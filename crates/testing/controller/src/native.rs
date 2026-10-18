@@ -13,7 +13,7 @@ use std::{
     time::{Duration, Instant},
 };
 use xadbtest_protocol::{
-    engine::{Action, MAX_PENDING, MAX_REQUESTS, Request, Response, VERSION},
+    engine::{self, MAX_PENDING, MAX_REQUESTS},
     frame,
 };
 
@@ -54,6 +54,9 @@ pub struct Options {
     pub expected_worker_sha256: String,
     pub artifacts: PathBuf,
     pub run: [u8; 16],
+    /// Optional controller-owned existing fixture directory for process restart.
+    /// This path is never supplied by the worker protocol.
+    pub work_directory: Option<PathBuf>,
     #[cfg(feature = "self-test")]
     pub test: TestOptions,
 }
@@ -69,6 +72,7 @@ impl Options {
             expected_worker_sha256,
             artifacts,
             run,
+            work_directory: None,
             #[cfg(feature = "self-test")]
             test: TestOptions::default(),
         }
@@ -140,9 +144,44 @@ pub struct Report {
     pub completion: &'static str,
 }
 
+/// Wire-only specialization; it cannot import a production engine or an oracle.
+pub trait NativeProtocol {
+    type Action;
+    type Request: frame::Envelope;
+    type Response: frame::Envelope;
+    const NAME: &'static str;
+    const REQUEST_MS: u64 = 5_000;
+    const RUN_MS: u64 = 60_000;
+    fn request(run: [u8; 16], request: u64, actor: u8, action: Self::Action) -> Self::Request;
+    fn identity(response: &Self::Response) -> ([u8; 16], u64, u8);
+}
+
+pub struct K0Protocol;
+impl NativeProtocol for K0Protocol {
+    type Action = engine::Action;
+    type Request = engine::Request;
+    type Response = engine::Response;
+    const NAME: &'static str = "k0-v1";
+    fn request(run: [u8; 16], request: u64, actor: u8, action: Self::Action) -> Self::Request {
+        engine::Request {
+            version: engine::VERSION,
+            run,
+            request,
+            actor,
+            action,
+        }
+    }
+    fn identity(response: &Self::Response) -> ([u8; 16], u64, u8) {
+        (response.run, response.request, response.actor)
+    }
+}
+
+/// Existing K0 API keeps its concrete type and wire behavior.
+pub type Session = NativeSession<K0Protocol>;
+
 /// Streaming process ownership. Failures are sticky and trigger explicit cleanup.
 /// Drop is a best-effort fallback and leaves an incomplete run without a completion report.
-pub struct Session {
+pub struct NativeSession<P: NativeProtocol> {
     child: OwnedChild,
     input: UnixStream,
     output: UnixStream,
@@ -151,15 +190,17 @@ pub struct Session {
     error_log: File,
     history: File,
     directory: PathBuf,
+    work_directory: PathBuf,
+    planned_kill: bool,
     worker_hash: String,
     run: [u8; 16],
     limits: Limits,
     began: Instant,
-    decoder: frame::Decoder<Response>,
+    decoder: frame::Decoder<P::Response>,
     frame_send_cut: Option<u64>,
     sent_high_water: u64,
     pending: BTreeMap<u64, Pending>,
-    inbox: VecDeque<Response>,
+    inbox: VecDeque<P::Response>,
     issued: u64,
     observed: u64,
     input_bytes: usize,
@@ -174,7 +215,7 @@ pub struct Session {
     #[cfg(feature = "self-test")]
     test: TestOptions,
 }
-impl Session {
+impl<P: NativeProtocol> NativeSession<P> {
     /// Copy and verify the candidate before spawning it in an owned subdirectory.
     pub fn start(options: Options) -> Result<Self> {
         if options.run == [0; 16]
@@ -192,7 +233,7 @@ impl Session {
             options.test.worker_args.clone(),
         );
         #[cfg(not(feature = "self-test"))]
-        let (limits, args) = (Limits::default(), Vec::<String>::new());
+        let (limits, args) = (Limits { request_ms: P::REQUEST_MS, run_ms: P::RUN_MS, ..Limits::default() }, Vec::<String>::new());
         if [
             limits.input_bytes,
             limits.stdout_bytes,
@@ -201,8 +242,10 @@ impl Session {
         ]
         .contains(&0)
             || [limits.request_ms, limits.run_ms, limits.drain_ms].contains(&0)
-            || limits.run_ms > 60000
-            || limits.request_ms > 5000
+            || P::REQUEST_MS > 60_000
+            || P::RUN_MS > 120_000
+            || limits.run_ms > P::RUN_MS
+            || limits.request_ms > P::REQUEST_MS
             || limits.drain_ms > 5000
             || limits.input_bytes > 64 * 1024 * 1024
             || limits.stdout_bytes > 64 * 1024 * 1024
@@ -219,8 +262,20 @@ impl Session {
             .prefix("native-")
             .tempdir_in(options.artifacts.canonicalize()?)?
             .keep();
-        let work = directory.join("work");
-        fs::create_dir(&work)?;
+        let work = if let Some(existing) = options.work_directory.as_ref() {
+            let work = existing.canonicalize()?;
+            if !work.is_dir() {
+                return Err(fault(
+                    ErrorKind::Configuration,
+                    "restart fixture is not a directory",
+                ));
+            }
+            work
+        } else {
+            let work = directory.join("work");
+            fs::create_dir(&work)?;
+            work
+        };
         let binary = directory.join("worker");
         fs::copy(&options.worker, &binary)?;
         let worker_hash = file_sha256(&binary)?;
@@ -241,13 +296,15 @@ impl Session {
                 "toolchain":env!("XADBTEST_TOOLCHAIN"), "target":env!("XADBTEST_TARGET"),
                 "profile":env!("XADBTEST_PROFILE"), "self_test":cfg!(feature="self-test"),
                 "limits":limits, "worker_args":args,
+                "wire_protocol":P::NAME, "work_directory":work,
             }),
         )?;
         let output_log = create(&directory.join("stdout.bin"))?;
         let error_log = create(&directory.join("stderr.bin"))?;
         let history = create(&directory.join("history.bin"))?;
         let began = Instant::now();
-        let (child, input, output, errors) = OwnedChild::spawn_stream(&binary, &work, &args)?;
+        let (child, input, output, errors) =
+            OwnedChild::spawn_stream(&binary, &work, &args, &directory.join("fault-control.sock"))?;
         Ok(Self {
             child,
             input,
@@ -257,6 +314,8 @@ impl Session {
             error_log,
             history,
             directory,
+            work_directory: work,
+            planned_kill: false,
             worker_hash,
             run: options.run,
             limits,
@@ -305,8 +364,28 @@ impl Session {
         }
     }
 
+    pub(crate) fn work_directory(&self) -> &Path {
+        &self.work_directory
+    }
+    pub(crate) fn was_killed(&self) -> bool {
+        self.planned_kill
+    }
+    pub(crate) fn run_identity(&self) -> [u8; 16] {
+        self.run
+    }
+    pub(crate) fn worker_id(&self) -> u32 {
+        self.child.id()
+    }
+    // Control-channel waits must keep ordinary stdout/stderr and journal moving.
+    pub(crate) fn poll(&mut self) -> Result<()> {
+        self.checked(|this| this.pump().map(|_| ()))
+    }
+    pub(crate) fn reject<T>(&mut self, error: Error) -> Result<T> {
+        self.checked(|_| Err(error))
+    }
+
     /// Append an Invoke before any request byte, then send while draining all streams.
-    pub fn invoke(&mut self, actor: u8, action: Action) -> Result<u64> {
+    pub fn invoke(&mut self, actor: u8, action: P::Action) -> Result<u64> {
         let began = Instant::now();
         self.checked(|this| {
             let request_timeout = Duration::from_millis(this.limits.request_ms);
@@ -333,13 +412,7 @@ impl Session {
                 return Err(fault(ErrorKind::Protocol, "actor/request/pending bound"));
             }
             let id = this.issued + 1;
-            let request = Request {
-                version: VERSION,
-                run: this.run,
-                request: id,
-                actor,
-                action,
-            };
+            let request = P::request(this.run, id, actor, action);
             let bytes =
                 frame::encode(&request).map_err(|e| fault(ErrorKind::Protocol, e.to_string()))?;
             if bytes.len() > this.limits.input_bytes - this.input_bytes {
@@ -389,7 +462,7 @@ impl Session {
     }
 
     /// Receive the next recorded response, allowing other actors to complete first.
-    pub fn receive(&mut self) -> Result<Response> {
+    pub fn receive(&mut self) -> Result<P::Response> {
         self.checked(|this| {
             loop {
                 this.deadlines()?;
@@ -490,13 +563,15 @@ impl Session {
                         offset += used;
                         if let Some(response) = message {
                             self.deadlines()?;
-                            let pending = self.pending.get(&response.request).ok_or_else(|| {
+                            let (response_run, response_request, response_actor) =
+                                P::identity(&response);
+                            let pending = self.pending.get(&response_request).ok_or_else(|| {
                                 fault(ErrorKind::Protocol, "unknown/duplicate response")
                             })?;
-                            if response.run != self.run
-                                || response.actor != pending.actor
+                            if response_run != self.run
+                                || response_actor != pending.actor
                                 || !pending.sent
-                                || response.request > send_cut
+                                || response_request > send_cut
                             {
                                 return Err(fault(
                                     ErrorKind::Protocol,
@@ -505,9 +580,9 @@ impl Session {
                             }
                             let bytes = frame::encode(&response)
                                 .map_err(|e| fault(ErrorKind::Protocol, e.to_string()))?;
-                            self.record(3, response.request, &bytes)?;
+                            self.record(3, response_request, &bytes)?;
                             self.deadlines()?;
-                            self.pending.remove(&response.request);
+                            self.pending.remove(&response_request);
                             self.observed += 1;
                             self.inbox.push_back(response);
                             self.frame_send_cut = None;
@@ -576,6 +651,7 @@ impl Session {
                 &this.directory.join("planned-kill.json"),
                 &this.report("WORKER_KILLED_NO_PRODUCT_VERDICT")?,
             )?;
+            this.planned_kill = true;
             Ok(())
         })
     }

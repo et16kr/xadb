@@ -1,5 +1,6 @@
 [package]
 name = "xadbtest-engine-worker"
+default-run = "xadbtest-engine-worker"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -15,9 +16,9 @@ xadbtest-protocol.workspace = true
 sha2.workspace = true
 
 [dev-dependencies]
+serde_json.workspace = true
 xadbtest = { path = "../controller" }
 tempfile.workspace = true
-serde_json.workspace = true
 
 [lints]
 workspace = true

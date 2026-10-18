@@ -368,3 +368,12 @@ K1–K5 production API 연결과 독립 정적 검토를 마친 뒤 테스트를
 D2 / 채택 / 2026-10-18. 사용자 DEV2 완료 및 단계별 commit 요청에 따라 `/root/dev2_completion_review`가 구현하고 `/root`가 계약 담당·독립 실제 diff 검토·통합을 맡았다. dirty flag는 같은 값 replace·insert/delete·변경 후 원복에서 불필요한 q 증가와 UNKNOWN을 허용했다. start-version 검증 뒤 최종 논리 행을 비교하는 대안을 선택했다. 오래된 RW는 최종 행이 현재 행과 같아도 충돌하며, 명시 BeforeAttempt abort는 유지한다. 기존 dirty-flag shortcut을 대체한다. no-op/conflict/fault 의미가 바뀌면 재검토한다.
 
 commit `ea145b9`의 history 22 PASS/extended 1 ignored, bounded smoke 1 PASS/exhaustive 1 ignored는 `p0-net-zero-01.log`에 남겼다. 전수 profile은 256 초기 상태·actor별 13 program·19 interval class·6 critical order·70 serial order, 총 9,604,608건(ACCEPTED 7,003,648/REJECTED 2,600,960)이며 전수 실행은 아직 NOT_RUN이다. Insert/Delete·다중 mutation·rollback·UNKNOWN·crash·catalog는 이 유한 공간에서 제외하고 별도 literal/integration 의무로 남긴다.
+
+
+### 고정 source 검증 체크포인트와 사용자 중지 — 2026-10-18
+
+[원본 연결과 중단 receipt](../evidence/dev2-kernel-xadb-20261018-r1.json)의 retained source는 `8e4665f374b450904a25b4c84911e7fc6a2a13c2ad0fca360f371e8a0adebb88`이다. 이 export에는 별도 미완료 성능 초안과 K0 후보도 포함되어 있으므로 이후 선택적 commit의 전체 HEAD와 같다고 주장하지 않는다. source·retained 실행 파일·사전 manifest·실제 execution·재개 전 crash image를 독립 bridge에 묶었다. engine 22개, transaction 7개, cache-loss 15개, ext4 fixture의 동시성 64 seeds(4,096 commit/4,096 conflict)가 PASS했다. 독립 oracle/bridge 75개와 kernel runner 반례 8개도 PASS했다. 이 결과는 해당 고정 source와 시험 범위에 귀속된다.
+
+native 캠페인 첫 회는 4개 시험·33개 case와 controller 소유권 부정 사례가 모두 PASS했고 strict 독립 판정 33 ACCEPTED, 누락·중복·미연결 run 0이다. 두 번째 회는 디스크 여유 0의 ENOSPC로 1 PASS/3 FAIL, 세 번째 회는 NOT_RUN이다. 전체 검증은 FAIL/미완료이며 첫 회 PASS로 3회 의무를 대신하지 않는다. 최종 report 저장도 ENOSPC로 실패해 원래 0-byte report.json을 보존했고, 실제 원본 로그·manifest·첫 execution/summary에서 사후 receipt를 별도로 작성했다. 첫 시도에서 발견한 신규 성능 worker 빌드 오류 3개와 그 수정도 `kernel-frozen-01.log`·`artifacts/d2k-5wk_abx0/`에 보존한다.
+
+사용자는 이번 진행 단위의 결과를 commit하고 일단 멈추도록 요청했다. 원본 source·실행 파일·crash image·journal·로그를 유지하고 이번 두 시도의 재생성 가능한 `target/` 캐시만 지워 약702MiB를 확보했다. 이후 캠페인·장시간·성능 실행은 시작하지 않는다. source-only extended runner 반례는 SHA binding 보완 후 11개 PASS지만 30분 target이나 P0 전수 실행은 아니다. native transport/fault 구현과 검증 기반을 commit하고, 미검증 성능 초안·미채택 K0 최적화 후보는 별도 작업 트리에 보존한다. DEV2/B2/D0 완료·성능 채택·공식 배포는 여전히 미완료다.

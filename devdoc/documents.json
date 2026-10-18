@@ -622,6 +622,11 @@
       "path": "evidence/comm-execution-scope-20261018.json",
       "role": "evidence",
       "title": "COMM 실행 사본·원본 보고서·소스 범위 색인"
+    },
+    "dev2-kernel-xadb-20261018-r1.json": {
+      "path": "evidence/dev2-kernel-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "DEV2 K1–K5 로컬 검증과 ENOSPC 중단 체크포인트"
     }
   }
 }

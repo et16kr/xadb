@@ -61,6 +61,7 @@ impl OwnedChild {
         binary: &Path,
         directory: &Path,
         args: &[String],
+        control_socket: &Path,
     ) -> io::Result<(Self, UnixStream, UnixStream, UnixStream)> {
         let (stdin, in_reader) = UnixStream::pair()?;
         let (stdout, out_writer) = UnixStream::pair()?;
@@ -75,6 +76,7 @@ impl OwnedChild {
             .env("LANG", "C")
             .env("TZ", "UTC")
             .env("TMPDIR", directory)
+            .env("XADBTEST_CONTROL_SOCKET", control_socket)
             .stdin(Stdio::from(OwnedFd::from(in_reader)))
             .stdout(Stdio::from(OwnedFd::from(out_writer)))
             .stderr(Stdio::from(OwnedFd::from(err_writer)))

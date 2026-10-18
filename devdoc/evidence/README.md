@@ -52,3 +52,5 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [COMM 실행 범위 색인](comm-execution-scope-20261018.json): 각 원본의 execution root·recipe·hash와 소유 파일 일치 기록. 위 COMM 보고서의 상대 artifact 경로는 이 색인의 해당 execution root 기준이다.
 
 - [DEV0 당시 source 채택 사본](dev0-current-source-20261018.json) · [DEV1 당시 source 채택 사본](dev1-current-source-20261018.json) · [DEV2 당시 source 채택 사본](dev2-current-source-20261018.json): 기존 COMM 회귀 JSON과 바이트 동일. 상대 artifact 경로는 [원래 실행 범위](comm-execution-scope-20261018.json)의 root에서 해석한다.
+
+- [K1–K5 영속 커널 검증 체크포인트](dev2-kernel-xadb-20261018-r1.json): 고정 source에서 engine 22·transaction 7·cache-loss 15·동시성 64 seeds와 첫 native 33 cases strict ACCEPTED. 2회차 ENOSPC로 FAIL, 3회차 미실행. 원래 빈 report와 로그를 보존한 사후 재구성 receipt이며 DEV2 완료 증거가 아님.

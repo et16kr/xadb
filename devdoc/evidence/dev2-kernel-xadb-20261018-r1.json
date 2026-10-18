@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18",
+  "status": "FAIL",
+  "scope": "DEV2 retained-source kernel correctness development checkpoint; three-campaign run incomplete",
+  "dev2_stage_status": "INCOMPLETE",
+  "product_qualification": "NOT_RUN",
+  "public_release": "NOT_RUN",
+  "protected_ci": "NOT_RUN",
+  "receipt_origin": "ROOT_POST_RUN_RECONSTRUCTION_FROM_RETAINED_LOGS_AND_PRE_RUN_MANIFEST",
+  "not_original_runner_report": true,
+  "source_sha256": "8e4665f374b450904a25b4c84911e7fc6a2a13c2ad0fca360f371e8a0adebb88",
+  "retained_source": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/source",
+  "manifest": {
+    "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/pre-run-manifest.json",
+    "bytes": 2950,
+    "sha256": "5bcdb25690f46053a9a7962a303fa73699da6d47b8496349d9d92f8d55cc487e"
+  },
+  "original_runner_report": {
+    "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/report.json",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "runner_failure_log": {
+    "path": "/home/et16/work/xadb/artifacts/dev2-kernel-20261018-integration-r1/kernel-frozen-02.log",
+    "bytes": 2624,
+    "sha256": "79901aef22b53a5fdb49b9ed068e2e7debffeb05f0f07dfab0e49cfea3059b64"
+  },
+  "runner_exit_code": 1,
+  "report_failure": "No space left on device while creating the final report; original empty report.json is preserved",
+  "passed_scope": {
+    "engine_units": 22,
+    "transaction_tests": 7,
+    "cache_loss_tests": 15,
+    "kernel_thread_seeds": 64,
+    "kernel_thread_commits": 4096,
+    "kernel_thread_conflicts": 4096,
+    "oracle_bridge_self_tests": 75,
+    "kernel_runner_self_tests": 8
+  },
+  "native_campaigns": [
+    {
+      "repetition": 0,
+      "status": "PASS",
+      "tests": 4,
+      "strict_cases_accepted": 33,
+      "controller_negative": "ACCEPTED",
+      "execution": {
+        "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/execution-0.json",
+        "bytes": 1414,
+        "sha256": "ef4c12fcbd28300d85d4d743395f855e5a868fa1da6a469a7da267c153b94679"
+      },
+      "oracle_summary": {
+        "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/oracle-0/summary.json",
+        "bytes": 6348,
+        "sha256": "13dba14c6e8906b20d500f501b8d0a0f4193107f5afd13929fa50c1607dfa70f"
+      }
+    },
+    {
+      "repetition": 1,
+      "status": "FAIL",
+      "tests_passed": 1,
+      "tests_failed": 3,
+      "reason": "ENOSPC during retained worker/fixture setup; preserve the failures",
+      "execution_receipt_complete": false
+    },
+    {
+      "repetition": 2,
+      "status": "NOT_RUN"
+    }
+  ],
+  "logs": {
+    "kernel-runner-self-tests": {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/kernel-runner-self-tests.log",
+      "bytes": 1694,
+      "sha256": "3a95242c2df10ab209946071143dd6bd67f3e9c29e3a1b85ea4faf240b75a097"
+    },
+    "build-engine": {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/build-engine.log",
+      "bytes": 13265,
+      "sha256": "c625f20448068c3f2afb8f9ea40e82d8dc6fad50c8b62ed48f38afc95a45cb32"
+    },
+    "build-native": {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/build-native.log",
+      "bytes": 61524,
+      "sha256": "7f5a5fa5b97bcdb32cc3c966aa352923dd9d19e021516e15a627fe44c3c7f1b8"
+    },
+    "independent-oracle-self-tests": {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/independent-oracle-self-tests.log",
+      "bytes": 13797,
+      "sha256": "a7018e3da9f5b35da806f92378f7839cdb32255f1101a570cfda7a4b732ec454"
+    },
+    "engine-units": {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/engine-units.log",
+      "bytes": 2428,
+      "sha256": "26b1c903a85f1405407c343ec544bf92af3ba9e918ca31306d9eb881cfe8e194"
+    },
+    "transactions": {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/transactions.log",
+      "bytes": 681,
+      "sha256": "2b33e0fa9ab320620d456b100c5a24cecfed27d47bdc4234163557001ee13a0b"
+    },
+    "cache-loss-cuts": {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/cache-loss-cuts.log",
+      "bytes": 1389,
+      "sha256": "aaa2c62c1dcb0ef93a7f00fda5a512ca8b91128de6b19353bdf9f36421d75b63"
+    },
+    "kernel-threads-v2": {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/kernel-threads-v2.log",
+      "bytes": 999,
+      "sha256": "87050362d18cee3e193b078d88e1fcc731cc1b54e98f1112bb5c974514f9549d"
+    },
+    "native-0": {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/native-0.log",
+      "bytes": 653,
+      "sha256": "6978ec07ede4bb683a1fe465183a470af8af3bca757fd475d27c288d7de192e4"
+    },
+    "oracle-0": {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/oracle-0.log",
+      "bytes": 6348,
+      "sha256": "13dba14c6e8906b20d500f501b8d0a0f4193107f5afd13929fa50c1607dfa70f"
+    },
+    "native-1": {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/native-1.log",
+      "bytes": 1716,
+      "sha256": "298d81acc9a472f7b5446406aa2e7fddeeff64ea34602800a58b41dcee82b0a2"
+    }
+  },
+  "retained_binaries": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/binaries/durable_recovery-test",
+      "bytes": 16332664,
+      "sha256": "907449b62c261f3115ba8a21547b478c49a6cb1412a3d7577437e0712028bc2a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/binaries/kernel_stress-test",
+      "bytes": 16166680,
+      "sha256": "3a5de72abbe379888a48901a6c6c44fbadbe6dfde7b6fed059da4bf8fc7bc94c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/binaries/native_fault-test",
+      "bytes": 43626664,
+      "sha256": "398e0326dbabd31c960935aae9fac86caffcd2e56d569f2d89f584416b43cbbd"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/binaries/transaction-test",
+      "bytes": 11147984,
+      "sha256": "7f10fe7330ae1eb48664124b4fdf9416ee845e2ce9ec0b2230b2328677f49709"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/binaries/xadb_engine-test",
+      "bytes": 12369128,
+      "sha256": "e84fd703d73ab2972b1db559099070f36fec73ee6cc9880199d1fb7f0cf8da9e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/d2k-d353cn0_/binaries/xadbtest-durable-worker",
+      "bytes": 25760088,
+      "sha256": "accbb6ee8f18f04a85f017ddf716865da608f543d0d6d9fb5b4194f5873efce5"
+    }
+  ],
+  "cleanup": {
+    "removed_only_rebuildable_targets": [
+      "artifacts/d2k-5wk_abx0/target",
+      "artifacts/d2k-d353cn0_/target"
+    ],
+    "preserved": [
+      "source exports",
+      "retained binaries",
+      "raw logs",
+      "pre-run manifests",
+      "execution receipts",
+      "native crash images and journals"
+    ]
+  },
+  "remaining": [
+    "native fault campaign completion",
+    "full V3 stress and codecs",
+    "bounded exhaustive 9604608 cases",
+    "performance correctness, measurements and candidate decision",
+    "final lower regressions"
+  ],
+  "pause": "User requested finishing the current unit, committing the result and stopping; no further campaign was started after ENOSPC"
+}
