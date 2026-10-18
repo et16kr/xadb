@@ -23,3 +23,5 @@
 - [recovery-test-matrix.json](recovery-test-matrix.json)
 - [XADB — recovery undo의 로그 보존과 RP 제약 검토](replication-undo-analysis.md)
 - [replication-undo-plan.json](replication-undo-plan.json)
+
+DEV3의 COW pack 경로는 [in-place·WAL·영속 undo 결정](../contracts/disk-storage-design.md#decision)과 [구현 순서](../plans/dev3-implementation-plan.md#sequence)로 대체한다. 설계와 제품 실행 상태를 구분한다.

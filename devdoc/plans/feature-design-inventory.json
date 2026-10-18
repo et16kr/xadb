@@ -1157,7 +1157,7 @@
           "spec_id": "FS-WAL-09",
           "design_id": "DS-WAL-09",
           "spec_scope": "statement/transaction undo·장기 거래·복제 재시작 요구",
-          "design_scope": "private/COW 계약과 undo 대안 검토·보존 소유자",
+          "design_scope": "DEV2 private 기준선·DEV3 영속 undo/WAL 분리·보존 소유자",
           "stage_refs": [
             "DEV2",
             "DEV8"
@@ -1442,7 +1442,7 @@
           "spec_id": "FS-STORE-03",
           "design_id": "DS-STORE-03",
           "spec_scope": "buffer보다 큰 table·variable row·overflow·접근 실패",
-          "design_scope": "page layout·row format·분할·locator·COW 수명",
+          "design_scope": "mutable page·row format·분할·locator·undo/allocator 수명",
           "stage_refs": [
             "DEV3"
           ],

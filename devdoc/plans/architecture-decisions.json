@@ -25,16 +25,16 @@
     "core": "safe Rust; unsafe/FFI only in reviewed explicit boundaries",
     "deployment": "modular single process plus embedded engine API",
     "initial_storage": "DEV2 SQL-free durable disk kernel; DEV3 bounded DISK row/index; DEV4 embedded SQL; DEV5 server",
-    "commit": "serial coordinator, coarse epoch validation, versioned redo WAL",
-    "publication": "safe composite view descriptor with disk row, index, locator and catalog roots; bounded disk caches",
+    "commit": "DEV2 coarse global epoch baseline; DEV3 serial commit coordinator, persistent undo, table-set Serializable and explicit ReadCommitted",
+    "publication": "DEV2 composite immutable roots; DEV3 logical snapshot/TxnStatus/commit frontier over mutable pages with bounded caches",
     "reference": "phase1-product-baseline.md and disk-storage-design.md; implementation-contracts.md for common Rust contracts",
     "version_channels": "internal distributions are not compatibility baselines; customer delivery starts compatibility obligations; product version != stage != channel",
     "recovery_logging": {
       "status": "DESIGN_PROPOSAL_NOT_IMPLEMENTED",
       "reference": "recovery-logging-design.md",
       "contract": "recovery-logging-contract.json",
-      "baseline": "L0 single redo/commit stream; exact committed generation checkpoint; common DISK recovery",
-      "optimization": "L1 after B2; L2 after S1 with separate acceptance; no initial SQL dependency"
+      "baseline": "DEV2 L0/exact immutable checkpoint; DEV3-DESIGN-003 L0 WAL-before-page/persistent undo/CLR/fuzzy checkpoint/offline exact backup",
+      "optimization": "Legacy L1/L2 proposals require a storage-aware decision before DEV3 use; no initial SQL dependency"
     }
   },
   "unresolved": [
@@ -108,5 +108,6 @@
     "decision_and_execution_states_separate": true
   },
   "scope_decision_ref": "project-direction.md",
-  "reference_policy_ref": "opensource-references.md"
+  "reference_policy_ref": "opensource-references.md",
+  "dev3_storage_decision_ref": "disk-storage-design.md#decision"
 }

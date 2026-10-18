@@ -1,5 +1,19 @@
 # XADB — 통합 recovery·logging·checkpoint 설계
 
+2026-10-18 적용 범위: **DEV3의 정본은 [DEV3-DESIGN-003](disk-storage-design.md#decision)**이다. 아래 §§1–15의 private/COW·root-only journal·page-before-commit·불변 exact checkpoint·root closure GC는 DEV2 기준선 및 이전 L1/L2 제안으로 한정한다. DEV3에 이를 함께 요구하지 않는다. 아래 “기존 저장 설계 유지”는 해당 당시 결정의 범위다. L1/L2는 DEV3에 자동 채택되지 않으며 새 저장 경로에 맞춘 별도 결정/검증이 필요하다.
+
+<a id="dev3-profile"></a>
+## DEV3 WAL·undo 프로파일
+
+단일 ordered L0에 interleaved update/CLR/commit을 기록하고, 영속 UndoRef chain으로 rollback한다. WAL-before-page·steal/no-force와 pending-only doublewrite를 적용한다. FileId와 FILEMAP으로 allocator 이전 bootstrap을 시작하고, DWB retirement 전 주소/슬롯 재사용을 금지한다. pageLSN/identity가 redo 중복 적용을 막는다.
+
+fuzzy checkpoint는 commit 상태 설치까지 일치한 capture LSN·ATT/DPT를 저장한다. analysis는 capture 직후, streaming redo는 최소 recLSN에서 시작한다. 채택 prefix를 먼저 sync하고 recovery epoch/WRITER를 영속 선택한 뒤 CLR을 쓴다. 반복 restart가 그 CLR을 발견해야 하며 최종 STABILIZE 전 user admission을 열지 않는다. source WAL bytes는 보존하지만 home page는 이 규약으로 수정한다.
+
+정상 open은 필요한 WAL/control·복구 page를 검증하고, 전체 row↔index/unique/allocation/undo 검사는 별도 offline audit로 수행한다. S1/fault 인수는 reopen 뒤 full audit와 독립 이력을 모두 요구한다. previous checkpoint는 같은 mutable datafile의 더 이른 redo 시작점이다. exact-C backup은 admission drain·전체 flush 뒤 복사하며 source WAL 없이 새 timeline으로 restore한다.
+
+WAL floor와 undo 수명은 별도다. undo/status/allocator의 redo closure가 갖춰진 뒤 active begin WAL을 제거할 수 있으나 rollback chain·snapshot·incoming undo refs는 보존한다. root/pack 전체 GC를 요구하지 않는다. [기계 계약](recovery-logging-contract.json)의 `dev3_profile`과 [DS01–06](disk-test-matrix.json)·RC-T12–14가 이 선택을 소비한다. 구현·제품 실행은 NOT_RUN이다.
+
+
 
 
 **권고안은 매체 공통의 commit/recovery 상태 기계, 불변 checkpoint generation, 단계적으로 확장하는 병렬 redo logging이다.** DISK의 물리 저장법은 다르지만, 거래 성공 여부·복구 시점·WAL 회수 판단은 하나로 만든다. 두 전체 이미지를 번갈아 고치는 대신, 완성된 generation을 manifest로 선택한다. 로그의 큰 본문은 병렬화하되 거래 간 순서와 원자성은 명시적인 commit 결정으로 보존한다.

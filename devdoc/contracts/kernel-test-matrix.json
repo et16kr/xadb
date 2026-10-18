@@ -77,7 +77,8 @@
       "stage_or_step": "DEV3",
       "title": "Rows and every secondary index",
       "acceptance": "Insert/update/delete/failure atomic across row/index/catalog; scan equivalence against separate model",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "detail_ref": "disk-test-matrix.json"
     },
     {
       "id": "KU10",
@@ -85,7 +86,8 @@
       "stage_or_step": "DEV3",
       "title": "DISK shared durability and capacity",
       "acceptance": "Real files, common commit, allocation/reclamation and bounded buffer/locator with working set at least 4x buffer",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "detail_ref": "disk-test-matrix.json"
     },
     {
       "id": "KU11",
@@ -121,5 +123,6 @@
     }
   ],
   "detailed_recovery_cases": "recovery-test-matrix.json",
-  "detailed_recovery_scope": "L0 cases extend existing K2-K5/H1/S1 obligations; optional L1/L2 cases do not become initial-kernel prerequisites"
+  "detailed_recovery_scope": "L0 cases extend existing K2-K5/H1/S1 obligations; optional L1/L2 cases do not become initial-kernel prerequisites",
+  "dev3_profile_ref": "disk-storage-design.md#decision"
 }

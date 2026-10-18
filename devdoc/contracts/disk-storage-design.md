@@ -1,223 +1,223 @@
 # DEV3 — 디스크 저장·인덱스 상세 설계
 
-2026-10-18 · **DEV3-DESIGN-001 D2 기본 설계 ACCEPTED / leaf byte vector·실행 profile 미동결 / 미구현·제품 시험 NOT_RUN**
+2026-10-18 · **DEV3-DESIGN-003 D2 ACCEPTED / in-place·WAL·영속 undo 설계 / 미구현·제품 시험 NOT_RUN**
 
-[구현·검증 계획](../plans/dev3-implementation-plan.md) · [소스 조사 증거](../evidence/dev3-source-research.md) · [커널 계약](implementation-contracts.md) · [DEV2 설계](dev2-kernel-design.md) · [복구 계약](recovery-logging-design.md) · [인수 항목](disk-test-matrix.json)
-
-DEV3는 DEV2의 SQL 없는 durable transaction을 실제 디스크 행·catalog·인덱스와 제한된 버퍼로 확장한다. 이 문서의 API·형식은 구현 설계이며 현재 호출 가능한 기능이 아니다. 설계 준비는 DEV2 완료 전 가능하나 production 구현은 [단계 진입 규칙](../plans/stage-completion.json)의 최소 선행 요건과 leaf 선행 조건을 충족해야 한다. DEV2 이관 완료 여부와 실제 durable 선행 증거는 [구현 계획의 인수 경계](../plans/dev3-implementation-plan.md#parallel-entry)에서 별도로 확인한다.
+[구현 계획](../plans/dev3-implementation-plan.md) · [이번 조사](../evidence/dev3-wal-undo-research.md) · [이전 조사](../evidence/dev3-source-research.md) · [커널 계약](implementation-contracts.md) · [DEV2 계약](dev2-kernel-design.md) · [복구 계약](recovery-logging-design.md) · [인수 항목](disk-test-matrix.json)
 
 <a id="scope"></a>
-## 1. 범위와 유지할 계약
+## 1. 범위와 대체 관계
 
-| DEV3 필수 범위 | 유지하거나 후속 단계에 남길 경계 |
-| --- | --- |
-| DISK 행·catalog·PK/unique/nonunique B+tree, point/range/전체 scan | Bool/Int64/Utf8/Binary/NULL, 비파티션 table, 고정 열 schema |
-| RowUID 해석, overflow row, bounded page/metadata/locator cache | 전체 행·locator·파일 inventory를 RAM에 강제 상주시키지 않음 |
-| 다중 table의 row/index/catalog 변경을 한 commit으로 공개 | DEV2의 단일 L0, coarse serializable validation, statement rollback |
-| 실제 파일 I/O·crash/reopen·exact-cut checkpoint/backup/restore | ACK/UNKNOWN·STABILIZE·CURRENT/WRITER·writer lease 의미 유지 |
-| 공간 회수·유지보수·buffer보다 큰 DB·PF09 측정 | PART/NG, SQL, online DDL, L1/L2, 복제/PITR, 고급 압축은 후속 |
+사용자가 선행 리뷰 보완 뒤 COW pack/GC의 재설계를 요청했다. [DEV3-REVIEW-002](#review-followup)를 먼저 검토·반영했고, 이어 **mutable disk page + 단일 WAL + 영속 undo + bounded dirty buffer**를 선택한다. 제품 저장 엔진은 DISK 하나이며 resident/mixed 엔진은 추가하지 않는다. 기존 DEV0/1·DEV2 P0/K0 구현과 실행 증거를 바꾸지 않는다. 영속 DEV2/DEV3는 미구현이다.
 
-제품 저장 엔진은 DISK 하나다. `storage::volatile`은 DEV2의 임시 시험 substrate다. DEV3 시험은 production disk 경로를 사용하며 volatile 결과를 S1 증거로 승계하지 않는다. 이전 사내 DB 변환은 요구하지 않고 새 fixture를 만든다. DEV3 feature/format을 모르는 build는 데이터 변경 전에 거절한다. 현재 build의 복구 의무는 [버전 정책](../policies/version-compatibility-policy.json)에 따라 유지한다.
+DEV3-DESIGN-003은 DEV3-DESIGN-001의 COW tree·sealed pack·root closure GC·전체 재작성 compaction·page-before-commit·root-only disk recovery를 대체한다. DEV3-PARALLEL-001의 pack/COW 작업 분할도 새 계획으로 대체한다. DEV2의 private/COW substrate·AXF1 한 거래 frame·exact checkpoint는 **DEV2 전용 기준선**으로 남으며 DEV3 page 경로에 적용하지 않는다. 상위 계약의 불변 CommittedRoot는 DEV3에서는 논리 snapshot/commit frontier를 뜻한다. mutable page 내용의 불변성이나 root graph 보존을 요구하지 않는다.
+
+유지할 의미는 RowUID, statement 원자성, atomic multi-table row/index/catalog commit, durable ACK/UNKNOWN fencing, 독립 oracle, 현재 build의 crash/reopen, exact-cut backup/restore, bounded RAM이다. 호환 정책상 새 development fixture를 사용하고 기존 형식을 자동 변환/삭제하지 않는다. 다른 format은 변경 전에 거절한다. Oracle과의 전체 SQL/내부 구현 일치를 선언하지 않는다.
 
 <a id="choice"></a>
-## 2. 구조 선택과 조사 반영
+## 2. 선택과 비용
 
-초기 선택은 **slotted page를 사용하는 불변 COW B+tree + sealed page pack + 단일 commit coordinator**다. 새 페이지와 파일 이름을 영속화한 뒤 L0 commit frame을 sync하고 전체 view를 공개한다. 이는 기존 DISK data-before-commit 계약의 구체화다.
+| 대안 | 판단 |
+| --- | --- |
+| in-place + WAL + 영속 undo | 채택. commit이 모든 data page sync를 기다리지 않고, 기존 datafile 공간을 재사용. 대신 dirty-page flush, undo/CLR, torn-page repair를 필수 구현 |
+| 이전 COW + immutable pack | snapshot/원자 root 교체가 단순하지만 path copy·여러 sync·root 보존·whole-pack GC/전체 compaction 비용. 이번 선택으로 대체 |
+| WAL-first + private/COW 유지 | 가능하지만 redo page 재생성과 COW 회수를 모두 부담. 초기 단일 경로로 선택하지 않음 |
+| LSM 또는 별도 resident 엔진 | 이번 범위에 추가하지 않음 |
 
-| 대안 | 선택 이유·보류 이유 | 근거 |
-| --- | --- | --- |
-| COW B+tree | snapshot이 가리키는 page를 수정하지 않아 reader와 구조 변경을 분리. point/range를 같은 구조로 제공. 경로 복사·공간 증폭 비용은 측정 필요 | 기존 XADB 복구 계약; R1/R4/R7의 page/tree 책임 비교 |
-| WAL-first in-place B-tree | data sync를 commit마다 요구하지 않는 이점. undo/pageLSN/CLR·torn page 대응·동시 구조 변경 계약이 새로 필요해 초기 선택에서 제외 | R2/R3의 WAL-before-page, R7의 flush/recovery 경계 |
-| LSM | 쓰기 batching의 비교 후보이나 compaction·range read·secondary index 원자성의 초기 복잡성이 큼. R6의 manifest/파일 수명 원칙만 참고 | R6 |
-| 전체 행 배열·전체 locator 상주 | 작은 oracle에는 유용하나 DB 용량과 RAM을 분리하는 DS03/RC-T14를 충족하지 못함 | DEV2 초기 표현의 한계 |
-
-R1의 pin/내용 lock 구분, R3의 교체 불가 상태, R5의 예약·동시 load 재검사는 buffer 수명 설계에 반영한다. R4의 reader 경계와 checkpoint 보존, R6의 manifest sync와 선택 실패 시 보존은 retention 시험에 반영한다. R7에서는 디스크 index의 영속 본체, page header·slot 경계, flush 중간 상태의 보존 책임을 확인했다. 원래 소스의 알고리즘·수치·성능·검증 수준을 XADB의 보장으로 가져오지 않는다. 실제 revision·읽은 범위·채택/기각 이유는 조사 증거의 정본이다.
+ARIES의 WAL-before-page, pageLSN, analysis/redo/undo, redo-only 보상, fuzzy checkpoint를 참고한다. transaction undo의 정본은 **WAL 역방향 chain 대신 영속 UndoRef chain**이다. 오래 열린 거래가 시작 WAL 전체를 요구하지 않도록 한 선택이며 원형 ARIES와 동일 알고리즘이라고 부르지 않는다. undo store 자체의 변경과 rollback 진행점은 WAL로 redo 보호한다. 실제 성능 우월성은 미측정이다.
 
 <a id="ownership"></a>
-## 3. 모듈·API·root 소유
+## 3. 책임·API·공개
 
-기존 `xadb-engine` 내부에 실제 구현 시 `storage::disk` 책임을 추가한다. `page`, `tree`, `buffer`, `pack`, `reclaim`은 책임 구분이며 빈 파일·crate를 미리 생성하지 않는다. catalog는 schema와 index 정의를, transaction은 validation·statement rollback·공통 commit을, durable은 WAL·recovery·checkpoint 선택을 소유한다. storage는 준비된 page/root와 dependency 목록을 반환하며 스스로 commit·ACK하지 않는다. platform 효과는 foundation port를 통해 조립한다.
+기존 engine 안에서 storage는 page/heap-row-tree/index/allocator/buffer, transaction은 잠금·가시성·statement/undo·commit, durable은 WAL·flush 장벽·checkpoint·restart, catalog는 versioned 정의/객체 수명을 소유한다. platform 효과는 foundation port로 전달한다. 실제 구현 전 빈 소스 경로·crate를 추가하지 않는다.
 
-```text
-transaction coordinator
-  ├─ catalog: table/index 정의와 root descriptor의 COW 변경
-  ├─ storage::disk: row tree / index tree / page pack 준비
-  │                   └─ bounded buffer → foundation FileIo/namespace port
-  ├─ durable: dependency 확인 → L0 append/sync
-  └─ publication: Arc<CommittedRoot> 하나 교체
-```
-
-`CommittedRoot`는 DB/timeline, q, catalog-root와 파일 형식 식별자만 담는 작은 descriptor다. catalog는 디스크 B+tree이며 TableUID별 schema·row-root·index 정의/root를 저장한다. table 이름 조회도 catalog 내 별도 key namespace로 제공하며 이름→TableUID와 객체 레코드를 같은 catalog root로 바꾼다. 이름 cache는 `(catalog-root, name)`에 종속되고 예산을 갖는다. table 수 증가에 따라 모든 root·schema를 복사하거나 상주시킬 필요가 없다.
-
-**row tree가 locator의 영속 정본도 겸한다.** `TableUID + RowId → row leaf cell → inline row/overflow` 경로로 해석한다. 별도 전체 RowId→물리주소 배열을 두지 않는다. secondary index leaf는 `(encoded key, RowId)`이며 row 주소를 담지 않는다. locator cache는 `(DB/timeline, table generation, row-root, RowId)`를 key로 하며 miss 때 row tree를 읽는다. hit도 page identity·slot RowId를 확인하고 불일치는 무조건 다른 행으로 해석하지 않는다. root 교체 뒤 old-root cache entry는 old snapshot에서만 유효하다. DS02의 locator 원자성은 row-root 교체와 cache namespace 검사로 충족해야 한다.
-
-| 계획 typed API | 의미·수명 |
+| 계획 API/개념 | 계약 |
 | --- | --- |
-| DEV2 `read/scan/execute_statement/commit` | 공개 RowUID·오류 의미 유지. disk 조회와 private overlay를 합침 |
-| `create_index(table, IndexSpec)` | 독립 DDL. DB admission 차단·기존 사용자 drain 후 전체 table 검증·build, 하나의 원자 commit |
-| `drop_index(handle)` | 독립 DDL. 새 catalog에서 제거; old snapshot의 index root는 pin으로 유지 |
-| `index_lookup/index_range(handle, bounds, limit, cursor)` | transaction snapshot + private index delta. `(key, RowId)` 순서, 명시적 EOF, owning snapshot과 동일 private-view revision |
-| `reclaim()` | 증명된 unreachable whole pack만 삭제; 논리 상태·q 변경 없음 |
-| `compact()` | admission drain 후 전체 현재 tree를 bounded streaming으로 재작성하고 유지보수 commit. 실패는 old view 유지 |
+| `begin(access, isolation)` | 기존 인자 생략 API는 `Serializable` 유지. `ReadCommitted`는 명시 선택. 두 모드를 S1에서 직접 API로 검증 |
+| `begin_statement` / `finish_statement` | ReadCommitted는 진입 때 published q를 pin; Serializable은 transaction 시작 q 사용. 한 SQL statement의 scan과 mutation은 같은 token 공유 |
+| `execute_statement` | 입력 순서로 row 변경, statement 종료에 최종 unique 집합 검사. 성공 뒤 이전 statement undo를 유지 |
+| `read/scan/index_range` | snapshot q와 own transaction의 변경을 함께 해석. visible 값을 caller-owned buffer에 복사 |
+| `PageGuard` / content latch | frame pin과 page 내용 동기화 분리. pin은 page bytes 불변 보장이 아님 |
+| `SnapshotGuard` | q와 undo/객체 수명 horizon 등록. DB 전체 page frame 또는 이전 root closure를 pin하지 않음 |
+| `checkpoint` / `backup_exact` | fuzzy recovery metadata checkpoint / admission drain을 거친 exact C 복사. 서로 다른 작업 |
+| `reclaim` | eligible undo·삭제 row/index·retired object·free extent를 제한된 batch로 aging. 전체 root mark/sweep 없음 |
 
-cursor가 열린 뒤 같은 transaction에서 statement를 수행하면 기존 cursor를 `CursorInvalidated`로 거절한다. transaction 종료·재open·다른 engine에서도 재사용할 수 없다. range bounds는 key tuple에 적용하고 같은 key의 RowId는 resume의 tie-breaker로 사용한다. 반환 row는 caller의 제한된 owned 결과이며 page guard를 해제한 후 빌린 bytes를 남기지 않는다. 기존 DEV2 row scan도 이 private-view revision 규약을 디스크 확장 시 적용하며 신규 오류 vector를 동결한다.
+CommittedView는 DB/timeline·published q·catalog 접근 identity의 작은 descriptor다. 각 변경은 TxnRef에 종속되고 commit 상태의 원자 공개로 row/index/catalog 전체의 가시성이 전환된다. 하나의 writer coordinator가 q를 부여하고 durable commit→transaction committed 상태→published frontier를 순서대로 설치한다. frontier 공개 lock 안 allocation/I/O/callback을 금지한다. commit metadata와 설치 자원은 미리 예약한다.
 
 <a id="page"></a>
-## 4. page·pack·물리 identity
+## 4. 페이지·파일·identity
 
-초기 page 크기는 **16 KiB**, header 예약 128 bytes, 마지막 SHA-256 32 bytes다. 나머지는 정렬된 slot directory와 packed cell 영역으로 나눈다. slot은 `(offset:u16, length:u16)`이고 cell bytes는 page 끝의 digest 앞에서 역방향으로 채운다. committed page에 free-list mutation을 하지 않고 private rebuild로 빈 공간을 정리한다. 행 codec은 key codec과 별도다.
+page는 16 KiB, header 예약 128 bytes, SHA-256 32 bytes, `(offset:u16,length:u16)` slot directory와 cell 영역을 가진다. header는 DB/file/page identity, page incarnation, owner ObjectId/Generation, kind/level, pageLSN, bounds/count, reserved=0을 포함한다. 공통 kind는 row/index/catalog internal/leaf, overflow, undo, transaction status, allocation metadata다. raw Rust struct dump를 금지한다.
 
-| 항목 | 필수 내용·검사 |
-| --- | --- |
-| 공통 header | magic, format, kind, header/page length, DB identity, file identity, page number, owner ObjectId/Generation, level, slot count, lower/upper, reserved=0 |
-| page 종류 | catalog leaf/internal, row leaf/internal, index leaf/internal, overflow. 잘못된 kind/owner/level 참조 거절 |
-| `PageRef` | `FileId(writer_epoch:u64, file_counter:u64)`, `page_no:u32`, kind:u8, reserved 3 bytes, object generation:u64의 32 bytes. 숫자는 little endian |
-| integrity | header+payload+0으로 채운 미사용 영역을 SHA-256으로 검사. checksum은 파일 sync나 악의적 변경 방지의 대체물이 아님 |
-| parser | 길이 산술·slot overlap·경계·정렬·중복·child level·순환을 할당/역참조 전 검사. 임의 Rust struct dump 금지 |
+PageRef는 `(FileId, page_no, incarnation)`이며 ObjectId/Generation은 기대 owner와 header에서 대조한다. 물리 slot은 RowUID가 아니다. 파일은 영속 예약 writer epoch+counter로 고유 생성하며 재사용하지 않는다. 같은 파일 안 page/extent/slot은 generation을 전진시켜 재사용한다. stale buffer/locator/undo 참조와 wrap을 거절한다. 재사용 WAL의 init image와 allocation generation 변경은 한 완결 mini-transaction에 담는다.
 
-header의 최종 field offset·magic·pack header/footer layout·독립 hex vector는 D3-F01에서 동결한다. 위 크기와 필수 필드는 설계 기준이며 binary format 배포 승인이 아니다. checksum은 이미 채택한 SHA-256 dependency를 사용하고 새 dependency는 추가하지 않는다.
+파일은 engine-owned data/undo 공간이며 고정 크기 extent(초기 64 pages)를 늘려 사용한다. allocation bitmap/free-space metadata는 disk에 두고 bounded cache로 읽는다. 새 파일/길이 확보·header·namespace 영속화가 끝나기 전 그 공간을 참조하는 로그의 durable commit을 허용하지 않는다. 이 장벽은 파일 최초 생성/확장에만 필요하며 매 commit의 새 pack 생성이 아니다. 공개되지 않은 생성 파일은 별도 owned staging 목록으로 관리한다. 선택된 checksummed FILEMAP control에는 DB/FileId·파일명·고정 bootstrap page 주소·예약된 길이가 들어간다. FILEMAP은 data/allocator page에 의존하지 않는 작은 chunked manifest이며 atomic selector+dirsync로 설치한다. 새 파일은 FILEMAP 영속 선택 뒤만 WAL에서 참조한다. drop한 파일 mapping은 필요한 WAL·DWB·checkpoint가 사라질 때까지 남긴다. FILEMAP 손상은 임의 directory 탐색으로 복구하지 않고 거절한다.
 
-pack은 한 준비 작업이 소유하는 immutable 파일이다. 파일당 최대 64 MiB이며 header 1 page, 연속 data pages, count·길이·digest를 가진 seal footer를 포함한다. 최종 짧은 pack을 64 MiB로 padding하지 않는다. 파일별 SHA-256·길이는 dependency inventory에 저장한다. 준비 중 header 확정은 허용하되 seal 뒤 append/overwrite는 금지한다. 파일은 최종 고유 이름으로 배타 생성하고 파일 sync·directory sync 전까지 미선택 staging이다. rename만으로 commit을 표현하지 않는다. 파일 생성 전에 bounded build-owner pin을 등록하며 owner의 디스크 staging inventory로 생성 파일을 추적한다. root pin만으로 아직 root에 연결되지 않은 준비 파일을 보호했다고 하지 않는다.
-
-`FileId`는 DEV2의 영속 예약 writer epoch와 해당 open의 단조 counter를 사용한다. rollback 때 counter를 되돌리지 않고 재시작은 새 epoch를 쓴다. q·RowId·파일 counter를 혼용하지 않는다. physical file 이름과 page slot은 재사용하지 않는다. 이미 존재하면 덮어쓰기 대신 오류로 차단한다. restore는 새 timeline namespace에서 원본 pack identity를 유지하고 이후 파일은 backup high-water보다 큰 writer epoch로 만든다. page의 DB identity는 보존하고 원본 timeline은 manifest provenance로 검증하므로 모든 page를 복원 때 재작성할 필요가 없다. runtime handle의 새 timeline/instance 검사는 유지한다.
+page load마다 길이·checksum·identity·owner·kind·slot overlap·정렬·참조 level과 산술 상한을 검사한다. checksum은 torn write를 검출할 뿐 복원 수단이 아니다. [flush 규약](#buffer)의 doublewrite가 복원을 맡는다. F01에서 offsets·record IDs·digest 범위·독립 hex vector를 동결한다.
 
 <a id="tree"></a>
-## 5. row·tree·scan
+## 5. 행·B+tree·cursor
 
-row tree key는 nonzero RowId의 big-endian 순서 bytes다. leaf cell은 RowId, schema 식별자, canonical row 길이와 inline/overflow tag를 가진다. row는 DEV2의 128 KiB, 가변 값은 64 KiB 상한을 유지한다. canonical row가 2 KiB 이하이면 inline, 초과하면 전체 row를 overflow chain에 저장하고 leaf에는 길이·첫 PageRef·row digest만 둔다. overflow에는 chunk ordinal·bytes·next ref·동일 owner를 저장하며 총 길이·최대 chain 길이를 row 상한에서 산출한다. 순환·중복 chunk·조기 종료·trailing bytes·다른 row 소유자를 거절한다.
+row tree는 `TableUID, RowId → versioned row`의 영속 locator를 겸한다. RowId는 논리적으로 재사용하지 않는다. leaf는 row identity·VersionStamp·undo ref·삭제 표시·canonical row를 담는다. 2 KiB 초과 row는 최대 128 KiB의 overflow chain을 사용하고 가변 값 상한 64 KiB를 유지한다. overflow 교체 시 이전 chain은 undo horizon까지 개별 allocation으로 보존하고 이후 allocator에 반환한다. 전체 tree COW를 만들지 않는다.
 
-internal page는 첫 child와 `(separator, right child)` 목록이다. separator는 오른쪽 subtree의 최소 full key이며 `left < separator <= right`로 찾는다. row와 index tree 모두 **변경 경로를 복사**하고 immutable child를 공유한다. leaf split은 cell 수가 아닌 encoded bytes가 양쪽에 들어가는 경계를 골라 약 절반으로 나눈다. separator를 상위에 반영하고 필요 시 root까지 split한다. max key/cell 한도는 최소 두 child와 separator가 들어가도록 검증한다. 높이는 16 이하이며 초과는 commit 전 LimitExceeded다.
+각 tree의 **안정 anchor page**가 현재 structural root를 가리킨다. catalog/old snapshot은 anchor identity를 보존하며 split 전 root pointer를 snapshot 정본으로 쓰지 않는다. internal separator·byte 기반 split·높이 16·key 한도는 유지한다. 초기 구조 변경은 tree 단위 짧은 exclusive latch 아래 serialize하고 일반 탐색은 shared tree latch와 page content latch로 보호한다. latch 보유 중 I/O·quota 대기·transaction lock 대기를 금지하고, 필요한 page pin/예약 후 latch를 재획득하여 generation/version을 재검사한다. 재시도는 bounded이며 부족하면 명시 오류다.
 
-delete는 새 leaf에서 제거하고 비어 있는 child를 parent에서 제거하며 unary root를 축소한다. 비어 있지 않은 underfull page의 즉시 merge는 초기 필수 알고리즘에서 제외한다. 따라서 최소 occupancy/최적 높이를 보장하지 않으며 삭제 편향의 read/write 증폭을 PF09로 측정한다. S1에는 아래 offline compaction을 포함해 장기간 공간을 줄일 실제 경로를 제공한다.
+split·새 root 설치·allocator 구조 변경은 완료된 redo-only mini-transaction으로 묶는다. 사용자의 abort가 이미 완결된 split을 되돌리지 않는다. 사용자 undo는 RowUID/논리 key로 현재 tree에서 대상 항목을 찾고 원래 mutation의 효과만 취소한다. 이전 전체 page image를 복사하여 다른 거래 변경까지 되돌리는 undo를 금지한다. 로그의 page-oriented redo와 논리 undo가 다른 대상 page를 사용할 수 있음을 명시한다. 최소 구현은 underfull merge를 생략하고 빈 leaf 제거/공간 반환을 안전한 구조 작업으로 수행한다.
 
-**영속 sibling link를 scan의 정본으로 쓰지 않는다.** old leaf의 next pointer가 새 COW root의 leaf를 가리킨다고 가정하면 세대가 섞일 수 있다. cursor는 고정 root, 마지막 full key, 높이 제한의 `(PageRef, child ordinal)` stack으로 다음 leaf를 찾는다. frame은 leaf 처리 후 반환하고 다음 페이지에서 재획득할 수 있다. stack이 깨지면 마지막 key보다 큰 값을 같은 root에서 재탐색한다. private delta는 bounded 정렬 집합으로 merge하며 삭제·교체의 old index entry는 제외한다. 반복·누락과 limit 경계는 독립 scan 결과와 대조한다.
+index의 물리 key는 `(encoded composite, RowId)`이며 presence/end 상태도 versioned다. 같은 full key를 제거 후 다시 추가하면 한 항목의 presence undo chain으로 표현한다. 이전 snapshot에 필요한 deleted key를 조기 제거하지 않는다. cursor는 마지막 full key보다 큰 항목을 **현재 구조에서 재탐색**한 뒤 고정 q로 가시성을 검사한다. 호출 간 tree stack/page pointer를 정본으로 유지하지 않는다. split·key 이동·aging과 함께 중복/누락을 검사한다. sibling link는 latch 안 탐색 보조로만 사용할 수 있다.
+
+locator cache는 DB/timeline·table generation·RowId에 대한 물리 hint다. hit마다 page incarnation/slot RowId를 검증하고, 이동된 hint는 row tree 재조회로 처리한다. snapshot 적합성은 항상 version/undo로 판정하며 cache hit로 생략하지 않는다. cursor는 소유 transaction/statement/private revision에 묶이고 같은 transaction의 후속 mutation 뒤 기존 cursor는 CursorInvalidated다.
 
 <a id="keys"></a>
-## 6. index 의미와 statement 원자성
+## 6. UNIQUE와 statement 원자성
 
-`IndexSpec`은 소유 TableUID, 새 ObjectId/Generation, kind(PK/Unique/Nonunique), 1–4개 서로 다른 열의 순서, ascending binary 비교를 가진다. table당 index 최대 8개이며 PK는 최대 1개다. expression·partial·descending·collation 옵션은 명시적으로 미지원이다. 이 제한은 DEV3 기준선이고 후속 SQL 기능을 영구 제외하는 결정이 아니다.
+IndexSpec은 PK/Unique/Nonunique, 1–4개 서로 다른 열, table당 최대 8개, PK 최대 1개, ascending binary 비교다. Bool/Int64/Utf8/Binary/NULL, escaping 후 composite 1,024 bytes, RowId tie-breaker를 유지한다. PK는 이미 nonnullable인 열만 허용한다. expression/partial/descending/collation은 후속이다.
 
-- component encoding은 DEV1의 `encode_key` 의미를 따른다. NULL은 첫 순서, Bool은 false<true, Int64는 sign-bit 변환, UTF-8/Binary는 byte 순서와 terminator escaping이다. 고정 schema에서 component를 이어 composite key를 만든다. 다른 타입으로 자동 변환하지 않는다.
-- encoded composite key는 RowId를 제외하고 최대 1,024 bytes다. 원본 문자열 길이만으로 판정하지 않고 escape 후 길이를 검사한다. index가 없는 열의 64 KiB 값 지원은 유지한다. index 생성·DML에서 넘치면 `IndexKeyTooLarge`로 해당 statement/build를 원자 실패시킨다.
-- 모든 index의 물리 key는 `(composite, RowId)`다. PK는 모든 열 NOT NULL이고 전체 composite가 유일해야 한다. PK 생성은 해당 열이 이미 nonnullable인 schema에서만 허용한다. nullable metadata를 숨겨서 변경하지 않는다.
-- Unique는 NULL이 하나라도 있으면 서로 충돌하지 않는 정책을 선택한다. NULL이 없는 composite만 RowId를 제외하고 중복 검사한다. Nonunique는 같은 composite를 RowId 순서로 보존한다. SQL `NULL = NULL`을 참으로 바꾸지 않는다.
-- uniqueness는 각 mutation 직후, snapshot+앞선 private 변경을 기준으로 즉시 검사한다. 같은 statement에서 두 행의 unique key 교환도 첫 mutation의 중복이면 실패한다. deferred constraint는 미지원이다. 실패하면 그 statement의 row·모든 index delta·quota·임시 파일을 진입 상태로 복원하고 이전 statement는 보존한다. rollback 후 orphan 파일의 disk quota는 실제 삭제가 확인될 때까지 소비량에 남긴다. private memory 해제와 물리 disk 해제를 혼동하지 않는다.
+Unique는 **전체 NULL만 중복 예외**, 부분 NULL은 NULL 위치를 포함한 동일 tuple이면 충돌한다. `(1,NULL)` 두 행은 거절, `(NULL,NULL)` 두 행은 허용한다. SQL의 삼값 논리를 바꾸지 않는다. final uniqueness는 mutation마다가 아니라 **statement 종료**에 검사한다. 영향 old entries를 제외한 최종 new 집합 내부 및 다른 visible committed entries와 대조하여 key 교환을 허용한다.
 
-commit coordinator의 `start_q == current_q` 검사는 concurrent duplicate 삽입·범위 phantom·schema 변경도 보수적으로 충돌시킨다. uniqueness 사전 검사만으로 이 검사를 생략하지 않는다. commit 전에 old/new index entry와 최종 row의 일관성을 확인하며 key 변경은 old 삭제+new 삽입을 하나의 private 변경으로 준비한다. RowUID는 PK와 독립이므로 PK 변경으로 행 정체성을 바꾸지 않는다.
+같은 unique key에 대한 경쟁은 `(index generation, encoded key)` transaction lock으로 serialize한다. 영향받는 old/new unique keys를 정렬해 예약/잠금한 뒤 검사하고 commit/abort 완료까지 보유한다. 검사 대상은 다른 거래의 최신 committed 상태와 own final delta이며 오래된 statement snapshot만으로 duplicate를 허용하지 않는다. all-null 예외 key는 unique conflict lock 대상에서 제외한다.
 
-index build는 admission close→기존 transaction/cursor drain→고정 root scan→bounded run 생성/merge sort→duplicate 검증→COW tree build→catalog 변경의 한 commit 순서다. timeout이면 build를 시작하지 않고 admission을 복원한다. build 실패·취소는 기존 catalog 유지, commit 시도 뒤는 공통 UNKNOWN 규칙이다. spill은 소유 임시 파일·quota에 포함하며 run 목록도 디스크에 둔다. 미완성 index를 `valid`로 노출하지 않고 unique 실패를 일부 행 제외로 처리하지 않는다. built tree를 재시작 때마다 재생성하지 않는다.
+statement 시작 시 undo-head savepoint·오류 결과·rollback 예약을 확보한다. 타입/키 크기/unique/quota/취소 실패는 해당 mark까지 undo하고 이전 성공 statement를 보존한다. rollback은 새 undo 생성 없이 기존 record와 사전 예약한 CLR/WAL/작업 공간을 사용한다. 디스크/로그 오류 때문에 rollback을 마치지 못하면 성공 ABORT를 응답하지 않고 RecoveryRequired/Fenced로 전이한다. statement 실패와 transaction 전체 abort를 구별한다.
+
+<a id="concurrency"></a>
+## 7. 가시성·동시성
+
+ReadCommitted는 statement마다 published q를 pin하고 own writes를 읽는다. 다른 거래의 uncommitted/나중 commit은 undo를 따라 제거한다. 행 쓰기는 stable RowUID X lock을 transaction 종료까지 보유한다. lock 대기 뒤 대상 행이 statement가 관측한 버전과 다르면 자동 predicate 재평가 대신 SerializationConflict로 **전체 거래 abort**한다. 상위 SQL이 수정 predicate를 숨겨 재실행하지 않는다. 같은 q의 서로 다른 행 writer는 key/schema 충돌이 없으면 모두 commit할 수 있다.
+
+Serializable은 transaction snapshot을 유지하고 read/write table 집합·absence/range 조회의 table generation을 등록한다. coordinator에서 각 table의 마지막 committed 변경 q가 start_q 이하여야 한다. own writes는 별도이므로 validation에서 제외한다. 성공 commit은 변경 table의 q를 전진시킨다. catalog 조회는 해당 catalog namespace/generation의 변경을 같은 방식으로 검증한다. table 단위 false conflict는 초기 보수적 선택이다. 독립 table writer는 모두 성공할 수 있고 같은 table의 다른 행은 충돌할 수 있음을 문서/시험에 명시한다. DB 전체 q 동일 검사는 제거한다. 더 세밀한 predicate validation은 후속 측정 대상이다.
+
+transaction lock과 page latch는 분리한다. 기다리는 lock을 가진 채 page/tree latch·WAL append gate·publication lock을 보유하지 않는다. 최대 32 transaction wait-for graph를 검사하고 cycle의 가장 큰 TxnId를 victim으로 골라 전체 undo 후 lock을 해제한다. timeout/cancel도 undo 완료 뒤 결과를 확정한다. pinned snapshot을 시간만으로 강제 만료하지 않는다.
+
+DDL은 독립 원자 거래다. offline index build는 admission close/drain 후 bounded external sort·검증·신규 object를 build하고 catalog 등록을 commit한다. build 중 crash의 미공개 object는 allocation owner 기록으로 정리한다. drop은 versioned catalog에서 retire 상태를 공개하고 old snapshot의 객체/anchor를 horizon까지 유지한다. 같은 이름의 재생성은 다른 generation이다. online index build는 후속이다.
+
+<a id="undo"></a>
+## 8. 영속 undo와 aging
+
+UndoRef는 `(undo file/page incarnation, slot generation)`의 안정 참조다. record는 TxnId·previous transaction UndoRef·대상 RowUID/논리 index key/catalog identity·before version·previous version ref·undo kind를 담는다. 128 KiB 값은 bounded chunks로 나누고 chain/count/digest를 검사한다. transaction status에는 TxnId/generation·Active/Aborting/Committed/Aborted·commit q·undo head·rollback target/progress가 있다.
+
+VersionStamp는 `Committed(q)` 또는 `TxnRef(id,generation)`다. 다른 거래의 committed 값을 before-image로 캡처할 때는 commit q를 해석해 저장한다. 미완료 거래의 상태 slot을 무조건 복제하지 않는다. own 연속 변경은 자신의 chain을 유지한다. terminal 거래는 durable aging queue와 undo chain에 변경 대상을 남긴다. horizon을 통과하면 현재 header에 남은 자기 TxnRef를 logged commit-q stamp로 바꾸고, 이미 다른 거래가 대체한 경우 그 before-image의 resolved stamp를 확인한다. 관련 참조 제거가 완료된 뒤만 status/undo slot을 generation 증가와 함께 재사용한다.
+
+버전 chain의 obsolete suffix는 owner aging 작업이 **logged cut**으로 끊는다. before-image 안 previous-version ref와 Active 거래의 rollback chain도 영속 참조다. undo record마다 disk에 저장하는 incoming-reference count를 관리하며 row/index header·undo record·transaction head의 link 변경과 count 증감을 같은 WAL 그룹으로 처리한다. 0-count이고 horizon/rollback pin이 없는 record만 반환한다. chain은 단조로운 record sequence로 과거만 참조하고 cycle/overflow는 거절한다. cut 전 참조가 남은 suffix는 더 오래 보존할 수 있다. rollback은 오래된 before-image에 남은 link를 무조건 되살리지 않고 현재 cut과 참조 이전을 같은 CLR에 반영한다. record 반환은 그 outgoing reference를 batch로 해제하는 logged queue 작업이며 full-root tracing을 만들지 않는다. `A commit→B update→A aging→B abort→slot 재사용`의 chain·count·full-check를 필수로 검증한다.
+
+undo horizon은 active transaction snapshot, 열린 ReadCommitted statement/cursor, rollback chain, retired object/overflow, backup/recovery 작업 중 가장 오래 필요한 소유를 포함한다. reader horizon만 지났다고 아직 Active인 거래의 undo를 반환하지 않는다. ReadCommitted의 statement 사이에는 reader pin을 놓을 수 있으나 자기 rollback chain은 거래 종료까지 유지한다. disk undo/page/tss 회수는 owner별 큐·segment cursor의 작은 batch로 수행하며 전체 root graph나 immutable pack을 추적하지 않는다.
+
+WAL 보존과 undo 보존을 분리한다. checkpoint의 transaction head/progress와 필요한 undo/status/allocator page가 redo 가능해야만 오래된 WAL을 놓는다. dirty undo page의 recLSN은 data page와 동일하게 WAL을 pin한다. 조건 충족 후에는 오래된 Active 거래의 시작 WAL이 없어도 UndoRef chain으로 rollback/restart undo가 가능해야 한다. WAL의 prevLSN은 진단용 chain이며 삭제한 로그를 undo의 필수 입력으로 사용하지 않는다. RP/archive/PITR 보존은 별도 owner다.
 
 <a id="buffer"></a>
-## 7. buffer·pin·lock·자원
+## 9. buffer·WAL-before-page·torn-page
 
-공유 buffer에는 검증된 **immutable clean page**만 넣는다. private dirty page와 build spill은 별도 예약을 사용하고 commit 전 sealed pack으로 내보낸다. 공유 buffer eviction이 dirty write나 WAL sync를 수행하지 않으므로 별도 background flusher는 S1 선행 조건이 아니다.
+buffer는 Empty/Loading/Clean/Dirty/Flushing 상태와 frame generation·pin·content latch·modification counter를 가진다. 같은 page의 중복 load/예약을 조정한다. clock은 pinned/I/O frame을 건너뛰고 bounded sweep/deadline 뒤 BufferBusy를 반환한다. dirty victim은 flush 완료 전 재사용하지 않는다. file read/flush/checksum은 map/state mutex 밖에서 수행한다.
 
-frame 상태는 `Empty → Loading(identity) → Clean(identity, pins, usage) → Evicting → Empty`다. 실패한 Loading은 waiter에게 오류를 전달하고 프레임을 해제한다. cache map entry 등록과 최초 pin은 동일 짧은 mutex 경계로 보호한다. 하나의 identity에 Loading이 있으면 새 loader는 제한된 wait/retry를 사용한다. I/O·checksum은 mutex 밖에서 하고 completion 시 identity와 frame generation을 다시 확인한다. clean frame을 교체할 때는 pins=0과 I/O 부재를 확인하고 map 제거·새 identity 예약을 한 경계로 처리한다.
+**steal/no-force**를 선택한다. uncommitted page도 undo와 redo가 보호되면 flush 가능하고, commit 때 data page 전체 flush는 요구하지 않는다. 각 page 변경은 완결 WAL mini-transaction을 append한 후 메모리에 적용하고 pageLSN을 해당 기록 끝 LSN으로 올린다. undo 생성·transaction head 갱신·data effect는 완결 redo 그룹과 상태 전이로 연결하며 중간 undo ref가 보이는 순서를 금지한다. WAL 공간/undo/rollback 예약은 latch 전에 확보하고 append gate 안에서는 I/O 대기를 하지 않는다. append 뒤 적용 불변식 실패는 fence다.
 
-교체는 단순 clock을 사용한다. bounded sweep 뒤 후보가 없으면 deadline 있는 wait 또는 `BufferBusy`이며 무한 회전하지 않는다. 순차 scan은 작은 재사용 ring을 사용해 전체 hot set을 지우는 비용을 측정한다. 처음부터 lock-free·NUMA shard·prefetch를 필수로 하지 않는다. `PageGuard`는 frame pin, `SnapshotGuard`는 디스크 reachable closure pin이다. snapshot 하나가 DB 전체 page frame을 pin하지 않는다. cursor가 외부 호출 사이 유지할 frame은 최대 2개이고 tree stack에는 ref만 둔다.
+flush는 다음 순서를 지킨다.
 
-기존 lock 순서 `coordinator → retention ledger → publication`을 유지한다. buffer mutex·frame 상태 lock을 보유한 채 그 상위 lock을 얻지 않는다. page load 중 ledger/publication lock을 잡지 않고, root/file 소유 pin을 먼저 획득한다. coordinator는 commit 준비 I/O 동안 보유할 수 있으나 ledger/publication lock은 해제한다. PageGuard drop과 callback이 같은 mutex를 재취득하는 경로를 검토한다. wait 중 취소·timeout은 statement 이전 상태를 복원하고 commit 시도 이후 취소는 rollback 성공으로 답하지 않는다.
+1. latch 안에서 identity/incarnation/pageLSN/modification counter와 완전 page image를 사전 예약한 I/O buffer로 복사한다.
+2. latch 밖에서 **그 pageLSN까지 WAL sync**를 확인한다. 실패하면 home page를 쓰지 않고 fence한다.
+3. 고정 크기 doublewrite 슬롯에 identity·pageLSN·slot sequence·checksum과 image를 기록하고 sync한 뒤, 해당 pending을 선택한 DWB control의 atomic replace+dirsync까지 완료한다.
+4. 원래 data/undo/status/allocator page 위치에 image를 write하고 해당 file sync를 완료한다.
+5. 그 뒤 DWB control에서 해당 슬롯을 retired로 제거한 선택을 sync하고, 그 뒤만 doublewrite 슬롯을 재사용한다. 현재 frame의 counter/identity가 같을 때만 clean 전환/DPT 제거; 재갱신됐으면 dirty와 보수적 recLSN을 유지한다.
 
-| DEV3 초기 공학적 profile | 한도·계상 |
-| --- | --- |
-| page buffer | 64 MiB(4,096 frames). test용 4/16 MiB profile 별도. descriptor/map bytes는 metadata 예산 |
-| metadata/cache | 합계 8 MiB. catalog/locator/file-handle cache·frame descriptors·pin ledger 포함; locator 1 MiB, inventory decoder 64 KiB를 포함; 파일 handle 최대 128 |
-| transaction | DEV2의 256 mutation, WAL payload 전체 1 MiB, private 8 MiB/transaction·전체 64 MiB 유지. index delta·준비 metadata 포함 |
-| 시스템 scratch | checkpoint/recovery/build/compact/GC 중 하나에 16 MiB, 나머지는 Busy. private page·merge run 목록의 무제한 상주 금지 |
-| 동시성·pin | user transaction/snapshot 32, checkpoint 1, backup 1. 자동 reader 만료 없음; 장기 pin은 진단·admission 제한 |
-| retained disk | 초기 소유 DB quota 8 GiB, 그 안의 유지보수 reserve 1 GiB; retained WAL 256 MiB, 단일 manifest/inventory chunk 1 MiB |
-| 진단 | DEV2의 4,096 event·4 MiB trace. 필수 fault receipt 유실은 시험 실패 |
+doublewrite는 16 MiB의 영속 고정 pool이며 디스크 quota에 포함한다. bounded DWB control manifest는 **현재 pending 슬롯**의 sequence·DB/FileId/page/incarnation·pageLSN·image hash만 선택한다. image sync 뒤 control을 atomic replace+dirsync로 영속 선택한 후 home write를 시도한다. home file sync 뒤 해당 pending을 제거한 control 선택을 영속화해야 재사용할 수 있다. 선택이 불명이면 fence하고 그 슬롯을 덮어쓰지 않는다. 동일 page의 flush/재사용은 앞선 pending retirement 완료까지 serialize한다. control 갱신도 단일 coordinator로 serialize하며 lock 안 I/O를 하지 않는다. 이전 control로의 임의 fallback이나 raw 슬롯 scan으로 후보를 부활시키지 않는다. 손상 selector/control은 거절한다. 이 보수적 control I/O 비용을 PF09에 포함하며 최적화는 별도 검토한다.
 
-DEV2의 committed+old row 64 MiB 전량 상주 예산은 DEV3에서 page buffer/metadata/pinned disk 회계로 대체한다. DEV2 substrate 한도는 그대로 유지한다. DEV2의 4,096-file 상주 inventory를 DEV3의 영구 파일 수 상한으로 가져오지 않고 디스크 inventory와 제한된 decoder로 대체한다. 논리 한도와 allocator/OS RSS는 구분하며 memory ledger의 고유 allocation만 합산한다. 실제 RSS 기준·장치 free-space·I/O timeout 수치는 D3-F05 환경 profile에 동결한다. `try_reserve`만으로 OS OOM 복구를 약속하지 않는다.
+FILEMAP과 선택된 DWB control은 home allocator에 의존하지 않고 읽을 수 있다. 첫 bootstrap 단계에서 두 control의 identity/digest를 검증한 뒤 **pending image만** FILEMAP의 주소에 복원한다. pending이 있는 주소의 재할당은 retirement 전 금지되므로 slot의 incarnation을 bootstrap 근거로 사용할 수 있다. allocator/status/anchor도 동일 방식으로 먼저 복원하고, WAL allocation/init redo를 적용하면서 일반 page owner/incarnation을 검증한다. healthy home이 더 높은 LSN/incarnation이면 불변식 위반으로 거절하며 오래된 image로 덮지 않는다. 유효 pending 없는 기존 initialized home의 torn/손상은 원칙적으로 REJECT_CORRUPTION이다. 예외는 FILEMAP·allocation generation과 일치하는 **완전한 INIT image 및 그 이후 채택 끝까지의 WAL 전체**가 보존된 경우다. 새 page가 아직 zero/uninitialized home인 no-force 상태도 이 경로에서 INIT부터 재구성한다. delta redo만으로 checksum 오류를 숨기거나 WAL이 끊긴 INIT을 복원 근거로 쓰지 않는다. INIT 복원 대상은 redo에서 초기화하므로 bootstrap 단계의 blanket page-load 거절을 적용하지 않는다. @10 사본이 retired된 뒤 @20을 쓰고 슬롯을 재사용한 경우 @10 raw bytes가 남아 있어도 복구 후보가 아니다. arbitrary cold-page 손상까지 수리한다고 주장하지 않는다. control torn·retirement 불명·allocator torn·page reuse·두 번째 crash가 F04 필수 vector다.
 
 <a id="commit"></a>
-## 8. 다중 객체 commit과 WAL
+## 10. WAL·commit·rollback
 
-1. active transaction이 row/index private delta와 statement 결과를 준비한다. old snapshot·자원 pin을 유지한다.
-2. coordinator에서 start_q와 schema/generation을 검증한다. 최종 catalog tree에 모든 table/index 변경을 모으고 q=current+1을 잠정 계산한다.
-3. 새 page·overflow·catalog 경로를 pack으로 준비하고 새 파일 inventory를 chunk로 기록한다. rollback·receipt·publication·retention entry 공간과 전체 WAL 크기를 **commit 시도 전** 예약한다.
-4. 최종 tree 생성은 예약된 소량 page workspace와 staging pack을 사용한다. transaction 전체 새 page를 한 Vec에 모으지 않는다. 이미 sealed된 private pack은 해당 build-owner 아래에서만 다시 읽고 공개 cache의 visible root로 등록하지 않는다. 중간 path-copy로 버려진 page도 pack quota에 계상한다. 모든 새 pack과 dependency inventory의 write→file sync→이름 directory sync를 끝낸다. 재사용 page는 기존 pin된 durable closure의 일부여야 한다. namespace/준비 I/O 불명은 transaction commit 미시도라 ABORTED 판정 가능하나 engine은 보수적으로 Fenced로 둔다.
-5. L0의 한 완결 frame에 TxnId/prev_q/q, 논리 row after-image/tombstone·catalog delta, 전후 root identity, 새 catalog-root, dependency inventory ref/digest, high-water를 넣는다. after-image와 disk root 둘 다 유지하며 새 metadata도 1 MiB payload 상한에 포함한다. 초과 거래를 부분 commit하지 않는다.
-6. 첫 WAL byte 시도 직전에 CommitAttempted. WAL append→sync→미리 준비한 전체 CommittedRoot 교체→ACK다. publication lock 안 allocation·I/O·old-root 소멸은 없다.
+L0는 단일 ordered WAL stream이며 여러 transaction의 update 기록이 섞일 수 있다. WAL 레코드는 begin/update(undo+page redo)/system mini-transaction/CLR/commit/abort-end/checkpoint를 구분한다. frame마다 DB/timeline·writer epoch·LSN·TxnId·length·checksum·종류를 검증한다. 하나의 transaction을 한 AXF1 frame으로 넣는 DEV2 규약을 DEV3에는 적용하지 않는다. mini-transaction은 최대 1 MiB 완결 frame이며 128 KiB row 분할과 overflow/undo chain을 다룬다. transaction의 논리 mutation 256개·canonical after-image 합계 1 MiB 상한은 유지하고 실제 WAL/undo/CLR bytes는 별도 예약한다.
 
-WAL은 모든 page를 복제하지 않는다. after-image는 논리 변경/독립 검산을 위한 기록이고 disk recovery는 검증된 root·pack을 선택한다. valid commit이 참조한 pack이 없으면 after-image만으로 즉석 재구성해 성공하지 않는다. row delta와 root의 의미 일치는 실제 시험의 독립 oracle 및 복구 검증으로 대조한다. catalog-only/index-build/compact commit은 논리 row delta가 0일 수 있고 kind와 before/after root를 명시한다. logical q는 물리 유지보수 commit에도 전진하므로 시작 q가 다른 writer는 동일하게 충돌한다.
+commit은 statement-final 검사/잠금·schema validation→필수 namespace 확인→q/commit record·응답/상태 설치 자원 예약→**첫 commit record byte 시도에 CommitAttempted**→commit LSN까지 WAL sync→TxnStatus Committed(q)와 frontier 공개→ACK 순서다. 데이터/undo page가 아직 disk에 없어도 redo가 복원할 수 있어야 한다. q를 WAL LSN 또는 wall clock과 혼용하지 않는다. LSN은 한 DB의 epoch 사이에도 단조 증가하는 논리 로그 위치이며 FileId/offset과 별개다. wrap과 이미 영속 page가 가진 LSN 재사용을 금지한다. group commit은 후속 최적화이며 초기 단일 coordinator로도 여러 nonconflicting 거래의 update 준비는 겹칠 수 있다.
 
-| cut | transaction 결과와 파일 의무 |
+| 실패 경계 | 결과 |
 | --- | --- |
-| page 준비/파일 sync 전후, WAL 미시도 | 기존 root 유지, ABORTED. 새 파일은 orphan 후보이며 소유와 비참조 증명 뒤 정리 |
-| WAL 첫 byte 이후 write/sync 불명 | UNKNOWN + Fenced. 새 pack·old/new closure 보존, 자동 재전송 금지 |
-| WAL sync 뒤 publish/ACK 전 장애 | durable transaction 보존. 응답 미관측은 외부 UNKNOWN이며 recovery는 전체 반영 |
-| ACK 관측 뒤 crash | row/index/catalog/locator 전체가 같은 q로 보존되어야 함 |
+| update WAL이 존재하지만 commit record 미시도 | undo 완료 후 ABORTED. rollback I/O 실패면 NotCommitted/RecoveryRequired + Fenced; 공유 변경이 사라졌다고 답하지 않음 |
+| commit append/sync 결과 불명 | UNKNOWN + Fenced. row/index/catalog 전체를 recovery에서 판정; 재전송 금지 |
+| commit sync 후 publish/reply 실패 | commit 유지. 외부 응답 미관측은 UNKNOWN |
+| rollback/CLR 중 crash | redo가 CLR 효과와 UndoNextRef 진행점을 함께 복원하고 남은 chain만 undo |
+
+CLR은 redo-only이며 되돌린 논리 효과의 **현재 물리 page들**에 대한 redo와 다음 UndoRef/target 상태 갱신을 한 완결 그룹으로 기록한다. CLR 자체를 undo하지 않는다. undo progress를 먼저 저장하고 data 복원을 생략하는 경로를 금지한다. transaction abort는 모든 undo 후 durable abort-end·상태 확인 뒤 잠금을 해제한다. statement rollback은 savepoint까지만 수행하고 거래를 Active로 돌린다. CLR 완료에 필요한 로그/작업 공간은 처음 변경을 admission할 때 예약한다.
 
 <a id="recovery"></a>
-## 9. recovery·checkpoint·backup
+## 11. 정상 recovery와 전체 검사의 분리
 
-DEV2의 `LEASE → PREFLIGHT → SELECT → LOAD → SCAN → APPLY → VERIFY → STABILIZE → RESUME → READY`를 유지한다. LOAD는 모든 row를 RAM에 만들지 않고 checkpoint catalog-root와 bounded caches를 연다. SCAN/APPLY는 연속 q의 commit frame마다 dependency inventory·새 pack의 길이/digest·before/after root chain을 검사하고 private root를 전진시킨다. transient intermediate root도 실제 replay 의무에서 제외하지 않는다.
+`LEASE → PREFLIGHT/SELECT → DOUBLEWRITE_REPAIR → ANALYSIS → REDO → RECOVERY_LOG_OPEN → UNDO → VERIFY_RECOVERY → STABILIZE → RESUME → READY`다. 이전 성공 sync의 bytes/namespace 보존, active tail의 제한적 incomplete frame 제외, 완전 길이 checksum 오류 거절, UNKNOWN 합법 이력은 DEV2와 동일하게 검사한다. 소스 WAL은 고치지 않는다. recovery 중 page는 WAL/CLR 규약으로 변경할 수 있으므로 DEV2의 '모든 source page 불변'을 적용하지 않는다.
 
-VERIFY는 선택한 checkpoint와 채택한 root의 tree 구조·소유·bounds·row/index 정합성을 bounded 순회로 검사한다. **recovery 검증은 추가 디스크 spill을 요구하지 않는다.** 각 row를 scan하면서 모든 index의 `(key, RowId)`를 point lookup하고, 각 index를 역으로 scan하면서 해당 RowId의 존재·key 일치·strict physical order·인접 unique 조건·전체 entry count를 검사한다. NULL entry도 포함해 index당 row 수와 entry 수가 같아야 한다. catalog의 이름/객체 양방향 관계도 검사한다. locator는 row tree의 RowId·slot·overflow identity로 검사한다. parent의 key 범위·child level 감소·non-root empty child 거절·bounded overflow chain 검사로 잘못된 graph를 거절한다.
+ANALYSIS는 선택 checkpoint의 capture LSN 상태에서 active transaction table을 seed하고 **capture LSN 직후**부터 완결 WAL 끝까지 거래 상태·최신 UndoRef·commit q를 재구성한다. checkpoint 이전 상태를 다시 덮어쓰거나 이미 끝난 거래를 ATT에 부활시키지 않는다. terminal commit을 undo하지 않으며 미완료 거래를 loser로 정한다. runtime DPT는 buffer/flush-inflight page의 recLSN을 보유하고 checkpoint에 기록한다. 재시작에는 커진 전체 DPT를 RAM에 만들지 않는다. `redo_start=min(checkpoint capture LSN, checkpoint DPT의 최소 recLSN)`부터 모든 관련 page redo를 streaming 읽고 incarnation/pageLSN으로 이미 반영한 기록을 건너뛴다. 이는 ARIES의 선택적 redo보다 보수적인 bounded-memory 시작안이다. ATT 최대치는 admission된 32개와 system 작업 예약으로 제한하며 commit/abort 완료 시 제거한다.
 
-검증은 root stack·한 row·한 index key와 bounded buffer만 유지한다. 정상 quota 내 DB를 개방하기 위해 전체 index 크기만큼 임시 disk 공간을 추가 요구하지 않는다. VERIFY 중 재장애도 새로운 spill 파일을 누적하지 않고 같은 원본에서 다시 시작한다. 최종 root만 검사해 중간 commit의 누락 dependency를 숨기지 않는다. 초기 full verification은 많은 random lookup I/O를 지불하며 빠른 startup을 보장하지 않는다. 외부 정렬을 이용한 빠른 VERIFY는 보호된 scratch와 반복 장애 수명을 별도로 설계한 뒤만 채택한다. incremental verification도 별도 D2다.
+REDO는 commit 여부와 관계없이 이력을 반복한다. 이 단계는 source WAL만 사용하며 page flush가 필요하면 먼저 채택 prefix의 해당 LSN/namespace를 sync하고 doublewrite를 따른다. allocation/init·undo·status·CLR·tree 구조 기록도 포함한다. RECOVERY_LOG_OPEN은 채택한 이전 prefix와 namespace를 먼저 STABILIZE한 뒤 그 완결 끝에 연결한 새 recovery epoch/header를 sync하고 **WRITER 선택까지 영속화**한다. admission은 계속 닫는다. 이 선택이 끝나기 전 새 CLR append 및 그 효과의 home write를 금지한다. 다음 restart는 선택된 recovery epoch도 정상 predecessor chain에서 발견한다. 기존 recovery epoch의 incomplete tail도 같은 규약으로 판정한다. UNDO는 loser의 durable UndoRef head부터 역순으로 처리하고 선택된 recovery epoch에 새 CLR을 남긴다. 이미 완료한 undo는 CLR의 UndoNextRef로 건너뛴다. recovery 중 두 번째 장애에도 source WAL+새 CLR에서 다시 실행할 수 있어야 한다.
 
-STABILIZE는 기존 journal뿐 아니라 채택에 필요한 pack·inventory·epoch·namespace도 영속화한다. 프로세스 종료 뒤 OS cache에서 읽은 완결 bytes를 이전 sync 증거로 간주하지 않는다. 실패하면 새 writer epoch·READY·GC를 허용하지 않는다. incomplete tail 허용과 full-length checksum 오류 거절은 [DEV2 장애 판정표](dev2-kernel-design.md#fault-outcomes)를 따른다. page 손상은 WAL tail처럼 버리지 않는다.
+VERIFY_RECOVERY는 WAL/selector/allocator·거래 terminal 상태·실제로 redo/undo한 page의 구조와 효과를 검증한다. **변경 없는 전체 table/index 양방향 검사를 정상 open의 필수 작업으로 하지 않는다.** 모든 page read에서 checksum/identity/bounds를 검사하며 읽지 않은 임의 cold page 손상은 첫 접근 또는 전체 검사에서 발견할 수 있다는 범위를 공개한다. 필요한 WAL/복구 page 손상은 정상 open을 거절한다. checksum을 맞춘 논리 오염까지 online read 하나로 검출한다고 하지 않는다.
 
-checkpoint는 coordinator/ledger/publication 경계에서 **root C·C 직후 replay anchor·high-water·closure pin을 함께** 잡는다. C의 reachable pack inventory는 디스크 chunk로 streaming 작성하고 top manifest는 chunk refs를 가진 tree의 root·digest·count를 담아 1 MiB 이하로 제한한다. inventory tree 자체의 closure도 보존한다. pack→inventory chunk→manifest→CURRENT temp/sync/rename/dirsync 순서를 지키고 WRITER를 되돌리지 않는다. checkpoint는 전체 DB를 다시 복사할 필요 없이 기존 immutable pack을 참조한다.
+`check_integrity(full)`은 admission drain한 고정 상태에서 전체 row↔index·unique·catalog·allocation/undo 참조를 bounded 순회하는 별도 작업이다. 추가 disk spill은 요구하지 않는다. S1/fault 인수는 정상 reopen 성공 후 이 검사와 독립 이력 검산을 함께 실행한다. 따라서 검증을 생략하여 PASS시키지 않으며 정상 서비스의 startup 비용과 audit 비용을 분리한다. 같은 0/소량 WAL·같은 dirty-page 수의 256 MiB/1 GiB fixture에서 정상 reopen I/O가 전체 DB scan으로 증가하지 않는지 검사한다.
 
-CURRENT는 current/previous manifest를 명시한다. fallback은 previous에서 현재 WRITER까지 모든 WAL·각 commit page closure가 검증될 때만 허용한다. 두 checkpoint가 공유하는 pack이 손상되면 previous가 있다는 이유만으로 복구 가능하다고 주장하지 않는다. fallback 후 CURRENT 재선택·previous 제거·새 checkpoint 의무는 DEV2와 동일하다.
+STABILIZE는 채택한 이전 WAL 끝과 새 CLR·epoch/namespace를 sync한다. 필요 page write는 doublewrite 규약을 지킨다. 이 장벽 실패 시 사용자 admission/READY/reclaim을 금지한다. 이미 durable 선택된 recovery WRITER를 되돌리지 않는다. RESUME은 그 epoch를 계속 쓰거나 tip에 새 epoch를 연결하며 다음 restart가 앞선 UNKNOWN의 채택과 새 ACK를 놓치지 않아야 한다. 반복 recovery의 transient workspace는 사전 예약된 memory/doublewrite pool만 사용하고 DB 크기만큼 scratch를 생성하지 않는다.
 
-exact-cut backup은 C의 manifest·inventory·reachable pack 파일 전체를 pin하고 복사한다. pack 내부의 unreachable bytes가 일부 포함되어도 C 밖의 root를 선택하지 않는다. restore는 별도의 빈 소유 경로에 전체 closure 검증→새 timeline/base-q=C·epoch/anchor→CURRENT/WRITER 영속 선택 후 개방한다. **원본 WAL 없이 복원→새 commit ACK→재시작**을 검증한다. 최신 R/PITR를 root-only WAL만으로 제공하지 않는다.
+<a id="checkpoint"></a>
+## 12. fuzzy checkpoint·WAL 회수·backup
+
+checkpoint는 전체 data snapshot이 아니다. begin-checkpoint 기록 뒤 commit coordinator와 append/registry/DPT 경계에서 **capture LSN**과 그 위치까지의 ATT(UndoRef/progress 포함)·DPT·allocator high-water·published q를 함께 복사한다. capture는 CommitAttempted 거래의 sync/상태 설치가 끝날 때까지 기다리며 불명 commit이면 checkpoint를 진행하지 않는다. 이미 append된 update·CLR·commit·abort의 DPT/head/status 등록이 끝나야 capture할 수 있다. lock 밖에서 end-checkpoint metadata chunks를 쓰고 sync한 뒤 CURRENT가 begin/capture/end LSN·chunk digest·current/previous identity를 atomic replace+dirsync로 선택한다. dirty pages를 모두 flush할 필요는 없다. WRITER는 checkpoint가 되돌리지 않는다.
+
+mutable datafile을 공유하므로 previous checkpoint는 **이전 데이터 이미지가 아니라 더 이른 analysis/redo 시작점**이다. fallback은 그 metadata와 필요한 WAL/undo/namespace가 모두 남고 현재 page를 redo로 설명할 수 있을 때만 허용한다. datafile 손상을 previous selector만으로 치료하지 않는다. CURRENT 손상 때 임의로 큰 파일 번호를 선택하지 않는다.
+
+WAL 삭제 floor는 current/previous checkpoint 각각의 redo_start, live dirty recLSN, checkpoint 진행, 미완결 system 작업, backup/archive/RP owner의 최소 필요 LSN이다. Active 거래의 최초 LSN은 undo store 독립성 조건을 만족하면 floor에 넣지 않는다. free/undo/status 변경도 home flush와 checkpoint 인계 전까지 WAL을 보존한다. 단조 floor 확정과 Retiring 등록은 coordinator→retention 경계에서 수행하고 unlink/dirsync는 lock 밖이다. old/new selector 불명 때 합집합 floor를 보존하고 새 삭제를 막는다.
+
+exact-cut backup의 초기 방식은 **offline admission drain**이다. 새 거래/maintenance admission을 닫고 기존 거래·cursor의 정상 종료와 진행 중 aging/DDL의 완료를 기다린다. 기존 commit/rollback은 drain 중 허용하며 timeout이면 gate를 복원하고 Busy를 반환한다. reader 강제 만료나 숨은 commit을 하지 않는다. drain 뒤 C를 고정하고 모든 dirty data/undo/status/allocator를 WAL-first/doublewrite로 flush+sync한다. 완결 checkpoint를 선택하고 mutation을 중지한 상태에서 allocated pages/파일 metadata를 streaming 복사한다. backup 파일과 manifest·namespace를 sync한 뒤만 성공을 알리고 admission을 복원한다. clone reflink나 immutable live datafile을 가정하지 않는다. 취소/복사 실패는 source C를 유지하고 불완전 destination은 성공 backup으로 선택하지 않는다.
+
+restore는 빈 소유 경로에 완전 backup closure 검증→전체 무결성 검사→새 timeline·writer epoch·base q=C와 genesis WAL/checkpoint/control 선택→sync 후 개방한다. backup manifest는 source의 완결 WAL high-water LSN을 포함한다. 새 timeline의 첫 LSN은 그보다 크게 시작하여 복사된 pageLSN을 새 WAL이 잘못 건너뛰지 않게 한다. 모든 복사 pageLSN이 manifest high-water 이하인지 검증하고 이 baseLSN은 새 control에서 인증한다. source WAL 파일 자체는 필요하지 않다. source WAL 없이 복원→새 commit ACK→두 번째 restart를 검사한다. online backup/PITR/replication은 후속 계약이며 offline exact cut을 그것들의 완료로 주장하지 않는다.
 
 <a id="reclaim"></a>
-## 10. retention·회수·compaction
+## 13. 공간 재사용·진행 보장
 
-보존 대상은 `current/previous checkpoint + live snapshot + checkpoint/build/backup pin + retained replay의 모든 commit root + 준비/UNKNOWN dependency`의 reachable 합집합이다. 최신 root에서 사라진 page도 previous checkpoint부터 순차 replay할 때 필요하면 보존한다. snapshot은 page를, replay는 root/pack과 WAL을 각기 필요한 범위로 pin한다.
+whole-pack GC, 모든 root 도달성 mark, 전체 DB를 새 pack으로 쓰는 필수 compaction을 제거한다. allocator는 free page/extent를 재사용하고 aging은 owner queue에서 undo·삭제 row/index·retired object를 horizon 기준으로 정리한다. index key를 먼저 정리하고 row/overflow 참조를 제거한 뒤 slot/extent를 반환한다. page 재사용은 durable allocation generation과 WAL init으로 보호한다. page 내 빈 cell 정리는 logged page compaction이며 전체 DB rewrite와 다르다.
 
-ledger에는 bounded active root handle과 checkpoint/replay range의 끝점만 상주시킨다. retained commit root·pack inventory는 WAL/디스크에서 streaming 열거하며 replay 범위의 모든 q를 RAM 목록으로 만들지 않는다.
+장기 reader/Active transaction은 undo와 retired space를 보존한다. quota 부족 때 새 statement/write를 거절하고 원인을 oldest snapshot/undo owner와 함께 보고한다. reader를 몰래 만료하거나 필요한 undo를 덮어쓰지 않는다. crash 뒤 orphan build 정리는 allocation ownership·transaction status를 검증한 뒤 batch로 수행한다. 낮은 free space에서도 이미 시작한 rollback·flush·checkpoint·aging은 아래 reserve 안에서 진행해야 한다.
 
-ledger의 root pin 집합과 revision을 짧은 lock 아래 고정한 뒤, lock 밖에서 tree/overflow/inventory를 순회하고 `(FileId, page_no)` mark를 bounded 외부 정렬한다. whole pack이 참조 0일 때만 삭제 후보가 된다. candidate 목록도 디스크에 둔다. 새 commit/pin/checkpoint 선택이 생기면 ledger revision을 증가시킨다. 최종 coordinator→ledger 경계에서 revision 동일·Fenced 아님·새 pin 없음 확인 후 제한된 candidate batch를 Retiring으로 전환한다. revision이 달라지면 mark를 다시 수행한다. 장기 경합 때 admission drain의 maintenance 구간으로 진행을 보장한다. 정상 I/O 동안 ledger/publication lock을 보유하지 않는다.
+초기 전체 owned disk quota 8 GiB 안에 **1 GiB를 maintenance/rollback 전용**으로 예약한다. foreground가 이 reserve를 소비하지 못한다. transaction admission은 실제 undo bytes·최악 CLR encoded bound·rollback 재삽입/split에 필요한 page·WAL/checkpoint 여유를 계산하고 reserve와 중복 없이 선점한다. bound를 계산할 수 없는 operation은 시작 전에 거절한다. fixed doublewrite 16 MiB, checkpoint metadata 두 세대와 회수 진행점 공간도 이 예산에 포함한다. 작은 rollback page pool을 일반 insert에 대여하지 않는다. OS의 실제 ENOSPC/I/O 불명은 여전히 Fenced 모델이며 quota가 장치 장애를 해결한다고 주장하지 않는다.
 
-Retiring 파일에는 새 pin을 등록하지 않고 실제 unlink·directory sync는 lock 밖에서 한다. crash로 남은 파일은 다시 조사한다. 읽지 못한 directory entry·손상 manifest를 unreachable 증거로 취급하지 않는다. 자동 orphan 정리는 선택 chain과 모든 pin 밖인 엔진 소유 파일만 대상으로 하며 알 수 없는 파일은 삭제하지 않는다. restart 후 ledger 재구성과 STABILIZE 전에는 GC를 금지한다.
+aging cursor/진행점은 재실행 가능한 logged state다. 메모리 batch·disk 진행점은 고정 상한이며 오래된 전체 mark/sort scratch를 만들지 않는다. 거래 시작 WAL을 실제 제거한 상태의 rollback/recovery, 긴 reader 해제 뒤 재사용 증가, quota 경계의 반복 crash 및 rollback pool 고갈 거절을 필수 인수한다. online shrink/OS 반환·재배치 compaction은 S1 필수가 아니다. 내부 재사용량과 filesystem 반환량은 구별한다.
 
-whole-pack GC만으로는 살아 있는 page 하나가 많은 dead bytes를 붙잡을 수 있다. S1의 초기 해결은 **offline 전체 현재 상태 compaction**이다. admission close/drain 후 현재 row/index/catalog를 bounded streaming으로 새 pack에 재작성하고 하나의 유지보수 commit으로 root를 전환한다. 논리 행·index 정의·RowUID는 그대로다. root-only 유지보수 WAL의 dependency inventory는 chunked라 DB 크기만큼 WAL frame이 커지지 않는다. workspace 16 MiB와 disk reserve로 충분하지 않으면 시작 전 거절한다. 실제 ENOSPC는 commit 전 실패·orphan으로 처리한다.
+<a id="budgets"></a>
+## 14. 자원·성능
 
-새 checkpoint만으로 old pack이 즉시 해제되지는 않는다. previous checkpoint와 replay roots, 기존 backup pin이 빠질 때까지 보존한다. 정상 checkpoint 두 번으로 두 fallback 기준이 새 pack closure로 전진한 뒤 남은 pin이 없을 때만 회수한다. reserve보다 큰 DB는 사용자 quota 확대 또는 명시적인 maintenance 공간 마련이 필요하다. 저여유 공간의 부분 evacuation, online compaction, in-place page 재사용은 후속 대안이며 현재 무중단 공간 회수를 약속하지 않는다. 이 제약과 수행 시간·추가 bytes는 PF09에 보고한다.
+| 자원 | 초기 공학적 profile |
+| --- | --- |
+| page buffer | 64 MiB/4,096 frames; 4/16 MiB fault profile. dirty/clean 합계 |
+| metadata/cache | 합계 8 MiB; frame map/DPT·bounded lock table·catalog/locator·FD cache. locator 1 MiB, FD 최대 128 |
+| transaction | 최대 32; mutation 256, 논리 payload 1 MiB, private 8 MiB/거래·전체 64 MiB. 추가 잠금/undo staging을 포함 |
+| system workspace | 합계 16 MiB: flush/DWB I/O buffer 4 MiB 고정 + recovery/checkpoint/build/full-check/aging 중 한 작업 12 MiB. foreground가 고정 flush 몫을 빌리지 않음 |
+| disk/WAL | owned 8 GiB·maintenance reserve 1 GiB·보존 WAL 256 MiB·doublewrite 16 MiB. 전체 quota와 하위 한도를 동시에 적용 |
+| snapshot/diagnostics | user snapshot 32, backup/checkpoint 각 1; trace 4 MiB/4,096 events. 필수 receipt 유실은 실패 |
+
+대형 index build의 run/disk 목록은 별도 사전 예약·owned staging이며 외부 정렬의 FD/fan-in·취소 정리가 bounded해야 한다. data/index/row locator/할당 inventory 각각 accessed bytes ≥ configured buffer 4배 기준을 유지한다. inventory는 이제 파일 pack 목록 대신 page/extent allocation inventory다. 필요한 큰 inventory fixture와 quota는 실행 전에 F05에서 정한다. 단지 작은 metadata cache를 넘었다는 것으로 인수를 대체하지 않는다.
+
+PF09는 성공 TPS/충돌률, commit·WAL sync p99, background data flush/doublewrite bytes, page read/hit/pin/latch/lock wait, undo 생성/보존/aging량, 재사용 가능/실제 재사용 공간, checkpoint·정상 reopen·full-check·backup 중단시간, RSS/FD/rollback reserve peak를 기록한다. page-cache miss와 실제 장치 I/O를 구별한다. baseline/candidate는 동일 의미·durability·fixture/환경에서 비교하고 성능 개선을 미리 선언하지 않는다.
 
 <a id="acceptance"></a>
-## 11. 검증·측정과 구현 전 동결
+## 15. 구현 전 동결과 인수
 
-[구현 계획](../plans/dev3-implementation-plan.md#acceptance)이 DS01–06·KU09/10·RC-T12–14·PF09와 DEV2 회귀를 구체 사례에 연결한다. 최소 working set은 configured buffer의 4배이며 row/index/locator/inventory의 각 corpus에도 RC-T14의 configured page-buffer 4배 기준을 유지한다. locator/inventory 전용 cache 압력은 추가로 검사하며 작은 cache 기준으로 전체 buffer 인수를 대체하지 않는다. 정확한 크기와 중복 계상 방지는 구현 계획에 둔다. page-cache hit만 측정한 결과를 실제 저장 I/O 증거로 사용하지 않는다. engine read/write/sync와 외부 OS I/O 관측을 함께 남긴다. OS cache cold/warm은 별도 profile이며 공유 host의 전체 cache를 비우지 않는다.
-
-필수 지표는 page read/write bytes·hit/miss·pin wait, tree height/split·path copy·overflow, 논리 변경 대비 pack bytes, pack/file 수, live/retained/unreachable bytes, WAL/page/dir sync latency, checkpoint/GC/compaction/reopen 시간·scratch/RSS peak, index↔scan equality다. baseline과 candidate는 동일 의미·durability·fixture·환경에서 비교한다. 측정 없는 성능 개선 주장은 하지 않는다.
-
-D3-F01–F06의 byte vectors, Rust API/오류 상태표, fault receipts, profile 수치와 DEV2 실제 통합 근거는 해당 leaf 구현 전에 동결한다. 이 설계의 채택은 S1 PASS가 아니며 실제 entrypoint/evidence는 아직 없다.
+[계획](../plans/dev3-implementation-plan.md#acceptance)과 DS01–06·KU09/10·RC-T12–14·PF09가 소유한다. F01 byte layout/feature, F02 API·isolation·잠금/undo 상태표, F03 독립 oracle/vector, F04 실제 I/O/fault/doublewrite·반복 복구, F05 자원·환경·성능, F06 DEV2 실제 공급, F07 파일/작업 소유를 leaf 전에 동결한다. 설계만으로 제품 PASS를 기록하지 않는다.
 
 <a id="parallel-development"></a>
-## 12. DEV3 내부 병렬 개발 경계
+## 16. 작업 경계
 
-**DEV3는 공통 형식·접근 계약과 최소 선행 leaf를 먼저 확정한 뒤 내부 구현을 병렬로 진행할 수 있다.** 작업 배정·선행 leaf·공유 파일·병합 순서의 정본은 [구현 계획의 병렬 개발 절](../plans/dev3-implementation-plan.md#parallel-development)이다. 기존 S0–S5와 XADB-028→021→022→029 순서를 유지하며, DEV3와 DEV4의 동시 착수나 런타임 병렬 commit을 추가하는 결정이 아니다. 실제 병렬 실행·단축 효과는 NOT_RUN이다.
+공통 identity/page/WAL/undo/visibility 계약→page/allocator·WAL·buffer/flush 표현→row/undo/status와 구조 tree 통합→index/catalog/statement→recovery/checkpoint/aging/backup 순으로 합친다. pack 전용 병렬 역할은 폐기한다. undo와 WAL, dirty buffer와 doublewrite는 독립으로 성공했다고 durability를 주장할 수 없다. 실제 소유와 최소 선행 leaf는 [구현 계획](../plans/dev3-implementation-plan.md#parallel-development)을 따른다.
 
-| 설계 경계 | 병렬 개발에 적용할 조건 |
-| --- | --- |
-| page/pack/PageRef·key·inventory 표현 | 형식별 단일 담당이 D3-F01과 소비 API를 먼저 고정. 동일 형식·checksum·key 의미를 작업별로 복제하지 않음 |
-| pack I/O·clean buffer·COW tree | 공통 page 읽기/준비·pin·오류·예약 계약 뒤 분리 가능. tree 소비자는 pack sync를, buffer는 root 공개를 소유하지 않음. 실제 통합 검증은 세 구현이 연결된 뒤 수행 |
-| row·index·catalog | 공통 tree의 최소 실제 구현 뒤 의미별 소비 작업 분리 가능. split/path-copy/순회는 tree 담당 한 곳에서 수정 |
-| row와 locator | row tree가 locator의 영속 정본이므로 **같은 작업 소유**. 별도 locator tree/전체 RAM map을 병렬 구현하지 않음 |
-| statement·commit·recovery·retention | 공통 상태표와 ledger의 단일 소유 유지. 모듈별 준비·시험은 병렬 가능하나 공통 상태 전이와 공개/회수 연결은 통합 담당이 순차 반영 |
-| 독립 oracle·시험 | 구현과 병렬 준비 가능. production codec/tree를 기대값 계산에 공유하지 않고, 통합 source/build에서 실제 I/O·장애·자원 인수 재실행 |
+<a id="review-followup"></a>
+## DEV3-REVIEW-002 — 먼저 반영한 리뷰 보완
 
-DEV2 이관 중에는 계약 대조·독립 vector·작업 범위 준비를 진행한다. production leaf마다 D3-F06의 실제 공급 revision·선행 증거와 D3-F07의 담당/수정 범위 확정이 필요하다. 동일 worktree의 파일 분리만으로 독립성을 판단하지 않는다. 독립 검토와 병렬 소유 규칙은 [DP01](../policies/development-policy.md#section-2)·[병렬 개발 정책](../policies/parallel-development-policy.md#section-2)을 따른다.
-
-이 절의 구체화 결정은 [DEV3-PARALLEL-001](../plans/dev3-implementation-plan.md#parallel-review)에 기록한다. 기존 DEV3-DESIGN-001의 저장 알고리즘·형식 기준·인수 의무를 대체하지 않는다.
+2026-10-18 D2 ACCEPTED. 부분 NULL UNIQUE·statement-final 검사, global-q의 초기 한계, full VERIFY 비용 시험, 파일 수 기반 GC scratch 상한/반복 장애 정리, compaction 전체 공간 계산을 먼저 반영했다. `/root/dev3_redesign_review`가 원본 대비 세 파일을 검토하여 PASS, 통합을 막는 P1/P2 없음. `/root`가 확인했다. 제품/문서 자동 검사 미실행. UNIQUE/vector와 성능 관측 의무는 유지한다. 중간 COW GC/scratch/compaction은 아래 003으로 대체하고 동시성과 정상 recovery 분리는 7·11절로 닫는다. 선행 보완 snapshot 지문은 [이번 조사](../evidence/dev3-wal-undo-research.md)에 보존한다.
 
 <a id="decision"></a>
-## DEV3-DESIGN-001 결정 기록
+## DEV3-DESIGN-003 — in-place·WAL·영속 undo
 
 | 항목 | 내용 |
 | --- | --- |
-| 분류·상태·결정일 | D2 · ACCEPTED · 2026-10-18 |
-| 작업·계약·통합 담당 | `/root` |
-| 근거 | 사용자가 DEV3 설계와 여러 로컬 DBMS 및 추가 로컬 소스 참고를 명시 요청 |
-| 선택 | COW B+tree·immutable pack·bounded clean buffer·row tree locator·공통 L0/root·closure 보존·offline compaction |
-| 비교 대안 | 이 문서 2절. in-place/LSM·전체 locator 상주·온라인 구조 변경은 초기 채택하지 않음 |
-| 적용 | 기존 XADB-SCOPE-001과 DEV2/DISK 불변식 구체화. DEV2 substrate의 실제 의미·상태·과거 증거는 변경하지 않음 |
-| 독립 검토·검증 | `/root/dev3_design_review` 최종 설계 검토 PASS. P2 수정 확인·문서 무결성 PASS. [계획의 작업 기록](../plans/dev3-implementation-plan.md#review); 제품 실행 NOT_RUN |
-| 재검토 조건 | DEV2 실제 API/형식과 가정 불일치, COW·small pack·full verification 비용 과다, quota/compaction 진행 불능, key·page 한도 확대, 실제 S1 반례 |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-18 |
+| 담당/계약/통합 | `/root`; 별도 검토 `/root/dev3_redesign_review` |
+| 위임 근거 | 사용자가 Oracle·ARIES 및 로컬 디스크 구현 비교를 요청하고, 리뷰 보완을 먼저 반영한 뒤 COW pack/GC 재설계를 명시 지시 |
+| 선택 | in-place B+tree·dirty bounded buffer·WAL-before-page·disk undo·redo-only CLR·doublewrite·fuzzy checkpoint·offline exact-cut backup·horizon aging |
+| 대체 | DEV3-DESIGN-001/DEV3-PARALLEL-001의 COW/pack/closure/공개·복구·회수 규약. REVIEW-002의 UNIQUE 보완 유지. 과거 소스 조사·검토 사실과 실제 DEV2 코드/증거는 보존 |
+| 적용 | DEV3와 후속 disk 소비 경로. DEV2 전용 private/COW 기준선과 format은 별개. 기존 과거 COW 설명은 DEV3 규범보다 우선하지 않음 |
+| 한계 | READ COMMITTED 명시 선택, 기본 Serializable의 table 단위 false conflict, 단일 commit coordinator·직렬 SMO, offline backup. 모든 byte/API/fault profile 미동결·제품 실행 NOT_RUN |
+| 독립 검토·확인 | `/root/dev3_redesign_review` 최종 PASS. 초안 P1 3건·P2 2건과 INIT 복원 경계 해소, 통합 차단 지적 없음. `/root` 반영 확인. 제품/문서 자동 검사 미실행; [기록](../evidence/dev3-wal-undo-research.md#review) |
+| 재검토 | reserve/undo 회수 진행 불능, dirty-page/CLR 재장애 반례, RTO/I/O 과다, Oracle 유사 의미 확대, online backup/고급 동시성 요구 |

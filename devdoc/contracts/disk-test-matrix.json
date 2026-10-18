@@ -11,9 +11,9 @@
       "acceptance": "Real page read/write and scan/index equality with independent row values; not a RAM-only substitute",
       "execution_status": "NOT_RUN",
       "required_variants": [
-        "empty/multilevel COW trees; byte-balanced splits and empty-child/root collapse",
-        "inline/overflow row boundaries; ownership, checksum and bounds rejection",
-        "snapshot-root traversal without persistent sibling-link assumptions; independent scan/index equality"
+        "empty/multilevel mutable trees; stable anchor, byte-balanced split and redo-only structural mini-transactions",
+        "inline/overflow boundaries, ownership, checksum, bounds; logical undo after a concurrent split never restores a whole stale page",
+        "cursor re-search by last full key at fixed snapshot; versioned index presence; independent scan/index equality"
       ]
     },
     {
@@ -22,9 +22,11 @@
       "acceptance": "Atomic row/index/locator/catalog commit and crash/reopen, including partial writes and UNKNOWN outcomes",
       "execution_status": "NOT_RUN",
       "required_variants": [
-        "multi-table row/index/catalog root and row-tree locator at one q",
-        "pack and inventory write/file-sync/directory-sync before one L0 frame; UNKNOWN fencing",
-        "independent ACK/abort/unknown history; no partial root publication"
+        "multi-table row/index/catalog logical publication at one q with stable row-tree locator",
+        "commit WAL sync without forced data flush; uncommitted dirty eviction; WAL-before-page and doublewrite barriers",
+        "update versus commit-attempt distinction; independent ACK/abort/unknown histories; CLR progress/effect atomicity",
+        "FILEMAP namespace extension, pending DWB selection and retirement, data/undo/status/allocator home writes; each fault cut",
+        "durable commit with brand-new unflushed zero home pages: full INIT image plus complete redo closure reconstructs pages; delta-only corrupt initialized home rejects"
       ]
     },
     {
@@ -33,9 +35,11 @@
       "acceptance": "Working set >= 4x buffer, actual I/O witness and bounded buffer/locator/RSS accounting",
       "execution_status": "NOT_RUN",
       "required_variants": [
-        "row/index/locator/inventory corpus each >=4x configured page buffer per RC-T14; smaller dedicated cache pressure is additional only",
-        "bounded descriptors, file handles, metadata and external inventory; spill-free bidirectional lookup during recovery VERIFY",
-        "offline compaction disk admission, write amplification, file count and RSS profile"
+        "row/index/locator/allocation inventory accessed corpus each >=4x configured page buffer; smaller cache pressure is additional only",
+        "bounded descriptors, lock table, ATT, runtime DPT, metadata and FD; conservative streaming recovery without whole-database DPT",
+        "same 0/small WAL and dirty-page count at 256 MiB and 1 GiB: normal reopen I/O does not require full scan; full audit cost separate",
+        "reserved worst-case CLR bytes and rollback split pages; foreground cannot borrow maintenance reserve; repeated crash has no proportional disk scratch",
+        "fixed flush buffers coexist with foreground/one maintenance workspace; actual DWB/control-sync write amplification"
       ]
     },
     {
@@ -44,21 +48,24 @@
       "acceptance": "Pinned snapshot survives eviction, concurrent change, checkpoint and reclamation; no stale physical reuse",
       "execution_status": "NOT_RUN",
       "required_variants": [
-        "root-qualified locator cache; PageGuard versus SnapshotGuard; concurrent loading and full pin budgets",
-        "old snapshot plus checkpoint/backup and every retained intermediate replay root",
-        "mark revision recheck, pin versus Retiring, whole-pack deletion, no physical identity reuse"
+        "PageGuard pin versus content latch versus snapshot/rollback horizon; stale locator hint revalidation",
+        "old reader and active transaction survive overwrite/delete/drop, eviction/checkpoint and aging; retired object and overflow retention",
+        "undo/status/page generation reuse, commit-q stamping and logged chain cuts with incoming references",
+        "A commit then B update then A aging then B abort then full check and old-slot reuse; active begin WAL reclaimed before abort/restart"
       ]
     },
     {
       "id": "DS05",
       "stage": "DEV3",
-      "acceptance": "Backup/checkpoint/restore at one committed cut; repeated recovery and required corruption rejection",
+      "acceptance": "Fuzzy recovery checkpoint, offline exact-cut backup/restore, repeated recovery and required corruption rejection",
       "execution_status": "NOT_RUN",
       "required_variants": [
-        "chunked exact-cut manifest; current/previous and WRITER anchor chain",
-        "STABILIZE adopted journal/page dependencies; second fault; shared-pack corruption rejection",
-        "source-WAL-free restore at C then new ACK and restart; compaction and two-checkpoint reclamation",
-        "repeated VERIFY crashes create no disk spill accumulation; valid quota-sized database opens without size-proportional recovery scratch"
+        "fuzzy checkpoint capture LSN with ATT/DPT and committed status; analysis begins after capture, redo from minimum recLSN",
+        "selected pending-only doublewrite control, durable retirement, torn allocator bootstrap; stale image cannot repair a newer page",
+        "durable recovery epoch/WRITER selection before first CLR; second fault during redo/undo/STABILIZE/RESUME and new ACK",
+        "current/previous are recovery starting points sharing mutable files; preserve both WAL floors, never revert data by selecting old metadata",
+        "offline drained exact-C backup, source-WAL-free restore then new ACK and restart; full integrity check plus independent history after reopen",
+        "restore authenticates baseLSN above all copied pageLSNs; new unflushed ACK then restart redoes the update"
       ]
     },
     {
@@ -67,9 +74,11 @@
       "acceptance": "PK/unique/nonunique independent vectors, statement failure atomicity, quota and cancellation",
       "execution_status": "NOT_RUN",
       "required_variants": [
-        "PK nonnull; unique NULL-distinct; nonunique RowId order; 1-4 column composite vectors",
-        "1024-byte encoded key boundary, row value limits unchanged; immediate mutation uniqueness",
-        "statement rollback of all row/index deltas; cursor invalidation; offline index build/drain/cancel"
+        "PK nonnull; all-null unique exempt, equal partially-null tuples conflict; nonunique RowId order; 1-4 column vectors",
+        "1024-byte encoded key boundary; statement-final key swap success, final duplicate failure, order-independent final set",
+        "statement rollback to undo mark preserves previous statement; rollback failure fences instead of false ABORT; cursor invalidation and offline build/cancel",
+        "explicit ReadCommitted statement snapshots and independent-row writers; default Serializable table-set validation with independent-table success and same-table false conflict",
+        "unique old/new key locks, latest committed conflict checks, row write conflict after wait, deadlock victim full undo"
       ]
     },
     {
@@ -86,5 +95,6 @@
     }
   ],
   "design_ref": "disk-storage-design.md",
-  "implementation_plan_ref": "dev3-implementation-plan.md"
+  "implementation_plan_ref": "dev3-implementation-plan.md",
+  "decision_ref": "disk-storage-design.md#decision"
 }

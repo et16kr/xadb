@@ -670,7 +670,10 @@
         "PK/unique/nonunique and row/catalog atomicity; independent scan/index equality",
         "Actual disk I/O, multi-table atomic commit, reopen and backup/restore at one commit cut",
         "Working set >= 4 times buffer; bounded page/locator/RSS budgets and measured I/O",
-        "DEV2 regression and required PF cases on the production disk path"
+        "DEV2 regression and required PF cases on the production disk path",
+        "WAL-before-page, persistent undo/CLR, pending doublewrite retirement and repeated recovery including discoverable recovery epoch",
+        "Fuzzy checkpoint capture and WAL floors; separate full integrity audit after reopen; offline exact-cut backup",
+        "Statement-final partial-NULL uniqueness, explicit ReadCommitted and default table-validated Serializable; bounded aging/rollback reserves"
       ],
       "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
       "open_decisions": [
@@ -690,7 +693,8 @@
       "design_refs": [
         "disk-storage-design.md",
         "dev3-implementation-plan.md"
-      ]
+      ],
+      "design_decision_ref": "disk-storage-design.md#decision"
     },
     {
       "id": "DEV4",

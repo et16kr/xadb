@@ -28,3 +28,5 @@ DEV4의 [소스 조사](dev4-source-research.md)는 PostgreSQL·MariaDB·CUBRID�
 - [dev0-xadb-20261018-r2.json](dev0-xadb-20261018-r2.json)
 - [dev1-xadb-20261018-r2.json](dev1-xadb-20261018-r2.json)
 - [dev2-xadb-20261018-r2.json](dev2-xadb-20261018-r2.json)
+
+- [DEV3 WAL·undo 재설계 조사와 검토](dev3-wal-undo-research.md): 선행 리뷰 보완 후 저장 재설계; 소스 열람/설계 검토이며 제품 실행 NOT_RUN.

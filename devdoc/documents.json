@@ -497,6 +497,11 @@
       "path": "evidence/dev4-source-research.md",
       "role": "evidence",
       "title": "DEV4 소스 조사 기록"
+    },
+    "dev3-wal-undo-research.md": {
+      "path": "evidence/dev3-wal-undo-research.md",
+      "role": "evidence",
+      "title": "DEV3 WAL·undo 재설계 조사와 검토"
     }
   }
 }

@@ -1,5 +1,23 @@
 # XADB Rust 구현 계약
 
+<a id="dev3-profile"></a>
+## DEV3 적용 경계
+
+[DEV3-DESIGN-003](disk-storage-design.md#decision)이 DISK 구현의 저장·동시성·복구 세부 규범이다. 아래 private/COW·global-q·불변 root 교체·exact checkpoint 설명은 **DEV2 기준선**으로 한정한다. DEV3와 후속 disk 소비에서는 다음을 적용하며, 기존 DEV2 코드/시험을 소급 변경하지 않는다.
+
+| 경계 | DEV3 규약 |
+| --- | --- |
+| snapshot/공개 | 작은 q descriptor·undo horizon. page는 mutable이며 PageGuard pin과 content latch가 별개. TxnStatus와 commit frontier로 다중 객체 가시성 원자 공개 |
+| 실패/statement | 영속 undo mark와 CLR로 복원 완료 후 오류 확정. rollback I/O 실패는 RecoveryRequired/Fenced이며 private 폐기로 대체하지 않음 |
+| validation | 기본 Serializable의 table read/write-set 검증, 명시 ReadCommitted statement snapshot·row/key 잠금. DB 전체 q 비교 제거 |
+| durability | update/undo/CLR redo를 포함한 WAL-before-page·steal/no-force·선택된 pending doublewrite. commit은 data 전체 sync를 요구하지 않음 |
+| recovery | source WAL은 보존, home page는 redo/CLR로 변경 가능. CLR 전에 recovery epoch/WRITER를 영속 선택. 정상 recovery와 full audit 분리 |
+| checkpoint/backup | capture LSN과 ATT/DPT의 fuzzy metadata checkpoint; admission drain한 exact-C backup 별도 |
+| 회수 | allocator·undo/status·삭제 항목의 horizon/reference aging. COW root/pack GC 없음 |
+
+SQL 소비자의 기존 private/COW·global-q 전제도 이 경계로 대체한다. SQL 기본 isolation 변경이나 READ COMMITTED 문법 추가는 별도 SQL 결정이며, 인자를 생략한 API는 Serializable이다. DEV4의 Oracle 관련 값/이름/DDL 변경은 해당 소유 계약을 따른다. 상세 byte/API/fault 동결과 제품 실행은 미완료다.
+
+
 2026-10-18 · **DEV1 공통 기반 로컬 구현·검증, DB 커널은 설계 단계** · 주 개발 언어 Rust는 사용자 확정 사항이다.
 
 [종합 설계](../reference/architecture-overview.md) · [실현 가능성 리뷰](../reference/architecture-overview.md) · [AI 개발 방법](../policies/ai-development-method.md)
@@ -93,7 +111,7 @@ private write batch만으로 statement atomicity가 완성되지는 않는다. �
 | DDL 준비 실패 | 새 metadata/index 폐기, 이전 catalog 유지 | old/new 객체 수명과 생성 자원 회수 |
 | DROP 후 이전 reader | 고정 snapshot 범위에서 유효, 새 접근은 generation 검증 | 오래된 cursor와 새 이름의 객체 혼동 없음 |
 
-초기 DDL은 독립적인 원자 거래로 제한한다. 일반 DML transaction 중 DDL은 명시적으로 거절한다. implicit commit 같은 예상 밖 효과를 넣지 않는다. 초기 offline index build·bulk partition DDL은 DB 전체 admission을 먼저 닫고 기존 사용자 drain을 확인한 다음 시작한다. timeout이면 build를 시작하지 않는다. online DDL은 이후 독립 상태 기계로 설계한다.
+초기 **native DDL API**는 독립적인 원자 거래로 제한한다. 일반 DML transaction을 가진 채 native DDL을 호출하면 명시적으로 거절하며 engine에 숨은 implicit commit을 넣지 않는다. [DEV4-REVIEW-002](dev4-sql-design.md#oracle-review)의 SQL direct DDL은 별도 상위 조립 계약이다. SQL session이 지원 문법·진입 검사를 마친 뒤 이전 거래를 명시 commit하고 COMMITTED를 확인한 경우에만 독립 native DDL을 호출한다. 두 거래의 결과를 분리하며 DDL 실패가 이전 COMMITTED를 되돌리지 않는다. 세부 validation·취소·UNKNOWN 경계는 [SQL DDL 계약](dev4-sql-design.md#ddl-boundary)이 소유한다. 이 구체화는 DEV2 native API 동작을 바꾸지 않는다. 초기 offline index build·bulk partition DDL은 DB 전체 admission을 먼저 닫고 기존 사용자 drain을 확인한 다음 시작한다. timeout이면 build를 시작하지 않는다. online DDL은 이후 독립 상태 기계로 설계한다.
 
 <a id="section-5"></a>
 
@@ -125,7 +143,7 @@ M_peak ≤ M_live + M_pinned_old + M_private_reserved
 
 `Prepared → commit-record-attempted → synced → published → reply`의 순서는 종합 설계를 유지한다. replay는 확정된 ID·값·catalog delta를 처리하고 SQL이나 시간을 다시 평가하지 않는다. 복구가 끝나 모든 불변식을 검사하기 전에는 정상 query를 받지 않는다. 필요한 durable 영역의 손상을 조용히 tail로 버리지 않는다.
 
-H1부터 `Prepared`에는 미공개 DISK/index/locator COW page의 작성과 sync가 포함된다. 공통 WAL은 그 영속 root와 row after-image·metadata를 함께 commit한다. root descriptor가 작다는 것은 disk directory 전체가 RAM에 있다는 뜻이 아니다. WAL-first 방식으로의 최적화는 별도 ADR과 시험이 필요하다.
+H1/DEV3의 `Prepared`와 영속 순서는 [DEV3-DESIGN-003](disk-storage-design.md#commit)을 따른다. data page sync 대신 redo 가능한 update/undo·namespace를 준비하고 commit WAL sync로 ACK를 보호한다. WAL-before-page·doublewrite·CLR/recovery 인수는 필수이며 작은 view descriptor가 전체 disk metadata의 RAM 상주를 허용하지 않는다.
 
 XADBTest controller가 실제 client reply를 받아 history에 기록한다. candidate가 스스로 출력한 `wal.synced=true`는 진단 witness이며 ACK 영속성의 독립 증명은 아니다. controller는 candidate 프로세스와 분리되고 crash 대상에서 제외된다. controller가 관측한 ACK를 보존한 뒤 candidate만 종료하고, 재시작 결과를 외부 expected history와 비교한다. controller까지 함께 잃은 경우 ACK 관측 여부를 미확정으로 남긴다.
 
@@ -139,13 +157,13 @@ SQLite의 allocation/I/O 실패 주입과 FoundationDB의 simulation/native 시�
 
 DEV2 recovery는 채택한 기존 prefix를 [STABILIZE](dev2-kernel-design.md#recovery-stabilize)로 영속화한 뒤 새 writer epoch를 선택하고 READY로 전이한다. checkpoint의 [replay anchor·선택 규약](dev2-kernel-design.md#replay-anchor)은 선행 WAL 검증 종료점과 current/previous의 보존 범위를 정하며 checkpoint가 WRITER tip을 되돌리지 않게 한다. [장애 결과](dev2-kernel-design.md#fault-outcomes)의 정상 복구와 손상/I/O 거절을 각각 인수하고, 거절 검출 PASS를 정상 reopen 증거로 바꾸지 않는다.
 
-후속 L1은 병렬 private encoding과 group commit, L2는 여러 payload lane과 전역 commit journal을 사용한다. L2의 commit record는 모든 payload와 COW 의존성이 영속화된 뒤에만 기록한다. lane별 최대 예약 offset을 durable prefix로 사용하지 않는다. fine-grained serializable validation과 직전 accepted root에 대한 merge 없이 coarse epoch 방식을 병렬 group commit으로 교체하지 않는다.
+아래 L1/L2는 이전 private/COW 프로파일의 후속 제안이며 DEV3에 자동 적용하지 않는다. L1은 병렬 private encoding과 group commit, L2는 여러 payload lane과 전역 commit journal을 제안한다. L2의 commit record는 모든 payload와 COW 의존성이 영속화된 뒤에만 기록한다. lane별 최대 예약 offset을 durable prefix로 사용하지 않는다. fine-grained serializable validation과 직전 accepted root에 대한 merge 없이 coarse epoch 방식을 병렬 group commit으로 교체하지 않는다.
 
 L1/L2는 첫 B2/S1/SQL의 선행 조건이 아니다. [28개 인수 계획](recovery-test-matrix.json)은 모두 제품 시험 미실행이며, 작은 Python 모델의 결과와 구분한다. 교차 버전 호환 대상과 VERSION_RELEASE 적용 여부는 중앙 [버전 정책](../policies/version-compatibility-policy.json)을 따른다.
 
 ### 6.2 Undo와 RP의 로그 보존 책임
 
-[로그 보존 검토](replication-undo-analysis.md)는 undo 정보의 redo 기록과 rollback의 원본 로그 의존을 구분한다. undo tablespace 대안을 채택하면 undo chain·거래 상태·checkpoint를 통해 과거 로그 없이 undo할 수 있음을 검증해야 한다. RP의 capture restart pin은 별도이며 열린 거래의 분석 상태를 영속 인계하기 전에는 read/sent 위치만으로 회수하지 않는다. 현재 private/COW 계약은 유지하며 해당 대안은 별도 저장 ADR와 실제 fault 시험을 필요로 한다. [세부 계획](replication-undo-plan.json)은 초기 B2/SQL에 RP 구현을 요구하지 않는다.
+[로그 보존 검토](replication-undo-analysis.md)는 undo 정보의 redo 기록과 rollback의 원본 로그 의존을 구분한다. undo tablespace 대안을 채택하면 undo chain·거래 상태·checkpoint를 통해 과거 로그 없이 undo할 수 있음을 검증해야 한다. RP의 capture restart pin은 별도이며 열린 거래의 분석 상태를 영속 인계하기 전에는 read/sent 위치만으로 회수하지 않는다. DEV2 private/COW 기준선은 유지한다. DEV3의 저장 ADR는 [DESIGN-003](disk-storage-design.md#undo)이며 영속 undo closure와 실제 fault 시험은 필수 미완료 의무다. [세부 계획](replication-undo-plan.json)은 초기 B2/SQL에 RP 구현을 요구하지 않는다.
 
 <a id="section-7"></a>
 

@@ -50,7 +50,7 @@
     },
     {
       "id": "UR-08",
-      "rule": "Current private/COW baseline and development order are preserved; undo-store engine requires a storage ADR."
+      "rule": "DEV2 private/COW baseline and stage order remain; DEV3 storage ADR is DEV3-DESIGN-003; implementation and replication qualification remain NOT_RUN."
     }
   ],
   "tasks": [
@@ -76,7 +76,7 @@
       "requirement_refs": [
         "R11-02"
       ],
-      "applicability": "OPTIONAL_UNDO_STORE_ENGINE_ADR",
+      "applicability": "DEV3_STORAGE_UNDO_OBLIGATION; RP integration remains DEV8; design_ref=disk-storage-design.md",
       "execution_status": "NOT_RUN"
     },
     {
@@ -89,7 +89,7 @@
       "requirement_refs": [
         "R11-02"
       ],
-      "applicability": "OPTIONAL_UNDO_STORE_ENGINE_ADR",
+      "applicability": "DEV3_STORAGE_UNDO_OBLIGATION; RP integration remains DEV8; design_ref=disk-storage-design.md",
       "execution_status": "NOT_RUN"
     },
     {
@@ -320,5 +320,7 @@
       ],
       "execution_status": "NOT_RUN"
     }
-  ]
+  ],
+  "dev3_storage_decision_ref": "disk-storage-design.md#decision",
+  "changes_current_private_cow_baseline_scope": "false applies to DEV2; DEV3 adopts persistent undo via DESIGN-003, replication remains later"
 }

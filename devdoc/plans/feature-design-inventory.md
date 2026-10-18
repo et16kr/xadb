@@ -86,7 +86,7 @@ DEV4 최소 subset의 문법·타입·DDL/DML·prepared·CLI는 [상세 설계](
 | WAL-06 | 손상과 부분 기록 처리 | torn/short write·corruption·필수 영역/끝부분 구분 | checksum·길이 검사·fail-closed·진단·복구 가능 판정 |
 | WAL-07 | Checkpoint와 generation | 일관된 cut·완료·실패·재시도·선택 기준 | snapshot pin·manifest·root 선택·원자 설치·검증 |
 | WAL-08 | 로그와 세대 회수 | recovery·backup·reader·replication 보존 요구 | consumer pin·최저 보존점·회수 순서·공간 압력 |
-| WAL-09 | Undo와 rollback 보존 책임 | statement/transaction undo·장기 거래·복제 재시작 요구 | private/COW 계약과 undo 대안 검토·보존 소유자 |
+| WAL-09 | Undo와 rollback 보존 책임 | statement/transaction undo·장기 거래·복제 재시작 요구 | DEV2 private 기준선·DEV3 영속 undo/WAL 분리·보존 소유자 |
 | WAL-10 | Group commit과 병렬 로그 | 동시 commit 완료·순서·오류·성능 관측 요구 | L1/L2 단계별 작업 분할·durable prefix·의존 검증 |
 | WAL-11 | 디스크 행·인덱스·catalog 통합 recovery | 디스크 저장 경로·index·locator·metadata의 동일 복구 cut | row/page replay·재구축·root 검증·공통 commit 연결 |
 | WAL-12 | 복구 진단과 점검 도구 | 로그·checkpoint·page 검사·읽기 전용 dump | decoder 재사용 경계·손상 격리·증거 보존·민감값 처리 |
@@ -109,7 +109,7 @@ DEV4 최소 subset의 문법·타입·DDL/DML·prepared·CLI는 [상세 설계](
 | 항목 | 주제 | 기능 명세 | 설계 |
 | --- | --- | --- | --- |
 | STORE-01 | 공통 row와 RowUID | row identity·scan·fetch·변경·삭제·재사용 의미 | 논리 row와 물리 위치 분리·locator·수명·version |
-| STORE-03 | DISK row와 page | buffer보다 큰 table·variable row·overflow·접근 실패 | page layout·row format·분할·locator·COW 수명 |
+| STORE-03 | DISK row와 page | buffer보다 큰 table·variable row·overflow·접근 실패 | mutable page·row format·분할·locator·undo/allocator 수명 |
 | STORE-04 | Buffer와 캐시 | capacity·pin·eviction·prefetch·사용량 관측 | buffer 동시성·I/O 요청·교체·오류·회수 |
 | STORE-05 | Tablespace와 파일 | 생성·증설·상한·autoextend·online/offline·rename/drop | 파일/공간 metadata·allocation·중복 open·실패 복구 |
 | STORE-06 | Extent segment와 빈 공간 | 공간 사용·반환·fragmentation·구조적 한도 | allocator·free-space 관리·안전한 재사용·계량 |

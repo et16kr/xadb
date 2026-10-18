@@ -338,8 +338,34 @@
         "RC02"
       ],
       "title": "Disk row/index/catalog atomicity",
-      "acceptance": "Fault each COW write/sync/namespace, common commit and publication; disk storage paths and indexes/locator/catalog all or none",
-      "execution_status": "NOT_RUN"
+      "acceptance": "Fault WAL/undo/status/page/DWB/FILEMAP/commit boundaries with steal/no-force; row/index/catalog all-or-none logical visibility, ACK preservation and UNKNOWN fencing; commit need not force data pages",
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        {
+          "name": "wal_before_home_and_steal_redo_losers_then_undo",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "omit_wal_or_doublewrite_barrier_mutant",
+          "expected": "MUTANT_REJECTED"
+        },
+        {
+          "name": "logical_undo_after_split_preserves_other_writer",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "clr_effect_and_progress_second_crash",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "new_zero_home_with_complete_INIT_and_later_redo",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "corrupt_initialized_home_with_only_delta_redo_and_no_pending_image",
+          "expected": "REJECT_CORRUPTION"
+        }
+      ]
     },
     {
       "id": "RC-T13",
@@ -353,9 +379,35 @@
         "RC06",
         "RC08"
       ],
-      "title": "Superseded COW replay roots",
-      "acceptance": "A later root replaces pages still needed for sequential replay from older checkpoint; GC retains them through repeated recovery",
-      "execution_status": "NOT_RUN"
+      "title": "Undo and dirty-page retention with repeated recovery",
+      "acceptance": "Retain snapshot/rollback/version links, allocator generations, current/previous WAL floors and selected pending DWB images. Reclaim begin WAL only after complete undo/status/allocation redo closure; rollback still succeeds. Durably select recovery WRITER before first CLR; second restart must discover it.",
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        {
+          "name": "recovery_epoch_selected_before_clr_then_second_crash",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "active_begin_wal_removed_then_abort_and_restart",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "stale_retired_dwb_image_for_corrupt_newer_home",
+          "expected": "REJECT_CORRUPTION"
+        },
+        {
+          "name": "allocator_torn_with_valid_pending_control",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "undo_suffix_cut_and_B_abort_after_A_aging",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "checkpoint_capture_vs_commit_install_and_dirty_registration",
+          "expected": "RECOVER_OK"
+        }
+      ]
     },
     {
       "id": "RC-T14",
@@ -371,8 +423,18 @@
         "RC12"
       ],
       "title": "Bounded DISK recovery",
-      "acceptance": "Data/index/locator/inventory at least 4x buffer with bounded caches, decode budgets and correct restart result",
-      "execution_status": "NOT_RUN"
+      "acceptance": "Data/index/locator/allocation inventory each >=4x buffer, bounded ATT/runtime DPT and streaming redo. Normal reopen avoids full cold data scan; separate offline full integrity audit and independent history required. Fixed recovery/flush workspace and no proportional disk spill.",
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        {
+          "name": "same_wal_dirty_count_256MiB_1GiB_normal_open_and_separate_full_audit",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "quota_boundary_rollback_CLR_page_reserve_and_repeated_crash",
+          "expected": "RECOVER_OK"
+        }
+      ]
     },
     {
       "id": "RC-T15",
@@ -534,7 +596,7 @@
         "RC10"
       ],
       "title": "PITR archive object closure",
-      "acceptance": "Root-only WAL with missing COW file must fail; complete archived group/payload/page set restores at target boundary into new timeline",
+      "acceptance": "At the selected storage profile, missing required backup/redo/namespace dependencies reject restore; complete target-boundary closure restores into a new timeline. DEV3 uses base backup plus redo, not old root-only COW object rules.",
       "execution_status": "NOT_RUN"
     },
     {
@@ -600,5 +662,11 @@
     }
   ],
   "fault_outcome_contract_ref": "dev2-kernel-design.md#fault-outcomes",
-  "variant_policy": "Every required variant inherits NOT_RUN from its case; freeze exact fixtures, cuts and expected outcome before execution. Corruption/I/O rejection passes do not count as successful reopen or power-loss recovery."
+  "variant_policy": "Every required variant inherits NOT_RUN from its case; freeze exact fixtures, cuts and expected outcome before execution. Corruption/I/O rejection passes do not count as successful reopen or power-loss recovery.",
+  "profile_application": {
+    "DEV2": "K0-K5 cases retain their private/COW expectations",
+    "DEV3": "RC-T12-14 plus DS01-06; shared ACK/UNKNOWN/fault rules retained; fuzzy checkpoint, mutable-page redo/undo and offline backup use DEV3 variants",
+    "L1_L2": "legacy proposal only, NOT_RUN; storage-aware redesign required before applying to DEV3"
+  },
+  "dev3_fault_outcome_contract_ref": "disk-storage-design.md#recovery"
 }

@@ -8,13 +8,13 @@
     "bottom-up K0-K5 order",
     "private writes and atomic CommittedRoot",
     "coarse serializable initial validation",
-    "durable DISK COW pages before common commit attempt",
+    "DEV2 private/COW baseline only; DEV3 replaces page-before-commit with WAL-before-page and persistent undo",
     "same-major formats designated as compatibility baselines by version-compatibility-policy.json remain readable or convertible"
   ],
   "invariants": [
     {
       "id": "RC01",
-      "rule": "ACK implies durable complete commit and all payload/page/namespace dependencies; publication precedes ACK"
+      "rule": "ACK requires a durable complete commit and every recovery/namespace dependency; DEV3 redo protects unflushed mutable pages; publication precedes ACK"
     },
     {
       "id": "RC02",
@@ -30,11 +30,11 @@
     },
     {
       "id": "RC05",
-      "rule": "Checkpoint is one pinned committed cut; immutable files and manifest precede durable CURRENT selection; L0 pins its authenticated replay anchor with the root and never rewinds WRITER"
+      "rule": "DEV2 exact immutable checkpoint; DEV3 fuzzy capture-LSN ATT/DPT checkpoint and separate offline exact-C backup; durable CURRENT never rewinds WRITER"
     },
     {
       "id": "RC06",
-      "rule": "Reclaim only objects/logs outside all current/previous anchor-to-tip closures, replay roots, active preparations and consumer pins; retain old/new selector closure union until durable selection"
+      "rule": "Reclaim only outside every required owner: DEV2 root closures; DEV3 checkpoint/DPT WAL floors, undo/rollback references, snapshot horizons and pending doublewrite; preserve old/new selection uncertainty"
     },
     {
       "id": "RC07",
@@ -42,15 +42,15 @@
     },
     {
       "id": "RC08",
-      "rule": "Repeated recovery preserves source bytes, stabilizes the accepted prior prefix and namespaces before selecting a new epoch or admitting queries, and never skips partially materialized work"
+      "rule": "Recovery preserves source WAL, stabilizes adopted history, durably selects a discoverable recovery epoch before new CLR effects, and resumes safely after repeated faults; DEV3 home pages may change under WAL/doublewrite"
     },
     {
       "id": "RC09",
-      "rule": "Serializable validation includes preceding accepted transactions, absent/range/unique/catalog conflicts; roots merge against preceding state"
+      "rule": "Serializable validation covers preceding accepted changes, absence/range/unique/catalog conflicts; DEV3 default table-set validation and explicit ReadCommitted follow the disk owner contract"
     },
     {
       "id": "RC10",
-      "rule": "Root-only DISK commit journal requires referenced COW objects for extended restore/PITR/physical replication"
+      "rule": "Extended restore/PITR/replication must retain the profile-specific full backup/WAL/namespace closure; root-only COW logs require referenced immutable objects, DEV3 physical redo requires an adequate base backup and full redo chain"
     },
     {
       "id": "RC11",
@@ -197,7 +197,7 @@
   "replication_undo_detail_ref": "replication-undo-plan.json",
   "review_addendum": {
     "reference": "recovery-logging-design.md#section-15",
-    "existing_storage_and_logging_design_preserved": true,
+    "existing_storage_and_logging_design_preserved": "DEV2 only; DEV3 superseded by DEV3-DESIGN-003",
     "new_research_algorithm_adopted": false,
     "principle": "Use established durability/recovery principles; preserve implementation boundaries without predesigning future algorithms",
     "clarifications": [
@@ -216,7 +216,13 @@
         "fault outcome separation"
       ]
     },
-    "import_note": "Design obligations retained; prior source survey and small-model reports remain in the original workspace and are not XADB evidence."
+    "import_note": "Design obligations retained; prior source survey and small-model reports remain in the original workspace and are not XADB evidence.",
+    "dev3_refinement": {
+      "decision_ref": "disk-storage-design.md#decision",
+      "source_ref": "dev3-wal-undo-research.md",
+      "status": "ACCEPTED",
+      "product_tests": "NOT_RUN"
+    }
   },
   "recovery_stabilization": {
     "reference": "dev2-kernel-design.md#recovery-stabilize",
@@ -231,5 +237,39 @@
     "failure": "REJECT_IO; no new WRITER selection, publication, admission or GC",
     "required_fault_case": "RC-T04",
     "adapter_and_error_reopen_qualification": "NOT_RUN"
+  },
+  "storage_profile_scope": {
+    "legacy_fields": "DEV2 private/COW baseline and historical L1/L2 proposal unless explicitly overridden below",
+    "dev3": "DEV3-DESIGN-003; disk-storage-design.md is the owner; legacy COW fields are not DEV3 requirements"
+  },
+  "dev3_profile": {
+    "decision_ref": "disk-storage-design.md#decision",
+    "execution_status": "NOT_RUN",
+    "logging_level": "L0_SINGLE_ORDERED_INTERLEAVED_UPDATE_CLR_COMMIT",
+    "page_policy": "STEAL_NO_FORCE_WAL_BEFORE_PAGE",
+    "undo_authority": "PERSISTENT_UNDOREF_CHAIN_REDO_PROTECTED",
+    "atomicity": "TxnStatus plus published commit frontier; no physical root-set replacement",
+    "torn_page": "selected pending-only doublewrite; sync image/control before home, home sync then durable retirement before slot reuse; immutable FILEMAP bootstrap; complete allocation-authorized INIT image plus retained subsequent WAL may reconstruct an uninitialized/new page; delta-only corruption repair forbidden",
+    "checkpoint": "capture LSN and consistent ATT/DPT/status under commit coordinator; analysis after capture; redo from min(capture,min recLSN)",
+    "recovery_phases": [
+      "LEASE",
+      "PREFLIGHT_SELECT",
+      "DOUBLEWRITE_REPAIR",
+      "ANALYSIS",
+      "REDO",
+      "RECOVERY_LOG_OPEN",
+      "UNDO",
+      "VERIFY_RECOVERY",
+      "STABILIZE",
+      "RESUME",
+      "READY"
+    ],
+    "recovery_log_open": "stabilize adopted prefix and namespaces, durably link/select recovery WRITER before first CLR and its home effects; admission stays closed",
+    "normal_verification": "WAL/control/required/touched pages; full integrity audit separate and mandatory with independent history in acceptance",
+    "backup": "offline admission drain, flush/sync all protected pages at C, copy complete allocated closure, restore fresh timeline without source WAL; authenticated baseLSN greater than every copied pageLSN",
+    "retention": "min current/previous redo floors, dirty recLSN, system work and external consumers; undo/status refs and pending DWB obey separate lifetimes",
+    "no_full_pack_gc": true,
+    "begin_wal_not_mandatory_after_undo_closure": true,
+    "legacy_L1_L2": "not adopted for DEV3; require new storage-aware decision and qualification before implementation"
   }
 }

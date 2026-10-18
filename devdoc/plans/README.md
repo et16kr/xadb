@@ -19,3 +19,5 @@
 - [XADB 제품 기능 요구](product-requirements.md)
 - [XADB 제품 방향](project-direction.md)
 - [stage-completion.json](stage-completion.json)
+
+DEV3의 COW pack 경로는 [in-place·WAL·영속 undo 결정](../contracts/disk-storage-design.md#decision)과 [구현 순서](../plans/dev3-implementation-plan.md#sequence)로 대체한다. 설계와 제품 실행 상태를 구분한다.

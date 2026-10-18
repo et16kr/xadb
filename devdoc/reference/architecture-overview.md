@@ -1,5 +1,8 @@
 # XADB — AI가 개발하고 검증할 수 있는 데이터베이스 설계
 
+DEV3 저장 경로의 현행 정본은 [disk-storage-design](../contracts/disk-storage-design.md#decision)이다. 이 종합 설명의 COW/private·root 불변·global-q 및 불변 checkpoint 표현은 DEV2 기준선/이전 제안으로 한정한다. 후속 DISK는 in-place·WAL-before-page·영속 undo·fuzzy checkpoint를 사용하며 기존 제품 구현 완료를 뜻하지 않는다.
+
+
 > **제안의 중심:** XADB는 AI가 코드를 많이 생성하는 제품이 아니라, AI가 자신의 변경을 작은 범위에서 재현하고 반증할 수 있는 제품으로 만든다. 새 엔진, 테스트 플랫폼, 개발 도구를 하나의 제품으로 설계한다.
 
 작성: 2026-10-18 · 문서 상태: **설계 제안 / 제품 미구현** · 대상: 제품 책임자, DB 엔진 개발자, 테스트·운영 담당자, AI 개발 에이전트

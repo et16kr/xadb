@@ -439,7 +439,7 @@
       "stage_ref": "DEV3",
       "task_ref": "XADB-021",
       "status": "PLANNED",
-      "responsibility": "COW page·bounded buffer·물리 I/O"
+      "responsibility": "in-place page·allocator·dirty buffer·WAL 연계 물리 I/O"
     },
     {
       "path": "crates/engine/src/storage/locator",

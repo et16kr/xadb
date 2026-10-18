@@ -1,5 +1,8 @@
 # DEV2 — SQL 없는 영속 커널 상세 설계
 
+DEV3와의 경계: 이 문서의 private/COW·global-q validation·AXF1 한 거래 frame·불변 exact checkpoint는 **DEV2 기준선**이다. 후속 DISK는 [DEV3-DESIGN-003](disk-storage-design.md#decision)의 in-place·WAL·영속 undo 프로파일로 전환한다. DEV2 기존 구현/증거를 재해석하거나 DEV2 완료를 DEV3에 종속시키지 않는다.
+
+
 2026-10-18 · **D2 기본 설계 ACCEPTED / leaf 형식·실행 profile 동결 미완료 / P0/K0 일부 구현 / 영속 경로·제품 시험 NOT_RUN**
 
 [구현 순서와 검증 계획](../plans/dev2-implementation-plan.md) · [커널 소유 계약](implementation-contracts.md) · [복구 소유 계약](recovery-logging-design.md) · [DEV2 완료 의무](../plans/stage-completion.json)

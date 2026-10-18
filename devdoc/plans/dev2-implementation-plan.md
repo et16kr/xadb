@@ -1,5 +1,8 @@
 # DEV2 — 조사 결과와 구현·검증 계획
 
+후속 DISK 이관: [DEV3 계획](dev3-implementation-plan.md#entry)은 DEV2의 identity·오류/원자성·ACK/UNKNOWN 원리를 소비하되 private/COW·AXF1·global-q·exact checkpoint 표현을 교체한다. 아래 DEV2 구현/인수 계획은 그 기준선으로 유지한다. DEV3 설계 채택이 DEV2 영속 실행 증거는 아니다.
+
+
 2026-10-18 · **D2 기본 설계·착수 순서 채택 / leaf 동결 의무 유지 / P0/K0 일부 구현 / 영속 경로·제품 시험 NOT_RUN**
 
 [상세 커널 설계](../contracts/dev2-kernel-design.md) · [개발 순서](bottom-up-development.md) · [단계 JSON](development-stages.json) · [완료 계약](stage-completion.json)

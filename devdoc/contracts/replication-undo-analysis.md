@@ -1,5 +1,8 @@
 # XADB — recovery undo의 로그 보존과 RP 제약 검토
 
+2026-10-18 범위 갱신: undo-store 저장 결정은 [DEV3-DESIGN-003](disk-storage-design.md#undo)이 채택한다. 아래의 “현재 private/COW 유지·미래 undo-store”는 DEV2 기준선/이전 제안의 범위다. DEV3는 영속 undo와 독립 redo 보존을 구현해야 하며 실행은 NOT_RUN이다. RP capture/spool·archive·PITR는 계속 후속 범위이며 DEV3 초기 선행에 넣지 않는다.
+
+
 
 
 **사용자가 원하는 방향은 가능하다.** undo 정보를 redo에 남기되, checkpoint 이후 rollback/recovery undo가 과거 redo를 역탐색하지 않고 **복구 가능한 undo tablespace의 거래별 chain**을 사용하도록 하면, 장기 미완료 거래 때문에 과거 로그 전체를 유지하는 제약을 제거할 수 있다. 목적은 로그에서 before value를 없애는 것이 아니라 **undo를 수행하기 위해 원본 로그 파일을 붙잡는 의존성의 제거**다.

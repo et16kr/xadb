@@ -101,7 +101,7 @@
       "execution_status": "NOT_RUN",
       "submodule_boundaries": [
         "storage_mem: resident versions and guards",
-        "storage_disk: COW pages and bounded buffers",
+        "storage_disk: in-place pages, allocator, bounded dirty buffers and WAL/doublewrite integration",
         "row_locator: snapshot-specific identity and location",
         "native_index: independent key/RowUID tree and cursor"
       ],

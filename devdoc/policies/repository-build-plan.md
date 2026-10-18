@@ -168,7 +168,7 @@ worker 실행 관계는 controller의 engine import를 뜻하지 않는다. `xad
 | crates/engine/src/durable/wal | K2 | XADB-007 | 공통 batch framing·append·sync |
 | crates/engine/src/durable/recovery | K3 | XADB-008 | 완결 committed batch replay와 reopen |
 | crates/engine/src/durable/checkpoint | K5 | XADB-009 | generation checkpoint·restore·공통 보존 |
-| crates/engine/src/storage/disk | DEV3 | XADB-021 | COW page·bounded buffer·물리 I/O |
+| crates/engine/src/storage/disk | DEV3 | XADB-021 | in-place page·allocator·dirty buffer·WAL 연계 물리 I/O |
 | crates/engine/src/storage/locator | DEV3 | XADB-021 | snapshot별 RowUID 해석·상한 있는 DISK mapping |
 | crates/engine/src/storage/index | DEV3 | XADB-028 | native key·RowUID·cursor와 공통 transaction |
 | crates/engine/src/storage/partition | PART | XADB-030 | membership·routing·local index·원자적 행 이동 |
