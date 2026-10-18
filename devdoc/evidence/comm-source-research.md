@@ -51,3 +51,49 @@ XADB 기준 revision은 `b8b1e60a314d397198e2f2c41205f9e468a6decf`다. 착수 �
 최종 검토 결과는 **기본 설계 채택 가능, 잔여 blocker 없음**이다. `/root`가 계약·통합 담당으로 반영하여 COMM-DESIGN-001을 ACCEPTED로 바꿨다. COMM-C0/C4의 실제 API·dependency·runner·native fault/seed/profile 구체화와 구현의 독립 검토는 후속 의무다. 검토자는 파일을 수정하거나 자동 검사·제품 시험을 실행하지 않았다.
 
 이번 작업은 소스 조사·설계 작성·독립 의미 검토만 수행했다. 문서 자동 검사는 DOC-002에 따라 push 직전으로 남겼으며 push하지 않았다. 제품 시험·공식 배포·C1/KU12/C-V01–18은 NOT_RUN이다. 이 기록은 설계 채택과 검토의 증거이며 제품 실행 PASS가 아니다.
+
+<a id="review-corrections"></a>
+## 후속 설계 리뷰 — COMM-DESIGN-002
+
+2026-10-18 사용자가 COMM 설계 리뷰와 발견 문제의 즉시 수정을 요청했다. 위 최초 리뷰·조사 identity는 당시 기록으로 보존한다. 이번 작업·계약·통합 담당은 `/root`, 별도 AI 검토자는 `/root/comm_review`다. 문서에 표현된 API·종료 의미를 구체화하므로 DP01 D2로 분류했다. 제품 코드와 실행 profile/runner는 추가하지 않는다.
+
+### 기준과 수정 소유
+
+기준 commit은 `055f744a33ac33a34fada89cba2660588f07fb4c`다. 수정 전 `git diff --binary HEAD`의 SHA-256은 `7d796843442e1f50812ce9ddab0ef982708c3692e575cc262789d53468124bbb`이며, 아래 순서의 `[path, file_sha256]` 배열을 UTF-8 JSON(`ensure_ascii=False`, separators `,`/`:`)으로 직렬화한 dirty manifest의 SHA-256은 `72734eb28e80c02bd884a9d98299c5a6ec83632ed7421392859dacad101ad47c`다. 아래 다른 작업의 파일은 수정 대상에서 제외했다.
+
+| 기존 변경 파일 | 착수 시 SHA-256 |
+| --- | --- |
+| `devdoc/implementation/dev2-implementation.md` | `f9e3dff3a64a97598322b755203b28ada9e6bfed6c7ffef2fdc4a77a60df8b0a` |
+| `crates/engine/tests/stress.rs` | `a5a31010ade42cec4c59ba8a08ac692a4ec8fc20732f7738e5e357029663c29f` |
+| `crates/testing/protocol/tests/fuzz.rs` | `83bf8fa120a176f083c2abdb1102b797de31bad6f4953b6b5388bf5d0fd5b5bb` |
+| `scripts/check_dev2_extended.py` | `d5c156664b7713b63f0262173932a87de862ff38d8ed59827014f2372f624332` |
+| `scripts/test_check_dev2_extended.py` | `76042b8a82d9a45499f7b6df337b59a82c05899eb1a3acf7e68b067873a975c0` |
+
+소유 경로는 COMM 설계·구현 계획·이 조사 기록이며, 공유 수정은 `kernel-test-matrix.json`의 KU12, `stage-completion.json`의 COMM 인수 문구와 contracts/plans/evidence의 README 항목이다. `/root`만 순차 편집하고 검토자는 읽기 전용으로 진행했다. 기존 문서 ID·경로는 유지하므로 `documents.json`에 새 항목을 만들지 않는다. 반영 순서는 의미 계약 → 인수 반례/JSON·색인 → 독립 재검토다. 생성 산출물은 없고 문서 자동 검사는 push 시점으로 남긴다.
+
+작업 도중 다른 작업의 DEV3/DEV4 계약·계획, 공통 구현 계약·문서 색인·evidence README와 DEV2 증거 변경이 추가된 것도 확인했다. COMM의 좁은 항목만 patch하고 이 변경들을 되돌리거나 이번 리뷰의 승인 범위에 포함하지 않았다.
+
+### 반례와 수정
+
+아래는 계약·소스·공식 문서 대조로 구성한 반례이며 XADB 제품에서 재현한 실행 결과가 아니다.
+
+| 우선순위·반례 | 수정과 필수 인수 |
+| --- | --- |
+| P1 · pending connect에는 TX가 없고 Open 전 enqueue도 불가한데 writable을 TX가 있을 때만 감시하면 완료를 놓침 | Connecting의 writable/error interest를 TX와 분리하고 socket error 확인. C-V09·16 |
+| P2 · RX slot 포화 중 HUP를 interest=0으로 계속 감시하면 즉시 반환이 반복되고, HUP를 EOF로 해석하면 buffered frame 유실 | 상태별 대기 목록, HUP 힌트 보관과 `read=0` 구분, non-actionable endpoint 제외·bounded 재시도, full listener pause. C-V09·11·16 |
+| P2 · 송신자 clock을 driver보다 10초 늦게 만들면 30초 TX deadline을 driver epoch에서 20초로 판단 가능; 순회 시작 시각 재사용도 늦은 완료를 성공으로 보임 | 동일 Clock instance 주입과 효과 전후 fresh 시각, 늦은 TX byte 진행 보존·RX 미공개. C-V10·16 |
+| P2 · RX 시작 t=0, 새 TX enqueue와 drain t=29.9 s, TX 완료 t=31 s에서 잔존 RX timer가 정상 drain을 t=30 s에 중단 | partial RX·예약 반환과 RX/idle timer 해제, 검증 RX 유지, TX/drain deadline만 적용. C-V13 |
+| P2 · accepted TX 뒤 owner를 drop하고 ticket만 보유하면 close 전용 결과 정리 규칙으로는 Pending이 영구 잔존 가능 | owner guard Drop도 admission 차단·close·ticket 1회 실패 확정. 실제 prefix 보존, 외부 lease/ledger 수명 유지, terminal 회수는 ticket 소비. C-V06·13·16 |
+| P2 · IPv4 listener가 매 순회 accept 8회를 먼저 쓰면 IPv6/Unix가 연결 timeout까지 선택되지 않을 수 있음 | driver 전체 8회 예산 안에서 ready listener별 1 attempt round-robin, 시작 위치 유지. C-V13·scripted 공정성 |
+
+`/root/comm_review`는 원래 계약, C1/KU12, 실제 foundation codec/runtime 및 platform clock을 직접 읽었다. 독립 검토에서 Drop 결과 정리·clock epoch·partial RX drain을 지적했고 listener 간 starvation도 추가했다. `/root`의 Connecting/hangup 반례도 대조했다. 이는 같은 모델의 별도 실행이며 오류가 통계적으로 독립이라는 주장은 하지 않는다.
+
+### 추가 근거와 검증 범위
+
+현재 [foundation Clock](../../crates/foundation/src/runtime.rs)과 [platform MonotonicClock](../../crates/platform/src/runtime.rs)은 서로 다른 instance의 epoch를 비교할 수 없다고 명시한다. 기존 cooperative cancellation은 token 확인과 다음 효과 사이의 원자성을 보장하지 않는다. 이번 설계는 새 clock이나 강제 syscall 중단을 구현했다고 주장하지 않고 조립과 관측 규칙을 고정한다.
+
+2026-10-18에 Linux man-pages 6.19의 [connect(2)](https://man7.org/linux/man-pages/man2/connect.2.html)와 [poll(2)](https://man7.org/linux/man-pages/man2/poll.2.html)를 열람했다. 전자는 nonblocking connect의 writable 대기와 SO_ERROR 확인을 설명하고, 후자는 interest=0에서도 HUP/ERR/NVAL이 반환되며 hangup 이후에도 unread bytes가 남을 수 있음을 명시한다. XADB의 상태별 interest·대기 목록 제외는 이 API 의미에서 도출한 설계 수정이다. 다른 DBMS checkout을 다시 조사·수정하거나 실행하지 않았다.
+
+`/root/comm_review`가 수정본을 독립 재검토하여 **잔여 차단 결함 없음, COMM-DESIGN-002 채택 가능**으로 판정했다. 6개 반례와 C-V 항목의 대응, Closed 연결의 미회수 RX/외부 owner에 대한 slot 유지, 20 ms 재시도 시각, KU12·COMM JSON과 README 연결을 확인했다. `/root`가 계약·통합 담당으로 반영하여 ACCEPTED로 바꿨다. 검토자는 파일 수정·자동 검사·제품 시험을 수행하지 않았다.
+
+기존 변경 파일 hash 재대조에서 네 untracked 소스/스크립트는 착수 시와 같았고 DEV2 구현 문서는 동시 작업으로 추가 변경된 것을 확인했다. 이번 작업은 어느 파일도 수정하지 않았다. COMM 미구현으로 제품 시험·C1/KU12·C-V01–18은 계속 NOT_RUN이다. 문서 검사기는 DOC-002에 따라 실행하지 않았고 commit/push도 하지 않았다. 기존 과거 실행 증거와 `document-validation.json`을 갱신하지 않는다.

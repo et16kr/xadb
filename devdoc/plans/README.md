@@ -7,7 +7,7 @@
 - [architecture-decisions.json](architecture-decisions.json)
 - [하위 계층부터 개발하는 순서](bottom-up-development.md)
 - [capability-inventory.json](capability-inventory.json)
-- [COMM — 구현·검증 계획](comm-implementation-plan.md) — C1/KU12 leaf·fault·독립 peer·자원·성능 인수와 DEV5 이관
+- [COMM — 구현·검증 계획](comm-implementation-plan.md) — C1/KU12 leaf·readiness/종료 경합 반례·독립 peer·자원·성능 인수와 DEV5 이관
 - [DEV2 — 조사 결과와 구현·검증 계획](dev2-implementation-plan.md)
 - [DEV3 — 구현·병렬 개발·검증 계획](dev3-implementation-plan.md)
 - [DEV4 — embedded SQL 구현·검증 계획](dev4-implementation-plan.md) — Oracle 의미·DDL 두 outcome·rollback/recrash 인수와 후속 격리 의무

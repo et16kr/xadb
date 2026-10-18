@@ -102,7 +102,7 @@
       "gate": "C1",
       "stage_or_step": "COMM",
       "title": "Transport without engine",
-      "acceptance": "Owned IPv4/IPv6 loopback and Unix endpoints; AXF1 stream and bounded byte/slot queues, short I/O, absolute deadlines, cancellation/drain, independent oracle and actual fault receipts; all C-V01–18 in comm-implementation-plan.md. SQL/commit/TLS semantics remain subsequent owner obligations.",
+      "acceptance": "Owned IPv4/IPv6 loopback and Unix endpoints; AXF1 stream and bounded byte/slot queues, state-specific readiness and fair accept, short I/O, shared-clock absolute deadlines, cancellation/drain and owner-drop ticket settlement, independent oracle and actual fault receipts; all C-V01–18 in comm-implementation-plan.md. SQL/commit/TLS semantics remain subsequent owner obligations.",
       "execution_status": "NOT_RUN",
       "contract_ref": "comm-design.md",
       "implementation_plan_ref": "comm-implementation-plan.md"

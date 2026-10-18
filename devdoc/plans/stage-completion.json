@@ -1045,7 +1045,7 @@
         }
       ],
       "pass_criteria": [
-        "engine 없이 실제 소유 TCP IPv4/IPv6 loopback·Unix endpoint에서 KU12 상세 C-V01–18 전체와 DEV1/DEV0 회귀 PASS; AXF1·byte/slot/global quota·absolute deadline·취소/종료·독립 oracle·native fault receipt·성능 비용 인수 충족"
+        "engine 없이 실제 소유 TCP IPv4/IPv6 loopback·Unix endpoint에서 KU12 상세 C-V01–18 전체와 DEV1/DEV0 회귀 PASS; AXF1·byte/slot/global quota·상태별 readiness/accept 공정성·공유 clock absolute deadline·취소/drain/owner Drop 결과 정리·독립 oracle·native fault receipt·성능 비용 인수 충족"
       ],
       "acceptance_input_status": "LEAF_DESIGN_DEFINED_EXECUTABLE_PROFILE_REQUIRED",
       "open_decisions": [
