@@ -6,7 +6,7 @@
 
 이 문서는 DEV4의 유한한 SQL 범위를 구현 전에 검토할 수 있도록 구문과 관측 결과를 구체화한다. 테이블·색인, 한 테이블 조회, INSERT·UPDATE·DELETE, 트랜잭션을 다룬다. 여기서 선택한 철자·NULL unique·문자 길이·정렬·세션 제어의 상세는 **신규 제안**이다. 기존 설계로 채택된 statement rollback·초기 SERIALIZABLE·트랜잭션 안 DDL 거절·결과 불명 보존은 그대로 따른다.
 
-후속 [DEV4 상세 설계](../contracts/dev4-sql-design.md)가 최소 SQL의 소유 계약과 prepared 실행을 구체화한다. 이 초안의 예제는 계속 미실행 제안이며 후속 계약과 대조한다. 특히 아래 5절의 최종 statement view 제약 검사 제안은 미채택이고, [DEV3 즉시 검사](../contracts/disk-storage-design.md#keys)와 DEV4의 mutation 순서·statement rollback을 적용한다.
+후속 [DEV4 상세 설계](../contracts/dev4-sql-design.md)가 최소 SQL의 소유 계약과 prepared 실행을 구체화한다. 이 초안의 예제는 당시의 미실행 제안으로 보존하며 현행 Q1 기대값으로 사용하지 않는다. [DEV4-REVIEW-002](../contracts/dev4-sql-design.md#oracle-review)는 [현재 DEV3](../contracts/disk-storage-design.md#keys)의 부분 NULL·문장 최종 UNIQUE 검사를 소비하고, 미인용 이름 대문자·SQL 빈 text 입력의 NULL 정규화·DDL 전 commit을 채택한다. 아래 소문자 이름·빈 text 보존·Active DDL 거절은 대체된 제안이다. 초안 전체가 채택됐거나 예제가 실행됐다는 뜻은 아니다.
 
 <a id="section-1"></a>
 

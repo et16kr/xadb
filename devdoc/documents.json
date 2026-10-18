@@ -486,7 +486,7 @@
     "dev4-sql-design.md": {
       "path": "contracts/dev4-sql-design.md",
       "role": "contracts",
-      "title": "DEV4 — embedded 최소 SQL 상세 설계"
+      "title": "DEV4 — embedded 최소 SQL·Oracle 의미 상세 설계"
     },
     "dev4-implementation-plan.md": {
       "path": "plans/dev4-implementation-plan.md",
@@ -496,7 +496,7 @@
     "dev4-source-research.md": {
       "path": "evidence/dev4-source-research.md",
       "role": "evidence",
-      "title": "DEV4 소스 조사 기록"
+      "title": "DEV4 소스·Oracle/ARIES 조사 기록"
     },
     "dev3-wal-undo-research.md": {
       "path": "evidence/dev3-wal-undo-research.md",

@@ -827,7 +827,8 @@
   "review_ref": "manual-review.json",
   "successor_contract_ref": "dev4-sql-design.md",
   "proposal_disposition": {
-    "constraint_validation": "Final-statement-view proposal was not adopted. DEV3 mutation-by-mutation immediate uniqueness and DEV4 deterministic mutation order with whole-statement rollback apply.",
-    "other_proposals": "Consult dev4-sql-design.md for the bounded adopted scope; this draft and its examples remain unexecuted proposal inputs."
+    "constraint_validation": "DEV4-REVIEW-002 consumes current DEV3 statement-final uniqueness, with duplicate exemption only for all-NULL keys and whole-statement rollback. The earlier DEV4 mutation-immediate choice is superseded.",
+    "oracle_semantics": "DEV4-REVIEW-002 supersedes this draft's lowercase folding, preserved SQL empty text inputs and rejection of active-session DDL. Current SQL folds unquoted names to uppercase, normalizes empty Utf8 inputs to typed NULL and reports prior-transaction precommit separately from independent DDL.",
+    "other_proposals": "Consult dev4-sql-design.md for the bounded adopted scope. All original examples remain unexecuted historical proposals, not current Q1 expected results. Native empty values and native no-DDL-in-transaction remain distinct contracts."
   }
 }

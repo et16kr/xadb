@@ -28,7 +28,9 @@
 
 DEV4는 비파티션 디스크 table의 CREATE/DROP TABLE/INDEX, INSERT/UPDATE/DELETE, 단일 table SELECT·predicate·ORDER BY·limit, BEGIN/COMMIT/ROLLBACK과 typed prepare/bind/execute/fetch/close를 제공할 계획이다. 최소 타입은 signed 64-bit integer·BOOLEAN·UTF-8 text·binary와 NULL이다. 문법·타입·parameter·수명·오류는 [DEV4 상세 설계](../contracts/dev4-sql-design.md), 구현 순서·SC02/KU13/PF10은 [구현·검증 계획](dev4-implementation-plan.md)을 따른다. [SQL 초안](../reference/sql-language-draft.md)은 이전 제안이며, 실제 leaf API·profile 동결과 DEV3 실행 선행 요건은 남아 있다.
 
-PK·UNIQUE·NOT NULL, statement rollback, snapshot + coarse validation SERIALIZABLE, read-your-writes, schema/object 변경 후 handle 검증을 포함한다. 조인·집계·subquery·window·확장 타입·FK/CHECK·PSM·trigger 등은 DEV7에서 확장한다. 기본 prepare/bind를 DEV7까지 미루지 않는다.
+[Oracle 리뷰 보완](../contracts/dev4-sql-design.md#oracle-review)은 대문자 미인용 이름, SQL 빈 text 입력의 typed NULL, 전체 NULL만 중복 허용하는 문장 최종 UNIQUE, 이전 거래와 DDL의 별도 commit 결과·RecoveryRequired를 구체화한다. native 값 표현·독립 DDL API를 유지하며 DEV3-DESIGN-003의 statement token·table 단위 SERIALIZABLE·WAL/영속 undo 공급을 전제로 한다. 실제 공급 검증과 SQL READ COMMITTED 노출은 [후속 계약 의무](dev4-implementation-plan.md#oracle-followup)이며 Oracle 전체 호환·제품 실행 완료를 뜻하지 않는다.
+
+PK·UNIQUE·NOT NULL, statement rollback, transaction snapshot + table read/write-set validation SERIALIZABLE, read-your-writes, schema/object 변경 후 handle 검증을 포함한다. 조인·집계·subquery·window·확장 타입·FK/CHECK·PSM·trigger 등은 DEV7에서 확장한다. 기본 prepare/bind를 DEV7까지 미루지 않는다.
 
 <a id="section-3"></a>
 ## 3. 커널과 저장

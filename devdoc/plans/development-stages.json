@@ -381,15 +381,16 @@
     ],
     "constraints": [
       "PRIMARY_KEY",
-      "UNIQUE_NULL_DISTINCT",
+      "UNIQUE_ALL_NULL_DISTINCT_STATEMENT_FINAL",
       "NOT_NULL"
     ],
     "transaction": [
       "BEGIN_COMMIT_ROLLBACK",
       "AUTOCOMMIT",
-      "SERIALIZABLE_COARSE_VALIDATION",
+      "SERIALIZABLE_TABLE_READ_WRITE_SET_VALIDATION",
       "READ_YOUR_WRITES",
-      "STATEMENT_ROLLBACK"
+      "STATEMENT_ROLLBACK",
+      "SQL_DDL_PRECOMMIT_WITH_SEPARATE_OUTCOMES"
     ],
     "interfaces": [
       "embedded SQL API and CLI; network not required",
@@ -407,10 +408,24 @@
       "REPLICATION_HA",
       "XA_DB_LINK",
       "LOB_SPATIAL",
-      "SHARED_PLAN_CACHE_ADVANCED_REOPTIMIZATION"
+      "SHARED_PLAN_CACHE_ADVANCED_REOPTIMIZATION",
+      "READ_COMMITTED_REQUIRES_ENGINE_SNAPSHOT_AND_CONFLICT_CONTRACT"
     ],
     "deferred_does_not_mean_excluded_from_replacement": true,
     "unimplemented_behavior": "explicit unsupported error; no silent success",
+    "oracle_semantics": {
+      "decision_ref": "dev4-sql-design.md#oracle-review",
+      "reference_version": "Oracle Database 19c documentation; no Oracle execution comparison",
+      "unquoted_identifier": "ASCII uppercase; quoted bytes preserved; fixed PUBLIC namespace",
+      "empty_text": "SQL Utf8 literal/bind inputs become typed NULL after type checking; native stored empty Utf8 and empty Binary remain values",
+      "uniqueness": "Only all-NULL composite keys permit duplicates; validate statement-final delta in the engine",
+      "ddl": "Entry syntax/support/session checks precede explicit prior-transaction commit; semantic validation and atomic native DDL follow only confirmed success",
+      "ddl_result": "Separate prior_transaction_outcome and ddl_outcome, including NotAttempted and NotCommittedRecoveryRequired with per-transaction certainty; never retry the whole SQL automatically",
+      "isolation": "DEV3-DESIGN-003 transaction snapshot plus table read/write-set validation; SQL READ COMMITTED exposure awaits actual native supply validation and a separate SQL decision",
+      "recovery": "DEV3-DESIGN-003 WAL/persistent undo/CLR supply and rollback/recrash R1-R4; preserve NotCommitted/RecoveryRequired and fencing on incomplete undo; DEV2 private/COW is not disk execution evidence",
+      "claims_full_oracle_compatibility": false,
+      "product_execution_status": "NOT_RUN"
+    },
     "prepared_execution": {
       "task_ref": "XADB-011",
       "operations": [

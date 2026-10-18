@@ -73,7 +73,8 @@
         "D4-T01..T04: complete grammar/type/NULL/DDL/DML boundary vectors and statement effects",
         "D4-T05..T08: scan/point/range, sort/limit, typed prepared metadata/binding and bounded handle/result lifecycle",
         "D4-T09..T11: transaction/concurrency, current-build durability/reopen and cancellation/quota/spill cleanup",
-        "D4-T12..T14: embedded CLI, independent SQL/native oracle and PF10 plan/storage evidence"
+        "D4-T12..T14: embedded CLI, independent SQL/native oracle and PF10 plan/storage evidence",
+        "D4-V17..V24: partial/all-NULL uniqueness, uppercase names, SQL empty-text/native boundary, DDL prior/DDL outcomes and rollback/recrash histories R1-R4"
       ]
     },
     {
@@ -736,17 +737,20 @@
         "독립 row/history oracle, native/SQL 대조와 영향받는 DEV2/DEV3 회귀 및 CLI 결과/metadata 확인",
         "해당 단계의 PF 성능 개발 인수: 실제 production 경로·동일 의미·유효한 비교·독립 정답·계측 비용·재현 증거. 미구현/불충분을 PASS로 기록하지 않음",
         "기본 typed prepare/bind/execute/fetch/close와 parameter/result metadata를 직접 실행과 대조; stale plan·오류·자원 수명 검증. 고급 공유 cache·재최적화는 비요구",
-        "dev4-implementation-plan.md의 D4-T01–T14 필수 변형과 coverage inventory 전부; D4-F01–F05 실행 입력 동결·독립 검토 필요"
+        "dev4-implementation-plan.md의 D4-T01–T14 필수 변형과 coverage inventory 전부; D4-F01–F05 실행 입력 동결·독립 검토 필요",
+        "DEV4-REVIEW-002의 D4-V17–24: SQL/native 값 경계·문장 최종 UNIQUE·DDL 두 outcome/NotCommittedRecoveryRequired와 R1–R4 rollback/recrash를 DEV3-DESIGN-003 실제 WAL/undo/CLR 경로·독립 이력으로 판정; Oracle 전체 호환이나 미실행 CLR PASS로 확대하지 않음"
       ],
       "acceptance_input_status": "BASE_DESIGN_DEFINED_LEAF_API_AND_EXECUTION_PROFILES_PENDING",
       "open_decisions": [
-        "D4-F01/F02: actual DEV3 public API handoff, Rust signatures and complete error/handle/metadata transition vectors",
+        "D4-F01/F02: actual DEV3-DESIGN-003 API handoff, shared scan/mutation statement token, table validation, uppercase/text normalization/native boundary, Rust signatures, DDL two outcomes/RecoveryRequired and cleanup ownership/error/handle/metadata vectors",
         "D4-F03: temporary spill codec, owner cleanup API and allocation/FD/disk fault inventory",
-        "D4-F04: SC02/KU13 full variant inventory, independent oracle mutants, worker protocol and executable commands",
+        "D4-F04: SC02/KU13 full variant inventory including V17-V24 and R1-R4, independent oracle mutants, two-outcome worker protocol and executable commands",
         "D4-F05: PF10 fixtures/environment/release recipes, numerical resource/instrumentation/regression budgets and paired measurement schedule"
       ],
       "deferred_obligations": [
-        "server/client·확장 SQL은 후속 의무"
+        "server/client·확장 SQL은 후속 의무",
+        "SQL READ COMMITTED exposure/default requires actual DEV3-DESIGN-003 native statement snapshots and row/key conflict verification; conservative full abort after an observed-version change is not identical to Oracle",
+        "DEV3-DESIGN-003 acceptance and actual WAL/undo/CLR/doublewrite/checkpoint/retention/recrash evidence precede DEV4 production handoff; this design edit does not execute the storage implementation"
       ],
       "run_entrypoint": null,
       "evidence_refs": [],

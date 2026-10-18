@@ -8,7 +8,7 @@ r1 당시 DEV0/DEV1은 로컬 범위 PASS다. 당시 DEV2 reference/substrate/fr
 
 DEV3의 [소스 조사](dev3-source-research.md)는 실제 revision·열람 범위의 기록이며 DBMS build·제품 실행 또는 S1 PASS 증거가 아니다.
 
-DEV4의 [소스 조사](dev4-source-research.md)는 PostgreSQL·MariaDB·CUBRID·SQLite의 SQL/prepared 경계를 읽은 기록이며 SQL 구현·Q1 PASS 증거가 아니다.
+DEV4의 [소스·Oracle/ARIES 조사](dev4-source-research.md)는 PostgreSQL·MariaDB·CUBRID·SQLite의 SQL/prepared 및 복구 경계와 Oracle 19c 공식 문서·ARIES 초록/원 논문의 명시한 부분을 읽은 기록이다. SQL 구현·Oracle 실행 비교·Q1 PASS 증거가 아니다.
 
 현재 source SHA-256은 `3fa1b7958cc5597ba99be6ba81d75ea65360657d318d22d59e6e2b633f76a540`다. 재구성 범위·별도 리뷰는 [경로 재구성 기록](../history/project-migration.md#testing-layout)을 따른다. `dev0-validation.json`·`dev1-validation.json`·`dev2-validation.json` 문서 ID는 r2를 참조하고, r1은 원래 파일 경로를 문서 ID로 등록해 보존한다.
 
@@ -19,7 +19,7 @@ DEV4의 [소스 조사](dev4-source-research.md)는 PostgreSQL·MariaDB·CUBRID�
 - [dev2-xadb-20261018-r1.json](dev2-xadb-20261018-r1.json)
 - [implementation-import-inventory.json](implementation-import-inventory.json)
 - [DEV3 소스 조사 기록](dev3-source-research.md)
-- [DEV4 소스 조사 기록](dev4-source-research.md)
+- [DEV4 소스·Oracle/ARIES 조사 기록](dev4-source-research.md)
 
 - [후속 구현 이관 inventory](implementation-incremental-import-20261018.json)
 
