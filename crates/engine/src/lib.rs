@@ -4,6 +4,7 @@
 
 pub mod api;
 mod catalog;
+pub mod diagnostics;
 mod error;
 mod identity;
 mod metrics;

@@ -1,5 +1,7 @@
 //! K0 native adapter to the actual volatile substrate. No expected values or verdicts.
 //! A protocol error permanently fences this session before any further engine effect.
+pub mod performance;
+
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt,
@@ -80,6 +82,7 @@ pub struct Session {
     run: Option<[u8; 16]>,
     requests: BTreeSet<u64>,
     poisoned: bool,
+    performance_complete: bool,
     store: Option<VolatileStore>,
     database: [u8; 16],
     timeline: u64,
@@ -99,6 +102,7 @@ impl Session {
             run: None,
             requests: BTreeSet::new(),
             poisoned: false,
+            performance_complete: false,
             store: None,
             database: [0; 16],
             timeline: 0,
@@ -112,7 +116,7 @@ impl Session {
     /// Product errors are observations. Envelope/alias/session errors are fatal and
     /// every subsequent dispatch is rejected, even if its inputs would be valid.
     pub fn dispatch(&mut self, request: wire::Request) -> Result<wire::Response, ProtocolError> {
-        if self.poisoned {
+        if self.poisoned || self.performance_complete {
             return Err(ProtocolError("session is poisoned"));
         }
         let result = self.execute(&request);
@@ -304,6 +308,20 @@ impl Session {
                         resident_bytes: m.resident_bytes,
                         snapshot_pins: m.snapshot_pins,
                     },
+                })
+            }
+            A::Performance { input } => {
+                if request.actor != 0 || request.request != 2 || self.requests.len() != 2 {
+                    return Err(
+                        ProtocolError("performance must immediately follow initialize").into(),
+                    );
+                }
+                if !input.validate() {
+                    return Err(ProtocolError("invalid performance profile").into());
+                }
+                self.performance_complete = true;
+                Ok(O::Performance {
+                    output: Box::new(performance::run(input)?),
                 })
             }
         }

@@ -1,0 +1,852 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18T12:20:06.429217+00:00",
+  "scope": "DEV2 K0-005 current-capability diagnostics and local instrumentation/replay audit; no optimization promotion",
+  "status": "PASS",
+  "dev2_stage_status": "INCOMPLETE",
+  "k0_stage_status": "INCOMPLETE",
+  "durability": "NOT_RUN",
+  "protected_ci": "NOT_RUN",
+  "pf12_optimization": "NOT_RUN",
+  "performance_qualification": "INCOMPLETE",
+  "artifact_directory": "artifacts/dev2-performance/check-bd77v_rc",
+  "checks": [
+    {
+      "id": "lower-regression",
+      "command": [
+        "python3",
+        "scripts/check_dev2_reference.py",
+        "--with-substrate",
+        "--report",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/dev2-regression.json"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 1800,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/lower-regression.log",
+      "log_sha256": "afb5faa83e447b92c4a3aeafc24dc9360b938e91c6fa330575e9d071b9a3a2a4"
+    },
+    {
+      "id": "platform-observers",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-platform",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--lib"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/platform-observers.log",
+      "log_sha256": "d3c67991d9fd299a8ce814f2c8204eb01ca7e396cb1225b8243f6cd83e9b7eb7"
+    },
+    {
+      "id": "protocol-performance",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-protocol",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--test",
+        "performance"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/protocol-performance.log",
+      "log_sha256": "822cfcc75fc5e398722b91399eb84171a9cc9836311be3632232c8229f54b532"
+    },
+    {
+      "id": "catalog-performance-boundary",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-reference",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--test",
+        "performance_boundary"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/catalog-performance-boundary.log",
+      "log_sha256": "4496aa66ef29e530a787cb54344c13adf4d531f84b9dc1032851c0fb0d9bf84d"
+    },
+    {
+      "id": "diagnostics-unit",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--lib"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/diagnostics-unit.log",
+      "log_sha256": "7f44b358122ee737813bf7be558c06770f982265c37b668d2649be07dc445e43"
+    },
+    {
+      "id": "engine-performance",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--test",
+        "performance"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/engine-performance.log",
+      "log_sha256": "96fe442abf7d910271d842278e447b58d9bebd4b5b5bdd3a73223d811332fb7c"
+    },
+    {
+      "id": "worker-performance",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--test",
+        "performance"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/worker-performance.log",
+      "log_sha256": "18a430532bd512170faf51da6a6eba844d8a30e193ece358238983c6e56a94bc"
+    },
+    {
+      "id": "worker-performance-admission",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--test",
+        "performance_admission"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/worker-performance-admission.log",
+      "log_sha256": "832983c52228604083daf6eab45f2b749d7a945c46d010710fa18f1255c6133f"
+    },
+    {
+      "id": "controller-performance",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--test",
+        "performance"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/controller-performance.log",
+      "log_sha256": "741296b38a5f93350d82e159494291e1cf2a5b6d4067881d7eb70b2a8a46ddc2"
+    },
+    {
+      "id": "release-build",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--target-dir",
+        "/tmp/xadb-performance-release-v_87cr3o",
+        "--target",
+        "x86_64-unknown-linux-gnu",
+        "-p",
+        "xadbtest",
+        "-p",
+        "xadbtest-engine-worker"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/release-build.log",
+      "log_sha256": "601378359253227947e41c76a1add99f8100304a4f1ec0de4129a6b4b3781339"
+    },
+    {
+      "id": "profile",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/binaries/xadbtest",
+        "performance-profile"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/profile.log",
+      "log_sha256": "81fd36bd7a2a827c0444c22e8c46b7fd89a84876849a72de3ab48db20f4f429b"
+    },
+    {
+      "id": "prepare-always",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/binaries/xadbtest",
+        "prepare-performance",
+        "--receipt",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/build-receipt.json",
+        "--receipt-sha256",
+        "8d981b75193fe146436c7eb763061a704499331456a19e4e230f7d2429a8286a",
+        "--campaign-id",
+        "f2168cd441804ce7ad1a9ab750c5c26a",
+        "--seed",
+        "20261018",
+        "--mode",
+        "always",
+        "--output",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/always-recipe.json"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/prepare-always.log",
+      "log_sha256": "4e512a80ebd7ecd381c494a6298755a96ec3f2d15b38a0ded0960bc870013c2c"
+    },
+    {
+      "id": "audit-always",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/binaries/xadbtest",
+        "run-performance",
+        "--recipe",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/always-recipe.json",
+        "--recipe-sha256",
+        "ea437801e7a7d9f8b606d64c8d2a381add8316b307f8731192d34fc94512373c",
+        "--baseline-worker",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/binaries/xadbtest-engine-worker",
+        "--candidate-worker",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/binaries/xadbtest-engine-worker",
+        "--baseline-receipt",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/build-receipt.json",
+        "--candidate-receipt",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/build-receipt.json",
+        "--baseline-config",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/build-config.json",
+        "--candidate-config",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/build-config.json",
+        "--artifacts",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/always"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0,
+        2
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/audit-always.log",
+      "log_sha256": "9b69f5815c72cf2f9f5d35daa581f43398d4a35c15b8170e51ad7d8d4cf93b04"
+    },
+    {
+      "id": "verify-always",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/binaries/xadbtest",
+        "verify-performance",
+        "--directory",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/always/performance-B2DAJS",
+        "--recipe-sha256",
+        "ea437801e7a7d9f8b606d64c8d2a381add8316b307f8731192d34fc94512373c"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0,
+        2
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/verify-always.log",
+      "log_sha256": "9b69f5815c72cf2f9f5d35daa581f43398d4a35c15b8170e51ad7d8d4cf93b04"
+    },
+    {
+      "id": "prepare-detailed",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/binaries/xadbtest",
+        "prepare-performance",
+        "--receipt",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/build-receipt.json",
+        "--receipt-sha256",
+        "8d981b75193fe146436c7eb763061a704499331456a19e4e230f7d2429a8286a",
+        "--campaign-id",
+        "4d51573211a34a878dc75e2b2a53a6c3",
+        "--seed",
+        "20261018",
+        "--mode",
+        "detailed",
+        "--output",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/detailed-recipe.json"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/prepare-detailed.log",
+      "log_sha256": "1e4a340ba387025458230bae955da288b316199b93fb6d87ba5b8f5e171da169"
+    },
+    {
+      "id": "audit-detailed",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/binaries/xadbtest",
+        "run-performance",
+        "--recipe",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/detailed-recipe.json",
+        "--recipe-sha256",
+        "0827ca28131c4230ffb4726da94de79325ac6a47227f2ba13f1b51a0ed78587a",
+        "--baseline-worker",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/binaries/xadbtest-engine-worker",
+        "--candidate-worker",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/binaries/xadbtest-engine-worker",
+        "--baseline-receipt",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/build-receipt.json",
+        "--candidate-receipt",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/build-receipt.json",
+        "--baseline-config",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/build-config.json",
+        "--candidate-config",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/build-config.json",
+        "--artifacts",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/detailed"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0,
+        2
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/audit-detailed.log",
+      "log_sha256": "adb0fdae12e0fa618f207625753d47f8ef263e418355b801d79889d4ecdbe7c0"
+    },
+    {
+      "id": "verify-detailed",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/binaries/xadbtest",
+        "verify-performance",
+        "--directory",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/detailed/performance-5FK586",
+        "--recipe-sha256",
+        "0827ca28131c4230ffb4726da94de79325ac6a47227f2ba13f1b51a0ed78587a"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0,
+        2
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/verify-detailed.log",
+      "log_sha256": "adb0fdae12e0fa618f207625753d47f8ef263e418355b801d79889d4ecdbe7c0"
+    },
+    {
+      "id": "replay",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/replay-workspace/original/controller",
+        "replay-performance",
+        "--directory",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/replay-workspace/original",
+        "--recipe-sha256",
+        "ea437801e7a7d9f8b606d64c8d2a381add8316b307f8731192d34fc94512373c",
+        "--campaign-id",
+        "9a337b705eaa4eb38cff047e58dfc465",
+        "--artifacts",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/replay"
+      ],
+      "cwd": "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/replay-workspace",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0,
+        2
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/replay.log",
+      "log_sha256": "dd7d92a6077b672e5ef8244fa17e08bb7f7ab4f5425765caa15956ebebc74dee"
+    },
+    {
+      "id": "verify-replay",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/replay/performance-rfkrK9/controller",
+        "verify-performance",
+        "--directory",
+        "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/replay/performance-rfkrK9",
+        "--recipe-sha256",
+        "eb47978a4362a964dc132d0b654c9e0d9d5b01828be4f98c564cde20b402c06c"
+      ],
+      "cwd": "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/replay-workspace",
+      "exit_code": 0,
+      "accepted_exit_codes": [
+        0,
+        2
+      ],
+      "status": "PASS",
+      "timed_out": false,
+      "timeout_seconds": 600,
+      "log": "artifacts/dev2-performance/check-bd77v_rc/verify-replay.log",
+      "log_sha256": "dd7d92a6077b672e5ef8244fa17e08bb7f7ab4f5425765caa15956ebebc74dee"
+    }
+  ],
+  "campaigns": [
+    {
+      "schema_version": 1,
+      "directory": "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/always/performance-B2DAJS",
+      "recipe_sha256": "ea437801e7a7d9f8b606d64c8d2a381add8316b307f8731192d34fc94512373c",
+      "index_sha256": "44c1b9556fbfe920d455e038a98cb8f0c3b1320dc0968c529da00142220eecc8",
+      "original_controller": {
+        "source_sha256": "6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+        "target": "x86_64-unknown-linux-gnu",
+        "profile": "release",
+        "self_test": false
+      },
+      "original_controller_sha256": "18f7af0d5f96d65f6c2fc91f256695d76fe17fd41d39aa093617c7bc3d606bf6",
+      "analyzer_build": {
+        "source_sha256": "6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+        "target": "x86_64-unknown-linux-gnu",
+        "profile": "release",
+        "self_test": false
+      },
+      "analyzer_sha256": "18f7af0d5f96d65f6c2fc91f256695d76fe17fd41d39aa093617c7bc3d606bf6",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "NO_MATERIAL_CHANGE",
+        "guardrails": "FAIL",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 85407350,
+            "denominator": 85415275
+          },
+          {
+            "numerator": 84510369,
+            "denominator": 83286918
+          },
+          {
+            "numerator": 84043302,
+            "denominator": 83566729
+          },
+          {
+            "numerator": 85109635,
+            "denominator": 85238139
+          },
+          {
+            "numerator": 84150245,
+            "denominator": 83163663
+          },
+          {
+            "numerator": 84826768,
+            "denominator": 82297401
+          },
+          {
+            "numerator": 84717470,
+            "denominator": 82442426
+          },
+          {
+            "numerator": 85505566,
+            "denominator": 83700653
+          },
+          {
+            "numerator": 84070083,
+            "denominator": 83230140
+          },
+          {
+            "numerator": 85237547,
+            "denominator": 82785396
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 85407350,
+            "denominator": 85415275
+          },
+          {
+            "numerator": 85237547,
+            "denominator": 82785396
+          }
+        ],
+        "median": [
+          14036806402516557,
+          13852890361721268
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 84826768,
+          "denominator": 82297401
+        },
+        "worst_cpu": {
+          "numerator": 84897163,
+          "denominator": 81998356
+        },
+        "worst_external": {
+          "numerator": 97272755,
+          "denominator": 92707065
+        },
+        "worst_sample_p99": {
+          "numerator": 2955,
+          "denominator": 2044
+        },
+        "worst_process_peak_rss_delta": 4096
+      }
+    },
+    {
+      "schema_version": 1,
+      "directory": "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/detailed/performance-5FK586",
+      "recipe_sha256": "0827ca28131c4230ffb4726da94de79325ac6a47227f2ba13f1b51a0ed78587a",
+      "index_sha256": "43b06d52900dc0b8f5d6564879fdfa1a8fcb2be9fd080609004d34b196eaafcb",
+      "original_controller": {
+        "source_sha256": "6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+        "target": "x86_64-unknown-linux-gnu",
+        "profile": "release",
+        "self_test": false
+      },
+      "original_controller_sha256": "18f7af0d5f96d65f6c2fc91f256695d76fe17fd41d39aa093617c7bc3d606bf6",
+      "analyzer_build": {
+        "source_sha256": "6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+        "target": "x86_64-unknown-linux-gnu",
+        "profile": "release",
+        "self_test": false
+      },
+      "analyzer_sha256": "18f7af0d5f96d65f6c2fc91f256695d76fe17fd41d39aa093617c7bc3d606bf6",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "INCONCLUSIVE",
+        "guardrails": "FAIL",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 87112573,
+            "denominator": 82147807
+          },
+          {
+            "numerator": 87061216,
+            "denominator": 82158827
+          },
+          {
+            "numerator": 86100513,
+            "denominator": 82204413
+          },
+          {
+            "numerator": 90155495,
+            "denominator": 83358513
+          },
+          {
+            "numerator": 86280905,
+            "denominator": 82656451
+          },
+          {
+            "numerator": 86009180,
+            "denominator": 82584996
+          },
+          {
+            "numerator": 85962983,
+            "denominator": 82848615
+          },
+          {
+            "numerator": 86642180,
+            "denominator": 83355306
+          },
+          {
+            "numerator": 86840777,
+            "denominator": 83622092
+          },
+          {
+            "numerator": 86336450,
+            "denominator": 83117364
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 86840777,
+            "denominator": 83622092
+          },
+          {
+            "numerator": 87112573,
+            "denominator": 82147807
+          }
+        ],
+        "median": [
+          14234721766521560,
+          13652365350418392
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 90155495,
+          "denominator": 83358513
+        },
+        "worst_cpu": {
+          "numerator": 88957620,
+          "denominator": 82976721
+        },
+        "worst_external": {
+          "numerator": 101336583,
+          "denominator": 95363293
+        },
+        "worst_sample_p99": {
+          "numerator": 3987,
+          "denominator": 1442
+        },
+        "worst_process_peak_rss_delta": 40960
+      }
+    },
+    {
+      "schema_version": 1,
+      "directory": "/home/et16/work/xadb/artifacts/dev2-performance/check-bd77v_rc/replay/performance-rfkrK9",
+      "recipe_sha256": "eb47978a4362a964dc132d0b654c9e0d9d5b01828be4f98c564cde20b402c06c",
+      "index_sha256": "ee852937903fca784281d8bac9dd18aee9dca2495d4a0882ab76772e2abd4288",
+      "original_controller": {
+        "source_sha256": "6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+        "target": "x86_64-unknown-linux-gnu",
+        "profile": "release",
+        "self_test": false
+      },
+      "original_controller_sha256": "18f7af0d5f96d65f6c2fc91f256695d76fe17fd41d39aa093617c7bc3d606bf6",
+      "analyzer_build": {
+        "source_sha256": "6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+        "target": "x86_64-unknown-linux-gnu",
+        "profile": "release",
+        "self_test": false
+      },
+      "analyzer_sha256": "18f7af0d5f96d65f6c2fc91f256695d76fe17fd41d39aa093617c7bc3d606bf6",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "NO_MATERIAL_CHANGE",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 83836778,
+            "denominator": 82530501
+          },
+          {
+            "numerator": 84522489,
+            "denominator": 82665477
+          },
+          {
+            "numerator": 84539282,
+            "denominator": 83025029
+          },
+          {
+            "numerator": 83579310,
+            "denominator": 83688959
+          },
+          {
+            "numerator": 83551427,
+            "denominator": 83083650
+          },
+          {
+            "numerator": 84282844,
+            "denominator": 82211044
+          },
+          {
+            "numerator": 84480689,
+            "denominator": 83766595
+          },
+          {
+            "numerator": 83717021,
+            "denominator": 82535490
+          },
+          {
+            "numerator": 84732427,
+            "denominator": 82957470
+          },
+          {
+            "numerator": 84662524,
+            "denominator": 83867787
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 83551427,
+            "denominator": 83083650
+          },
+          {
+            "numerator": 84522489,
+            "denominator": 82665477
+          }
+        ],
+        "median": [
+          13828717237608741,
+          13623390679960980
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 84282844,
+          "denominator": 82211044
+        },
+        "worst_cpu": {
+          "numerator": 83986566,
+          "denominator": 81990942
+        },
+        "worst_external": {
+          "numerator": 95609479,
+          "denominator": 92427853
+        },
+        "worst_sample_p99": {
+          "numerator": 1413,
+          "denominator": 1293
+        },
+        "worst_process_peak_rss_delta": 12288
+      }
+    }
+  ],
+  "source_sha256_before": "6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f",
+  "source_sha256": "6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f",
+  "retained_source": "artifacts/dev2-performance/check-bd77v_rc/source-inputs",
+  "regression": "artifacts/dev2-performance/check-bd77v_rc/dev2-regression.json",
+  "regression_sha256": "b538eb526452845220a509bd850d34247884b342f9281c3b5f1496cc9068539e",
+  "build_receipt": {
+    "path": "artifacts/dev2-performance/check-bd77v_rc/build-receipt.json",
+    "sha256": "8d981b75193fe146436c7eb763061a704499331456a19e4e230f7d2429a8286a"
+  },
+  "controller_sha256": "18f7af0d5f96d65f6c2fc91f256695d76fe17fd41d39aa093617c7bc3d606bf6",
+  "worker_sha256": "740828c9c13da15ccfe241b2740aecdd57bfa2cbb7f2451be51b6a5d93c7384f",
+  "environment": {
+    "uname": [
+      "Linux",
+      "et16-msi",
+      "7.0.0-38-generic",
+      "#38-Ubuntu SMP PREEMPT_DYNAMIC Fri Sep  4 09:10:14 UTC 2026",
+      "x86_64",
+      ""
+    ],
+    "cpu_count": 32,
+    "loadavg_before": [
+      2.005859375,
+      1.3642578125,
+      1.13232421875
+    ],
+    "parallel_builds_during_measurement": false,
+    "loadavg_after": [
+      1.85107421875,
+      1.3515625,
+      1.13037109375
+    ]
+  },
+  "source_sha256_after": "6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f"
+}

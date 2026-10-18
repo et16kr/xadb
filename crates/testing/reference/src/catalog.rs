@@ -201,6 +201,11 @@ fn account_pair(
     response: &Response,
     remaining: &mut usize,
 ) -> Result<(), &'static str> {
+    if matches!(request.action, Action::Performance { .. })
+        || matches!(response.observation, Observation::Performance { .. })
+    {
+        return Err("performance outside catalog profile");
+    }
     take(remaining, 512)?;
     match &request.action {
         Action::Create { spec, .. } => schema_cost(spec, remaining, true)?,
@@ -360,6 +365,7 @@ impl State {
             return invalid("initialize first");
         }
         match action {
+            Action::Performance { .. } => return invalid("performance outside catalog profile"),
             Action::Initialize { .. } => return invalid("repeated initialization"),
             Action::Create { table: alias, spec } => {
                 reserve(&mut self.tables, *alias)?;

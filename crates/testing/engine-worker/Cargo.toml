@@ -8,7 +8,11 @@ publish.workspace = true
 [dependencies]
 xadb-engine.workspace = true
 xadb-foundation.workspace = true
+xadb-platform.workspace = true
 xadbtest-protocol.workspace = true
+
+[build-dependencies]
+sha2.workspace = true
 
 [dev-dependencies]
 xadbtest = { path = "../controller" }

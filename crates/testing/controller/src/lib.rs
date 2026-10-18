@@ -8,6 +8,7 @@ pub mod catalog;
 mod controller;
 pub mod native;
 mod oracle;
+pub mod performance;
 mod process;
 pub mod spec;
 pub mod verdict;

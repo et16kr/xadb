@@ -129,19 +129,19 @@
       "title": "XADB 조사·실행 증거"
     },
     "dev0-validation.json": {
-      "path": "evidence/dev0-xadb-20261018-r2.json",
+      "path": "evidence/dev0-xadb-20261018-r3.json",
       "role": "evidence",
-      "title": "dev0-xadb-20261018-r2.json"
+      "title": "dev0-xadb-20261018-r3.json"
     },
     "dev1-validation.json": {
-      "path": "evidence/dev1-xadb-20261018-r2.json",
+      "path": "evidence/dev1-xadb-20261018-r3.json",
       "role": "evidence",
-      "title": "dev1-xadb-20261018-r2.json"
+      "title": "dev1-xadb-20261018-r3.json"
     },
     "dev2-validation.json": {
-      "path": "evidence/dev2-xadb-20261018-r2.json",
+      "path": "evidence/dev2-xadb-20261018-r3.json",
       "role": "evidence",
-      "title": "dev2-xadb-20261018-r2.json"
+      "title": "dev2-xadb-20261018-r3.json"
     },
     "implementation-import-inventory.json": {
       "path": "evidence/implementation-import-inventory.json",
@@ -502,6 +502,26 @@
       "path": "evidence/dev3-wal-undo-research.md",
       "role": "evidence",
       "title": "DEV3 WAL·undo 재설계 조사와 검토"
+    },
+    "evidence/dev0-xadb-20261018-r2.json": {
+      "path": "evidence/dev0-xadb-20261018-r2.json",
+      "role": "evidence",
+      "title": "dev0-xadb-20261018-r2.json"
+    },
+    "evidence/dev1-xadb-20261018-r2.json": {
+      "path": "evidence/dev1-xadb-20261018-r2.json",
+      "role": "evidence",
+      "title": "dev1-xadb-20261018-r2.json"
+    },
+    "evidence/dev2-xadb-20261018-r2.json": {
+      "path": "evidence/dev2-xadb-20261018-r2.json",
+      "role": "evidence",
+      "title": "dev2-xadb-20261018-r2.json"
+    },
+    "dev2-performance-validation.json": {
+      "path": "evidence/dev2-performance-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "DEV2 K0-005 diagnostics and local audit/replay execution"
     }
   }
 }

@@ -12,7 +12,9 @@
     "native frame codec",
     "native production engine worker",
     "bounded external streaming controller and dedicated adversarial/native tests",
-    "independent sequential catalog oracle and saved recipe run/verify CLI"
+    "independent sequential catalog oracle and saved recipe run/verify CLI",
+    "bounded optional engine diagnostics with Off/Always/Detailed modes",
+    "independent performance scalar checking and paired instrumentation/replay audit with retained release bundles"
   ],
   "durability": "NOT_IMPLEMENTED",
   "disk_pages_and_indexes": "NOT_IMPLEMENTED",
@@ -26,8 +28,8 @@
     "dev2-validation.json"
   ],
   "dev2_imported_unvalidated": [],
-  "current_source_validation": "LOCAL_VERIFIED_P0_K0_LEAVES_WITH_DEV0_DEV1_REGRESSION",
-  "evidence_scope": "Fresh r2 reports validate source 3fa1b7958cc5597ba99be6ba81d75ea65360657d318d22d59e6e2b633f76a540 after testing package regrouping and incremental K0 import; DEV2 and K0 overall remain INCOMPLETE; no durability or product qualification.",
+  "current_source_validation": "LOCAL_VERIFIED_P0_K0_LEAVES_AND_DIAGNOSTICS_AUDIT_WITH_DEV0_DEV1_REGRESSION",
+  "evidence_scope": "Fresh r3 reports validate source 6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f: DEV0 8, DEV1 8, DEV2 P0/K0 28 checks. Separate K0-005 report validates 35 named tests and three 20-run release campaigns/replay; initial Always and Detailed sample-p99 guardrails FAIL, no optimization promotion. K0/DEV2 and full performance acceptance remain INCOMPLETE; no durability or product qualification.",
   "validation_handoff": {
     "owner": "XADB",
     "status": "INTERRUPTED_AT_USER_REQUEST",
@@ -37,14 +39,51 @@
     "superseded_by": "dev2-validation.json"
   },
   "current_validation": {
-    "run_directory": "artifacts/dev2-reference/check-odsnj6yj",
+    "run_directory": "artifacts/dev2-reference/check-bfcd2fy0",
     "command": "python3 scripts/check_dev2_reference.py --with-substrate",
-    "source_sha256": "3fa1b7958cc5597ba99be6ba81d75ea65360657d318d22d59e6e2b633f76a540",
+    "source_sha256": "6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f",
     "dev0_checks": 8,
     "dev1_checks": 8,
     "dev2_checks": 28,
     "status": "PASS",
     "dev2_stage_status": "INCOMPLETE",
     "k0_stage_status": "INCOMPLETE"
+  },
+  "performance_evidence_ref": "dev2-performance-validation.json",
+  "performance_validation": {
+    "run_directory": "artifacts/dev2-performance/check-bd77v_rc",
+    "command": "python3 -B scripts/check_dev2_performance.py",
+    "source_sha256": "6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f",
+    "status": "PASS",
+    "checks": 19,
+    "required_named_tests": 35,
+    "campaigns": [
+      {
+        "kind": "OFF_ALWAYS_AUDIT",
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "NO_MATERIAL_CHANGE",
+        "guardrails": "FAIL",
+        "promotion": "INCOMPLETE"
+      },
+      {
+        "kind": "OFF_DETAILED_AUDIT",
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "INCONCLUSIVE",
+        "guardrails": "FAIL",
+        "promotion": "INCOMPLETE"
+      },
+      {
+        "kind": "OFF_ALWAYS_REPLAY_AUDIT",
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "NO_MATERIAL_CHANGE",
+        "guardrails": "PASS",
+        "promotion": "INCOMPLETE"
+      }
+    ],
+    "scope": "Execution correctness and evidence retention; initial guardrail failures remain recorded; not full PF or K0/DEV2 acceptance",
+    "performance_qualification": "INCOMPLETE"
   }
 }

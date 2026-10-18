@@ -106,6 +106,10 @@ pub enum Action {
         cursor: u64,
     },
     Metrics {},
+    /// One isolated fixture batch immediately after Initialize.
+    Performance {
+        input: crate::performance::Input,
+    },
 }
 
 /// Identity excludes addresses and the nonserializable open-instance capability.
@@ -166,6 +170,9 @@ pub enum Observation {
     },
     Metrics {
         counters: Metrics,
+    },
+    Performance {
+        output: Box<crate::performance::Output>,
     },
     /// Product failure: public root unchanged, known result, no automatic retry.
     /// Only K0's nine assigned codes are permitted. Protocol failures terminate the stream.

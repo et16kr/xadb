@@ -3,86 +3,6 @@
 version = 4
 
 [[package]]
-name = "xadb-engine"
-version = "0.1.0"
-dependencies = [
- "xadb-foundation",
-]
-
-[[package]]
-name = "xadb-foundation"
-version = "0.1.0"
-dependencies = [
- "sha2",
-]
-
-[[package]]
-name = "xadb-platform"
-version = "0.1.0"
-dependencies = [
- "xadb-foundation",
- "nix",
- "tempfile",
-]
-
-[[package]]
-name = "xadbtest"
-version = "0.1.0"
-dependencies = [
- "xadbtest-protocol",
- "xadbtest-reference",
- "nix",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
-]
-
-[[package]]
-name = "xadbtest-engine-worker"
-version = "0.1.0"
-dependencies = [
- "xadb-engine",
- "xadb-foundation",
- "xadbtest",
- "xadbtest-protocol",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
-name = "xadbtest-fixture-worker"
-version = "0.1.0"
-dependencies = [
- "xadbtest-protocol",
- "serde_json",
-]
-
-[[package]]
-name = "xadbtest-foundation-worker"
-version = "0.1.0"
-dependencies = [
- "xadb-foundation",
- "xadbtest-protocol",
- "serde_json",
-]
-
-[[package]]
-name = "xadbtest-protocol"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "xadbtest-reference"
-version = "0.1.0"
-dependencies = [
- "xadbtest-protocol",
-]
-
-[[package]]
 name = "bitflags"
 version = "2.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -386,3 +306,85 @@ name = "wit-bindgen"
 version = "0.57.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
+
+[[package]]
+name = "xadb-engine"
+version = "0.1.0"
+dependencies = [
+ "xadb-foundation",
+]
+
+[[package]]
+name = "xadb-foundation"
+version = "0.1.0"
+dependencies = [
+ "sha2",
+]
+
+[[package]]
+name = "xadb-platform"
+version = "0.1.0"
+dependencies = [
+ "nix",
+ "tempfile",
+ "xadb-foundation",
+]
+
+[[package]]
+name = "xadbtest"
+version = "0.1.0"
+dependencies = [
+ "nix",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "xadbtest-protocol",
+ "xadbtest-reference",
+]
+
+[[package]]
+name = "xadbtest-engine-worker"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "xadb-engine",
+ "xadb-foundation",
+ "xadb-platform",
+ "xadbtest",
+ "xadbtest-protocol",
+]
+
+[[package]]
+name = "xadbtest-fixture-worker"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "xadbtest-protocol",
+]
+
+[[package]]
+name = "xadbtest-foundation-worker"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "xadb-foundation",
+ "xadbtest-protocol",
+]
+
+[[package]]
+name = "xadbtest-protocol"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "xadbtest-reference"
+version = "0.1.0"
+dependencies = [
+ "xadbtest-protocol",
+]

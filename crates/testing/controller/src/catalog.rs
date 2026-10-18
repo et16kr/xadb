@@ -97,6 +97,10 @@ fn parse_recipe(bytes: &[u8]) -> Result<Recipe> {
         || recipe.run == [0; 16]
         || recipe.actions.is_empty()
         || recipe.actions.len() > 1024
+        || recipe
+            .actions
+            .iter()
+            .any(|action| matches!(action, Action::Performance { .. }))
         || !matches!(recipe.actions[0], Action::Initialize { .. })
     {
         return Err("invalid recipe envelope".into());

@@ -2,6 +2,7 @@
 pub mod engine;
 pub mod frame;
 pub mod history;
+pub mod performance;
 
 use serde::{Deserialize, Serialize};
 

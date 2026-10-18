@@ -273,9 +273,10 @@
       "normal_workspace_dependencies": [
         "xadb-engine",
         "xadb-foundation",
+        "xadb-platform",
         "xadbtest-protocol"
       ],
-      "role": "typed volatile engine adapter; xadb-platform dependency remains planned for K2 I/O",
+      "role": "typed volatile engine adapter and bounded performance fixture; platform owns Linux CPU/RSS observations",
       "test_workspace_dependencies": [
         "xadbtest"
       ]

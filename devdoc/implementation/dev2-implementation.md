@@ -1,6 +1,6 @@
 # DEV2 구현 기록
 
-**이관 상태:** 아래의 API·동작·제약 설명을 현재 코드와 함께 유지한다. 이전 실행 횟수·검토 기록은 새 XADB qualification이 아니다. 시험 패키지 재구성 후 r2 실행에서 후속 K0 이관을 포함한 28개 check와 DEV0·DEV1 회귀를 확인했다. 현재 적용 source와 한계는 [구현 상태](implementation-status.json)와 [증거 색인](../evidence/README.md)을 따른다.
+**이관 상태:** 아래의 API·동작·제약 설명을 현재 코드와 함께 유지한다. 이전 실행 횟수·검토 기록은 새 XADB qualification이 아니다. K0-005 통합 후 r3 실행에서28개 check와 DEV0·DEV1 회귀를 확인했고, 별도 성능 진단 r1에서35개 시험과60개 release 실행을 확인했다. 최초 성능 비교의 sample-p99 guardrail FAIL은 유지한다. 현재 적용 source와 한계는 [구현 상태](implementation-status.json)와 [증거 색인](../evidence/README.md)을 따른다.
 
 
 2026-10-18 · **구현 진행 중 / DEV2·B2·D0 미완료**
@@ -171,7 +171,7 @@ Lookup의 검색 이름도 UTF-8 bytes를 논리 비용에 더하고 최대129by
 
 ## DEV2-K0-005 — 성능 작업의 미구현 제안 인계
 
-**PROPOSED / 구현 NOT_RUN / 검토 미완.** 성능 계측과 외부 비교·재현을 두 담당으로 나누는 설계 준비까지 인계한다. 이 추가 이관에서 성능 코드·platform 수집·새 dependency를 구현하지 않는다. 작업 재개 시 XADB 소유 계약으로 검토·채택하고 파일 담당을 다시 확인한다.
+**이관 당시 PROPOSED 기록.** 아래 제안은 이관 시점에는 구현 NOT_RUN·검토 미완이었다. 현재 채택 계약과 담당·구현·검증은 뒤의 K0-005 재개 계약과 실제 결과를 따른다. 이관 제안 자체를 실행 증거로 사용하지 않는다.
 
 전용 구현 계획은 엔진 `metrics.rs`/`substrate.rs`와 전용 시험·worker `performance.rs`, controller `performance.rs`/하위 모듈·전용 시험으로 분리한다. 공통 protocol/Cargo/lib/main/scripts/docs와 platform 수집 adapter는 통합 담당이 순차 반영할 영역이다. 아직 없는 경로를 IMPLEMENTED로 등록하지 않는다.
 
@@ -200,3 +200,58 @@ recipe JSON64KiB, strict version1/unknown·duplicate field 거절, 한 campaign�
 - 최초 두 계측 비교는 InstrumentationAudit, candidate 채택 확인은 단일 Confirmation, 새 세션 재현은 ReplayAudit로 구분한다. ReplayAudit는 원본 recipe/확인/실패를 보존하고 새 run IDs로 재실행·재분석하되 promotion=INCOMPLETE로 고정한다. 이 구분을 wire/recipe·분석 규칙에 반영해야 한다.
 
 K0 성능·bundle 의무와 K1 트랜잭션·K2 WAL·K3 복구·K4 동시성·K5 checkpoint/restore는 남은 작업이다. 이번 이관은 이 기능을 새로 구현하거나 DEV2 완료를 선언하지 않는다.
+
+### K0-005 재개 계약 — 2026-10-18
+
+**D2 / ACCEPTED / 착수 시 고정한 계약.** 사용자가 병렬 진행안을 승인했다. 위 이관 제안의 미결 입력은 이 절에서 구체화한다. 실제 구현·시험 결과는 후속 기록으로 구분하며 이 계약의 채택만으로 K0·DEV2 전체 완료를 뜻하지 않는다. 기준 commit은 `b4d1d8c`, 실행 소스 지문은 `3fa1b7958cc5597ba99be6ba81d75ea65360657d318d22d59e6e2b633f76a540`이다. r2의 DEV0 8·DEV1 8·DEV2 28개 PASS와 같은 지문임을 재확인했다. 착수 때 별도 DEV4 설계 문서의 미커밋 변경이 있으며 그 원문·색인을 보존한다.
+
+| 담당 | 소유·공유 변경 |
+| --- | --- |
+| 작업·계약·통합 `/root` | protocol performance 형식과 Action/Observation 연결, platform 수집, Cargo/공통 build identity/lib/main 조립, scripts·배치·증거·이 절. 공유 문서는 최신 원문에서 좁게 편집 |
+| 구현 `/root/dev2_engine_performance` | engine diagnostics/metrics/substrate와 전용 시험, engine-worker performance 모듈과 전용 시험 |
+| 구현 `/root/dev2_controller_performance` | controller performance 모듈·하위 파일과 전용 시험. production의 정답 계산은 공유하지 않음 |
+| 독립 검토 `/root/dev2_performance_review` | 계약·부정 vector·최종 diff·실제 증거의 읽기 전용 검토 |
+
+같은 작업 트리에서는 위 소유 경로만 병렬 편집한다. 공통 계약 → 공통 wire/adapter → 두 구현 → 조립/독립 검토 → 소스 변경을 멈춘 통합 검증 → 증거·문서 등록 순서다. 각 구현의 Cargo 검사는 별도 `/tmp` target을 사용하고 root만 최종 workspace/stage 검사를 실행한다. 성능 측정 동안 다른 빌드·시험은 중지하고 환경을 보존한다. 다른 작업의 source 변경이 생기면 최종 지문을 다시 고정한다.
+
+새 diagnostics는 별도 `diagnostics` 모듈과 `VolatileStore::new_with_diagnostics`/`diagnostics`/`drain_diagnostics`로 제공한다. 기존 `new`는 Off다. Off는 모든 추가 관측을 None으로 반환하며 queue/추가 counter 저장소를 할당하지 않는다. Always는11개 operation의 started/completed/failed만, Detailed는 같은 counter와 종료 event를 수집한다. completed는 Ok와 Err의 정상 반환 전체, failed는 Err 부분집합이며 panic은 완료로 꾸미지 않는다. event는 종료 시점 operation·실제 ErrorCode와 sequence만 포함하고 시간 span이 아니다. sequence 포화 뒤 새 event는 drop하며 중복 sequence를 발급하지 않는다. 진단 mutex 경합·poison은 product root와 분리된 관측 손실로 집계하며 정상 제품 동작을 바꾸지 않는다.
+
+diagnostics의 engine 소유 논리 bytes는 고정 collector 크기 + Arc header + 실제 예약 queue capacity×event 크기이며 최대64KiB다. 별도 예산으로 초기 준비하고 기존 row quota에 charge하지 않는다. Snapshot/Cursor에 추가하는 동일 크기 참조 필드의 기존 pin 회계는 모든 mode에서 같으며 source build별 quota vector로 검증한다. cap0..1,024(기본256), Always/Off는 queue를 만들지 않는다. drain은 반환 buffer를 먼저 제한적으로 준비한 다음 try_lock으로 이동하고 원래 queue capacity를 유지한다. 단일 반환 backing은 추가로 최대 cap×event 크기이고 caller가 여러 반환을 보유하는 메모리는 engine 상한 밖이다. allocation 실패는 수집 오류, 경합·poison은 unavailable로 표시한다. 이 숫자는 RSS/OOM 보장이 아니다. counter saturation은 공개하며 정확 delta로 해석하지 않는다.
+
+측정 입력은 version1·seed·row_count(1 또는128)·pin_old·mode·capacity·warmup4096·measure65536·latency_stride16이다. 측정 loop의 값·latency 출력 buffer는 측정 전에 준비한다. warmup → event drain → before metrics/diagnostics → CPU/Instant 시작 → replace·snapshot·read·view/snapshot 해제 반복 → Instant/CPU 종료 → after metrics/diagnostics → event drain → 최종/old 행 정답 조회 순서다. 반환값 저장과 표본 clock 비용은 명시적으로 측정 안에 있다. 기존3개 누적 counter만 checked delta로, resident/pins는 before/after gauge로 해석한다. setup/warmup/measure 시간과 실제 완료수·오류를 분리하고 누락 값·실패를 성공 관측으로 채우지 않는다. `/proc`는 platform adapter만 읽으며 CPU는 main thread schedstat 실행 ns delta, RSS는 수집 시점 process VmHWM bytes다. 미지원·읽기 오류·역행은 None이다.
+
+worker 출력은 위 입력·실제 경로 `k0.replace_snapshot_read.v1`·build source/toolchain/target/profile identity, 구간 시간·완료수·오류, measurement 값65,536개·최종/old 값·latency4096개, before/after 기본/추가 counter, bounded event/drop/saturation, CPU/RSS 관측을 포함한다. wire는 strict version1/unknown·duplicate field 거절이며 기존4MiB frame·5초 요청·60초 run 한도를 유지한다. Performance는 actor0의 Initialize 바로 다음 request2에서만 허용하고 한 session에 한 번으로 종료한다. 기존 catalog oracle/recipe는 이 확장을 지원하는 것처럼 수용하지 않고 INVALID로 거절한다. 공유 build helper는 controller와 worker의 실제 build 지문을 동일 산술로 기록하며 worker가 자기 품질 verdict를 제출하지 않는다. 실제 release build receipt·binary hash는 root의 실행 증거에 묶고 실행 전후 source/binary identity를 대조한다.
+
+비교는 고정10쌍·AB5/BA5의 seed shuffle이며20개 run ID 전체가 유일해야 한다. ratio의 numerator/denominator 원본을 보존하고 정렬·threshold·guardrail·drift는 checked u128 cross-product(필요시 overflow 거절)로 판정한다. ppm은 표시 전용이다. 10 ratio의 median은5·6번째의 평균이고 interval은2·9번째다. coverage1002/1024는 독립·동일분포 pair 가정 아래 nominal이며 drift 검사가 그 가정을 증명하지 않는다. AB/BA 각5개 median(3번째)의 절대 ratio 차이가0.10 초과면 INVALID다. 정확 경계0.95/1.05는 NO_MATERIAL_CHANGE 구간에 포함하고, 1.0500009·1.1500009·1.2500009를 반올림해 허용하지 않는다. 기존 +15% elapsed/CPU/외부 Invoke→Observe, +25% sample p99, +4MiB process RSS guardrail을 모든 pair에 적용한다. 외부 시간은 controller journal의 동일 clock에서 계산한다.
+
+InstrumentationAudit(동일 release의 Off↔Always, Off↔Detailed)와 ReplayAudit는 promotion=INCOMPLETE다. Confirmation은 같은 계측 mode/capacity·fixture/분석 계약, 탐색 candidate≤16·새 run·확인 시도1을 요구한다. 탐색/이전 확인/현재20개 run의 중복·누락·기준 변경을 거절하며 실제 독립 증거가 부족하면 INCOMPLETE다. 최초 audit를 최적화 채택 증거로 쓰지 않는다. recipe는64KiB strict JSON이고 원문 hash·build/config·fixture/semantic/path·controller/oracle/분석 identity·환경·실제 명령·가설/다음 실험을 bundle에 보존한다. worker 사본·native journal/raw streams/종료 receipt를20개 모두 보존하고 실패도 삭제하지 않는다. verify는 원본에서 재판정하고 replay는 원본 recipe/hash/결과를 보존한 채 별도 cwd·새 process/run ID로 다시 실행하는 ReplayAudit다. 로컬 identity/이력 검사는 보호 CI 권한 분리를 대신하지 않는다.
+
+필수 반례는 모드별 CRUD/old snapshot/ID/오류/quota 동일성,11개 operation 성공/실패 counter, queue cap0/1/256·경합·poison·포화·drain 수명, 잘못된 seed/warmup/old row·값/완료량 누락, CPU None·gauge 감소·saturation, 통계 동등/개선/악화/불확실/정확 경계/drift, identity·unknown/duplicate/초과 입력·누락 이력·timeout 은폐·run 재사용·재현의 승격 위조다. root는 release 두 audit와 별도 cwd replay, 독립 build·부정 시험·기존28-check와 DEV0/1 회귀를 실행한다. PF01/03/04/05/07/13의 이 capability만 기록하고 PF12 국소 최적화, bounded concurrent 전수,30분 stress/fuzz, WAL/내구성 및 K0/DEV2 전체는 미완료로 유지한다.
+
+독립 검토 `/root/dev2_performance_review`가 재개 계약·미결 반례를 확인하고 착수 차단 의견 없음으로 검토했다. `/root`가 D2 입력을 채택한다. diagnostics snapshot은 각 atomic의 개별 관측이며 동시 단일 시점 snapshot이 아니다. 현재 단일 thread fixture에서만 exact delta를 검증한다. 이 결정은 구현 diff·실행 결과의 후속 독립 검토를 대신하지 않는다.
+
+K0-005 최종 통합 검토에서 재현 단위를 구체화했다. campaign은 worker 두 사본·receipt와 함께 실행한 controller 사본 및 baseline/candidate build config 원문을 보존하며 config hash를 side/receipt에 대조한다. 원래 실행 controller와 재분석 analyzer identity는 결과에서 구별한다. 실제 검증은 campaign 전체를 별도 cwd에 복사하고 그 안의 controller로 새 process/run IDs를 만든다. 상위 check-session은 fingerprint 대상 source 원문도 보존한다. 각 latency 표본은 measurement 시간 이하여야 하며 setup+warmup+measurement 합은 외부 Invoke→Observe 시간 이하인지 checked/u128 포함 관계로 검사한다. 서로 다른 시계 timestamp를 빼지 않으며 equality는 허용한다. AB/BA drift만 발생한 완전한 실행은 성능 validity=INVALID를 그대로 보존한다. 이때 wrapper 실행 정합성 PASS는 효과·guardrail·승격 PASS를 뜻하지 않으며 나머지 증거 누락/실행 실패/정답 오류는 wrapper FAIL이다.
+
+Detailed의 고정 single-thread fixture에서는 측정 전 completed counter 합 다음 sequence부터 Replace→Snapshot→Read 순서로 cap개 이벤트를 보존해야 한다. 이 fixture에 수집 경합이나 다른 drain 호출자는 없으므로 정확한 sequence·operation·길이·drop delta로 warmup 미배출과 잘못된 operation 라벨도 거절한다. 일반 concurrent diagnostics API의 lossy 수집 허용을 이 fixture의 증거 누락 허용으로 확장하지 않는다.
+
+### K0-005 구현 범위
+
+engine의 [diagnostics](../../crates/engine/src/diagnostics.rs)와 기존 substrate 경로를 연결했고, [worker fixture](../../crates/testing/engine-worker/src/performance.rs)는 별도 성능용 모형이 아닌 실제 `VolatileStore` API를 실행한다. [controller 분석·재현](../../crates/testing/controller/src/performance.rs)은 별도 scalar 기대값과 exact ratio 산술을 소유한다. CPU/RSS 수집은 platform에 두고 kernel/reference가 OS 관측을 직접 소비하지 않는다. 기존 catalog 이력 경로는 Performance 입력·관측을 거절한다.
+
+실행 진입점은 `python3 -B scripts/check_dev2_performance.py`다. 기존 DEV0·DEV1·28-check 회귀와 고정 성능 반례 35개, 새 target release build, Off↔Always·Off↔Detailed 각10쌍, 별도 cwd의 보존 controller ReplayAudit10쌍을 순서대로 수행한다. CLI `performance-profile`, `prepare-performance`, `run-performance`, `verify-performance`, `replay-performance`는 원본 recipe/hash와 receipt/config를 구체 입력으로 사용한다. 완전한 campaign의 `resume.md`에 재검증·재현 명령을 남기고 저장된 comparison을 신뢰하지 않은 재분석을 수행한다.
+
+독립 구현 검토에서 configured capacity의 양쪽 해석, controller/config 원문 보존, 불가능한 시간 포함 관계, Detailed event의 sequence·operation 검증을 보완했다. `/root/dev2_performance_review`는 수정된 코드·반례·runner를 읽고 통합 실행 GO를 확인했다. 실행기 첫 시도 `artifacts/dev2-performance/check-287gdq9o`는 기존 전수 회귀 소요에 비해 짧은 상위 timeout을 발견해 중단했고 `execution-interruption.json`에 보존했다. 제품 request/run 한도를 바꾸지 않고 하위 회귀를 기다리는 상위 command 한도만1,800초로 조정했다. 중단한 결과는 현재 소스 PASS로 사용하지 않는다.
+
+### K0-005 실제 실행 결과 — 2026-10-18
+
+[성능 진단 원본 보고서](../evidence/dev2-performance-xadb-20261018-r1.json)의 source는 `6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f`다. 전후·retained source 지문이 같고 wrapper19개 check와 필수 시험35개가 PASS했다. [DEV2 r3](../evidence/dev2-xadb-20261018-r3.json)의28개 check 및 DEV0·DEV1 각8개 회귀도 같은 source에서 PASS했다. workspace fmt·Clippy·all-features/default·fresh source build와 V2/V3 이력 검사는 해당 원본 로그에 묶인다. 보존한 release worker/controller와 각 config/receipt hash를 대조했고 새 cwd의 campaign 사본에서 같은 controller로 재현했다.
+
+| 비교(각10쌍·20run) | 정답 / validity | measurement 중앙 비율(candidate/Off) | 효과 | guardrail |
+| --- | --- | --- | --- | --- |
+| Off↔Always 최초 audit | PASS / VALID | 약1.01328 | NO_MATERIAL_CHANGE | FAIL: 최악 pair의 표본 p99 약1.44569배 |
+| Off↔Detailed 최초 audit | PASS / VALID | 약1.04266 | INCONCLUSIVE | FAIL: 최악 pair의 표본 p99 약2.76491배 |
+| Off↔Always ReplayAudit | PASS / VALID | 약1.01507 | NO_MATERIAL_CHANGE | PASS |
+
+세 campaign의 원시20run씩과 원본 replay 계보·새 run IDs·실패 축을 보존했다. 이 표의 비율은 표시용 근삿값이며 판정에는 원본 정수 비율을 사용했다. 최초 audit의 p99 실패는 후속 replay PASS로 지우지 않는다. 모든 promotion은 INCOMPLETE이며 CPU·elapsed·외부 시간·RSS의 현재 한도 통과만으로 p99 한도나 원인 규명을 대신하지 않는다. 실제 원인·국소 최적화(PF12), 통합 PF 인수, bounded concurrent 전수,30분 stress/fuzz, K1–K5와 영속성은 남은 의무다. K0·DEV2 전체는 INCOMPLETE다.
+
+최종 독립 검토 `/root/dev2_performance_review`는 현재/보존 source 지문, wrapper19개·필수 시험35개 및 하위28/8/8개 실행 로그 hash, controller/worker/config/receipt/index와60개 실행 원시 파일 hash를 읽기 전용으로 대조했다. 모든 run ID의 유일성, journal↔stdout·envelope·65,536개 값·최종/old 행·counter·Detailed sequence/drop·시간 포함 관계를 별도로 확인했다. 원본 Always campaign은 별도 cwd 사본과 replay의 original에서 byte-identical이며 median/interval·최악 pair 표본 p99의 Fraction 재계산이 원본 보고서와 일치했다. 통합 차단 결함 없이 실행 기능·재현 leaf 통합 GO다. 최초 성능 budget 실패·원인 미규명·승격 INCOMPLETE는 그대로 남으며 성능 인수 GO를 뜻하지 않는다. `/root`가 해당 검토와 원본 보고서 등록을 확인했다.

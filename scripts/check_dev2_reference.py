@@ -382,7 +382,7 @@ def main():
             require_passed_tests(command('frame-v3-extended', [str(binary), '--ignored']),
                                  {FRAME_EXTENDED_TEST})
             local = dependency_closure(metadata, 'xadbtest-engine-worker')
-            if local != ['xadb-engine', 'xadb-foundation', 'xadbtest', 'xadbtest-engine-worker', 'xadbtest-protocol', 'xadbtest-reference']:
+            if local != ['xadb-engine', 'xadb-foundation', 'xadb-platform', 'xadbtest', 'xadbtest-engine-worker', 'xadbtest-protocol', 'xadbtest-reference']:
                 raise RuntimeError(f'wrong native worker dependency boundary: {local}')
             binaries = build_tests('xadbtest-engine-worker', WORKER_TESTS, 'xadbtest-engine-worker')
             report['worker'] = {
