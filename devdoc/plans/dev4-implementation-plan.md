@@ -15,7 +15,7 @@ DEV4의 기존 task는 XADB-011, gate는 Q1이며 DEV3에 의존한다. DEV2 P0/
 | --- | --- |
 | catalog/DDL | 고정 snapshot lookup, 열 type/nullable/byte length, table/index identity, schema epoch/index 정의 대조. PK/UNIQUE 포함 create와 drop의 단일 원자 native DDL. SQL precommit 종료 뒤 새 catalog 검증 |
 | row/index | typed scan/point/range+own writes/undo consistent read, cursor 수명/EOF/RowId 순서, owned row, 부분 NULL 및 최신 committed+own final delta에 대한 문장 최종 UNIQUE·key lock |
-| transaction | begin_statement token을 대상 scan→단일 execute_statement→finish_statement까지 공유. 영속 undo mark·rollback 예약·논리 payload와 실제 WAL 예산 구분, ReadOnly/ReadWrite·table 단위 Serializable validation |
+| transaction | begin_statement token을 대상 scan→단일 execute_statement→finish_statement까지 공유. 최초 q 선택/horizon 등록의 gate·published q 보존 기준·guard 인계 수신. 영속 undo mark·rollback 예약·논리 payload와 실제 WAL 예산 구분, ReadOnly/ReadWrite·table 단위 Serializable validation |
 | durable/lifecycle | commit outcome/certainty/fencing, DDL prior/ddl 두 outcome과 NotCommittedRecoveryRequired 전달, 실제 undo 완료/실패·Drop 소유 인계·engine close/open, owner temp namespace·quota·cleanup 효과 port |
 | verification | native literal row/history oracle·실제 ACK 수집·fault hooks·독립 lower regression. imported receipt를 현재 fingerprint에 대입하지 않음 |
 
@@ -47,7 +47,7 @@ DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01�
 | ID | 이 설계가 정한 것 | 구현 전에 고정할 실제 입력 |
 | --- | --- | --- |
 | D4-F01 | 문법·대문자 이름·SQL 빈 text 정규화·부분 NULL/문장 최종 UNIQUE·span·수치 한도 | exact token/AST/Rust signature, 원래 text 타입 보존과 native canonical fixture, 모든 production error→SQL code/effect vector, malformed/unsupported token corpus와 hash |
-| D4-F02 | `?`·prepare 추론·owned bind·metadata·상태표·stale reject·DDL 두 outcome | engine catalog dependency accessor, scan/mutation 공통 statement token, session/result 수명, DDL validation/precommit 경계·두 receipt/오류/취소·NotCommittedRecoveryRequired 전이, ROLLBACK/close_session/Drop의 undo 소유 인계·fencing API·literal vector·실제 thread barrier |
+| D4-F02 | `?`·prepare 추론·owned bind·metadata·상태표·stale reject·DDL 두 outcome | engine catalog dependency accessor, scan/mutation 공통 statement token, snapshot q/등록·aging의 동기화와 published q 보존·guard 인계 증거, session/result 수명, DDL validation/precommit 경계·두 receipt/오류/취소·NotCommittedRecoveryRequired 전이, ROLLBACK/close_session/Drop의 undo 소유 인계·fencing API·literal vector·실제 thread barrier |
 | D4-F03 | bounded external sort와 SQL memory/disk/FD 예산 | 임시 file/record/manifest byte layout·독립 hex, owner cleanup port·disk reservation, merge/ENOSPC/short I/O fault cuts와 allocation inventory |
 | D4-F04 | Q1 필수 사례와 native/literal independence·rollback/recrash | SQL worker adapter/protocol version·DDL 두 outcome/ACK·NotCommittedRecoveryRequired를 포함한 row/error/event schema, D4-V17–24·DEV3 WAL/undo/CLR과 fault 교차 inventory, mutation·negative verdict·seed/schedule·실행 명령 |
 | D4-F05 | PF10 workload군·기본 V2/V3·계측 책임 | 실제 host/CPU/FS·fixture cardinality/distribution/hash·release binary/feature, warmup/sample·RSS/I/O·계측 비용·회귀 threshold·paired 순서와 재현 recipe |
@@ -79,6 +79,8 @@ DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01�
 각 지원 statement×타입에는 정상/NULL(허용/거절)/빈 값/경계/오류가 필요하다. direct와 prepared는 지원 교집합 전부를 비교하고 DDL/transaction control은 prepare에서 명시 Unsupported를 확인한다. 각 index kind(PK/unique/nonunique)×단일/복합 key의 적용 가능한 point/range/DML·crash 변형을 포함한다. 전체 문법·타입 항목이 어느 test ID에 연결됐는지 coverage inventory를 만든다. 기능이 없는 조합은 근거 있는 N/A이며 후속 필수 기능을 삭제하지 않는다.
 
 T04/09/11/14는 [초기 처리 범위](../contracts/dev4-sql-design.md#capacity-boundary)를 함께 인수한다. 256/257개 대상의 단일 DML, 여러 성공 statement가 거래 한도에 도달한 뒤 실패, 같은 table의 다른 행/독립 table writer를 구별한다. count 성공을 부분 처리와 혼동하지 않고 실패한 문장 전체 복원·앞선 성공 변경 유지·명시 COMMIT/ROLLBACK 결과를 확인한다. 낮은 WAL/frame/FD 여유에서 cancel·close_session·Drop 인계와 rollback을 수행하여 예약 소유 유실·거짓 ABORT를 거절한다. 한도가 큰 workload를 거절했다면 처리량 표본에서 조용히 제외하지 않고 실패 원인/비율로 보고한다.
+
+T09는 [DEV3 snapshot 획득](../contracts/disk-storage-design.md#snapshot-acquisition)의 실제 DS04 선행 증거를 수신하고, idle prepare와 execute 최초 획득을 writer/aging과 교차한다. q10 선택/등록 사이 및 status11 설치/frontier10의 경계에서 catalog/row 결과가 q10과 일치해야 한다. SQL이 engine guard 대신 raw q를 넘기거나 result 인계 중 마지막 horizon 소유를 놓는 mutant를 거절한다. 이 시험은 SQL ReadCommitted 노출을 추가하지 않으며 현재 Serializable·implicit ReadOnly 경로를 검증한다.
 
 <a id="verification"></a>
 ## 5. 독립성·fault·검증 강도

@@ -687,6 +687,7 @@
         "Fuzzy checkpoint capture and WAL floors; separate full integrity audit after reopen; offline exact-cut backup",
         "Statement-final partial-NULL uniqueness, explicit ReadCommitted and default table-validated Serializable; bounded aging/rollback reserves",
         "DEV3-REVIEW-004: D3-M01-M06 bounded exploration completed without truncation; independent edge and logical history oracles plus required negative mutants; M03/M06 fair-cycle or decreasing-rank progress verdict beyond depth-limited safety; model results do not replace actual DS/RC execution",
+        "DEV3-REVIEW-005: D3-M02 and actual DS04 threads cover atomic snapshot q selection/horizon registration versus aging, status-before-frontier publication with no readers, published-q horizon floor, reservation cleanup and continuous guard ownership; required mutants rejected",
         "Opcode resource vectors instantiated against actual codecs and simultaneous disk/reserve/WAL/frame/memory/FD limits; progress under boundary pressure and full reservation ownership through rollback",
         "DWB batch 1/8/64 all-file sync and whole-batch retirement/repair/recrash; PF09 sync counts, gate/flush waits and latency guards measured"
       ],
@@ -694,6 +695,7 @@
       "open_decisions": [
         "D3-F01: freeze exact byte offsets, feature/format IDs and independent normal/corrupt vectors",
         "D3-F02/F03: freeze Rust API/error/cursor vectors, independent oracle and full variant inventory",
+        "disk-storage-design.md#snapshot-acquisition: freeze snapshot/publication/registry guard ranks and split acquisition actions/barriers; D3-M02 and actual DS04 evidence remain NOT_RUN",
         "D3-F04/F05: freeze actual fault receipts/schedules, environment, RSS/disk/timeout and PF09 numerical profiles",
         "D3-F06: verify received DEV2 revision, actual durable leaf prerequisites and interfaces before each dependent production leaf",
         "D3-F07: assign actual task/integration owners, narrow paths, shared contracts and merge order before each parallel task; dev3-implementation-plan.md#parallel-development",

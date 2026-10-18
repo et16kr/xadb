@@ -1,6 +1,6 @@
 # DEV3 — 구현·병렬 개발·검증 계획
 
-2026-10-18 · **DEV3-DESIGN-003·REVIEW-004 ACCEPTED / production·모델·S1 NOT_RUN**
+2026-10-18 · **DEV3-DESIGN-003·REVIEW-004·REVIEW-005 ACCEPTED / production·모델·S1 NOT_RUN**
 
 [상세 설계](../contracts/disk-storage-design.md) · [이번 조사·검토](../evidence/dev3-wal-undo-research.md) · [이전 조사](../evidence/dev3-source-research.md) · [완료 정본](stage-completion.json) · [DEV2 선행](dev2-implementation-plan.md)
 
@@ -94,7 +94,7 @@ F06에서 수신 commit/dirty digest·실제 crate/API/feature·사용한 실행
 | DS01/KU09 | empty/multilevel mutable tree·split/root 변경·빈 leaf 제거, overflow 경계/누락/순환, stable anchor cursor와 concurrent split/delete. index point/range/full scan과 독립 row 값 동일 |
 | DS02/RC-T12/KU10 | 다중 table/index/catalog 원자 commit. commit 시 data flush 없음, uncommitted steal, WAL-before-page·doublewrite 누락 mutant, namespace 확장·각 sync·publish/reply UNKNOWN |
 | DS03/RC-T14 | row/index/locator/allocation inventory 각각 buffer 4배, bounded buffer/FD/lock/ATT/RSS. recovery의 전체 DPT 적재 금지. 같은 0/소량 WAL·dirty 수에서 256 MiB/1 GiB 정상 reopen I/O 비교와 full audit 비용 분리 |
-| DS04/RC-T13 | old snapshot·긴 Active 거래·RC statement pin, status/undo/page slot ABA, commit-q stamping·overflow/delete/drop aging. begin WAL 제거 뒤 abort/recovery와 반복 CLR crash |
+| DS04/RC-T13 | old snapshot·긴 Active 거래·RC statement pin, status/undo/page slot ABA, commit-q stamping·overflow/delete/drop aging. DS04는 최초 q 선택/등록과 aging 경쟁·status 설치 후 frontier 공개 전 보호도 검증. begin WAL 제거 뒤 abort/recovery와 반복 CLR crash |
 | DS05 | fuzzy checkpoint 중 수정/flush·ATT/DPT 누락 mutant·previous fallback의 WAL floor. DWB 슬롯 torn/재사용/bootstrap. source-WAL 없는 offline exact C restore→새 ACK→재시작 |
 | DS06 | PK NULL 거절; unique `(1,NULL)` 중복 거절·`(NULL,NULL)` 허용; statement key 교환 성공·최종 중복 실패·이전 statement 보존. key1024 경계·1–4열·8 index·offline build 실패/취소 |
 | 동시성 | RC 두 statement 사이 다른 commit 관측, 같은 statement 안정, independent row writer 둘 다 성공; Serializable 독립 table 성공·same-table false conflict·write-skew/absence/range/catalog 충돌. unique 잠금 경합·deadlock victim full undo |
@@ -114,7 +114,7 @@ F06에서 수신 commit/dirty digest·실제 crate/API/feature·사용한 실행
 | ID / 인수 | 시작 이력과 교차 전이 | 필수 판정·부정 사례 |
 | --- | --- | --- |
 | D3-M01 / DS04 | A commit→B update→A aging→B statement/전체 rollback→slot 재사용 | cut 전/후 before-image·두 종류의 previous link·head 변경. 필요한 과거 값 유실, dangling edge·count 누락/중복 감소 거절 |
-| D3-M02 / DS01,DS04 | reader가 UndoRef/TxnRef 복사→source latch 해제→ager stamp/cut/reuse→reader 재개 | transient pin 동안 재사용 불가, 해제 뒤 회수 가능. snapshot pin만으로 복사된 status 참조의 수명을 보장하는 mutant 거절 |
+| D3-M02 / DS01,DS04 | 최초 snapshot q 선택→horizon 등록과 commit/aging 교차; status11 설치·frontier10에서 reader 없는 aging→snapshot10 획득; 이후 UndoRef/TxnRef 복사→source latch 해제→ager stamp/cut/reuse→reader 재개 | q 선택/등록의 gate 연속 보유·H=min(published q, 등록 q)·guard 인계, transient pin 동안 재사용 불가. 등록 전 gate 해제·미공개 commit q/빈 registry의 무한대 horizon·pin 인계 공백·snapshot만으로 transient 수명 대체 mutant 거절 |
 | D3-M03 / DS01,DS06 | split 뒤 다른 writer 변경→원래 writer rollback; 반대 순서의 page 발견·pin 부족; reader가 매 try를 선점 | 타 거래 값/완결 SMO 보존, 정렬된 latch·전체 pin 예약·재시도 cleanup·FIFO turn/drain. stale 전체 page 복원·부분 pin 보유 대기·공정한 무한 try starvation mutant 거절 |
 | D3-M04 / DS02,DS05 | CLR effect/progress, count/cut/queue cursor, commit 상태·ATT/DPT capture 각각의 append/apply/flush 사이 crash 두 번 | 완결 그룹의 원자 redo·UndoNextRef 진행, winner 보존·loser 제거, queue 정확히 한 번 해제. progress만 먼저 남기는 mutant 거절 |
 | D3-M05 / DS02,DS05 | 서로 다른 file의 두-page DWB batch: image→pending→일부 home→file sync→retirement→reuse, 각 경계 재장애 | 전체 pending 복원, partial 성공의 조기 retirement·raw retired image 부활·필수 file sync 누락 거절 |
@@ -123,6 +123,10 @@ F06에서 수신 commit/dirty digest·실제 crate/API/feature·사용한 실행
 M03/M06의 **진행 판정은 action 길이16의 safety 탐색과 별도**다. 같은 고정 유한 객체 범위에서 추가 crash가 없는 실행의 도달 가능한 상태 graph를 만들고, retry/새 reader 반복을 보존하는 순환으로 표현한다. F02/F03에서 fairness와 I/O 종료 가정·K·정규화 규칙을 먼저 동결한다. fair SCC에서 미완료 예약 작업이 영원히 남는 cycle이 없는지 검사하거나 이에 해당하는 감소 순위 증명을 제출한다. 보호 상한으로 graph를 닫지 못하면 INCONCLUSIVE이며, 단순히 depth16까지 오류가 없다는 이유로 진행 PASS를 주지 않는다. 반환한 ticket 순서·drain 완료·각 CLR/flush 단계의 진전과 starvation mutant의 counterexample을 receipt에 남긴다.
 
 M01–M06 PASS는 작은 범위의 논리 검증이다. 8 index·높이16·최대 row·64-page DWB batch는 실제 profile에서 별도로 검사한다. 상태수·전이수·미탐색 수·counterexample·모델/fixture hash를 receipt에 남기며 실제 thread·파일 I/O·DS/PF 인수를 대체하지 않는다.
+
+M02는 `q_read`, `horizon_register`, `status_install`, `frontier_publish`, `horizon_sample`, `cut/reuse`, `guard_transfer/release`를 별도 action으로 둔다. 후보의 q 선택/등록을 검증 없이 하나의 atomic action으로 숨기지 않고 gate 소유 상태로 interleaving 가능 여부를 판정한다. 초기 상태에 값 A@q10, writer의 값 B@q11과 A 복원용 undo를 두며, snapshot10의 독립 기대값은 항상 A다. 두 고정 시작 fixture(등록 직전·status 설치 후 공개 직전)에서 기존 유한 범위로 탐색하고, reader 없는 상태도 포함한다. 등록 실패/취소의 slot 반환과 인계 중 이전 소유 보존을 검사한다.
+
+DS04의 실제 thread 시험은 위 두 경계에 barrier를 두고 reader/writer/ager를 교차 실행한다. 등록 전에는 ager의 cut 적용이 대기하고 등록 후에는 q10의 값을 보존해야 한다. status11·frontier10·빈 registry에서도 q10에 필요한 undo/객체를 유지해야 하며, frontier11 공개와 마지막 q10 소유 해제 뒤에는 다른 pin이 없는 eligible suffix를 회수할 수 있어야 한다. Serializable begin·ReadCommitted begin_statement·짧은 catalog snapshot과 guard 인계를 각각 확인한다. 기존 reader content 경로와 새 snapshot admission을 구별하고 M03/M06의 turn drain/잠금 순환 판정에도 이 action을 포함한다. barrier 도달·gate/registry 소유·expected/actual 값을 기록하며 NOT_RUN 상태를 유지한다.
 
 <a id="resource-proof"></a>
 ### 3.2 최악 조건 자원 계산과 진행 인수
@@ -168,7 +172,7 @@ batch deadline은 낮은 부하에서도 1-page flush가 진행되는 시간 상
 | ID | 산출물 | 완료 시점·현재 상태 |
 | --- | --- | --- |
 | D3-F01 | page/anchor/allocator/undo/status/WAL/CLR/checkpoint/DWB offsets·IDs·digest 범위·독립 hex vector | 표현 codec 전. 구조 선택만 완료, bytes 미동결 |
-| D3-F02 | API·isolation·rank/try-lock/전체 pin 예약·FIFO progress turn/K/workspace/drain 순서·transient reference guard·statement/rollback/cut/queue 상태표 | 해당 소비 구현 전. D3-M01–M06 action/fixture·fairness/진행 판정과 Rust signature 미동결 |
+| D3-F02 | API·isolation·rank/try-lock/전체 pin 예약·FIFO progress turn/K/workspace/drain 순서·snapshot q/등록 gate와 published horizon·guard 인계·transient reference guard·statement/rollback/cut/queue 상태표 | 해당 소비 구현 전. D3-M01–M06 action/fixture·fairness/진행 판정과 Rust signature 미동결 |
 | D3-F03 | 독립 key/row/index/history·edge graph oracle·negative mutants·case/variant 예상값 | 해당 production leaf 전 D3-M01–M06 전수 완료 필요; 모델/제품 실행 NOT_RUN |
 | D3-F04 | 실제 WAL/DWB batch/home/namespace receipts·allocator bootstrap·각 장애 cut·반복 recovery | 실제 I/O leaf 전. batch1/8/64·다중 file·repair 재장애 profile 미동결 |
 | D3-F05 | opcode별 자원 벡터·최악 CLR/rollback pages·progress frame/FD/WAL·큰 inventory quota·PF09 | 해당 effect 전 산식 대입·경계 인수 필요. 숫자 reservation table·batch deadline·실측 미완료 |
@@ -198,3 +202,20 @@ DEV3-DESIGN-001/PARALLEL-001의 소스 조사·독립 검토와 당시 문서 �
 ## 9. REVIEW-004 보완의 착수와 인수
 
 [아키텍처 비교 보완 기록](../evidence/dev3-dev4-architecture-review.md)은 이번 작업의 기준 사본·소유·독립 검토를 기록한다. 원래 DESIGN-003의 검토 결과는 그 당시 범위로 보존한다. 이번 D2는 구체적인 변경/수명 프로토콜·모델 범위·자원 계산 의무·batch 인수를 추가하며, 미실행 모델·예약표·성능 측정을 완료로 표시하지 않는다. S0의 문서 동결과 각 leaf의 모델/실제 I/O 실행 증거를 별도 확인한다.
+
+<a id="snapshot-review"></a>
+## 10. REVIEW-005 작업과 검토
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·담당 | D2; 작업/계약/통합 `/root` |
+| 기준 identity | HEAD `e50e0793acf54c115d4715f71126f6ae45c74008`; 착수 status SHA-256 `01eb13ad595267d1e920c5f9bd3e39c8cf75be1bf784a950633fc15987a5fa41`; 9개 관련 원문의 사본/hash는 `/tmp/xadb-snapshot-review-llzj1hm2/identity.json`과 before 사본, 실제 수정은 아래 8개 문서 |
+| 전용 본문 | DEV3 상세 설계·이 계획·disk-test-matrix, DEV4 상세 설계·계획의 snapshot 소비 절 |
+| 공유 수정·중복 | stage-completion의 DEV3 인수, contracts/plans README의 기존 DEV3 항목만 최신 원문에 수정. DEV2·COMM·DEV5 제품/문서의 기존 미commit 변경과 stage의 다른 항목은 별도 보존 |
+| 반영 순서 | snapshot 소유 계약→M02/DS04와 F02→DEV4 수신·T09→단계/폴더 색인→독립 검토→이번 변경만 commit. 기존 문서 ID/경로/제목은 유지하며 새 문서·제품 경로·생성물 없음 |
+| 검증 범위 | 의미·반례·좁은 diff 검토와 해당 8개 파일의 `git diff --check` PASS. 사용자의 최종 지시에 따라 전체 문서 검사·push 미실행. 모델·제품 실행도 미실행 |
+| 독립 검토 | `/root/snapshot_design_review`가 원문 사본 대비 8개 파일의 변경과 기존 잠금/수명/모델 계약을 읽기 전용 검토: PASS·필수 P1/P2 없음. gate 연속 보유·published q 기준·guard 인계·turn admission·M02/DS04·DEV4 수신을 확인. 검사기/제품 시험 미실행. `/root` 반영 확인 후 REVIEW-005 ACCEPTED |
+
+관련 결정은 [DEV3-REVIEW-005](../contracts/disk-storage-design.md#snapshot-review)다. 앞선 리뷰·실행 receipt를 이번 변경의 검증으로 승계하지 않는다.
+
+작업 중 별도 DEV5 문서 commit `f8b5d86`으로 HEAD가 이동한 것을 확인했다. 이번 변경은 그 commit 위에 좁게 적용하며, 다른 작업의 미commit 변경을 이번 commit에 포함하지 않는다. 기존 문서 ID·경로를 재등록하거나 현재 문서 검사 결과를 생성하지 않는다.

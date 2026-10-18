@@ -1,6 +1,6 @@
 # DEV3 — 디스크 저장·인덱스 상세 설계
 
-2026-10-18 · **DEV3-DESIGN-003·REVIEW-004 ACCEPTED / 미구현·모델·제품 시험 NOT_RUN**
+2026-10-18 · **DEV3-DESIGN-003·REVIEW-004·REVIEW-005 ACCEPTED / 미구현·모델·제품 시험 NOT_RUN**
 
 [구현 계획](../plans/dev3-implementation-plan.md) · [이번 조사](../evidence/dev3-wal-undo-research.md) · [이전 조사](../evidence/dev3-source-research.md) · [커널 계약](implementation-contracts.md) · [DEV2 계약](dev2-kernel-design.md) · [복구 계약](recovery-logging-design.md) · [인수 항목](disk-test-matrix.json)
 
@@ -39,7 +39,7 @@ ARIES의 WAL-before-page, pageLSN, analysis/redo/undo, redo-only 보상, fuzzy c
 | `execute_statement` | 입력 순서로 row 변경, statement 종료에 최종 unique 집합 검사. 성공 뒤 이전 statement undo를 유지 |
 | `read/scan/index_range` | snapshot q와 own transaction의 변경을 함께 해석. visible 값을 caller-owned buffer에 복사 |
 | `PageGuard` / content latch | frame pin과 page 내용 동기화 분리. pin은 page bytes 불변 보장이 아님 |
-| `SnapshotGuard` | q와 undo/객체 수명 horizon 등록. DB 전체 page frame 또는 이전 root closure를 pin하지 않음 |
+| `SnapshotGuard` | [snapshot 획득 규약](#snapshot-acquisition)으로 q 선택과 undo/객체 수명 horizon 등록을 aging에 대해 원자 처리. DB 전체 page frame 또는 이전 root closure를 pin하지 않음 |
 | `checkpoint` / `backup_exact` | fuzzy recovery metadata checkpoint / admission drain을 거친 exact C 복사. 서로 다른 작업 |
 | `reclaim` | eligible undo·삭제 row/index·retired object·free extent를 제한된 batch로 aging. 전체 root mark/sweep 없음 |
 
@@ -115,6 +115,25 @@ commit의 status 설치는 WAL sync 뒤 위 순서로 수행하고, page/tree/ap
 
 이 규약의 진행 조건은 종료하는 I/O와 공정한 actor 실행이며 I/O 장애는 Fenced로 구별한다. 무한히 유입되는 reader가 매 try 순간을 점유하는 공정한 starvation schedule도 turn의 drain 뒤에는 배제해야 한다. F02는 K·admission guard/rank·전체 pin 예약과 drain의 종료 조건을 동결하고, D3-M03/M06은 단순 action-depth 검사와 별도로 이 진행성을 판정한다.
 
+<a id="snapshot-acquisition"></a>
+### 7.2 최초 snapshot 획득과 horizon 등록
+
+`begin`의 transaction snapshot, ReadCommitted의 새 statement snapshot, idle prepare의 짧은 catalog snapshot은 같은 획득 규약을 사용한다. **published q만 읽은 뒤 gate 밖에서 나중에 horizon을 등록하는 경로는 금지한다.** 작은 CommittedView를 복사한 사실만으로 undo·객체 수명이 보호되지는 않는다.
+
+1. snapshot/registry slot과 guard 메모리를 먼저 예약하고, 적용 경로의 turn admission에 참여한다. admission·gate 대기는 coordinator·publication·tree/page/append/registry 잠금과 page pin을 보유하지 않은 상태에서 한다. 새 snapshot 등록은 turn 준비 중 허용하는 기존 reader의 content 접근과 구별하며, 신규 적용 진입이 닫혔으면 기다린다.
+2. version-edit gate를 획득한 뒤 publication lock에서 DB/timeline/open identity와 published `q`를 복사하고 publication lock을 해제한다. gate는 계속 보유한 채 registry leaf lock에서 예약한 slot에 그 `q`의 horizon 소유를 등록한다. 등록이 완료된 뒤 registry lock과 gate를 해제하고 guard를 반환한다. 등록 전에 catalog/row 접근을 시작하지 않는다. 이 구간에는 allocation·I/O·callback·다른 admission 대기가 없다.
+3. 획득의 선형화 시점은 gate 안에서 published `q`를 읽은 순간이다. commit frontier가 그 뒤 전진해도 aging은 같은 gate를 얻기 전에는 cut/reuse를 적용할 수 없고, gate를 얻으면 이미 등록된 `q`를 관측한다. 예약/진입 실패는 guard나 사용 가능한 미등록 `q`를 반환하지 않으며 예약을 해제한다.
+
+snapshot 경로의 잠금 순서는 `version-edit gate → publication lock 해제 → registry leaf lock`이다. publication과 registry lock은 동시에 보유하지 않으며, 이 경로는 coordinator·tree/page/append lock을 요청하지 않는다. commit도 publication lock을 잡은 채 version-edit gate를 요청하지 않는다. DEV2의 `retention ledger → publication` 순서를 DEV3 registry에 그대로 복사하지 않는다.
+
+aging은 version-edit gate를 보유하고 **tree/page/append/registry lock을 얻기 전에** publication lock에서 `Q = published q`를 읽고 해제한다. 이어 registry에서 등록된 snapshot들의 최소값과 rollback/객체/backup 소유를 확인한다. snapshot 보존 기준은 `H = min(Q, 등록된 snapshot q들)`이며 reader가 없으면 `H = Q`다. `H`와 더 오래된 소유가 요구하는 모든 버전을 재구성할 수 있는 link/값을 유지한다. 단순히 undo record의 q가 H 이하라는 이유로 그 record를 지우지 않는다. 후보를 gate 밖에서 준비했으면 실제 cut/reuse를 적용하는 gate 구간마다 이 검사를 다시 한다. 별도 incoming count·rollback·transient pin 조건도 계속 적용한다.
+
+이 `Q` 기준은 `TxnStatus=Committed(q=11)` 설치 후 frontier가 아직10인 구간에도 적용한다. reader가 없어도 새 snapshot은10을 선택할 수 있으므로10의 복원에 필요한 undo/객체를 남겨야 한다. frontier가 전진하면 이전 Q로 판정한 보존은 보수적일 뿐이다. 아직 공개하지 않은 commit q나 활성 reader가 없다는 이유의 무한대 값을 H로 사용하지 않는다. engine이 Fenced이면 새 snapshot admission과 회수를 진행하지 않는다.
+
+guard의 마지막 사용·소유가 끝난 뒤 등록을 해제한다. 해제는 registry leaf lock만으로 가능하며 보존 요구를 줄일 뿐 오래된 q를 새로 등록하지 않는다. Serializable statement/cursor는 기존 transaction guard의 소유를 끊지 않고 공유한다. 별도 slot으로 인계할 때에는 원래 소유를 유지한 채 위 gate/registry 순서로 새 소유를 등록한 뒤 이전 소유를 해제한다. ReadCommitted의 다음 statement는 해제한 q를 재등록하지 않고 최신 published q를 새로 획득한다. 이 규약은 [개별 참조의 transient pin](#undo-lifecycle)을 대체하지 않는다.
+
+필수 반례는 `reader q=10 선택 → writer q=11 공개 → aging → reader horizon 등록`과 `status11 설치 → frontier10인 채 aging → snapshot10 획득`이다. 전자는 등록까지 gate를 유지하여 aging을 차단하고, 후자는 Q 기준으로10을 보존해야 한다. [D3-M02와 실제 thread 인수](../plans/dev3-implementation-plan.md#state-model)에서 acquisition/등록/공개/cut의 별도 action과 도달 barrier로 판정한다. 현재 모델·제품 실행은 NOT_RUN이다.
+
 <a id="undo"></a>
 ## 8. 영속 undo와 aging
 
@@ -124,7 +143,7 @@ VersionStamp는 `Committed(q)` 또는 `TxnRef(id,generation)`다. 다른 거래�
 
 버전 chain의 obsolete suffix는 owner aging 작업이 **logged cut**으로 끊는다. before-image 안 previous-version ref와 Active 거래의 rollback chain도 영속 참조다. undo record마다 disk에 저장하는 incoming-reference count를 관리하며 row/index header·undo record·transaction head의 link 변경과 count 증감을 같은 WAL 그룹으로 처리한다. 0-count이고 horizon/rollback pin이 없는 record만 반환한다. chain은 단조로운 record sequence로 과거만 참조하고 cycle/overflow는 거절한다. cut 전 참조가 남은 suffix는 더 오래 보존할 수 있다. rollback은 오래된 before-image에 남은 link를 무조건 되살리지 않고 현재 cut과 참조 이전을 같은 CLR에 반영한다. record 반환은 그 outgoing reference를 batch로 해제하는 logged queue 작업이며 full-root tracing을 만들지 않는다. `A commit→B update→A aging→B abort→slot 재사용`의 chain·count·full-check를 필수로 검증한다.
 
-undo horizon은 active transaction snapshot, 열린 ReadCommitted statement/cursor, rollback chain, retired object/overflow, backup/recovery 작업 중 가장 오래 필요한 소유를 포함한다. reader horizon만 지났다고 아직 Active인 거래의 undo를 반환하지 않는다. ReadCommitted의 statement 사이에는 reader pin을 놓을 수 있으나 자기 rollback chain은 거래 종료까지 유지한다. disk undo/page/tss 회수는 owner별 큐·segment cursor의 작은 batch로 수행하며 전체 root graph나 immutable pack을 추적하지 않는다.
+undo horizon은 [현재 published q와 등록된 snapshot](#snapshot-acquisition), rollback chain, retired object/overflow, backup/recovery 작업 중 가장 오래 필요한 소유를 포함한다. reader horizon만 지났다고 아직 Active인 거래의 undo를 반환하지 않는다. ReadCommitted의 statement 사이에는 reader pin을 놓을 수 있으나 자기 rollback chain은 거래 종료까지 유지한다. disk undo/page/tss 회수는 owner별 큐·segment cursor의 작은 batch로 수행하며 전체 root graph나 immutable pack을 추적하지 않는다.
 
 WAL 보존과 undo 보존을 분리한다. checkpoint의 transaction head/progress와 필요한 undo/status/allocator page가 redo 가능해야만 오래된 WAL을 놓는다. dirty undo page의 recLSN은 data page와 동일하게 WAL을 pin한다. 조건 충족 후에는 오래된 Active 거래의 시작 WAL이 없어도 UndoRef chain으로 rollback/restart undo가 가능해야 한다. WAL의 prevLSN은 진단용 chain이며 삭제한 로그를 undo의 필수 입력으로 사용하지 않는다. RP/archive/PITR 보존은 별도 owner다.
 
@@ -313,3 +332,16 @@ PF09는 성공 TPS/충돌률, commit·WAL sync p99, background data flush/double
 | 검증·독립 검토 | [이번 근거와 작업 기록](../evidence/dev3-dev4-architecture-review.md). `/root/dev34_architecture_review`가 P1 진행 규약 보완 뒤 설계 채택 PASS·추가 필수 P1/P2 없음 확인. `/root` 반영 확인. 모델·제품·성능 시험 NOT_RUN, 문서 자동 검사는 push gate |
 | 남은 입력 | 실제 opcode/codec bound, Rust guard/API, 상태 탐색 action/corpus, fault byte images·deadline·성능 수치. 문서 보완은 해당 계산·실행의 완료가 아님 |
 | 재검토 | gate 병목, bounded model 반례/미완주, 예약 미충족·rollback 진행 실패, 배치 crash 반례, DEV2 경로 중복 유지비용 |
+
+<a id="snapshot-review"></a>
+## DEV3-REVIEW-005 — snapshot 등록과 aging의 원자 경계
+
+| 항목 | 내용 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-18 |
+| 담당·권한 | 작업/계약/통합 `/root`; 사용자의 DEV3·DEV4 리뷰 지적 수정 및 commit 요청. 전체 문서 검사·push는 후속 지시로 제외 |
+| 문제 | 최초 q 선택과 horizon 등록 사이의 회수 경쟁, status 설치 후 frontier 공개 전의 새 reader 보호가 미명시 |
+| 선택·대안 | 기존 version-edit gate로 q 선택/등록과 aging 결정을 조정하고 published q를 보존 기준에 포함. 새 전역 lock 추가나 DEV2 retention/publication 순서 재사용 대신 기존 순서를 구체화 |
+| 적용·대체 | DESIGN-003/REVIEW-004의 snapshot 획득·horizon 규약을7.2절로 구체화. WAL·격리·SQL 의미·단계 DAG·과거 evidence는 유지 |
+| 검증·검토 | D3-M02·DS04와 DEV4 수신/동시성 인수 보강. `/root/snapshot_design_review`의 독립 설계 검토 PASS·필수 P1/P2 없음, `/root` 반영 확인. [작업 기록](../plans/dev3-implementation-plan.md#snapshot-review). 모델·제품·전체 문서 검사 미실행 |
+| 재검토 | snapshot/registry/gate 경계 변경, frontier 이전 회수 반례, pin 인계 유실 또는 새 admission 순환 |

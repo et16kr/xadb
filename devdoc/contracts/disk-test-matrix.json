@@ -56,6 +56,8 @@
       "required_variants": [
         "PageGuard pin versus content latch versus snapshot/rollback horizon; stale locator hint revalidation",
         "old reader and active transaction survive overwrite/delete/drop, eviction/checkpoint and aging; retired object and overflow retention",
+        "DEV3-REVIEW-005/D3-M02 plus actual thread barriers: version-edit gate spans published-q selection and horizon registration; acquisition failure releases reservations; guard transfer has no unowned interval",
+        "No-reader status11-installed/frontier10 schedule preserves snapshot10 using H=min(published q, registered snapshot q); separate q-read/register/publish/cut actions; premature gate release, unpublished-q/infinite horizon and raw-q handoff mutants rejected",
         "undo/status/page generation reuse, commit-q stamping and logged chain cuts with incoming references",
         "A commit then B update then A aging then B abort then full check and old-slot reuse; active begin WAL reclaimed before abort/restart",
         "D3-M01/M02/M04: persistent edge multiplicity and independently reconstructed counts; transient UndoRef/TxnRef pins acquired before source-latch release; queue cursor and edge release atomic across repeated crash",

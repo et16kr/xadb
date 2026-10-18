@@ -172,6 +172,8 @@ prepare는 active transaction이면 그 catalog, idle이면 짧은 read-only sna
 
 drop/recreate·schema/index 정의 변경은 StalePlan으로 **첫 row 접근/효과 이전** 거절한다. 이름으로 자동 재bind하지 않는다. 검사와 실행은 동일 pinned transaction view를 사용해 DDL 사이의 TOCTOU를 막는다. 기존 transaction의 old catalog가 유효하면 그 view에 대해 판단하되 실제 offline DDL drain 규칙을 우회하지 않는다. 새 prepare는 최신 metadata를 반환하고 기존 handle metadata를 조용히 변경하지 않는다.
 
+idle prepare의 짧은 catalog snapshot과 execute의 최초 transaction/statement snapshot은 [DEV3의 q 선택·horizon 등록 규약](disk-storage-design.md#snapshot-acquisition)을 소비한다. SQL이 published q를 먼저 읽어 보관했다가 나중에 pin을 요청하지 않는다. 기존 transaction view를 statement/result에 넘길 때도 engine guard의 소유를 연속 유지하며 raw q만으로 snapshot을 재생성하지 않는다. 실제 수신과 최초 획득/aging 경쟁은 D4-F02·T09에서 확인한다.
+
 fetch는 owned row batch와 `complete` flag를 반환한다. max_rows=1..128, max_bytes=256 KiB 이내이며 현재 행이 caller 예산보다 크면 RowBufferTooSmall과 필요한 크기를 반환하고 위치를 전진시키지 않는다. 정상 EOF 또는 LIMIT 도달만 `complete=true`다. I/O·취소 오류나 조기 close는 미완료 결과이며 이미 전달한 prefix를 전체 성공으로 표시하지 않는다. `close_result`는 result의 자원만 정리하고 명시 transaction의 기존 DML을 commit하지 않는다. `close_statement`는 소속 result를 닫고 binding·plan을 해제한다. 명시 close_session/ROLLBACK은 engine undo 완료를 확인하며 실패는 호출자에게 반환한다. Drop은 hidden commit·새 allocation·panic 없이 이미 예약한 engine abort/수명 경로로 소유를 넘기거나 engine을 fence한다. undo/lock 소유를 단순히 버리거나 cleanup 미완료를 정상 rollback으로 표시하지 않는다. 구체 인계 API는 D4-F02에서 동결한다.
 
 ROLLBACK은 active result를 닫고 generation을 전진시켜 기존 result token을 InvalidHandle로 만든다. 소유 statement는 ReadyBound로 돌아가며 새 transaction에서 dependency 검사를 다시 받아야 한다. close_session은 모든 statement/result를 무효화한다. terminal 오류 기록에는 code/effect만 제한된 크기로 보존하고 원문 row·spill·snapshot을 붙잡지 않는다.
