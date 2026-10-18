@@ -121,7 +121,11 @@
       "stage_or_step": "DEV5",
       "title": "Actual client acknowledgement",
       "acceptance": "Observed network reply plus WAL/reopen, cancel/session/auth and disconnect uncertainty; native ACK evidence alone insufficient",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev5-server-design.md",
+        "dev5-implementation-plan.md"
+      ]
     }
   ],
   "detailed_recovery_cases": "recovery-test-matrix.json",

@@ -8,6 +8,8 @@
 
 DEV4 최소 subset의 문법·타입·DDL/DML·prepared·CLI는 [상세 설계](../contracts/dev4-sql-design.md)와 [구현·검증 계획](dev4-implementation-plan.md)에서 구체화했다. 아래 SQL·TYPE·CAT·TOOL 항목의 전체 DEV7/driver 범위를 작성 완료한 것은 아니며 실행 상태도 바꾸지 않는다.
 
+DEV5의 SES/NET/SEC 최소 local server 범위는 [서버 설계](../contracts/dev5-server-design.md)와 [인수 계획](dev5-implementation-plan.md)에서 구체화한다. TCP SQL·TLS·객체 ACL·LOB·driver 등 후속 기능은 미완료 의무로 남기며 전체 topic의 완료로 승격하지 않는다.
+
 ## BASE 제품 범위와 공통 계약
 
 | 항목 | 주제 | 기능 명세 | 설계 |

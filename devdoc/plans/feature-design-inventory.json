@@ -12,7 +12,9 @@
     "repository-build-plan.json",
     "development-policy.md",
     "capability-inventory.json",
-    "ai-performance-engineering.json"
+    "ai-performance-engineering.json",
+    "dev5-server-design.md",
+    "dev5-implementation-plan.md"
   ],
   "changes_existing_contracts": false,
   "changes_stage_order": false,

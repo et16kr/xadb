@@ -156,7 +156,11 @@
       "gate": "B3",
       "title": "SQL/index/catalog/concurrency integration",
       "acceptance": "real client, declared isolation histories, full scan/index equality and schema epoch tests",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev5-server-design.md",
+        "dev5-implementation-plan.md"
+      ]
     },
     {
       "id": "PA09",

@@ -162,7 +162,8 @@
         "lifecycle/session/connection/admission/auth/cancel",
         "actual client SQL ACK to production WAL/reopen",
         "start/stop primitives already exist below; this stage composes them",
-        "request protocol and session-owned prepared handles using DEV4 binding semantics; isolation, invalidation, cancel and cleanup"
+        "request protocol and session-owned prepared handles using DEV4 binding semantics; isolation, invalidation, cancel and cleanup",
+        "initial local Unix peer-UID authentication and DB-scoped authorization; bounded XSQ1 request fragmentation, worker/session ownership, output credits and cleanup; remote/TCP SQL remains deferred"
       ],
       "gate_refs": [
         "B3"
@@ -173,7 +174,11 @@
       ],
       "channel": "development",
       "execution_status": "NOT_RUN",
-      "completion_ref": "stage-completion.json#DEV5"
+      "completion_ref": "stage-completion.json#DEV5",
+      "design_refs": [
+        "dev5-server-design.md",
+        "dev5-implementation-plan.md"
+      ]
     },
     {
       "id": "DEV6",

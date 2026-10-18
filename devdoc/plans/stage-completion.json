@@ -84,7 +84,18 @@
       "task_ref": "XADB-033",
       "title": "서버 요청 상태·접근·취소",
       "acceptance": "인증 성공/실패, 권한 거절, session 격리, admission/quota, timeout/cancel/drain, commit 전후 disconnect와 재접속을 실제 local protocol client로 시험한다. writer fencing과 COMMITTED/ABORTED/UNKNOWN의 결과를 외부 history로 확인한다. DEV4 기본 prepared 실행을 실제 protocol에 연결하고 statement handle의 세션 격리, metadata/bind 전달, schema 무효화·권한 재확인, cancel/disconnect/close 뒤 자원 회수를 검증한다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev5-server-design.md",
+        "dev5-implementation-plan.md"
+      ],
+      "required_variants": [
+        "D5-T01/T02: independent wire vectors, bounded fragmentation, full-size SQL/bind and atomic input errors",
+        "D5-T03..T07: peer authentication, policy recheck and DDL prior outcome, session isolation, typed prepared metadata and stale handles",
+        "D5-T08..T12: admission/output/control progress, request-scoped cancel, transaction effects, real concurrency and ordered cleanup/drain",
+        "D5-T13: D5-C01..C08 actual socket ACK/WAL/reopen/recrash and known-bad oracle checks",
+        "D5-T14/P01..P04: PF11 request causality, independent end-to-end latency, resource and instrumentation costs"
+      ]
     },
     {
       "id": "SC04",
@@ -782,7 +793,7 @@
         "XADB-012",
         "XADB-033"
       ],
-      "contract_ref": "implementation-contracts.md",
+      "contract_ref": "dev5-server-design.md",
       "required_test_refs": [
         {
           "file": "stage-completion.json",
@@ -814,25 +825,34 @@
         }
       ],
       "pass_criteria": [
-        "실제 응답 관측→WAL→reopen의 ACK 보존; 인증/권한 거절 후 금지 효과 0",
+        "실제 응답 관측→WAL→reopen의 ACK 보존; 인증/접근 거절 효과0. DDL 권한 거절의 객체 효과0과 이미 허용된 prior transaction COMMITTED를 구분하여 두 outcome 보존",
         "request/session/cancel/disconnect 상태별 effect·certainty와 독립 이력 일치; Q1/C1 회귀 PASS",
         "해당 단계의 PF 성능 개발 인수: 실제 production 경로·동일 의미·유효한 비교·독립 정답·계측 비용·재현 증거. 미구현/불충분을 PASS로 기록하지 않음",
-        "DEV4 prepared 계약을 실제 요청/응답·세션 소유 handle에 연결; DEV6가 요구할 metadata·binding·격리·해제 시험 완료"
+        "DEV4 prepared 계약을 실제 요청/응답·세션 소유 handle에 연결; DEV6가 요구할 metadata·binding·격리·해제 시험 완료",
+        "dev5-implementation-plan.md D5-T01–T14·C01–C08 필수 inventory 전부, 독립 byte/history oracle·known-bad·bounded model·V3 thread/fuzz/fault 및 PF11 수치 profile 충족",
+        "XSQ1 full-size SQL/bind·request generation·control progress·reserved cleanup·server quiesce 후 terminal enqueue/COMM drain 순서·client UNKNOWN와 engine fencing 구별"
       ],
-      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "acceptance_input_status": "BASE_DESIGN_DEFINED_LEAF_API_AND_EXECUTION_PROFILES_PENDING",
       "open_decisions": [
-        "protocol frame/request/reply·인증/권한·session 상태표",
-        "connection/admission/request/output budget와 timeout·cancel·shutdown 경계",
-        "PF 사례별 workload/fixture·실제 recipe·계측 비용/회귀 예산·반복/통계 방법을 구현·실행 전에 확정",
-        "prepare/bind/execute/fetch/close protocol과 statement handle·권한·schema epoch 검증 상태표"
+        "D5-F01: exact XSQ1 body/metadata/handle/outcome codecs and independent literal byte fixtures before protocol implementation",
+        "D5-F02: actual peer-credential port, policy grammar/epoch and DEV4 authorization callback including DDL precommit effects",
+        "D5-F03: worker/session/cleanup ownership APIs, shutdown supervisor and bounded model/resource inventory",
+        "D5-F04: actual Q1/C1 supply revisions, independent client/oracle and fault receipts with executable recipes",
+        "D5-F05: actual release/environment/fixture identities and preregistered PF11 schedule using dev5-implementation-plan.md#performance"
       ],
       "deferred_obligations": [
-        "DEV6 driver 완성·이전 사내 client 호환은 선행 조건 아님; XADB-033은 XADB-032를 사용"
+        "DEV6 driver 완성·이전 사내 client 호환은 선행 조건 아님; XADB-033은 XADB-032를 사용",
+        "TCP SQL/remote TLS·password·객체 ACL·LOB·session resume·durable request lookup은 후속 계약/실제 인수 필요; local Unix B3 완료로 전체 NET/SEC/SES capability 완료/N/A 처리 금지"
       ],
       "run_entrypoint": null,
       "evidence_refs": [],
       "execution_status": "NOT_RUN",
-      "official_distribution_status": "NOT_RUN"
+      "official_distribution_status": "NOT_RUN",
+      "design_refs": [
+        "dev5-server-design.md",
+        "dev5-implementation-plan.md"
+      ],
+      "design_decision_ref": "dev5-server-design.md#decision"
     },
     {
       "id": "DEV6",

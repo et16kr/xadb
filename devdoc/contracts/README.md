@@ -4,6 +4,8 @@
 
 <!-- catalogue -->
 
+- [DEV5 — 서버·세션·요청 프로토콜 상세 설계](dev5-server-design.md) — local 인증·권한·XSQ1·prepared·취소·자원·외부 ACK; B3 미실행
+
 - [ai-performance-engineering.json](ai-performance-engineering.json)
 - [XADB — AI가 분석·수정·검증하는 성능 개발 구조](ai-performance-engineering.md)
 - [causal-diagnosis-cases.json](causal-diagnosis-cases.json)
