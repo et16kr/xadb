@@ -51,6 +51,7 @@ Cargo 이름   xadb-engine
 | 대상 | 규칙 | 예 |
 | --- | --- | --- |
 | 제품 crate 폴더 | 제품명 접두어 없이 책임 이름 사용 | `crates/foundation`, `crates/platform`, 계획 `crates/engine` |
+| 시험 도구 crate 폴더 | `crates/testing` 아래 책임 이름 사용 | `controller`, `protocol`, `reference`, `engine-worker` |
 | Cargo 패키지 | 폴더명과 별도 식별자. 현재 소문자·하이픈 이름 유지 | `xadb-foundation`, `xadbtest-protocol` |
 | Rust crate 경로 | Cargo 패키지와 구분해 밑줄 사용 | `xadb_foundation::identity` |
 | 모듈·Rust 파일 | 책임 중심의 `snake_case` | `transaction`, `commit_batch.rs` |
@@ -60,7 +61,7 @@ Cargo 이름   xadb-engine
 | 상수·static | `SCREAMING_SNAKE_CASE` | `MAX_FRAME_BYTES` |
 | 테스트 함수 | 조건과 기대 동작을 드러내는 `snake_case` | `stale_handle_is_rejected` |
 
-저장소가 이미 XADB 제품을 식별하므로 제품 소스 폴더에 `xadb-`를 반복하지 않는다. 현재 제품 폴더는 `foundation`, `platform`이며, 후속 `engine`, `transport`, `sql`, `server` 등도 같은 기준을 따른다. Cargo package 이름과 Rust import 이름은 별도 식별자이므로 이번 폴더 정리에서 유지한다. 예를 들어 `cargo test -p xadb-foundation`은 `crates/foundation`을 대상으로 한다. 독립 시험 도구의 고유 이름인 `xadbtest`와 그 관련 패키지 폴더는 유지한다. 기존 증거에 기록된 원래 경로는 해당 실행의 identity로 보존한다.
+저장소가 이미 XADB 제품을 식별하므로 제품 소스 폴더에 `xadb-`를 반복하지 않는다. 현재 제품 폴더는 `foundation`, `platform`이며, 후속 `engine`, `transport`, `sql`, `server` 등도 같은 기준을 따른다. Cargo package 이름과 Rust import 이름은 별도 식별자이므로 이번 폴더 정리에서 유지한다. 예를 들어 `cargo test -p xadb-foundation`은 `crates/foundation`을 대상으로 한다. 독립 시험 도구의 패키지·명령 이름인 `xadbtest` 계열은 유지하고, 소스 폴더는 `crates/testing/controller`, `protocol`, `reference`, `fixture-worker`, `foundation-worker`, `engine-worker`로 묶는다. `testing`은 분류용 디렉터리이며 각 하위 패키지는 별도 `Cargo.toml`과 의존 경계를 유지한다. 채택 근거와 이전 규칙의 대체는 [시험 도구 배치 결정](repository-build-plan.md#testing-layout)을 따른다. 기존 증거에 기록된 원래 경로는 해당 실행의 identity로 보존한다.
 
 Rust 코드에는 인자 `a`, 지역변수 `s`, 멤버 `m`, 전역 `g` 같은 범주 접두어를 추가하지 않는다. 변수의 역할은 이름과 선언, 멤버 접근은 `self.field`로 드러낸다. 짧은 루프의 `i`, 일반적인 타입 매개변수 `T`까지 긴 이름으로 바꾸지는 않는다.
 
@@ -208,7 +209,7 @@ cargo test --workspace --all-features --locked
 
 최소 환경은 검증하려는 효과를 제거한다는 뜻이 아니다. 파일 영속화·동시성·재시작이 계약에 포함되면 실제 I/O·thread·reopen과 필요한 통합 범위를 유지한다. 단일 시험 파일·드라이버로 제한하거나 하위 시험 성공을 완전한 검증의 증명으로 취급하지 않는다. 실패 주입을 위해 모든 내부 호출을 trait로 바꾸기보다 실제 효과 경계와 기존 주입 수단을 우선한다.
 
-리뷰는 계약·정확성 → 실패 효과·자원 수명 → 동시성·복구 → 의존 경계 → 이름·문서 순서로 수행한다. 정상 결과뿐 아니라 영향을 받는 오류·취소·부분 I/O·재시작 경계를 확인한다. 작은 모듈 성공을 실제 통합·단계 완료로 승격하지 않는다. 문서 링크나 서식만 고친 경우에는 문서 검사를 사용하며 제품 시험을 실행했다고 기록하지 않는다.
+리뷰는 계약·정확성 → 실패 효과·자원 수명 → 동시성·복구 → 의존 경계 → 이름·문서 순서로 수행한다. 정상 결과뿐 아니라 영향을 받는 오류·취소·부분 I/O·재시작 경계를 확인한다. 작은 모듈 성공을 실제 통합·단계 완료로 승격하지 않는다. 문서 링크나 서식만 고친 경우 자동 검사는 [DOC-002](documentation-policy.md#push-gate)에 따라 push 직전에 수행하며 제품 시험을 실행했다고 기록하지 않는다.
 
 <a id="section-11"></a>
 

@@ -1,15 +1,22 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-10-18T20:17:06.007370+09:00",
-  "status": "PASS",
-  "errors": [],
+  "date": "2026-10-18T20:31:37.745665+09:00",
+  "status": "FAIL",
+  "errors": [
+    "dev0-validation.json: evidence: current source fingerprint mismatch",
+    "dev1-validation.json: evidence: current source fingerprint mismatch",
+    "dev2-validation.json: evidence: current source fingerprint mismatch",
+    "dev2-validation.json: evidence: missing/duplicate/unexpected fixed check inventory",
+    "dev2-validation.json: evidence: unimplemented/unexecuted DEV2 limit changed streaming_controller",
+    "dev2-validation.json: evidence: unimplemented/unexecuted DEV2 limit changed catalog_oracle"
+  ],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
       "links": 42,
       "duplicate_ids": 0,
-      "sha256": "95d7ad530cffeeabd163e2e82d17f9c99101b40d324cdaaa1eb67bb0c54b5491"
+      "sha256": "01f37dc43cbeb180313efd675cb2a624ed17a74245fc2b84456c293e36e717fc"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -27,13 +34,13 @@
       "file": "devdoc/contracts/dev2-kernel-design.md",
       "links": 25,
       "duplicate_ids": 0,
-      "sha256": "97482bc954495b80c2144230c1c6858be4b77743a74e9cdb338245dbd5288a33"
+      "sha256": "3faa9ee20659fa3a0d53e29cb505c9e676829587974f43361747a25ecb0b89cb"
     },
     {
       "file": "devdoc/contracts/disk-storage-design.md",
-      "links": 11,
+      "links": 16,
       "duplicate_ids": 0,
-      "sha256": "94f5ec23da7527e0622a1debf51cc2f0ceacf18bd91af976af2dcbd3cf1ee1bc"
+      "sha256": "64ad2869f00b6f9afa4ee94e99ae0c5478db1f4894f54bcdf4b63369b1232348"
     },
     {
       "file": "devdoc/contracts/implementation-contracts.md",
@@ -55,9 +62,9 @@
     },
     {
       "file": "devdoc/evidence/README.md",
-      "links": 6,
+      "links": 7,
       "duplicate_ids": 0,
-      "sha256": "be53ba708c9a655a7c96ac200fab67d7829d59bf805e53b33cf6fa7bbff110c4"
+      "sha256": "774b948671ffe9b2742c2f4ba7679b78b548e2ce517487add31fec0a8fdb9580"
     },
     {
       "file": "devdoc/evidence/dev3-source-research.md",
@@ -85,21 +92,21 @@
     },
     {
       "file": "devdoc/history/project-migration.md",
-      "links": 4,
+      "links": 6,
       "duplicate_ids": 0,
-      "sha256": "9ed4f4b97feee3a2012c691577deaa5789783d1bfef618d7e62c9787d10276c7"
+      "sha256": "8f5c26dccd370593526b494c2c01ce7aab07bacda2a228d3fe3a04e24f260f36"
     },
     {
       "file": "devdoc/implementation/README.md",
-      "links": 12,
+      "links": 13,
       "duplicate_ids": 0,
-      "sha256": "12deccd34150905b935401d6a30020319ee73c2cd783cb4a30c1e49d749aba0a"
+      "sha256": "4f9a110b2c84456d72725c435fe5ec4954beabf76ddafd4e7121e3f48bb66b15"
     },
     {
       "file": "devdoc/implementation/dev0-implementation.md",
       "links": 9,
       "duplicate_ids": 0,
-      "sha256": "72e0a2a111bf0c4a401118d51719c56391e4bc0e63040c04adacdb1ea2bb359f"
+      "sha256": "0a8d251e7e4aeb587983febf44d937f66d7464143eeeec60734343ae14789fa8"
     },
     {
       "file": "devdoc/implementation/dev1-implementation.md",
@@ -111,13 +118,13 @@
       "file": "devdoc/implementation/dev2-implementation.md",
       "links": 7,
       "duplicate_ids": 0,
-      "sha256": "5f22d374986c9d5a782309fc569299f687107014bf4367cb747c11021e6fc0cb"
+      "sha256": "2f28d4dc475ff8d750b8ce1de2d70038ce4216cabcc7f5f8080f5f92e8e3f1ed"
     },
     {
       "file": "devdoc/plans/README.md",
       "links": 15,
       "duplicate_ids": 0,
-      "sha256": "13ab3467cd8b8dd4e61383ae9aaee66c4b88ebf69164be8f3bf90ccaad4e6f60"
+      "sha256": "f503dae8dffb162d39b3ff8cde427f9583a67ba949bf3c83588c0f42c6df4cad"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",
@@ -133,9 +140,9 @@
     },
     {
       "file": "devdoc/plans/dev3-implementation-plan.md",
-      "links": 5,
+      "links": 8,
       "duplicate_ids": 0,
-      "sha256": "3c9ec7ab0d5516dd2673e55b9d2625e575562942539348184f7a98f4def54959"
+      "sha256": "46925b7841a8fe6c0c1a0c3d2279fac22ac180019cc051d8ca0e03907fadc0ec"
     },
     {
       "file": "devdoc/plans/development-stages.md",
@@ -181,9 +188,9 @@
     },
     {
       "file": "devdoc/policies/coding-convention.md",
-      "links": 28,
+      "links": 29,
       "duplicate_ids": 0,
-      "sha256": "14a4637f9adbc96e691a97106cb8ee30903be705233bd85318caf6c7b3e1e962"
+      "sha256": "d05a354cd3533f4535dc0b680e1ff9d95087a3edb96c552fa83a09e559d7deec"
     },
     {
       "file": "devdoc/policies/development-policy.md",
@@ -205,9 +212,9 @@
     },
     {
       "file": "devdoc/policies/repository-build-plan.md",
-      "links": 16,
+      "links": 17,
       "duplicate_ids": 0,
-      "sha256": "cc51c68400f904ed8478e48fd94635c78321c3fb000432412e3d4e78a5f78f2f"
+      "sha256": "1d38acaec6ee3697de91e60b62e03452d1f5a8ddf1b99bfde0bed961e369acb5"
     },
     {
       "file": "devdoc/reference/README.md",
@@ -219,7 +226,7 @@
       "file": "devdoc/reference/architecture-overview.md",
       "links": 65,
       "duplicate_ids": 0,
-      "sha256": "347b7b5bc71b79aab92fa5bdff9389b57af841174d21e68965eff60866c387e2"
+      "sha256": "01c18401e58ff2caac937f62352f85b9fca5677123e7bc2aeaf5b4a6d84cd04a"
     },
     {
       "file": "devdoc/reference/feature-design-leaf-index.md",
@@ -265,9 +272,9 @@
     },
     {
       "file": "README.md",
-      "links": 6,
+      "links": 7,
       "duplicate_ids": 0,
-      "sha256": "0fbfd609a46174a794622a6169109e4010b7afc260431678563aaf0c7c3334ea"
+      "sha256": "80fe7dd3ef7b2eb4eba7221a57442bc3d82e1bbde420fa921ed53d512a3c0369"
     },
     {
       "file": "AGENTS.md",

@@ -156,6 +156,8 @@ pub struct Session {
     limits: Limits,
     began: Instant,
     decoder: frame::Decoder<Response>,
+    frame_send_cut: Option<u64>,
+    sent_high_water: u64,
     pending: BTreeMap<u64, Pending>,
     inbox: VecDeque<Response>,
     issued: u64,
@@ -233,6 +235,7 @@ impl Session {
         save(
             &directory.join("manifest.json"),
             &serde_json::json!({
+                "schema_version":1, "journal_format_version":1,
                 "scope":"NATIVE_TRANSPORT_NOT_PRODUCT_VERDICT", "run":options.run,
                 "source_sha256":env!("XADBTEST_SOURCE_SHA256"), "worker_sha256":worker_hash,
                 "toolchain":env!("XADBTEST_TOOLCHAIN"), "target":env!("XADBTEST_TARGET"),
@@ -259,6 +262,8 @@ impl Session {
             limits,
             began,
             decoder: frame::Decoder::new(),
+            frame_send_cut: None,
+            sent_high_water: 0,
             pending: BTreeMap::new(),
             inbox: VecDeque::new(),
             issued: 0,
@@ -302,11 +307,27 @@ impl Session {
 
     /// Append an Invoke before any request byte, then send while draining all streams.
     pub fn invoke(&mut self, actor: u8, action: Action) -> Result<u64> {
+        let began = Instant::now();
         self.checked(|this| {
+            let request_timeout = Duration::from_millis(this.limits.request_ms);
+            if began.elapsed() >= request_timeout {
+                return Err(fault(ErrorKind::Timeout, "request admission deadline"));
+            }
             this.deadlines()?;
+            // Drain all currently readable output before admitting a new identity.
+            // Each pump has finite quanta and checks deadlines/budgets.
+            loop {
+                let progressed = this.pump()?;
+                if began.elapsed() >= request_timeout {
+                    return Err(fault(ErrorKind::Timeout, "request admission deadline"));
+                }
+                if !progressed {
+                    break;
+                }
+            }
             if usize::from(actor) >= MAX_PENDING
                 || this.issued == MAX_REQUESTS
-                || this.pending.len() == MAX_PENDING
+                || this.pending.len() + this.inbox.len() == MAX_PENDING
                 || this.pending.values().any(|p| p.actor == actor)
             {
                 return Err(fault(ErrorKind::Protocol, "actor/request/pending bound"));
@@ -324,7 +345,9 @@ impl Session {
             if bytes.len() > this.limits.input_bytes - this.input_bytes {
                 return Err(fault(ErrorKind::Limit, "input budget"));
             }
-            let began = Instant::now();
+            if began.elapsed() >= request_timeout {
+                return Err(fault(ErrorKind::Timeout, "request encoding deadline"));
+            }
             this.record(1, id, &bytes)?;
             this.issued = id;
             this.pending.insert(
@@ -354,6 +377,7 @@ impl Session {
                         .get_mut(&id)
                         .expect("sending request pending")
                         .sent = true;
+                    this.sent_high_water = id;
                 }
                 this.pump()?;
                 if offset != bytes.len() {
@@ -375,8 +399,9 @@ impl Session {
                 if this.pending.is_empty() {
                     return Err(fault(ErrorKind::Protocol, "no pending response"));
                 }
-                this.pump()?;
-                thread::sleep(Duration::from_millis(2));
+                if !this.pump()? {
+                    thread::sleep(Duration::from_micros(200));
+                }
             }
         })
     }
@@ -420,15 +445,19 @@ impl Session {
         Ok(())
     }
 
-    fn pump(&mut self) -> Result<()> {
+    fn pump(&mut self) -> Result<bool> {
         self.deadlines()?;
+        let mut progressed = false;
         let mut buffer = [0; 8192];
         for _ in 0..8 {
             if self.output_eof {
                 break;
             }
-            match self.output.read(&mut buffer) {
+            let remaining = self.limits.stdout_bytes - self.output_bytes;
+            let capacity = buffer.len().min(remaining.max(1));
+            match self.output.read(&mut buffer[..capacity]) {
                 Ok(0) => {
+                    progressed = true;
                     self.output_eof = true;
                     self.decoder
                         .finish()
@@ -439,6 +468,7 @@ impl Session {
                     break;
                 }
                 Ok(count) => {
+                    progressed = true;
                     if count > self.limits.stdout_bytes - self.output_bytes {
                         return Err(fault(ErrorKind::Limit, "stdout budget"));
                     }
@@ -446,18 +476,27 @@ impl Session {
                     self.output_bytes += count;
                     let mut offset = 0;
                     while offset != count {
+                        if self.pending.is_empty() {
+                            return Err(fault(
+                                ErrorKind::Protocol,
+                                "unsolicited output without a pending request",
+                            ));
+                        }
+                        let send_cut = *self.frame_send_cut.get_or_insert(self.sent_high_water);
                         let (used, message) = self
                             .decoder
                             .feed(&buffer[offset..count])
                             .map_err(|e| fault(ErrorKind::Protocol, e.to_string()))?;
                         offset += used;
                         if let Some(response) = message {
+                            self.deadlines()?;
                             let pending = self.pending.get(&response.request).ok_or_else(|| {
                                 fault(ErrorKind::Protocol, "unknown/duplicate response")
                             })?;
                             if response.run != self.run
                                 || response.actor != pending.actor
                                 || !pending.sent
+                                || response.request > send_cut
                             {
                                 return Err(fault(
                                     ErrorKind::Protocol,
@@ -467,9 +506,11 @@ impl Session {
                             let bytes = frame::encode(&response)
                                 .map_err(|e| fault(ErrorKind::Protocol, e.to_string()))?;
                             self.record(3, response.request, &bytes)?;
+                            self.deadlines()?;
                             self.pending.remove(&response.request);
                             self.observed += 1;
                             self.inbox.push_back(response);
+                            self.frame_send_cut = None;
                         }
                     }
                 }
@@ -482,12 +523,16 @@ impl Session {
             if self.error_eof {
                 break;
             }
-            match self.errors.read(&mut buffer) {
+            let remaining = self.limits.stderr_bytes - self.error_bytes;
+            let capacity = buffer.len().min(remaining.max(1));
+            match self.errors.read(&mut buffer[..capacity]) {
                 Ok(0) => {
+                    progressed = true;
                     self.error_eof = true;
                     break;
                 }
                 Ok(count) => {
+                    progressed = true;
                     if count > self.limits.stderr_bytes - self.error_bytes {
                         return Err(fault(ErrorKind::Limit, "stderr budget"));
                     }
@@ -499,7 +544,8 @@ impl Session {
                 Err(error) => return Err(error.into()),
             }
         }
-        self.deadlines()
+        self.deadlines()?;
+        Ok(progressed)
     }
 
     fn cleanup(&mut self) -> Result<()> {
@@ -524,7 +570,26 @@ impl Session {
         self.checked(|this| {
             this.pump()?;
             this.record(4, 0, &[])?;
-            this.cleanup()
+            this.cleanup()?;
+            this.record(6, 0, &[])?;
+            save(
+                &this.directory.join("planned-kill.json"),
+                &this.report("WORKER_KILLED_NO_PRODUCT_VERDICT")?,
+            )?;
+            Ok(())
+        })
+    }
+
+    fn report(&self, completion: &'static str) -> Result<Report> {
+        Ok(Report {
+            directory: self.directory.clone(),
+            worker_sha256: self.worker_hash.clone(),
+            requests: self.issued,
+            observations: self.observed,
+            history_sha256: file_sha256(&self.directory.join("history.bin"))?,
+            stdout_sha256: file_sha256(&self.directory.join("stdout.bin"))?,
+            stderr_sha256: file_sha256(&self.directory.join("stderr.bin"))?,
+            completion,
         })
     }
 
@@ -562,16 +627,7 @@ impl Session {
                 return Err(fault(ErrorKind::Protocol, "worker exit was not successful"));
             }
             this.record(5, 0, &[])?;
-            let report = Report {
-                directory: this.directory.clone(),
-                worker_sha256: this.worker_hash.clone(),
-                requests: this.issued,
-                observations: this.observed,
-                history_sha256: file_sha256(&this.directory.join("history.bin"))?,
-                stdout_sha256: file_sha256(&this.directory.join("stdout.bin"))?,
-                stderr_sha256: file_sha256(&this.directory.join("stderr.bin"))?,
-                completion: "TRANSPORT_CLOSED_NO_PRODUCT_VERDICT",
-            };
+            let report = this.report("TRANSPORT_CLOSED_NO_PRODUCT_VERDICT")?;
             save(&this.directory.join("completion.json"), &report)?;
             Ok(report)
         })

@@ -14,7 +14,7 @@ fn collect(path: &Path, files: &mut Vec<std::path::PathBuf>) {
 fn main() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").expect("Cargo manifest directory");
     let root = Path::new(&crate_dir)
-        .join("../..")
+        .join("../../..")
         .canonicalize()
         .expect("workspace");
     let mut files = Vec::new();

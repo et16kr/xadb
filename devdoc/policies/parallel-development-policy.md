@@ -54,7 +54,7 @@
 
 ## 3. 공유 조립 파일과 생성물
 
-**XADB-LAYOUT-006:** `Cargo.toml`·`Cargo.lock`·모듈 등록·문서 색인·공용 checker도 공유 변경에 포함한다. lockfile은 병합한 manifest를 기준으로 정합성을 확인한다. 원문 Markdown/JSON과 문서 색인을 먼저 합치고 통합 담당이 최신 원문으로 문서 검증 결과를 갱신한다. HTML은 생성하지 않는다. 생성물의 충돌을 수동 편집으로 해결하지 않는다. 재생성 중 입력이 바뀌면 최종 입력으로 다시 생성·검증하며, 오래된 실행 결과를 새 소스의 PASS로 고쳐 쓰지 않는다. 도구로 범위를 정리할 때도 무관한 파일의 rename·서식 변경을 섞지 않는다.
+**XADB-LAYOUT-006:** `Cargo.toml`·`Cargo.lock`·모듈 등록·문서 색인·공용 checker도 공유 변경에 포함한다. lockfile은 병합한 manifest를 기준으로 정합성을 확인한다. 원문 Markdown/JSON과 문서 색인을 먼저 합치고, [DOC-002](documentation-policy.md#push-gate)에 따라 push할 commit에서 문서 검사를 수행한다. 편집 중 document-validation.json을 반복 생성하지 않는다. HTML은 생성하지 않는다. 생성물의 충돌을 수동 편집으로 해결하지 않는다. 생성 결과는 검사한 입력에만 귀속하며, 오래된 실행 결과를 새 소스의 PASS로 고쳐 쓰지 않는다. 도구로 범위를 정리할 때도 무관한 파일의 rename·서식 변경을 섞지 않는다.
 
 파일 분리는 크기보다 변경 책임과 실제 공동 수정 여부로 판단한다. 현재 foundation의 `runtime.rs`와 통합된 계약 시험처럼 여러 책임을 담은 파일은 관련 작업이 나뉠 때 분리 후보로 검토한다. 일괄 재배치는 이 정책 채택에 포함하지 않는다. 별도 crate는 독립 빌드·공개 경계가 필요한 경우에 검토하고, 순환 의존이나 전역 singleton으로 분리를 우회하지 않는다.
 
@@ -78,10 +78,6 @@ DEV2 K0 착수 전 해당 작업의 수정 범위·담당·공유 계약을 구�
 
 ## 5. 문서 검증
 
-저장소 루트에서 실행한다.
-
-```bash
-python3 devdoc/verify_documents.py
-```
+문서 검사는 [DOC-002](documentation-policy.md#push-gate)의 pre-push 훅에서 전송할 commit마다 실행한다. 편집·commit 때 반복 실행하지 않는다.
 
 문서 검사는 링크·JSON·Markdown 지문 등을 확인하며 제품 시험이나 PD01–PD03의 실행을 대신하지 않는다.

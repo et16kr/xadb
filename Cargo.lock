@@ -30,6 +30,7 @@ name = "xadbtest"
 version = "0.1.0"
 dependencies = [
  "xadbtest-protocol",
+ "xadbtest-reference",
  "nix",
  "serde",
  "serde_json",
@@ -43,7 +44,10 @@ version = "0.1.0"
 dependencies = [
  "xadb-engine",
  "xadb-foundation",
+ "xadbtest",
  "xadbtest-protocol",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]

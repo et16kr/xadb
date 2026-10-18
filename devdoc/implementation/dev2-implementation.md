@@ -1,6 +1,6 @@
 # DEV2 구현 기록
 
-**이관 상태:** 아래의 API·동작·제약 설명을 현재 코드와 함께 유지한다. 이전 실행 횟수·검토 기록은 새 XADB qualification이 아니다. 새 실행 여부는 [구현 상태](implementation-status.json)와 [증거 색인](../evidence/README.md)을 따른다.
+**이관 상태:** 아래의 API·동작·제약 설명을 현재 코드와 함께 유지한다. 이전 실행 횟수·검토 기록은 새 XADB qualification이 아니다. 시험 패키지 재구성 후 r2 실행에서 후속 K0 이관을 포함한 28개 check와 DEV0·DEV1 회귀를 확인했다. 현재 적용 source와 한계는 [구현 상태](implementation-status.json)와 [증거 색인](../evidence/README.md)을 따른다.
 
 
 2026-10-18 · **구현 진행 중 / DEV2·B2·D0 미완료**
@@ -13,7 +13,7 @@
 | --- | --- |
 | 작업·계약·통합 담당 | `/root` |
 | 범위 | XADB-004의 작은 row/transaction oracle와 literal known-bad self-test. 실제 engine·native worker·내구성 시험과 별개 |
-| 소유 경로 | `crates/xadbtest-reference/`, `crates/xadbtest-protocol/src/history.rs`, 관련 시험; 이 구현 기록 |
+| 소유 경로 | `crates/testing/reference/`, `crates/testing/protocol/src/history.rs`, 관련 시험; 이 구현 기록 |
 | 공유 변경 | `/root`가 Cargo workspace/lock, protocol 모듈 선언, 저장소 배치 JSON/Markdown, 문서 색인/검사 결과를 순차 반영 |
 | 순서 | 이력 계약 → 독립 검토 → reference 구현·literal 반례 → 하위 회귀·독립 build → 최신 문서 검사 |
 | 대안 | commit 응답 순서만 정렬하면 응답 역전과 begin 구간을 오판한다. worker snapshot 번호를 신뢰하면 혼합 snapshot을 놓친다 |
@@ -129,7 +129,7 @@ worker 하위 leaf는 adapter literal6개와 trusted process smoke4개를 먼저
 
 ## DEV2-K0-003 — 외부 streaming controller
 
-**D2 / 초안 코드 이관 / 기능 인수 미실행.** `crates/xadbtest/src/native.rs`의 native session 초안도 snapshot에 포함되어 이관됐다. workspace 빌드·Clippy 대상에는 포함되지만 이 모듈의 독립 process mutant·외부 이력 통합 시험은 아직 연결되지 않았으며 실행 보고서는 `streaming_controller: NOT_RUN`이다. 아래는 완료해야 할 계약이며 현재 검증된 보장이 아니다. `xadbtest::native`는 기존 Linux `OwnedChild`의 unreaped leader/process-group 정리를 재사용한다. 기존 전체 stdout fixture controller의 판정 경로는 유지한다. 새 외부 dependency·production normal dependency는 없다.
+**D2 / 후속 구현·시험 이관 / r2 현재 소스의 해당 leaf 로컬 검증.** 초기 초안 이후의 controller 보완과 실제 worker·부정 시험을 추가했다. 아래는 이관한 현재 API·오류·수명 계약이며, 실제 후속 이관 검증은 [r2 보고서](../evidence/dev2-xadb-20261018-r2.json)에 기록한다. DEV2·K0 전체 완료를 뜻하지 않는다.
 
 controller가 소유하는 새 artifact directory에 candidate binary 사본/hash, 제한된 raw stdout/stderr, append-only invocation/response journal을 보존한다. worker cwd는 별도 하위 directory이고 expected 값·최종 verdict·journal 경로를 인자로 보내지 않는다. 같은 OS 사용자 권한의 로컬 분리는 보호 CI나 보안 sandbox로 주장하지 않는다. 호출자는 typed action만 invoke하고 수신 observation의 의미를 독립 oracle로 판정한다. transport의 정상 종료만으로 제품 PASS를 만들지 않는다.
 
@@ -142,3 +142,61 @@ journal에는 단조 event sequence와 session-relative monotonic time, Invoke/�
 정상 종료 drain grace는5초이며 run60초에 포함한다(남은 run 시간이 짧으면 그 시간이 먼저 만료). SIGKILL→reap는 기존 DEV0와 같이 협력적 Linux의 실제 정리이며 uninterruptible kernel wait나 process group을 탈출한 descendant의 강제 시간 보장을 주장하지 않는다. pipe를 유지한 descendant 때문에 grace가 끝나면 timeout을 남기며 정상 실행으로 승격하지 않는다. 기존 `OwnedChild::finish`의 kernel wait 한계는 유지하고 아직 실행하지 않은 sandbox/cgroup 자격으로 바꾸지 않는다.
 
 초기 부정 corpus는 wrong run/request/actor, duplicate/unsolicited/reversed response, partial/oversized/malformed frame, missing response/late response, continuously flooding stdout/stderr, stdin을 읽지 않는 worker, leader 종료 후 pipe를 보유한 descendant, journal 쓰기 실패다. 실제 native worker와 정상 literal 이력, 복수 actor pending/역전, 중간 응답 뒤 controller-owned kill을 대조한다. 이 controller leaf도 K0 catalog oracle 전체·bounded concurrent 공간·PF/bundle·durability 완료를 대신하지 않는다.
+
+실제 worker 통합 시험은 `xadbtest-engine-worker`의 dev-dependency로 기존 `xadbtest`, `tempfile`, `serde_json`을 사용한다. worker normal 실행은 이 controller를 링크하지 않는다. controller에 engine 의존을 추가하는 대안보다 기존 process boundary를 유지하며 `tests/support`의 test-only scalar 기대값 generator를 기존 trusted process와 실제 controller가 함께 소비한다. production 모델을 공유하지 않는다. V2 64×128 requests·별도 최대 seed1,024·V3 256×1,024 profile은 앞선 worker leaf와 같으며 실제 controller 경로에서도 따로 실행한다. 실행 전 이름·source hash를 wrapper가 고정하고 각 session의 worker 사본·journal·stdout/stderr·manifest·completion을 보존한다. 이 dev 간선과 native controller는 K0의 catalog 전체 oracle를 대체하지 않는다. 의존 경계/실제 native 통합이 바뀔 때 이 선택을 재검토한다.
+
+이관한 구현은 두 반례의 수정과 회귀 시험을 포함한다. ACK와 초과 stdout이 같은 read에 도착하면 ACK까지 버리는 문제는 남은 허용 byte까지 먼저 decode/Observe하고 다음1byte로 초과를 검출하도록 수정했다. invoke 전 도착한 완전·부분 응답을 미래 request에 연결하는 문제는 admission 전에 읽을 수 있는 stream을 모두 drain하고, frame 첫 byte의 Sent high-water를 보존해 수정했다. 회귀 corpus에 양쪽·여러 quantum drain을 포함했다. invoke 진입에서 request deadline을 시작해 admission/encode도 포함하고 manifest/journal format version을 명시했다. 실제 worker의 Insert/Read 뒤 계획 kill도 `Observe→KillIntent→KillConfirmed`와 별도 `planned-kill.json` hash receipt로 보존한다. 정상 종료 receipt와 계획 kill은 제품 verdict·내구성 증거가 아니다.
+
+## DEV2-K0-004 — catalog 이력과 native recipe 연결
+
+**D2 / 후속 구현·시험 이관 / r2 현재 소스의 해당 leaf 로컬 검증.** P0 거래 이력 checker와 native transport를 유지하며 순차 catalog 이력을 독립 판정한다. `xadbtest`가 `xadbtest-reference`를 normal dependency로 소비한다. engine/foundation의 역방향 의존이나 production row/compare/codec 공유는 추가하지 않는다. 작은 독립 BTreeMap 모델을 사용하는 선택은 현재 K0 profile에 한정한다. profile·공개 결과·K1 연결을 확장할 때 다시 검토한다.
+
+reference는 protocol의 입력·관측 타입만 공유하고 별도 `BTreeMap`과 명시적인 snapshot 복사로 catalog·schema·row·cursor 상태를 계산한다. 정상/오류 observation, namespace/epoch/local ID, NULL/absence, drop/recreate와 old reader, cursor 고정 순서·EOF·canonical byte 수를 자체 해석한다. alias의 소비·해제 규칙도 검사한다. Metrics의 attempted operation/returned row/pin은 독립 계산하고, resident byte는 감소 가능한 gauge로0..64MiB 범위만 검사하고, 누적 row-ref 복사량은 단조성만 검사한다. 후자에 대한 정확한 비용 비교는 별도 PF 소유이며 전체 metric을 독립 재현했다는 주장을 하지 않는다.
+
+첫 native recipe는 actor0의 순차 요청이며 Initialize는64MiB resident·32pin으로 고정한다. reference 실행 profile은1,024 requests·논리 입력/관측8MiB, 성공 상태별4table·table당4columns·전체128rows·scalar payload1KiB, 동시에 보유한 snapshot8개·cursor8개로 제한한다. profile 밖은 명시 INVALID이고 축소하거나 일부만 PASS시키지 않는다. schema/type와 stale/없는 행의 제품 오류는 공개 catalog root를 변경하지 않는다. Create/Insert 실패 때 예약한 alias는 영구 소비되고 attempted-op counter는 증가할 수 있다. 잘못된·재사용·해제된 alias는 제품 오류가 아니라 fatal protocol/INVALID이며 이후 정상 operation을 허용하지 않는다. 제품의 더 큰 한도·quota 실패·동시 actor 검증은 기존 literal/transport 시험에 남기며 이 작은 모델의 검증 범위로 합치지 않는다. snapshot/cursor 복사 수와 각 root의 입력 한도를 함께 검사해 큰 무제한 복사를 시작하지 않는다.
+
+controller의 versioned recipe는 worker 경로/hash·run identity·typed action을 입력으로 받아 현재 streaming session을 실행한다. 외부 journal의 Invoke/Sent/Observe를 별도 reader로 확인하고 그 입력·관측을 reference에 전달한다. recipe/worker/외부 history identity가 다르거나 요청·응답·종료 기록이 빠지면 INVALID/ERROR로 남긴다. worker에는 예상 observation이나 verdict를 전달하지 않는다. 파일에서 재실행한 recipe도 같은 독립 판정을 거치며 결과를 바꾼 known-bad 이력을 거절한다. 이 replay는 K0의 현재 행/catalog 의미만 소유하며 XADB-014a/PF의 전체 bundle·통계·성능 비교 완료는 별도 의무다.
+
+검증 profile은 실행 전에 literal schema/ID/scan 경계와 각 의미별 wrong observation을 고정하고, V2 seed0..63×128 requests·별도 최대1,024·V3 seed0..255×1,024를 사용한다. 정상 이력 수용뿐 아니라 stale table 부활, 새 snapshot 혼합, 삭제/실패 변경 반영, 잘못된 identity·scalar·페이지 순서/EOF/byte 수, duplicate/missing history의 거절을 요구한다. 실제 worker와 controller를 통과한 동일 recipe의 외부 journal을 비교한다. profile/오류 우선순위·자원 상한·공개 결과 타입은 코드 추가 전에 검토하며, K1 거래/동시 이력 통합 또는 한도 확장 때 재검토한다. 기존 결정을 대체하지 않는 K0 하위 확장이다.
+
+K0-004 입력 예산은 논리 비용으로 고정한다. 요청/관측 pair마다512bytes, 모든 schema의 table 이름 UTF-8 bytes와 각 column의64bytes+이름 bytes, 입력 cell마다32bytes+Utf8/Binary payload bytes, 반환 row마다128bytes+각 cell의 같은 비용, ProductError code의 UTF-8 bytes를 합산한다. Scan Page의 모든 row를 포함하고 입력·관측을 둘 다 센다. 기타 숫자/enum/alias/envelope/고정 metric은 pair의512bytes에 포함된다. checked 합산으로8MiB를 넘으면 INVALID이며 raw journal의64MiB 한도와 별개다. 이는 RSS/allocator capacity 보장이 아니다. input schema는 최대4columns·각 이름 최대129bytes(정상128+1의 오류 사례), input cell은 최대4개·payload1KiB로 제한한다. 반환 관측은 위 전체8MiB 예산에서 먼저 검사하고 잘못된 값은 기대 관측과 불일치로 REJECTED 처리한다. 정상 상태의4table·128rows·snapshot8·cursor8 한도를 clone 전에 검사한다. protocol의 frame4MiB에 더해 recipe 파일 자체는 parse 전에16MiB(허용 마지막 byte 다음1byte로 초과 확인), 최대1,024 action으로 고정하고 unknown/duplicate field·version은 거절한다. JSON escaping이 이 별도 파일 한도를 넘으면 논리 예산 내라도 parse 전 실행 ERROR다.
+
+oracle 판정 결과는 `ACCEPTED`(모든 pair의 의미 일치), `REJECTED`(정상 profile의 관측 불일치), `INVALID`(typed 입력·protocol·profile·논리 예산 위반)로 구분하며 첫 실패 위치와 이유를 남긴다. 빈 typed trace는 INVALID다. 첫 Initialize는 nonzero DB/timeline/epoch,64MiB/32pin의 고정 profile이며 실패한 초기화를 정상 recipe로 승격하지 않는다. native recipe parser·파일 byte 한도·identity·미완료 journal·transport·I/O 실패는 실행 ERROR로 남는다. CLI 종료 코드는 ACCEPTED=0, REJECTED=1, INVALID=2, 실행 ERROR=3이며 ERROR를 oracle 결과로 합치지 않는다.
+
+오류 우선순위는 envelope/run/request/actor 및 protocol alias 검사를 먼저 한다. Create는 table alias 예약→schema 이름·열수·중복→동일 이름 확인 순서, Lookup은 snapshot 확인→table alias 예약→이름 조회, Insert는 table alias 확인→row alias 예약→현재 table 유효성→열수·각 열의 타입/nullability 순서다. Replace/Delete는 table·row alias→현재 table→row 소속 table→행 존재를 확인하며 Replace만 이후 schema를 검사한다. Read는 snapshot·table·row alias→해당 snapshot의 table→row 소속 table→행 조회 순서다. OpenScan은 snapshot·table alias→cursor 한도/예약→snapshot의 table, NextPage는 cursor alias→limit1..1,024, Release/Close는 active alias 확인 후 자원 소유만 해제한다. 제품 오류 ID는 기존 K0-001의 InvalidInput/SchemaMismatch/TableExists/TableNotFound/StaleHandle/RowNotFound/LimitExceeded를 그대로 대조한다. 이 고정 작은 profile에서 예상하지 않는 allocation/quota 오류는 정상 관측으로 허용하지 않는다. 큰 값·전체 제품 table/pin/cursor 한도는 기존 직접 literal 시험에 남긴다.
+
+Lookup의 검색 이름도 UTF-8 bytes를 논리 비용에 더하고 최대129bytes로 제한한다. Metrics.operations는 Create/Drop/Insert/Replace/Delete가 실제 engine 호출에 진입한 횟수(제품 오류 포함), rows_read는 성공 Read(Some)와 반환 page의 행 수, snapshot_pins는 snapshot/cursor가 공유하는 고유 pin 수다. 별도 검토자는 resident gauge·alias 소비·입력 예산/결과형/오류 순서 및 Lookup 비용 누락을 지적했고 위 계약에 반영했다. 다른 착수 차단 모순이 없음을 확인해 계약·통합 담당이 D2 입력을 채택한다. 이 검토는 아직 없는 코드나 실행 결과의 승인 증거가 아니다.
+
+유효한 요청에 대한 잘못된 response envelope는 관측 불일치이므로 reference에서 REJECTED다. native reader의 framing·matching 위반은 실행 ERROR다. 입력 요청의 envelope/order/alias 위반은 INVALID로 구분한다. native reader와 reference는 같은 `CatalogInputBudget`을 소비해 각 decoded pair를 보유하기 전에 논리 예산을 확인하며 예산 실패 뒤 재사용을 거절한다. 이 공유는 입력 예산 계약에만 해당하고 native framing이나 production 정답 계산을 reference에 가져오지 않는다.
+
+## DEV2-K0-005 — 성능 작업의 미구현 제안 인계
+
+**PROPOSED / 구현 NOT_RUN / 검토 미완.** 성능 계측과 외부 비교·재현을 두 담당으로 나누는 설계 준비까지 인계한다. 이 추가 이관에서 성능 코드·platform 수집·새 dependency를 구현하지 않는다. 작업 재개 시 XADB 소유 계약으로 검토·채택하고 파일 담당을 다시 확인한다.
+
+전용 구현 계획은 엔진 `metrics.rs`/`substrate.rs`와 전용 시험·worker `performance.rs`, controller `performance.rs`/하위 모듈·전용 시험으로 분리한다. 공통 protocol/Cargo/lib/main/scripts/docs와 platform 수집 adapter는 통합 담당이 순차 반영할 영역이다. 아직 없는 경로를 IMPLEMENTED로 등록하지 않는다.
+
+### K0-005 공통 계약 제안 — 독립 검토 전
+
+두 담당의 입력을 합친 최초 범위는 한 thread의 실제 row replace→새 snapshot/read다. 기존5개 기본 Metrics는 off에도 남는 비용이며 새 diagnostics만 Off/Always/Detailed로 구분한다. API operation label11개(Create/Drop/Insert/Replace/Delete/Snapshot/Lookup/Schema/Read/Scan/NextPage)의 시작·완료·실패 counter를 고정 배열에 기록한다. off는 미수집을 None으로 표시한다. 상세 event는 sequence·operation·성공/실제 ErrorCode이며 clock/span이라고 표시하지 않는다. hot path는 할당·출력·대기 없이 try_lock으로 사전 할당 queue에 기록하고, 포화·경합·poison 시 drop을 공개한다. capacity0..1,024, 기본256, row quota와 분리한 diagnostics 메모리 상한을 적용한다. drain 뒤 queue capacity를 유지한다. counter/sequence의 포화는 saturated 상태로 공개하고 wrap하지 않는다. 기존 기본 counter의 의미는 바꾸지 않는다.
+
+protocol은 별도 `performance` 소유 모듈의 엄격한 version1 input/output을 native engine Action/Observation에 연결한다. native Initialize 뒤 두 번째 요청 한 번만 허용하는 독립 fixture batch로 제한하고, 기존 세션의 행·alias를 소비하거나 변경하지 않는다. worker 내부의 새 volatile store(고정64MiB/32pins, DB `[2;16]`·timeline7·epoch3)를 사용한다. input은 seed, row_count1/128, pin_old, diagnostics mode/capacity, warmup4,096, measure65,536, latency_stride16이다. 각 구간 row index는 `i % row_count`, 초기 row 값은 index의 i64 값이다. 매 iteration 시작에 LCG `state = state * 6364136223846793005 + 1442695040888963407`를 u64 wrapping으로 적용하고 i64로 해석해 replace→새 snapshot/read→drop한다. warmup 끝 state를 measurement로 넘긴다. old snapshot은 setup 후 warmup 전에 고정한다. 제품 오류는 숨기지 않고 해당 실행을 실패로 남긴다. 직접 엔진 시험은 같은 정상/오류 fixture의 mode별 의미·ID·quota 결과를 대조한다.
+
+worker output은 입력 echo, setup/warmup/measure 각각의 elapsed ns, 실제 완료 수·오류, measurement read 값65,536개 전부, 최종/old row 최대128개, 매16번째 iteration의 latency ns4,096개, 측정 전후 기본/추가 counter, bounded 상세 event/drop/saturation을 담는다. 입력·결과는 기존4MiB frame과5초 request·60초 run 한도를 유지한다. 측정 전 상세 queue를 drain하고 counter는 전후 delta를 사용한다. 측정 후 correctness 조회·직렬화 시간은 measurement 안에 넣지 않는다. 외부 controller는 값/완료량을 독립 scalar 산술로 대조하고 외부 Invoke→Observe 시간 및 process 정상 종료를 별도 확인한다. worker clock과 controller clock을 서로 빼지 않는다. Linux `/proc/self/schedstat`의 실행 ns delta는 single-thread CPU 관측, `/proc/self/status` VmHWM은 전체 process peak RSS로 정의한다. 수집 불가·역행·불완전은 None/UNSUPPORTED이며0으로 대체하지 않는다. VmHWM을 측정 구간만의 RSS라고 하지 않는다.
+
+최초 성능 fixture는 row_count128·pin_old=true다. correctness edge는1/128행·pin 유무와 cap0/1/256을 포함한다. 비교는 actual release의 off↔always, off↔detailed 두 campaign으로 시작하며 최초 동일 구현의 계측 비용을 보고한다. 개선 PASS를 목표로 하지 않는다. 모든 campaign은 실행 전 고정한10 paired runs, AB5/BA5 순서를 seed로 섞어 보존한다. 주 비용은 measure_ns, 최소 유용 효과5%, median ratio의 distribution-free interval은 정렬된10개 비율의 두 번째/아홉 번째(coverage1002/1024)다. interval 전체가0.95 미만이면 IMPROVED,1.05 초과면 REGRESSED, 전체가[0.95,1.05] 안이면 NO_MATERIAL_CHANGE, 나머지는 INCONCLUSIVE다. 원시 sample p99는 정렬된4,096개 중 index4,055이며 전체 latency 모집단 p99로 표시하지 않는다. 사전 guardrail은 measure elapsed/CPU/외부 request elapsed 각각+15%, 표본p99+25%, process peak RSS+4MiB이며 comparison은 각 paired guardrail의 최악값을 사용한다. 필요한 관측이 없으면 guardrails UNKNOWN·promotion INCOMPLETE다. AB/BA 층의 주 비용 ratio median 차이가0.10을 넘으면 drift INVALID다.
+
+recipe JSON64KiB, strict version1/unknown·duplicate field 거절, 한 campaign의10쌍과 단일 fixture/분석 정책을 원문 hash로 묶는다. source/binary/build/config·fixture/semantic/path identity, worker 사본, 원본 recipe, 각 실행의 native journal/raw streams/종료 receipt·원시 관측, 가설·재실행 지시를 소유 bundle에 보존한다. 비교 결과축은 validity/correctness/performance_effect/guardrails/cause_status/promotion을 분리한다. ratio는 checked 정수 ppm을 쓰며0 분모/overflow는 성공 판정이 아니다. baseline/candidate의 계측 모드·binary/source 차이만 명시적으로 허용하며 fixture·의미·부하·실제 경로·완료량 mismatch는 INVALID다. 한 pair의 실패도 삭제하지 않는다. 탐색 후보는최대16개, 고정 candidate의 최종 확인은1 campaign이며 탐색·확인 run ID는 겹치지 않는다. winner 재사용·중복 확인·기준 자기 변경·누락 run의 거짓 개선을 반례로 거절한다. 로컬 파일 분리는 보호 CI 권한 분리로 주장하지 않는다.
+
+고정 분석 vector는 동등/개선/악화/불확실·order drift·우연한 탐색 winner 재사용, 잘못된 identity/부하/경로·요청/관측 누락·timeout 은폐다. bundle만 남긴 별도 cwd에서 baseline/candidate를 새 process로 재실행해 정답과 비교를 다시 산출한다. PF01/03/04/05/07/13의 현재 K0 variant를 목표로 하며 WAL/sync·중첩·병렬 clock·내구성 의무와 PF12 실제 국소 최적화는 별도 후속이다. row-ref 불필요 복사는 관측 후 검토할 가설일 뿐 현재 최적화나 효과로 기록하지 않는다.
+
+### 재개 전 해결할 항목
+
+아래는 앞의 제안에 아직 반영해야 할 검토 의견이다. 미완 제안으로 보존하며 실행 증거·채택 계약으로 해석하지 않는다.
+
+- `/proc` CPU/RSS 수집은 platform adapter가 소유한다. root가 `crates/platform/src/performance.rs`와 module 조립·worker→platform normal 간선·배치 원문을 함께 반영할 계획이다. worker 내부 직접 OS 수집으로 배치 정책을 우회하지 않는다.
+- 기존 Metrics의3개 누적 counter만 checked delta를 사용하고 resident_bytes/snapshot_pins는 before/after gauge로 다룬다. VmHWM은 sampling 시점까지의 process peak다. warmup→event drain→before metrics→CPU/Instant 시작→측정→Instant/CPU 끝→after metrics→event drain→최종 correctness 조회의 cut를 반영한다.
+- 모드별 수집 범위와 completed의 오류 포함 여부, 제안한 diagnostics64KiB 논리 비용식·drain 반환 메모리 범위를 확정한다. 아직 수치만으로 총 RSS 상한을 주장하지 않는다.
+- ratio ppm을 floor로 계산해 경계 초과를 PASS시키지 않도록 checked cross-product 또는 보수적 경계 비교를 확정한다. 예를 들어10,500,009/10,000,000을1.05 이하로 분류하면 안 된다.
+- 최초 두 계측 비교는 InstrumentationAudit, candidate 채택 확인은 단일 Confirmation, 새 세션 재현은 ReplayAudit로 구분한다. ReplayAudit는 원본 recipe/확인/실패를 보존하고 새 run IDs로 재실행·재분석하되 promotion=INCOMPLETE로 고정한다. 이 구분을 wire/recipe·분석 규칙에 반영해야 한다.
+
+K0 성능·bundle 의무와 K1 트랜잭션·K2 WAL·K3 복구·K4 동시성·K5 checkpoint/restore는 남은 작업이다. 이번 이관은 이 기능을 새로 구현하거나 DEV2 완료를 선언하지 않는다.

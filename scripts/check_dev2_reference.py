@@ -97,6 +97,54 @@ WORKER_TESTS = {
         'maximum_canonical_rows_survive_wire_escaping_and_page_byte_limits',
     },
 }
+NATIVE_WORKER_TESTS = {
+    'actual_worker_kill_receipt_follows_recorded_insert_and_read',
+    'controller_records_actual_old_snapshot_after_delete_and_drop_recreate',
+    'controller_v2_64_seeds_execute_128_requests_and_verify_external_history',
+    'controller_maximum_1024_requests_verify_external_history',
+}
+NATIVE_WORKER_EXTENDED_TEST = 'controller_v3_256_seeds_execute_1024_requests_and_verify_external_history'
+WORKER_TESTS['native'] = NATIVE_WORKER_TESTS
+CONTROLLER_TESTS = {
+    'external_journal_orders_invoke_sent_observe_and_retains_exact_worker',
+    'reversed_responses_match_two_actors_and_full_32_pending_boundary',
+    'identity_duplicate_partial_oversized_malformed_and_unsolicited_responses_are_rejected',
+    'request_timeout_and_stdin_backpressure_do_not_block_cleanup',
+    'early_response_before_complete_large_request_is_rejected',
+    'bounded_output_error_and_input_budgets_are_not_silent_truncation',
+    'journal_failure_before_send_or_observe_stays_failed_even_when_cleanup_also_fails',
+    'journal_byte_limit_and_unconsumed_response_prevent_successful_close',
+    'descendant_holding_streams_hits_drain_deadline_and_is_signalled',
+    'planned_kill_records_intent_and_confirmed_cleanup_after_response',
+    'bad_worker_hash_and_same_actor_pending_are_rejected',
+    'valid_response_is_preserved_when_same_write_exceeds_stdout_budget',
+    'responses_present_before_invoke_cannot_be_retroactively_matched',
+    'partial_response_start_cannot_bind_a_later_request_identity',
+    'admission_drains_more_than_one_quantum_before_registering_new_request',
+}
+CATALOG_TESTS = {
+    'literal_catalog_scalar_identity_old_cursor_and_pin_vectors',
+    'failed_schema_and_rows_consume_aliases_but_preserve_root_and_id_issuance',
+    'malformed_envelopes_duplicate_missing_and_retired_capabilities_never_pass',
+    'fixed_profile_and_logical_eight_mib_boundary_are_checked_before_copy',
+    'catalog_v2_64_seeds_execute_128_pairs_and_reject_mixed_snapshots',
+    'catalog_maximum_1024_pairs_preserves_fixed_snapshots',
+    'canonical_page_budget_orders_all_128_rows_and_rejects_permutation',
+    'input_budget_accounts_schema_lookup_and_observed_cell_bytes',
+    'table_cursor_name_value_and_metric_profile_boundaries_are_explicit',
+    'incremental_input_budget_remains_failed_and_matches_pair_limit',
+}
+CATALOG_EXTENDED_TEST = 'catalog_v3_256_seeds_execute_1024_pairs'
+WORKER_TESTS['catalog'] = {
+    'saved_recipe_replays_into_distinct_owned_runs_and_verifies_without_live_source',
+    'wrong_input_identity_unknown_duplicate_version_and_byte_limits_never_start_worker',
+    'tampered_complete_history_is_rejected_even_after_stream_hashes_are_refreshed',
+    'actual_catalog_v2_64_seeds_execute_128_requests',
+    'actual_catalog_maximum_1024_requests',
+    'exact_sixteen_mib_recipe_with_json_whitespace_is_valid',
+}
+CATALOG_WORKER_EXTENDED_TEST = 'actual_catalog_v3_256_seeds_execute_1024_requests'
+
 WORKER_EXTENDED_TEST = 'native_v3_256_seeds_each_execute_1024_requests_against_independent_values'
 
 
@@ -126,7 +174,10 @@ def main():
     parent.mkdir(parents=True, exist_ok=True)
     session = Path(tempfile.mkdtemp(prefix='check-', dir=parent))
     environment = os.environ.copy()
-    environment.pop('XADBTEST_ENGINE_WORKER_BIN', None)
+    for name in ('XADBTEST_ENGINE_WORKER_BIN', 'XADBTEST_NATIVE_MUTANT_BIN',
+                 'XADBTEST_NATIVE_ARTIFACTS', 'XADBTEST_NATIVE_MUTANT_ARTIFACTS',
+                 'XADBTEST_CATALOG_ARTIFACTS'):
+        environment.pop(name, None)
     environment['CARGO_TARGET_DIR'] = str(ROOT / 'target')
     checks = []
     report = {
@@ -140,20 +191,21 @@ def main():
     if args.with_substrate:
         report['scope'] += '; actual K0 volatile substrate leaf, not complete K0'
         report['k0_stage_status'] = 'INCOMPLETE'
-        report['native_worker'] = 'TRUSTED_SMOKE_AND_GENERATED_SEQUENTIAL_ONLY'
-        report['streaming_controller'] = 'NOT_RUN'
+        report['native_worker'] = 'TRUSTED_AND_EXTERNAL_CONTROLLER_SEQUENTIAL'
+        report['streaming_controller'] = 'ADVERSARIAL_SELF_TEST_AND_ACTUAL_WORKER'
+        report['catalog_oracle'] = 'BOUNDED_SEQUENTIAL_RECIPE_AND_EXTERNAL_HISTORY'
         report['performance_acceptance'] = 'NOT_RUN'
         report['v3_30_minute_thread_stress'] = 'NOT_RUN'
         report['native_frame_codec'] = 'IN_SCOPE_SELF_TEST_ONLY'
         report['v3_30_minute_codec_fuzz'] = 'NOT_RUN'
 
-    def command(name, argv):
+    def command(name, argv, cwd=None):
         print(f'{name}: {" ".join(argv)}', flush=True)
-        result = subprocess.run(argv, cwd=ROOT, env=environment, stdout=subprocess.PIPE,
+        result = subprocess.run(argv, cwd=cwd or ROOT, env=environment, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT, timeout=600)
         log = session / f'{name}.log'
         log.write_bytes(result.stdout)
-        checks.append({'id': name, 'command': argv, 'exit_code': result.returncode,
+        checks.append({'id': name, 'command': argv, 'cwd': str(cwd or ROOT), 'exit_code': result.returncode,
                        'status': 'PASS' if result.returncode == 0 else 'FAIL',
                        'log': str(log.relative_to(ROOT)), 'log_sha256': digest(log)})
         if result.returncode != 0:
@@ -176,12 +228,16 @@ def main():
             pending.extend(dependency['pkg'] for dependency in nodes[package]['deps'])
         return sorted(packages[key]['name'] for key in closure if packages[key]['source'] is None)
 
-    def build_tests(package_name, targets, production_target=None):
+    def build_tests(package_name, targets, production_target=None, features=None, variant="", command_only=False):
+        label = package_name + variant
         binaries = {}
         with tempfile.TemporaryDirectory(prefix=f'{package_name}-build-') as target:
-            output = command(f'{package_name}-independent-build', [
-                'cargo', 'test', '-p', package_name, '--no-default-features', '--locked',
-                '--offline', '--target-dir', target, '--no-run', '--message-format=json'])
+            output = command(f'{label}-independent-build', [
+                'cargo', 'build' if command_only else 'test', '-p', package_name,
+                '--no-default-features', '--locked', '--offline', '--target-dir', target,
+                '--message-format=json']
+                + (['--bin', production_target] if command_only else ['--no-run'])
+                + (['--features', features] if features else []))
             for line in output.splitlines():
                 if not line.startswith(b'{'):
                     continue
@@ -197,7 +253,7 @@ def main():
                     continue
                 if name in binaries:
                     raise RuntimeError(f'ambiguous {package_name}/{name} test binary')
-                binary = session / f'{package_name}-{name}-tests'
+                binary = session / f'{label}-{name}-tests'
                 shutil.copy2(item['executable'], binary)
                 binaries[name] = binary
         expected = set(targets) | ({'production'} if production_target else set())
@@ -208,7 +264,7 @@ def main():
     code = 0
     try:
         report['source_sha256_before'] = source_fingerprint()
-        generator = ROOT / 'crates/xadbtest-reference/tests/history.rs'
+        generator = ROOT / 'crates/testing/reference/tests/history.rs'
         report['profiles'] = {
             'generator_source': str(generator.relative_to(ROOT)),
             'generator_sha256': digest(generator),
@@ -230,7 +286,7 @@ def main():
                 'required_tests': {key: sorted(value) for key, value in SUBSTRATE_TESTS.items()},
                 'extended_test': SUBSTRATE_EXTENDED_TEST,
             }
-            frame_generator = ROOT / 'crates/xadbtest-protocol/tests/engine_frame.rs'
+            frame_generator = ROOT / 'crates/testing/protocol/tests/engine_frame.rs'
             report['profiles']['frame'] = {
                 'generator_source': str(frame_generator.relative_to(ROOT)),
                 'generator_sha256': digest(frame_generator),
@@ -239,7 +295,7 @@ def main():
                 'maximum_length_seed': 2**64 - 1,
                 'required_tests': sorted(FRAME_TESTS), 'extended_test': FRAME_EXTENDED_TEST,
             }
-            worker_generator = ROOT / 'crates/xadbtest-engine-worker/tests/process.rs'
+            worker_generator = ROOT / 'crates/testing/engine-worker/tests/support/mod.rs'
             report['profiles']['worker'] = {
                 'generator_source': str(worker_generator.relative_to(ROOT)),
                 'generator_sha256': digest(worker_generator),
@@ -248,6 +304,31 @@ def main():
                 'maximum_length_seed': 2**64 - 1,
                 'required_tests': {key: sorted(value) for key, value in WORKER_TESTS.items()},
                 'extended_test': WORKER_EXTENDED_TEST,
+                'controller_extended_test': NATIVE_WORKER_EXTENDED_TEST,
+                'drivers': {name: digest(ROOT / name) for name in (
+                    'crates/testing/engine-worker/tests/process.rs',
+                    'crates/testing/engine-worker/tests/native.rs')},
+            }
+            report['profiles']['controller'] = {
+                'sources': {name: digest(ROOT / name) for name in (
+                    'crates/testing/controller/tests/native.rs',
+                    'crates/testing/controller/tests/fixtures/native_mutant.rs')},
+                'required_tests': sorted(CONTROLLER_TESTS),
+                'scope': 'reduced limits in self-test; fixed production limits in actual worker runs',
+            }
+            report['profiles']['catalog'] = {
+                'sources': {name: digest(ROOT / name) for name in (
+                    'crates/testing/reference/tests/catalog.rs',
+                    'crates/testing/reference/tests/support/catalog_cases.rs',
+                    'crates/testing/engine-worker/tests/catalog.rs')},
+                'v2': {'seeds': list(range(64)), 'requests_per_seed': 128},
+                'v3': {'seeds': list(range(256)), 'requests_per_seed': 1024},
+                'maximum_length_seed': 2**64 - 1,
+                'required_reference_tests': sorted(CATALOG_TESTS),
+                'required_worker_tests': sorted(WORKER_TESTS['catalog']),
+                'extended_reference_test': CATALOG_EXTENDED_TEST,
+                'extended_worker_test': CATALOG_WORKER_EXTENDED_TEST,
+                'scope': 'actor-zero sequential small catalog; no PF or durability qualification',
             }
         # Freeze profiles in the owned run before compilation or execution.
         write_report(session / 'profiles.json', report['profiles'])
@@ -268,12 +349,19 @@ def main():
             raise RuntimeError(f'production dependency in independent oracle: {local}')
         report['all_kind_workspace_dependency_closure'] = local
         report['dependency_target'] = regression['target']
-        binary = build_tests('xadbtest-reference', {'history'})['history']
+        reference_binaries = build_tests('xadbtest-reference', {'history', 'catalog'} if args.with_substrate else {'history'})
+        binary = reference_binaries['history']
         report['test_binary'] = str(binary.relative_to(ROOT))
         report['test_binary_sha256'] = digest(binary)
         require_passed_tests(command('literal-v2-maximum', [str(binary)]), REQUIRED_TESTS)
         require_passed_tests(command('v3-extended', [str(binary), '--ignored']), {EXTENDED_TEST})
         if args.with_substrate:
+            binary = reference_binaries['catalog']
+            report['catalog_reference'] = {'test_binary': str(binary.relative_to(ROOT)),
+                                           'test_binary_sha256': digest(binary)}
+            require_passed_tests(command('catalog-reference-literal-v2-maximum', [str(binary)]), CATALOG_TESTS)
+            require_passed_tests(command('catalog-reference-v3-extended', [str(binary), '--ignored']),
+                                 {CATALOG_EXTENDED_TEST})
             local = dependency_closure(metadata, 'xadb-engine')
             if local != ['xadb-engine', 'xadb-foundation']:
                 raise RuntimeError(f'wrong engine dependency boundary: {local}')
@@ -294,7 +382,7 @@ def main():
             require_passed_tests(command('frame-v3-extended', [str(binary), '--ignored']),
                                  {FRAME_EXTENDED_TEST})
             local = dependency_closure(metadata, 'xadbtest-engine-worker')
-            if local != ['xadb-engine', 'xadb-foundation', 'xadbtest-engine-worker', 'xadbtest-protocol']:
+            if local != ['xadb-engine', 'xadb-foundation', 'xadbtest', 'xadbtest-engine-worker', 'xadbtest-protocol', 'xadbtest-reference']:
                 raise RuntimeError(f'wrong native worker dependency boundary: {local}')
             binaries = build_tests('xadbtest-engine-worker', WORKER_TESTS, 'xadbtest-engine-worker')
             report['worker'] = {
@@ -305,10 +393,137 @@ def main():
             # The retained process tests must launch the retained production executable,
             # not the deleted temporary build path embedded by Cargo at compilation.
             environment['XADBTEST_ENGINE_WORKER_BIN'] = str(binaries['production'])
+            environment['XADBTEST_NATIVE_ARTIFACTS'] = str(session / 'native-runs')
+            environment['XADBTEST_CATALOG_ARTIFACTS'] = str(session / 'catalog-runs')
             for name, required in WORKER_TESTS.items():
                 require_passed_tests(command(f'worker-{name}', [str(binaries[name])]), required)
             require_passed_tests(command('worker-v3-extended', [str(binaries['process']), '--ignored']),
                                  {WORKER_EXTENDED_TEST})
+            require_passed_tests(command('worker-controller-v3-extended', [
+                str(binaries['native']), '--ignored']), {NATIVE_WORKER_EXTENDED_TEST})
+            require_passed_tests(command('worker-catalog-v3-extended', [
+                str(binaries['catalog']), '--ignored']), {CATALOG_WORKER_EXTENDED_TEST})
+            local = dependency_closure(metadata, 'xadbtest')
+            if local != ['xadbtest', 'xadbtest-protocol', 'xadbtest-reference']:
+                raise RuntimeError(f'wrong controller dependency boundary: {local}')
+            binaries = build_tests('xadbtest', {'native'}, 'xadbtest-native-mutant-worker', 'self-test')
+            report['controller'] = {
+                'all_kind_workspace_dependency_closure': local,
+                'binaries': {name: {'path': str(path.relative_to(ROOT)), 'sha256': digest(path)}
+                             for name, path in binaries.items()},
+            }
+            environment['XADBTEST_NATIVE_MUTANT_BIN'] = str(binaries['production'])
+            environment['XADBTEST_NATIVE_MUTANT_ARTIFACTS'] = str(session / 'native-mutants')
+            require_passed_tests(command('controller-adversarial', [str(binaries['native'])]),
+                                 CONTROLLER_TESTS)
+            # Inventory every retained native session before declaring this leaf PASS.
+            runs = []
+            for directory in sorted((session / 'native-runs').iterdir()):
+                completed = directory / 'completion.json'
+                killed = directory / 'planned-kill.json'
+                if completed.is_file() == killed.is_file():
+                    raise RuntimeError('native session must have exactly one terminal report')
+                terminal = completed if completed.is_file() else killed
+                completion = json.loads(terminal.read_text())
+                manifest = json.loads((directory / 'manifest.json').read_text())
+                if (manifest['source_sha256'] != report['source_sha256']
+                        or manifest['self_test'] is not False
+                        or manifest['worker_sha256'] != report['worker']['binaries']['production']['sha256']
+                        or completion['requests'] != completion['observations']
+                        or completion['completion'] != ('TRANSPORT_CLOSED_NO_PRODUCT_VERDICT'
+                            if completed.is_file() else 'WORKER_KILLED_NO_PRODUCT_VERDICT')):
+                    raise RuntimeError('native session identity/completion mismatch')
+                for key, filename in (('worker_sha256', 'worker'), ('history_sha256', 'history.bin'),
+                                      ('stdout_sha256', 'stdout.bin'), ('stderr_sha256', 'stderr.bin')):
+                    if completion[key] != digest(directory / filename):
+                        raise RuntimeError(f'native session digest mismatch: {directory}/{filename}')
+                runs.append({'directory': str(directory.relative_to(ROOT)),
+                             'requests': completion['requests'],
+                             'terminal_report': terminal.name, 'completion_sha256': digest(terminal),
+                             'manifest_sha256': digest(directory / 'manifest.json')})
+            if (len(runs) != 323 or sorted(run['requests'] for run in runs)
+                    != [5, 10] + [128] * 64 + [1024] * 257
+                    or sum(run['terminal_report'] == 'planned-kill.json' for run in runs) != 1):
+                raise RuntimeError('native session inventory is incomplete')
+            write_report(session / 'native-inventory.json', runs)
+            report['native_inventory'] = {
+                'path': str((session / 'native-inventory.json').relative_to(ROOT)),
+                'sha256': digest(session / 'native-inventory.json'), 'sessions': len(runs),
+            }
+            mutants = [{'path': str(path.relative_to(ROOT)), 'sha256': digest(path)}
+                       for path in sorted((session / 'native-mutants').rglob('*')) if path.is_file()]
+            write_report(session / 'native-mutants.json', mutants)
+            report['native_mutants'] = {
+                'path': str((session / 'native-mutants.json').relative_to(ROOT)),
+                'sha256': digest(session / 'native-mutants.json'), 'files': len(mutants),
+            }
+            # Catalog positive runs and deliberate history mutations have separate paths.
+            catalog_parent = session / 'catalog-runs'
+            expected_seeds = {f'seed-{seed}-128' for seed in range(64)} | {
+                f'seed-{seed}-1024' for seed in range(256)} | {f'seed-{2**64 - 1}-1024'}
+            actual_seeds = {p.name for p in catalog_parent.glob('seed-*')}
+            if actual_seeds != expected_seeds:
+                raise RuntimeError('catalog seed directory inventory mismatch')
+            catalog_runs = []
+            for path in sorted(catalog_parent.glob('**/catalog-result.json')):
+                if any(part.startswith('mutant-') for part in path.parts):
+                    continue
+                directory = path.parent
+                verdict = json.loads(path.read_text())
+                receipt = json.loads((directory / 'completion.json').read_text())
+                manifest = json.loads((directory / 'manifest.json').read_text())
+                recipe_path = directory / 'recipe.json'
+                recipe = json.loads(recipe_path.read_text())
+                if (verdict['verdict'] != 'ACCEPTED' or verdict['checked_pairs'] != len(recipe['actions'])
+                        or manifest['source_sha256'] != report['source_sha256'] or manifest['self_test'] is not False
+                        or manifest['worker_sha256'] != report['worker']['binaries']['production']['sha256']
+                        or verdict['recipe_sha256'] != digest(recipe_path)
+                        or receipt['requests'] != len(recipe['actions']) or receipt['observations'] != len(recipe['actions'])):
+                    raise RuntimeError('catalog run identity/count/verdict mismatch')
+                for key, filename in (('worker_sha256', 'worker'), ('history_sha256', 'history.bin'),
+                                      ('stdout_sha256', 'stdout.bin'), ('stderr_sha256', 'stderr.bin')):
+                    if receipt[key] != digest(directory / filename):
+                        raise RuntimeError('catalog retained artifact hash mismatch')
+                seed_directory = next((part for part in path.parts if part.startswith('seed-')), None)
+                if seed_directory:
+                    _, seed, requests = seed_directory.split('-')
+                    first = next(action for action in recipe['actions'] if action['operation'] == 'replace')
+                    value = (int(seed) * 6364136223846793005 + 1442695040888963407) % 2**64
+                    if value >= 2**63:
+                        value -= 2**64
+                    if first['values'] != [{'type': 'int64', 'value': value}] or len(recipe['actions']) != int(requests):
+                        raise RuntimeError('catalog recorded seed/request identity mismatch')
+                catalog_runs.append({'directory': str(directory.relative_to(ROOT)),
+                                     'pairs': len(recipe['actions']), 'result_sha256': digest(path)})
+            if len(catalog_runs) != 325:
+                raise RuntimeError(f'catalog run inventory incomplete: {len(catalog_runs)}')
+            write_report(session / 'catalog-inventory.json', catalog_runs)
+            report['catalog_inventory'] = {'path': str((session / 'catalog-inventory.json').relative_to(ROOT)),
+                                          'sha256': digest(session / 'catalog-inventory.json'), 'sessions': len(catalog_runs)}
+            catalog_files = [{'path': str(p.relative_to(ROOT)), 'sha256': digest(p)}
+                             for p in sorted(catalog_parent.rglob('*')) if p.is_file()]
+            write_report(session / 'catalog-files.json', catalog_files)
+            report['catalog_files'] = {'path': str((session / 'catalog-files.json').relative_to(ROOT)),
+                                      'sha256': digest(session / 'catalog-files.json'), 'files': len(catalog_files)}
+            # Exercise the default command with only retained input/binaries and an unrelated cwd.
+            controller = build_tests('xadbtest', set(), 'xadbtest', variant='-default-command',
+                                     command_only=True)['production']
+            report['catalog_command'] = {'binary': str(controller.relative_to(ROOT)), 'sha256': digest(controller)}
+            recipe = catalog_parent / 'literal-replay' / 'input.json'
+            worker = ROOT / report['worker']['binaries']['production']['path']
+            identity = ['--recipe-sha256', digest(recipe), '--worker-sha256', digest(worker)]
+            with tempfile.TemporaryDirectory(prefix='catalog-command-cwd-') as cwd:
+                output = command('catalog-command-run', [str(controller), 'run-catalog', '--recipe', str(recipe),
+                    '--worker', str(worker), '--artifacts', str(session / 'catalog-command')] + identity, cwd=cwd)
+                executed = json.loads(output)
+                if executed['verdict'] != 'ACCEPTED' or executed['checked_pairs'] != 23:
+                    raise RuntimeError('catalog command did not execute the complete literal recipe')
+                output = command('catalog-command-verify', [str(controller), 'verify-catalog',
+                    '--directory', executed['directory']] + identity, cwd=cwd)
+                verified = json.loads(output)
+                if verified != executed:
+                    raise RuntimeError('catalog command verification differs from executed result')
+            report['catalog_command']['run'] = executed
         report['source_sha256_after'] = source_fingerprint()
         verify_source_identity(report['source_sha256_before'], report['source_sha256_after'])
         if report['profiles']['generator_sha256'] != digest(generator):
@@ -322,6 +537,13 @@ def main():
         if (args.with_substrate and report['profiles']['worker']['generator_sha256']
                 != digest(worker_generator)):
             raise RuntimeError('worker profile generator changed during run')
+        if args.with_substrate:
+            for inputs in (report['profiles']['worker']['drivers'],
+                           report['profiles']['controller']['sources'],
+                           report['profiles']['catalog']['sources']):
+                for name, expected in inputs.items():
+                    if digest(ROOT / name) != expected:
+                        raise RuntimeError(f'profile source changed during run: {name}')
         report['status'] = 'PASS'
     except (RuntimeError, OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
         report['status'] = 'FAIL'

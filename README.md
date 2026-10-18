@@ -6,7 +6,11 @@ XADB는 **오픈소스 DBMS를 참고하여, AI가 이해하고 개발하기 좋
 
 PostgreSQL·MariaDB·CUBRID·SQLite 등 공개 DBMS의 문서와 구현을 비교 자료로 사용합니다. 각 기능의 의미와 인수 기준은 XADB 계약으로 정하며, 참고 제품의 SQL·파일·wire 호환이나 성능 우월성을 자동으로 주장하지 않습니다. [제품 방향](devdoc/plans/project-direction.md) · [공개 참고 자료와 로컬 소스 경로](devdoc/reference/opensource-references.md)
 
-현재 DEV0 검증 도구, DEV1 공통 의미·Linux 효과 경계, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog·native worker의 일부 구현을 이관했습니다. 외부 streaming controller의 초안 코드도 포함되지만 전용 인수 시험은 미실행입니다. **영속 transaction/WAL/recovery, 디스크 페이지·인덱스, SQL·서버는 아직 구현되지 않았습니다.** K0의 임시 메모리 상태는 커널 개발 기반이며 독립 메모리 DBMS 제품이 아닙니다. [현재 구현과 실행 상태](devdoc/implementation/README.md)
+현재 DEV0 검증 도구, DEV1 공통 의미·Linux 효과 경계, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog·native worker의 일부 구현을 이관했습니다. 외부 streaming controller와 독립 catalog 판정·저장 recipe 재실행 경로를 추가 이관했으며, 시험 패키지를 재구성한 현재 소스에서 DEV0·DEV1 회귀와 DEV2 P0/K0 leaf 검증을 실제 실행했습니다. **영속 transaction/WAL/recovery, 디스크 페이지·인덱스, SQL·서버는 아직 구현되지 않았습니다.** K0의 임시 메모리 상태는 커널 개발 기반이며 독립 메모리 DBMS 제품이 아닙니다. [현재 구현과 실행 상태](devdoc/implementation/README.md)
+
+## 소스 구성
+
+제품 패키지는 `crates/engine`, `crates/foundation`, `crates/platform`에 둡니다. 시험 도구는 `crates/testing` 아래 `controller`, `protocol`, `reference`, `fixture-worker`, `foundation-worker`, `engine-worker`로 묶습니다. 각 폴더는 독립 Cargo 패키지이며 `xadbtest`, `xadbtest-reference` 등 패키지·실행 명령 이름은 유지합니다. [패키지 배치와 의존 방향](devdoc/policies/repository-build-plan.md)
 
 ## 빌드와 검증
 
@@ -17,7 +21,6 @@ cargo build --workspace --locked
 python3 scripts/check_dev0.py
 python3 scripts/check_dev1.py
 python3 scripts/check_dev2_reference.py --with-substrate
-python3 devdoc/verify_documents.py
 ```
 
 DEV1은 DEV0 회귀를, DEV2 실행기는 DEV0/DEV1 회귀를 포함합니다. XADBTest의 fixture 성공과 volatile substrate 성공은 실제 DB 내구성이나 제품 출시 검증이 아닙니다. 현재 실행 결과는 [증거 색인](devdoc/evidence/README.md)에서 확인합니다. 개발 빌드는 새 DB·fixture를 사용하고, 안정 릴리스의 호환 기준선은 별도로 선언합니다.
@@ -25,5 +28,13 @@ DEV1은 DEV0 회귀를, DEV2 실행기는 DEV0/DEV1 회귀를 포함합니다. X
 ## 개발 문서
 
 [devdoc/README.md](devdoc/README.md)에서 정책·계획·계약·현재 구현을 찾습니다. 문서는 Markdown만 작성하며 JSON은 검증기가 소비하는 계약·색인·실행 결과에 사용합니다. 사용자용 `xadb` SQL CLI는 계획이며 현재 실행 가능한 도구는 `xadbtest`와 시험 worker입니다.
+
+문서 검사는 push 직전에 수행하고 편집·commit 때에는 실행하지 않습니다. 새 clone에서 기존 사용자 훅이 없는 경우 한 번 설정합니다.
+
+```bash
+git config --local core.hooksPath scripts/git-hooks
+```
+
+이후 `git push`는 전송할 commit의 문서 검사를 통과해야 진행합니다. 기존 훅이 있으면 먼저 보존·연결하며, 세부 범위는 [문서 push 규칙](devdoc/policies/documentation-policy.md#push-gate)을 따릅니다.
 
 기존 개발 작업의 현재 파일을 독립 저장소로 이관했습니다. 이전 Git 이력을 가져오지 않았으며, 이전 실행 결과를 XADB의 결과로 재표기하지 않습니다. [이관 범위와 상태](devdoc/history/project-migration.md)

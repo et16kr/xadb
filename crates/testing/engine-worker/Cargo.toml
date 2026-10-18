@@ -10,5 +10,10 @@ xadb-engine.workspace = true
 xadb-foundation.workspace = true
 xadbtest-protocol.workspace = true
 
+[dev-dependencies]
+xadbtest = { path = "../controller" }
+tempfile.workspace = true
+serde_json.workspace = true
+
 [lints]
 workspace = true

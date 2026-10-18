@@ -10,7 +10,9 @@
     "P0 independent history reference",
     "K0 volatile row/catalog/snapshot/quota",
     "native frame codec",
-    "native production engine worker"
+    "native production engine worker",
+    "bounded external streaming controller and dedicated adversarial/native tests",
+    "independent sequential catalog oracle and saved recipe run/verify CLI"
   ],
   "durability": "NOT_IMPLEMENTED",
   "disk_pages_and_indexes": "NOT_IMPLEMENTED",
@@ -23,7 +25,26 @@
     "dev1-validation.json",
     "dev2-validation.json"
   ],
-  "dev2_imported_unvalidated": [
-    "xadbtest::native streaming controller draft; built/linted, dedicated acceptance NOT_RUN"
-  ]
+  "dev2_imported_unvalidated": [],
+  "current_source_validation": "LOCAL_VERIFIED_P0_K0_LEAVES_WITH_DEV0_DEV1_REGRESSION",
+  "evidence_scope": "Fresh r2 reports validate source 3fa1b7958cc5597ba99be6ba81d75ea65360657d318d22d59e6e2b633f76a540 after testing package regrouping and incremental K0 import; DEV2 and K0 overall remain INCOMPLETE; no durability or product qualification.",
+  "validation_handoff": {
+    "owner": "XADB",
+    "status": "INTERRUPTED_AT_USER_REQUEST",
+    "run_directory": "artifacts/dev2-reference/check-kecbzonw",
+    "command": "python3 scripts/check_dev2_reference.py --with-substrate",
+    "new_report_created": false,
+    "superseded_by": "dev2-validation.json"
+  },
+  "current_validation": {
+    "run_directory": "artifacts/dev2-reference/check-odsnj6yj",
+    "command": "python3 scripts/check_dev2_reference.py --with-substrate",
+    "source_sha256": "3fa1b7958cc5597ba99be6ba81d75ea65360657d318d22d59e6e2b633f76a540",
+    "dev0_checks": 8,
+    "dev1_checks": 8,
+    "dev2_checks": 28,
+    "status": "PASS",
+    "dev2_stage_status": "INCOMPLETE",
+    "k0_stage_status": "INCOMPLETE"
+  }
 }

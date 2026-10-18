@@ -4,6 +4,7 @@
 #[cfg(not(target_os = "linux"))]
 compile_error!("XADBTest DEV0 supports Linux only");
 
+pub mod catalog;
 mod controller;
 pub mod native;
 mod oracle;

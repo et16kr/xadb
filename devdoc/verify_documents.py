@@ -105,7 +105,18 @@ REQUIRED_CHECKS = {'dev0': {'evidence-self-tests': 0,
           'xadbtest-engine-worker-independent-build': 0,
           'worker-adapter': 0,
           'worker-process': 0,
-          'worker-v3-extended': 0}}
+          'worker-v3-extended': 0,
+          'catalog-reference-literal-v2-maximum': 0,
+          'catalog-reference-v3-extended': 0,
+          'worker-native': 0,
+          'worker-catalog': 0,
+          'worker-controller-v3-extended': 0,
+          'worker-catalog-v3-extended': 0,
+          'xadbtest-independent-build': 0,
+          'controller-adversarial': 0,
+          'xadbtest-default-command-independent-build': 0,
+          'catalog-command-run': 0,
+          'catalog-command-verify': 0}}
 
 STAGE_PREDECESSORS = {'DEV0': [],
  'DEV1': ['DEV0'],
@@ -289,9 +300,11 @@ def validate_evidence(report, fingerprint):
         errors.append('evidence: local run cannot qualify protected release')
     if kind == 'dev2':
         limits = {key: 'NOT_RUN' for key in ('product_durability', 'bounded_concurrent_exploration',
-                  'streaming_controller', 'performance_acceptance', 'v3_30_minute_thread_stress',
+                  'performance_acceptance', 'v3_30_minute_thread_stress',
                   'v3_30_minute_codec_fuzz')}
-        limits.update(dev2_stage_status='INCOMPLETE', k0_stage_status='INCOMPLETE')
+        limits.update(dev2_stage_status='INCOMPLETE', k0_stage_status='INCOMPLETE',
+                      streaming_controller='ADVERSARIAL_SELF_TEST_AND_ACTUAL_WORKER',
+                      catalog_oracle='BOUNDED_SEQUENTIAL_RECIPE_AND_EXTERNAL_HISTORY')
         for key, value in limits.items():
             if report.get(key) != value:
                 errors.append('evidence: unimplemented/unexecuted DEV2 limit changed ' + key)

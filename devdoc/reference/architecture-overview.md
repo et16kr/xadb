@@ -93,7 +93,7 @@ Observability records stable events across these boundaries.
 | 진단 | foundation의 현재 bounded event 기반, 모듈별 후속 확장 | core 상태를 수정하지 않는 관측. 오류 재귀·무한 버퍼 금지 |
 | 서버 | 계획된 `crates/server`의 `xadb-server` | session·auth·network·config·lifecycle 조립. 엔진 의미 중복 구현 금지 |
 | 시험 | 현재 `xadbtest` 계열, 계획된 reference·engine worker | worker는 production API 호출, reference는 독립 기대값 계산. 제품에 시험용 정답 경로 금지 |
-| CLI | 현재 `crates/xadbtest`, 계획된 `crates/cli`의 `xadb-cli` | typed result·exit code·schema. 초기 SQL CLI 이후 운영 기능은 해당 단계에서 확장 |
+| CLI | 현재 `crates/testing/controller`, 계획된 `crates/cli`의 `xadb-cli` | typed result·exit code·schema. 초기 SQL CLI 이후 운영 기능은 해당 단계에서 확장 |
 
 제품 폴더에는 `xadb-`를 붙이지 않으며 Cargo package 이름과 구분한다. 초기 `xadb-types/xadb-plan/xadb-opt/xadb-exec/xadb-txn/xadb-storage/xadb-catalog/xadb-durable/xadb-runtime/xadb-observe/xadb-testkit` 표기는 역할 제안이었다. 현재·계획 경로는 [저장소 배치 정책](../policies/repository-build-plan.md)을 따른다. 첫 커널은 내부 모듈로 시작하고 독립 계약이 필요할 때 crate를 분리한다. 타입당 파일·파일당 crate 규칙이나 획일적 LOC 제한은 두지 않는다. 현재 manifest·일부 normal dependency 검사를 사용하고 전체 feature·target·build·dev 의존과 FFI·생성 코드·런타임 등록 검사는 구현 범위에 맞춰 추가한다.
 

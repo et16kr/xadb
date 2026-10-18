@@ -1,6 +1,6 @@
 # XADB 개발 문서
 
-**Markdown 중심으로 관리합니다. HTML은 생성하지 않습니다.** 현재 DEV0·DEV1 최소 기반, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog substrate를 부분 구현·로컬 검증했습니다. 영속 엔진·후속 제품 인수는 미구현·미실행입니다. 정확한 범위는 [현재 구현](implementation/README.md)과 [개발 단계](plans/development-stages.md)를 확인합니다.
+**Markdown 중심으로 관리합니다. HTML은 생성하지 않습니다.** 현재 DEV0·DEV1 최소 기반, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog substrate를 부분 구현했습니다. 후속 streaming controller·catalog 재현 경로와 시험 패키지 재구성을 포함한 현재 소스에서 DEV0·DEV1 회귀 및 DEV2 P0/K0 leaf를 로컬 검증했습니다. 영속 엔진·후속 제품 인수는 미구현·미실행입니다. 정확한 범위는 [현재 구현](implementation/README.md)과 [개발 단계](plans/development-stages.md)를 확인합니다.
 
 ## 작업을 시작할 때
 
@@ -15,7 +15,7 @@
 | 다음 기능·단계 완료 판단 | [개발 단계](plans/development-stages.md) | [완료 계약](plans/stage-completion.json), [하위 계층 결정](plans/bottom-up-development.md) |
 | 현재 foundation/platform·XADBTest 변경 | [구현 색인](implementation/README.md) | DEV0/DEV1 계약·현재 소스·실행 결과 |
 | DEV2 커널·WAL·복구 변경 | [구현 계약](contracts/implementation-contracts.md), [DEV2 상세 설계](contracts/dev2-kernel-design.md) | [DEV2 구현·검증 계획](plans/dev2-implementation-plan.md), 해당 복구·저장 소유 계약 |
-| DEV3 디스크 page·buffer·index 설계 | [DEV3 상세 설계](contracts/disk-storage-design.md), [구현·검증 계획](plans/dev3-implementation-plan.md) | [실제 DBMS 소스 조사](evidence/dev3-source-research.md), DS01–06·DEV2 선행 계약 |
+| DEV3 디스크 page·buffer·index 설계와 병렬 개발 | [DEV3 상세 설계](contracts/disk-storage-design.md), [구현·병렬 개발·검증 계획](plans/dev3-implementation-plan.md#parallel-development) | [실제 DBMS 소스 조사](evidence/dev3-source-research.md), DS01–06·DEV2 이관/선행 계약 |
 | 성능 계측·원인 분석·개선 | [AI 성능 개발 계약](contracts/ai-performance-engineering.md) | DP07, 해당 단계 PF 인수 의무 |
 | 기능 명세·설계를 작성할 대상 | [작성 대상 목록](plans/feature-design-inventory.md) | [원문 이름 색인](reference/feature-design-leaf-index.md)과 해당 소유 계약 |
 | 프로젝트 목표·AI 개발 실험 | [제품 방향](plans/project-direction.md) | 현재 구현과 최종 목표, 공개 DBMS 참고 방향을 구분 |
@@ -42,10 +42,8 @@
 
 원문·관련 JSON·폴더 색인·[문서 ID 색인](documents.json)을 함께 갱신합니다. 새 문서의 위치·상태·참조 규칙은 [문서 운영 기준](policies/documentation-policy.md)을 따릅니다.
 
-```bash
-python3 devdoc/verify_documents.py
-```
+문서 검사는 **push 직전** 훅에서 수행합니다. 편집·commit 때 반복 실행하지 않습니다. 훅은 전송할 commit의 임시 사본에서 `python3 devdoc/verify_documents.py`를 실행하고 실패하면 push를 차단합니다. 설치와 범위는 [문서 push 규칙](policies/documentation-policy.md#push-gate)을 따릅니다.
 
-이 명령은 문서 무결성을 검사하며 제품 시험을 실행하지 않습니다. [저장된 결과](document-validation.json)를 실제 DB 검증으로 해석하지 않습니다. 과거 측정 스크립트를 문서 정리 목적으로 다시 실행하지 않습니다.
+이 명령은 문서·계약·증거 정합성을 검사하며 제품 시험을 실행하지 않습니다. [저장된 결과](document-validation.json)는 해당 실행 당시 결과이며 현재 문서나 DB의 검증 완료로 해석하지 않습니다. 과거 측정 스크립트를 문서 정리 목적으로 다시 실행하지 않습니다.
 
 기존 개발 파일을 새 XADB 저장소로 이관했으며 이전 Git 이력과 과거 시험 결과는 가져오지 않았습니다. 이번 이관의 경로·증거 처리 기록은 [이관 기록](document-migration.json)에 있습니다. [제품 저장소 안내](../README.md)

@@ -27,9 +27,9 @@ DEV0의 유한한 범위는 Rust workspace, 독립 XADBTest controller/worker, �
 
 | 위치 | 책임 |
 |---|---|
-| `crates/xadbtest-protocol` | versioned typed operation/request/observation. engine·oracle 의존 없음 |
-| `crates/xadbtest` | case 검증, worker identity, 실행·회수, 독립 기대값 비교, 증거·판정. `lib.rs`는 공개 조립, `controller.rs`는 실행·증거 소유 |
-| `crates/xadbtest-fixture-worker` | signed INT64 checked-add와 overflow 관측을 반환하는 프레임워크 시험 fixture |
+| `crates/testing/protocol` | versioned typed operation/request/observation. engine·oracle 의존 없음 |
+| `crates/testing/controller` | case 검증, worker identity, 실행·회수, 독립 기대값 비교, 증거·판정. `lib.rs`는 공개 조립, `controller.rs`는 실행·증거 소유 |
+| `crates/testing/fixture-worker` | signed INT64 checked-add와 overflow 관측을 반환하는 프레임워크 시험 fixture |
 | `tests/cases/dev0-smoke.json` | 손으로 계산한 7개 기대값, 필수 witness, 실행 상한 |
 | `scripts/check_dev0.py` | 실제 검사 실행·로그 보존·clean build/runtime·artifact hash 확인 |
 

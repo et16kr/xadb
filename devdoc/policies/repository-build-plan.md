@@ -13,7 +13,17 @@
 
 우선순위는 [하위 계층 개발 결정](../plans/bottom-up-development.md), [단계 JSON](../plans/development-stages.json), [Rust 구현 계약](../contracts/implementation-contracts.md), [버전 정책](version-compatibility-policy.json)이다. DEV0/DEV1의 실제 명령·제약은 각각의 구현 문서와 manifest를 따른다. 이름·API 문서·리뷰는 [코딩 컨벤션](coding-convention.md)을 따른다. 종합 보고서 5.2절도 이 문서의 실제 초기 배치를 사용한다. 초기 제안의 `xadb-types/xadb-txn/xadb-storage/xadb-durable/...`는 역할 이름이었으며 독립 Cargo package 예약이 아니다.
 
-제품 폴더는 `crates/foundation`, `crates/platform`, 후속 `crates/engine`처럼 **제품명 접두어 없이 역할로 명명**한다. Cargo package 이름은 별도 식별자로 `xadb-foundation`, `xadb-platform`, `xadb-engine` 등을 유지한다. `cargo -p`에는 package 이름을, workspace member와 path dependency에는 실제 경로를 쓴다. 독립 시험 도구 이름인 `xadbtest` 계열 폴더는 유지한다. XADB package·도구 이름으로 이관하고 새 소스 fingerprint와 실행 증거를 생성한다.
+제품 폴더는 `crates/foundation`, `crates/platform`, 후속 `crates/engine`처럼 **제품명 접두어 없이 역할로 명명**한다. Cargo package 이름은 별도 식별자로 `xadb-foundation`, `xadb-platform`, `xadb-engine` 등을 유지한다. `cargo -p`에는 package 이름을, workspace member와 path dependency에는 실제 경로를 쓴다. 독립 시험 도구의 패키지·명령 이름인 `xadbtest` 계열은 유지하고, 폴더는 `crates/testing` 아래 역할별로 묶는다. XADB package·도구 이름으로 이관하고 새 소스 fingerprint와 실행 증거를 생성한다.
+
+<a id="testing-layout"></a>
+
+### XADB-LAYOUT-TESTING-001 — 시험 도구 폴더 재구성
+
+2026-10-18 · **ACCEPTED / D2**. 사용자가 시험 패키지를 한 분류 폴더로 묶고 관련 문서를 갱신하도록 요청했다. 기존의 `xadbtest*` 폴더 유지 예외를 이 결정으로 대체한다. 제품 폴더는 기존 역할 이름을 사용하며, 시험 패키지는 아래 4절의 `crates/testing/<역할>`에 둔다. `controller`의 Cargo 이름은 `xadbtest`이고 나머지 패키지·실행 파일 이름도 유지한다.
+
+평면 배치를 유지하는 대안과 시험 코드를 단일 패키지로 합치는 대안을 비교했다. 선택한 배치는 제품과 시험 도구의 탐색 위치를 구분하고 폴더 접두어 반복을 줄이면서 기존 9개 패키지·target·feature·의존 경계를 보존한다. `testing`에는 `Cargo.toml`을 추가하지 않고 루트 workspace가 여섯 시험 패키지를 직접 등록한다. 폴더 계층은 Rust 모듈 또는 의존 관계를 뜻하지 않는다. reference는 계속 production 의미 구현에 의존하지 않는다.
+
+작업·계약·통합 담당은 `/root`다. workspace 경로, 상대 dependency·fixture 경로, controller의 workspace-root 계산, 검증 스크립트의 source 경로를 함께 갱신한다. fingerprint와 clean export는 기존 `crates` 루트를 재귀 순회하므로 포함 루트는 유지하며 실제 새 빌드로 확인한다. 과거 실행 보고서와 이관 inventory는 당시 경로·hash를 보존한다. 변경·검토·실행 근거는 [재구성 기록](../history/project-migration.md#testing-layout)에서 관리한다. 패키지 역할 증가나 탐색·빌드 경계 혼동이 생기면 재검토한다.
 
 <a id="section-2"></a>
 
@@ -30,6 +40,7 @@
 | 경로 | 상태 | 책임 |
 | --- | --- | --- |
 | crates | EXISTING | Rust 제품 라이브러리·실행 파일과 XADBTest 패키지 |
+| crates/testing | EXISTING | XADBTest 패키지의 분류 디렉터리. 자체 Cargo 패키지·workspace는 만들지 않음 |
 | scripts | EXISTING | 빌드·시험 조립 자동화. 제품 DB 의미는 두지 않음 |
 | tests/cases | EXISTING | version을 명시한 typed 시나리오와 독립 기대값 |
 | devdoc | EXISTING | 설계·명세·계약·저장된 검증 증거의 단일 문서 루트 |
@@ -70,15 +81,15 @@
 
 | package | 소스 경로 | 상태 | 도입 단계 | 직접 workspace 의존 |
 | --- | --- | --- | --- | --- |
-| xadbtest-protocol | crates/xadbtest-protocol | IMPLEMENTED | DEV0 | 없음 |
-| xadbtest | crates/xadbtest | IMPLEMENTED | DEV0 | xadbtest-protocol |
-| xadbtest-fixture-worker | crates/xadbtest-fixture-worker | IMPLEMENTED | DEV0 | xadbtest-protocol |
+| xadbtest-protocol | crates/testing/protocol | IMPLEMENTED | DEV0 | 없음 |
+| xadbtest | crates/testing/controller | IMPLEMENTED | DEV0 | xadbtest-protocol, xadbtest-reference |
+| xadbtest-fixture-worker | crates/testing/fixture-worker | IMPLEMENTED | DEV0 | xadbtest-protocol |
 | xadb-foundation | crates/foundation | IMPLEMENTED | DEV1 | 없음 |
 | xadb-platform | crates/platform | IMPLEMENTED | DEV1 | xadb-foundation |
-| xadbtest-foundation-worker | crates/xadbtest-foundation-worker | IMPLEMENTED | DEV1 | xadb-foundation, xadbtest-protocol |
+| xadbtest-foundation-worker | crates/testing/foundation-worker | IMPLEMENTED | DEV1 | xadb-foundation, xadbtest-protocol |
 | xadb-engine | crates/engine | IMPLEMENTED | DEV2 | xadb-foundation |
-| xadbtest-reference | crates/xadbtest-reference | IMPLEMENTED | DEV2 | xadbtest-protocol |
-| xadbtest-engine-worker | crates/xadbtest-engine-worker | IMPLEMENTED | DEV2 | xadb-engine, xadb-foundation, xadbtest-protocol |
+| xadbtest-reference | crates/testing/reference | IMPLEMENTED | DEV2 | xadbtest-protocol |
+| xadbtest-engine-worker | crates/testing/engine-worker | IMPLEMENTED | DEV2 | xadb-engine, xadb-foundation, xadbtest-protocol |
 | xadb-transport | crates/transport | PLANNED | COMM | xadb-foundation |
 | xadb-sql | crates/sql | PLANNED | DEV4 | xadb-foundation, xadb-engine |
 | xadb-cli | crates/cli | PLANNED | DEV4 | xadb-foundation, xadb-sql, xadb-platform |
@@ -97,10 +108,10 @@ xadb-client ──→ xadb-transport
 xadb-replication ──→ xadb-engine / xadb-transport
 
 xadbtest controller ──(process protocol)──→ xadbtest-engine-worker ──→ xadb-engine
-    └──→ xadbtest-reference ──→ xadbtest-protocol    [DEV2에서 연결할 계획]
+    └──→ xadbtest-reference ──→ xadbtest-protocol    [DEV2 K0 catalog recipe 연결]
 ```
 
-worker 실행 관계는 controller의 engine import를 뜻하지 않는다. 현재 `xadbtest`는 `xadbtest-reference`에 의존하지 않으며 XADB-004 통합 시 목록을 함께 갱신한다. reference는 자체 row/history 모델과 기대값 계산을 사용한다. protocol의 단순 입력/관측 타입은 공유할 수 있지만 `xadb-foundation`의 production codec·비교·commit 알고리즘을 정답 계산에 재사용하지 않는다. known-bad history 거절은 별도 필수 시험이다.
+worker 실행 관계는 controller의 engine import를 뜻하지 않는다. `xadbtest`는 K0 catalog recipe의 외부 이력 판정을 위해 `xadbtest-reference`에 normal dependency로 연결한다. worker의 `xadbtest` 의존은 통합 시험용 dev-dependency이며 normal 실행에는 포함하지 않는다. reference는 자체 row/history 모델과 기대값 계산을 사용한다. protocol의 단순 입력/관측 타입은 공유할 수 있지만 `xadb-foundation`의 production codec·비교·commit 알고리즘을 정답 계산에 재사용하지 않는다. known-bad history 거절은 별도 필수 시험이다.
 
 `xadb-engine`은 SQL·server·transport·client·RP 구현·XADBTest를 import하지 않는다. replication을 위한 commit stream/retention port는 engine 쪽에서 정의하고 상위 consumer가 구현한다. `xadb-foundation`은 다른 workspace 계층에 의존하지 않는다. 하위 crate를 단독 build/test할 수 있어야 하며 `pub(crate)` 내부 타입을 외부 consumer에 노출하지 않는다.
 
@@ -185,9 +196,9 @@ DISK는 물리 저장 방식만 분리한다. 공통 RowUID, snapshot, catalog, 
 
 | 단계 | 주요 위치 | 배치 기준 |
 | --- | --- | --- |
-| DEV0 | crates/xadbtest, crates/xadbtest-protocol, crates/xadbtest-fixture-worker | 현재 최소 harness |
-| DEV1 | crates/foundation, crates/platform, crates/xadbtest-foundation-worker | 공통 계약과 Linux 구현을 분리한 최소 기반 |
-| DEV2 | crates/engine, crates/xadbtest-reference, crates/xadbtest-engine-worker | 다음 패키지 배치 결정. XADB-004 독립 oracle 필수 |
+| DEV0 | crates/testing/controller, crates/testing/protocol, crates/testing/fixture-worker | 현재 최소 harness |
+| DEV1 | crates/foundation, crates/platform, crates/testing/foundation-worker | 공통 계약과 Linux 구현을 분리한 최소 기반 |
+| DEV2 | crates/engine, crates/testing/reference, crates/testing/engine-worker | 다음 패키지 배치 결정. XADB-004 독립 oracle 필수 |
 | DEV3 | crates/engine/src/storage | 같은 production engine을 확장. K0는 폐기할 모델이 아님 |
 | DEV4 | crates/sql, crates/cli | embedded SQL부터 구현 |
 | DEV5 | crates/server | COMM과 조립. DEV6 driver 완성을 요구하지 않음 |
@@ -226,7 +237,7 @@ DEV1 검사는 DEV0 회귀와 production foundation/platform의 실제 연결을
 
 기존 `sure/release`, 재귀 Make, `build_all`의 clean+build, 환경별 절대 경로·전역 include 관행을 그대로 옮기지 않는다. Cargo가 manifest DAG로 증분 빌드 순서를 결정하고 단계 checker가 검증 순서를 소유한다. 문서는 Markdown으로 관리하며 HTML 생성 경로는 사용하지 않는다.
 
-현재 실행 소스 fingerprint와 clean export는 `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, `crates`, `tests`, `scripts`, `.github`를 포함한다. 새 `clients/`, `benches/`, `packaging/` 등 실행 입력 루트를 도입할 때 **`scripts/check_dev0.py`, `crates/xadbtest/build.rs`, clean-export 목록, `devdoc/verify_documents.py`의 증거 identity 범위**를 함께 갱신한다. 새 루트의 코드가 증거 hash에서 빠진 상태로 검증 완료를 주장하지 않는다. 설계 Markdown/JSON은 별도 문서 지문으로 검증한다.
+현재 실행 소스 fingerprint와 clean export는 `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, `crates`, `tests`, `scripts`, `.github`를 포함한다. 새 `clients/`, `benches/`, `packaging/` 등 실행 입력 루트를 도입할 때 **`scripts/check_dev0.py`, `crates/testing/controller/build.rs`, clean-export 목록, `devdoc/verify_documents.py`의 증거 identity 범위**를 함께 갱신한다. 새 루트의 코드가 증거 hash에서 빠진 상태로 검증 완료를 주장하지 않는다. 설계 Markdown/JSON은 별도 문서 지문으로 검증한다.
 
 <a id="section-10"></a>
 
@@ -235,6 +246,8 @@ DEV1 검사는 DEV0 회귀와 production foundation/platform의 실제 연결을
 첫 사내 배포의 qualification 대상·release profile·panic·feature·패키지·증거 보관·보호 승격 방침은 [개발 운영 방침 DP06](development-policy.md)으로 채택했다. Ubuntu 24.04/x86_64/ext4를 최초 대상에 한정하며, 정확한 image/kernel/device identity·recipe와 실제 검증은 배포 작업에서 완성한다. 현재 Cargo profile·CI 설정이 이 계획으로 변경되거나 지원 qualification을 통과한 상태는 아니다.
 
 현재 `.github/workflows/dev0.yml`은 push/PR에서 `python3 scripts/check_dev1.py`를 실행하고 `artifacts/`를 보존하도록 작성되어 있다. 원격 실행·branch protection·보호 oracle 승격은 미검증이다. 이번에는 CI를 실행하거나 이름을 변경하지 않는다. 후속 CI는 독립 package 검사, 현재 단계 통합, release/profile 조합, 문서 검증을 각각 증거로 남기며 해당 경로가 준비될 때 추가한다.
+
+로컬 문서 push 제약은 [DOC-002](documentation-policy.md#push-gate)의 `scripts/git-hooks/pre-push`와 `scripts/check_push.py`로 구현한다. 기존 `scripts` fingerprint/clean-export 루트 안에 배치한다. 실제 pushed commit의 임시 export에서 검사하며 편집·commit 검사를 추가하지 않는다. `scripts/test_check_push.py`는 임시 로컬 remote에 대한 훅 자체의 회귀다. 로컬 훅과 원격 CI/보호 설정은 별도다.
 
 첫 사내 배포 전에 `packaging/`의 고정 recipe와 설치 smoke를 작성하고 결과는 `artifacts/dist/<version>/<target>/`에 둔다. source revision/dirty digest, toolchain/lockfile, target OS/kernel/filesystem, feature/profile, binary·symbol hash, stage/capability와 인수 증거를 manifest에 담는다. install prefix와 DB 경로는 분리하고, 라이브러리·header/JAR·도구는 해당 capability가 구현된 경우에만 포함한다. 지금 설치 패키지가 존재하거나 배포 검증을 마쳤다는 뜻은 아니다.
 
@@ -259,11 +272,7 @@ DEV1 검사는 DEV0 회귀와 production foundation/platform의 실제 연결을
 
 ## 10. 문서 검증과 증거 범위
 
-저장소 루트에서 다음을 실행한다.
-
-```bash
-python3 devdoc/verify_documents.py
-```
+문서 자동 검사는 [DOC-002](documentation-policy.md#push-gate)에 따라 push 직전에 전송할 commit에서 수행한다. 편집·commit 때 실행하지 않는다.
 
 
-문서 검사 성공은 Cargo build나 DB recovery 성공이 아니다. DEV2 이후·release·패키징·원격 CI는 계속 미실행이며 최초 배치 문서 작성은 제품 소스를 변경하지 않았다. 후속 플랫폼 분리는 실제 DEV1 코드 변경이며, 이전 실행 결과는 `dev0-validation-pre-platform.json`·`dev1-validation-pre-platform.json`으로 보존하고 현재 DEV0/DEV1 결과는 실제 재실행으로 갱신한다.
+문서 검사 성공은 Cargo build나 DB recovery 성공이 아니다. 현재 DEV2 P0/K0 leaf의 로컬 실행은 [증거 색인](../evidence/README.md)을 따르며, DEV2 전체 인수·후속 단계·release·패키징·원격 CI는 계속 미실행이다. 최초 배치 문서 작성은 제품 소스를 변경하지 않았다. 후속 플랫폼 분리는 실제 DEV1 코드 변경이며, 이전 실행 결과는 `dev0-validation-pre-platform.json`·`dev1-validation-pre-platform.json`으로 보존하고 현재 DEV0/DEV1 결과는 실제 재실행으로 갱신한다.

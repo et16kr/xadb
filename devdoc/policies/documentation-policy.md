@@ -1,6 +1,6 @@
 # 문서 운영 기준
 
-2026-10-18 · **DOC-001 사용자 채택 · 현재 저장소의 문서 작성·검증 기준**
+2026-10-18 · **DOC-001 문서 운영 / DOC-002 문서 검사 시점을 push로 변경**
 
 [문서 진입점](../README.md) · [개발 운영 방침](development-policy.md#section-3) · [기계 판독 색인](../documents.json)
 
@@ -48,13 +48,39 @@ Markdown은 실제 파일로 향하는 상대 링크를 사용한다. 절 참조
 
 과거 source 경로·revision·hash·실행 명령은 당시 증거의 identity다. 지금의 제품 경로로 소급 수정하지 않는다. `document-migration.json`은 이번 이관의 snapshot identity, 구현 경로·hash 대응, 제외·유지 범위와 신규 검증를 보존한다. 이관 당시의 고정 증거는 byte 단위로 보존하며 새 실행은 새 증거를 남기고 채택 참조를 별도로 갱신한다.
 
-문서 변경 후 저장소 루트에서 실행한다.
+문서 자동 검사는 아래 push 시점에 적용한다. 편집·commit·문서 작업 종료마다 검사하거나 생성 결과를 갱신하지 않는다. 의미·불변식·설계 판단의 검토는 계속하며 자동 검사 PASS를 설계 타당성의 증명으로 사용하지 않는다. 제품 코드의 기능·회귀·복구 시험은 기존 단계별 의무를 적용한다.
+
+<a id="push-gate"></a>
+## Push 직전 문서 검사
+
+[pre-push 훅](../../scripts/git-hooks/pre-push)이 [push 검사기](../../scripts/check_push.py)를 실행한다. 기존 훅 설정이 없는 checkout에서는 한 번 등록한다. 기존 `core.hooksPath`나 사용자 훅이 있으면 덮어쓰지 않고 소유자와 연결 방식을 정한다.
 
 ```bash
-python3 devdoc/verify_documents.py
+git config --local core.hooksPath scripts/git-hooks
 ```
 
-검증기는 Markdown 링크·anchor·문서 역할·색인·JSON·Python 구문, 기존 정책/단계/인수 계약의 정합성, 보존 증거 지문을 검사하고 `document-validation.json`을 갱신한다. HTML 재유입과 제거된 생성기 사용을 거절한다. 제품 시험과 역사적 측정 스크립트는 실행하지 않는다. 제품 코드 변경에는 기존 단계의 실제 시험을 적용한다.
+- 검사 대상은 Git이 전송하려는 각 ref의 최종 commit이다. annotated tag는 commit으로 해석하고 같은 commit은 한 번 검사한다. 여러 commit 중 하나라도 실패하면 해당 push 전체를 차단한다. 삭제만 하는 ref는 검사할 새 내용이 없어 제외한다.
+- 각 commit을 `git archive`와 `tar`로 임시 디렉터리에 내보내 그 사본의 `python3 devdoc/verify_documents.py`를 실행한다. Python과 `devdoc/requirements.txt`의 검사 의존성이 필요하다. 검사기 누락·해석할 수 없는 commit·export/실행 오류도 push 차단이다.
+- 미커밋 변경은 검사 대상에 섞지 않는다. 검사 중 생성하는 `document-validation.json`은 임시 사본에만 기록하고 사본은 종료 시 정리한다. 작업 트리·index·기존 증거를 갱신하거나 검사 결과를 자동 commit하지 않는다. 출력에는 검사 commit과 결과를 남긴다.
+- 현재 검사 범위는 링크/anchor·색인/역할·JSON/Python 구문·일부 단계/패키지/인수 계약·기존 증거 identity다. 이 변경은 검사 시점을 옮기며 검사기의 모든 검출 능력을 인증하지 않는다. 설계 의미의 정확성·제품 실행·원격 보호 CI는 별도다.
+- 이 훅은 설치한 로컬 checkout의 push 제약이다. 새 clone에도 설치가 필요하며 원격 서버가 강제하는 branch protection으로 주장하지 않는다. 기존 제품 CI를 대체하지 않는다.
+
+평상시 문서 수정에서는 검사하지 않는다. 훅/검사기 자체를 변경할 때에는 실패를 실제 차단하는지 별도의 좁은 회귀 시험을 적용하고, 제품 단계 완료·배포에는 기존 검증 의무를 유지한다.
+
+<a id="doc-002"></a>
+## DOC-002 결정 기록
+
+| 항목 | 내용 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-18 |
+| 근거·담당 | 사용자가 편집 중 문서 검사 대신 push 제약을 명시 지시. 작업·계약·통합 담당 `/root` |
+| 선택·이유 | 전송할 commit마다 pre-push 검사. 편집 중 가변 상태와 다른 작업의 미커밋 변경을 배제하고 검사 실패 시 전송을 막음 |
+| 대안 | 매 편집 검사는 잡음/중복 실행이 큼. pre-commit은 사용자 수정 지시로 제외. 작업 트리 검사는 실제 전송할 내용과 다를 수 있어 commit export 사용 |
+| 대체 | DOC-001·AGENTS·DP03 V0 및 관련 정책의 문서 수정 직후 실행 시점만 대체. 문서 형식·단계/제품 검증·독립 검토 의무 유지 |
+| 소유·중복 | 새 `scripts/check_push.py`, `scripts/git-hooks/pre-push`, `scripts/test_check_push.py`와 문서 검사 시점 규칙만 수정. DEV2 이관의 checker/product/evidence 변경은 별도 작업으로 보존. 공유 정책/README는 최신 원문의 해당 절만 변경 |
+| 검증 | `python3 -B -m unittest discover -s scripts -p test_check_push.py`: 임시 로컬 bare remote에 대한 훅 회귀 4개 PASS. 정상/실패·dirty tree 분리·tag/중복·삭제·다중 ref·검사기 누락/잘못된 입력 확인. 문서 검사기 의미의 검증이 아닌 push 차단 동작의 시험이며 실제 원격 push·제품 검증 미실행 |
+| 독립 검토·적용 | `/root/dev3_parallel_review`가 실제 스크립트·정책 diff와 위 실행 결과를 읽기 전용으로 검토: PASS, 수정 필요 지적 없음. `/root` 반영 확인. 기존 사용자 훅/설정이 없는 현재 저장소의 local core.hooksPath를 scripts/git-hooks로 설정. 동시 DEV2 이관 변경과 원격 보호 설정은 승인 범위 밖 |
+| 재검토 | 잘못된 commit 검사, 실패를 허용하는 훅, 기존 훅 충돌, 원격 강제가 필요한 경우 |
 
 <a id="doc-001"></a>
 

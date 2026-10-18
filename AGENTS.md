@@ -11,6 +11,6 @@
 - Follow `bottom-up-development.md`, `development-stages.json`, and `stage-completion.json`. DEV2 is partial; volatile tests do not qualify durability.
 - Follow `repository-build-plan.md` and its JSON for roles, packages, dependencies, fingerprints and clean exports. Add planned paths only with implementation.
 - Read `implementation-contracts.md` before kernel changes and `version-compatibility-policy.json` before published-format or semantic changes. Development builds use fresh fixtures; current-build recovery checks remain mandatory.
-- Run `python3 devdoc/verify_documents.py` after document edits. This checks documentation, not product execution.
+- Document verification is a pre-push gate, not an edit or commit requirement. Use the repository's `scripts/git-hooks/pre-push` hook (`git config --local core.hooksPath scripts/git-hooks` when no existing hooks need preserving). It checks each pushed commit in a temporary export and blocks on failure; do not rerun document checks while editing. See `devdoc/policies/documentation-policy.md#push-gate`. Product execution checks retain their stage-specific requirements.
 - DEV0: `python3 scripts/check_dev0.py`; DEV1 plus DEV0 regression: `python3 scripts/check_dev1.py`; DEV2 current P0/K0 leaf plus lower regressions: `python3 scripts/check_dev2_reference.py --with-substrate`.
 - This is a separate repository. Do not modify the source checkout or import its Git history. Imported prior progress is not a fresh XADB verification result.

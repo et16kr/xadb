@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18T11:31:37.845192+00:00",
+  "scope": "DEV0 local harness qualification only; no engine or protected release qualification",
+  "status": "PASS",
+  "artifact_directory": "artifacts/dev0/check-w_hwerid",
+  "checks": [
+    {
+      "id": "evidence-self-tests",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/test_check_evidence.py"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev0/check-w_hwerid/evidence-self-tests.log",
+      "log_sha256": "643c7cfc3921e5830e047bed28578bc933677c101c9c5a9f6610b6207052d03c"
+    },
+    {
+      "id": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev0/check-w_hwerid/format.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "lint",
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev0/check-w_hwerid/lint.log",
+      "log_sha256": "ba9d239b6608644ea5c739b0aaa46bbcaa955011726d6f6d6c9049d727fa9967"
+    },
+    {
+      "id": "self-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--all-features",
+        "--locked"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev0/check-w_hwerid/self-tests.log",
+      "log_sha256": "4b8be3ae84a63b2e76dc8726730a2055b96e829fe62a31036740c91ee08ad5d3"
+    },
+    {
+      "id": "default-build",
+      "command": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--locked"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev0/check-w_hwerid/default-build.log",
+      "log_sha256": "4f3c39ae8015dccf5f9752c456fa9a4c203dcf280325c1115a3f155c11992a67"
+    },
+    {
+      "id": "real-fixture-smoke",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev0/check-w_hwerid/binaries/xadbtest",
+        "run",
+        "--case",
+        "/home/et16/work/xadb/artifacts/dev0/check-w_hwerid/case.json",
+        "--case-sha256",
+        "6ec93446b23585b5d5ef00dcffc676b027f162cd8106f2d01503d245fb20861c",
+        "--worker",
+        "/home/et16/work/xadb/artifacts/dev0/check-w_hwerid/binaries/xadbtest-fixture-worker",
+        "--worker-sha256",
+        "52bd433b8275a48980981899a3af9f5c0e9eeb1acca36c831073b8a54a313cf1",
+        "--artifacts",
+        "/home/et16/work/xadb/artifacts/dev0/check-w_hwerid/smoke"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev0/check-w_hwerid/real-fixture-smoke.log",
+      "log_sha256": "88370a8a3e38e0daa0de2ccc0e5ca053b02b02250b6df9c7a3b81bad70541dcb"
+    },
+    {
+      "id": "clean-runtime",
+      "command": [
+        "retained binaries + case in empty cwd"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev0/check-w_hwerid/clean-runtime.log",
+      "log_sha256": "f5da6bd3cd336743b8d84e94e33adf2edafeb9a87d54bb6409624374e83cbbcb"
+    },
+    {
+      "id": "fresh-source-build",
+      "command": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--locked",
+        "--offline",
+        "--target-dir",
+        "/tmp/xadbtest-fresh-build-_y07rdcf/target"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev0/check-w_hwerid/fresh-source-build.log",
+      "log_sha256": "8891aea593b13ad437bab6811fed09db8b6dfaccc9e8b604ca221ee406df23fc"
+    }
+  ],
+  "engine_tests": "VOLATILE_SUBSTRATE_ONLY_NO_DURABILITY",
+  "official_release": false,
+  "protected_ci_execution": "NOT_RUN",
+  "source_sha256_before": "3fa1b7958cc5597ba99be6ba81d75ea65360657d318d22d59e6e2b633f76a540",
+  "source_sha256": "3fa1b7958cc5597ba99be6ba81d75ea65360657d318d22d59e6e2b633f76a540",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "target": "x86_64-unknown-linux-gnu",
+  "os_release": "PRETTY_NAME=\"Ubuntu 26.04.1 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"26.04\"\nVERSION=\"26.04.1 LTS (Resolute Raccoon)\"\nVERSION_CODENAME=resolute\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=resolute\nLOGO=ubuntu-logo\n",
+  "smoke": {
+    "run_directory": "artifacts/dev0/check-w_hwerid/smoke/run-dfdAVj",
+    "controller_sha256": "9c2ac6b3382b7dc92d63404bcb46af69848f1d1aa570073053b1f6077723265d",
+    "worker_sha256": "52bd433b8275a48980981899a3af9f5c0e9eeb1acca36c831073b8a54a313cf1",
+    "case_sha256": "6ec93446b23585b5d5ef00dcffc676b027f162cd8106f2d01503d245fb20861c",
+    "verdict": {
+      "result_schema_version": 1,
+      "run_id": "run-dfdAVj",
+      "case_validity": "VALID",
+      "product_verdict": "PASS",
+      "execution_state": "COMPLETED",
+      "cleanup_state": "PASS",
+      "case_verdict": "PASS",
+      "assertions_checked": 7,
+      "required_steps_complete": true,
+      "reasons": []
+    }
+  },
+  "retained_bundles": 51,
+  "intentional_self_test_and_smoke_outcomes": {
+    "PASS": 9,
+    "INVALID": 31,
+    "ERROR": 6,
+    "TIMEOUT": 1,
+    "FAIL": 4
+  },
+  "source_sha256_after": "3fa1b7958cc5597ba99be6ba81d75ea65360657d318d22d59e6e2b633f76a540"
+}

@@ -18,9 +18,10 @@
     "product_source_prefix": "",
     "product_directory_naming": "role without xadb- prefix",
     "cargo_package_identifiers": "unchanged; distinct from source directory names",
-    "test_tool_directories": "retain xadbtest as the independent tool name",
+    "test_tool_directories": "crates/testing/<role>; grouping directory only; independent packages retain xadbtest* identifiers",
     "historical_evidence_paths": "preserve original identity",
-    "planned_paths_created_as_placeholders": false
+    "planned_paths_created_as_placeholders": false,
+    "test_tool_layout_decision_ref": "repository-build-plan.md#testing-layout"
   },
   "current_example_paths": [
     "crates/foundation/src/identity.rs",

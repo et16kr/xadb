@@ -129,19 +129,19 @@
       "title": "XADB 조사·실행 증거"
     },
     "dev0-validation.json": {
-      "path": "evidence/dev0-xadb-20261018-r1.json",
+      "path": "evidence/dev0-xadb-20261018-r2.json",
       "role": "evidence",
-      "title": "dev0-xadb-20261018-r1.json"
+      "title": "dev0-xadb-20261018-r2.json"
     },
     "dev1-validation.json": {
-      "path": "evidence/dev1-xadb-20261018-r1.json",
+      "path": "evidence/dev1-xadb-20261018-r2.json",
       "role": "evidence",
-      "title": "dev1-xadb-20261018-r1.json"
+      "title": "dev1-xadb-20261018-r2.json"
     },
     "dev2-validation.json": {
-      "path": "evidence/dev2-xadb-20261018-r1.json",
+      "path": "evidence/dev2-xadb-20261018-r2.json",
       "role": "evidence",
-      "title": "dev2-xadb-20261018-r1.json"
+      "title": "dev2-xadb-20261018-r2.json"
     },
     "implementation-import-inventory.json": {
       "path": "evidence/implementation-import-inventory.json",
@@ -456,12 +456,32 @@
     "dev3-implementation-plan.md": {
       "path": "plans/dev3-implementation-plan.md",
       "role": "plans",
-      "title": "DEV3 — 조사 결과와 구현·검증 계획"
+      "title": "DEV3 — 구현·병렬 개발·검증 계획"
     },
     "dev3-source-research.md": {
       "path": "evidence/dev3-source-research.md",
       "role": "evidence",
       "title": "DEV3 소스 조사 기록"
+    },
+    "implementation-incremental-import-20261018.json": {
+      "path": "evidence/implementation-incremental-import-20261018.json",
+      "role": "evidence",
+      "title": "XADB 후속 구현 이관 inventory"
+    },
+    "evidence/dev0-xadb-20261018-r1.json": {
+      "path": "evidence/dev0-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "dev0-xadb-20261018-r1.json"
+    },
+    "evidence/dev1-xadb-20261018-r1.json": {
+      "path": "evidence/dev1-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "dev1-xadb-20261018-r1.json"
+    },
+    "evidence/dev2-xadb-20261018-r1.json": {
+      "path": "evidence/dev2-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "dev2-xadb-20261018-r1.json"
     }
   }
 }

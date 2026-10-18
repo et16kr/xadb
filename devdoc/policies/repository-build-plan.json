@@ -47,6 +47,11 @@
       "responsibility": "Rust 제품 라이브러리·실행 파일과 XADBTest 패키지"
     },
     {
+      "path": "crates/testing",
+      "status": "EXISTING",
+      "responsibility": "XADBTest 패키지의 분류 디렉터리. 자체 Cargo 패키지·workspace 없음"
+    },
+    {
       "path": "scripts",
       "status": "EXISTING",
       "responsibility": "빌드·시험 조립 자동화. 제품 DB 의미는 두지 않음"
@@ -175,7 +180,7 @@
   "packages": [
     {
       "name": "xadbtest-protocol",
-      "path": "crates/xadbtest-protocol",
+      "path": "crates/testing/protocol",
       "stage_ref": "DEV0",
       "status": "IMPLEMENTED",
       "placement": "CURRENT",
@@ -184,18 +189,19 @@
     },
     {
       "name": "xadbtest",
-      "path": "crates/xadbtest",
+      "path": "crates/testing/controller",
       "stage_ref": "DEV0",
       "status": "IMPLEMENTED",
       "placement": "CURRENT",
       "normal_workspace_dependencies": [
-        "xadbtest-protocol"
+        "xadbtest-protocol",
+        "xadbtest-reference"
       ],
       "role": "controller/oracle/verdict/evidence"
     },
     {
       "name": "xadbtest-fixture-worker",
-      "path": "crates/xadbtest-fixture-worker",
+      "path": "crates/testing/fixture-worker",
       "stage_ref": "DEV0",
       "status": "IMPLEMENTED",
       "placement": "CURRENT",
@@ -226,7 +232,7 @@
     },
     {
       "name": "xadbtest-foundation-worker",
-      "path": "crates/xadbtest-foundation-worker",
+      "path": "crates/testing/foundation-worker",
       "stage_ref": "DEV1",
       "status": "IMPLEMENTED",
       "placement": "CURRENT",
@@ -249,7 +255,7 @@
     },
     {
       "name": "xadbtest-reference",
-      "path": "crates/xadbtest-reference",
+      "path": "crates/testing/reference",
       "stage_ref": "DEV2",
       "status": "IMPLEMENTED",
       "placement": "SELECTED_DEV2",
@@ -260,7 +266,7 @@
     },
     {
       "name": "xadbtest-engine-worker",
-      "path": "crates/xadbtest-engine-worker",
+      "path": "crates/testing/engine-worker",
       "stage_ref": "DEV2",
       "status": "IMPLEMENTED",
       "placement": "SELECTED_DEV2",
@@ -269,7 +275,10 @@
         "xadb-foundation",
         "xadbtest-protocol"
       ],
-      "role": "typed volatile engine adapter; xadb-platform dependency remains planned for K2 I/O"
+      "role": "typed volatile engine adapter; xadb-platform dependency remains planned for K2 I/O",
+      "test_workspace_dependencies": [
+        "xadbtest"
+      ]
     },
     {
       "name": "xadb-transport",
@@ -542,9 +551,9 @@
     {
       "stage_ref": "DEV0",
       "paths": [
-        "crates/xadbtest",
-        "crates/xadbtest-protocol",
-        "crates/xadbtest-fixture-worker"
+        "crates/testing/controller",
+        "crates/testing/protocol",
+        "crates/testing/fixture-worker"
       ],
       "note": "현재 최소 harness"
     },
@@ -553,7 +562,7 @@
       "paths": [
         "crates/foundation",
         "crates/platform",
-        "crates/xadbtest-foundation-worker"
+        "crates/testing/foundation-worker"
       ],
       "note": "공통 계약과 Linux 구현을 분리한 최소 기반"
     },
@@ -561,8 +570,8 @@
       "stage_ref": "DEV2",
       "paths": [
         "crates/engine",
-        "crates/xadbtest-reference",
-        "crates/xadbtest-engine-worker"
+        "crates/testing/reference",
+        "crates/testing/engine-worker"
       ],
       "note": "다음 패키지 배치 결정. XADB-004 독립 oracle 필수"
     },
@@ -648,7 +657,7 @@
     "current": "DEV1 checker verifies foundation and platform normal dependency closures and independent builds on Linux; document verifier compares all current direct normal workspace edges with manifests",
     "planned": "DEV2 checker must check transitive normal/build/dev/target/feature closures and independent package builds; controller/reference must not depend on production engine semantics",
     "planned_execution_status": "NOT_RUN",
-    "future_controller_dependency_addition": "xadbtest -> xadbtest-reference only when XADB-004 is integrated; update current edge inventory in the same change",
+    "future_controller_dependency_addition": "xadbtest -> xadbtest-reference added for K0-004 native catalog recipe; the reference closure remains protocol only",
     "intra_engine_visibility": "Public api and re-exports only; transaction orchestrates publication/storage/durable through explicit contracts. Internal modules must not reach upward to SQL/server/test implementations.",
     "design_review": {
       "normative_ref": "repository-build-plan.md#dependency-review",
@@ -778,9 +787,10 @@
     "product_source_prefix": "",
     "product_directory_naming": "role without xadb- prefix",
     "cargo_package_identifiers": "xadb-* for product packages; xadbtest* for test tooling",
-    "test_tool_directories": "xadbtest*",
+    "test_tool_directories": "crates/testing/<role>; grouping directory only; independent packages retain xadbtest* identifiers",
     "historical_evidence_paths": "preserve original identity",
-    "planned_paths_created_as_placeholders": false
+    "planned_paths_created_as_placeholders": false,
+    "test_tool_layout_decision_ref": "repository-build-plan.md#testing-layout"
   },
   "development_policy_ref": "development-policy.json",
   "performance_engineering_ref": "ai-performance-engineering.json",
@@ -802,5 +812,31 @@
     "tests",
     "scripts",
     ".github"
-  ]
+  ],
+  "testing_layout_decision": {
+    "id": "XADB-LAYOUT-TESTING-001",
+    "status": "ACCEPTED",
+    "change_class": "D2",
+    "date": "2026-10-18",
+    "owner": "/root",
+    "contract_owner": "/root",
+    "integration_owner": "/root",
+    "authorization": "User explicitly requested the proposed crates/testing regrouping and related documentation updates.",
+    "supersedes": "Previous coding/build-policy exception retaining flat xadbtest* source directories; package and binary names remain unchanged.",
+    "source_path_mapping": {
+      "crates/xadbtest": "crates/testing/controller",
+      "crates/xadbtest-protocol": "crates/testing/protocol",
+      "crates/xadbtest-reference": "crates/testing/reference",
+      "crates/xadbtest-fixture-worker": "crates/testing/fixture-worker",
+      "crates/xadbtest-foundation-worker": "crates/testing/foundation-worker",
+      "crates/xadbtest-engine-worker": "crates/testing/engine-worker"
+    },
+    "execution_record_ref": "project-migration.md#testing-layout",
+    "review_status": "REVIEWED_NO_BLOCKING_FINDINGS",
+    "changes_package_dependencies": false,
+    "changes_kernel_semantics": false,
+    "changes_stage_order": false,
+    "reviewer": "/root/testing_layout_review",
+    "review_scope": "Baseline-relative paths and package metadata, preserved prior changes/evidence, actual DEV0/DEV1/DEV2 leaf reports and logs, stable source identity and current documentation references"
+  }
 }

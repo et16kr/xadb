@@ -93,7 +93,7 @@
   "validation_profiles": [
     {
       "id": "V0",
-      "scope": "Document changes only; both renderers and document verifier"
+      "scope": "Document verification on pushed commit snapshots at pre-push only; no edit-time or pre-commit document checks; DOC-002"
     },
     {
       "id": "V1",

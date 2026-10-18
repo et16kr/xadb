@@ -10,6 +10,7 @@ self-test = []
 
 [dependencies]
 xadbtest-protocol.workspace = true
+xadbtest-reference = { path = "../reference" }
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
@@ -32,6 +33,14 @@ required-features = ["self-test"]
 name = "controller"
 required-features = ["self-test"]
 
+[[bin]]
+name = "xadbtest-native-mutant-worker"
+path = "tests/fixtures/native_mutant.rs"
+required-features = ["self-test"]
+
+[[test]]
+name = "native"
+required-features = ["self-test"]
+
 [lints]
 workspace = true
-

@@ -10,6 +10,32 @@ fn execute() -> Result<u8, Box<dyn std::error::Error>> {
             println!("{}", file_sha256(&PathBuf::from(path))?);
             Ok(0)
         }
+        Some("run-catalog") | Some("verify-catalog") => {
+            let mode = std::env::args().nth(1).expect("matched command");
+            let allowed = if mode == "run-catalog" {
+                vec!["--recipe", "--recipe-sha256", "--worker", "--worker-sha256", "--artifacts"]
+            } else {vec!["--directory", "--recipe-sha256", "--worker-sha256"]};
+            let mut options = BTreeMap::new();
+            while let Some(key) = args.next() {
+                if !allowed.contains(&key.as_str()) {return Err(format!("unknown option: {key}").into());}
+                let value = args.next().ok_or_else(|| format!("missing value: {key}"))?;
+                if options.insert(key, value).is_some() {return Err("duplicate option".into());}
+            }
+            let mut take = |name| options.remove(name).ok_or_else(|| format!("missing option: {name}"));
+            let recipe_sha256 = take("--recipe-sha256")?;
+            let worker_sha256 = take("--worker-sha256")?;
+            let report = if mode == "run-catalog" {
+                xadbtest::catalog::run(&xadbtest::catalog::Options {
+                    recipe: take("--recipe")?.into(), recipe_sha256,
+                    worker: take("--worker")?.into(), worker_sha256,
+                    artifacts: take("--artifacts")?.into(),
+                })?
+            } else {
+                xadbtest::catalog::verify(&PathBuf::from(take("--directory")?), &recipe_sha256, &worker_sha256)?
+            };
+            println!("{}", serde_json::to_string(&report)?);
+            Ok(report.exit_code())
+        }
         Some("run") => {
             let allowed = ["--case", "--case-sha256", "--worker", "--worker-sha256", "--artifacts"];
             let mut options = BTreeMap::new();
@@ -32,7 +58,7 @@ fn execute() -> Result<u8, Box<dyn std::error::Error>> {
             println!("{}", serde_json::json!({"run_directory":report.directory, "case_verdict":report.verdict.case_verdict, "exit_code":report.verdict.exit_code()}));
             Ok(report.verdict.exit_code())
         }
-        _ => Err("usage: xadbtest hash <file> | xadbtest run --case <json> --case-sha256 <sha256> --worker <binary> --worker-sha256 <sha256> --artifacts <directory>".into()),
+        _ => Err("usage: xadbtest hash <file> | xadbtest run-catalog --recipe <json> --recipe-sha256 <sha256> --worker <binary> --worker-sha256 <sha256> --artifacts <directory> | xadbtest verify-catalog --directory <run> --recipe-sha256 <sha256> --worker-sha256 <sha256> | xadbtest run --case <json> --case-sha256 <sha256> --worker <binary> --worker-sha256 <sha256> --artifacts <directory>".into()),
     }
 }
 

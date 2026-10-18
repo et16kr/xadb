@@ -20,7 +20,7 @@
 | [FileIo](../../crates/foundation/src/io.rs): positional read/write/sync/set_len | namespace·create/open·writer lease·file inventory·원자 selector 교체 |
 | [Linux adapter](../../crates/platform/src/linux.rs): 실제 파일 효과·directory sync | DB 디렉터리 소유, 잠금, rename·directory fault 관측, 재시작 연결 |
 | [runtime](../../crates/foundation/src/runtime.rs): quota·lifecycle·취소·제한 event | DB 자원 회계, transaction/statement 효과, 실제 thread barrier와 pin/GC |
-| [XADBTest protocol](../../crates/xadbtest-protocol/src/lib.rs): CheckedAdd, 64 KiB 전체 입력, 최대 128 step | 여러 요청·응답의 실시간 이력, actor·crash barrier·큰 값·scan 페이지 |
+| [XADBTest protocol](../../crates/testing/protocol/src/lib.rs): CheckedAdd, 64 KiB 전체 입력, 최대 128 step | 여러 요청·응답의 실시간 이력, actor·crash barrier·큰 값·scan 페이지 |
 | DEV0/1의 로컬 증거 | 독립 행/거래 oracle, 실제 engine worker, K0–K5와 PF 증거는 새로 필요 |
 
 `FileIo::sync_all` 성공을 파일 이름·selector의 영속화까지 확장하지 않는다. Linux의 파일 fsync와 디렉터리 fsync는 별도이고, rename의 원자적 이름 교체만으로 crash 후 영속 선택이 완성되지 않는다. 이 차이를 namespace port와 checkpoint 순서에 반영한다. [fsync(2)](https://man7.org/linux/man-pages/man2/fsync.2.html), [rename(2)](https://man7.org/linux/man-pages/man2/rename.2.html)

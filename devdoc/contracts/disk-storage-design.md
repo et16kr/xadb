@@ -4,7 +4,7 @@
 
 [구현·검증 계획](../plans/dev3-implementation-plan.md) · [소스 조사 증거](../evidence/dev3-source-research.md) · [커널 계약](implementation-contracts.md) · [DEV2 설계](dev2-kernel-design.md) · [복구 계약](recovery-logging-design.md) · [인수 항목](disk-test-matrix.json)
 
-DEV3는 DEV2의 SQL 없는 durable transaction을 실제 디스크 행·catalog·인덱스와 제한된 버퍼로 확장한다. 이 문서의 API·형식은 구현 설계이며 현재 호출 가능한 기능이 아니다. 설계 준비는 DEV2 완료 전 가능하나 production 구현은 [단계 진입 규칙](../plans/stage-completion.json)의 최소 선행 요건과 leaf 선행 조건을 충족해야 한다. 현재 DEV2는 P0/K0 일부 구현이며 WAL·recovery가 없다.
+DEV3는 DEV2의 SQL 없는 durable transaction을 실제 디스크 행·catalog·인덱스와 제한된 버퍼로 확장한다. 이 문서의 API·형식은 구현 설계이며 현재 호출 가능한 기능이 아니다. 설계 준비는 DEV2 완료 전 가능하나 production 구현은 [단계 진입 규칙](../plans/stage-completion.json)의 최소 선행 요건과 leaf 선행 조건을 충족해야 한다. DEV2 이관 완료 여부와 실제 durable 선행 증거는 [구현 계획의 인수 경계](../plans/dev3-implementation-plan.md#parallel-entry)에서 별도로 확인한다.
 
 <a id="scope"></a>
 ## 1. 범위와 유지할 계약
@@ -189,6 +189,24 @@ whole-pack GC만으로는 살아 있는 page 하나가 많은 dead bytes를 붙�
 필수 지표는 page read/write bytes·hit/miss·pin wait, tree height/split·path copy·overflow, 논리 변경 대비 pack bytes, pack/file 수, live/retained/unreachable bytes, WAL/page/dir sync latency, checkpoint/GC/compaction/reopen 시간·scratch/RSS peak, index↔scan equality다. baseline과 candidate는 동일 의미·durability·fixture·환경에서 비교한다. 측정 없는 성능 개선 주장은 하지 않는다.
 
 D3-F01–F06의 byte vectors, Rust API/오류 상태표, fault receipts, profile 수치와 DEV2 실제 통합 근거는 해당 leaf 구현 전에 동결한다. 이 설계의 채택은 S1 PASS가 아니며 실제 entrypoint/evidence는 아직 없다.
+
+<a id="parallel-development"></a>
+## 12. DEV3 내부 병렬 개발 경계
+
+**DEV3는 공통 형식·접근 계약과 최소 선행 leaf를 먼저 확정한 뒤 내부 구현을 병렬로 진행할 수 있다.** 작업 배정·선행 leaf·공유 파일·병합 순서의 정본은 [구현 계획의 병렬 개발 절](../plans/dev3-implementation-plan.md#parallel-development)이다. 기존 S0–S5와 XADB-028→021→022→029 순서를 유지하며, DEV3와 DEV4의 동시 착수나 런타임 병렬 commit을 추가하는 결정이 아니다. 실제 병렬 실행·단축 효과는 NOT_RUN이다.
+
+| 설계 경계 | 병렬 개발에 적용할 조건 |
+| --- | --- |
+| page/pack/PageRef·key·inventory 표현 | 형식별 단일 담당이 D3-F01과 소비 API를 먼저 고정. 동일 형식·checksum·key 의미를 작업별로 복제하지 않음 |
+| pack I/O·clean buffer·COW tree | 공통 page 읽기/준비·pin·오류·예약 계약 뒤 분리 가능. tree 소비자는 pack sync를, buffer는 root 공개를 소유하지 않음. 실제 통합 검증은 세 구현이 연결된 뒤 수행 |
+| row·index·catalog | 공통 tree의 최소 실제 구현 뒤 의미별 소비 작업 분리 가능. split/path-copy/순회는 tree 담당 한 곳에서 수정 |
+| row와 locator | row tree가 locator의 영속 정본이므로 **같은 작업 소유**. 별도 locator tree/전체 RAM map을 병렬 구현하지 않음 |
+| statement·commit·recovery·retention | 공통 상태표와 ledger의 단일 소유 유지. 모듈별 준비·시험은 병렬 가능하나 공통 상태 전이와 공개/회수 연결은 통합 담당이 순차 반영 |
+| 독립 oracle·시험 | 구현과 병렬 준비 가능. production codec/tree를 기대값 계산에 공유하지 않고, 통합 source/build에서 실제 I/O·장애·자원 인수 재실행 |
+
+DEV2 이관 중에는 계약 대조·독립 vector·작업 범위 준비를 진행한다. production leaf마다 D3-F06의 실제 공급 revision·선행 증거와 D3-F07의 담당/수정 범위 확정이 필요하다. 동일 worktree의 파일 분리만으로 독립성을 판단하지 않는다. 독립 검토와 병렬 소유 규칙은 [DP01](../policies/development-policy.md#section-2)·[병렬 개발 정책](../policies/parallel-development-policy.md#section-2)을 따른다.
+
+이 절의 구체화 결정은 [DEV3-PARALLEL-001](../plans/dev3-implementation-plan.md#parallel-review)에 기록한다. 기존 DEV3-DESIGN-001의 저장 알고리즘·형식 기준·인수 의무를 대체하지 않는다.
 
 <a id="decision"></a>
 ## DEV3-DESIGN-001 결정 기록

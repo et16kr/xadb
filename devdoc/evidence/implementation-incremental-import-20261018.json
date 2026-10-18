@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "source_id": "development-snapshot-20261018-02",
+  "source_revision": "8efe2746b64ab3fbf3bee35ab12328e89c75ac0e",
+  "captured_at": "2026-10-18T20:19:43.268680+09:00",
+  "source_inventory_sha256": "b0e4c27c55bc99a25ae2d9059feab820dcb9665ec6833ceca2b2302e23a1453a",
+  "source_inventory_storage": "external-local-archive",
+  "previous_import_inventory": "implementation-import-inventory.json",
+  "previous_import_inventory_sha256": "a2c3c25151d010c27afa73ecdda015bc4efc106314f6e2e723ff1352456e14c2",
+  "target_base_revision": "4a923214dd91c5566779652e59e13883eb940672",
+  "meaning": "Incremental implementation import identity after the original snapshot; not product execution evidence. Original paths remain only in the external local inventory.",
+  "source_modified": false,
+  "git_history_imported": false,
+  "commit_created": false,
+  "files": [
+    {
+      "target_path": "Cargo.lock",
+      "change": "UPDATE",
+      "source_sha256": "51f08756bb14374b74f454ef96b8c4342b2fdd89681037f4486356e7fff04788",
+      "previous_imported_sha256": "9d816e0ee4cb01e35ecf536eb959e683070a2ff49651670311c5e35133ce7b9d",
+      "imported_sha256": "65174b7a2536f9efe8a14e99e924e11f39791f64f6260051d477d7dc1960763e"
+    },
+    {
+      "target_path": "crates/xadbtest/Cargo.toml",
+      "change": "UPDATE",
+      "source_sha256": "aecd3424b60f9e063037a609c43ec9e362e12538e7f16916e1803c6a6b819b6c",
+      "previous_imported_sha256": "94c77739cebcdd5c1bcd02340f5e1adf895b0020356781fedbf362f2eb035257",
+      "imported_sha256": "e4330819da5afdd93008cce1432635e0c048180afbad6ff917b906adee685c61"
+    },
+    {
+      "target_path": "crates/xadbtest/src/catalog.rs",
+      "change": "ADD",
+      "source_sha256": "47a58c9e736b711d4f90f944daa5a2e955eba97e0d1ec73c85ec2869efddc180",
+      "previous_imported_sha256": null,
+      "imported_sha256": "989ad06ce181e99cd5fcb3c6c68261857df448b51caedad6c878d4b86263cea6"
+    },
+    {
+      "target_path": "crates/xadbtest/src/lib.rs",
+      "change": "UPDATE",
+      "source_sha256": "938a9bf42aa60e2c106e74586295a0885d9939860b8b214e28ccc4428eb437e9",
+      "previous_imported_sha256": "11da4ed566c45aaeb2340dc17f339a11f9a5c9be158d149e7def53cbce030c37",
+      "imported_sha256": "127b29a279d0a8ad1842ede1e661a22e4325ba237c67703113e5840389b698dc"
+    },
+    {
+      "target_path": "crates/xadbtest/src/main.rs",
+      "change": "UPDATE",
+      "source_sha256": "0ab35c31525ab8a5b2f3ac19c25e1a7e34f158f3c7d8fd0ab2c2de016b2db189",
+      "previous_imported_sha256": "42ef2dce258aa582701f414dcb77fca9c70783171b36b37bbe3108049d7aab11",
+      "imported_sha256": "ac66f7d3663fc3ee5e43b124abb58b0ab824b4a62eddf2890c245b026c398c2f"
+    },
+    {
+      "target_path": "crates/xadbtest/src/native.rs",
+      "change": "UPDATE",
+      "source_sha256": "64987432a0e1630a209be8c5d969876d18464fc33cbdc642260320db58c26c16",
+      "previous_imported_sha256": "1d82542ceef827fce0e6bc9dae81b0ada65f8ece56c12fde4cfe8f7ae91cc397",
+      "imported_sha256": "0881632e6a20973bc0bc5da89809feb352266bf31639a7ed68c32600213b2eca"
+    },
+    {
+      "target_path": "crates/xadbtest/tests/fixtures/native_mutant.rs",
+      "change": "ADD",
+      "source_sha256": "ce156056b54ffecfb9221ee575f09c46928851cfb4301ba86a02e5505f4d3121",
+      "previous_imported_sha256": null,
+      "imported_sha256": "dc9b284da83df25627464e773b470653f752fdefb93e509cfa9ee44729047a4e"
+    },
+    {
+      "target_path": "crates/xadbtest/tests/native.rs",
+      "change": "ADD",
+      "source_sha256": "f2f9819bdd46362af7c8ec064f556f47fb95c21219a3d64c7bca2e2d1ecb3217",
+      "previous_imported_sha256": null,
+      "imported_sha256": "74964e877ed6e6da47175710f1b3ef325cc513b27dfb649f86e9f8358a6966dd"
+    },
+    {
+      "target_path": "crates/xadbtest-engine-worker/Cargo.toml",
+      "change": "UPDATE",
+      "source_sha256": "26362a999a2196fe2f4f2a4c09805c5186152f4112055da61156a1627ae6a651",
+      "previous_imported_sha256": "f2930665e115a2424d8f191485a9a7f63f499dcaedab9712cd1d7bf84dceae0c",
+      "imported_sha256": "20d99c8111c68e431c3054ec78f7192b63ad629c3ab6f247e7bc86dafcf1e637"
+    },
+    {
+      "target_path": "crates/xadbtest-engine-worker/tests/catalog.rs",
+      "change": "ADD",
+      "source_sha256": "b404ae2dfcfd3f03f3e5818e622f0045cf5002c7456d5201239cf3e3e2ce33ca",
+      "previous_imported_sha256": null,
+      "imported_sha256": "32678d3bba67635dac3ff827e18bece5e402debf13e5c7c2a823e6003bae802d"
+    },
+    {
+      "target_path": "crates/xadbtest-engine-worker/tests/native.rs",
+      "change": "ADD",
+      "source_sha256": "39f986b5181993edb1aa8292ad55255a11200efa5d55d0dfc9173b86fcba4c08",
+      "previous_imported_sha256": null,
+      "imported_sha256": "2481ed70cbaf81c6fe00ab38a4d2cd53c0bacbbac022664a86d32093f697739c"
+    },
+    {
+      "target_path": "crates/xadbtest-engine-worker/tests/process.rs",
+      "change": "UPDATE",
+      "source_sha256": "24594cc8cd4558006fc121ea445914704f1632c32c00401c8b504d4ee0d2e4ee",
+      "previous_imported_sha256": "ac69fb05d3c2501f3bedcdfbaac5cdea0082500b8fe61e7336a9c9401518f555",
+      "imported_sha256": "7cd1c477ccbc569fdef1751b156a65854ef9c465073d363d4bbfd505f77211db"
+    },
+    {
+      "target_path": "crates/xadbtest-engine-worker/tests/support/mod.rs",
+      "change": "ADD",
+      "source_sha256": "77a3680552f8de93ecca22625c17cddd5e1ecb53ea95e32fcf17c613f8cb3831",
+      "previous_imported_sha256": null,
+      "imported_sha256": "4c2890190afdbc27caa4d6c9fca25498066fbab27cb5d3c567435cb62958e453"
+    },
+    {
+      "target_path": "crates/xadbtest-reference/src/catalog.rs",
+      "change": "ADD",
+      "source_sha256": "70586526852ed56e478c8d2a0ce1c57909da8911dd6a30a3745eb95844b4dae4",
+      "previous_imported_sha256": null,
+      "imported_sha256": "695ac5a8d32c09e4d7325583d3b3d0f31b9c9243aa6c11be1590c0ee17766065"
+    },
+    {
+      "target_path": "crates/xadbtest-reference/src/lib.rs",
+      "change": "UPDATE",
+      "source_sha256": "2de711a560ec6a836405b0fea0743e60db3f6347ae953bafad8afdfa9cb857d5",
+      "previous_imported_sha256": "d846d08ebaa99b93580b66009b04a759d3a557fefa6df8d4b96d88caa211257c",
+      "imported_sha256": "2de711a560ec6a836405b0fea0743e60db3f6347ae953bafad8afdfa9cb857d5"
+    },
+    {
+      "target_path": "crates/xadbtest-reference/tests/catalog.rs",
+      "change": "ADD",
+      "source_sha256": "f0616b0243d0fcf0b44eb3780a68cb406c4672833e2c7c4fd829ae8e5a2e6371",
+      "previous_imported_sha256": null,
+      "imported_sha256": "755b40ac9cc3c2e62615f8f44762d7faa953ac9de973a251b700059924d88d5a"
+    },
+    {
+      "target_path": "crates/xadbtest-reference/tests/support/catalog_cases.rs",
+      "change": "ADD",
+      "source_sha256": "3ea21b9a91d84dd83a5815ff0fd3898c57d568f6d1e8acceec18424b4d742464",
+      "previous_imported_sha256": null,
+      "imported_sha256": "3fe8e1fc0b373c31edb9d28cbe36ec9053584bd3638156e7a1876063d95d8bee"
+    },
+    {
+      "target_path": "scripts/check_dev2_reference.py",
+      "change": "UPDATE",
+      "source_sha256": "8e7dda42b3b420e4b3e91caae5df0f468ba3d6882f20d8624abcd9b60db87407",
+      "previous_imported_sha256": "e0552b337d1760c88c8585b7679f23098f53cfa9b27eddcf25f251d79aa1ac0e",
+      "imported_sha256": "266bed67a3f1c976ffb46fe7198f2bf255b51053d9ebc5b713ddf3aca5de684f"
+    }
+  ],
+  "target_adaptation_paths": [
+    "devdoc/verify_documents.py",
+    "devdoc/policies/repository-build-plan.json",
+    "devdoc/policies/repository-build-plan.md"
+  ],
+  "retained_product_direction": "DISK_ONLY; volatile K0 is a temporary kernel substrate",
+  "unimplemented_handoff": "K0-005 performance proposal and review gaps only",
+  "verification": "Not completed here. Validation and fresh report registration are handed off to the XADB owner at the user request; r1 reports remain unchanged.",
+  "interrupted_local_run": {
+    "directory": "artifacts/dev2-reference/check-kecbzonw",
+    "status": "INTERRUPTED_AT_USER_REQUEST",
+    "exit_code": 130,
+    "completed_report_created": false
+  }
+}
