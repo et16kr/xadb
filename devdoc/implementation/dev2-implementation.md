@@ -377,3 +377,47 @@ commit `ea145b9`의 history 22 PASS/extended 1 ignored, bounded smoke 1 PASS/exh
 native 캠페인 첫 회는 4개 시험·33개 case와 controller 소유권 부정 사례가 모두 PASS했고 strict 독립 판정 33 ACCEPTED, 누락·중복·미연결 run 0이다. 두 번째 회는 디스크 여유 0의 ENOSPC로 1 PASS/3 FAIL, 세 번째 회는 NOT_RUN이다. 전체 검증은 FAIL/미완료이며 첫 회 PASS로 3회 의무를 대신하지 않는다. 최종 report 저장도 ENOSPC로 실패해 원래 0-byte report.json을 보존했고, 실제 원본 로그·manifest·첫 execution/summary에서 사후 receipt를 별도로 작성했다. 첫 시도에서 발견한 신규 성능 worker 빌드 오류 3개와 그 수정도 `kernel-frozen-01.log`·`artifacts/d2k-5wk_abx0/`에 보존한다.
 
 사용자는 이번 진행 단위의 결과를 commit하고 일단 멈추도록 요청했다. 원본 source·실행 파일·crash image·journal·로그를 유지하고 이번 두 시도의 재생성 가능한 `target/` 캐시만 지워 약702MiB를 확보했다. 이후 캠페인·장시간·성능 실행은 시작하지 않는다. source-only extended runner 반례는 SHA binding 보완 후 11개 PASS지만 30분 target이나 P0 전수 실행은 아니다. native transport/fault 구현과 검증 기반을 commit하고, 미검증 성능 초안·미채택 K0 최적화 후보는 별도 작업 트리에 보존한다. DEV2/B2/D0 완료·성능 채택·공식 배포는 여전히 미완료다.
+
+<a id="dev2-review-20261019"></a>
+## DEV2 코드 리뷰 — 재시작용 용량 예약 (2026-10-19)
+
+**D1 / 기존 자원·복구 계약의 결함 수정 / 로컬 검증 PASS.** 사용자 코드 리뷰·즉시 수정 요청에 따라 `/root`가 구현·통합하고 `/root/dev2_independent_review`가 소유 계약·원래 반례·실제 diff를 독립 검토했다. 기준 commit은 `fe8d3f5d2a7744a1c54a26fa9d30c656b974fa7c`이며 착수 미커밋 diff의 SHA-256은 `eb3abb812f0adc05517663b33c8cddd6b71477e7ecf87445432077e115d97761`이다. 이 digest는 당시 untracked 파일의 identity를 포함하지 않는다. 기존 성능 초안·K0 후보·COMM 변경과 이후 동시 작업은 보존한다.
+
+소유 변경은 [WAL admission](../../crates/engine/src/durable/wal.rs), [빠른 경계 시험](../../crates/engine/src/database/capacity_tests.rs), [실제 용량 시험](../../crates/testing/engine-worker/tests/durable_capacity.rs), 이 기록이다. 이 작업에서 공유 `database.rs`에 추가한 것은 시험 모듈 연결이다. `persist()`의 let-chain 정리와 `io.rs`/`wal.rs`의 lint 허용 주석·attribute는 동시 변경이며 이 수정의 소유 범위에 넣지 않는다. 새 crate·의존성·실행 source root는 없으며 기존 `crates` fingerprint/clean-export 범위에 들어간다. 공개 형식과 256 MiB/4,096개 하드 상한, WAL 보존·STABILIZE·UNKNOWN·checkpoint 선택 계약은 유지한다. 수정 뒤 소스를 동결하고 해당 사본에서 통합·하위 회귀를 실행했다. 문서 자동 검사는 push gate에서만 수행한다.
+
+### 발견·수정
+
+- **P1 — ACK 뒤 WAL 용량 부족으로 재시작 실패.** 이전 append는 보존 WAL의 하드 상한까지 허용하지만 open은 새 epoch의 203-byte RESUME header를 더한다. 실제 Linux 파일에서 268,418,948 bytes 보존 상태에 16,135-byte Binary 교체를 commit하면 q=4,088 ACK 후 202 bytes만 남고, 다음 open이 `LimitExceeded: retained WAL budget`으로 실패했다. 원래 DB와 로그는 `artifacts/dev2-review-20261019/capacity-before-db/`와 `capacity-before-02.log`에 보존한다.
+- **같은 원인의 파일 inventory 경계.** normal metadata 생성과 회전 없는 append가 다음 open의 4-slot 검사 여유를 보존하지 않았다. 정상 admission은 예약된 checkpoint slot까지 합쳐 재시작용 4개를 남기며, 기존 open이 여유를 사용한 뒤에는 파일을 추가하지 않는 write도 재검사한다.
+- **회전 선행 효과.** 회전이 필요한 batch는 seal+새 header+batch+재시작 header를 첫 seal write 전에 함께 검사한다. 한도 거절은 Aborted/unfenced이며 WAL·WRITER·q를 바꾸지 않는다. 하드 상한 확대나 필수 WAL 삭제로 회피하지 않았다.
+
+이 여유는 정상 write/metadata admission 뒤 다음 한 번의 open을 위한 것이다. 유지 작업 없이 반복 open하거나 실패한 metadata 시도를 무한히 허용한다는 뜻은 아니다. recovery 자체는 기존 하드 상한을 사용하고 소스 파일을 보존한다. 여유를 소비한 후에는 checkpoint/GC로 용량을 회수해야 한다.
+
+### 다른 DBMS와 대조한 책임
+
+공개 자료는 리뷰 질문의 근거이며 XADB와 같은 구현·SQL·성능이라는 주장이 아니다. 로컬 checkout은 읽기 전용으로 사용했고 아래 실제 HEAD와 clean worktree를 확인했다. resident/mixed-storage 제품 엔진을 도입하지 않는다.
+
+| 자료·실제 revision | 읽은 경계·XADB 적용 |
+| --- | --- |
+| [Oracle 26ai COMMIT](https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/COMMIT.html), 2026-10-19 열람 | WAIT 성공 응답과 redo 영속화, 성공 응답 유실의 불확실성을 구분. XADB sync→publish→reply와 UNKNOWN 처리를 대조 |
+| PostgreSQL `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851`, `/home/et16/work/postgres` | `src/backend/access/transam/xact.c:1520–1564`, `RecordTransactionCommit`의 `XLogFlush` 후 commit 상태 갱신. 동기·비동기 정책을 구분해 읽음 |
+| MariaDB `327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4`, `/home/et16/work/mariadb` | `storage/innobase/log/log0log.cc:70–86,2041–2104`, `set_capacity`의 margin과 `checkpoint_margin`/`log_free_check`의 쓰기 전 용량 관리. XADB 재시작 여유 누락을 대조 |
+| CUBRID `a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5`, `/home/et16/work/cubrid` | `src/transaction/log_page_buffer.c:6513–6678`, `logpb_remove_archive_logs`의 checkpoint·backup 등 필요 범위 보존. XADB current/previous closure·system pin·GC 승인 순서를 대조 |
+| SQLite `43a48f77585a88940c727f33682151418f544059`, `/home/et16/work/sqlite` | `src/wal.c:2250–2281`, `walCheckpoint`의 reader 보존과 WAL→DB sync 순서. XADB immutable checkpoint/retention 검토에 사용하며 동일 알고리즘으로 해석하지 않음 |
+
+### 실행 범위
+
+원본 결과는 `artifacts/dev2-review-20261019/`에 보존한다. 테스트 작성 첫 빌드는 존재하지 않는 `LinuxDirectory::open` 호출로 실패했고 `open_existing`으로 바로잡았다(`capacity-before.log`). 제품 결함 반례는 그 후 실제 실행인 `capacity-before-02.log`와 `capacity-unit-before.log`다. 원래 실패를 후속 PASS로 덮어쓰지 않는다.
+
+| 실행 | 관측·한계 |
+| --- | --- |
+| 빠른 용량 경계 3개 | 수정 전 3 FAIL → 수정 후 3 PASS. 202/203-byte, 회전 전 무효과, checkpoint 예약/비회전 write의 파일 여유. 합성 accounting 입력이며 하드 상한을 축소하지 않음 |
+| 실제 256 MiB WAL 경계 | 수정 전 ACK 후 open 실패 → 수정 후 write 거절·기존 ACK/q 복원·checkpoint 2회·GC·새 write 성공. 실제 파일 I/O/reopen이며 power-loss qualification 아님 |
+| 실제 파일 inventory 경계 | 4,092개에서 ACK 후 reopen으로 4,094개가 되어도 기존 table/q 보존. 다음 write는 무효과로 거절 |
+| transaction·cache-loss 회귀 | 7개·15개 PASS. 기존 모든 선언 fixture cut와 rotation/checkpoint/backup/restore/GC를 포함 |
+| 실제 durable/native fault | 2개·4개 PASS. 이번 실행은 local 1회이며 formal manifest/독립 bridge·V3 3회 반복의 완료로 주장하지 않음 |
+| DEV2 P0/K0 및 DEV0·DEV1 | 고정 source에서 `python3 scripts/check_dev2_reference.py --with-substrate` PASS. DEV2 검사 28개, native 323개·catalog 325개 세션, DEV0·DEV1 각각 8개 검사 PASS. 실행 전후 source SHA-256 동일 |
+
+고정 source는 `artifacts/dev2-review-20261019/source/`, SHA-256 `972ee1aa3ed58fd3f6902643543f369482d2e4fc85879aa56c13f3bef6a6488f`다. 이 snapshot에는 별도 작업의 변경도 포함되며 현재 전체 작업 트리와 같다고 추정하지 않는다. 리뷰 수정의 로컬 결과로 DEV2/B2/D0 완료·성능 인수·공식 배포 상태를 승격하지 않는다.
+
+하위 회귀의 최종 보고서는 `artifacts/dev2-review-20261019/dev2-regression.json`(SHA-256 `9ff013d412abefd513bef7d09fc4a5d28b5aef4818212c62d60087c723071dae`)이며 stdout은 `dev2-regression.log`에 보존한다. 독립 검토자는 수정 코드·원래 반례·완료된 집중 시험·고정 source 지문, DEV0/DEV1의 보존 결과와 최종 DEV2 보고서·로그·native/catalog inventory의 지문을 직접 대조했다. 최종 판정은 **D1 수정 통합 차단 지적 없음 / PASS**이며 `/root`가 반영을 확인했다. 검토자는 재시험이나 파일 수정을 하지 않았다.

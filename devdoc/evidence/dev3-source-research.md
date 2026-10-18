@@ -6,9 +6,9 @@
 
 ## 조사 identity와 한계
 
-사용자가 지정한 로컬 checkout을 읽기 전용으로 조사했다. 아래 revision은 이번 조사에서 `git rev-parse HEAD`로 다시 확인했고, 7개 checkout 모두 `git status --porcelain --untracked-files=no`가 빈 출력이었다. 파일 SHA-256은 읽은 작업 트리 bytes의 지문이다. 전체 구현 분석·빌드·시험이나 해당 제품과 같은 SQL/내구성/성능을 보장하는 조사가 아니다. 소스 파일·Git 이력을 XADB에 복사하거나 원본 checkout을 수정하지 않았다.
+사용자가 지정한 로컬 checkout을 읽기 전용으로 조사했다. 아래 revision은 이번 조사에서 `git rev-parse HEAD`로 다시 확인했고, 6개 checkout 모두 `git status --porcelain --untracked-files=no`가 빈 출력이었다. 파일 SHA-256은 읽은 작업 트리 bytes의 지문이다. 전체 구현 분석·빌드·시험이나 해당 제품과 같은 SQL/내구성/성능을 보장하는 조사가 아니다. 소스 파일·Git 이력을 XADB에 복사하거나 원본 checkout을 수정하지 않았다.
 
-공개 소스 R1–R6의 경로는 해당 checkout 기준 상대 경로다. R7은 요청에 따라 중립 식별자로 기록하며 원래 경로와 출처 이름은 외부 로컬 archive에 보존한다. 파일별 원래 경로·revision·SHA-256·열람 line range를 가진 inventory는 `/home/et16/work/xadb-source-archive/dev3-20261018-r1/source-inventory.json`이다. 이 archive는 제품 빌드 의존성·Git 배포 산출물이 아니다. 원본을 익명으로 재배포한 것이 아니며 향후 코드 도입 시 출처·라이선스·notice 의무는 별도로 처리한다.
+공개 소스 R1–R6의 경로는 해당 checkout 기준 상대 경로다. 파일별 원래 경로·revision·SHA-256·열람 line range를 가진 inventory는 `/home/et16/work/xadb-source-archive/dev3-20261018-r1/source-inventory.json`이다. 이 archive는 제품 빌드 의존성·Git 배포 산출물이 아니다. 원본을 익명으로 재배포한 것이 아니며 향후 코드 도입 시 출처·라이선스·notice 의무는 별도로 처리한다.
 
 Inventory SHA-256: `22caadc58346c03c0e202aef4ffc3e8d0f3eab861c943471f6e7635be9e89225`. 이 지문은 조사 identity이며 실행 증거가 아니다.
 
@@ -20,7 +20,6 @@ Inventory SHA-256: `22caadc58346c03c0e202aef4ffc3e8d0f3eab861c943471f6e7635be9e8
 | R4 | SQLite | `43a48f77585a88940c727f33682151418f544059` |
 | R5 | DuckDB | `1b4c3e54ba3625bac56ad184f0ce642a8d2bfbd5` |
 | R6 | RocksDB | `54732b0c8f6f8af34f973d7fae0a234022fcf1fa` |
-| R7 | 로컬 참고 소스 R7 | `0682bdd8610c3728810df616c95a858cda675706` |
 
 ## 읽은 범위와 파일 지문
 
@@ -37,10 +36,6 @@ Inventory SHA-256: `22caadc58346c03c0e202aef4ffc3e8d0f3eab861c943471f6e7635be9e8
 | R4 | `src/btreeInt.h` | 105–178 | `903f2d3ba81ea9cba1dbb6fafef824688adef56a8b4d0fe7a8411261c2b4910e` |
 | R5 | `src/storage/standard_buffer_manager.cpp` | 365–425, 455–485 | `4d2b50f04c9b7719fb138a1ec07e373f72403dd6731db9fc8806b034986eee2a` |
 | R6 | `db/version_set.cc` | 6308–6390, 7028–7085 | `f5005f1009d24479b9e62875766b8882295974dcf4dc281f36f47870872c7eaf` |
-| R7 | `R7-buffer-access` | 1918–2020 | `c29a8868e0955430c06a3b54c10a0ec5bb01a6353a4229b743a414cac8ee748e` |
-| R7 | `R7-flush-lifecycle` | 15–69 | `2592c6f4a31b48057233bc33a6d1e84adddace5fec3eae2569bfc2ec281f0686` |
-| R7 | `R7-physical-page` | 65–140 | `d4faf9be7d3c017983e999271ce23f1c3263938897b62d6dfd155422a1494c8d` |
-| R7 | `R7-disk-index` | 24–84 | `1f951b04e4fedb8828d9c243279c9a60224526581504072b030d31344cf1f9b5` |
 
 ## 관찰·설계 판단·필요한 검증
 
@@ -54,7 +49,6 @@ Inventory SHA-256: `22caadc58346c03c0e202aef4ffc3e8d0f3eab861c943471f6e7635be9e8
 | R4 | WAL 주석의 고정 mxFrame snapshot·reader read-mark와 checkpoint 제한, btree header·정렬 slot pointer·cell 영역 | 고정 snapshot 기준 scan, checkpoint와 reader의 별도 보존 책임, slotted page 경계 검사 | WAL-index/shared-memory 형식·동기화 방식을 채택하지 않음. DS01/04/05 |
 | R5 | Pin은 memory eviction/reservation 뒤 lock을 다시 얻어 동시 load를 재검사하고 중복 예약을 해제한다. Unpin은 reader 감소와 eviction queue를 연결한다 | load 경쟁의 이중 예약 방지, owning guard 반환/Drop의 lock 경합 검사 | 분석용 block 크기·columnar 경로를 행 저장 기본값으로 가져오지 않음. DS03/RC-T14 |
 | R6 | manifest record 작성→SyncManifest→CURRENT 선택, 선택 실패 때 old manifest 보존; 별도 rewrite 경로에서 rename 후 directory sync | manifest·namespace의 독립 영속 장벽, 불명 선택의 old/new 합집합 보존 | LSM·compaction 구조 또는 실제 crash 시험 결과를 승계하지 않음. DS05/RC-T13 |
-| R7 | buffer access의 fix-count pin과 교체, flush 설명의 I/O buffer 전이 중 recovery 경계, physical page 초기화, disk index 설명의 영속 본체·key 복사·구조 변경 순서 | 중간 상태도 보존 회계에 포함, page owner/경계 검사, 재시작 뒤 index 재build에 의존하지 않는 설계 | 일부 열람 코드/주석 자체에 추가 검증 필요 표시가 있다. 이를 검증된 최적화로 간주하지 않음. 원래 pointer/latch/undo·제품 저장 구성을 채택하지 않음. DS01/02/04 |
 
 ## 비교에서 얻은 구체 결정
 
@@ -67,4 +61,4 @@ Inventory SHA-256: `22caadc58346c03c0e202aef4ffc3e8d0f3eab861c943471f6e7635be9e8
 
 ## 조사 완료와 남은 실행
 
-7개 로컬 checkout에서 위 범위를 확인하고 지문을 기록했다. source build·benchmark·실제 XADB disk 구현·fault suite는 실행하지 않았다. DEV3 상태는 NOT_RUN이며 이 조사로 DEV2의 미완료 또는 S1 의무가 해소되지 않는다. XADB 코드에 특정 소스 구현을 복사하지 않았으며 외부 원본 경로·지문 archive를 보존했다.
+6개 로컬 checkout에서 위 범위를 확인하고 지문을 기록했다. source build·benchmark·실제 XADB disk 구현·fault suite는 실행하지 않았다. DEV3 상태는 NOT_RUN이며 이 조사로 DEV2의 미완료 또는 S1 의무가 해소되지 않는다. XADB 코드에 특정 소스 구현을 복사하지 않았으며 외부 원본 경로·지문 archive를 보존했다.

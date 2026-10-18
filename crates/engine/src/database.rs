@@ -1,5 +1,7 @@
 //! SQL-free DEV2 durable API. A successful write receipt follows file sync and
 //! atomic root publication. Reopening is always a current-build recovery operation.
+#[cfg(test)]
+mod capacity_tests;
 mod maintenance;
 
 use crate::{

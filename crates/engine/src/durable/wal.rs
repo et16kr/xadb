@@ -17,6 +17,12 @@ use xadb_foundation::{
 };
 
 const SEAL_BYTES: u64 = (codec::COMMON_BYTES + 48 + codec::FRAME_OVERHEAD) as u64;
+// Normal writes leave space for one subsequent recovery epoch. A linked header
+// contains segment/start_q, origin/option tags, Link and resume digest. Recovery
+// itself uses the hard limits; repeated opens without maintenance remain finite.
+const LINKED_HEADER_BYTES: u64 =
+    (codec::COMMON_BYTES + 16 + 2 + 68 + 32 + codec::FRAME_OVERHEAD) as u64;
+const RECOVERY_FILE_SLOTS: usize = 4;
 
 pub(crate) struct Wal<W: WriterNamespace> {
     pub writer: W,
@@ -73,7 +79,11 @@ impl<W: WriterNamespace> Wal<W> {
         }
         // Header + optional resume + a temporary selector; the selected WRITER
         // is new only for initial create/restore. Reserve conservatively.
-        if inventory.len().checked_add(4).is_none_or(|n| n > MAX_FILES) {
+        if inventory
+            .len()
+            .checked_add(RECOVERY_FILE_SLOTS)
+            .is_none_or(|n| n > MAX_FILES)
+        {
             return Err(Error::limit("writer metadata file budget"));
         }
         let segment = 1;
@@ -189,9 +199,24 @@ impl<W: WriterNamespace> Wal<W> {
             .inventory_count
             .checked_add(self.reserved_files)
             .and_then(|n| n.checked_add(additional))
+            .and_then(|n| n.checked_add(RECOVERY_FILE_SLOTS))
             .is_none_or(|n| n > MAX_FILES)
         {
             return Err(Error::limit("internal file inventory budget"));
+        }
+        Ok(())
+    }
+
+    fn check_wal_bytes(&self, additional: u64) -> Result<()> {
+        if self
+            .retained_wal_bytes
+            .checked_add(additional)
+            .and_then(|n| n.checked_add(LINKED_HEADER_BYTES))
+            .is_none_or(|n| n > WAL_BYTES)
+        {
+            return Err(Error::limit(
+                "retained WAL budget including recovery header",
+            ));
         }
         Ok(())
     }
@@ -237,7 +262,7 @@ impl<W: WriterNamespace> Wal<W> {
         Ok(())
     }
 
-    fn rotate(&mut self) -> Result<()> {
+    fn rotate(&mut self, pending_batch_bytes: u64) -> Result<()> {
         let observations = Arc::clone(&self.observations);
         let timer = observations.start(Operation::WalRotate, 0, 1);
         self.check_files(2)?;
@@ -287,13 +312,14 @@ impl<W: WriterNamespace> Wal<W> {
             },
         )?;
         let extra = seal.len() as u64 + bytes.len() as u64;
-        if self
-            .retained_wal_bytes
-            .checked_add(extra)
-            .is_none_or(|n| n > WAL_BYTES)
-        {
-            return Err(Error::limit("retained WAL rotation budget"));
-        }
+        // Admit rotation and the pending batch together, before the first seal
+        // write. A rejected batch must not consume its recovery headroom through
+        // otherwise successful metadata writes.
+        self.check_wal_bytes(
+            extra
+                .checked_add(pending_batch_bytes)
+                .ok_or(Error::limit("WAL rotation byte accounting overflow"))?,
+        )?;
         // Rotation uncertainty fences the engine, but the next transaction's
         // batch has not been attempted and therefore remains definitely aborted.
         write_all_at(&mut self.file, &seal, self.offset)
@@ -366,22 +392,12 @@ impl<W: WriterNamespace> Wal<W> {
             encoded.as_ref().map_or(0, |frame| frame.len() as u64),
         );
         let frame = encoded?;
-        if self
-            .retained_wal_bytes
-            .checked_add(frame.len() as u64)
-            .is_none_or(|n| n > WAL_BYTES)
-        {
-            return Err(Error::limit("retained WAL budget"));
-        }
+        // A prior open may have consumed reserved metadata space. Even a batch
+        // that does not rotate must leave the next open possible after its ACK.
+        self.check_files(0)?;
+        self.check_wal_bytes(frame.len() as u64)?;
         if self.offset + frame.len() as u64 + SEAL_BYTES > SEGMENT_BYTES {
-            self.rotate()?;
-        }
-        if self
-            .retained_wal_bytes
-            .checked_add(frame.len() as u64)
-            .is_none_or(|n| n > WAL_BYTES)
-        {
-            return Err(Error::limit("retained WAL budget after rotation"));
+            self.rotate(frame.len() as u64)?;
         }
         cancellation.check().map_err(|_| Error {
             outcome: TransactionOutcome::Aborted,

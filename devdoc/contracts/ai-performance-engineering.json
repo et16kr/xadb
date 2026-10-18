@@ -421,32 +421,7 @@
       "evidence_refs": []
     }
   ],
-  "legacy_evidence": [
-    {
-      "revision": "0682bdd8610c3728810df616c95a858cda675706",
-      "sha256": "0e7665bd8ad55467826bf18ef8512b338f81eee3f7fc62e0d567acd02497d468",
-      "identity_note": "current checkout content; file hash identifies any local changes relative to HEAD",
-      "runtime_verified": false
-    },
-    {
-      "revision": "0682bdd8610c3728810df616c95a858cda675706",
-      "sha256": "568be2d60d7c48c7b1395a787c3816ecf7b20ee480f6fbba08db56e592f6be2f",
-      "identity_note": "current checkout content; file hash identifies any local changes relative to HEAD",
-      "runtime_verified": false
-    },
-    {
-      "revision": "0682bdd8610c3728810df616c95a858cda675706",
-      "sha256": "94ef2048580666c047901509136c6f035dad950cc170ba97e6926ac25847f9ca",
-      "identity_note": "current checkout content; file hash identifies any local changes relative to HEAD",
-      "runtime_verified": false
-    },
-    {
-      "revision": "0682bdd8610c3728810df616c95a858cda675706",
-      "sha256": "5f22f38b5194899fd109ad7e471159a2ea5e1ebb9486076e5aaeb44aee274f2d",
-      "identity_note": "current checkout content; file hash identifies any local changes relative to HEAD",
-      "runtime_verified": false
-    }
-  ],
+  "legacy_evidence": [],
   "review": {
     "status": "COMPLETED",
     "reviewer": "/root/performance_design_review",

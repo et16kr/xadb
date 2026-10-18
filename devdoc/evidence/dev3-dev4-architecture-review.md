@@ -12,7 +12,7 @@
 
 ## 실제 source identity
 
-아래 5개 checkout은 재확인 때 tracked clean이다. untracked 내용·빌드 환경·전체 기능 감사는 하지 않았다. 원래 root/origin/경로·열람 행과 14개 파일 전체 SHA-256은 외부 local archive `/home/et16/work/xadb-source-archive/dev3-dev4-architecture-20261018-r1/source-inventory.json`에 보존했다. inventory SHA-256은 `6ef50788d811dd8d1008d4b93f40738dfd8e1cbc37e397f2d680a7ca583b0399`다. source R7의 원래 경로 inventory는 그 archive에만 두며 제품 빌드 입력이 아니다.
+아래 4개 checkout은 재확인 때 tracked clean이다. untracked 내용·빌드 환경·전체 기능 감사는 하지 않았다. 원래 root/origin/경로·열람 행과 14개 파일 전체 SHA-256은 외부 local archive `/home/et16/work/xadb-source-archive/dev3-dev4-architecture-20261018-r1/source-inventory.json`에 보존했다. inventory SHA-256은 `6ef50788d811dd8d1008d4b93f40738dfd8e1cbc37e397f2d680a7ca583b0399`다. archive는 제품 빌드 입력이 아니다.
 
 | ID | 대상 | 실제 revision |
 | --- | --- | --- |
@@ -20,7 +20,6 @@
 | R2 | MariaDB/InnoDB | `327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4` |
 | R3 | CUBRID | `a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5` |
 | R4 | SQLite | `43a48f77585a88940c727f33682151418f544059` |
-| R7 | 로컬 참고 소스 R7 | `0682bdd8610c3728810df616c95a858cda675706` |
 
 | 소스·읽은 범위 | 관측 | XADB에 적용한 판단 |
 | --- | --- | --- |
@@ -30,13 +29,9 @@
 | R2 `buf/buf0flu.cc` 745–845·875–944, `buf/buf0dblwr.cc` 588–690 | flush 경계와 여러 page의 DWB batch | page별 장벽을 보존한 bounded batch와 비용 인수 추가 |
 | R3 `transaction/log_recovery.c` 266–335·4900–4970 | 논리 undo의 보상 기록, CLR은 redo-only, 다음 undo와 system operation 처리 | effect/progress의 원자 CLR, split 뒤 논리 undo·재장애 모델 유지/보강 |
 | R4 `vdbeaux.c` 3240–3312·3445–3515 | statement savepoint rollback과 전체 rollback, cleanup 실패 시 오류 승격 | SQL의 이전 statement 보존·rollback 실패/Fenced 구분 유지 |
-| R7 undo-segment 1870–1915·2020–2095·2270–2375 | undo page 할당·최소 view SCN·extent recycle | XADB의 모든 자원 예약·reader/rollback 보존을 자체 계약으로 검증 |
-| R7 disk-flusher 1770–1885, disk-index 20–88 | I/O buffer 단위 doublewrite·WAL 대기, SMO와 latch 순서 | 초기 version-edit gate와 명시 다중 page 순서, batch 인수 선택 |
-| R7 SQL-interface 1635–1765·2390–2476, statement 105–145·255–302 | validate/optimize/execute, 객체 검증·잠금, statement savepoint/view SCN | SQL/engine 경계와 token·cleanup 소유 유지 |
 
 R1 경로는 `src/backend`, R2는 `storage/innobase`, R3/R4는 `src` 아래다. 위 표는 실제 독해 부분이며 파일 전체 또는 제품 전체 분석을 뜻하지 않는다.
 
-공식 [디스크 MVCC·거래 관리 설명](https://manual.altibase.com/7.1/en/admin/administrator/8.-Managing-Transactions/)과 [undo tablespace 설명](https://manual.altibase.com/7.1/en/admin/administrator/6.-Managing-Tablespaces/The-Undo-Tablespace/)도 앞선 리뷰에서 확인했다. disk in-place 변경·undo/TSS 보존과 만료 공간 재사용의 비교 입력이며 resident/mixed 엔진을 XADB 범위에 추가하지 않는다. 벤치마크나 해당 제품의 실행 비교는 하지 않았다.
 
 ## 지적과 반영 범위
 

@@ -8,7 +8,7 @@
 
 사용자는 Oracle 유사 방향·ARIES 참고와 COW/GC 재설계를 요청했고, 선행 리뷰 문제를 먼저 고치도록 순서를 지정했다. REVIEW-002를 먼저 반영·검토하고 DESIGN-003을 작성했다. 공개 소스는 비교 입력이며 동일한 내부 알고리즘/SQL·성능을 보장하지 않는다. 원본 checkout 수정·Git 이력/코드 도입·DBMS build는 하지 않았다. 이전 조사에서 COW 유지로 판단한 부분은 당시의 기록이며 이번 채택의 정본이 아니다.
 
-실제 HEAD와 tracked 작업 트리 상태를 다시 확인했다. 아래 7개는 tracked clean이다. R7 원래 출처/경로는 외부 archive에만 기록한다. 전체 파일 bytes의 SHA-256·revision·열람 행 inventory는 `/home/et16/work/xadb-source-archive/dev3-20261018-r2/source-inventory.json`이며 SHA-256은 `831f3ef0fae41a029e700a8de4c004dc0a08aa9d2061ca2acd71e33872fe4458`이다. archive는 제품 빌드 의존성이 아니다.
+실제 HEAD와 tracked 작업 트리 상태를 다시 확인했다. 아래 6개는 tracked clean이다. 전체 파일 bytes의 SHA-256·revision·열람 행 inventory는 `/home/et16/work/xadb-source-archive/dev3-20261018-r2/source-inventory.json`이며 SHA-256은 `831f3ef0fae41a029e700a8de4c004dc0a08aa9d2061ca2acd71e33872fe4458`이다. archive는 제품 빌드 의존성이 아니다.
 
 | ID | 대상 | 실제 revision |
 | --- | --- | --- |
@@ -18,7 +18,6 @@
 | R4 | SQLite | `43a48f77585a88940c727f33682151418f544059` |
 | R5 | DuckDB | `1b4c3e54ba3625bac56ad184f0ce642a8d2bfbd5` |
 | R6 | RocksDB | `54732b0c8f6f8af34f973d7fae0a234022fcf1fa` |
-| R7 | 로컬 참고 소스 R7 | `0682bdd8610c3728810df616c95a858cda675706` |
 
 | ID·열람 경로/중립 책임 | 실제 읽은 행 | 관측과 XADB 판단 |
 | --- | --- | --- |
@@ -32,9 +31,6 @@
 | R5 `src/storage/standard_buffer_manager.cpp` | 365–425 | pin 뒤 재검사·중복 예약 방지 |
 | R5 `src/storage/single_file_block_manager.cpp` | 1330–1440 | checkpoint 데이터/header sync·공간 수명. checkpoint 장벽과 파일 재사용을 혼동하지 않음 |
 | R6 `db/db_impl/db_impl_files.cc` | 210–310 | pending/live 파일의 회수 제외. COW/LSM 파일 회수 책임의 비교이며 LSM 채택 근거가 아님 |
-| R7 disk-index | 24–87 | 삭제 key의 limit-SCN·물리 정리. 디스크 엔진에 정리 작업 자체가 없다는 해석은 부정확 |
-| R7 undo-segment | 2280–2360 | recycle SCN·extent 회수. undo 보존과 공간 재사용 책임 |
-| R7 transaction-segment | 920–1005 | commit SCN·undo extent·abort 관련 수명. reader 외 Active rollback의 참조도 보존 |
 
 ## Oracle·ARIES와 공개 설명
 
@@ -42,7 +38,6 @@
 - [Oracle concurrency](https://docs.oracle.com/en/database/oracle/oracle-database/26/cncpt/data-concurrency-and-consistency.html): statement read consistency·undo·row lock. XADB는 명시 ReadCommitted를 추가하고 기본 Serializable은 보수적 table validation으로 유지한다. Oracle과 같은 isolation 구현이라고 하지 않는다.
 - [Oracle integrity](https://docs.oracle.com/en/database/oracle/oracle-database/26/cncpt/data-integrity.html), [constraint](https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/constraint.html): composite UNIQUE의 all-null 예외와 부분 NULL 충돌, immediate constraint의 statement 종료 검사. REVIEW-002의 NULL/최종 집합 검사를 유지한다.
 - [ARIES 원 논문](https://cs.stanford.edu/people/chrismre/cs345/rl/aries.pdf): §§4.2–4.4, 5.4, 6.2 및 CLR 논의의 pageLSN·ATT/DPT·recLSN·fuzzy checkpoint·UndoNxtLSN을 참고했다. XADB는 bounded streaming redo와 영속 UndoRef chain을 사용하므로 원형 ARIES의 그대로 구현이 아니다.
-- [R7 거래 관리](https://manual.altibase.com/7.1/en/admin/administrator/8.-Managing-Transactions/), [undo tablespace](https://manual.altibase.com/7.1/en/admin/administrator/6.-Managing-Tablespaces/The-Undo-Tablespace/): disk in-place MVCC와 undo, 삭제 항목/transaction slot의 aging 설명. 이를 COW root/pack mark-sweep와 구분했다. resident 저장 경로는 제품 범위에 넣지 않았다.
 
 이번의 핵심 판단은 GC라는 이름을 지우는 것이 아니다. immutable pack을 만들어 이전 root를 모두 추적하는 비용을 없애고, page allocator와 영속 undo·삭제 index/row·transaction 상태 각각의 수명 책임을 둔다. undo aging은 여전히 필요하다. doublewrite 추가 I/O, CLR/undo 관리 복잡성, 보수적 serializable conflict·offline backup 중단시간은 남는 비용이며 PF09 실측 전 우월성을 선언하지 않는다.
 
@@ -54,7 +49,7 @@
 1. **REVIEW-002 선행 보완:** partial-null UNIQUE, statement-final 검사·key swap, global-q 한계, reopen 비용, 파일 수 기반 scratch·compaction 점유를 먼저 세 파일에 반영했다. `/root/dev3_redesign_review`가 원본 대비 실제 diff를 검토해 PASS·통합 차단 P1/P2 없음. `/root` 확인. snapshot은 archive `phase1/`에 원래 bytes로 보존했다.
 2. **DESIGN-003 초안:** mutable page·WAL·undo/CLR·DWB·checkpoint/aging을 작성했다. 같은 별도 검토자가 P1 세 건(recovery CLR 발견 경로, DWB bootstrap, stale DWB image)과 P2 두 건(checkpoint capture/commit 상태, undo suffix 참조)을 지적했다.
 3. **수정:** CLR 전에 recovery epoch/WRITER 영속 선택, 독립 FILEMAP·pending-only DWB control과 retirement, capture LSN/commit coordinator 일치, logged chain cut·참조 count/rollback pin을 명시했다. 해당 반례를 인수에 연결했다.
-4. **최종 검토:** `/root/dev3_redesign_review`가 최신 본문·계획·상위 profile·DS/RC/KU/stage 인수·색인을 재검토해 **PASS**, 통합 차단 P1/P2 없음. 추가로 no-force의 새 zero home을 allocation-authorized 완전 INIT+연속 redo로 구성하는 경계를 보강하고 재확인했다. 복원된 pageLSN보다 큰 인증 baseLSN도 인수에 연결했다. 7 checkout HEAD/tracked clean, 15 source hash, archive와 선행 snapshot 지문을 별도 확인해 일치했다. `/root`가 반영 확인 후 DESIGN-003을 ACCEPTED로 기록했다.
+4. **최종 검토:** `/root/dev3_redesign_review`가 최신 본문·계획·상위 profile·DS/RC/KU/stage 인수·색인을 재검토해 **PASS**, 통합 차단 P1/P2 없음. 추가로 no-force의 새 zero home을 allocation-authorized 완전 INIT+연속 redo로 구성하는 경계를 보강하고 재확인했다. 복원된 pageLSN보다 큰 인증 baseLSN도 인수에 연결했다. checkout HEAD/tracked clean, source hash, archive와 선행 snapshot 지문을 별도 확인해 일치했다. `/root`가 반영 확인 후 DESIGN-003을 ACCEPTED로 기록했다.
 5. **검증 범위:** 이번 변경 경로의 `git diff --check` PASS. 제품 시험과 문서 자동 검사는 실행하지 않았으며 document-validation.json을 재생성하지 않았다. 문서 검사는 push gate에서만 한다. F01–F07·제품 구현/복구 시험은 여전히 미완료다. 동시 DEV4·DEV2 성능 변경은 이번 독립 승인 범위에서 제외했다.
 
 | 선행 snapshot | SHA-256 |
