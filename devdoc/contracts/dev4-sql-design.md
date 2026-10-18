@@ -1,6 +1,6 @@
 # DEV4 — embedded 최소 SQL·Oracle 의미 상세 설계
 
-2026-10-18 · **DEV4-DESIGN-001 기본 설계·DEV4-REVIEW-002 보완 ACCEPTED / leaf API·실행 profile 미동결 / 미구현·Q1 NOT_RUN**
+2026-10-18 · **DEV4-DESIGN-001·REVIEW-002·REVIEW-003 ACCEPTED / 미구현·Q1 NOT_RUN**
 
 [구현·검증 계획](../plans/dev4-implementation-plan.md) · [실제 소스 조사](../evidence/dev4-source-research.md) · [단계 범위](../plans/development-stages.json) · [완료 계약](../plans/stage-completion.json) · [DEV3 저장 계약](disk-storage-design.md) · [커널 구현 계약](implementation-contracts.md)
 
@@ -134,6 +134,8 @@ index build는 DEV3 admission close/drain과 bounded sort를 따른다. DROP TAB
 
 후보 우선순위는 full-key unique equality → 가장 긴 equality prefix+다음 range → 가장 긴 equality prefix → RowScan이며 동일 후보는 index ObjectId로 고정한다. 통계 기반 비용 optimizer·index-only scan·sort 제거는 이 기준선에 포함하지 않는다. index path도 row fetch와 residual filter를 거치고 read-your-writes delta를 포함한다. 시험 전용 force-scan은 비교 입력이며 공개 SQL hint가 아니다.
 
+unique index라는 이유만으로 모든 lookup을 최대1행으로 줄이지 않는다. `IS NULL` bound로 구성 열 전체가 NULL이면 중복 허용 key이므로 모든 visible RowId를 반환한다. full-key가 유일성을 보장하는 경우에만 단건 성질을 사용한다. D4-V25는 point/range 선택·force-scan·native 경로에서 이 구분을 확인한다.
+
 INSERT는 열 목록이 필수이고 omitted nullable 열은 NULL, omitted nonnullable 열은 NotNull이다. tuple 수/열 수·중복 열·타입/길이를 검사한 뒤 VALUES 순서로 처리한다. UPDATE의 SET 우변은 literal/parameter만 받으며 중복 목적 열은 Name 오류다. affected_rows는 INSERT 추가 수, DELETE 삭제 수, UPDATE 조건에 매칭한 수이며 동일 값 대입도 센다.
 
 UPDATE/DELETE는 **engine의 한 begin_statement token 아래 snapshot+앞선 성공 statement의 own-write view**에서 대상 RowUID와 필요한 원래 값을 제한된 목록으로 먼저 모은다. scan과 mutation은 같은 token을 공유하며 SQL이 새로운 문장 snapshot을 중간에 만들지 않는다. 전체 대상 수·bytes가 transaction의 남은 256 mutation·8 MiB private·1 MiB 논리 payload 및 engine undo/rollback reserve를 넘으면 statement를 실패시킨다. 실제 interleaved WAL/CLR 크기를 논리 payload 한도와 같다고 계산하지 않는다. LIMIT 없는 DML을 내부 여러 commit으로 나누지 않는다. 대상 확정 후 native cursor를 닫되 statement token은 유지하고 RowId 오름차순으로 한 execute_statement에 넘겨 각 행을 한 번만 변경한 뒤 finish_statement로 최종 제약을 판정한다. scan 도중 자기 UPDATE가 index를 옮겨 행을 반복 방문하는 Halloween 문제를 막는다. 잠금 대기 뒤 관측 버전이 바뀌면 DEV3의 전체 거래 SerializationConflict/undo 결과를 전달하며 SQL이 predicate를 숨겨 재실행하지 않는다.
@@ -241,6 +243,18 @@ sorter는 정렬 key+RowId+projected values를 bounded run으로 기록하고 fa
 
 prepare·execute·plan/node ID에 parse/bind/plan 시간, rows/loops, visited row/page, predicate 통과 수, sort run/spill bytes·merge pass·memory peak, storage I/O와 commit outcome을 연결한다. parameter 원문 값을 기본 진단에 넣지 않는다. 계측 off/상시/상세와 유실을 구분하며 미계측을 0으로 보고하지 않는다. PF10의 실제 release 측정과 독립 결과는 [검증 계획](../plans/dev4-implementation-plan.md#performance)을 따른다.
 
+<a id="capacity-boundary"></a>
+### 7.1 초기 처리 범위와 저장 경로 인수
+
+| 현재 선택 | 관측 가능한 한계·계측 | 확대 전에 필요한 것 |
+| --- | --- | --- |
+| table 단위 Serializable | 같은 table의 서로 다른 행 writer도 충돌 가능. 성공 TPS와 시도 TPS·충돌률을 분리 | finer validation 또는 SQL ReadCommitted의 별도 의미/동시성 검증 |
+| 거래당256 mutation·논리1 MiB·대상 선확정 | 한도를 넘는 UPDATE/DELETE는 Limit이며 문장 전체 실패. 앞선 성공 statement는 유지 | 큰 거래·spill 대상 목록·undo/CLR reserve의 별도 계약; 몰래 여러 commit으로 분할하지 않음 |
+| 규칙 기반 access path·항상 필요한 외부 sort | 편향·낮은 선택도에서 index가 scan보다 비쌀 수 있고 작은 LIMIT도 정렬 quota 초과 가능 | 실제 node/storage 비용과 독립 동등 결과를 근거로 비용 선택·top-N·sort 제거 검토 |
+| DEV3의 짧은 적용 직렬화·bounded DWB batch | SQL 동시성/응답 비용에 gate·flush 대기가 포함됨 | parse/bind와 gate/lock/flush/commit 비용 분리. SQL에서 저장 guard·reserve 우회 금지 |
+
+위 한계는 오류 효과가 명확한 초기 개발 profile이며 일반 DBMS의 처리 용량이나 SLA가 아니다. D4-F02/F05는 [DEV3 변경 프로토콜](disk-storage-design.md#mutation-protocol), [자원 예약](disk-storage-design.md#reserve-accounting), [batch flush](disk-storage-design.md#doublewrite-batch)의 실제 공급 revision·증거를 확인한다. SQL의 transaction/statement token은 engine이 보유한 undo·lock·예약 소유와 함께 종료/인계되어야 한다. 낮은 자원에서 cancel/close/rollback을 요청한 뒤 정상 종료와 Fenced를 구별하는 시험을 포함한다. 미구현 F01–F05·모델·disk 인수는 이 문서 보완만으로 완료되지 않는다.
+
 <a id="vectors"></a>
 ## 8. 구현 전에 보존할 독립 의미 vector
 
@@ -272,6 +286,7 @@ prepare·execute·plan/node ID에 parse/bind/plan 시간, rows/loops, visited ro
 | D4-V22 | DDL precommit의 conflict/undo 실패/UNKNOWN, 또는 precommit 성공 뒤 DDL 전 cancel/DDL build 실패/DDL undo 실패/DDL UNKNOWN | 각각 prior=Aborted/NotCommittedRecoveryRequired/Unknown이고 ddl=NotAttempted·Idle/Fenced/Fenced. 성공 뒤는 prior=Committed 유지, ddl=NotAttempted/Aborted/NotCommittedRecoveryRequired/Unknown·Idle/Idle/Fenced/Fenced. undo 실패의 확정 NotCommitted와 cleanup 미완료 보존. 원래 SQL 전체 자동 재시도 금지 |
 | D4-V23 | S1 성공→S2 중간 key/quota 실패 또는 최종 UNIQUE 실패→문장 rollback 완료→COMMIT ACK→kill/reopen/복구 재장애 | S1의 row/index만 보존, S2는 없음. 별도 case로 문장 rollback 중 COMMIT 전 kill이면 S1도 포함한 해당 미commit 거래 전체 없음 |
 | D4-V24 | DML commit durable 뒤 응답 전 kill, DDL precommit durable 뒤 DDL 호출 전 kill, DDL durable 뒤 응답 전 kill | 외부 응답은 UNKNOWN일 수 있으나 각각 거래 전체 / 이전 DML만 / 이전 DML+DDL 보존. 두 commit identity와 복구 cut를 분리하며 반복 reopen에서도 누락·중복 없음 |
+| D4-V25 | 기본 fixture에서 `WHERE k IS NULL`; 별도 `u(id BIGINT NOT NULL,a BIGINT,b BIGINT,PRIMARY KEY(id),UNIQUE(a,b))`에 `(1,NULL,NULL),(2,NULL,NULL)`을 넣고 `WHERE a IS NULL AND b IS NULL ORDER BY id` | 각각 id bag `[2,3]` / ordered `[1,2]`. unique point/range·force-scan·native·reopen 모두 동일하며 단건 조기 종료 mutant 거절 |
 
 추가 필수 교차 조합·crash cut·부정 oracle·CLI/PF10은 구현 계획의 Q1 행렬이 소유한다. 위 예시만 통과해 Q1을 완료할 수 없다.
 
@@ -305,3 +320,15 @@ prepare·execute·plan/node ID에 parse/bind/plan 시간, rows/loops, visited ro
 | 재검토 조건 | SQL/native 정규화 경계 오용, DDL 두 거래의 결과 유실, 실제 공급 API 불일치, READ COMMITTED 도입, 저장 방식 변경, Oracle 대상 버전·호환 범위 확대 |
 
 사내 개발은 새 fixture를 사용하며 이전 대소문자/빈 값의 자동 변환을 구현하지 않는다. 현재 build의 reopen·ACK·constraint 검증은 유지한다. 준비된 설계의 채택은 미동결 leaf나 실행 결과를 PASS로 바꾸지 않는다.
+
+<a id="architecture-review"></a>
+## DEV4-REVIEW-003 — 저장 공급과 처리 범위 보완
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-18 |
+| 담당·권한 | 작업/SQL 계약/통합 `/root`; 사용자의 DBMS 비교 리뷰 후 문서 수정 지시 |
+| 선택·이유 | 기본 계층·문법 유지. all-null unique lookup의 다중 결과를 명시하고 초기 처리 한계를 인수/계측에 연결. DEV3-REVIEW-004의 실제 공급·예약/cleanup 증거를 수신 |
+| 대체·대안 | 기존 UNIQUE·오류·DDL·isolation 의미를 바꾸지 않는 구체화. READ COMMITTED 기본 전환·큰 DML 분할 commit·고급 optimizer 도입은 이번 범위 밖 |
+| 인수·독립 검토 | [비교·보완 기록](../evidence/dev3-dev4-architecture-review.md), D4-V25·T04/05/09/11/14. `/root/dev34_architecture_review` 최종 설계 채택 PASS·필수 P1/P2 없음, `/root` 반영 확인. 제품·Q1·PF10 NOT_RUN |
+| 재검토 | all-null lookup 누락, 저장 공급 미충족, quota/cleanup 경계의 의미 변경, 실제 충돌률/flush 대기로 처리 목표 미달 |

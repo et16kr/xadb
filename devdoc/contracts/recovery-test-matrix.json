@@ -364,6 +364,14 @@
         {
           "name": "corrupt_initialized_home_with_only_delta_redo_and_no_pending_image",
           "expected": "REJECT_CORRUPTION"
+        },
+        {
+          "name": "dwb_batch_1_8_64_multifile_partial_home_then_repair_recrash",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "dwb_partial_batch_retirement_or_missing_file_sync_mutant",
+          "expected": "MUTANT_REJECTED"
         }
       ]
     },
@@ -406,6 +414,14 @@
         {
           "name": "checkpoint_capture_vs_commit_install_and_dirty_registration",
           "expected": "RECOVER_OK"
+        },
+        {
+          "name": "edge_release_queue_cursor_and_CLR_second_crash",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "transient_status_or_undo_reference_reused_before_reader_release_mutant",
+          "expected": "MUTANT_REJECTED"
         }
       ]
     },
@@ -433,6 +449,14 @@
         {
           "name": "quota_boundary_rollback_CLR_page_reserve_and_repeated_crash",
           "expected": "RECOVER_OK"
+        },
+        {
+          "name": "opcode_bound_reserved_WAL_frames_FD_and_rollback_without_reclaim_dependency",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "foreground_borrows_progress_reserve_or_duplicates_reservation_mutant",
+          "expected": "MUTANT_REJECTED"
         }
       ]
     },

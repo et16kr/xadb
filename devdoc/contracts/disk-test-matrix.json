@@ -13,7 +13,8 @@
       "required_variants": [
         "empty/multilevel mutable trees; stable anchor, byte-balanced split and redo-only structural mini-transactions",
         "inline/overflow boundaries, ownership, checksum, bounds; logical undo after a concurrent split never restores a whole stale page",
-        "cursor re-search by last full key at fixed snapshot; versioned index presence; independent scan/index equality"
+        "cursor re-search by last full key at fixed snapshot; versioned index presence; independent scan/index equality",
+        "D3-M03 and actual schedules: version-edit/tree/page/append/registry order; complete pin-set admission; release and restart on try-latch failure; logical undo after split"
       ]
     },
     {
@@ -26,7 +27,8 @@
         "commit WAL sync without forced data flush; uncommitted dirty eviction; WAL-before-page and doublewrite barriers",
         "update versus commit-attempt distinction; independent ACK/abort/unknown histories; CLR progress/effect atomicity",
         "FILEMAP namespace extension, pending DWB selection and retirement, data/undo/status/allocator home writes; each fault cut",
-        "durable commit with brand-new unflushed zero home pages: full INIT image plus complete redo closure reconstructs pages; delta-only corrupt initialized home rejects"
+        "durable commit with brand-new unflushed zero home pages: full INIT image plus complete redo closure reconstructs pages; delta-only corrupt initialized home rejects",
+        "DWB batch sizes 1/8/64 across multiple files: maximum pageLSN WAL sync, all images durable before pending selection, all home-file syncs before whole-batch retirement; bootstrap repair/recrash"
       ]
     },
     {
@@ -39,7 +41,11 @@
         "bounded descriptors, lock table, ATT, runtime DPT, metadata and FD; conservative streaming recovery without whole-database DPT",
         "same 0/small WAL and dirty-page count at 256 MiB and 1 GiB: normal reopen I/O does not require full scan; full audit cost separate",
         "reserved worst-case CLR bytes and rollback split pages; foreground cannot borrow maintenance reserve; repeated crash has no proportional disk scratch",
-        "fixed flush buffers coexist with foreground/one maintenance workspace; actual DWB/control-sync write amplification"
+        "fixed flush buffers coexist with foreground/one maintenance workspace; actual DWB/control-sync write amplification",
+        "Opcode resource vector bound and charged-plus-reserved inequalities for owned disk/protected reserve/WAL/memory/frame/FD/lock/reference/DWB slots; no duplicate reservation",
+        "D3-M06 plus actual boundary-minus-one/exact/plus-one profiles at 4/16/64 MiB buffers; calculated admission among up to 32 requests; rollback cannot depend on checkpoint or aging to finish",
+        "D3-M03/M06 fair-cycle progress check beyond bounded-depth safety; finite retry then FIFO turn, maintenance workspace before-turn wait forbidden, preparation permits reserved flusher, content drain excludes recurring reader starvation; actual thread witnesses",
+        "DWB batch 1/8/64 deadline, effective batch size, sync/dirsync counts, dirty age and rollback/commit p99; no throughput gain claimed before measurement"
       ]
     },
     {
@@ -51,7 +57,9 @@
         "PageGuard pin versus content latch versus snapshot/rollback horizon; stale locator hint revalidation",
         "old reader and active transaction survive overwrite/delete/drop, eviction/checkpoint and aging; retired object and overflow retention",
         "undo/status/page generation reuse, commit-q stamping and logged chain cuts with incoming references",
-        "A commit then B update then A aging then B abort then full check and old-slot reuse; active begin WAL reclaimed before abort/restart"
+        "A commit then B update then A aging then B abort then full check and old-slot reuse; active begin WAL reclaimed before abort/restart",
+        "D3-M01/M02/M04: persistent edge multiplicity and independently reconstructed counts; transient UndoRef/TxnRef pins acquired before source-latch release; queue cursor and edge release atomic across repeated crash",
+        "No slot reuse until persistent references, active rollback/horizon ownership, transient pins and outgoing release are resolved; full-check plus logical snapshot/rollback oracle"
       ]
     },
     {
@@ -65,7 +73,8 @@
         "durable recovery epoch/WRITER selection before first CLR; second fault during redo/undo/STABILIZE/RESUME and new ACK",
         "current/previous are recovery starting points sharing mutable files; preserve both WAL floors, never revert data by selecting old metadata",
         "offline drained exact-C backup, source-WAL-free restore then new ACK and restart; full integrity check plus independent history after reopen",
-        "restore authenticates baseLSN above all copied pageLSNs; new unflushed ACK then restart redoes the update"
+        "restore authenticates baseLSN above all copied pageLSNs; new unflushed ACK then restart redoes the update",
+        "Partial batch home success retains every pending slot; repair and sync/retire whole selected batch before later redo writes/reuse; retired raw image and early-retirement mutants rejected"
       ]
     },
     {
@@ -78,7 +87,8 @@
         "1024-byte encoded key boundary; statement-final key swap success, final duplicate failure, order-independent final set",
         "statement rollback to undo mark preserves previous statement; rollback failure fences instead of false ABORT; cursor invalidation and offline build/cancel",
         "explicit ReadCommitted statement snapshots and independent-row writers; default Serializable table-set validation with independent-table success and same-table false conflict",
-        "unique old/new key locks, latest committed conflict checks, row write conflict after wait, deadlock victim full undo"
+        "unique old/new key locks, latest committed conflict checks, row write conflict after wait, deadlock victim full undo",
+        "Whole-operation admission before first effect; statement rollback preserves prior successful statements and remaining whole-transaction abort reserve; cancel/deadlock/Drop transfer reservation ownership"
       ]
     },
     {

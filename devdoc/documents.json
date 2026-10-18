@@ -537,6 +537,11 @@
       "path": "evidence/comm-source-research.md",
       "role": "evidence",
       "title": "COMM 소스 조사와 설계 검토 기록"
+    },
+    "dev3-dev4-architecture-review.md": {
+      "path": "evidence/dev3-dev4-architecture-review.md",
+      "role": "evidence",
+      "title": "DEV3·DEV4 아키텍처 비교와 설계 보완"
     }
   }
 }

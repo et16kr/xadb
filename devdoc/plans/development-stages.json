@@ -120,7 +120,8 @@
       "completion_ref": "stage-completion.json#DEV3",
       "design_refs": [
         "disk-storage-design.md",
-        "dev3-implementation-plan.md"
+        "dev3-implementation-plan.md",
+        "disk-storage-design.md#architecture-review"
       ]
     },
     {
@@ -146,7 +147,8 @@
       "completion_ref": "stage-completion.json#DEV4",
       "design_refs": [
         "dev4-sql-design.md",
-        "dev4-implementation-plan.md"
+        "dev4-implementation-plan.md",
+        "dev4-sql-design.md#architecture-review"
       ]
     },
     {

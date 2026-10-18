@@ -17,6 +17,8 @@
 
 SQL 소비자의 기존 private/COW·global-q 전제도 이 경계로 대체한다. SQL 기본 isolation 변경이나 READ COMMITTED 문법 추가는 별도 SQL 결정이며, 인자를 생략한 API는 Serializable이다. DEV4의 Oracle 관련 값/이름/DDL 변경은 해당 소유 계약을 따른다. 상세 byte/API/fault 동결과 제품 실행은 미완료다.
 
+[DEV3-REVIEW-004](disk-storage-design.md#architecture-review)는 다중 page 변경 순서·transient 참조 수명·undo 회수 상태·자원 벡터 예약·bounded DWB batch를 구체화한다. 세부 정본은 DEV3에 두며 이 문서의 아래 DEV2 전용 lock/COW 설명으로 덮어쓰지 않는다. [DEV4 초기 처리 범위](dev4-sql-design.md#capacity-boundary)는 해당 실제 공급과 cleanup 소유를 소비한다. 두 단계의 모델·제품 실행 상태는 각각 미완료다.
+
 
 2026-10-18 · **DEV1 공통 기반 로컬 구현·검증, DB 커널은 설계 단계** · 주 개발 언어 Rust는 사용자 확정 사항이다.
 

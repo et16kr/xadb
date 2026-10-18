@@ -11,8 +11,8 @@
 - [dev0-contract.json](dev0-contract.json)
 - [dev1-contract.json](dev1-contract.json)
 - [DEV2 — SQL 없는 영속 커널 상세 설계](dev2-kernel-design.md)
-- [DEV4 — embedded 최소 SQL·Oracle 의미 상세 설계](dev4-sql-design.md)
-- [DEV3 — 디스크 저장·인덱스 상세 설계](disk-storage-design.md)
+- [DEV4 — embedded 최소 SQL·Oracle 의미 상세 설계](dev4-sql-design.md) — 처리 범위·저장 공급/cleanup·all-null unique lookup 인수 포함
+- [DEV3 — 디스크 저장·인덱스 상세 설계](disk-storage-design.md) — 변경/참조 수명·undo 상태·자원 벡터·DWB batch 계약 포함
 - [disk-test-matrix.json](disk-test-matrix.json)
 - [execution-boundary-cases.json](execution-boundary-cases.json)
 - [XADB Rust 구현 계약](implementation-contracts.md)

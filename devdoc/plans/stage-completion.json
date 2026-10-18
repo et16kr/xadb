@@ -674,7 +674,10 @@
         "DEV2 regression and required PF cases on the production disk path",
         "WAL-before-page, persistent undo/CLR, pending doublewrite retirement and repeated recovery including discoverable recovery epoch",
         "Fuzzy checkpoint capture and WAL floors; separate full integrity audit after reopen; offline exact-cut backup",
-        "Statement-final partial-NULL uniqueness, explicit ReadCommitted and default table-validated Serializable; bounded aging/rollback reserves"
+        "Statement-final partial-NULL uniqueness, explicit ReadCommitted and default table-validated Serializable; bounded aging/rollback reserves",
+        "DEV3-REVIEW-004: D3-M01-M06 bounded exploration completed without truncation; independent edge and logical history oracles plus required negative mutants; M03/M06 fair-cycle or decreasing-rank progress verdict beyond depth-limited safety; model results do not replace actual DS/RC execution",
+        "Opcode resource vectors instantiated against actual codecs and simultaneous disk/reserve/WAL/frame/memory/FD limits; progress under boundary pressure and full reservation ownership through rollback",
+        "DWB batch 1/8/64 all-file sync and whole-batch retirement/repair/recrash; PF09 sync counts, gate/flush waits and latency guards measured"
       ],
       "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
       "open_decisions": [
@@ -682,7 +685,10 @@
         "D3-F02/F03: freeze Rust API/error/cursor vectors, independent oracle and full variant inventory",
         "D3-F04/F05: freeze actual fault receipts/schedules, environment, RSS/disk/timeout and PF09 numerical profiles",
         "D3-F06: verify received DEV2 revision, actual durable leaf prerequisites and interfaces before each dependent production leaf",
-        "D3-F07: assign actual task/integration owners, narrow paths, shared contracts and merge order before each parallel task; dev3-implementation-plan.md#parallel-development"
+        "D3-F07: assign actual task/integration owners, narrow paths, shared contracts and merge order before each parallel task; dev3-implementation-plan.md#parallel-development",
+        "disk-storage-design.md#architecture-review and dev3-implementation-plan.md#state-model: freeze exact guards/actions/corpus, implement independent models and record complete exploration; currently NOT_RUN",
+        "dev3-implementation-plan.md#resource-proof: opcode numeric bounds, progress partition and actual admission table remain pending; DWB batch deadlines and performance thresholds fixed before execution",
+        "dev3-implementation-plan.md#reuse-boundary: classify actual DEV2 symbols/tests as reuse/adapt/DEV2-only/new; absent durable supply is not supplied, not assumed reusable"
       ],
       "deferred_obligations": [
         "PART/NG·고급 저장·제품 최대 성능은 S1 선행 조건 아님"
@@ -738,14 +744,16 @@
         "해당 단계의 PF 성능 개발 인수: 실제 production 경로·동일 의미·유효한 비교·독립 정답·계측 비용·재현 증거. 미구현/불충분을 PASS로 기록하지 않음",
         "기본 typed prepare/bind/execute/fetch/close와 parameter/result metadata를 직접 실행과 대조; stale plan·오류·자원 수명 검증. 고급 공유 cache·재최적화는 비요구",
         "dev4-implementation-plan.md의 D4-T01–T14 필수 변형과 coverage inventory 전부; D4-F01–F05 실행 입력 동결·독립 검토 필요",
-        "DEV4-REVIEW-002의 D4-V17–24: SQL/native 값 경계·문장 최종 UNIQUE·DDL 두 outcome/NotCommittedRecoveryRequired와 R1–R4 rollback/recrash를 DEV3-DESIGN-003 실제 WAL/undo/CLR 경로·독립 이력으로 판정; Oracle 전체 호환이나 미실행 CLR PASS로 확대하지 않음"
+        "DEV4-REVIEW-002의 D4-V17–24: SQL/native 값 경계·문장 최종 UNIQUE·DDL 두 outcome/NotCommittedRecoveryRequired와 R1–R4 rollback/recrash를 DEV3-DESIGN-003 실제 WAL/undo/CLR 경로·독립 이력으로 판정; Oracle 전체 호환이나 미실행 CLR PASS로 확대하지 않음",
+        "DEV4-REVIEW-003: D4-V25 all-null unique multi-row lookup; transaction capacity boundaries and prior-statement preservation; actual DEV3 reservation/cleanup handoff and separated attempted/success TPS, conflicts/limits and gate/flush cost"
       ],
       "acceptance_input_status": "BASE_DESIGN_DEFINED_LEAF_API_AND_EXECUTION_PROFILES_PENDING",
       "open_decisions": [
         "D4-F01/F02: actual DEV3-DESIGN-003 API handoff, shared scan/mutation statement token, table validation, uppercase/text normalization/native boundary, Rust signatures, DDL two outcomes/RecoveryRequired and cleanup ownership/error/handle/metadata vectors",
         "D4-F03: temporary spill codec, owner cleanup API and allocation/FD/disk fault inventory",
         "D4-F04: SC02/KU13 full variant inventory including V17-V24 and R1-R4, independent oracle mutants, two-outcome worker protocol and executable commands",
-        "D4-F05: PF10 fixtures/environment/release recipes, numerical resource/instrumentation/regression budgets and paired measurement schedule"
+        "D4-F05: PF10 fixtures/environment/release recipes, numerical resource/instrumentation/regression budgets and paired measurement schedule",
+        "dev4-sql-design.md#capacity-boundary: D4-F02/F05 record actual DEV3-REVIEW-004 supply, reservation ownership and batch/gate profile; design/model acceptance alone is not disk evidence"
       ],
       "deferred_obligations": [
         "server/client·확장 SQL은 후속 의무",

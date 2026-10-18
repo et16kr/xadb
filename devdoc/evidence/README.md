@@ -14,6 +14,7 @@ DEV4의 [소스·Oracle/ARIES 조사](dev4-source-research.md)는 PostgreSQL·Ma
 
 <!-- catalogue -->
 
+- [DEV3·DEV4 아키텍처 비교와 설계 보완](dev3-dev4-architecture-review.md) — 실제 source revision·교차 상태/자원/batch 보완과 독립 검토; 모델·제품 실행 증거 아님
 - [COMM 소스 조사와 설계 검토 기록](comm-source-research.md) — 최초 DBMS 조사와 후속 readiness·clock·종료 수명 리뷰/수정 근거; C1 실행 증거 아님
 - [dev0-xadb-20261018-r1.json](dev0-xadb-20261018-r1.json)
 - [dev1-xadb-20261018-r1.json](dev1-xadb-20261018-r1.json)

@@ -1,6 +1,6 @@
 # DEV4 — embedded SQL 구현·검증 계획
 
-2026-10-18 · **DEV4-DESIGN-001 기본 설계·DEV4-REVIEW-002 보완 ACCEPTED / 구현 착수 전 입력 일부 미동결 / 제품 실행 NOT_RUN**
+2026-10-18 · **DEV4-DESIGN-001·REVIEW-002·REVIEW-003 ACCEPTED / 제품·Q1 NOT_RUN**
 
 [SQL 소유 계약](../contracts/dev4-sql-design.md) · [소스 조사](../evidence/dev4-source-research.md) · [단계 완료](stage-completion.json) · [저장 선행](dev3-implementation-plan.md) · [개발 운영](../policies/development-policy.md)
 
@@ -20,6 +20,8 @@ DEV4의 기존 task는 XADB-011, gate는 Q1이며 DEV3에 의존한다. DEV2 P0/
 | verification | native literal row/history oracle·실제 ACK 수집·fault hooks·독립 lower regression. imported receipt를 현재 fingerprint에 대입하지 않음 |
 
 공급 API가 설계와 다르면 해당 owner에게 필요한 최소 경계를 D2로 통합한 후 SQL에서 소비한다. private storage 접근, SQL에서 UNIQUE 재구현, 여러 commit으로 하나의 DDL/DML 자체를 쪼개는 우회는 허용하지 않는다. SQL DDL의 이전 거래 commit과 독립 DDL 거래는 명시한 서로 다른 두 거래이며 각각의 원자성과 outcome을 유지한다.
+
+DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01–M06의 논리 상태 모델만으로 DWB·undo/rollback의 실제 파일 시험을 대체하지 않는다. D4-F02에는 statement/transaction token과 undo·lock·자원 예약의 종료/인계 책임을, D4-F05에는 실제 admission 한도·DWB batch/deadline·version-edit gate 계측을 기록한다. 기존 stage DAG를 바꾸거나 SQL 안에 저장 예약 manager를 추가하지 않는다.
 
 <a id="sequence"></a>
 ## 2. 구현 순서와 소유
@@ -63,7 +65,7 @@ DEV4의 기존 task는 XADB-011, gate는 Q1이며 DEV3에 의존한다. DEV2 P0/
 | D4-T02 / SC02 | Int64 min/max±1·Bool·SQL 빈 text literal/bind·native 빈 text·빈 Binary·공백/NUL·UTF-8 길이·NULL, 모든 비교×타입·T/F/U | D4-V19/20·독립 literal/단순 evaluator. 빈 text의 untyped NULL 오변환·native read 정규화·암묵 cast·NULL=TRUE mutant 거절 |
 | D4-T03 / SC02,KU13 | 네 DDL·PK/UNIQUE/NOT NULL, composite 1/4/5·index 8/9·key1024/1025, 부분/전체 NULL·drop/recreate·PK index 보호·precommit | D4-V17/21/22. 각 DDL catalog+row/index는 old/new 중 하나. 이전 DML과 DDL의 Committed/Aborted/NotAttempted/NotCommittedRecoveryRequired/Unknown은 별도 판정. native DDL-in-txn 거절 유지 |
 | D4-T04 / SC02,KU13 | INSERT multi-row·UPDATE/DELETE empty/all/some·동일 값 update·missing column·문장 최종 unique 및 중간 key/quota 오류 | D4-V05/06/17, affected count·이전 statement 유지·모든 index rollback·대상 한 번·256/257 경계. native key 교환 성공 하위 회귀, SQL 지원으로 오인하지 않음 |
-| D4-T05 / SC02,KU13 | scan/point/range·복합 prefix·inclusive/exclusive·NULL bounds·AND residual·OR/NOT fallback·자기 insert/update/delete·undo consistent read | literal rows + 독립 native history + force-scan의 삼중 대조. 누락/중복/잘못된 NULL bound mutant 거절 |
+| D4-T05 / SC02,KU13 | scan/point/range·복합 prefix·inclusive/exclusive·NULL bounds·AND residual·OR/NOT fallback·자기 insert/update/delete·undo consistent read | D4-V25의 all-null unique 다중 결과, literal rows + 독립 native history + force-scan의 삼중 대조. 단건 조기 종료·누락/중복/잘못된 NULL bound mutant 거절 |
 | D4-T06 / SC02 | ORDER BY ASC/DESC×NULLS 기본/명시×복수 열·미선택 열·동률·LIMIT 0/1/Int64 max | 별도 sort 기대값. 무순서 결과는 bag multiplicity, tie는 허용 순서 집합, unique tie-breaker 사례는 exact order |
 | D4-T07 / SC02 | 모든 지원 DML/SELECT direct/prepared, marker 위치·hint/추론·count/type/NULL/bytes·caller buffer 해제 | immutable metadata·typed 값 독립성, bind 실패 원자 보존, 값의 SQL injection 재해석 없음 |
 | D4-T08 / SC02 | 모든 handle 상태 전이·EOF/조기 close·double close·다른 session/engine·slot reuse·stale plan, 재bind/재execute·prepare/DDL race·D4-V15/16·close_session/Drop undo 실패 | 첫 효과 전 거절, old result/token 재사용 없음, terminal descriptor도 bounded·fetch 실패 후 거래/statement 상태·정상 cleanup 뒤 memory/pin/FD/quota 회복. 미완료 undo/lock 소유 유실과 정상 rollback 오응답 거절 |
@@ -75,6 +77,8 @@ DEV4의 기존 task는 XADB-011, gate는 Q1이며 DEV3에 의존한다. DEV2 P0/
 | D4-T14 / PF10 | 아래 workload/계측 모드·큰 working set·sort spill·native 대비 SQL 비용 | plan→실제 node→storage 경로·동등 결과·자원 상한·비교 유효성·bundle 재현 |
 
 각 지원 statement×타입에는 정상/NULL(허용/거절)/빈 값/경계/오류가 필요하다. direct와 prepared는 지원 교집합 전부를 비교하고 DDL/transaction control은 prepare에서 명시 Unsupported를 확인한다. 각 index kind(PK/unique/nonunique)×단일/복합 key의 적용 가능한 point/range/DML·crash 변형을 포함한다. 전체 문법·타입 항목이 어느 test ID에 연결됐는지 coverage inventory를 만든다. 기능이 없는 조합은 근거 있는 N/A이며 후속 필수 기능을 삭제하지 않는다.
+
+T04/09/11/14는 [초기 처리 범위](../contracts/dev4-sql-design.md#capacity-boundary)를 함께 인수한다. 256/257개 대상의 단일 DML, 여러 성공 statement가 거래 한도에 도달한 뒤 실패, 같은 table의 다른 행/독립 table writer를 구별한다. count 성공을 부분 처리와 혼동하지 않고 실패한 문장 전체 복원·앞선 성공 변경 유지·명시 COMMIT/ROLLBACK 결과를 확인한다. 낮은 WAL/frame/FD 여유에서 cancel·close_session·Drop 인계와 rollback을 수행하여 예약 소유 유실·거짓 ABORT를 거절한다. 한도가 큰 workload를 거절했다면 처리량 표본에서 조용히 제외하지 않고 실패 원인/비율로 보고한다.
 
 <a id="verification"></a>
 ## 5. 독립성·fault·검증 강도
@@ -120,12 +124,14 @@ stdout은 결과·metadata·count, stderr는 위치·code/effect/transaction sta
 | P10-A | point/range: forced scan ↔ 자동 index, native ↔ direct ↔ 반복 prepared | parse/bind/plan·node loops/rows·visited row/page·latency |
 | P10-B | predicate selectivity 0/단일/부분/전체·NULL/중복/편향 | residual rows·불필요 방문·같은 결과/오류·table 단위 false conflict와 독립 table 처리량 |
 | P10-C | ORDER BY 단일/복합·작은/큰 LIMIT, 정렬 입력이 sort memory의 최소4배 | run/merge pass·spill bytes·disk peak·time-to-first-row·전체 fetch 시간 |
-| P10-D | multi-row DML·제약 실패·read-your-writes·commit·reopen | SQL overhead와 engine sync/공개 비용 분리·ACK/rollback 동등 |
+| P10-D | multi-row DML·제약 실패·read-your-writes·commit·reopen | SQL overhead와 engine version-edit gate/row-key lock·DWB/commit sync·공개 비용 분리·ACK/rollback 동등 |
 | P10-E | 계측 off/상시/상세, 결과 fetch chunk·조기 close·quota pressure | 정확성·유실 공개·계측 비용·RSS/FD/pin·취소 회수 |
 
 적어도 한 SQL scan/index workload는 설정한 전체 page buffer의 4배 이상 working set을 사용하고 실제 file I/O witness를 남긴다. 작은 sort budget만 넘긴 것으로 DISK working set 인수를 대신하지 않는다. DEV3 RC-T14의 row/index/locator/inventory 각각에 대한 인수는 하위 회귀로 유지한다. OS cache cold/warm은 구별하고 공유 host cache를 전역으로 지우지 않는다.
 
 F05에서 cardinality·bytes·분포·seed·warmup/sample/반복·장치 동시 부하·memory/disk ceilings·주 지표·p99/쓰기량/복구/계측 비용의 수치 회귀 예산을 실행 전에 고정한다. 변경의 성능 이득을 주장할 때 DP07의 같은 의미 baseline/candidate 최소10 paired run과 불확실성 보고를 사용한다. 처음 구현한 parser에 존재하지 않는 이전 성능을 만들지 않으며 native와의 비교는 SQL 추가 비용이지 동일 API의 속도 개선 주장이 아니다. 잘못된 결과·sync 생략·요청 누락의 빠른 run은 INVALID다.
+
+시도/성공 TPS, SerializationConflict·Limit·BufferBusy·Fenced 비율을 분리한다. 동일한 SQL·결과·격리·durability에서 batch1/8/64의 공급 profile을 식별하고 PF09의 flush 비용과 연결한다. 초기 규칙 기반 plan의 저선택도/편향 비용과 작은 LIMIT의 전체 sort 비용을 기록하며, 성능표를 위해 자동 commit 분할·격리 완화·sync 생략을 허용하지 않는다.
 
 <a id="work-record"></a>
 ## 8. 설계 작업·독립 검토 기록
@@ -179,3 +185,8 @@ SQL READ COMMITTED 노출과 DEV3 저장 구현은 이 보완의 제품 구현�
 별도 검토의 DDL 진입 거절 시 Active 유지, D4-V18의 빈 catalog fixture, DDL type_length 변환·범위 검사 시점을 반영했다. 새 DEV3 경계에서는 두 DDL outcome의 NotCommittedRecoveryRequired, ROLLBACK/close_session/Drop의 undo·lock 소유, scan/mutation의 공통 statement token, 논리 payload와 WAL 예산 구분, 최신 committed+own final delta UNIQUE를 보완했다. 미commit rollback 도중 crash의 기대값은 S1도 포함한 거래 전체 소멸이며, rollback 완료 후 COMMIT ACK를 받은 R1과 구분한다.
 
 최종 별도 검토는 이 DEV4 설계 변경의 일관성·조사 identity에 한정한다. 검토자는 파일 수정·문서 자동 검사·제품 시험을 하지 않았고, 동시 DEV3 작업 자체나 제품 실행을 이 검토로 승인하지 않았다. 설계 채택을 Q1·성능·복구 PASS로 승격하지 않는다.
+
+<a id="architecture-review"></a>
+## 11. REVIEW-003 보완
+
+[이번 비교·보완 기록](../evidence/dev3-dev4-architecture-review.md)은 DEV3의 상태/예약/배치 공급과 DEV4의 초기 처리 한계·all-null lookup을 연결한 D2 작업이다. 기존 REVIEW-002의 검토 identity와 실행 상태는 유지한다. 새 D4-V25·교차 인수도 NOT_RUN이며, 문서 보완과 독립 검토를 Q1 실행 증거로 사용하지 않는다.
