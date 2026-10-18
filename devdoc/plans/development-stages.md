@@ -27,6 +27,8 @@ COMM은 [독립 통신 상세 설계](../contracts/comm-design.md)와 [C1/KU12 �
 
 DEV5의 local Unix 인증·권한·세션·XSQ1·prepared·취소·종료와 외부 ACK는 [서버 설계](../contracts/dev5-server-design.md), SC03/KU14/PA08/PF11과 실제 Q1/C1 수신은 [구현·검증 계획](dev5-implementation-plan.md)을 따른다. 설계 채택과 leaf API/byte fixture 동결·제품 B3 실행은 별개이며 B3는 NOT_RUN이다.
 
+DEV6의 native/C facade→JDBC→ODBC 범위는 [클라이언트 설계](../contracts/dev6-client-design.md), 실제 B3 선행·SC04–06·D6-F01–F07·부분 buffer/취소/UNKNOWN·성능 인수는 [구현 계획](dev6-implementation-plan.md)을 따른다. 공통 계약 동결 후 독립 모듈의 [병렬 개발](dev6-implementation-plan.md#parallel)은 가능하며 SC04→SC05→SC06은 실제 인수 순서다. D2 설계 채택과 leaf 동결·구현·CLIENT1 완료는 별개이며 실행은 NOT_RUN이다.
+
 <a id="section-2"></a>
 ## 2. 최소 SQL 범위
 

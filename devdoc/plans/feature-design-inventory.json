@@ -14,7 +14,9 @@
     "capability-inventory.json",
     "ai-performance-engineering.json",
     "dev5-server-design.md",
-    "dev5-implementation-plan.md"
+    "dev5-implementation-plan.md",
+    "dev6-client-design.md",
+    "dev6-implementation-plan.md"
   ],
   "changes_existing_contracts": false,
   "changes_stage_order": false,
@@ -3386,7 +3388,9 @@
       "existing_doc_refs": [
         "product-requirements.md",
         "interface-experience-plan.md",
-        "user-manual-draft.md"
+        "user-manual-draft.md",
+        "dev6-client-design.md",
+        "dev6-implementation-plan.md"
       ],
       "items": [
         {
@@ -3405,7 +3409,9 @@
           "scope_status": "DOCUMENTATION_REQUIRED",
           "document_status": "RELATED_MATERIAL_DETAIL_REVIEW_REQUIRED",
           "specification_written_by_this_inventory": false,
-          "design_written_by_this_inventory": false
+          "design_written_by_this_inventory": false,
+          "design_ref": "dev6-client-design.md",
+          "remaining_scope": "DEV6 base design specified; exact API/ABI/overload/profile and actual CLIENT1 remain pending; broader client and remote/extended capabilities remain separate obligations"
         },
         {
           "id": "CLIENT-02",
@@ -3423,7 +3429,9 @@
           "scope_status": "DOCUMENTATION_REQUIRED",
           "document_status": "RELATED_MATERIAL_DETAIL_REVIEW_REQUIRED",
           "specification_written_by_this_inventory": false,
-          "design_written_by_this_inventory": false
+          "design_written_by_this_inventory": false,
+          "design_ref": "dev6-client-design.md",
+          "remaining_scope": "DEV6 base design specified; exact API/ABI/overload/profile and actual CLIENT1 remain pending; broader client and remote/extended capabilities remain separate obligations"
         },
         {
           "id": "CLIENT-03",
@@ -3441,7 +3449,9 @@
           "scope_status": "DOCUMENTATION_REQUIRED",
           "document_status": "RELATED_MATERIAL_DETAIL_REVIEW_REQUIRED",
           "specification_written_by_this_inventory": false,
-          "design_written_by_this_inventory": false
+          "design_written_by_this_inventory": false,
+          "design_ref": "dev6-client-design.md",
+          "remaining_scope": "DEV6 base design specified; exact API/ABI/overload/profile and actual CLIENT1 remain pending; broader client and remote/extended capabilities remain separate obligations"
         },
         {
           "id": "CLIENT-04",
@@ -3480,7 +3490,9 @@
           "scope_status": "DOCUMENTATION_REQUIRED",
           "document_status": "RELATED_MATERIAL_DETAIL_REVIEW_REQUIRED",
           "specification_written_by_this_inventory": false,
-          "design_written_by_this_inventory": false
+          "design_written_by_this_inventory": false,
+          "design_ref": "dev6-client-design.md",
+          "remaining_scope": "DEV6 base design specified; exact API/ABI/overload/profile and actual CLIENT1 remain pending; broader client and remote/extended capabilities remain separate obligations"
         },
         {
           "id": "CLIENT-06",
@@ -3613,7 +3625,9 @@
           "scope_status": "DOCUMENTATION_REQUIRED",
           "document_status": "RELATED_MATERIAL_DETAIL_REVIEW_REQUIRED",
           "specification_written_by_this_inventory": false,
-          "design_written_by_this_inventory": false
+          "design_written_by_this_inventory": false,
+          "design_ref": "dev6-client-design.md",
+          "remaining_scope": "DEV6 base design specified; exact API/ABI/overload/profile and actual CLIENT1 remain pending; broader client and remote/extended capabilities remain separate obligations"
         }
       ],
       "predecessor_document_groups": [

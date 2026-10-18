@@ -21,6 +21,8 @@ DEV3의 mutable page·WAL·영속 undo·CLR·doublewrite·table SERIALIZABLE 공
 <a id="freeze"></a>
 ## 2. 구현 전 동결할 leaf
 
+[DEV6 수신 요구 D6-W01](../contracts/dev6-client-design.md#protocol)의 authoritative autocommit/state·metadata와 expected_result 효과 전 검사를 D5-F01에 함께 동결한다. DEV5 독립 protocol client가 직접 검사하므로 완성된 DEV6 driver를 B3 선행 조건으로 만들지 않는다.
+
 모두 **OPEN_NOT_IMPLEMENTED**다. 설계에서 정한 의미·한도는 유지하고 실제 signature/입력/receipt와 실행 recipe를 아래 gate 전에 D2 검토한다. 코드 없이 그럴듯한 명령이나 byte 기대값을 완료 증거로 만들지 않는다.
 
 | ID | 동결할 내용 | 닫는 시점·필수 산출 |

@@ -278,3 +278,11 @@ Oracle은 일반 COMMIT에 추가 권한을 요구하지 않지만 XADB는 위 �
 | 상태·인수·독립 검토 | ACCEPTED. D5-T07/T09/T10·M01/M02·F03에 반영. `/root/dev345_independent_review`가 원문·반례·세 단계 계약/계획/인수 diff를 독립 검토하고 축소 계산을 재실행: 필수 P1/P2 잔여 없음. `/root` 반영 확인. 이전 review identity·실행 결과 유지 |
 | 참고 근거 | 2026-10-19 독립 검토자가 PostgreSQL `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851`의 `src/backend/tcop/postgres.c` ProcessInterrupts/command read, MariaDB `327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4`의 `sql/sql_class.cc` kill/wakeup 선택 구간 대조. XADB generation·parked·상위 cleanup 의미는 자체 계약으로 유지 |
 | 실행·재검토 | 축소 계산만 실행. server 모델·제품·복구·성능은 NOT_RUN. 이전 요청 취소의 전파·상위 수명 신호 유실 또는 실제 leaf 반례가 생기면 재검토 |
+
+
+<a id="dev6-client-supply"></a>
+## DEV6 수신 경계 — D6-W01
+
+[DEV6-DESIGN-001](dev6-client-design.md#decision)의 D2 계약은 [D6-W01](dev6-client-design.md#protocol)을 D5-F01 공동 동결 입력으로 추가한다. 정확한 byte layout은 아직 미동결이다. 모든 ordinary terminal의 authoritative autocommit/transaction/result state, Prepare/Describe의 타입·nullability·byte bound·source/label·statement class, Welcome의 profile/한도를 제공한다. ExecuteDirect/Execute의 expected_result(Any/Rows/Update)는 parser 또는 prepared class로 판정하고 transaction 시작·DDL precommit·첫 효과 전에 불일치를 거절한다. protocol adapter가 SQL 문자열 prefix로 분류하지 않는다. 이 공급은 실제 DEV4 callback/class 경계와 독립 literal vector를 먼저 검증해야 하며 구현 완료를 뜻하지 않는다.
+
+SQL/native의 Active+SET AUTOCOMMIT 거절·COMMIT의 열린 result 거절은 유지한다. DEV6 JDBC/ODBC API는 [명시적 거래 조립](dev6-client-design.md#transactions)으로 cursor close/COMMIT/SET을 별도 ordinary 요청으로 전송하고 단계별 확정 outcome을 보존한다. 기존 REVIEW-003의 의미를 조용히 바꾸지 않는 원칙 아래 client API 책임을 구체화한 결정이며 server에 hidden commit·자동 replay를 추가하지 않는다. B3는 DEV6 driver 완성 없이 독립 client로 이 공급을 인수하며 실행 상태는 NOT_RUN이다.

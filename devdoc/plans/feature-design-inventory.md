@@ -254,6 +254,8 @@ DEV5의 SES/NET/SEC 최소 local server 범위는 [서버 설계](../contracts/d
 
 ## CLIENT Client API와 driver
 
+[DEV6 상세 설계](../contracts/dev6-client-design.md)와 [인수 계획](dev6-implementation-plan.md)은 CLIENT-01/02/03/05/12의 초기 native/C ABI·JDBC·ODBC·실패 의미를 구체화한다. 정확한 ABI/API overload·byte fixtures·실행 환경 동결은 남아 있으며 전체 driver/언어/ORM·pool/XA/batch/LOB 범위를 완료한 것으로 보지 않는다.
+
 | 항목 | 주제 | 기능 명세 | 설계 |
 | --- | --- | --- | --- |
 | CLIENT-01 | Native client API | connection/statement/result·binding·metadata·오류·thread 안전 | handle·소유권·비동기/동기 경계·protocol 연결 |

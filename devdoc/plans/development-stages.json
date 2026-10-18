@@ -191,7 +191,8 @@
       "purpose": "client libraries",
       "scope": [
         "native client API then JDBC then ODBC",
-        "binding/metadata/encoding/error/cancel/version negotiation"
+        "binding/metadata/encoding/error/cancel/version negotiation",
+        "Linux owned Unix endpoint; native Rust/C facade, Java21/JDBC4.3 and unixODBC/ODBC3.8 declared subsets; explicit API transaction composition, bounded ownership and no automatic replay"
       ],
       "gate_refs": [
         "CLIENT1"
@@ -203,7 +204,12 @@
       ],
       "channel": "development",
       "execution_status": "NOT_RUN",
-      "completion_ref": "stage-completion.json#DEV6"
+      "completion_ref": "stage-completion.json#DEV6",
+      "design_refs": [
+        "dev6-client-design.md",
+        "dev6-implementation-plan.md",
+        "dev6-source-research.md"
+      ]
     },
     {
       "id": "DEV7",

@@ -106,7 +106,17 @@
       "task_ref": "XADB-034",
       "title": "native client",
       "acceptance": "DEV4 타입/SQL의 connect/close, prepare/bind/execute/fetch, metadata, autocommit/explicit transaction, 오류·취소·timeout과 handle/buffer 소유권을 실제 DEV5 서버에 연결한다. 부분 전송·연결 유실·자원 회수를 검사하고 literal 기대값과 대조한다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev6-client-design.md",
+        "dev6-implementation-plan.md"
+      ],
+      "required_details": [
+        "D6-F01..F07: actual wire/API/ABI/runtime/error and execution profiles frozen before implementation or acceptance",
+        "D6-T01..T18: applicable client/overload/type/error/environment variants, actual server and independent expectations",
+        "D6-C01..C08: complete external ACK, partial send/receive, transaction composition outcomes and current-build disk reopen/recrash",
+        "D6-M01..M03 and D6-P01..P04: bounded state exploration, real concurrency/FFI and measured resource/instrumentation costs"
+      ]
     },
     {
       "id": "SC05",
@@ -115,7 +125,17 @@
       "task_ref": "XADB-035",
       "title": "JDBC",
       "acceptance": "고정한 JDK/JDBC 지원표의 Connection, Statement, PreparedStatement, ResultSet, metadata, 타입/NULL 매핑, transaction, SQLException/취소·close를 실제 Java client로 검사한다. 미지원 메서드는 명시적 unsupported이며 native PASS를 승계하지 않는다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev6-client-design.md",
+        "dev6-implementation-plan.md"
+      ],
+      "required_details": [
+        "D6-F01..F07: actual wire/API/ABI/runtime/error and execution profiles frozen before implementation or acceptance",
+        "D6-T01..T18: applicable client/overload/type/error/environment variants, actual server and independent expectations",
+        "D6-C01..C08: complete external ACK, partial send/receive, transaction composition outcomes and current-build disk reopen/recrash",
+        "D6-M01..M03 and D6-P01..P04: bounded state exploration, real concurrency/FFI and measured resource/instrumentation costs"
+      ]
     },
     {
       "id": "SC06",
@@ -124,7 +144,17 @@
       "task_ref": "XADB-036",
       "title": "ODBC",
       "acceptance": "고정한 ODBC/driver manager/ABI 조합에서 연결, prepare/bind/execute/fetch, indicator/NULL, metadata, diagnostic, transaction, 취소 및 handle 해제를 실제 client로 검사한다. 길이·인코딩·부분 buffer·오류 후 연결 상태를 독립 확인한다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev6-client-design.md",
+        "dev6-implementation-plan.md"
+      ],
+      "required_details": [
+        "D6-F01..F07: actual wire/API/ABI/runtime/error and execution profiles frozen before implementation or acceptance",
+        "D6-T01..T18: applicable client/overload/type/error/environment variants, actual server and independent expectations",
+        "D6-C01..C08: complete external ACK, partial send/receive, transaction composition outcomes and current-build disk reopen/recrash",
+        "D6-M01..M03 and D6-P01..P04: bounded state exploration, real concurrency/FFI and measured resource/instrumentation costs"
+      ]
     },
     {
       "id": "SC07",
@@ -238,7 +268,11 @@
         "SC04"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev6-client-design.md",
+        "dev6-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-035",
@@ -251,7 +285,11 @@
         "SC05"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev6-client-design.md",
+        "dev6-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-036",
@@ -264,7 +302,11 @@
         "SC06"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev6-client-design.md",
+        "dev6-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-037",
@@ -853,7 +895,8 @@
         "D5-F03: actual SQL/engine suspend-resume supply and lower regressions, atomic wait registration/cancellation and ownership, idle/transaction lifetime cleanup boundaries, shutdown supervisor and bounded model/resource inventory",
         "D5-F04: actual Q1/C1 supply revisions, independent client/oracle and fault receipts with executable recipes",
         "D5-F05: actual release/environment/fixture identities and preregistered PF11 schedule using dev5-implementation-plan.md#performance",
-        "D5-F03: actual per-request SQL operation context distinct from cursor/statement snapshot lifetime; terminal retirement and parked resumption vectors pending"
+        "D5-F03: actual per-request SQL operation context distinct from cursor/statement snapshot lifetime; terminal retirement and parked resumption vectors pending",
+        "D5-F01/D6-W01: authoritative mode/state and metadata, expected_result rejection before transaction start/DDL precommit; independent protocol client may test without completed DEV6 drivers"
       ],
       "deferred_obligations": [
         "DEV6 driver 완성·이전 사내 client 호환은 선행 조건 아님; XADB-033은 XADB-032를 사용",
@@ -882,7 +925,7 @@
         "XADB-035",
         "XADB-036"
       ],
-      "contract_ref": "development-stages.md",
+      "contract_ref": "dev6-client-design.md",
       "required_test_refs": [
         {
           "file": "stage-completion.json",
@@ -896,12 +939,18 @@
       ],
       "pass_criteria": [
         "native/JDBC/ODBC 각각 실제 DEV5 서버에서 필수 API 지원표 전부 PASS",
-        "DEV4 타입/SQL·transaction/metadata/error/cancel의 client별 결과 일치; unsupported 및 buffer/handle 소유권 명확"
+        "DEV4 타입/SQL·transaction/metadata/error/cancel의 client별 결과 일치; unsupported 및 buffer/handle 소유권 명확",
+        "D6-T01–T18 applicable full leaf inventory, C01–C08 actual external ACK/reopen/recrash, M01–M03 bounded model and DP03 V3 profiles; independent review",
+        "JDBC/ODBC explicit transaction API composition preserves each committed outcome; expected-result mismatch has zero effects before DDL precommit; no automatic SQL replay",
+        "D6-P01–P04 correctness, owned memory/handle/FD bounds, instrumentation costs and independent raw comparison/replay evidence; missing/uncertain evidence is not PASS"
       ],
-      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "acceptance_input_status": "BASE_DESIGN_DEFINED_LEAF_API_AND_EXECUTION_PROFILES_PENDING",
       "open_decisions": [
-        "native API 및 JDK/JDBC/ODBC/driver-manager/ABI 지원표",
-        "최소 지원표 전체 operation·오류·환경 조합과 실행 entrypoint"
+        "D6-F01 with D5-F01: exact D6-W01 wire fields, expected-result pre-effect validation and independent bytes",
+        "D6-F02: every native/JDK21/ODBC operation and overload, type/error/capability mapping and independent expected outcome",
+        "D6-F03/F04: actual native/C signatures, isolated FFI package, ownership and unixODBC ABI/length/descriptor matrix",
+        "D6-F05/F06: pinned runtime/build/install identity, current B3/Q1/C1 supply and actual driver/controller/fault/reopen entrypoints",
+        "D6-F07: actual metrics/source/profile/recipe and preregistered performance comparisons"
       ],
       "deferred_obligations": [
         "callable/batch/LOB/XA 등 확장 의미는 해당 DEV7 leaf에 연결; 교차 버전은 안정 릴리스 때 VERSION_RELEASE",
@@ -910,7 +959,12 @@
       "run_entrypoint": null,
       "evidence_refs": [],
       "execution_status": "NOT_RUN",
-      "official_distribution_status": "NOT_RUN"
+      "official_distribution_status": "NOT_RUN",
+      "design_refs": [
+        "dev6-client-design.md",
+        "dev6-implementation-plan.md"
+      ],
+      "design_decision_ref": "dev6-client-design.md#decision"
     },
     {
       "id": "DEV7",

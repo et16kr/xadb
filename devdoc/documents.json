@@ -632,6 +632,21 @@
       "path": "evidence/dev2-kernel-xadb-20261018-r1.json",
       "role": "evidence",
       "title": "DEV2 K1–K5 로컬 검증과 ENOSPC 중단 체크포인트"
+    },
+    "dev6-client-design.md": {
+      "path": "contracts/dev6-client-design.md",
+      "role": "contracts",
+      "title": "DEV6 — native·JDBC·ODBC 클라이언트 상세 설계"
+    },
+    "dev6-implementation-plan.md": {
+      "path": "plans/dev6-implementation-plan.md",
+      "role": "plans",
+      "title": "DEV6 — 클라이언트 구현·검증 계획"
+    },
+    "dev6-source-research.md": {
+      "path": "evidence/dev6-source-research.md",
+      "role": "evidence",
+      "title": "DEV6 — Oracle·REF-C06-02·로컬 DBMS 클라이언트 조사와 검토"
     }
   }
 }
