@@ -9,7 +9,6 @@ struct Transaction {
     mode: Mode,
     version: u64,
     rows: Rows,
-    dirty: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -115,7 +114,6 @@ impl Model {
                     mode: *mode,
                     version: self.version,
                     rows: self.visible.clone(),
-                    dirty: false,
                 },
             );
             return Observation::Begun;
@@ -160,7 +158,6 @@ impl Model {
                     }
                 }
                 transaction.rows = prepared;
-                transaction.dirty |= !mutations.is_empty();
                 Observation::StatementApplied
             }
             Action::Rollback => {
@@ -180,7 +177,11 @@ impl Model {
                 if *fault == CommitFault::BeforeAttempt {
                     return Observation::Aborted;
                 }
-                if !transaction.dirty {
+                // Validation must precede equality: a stale RW transaction is
+                // rejected even when its private rows have returned to the
+                // visible values. Only a logical change advances the version
+                // or reaches the uncertain durable-attempt boundary.
+                if transaction.rows == self.visible {
                     return Observation::Committed;
                 }
                 if *fault == CommitFault::Uncertain {
