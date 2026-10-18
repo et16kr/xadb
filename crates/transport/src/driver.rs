@@ -55,7 +55,8 @@ impl<W: ReadinessWait> Driver<W> {
             draining: false,
         })
     }
-    /// Cancellation observed before every native accept and each progress/wait cycle.
+    /// Driver-wide cancellation, inherited by adopted connections and their
+    /// existing senders. Observed at admission, each I/O check, and wait/accept.
     pub fn cancellation(&self) -> Cancellation {
         self.cancellation.clone()
     }
@@ -110,6 +111,12 @@ impl<W: ReadinessWait> Driver<W> {
             .enumerate()
             .position(|(i, c)| c.is_none() && self.generations[i] != u64::MAX)
             .ok_or(ErrorKind::ResourceExhausted)?;
+        connection
+            .shared
+            .admission
+            .lock()
+            .map_err(|_| ErrorKind::Poisoned)?
+            .driver_cancellation = Some(self.cancellation.clone());
         self.generations[slot] += 1;
         self.connections[slot] = Some(connection);
         Ok(ConnectionId {
@@ -349,7 +356,17 @@ impl<W: ReadinessWait> Driver<W> {
                     let connection = Connection::new(&self.transport, stream, family, false, now)?;
                     self.add(connection)?;
                 }
-                Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                // A pending peer can disappear before accept. Back off only
+                // this listener; existing sessions and other listeners remain
+                // usable. Persistent listener/adapter errors still fail below.
+                Err(e)
+                    if matches!(
+                        e.kind(),
+                        io::ErrorKind::WouldBlock
+                            | io::ErrorKind::ConnectionAborted
+                            | io::ErrorKind::ConnectionReset
+                    ) =>
+                {
                     ready[index] = false;
                     self.listener_retry[index] =
                         crate::deadline(self.transport.clock.now()?, WAIT_NANOS)?;

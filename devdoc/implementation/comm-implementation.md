@@ -4,6 +4,8 @@
 
 [소유 계약](../contracts/comm-design.md) · [구현·검증 계획](../plans/comm-implementation-plan.md) · [저장소 배치](../policies/repository-build-plan.md)
 
+2026-10-19 [코드 리뷰·수정 기록](../evidence/comm-code-review-20261019.md): driver 취소를 기존 sender·각 I/O 검사에 전달하고, accept의 peer 중단 오류를 listener별 backoff로 격리했다. 관련 COMM 시험·독립 검토는 PASS이며 리뷰 당시 혼합 사본은 별도 DEV2 시험의 lint 실패로 하위 통합 gate가 FAIL이었다. 두 수정만 분리한 commit 대상 사본의 transport 시험은 기본/전체 feature 각각 35개 PASS다. 전체 C1 상태는 유지한다.
+
 ## 실제 구현과 사용
 
 - [foundation network](../../crates/foundation/src/network.rs): `ByteStream`, `Connector`, `Listener`, `ReadinessWait`, opaque `Registration`과 readiness hint. fd·nix 타입은 공통 API에 노출하지 않는다.

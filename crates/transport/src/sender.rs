@@ -32,6 +32,9 @@ pub(crate) struct Slot {
 pub(crate) struct Admission {
     pub(crate) open: bool,
     pub(crate) fatal: Option<Error>,
+    // Installed under the same gate when the owner enters a driver. Existing
+    // sender handles then observe shutdown without waiting for the next step.
+    pub(crate) driver_cancellation: Option<Cancellation>,
     next: u64,
     pub(crate) slots: [Option<Slot>; 4],
 }
@@ -55,10 +58,22 @@ impl Shared {
             admission: Mutex::new(Admission {
                 open,
                 fatal: None,
+                driver_cancellation: None,
                 next: 1,
                 slots: std::array::from_fn(|_| None),
             }),
         })
+    }
+    pub(crate) fn check_cancellation(&self, admission: &Admission) -> Result<()> {
+        if self.cancellation.check().is_err()
+            || admission
+                .driver_cancellation
+                .as_ref()
+                .is_some_and(|cancellation| cancellation.check().is_err())
+        {
+            return Err(ErrorKind::Cancelled.into());
+        }
+        Ok(())
     }
     pub(crate) fn finish(&self, index: usize, outcome: SendOutcome) {
         let mut admission = self
@@ -102,9 +117,7 @@ impl ConnectionSender {
             .map_err(|_| ErrorKind::Backpressured)?;
         encode_frame_into(payload, &mut buffer.bytes).map_err(|_| ErrorKind::InvalidFrame)?;
         let mut admission = self.0.admission.lock().map_err(|_| ErrorKind::Poisoned)?;
-        if self.0.cancellation.check().is_err() {
-            return Err(ErrorKind::Cancelled.into());
-        }
+        self.0.check_cancellation(&admission)?;
         if let Some(error) = admission.fatal {
             return Err(error);
         }

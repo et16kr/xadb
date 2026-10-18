@@ -326,6 +326,7 @@ impl Connection {
             .admission
             .lock()
             .map_err(|_| ErrorKind::Poisoned)?;
+        self.shared.check_cancellation(&a)?;
         if let Some(error) = a.fatal {
             return Err(error);
         }

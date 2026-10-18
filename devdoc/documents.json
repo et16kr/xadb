@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "comm-code-review-20261019.md": {
+      "path": "evidence/comm-code-review-20261019.md",
+      "role": "evidence",
+      "title": "COMM 코드 리뷰·취소와 accept 오류 격리 수정"
+    },
     "README.md": {
       "path": "README.md",
       "role": "entrypoint",

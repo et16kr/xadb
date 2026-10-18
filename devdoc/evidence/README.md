@@ -19,6 +19,7 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 
 - [DEV3·DEV4 아키텍처 비교와 설계 보완](dev3-dev4-architecture-review.md) — 실제 source revision·교차 상태/자원/batch 보완과 독립 검토; 모델·제품 실행 증거 아님
 - [COMM 소스 조사와 설계 검토 기록](comm-source-research.md) — 최초 DBMS 조사와 후속 readiness·clock·종료 수명 리뷰/수정 근거; C1 실행 증거 아님
+- [COMM 코드 리뷰와 수정 기록](comm-code-review-20261019.md) — driver 취소·accept 오류 격리 결함, DBMS 소스 비교와 해당 회귀·독립 검토; 전체 C1 인수 아님
 - [dev0-xadb-20261018-r1.json](dev0-xadb-20261018-r1.json)
 - [dev1-xadb-20261018-r1.json](dev1-xadb-20261018-r1.json)
 - [dev2-xadb-20261018-r1.json](dev2-xadb-20261018-r1.json)
