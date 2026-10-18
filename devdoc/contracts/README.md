@@ -10,7 +10,7 @@
 - [dev0-contract.json](dev0-contract.json)
 - [dev1-contract.json](dev1-contract.json)
 - [DEV2 — SQL 없는 영속 커널 상세 설계](dev2-kernel-design.md)
-- [디스크 저장 엔진 기준](disk-storage-design.md)
+- [DEV3 — 디스크 저장·인덱스 상세 설계](disk-storage-design.md)
 - [disk-test-matrix.json](disk-test-matrix.json)
 - [execution-boundary-cases.json](execution-boundary-cases.json)
 - [XADB Rust 구현 계약](implementation-contracts.md)

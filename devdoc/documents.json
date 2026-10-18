@@ -46,7 +46,7 @@
     "disk-storage-design.md": {
       "path": "contracts/disk-storage-design.md",
       "role": "contracts",
-      "title": "디스크 저장 엔진 기준"
+      "title": "DEV3 — 디스크 저장·인덱스 상세 설계"
     },
     "disk-test-matrix.json": {
       "path": "contracts/disk-test-matrix.json",
@@ -126,7 +126,7 @@
     "evidence/README.md": {
       "path": "evidence/README.md",
       "role": "evidence",
-      "title": "XADB 실행 증거"
+      "title": "XADB 조사·실행 증거"
     },
     "dev0-validation.json": {
       "path": "evidence/dev0-xadb-20261018-r1.json",
@@ -452,6 +452,16 @@
       "path": "verify_documents.py",
       "role": "entrypoint",
       "title": "verify_documents.py"
+    },
+    "dev3-implementation-plan.md": {
+      "path": "plans/dev3-implementation-plan.md",
+      "role": "plans",
+      "title": "DEV3 — 조사 결과와 구현·검증 계획"
+    },
+    "dev3-source-research.md": {
+      "path": "evidence/dev3-source-research.md",
+      "role": "evidence",
+      "title": "DEV3 소스 조사 기록"
     }
   }
 }

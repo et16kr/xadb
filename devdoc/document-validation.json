@@ -1,21 +1,21 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-10-18T19:48:39.030036+09:00",
+  "date": "2026-10-18T20:17:06.007370+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 39,
+      "links": 42,
       "duplicate_ids": 0,
-      "sha256": "1060616c94d8752d7677b9909b3fe551b0e99119c525bfdb2880d7195b554489"
+      "sha256": "95d7ad530cffeeabd163e2e82d17f9c99101b40d324cdaaa1eb67bb0c54b5491"
     },
     {
       "file": "devdoc/contracts/README.md",
       "links": 19,
       "duplicate_ids": 0,
-      "sha256": "e9fc2ddf5b59a2b8d2fe6ddb4821464b25640445334ecabe544211e471447290"
+      "sha256": "5f61758386045d8d480ecd57f832f8dddb8fc6031b14a448846711537d75e0b2"
     },
     {
       "file": "devdoc/contracts/ai-performance-engineering.md",
@@ -31,9 +31,9 @@
     },
     {
       "file": "devdoc/contracts/disk-storage-design.md",
-      "links": 4,
+      "links": 11,
       "duplicate_ids": 0,
-      "sha256": "60d8d5630b0e088adf84bec9625f6dfc6aaf5006b2fd8d31fe9848e4f9a18ce5"
+      "sha256": "94f5ec23da7527e0622a1debf51cc2f0ceacf18bd91af976af2dcbd3cf1ee1bc"
     },
     {
       "file": "devdoc/contracts/implementation-contracts.md",
@@ -55,9 +55,15 @@
     },
     {
       "file": "devdoc/evidence/README.md",
-      "links": 4,
+      "links": 6,
       "duplicate_ids": 0,
-      "sha256": "c896ea3cbf499e7a0c947af3d410b8b71bfd3681ee57fa66482fe9b05b6b64a3"
+      "sha256": "be53ba708c9a655a7c96ac200fab67d7829d59bf805e53b33cf6fa7bbff110c4"
+    },
+    {
+      "file": "devdoc/evidence/dev3-source-research.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "1f063e81870121a5cfdc297f3cc4e49b45267acf2c471ee12f408ab72a989bd6"
     },
     {
       "file": "devdoc/examples/AGENT_WORKFLOW.example.md",
@@ -109,9 +115,9 @@
     },
     {
       "file": "devdoc/plans/README.md",
-      "links": 14,
+      "links": 15,
       "duplicate_ids": 0,
-      "sha256": "8a885635fa7969eea76c5e9225e97aedee7b26dda95c21451635c08f847db420"
+      "sha256": "13ab3467cd8b8dd4e61383ae9aaee66c4b88ebf69164be8f3bf90ccaad4e6f60"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",
@@ -126,10 +132,16 @@
       "sha256": "f4886497a15028cb16c6d5a1e8366b431eb6d735e98ed6430e0b63d95c8e669a"
     },
     {
-      "file": "devdoc/plans/development-stages.md",
-      "links": 12,
+      "file": "devdoc/plans/dev3-implementation-plan.md",
+      "links": 5,
       "duplicate_ids": 0,
-      "sha256": "8d919adbc0505c5c409e2332516c414482145963f1a8508f7695be751a740505"
+      "sha256": "3c9ec7ab0d5516dd2673e55b9d2625e575562942539348184f7a98f4def54959"
+    },
+    {
+      "file": "devdoc/plans/development-stages.md",
+      "links": 13,
+      "duplicate_ids": 0,
+      "sha256": "f4a8f3b6f5fd4309d7461aa7a15572889604ca948c250ebd96cce0d523d2f2e7"
     },
     {
       "file": "devdoc/plans/feature-design-inventory.md",
@@ -141,7 +153,7 @@
       "file": "devdoc/plans/phase1-product-baseline.md",
       "links": 5,
       "duplicate_ids": 0,
-      "sha256": "ad11a62b6d541eafeb3f95aae192af3ec4ed3db1d91ca3b887b62ece6c85af81"
+      "sha256": "e6c7c466c5dd025386d0a6b10d1e9e7f987ef45a707fbaa38d01663d23bc1be5"
     },
     {
       "file": "devdoc/plans/product-requirements.md",
@@ -153,7 +165,7 @@
       "file": "devdoc/plans/project-direction.md",
       "links": 3,
       "duplicate_ids": 0,
-      "sha256": "8d665d63ee02cdd1a0649468fd8f549e575d36916f83708f4168baa319aa6565"
+      "sha256": "74f6c2b5be805c53f6142d9c55a0ccf724d9476d7874cd16127250de7d2cd320"
     },
     {
       "file": "devdoc/policies/README.md",
@@ -207,7 +219,7 @@
       "file": "devdoc/reference/architecture-overview.md",
       "links": 65,
       "duplicate_ids": 0,
-      "sha256": "e484bbefdede5fc58d14926925b5e6e3bcd13e77bebf5f9210c647bd7292e5d1"
+      "sha256": "347b7b5bc71b79aab92fa5bdff9389b57af841174d21e68965eff60866c387e2"
     },
     {
       "file": "devdoc/reference/feature-design-leaf-index.md",
@@ -255,7 +267,7 @@
       "file": "README.md",
       "links": 6,
       "duplicate_ids": 0,
-      "sha256": "35a456c16fce29b8ff44c0c7972a088511ab2fc7ffdc751cfba4a3d2f0099d2c"
+      "sha256": "0fbfd609a46174a794622a6169109e4010b7afc260431678563aaf0c7c3334ea"
     },
     {
       "file": "AGENTS.md",

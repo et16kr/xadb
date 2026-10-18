@@ -2,7 +2,7 @@
 
 XADB는 **오픈소스 DBMS를 참고하여, AI가 이해하고 개발하기 좋은 DBMS를 AI agent로 만들 수 있는지 시험하는 저장소**입니다. 현재는 초기 개발 단계입니다.
 
-최종 목표는 Linux와 Rust로 구현한 디스크 기반 관계형 DBMS입니다. 폭넓은 SQL·트랜잭션·복구 기능과 기본 성능을 갖추면서, 구조를 이해하고 수정하고 검증할 수 있는 구현을 목표로 합니다. 특정 workload만을 위한 복잡한 튜닝은 측정 근거가 있을 때 추가합니다.
+최종 목표는 Linux에서 Rust로 구현하는 관계형 DBMS입니다. 폭넓은 SQL·트랜잭션·복구 기능과 기본 성능을 갖추면서, 구조를 이해하고 수정하고 검증할 수 있는 구현을 목표로 합니다. 특정 workload만을 위한 복잡한 튜닝은 측정 근거가 있을 때 추가합니다.
 
 PostgreSQL·MariaDB·CUBRID·SQLite 등 공개 DBMS의 문서와 구현을 비교 자료로 사용합니다. 각 기능의 의미와 인수 기준은 XADB 계약으로 정하며, 참고 제품의 SQL·파일·wire 호환이나 성능 우월성을 자동으로 주장하지 않습니다. [제품 방향](devdoc/plans/project-direction.md) · [공개 참고 자료와 로컬 소스 경로](devdoc/reference/opensource-references.md)
 

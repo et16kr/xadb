@@ -8,6 +8,7 @@
 - [하위 계층부터 개발하는 순서](bottom-up-development.md)
 - [capability-inventory.json](capability-inventory.json)
 - [DEV2 — 조사 결과와 구현·검증 계획](dev2-implementation-plan.md)
+- [DEV3 — 조사 결과와 구현·검증 계획](dev3-implementation-plan.md)
 - [development-stages.json](development-stages.json)
 - [XADB 개발 단계](development-stages.md)
 - [feature-design-inventory.json](feature-design-inventory.json)

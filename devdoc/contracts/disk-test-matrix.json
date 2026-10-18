@@ -9,37 +9,68 @@
       "id": "DS01",
       "stage": "DEV3",
       "acceptance": "Real page read/write and scan/index equality with independent row values; not a RAM-only substitute",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        "empty/multilevel COW trees; byte-balanced splits and empty-child/root collapse",
+        "inline/overflow row boundaries; ownership, checksum and bounds rejection",
+        "snapshot-root traversal without persistent sibling-link assumptions; independent scan/index equality"
+      ]
     },
     {
       "id": "DS02",
       "stage": "DEV3",
       "acceptance": "Atomic row/index/locator/catalog commit and crash/reopen, including partial writes and UNKNOWN outcomes",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        "multi-table row/index/catalog root and row-tree locator at one q",
+        "pack and inventory write/file-sync/directory-sync before one L0 frame; UNKNOWN fencing",
+        "independent ACK/abort/unknown history; no partial root publication"
+      ]
     },
     {
       "id": "DS03",
       "stage": "DEV3",
       "acceptance": "Working set >= 4x buffer, actual I/O witness and bounded buffer/locator/RSS accounting",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        "row/index/locator/inventory corpus each >=4x configured page buffer per RC-T14; smaller dedicated cache pressure is additional only",
+        "bounded descriptors, file handles, metadata and external inventory; spill-free bidirectional lookup during recovery VERIFY",
+        "offline compaction disk admission, write amplification, file count and RSS profile"
+      ]
     },
     {
       "id": "DS04",
       "stage": "DEV3",
       "acceptance": "Pinned snapshot survives eviction, concurrent change, checkpoint and reclamation; no stale physical reuse",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        "root-qualified locator cache; PageGuard versus SnapshotGuard; concurrent loading and full pin budgets",
+        "old snapshot plus checkpoint/backup and every retained intermediate replay root",
+        "mark revision recheck, pin versus Retiring, whole-pack deletion, no physical identity reuse"
+      ]
     },
     {
       "id": "DS05",
       "stage": "DEV3",
       "acceptance": "Backup/checkpoint/restore at one committed cut; repeated recovery and required corruption rejection",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        "chunked exact-cut manifest; current/previous and WRITER anchor chain",
+        "STABILIZE adopted journal/page dependencies; second fault; shared-pack corruption rejection",
+        "source-WAL-free restore at C then new ACK and restart; compaction and two-checkpoint reclamation",
+        "repeated VERIFY crashes create no disk spill accumulation; valid quota-sized database opens without size-proportional recovery scratch"
+      ]
     },
     {
       "id": "DS06",
       "stage": "DEV3",
       "acceptance": "PK/unique/nonunique independent vectors, statement failure atomicity, quota and cancellation",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        "PK nonnull; unique NULL-distinct; nonunique RowId order; 1-4 column composite vectors",
+        "1024-byte encoded key boundary, row value limits unchanged; immediate mutation uniqueness",
+        "statement rollback of all row/index deltas; cursor invalidation; offline index build/drain/cancel"
+      ]
     },
     {
       "id": "DS07",
@@ -53,5 +84,7 @@
       "acceptance": "Disk global unique/nonunique tree; membership/lifetime/row movement/crash at one cut",
       "execution_status": "NOT_RUN"
     }
-  ]
+  ],
+  "design_ref": "disk-storage-design.md",
+  "implementation_plan_ref": "dev3-implementation-plan.md"
 }

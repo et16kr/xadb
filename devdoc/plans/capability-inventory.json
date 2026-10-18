@@ -1647,7 +1647,7 @@
     "manual_layout_equivalence_required": false,
     "implementation_algorithm_equivalence_required": false
   },
-  "product_position": "Independent disk-based relational DBMS with broad SQL, correct transactions/recovery and understandable internals",
+  "product_position": "Independent relational DBMS with broad SQL, correct transactions/recovery and understandable internals",
   "baseline_selection": "XADB contracts define behavior. PostgreSQL, MariaDB, SQLite and other public DBMS are comparison inputs; no automatic dialect or implementation equivalence.",
   "acceptance_contract_origin": "Imported development proposals adapted to the XADB scope; not execution evidence or claims about a reference DBMS."
 }

@@ -7,7 +7,7 @@
 <a id="section-1"></a>
 ## 1. 제품 범위
 
-Linux/Rust 단일 프로세스의 디스크 관계형 DBMS로 시작한다. 단일 DB 안의 여러 table·index·catalog 변경은 한 transaction에서 원자적이어야 한다. 버퍼와 locator cache는 명시된 예산 안에 있으며 전체 DB가 RAM에 들어간다고 가정하지 않는다. 선언한 SQL 기능은 독립 expected result와 실제 저장 경로에서 검증한다.
+Linux에서 Rust로 구현하는 단일 프로세스 관계형 DBMS로 시작한다. 단일 DB 안의 여러 table·index·catalog 변경은 한 transaction에서 원자적이어야 한다. 버퍼와 locator cache는 명시된 예산 안에 있으며 전체 DB가 RAM에 들어간다고 가정하지 않는다. 선언한 SQL 기능은 독립 expected result와 실제 저장 경로에서 검증한다.
 
 <a id="section-2"></a>
 ## 2. 공통 불변식

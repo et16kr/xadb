@@ -617,7 +617,7 @@
         "XADB-022",
         "XADB-029"
       ],
-      "contract_ref": "bottom-up-development.md",
+      "contract_ref": "disk-storage-design.md",
       "required_test_refs": [
         {
           "file": "kernel-test-matrix.json",
@@ -664,9 +664,10 @@
       ],
       "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
       "open_decisions": [
-        "page/index/locator byte formats and ownership",
-        "buffer/pin/retention budgets and workload profiles",
-        "freeze independent expected results and actual fault schedule before implementation"
+        "D3-F01: freeze exact byte offsets, feature/format IDs and independent normal/corrupt vectors",
+        "D3-F02/F03: freeze Rust API/error/cursor vectors, independent oracle and full variant inventory",
+        "D3-F04/F05: freeze actual fault receipts/schedules, environment, RSS/disk/timeout and PF09 numerical profiles",
+        "D3-F06: verify actual DEV2 durable prerequisites and interfaces before production integration"
       ],
       "deferred_obligations": [
         "PART/NG·고급 저장·제품 최대 성능은 S1 선행 조건 아님"
@@ -674,7 +675,11 @@
       "run_entrypoint": null,
       "evidence_refs": [],
       "execution_status": "NOT_RUN",
-      "official_distribution_status": "NOT_RUN"
+      "official_distribution_status": "NOT_RUN",
+      "design_refs": [
+        "disk-storage-design.md",
+        "dev3-implementation-plan.md"
+      ]
     },
     {
       "id": "DEV4",

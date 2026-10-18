@@ -119,7 +119,8 @@
       "execution_status": "NOT_RUN",
       "completion_ref": "stage-completion.json#DEV3",
       "design_refs": [
-        "disk-storage-design.md"
+        "disk-storage-design.md",
+        "dev3-implementation-plan.md"
       ]
     },
     {

@@ -33,7 +33,7 @@ PK·UNIQUE·NOT NULL, statement rollback, snapshot + coarse validation SERIALIZA
 <a id="section-3"></a>
 ## 3. 커널과 저장
 
-DEV2의 K0–K5는 [하위 계층 계획](bottom-up-development.md)과 [커널 설계](../contracts/dev2-kernel-design.md)를 따른다. 현재 P0/K0 일부가 있으며 WAL/recovery는 없다. DEV3의 실제 disk page·buffer·index는 [저장 기준](../contracts/disk-storage-design.md)으로 검증한다.
+DEV2의 K0–K5는 [하위 계층 계획](bottom-up-development.md)과 [커널 설계](../contracts/dev2-kernel-design.md)를 따른다. 현재 P0/K0 일부가 있으며 WAL/recovery는 없다. DEV3의 실제 disk page·buffer·index는 [상세 설계](../contracts/disk-storage-design.md)와 [구현·검증 계획](dev3-implementation-plan.md)을 따른다. 설계 준비는 DEV2 완료 전 가능하지만 production 착수의 선행 요건과 S1 실제 증거 의무는 유지한다.
 
 <a id="section-4"></a>
 ## 4. 단계 완료와 공개

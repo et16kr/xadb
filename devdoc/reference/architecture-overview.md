@@ -18,7 +18,7 @@
 
 ## 1. 제품 방향
 
-[제품 방향](../plans/project-direction.md)을 따른다. Linux/Rust 디스크 관계형 DBMS를 개발하고, 폭넓은 기능·기본 성능·이해 가능한 구조를 함께 추구한다. 이 문서는 이관한 일반 설계 제안이며 현재 구현은 [구현 색인](../implementation/README.md)을 따른다.
+[제품 방향](../plans/project-direction.md)을 따른다. Linux에서 Rust로 관계형 DBMS를 개발하고, 폭넓은 기능·기본 성능·이해 가능한 구조를 함께 추구한다. 이 문서는 이관한 일반 설계 제안이며 현재 구현은 [구현 색인](../implementation/README.md)을 따른다.
 
 <a id="section-2"></a>
 
