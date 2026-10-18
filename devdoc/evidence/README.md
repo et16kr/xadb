@@ -42,6 +42,8 @@ COMM 반영 commit과 이번 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [dev2-xadb-20261018-r3.json](dev2-xadb-20261018-r3.json)
 - [dev2-performance-xadb-20261018-r1.json](dev2-performance-xadb-20261018-r1.json)
 
+- [K0-006 중단 보고서](dev2-extended-xadb-20261018-r1.json): 사용자 요청으로 약464초에 중단; FAIL 원본 보존, 30분 의무와 하위 회귀 미완료. K1–K5 구현 완료 전 테스트 금지.
+
 - [COMM 전용 기준 사본 r1](comm-isolated-xadb-20261018-r1.json): 27개 시험 및 하위 회귀 PASS. 마지막 drain 경합 보완 전 source에만 적용.
 - [COMM 혼합 사본 실패 r1](comm-mixed-xadb-20261018-r1.json): COMM focused 검사는 통과했으나 함께 포함된 DEV2 변경의 format 검사에서 하위 회귀 FAIL. 원본 실패를 보존.
 - [COMM 전용 DEV0 회귀](comm-dev0-xadb-20261018-r1.json) · [COMM 전용 DEV1 회귀](comm-dev1-xadb-20261018-r1.json): 최종 COMM 전용 기준 사본에서 각 8개 check PASS. 최종 소스 지문 대조 뒤 current-source 문서 ID로 연결했으며 원본 실행 identity는 유지.

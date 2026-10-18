@@ -553,6 +553,11 @@
       "role": "evidence",
       "title": "COMM 소스 조사와 설계 검토 기록"
     },
+    "dev2-extended-xadb-20261018-r1.json": {
+      "path": "evidence/dev2-extended-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "DEV2 K0-006 사용자 중단 원본 보고서"
+    },
     "dev3-dev4-architecture-review.md": {
       "path": "evidence/dev3-dev4-architecture-review.md",
       "role": "evidence",

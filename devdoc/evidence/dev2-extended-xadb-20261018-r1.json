@@ -1,0 +1,375 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18T12:54:24.044474+00:00",
+  "scope": "DEV2 K0-006 real-thread and native Request/Response V3 leaf",
+  "status": "FAIL",
+  "dev2_stage_status": "INCOMPLETE",
+  "k0_stage_status": "INCOMPLETE",
+  "durability": "NOT_RUN",
+  "bounded_concurrent_exhaustion": "NOT_RUN",
+  "performance": "NOT_RUN",
+  "additional_parser_targets": "NOT_RUN",
+  "protected_ci": "NOT_RUN",
+  "artifact_directory": "artifacts/dev2-extended/check-s6196li5",
+  "checks": [
+    {
+      "id": "base-commit",
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.001283215002331417,
+      "timeout_seconds": 600,
+      "status": "PASS",
+      "log": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/base-commit.log",
+      "log_sha256": "a9dcd8d941770e4723b1c0765e43f80b84b93b84ebd02b0536ba734abb16be96"
+    },
+    {
+      "id": "dirty-status",
+      "command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "cwd": "/home/et16/work/xadb",
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.0033080440043704584,
+      "timeout_seconds": 600,
+      "status": "PASS",
+      "log": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/dirty-status.log",
+      "log_sha256": "e422fb117f96697b9a81d5dc2dcf1d4212b686dc8612962bac6e8ea3c360ad97"
+    },
+    {
+      "id": "toolchain",
+      "command": [
+        "rustc",
+        "-Vv"
+      ],
+      "cwd": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/source-inputs",
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.015404227997350972,
+      "timeout_seconds": 600,
+      "status": "PASS",
+      "log": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/toolchain.log",
+      "log_sha256": "4fdff2578428e9c5c08ddd7a0d3079c1a106b1cdaa46e73e46f7cd32b0fb9cad"
+    },
+    {
+      "id": "runner-self-tests",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_dev2_extended.py"
+      ],
+      "cwd": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/source-inputs",
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 3.3702656390014454,
+      "timeout_seconds": 600,
+      "status": "PASS",
+      "log": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/runner-self-tests.log",
+      "log_sha256": "243602036a5ee2b6dea515d1b3577df219065de750617755118bede3a3d0016d"
+    },
+    {
+      "id": "build-xadb-engine-stress",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--test",
+        "stress",
+        "--release",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/source-inputs",
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 1.4659879259997979,
+      "timeout_seconds": 600,
+      "status": "PASS",
+      "log": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/build-xadb-engine-stress.log",
+      "log_sha256": "3a6e0c2f296bad0ac2c6df304169256eaea8dcf496497977186c2e1d9cb77719"
+    },
+    {
+      "id": "inventory-xadb-engine-stress",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/binaries/xadb-engine-stress",
+        "--list"
+      ],
+      "cwd": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5",
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.0013950330030638725,
+      "timeout_seconds": 600,
+      "status": "PASS",
+      "log": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/inventory-xadb-engine-stress.log",
+      "log_sha256": "c692b0263c5be563f619955e045d717f32e425fa129022bc16776171a58e2b63"
+    },
+    {
+      "id": "smoke-four_readers_keep_old_rows_and_release_pins_smoke",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/binaries/xadb-engine-stress",
+        "--exact",
+        "four_readers_keep_old_rows_and_release_pins_smoke",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5",
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.007355007997830398,
+      "timeout_seconds": 600,
+      "status": "PASS",
+      "log": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/smoke-four_readers_keep_old_rows_and_release_pins_smoke.log",
+      "log_sha256": "6ce75d20f26b0865456b5526d78e8a87c61d9c0e295bf6ce236b739ab80190e1"
+    },
+    {
+      "id": "build-xadbtest-protocol-fuzz",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-protocol",
+        "--test",
+        "fuzz",
+        "--release",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/source-inputs",
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 5.0203767549974145,
+      "timeout_seconds": 600,
+      "status": "PASS",
+      "log": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/build-xadbtest-protocol-fuzz.log",
+      "log_sha256": "2b2d094b2eb0c05613a2079979ea9d9bdd120358fb15a5c84ba10f602869c6a4"
+    },
+    {
+      "id": "inventory-xadbtest-protocol-fuzz",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/binaries/xadbtest-protocol-fuzz",
+        "--list"
+      ],
+      "cwd": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5",
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.001415030004864093,
+      "timeout_seconds": 600,
+      "status": "PASS",
+      "log": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/inventory-xadbtest-protocol-fuzz.log",
+      "log_sha256": "c796928b83a15873e06637d4edbd7a9dec1374d7cfafd8862c28a661e8c66871"
+    },
+    {
+      "id": "smoke-request_mutation_corpus_smoke",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/binaries/xadbtest-protocol-fuzz",
+        "--exact",
+        "request_mutation_corpus_smoke",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5",
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.03149795799981803,
+      "timeout_seconds": 600,
+      "status": "PASS",
+      "log": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/smoke-request_mutation_corpus_smoke.log",
+      "log_sha256": "84fd89aab8fa13db7a0b8394acfe9b3b298e3d8fef42017b12e735a35a1c57fa"
+    },
+    {
+      "id": "smoke-response_mutation_corpus_smoke",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/binaries/xadbtest-protocol-fuzz",
+        "--exact",
+        "response_mutation_corpus_smoke",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5",
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.06357038299756823,
+      "timeout_seconds": 600,
+      "status": "PASS",
+      "log": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/smoke-response_mutation_corpus_smoke.log",
+      "log_sha256": "5df465c8c7a6c2d682485504a5c7ba9c08d9894e6f4468c613d6d287fef7b51e"
+    }
+  ],
+  "targets": [],
+  "parallel_correctness_execution": true,
+  "environment": {
+    "uname": [
+      "Linux",
+      "et16-msi",
+      "7.0.0-38-generic",
+      "#38-Ubuntu SMP PREEMPT_DYNAMIC Fri Sep  4 09:10:14 UTC 2026",
+      "x86_64",
+      ""
+    ],
+    "cpu_count": 32
+  },
+  "profile": {
+    "targets": [
+      {
+        "target": "k0_real_thread_stress",
+        "package": "xadb-engine",
+        "binary": "stress",
+        "test": "four_readers_keep_old_rows_and_release_pins_v3_30_minutes",
+        "generator": "k0-thread-v1",
+        "seed": 0
+      },
+      {
+        "target": "native_request_fuzz",
+        "package": "xadbtest-protocol",
+        "binary": "fuzz",
+        "test": "v3_request_parser_mutation_fuzz_30_minutes",
+        "generator": "k0-native-mutation-v1",
+        "seed": 6359439200462655793
+      },
+      {
+        "target": "native_response_fuzz",
+        "package": "xadbtest-protocol",
+        "binary": "fuzz",
+        "test": "v3_response_parser_mutation_fuzz_30_minutes",
+        "generator": "k0-native-mutation-v1",
+        "seed": 6359439200462656305
+      }
+    ],
+    "min_seconds": 1800,
+    "timeout_seconds": 2400,
+    "memory_bytes_per_target": 1073741824,
+    "fuzz_variants": {
+      "native_request_fuzz": [
+        "initialize",
+        "create",
+        "lookup",
+        "drop_table",
+        "insert",
+        "replace",
+        "delete",
+        "snapshot",
+        "release_snapshot",
+        "read",
+        "open_scan",
+        "next_page",
+        "close_scan",
+        "metrics",
+        "performance_off",
+        "performance_always",
+        "performance_detailed"
+      ],
+      "native_response_fuzz": [
+        "ready",
+        "done",
+        "table",
+        "inserted",
+        "row_some",
+        "row_none",
+        "page",
+        "empty_page",
+        "metrics",
+        "performance_off",
+        "performance_always",
+        "performance_detailed",
+        "product_error_1",
+        "product_error_2",
+        "product_error_3",
+        "product_error_4",
+        "product_error_5",
+        "product_error_6",
+        "product_error_7",
+        "product_error_8",
+        "product_error_9"
+      ]
+    },
+    "fuzz_operators": [
+      "valid_identity_text",
+      "byte_flip",
+      "byte_insert",
+      "byte_delete",
+      "length",
+      "truncate",
+      "concatenate",
+      "unknown_field",
+      "duplicate_field",
+      "unknown_tag",
+      "identity_limit",
+      "invalid_utf8",
+      "nested_unknown",
+      "nested_duplicate",
+      "trailing_json",
+      "partial_suffix",
+      "invalid_suffix"
+    ],
+    "fuzz_families": [
+      "valid",
+      "eof",
+      "length",
+      "identity",
+      "duplicate",
+      "unknown",
+      "utf8",
+      "json",
+      "tag",
+      "truncation",
+      "concatenation",
+      "serialization",
+      "differential"
+    ],
+    "stress_lanes": [
+      "off",
+      "always",
+      "detailed_0",
+      "detailed_1",
+      "detailed_256"
+    ]
+  },
+  "source_sha256_before": "9c722a4cdac744c2ee09e9eb5b7262dd05e892e19ccc12be2e3465df711b1fb8",
+  "base_commit": "b8b1e60a314d397198e2f2c41205f9e468a6decf",
+  "retained_source": "/home/et16/work/xadb/artifacts/dev2-extended/check-s6196li5/source-inputs",
+  "source_sha256": "9c722a4cdac744c2ee09e9eb5b7262dd05e892e19ccc12be2e3465df711b1fb8",
+  "profile_sha256": "1b5c613b017b025871a06a25fa52e13ae75ca05142c31e3dfe9abe3c13b4117a",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n",
+  "build_environment": {
+    "CARGO_PROFILE_RELEASE_OPT_LEVEL": "3",
+    "CARGO_PROFILE_RELEASE_LTO": "false",
+    "CARGO_PROFILE_RELEASE_CODEGEN_UNITS": "16",
+    "CARGO_PROFILE_RELEASE_INCREMENTAL": "false",
+    "CARGO_PROFILE_RELEASE_OVERFLOW_CHECKS": "true",
+    "CARGO_PROFILE_RELEASE_DEBUG": "2",
+    "CARGO_PROFILE_RELEASE_STRIP": "none"
+  },
+  "error": ""
+}

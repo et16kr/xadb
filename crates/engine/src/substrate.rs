@@ -4,7 +4,7 @@
 use crate::{
     Error, ErrorCode, Result,
     api::{DatabaseId, Instance, Metrics, Namespace, RowUid, StoreOptions, TableHandle, TableSpec},
-    catalog::{self, Root, Schema, TableRoot},
+    catalog::{self, Root, Schema, TableRoot, check_row, table_index},
     diagnostics::{
         Diagnostics, DiagnosticsDrain, DiagnosticsOptions, DiagnosticsSnapshot, Operation,
     },
@@ -18,28 +18,6 @@ use xadb_foundation::{
     runtime::{Quota, Reservation},
     value::Value,
 };
-
-fn table_index(instance: &Arc<Instance>, root: &Root, handle: &TableHandle) -> Result<usize> {
-    if !Arc::ptr_eq(instance, &handle.instance) {
-        return Err(Error::new(
-            ErrorCode::StaleHandle,
-            "different open instance",
-        ));
-    }
-    root.identity(handle.identity).ok_or(Error::new(
-        ErrorCode::StaleHandle,
-        "table not in this snapshot",
-    ))
-}
-fn check_row(namespace: Namespace, table: ObjectHandle, row: RowUid) -> Result<()> {
-    if row.namespace != namespace || row.table != table {
-        return Err(Error::new(
-            ErrorCode::StaleHandle,
-            "row namespace/table mismatch",
-        ));
-    }
-    Ok(())
-}
 
 /// Single-owner volatile mutation driver. Snapshots may be read on other threads.
 /// Dropping this driver never commits or syncs anything; owning views remain valid.

@@ -27,9 +27,9 @@ protocol의 이력은 controller가 보존한 입력·관측이다. worker verdi
 
 연산 alphabet은 `Begin(ReadOnly|ReadWrite)`, `Read`, `Scan`, `Statement([Insert|Replace|Delete])`, `Commit`, `Rollback`이다. 외부 사건은 `Invoke(actor, request, operation)`, `Return(actor, request, observation)`, `Crash`다. 끝까지 응답 없는 요청은 Crash로 닫힌 경우만 허용하며 그 외는 INVALID다. Crash 이전 request의 늦은 Return도 INVALID다. request는 전체 이력에서 유일하고 actor마다 한 요청만 in-flight다. Begin 응답 후 같은 actor의 다음 요청을 호출한다. invocation/response 경계를 넘어 응답 순서가 달라지는 것은 허용한다. 형식 오류는 INVALID, 관측을 설명할 선형화가 없으면 REJECTED, 탐색 상한 초과는 INCOMPLETE다. 빈 assertion 이력은 INVALID다.
 
-Begin의 snapshot+자기 변경만 읽는다. statement는 전체 복사본에서 입력 순서대로 적용하여 오류 시 진입 상태를 유지한다. Replace/Delete의 없는 행과 Insert의 중복 행은 명시 오류다. ReadOnly 쓰기는 거절한다. 성공한 쓰기 statement는 dirty 상태를 만들며 commit은 시작 version과 현재 version이 같을 때만 전체 반영한다. 무변경 ReadWrite도 version 검사를 한다. ReadOnly는 기존 snapshot에서 종료한다. Rollback/실패한 commit은 private 변경을 버린다.
+Begin의 snapshot+자기 변경만 읽는다. statement는 전체 복사본에서 입력 순서대로 적용하여 오류 시 진입 상태를 유지한다. Replace/Delete의 없는 행과 Insert의 중복 행은 명시 오류다. ReadOnly 쓰기는 거절한다. 성공한 쓰기 statement는 private 상태를 만들며 commit은 시작 version과 현재 version이 같을 때만 전체 반영한다. 최종 논리 행이 현재 committed 행과 같으면 version을 증가시키지 않는다(DEV2-P0-NET-ZERO-002). 무변경 ReadWrite도 version 검사를 한다. ReadOnly는 기존 snapshot에서 종료한다. Rollback/실패한 commit은 private 변경을 버린다.
 
-Commit의 fault 선택은 worker 응답이 아닌 **시험 controller의 사전 입력**이다. `None`은 UNKNOWN을 허용하지 않는다. `BeforeAttempt`는 ABORTED, `Uncertain`은 첫 write 시도 이후의 불확실성으로 전체 포함/미포함 두 branch와 Fenced를 만든다. Uncertain은 dirty ReadWrite에만 적용한다. Fenced 뒤 기존 ReadOnly/ReadWrite 모두 Read/Scan과 Rollback은 가능하다. Begin/Statement/Commit은 Fenced 오류이며 commit 거절은 private 상태를 유지한다. Uncertain 분기는 정상 version validation을 통과한 dirty writer에만 적용한다. Crash는 private/pending 상태를 버리고 모델의 durable 상태로 다시 연다. 일반 commit의 ACK가 유실된 pending 요청은 Crash 전에 전체 선형화되거나 미실행일 수 있다. Fenced 상태의 미공개 UNKNOWN은 Crash 뒤만 관측된다. 실제 I/O receipt나 process kill의 증거를 이 self-test로 대신하지 않는다.
+Commit의 fault 선택은 worker 응답이 아닌 **시험 controller의 사전 입력**이다. `None`은 UNKNOWN을 허용하지 않는다. `BeforeAttempt`는 ABORTED, `Uncertain`은 첫 write 시도 이후의 불확실성으로 전체 포함/미포함 두 branch와 Fenced를 만든다. Uncertain은 최종 논리 변경이 있는 ReadWrite에만 적용한다. Fenced 뒤 기존 ReadOnly/ReadWrite 모두 Read/Scan과 Rollback은 가능하다. Begin/Statement/Commit은 Fenced 오류이며 commit 거절은 private 상태를 유지한다. Uncertain 분기는 정상 version validation을 통과하고 최종 논리 변경이 있는 writer에만 적용한다. Crash는 private/pending 상태를 버리고 모델의 durable 상태로 다시 연다. 일반 commit의 ACK가 유실된 pending 요청은 Crash 전에 전체 선형화되거나 미실행일 수 있다. Fenced 상태의 미공개 UNKNOWN은 Crash 뒤만 관측된다. 실제 I/O receipt나 process kill의 증거를 이 self-test로 대신하지 않는다.
 
 초기 한도는 최대 actor 8, 동시 pending 8, events 4,096, initial rows 128, row columns 32, scalar bytes 65,536, mutations/statement 256, 전체 history 입력 비용 8 MiB(scalar payload에 cell 32·key/mutation 32·event 64 bytes를 더한 논리 단위)다. 탐색은 event별 closure를 중복 제거하고 전체 방문 상태 1,000,000개·전이 4,000,000개를 한도로 한다. event별 frontier 4,096개·보유 Vec/String capacity×실제 요소 크기와 BTree entry별 16-slot+1 KiB 여유를 합한 64 MiB, 이력당 단조 clock 30초를 추가 상한으로 둔다. 이전/다음 frontier와 최대 두 scratch 모델, caller 입력은 별도이며 이 수치는 process RSS/OOM 보장이 아니다. 각 limit 위반은 명시 INVALID/INCOMPLETE이며 잘린 입력을 PASS하지 않는다. 이 숫자는 oracle의 시험 예산이며 제품 용량이 아니다.
 
@@ -255,3 +255,116 @@ engine의 [diagnostics](../../crates/engine/src/diagnostics.rs)와 기존 substr
 세 campaign의 원시20run씩과 원본 replay 계보·새 run IDs·실패 축을 보존했다. 이 표의 비율은 표시용 근삿값이며 판정에는 원본 정수 비율을 사용했다. 최초 audit의 p99 실패는 후속 replay PASS로 지우지 않는다. 모든 promotion은 INCOMPLETE이며 CPU·elapsed·외부 시간·RSS의 현재 한도 통과만으로 p99 한도나 원인 규명을 대신하지 않는다. 실제 원인·국소 최적화(PF12), 통합 PF 인수, bounded concurrent 전수,30분 stress/fuzz, K1–K5와 영속성은 남은 의무다. K0·DEV2 전체는 INCOMPLETE다.
 
 최종 독립 검토 `/root/dev2_performance_review`는 현재/보존 source 지문, wrapper19개·필수 시험35개 및 하위28/8/8개 실행 로그 hash, controller/worker/config/receipt/index와60개 실행 원시 파일 hash를 읽기 전용으로 대조했다. 모든 run ID의 유일성, journal↔stdout·envelope·65,536개 값·최종/old 행·counter·Detailed sequence/drop·시간 포함 관계를 별도로 확인했다. 원본 Always campaign은 별도 cwd 사본과 replay의 original에서 byte-identical이며 median/interval·최악 pair 표본 p99의 Fraction 재계산이 원본 보고서와 일치했다. 통합 차단 결함 없이 실행 기능·재현 leaf 통합 GO다. 최초 성능 budget 실패·원인 미규명·승격 INCOMPLETE는 그대로 남으며 성능 인수 GO를 뜻하지 않는다. `/root`가 해당 검토와 원본 보고서 등록을 확인했다.
+
+## DEV2-K0-006 — 장시간 thread와 native parser 검증 확장
+
+**D2 / 구현 중 / 장시간 실행 사용자 요청으로 중단.** 사용자 DEV2 완료·병렬 진행 요청에 따라 기존 K0-005를 기준으로 현재 capability의 V3 미실행 의무를 진행한다. 작업·계약·통합 담당은 `/root`, 독립 검토자는 `/root/dev2_completion_review`다. 기준 commit은 `b8b1e60a314d397198e2f2c41205f9e468a6decf`, 착수 기준 소스 지문은 `6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f`다. 착수 초기 보였던 K0-005 미커밋 변경은 해당 commit에 반영되었으며 최신 clean 상태를 다시 확인했다. 과거 원본 증거는 수정하지 않는다.
+
+| 소유 | 수정 범위·순서 |
+| --- | --- |
+| `/root/dev2_k0_stress` | 신규 `crates/engine/tests/stress.rs`: 실제 단일 writer와 immutable snapshot reader 장시간 시험·짧은 smoke |
+| `/root/dev2_k0_fuzz` → `/root` | 신규 `crates/testing/protocol/tests/fuzz.rs`와 필요한 전용 support: native Request/Response mutation fuzz·보존 corpus |
+| `/root` | 신규 `scripts/check_dev2_extended.py`·그 runner 반례 시험, 이 기록과 필요한 문서/증거 등록. 공유 파일은 최신 원문에 순차 반영 |
+| 독립 검토 | 각 입력 profile → 구현 diff·기존 반례 → smoke → 고정 source의 실제 장시간 증거. 구현자가 자신의 작업을 독립 승인하지 않음 |
+
+기존 제품·wire·정답 의미와 dependency는 바꾸지 않는다. 짧은 seed 회귀만 반복하는 대안은 DP03의 시간 기반 의무를 충족하지 않는다. 새 외부 fuzz dependency 대신 구체 Request/Response 경계에 유계 mutation generator와 독립 literal vector를 추가한다. 이는 coverage-guided fuzz나 모든 입력의 전수 증명이 아니다. K0 writer는 `&mut VolatileStore` 하나이며 K4 다중 transaction 동시성·내구성 검증으로 표시하지 않는다.
+
+장시간 target은 `k0_real_thread_stress`, `native_request_fuzz`, `native_response_fuzz` 세 개다. 각각 실제 monotonic 반복 구간 최소1,800초, 외부 process timeout2,400초를 고정한다. 빌드·sleep·다른 target의 경과 시간을 합산하지 않는다. 입력 corpus/seed/generator와 source hash를 실행 전에 보존하고 각 target의 원시 출력·완료량·elapsed·exit status·binary hash를 연결한다. 같은 source의 release/no-default-features 시험 실행 파일을 source-only export에서 빌드하고 별도 cwd에서 실행한다. 세 target의 병렬 실행은 정확성 검증이며 성능 비교로 쓰지 않는다. 짧은 smoke는 별도 시험명과 결과이며 V3 완료로 승격하지 않는다. timeout·panic·missing receipt·0 tests·시간 미달·필수 lane 미도달은 FAIL다.
+
+별도 미완료 의무는 P0의 bounded concurrent program 공간 전수, controller catalog/performance recipe·config/bundle JSON의 해당 V3 parser target, 후속 영속 codec의 V3, K0 PF12와 최초 sample-p99 실패 원인/해결이다. 이 leaf를 실행해도 K0·DEV2 전체를 완료 처리하지 않는다. 기존 V2/V3 seed 회귀와 DEV0/1 하위 회귀는 유지한다. 문서 자동 검사는 push 훅에서만 수행한다.
+
+### 실행 전 동결한 구체 profile
+
+thread generator는 `k0-thread-v1`, seed0부터0..255 순환, Off/Always/Detailed(cap0/1/256)의5 lane이다. 각 lane×seed 최소1,280 round를 모두 방문하고 각 lane 최소256회, 실제 reader4개 각각의 연산과 writer 연산을 확인한다. 16행의 독립 Int64 scalar 기대값, barrier를 통한 replace/delete/drop-recreate, old snapshot/cursor/page/view 수명, pin4→4→0, 동일 empty-catalog capacity의 resident 회복을 대조한다. reader와 writer의 diagnostics 수집·drain을 겹치고 join 후 정확한 operation counter·event sequence·drained+dropped 회계를 확인한다. Off의 관측 없음과0을 구별한다. 시작·종료 receipt와 실제 lane/seed/thread 작업량을 교차 검증한다.
+
+native mutation generator는 `k0-native-mutation-v1`/SplitMix64, Request seed `0x5841444252455131`, Response seed `0x5841444252455331`이다. Request17·Response21 literal variant(Performance mode와9개 product error 포함), strict malformed corpus, 17개 mutation operator, 13개 공통 family(Response는 product_code 추가)를 선언한다. body 길이·UTF-8·identity·unknown/duplicate field/tag·모든 짧은 prefix·4MiB 한도/초과·escape 팽창·연속 frame·valid prefix 뒤 손상 suffix·poison/EOF/progress를 검사한다. 입력 cap은8,388,612bytes다. 초기 corpus는 Request322·Response223 cases이며 각variant와family/operator 실제 방문·완료량 합계를 확인한다. literal 정상/거절 기대값과 별도 raw framing/identity 검사를 사용하며 arbitrary mutation의 blocking/stream 대조가 공통 JSON decoder 의미의 독립 증명은 아님을 명시한다. 실패 input·chunk PRNG state·seed·iteration을 별도 파일에 보존하고 재현할 수 있다.
+
+별도 검토자는 착수 profile과 thread 최종 diff를 검토했다. 처음 thread smoke에서 생성 직후 empty root184bytes와 create/drop 이후192bytes를 잘못 비교했다. 소유 구현이 보유하는1-slot 배열의8bytes를 독립 확인하고 fixture를 동일 create/drop-empty 상태로 맞췄다. 제품 quota 한도를 늘리거나 실패를 삭제하지 않았다. Native 최초 smoke는 valid text mutation이 Performance의 `seed` 필드명까지 바꾼 generator 오류로 실패했다. 원문·binary·입력·실패 로그는 `artifacts/dev2-extended/first-fuzz-generator-failure-0te6rm16`에 보존했고 문자열 값 위치만 바꾸도록 수정했다. 두 native smoke는 수정 뒤 PASS다. helper agent 중단 뒤 `/root`가 native 구현·검증을 이어받았으며 최종 독립 리뷰는 별도로 수행한다.
+
+runner 반례는0 tests·누락/중복/외국 identity·시간 미달·불가능한 duration·필수 작업량 누락·가짜 exit0·crash·timeout·spawn 실패·자손 process cleanup과 원문 로그 보존을 확인한다. timeout 상태를 다음 poll에서 잃는 초기 오류를 반례로 잡아 고쳤다. long 실행은 `--nocapture`로 profile/panic을 즉시 보존하며 exact 시험명·1개 실행·최종1PASS/0FAIL/0ignored와 고정 JSON receipt를 함께 확인한다. 원래 실패를 후속 PASS로 지우지 않는다.
+
+### 사용자 실행 순서 변경 — K1–K5 구현 우선
+
+2026-10-18 사용자가 **“K1~k5구현 완료 될 때 까지 테스트 금지”**를 명시했다. 이를 현재 작업의 실행 순서에 우선 적용한다. K1–K5 production 구현을 모두 연결하기 전에는 unit/integration/property/stress/fuzz/benchmark/회귀 및 문서 검증을 실행하지 않는다. 코드 작성과 독립 정적 검토는 병렬 진행한다. 기존 단계별 실행 의무를 삭제하거나 통과로 간주하지 않으며, 구현 완료 후 통합 source에서 검증을 수행한다.
+
+실행 중이던 세 K0-006 target은 약464초에 중단했다. runner PID553303에 SIGINT를 전달했고 runner가 자식 process group을 종료·회수했다. [원본 보고서](../evidence/dev2-extended-xadb-20261018-r1.json)는 runner의 FAIL을 그대로 보존한다. 개별 `runner interrupted`·exit−9·실제 경과는 `artifacts/dev2-extended/check-s6196li5/target-results.json`, source/binary/raw log는 같은 디렉터리에 남겼다. 30분 의무를 충족하지 않았고 하위 회귀는 시작하지 않았다. 이는 사용자 요청에 따른 실행 중단이며 제품 결함 발견이나 PASS를 뜻하지 않는다. 추가 bounded exhaustive 실행도 보류한다.
+
+## DEV2-K1–K5-001 — 영속 커널 구현 계약
+
+**D2 / 구현 연결·독립 정적 검토 완료 / 로컬 부분 검증, DEV2 인수 미완료.** 작업·통합 담당은 `/root`, 독립 검토자는 `/root/dev2_completion_review`다. 기존 DEV2의 private/COW·coarse validation·L0 AXF1·exact checkpoint 계약을 구현하며 DEV3의 mutable page/undo를 앞당겨 넣지 않는다. 기준 commit은 K0-006과 같고 중단 실행의 retained source는 `artifacts/dev2-extended/check-s6196li5/source-inputs`에 보존한다. 별도 작업의 `disk-storage-design.md` 변경은 수정하지 않는다. 사용자 지시에 따라 아래 구현이 모두 연결되기 전에는 테스트를 실행하지 않는다.
+
+| 담당 | 구현 소유·공유 변경 |
+| --- | --- |
+| `/root/dev2_k0_stress` | `crates/engine/src/transaction.rs`, `transaction/`, `publication.rs`, paired private quota에 필요한 `catalog.rs`·`storage/volatile.rs`. 기존 K0 API는 유지. 루트가 engine `lib.rs`를 연결 |
+| `/root/dev2_performance_analysis` | `crates/foundation/src/namespace.rs`, `crates/platform/src/namespace.rs`와 각 `lib.rs` 연결. 기존 nix의 디렉터리 feature만 필요한 경우 추가 |
+| `/root` | `crates/engine/src/durable/`, `database.rs`, engine `lib.rs`, foundation codec의 streaming digest 경계, 문서·빌드 inventory와 실제 통합 |
+| 독립 검토 | 착수 계약과 각 diff를 정적으로 검토. 검토 중 실행 시험을 추가하지 않음 |
+
+### K1·K4 트랜잭션 경계
+
+새 `VolatileDatabase`와 `Transaction`은 K0의 단일 작업 driver와 분리한다. 고정 snapshot·읽기 전용/읽기 쓰기·statement COW 준비·read-your-writes·명시 rollback·coarse start-q validation을 제공한다. private allocation은 거래별8MiB와 전체64MiB에 함께 예약하고, 둘째 예약 실패 때 첫 예약을 RAII로 반환한다. statement의 새 root가 모두 준비된 뒤 private root를 교체하므로 오류는 이전 statement 결과를 보존한다. RowId·TxnId는 실패나 rollback 뒤 재사용하지 않는다. active transaction과 user pin 각각 최대32다.
+
+commit은 coordinator 아래 validation·resident root 준비를 마치고, 내부 callback에서 WAL을 준비·동기화한 뒤 publication lock 안에서는 Arc 교체만 한다. 해제는 lock 밖이다. callback은 public API가 아니며, 최종 `Engine`은 private `Transaction`을 감싼 durable transaction만 반환하여 volatile commit 우회를 막는다. 읽기 전용과 무변경 읽기 쓰기는 WAL/q를 생성하지 않으며 후자는 start-q를 검사한다. 기존 K0의9개 오류 번호는 변경하지 않고 transaction 오류·효과·certainty를 별도 타입으로 제공한다. 취소는 commit 시도 전만 abort이며 시도 후에는 기존 결정을 마친다.
+
+### K2–K5 형식 동결 제안
+
+모든 record는 기존 AXF1 외피와 SHA-256 검사를 사용한다. 내부 공통 prefix는 아래43bytes다. 숫자는 little endian이며 지원 형식은1, required features는1만 허용한다. 0 DB/timeline/epoch·unknown tag·초과 길이·trailing bytes는 거절한다. 이 표는 실행된 golden vector가 아니다.
+
+| offset | bytes | 의미 |
+| --- | --- | --- |
+| 0 | 4 | ASCII `XDK1` |
+| 4 | 2 | engine format=1 |
+| 6 | 8 | required features=1 |
+| 14 | 1 | kind: Header1, Batch2, Seal3, Resume4, Writer5, Current6, Manifest7, Chunk8 |
+| 15 | 16 | DatabaseId 원본 bytes |
+| 31 | 8 | timeline |
+| 39 | 4 | writer epoch |
+
+`Link`는 epoch(u32),segment(u64),end_offset(u64),file_size(u64),q(u64),prefix_digest(32) 순이다. rotation은 seal까지 완결된 이전 파일, resume은 완결 prefix 끝과 남겨 둔 tail의 원래 파일 크기를 구별한다. `Anchor`는 epoch(u32),segment(u64),header_digest(32),offset(u64),prefix_digest(32),q(u64)다. optional은 0/1 한 byte이며 payload가 없는 0 뒤에 padding을 허용하지 않는다.
+
+Header는 segment·start_q·origin(genesis/rotation/resume/restore)·이전 Link·resume digest를 가진다. Batch는 txn local(u64)·prev_q(u64)·q(u64)·change count(u16)와 Create/Drop/Put/Delete를 저장하고 `XDCM`,반복 q(u64),count(u16),body bytes(u32) trailer로 끝낸다. DDL은 단독 변경, DML은 행별 최종 after-image/tombstone으로 최대256개다. object handle은 object/generation/schema epoch 각각u64, row 번호는u64다. schema 이름 길이는u16, 열수u16, 각 열은 이름·type(u8)·nullable(0/1)이다. row는 cell count(u32) 뒤 NULL0/Bool1/Int642/Utf83/Binary4 tag와 원본 scalar bytes다. 가변 값은u32 길이 뒤 원본 bytes다. 값64KiB·row128KiB·전체 payload1MiB를 유지한다.
+
+Seal은 끝 offset·q·prefix digest, Resume은 새 segment와 이전 Link, Writer는 segment·header digest다. Current는 current와 optional previous manifest generation·digest만 선택한다. Manifest는 generation·cut q·epoch high-water·replay Anchor·schema·chunk inventory, Chunk는 generation·index와 분할하지 않은 row after-image를 저장한다. 이름은 형식/identity로부터 결정하며 임의 경로를 payload에서 받지 않는다. chunk 크기1MiB·manifest1MiB·파일 inventory4,096개를 적용한다. bootstrap은 C=0의 빈 manifest, restore는 원본 WAL에 연결하지 않는 새 timeline·header·anchor를 선택한다.
+
+WAL source를 truncate/덮어쓰기하지 않고 검증 prefix를 STABILIZE한 뒤 새 epoch·WRITER를 선택한다. checkpoint는 coordinator에서 root와 정확한 anchor를 함께 capture하고 lock 밖에서 chunk/manifest를 쓴다. 마지막 CURRENT 선택만 coordinator 아래 수행한다. current/previous 전체 closure와 backup/build/replay pin이 없는 파일만 Retiring으로 바꿔 회수한다. selector 결과 불명은 fence하고 old/new closure를 유지한다. 검증은 K1–K5 구현 완료 후 수행하며 그 전까지 durability·recovery·동시성·checkpoint 인수는 NOT_RUN이다.
+
+
+### K1–K5 구현 연결과 정적 검토 — 최초 실행 전 기록
+
+현재 [트랜잭션](../../crates/engine/src/transaction.rs)·[publication](../../crates/engine/src/publication.rs), [WAL](../../crates/engine/src/durable/wal.rs), [복구](../../crates/engine/src/durable/recovery.rs), [체크포인트 생성](../../crates/engine/src/durable/checkpoint.rs)·[보존 ledger](../../crates/engine/src/durable/retention.rs)·[archive](../../crates/engine/src/durable/backup.rs) 소스가 있다. [Engine](../../crates/engine/src/database.rs)과 [유지 작업](../../crates/engine/src/database/maintenance.rs)은 create/open·durable transaction·checkpoint·backup·restore_new·collect_garbage를 연결한다. Linux namespace 효과는 foundation port와 platform adapter에 분리했다. 이 절은 최초 빌드·실행 전 설계 기록이다. 이후 native durable 이력·계측 연결과 최종 통합 정적 검토를 완료했고, 아래 실행 기록부터 로컬 검증을 시작했다.
+
+독립 검토자는 각 단계의 실제 diff에서 namespace exclusion/파일 identity, private quota/빌린 읽기 수명, commit sync/publication, frame·replay closure, exact-cut checkpoint/retention/archive를 검토했다. NULL 중심 행의 decoded allocation 증폭은 record당2MiB 상한으로 제한했고 checkpoint packing은 wire1MiB와 decoded2MiB를 함께 적용한다. 복구 replay는 테이블별 최종 배열을 한 번 준비하여 old+intermediate+final 중복 보유를 피한다. 복구 임시 plan은 소비형 API에서 lease까지 해제한 후 새 epoch를 구성한다. 이 정적 검토를 실행 PASS·내구성 자격으로 사용하지 않는다.
+
+관리 메모리는 실행 전 다음 값으로 구체화했다. Engine의 전체 resident 상한64MiB 중8MiB를 control용으로 선예약하고, 그 하위 quota에서 retention entry·system pin·manifest·name/inventory·Engine 고정 allocation을 회계한다. 일반 root·old root와 core 고정 allocation은 나머지 최대56MiB를 공유한다. `control_reserved_bytes`와 `control_used_bytes`는 구별하며 이 값은 RSS가 아니다. 작은 설정에서 관리 예약에 실패하면 READY 전에 QuotaExceeded로 거절한다. 일반 행이 여유를 모두 사용해도 GC와 checkpoint 선택을 위한 관리 예산을 사용할 수 있게 하기 위한 초기 계약 구체화이며, 실행 실패 뒤 fixture를 줄인 결과가 아니다. private 거래별8MiB/전체64MiB와 공통 scratch16MiB는 별도다.
+
+checkpoint build는 coordinator에서 root·q·정확한 WAL anchor·generation·build pin을 함께 capture한다. immutable 파일 생성은 coordinator 밖에서 진행하고 파일 slot을 먼저 예약한다. selector 직전에는 builder scratch를 반환하고 current/previous closure와 새 파일의 합집합을 Selection pin으로 보존한다. CURRENT 선택 오류는 fence와 합집합 pin을 유지한다. GC는 coordinator/ledger에서 Retiring 승인을 마친 뒤 namespace 직렬화 mutex만 보유하여 unlink·directory sync한다. unlink가 승인된 파일은 이후 pin을 받지 않는다. Drop은 파일 삭제·동기화·namespace 조회를 수행하지 않는다. 높은 orphan epoch/generation은 durable high-water가 그 값을 보존하기 전까지 회수하지 않는다.
+
+backup은 선택된 checkpoint C의 manifest/chunk만 복사하며 WAL을 포함하지 않는다. 현재 구현은 복사 동안 namespace mutex를 보유하므로 커밋이 그 I/O를 기다릴 수 있고, 고정 snapshot 읽기는 계속 가능하다. 원본 검증 오류와 대상 I/O 오류를 분리한다. restore는 빈 대상에서 같은 DatabaseId, 원본과 다른 nonzero timeline, 원본 high-water보다 큰 epoch를 선택하고 모든 checkpoint record를 새 namespace로 재인코딩한다. manifest provenance에는 원본 DB/timeline/generation/manifest digest를 기록하고 후속 정상 checkpoint에도 유지한다. manifest의 common epoch와 capture anchor epoch는 같다. 대상 CURRENT와 WRITER가 모두 영속화되기 전 정상 Engine을 반환하지 않는다.
+
+사용자 실행 금지는 K1–K5 구현 연결·독립 정적 검토 완료까지 지켰다. 그 이후 필요한 검증을 시작했으며, 새 변경·실패·미해결 문제 또는 최종 고정 source의 증거 결합에 필요한 검사만 수행한다. 이전 K0 실행 결과는 변경된 K1–K5 소스의 검증 결과가 아니다.
+
+
+### K1–K5 로컬 구현 검증과 단계별 commit — 2026-10-18
+
+K1–K5 production API 연결과 독립 정적 검토를 마친 뒤 테스트를 재개했다. 사용자가 요구한 순서는 구현 완료 전 실행 금지였으며, 현재 단계는 구현 후 검증이다. 아래 로그는 `artifacts/dev2-kernel-20261018-integration-r1/`의 개발 중 로컬 source 실행이다. 최종 동결 export·V3·성능·하위 회귀를 모두 통과한 DEV2 완료 증거로 사용하지 않는다. 원본 실패는 보존한다.
+
+| 실제 실행 | 결과·정확한 한계 |
+| --- | --- |
+| `engine-unit-01.log`, `transaction-01.log` | engine 21개·transaction 7개 PASS. 이후 수정의 최종 통합 회귀는 별도 |
+| `cache-loss-03.log` | cache-loss 15개 중 12 PASS·3 FAIL. 두 건은 restore 새 timeline의 RowUID를 source RowUID와 혼동한 fixture, 한 건은 실제 checkpoint+GC scratch 예약 초과 |
+| `cache-loss-04-restore.log` | 두 restore/backup fixture 수정 후 해당 2개 PASS |
+| `cache-loss-04-concurrent.log`, `cache-loss-05-concurrent.log` | 추가 한 페이지 가정 fixture 실패를 보존하고 bounded scan EOF 반복으로 수정. 실제 checkpoint 중 commit·rotation·GC 한 건 PASS |
+| `native-fault-01.log` | durable 2개와 fault 4개 PASS. 당시 33개 case의 재개 후 이미지에 대한 독립 판정은 consistency ACCEPTED, strict INCOMPLETE이며 사전 crash image/provenance를 갖춘 최종 반복은 별도 |
+| `disk-codec-v2-01.log`, `durable-wire-v2-01.log` | disk 64×128 변형 입력 및 durable/fault 4 lane 각각 64×128 변형 입력·고정 corpus PASS. coverage-guided fuzz와 V3 30분 자격은 아님 |
+| `independent-oracle-02.log` | 독립 oracle 41개·bridge 34개, 총 75개 self-test PASS. production 장애 실행 PASS를 대신하지 않음 |
+| `kernel-threads-v2-01.log` | 64 seed에서 실제 Linux I/O와 2 writer/4 reader, commit 4,096·충돌 4,096·고정 old snapshot 및 자유 reader 원자성 PASS. power-loss 시험은 아님 |
+
+복구 시 CURRENT/WRITER가 없으면 불완전 생성/선택을 명시 거절하고 덮어쓰지 않는다. GC는 Retiring 승인 후 중단되면 RAII로 fence하여 부분 승인 ledger를 정상 운영으로 남기지 않는다. 복구 workspace는 고정 4,096-entry 선예약 대신 실제 제한된 inventory 수만큼 예약하고, 재탐색 중 개수가 그 수를 넘으면 grow하지 않고 거절한다. 이 변경은 16MiB scratch 한도를 늘리지 않고 checkpoint와 GC의 작은 DB 동시 실행에서 확인한 과다 예약을 줄인다. `/root/dev2_completion_review`가 실제 production diff와 위 실패 원인을 독립 검토해 GO를 확인했다. fixture의 source/new-timeline ID 구별과 scan paging 수정도 별도 기록했다.
+
+단계별 commit은 사용자의 추가 지시에 따른다. 검증된 단위를 commit하고 다음 단위로 진행한다. 장시간·성능·최종 동결 검증 전에는 DEV2/B2/D0 완료나 공식 배포를 선언하지 않는다.
+
+### DEV2-P0-NET-ZERO-002 — 최종 논리 상태와 무변경 commit
+
+D2 / 채택 / 2026-10-18. 사용자 DEV2 완료 및 단계별 commit 요청에 따라 `/root/dev2_completion_review`가 구현하고 `/root`가 계약 담당·독립 실제 diff 검토·통합을 맡았다. dirty flag는 같은 값 replace·insert/delete·변경 후 원복에서 불필요한 q 증가와 UNKNOWN을 허용했다. start-version 검증 뒤 최종 논리 행을 비교하는 대안을 선택했다. 오래된 RW는 최종 행이 현재 행과 같아도 충돌하며, 명시 BeforeAttempt abort는 유지한다. 기존 dirty-flag shortcut을 대체한다. no-op/conflict/fault 의미가 바뀌면 재검토한다.
+
+commit `ea145b9`의 history 22 PASS/extended 1 ignored, bounded smoke 1 PASS/exhaustive 1 ignored는 `p0-net-zero-01.log`에 남겼다. 전수 profile은 256 초기 상태·actor별 13 program·19 interval class·6 critical order·70 serial order, 총 9,604,608건(ACCEPTED 7,003,648/REJECTED 2,600,960)이며 전수 실행은 아직 NOT_RUN이다. Insert/Delete·다중 mutation·rollback·UNKNOWN·crash·catalog는 이 유한 공간에서 제외하고 별도 literal/integration 의무로 남긴다.

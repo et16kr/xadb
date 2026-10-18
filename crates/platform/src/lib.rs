@@ -8,6 +8,8 @@ compile_error!("xadb-platform currently supports Linux only");
 #[cfg(target_os = "linux")]
 pub mod linux;
 #[cfg(target_os = "linux")]
+pub mod namespace;
+#[cfg(target_os = "linux")]
 pub mod network;
 #[cfg(target_os = "linux")]
 pub mod performance;

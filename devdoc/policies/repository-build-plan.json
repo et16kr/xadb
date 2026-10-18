@@ -277,7 +277,7 @@
         "xadb-platform",
         "xadbtest-protocol"
       ],
-      "role": "typed volatile engine adapter and bounded performance fixture; platform owns Linux CPU/RSS observations",
+      "role": "typed engine adapters and bounded performance fixture; platform owns Linux effects and observations",
       "test_workspace_dependencies": [
         "xadbtest"
       ]
@@ -417,40 +417,45 @@
       "kernel_step": "K1",
       "stage_ref": "DEV2",
       "task_ref": "XADB-006",
-      "status": "PLANNED",
-      "responsibility": "private batch·snapshot·rollback·commit 상태. K4에서 동시성 확장"
+      "status": "IMPLEMENTED",
+      "responsibility": "private batch·snapshot·rollback·commit 상태. K4에서 동시성 확장",
+      "validation_status": "LOCAL_PARTIAL_VALIDATION_FINAL_ACCEPTANCE_PENDING"
     },
     {
       "path": "crates/engine/src/publication",
       "kernel_step": "K1",
       "stage_ref": "DEV2",
       "task_ref": "XADB-006",
-      "status": "PLANNED",
-      "responsibility": "단일 committed view와 reader pin. K2에서 영속 순서 연결"
+      "status": "IMPLEMENTED",
+      "responsibility": "단일 committed view와 reader pin. K2에서 영속 순서 연결",
+      "validation_status": "LOCAL_PARTIAL_VALIDATION_FINAL_ACCEPTANCE_PENDING"
     },
     {
       "path": "crates/engine/src/durable/wal",
       "kernel_step": "K2",
       "stage_ref": "DEV2",
       "task_ref": "XADB-007",
-      "status": "PLANNED",
-      "responsibility": "공통 batch framing·append·sync"
+      "status": "IMPLEMENTED",
+      "responsibility": "공통 batch framing·append·sync",
+      "validation_status": "LOCAL_PARTIAL_VALIDATION_FINAL_ACCEPTANCE_PENDING"
     },
     {
       "path": "crates/engine/src/durable/recovery",
       "kernel_step": "K3",
       "stage_ref": "DEV2",
       "task_ref": "XADB-008",
-      "status": "PLANNED",
-      "responsibility": "완결 committed batch replay와 reopen"
+      "status": "IMPLEMENTED",
+      "responsibility": "완결 committed batch replay와 reopen",
+      "validation_status": "LOCAL_PARTIAL_VALIDATION_FINAL_ACCEPTANCE_PENDING"
     },
     {
       "path": "crates/engine/src/durable/checkpoint",
       "kernel_step": "K5",
       "stage_ref": "DEV2",
       "task_ref": "XADB-009",
-      "status": "PLANNED",
-      "responsibility": "generation checkpoint·restore·공통 보존"
+      "status": "IMPLEMENTED",
+      "responsibility": "generation checkpoint·restore·공통 보존",
+      "validation_status": "LOCAL_PARTIAL_VALIDATION_FINAL_ACCEPTANCE_PENDING"
     },
     {
       "path": "crates/engine/src/storage/disk",

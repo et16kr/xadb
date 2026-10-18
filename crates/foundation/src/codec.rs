@@ -11,6 +11,34 @@ const HEADER: usize = FRAME_HEADER_BYTES;
 pub const FRAME_OVERHEAD: usize = 42;
 const DIGEST: usize = 32;
 
+/// Streaming SHA-256 state for bounded file-prefix verification.
+/// This detects content changes; it is not a signature or an authenticity proof.
+/// No file effects or heap buffers are owned by this value.
+#[derive(Clone, Default)]
+pub struct ContentHasher(Sha256);
+
+impl ContentHasher {
+    /// Start an empty content digest, independent of AXF1 framing.
+    pub fn new() -> Self {
+        Self(Sha256::new())
+    }
+
+    /// Include the next ordered bytes without retaining the input.
+    pub fn update(&mut self, bytes: &[u8]) {
+        self.0.update(bytes);
+    }
+
+    /// Finish a copy of the current prefix digest, retaining the streaming state.
+    pub fn digest(&self) -> [u8; 32] {
+        self.0.clone().finalize().into()
+    }
+}
+
+/// SHA-256 of exactly these bytes, without an AXF1 envelope.
+pub fn content_digest(bytes: &[u8]) -> [u8; 32] {
+    Sha256::digest(bytes).into()
+}
+
 fn invalid() -> Error {
     Error::new(ErrorCode::InvalidFormat, "invalid frame or checksum")
 }

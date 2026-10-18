@@ -16,7 +16,7 @@
     "bounded optional engine diagnostics with Off/Always/Detailed modes",
     "independent performance scalar checking and paired instrumentation/replay audit with retained release bundles"
   ],
-  "durability": "NOT_IMPLEMENTED",
+  "durability": "IMPLEMENTED_LOCAL_PARTIAL_VALIDATION",
   "disk_pages_and_indexes": "NOT_IMPLEMENTED",
   "sql": "NOT_IMPLEMENTED",
   "server": "NOT_IMPLEMENTED",
@@ -28,7 +28,13 @@
     "dev2-validation.json"
   ],
   "dev2_imported_unvalidated": [],
-  "current_source_validation": "LOCAL_VERIFIED_P0_K0_LEAVES_AND_DIAGNOSTICS_AUDIT_WITH_DEV0_DEV1_REGRESSION",
+  "current_source_validation": "K1_K5_LOCAL_PARTIAL_VALIDATION_FINAL_FROZEN_ACCEPTANCE_PENDING",
+  "dev2_unvalidated_implementation": [
+    "K1-K5 production integration and independent static review completed; development unit, transaction, cache-loss, native fault and V2 checks partly executed",
+    "Final frozen native fault campaigns with independent pre-open-image oracle and three fresh repetitions pending",
+    "Full V3 thread/parser/codec profiles, bounded exhaustive exploration and current lower regressions pending",
+    "K1-K5 performance baseline/audit/replay and K0 optimization confirmation pending; initial p99 failures remain"
+  ],
   "evidence_scope": "Existing COMM regression reports validate committed source e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1: DEV0 8, DEV1 8, DEV2 P0/K0 28 checks. The DEV3/DEV4 documentation commit has the same source fingerprint; ongoing uncommitted DEV2 work is excluded. No product tests were rerun for this reference correction. Historical r3 and separate K0-005 performance reports retain source 6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f; initial sample-p99 guardrail failures and INCOMPLETE performance/K0/DEV2 qualification remain unchanged.",
   "validation_handoff": {
     "owner": "XADB",
