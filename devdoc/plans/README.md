@@ -4,7 +4,7 @@
 
 <!-- catalogue -->
 
-- [DEV5 — 서버 구현·검증 계획](dev5-implementation-plan.md) — D5-F01–05·T01–14·crash cut·PF11 및 DEV6 이관
+- [DEV5 — 서버 구현·검증 계획](dev5-implementation-plan.md) — D5-F01–05·T01–14·worker 대기/만료·철회 후 정리 반례·crash cut·PF11 및 DEV6 이관
 
 - [architecture-decisions.json](architecture-decisions.json)
 - [하위 계층부터 개발하는 순서](bottom-up-development.md)

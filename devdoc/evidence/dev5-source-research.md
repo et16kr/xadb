@@ -56,3 +56,22 @@ D2의 별도 읽기 전용 검토자는 `/root/dev5_design_review`, 작업·계�
 2026-10-18 `/root/dev5_design_review` 최종 재검토 결과는 **설계 채택 가능·잔여 필수 P1/P2 없음**이다. 새 문서3개와 기준 사본 대비 공유 문서12개의 DEV5 변경, DEV4/COMM 원문을 읽었고 source origin/HEAD·위4개 파일 hash·baseline identity hash 일치도 확인했다. `/root`가 계약/통합 담당으로 지적 반영을 확인하여 DEV5-DESIGN-001을 ACCEPTED로 기록했다. 동시 COMM 문서 변경과 기존 제품 dirty 변경은 검토 승인 범위에서 제외했다.
 
 검토자는 읽기 전용으로 작업했고 파일 수정·문서 자동 검사·제품 실행을 하지 않았다. D5-F01–F05·B3·PF11·모델/동시성/보안/복구 실행은 여전히 미완료/NOT_RUN이다. 설계 검토와 source 열람은 제품 실행 PASS를 대신하지 않으며 기존 실행 증거는 변경하지 않는다.
+
+<a id="review-corrections"></a>
+## DEV5-REVIEW-002 — 후속 독립 설계 리뷰
+
+2026-10-18 사용자의 설계 리뷰·문제 즉시 수정 요청에 따라 `/root`가 DEV5·DEV4·COMM·단계 계약을 대조하고 `/root/dev5_independent_review`가 별도 읽기 전용 검토를 수행했다. 최초 설계의 채택/검토 결과는 위에 당시 기록으로 보존한다. 이번에는 공개 DBMS checkout을 다시 조사하거나 제품을 실행하지 않았다. 기준 identity·수정 소유는 [계획의 작업 기록](../plans/dev5-implementation-plan.md#review-work-record)에 있다.
+
+| 우선순위·항목 | 설계 반례 | 반영한 수정·필수 확인 |
+| --- | --- | --- |
+| P2 · worker와 거래 소유자 사이 진행 정체 | A가 row lock을 가진 채 idle, B–E가4 worker를 모두 점유해 A를 기다림, A의 COMMIT/ROLLBACK은 worker queue에서 대기. engine의 transaction wait-for graph에는 cycle이 없고 일반 timeout까지 정상 종료/다른 runnable 세션이 정체될 수 있음 | 다른 세션에 의존하는 lock/DDL drain/admission 대기를 SQL/engine의 명시 중단·재개 경계로 반환하고 parked 요청의 자원·generation·deadline 유지. wait 등록/ready 검사 원자화, cancel/shutdown 인계 명시. D5-F03 실제 공급 gate, D5-T08/12·M01/02에 holder 진행·wake 유실·stale wake 반례 |
+| P2 · 거래300초 만료의 효과 누락 | 짧은 문장을 계속 실행하거나 parked 요청을 취소한 뒤 일반 timeout 규칙대로 명시 거래를 Active로 돌려보내면 최대수명 규칙을 충족하지 못함. 완료된 DML Reply 뒤 조용히 Idle로 바꾸면 다음 DML이 새 거래에 들어갈 수도 있음 | transaction generation별 만료 시 신규 admission 차단·Closing·result 정리·미commit 거래 전체 undo·연결 종료. CommitAttempted 결과와 이미 확정된 terminal은 불변. D5-T09에 idle/queued/running/parked/commit 전후·undo fault 및 후속 DML 거절 |
+| 명료화 · 종료 중 slot·fragment 경계 | 기존 slot 재사용 금지 원칙은 있으나 인증 session32 회계와 reply enqueue가 가리키는 범위가 모호함 | Closing/Fenced/Closed의 미회수 소유까지32 slot에 포함. 모든 Reply fragment enqueue 뒤 다음 ordinary admission. 반복 disconnect/지연 cleanup도 T08에서 확인 |
+
+계약 담당은 timeout 의존·worker 증설보다 소유가 명시된 대기 중단/재개를 선택했다. 현재 하위 API에 이 기능이 있다고 주장하지 않으며 실제 공급·독립 검토·하위 회귀를 서버 조립의 필수 입력으로 남겼다. 실제 OS I/O가 끝나지 않는 상황까지 유한 시간 진행을 증명한 것은 아니다. 거래 수명 만료에는 새 sticky error/재개 protocol 대신 세션 종료를 선택해 기존 transaction 의도의 조용한 변경을 막았다.
+
+별도 검토자가 수정 중 발견한 기존 문구의 `worker 재사용 금지`와 parked worker 반환 충돌도 정리했다. 재사용 금지 대상은 정리가 끝나지 않은 request/transaction 소유 slot이며, 안전한 인계를 끝낸 worker만 풀로 반환한다. 실행 중 thread를 강제 회수하지 않는다.
+
+2026-10-18 `/root/dev5_independent_review`가 DEV5 원문3개·stage-completion.json의 SC03/DEV5 항목·contracts/plans/evidence README, 총7개 파일의 이번 변경을 기준 사본과 대조했다. worker 대기·만료·slot·fragment 경계와 반례/인수 연결, baseline HEAD/hash를 확인한 최종 결과는 **채택 가능·잔여 필수 P1/P2 없음**이다. `/root`가 계약·통합 담당으로 반영을 확인하여 DEV5-REVIEW-002를 ACCEPTED로 기록했다. DEV3/DEV4/COMM 등 동시 변경은 승인 범위에서 제외했다.
+
+검토자는 파일 수정·문서 자동 검사·제품/모델/성능 실행을 하지 않았다. D5-F01–F05·SC03/KU14/PA08/PF11·B3 및 모델/제품 실행은 계속 **NOT_RUN**이며, 문서 자동 검사는 DOC-002의 push 전용 규칙에 따라 실행하지 않았다.

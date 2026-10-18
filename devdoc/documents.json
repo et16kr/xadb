@@ -557,6 +557,11 @@
       "path": "evidence/dev5-source-research.md",
       "role": "evidence",
       "title": "DEV5 — 서버 소스 조사와 독립 검토 기록"
+    },
+    "dev5-oracle-source-review.md": {
+      "path": "evidence/dev5-oracle-source-review.md",
+      "role": "evidence",
+      "title": "DEV5 — Oracle·로컬 DBMS 비교와 후속 설계 검토"
     }
   }
 }

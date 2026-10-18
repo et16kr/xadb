@@ -177,7 +177,8 @@
       "completion_ref": "stage-completion.json#DEV5",
       "design_refs": [
         "dev5-server-design.md",
-        "dev5-implementation-plan.md"
+        "dev5-implementation-plan.md",
+        "dev5-server-design.md#oracle-server-review"
       ]
     },
     {

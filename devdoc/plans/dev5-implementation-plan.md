@@ -1,6 +1,6 @@
 # DEV5 — 서버 구현·검증 계획
 
-2026-10-18 · **DEV5-DESIGN-001 ACCEPTED 설계 대응 / 제품·B3·PF11 NOT_RUN**
+2026-10-18 · **DEV5-DESIGN-001·DEV5-REVIEW-002/003 ACCEPTED 대응 / 제품·B3·PF11 NOT_RUN**
 
 [서버 상세 설계](../contracts/dev5-server-design.md) · [소스 조사·검토](../evidence/dev5-source-research.md) · [단계 JSON](development-stages.json) · [완료 계약](stage-completion.json)
 
@@ -13,7 +13,7 @@
 | --- | --- | --- |
 | 설계·byte vector·모델 준비 | DEV4/COMM 채택 계약, 단계·제품 방향 | 이번 작업 범위. 코드 실행 증거 아님 |
 | protocol/auth 모듈 구현 | D5-F01/F02 동결, 실제 DEV1/COMM 공급 API와 해당 leaf 회귀 | Q1 없이 stub으로 모듈 시험 가능하나 B3 통합 PASS 불가 |
-| 실제 서버 조립 | 현재 revision의 S1→Q1, C1 실제 실행 증거; D4-F01/F02/F04/F05·C1 소유권/취소/clock/peer port 공급 | 기존 부분 구현·dirty 코드만으로 충족했다고 판단하지 않음 |
+| 실제 서버 조립 | 현재 revision의 S1→Q1, C1 실제 실행 증거; D4-F01/F02/F04/F05·C1 소유권/취소/clock/peer port 및 D5-F03 wait 중단·재개 공급 | 기존 부분 구현·dirty 코드만으로 충족했다고 판단하지 않음 |
 | B3 완료 | 아래 모든 필수 inventory·수치 profile 동결 및 SC03/KU14/PA08/PF11 실제 PASS, Q1/C1·하위 회귀, 독립 검토 | NOT_RUN; 미도달·미실행·UNKNOWN을 PASS로 변경 금지 |
 
 DEV3의 mutable page·WAL·영속 undo·CLR·doublewrite·table SERIALIZABLE 공급을 실제 확인한다. DEV2 volatile/COW leaf나 mock SQL/echo ACK를 B3 durability로 대체하지 않는다. current-build recovery·restore와 과거 ACK 보존을 검증하며 사내 교차 버전은 NOT_REQUIRED_INTERNAL_FRESH_BUILD다. 안정 릴리스 때 VERSION_RELEASE가 추가된다.
@@ -26,8 +26,8 @@ DEV3의 mutable page·WAL·영속 undo·CLR·doublewrite·table SERIALIZABLE 공
 | ID | 동결할 내용 | 닫는 시점·필수 산출 |
 | --- | --- | --- |
 | D5-F01 | XSQ1 body별 exact field order·handle/metadata/outcome enum·timeout prefix·버전 거절, 독립 byte fixtures | wire codec 구현 전. 정상/최소/최대/손상 literal bytes·기대 오류·allocation inventory; SQL1 MiB/bind8 MiB/UTF-8 경계 |
-| D5-F02 | 실제 platform peer credential port, UID/principal map grammar·reload epoch, SQL authorization callback·DDL 단계·권한 효과 | auth/SQL adapter 구현 전. dependency/unsafe/feature 검토, 실패·revoke race vector, guard/thread 소유 가능성 |
-| D5-F03 | request/worker/result/engine abort ownership·reserved cleanup slot·writer fence·shutdown supervisor | session/scheduler 구현 전. state transition table·lock order·heap/stack/FD 최악 계산·bounded model 전이/깊이 |
+| D5-F02 | 실제 platform peer credential port, UID/principal map grammar·reload epoch, SQL authorization callback·DDL 단계·권한 효과·자기 cleanup 예외 | auth/SQL adapter 구현 전. dependency/unsafe/feature 검토, 실패·revoke race와 철회 후 cleanup vector, parser가 제공한 ROLLBACK 분류·session 소유 검사, guard/thread 소유 가능성 |
+| D5-F03 | request/worker/result/engine abort ownership·wait 중단/재개·reserved cleanup slot·idle/거래 수명 만료·writer fence·shutdown supervisor | session/scheduler 구현 전. SQL/engine 실제 공급 API·하위 회귀/별도 검토, wait 등록/조건 검사·wake/cancel 경합·thread 이동, Ready/terminal/인계의 idle 시각·적용 상태, state transition table·lock order·heap/stack/FD 최악 계산·bounded model 전이/깊이 |
 | D5-F04 | 독립 client/controller·SQL/native literal oracle·ACK history·socket/WAL/reopen fault hooks·receipt | 실제 server runner 구현 전. build/fault manifest, 각 cut reachability와 known-bad 검출, Q1/C1 공급 revision |
 | D5-F05 | PF11 fixture·source/binary/profile/환경·worker/admission 규모·실제 recipe·사전 통계 계획 | baseline 실행 전. 아래 profile·paired order/seed·원시 sample·metric map·재현 bundle |
 
@@ -40,7 +40,7 @@ frame/UID/권한 callback의 실제 하위 계약이 부족하면 해당 소유�
 | --- | --- | --- |
 | D5-I01 | protocol 모델·독립 byte decoder/fixture, XSQ1 codec·bounded reassembly | D5-F01·T01/02/13. AXF1과 logical-body 한도 분리 |
 | D5-I02 | peer identity·정책 loading/reload·권한 callback | F02·T03/04. 인증 없는 SQL 효과 0과 DDL prior outcome |
-| D5-I03 | session registry·request generation·worker scheduling·예약/cleanup 소유 | F03·T05/08/09/12, 모델과 synthetic budget |
+| D5-I03 | session registry·request generation·worker scheduling·park/resume·거래 수명 만료·예약/cleanup 소유 | F03의 하위 공급을 먼저 확인, T05/08/09/12·모델과 synthetic budget |
 | D5-I04 | DEV4 prepared/direct/fetch/metadata adapter·DDL/거래·stale 권한 재확인 | 실제 Q1/C1 공급 뒤 T06/07/10/11, mock 종료 |
 | D5-I05 | start/recovery/listener·cancel/disconnect/shutdown·외부 ACK runner | F04·T03–13 전체, current-build disk reopen/재장애 |
 | D5-I06 | PF11 계측·부하/원인 구분·비교·replay, 단계 통합 | F05·T14, 실제 하위 회귀·별도 검토·B3 판정 |
@@ -59,17 +59,23 @@ frame/UID/권한 callback의 실제 하위 계약이 부족하면 해당 소유�
 | D5-T01 | XSQ1 header/kind/version/flags·짧은 body·count/length overflow·UTF-8·NULL·Int64 min/max | 독립 byte vector 일치, 손상은 SQL 전에 거절, allocation 한도. SC03 |
 | D5-T02 | 모든 header/body split·복수 AXF1 묶음·1 MiB SQL+envelope·8 MiB bind·fragment 256/257·중복 offset·중간 EOF/cancel | 전체 한 번 실행 또는 효과0, 실패 bind는 이전 binding 보존, reservation 회수. quota 거절 close와 semantic bind 오류 구분. SC03 |
 | D5-T03 | peer UID/claimed UID 불일치·unknown principal·잘못된 DB·권한 없음·version mismatch·실제 owned Unix connect·두 server DB open | 인증 전 SQL/catalog/txn 효과0, writer lease 단독, pre-recovery Ready 불가. Unix mode/path 소유 검사, TCP SQL Unsupported. SC03 |
-| D5-T04 | read/write/ddl/connect 각각 거절, prepare 후 revoke, fetch/Describe 재확인, reload 성공/손상/중복/epoch 경합 | 권한 선형화점 이후 승인한 동작만 완료; 다음 동작 새 epoch. DDL 앞 UPDATE는 prior=Committed·ddl=NotAttempted·PermissionDenied로 reopen 보존, prior commit 권한 거절은 Active 유지. SC03 |
+| D5-T04 | read/write/ddl/connect 각각 거절, prepare 후 revoke, fetch/Describe 재확인, 철회 후 자기 ROLLBACK/CloseResult/CloseStatement/CloseSession/Cancel, reload 성공/손상/중복/epoch 경합 | 권한 선형화점 이후 승인한 동작만 완료; 다음 업무 새 epoch. cleanup은 새 권한 없이 수행하거나 이미 Closing의 정리로 인계하며 교차 session token·위조 cleanup class는 거절. DDL 앞 UPDATE는 prior=Committed·ddl=NotAttempted·PermissionDenied로 reopen 보존, prior commit 권한 거절은 Active 유지. SC03 |
 | D5-T05 | session 교차 token·다른 connection·stale generation·ID duplicate/overflow·pipelining·Reply(N) 먼저/CancelAck(N) 나중 수신 | 다른 세션 영향0, 재실행0, request terminal 단일 확정, live/closed/tombstone quota 상한. client는 두 응답 후 N+1을 보내며, 완료 Ack ticket 회수가 늦었다고 정상 다음 Cancel을 거절하지 않음. SC03 |
 | D5-T06 | prepare/bind/Describe/execute/fetch/close 전체, type/count/NULL/empty text/binary·잘못된 rebind·caller buffer 해제·N=0 | DEV4 metadata/NULL/원자 binding/handle lifecycle과 일치, 문자열 SQL 합성 mutant 거절. SC03·PA08 |
 | D5-T07 | DROP/recreate·index 변경 후 execute, schema와 권한 동시 변경, old catalog 거래, 10,000회 result EOF/close/reexecute | dependency·권한 재확인과 세션 격리, 마지막 descriptor만 보존, stale 첫 효과0, pin/plan/bind 누수0. SC03·PA08 |
-| D5-T08 | 32session/4worker 포화·global quota·output 10초 정지·partial RX trickle·Cancel flood | byte/slot/FD/pin bound 준수, 신규 SQL 생산 중단, control 진행, 다른 runnable 세션 진행, 실패 종류/기한/자원 회수 관측. SC03 |
-| D5-T09 | queued/running/precommit/CommitAttempted/sync/publish/terminal/send의 cancel·timeout·FIN/reset | Reply(N)→CancelAck(N)→N+1/Cancel(N+1) 정상 trace와 늦은 Cancel(N)을 교차 검사. late cancel이 다음 request/COMMITTED에 영향0, Requested와 완료 구별, ABORTED/UNKNOWN/NotCommittedRecoveryRequired 정확한 mapping. SC03·KU14 |
+| D5-T08 | 32session/4worker 포화·global quota·output 10초 정지·partial RX trickle·Cancel flood, 아래 worker 대기 순환/종료 세션 반복 | byte/slot/FD/pin bound 준수, 신규 SQL 생산 중단, control·holder의 COMMIT/cleanup·다른 runnable 세션 진행. Closing/Fenced/cleanup-pending도32 slot 회계, 실패 종류/기한/자원 회수 관측. SC03 |
+| D5-T09 | queued/running/parked/precommit/CommitAttempted/sync/publish/terminal/send의 cancel·timeout·FIN/reset, 최초 Ready·idle30/60초·거래300초 만료 | Reply(N)→CancelAck(N)→N+1/Cancel(N+1) 정상 trace와 늦은 Cancel(N), wait 등록 전후 wake/cancel을 교차 검사. late 신호가 다음 generation/COMMITTED에 영향0, Requested와 완료 구별. 일반 timeout의 명시 거래 유지와 idle/수명 만료의 Closing·전체 undo 구분, ABORTED/UNKNOWN/NotCommittedRecoveryRequired 정확한 mapping. SC03·KU14 |
 | D5-T10 | ON/OFF/BEGIN·실패 S2 뒤 S1 commit·SELECT prefix 취소·DDL prior/ddl outcome·권한·undo 오류 | DEV4 D4-V05/16/21–24의 wire 결과와 native/literal/reopen 일치. 부분 statement/DDL 성공 위장0. PA08·KU14 |
 | D5-T11 | 같은 table 충돌·독립 table 성공·unique 부분/전체 NULL·scan/index/force-scan·동시 schema | 선언한 Serializable history·D4-V11/17/25와 일치. 성공TPS·시도TPS/충돌률 분리. PA08 |
-| D5-T12 | startup/recovery 실패·빈 서버/Active/result/TX 중 shutdown·Drop/panic·worker 포화 cleanup·기한 초과 | reply enqueue 뒤 COMM drain, 미commit undo 또는 recovery 소유, 재사용 금지/fence 정확, 자기 endpoint만 제거. grace 실패를 성공으로 표시하지 않음. SC03 |
+| D5-T12 | startup/recovery 실패·빈 서버/Active/result/parked/TX 중 shutdown·Drop/panic·worker 포화 cleanup·기한 초과·권한/idle cleanup과 output 포화 | reply 전체 enqueue 뒤 COMM drain, parked 소유의 단일 cleanup 인계·미commit undo 또는 recovery 소유. cleanup이 새 assembly/staging/TX credit을 기다리지 않으며 기존 terminal을 덮지 않음. 재사용 금지/fence 정확, 자기 endpoint만 제거. grace 실패를 성공으로 표시하지 않음. SC03 |
 | D5-T13 | 아래 crash cut·잘못된 server/client decoder·미도달 hook·빈/유실 ACK history·mutant | actual client ACK 보존, 확정 abort 비가시, UNKNOWN 원자성, 반복 reopen·row/index/catalog 일치, oracle가 known-bad 거절. KU14·PA08 |
 | D5-T14 | below PF11 profile·queue/worker/WAL/output 경계·trace loss·계측 off/on·slow peer | 외부 latency와 내부 원인 연결, 비용/회귀 수치·독립 정확성·새 세션 replay 충족. PF11 |
+
+D5-T08은 holder A가 행 잠금을 가진 채 idle이고 B–E 네 요청이 같은 잠금을 기다린 후 A의 COMMIT/ROLLBACK이 도착하는 순서를 barrier로 고정한다. B–E가 parked로 worker를 반환한 상태에서 A가 실행되어야 하며, B–E의 ordinary deadline을 만료시켜서만 A가 진행하면 실패다. offline DDL의 drain과 그 admission에 막힌 요청도 같은 관점으로 검사한다. D5-M02의 축소 모델과 실제 4-worker 통합을 모두 요구한다. disconnect 뒤 cleanup을 고의 지연하고 반복 접속하여 slot32를 초과하는 인증/소유 재사용이 없는지도 확인한다.
+
+D5-T09의 거래 수명 vector는 transaction 생성→짧은 SELECT/DML 성공을 반복하면서300초 경과, result를 열린 채 유지, in-flight 없는 idle, queued/parked/running 및 CommitAttempted 전후를 포함한다. 공유 fake Clock으로 경계 직전/동일/직후를 고정하고 실제 server timer 경로도 별도로 실행한다. 이미 받은 Active DML 성공 뒤 만료하면 연결이 닫히고 미commit 전체가 없어야 하며 후속 DML을 새 거래로 조용히 실행하지 않는다. 진행 중 terminal은 cleanup 완료 뒤만 확정하고 이미 확정된 terminal은 덮지 않는다. 만료 전 CommitAttempted의 결과는 engine certainty대로 보존한다. undo fault·지연 시 정상 ABORTED/300초 내 정리 성공을 꾸미지 않는다.
+
+idle vector는 Welcome 뒤 ordinary가 없는 세션, Active/result의 terminal 뒤 입력 없음, 부분 frame/Cancel trickle, 완료 입력이 queued인 채 deadline 도달, worker 인계 직전/동일/직후를 포함한다. running/parked에는 idle을 적용하지 않되 원래 ordinary/transaction deadline은 유지한다. idle30초와 ordinary30초를 구분하려면 앞선 terminal 뒤 20초에 다음 요청을 인계하고 15초간 실행/park하여, 이전 idle 시각은 지났지만 새 ordinary deadline은 아직 남은 이력을 검사한다. 새 terminal로 idle만 갱신되고 거래 생성 시각은 유지되어야 한다. 다음 client 호출 없이도 cleanup을 실행하고 output 포화·undo 실패에서 결과를 위장하지 않는다.
 
 ### 4.1 필수 crash/fault cut
 
@@ -90,11 +96,11 @@ process kill, 파일 API short write/sync fault, 하위 전원 장애 모델을 
 
 ### 4.2 모델·부정 사례·실제 동시성
 
-D5-M01은 세션2·worker1·세션당 ordinary2·취소1·disconnect1, 축소 RX/TX/cleanup slot 각1의 유한 상태 모델이다. assembly/queue/run/commit-attempt/durable/terminal/TX/cleanup 상태, revoke epoch 2개와 shutdown을 포함한다. ID 재사용 금지·terminal 유일성·unauthorized effect0·정리 소유 보존·late cancel 격리를 검사한다. 독립 expected state와 전이 목록·탐색 깊이/상태 수 상한은 F03에서 실행 전 동결하고 유한 공간 완주 여부를 기록한다. cutoff를 PASS로 처리하지 않는다.
+D5-M01은 세션2·worker1·세션당 ordinary2개 순차 요청·취소1·disconnect1, 축소 RX/TX/cleanup slot 각1의 유한 상태 모델이다. assembly/queue/run/parked/commit-attempt/durable/terminal/TX/cleanup 상태, revoke epoch 2개와 shutdown·거래 수명 만료를 포함한다. ID 재사용 금지·terminal 유일성·unauthorized effect0·정리 소유 보존·late cancel/wake 격리를 검사한다. wait 등록 직전/직후 unlock·cancel과 slot 회수 뒤 stale wake를 별도 action으로 둔다. 독립 expected state와 전이 목록·탐색 깊이/상태 수 상한은 F03에서 실행 전 동결하고 유한 공간 완주 여부를 기록한다. cutoff를 PASS로 처리하지 않는다.
 
-D5-M02는 output slot 포화+Cancel+shutdown의 wait-for graph를 확인한다. SQL worker가 TX 공간을 기다리지 않고 I/O owner가 worker slot을 기다리지 않는 불변식, cleanup 예약과 engine blocking 종료의 구분을 확인한다. 실제 OS I/O 종료의 실시간 상한을 모델로 증명하지 않는다.
+D5-M02는 output slot 포화+Cancel+shutdown과 worker↔다른 세션의 transaction/DDL drain 의존을 함께 확인한다. 최소 holder1·waiter1·worker1로 lock wait 중 holder의 COMMIT/ROLLBACK/close가 진행하는지 검사하고 실제4-worker 사례는 D5-T08에서 수행한다. SQL worker가 TX 공간이나 다른 세션 실행에 의존하는 조건을 점유한 채 기다리지 않고 I/O owner가 worker slot을 기다리지 않는 불변식, wait registration/continuation의 단일 소유·깨우기 유실 방지, cleanup 예약과 engine blocking 종료의 구분을 확인한다. 실제 OS I/O 종료의 실시간 상한을 모델로 증명하지 않는다.
 
-known-bad 최소 집합은 auth 우회, prior DDL outcome 유실, stale handle 재활성, 잘못된 fragment 순서 수락, 일부 bind 교체, affected_rows를 COMMITTED로 표시, local flush를 ACK로 계산, sync 전 ACK, ACK된 행 유실, late cancel이 새 요청 취소, undo 실패를 ABORTED로 표시, TX 대기 중 worker 점유다. 모델·byte oracle·실제 process의 해당 검출 증거를 따로 남긴다.
+known-bad 최소 집합은 auth 우회, prior DDL outcome 유실, stale handle 재활성, 잘못된 fragment 순서 수락, 일부 bind 교체, affected_rows를 COMMITTED로 표시, local flush를 ACK로 계산, sync 전 ACK, ACK된 행 유실, late cancel이 새 요청 취소, undo 실패를 ABORTED로 표시, TX/transaction lock 대기 중 worker 점유, wait 등록 경합의 wake 유실, 거래 수명 만료 뒤 Active/새 거래 재사용, 권한 철회로 자기 cleanup 거절, cleanup 표방 입력으로 DML 권한 우회, running/parked에 idle 적용, 부분 byte로 idle 갱신이다. 모델·byte oracle·실제 process의 해당 검출 증거를 따로 남긴다.
 
 DP03의 V2 property 64 seeds×최대128 operations, V3 256×최대1,024와 실제 thread stress 30분, 관련 protocol/parser target당 fuzz 30분 및 보존 corpus 전체, 비결정 fault cell 3회 새 fixture를 적용한다. 구현 전 seed/operation/환경을 동결하며 단순 반복 unit test를 해당 인수로 대체하지 않는다.
 
@@ -141,3 +147,22 @@ TCP SQL·TLS/인증서·원격 identity/password·객체별 ACL·multi-DB·LOB c
 | 검증 상태 | 실제 local source revision/origin·선택 코드·hash 확인. 제품/성능/모델/복구 실행 NOT_RUN. DOC-002에 따라 문서 자동 검사는 push 전용; 현재 실행하지 않음 |
 
 설계 작성·검토 과정에서는 commit/push·배포·제품 시험을 수행하지 않았다. 설계 채택·실제 leaf 동결·제품 인수는 별개이며, 기존 FAIL·중단 기록을 다시 쓰지 않는다.
+
+<a id="review-work-record"></a>
+## 8. DEV5-REVIEW-002 작업 기록
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·권한·담당 | D2. 사용자 DEV5 설계 리뷰·문제 즉시 수정 요청. 작업/계약/통합 `/root`, 읽기 전용 별도 검토 `/root/dev5_independent_review` |
+| 기준 identity | HEAD `f8b5d8648b55f0242954ee2cdb662926087d9bfa`, 미commit 파일74개 해시 포함 사본 `/tmp/xadb-dev5-review-base-nhobrboj`; identity.json SHA-256 `06f209b55b8b2b20f8cb55deb7ae42470e0613d0e4b1ea58f0afbc46cd163686` |
+| 수정 소유 | DEV5 설계·이 계획·기존 source-research의 새 검토 절. 공유 수정은 stage-completion.json의 SC03/DEV5 동결·인수 항목과 contracts/plans/evidence README 설명만 통합 담당이 순차 반영 |
+| 중복 확인 | DEV2 제품/시험·COMM 및 DEV3/DEV4 설계의 동시 변경을 관측. 초기 DEV5 문서의 별도 commit도 관측했으며 최신 파일에 좁은 patch 적용. 해당 제품 코드·Cargo·타 단계 계약·기존 실행 증거는 이번 수정 범위 밖 |
+| 순서·생성물 | 원문/반례 독립 검토→설계와 인수 수정→관련 JSON/색인→diff 독립 재검토. 신규 문서/ID·package·생성물 없음; 기존 documents.json 등록 ID 유지 |
+| 검토·검증 | 확정 P2 두 건과 종료 중 session 회계 명료화. `/root/dev5_independent_review`가 7개 파일의 DEV5 diff·반례·직접 계약을 재검토: 채택 가능, 잔여 필수 P1/P2 없음. `/root` 반영 확인. 제품/모델/성능/복구 실행 NOT_RUN. DOC-002에 따라 문서 자동 검사는 push 전용이며 이 작업에서 실행하지 않음 |
+
+300초/worker4/session32 수치와 품질 gate는 유지한다. 구체 하위 API·실행 인수 미완료를 문서 검토 결과로 승격하지 않는다.
+
+<a id="oracle-review-work-record"></a>
+## 9. DEV5-REVIEW-003 후속 검토
+
+[Oracle·로컬 DBMS 조사와 작업 기록](../evidence/dev5-oracle-source-review.md#work-record)을 따른다. 현재 채팅 `01a14f3d-7736-74c1-94d3-dae23716d7c0`의 `/root`가 002 완료본을 수신한 뒤 cleanup 권한 예외·idle 적용 경계와 F02/F03/T04/T09/T12·known-bad만 순차 보완했다. 002의 worker4/parked·거래300초·하위 공급 gate는 보존한다. 별도 실행 `/root/dev5_independent_review`가 003 diff·원문·source/Oracle 근거를 재검토하여 채택 가능·잔여 필수 P1/P2 없음으로 판단했고 `/root`가 반영을 확인했다. 제품·모델·성능·복구는 NOT_RUN이다.
