@@ -1,0 +1,21 @@
+[package]
+name = "xadb-platform"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+test-support = ["xadb-foundation/test-support"]
+
+[dependencies]
+xadb-foundation.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+nix.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

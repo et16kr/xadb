@@ -1,0 +1,484 @@
+{
+  "schema_version": 1,
+  "document": "ai-performance-engineering.md",
+  "status": "DESIGN_CONTRACT_NOT_IMPLEMENTED",
+  "execution_status": "NOT_RUN",
+  "run_entrypoint": null,
+  "evidence_refs": [],
+  "decision": {
+    "id": "PE-D01",
+    "class": "D2",
+    "status": "ACCEPTED",
+    "date": "2026-10-18",
+    "owner": "/root",
+    "contract_owner": "/root",
+    "integration_owner": "/root",
+    "authorization": "User requested documentation for AI to analyze bottlenecks, identify causes, improve code and verify improvement autonomously within existing product contracts.",
+    "alternatives": [
+      "manual analysis over operational counters",
+      "common measurement, reproducible experiments and independent comparison from the kernel",
+      "always-on detailed trace for every function"
+    ],
+    "selected_alternative": "common measurement, reproducible experiments and independent comparison from the kernel",
+    "rationale": "connect observations to code, causal experiments and reviewable evidence while bounding hot-path cost",
+    "supersedes": [],
+    "revisit_when": [
+      "instrumentation exceeds registered budgets",
+      "false cause or improvement verdict",
+      "fresh-session reproduction fails"
+    ]
+  },
+  "authority_refs": [
+    "development-policy.json",
+    "development-stages.json",
+    "stage-completion.json",
+    "repository-build-plan.json",
+    "implementation-contracts.md",
+    "version-compatibility-policy.json",
+    "dev1-contract.json"
+  ],
+  "current_implementation": {
+    "foundation_clock_events": "IMPLEMENTED_FINITE_DEV1_SCOPE",
+    "performance_runner": "NOT_IMPLEMENTED",
+    "full_metric_catalog_and_async_links": "NOT_IMPLEMENTED",
+    "performance_pilot": "NOT_RUN",
+    "dev0_dev1_evidence_requalified": false
+  },
+  "requirements": [
+    {
+      "id": "PE01",
+      "requirement": "계측 항목에서 코드·계약·실험으로 이동",
+      "contract": "항목 ID, 소유 모듈, source/build identity, API·불변식·benchmark 연결"
+    },
+    {
+      "id": "PE02",
+      "requirement": "시간과 작업량의 의미 고정",
+      "contract": "단위·범위·분모·중첩·병렬성·시계·오류/취소 집계 정의"
+    },
+    {
+      "id": "PE03",
+      "requirement": "요청과 비동기 작업 연결",
+      "contract": "request/operation/transaction, parent·link, batch·worker·자원 관계"
+    },
+    {
+      "id": "PE04",
+      "requirement": "제한된 저비용 계측",
+      "contract": "모드별 비용·메모리 상한, 비차단 기록, drop·표본·누락 표시"
+    },
+    {
+      "id": "PE05",
+      "requirement": "동일 조건 재현과 비교",
+      "contract": "고정 workload·환경·의미, baseline/candidate 별 지문과 실제 경로"
+    },
+    {
+      "id": "PE06",
+      "requirement": "가설과 원인을 구분",
+      "contract": "관측·후보·반증·구분 실험·원인 근거를 분리"
+    },
+    {
+      "id": "PE07",
+      "requirement": "의미를 보존하는 국소 수정",
+      "contract": "독립 정답, 관련 동시성·실패·복구 시험, 변경 경로 확인"
+    },
+    {
+      "id": "PE08",
+      "requirement": "독립적 개선·회귀 판정",
+      "contract": "효과·불확실성·허용 회귀·유효성을 controller가 계산"
+    },
+    {
+      "id": "PE09",
+      "requirement": "새 AI 세션에서 이어 하기",
+      "contract": "원본 증거·계약·실행 recipe·가설 이력·다음 실험을 묶음"
+    },
+    {
+      "id": "PE10",
+      "requirement": "하위 단계부터 측정",
+      "contract": "DEV2 실제 API부터, DEV3 저장·DEV4 SQL·DEV5 서버·DEV8 전체 검증"
+    }
+  ],
+  "metric_catalog_fields": [
+    "metric_id",
+    "semantic_revision",
+    "kind",
+    "unit",
+    "scope",
+    "aggregation_reset",
+    "denominator",
+    "label_allowlist",
+    "sampling",
+    "coverage",
+    "source_locator",
+    "contract_refs",
+    "benchmark_refs"
+  ],
+  "bundle_components": [
+    "manifest",
+    "workload/profile",
+    "metric catalog",
+    "observations",
+    "hypotheses",
+    "change",
+    "comparison",
+    "resume"
+  ],
+  "modes": [
+    "minimal/off baseline",
+    "always-on",
+    "scoped",
+    "reproduction lab"
+  ],
+  "verdicts": {
+    "validity": [
+      "VALID",
+      "INVALID",
+      "UNKNOWN"
+    ],
+    "correctness": [
+      "PASS",
+      "FAIL",
+      "UNKNOWN",
+      "NOT_RUN"
+    ],
+    "performance_effect": [
+      "IMPROVED",
+      "NO_MATERIAL_CHANGE",
+      "REGRESSED",
+      "INCONCLUSIVE",
+      "NOT_RUN"
+    ],
+    "guardrails": [
+      "PASS",
+      "FAIL",
+      "UNKNOWN",
+      "NOT_RUN"
+    ],
+    "cause_status": [
+      "SUPPORTED",
+      "REJECTED",
+      "UNRESOLVED",
+      "NOT_RUN"
+    ],
+    "promotion": [
+      "READY_FOR_REVIEW",
+      "REJECTED",
+      "INCOMPLETE"
+    ]
+  },
+  "comparison_policy": {
+    "semantics_must_match": true,
+    "invalid_or_unknown_comparison": "INCONCLUSIVE",
+    "candidate_self_promotion_allowed": false,
+    "baseline_correctness_required": true,
+    "complexity_policy_ref": "development-policy.json",
+    "complexity_minimum_pairs": 10,
+    "minimum_pairs_guarantees_sufficiency": false,
+    "universal_improvement_percent": null,
+    "baseline_refresh_requires_separate_review": true,
+    "internal_cross_version_compatibility_required": false,
+    "confirmation_policy": {
+      "separate_exploration_and_confirmation": true,
+      "freeze_candidate_before_fresh_runs": true,
+      "retain_all_candidates_and_failed_confirmations": true,
+      "preregister_repeated_confirmation_error_control": true,
+      "reuse_exploration_as_confirmation": false
+    }
+  },
+  "stage_obligations": [
+    {
+      "stage": "DEV2",
+      "case_ids": [
+        "PF01",
+        "PF02",
+        "PF03",
+        "PF04",
+        "PF05",
+        "PF06",
+        "PF07",
+        "PF12",
+        "PF13"
+      ],
+      "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+    },
+    {
+      "stage": "DEV3",
+      "case_ids": [
+        "PF09"
+      ],
+      "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+    },
+    {
+      "stage": "DEV4",
+      "case_ids": [
+        "PF10"
+      ],
+      "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+    },
+    {
+      "stage": "DEV5",
+      "case_ids": [
+        "PF11"
+      ],
+      "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+    },
+    {
+      "stage": "DEV8",
+      "case_ids": [
+        "PF08",
+        "PF14"
+      ],
+      "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+    }
+  ],
+  "cases": [
+    {
+      "id": "PF01",
+      "stage": "DEV2",
+      "requirement_refs": [
+        "PE01",
+        "PE02"
+      ],
+      "acceptance": "항목 단위·범위·분모·소유 코드 연결, 중복 ID·stale source·미계측 값의 0 대체를 거절",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF02",
+      "stage": "DEV2",
+      "requirement_refs": [
+        "PE02",
+        "PE03"
+      ],
+      "acceptance": "중첩·병렬·공유 flush·다른 clock domain의 고정 이력으로 중복 합산·잘못된 차감을 검출",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF03",
+      "stage": "DEV2",
+      "requirement_refs": [
+        "PE04",
+        "PE07"
+      ],
+      "acceptance": "버퍼 포화·수집 지연·수집기 부재에서도 상한·drop 공개, 동일 정답·오류·내구성 보존",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF04",
+      "stage": "DEV2",
+      "requirement_refs": [
+        "PE04",
+        "PE05"
+      ],
+      "acceptance": "off/상시/상세의 실제 release 측정, 사전 비용 예산 준수 또는 명시 실패·불충분",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF05",
+      "stage": "DEV2",
+      "requirement_refs": [
+        "PE05",
+        "PE08"
+      ],
+      "acceptance": "각 run의 등록 manifest와 다른 binary/fixture, 서로 다른 의미·부하·미도달 경로의 비교를 INVALID로 거절",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF06",
+      "stage": "DEV2",
+      "requirement_refs": [
+        "PE05",
+        "PE07",
+        "PE08"
+      ],
+      "acceptance": "sync 생략·요청 누락·오류/timeout 은폐·부하 감소로 만든 거짓 개선을 채택하지 않음",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF07",
+      "stage": "DEV2",
+      "requirement_refs": [
+        "PE08"
+      ],
+      "acceptance": "알려진 동등·개선·악화·불확실·순서 drift 및 동등한 다수 후보의 우연한 winner에서 판정·독립 확인·탐색 선택 편향 처리 검증",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF08",
+      "stage": "DEV8",
+      "requirement_refs": [
+        "PE06",
+        "PE07",
+        "PE08",
+        "PE09"
+      ],
+      "acceptance": "원인을 숨긴 CPU·대기·queue·과도한 작업량 사례에서 후보·구분 실험·수정·독립 판정, DP05 성능 과제 5개 기록",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF09",
+      "stage": "DEV3",
+      "requirement_refs": [
+        "PE02",
+        "PE05",
+        "PE10"
+      ],
+      "acceptance": "데이터/동시성/편향/working set 변화의 작업량과 단위 비용, memory·I/O 회귀 확인",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF10",
+      "stage": "DEV4",
+      "requirement_refs": [
+        "PE01",
+        "PE02",
+        "PE03",
+        "PE10"
+      ],
+      "acceptance": "plan/node→실제 rows/loops/spill→storage 연결, 변경 전후 결과 동등성과 비용 설명",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF11",
+      "stage": "DEV5",
+      "requirement_refs": [
+        "PE02",
+        "PE03",
+        "PE10"
+      ],
+      "acceptance": "thread/queue/async 경계를 넘는 요청 연결, 외부 응답과 worker 합산 시간 구분",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF12",
+      "stage": "DEV2",
+      "requirement_refs": [
+        "PE06",
+        "PE07",
+        "PE08"
+      ],
+      "acceptance": "국소 수정 전후 원인 지표·end-to-end 효과와 독립 정답·관련 fault/recovery를 함께 확인",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF13",
+      "stage": "DEV2",
+      "requirement_refs": [
+        "PE05",
+        "PE09"
+      ],
+      "acceptance": "새 세션이 bundle만으로 baseline/candidate와 가설 이력을 재현, 미지원 수집·손실은 명시",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    },
+    {
+      "id": "PF14",
+      "stage": "DEV8",
+      "requirement_refs": [
+        "PE07",
+        "PE08",
+        "PE10"
+      ],
+      "acceptance": "장시간 tail·backlog·메모리·복구 회귀와 candidate의 baseline/기준 자기 갱신을 검출",
+      "recipe_status": "REQUIRES_IMPLEMENTATION_PROFILE",
+      "run_entrypoint": null,
+      "execution_status": "NOT_RUN",
+      "evidence_refs": []
+    }
+  ],
+  "legacy_evidence": [
+    {
+      "revision": "0682bdd8610c3728810df616c95a858cda675706",
+      "sha256": "0e7665bd8ad55467826bf18ef8512b338f81eee3f7fc62e0d567acd02497d468",
+      "identity_note": "current checkout content; file hash identifies any local changes relative to HEAD",
+      "runtime_verified": false
+    },
+    {
+      "revision": "0682bdd8610c3728810df616c95a858cda675706",
+      "sha256": "568be2d60d7c48c7b1395a787c3816ecf7b20ee480f6fbba08db56e592f6be2f",
+      "identity_note": "current checkout content; file hash identifies any local changes relative to HEAD",
+      "runtime_verified": false
+    },
+    {
+      "revision": "0682bdd8610c3728810df616c95a858cda675706",
+      "sha256": "94ef2048580666c047901509136c6f035dad950cc170ba97e6926ac25847f9ca",
+      "identity_note": "current checkout content; file hash identifies any local changes relative to HEAD",
+      "runtime_verified": false
+    },
+    {
+      "revision": "0682bdd8610c3728810df616c95a858cda675706",
+      "sha256": "5f22f38b5194899fd109ad7e471159a2ea5e1ebb9486076e5aaeb44aee274f2d",
+      "identity_note": "current checkout content; file hash identifies any local changes relative to HEAD",
+      "runtime_verified": false
+    }
+  ],
+  "review": {
+    "status": "COMPLETED",
+    "reviewer": "/root/performance_design_review",
+    "scope": "read-only independent D2 design and document checker review; no product or performance execution",
+    "result": "NO_BLOCKING_FINDINGS_AFTER_CORRECTION",
+    "findings": [
+      {
+        "id": "PERF-REVIEW-01",
+        "priority": "P2",
+        "issue": "adaptive candidate search can select an accidental performance winner",
+        "resolution": "separate frozen-candidate confirmation, fresh runs, repeated-confirmation error control and PF07 negative case",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "PERF-REVIEW-02",
+        "priority": "P2",
+        "issue": "checker omitted current tool/pilot state and task example linkage",
+        "resolution": "validate exact current states, task contract and unexecuted/null fields; negative controls added",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "PERF-REVIEW-03",
+        "priority": "P3",
+        "issue": "PF05 wording could reject the deliberately different A/B binaries",
+        "resolution": "reject mismatch against each run registered manifest",
+        "status": "RESOLVED"
+      }
+    ],
+    "independent_positive_control": "PASS",
+    "independent_negative_controls_rejected": 12,
+    "markdown_sha256": "b35df4d776d21a815d128c44ea8840035b80bde6b2d8e08c73b27deb72fd5f5c",
+    "document_checker_sha256": "8a1983d17d0a2c9a809805a11cdf13d8a8522b3722d3d4615c22a1ff1121a32e"
+  },
+  "task_allocation_ref": "development-stages.json#kernel_build_steps"
+}

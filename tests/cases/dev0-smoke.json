@@ -1,0 +1,29 @@
+{
+  "scenario_schema_version": 1,
+  "case_id": "XADBTEST-DEV0-001",
+  "contracts": ["XADBTEST-EXACT-VALUES-001", "XADBTEST-NO-FALSE-PASS-001"],
+  "steps": [
+    {"id": "positive", "action": {"operation": "checked_add", "left": 19, "right": 23}},
+    {"id": "negative", "action": {"operation": "checked_add", "left": -40, "right": -2}},
+    {"id": "zero", "action": {"operation": "checked_add", "left": -7, "right": 7}},
+    {"id": "max", "action": {"operation": "checked_add", "left": 9223372036854775807, "right": 0}},
+    {"id": "min", "action": {"operation": "checked_add", "left": -9223372036854775808, "right": 0}},
+    {"id": "overflow", "action": {"operation": "checked_add", "left": 9223372036854775807, "right": 1}},
+    {"id": "underflow", "action": {"operation": "checked_add", "left": -9223372036854775808, "right": -1}}
+  ],
+  "oracle": {
+    "id": "exact-values-v1",
+    "provenance": "Hand-calculated integer vectors and signed 64-bit bounds; not candidate output.",
+    "assertions": [
+      {"step_id": "positive", "expected": {"type": "int64", "value": 42}},
+      {"step_id": "negative", "expected": {"type": "int64", "value": -42}},
+      {"step_id": "zero", "expected": {"type": "int64", "value": 0}},
+      {"step_id": "max", "expected": {"type": "int64", "value": 9223372036854775807}},
+      {"step_id": "min", "expected": {"type": "int64", "value": -9223372036854775808}},
+      {"step_id": "overflow", "expected": {"type": "overflow"}},
+      {"step_id": "underflow", "expected": {"type": "overflow"}}
+    ]
+  },
+  "required_witnesses": ["fixture.checked_add", "fixture.overflow"],
+  "limits": {"timeout_ms": 2000, "output_bytes_per_stream": 65536}
+}

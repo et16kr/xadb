@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "product": "XADB",
+  "date": "2026-10-18",
+  "storage_engine": "DISK_ONLY",
+  "dev0": "LOCAL_VERIFIED",
+  "dev1": "LOCAL_VERIFIED",
+  "dev2": "PARTIAL_IMPLEMENTATION",
+  "dev2_implemented": [
+    "P0 independent history reference",
+    "K0 volatile row/catalog/snapshot/quota",
+    "native frame codec",
+    "native production engine worker"
+  ],
+  "durability": "NOT_IMPLEMENTED",
+  "disk_pages_and_indexes": "NOT_IMPLEMENTED",
+  "sql": "NOT_IMPLEMENTED",
+  "server": "NOT_IMPLEMENTED",
+  "product_qualification": "NOT_RUN",
+  "public_release": "NOT_RUN",
+  "evidence_refs": [
+    "dev0-validation.json",
+    "dev1-validation.json",
+    "dev2-validation.json"
+  ],
+  "dev2_imported_unvalidated": [
+    "xadbtest::native streaming controller draft; built/linted, dedicated acceptance NOT_RUN"
+  ]
+}

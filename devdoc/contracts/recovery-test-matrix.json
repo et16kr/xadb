@@ -1,0 +1,604 @@
+{
+  "schema_version": 1,
+  "status": "PLANNED_NOT_EXECUTED",
+  "contract_ref": "recovery-logging-contract.json",
+  "independent_oracle_required": true,
+  "production_recovery_required": true,
+  "process_kill_is_power_loss_proof": false,
+  "initial_B2_requires_L1_or_L2": false,
+  "optional_capability_rule": "Cases with gate null require separate leaf tasks and gates before implementation/qualification; not added as earlier-stage prerequisites",
+  "performance_thresholds": "UNSET_REQUIRES_WORKLOAD_SLO_AND_HARDWARE_PROFILE",
+  "cases": [
+    {
+      "id": "RC-T01",
+      "level": "L0",
+      "stage_or_step": "K2",
+      "gate": "B1",
+      "existing_kernel_case_refs": [
+        "KU04"
+      ],
+      "invariant_refs": [
+        "RC01",
+        "RC04"
+      ],
+      "title": "Short write and sync uncertainty",
+      "acceptance": "Inject partial payload/trailer writes and sync failure with both surviving and lost bytes; no success before sync, uncertain attempted commit fences writers",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T02",
+      "level": "L0",
+      "stage_or_step": "K3",
+      "gate": "B2",
+      "existing_kernel_case_refs": [
+        "KU05"
+      ],
+      "invariant_refs": [
+        "RC01",
+        "RC02",
+        "RC07"
+      ],
+      "title": "ACK, ABORT, UNKNOWN external history",
+      "acceptance": "Controller records typed row/index/catalog history outside candidate; production reopen preserves ACK, excludes explicit ABORT and allows only whole UNKNOWN commits. Validate one history across reopen, including reads of recovered UNKNOWN effects and subsequent commits; do not independently discard such effects on a later restart.",
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        {
+          "name": "cross_restart_read_and_commit_history",
+          "expected": "RECOVER_OK"
+        }
+      ]
+    },
+    {
+      "id": "RC-T03",
+      "level": "L0",
+      "stage_or_step": "K3",
+      "gate": "B2",
+      "existing_kernel_case_refs": [
+        "KU06"
+      ],
+      "invariant_refs": [
+        "RC07"
+      ],
+      "title": "Tail versus required corruption",
+      "acceptance": "Truncate active tail under declared crash model, corrupt sealed/interior frames and remove referenced data; only allowed incomplete tail ignored; required corruption errors. Include full-length torn body/trailer writes; record the qualified fault profile and retain fail-closed behavior when ambiguous. Freeze separate RECOVER_OK and REJECT_CORRUPTION vectors, including torn unacknowledged final frames arising from normal crash. A rejection must preserve source bytes and expose no normal queries or new ACKs; it is not successful automatic recovery.",
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        {
+          "name": "allowed_incomplete_tail",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "full_length_torn_unacknowledged_tail",
+          "expected": "REJECT_CORRUPTION"
+        },
+        {
+          "name": "sealed_or_interior_damage",
+          "expected": "REJECT_CORRUPTION"
+        },
+        {
+          "name": "invalid_anchor_or_required_chain_missing",
+          "expected": "REJECT_CORRUPTION"
+        }
+      ]
+    },
+    {
+      "id": "RC-T04",
+      "level": "L0",
+      "stage_or_step": "K3",
+      "gate": "B2",
+      "existing_kernel_case_refs": [
+        "KU06"
+      ],
+      "invariant_refs": [
+        "RC08"
+      ],
+      "title": "Repeated recovery crash",
+      "acceptance": "Crash during decode/apply/verify/checkpoint recovery, then restart twice from retained source; no duplicate mutation or skipped redo. Also recover an old permitted incomplete tail, establish the next writer epoch, ACK a new transaction, crash again and preserve both old and new acknowledged history. Add process-only crash retaining a complete unsynced old frame in OS cache, STABILIZE of old files/namespaces, new-epoch ACK, then power-loss model discarding remaining volatile state. Omission of prior-prefix stabilization must be detected. Failed/uncertain stabilization blocks WRITER selection and READY. For power loss before or partway through STABILIZE, freeze each surviving image and its expected result in advance: valid retained prefixes recover, full-length torn unsynced frames reject as corruption. RECOVER_OK at every subsequent RESUME cut requires the complete stabilization barrier first; never reclassify a result after execution.",
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        {
+          "name": "process_crash_cached_complete_frame_then_new_ack_then_power_loss_model",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "stabilize_each_file_and_namespace_error_or_unknown",
+          "expected": "REJECT_IO"
+        },
+        {
+          "name": "power_loss_before_or_during_stabilize_with_valid_retained_prefix",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "power_loss_before_or_during_stabilize_with_full_length_torn_unsynced_frame",
+          "expected": "REJECT_CORRUPTION"
+        },
+        {
+          "name": "power_loss_after_complete_stabilize_and_each_resume_cut",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "omit_old_prefix_sync_mutant",
+          "expected": "MUTANT_REJECTED"
+        }
+      ]
+    },
+    {
+      "id": "RC-T05",
+      "level": "L0",
+      "stage_or_step": "K4",
+      "gate": "B2",
+      "existing_kernel_case_refs": [
+        "KU03",
+        "KU07"
+      ],
+      "invariant_refs": [
+        "RC02",
+        "RC09"
+      ],
+      "title": "Statement and transaction effects",
+      "acceptance": "Multi-row failure, cancel and epoch conflicts restore statement/private state without exposing partial row/index changes",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T06",
+      "level": "L0",
+      "stage_or_step": "K5",
+      "gate": "B2",
+      "existing_kernel_case_refs": [
+        "KU08"
+      ],
+      "invariant_refs": [
+        "RC05"
+      ],
+      "title": "Concurrent exact-cut checkpoint",
+      "acceptance": "Update same row chunks while checkpointing pinned C; compare all roots to independent history exactly at C. Capture root C, replay anchor offset/prefix digest, allocator high-water and pins together; rotate and commit while immutable checkpoint files are built.",
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        {
+          "name": "pinned_root_offset_prefix_digest_and_allocator_high_water",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "checkpoint_build_concurrent_update_and_rotation",
+          "expected": "RECOVER_OK"
+        }
+      ]
+    },
+    {
+      "id": "RC-T07",
+      "level": "L0",
+      "stage_or_step": "K5",
+      "gate": "B2",
+      "existing_kernel_case_refs": [
+        "KU08"
+      ],
+      "invariant_refs": [
+        "RC05",
+        "RC07"
+      ],
+      "title": "Every manifest and selector crash cut",
+      "acceptance": "Fault file sync, rename and directory sync before/after manifest and CURRENT publication; choose complete old/new state; corrupt selector fails closed. Cover CURRENT-only checkpoint selection serialized with commit/rotation/Retiring, actual WRITER tip preservation, old/new closure union on uncertain selection, and corrupt WRITER rejection.",
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        {
+          "name": "each_current_and_writer_selection_crash_cut",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "selector_error_with_old_new_closure_union",
+          "expected": "REJECT_IO"
+        },
+        {
+          "name": "checkpoint_never_rewinds_writer_tip",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "corrupt_current_or_writer_selector",
+          "expected": "REJECT_CORRUPTION"
+        }
+      ]
+    },
+    {
+      "id": "RC-T08",
+      "level": "L0",
+      "stage_or_step": "K5",
+      "gate": "B2",
+      "existing_kernel_case_refs": [
+        "KU08"
+      ],
+      "invariant_refs": [
+        "RC06"
+      ],
+      "title": "Early reclaim mutant",
+      "acceptance": "Delete old replay WAL before CURRENT directory sync in mutant; independent restore must detect ACK loss. Also delete the anchor segment or a required epoch link in a mutant; missing required files must never be mistaken for intentionally pruned pre-anchor history.",
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        {
+          "name": "reclaim_before_current_directory_sync_mutant",
+          "expected": "MUTANT_REJECTED"
+        },
+        {
+          "name": "delete_anchor_or_required_epoch_link_mutant",
+          "expected": "MUTANT_REJECTED"
+        }
+      ]
+    },
+    {
+      "id": "RC-T09",
+      "level": "L0",
+      "stage_or_step": "K5",
+      "gate": "B2",
+      "existing_kernel_case_refs": [
+        "KU08"
+      ],
+      "invariant_refs": [
+        "RC06",
+        "RC07"
+      ],
+      "title": "Fallback chain completeness",
+      "acceptance": "Retained previous manifest must retain all subsequent commit/payload/page dependencies; no automatic old-generation open with missing chain. Reclaim only before every retained anchor and reopen using both current and previous; cover two anchors in one segment, empty genesis/new epoch, fallback CURRENT reselection with previous absent, and subsequent checkpoint/restart without re-registering damaged current.",
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        {
+          "name": "delete_only_pre_anchor_files_then_reopen_current_and_previous",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "same_segment_different_anchor_offsets",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "empty_genesis_or_new_epoch_anchor",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "damaged_current_with_complete_previous_to_tip_chain",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "fallback_reselection_then_new_checkpoint_and_restart",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "fallback_reselection_each_crash_cut",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "missing_fallback_suffix_or_skipped_predecessor",
+          "expected": "REJECT_CORRUPTION"
+        }
+      ]
+    },
+    {
+      "id": "RC-T10",
+      "level": "L0",
+      "stage_or_step": "K5",
+      "gate": "B2",
+      "existing_kernel_case_refs": [
+        "KU08"
+      ],
+      "invariant_refs": [
+        "RC06",
+        "RC12"
+      ],
+      "title": "Pin versus GC race",
+      "acceptance": "Concurrent reader/backup pin and generation retirement; no delete-after-check race, bounded orphan cleanup after crash. Retiring approval uses coordinator then ledger; selector uncertainty prevents new Retiring. Prior-approved deletes remain outside all old/new closures; restart rebuilds ledger before GC.",
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        {
+          "name": "pin_vs_retiring_and_selector_publication",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "fenced_engine_no_new_retiring_and_existing_safe_deletes",
+          "expected": "REJECT_IO"
+        }
+      ]
+    },
+    {
+      "id": "RC-T11",
+      "level": "L0",
+      "stage_or_step": "K5",
+      "gate": "B2",
+      "existing_kernel_case_refs": [
+        "KU08"
+      ],
+      "invariant_refs": [
+        "RC05",
+        "RC07"
+      ],
+      "title": "Empty-environment exact-cut restore",
+      "acceptance": "Restore copied checkpoint closure in separate empty owned directory with independent row/index/catalog checks and interrupted restore. Restore without source WAL by binding state C to a fresh timeline/base-q=C segment and new local manifest/selectors; then ACK a new write and restart. Interrupted creation with missing required selectors/files is rejected as incomplete; a complete surviving selection must reopen normally. Never silently open a partial database.",
+      "execution_status": "NOT_RUN",
+      "required_variants": [
+        {
+          "name": "restore_without_source_wal_reanchor_at_C_then_new_ack_and_restart",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "interrupted_restore_missing_required_selector_or_file",
+          "expected": "REJECT_INCOMPLETE_CREATE"
+        },
+        {
+          "name": "interrupted_restore_with_complete_surviving_selection",
+          "expected": "RECOVER_OK"
+        }
+      ]
+    },
+    {
+      "id": "RC-T12",
+      "level": "L0",
+      "stage_or_step": "DEV3",
+      "gate": "H1",
+      "existing_kernel_case_refs": [
+        "KU10"
+      ],
+      "invariant_refs": [
+        "RC01",
+        "RC02"
+      ],
+      "title": "Disk row/index/catalog atomicity",
+      "acceptance": "Fault each COW write/sync/namespace, common commit and publication; disk storage paths and indexes/locator/catalog all or none",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T13",
+      "level": "L0",
+      "stage_or_step": "DEV3",
+      "gate": "H1",
+      "existing_kernel_case_refs": [
+        "KU10"
+      ],
+      "invariant_refs": [
+        "RC06",
+        "RC08"
+      ],
+      "title": "Superseded COW replay roots",
+      "acceptance": "A later root replaces pages still needed for sequential replay from older checkpoint; GC retains them through repeated recovery",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T14",
+      "level": "L0",
+      "stage_or_step": "DEV3",
+      "gate": "S1",
+      "existing_kernel_case_refs": [
+        "KU09",
+        "KU10"
+      ],
+      "invariant_refs": [
+        "RC07",
+        "RC12"
+      ],
+      "title": "Bounded DISK recovery",
+      "acceptance": "Data/index/locator/inventory at least 4x buffer with bounded caches, decode budgets and correct restart result",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T15",
+      "level": "L1",
+      "stage_or_step": "OPT_AFTER_B2",
+      "gate": null,
+      "existing_kernel_case_refs": [
+        "KU07"
+      ],
+      "invariant_refs": [
+        "RC09"
+      ],
+      "title": "Serializable group validation",
+      "acceptance": "Actual threads plus controlled schedules for absent/range/unique/catalog conflicts; batch intra-dependencies; stale root replacement mutant rejected",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T16",
+      "level": "L1",
+      "stage_or_step": "OPT_AFTER_B2",
+      "gate": null,
+      "existing_kernel_case_refs": [
+        "KU05"
+      ],
+      "invariant_refs": [
+        "RC01",
+        "RC02",
+        "RC03",
+        "RC04"
+      ],
+      "title": "Group commit crash and ACK ordering",
+      "acceptance": "Whole group framing/sync/publication, lost response, failed group without partial adoption, no abort after possible commit",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T17",
+      "level": "L2",
+      "stage_or_step": "OPT_AFTER_S1",
+      "gate": null,
+      "existing_kernel_case_refs": [
+        "KU05",
+        "KU10"
+      ],
+      "invariant_refs": [
+        "RC01",
+        "RC02",
+        "RC07"
+      ],
+      "title": "One payload lane lost",
+      "acceptance": "Valid commit references two lane fragments and COW pages; missing any dependency gives explicit startup error, never partial success",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T18",
+      "level": "L2",
+      "stage_or_step": "OPT_AFTER_S1",
+      "gate": null,
+      "existing_kernel_case_refs": [
+        "KU04"
+      ],
+      "invariant_refs": [
+        "RC01",
+        "RC03"
+      ],
+      "title": "Reservation hole",
+      "acceptance": "Later write finishes before earlier reserved range; contiguous frontier never jumps hole; max-offset mutant rejected",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T19",
+      "level": "L2",
+      "stage_or_step": "OPT_AFTER_S1",
+      "gate": null,
+      "existing_kernel_case_refs": [
+        "KU05"
+      ],
+      "invariant_refs": [
+        "RC03",
+        "RC07"
+      ],
+      "title": "Commit order and stream epoch",
+      "acceptance": "Payload physical order differs from q; validate commit prefix and topology; reject missing group, wrong DB/timeline, stale reused segment",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T20",
+      "level": "L2",
+      "stage_or_step": "OPT_AFTER_S1",
+      "gate": null,
+      "existing_kernel_case_refs": [
+        "KU08"
+      ],
+      "invariant_refs": [
+        "RC06"
+      ],
+      "title": "Prepared payload older than checkpoint tail",
+      "acceptance": "Delayed transaction later commits using old offset; GC must retain active reservation and referenced payload",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T21",
+      "level": "L2",
+      "stage_or_step": "OPT_AFTER_S1",
+      "gate": null,
+      "existing_kernel_case_refs": [
+        "KU07",
+        "KU10"
+      ],
+      "invariant_refs": [
+        "RC02",
+        "RC03",
+        "RC09"
+      ],
+      "title": "Parallel recovery dependencies",
+      "acceptance": "Decode/apply schedule changes with same-key/global-index/catalog/row-move conflicts; equal independent serial history and atomic publication",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T22",
+      "level": "L2",
+      "stage_or_step": "OPT_AFTER_S1",
+      "gate": null,
+      "existing_kernel_case_refs": [
+        "KU04",
+        "KU08"
+      ],
+      "invariant_refs": [
+        "RC04",
+        "RC12"
+      ],
+      "title": "Stalled lane and disk full",
+      "acceptance": "Bounded queue/pins, slow sync and ENOSPC; admission rejects before commit where possible, UNKNOWN fence otherwise; required data never deleted",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T23",
+      "level": "L0",
+      "stage_or_step": "RELEASE",
+      "gate": "VERSION_RELEASE",
+      "existing_kernel_case_refs": [],
+      "invariant_refs": [
+        "RC11"
+      ],
+      "title": "All earlier same-major recovery formats required by the central version policy",
+      "acceptance": "For releases and source baselines designated by version-compatibility-policy.json: old checkpoint/WAL/backup into new engine including skipped minors, failed conversion and L0 to L2 transition; new writes survive restart. For distributions outside the compatibility domain, record the policy-defined not-required status; current-build recovery remains mandatory. No prior applicable baseline is N/A, not PASS.",
+      "execution_status": "NOT_RUN",
+      "applicability": "customer-delivery qualification only; previous internal distributions excluded"
+    },
+    {
+      "id": "RC-T24",
+      "level": "OPS",
+      "stage_or_step": "DEV8",
+      "gate": "OPS1",
+      "existing_kernel_case_refs": [
+        "KU08",
+        "KU10"
+      ],
+      "invariant_refs": [
+        "RC10"
+      ],
+      "title": "PITR archive object closure",
+      "acceptance": "Root-only WAL with missing COW file must fail; complete archived group/payload/page set restores at target boundary into new timeline",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T25",
+      "level": "OPS",
+      "stage_or_step": "DEV8",
+      "gate": "OPS1",
+      "existing_kernel_case_refs": [],
+      "invariant_refs": [
+        "RC06",
+        "RC10"
+      ],
+      "title": "Replication consumer retention",
+      "acceptance": "Slow consumer pins correct ranges/objects; explicit resync transition; physical refs or logical row-delta path actually present",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T26",
+      "level": "L0",
+      "stage_or_step": "K2",
+      "gate": "B1",
+      "existing_kernel_case_refs": [
+        "KU04"
+      ],
+      "invariant_refs": [
+        "RC07",
+        "RC12"
+      ],
+      "title": "Bounded persistent codec",
+      "acceptance": "Unknown version/type, malicious lengths, truncation, checksum and compression expansion rejected without unbounded allocation",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T27",
+      "level": "L2",
+      "stage_or_step": "OPT_AFTER_S1",
+      "gate": null,
+      "existing_kernel_case_refs": [
+        "KU05"
+      ],
+      "invariant_refs": [
+        "RC01",
+        "RC03"
+      ],
+      "title": "Commit-before-payload mutant",
+      "acceptance": "Persist commit without one payload sync then crash with that payload lost; mutant must be rejected as unsafe",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RC-T28",
+      "level": "PERF",
+      "stage_or_step": "OPT_AFTER_S1",
+      "gate": null,
+      "existing_kernel_case_refs": [],
+      "invariant_refs": [
+        "RC01",
+        "RC09",
+        "RC12"
+      ],
+      "title": "Like-for-like throughput latency and RTO",
+      "acceptance": "L0/L1/L2 on pinned hardware/FS, same durable ACK/isolation, actor/hotspot/size/media/checkpoint axes; TPS,p99,aborts,CPU,bytes,amplification,RTO and budgets; SLO acceptance must be set before qualification",
+      "execution_status": "NOT_RUN"
+    }
+  ],
+  "fault_outcome_contract_ref": "dev2-kernel-design.md#fault-outcomes",
+  "variant_policy": "Every required variant inherits NOT_RUN from its case; freeze exact fixtures, cuts and expected outcome before execution. Corruption/I/O rejection passes do not count as successful reopen or power-loss recovery."
+}

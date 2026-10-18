@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "document_status": "DESIGN_PROPOSAL_NOT_IMPLEMENTED_OR_EXECUTED",
+  "product": "XADB",
+  "active_configuration": false,
+  "default_assignment_before_execution": {
+    "design_and_cross_module_reasoning": "gpt-6-astra",
+    "narrow_reproduction_tests_and_evidence_extraction": "gpt-6-luna",
+    "final_review_and_report": "gpt-6-astra"
+  },
+  "assignment_status": "pilot recommendation; not measured or activated",
+  "same_authorization_and_quality_gates_for_all_models": true,
+  "failure_routes": {
+    "PRODUCT_TEST_FAIL": {
+      "automatic_model_retry": false,
+      "action": "preserve counterexample; continue debugging; choose another analyst only when useful"
+    },
+    "CONFIRMED_TRANSIENT_TOOL_OR_TRANSPORT_ERROR": {
+      "automatic_model_retry": "bounded_and_optional",
+      "preconditions": [
+        "no_safety_or_policy_denial",
+        "effects_reconciled",
+        "same_scope",
+        "retry_budget_remaining"
+      ],
+      "max_same_operation_retry": 1
+    },
+    "CONFIRMED_TASK_TIMEOUT": {
+      "automatic_model_retry": "bounded_and_optional",
+      "preconditions": [
+        "no_safety_or_policy_denial",
+        "owned_process_status_known",
+        "same_scope",
+        "adequate_task_budget"
+      ]
+    },
+    "ANALYSIS_QUALITY_FAILURE": {
+      "automatic_model_retry": "optional_reassignment",
+      "preconditions": [
+        "same_authorization",
+        "same_oracle",
+        "new_evidence_or_independent_hypothesis"
+      ]
+    },
+    "SAFETY_STOP": {
+      "automatic_model_retry": false,
+      "action": "review actual notice and effects; no other-model, new-thread, or indirect retry of blocked conduct"
+    },
+    "POLICY_DENIED": {
+      "automatic_model_retry": false,
+      "action": "materially safer alternative only when authorized; otherwise obtain required clarification through official flow"
+    },
+    "UNKNOWN": {
+      "automatic_model_retry": false,
+      "action": "classify from evidence before any reassignment"
+    }
+  },
+  "no_retry_until_success_policy": true,
+  "no_model_selected_for_weaker_safeguards": true,
+  "provider_notice_must_not_be_hidden_from_parent": true,
+  "child_packet": [
+    "purpose",
+    "exact_revision",
+    "contract_ids",
+    "owned_scope",
+    "case_and_recipe_ids",
+    "allowed_effects",
+    "evidence_view_refs",
+    "completion_criteria"
+  ],
+  "child_packet_excludes": [
+    "unnecessary_full_conversation",
+    "raw_credentials",
+    "unrelated_raw_dumps"
+  ],
+  "parent_receives": "validated subagent-result envelope and selectively requested evidence views",
+  "evaluation": {
+    "design": "2x2: Astra alone versus Astra+Luna; necessary typed views versus artifact-first envelopes",
+    "all_arms": "same safe fixtures, isolation, contracts and fault strength",
+    "do_not_redispatch_a_safety_blocked_trial_to_other_arm": true,
+    "measure": [
+      "completion",
+      "safety_stop_class",
+      "correctness",
+      "evidence_auditability",
+      "latency",
+      "cost"
+    ]
+  }
+}

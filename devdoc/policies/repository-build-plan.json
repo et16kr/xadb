@@ -1,0 +1,806 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18",
+  "status": "ACCEPTED_LAYOUT_POLICY_IMPLEMENTATION_PARTIAL",
+  "document": "repository-build-plan.md",
+  "authority_refs": [
+    "bottom-up-development.md",
+    "development-stages.json",
+    "implementation-contracts.md",
+    "version-compatibility-policy.json",
+    "dev0-contract.json",
+    "dev1-contract.json",
+    "recovery-logging-contract.json",
+    "disk-storage-design.md"
+  ],
+  "policy": {
+    "design_root": "devdoc",
+    "legacy_build_dependency": false,
+    "internal_version_compatibility_required": false,
+    "internal_fresh_database_and_fixtures": true,
+    "compatibility_starts_at": "first declared stable release",
+    "kernel_requires_sql_or_network": false,
+    "native_global_required_for_initial_sql": false,
+    "changes_stage_order": false,
+    "changes_kernel_semantics": false,
+    "planned_directories_created_as_placeholders": false,
+    "document_generation_executes_product_tests": false,
+    "server_platform_policy": "Linux implementation now; additional OS only after business decision, adapter implementation and qualification",
+    "document_layout": "DOC-001 role directories are the current layout; preserve original source paths/revisions/hashes of historical evidence after migration"
+  },
+  "toolchain": {
+    "rust": "1.95.0",
+    "edition": "2024",
+    "target": "x86_64-unknown-linux-gnu",
+    "python_minimum": "3.11",
+    "rust_dependencies": "Cargo.lock",
+    "workspace_publish": false,
+    "unsafe_code": "forbid",
+    "custom_cargo_profiles_configured": false,
+    "remote_ci_execution": "NOT_RUN",
+    "protected_ci_qualification": "NOT_RUN"
+  },
+  "directories": [
+    {
+      "path": "crates",
+      "status": "EXISTING",
+      "responsibility": "Rust 제품 라이브러리·실행 파일과 XADBTest 패키지"
+    },
+    {
+      "path": "scripts",
+      "status": "EXISTING",
+      "responsibility": "빌드·시험 조립 자동화. 제품 DB 의미는 두지 않음"
+    },
+    {
+      "path": "tests/cases",
+      "status": "EXISTING",
+      "responsibility": "version을 명시한 typed 시나리오와 독립 기대값"
+    },
+    {
+      "path": "devdoc",
+      "status": "EXISTING",
+      "responsibility": "설계·명세·계약·저장된 검증 증거의 단일 문서 루트"
+    },
+    {
+      "path": "devdoc/policies",
+      "status": "EXISTING",
+      "responsibility": "상시 적용하는 개발 규칙과 문서 운영 기준"
+    },
+    {
+      "path": "devdoc/plans",
+      "status": "EXISTING",
+      "responsibility": "제품 범위·개발 순서·작성 목록·단계 완료"
+    },
+    {
+      "path": "devdoc/contracts",
+      "status": "EXISTING",
+      "responsibility": "기능별 의미·불변식·인수 계약과 미실행 시험 계획"
+    },
+    {
+      "path": "devdoc/implementation",
+      "status": "EXISTING",
+      "responsibility": "현재 구현 범위·제약·시험 진입점"
+    },
+    {
+      "path": "devdoc/reference",
+      "status": "EXISTING",
+      "responsibility": "필요한 절만 조회하는 종합 설계·매뉴얼 초안·상세 색인"
+    },
+    {
+      "path": "devdoc/examples",
+      "status": "EXISTING",
+      "responsibility": "실행·승인이 아닌 작업 계약과 진단 예시"
+    },
+    {
+      "path": "devdoc/evidence",
+      "status": "EXISTING",
+      "responsibility": "원본 identity를 보존하는 조사·모델·실행 증거"
+    },
+    {
+      "path": "devdoc/history",
+      "status": "EXISTING",
+      "responsibility": "현재 규범과 구분하는 기존 제품 조사 보고서와 근거"
+    },
+    {
+      "path": ".github/workflows",
+      "status": "EXISTING",
+      "responsibility": "로컬과 같은 검사 진입점을 호출하는 CI"
+    },
+    {
+      "path": "target",
+      "status": "GENERATED",
+      "responsibility": "Cargo 빌드 산출물. Git 제외"
+    },
+    {
+      "path": "artifacts",
+      "status": "GENERATED",
+      "responsibility": "소유 run의 로그·보존 binary·증거 bundle. Git 제외"
+    },
+    {
+      "path": "devdoc/modules",
+      "status": "PLANNED",
+      "responsibility": "모듈 책임·API·소유권·오류·시험 진입 문서"
+    },
+    {
+      "path": "devdoc/specs",
+      "status": "PLANNED",
+      "responsibility": "SQL·값·내구성·format 명세"
+    },
+    {
+      "path": "devdoc/adr",
+      "status": "PLANNED",
+      "responsibility": "대안·전제·재검토 조건을 담는 설계 결정"
+    },
+    {
+      "path": "tests/corpus",
+      "status": "PLANNED",
+      "responsibility": "독립적으로 검토한 최소 반례·known-bad history"
+    },
+    {
+      "path": "tests/schedules",
+      "status": "PLANNED",
+      "responsibility": "actor·barrier 실행 순서 시나리오"
+    },
+    {
+      "path": "tests/durability",
+      "status": "PLANNED",
+      "responsibility": "crash cut·파일 fault 시나리오"
+    },
+    {
+      "path": "tests/sql",
+      "status": "PLANNED",
+      "responsibility": "SQL 입력과 typed 독립 기대값"
+    },
+    {
+      "path": "tests/versions",
+      "status": "PLANNED",
+      "responsibility": "안정 릴리스 기준선이 생긴 뒤 same-major fixture"
+    },
+    {
+      "path": "benches",
+      "status": "PLANNED",
+      "responsibility": "workload·데이터 생성기·비교 기준"
+    },
+    {
+      "path": "clients/jdbc",
+      "status": "PLANNED",
+      "responsibility": "DEV6 비 Rust JDBC 소스와 빌드"
+    },
+    {
+      "path": "packaging",
+      "status": "PLANNED",
+      "responsibility": "사내 배포 준비 시 recipe·manifest"
+    }
+  ],
+  "packages": [
+    {
+      "name": "xadbtest-protocol",
+      "path": "crates/xadbtest-protocol",
+      "stage_ref": "DEV0",
+      "status": "IMPLEMENTED",
+      "placement": "CURRENT",
+      "normal_workspace_dependencies": [],
+      "role": "typed request/observation"
+    },
+    {
+      "name": "xadbtest",
+      "path": "crates/xadbtest",
+      "stage_ref": "DEV0",
+      "status": "IMPLEMENTED",
+      "placement": "CURRENT",
+      "normal_workspace_dependencies": [
+        "xadbtest-protocol"
+      ],
+      "role": "controller/oracle/verdict/evidence"
+    },
+    {
+      "name": "xadbtest-fixture-worker",
+      "path": "crates/xadbtest-fixture-worker",
+      "stage_ref": "DEV0",
+      "status": "IMPLEMENTED",
+      "placement": "CURRENT",
+      "normal_workspace_dependencies": [
+        "xadbtest-protocol"
+      ],
+      "role": "harness self-test worker"
+    },
+    {
+      "name": "xadb-foundation",
+      "path": "crates/foundation",
+      "stage_ref": "DEV1",
+      "status": "IMPLEMENTED",
+      "placement": "CURRENT",
+      "normal_workspace_dependencies": [],
+      "role": "IDs/errors/values/codecs/effect ports/quota/lifecycle"
+    },
+    {
+      "name": "xadb-platform",
+      "path": "crates/platform",
+      "stage_ref": "DEV1",
+      "status": "IMPLEMENTED",
+      "placement": "CURRENT",
+      "normal_workspace_dependencies": [
+        "xadb-foundation"
+      ],
+      "role": "Concrete Linux file effects and native clock/scheduler; no engine or SQL dependency"
+    },
+    {
+      "name": "xadbtest-foundation-worker",
+      "path": "crates/xadbtest-foundation-worker",
+      "stage_ref": "DEV1",
+      "status": "IMPLEMENTED",
+      "placement": "CURRENT",
+      "normal_workspace_dependencies": [
+        "xadb-foundation",
+        "xadbtest-protocol"
+      ],
+      "role": "production foundation adapter"
+    },
+    {
+      "name": "xadb-engine",
+      "path": "crates/engine",
+      "stage_ref": "DEV2",
+      "status": "IMPLEMENTED",
+      "placement": "SELECTED_DEV2",
+      "normal_workspace_dependencies": [
+        "xadb-foundation"
+      ],
+      "role": "row/catalog/transaction/WAL/recovery production kernel"
+    },
+    {
+      "name": "xadbtest-reference",
+      "path": "crates/xadbtest-reference",
+      "stage_ref": "DEV2",
+      "status": "IMPLEMENTED",
+      "placement": "SELECTED_DEV2",
+      "normal_workspace_dependencies": [
+        "xadbtest-protocol"
+      ],
+      "role": "independent row/history oracle, no production semantics dependency"
+    },
+    {
+      "name": "xadbtest-engine-worker",
+      "path": "crates/xadbtest-engine-worker",
+      "stage_ref": "DEV2",
+      "status": "IMPLEMENTED",
+      "placement": "SELECTED_DEV2",
+      "normal_workspace_dependencies": [
+        "xadb-engine",
+        "xadb-foundation",
+        "xadbtest-protocol"
+      ],
+      "role": "typed volatile engine adapter; xadb-platform dependency remains planned for K2 I/O"
+    },
+    {
+      "name": "xadb-transport",
+      "path": "crates/transport",
+      "stage_ref": "COMM",
+      "status": "PLANNED",
+      "placement": "RESERVED_DIRECTION",
+      "normal_workspace_dependencies": [
+        "xadb-foundation"
+      ],
+      "role": "bounded frame/connection/backpressure"
+    },
+    {
+      "name": "xadb-sql",
+      "path": "crates/sql",
+      "stage_ref": "DEV4",
+      "status": "PLANNED",
+      "placement": "RESERVED_DIRECTION",
+      "normal_workspace_dependencies": [
+        "xadb-foundation",
+        "xadb-engine"
+      ],
+      "role": "parser/binder/plan/optimizer/executor modules"
+    },
+    {
+      "name": "xadb-cli",
+      "path": "crates/cli",
+      "stage_ref": "DEV4",
+      "status": "PLANNED",
+      "placement": "RESERVED_DIRECTION",
+      "normal_workspace_dependencies": [
+        "xadb-foundation",
+        "xadb-sql",
+        "xadb-platform"
+      ],
+      "role": "embedded SQL CLI; later remote mode"
+    },
+    {
+      "name": "xadb-server",
+      "path": "crates/server",
+      "stage_ref": "DEV5",
+      "status": "PLANNED",
+      "placement": "RESERVED_DIRECTION",
+      "normal_workspace_dependencies": [
+        "xadb-foundation",
+        "xadb-engine",
+        "xadb-sql",
+        "xadb-transport",
+        "xadb-platform"
+      ],
+      "role": "session/auth/admission/config and production composition"
+    },
+    {
+      "name": "xadb-client",
+      "path": "crates/client",
+      "stage_ref": "DEV6",
+      "status": "PLANNED",
+      "placement": "RESERVED_DIRECTION",
+      "normal_workspace_dependencies": [
+        "xadb-foundation",
+        "xadb-transport"
+      ],
+      "role": "native client API"
+    },
+    {
+      "name": "xadb-odbc",
+      "path": "crates/odbc",
+      "stage_ref": "DEV6",
+      "status": "PLANNED",
+      "placement": "RESERVED_DIRECTION",
+      "normal_workspace_dependencies": [
+        "xadb-client"
+      ],
+      "role": "ODBC boundary; unsafe/FFI requires separate reviewed contract"
+    },
+    {
+      "name": "xadb-replication",
+      "path": "crates/replication",
+      "stage_ref": "DEV8",
+      "status": "PLANNED",
+      "placement": "RESERVED_DIRECTION",
+      "normal_workspace_dependencies": [
+        "xadb-foundation",
+        "xadb-engine",
+        "xadb-transport"
+      ],
+      "role": "commit stream consumption/resync/retention ownership"
+    }
+  ],
+  "kernel_modules": [
+    {
+      "path": "crates/engine/src/api",
+      "kernel_step": "K0",
+      "stage_ref": "DEV2",
+      "task_ref": "XADB-027",
+      "status": "IMPLEMENTED",
+      "responsibility": "공개 typed engine API. 저장소 내부 표현 은닉"
+    },
+    {
+      "path": "crates/engine/src/catalog",
+      "kernel_step": "K0",
+      "stage_ref": "DEV2",
+      "task_ref": "XADB-027",
+      "status": "IMPLEMENTED",
+      "responsibility": "SQL 없는 객체·schema metadata와 수명"
+    },
+    {
+      "path": "crates/engine/src/storage/volatile",
+      "kernel_step": "K0",
+      "stage_ref": "DEV2",
+      "task_ref": "XADB-027",
+      "status": "IMPLEMENTED",
+      "responsibility": "실제 최소 행 저장소. DEV3에서 디스크 페이지·buffer·index로 확장"
+    },
+    {
+      "path": "crates/engine/src/transaction",
+      "kernel_step": "K1",
+      "stage_ref": "DEV2",
+      "task_ref": "XADB-006",
+      "status": "PLANNED",
+      "responsibility": "private batch·snapshot·rollback·commit 상태. K4에서 동시성 확장"
+    },
+    {
+      "path": "crates/engine/src/publication",
+      "kernel_step": "K1",
+      "stage_ref": "DEV2",
+      "task_ref": "XADB-006",
+      "status": "PLANNED",
+      "responsibility": "단일 committed view와 reader pin. K2에서 영속 순서 연결"
+    },
+    {
+      "path": "crates/engine/src/durable/wal",
+      "kernel_step": "K2",
+      "stage_ref": "DEV2",
+      "task_ref": "XADB-007",
+      "status": "PLANNED",
+      "responsibility": "공통 batch framing·append·sync"
+    },
+    {
+      "path": "crates/engine/src/durable/recovery",
+      "kernel_step": "K3",
+      "stage_ref": "DEV2",
+      "task_ref": "XADB-008",
+      "status": "PLANNED",
+      "responsibility": "완결 committed batch replay와 reopen"
+    },
+    {
+      "path": "crates/engine/src/durable/checkpoint",
+      "kernel_step": "K5",
+      "stage_ref": "DEV2",
+      "task_ref": "XADB-009",
+      "status": "PLANNED",
+      "responsibility": "generation checkpoint·restore·공통 보존"
+    },
+    {
+      "path": "crates/engine/src/storage/disk",
+      "kernel_step": null,
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-021",
+      "status": "PLANNED",
+      "responsibility": "COW page·bounded buffer·물리 I/O"
+    },
+    {
+      "path": "crates/engine/src/storage/locator",
+      "kernel_step": null,
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-021",
+      "status": "PLANNED",
+      "responsibility": "snapshot별 RowUID 해석·상한 있는 DISK mapping"
+    },
+    {
+      "path": "crates/engine/src/storage/index",
+      "kernel_step": null,
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "PLANNED",
+      "responsibility": "native key·RowUID·cursor와 공통 transaction"
+    },
+    {
+      "path": "crates/engine/src/storage/partition",
+      "kernel_step": null,
+      "stage_ref": "PART",
+      "task_ref": "XADB-030",
+      "status": "PLANNED",
+      "responsibility": "membership·routing·local index·원자적 행 이동"
+    },
+    {
+      "path": "crates/engine/src/storage/index/global",
+      "kernel_step": null,
+      "stage_ref": "NG",
+      "task_ref": "XADB-023",
+      "status": "PLANNED",
+      "responsibility": "디스크 저장 경로를 포괄하는 native global tree. SQL 숨김 table 제외"
+    }
+  ],
+  "builds": [
+    {
+      "id": "workspace-debug",
+      "command": "cargo build --workspace --locked",
+      "status": "AVAILABLE",
+      "execution_status": "EXISTING_LOCAL_EVIDENCE",
+      "evidence_refs": [
+        "dev0-validation.json"
+      ],
+      "output": "target/debug",
+      "scope": "Build only; no qualification by itself"
+    },
+    {
+      "id": "dev0",
+      "command": "python3 scripts/check_dev0.py",
+      "status": "AVAILABLE",
+      "execution_status": "EXISTING_LOCAL_EVIDENCE",
+      "evidence_refs": [
+        "dev0-validation.json"
+      ],
+      "output": "artifacts/dev0",
+      "scope": "Harness checks; all-features are self-tests"
+    },
+    {
+      "id": "dev1",
+      "command": "python3 scripts/check_dev1.py",
+      "status": "AVAILABLE",
+      "execution_status": "EXISTING_LOCAL_EVIDENCE",
+      "evidence_refs": [
+        "dev1-validation.json"
+      ],
+      "output": "artifacts/dev1",
+      "scope": "DEV0 regression and production foundation checks"
+    },
+    {
+      "id": "foundation-only",
+      "command": "cargo build -p xadb-foundation --no-default-features --locked",
+      "status": "AVAILABLE",
+      "execution_status": "EXISTING_LOCAL_EVIDENCE",
+      "evidence_refs": [
+        "dev1-validation.json"
+      ],
+      "output": "target/debug",
+      "scope": "Saved independent check also uses --offline and fresh --target-dir"
+    },
+    {
+      "id": "release",
+      "command": "cargo build --workspace --release --locked",
+      "status": "AVAILABLE",
+      "execution_status": "NOT_RUN",
+      "evidence_refs": [],
+      "output": "target/release",
+      "scope": "Cargo command available; release correctness/packaging not qualified"
+    },
+    {
+      "id": "dev2",
+      "command": null,
+      "status": "PLANNED",
+      "execution_status": "NOT_RUN",
+      "evidence_refs": [],
+      "output": "artifacts/dev2",
+      "scope": "Create scripts/check_dev2.py with actual K0-K5 engine acceptance; no current command"
+    },
+    {
+      "id": "distribution",
+      "command": null,
+      "status": "PLANNED",
+      "execution_status": "NOT_RUN",
+      "evidence_refs": [],
+      "output": "artifacts/dist",
+      "scope": "Recipes and supported environment/feature matrix required before distribution"
+    }
+  ],
+  "stage_placements": [
+    {
+      "stage_ref": "DEV0",
+      "paths": [
+        "crates/xadbtest",
+        "crates/xadbtest-protocol",
+        "crates/xadbtest-fixture-worker"
+      ],
+      "note": "현재 최소 harness"
+    },
+    {
+      "stage_ref": "DEV1",
+      "paths": [
+        "crates/foundation",
+        "crates/platform",
+        "crates/xadbtest-foundation-worker"
+      ],
+      "note": "공통 계약과 Linux 구현을 분리한 최소 기반"
+    },
+    {
+      "stage_ref": "DEV2",
+      "paths": [
+        "crates/engine",
+        "crates/xadbtest-reference",
+        "crates/xadbtest-engine-worker"
+      ],
+      "note": "다음 패키지 배치 결정. XADB-004 독립 oracle 필수"
+    },
+    {
+      "stage_ref": "DEV3",
+      "paths": [
+        "crates/engine/src/storage"
+      ],
+      "note": "같은 production engine을 확장. K0는 폐기할 모델이 아님"
+    },
+    {
+      "stage_ref": "DEV4",
+      "paths": [
+        "crates/sql",
+        "crates/cli"
+      ],
+      "note": "embedded SQL부터 구현"
+    },
+    {
+      "stage_ref": "DEV5",
+      "paths": [
+        "crates/server"
+      ],
+      "note": "COMM과 조립. DEV6 driver 완성을 요구하지 않음"
+    },
+    {
+      "stage_ref": "DEV6",
+      "paths": [
+        "crates/client",
+        "clients/jdbc",
+        "crates/odbc"
+      ],
+      "note": "native → JDBC → ODBC"
+    },
+    {
+      "stage_ref": "DEV7",
+      "paths": [
+        "crates/sql",
+        "crates/foundation"
+      ],
+      "note": "기능에 따라 저장·server도 확장. 전체 leaf 검토 후 package 분리"
+    },
+    {
+      "stage_ref": "DEV8",
+      "paths": [
+        "crates/replication",
+        "benches",
+        "packaging"
+      ],
+      "note": "복제·PITR·운영·장시간 검증. 기본 진단은 하위 단계부터"
+    },
+    {
+      "stage_ref": "DEV9",
+      "paths": [
+        "tests",
+        "devdoc"
+      ],
+      "note": "전체 대체 인수. 별도 거대 대체 engine crate는 만들지 않음"
+    },
+    {
+      "stage_ref": "COMM",
+      "paths": [
+        "crates/transport"
+      ],
+      "note": "engine 없이 독립 검증"
+    },
+    {
+      "stage_ref": "PART",
+      "paths": [
+        "crates/engine/src/storage/partition"
+      ],
+      "note": "DEV3 뒤 구현"
+    },
+    {
+      "stage_ref": "NG",
+      "paths": [
+        "crates/engine/src/storage/index/global"
+      ],
+      "note": "PART 뒤 구현. SQL 기능 검증은 별도로 DEV5 필요"
+    }
+  ],
+  "dependency_enforcement": {
+    "current": "DEV1 checker verifies foundation and platform normal dependency closures and independent builds on Linux; document verifier compares all current direct normal workspace edges with manifests",
+    "planned": "DEV2 checker must check transitive normal/build/dev/target/feature closures and independent package builds; controller/reference must not depend on production engine semantics",
+    "planned_execution_status": "NOT_RUN",
+    "future_controller_dependency_addition": "xadbtest -> xadbtest-reference only when XADB-004 is integrated; update current edge inventory in the same change",
+    "intra_engine_visibility": "Public api and re-exports only; transaction orchestrates publication/storage/durable through explicit contracts. Internal modules must not reach upward to SQL/server/test implementations.",
+    "design_review": {
+      "normative_ref": "repository-build-plan.md#dependency-review",
+      "allowed_graph_derived_automatically_from_observed_graph": false,
+      "record_dimensions": [
+        "owning_contract_and_allowed_directions",
+        "source_revision_target_features_profile",
+        "direct_and_transitive_normal_build_edges",
+        "test_support_dev_fixture_runner_edges_and_resources",
+        "automated_reviewed_and_unchecked_scope"
+      ],
+      "edge_roles_checked_separately": true,
+      "test_only_dependencies_added_to_production": false,
+      "expanded_checker_execution": "NOT_RUN",
+      "global_index_or_all_future_checks_block_dev2_k0": false,
+      "decision_record_ref": "coding-convention.json",
+      "decision_id": "XADB-METHOD-001"
+    }
+  },
+  "release_plan": {
+    "execution_status": "NOT_RUN",
+    "automatic_publish": false,
+    "artifact_root": "artifacts/dist",
+    "database_paths": "Explicit caller-owned external or test-temporary paths; not source, target, or install prefix",
+    "required_manifest": [
+      "product_version",
+      "channel",
+      "stage",
+      "capabilities",
+      "source_revision_and_dirty_digest",
+      "toolchain_and_lockfile",
+      "target_os_kernel_filesystem",
+      "features_and_profile",
+      "binary_and_symbol_checksums",
+      "acceptance_evidence"
+    ],
+    "before_internal_distribution": [
+      "capability-specific actual acceptance and regression",
+      "release/default-feature semantic parity; no mutation/test-support in shipping binaries",
+      "fixed recipe, supported environment and installation smoke",
+      "fresh DB/fixtures; never delete or overwrite an existing DB automatically"
+    ],
+    "before_customer_delivery": [
+      "product qualification and external release gate",
+      "every prior stable-release same-major compatibility baseline; internal distributions excluded"
+    ]
+  },
+  "open_decisions": [
+    {
+      "id": "RB01",
+      "before": "DEV2 K0 구현 전",
+      "decision": "공개 row/catalog API, 오류·상한·history operation과 oracle vector. 경로 결정으로 의미까지 승인하지 않음"
+    },
+    {
+      "id": "RB02",
+      "before": "DEV2 K2–K5 구현 전",
+      "decision": "기존 recovery 계약에 따른 WAL/checkpoint byte 형식과 filesystem·fault 검증 조건"
+    },
+    {
+      "id": "RB03",
+      "before": "첫 사내 배포 전",
+      "decision": "DP06의 채택 환경·release 방침을 구현. 정확한 image/kernel/device identity, capability별 feature 목록·설치 recipe·보호 승격과 실제 qualification 증거 확정"
+    },
+    {
+      "id": "RB04",
+      "before": "DEV6 구현 전",
+      "decision": "native ABI/FFI 소유권, JDBC 빌드 도구/JDK, ODBC driver manager와 패키징"
+    },
+    {
+      "id": "RB05",
+      "before": "실행 입력 루트·generator 추가 전",
+      "decision": "source fingerprint·build identity·clean export·문서의 증거 identity 범위를 함께 확장. generator 입력·version 기록"
+    },
+    {
+      "id": "RB06",
+      "before": "후속 crate 분리·구성 요소 추가 전",
+      "decision": "의존 DAG·공개 경계·전체 대체 leaf를 검토. 모듈마다 crate를 기계적으로 만들지 않음"
+    },
+    {
+      "id": "RB07",
+      "before": "새 OS 지원 결정 시",
+      "decision": "파일 영속화·잠금·시간·대기/취소 계약과 OS/CPU/FS 조합, 실제 복구·회귀·패키징·CI 증거를 확정. 컴파일 성공만으로 지원 선언 금지"
+    }
+  ],
+  "parallel_development_ref": "parallel-development-policy.json",
+  "platform_boundary": {
+    "status": "IMPLEMENTED_LINUX_ONLY",
+    "contracts_package": "xadb-foundation",
+    "implementation_package": "xadb-platform",
+    "implemented_os": [
+      "linux"
+    ],
+    "locally_tested_targets": [
+      "x86_64-unknown-linux-gnu"
+    ],
+    "other_os_qualification": "NOT_RUN",
+    "foundation_imports_platform": false,
+    "engine_imports_platform": false,
+    "composition_packages": [
+      "xadbtest-engine-worker",
+      "xadb-cli",
+      "xadb-server"
+    ],
+    "implemented_contracts": [
+      "FileIo",
+      "Clock",
+      "Scheduler"
+    ],
+    "linux_file_implementation": "platform/src/linux.rs",
+    "native_runtime_implementation": "platform/src/runtime.rs",
+    "test_implementation": "xadb-foundation test-support: FaultFile, ManualClock, ScriptedScheduler",
+    "remaining_ports": "DEV2 must define owned create/open, writer exclusion, directory publication and recovery integration; COMM must define transport/wait/cancel contracts before implementation",
+    "std_policy": "Use standard collections/synchronization directly; do not wrap every std API. Concrete time/scheduler effects are supplied by platform.",
+    "new_os_gate": [
+      "business support decision",
+      "OS/CPU/filesystem capability and error contract review",
+      "adapter implementation",
+      "same semantic/fault suite plus actual OS recovery/concurrency tests",
+      "packaging and CI evidence"
+    ],
+    "client_policy": "Client target matrix is separate from server OS support; common value/protocol libraries must not import the Linux server adapter.",
+    "test_harness_policy": "XADBTest process ownership and controller OS calls remain in the harness, outside production engine dependencies.",
+    "evidence_ref": "dev1-validation.json"
+  },
+  "coding_convention_ref": "coding-convention.json",
+  "directory_naming": {
+    "product_source_prefix": "",
+    "product_directory_naming": "role without xadb- prefix",
+    "cargo_package_identifiers": "xadb-* for product packages; xadbtest* for test tooling",
+    "test_tool_directories": "xadbtest*",
+    "historical_evidence_paths": "preserve original identity",
+    "planned_paths_created_as_placeholders": false
+  },
+  "development_policy_ref": "development-policy.json",
+  "performance_engineering_ref": "ai-performance-engineering.json",
+  "documentation_policy_ref": "documentation-policy.md",
+  "source_fingerprint_roots": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "rust-toolchain.toml",
+    "crates",
+    "tests",
+    "scripts",
+    ".github"
+  ],
+  "clean_export_roots": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "rust-toolchain.toml",
+    "crates",
+    "tests",
+    "scripts",
+    ".github"
+  ]
+}

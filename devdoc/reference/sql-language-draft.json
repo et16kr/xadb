@@ -1,0 +1,828 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18",
+  "status": "PROPOSED_SQL_CONTRACT_NOT_IMPLEMENTED",
+  "document": "sql-language-draft.md",
+  "manual_ref": "user-manual-draft.json",
+  "stage_ref": "DEV4",
+  "kernel_contract_ref": "implementation-contracts.md",
+  "changes_accepted_stage_order": false,
+  "changes_implemented_foundation": false,
+  "claims_customer_compatibility_baseline": false,
+  "inline_case_ids": [
+    "SQL-01",
+    "SQL-02",
+    "SQL-03",
+    "SQL-04",
+    "SQL-05",
+    "SQL-06",
+    "SQL-07",
+    "SQL-08"
+  ],
+  "session_fixture": {
+    "new_session_per_actor_per_case": true,
+    "autocommit": "ON",
+    "transaction": "IDLE"
+  },
+  "accepted_semantics_preserved": [
+    "statement atomicity",
+    "initial serializable snapshot and validation",
+    "no DDL inside active transaction",
+    "UNKNOWN is not ABORTED",
+    "same logical DISK transaction semantics"
+  ],
+  "proposed_semantics": {
+    "types": [
+      "BIGINT",
+      "BOOLEAN",
+      "VARCHAR(n)",
+      "VARBINARY(n)"
+    ],
+    "variable_length_unit": "bytes",
+    "initial_internal_variable_limit": 65536,
+    "final_customer_capacity_limit_claimed": false,
+    "string_comparison": "UTF-8 byte order; no normalization or implicit cast",
+    "identifier_unquoted": "ASCII fold to lower",
+    "identifier_quoted": "exact UTF-8; doubled quote escape",
+    "identifier_limit_bytes_internal_proposal": 128,
+    "default_user_namespace": "public",
+    "storage_clause": "STORAGE DISK (required)",
+    "unique_nulls": "any NULL component does not conflict; primary key requires all components non-NULL",
+    "ordering_defaults": {
+      "ASC": "NULLS LAST",
+      "DESC": "NULLS FIRST"
+    },
+    "autocommit_default": "ON",
+    "off_starts_on": "first SELECT/DML after idle",
+    "active_mode_change": "error, preserve transaction",
+    "idle_commit_or_rollback": "transaction-state error",
+    "ddl": "independent atomic action only when idle; reject active transaction without implicit commit",
+    "update_affected_count": "matched rows including unchanged values",
+    "update_rhs": "literal only",
+    "constraint_validation": "final statement view; all-or-nothing statement effects",
+    "parameters": "driver binding syntax is a later public client contract",
+    "failed_unique_index_build": "XADB-SQL-UNIQUE; preserve existing table/catalog and release temporary resources and owned admission; no partial index publication",
+    "health_probe": "FROM-less SELECT 1 unsupported initially; use capability-aware health path or owned fixture query"
+  },
+  "initial_out_of_scope": [
+    "join",
+    "subquery",
+    "aggregation",
+    "window",
+    "DISTINCT",
+    "CTE",
+    "UNION",
+    "functions",
+    "arithmetic expressions",
+    "implicit casts",
+    "SAVEPOINT",
+    "ALTER",
+    "foreign key",
+    "CHECK",
+    "PSM",
+    "partition SQL",
+    "OFFSET"
+  ],
+  "cases": [
+    {
+      "id": "SQL-01",
+      "language": "sql",
+      "input": "CREATE TABLE orders (\n    order_id BIGINT NOT NULL,\n    customer_name VARCHAR(80),\n    quantity BIGINT NOT NULL,\n    paid BOOLEAN NOT NULL,\n    PRIMARY KEY (order_id)\n) STORAGE DISK;\nINSERT INTO orders (order_id, customer_name, quantity, paid)\nVALUES (1001, '김하나', 2, FALSE),\n       (1002, NULL, 1, TRUE),\n       (1003, '', 3, FALSE);",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "SELF_CONTAINED",
+      "expected": {
+        "affected_rows": 3,
+        "orders": [
+          [
+            1001,
+            "김하나",
+            2,
+            false
+          ],
+          [
+            1002,
+            null,
+            1,
+            true
+          ],
+          [
+            1003,
+            "",
+            3,
+            false
+          ]
+        ]
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "real DISK storage, transaction and statement effects; no parser-only PASS"
+    },
+    {
+      "id": "SQL-02",
+      "language": "sql",
+      "input": "SELECT order_id, quantity\nFROM orders\nWHERE paid = FALSE\nORDER BY order_id;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "columns": [
+          "order_id",
+          "quantity"
+        ],
+        "rows": [
+          [
+            1001,
+            2
+          ],
+          [
+            1003,
+            3
+          ]
+        ],
+        "ordered": true
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "real DISK storage, transaction and statement effects; no parser-only PASS"
+    },
+    {
+      "id": "SQL-03",
+      "language": "sql",
+      "input": "SELECT order_id FROM orders WHERE customer_name IS NULL ORDER BY order_id;\nSELECT order_id FROM orders WHERE customer_name = '' ORDER BY order_id;\nSELECT order_id FROM orders WHERE customer_name = NULL ORDER BY order_id;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "ordered_result_sets": [
+          [
+            [
+              1002
+            ]
+          ],
+          [
+            [
+              1003
+            ]
+          ],
+          []
+        ]
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "real DISK storage, transaction and statement effects; no parser-only PASS"
+    },
+    {
+      "id": "SQL-04",
+      "language": "sql",
+      "input": "SELECT order_id FROM orders\nORDER BY customer_name ASC NULLS LAST, order_id ASC LIMIT 2;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "rows": [
+          [
+            1003
+          ],
+          [
+            1001
+          ]
+        ],
+        "ordered": true
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "real DISK storage, transaction and statement effects; no parser-only PASS"
+    },
+    {
+      "id": "SQL-05",
+      "language": "sql",
+      "input": "BEGIN;\nUPDATE orders SET quantity = 5 WHERE order_id = 1001;\nSELECT quantity FROM orders WHERE order_id = 1001;\nROLLBACK;\nSELECT quantity FROM orders WHERE order_id = 1001;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "update_affected_rows": 1,
+        "ordered_result_sets": [
+          [
+            [
+              5
+            ]
+          ],
+          [
+            [
+              2
+            ]
+          ]
+        ],
+        "final_transaction": "IDLE"
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "real DISK storage, transaction and statement effects; no parser-only PASS"
+    },
+    {
+      "id": "SQL-06",
+      "language": "sql",
+      "input": "BEGIN;\nUPDATE orders SET quantity = 5 WHERE order_id = 1001;\nINSERT INTO orders (order_id, customer_name, quantity, paid)\nVALUES (1004, '이둘', 1, FALSE), (1001, '중복', 1, FALSE);\nSELECT order_id, quantity FROM orders ORDER BY order_id;\nROLLBACK;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "expected_error": "XADB-SQL-UNIQUE",
+        "continue_after_expected_error": true,
+        "rows_before_final_rollback": [
+          [
+            1001,
+            5
+          ],
+          [
+            1002,
+            1
+          ],
+          [
+            1003,
+            3
+          ]
+        ],
+        "new_row_1004_present": false,
+        "final_state": "original orders fixture"
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "real DISK storage, transaction and statement effects; no parser-only PASS"
+    },
+    {
+      "id": "SQL-07",
+      "language": "sql",
+      "input": "CREATE TABLE tags (\n    tag_id BIGINT NOT NULL,\n    tag VARCHAR(6),\n    PRIMARY KEY (tag_id),\n    UNIQUE (tag)\n) STORAGE DISK;\nINSERT INTO tags (tag_id, tag) VALUES (1, NULL), (2, NULL), (3, '');\nINSERT INTO tags (tag_id, tag) VALUES (4, '');\nINSERT INTO tags (tag_id, tag) VALUES (5, '가나다');",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "SELF_CONTAINED",
+      "expected": {
+        "initial_insert_affected_rows": 3,
+        "ordered_errors": [
+          "XADB-SQL-UNIQUE",
+          "XADB-SQL-RANGE"
+        ],
+        "continue_after_expected_error": true,
+        "final_tags": [
+          [
+            1,
+            null
+          ],
+          [
+            2,
+            null
+          ],
+          [
+            3,
+            ""
+          ]
+        ]
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "real DISK storage, transaction and statement effects; no parser-only PASS"
+    },
+    {
+      "id": "SQL-08",
+      "language": "sql",
+      "input": "BEGIN;\nUPDATE orders SET quantity = 5 WHERE order_id = 1001;\nCREATE INDEX orders_quantity ON orders (quantity);\nSELECT quantity FROM orders WHERE order_id = 1001;\nROLLBACK;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "expected_error": "XADB-SQL-DDL-IN-TXN",
+        "continue_after_expected_error": true,
+        "index_created": false,
+        "quantity_before_rollback": 5,
+        "final_quantity": 2
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "real DISK storage, transaction and statement effects; no parser-only PASS"
+    },
+    {
+      "id": "SQL-09",
+      "purpose": "integer boundaries",
+      "language": "sql",
+      "input": "INSERT INTO orders (order_id, customer_name, quantity, paid) VALUES (1004, NULL, 9223372036854775807, FALSE);\nINSERT INTO orders (order_id, customer_name, quantity, paid) VALUES (1005, NULL, 9223372036854775808, FALSE);",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "first_insert_rows": 1,
+        "second_error": "XADB-SQL-RANGE",
+        "row_1005_present": false
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual engine and independent expected history/rows"
+    },
+    {
+      "id": "SQL-10",
+      "purpose": "binary round trip",
+      "language": "sql",
+      "input": "CREATE TABLE payloads (id BIGINT NOT NULL, raw VARBINARY(4), PRIMARY KEY (id)) STORAGE DISK;\nINSERT INTO payloads (id, raw) VALUES (1, X'00FF'), (2, X'');\nSELECT id, raw FROM payloads ORDER BY id;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "SELF_CONTAINED",
+      "expected": {
+        "rows_typed": [
+          {
+            "id": 1,
+            "binary_hex": "00ff"
+          },
+          {
+            "id": 2,
+            "binary_hex": ""
+          }
+        ]
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual engine and independent expected history/rows"
+    },
+    {
+      "id": "SQL-11",
+      "purpose": "no implicit cast",
+      "language": "sql",
+      "input": "UPDATE orders SET quantity = '2' WHERE order_id = 1001;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "error": "XADB-SQL-TYPE",
+        "state": "unchanged original orders fixture"
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual engine and independent expected history/rows"
+    },
+    {
+      "id": "SQL-12",
+      "purpose": "zero match and delete counts",
+      "language": "sql",
+      "input": "UPDATE orders SET quantity = 5 WHERE order_id = 9999;\nDELETE FROM orders WHERE order_id = 1003;\nSELECT order_id FROM orders ORDER BY order_id;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "affected_rows": [
+          0,
+          1
+        ],
+        "rows": [
+          [
+            1001
+          ],
+          [
+            1002
+          ]
+        ]
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual engine and independent expected history/rows"
+    },
+    {
+      "id": "SQL-13",
+      "purpose": "autocommit state transitions",
+      "language": "sql",
+      "input": "SET AUTOCOMMIT OFF;\nSELECT order_id FROM orders ORDER BY order_id;\nSET AUTOCOMMIT ON;\nROLLBACK;\nSET AUTOCOMMIT ON;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "select_starts_transaction": true,
+        "first_set_on_error": "XADB-SQL-TXN-STATE",
+        "continue_after_expected_error": true,
+        "final_mode": "ON",
+        "final_transaction": "IDLE"
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual engine and independent expected history/rows"
+    },
+    {
+      "id": "SQL-14",
+      "purpose": "commit conflict",
+      "language": "controller_scenario",
+      "input": null,
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "actor_a": "COMMITTED",
+        "actor_b": "ABORTED_WITH_CONFLICT",
+        "final_quantity_1001": 5,
+        "retry_scope_b": "whole transaction"
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual engine and independent expected history/rows",
+      "schedule": [
+        "A BEGIN",
+        "B BEGIN",
+        "A SELECT quantity FROM orders WHERE order_id = 1001",
+        "B SELECT quantity FROM orders WHERE order_id = 1001",
+        "A UPDATE orders SET quantity = 5 WHERE order_id = 1001",
+        "B UPDATE orders SET quantity = 6 WHERE order_id = 1001",
+        "A COMMIT observed success",
+        "B COMMIT conflict"
+      ]
+    },
+    {
+      "id": "SQL-15",
+      "purpose": "unknown commit outcome",
+      "language": "controller_scenario",
+      "input": null,
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "observed_client_result": "UNKNOWN",
+        "recovered_state": "entire original fixture or all three quantities=5; no partial transaction",
+        "automatic_replay_allowed": false
+      },
+      "planned_stage_refs": [
+        "DEV2",
+        "DEV3",
+        "DEV4",
+        "DEV5"
+      ],
+      "required_integration": "SQL recovery integration after Q1; repeat actual network ACK path after B3",
+      "schedule": [
+        "BEGIN",
+        "UPDATE orders SET quantity = 5",
+        "COMMIT with reply lost at an unconfirmed commit boundary",
+        "controller restarts owned worker through actual recovery",
+        "compare with independent admissible transaction histories"
+      ]
+    },
+    {
+      "id": "SQL-16",
+      "purpose": "acknowledged commit survives restart",
+      "language": "controller_scenario",
+      "input": null,
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "controller_observed_commit_success": true,
+        "recovered_quantity_1001": 5,
+        "power_loss_claimed_by_process_restart": false
+      },
+      "planned_stage_refs": [
+        "DEV2",
+        "DEV3",
+        "DEV4",
+        "DEV5"
+      ],
+      "required_integration": "SQL recovery integration after Q1; repeat actual network ACK path after B3",
+      "schedule": [
+        "BEGIN",
+        "UPDATE orders SET quantity = 5 WHERE order_id = 1001",
+        "COMMIT success observed by independent controller",
+        "terminate owned worker and reopen with actual recovery",
+        "verify quantity and indexes"
+      ]
+    },
+    {
+      "id": "SQL-17",
+      "purpose": "unsupported syntax and binding validation",
+      "language": "sql",
+      "input": "SELECT 1;\nSELECT order_id FROM orders WHERE 1 = 0 AND missing_column = 1;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "ordered_errors": [
+          "XADB-SQL-UNSUPPORTED",
+          "XADB-SQL-NAME"
+        ],
+        "continue_after_expected_error": true,
+        "state": "unchanged original orders fixture"
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual engine and independent expected history/rows"
+    },
+    {
+      "id": "SQL-18",
+      "purpose": "NOT NULL failure is statement atomic",
+      "language": "sql",
+      "input": "INSERT INTO orders (order_id, customer_name, quantity, paid)\nVALUES (1004, '정상', 1, FALSE), (1005, '실패', NULL, FALSE);\nSELECT order_id FROM orders ORDER BY order_id;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "ordered_errors": [
+          "XADB-SQL-NOT-NULL"
+        ],
+        "rows": [
+          [
+            1001
+          ],
+          [
+            1002
+          ],
+          [
+            1003
+          ]
+        ],
+        "continue_after_expected_error": true,
+        "transaction": "IDLE"
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual DISK engine with independent rows, catalog, transaction and resource observations"
+    },
+    {
+      "id": "SQL-19",
+      "purpose": "UTF-8 bytes and binary length boundaries",
+      "language": "sql",
+      "input": "CREATE TABLE payloads (id BIGINT NOT NULL, label VARCHAR(6), data VARBINARY(2), PRIMARY KEY (id)) STORAGE DISK;\nINSERT INTO payloads (id, label, data) VALUES (1, '가나', X'00FF'), (2, '', X'');\nINSERT INTO payloads (id, label, data) VALUES (3, '가나다', X'00');\nINSERT INTO payloads (id, label, data) VALUES (4, '가', X'00FF01');\nSELECT id, label, data FROM payloads ORDER BY id;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "SELF_CONTAINED",
+      "expected": {
+        "ordered_errors": [
+          "XADB-SQL-RANGE",
+          "XADB-SQL-RANGE"
+        ],
+        "rows": [
+          [
+            1,
+            "가나",
+            {
+              "binary_hex": "00FF"
+            }
+          ],
+          [
+            2,
+            "",
+            {
+              "binary_hex": ""
+            }
+          ]
+        ],
+        "continue_after_expected_error": true
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual DISK engine with independent rows, catalog, transaction and resource observations"
+    },
+    {
+      "id": "SQL-20",
+      "purpose": "composite UNIQUE and any NULL component",
+      "language": "sql",
+      "input": "CREATE TABLE pairs (id BIGINT NOT NULL, a BIGINT, b VARCHAR(6), PRIMARY KEY (id), UNIQUE (a, b)) STORAGE DISK;\nINSERT INTO pairs (id, a, b) VALUES (1, 1, 'a'), (2, 1, NULL), (3, 1, NULL), (4, NULL, 'a'), (5, NULL, 'a');\nINSERT INTO pairs (id, a, b) VALUES (6, 1, 'a');\nSELECT id FROM pairs ORDER BY id;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "SELF_CONTAINED",
+      "expected": {
+        "first_insert_affected_rows": 5,
+        "ordered_errors": [
+          "XADB-SQL-UNIQUE"
+        ],
+        "rows": [
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [
+            3
+          ],
+          [
+            4
+          ],
+          [
+            5
+          ]
+        ],
+        "continue_after_expected_error": true
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual DISK engine with independent rows, catalog, transaction and resource observations"
+    },
+    {
+      "id": "SQL-21",
+      "purpose": "unchanged UPDATE count and LIMIT zero",
+      "language": "sql",
+      "input": "UPDATE orders SET quantity = 2 WHERE order_id = 1001;\nSELECT order_id FROM orders ORDER BY order_id LIMIT 0;\nSELECT order_id FROM orders ORDER BY customer_name DESC, order_id;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "affected_rows": 1,
+        "ordered_resultsets": [
+          [],
+          [
+            [
+              1002
+            ],
+            [
+              1001
+            ],
+            [
+              1003
+            ]
+          ]
+        ]
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual DISK engine with independent rows, catalog, transaction and resource observations"
+    },
+    {
+      "id": "SQL-22",
+      "purpose": "quoted name identity and DROP lifecycle",
+      "language": "sql",
+      "input": "CREATE TABLE \"Orders\" (id BIGINT NOT NULL, PRIMARY KEY (id)) STORAGE DISK;\nINSERT INTO \"Orders\" (id) VALUES (1);\nSELECT id FROM orders;\nSELECT id FROM \"Orders\";\nDROP TABLE \"Orders\";\nCREATE TABLE \"Orders\" (id BIGINT NOT NULL, PRIMARY KEY (id)) STORAGE DISK;\nSELECT id FROM \"Orders\";",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "SELF_CONTAINED",
+      "expected": {
+        "ordered_errors": [
+          "XADB-SQL-NAME"
+        ],
+        "ordered_successful_resultsets": [
+          [
+            [
+              1
+            ]
+          ],
+          []
+        ],
+        "continue_after_expected_error": true,
+        "new_object_identity_required": true
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual DISK engine with independent rows, catalog, transaction and resource observations"
+    },
+    {
+      "id": "SQL-23",
+      "purpose": "idle DDL with autocommit OFF and explicit state errors",
+      "language": "sql",
+      "input": "SET AUTOCOMMIT OFF;\nCREATE TABLE mode_probe (id BIGINT NOT NULL, PRIMARY KEY (id)) STORAGE DISK;\nROLLBACK;\nSELECT id FROM mode_probe;\nBEGIN;\nROLLBACK;\nSET AUTOCOMMIT ON;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "SELF_CONTAINED",
+      "expected": {
+        "ordered_errors": [
+          "XADB-SQL-TXN-STATE",
+          "XADB-SQL-TXN-STATE"
+        ],
+        "ddl_committed": true,
+        "select_rows": [],
+        "select_starts_transaction": true,
+        "continue_after_expected_error": true,
+        "final_mode": "ON",
+        "final_transaction": "IDLE"
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual DISK engine with independent rows, catalog, transaction and resource observations"
+    },
+    {
+      "id": "SQL-24",
+      "purpose": "failed unique index build preserves table and releases owned admission",
+      "language": "sql",
+      "input": "CREATE UNIQUE INDEX orders_paid ON orders (paid);\nSELECT order_id, paid FROM orders ORDER BY order_id;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "FRESH_SQL-01",
+      "expected": {
+        "ordered_errors": [
+          "XADB-SQL-UNIQUE"
+        ],
+        "rows": [
+          [
+            1001,
+            false
+          ],
+          [
+            1002,
+            true
+          ],
+          [
+            1003,
+            false
+          ]
+        ],
+        "index_not_published": true,
+        "owned_admission_and_temporary_resources_released": true,
+        "continue_after_expected_error": true
+      },
+      "planned_stage_refs": [
+        "DEV4"
+      ],
+      "required_integration": "actual DISK engine with independent rows, catalog, transaction and resource observations"
+    },
+    {
+      "id": "SQL-25",
+      "purpose": "mixed DISK acknowledged commit and UNKNOWN recovery",
+      "language": "controller_scenario",
+      "input": null,
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "fixture": "SELF_CONTAINED",
+      "schedule": [
+        "Create DISK table m and DISK table d with id BIGINT NOT NULL primary key and quantity BIGINT NOT NULL; insert (1,2) in each, commit fixtures",
+        "A BEGIN; update quantity=5 for id=1 in both tables",
+        "Variant ACK: controller observes COMMIT success before terminating owned worker",
+        "Variant UNKNOWN on separate fresh fixture: lose reply at unconfirmed commit boundary and terminate owned worker",
+        "Reopen through actual production recovery; compare both rows and all indexes with independent controller history"
+      ],
+      "expected": {
+        "ack_variant": {
+          "m": 5,
+          "d": 5
+        },
+        "unknown_variant_allowed_pairs": [
+          [
+            2,
+            2
+          ],
+          [
+            5,
+            5
+          ]
+        ],
+        "mixed_pair_forbidden": true,
+        "automatic_retry": false,
+        "process_kill_does_not_qualify_power_loss": true
+      },
+      "planned_stage_refs": [
+        "DEV2",
+        "DEV3",
+        "DEV4",
+        "DEV5"
+      ],
+      "required_integration": "native kernel baseline then actual disk SQL after Q1; real network ACK after B3; independent history survives worker termination"
+    }
+  ],
+  "product_execution_status": "NOT_RUN",
+  "expected_results_origin": "XADB-authored hand-derived examples; not copied legacy execution output",
+  "statement_error_fixture_rule": "Controller explicitly handles expected errors and continues where specified; default stop-on-error CLI scripts do not run subsequent statements automatically.",
+  "followup_decisions": [
+    "review proposed lexical and semantic choices before implementation",
+    "bound composite keys and statement resources before storage qualification",
+    "bind driver SQLSTATE mapping and parameter protocol before client exposure",
+    "add native and SQL equivalence with independent row/history oracle",
+    "extend SQL by feature-specific specifications and tests"
+  ],
+  "review_ref": "manual-review.json"
+}

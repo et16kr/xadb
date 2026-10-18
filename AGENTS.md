@@ -1,0 +1,16 @@
+# XADB repository guide
+
+- Start with `devdoc/README.md`, then read only the task's owner contracts and evidence.
+- Apply `devdoc/policies/coding-convention.md`, `development-policy.md`, and `documentation-policy.md`. Existing authorization permits routine work; D1/D2 require independent review. Adoption is not execution evidence.
+- Product direction is `devdoc/plans/project-direction.md`: Linux/Rust, a disk-based relational DBMS, understandable internals, broad functionality and measured basic performance. Public DBMS are research inputs, not claims of identical SQL or implementation.
+- For public DBMS source research, use [the local source catalog](devdoc/reference/opensource-references.md): ten checkouts under `/home/et16/work`, including PostgreSQL, MariaDB and CUBRID, with source entry points and recorded revisions. Read the relevant parts for the task and record the actual revision used.
+- Keep resident-database and mixed-storage product engines out of scope. Ordinary buffers, caches, quotas and the temporary volatile K0 substrate remain necessary.
+- Documentation is Markdown only. Keep rules in `policies/`, order in `plans/`, owner contracts in `contracts/`, actual state in `implementation/`, optional detail in `reference/`, inactive examples in `examples/`, and truthful receipts in `evidence/` and `history/`.
+- Use XADB terminology in documents and commit messages. Describe migration provenance with neutral source identifiers and hashes; preserve original path inventories in the external local archive.
+- Register documents in the directory README and `devdoc/documents.json`. Use relative Markdown links; JSON document IDs resolve through the catalog. Preserve original identity for any historical evidence retained.
+- Follow `bottom-up-development.md`, `development-stages.json`, and `stage-completion.json`. DEV2 is partial; volatile tests do not qualify durability.
+- Follow `repository-build-plan.md` and its JSON for roles, packages, dependencies, fingerprints and clean exports. Add planned paths only with implementation.
+- Read `implementation-contracts.md` before kernel changes and `version-compatibility-policy.json` before published-format or semantic changes. Development builds use fresh fixtures; current-build recovery checks remain mandatory.
+- Run `python3 devdoc/verify_documents.py` after document edits. This checks documentation, not product execution.
+- DEV0: `python3 scripts/check_dev0.py`; DEV1 plus DEV0 regression: `python3 scripts/check_dev1.py`; DEV2 current P0/K0 leaf plus lower regressions: `python3 scripts/check_dev2_reference.py --with-substrate`.
+- This is a separate repository. Do not modify the source checkout or import its Git history. Imported prior progress is not a fresh XADB verification result.

@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "document_status": "DESIGN_PROPOSAL_NOT_IMPLEMENTED_OR_EXECUTED",
+  "product": "XADB",
+  "active_configuration": false,
+  "example_kind": "ILLUSTRATIVE_ENVELOPE_NOT_AN_ACTUAL_AGENT_RESULT",
+  "envelope": {
+    "task_id": "XADB-REPRO-ACK-001",
+    "run_id": "EXAMPLE_RUN",
+    "source_digest": "RESOLVE_BEFORE_USE",
+    "build_digest": "RESOLVE_BEFORE_USE",
+    "case_digest": "RESOLVE_BEFORE_USE",
+    "recipe_digest": "RESOLVE_BEFORE_USE",
+    "agent_model": "gpt-6-luna",
+    "agent_status": "COMPLETED",
+    "failure_class": "PRODUCT_TEST_FAIL",
+    "product_verdict": "FAIL",
+    "required_steps_complete": true,
+    "witness_summary": {
+      "expected": 7,
+      "observed": 7,
+      "missing": []
+    },
+    "oracle_summary": {
+      "contract": "ACK-DURABLE-001",
+      "synthetic_counterexample": "An acknowledged row is absent after the specified owned-child crash and recovery.",
+      "source": "independent typed-history oracle"
+    },
+    "disclosure_check": {
+      "status": "NOT_RUN",
+      "scanner_version": "RESOLVE_BEFORE_USE",
+      "allowed_to_parent": false,
+      "reason": "Proposal example only; validate and minimize before publication"
+    },
+    "evidence_refs": [
+      {
+        "id": "EV-ACK-HISTORY",
+        "view": "typed-history",
+        "digest": "RESOLVE_BEFORE_USE"
+      },
+      {
+        "id": "EV-RECOVERY-TRACE",
+        "view": "symbolic-event-trace",
+        "digest": "RESOLVE_BEFORE_USE"
+      }
+    ],
+    "raw_payloads_included": false,
+    "policy_or_safety_notice": null,
+    "unresolved_questions": [
+      "Which core state transition explains the missing row?"
+    ],
+    "completion_is_product_success": false
+  },
+  "rules": [
+    "Any safety notice is relayed as minimal accurate status, never hidden.",
+    "Example witness counts and outcomes are illustrative, not executed evidence.",
+    "A product FAIL does not imply agent failure or trigger an automatic model switch.",
+    "No artifact is promoted while disclosure status is NOT_RUN, UNKNOWN, or FAILED."
+  ]
+}

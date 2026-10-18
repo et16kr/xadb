@@ -1,0 +1,457 @@
+{
+  "schema_version": 2,
+  "reference_base": "devdoc",
+  "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
+  "documents": {
+    "README.md": {
+      "path": "README.md",
+      "role": "entrypoint",
+      "title": "XADB 개발 문서"
+    },
+    "contracts/README.md": {
+      "path": "contracts/README.md",
+      "role": "contracts",
+      "title": "기능 계약"
+    },
+    "ai-performance-engineering.json": {
+      "path": "contracts/ai-performance-engineering.json",
+      "role": "contracts",
+      "title": "ai-performance-engineering.json"
+    },
+    "ai-performance-engineering.md": {
+      "path": "contracts/ai-performance-engineering.md",
+      "role": "contracts",
+      "title": "XADB — AI가 분석·수정·검증하는 성능 개발 구조"
+    },
+    "causal-diagnosis-cases.json": {
+      "path": "contracts/causal-diagnosis-cases.json",
+      "role": "contracts",
+      "title": "causal-diagnosis-cases.json"
+    },
+    "dev0-contract.json": {
+      "path": "contracts/dev0-contract.json",
+      "role": "contracts",
+      "title": "dev0-contract.json"
+    },
+    "dev1-contract.json": {
+      "path": "contracts/dev1-contract.json",
+      "role": "contracts",
+      "title": "dev1-contract.json"
+    },
+    "dev2-kernel-design.md": {
+      "path": "contracts/dev2-kernel-design.md",
+      "role": "contracts",
+      "title": "DEV2 — SQL 없는 영속 커널 상세 설계"
+    },
+    "disk-storage-design.md": {
+      "path": "contracts/disk-storage-design.md",
+      "role": "contracts",
+      "title": "디스크 저장 엔진 기준"
+    },
+    "disk-test-matrix.json": {
+      "path": "contracts/disk-test-matrix.json",
+      "role": "contracts",
+      "title": "disk-test-matrix.json"
+    },
+    "execution-boundary-cases.json": {
+      "path": "contracts/execution-boundary-cases.json",
+      "role": "contracts",
+      "title": "execution-boundary-cases.json"
+    },
+    "implementation-contracts.md": {
+      "path": "contracts/implementation-contracts.md",
+      "role": "contracts",
+      "title": "XADB Rust 구현 계약"
+    },
+    "kernel-test-matrix.json": {
+      "path": "contracts/kernel-test-matrix.json",
+      "role": "contracts",
+      "title": "kernel-test-matrix.json"
+    },
+    "module-test-matrix.json": {
+      "path": "contracts/module-test-matrix.json",
+      "role": "contracts",
+      "title": "module-test-matrix.json"
+    },
+    "pilot-acceptance.json": {
+      "path": "contracts/pilot-acceptance.json",
+      "role": "contracts",
+      "title": "pilot-acceptance.json"
+    },
+    "recovery-logging-contract.json": {
+      "path": "contracts/recovery-logging-contract.json",
+      "role": "contracts",
+      "title": "recovery-logging-contract.json"
+    },
+    "recovery-logging-design.md": {
+      "path": "contracts/recovery-logging-design.md",
+      "role": "contracts",
+      "title": "XADB — 통합 recovery·logging·checkpoint 설계"
+    },
+    "recovery-test-matrix.json": {
+      "path": "contracts/recovery-test-matrix.json",
+      "role": "contracts",
+      "title": "recovery-test-matrix.json"
+    },
+    "replication-undo-analysis.md": {
+      "path": "contracts/replication-undo-analysis.md",
+      "role": "contracts",
+      "title": "XADB — recovery undo의 로그 보존과 RP 제약 검토"
+    },
+    "replication-undo-plan.json": {
+      "path": "contracts/replication-undo-plan.json",
+      "role": "contracts",
+      "title": "replication-undo-plan.json"
+    },
+    "document-migration.json": {
+      "path": "document-migration.json",
+      "role": "entrypoint",
+      "title": "document-migration.json"
+    },
+    "document-validation.json": {
+      "path": "document-validation.json",
+      "role": "entrypoint",
+      "title": "document-validation.json"
+    },
+    "document_tools.py": {
+      "path": "document_tools.py",
+      "role": "entrypoint",
+      "title": "document_tools.py"
+    },
+    "documents.json": {
+      "path": "documents.json",
+      "role": "entrypoint",
+      "title": "documents.json"
+    },
+    "evidence/README.md": {
+      "path": "evidence/README.md",
+      "role": "evidence",
+      "title": "XADB 실행 증거"
+    },
+    "dev0-validation.json": {
+      "path": "evidence/dev0-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "dev0-xadb-20261018-r1.json"
+    },
+    "dev1-validation.json": {
+      "path": "evidence/dev1-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "dev1-xadb-20261018-r1.json"
+    },
+    "dev2-validation.json": {
+      "path": "evidence/dev2-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "dev2-xadb-20261018-r1.json"
+    },
+    "implementation-import-inventory.json": {
+      "path": "evidence/implementation-import-inventory.json",
+      "role": "evidence",
+      "title": "implementation-import-inventory.json"
+    },
+    "AGENT_WORKFLOW.example.md": {
+      "path": "examples/AGENT_WORKFLOW.example.md",
+      "role": "examples",
+      "title": "XADB agent workflow — 제안 템플릿"
+    },
+    "examples/README.md": {
+      "path": "examples/README.md",
+      "role": "examples",
+      "title": "비활성 예시"
+    },
+    "agent-routing-policy.example.json": {
+      "path": "examples/agent-routing-policy.example.json",
+      "role": "examples",
+      "title": "agent-routing-policy.example.json"
+    },
+    "ai-execution-policy.example.json": {
+      "path": "examples/ai-execution-policy.example.json",
+      "role": "examples",
+      "title": "ai-execution-policy.example.json"
+    },
+    "causal-diagnosis.example.json": {
+      "path": "examples/causal-diagnosis.example.json",
+      "role": "examples",
+      "title": "causal-diagnosis.example.json"
+    },
+    "execution-request.example.json": {
+      "path": "examples/execution-request.example.json",
+      "role": "examples",
+      "title": "execution-request.example.json"
+    },
+    "module-repro-capsule.example.json": {
+      "path": "examples/module-repro-capsule.example.json",
+      "role": "examples",
+      "title": "module-repro-capsule.example.json"
+    },
+    "scenario.example.json": {
+      "path": "examples/scenario.example.json",
+      "role": "examples",
+      "title": "scenario.example.json"
+    },
+    "subagent-result.example.json": {
+      "path": "examples/subagent-result.example.json",
+      "role": "examples",
+      "title": "subagent-result.example.json"
+    },
+    "task-contract.example.json": {
+      "path": "examples/task-contract.example.json",
+      "role": "examples",
+      "title": "task-contract.example.json"
+    },
+    "version-scenario.example.json": {
+      "path": "examples/version-scenario.example.json",
+      "role": "examples",
+      "title": "version-scenario.example.json"
+    },
+    "history/README.md": {
+      "path": "history/README.md",
+      "role": "history",
+      "title": "XADB 이관 기록"
+    },
+    "project-migration.md": {
+      "path": "history/project-migration.md",
+      "role": "history",
+      "title": "XADB 독립 저장소 이관 기록"
+    },
+    "implementation/README.md": {
+      "path": "implementation/README.md",
+      "role": "implementation",
+      "title": "현재 구현"
+    },
+    "dev0-implementation.md": {
+      "path": "implementation/dev0-implementation.md",
+      "role": "implementation",
+      "title": "DEV0 — Rust 빌드와 XADBTest 최소 구현"
+    },
+    "dev1-implementation.md": {
+      "path": "implementation/dev1-implementation.md",
+      "role": "implementation",
+      "title": "DEV1 — 공통 의미와 Linux effect 기반"
+    },
+    "dev2-implementation.md": {
+      "path": "implementation/dev2-implementation.md",
+      "role": "implementation",
+      "title": "DEV2 구현 기록"
+    },
+    "implementation-status.json": {
+      "path": "implementation/implementation-status.json",
+      "role": "implementation",
+      "title": "implementation-status.json"
+    },
+    "plans/README.md": {
+      "path": "plans/README.md",
+      "role": "plans",
+      "title": "개발 계획"
+    },
+    "architecture-decisions.json": {
+      "path": "plans/architecture-decisions.json",
+      "role": "plans",
+      "title": "architecture-decisions.json"
+    },
+    "bottom-up-development.md": {
+      "path": "plans/bottom-up-development.md",
+      "role": "plans",
+      "title": "하위 계층부터 개발하는 순서"
+    },
+    "capability-inventory.json": {
+      "path": "plans/capability-inventory.json",
+      "role": "plans",
+      "title": "capability-inventory.json"
+    },
+    "dev2-implementation-plan.md": {
+      "path": "plans/dev2-implementation-plan.md",
+      "role": "plans",
+      "title": "DEV2 — 조사 결과와 구현·검증 계획"
+    },
+    "development-stages.json": {
+      "path": "plans/development-stages.json",
+      "role": "plans",
+      "title": "development-stages.json"
+    },
+    "development-stages.md": {
+      "path": "plans/development-stages.md",
+      "role": "plans",
+      "title": "XADB 개발 단계"
+    },
+    "feature-design-inventory.json": {
+      "path": "plans/feature-design-inventory.json",
+      "role": "plans",
+      "title": "feature-design-inventory.json"
+    },
+    "feature-design-inventory.md": {
+      "path": "plans/feature-design-inventory.md",
+      "role": "plans",
+      "title": "XADB 기능 명세·설계 작성 대상"
+    },
+    "phase1-product-baseline.md": {
+      "path": "plans/phase1-product-baseline.md",
+      "role": "plans",
+      "title": "XADB 초기 제품 기준선"
+    },
+    "phase1-scope.json": {
+      "path": "plans/phase1-scope.json",
+      "role": "plans",
+      "title": "phase1-scope.json"
+    },
+    "product-requirements.md": {
+      "path": "plans/product-requirements.md",
+      "role": "plans",
+      "title": "XADB 제품 기능 요구"
+    },
+    "project-direction.md": {
+      "path": "plans/project-direction.md",
+      "role": "plans",
+      "title": "XADB 제품 방향"
+    },
+    "stage-completion.json": {
+      "path": "plans/stage-completion.json",
+      "role": "plans",
+      "title": "stage-completion.json"
+    },
+    "policies/README.md": {
+      "path": "policies/README.md",
+      "role": "policies",
+      "title": "정책"
+    },
+    "ai-development-method.md": {
+      "path": "policies/ai-development-method.md",
+      "role": "policies",
+      "title": "XADB의 AI 개발·검증 방법"
+    },
+    "coding-convention.json": {
+      "path": "policies/coding-convention.json",
+      "role": "policies",
+      "title": "coding-convention.json"
+    },
+    "coding-convention.md": {
+      "path": "policies/coding-convention.md",
+      "role": "policies",
+      "title": "XADB 코딩 컨벤션과 개발 절차"
+    },
+    "development-policy.json": {
+      "path": "policies/development-policy.json",
+      "role": "policies",
+      "title": "development-policy.json"
+    },
+    "development-policy.md": {
+      "path": "policies/development-policy.md",
+      "role": "policies",
+      "title": "XADB — 개발 의사결정과 검증 운영 방침"
+    },
+    "documentation-policy.md": {
+      "path": "policies/documentation-policy.md",
+      "role": "policies",
+      "title": "문서 운영 기준"
+    },
+    "parallel-development-policy.json": {
+      "path": "policies/parallel-development-policy.json",
+      "role": "policies",
+      "title": "parallel-development-policy.json"
+    },
+    "parallel-development-policy.md": {
+      "path": "policies/parallel-development-policy.md",
+      "role": "policies",
+      "title": "XADB — 병렬 개발을 위한 파일 구성·소유 정책"
+    },
+    "repository-build-plan.json": {
+      "path": "policies/repository-build-plan.json",
+      "role": "policies",
+      "title": "repository-build-plan.json"
+    },
+    "repository-build-plan.md": {
+      "path": "policies/repository-build-plan.md",
+      "role": "policies",
+      "title": "XADB — 저장소 구성과 빌드 정책"
+    },
+    "version-compatibility-policy.json": {
+      "path": "policies/version-compatibility-policy.json",
+      "role": "policies",
+      "title": "version-compatibility-policy.json"
+    },
+    "reference/README.md": {
+      "path": "reference/README.md",
+      "role": "reference",
+      "title": "참고 자료와 초안"
+    },
+    "architecture-overview.md": {
+      "path": "reference/architecture-overview.md",
+      "role": "reference",
+      "title": "XADB — AI가 개발하고 검증할 수 있는 데이터베이스 설계"
+    },
+    "feature-design-leaf-index.md": {
+      "path": "reference/feature-design-leaf-index.md",
+      "role": "reference",
+      "title": "기능 상세화 안내"
+    },
+    "interface-experience-plan.json": {
+      "path": "reference/interface-experience-plan.json",
+      "role": "reference",
+      "title": "interface-experience-plan.json"
+    },
+    "interface-experience-plan.md": {
+      "path": "reference/interface-experience-plan.md",
+      "role": "reference",
+      "title": "XADB 사용자·운영 인터페이스 경험 기획"
+    },
+    "manual-review.json": {
+      "path": "reference/manual-review.json",
+      "role": "reference",
+      "title": "manual-review.json"
+    },
+    "manual-review.md": {
+      "path": "reference/manual-review.md",
+      "role": "reference",
+      "title": "XADB 매뉴얼 리뷰와 구현 추적"
+    },
+    "opensource-references.md": {
+      "path": "reference/opensource-references.md",
+      "role": "reference",
+      "title": "공개 DBMS 참고 자료"
+    },
+    "reference/review/README.md": {
+      "path": "reference/review/README.md",
+      "role": "reference",
+      "title": "XADB 검토 기록"
+    },
+    "sql-language-draft.json": {
+      "path": "reference/sql-language-draft.json",
+      "role": "reference",
+      "title": "sql-language-draft.json"
+    },
+    "sql-language-draft.md": {
+      "path": "reference/sql-language-draft.md",
+      "role": "reference",
+      "title": "XADB 초기 SQL 명세 초안"
+    },
+    "user-manual-draft.json": {
+      "path": "reference/user-manual-draft.json",
+      "role": "reference",
+      "title": "user-manual-draft.json"
+    },
+    "user-manual-draft.md": {
+      "path": "reference/user-manual-draft.md",
+      "role": "reference",
+      "title": "XADB 사용자 매뉴얼 초안"
+    },
+    "requirements.txt": {
+      "path": "requirements.txt",
+      "role": "entrypoint",
+      "title": "requirements.txt"
+    },
+    "test_document_tools.py": {
+      "path": "test_document_tools.py",
+      "role": "entrypoint",
+      "title": "test_document_tools.py"
+    },
+    "test_xadb_contracts.py": {
+      "path": "test_xadb_contracts.py",
+      "role": "entrypoint",
+      "title": "test_xadb_contracts.py"
+    },
+    "verify_documents.py": {
+      "path": "verify_documents.py",
+      "role": "entrypoint",
+      "title": "verify_documents.py"
+    }
+  }
+}

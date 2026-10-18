@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "document_status": "DESIGN_PROPOSAL_NOT_IMPLEMENTED_OR_EXECUTED",
+  "capsule_id": "XADB-REPRO-CAPSULE-EXAMPLE",
+  "capsule_status": "EXTRACTED",
+  "origin": {
+    "level": "M3_system",
+    "event_id": "RESOLVE_ORIGIN_EVENT",
+    "error_code": "XADB-ACK-ROW-MISSING-EXAMPLE",
+    "contract_id": "ACK-DURABLE-001",
+    "source_digest": "RESOLVE_SOURCE",
+    "build_digest": "RESOLVE_BUILD",
+    "error_origin_is_not_proven_cause": true
+  },
+  "target": {
+    "level": "M1_module",
+    "module": "xadb-durable recovery",
+    "entry_point": "PROPOSED_RECOVERY_LIBRARY_ENTRY",
+    "actual_production_core_required": true,
+    "server_bootstrap_required": false,
+    "source_file_binding": "resolve symbol against exact source revision; not an invented production path"
+  },
+  "input": {
+    "pre_state": "synthetic checkpoint before two acknowledged row writes",
+    "wal_image": "synthetic complete committed batch plus declared fault boundary",
+    "schedule": "explicit replay/event ordering",
+    "dependency_ports": [
+      "bounded page store",
+      "event sink"
+    ],
+    "credentials_or_customer_rows": false
+  },
+  "expected": {
+    "invariant": "Acknowledged complete transactions remain observable after recovery.",
+    "compare": "typed committed effects and row state; no physical-byte equivalence required"
+  },
+  "required_witnesses": [
+    "origin_event_bound_to_source",
+    "actual_recovery_entry_executed",
+    "target_WAL_batch_replayed",
+    "independent_ACK_oracle_checked",
+    "same_contract_violation_as_origin"
+  ],
+  "promotion_rule": "EXTRACTED becomes REPRODUCED only after execution verifies contract and causal witnesses",
+  "escalation": {
+    "on_not_reproduced": "add evidence-supported dependencies/history/schedule; use M2 or scoped M3 if necessary",
+    "do_not_assume": "the file logging an error caused it",
+    "do_not_replace": "production dependency semantics with a stub solely to obtain the same message"
+  },
+  "regression_after_fix": [
+    "same capsule",
+    "affected component contracts",
+    "required real-system recovery checks"
+  ],
+  "execution_status": "NOT_RUN",
+  "causal_context": {
+    "graph_artifact": "RESOLVE_GRAPH_FOR_THIS_RECOVERY_CASE",
+    "schema_example": "causal-diagnosis.example.json",
+    "schema_example_is_different_case": true,
+    "required_fields": [
+      "failed predicate and exact object/state version",
+      "producer/consumer and owner/writer histories",
+      "control, synchronization and persistence dependencies",
+      "expected but missing operations",
+      "conservative candidates with inclusion/exclusion evidence",
+      "unresolved boundaries and trace gaps",
+      "next discriminating experiment"
+    ],
+    "current_status": "INCOMPLETE",
+    "confirmed_cause": null,
+    "source_reference_alone_proves_cause": false,
+    "unobserved_edge_is_absent": false
+  }
+}

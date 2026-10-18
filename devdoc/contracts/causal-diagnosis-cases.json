@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "document_status": "DESIGN_PROPOSAL_NOT_IMPLEMENTED_OR_EXECUTED",
+  "execution_status": "NOT_RUN",
+  "gate_policy": {
+    "known_root_causes_must_remain_candidates": true,
+    "insufficient_evidence_must_be_marked_incomplete": true,
+    "case_truth_hidden_from_diagnoser": true,
+    "reduction_without_recall_is_insufficient": true,
+    "corpus_success_is_not_universal_proof": true
+  },
+  "cases": [
+    {
+      "id": "XADB-DIAG-001",
+      "name": "producer_corruption",
+      "scenario": "A detects a value already invalid at its input",
+      "required_behavior": "retain the upstream producer; do not assign cause solely to A",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-002",
+      "name": "consumer_checker_error",
+      "scenario": "A rejects a valid synthetic value while independent oracle accepts it",
+      "required_behavior": "retain and test A and the checker; do not automatically blame producer",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-003",
+      "name": "stale_plan",
+      "scenario": "B returns epoch 7 for a request bound to epoch 8 after declared invalidation",
+      "required_behavior": "retain B and A until independent module tests discriminate",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-004",
+      "name": "valid_old_snapshot",
+      "scenario": "request is correctly bound to old epoch 7 with valid lifetime",
+      "required_behavior": "do not classify epoch 7 as stale solely because current catalog is 8",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-005",
+      "name": "missing_invalidation",
+      "scenario": "required invalidation never occurs",
+      "required_behavior": "include the owner of the missing obligation although no event exists",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-006",
+      "name": "async_context_loss",
+      "scenario": "sender exists but receiver link is absent",
+      "required_behavior": "mark incomplete and retain delivery path; absence is not proof of nonexecution",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-007",
+      "name": "object_id_reuse",
+      "scenario": "same object ID reappears with different generation",
+      "required_behavior": "separate identities and detect stale references",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-008",
+      "name": "multiple_writers",
+      "scenario": "two allowed writers can affect a state version",
+      "required_behavior": "retain both histories and ordering until discriminated",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-009",
+      "name": "trace_loss",
+      "scenario": "required event is lost to sampling or ring buffer wrap",
+      "required_behavior": "mark incomplete; preserve conservative candidates",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-010",
+      "name": "revision_mismatch",
+      "scenario": "symbol map and build digest disagree",
+      "required_behavior": "mark bundle INVALID and do not assert source localization",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-011",
+      "name": "storage_dependency",
+      "scenario": "recovery symptom depends on an unverified persistence receipt",
+      "required_behavior": "retain storage adapter and durability sequence, not only recovery function",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-012",
+      "name": "two_causes",
+      "scenario": "two independent defects jointly violate an invariant",
+      "required_behavior": "retain both causes; do not force a single culprit",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-013",
+      "name": "unsafe_boundary",
+      "scenario": "unresolved memory corruption can cross FFI boundary",
+      "required_behavior": "expand candidate scope; a missing normal call edge cannot exclude influence",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-014",
+      "name": "insufficient_predicate",
+      "scenario": "byte checksum passes but semantic invariant fails",
+      "required_behavior": "do not exclude upstream based on checksum alone",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-015",
+      "name": "schema_upgrade",
+      "scenario": "new same-major tool opens old minor diagnostic bundle",
+      "required_behavior": "decode or convert preserving identity, unknowns and witness meanings",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    },
+    {
+      "id": "XADB-DIAG-016",
+      "name": "instrumentation_budget",
+      "scenario": "repeat equivalent workload with instrumentation enabled and disabled",
+      "required_behavior": "measure throughput, tail, memory, trace loss and schedule sensitivity under declared budget",
+      "execution_status": "NOT_RUN",
+      "actual_result": null
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "schema_version": 3,
+  "date": "2026-10-18",
+  "product_status": "DEV0_DEV1_IMPORTED_DEV2_P0_K0_PARTIAL_REVALIDATION_REQUIRED",
+  "user_confirmed": {
+    "product": "XADB",
+    "os_family": "Linux only",
+    "primary_language": "Rust",
+    "purpose": "Experiment whether AI agents can develop an AI-friendly DBMS informed by open-source systems; early implementation, final disk relational DBMS goal stated publicly",
+    "storage_engine": "DISK_ONLY",
+    "reference_dbms": [
+      "PostgreSQL",
+      "MariaDB",
+      "SQLite"
+    ],
+    "specialized_tuning_required": false,
+    "basic_performance_required": true,
+    "database_boundary": "one database and one shared transaction domain; disk tables and optional disk partitions",
+    "legacy_compatibility": false,
+    "internal_distribution_compatibility_required": false,
+    "new_independent_xadbtest": true,
+    "development_priority_not_business_priority": true
+  },
+  "implementation_proposals": {
+    "core": "safe Rust; unsafe/FFI only in reviewed explicit boundaries",
+    "deployment": "modular single process plus embedded engine API",
+    "initial_storage": "DEV2 SQL-free durable disk kernel; DEV3 bounded DISK row/index; DEV4 embedded SQL; DEV5 server",
+    "commit": "serial coordinator, coarse epoch validation, versioned redo WAL",
+    "publication": "safe composite view descriptor with disk row, index, locator and catalog roots; bounded disk caches",
+    "reference": "phase1-product-baseline.md and disk-storage-design.md; implementation-contracts.md for common Rust contracts",
+    "version_channels": "internal distributions are not compatibility baselines; customer delivery starts compatibility obligations; product version != stage != channel",
+    "recovery_logging": {
+      "status": "DESIGN_PROPOSAL_NOT_IMPLEMENTED",
+      "reference": "recovery-logging-design.md",
+      "contract": "recovery-logging-contract.json",
+      "baseline": "L0 single redo/commit stream; exact committed generation checkpoint; common DISK recovery",
+      "optimization": "L1 after B2; L2 after S1 with separate acceptance; no initial SQL dependency"
+    }
+  },
+  "unresolved": [
+    "qualify chosen Linux/filesystem/toolchain baseline",
+    "workload/SLA measurement and detailed complete driver/function acceptance inventory; do not narrow required functionality",
+    "physical data structure performance",
+    "memory/recovery/retention budgets"
+  ],
+  "execution_status": "NOT_RUN",
+  "decided_development_policy": {
+    "status": "ACCEPTED_BY_USER_DELEGATION",
+    "sequence": "DEV0-DEV9 with COMM/PART/NG branches",
+    "kernel": "real row substrate + transaction/logging/recovery developed in K0-K5 increments",
+    "no_sql_or_communication_dependency_in_storage": true,
+    "all_lower_layers_need_not_be_feature_complete": true,
+    "reference": "bottom-up-development.md"
+  },
+  "requirements_reference": "product-requirements.md; capability-inventory.json; replacement-evidence.json",
+  "requirements_review_exclusions": [
+    "DISK recovery design",
+    "logging architecture; no serial logging requirement adopted from legacy"
+  ],
+  "implementation_proposal_status": {
+    "commit": "Prior proposal, not an accepted successor-product requirement; excluded from this requirements review; separate recovery/logging design controls selection."
+  },
+  "repository_layout": {
+    "status": "ACCEPTED_LAYOUT_POLICY_IMPLEMENTATION_PARTIAL",
+    "reference": "repository-build-plan.json",
+    "design_root": "devdoc",
+    "dev2_packages": [
+      "xadb-engine",
+      "xadbtest-reference",
+      "xadbtest-engine-worker"
+    ],
+    "kernel_roles_initially_internal_modules": true,
+    "changes_existing_kernel_semantics": false,
+    "changes_existing_stage_order": false
+  },
+  "platform_separation": {
+    "status": "ACCEPTED_AND_IMPLEMENTED_LINUX_ONLY",
+    "reference": "repository-build-plan.json#platform_boundary",
+    "evidence": "dev1-validation.json",
+    "naming": "xadb-foundation and xadb-platform; legacy core/pd names not required",
+    "future_os": "business decision plus adapter and actual platform qualification",
+    "non_linux_test_status": "NOT_RUN",
+    "changes_kernel_semantics": false
+  },
+  "coding_convention": {
+    "status": "DOCUMENTED_DEVELOPMENT_POLICY",
+    "reference": "coding-convention.json",
+    "applies_to": "new and changed code",
+    "product_source_directory_names": "role names without xadb- prefix, as requested by the user",
+    "cargo_package_names": "retained as separate identifiers",
+    "changes_kernel_semantics": false,
+    "changes_stage_order": false,
+    "whole_repository_audit": "NOT_RUN",
+    "ai_efficiency_pilot": "NOT_RUN"
+  },
+  "development_policy": {
+    "status": "ACCEPTED_BY_USER_DELEGATION",
+    "reference": "development-policy.json",
+    "scope": "DP01-DP07 development methods and operating defaults; no kernel semantics or stage-order change",
+    "operational_qualification": "NOT_RUN"
+  },
+  "documentation": {
+    "decision_id": "DOC-001",
+    "status": "ACCEPTED_BY_USER",
+    "reference": "documentation-policy.md",
+    "format": "Markdown",
+    "html_generation": false,
+    "decision_and_execution_states_separate": true
+  },
+  "scope_decision_ref": "project-direction.md",
+  "reference_policy_ref": "opensource-references.md"
+}

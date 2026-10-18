@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "document_status": "DESIGN_PROPOSAL_NOT_IMPLEMENTED_OR_EXECUTED",
+  "strategy": "M1 module -> M2 actual embedded components -> required M3 isolated system",
+  "module_testability_requirements": [
+    "explicit inputs and owned state",
+    "no server bootstrap or privileged SQL for M1",
+    "no hidden global environment",
+    "same production core transitions",
+    "independent oracle",
+    "bounded resource footprint"
+  ],
+  "modules": [
+    {
+      "module": "parser_type",
+      "M1_input": "synthetic text/bytes and fixed type tables",
+      "oracles": [
+        "AST",
+        "error location",
+        "type semantics"
+      ],
+      "M3_required_when_affected": [
+        "client encoding",
+        "wire protocol"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "module": "binder_catalog",
+      "M1_input": "immutable catalog snapshot",
+      "oracles": [
+        "name resolution",
+        "permission semantics",
+        "dependency tracking"
+      ],
+      "M3_required_when_affected": [
+        "DDL transaction linkage",
+        "catalog recovery"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "module": "optimizer",
+      "M1_input": "typed logical plan and fixed statistics",
+      "oracles": [
+        "reference equivalence",
+        "rewrite preconditions"
+      ],
+      "M3_required_when_affected": [
+        "real executor",
+        "workload performance"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "module": "executor",
+      "M1_input": "row batches and Engine API",
+      "oracles": [
+        "NULL/duplicate/aggregate semantics",
+        "cancel"
+      ],
+      "M3_required_when_affected": [
+        "actual I/O",
+        "concurrent query",
+        "memory quota"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "module": "transaction",
+      "M1_input": "snapshot/private batches and explicit events",
+      "oracles": [
+        "atomicity",
+        "visibility",
+        "conflict history",
+        "ACK ordering"
+      ],
+      "M3_required_when_affected": [
+        "real threads and memory model",
+        "server ACK path"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "module": "row_index",
+      "M1_input": "small rows/pages and page-store/allocator ports",
+      "oracles": [
+        "row-index consistency",
+        "uniqueness",
+        "lifetime",
+        "whole-table uniqueness across media",
+        "snapshot-specific RowUID resolver",
+        "native global index equals full scan"
+      ],
+      "M3_required_when_affected": [
+        "production storage adapter",
+        "reclamation stress",
+        "DISK_BUFFERED global indexes",
+        "larger-than-memory buffered locator"
+      ],
+      "execution_status": "NOT_RUN",
+      "submodule_boundaries": [
+        "storage_mem: resident versions and guards",
+        "storage_disk: COW pages and bounded buffers",
+        "row_locator: snapshot-specific identity and location",
+        "native_index: independent key/RowUID tree and cursor"
+      ],
+      "boundary_contract": "common types and explicit ports, no private cross-medium imports; producer identities and snapshot generations carried in diagnosis"
+    },
+    {
+      "module": "wal_codec",
+      "M1_input": "synthetic versioned byte vectors",
+      "oracles": [
+        "framing",
+        "checksum",
+        "partial record rejection"
+      ],
+      "M3_required_when_affected": [
+        "real short write",
+        "sync behavior",
+        "filesystem fault"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "module": "recovery_conversion",
+      "M1_input": "old checkpoint/WAL images and new decoders",
+      "oracles": [
+        "ACK preservation",
+        "batch atomicity",
+        "idempotent replay",
+        "backward semantic preservation",
+        "one consistent disk row/index/locator/catalog view"
+      ],
+      "M3_required_when_affected": [
+        "actual crash",
+        "manifest durability",
+        "backup restore"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "module": "scheduler_resource",
+      "M1_input": "virtual time, actor events, budgets",
+      "oracles": [
+        "cancel",
+        "resource balance",
+        "bounded schedules"
+      ],
+      "M3_required_when_affected": [
+        "OS scheduling",
+        "stress",
+        "starvation observation"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "module": "protocol_session",
+      "M1_input": "in-memory duplex and synthetic identity",
+      "oracles": [
+        "framing",
+        "session state",
+        "authorization errors"
+      ],
+      "M3_required_when_affected": [
+        "real sockets",
+        "TLS",
+        "client interoperability"
+      ],
+      "execution_status": "NOT_RUN"
+    }
+  ],
+  "prohibited_shortcuts": [
+    "test-only correctness implementation",
+    "graceful shutdown labeled crash",
+    "simulation labeled real power loss",
+    "removing required M3 because M1 passed",
+    "hidden CI execution of policy-denied request"
+  ],
+  "expected_external_effects_M1": "memory and owned bounded scratch only",
+  "measured_provider_stop_reduction": null,
+  "development_order_reference": "development-stages.json",
+  "kernel_suite": "kernel-test-matrix.json",
+  "early_integration": "Production row/transaction/WAL/recovery via typed API and owned worker before SQL; actual I/O and threads retained. Network ACK obligations added at B3."
+}

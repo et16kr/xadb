@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18",
+  "status": "ACCEPTED_BY_USER_DELEGATION",
+  "normative_ref": "development-policy.md",
+  "authorization": {
+    "source": "User explicitly delegated the unresolved development-method and policy decisions in this conversation.",
+    "scope": "Development governance and initial operating defaults; existing product direction and kernel invariants preserved"
+  },
+  "decisions": [
+    {
+      "id": "DP01",
+      "title": "AI 결정 권한·독립 검토·통합 책임",
+      "applies": "다음 작업부터"
+    },
+    {
+      "id": "DP02",
+      "title": "결정 상태·원문·대체 이력·예외 관리",
+      "applies": "다음 방침·계약 변경부터"
+    },
+    {
+      "id": "DP03",
+      "title": "변경별 필수 검증과 사전 고정한 시험 프로파일",
+      "applies": "다음 관련 시험 구현부터; 해당 완료 판정 전에"
+    },
+    {
+      "id": "DP04",
+      "title": "외부 의존성 도입·갱신·예외 기준",
+      "applies": "다음 의존성 변경부터; 배포 전 전체 목록 확인"
+    },
+    {
+      "id": "DP05",
+      "title": "AI 작업 방식의 비교와 채택 기준",
+      "applies": "대표 과제 corpus 준비 시; pilot 실행 전"
+    },
+    {
+      "id": "DP06",
+      "title": "공식 사내 빌드·환경·검증 승격 기준",
+      "applies": "첫 사내 배포 전에 구현·실행"
+    },
+    {
+      "id": "DP07",
+      "title": "단순성·성능·복잡성의 선택 기준",
+      "applies": "다음 구조·성능 변경부터"
+    }
+  ],
+  "change_classes": [
+    {
+      "id": "D0",
+      "independent_review_required": false,
+      "human_decision_required": false
+    },
+    {
+      "id": "D1",
+      "independent_review_required": true,
+      "human_decision_required": false
+    },
+    {
+      "id": "D2",
+      "independent_review_required": true,
+      "human_decision_required": false,
+      "decision_record_required": true
+    },
+    {
+      "id": "D3",
+      "independent_review_required": true,
+      "human_decision_required": true,
+      "existing_valid_authorization_reused": true
+    }
+  ],
+  "decision_states": [
+    "PROPOSED",
+    "ACCEPTED",
+    "SUPERSEDED",
+    "REJECTED"
+  ],
+  "required_decision_fields": [
+    "id",
+    "title",
+    "status",
+    "date",
+    "owner",
+    "authorization_ref",
+    "scope",
+    "alternatives",
+    "rationale",
+    "contract_refs",
+    "validation_refs",
+    "review_record",
+    "supersedes",
+    "revisit_trigger"
+  ],
+  "validation_profiles": [
+    {
+      "id": "V0",
+      "scope": "Document changes only; both renderers and document verifier"
+    },
+    {
+      "id": "V1",
+      "scope": "Targeted production regression, counterexample or independent specification vectors"
+    },
+    {
+      "id": "V2",
+      "scope": "Integration of production changes; V1 plus implemented current-capability entrypoints, lower regressions and affected actual integration; future capability obligations remain deferred to their required gates"
+    },
+    {
+      "id": "V3",
+      "scope": "Stage/distribution qualification; complete frozen inventory and applicable extended checks; shipping release evidence at distribution"
+    }
+  ],
+  "numeric_defaults": {
+    "property_merge_seeds": 64,
+    "property_merge_max_operations": 128,
+    "property_extended_seeds": 256,
+    "property_extended_max_operations": 1024,
+    "real_thread_stress_minutes": 30,
+    "fuzz_minutes_per_target": 30,
+    "fault_cell_repetitions": 3,
+    "pilot_task_wall_minutes": 60,
+    "pilot_task_total_tokens": 100000,
+    "pilot_min_improvement_percent": 20,
+    "pilot_other_metric_max_regression_percent": 10
+  },
+  "default_license_identifiers": [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib"
+  ],
+  "ai_pilot": {
+    "initial_task_families": 4,
+    "development_cases_per_family": 3,
+    "held_out_cases_per_family": 2,
+    "initial_task_count": 20,
+    "future_performance_task_count": 5,
+    "future_customer_version_task_count": 5,
+    "followup_real_tasks": 10,
+    "status": "NOT_RUN",
+    "baseline": "Current configured model, one implementing agent and separate review; same verification gates in both arms",
+    "new_false_passes_allowed": 0,
+    "additional_escaped_defects_allowed": 0,
+    "primary_efficiency_metric_fixed_before_run": true
+  },
+  "distribution": {
+    "qualification_target": {
+      "os_family": "Ubuntu 24.04",
+      "rust_target": "x86_64-unknown-linux-gnu",
+      "filesystem": "local ext4",
+      "toolchain": "1.95.0"
+    },
+    "planned_release_profile": {
+      "opt-level": 3,
+      "lto": false,
+      "codegen-units": 16,
+      "incremental": false,
+      "overflow-checks": true,
+      "debug": 2,
+      "strip": "none",
+      "panic": "unwind"
+    },
+    "package_format": "version-and-target tar bundle plus manifest, checksums, symbols and license notices",
+    "exact_image_digest": null,
+    "profile_applied_to_manifest": false,
+    "qualification_status": "NOT_RUN",
+    "internal_evidence_min_retention_days": 90,
+    "customer_baseline_retention": "Until the major's support and compatibility obligations end",
+    "protected_promotion_verified": false
+  },
+  "performance": {
+    "minimum_paired_runs": 10,
+    "thresholds_fixed_before_measurement": true,
+    "universal_speedup_threshold": null
+  },
+  "references": [
+    "ai-development-method.md",
+    "coding-convention.md",
+    "parallel-development-policy.md",
+    "repository-build-plan.json",
+    "implementation-contracts.md",
+    "version-compatibility-policy.json",
+    "stage-completion.json",
+    "task-contract.example.json"
+  ],
+  "qualification": {
+    "operational_enforcement": "NOT_RUN",
+    "extended_test_profiles": "NOT_RUN",
+    "dependency_inventory_audit": "NOT_RUN",
+    "protected_ci": "NOT_RUN",
+    "distribution": "NOT_RUN",
+    "ai_pilot": "NOT_RUN",
+    "document_validation_is_product_validation": false,
+    "changes_kernel_semantics": false,
+    "changes_stage_order": false,
+    "internal_versions_are_compatibility_baselines": false
+  },
+  "supplemental_decision_refs": [
+    {
+      "id": "XADB-METHOD-001",
+      "record_ref": "coding-convention.json",
+      "normative_ref": "coding-convention.md#selective-design-reference",
+      "policy_ref": "DP07"
+    },
+    {
+      "id": "DOC-001",
+      "record_ref": "architecture-decisions.json",
+      "normative_ref": "documentation-policy.md#doc-001",
+      "policy_ref": "DP02"
+    }
+  ],
+  "documentation_policy_ref": "documentation-policy.md"
+}

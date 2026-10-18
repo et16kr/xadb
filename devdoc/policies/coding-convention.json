@@ -1,0 +1,312 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18",
+  "status": "DEVELOPMENT_POLICY_NEW_AND_CHANGED_CODE",
+  "document": "coding-convention.md",
+  "normative_text": "Markdown; JSON indexes rule IDs, enforcement scope, source references and decision lifecycle",
+  "repository_plan_ref": "repository-build-plan.json",
+  "authority_refs": [
+    "bottom-up-development.md",
+    "development-stages.json",
+    "repository-build-plan.md",
+    "implementation-contracts.md",
+    "dev1-contract.json",
+    "version-compatibility-policy.json",
+    "ai-development-method.md"
+  ],
+  "directory_policy": {
+    "product_source_prefix": "",
+    "product_directory_naming": "role without xadb- prefix",
+    "cargo_package_identifiers": "unchanged; distinct from source directory names",
+    "test_tool_directories": "retain xadbtest as the independent tool name",
+    "historical_evidence_paths": "preserve original identity",
+    "planned_paths_created_as_placeholders": false
+  },
+  "current_example_paths": [
+    "crates/foundation/src/identity.rs",
+    "crates/foundation/src/error.rs",
+    "crates/foundation/src/io.rs",
+    "crates/foundation/tests/contracts.rs",
+    "crates/platform/src/linux.rs",
+    "crates/platform/tests/contracts.rs"
+  ],
+  "current_check_entrypoints": [
+    "scripts/check_dev0.py",
+    "scripts/check_dev1.py",
+    "devdoc/verify_documents.py"
+  ],
+  "enforcement_modes": {
+    "AUTO": "Existing tool checks the mechanical scope; not an execution result",
+    "PARTIAL": "Some checks exist; review and behavior tests still required",
+    "REVIEW_TEST": "Semantic review and relevant behavior tests; not automatic certification"
+  },
+  "rules": [
+    {
+      "id": "XADB-CODE-NAME-001",
+      "title": "Rust 식별자·역할 폴더·패키지 구분",
+      "enforcement": "PARTIAL"
+    },
+    {
+      "id": "XADB-CODE-NAME-002",
+      "title": "경로와 도메인·역할 이름, 범주 접두어 생략",
+      "enforcement": "REVIEW_TEST"
+    },
+    {
+      "id": "XADB-CODE-NAME-003",
+      "title": "용어·약어·단위의 일관성과 개념 구분",
+      "enforcement": "REVIEW_TEST"
+    },
+    {
+      "id": "XADB-CODE-MOD-001",
+      "title": "책임별 배치, 필요한 파일·crate만 분리",
+      "enforcement": "REVIEW_TEST"
+    },
+    {
+      "id": "XADB-CODE-MOD-002",
+      "title": "최소 공개 범위와 명시 import·re-export",
+      "enforcement": "PARTIAL"
+    },
+    {
+      "id": "XADB-CODE-MOD-003",
+      "title": "계층 의존과 foundation·platform 조립 경계",
+      "enforcement": "PARTIAL"
+    },
+    {
+      "id": "XADB-CODE-TYPE-001",
+      "title": "의미가 다른 ID·세대·순서의 타입 구분",
+      "enforcement": "PARTIAL"
+    },
+    {
+      "id": "XADB-CODE-API-001",
+      "title": "명확한 동작·상태 전이·성공 효과",
+      "enforcement": "REVIEW_TEST"
+    },
+    {
+      "id": "XADB-CODE-API-002",
+      "title": "중요 경계의 오류·수명·동시성 문서",
+      "enforcement": "REVIEW_TEST"
+    },
+    {
+      "id": "XADB-CODE-ERR-001",
+      "title": "예상 오류의 typed Result와 panic 구분",
+      "enforcement": "PARTIAL"
+    },
+    {
+      "id": "XADB-CODE-ERR-002",
+      "title": "실패 효과·확실성·재시도 범위 보존",
+      "enforcement": "REVIEW_TEST"
+    },
+    {
+      "id": "XADB-CODE-LIFE-001",
+      "title": "RAII 정리와 명시적 commit·영속 완료",
+      "enforcement": "REVIEW_TEST"
+    },
+    {
+      "id": "XADB-CODE-LIFE-002",
+      "title": "quota·allocation 실패·panic 보장 범위",
+      "enforcement": "REVIEW_TEST"
+    },
+    {
+      "id": "XADB-CODE-CONC-001",
+      "title": "mutation owner·lock 순서·공개 시점",
+      "enforcement": "REVIEW_TEST"
+    },
+    {
+      "id": "XADB-CODE-SAFE-001",
+      "title": "unsafe 금지와 명시 예외 경계",
+      "enforcement": "PARTIAL"
+    },
+    {
+      "id": "XADB-CODE-FMT-001",
+      "title": "고정 rustfmt 스타일",
+      "enforcement": "AUTO"
+    },
+    {
+      "id": "XADB-CODE-LINT-001",
+      "title": "고정 Clippy 진입점과 최소 범위 예외",
+      "enforcement": "PARTIAL"
+    },
+    {
+      "id": "XADB-CODE-TEST-001",
+      "title": "독립 기대값과 조건·결과 중심 반례",
+      "enforcement": "REVIEW_TEST"
+    },
+    {
+      "id": "XADB-CODE-TEST-002",
+      "title": "관련 실제 통합·실패·복구 시험과 증거",
+      "enforcement": "REVIEW_TEST"
+    },
+    {
+      "id": "XADB-CODE-DOC-001",
+      "title": "설명의 단일 원문과 코드·계약 연결",
+      "enforcement": "PARTIAL"
+    },
+    {
+      "id": "XADB-CODE-WORK-001",
+      "title": "한 계약의 구현·반례·검증 작업 단위",
+      "enforcement": "REVIEW_TEST"
+    },
+    {
+      "id": "XADB-CODE-CHANGE-001",
+      "title": "의미 변경·이름 정리 구분과 버전 정책",
+      "enforcement": "REVIEW_TEST"
+    }
+  ],
+  "qualification": {
+    "whole_repository_conformance_audit": "NOT_RUN",
+    "ai_efficiency_pilot": "NOT_RUN",
+    "illustrative_kernel_apis": "NOT_IMPLEMENTED_EXAMPLES",
+    "document_validation_is_product_validation": false,
+    "changes_kernel_semantics": false,
+    "changes_stage_order": false,
+    "internal_versions_are_compatibility_baselines": false
+  },
+  "revision": "1.1",
+  "design_reference": {
+    "title": "대규모 C++ I편: 절차와 아키텍처 [23주년 개정판]",
+    "author": "존 레이코스",
+    "source_kind": "USER_PROVIDED_EPUB_SELECTED_SECTIONS",
+    "source_filename": "대규모C++-1.epub",
+    "source_sha256": "e31bf84126f1fa59204bd10676cf2cc56a6bd58c05ecdd4d853180a3c0b18436",
+    "source_is_normative_for_ax": false,
+    "ai_efficiency_claim": "XADB application hypothesis; not evidence supplied by the book",
+    "selected_principles": [
+      {
+        "topic": "allowed_versus_observed_dependencies",
+        "sections": [
+          "2.2.14",
+          "2.2.15",
+          "1.11"
+        ],
+        "epub_documents": [
+          "OEBPS/Text/Section0202.html",
+          "OEBPS/Text/Section0111.html"
+        ],
+        "application_ref": "repository-build-plan.md#dependency-review",
+        "rule_refs": [
+          "XADB-CODE-MOD-003"
+        ]
+      },
+      {
+        "topic": "shared_semantics_down_composition_up",
+        "sections": [
+          "3.5.2",
+          "3.5.3"
+        ],
+        "epub_documents": [
+          "OEBPS/Text/Section0305.html"
+        ],
+        "application_section": "4",
+        "rule_refs": [
+          "XADB-CODE-MOD-001",
+          "XADB-CODE-MOD-003"
+        ]
+      },
+      {
+        "topic": "primitive_and_derived_operations_with_cochange_boundaries",
+        "sections": [
+          "3.2.5–3.2.9",
+          "3.3.1",
+          "3.3.2",
+          "3.12.12"
+        ],
+        "epub_documents": [
+          "OEBPS/Text/Section0302.html",
+          "OEBPS/Text/Section0303.html",
+          "OEBPS/Text/Section0312.html"
+        ],
+        "application_sections": [
+          "4",
+          "5"
+        ],
+        "rule_refs": [
+          "XADB-CODE-MOD-001",
+          "XADB-CODE-API-001",
+          "XADB-CODE-API-002"
+        ]
+      },
+      {
+        "topic": "test_dependencies_and_minimal_required_environment",
+        "sections": [
+          "2.14.3–2.14.7"
+        ],
+        "epub_documents": [
+          "OEBPS/Text/Section0214.html"
+        ],
+        "application_section": "10",
+        "rule_refs": [
+          "XADB-CODE-TEST-001",
+          "XADB-CODE-TEST-002"
+        ]
+      },
+      {
+        "topic": "bounded_local_duplication_tradeoff",
+        "sections": [
+          "3.5.6"
+        ],
+        "epub_documents": [
+          "OEBPS/Text/Section0305.html"
+        ],
+        "application_section": "4",
+        "rule_refs": [
+          "XADB-CODE-MOD-001",
+          "XADB-CODE-MOD-003",
+          "XADB-CODE-TEST-001"
+        ]
+      }
+    ],
+    "non_adopted_mechanics": [
+      "one_type_per_component",
+      "cpp_header_implementation_test_triplets",
+      "fixed_package_depth_and_prefixes",
+      "test_only_dependencies_added_to_production",
+      "universal_ccd_threshold",
+      "recompilation_isolation_claim_for_rust_traits",
+      "productivity_rate_inferred_from_dynamic_programming_analogy"
+    ],
+    "decision_ref": "XADB-METHOD-001"
+  },
+  "supplemental_decisions": [
+    {
+      "id": "XADB-METHOD-001",
+      "title": "대규모 C++의 의존성·모듈화 원칙 선별 적용",
+      "status": "ACCEPTED",
+      "change_class": "D2",
+      "date": "2026-10-18",
+      "owner": "/root",
+      "integration_owner": "/root",
+      "contract_owner": "/root",
+      "authorization_ref": "User requested critical selection of useful ideas, then explicitly requested augmentation of our documents; DP01 D2 delegation.",
+      "scope": "Refine existing module/API/test/work rules; no kernel semantics, stage order, compatibility or mandatory quality changes.",
+      "alternatives": [
+        "Adopt all book rules",
+        "Keep a general book summary only",
+        "Select principles into existing normative owners"
+      ],
+      "rationale": "Preserve useful dependency and change-cost reasoning without importing C++ packaging or unmeasured AI productivity claims.",
+      "contract_refs": [
+        "coding-convention.md",
+        "repository-build-plan.md",
+        "ai-development-method.md",
+        "development-policy.md"
+      ],
+      "validation_refs": [
+        "../document-validation.json"
+      ],
+      "review_record": {
+        "status": "REVIEWED_NO_BLOCKING_FINDINGS",
+        "reviewer": "/root/book_policy_review",
+        "date": "2026-10-18",
+        "independent_execution": true,
+        "scope": "Selected original book passages, EPUB metadata/hash/paths, existing contracts, scoped Markdown/JSON changes and saved document validation",
+        "blocking_findings": [],
+        "required_revisions": [],
+        "conclusion": "No source overstatement or conflict with atomicity, real I/O/recovery, independent oracle, stage order or compatibility policy found; adoption is not product or AI qualification."
+      },
+      "supersedes": [],
+      "revisit_trigger": "Increased discovery/reproduction/integration cost, duplicated shared meaning, forbidden dependencies or escaped defects.",
+      "expanded_dependency_checker_execution": "NOT_RUN",
+      "ai_efficiency_evaluation": "NOT_RUN"
+    }
+  ]
+}

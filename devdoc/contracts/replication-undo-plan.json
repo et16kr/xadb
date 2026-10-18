@@ -1,0 +1,324 @@
+{
+  "schema_version": 1,
+  "document_status": "DESIGN_DETAIL_PROPOSAL_NOT_IMPLEMENTED",
+  "document": "replication-undo-analysis.md",
+  "intent": "RELEASE_TRANSACTION_UNDO_LOG_RETENTION_NOT_REMOVE_UNDO_BYTES",
+  "recovery_contract_ref": "recovery-logging-contract.json",
+  "compatibility_policy_ref": "version-compatibility-policy.json",
+  "product_test_status": "NOT_RUN",
+  "initial_kernel_requires_replication": false,
+  "changes_current_private_cow_baseline": false,
+  "retention_design": {
+    "undo_redo_retained": true,
+    "undo_tablespace_flush_alone_sufficient_for_all_log_deletion": false,
+    "active_transaction_begin_is_mandatory_pin_after_complete_undo_checkpoint": false,
+    "capture_read_ahead_alone_releases_restart_pin": false,
+    "durable_open_transaction_capture_required_to_advance_restart_without_original_logs": true,
+    "new_logical_wal_format_mandatory_for_this_goal": false,
+    "archive_backup_and_standby_owners_remain": true,
+    "space_obligation_moves_to_undo_and_spool_not_disappears": true,
+    "spool_gc_must_reclaim_unrelated_completed_transactions": true
+  },
+  "invariants": [
+    {
+      "id": "UR-01",
+      "rule": "Undo redo may remain; rollback must not require reclaimed original log ranges."
+    },
+    {
+      "id": "UR-02",
+      "rule": "Undo chain, transaction state and allocation/data recovery closure must be durable before releasing undo log dependency."
+    },
+    {
+      "id": "UR-03",
+      "rule": "Capture read/sent position is not a durable restart position; open transaction and decoder state must survive original log reclamation."
+    },
+    {
+      "id": "UR-04",
+      "rule": "Persist payload and checkpoint selection before advancing retention ownership; retained fallback must be complete."
+    },
+    {
+      "id": "UR-05",
+      "rule": "Local redo, transaction undo, capture restart, backup/archive/standby are independent retention owners."
+    },
+    {
+      "id": "UR-06",
+      "rule": "Commit, abort and partial rollback semantics survive capture restart and target retry."
+    },
+    {
+      "id": "UR-07",
+      "rule": "No implicit loss on budget exhaustion; backpressure, explicit rejection or declared reseed transition."
+    },
+    {
+      "id": "UR-08",
+      "rule": "Current private/COW baseline and development order are preserved; undo-store engine requires a storage ADR."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "RP-U01",
+      "title": "기존 undo·checkpoint·RP 보존 owner 분해",
+      "completion_criterion": "매체·거래·옵션별 원본 로그 필요 사유가 구분됨",
+      "depends_on": [],
+      "requirement_refs": [
+        "R11-02",
+        "R11-07"
+      ],
+      "applicability": "REPLICATION_DETAIL_DESIGN_THEN_DEV8_IMPLEMENTATION",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RP-U02",
+      "title": "undo tablespace chain·거래 상태·모든 undo 효과 설계",
+      "completion_criterion": "과거 로그 없이 rollback할 수 있는 durable closure 명세",
+      "depends_on": [
+        "RP-U01"
+      ],
+      "requirement_refs": [
+        "R11-02"
+      ],
+      "applicability": "OPTIONAL_UNDO_STORE_ENGINE_ADR",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RP-U03",
+      "title": "undo/data checkpoint·반복 recovery·로그 회수",
+      "completion_criterion": "RP off 상태에서 열린 거래의 시작 로그 삭제 후 정상 undo",
+      "depends_on": [
+        "RP-U02"
+      ],
+      "requirement_refs": [
+        "R11-02"
+      ],
+      "applicability": "OPTIONAL_UNDO_STORE_ENGINE_ADR",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RP-U04",
+      "title": "capture의 열린 거래·decoder·savepoint 상태 inventory",
+      "completion_criterion": "재시작에 필요한 전체 상태와 원본 자료 목록 확정",
+      "depends_on": [
+        "RP-U01"
+      ],
+      "requirement_refs": [
+        "R11-03",
+        "R11-05"
+      ],
+      "applicability": "REPLICATION_DETAIL_DESIGN_THEN_DEV8_IMPLEMENTATION",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RP-U05",
+      "title": "durable capture checkpoint/spool·원본 로그 인계",
+      "completion_criterion": "commit 전에도 보존 인계 가능, crash 후 원본 시작점 불필요",
+      "depends_on": [
+        "RP-U04"
+      ],
+      "requirement_refs": [
+        "R11-02",
+        "R11-04"
+      ],
+      "applicability": "REPLICATION_DETAIL_DESIGN_THEN_DEV8_IMPLEMENTATION",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RP-U06",
+      "title": "target progress·dedup·미commit apply/rollback",
+      "completion_criterion": "재전송·target crash에도 부분/중복 확정 없음",
+      "depends_on": [
+        "RP-U05"
+      ],
+      "requirement_refs": [
+        "R11-02",
+        "R11-06"
+      ],
+      "applicability": "REPLICATION_DETAIL_DESIGN_THEN_DEV8_IMPLEMENTATION",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RP-U07",
+      "title": "공통 retention·공간 제한·archive·reseed",
+      "completion_criterion": "owner별 해제, 공간 부족 때 조용한 누락 없음",
+      "depends_on": [
+        "RP-U01",
+        "RP-U05",
+        "RP-U06"
+      ],
+      "requirement_refs": [
+        "R11-04",
+        "R11-07"
+      ],
+      "applicability": "REPLICATION_DETAIL_DESIGN_THEN_DEV8_IMPLEMENTATION",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RP-U08",
+      "title": "bootstrap·DDL/LOB·충돌·부분 구독 통합",
+      "completion_criterion": "기존 R11 업무 의미를 유지하며 재시작 가능",
+      "depends_on": [
+        "RP-U05",
+        "RP-U06"
+      ],
+      "requirement_refs": [
+        "R11-01",
+        "R11-03",
+        "R11-04",
+        "R11-05"
+      ],
+      "applicability": "REPLICATION_DETAIL_DESIGN_THEN_DEV8_IMPLEMENTATION",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RP-U09",
+      "title": "동기 모드·failover·관측·장기 거래 qualification",
+      "completion_criterion": "선언한 RPO와 실제 owner별 보존량 검증",
+      "depends_on": [
+        "RP-U07",
+        "RP-U08"
+      ],
+      "requirement_refs": [
+        "R11-01",
+        "R11-02",
+        "R11-06",
+        "R11-07"
+      ],
+      "applicability": "REPLICATION_DETAIL_DESIGN_THEN_DEV8_IMPLEMENTATION",
+      "execution_status": "NOT_RUN"
+    }
+  ],
+  "cases": [
+    {
+      "id": "RU-01",
+      "scenario": "RP off, 장기 갱신 T + 많은 다른 commit, checkpoint 후 T 시작 로그 삭제, crash",
+      "oracle": "undo store에서 T 전체 rollback, ACK 거래 보존",
+      "task_refs": [
+        "RP-U02",
+        "RP-U03"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-02",
+      "scenario": "같은 조건에서 정상 ROLLBACK·savepoint rollback",
+      "oracle": "삭제한 로그를 읽지 않고 정확한 상태 복원",
+      "task_refs": [
+        "RP-U02",
+        "RP-U03"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-03",
+      "scenario": "undo page/head/allocator/data/checkpoint 각 영속화 경계의 crash",
+      "oracle": "불완전 checkpoint로 로그 회수하지 않음",
+      "task_refs": [
+        "RP-U03"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-04",
+      "scenario": "recovery undo 중 반복 crash",
+      "oracle": "중복 undo·누락 없이 종료, rollback 진행점 일치",
+      "task_refs": [
+        "RP-U03"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-05",
+      "scenario": "RP on, 읽기만 완료·spool 미영속 상태에서 GC 시도",
+      "oracle": "원본 로그 삭제 거절",
+      "task_refs": [
+        "RP-U05",
+        "RP-U07"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-06",
+      "scenario": "열린 거래 spool checkpoint 후 시작 로그 삭제, capture crash, 이후 COMMIT",
+      "oracle": "시작 로그 재독 없이 정확한 전체 거래 전송",
+      "task_refs": [
+        "RP-U05"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-07",
+      "scenario": "RU-06 뒤 ABORT·부분 rollback·statement 실패",
+      "oracle": "취소 범위가 target에 확정되지 않음",
+      "task_refs": [
+        "RP-U04",
+        "RP-U05",
+        "RP-U06"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-08",
+      "scenario": "row-piece/LOB 조립 중 checkpoint와 crash",
+      "oracle": "미완성 상태 재개, 해제된 포인터 없이 정확한 값",
+      "task_refs": [
+        "RP-U04",
+        "RP-U08"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-09",
+      "scenario": "spool payload/manifest/pin 이동 각 경계 crash 및 손상",
+      "oracle": "유효 old/new 기준 선택 또는 명시 오류, 누락 건너뛰기 금지",
+      "task_refs": [
+        "RP-U05",
+        "RP-U07"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-10",
+      "scenario": "target send/receive/spool/apply/progress 경계 crash",
+      "oracle": "계약한 내구성만 ACK, 재전송의 중복 효과 없음",
+      "task_refs": [
+        "RP-U06"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-11",
+      "scenario": "장기 RP 중단·spool full·archive/backup/standby pin",
+      "oracle": "owner별 보존, 감속/거절/명시적 reseed",
+      "task_refs": [
+        "RP-U07"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-12",
+      "scenario": "bootstrap·DDL/drop-recreate·PK 변경·다중 writer before 충돌",
+      "oracle": "기존 R11 의미와 schema/identity 유지",
+      "task_refs": [
+        "RP-U08"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-13",
+      "scenario": "mixed DISK·index/catalog/NTA undo, 선택 시 XA prepared",
+      "oracle": "남아 있는 log-based undo 의존 탐지; 미지원 XA는 명시 거절",
+      "task_refs": [
+        "RP-U02",
+        "RP-U03"
+      ],
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RU-14",
+      "scenario": "동일 내구성에서 기존 pin·undo store·capture checkpoint 비교",
+      "oracle": "WAL/undo/spool 총 byte·checkpoint I/O·p99·rollback/recovery 시간 분리 측정",
+      "task_refs": [
+        "RP-U09"
+      ],
+      "execution_status": "NOT_RUN"
+    }
+  ]
+}

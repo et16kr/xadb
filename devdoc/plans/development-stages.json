@@ -1,0 +1,778 @@
+{
+  "schema_version": 3,
+  "date": "2026-10-18",
+  "status": "DEV0_DEV1_LOCALLY_VERIFIED_ENGINE_NOT_IMPLEMENTED",
+  "priority_basis": [
+    "technical dependencies",
+    "early correctness-risk reduction",
+    "independent verifiability",
+    "bounded AI reproduction and rework cost"
+  ],
+  "business_priority_used": false,
+  "first_product_label_used": false,
+  "stages": [
+    {
+      "id": "DEV0",
+      "depends_on": [],
+      "purpose": "minimal test foundation",
+      "scope": [
+        "Rust build and minimal XADBTest controller/worker",
+        "independent oracle, verdict, receipt, owned process and cleanup; no engine dependency"
+      ],
+      "gate_refs": [
+        "B0"
+      ],
+      "task_refs": [
+        "XADB-002",
+        "XADB-003"
+      ],
+      "channel": "development",
+      "execution_status": "LOCAL_VERIFIED",
+      "evidence_ref": "dev0-validation.json",
+      "contract_ref": "dev0-contract.json",
+      "qualification": "B0 local harness scope only; protected promotion and product qualification pending",
+      "completion_ref": "stage-completion.json#DEV0"
+    },
+    {
+      "id": "DEV1",
+      "depends_on": [
+        "DEV0"
+      ],
+      "purpose": "common semantics and Linux effect boundaries",
+      "scope": [
+        "typed identity/error/value/key/format contracts",
+        "real and faultable file I/O, clock/scheduler/quota ports",
+        "minimal runtime lifecycle and observability; use Rust std instead of cloning legacy portability layers",
+        "xadb-foundation owns common semantics/effect contracts; xadb-platform supplies Linux-only native effects; no foundation-to-platform dependency"
+      ],
+      "gate_refs": [
+        "F1"
+      ],
+      "task_refs": [
+        "XADB-005",
+        "XADB-026"
+      ],
+      "channel": "development",
+      "execution_status": "LOCAL_VERIFIED",
+      "evidence_ref": "dev1-validation.json",
+      "contract_ref": "dev1-contract.json",
+      "qualification": "F1 minimal common semantics and Linux effects locally verified; DB engine and protected qualification pending",
+      "completion_ref": "stage-completion.json#DEV1"
+    },
+    {
+      "id": "DEV2",
+      "depends_on": [
+        "DEV1"
+      ],
+      "purpose": "SQL-free durable kernel",
+      "scope": [
+        "K0-K5 real row substrate + transaction/WAL/recovery integration",
+        "snapshot/conflict/statement rollback/checkpoint/restore",
+        "typed engine API and native history suite, not SQL or network",
+        "per-step production instrumentation, independent performance comparison and replay; later AI workflow pilot is separate"
+      ],
+      "gate_refs": [
+        "B2",
+        "D0"
+      ],
+      "task_refs": [
+        "XADB-004",
+        "XADB-014a",
+        "XADB-027",
+        "XADB-006",
+        "XADB-007",
+        "XADB-008",
+        "XADB-010",
+        "XADB-009",
+        "XADB-032"
+      ],
+      "channel": "development",
+      "execution_status": "PARTIAL_IMPLEMENTATION",
+      "completion_ref": "stage-completion.json#DEV2",
+      "design_refs": [
+        "dev2-kernel-design.md",
+        "dev2-implementation-plan.md"
+      ]
+    },
+    {
+      "id": "DEV3",
+      "depends_on": [
+        "DEV2"
+      ],
+      "purpose": "finite disk storage and index baseline before SQL",
+      "scope": [
+        "production disk row/index/catalog",
+        "bounded page buffer and locator cache",
+        "atomic multi-table disk commit/recovery",
+        "direct API scan/index and larger-than-buffer qualification"
+      ],
+      "gate_refs": [
+        "S1"
+      ],
+      "task_refs": [
+        "XADB-028",
+        "XADB-021",
+        "XADB-022",
+        "XADB-029"
+      ],
+      "channel": "development",
+      "execution_status": "NOT_RUN",
+      "completion_ref": "stage-completion.json#DEV3",
+      "design_refs": [
+        "disk-storage-design.md"
+      ]
+    },
+    {
+      "id": "DEV4",
+      "depends_on": [
+        "DEV3"
+      ],
+      "purpose": "embedded minimal SQL",
+      "scope": [
+        "parser/binder/minimal planner/executor using existing engine API",
+        "initial_sql_scope below; nonpartitioned DISK",
+        "embedded CLI and statement boundary equivalence; no server/client prerequisite",
+        "basic typed prepare/bind/execute/fetch/close and parameter/result metadata for DEV4 scalar DML/SELECT"
+      ],
+      "gate_refs": [
+        "Q1"
+      ],
+      "task_refs": [
+        "XADB-011"
+      ],
+      "channel": "development",
+      "execution_status": "NOT_RUN",
+      "completion_ref": "stage-completion.json#DEV4"
+    },
+    {
+      "id": "DEV5",
+      "depends_on": [
+        "DEV4",
+        "COMM"
+      ],
+      "purpose": "server integration",
+      "scope": [
+        "lifecycle/session/connection/admission/auth/cancel",
+        "actual client SQL ACK to production WAL/reopen",
+        "start/stop primitives already exist below; this stage composes them",
+        "request protocol and session-owned prepared handles using DEV4 binding semantics; isolation, invalidation, cancel and cleanup"
+      ],
+      "gate_refs": [
+        "B3"
+      ],
+      "task_refs": [
+        "XADB-012",
+        "XADB-033"
+      ],
+      "channel": "development",
+      "execution_status": "NOT_RUN",
+      "completion_ref": "stage-completion.json#DEV5"
+    },
+    {
+      "id": "DEV6",
+      "depends_on": [
+        "DEV5"
+      ],
+      "purpose": "client libraries",
+      "scope": [
+        "native client API then JDBC then ODBC",
+        "binding/metadata/encoding/error/cancel/version negotiation"
+      ],
+      "gate_refs": [
+        "CLIENT1"
+      ],
+      "task_refs": [
+        "XADB-034",
+        "XADB-035",
+        "XADB-036"
+      ],
+      "channel": "development",
+      "execution_status": "NOT_RUN",
+      "completion_ref": "stage-completion.json#DEV6"
+    },
+    {
+      "id": "DEV7",
+      "depends_on": [
+        "DEV4"
+      ],
+      "purpose": "SQL and execution extensions",
+      "scope": [
+        "decimal/time and other required scalar semantics",
+        "join/aggregate/subquery/window/optimizer/FK/CHECK/savepoint; advanced plan caching/reoptimization and prepared execution for extended SQL",
+        "PSM/triggers/sequence/queue/LOB/spatial/external connection/XA as separate leaf tasks with extra prerequisites"
+      ],
+      "gate_refs": [
+        "SQL_EXT1"
+      ],
+      "task_refs": [
+        "XADB-037",
+        "XADB-038",
+        "XADB-039",
+        "XADB-040",
+        "XADB-041"
+      ],
+      "channel": "development",
+      "execution_status": "NOT_RUN",
+      "completion_ref": "stage-completion.json#DEV7"
+    },
+    {
+      "id": "DEV8",
+      "depends_on": [
+        "DEV3",
+        "DEV5"
+      ],
+      "purpose": "replication operations and performance",
+      "scope": [
+        "replication/resync/failover, PITR, admin and soak/performance",
+        "commit stream/schema epoch/retention contracts originate in DEV1-2",
+        "feature-specific qualification includes DEV6/7 functionality as it is added"
+      ],
+      "gate_refs": [
+        "OPS1"
+      ],
+      "task_refs": [
+        "XADB-042",
+        "XADB-043",
+        "XADB-044",
+        "XADB-045"
+      ],
+      "channel": "development",
+      "execution_status": "NOT_RUN",
+      "completion_ref": "stage-completion.json#DEV8"
+    },
+    {
+      "id": "DEV9",
+      "depends_on": [
+        "DEV6",
+        "DEV7",
+        "DEV8",
+        "PART"
+      ],
+      "purpose": "declared product capability qualification",
+      "scope": [
+        "freeze the declared release feature and workload inventory",
+        "qualify implemented SQL/client/storage/recovery/operations combinations; document limitations"
+      ],
+      "gate_refs": [
+        "PRODUCT_QUALIFIED"
+      ],
+      "task_refs": [
+        "XADB-046",
+        "XADB-047"
+      ],
+      "channel": "development",
+      "execution_status": "NOT_RUN",
+      "completion_ref": "stage-completion.json#DEV9"
+    },
+    {
+      "id": "COMM",
+      "depends_on": [
+        "DEV1"
+      ],
+      "purpose": "independent transport branch",
+      "scope": [
+        "bounded frame codec and transport state machine",
+        "fragmentation/backpressure/timeout/disconnect using loopback/owned Unix sockets",
+        "business protocol integrated only at DEV5"
+      ],
+      "gate_refs": [
+        "C1"
+      ],
+      "task_refs": [
+        "XADB-031"
+      ],
+      "channel": "development",
+      "execution_status": "NOT_RUN",
+      "completion_ref": "stage-completion.json#COMM"
+    },
+    {
+      "id": "PART",
+      "depends_on": [
+        "DEV3"
+      ],
+      "purpose": "SQL-free partition foundation",
+      "scope": [
+        "range then list then hash; local index and routing",
+        "snapshot membership/row movement/offline lifecycle by typed API",
+        "SQL grammar and planner linkage qualified later when exposed"
+      ],
+      "gate_refs": [
+        "P1"
+      ],
+      "task_refs": [
+        "XADB-030"
+      ],
+      "channel": "development",
+      "execution_status": "NOT_RUN",
+      "completion_ref": "stage-completion.json#PART"
+    },
+    {
+      "id": "NG",
+      "depends_on": [
+        "PART"
+      ],
+      "purpose": "SQL-free native global engine branch",
+      "scope": [
+        "optional disk-buffered global key/RowUID tree across disk partitions",
+        "atomic unique checks and lifetime/recovery",
+        "H2/H3 core qualification; DEV5 end-to-end qualification"
+      ],
+      "gate_refs": [
+        "H2",
+        "H3"
+      ],
+      "task_refs": [
+        "XADB-023",
+        "XADB-024",
+        "XADB-025"
+      ],
+      "channel": "development",
+      "execution_status": "NOT_RUN",
+      "completion_ref": "stage-completion.json#NG"
+    }
+  ],
+  "initial_execution_path": [
+    "DEV0",
+    "DEV1",
+    "DEV2",
+    "DEV3",
+    "DEV4",
+    "DEV5",
+    "DEV6"
+  ],
+  "stage_number_equals_minor_number": false,
+  "stage_completion_implies_external_release": false,
+  "initial_sql_scope": {
+    "stage": "DEV4",
+    "storage": [
+      "DISK"
+    ],
+    "types": [
+      "INT64",
+      "BOOLEAN",
+      "UTF8_TEXT_BINARY_COLLATION",
+      "BINARY",
+      "NULL"
+    ],
+    "ddl": [
+      "CREATE_TABLE",
+      "DROP_TABLE",
+      "CREATE_INDEX",
+      "DROP_INDEX"
+    ],
+    "dml": [
+      "INSERT",
+      "UPDATE",
+      "DELETE",
+      "SINGLE_TABLE_SELECT"
+    ],
+    "query": [
+      "projection",
+      "comparison",
+      "AND_OR_NOT_IS_NULL",
+      "ORDER_BY",
+      "LIMIT",
+      "scan_point_range"
+    ],
+    "constraints": [
+      "PRIMARY_KEY",
+      "UNIQUE_NULL_DISTINCT",
+      "NOT_NULL"
+    ],
+    "transaction": [
+      "BEGIN_COMMIT_ROLLBACK",
+      "AUTOCOMMIT",
+      "SERIALIZABLE_COARSE_VALIDATION",
+      "READ_YOUR_WRITES",
+      "STATEMENT_ROLLBACK"
+    ],
+    "interfaces": [
+      "embedded SQL API and CLI; network not required",
+      "DEV5 adds owned Unix socket server/session",
+      "DEV6 adds native/JDBC/ODBC clients"
+    ],
+    "deferred": [
+      "JOIN_AGGREGATION_SUBQUERY_WINDOW",
+      "DECIMAL_FLOAT_DATE_TIMESTAMP",
+      "FK_CHECK",
+      "EXPLICIT_SAVEPOINT",
+      "JDBC_ODBC",
+      "PARTITION_SQL_NATIVE_GLOBAL",
+      "PSM_TRIGGER",
+      "REPLICATION_HA",
+      "XA_DB_LINK",
+      "LOB_SPATIAL",
+      "SHARED_PLAN_CACHE_ADVANCED_REOPTIMIZATION"
+    ],
+    "deferred_does_not_mean_excluded_from_replacement": true,
+    "unimplemented_behavior": "explicit unsupported error; no silent success",
+    "prepared_execution": {
+      "task_ref": "XADB-011",
+      "operations": [
+        "prepare",
+        "bind",
+        "execute",
+        "fetch",
+        "close"
+      ],
+      "scope": "DEV4 scalar types and DML/SELECT; embedded API first, DEV5 protocol, DEV6 clients",
+      "required_contracts": [
+        "parameter and result metadata",
+        "typed values separate from SQL text; NULL, byte length and binding ownership",
+        "parameter count/type/length errors with no forbidden mutation",
+        "statement/result lifetime, rebind/reexecute and close",
+        "schema/object generation validation before stale plan use",
+        "same transaction, statement rollback, quota and cancellation guarantees as direct execution"
+      ],
+      "not_implied": [
+        "SQL PREPARE/EXECUTE command syntax",
+        "DDL or identifier parameters",
+        "shared plan cache or advanced reoptimization",
+        "array/batch binding, callable, LOB or XA support"
+      ],
+      "open_before_implementation": [
+        "parameter marker syntax and type inference",
+        "error phase/code/effect and rebind/result state transitions",
+        "schema invalidation: explicit reject or validated reprepare, with independent vectors"
+      ],
+      "execution_status": "NOT_RUN"
+    }
+  },
+  "version_policy": {
+    "official_internal_versions_are_compatibility_baselines": false,
+    "reverse_required": false,
+    "external_launch_resets_major": false,
+    "unpublished_branch_types_may_change": true,
+    "internal_distribution_compatibility_required": false,
+    "internal_distribution_default": "fresh database and fixtures; no prior internal upgrade obligation",
+    "compatibility_starts_at": "first declared stable release",
+    "all_earlier_same_major_customer_delivered_minors": true
+  },
+  "external_release": {
+    "automatic_on_stage_completion": false,
+    "research_preview_allowed_before_product_qualification": true,
+    "requirements": [
+      "explicit experimental capability/status",
+      "reproducible build and executed relevant checks",
+      "license and notices selected before distribution"
+    ],
+    "product_qualification_gate": "PRODUCT_QUALIFIED"
+  },
+  "task_graph_scope": "phase1-scope.json contains 49 seed work packages; each DEV6-9 package must expand its complete variants before qualification, not claim to be a final leaf inventory",
+  "official_internal_distribution_required_gates": [
+    "all gates for the declared stage/capabilities"
+  ],
+  "decision": {
+    "id": "XADB-SCOPE-001",
+    "date": "2026-10-18",
+    "status": "ACCEPTED",
+    "authority": "User requested a separate XADB project with disk-only storage and public DBMS references; existing source project remains unchanged."
+  },
+  "native_global_required_for_initial_sql": false,
+  "storage_baseline_required_before_sql": true,
+  "communication_required_for_storage": false,
+  "first_internal_usable_version": {
+    "stage": "DEV2",
+    "interface": "typed production engine API, native scenario worker",
+    "sql_required": false,
+    "network_required": false,
+    "gates": [
+      "B2",
+      "D0"
+    ],
+    "data_use": "synthetic qualification only until operational controls qualified"
+  },
+  "kernel_build_steps": [
+    {
+      "id": "K0",
+      "depends_on": [],
+      "task_refs": [
+        "XADB-004",
+        "XADB-014a",
+        "XADB-027",
+        "XADB-032"
+      ],
+      "scope": "minimal actual row/catalog substrate and independent operation history; volatile only, no durability claim",
+      "execution_status": "NOT_RUN",
+      "performance": {
+        "product_task_refs": [
+          "XADB-027"
+        ],
+        "harness_task_ref": "XADB-032",
+        "bundle_task_ref": "XADB-014a",
+        "case_refs": [
+          "PF01",
+          "PF03",
+          "PF04",
+          "PF05",
+          "PF07",
+          "PF12",
+          "PF13"
+        ],
+        "scope": "row/catalog operation metrics, bounded collection, workload/recipe identity, independent comparison and replay of current capabilities",
+        "applicability": "Implement and verify current-capability variants with this step; preserve explicit later variants and complete all DEV2 PF obligations before stage closure. No future collector or full pilot entry gate.",
+        "execution_status": "NOT_RUN"
+      }
+    },
+    {
+      "id": "K1",
+      "depends_on": [
+        "K0"
+      ],
+      "task_refs": [
+        "XADB-006"
+      ],
+      "scope": "private batch, fixed snapshot, rollback, quota and explicit commit states",
+      "execution_status": "NOT_RUN",
+      "performance": {
+        "product_task_refs": [
+          "XADB-006"
+        ],
+        "harness_task_ref": "XADB-032",
+        "bundle_task_ref": "XADB-014a",
+        "case_refs": [
+          "PF02",
+          "PF03",
+          "PF05",
+          "PF12",
+          "PF13"
+        ],
+        "scope": "transaction/snapshot/rollback work attribution and quota/cancel outcomes",
+        "applicability": "Implement and verify current-capability variants with this step; preserve explicit later variants and complete all DEV2 PF obligations before stage closure. No future collector or full pilot entry gate.",
+        "execution_status": "NOT_RUN"
+      }
+    },
+    {
+      "id": "K2",
+      "depends_on": [
+        "K1"
+      ],
+      "task_refs": [
+        "XADB-007"
+      ],
+      "scope": "versioned complete WAL batch and real append/sync/publication ordering; recovery proof still outstanding",
+      "execution_status": "NOT_RUN",
+      "performance": {
+        "product_task_refs": [
+          "XADB-007"
+        ],
+        "harness_task_ref": "XADB-032",
+        "bundle_task_ref": "XADB-014a",
+        "case_refs": [
+          "PF02",
+          "PF03",
+          "PF04",
+          "PF06",
+          "PF12",
+          "PF13"
+        ],
+        "scope": "WAL append/sync/publication costs, shared work attribution and rejection of skipped durability",
+        "applicability": "Implement and verify current-capability variants with this step; preserve explicit later variants and complete all DEV2 PF obligations before stage closure. No future collector or full pilot entry gate.",
+        "execution_status": "NOT_RUN"
+      }
+    },
+    {
+      "id": "K3",
+      "depends_on": [
+        "K2"
+      ],
+      "task_refs": [
+        "XADB-008"
+      ],
+      "scope": "production replay/reopen, committed complete batches, UNKNOWN and repeated recovery failure",
+      "execution_status": "NOT_RUN",
+      "performance": {
+        "product_task_refs": [
+          "XADB-008"
+        ],
+        "harness_task_ref": "XADB-032",
+        "bundle_task_ref": "XADB-014a",
+        "case_refs": [
+          "PF06",
+          "PF12",
+          "PF13"
+        ],
+        "scope": "reopen/recovery cost and correctness under repeated faults",
+        "applicability": "Implement and verify current-capability variants with this step; preserve explicit later variants and complete all DEV2 PF obligations before stage closure. No future collector or full pilot entry gate.",
+        "execution_status": "NOT_RUN"
+      }
+    },
+    {
+      "id": "K4",
+      "depends_on": [
+        "K3"
+      ],
+      "task_refs": [
+        "XADB-010"
+      ],
+      "scope": "concurrent histories, coarse serializable validation and statement failure",
+      "execution_status": "NOT_RUN",
+      "performance": {
+        "product_task_refs": [
+          "XADB-010"
+        ],
+        "harness_task_ref": "XADB-032",
+        "bundle_task_ref": "XADB-014a",
+        "case_refs": [
+          "PF02",
+          "PF03",
+          "PF04",
+          "PF07",
+          "PF12",
+          "PF13"
+        ],
+        "scope": "real-thread schedules, overlapping work, contention and confirmation bias",
+        "applicability": "Implement and verify current-capability variants with this step; preserve explicit later variants and complete all DEV2 PF obligations before stage closure. No future collector or full pilot entry gate.",
+        "execution_status": "NOT_RUN"
+      }
+    },
+    {
+      "id": "K5",
+      "depends_on": [
+        "K4"
+      ],
+      "task_refs": [
+        "XADB-009"
+      ],
+      "scope": "checkpoint/restore/retention with reader pins and repeated failures; B2 complete only after all steps",
+      "execution_status": "NOT_RUN",
+      "performance": {
+        "product_task_refs": [
+          "XADB-009"
+        ],
+        "harness_task_ref": "XADB-032",
+        "bundle_task_ref": "XADB-014a",
+        "case_refs": [
+          "PF03",
+          "PF04",
+          "PF06",
+          "PF12",
+          "PF13"
+        ],
+        "scope": "checkpoint/restore/retention and accumulated DEV2 performance regression",
+        "applicability": "Implement and verify current-capability variants with this step; preserve explicit later variants and complete all DEV2 PF obligations before stage closure. No future collector or full pilot entry gate.",
+        "execution_status": "NOT_RUN"
+      }
+    }
+  ],
+  "kernel_test_reference": "kernel-test-matrix.json",
+  "stage_revision_note": "Unimplemented plan IDs revised from dc2ef3a; not a product version or compatibility reset",
+  "ng_full_feature_qualification": {
+    "requires_stages": [
+      "NG",
+      "DEV5"
+    ],
+    "gate": "GLOBAL_INDEX_QUALIFICATION",
+    "required_for_external_release": "required if declared XADB capability includes global indexes; not automatic from stage numbering"
+  },
+  "customer_delivery_version_task_refs": [
+    "XADB-013"
+  ],
+  "recovery_logging_detail": {
+    "reference": "recovery-logging-contract.json",
+    "acceptance_reference": "recovery-test-matrix.json",
+    "K2_K5_level": "L0",
+    "L1_after_gate": "B2",
+    "L2_after_gate": "S1",
+    "L1_L2_required_for_initial_SQL": false,
+    "product_execution_status": "NOT_RUN",
+    "new_optimization_leaf_tasks": "required before execution; existing seed DAG unchanged"
+  },
+  "replication_undo_detail": {
+    "reference": "replication-undo-analysis.md",
+    "plan_ref": "replication-undo-plan.json",
+    "focus": "Separate local undo log retention from capture restart retention; persist ownership before reclaiming original logs",
+    "actual_replication_stage": "DEV8",
+    "required_for_initial_SQL": false,
+    "changes_private_cow_baseline": false,
+    "product_test_status": "NOT_RUN"
+  },
+  "completion_contract_reference": "stage-completion.json",
+  "stage_dependency_semantics": "Stage edges are minimum entry prerequisites; exact task dependencies also apply. A feature may start after its predecessors; whole-stage closure requires every required task, variant and affected integration in stage-completion.json.",
+  "documentation_drafts": {
+    "manual_ref": "user-manual-draft.json",
+    "sql_ref": "sql-language-draft.json",
+    "status": "AUTHORING_AND_SQL_PROPOSALS_NOT_PRODUCT_VERIFICATION",
+    "new_semantics_status": "PROPOSED",
+    "review_before_relevant_implementation_stages": [
+      "DEV3",
+      "DEV4"
+    ],
+    "changes_stage_order_or_existing_gates": false,
+    "cases_execution_status": "NOT_RUN",
+    "review_ref": "manual-review.json",
+    "manual_revision": "0.2"
+  },
+  "repository_build_plan_ref": "repository-build-plan.json",
+  "platform_boundary_reference": "repository-build-plan.json#platform_boundary",
+  "performance_engineering": {
+    "contract_ref": "ai-performance-engineering.json",
+    "execution_status": "NOT_RUN",
+    "stage_obligations": [
+      {
+        "stage": "DEV2",
+        "case_ids": [
+          "PF01",
+          "PF02",
+          "PF03",
+          "PF04",
+          "PF05",
+          "PF06",
+          "PF07",
+          "PF12",
+          "PF13"
+        ],
+        "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+      },
+      {
+        "stage": "DEV3",
+        "case_ids": [
+          "PF09"
+        ],
+        "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+      },
+      {
+        "stage": "DEV4",
+        "case_ids": [
+          "PF10"
+        ],
+        "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+      },
+      {
+        "stage": "DEV5",
+        "case_ids": [
+          "PF11"
+        ],
+        "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+      },
+      {
+        "stage": "DEV8",
+        "case_ids": [
+          "PF08",
+          "PF14"
+        ],
+        "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+      }
+    ],
+    "changes_stage_order": false,
+    "retroactively_requalifies_dev0_dev1": false,
+    "task_allocation_ref": "development-stages.json#kernel_build_steps",
+    "early_support_tasks": [
+      "XADB-014a",
+      "XADB-032"
+    ],
+    "later_work": [
+      {
+        "task_ref": "XADB-014b",
+        "scope": "automatic history minimization after K5; basic reproducible bundle exists from K0",
+        "required_for_k0": false
+      },
+      {
+        "task_ref": "XADB-015",
+        "scope": "post-K5 kernel benchmark campaign and AI delivery pilot using existing metrics/comparator; not the first measurement harness",
+        "required_for_k0": false,
+        "required_for_dev2_closure": false
+      }
+    ]
+  }
+}

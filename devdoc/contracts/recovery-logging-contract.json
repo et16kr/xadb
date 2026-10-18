@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18",
+  "status": "DESIGN_PROPOSAL_NOT_IMPLEMENTED",
+  "reference": "recovery-logging-design.md",
+  "test_matrix_ref": "recovery-test-matrix.json",
+  "preserves": [
+    "bottom-up K0-K5 order",
+    "private writes and atomic CommittedRoot",
+    "coarse serializable initial validation",
+    "durable DISK COW pages before common commit attempt",
+    "same-major formats designated as compatibility baselines by version-compatibility-policy.json remain readable or convertible"
+  ],
+  "invariants": [
+    {
+      "id": "RC01",
+      "rule": "ACK implies durable complete commit and all payload/page/namespace dependencies; publication precedes ACK"
+    },
+    {
+      "id": "RC02",
+      "rule": "One transaction changes DISK, all indexes, locator, membership and catalog atomically"
+    },
+    {
+      "id": "RC03",
+      "rule": "Committed decisions and published views form a legal consecutive commit_seq prefix; LogPos is lane-local"
+    },
+    {
+      "id": "RC04",
+      "rule": "Before commit attempt ABORT is possible; uncertain attempted commit is UNKNOWN and fences writers"
+    },
+    {
+      "id": "RC05",
+      "rule": "Checkpoint is one pinned committed cut; immutable files and manifest precede durable CURRENT selection; L0 pins its authenticated replay anchor with the root and never rewinds WRITER"
+    },
+    {
+      "id": "RC06",
+      "rule": "Reclaim only objects/logs outside all current/previous anchor-to-tip closures, replay roots, active preparations and consumer pins; retain old/new selector closure union until durable selection"
+    },
+    {
+      "id": "RC07",
+      "rule": "Recovery selects one complete generation, validates all commit dependencies, preserves ACK and rejects known required corruption"
+    },
+    {
+      "id": "RC08",
+      "rule": "Repeated recovery preserves source bytes, stabilizes the accepted prior prefix and namespaces before selecting a new epoch or admitting queries, and never skips partially materialized work"
+    },
+    {
+      "id": "RC09",
+      "rule": "Serializable validation includes preceding accepted transactions, absent/range/unique/catalog conflicts; roots merge against preceding state"
+    },
+    {
+      "id": "RC10",
+      "rule": "Root-only DISK commit journal requires referenced COW objects for extended restore/PITR/physical replication"
+    },
+    {
+      "id": "RC11",
+      "rule": "Every earlier same-major checkpoint/WAL/backup designated by the central version policy remains readable or convertible; distribution applicability is owned by that policy"
+    },
+    {
+      "id": "RC12",
+      "rule": "Queues, pins, decoding, recovery and disk caches have explicit budgets and observable backpressure"
+    }
+  ],
+  "logging_levels": [
+    {
+      "id": "L0",
+      "status": "NOT_IMPLEMENTED",
+      "scope": "Single inline redo/commit stream, serial coordinator",
+      "earliest_step": "K2",
+      "completion_gate": "B2",
+      "requires_sql": false
+    },
+    {
+      "id": "L1",
+      "status": "NOT_IMPLEMENTED",
+      "scope": "Parallel private encoding, bounded single-writer group commit",
+      "after_gates": [
+        "B2"
+      ],
+      "additional_prerequisite": "separate fine-grained serializable validation design and tests before admitting multiple concurrent writers in a group",
+      "required_for_initial_B2": false
+    },
+    {
+      "id": "L2",
+      "status": "NOT_IMPLEMENTED",
+      "scope": "Parallel payload lanes plus global commit journal and prefix publication",
+      "after_gates": [
+        "S1"
+      ],
+      "additional_prerequisite": "L1 plus applicable multi-stream acceptance and version gates required by the central version policy",
+      "required_for_initial_B2": false,
+      "required_for_initial_S1": false,
+      "required_for_initial_SQL": false
+    }
+  ],
+  "commit_states": [
+    "ACTIVE",
+    "VALIDATING",
+    "PREPARED",
+    "DEPENDENCIES_DURABLE",
+    "COMMIT_ATTEMPTED",
+    "COMMIT_SYNCED",
+    "PUBLISHED",
+    "REPLY_SENT"
+  ],
+  "l2_order": [
+    "reserve bounded resources and prepare private values",
+    "validate and merge against preceding accepted view",
+    "persist all payload and COW page dependencies including namespaces",
+    "append complete CommitGroup with ordered entries and exact dependency references",
+    "sync whole CommitGroup",
+    "publish composite root for whole group",
+    "reply"
+  ],
+  "l0_inline_optimization": "Payload and commit trailer may share one WAL file and one sync; DISK COW sync still precedes commit attempt",
+  "checkpoint": {
+    "kind": "exact committed immutable generation",
+    "selection": "synced files and manifest, then atomic CURRENT replace and parent directory sync under qualified filesystem contract",
+    "cut": "published commit group boundary",
+    "fallback": "only with complete retained replay log and object closure to committed tip",
+    "highest_filename_is_authoritative": false,
+    "fixed_two_full_database_images_required": false,
+    "l0_detail_ref": "dev2-kernel-design.md#checkpoint-selection",
+    "l0_replay_anchor_ref": "dev2-kernel-design.md#replay-anchor",
+    "l0_checkpoint_updates_writer": false,
+    "l0_selector_io_serialized_with_commit_rotation": true,
+    "l0_predecessor_traversal_stop": "Only at the selected manifest-authenticated anchor segment after identity, offset and prefix digest verification; retain the whole anchor file",
+    "l0_fallback_reselection": "After verifying and stabilizing the full fallback path, durably select it as current with no previous before RESUME; never register the damaged current as previous"
+  },
+  "retention": {
+    "authority": "synchronized owner/pin ledger with generation retire protocol",
+    "includes_post_checkpoint_replay_COW_roots": true,
+    "includes_active_payload_reservations": true,
+    "delete_before_checkpoint_lane_tail": false,
+    "reader_pins_always_require_WAL": false,
+    "l0_current_and_previous_anchor_to_writer_tip_union": true,
+    "l0_gc_retiring_order": [
+      "commit_coordinator",
+      "retention_ledger"
+    ],
+    "l0_new_retiring_forbidden_when_fenced": true,
+    "l0_rebuild_from_validated_selectors_before_gc": true
+  },
+  "fault_model": {
+    "successful_sync_bytes_and_namespace_survive_declared_crash": true,
+    "unsynced_writes_may_survive": true,
+    "sync_error_may_have_persisted": true,
+    "directory_sync_required": true,
+    "process_kill_proves_power_loss": false,
+    "arbitrary_silent_tail_deletion_detectable_without_external_witness": false,
+    "checksum_failure_default": "fail closed; never blanket tail truncation",
+    "required_dependency_missing": "startup error; never skip transaction or lane",
+    "process_crash_may_preserve_unsynced_os_cache": true,
+    "new_file_or_directory_sync_stabilizes_old_file_data": false,
+    "full_length_torn_tail": "REJECT_CORRUPTION even for an unacknowledged final frame; never count as RECOVER_OK",
+    "automatic_open_after_every_power_loss_claimed": false,
+    "outcome_contract_ref": "dev2-kernel-design.md#fault-outcomes"
+  },
+  "backup": {
+    "K5": "complete checkpoint closure at C restored in empty owned environment",
+    "extended_restore": "commit groups + payload + all referenced COW objects through target",
+    "pitr_target": "complete group boundary",
+    "pitr_timeline": "new timeline before writes",
+    "K5_reanchor": "Restore validated state C without source WAL; new timeline/base-q=C header, local manifest, CURRENT and WRITER are durable before opening; preserve original backup provenance and bytes"
+  },
+  "recovery_phases": [
+    "PREFLIGHT",
+    "SELECT",
+    "LOAD",
+    "SCAN",
+    "REPLAY",
+    "VERIFY",
+    "STABILIZE",
+    "RESUME",
+    "READY"
+  ],
+  "not_initially_supported": [
+    "XA prepared transaction recovery",
+    "asynchronous non-durable ACK under normal success",
+    "normal service during partial recovery",
+    "command/SQL replay",
+    "arbitrary wall-clock PITR inside a commit group",
+    "vector-dependency logging without global commit sequence",
+    "WAL-first DISK pages"
+  ],
+  "open_before_implementation": [
+    "byte layout/checksum IDs and fixtures",
+    "chunk/page/group size and quotas",
+    "filesystem crash contract qualification",
+    "fine-grained validation ADR",
+    "L1/L2 leaf task DAG and performance profiles",
+    "archive/replication/PITR capability contracts and SLO"
+  ],
+  "product_test_status": "NOT_RUN",
+  "compatibility_policy_ref": "version-compatibility-policy.json",
+  "version_baseline_authority": "version-compatibility-policy.json",
+  "replication_undo_detail_ref": "replication-undo-plan.json",
+  "review_addendum": {
+    "reference": "recovery-logging-design.md#section-15",
+    "existing_storage_and_logging_design_preserved": true,
+    "new_research_algorithm_adopted": false,
+    "principle": "Use established durability/recovery principles; preserve implementation boundaries without predesigning future algorithms",
+    "clarifications": [
+      "Durably link accepted prior log end to the new writer epoch before new commits; verify recovery followed by new ACK and second crash",
+      "Fault acceptance includes full-length torn writes as well as truncated tails; no unqualified relaxation of corruption handling"
+    ],
+    "dev2_refinement": {
+      "decision_id": "DEV2-DESIGN-002",
+      "reference": "dev2-kernel-design.md#recovery-review-decision",
+      "status": "ACCEPTED",
+      "product_tests": "NOT_RUN",
+      "scope": [
+        "prior-prefix stabilization",
+        "authenticated L0 replay anchor",
+        "CURRENT-only checkpoint selection and GC ordering",
+        "fault outcome separation"
+      ]
+    },
+    "import_note": "Design obligations retained; prior source survey and small-model reports remain in the original workspace and are not XADB evidence."
+  },
+  "recovery_stabilization": {
+    "reference": "dev2-kernel-design.md#recovery-stabilize",
+    "order": [
+      "VERIFY",
+      "STABILIZE_REQUIRED_OLD_FILES_AND_NAMESPACES",
+      "RESUME_DURABLE_WRITER_SELECTION",
+      "PUBLISH_RECOVERED_ROOT",
+      "READY"
+    ],
+    "l0_baseline": "Explicitly sync retained WAL and epoch metadata from the selected checkpoint anchor through accepted R; preserve source bytes and pins",
+    "failure": "REJECT_IO; no new WRITER selection, publication, admission or GC",
+    "required_fault_case": "RC-T04",
+    "adapter_and_error_reopen_qualification": "NOT_RUN"
+  }
+}

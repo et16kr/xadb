@@ -1,0 +1,29 @@
+# XADB
+
+XADB는 **오픈소스 DBMS를 참고하여, AI가 이해하고 개발하기 좋은 DBMS를 AI agent로 만들 수 있는지 시험하는 저장소**입니다. 현재는 초기 개발 단계입니다.
+
+최종 목표는 Linux와 Rust로 구현한 디스크 기반 관계형 DBMS입니다. 폭넓은 SQL·트랜잭션·복구 기능과 기본 성능을 갖추면서, 구조를 이해하고 수정하고 검증할 수 있는 구현을 목표로 합니다. 특정 workload만을 위한 복잡한 튜닝은 측정 근거가 있을 때 추가합니다.
+
+PostgreSQL·MariaDB·CUBRID·SQLite 등 공개 DBMS의 문서와 구현을 비교 자료로 사용합니다. 각 기능의 의미와 인수 기준은 XADB 계약으로 정하며, 참고 제품의 SQL·파일·wire 호환이나 성능 우월성을 자동으로 주장하지 않습니다. [제품 방향](devdoc/plans/project-direction.md) · [공개 참고 자료와 로컬 소스 경로](devdoc/reference/opensource-references.md)
+
+현재 DEV0 검증 도구, DEV1 공통 의미·Linux 효과 경계, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog·native worker의 일부 구현을 이관했습니다. 외부 streaming controller의 초안 코드도 포함되지만 전용 인수 시험은 미실행입니다. **영속 transaction/WAL/recovery, 디스크 페이지·인덱스, SQL·서버는 아직 구현되지 않았습니다.** K0의 임시 메모리 상태는 커널 개발 기반이며 독립 메모리 DBMS 제품이 아닙니다. [현재 구현과 실행 상태](devdoc/implementation/README.md)
+
+## 빌드와 검증
+
+Linux x86_64, Rust 1.95.0과 `Cargo.lock`을 사용합니다.
+
+```bash
+cargo build --workspace --locked
+python3 scripts/check_dev0.py
+python3 scripts/check_dev1.py
+python3 scripts/check_dev2_reference.py --with-substrate
+python3 devdoc/verify_documents.py
+```
+
+DEV1은 DEV0 회귀를, DEV2 실행기는 DEV0/DEV1 회귀를 포함합니다. XADBTest의 fixture 성공과 volatile substrate 성공은 실제 DB 내구성이나 제품 출시 검증이 아닙니다. 현재 실행 결과는 [증거 색인](devdoc/evidence/README.md)에서 확인합니다. 개발 빌드는 새 DB·fixture를 사용하고, 안정 릴리스의 호환 기준선은 별도로 선언합니다.
+
+## 개발 문서
+
+[devdoc/README.md](devdoc/README.md)에서 정책·계획·계약·현재 구현을 찾습니다. 문서는 Markdown만 작성하며 JSON은 검증기가 소비하는 계약·색인·실행 결과에 사용합니다. 사용자용 `xadb` SQL CLI는 계획이며 현재 실행 가능한 도구는 `xadbtest`와 시험 worker입니다.
+
+기존 개발 작업의 현재 파일을 독립 저장소로 이관했습니다. 이전 Git 이력을 가져오지 않았으며, 이전 실행 결과를 XADB의 결과로 재표기하지 않습니다. [이관 범위와 상태](devdoc/history/project-migration.md)

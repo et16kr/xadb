@@ -1,0 +1,309 @@
+{
+  "schema_version": 1,
+  "document_status": "DESIGN_PROPOSAL_SYNTHETIC_ILLUSTRATION_NOT_EXECUTED",
+  "execution_status": "NOT_RUN",
+  "actual_diagnosis": null,
+  "confirmed_cause": null,
+  "case_id": "XADB-PLAN-EPOCH-ILLUSTRATION",
+  "scope": {
+    "modules": {
+      "A": "xadb-exec",
+      "B": "xadb-plan cache",
+      "C": "xadb-catalog",
+      "D": "xadb-runtime event delivery",
+      "E": "xadb-storage",
+      "F": "xadb-txn"
+    },
+    "build_digest": "RESOLVE_BEFORE_EXECUTION",
+    "symbol_names_are_proposed": true,
+    "real_source_file_paths": null
+  },
+  "contract": {
+    "id": "PLAN-EPOCH-001-EXAMPLE",
+    "preconditions": [
+      "request explicitly bound to catalog epoch 8",
+      "old-snapshot epoch 7 use is not permitted for this request",
+      "declared invalidation completion precedes this lookup"
+    ],
+    "postcondition": "lookup returns an epoch-compatible plan or an explicit cache miss; it must not return epoch 7 as usable for epoch 8"
+  },
+  "graph": {
+    "status": "HYPOTHETICAL",
+    "edge_orientation": "cause or prerequisite toward effect or consumer; not source import direction",
+    "nodes": [
+      {
+        "id": "c_publish",
+        "kind": "event",
+        "owner": "C",
+        "proposed_symbol": "Catalog::publish",
+        "effect": "publish epoch 8"
+      },
+      {
+        "id": "catalog8",
+        "kind": "state_version",
+        "owner": "C",
+        "identity": {
+          "object_id": "catalog",
+          "generation": 1,
+          "state_version": 8
+        }
+      },
+      {
+        "id": "req8",
+        "kind": "request_context",
+        "owner": "A",
+        "required_catalog_epoch": 8
+      },
+      {
+        "id": "expected_invalidate",
+        "kind": "obligation",
+        "owner": "B",
+        "contract_id": "PLAN-EPOCH-001-EXAMPLE",
+        "effect": "after invalidation completes, lookup for epoch 8 must not return epoch 7"
+      },
+      {
+        "id": "d_deliver",
+        "kind": "event",
+        "owner": "D",
+        "message_id": "synthetic-invalidate-8"
+      },
+      {
+        "id": "b_invalidate",
+        "kind": "event",
+        "owner": "B",
+        "proposed_symbol": "PlanCache::invalidate",
+        "reported_completion": true,
+        "completion_log_is_not_correctness_proof": true
+      },
+      {
+        "id": "cache_pre7",
+        "kind": "state_version",
+        "owner": "B",
+        "identity": {
+          "object_id": "cache-entry-42",
+          "generation": 1,
+          "state_version": 1
+        },
+        "plan_epoch": 7
+      },
+      {
+        "id": "b_lookup",
+        "kind": "event",
+        "owner": "B",
+        "proposed_symbol": "PlanCache::lookup",
+        "requested_epoch": 8
+      },
+      {
+        "id": "plan7",
+        "kind": "returned_object",
+        "owner": "B",
+        "identity": {
+          "object_id": "plan-42",
+          "generation": 1,
+          "state_version": 1
+        },
+        "catalog_epoch": 7,
+        "reader": "A",
+        "mutation_authority": "B only in this hypothetical case"
+      },
+      {
+        "id": "a_check",
+        "kind": "invariant_check",
+        "owner": "A",
+        "proposed_symbol": "Executor::validate_plan_epoch",
+        "expected": 8,
+        "observed": 7,
+        "contract_id": "PLAN-EPOCH-001-EXAMPLE"
+      }
+    ],
+    "edges": [
+      {
+        "from": "c_publish",
+        "to": "catalog8",
+        "kind": "produces",
+        "evidence_origin": "illustrative_only"
+      },
+      {
+        "from": "catalog8",
+        "to": "req8",
+        "kind": "binds_request_epoch",
+        "evidence_origin": "illustrative_only"
+      },
+      {
+        "from": "catalog8",
+        "to": "expected_invalidate",
+        "kind": "requires",
+        "evidence_origin": "illustrative_only"
+      },
+      {
+        "from": "catalog8",
+        "to": "d_deliver",
+        "kind": "message_input",
+        "evidence_origin": "illustrative_only"
+      },
+      {
+        "from": "d_deliver",
+        "to": "b_invalidate",
+        "kind": "message_delivery",
+        "evidence_origin": "illustrative_only"
+      },
+      {
+        "from": "expected_invalidate",
+        "to": "b_invalidate",
+        "kind": "obligation_owner",
+        "evidence_origin": "illustrative_only"
+      },
+      {
+        "from": "b_invalidate",
+        "to": "b_lookup",
+        "kind": "happens_before",
+        "evidence_origin": "illustrative_only"
+      },
+      {
+        "from": "cache_pre7",
+        "to": "b_lookup",
+        "kind": "reads_state",
+        "evidence_origin": "illustrative_only"
+      },
+      {
+        "from": "req8",
+        "to": "b_lookup",
+        "kind": "selects_expected_version",
+        "evidence_origin": "illustrative_only"
+      },
+      {
+        "from": "b_lookup",
+        "to": "plan7",
+        "kind": "returns",
+        "evidence_origin": "illustrative_only"
+      },
+      {
+        "from": "plan7",
+        "to": "a_check",
+        "kind": "consumes",
+        "evidence_origin": "illustrative_only"
+      },
+      {
+        "from": "req8",
+        "to": "a_check",
+        "kind": "comparison_input",
+        "evidence_origin": "illustrative_only"
+      }
+    ],
+    "not_a_complete_source_or_memory_graph": true,
+    "possible_unobserved_edges_must_be_preserved": true
+  },
+  "object_reference_contract": {
+    "owner": "B",
+    "reference_from": "A",
+    "reference_to": "plan7",
+    "lifetime": "request validation through execution or rejection",
+    "expected_epoch_source": "req8",
+    "raw_address_is_not_identity": true,
+    "state_version_is_not_generation": true,
+    "additional_writers_require_candidate_expansion": true
+  },
+  "illustrative_diagnosis": {
+    "conditional_state": "CANDIDATES_BOUNDED",
+    "verified": false,
+    "detecting_module": "A",
+    "failed_node": "a_check",
+    "first_observed_bad_boundary": "B lookup output / A input",
+    "initial_candidate_modules": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F"
+    ],
+    "flow_candidate_modules": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "conservative_candidate_modules_after_assumptions": [
+      "A",
+      "B"
+    ],
+    "priority_modules": [
+      "B",
+      "A"
+    ],
+    "unresolved_hypotheses": [
+      "B invalidation branch or key mismatch",
+      "B reference lifetime or stale cache publication",
+      "A expected epoch or checker defect"
+    ],
+    "conditional_exclusions": [
+      {
+        "modules": [
+          "E",
+          "F"
+        ],
+        "required_evidence": "no data/control/ownership/environment path to this violation in the declared execution; no unresolved shared-state influence"
+      },
+      {
+        "modules": [
+          "C",
+          "D"
+        ],
+        "required_evidence": "matching epoch and message identity, verified input semantics and delivery to B, no unresolved mutation or ordering dependency"
+      }
+    ],
+    "assumptions": [
+      "exact source/build and instrumentation mapping",
+      "trusted independent boundary predicates sufficient for this violation",
+      "complete required witnesses over the relevant object history",
+      "no unresolved unsafe or FFI corruption",
+      "all influencing configuration, writers, scheduling and shared services modeled"
+    ],
+    "when_assumptions_unverified": "INCOMPLETE; retain possible upstream and external causes; do not treat an absent event as non-execution",
+    "scope_expansion_triggers": [
+      "missing delivery witness",
+      "trace gap",
+      "unknown writer",
+      "unresolved dynamic dispatch",
+      "possible memory corruption",
+      "predicate does not cover required semantics"
+    ],
+    "next_experiments": [
+      {
+        "target": "real B core",
+        "input": "synthetic cached epoch 7 plan, completed invalidation to 8, lookup bound to 8",
+        "oracle": "epoch-compatible result or cache miss; epoch 7 result is a contract violation",
+        "execution_status": "NOT_RUN"
+      },
+      {
+        "target": "real A core",
+        "input": "independent synthetic epoch 8 and epoch 7 plans for request bound to 8",
+        "oracle": "accept epoch 8 and reject epoch 7",
+        "execution_status": "NOT_RUN"
+      }
+    ],
+    "localization_rule": "Only after discriminating experiments support the hypothesis, localize the failing module/path; do not equate localization with a validated causal explanation.",
+    "fix_validation": [
+      "same failing capsule before fix",
+      "independent oracle and distinguishing cases",
+      "pass after fix",
+      "required integration regression",
+      "remaining assumptions reported"
+    ]
+  },
+  "measurement_example": {
+    "basis": "hypothetical counts, not measured",
+    "initial_modules": 6,
+    "flow_modules": 4,
+    "boundary_modules": 2,
+    "boundary_reduction": 0.6666666666666667,
+    "actual_root_cause_recall": null
+  },
+  "evidence_policy": {
+    "raw_customer_rows": false,
+    "credentials": false,
+    "scope_facts_hidden": false,
+    "default_view": "typed IDs, predicates, candidate reasons, evidence references"
+  },
+  "compatibility": "New same-major diagnostic readers understand or convert older minor bundles; reverse compatibility is not required."
+}

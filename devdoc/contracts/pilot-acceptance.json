@@ -1,0 +1,270 @@
+{
+  "schema_version": 3,
+  "status": "PROPOSED_NOT_EXECUTED",
+  "local_partial_evidence": {
+    "PA01": "dev0-contract.json: local wrong-build/oracle/witness/zero-assertion tests; protected controller qualification pending",
+    "PA13": "dev0-contract.json: local verdict axes/forged-PASS/oracle-fingerprint tests; trusted promotion pending",
+    "execution_record": "dev0-validation.json",
+    "full_planned_cases_passed": false
+  },
+  "design_review_is_product_validation": false,
+  "gate_prerequisites": {
+    "B0": [],
+    "B1": [
+      "B0"
+    ],
+    "B2": [
+      "F1"
+    ],
+    "B3": [
+      "Q1",
+      "C1"
+    ],
+    "VERSION_RELEASE": [
+      "B0"
+    ],
+    "AI_PILOT": [
+      "B2"
+    ],
+    "H1": [
+      "B2"
+    ],
+    "H2": [
+      "H1",
+      "P1"
+    ],
+    "H3": [
+      "H2"
+    ],
+    "D0": [
+      "B1"
+    ],
+    "GLOBAL_INDEX_QUALIFICATION": [
+      "B3",
+      "H3"
+    ],
+    "PRODUCT_QUALIFIED": [
+      "CLIENT1",
+      "SQL_EXT1",
+      "OPS1",
+      "P1"
+    ],
+    "EXTERNAL_RELEASE": [
+      "PRODUCT_QUALIFIED",
+      "VERSION_RELEASE"
+    ],
+    "F1": [
+      "B1"
+    ],
+    "S1": [
+      "B2",
+      "D0",
+      "H1"
+    ],
+    "Q1": [
+      "S1"
+    ],
+    "C1": [
+      "F1"
+    ],
+    "P1": [
+      "S1"
+    ],
+    "CLIENT1": [
+      "B3"
+    ],
+    "SQL_EXT1": [
+      "Q1"
+    ],
+    "OPS1": [
+      "S1",
+      "B3"
+    ]
+  },
+  "stage_notes": {
+    "B1": "per-module requirements; not a full durability proof",
+    "B2": "K0-K5 + XADB-032: real rows, transaction/WAL/recovery/concurrency/checkpoint; no SQL/network dependencies",
+    "B3": "DEV5 server: Q1 embedded SQL + C1 transport; real DISK, does not require PART/NG",
+    "VERSION_RELEASE": "customer-delivery qualification only; compare all earlier same-major stable-release baselines, excluding all internal distributions. Before first declared stable release: NOT_APPLICABLE_NO_RELEASE_BASELINE. Internal builds use fresh DB/fixtures and still require current-build recovery/atomicity tests.",
+    "AI_PILOT": "kernel tasks can start after B2; SQL/version/performance tasks require their feature baselines and additional gates",
+    "D0": "initial architecture readiness only: stable IDs, snapshot storage boundaries, scope/media separation, shared commit extensibility and version contracts; not real disk/index proof",
+    "GLOBAL_INDEX_QUALIFICATION": "follow-up actual mixed SQL/storage/recovery qualification; internal builds do not require cross-version conversion. Customer delivery additionally requires applicable VERSION_RELEASE cases.",
+    "PRODUCT_QUALIFIED": "Internal product qualification: frozen exact baseline, complete leaf inventory, zero gaps/unresolved items, CLIENT1/SQL_EXT1/OPS1/P1 and required feature integrations. VERSION_RELEASE is added only by EXTERNAL_RELEASE for customer delivery.",
+    "F1": "DEV1 shared semantics/effects and independently buildable core boundaries",
+    "S1": "DEV3 bounded real DISK row/index/catalog API, common durability and capacity checks; no parser/server/global dependency",
+    "Q1": "DEV4 minimal embedded SQL, both declared media; no network server",
+    "C1": "COMM framed transport and local connections, independent of storage",
+    "P1": "PART typed partition/local index/membership/lifecycle with production storage; no SQL/global prerequisite",
+    "CLIENT1": "Current-build native/JDBC/ODBC support matrix. Cross-version old-client/new-server belongs only to customer-delivery VERSION_RELEASE.",
+    "H2": "native global core on H1/P1; SQL-free API tests; does not wait for B3",
+    "H3": "NG core lifetime/row move/capacity; full SQL integration remains GLOBAL_INDEX_QUALIFICATION",
+    "SQL_EXT1": "All DEV7 required work packages and frozen variants pass; exact task dependencies add client/storage prerequisites per feature. Partial feature qualification does not close DEV7.",
+    "OPS1": "All DEV8 replication/restore/operations/workload obligations and pre-registered numerical thresholds pass; unknown SLO or environment blocks closure."
+  },
+  "cases": [
+    {
+      "id": "PA01",
+      "gate": "B0",
+      "title": "Runner rejects wrong build, missing oracle/witness, zero assertion",
+      "acceptance": "protected controller refuses PASS; original receipts retained",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PA02",
+      "gate": "B1",
+      "title": "Composite root and snapshot lifetime",
+      "acceptance": "actual core never returns mixed row/index/catalog epochs; stale handle cases; publication mutants detected",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PA03",
+      "gate": "B1",
+      "title": "Statement rollback and DDL failure",
+      "acceptance": "multi-row error restores statement entry state and resource budget; old catalog remains valid",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PA04",
+      "gate": "B1",
+      "title": "Value/key/codec semantics",
+      "acceptance": "independent boundary vectors for ordering/equality/NULL/unique/versioned encoding",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PA05",
+      "gate": "B2",
+      "title": "ACK durability and unknown commit",
+      "acceptance": "external ACK survives owned-process crash/reopen; uncertain sync never reported definitely aborted",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PA06",
+      "gate": "B2",
+      "title": "Checkpoint, restore and repeated failure",
+      "acceptance": "early-delete mutant detected; recovery crash and restore validated on supported real I/O",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PA07",
+      "gate": "B2",
+      "title": "Quota and unexpected process failure",
+      "acceptance": "normal quota refuses before commit attempt; crash/OOM model preserves durable ACK; cleanup and memory ledger",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PA08",
+      "gate": "B3",
+      "title": "SQL/index/catalog/concurrency integration",
+      "acceptance": "real client, declared isolation histories, full scan/index equality and schema epoch tests",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PA09",
+      "gate": "VERSION_RELEASE",
+      "title": "Every earlier XADB minor to candidate",
+      "acceptance": "preserved release binaries/fixtures; decode/convert/restart faults; no reverse requirement",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PA10",
+      "gate": "AI_PILOT",
+      "title": "Module reproduction and causal narrowing",
+      "acceptance": "fresh-session replay; missing edge not excluded; false exclusion measured on labeled corpus",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PA11",
+      "gate": "AI_PILOT",
+      "title": "Independent AI development evaluation",
+      "acceptance": "all attempted tasks counted; held-out acceptance; exact model/tool/source/evidence version",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PA12",
+      "gate": "AI_PILOT",
+      "title": "Normal scoped workflows and boundary protection",
+      "acceptance": "required debug/test coverage retained; no host/external effects; stops classified; no safety-stop model fallback",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PA13",
+      "gate": "B0",
+      "title": "Verdict axes and trusted promotion",
+      "acceptance": "product FAIL survives cleanup ERROR; forged PASS and modified oracle cannot self-promote",
+      "execution_status": "NOT_RUN"
+    }
+  ],
+  "additional_case_reference": "kernel-test-matrix.json",
+  "gate_task_requirements": {
+    "F1": [
+      "XADB-005",
+      "XADB-026"
+    ],
+    "B2": [
+      "XADB-004",
+      "XADB-027",
+      "XADB-006",
+      "XADB-007",
+      "XADB-008",
+      "XADB-010",
+      "XADB-009",
+      "XADB-032"
+    ],
+    "H1": [
+      "XADB-021",
+      "XADB-022"
+    ],
+    "S1": [
+      "XADB-028",
+      "XADB-029"
+    ],
+    "Q1": [
+      "XADB-011"
+    ],
+    "C1": [
+      "XADB-031"
+    ],
+    "B3": [
+      "XADB-012",
+      "XADB-033"
+    ],
+    "P1": [
+      "XADB-030"
+    ],
+    "H2": [
+      "XADB-023"
+    ],
+    "H3": [
+      "XADB-024",
+      "XADB-025"
+    ],
+    "CLIENT1": [
+      "XADB-034",
+      "XADB-035",
+      "XADB-036"
+    ],
+    "SQL_EXT1": [
+      "XADB-037",
+      "XADB-038",
+      "XADB-039",
+      "XADB-040",
+      "XADB-041"
+    ],
+    "OPS1": [
+      "XADB-042",
+      "XADB-043",
+      "XADB-044",
+      "XADB-045"
+    ],
+    "PRODUCT_QUALIFIED": [
+      "XADB-046",
+      "XADB-047"
+    ]
+  },
+  "completion_contract_reference": "stage-completion.json",
+  "gate_applicability": {
+    "VERSION_RELEASE": "CUSTOMER_DELIVERY_ONLY",
+    "EXTERNAL_RELEASE": "CUSTOMER_DELIVERY_ONLY",
+    "internal_cross_version_result": "NOT_REQUIRED_INTERNAL_FRESH_BUILD"
+  }
+}

@@ -1,0 +1,267 @@
+{
+  "schema_version": 4,
+  "document_status": "PROPOSAL_EXAMPLE_NOT_EXECUTED",
+  "task_id": "XADB-007",
+  "title": "Commit acknowledgement follows durable complete WAL batch",
+  "goal": "Implement the first real durable commit path and demonstrate its ordering with a discriminating regression.",
+  "preconditions": [
+    "B0 build/runner/independent oracle verified",
+    "XADB-005 effect ports verified",
+    "XADB-006 private batch verified"
+  ],
+  "scope": [
+    "xadb-txn commit state machine",
+    "xadb-durable batch codec",
+    "durability contract tests"
+  ],
+  "change_coordination": {
+    "schema_version": 1,
+    "status": "UNRESOLVED_EXAMPLE",
+    "policy_ref": "parallel-development-policy.json",
+    "task_owner": null,
+    "integration_owner": null,
+    "base_identity": {
+      "revision": null,
+      "dirty_digest": null,
+      "must_match": "source_revision"
+    },
+    "path_status": "PLANNED_CANDIDATES_RESOLVE_AND_NARROW_BEFORE_START",
+    "owned_paths": [
+      {
+        "module": "durable/wal",
+        "paths": [
+          "crates/engine/src/durable/wal.rs",
+          "crates/engine/src/durable/wal/**",
+          "crates/engine/tests/wal_*.rs"
+        ]
+      }
+    ],
+    "shared_edits": [
+      {
+        "paths": [
+          "crates/engine/src/transaction.rs",
+          "crates/engine/src/transaction/**"
+        ],
+        "reason": "Connect the complete WAL batch to commit ordering",
+        "owner": null,
+        "merge_after": [
+          "contract-baseline",
+          "wal-implementation"
+        ]
+      },
+      {
+        "paths": [
+          "crates/engine/src/lib.rs",
+          "crates/engine/src/durable.rs",
+          "crates/engine/src/durable/mod.rs"
+        ],
+        "reason": "Only required declarations and narrow re-exports",
+        "owner": null,
+        "merge_after": [
+          "wal-implementation"
+        ]
+      },
+      {
+        "paths": [
+          "devdoc/contracts/implementation-contracts.md",
+          "devdoc/contracts/recovery-logging-contract.json"
+        ],
+        "reason": "Record the concrete WAL/API contract within the accepted kernel semantics",
+        "owner": null,
+        "merge_after": []
+      }
+    ],
+    "contract_changes": [
+      {
+        "contract_refs": [
+          "ACK-DURABLE-001",
+          "BATCH-ATOMIC-001",
+          "UNKNOWN-001"
+        ],
+        "owner": null,
+        "scope": "Resolve concrete WAL framing and failure/API details before implementation; review any semantic change",
+        "merge_step": "contract-baseline",
+        "status": "UNRESOLVED"
+      }
+    ],
+    "overlap_review": {
+      "status": "NOT_RUN",
+      "peer_tasks": [],
+      "peer_base_identities": [],
+      "path_overlaps": [],
+      "semantic_overlaps": [],
+      "resolutions": [],
+      "empty_lists_mean_no_overlap": false
+    },
+    "merge_order": [
+      "contract-baseline",
+      "wal-implementation",
+      "commit-integration",
+      "merged-validation",
+      "generated-documents"
+    ],
+    "generated_outputs": [
+      {
+        "paths": [
+          "devdoc/document-validation.json"
+        ],
+        "source_inputs": [
+          "devdoc/**/*.md",
+          "devdoc/**/*.json"
+        ],
+        "commands": [
+          "python3 devdoc/verify_documents.py"
+        ],
+        "owner": null,
+        "merge_step": "generated-documents"
+      }
+    ]
+  },
+  "non_goals": [
+    "group commit",
+    "replication",
+    "implementing partition/global index inside XADB-007; design expansion boundaries now and implement later at H1-H3"
+  ],
+  "test_framework": "new independent XADBTest",
+  "version_policy": "version-compatibility-policy.json",
+  "contracts": [
+    {
+      "id": "ACK-DURABLE-001",
+      "invariant": "Every acknowledged commit survives recovery under the declared storage fault model."
+    },
+    {
+      "id": "BATCH-ATOMIC-001",
+      "invariant": "Readers and recovery never observe part of a transaction batch."
+    },
+    {
+      "id": "UNKNOWN-001",
+      "invariant": "A missing client reply does not imply that the transaction aborted."
+    }
+  ],
+  "required_evidence": [
+    "exact source/build/config/case/oracle hashes",
+    "actual core path and fault receipts",
+    "reference oracle results",
+    "ACK-before-sync mutant rejected",
+    "resource cleanup result",
+    "flow contract and object ownership changes; data/state versions and ordered witnesses for touched invariants; missing evidence remains explicit",
+    "version-tagged codec vectors and explicit future baseline obligations",
+    "actual local file I/O and controlled append/sync error receipts; independent durable-prefix observation"
+  ],
+  "required_test_layers": [
+    "unit",
+    "component",
+    "real-file commit-ordering"
+  ],
+  "oracle_policy": {
+    "expected_output_self_promotion": false,
+    "independent_reference_required": true,
+    "candidate_cannot_promote_own_expected_output": true,
+    "protected_controller_observation_required": true
+  },
+  "completion": {
+    "implementation_only_is_done": false,
+    "required_witness_miss": "INVALID",
+    "unsupported_feature": "UNSUPPORTED",
+    "test_not_run": "UNVERIFIED",
+    "required_gates": [
+      "B0",
+      "B1"
+    ],
+    "result_on_success": "MODULE_VERIFIED; not full ACK-DURABLE-001 validation or product readiness",
+    "gate_definition": "implementation-contracts.md section 7"
+  },
+  "design_change_review_triggers": [
+    "durability semantics",
+    "WAL format compatibility",
+    "isolation semantics",
+    "unsafe boundary expansion"
+  ],
+  "reproduction_bundle": [
+    "manifest.json",
+    "history.jsonl",
+    "schedule.json",
+    "fault-receipts.jsonl",
+    "verdict.json"
+  ],
+  "execution_policy": "ai-execution-policy.example.json",
+  "agent_routing_policy": "agent-routing-policy.example.json",
+  "evidence_delivery": "validated typed views and minimal result envelope; no raw dump in parent context",
+  "diagnostic_delivery": {
+    "source_reference_index_required": true,
+    "flow_and_ownership_contract_required": true,
+    "conservative_and_priority_candidates_separate": true,
+    "candidate_exclusion_requires_evidence": true
+  },
+  "language": "Rust (user-confirmed); safe Rust core",
+  "deferred_integration_obligations": [
+    {
+      "gate": "B2",
+      "requires": [
+        "XADB-008",
+        "XADB-010",
+        "XADB-009",
+        "XADB-032"
+      ],
+      "evidence": "owned-process crash/reopen with production recovery, checkpoint/restore and external ACK history",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "gate": "S1",
+      "requires": [
+        "XADB-028",
+        "XADB-021",
+        "XADB-022",
+        "XADB-029"
+      ],
+      "evidence": "rerun durability with production DISK row/index/locator implementations",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "gate": "B3",
+      "requires": [
+        "S1",
+        "Q1",
+        "C1",
+        "XADB-012"
+      ],
+      "evidence": "actual SQL/server integration for declared DISK capabilities; prior API evidence does not replace network ACK evidence",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "gate": "VERSION_RELEASE",
+      "requires": [
+        "previous stable-release XADB minor baselines; not internal distributions"
+      ],
+      "evidence": "customer delivery only: all older same-major customer contracts, WAL/data/protocol/backup and faulted conversion; internal fresh builds do not require this gate",
+      "execution_status": "NOT_RUN"
+    }
+  ],
+  "governance": {
+    "policy_ref": "development-policy.json",
+    "status": "UNRESOLVED_EXAMPLE",
+    "change_class": "D2",
+    "reason": "Resolve the WAL boundary and its independent evidence before implementation.",
+    "authorization_ref": null,
+    "decision_refs": [],
+    "contract_owner": null,
+    "independent_reviewer": null,
+    "review_evidence": [],
+    "review_status": "NOT_RUN",
+    "verification_profile": "V2",
+    "extended_profile_at_gate": "V3",
+    "profile_contract_ref": null,
+    "profile_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+    "current_example_is_approval": false
+  },
+  "performance_engineering": {
+    "contract_ref": "ai-performance-engineering.json",
+    "status": "RESOLVE_WHEN_PERFORMANCE_RELEVANT",
+    "applicability": "register baseline instrumentation with implemented kernel paths; optimization claims require comparison and cause evidence; no future SQL/server dependency",
+    "profile_ref": null,
+    "bundle_ref": null,
+    "run_entrypoint": null,
+    "execution_status": "NOT_RUN",
+    "changes_existing_bootstrap_gates": false
+  }
+}

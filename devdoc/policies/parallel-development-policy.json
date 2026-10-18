@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18",
+  "status": "ACCEPTED_POLICY_PROCESS_NOT_QUALIFIED",
+  "normative_ref": "parallel-development-policy.md",
+  "task_contract_ref": "task-contract.example.json#change_coordination",
+  "application": "New and modified files; resolve task ownership and overlap before DEV2 K0 and every parallel change",
+  "existing_code_reorganization": "NOT_PERFORMED",
+  "rules": [
+    {
+      "id": "XADB-LAYOUT-001",
+      "title": "함께 변경되는 책임별 파일 구성",
+      "criterion": "기능 전용 타입·구현·오류·설정 정의·통계·시험을 소유 모듈에 배치"
+    },
+    {
+      "id": "XADB-LAYOUT-002",
+      "title": "공통 계약의 최소화",
+      "criterion": "실제 공유 의미만 공통 경계에 두고 계약 담당과 변경 이유를 명시"
+    },
+    {
+      "id": "XADB-LAYOUT-003",
+      "title": "작은 조립·등록 지점",
+      "criterion": "lib.rs·mod.rs·등록 목록에는 연결만 두고 기능 본문은 소유 모듈에 유지"
+    },
+    {
+      "id": "XADB-LAYOUT-004",
+      "title": "시험과 문서의 책임별 분리",
+      "criterion": "모듈 시험·계약 문서는 책임별로, 경계를 가로지르는 시험은 통합 영역에 배치"
+    },
+    {
+      "id": "XADB-LAYOUT-005",
+      "title": "작업별 수정 범위와 병합 조정",
+      "criterion": "수정 경로·공유 파일·계약 담당·동시 작업과 병합 순서를 착수 전에 기록"
+    },
+    {
+      "id": "XADB-LAYOUT-006",
+      "title": "무관한 정리와 생성물 충돌 방지",
+      "criterion": "별도 rename·전체 서식 정리를 기능 변경에 섞지 않고 생성물은 합친 원문에서 재생성"
+    }
+  ],
+  "required_task_fields": [
+    "task_owner",
+    "integration_owner",
+    "base_identity",
+    "owned_paths",
+    "shared_edits",
+    "contract_changes",
+    "overlap_review",
+    "merge_order",
+    "generated_outputs",
+    "validation"
+  ],
+  "overlap_dimensions": [
+    "exact_path",
+    "directory_and_glob",
+    "rename_source_and_destination",
+    "shared_api_format_invariant"
+  ],
+  "unresolved_task_can_start_overlapping_edits": false,
+  "current_enforcement": "TASK_CONTRACT_AND_REVIEW",
+  "automated_overlap_checker": "NOT_IMPLEMENTED",
+  "acceptance_cases": [
+    {
+      "id": "PD01",
+      "scenario": "같은 기준에서 시작한 독립 기능 두 개",
+      "acceptance": "기능 전용 변경 경로가 분리되고 필요한 공유 변경은 담당·순서가 기록됨. 합친 결과의 관련 실제 시험 통과",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PD02",
+      "scenario": "같은 파일 또는 공통 계약을 바꾸는 두 작업",
+      "acceptance": "경로가 달라도 의미 중복을 식별하고 공통 계약을 조정. 조정된 기준에서 소비 작업과 통합 시험 통과",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "PD03",
+      "scenario": "문서 원문과 등록·생성물의 동시 변경",
+      "acceptance": "양쪽 원문 변경을 보존하고 최신 입력에서 생성·검증. 생성물 직접 편집과 다른 작업 덮어쓰기 없음",
+      "execution_status": "NOT_RUN"
+    }
+  ],
+  "measurement": {
+    "execution_status": "NOT_RUN",
+    "identity": [
+      "task_pair",
+      "base_revision",
+      "candidate_revisions_and_dirty_digests",
+      "merged_source_and_build"
+    ],
+    "metrics": [
+      "private_path_overlap_count",
+      "shared_path_overlap_count",
+      "merge_conflict_file_count",
+      "semantic_conflict_count",
+      "coordination_elapsed_minutes",
+      "rework_minutes"
+    ],
+    "observed_values": null,
+    "improvement_claim": null
+  },
+  "document": "parallel-development-policy.md"
+}

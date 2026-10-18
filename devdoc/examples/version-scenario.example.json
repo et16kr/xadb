@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "document_status": "PROPOSAL_EXAMPLE_NOT_EXECUTED",
+  "case_id": "XADB-VER-001",
+  "framework": "XADBTest",
+  "title": "New XADB recovers old WAL, resumes interrupted conversion, and durably continues writes",
+  "contracts": [
+    "XADB-MINOR-DATA-001",
+    "XADB-MINOR-WAL-001",
+    "MIGRATION-ATOMIC-001",
+    "ACK-DURABLE-001"
+  ],
+  "direction": "older source -> newer engine; no downgrade step",
+  "versions": {
+    "older": {
+      "version": "1.0.0",
+      "binary_sha256": "RESOLVE_RELEASE_ARTIFACT_BEFORE_RUN"
+    },
+    "newer": {
+      "version": "1.1.0",
+      "binary_sha256": "RESOLVE_RELEASE_ARTIFACT_BEFORE_RUN"
+    }
+  },
+  "fixture": {
+    "private_data_directory": true,
+    "exclusive_process_ownership": true,
+    "logical_operations": "supported by both versions, with identical specified meaning",
+    "illustrative_source_format": "FORMAT_1",
+    "illustrative_target_format": "FORMAT_2",
+    "conversion_required": true,
+    "background_checkpoints": "controlled by runner so committed WAL remains above checkpoint at each specified crash"
+  },
+  "steps": [
+    {
+      "id": "old-create",
+      "version": "older",
+      "operation": "create_database_and_commit",
+      "rows": [
+        [
+          "a",
+          101
+        ]
+      ],
+      "expect_reply": "COMMITTED"
+    },
+    {
+      "id": "old-checkpoint",
+      "version": "older",
+      "operation": "checkpoint_and_confirm_durable_boundary"
+    },
+    {
+      "id": "old-write",
+      "version": "older",
+      "operation": "commit",
+      "rows": [
+        [
+          "b",
+          202
+        ]
+      ],
+      "expect_reply": "COMMITTED"
+    },
+    {
+      "id": "old-crash",
+      "version": "older",
+      "operation": "kill_owned_server_before_next_checkpoint",
+      "after": "old-write.reply_observed",
+      "assert_process_exited": true
+    },
+    {
+      "id": "new-recover",
+      "version": "newer",
+      "operation": "open_upgrade_workspace_and_recover_old_format",
+      "source_database_and_wal": "preserve_original",
+      "external_writes": "blocked",
+      "expect_rows": [
+        [
+          "a",
+          101
+        ],
+        [
+          "b",
+          202
+        ]
+      ]
+    },
+    {
+      "id": "conversion-crash",
+      "version": "newer",
+      "operation": "convert_shadow_generation_and_kill_at_event",
+      "fault_event": "upgrade.shadow_generation_synced_before_manifest_publish",
+      "fault_receipt_required": true,
+      "assert_process_exited": true
+    },
+    {
+      "id": "new-resume",
+      "version": "newer",
+      "operation": "resume_or_restart_conversion_and_durably_publish",
+      "expect_rows": [
+        [
+          "a",
+          101
+        ],
+        [
+          "b",
+          202
+        ]
+      ],
+      "assert_integrity": true,
+      "assert_single_complete_generation": true
+    },
+    {
+      "id": "new-write",
+      "version": "newer",
+      "operation": "commit",
+      "rows": [
+        [
+          "c",
+          303
+        ]
+      ],
+      "expect_reply": "COMMITTED"
+    },
+    {
+      "id": "new-crash",
+      "version": "newer",
+      "operation": "kill_owned_server_before_next_checkpoint",
+      "after": "new-write.reply_observed",
+      "assert_process_exited": true
+    },
+    {
+      "id": "new-reopen",
+      "version": "newer",
+      "operation": "recover_converted_database",
+      "expect_rows": [
+        [
+          "a",
+          101
+        ],
+        [
+          "b",
+          202
+        ],
+        [
+          "c",
+          303
+        ]
+      ],
+      "assert_integrity": true
+    }
+  ],
+  "required_witnesses": [
+    "both_exact_release_binary_hashes_verified",
+    "no_overlap_between_owned_server_processes",
+    "old-write.reply_observed",
+    "old-write.commit_sequence_above_checkpoint_sequence_at_old_crash",
+    "newer_version.replayed_older_version_wal",
+    "older_source_and_wal_preserved_until_durable_new_generation_selection",
+    "conversion-crash.target_event_reached_and_process_killed",
+    "newer_version.resumed_or_restarted_incomplete_conversion",
+    "newer_version.selected_one_complete_generation",
+    "all_old_acknowledged_rows_and_constraints_preserved",
+    "new-write.reply_observed",
+    "new-write.commit_sequence_above_checkpoint_sequence_at_new_crash",
+    "all_acknowledged_rows_preserved_after_newer_recovery"
+  ],
+  "oracle": {
+    "source": "explicit XADB transaction and logical conversion contracts, independent of converter implementation",
+    "typed_rows": true,
+    "compare_as": "multiset",
+    "duplicates_allowed": false,
+    "conversion_consistency": [
+      "logical rows",
+      "catalog",
+      "constraints",
+      "single generation"
+    ],
+    "physical_byte_equality_required": false
+  },
+  "verdict_policy": {
+    "missing_required_witness": "INVALID",
+    "checkpoint_preempted_required_wal_replay": "INVALID",
+    "missing_fault_receipt": "INVALID"
+  },
+  "cleanup": {
+    "assert_no_owned_processes": true
+  },
+  "limitations": [
+    "Version and format identifiers are illustrative; no release binary or migration was executed.",
+    "Process kill is not a power-loss test; the matrix also needs simulated-storage fault variants.",
+    "Separate cases must cover old client/new server, old backup/new restore, other catalog/constraint values, and crash cuts during and after manifest publication and source reclamation.",
+    "No step requires an old engine to reopen data written or converted by the newer engine.",
+    "This pair illustrates stable-release baselines only; every earlier same-major customer minor is required. Internal distributions have no version compatibility obligation."
+  ],
+  "applicability": "customer-delivery qualification only; previous internal builds excluded; NOT_REQUIRED_INTERNAL_FRESH_BUILD for internal distributions"
+}

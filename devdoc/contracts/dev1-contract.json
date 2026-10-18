@@ -1,0 +1,164 @@
+{
+  "schema_version": 2,
+  "stage": "DEV1",
+  "task_refs": [
+    "XADB-005",
+    "XADB-026"
+  ],
+  "status": "IMPLEMENTED_AND_LOCALLY_TESTED",
+  "gate": "F1_LOCAL_VERIFIED",
+  "qualification": "finite minimal foundation only; local evidence, not protected CI or engine qualification",
+  "document": "dev1-implementation.md",
+  "evidence": "dev1-validation.json",
+  "process_adapter": "xadbtest-foundation-worker",
+  "engine_implemented": false,
+  "official_distribution": false,
+  "internal_version_compatibility": "NOT_REQUIRED_INTERNAL_FRESH_BUILD",
+  "identity": {
+    "types": [
+      "ObjectId",
+      "RowId",
+      "Generation",
+      "SchemaEpoch",
+      "CommitSeq"
+    ],
+    "representation": "nonzero u64, checked increment; no wrapping",
+    "stale_handle_check": [
+      "object",
+      "generation",
+      "schema_epoch"
+    ],
+    "allocation_uniqueness_and_snapshot_lifetime": "DEV2"
+  },
+  "errors": {
+    "namespace": "XADB-FOUND-0001 through XADB-FOUND-0014",
+    "dimensions": [
+      "code",
+      "context",
+      "io_kind",
+      "effect",
+      "certainty",
+      "retry_scope"
+    ],
+    "mutating_io_error": [
+      "CallerMustResolve",
+      "Unknown",
+      "AfterRecovery"
+    ],
+    "transaction_rollback_claimed": false
+  },
+  "values": {
+    "types": [
+      "null",
+      "bool",
+      "i64",
+      "utf8",
+      "binary"
+    ],
+    "max_variable_bytes": 65536,
+    "string_order": "binary UTF-8, no normalization",
+    "null_compare": "UNKNOWN",
+    "mixed_nonnull_compare": "TypeMismatch",
+    "i64_overflow": "error, no wrap",
+    "key_order": [
+      "null",
+      "bool",
+      "i64",
+      "utf8",
+      "binary"
+    ],
+    "key_encoding": "tag; sign-flipped BE i64; 00 FF escaped zero and 00 00 terminator for variable bytes",
+    "row_value_persistence_and_unique_null_policy": "DEV2/DEV3"
+  },
+  "frame": {
+    "magic": "AXF1",
+    "format": 1,
+    "header": "magic + u16 LE format + u32 LE length",
+    "max_payload_bytes": 1048576,
+    "checksum": "SHA256(header + payload), 32 bytes",
+    "decoder": "borrowed, bounded, exact length, explicit unsupported/corrupt rejection",
+    "is_wal_format": false
+  },
+  "effects": {
+    "file": [
+      "read_at",
+      "write_at",
+      "sync_all",
+      "set_len",
+      "sync_directory"
+    ],
+    "platform": "Linux",
+    "fault_feature": "test-support",
+    "faults": [
+      "short-write",
+      "write-prefix-then-error",
+      "sync-then-error",
+      "read-error",
+      "zero-write"
+    ],
+    "receipt_capacity": 256,
+    "clock": "native Instant / controlled monotonic u64",
+    "scheduler": "native yield / explicit scripted checkpoints with sticky failure",
+    "positional_write_guard": "reject O_APPEND on every write; caller excludes concurrent shared-flag mutation",
+    "fault_qualification": "finish requires applied fault and complete receipts; scheduled and injected are separate",
+    "contracts_package": "xadb-foundation",
+    "implementation_package": "xadb-platform",
+    "platform_policy": "Linux-only implementation; other OS adapters require separate qualification",
+    "multi_os_status": "EXTENSION_BOUNDARY_IMPLEMENTED_LINUX_ONLY; no non-Linux adapter/build/runtime qualification"
+  },
+  "runtime": {
+    "quota": "atomic checked reservation with RAII release, not a global OOM guarantee",
+    "lifecycle": [
+      "Running",
+      "Draining",
+      "Stopped"
+    ],
+    "cancellation": "cooperative check before effect; no syscall interruption or rollback",
+    "event_capacity_range": [
+      1,
+      4096
+    ],
+    "event_overflow": "drop newest and count loss"
+  },
+  "acceptance": {
+    "foundation_contract_tests": 16,
+    "default_feature_contract_tests": 13,
+    "dev0_controller_tests": 14,
+    "foundation_process_assertions": 7,
+    "independent_oracles": [
+      "i128 arithmetic",
+      "hand-calculated key hex",
+      "explicit key order",
+      "Python hashlib frame literal",
+      "actual file bytes",
+      "resource ledger",
+      "controller literal expectations"
+    ],
+    "actual_execution_status_reference": "dev1-validation.json",
+    "dev0_process_unit_tests": 6,
+    "evidence_script_tests": 10,
+    "platform_contract_tests": 9,
+    "platform_default_feature_contract_tests": 4,
+    "total_contract_tests": 25,
+    "dependency_checks": [
+      "foundation has no normal workspace dependency or nix",
+      "platform normal workspace dependencies only foundation",
+      "each package builds independently in a fresh target directory"
+    ]
+  },
+  "not_claimed": [
+    "DB engine, transaction, WAL, recovery or checkpoint implementation",
+    "power-loss durability or ext4/XFS support qualification",
+    "all foundation operations connected to the XADBTest process protocol",
+    "exhaustive scheduling, hostile process sandbox, full replay/minimization",
+    "customer release compatibility or protected CI execution",
+    "Non-Linux build/runtime qualification or a complete DEV2 filesystem/COMM transport port"
+  ],
+  "task_attribution_correction": "Earlier prose attributed value/key/frame vectors to XADB-004. They are XADB-026 evidence; XADB-004 row/transaction reference is unimplemented DEV2 work. No execution record or test result changed.",
+  "production_crates": [
+    "xadb-foundation",
+    "xadb-platform"
+  ],
+  "platform_boundary_ref": "repository-build-plan.json#platform_boundary",
+  "api_documentation": "foundation/platform deny missing_docs; public effect, error, lifetime and concurrency contracts; no HTML documentation artifacts"
+}

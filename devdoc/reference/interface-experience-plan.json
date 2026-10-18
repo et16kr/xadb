@@ -1,0 +1,1130 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18",
+  "status": "PROPOSED_EXPERIENCE_PLAN_NOT_IMPLEMENTED_NOT_VALIDATED",
+  "document": "interface-experience-plan.md",
+  "user_request": {
+    "type": "experience_planning_not_implementation_design",
+    "logging": "operational_and_diagnostic_messages_not_recovery_log"
+  },
+  "existing_constraints": {
+    "development_order_ref": "development-stages.json",
+    "kernel_contract_ref": "implementation-contracts.md",
+    "version_policy_ref": "version-compatibility-policy.json",
+    "replacement_ref": "capability-inventory.json",
+    "legacy_compatibility_required": false,
+    "changes_existing_gates": false,
+    "changes_kernel_contracts": false,
+    "changes_implemented_dev0_cli": false,
+    "product_implementation_claimed": false,
+    "compatibility_starts_at": "first declared stable release",
+    "internal_versions_are_compatibility_baselines": false,
+    "internal_fresh_build_required": true,
+    "logical_migration_and_validation_required": true
+  },
+  "decisions": [
+    {
+      "id": "D-01",
+      "recommendation": "통일된 제품 언어와 업무 중심 정보 구조",
+      "status": "PROPOSED",
+      "evidence_refs": [],
+      "stage_refs": [
+        "DEV5",
+        "DEV6",
+        "DEV8"
+      ]
+    },
+    {
+      "id": "D-02",
+      "recommendation": "설명 가능한 설정·출처·현재/저장/대기와 변경 영향",
+      "status": "PROPOSED",
+      "evidence_refs": [],
+      "stage_refs": [
+        "DEV1",
+        "DEV5",
+        "DEV8"
+      ]
+    },
+    {
+      "id": "D-03",
+      "recommendation": "공개 운영 SQL과 내부 진단의 경계",
+      "status": "PROPOSED",
+      "evidence_refs": [],
+      "stage_refs": [
+        "DEV4",
+        "DEV5",
+        "DEV7",
+        "DEV8"
+      ]
+    },
+    {
+      "id": "D-04",
+      "recommendation": "사건 중심 message logging·검색·보존·제한 trace",
+      "status": "PROPOSED",
+      "evidence_refs": [],
+      "stage_refs": [
+        "DEV1",
+        "DEV5",
+        "DEV8"
+      ]
+    },
+    {
+      "id": "D-05",
+      "recommendation": "xadb 중심 대화형·자동화 CLI, 논리 이관·비교와 일관된 관리 경험",
+      "status": "PROPOSED",
+      "evidence_refs": [],
+      "stage_refs": [
+        "DEV4",
+        "DEV5",
+        "DEV6",
+        "DEV8"
+      ]
+    },
+    {
+      "id": "D-06",
+      "recommendation": "오류 영향·재시도 범위·확실성·권한의 일관성",
+      "status": "PROPOSED",
+      "evidence_refs": [],
+      "stage_refs": [
+        "DEV1",
+        "DEV4",
+        "DEV5",
+        "DEV6"
+      ]
+    },
+    {
+      "id": "D-07",
+      "recommendation": "디스크 파티션 테이블의 논리 객체·배치·global 범위 구분",
+      "status": "PROPOSED",
+      "evidence_refs": [],
+      "stage_refs": [
+        "DEV3",
+        "PART",
+        "NG",
+        "DEV5",
+        "DEV7",
+        "DEV8"
+      ]
+    },
+    {
+      "id": "D-08",
+      "recommendation": "기본 진단의 자체 완결성과 지원 자료 인계",
+      "status": "PROPOSED",
+      "evidence_refs": [],
+      "stage_refs": [
+        "DEV1",
+        "DEV2",
+        "DEV3",
+        "DEV5",
+        "DEV8"
+      ]
+    },
+    {
+      "id": "D-09",
+      "recommendation": "기존 same-major 공개 계약과 개발 순서 준수",
+      "status": "PROPOSED",
+      "evidence_refs": [],
+      "stage_refs": [
+        "DEV1",
+        "DEV2",
+        "DEV3",
+        "DEV4",
+        "DEV5",
+        "DEV6",
+        "DEV7",
+        "DEV8",
+        "DEV9"
+      ]
+    },
+    {
+      "id": "D-10",
+      "recommendation": "측정 가능한 사용성·정확한 결측·접근성과 관측 비용",
+      "status": "PROPOSED",
+      "evidence_refs": [],
+      "stage_refs": [
+        "DEV5",
+        "DEV6",
+        "DEV8",
+        "DEV9"
+      ]
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "CLI",
+      "proposed_entry": "ax",
+      "purpose": "interactive SQL and repeatable operations",
+      "implemented": false
+    },
+    {
+      "id": "PUBLIC_SQL",
+      "proposed_namespaces": [
+        "information_schema",
+        "xadb_catalog",
+        "xadb_stats",
+        "xadb_history"
+      ],
+      "purpose": "documented discovery, metadata, current and retained observations",
+      "implemented": false
+    },
+    {
+      "id": "CONSOLE",
+      "proposed_navigation": [
+        "개요",
+        "활동·쿼리",
+        "데이터·객체",
+        "설정",
+        "이벤트·로그",
+        "작업",
+        "접근 관리"
+      ],
+      "purpose": "guided operator journeys with CLI/SQL equivalence where applicable",
+      "implemented": false
+    },
+    {
+      "id": "DIAGNOSTIC",
+      "proposed_namespace": "xadb_diag",
+      "purpose": "privileged bounded expert inspection with build identity; no routine monitoring dependency",
+      "implemented": false
+    },
+    {
+      "id": "INTEGRATIONS",
+      "purpose": "declared native/JDBC/ODBC and documented management/metrics/message interfaces; exact supported combinations pending",
+      "implemented": false
+    }
+  ],
+  "public_names_and_examples": "ILLUSTRATIVE_NOT_FROZEN_CONTRACTS",
+  "configuration": {
+    "persistent_owner_modes": [
+      "file_managed",
+      "product_managed"
+    ],
+    "persistent_owner_count_per_setting": 1,
+    "display_states": [
+      "effective",
+      "desired_persisted",
+      "pending",
+      "validation_error",
+      "conflict",
+      "apply_failed"
+    ],
+    "application_modes": [
+      "immediate",
+      "new_session",
+      "explicit_reload",
+      "restart",
+      "creation_only"
+    ],
+    "multi_change_atomicity": "Do not promise all-or-nothing unless qualified; expose partial execution.",
+    "same_scope_input_order_low_to_high": [
+      "selected_persistent_owner",
+      "allowed_environment",
+      "allowed_start_options"
+    ],
+    "source_precedence_is_distinct_from_scope_precedence": true,
+    "hard_limits_cannot_be_relaxed_by_overrides": true,
+    "next_start_prediction": "Conditional on known deployment inputs; otherwise unknown. Saving a masked persistent value does not make it effective.",
+    "temporary_override_policy": "Only settings with a supported expiry effect; no instant TTL reversion for restart/creation-only settings. Remove owned override and recompute from current sources, never restore a stale saved value.",
+    "change_preconditions": [
+      "target_identity_and_generation",
+      "configuration_revision",
+      "current_authorization",
+      "plan_expiry",
+      "current_action_preconditions"
+    ],
+    "owner_transition": "Explicit comparison and change; no automatic fallback to another persistent owner.",
+    "policy_change": "Changing a governing limit/policy itself requires its management authorization and validation; lower-scope or temporary values cannot bypass it."
+  },
+  "messages": {
+    "recovery_log_design_in_scope": false,
+    "kinds": [
+      "operational",
+      "error_warning",
+      "query_diagnostic",
+      "audit",
+      "bounded_trace"
+    ],
+    "severity_proposal": [
+      "TRACE",
+      "DEBUG",
+      "INFO",
+      "WARN",
+      "ERROR",
+      "FATAL"
+    ],
+    "fatal_scope": "instance_cannot_continue_normal_service",
+    "identities": [
+      "message_code",
+      "event_id",
+      "request_id",
+      "query_fingerprint",
+      "instance_boot_identity"
+    ],
+    "missing_context": "Do not fabricate IDs or correlate by wall-clock alone.",
+    "full_sql_and_bind_values_default": false,
+    "trace_requires_scope_duration_size_limits": true,
+    "ordinary_log_loss_policy": "bounded collection, explicit suppression/loss/gap reporting; no universal lossless claim",
+    "audit_policy": "separate retention and access; no sampling for required audit; refuse protected management actions before execution when required recording is unavailable; never rewrite observed effects",
+    "sink_owner": "explicit per deployment profile",
+    "external_upload_automatic": false,
+    "search_capability": "Separate sink delivery from read/search access; report actual source, authorization, retention interval, filter/follow support, and gaps. Unsupported external history is not zero events.",
+    "follow_identity": "instance/boot and source position; expired cursors, duplicates and gaps are explicit; no implicit global ordering or deduplication guarantee",
+    "trace_lifecycle": {
+      "owned_capture_id_required": true,
+      "server_enforced_duration_and_size": true,
+      "remove_only_own_capture_on_end": true,
+      "preserve_concurrent_base_config_and_other_captures": true,
+      "aggregate_budget_visible": true,
+      "resume_after_restart_by_default": false,
+      "unconfirmed_release_is_completed": false
+    },
+    "audit_outcome": "Preflight availability is not final receipt. State required pre-action and outcome recording conditions per protected action; report action effects and audit recording separately on mid-action failure; no automatic replay."
+  },
+  "acceptance": {
+    "status": "PLANNED_NOT_RUN",
+    "cases": [
+      {
+        "id": "UX-01",
+        "task_and_target": "준비된 환경에서 첫 연결·SELECT 10분 이내, 참가자 80% 이상 자력 완료",
+        "failure_condition": "도움 없이는 실제 대상/권한을 확인하지 못함",
+        "decision_refs": [
+          "D-01",
+          "D-05"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "USER_STUDY",
+        "stage_refs": [
+          "DEV4",
+          "DEV5"
+        ],
+        "required_capabilities": [
+          "sql_connection",
+          "identity_and_transaction_prompt"
+        ]
+      },
+      {
+        "id": "UX-02",
+        "task_and_target": "설정의 값·출처·적용 시점 2분 이내 설명, 80% 이상",
+        "failure_condition": "저장 값을 현재 값으로 착각",
+        "decision_refs": [
+          "D-02"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "USER_STUDY",
+        "stage_refs": [
+          "DEV5"
+        ],
+        "required_capabilities": [
+          "effective_setting_sources"
+        ]
+      },
+      {
+        "id": "UX-03",
+        "task_and_target": "재시작 필요 설정 변경 후 미적용 상태를 모든 참가자가 식별",
+        "failure_condition": "재시작 전 적용 완료로 보고",
+        "decision_refs": [
+          "D-02"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "MIXED",
+        "stage_refs": [
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "restart_pending_settings"
+        ]
+      },
+      {
+        "id": "UX-04",
+        "task_and_target": "고정된 느린 요청 시나리오에서 근거 있는 원인 후보를 5분 이내 식별, 80% 이상",
+        "failure_condition": "로그 파일명/내부 X$ 지식이 없으면 진행 불가",
+        "decision_refs": [
+          "D-01",
+          "D-03",
+          "D-04"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "USER_STUDY",
+        "stage_refs": [
+          "DEV7",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "query_wait_and_plan_observation"
+        ]
+      },
+      {
+        "id": "UX-05",
+        "task_and_target": "오류에서 관련 사건·요청·설정으로 세 번 이내 이동",
+        "failure_condition": "화면 이동 때 대상·시간 구간이 사라짐",
+        "decision_refs": [
+          "D-01",
+          "D-04",
+          "D-06"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "USER_STUDY",
+        "stage_refs": [
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "authorized_context_navigation"
+        ]
+      },
+      {
+        "id": "UX-06",
+        "task_and_target": "권한 제한·미수집·보존 만료를 모든 평가에서 구분",
+        "failure_condition": "0건 또는 정상으로 오인",
+        "decision_refs": [
+          "D-03",
+          "D-10"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "MIXED",
+        "stage_refs": [
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "observation_availability_states"
+        ]
+      },
+      {
+        "id": "UX-07",
+        "task_and_target": "CLI/SQL/화면의 동일 범위 관측 비교, 정의된 갱신 오차 이내",
+        "failure_condition": "단위·대상·권한·의미가 다름",
+        "decision_refs": [
+          "D-01",
+          "D-03"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "comparable_public_sql_cli_console_observations"
+        ]
+      },
+      {
+        "id": "UX-08",
+        "task_and_target": "문장 실패·거래 실패·결과 불명 사례의 효과를 모두 올바르게 분류",
+        "failure_condition": "위험한 자동 재실행 또는 숨은 commit",
+        "decision_refs": [
+          "D-06"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "MIXED",
+        "stage_refs": [
+          "DEV4",
+          "DEV5",
+          "DEV6"
+        ],
+        "required_capabilities": [
+          "statement_transaction_and_unknown_effects"
+        ]
+      },
+      {
+        "id": "UX-09",
+        "task_and_target": "중간 SQL 실패 스크립트를 자동화가 실패/부분 결과로 분기",
+        "failure_condition": "일부 출력 파일 생성만으로 성공 처리",
+        "decision_refs": [
+          "D-05",
+          "D-06"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV4",
+          "DEV6"
+        ],
+        "required_capabilities": [
+          "sql_script_execution"
+        ]
+      },
+      {
+        "id": "UX-10",
+        "task_and_target": "접수 응답·terminal 유실과 서버 재시작 후 선언한 제출 키/operation ID 범위에서 결과 조회·중복 방지·보존 만료 확인",
+        "failure_condition": "ID를 받지 못했거나 기록이 없다는 이유로 같은 작업을 자동 재실행",
+        "decision_refs": [
+          "D-05",
+          "D-06"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "long_operation_submission_and_status",
+          "declared_lookup_and_deduplication_scope"
+        ]
+      },
+      {
+        "id": "UX-11",
+        "task_and_target": "반복 메시지·sink 장애·rotation·외부 검색 미연계에서 실제 검색 범위·손실·이어보기 공백 노출",
+        "failure_condition": "전송 성공을 검색 가능으로 표시하거나 조회 불가를 0건으로 처리",
+        "decision_refs": [
+          "D-04"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "message_sink_and_search_capabilities"
+        ]
+      },
+      {
+        "id": "UX-12",
+        "task_and_target": "중첩 trace·운영자 동시 변경·client 유실·재시작에서 각 수집 한도와 자기 수집만 해제함을 확인",
+        "failure_condition": "과거 설정 덮어쓰기·다른 수집 종료·한도 없는 지속·미확인 해제를 완료로 표시",
+        "decision_refs": [
+          "D-04"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "owned_bounded_capture"
+        ]
+      },
+      {
+        "id": "UX-13",
+        "task_and_target": "지원 묶음 5분 이내 생성·내용 확인, 준비된 fixture 기준",
+        "failure_condition": "비밀 포함, 수집 공백 은폐, 자동 외부 전송",
+        "decision_refs": [
+          "D-08"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "MIXED",
+        "stage_refs": [
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "support_bundle"
+        ]
+      },
+      {
+        "id": "UX-14",
+        "task_and_target": "디스크 파티션 배치·global 범위·내구성 의미를 80% 이상 정확히 설명",
+        "failure_condition": "버퍼 캐시와 영속 저장의 보장을 혼동",
+        "decision_refs": [
+          "D-07"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "USER_STUDY",
+        "stage_refs": [
+          "PART",
+          "NG",
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "qualified_disk_sql_server_and_observation"
+        ]
+      },
+      {
+        "id": "UX-15",
+        "task_and_target": "서버 SQL 접속 불가 상태에서 기동 문제 조사 완료",
+        "failure_condition": "SQL 연결 성공 없이는 메시지도 못 찾음",
+        "decision_refs": [
+          "D-08"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV2",
+          "DEV5"
+        ],
+        "required_capabilities": [
+          "local_startup_diagnostics"
+        ]
+      },
+      {
+        "id": "UX-16",
+        "task_and_target": "저권한 경로와 parser 오류·정규화 실패·주석·SQL 히스토리·지원 묶음에서 비밀/원문 노출 제한 확인",
+        "failure_condition": "우회 경로 노출·분류 실패 시 원문 fallback·비밀번호 명령 차단만으로 전체 비밀 제거 주장",
+        "decision_refs": [
+          "D-06"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV4",
+          "DEV5",
+          "DEV6",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "authorization_and_sensitive_capture_policy"
+        ]
+      },
+      {
+        "id": "UX-17",
+        "task_and_target": "최초 안정 릴리스부터 이전 안정 릴리스 설정·명령·출력 소비자 회귀; 사내 배포 제외",
+        "failure_condition": "새 안정 릴리스 버전에서 조용한 의미 변경",
+        "decision_refs": [
+          "D-09"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV9"
+        ],
+        "required_capabilities": [
+          "customer_release_candidate",
+          "earlier_customer_baselines_if_any"
+        ],
+        "applicability": "Customer delivery only. Internal builds: NOT_REQUIRED_INTERNAL_FRESH_BUILD; no earlier customer baseline: NOT_APPLICABLE_NO_RELEASE_BASELINE. Neither is PASS."
+      },
+      {
+        "id": "UX-18",
+        "task_and_target": "파일/제품 소유권·환경변수/시작 옵션·만료 override·동시 변경에서 출처/희망/현재/다음 시작 값 구분",
+        "failure_condition": "가려진 저장 값을 적용 완료로 표시·만료 시 과거 값 덮어쓰기·재시작 설정의 즉시 원복 약속",
+        "decision_refs": [
+          "D-02"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV1",
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "configuration_source_and_override_lifecycle"
+        ]
+      },
+      {
+        "id": "UX-19",
+        "task_and_target": "키보드만 사용·한글·색상 없음·시간대 변경에서도 주요 과제 완료",
+        "failure_condition": "색/hover/locale 문자열에 기능 의존",
+        "decision_refs": [
+          "D-10"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "USER_STUDY",
+        "stage_refs": [
+          "DEV4",
+          "DEV6",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "interactive_cli_or_console"
+        ]
+      },
+      {
+        "id": "UX-20",
+        "task_and_target": "통계 초기화·표본 부족·관측 공백·다른 시각 join을 올바르게 표시",
+        "failure_condition": "음수 rate·가짜 percentile·허위 일관성",
+        "decision_refs": [
+          "D-03",
+          "D-10"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "counter_and_sample_metadata"
+        ]
+      },
+      {
+        "id": "UX-21",
+        "task_and_target": "실제 실행 plan·취소·세션 종료의 효과를 실행 전에 구분",
+        "failure_condition": "읽기 전용 분석으로 알고 DML 실행",
+        "decision_refs": [
+          "D-05",
+          "D-06"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "MIXED",
+        "stage_refs": [
+          "DEV4",
+          "DEV5",
+          "DEV7"
+        ],
+        "required_capabilities": [
+          "explain_execution_and_cancel_effects"
+        ]
+      },
+      {
+        "id": "UX-22",
+        "task_and_target": "감사 기록의 시작 전·실행 중·결과 기록 실패에서 보호 동작 결과와 감사 상태를 따로 확인",
+        "failure_condition": "실행된 동작을 미실행 처리·감사 sampling·기록 실패를 이유로 변경 자동 재실행",
+        "decision_refs": [
+          "D-04",
+          "D-06"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "protected_action_audit_policy"
+        ]
+      },
+      {
+        "id": "UX-23",
+        "task_and_target": "기본 관측과 제한 trace의 CPU·지연·저장 증가를 기준 workload에서 측정",
+        "failure_condition": "비용 무측정·무제한 수집, 수집 범위 은폐",
+        "decision_refs": [
+          "D-10"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "bounded_observation",
+          "preregistered_workload_and_budget"
+        ]
+      },
+      {
+        "id": "UX-24",
+        "task_and_target": "기본 오류 설명·상태 조회·진단 묶음을 인터넷/AI 없이 완료",
+        "failure_condition": "외부 계정이나 모델이 필수",
+        "decision_refs": [
+          "D-08"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV2",
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "offline_basic_diagnostics"
+        ]
+      },
+      {
+        "id": "UX-25",
+        "task_and_target": "이관 fixture에서 객체별 변환·데이터 비교·미해결 차이·선택 동기화 영향 확인",
+        "failure_condition": "미지원 객체 누락·부분 성공을 이관 완료로 보고",
+        "decision_refs": [
+          "D-05",
+          "D-06",
+          "D-09"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "MIXED",
+        "stage_refs": [
+          "DEV7",
+          "DEV8",
+          "DEV9"
+        ],
+        "required_capabilities": [
+          "logical_migration_and_comparison"
+        ]
+      },
+      {
+        "id": "UX-26",
+        "task_and_target": "유한 JSON/JSONL·CSV 출력의 중간 오류·잘림·broken pipe·commit 후 출력 실패를 자동화가 구분",
+        "failure_condition": "일부 행/파일만으로 성공 처리·완료 레코드 없는 유한 스트림 성공·출력 실패를 rollback으로 보고",
+        "decision_refs": [
+          "D-05",
+          "D-06"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV4",
+          "DEV6"
+        ],
+        "required_capabilities": [
+          "typed_machine_output_and_completion"
+        ]
+      },
+      {
+        "id": "UX-27",
+        "task_and_target": "검토 후 context 변경·객체/세션 재생성·권한 철회·설정 revision 변경 시 오래된 변경/cancel 거절",
+        "failure_condition": "이름이나 재사용 ID만 같다는 이유로 다른 대상에 변경·취소 실행",
+        "decision_refs": [
+          "D-02",
+          "D-05",
+          "D-06"
+        ],
+        "execution_status": "NOT_RUN",
+        "result": null,
+        "evaluation_kind": "PRODUCT_ACCEPTANCE",
+        "stage_refs": [
+          "DEV5",
+          "DEV8"
+        ],
+        "required_capabilities": [
+          "target_bound_action_preconditions"
+        ]
+      }
+    ],
+    "participants_proposal": {
+      "dba": 5,
+      "developer": 5,
+      "operator_platform": 5
+    },
+    "success_rate_general_target": 0.8,
+    "critical_semantic_misinterpretation_allowed": false,
+    "performance_overhead_budget": "TO_BE_SET_WITH_WORKLOAD_BEFORE_MEASUREMENT",
+    "usability_targets_are_server_slas": false,
+    "documentation_validation_is_product_validation": false,
+    "stage_refs_meaning": "Planning/evaluation touchpoints, not a demand for every listed stage to implement the complete journey. Run relevant product checks as each capability becomes available; full console/user studies do not block the lower-layer gates.",
+    "mixed_case_rule": "User-study success and deterministic product correctness must be evidenced separately; neither substitutes for the other.",
+    "comparison_rule": "Same target, privilege, workload and time/reset interval; documented freshness tolerance set before measurement. Never require live views to be a shared snapshot without that guarantee."
+  },
+  "open_questions": [
+    {
+      "id": "OPEN-01",
+      "question": "지원할 SQL·운영 업무·추가 도구 목록",
+      "blocks": "declared product capability qualification"
+    },
+    {
+      "id": "OPEN-02",
+      "question": "기본 로그·통계 보존 기간/용량 및 허용 관측 비용",
+      "blocks": "production defaults and cost qualification"
+    },
+    {
+      "id": "OPEN-03",
+      "question": "역할 분리와 필수 감사 적용 범위",
+      "blocks": "production role/audit policy"
+    },
+    {
+      "id": "OPEN-04",
+      "question": "관리 화면 배포 방식·설치 대상 규모",
+      "blocks": "packaging choice; does not block this experience proposal"
+    },
+    {
+      "id": "OPEN-05",
+      "question": "공개 설정명·SQL/CLI 구문·뷰 열·출력 필드/enum·종료 코드·권한·보존 기한의 기능별 확정",
+      "blocks": "Exact runnable reference examples and implementation of the affected public feature; does not block conceptual/task manual drafts."
+    }
+  ],
+  "replacement_requirement_mappings": [
+    {
+      "requirement_ref": "R14-01",
+      "decision_refs": [
+        "D-03"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R14-02",
+      "decision_refs": [
+        "D-02",
+        "D-05"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R14-03",
+      "decision_refs": [
+        "D-05"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R14-04",
+      "decision_refs": [
+        "D-05"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R14-05",
+      "decision_refs": [
+        "D-05",
+        "D-09"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R14-06",
+      "decision_refs": [
+        "D-05",
+        "D-06"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R14-07",
+      "decision_refs": [
+        "D-03",
+        "D-05"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R14-08",
+      "decision_refs": [
+        "D-03",
+        "D-05"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R14-09",
+      "decision_refs": [
+        "D-03",
+        "D-04"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R14-10",
+      "decision_refs": [
+        "D-06",
+        "D-08"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R14-11",
+      "decision_refs": [
+        "D-06"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R13-05",
+      "decision_refs": [
+        "D-04",
+        "D-06"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R16-03",
+      "decision_refs": [
+        "D-09"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    },
+    {
+      "requirement_ref": "R16-04",
+      "decision_refs": [
+        "D-01",
+        "D-10"
+      ],
+      "relationship": "EXPERIENCE_PLANNING_SUPPORT_NOT_IMPLEMENTATION_COVERAGE"
+    }
+  ],
+  "sensitive_capture": {
+    "default_mode": "allowlisted structured fields and literal-free normalized representation",
+    "raw_fallback_on_normalization_or_classification_failure": false,
+    "parser_errors_comments_and_details_in_scope": true,
+    "raw_sql_persistent_history_default": false,
+    "in_memory_interactive_recall": true,
+    "explicit_raw_capture_requires": [
+      "authorization",
+      "target",
+      "duration",
+      "retention",
+      "content_review"
+    ],
+    "credentials_allowed_by_raw_opt_in": false,
+    "unclassifiable_raw_material_in_default_bundle": false,
+    "universal_secret_removal_claimed": false
+  },
+  "operations": {
+    "operation_id_arrives_after_submission": true,
+    "lost_acceptance_response": "Use a client-retained submission key only for operations advertising lookup/deduplication; otherwise UNKNOWN and no automatic replay.",
+    "deduplicated_submission_contract": [
+      "authorization_scope",
+      "target_identity_and_generation",
+      "same_payload_same_operation",
+      "different_payload_conflict",
+      "restart_lookup_scope",
+      "deduplication_and_result_retention_deadlines",
+      "acceptance_effect_crash_boundary"
+    ],
+    "request_id_implies_idempotency": false,
+    "missing_expired_or_forbidden_lookup_proves_not_executed": false,
+    "automatic_resubmit_outside_guarantee": false,
+    "execution_certainty_and_cancellation_are_separate": true,
+    "cancel_accepted_implies_cancelled": false,
+    "preview_binds_target_generation_and_requires_execution_time_recheck": true,
+    "exactly_once_claimed_by_identifier_alone": false
+  },
+  "automation_output": {
+    "json": "one finite result document; no concatenated unframed documents",
+    "jsonl_record_roles": [
+      "type_metadata",
+      "statement_and_result_set_identity",
+      "ordered_rows",
+      "statement_result",
+      "finite_request_final_result"
+    ],
+    "finite_stream_requires_final_result_for_completion": true,
+    "open_follow_stream": "bounded observation interval and gaps; no whole-history completion claim",
+    "csv_completion": "separate completion receipt or verified CLI exit result",
+    "separate_result_axes": [
+      "delivery_status",
+      "sql_or_operation_result",
+      "transaction_effect"
+    ],
+    "output_failure": "Stop sending subsequent statements; report only confirmed effects of in-flight work. Nonzero exit if the CLI can return a status; a committed effect remains committed.",
+    "normal_noninteractive_exit": "Request rollback for an active uncommitted transaction and report confirmation; disconnect/kill or an unresolved commit must not be reported as confirmed rollback.",
+    "field_names_and_exit_integers": "TO_BE_FROZEN_BEFORE_RELEVANT_PUBLIC_FEATURE_IMPLEMENTATION",
+    "consumer_success": "Check the final result success state and the CLI exit status when available; an existing file or partial rows is not evidence of success."
+  },
+  "review": {
+    "date": "2026-10-18",
+    "status": "DESIGN_REVIEW_CORRECTIONS_APPLIED_PRODUCT_NOT_VERIFIED",
+    "scope": "Experience semantics, kernel/development/version consistency and acceptance traceability; no implementation or usability qualification.",
+    "findings": [
+      {
+        "id": "IR-01",
+        "issue": "접수 응답 유실 시 작업 중복 실행 가능",
+        "sections": "8.3 / 10.G",
+        "case_refs": [
+          "UX-10"
+        ],
+        "correction": "전송 전 보존한 제출 키·조건부 중복 방지·조회/보존 경계와 결과 불명 처리",
+        "resolution": "CORRECTED_IN_DESIGN_NOT_PRODUCT_VERIFIED"
+      },
+      {
+        "id": "IR-02",
+        "issue": "진단 자동 원복이 동시 설정 변경을 덮어쓸 수 있음",
+        "sections": "5.3 / 7.4",
+        "case_refs": [
+          "UX-12",
+          "UX-18"
+        ],
+        "correction": "소유 수집만 해제하고 현재 기본값·다른 수집 보존",
+        "resolution": "CORRECTED_IN_DESIGN_NOT_PRODUCT_VERIFIED"
+      },
+      {
+        "id": "IR-03",
+        "issue": "출력 중단과 서버 거래 결과의 혼동",
+        "sections": "8.2 / 8.3",
+        "case_refs": [
+          "UX-09",
+          "UX-26"
+        ],
+        "correction": "유한 출력 완료 표식과 전달/동작/거래 상태 분리, 확인되지 않은 rollback 표시 금지",
+        "resolution": "CORRECTED_IN_DESIGN_NOT_PRODUCT_VERIFIED"
+      },
+      {
+        "id": "IR-04",
+        "issue": "검토 후 바뀐 대상이나 재사용 ID에 변경·취소 가능",
+        "sections": "5.4",
+        "case_refs": [
+          "UX-27"
+        ],
+        "correction": "대상 identity/generation·revision·권한·유효기간 재확인",
+        "resolution": "CORRECTED_IN_DESIGN_NOT_PRODUCT_VERIFIED"
+      },
+      {
+        "id": "IR-05",
+        "issue": "입력 출처 우선순위와 임시 값 만료 의미 누락",
+        "sections": "5.3",
+        "case_refs": [
+          "UX-18"
+        ],
+        "correction": "범위와 출처 우선순위 구분, 가려진 값·다음 시작·만료 지원 범위 명시",
+        "resolution": "CORRECTED_IN_DESIGN_NOT_PRODUCT_VERIFIED"
+      },
+      {
+        "id": "IR-06",
+        "issue": "외부 로그 전송을 과거 검색 지원으로 오해",
+        "sections": "7.3",
+        "case_refs": [
+          "UX-11"
+        ],
+        "correction": "sink 전송과 검색 capability·보존/공백·이어보기 범위 분리",
+        "resolution": "CORRECTED_IN_DESIGN_NOT_PRODUCT_VERIFIED"
+      },
+      {
+        "id": "IR-07",
+        "issue": "SQL 정규화 실패·파일 히스토리의 비밀 기록 경계 누락",
+        "sections": "7.2 / 7.4 / 8.2",
+        "case_refs": [
+          "UX-13",
+          "UX-16"
+        ],
+        "correction": "원문 fallback 금지·파일 기록 선택·기본 묶음 allowlist 및 제외 사유",
+        "resolution": "CORRECTED_IN_DESIGN_NOT_PRODUCT_VERIFIED"
+      },
+      {
+        "id": "IR-08",
+        "issue": "감사 사전 확인 이후 실패의 결과 의미 미정",
+        "sections": "7.3",
+        "case_refs": [
+          "UX-22"
+        ],
+        "correction": "동작 효과와 감사 기록 상태를 별도로 보고",
+        "resolution": "CORRECTED_IN_DESIGN_NOT_PRODUCT_VERIFIED"
+      },
+      {
+        "id": "IR-09",
+        "issue": "경험 인수 JSON의 참조·문서 동기화·평가 종류 검증 부재",
+        "sections": "14 / 15 / 17",
+        "case_refs": [
+          "UX-17"
+        ],
+        "correction": "문서 검사기에 참조/상태/표 일치 검증 추가, 사용자 평가와 제품 시험 구분",
+        "resolution": "CORRECTED_IN_DESIGN_NOT_PRODUCT_VERIFIED"
+      }
+    ],
+    "manual_readiness": "Concept and task-flow drafts can start. Exact runnable syntax, reference tables and supported-version claims require feature-level specifications and implementation evidence.",
+    "public_names_frozen": false,
+    "product_tests_executed": false
+  },
+  "manual_detail_proposals": {
+    "manual_ref": "user-manual-draft.json",
+    "review_ref": "manual-review.json",
+    "status": "PROPOSED_NOT_FROZEN_OR_IMPLEMENTED",
+    "topics": [
+      "lossless CLI value/result schema",
+      "setting reference cards and apply outcomes",
+      "public view row/observation semantics",
+      "driver batch/pool/API effects",
+      "permission and lifecycle workflows"
+    ],
+    "acceptance_cases_execution_status": "NOT_RUN",
+    "changes_existing_kernel_or_version_contracts": false
+  },
+  "import_note": "Interface design proposals retained. Prior source-survey evidence is not imported or attributed to a different upstream. Future research records actual URLs and revisions."
+}

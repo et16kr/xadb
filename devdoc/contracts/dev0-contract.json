@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "stage": "DEV0",
+  "task_refs": [
+    "XADB-002",
+    "XADB-003"
+  ],
+  "gate": "B0_LOCAL_VERIFIED",
+  "status": "IMPLEMENTED_AND_LOCALLY_TESTED",
+  "evidence": "dev0-validation.json",
+  "specification": "dev0-implementation.md",
+  "entry_point": "python3 scripts/check_dev0.py",
+  "engine_implemented": false,
+  "official_distribution": false,
+  "format_status": "UNPUBLISHED_DEVELOPMENT_FORMAT",
+  "previous_release_compatibility": "NOT_REQUIRED_INTERNAL_FRESH_BUILD",
+  "build": {
+    "rust": "1.95.0",
+    "edition": "2024",
+    "target": "x86_64-unknown-linux-gnu",
+    "local_os": "Ubuntu 26.04.1 LTS",
+    "dependencies": "Cargo.lock with registry checksums",
+    "workspace_unsafe": "forbid",
+    "host_image_digest": "NOT_PINNED",
+    "remote_ci": "CONFIGURED_NOT_RUN"
+  },
+  "schemas": {
+    "scenario": 1,
+    "protocol": 1,
+    "result": 1,
+    "manifest": 1,
+    "receipt": 1
+  },
+  "limits": {
+    "max_input_bytes": 65536,
+    "steps": [
+      1,
+      128
+    ],
+    "timeout_ms": [
+      50,
+      10000
+    ],
+    "output_bytes_per_stream": [
+      1024,
+      1048576
+    ]
+  },
+  "operations": [
+    "checked_add"
+  ],
+  "oracle": {
+    "id": "exact-values-v1",
+    "expected_origin": "hand-calculated explicit values, no candidate-output adoption",
+    "passed_to_worker": false,
+    "exact_assertion_per_step": true
+  },
+  "exit_codes": {
+    "PASS": 0,
+    "FAIL": 1,
+    "INVALID": 2,
+    "ERROR": 3,
+    "TIMEOUT": 4
+  },
+  "ownership": {
+    "process": "Child + dedicated process group; signal before reaping leader",
+    "directory": "unique private work directory, explicitly closed",
+    "artifacts": "unique retained run directory; create_new files and hashes",
+    "security_sandbox": false,
+    "controller_crash_reconciliation": "NOT_IMPLEMENTED"
+  },
+  "pilot_mapping": {
+    "PA01": "local wrong-build/oracle/witness/zero-assertion coverage; protected execution pending",
+    "PA13": "local verdict preservation/forged-PASS/oracle-fingerprint coverage; trusted promotion pending"
+  },
+  "deferred": [
+    "protected CI baseline and release promotion",
+    "image and filesystem qualification",
+    "controller crash reconciliation and full replay",
+    "production engine adapter and actual engine tests",
+    "scheduling, production I/O faults, minimization, stable-release same-major release fixtures"
+  ],
+  "current_evidence_scope": "DEV0 regression on the current workspace; foundation has separate DEV1 evidence",
+  "acceptance_counts": {
+    "controller_integration": 14,
+    "process_unit": 6,
+    "python_evidence": 10
+  },
+  "worker_completion": "leader exit and stdout/stderr EOF before deadline; missing original group still terminates owned Child",
+  "report_export": "new distinct destination only; preflight rejects occupied paths and exclusive create prevents overwrite races; export errors fail CLI, retained check evidence remains"
+}

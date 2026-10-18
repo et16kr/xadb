@@ -1,0 +1,101 @@
+{
+  "schema_version": 2,
+  "document_status": "DESIGN_POLICY_NOT_IMPLEMENTED_OR_VERIFIED",
+  "product": "XADB",
+  "requirements_origin": "Development builds use fresh fixtures. Public experimental previews are not compatibility baselines; stable release baselines must be explicitly declared.",
+  "legacy_compatibility_adapters_in_scope": false,
+  "legacy_product_migration_in_scope": false,
+  "test_framework": {
+    "name": "XADBTest",
+    "implementation": "new independent framework",
+    "staf_runtime_dependency": false,
+    "legacy_expected_output_is_authoritative": false,
+    "historical_cases_usage": "Design lessons only; write new tests and independent expectations from XADB contracts"
+  },
+  "version_policy": {
+    "scheme": "MAJOR.MINOR.PATCH",
+    "stable_contract_from": "first explicitly declared stable XADB release",
+    "compatibility_domain": "every earlier stable release in the same XADB major; experimental development snapshots are excluded",
+    "direction": "older producer or client -> newer consumer or server",
+    "all_earlier_minors_required": true,
+    "adjacent_minor_only": false,
+    "intermediate_server_installation_required": false,
+    "internal_converter_chain_allowed": true,
+    "sql_and_public_error_semantics": "newer release preserves previously specified public behavior; documented bug fixes preserve intended contract, not historical wrong answers",
+    "old_client_to_new_server_required": true,
+    "new_client_to_old_server_required": false,
+    "old_data_catalog_wal_to_new_engine": "read, recover, optionally convert, then continue read/write without loss of acknowledged commits or logical semantics",
+    "old_backup_restore_on_new_release_required": true,
+    "new_data_wal_backup_on_old_release_required": false,
+    "reverse_compatibility_required": false,
+    "downgrade_required": false,
+    "minor_may_change_persistent_format": true,
+    "minor_may_raise_required_reader_minor": true,
+    "new_format_unreadable_by_old_minor_requires_major": false,
+    "old_binary_on_unsupported_new_format": "reject before modifying database; this is a defensive guard, not successful reverse compatibility",
+    "format_version_equals_product_version": false,
+    "format_envelope": "explicit format/generation identifiers during development; customer-visible compatibility envelope fixed from first declared stable release",
+    "conversion_strategy_initial": "offline shadow generation with retained recovery source, resumable journal, validated state, and durable manifest publication",
+    "conversion_fault_invariant": "new engine selects a complete recoverable old or new generation, never a mixture; acknowledged transactions and prior semantics remain intact",
+    "original_reclamation": "only after durable selection and verified recoverability of the new generation",
+    "pre_upgrade_backup_restore": "separate recovery point; does not preserve later acknowledged writes and is not a lossless downgrade",
+    "major_breaking_changes": "separate explicit design when prior public semantics or prior-data processing cannot be preserved; changing internal format alone does not require a major",
+    "internal_implementation_and_nonpublic_abi_stability_required": false,
+    "official_internal_versions_are_baselines": false,
+    "external_launch_resets_major": false,
+    "internal_distribution_compatibility_required": false,
+    "customer_delivered_versions_are_baselines": true
+  },
+  "required_release_evidence": [
+    "old client to new server with previously specified semantics",
+    "old data and catalog to new reader or converter, then new writes and checkpoint",
+    "old WAL after crash to new recovery, preserving acknowledged commits and batch atomicity",
+    "old same-major backup to new restore with independent semantic and integrity oracles",
+    "all earlier same-major minor sources to candidate, including skipped-minor upgrades without intermediate server installation",
+    "crash cuts before and after conversion manifest publication, restart with new engine, and repeated conversion safety",
+    "new writes after conversion survive crash and recovery with the new engine",
+    "unsupported-format old-reader guard rejects without modification; does not require old reader to open converted data",
+    "XADBTest runner/oracle/scheduler negative self-tests",
+    "stable disk releases: preserve declared data/WAL/backup formats, row/index/catalog identities and uniqueness within the published compatibility baseline"
+  ],
+  "not_claimed": [
+    "Any XADB product release exists or was tested here",
+    "An old binary understands a newer persistent format or preserves post-upgrade writes on downgrade",
+    "Sampled version pairs prove every patch/configuration combination",
+    "Backward compatibility alone supports mixed-minor replication or zero-downtime rolling upgrades"
+  ],
+  "pair_count_model": {
+    "indices": "n stable-release minors within one major, ordered by release; internal distributions excluded; patch and fault variants counted separately",
+    "required_pairs_including_self": "n*(n+1)/2",
+    "additional_pairs_for_next_minor_including_self": "n+1",
+    "required_strict_upgrade_pairs": "n*(n-1)/2",
+    "additional_strict_upgrade_pairs_for_next_minor": "n",
+    "example_existing_minor_count": 4,
+    "example_added_pairs_including_self": 5
+  },
+  "distribution_policy": {
+    "channels": [
+      "internal",
+      "external"
+    ],
+    "version_independent_of_development_stage": true,
+    "internal_capability_qualification_is_external_release": false,
+    "external_release_gate": "EXTERNAL_RELEASE",
+    "replacement_required": true
+  },
+  "internal_distribution_policy": {
+    "default": "NO_VERSION_COMPATIBILITY",
+    "fresh_database_and_fixtures_each_distribution": true,
+    "previous_internal_data_wal_backup_client_api_compatibility_required": false,
+    "internal_upgrade_converters_required": false,
+    "version_release_gate_required": false,
+    "compatibility_result": "NOT_REQUIRED_INTERNAL_FRESH_BUILD",
+    "current_build_recovery_atomicity_and_integrity_tests_required": true,
+    "unsupported_existing_format": "reject explicitly; no implicit deletion or overwrite",
+    "automatic_customer_release_qualification": false
+  },
+  "required_release_evidence_applicability": "customer delivery only; previous versions mean stable-release baselines, never internal builds. No prior customer baseline is N/A, not PASS. Current-build correctness, recovery and independent oracle checks remain mandatory for internal work.",
+  "superseded_policy": "The earlier rule making official internal distributions compatibility baselines is superseded by the user-confirmed no-compatibility default. Historical validation.json retains its original design-review record and is not current policy.",
+  "legacy_product_migration_scope": "Logical schema/data/workload mapping, import/export and validation are required replacement capabilities (R14); no legacy physical file reader or wire/binary compatibility is implied.",
+  "requirements_reference": "product-requirements.md"
+}

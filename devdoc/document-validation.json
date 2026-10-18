@@ -1,0 +1,268 @@
+{
+  "schema_version": 2,
+  "product": "XADB",
+  "date": "2026-10-18T19:48:39.030036+09:00",
+  "status": "PASS",
+  "errors": [],
+  "markdown_documents": [
+    {
+      "file": "devdoc/README.md",
+      "links": 39,
+      "duplicate_ids": 0,
+      "sha256": "1060616c94d8752d7677b9909b3fe551b0e99119c525bfdb2880d7195b554489"
+    },
+    {
+      "file": "devdoc/contracts/README.md",
+      "links": 19,
+      "duplicate_ids": 0,
+      "sha256": "e9fc2ddf5b59a2b8d2fe6ddb4821464b25640445334ecabe544211e471447290"
+    },
+    {
+      "file": "devdoc/contracts/ai-performance-engineering.md",
+      "links": 9,
+      "duplicate_ids": 0,
+      "sha256": "58ab63e29dcec17748be84c1d1bcd7a66b3ee54139696a21b8cafec525291b9f"
+    },
+    {
+      "file": "devdoc/contracts/dev2-kernel-design.md",
+      "links": 25,
+      "duplicate_ids": 0,
+      "sha256": "97482bc954495b80c2144230c1c6858be4b77743a74e9cdb338245dbd5288a33"
+    },
+    {
+      "file": "devdoc/contracts/disk-storage-design.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "60d8d5630b0e088adf84bec9625f6dfc6aaf5006b2fd8d31fe9848e4f9a18ce5"
+    },
+    {
+      "file": "devdoc/contracts/implementation-contracts.md",
+      "links": 30,
+      "duplicate_ids": 0,
+      "sha256": "3463c867dd7b3d4a68ab45bb1f3214b9649b0af40f6e07458b3d2f6160593f8a"
+    },
+    {
+      "file": "devdoc/contracts/recovery-logging-design.md",
+      "links": 21,
+      "duplicate_ids": 0,
+      "sha256": "79559b93774fe95c06ca71f73a1a1184de434458833d32d3d502ef14827c4629"
+    },
+    {
+      "file": "devdoc/contracts/replication-undo-analysis.md",
+      "links": 1,
+      "duplicate_ids": 0,
+      "sha256": "ea832445b4cea107e2aa7b38ff5368978723627b5b30d7289178b6db342be57d"
+    },
+    {
+      "file": "devdoc/evidence/README.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "c896ea3cbf499e7a0c947af3d410b8b71bfd3681ee57fa66482fe9b05b6b64a3"
+    },
+    {
+      "file": "devdoc/examples/AGENT_WORKFLOW.example.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "656f679093247cb7882cd153f8bcc74e4c1034b89f9f6865fad81b05f931e8ed"
+    },
+    {
+      "file": "devdoc/examples/README.md",
+      "links": 11,
+      "duplicate_ids": 0,
+      "sha256": "95ee8719c063e2b0d12554940892a291c95724d8cda135b944059c9947777453"
+    },
+    {
+      "file": "devdoc/history/README.md",
+      "links": 1,
+      "duplicate_ids": 0,
+      "sha256": "aca0b96f3f7422f503cc3f0a8a8ac0a7bfac312d260b02fab77b2a078f4c93e7"
+    },
+    {
+      "file": "devdoc/history/project-migration.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "9ed4f4b97feee3a2012c691577deaa5789783d1bfef618d7e62c9787d10276c7"
+    },
+    {
+      "file": "devdoc/implementation/README.md",
+      "links": 12,
+      "duplicate_ids": 0,
+      "sha256": "12deccd34150905b935401d6a30020319ee73c2cd783cb4a30c1e49d749aba0a"
+    },
+    {
+      "file": "devdoc/implementation/dev0-implementation.md",
+      "links": 9,
+      "duplicate_ids": 0,
+      "sha256": "72e0a2a111bf0c4a401118d51719c56391e4bc0e63040c04adacdb1ea2bb359f"
+    },
+    {
+      "file": "devdoc/implementation/dev1-implementation.md",
+      "links": 9,
+      "duplicate_ids": 0,
+      "sha256": "7cdab57fb03e3e083a4bafef1fcc16e644b36b97ddd88b0dbaef311494113a9f"
+    },
+    {
+      "file": "devdoc/implementation/dev2-implementation.md",
+      "links": 7,
+      "duplicate_ids": 0,
+      "sha256": "5f22d374986c9d5a782309fc569299f687107014bf4367cb747c11021e6fc0cb"
+    },
+    {
+      "file": "devdoc/plans/README.md",
+      "links": 14,
+      "duplicate_ids": 0,
+      "sha256": "8a885635fa7969eea76c5e9225e97aedee7b26dda95c21451635c08f847db420"
+    },
+    {
+      "file": "devdoc/plans/bottom-up-development.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "77208e024567e685232528689d3180633b7921487175fcd7a9c2aca6abdea6ef"
+    },
+    {
+      "file": "devdoc/plans/dev2-implementation-plan.md",
+      "links": 17,
+      "duplicate_ids": 0,
+      "sha256": "f4886497a15028cb16c6d5a1e8366b431eb6d735e98ed6430e0b63d95c8e669a"
+    },
+    {
+      "file": "devdoc/plans/development-stages.md",
+      "links": 12,
+      "duplicate_ids": 0,
+      "sha256": "8d919adbc0505c5c409e2332516c414482145963f1a8508f7695be751a740505"
+    },
+    {
+      "file": "devdoc/plans/feature-design-inventory.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "7305a0edc647793f9b2317244783f7e6377181e31d6aec2605675d74a99056e7"
+    },
+    {
+      "file": "devdoc/plans/phase1-product-baseline.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "ad11a62b6d541eafeb3f95aae192af3ec4ed3db1d91ca3b887b62ece6c85af81"
+    },
+    {
+      "file": "devdoc/plans/product-requirements.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "fcfaa6c4107f0aa601fe7ab41f04b5d6b67ee03f685776d382c6603e69c700af"
+    },
+    {
+      "file": "devdoc/plans/project-direction.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "8d665d63ee02cdd1a0649468fd8f549e575d36916f83708f4168baa319aa6565"
+    },
+    {
+      "file": "devdoc/policies/README.md",
+      "links": 12,
+      "duplicate_ids": 0,
+      "sha256": "412887323fa72868b78d179a8f1475f703a4adf03cf463d861304a3aaf85809a"
+    },
+    {
+      "file": "devdoc/policies/ai-development-method.md",
+      "links": 19,
+      "duplicate_ids": 0,
+      "sha256": "8c743569a67c469d7c6ad81bfdbd118c8a110070ae4e5afd264a5d480f6819bb"
+    },
+    {
+      "file": "devdoc/policies/coding-convention.md",
+      "links": 28,
+      "duplicate_ids": 0,
+      "sha256": "14a4637f9adbc96e691a97106cb8ee30903be705233bd85318caf6c7b3e1e962"
+    },
+    {
+      "file": "devdoc/policies/development-policy.md",
+      "links": 9,
+      "duplicate_ids": 0,
+      "sha256": "44e6c017690b789730ee96e36a75b3364b9c7f98636e5afc495197b206797731"
+    },
+    {
+      "file": "devdoc/policies/documentation-policy.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "4a3af430662892155c648276236e0a3677d9c3236810ae02fdb94bb2cbc80238"
+    },
+    {
+      "file": "devdoc/policies/parallel-development-policy.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "d3dd39d197c25b7aeb152a2021083389eaac3679b0148b834e8ca55d1ef2fff4"
+    },
+    {
+      "file": "devdoc/policies/repository-build-plan.md",
+      "links": 16,
+      "duplicate_ids": 0,
+      "sha256": "cc51c68400f904ed8478e48fd94635c78321c3fb000432412e3d4e78a5f78f2f"
+    },
+    {
+      "file": "devdoc/reference/README.md",
+      "links": 12,
+      "duplicate_ids": 0,
+      "sha256": "96c3c9ebec8911e54b734b35655443b02ac31046af388c2c5a609846bcb621c5"
+    },
+    {
+      "file": "devdoc/reference/architecture-overview.md",
+      "links": 65,
+      "duplicate_ids": 0,
+      "sha256": "e484bbefdede5fc58d14926925b5e6e3bcd13e77bebf5f9210c647bd7292e5d1"
+    },
+    {
+      "file": "devdoc/reference/feature-design-leaf-index.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "6edbf0c3eff65338c569226582439efae7456590e959a6de45ae57eeee3a3bcc"
+    },
+    {
+      "file": "devdoc/reference/interface-experience-plan.md",
+      "links": 18,
+      "duplicate_ids": 0,
+      "sha256": "8c9ec5e4c84f50275ce8e6d45df7890689eb691ed5bda7831bfbacc79dec43d1"
+    },
+    {
+      "file": "devdoc/reference/manual-review.md",
+      "links": 147,
+      "duplicate_ids": 0,
+      "sha256": "efa89b86cfcdb68de2ef430f9cadf867c7435324cafcfef1e0c0f692d24891bc"
+    },
+    {
+      "file": "devdoc/reference/opensource-references.md",
+      "links": 23,
+      "duplicate_ids": 0,
+      "sha256": "689d233fe3bdbcabdea83631e76cad5f215d24c67acdb1366c7791ad31d2cabd"
+    },
+    {
+      "file": "devdoc/reference/review/README.md",
+      "links": 1,
+      "duplicate_ids": 0,
+      "sha256": "894a40eb0d77eddcf4723b53fc934b6bf1a1260e83b69a72370ffb70cf3846fa"
+    },
+    {
+      "file": "devdoc/reference/sql-language-draft.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "058894203fa6462efb10404aeb7cbfd6d2e912d3acf1748b228172249cac88cc"
+    },
+    {
+      "file": "devdoc/reference/user-manual-draft.md",
+      "links": 20,
+      "duplicate_ids": 0,
+      "sha256": "b32811f2ab25d71317eeff2e448da7b0f289ed499f48d8d6678d52a99d1af3c5"
+    },
+    {
+      "file": "README.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "35a456c16fce29b8ff44c0c7972a088511ab2fc7ffdc751cfba4a3d2f0099d2c"
+    },
+    {
+      "file": "AGENTS.md",
+      "links": 1,
+      "duplicate_ids": 0,
+      "sha256": "b3705475068d7193df5f7c0090c1867ada8aca63a2b116c13e957838ff30dcf1"
+    }
+  ],
+  "scope": "Markdown/JSON/navigation, stage/task/case/package contracts and current source evidence identity; no product tests or historical measurements executed"
+}

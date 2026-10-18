@@ -1,0 +1,789 @@
+{
+  "schema_version": 2,
+  "date": "2026-10-18",
+  "title": "XADB 사용자 매뉴얼 초안",
+  "draft_revision": "0.2",
+  "status": "AUTHORING_DRAFT_NOT_A_RELEASE_MANUAL",
+  "document": "user-manual-draft.md",
+  "format": "repository Markdown",
+  "audience": [
+    "application_developers",
+    "DBAs",
+    "operators",
+    "feature_implementers"
+  ],
+  "authorities": {
+    "stages": "development-stages.json",
+    "interface": "interface-experience-plan.json",
+    "kernel": "implementation-contracts.md",
+    "version_policy": "version-compatibility-policy.json",
+    "replacement": "capability-inventory.json",
+    "recovery": "recovery-logging-contract.json",
+    "sql_draft": "sql-language-draft.json",
+    "review_trace": "manual-review.json"
+  },
+  "current_implementation": {
+    "locally_verified_stages": [
+      "DEV0",
+      "DEV1"
+    ],
+    "dev2": "PARTIAL_VOLATILE_SUBSTRATE",
+    "evidence_refs": [
+      "dev0-validation.json",
+      "dev1-validation.json",
+      "dev2-validation.json"
+    ],
+    "durability": false,
+    "disk_pages_and_indexes": false,
+    "sql": false,
+    "server": false,
+    "user_xadb_cli": false,
+    "description": "Early AI-agent DBMS experiment; local harness/foundation and partial volatile kernel only; not product qualification"
+  },
+  "policy": {
+    "internal_versions_are_compatibility_baselines": false,
+    "internal_fresh_build_required": true,
+    "customer_compatibility_starts_at": "first declared stable release",
+    "new_semantics_are_proposals": true,
+    "examples_are_executed": false,
+    "complete_replacement_coverage_claimed": false
+  },
+  "chapters": [
+    {
+      "id": "M01",
+      "section": 1,
+      "heading": "이용 안내",
+      "anchor": "section-1",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R16"
+      ],
+      "experience_case_refs": []
+    },
+    {
+      "id": "M02",
+      "section": 2,
+      "heading": "제품 개념과 구성",
+      "anchor": "section-2",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R04",
+        "R05",
+        "R06"
+      ],
+      "experience_case_refs": [
+        "UX-14"
+      ]
+    },
+    {
+      "id": "M03",
+      "section": 3,
+      "heading": "설치와 첫 접속",
+      "anchor": "section-3",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R16",
+        "R13",
+        "R14"
+      ],
+      "experience_case_refs": [
+        "UX-01",
+        "UX-15"
+      ]
+    },
+    {
+      "id": "M04",
+      "section": 4,
+      "heading": "SQL 시작하기",
+      "anchor": "section-4",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R01",
+        "R03"
+      ],
+      "experience_case_refs": [
+        "UX-08"
+      ]
+    },
+    {
+      "id": "M05",
+      "section": 5,
+      "heading": "자료형과 SQL 참고",
+      "anchor": "section-5",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R01",
+        "R02",
+        "R07",
+        "R08",
+        "R10"
+      ],
+      "experience_case_refs": [
+        "UX-08"
+      ]
+    },
+    {
+      "id": "M06",
+      "section": 6,
+      "heading": "트랜잭션과 오류 처리",
+      "anchor": "section-6",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R03"
+      ],
+      "experience_case_refs": [
+        "UX-08",
+        "UX-21"
+      ]
+    },
+    {
+      "id": "M07",
+      "section": 7,
+      "heading": "테이블과 저장 배치와 색인",
+      "anchor": "section-7",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R04",
+        "R05",
+        "R06"
+      ],
+      "experience_case_refs": [
+        "UX-14",
+        "UX-27"
+      ]
+    },
+    {
+      "id": "M08",
+      "section": 8,
+      "heading": "설정 관리",
+      "anchor": "section-8",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R14"
+      ],
+      "experience_case_refs": [
+        "UX-02",
+        "UX-03",
+        "UX-18",
+        "UX-27"
+      ]
+    },
+    {
+      "id": "M09",
+      "section": 9,
+      "heading": "CLI와 자동화",
+      "anchor": "section-9",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R14"
+      ],
+      "experience_case_refs": [
+        "UX-09",
+        "UX-10",
+        "UX-26"
+      ]
+    },
+    {
+      "id": "M10",
+      "section": 10,
+      "heading": "애플리케이션 연결과 드라이버",
+      "anchor": "section-10",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R09"
+      ],
+      "experience_case_refs": [
+        "UX-08",
+        "UX-17"
+      ]
+    },
+    {
+      "id": "M11",
+      "section": 11,
+      "heading": "사용자와 권한과 보안",
+      "anchor": "section-11",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R13"
+      ],
+      "experience_case_refs": [
+        "UX-16",
+        "UX-22",
+        "UX-27"
+      ]
+    },
+    {
+      "id": "M12",
+      "section": 12,
+      "heading": "상태 조회와 성능 조사",
+      "anchor": "section-12",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R14",
+        "R15"
+      ],
+      "experience_case_refs": [
+        "UX-04",
+        "UX-07",
+        "UX-20",
+        "UX-23"
+      ]
+    },
+    {
+      "id": "M13",
+      "section": 13,
+      "heading": "메시지 로그와 진단",
+      "anchor": "section-13",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R14",
+        "R13"
+      ],
+      "experience_case_refs": [
+        "UX-05",
+        "UX-06",
+        "UX-11",
+        "UX-12",
+        "UX-13",
+        "UX-16",
+        "UX-24"
+      ]
+    },
+    {
+      "id": "M14",
+      "section": 14,
+      "heading": "백업과 복구",
+      "anchor": "section-14",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R12"
+      ],
+      "experience_case_refs": [
+        "UX-15"
+      ]
+    },
+    {
+      "id": "M15",
+      "section": 15,
+      "heading": "복제와 장애 전환",
+      "anchor": "section-15",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R11"
+      ],
+      "experience_case_refs": []
+    },
+    {
+      "id": "M16",
+      "section": 16,
+      "heading": "데이터 이관과 버전 변경",
+      "anchor": "section-16",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R14",
+        "R16",
+        "R10"
+      ],
+      "experience_case_refs": [
+        "UX-17",
+        "UX-25"
+      ]
+    },
+    {
+      "id": "M17",
+      "section": 17,
+      "heading": "문제 해결",
+      "anchor": "section-17",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R14",
+        "R12",
+        "R13"
+      ],
+      "experience_case_refs": [
+        "UX-06",
+        "UX-08",
+        "UX-26"
+      ]
+    },
+    {
+      "id": "M18",
+      "section": 18,
+      "heading": "기존 용어와 기능 대응",
+      "anchor": "section-18",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16"
+      ],
+      "experience_case_refs": []
+    },
+    {
+      "id": "M19",
+      "section": 19,
+      "heading": "참고 자료와 초안의 관리",
+      "anchor": "section-19",
+      "content_status": "DRAFT_WRITTEN",
+      "product_execution_status": "NOT_RUN",
+      "family_refs": [
+        "R16"
+      ],
+      "experience_case_refs": []
+    }
+  ],
+  "examples": [
+    {
+      "id": "EX-10",
+      "language": "sql",
+      "input": "CREATE TABLE orders (\n    order_id BIGINT NOT NULL,\n    customer_name VARCHAR(80),\n    quantity BIGINT NOT NULL,\n    paid BOOLEAN NOT NULL,\n    PRIMARY KEY (order_id)\n) STORAGE DISK;\nINSERT INTO orders (order_id, customer_name, quantity, paid)\nVALUES (1001, '김하나', 2, FALSE),\n       (1002, NULL, 1, TRUE),\n       (1003, '', 3, FALSE);",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "specification_ref": "sql-language-draft.json",
+      "sql_example_ref": "SQL-01",
+      "scope": "DEV4_SQL_PROPOSAL",
+      "chapter_ref": "M04",
+      "preconditions": "새 소유fixture; autocommit ON, IDLE",
+      "expected_observation": "4열 정의·기본 키와 정확한 3행, INSERT count=3",
+      "failure_check": "동명 객체·타입 오류 시 자동 삭제나 부분 성공 없음"
+    },
+    {
+      "id": "EX-01",
+      "language": "sql",
+      "input": "SELECT order_id, quantity\nFROM orders\nWHERE paid = FALSE\nORDER BY order_id;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "specification_ref": "sql-language-draft.json",
+      "sql_example_ref": "SQL-02",
+      "scope": "DEV4_SQL_PROPOSAL",
+      "chapter_ref": "M04",
+      "preconditions": "새 SQL-01 fixture",
+      "expected_observation": "(1001,2),(1003,3)의 순서·열 타입·완료",
+      "failure_check": "부분 출력은 완료 아님"
+    },
+    {
+      "id": "EX-02",
+      "language": "sql",
+      "input": "BEGIN;\nUPDATE orders SET quantity = 5 WHERE order_id = 1001;\nSELECT quantity FROM orders WHERE order_id = 1001;\nROLLBACK;\nSELECT quantity FROM orders WHERE order_id = 1001;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "specification_ref": "sql-language-draft.json",
+      "sql_example_ref": "SQL-05",
+      "scope": "DEV4_SQL_PROPOSAL",
+      "chapter_ref": "M04",
+      "preconditions": "새 SQL-01 fixture; 동시 변경 없음",
+      "expected_observation": "조회 5→2; 마지막 상태 IDLE",
+      "failure_check": "commit 응답 유실과 rollback 성공 혼동 금지"
+    },
+    {
+      "id": "EX-03",
+      "language": "text",
+      "input": "xadb config explain query.timeout --context lab-orders --format json",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "specification_ref": "interface-experience-plan.json",
+      "scope": "LATER_USER_INTERFACE_PROPOSAL",
+      "chapter_ref": "M08",
+      "preconditions": "지원 설정·대상 조회 권한",
+      "expected_observation": "유효/저장/대기 값·단위·출처·적용 시점",
+      "failure_check": "미지원·redacted·다음 시작 미확정을 0으로 채우지 않음"
+    },
+    {
+      "id": "EX-04",
+      "language": "text",
+      "input": "xadb sql --context lab-orders --file check.sql --on-error stop --format json",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "specification_ref": "interface-experience-plan.json",
+      "scope": "LATER_USER_INTERFACE_PROPOSAL",
+      "chapter_ref": "M09",
+      "preconditions": "check.sql에 EX-01 조회만 포함; 지원 CLI·새 fixture",
+      "expected_observation": "문장별 결과와 최종 완료·CLI 정상 종료",
+      "failure_check": "SQL/출력 오류 시 nonzero·미실행 문장·기존 commit 유지"
+    },
+    {
+      "id": "EX-05",
+      "language": "text",
+      "input": "xadb operation wait OP-38 --context lab-orders --timeout 5min",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "specification_ref": "interface-experience-plan.json",
+      "scope": "LATER_USER_INTERFACE_PROPOSAL",
+      "chapter_ref": "M09",
+      "preconditions": "같은 대상의 OP-38 조회 권한",
+      "expected_observation": "terminal 결과 또는 대기 만료·진행 중을 구분",
+      "failure_check": "5분 대기 만료를 서버 작업 취소로 표시하지 않음"
+    },
+    {
+      "id": "EX-06",
+      "language": "sql",
+      "input": "SELECT session_id, application_name, request_id, state, wait_kind, elapsed_ms\nFROM xadb_stats.requests\nWHERE state = 'waiting';",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "specification_ref": "interface-experience-plan.json",
+      "scope": "LATER_USER_INTERFACE_PROPOSAL",
+      "chapter_ref": "M12",
+      "preconditions": "xadb_stats.requests와 조회 권한; 고정 대기 요청 fixture",
+      "expected_observation": "관측 시각·실제 대기 행과 열 의미",
+      "failure_check": "행 부재를 요청 성공으로 단정하지 않음"
+    },
+    {
+      "id": "EX-07",
+      "language": "text",
+      "input": "xadb logs --context lab-orders --level error --since 30m --format jsonl",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "specification_ref": "interface-experience-plan.json",
+      "scope": "LATER_USER_INTERFACE_PROPOSAL",
+      "chapter_ref": "M13",
+      "preconditions": "sink 검색 capability·권한·30분 관측 fixture",
+      "expected_observation": "조회 범위·심각도·시각·공백을 포함하는 레코드",
+      "failure_check": "수집 중단·보존 만료·redaction을 오류 없음으로 해석하지 않음"
+    },
+    {
+      "id": "EX-08",
+      "language": "text",
+      "input": "xadb diagnose capture --context lab-orders --request R-912 --duration 60s",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "specification_ref": "interface-experience-plan.json",
+      "scope": "LATER_USER_INTERFACE_PROPOSAL",
+      "chapter_ref": "M13",
+      "preconditions": "R-912 identity와 수집 권한; byte/rate/동시성 예산 확정",
+      "expected_observation": "60초와 각 예산 이내 수집·자기 수집 해제·완료 상태",
+      "failure_check": "client 유실·다른 수집·동시 설정 변경에도 과거값 덮어쓰기 금지"
+    },
+    {
+      "id": "EX-09",
+      "language": "text",
+      "input": "xadb support bundle --context lab-orders --incident E-72",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "specification_ref": "interface-experience-plan.json",
+      "scope": "LATER_USER_INTERFACE_PROPOSAL",
+      "chapter_ref": "M13",
+      "preconditions": "E-72와 대상·시간·권한·허용 수집 항목",
+      "expected_observation": "로컬 묶음·manifest의 포함/제외/실패와 무결성",
+      "failure_check": "원문 fallback·자동 외부 전송·누락을 빈 정상 자료로 대체 금지"
+    },
+    {
+      "id": "EX-11",
+      "language": "sql",
+      "input": "BEGIN;\nUPDATE orders SET quantity = 5 WHERE order_id = 1001;\nINSERT INTO orders (order_id, customer_name, quantity, paid)\nVALUES (1004, '이둘', 1, FALSE), (1001, '중복', 1, FALSE);\nSELECT order_id, quantity FROM orders ORDER BY order_id;\nROLLBACK;",
+      "syntax_status": "PROPOSED",
+      "execution_status": "NOT_RUN",
+      "result": null,
+      "specification_ref": "sql-language-draft.json",
+      "sql_example_ref": "SQL-06",
+      "scope": "DEV4_SQL_PROPOSAL",
+      "chapter_ref": "M04",
+      "preconditions": "새 SQL-01 fixture; 예상 오류 뒤 계속하는 대화형/controller",
+      "expected_observation": "INSERT 전체 복원, 앞선 UPDATE 유지, 마지막 rollback 후 원래 fixture",
+      "failure_check": "오류 뒤 1004 잔존 또는 앞선 UPDATE implicit commit 금지"
+    }
+  ],
+  "open_specifications": [
+    {
+      "id": "MS-01",
+      "topic": "install commands, ports, supported OS/filesystem and package matrix",
+      "before": "server/distribution feature implementation",
+      "status": "OPEN",
+      "owner_area": "배포·서버",
+      "stage_refs": [
+        "DEV5",
+        "DEV9"
+      ],
+      "required_deliverable": "설치/제거·기동/종료 명령 사전, 경로·소유권·지원환경 행렬과 timeout 정책",
+      "blocks": "only corresponding feature specification/implementation qualification; not all earlier stages"
+    },
+    {
+      "id": "MS-02",
+      "topic": "review the concrete initial SQL syntax, length, uniqueness, ordering and autocommit proposals",
+      "before": "DEV4 implementation; storage-relevant unique/key choices before DEV3",
+      "status": "OPEN",
+      "owner_area": "저장·SQL",
+      "stage_refs": [
+        "DEV3",
+        "DEV4"
+      ],
+      "required_deliverable": "NULL/key/행 한도·문법·트랜잭션 상태표·경계 fixture의 승인된 명세",
+      "blocks": "only corresponding feature specification/implementation qualification; not all earlier stages"
+    },
+    {
+      "id": "MS-03",
+      "topic": "CLI field schema, integer exit codes and option registry",
+      "before": "corresponding public CLI implementation",
+      "status": "OPEN",
+      "owner_area": "CLI",
+      "stage_refs": [
+        "DEV4",
+        "DEV5",
+        "DEV8"
+      ],
+      "required_deliverable": "필수/선택 필드 schema·lossless encoding·크기 상한·옵션·exit 정수 및 오류 우선순위",
+      "blocks": "only corresponding feature specification/implementation qualification; not all earlier stages"
+    },
+    {
+      "id": "MS-04",
+      "topic": "public view columns, types, units, visibility and observation scope",
+      "before": "corresponding public view implementation",
+      "status": "OPEN",
+      "owner_area": "관측·catalog",
+      "stage_refs": [
+        "DEV5",
+        "DEV8"
+      ],
+      "required_deliverable": "뷰별 key·열 타입/NULL/단위·권한·관측/비용 사전",
+      "blocks": "only corresponding feature specification/implementation qualification; not all earlier stages"
+    },
+    {
+      "id": "MS-05",
+      "topic": "setting names, defaults, source precedence, apply modes and role matrix",
+      "before": "corresponding configuration implementation",
+      "status": "OPEN",
+      "owner_area": "설정·서버",
+      "stage_refs": [
+        "DEV5",
+        "DEV8"
+      ],
+      "required_deliverable": "설정별 기본값·허용값·출처·소유자·적용/해제 계약",
+      "blocks": "only corresponding feature specification/implementation qualification; not all earlier stages"
+    },
+    {
+      "id": "MS-06",
+      "topic": "public errors/SQLSTATE and native/JDBC/ODBC mapping",
+      "before": "corresponding SQL/client implementation",
+      "status": "OPEN",
+      "owner_area": "SQL·client",
+      "stage_refs": [
+        "DEV4",
+        "DEV6"
+      ],
+      "required_deliverable": "SQLSTATE/오류와 driver API·표준 부작용·타입/metadata 대응표",
+      "blocks": "only corresponding feature specification/implementation qualification; not all earlier stages"
+    },
+    {
+      "id": "MS-07",
+      "topic": "lookup/deduplication guarantees, retention, audit policy and observation budgets",
+      "before": "corresponding operation/logging implementation",
+      "status": "OPEN",
+      "owner_area": "운영·관측",
+      "stage_refs": [
+        "DEV5",
+        "DEV8"
+      ],
+      "required_deliverable": "제출 키/결과 보존·원자 접수·예산·감사 실패별 효과표",
+      "blocks": "only corresponding feature specification/implementation qualification; not all earlier stages"
+    },
+    {
+      "id": "MS-08",
+      "topic": "권한 행렬·철회/세션 재사용·bootstrap·인증서/키 교체 명세",
+      "before": "corresponding feature implementation",
+      "status": "OPEN",
+      "owner_area": "보안",
+      "stage_refs": [
+        "DEV5",
+        "DEV8"
+      ],
+      "required_deliverable": "권한 행렬·철회/세션 재사용·bootstrap·인증서/키 교체 명세",
+      "blocks": "only corresponding feature specification/implementation qualification; not all earlier stages"
+    },
+    {
+      "id": "MS-09",
+      "topic": "K5 closure/manifest·restore resume; 확장 PITR/pin/공간 정책과 환경별 RPO/RTO",
+      "before": "corresponding feature implementation",
+      "status": "OPEN",
+      "owner_area": "영속성·운영",
+      "stage_refs": [
+        "DEV2",
+        "DEV8"
+      ],
+      "required_deliverable": "K5 closure/manifest·restore resume; 확장 PITR/pin/공간 정책과 환경별 RPO/RTO",
+      "blocks": "only corresponding feature specification/implementation qualification; not all earlier stages"
+    },
+    {
+      "id": "MS-10",
+      "topic": "topology·ACK/영속 위치·sync/충돌·fencing 주체·전환/failback 절차",
+      "before": "corresponding feature implementation",
+      "status": "OPEN",
+      "owner_area": "복제·HA",
+      "stage_refs": [
+        "DEV8"
+      ],
+      "required_deliverable": "topology·ACK/영속 위치·sync/충돌·fencing 주체·전환/failback 절차",
+      "blocks": "only corresponding feature specification/implementation qualification; not all earlier stages"
+    },
+    {
+      "id": "MS-11",
+      "topic": "파일 profile·snapshot·chunk/에러·resume·독립 비교 계약",
+      "before": "corresponding feature implementation",
+      "status": "OPEN",
+      "owner_area": "데이터 도구",
+      "stage_refs": [
+        "DEV8"
+      ],
+      "required_deliverable": "파일 profile·snapshot·chunk/에러·resume·독립 비교 계약",
+      "blocks": "only corresponding feature specification/implementation qualification; not all earlier stages"
+    },
+    {
+      "id": "MS-12",
+      "topic": "각 요구의 문법/overload·권한·정상/실패/동시성·driver/복구 조합 명세",
+      "before": "corresponding feature implementation",
+      "status": "OPEN",
+      "owner_area": "후속 기능",
+      "stage_refs": [
+        "DEV7",
+        "PART",
+        "NG"
+      ],
+      "required_deliverable": "각 요구의 문법/overload·권한·정상/실패/동시성·driver/복구 조합 명세",
+      "blocks": "only corresponding feature specification/implementation qualification; not all earlier stages"
+    }
+  ],
+  "publication_rule": "A reference/example becomes supported only after accepted specification, actual implementation, independent expected results and version-specific execution evidence; draft prose and document validation are not product tests.",
+  "review_ref": "manual-review.json",
+  "proposed_public_contracts": {
+    "status": "PROPOSED_NOT_FROZEN_OR_IMPLEMENTED",
+    "cli_result": {
+      "manual_anchor": "manual-cli-results",
+      "decision_ref": "MS-03",
+      "action_status": [
+        "accepted",
+        "succeeded",
+        "failed",
+        "incomplete",
+        "unknown"
+      ],
+      "delivery_status": [
+        "complete",
+        "partial",
+        "failed"
+      ],
+      "transaction_effect": [
+        "none",
+        "committed",
+        "aborted",
+        "unknown"
+      ],
+      "integer_encoding": "decimal string with logical type metadata",
+      "boolean_encoding": "JSON boolean",
+      "null_encoding": "JSON null",
+      "text_encoding": "JSON string; preserve empty and literal NULL",
+      "binary_encoding": "uppercase even-length hex string with binary type metadata",
+      "columns_and_rows": "ordered metadata array and ordered value arrays; preserve duplicate column names",
+      "jsonl_record_types": [
+        "metadata",
+        "row",
+        "statement_end",
+        "request_end"
+      ],
+      "finite_stream_requires": "request_end and successful final status, plus CLI exit result when available",
+      "exit_zero": "complete delivery of successful requested CLI action; accepted submission is not server operation completion",
+      "nonzero_numeric_assignments": "OPEN",
+      "statement_effect": [
+        "not_started",
+        "no_change",
+        "applied",
+        "rolled_back",
+        "unknown"
+      ],
+      "transaction_state": [
+        "idle",
+        "active",
+        "unavailable"
+      ]
+    },
+    "view_observation": {
+      "manual_anchor": "manual-observation",
+      "decision_ref": "MS-04",
+      "proposed_envelope": [
+        "observed_at",
+        "boot_id",
+        "collection_status",
+        "counter_reset_identity_when_applicable"
+      ],
+      "collection_status": [
+        "available",
+        "not_collected",
+        "insufficient_sample",
+        "expired",
+        "unsupported",
+        "redacted"
+      ],
+      "hidden_object_existence": "do not expose through status or errors",
+      "request_elapsed_unit": "nonnegative BIGINT milliseconds"
+    },
+    "configuration": {
+      "manual_anchor": "manual-settings",
+      "decision_ref": "MS-05",
+      "required_reference_fields": [
+        "purpose",
+        "type",
+        "unit",
+        "range",
+        "default_or_calculation",
+        "special_values",
+        "allowed_scopes",
+        "policy_caps",
+        "effective",
+        "stored",
+        "pending",
+        "source",
+        "revision",
+        "apply_mode",
+        "privilege",
+        "coupled_validation",
+        "reversal_effect"
+      ],
+      "defaults_and_numeric_limits": "OPEN"
+    },
+    "client": {
+      "manual_anchor": "manual-clients",
+      "decision_ref": "MS-06",
+      "standard_api_semantics": "document and test adapter commit/rollback effects; do not assume server SET AUTOCOMMIT error policy applies unchanged to standard APIs",
+      "batch_atomicity": "declare statement/transaction/chunk or element scope and each outcome",
+      "pool_return": "verified cleanup/reset; no hidden commit; discard failed or UNKNOWN connection"
+    }
+  }
+}

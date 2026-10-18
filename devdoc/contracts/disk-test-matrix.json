@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "document": "disk-storage-design.md",
+  "execution_status": "NOT_RUN",
+  "storage_engine": "DISK_ONLY",
+  "working_set_min_buffer_multiple": 4,
+  "cases": [
+    {
+      "id": "DS01",
+      "stage": "DEV3",
+      "acceptance": "Real page read/write and scan/index equality with independent row values; not a RAM-only substitute",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "DS02",
+      "stage": "DEV3",
+      "acceptance": "Atomic row/index/locator/catalog commit and crash/reopen, including partial writes and UNKNOWN outcomes",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "DS03",
+      "stage": "DEV3",
+      "acceptance": "Working set >= 4x buffer, actual I/O witness and bounded buffer/locator/RSS accounting",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "DS04",
+      "stage": "DEV3",
+      "acceptance": "Pinned snapshot survives eviction, concurrent change, checkpoint and reclamation; no stale physical reuse",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "DS05",
+      "stage": "DEV3",
+      "acceptance": "Backup/checkpoint/restore at one committed cut; repeated recovery and required corruption rejection",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "DS06",
+      "stage": "DEV3",
+      "acceptance": "PK/unique/nonunique independent vectors, statement failure atomicity, quota and cancellation",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "DS07",
+      "stage": "PART",
+      "acceptance": "Disk partition routing/pruning and atomic row movement with local index consistency",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "DS08",
+      "stage": "NG",
+      "acceptance": "Disk global unique/nonunique tree; membership/lifetime/row movement/crash at one cut",
+      "execution_status": "NOT_RUN"
+    }
+  ]
+}

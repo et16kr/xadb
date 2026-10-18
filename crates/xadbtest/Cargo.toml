@@ -1,0 +1,37 @@
+[package]
+name = "xadbtest"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+self-test = []
+
+[dependencies]
+xadbtest-protocol.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tempfile.workspace = true
+nix.workspace = true
+
+[build-dependencies]
+sha2.workspace = true
+
+[[bin]]
+name = "xadbtest"
+path = "src/main.rs"
+
+[[bin]]
+name = "xadbtest-mutant-worker"
+path = "tests/fixtures/mutant.rs"
+required-features = ["self-test"]
+
+[[test]]
+name = "controller"
+required-features = ["self-test"]
+
+[lints]
+workspace = true
+

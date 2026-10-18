@@ -1,0 +1,78 @@
+{
+  "schema_version": 2,
+  "date": "2026-10-18",
+  "decision": "XADB-SCOPE-001",
+  "format": "Markdown only",
+  "source_snapshot_revision": "8efe2746b64ab3fbf3bee35ab12328e89c75ac0e",
+  "captured_at": "2026-10-18T19:22:35.128038+09:00",
+  "source_snapshot_inventory_sha256": "0edcc4f775948b9a142991ef5f25dd0a68334cca66ec237353c0b07aeae2689d",
+  "source_snapshot_inventory_storage": "external-local-archive",
+  "source_file_count": 228,
+  "included_uncommitted_changes": true,
+  "source_modified_by_migration": false,
+  "git_history_imported": false,
+  "preserved_evidence": [
+    {
+      "path": "evidence/dev0-xadb-20261018-r1.json",
+      "sha256": "206eb62d19bb5e41b043ddfa629efbabcf2233a36e236f5c0ef0718b49ff1e22",
+      "meaning": "Fresh XADB execution report; DEV0/DEV1 nested regression reports copied without byte changes"
+    },
+    {
+      "path": "evidence/dev1-xadb-20261018-r1.json",
+      "sha256": "77eff285fd3177bcc4584cafcaab2d04c17807eebb55a91555551cf2c1c5027d",
+      "meaning": "Fresh XADB execution report; DEV0/DEV1 nested regression reports copied without byte changes"
+    },
+    {
+      "path": "evidence/dev2-xadb-20261018-r1.json",
+      "sha256": "6f142e216e3c8eebacb0f441de841bb01a248856a3c1bb1ddac1670f8f374191",
+      "meaning": "Fresh XADB execution report; DEV0/DEV1 nested regression reports copied without byte changes"
+    }
+  ],
+  "old_execution_evidence_policy": "Original receipts remain in the unchanged source checkout. XADB records fresh runs; no old source/hash/result is relabelled.",
+  "excluded_categories": [
+    "resident engine design and comparison experiments",
+    "mixed-storage design and qualification",
+    "prior product source surveys and benchmark histories",
+    "prior replacement-only release gates"
+  ],
+  "retained_categories": [
+    "DEV0/DEV1 implementation and tests",
+    "DEV2 P0/K0 partial implementation, worker and tests",
+    "disk-applicable contracts, SQL/manual drafts, plans and development policies"
+  ],
+  "renamed_packages": "xadb-* and xadbtest*",
+  "volatile_substrate": "K0 implementation retained as storage/volatile.rs; not a resident DBMS product",
+  "review": {
+    "classification": "D2",
+    "reviewer": "/root/xadb_migration_review",
+    "status": "PASS",
+    "scope": "Read-only migration review: disk-only scope, provenance, current state, required contracts and negative validation controls; not engine durability certification",
+    "blocking_findings": [],
+    "resolved_findings": [
+      "Preserved D0 seven boundaries and disk acceptance closures",
+      "Removed old storage/source-survey residue and corrected unintended identifier substitutions",
+      "Restored required stage/status/fixed-evidence guards and negative tests"
+    ],
+    "verification": "Read-only verify(): 43 Markdown files, zero errors; 27 unittest cases PASS; 17 DEV2 log hashes matched"
+  },
+  "verification": {
+    "status": "PASS",
+    "document_command": "python3 devdoc/verify_documents.py",
+    "document_scope": "Markdown/JSON/index/contract/state/evidence identity; not product execution",
+    "unit_test_command": "python3 -m unittest discover -s devdoc -p 'test_*.py'",
+    "unit_tests_passed": 27,
+    "product_command": "python3 scripts/check_dev2_reference.py --with-substrate --report devdoc/evidence/dev2-xadb-20261018-r1.json",
+    "product_result": "DEV0/DEV1 local regression PASS; DEV2 reference/substrate/frame/worker leaf checks PASS; DEV2 and K0 INCOMPLETE; durability NOT_RUN",
+    "evidence_refs": [
+      "dev0-validation.json",
+      "dev1-validation.json",
+      "dev2-validation.json"
+    ]
+  },
+  "source_inventory_local_path": ".git/xadb-import-source-inventory.json",
+  "implementation_mapping": "evidence/implementation-import-inventory.json",
+  "github": {
+    "repository": "https://github.com/et16kr/xadb",
+    "visibility": "PUBLIC"
+  }
+}

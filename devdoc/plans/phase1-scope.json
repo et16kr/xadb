@@ -1,0 +1,400 @@
+{
+  "schema_version": 5,
+  "date": "2026-10-18",
+  "stage1_status": "DESIGN_BASELINE_WRITTEN",
+  "product_status": "DEV0_DEV1_IMPORTED_DEV2_P0_K0_PARTIAL_REVALIDATION_REQUIRED",
+  "dev0_harness": {
+    "status": "LOCAL_VERIFIED",
+    "contract": "dev0-contract.json",
+    "evidence": "dev0-validation.json"
+  },
+  "user_confirmed": {
+    "product": "XADB",
+    "os_family": "Linux only",
+    "primary_language": "Rust",
+    "purpose": "Experiment whether AI agents can develop an AI-friendly DBMS informed by open-source systems; early implementation, final disk relational DBMS goal stated publicly",
+    "storage_engine": "DISK_ONLY",
+    "reference_dbms": [
+      "PostgreSQL",
+      "MariaDB",
+      "SQLite"
+    ],
+    "specialized_tuning_required": false,
+    "basic_performance_required": true,
+    "database_boundary": "one database and one shared transaction domain; disk tables and optional disk partitions",
+    "legacy_compatibility": false,
+    "internal_distribution_compatibility_required": false,
+    "new_independent_xadbtest": true,
+    "development_priority_not_business_priority": true
+  },
+  "implementation_defaults": {
+    "initial_cpu": "x86_64",
+    "b0_candidate_os": "Ubuntu 26.04.1 LTS (DEV0 harness locally tested; not engine support qualification)",
+    "b0_candidate_toolchain": "Rust/cargo 1.95.0 pinned and built for DEV0; see dev0-validation.json",
+    "first_filesystem_qualification": "local ext4",
+    "additional_filesystem_qualification": [
+      "local XFS"
+    ],
+    "single_process_shared_transaction_domain": true,
+    "disk_data": "larger-than-memory with bounded buffer and locator cache",
+    "index_scope": "LOCAL; optional GLOBAL across disk partitions",
+    "global_index_placements": [
+      "DISK_BUFFERED"
+    ],
+    "first_global_physical_layout": "one native non-partitioned B+tree per index",
+    "row_identity": "TableUID + nonreused RowSerial; snapshot-versioned resolver",
+    "disk_commit": "durable COW data/index/locator pages before common commit WAL; atomic complete view publish",
+    "isolation_first": "SERIALIZABLE via coarse epoch validation",
+    "offline_ddl_first": "database-wide close-admission then drain then shadow generation switch",
+    "disk_timing": "DEV3 required before DEV4 SQL; advanced disk optimization may follow measured need",
+    "development_order": "test -> foundation -> SQL-free durable kernel -> DISK storage baseline -> embedded SQL -> server -> clients; COMM/PART/NG are explicit branches",
+    "recovery_logging_contract": "recovery-logging-contract.json",
+    "checkpoint": "exact committed immutable generation selected by durable manifest/CURRENT; no fixed two-full-image requirement"
+  },
+  "not_required_initially": [
+    "cross-server global index",
+    "online index build",
+    "partitioned global index",
+    "multi-writer replication",
+    "all Linux distributions"
+  ],
+  "qualification_profile": {
+    "disk_working_set_min_buffer_multiple": 4,
+    "this_is_not_a_product_capacity_limit": true,
+    "ack_loss_under_declared_durability_fault_model": 0,
+    "applicability": "Current disk-engine capability only; public research preview does not imply production readiness.",
+    "performance_numbers": "Measured under declared workload and durability; no inherited performance claims."
+  },
+  "open_by_implementation_gate": {
+    "B0": [
+      "host/CI image digest pin and protected CI qualification remain pending; toolchain and Cargo.lock are pinned for DEV0"
+    ],
+    "H1": [
+      "page format, generation owner/GC, actual sync contract"
+    ],
+    "H2": [
+      "encoded key sizes, index layout and NULL/collation vectors"
+    ],
+    "H3": [
+      "actual memory/retention/RTO limits"
+    ],
+    "EXTERNAL_RELEASE": [
+      "customer workload SLO and exact feature/driver/Linux qualification manifest"
+    ]
+  },
+  "task_dependencies": {
+    "XADB-001": [],
+    "XADB-002": [
+      "XADB-001"
+    ],
+    "XADB-003": [
+      "XADB-002"
+    ],
+    "XADB-004": [
+      "XADB-001"
+    ],
+    "XADB-005": [
+      "XADB-002"
+    ],
+    "XADB-006": [
+      "XADB-003",
+      "XADB-004",
+      "XADB-026",
+      "XADB-027"
+    ],
+    "XADB-007": [
+      "XADB-005",
+      "XADB-006"
+    ],
+    "XADB-008": [
+      "XADB-007"
+    ],
+    "XADB-009": [
+      "XADB-008",
+      "XADB-010"
+    ],
+    "XADB-010": [
+      "XADB-006",
+      "XADB-008"
+    ],
+    "XADB-011": [
+      "XADB-029"
+    ],
+    "XADB-021": [
+      "XADB-005",
+      "XADB-008",
+      "XADB-028"
+    ],
+    "XADB-022": [
+      "XADB-009",
+      "XADB-021"
+    ],
+    "XADB-023": [
+      "XADB-029",
+      "XADB-030"
+    ],
+    "XADB-024": [
+      "XADB-010",
+      "XADB-023",
+      "XADB-030"
+    ],
+    "XADB-025": [
+      "XADB-023",
+      "XADB-029"
+    ],
+    "XADB-012": [
+      "XADB-011",
+      "XADB-031"
+    ],
+    "XADB-013": [
+      "XADB-003",
+      "XADB-026"
+    ],
+    "XADB-014a": [
+      "XADB-003",
+      "XADB-005"
+    ],
+    "XADB-014b": [
+      "XADB-009",
+      "XADB-014a"
+    ],
+    "XADB-015": [
+      "XADB-009",
+      "XADB-014b",
+      "XADB-032"
+    ],
+    "XADB-016": [
+      "XADB-002"
+    ],
+    "XADB-017": [
+      "XADB-003",
+      "XADB-016"
+    ],
+    "XADB-018": [
+      "XADB-005",
+      "XADB-008",
+      "XADB-016"
+    ],
+    "XADB-019a": [
+      "XADB-003",
+      "XADB-014a"
+    ],
+    "XADB-019b": [
+      "XADB-014b",
+      "XADB-017"
+    ],
+    "XADB-020": [
+      "XADB-015",
+      "XADB-018",
+      "XADB-019b"
+    ],
+    "XADB-026": [
+      "XADB-003",
+      "XADB-005"
+    ],
+    "XADB-027": [
+      "XADB-026",
+      "XADB-004"
+    ],
+    "XADB-032": [
+      "XADB-003",
+      "XADB-027",
+      "XADB-014a"
+    ],
+    "XADB-028": [
+      "XADB-009",
+      "XADB-010",
+      "XADB-027"
+    ],
+    "XADB-029": [
+      "XADB-022",
+      "XADB-028"
+    ],
+    "XADB-030": [
+      "XADB-029"
+    ],
+    "XADB-031": [
+      "XADB-026"
+    ],
+    "XADB-033": [
+      "XADB-012",
+      "XADB-032"
+    ],
+    "XADB-034": [
+      "XADB-033"
+    ],
+    "XADB-035": [
+      "XADB-034"
+    ],
+    "XADB-036": [
+      "XADB-035"
+    ],
+    "XADB-037": [
+      "XADB-011"
+    ],
+    "XADB-038": [
+      "XADB-037"
+    ],
+    "XADB-039": [
+      "XADB-038"
+    ],
+    "XADB-040": [
+      "XADB-037",
+      "XADB-029"
+    ],
+    "XADB-041": [
+      "XADB-039",
+      "XADB-036"
+    ],
+    "XADB-042": [
+      "XADB-033",
+      "XADB-029"
+    ],
+    "XADB-043": [
+      "XADB-033",
+      "XADB-029"
+    ],
+    "XADB-044": [
+      "XADB-042",
+      "XADB-043"
+    ],
+    "XADB-045": [
+      "XADB-036",
+      "XADB-040",
+      "XADB-041",
+      "XADB-044",
+      "XADB-030"
+    ],
+    "XADB-046": [
+      "XADB-001"
+    ],
+    "XADB-047": [
+      "XADB-036",
+      "XADB-040",
+      "XADB-041",
+      "XADB-045",
+      "XADB-046",
+      "XADB-030"
+    ]
+  },
+  "new_tasks": {
+    "XADB-021": "real COW disk pages and bounded buffer/locator path",
+    "XADB-022": "atomic disk row/index/locator commit and recovery",
+    "XADB-023": "optional disk-buffered global index",
+    "XADB-024": "row movement and offline partition lifecycle with shared index",
+    "XADB-025": "larger-than-memory qualification and resource/latency accounting",
+    "XADB-026": "shared types/value/error/codec and Linux boundaries (F1)",
+    "XADB-027": "minimal real row/catalog substrate, no SQL",
+    "XADB-028": "production disk row/index/catalog representation",
+    "XADB-029": "bounded DISK row/index and direct API storage qualification (S1)",
+    "XADB-030": "SQL-free partition/local-index/lifecycle foundation (P1)",
+    "XADB-031": "independent transport/frame/backpressure branch (C1)",
+    "XADB-032": "native typed-operation/history suite plus independent performance comparison and replay from K0; automatic minimization is XADB-014b",
+    "XADB-033": "SQL/server regression corpus after embedded kernel qualification",
+    "XADB-034": "native client: current-build API, ownership, binding, metadata, errors and cancellation",
+    "XADB-035": "JDBC: declared API support matrix and actual Java integration",
+    "XADB-036": "ODBC: declared driver-manager/API matrix and actual client integration",
+    "XADB-037": "extended scalar types, operators, casts, ordering and persistent codecs",
+    "XADB-038": "relational execution, optimizer, constraints, savepoint and advanced prepared-plan extensions",
+    "XADB-039": "PSM, triggers, sequence, queue and programmable object lifecycle",
+    "XADB-040": "LOB, spatial and extended storage-facing SQL semantics",
+    "XADB-041": "external routines, DB link and XA/in-doubt workflows",
+    "XADB-042": "replication, resync, conflict handling, fencing, failover and failback",
+    "XADB-043": "backup/archive/PITR and operational restore",
+    "XADB-044": "security, administration, observability and operational runbooks",
+    "XADB-045": "registered workload, capacity, soak and performance qualification",
+    "XADB-046": "freeze XADB capability baseline and complete requirement/variant inventory; preparation may start early",
+    "XADB-047": "execute the declared XADB capability matrix and resolve every required gap"
+  },
+  "references": [
+    "phase1-product-baseline.md",
+    "disk-storage-design.md",
+    "disk-test-matrix.json",
+    "development-stages.md",
+    "bottom-up-development.md",
+    "kernel-test-matrix.json"
+  ],
+  "engine_tests": "VOLATILE_SUBSTRATE_ONLY_NO_DURABILITY",
+  "design_now": [
+    "stable row identity independent of physical address",
+    "snapshot-bound row access",
+    "atomic row/index/catalog publication and recovery",
+    "versioned formats, explicit unsupported capability errors",
+    "bounded page buffer and locator cache; no mandatory whole-database RAM map",
+    "independent oracles and actual I/O/fault tests"
+  ],
+  "task_gate_obligations": {
+    "XADB-012": [
+      "Q1",
+      "C1",
+      "D0"
+    ],
+    "XADB-011": [
+      "S1"
+    ],
+    "global_feature_qualification": [
+      "B3",
+      "H3",
+      "GLOBAL_INDEX_QUALIFICATION"
+    ]
+  },
+  "initial_internal_baseline": {
+    "status": "PARTIAL_K0_IMPLEMENTATION_NO_DURABILITY",
+    "stage": "DEV2",
+    "storage": "volatile K0 substrate followed by disk-backed WAL/checkpoint durability in K2-K5",
+    "scope": "typed engine API, transaction/WAL/recovery/checkpoint, native test worker, no SQL/server dependency",
+    "gates": [
+      "B0",
+      "F1",
+      "B2",
+      "D0"
+    ],
+    "channel": "internal",
+    "external_release_eligible": false,
+    "scope_reference": "development-stages.json#first_internal_usable_version",
+    "compatibility": "NOT_REQUIRED_INTERNAL_FRESH_BUILD"
+  },
+  "external_release_policy": {
+    "gate": "EXTERNAL_RELEASE",
+    "requires": "Declared capability, license/notices, reproducible build/tests and honest experimental status; production qualification is a separate gate",
+    "baseline": "capability-inventory.json",
+    "current_eligible": false
+  },
+  "development_stages_reference": "development-stages.json",
+  "initial_sql_baseline": {
+    "stage": "DEV4",
+    "storage": [
+      "DISK"
+    ],
+    "interface": "embedded SQL/CLI",
+    "gate": "Q1",
+    "server_required": false,
+    "native_global_required": false,
+    "scope_reference": "development-stages.json#initial_sql_scope",
+    "prepared_execution_ref": "development-stages.json#initial_sql_scope"
+  },
+  "replacement_requirements_reference": "capability-inventory.json",
+  "initial_scope_limit_is_product_exclusion": false,
+  "dev1_foundation": {
+    "status": "LOCAL_VERIFIED",
+    "contract": "dev1-contract.json",
+    "evidence": "dev1-validation.json",
+    "packages": [
+      "xadb-foundation",
+      "xadb-platform"
+    ],
+    "platform_boundary_ref": "repository-build-plan.json#platform_boundary"
+  },
+  "completion_contract_reference": "stage-completion.json",
+  "task_identity_clarification": {
+    "XADB-004": "Independent row/transaction reference with known-bad histories; NOT_IMPLEMENTED, required before DEV2 K0. Foundation value/key vectors belong to XADB-026.",
+    "XADB-026": "DEV1 ID/error/value/key/frame/quota/lifecycle semantics; implementation evidence unchanged.",
+    "XADB-033": "Current-build SQL/server regression uses XADB-012 and native history suite XADB-032; no XADB-013 customer-version dependency.",
+    "XADB-013": "Customer-delivery version fixture runner only; not an internal stage prerequisite.",
+    "XADB-014a": "K0 manifest and reproducible bundle; DEV2 required support, extended with current capabilities",
+    "XADB-015": "Post-K5 benchmark campaign and AI delivery pilot; early instrumentation/comparison/replay belongs to K-step product tasks, XADB-014a and XADB-032",
+    "XADB-032": "K0 onward native history and independent performance comparison/replay; no automatic-minimizer prerequisite"
+  },
+  "new_task_detail_rule": "XADB-034..047 are required work packages with NOT_RUN acceptance, not completed leaf inventories. Expand operation/overload/environment/fault combinations before their implementation and freeze full coverage before stage closure.",
+  "performance_task_allocation_ref": "development-stages.json#kernel_build_steps"
+}

@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "document_status": "DESIGN_PROPOSAL_NOT_IMPLEMENTED_OR_EXECUTED",
+  "product": "XADB",
+  "active_configuration": false,
+  "example_kind": "ILLUSTRATIVE_REQUEST_NOT_AN_EXECUTION_RECORD",
+  "task": {
+    "id": "XADB-REPRO-ACK-001",
+    "purpose": "Find and fix loss of acknowledged synthetic rows after recovery",
+    "repository": "new XADB repository only",
+    "contract": "ACK-DURABLE-001",
+    "revision_digest": "RESOLVE_BEFORE_RUN",
+    "build_digest": "RESOLVE_BEFORE_RUN"
+  },
+  "execution": {
+    "profile": "dev-isolated",
+    "recipe_id": "owned-child-ack-recovery-v1",
+    "recipe_digest": "RESOLVE_REGISTERED_RECIPE_BEFORE_RUN",
+    "run_id": "ALLOCATE_AT_EXECUTION",
+    "fixture": "synthetic-two-rows-v1",
+    "scope_reference": "RESOLVE_EXISTING_AUTHORIZATION",
+    "resource_binding": "controller allocates private overlay and process handles; caller supplies no host PID/path"
+  },
+  "declared_steps": [
+    {
+      "id": "setup",
+      "effect": "create_run_overlay_and_owned_child",
+      "data": "synthetic"
+    },
+    {
+      "id": "commit",
+      "effect": "commit_synthetic_rows",
+      "required_observation": "ACK"
+    },
+    {
+      "id": "crash",
+      "effect": "crash_owned_child",
+      "event": "ack_observed_before_next_checkpoint",
+      "implementation": "pinned runner recipe; effect remains visible"
+    },
+    {
+      "id": "recover",
+      "effect": "recover_same_run_database_with_expected_binary"
+    },
+    {
+      "id": "verify",
+      "effect": "typed_oracle_and_integrity_checks",
+      "required_result": "all acknowledged rows preserved"
+    },
+    {
+      "id": "finalize",
+      "effect": "release_only_resources_owned_by_this_run"
+    }
+  ],
+  "mandatory_witnesses": [
+    "exact_binary",
+    "run_resource_ownership",
+    "ACK_observed",
+    "commit_above_checkpoint",
+    "declared_crash_executed",
+    "recovery_path_executed",
+    "oracle_executed"
+  ],
+  "disallowed_effects": [
+    "unowned_process_control",
+    "shared_or_production_database_write",
+    "host_security_configuration_change",
+    "real_credential_access",
+    "unapproved_external_network_access"
+  ],
+  "output_contract": {
+    "raw": "minimal run artifacts, restricted",
+    "parent": "subagent-result schema with validated evidence refs",
+    "collect_all_environment_or_credentials": false
+  },
+  "limitations": [
+    "No execution occurred; placeholders must be resolved and validated.",
+    "Process crash is not power loss; separate isolated storage-lab variants remain mandatory.",
+    "This recipe does not guarantee acceptance by provider safety monitoring."
+  ]
+}

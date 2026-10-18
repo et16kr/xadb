@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "status": "PLANNED_NOT_EXECUTED",
+  "scope": "finite bottom-up acceptance catalogue, not complete replacement test inventory",
+  "no_security_stop_bypass": true,
+  "production_core_required": true,
+  "independent_oracle_required": true,
+  "process_kill_is_power_loss_proof": false,
+  "cases": [
+    {
+      "id": "KU01",
+      "gate": "F1",
+      "stage_or_step": "DEV1",
+      "title": "Independent core build and value/codec contract",
+      "acceptance": "Core target builds and runs without SQL, network/server/client/RP imports; independent equality/order/NULL/version vectors",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU02",
+      "gate": "B1",
+      "stage_or_step": "K0",
+      "title": "Actual minimal substrate",
+      "acceptance": "Same production row/catalog API as later executor; fixture version and allocation ownership explicit; no empty-transaction-only PASS",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU03",
+      "gate": "B1",
+      "stage_or_step": "K1",
+      "title": "Private batch and failure effects",
+      "acceptance": "Read-your-writes, hidden uncommitted rows, statement rollback, full abort and quota ledger",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU04",
+      "gate": "B1",
+      "stage_or_step": "K2",
+      "title": "Real WAL ordering",
+      "acceptance": "Complete framed batch; short-write/sync uncertainty; ACK-before-sync mutant rejected; no full recovery claim",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU05",
+      "gate": "B2",
+      "stage_or_step": "K3",
+      "title": "External history and production recovery",
+      "acceptance": "Owned worker commit result captured by controller; crash/reopen recovers ACKed complete transactions and no partial batch",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU06",
+      "gate": "B2",
+      "stage_or_step": "K3",
+      "title": "Recovery interrupted twice",
+      "acceptance": "Recovery and restore interruptions preserve source and replay semantics; durable-area corruption is not silently accepted as tail",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU07",
+      "gate": "B2",
+      "stage_or_step": "K4",
+      "title": "Concurrent serializable histories",
+      "acceptance": "Deterministic schedules plus actual threads; conflict, lost update/write skew/phantom, old snapshot lifetime",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU08",
+      "gate": "B2",
+      "stage_or_step": "K5",
+      "title": "Checkpoint and reclamation",
+      "acceptance": "Reader/backup pins and retained logs safe; early-reclaim mutant rejected; restore into empty owned directory",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU09",
+      "gate": "S1",
+      "stage_or_step": "DEV3",
+      "title": "Rows and every secondary index",
+      "acceptance": "Insert/update/delete/failure atomic across row/index/catalog; scan equivalence against separate model",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU10",
+      "gate": "S1",
+      "stage_or_step": "DEV3",
+      "title": "DISK shared durability and capacity",
+      "acceptance": "Real files, common commit, allocation/reclamation and bounded buffer/locator with working set at least 4x buffer",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU11",
+      "gate": "P1",
+      "stage_or_step": "PART",
+      "title": "Partition without global/SQL",
+      "acceptance": "Routing/membership/row movement/local index with snapshots and failure; unique only at declared supported scope, reject unsupported table-global unique",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU12",
+      "gate": "C1",
+      "stage_or_step": "COMM",
+      "title": "Transport without engine",
+      "acceptance": "Owned local endpoints, fragmentation/backpressure/disconnect/timeouts; application request semantics deferred to actual server",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU13",
+      "gate": "Q1",
+      "stage_or_step": "DEV4",
+      "title": "SQL agrees with native engine histories",
+      "acceptance": "Equivalent bounded SQL/native operations against real DISK; independent result/effect oracle, not only comparing two paths sharing code",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "KU14",
+      "gate": "B3",
+      "stage_or_step": "DEV5",
+      "title": "Actual client acknowledgement",
+      "acceptance": "Observed network reply plus WAL/reopen, cancel/session/auth and disconnect uncertainty; native ACK evidence alone insufficient",
+      "execution_status": "NOT_RUN"
+    }
+  ],
+  "detailed_recovery_cases": "recovery-test-matrix.json",
+  "detailed_recovery_scope": "L0 cases extend existing K2-K5/H1/S1 obligations; optional L1/L2 cases do not become initial-kernel prerequisites"
+}

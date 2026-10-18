@@ -1,0 +1,1118 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18",
+  "status": "COMPLETION_RULES_DEFINED_FUTURE_ACCEPTANCE_INPUTS_PENDING",
+  "scope": "Finite stage closure rules; planned tests are NOT_RUN and no product pass is granted by this document.",
+  "policy": {
+    "entry_rule": "Complete stage minimum prerequisites and exact leaf task prerequisites; freeze that leaf contract/oracle/profile before production implementation. Contract preparation and XADB-046 inventory work may proceed earlier.",
+    "closure_rule": "Frozen nonempty required inventory, all required task/variant cases VERIFIED_PASS on identified candidate, affected lower-level regressions PASS, resources/cleanup/evidence complete, zero unresolved required decisions or blockers. Missing entrypoint/evidence is NOT_RUN, not PASS.",
+    "local_evidence_rule": "DEV0/DEV1 LOCAL_VERIFIED permits scoped local dependent development; does not satisfy protected CI, official distribution, all PA/KU cases or release promotion.",
+    "internal_distribution_rule": "A declared internal capability needs its complete current-build closure record plus pinned execution environment and protected evidence review/promotion; no previous internal compatibility. These promotion obligations are currently NOT_RUN.",
+    "scope_rule": "Stage closure uses all required work packages. A subset capability may be verified and distributed with its own manifest; stage remains incomplete. Deferred required replacement functions cannot be N/A.",
+    "applicability_rule": "Expand every case into concrete variants. For cases spanning future components, run all currently supported variants and register the remaining obligation with owner task and trigger capability; never mark the whole unexecuted case PASS. Rerun affected cases when the component arrives.",
+    "version_rule": "VERSION_RELEASE only for customer delivery. Internal cross-version result NOT_REQUIRED_INTERNAL_FRESH_BUILD; no prior customer baseline NOT_APPLICABLE_NO_RELEASE_BASELINE. Current-build correctness always required.",
+    "evidence_fields": [
+      "source_revision_and_dirty_tree_digest",
+      "binary_digest",
+      "contract_and_inventory_digest",
+      "case_and_oracle_digest",
+      "exact_command_and_environment",
+      "hardware_OS_FS_toolchain",
+      "seed_schedule_fault_receipts",
+      "expected_and_actual_results",
+      "resource_and_cleanup_results",
+      "unresolved_and_deferred_obligations",
+      "review_and_promotion_record"
+    ],
+    "profile_fields": [
+      "capability_and_variant_inventory",
+      "oracle_and_negative_mutants",
+      "byte_count_time_budgets",
+      "hardware_OS_FS_and_durability_model",
+      "seed_schedule_fault_cut_list",
+      "repetitions_and_duration",
+      "numerical_pass_thresholds",
+      "executable_entrypoints"
+    ],
+    "evidence_destination": "Future actual runs retain immutable per-run bundles under artifacts/<stage>/<run-id>; a stage report references their hashes. No future report exists yet.",
+    "status_values": [
+      "NOT_RUN",
+      "BLOCKED_UNRESOLVED_CONTRACT",
+      "LOCAL_VERIFIED",
+      "VERIFIED_PASS",
+      "FAIL",
+      "NOT_REQUIRED_INTERNAL_FRESH_BUILD",
+      "NOT_APPLICABLE_NO_RELEASE_BASELINE"
+    ],
+    "development_policy_ref": "development-policy.json",
+    "verification_profile_rule": "DP03 adds applicable initial budgets to future harnesses. Concrete leaf variants, cut/schedule lists and limits remain required; no saved evidence is upgraded. LOCAL_VERIFIED development may continue without future distribution or AI pilot implementation."
+  },
+  "cases": [
+    {
+      "id": "SC01",
+      "stage": "DEV2",
+      "gate": "B1",
+      "task_ref": "XADB-004",
+      "title": "독립 행·거래 정답 모델",
+      "acceptance": "작은 명시적 상태/직렬 이력 oracle로 read/write/delete, snapshot, commit/abort/UNKNOWN을 판정한다. lost update, write skew, phantom, partial batch, ACK 유실의 known-bad 이력을 모두 거절한다. production row/codec/replay를 정답 계산에 재사용하지 않는다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC02",
+      "stage": "DEV4",
+      "gate": "Q1",
+      "task_ref": "XADB-011",
+      "title": "최소 SQL 전체 문법·오류 행렬",
+      "acceptance": "initial_sql_scope의 각 구문·타입·연산·제약에 정상/NULL/빈 값/경계/오류 사례를 연결한다. 디스크 저장 경로와 mixed transaction에서 독립 결과·statement effect를 대조하고 미지원 구문은 안정 오류로 거절한다. 기본 prepare/bind/execute/fetch/close의 parameter/result metadata, NULL·개수·타입·길이 오류, 재bind·재실행·close, schema/object 변경 뒤 stale plan 거절 또는 검증된 재준비를 독립 기대값으로 확인한다. SQL 텍스트에 bind 값을 삽입하는 방식으로 대체하지 않는다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC03",
+      "stage": "DEV5",
+      "gate": "B3",
+      "task_ref": "XADB-033",
+      "title": "서버 요청 상태·접근·취소",
+      "acceptance": "인증 성공/실패, 권한 거절, session 격리, admission/quota, timeout/cancel/drain, commit 전후 disconnect와 재접속을 실제 local protocol client로 시험한다. writer fencing과 COMMITTED/ABORTED/UNKNOWN의 결과를 외부 history로 확인한다. DEV4 기본 prepared 실행을 실제 protocol에 연결하고 statement handle의 세션 격리, metadata/bind 전달, schema 무효화·권한 재확인, cancel/disconnect/close 뒤 자원 회수를 검증한다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC04",
+      "stage": "DEV6",
+      "gate": "CLIENT1",
+      "task_ref": "XADB-034",
+      "title": "native client",
+      "acceptance": "DEV4 타입/SQL의 connect/close, prepare/bind/execute/fetch, metadata, autocommit/explicit transaction, 오류·취소·timeout과 handle/buffer 소유권을 실제 DEV5 서버에 연결한다. 부분 전송·연결 유실·자원 회수를 검사하고 literal 기대값과 대조한다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC05",
+      "stage": "DEV6",
+      "gate": "CLIENT1",
+      "task_ref": "XADB-035",
+      "title": "JDBC",
+      "acceptance": "고정한 JDK/JDBC 지원표의 Connection, Statement, PreparedStatement, ResultSet, metadata, 타입/NULL 매핑, transaction, SQLException/취소·close를 실제 Java client로 검사한다. 미지원 메서드는 명시적 unsupported이며 native PASS를 승계하지 않는다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC06",
+      "stage": "DEV6",
+      "gate": "CLIENT1",
+      "task_ref": "XADB-036",
+      "title": "ODBC",
+      "acceptance": "고정한 ODBC/driver manager/ABI 조합에서 연결, prepare/bind/execute/fetch, indicator/NULL, metadata, diagnostic, transaction, 취소 및 handle 해제를 실제 client로 검사한다. 길이·인코딩·부분 buffer·오류 후 연결 상태를 독립 확인한다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC07",
+      "stage": "DEV7",
+      "gate": "SQL_EXT1",
+      "task_ref": "XADB-037",
+      "title": "확장 타입·값",
+      "acceptance": "배정된 모든 타입/overload/cast의 precision/rounding/overflow/timezone/collation/NULL과 equality/order/hash/key/persistence 벡터를 독립 검산한다. SQL·index·저장·실제 driver의 선언된 지원 조합에서 의미와 오류가 일치해야 한다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC08",
+      "stage": "DEV7",
+      "gate": "SQL_EXT1",
+      "task_ref": "XADB-038",
+      "title": "관계 실행·제약·optimizer",
+      "acceptance": "join/aggregate/subquery/window/set/재귀·view 등 배정된 관계 기능과 FK/CHECK/savepoint와 고급 plan cache·재최적화·확장 SQL의 prepared 실행을 빈 값·중복·NULL·경합·schema 변경으로 검증한다. 독립 관계 oracle 및 최적화 전후 대조를 함께 사용하고 오류의 statement/transaction 효과와 복구를 검사한다. DEV4/DEV5의 기본 prepare/bind 계약은 선행 기준선이며 DEV7까지 미루지 않는다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC09",
+      "stage": "DEV7",
+      "gate": "SQL_EXT1",
+      "task_ref": "XADB-039",
+      "title": "프로그래머블 객체",
+      "acceptance": "PSM/trigger/sequence/queue의 배정된 전체 구문·권한·의존성·재귀/오류·동시성·transaction 효과를 검증한다. 생성/변경/삭제 및 재시작 후 상태를 실제 SQL/server/client 경로에서 독립 기대값과 비교한다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC10",
+      "stage": "DEV7",
+      "gate": "SQL_EXT1",
+      "task_ref": "XADB-040",
+      "title": "LOB·spatial·저장 확장",
+      "acceptance": "배정된 함수/연산/표현 한도의 경계·NULL·큰 값·streaming·index 결과를 독립 값/기하 oracle로 대조한다. 실패/취소·snapshot 수명·quota·디스크 저장 경로 복구를 확인하고 연결 API 지원 조합을 빠짐없이 실행한다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC11",
+      "stage": "DEV7",
+      "gate": "SQL_EXT1",
+      "task_ref": "XADB-041",
+      "title": "외부 routine·DB link·XA",
+      "acceptance": "격리된 소유 peer/TM에서 명세한 transaction 경계, prepare/commit/rollback, in-doubt, 권한, 연결/응답 유실·중복·재시작·운영 해결을 실행한다. 실제 외부 효과와 독립 history를 비교하며 로컬 호출 성공만으로 PASS하지 않는다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC12",
+      "stage": "DEV8",
+      "gate": "OPS1",
+      "task_ref": "XADB-042",
+      "title": "복제·장애전환",
+      "acceptance": "등록한 topology와 sync/async 모드마다 ACK·충돌·순서·초기/재동기화·schema·retention·네트워크 단절·노드 재시작·failover/failback을 검사한다. fenced writer의 잘못된 ACK 0, 명세 밖 유실/중복 0 및 모드별 사전 RPO/RTO 기준을 충족한다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC13",
+      "stage": "DEV8",
+      "gate": "OPS1",
+      "task_ref": "XADB-043",
+      "title": "운영 백업·PITR",
+      "acceptance": "전체 backup/archive closure를 별도 빈 환경에 복원하고 목표 commit/time 경계 및 새 timeline을 독립 history로 검증한다. 누락/손상 dependency 거절, restore 중 반복 장애, retention과 실제 RPO/RTO 기준을 검사한다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC14",
+      "stage": "DEV8",
+      "gate": "OPS1",
+      "task_ref": "XADB-044",
+      "title": "운영·보안·관측",
+      "acceptance": "배정된 권한/설정/감사/진단/이관/관리 CLI·화면과 runbook을 실제 환경에서 실행한다. 권한 없는 효과와 민감정보 노출 0, 설정 적용 상태·기계 출력·오류/진행률 일치 및 연결된 UX 인수 기준을 충족한다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC15",
+      "stage": "DEV8",
+      "gate": "OPS1",
+      "task_ref": "XADB-045",
+      "title": "성능·용량·장시간",
+      "acceptance": "candidate 실행 전에 workload/장비/FS/격리/내구성/driver, 데이터 크기·seed·기간·반복 횟수·p99/TPS/RSS/I/O/RPO/RTO/누출 허용치를 고정한다. 모든 필수 조합이 correctness와 각 임계값을 충족해야 하며 평균으로 실패를 숨기거나 실행 후 기준을 낮추지 않는다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC16",
+      "stage": "DEV9",
+      "gate": "PRODUCT_QUALIFIED",
+      "task_ref": "XADB-046",
+      "title": "제품 capability 기준선·목록 동결",
+      "acceptance": "XADB가 지원할 기능·도구·환경·운영 업무와 근거를 고정한다. 104개 capability를 overload/API/property/limit/오류·운영 조합으로 분해하고 required leaf마다 담당 task·case·oracle·통과 기준을 연결한다. 빈 inventory나 미분류 항목은 실패다.",
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "SC17",
+      "stage": "DEV9",
+      "gate": "PRODUCT_QUALIFIED",
+      "task_ref": "XADB-047",
+      "title": "전체 제품 검증",
+      "acceptance": "동결한 required leaf와 기능×client×환경×운영 조합을 동일 candidate에서 모두 VERIFIED_PASS로 입증한다. 논리 이관·기능적 대체 예제·운영·성능·복구 증거가 완결되고 미확정/미지원/실패/미실행 공백과 blocker가 0이어야 한다. 사내 결과로 외부 출시를 승인하지 않는다.",
+      "execution_status": "NOT_RUN"
+    }
+  ],
+  "work_packages": [
+    {
+      "id": "XADB-034",
+      "stage": "DEV6",
+      "depends_on": [
+        "XADB-033"
+      ],
+      "title": "native client: current-build API, ownership, binding, metadata, errors and cancellation",
+      "case_ids": [
+        "SC04"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-035",
+      "stage": "DEV6",
+      "depends_on": [
+        "XADB-034"
+      ],
+      "title": "JDBC: declared API support matrix and actual Java integration",
+      "case_ids": [
+        "SC05"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-036",
+      "stage": "DEV6",
+      "depends_on": [
+        "XADB-035"
+      ],
+      "title": "ODBC: declared driver-manager/API matrix and actual client integration",
+      "case_ids": [
+        "SC06"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-037",
+      "stage": "DEV7",
+      "depends_on": [
+        "XADB-011"
+      ],
+      "title": "extended scalar types, operators, casts, ordering and persistent codecs",
+      "case_ids": [
+        "SC07"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-038",
+      "stage": "DEV7",
+      "depends_on": [
+        "XADB-037"
+      ],
+      "title": "relational execution, optimizer, constraints, savepoint and advanced prepared-plan extensions",
+      "case_ids": [
+        "SC08"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-039",
+      "stage": "DEV7",
+      "depends_on": [
+        "XADB-038"
+      ],
+      "title": "PSM, triggers, sequence, queue and programmable object lifecycle",
+      "case_ids": [
+        "SC09"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-040",
+      "stage": "DEV7",
+      "depends_on": [
+        "XADB-037",
+        "XADB-029"
+      ],
+      "title": "LOB, spatial and extended storage-facing SQL semantics",
+      "case_ids": [
+        "SC10"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-041",
+      "stage": "DEV7",
+      "depends_on": [
+        "XADB-039",
+        "XADB-036"
+      ],
+      "title": "external routines, DB link and XA/in-doubt workflows",
+      "case_ids": [
+        "SC11"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-042",
+      "stage": "DEV8",
+      "depends_on": [
+        "XADB-033",
+        "XADB-029"
+      ],
+      "title": "replication, resync, conflict handling, fencing, failover and failback",
+      "case_ids": [
+        "SC12"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-043",
+      "stage": "DEV8",
+      "depends_on": [
+        "XADB-033",
+        "XADB-029"
+      ],
+      "title": "backup/archive/PITR and operational restore",
+      "case_ids": [
+        "SC13"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-044",
+      "stage": "DEV8",
+      "depends_on": [
+        "XADB-042",
+        "XADB-043"
+      ],
+      "title": "security, administration, observability and operational runbooks",
+      "case_ids": [
+        "SC14"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-045",
+      "stage": "DEV8",
+      "depends_on": [
+        "XADB-036",
+        "XADB-040",
+        "XADB-041",
+        "XADB-044",
+        "XADB-030"
+      ],
+      "title": "registered workload, capacity, soak and performance qualification",
+      "case_ids": [
+        "SC15"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-046",
+      "stage": "DEV9",
+      "depends_on": [
+        "XADB-001"
+      ],
+      "title": "freeze XADB capability baseline and complete requirement/variant inventory; preparation may start early",
+      "case_ids": [
+        "SC16"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "XADB-047",
+      "stage": "DEV9",
+      "depends_on": [
+        "XADB-036",
+        "XADB-040",
+        "XADB-041",
+        "XADB-045",
+        "XADB-046",
+        "XADB-030"
+      ],
+      "title": "execute the declared XADB capability matrix and resolve every required gap",
+      "case_ids": [
+        "SC17"
+      ],
+      "detail_expansion_required": true,
+      "execution_status": "NOT_RUN"
+    }
+  ],
+  "stages": [
+    {
+      "id": "DEV0",
+      "entry_stage_refs": [],
+      "gate_refs": [
+        "B0"
+      ],
+      "task_refs": [
+        "XADB-002",
+        "XADB-003"
+      ],
+      "contract_ref": "dev0-contract.json",
+      "required_test_refs": [
+        {
+          "file": "dev0-validation.json",
+          "ids": [
+            "evidence-self-tests",
+            "format",
+            "lint",
+            "self-tests",
+            "default-build",
+            "real-fixture-smoke",
+            "clean-runtime",
+            "fresh-source-build"
+          ],
+          "applicability": "LOCAL_MINIMUM"
+        }
+      ],
+      "pass_criteria": [
+        "해당 로컬 계약의 모든 실제 check와 fixture assertion PASS; 의도적 실패는 지정한 FAIL/INVALID/ERROR/TIMEOUT과 일치"
+      ],
+      "acceptance_input_status": "FROZEN_LOCAL_MINIMUM",
+      "open_decisions": [],
+      "deferred_obligations": [
+        "보호 CI·이미지 pin·trusted promotion은 별도 배포 승격 의무이며 로컬 진행을 막지 않음"
+      ],
+      "run_entrypoint": "python3 scripts/check_dev0.py",
+      "evidence_refs": [
+        "dev0-validation.json"
+      ],
+      "execution_status": "LOCAL_VERIFIED",
+      "official_distribution_status": "NOT_RUN"
+    },
+    {
+      "id": "DEV1",
+      "entry_stage_refs": [
+        "DEV0"
+      ],
+      "gate_refs": [
+        "F1"
+      ],
+      "task_refs": [
+        "XADB-005",
+        "XADB-026"
+      ],
+      "contract_ref": "dev1-contract.json",
+      "required_test_refs": [
+        {
+          "file": "dev1-validation.json",
+          "ids": [
+            "dev0-regression",
+            "dependency-boundary",
+            "independent-build",
+            "foundation-default-tests",
+            "foundation-worker",
+            "wrong-expectation-rejected",
+            "platform-independent-build",
+            "platform-default-tests"
+          ],
+          "applicability": "LOCAL_MINIMUM"
+        }
+      ],
+      "pass_criteria": [
+        "dev1-contract.json acceptance에 명시한 전체 foundation/default/controller/process/evidence 시험과 process assertion 및 고의 오답 거절 증거 일치; 상위 crate 의존 0",
+        "foundation/platform normal dependency closure와 각각의 독립 build; 공통 16개·platform 9개 실제 계약 시험, default 13개+4개; 타 OS 지원은 미검증"
+      ],
+      "acceptance_input_status": "FROZEN_LOCAL_MINIMUM",
+      "open_decisions": [],
+      "deferred_obligations": [
+        "XADB-004 독립 행/거래 reference는 DEV2; KU01/PA04 전체나 DB durability를 로컬 증거로 승격하지 않음"
+      ],
+      "run_entrypoint": "python3 scripts/check_dev1.py",
+      "evidence_refs": [
+        "dev1-validation.json"
+      ],
+      "execution_status": "LOCAL_VERIFIED",
+      "official_distribution_status": "NOT_RUN"
+    },
+    {
+      "id": "DEV2",
+      "entry_stage_refs": [
+        "DEV1"
+      ],
+      "gate_refs": [
+        "B2",
+        "D0"
+      ],
+      "task_refs": [
+        "XADB-004",
+        "XADB-014a",
+        "XADB-027",
+        "XADB-006",
+        "XADB-007",
+        "XADB-008",
+        "XADB-010",
+        "XADB-009",
+        "XADB-032"
+      ],
+      "contract_ref": "implementation-contracts.md",
+      "required_test_refs": [
+        {
+          "file": "stage-completion.json",
+          "ids": [
+            "SC01"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "kernel-test-matrix.json",
+          "ids": [
+            "KU02",
+            "KU03",
+            "KU04",
+            "KU05",
+            "KU06",
+            "KU07",
+            "KU08"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "pilot-acceptance.json",
+          "ids": [
+            "PA02",
+            "PA03",
+            "PA05",
+            "PA06",
+            "PA07"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "recovery-test-matrix.json",
+          "ids": [
+            "RC-T01",
+            "RC-T02",
+            "RC-T03",
+            "RC-T04",
+            "RC-T05",
+            "RC-T06",
+            "RC-T07",
+            "RC-T08",
+            "RC-T09",
+            "RC-T10",
+            "RC-T11",
+            "RC-T26"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "ai-performance-engineering.json",
+          "ids": [
+            "PF01",
+            "PF02",
+            "PF03",
+            "PF04",
+            "PF05",
+            "PF06",
+            "PF07",
+            "PF12",
+            "PF13"
+          ],
+          "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+        }
+      ],
+      "pass_criteria": [
+        "K0–K5 production API 연결; ACK 유실 0·부분 반영 0·고정 snapshot 혼합 0·필수 손상 무음 수용 0",
+        "D0의 7개 확장 경계 모두 실제 코드/fixture로 확인; 독립 history, known-bad mutant, 실제 thread/I/O와 재시작 증거",
+        "해당 단계의 PF 성능 개발 인수: 실제 production 경로·동일 의미·유효한 비교·독립 정답·계측 비용·재현 증거. 미구현/불충분을 PASS로 기록하지 않음",
+        "K0–K5 성능 작업은 development-stages.json의 kernel_build_steps.performance 담당에 연결하고 XADB-014a bundle·XADB-032 비교/replay로 검증; XADB-015 AI pilot 완료를 DEV2 gate에 추가하지 않음"
+      ],
+      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "open_decisions": [
+        "XADB-004 reference와 known-bad corpus",
+        "row/catalog/API·오류·WAL layout 및 format 한도",
+        "row/batch/snapshot/pin/recovery/diagnostic byte·개수·시간 예산",
+        "Linux/FS/flush fault model 및 전체 crash cut·schedule·seed·반복 횟수",
+        "PF 사례별 workload/fixture·실제 recipe·계측 비용/회귀 예산·반복/통계 방법을 구현·실행 전에 확정",
+        "각 K 단계의 계측 항목·XADB-014a bundle·XADB-032 비교/replay recipe와 현재/후속 PF variant 배정"
+      ],
+      "deferred_obligations": [
+        "DISK/global/SQL 시험은 해당 단계에서 재실행; L1/L2 선택 최적화는 선행 조건 아님",
+        "XADB-014b 자동 축소와 XADB-015 AI workflow pilot은 후속 작업; K0의 계측·비교·재현을 이 작업들 뒤로 미루지 않음"
+      ],
+      "run_entrypoint": null,
+      "evidence_refs": [],
+      "execution_status": "PARTIAL_IMPLEMENTATION",
+      "official_distribution_status": "NOT_RUN",
+      "design_refs": [
+        "dev2-kernel-design.md",
+        "dev2-implementation-plan.md"
+      ]
+    },
+    {
+      "id": "DEV3",
+      "entry_stage_refs": [
+        "DEV2"
+      ],
+      "gate_refs": [
+        "S1"
+      ],
+      "task_refs": [
+        "XADB-028",
+        "XADB-021",
+        "XADB-022",
+        "XADB-029"
+      ],
+      "contract_ref": "bottom-up-development.md",
+      "required_test_refs": [
+        {
+          "file": "kernel-test-matrix.json",
+          "ids": [
+            "KU09",
+            "KU10"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "recovery-test-matrix.json",
+          "ids": [
+            "RC-T12",
+            "RC-T13",
+            "RC-T14"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "ai-performance-engineering.json",
+          "ids": [
+            "PF09"
+          ],
+          "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+        },
+        {
+          "file": "disk-test-matrix.json",
+          "ids": [
+            "DS01",
+            "DS02",
+            "DS03",
+            "DS04",
+            "DS05",
+            "DS06"
+          ],
+          "applicability": "DISK_STORAGE"
+        }
+      ],
+      "pass_criteria": [
+        "PK/unique/nonunique and row/catalog atomicity; independent scan/index equality",
+        "Actual disk I/O, multi-table atomic commit, reopen and backup/restore at one commit cut",
+        "Working set >= 4 times buffer; bounded page/locator/RSS budgets and measured I/O",
+        "DEV2 regression and required PF cases on the production disk path"
+      ],
+      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "open_decisions": [
+        "page/index/locator byte formats and ownership",
+        "buffer/pin/retention budgets and workload profiles",
+        "freeze independent expected results and actual fault schedule before implementation"
+      ],
+      "deferred_obligations": [
+        "PART/NG·고급 저장·제품 최대 성능은 S1 선행 조건 아님"
+      ],
+      "run_entrypoint": null,
+      "evidence_refs": [],
+      "execution_status": "NOT_RUN",
+      "official_distribution_status": "NOT_RUN"
+    },
+    {
+      "id": "DEV4",
+      "entry_stage_refs": [
+        "DEV3"
+      ],
+      "gate_refs": [
+        "Q1"
+      ],
+      "task_refs": [
+        "XADB-011"
+      ],
+      "contract_ref": "development-stages.md",
+      "required_test_refs": [
+        {
+          "file": "stage-completion.json",
+          "ids": [
+            "SC02"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "kernel-test-matrix.json",
+          "ids": [
+            "KU13"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "ai-performance-engineering.json",
+          "ids": [
+            "PF10"
+          ],
+          "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+        }
+      ],
+      "pass_criteria": [
+        "initial_sql_scope 모든 포함 기능의 디스크 저장 경로 결과·오류·statement rollback PASS; 제외 구문은 명시 거절",
+        "독립 row/history oracle, native/SQL 대조와 영향받는 DEV2/DEV3 회귀 및 CLI 결과/metadata 확인",
+        "해당 단계의 PF 성능 개발 인수: 실제 production 경로·동일 의미·유효한 비교·독립 정답·계측 비용·재현 증거. 미구현/불충분을 PASS로 기록하지 않음",
+        "기본 typed prepare/bind/execute/fetch/close와 parameter/result metadata를 직접 실행과 대조; stale plan·오류·자원 수명 검증. 고급 공유 cache·재최적화는 비요구"
+      ],
+      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "open_decisions": [
+        "정확한 grammar·타입/연산 boundary vector·오류 code/effect",
+        "각 포함 capability의 디스크 저장 경로 test matrix와 CLI/UX 적용 목록",
+        "PF 사례별 workload/fixture·실제 recipe·계측 비용/회귀 예산·반복/통계 방법을 구현·실행 전에 확정",
+        "parameter marker·타입 추론·metadata·bind 소유권·재실행 상태표·schema 무효화 처리와 오류 시점/효과"
+      ],
+      "deferred_obligations": [
+        "server/client·확장 SQL은 후속 의무"
+      ],
+      "run_entrypoint": null,
+      "evidence_refs": [],
+      "execution_status": "NOT_RUN",
+      "official_distribution_status": "NOT_RUN"
+    },
+    {
+      "id": "DEV5",
+      "entry_stage_refs": [
+        "DEV4",
+        "COMM"
+      ],
+      "gate_refs": [
+        "B3"
+      ],
+      "task_refs": [
+        "XADB-012",
+        "XADB-033"
+      ],
+      "contract_ref": "implementation-contracts.md",
+      "required_test_refs": [
+        {
+          "file": "stage-completion.json",
+          "ids": [
+            "SC03"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "kernel-test-matrix.json",
+          "ids": [
+            "KU14"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "pilot-acceptance.json",
+          "ids": [
+            "PA08"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "ai-performance-engineering.json",
+          "ids": [
+            "PF11"
+          ],
+          "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+        }
+      ],
+      "pass_criteria": [
+        "실제 응답 관측→WAL→reopen의 ACK 보존; 인증/권한 거절 후 금지 효과 0",
+        "request/session/cancel/disconnect 상태별 effect·certainty와 독립 이력 일치; Q1/C1 회귀 PASS",
+        "해당 단계의 PF 성능 개발 인수: 실제 production 경로·동일 의미·유효한 비교·독립 정답·계측 비용·재현 증거. 미구현/불충분을 PASS로 기록하지 않음",
+        "DEV4 prepared 계약을 실제 요청/응답·세션 소유 handle에 연결; DEV6가 요구할 metadata·binding·격리·해제 시험 완료"
+      ],
+      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "open_decisions": [
+        "protocol frame/request/reply·인증/권한·session 상태표",
+        "connection/admission/request/output budget와 timeout·cancel·shutdown 경계",
+        "PF 사례별 workload/fixture·실제 recipe·계측 비용/회귀 예산·반복/통계 방법을 구현·실행 전에 확정",
+        "prepare/bind/execute/fetch/close protocol과 statement handle·권한·schema epoch 검증 상태표"
+      ],
+      "deferred_obligations": [
+        "DEV6 driver 완성·이전 사내 client 호환은 선행 조건 아님; XADB-033은 XADB-032를 사용"
+      ],
+      "run_entrypoint": null,
+      "evidence_refs": [],
+      "execution_status": "NOT_RUN",
+      "official_distribution_status": "NOT_RUN"
+    },
+    {
+      "id": "DEV6",
+      "entry_stage_refs": [
+        "DEV5"
+      ],
+      "gate_refs": [
+        "CLIENT1"
+      ],
+      "task_refs": [
+        "XADB-034",
+        "XADB-035",
+        "XADB-036"
+      ],
+      "contract_ref": "development-stages.md",
+      "required_test_refs": [
+        {
+          "file": "stage-completion.json",
+          "ids": [
+            "SC04",
+            "SC05",
+            "SC06"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        }
+      ],
+      "pass_criteria": [
+        "native/JDBC/ODBC 각각 실제 DEV5 서버에서 필수 API 지원표 전부 PASS",
+        "DEV4 타입/SQL·transaction/metadata/error/cancel의 client별 결과 일치; unsupported 및 buffer/handle 소유권 명확"
+      ],
+      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "open_decisions": [
+        "native API 및 JDK/JDBC/ODBC/driver-manager/ABI 지원표",
+        "최소 지원표 전체 operation·오류·환경 조합과 실행 entrypoint"
+      ],
+      "deferred_obligations": [
+        "callable/batch/LOB/XA 등 확장 의미는 해당 DEV7 leaf에 연결; 교차 버전은 안정 릴리스 때 VERSION_RELEASE",
+        "기본 prepare/bind는 DEV4/DEV5가 제공; shared plan cache·고급 재최적화는 CLIENT1 선행 조건이 아님"
+      ],
+      "run_entrypoint": null,
+      "evidence_refs": [],
+      "execution_status": "NOT_RUN",
+      "official_distribution_status": "NOT_RUN"
+    },
+    {
+      "id": "DEV7",
+      "entry_stage_refs": [
+        "DEV4"
+      ],
+      "gate_refs": [
+        "SQL_EXT1"
+      ],
+      "task_refs": [
+        "XADB-037",
+        "XADB-038",
+        "XADB-039",
+        "XADB-040",
+        "XADB-041"
+      ],
+      "contract_ref": "capability-inventory.json",
+      "required_test_refs": [
+        {
+          "file": "stage-completion.json",
+          "ids": [
+            "SC07",
+            "SC08",
+            "SC09",
+            "SC10",
+            "SC11"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        }
+      ],
+      "pass_criteria": [
+        "XADB-037..041에 배정한 전체 필수 기능/variant inventory 완결; 각 leaf의 독립 oracle·오류·원자성·저장/서버/client 통합 PASS",
+        "기능 일부의 사내 배포는 허용하되 필수 task·variant를 제외하거나 미구현을 N/A로 바꿔 DEV7 전체를 닫지 않음"
+      ],
+      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "open_decisions": [
+        "replacement planned_stages에 DEV7이 있는 모든 요구의 세부 배정과 범위 경계",
+        "overload/연산/API·권한·동시성·복구·client 조합, leaf 선행 task와 수치 한도"
+      ],
+      "deferred_obligations": [
+        "PART/NG SQL 노출은 실제 core와 통합 gate 필요; 다른 단계에 배정한 요구도 DEV9에서 누락 검사"
+      ],
+      "run_entrypoint": null,
+      "evidence_refs": [],
+      "execution_status": "NOT_RUN",
+      "official_distribution_status": "NOT_RUN"
+    },
+    {
+      "id": "DEV8",
+      "entry_stage_refs": [
+        "DEV3",
+        "DEV5"
+      ],
+      "gate_refs": [
+        "OPS1"
+      ],
+      "task_refs": [
+        "XADB-042",
+        "XADB-043",
+        "XADB-044",
+        "XADB-045"
+      ],
+      "contract_ref": "capability-inventory.json",
+      "required_test_refs": [
+        {
+          "file": "stage-completion.json",
+          "ids": [
+            "SC12",
+            "SC13",
+            "SC14",
+            "SC15"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "recovery-test-matrix.json",
+          "ids": [
+            "RC-T24",
+            "RC-T25"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "ai-performance-engineering.json",
+          "ids": [
+            "PF08",
+            "PF14"
+          ],
+          "applicability": "required at stage completion for implemented capabilities; not an entry gate for all future instrumentation"
+        }
+      ],
+      "pass_criteria": [
+        "XADB-042..045의 모든 필수 topology/복구/운영/workload 조합 PASS; 모드별 ACK/RPO/RTO·fencing·retention 충족",
+        "사전 등록한 기간·반복·용량·성능·누출 기준 전부 충족; 의미/내구성을 낮춘 측정은 거절",
+        "해당 단계의 PF 성능 개발 인수: 실제 production 경로·동일 의미·유효한 비교·독립 정답·계측 비용·재현 증거. 미구현/불충분을 PASS로 기록하지 않음"
+      ],
+      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "open_decisions": [
+        "복제 topology·sync/async·충돌·쓰기 소유·failover 정책",
+        "환경별 workload·데이터·기간·반복과 TPS/p99/RPO/RTO/RSS/I/O·자원 증가 허용치",
+        "운영 보안/이관/runbook·CLI/화면/UX 필수 목록과 전체 기능 통합 조합",
+        "PF 사례별 workload/fixture·실제 recipe·계측 비용/회귀 예산·반복/통계 방법을 구현·실행 전에 확정"
+      ],
+      "deferred_obligations": [
+        "leaf 준비/국소 profiling은 일찍 가능; 전체 qualification은 실제 DEV6/DEV7 등 의존 기능 구현 후"
+      ],
+      "run_entrypoint": null,
+      "evidence_refs": [],
+      "execution_status": "NOT_RUN",
+      "official_distribution_status": "NOT_RUN"
+    },
+    {
+      "id": "DEV9",
+      "entry_stage_refs": [
+        "DEV6",
+        "DEV7",
+        "DEV8",
+        "PART"
+      ],
+      "gate_refs": [
+        "PRODUCT_QUALIFIED"
+      ],
+      "task_refs": [
+        "XADB-046",
+        "XADB-047"
+      ],
+      "contract_ref": "capability-inventory.json",
+      "required_test_refs": [
+        {
+          "file": "stage-completion.json",
+          "ids": [
+            "SC16",
+            "SC17"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        }
+      ],
+      "pass_criteria": [
+        "BaselineFrozen ∧ InventoryComplete ∧ RequiredLeafCount>0; 미확정 0·required gap 0",
+        "CLIENT1/SQL_EXT1/OPS1/P1 및 요구된 기능별 통합 gate와 현재 build 복구·운영·성능 증거 완결",
+        "제품 capability 인수와 안정 출시 분리; EXTERNAL_RELEASE에서만 고객 버전 호환·출시 blocker 추가 판정"
+      ],
+      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "open_decisions": [
+        "XADB의 기능 범위·설정·사용 사례·실행 환경",
+        "104 capability 아래 완전한 leaf/variant 목록과 이관·운영·성능 corpus"
+      ],
+      "deferred_obligations": [
+        "디스크 저장 DEV3는 필수; 선언한 capability가 global index를 요구하면 GLOBAL_INDEX_QUALIFICATION 필수"
+      ],
+      "run_entrypoint": null,
+      "evidence_refs": [],
+      "execution_status": "NOT_RUN",
+      "official_distribution_status": "NOT_RUN"
+    },
+    {
+      "id": "COMM",
+      "entry_stage_refs": [
+        "DEV1"
+      ],
+      "gate_refs": [
+        "C1"
+      ],
+      "task_refs": [
+        "XADB-031"
+      ],
+      "contract_ref": "bottom-up-development.md",
+      "required_test_refs": [
+        {
+          "file": "kernel-test-matrix.json",
+          "ids": [
+            "KU12"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        }
+      ],
+      "pass_criteria": [
+        "engine 없이 실제 소유 local endpoint에서 fragmentation/backpressure/timeout/disconnect 시험 PASS; frame/queue 상한 준수"
+      ],
+      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "open_decisions": [
+        "frame/protocol version·크기·queue·timeout 수치와 상태별 fault matrix"
+      ],
+      "deferred_obligations": [
+        "SQL 요청 의미는 DEV5에서 통합"
+      ],
+      "run_entrypoint": null,
+      "evidence_refs": [],
+      "execution_status": "NOT_RUN",
+      "official_distribution_status": "NOT_RUN"
+    },
+    {
+      "id": "PART",
+      "entry_stage_refs": [
+        "DEV3"
+      ],
+      "gate_refs": [
+        "P1"
+      ],
+      "task_refs": [
+        "XADB-030"
+      ],
+      "contract_ref": "bottom-up-development.md",
+      "required_test_refs": [
+        {
+          "file": "kernel-test-matrix.json",
+          "ids": [
+            "KU11"
+          ],
+          "applicability": "CURRENT_DECLARED_CAPABILITIES"
+        },
+        {
+          "file": "disk-test-matrix.json",
+          "ids": [
+            "DS07"
+          ]
+        }
+      ],
+      "pass_criteria": [
+        "range/list/hash routing·membership·local index·row move와 offline lifecycle을 실제 디스크 저장 경로에서 검증; snapshot·복구·unique scope 유지"
+      ],
+      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "open_decisions": [
+        "range 경계/list 중복/hash·NULL routing 명세 및 partition 수/크기 상한",
+        "MOVE/DROP/TRUNCATE 실패 cut와 기존 reader/backup pin 시험 목록"
+      ],
+      "deferred_obligations": [
+        "table-global unique 미지원 상태는 명시 거절; SQL 노출은 별도 실제 통합"
+      ],
+      "run_entrypoint": null,
+      "evidence_refs": [],
+      "execution_status": "NOT_RUN",
+      "official_distribution_status": "NOT_RUN"
+    },
+    {
+      "id": "NG",
+      "entry_stage_refs": [
+        "PART"
+      ],
+      "gate_refs": [
+        "H2",
+        "H3"
+      ],
+      "task_refs": [
+        "XADB-023",
+        "XADB-024",
+        "XADB-025"
+      ],
+      "required_test_refs": [
+        {
+          "file": "disk-test-matrix.json",
+          "ids": [
+            "DS08"
+          ]
+        }
+      ],
+      "pass_criteria": [
+        "두 index placement의 point/range·unique를 독립 scan과 대조; row/index/locator/membership의 원자성·수명·복구 PASS",
+        "신규 native global 경로에서 H1 crash suite 재실행; working set ≥ buffer 4배 및 자원 예산 충족"
+      ],
+      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "open_decisions": [
+        "key/NULL/collation·tree layout와 지원 타입별 vector",
+        "pin/retention/GC·memory/RTO 수치와 workload/cut matrix"
+      ],
+      "deferred_obligations": [
+        "global index decimal은 실제 decimal capability 추가 시 의무; SQL 없는 초기 core를 DEV7에 종속시키지 않음",
+        "SQL 기능 지원 승격은 DEV5와 GLOBAL_INDEX_QUALIFICATION; 고객 호환은 VERSION_RELEASE"
+      ],
+      "run_entrypoint": null,
+      "evidence_refs": [],
+      "execution_status": "NOT_RUN",
+      "official_distribution_status": "NOT_RUN"
+    }
+  ],
+  "performance_engineering_ref": "ai-performance-engineering.json"
+}

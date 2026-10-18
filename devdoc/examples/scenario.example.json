@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "document_status": "PROPOSAL_EXAMPLE_NOT_EXECUTED",
+  "case_id": "XADB-DUR-001",
+  "contracts": [
+    "ACK-DURABLE-001",
+    "BATCH-ATOMIC-001"
+  ],
+  "backend": "real-subprocess",
+  "fixture": {
+    "id": "empty-kv-v1",
+    "seed": 17,
+    "private_data_directory": true
+  },
+  "steps": [
+    {
+      "id": "begin",
+      "actor": "client-A",
+      "operation": "begin_transaction"
+    },
+    {
+      "id": "put-a",
+      "actor": "client-A",
+      "operation": "put",
+      "key": "a",
+      "value": 101
+    },
+    {
+      "id": "put-b",
+      "actor": "client-A",
+      "operation": "put",
+      "key": "b",
+      "value": 202
+    },
+    {
+      "id": "commit",
+      "actor": "client-A",
+      "operation": "commit",
+      "expect_reply": "COMMITTED"
+    },
+    {
+      "id": "crash",
+      "actor": "runner",
+      "operation": "kill_owned_server_process",
+      "after": "commit.reply_observed"
+    },
+    {
+      "id": "reopen",
+      "actor": "runner",
+      "operation": "reopen_same_private_data_directory"
+    },
+    {
+      "id": "read",
+      "actor": "client-B",
+      "operation": "read_all_typed_rows"
+    }
+  ],
+  "required_witnesses": [
+    "wal.commit_batch.synced",
+    "commit.reply_observed",
+    "owned_process.killed",
+    "recovery.completed"
+  ],
+  "oracle": {
+    "id": "exact-kv-state-v1",
+    "independent_expected_rows": [
+      [
+        "a",
+        101
+      ],
+      [
+        "b",
+        202
+      ]
+    ],
+    "duplicates_allowed": false,
+    "extra_rows_allowed": false,
+    "expected_provenance": "explicit transaction contract, not copied from candidate output"
+  },
+  "cleanup": {
+    "assert_no_owned_processes": true,
+    "assert_no_leaked_handles": true
+  },
+  "limits": {
+    "timeout_seconds": 30
+  },
+  "failure_bundle_required": true,
+  "limitations": [
+    "Process kill alone does not model power loss or a lying storage device.",
+    "A separate faultable-filesystem campaign must test unsynced-write loss, tearing, and reorder.",
+    "Operation and event names are proposed interfaces, not currently installed commands."
+  ]
+}

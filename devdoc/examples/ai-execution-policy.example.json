@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "document_status": "DESIGN_PROPOSAL_NOT_IMPLEMENTED_OR_EXECUTED",
+  "product": "XADB",
+  "active_configuration": false,
+  "objective": "Complete ordinary debugging, reproduction, testing, review, and optimization within explicit safe scope; prevention is primary, interruption recovery is secondary",
+  "provider_no_stop_guarantee": false,
+  "authorization_source": "Existing user and organization authorization, verified by controller; this file grants no permissions",
+  "profiles": {
+    "review-local": {
+      "resources": "immutable source/diff/specification and agent-readable evidence views",
+      "candidate_code_execution": false,
+      "analysis_tools": "pinned and isolated",
+      "raw_artifact_access": false
+    },
+    "dev-isolated": {
+      "resources": "run-owned source copy, build cache, generated synthetic fixture, private data overlay and child processes",
+      "candidate_code_execution": true,
+      "os_enforcement_required": true,
+      "real_host_pid_or_filesystem_visible": false,
+      "internet_egress": false,
+      "real_credentials": false,
+      "production_access": false
+    },
+    "diagnostic-lab": {
+      "resources": "preprovisioned disposable lab image with owned debugger/profiler/actual-storage test capability",
+      "arbitrary_host_control": false,
+      "external_targets": false,
+      "requires_profile_validation_before_use": true
+    }
+  },
+  "normal_workflow": [
+    "read exact source and sanitized evidence",
+    "construct minimal synthetic fixture",
+    "run actual Engine API with explicit fault ports",
+    "run registered integration recipe against run-owned XADB child",
+    "verify witnesses, independent oracle, resource cleanup, and effects",
+    "produce a minimal result envelope and validated evidence views"
+  ],
+  "permitted_effects_within_dev_isolated": [
+    "create_and_modify_run_overlay",
+    "compile_candidate_in_worker",
+    "run_registered_case",
+    "inject_named_internal_fault",
+    "crash_owned_child_under_declared_recipe",
+    "recover_owned_database",
+    "read_agent_evidence_view",
+    "finalize_owned_resources"
+  ],
+  "normal_workflow_external_effect_targets": {
+    "unowned_process_control": 0,
+    "shared_or_production_database_write": 0,
+    "host_security_configuration_change": 0,
+    "real_credential_access": 0,
+    "unapproved_external_network_access": 0
+  },
+  "request_contract": {
+    "selectors": [
+      "project_id",
+      "revision_digest",
+      "build_digest",
+      "case_id",
+      "fixture_digest",
+      "profile_id",
+      "recipe_digest",
+      "run_id"
+    ],
+    "reject_arbitrary_host_path_pid_url_or_shell": true,
+    "scope_checks": [
+      "authenticated_caller",
+      "project_and_run_owner",
+      "resource_generation",
+      "registered_recipe",
+      "current_scope",
+      "lease",
+      "resource_budget"
+    ],
+    "enforcement": [
+      "OS_isolation",
+      "no_host_admin_socket",
+      "symlink_and_mount_escape_checks",
+      "process_handle_identity",
+      "runtime_effect_receipts"
+    ],
+    "argument_digest_bound_to_operation_id": true,
+    "effect_plan_visible_to_parent_and_platform": true,
+    "labels_do_not_override_actual_effects": true
+  },
+  "supply_and_policy": {
+    "pinned_toolchain_and_dependencies": true,
+    "build_scripts_are_untrusted_code": true,
+    "controller_policy_not_writable_by_candidate": true,
+    "recipe_changes_use_protected_deployment": true,
+    "broad_command_prefix_is_not_authorization": true,
+    "no_security_setting_changes_by_normal_runner": true
+  },
+  "evidence": {
+    "minimize_before_collection": true,
+    "synthetic_data_default": true,
+    "raw_store_default_agent_access": false,
+    "use_os_or_view_service_for_real_access_separation": true,
+    "parent_input": "validated result envelope and approved typed views; no bulk raw dump",
+    "sensitive_check_failure_or_unknown": "do not promote artifact into agent-readable view",
+    "scanner_pass_is_not_proof_of_complete_deidentification": true,
+    "reporting_delay_is_not_policy_exemption": true,
+    "audit_visibility_preserved": true
+  },
+  "residual_failure_handling": {
+    "product_verdict_separate_from_workflow_state": true,
+    "before_effect": "persist operation intent",
+    "after_effect": "persist receipt",
+    "unknown_effect": "reconcile before retry",
+    "policy_denial_or_safety_stop": "no automatic reroute; inspect notice and scope; only provider-permitted safe continuation",
+    "lost_agent_without_notice": "AGENT_LOST_UNKNOWN; do not infer ordinary failure",
+    "recovery_does_not_replace_prevention_acceptance": true
+  },
+  "related_artifacts": [
+    "execution-request.example.json",
+    "execution-boundary-cases.json",
+    "agent-routing-policy.example.json",
+    "subagent-result.example.json",
+    "AGENT_WORKFLOW.example.md"
+  ],
+  "test_selection": {
+    "order": [
+      "M1_module",
+      "M2_embedded_components",
+      "M3_required_isolated_system"
+    ],
+    "required_levels": "contract and dependency graph determine; no layer may silently be dropped",
+    "module_matrix": "module-test-matrix.json"
+  }
+}
