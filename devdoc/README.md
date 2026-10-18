@@ -23,6 +23,7 @@
 | 성능 계측·원인 분석·개선 | [AI 성능 개발 계약](contracts/ai-performance-engineering.md) | DP07, 해당 단계 PF 인수 의무 |
 | 기능 명세·설계를 작성할 대상 | [작성 대상 목록](plans/feature-design-inventory.md) | [원문 이름 색인](reference/feature-design-leaf-index.md)과 해당 소유 계약 |
 | 프로젝트 목표·AI 개발 실험 | [제품 방향](plans/project-direction.md) | 현재 구현과 최종 목표, 공개 DBMS 참고 방향을 구분 |
+| 상용 DBMS 수준으로의 확장 가능성 | [기술 평가](reference/commercial-dbms-extensibility-assessment.md) | 현재 구현·채택 설계·미검증 과제와 단계별 재평가 조건; 제품 인수 증거 아님 |
 | SQL·CLI·매뉴얼의 상세 제안 | [참고 자료 색인](reference/README.md) | 제안 상태를 확인하고 채택 계약과 구별 |
 | 버전·형식 호환 | [버전 정책](policies/version-compatibility-policy.json) | 사내 새 DB와 안정 릴리스 기준선을 구별 |
 | 증거·과거 조사 확인 | [증거 색인](evidence/README.md), [역사 자료](history/README.md) | source/revision/hash·실행 범위 |

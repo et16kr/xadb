@@ -398,6 +398,11 @@
       "role": "reference",
       "title": "XADB — AI가 개발하고 검증할 수 있는 데이터베이스 설계"
     },
+    "commercial-dbms-extensibility-assessment.md": {
+      "path": "reference/commercial-dbms-extensibility-assessment.md",
+      "role": "reference",
+      "title": "XADB — 상용 DBMS 수준으로의 확장 가능성 평가"
+    },
     "feature-design-leaf-index.md": {
       "path": "reference/feature-design-leaf-index.md",
       "role": "reference",
