@@ -522,6 +522,21 @@
       "path": "evidence/dev2-performance-xadb-20261018-r1.json",
       "role": "evidence",
       "title": "DEV2 K0-005 diagnostics and local audit/replay execution"
+    },
+    "comm-design.md": {
+      "path": "contracts/comm-design.md",
+      "role": "contracts",
+      "title": "COMM — 독립 통신 계층 상세 설계"
+    },
+    "comm-implementation-plan.md": {
+      "path": "plans/comm-implementation-plan.md",
+      "role": "plans",
+      "title": "COMM — 구현·검증 계획"
+    },
+    "comm-source-research.md": {
+      "path": "evidence/comm-source-research.md",
+      "role": "evidence",
+      "title": "COMM 소스 조사와 설계 검토 기록"
     }
   }
 }

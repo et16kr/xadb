@@ -34,6 +34,8 @@ DEV3에서는 실제 disk page·bounded buffer/locator, row/catalog와 PK·uniqu
 
 COMM은 DEV1 다음 frame/transport/backpressure를, PART는 DEV3 다음 disk partition/local index를 구현한다. NG는 PART 뒤 disk global index를 다룬다. DEV5 서버와 연결할 때 실제 request/reply와 SQL·durability 의미를 다시 검증한다.
 
+COMM의 AXF1 stream·Linux local socket·quota·deadline·취소 경계는 [상세 설계](../contracts/comm-design.md), C1/KU12 구현 순서와 인수는 [구현·검증 계획](comm-implementation-plan.md)을 따른다. 설계 작성은 C1 구현·실행 완료가 아니다.
+
 <a id="section-5"></a>
 ## 5. 진행·완료
 

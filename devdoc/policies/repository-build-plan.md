@@ -129,6 +129,8 @@ worker 실행 관계는 controller의 engine import를 뜻하지 않는다. `xad
 
 현재 분리는 DEV1에 이미 존재하던 구현만 옮긴 것이다. 파일 생성/open·writer 배제·rename/publication의 공통 경계와 recovery 연결은 DEV2에서, transport·대기/취소 경계는 COMM에서 실제 사용 계약과 함께 정의한다. WAL/페이지/SQL/오류 의미나 개발 순서를 이번 분리로 변경하지 않는다. 서버 OS 지원과 client OS 지원표는 별개이며 공통 값·프로토콜 코드가 Linux 서버 구현을 import하지 않게 한다.
 
+[COMM 상세 설계](../contracts/comm-design.md#architecture)는 foundation의 byte-I/O/readiness port, platform의 Linux socket adapter, transport의 framing·queue·deadline 책임을 구체화한다. 실제 API·adapter·crate는 미구현이며 현재 implemented port 목록·의존 간선·fingerprint/export roots는 유지한다. 시험 조립부의 실제 경로와 dependency는 구현과 함께 등록한다.
+
 새 OS에는 빈 성공 stub을 두지 않는다. 사업상 지원 결정 후 OS/CPU/filesystem capability, 영속화·잠금·오류·취소 의미를 검토하고 adapter·실제 회귀/복구·패키징·CI 증거를 추가한다. 공통 계약을 만족하지 못하면 계약 변경을 별도로 검토한다. 컴파일 성공이나 이전 Linux PASS를 새 OS의 지원 증거로 승계하지 않는다.
 
 <a id="dependency-review"></a>

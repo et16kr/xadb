@@ -288,7 +288,9 @@
       ],
       "channel": "development",
       "execution_status": "NOT_RUN",
-      "completion_ref": "stage-completion.json#COMM"
+      "completion_ref": "stage-completion.json#COMM",
+      "design_ref": "comm-design.md",
+      "implementation_plan_ref": "comm-implementation-plan.md"
     },
     {
       "id": "PART",

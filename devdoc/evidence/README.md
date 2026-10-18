@@ -14,6 +14,7 @@ DEV4의 [소스·Oracle/ARIES 조사](dev4-source-research.md)는 PostgreSQL·Ma
 
 <!-- catalogue -->
 
+- [COMM 소스 조사와 설계 검토 기록](comm-source-research.md) — PostgreSQL·MariaDB·CUBRID의 실제 revision·열람 범위; C1 실행 증거 아님
 - [dev0-xadb-20261018-r1.json](dev0-xadb-20261018-r1.json)
 - [dev1-xadb-20261018-r1.json](dev1-xadb-20261018-r1.json)
 - [dev2-xadb-20261018-r1.json](dev2-xadb-20261018-r1.json)

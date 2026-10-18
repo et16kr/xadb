@@ -3204,7 +3204,9 @@
       ],
       "existing_doc_refs": [
         "interface-experience-plan.md",
-        "repository-build-plan.md"
+        "repository-build-plan.md",
+        "comm-design.md",
+        "comm-implementation-plan.md"
       ],
       "items": [
         {
@@ -3221,9 +3223,11 @@
             "R09-09"
           ],
           "scope_status": "DOCUMENTATION_REQUIRED",
-          "document_status": "RELATED_MATERIAL_DETAIL_REVIEW_REQUIRED",
+          "document_status": "COMM_LOCAL_DESIGN_WRITTEN_IMPLEMENTATION_NOT_RUN",
           "specification_written_by_this_inventory": false,
-          "design_written_by_this_inventory": false
+          "design_written_by_this_inventory": false,
+          "design_ref": "comm-design.md",
+          "remaining_scope": "Current-build AXF1 streaming specified in COMM; application message sequence belongs to DEV5"
         },
         {
           "id": "NET-02",
@@ -3240,9 +3244,11 @@
             "R09-09"
           ],
           "scope_status": "DOCUMENTATION_REQUIRED",
-          "document_status": "RELATED_MATERIAL_DETAIL_REVIEW_REQUIRED",
+          "document_status": "COMM_LOCAL_DESIGN_WRITTEN_IMPLEMENTATION_NOT_RUN",
           "specification_written_by_this_inventory": false,
-          "design_written_by_this_inventory": false
+          "design_written_by_this_inventory": false,
+          "design_ref": "comm-design.md",
+          "remaining_scope": "Local loopback/owned Unix endpoints specified in COMM; remote and client OS integration belongs to DEV5/DEV6"
         },
         {
           "id": "NET-03",
@@ -3317,9 +3323,11 @@
             "R15-04"
           ],
           "scope_status": "DOCUMENTATION_REQUIRED",
-          "document_status": "RELATED_MATERIAL_DETAIL_REVIEW_REQUIRED",
+          "document_status": "COMM_LOCAL_DESIGN_WRITTEN_IMPLEMENTATION_NOT_RUN",
           "specification_written_by_this_inventory": false,
-          "design_written_by_this_inventory": false
+          "design_written_by_this_inventory": false,
+          "design_ref": "comm-design.md",
+          "remaining_scope": "Local byte/slot quotas and backpressure specified in COMM; SQL result producer/cursor cleanup belongs to DEV5"
         },
         {
           "id": "NET-07",

@@ -11,7 +11,8 @@
     "dev0-contract.json",
     "dev1-contract.json",
     "recovery-logging-contract.json",
-    "disk-storage-design.md"
+    "disk-storage-design.md",
+    "comm-design.md"
   ],
   "policy": {
     "design_root": "devdoc",
@@ -290,7 +291,8 @@
       "normal_workspace_dependencies": [
         "xadb-foundation"
       ],
-      "role": "bounded frame/connection/backpressure"
+      "role": "bounded frame/connection/backpressure",
+      "design_ref": "comm-design.md"
     },
     {
       "name": "xadb-sql",

@@ -23,6 +23,8 @@
 | PART | DEV3 | SQL-free partition foundation | P1 |
 | NG | PART | SQL-free native global engine branch | H2, H3 |
 
+COMM은 [독립 통신 상세 설계](../contracts/comm-design.md)와 [C1/KU12 구현·검증 계획](comm-implementation-plan.md)을 따른다. DEV1 AXF1 bytes를 재사용하고 TCP loopback·소유 Unix socket에서 진행한다. transport와 runner는 미구현이며 실행 상태는 NOT_RUN이다.
+
 <a id="section-2"></a>
 ## 2. 최소 SQL 범위
 

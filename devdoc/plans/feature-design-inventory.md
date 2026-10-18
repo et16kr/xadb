@@ -237,6 +237,8 @@ DEV4 최소 subset의 문법·타입·DDL/DML·prepared·CLI는 [상세 설계](
 
 ## NET 통신과 wire protocol
 
+[COMM 상세 설계](../contracts/comm-design.md)와 [구현·검증 계획](comm-implementation-plan.md)이 NET-01, NET-02/06의 local C1 범위를 구체화한다. NET-03/04/05/07의 업무 protocol과 NET-08 TLS는 후속 계약·인수가 필요하며 이번 작성으로 전체 NET 명세·제품 구현이 완료되지는 않는다.
+
 | 항목 | 주제 | 기능 명세 | 설계 |
 | --- | --- | --- | --- |
 | NET-01 | Frame과 메시지 형식 | frame 한도·fragmentation·순서·잘못된 입력 | codec·length 검증·decoder state·buffer 소유 |

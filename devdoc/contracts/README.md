@@ -7,6 +7,7 @@
 - [ai-performance-engineering.json](ai-performance-engineering.json)
 - [XADB — AI가 분석·수정·검증하는 성능 개발 구조](ai-performance-engineering.md)
 - [causal-diagnosis-cases.json](causal-diagnosis-cases.json)
+- [COMM — 독립 통신 계층 상세 설계](comm-design.md) — AXF1 stream·Linux local socket·quota·deadline·취소; 구현·C1 검증 미실행
 - [dev0-contract.json](dev0-contract.json)
 - [dev1-contract.json](dev1-contract.json)
 - [DEV2 — SQL 없는 영속 커널 상세 설계](dev2-kernel-design.md)

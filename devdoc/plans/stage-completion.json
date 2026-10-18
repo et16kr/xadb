@@ -1034,7 +1034,7 @@
       "task_refs": [
         "XADB-031"
       ],
-      "contract_ref": "bottom-up-development.md",
+      "contract_ref": "comm-design.md",
       "required_test_refs": [
         {
           "file": "kernel-test-matrix.json",
@@ -1045,19 +1045,22 @@
         }
       ],
       "pass_criteria": [
-        "engine 없이 실제 소유 local endpoint에서 fragmentation/backpressure/timeout/disconnect 시험 PASS; frame/queue 상한 준수"
+        "engine 없이 실제 소유 TCP IPv4/IPv6 loopback·Unix endpoint에서 KU12 상세 C-V01–18 전체와 DEV1/DEV0 회귀 PASS; AXF1·byte/slot/global quota·absolute deadline·취소/종료·독립 oracle·native fault receipt·성능 비용 인수 충족"
       ],
-      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "acceptance_input_status": "LEAF_DESIGN_DEFINED_EXECUTABLE_PROFILE_REQUIRED",
       "open_decisions": [
-        "frame/protocol version·크기·queue·timeout 수치와 상태별 fault matrix"
+        "COMM-C0 effect port의 실제 Rust API·safe Linux socket/poll feature 검토",
+        "COMM-C4 실제 runner·native fault recipe·seed/모델 manifest·환경 및 독립 검토; 수치 기본값은 comm-design.md와 comm-implementation-plan.md에 정의"
       ],
       "deferred_obligations": [
-        "SQL 요청 의미는 DEV5에서 통합"
+        "DEV5/DEV6: 인증·handshake·SQL request/reply·LOB chunk·request cancel·재연결/UNKNOWN 및 실제 ACK→WAL→reopen",
+        "NET-08/SEC-04: 원격/TLS·인증서·client 검증과 실제 통합 인수; local-only C1로 완료 처리하지 않음"
       ],
       "run_entrypoint": null,
       "evidence_refs": [],
       "execution_status": "NOT_RUN",
-      "official_distribution_status": "NOT_RUN"
+      "official_distribution_status": "NOT_RUN",
+      "implementation_plan_ref": "comm-implementation-plan.md"
     },
     {
       "id": "PART",
