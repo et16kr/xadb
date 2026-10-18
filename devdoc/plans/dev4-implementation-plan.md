@@ -1,6 +1,6 @@
 # DEV4 — embedded SQL 구현·검증 계획
 
-2026-10-18 · **DEV4-DESIGN-001·REVIEW-002·REVIEW-003 ACCEPTED / 제품·Q1 NOT_RUN**
+2026-10-19 · **DEV4-DESIGN-001·REVIEW-002–005 ACCEPTED / 제품·Q1 NOT_RUN**
 
 [SQL 소유 계약](../contracts/dev4-sql-design.md) · [소스 조사](../evidence/dev4-source-research.md) · [단계 완료](stage-completion.json) · [저장 선행](dev3-implementation-plan.md) · [개발 운영](../policies/development-policy.md)
 
@@ -49,7 +49,7 @@ DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01�
 | D4-F01 | 문법·대문자 이름·SQL 빈 text 정규화·부분 NULL/문장 최종 UNIQUE·span·수치 한도 | exact token/AST/Rust signature, 원래 text 타입 보존과 native canonical fixture, 모든 production error→SQL code/effect vector, malformed/unsupported token corpus와 hash |
 | D4-F02 | `?`·prepare 추론·owned bind·metadata·상태표·stale reject·DDL 두 outcome | engine catalog dependency accessor, scan/mutation 공통 statement token·opaque row observation과 대기 없는 X-lock 검증, snapshot q/등록·aging의 동기화와 published q 보존·guard 인계 증거, session/result 수명, DDL validation/precommit 경계·두 receipt/오류/취소·NotCommittedRecoveryRequired 전이, ROLLBACK/close_session/Drop의 undo 소유 인계·fencing API·literal vector·실제 thread barrier |
 | D4-F03 | bounded external sort와 SQL memory/disk/FD 예산 | 임시 file/record/manifest byte layout·독립 hex, owner cleanup port·disk reservation, merge/ENOSPC/short I/O fault cuts와 allocation inventory |
-| D4-F04 | Q1 필수 사례와 native/literal independence·rollback/recrash | SQL worker adapter/protocol version·DDL 두 outcome/ACK·NotCommittedRecoveryRequired를 포함한 row/error/event schema, D4-V17–26·DEV3 WAL/undo/CLR·bootstrap/예약 복원과 fault 교차 inventory, mutation·negative verdict·seed/schedule·실행 명령 |
+| D4-F04 | Q1 필수 사례와 native/literal independence·rollback/recrash | SQL worker adapter/protocol version·DDL 두 outcome/ACK·NotCommittedRecoveryRequired를 포함한 row/error/event schema, D4-V17–28·DEV3 WAL/undo/CLR·bootstrap/예약 복원과 fault 교차 inventory, mutation·negative verdict·seed/schedule·실행 명령 |
 | D4-F05 | PF10 workload군·기본 V2/V3·계측 책임 | 실제 host/CPU/FS·fixture cardinality/distribution/hash·release binary/feature, warmup/sample·RSS/I/O·계측 비용·회귀 threshold·paired 순서와 재현 recipe |
 
 담당은 해당 leaf 구현자와 SQL/engine 계약 담당, 통합 담당이며 실제 이름을 착수 기록에 배정한다. 빈 담당·null entrypoint를 동결 완료로 바꾸지 않는다. 각 동결은 DP01 별도 검토를 받고 구현 후보를 실행하기 전에 hash를 기록한다. 실패를 없애기 위해 사후 예산/variant를 줄이지 않는다.
@@ -75,6 +75,8 @@ DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01�
 | D4-T12 / SC02 | interactive/batch CLI·stdin/file·Unicode/NULL/binary 출력·metadata/count/error·중간 실패·EOF·DDL 두 outcome | typed embedded 결과와 독립 출력 fixture, exit status·stdout/stderr·종료 시 숨은 commit 없음. DDL 실패 뒤 이미 commit된 이전 DML을 명시 |
 | D4-T13 / KU13 | literal SQL/native 동등 workload·row/index/catalog recovery·알려진 잘못된 결과/ACK/order/error·잘못된 binary/recipe | 같은 production 경로 둘의 일치만으로 PASS 금지. oracle/runner는 부정 사례를 거절해야 함 |
 | D4-T14 / PF10 | 아래 workload/계측 모드·큰 working set·sort spill·native 대비 SQL 비용 | plan→실제 node→storage 경로·동등 결과·자원 상한·비교 유효성·bundle 재현 |
+
+[DEV4-REVIEW-005](../contracts/dev4-sql-design.md#mathematical-review)의 D4-V27은 T04/T10/T11에, D4-V28은 T08/T11에 포함한다. 반복 statement 실패 뒤 S1 논리 값과 실제 WAL/CLR·undo/page·transaction lock 회계를 독립 대조하며 quota counter의 과거값 복원 mutant를 거절한다. 전체 abort 예약은 보존한다. cursor snapshot은 유지하면서 execute/fetch/close마다 operation context를 새로 연결하고, 이전 호출 deadline 경과·늦은 cancel·현재 호출 취소·parked 재개의 원래 deadline을 검사한다. F02에 API·소유/해제 시점을, F04/F05에 fixed schedule·잔여 charge/예약 및 peak를 동결한다. 두 vector의 제품 실행은 NOT_RUN이다.
 
 각 지원 statement×타입에는 정상/NULL(허용/거절)/빈 값/경계/오류가 필요하다. direct와 prepared는 지원 교집합 전부를 비교하고 DDL/transaction control은 prepare에서 명시 Unsupported를 확인한다. 각 index kind(PK/unique/nonunique)×단일/복합 key의 적용 가능한 point/range/DML·crash 변형을 포함한다. 전체 문법·타입 항목이 어느 test ID에 연결됐는지 coverage inventory를 만든다. 기능이 없는 조합은 근거 있는 N/A이며 후속 필수 기능을 삭제하지 않는다.
 

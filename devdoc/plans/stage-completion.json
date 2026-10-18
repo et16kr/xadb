@@ -74,7 +74,8 @@
         "D4-T05..T08: scan/point/range, sort/limit, typed prepared metadata/binding and bounded handle/result lifecycle",
         "D4-T09..T11: transaction/concurrency, current-build durability/reopen and cancellation/quota/spill cleanup",
         "D4-T12..T14: embedded CLI, independent SQL/native oracle and PF10 plan/storage evidence",
-        "D4-V17..V24: partial/all-NULL uniqueness, uppercase names, SQL empty-text/native boundary, DDL prior/DDL outcomes and rollback/recrash histories R1-R4"
+        "D4-V17..V24: partial/all-NULL uniqueness, uppercase names, SQL empty-text/native boundary, DDL prior/DDL outcomes and rollback/recrash histories R1-R4",
+        "D4-V27/V28: logical statement rollback versus retained physical/lock charges; independent per-call cancellation/deadline context across a persistent SELECT result"
       ]
     },
     {
@@ -94,7 +95,8 @@
         "D5-T03..T07: peer authentication, policy recheck with owned cleanup after revocation and DDL prior outcome, session isolation, typed prepared metadata and stale handles",
         "D5-T08..T12: admission/output/control and parked-worker progress, request-scoped cancel, Ready/terminal/handoff idle boundaries and transaction lifetime cleanup, real concurrency and ordered cleanup/drain including closing session quotas",
         "D5-T13: D5-C01..C08 actual socket ACK/WAL/reopen/recrash and known-bad oracle checks",
-        "D5-T14/P01..P04: PF11 request causality, independent end-to-end latency, resource and instrumentation costs"
+        "D5-T14/P01..P04: PF11 request causality, independent end-to-end latency, resource and instrumentation costs",
+        "D5-T07/T09/T10: Execute(N) terminal retires only request context, Fetch(N+1) retains cursor snapshot with fresh context; old Cancel/deadline inert, parked current context and parent cleanup preserved; failed-statement residual charges"
       ]
     },
     {
@@ -690,7 +692,8 @@
         "DEV3-REVIEW-005: D3-M02 and actual DS04 threads cover atomic snapshot q selection/horizon registration versus aging, status-before-frontier publication with no readers, published-q horizon floor, reservation cleanup and continuous guard ownership; required mutants rejected",
         "Opcode resource vectors instantiated against actual codecs and simultaneous disk/reserve/WAL/frame/memory/FD limits; progress under boundary pressure and full reservation ownership through rollback",
         "DWB batch 1/8/64 all-file sync and whole-batch retirement/repair/recrash; PF09 sync counts, gate/flush waits and latency guards measured",
-        "DEV3-REVIEW-006: DS06/M03 checks logical observed-row versions after every X-lock acquisition before target effect; DS03/05, M04/M06 and RC-T14 restore durable remaining obligations and fixed bootstrap resources across BEGIN-WAL deletion and repeated partial-CLR crashes within all quotas"
+        "DEV3-REVIEW-006: DS06/M03 checks logical observed-row versions after every X-lock acquisition before target effect; DS03/05, M04/M06 and RC-T14 restore durable remaining obligations and fixed bootstrap resources across BEGIN-WAL deletion and repeated partial-CLR crashes within all quotas",
+        "DEV3-REVIEW-007: logical rollback does not rewind resource ledgers; every finite crash prefix preserves closure/peak while completion assumes a sufficient crash-free interval and finite obligations"
       ],
       "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
       "open_decisions": [
@@ -761,7 +764,8 @@
         "dev4-implementation-plan.md의 D4-T01–T14 필수 변형과 coverage inventory 전부; D4-F01–F05 실행 입력 동결·독립 검토 필요",
         "DEV4-REVIEW-002의 D4-V17–24: SQL/native 값 경계·문장 최종 UNIQUE·DDL 두 outcome/NotCommittedRecoveryRequired와 R1–R4 rollback/recrash를 DEV3-DESIGN-003 실제 WAL/undo/CLR 경로·독립 이력으로 판정; Oracle 전체 호환이나 미실행 CLR PASS로 확대하지 않음",
         "DEV4-REVIEW-003: D4-V25 all-null unique multi-row lookup; transaction capacity boundaries and prior-statement preservation; actual DEV3 reservation/cleanup handoff and separated attempted/success TPS, conflicts/limits and gate/flush cost",
-        "DEV4-REVIEW-004: D4-V26/T09 passes opaque row observations through materialization to immediate-lock validation before target effect; T10/T11 receive actual DEV3 bootstrap/reservation-restoration evidence and distinguish normal admitted recovery from corrupt/I/O rejection"
+        "DEV4-REVIEW-004: D4-V26/T09 passes opaque row observations through materialization to immediate-lock validation before target effect; T10/T11 receive actual DEV3 bootstrap/reservation-restoration evidence and distinguish normal admitted recovery from corrupt/I/O rejection",
+        "DEV4-REVIEW-005: D4-V27/V28 actual residual resource accounting after failed statements and per-operation cancel/deadline across persistent result snapshots"
       ],
       "acceptance_input_status": "BASE_DESIGN_DEFINED_LEAF_API_AND_EXECUTION_PROFILES_PENDING",
       "open_decisions": [
@@ -770,7 +774,8 @@
         "D4-F04: SC02/KU13 full variant inventory including V17-V24 and R1-R4, independent oracle mutants, two-outcome worker protocol and executable commands",
         "D4-F05: PF10 fixtures/environment/release recipes, numerical resource/instrumentation/regression budgets and paired measurement schedule",
         "dev4-sql-design.md#capacity-boundary: D4-F02/F05 record actual DEV3-REVIEW-004 supply, reservation ownership and batch/gate profile; design/model acceptance alone is not disk evidence",
-        "D4-F02/F04: actual opaque observation signatures and no-wait conflict barriers; R2/T11 low-quota partial-CLR restart and reserve-restore supply evidence remain NOT_RUN"
+        "D4-F02/F04: actual opaque observation signatures and no-wait conflict barriers; R2/T11 low-quota partial-CLR restart and reserve-restore supply evidence remain NOT_RUN",
+        "D4-F02/F04/F05: logical rollback versus retained WAL/CLR/undo/page/SMO/lock ownership and fresh operation context per fetch; actual API, schedules and resource measurements pending"
       ],
       "deferred_obligations": [
         "server/client·확장 SQL은 후속 의무",
@@ -838,7 +843,8 @@
         "dev5-implementation-plan.md D5-T01–T14·C01–C08 필수 inventory 전부, 독립 byte/history oracle·known-bad·bounded model·V3 thread/fuzz/fault 및 PF11 수치 profile 충족",
         "XSQ1 full-size SQL/bind·request generation·control progress·reserved cleanup·server quiesce 후 terminal 전체 enqueue/COMM drain 순서·client UNKNOWN와 engine fencing 구별",
         "다른 세션의 lock/DDL drain 대기는 worker 반환·등록 경합의 wake 유실 없음; holder COMMIT/cleanup 진행, 거래300초 만료의 Closing·전체 undo·후속 요청 거절, 종료 중 소유까지 session32 회계",
-        "권한 철회 뒤 자기 ROLLBACK/close/cancel 정리와 교차 session 거절; idle 시작·인계 경계와 running/parked 제외, 만료 cleanup의 기존 예약·terminal 보존"
+        "권한 철회 뒤 자기 ROLLBACK/close/cancel 정리와 교차 session 거절; idle 시작·인계 경계와 running/parked 제외, 만료 cleanup의 기존 예약·terminal 보존",
+        "DEV5-REVIEW-004: Execute-to-Fetch request context replacement preserves cursor snapshot, late request isolation and parent lifetime cleanup; wire D4-V27 residual resource accounting"
       ],
       "acceptance_input_status": "BASE_DESIGN_DEFINED_LEAF_API_AND_EXECUTION_PROFILES_PENDING",
       "open_decisions": [
@@ -846,7 +852,8 @@
         "D5-F02: actual peer-credential port, policy grammar/epoch and DEV4 authorization callback including DDL precommit effects and owned cleanup exemptions",
         "D5-F03: actual SQL/engine suspend-resume supply and lower regressions, atomic wait registration/cancellation and ownership, idle/transaction lifetime cleanup boundaries, shutdown supervisor and bounded model/resource inventory",
         "D5-F04: actual Q1/C1 supply revisions, independent client/oracle and fault receipts with executable recipes",
-        "D5-F05: actual release/environment/fixture identities and preregistered PF11 schedule using dev5-implementation-plan.md#performance"
+        "D5-F05: actual release/environment/fixture identities and preregistered PF11 schedule using dev5-implementation-plan.md#performance",
+        "D5-F03: actual per-request SQL operation context distinct from cursor/statement snapshot lifetime; terminal retirement and parked resumption vectors pending"
       ],
       "deferred_obligations": [
         "DEV6 driver 완성·이전 사내 client 호환은 선행 조건 아님; XADB-033은 XADB-032를 사용",

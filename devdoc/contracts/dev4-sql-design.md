@@ -1,6 +1,6 @@
 # DEV4 — embedded 최소 SQL·Oracle 의미 상세 설계
 
-2026-10-18 · **DEV4-DESIGN-001·REVIEW-002·REVIEW-003·REVIEW-004 ACCEPTED / 미구현·Q1 NOT_RUN**
+2026-10-19 · **DEV4-DESIGN-001·REVIEW-002–005 ACCEPTED / 미구현·Q1 NOT_RUN**
 
 [구현·검증 계획](../plans/dev4-implementation-plan.md) · [실제 소스 조사](../evidence/dev4-source-research.md) · [단계 범위](../plans/development-stages.json) · [완료 계약](../plans/stage-completion.json) · [DEV3 저장 계약](disk-storage-design.md) · [커널 구현 계약](implementation-contracts.md)
 
@@ -140,7 +140,7 @@ INSERT는 열 목록이 필수이고 omitted nullable 열은 NULL, omitted nonnu
 
 UPDATE/DELETE는 **engine의 한 begin_statement token 아래 snapshot+앞선 성공 statement의 own-write view**에서 대상 RowUID·필요한 원래 값·engine이 발급한 opaque 논리 행 버전 observation을 제한된 목록으로 먼저 모은다. scan과 mutation은 같은 token을 공유하며 SQL이 새로운 문장 snapshot을 중간에 만들지 않는다. 전체 대상 수·bytes가 transaction의 남은 256 mutation·8 MiB private·1 MiB 논리 payload 및 engine undo/rollback reserve를 넘으면 statement를 실패시킨다. 실제 interleaved WAL/CLR 크기를 논리 payload 한도와 같다고 계산하지 않는다. LIMIT 없는 DML을 내부 여러 commit으로 나누지 않는다. 대상 확정 후 native cursor를 닫되 statement token은 유지하고 RowId 오름차순으로 한 execute_statement에 넘겨 각 행을 한 번만 변경한 뒤 finish_statement로 최종 제약을 판정한다. scan 도중 자기 UPDATE가 index를 옮겨 행을 반복 방문하는 Halloween 문제를 막는다. [DEV3 행 버전 규약](disk-storage-design.md#observed-row-version)에 따라 잠금 획득 뒤 대기 여부와 무관하게 관측 버전을 검사한다. cursor를 닫아도 observation과 statement token의 결합을 유지하며 SQL이 RowUID/값만으로 observation을 재구성하지 않는다. 버전 변경·삭제이면 해당 행 변경 전에 DEV3의 전체 거래 SerializationConflict/undo 결과를 전달한다. SQL이 predicate를 숨겨 재실행하거나 commit까지 검사를 미루지 않는다.
 
-UNIQUE는 DEV3처럼 **statement의 최종 row/index delta**를 기준으로 검사한다. engine이 old/new key 잠금으로 직렬화한 다른 거래의 최신 committed 항목과 own final delta에서 영향받는 old entry를 제외하고 최종 new key를 검사한다. SQL statement snapshot만으로 유일성을 판정하거나 transaction 종료까지 미루지 않는다. 일시적 중복이나 RowId 처리 순서만으로 최종 유일한 상태를 거절하지 않는다. 복구 가능한 statement 오류는 이번 문장의 행·모든 index delta·quota·staging을 되돌려 이전 성공 statement를 보존한 뒤 반환한다. 실패 affected_rows는 성공한 부분 행 수가 아니라 오류이며 effect=statement rollback이다. 전체 거래 conflict나 undo I/O 실패에는 각각 transaction abort 또는 RecoveryRequired/Fenced가 우선한다. DML 대상으로 쓴 native cursor는 mutation 전에 닫는다. 취소/할당 실패와 engine 오류에서 rollback mark의 소유자는 engine이며 SQL이 부분 역연산을 새 SQL로 수행하지 않는다. native key 교환 성공은 하위 회귀로 보존하되 현재 상수 SET 문법이 key 교환 SQL을 지원한다고 주장하지 않는다.
+UNIQUE는 DEV3처럼 **statement의 최종 row/index delta**를 기준으로 검사한다. engine이 old/new key 잠금으로 직렬화한 다른 거래의 최신 committed 항목과 own final delta에서 영향받는 old entry를 제외하고 최종 new key를 검사한다. SQL statement snapshot만으로 유일성을 판정하거나 transaction 종료까지 미루지 않는다. 일시적 중복이나 RowId 처리 순서만으로 최종 유일한 상태를 거절하지 않는다. 복구 가능한 statement 오류는 이번 문장의 논리 행·모든 index delta를 되돌리고 statement staging을 정리하여 이전 성공 statement를 보존한 뒤 반환한다. quota는 실제 반환한 자원만 해제하며, WAL/CLR·회수 전 undo/page·완결 SMO·거래 잠금과 남은 abort 예약은 [DEV3 자원 회계](disk-storage-design.md#rollback-accounting)를 따른다. SQL은 논리 rollback 성공을 근거로 engine ledger를 과거 값으로 초기화하지 않는다. 실패 affected_rows는 성공한 부분 행 수가 아니라 오류이며 effect=statement rollback이다. 전체 거래 conflict나 undo I/O 실패에는 각각 transaction abort 또는 RecoveryRequired/Fenced가 우선한다. DML 대상으로 쓴 native cursor는 mutation 전에 닫는다. 취소/할당 실패와 engine 오류에서 rollback mark의 소유자는 engine이며 SQL이 부분 역연산을 새 SQL로 수행하지 않는다. native key 교환 성공은 하위 회귀로 보존하되 현재 상수 SET 문법이 key 교환 SQL을 지원한다고 주장하지 않는다.
 
 <a id="prepared"></a>
 ## 5. typed prepared 실행·metadata·수명
@@ -218,6 +218,9 @@ SQL 오류는 stable code, phase(lex/parse/bind/execute/fetch/precommit/commit),
 
 cancel은 row/parse chunk·sort run·I/O wait의 bounded checkpoint에서 관측한다. 일반 DML 중 취소는 statement rollback 후 명시 거래를 유지할 수 있지만 COMMIT 진입 이후에는 engine commit 상태가 우선한다. sync 성공 뒤 취소 신호가 왔다고 committed를 ABORTED로 바꾸지 않는다. Fenced session은 새 execute를 받지 않고 close/진단만 허용한다. reopen은 새 engine/session/handle이며 outcome 확인·중복 요청 정책은 후속 서버 계약과 구분한다.
 
+<a id="operation-context"></a>
+SELECT의 statement/snapshot token 수명은 execute 호출의 취소·deadline 수명과 다르다. result는 snapshot·plan·읽기 위치를 보존하고, **각 execute/fetch/close 호출은 자기 operation generation·cancel token·deadline을 전달**한다. 완료된 execute/fetch의 deadline이나 cancel을 result에 영구 저장하지 않는다. 동일 호출이 중단/재개될 때에는 그 호출의 context를 유지하여 deadline을 연장하지 않지만, 이후 fetch에는 새 context를 사용한다. session close·거래 수명 만료는 별도 상위 cleanup 신호이며 context 교체로 지워지지 않는다. embedded API와 DEV5 adapter가 같은 규약을 소비하고 정확한 Rust signature는 F02에서 동결한다.
+
 fetch terminal 오류는 위 result 상태표에 따라 cursor를 닫는다. 단, RowBufferTooSmall은 재시도 가능하여 cursor를 유지한다. engine이 transaction abort 완료를 확인하면 session은 Idle로, Fenced를 요구하면 Fenced로 전이하고 모든 active result를 무효화한다. 오류표의 statement 복원·거래 종료·lock 해제는 engine cleanup 완료가 전제이며 undo I/O 실패에는 RecoveryRequired/Fenced가 우선한다. statement를 ReadyBound로 돌리는 것으로 engine fencing을 해제하지 않는다.
 
 <a id="recovery-boundary"></a>
@@ -290,6 +293,8 @@ prepare·execute·plan/node ID에 parse/bind/plan 시간, rows/loops, visited ro
 | D4-V24 | DML commit durable 뒤 응답 전 kill, DDL precommit durable 뒤 DDL 호출 전 kill, DDL durable 뒤 응답 전 kill | 외부 응답은 UNKNOWN일 수 있으나 각각 거래 전체 / 이전 DML만 / 이전 DML+DDL 보존. 두 commit identity와 복구 cut를 분리하며 반복 reopen에서도 누락·중복 없음 |
 | D4-V25 | 기본 fixture에서 `WHERE k IS NULL`; 별도 `u(id BIGINT NOT NULL,a BIGINT,b BIGINT,PRIMARY KEY(id),UNIQUE(a,b))`에 `(1,NULL,NULL),(2,NULL,NULL)`을 넣고 `WHERE a IS NULL AND b IS NULL ORDER BY id` | 각각 id bag `[2,3]` / ordered `[1,2]`. unique point/range·force-scan·native·reopen 모두 동일하며 단건 조기 종료 mutant 거절 |
 | D4-V26 | T1이 UPDATE/DELETE 대상을 관측한 뒤 T2가 같은 행 변경/commit/잠금 해제, 그 뒤 T1이 즉시 X lock 획득 | DML execute에서 해당 행의 첫 변경 전 전체 거래 conflict·undo 완료 후 ABORTED, T1의 앞선 변경도 소멸·T2 ACK 보존. 대기 경로·삭제·동일 값의 새 버전·own write·split 변형을 T09와 native DS06에서 대조 |
+| D4-V27 | S1 성공 뒤 새 row/key 잠금을 얻고 WAL을 쓴 S2가 실패→statement rollback을 반복; WAL floor를 다른 owner가 pin | S1 값 유지, S2 값 없음. 실제 잔류 WAL/CLR·undo/page·잠금은 계속 charge하며 다음 statement admission이 사전 거절될 수 있음. 이미 예약한 전체 ROLLBACK은 진행하고 COMMIT 시도는 기존 certainty/실패 규약을 유지. ledger 과거값 복원·소비 CLR 예약 재사용 mutant 거절 |
+| D4-V28 | SELECT execute 완료 뒤 그 호출 deadline만 경과하고 유효 result를 fetch; 다음 fetch의 중단/재개·취소 | 최초 snapshot/위치 유지, 새 fetch는 새 operation context 사용. 이전 호출 cancel/deadline 영향0, 현재 fetch 취소는 미완료 result 해제와 기존 거래 효과를 따름. session/transaction 만료는 별도 우선 |
 
 추가 필수 교차 조합·crash cut·부정 oracle·CLI/PF10은 구현 계획의 Q1 행렬이 소유한다. 위 예시만 통과해 Q1을 완료할 수 없다.
 
@@ -347,3 +352,15 @@ prepare·execute·plan/node ID에 parse/bind/plan 시간, rows/loops, visited ro
 | 대안·대체 | RowUID/원래 값만 전달하거나 commit validation에만 의존하는 해석을 대체. SQL 자체 재검사/rollback ledger는 만들지 않음. REVIEW-002/003의 Serializable·statement 원자성·오류 효과와 SQL 범위 유지 |
 | 인수·독립 검토 | D4-V26·T09, R2·T10/T11, F02/F04. `/root/dev34_conflict_reserve_review` 최종 독립 설계 검토 PASS·필수 P1/P2 없음, `/root` 반영 확인; [공통 작업 기록](../plans/dev3-implementation-plan.md#conflict-reserve-review). Q1·제품·성능 NOT_RUN |
 | 재검토 | 실제 observation API/오류 효과 불일치, SQL의 숨은 재실행, 복구 예약 공급 미충족, SQL isolation 확대 |
+
+<a id="mathematical-review"></a>
+## DEV4-REVIEW-005 — 문장 rollback 회계와 호출별 취소 수명
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·일자·담당 | D2 · 2026-10-19 · 작업/계약/통합 `/root` |
+| 권한·선택 | 사용자의 DEV3·4·5 수학적 재검토·문제 즉시 수정 요청과 DP01 위임. 4절의 quota 전체 복원 표현을 실제 반환 회계로 대체하고 6절의 operation context·D4-V27/V28 추가. SQL 값·격리 의미 유지 |
+| 대안·대체 | 4절의 quota 전체 원복 표현을 실제 반환 회계로 수정. 논리 rollback 후 물리 비용이 남는 [DEV3 보존식](disk-storage-design.md#rollback-accounting)을 적용. cursor에 완료 요청의 context를 고정하면 이전 deadline이 다음 fetch를 취소하므로 snapshot과 호출 context의 소유를 분리 |
+| 상태·인수·독립 검토 | ACCEPTED. D4-V27/V28·T04/T08/T10/T11·F02/F04/F05에 반영. `/root/dev345_independent_review`가 원문·반례·세 단계 계약/계획/인수 diff를 독립 검토하고 축소 계산을 재실행: 필수 P1/P2 잔여 없음. `/root` 반영 확인. 이전 review identity·실행 결과 유지 |
+| 참고 근거 | 2026-10-19 [Oracle 19c Transactions](https://docs.oracle.com/en/database/oracle/oracle-database/19/cncpt/transactions.html)의 문장 원자성·[읽기 일관성](https://docs.oracle.com/en/database/oracle/oracle-database/19/cncpt/data-concurrency-and-consistency.html), MariaDB `327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4`의 `storage/innobase/include/read0types.h` ReadView/purge를 대조. XADB ledger·Serializable·snapshot 모델은 자체 계약으로 유지 |
+| 실행·재검토 | 산술 반례·축소 계산만 실행. Q1·제품·복구·성능은 NOT_RUN. 잔류 비용 누락·snapshot/operation 수명 혼동 또는 실제 leaf 반례가 생기면 재검토 |

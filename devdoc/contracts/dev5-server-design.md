@@ -1,6 +1,6 @@
 # DEV5 — 서버·세션·요청 프로토콜 상세 설계
 
-2026-10-18 · **DEV5-DESIGN-001·DEV5-REVIEW-002/003 D2 ACCEPTED / 독립 재검토 반영 / 미구현·B3 NOT_RUN**
+2026-10-19 · **DEV5-DESIGN-001·DEV5-REVIEW-002–004 D2 ACCEPTED / 독립 재검토 반영 / 미구현·B3 NOT_RUN**
 
 [구현·검증 계획](../plans/dev5-implementation-plan.md) · [소스 조사·검토](../evidence/dev5-source-research.md) · [DEV4 SQL](dev4-sql-design.md) · [COMM](comm-design.md) · [단계 완료](../plans/stage-completion.json)
 
@@ -186,6 +186,9 @@ ordinary timeout field는 D5-F01 body의 공통 prefix에 두며 0은 기본30�
 
 Cancel의 Requested는 token 신호 전달만 뜻한다. 최종 성공·취소·commit 결과는 원래 request의 Reply/Error에서만 안다. signal과 terminal 확정은 request generation을 확인하는 동일 짧은 lock/atomic 상태에서 선형화하여 다음 요청에 오래된 signal이 붙지 않게 한다. worker는 session lock을 잡고 socket/queue 공간·engine blocking I/O를 기다리지 않는다.
 
+<a id="cursor-request-context"></a>
+열린 result를 만든 Execute(N)의 terminal이 확정되면 N의 cancel/deadline context는 끝난다. result snapshot·읽기 위치의 수명은 계속된다. Fetch(N+1)은 [DEV4 operation context](dev4-sql-design.md#operation-context)에 새 request generation·FIRST 시점 deadline·cancel token을 연결한다. Cancel(N)은 NotActive이고 N+1에 영향을 주지 않으며, Cancel(N+1)은 진행 중인 그 fetch에만 신호를 준다. Execute(N)의 deadline이 지난 사실만으로 다음 유효 fetch를 취소하지 않는다. parked fetch는 같은 N+1 context로 재개하고 원래 deadline을 유지한다. session/transaction 만료와 disconnect의 전체 cleanup 신호는 context 교체로 제거하지 않는다. 요청 terminal과 query EOF를 분리한 기존 규약의 하위 API 인수 조건이다.
+
 peer FIN은 C1의 새 TX admission까지 닫으므로 request delimiter로 쓰지 않는다. 아직 실행되지 않은 완결 RX가 남아 있어도 SQL admission을 닫고 실행하지 않는다. 실행 중 거래는 disconnect token을 관측하며 이미 commit한 결과는 유지한다. unread row prefix·부분 Reply·FlushedLocally·server 로그는 client가 COMMITTED를 받은 증거가 아니다.
 
 client가 terminal을 완결 검증해 기록했으면 그 outcome을 보존한다. mutation/commit 가능 요청을 전송했으나 terminal을 받지 못했으면 **client 관측은 UNKNOWN**이다. 이는 server engine이 반드시 UNKNOWN/Fenced라는 뜻은 아니다. server는 COMMITTED일 수 있고 정상 서비스할 수 있다. 반대로 engine의 durable I/O UNKNOWN이면 engine writer fence를 유지하고 모든 세션의 새 engine 작업을 차단한다. 서버는 새 연결을 만들어 fencing을 우회하지 않는다.
@@ -263,3 +266,15 @@ PF11은 connection/session/request→queue→worker→SQL plan/transaction→WAL
 | 재검토 | cleanup 권한 우회로 새 업무 실행, 철회/idle 뒤 자원 소유 유실, 실행 중 idle 오판정, 후속 driver와 명시 SQL 의미 불일치 |
 
 Oracle은 일반 COMMIT에 추가 권한을 요구하지 않지만 XADB는 위 권한 재확인을 선택했다. Oracle JDBC의 OFF→ON 암묵 commit과 달리 XADB의 Active + SET AUTOCOMMIT은 DEV4대로 TxnState이고, CloseSession은 미commit 거래를 rollback한다. 이 차이를 protocol adapter에서 조용히 바꾸지 않는다. Oracle의 DDL precommit·문장 원자성·durable commit 응답 유실·취소 결과 구분은 기존 XADB 경계와 대조했으며 공식 원문·버전·선택 이유는 위 조사에 기록한다.
+
+<a id="mathematical-review"></a>
+## DEV5-REVIEW-004 — cursor와 request 취소·deadline의 분리
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·일자·담당 | D2 · 2026-10-19 · 작업/계약/통합 `/root` |
+| 권한·선택 | 사용자의 DEV3·4·5 수학적 재검토·문제 즉시 수정 요청과 DP01 위임. 6절의 request generation 계약을 DEV4 operation context 수신으로 구체화. wire format·timeout 수치·cleanup 정책 유지 |
+| 대안·대체 | Execute(N)의 완료 context를 cursor에 계속 두는 해석을 새 Fetch(N+1) context 인계로 대체. `deadline(N)<now<deadline(N+1)`에서 기존 snapshot은 유효하지만 N의 deadline은 비활성이어야 함. timeout 확대나 result snapshot 재선택은 이 수명 문제를 해결하지 못함 |
+| 상태·인수·독립 검토 | ACCEPTED. D5-T07/T09/T10·M01/M02·F03에 반영. `/root/dev345_independent_review`가 원문·반례·세 단계 계약/계획/인수 diff를 독립 검토하고 축소 계산을 재실행: 필수 P1/P2 잔여 없음. `/root` 반영 확인. 이전 review identity·실행 결과 유지 |
+| 참고 근거 | 2026-10-19 독립 검토자가 PostgreSQL `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851`의 `src/backend/tcop/postgres.c` ProcessInterrupts/command read, MariaDB `327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4`의 `sql/sql_class.cc` kill/wakeup 선택 구간 대조. XADB generation·parked·상위 cleanup 의미는 자체 계약으로 유지 |
+| 실행·재검토 | 축소 계산만 실행. server 모델·제품·복구·성능은 NOT_RUN. 이전 요청 취소의 전파·상위 수명 신호 유실 또는 실제 leaf 반례가 생기면 재검토 |

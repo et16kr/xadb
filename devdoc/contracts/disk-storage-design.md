@@ -1,6 +1,6 @@
 # DEV3 — 디스크 저장·인덱스 상세 설계
 
-2026-10-18 · **DEV3-DESIGN-003·REVIEW-004·REVIEW-005·REVIEW-006 ACCEPTED / 미구현·모델·제품 시험 NOT_RUN**
+2026-10-19 · **DEV3-DESIGN-003·REVIEW-004–007 ACCEPTED / 미구현·단계 모델·제품 시험 NOT_RUN**
 
 [구현 계획](../plans/dev3-implementation-plan.md) · [이번 조사](../evidence/dev3-wal-undo-research.md) · [이전 조사](../evidence/dev3-source-research.md) · [커널 계약](implementation-contracts.md) · [DEV2 계약](dev2-kernel-design.md) · [복구 계약](recovery-logging-design.md) · [인수 항목](disk-test-matrix.json)
 
@@ -79,6 +79,11 @@ Unique는 **전체 NULL만 중복 예외**, 부분 NULL은 NULL 위치를 포함
 같은 unique key에 대한 경쟁은 `(index generation, encoded key)` transaction lock으로 serialize한다. 영향받는 old/new unique keys를 정렬해 예약/잠금한 뒤 검사하고 commit/abort 완료까지 보유한다. 검사 대상은 다른 거래의 최신 committed 상태와 own final delta이며 오래된 statement snapshot만으로 duplicate를 허용하지 않는다. all-null 예외 key는 unique conflict lock 대상에서 제외한다.
 
 statement 시작 시 undo-head savepoint·오류 결과·rollback 예약을 확보한다. 타입/키 크기/unique/quota/취소 실패는 해당 mark까지 undo하고 이전 성공 statement를 보존한다. rollback은 새 undo 생성 없이 기존 record와 사전 예약한 CLR/WAL/작업 공간을 사용한다. 디스크/로그 오류 때문에 rollback을 마치지 못하면 성공 ABORT를 응답하지 않고 RecoveryRequired/Fenced로 전이한다. statement 실패와 transaction 전체 abort를 구별한다.
+
+<a id="rollback-accounting"></a>
+**statement rollback은 논리 효과의 복원이며 자원 ledger의 과거 사본 복원이 아니다.** 실제 해제한 statement staging·미소비 예약만 반환한다. 이미 기록한 WAL/CLR, 아직 회수하지 않은 undo/page·완결 SMO와 transaction 종료까지 유지하는 row/key lock은 해당 소유 규약에 따라 계속 charge한다. 같은 실패를 반복해도 각 시점의 `charged + outstanding_reserved <= capacity`를 만족해야 하며, 다음 statement의 최악 비용을 확보하지 못하면 첫 effect 전에 거절한다. 남은 전체 거래의 abort/terminal 예약은 유지한다. 소비한 CLR bytes를 예약으로 되살리거나 SQL이 quota counter를 mark 시점으로 되감지 않는다. 논리 데이터·affected_rows의 원자성과 물리 사용량·잠금 수의 원상복구를 혼동하지 않는다. DS03/DS06으로 인수한다.
+
+회수량을 `G_n`, 실패 문장 i의 forward WAL·CLR 비용을 `f_i,c_i`라 하면 `W_n=W_0+Σ(f_i+c_i)-G_n`이다. 논리 값이 같아도 WAL floor가 pin되어 `G_n=0`이면 사용량은 증가한다. 예를 들어 capacity20·기존 charge5·전체 abort 예약3·실패당 비용3이면 4회 뒤 `17+3=20`으로 다음 admission을 거절해야 한다. 매번 charge를5로 되감으면 5회째 실제 `20+3>20`을 허용한다. 이는 단위 없는 회계 반례이며 실제 opcode별 bytes 상한은 F05에서 동결한다.
 
 <a id="concurrency"></a>
 ## 7. 가시성·동시성
@@ -296,7 +301,7 @@ aging cursor/진행점은 재실행 가능한 logged state다. 메모리 batch·
 2. **capture와 복원:** checkpoint는 같은 capture LSN의 descriptor와 allocator ownership을 인계한다. ANALYSIS는 capture 직후의 완결 WAL을 순서대로 적용하여 채택한 끝의 잔여량을 만든다. 이 계산은 아직 redo하지 않은 home undo/status의 최신성에 의존하지 않는다. begin WAL을 삭제하려면 이 closure와 소유 inventory의 redo 경로가 남아야 한다. RESERVE_RESTORE는 checkpoint+WAL에서 복원한 같은 채택 prefix의 예약 소유 inventory와 descriptor를 검산하고 recovery owner에게 한 번만 인계한다. 이 inventory는 예약 소유의 bounded/streaming 표현이며 전체 allocator의 RAM 복제가 아니다. REDO가 끝나면 home allocator/undo/status와도 대조한 뒤 UNDO에 진입한다. REDO가 home page를 따라잡게 하더라도 논리 예약을 두 번 차감하지 않는다.
 3. **이중 계산 금지:** 이미 존재하는 extent/file bytes는 charged이고 그 안의 예약 page token은 별도 소유다. 아직 파일로 실현되지 않은 growth만 outstanding growth다. 부분 recovery가 남긴 실제 WAL/CLR/header bytes는 retained/charged에 포함하고 같은 bytes를 잔여 WAL 예약으로 재사용하지 않는다. 끝난 undo는 남은 obligation에서 제외하되 그 CLR bytes가 실제 회수되기 전까지 charged에서 빼지 않는다. runtime의 모든 자원 부등식을 다시 동시에 확인하며 protected 1 GiB를 전체 8 GiB에 추가하지 않는다.
 4. **bootstrap과 재장애:** DB 생성/foreground admission 때부터 fixed maintenance에 DWB repair·streaming analysis/redo의 frame/memory/FD·전용 checkpoint 두 슬롯/selector staging·기존 checkpoint와 공존하는 peak·recovery epoch/header/WRITER 설치 여유를 포함한다. BOOT_RESERVE는 선택 control의 고정 profile·검증한 FILEMAP/namespace로 이 몫을 확보하며 home allocator/undo를 먼저 읽지 않으므로 undo를 읽기 위해 먼저 undo 예약이 필요한 순환이 없다. 새 epoch/header도 쓰기 **전** WAL256 MiB와 owned/protected quota에 charge한다. [RECOVERY_REBASE](#recovery-rebase)는 새 WAL append 없이 두 슬롯을 인계/재사용하고 필요한 bytes를 회수하여 다음 epoch의 예약을 복구한다. 채택된 prefix나 current/previous가 아직 요구하는 bytes는 재사용할 수 없다. 이 bootstrap 인계는 loser undo 완료나 foreground admission에 의존해서는 안 된다.
-5. **진행과 실패:** runtime admission bound는 모든 허용 crash cut에서 bootstrap+복원한 잔여 작업이 기존 예약 안에 들어간다는 귀납 조건을 만족해야 한다. 단지 restart 때 부족을 발견해 거절하는 것을 정상 admission의 성공 증명으로 삼지 않는다. 정상 durable 이미지·고정 profile·종료하는 정상 I/O에서는 반복 중단 뒤에도 잔여 rollback이 진행해야 한다. 손상/불명 I/O/필수 자원 확보 실패는 open 거절·Fenced이며 READY나 ABORTED 성공이 아니다. 임의 손상된 descriptor를 축소하거나 foreground 몫을 빌려 맞추지 않는다.
+5. **진행과 실패:** runtime admission bound는 모든 허용 crash cut에서 bootstrap+복원한 잔여 작업이 기존 예약 안에 들어간다는 귀납 조건을 만족해야 한다. 단지 restart 때 부족을 발견해 거절하는 것을 정상 admission의 성공 증명으로 삼지 않는다. 정상 durable 이미지·고정 profile의 **모든 유한 crash prefix에서 closure·예약 안전성과 고정 peak**를 유지한다. 완료 보장은 유한한 잔여 obligation, 충분히 긴 무장애 실행 구간, 종료하는 정상 I/O와 공정한 actor 실행을 전제한다. 매 CLR 영속화 직전에 무한히 중단되는 실행의 완료를 보장하지 않는다. crash 횟수에 따른 공간 누적 방지와 마지막 장애 뒤 rollback 종료는 별도 증명 의무다. 손상/불명 I/O/필수 자원 확보 실패는 open 거절·Fenced이며 READY나 ABORTED 성공이 아니다. 임의 손상된 descriptor를 축소하거나 foreground 몫을 빌려 맞추지 않는다.
 
 F05는 각 forward/CLR/SMO/terminal/capture/bootstrap 전후의 `charged + outstanding` 보존과 반복 restart의 고정 peak를 수치로 증명한다. F04는 BEGIN WAL 삭제·부분 CLR·새 epoch 선택·bootstrap checkpoint 인계/회수의 재장애를 포함한다. 이 동결·모델·실제 I/O 인수는 **NOT_RUN**이며 구현 전 미완료 의무다.
 
@@ -386,3 +391,15 @@ PF09는 성공 TPS/충돌률, commit·WAL sync p99, background data flush/double
 | 적용·대체 | DESIGN-003/REVIEW-004의 “잠금 대기 뒤” 조건과 runtime-only로 해석될 수 있는 예약 인계를 구체화. REVIEW-005 snapshot 소유, 저장 구조·격리 기본값·SQL 범위·stage DAG 유지. 이전 검토/증거 identity는 보존 |
 | 인수·검토 | DS03/05/06·RC-T14, M03/M04/M06, F01/F02/F04/F05. `/root/dev34_conflict_reserve_review` 최종 독립 설계 검토 PASS·필수 P1/P2 없음, `/root` 반영 확인; [작업 기록](../plans/dev3-implementation-plan.md#conflict-reserve-review). 모델·제품·전체 문서 검사 NOT_RUN |
 | 재검토 | 관측 버전의 ABA/own-write 오판, descriptor/allocator 불일치, bootstrap 재장애 누적 또는 quota 내 admitted rollback의 진행 실패 |
+
+<a id="mathematical-review"></a>
+## DEV3-REVIEW-007 — 문장 rollback 자원 회계와 복구 진행 전제
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·일자·담당 | D2 · 2026-10-19 · 작업/계약/통합 `/root` |
+| 권한·선택 | 사용자의 DEV3·4·5 수학적 재검토·문제 즉시 수정 요청과 DP01 위임. 6·13.2절의 자원 소유/진행 보장을 구체화. 기존 page/WAL/undo 형식·격리·stage gate 유지 |
+| 대안·대체 | 논리 rollback 때 ledger까지 되감는 해석은 위 보존식을 위반하므로 실제 반환만 차감. 기존 예약·잠금 소유를 유지하며 무조건 복구 완료라는 해석은 13.2절의 진행 전제로 대체. 새 저장 형식/정책은 추가하지 않음 |
+| 상태·인수·독립 검토 | ACCEPTED. DS03/DS06·M03/M06·F02/F05에 반영. `/root/dev345_independent_review`가 원문·반례·세 단계 계약/계획/인수 diff를 독립 검토하고 회계 등 축소 계산을 재실행: 필수 P1/P2 잔여 없음. `/root` 반영 확인. 이전 review identity·실행 결과 유지 |
+| 참고 근거 | 2026-10-19 [ARIES 원 논문](https://cs.stanford.edu/people/chrismre/cs345/rl/aries.pdf)의 WAL/CLR·공간 예약 원리와 로컬 소스 선택 구간 대조. PostgreSQL `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851`의 `src/backend/storage/buffer/bufmgr.c` FlushBuffer, CUBRID `a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5`의 `src/transaction/log_recovery.c` undo/compensate, MySQL `3b99be40f8a31d9396cad10accfd3ba51647d613`의 `storage/innobase/buf/buf0dblwr.cc` batch 완료, SQLite `43a48f77585a88940c727f33682151418f544059`의 `src/wal.c` reader/checkpoint. 외부 구현과 동일하다는 주장이나 실행 증거가 아님 |
+| 실행·재검토 | 산술 반례·축소 계산만 실행. 기존 단계 모델/제품/복구/성능은 NOT_RUN. 잔류 비용 누락·진행 가정 변경 또는 실제 leaf 반례가 생기면 재검토 |

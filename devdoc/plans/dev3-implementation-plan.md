@@ -1,6 +1,6 @@
 # DEV3 — 구현·병렬 개발·검증 계획
 
-2026-10-18 · **DEV3-DESIGN-003·REVIEW-004·REVIEW-005 ACCEPTED / production·모델·S1 NOT_RUN**
+2026-10-19 · **DEV3-DESIGN-003·REVIEW-004–007 ACCEPTED / production·단계 모델·S1 NOT_RUN**
 
 [상세 설계](../contracts/disk-storage-design.md) · [이번 조사·검토](../evidence/dev3-wal-undo-research.md) · [이전 조사](../evidence/dev3-source-research.md) · [완료 정본](stage-completion.json) · [DEV2 선행](dev2-implementation-plan.md)
 
@@ -132,10 +132,14 @@ M02는 `q_read`, `horizon_register`, `status_install`, `frontier_publish`, `hori
 
 DS04의 실제 thread 시험은 위 두 경계에 barrier를 두고 reader/writer/ager를 교차 실행한다. 등록 전에는 ager의 cut 적용이 대기하고 등록 후에는 q10의 값을 보존해야 한다. status11·frontier10·빈 registry에서도 q10에 필요한 undo/객체를 유지해야 하며, frontier11 공개와 마지막 q10 소유 해제 뒤에는 다른 pin이 없는 eligible suffix를 회수할 수 있어야 한다. Serializable begin·ReadCommitted begin_statement·짧은 catalog snapshot과 guard 인계를 각각 확인한다. 기존 reader content 경로와 새 snapshot admission을 구별하고 M03/M06의 turn drain/잠금 순환 판정에도 이 action을 포함한다. barrier 도달·gate/registry 소유·expected/actual 값을 기록하며 NOT_RUN 상태를 유지한다.
 
+M03/M06의 완료 증명은 유한 obligation·충분한 무장애 구간·종료하는 정상 I/O·공정한 실행을 전제한다. 모든 허용 crash cut의 closure/peak 안전성은 별도 귀납 의무다. 기존 D3-M01–M06의 graph·action/codec·실제 I/O 인수는 NOT_RUN이며 설계 검토로 완료되지 않는다.
+
 <a id="resource-proof"></a>
 ### 3.2 최악 조건 자원 계산과 진행 인수
 
 F05는 [자원 벡터 산식](../contracts/disk-storage-design.md#reserve-accounting)에 opcode별 실제 codec bound를 대입한 예약표를 제출한다. 행/index/overflow/undo/CLR/SMO/allocator/control을 빠짐없이 포함하고, 각 항의 bytes/pages·고정/거래별 소유·최대 동시 실행·반환 시점을 표시한다. 8 GiB와 그 안의1 GiB reserve, WAL256 MiB, memory/frame/FD 하위 한도를 **동시에** 만족하는 admission 수를 계산한다. 이 표가 없으면 F05 미완료이며 S2/S3의 해당 effect를 통합하지 않는다.
+
+[DEV3-REVIEW-007](../contracts/disk-storage-design.md#mathematical-review)의 반복 statement 실패를 DS03/DS06에 추가한다. S1 성공 뒤 새 key/row 잠금을 얻고 WAL을 쓴 S2를 실패·rollback하며 다른 owner가 WAL floor를 pin한다. S2의 논리 효과는 없어도 누적 WAL/CLR·회수 전 undo/page·완결 SMO와 거래 잠금이 실제 ledger에 남아야 한다. 실제 반환량만 차감하고, 다음 statement가 최악 비용을 확보하지 못하면 첫 effect 전에 거절한다. 전체 거래 abort의 예약은 유지하며 commit 시도는 기존 실패/확실성 계약을 따른다. ledger를 statement mark로 복원하거나 retained lock을 무단 반환하는 mutant를 거절한다. F02/F05에는 logical rollback, 실제 반환, 잔여 소유를 별도 열로 둔다.
 
 필수 실제 fixture는 최대128 KiB row·8 index·높이 경계의 tree·4/16/64 MiB buffer·최대32 거래 요청이다. 전부를 수용해야 하는 시험이 아니라 계산된 수까지만 안전하게 admission하고 나머지는 첫 effect 전 거절하는 시험이다. row size·index key·논리1 MiB 등 서로 양립하지 않는 극값은 한 불가능 fixture로 합치지 않고 각각 한도를 만족하는 case로 분리한다. allocator inventory의4배 working set도 실제 entry 크기/할당량으로 산정하고 필요 quota 변경은 실행 전 검토한다.
 

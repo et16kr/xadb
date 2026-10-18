@@ -1,6 +1,6 @@
 # DEV5 — 서버 구현·검증 계획
 
-2026-10-18 · **DEV5-DESIGN-001·DEV5-REVIEW-002/003 ACCEPTED 대응 / 제품·B3·PF11 NOT_RUN**
+2026-10-19 · **DEV5-DESIGN-001·DEV5-REVIEW-002–004 ACCEPTED 대응 / 제품·B3·PF11 NOT_RUN**
 
 [서버 상세 설계](../contracts/dev5-server-design.md) · [소스 조사·검토](../evidence/dev5-source-research.md) · [단계 JSON](development-stages.json) · [완료 계약](stage-completion.json)
 
@@ -70,6 +70,8 @@ frame/UID/권한 callback의 실제 하위 계약이 부족하면 해당 소유�
 | D5-T12 | startup/recovery 실패·빈 서버/Active/result/parked/TX 중 shutdown·Drop/panic·worker 포화 cleanup·기한 초과·권한/idle cleanup과 output 포화 | reply 전체 enqueue 뒤 COMM drain, parked 소유의 단일 cleanup 인계·미commit undo 또는 recovery 소유. cleanup이 새 assembly/staging/TX credit을 기다리지 않으며 기존 terminal을 덮지 않음. 재사용 금지/fence 정확, 자기 endpoint만 제거. grace 실패를 성공으로 표시하지 않음. SC03 |
 | D5-T13 | 아래 crash cut·잘못된 server/client decoder·미도달 hook·빈/유실 ACK history·mutant | actual client ACK 보존, 확정 abort 비가시, UNKNOWN 원자성, 반복 reopen·row/index/catalog 일치, oracle가 known-bad 거절. KU14·PA08 |
 | D5-T14 | below PF11 profile·queue/worker/WAL/output 경계·trace loss·계측 off/on·slow peer | 외부 latency와 내부 원인 연결, 비용/회귀 수치·독립 정확성·새 세션 replay 충족. PF11 |
+
+D5-T07/T09와 M01/M02에 [cursor와 request context](../contracts/dev5-server-design.md#cursor-request-context)의 교차 사례를 추가한다. Execute(N) terminal 뒤 N의 deadline을 넘기되 result/세션/거래는 유효한 시각에서 Fetch(N+1)을 시작한다. 최초 snapshot 유지·새 operation context 사용을 확인하고 Cancel(N)=NotActive/영향0, Cancel(N+1)=현재 fetch 신호를 검사한다. N+1의 park/resume는 deadline을 연장하지 않으며 disconnect·상위 수명 만료는 새 context로 지워지지 않는다. 현재 fetch 취소의 미완료 result·거래 효과는 DEV4를 따른다. F03에는 실제 token/context API와 단일 소유 인계를 동결한다. T10은 D4-V27 반복 실패의 논리 rollback과 잔류 자원 charge를 wire 결과와 함께 대조한다. 실제 server 모델/제품 실행은 NOT_RUN이다.
 
 D5-T08은 holder A가 행 잠금을 가진 채 idle이고 B–E 네 요청이 같은 잠금을 기다린 후 A의 COMMIT/ROLLBACK이 도착하는 순서를 barrier로 고정한다. B–E가 parked로 worker를 반환한 상태에서 A가 실행되어야 하며, B–E의 ordinary deadline을 만료시켜서만 A가 진행하면 실패다. offline DDL의 drain과 그 admission에 막힌 요청도 같은 관점으로 검사한다. D5-M02의 축소 모델과 실제 4-worker 통합을 모두 요구한다. disconnect 뒤 cleanup을 고의 지연하고 반복 접속하여 slot32를 초과하는 인증/소유 재사용이 없는지도 확인한다.
 
