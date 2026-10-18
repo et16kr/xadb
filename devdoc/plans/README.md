@@ -9,6 +9,7 @@
 - [capability-inventory.json](capability-inventory.json)
 - [DEV2 — 조사 결과와 구현·검증 계획](dev2-implementation-plan.md)
 - [DEV3 — 구현·병렬 개발·검증 계획](dev3-implementation-plan.md)
+- [DEV4 — embedded SQL 구현·검증 계획](dev4-implementation-plan.md)
 - [development-stages.json](development-stages.json)
 - [XADB 개발 단계](development-stages.md)
 - [feature-design-inventory.json](feature-design-inventory.json)

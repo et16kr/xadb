@@ -1,0 +1,258 @@
+# DEV4 — embedded 최소 SQL 상세 설계
+
+2026-10-18 · **DEV4-DESIGN-001 D2 기본 설계 ACCEPTED / leaf API·실행 profile 미동결 / 미구현·Q1 NOT_RUN**
+
+[구현·검증 계획](../plans/dev4-implementation-plan.md) · [실제 소스 조사](../evidence/dev4-source-research.md) · [단계 범위](../plans/development-stages.json) · [완료 계약](../plans/stage-completion.json) · [DEV3 저장 계약](disk-storage-design.md) · [커널 구현 계약](implementation-contracts.md)
+
+이 문서는 XADB의 비파티션 DISK table에 대한 SQL 의미와 embedded 실행 경계를 정한다. API 이름은 구현 예정이며 호출 가능한 제품을 뜻하지 않는다. DEV2 부분 구현과 DEV3 설계 채택을 영속 엔진 완료로 해석하지 않는다. 설계 준비는 지금 가능하지만 production 구현은 DEV3 최소 선행 증거와 해당 leaf의 계약·oracle·profile 동결 뒤 시작한다.
+
+<a id="scope"></a>
+## 1. 범위·원문·선택
+
+필수 범위는 CREATE/DROP TABLE/INDEX, INSERT/UPDATE/DELETE, 단일 table SELECT·predicate·ORDER BY·LIMIT, PK/UNIQUE/NOT NULL, BEGIN/COMMIT/ROLLBACK·autocommit, typed prepare/bind/execute/fetch/close, embedded CLI다. Bool/Int64/Utf8/Binary와 NULL, statement rollback, read-your-writes, snapshot + coarse validation SERIALIZABLE을 유지한다.
+
+join·집계·subquery·window·DISTINCT·CTE·set 연산·산술/함수·암묵 cast·확장 타입·FK/CHECK·명시 SAVEPOINT·ALTER·PSM·trigger·partition SQL은 DEV7 또는 해당 후속 단계의 의무다. server/transport는 DEV5, driver는 DEV6이며 Q1에 요구하지 않는다. shared plan cache·고급 재최적화·JIT·vectorized 실행은 초기 구현에 넣지 않는다. 미지원 문법은 성공이나 빈 결과로 위장하지 않는다.
+
+| 결정 | 채택할 선택과 이유 | 비교한 대안 |
+| --- | --- | --- |
+| SQL front end | 제한된 lexer + recursive-descent statement parser + precedence predicate parser, typed AST/BoundStatement | 외부 범용 parser는 XADB subset·오류·quota adapter 비용이 있어 지금 의존성을 추가하지 않음. 문법 확대 때 재검토 |
+| 실행 | 작은 pull executor, scan/point/range + filter/project/sort/limit, DML은 engine statement API | VM/JIT·일반 optimizer framework는 현재 기능에 불필요한 상태·검증 비용 |
+| prepared 실행 | 문맥/명시 hint로 prepare 시 타입 고정, owned binding, execute 시 dependency 검사, stale 명시 거절 | 실행마다 타입 변경·자동 reprepare는 metadata/오류 효과와 재실행 경합을 복잡하게 함 |
+| ORDER BY | streaming 외부 merge sort를 기준선으로 제공 | RAM 전체 materialization은 큰 DISK 데이터에 부적합. top-N·index로 sort 제거는 별도 동등성 검증 뒤 |
+| 제약·commit | 기존 DEV3 즉시 unique 검사와 DEV2 commit 결과를 사용 | SQL 전용 commit·최종 상태 unique 검사로 기존 엔진 의미를 바꾸지 않음 |
+
+SQL 초안의 어휘·타입·문법 제안 중 아래에 명시한 부분을 구체화한다. [초안](../reference/sql-language-draft.md)은 역사적 제안/예제이며 새로운 정본이 아니다. 특히 초안 5절의 **문장 최종 상태 제약 검사 제안은 채택하지 않는다**. DEV3의 mutation별 즉시 검사와 전체 statement rollback을 따른다. 다른 DBMS와 동일 dialect/ABI/오류 동작을 약속하지 않는다.
+
+<a id="grammar"></a>
+## 2. 유한 문법과 이름
+
+아래 EBNF의 `[]`는 선택, `{}`는 반복이다. API의 한 SQL 입력은 정확히 한 문장과 선택적인 마지막 `;`만 받는다. CLI batch는 같은 lexer의 경계 규칙으로 문장을 하나씩 전달한다. 공백/주석만 있는 API 입력은 Syntax 오류, CLI의 빈 구간은 건너뛴다.
+
+```text
+statement := create_table | drop_table | create_index | drop_index
+           | insert | update | delete | select | transaction_control
+create_table := CREATE TABLE table_name '(' column_def {',' column_def}
+                [',' PRIMARY KEY '(' columns ')']
+                {',' UNIQUE '(' columns ')'} ')' STORAGE DISK
+column_def := name type [NOT NULL | NULL]
+type := BIGINT | BOOLEAN | VARCHAR '(' positive_integer ')'
+      | VARBINARY '(' positive_integer ')'
+create_index := CREATE [UNIQUE] INDEX index_name ON table_name '(' columns ')'
+drop_table := DROP TABLE table_name
+drop_index := DROP INDEX index_name
+columns := name {',' name}
+insert := INSERT INTO table_name '(' columns ')' VALUES tuple {',' tuple}
+tuple := '(' scalar {',' scalar} ')'
+update := UPDATE table_name SET name '=' scalar {',' name '=' scalar} [WHERE predicate]
+delete := DELETE FROM table_name [WHERE predicate]
+select := SELECT projection FROM table_name [WHERE predicate]
+          [ORDER BY order_term {',' order_term}] [LIMIT limit_value]
+projection := '*' | name [AS name] {',' name [AS name]}
+order_term := name [ASC | DESC] [NULLS FIRST | NULLS LAST]
+predicate := or_term
+or_term := and_term {OR and_term}
+and_term := not_term {AND not_term}
+not_term := NOT not_term | '(' predicate ')' | comparison | null_test
+comparison := value ('=' | '<>' | '<' | '<=' | '>' | '>=') value
+null_test := value IS [NOT] NULL
+value := name | scalar
+scalar := literal | '?'
+limit_value := nonnegative_integer | '?'
+transaction_control := BEGIN | COMMIT | ROLLBACK | SET AUTOCOMMIT (ON | OFF)
+table_name := [public '.'] name
+index_name := [public '.'] name
+```
+
+`public` prefix도 일반 identifier 정규화 규칙을 적용한다. 단일 고정 namespace `public`만 제공하고 다른 schema는 Unsupported다. engine에는 prefix를 제거한 이름 bytes를 전달한다. table/index 이름 namespace는 분리하고 index 이름은 DB 전체에서 유일하다. 열 참조는 입력 table의 단순 이름만 받는다. table alias·qualified column·출력 alias/ordinal을 ORDER BY에서 참조하는 문법은 미지원이다. projection의 중복 열/출력 이름은 허용하며 metadata ordinal로 구별한다.
+
+- keyword와 unquoted name은 ASCII 대소문자를 구별하지 않는다. unquoted name은 `[A-Za-z_][A-Za-z0-9_]*`이고 ASCII 소문자로 저장한다. 이 문법의 keyword는 reserved다.
+- quoted name은 `"..."`, 내부 quote는 `""`로 표시하며 UTF-8 bytes를 정규화 없이 비교한다. 정규화 후 1–128 bytes, NUL과 Unicode C0/C1 control은 거절한다. `t`, `T`, `"t"`는 같고 `"T"`는 다르다.
+- 정수 literal은 선택적 `+`/`-`와 decimal digits이며 Int64 범위를 checked parsing한다. 최소값 `-9223372036854775808`도 허용한다. 소수·지수는 Unsupported, 정수 overflow는 Range다.
+- boolean은 TRUE/FALSE, text는 `'...'` 및 `''` escape, binary는 `X'...'`의 짝수 hex digits, NULL은 값의 부재다. 빈 text/binary는 실제 값이다. backslash escape·Unicode 정규화를 하지 않는다. text의 U+0000은 길이 있는 값으로 보존한다. identifier NUL과 구분한다.
+- 입력은 유효한 UTF-8, 주석은 `--`부터 줄 끝과 중첩하지 않는 `/* ... */`다. 미종료 quote/comment는 Syntax다. literal·identifier·comment 안의 `?`/`;`는 parameter/구분자가 아니다.
+- `!=`, DEFAULT, RETURNING, INSERT SELECT, IF EXISTS, CASCADE, descending/expression/partial index, SQL PREPARE/EXECUTE는 미지원이다. 알려진 후속 feature 시작 위치는 Unsupported, 나머지 잘못된 token/구조는 Syntax로 분류한다.
+
+오류 위치는 원문 UTF-8의 0-based byte `[start,end)`를 정본으로 반환하며 EOF는 같은 시작/끝 offset이다. CLI의 1-based line/column은 표시용이며 원본 byte span을 보존한다. parse·bind는 단락 평가 전에 전체 문장을 검증한다. `LIMIT 0`이나 거짓 predicate도 없는 열/잘못된 타입 오류를 숨기지 않는다.
+
+<a id="values"></a>
+## 3. 타입·NULL·DDL
+
+| SQL 타입 | 공통 값 의미 | 제약 |
+| --- | --- | --- |
+| BIGINT | signed Int64 | 범위 밖 거절, wrap/saturation/암묵 cast 없음 |
+| BOOLEAN | false < true | 0/1·text 자동 변환 없음 |
+| VARCHAR(n) | UTF-8 byte 비교 | n=1..65,536 bytes; trailing space·빈 값 보존, 절단/padding 없음 |
+| VARBINARY(n) | unsigned byte 사전식 비교 | n=1..65,536 bytes; text 자동 변환 없음 |
+| NULL | nullable typed 값 | 독립 열 타입이 아님; SQL 비교와 index NULL 순서를 구분 |
+
+같은 논리 타입끼리만 비교·대입한다. 문자열 선언 길이가 달라도 비교 타입은 Utf8이며, 대입 길이는 목적 열에서 검사한다. untyped literal NULL은 상대/대입 문맥 타입을 사용한다. `NULL = NULL`은 UNKNOWN, `NULL IS NULL`은 TRUE다. 다른 non-NULL 타입의 비교는 결과를 보기 전에 Type 오류다.
+
+일반 비교에서 어느 쪽이 NULL이면 UNKNOWN이며 WHERE는 TRUE만 통과시킨다. NOT은 T→F/F→T/U→U, AND는 F가 있으면 F·모두 T면 T·나머지 U, OR는 T가 있으면 T·모두 F면 F·나머지 U다. IS NULL은 항상 T/F다. foundation의 SQL 비교와 total key ordering을 혼동하지 않는다.
+
+CREATE TABLE은 1–32개의 서로 다른 열과 최대 하나의 PK를 받는다. PK 열의 nullable 생략은 binder가 NOT NULL로 확정해 engine schema에 넘긴다. 명시 NULL과 PK가 겹치면 정의 오류다. PK/UNIQUE/명시 index를 합해 table당 8개, 각 index는 1–4개의 서로 다른 열, encoded key는 RowId 제외 1,024 bytes 이하라는 DEV3 한도를 적용한다. PK/UNIQUE 제약 소유 index는 catalog 내부 identity로 관리하며 SQL의 DROP INDEX 대상으로 노출하지 않는다. 명시 CREATE UNIQUE INDEX는 DROP INDEX로 제거할 수 있다.
+
+PK는 NULL 불가·유일, UNIQUE는 구성 열에 NULL이 하나라도 있으면 충돌하지 않는다. UNIQUE의 빈 문자열·빈 binary는 NULL이 아니다. row·모든 index·catalog를 같은 engine statement/commit에 묶는다. PK/UNIQUE 포함 CREATE TABLE은 비공개 table/schema/index 정의를 하나의 catalog 거래로 준비해야 하며 여러 공개 DDL 호출로 쪼개지 않는다. 이 native API가 준비되지 않으면 SQL에서 에뮬레이션하지 않고 선행 계약 미충족으로 남긴다.
+
+DDL은 session transaction과 열린 result가 없을 때만 독립 원자 실행한다. autocommit OFF의 idle에서도 독립 DDL이며 implicit commit은 없다. index build는 DEV3 admission close/drain과 bounded sort를 따른다. DROP TABLE은 소유 index와 함께 제거하며 old snapshot/파일 회수는 engine이 소유한다. prepare handle만으로 장기 snapshot을 잡아 DDL drain을 막지 않는다.
+
+<a id="execution"></a>
+## 4. binder·planner·executor와 DML
+
+기존 배치대로 `xadb-sql → xadb-engine, xadb-foundation`, `xadb-cli → xadb-sql, xadb-foundation, xadb-platform`을 사용한다. engine은 SQL을 import하지 않고 SQL은 private page/WAL/lock에 접근하지 않는다. platform 효과는 CLI/worker가 주입하며 SQL은 public engine open/create와 효과 전달을 조립하는 좁은 facade를 제공한다. 새 crate·worker·빌드 경로는 실제 구현 시 등록한다.
+
+| 소유 책임 | 입력→출력·보장 |
+| --- | --- |
+| lexer/parser | 원문→span 있는 AST; bounded 입력·깊이, 파일 I/O·catalog mutation 없음 |
+| binder | 하나의 catalog snapshot에서 이름→ObjectId/Generation/SchemaEpoch·열 ordinal·타입·metadata. AST를 실행하며 이름을 다시 찾지 않음 |
+| planner | BoundStatement→typed plan/node ID·dependency 목록. engine public scan/index API만 사용 |
+| executor | snapshot/private view 고정→open/next/close; row/page guard를 외부에 빌리지 않음 |
+| session | transaction·statement/result handle·binding·quota·취소 상태. durable outcome은 engine 결과 그대로 전달 |
+| engine | statement mark·row/index mutation·unique·validation·commit/UNKNOWN·복구·retention |
+
+초기 SELECT 기준선은 `RowScan → Filter → Sort(필요 시) → Project → Limit`이다. 정렬에는 선택하지 않은 입력 열도 사용할 수 있다. NULL 기본 위치는 ASC LAST, DESC FIRST이며 명시 FIRST/LAST가 우선한다. 내부 index의 NULL-first encoding을 그대로 SQL 순서로 노출하지 않는다. ORDER BY 없이는 순서를 보장하지 않고 동률의 상대 순서도 SQL 보장이 아니다. 실제 sorter는 RowId를 내부 tie-breaker로 사용해 재현성을 얻되 사용자 계약으로 승격하지 않는다. LIMIT은 0..Int64::MAX, parameter는 non-NULL Int64여야 한다. OFFSET은 미지원이다.
+
+최소 access path 선택은 full scan, index point, forward index range다. AND의 항에서 `(열 = literal/parameter)`의 leading equality prefix와 다음 한 열의 `<,<=,>,>=` bounds만 추출한다. `IS NULL`은 NULL equality bound로 사용할 수 있다. 일반 `열 = NULL`을 IS NULL lookup으로 바꾸지 않는다. NULL bind의 일반 비교는 TRUE 결과가 없음을 유지한다. OR/NOT·열끼리 비교는 보수적으로 scan하며 모든 residual predicate를 재평가한다. 모순 bound는 empty, inclusive/exclusive composite prefix는 DEV3의 key 계약으로 표현한다.
+
+후보 우선순위는 full-key unique equality → 가장 긴 equality prefix+다음 range → 가장 긴 equality prefix → RowScan이며 동일 후보는 index ObjectId로 고정한다. 통계 기반 비용 optimizer·index-only scan·sort 제거는 이 기준선에 포함하지 않는다. index path도 row fetch와 residual filter를 거치고 read-your-writes delta를 포함한다. 시험 전용 force-scan은 비교 입력이며 공개 SQL hint가 아니다.
+
+INSERT는 열 목록이 필수이고 omitted nullable 열은 NULL, omitted nonnullable 열은 NotNull이다. tuple 수/열 수·중복 열·타입/길이를 검사한 뒤 VALUES 순서로 처리한다. UPDATE의 SET 우변은 literal/parameter만 받으며 중복 목적 열은 Name 오류다. affected_rows는 INSERT 추가 수, DELETE 삭제 수, UPDATE 조건에 매칭한 수이며 동일 값 대입도 센다.
+
+UPDATE/DELETE는 **statement 진입 snapshot+앞선 성공 statement의 private view**에서 대상 RowUID와 필요한 원래 값을 제한된 목록으로 먼저 모은다. 전체 대상 수·bytes가 transaction의 남은 256 mutation·8 MiB private·1 MiB WAL 예산을 넘으면 statement를 실패시킨다. LIMIT 없는 DML을 내부 여러 commit으로 나누지 않는다. 대상 확정 후 RowId 오름차순으로 한 `execute_statement`에 넘겨 각 행을 한 번만 변경한다. scan 도중 자기 UPDATE가 index를 옮겨 행을 반복 방문하는 Halloween 문제를 막는다.
+
+UNIQUE는 DEV3처럼 각 mutation 직후 즉시 검사한다. 어느 행에서 실패해도 이번 문장의 행·모든 index delta·quota·staging을 되돌리고 이전 성공 statement를 보존한다. 실패 affected_rows는 성공한 부분 행 수가 아니라 오류이며 effect=statement rollback이다. DML 대상으로 쓴 native cursor는 mutation 전에 닫는다. 취소/할당 실패와 engine 오류에서 rollback mark의 소유자는 engine이며 SQL이 부분 역연산을 새 SQL로 수행하지 않는다.
+
+<a id="prepared"></a>
+## 5. typed prepared 실행·metadata·수명
+
+기본 API 책임은 `prepare(sql, parameter_types?)`, `bind_all(handle, values)`, `execute(handle)`, `fetch(result, max_rows, max_bytes)`, `close_result`, `close_statement`다. `execute_direct(sql)`은 동일 parse/bind/plan/execute 경로를 일회성으로 사용한다. typed prepare는 SELECT/INSERT/UPDATE/DELETE만 받으며 DDL/transaction control은 direct 경로다. SQL 문자열에 binding 값을 합성하지 않는다.
+
+`?`는 lexical 왼쪽부터 1..N으로 번호를 붙이며 같은 값의 반복 사용도 각 occurrence에 따로 bind한다. 최대 256개다. 이름·타입 이름·DDL·열 목록·ORDER BY 이름에는 marker를 허용하지 않는다. assignment 대상, 비교 상대의 concrete 타입, LIMIT의 Int64 문맥으로 타입을 추론한다. hint는 생략하거나 정확히 N개의 optional type을 주며 conflicting hint는 Type이다. `? IS NULL`, `? = ?`, `? = NULL`처럼 타입이 결정되지 않는 marker는 명시 hint가 없으면 ParameterTypeUnknown으로 prepare 실패한다. NULL literal 자체와 parameter를 구분한다.
+
+parameter metadata는 ordinal, 논리 타입, 허용 NULL, 최대 bytes, 사용 위치를 포함한다. 기본 가변 값 상한은 65,536 bytes이고 assignment는 목적 열 길이로 좁힌다. nullable=false 목적 열과 LIMIT의 marker는 NULL 불가다. result metadata는 ordinal, 출력 이름, 논리 타입, nullable, 선언 byte 길이(가변 타입), 원본 table identity/열 ordinal을 포함하며 affected count는 result column이 아니다. `*`는 prepare catalog의 열 순서로 펼친다. metadata는 prepare 이후 불변이다.
+
+binding은 타입 tag·NULL·명시 byte 길이를 가진 owned 값이다. `bind_all`은 정확히 N개를 검증·예약·복사/소유권 이전한 뒤 한 번에 교체한다. 실패하면 이전 binding 전체를 보존하며 부분 교체하지 않는다. NULL도 선언 타입과 일치해야 한다. UTF-8 오류·count/type/length/NULL 오류는 mutation 전에 반환한다. 성공한 binding은 caller 원본 buffer의 수명과 독립이며 반복 execute 사이 유지한다. 실제 저장 제약과 key encoding 크기는 execute 때 다시 확인한다.
+
+| statement 상태 | 허용 동작·다음 상태 |
+| --- | --- |
+| ReadyUnbound | bind 성공→ReadyBound; N=0이면 prepare 즉시 ReadyBound. execute는 BindCount 오류 |
+| ReadyBound | bind 성공→교체; DML execute 성공/복구 가능한 오류 뒤 ReadyBound; SELECT execute 성공→ResultOpen |
+| ResultOpen | 해당 result fetch/close만 실행. 같은 session의 새 execute·direct·bind·prepare·COMMIT은 ResultBusy. ROLLBACK/close_session은 result 취소 뒤 수행 |
+| ResultOpen→EOF | 결과 완료 상태를 반환하고 pin/scratch 해제, statement ReadyBound. result token은 이후 EOF 조회 또는 close만 허용 |
+| ResultOpen→복구 가능한 fetch 오류 | 미완료 terminal error 저장, pin/scratch 해제, statement ReadyBound. 이후 fetch는 같은 terminal error만 반환, 새 execute에는 사용 불가 |
+| ResultOpen→close_result | 미완료이면 취소·해제, statement ReadyBound, result Closed. EOF 이후 close도 같은 Closed 상태이며 fetch는 HandleClosed |
+| Invalid | stale 검사 실패→bindings·metadata는 조회 가능하나 재bind/execute 불가. close 후 새 prepare 필요 |
+| Closed | terminal. 같은 session의 close는 멱등; 다른 사용은 HandleClosed. 다른 session/engine token은 InvalidHandle |
+
+session당 활성 result는 하나다. **statement당 마지막 result descriptor 한 개만** 보존하며 EOF/error/closed 기록도 prepared 64개·8 MiB/session 예산 안에서 센다. 다음 execute 또는 statement close는 이전 terminal result를 폐기하고 generation을 전진시킨다. 과거 result는 InvalidHandle이다. direct 실행도 session당 마지막 terminal descriptor 한 개만 보존하고 다음 direct 실행에서 교체한다. 따라서 반복 SELECT/EOF가 descriptor를 누적하지 않는다.
+
+handle은 session incarnation+slot generation을 검증하며 정수 재사용으로 과거 handle을 부활시키지 않는다. 멱등 close는 해당 slot의 현재 closed generation에만 적용하며 slot 재사용 뒤 과거 generation은 InvalidHandle이다. closed tombstone도 고정 slot 수 안에서 관리한다. session operation은 하나씩 직렬 실행하고 cancel token 신호만 별도 thread에서 허용한다. 실행 중 close/bind 경쟁은 Busy이며 내부 상태를 동시 변경하지 않는다.
+
+prepare는 active transaction이면 그 catalog, idle이면 짧은 read-only snapshot으로 bind하고 pin을 즉시 해제한다. idle prepare가 autocommit OFF의 transaction을 시작하지 않는다. execute는 실제 실행 transaction을 먼저 고정하고 그 catalog에서 DB/timeline/open instance, table ObjectId/Generation/SchemaEpoch, 사용한 index identity와 table의 index 정의 집합을 다시 검사한다. 단순 data commit만으로 plan을 무효화하지 않는다. index 정의 집합은 catalog descriptor로 대조하며 root/page 주소를 영구 plan에 저장하지 않는다.
+
+drop/recreate·schema/index 정의 변경은 StalePlan으로 **첫 row 접근/효과 이전** 거절한다. 이름으로 자동 재bind하지 않는다. 검사와 실행은 동일 pinned transaction view를 사용해 DDL 사이의 TOCTOU를 막는다. 기존 transaction의 old catalog가 유효하면 그 view에 대해 판단하되 실제 offline DDL drain 규칙을 우회하지 않는다. 새 prepare는 최신 metadata를 반환하고 기존 handle metadata를 조용히 변경하지 않는다.
+
+fetch는 owned row batch와 `complete` flag를 반환한다. max_rows=1..128, max_bytes=256 KiB 이내이며 현재 행이 caller 예산보다 크면 RowBufferTooSmall과 필요한 크기를 반환하고 위치를 전진시키지 않는다. 정상 EOF 또는 LIMIT 도달만 `complete=true`다. I/O·취소 오류나 조기 close는 미완료 결과이며 이미 전달한 prefix를 전체 성공으로 표시하지 않는다. `close_result`는 result의 자원만 정리하고 명시 transaction의 기존 DML을 commit하지 않는다. `close_statement`는 소속 result를 닫고 binding·plan을 해제한다. Drop은 hidden commit·새 allocation·panic 없이 취소/해제 경로만 수행한다.
+
+ROLLBACK은 active result를 닫고 generation을 전진시켜 기존 result token을 InvalidHandle로 만든다. 소유 statement는 ReadyBound로 돌아가며 새 transaction에서 dependency 검사를 다시 받아야 한다. close_session은 모든 statement/result를 무효화한다. terminal 오류 기록에는 code/effect만 제한된 크기로 보존하고 원문 row·spill·snapshot을 붙잡지 않는다.
+
+<a id="transactions"></a>
+## 6. session·transaction·오류 효과
+
+새 session은 autocommit ON·Idle이다. BEGIN/OFF에서 시작하는 거래는 ReadWrite이며 read-only SQL만 실행해도 engine의 무변경 ReadWrite validation을 따른다. ON의 단독 SELECT만 ReadOnly를 사용한다.
+
+lex/parse·handle·binding 개수/타입·session 상태 검사는 새 transaction을 만들기 전에 수행하며 이 단계 오류는 Idle을 유지한다. execute가 실제 transaction을 시작한 뒤의 catalog bind/dependency 검사·statement/fetch 오류는 아래 Active 규칙을 따른다. OFF에서 이 호출이 처음 거래를 만들었어도 복구 가능한 오류 뒤 Active이며 transaction_state에 이를 반환한다. ON에서 만든 implicit 거래는 해당 실행의 terminal 오류면 종료하고, 기존 명시/OFF 거래는 복구 가능한 statement/fetch 오류 뒤 유지한다. API 진입 거절과 RowBufferTooSmall은 기존 거래/result를 유지한다. prepare 자체는 idle user transaction을 만들지 않는다.
+
+| 현재 상태/입력 | 전이·관측 결과 |
+| --- | --- |
+| Idle + BEGIN | Active 명시 거래. nested BEGIN은 TxnState, 기존 거래 유지 |
+| Idle ON + DML | implicit ReadWrite→한 statement→commit. COMMITTED 확인 뒤 성공 count 반환 |
+| Idle ON + SELECT | implicit ReadOnly→cursor snapshot 유지→EOF/close/error에서 해제. durable commit receipt 없음 |
+| Idle OFF + SELECT/DML | 첫 execute에서 Active 거래 시작. EOF/statement 성공 뒤도 Active |
+| Active + COMMIT | 열린 result 없을 때 engine commit으로 종료. 성공/ABORTED/UNKNOWN 구분 |
+| Active + ROLLBACK | 열린 result 취소 후 private 변경·pin 해제→Idle. commit 시도 중에는 rollback 성공을 만들지 않음 |
+| Idle + COMMIT/ROLLBACK | TxnState 오류 |
+| Idle + SET AUTOCOMMIT | ON/OFF 설정; Active이면 TxnState로 거절 |
+| Idle + DDL | 독립 engine DDL, 모드는 유지. Active이면 DdlInTransaction |
+| close_session | result/statement 정리·미시도 거래 rollback. 이미 알려진 commit 결과를 변경하지 않음 |
+
+SQL 오류는 stable code, phase(lex/parse/bind/execute/fetch/commit), source span(가능할 때), statement_effect, transaction_state, certainty, retry_scope, 원인 engine code를 가진다. foundation의 Effect/Certainty/RetryScope 의미를 보존하고 SQL 상세 필드는 adapter에서 제공한다. SQLSTATE·driver 매핑은 DEV6에서 이 의미를 보존해 고정하며 임의 SQLSTATE를 지금 약속하지 않는다.
+
+| 코드 접두어 `XADB-SQL-` 뒤 이름 | 최초 검출 시점 | 효과·후속 처리 |
+| --- | --- | --- |
+| SYNTAX, UNSUPPORTED, NAME, TYPE, RANGE | parse/bind; 값 범위는 bind/execute | 미실행 또는 statement 복원. Active의 이전 성공 변경 유지 |
+| BIND-COUNT, PARAMETER-TYPE-UNKNOWN | bind/prepare | 효과 없음, 기존 binding/거래 유지 |
+| NOT-NULL, UNIQUE, INDEX-KEY-TOO-LARGE | bind/execute/build | 이번 statement/build 전체 복원 |
+| LIMIT, CANCELLED, TIMEOUT | 준비/execute/fetch, commit 전 | 일반 statement는 복원; implicit 거래는 종료. COMMIT 호출 중 pre-attempt 취소는 전체 ABORTED |
+| TXN-STATE, DDL-IN-TXN, RESULT-BUSY | API/session 진입 | 효과 없음, 기존 거래/result 유지 |
+| INVALID-HANDLE, HANDLE-CLOSED, STALE-PLAN | API/execute dependency 검사 | 효과 없음. stale statement만 Invalid |
+| ROW-BUFFER-TOO-SMALL | fetch | cursor 유지, 같은 위치로 큰 budget 재요청 가능 |
+| CONFLICT | commit validation | 전체 ABORTED→Idle, 새 transaction 전체 재시도 판단 |
+| RESULT-UNKNOWN | CommitAttempted 뒤 불확실한 I/O/응답 | UNKNOWN 유지·engine Fenced, 자동 retry/rollback 금지 |
+| ENGINE | 기타 typed engine 오류 | 원래 effect/certainty/fencing을 전달. 손상·불변식·metadata 불명은 복구 가능한 SQL 오류로 낮추지 않음 |
+
+cancel은 row/parse chunk·sort run·I/O wait의 bounded checkpoint에서 관측한다. 일반 DML 중 취소는 statement rollback 후 명시 거래를 유지할 수 있지만 COMMIT 진입 이후에는 engine commit 상태가 우선한다. sync 성공 뒤 취소 신호가 왔다고 committed를 ABORTED로 바꾸지 않는다. Fenced session은 새 execute를 받지 않고 close/진단만 허용한다. reopen은 새 engine/session/handle이며 outcome 확인·중복 요청 정책은 후속 서버 계약과 구분한다.
+
+fetch terminal 오류는 위 result 상태표에 따라 cursor를 닫는다. 단, RowBufferTooSmall은 재시도 가능하여 cursor를 유지한다. engine이 transaction abort를 요구하면 session은 Idle로, Fenced를 요구하면 Fenced로 전이하고 모든 active result를 무효화한다. statement를 ReadyBound로 돌리는 것으로 engine fencing을 해제하지 않는다.
+
+<a id="resources"></a>
+## 7. bounded 실행·정렬·진단
+
+아래는 초기 개발 한도이며 제품 최대 용량/SLA의 측정 결과가 아니다. 모든 count/length 산술은 할당 전에 checked 연산하고 초과는 typed error다. 데이터/statement가 크다고 조용히 잘라 성공시키지 않는다.
+
+| 자원 | 초기 상한·회계 |
+| --- | --- |
+| 한 SQL 입력 | UTF-8 1 MiB, token 65,536개, AST node 8,192개, nesting 64(괄호·연속 NOT 등 모든 parser 재귀 포함). CLI batch 전체는 streaming |
+| 열·projection·ORDER BY | table 32열, projection/정렬 각각 32항, projected canonical row 128 KiB |
+| prepared | session당 64개, parameter 256개/statement. SQL text·AST/plan·metadata·binding 합계 8 MiB/session |
+| 활성 실행 | session당 1개·workspace 8 MiB. 그 안에 sort run 4 MiB·반환 batch 256 KiB 포함 |
+| SQL 총 memory | DB당 compiled/bound+active SQL 예약 합계 64 MiB. engine의 buffer/metadata/private/system budget과 별도로 더해 RSS를 관측 |
+| temporary sort disk | query당 256 MiB, DB당 1 GiB. 해당 볼륨의 여유/전체 disk admission에도 반영, engine retained-data quota에서 숨기지 않음 |
+| sorter 파일 | fan-in 8, query당 열린 임시 FD 최대 10, SQL 전체 임시 FD 64. OS/engine FD 예산과 함께 합산 |
+| transaction | DEV2/DEV3의 256 mutation·WAL 1 MiB·private 8 MiB, user snapshot/pin 32 유지. SQL에서 별도 추가 용량처럼 중복 배정하지 않음 |
+
+sorter는 정렬 key+RowId+projected values를 bounded run으로 기록하고 fan-in 8 merge를 반복한다. header·key·값을 포함한 spill record는 최대 256 KiB이고 확장한 정렬 key가 이 한도를 넘으면 Limit이다. merge는 입력별 현재 record 하나와 출력 buffer만 유지해 최대 record에서도 4 MiB sort 예산 안에 들어가도록 예약한다. 전체 run 목록은 디스크 manifest에서 순회하고 메모리에 모든 run/file 이름을 모으지 않는다. merge 단계의 입력+출력 공존 peak를 disk quota에 포함한다. 한 row가 workspace/결과 한도를 넘으면 Limit이며 끝없는 retry를 하지 않는다. 정렬 완료 전 결과를 반환하지 않고 이후 fetch는 bounded batch로 읽는다. LIMIT top-N 최적화는 필수가 아니므로 LIMIT이 작아도 정렬 quota 초과가 가능하다.
+
+임시 파일은 engine data pack/WAL과 분리한 소유 run namespace에 배타 생성한다. 파일 format/version·record length·checksum·count를 검사하며 corrupt/truncated spill을 정렬 성공으로 처리하지 않는다. spill은 durable DB 상태가 아니므로 commit dependency나 recovery redo에 넣지 않는다. query/result close·취소·오류 때 닫고 삭제하며 삭제 실패 bytes는 실제 회수까지 quota에 남긴다. crash 뒤에는 writer lease 확보 후 소유 manifest로 확인한 임시 namespace만 bounded cleanup한다. 알 수 없는 파일은 지우지 않는다. 임시 codec byte vector와 cleanup API는 D4-F03에서 구현 전에 고정한다.
+
+prepare·execute·plan/node ID에 parse/bind/plan 시간, rows/loops, visited row/page, predicate 통과 수, sort run/spill bytes·merge pass·memory peak, storage I/O와 commit outcome을 연결한다. parameter 원문 값을 기본 진단에 넣지 않는다. 계측 off/상시/상세와 유실을 구분하며 미계측을 0으로 보고하지 않는다. PF10의 실제 release 측정과 독립 결과는 [검증 계획](../plans/dev4-implementation-plan.md#performance)을 따른다.
+
+<a id="vectors"></a>
+## 8. 구현 전에 보존할 독립 의미 vector
+
+모두 **PLANNED_NOT_RUN**이다. 각 행은 새 fixture/독립 case이며 native oracle에 기대값을 literal로 넣고 SQL evaluator/production key codec으로 만들지 않는다. 기본 fixture는 `t(id BIGINT NOT NULL, k BIGINT, s VARCHAR(6), b BOOLEAN, v VARBINARY(2), PRIMARY KEY(id), UNIQUE(k)) STORAGE DISK`와 `(1,10,'가나',FALSE,X'00FF'), (2,NULL,'',TRUE,X''), (3,NULL,NULL,NULL,NULL)`이다.
+
+| ID | 입력·조건 | 독립 기대값·효과 |
+| --- | --- | --- |
+| D4-V01 | `SELECT id FROM t WHERE k = NULL` / `WHERE k IS NULL ORDER BY id` | 각각 빈 결과 / `[2,3]` |
+| D4-V02 | `WHERE NOT (k = 10) ORDER BY id` / `WHERE k = 10 OR k IS NULL ORDER BY id` | 각각 빈 결과 / `[1,2,3]`; T/F/U 3×3 AND/OR와 NOT 전체 vector 추가 |
+| D4-V03 | `ORDER BY k ASC, id` / `ORDER BY k DESC, id` | id 순서 `[1,2,3]` / `[2,3,1]`; 명시 NULLS FIRST/LAST도 검사 |
+| D4-V04 | 새 행에 `'가나다'` / `'가나'` | VARCHAR(6) 대입 각각 Range / 성공; 빈 값은 NULL과 다름 |
+| D4-V05 | `BEGIN; UPDATE t SET b=TRUE WHERE id=1; INSERT INTO t(id,k) VALUES(4,20),(5,10)` | INSERT 전체 UNIQUE 실패, 4·5 둘 다 없음. 앞선 id=1의 b=TRUE 유지, COMMIT 가능 |
+| D4-V06 | `UPDATE t SET k=20 WHERE id=1 OR id=2` | 두 번째 mutation UNIQUE 실패, 전체 statement 복원, 원래 k=10/NULL 유지 |
+| D4-V07 | `prepare('SELECT id FROM t WHERE id >= ? ORDER BY id LIMIT ?'); bind [Int64(2),Int64(1)]` | metadata 둘 다 Int64, LIMIT NULL 불가; 결과 `[2]`. 문자열 `"2"` bind는 Type·기존 binding 유지 |
+| D4-V08 | `prepare('SELECT id FROM t WHERE ? IS NULL')` | hint 없으면 ParameterTypeUnknown; Int64 hint + typed NULL이면 `[1,2,3]` multiset |
+| D4-V09 | ReadyBound에서 잘못된 개수/UTF-8/길이 bind, 열린 result에서 재bind/execute, EOF 후 재execute | 실패 binding 원자 보존 / ResultBusy / 같은 binding으로 새 snapshot 실행 |
+| D4-V10 | prepare 뒤 idle에서 DROP/같은 이름 CREATE, 또는 선택 index DROP | StalePlan, 이전 metadata 유지, effect 없음. 새 prepare만 새 identity 사용 |
+| D4-V11 | 두 session이 같은 q에서 BEGIN→서로 다른 행 UPDATE→순서대로 COMMIT | 첫 COMMITTED, 두 번째 CONFLICT·ABORTED. private 결과·ACK history와 reopen 대조 |
+| D4-V12 | text parameter에 quote·semicolon·`--` 포함, caller buffer 즉시 변경/해제 | SQL 재해석 없음, bind 시 owned bytes 그대로 비교 |
+| D4-V13 | `LIMIT 0` + 존재하지 않는 열, Int64 최소/최대±1, index encoded key 1024/1025 | 이름 오류 숨김 없음, 정수·encoded key 경계의 성공/거절 정확히 구분 |
+| D4-V14 | fetch prefix 뒤 cancel/spill I/O 오류/close, 재open, stale result 재사용 | 미완료 표시, pin/FD/quota 회수; 이전 결과 token 거절. 과거 prefix를 전체 성공으로 판정하지 않음 |
+| D4-V15 | 한 prepared SELECT를 execute→EOF로 10,000회 반복하며 과거 token 보관, close/slot 재사용 | statement당 terminal descriptor 1개, 전체 memory 상한 유지. 이전 generation은 InvalidHandle, 현재 closed generation의 close만 멱등 |
+| D4-V16 | BEGIN→UPDATE 성공→SELECT fetch 취소→COMMIT; ON implicit UNIQUE/stale 오류; OFF 첫 execute stale 오류 | 각각 result 해제·앞선 UPDATE commit 가능 / Idle·pin 해제 / Active 유지·effect 없음·ROLLBACK 가능. RowBufferTooSmall은 cursor 위치 유지 |
+
+추가 필수 교차 조합·crash cut·부정 oracle·CLI/PF10은 구현 계획의 Q1 행렬이 소유한다. 위 예시만 통과해 Q1을 완료할 수 없다.
+
+<a id="decision"></a>
+## 9. DEV4-DESIGN-001 결정 기록
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-18 |
+| 담당·권한 | 작업·SQL 계약·통합 `/root`. 사용자의 DEV4 설계 요청과 DP01의 기존 D2 위임. 제품 방향·단계 선행·내구성 의무 유지 |
+| 선택·대안 | 1절의 유한 문법·typed pull 실행·owned binding·명시 stale 거절·외부 sort. 공개 소스의 책임 분리를 참고하되 코드는 도입하지 않음 |
+| 적용·대체 | DEV4 기본 의미의 소유 계약. SQL 초안의 최종 상태 UNIQUE 검사 제안은 미채택, DEV3 즉시 검사 우선. 기존 채택된 kernel/storage 계약을 대체하지 않음 |
+| 조사·검증 | [소스 조사](../evidence/dev4-source-research.md)와 [인수 계획](../plans/dev4-implementation-plan.md). 문서 자동 검사는 push 전용, 제품 실행 NOT_RUN |
+| 독립 검토 | `/root/dev4_design_review`가 원문·최종 diff·기존 소유 계약·실제 소스 증거를 읽기 전용으로 검토. P2 2건 수정 후 필수 수정 지적 없음·통합 가능. 계약/통합 담당 `/root` 반영 확인. 범위·수정은 [작업 기록](../plans/dev4-implementation-plan.md#work-record) 참조 |
+| 재검토 조건 | 실제 engine API로 단일 statement/DDL 원자성 구현 불가, 자원 상한 위반, SQL/native 의미 불일치, schema race, DEV7 확장 또는 측정으로 새 optimizer/정렬 구조 필요 |
+
+기본 설계 채택과 leaf의 실행 입력 동결을 구분한다. 실제 Rust signature·오류 mapping vector·spill codec·worker protocol·실행 recipe·fault schedule은 D4-F01–F05로 남아 있으며 미동결 항목을 구현 완료/PASS로 표시하지 않는다.

@@ -16,6 +16,7 @@
 | 현재 foundation/platform·XADBTest 변경 | [구현 색인](implementation/README.md) | DEV0/DEV1 계약·현재 소스·실행 결과 |
 | DEV2 커널·WAL·복구 변경 | [구현 계약](contracts/implementation-contracts.md), [DEV2 상세 설계](contracts/dev2-kernel-design.md) | [DEV2 구현·검증 계획](plans/dev2-implementation-plan.md), 해당 복구·저장 소유 계약 |
 | DEV3 디스크 page·buffer·index 설계와 병렬 개발 | [DEV3 상세 설계](contracts/disk-storage-design.md), [구현·병렬 개발·검증 계획](plans/dev3-implementation-plan.md#parallel-development) | [실제 DBMS 소스 조사](evidence/dev3-source-research.md), DS01–06·DEV2 이관/선행 계약 |
+| DEV4 최소 SQL·prepared 실행·embedded CLI | [DEV4 상세 설계](contracts/dev4-sql-design.md), [구현·검증 계획](plans/dev4-implementation-plan.md) | [실제 소스 조사](evidence/dev4-source-research.md), SC02·KU13·PF10·DEV3 선행 증거 |
 | 성능 계측·원인 분석·개선 | [AI 성능 개발 계약](contracts/ai-performance-engineering.md) | DP07, 해당 단계 PF 인수 의무 |
 | 기능 명세·설계를 작성할 대상 | [작성 대상 목록](plans/feature-design-inventory.md) | [원문 이름 색인](reference/feature-design-leaf-index.md)과 해당 소유 계약 |
 | 프로젝트 목표·AI 개발 실험 | [제품 방향](plans/project-direction.md) | 현재 구현과 최종 목표, 공개 DBMS 참고 방향을 구분 |

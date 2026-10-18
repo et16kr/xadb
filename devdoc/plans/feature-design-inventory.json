@@ -2039,7 +2039,9 @@
       "existing_doc_refs": [
         "sql-language-draft.md",
         "user-manual-draft.md",
-        "product-requirements.md"
+        "product-requirements.md",
+        "dev4-sql-design.md",
+        "dev4-implementation-plan.md"
       ],
       "items": [
         {

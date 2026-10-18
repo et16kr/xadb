@@ -10,6 +10,7 @@
 - [dev0-contract.json](dev0-contract.json)
 - [dev1-contract.json](dev1-contract.json)
 - [DEV2 — SQL 없는 영속 커널 상세 설계](dev2-kernel-design.md)
+- [DEV4 — embedded 최소 SQL 상세 설계](dev4-sql-design.md)
 - [DEV3 — 디스크 저장·인덱스 상세 설계](disk-storage-design.md)
 - [disk-test-matrix.json](disk-test-matrix.json)
 - [execution-boundary-cases.json](execution-boundary-cases.json)

@@ -824,5 +824,10 @@
     "add native and SQL equivalence with independent row/history oracle",
     "extend SQL by feature-specific specifications and tests"
   ],
-  "review_ref": "manual-review.json"
+  "review_ref": "manual-review.json",
+  "successor_contract_ref": "dev4-sql-design.md",
+  "proposal_disposition": {
+    "constraint_validation": "Final-statement-view proposal was not adopted. DEV3 mutation-by-mutation immediate uniqueness and DEV4 deterministic mutation order with whole-statement rollback apply.",
+    "other_proposals": "Consult dev4-sql-design.md for the bounded adopted scope; this draft and its examples remain unexecuted proposal inputs."
+  }
 }

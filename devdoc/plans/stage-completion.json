@@ -64,7 +64,17 @@
       "task_ref": "XADB-011",
       "title": "최소 SQL 전체 문법·오류 행렬",
       "acceptance": "initial_sql_scope의 각 구문·타입·연산·제약에 정상/NULL/빈 값/경계/오류 사례를 연결한다. 디스크 저장 경로와 mixed transaction에서 독립 결과·statement effect를 대조하고 미지원 구문은 안정 오류로 거절한다. 기본 prepare/bind/execute/fetch/close의 parameter/result metadata, NULL·개수·타입·길이 오류, 재bind·재실행·close, schema/object 변경 뒤 stale plan 거절 또는 검증된 재준비를 독립 기대값으로 확인한다. SQL 텍스트에 bind 값을 삽입하는 방식으로 대체하지 않는다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev4-sql-design.md",
+        "dev4-implementation-plan.md"
+      ],
+      "required_variants": [
+        "D4-T01..T04: complete grammar/type/NULL/DDL/DML boundary vectors and statement effects",
+        "D4-T05..T08: scan/point/range, sort/limit, typed prepared metadata/binding and bounded handle/result lifecycle",
+        "D4-T09..T11: transaction/concurrency, current-build durability/reopen and cancellation/quota/spill cleanup",
+        "D4-T12..T14: embedded CLI, independent SQL/native oracle and PF10 plan/storage evidence"
+      ]
     },
     {
       "id": "SC03",
@@ -693,7 +703,7 @@
       "task_refs": [
         "XADB-011"
       ],
-      "contract_ref": "development-stages.md",
+      "contract_ref": "dev4-sql-design.md",
       "required_test_refs": [
         {
           "file": "stage-completion.json",
@@ -721,14 +731,15 @@
         "initial_sql_scope 모든 포함 기능의 디스크 저장 경로 결과·오류·statement rollback PASS; 제외 구문은 명시 거절",
         "독립 row/history oracle, native/SQL 대조와 영향받는 DEV2/DEV3 회귀 및 CLI 결과/metadata 확인",
         "해당 단계의 PF 성능 개발 인수: 실제 production 경로·동일 의미·유효한 비교·독립 정답·계측 비용·재현 증거. 미구현/불충분을 PASS로 기록하지 않음",
-        "기본 typed prepare/bind/execute/fetch/close와 parameter/result metadata를 직접 실행과 대조; stale plan·오류·자원 수명 검증. 고급 공유 cache·재최적화는 비요구"
+        "기본 typed prepare/bind/execute/fetch/close와 parameter/result metadata를 직접 실행과 대조; stale plan·오류·자원 수명 검증. 고급 공유 cache·재최적화는 비요구",
+        "dev4-implementation-plan.md의 D4-T01–T14 필수 변형과 coverage inventory 전부; D4-F01–F05 실행 입력 동결·독립 검토 필요"
       ],
-      "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
+      "acceptance_input_status": "BASE_DESIGN_DEFINED_LEAF_API_AND_EXECUTION_PROFILES_PENDING",
       "open_decisions": [
-        "정확한 grammar·타입/연산 boundary vector·오류 code/effect",
-        "각 포함 capability의 디스크 저장 경로 test matrix와 CLI/UX 적용 목록",
-        "PF 사례별 workload/fixture·실제 recipe·계측 비용/회귀 예산·반복/통계 방법을 구현·실행 전에 확정",
-        "parameter marker·타입 추론·metadata·bind 소유권·재실행 상태표·schema 무효화 처리와 오류 시점/효과"
+        "D4-F01/F02: actual DEV3 public API handoff, Rust signatures and complete error/handle/metadata transition vectors",
+        "D4-F03: temporary spill codec, owner cleanup API and allocation/FD/disk fault inventory",
+        "D4-F04: SC02/KU13 full variant inventory, independent oracle mutants, worker protocol and executable commands",
+        "D4-F05: PF10 fixtures/environment/release recipes, numerical resource/instrumentation/regression budgets and paired measurement schedule"
       ],
       "deferred_obligations": [
         "server/client·확장 SQL은 후속 의무"
@@ -736,7 +747,11 @@
       "run_entrypoint": null,
       "evidence_refs": [],
       "execution_status": "NOT_RUN",
-      "official_distribution_status": "NOT_RUN"
+      "official_distribution_status": "NOT_RUN",
+      "design_refs": [
+        "dev4-sql-design.md",
+        "dev4-implementation-plan.md"
+      ]
     },
     {
       "id": "DEV5",

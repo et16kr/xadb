@@ -26,7 +26,7 @@
 <a id="section-2"></a>
 ## 2. 최소 SQL 범위
 
-DEV4는 비파티션 디스크 table의 CREATE/DROP TABLE/INDEX, INSERT/UPDATE/DELETE, 단일 table SELECT·predicate·ORDER BY·limit, BEGIN/COMMIT/ROLLBACK과 typed prepare/bind/execute/fetch/close를 제공할 계획이다. 최소 타입은 signed 64-bit integer·BOOLEAN·UTF-8 text·binary와 NULL이다. 상세 선택은 [SQL 초안](../reference/sql-language-draft.md)의 제안 상태와 구분해 구현 전에 동결한다.
+DEV4는 비파티션 디스크 table의 CREATE/DROP TABLE/INDEX, INSERT/UPDATE/DELETE, 단일 table SELECT·predicate·ORDER BY·limit, BEGIN/COMMIT/ROLLBACK과 typed prepare/bind/execute/fetch/close를 제공할 계획이다. 최소 타입은 signed 64-bit integer·BOOLEAN·UTF-8 text·binary와 NULL이다. 문법·타입·parameter·수명·오류는 [DEV4 상세 설계](../contracts/dev4-sql-design.md), 구현 순서·SC02/KU13/PF10은 [구현·검증 계획](dev4-implementation-plan.md)을 따른다. [SQL 초안](../reference/sql-language-draft.md)은 이전 제안이며, 실제 leaf API·profile 동결과 DEV3 실행 선행 요건은 남아 있다.
 
 PK·UNIQUE·NOT NULL, statement rollback, snapshot + coarse validation SERIALIZABLE, read-your-writes, schema/object 변경 후 handle 검증을 포함한다. 조인·집계·subquery·window·확장 타입·FK/CHECK·PSM·trigger 등은 DEV7에서 확장한다. 기본 prepare/bind를 DEV7까지 미루지 않는다.
 
