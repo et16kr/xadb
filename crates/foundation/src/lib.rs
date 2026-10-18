@@ -6,6 +6,7 @@ pub mod codec;
 pub mod error;
 pub mod identity;
 pub mod io;
+pub mod network;
 pub mod runtime;
 pub mod value;
 

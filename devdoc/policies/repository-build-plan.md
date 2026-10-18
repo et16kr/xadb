@@ -90,7 +90,8 @@
 | xadb-engine | crates/engine | IMPLEMENTED | DEV2 | xadb-foundation |
 | xadbtest-reference | crates/testing/reference | IMPLEMENTED | DEV2 | xadbtest-protocol |
 | xadbtest-engine-worker | crates/testing/engine-worker | IMPLEMENTED | DEV2 | xadb-engine, xadb-foundation, xadb-platform, xadbtest-protocol |
-| xadb-transport | crates/transport | PLANNED | COMM | xadb-foundation |
+| xadb-transport | crates/transport | IMPLEMENTED | COMM | xadb-foundation |
+| xadbtest-transport-worker | crates/testing/transport-worker | IMPLEMENTED | COMM | xadb-foundation, xadb-platform, xadb-transport |
 | xadb-sql | crates/sql | PLANNED | DEV4 | xadb-foundation, xadb-engine |
 | xadb-cli | crates/cli | PLANNED | DEV4 | xadb-foundation, xadb-sql, xadb-platform |
 | xadb-server | crates/server | PLANNED | DEV5 | xadb-foundation, xadb-engine, xadb-sql, xadb-transport, xadb-platform |
@@ -129,7 +130,7 @@ worker 실행 관계는 controller의 engine import를 뜻하지 않는다. `xad
 
 현재 분리는 DEV1에 이미 존재하던 구현만 옮긴 것이다. 파일 생성/open·writer 배제·rename/publication의 공통 경계와 recovery 연결은 DEV2에서, transport·대기/취소 경계는 COMM에서 실제 사용 계약과 함께 정의한다. WAL/페이지/SQL/오류 의미나 개발 순서를 이번 분리로 변경하지 않는다. 서버 OS 지원과 client OS 지원표는 별개이며 공통 값·프로토콜 코드가 Linux 서버 구현을 import하지 않게 한다.
 
-[COMM 상세 설계](../contracts/comm-design.md#architecture)는 foundation의 byte-I/O/readiness port, platform의 Linux socket adapter, transport의 framing·queue·deadline 책임을 구체화한다. 실제 API·adapter·crate는 미구현이며 현재 implemented port 목록·의존 간선·fingerprint/export roots는 유지한다. 시험 조립부의 실제 경로와 dependency는 구현과 함께 등록한다.
+[COMM 상세 설계](../contracts/comm-design.md#architecture)는 foundation의 byte-I/O/readiness port, platform의 Linux socket adapter, transport의 framing·queue·deadline 책임을 구체화한다. 실제 port·adapter·transport와 `crates/testing/transport-worker`를 구현했다. native 통합 시험은 transport의 dev-dependency로 platform을 연결한다. fingerprint/export roots는 기존 crates/scripts 안에서 유지하며 [구현·인수 범위](../implementation/comm-implementation.md)를 따른다.
 
 새 OS에는 빈 성공 stub을 두지 않는다. 사업상 지원 결정 후 OS/CPU/filesystem capability, 영속화·잠금·오류·취소 의미를 검토하고 adapter·실제 회귀/복구·패키징·CI 증거를 추가한다. 공통 계약을 만족하지 못하면 계약 변경을 별도로 검토한다. 컴파일 성공이나 이전 Linux PASS를 새 OS의 지원 증거로 승계하지 않는다.
 
@@ -177,6 +178,8 @@ worker 실행 관계는 controller의 engine import를 뜻하지 않는다. `xad
 | crates/engine/src/storage/index/global | NG | XADB-023 | 디스크 저장 경로를 포괄하는 native global tree. SQL 숨김 table 제외 |
 
 K0의 row/catalog는 작은 실제 production 구현이다. XADB-004 reference와 XADB-032 native history suite는 별도이고, production row 저장소를 oracle로 사용하지 않는다. K4의 XADB-010은 `transaction`/`publication`의 동시성·statement 효과를 확장한다. DEV3의 XADB-022는 `durable`·DISK를 동일 commit/recovery로 연결하며 XADB-029가 실제 DISK row/index와 유한 저장 기준선을 마무리한다.
+
+2026-10-18 K1–K5 소스 연결에서 `database.rs`·`database/maintenance.rs`, `transaction.rs`·`transaction/`, `publication.rs`, `durable/{codec,changes,wal,recovery,checkpoint,retention,backup,observation}.rs`를 실제 구현했다. namespace port와 Linux 구현은 foundation/platform에 두며 durable worker는 기존 engine-worker 패키지의 별도 `xadbtest-durable-worker` binary다. 새 production crate나 engine→platform/test 간선은 만들지 않는다. 이 경로의 `IMPLEMENTED`는 소스 존재·연결을 뜻하며 현재 빌드·실행 검증은 NOT_RUN이고 DEV2 완료를 뜻하지 않는다. 사용자 지시에 따라 K1–K5 전체 구현 연결 전 실행은 보류했다. 상세 소유·예산·정적 검토는 [DEV2 구현 기록](../implementation/dev2-implementation.md)을 따른다.
 
 `transaction`이 준비·validation·WAL 완료·공개의 순서를 소유한다. `storage`는 명시된 변경/읽기 계약, `durable`은 versioned batch·영속 효과/복원 계약, `catalog`는 metadata 상태를 소유한다. 이들을 합성하는 지점이 engine이며 서로의 manager나 private 물리 포인터에 무제한 접근하는 구조를 허용하지 않는다. 이 역할은 각각 `transaction`, `durable`, `storage` 내부 모듈로 두며, 후속 crate 분리에서도 순환 의존을 전역 singleton으로 우회하지 않는다.
 

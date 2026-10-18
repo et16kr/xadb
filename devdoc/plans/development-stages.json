@@ -295,10 +295,11 @@
         "XADB-031"
       ],
       "channel": "development",
-      "execution_status": "NOT_RUN",
+      "execution_status": "PARTIAL_IMPLEMENTATION",
       "completion_ref": "stage-completion.json#COMM",
       "design_ref": "comm-design.md",
-      "implementation_plan_ref": "comm-implementation-plan.md"
+      "implementation_plan_ref": "comm-implementation-plan.md",
+      "implementation_ref": "comm-implementation.md"
     },
     {
       "id": "PART",

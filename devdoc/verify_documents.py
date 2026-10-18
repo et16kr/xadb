@@ -190,7 +190,7 @@ def validate_stage_graph(development, completion, scope, documents):
         if other.get('entry_stage_refs') != stage.get('depends_on'):
             errors.append('stages: entry prerequisite mismatch ' + name)
         expected_status = ('LOCAL_VERIFIED' if name in ('DEV0', 'DEV1') else
-                           'PARTIAL_IMPLEMENTATION' if name == 'DEV2' else 'NOT_RUN')
+                           'PARTIAL_IMPLEMENTATION' if name in ('DEV2', 'COMM') else 'NOT_RUN')
         if stage.get('execution_status') != expected_status or other.get('execution_status') != expected_status:
             errors.append('stages: unsupported execution status ' + name)
         if other.get('official_distribution_status') != 'NOT_RUN':

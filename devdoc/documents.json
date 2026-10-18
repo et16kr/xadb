@@ -562,6 +562,46 @@
       "path": "evidence/dev5-oracle-source-review.md",
       "role": "evidence",
       "title": "DEV5 — Oracle·로컬 DBMS 비교와 후속 설계 검토"
+    },
+    "comm-implementation.md": {
+      "path": "implementation/comm-implementation.md",
+      "role": "implementation",
+      "title": "COMM 구현 기록"
+    },
+    "comm-isolated-xadb-20261018-r1.json": {
+      "path": "evidence/comm-isolated-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "COMM 전용 기준 사본 27-test 실행 보고서 — 최종 drain 보완 전"
+    },
+    "comm-mixed-xadb-20261018-r1.json": {
+      "path": "evidence/comm-mixed-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "COMM 혼합 source 사본 실패 원본 — 하위 format 회귀 실패"
+    },
+    "comm-dev1-xadb-20261018-r1.json": {
+      "path": "evidence/comm-dev1-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "COMM 전용 최종 기준 사본 DEV1 회귀 원본"
+    },
+    "comm-dev0-xadb-20261018-r1.json": {
+      "path": "evidence/comm-dev0-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "COMM 전용 최종 기준 사본 DEV0 회귀 원본"
+    },
+    "comm-isolated-xadb-20261018-r2.json": {
+      "path": "evidence/comm-isolated-xadb-20261018-r2.json",
+      "role": "evidence",
+      "title": "COMM 전용 최종 기준 사본 28-test 실행 원본"
+    },
+    "comm-dev2-xadb-20261018-r1.json": {
+      "path": "evidence/comm-dev2-xadb-20261018-r1.json",
+      "role": "evidence",
+      "title": "COMM 전용 최종 기준 사본 DEV2 P0/K0 leaf 회귀 원본"
+    },
+    "comm-execution-scope-20261018.json": {
+      "path": "evidence/comm-execution-scope-20261018.json",
+      "role": "evidence",
+      "title": "COMM 실행 사본·원본 보고서·소스 범위 색인"
     }
   }
 }

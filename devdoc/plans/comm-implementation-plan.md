@@ -1,6 +1,6 @@
 # COMM — 구현·검증 계획
 
-2026-10-18 · **기본 설계 독립 검토·채택 / 구현·C1 인수 NOT_RUN**
+2026-10-18 · **기본 설계 독립 검토·채택 / 핵심 구현·C1 인수 INCOMPLETE**
 
 [COMM 소유 계약](../contracts/comm-design.md) · [단계 완료 계약](stage-completion.json) · [KU12](../contracts/kernel-test-matrix.json) · [개발 운영 방침](../policies/development-policy.md)
 
@@ -11,20 +11,20 @@ COMM은 DEV1 뒤 시작하며 DEV2·DEV3·SQL을 기다리지 않는다. XADBTes
 
 | leaf | 구현할 책임 | 완료에 필요한 증거 |
 | --- | --- | --- |
-| COMM-C0 계약·port | foundation header inspection, ByteStream/Connector/Listener/ReadinessWait의 signature·오류·generation, 공유 Clock instance, fixed limit 상수 | 기존 DEV1 bytes 불변의 독립 vector, 상태별 readiness·owner Drop 정리 계약의 D2 리뷰, dependency feature 결정. 현재 미구현 |
-| COMM-C1 codec·lease | incremental header/body, validated frame lease, TX cursor·FIFO, byte/slot quota | C-V01–06, 모든 실패 경로의 charge 반환. 아직 socket 통합 PASS 아님 |
+| COMM-C0 계약·port | foundation header inspection, ByteStream/Connector/Listener/ReadinessWait의 signature·오류·generation, 공유 Clock instance, fixed limit 상수 | 기존 DEV1 bytes 불변의 독립 vector, 상태별 readiness·owner Drop 정리 계약의 D2 리뷰, dependency feature 결정. 실제 port/header 구현·검토는 구현 기록 참조 |
+| COMM-C1 codec·lease | incremental header/body, validated frame lease, TX cursor·FIFO, byte/slot quota | C-V01–06, 모든 실패 경로의 charge 반환. focused 실행을 전체 C-V 완료로 해석하지 않음 |
 | COMM-C2 Linux 효과 | 소유 TCP/Unix endpoint, nonblocking connect/accept, wait·close, generation·clock | C-V07–09, 실제 OS 관측·short I/O witness |
 | COMM-C3 연결 조립 | round-robin, TX admission gate, absolute deadlines, backpressure, cancel·drain·join | C-V10–15, scripted schedule와 실제 socket/process 시험 |
 | COMM-C4 인수·handoff | 독립 peer/oracle, fault receipt, metrics·성능·runner·clean export | C-V01–18 + DEV1/DEV0 회귀 + 별도 검토, C1 gate의 closure 기록 |
 
-leaf `COMM-C0`–`COMM-C4`를 순서대로 통합한 뒤 완료 gate C1을 판정한다. 본문의 C0–C4는 이 leaf의 약칭이다. 파일·package·실행 명령은 실제 구현과 함께 등록한다. 지금 `run_entrypoint`는 null이며 아래 예산은 실행한 결과가 아니다.
+leaf `COMM-C0`–`COMM-C4`를 순서대로 통합한 뒤 완료 gate C1을 판정한다. 본문의 C0–C4는 이 leaf의 약칭이다. 파일·package·실행 명령은 실제 구현과 함께 등록한다. 현재 focused leaf entrypoint는 `python3 -B scripts/check_comm.py --snapshot --with-regressions`이며 아래 전체 예산을 완료한 결과는 아니다. [현재 구현·잔여 인수](../implementation/comm-implementation.md)를 따른다.
 
 작업 담당은 `/root`; 구현 착수 때 실제 구현자·독립 검토자·통합 담당을 기록한다. 기본은 순차 통합이다. foundation 계약을 consumer가 독립적으로 복제하지 않고 C0에서 먼저 동결한다. actual API가 설계와 다르면 관련 owner 계약을 수정·검토한 뒤 진행한다. 별도 검토 없는 구현은 `READY_FOR_REVIEW`이며 C1 PASS로 승격하지 않는다.
 
 <a id="acceptance"></a>
 ## 2. KU12 상세 인수 목록
 
-아래는 모두 `NOT_RUN`이다. C-V01–18 전부와 DEV1/DEV0 회귀가 C1의 현재 local capability closure다. 최소 범위만 실행하면 해당 leaf 결과만 기록한다.
+아래는 전체 C1 인수 inventory다. 일부 반례의 실제 실행은 [구현 기록](../implementation/comm-implementation.md)에 한정하며 각 C-V 전체 완료로 승격하지 않는다. C-V01–18 전부와 DEV1/DEV0 회귀가 C1의 현재 local capability closure다. 최소 범위만 실행하면 해당 leaf 결과만 기록한다.
 
 | ID | 입력·장애·독립 기대값 | 필수 판정 |
 | --- | --- | --- |
@@ -68,7 +68,7 @@ TCP fragmentation은 packet 경계를 제어했다고 주장하지 않는다. sc
 | resources | 모든 시점 quota/slots/connection 상한, 종료 후 전체 lease 반환·join 뒤 fd/예약 baseline 복귀. kernel TIME_WAIT 제외 |
 | fault matrix | Header(0/partial), Body(partial/complete), TX(queued/partial/last-byte), Connecting, Draining 각각의 EOF/error/cancel/deadline 중 유효 조합. 불가능한 조합의 이유도 manifest에 남김 |
 
-fault 위치의 정확한 call number와 native buffer 설정은 구현된 port/runner에 의존한다. 구현 전 이 표를 완성한 것으로 추정하지 않고 C0/C4 manifest에 receipt 위치·expected error·byte progress·반복·명령을 추가해 독립 검토한다. 현재는 설계 수치와 case 목록이 정해졌으며 실행 profile/runner는 미구현이다.
+fault 위치의 정확한 call number와 native buffer 설정은 구현된 port/runner에 의존한다. 구현 전 이 표를 완성한 것으로 추정하지 않고 C0/C4 manifest에 receipt 위치·expected error·byte progress·반복·명령을 추가해 독립 검토한다. 현재 focused runner와 receipt는 구현했으나 이 표의 전체 fault profile과 장시간 인수는 미완료다. 실제 실행 범위는 구현 기록을 따른다.
 
 <a id="performance"></a>
 ## 4. 성능과 관측 가능성
@@ -94,4 +94,4 @@ DEV5는 C1 bytes/limits/version과 아래 의무를 인수한다.
 - 인증된 cancel request와 완료 경합, 재연결·중복 요청 정책, COMMITTED/ABORTED/UNKNOWN 표시.
 - 실제 SQL→WAL→publish→reply 및 reply 유실 뒤 같은 build recovery. transport local flush를 durable ACK로 바꾸지 않음.
 
-이번 변경은 설계 문서 작업이다. 제품 코드·dependency·crate·runner를 추가하지 않았으며 C1 실행은 NOT_RUN이다. 문서 자동 검사는 DOC-002에 따라 push 직전 훅에서 수행하고 편집 중 실행하지 않는다.
+최초 계획 작성은 설계 작업이었다. 후속 핵심 구현과 focused runner는 [구현 기록](../implementation/comm-implementation.md)에 연결하며 C1 전체 인수는 INCOMPLETE다. 문서 자동 검사는 DOC-002에 따라 push 직전 훅에서 수행하고 편집 중 실행하지 않는다.

@@ -41,3 +41,10 @@ DEV4의 [소스·Oracle/ARIES 조사](dev4-source-research.md)는 PostgreSQL·Ma
 - [dev1-xadb-20261018-r3.json](dev1-xadb-20261018-r3.json)
 - [dev2-xadb-20261018-r3.json](dev2-xadb-20261018-r3.json)
 - [dev2-performance-xadb-20261018-r1.json](dev2-performance-xadb-20261018-r1.json)
+
+- [COMM 전용 기준 사본 r1](comm-isolated-xadb-20261018-r1.json): 27개 시험 및 하위 회귀 PASS. 마지막 drain 경합 보완 전 source에만 적용.
+- [COMM 혼합 사본 실패 r1](comm-mixed-xadb-20261018-r1.json): COMM focused 검사는 통과했으나 함께 포함된 DEV2 변경의 format 검사에서 하위 회귀 FAIL. 원본 실패를 보존.
+- [COMM 전용 DEV0 회귀](comm-dev0-xadb-20261018-r1.json) · [COMM 전용 DEV1 회귀](comm-dev1-xadb-20261018-r1.json): 최종 COMM 전용 기준 사본에서 각 8개 check PASS. 기존 current-source 문서 ID를 대체하지 않음.
+- [COMM 전용 최종 사본 r2](comm-isolated-xadb-20261018-r2.json): 28개 Rust 시험(기본·전체 feature 각각), 12개 native 사례, lint·독립 build·하위 회귀 PASS. 전체 C1은 INCOMPLETE.
+- [COMM 전용 DEV2 회귀](comm-dev2-xadb-20261018-r1.json): 최종 COMM 전용 기준 사본의 P0/K0 leaf 28개 check PASS; 내구성·현재 혼합 작업 트리의 검증 아님.
+- [COMM 실행 범위 색인](comm-execution-scope-20261018.json): 각 원본의 execution root·recipe·hash와 소유 파일 일치 기록. 위 COMM 보고서의 상대 artifact 경로는 이 색인의 해당 execution root 기준이다.

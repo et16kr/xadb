@@ -286,13 +286,16 @@
       "name": "xadb-transport",
       "path": "crates/transport",
       "stage_ref": "COMM",
-      "status": "PLANNED",
-      "placement": "RESERVED_DIRECTION",
+      "status": "IMPLEMENTED",
+      "placement": "CURRENT",
       "normal_workspace_dependencies": [
         "xadb-foundation"
       ],
       "role": "bounded frame/connection/backpressure",
-      "design_ref": "comm-design.md"
+      "design_ref": "comm-design.md",
+      "test_workspace_dependencies": [
+        "xadb-platform"
+      ]
     },
     {
       "name": "xadb-sql",
@@ -369,6 +372,19 @@
         "xadb-transport"
       ],
       "role": "commit stream consumption/resync/retention ownership"
+    },
+    {
+      "name": "xadbtest-transport-worker",
+      "path": "crates/testing/transport-worker",
+      "stage_ref": "COMM",
+      "status": "IMPLEMENTED",
+      "placement": "CURRENT",
+      "normal_workspace_dependencies": [
+        "xadb-foundation",
+        "xadb-platform",
+        "xadb-transport"
+      ],
+      "role": "engine-free native COMM echo and fault fixture; independent expectations in Python peer"
     }
   ],
   "kernel_modules": [
@@ -762,17 +778,22 @@
     "composition_packages": [
       "xadbtest-engine-worker",
       "xadb-cli",
-      "xadb-server"
+      "xadb-server",
+      "xadbtest-transport-worker"
     ],
     "implemented_contracts": [
       "FileIo",
       "Clock",
-      "Scheduler"
+      "Scheduler",
+      "ByteStream",
+      "Connector",
+      "Listener",
+      "ReadinessWait"
     ],
     "linux_file_implementation": "platform/src/linux.rs",
     "native_runtime_implementation": "platform/src/runtime.rs",
     "test_implementation": "xadb-foundation test-support: FaultFile, ManualClock, ScriptedScheduler",
-    "remaining_ports": "DEV2 must define owned create/open, writer exclusion, directory publication and recovery integration; COMM must define transport/wait/cancel contracts before implementation",
+    "remaining_ports": "DEV2 namespace/recovery changes are tracked separately; COMM remote/TLS adapters remain outside local C1",
     "std_policy": "Use standard collections/synchronization directly; do not wrap every std API. Concrete time/scheduler effects are supplied by platform.",
     "new_os_gate": [
       "business support decision",

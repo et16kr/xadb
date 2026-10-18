@@ -85,5 +85,17 @@
     ],
     "scope": "Execution correctness and evidence retention; initial guardrail failures remain recorded; not full PF or K0/DEV2 acceptance",
     "performance_qualification": "INCOMPLETE"
+  },
+  "comm": "PARTIAL_IMPLEMENTATION",
+  "comm_implementation_ref": "comm-implementation.md",
+  "comm_c1_status": "INCOMPLETE",
+  "comm_validation": {
+    "status": "SCOPED_LEAF_PASS",
+    "report_ref": "comm-isolated-xadb-20261018-r2.json",
+    "scope_ref": "comm-execution-scope-20261018.json",
+    "source_sha256": "e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1",
+    "basis": "RECORDED_BASE_PLUS_COMM_CHANGES",
+    "current_worktree_validation": "NOT_CLAIMED",
+    "c1_status": "INCOMPLETE"
   }
 }

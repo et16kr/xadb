@@ -1,0 +1,20 @@
+[package]
+name = "xadb-transport"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+test-support = ["xadb-foundation/test-support"]
+
+[dependencies]
+xadb-foundation.workspace = true
+
+[dev-dependencies]
+xadb-platform.workspace = true
+sha2.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

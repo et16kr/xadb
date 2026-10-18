@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18",
+  "scope": "Provenance index for unchanged COMM execution reports; no new product execution performed by this index.",
+  "current_worktree_validation": "NOT_CLAIMED; concurrent DEV2 source is excluded from the isolated PASS exports",
+  "base_revision": "3b5fad8b6df97ddb0d72f8d6361f563e3f2b59ce",
+  "c1_status": "INCOMPLETE",
+  "runs": [
+    {
+      "report_ref": "comm-mixed-xadb-20261018-r1.json",
+      "report_sha256": "845543a95cac6a46e9da59782e0d52180d619caa4c1e727286eaa94b848fbbfd",
+      "status": "FAIL",
+      "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+      "execution_root": "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source",
+      "original_report": "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/validation.json",
+      "relative_artifact_paths_base": "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source"
+    },
+    {
+      "report_ref": "comm-isolated-xadb-20261018-r1.json",
+      "report_sha256": "3a4dfb836fef7124a1c512462177d3fa44d836aef7325d0675f67aad692aa72e",
+      "status": "PASS",
+      "source_sha256": "7df1397eb2ca3b0a8a81b034a1426ffbe23b62b23644da1803501d5c979a0ac2",
+      "execution_root": "/home/et16/work/xadb/artifacts/comm-isolated/check-5627r7a_/source",
+      "original_report": "/home/et16/work/xadb/artifacts/comm-isolated/check-5627r7a_/source/artifacts/comm/check-_jw36iq_/validation.json",
+      "relative_artifact_paths_base": "/home/et16/work/xadb/artifacts/comm-isolated/check-5627r7a_/source",
+      "recipe_path": "/home/et16/work/xadb/artifacts/comm-isolated/check-5627r7a_/recipe.json",
+      "recipe_sha256": "5057fd6e703eb18557072af115bb0cf6473d4a2bf0bae81985d603938f9364eb",
+      "recipe": {
+        "base_revision": "3b5fad8b6df97ddb0d72f8d6361f563e3f2b59ce",
+        "source_root": "/home/et16/work/xadb/artifacts/comm-isolated/check-5627r7a_/source",
+        "purpose": "COMM-only integration on the recorded base; excludes concurrent DEV2 source changes",
+        "overlaid_owned_paths": [
+          "crates/transport",
+          "crates/testing/transport-worker",
+          "crates/foundation/src/network.rs",
+          "crates/platform/src/network.rs",
+          "scripts/check_comm.py",
+          "scripts/test_check_comm.py"
+        ],
+        "shared_changes": [
+          "Cargo.toml",
+          "Cargo.lock",
+          "crates/foundation/src/lib.rs",
+          "crates/foundation/src/codec.rs",
+          "crates/platform/src/lib.rs",
+          "crates/platform/Cargo.toml"
+        ],
+        "foreign_worktree_modified": false
+      }
+    },
+    {
+      "report_ref": "comm-isolated-xadb-20261018-r2.json",
+      "report_sha256": "18f982d61e72bfdd7b091a459caf53adb0e7cd884f18a5cf7793b195422e2fc4",
+      "status": "PASS",
+      "source_sha256": "e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1",
+      "execution_root": "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source",
+      "original_report": "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/comm/check-vssxnkt6/validation.json",
+      "relative_artifact_paths_base": "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source",
+      "recipe_path": "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/recipe.json",
+      "recipe_sha256": "840a1ea7a8a669dcf9c27b3b9f869bb3999dd8869f0302e15cb7665b0ae6ab73",
+      "recipe": {
+        "base_revision": "3b5fad8b6df97ddb0d72f8d6361f563e3f2b59ce",
+        "source_root": "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source",
+        "purpose": "COMM-only integration on the recorded base; excludes concurrent DEV2 source changes",
+        "overlaid_owned_paths": [
+          "crates/transport",
+          "crates/testing/transport-worker",
+          "crates/foundation/src/network.rs",
+          "crates/platform/src/network.rs",
+          "scripts/check_comm.py",
+          "scripts/test_check_comm.py"
+        ],
+        "shared_changes": [
+          "Cargo.toml",
+          "Cargo.lock",
+          "crates/foundation/src/lib.rs",
+          "crates/foundation/src/codec.rs",
+          "crates/platform/src/lib.rs",
+          "crates/platform/Cargo.toml"
+        ],
+        "foreign_worktree_modified": false,
+        "previous_export": "/home/et16/work/xadb/artifacts/comm-isolated/check-5627r7a_/source",
+        "final_fix": "Drain deadline is sampled under the TX admission gate; fixed inventory includes 28 tests."
+      }
+    }
+  ],
+  "final_scope": {
+    "base_revision": "3b5fad8b6df97ddb0d72f8d6361f563e3f2b59ce",
+    "retained_source_root": "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source",
+    "owned_files": [
+      {
+        "path": "crates/transport/Cargo.toml",
+        "sha256": "07f9f535ba61df294c57cb0ad34496d46d374ad6679748535982d0d25624fc8f"
+      },
+      {
+        "path": "crates/transport/src/connection.rs",
+        "sha256": "3c634fe63680cf1bee5db0ac044cf6175731cff1059136f6b4a5203cb7ab81d5"
+      },
+      {
+        "path": "crates/transport/src/driver.rs",
+        "sha256": "c66dba3c5fea9cbb32175824308094db2b8bfc4563e46f182011fb134d7274eb"
+      },
+      {
+        "path": "crates/transport/src/lib.rs",
+        "sha256": "e8ebbc0da1af6a582ae0fff2b9f6d4df60fba42893adf0b6f734dfa8caf3c98a"
+      },
+      {
+        "path": "crates/transport/src/resources.rs",
+        "sha256": "517d2935d21fd7cab8e374cfc0226eb6b86ddb2f76d67fa214e2f9b47d451378"
+      },
+      {
+        "path": "crates/transport/src/sender.rs",
+        "sha256": "a153ff7988e9d9fb98b3bf19682517d295addddcdef1864c77923dd06b052cd6"
+      },
+      {
+        "path": "crates/transport/tests/driver.rs",
+        "sha256": "e46587b71a4521fba73098e924c1bd064e6bd8a93e2ed4afc22d4d6404f4baac"
+      },
+      {
+        "path": "crates/transport/tests/framing.rs",
+        "sha256": "b435644c465596c661a56114bd23b80385dd34b9871cc791fdf96e358026d3ea"
+      },
+      {
+        "path": "crates/transport/tests/lifecycle.rs",
+        "sha256": "c0c30b76ea84389bf25f942cb773883ca614dc8a9f3925f001950fdd18edba10"
+      },
+      {
+        "path": "crates/transport/tests/native.rs",
+        "sha256": "6b1b877425c1241d774fc2652b133c75211f3a2e699bad311445167ee72bf49c"
+      },
+      {
+        "path": "crates/transport/tests/support/mod.rs",
+        "sha256": "909ea92ef15405c2e88d80906cbb6f50f2d936b7aa2537ad43019a4eefcb2608"
+      },
+      {
+        "path": "crates/testing/transport-worker/Cargo.toml",
+        "sha256": "e588183af167e93a694d246185375efe54dcd1b815a8c81b176f01719eaf6f3f"
+      },
+      {
+        "path": "crates/testing/transport-worker/build.rs",
+        "sha256": "3b718edafed6cbca9c451e267e4da8c7ad4b850134492c7e1387edf51812d265"
+      },
+      {
+        "path": "crates/testing/transport-worker/src/main.rs",
+        "sha256": "d8430ea12c8c901c80d512d8b5c46a2512598d917a08ded223d337256be07772"
+      },
+      {
+        "path": "crates/foundation/src/network.rs",
+        "sha256": "d3dcde776c1528825c769074894f6453e853a1bdd8a0be49d431d45666291856"
+      },
+      {
+        "path": "crates/platform/src/network.rs",
+        "sha256": "4f0a90cf2e5ad0518faa6ecc21dd96c3a9bb5d4dcb70df82552a33c0eaf81ee2"
+      },
+      {
+        "path": "scripts/check_comm.py",
+        "sha256": "0f262262bf9dccdb83add2c9391bbc7c353b929a387f9bfb13677f9606306795"
+      },
+      {
+        "path": "scripts/test_check_comm.py",
+        "sha256": "6a5293f2b5b1710ee5d995bc74b7631cbc1266a5fb00467183f0eb0d36dc969e"
+      }
+    ],
+    "owned_differences_at_comparison": [],
+    "shared_files_exclude_concurrent_namespace_and_content_hasher": [
+      "Cargo.toml",
+      "Cargo.lock",
+      "crates/foundation/src/lib.rs",
+      "crates/foundation/src/codec.rs",
+      "crates/platform/src/lib.rs",
+      "crates/platform/Cargo.toml"
+    ],
+    "shared_file_exclusions": [
+      "foundation/platform namespace module exports",
+      "foundation ContentHasher/content_digest",
+      "platform nix dir feature"
+    ],
+    "validation_source_sha256": "e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1",
+    "rust_tests_per_feature_configuration": 28,
+    "native_cases": 12,
+    "native_kill_limitation": "SIGKILL/reap after peer sendall is observed; actual worker partial-RX reachability is not proved.",
+    "lower_reports": [
+      {
+        "report_ref": "comm-dev2-xadb-20261018-r1.json",
+        "sha256": "d90cd285fa57994142a36834884cc270d9fe606982a9e8cd22b90d0e1341f420",
+        "original_report": "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/comm/check-vssxnkt6/dev2-regression.json",
+        "relative_artifact_paths_base": "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source",
+        "checks": 28
+      },
+      {
+        "report_ref": "comm-dev1-xadb-20261018-r1.json",
+        "sha256": "60a20d7df27a9a0e8dc006b8f3e7dc10280c476e83fd9ffdb1a5492e28eb8abb",
+        "original_report": "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/dev2-reference/check-usou3151/dev1-regression.json",
+        "relative_artifact_paths_base": "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source",
+        "checks": 8
+      },
+      {
+        "report_ref": "comm-dev0-xadb-20261018-r1.json",
+        "sha256": "789d9c57709ac05a7f0f1ca7475c2564a3e3c4f4487e136764a5bc3b3bf0d2d6",
+        "original_report": "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/dev1/check-9mvfouiu/dev0-regression.json",
+        "relative_artifact_paths_base": "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source",
+        "checks": 8
+      }
+    ]
+  }
+}

@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18T13:38:11.640255+00:00",
+  "scope": "DEV1 foundation and Linux platform F1 local verification; not a database or release qualification",
+  "status": "PASS",
+  "artifact_directory": "artifacts/dev1/check-9mvfouiu",
+  "checks": [
+    {
+      "id": "dev0-regression",
+      "command": [
+        "python3",
+        "scripts/check_dev0.py",
+        "--report",
+        "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/dev1/check-9mvfouiu/dev0-regression.json"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev1/check-9mvfouiu/dev0-regression.log",
+      "log_sha256": "48a23bc36246cc208450aae7c30657000def4ff127fd65f830df819be2ca3c20"
+    },
+    {
+      "id": "dependency-boundary",
+      "command": [
+        "cargo",
+        "metadata",
+        "--format-version",
+        "1",
+        "--locked",
+        "--offline",
+        "--filter-platform",
+        "x86_64-unknown-linux-gnu"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev1/check-9mvfouiu/dependency-boundary.log",
+      "log_sha256": "be5ad089007fed45d1f8e5412f0f34da709231b289e373e85667322f9c18aa47"
+    },
+    {
+      "id": "independent-build",
+      "command": [
+        "cargo",
+        "build",
+        "-p",
+        "xadb-foundation",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--target-dir",
+        "/tmp/xadb-foundation-build-xh6m40_u"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev1/check-9mvfouiu/independent-build.log",
+      "log_sha256": "597cb724c1f735b955e47d34133342fd9af04a34a5a41daeda11a300a45e7304"
+    },
+    {
+      "id": "platform-independent-build",
+      "command": [
+        "cargo",
+        "build",
+        "-p",
+        "xadb-platform",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--target-dir",
+        "/tmp/xadb-platform-build-yw9hcu2n"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev1/check-9mvfouiu/platform-independent-build.log",
+      "log_sha256": "b49455563537ea966c61b265a896e51565560031ce136f9177dd212ec73feeb1"
+    },
+    {
+      "id": "foundation-default-tests",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-foundation",
+        "--no-default-features",
+        "--locked"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev1/check-9mvfouiu/foundation-default-tests.log",
+      "log_sha256": "245fcf55018dd4d4f9be6847d09bf0f62f2706ba9990c4bc14b0dd19a24b14b2"
+    },
+    {
+      "id": "platform-default-tests",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-platform",
+        "--no-default-features",
+        "--locked"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev1/check-9mvfouiu/platform-default-tests.log",
+      "log_sha256": "98ca19592192a25ff96d73619fa135c78e488b54beb0ab8c325b57532241b548"
+    },
+    {
+      "id": "foundation-worker",
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/dev1/check-9mvfouiu/binaries/xadbtest",
+        "run",
+        "--case",
+        "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/dev1/check-9mvfouiu/case.json",
+        "--case-sha256",
+        "6c89b4960beaa75a889bda2db5d89a5e4454b415dcf0fd7eecac5881cda5b365",
+        "--worker",
+        "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/dev1/check-9mvfouiu/binaries/xadbtest-foundation-worker",
+        "--worker-sha256",
+        "64a63486ad3673ecb515f11eb847b0fedcb2a500e9f4aad153e4a845bf6333bb",
+        "--artifacts",
+        "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/dev1/check-9mvfouiu/foundation-worker"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/dev1/check-9mvfouiu/foundation-worker.log",
+      "log_sha256": "af3611d65390f64a357741c67a9bb573856f33fabd5e98fbcdbff85420114990"
+    },
+    {
+      "id": "wrong-expectation-rejected",
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/dev1/check-9mvfouiu/binaries/xadbtest",
+        "run",
+        "--case",
+        "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/dev1/check-9mvfouiu/wrong-expectation.json",
+        "--case-sha256",
+        "759135f29ffd71addbc42275fd874da682624e372637b186355ad228c5bb22db",
+        "--worker",
+        "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/dev1/check-9mvfouiu/binaries/xadbtest-foundation-worker",
+        "--worker-sha256",
+        "64a63486ad3673ecb515f11eb847b0fedcb2a500e9f4aad153e4a845bf6333bb",
+        "--artifacts",
+        "/home/et16/work/xadb/artifacts/comm-isolated/check-o9_awth1/source/artifacts/dev1/check-9mvfouiu/wrong-expectation-rejected"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "status": "PASS",
+      "log": "artifacts/dev1/check-9mvfouiu/wrong-expectation-rejected.log",
+      "log_sha256": "d11433475d890e864bdcaee84437dc3f4bbf6ee62090ede5b3a89eddc839519f"
+    }
+  ],
+  "engine_tests": "VOLATILE_SUBSTRATE_ONLY_NO_DURABILITY",
+  "official_release": false,
+  "protected_ci_execution": "NOT_RUN",
+  "cross_version_compatibility": "NOT_REQUIRED_INTERNAL_FRESH_BUILD",
+  "source_sha256_before": "e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1",
+  "source_sha256": "e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "target": "x86_64-unknown-linux-gnu",
+  "os_release": "PRETTY_NAME=\"Ubuntu 26.04.1 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"26.04\"\nVERSION=\"26.04.1 LTS (Resolute Raccoon)\"\nVERSION_CODENAME=resolute\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=resolute\nLOGO=ubuntu-logo\n",
+  "dev0_regression": "artifacts/dev1/check-9mvfouiu/dev0-regression.json",
+  "normal_dependency_closure": [
+    "block-buffer",
+    "cfg-if",
+    "cpufeatures",
+    "crypto-common",
+    "digest",
+    "generic-array",
+    "sha2",
+    "typenum",
+    "xadb-foundation"
+  ],
+  "platform_normal_dependency_closure": [
+    "bitflags",
+    "block-buffer",
+    "cfg-if",
+    "cpufeatures",
+    "crypto-common",
+    "digest",
+    "generic-array",
+    "libc",
+    "memoffset",
+    "nix",
+    "sha2",
+    "typenum",
+    "xadb-foundation",
+    "xadb-platform"
+  ],
+  "smoke": {
+    "run_directory": "artifacts/dev1/check-9mvfouiu/foundation-worker/run-RnEPCc",
+    "verdict": {
+      "result_schema_version": 1,
+      "run_id": "run-RnEPCc",
+      "case_validity": "VALID",
+      "product_verdict": "PASS",
+      "execution_state": "COMPLETED",
+      "cleanup_state": "PASS",
+      "case_verdict": "PASS",
+      "assertions_checked": 7,
+      "required_steps_complete": true,
+      "reasons": []
+    },
+    "worker_sha256": "64a63486ad3673ecb515f11eb847b0fedcb2a500e9f4aad153e4a845bf6333bb",
+    "case_sha256": "6c89b4960beaa75a889bda2db5d89a5e4454b415dcf0fd7eecac5881cda5b365"
+  },
+  "source_sha256_after": "e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1"
+}

@@ -1,0 +1,880 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18T13:29:35.043341+00:00",
+  "scope": "COMM implemented C0-C3 leaves and focused C4 native/checker integration; not full C1",
+  "status": "FAIL",
+  "c1_status": "INCOMPLETE",
+  "official_distribution": false,
+  "artifact_directory": "artifacts/comm/check-wh5q_7yd",
+  "checks": [
+    {
+      "id": "checker-negative-tests",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_comm.py"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/comm/check-wh5q_7yd/checker-negative-tests.log",
+      "log_sha256": "921b60a7fd52e978fbb551cacd29df2d6708879400278e1fcc70fceeb0c6f8e0"
+    },
+    {
+      "id": "transport-default",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-transport",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/comm/check-wh5q_7yd/transport-default.log",
+      "log_sha256": "a860cd39ef0548a8a55ee3e0aec6578f423cdf29264707f278606303f7fbf9d1"
+    },
+    {
+      "id": "transport-instrumented",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-transport",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/comm/check-wh5q_7yd/transport-instrumented.log",
+      "log_sha256": "ce6792bde77acbb464b05fb0f107c859b79eb9643ca032a6e1ca285fe4c8f47d"
+    },
+    {
+      "id": "comm-lint",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-transport",
+        "-p",
+        "xadbtest-transport-worker",
+        "--all-features",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/comm/check-wh5q_7yd/comm-lint.log",
+      "log_sha256": "48f87539e54c9d99f8189628c93bc0c72dded829d33bdf2f60780ec5a30e69e2"
+    },
+    {
+      "id": "dependency-boundary",
+      "command": [
+        "cargo",
+        "metadata",
+        "--format-version",
+        "1",
+        "--locked",
+        "--offline",
+        "--filter-platform",
+        "x86_64-unknown-linux-gnu"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/comm/check-wh5q_7yd/dependency-boundary.log",
+      "log_sha256": "c8cb225b9f0018de61af97581a695f6a2db29a246d9ef53dbbe419b5dc4ea213"
+    },
+    {
+      "id": "independent-build",
+      "command": [
+        "cargo",
+        "build",
+        "-p",
+        "xadb-transport",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--target-dir",
+        "/tmp/xadb-comm-independent-tnqbkczt"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/comm/check-wh5q_7yd/independent-build.log",
+      "log_sha256": "3f71f425fd9fdbfc454c4bdba46820cf010cb18ed127f9aba833a53ec99c1b60"
+    },
+    {
+      "id": "worker-default-build",
+      "command": [
+        "cargo",
+        "build",
+        "-p",
+        "xadbtest-transport-worker",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "artifacts/comm/check-wh5q_7yd/worker-default-build.log",
+      "log_sha256": "1e32c6ddd373ae4742431a9b61f63930f013a692e22d0b765a14ae68056bcca3"
+    },
+    {
+      "id": "lower-regressions",
+      "command": [
+        "python3",
+        "scripts/check_dev2_reference.py",
+        "--with-substrate",
+        "--report",
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/dev2-regression.json"
+      ],
+      "exit_code": 1,
+      "status": "FAIL",
+      "log": "artifacts/comm/check-wh5q_7yd/lower-regressions.log",
+      "log_sha256": "ffba888bf97758d6339fb07c732f65c6bcf29b69dbcbb91ec834ccb21fe3a3c7"
+    }
+  ],
+  "unverified": [
+    "full depth-8 two-connection model",
+    "full native fault matrix x3",
+    "30-minute codec/event fuzz and thread stress",
+    "C-V16 complete mutant inventory",
+    "C-V18 workload/Always-Detailed overhead acceptance",
+    "complete diagnostic ring/latency profile"
+  ],
+  "environment": {
+    "uname": [
+      "Linux",
+      "et16-msi",
+      "7.0.0-38-generic",
+      "#38-Ubuntu SMP PREEMPT_DYNAMIC Fri Sep  4 09:10:14 UTC 2026",
+      "x86_64",
+      ""
+    ],
+    "cpu_count": 32
+  },
+  "property_profile": {
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+    ],
+    "operations_per_seed": 128,
+    "generator": "tests/framing.rs LCG 6364136223846793005*x+1"
+  },
+  "source_sha256_before": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+  "lockfile_sha256": "f67269ca67484a0241bf06f22dee740fe6943bfe38d204193ab7fbcddec28a45",
+  "contract_sha256": {
+    "devdoc/contracts/comm-design.md": "3756aee6c169919bb5a140bfba340b8467cd13cb21fb0b611bbe920cedb73c49",
+    "devdoc/plans/comm-implementation-plan.md": "8c6c4a8417dfe9ba19889db7b367cdbe6b1373fe79d2acca31c0506c939ca0d7"
+  },
+  "normal_dependency_closures": {
+    "xadb-transport": [
+      "block-buffer",
+      "cfg-if",
+      "cpufeatures",
+      "crypto-common",
+      "digest",
+      "generic-array",
+      "sha2",
+      "typenum",
+      "xadb-foundation",
+      "xadb-transport"
+    ],
+    "xadbtest-transport-worker": [
+      "bitflags",
+      "block-buffer",
+      "cfg-if",
+      "cpufeatures",
+      "crypto-common",
+      "digest",
+      "generic-array",
+      "itoa",
+      "libc",
+      "memchr",
+      "memoffset",
+      "nix",
+      "ryu",
+      "serde_core",
+      "serde_json",
+      "sha2",
+      "typenum",
+      "xadb-foundation",
+      "xadb-platform",
+      "xadb-transport",
+      "xadbtest-transport-worker"
+    ]
+  },
+  "binary_sha256": "11c67bb93e8d03c9ad43f750600e7e6c1f485efa6a0c679e561b9ad6553ade51",
+  "native": [
+    {
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/xadbtest-transport-worker",
+        "tcp4"
+      ],
+      "pid": 1224132,
+      "family": "tcp4",
+      "mode": "echo",
+      "peer_started": true,
+      "observations": [
+        {
+          "payload_bytes": 0,
+          "wire_sha256": "7f2224e3c70199e290b7fc6ef1fcfd1492a38be7df7992b94a346762a20ab53a",
+          "round_trip_ns": 20109351
+        },
+        {
+          "payload_bytes": 1,
+          "wire_sha256": "eea5017f41cebb56975cd1aca279133f6f6e7c5ccd4e8efc68498ff81b24d411",
+          "round_trip_ns": 20121073
+        },
+        {
+          "payload_bytes": 2,
+          "wire_sha256": "048e8d5f9d8993e032d1c96ab9f480600acd50f3a20c13326df6fb8c1578b158",
+          "round_trip_ns": 20097029
+        },
+        {
+          "payload_bytes": 64,
+          "wire_sha256": "eed8f287380ef0e7f78e961d8dbc017d9462437b124d3ace1f1da049df579dab",
+          "round_trip_ns": 20135230
+        },
+        {
+          "payload_bytes": 4096,
+          "wire_sha256": "bd3ae31dab62c1eb7d9dfc7cac13c431989c1641236c0ea60b976433327567bf",
+          "round_trip_ns": 60355877
+        },
+        {
+          "payload_bytes": 65536,
+          "wire_sha256": "4bf4c81d04257684d027832674f1f1686feda2e8ee4071706cde9fbddc9a7968",
+          "round_trip_ns": 22157411
+        },
+        {
+          "payload_bytes": 1048576,
+          "wire_sha256": "75546a10f6299777bb2902d1017b79a9141ac1864681da9656c1cc31ad2b0694",
+          "round_trip_ns": 38454637
+        }
+      ],
+      "ready": {
+        "event": "ready",
+        "pid": 1224132,
+        "profile": "debug",
+        "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+        "target": "x86_64-unknown-linux-gnu",
+        "tcp": "127.0.0.1:41243",
+        "unix": null
+      },
+      "socket_buffers": {
+        "send": 2626560,
+        "receive": 131072
+      },
+      "stderr": "",
+      "returncode": 0,
+      "closed": {
+        "connections": 0,
+        "event": "closed",
+        "failed": 0,
+        "flushed": 7,
+        "frames": 7,
+        "io_kind": null,
+        "payload_bytes": 0,
+        "read_bytes": 1118569,
+        "reason": "Closed",
+        "short_io": 7,
+        "would_block": 8,
+        "written_bytes": 1118569
+      }
+    },
+    {
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/xadbtest-transport-worker",
+        "tcp4"
+      ],
+      "pid": 1224133,
+      "family": "tcp4",
+      "mode": "corrupt",
+      "peer_started": true,
+      "observations": [],
+      "ready": {
+        "event": "ready",
+        "pid": 1224133,
+        "profile": "debug",
+        "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+        "target": "x86_64-unknown-linux-gnu",
+        "tcp": "127.0.0.1:36059",
+        "unix": null
+      },
+      "socket_buffers": {
+        "send": 2626560,
+        "receive": 131072
+      },
+      "fault": {
+        "kind": "checksum_bit_flip",
+        "byte": 10,
+        "sent_bytes": 47
+      },
+      "stderr": "",
+      "returncode": 0,
+      "closed": {
+        "connections": 0,
+        "event": "closed",
+        "failed": 0,
+        "flushed": 0,
+        "frames": 0,
+        "io_kind": null,
+        "payload_bytes": 0,
+        "read_bytes": 47,
+        "reason": "InvalidFrame",
+        "short_io": 0,
+        "would_block": 0,
+        "written_bytes": 0
+      }
+    },
+    {
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/xadbtest-transport-worker",
+        "tcp4"
+      ],
+      "pid": 1224134,
+      "family": "tcp4",
+      "mode": "truncated",
+      "peer_started": true,
+      "observations": [],
+      "ready": {
+        "event": "ready",
+        "pid": 1224134,
+        "profile": "debug",
+        "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+        "target": "x86_64-unknown-linux-gnu",
+        "tcp": "127.0.0.1:37819",
+        "unix": null
+      },
+      "socket_buffers": {
+        "send": 2626560,
+        "receive": 131072
+      },
+      "fault": {
+        "kind": "body_eof",
+        "sent_bytes": 11
+      },
+      "stderr": "",
+      "returncode": 0,
+      "closed": {
+        "connections": 0,
+        "event": "closed",
+        "failed": 0,
+        "flushed": 0,
+        "frames": 0,
+        "io_kind": null,
+        "payload_bytes": 0,
+        "read_bytes": 11,
+        "reason": "TruncatedFrame",
+        "short_io": 1,
+        "would_block": 0,
+        "written_bytes": 0
+      }
+    },
+    {
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/xadbtest-transport-worker",
+        "tcp4"
+      ],
+      "pid": 1224135,
+      "family": "tcp4",
+      "mode": "kill",
+      "peer_started": true,
+      "observations": [],
+      "ready": {
+        "event": "ready",
+        "pid": 1224135,
+        "profile": "debug",
+        "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+        "target": "x86_64-unknown-linux-gnu",
+        "tcp": "127.0.0.1:35455",
+        "unix": null
+      },
+      "socket_buffers": {
+        "send": 2626560,
+        "receive": 131072
+      },
+      "fault": {
+        "kind": "SIGKILL",
+        "sent_bytes": 512,
+        "returncode": -9
+      },
+      "cleanup": "PROCESS_REAPED_NO_IN_PROCESS_QUOTA_CLAIM"
+    },
+    {
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/xadbtest-transport-worker",
+        "tcp6"
+      ],
+      "pid": 1224136,
+      "family": "tcp6",
+      "mode": "echo",
+      "peer_started": true,
+      "observations": [
+        {
+          "payload_bytes": 0,
+          "wire_sha256": "7f2224e3c70199e290b7fc6ef1fcfd1492a38be7df7992b94a346762a20ab53a",
+          "round_trip_ns": 20125242
+        },
+        {
+          "payload_bytes": 1,
+          "wire_sha256": "eea5017f41cebb56975cd1aca279133f6f6e7c5ccd4e8efc68498ff81b24d411",
+          "round_trip_ns": 20131292
+        },
+        {
+          "payload_bytes": 2,
+          "wire_sha256": "048e8d5f9d8993e032d1c96ab9f480600acd50f3a20c13326df6fb8c1578b158",
+          "round_trip_ns": 20120643
+        },
+        {
+          "payload_bytes": 64,
+          "wire_sha256": "eed8f287380ef0e7f78e961d8dbc017d9462437b124d3ace1f1da049df579dab",
+          "round_trip_ns": 20135250
+        },
+        {
+          "payload_bytes": 4096,
+          "wire_sha256": "bd3ae31dab62c1eb7d9dfc7cac13c431989c1641236c0ea60b976433327567bf",
+          "round_trip_ns": 61098252
+        },
+        {
+          "payload_bytes": 65536,
+          "wire_sha256": "4bf4c81d04257684d027832674f1f1686feda2e8ee4071706cde9fbddc9a7968",
+          "round_trip_ns": 21332752
+        },
+        {
+          "payload_bytes": 1048576,
+          "wire_sha256": "75546a10f6299777bb2902d1017b79a9141ac1864681da9656c1cc31ad2b0694",
+          "round_trip_ns": 37379255
+        }
+      ],
+      "ready": {
+        "event": "ready",
+        "pid": 1224136,
+        "profile": "debug",
+        "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+        "target": "x86_64-unknown-linux-gnu",
+        "tcp": "[::1]:44549",
+        "unix": null
+      },
+      "socket_buffers": {
+        "send": 2626560,
+        "receive": 131072
+      },
+      "stderr": "",
+      "returncode": 0,
+      "closed": {
+        "connections": 0,
+        "event": "closed",
+        "failed": 0,
+        "flushed": 7,
+        "frames": 7,
+        "io_kind": null,
+        "payload_bytes": 0,
+        "read_bytes": 1118569,
+        "reason": "Closed",
+        "short_io": 3,
+        "would_block": 8,
+        "written_bytes": 1118569
+      }
+    },
+    {
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/xadbtest-transport-worker",
+        "tcp6"
+      ],
+      "pid": 1224137,
+      "family": "tcp6",
+      "mode": "corrupt",
+      "peer_started": true,
+      "observations": [],
+      "ready": {
+        "event": "ready",
+        "pid": 1224137,
+        "profile": "debug",
+        "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+        "target": "x86_64-unknown-linux-gnu",
+        "tcp": "[::1]:36289",
+        "unix": null
+      },
+      "socket_buffers": {
+        "send": 2626560,
+        "receive": 131072
+      },
+      "fault": {
+        "kind": "checksum_bit_flip",
+        "byte": 10,
+        "sent_bytes": 47
+      },
+      "stderr": "",
+      "returncode": 0,
+      "closed": {
+        "connections": 0,
+        "event": "closed",
+        "failed": 0,
+        "flushed": 0,
+        "frames": 0,
+        "io_kind": null,
+        "payload_bytes": 0,
+        "read_bytes": 47,
+        "reason": "InvalidFrame",
+        "short_io": 0,
+        "would_block": 0,
+        "written_bytes": 0
+      }
+    },
+    {
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/xadbtest-transport-worker",
+        "tcp6"
+      ],
+      "pid": 1224138,
+      "family": "tcp6",
+      "mode": "truncated",
+      "peer_started": true,
+      "observations": [],
+      "ready": {
+        "event": "ready",
+        "pid": 1224138,
+        "profile": "debug",
+        "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+        "target": "x86_64-unknown-linux-gnu",
+        "tcp": "[::1]:35059",
+        "unix": null
+      },
+      "socket_buffers": {
+        "send": 2626560,
+        "receive": 131072
+      },
+      "fault": {
+        "kind": "body_eof",
+        "sent_bytes": 11
+      },
+      "stderr": "",
+      "returncode": 0,
+      "closed": {
+        "connections": 0,
+        "event": "closed",
+        "failed": 0,
+        "flushed": 0,
+        "frames": 0,
+        "io_kind": null,
+        "payload_bytes": 0,
+        "read_bytes": 11,
+        "reason": "TruncatedFrame",
+        "short_io": 1,
+        "would_block": 0,
+        "written_bytes": 0
+      }
+    },
+    {
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/xadbtest-transport-worker",
+        "tcp6"
+      ],
+      "pid": 1224139,
+      "family": "tcp6",
+      "mode": "kill",
+      "peer_started": true,
+      "observations": [],
+      "ready": {
+        "event": "ready",
+        "pid": 1224139,
+        "profile": "debug",
+        "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+        "target": "x86_64-unknown-linux-gnu",
+        "tcp": "[::1]:44203",
+        "unix": null
+      },
+      "socket_buffers": {
+        "send": 2626560,
+        "receive": 131072
+      },
+      "fault": {
+        "kind": "SIGKILL",
+        "sent_bytes": 512,
+        "returncode": -9
+      },
+      "cleanup": "PROCESS_REAPED_NO_IN_PROCESS_QUOTA_CLAIM"
+    },
+    {
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/xadbtest-transport-worker",
+        "unix",
+        "/tmp/xadb-comm-unix-jxf05n53/private"
+      ],
+      "pid": 1224140,
+      "family": "unix",
+      "mode": "echo",
+      "peer_started": true,
+      "observations": [
+        {
+          "payload_bytes": 0,
+          "wire_sha256": "7f2224e3c70199e290b7fc6ef1fcfd1492a38be7df7992b94a346762a20ab53a",
+          "round_trip_ns": 20100435
+        },
+        {
+          "payload_bytes": 1,
+          "wire_sha256": "eea5017f41cebb56975cd1aca279133f6f6e7c5ccd4e8efc68498ff81b24d411",
+          "round_trip_ns": 20131704
+        },
+        {
+          "payload_bytes": 2,
+          "wire_sha256": "048e8d5f9d8993e032d1c96ab9f480600acd50f3a20c13326df6fb8c1578b158",
+          "round_trip_ns": 20131423
+        },
+        {
+          "payload_bytes": 64,
+          "wire_sha256": "eed8f287380ef0e7f78e961d8dbc017d9462437b124d3ace1f1da049df579dab",
+          "round_trip_ns": 20161940
+        },
+        {
+          "payload_bytes": 4096,
+          "wire_sha256": "bd3ae31dab62c1eb7d9dfc7cac13c431989c1641236c0ea60b976433327567bf",
+          "round_trip_ns": 20357487
+        },
+        {
+          "payload_bytes": 65536,
+          "wire_sha256": "4bf4c81d04257684d027832674f1f1686feda2e8ee4071706cde9fbddc9a7968",
+          "round_trip_ns": 61608511
+        },
+        {
+          "payload_bytes": 1048576,
+          "wire_sha256": "75546a10f6299777bb2902d1017b79a9141ac1864681da9656c1cc31ad2b0694",
+          "round_trip_ns": 883009307
+        }
+      ],
+      "ready": {
+        "event": "ready",
+        "pid": 1224140,
+        "profile": "debug",
+        "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+        "target": "x86_64-unknown-linux-gnu",
+        "tcp": null,
+        "unix": "/tmp/xadb-comm-unix-jxf05n53/private/socket"
+      },
+      "socket_buffers": {
+        "send": 212992,
+        "receive": 212992
+      },
+      "stderr": "",
+      "returncode": 0,
+      "closed": {
+        "connections": 0,
+        "event": "closed",
+        "failed": 0,
+        "flushed": 7,
+        "frames": 7,
+        "io_kind": null,
+        "payload_bytes": 0,
+        "read_bytes": 1118569,
+        "reason": "Closed",
+        "short_io": 56,
+        "would_block": 51,
+        "written_bytes": 1118569
+      }
+    },
+    {
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/xadbtest-transport-worker",
+        "unix",
+        "/tmp/xadb-comm-unix-dyf6a1wj/private"
+      ],
+      "pid": 1224141,
+      "family": "unix",
+      "mode": "corrupt",
+      "peer_started": true,
+      "observations": [],
+      "ready": {
+        "event": "ready",
+        "pid": 1224141,
+        "profile": "debug",
+        "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+        "target": "x86_64-unknown-linux-gnu",
+        "tcp": null,
+        "unix": "/tmp/xadb-comm-unix-dyf6a1wj/private/socket"
+      },
+      "socket_buffers": {
+        "send": 212992,
+        "receive": 212992
+      },
+      "fault": {
+        "kind": "checksum_bit_flip",
+        "byte": 10,
+        "sent_bytes": 47
+      },
+      "stderr": "",
+      "returncode": 0,
+      "closed": {
+        "connections": 0,
+        "event": "closed",
+        "failed": 0,
+        "flushed": 0,
+        "frames": 0,
+        "io_kind": null,
+        "payload_bytes": 0,
+        "read_bytes": 47,
+        "reason": "InvalidFrame",
+        "short_io": 0,
+        "would_block": 0,
+        "written_bytes": 0
+      }
+    },
+    {
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/xadbtest-transport-worker",
+        "unix",
+        "/tmp/xadb-comm-unix-2vqt16go/private"
+      ],
+      "pid": 1224142,
+      "family": "unix",
+      "mode": "truncated",
+      "peer_started": true,
+      "observations": [],
+      "ready": {
+        "event": "ready",
+        "pid": 1224142,
+        "profile": "debug",
+        "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+        "target": "x86_64-unknown-linux-gnu",
+        "tcp": null,
+        "unix": "/tmp/xadb-comm-unix-2vqt16go/private/socket"
+      },
+      "socket_buffers": {
+        "send": 212992,
+        "receive": 212992
+      },
+      "fault": {
+        "kind": "body_eof",
+        "sent_bytes": 11
+      },
+      "stderr": "",
+      "returncode": 0,
+      "closed": {
+        "connections": 0,
+        "event": "closed",
+        "failed": 0,
+        "flushed": 0,
+        "frames": 0,
+        "io_kind": null,
+        "payload_bytes": 0,
+        "read_bytes": 11,
+        "reason": "TruncatedFrame",
+        "short_io": 1,
+        "would_block": 0,
+        "written_bytes": 0
+      }
+    },
+    {
+      "command": [
+        "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source/artifacts/comm/check-wh5q_7yd/xadbtest-transport-worker",
+        "unix",
+        "/tmp/xadb-comm-unix-yzqlme2z/private"
+      ],
+      "pid": 1224143,
+      "family": "unix",
+      "mode": "kill",
+      "peer_started": true,
+      "observations": [],
+      "ready": {
+        "event": "ready",
+        "pid": 1224143,
+        "profile": "debug",
+        "source_sha256": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+        "target": "x86_64-unknown-linux-gnu",
+        "tcp": null,
+        "unix": "/tmp/xadb-comm-unix-yzqlme2z/private/socket"
+      },
+      "socket_buffers": {
+        "send": 212992,
+        "receive": 212992
+      },
+      "fault": {
+        "kind": "SIGKILL",
+        "sent_bytes": 512,
+        "returncode": -9
+      },
+      "cleanup": "PROCESS_REAPED_NO_IN_PROCESS_QUOTA_CLAIM"
+    }
+  ],
+  "error": "lower-regressions failed",
+  "retained_source_export": "artifacts/comm/check-a7k80c66/source",
+  "execution_root": "/home/et16/work/xadb/artifacts/comm/check-a7k80c66/source",
+  "live_source_sha256_after": "aeddac30994a4d468b9cc4ab60b73ccb5b2fbb438ae2275b55f35bcc56f0b738",
+  "evidence_scope": "The exact retained source export only; later concurrent workspace edits are excluded."
+}

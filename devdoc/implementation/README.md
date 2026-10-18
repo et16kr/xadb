@@ -11,6 +11,7 @@
 | 외부 streaming controller | `xadbtest::native`의 부정 시험·실제 worker 연결 로컬 검증 | [DEV2](dev2-implementation.md) |
 | 순차 catalog oracle·recipe | 독립 기대값·실제 이력·저장 recipe 실행/재검증 로컬 검증 | [DEV2](dev2-implementation.md) |
 | K0 성능 진단·audit/replay | Off/Always/Detailed와 독립 정답·통계·원시 bundle 검증 구현; 최초 p99 비용 한도 FAIL, PF 인수 미완료 | [DEV2](dev2-implementation.md) |
+| COMM 핵심 | frame·Linux local socket·quota·deadline·취소/종료·focused runner 구현, C1 인수 미완료 | [COMM](comm-implementation.md) |
 | 영속 transaction/WAL/recovery | 미구현 | DEV2 K1–K5 |
 | disk pages/index·SQL/server/client·replication | 미구현 | DEV3 이후 |
 
@@ -19,6 +20,8 @@
 P0/K0 시험 성공은 B2/D0나 DEV2 전체 완료를 의미하지 않는다. bounded concurrent exploration, 통합 PF 인수, 영속 경로는 남은 작업이다. 과거 source snapshot의 PASS를 새 XADB의 PASS로 취급하지 않는다.
 
 <!-- catalogue -->
+
+- [COMM 구현 기록](comm-implementation.md)
 
 - [DEV0 — Rust 빌드와 XADBTest 최소 구현](dev0-implementation.md)
 - [DEV1 — 공통 의미와 Linux effect 기반](dev1-implementation.md)

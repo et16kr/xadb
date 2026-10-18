@@ -4,7 +4,11 @@ use sha2::{Digest, Sha256};
 
 /// Maximum current-build frame payload in bytes, excluding header and digest.
 pub const MAX_FRAME_PAYLOAD: usize = 1_048_576;
-const HEADER: usize = 10;
+/// AXF1 header size, before payload and digest.
+pub const FRAME_HEADER_BYTES: usize = 10;
+const HEADER: usize = FRAME_HEADER_BYTES;
+/// AXF1 envelope overhead, including the SHA-256 digest.
+pub const FRAME_OVERHEAD: usize = 42;
 const DIGEST: usize = 32;
 
 fn invalid() -> Error {
@@ -84,12 +88,8 @@ pub fn encode_frame(payload: &[u8]) -> Result<Vec<u8>> {
         ));
     }
     let mut frame = allocate(HEADER + payload.len() + DIGEST)?;
-    frame.extend_from_slice(b"AXF1");
-    frame.extend_from_slice(&1_u16.to_le_bytes());
-    frame.extend_from_slice(&(payload.len() as u32).to_le_bytes());
-    frame.extend_from_slice(payload);
-    let hash = Sha256::digest(&frame);
-    frame.extend_from_slice(&hash);
+    frame.resize(HEADER + payload.len() + DIGEST, 0);
+    encode_frame_into(payload, &mut frame)?;
     Ok(frame)
 }
 
@@ -105,19 +105,7 @@ pub fn decode_frame(frame: &[u8]) -> Result<&[u8]> {
     if frame.len() < HEADER + DIGEST || &frame[..4] != b"AXF1" {
         return Err(invalid());
     }
-    if frame[4..6] != [1, 0] {
-        return Err(Error::new(
-            ErrorCode::UnsupportedFormat,
-            "unsupported frame version",
-        ));
-    }
-    let len = u32::from_le_bytes([frame[6], frame[7], frame[8], frame[9]]) as usize;
-    if len > MAX_FRAME_PAYLOAD {
-        return Err(Error::new(
-            ErrorCode::LimitExceeded,
-            "frame length exceeds budget",
-        ));
-    }
+    let len = inspect_frame_header(&frame[..HEADER])? - FRAME_OVERHEAD;
     if frame.len() != HEADER + len + DIGEST {
         return Err(invalid());
     }
@@ -126,4 +114,57 @@ pub fn decode_frame(frame: &[u8]) -> Result<&[u8]> {
         return Err(invalid());
     }
     Ok(&frame[HEADER..end])
+}
+
+/// Validate an exact AXF1 header before reserving or allocating a body.
+/// Returns total wire bytes (header, payload, digest); does not validate a digest.
+///
+/// # Errors
+/// Rejects malformed header size/magic, unsupported version, and payloads over 1 MiB.
+pub fn inspect_frame_header(header: &[u8]) -> Result<usize> {
+    if header.len() != HEADER || &header[..4] != b"AXF1" {
+        return Err(invalid());
+    }
+    if header[4..6] != [1, 0] {
+        return Err(Error::new(
+            ErrorCode::UnsupportedFormat,
+            "unsupported header version",
+        ));
+    }
+    let len = u32::from_le_bytes([header[6], header[7], header[8], header[9]]) as usize;
+    if len > MAX_FRAME_PAYLOAD {
+        return Err(Error::new(
+            ErrorCode::LimitExceeded,
+            "header length exceeds budget",
+        ));
+    }
+    HEADER
+        .checked_add(len)
+        .and_then(|n| n.checked_add(DIGEST))
+        .ok_or_else(invalid)
+}
+
+/// Encode AXF1 into an exactly sized caller-owned buffer without allocation.
+/// The caller owns quota/lifetime; output never aliases the borrowed payload.
+///
+/// # Errors
+/// Invalid size/oversize payload is rejected before changing output.
+pub fn encode_frame_into(payload: &[u8], output: &mut [u8]) -> Result<()> {
+    if payload.len() > MAX_FRAME_PAYLOAD {
+        return Err(Error::new(
+            ErrorCode::LimitExceeded,
+            "frame payload exceeds 1 MiB",
+        ));
+    }
+    if output.len() != payload.len() + FRAME_OVERHEAD {
+        return Err(invalid());
+    }
+    output[..4].copy_from_slice(b"AXF1");
+    output[4..6].copy_from_slice(&1_u16.to_le_bytes());
+    output[6..10].copy_from_slice(&(payload.len() as u32).to_le_bytes());
+    let end = HEADER + payload.len();
+    output[HEADER..end].copy_from_slice(payload);
+    let digest = Sha256::digest(&output[..end]);
+    output[end..].copy_from_slice(&digest);
+    Ok(())
 }

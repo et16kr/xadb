@@ -1,13 +1,13 @@
 # COMM — 독립 통신 계층 상세 설계
 
-2026-10-18 · **D2 / ACCEPTED · 독립 검토 반영 / 미구현·제품 시험 NOT_RUN**
+2026-10-18 · **D2 / ACCEPTED · 독립 검토 반영 / 핵심 구현·C1 전체 인수 INCOMPLETE**
 
 [구현·검증 계획](../plans/comm-implementation-plan.md) · [소스 조사](../evidence/comm-source-research.md) · [단계 완료 계약](../plans/stage-completion.json) · [저장소 배치](../policies/repository-build-plan.md)
 
 <a id="scope"></a>
 ## 1. 목적과 소유 범위
 
-COMM은 DEV1 이후 engine·SQL·server 없이 구현하는 bounded byte transport다. `XADB-031 / C1 / KU12`를 구체화하며 DEV2–DEV4 완료를 선행 조건으로 추가하지 않는다. 현재 존재하는 것은 foundation의 완결 프레임 codec·quota·cooperative cancellation이며 streaming decoder, socket adapter, readiness wait와 COMM runner는 없다.
+COMM은 DEV1 이후 engine·SQL·server 없이 구현하는 bounded byte transport다. `XADB-031 / C1 / KU12`를 구체화하며 DEV2–DEV4 완료를 선행 조건으로 추가하지 않는다. 현재 port·streaming decoder·Linux socket adapter·bounded driver·focused runner를 구현했다. 실행 범위와 남은 인수는 [COMM 구현 기록](../implementation/comm-implementation.md)을 따른다.
 
 | 범위 | 이번 소유 계약 | 후속 소유자와 의무 |
 | --- | --- | --- |
@@ -65,7 +65,7 @@ hangup은 EOF의 힌트이며 buffered bytes가 남아 있을 수 있다. `read=
 
 상태는 `Header(filled 0..10) → Body(filled 10..L+42) → Verified → Header(0)`다. header는 고정 배열로 읽는다. magic·format·L과 checked `L+42`를 검증한 뒤에만 quota 예약과 fallible allocation을 한다. 잘못된 header로 body allocation이나 attacker 지정 길이만큼의 discard를 하지 않는다. 완결된 bytes에 foundation `decode_frame` 검증이 성공해야만 payload를 공개한다. checksum은 손상 검출이며 peer 인증이 아니다.
 
-foundation에 header 길이·전체 길이 검증을 공유하는 작은 API를 추가하여 transport와 완결 codec이 magic/상한을 따로 구현하지 않도록 한다. 정확한 함수 signature는 C0에서 동결하되 AXF1 bytes와 기존 encode/decode 의미는 유지한다. 이 변경에는 DEV1 회귀와 별도 D2 리뷰가 필요하다.
+foundation에 header 길이·전체 길이 검증을 공유하는 작은 API를 추가하여 transport와 완결 codec이 magic/상한을 따로 구현하지 않도록 한다. `inspect_frame_header`와 `encode_frame_into`의 실제 signature를 구현했으며 AXF1 bytes와 기존 encode/decode 의미는 유지한다. 이 변경에는 DEV1 회귀와 별도 D2 리뷰가 필요하다.
 
 RX는 다음 부족한 부분까지만 읽어 이미 읽은 뒤 처리하지 못하는 대형 spill buffer를 만들지 않는다. header/body의 성공한 byte 수만 cursor를 전진한다. `Interrupted`는 syscall 예산·취소·deadline 재확인 후 재시도한다. `WouldBlock`은 상태를 보존하고 scheduler에 반환한다. nonempty buffer에 대한 `read=0`은 EOF다. 부분 header/body EOF는 `TruncatedFrame`으로 닫는다. checksum·version·길이 오류 뒤 같은 stream을 재동기화하지 않는다.
 
@@ -74,7 +74,7 @@ RX는 다음 부족한 부분까지만 읽어 이미 읽은 뒤 처리하지 못
 <a id="ports"></a>
 ## 4. API와 effect port의 계약
 
-아래 이름은 구현할 책임이며 현재 Rust API가 아니다. 공통 port는 foundation, 연결 의미·오류·frame lease는 transport, native handle은 platform이 소유한다.
+아래 표는 책임 계약이며 실제 Rust signature와 사용법은 [구현 기록](../implementation/comm-implementation.md)을 따른다. 공통 port는 foundation, 연결 의미·오류·frame lease는 transport, native handle은 platform이 소유한다.
 
 | 경계 | 계약 |
 | --- | --- |
@@ -176,6 +176,8 @@ COMM은 payload를 자동 재전송하지 않는다. `SendTicket`은 durable tra
 
 <a id="decision"></a>
 ## 9. COMM-DESIGN-001 결정 기록
+
+아래 두 결정 기록의 미구현·NOT_RUN은 각 설계 작업 당시의 상태다. 후속 실제 API·의존성과 실행은 [COMM-IMPL-001](../implementation/comm-implementation.md)에서 별도로 관리한다.
 
 | 항목 | 내용 |
 | --- | --- |

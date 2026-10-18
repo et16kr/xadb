@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/testing/protocol", "crates/testing/controller", "crates/testing/fixture-worker", "crates/foundation", "crates/platform", "crates/testing/foundation-worker", "crates/testing/reference", "crates/engine", "crates/testing/engine-worker"]
+members = ["crates/testing/protocol", "crates/testing/controller", "crates/testing/fixture-worker", "crates/foundation", "crates/platform", "crates/testing/foundation-worker", "crates/testing/reference", "crates/engine", "crates/testing/engine-worker", "crates/transport", "crates/testing/transport-worker"]
 resolver = "3"
 
 [workspace.package]
@@ -18,6 +18,7 @@ xadbtest-protocol = { path = "crates/testing/protocol" }
 xadb-foundation = { path = "crates/foundation" }
 xadb-platform = { path = "crates/platform" }
 xadb-engine = { path = "crates/engine" }
+xadb-transport = { path = "crates/transport" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

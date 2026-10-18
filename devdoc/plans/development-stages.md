@@ -23,7 +23,7 @@
 | PART | DEV3 | SQL-free partition foundation | P1 |
 | NG | PART | SQL-free native global engine branch | H2, H3 |
 
-COMM은 [독립 통신 상세 설계](../contracts/comm-design.md)와 [C1/KU12 구현·검증 계획](comm-implementation-plan.md)을 따른다. DEV1 AXF1 bytes를 재사용하고 TCP loopback·소유 Unix socket에서 진행한다. transport와 runner는 미구현이며 실행 상태는 NOT_RUN이다.
+COMM은 [독립 통신 상세 설계](../contracts/comm-design.md)와 [C1/KU12 구현·검증 계획](comm-implementation-plan.md)을 따른다. DEV1 AXF1 bytes를 재사용하고 TCP loopback·소유 Unix socket에서 진행한다. transport·Linux adapter·focused runner는 부분 구현이며 [현재 실행 범위](../implementation/comm-implementation.md)를 따른다. C1 전체 인수는 미완료다.
 
 DEV5의 local Unix 인증·권한·세션·XSQ1·prepared·취소·종료와 외부 ACK는 [서버 설계](../contracts/dev5-server-design.md), SC03/KU14/PA08/PF11과 실제 Q1/C1 수신은 [구현·검증 계획](dev5-implementation-plan.md)을 따른다. 설계 채택과 leaf API/byte fixture 동결·제품 B3 실행은 별개이며 B3는 NOT_RUN이다.
 
