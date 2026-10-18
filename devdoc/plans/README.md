@@ -11,8 +11,8 @@
 - [capability-inventory.json](capability-inventory.json)
 - [COMM — 구현·검증 계획](comm-implementation-plan.md) — C1/KU12 leaf·readiness/종료 경합 반례·독립 peer·자원·성능 인수와 DEV5 이관
 - [DEV2 — 조사 결과와 구현·검증 계획](dev2-implementation-plan.md)
-- [DEV3 — 구현·병렬 개발·검증 계획](dev3-implementation-plan.md) — D3-M01–M06 모델·최초 snapshot/aging 경쟁·최악 자원 계산·batch 인수와 DEV2 재사용 경계
-- [DEV4 — embedded SQL 구현·검증 계획](dev4-implementation-plan.md) — Oracle 의미·DDL 두 outcome·rollback/recrash·처리 한계 및 실제 저장 공급 인수
+- [DEV3 — 구현·병렬 개발·검증 계획](dev3-implementation-plan.md) — D3-M01–M06·snapshot/aging·대기 없는 행 충돌·복구 예약/재장애·자원 계산·DEV2 재사용 경계
+- [DEV4 — embedded SQL 구현·검증 계획](dev4-implementation-plan.md) — Oracle 의미·DDL 두 outcome·관측 버전 전달·rollback/recrash/예약 복원·실제 저장 공급 인수
 - [development-stages.json](development-stages.json)
 - [XADB 개발 단계](development-stages.md)
 - [feature-design-inventory.json](feature-design-inventory.json)

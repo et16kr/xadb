@@ -97,7 +97,7 @@ F06에서 수신 commit/dirty digest·실제 crate/API/feature·사용한 실행
 | DS04/RC-T13 | old snapshot·긴 Active 거래·RC statement pin, status/undo/page slot ABA, commit-q stamping·overflow/delete/drop aging. DS04는 최초 q 선택/등록과 aging 경쟁·status 설치 후 frontier 공개 전 보호도 검증. begin WAL 제거 뒤 abort/recovery와 반복 CLR crash |
 | DS05 | fuzzy checkpoint 중 수정/flush·ATT/DPT 누락 mutant·previous fallback의 WAL floor. DWB 슬롯 torn/재사용/bootstrap. source-WAL 없는 offline exact C restore→새 ACK→재시작 |
 | DS06 | PK NULL 거절; unique `(1,NULL)` 중복 거절·`(NULL,NULL)` 허용; statement key 교환 성공·최종 중복 실패·이전 statement 보존. key1024 경계·1–4열·8 index·offline build 실패/취소 |
-| 동시성 | RC 두 statement 사이 다른 commit 관측, 같은 statement 안정, independent row writer 둘 다 성공; Serializable 독립 table 성공·same-table false conflict·write-skew/absence/range/catalog 충돌. unique 잠금 경합·deadlock victim full undo |
+| 동시성 | RC 두 statement 사이 다른 commit 관측, 같은 statement 안정, independent row writer 둘 다 성공; 관측→타 거래 commit/unlock→즉시 X lock에서도 논리 버전 충돌. Serializable 독립 table 성공·same-table false conflict·write-skew/absence/range/catalog 충돌. unique 잠금 경합·deadlock victim full undo |
 | 자원 | foreground가 reserve 소비하는 mutant, CLR worst-case/rollback split page 부족의 사전 거절, quota 경계에서 rollback/flush/checkpoint/aging 진행, 반복 crash에서 scratch/disk 누적 없음 |
 | 전체 검증 | 정상 reopen 후 admission drain한 full row↔index/unique/catalog/allocation/undo 검사와 독립 이력. cold-page corruption 첫 read/audit 거절을 startup 검출로 과장하지 않음 |
 | 하위 회귀 | DEV0/1·DEV2 P0/K0 및 실제 공급 durable leaf. 동일 의미 회귀와 형식별 DEV2/DEV3 차이를 분리 |
@@ -118,7 +118,11 @@ F06에서 수신 commit/dirty digest·실제 crate/API/feature·사용한 실행
 | D3-M03 / DS01,DS06 | split 뒤 다른 writer 변경→원래 writer rollback; 반대 순서의 page 발견·pin 부족; reader가 매 try를 선점 | 타 거래 값/완결 SMO 보존, 정렬된 latch·전체 pin 예약·재시도 cleanup·FIFO turn/drain. stale 전체 page 복원·부분 pin 보유 대기·공정한 무한 try starvation mutant 거절 |
 | D3-M04 / DS02,DS05 | CLR effect/progress, count/cut/queue cursor, commit 상태·ATT/DPT capture 각각의 append/apply/flush 사이 crash 두 번 | 완결 그룹의 원자 redo·UndoNextRef 진행, winner 보존·loser 제거, queue 정확히 한 번 해제. progress만 먼저 남기는 mutant 거절 |
 | D3-M05 / DS02,DS05 | 서로 다른 file의 두-page DWB batch: image→pending→일부 home→file sync→retirement→reuse, 각 경계 재장애 | 전체 pending 복원, partial 성공의 조기 retirement·raw retired image 부활·필수 file sync 누락 거절 |
-| D3-M06 / DS03 | 자원 잔여량을 필요량−1/동일/+1로 두고 admission·취소·deadlock victim·rollback·flush 교차 | 첫 effect 전 전부 예약 또는 거절, protected 몫 침범 없음, 종료하는 I/O·공정한 actor 실행 아래 예약 rollback/flush 완료. turn 준비에서 flusher까지 차단하거나 상위 잠금을 가진 turn 대기의 순환·starvation mutant 거절 |
+| D3-M06 / DS03 | 자원 잔여량을 필요량−1/동일/+1로 두고 admission·취소·deadlock victim·rollback·flush·crash/예약 복원 교차 | 첫 effect 전 전부 예약 또는 거절, protected 몫 침범 없음, 종료하는 I/O·공정한 actor 실행 아래 예약 rollback/flush 완료. turn 준비에서 flusher까지 차단하거나 상위 잠금을 가진 turn 대기의 순환·starvation, ledger 초기화·CLR 소비량 재사용 mutant 거절 |
+
+DS06의 [행 관측 버전](../contracts/disk-storage-design.md#observed-row-version) 시험은 native ReadCommitted와 Serializable을 각각 사용한다. `T1 observe(A) → T2 update/commit/unlock → T1 X-lock 즉시 획득 → validate`에 실제 barrier를 두고, T1의 해당 행 효과 전 전체 거래 conflict를 확인한다. T1의 앞선 own writes도 전체 undo되고 T2의 ACK는 보존되어야 한다. 실제 잠금 대기, T2 delete, 같은 bytes를 쓴 새 버전, T2 abort 뒤 원래 identity 복원, 앞선 own-write 관측, 값 변경 없는 split/이동을 별도 fixture로 둔다. wait-only 검사·물리 page version만 비교·값 equality만 비교·caller가 observation을 다른 statement/행에 재사용하는 mutant를 거절한다. D3-M03에는 두 writer의 observe/lock/validate/apply를 분리한 고정 fixture를 추가하며 commit validation만으로 잘못된 execute 효과를 가리지 않는다.
+
+D3-M04/M06에는 영속 descriptor·실제 파일 bytes·page token 소유·잔여 obligation을 별도 상태로 둔다. 같은 그룹의 effect/progress/예약 변경, capture와 WAL 인계, crash의 volatile ledger 소멸, BOOT_RESERVE/RESERVE_RESTORE, 부분 CLR 뒤 두 번째 crash를 각각 action으로 고정한다. undo 대상과 남은 비용은 production ledger와 독립적으로 계산한다. 기존 유한 공간/상한을 유지하며 이 fixture를 완주해야 한다. 반복 bootstrap은 아래 추가 crash 없는 진행 graph와 분리하여, crash 전이를 유지하는 별도 M06 bootstrap graph로 판정한다. source cut·고정 두 슬롯·공통 fallback·base-only/WRITER 선택·charged/reserved를 상태로 두고, 새 epoch 설치 직후 crash 순환과 모든 슬롯 인계/회수 cut에서 고정 peak 및 최소 한 recovery closure 보존을 검사한다. depth16/crash2 탐색 외에 이 추상 graph의 모든 도달 상태·crash 간 귀납 전이를 완주해야 한다. 동일한 탐색 보호 상한을 적용하며, cap 도달·미증명은 INCONCLUSIVE이고 실행 뒤 상한 축소로 PASS시키지 않는다.
 
 M03/M06의 **진행 판정은 action 길이16의 safety 탐색과 별도**다. 같은 고정 유한 객체 범위에서 추가 crash가 없는 실행의 도달 가능한 상태 graph를 만들고, retry/새 reader 반복을 보존하는 순환으로 표현한다. F02/F03에서 fairness와 I/O 종료 가정·K·정규화 규칙을 먼저 동결한다. fair SCC에서 미완료 예약 작업이 영원히 남는 cycle이 없는지 검사하거나 이에 해당하는 감소 순위 증명을 제출한다. 보호 상한으로 graph를 닫지 못하면 INCONCLUSIVE이며, 단순히 depth16까지 오류가 없다는 이유로 진행 PASS를 주지 않는다. 반환한 ticket 순서·drain 완료·각 CLR/flush 단계의 진전과 starvation mutant의 counterexample을 receipt에 남긴다.
 
@@ -136,6 +140,8 @@ F05는 [자원 벡터 산식](../contracts/disk-storage-design.md#reserve-accoun
 필수 실제 fixture는 최대128 KiB row·8 index·높이 경계의 tree·4/16/64 MiB buffer·최대32 거래 요청이다. 전부를 수용해야 하는 시험이 아니라 계산된 수까지만 안전하게 admission하고 나머지는 첫 effect 전 거절하는 시험이다. row size·index key·논리1 MiB 등 서로 양립하지 않는 극값은 한 불가능 fixture로 합치지 않고 각각 한도를 만족하는 case로 분리한다. allocator inventory의4배 working set도 실제 entry 크기/할당량으로 산정하고 필요 quota 변경은 실행 전 검토한다.
 
 정확한 경계−1/동일/+1, WAL floor가 오래 pin된 상태, 여러 statement 성공 뒤 실패/취소, rollback 재삽입 중 split, batch flush 일부 실패, 두 번째 crash를 조합한다. 각 case는 reservation/소비/해제 ledger·pin/FD/RSS peak·rollback/flush 진행 witness를 남긴다. rollback이 자기 완료에 필요한 checkpoint/aging을 기다리는 순환, foreground의 reserve 차용, 이미 소비한 CLR 예약의 재사용, 고갈 뒤 거짓 ABORT를 mutant로 거절한다. 계속 유입되는 reader와 4 MiB buffer에서 turn 준비 중 flusher가 필요하도록 하고, ticket 대기·drain·완료의 실제 thread witness를 확인한다. 강제 I/O/ENOSPC는 성공 진행 보장과 별도로 Fenced·복구 결과를 판정한다.
+
+[crash 뒤 예약 복원](../contracts/disk-storage-design.md#recovery-reservation)의 추가 필수 fixture는 BEGIN WAL을 회수한 Active 거래와 일부 CLR만 완료한 loser다. runtime ledger를 모두 잃은 새 프로세스에서 checkpoint+WAL만으로 obligation을 복원하고, 기존 extent token·성장 예약·이미 소비한 CLR bytes·남은 CLR/split/status/abort-end를 독립 회계와 대조한다. BOOT_RESERVE·DWB repair·RESERVE_RESTORE·REDO·RECOVERY_REBASE의 공통 fallback/두 슬롯/base-only 선택·epoch/header/WRITER 선택·첫/중간/마지막 CLR·bootstrap checkpoint 인계/회수 전후에 장애를 넣는다. 새 epoch 선택 직후 연속 crash와 두 슬롯이 모두 선택된 초기 상태도 포함한다. 현재/previous closure를 유지한 채 고정 bootstrap peak 안에서 재진입해야 한다. 8 GiB 안의 protected1 GiB와 WAL256 MiB 경계를 동시에 채운 정상 admitted fixture는 공간 재요청 실패로 거절해 PASS할 수 없다. 잘못된 descriptor·실제 I/O 장애의 명시 거절은 별도 case다.
 
 <a id="faults"></a>
 ## 4. fault와 재현
@@ -157,7 +163,7 @@ DWB는 batch 크기1/8/64와 여러 대상 file, dirty frame 재갱신을 포함
 | --- | --- |
 | insert/update/delete·point/range | 1/2/4 writer·reader, TPS/성공률·충돌률, commit/WAL sync p99, latch/lock/pin wait, page read와 장치 I/O 구별 |
 | 오래된 reader/transaction | undo bytes·horizon lag·quota 거절·reader 해제 뒤 실제 재사용, WAL floor와 undo 수명 분리 |
-| checkpoint/reopen/audit | dirty-page·WAL 양 고정 비교, 정상 startup read bytes·시간, 전체 감사 비용 별도 |
+| checkpoint/reopen/audit | dirty-page·WAL 양 고정 비교, 정상 startup read bytes·시간, RECOVERY_REBASE의 home flush·슬롯/selector sync·회수 bytes/시간, 전체 감사 비용 별도 |
 | delete churn·aging | page/extent 내부 재사용, doublewrite/flush/CLR write bytes, reserve peak·진행량. OS 반환과 구분 |
 | DWB batch1/8/64 | 같은 durability·flush 요구량에서 성공 pages/s, DWB/home/control bytes, WAL/file/control sync·dirsync 수, 평균 실제 batch 크기, 대기/dirty age p99, commit·rollback tail latency |
 | offline backup/restore | C 일치·전체 검사·중단 시간·복사 bytes·취소/재장애 |
@@ -171,11 +177,11 @@ batch deadline은 낮은 부하에서도 1-page flush가 진행되는 시간 상
 
 | ID | 산출물 | 완료 시점·현재 상태 |
 | --- | --- | --- |
-| D3-F01 | page/anchor/allocator/undo/status/WAL/CLR/checkpoint/DWB offsets·IDs·digest 범위·독립 hex vector | 표현 codec 전. 구조 선택만 완료, bytes 미동결 |
-| D3-F02 | API·isolation·rank/try-lock/전체 pin 예약·FIFO progress turn/K/workspace/drain 순서·snapshot q/등록 gate와 published horizon·guard 인계·transient reference guard·statement/rollback/cut/queue 상태표 | 해당 소비 구현 전. D3-M01–M06 action/fixture·fairness/진행 판정과 Rust signature 미동결 |
+| D3-F01 | page/anchor/allocator/undo/status/WAL/CLR/checkpoint/DWB offsets·IDs·digest 범위·논리 행 버전·recovery obligation descriptor·독립 hex vector | 표현 codec 전. 구조 선택만 완료, bytes 미동결 |
+| D3-F02 | API·isolation·opaque row observation/검증 경계·rank/try-lock/전체 pin 예약·FIFO progress turn/K/workspace/drain 순서·snapshot q/등록 gate와 published horizon·guard 인계·transient reference guard·statement/rollback/cut/queue 상태표 | 해당 소비 구현 전. D3-M01–M06 action/fixture·fairness/진행 판정과 Rust signature 미동결 |
 | D3-F03 | 독립 key/row/index/history·edge graph oracle·negative mutants·case/variant 예상값 | 해당 production leaf 전 D3-M01–M06 전수 완료 필요; 모델/제품 실행 NOT_RUN |
-| D3-F04 | 실제 WAL/DWB batch/home/namespace receipts·allocator bootstrap·각 장애 cut·반복 recovery | 실제 I/O leaf 전. batch1/8/64·다중 file·repair 재장애 profile 미동결 |
-| D3-F05 | opcode별 자원 벡터·최악 CLR/rollback pages·progress frame/FD/WAL·큰 inventory quota·PF09 | 해당 effect 전 산식 대입·경계 인수 필요. 숫자 reservation table·batch deadline·실측 미완료 |
+| D3-F04 | 실제 WAL/DWB batch/home/namespace receipts·allocator/bootstrap 예약·recovery checkpoint 인계/회수·각 장애 cut·반복 recovery | 실제 I/O leaf 전. batch1/8/64·다중 file·repair 재장애 profile 미동결 |
+| D3-F05 | opcode별 자원 벡터·최악 CLR/rollback pages·progress frame/FD/WAL·bootstrap/예약 복원과 반복 restart peak·큰 inventory quota·PF09 | 해당 effect 전 산식 대입·경계 인수 필요. 숫자 reservation table·batch deadline·실측 미완료 |
 | D3-F06 | 실제 DEV2 공급 revision/API/format·재사용/adapter/전용/신규 symbol·시험 inventory·선행 leaf·clean export | production 착수와 S1 승격 각각. volatile/DEV2 형식 receipt로 DEV3 영속 충족 금지 |
 | D3-F07 | 담당·기준 commit/dirty digest·독점/공유 경로·중복·병합 순서·통합 검사 | 각 작업 전. 역할 계획만 존재 |
 
@@ -219,3 +225,24 @@ DEV3-DESIGN-001/PARALLEL-001의 소스 조사·독립 검토와 당시 문서 �
 관련 결정은 [DEV3-REVIEW-005](../contracts/disk-storage-design.md#snapshot-review)다. 앞선 리뷰·실행 receipt를 이번 변경의 검증으로 승계하지 않는다.
 
 작업 중 별도 DEV5 문서 commit `f8b5d86`으로 HEAD가 이동한 것을 확인했다. 이번 변경은 그 commit 위에 좁게 적용하며, 다른 작업의 미commit 변경을 이번 commit에 포함하지 않는다. 기존 문서 ID·경로를 재등록하거나 현재 문서 검사 결과를 생성하지 않는다.
+
+<a id="conflict-reserve-review"></a>
+## 11. REVIEW-006 작업과 검토
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·소유 | D2; 작업·DEV3/DEV4 경계 계약·통합 `/root`; 사용자 리뷰 후 수정 지시 |
+| 기준 identity | HEAD `61046cf0a00c7511a8c35292c7d950f2175aa888`; 착수 status SHA-256 `a2c02730a576a8411a83aa4439f8b6d80fb31fedf730ec4116f576f6e9b140a0`; 12개 원문 사본 `/tmp/xadb-dev34-conflict-reserve-qmwdw4wt/before`, identity.json SHA-256 `ab335111167ef1b8fd060a3196db3714f6e47caa61d9fdf3c18bb0585159393b` |
+| 전용 본문 | DEV3/DEV4 상세 설계와 구현 계획, disk/recovery-test-matrix의 해당 인수 |
+| 공유 수정·중복 | implementation-contracts DEV3 적용 표, development-stages/stage-completion의 DEV3/DEV4 항목, devdoc/contracts/plans README만 최신 원문에 순차 반영. DEV2·COMM·DEV5 제품/문서의 기존 dirty/staged 변경 보존. 작업 중 다른 작업의 HEAD 이동을 관측하여 실제 편집 직전 기준을 보관 |
+| 반영 순서 | DEV3 의미/복구 예약→DEV4 소비→모델/실제 시험 의무→공유 JSON/색인→독립 검토. 문서 ID/경로/제목은 기존 documents.json 등록 그대로이며 신규 문서·코드·생성물 없음 |
+| 비교 근거 | 앞선 리뷰에서 Oracle 19c 일관 읽기/거래와 Altibase 7.3 transaction/undo 문서, 로컬 PostgreSQL·MariaDB·CUBRID·SQLite·DuckDB를 열람. [기존 조사](../evidence/dev3-dev4-architecture-review.md)의 범위를 현재 제품 실행으로 승계하지 않음. 직접 반례 판단은 PostgreSQL heap/executor의 변경 tuple 처리와 ARIES §5.3 로그 예약·CLR 재장애 원칙을 참고; XADB의 보수적 전체 abort와 영속 UndoRef/예약 descriptor는 자체 계약 |
+| 실제 소스 기준 | PostgreSQL `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851`, MariaDB `327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4`, CUBRID `a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5`, SQLite `43a48f77585a88940c727f33682151418f544059`, DuckDB `1b4c3e54ba3625bac56ad184f0ce642a8d2bfbd5`. ARIES 원문 공개 PDF SHA-256 `3db37b1fb6c0ab2678d6825e3dab584d08e77a0a0bd06ea088c3676a51f684b9` |
+| 검증 범위 | 의미·반례·최신 원문 대비 좁은 diff 검토 및 해당 12개 파일의 `git diff --check` PASS. DOC-002에 따라 문서 자동 검사·생성물 갱신·push 미실행. 모델·제품 코드·실제 DBMS 비교 실행·Q1/PF/복구 시험 NOT_RUN |
+| 독립 검토 | `/root/dev34_conflict_reserve_review`가 기준 사본 대비 12개 문서와 보완 diff를 읽기 전용 검토. 반복 epoch 누적·crash graph 범위 P2 및 두 슬롯의 중간 해제 전이를 보완한 뒤 최종 PASS·필수 P1/P2 없음. `/root` 반영 확인, DEV3-REVIEW-006/DEV4-REVIEW-004 ACCEPTED. 검토자는 파일 수정·문서 자동 검사·제품 시험을 하지 않음 |
+
+관련 결정은 [DEV3-REVIEW-006](../contracts/disk-storage-design.md#conflict-reserve-review)과 [DEV4-REVIEW-004](../contracts/dev4-sql-design.md#conflict-reserve-review)다. 구체 descriptor/codec·선택한 bootstrap 인계의 byte/selector 상태표·수치 예약표·실제 fault harness는 해당 leaf 구현 전 동결 의무로 남긴다.
+
+사용자의 후속 전체 문서 검사·commit·push 지시에 따라, commit 대상 사본에서 전체 검사 중 current-source evidence 지문 불일치 3건을 확인했다. COMM 반영 소스와 이미 보존된 회귀 보고서의 지문 일치를 대조하여 문서 ID·현재 증거 설명을 수정했다. 이전 보고서 바이트와 성능 실패·미완료 상태는 보존한다. 제품 코드/checker 변경 및 새 제품 시험 실행은 없으며 최종 문서 결과는 [문서 검사 보고서](../document-validation.json)를 따른다.
+
+증거 참조 보완도 `/root/dev34_conflict_reserve_review`가 후보 소스 지문·채택 사본의 byte identity·원본 보존·미실행 범위를 읽기 전용으로 독립 확인하여 PASS, 필수 수정 지적 없음으로 판정했다. 검토자는 checker나 제품 시험을 재실행하지 않았다. `/root`가 반영 확인했다.

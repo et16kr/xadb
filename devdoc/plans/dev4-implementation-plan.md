@@ -47,9 +47,9 @@ DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01�
 | ID | 이 설계가 정한 것 | 구현 전에 고정할 실제 입력 |
 | --- | --- | --- |
 | D4-F01 | 문법·대문자 이름·SQL 빈 text 정규화·부분 NULL/문장 최종 UNIQUE·span·수치 한도 | exact token/AST/Rust signature, 원래 text 타입 보존과 native canonical fixture, 모든 production error→SQL code/effect vector, malformed/unsupported token corpus와 hash |
-| D4-F02 | `?`·prepare 추론·owned bind·metadata·상태표·stale reject·DDL 두 outcome | engine catalog dependency accessor, scan/mutation 공통 statement token, snapshot q/등록·aging의 동기화와 published q 보존·guard 인계 증거, session/result 수명, DDL validation/precommit 경계·두 receipt/오류/취소·NotCommittedRecoveryRequired 전이, ROLLBACK/close_session/Drop의 undo 소유 인계·fencing API·literal vector·실제 thread barrier |
+| D4-F02 | `?`·prepare 추론·owned bind·metadata·상태표·stale reject·DDL 두 outcome | engine catalog dependency accessor, scan/mutation 공통 statement token·opaque row observation과 대기 없는 X-lock 검증, snapshot q/등록·aging의 동기화와 published q 보존·guard 인계 증거, session/result 수명, DDL validation/precommit 경계·두 receipt/오류/취소·NotCommittedRecoveryRequired 전이, ROLLBACK/close_session/Drop의 undo 소유 인계·fencing API·literal vector·실제 thread barrier |
 | D4-F03 | bounded external sort와 SQL memory/disk/FD 예산 | 임시 file/record/manifest byte layout·독립 hex, owner cleanup port·disk reservation, merge/ENOSPC/short I/O fault cuts와 allocation inventory |
-| D4-F04 | Q1 필수 사례와 native/literal independence·rollback/recrash | SQL worker adapter/protocol version·DDL 두 outcome/ACK·NotCommittedRecoveryRequired를 포함한 row/error/event schema, D4-V17–24·DEV3 WAL/undo/CLR과 fault 교차 inventory, mutation·negative verdict·seed/schedule·실행 명령 |
+| D4-F04 | Q1 필수 사례와 native/literal independence·rollback/recrash | SQL worker adapter/protocol version·DDL 두 outcome/ACK·NotCommittedRecoveryRequired를 포함한 row/error/event schema, D4-V17–26·DEV3 WAL/undo/CLR·bootstrap/예약 복원과 fault 교차 inventory, mutation·negative verdict·seed/schedule·실행 명령 |
 | D4-F05 | PF10 workload군·기본 V2/V3·계측 책임 | 실제 host/CPU/FS·fixture cardinality/distribution/hash·release binary/feature, warmup/sample·RSS/I/O·계측 비용·회귀 threshold·paired 순서와 재현 recipe |
 
 담당은 해당 leaf 구현자와 SQL/engine 계약 담당, 통합 담당이며 실제 이름을 착수 기록에 배정한다. 빈 담당·null entrypoint를 동결 완료로 바꾸지 않는다. 각 동결은 DP01 별도 검토를 받고 구현 후보를 실행하기 전에 hash를 기록한다. 실패를 없애기 위해 사후 예산/variant를 줄이지 않는다.
@@ -69,7 +69,7 @@ DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01�
 | D4-T06 / SC02 | ORDER BY ASC/DESC×NULLS 기본/명시×복수 열·미선택 열·동률·LIMIT 0/1/Int64 max | 별도 sort 기대값. 무순서 결과는 bag multiplicity, tie는 허용 순서 집합, unique tie-breaker 사례는 exact order |
 | D4-T07 / SC02 | 모든 지원 DML/SELECT direct/prepared, marker 위치·hint/추론·count/type/NULL/bytes·caller buffer 해제 | immutable metadata·typed 값 독립성, bind 실패 원자 보존, 값의 SQL injection 재해석 없음 |
 | D4-T08 / SC02 | 모든 handle 상태 전이·EOF/조기 close·double close·다른 session/engine·slot reuse·stale plan, 재bind/재execute·prepare/DDL race·D4-V15/16·close_session/Drop undo 실패 | 첫 효과 전 거절, old result/token 재사용 없음, terminal descriptor도 bounded·fetch 실패 후 거래/statement 상태·정상 cleanup 뒤 memory/pin/FD/quota 회복. 미완료 undo/lock 소유 유실과 정상 rollback 오응답 거절 |
-| D4-T09 / SC02,KU13 | ON/OFF×BEGIN/COMMIT/ROLLBACK/DDL×성공/오류, read-your-writes·두 table mixed transaction·같은 table writer 및 무변경 ReadWrite conflict·독립 table writer 동시 성공 | 실제 2-thread schedule·external history·일관된 snapshot. 같은 table conflict 누락과 무관한 table까지 전역 q로 거절하는 mutant 모두 거절. 잠금 대기 뒤 버전 변경은 전체 거래 abort, SQL 숨은 재실행 금지. Oracle READ COMMITTED 결과로 혼용하지 않음 |
+| D4-T09 / SC02,KU13 | ON/OFF×BEGIN/COMMIT/ROLLBACK/DDL×성공/오류, read-your-writes·두 table mixed transaction·같은 table writer 및 무변경 ReadWrite conflict·독립 table writer 동시 성공 | 실제 2-thread schedule·external history·일관된 snapshot. 같은 table conflict 누락과 무관한 table까지 전역 q로 거절하는 mutant 모두 거절. 대기 유무와 무관한 잠금 후 논리 버전 변경은 execute 중 해당 행의 첫 effect 전에 전체 거래 abort, SQL 숨은 재실행 금지. Oracle READ COMMITTED 결과로 혼용하지 않음 |
 | D4-T10 / SC02,KU13 | update WAL/undo/CLR·data/undo flush·commit record append/sync/publication/reply cut, short write·sync error·kill·reopen·반복 recovery·checkpoint/backup/restore·DDL 두 거래 사이 cut | D4-V23/24 및 아래 R1–R4. 실제 ACK·ABORTED·NotCommittedRecoveryRequired·UNKNOWN history와 native oracle. 첫 update WAL과 첫 commit record 시도 구분, current-build ACK 보존·partial batch 금지·durable 이후 취소 오판 금지 |
 | D4-T11 / SC02 | parse/bind/execute/fetch/sort·commit 전후 cancel/timeout, statement/transaction rollback I/O 실패·도중 crash·복구 재장애, allocation/quota·spill ENOSPC·truncated file·cleanup 실패 | D4-V22/23·R1/R2, undo 완료 전 정상 ABORTED 응답 금지·확정 NotCommitted와 RecoveryRequired/Fenced 보존·복구 뒤 미commit 거래 전체 소멸, incomplete prefix, orphan quota 유지·소유 namespace만 회수 |
 | D4-T12 / SC02 | interactive/batch CLI·stdin/file·Unicode/NULL/binary 출력·metadata/count/error·중간 실패·EOF·DDL 두 outcome | typed embedded 결과와 독립 출력 fixture, exit status·stdout/stderr·종료 시 숨은 commit 없음. DDL 실패 뒤 이미 commit된 이전 DML을 명시 |
@@ -79,6 +79,8 @@ DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01�
 각 지원 statement×타입에는 정상/NULL(허용/거절)/빈 값/경계/오류가 필요하다. direct와 prepared는 지원 교집합 전부를 비교하고 DDL/transaction control은 prepare에서 명시 Unsupported를 확인한다. 각 index kind(PK/unique/nonunique)×단일/복합 key의 적용 가능한 point/range/DML·crash 변형을 포함한다. 전체 문법·타입 항목이 어느 test ID에 연결됐는지 coverage inventory를 만든다. 기능이 없는 조합은 근거 있는 N/A이며 후속 필수 기능을 삭제하지 않는다.
 
 T04/09/11/14는 [초기 처리 범위](../contracts/dev4-sql-design.md#capacity-boundary)를 함께 인수한다. 256/257개 대상의 단일 DML, 여러 성공 statement가 거래 한도에 도달한 뒤 실패, 같은 table의 다른 행/독립 table writer를 구별한다. count 성공을 부분 처리와 혼동하지 않고 실패한 문장 전체 복원·앞선 성공 변경 유지·명시 COMMIT/ROLLBACK 결과를 확인한다. 낮은 WAL/frame/FD 여유에서 cancel·close_session·Drop 인계와 rollback을 수행하여 예약 소유 유실·거짓 ABORT를 거절한다. 한도가 큰 workload를 거절했다면 처리량 표본에서 조용히 제외하지 않고 실패 원인/비율로 보고한다.
+
+T09/D4-V26은 `T1 대상 materialization → T2 commit/unlock → T1 즉시 X lock` barrier를 추가한다. T1 execute의 conflict와 전체 undo, T2 ACK 보존을 commit 호출 전에 검사한다. 기다린 lock·삭제·같은 값의 새 버전도 충돌해야 하며, 앞선 own-write 관측·논리 변경 없는 split은 행 버전 충돌을 만들지 않는다. native ReadCommitted 반례는 DS06의 선행 증거로 받고 SQL은 현재 Serializable로 실행한다. SQL이 observation을 누락/대체하거나 commit validation으로 execute 검사를 대신하는 mutant를 거절한다.
 
 T09는 [DEV3 snapshot 획득](../contracts/disk-storage-design.md#snapshot-acquisition)의 실제 DS04 선행 증거를 수신하고, idle prepare와 execute 최초 획득을 writer/aging과 교차한다. q10 선택/등록 사이 및 status11 설치/frontier10의 경계에서 catalog/row 결과가 q10과 일치해야 한다. SQL이 engine guard 대신 raw q를 넘기거나 result 인계 중 마지막 horizon 소유를 놓는 mutant를 거절한다. 이 시험은 SQL ReadCommitted 노출을 추가하지 않으며 현재 Serializable·implicit ReadOnly 경로를 검증한다.
 
@@ -105,7 +107,7 @@ fault 목록은 DEV2/DEV3 필수 cuts를 그대로 유지하고 SQL 경계의 pr
 | R3: DML COMMIT durable→응답 전달 전 kill | 외부 응답 UNKNOWN 허용, 거래 전체는 복구 후 보존. 재시작을 반복해도 중복 적용/누락 없음; SQL 자동 재실행 금지 |
 | R4: DDL precommit→DDL 검증/build→DDL commit | 이전 commit의 시도/sync/응답, 그 뒤 DDL 호출 전, DDL 준비·commit·응답 cut 각각 실행. 두 transaction identity/outcome을 분리하며 durable 이전 DML은 DDL 실패/취소/UNKNOWN에도 보존 |
 
-공급 대상 DEV3-DESIGN-003의 undo 적용 전후·redo-only CLR mini-transaction·다음 UndoRef/progress의 원자 기록·WAL sync·page flush·recovery 재장애 cuts를 하위 owner와 동결한다. SQL은 CLR을 생성하지 않는다. 첫 update WAL 기록을 CommitAttempted로 오판하지 않으며 첫 commit record byte 시도를 기준으로 삼는다. rollback I/O 실패는 확정 NotCommitted·RecoveryRequired/Fenced로 관측하고, 복구 완료 뒤 R1–R4의 행/index 보장을 검사한다. DEV2 private/COW 회귀를 이 disk 경로의 실행 증거로 대체하지 않는다.
+공급 대상 DEV3-DESIGN-003의 undo 적용 전후·redo-only CLR mini-transaction·다음 UndoRef/progress의 원자 기록·WAL sync·page flush·recovery 재장애 cuts를 하위 owner와 동결한다. R2와 T11의 낮은 자원 변형은 BEGIN WAL 삭제·부분 CLR 이후 재시작에서 engine의 BOOT_RESERVE/RESERVE_RESTORE·epoch 설치·잔여 undo 진행 증거를 받는다. 정상 admitted 이미지의 quota 경계 복구는 성공해야 하며 descriptor 손상/IO 실패의 Fenced 거절과 별도 판정한다. SQL은 CLR이나 별도 복구 ledger를 생성하지 않는다. 첫 update WAL 기록을 CommitAttempted로 오판하지 않으며 첫 commit record byte 시도를 기준으로 삼는다. rollback I/O 실패는 확정 NotCommitted·RecoveryRequired/Fenced로 관측하고, 복구 완료 뒤 R1–R4의 행/index 보장을 검사한다. DEV2 private/COW 회귀를 이 disk 경로의 실행 증거로 대체하지 않는다.
 
 실행 진입점은 실제 harness 구현 때 정한다. 현재 `check_dev2_reference.py --with-substrate`는 DEV2 일부 경로이며 Q1 명령으로 표기하지 않는다. 실행 보고서는 source+dirty/binary/contract/oracle/fixture hash, command·OS/FS/toolchain, schedule/fault 도달, expected/actual·cleanup, 미해결 의무·별도 검토를 포함한다. Q1 완료까지 영향받는 실제 DEV2/DEV3 회귀를 유지한다.
 
@@ -192,3 +194,8 @@ SQL READ COMMITTED 노출과 DEV3 저장 구현은 이 보완의 제품 구현�
 ## 11. REVIEW-003 보완
 
 [이번 비교·보완 기록](../evidence/dev3-dev4-architecture-review.md)은 DEV3의 상태/예약/배치 공급과 DEV4의 초기 처리 한계·all-null lookup을 연결한 D2 작업이다. 기존 REVIEW-002의 검토 identity와 실행 상태는 유지한다. 새 D4-V25·교차 인수도 NOT_RUN이며, 문서 보완과 독립 검토를 Q1 실행 증거로 사용하지 않는다.
+
+<a id="conflict-reserve-review"></a>
+## 12. REVIEW-004 보완
+
+D4-V26/T09는 대상 관측 뒤 타 거래가 잠금을 이미 해제한 경우도 execute 단계에서 검사한다. T10/T11·R2는 DEV3의 영속 예약 인계와 부분 CLR 후 복구 증거를 수신한다. 담당·기준 사본·공유 수정·독립 검토는 [공통 작업 기록](dev3-implementation-plan.md#conflict-reserve-review)에 둔다. 이 설계 보완으로 SQL ReadCommitted를 노출하거나 실제 DEV3/Q1 실행 상태를 승격하지 않는다.

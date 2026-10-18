@@ -31,3 +31,5 @@ P0/K0 시험 성공은 B2/D0나 DEV2 전체 완료를 의미하지 않는다. bo
 K0-004 순차 catalog 판정·recipe 실행/재검증과 K0-005 병렬 구현·검증의 현재 계약은 [DEV2 기록](dev2-implementation.md)을 따른다.
 
 K0-005 통합 후 새 r3 실행에서 DEV0 8개·DEV1 8개·DEV2 leaf 28개 check가 PASS했다. 성능 진단 r1은 고정 시험35개와60개 release 실행·원시 재검증을 확인한다. 최초 두 비교의 sample-p99 guardrail FAIL은 유지하며 PF 인수를 완료로 표시하지 않는다. [현재 증거](../evidence/README.md)는 실행 전후 같은 source hash에 적용한다. 과거 r1·r2와 중단된 실행을 현재 코드의 PASS로 재사용하지 않는다.
+
+COMM 반영 후 commit 소스의 DEV0/DEV1/DEV2 회귀 참조는 [현재 증거 색인](../evidence/README.md)의 COMM 보고서로 연결했다. 실행 전후 source 지문과 이번 문서 commit 대상의 지문이 일치함을 확인했다. 앞 문단의 r3·성능 보고서는 당시 source의 기록으로 보존하며, 이번 참조 수정에서 제품 시험을 새로 실행하거나 미commit DEV2 구현을 검증하지 않았다.

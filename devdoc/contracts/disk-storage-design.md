@@ -1,6 +1,6 @@
 # DEV3 — 디스크 저장·인덱스 상세 설계
 
-2026-10-18 · **DEV3-DESIGN-003·REVIEW-004·REVIEW-005 ACCEPTED / 미구현·모델·제품 시험 NOT_RUN**
+2026-10-18 · **DEV3-DESIGN-003·REVIEW-004·REVIEW-005·REVIEW-006 ACCEPTED / 미구현·모델·제품 시험 NOT_RUN**
 
 [구현 계획](../plans/dev3-implementation-plan.md) · [이번 조사](../evidence/dev3-wal-undo-research.md) · [이전 조사](../evidence/dev3-source-research.md) · [커널 계약](implementation-contracts.md) · [DEV2 계약](dev2-kernel-design.md) · [복구 계약](recovery-logging-design.md) · [인수 항목](disk-test-matrix.json)
 
@@ -83,7 +83,12 @@ statement 시작 시 undo-head savepoint·오류 결과·rollback 예약을 확�
 <a id="concurrency"></a>
 ## 7. 가시성·동시성
 
-ReadCommitted는 statement마다 published q를 pin하고 own writes를 읽는다. 다른 거래의 uncommitted/나중 commit은 undo를 따라 제거한다. 행 쓰기는 stable RowUID X lock을 transaction 종료까지 보유한다. lock 대기 뒤 대상 행이 statement가 관측한 버전과 다르면 자동 predicate 재평가 대신 SerializationConflict로 **전체 거래 abort**한다. 상위 SQL이 수정 predicate를 숨겨 재실행하지 않는다. 같은 q의 서로 다른 행 writer는 key/schema 충돌이 없으면 모두 commit할 수 있다.
+ReadCommitted는 statement마다 published q를 pin하고 own writes를 읽는다. 다른 거래의 uncommitted/나중 commit은 undo를 따라 제거한다. 행 쓰기는 stable RowUID X lock을 transaction 종료까지 보유한다. 관측한 행의 UPDATE/DELETE는 **잠금 대기 여부와 무관하게 X lock을 얻은 뒤, 해당 행의 첫 변경 전에** 아래 논리 버전을 검사한다. 즉시 획득·이미 소유한 잠금에도 같은 검사를 적용한다. 불일치나 삭제이면 자동 predicate 재평가 대신 SerializationConflict로 **전체 거래 abort**한다. 상위 SQL이 수정 predicate를 숨겨 재실행하지 않는다. 같은 q의 서로 다른 행 writer는 key/schema 충돌이 없으면 모두 commit할 수 있다.
+
+<a id="observed-row-version"></a>
+관측값은 engine이 발급한 opaque row observation으로 전달한다. DB/timeline/open identity, table generation/RowId, statement token 및 관측한 **논리 행 버전 identity**에 결합하며 caller가 값/버전을 새로 꾸며 만들 수 없다. native 단건 변경도 같은 statement view에서 기대 버전을 얻어 검사하며 lock 획득 시점의 최신 버전을 기대값으로 덮어쓰지 않는다. 직접 scan한 결과를 넘기는 경로와 같은 의미다. 새 RowId를 생성하는 INSERT에는 기존 행 observation 대신 RowId 신규성·최종 UNIQUE 규약을 적용한다.
+
+논리 버전 identity는 각 사용자 행 변경을 구별하고 undo가 이전 identity를 복원한다. 같은 bytes로 UPDATE해도 새 버전이며 값 비교만으로 동등하다고 하지 않는다. 이전 성공 statement의 own-write 버전은 유효한 관측값이다. page 이동/split/compaction·commit-q stamping만으로 논리 identity를 바꾸지 않고, TxnRef 하나만으로 같은 거래의 여러 행 변경을 구별하려 하지 않는다. 구체 인코딩과 generation/overflow 처리는 F01/F02에서 동결한다. 잠금 아래 현재 terminal/own 버전과 관측 버전을 비교하며, 검사를 통과한 잠금은 변경·transaction 종료까지 유지한다. 기존 page version·undo head 재검사는 물리 적용 준비의 유효성을 검사할 뿐 이 논리 비교를 대체하지 않는다. 이 규약은 Serializable에도 적용하며 commit 시 table validation도 유지한다.
 
 Serializable은 transaction snapshot을 유지하고 read/write table 집합·absence/range 조회의 table generation을 등록한다. coordinator에서 각 table의 마지막 committed 변경 q가 start_q 이하여야 한다. own writes는 별도이므로 validation에서 제외한다. 성공 commit은 변경 table의 q를 전진시킨다. catalog 조회는 해당 catalog namespace/generation의 변경을 같은 방식으로 검증한다. table 단위 false conflict는 초기 보수적 선택이다. 독립 table writer는 모두 성공할 수 있고 같은 table의 다른 행은 충돌할 수 있음을 문서/시험에 명시한다. DB 전체 q 동일 검사는 제거한다. 더 세밀한 predicate validation은 후속 측정 대상이다.
 
@@ -218,22 +223,31 @@ CLR은 redo-only이며 되돌린 논리 효과의 **현재 물리 page들**에 �
 <a id="recovery"></a>
 ## 11. 정상 recovery와 전체 검사의 분리
 
-`LEASE → PREFLIGHT/SELECT → DOUBLEWRITE_REPAIR → ANALYSIS → REDO → RECOVERY_LOG_OPEN → UNDO → VERIFY_RECOVERY → STABILIZE → RESUME → READY`다. 이전 성공 sync의 bytes/namespace 보존, active tail의 제한적 incomplete frame 제외, 완전 길이 checksum 오류 거절, UNKNOWN 합법 이력은 DEV2와 동일하게 검사한다. 소스 WAL은 고치지 않는다. recovery 중 page는 WAL/CLR 규약으로 변경할 수 있으므로 DEV2의 '모든 source page 불변'을 적용하지 않는다.
+`LEASE → PREFLIGHT/SELECT → BOOT_RESERVE → DOUBLEWRITE_REPAIR → ANALYSIS → RESERVE_RESTORE → REDO → RECOVERY_REBASE → RECOVERY_LOG_OPEN → UNDO → VERIFY_RECOVERY → STABILIZE → RESUME → READY`다. 이전 성공 sync의 bytes/namespace 보존, active tail의 제한적 incomplete frame 제외, 완전 길이 checksum 오류 거절, UNKNOWN 합법 이력은 DEV2와 동일하게 검사한다. 소스 WAL bytes를 수정하지 않는다. 아래 REBASE가 필요 closure를 영속 인계한 뒤의 파일 삭제는 회수 규약을 따른다. recovery 중 page는 WAL/CLR 규약으로 변경할 수 있으므로 DEV2의 '모든 source page 불변'을 적용하지 않는다.
+
+BOOT_RESERVE는 page repair보다 먼저 [영속 예약 인계](#recovery-reservation)의 고정 bootstrap 몫을 확보한다. ANALYSIS는 checkpoint와 WAL의 예약 상태도 복원하며, RESERVE_RESTORE에서 loser·미완결 system 작업의 잔여 예약과 같은 prefix의 논리 allocator 소유를 대조하고 **REDO의 추가 효과 전에** 복구 작업에 배정한다. 아직 redo하지 않은 home allocator의 값을 최신 소유로 사용하지 않는다. runtime ledger를 0으로 초기화하고 UNDO 진입 때 새 quota 요청을 하는 경로는 금지한다. admission은 모든 장벽 동안 닫혀 있다.
 
 ANALYSIS는 선택 checkpoint의 capture LSN 상태에서 active transaction table을 seed하고 **capture LSN 직후**부터 완결 WAL 끝까지 거래 상태·최신 UndoRef·commit q를 재구성한다. checkpoint 이전 상태를 다시 덮어쓰거나 이미 끝난 거래를 ATT에 부활시키지 않는다. terminal commit을 undo하지 않으며 미완료 거래를 loser로 정한다. runtime DPT는 buffer/flush-inflight page의 recLSN을 보유하고 checkpoint에 기록한다. 재시작에는 커진 전체 DPT를 RAM에 만들지 않는다. `redo_start=min(checkpoint capture LSN, checkpoint DPT의 최소 recLSN)`부터 모든 관련 page redo를 streaming 읽고 incarnation/pageLSN으로 이미 반영한 기록을 건너뛴다. 이는 ARIES의 선택적 redo보다 보수적인 bounded-memory 시작안이다. ATT 최대치는 admission된 32개와 system 작업 예약으로 제한하며 commit/abort 완료 시 제거한다.
 
-REDO는 commit 여부와 관계없이 이력을 반복한다. 이 단계는 source WAL만 사용하며 page flush가 필요하면 먼저 채택 prefix의 해당 LSN/namespace를 sync하고 doublewrite를 따른다. allocation/init·undo·status·CLR·tree 구조 기록도 포함한다. RECOVERY_LOG_OPEN은 채택한 이전 prefix와 namespace를 먼저 STABILIZE한 뒤 그 완결 끝에 연결한 새 recovery epoch/header를 sync하고 **WRITER 선택까지 영속화**한다. admission은 계속 닫는다. 이 선택이 끝나기 전 새 CLR append 및 그 효과의 home write를 금지한다. 다음 restart는 선택된 recovery epoch도 정상 predecessor chain에서 발견한다. 기존 recovery epoch의 incomplete tail도 같은 규약으로 판정한다. UNDO는 loser의 durable UndoRef head부터 역순으로 처리하고 선택된 recovery epoch에 새 CLR을 남긴다. 이미 완료한 undo는 CLR의 UndoNextRef로 건너뛴다. recovery 중 두 번째 장애에도 source WAL+새 CLR에서 다시 실행할 수 있어야 한다.
+REDO는 commit 여부와 관계없이 이력을 반복한다. 이 단계는 source WAL만 사용하며 page flush가 필요하면 먼저 채택 prefix의 해당 LSN/namespace를 sync하고 doublewrite를 따른다. allocation/init·undo·status·CLR·tree 구조 기록도 포함한다. 뒤의 RECOVERY_REBASE는 [고정 bootstrap 두 슬롯](#recovery-rebase)에 그 끝의 home/undo/ATT/예약 closure를 인계하며, **새 WAL을 쓰기 전에** 이전 재시작의 epoch 설치 비용을 회수한다. RECOVERY_LOG_OPEN은 그 인증된 base anchor의 완결 LSN 다음에 새 recovery epoch/header를 연결하여 sync하고 **WRITER 선택까지 영속화**한다. admission은 계속 닫는다. 이 선택이 끝나기 전 새 CLR append 및 그 효과의 home write를 금지한다. 다음 restart는 선택된 base anchor와 그 뒤 epoch chain에서 recovery epoch를 발견한다. 기존 recovery epoch의 incomplete tail도 같은 규약으로 판정한다. UNDO는 loser의 durable UndoRef head부터 역순으로 처리하고 선택된 recovery epoch에 새 CLR을 남긴다. 이미 완료한 undo는 CLR의 UndoNextRef로 건너뛴다. recovery 중 두 번째 장애에도 선택된 base closure+그 뒤 WAL/CLR에서 다시 실행할 수 있어야 한다.
+
+<a id="recovery-rebase"></a>
+RECOVERY_REBASE는 정상 fuzzy checkpoint와 구별되는 **admission이 닫힌 복구 전용 장벽**이다. 새 WAL begin/end record에 의존하지 않는 전용 checkpoint 두 슬롯과 selector 교체 공간을 DB 생성 때부터 fixed maintenance에 선할당한다. source WAL을 채택 끝 L까지 sync하고, REDO 관련 dirty home data/undo/status/allocator를 DWB로 전부 flush+sync한 뒤 pending batch retirement를 영속화한다. 변경 없는 cold table을 전수 순회하지 않는다. ATT/UndoRef/진행점/잔여 obligation·예약 ownership root·채택 commit/publication 상태·DPT empty·L 및 predecessor tip identity를 묶은 self-contained descriptor를 비선택 슬롯에 쓰고 sync한다. namespace도 완결되어야 한다. 이 descriptor는 L까지의 과거 WAL bytes를 다시 요구하지 않는 **replay base anchor**이며 timeline을 바꾸거나 LSN을 되감지 않는다.
+
+selector 인계는 `current=새 base, previous=기존 closure`를 atomic replace+dirsync한 뒤, `current=previous=새 base`를 다시 영속 선택하여 기존 closure의 bootstrap 슬롯 참조를 먼저 해제한다. 그 뒤 비선택인 다른 bootstrap 슬롯에도 같은 L의 완전 descriptor를 써서 sync하고 `current=두 번째 base, previous=첫 base`를 다시 영속 선택한다. selected current/previous가 참조하는 슬롯을 덮어쓰지 않는다. 둘이 이미 같은 L을 인증하면 재기록을 생략할 수 있다. 이전 restart의 두 bootstrap 슬롯이 모두 선택 중이면 먼저 source WAL/namespace를 포함하는 최신 current closure를 current와 previous 양쪽의 공통 근거로 영속 선택하여 다른 슬롯을 비운 뒤 위 순서를 시작한다. 그 단일 fallback 선택이 durable이 되기 전에는 슬롯을 쓰지 않으며, 모든 중간 단계에서 최소 한 개의 완전 recovery closure를 유지한다. REBASE selector는 base identity와 `base-only` writer continuation을 함께 원자 선택한다. 이전 CURRENT/WRITER를 따로 따라가 삭제한 epoch를 다시 요구하지 않으며, 다음 WRITER는 이 base identity를 명시적으로 참조해야 한다. 새 WRITER 선택 전 crash는 base-only에서 다시 시작한다. source cut/슬롯 identity와 허용 selector 상태는 F01/F04에서 고정한다.
+
+두 새 base가 영속 선택된 뒤에만 이전 checkpoint/epoch predecessor를 요구하는 recovery floor를 해제하고, 다른 live owner도 요구하지 않는 WAL/control 파일을 회수+dirsync한다. 삭제 실패 bytes는 여전히 charged다. selector 불명은 old/new 합집합 closure를 보존한다. 별도의 bootstrap 임시 파일을 재시작 횟수만큼 만들지 않으며, selector의 교체 staging도 고정 소유 슬롯으로 처리한다. **회수가 끝나 새 epoch와 잔여 UNDO의 예약이 동시에 확보되기 전에는 RECOVERY_LOG_OPEN에 진입하지 않는다.** 중간 crash는 선택된 old 또는 new closure로 REDO/REBASE부터 다시 시작하므로 새 epoch bytes를 더 쌓지 않는다. epoch 선택 직후 crash해도 다음 REBASE가 그 epoch를 포함한 L로 같은 두 슬롯을 재사용한다. 이때 기존 loser의 완료는 기다리지 않는다. 현재 offline backup profile에서 살아남는 소유만 적용하며, 향후 durable archive/RP owner가 base 이전 WAL을 요구하면 그 pin과 bootstrap 한도의 양립을 별도로 증명해야 한다.
 
 VERIFY_RECOVERY는 WAL/selector/allocator·거래 terminal 상태·실제로 redo/undo한 page의 구조와 효과를 검증한다. **변경 없는 전체 table/index 양방향 검사를 정상 open의 필수 작업으로 하지 않는다.** 모든 page read에서 checksum/identity/bounds를 검사하며 읽지 않은 임의 cold page 손상은 첫 접근 또는 전체 검사에서 발견할 수 있다는 범위를 공개한다. 필요한 WAL/복구 page 손상은 정상 open을 거절한다. checksum을 맞춘 논리 오염까지 online read 하나로 검출한다고 하지 않는다.
 
 `check_integrity(full)`은 admission drain한 고정 상태에서 전체 row↔index·unique·catalog·allocation/undo 참조를 bounded 순회하는 별도 작업이다. 추가 disk spill은 요구하지 않는다. S1/fault 인수는 정상 reopen 성공 후 이 검사와 독립 이력 검산을 함께 실행한다. 따라서 검증을 생략하여 PASS시키지 않으며 정상 서비스의 startup 비용과 audit 비용을 분리한다. 같은 0/소량 WAL·같은 dirty-page 수의 256 MiB/1 GiB fixture에서 정상 reopen I/O가 전체 DB scan으로 증가하지 않는지 검사한다.
 
-STABILIZE는 채택한 이전 WAL 끝과 새 CLR·epoch/namespace를 sync한다. 필요 page write는 doublewrite 규약을 지킨다. 이 장벽 실패 시 사용자 admission/READY/reclaim을 금지한다. 이미 durable 선택된 recovery WRITER를 되돌리지 않는다. RESUME은 그 epoch를 계속 쓰거나 tip에 새 epoch를 연결하며 다음 restart가 앞선 UNKNOWN의 채택과 새 ACK를 놓치지 않아야 한다. 반복 recovery의 transient workspace는 사전 예약된 memory/doublewrite pool만 사용하고 DB 크기만큼 scratch를 생성하지 않는다.
+STABILIZE는 이미 영속 선택된 base closure와 그 뒤 새 WAL/CLR·epoch/namespace의 영속성을 확인한다. 필요 page write는 doublewrite 규약을 지킨다. 이 장벽 실패 시 사용자 admission/READY/reclaim을 금지한다. 이미 durable 선택된 recovery WRITER를 되돌리지 않는다. RESUME은 그 epoch를 계속 쓰거나 tip에 새 epoch를 연결하며 다음 restart가 앞선 UNKNOWN의 채택과 새 ACK를 놓치지 않아야 한다. 반복 recovery의 transient workspace는 사전 예약된 memory/doublewrite pool만 사용하고 DB 크기만큼 scratch를 생성하지 않는다.
 
 <a id="checkpoint"></a>
 ## 12. fuzzy checkpoint·WAL 회수·backup
 
-checkpoint는 전체 data snapshot이 아니다. begin-checkpoint 기록 뒤 commit coordinator와 append/registry/DPT 경계에서 **capture LSN**과 그 위치까지의 ATT(UndoRef/progress 포함)·DPT·allocator high-water·published q를 함께 복사한다. capture는 CommitAttempted 거래의 sync/상태 설치가 끝날 때까지 기다리며 불명 commit이면 checkpoint를 진행하지 않는다. 이미 append된 update·CLR·commit·abort의 DPT/head/status 등록이 끝나야 capture할 수 있다. lock 밖에서 end-checkpoint metadata chunks를 쓰고 sync한 뒤 CURRENT가 begin/capture/end LSN·chunk digest·current/previous identity를 atomic replace+dirsync로 선택한다. dirty pages를 모두 flush할 필요는 없다. WRITER는 checkpoint가 되돌리지 않는다.
+checkpoint는 전체 data snapshot이 아니다. begin-checkpoint 기록 뒤 commit coordinator와 append/registry/DPT 경계에서 **capture LSN**과 그 위치까지의 ATT(UndoRef/progress·잔여 recovery obligation 포함)·DPT·allocator high-water/예약 소유·published q를 함께 복사한다. capture는 CommitAttempted 거래의 sync/상태 설치가 끝날 때까지 기다리며 불명 commit이면 checkpoint를 진행하지 않는다. 이미 append된 update·CLR·commit·abort의 DPT/head/status/예약 등록이 끝나야 capture할 수 있다. lock 밖에서 end-checkpoint metadata chunks를 쓰고 sync한 뒤 CURRENT가 begin/capture/end LSN·chunk digest·current/previous identity를 atomic replace+dirsync로 선택한다. dirty pages를 모두 flush할 필요는 없다. WRITER는 checkpoint가 되돌리지 않는다.
 
 mutable datafile을 공유하므로 previous checkpoint는 **이전 데이터 이미지가 아니라 더 이른 analysis/redo 시작점**이다. fallback은 그 metadata와 필요한 WAL/undo/namespace가 모두 남고 현재 page를 redo로 설명할 수 있을 때만 허용한다. datafile 손상을 previous selector만으로 치료하지 않는다. CURRENT 손상 때 임의로 큰 파일 번호를 선택하지 않는다.
 
@@ -241,7 +255,7 @@ WAL 삭제 floor는 current/previous checkpoint 각각의 redo_start, live dirty
 
 exact-cut backup의 초기 방식은 **offline admission drain**이다. 새 거래/maintenance admission을 닫고 기존 거래·cursor의 정상 종료와 진행 중 aging/DDL의 완료를 기다린다. 기존 commit/rollback은 drain 중 허용하며 timeout이면 gate를 복원하고 Busy를 반환한다. reader 강제 만료나 숨은 commit을 하지 않는다. drain 뒤 C를 고정하고 모든 dirty data/undo/status/allocator를 WAL-first/doublewrite로 flush+sync한다. 완결 checkpoint를 선택하고 mutation을 중지한 상태에서 allocated pages/파일 metadata를 streaming 복사한다. backup 파일과 manifest·namespace를 sync한 뒤만 성공을 알리고 admission을 복원한다. clone reflink나 immutable live datafile을 가정하지 않는다. 취소/복사 실패는 source C를 유지하고 불완전 destination은 성공 backup으로 선택하지 않는다.
 
-restore는 빈 소유 경로에 완전 backup closure 검증→전체 무결성 검사→새 timeline·writer epoch·base q=C와 genesis WAL/checkpoint/control 선택→sync 후 개방한다. backup manifest는 source의 완결 WAL high-water LSN을 포함한다. 새 timeline의 첫 LSN은 그보다 크게 시작하여 복사된 pageLSN을 새 WAL이 잘못 건너뛰지 않게 한다. 모든 복사 pageLSN이 manifest high-water 이하인지 검증하고 이 baseLSN은 새 control에서 인증한다. source WAL 파일 자체는 필요하지 않다. source WAL 없이 복원→새 commit ACK→두 번째 restart를 검사한다. online backup/PITR/replication은 후속 계약이며 offline exact cut을 그것들의 완료로 주장하지 않는다.
+restore는 빈 소유 경로에 완전 backup closure 검증→전체 무결성 검사→새 timeline·writer epoch·base q=C와 genesis WAL/checkpoint/control·고정 bootstrap 슬롯 선택→sync 후 개방한다. drain한 backup에는 loser가 없으며 새 timeline의 obligation ledger는 그 검증된 빈 상태로 시작한다. backup manifest는 source의 완결 WAL high-water LSN을 포함한다. 새 timeline의 첫 LSN은 그보다 크게 시작하여 복사된 pageLSN을 새 WAL이 잘못 건너뛰지 않게 한다. 모든 복사 pageLSN이 manifest high-water 이하인지 검증하고 이 baseLSN은 새 control에서 인증한다. source WAL 파일 자체는 필요하지 않다. source WAL 없이 복원→새 commit ACK→두 번째 restart를 검사한다. online backup/PITR/replication은 후속 계약이며 offline exact cut을 그것들의 완료로 주장하지 않는다.
 
 <a id="reclaim"></a>
 ## 13. 공간 재사용·진행 보장
@@ -272,6 +286,19 @@ rollback/flush/recovery가 요구하는 frame·memory·FD·WAL 최소 몫을 for
 F05는 4/16/64 MiB buffer 각각에서 이 부등식과 opcode bound가 성립하는 실제 최대 동시 admission을 산출한다. 최대 32 transaction은 허용 상한이며 모든 최대 크기 거래 32개를 반드시 동시 수용한다는 뜻이 아니다. 지원 profile에서 필수 progress reserve가 들어가지 않으면 profile 미충족으로 기록하고, 수치를 실행 후 줄여 PASS로 바꾸지 않는다. [최악 조건 인수](../plans/dev3-implementation-plan.md#resource-proof)를 통과하기 전 진행 보장을 검증 완료로 표시하지 않는다.
 
 aging cursor/진행점은 재실행 가능한 logged state다. 메모리 batch·disk 진행점은 고정 상한이며 오래된 전체 mark/sort scratch를 만들지 않는다. 거래 시작 WAL을 실제 제거한 상태의 rollback/recovery, 긴 reader 해제 뒤 재사용 증가, quota 경계의 반복 crash 및 rollback pool 고갈 거절을 필수 인수한다. online shrink/OS 반환·재배치 compaction은 S1 필수가 아니다. 내부 재사용량과 filesystem 반환량은 구별한다.
+
+<a id="recovery-reservation"></a>
+### 13.2 crash 뒤 예약 복원
+
+예약의 휘발성 계수만으로 진행을 보장하지 않는다. **잔여 recovery obligation을 WAL·checkpoint로 영속 인계**하는 방식을 채택한다. 거래/미완결 system 작업별 descriptor는 owner/generation, undo head·target/progress, 아직 필요한 CLR/구조 변경/abort-end/status/control의 상한, 이미 소유한 page/extent token과 미소비 성장/WAL 예약을 연결한다. 최대 32 ATT와 bounded system 작업 외에 전체 undo/page 목록을 RAM에 올리지 않으며 큰 소유 inventory는 allocator의 영속 구조로 순회한다. descriptor의 구체 bytes·최대 크기·검산 규칙은 F01/F05 입력이다.
+
+1. **runtime 기록:** forward effect를 허용하는 완결 WAL 그룹은 해당 effect로 늘어난 obligation과 예약 소유를 함께 기록한다. CLR/rollback split 그룹은 적용 효과·UndoNextRef와 함께 소비/잔여 obligation을 갱신한다. CLR의 구조 변경과 논리 undo가 다른 그룹이면 중간 상태도 자기 잔여 비용을 보존한다. statement 성공은 전체 abort 몫을 해제하지 않으며, statement rollback 완료 뒤에는 남은 앞선 statement의 obligation을 유지한다. terminal commit/abort의 채택이 확정된 뒤만 해당 abort 몫을 반환한다. record 누락·중복 적용을 owner generation과 적용 LSN으로 검출한다.
+2. **capture와 복원:** checkpoint는 같은 capture LSN의 descriptor와 allocator ownership을 인계한다. ANALYSIS는 capture 직후의 완결 WAL을 순서대로 적용하여 채택한 끝의 잔여량을 만든다. 이 계산은 아직 redo하지 않은 home undo/status의 최신성에 의존하지 않는다. begin WAL을 삭제하려면 이 closure와 소유 inventory의 redo 경로가 남아야 한다. RESERVE_RESTORE는 checkpoint+WAL에서 복원한 같은 채택 prefix의 예약 소유 inventory와 descriptor를 검산하고 recovery owner에게 한 번만 인계한다. 이 inventory는 예약 소유의 bounded/streaming 표현이며 전체 allocator의 RAM 복제가 아니다. REDO가 끝나면 home allocator/undo/status와도 대조한 뒤 UNDO에 진입한다. REDO가 home page를 따라잡게 하더라도 논리 예약을 두 번 차감하지 않는다.
+3. **이중 계산 금지:** 이미 존재하는 extent/file bytes는 charged이고 그 안의 예약 page token은 별도 소유다. 아직 파일로 실현되지 않은 growth만 outstanding growth다. 부분 recovery가 남긴 실제 WAL/CLR/header bytes는 retained/charged에 포함하고 같은 bytes를 잔여 WAL 예약으로 재사용하지 않는다. 끝난 undo는 남은 obligation에서 제외하되 그 CLR bytes가 실제 회수되기 전까지 charged에서 빼지 않는다. runtime의 모든 자원 부등식을 다시 동시에 확인하며 protected 1 GiB를 전체 8 GiB에 추가하지 않는다.
+4. **bootstrap과 재장애:** DB 생성/foreground admission 때부터 fixed maintenance에 DWB repair·streaming analysis/redo의 frame/memory/FD·전용 checkpoint 두 슬롯/selector staging·기존 checkpoint와 공존하는 peak·recovery epoch/header/WRITER 설치 여유를 포함한다. BOOT_RESERVE는 선택 control의 고정 profile·검증한 FILEMAP/namespace로 이 몫을 확보하며 home allocator/undo를 먼저 읽지 않으므로 undo를 읽기 위해 먼저 undo 예약이 필요한 순환이 없다. 새 epoch/header도 쓰기 **전** WAL256 MiB와 owned/protected quota에 charge한다. [RECOVERY_REBASE](#recovery-rebase)는 새 WAL append 없이 두 슬롯을 인계/재사용하고 필요한 bytes를 회수하여 다음 epoch의 예약을 복구한다. 채택된 prefix나 current/previous가 아직 요구하는 bytes는 재사용할 수 없다. 이 bootstrap 인계는 loser undo 완료나 foreground admission에 의존해서는 안 된다.
+5. **진행과 실패:** runtime admission bound는 모든 허용 crash cut에서 bootstrap+복원한 잔여 작업이 기존 예약 안에 들어간다는 귀납 조건을 만족해야 한다. 단지 restart 때 부족을 발견해 거절하는 것을 정상 admission의 성공 증명으로 삼지 않는다. 정상 durable 이미지·고정 profile·종료하는 정상 I/O에서는 반복 중단 뒤에도 잔여 rollback이 진행해야 한다. 손상/불명 I/O/필수 자원 확보 실패는 open 거절·Fenced이며 READY나 ABORTED 성공이 아니다. 임의 손상된 descriptor를 축소하거나 foreground 몫을 빌려 맞추지 않는다.
+
+F05는 각 forward/CLR/SMO/terminal/capture/bootstrap 전후의 `charged + outstanding` 보존과 반복 restart의 고정 peak를 수치로 증명한다. F04는 BEGIN WAL 삭제·부분 CLR·새 epoch 선택·bootstrap checkpoint 인계/회수의 재장애를 포함한다. 이 동결·모델·실제 I/O 인수는 **NOT_RUN**이며 구현 전 미완료 의무다.
 
 <a id="budgets"></a>
 ## 14. 자원·성능
@@ -345,3 +372,17 @@ PF09는 성공 TPS/충돌률, commit·WAL sync p99, background data flush/double
 | 적용·대체 | DESIGN-003/REVIEW-004의 snapshot 획득·horizon 규약을7.2절로 구체화. WAL·격리·SQL 의미·단계 DAG·과거 evidence는 유지 |
 | 검증·검토 | D3-M02·DS04와 DEV4 수신/동시성 인수 보강. `/root/snapshot_design_review`의 독립 설계 검토 PASS·필수 P1/P2 없음, `/root` 반영 확인. [작업 기록](../plans/dev3-implementation-plan.md#snapshot-review). 모델·제품·전체 문서 검사 미실행 |
 | 재검토 | snapshot/registry/gate 경계 변경, frontier 이전 회수 반례, pin 인계 유실 또는 새 admission 순환 |
+
+<a id="conflict-reserve-review"></a>
+## DEV3-REVIEW-006 — 관측 행 버전과 crash 뒤 예약 인계
+
+| 항목 | 내용 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-18 |
+| 담당·권한 | 작업/저장 계약/통합 `/root`; 사용자의 DEV3·DEV4 리뷰 후 “수정해 주세요” 지시 |
+| 반례 | 관측 뒤 타 거래가 commit/unlock하여 잠금 대기가 없으면 stale write 검사가 생략될 수 있음. crash로 runtime 예약 ledger가 사라지면 부분 CLR 뒤 남은 rollback 자원 소유가 불명 |
+| 선택 | [행 관측 버전](#observed-row-version)을 모든 X-lock 획득 후 검사. [영속 obligation](#recovery-reservation)을 effect/progress와 함께 기록하고 bootstrap·예약 복원·새 epoch 전 고정 두 슬롯 REBASE를 recovery 장벽으로 추가 |
+| 대안·이유 | wait-only 또는 payload/page 비교는 논리 변경을 놓침. commit-only 검사는 native RC를 보호하지 못함. restart에서 undo를 읽은 뒤 새 예약을 요청하는 방식은 bootstrap 순환·quota 부족을 남기므로 checkpoint/WAL에서 복원 가능한 descriptor 선택. 새 epoch를 무조건 추가하면 재장애 비용이 누적되므로, 기존 WAL을 수정하지 않는 고정 슬롯 base 인계를 먼저 수행 |
+| 적용·대체 | DESIGN-003/REVIEW-004의 “잠금 대기 뒤” 조건과 runtime-only로 해석될 수 있는 예약 인계를 구체화. REVIEW-005 snapshot 소유, 저장 구조·격리 기본값·SQL 범위·stage DAG 유지. 이전 검토/증거 identity는 보존 |
+| 인수·검토 | DS03/05/06·RC-T14, M03/M04/M06, F01/F02/F04/F05. `/root/dev34_conflict_reserve_review` 최종 독립 설계 검토 PASS·필수 P1/P2 없음, `/root` 반영 확인; [작업 기록](../plans/dev3-implementation-plan.md#conflict-reserve-review). 모델·제품·전체 문서 검사 NOT_RUN |
+| 재검토 | 관측 버전의 ABA/own-write 오판, descriptor/allocator 불일치, bootstrap 재장애 누적 또는 quota 내 admitted rollback의 진행 실패 |

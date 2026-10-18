@@ -29,7 +29,7 @@
   ],
   "dev2_imported_unvalidated": [],
   "current_source_validation": "LOCAL_VERIFIED_P0_K0_LEAVES_AND_DIAGNOSTICS_AUDIT_WITH_DEV0_DEV1_REGRESSION",
-  "evidence_scope": "Fresh r3 reports validate source 6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f: DEV0 8, DEV1 8, DEV2 P0/K0 28 checks. Separate K0-005 report validates 35 named tests and three 20-run release campaigns/replay; initial Always and Detailed sample-p99 guardrails FAIL, no optimization promotion. K0/DEV2 and full performance acceptance remain INCOMPLETE; no durability or product qualification.",
+  "evidence_scope": "Existing COMM regression reports validate committed source e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1: DEV0 8, DEV1 8, DEV2 P0/K0 28 checks. The DEV3/DEV4 documentation commit has the same source fingerprint; ongoing uncommitted DEV2 work is excluded. No product tests were rerun for this reference correction. Historical r3 and separate K0-005 performance reports retain source 6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f; initial sample-p99 guardrail failures and INCOMPLETE performance/K0/DEV2 qualification remain unchanged.",
   "validation_handoff": {
     "owner": "XADB",
     "status": "INTERRUPTED_AT_USER_REQUEST",
@@ -39,9 +39,11 @@
     "superseded_by": "dev2-validation.json"
   },
   "current_validation": {
-    "run_directory": "artifacts/dev2-reference/check-bfcd2fy0",
+    "run_directory": "artifacts/dev2-reference/check-usou3151",
     "command": "python3 scripts/check_dev2_reference.py --with-substrate",
-    "source_sha256": "6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f",
+    "source_sha256": "e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1",
+    "execution_root_ref": "comm-execution-scope-20261018.json",
+    "basis": "EXISTING_REPORT_MATCHES_COMMITTED_SOURCE_NOT_MIXED_WORKTREE",
     "dev0_checks": 8,
     "dev1_checks": 8,
     "dev2_checks": 28,

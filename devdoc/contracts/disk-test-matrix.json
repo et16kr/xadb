@@ -45,7 +45,8 @@
         "Opcode resource vector bound and charged-plus-reserved inequalities for owned disk/protected reserve/WAL/memory/frame/FD/lock/reference/DWB slots; no duplicate reservation",
         "D3-M06 plus actual boundary-minus-one/exact/plus-one profiles at 4/16/64 MiB buffers; calculated admission among up to 32 requests; rollback cannot depend on checkpoint or aging to finish",
         "D3-M03/M06 fair-cycle progress check beyond bounded-depth safety; finite retry then FIFO turn, maintenance workspace before-turn wait forbidden, preparation permits reserved flusher, content drain excludes recurring reader starvation; actual thread witnesses",
-        "DWB batch 1/8/64 deadline, effective batch size, sync/dirsync counts, dirty age and rollback/commit p99; no throughput gain claimed before measurement"
+        "DWB batch 1/8/64 deadline, effective batch size, sync/dirsync counts, dirty age and rollback/commit p99; no throughput gain claimed before measurement",
+        "DEV3-REVIEW-006/D3-M04/M06: durable recovery-obligation handoff with effect/progress; BOOT_RESERVE before repair and RESERVE_RESTORE before redo; consumed CLR bytes versus remaining reserve and allocated extent tokens; RECOVERY_REBASE before new epoch with two fixed slots, durable common fallback and base-only selection; crash-enabled bootstrap graph proves bounded peak without loser completion"
       ]
     },
     {
@@ -76,7 +77,8 @@
         "current/previous are recovery starting points sharing mutable files; preserve both WAL floors, never revert data by selecting old metadata",
         "offline drained exact-C backup, source-WAL-free restore then new ACK and restart; full integrity check plus independent history after reopen",
         "restore authenticates baseLSN above all copied pageLSNs; new unflushed ACK then restart redoes the update",
-        "Partial batch home success retains every pending slot; repair and sync/retire whole selected batch before later redo writes/reuse; retired raw image and early-retirement mutants rejected"
+        "Partial batch home success retains every pending slot; repair and sync/retire whole selected batch before later redo writes/reuse; retired raw image and early-retirement mutants rejected",
+        "Checkpoint captures ATT obligations and allocator ownership at one LSN; BEGIN WAL removed and partial CLR followed by ledger loss/restart; recovery epoch/header/WRITER and bootstrap checkpoint handoff/reclaim cuts preserve current/previous closures"
       ]
     },
     {
@@ -89,8 +91,9 @@
         "1024-byte encoded key boundary; statement-final key swap success, final duplicate failure, order-independent final set",
         "statement rollback to undo mark preserves previous statement; rollback failure fences instead of false ABORT; cursor invalidation and offline build/cancel",
         "explicit ReadCommitted statement snapshots and independent-row writers; default Serializable table-set validation with independent-table success and same-table false conflict",
-        "unique old/new key locks, latest committed conflict checks, row write conflict after wait, deadlock victim full undo",
-        "Whole-operation admission before first effect; statement rollback preserves prior successful statements and remaining whole-transaction abort reserve; cancel/deadlock/Drop transfer reservation ownership"
+        "unique old/new key locks, latest committed conflict checks; logical observed-row validation after every X-lock acquisition regardless of wait; deadlock victim full undo",
+        "Whole-operation admission before first effect; statement rollback preserves prior successful statements and remaining whole-transaction abort reserve; cancel/deadlock/Drop transfer reservation ownership",
+        "DEV3-REVIEW-006/D3-M03: observe then concurrent commit/unlock then immediate X-lock; wait/delete/same-bytes-new-version conflict before target effect; own-write and physical-split controls; opaque statement-bound observation; wait-only/page-only/value-only mutants rejected"
       ]
     },
     {

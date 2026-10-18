@@ -9,9 +9,9 @@
 | --- | --- |
 | snapshot/공개 | 작은 q descriptor·undo horizon. page는 mutable이며 PageGuard pin과 content latch가 별개. TxnStatus와 commit frontier로 다중 객체 가시성 원자 공개 |
 | 실패/statement | 영속 undo mark와 CLR로 복원 완료 후 오류 확정. rollback I/O 실패는 RecoveryRequired/Fenced이며 private 폐기로 대체하지 않음 |
-| validation | 기본 Serializable의 table read/write-set 검증, 명시 ReadCommitted statement snapshot·row/key 잠금. DB 전체 q 비교 제거 |
+| validation | 기본 Serializable의 table read/write-set 검증, 명시 ReadCommitted statement snapshot·row/key 잠금. 두 isolation 모두 [관측 행 버전](disk-storage-design.md#observed-row-version)을 잠금 획득 후 대기 여부와 무관하게 검증. DB 전체 q 비교 제거 |
 | durability | update/undo/CLR redo를 포함한 WAL-before-page·steal/no-force·선택된 pending doublewrite. commit은 data 전체 sync를 요구하지 않음 |
-| recovery | source WAL은 보존, home page는 redo/CLR로 변경 가능. CLR 전에 recovery epoch/WRITER를 영속 선택. 정상 recovery와 full audit 분리 |
+| recovery | source WAL은 보존, home page는 redo/CLR로 변경 가능. [bootstrap/영속 예약 복원](disk-storage-design.md#recovery-reservation) 뒤 CLR 전에 recovery epoch/WRITER를 영속 선택. 정상 recovery와 full audit 분리 |
 | checkpoint/backup | capture LSN과 ATT/DPT의 fuzzy metadata checkpoint; admission drain한 exact-C backup 별도 |
 | 회수 | allocator·undo/status·삭제 항목의 horizon/reference aging. COW root/pack GC 없음 |
 

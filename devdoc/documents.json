@@ -129,16 +129,31 @@
       "title": "XADB 조사·실행 증거"
     },
     "dev0-validation.json": {
+      "path": "evidence/dev0-current-source-20261018.json",
+      "role": "evidence",
+      "title": "DEV0 현재 source 증거 — 기존 COMM 회귀 원본의 동일 사본, 새 실행 아님"
+    },
+    "evidence/dev0-xadb-20261018-r3.json": {
       "path": "evidence/dev0-xadb-20261018-r3.json",
       "role": "evidence",
       "title": "dev0-xadb-20261018-r3.json"
     },
     "dev1-validation.json": {
+      "path": "evidence/dev1-current-source-20261018.json",
+      "role": "evidence",
+      "title": "DEV1 현재 source 증거 — 기존 COMM 회귀 원본의 동일 사본, 새 실행 아님"
+    },
+    "evidence/dev1-xadb-20261018-r3.json": {
       "path": "evidence/dev1-xadb-20261018-r3.json",
       "role": "evidence",
       "title": "dev1-xadb-20261018-r3.json"
     },
     "dev2-validation.json": {
+      "path": "evidence/dev2-current-source-20261018.json",
+      "role": "evidence",
+      "title": "DEV2 현재 source 증거 — 기존 COMM 회귀 원본의 동일 사본, 새 실행 아님"
+    },
+    "evidence/dev2-xadb-20261018-r3.json": {
       "path": "evidence/dev2-xadb-20261018-r3.json",
       "role": "evidence",
       "title": "dev2-xadb-20261018-r3.json"

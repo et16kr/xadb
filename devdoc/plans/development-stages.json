@@ -121,7 +121,8 @@
       "design_refs": [
         "disk-storage-design.md",
         "dev3-implementation-plan.md",
-        "disk-storage-design.md#architecture-review"
+        "disk-storage-design.md#architecture-review",
+        "disk-storage-design.md#conflict-reserve-review"
       ]
     },
     {
@@ -148,7 +149,8 @@
       "design_refs": [
         "dev4-sql-design.md",
         "dev4-implementation-plan.md",
-        "dev4-sql-design.md#architecture-review"
+        "dev4-sql-design.md#architecture-review",
+        "dev4-sql-design.md#conflict-reserve-review"
       ]
     },
     {

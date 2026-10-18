@@ -457,6 +457,22 @@
         {
           "name": "foreground_borrows_progress_reserve_or_duplicates_reservation_mutant",
           "expected": "MUTANT_REJECTED"
+        },
+        {
+          "name": "begin_wal_removed_partial_CLR_volatile_ledger_lost_reconstruct_remaining_obligations",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "BOOT_RESERVE_before_repair_RESERVE_RESTORE_before_redo_epoch_install_quota_boundary",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "RECOVERY_REBASE_two_slots_common_fallback_base_only_epoch_selected_immediate_recrash_fixed_peak",
+          "expected": "RECOVER_OK"
+        },
+        {
+          "name": "lost_descriptor_double_charged_extent_or_reused_consumed_CLR_reserve_mutant",
+          "expected": "MUTANT_REJECTED"
         }
       ]
     },
