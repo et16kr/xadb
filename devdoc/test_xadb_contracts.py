@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import unittest
 from document_tools import DocumentIndex
-from verify_documents import validate_capabilities, validate_evidence, validate_policy_limits, validate_stage_graph
+from verify_documents import validate_capabilities, validate_evidence, validate_implementation_status, validate_policy_limits, validate_stage_graph
 
 ROOT = Path(__file__).resolve().parent
 
@@ -50,6 +50,51 @@ class XadbContractChecks(unittest.TestCase):
         report = {'status': 'PASS', 'source_sha256': 'same', 'source_sha256_before': 'same',
                   'source_sha256_after': 'same', 'checks': [{'status': 'FAIL'}]}
         self.assertTrue(any('failed' in e for e in validate_evidence(report, 'same')))
+
+    def test_pending_implementation_preserves_historical_source_without_current_claim(self):
+        status = self.docs['implementation-status.json']
+        self.assertEqual(status['evidence_refs'], [])
+        self.assertEqual(validate_implementation_status(status, self.docs, 'f' * 64), [])
+
+    def test_historical_receipt_cannot_qualify_a_changed_current_source(self):
+        status = copy.deepcopy(self.docs['implementation-status.json'])
+        status.update(dev0='LOCAL_VERIFIED', dev1='LOCAL_VERIFIED',
+                      evidence_refs=status.pop('historical_evidence_refs'))
+        errors = validate_implementation_status(status, self.docs, 'f' * 64)
+        self.assertTrue(any('fingerprint mismatch' in error for error in errors))
+
+    def test_historical_status_keeps_pass_internal_hash_and_check_requirements(self):
+        for field, value in (('status', 'FAIL'), ('source_sha256_before', 'e' * 64), ('checks', [])):
+            with self.subTest(field=field):
+                documents = copy.deepcopy(self.docs)
+                documents['dev0-validation.json'][field] = value
+                self.assertTrue(validate_implementation_status(documents['implementation-status.json'], documents, 'f' * 64))
+
+    def test_historical_report_needs_a_real_recorded_source_hash(self):
+        documents = copy.deepcopy(self.docs)
+        report = documents['dev0-validation.json']
+        for field in ('source_sha256', 'source_sha256_before', 'source_sha256_after'):
+            report.pop(field)
+        errors = validate_implementation_status(documents['implementation-status.json'], documents, 'f' * 64)
+        self.assertTrue(any('recorded source identity' in error for error in errors))
+
+    def test_reference_roles_cannot_overlap_or_admit_an_undeclared_kernel_report(self):
+        status = copy.deepcopy(self.docs['implementation-status.json'])
+        status['evidence_refs'] = ['dev0-validation.json']
+        errors = validate_implementation_status(status, self.docs, 'f' * 64)
+        self.assertTrue(any('overlap' in error for error in errors))
+        status['evidence_refs'] = []
+        status['historical_evidence_refs'].append('new-kernel-report.json')
+        errors = validate_implementation_status(status, self.docs, 'f' * 64)
+        self.assertTrue(any('undeclared report profile' in error for error in errors))
+
+    def test_pending_implementation_cannot_claim_stage_product_or_release_completion(self):
+        for field, value in (('durability', 'VERIFIED_PASS'), ('dev2', 'COMPLETE'),
+                             ('product_qualification', 'PASS'), ('public_release', 'PASS')):
+            with self.subTest(field=field):
+                status = copy.deepcopy(self.docs['implementation-status.json'])
+                status[field] = value
+                self.assertTrue(validate_implementation_status(status, self.docs, 'f' * 64))
 
     def test_real_baseline_is_accepted(self):
         self.assertEqual(self.graph(), [])

@@ -1,6 +1,6 @@
 # XADB 개발 문서
 
-**Markdown 중심으로 관리합니다. HTML은 생성하지 않습니다.** 현재 DEV0·DEV1 최소 기반, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog substrate를 부분 구현했습니다. 후속 streaming controller·catalog 재현과 K0 성능 진단·audit/replay를 포함한 현재 소스에서 DEV0·DEV1 회귀 및 DEV2 P0/K0 leaf를 로컬 검증했습니다. 최초 성능 비교의 p99 비용 한도는 FAIL이며 성능 인수는 미완료입니다. K1–K5 영속 커널은 구현 연결·독립 정적 검토와 일부 로컬 검증을 마쳤으며, 최종 복구·V3·성능·하위 회귀 인수는 진행 중입니다. 후속 제품 인수는 미완료입니다. 정확한 범위는 [현재 구현](implementation/README.md)과 [개발 단계](plans/development-stages.md)를 확인합니다.
+**Markdown 중심으로 관리합니다. HTML은 생성하지 않습니다.** 현재 DEV0·DEV1 최소 기반, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog substrate를 부분 구현했습니다. 후속 streaming controller·catalog 재현과 K0 성능 진단·audit/replay를 포함한 이전 소스에서 DEV0·DEV1 회귀 및 DEV2 P0/K0 leaf를 로컬 검증했습니다. 이 결과는 현재 소스의 검증을 대신하지 않습니다. 최초 성능 비교의 p99 비용 한도는 FAIL이며 성능 인수는 미완료입니다. K1–K5 영속 커널은 구현 연결·독립 정적 검토와 일부 로컬 검증을 마쳤으며, 최종 복구·V3·성능·하위 회귀 인수는 진행 중입니다. 후속 제품 인수는 미완료입니다. 정확한 범위는 [현재 구현](implementation/README.md)과 [개발 단계](plans/development-stages.md)를 확인합니다.
 
 ## 작업을 시작할 때
 

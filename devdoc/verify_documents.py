@@ -311,6 +311,57 @@ def validate_evidence(report, fingerprint):
     return errors
 
 
+def validate_implementation_status(status, documents, fingerprint):
+    """Separate source-bound current claims from unchanged historical receipts.
+
+    Only the existing DEV0/DEV1/P0-K0 report profiles are accepted here. A future
+    kernel leaf needs its own declared validator; implementation is not a PASS.
+    """
+    errors = []
+    if status.get('durability') not in {'NOT_IMPLEMENTED', 'IMPLEMENTED_VALIDATION_PENDING'}:
+        errors.append('implementation: unsupported durability state')
+    if status.get('dev2') != 'PARTIAL_IMPLEMENTATION':
+        errors.append('implementation: partial kernel work cannot qualify DEV2')
+    if status.get('product_qualification') != 'NOT_RUN' or status.get('public_release') != 'NOT_RUN':
+        errors.append('implementation: pending kernel validation cannot qualify product or release')
+    references = {}
+    for field in ('evidence_refs', 'historical_evidence_refs'):
+        names = status.get(field, [])
+        if not isinstance(names, list) or any(not isinstance(name, str) for name in names):
+            errors.append('evidence: invalid reference list ' + field)
+            names = []
+        if len(names) != len(set(names)):
+            errors.append('evidence: duplicate references in ' + field)
+        references[field] = set(names)
+    if references['evidence_refs'] & references['historical_evidence_refs']:
+        errors.append('evidence: current and historical references overlap')
+    legacy = {'dev0-validation.json', 'dev1-validation.json', 'dev2-validation.json'}
+    for field, names in references.items():
+        for name in names:
+            if name not in legacy:
+                errors.append('evidence: undeclared report profile ' + name)
+                continue
+            report = documents.get(name)
+            if not isinstance(report, dict):
+                errors.append('evidence: missing report ' + name)
+                continue
+            recorded = report.get('source_sha256')
+            if not isinstance(recorded, str) or not re.fullmatch(r'[a-f0-9]{64}', recorded):
+                errors.append('evidence: missing or invalid recorded source identity ' + name)
+                continue
+            expected = fingerprint if field == 'evidence_refs' else recorded
+            errors += [name + ': ' + error for error in validate_evidence(report, expected)]
+    for stage in ('dev0', 'dev1'):
+        state = status.get(stage)
+        if state not in {'LOCAL_VERIFIED', 'PREVIOUS_SOURCE_VERIFIED', 'NOT_RUN'}:
+            errors.append('implementation: unsupported source verification state ' + stage)
+        field = {'LOCAL_VERIFIED': 'evidence_refs',
+                 'PREVIOUS_SOURCE_VERIFIED': 'historical_evidence_refs'}.get(state)
+        if field and stage + '-validation.json' not in references[field]:
+            errors.append('evidence: verified stage has no matching source-scope report ' + stage)
+    return errors
+
+
 def validate_policy_limits(documents):
     errors = []
     required = {
@@ -343,19 +394,10 @@ def verify(root=ROOT):
     for path in list(root.rglob('*.py')) + list((root.parent / 'scripts').glob('*.py')):
         compile(path.read_text(), str(path), 'exec')
     status = docs['implementation-status.json']
-    if status.get('durability') != 'NOT_IMPLEMENTED' or status.get('dev2') != 'PARTIAL_IMPLEMENTATION':
-        errors.append('implementation: volatile K0 cannot claim DEV2 durability')
     sys.path.insert(0, str(root.parent / 'scripts'))
     from check_dev0 import source_fingerprint
     fingerprint = source_fingerprint(root.parent)
-    for name in status.get('evidence_refs', []):
-        if name not in docs:
-            errors.append('evidence: missing current report ' + name)
-        else:
-            errors += [name + ': ' + e for e in validate_evidence(docs[name], fingerprint)]
-    for stage in ('dev0', 'dev1'):
-        if status.get(stage) == 'LOCAL_VERIFIED' and stage + '-validation.json' not in status.get('evidence_refs', []):
-            errors.append('evidence: verified stage has no report ' + stage)
+    errors += validate_implementation_status(status, docs, fingerprint)
     for entry in index.entries.values():
         path = root / entry['path']
         if path.parent != root and path.name != 'README.md':

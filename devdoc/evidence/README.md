@@ -1,6 +1,6 @@
 # XADB 조사·실행 증거
 
-2026-10-18 · commit 대상 소스의 현재 회귀 근거는 COMM 최종 사본의 DEV0/DEV1/DEV2 보고서다. K0-005의 별도 성능 근거는 당시 source의 r1 보고서로 보존한다. DEV0 8개·DEV1 8개·DEV2 P0/K0 leaf 28개 check와 새 성능 반례 35개를 실행했다. release 계측 비교 2개와 재현 1개는 각각20개 실행의 정답과 원시 이력 보존을 확인했다. 최초 Always·Detailed 비교의 sample-p99 guardrail은 FAIL이며 성능 인수·승격은 INCOMPLETE다. DEV2·K0 전체, 내구성·protected CI 인수는 완료하지 않았다. r1·r2 회귀 보고서는 당시 source snapshot의 결과로 보존한다. 보고서는 실행기가 생성한 바이트 그대로 복사했다.
+2026-10-18 · COMM 최종 사본의 DEV0/DEV1/DEV2 보고서는 해당 실행 당시 소스의 회귀 근거이며, 이후 K1–K5 변경을 포함한 현재 소스의 검증 결과가 아니다. K0-005의 별도 성능 근거는 당시 source의 r1 보고서로 보존한다. DEV0 8개·DEV1 8개·DEV2 P0/K0 leaf 28개 check와 새 성능 반례 35개를 실행했다. release 계측 비교 2개와 재현 1개는 각각20개 실행의 정답과 원시 이력 보존을 확인했다. 최초 Always·Detailed 비교의 sample-p99 guardrail은 FAIL이며 성능 인수·승격은 INCOMPLETE다. DEV2·K0 전체, 내구성·protected CI 인수는 완료하지 않았다. r1·r2 회귀 보고서는 당시 source snapshot의 결과로 보존한다. 보고서는 실행기가 생성한 바이트 그대로 복사했다.
 
 r1 당시 DEV0/DEV1은 로컬 범위 PASS다. 당시 DEV2 reference/substrate/frame/worker leaf는 PASS이나 DEV2와 K0 전체는 INCOMPLETE다. r1 당시 영속성·streaming controller·bounded concurrent exploration·PF 인수·30분 stress/fuzz·protected CI는 NOT_RUN이며 안정 제품 qualification이 아니다. `artifacts/` 경로는 해당 로컬 실행 산출물이며 Git으로 배포하지 않는다. 각 보고서의 source hash로 적용 소스를 확인한다.
 
@@ -10,7 +10,7 @@ DEV3의 [소스 조사](dev3-source-research.md)는 실제 revision·열람 범�
 
 DEV4의 [소스·Oracle/ARIES 조사](dev4-source-research.md)는 PostgreSQL·MariaDB·CUBRID·SQLite의 SQL/prepared 및 복구 경계와 Oracle 19c 공식 문서·ARIES 초록/원 논문의 명시한 부분을 읽은 기록이다. SQL 구현·Oracle 실행 비교·Q1 PASS 증거가 아니다.
 
-COMM 반영 commit과 이번 DEV3/DEV4 문서 commit 대상의 source SHA-256은 `e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1`이며, 보존된 COMM 회귀 보고서의 실행 전후 지문과 일치한다. `dev0-validation.json`·`dev1-validation.json`·`dev2-validation.json` 문서 ID는 각각 `dev0/1/2-current-source-20261018.json`을 참조한다. 이 세 파일은 `comm-dev0/1/2-xadb-20261018-r1.json`의 byte-identical 사본이며, 원래 COMM 문서 ID·상대 artifact 경로·실행 root와 원본 hash를 유지한다. catalog의 단일 경로 규칙 안에서 기존 참조를 보존하기 위한 채택 사본으로 새 실행이나 재검증 보고서가 아니다. `dev2-performance-validation.json`은 source `6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f`의 별도 성능 진단 r1을 유지한다. 이전 회귀 r1·r2·r3는 원래 파일 경로 ID와 바이트로 보존한다. 이 참조 갱신은 기존 실행의 적용 소스를 확인한 것이며 새 제품 시험 실행이나 진행 중인 DEV2 혼합 작업 트리의 PASS가 아니다. 이전 시험 패키지 재구성의 범위·리뷰는 [경로 재구성 기록](../history/project-migration.md#testing-layout)을 따른다. 이번 병렬 구현·검토·실측 한계는 [K0-005 기록](../implementation/dev2-implementation.md)을 따른다.
+COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은 `e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1`이며, 보존된 COMM 회귀 보고서의 실행 전후 지문과 일치한다. `dev0-validation.json`·`dev1-validation.json`·`dev2-validation.json` 문서 ID는 각각 `dev0/1/2-current-source-20261018.json`을 참조한다. 이 세 파일은 `comm-dev0/1/2-xadb-20261018-r1.json`의 byte-identical 사본이며, 원래 COMM 문서 ID·상대 artifact 경로·실행 root와 원본 hash를 유지한다. catalog의 단일 경로 규칙 안에서 기존 참조를 보존하기 위한 채택 사본으로 새 실행이나 재검증 보고서가 아니다. `dev2-performance-validation.json`은 source `6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f`의 별도 성능 진단 r1을 유지한다. 이전 회귀 r1·r2·r3는 원래 파일 경로 ID와 바이트로 보존한다. 이 참조 갱신은 기존 실행의 적용 소스를 확인한 것이며 새 제품 시험 실행이나 진행 중인 DEV2 혼합 작업 트리의 PASS가 아니다. 이전 시험 패키지 재구성의 범위·리뷰는 [경로 재구성 기록](../history/project-migration.md#testing-layout)을 따른다. 이번 병렬 구현·검토·실측 한계는 [K0-005 기록](../implementation/dev2-implementation.md)을 따른다.
 
 <!-- catalogue -->
 
@@ -46,9 +46,9 @@ COMM 반영 commit과 이번 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 
 - [COMM 전용 기준 사본 r1](comm-isolated-xadb-20261018-r1.json): 27개 시험 및 하위 회귀 PASS. 마지막 drain 경합 보완 전 source에만 적용.
 - [COMM 혼합 사본 실패 r1](comm-mixed-xadb-20261018-r1.json): COMM focused 검사는 통과했으나 함께 포함된 DEV2 변경의 format 검사에서 하위 회귀 FAIL. 원본 실패를 보존.
-- [COMM 전용 DEV0 회귀](comm-dev0-xadb-20261018-r1.json) · [COMM 전용 DEV1 회귀](comm-dev1-xadb-20261018-r1.json): 최종 COMM 전용 기준 사본에서 각 8개 check PASS. 최종 소스 지문 대조 뒤 current-source 문서 ID로 연결했으며 원본 실행 identity는 유지.
+- [COMM 전용 DEV0 회귀](comm-dev0-xadb-20261018-r1.json) · [COMM 전용 DEV1 회귀](comm-dev1-xadb-20261018-r1.json): 최종 COMM 전용 기준 사본에서 각 8개 check PASS. 당시 소스 지문 대조 뒤 current-source 문서 ID로 연결했으며 원본 실행 identity는 유지.
 - [COMM 전용 최종 사본 r2](comm-isolated-xadb-20261018-r2.json): 28개 Rust 시험(기본·전체 feature 각각), 12개 native 사례, lint·독립 build·하위 회귀 PASS. 전체 C1은 INCOMPLETE.
 - [COMM 전용 DEV2 회귀](comm-dev2-xadb-20261018-r1.json): 최종 COMM 전용 기준 사본의 P0/K0 leaf 28개 check PASS; 내구성·현재 혼합 작업 트리의 검증 아님.
 - [COMM 실행 범위 색인](comm-execution-scope-20261018.json): 각 원본의 execution root·recipe·hash와 소유 파일 일치 기록. 위 COMM 보고서의 상대 artifact 경로는 이 색인의 해당 execution root 기준이다.
 
-- [DEV0 현재 source 채택 사본](dev0-current-source-20261018.json) · [DEV1 현재 source 채택 사본](dev1-current-source-20261018.json) · [DEV2 현재 source 채택 사본](dev2-current-source-20261018.json): 기존 COMM 회귀 JSON과 바이트 동일. 상대 artifact 경로는 [원래 실행 범위](comm-execution-scope-20261018.json)의 root에서 해석한다.
+- [DEV0 당시 source 채택 사본](dev0-current-source-20261018.json) · [DEV1 당시 source 채택 사본](dev1-current-source-20261018.json) · [DEV2 당시 source 채택 사본](dev2-current-source-20261018.json): 기존 COMM 회귀 JSON과 바이트 동일. 상대 artifact 경로는 [원래 실행 범위](comm-execution-scope-20261018.json)의 root에서 해석한다.
