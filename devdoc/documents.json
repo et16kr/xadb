@@ -692,6 +692,11 @@
       "path": "evidence/dev8-source-research.md",
       "role": "evidence",
       "title": "DEV8 — Oracle·ARIES·로컬 소스 조사와 설계 검토"
+    },
+    "dev8-review-002.md": {
+      "path": "evidence/dev8-review-002.md",
+      "role": "evidence",
+      "title": "DEV8 — 운영 설계 2차 검토"
     }
   }
 }

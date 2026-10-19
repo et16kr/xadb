@@ -1195,12 +1195,13 @@
         "XADB-042..045의 모든 필수 topology/복구/운영/workload 조합 PASS; 모드별 ACK/RPO/RTO·fencing·retention 충족",
         "사전 등록한 기간·반복·용량·성능·누출 기준 전부 충족; 의미/내구성을 낮춘 측정은 거절",
         "해당 단계의 PF 성능 개발 인수: 실제 production 경로·동일 의미·유효한 비교·독립 정답·계측 비용·재현 증거. 미구현/불충분을 PASS로 기록하지 않음",
-        "dev8-implementation-plan.md의 30개 요구와 D8-F01–F10·T01–T40·P01–P07의 해당 필수 variant를 모두 인수; H1 성공으로 L1/M1·온라인/증분/PITR·보안/운영·전체 성능을 대체하지 않음. 설계 채택은 실행 증거가 아님"
+        "dev8-implementation-plan.md의 30개 요구와 D8-F01–F10·T01–T40·P01–P07의 해당 필수 variant를 모두 인수; H1 성공으로 L1/M1·온라인/증분/PITR·보안/운영·전체 성능을 대체하지 않음. 설계 채택은 실행 증거가 아님",
+        "DEV8-DESIGN-002의 D8-R2-V01–V04 필수: domain/projection별 원자 dedup·경로/세대 인계, sequence 외부 공개 전 보호·승격/발급 권한, partition 이동 전후 membership, WAL cut별 control dependency·정확한 PITR LSN. 정적 검토를 실행 PASS로 대체하지 않음"
       ],
       "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
       "open_decisions": [
-        "D8-F01/F02: engine port and logical supplement atomicity, RP retention with REBASE/recrash reservation, actual byte/error/client profiles",
-        "D8-F03/F04: concrete fence provider and proof, topology/config transitions, complete origin/conflict/schema/sequence/LOB/XA/capture/apply variants",
+        "D8-F01/F02: engine port and logical supplement atomicity, RP retention with REBASE/recrash reservation, actual byte/error/client profiles, prefix-bound control dependency inventory and durable installation",
+        "D8-F03/F04: concrete fence provider and proof, topology/config transitions, complete origin/conflict/schema/sequence/LOB/XA/capture/apply variants, immutable apply domain/projection ledger, partition membership transitions and protected sequence issuance",
         "D8-F05/F06/F07: backup/archive/restore formats and cut/clock profiles, reviewed TLS/KDF/crypto/key/audit providers and algorithms",
         "D8-F08/F09/F10: complete admin/CLI/UI/SNMP/migration/runtime matrix, bounded models and full fault inventory, environment-specific resources/performance/replay recipes"
       ],

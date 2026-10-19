@@ -78,3 +78,5 @@ DEV8-DESIGN-001의 담당·계약·통합은 `/root`, 독립 검토자는 별도
 수정본 재검토 결론은 **독립 D2 설계 검토 PASS, 남은 필수 P1/P2 blocker 없음**이다. 검토자는 R11–R15의 30개 요구와 SC12–15·RC-T24/25·PF08/14 연결, NOT_RUN·detail 확장 의무의 보존을 확인했다. 계약/통합 담당은 이 결과를 반영하여 DEV8-DESIGN-001을 ACCEPTED로 기록했다. F01–F10의 실제 형식·provider·수치·fault inventory와 DEV3 REBASE 확장 증명은 구현 전 동결 의무로 남으며 이 설계 PASS가 이를 대체하지 않는다.
 
 제품 구현·DBMS 비교 실행·SC12–15·RC-T24/25·PF08/14·OPS1은 NOT_RUN이다. 문서 자동 검사는 pre-push gate이고 이번 편집 중 실행하지 않는다. 이전 DEV2/COMM의 dirty 변경과 실행 증거를 이번 조사 결과로 바꾸지 않는다.
+
+후속 [REVIEW-002](dev8-review-002.md)는 새로운 반례와 DESIGN-002 보완을 기록한다. 위 DESIGN-001의 당시 독립 검토 결과·source inventory를 소급 수정하지 않는다.

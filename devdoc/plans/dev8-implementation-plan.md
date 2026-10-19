@@ -1,6 +1,6 @@
 # DEV8 — 복제·운영 구현·검증 계획
 
-2026-10-19 · **DEV8-DESIGN-001 대응 / 독립 설계 검토 PASS / leaf 동결·제품 실행·OPS1 NOT_RUN**
+2026-10-19 · **DEV8-DESIGN-001/002 대응 / 독립 수정본 검토 PASS / leaf 동결·제품 실행·OPS1 NOT_RUN**
 
 [상세 설계](../contracts/dev8-operations-design.md) · [조사·검토](../evidence/dev8-source-research.md) · [단계 정본](development-stages.json) · [완료 계약](stage-completion.json)
 
@@ -30,6 +30,8 @@ F01–F10은 **OPEN_NOT_IMPLEMENTED**다. 아키텍처 결정을 미완료로 �
 | D8-F10 | 성능/통합 | 환경·release/feature·fixture/seed·workload·기간/반복·RPO/RTO/latency/RSS/I/O 예산·통계·계측 비용·경쟁 부하 금지·재현 recipe. 첫 측정 전 |
 
 F01/F03에는 H1 `install_standby`/`follow_redo`의 source identity·active/prepared 보존과 **protected-XA의 PREPARED vote/coordinator decision/의무 해제 보호**를 포함한다. F04는 snapshot 이전 열린 거래·capture 활성화 cut, portable origin row/version mapping, tombstone와 retired ledger frontier를 동결한다. F05/F06는 DEV7 prepared-backup profile·일반 PITR clone의 외부 endpoint 격리·원 RM/TM identity의 안전한 인계를 요구한다. F07는 WAL/undo/archive/spill/진단까지 매체별 protection scope를 명시한다.
+
+[DESIGN-002 보완](../contracts/dev8-operations-design.md#decision-002)의 구현 전 입력도 필수다. F01/02/05/06은 WAL prefix→control generation/dependency의 인증·영속 설치·archive 보존·target-owned control 및 정확한 LSN cut을 동결한다. F02/03/04는 ApplyDomainId/projection generation, 원본/투영 digest, 겹치는 domain 거절, 여러 경로의 동일 효과 중복 제거와 generation 전환 snapshot을 동결한다. F01/04는 partition 이동의 전후 membership과 완전한 진입 image, F01/03은 NEXTVAL 공개 전 보호·실패의 범위 소모·async/M1의 발급 권한·승격/peer 교체 시 cache 인계를 정한다. 이 항목을 단순 후속 최적화로 미루지 않는다.
 
 <a id="sequence"></a>
 ## 3. 구현 묶음과 합류
@@ -143,6 +145,18 @@ F01/F03에는 H1 `install_standby`/`follow_redo`의 source identity·active/prep
 | T16/20 | source T7을 target T19로 적용한 후 source T8의 before=T7·동일 값 재쓰기·delete/reinsert. portable version mapping으로 정상 거래와 concurrent 충돌을 구별 |
 | T23/26/27/28 | prepared 포함 backup의 profile 거절/수락, standalone PITR clone과 살아 있는 원 RM/TM. 자동 재접속/resolve/외부 재실행0; 검증된 fence·identity 인계 없이는 외부 admission 금지 |
 | T32 | page 암호화 중 WAL/archive/temp/diagnostic의 평문 노출·restart nonce 재사용. 전체 protection 표면의 선언과 실제 bytes/권한 검사 일치 |
+
+<a id="review-002-variants"></a>
+### 5.1 REVIEW-002 필수 반례
+
+아래는 T01–T40을 보완하는 필수 variant다. 새 독립 checker와 해당 native fault 경로로 실행하며 모두 NOT_RUN이다.
+
+| ID·연결 | 반례·독립 기대값 |
+| --- | --- |
+| D8-R2-V01 / T14/15/16/20/21 | 한 source 거래가 T1/T2를 변경하고 disjoint domain 두 개가 각각 수신: 두 projection 모두 정확히 한 번 적용. 같은 domain의 두 전달 경로·순환은 한 번만 적용. 겹치는 domain 사전 거절, 원본/투영 digest 불일치 정지, peer/ConfigEpoch 변경으로 ledger 초기화 금지. filter generation 교체는 old apply drain/fence 후 snapshot/frontier 원자 선택; switch/restart 뒤 old queue/spool/replay는 RetiredHistory이며 새 target 변경0, domain ID 재사용0. M1 donor snapshot 이후 target local commit 경합은 모든 writer drain/fence·원점별 cut/효과 보존 뒤 설치하거나 교체 거절. source-only ledger·경로별 중복 적용·snapshot의 local commit 덮어쓰기 mutant 거절 |
+| D8-R2-V02 / T05/07/09/17 | COMMIT 없는 SELECT NEXTVAL·rollback·부분 fetch/외부 effect 뒤 primary 상실. 반환한 non-cycle 값 재발급0; 보호 안 된 예약은 반환0, gap은 허용. 범위 예약 local/remote sync·reply cut, cache 잔여·peer 교체·ALTER·M1 disjoint 범위·async/strict 발급 조합. 승격은 이전 writer의 예약 전체를 소비 처리하고 잔여 cache 재대여0. 보호 peer 미확보/이전 발급 범위 불명 시 해당 admission 거절 |
+| D8-R2-V03 / T15/16/17 | snapshot 중/이후 P0↔P1 partition 이동의 membership 네 조합·동일 거래 여러 이동/rollback. 제외→포함 INSERT, 포함→제외 DELETE, 포함→포함 UPDATE/원자 이동, 제외→제외 인증 no-op. 완전 after image·tombstone/portable version·한 거래 원자성·필수 unique/FK closure 검사. after partition만 보는 mutant 거절 |
+| D8-R2-V04 / T01/05/08/23/25/26/27/28 | seed 이후 file 생성/확장→의존 WAL→ACK 각 cut의 crash·namespace 누락·다른 control digest. control 설치 전 ACK 금지, source 없이 archive dependency로 복원. 나중 donor FILEMAP/CURRENT/WRITER/DWB를 복사하는 mutant 거절. 같은 q이나 backup Lend>target LSN인 사례·target 미도달·이후 sequence/undo/control 변경 혼입을 거절하고 선택 prefix만 복구 |
 
 <a id="faults"></a>
 ## 6. Fault·상태 모델·oracle 의무
