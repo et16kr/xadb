@@ -298,7 +298,14 @@
       ],
       "channel": "development",
       "execution_status": "NOT_RUN",
-      "completion_ref": "stage-completion.json#DEV9"
+      "completion_ref": "stage-completion.json#DEV9",
+      "design_refs": [
+        "dev9-qualification-design.md",
+        "dev9-implementation-plan.md"
+      ],
+      "research_refs": [
+        "dev9-source-research.md"
+      ]
     },
     {
       "id": "COMM",

@@ -326,7 +326,15 @@
       "task_ref": "XADB-046",
       "title": "제품 capability 기준선·목록 동결",
       "acceptance": "XADB가 지원할 기능·도구·환경·운영 업무와 근거를 고정한다. 104개 capability를 overload/API/property/limit/오류·운영 조합으로 분해하고 required leaf마다 담당 task·case·oracle·통과 기준을 연결한다. 빈 inventory나 미분류 항목은 실패다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev9-qualification-design.md",
+        "dev9-implementation-plan.md"
+      ],
+      "required_details": [
+        "D9-F01/F02: all 104 parent capabilities expanded into complete semantic leaves and applicable variants, public-surface reconciliation and explicit exclusions",
+        "D9-F03/F04/F07/F10: immutable baseline, candidate/receipt schema, independent oracle and negative checker; D9-T01..T10"
+      ]
     },
     {
       "id": "SC17",
@@ -335,7 +343,16 @@
       "task_ref": "XADB-047",
       "title": "전체 제품 검증",
       "acceptance": "동결한 required leaf와 기능×client×환경×운영 조합을 동일 candidate에서 모두 VERIFIED_PASS로 입증한다. 논리 이관·기능적 대체 예제·운영·성능·복구 증거가 완결되고 미확정/미지원/실패/미실행 공백과 blocker가 0이어야 한다. 사내 결과로 외부 출시를 승인하지 않는다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev9-qualification-design.md",
+        "dev9-implementation-plan.md"
+      ],
+      "required_details": [
+        "D9-F01..F10 frozen; CLIENT1/SQL_EXT1/OPS1/P1 and applicable global/feature gates bound to the same candidate manifest",
+        "D9-T11..T34 and D9-P01..P05: public paths, current-build recovery, operations, performance, R16 installation/documentation and version applicability",
+        "dev9-qualification-design.md#gates: required-cell completeness and independent review; internal qualification is not external release"
+      ]
     }
   ],
   "work_packages": [
@@ -563,7 +580,11 @@
         "SC16"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev9-qualification-design.md",
+        "dev9-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-047",
@@ -581,7 +602,11 @@
         "SC17"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev9-qualification-design.md",
+        "dev9-implementation-plan.md"
+      ]
     }
   ],
   "stages": [
@@ -1255,12 +1280,20 @@
         "104 capability 아래 완전한 leaf/variant 목록과 이관·운영·성능 corpus"
       ],
       "deferred_obligations": [
-        "디스크 저장 DEV3는 필수; 선언한 capability가 global index를 요구하면 GLOBAL_INDEX_QUALIFICATION 필수"
+        "디스크 저장 DEV3는 필수; 선언한 capability가 global index를 요구하면 GLOBAL_INDEX_QUALIFICATION 필수",
+        "D9-F01..F10: exact semantic leaf/variant inventory, literal evidence schema, actual environment/corpus/numerical profiles, package/manual and independent promotion review remain open"
       ],
       "run_entrypoint": null,
       "evidence_refs": [],
       "execution_status": "NOT_RUN",
-      "official_distribution_status": "NOT_RUN"
+      "official_distribution_status": "NOT_RUN",
+      "design_refs": [
+        "dev9-qualification-design.md",
+        "dev9-implementation-plan.md"
+      ],
+      "research_refs": [
+        "dev9-source-research.md"
+      ]
     },
     {
       "id": "COMM",

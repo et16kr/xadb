@@ -1790,7 +1790,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev9-qualification-design.md",
+            "dev9-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -1803,7 +1806,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev9-qualification-design.md",
+            "dev9-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE",
           "decision_reference": "version-compatibility-policy.json; product-requirements.md section 1"
         },
@@ -1817,7 +1823,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev9-qualification-design.md",
+            "dev9-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE",
           "decision_reference": "version-compatibility-policy.json; product-requirements.md section 1"
         },
@@ -1830,7 +1839,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev9-qualification-design.md",
+            "dev9-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE",
           "decision_reference": "version-compatibility-policy.json; product-requirements.md section 1"
         }
@@ -1855,7 +1867,7 @@
     "deferred_required_topics": 0
   },
   "current_external_release_eligible": false,
-  "current_reason": "SQL, durability and operational qualification are not implemented or executed.",
+  "current_reason": "Capability baseline and leaf inventory are not frozen; product integration, recovery, operational and performance qualification remain incomplete. DEV9 design is not execution evidence.",
   "coverage_percent": null,
   "coverage_note": "Required capability counts are a tracking inventory, never a replacement-completion percentage. Every leaf still NOT_RUN. Deferred topics remain required and prevent customer-delivery qualification.",
   "external_release_is_not_automatic_on_internal_stage_completion": true,
@@ -1890,7 +1902,9 @@
   "remaining_inventory_work": [
     "Expand SQL overloads, dialect differences and negative cases.",
     "Freeze each feature contract and independent acceptance vectors before implementation.",
-    "Record source URL/version when public implementation research is actually performed."
+    "Record source URL/version when public implementation research is actually performed.",
+    "D9-F01/F02: reconcile all 104 parents with public surfaces, expand every required semantic leaf and applicable variant; dev9-implementation-plan.md#coverage",
+    "D9-F03..F10: freeze candidate/evidence schema, independent oracles, real profiles, package/manual and promotion inputs before qualification"
   ],
   "requirement_count": 104,
   "requirements_report": "product-requirements.md",
@@ -1914,5 +1928,9 @@
   },
   "product_position": "Independent relational DBMS with broad SQL, correct transactions/recovery and understandable internals",
   "baseline_selection": "XADB contracts define behavior. PostgreSQL, MariaDB, SQLite and other public DBMS are comparison inputs; no automatic dialect or implementation equivalence.",
-  "acceptance_contract_origin": "Imported development proposals adapted to the XADB scope; not execution evidence or claims about a reference DBMS."
+  "acceptance_contract_origin": "Imported development proposals adapted to the XADB scope; not execution evidence or claims about a reference DBMS.",
+  "qualification_design_refs": [
+    "dev9-qualification-design.md",
+    "dev9-implementation-plan.md"
+  ]
 }

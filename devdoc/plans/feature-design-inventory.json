@@ -20,7 +20,9 @@
     "dev7-sql-extensions-design.md",
     "dev7-implementation-plan.md",
     "dev8-operations-design.md",
-    "dev8-implementation-plan.md"
+    "dev8-implementation-plan.md",
+    "dev9-qualification-design.md",
+    "dev9-implementation-plan.md"
   ],
   "changes_existing_contracts": false,
   "changes_stage_order": false,
@@ -43,7 +45,9 @@
         "coding-convention.md",
         "repository-build-plan.md",
         "development-policy.md",
-        "parallel-development-policy.md"
+        "parallel-development-policy.md",
+        "dev9-qualification-design.md",
+        "dev9-implementation-plan.md"
       ],
       "items": [
         {
@@ -5044,7 +5048,9 @@
         "development-policy.md",
         "parallel-development-policy.md",
         "bottom-up-development.md",
-        "stage-completion.json"
+        "stage-completion.json",
+        "dev9-qualification-design.md",
+        "dev9-implementation-plan.md"
       ],
       "items": [
         {
@@ -5259,7 +5265,9 @@
         "development-policy.md",
         "development-stages.md",
         "user-manual-draft.md",
-        "version-compatibility-policy.json"
+        "version-compatibility-policy.json",
+        "dev9-qualification-design.md",
+        "dev9-implementation-plan.md"
       ],
       "items": [
         {
@@ -5271,7 +5279,8 @@
           "design_scope": "build target·qualification matrix·recipe·manifest",
           "stage_refs": [
             "DEV0",
-            "DEV8"
+            "DEV8",
+            "DEV9"
           ],
           "requirement_refs": [
             "R16-01"
@@ -5289,7 +5298,8 @@
           "spec_scope": "권한·경로·service·secret·uninstall·기존 DB 보호",
           "design_scope": "installer·preflight·파일 소유·rollback·smoke",
           "stage_refs": [
-            "DEV8"
+            "DEV8",
+            "DEV9"
           ],
           "requirement_refs": [
             "R16-01"
@@ -5308,7 +5318,8 @@
           "design_scope": "lockfile·SBOM·소스 hash·clean build·배포 검증",
           "stage_refs": [
             "DEV0",
-            "DEV8"
+            "DEV8",
+            "DEV9"
           ],
           "requirement_refs": [
             "R16-01",

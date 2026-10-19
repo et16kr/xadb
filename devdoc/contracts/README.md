@@ -4,6 +4,8 @@
 
 <!-- catalogue -->
 
+- [DEV9 — 제품 기능·운영·성능 인수 설계](dev9-qualification-design.md) — SC16/17·기준선/후보 identity·전체 조합·설치/문서·독립 판정; 제품 인수 미실행
+
 - [DEV8 — 복제·백업·운영·성능 설계](dev8-operations-design.md) — DESIGN-002 domain·sequence·partition 이동·WAL/control 보완, SC12–15·H1/L1/M1·PITR·보안/운영; OPS1 미실행
 
 - [DEV7 — 확장 SQL·프로그래머블 객체·외부 거래 설계](dev7-sql-extensions-design.md) — SC07–11·64개 요구·DESIGN-002 비교 문맥/CALL/XA 보완; leaf 동결·SQL_EXT1 미실행

@@ -14,6 +14,8 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 
 <!-- catalogue -->
 
+- [DEV9 — Oracle·ARIES·로컬 소스 조사와 설계 검토](dev9-source-research.md) — 공개 로컬4개·LOCAL-Q01의 실제 revision/hash·인수 설계 선택; 제품 실행 아님
+
 - [DEV8 — Oracle·ARIES·로컬 소스 조사와 설계 검토](dev8-source-research.md) — 공개 로컬4개·LOCAL-R01 실제 revision/hash와 설계 선택; 제품 실행 아님
 - [DEV8 — 운영 설계 2차 검토](dev8-review-002.md) — domain별 중복 제거·sequence 보호·partition 이동·WAL/control cut 보완, Oracle/ARIES·로컬 소스 근거; 제품 실행 아님
 

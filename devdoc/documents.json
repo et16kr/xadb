@@ -697,6 +697,21 @@
       "path": "evidence/dev8-review-002.md",
       "role": "evidence",
       "title": "DEV8 — 운영 설계 2차 검토"
+    },
+    "dev9-qualification-design.md": {
+      "path": "contracts/dev9-qualification-design.md",
+      "role": "contracts",
+      "title": "DEV9 — 제품 기능·운영·성능 인수 설계"
+    },
+    "dev9-implementation-plan.md": {
+      "path": "plans/dev9-implementation-plan.md",
+      "role": "plans",
+      "title": "DEV9 — 제품 인수 구현·검증 계획"
+    },
+    "dev9-source-research.md": {
+      "path": "evidence/dev9-source-research.md",
+      "role": "evidence",
+      "title": "DEV9 — Oracle·ARIES·로컬 소스 조사와 설계 검토"
     }
   }
 }

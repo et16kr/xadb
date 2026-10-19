@@ -33,6 +33,8 @@ DEV7의 확장 타입·관계 실행·PSM·LOB/spatial·외부 routine/DB link/X
 
 DEV8의 복제 H1/L1/M1·capture/retention·온라인 백업/PITR·보안/운영은 [상세 설계](../contracts/dev8-operations-design.md)와 [구현·검증 계획](dev8-implementation-plan.md)을 따른다. R11–R15의 30개 요구와 SC12–15·RC-T24/25·PF08/14를 배정했다. 설계 준비는 가능하지만 실제 S1/B3와 기능별 DEV6/7/PART/NG 공급, F01–F10 동결·전체 variant 실행 전 OPS1은 NOT_RUN이다.
 
+DEV9의 기준선/후보 identity·세부 요구/조합·독립 판정·설치/문서는 [상세 설계](../contracts/dev9-qualification-design.md), 104개 부모 수신·F01–F10·T01–T34·P01–P05는 [구현·검증 계획](dev9-implementation-plan.md)을 따른다. XADB-046 준비는 조기 착수 가능하지만 SC16/17과 PRODUCT_QUALIFIED는 NOT_RUN이며 실제 CLIENT1/SQL_EXT1/OPS1/P1 및 필요한 global gate를 요구한다.
+
 <a id="section-2"></a>
 ## 2. 최소 SQL 범위
 
