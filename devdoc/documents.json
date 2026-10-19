@@ -668,6 +668,11 @@
       "role": "plans",
       "title": "DEV7 — 확장 기능 구현·검증 계획"
     },
+    "dev7-review-002.md": {
+      "path": "evidence/dev7-review-002.md",
+      "role": "evidence",
+      "title": "DEV7 — 비교 문맥·CALL·XA 설계 재검토"
+    },
     "dev7-source-research.md": {
       "path": "evidence/dev7-source-research.md",
       "role": "evidence",

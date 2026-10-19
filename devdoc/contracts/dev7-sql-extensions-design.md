@@ -1,6 +1,6 @@
 # DEV7 — 확장 SQL·프로그래머블 객체·외부 거래 설계
 
-2026-10-19 · **DEV7-DESIGN-001 / D2 아키텍처 설계 채택·독립 검토 PASS / leaf 동결·구현·SC07–SC11·SQL_EXT1 NOT_RUN**
+2026-10-19 · **DEV7-DESIGN-001·002 D2 설계 채택·독립 정적 검토 PASS / leaf 동결·구현·SC07–SC11·SQL_EXT1 NOT_RUN**
 
 [구현·검증 계획](../plans/dev7-implementation-plan.md) · [Oracle·Altibase·로컬 소스 조사](../evidence/dev7-source-research.md) · [완료 계약](../plans/stage-completion.json) · [기능 요구](../plans/capability-inventory.json)
 
@@ -49,7 +49,7 @@ typed logical plan은 output schema, nullability, ordering, dependency `(ObjectI
 <a id="types"></a>
 ## 3. SC07 — 값·타입·식
 
-`TypeDescriptor`는 type ID·precision/scale·길이 단위·collation/version·timezone 규칙을 식별한다. 비교/정렬/hash/key/직렬화의 의미 버전을 공유하고, SQL→index→spill→WAL→driver 전 구간을 같은 값 의미로 검증한다. 비교 결과가 같은 값은 같은 hash와 index 동등 class를 가져야 한다. SQL `NULL = NULL`과 grouping/set/key의 NULL 동등성은 별도다.
+`TypeDescriptor`는 type ID·precision/scale·길이 단위·collation/version·timezone 규칙을 식별한다. 비교/정렬/hash/key/직렬화의 의미 버전을 공유하고, SQL→index→spill→WAL→driver 전 구간을 같은 값 의미로 검증한다. binder는 각 비교에 양쪽 operand 타입·명시된 변환·padding 모드·collation/version·NULL 규칙을 고정한 `ComparisonDescriptor`를 부여한다. **같은 비교 문맥 안에서** 같은 값은 양쪽 hash 정규화 결과가 같아야 한다. index의 저장 key 의미와 lookup 비교 문맥이 다르면 동등성을 입증한 후보 범위+원식 재검사 또는 scan을 사용한다. SQL `NULL = NULL`과 grouping/set/key의 NULL 동등성은 별도다.
 
 | 영역 | 채택 방향과 경계 | F01에서 동결할 항목 |
 | --- | --- | --- |
@@ -63,6 +63,8 @@ typed logical plan은 output schema, nullability, ordering, dependency `(ObjectI
 | 변환 | Int64→충분한 decimal 등 손실 없는 공통형만 암묵 승격. text↔numeric/time, approximate↔exact는 명시 cast. session format의 숨은 숫자 변환 없음 | cast 행렬·typed NULL·결과 metadata·오류 위치/효과 |
 
 기존 SQL 빈 text 입력의 NULL 정규화는 유지한다. 함수가 생성한 빈 text, CHAR padding, LOB의 빈 값은 별개이며 각 함수 결과 규칙을 F01에 기재한다. UTF-8로 표현 가능한 국제 문자를 저장하는 것과 locale별 비교를 제공하는 것은 서로 다른 인수다. Unicode collation/tzdb 변경은 index 재구성과 plan 무효화가 필요한 의미 변경이며 OS locale에 자동 추종하지 않는다.
+
+`A=CHAR(1) 'a'`, `B=CHAR(2) 'a '`, `C=VARCHAR(2) 'a '`는 `A=B`, `B=C`가 TRUE이고 `A=C`는 FALSE다. 서로 다른 padding 문맥을 하나의 전역 동등 class로 합치지 않는다. equality 추론·join key 공유·merge ordering은 동일 문맥의 추이성과 양쪽 정규화/정렬 호환성을 입증한 경우에만 허용한다. grouping/set/window peer는 binder가 고정한 공통 결과 타입의 별도 문맥을 사용한다. hash/index/spill descriptor에도 필요한 문맥 identity를 보존하고 이전 문맥의 key를 재사용하지 않는다.
 
 함수 inventory는 산술·ABS/ROUND/TRUNC·문자 길이/SUBSTR/concat/trim/case 변환·날짜/interval 산술·format/parse·CASE/COALESCE/NULLIF·LIKE/정규식·hash/암복호화를 포함한다. CASE/COALESCE의 선택하지 않은 branch는 실행하지 않는다. optimizer는 오류·volatility·side effect가 있는 식의 평가 횟수/위치를 임의 변경하지 않는다. 정규식은 입력·pattern·실행 작업량이 bounded인 엔진을 선택하고 syntax·Unicode 규칙을 고정한다. 암호 기능은 key handle·허용 알고리즘·nonce 생성/중복 방지·인증 실패의 무효 결과를 분리하며 키/평문을 plan/로그에 넣지 않는다. 암호·Unicode·정규식 라이브러리 선택은 DP04 검토가 남아 있다. 함수 이름만으로 이 의무를 완료하지 않는다.
 
@@ -86,7 +88,7 @@ ORDER BY 없는 결과는 bag으로 비교한다. 정렬 동률의 ROW_NUMBER·R
 <a id="optimizer"></a>
 ## 5. Optimizer·통계·prepared cache
 
-규칙은 의미 보존 전제와 반례 vector를 갖는다. predicate pushdown은 outer join의 보존 측·NULL·volatile/오류 식을, join reorder는 lateral/side effect를, subquery 제거는 NULL·중복·scalar cardinality를 확인한다. 각 규칙을 끈 기준 plan과 독립 관계 oracle를 함께 대조한다. production executor 두 개의 일치만으로 정답을 결정하지 않는다.
+규칙은 의미 보존 전제와 반례 vector를 갖는다. predicate pushdown은 outer join의 보존 측·NULL·volatile/오류 식을, join reorder는 lateral/side effect를, subquery 제거는 NULL·중복·scalar cardinality를 확인한다. equality 전파는 ComparisonDescriptor의 호환성과 추이성 증명을 요구하며 CHAR/VARCHAR 혼합 반례에 `A=C`를 추가하지 않는다. 각 규칙을 끈 기준 plan과 독립 관계 oracle를 함께 대조한다. production executor 두 개의 일치만으로 정답을 결정하지 않는다.
 
 ANALYZE는 snapshot으로 row count·NULL fraction·NDV·범위/히스토그램을 bounded sample로 만들고 object generation·schema·stats epoch·sample seed를 저장한다. 초기 join 순서 탐색은 최대 8개 relation의 bounded 동적 계획, 그 이상은 결정적 greedy+원래 순서 후보로 제한한다. 비용 단위는 page I/O·row evaluation·sort/hash/spill bytes이며 실제 계측으로 보정한다. 통계가 없거나 틀려도 정확성과 quota는 유지한다. JIT·parallel/vectorized 실행은 이번 필수 구현 경로가 아니며 측정 뒤 별도 결정한다.
 
@@ -123,7 +125,11 @@ PART의 range/list/hash routing·local index와 NG global tree를 SQL로 노출�
 
 PSM은 typed AST를 작은 해석기로 실행한다. procedure/function·IN/OUT/INOUT·overload·local 변수·record/array/typeset·IF/CASE/LOOP·exception·cursor·dynamic SQL·package spec/body/session state를 F05 inventory로 전개한다. dynamic SQL은 일반 binder/권한/quota 경계를 통과하며 SQL 문자열을 compiler 내부 권한으로 우회하지 않는다. deterministic/stable/volatile/effectful 분류는 선언만 믿지 않고 허용 operation으로 검증한다. package generation 변경 후 기존 state는 `PackageStateInvalidated`로 폐기하고 다음 명시 호출에서 초기화한다.
 
-일반 CALL은 하나의 statement rollback 경계다. 내부 statement 오류는 자기 mark까지 복원한 후 handler로 전달하고, 처리되지 않은 오류는 CALL 시작점까지 되돌린다. OUT 값과 결과는 CALL 성공 뒤 확정한다. 일반 routine/trigger 내부의 COMMIT/DDL은 거절하여 호출자의 거래를 숨겨 끝내지 않는다. autonomous routine은 명시 별도 transaction·snapshot·quota·commit outcome을 가지며 부모를 suspend한다. 부모 rollback이 자식의 확정 commit을 취소하지 않는다. 부모가 가진 잠금에 자식이 접근하면 parent-child self wait를 탐지해 자식 오류로 종료하고, 잠금을 공유하는 가짜 중첩 거래로 구현하지 않는다.
+일반 CALL은 하나의 statement rollback 경계다. 복구 가능한 내부 statement 오류는 자기 mark까지 복원한 후 handler로 전달하고, 처리되지 않은 오류는 CALL 시작점까지 되돌린다. serialization conflict·full abort·Fenced 결과는 handler가 처리해도 종료된 거래를 Active로 되살리지 않는다. OUT 값과 결과는 CALL 성공 뒤 확정한다.
+
+일반 routine/trigger의 atomic 실행 문맥에서는 `COMMIT`, 전체 `ROLLBACK`, `BEGIN`/거래 재시작, autocommit·거래 특성 변경, DDL을 첫 효과 전에 거절한다. 명시 savepoint는 `(TxnId, invocation generation, name)`으로 현재 호출 frame이 소유한다. `ROLLBACK TO`/`RELEASE`/이름 재지정은 **현재 frame이 만든 명시 marker만** 대상으로 하며 호출자·형제·이전 호출의 marker와 engine implicit marker는 조회·대체·제거할 수 없다. 재귀 호출도 새 generation을 갖고 반환/예외 unwind 때 그 frame의 marker만 폐기한다. 내부 statement/CALL 복원 mark는 별도 숨은 소유이며 사용자 marker의 RELEASE로 제거되지 않는다. marker는 거래 전체 savepoint64 한도에 합산한다. 이 제한은 직접 구문·dynamic SQL·중첩 CALL·trigger 모두에 실행 문맥으로 전달하며 문자열 경로나 definer 권한으로 우회하지 않는다. 현재 CALL 내부의 명시 ROLLBACK TO가 먼저 성공한 내부 statement를 되돌리는 것은 허용하되 CALL 시작점 이전 변경에는 영향을 주지 않는다.
+
+autonomous routine은 명시 별도 transaction·snapshot·quota·commit outcome을 가지며 부모를 suspend한다. 그 거래의 제어 권한과 marker는 부모의 TxnId/호출 frame으로 넘어가지 않는다. autonomous 거래 안에서 호출한 일반 routine/trigger에도 atomic 문맥을 적용한다. 부모 rollback이 자식의 확정 commit을 취소하지 않는다. 부모가 가진 잠금에 자식이 접근하면 parent-child self wait를 탐지해 자식 오류로 종료하고, 잠금을 공유하는 가짜 중첩 거래로 구현하지 않는다.
 
 CALL의 반환 result는 성공 판정 전에 같은 statement의 bounded spool에 완성한다. OUT·result metadata/rows의 client 공개와 일반 fetch는 그 뒤 시작한다. spool 한도/쓰기 실패는 CALL rollback이며 뒤늦은 handler가 이전 결과를 성공으로 되살리지 않는다. result 생성에 부수 효과가 있는 lazy cursor를 반환하지 않는다. 성공 뒤 fetch I/O 오류는 incomplete result로 표시하며 이미 확정된 CALL/transaction outcome을 바꾸지 않는다. autocommit CALL은 LOB 결과의 owning snapshot/pin을 결과 수명까지 유지하는 별도 result ownership을 F06/F08로 동결하기 전에는 해당 locator 반환을 거절한다.
 
@@ -164,16 +170,21 @@ R10-05의 변경 분석·구독은 [기능 요구](../plans/capability-inventory
 <a id="xa"></a>
 ## 11. XA·in-doubt의 상태와 복구
 
-XA RM은 SQL prepared statement와 다른 거래 `PREPARED` 상태를 갖는다. XID는 TM namespace·format ID·gtrid·bqual의 bounded bytes이며 중복 start/prepare/decision은 상태별로 검증한다. `Active → Ended → Preparing → Prepared → CommitDecided / AbortDecided → Completed → Forgotten`을 기본으로 한다. rollback-only·read-only vote·join/suspend/resume·one-phase·heuristic 상태/API는 F07에서 flag별로 동결한다.
+XA RM은 SQL prepared statement와 다른 거래 `PREPARED` 상태를 갖는다. XID는 TM namespace·format ID·gtrid·bqual의 bounded bytes이며 중복 start/prepare/decision은 상태별로 검증한다. 정상 경로는 `Active → Ended → Preparing → Prepared → CommitDecided / AbortDecided → Completed → Retired`다. heuristic 완료는 별도 `HeuristicCompleted → Forgotten` 경로이며 정상 완료를 `forget` 대기 상태로 보내지 않는다. rollback-only·read-only vote·join/suspend/resume·one-phase 상태/API는 F07에서 flag별로 동결한다.
 
 | 경계 | durable 사실과 허용 동작 |
 | --- | --- |
 | prepare 전 | 모든 write/constraint·Serializable 검증, undo/redo·잠금/참조·prepared slot·recovery 예약을 확보. 실패하면 정상 abort 또는 I/O fence |
 | prepare 응답 | XID·TxnId·prepare LSN·retained lock/validation descriptor·resource manifest를 WAL sync한 뒤 Prepared ACK. user row는 아직 보이지 않음 |
 | prepared 유지 | connection/timeout/세션 종료가 abort하지 않음. engine ATT에서 일반 loser와 구별; checkpoint/retention/aging에 포함하고 backup은 아래 Busy 규칙. restart 때 잠금·validation 보호·undo 참조를 일반 admission 전에 복구 |
-| commit 결정 | TM의 권한 있는 결정을 영속 기록하고 redo 가능한 commit으로 원자 가시성 공개. 동일 XID의 같은 결정 재전송은 같은 outcome, 반대 결정은 protocol/heuristic 오류 |
+| commit 결정 | TM의 권한 있는 결정을 영속 기록하고 redo 가능한 commit으로 원자 가시성 공개. terminal receipt를 보존하는 동안 동일 XID의 같은 결정 재전송은 같은 outcome, 반대 결정은 protocol/heuristic 오류. 회수 후 응답은 아래 profile별 계약 |
 | abort 결정 | abort intent 이후 CLR로 완전 undo. 재장애에는 이어서 undo, 완료/반복 결정 receipt 보존 후 보호 해제 |
-| 완료 보존 | terminal decision/tombstone은 TM forget/ack 계약 전 지우지 않음. ledger 포화는 신규 admission 거절. 무조건 TTL 삭제 후 XID 재사용 금지 |
+| 정상 완료 보존 | StandardXa는 commit/완전 undo·terminal 사실과 recovery closure가 영속 확정된 뒤 정상 receipt를 bounded retirement로 회수. TM의 추가 ACK/forget을 기다리지 않음. HeuristicCompleted와 미해결 Prepared는 이 회수 대상이 아님 |
+| heuristic 완료 보존 | heuristic outcome/혼합·불명 상태와 XID를 crash 후에도 recover에 반환하며 권한 있는 `forget`의 영속 처리까지 보존. ledger 포화는 신규 admission을 거절하되 기존 recover/resolve/forget의 예약은 유지 |
+
+**StandardXa가 기본 외부 TM profile**이다. `forget`은 heuristic 완료에만 사용하며 정상 `Completed`에 대한 호출을 회수의 선행 조건으로 만들지 않는다. 정상 receipt가 남아 있으면 기록한 outcome을 재전달할 수 있지만 회수 뒤 decision/prepare 재전송에는 `XAER_NOTA`를 반환한다. NOTA나 recover 목록에서의 부재만으로 adapter가 commit/abort 성공을 합성하지 않는다. TM은 자기 durable journal과 RM identity를 포함한 검증된 복구 protocol로 판단하며, 입증하지 못한 결과는 UNKNOWN으로 남긴다. TM은 완료한 XID를 새 거래에 재사용하지 않아야 한다. RM은 보존 중인 XID의 중복 start를 거절하지만 회수한 모든 과거 XID의 영구 중복 검출을 약속하지 않는다. 정상 receipt 회수는 wall-clock TTL·reply 송신 성공이 아니라 영속 terminal/복구 참조의 안전성과 bounded 유지 정책에 따른다. F07/F09에서 회수 batch·service 간격·공존 peak를 동결하고, 장애·heuristic 없이 정상 완료만 반복하면 추가 TM 메시지 없이 quota 안에서 계속 진행해야 한다.
+
+같은 결정의 장기 outcome 재조회가 필요한 연결은 양쪽이 명시 협상한 **DecisionReceiptAck1 확장 profile**로 분리한다. 이 profile만 TM의 outcome 영속 수신 ACK를 회수 조건으로 사용한다. ACK 전에는 receipt와 같은 outcome을 유지하고, ACK 뒤에는 durable TM epoch/retired frontier로 늦은 XID를 새 거래로 시작하지 못하게 한다. frontier는 미완료/미ACK 구멍을 넘지 않으며 bounded 구멍 목록·ACK 유실/중복·epoch 종료·재장애 예약은 F07에서 동결한다. 회수한 outcome 자체의 영구 재조회는 보장하지 않는다. 표준 XAResource에 이 ACK를 있는 것처럼 매핑하거나 확장 미지원 TM에 요구하지 않는다. 확장 profile의 인수는 StandardXa 실제 TM 인수를 대체하지 않는다.
 
 `Preparing` 진입과 session cancel/close는 같은 transaction owner에서 선형화한다. prepare 시도 이전 취소는 full abort, 시도 이후에는 prepare의 durable 판정을 기다린다. prepare WAL 결과 불명이면 engine fence/recovery로 판정하며 connection close를 ABORT 근거로 쓰지 않는다. durable Prepared는 session에서 분리된 engine-owned 거래다. DEV5의 idle/300초 만료·disconnect·pool reset·권한 철회·graceful shutdown은 그 세션의 handle만 닫고 Prepared 자체를 보존한다. 일반 deadlock victim 선택에서도 Prepared를 제외한다.
 
@@ -183,7 +194,7 @@ prepared 거래의 SERIALIZABLE read/write 보호는 살아 있어야 한다. �
 
 coordinator는 global ID·모든 participant·prepare 시도와 vote·global decision·participant ACK를 durable journal로 관리한다. 전체 YES 확인 뒤 COMMIT decision을 sync하고 나서 commit message를 보낸다. decision이 영속된 뒤에는 timeout/cancel로 ABORT로 전환하지 않는다. crash 후 완전한 journal을 읽어 기존 decision을 재전달하고, decision이 없음을 검증한 transaction은 ABORT decision을 먼저 영속화해 해소한다. torn/손상 journal을 decision 부재로 처리하지 않는다. RM의 Prepared 응답이 유실된 참여자도 목록에 남겨 recover/abort를 반복한다.
 
-`UNKNOWN`은 호출자가 결과를 모른다는 관측이고, `Prepared`는 engine이 복구 가능한 투표 상태라는 사실이다. transport 단절은 둘을 서로 대체하지 않는다. `recover`는 권한 있는 TM에게 완결된 prepared 목록을 bounded page로 반환한다. 관리자의 force commit/rollback은 감사·XID·기존 decision 충돌·heuristic 결과를 영속 기록하고 정상 원자 완료로 위장하지 않는다. 일반 세션의 DDL implicit commit·로컬 COMMIT/ROLLBACK은 XA branch 안에서 effect 전 거절한다. current-build crash/recrash와 실제 두 RM/TM의 외부 이력이 SC11 필수다.
+`UNKNOWN`은 호출자가 결과를 모른다는 관측이고, `Prepared`는 engine이 복구 가능한 투표 상태라는 사실이다. transport 단절은 둘을 서로 대체하지 않는다. `recover`는 권한 있는 TM에게 **Prepared와 아직 forget되지 않은 HeuristicCompleted XID의 합집합**을 bounded page로 반환한다. 정상 Completed/Retired는 그 목록에 포함하지 않는다. TMSTARTRSCAN에서 고정한 scan 소유 목록을 TMNOFLAGS로 이어 읽고 TMENDRSCAN/close에서 해제하며, 중간 force/forget으로 기존 scan의 항목을 건너뛰지 않는다. 새 scan은 변경된 상태를 반영하고 각 상태 확인/decision 요청은 최신 상태를 재검사한다. scan metadata/pin도 quota·수명/취소 계약에 포함한다. heuristic commit/rollback/mixed/hazard는 해당 XA 결과로 보고하고 정상 원자 완료로 위장하지 않는다. 관리자의 force commit/rollback은 감사·XID·기존 decision 충돌·heuristic 결과를 영속 기록한다. `forget`은 권한·상태 검증과 영속 삭제 결정 뒤 성공하며 재시작 후 잊은 항목을 부활시키지 않는다. 중복 forget은 부재 시 XAER_NOTA이며 다른 거래에 효과가 없다. 일반 세션의 DDL implicit commit·로컬 COMMIT/ROLLBACK은 XA branch 안에서 effect 전 거절한다. current-build crash/recrash와 실제 두 RM/TM의 외부 이력이 SC11 필수다.
 
 <a id="clients"></a>
 ## 12. Driver·protocol·업무 확장
@@ -218,8 +229,21 @@ plan/node→estimated/actual rows·loops·memory peak·spill bytes/pass·skew fa
 | 담당·권한 | 설계·계약·통합 `/root`; 사용자의 DEV7 설계 및 Oracle·Altibase·로컬 DBMS 참고 요청, DP01의 기존 위임 |
 | 선택 | bounded pull 실행과 spill, 의미 descriptor, 보수적인 FK/prepare 보호, interpreted PSM, disk LOB, process 격리 외부 효과와 명시 2PC |
 | 대안 | 전체 DBMS dialect 복제·무제한 materialization·무조건 cache/자동 재실행·in-process 외부 routine·순차 remote commit의 원자 주장 배제. vector/JIT·fine-grained FK 등은 측정·기능 근거 뒤 재검토 |
-| 적용·대체 | 기존 DEV7 범위/SC07–11을 구체화. D7-STORAGE·RR/RC·XA는 별도 공급 profile로만 하위 capability를 확장. DEV2/3/4 기본 증거·기존 ABI·안정 버전 의무를 소급 대체하지 않음 |
+| 적용·대체 | 기존 DEV7 범위/SC07–11을 구체화. D7-STORAGE·RR/RC·XA는 별도 공급 profile로만 하위 capability를 확장. DEV2/3/4 기본 증거·기존 ABI·안정 버전 의무를 소급 대체하지 않음. 비교 문맥·CALL 거래 제어·XA 완료/복구 조회의 보완은 아래 DEV7-DESIGN-002가 해당 부분을 대체 |
 | 독립 검토 | `/root/dev7_design_review`가 원문·owner 계약·관련 diff·반례를 검토. D7-R01–R05 수정 후 재검토 PASS, 필수 P1/P2 잔여 없음. 계약/통합 `/root` 반영 확인. [상세 기록](../evidence/dev7-source-research.md#review) |
 | 남은 입력 | F01–F10의 overload/API/codec·resource/fault·runtime/dependency 동결. 실제 구현 담당은 leaf 착수 때 배정 |
 | 실행 | 제품 코드 변경·문서 검사·제품 시험·외부 DBMS 실행 비교 없음. SC07–SC11·SQL_EXT1·배포 NOT_RUN |
 | 재검토 | 의미/계층 충돌, SQL보다 큰 저장 effect, cache 권한 누출, quota/cleanup 순환, prepared 상태 유실, 독립 oracle 반례, 실제 workload 한도/성능 미충족 |
+
+<a id="review-002"></a>
+## 15. DEV7-DESIGN-002 — 비교 문맥·CALL·XA 재검토
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED (설계 보완 범위) · 2026-10-19 |
+| 담당·권한 | 계약·통합 `/root`; 사용자의 발견 문제 즉시 수정 요청과 DP01 위임 |
+| 선택 | 비교 문맥별 정규화/추이성, CALL frame 소유 savepoint와 거래 종료 차단, StandardXa 정상 완료 회수와 별도 ACK 확장, heuristic recover/forget 영속 수명 |
+| 대안·이유 | 전역 문자 동등 class는 혼합 padding 반례를 잃고, COMMIT만 막으면 ROLLBACK으로 CALL 원자성을 우회한다. 모든 XA 완료의 forget 대기는 표준 TM에서 정상 workload도 포화시키며, prepared 전용 recover는 heuristic 해결 대상을 숨긴다 |
+| 적용·대체 | DEV7-DESIGN-001의 위 네 경계만 구체화·대체. 일반 CALL/trigger의 원자성·64개 필수 요구·D-LOGGING 보류·하위 단계 기본 profile·실행 NOT_RUN은 유지 |
+| 검증·검토 | `/root/dev7_revision_review`의 독립 정적 설계 검토 PASS, P1/P2 잔여 없음. 계약/통합 `/root`가 검토 snapshot 일치와 반영을 확인. [근거·반례·검토 identity](../evidence/dev7-review-002.md). F01/F02/F05/F07/F09와 T02/T05/T10/T12/T15/T25/T26/T28/T30·C07의 실제 구현·인수는 NOT_RUN |
+| 재검토 | 서로 다른 비교 문맥의 key 공유, 호출자 거래/marker 침범, 정상 XA 기록 무한 보존, heuristic XID 누락·forget 부활, ACK 확장의 표준 API 오인 |

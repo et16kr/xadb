@@ -4,7 +4,7 @@
 
 <!-- catalogue -->
 
-- [DEV7 — 확장 SQL·프로그래머블 객체·외부 거래 설계](dev7-sql-extensions-design.md) — SC07–11·64개 요구 배정·타입/관계/PSM/LOB/XA 경계; leaf 동결·SQL_EXT1 미실행
+- [DEV7 — 확장 SQL·프로그래머블 객체·외부 거래 설계](dev7-sql-extensions-design.md) — SC07–11·64개 요구·DESIGN-002 비교 문맥/CALL/XA 보완; leaf 동결·SQL_EXT1 미실행
 
 - [DEV6 — native·JDBC·ODBC 클라이언트 상세 설계](dev6-client-design.md) — DEV6 설계·REVIEW-002 상태/취소/결과/버퍼 보완·인수 의무; CLIENT1 미실행
 

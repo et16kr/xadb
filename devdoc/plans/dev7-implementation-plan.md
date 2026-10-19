@@ -1,6 +1,6 @@
 # DEV7 — 확장 기능 구현·검증 계획
 
-2026-10-19 · **DEV7-DESIGN-001 아키텍처 설계 채택·독립 검토 PASS 대응 / leaf 동결·구현·SC07–SC11·SQL_EXT1 NOT_RUN**
+2026-10-19 · **DEV7-DESIGN-001·002 채택·독립 정적 검토 PASS 대응 / leaf 동결·구현·SC07–SC11·SQL_EXT1 NOT_RUN**
 
 [상세 설계](../contracts/dev7-sql-extensions-design.md) · [조사·독립 검토](../evidence/dev7-source-research.md) · [단계 JSON](development-stages.json) · [완료 계약](stage-completion.json)
 
@@ -18,13 +18,13 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 
 | ID | 소유 | 필수 입력과 착수 차단 범위 |
 | --- | --- | --- |
-| D7-F01 | foundation + SQL | 모든 type/함수/연산/overload/cast 결과형·NULL·rounding·overflow·달력/timezone/collation·error vectors, type ID와 persistent/index/spill/wire literal bytes. crypto/Unicode/regex dependency와 알고리즘/버전·key 계약. 해당 값 구현 전 |
-| D7-F02 | SQL | parser grammar·typed logical/physical node·volatility·관계/재귀/window frame·optimizer rule 전제·cache key/metadata invalidation, parameter support matrix와 독립 bag evaluator. relational 구현 전 |
+| D7-F01 | foundation + SQL | 모든 type/함수/연산/overload/cast 결과형·NULL·rounding·overflow·달력/timezone/collation·error vectors, type ID와 persistent/index/spill/wire literal bytes. ComparisonDescriptor의 양쪽 타입/변환·padding·collation·NULL·key/hash 정규화와 저장 index 문맥 호환성. crypto/Unicode/regex dependency와 알고리즘/버전·key 계약. 해당 값 구현 전 |
+| D7-F02 | SQL | parser grammar·typed logical/physical node·volatility·관계/재귀/window frame·optimizer rule 전제·cache key/metadata invalidation, parameter support matrix와 독립 bag evaluator. equality 추이성/비교 문맥 호환성, CHAR/VARCHAR 삼항 반례의 hash/merge/index/spill 및 rule on/off 결과. relational 구현 전 |
 | D7-F03 | engine + SQL | RC/RR/history·constraint protected probe·savepoint/deferred·알려진 신규 lock closure 정렬과 기존/동적 잠금의 wait-for/deadlock, D7-STORAGE 확장 profile의 opcode별 최대 forward/undo/CLR·WAL/page/lock/FD/재장애 예약, API와 오류. 기본 S1과 다른 format/profile·fresh fixture 선택. engine 확장 전 |
 | D7-F04 | catalog + storage + SQL | DDL precommit 두 outcome, dependency graph·view refresh·online job 상태와 delta/catch-up/switch/abort/recovery, PART/NG 실제 API와 공급 evidence. 관련 lifecycle 구현 전 |
-| D7-F05 | SQL + server | PSM 전체 구문/overload·권한·exception·OUT/transaction·성공 전 result spool/REF CURSOR 소유·trigger/cascade order·autonomous·sequence allocation·queue/scheduler lease와 job policy, package state·관리/통신 API 목록. programmable 구현 전 |
+| D7-F05 | SQL + server | PSM 전체 구문/overload·권한·exception·OUT/transaction·성공 전 result spool/REF CURSOR 소유·trigger/cascade order·autonomous·sequence allocation·queue/scheduler lease와 job policy, package state·관리/통신 API 목록. atomic 호출의 COMMIT/ROLLBACK/BEGIN/autocommit/거래 특성/DDL 차단, invocation 소유 명시 marker와 숨은 statement/CALL mark 분리·unwind·합산 상한, dynamic SQL/중첩 호출/trigger 및 autonomous 자식의 문맥 전달. programmable 구현 전 |
 | D7-F06 | storage + SQL + client | LOB chunk/locator/read-write/Unicode·geometry 함수/형식/SRID/topology/index·shapefile 지원표, 기하 dependency/robustness·streaming bounds. 해당 저장/adapter 구현 전 |
-| D7-F07 | engine + server + client | XA flag별 상태 전이·XID bytes·read-only/one-phase/join/resume/heuristic/forget·prepared recovery·session 분리·reserved resolve lane·DDL/backup Busy·shutdown 인계, coordinator journal protocol·peer/TM capability·fault cut; 외부 worker ABI/권한/격리와 DB link mode. 원자성/peer별 격리/전역 격리 구별·미지원 수준의 effect 전 거절·두 RM 역순 dependency/read-only vote 반례. 외부 효과 구현 전 |
+| D7-F07 | engine + server + client | XA flag별 상태 전이·XID bytes·read-only/one-phase/join/resume/heuristic/forget·prepared recovery·session 분리·reserved resolve lane·DDL/backup Busy·shutdown 인계, coordinator journal protocol·peer/TM capability·fault cut; 외부 worker ABI/권한/격리와 DB link mode. StandardXa 정상 receipt retirement/NOTA·TM의 XID 비재사용, HeuristicCompleted의 recover 합집합/scan·영속 forget, DecisionReceiptAck1의 협상·durable ACK/frontier/구멍·quota를 분리. 원자성/peer별 격리/전역 격리 구별·미지원 수준의 effect 전 거절·두 RM 역순 dependency/read-only vote 반례. 외부 효과 구현 전 |
 | D7-F08 | DEV5/6 계약 담당 | 확장 capability/profile·message body/type tag·request/result sequence·CALL spool/OUT 공개·REF CURSOR/LOB pin·CLI/C/JDBC/ODBC/embedded SQL/PDO/.NET support matrix·실제 Oracle/JDBC/HDFS/Hive adapter/runtime·DM/TM·TLS 공급·빌드/설치 manifest. 해당 adapter 구현 전 |
 | D7-F09 | 실행/검증 담당 | 각 요구→operation→variant→독립 expected→실제 API/worker→case 대응, bounded model 전체 공간·fault reachability·quota 산식/peak·cleanup, 고정 seed/corpus·원시 receipt·부정 self-test. runner 및 인수 전 |
 | D7-F10 | 성능/통합 담당 | release/environment/fixture/oracle identity·계측 mode·수치 guardrail·순서·원시 bundle·통계와 replay recipe. 첫 측정 전 |
@@ -126,20 +126,20 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 | ID | 인수 내용 | 독립 기대값·필수 실패/경계 |
 | --- | --- | --- |
 | D7-T01 | 수치·cast·결과 metadata | 정수/decimal 유리수 검산, 동률·음수 scale·carry·overflow·NaN/-0·mixed type 거절; SQL/key/hash/driver 일치 |
-| D7-T02 | 문자/binary/bit/collation | padding·빈 값/NULL·Unicode 길이·부정 UTF-8·sort key 동등 class·bit 잔여 padding; index/full scan 비교 |
+| D7-T02 | 문자/binary/bit/collation | padding·빈 값/NULL·Unicode 길이·부정 UTF-8·비교 문맥별 sort/hash key 동등 class·bit 잔여 padding; CHAR(1)/CHAR(2)/VARCHAR(2)의 삼항 반례와 index/full scan 비교 |
 | D7-T03 | 날짜/timezone·함수 | 달력/월말·DST gap/overlap·tzdb 차이·precision 변환; CPU/OS locale에 의존하지 않는 literal expected |
 | D7-T04 | 함수·regex·crypto | 함수/overload 전수 domain/NULL/error, lazy CASE, regex pathological input의 종료, 알려진 crypto vector·nonce/권한·부정 tag·secret 비노출 |
-| D7-T05 | join/subquery/lateral | 0/1/N match·NULL·중복·outer ON/WHERE·NOT IN(NULL)·scalar 2행 오류, nested/hash/merge/spill/correlated/decorrelated 동등성 |
+| D7-T05 | join/subquery/lateral | 0/1/N match·NULL·중복·outer ON/WHERE·NOT IN(NULL)·scalar 2행 오류, nested/hash/merge/spill/correlated/decorrelated 동등성. 혼합 padding의 A=B AND B=C가 한 행을 유지하고 허용되지 않은 A=C 추론이 거절됨 |
 | D7-T06 | aggregate/grouping | 빈 전체/grouped 입력·all-NULL·DISTINCT·rollup/grouping bit·overflow·중복 bag·hash skew |
 | D7-T07 | window | peer ties·ROWS/RANGE/GROUPS·EXCLUDE·기본 frame·NULL order·frame 경계·큰 partition/peer·stream prefix 실패 |
 | D7-T08 | set/pivot/재귀 | ALL multiplicity·NULL set 동등·pivot 빈 cell/type 결합·tree/diamond/cycle·경로별 cycle·UNION 전역 dedup·한도 초과 incomplete |
 | D7-T09 | MERGE/INSERT SELECT/RETURNING | Halloween·동일 target 중복 source·관측 후 concurrent update·unique 최종 상태·trigger/cascade 영향·실패 후 반환 prefix 없음 |
-| D7-T10 | optimizer/stats/cache | rule별 전제 위반 known-bad, stats stale/skew, 권한 철회/search path/tz/collation/DDL race, metadata 변경 ReprepareRequired·old plan pin·cache full |
+| D7-T10 | optimizer/stats/cache | rule별 전제 위반 known-bad, 비교 문맥을 합친 equality 추론·hash/key 공유 mutant 거절, stats stale/skew, 권한 철회/search path/tz/collation/DDL race, metadata 변경 ReprepareRequired·old plan pin·cache full |
 | D7-T11 | FK/CHECK/격리/잠금 | 부모 삭제와 자식 삽입 race, composite NULL·self-reference·cycle/cascade·deferred fix/commit fail, RC/RR/Serializable 허용/금지 history·NOWAIT/cancel/deadlock. 서로 이전 B/A 잠금 뒤 dynamic SQL/trigger로 A/B를 요청하는 역순 반례·기존 잠금 해제 없음·Prepared victim 제외 |
-| D7-T12 | savepoint/확장 거래 | marker 재지정/release·LOB/queue/constraint rollback·read/lock 유지·반복 rollback 후 WAL/CLR 잔류 과금·limit/limit+1·undo 재장애 |
+| D7-T12 | savepoint/확장 거래 | marker 재지정/release·LOB/queue/constraint rollback·read/lock 유지·반복 rollback 후 WAL/CLR 잔류 과금·limit/limit+1·undo 재장애. 호출 frame별 같은 이름 분리·다른 frame/implicit marker 접근 거절·return/unwind 정리와 전체64 상한 |
 | D7-T13 | DDL/view/materialized result | precommit 성공 뒤 DDL 실패의 두 outcome·generation/권한·refresh 실패 old generation 유지·CTAS/default/type 변환·재시작 |
 | D7-T14 | PART/NG SQL | range/list/hash·pruning/no-prune·행 이동·partition lifecycle·local/global index+extended type·DDL와 stale plan, 실제 core 공급 |
-| D7-T15 | PSM/exception/cursor/record/array | IN/OUT/INOUT·overload·dynamic SQL 권한·handled/unhandled 오류·CALL 원자성·합산 recursion/step budget·취소. DML+첫 result spool 뒤 다음 식 오류/취소/quota 초과에서 CALL rollback·OUT/row 공개0; 반환 REF CURSOR의 spool/handle 수명 |
+| D7-T15 | PSM/exception/cursor/record/array | IN/OUT/INOUT·overload·dynamic SQL 권한·handled/unhandled 오류·CALL 원자성·합산 recursion/step budget·취소. 호출 전 INSERT/사용자 savepoint 후 CALL 안의 전체 ROLLBACK·외부 marker ROLLBACK TO/RELEASE/이름 재지정이 이전 변경을 침범하지 않음. 직접/동적/중첩/trigger 각각 거래 제어 거절·자기 marker만 허용·종료된 거래를 handler가 부활시키지 않음. DML+첫 result spool 뒤 다음 식 오류/취소/quota 초과에서 CALL rollback·OUT/row 공개0; 반환 REF CURSOR의 spool/handle 수명 |
 | D7-T16 | package/autonomous | session state 격리·generation invalidation·pool reset·parent rollback과 child commit·self-lock deadlock·child UNKNOWN |
 | D7-T17 | trigger/sequence | trigger 순서/mutating table/cascade 최종 제약·재귀·sequence reserve 전후 crash·non-cycle 재사용0·CURRVAL session·gap 허용 |
 | D7-T18 | queue/scheduler/built-ins | 다중 consumer·rollback 재소비·lease fencing·duplicate delivery·dead-letter·wall clock jump·권한 철회·external effect UNKNOWN |
@@ -149,12 +149,12 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 | D7-T22 | 파일/대형 교환 | WKT/WKB byte order/길이·EWKB SRID·shapefile attribute/encoding·부분 파일/truncation·lossy conversion 명시 거절·export/import |
 | D7-T23 | external routine | 실제 C/C++ ABI·worker crash/timeout/취소·oversize·권한/격리·dangling result/old worker ID·외부 효과 uncertainty |
 | D7-T24 | DB link | ReadOnly/IndependentRemote/Atomic2pc mode·type/collation 차이·pushdown on/off·remote disconnect/duplicate reply·비2PC peer atomic 거절·미지원 전역 격리의 effect 전 거절 |
-| D7-T25 | XA RM | 전체 flags/상태·중복 XID·prepare vote·read-only/one-phase·잠금/Serializable fence 재구성·recover pagination·late/opposite decision·forget/heuristic. prepare/close 경합·idle/300초/권한 철회/pool/shutdown·일반 deadlock victim에서 Prepared 보존 |
-| D7-T26 | XA coordinator | 두 RM과 실제 TM·participant YES 유실·durable decision 전후 분리·split response·coordinator/RM 순서별 crash/recrash·decision 불변. A에서 T1 read→T2 write, B에서 T2 read→T1 write/read-only vote의 전역 cycle을 local Serializable/2PC 성공만으로 PASS하지 않음. Prepared32·DDL/backup drain 중 resolve control 진행/Busy와 종료 인계 |
+| D7-T25 | XA RM | 전체 flags/상태·중복 XID·prepare vote·read-only/one-phase·잠금/Serializable fence 재구성·late/opposite decision. StandardXa 정상 완료가 추가 ACK/forget 없이 ledger 상한을 넘는 누적 거래 수에서도 회수·진행; 보존 중 동일 outcome과 retirement 후 NOTA 구별. Prepared+HeuristicCompleted recover pagination·중간 force/forget·close/restart, force 응답 유실 후 recover→heuristic 결과→forget·재장애 뒤 부활0. prepare/close 경합·idle/300초/권한 철회/pool/shutdown·일반 deadlock victim에서 Prepared 보존 |
+| D7-T26 | XA coordinator | 두 RM과 실제 TM·participant YES 유실·durable decision 전후 분리·split response·coordinator/RM 순서별 crash/recrash·decision 불변. StandardXa와 확장 ACK 지원 TM을 별도 인수하고 NOTA/목록 부재만으로 성공 합성0; 확장은 ACK 전 outcome 보존·ACK 유실/중복·frontier 구멍·늦은 XID·epoch/restart. A에서 T1 read→T2 write, B에서 T2 read→T1 write/read-only vote의 전역 cycle을 local Serializable/2PC 성공만으로 PASS하지 않음. Prepared32·DDL/backup drain 중 resolve control 진행/Busy와 종료 인계 |
 | D7-T27 | 이종 adapter/분산 교환 외부 계약 | Oracle/JDBC의 필드/타입·binding/batch·원격 오류·단절 certainty; HDFS/Hive 실제 입출력·타입/encoding·완결/부분 실패. 변경 추출·logging 내부·R10-05 상세 인수는 D-LOGGING 보류 |
 | D7-T28 | native/C/JDBC/ODBC 확장 | 실제 runtime별 type/Callable/batch/LOB/keys/multi-result/pool/XA·partial buffer·client cancel·외부 ACK·current-build reopen. CALL 실패 전 OUT/result 공개0·spool REF CURSOR stale·성공 뒤 fetch 오류가 CALL outcome을 변경하지 않음·LOB pin 미지원 거절 |
 | D7-T29 | embedded SQL/언어/framework/remote | 생성 소스 clean build·host indicator/array/thread·PHP/PDO/.NET 실제 업무·framework metadata·TLS/auth failure와 정상 연결 |
-| D7-T30 | 합산 자원·spill/cleanup | 각 node와 다중 query의 resident peak, skew fallback·동시 merge·FD/disk full·unlink 실패 잔류·prepared 압력·cleanup 독립 진행 |
+| D7-T30 | 합산 자원·spill/cleanup | 각 node와 다중 query의 resident peak, skew fallback·동시 merge·FD/disk full·unlink 실패 잔류·prepared 압력·cleanup 독립 진행. 정상 XA receipt retirement의 bounded 진행과 heuristic/미ACK 보존 압력 분리·recover scan pin/metadata 합산 |
 | D7-T31 | 부정 oracle/검사기·전체 복구 | wrong binary/profile·미도달 cut·누락 variant·빈 trace·stale expected·관계/복구 mutant 거절, 실제 native/SQL/외부 history 비교 |
 | D7-T32 | 성능·재현·하위 회귀 | 아래 P01–P05와 관련 최신 source의 하위 단계 전체 필수 검사, 독립 검토 뒤 leaf/단계 상태 분리 |
 
@@ -171,14 +171,14 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 | D7-C04 | refresh/online job build·delta drain·switch record/sync·공개·old 회수 | complete old 또는 complete new identity, 반쪽 catalog/index0; cleanup 재장애 |
 | D7-C05 | RM prepare record 쓰기/sync·응답 직전/유실·cancel/close·checkpoint·reopen | 불완전 prepare는 loser, durable prepare는 in-doubt 보존·잠금/undo/validation fence 복원; prepare 시도 뒤 불명은 close 때문에 abort하지 않음 |
 | D7-C06 | coordinator prepare 요청 전후·YES 일부/전체·decision append/sync·전달/ACK | 손상과 decision 부재 구별; 확정 COMMIT을 ABORT로 바꾸지 않음; 두 RM의 상반 확정0 |
-| D7-C07 | RM commit/abort intent·CLR·visibility·terminal receipt·forget·DDL/backup drain/shutdown | decision 재전달 안전·UNKNOWN 보존·forget 전 XID 재사용0·반복 crash 후 자원 예약 복원·예약 resolve lane 진행·backup Busy·Prepared 영속 인계 |
+| D7-C07 | RM commit/abort intent·CLR·visibility·terminal receipt/retirement·heuristic force/forget·확장 ACK/frontier·DDL/backup drain/shutdown | 보존 중 decision 재전달·회수 뒤 NOTA와 UNKNOWN 구별; 정상 회수에 TM 추가 메시지 불필요. heuristic force 응답 유실 뒤 recover 노출·forget 영속 후 부활0, 미완료/heuristic/미ACK 기록의 조기 삭제0·반복 crash 후 예약 복원·예약 resolve lane 진행·backup Busy·Prepared 영속 인계 |
 | D7-C08 | external worker/link/driver의 partial write/read·cancel·close | effect 전 거절/가능한 remote effect/확정 outcome 구별; 무조건 재시도0 |
 | D7-C09 | spill create/write/read/unlink·disk/FD/memory 부족·동시 cleanup | truncated/spill checksum 오류 검출·incomplete 결과·실제 회수 전 charge 유지 |
 | D7-C10 | Oracle/JDBC adapter batch·분석 교환 file/stream의 요청/remote reply·cancel/close | 완결/부분 실패·remote certainty·필드/타입 무손실 또는 명시 거절; 외부 fixture 성공을 실제 logging 추출 증거로 대체하지 않음 |
 
 F09는 각 cut를 operation별 실제 opcode/fixture/환경/worker에 전개한다. fault hook 호출 횟수가 아니라 실제 도달 witness·native 효과·외부 controller history·current-build reopen 및 integrity 검사로 판정한다. process kill·I/O fault·power-loss model을 따로 보고한다.
 
-bounded model은 (M01) 2 writer+reader의 parent/child/savepoint, (M02) executor+DDL/권한 변경의 cache/result, (M03) LOB upload+snapshot+cancel/aging, (M04) coordinator+2 RM+재전달/restart/drain과 역순 dependency, (M05) lease owner2개+queue consumer를 분리한다. F09에서 각 모델의 actor·값·operation bound·전체 상태/전이 집합·terminal invariant·state budget을 고정하고 선언한 공간을 완주한다. state budget 도달은 PASS가 아니다.
+bounded model은 (M01) 2 writer+reader의 parent/child/savepoint와 호출 frame 소유, (M02) executor+DDL/권한 변경의 cache/result 및 비교 문맥, (M03) LOB upload+snapshot+cancel/aging, (M04) coordinator+2 RM+재전달/restart/drain과 역순 dependency·정상 retirement/heuristic recover/확장 ACK, (M05) lease owner2개+queue consumer를 분리한다. F09에서 각 모델의 actor·값·operation bound·전체 상태/전이 집합·terminal invariant·state budget을 고정하고 선언한 공간을 완주한다. state budget 도달은 PASS가 아니다.
 
 DP03의 V2 64 seeds×최대128 operations, V3 256×최대1,024를 적용하고 최대 길이 고정 사례도 포함한다. 영향받는 실제 concurrency suite는 V3 최소30분, parser/type/spill/WKT/WKB/worker/XA codec 등 실제 target별 fuzz 최소30분, 비결정 fault 셀은 fresh fixture3회다. suite 분할은 가능하나 미실행/실패/timeout 셀을 제외하지 않는다. 숫자를 실패 뒤 축소하지 않는다.
 
@@ -204,4 +204,4 @@ workload cell당 warmup30초·측정60초를 기본으로 최소10쌍 AB/BA 교�
 
 leaf bundle은 source revision+dirty digest·export/binary/runtime/fixture/oracle hash, capability/operation/variant 목록, source-to-case 연결, 외부 ACK·원시 이력·fault reachability·모든 결과, 독립 검토자와 미해결 문제를 포함한다. actual result가 없는 expected 표는 증거가 아니다. 잘못된 binary/미도달/누락을 거절하는 checker 자체의 부정 시험도 필수다.
 
-설계 채택 이후에도 F01–F10 동결과 모든 제품 실행은 NOT_RUN이다. SC07–SC11 각 leaf PASS를 전체 DEV7 PASS로 확대하지 않는다. PART/NG·언어 adapter·온라인 변경·이종 sink 등 어렵거나 선행이 부족한 항목도 필수 배정표에 남긴다. R10-03 logging 내부·R10-05 상세의 D-LOGGING 보류도 해제·설계·실행 전까지 전체 완료의 미해결 의무다. 전체 overload/variant 확장 완료와 모든 필수 통합·현재-build recovery·자원·성능·하위 회귀가 끝나야 SQL_EXT1을 완료한다.
+설계 채택 이후에도 F01–F10 동결과 모든 제품 실행은 NOT_RUN이다. [DEV7-DESIGN-002 재검토](../evidence/dev7-review-002.md)의 네 반례와 위 확장 인수도 실제 실행 의무로 남는다. SC07–SC11 각 leaf PASS를 전체 DEV7 PASS로 확대하지 않는다. PART/NG·언어 adapter·온라인 변경·이종 sink 등 어렵거나 선행이 부족한 항목도 필수 배정표에 남긴다. R10-03 logging 내부·R10-05 상세의 D-LOGGING 보류도 해제·설계·실행 전까지 전체 완료의 미해결 의무다. 전체 overload/variant 확장 완료와 모든 필수 통합·현재-build recovery·자원·성능·하위 회귀가 끝나야 SQL_EXT1을 완료한다.

@@ -163,7 +163,7 @@
       "gate": "SQL_EXT1",
       "task_ref": "XADB-037",
       "title": "확장 타입·값",
-      "acceptance": "배정된 모든 타입/overload/cast의 precision/rounding/overflow/timezone/collation/NULL과 equality/order/hash/key/persistence 벡터를 독립 검산한다. SQL·index·저장·실제 driver의 선언된 지원 조합에서 의미와 오류가 일치해야 한다.",
+      "acceptance": "배정된 모든 타입/overload/cast의 precision/rounding/overflow/timezone/collation/NULL과 equality/order/hash/key/persistence 벡터를 독립 검산한다. ComparisonDescriptor별 padding/변환/NULL 문맥과 CHAR/VARCHAR 혼합 삼항 반례를 검사한다. SQL·index·저장·실제 driver의 선언된 지원 조합에서 의미와 오류가 일치해야 한다.",
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
@@ -181,7 +181,7 @@
       "gate": "SQL_EXT1",
       "task_ref": "XADB-038",
       "title": "관계 실행·제약·optimizer",
-      "acceptance": "join/aggregate/subquery/window/set/재귀·view 등 배정된 관계 기능과 FK/CHECK/savepoint와 고급 plan cache·재최적화·확장 SQL의 prepared 실행을 빈 값·중복·NULL·경합·schema 변경으로 검증한다. 독립 관계 oracle 및 최적화 전후 대조를 함께 사용하고 오류의 statement/transaction 효과와 복구를 검사한다. DEV4/DEV5의 기본 prepare/bind 계약은 선행 기준선이며 DEV7까지 미루지 않는다.",
+      "acceptance": "join/aggregate/subquery/window/set/재귀·view 등 배정된 관계 기능과 FK/CHECK/savepoint와 고급 plan cache·재최적화·확장 SQL의 prepared 실행을 빈 값·중복·NULL·경합·schema 변경으로 검증한다. 독립 관계 oracle 및 최적화 전후 대조를 함께 사용하고 오류의 statement/transaction 효과와 복구를 검사한다. 비교 문맥을 무시한 equality 추론·hash/merge/index key 공유 반례와 호출 frame별 marker 소유를 포함한다. DEV4/DEV5의 기본 prepare/bind 계약은 선행 기준선이며 DEV7까지 미루지 않는다.",
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
@@ -199,7 +199,7 @@
       "gate": "SQL_EXT1",
       "task_ref": "XADB-039",
       "title": "프로그래머블 객체",
-      "acceptance": "PSM/trigger/sequence/queue의 배정된 전체 구문·권한·의존성·재귀/오류·동시성·transaction 효과를 검증한다. 생성/변경/삭제 및 재시작 후 상태를 실제 SQL/server/client 경로에서 독립 기대값과 비교한다.",
+      "acceptance": "PSM/trigger/sequence/queue의 배정된 전체 구문·권한·의존성·재귀/오류·동시성·transaction 효과를 검증한다. 직접/dynamic SQL/중첩 CALL/trigger에서 atomic 거래 제어 제한과 호출자·implicit marker 보호, 자기 frame marker 조작과 unwind, full abort 뒤 handler의 거래 부활 금지를 포함한다. 생성/변경/삭제 및 재시작 후 상태를 실제 SQL/server/client 경로에서 독립 기대값과 비교한다.",
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
@@ -235,7 +235,7 @@
       "gate": "SQL_EXT1",
       "task_ref": "XADB-041",
       "title": "외부 routine·DB link·XA",
-      "acceptance": "격리된 소유 peer/TM에서 명세한 transaction 경계, prepare/commit/rollback, in-doubt, 권한, 연결/응답 유실·중복·재시작·운영 해결을 실행한다. 실제 외부 효과와 독립 history를 비교하며 로컬 호출 성공만으로 PASS하지 않는다.",
+      "acceptance": "격리된 소유 peer/TM에서 명세한 transaction 경계, prepare/commit/rollback, in-doubt, 권한, 연결/응답 유실·중복·재시작·운영 해결을 실행한다. StandardXa 정상 receipt가 TM의 추가 ACK/forget 없이 bounded 회수·진행하고 회수 후 NOTA를 성공으로 합성하지 않음을 확인한다. Prepared+HeuristicCompleted recover 합집합·scan 경합·영속 forget 뒤 부활 금지와 별도 DecisionReceiptAck1 profile을 각각 인수한다. 실제 외부 효과와 독립 history를 비교하며 로컬 호출 성공만으로 PASS하지 않는다.",
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
@@ -1071,7 +1071,8 @@
       "pass_criteria": [
         "XADB-037..041에 배정한 전체 필수 기능/variant inventory 완결; 각 leaf의 독립 oracle·오류·원자성·저장/서버/client 통합 PASS",
         "기능 일부의 사내 배포는 허용하되 필수 task·variant를 제외하거나 미구현을 N/A로 바꿔 DEV7 전체를 닫지 않음",
-        "dev7-implementation-plan.md의 64개 DEV7 요구 배정과 모든 필수 leaf/variant 동결·인수; D7-T01–T32·C01–C10·P01–P05의 적용 셀 전체 및 실제 하위 공급·독립 검토. 설계 채택으로 detail_expansion_required나 실행 상태를 닫지 않음"
+        "dev7-implementation-plan.md의 64개 DEV7 요구 배정과 모든 필수 leaf/variant 동결·인수; D7-T01–T32·C01–C10·P01–P05의 적용 셀 전체 및 실제 하위 공급·독립 검토. 설계 채택으로 detail_expansion_required나 실행 상태를 닫지 않음",
+        "DEV7-DESIGN-002와 dev7-review-002.md의 D7-R2-01..04: 비교 문맥·CALL 거래/marker 소유·표준 XA 정상 회수·heuristic recover/forget을 실제 해당 API와 장애/자원 경로에서 인수; 정적 리뷰는 제품 PASS가 아님"
       ],
       "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
       "open_decisions": [

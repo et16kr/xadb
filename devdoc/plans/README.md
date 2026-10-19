@@ -4,7 +4,7 @@
 
 <!-- catalogue -->
 
-- [DEV7 — 확장 기능 구현·검증 계획](dev7-implementation-plan.md) — F01–10·64개 요구·T01–32·fault/성능·실제 선행 공급; 구현·제품 인수 미실행
+- [DEV7 — 확장 기능 구현·검증 계획](dev7-implementation-plan.md) — F01–10·64개 요구·T01–32·DESIGN-002 비교/CALL/XA 반례·fault/성능; 구현·제품 인수 미실행
 
 - [DEV6 — 클라이언트 구현·검증 계획](dev6-implementation-plan.md) — DEV6 설계·REVIEW-002 상태/취소/결과/버퍼 보완·인수 의무; CLIENT1 미실행
 
