@@ -651,7 +651,7 @@
     "dev6-source-research.md": {
       "path": "evidence/dev6-source-research.md",
       "role": "evidence",
-      "title": "DEV6 — Oracle·REF-C06-02·로컬 DBMS 클라이언트 조사와 검토"
+      "title": "DEV6 — Oracle·ARIES·로컬 DBMS 클라이언트 조사와 검토"
     }
   }
 }

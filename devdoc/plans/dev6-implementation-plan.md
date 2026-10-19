@@ -1,6 +1,6 @@
 # DEV6 — 클라이언트 구현·검증 계획
 
-2026-10-19 · **DEV6-DESIGN-001 ACCEPTED 대응 / 모든 구현·SC04/05/06·CLIENT1 NOT_RUN**
+2026-10-19 · **DEV6-DESIGN-001 및 REVIEW-002 보완 대응 / 모든 구현·SC04/05/06·CLIENT1 NOT_RUN**
 
 [상세 설계](../contracts/dev6-client-design.md) · [조사·검토](../evidence/dev6-source-research.md) · [단계](development-stages.json) · [완료 계약](stage-completion.json) · [DEV5 공급](dev5-implementation-plan.md)
 
@@ -25,10 +25,10 @@ XADB-034→035→036은 **실제 단계 인수 순서**다. [병렬 개발 표](
 
 | ID | 소유·동결 내용 | 필요한 산출·시점 |
 | --- | --- | --- |
-| D6-F01 | DEV5/client 공동 D6-W01: expected_result 효과 전 판정, mode/transaction/result state, metadata, 전체 body field/enum·profile ID·capability | D5-F01와 같은 wire 정본·독립 정상/손상 bytes, Rust/Java/독립 decoder 세 방향 corpus. codec 구현 전 |
-| D6-F02 | client API·전체 lower error→SQLSTATE/numeric code·JDK21 method overload·ODBC function/attr support inventory | 각 항목 Supported/Conditional/Unsupported/LocalNoOp, side effect·조건·case·기대 outcome. JDBC 표준+XADB 차이, raw SQL 상태 갱신·권한/DDL 조합. adapter 구현 전 |
+| D6-F01 | DEV5/client 공동 D6-W01: expected_result 효과 전 판정, mode/transaction/result state, metadata, 전체 body field/enum·profile ID·capability | D5-F01와 같은 wire 정본·독립 정상/손상 bytes, Rust/Java/독립 decoder 세 방향 corpus. local 실패/송신 admission별 연속 request ID; Java sender도 동일 예약/소비 의미. codec 구현 전 |
+| D6-F02 | client API·전체 lower error→SQLSTATE/numeric code·JDK21 method overload·ODBC function/attr support inventory | 각 항목 Supported/Conditional/Unsupported/LocalNoOp, side effect·조건·case·기대 outcome. 복합 API guard/cancel/deadline, close 뒤 mode 분기, cached result 무효화·결과 소진, raw SQL·권한/DDL 조합. adapter 구현 전 |
 | D6-F03 | native Rust signatures·C ABI·새 FFI package 및 OS 조립 DAG·unsafe 범위·registry·소유권·panic/Drop·allocation peak | C11 header·sizeof/align/offset/symbol probe, invalid handle/alias/length/FFI smoke, allocation failure 목록, package별 lint. FFI 구현 전 |
-| D6-F04 | unixODBC function/attr/info/descriptor·ANSI/W length·input/output conversion·diagnostic vendor fields | DM/header/config ABI matrix, scalar input/output 모든 지원 조합·미지원 조합, bound/unbound/truncation/NULL vectors, pointer caller 전제. ODBC 구현 전 |
+| D6-F04 | unixODBC function/attr/info/descriptor·ANSI/W length·input/output conversion·diagnostic vendor fields | DM/header/config ABI matrix, scalar input/output 모든 지원 조합·미지원 조합, bound/unbound/truncation/NULL vectors, 가변 길이 probe와 고정 C type·NULL pointer 구별. ODBC 구현 전 |
 | D6-F05 | 실제 JDK21 vendor/patch·Maven distribution/plugin lock·unixODBC version/build·Rust/compiler·OS/CPU/libc·release profile | 실행 manifest, JAR/shared library/header 설치 recipe, source/dirty/binary/tool/profile hash, clients root 포함 clean export. 빌드/설치 인수 전 |
 | D6-F06 | 실제 client/controller ACK ledger·독립 oracle·partial send/read·WAL/reopen/recrash hook | 각 D6-C cut reachability, wrong driver/mutant/self-test, 실제 B3/Q1/C1 source identity. runner 구현 전 |
 | D6-F07 | 성능·계측 mode·fixture/seed/order·metric 의미·수치 guardrail·원시 bundle | 아래 profile의 실제 명령·통계 계산·재현 entrypoint. 첫 baseline 실행 전 |
@@ -141,13 +141,26 @@ DEV4 D4-V01–V28의 적용 가능한 SQL/native/literal case를 보존하며 �
 | ODBC auto ON→raw BEGIN→UPDATE→SQLDisconnect |25000·연결/Active 거래 유지·hidden rollback0. SQLEndTran은 no-op, raw ROLLBACK 후 Disconnect 성공. 별도 raw COMMIT case는 ACK/reopen 보존 |
 | next가3행 prefix 반환한 뒤 disconnect | 전체 query 실패/incomplete. prefix를 완료된3행 결과로 인수하지 않음 |
 
+### REVIEW-002 추가 고정 vector
+
+아래 R2-V01–V06은 기존 T군의 필수 변형이며 새 기능·실행 PASS가 아니다. [보완 결정](../contracts/dev6-client-design.md#review-002)의 반례를 독립 literal 기대값과 실제 driver 호출로 인수한다.
+
+| vector·연결 | 독립 기대 |
+| --- | --- |
+| R2-V01 · T01/03: 정상 request1→local 잘못된 bind/encode quota 실패/송신 전 cancel→다음 정상 호출; FIRST enqueue Backpressured 뒤 재개 | peer가 보는 다음 ID는2. local operation generation은 별도 증가 가능. enqueue 수락 뒤 송신 실패는 연결 폐기·자동 재송신0; 미수락마다 새 ID를 소비하는 mutant 거절 |
+| R2-V02 · T03/04/07: Prepared execute의 BindAll ACK 직후 cancel·경쟁 setter/Execute/close; queryTimeout=1초 중 BindAll이900ms 소비 | API guard는 하위 단계 사이에도 유지, 경쟁 호출 Busy. cancel이 Execute admission보다 먼저면 Execute 미송신·SQL 효과0·완료 binding 보존. 남은 Execute 예산≤100ms, timeout 재시작0. wire 요청 사이 cancel을 잃는 mutant 거절 |
+| R2-V03 · T08/10: auto ON implicit SELECT 미완료→setAutoCommit(false), OFF SELECT→true, ON raw BEGIN+SELECT→false; 각 close 실패 | implicit SELECT close 후 Idle이면 SET OFF만, 빈 COMMIT0. OFF close 후 Active이면 COMMIT→SET ON. raw BEGIN은 close 후에도 Active: JDBC COMMIT→SET OFF, ODBC25000·DML/mode 유지·close outcome 보존. close 실패 뒤 COMMIT/SET0 |
+| R2-V04 · T08/10: OFF SELECT의 마지막2행+EOF batch 수신·1행만 소비→rollback/commit; auto ON 정상 EOF 및 JDBC commit/rollback·ODBC SQLEndTran | 실제 rollback/commit 뒤 남은 cached row·GetData offset 무효, 새 next/getter로 재노출0. ON 정상 EOF·JDBC25000 진입 거절·ODBC no-op은 남은 행/offset 보존. commit 전 close 완료 뒤 commit 실패는 이미 닫은 결과를 되살리지 않음. cached result와 server active cursor를 동일 flag로 두는 mutant 거절 |
+| R2-V05 · T13: UPDATE count=1→getMoreResults()와 CLOSE_CURRENT_RESULT overload; SELECT 결과의 getMoreResults·close 실패 | 정상 소진은 false·getUpdateCount/getLargeUpdateCount=-1·getResultSet=null, 반복에도 유지. SELECT는 먼저 close, close 실패는 SQLException. 기존 count를 남기는 mutant 거절 |
+| R2-V06 · T14/15: SQLGetData SQL_C_SBIGINT·유효8byte buffer·BufferLength0/1; CHAR/BINARY 길이0; NULL TargetValuePtr; native-origin 빈 text | 고정 C type은8byte 복사·indicator8·다음NO_DATA. 가변 미소진 non-NULL은 길이 조회·offset 유지, 남은 bytes/terminator가 있으면01004; NULL/빈 Binary의 첫 완료는 별도. 빈 CHAR는 길이0에서01004·미소진, 이어1에서NUL·SUCCESS 뒤NO_DATA; 빈 WCHAR는0/1에서01004·미소진, 이어2에서UTF-16 NUL·SUCCESS 뒤NO_DATA. NULL pointer는HY009·쓰기0·offset 유지. 양쪽 guard bytes 및 음수HY090 확인 |
+
 <a id="faults"></a>
 ## 5. 실제 fault cut·상태 모델
 
 | cut | 위치·필수 관측 |
 | --- | --- |
 | D6-C01 | local encode 전/일부 TX/완결 TX, server admission 전후. NotAttempted와 보수적Unknown 구분, 요청 재송신0 |
-| D6-C02 | BindAll ACK 전후·Execute 송신 전후. binding 성공은 SQL 실행 성공 아님, 유실 뒤 이전값 실행0 |
+| D6-C02 | BindAll ACK 전후·Execute 송신 전후 및 두 request 사이 cancel/deadline·경쟁 호출. binding 성공은 SQL 실행 성공 아님, 미시도 Execute/완료 binding 구분, 유실 뒤 이전값 실행0 |
 | D6-C03 | DEV5 D5-C03/C04 commit attempt/sync/publish, partial terminal·CRC 손상·client decode 후 API 반환 전후 |
 | D6-C04 | client process 밖 ledger에 완결 COMMITTED 기록 뒤 server kill/reopen/recrash. 모든 ACK 보존 |
 | D6-C05 | DDL prior commit 뒤/DDL durable 뒤/각 reply 유실. 이전 DML과 DDL 두 durable outcome 분리 |
@@ -158,6 +171,8 @@ DEV4 D4-V01–V28의 적용 가능한 SQL/native/literal case를 보존하며 �
 외부 ACK ledger는 client가 완결 검증한 terminal과 application 관측 경계를 별도로 저장하고 controller가 수신한 ledger의 receipt를 확인한 후 candidate를 종료한다. client buffer/FlushedLocally/server log를 외부 ACK로 쓰지 않는다. client 자체가 ACK 기록 전에 죽었으면 unknown 관측이며 durable commit이 존재할 수 있다. XADBTest native history 기반을 사용하되 driver 오류 mapping을 독립 oracle로 재사용하지 않는다. 현재 build의 실제 disk I/O·reopen은 필수이며 process kill을 device power-loss 검증으로 표현하지 않는다.
 
 bounded 모델은 D6-M01(request/CancelAck 순서), M02(handle/free/취소 generation), M03(API mode 조립·부분 outcome)이다. 각각 actor3, request generation2, result/statement slot2, state cap1,000,000·transition cap10,000,000·depth24로 선언한 축소 공간의 전이를 전수 탐색한다. bound 초과는 모델 미완료이며 PASS가 아니다. M01 terminal-before-Ack/Ack-before-terminal·close, M02 재사용/늦은 cancel, M03 commit 성공/실패/unknown와 SET 유실/권한 철회가 필수 도달 witness다. 실제 구현 전 전이표·정규화·state/action inventory를 동결한다. 모델 밖 수치 경계는 고정 vector로 보완한다.
+
+REVIEW-002는 같은 모델의 필수 상태에 다음을 추가한다. M01은 ID reserved/accepted와 local 미송신 실패, M02는 public operation generation과 하위 wire generation 및 request 없는 구간의 cancel latch, M03은 result close 전후 Idle/Active와 local cached rows를 구별한다. R2-V01–V04 witness를 반드시 도달하고, 기존 bound 안에서 완주하지 못하면 미완료로 남겨 D2로 범위를 재동결한다. request ID 숫자를 증가시키는 시험만으로 API 전체 직렬화·취소 도달을 대신하지 않는다.
 
 V2는 관련 property suite당64 seeds×최대128 ops, V3는256×최대1024 ops·영향 동시성30분·각 codec target30분 fuzz·비결정 fault cell3회 새 fixture를 DP03대로 적용한다. 선언한 유한 모델 완주·literal corpus·실제 thread/DM/Java·disk 복구를 random seeds로 대체하지 않는다. 모듈 검사와 단계 전체 inventory 인수를 구분한다.
 
@@ -183,3 +198,5 @@ driver 소유 quota·control reserve·FD/handle 상한 위반0, close 완료 뒤
 작업·client 계약·통합 담당은 `/root`다. 사용자 요청과 DP01 D2 위임 안에서 설계3문서, DEV5 수신 경계, 단계/완료 계약·작성 목록·색인을 수정했다. 추가 요청에 따라 PAR01–06의 병렬 가능 여부·선행 계약·파일 소유·합류·직렬 인수 순서를 표시했다. 진행 중인 engine/transport 코드·DEV3/4 설계·실행 보고서는 다른 작업 소유로 보존했다. 공유 문서는 최신 원문의 해당 DEV6 절만 반영했다. source checkout은 읽기만 했으며 코드/이력·외부 dependency를 가져오지 않았다.
 
 `/root/dev6_design_review`의 기본 설계·병렬 계획 독립 검토와 지적 수정 확인을 [조사 기록](../evidence/dev6-source-research.md#review)에 남기고 D2 설계를 채택했다. 실제 F01–F07 동결·모델·Rust/Java/C/ODBC 구현·B3 연동·성능·하위 회귀·CLIENT1은 모두 남아 있다. 이번 작업에서는 제품 시험이나 문서 자동 검사를 실행하지 않았다. 문서 자동 검사는 repository pre-push gate에서 적용한다.
+
+후속 [DEV6-REVIEW-002](../contracts/dev6-client-design.md#review-002)는 사용자 리뷰·즉시 수정 요청에 따른 별도 보완이다. 현재 계획의 R2-V01–V06과 F01/F02/F04·C02·M01–M03 변경은 [새 조사·검토 기록](../evidence/dev6-source-research.md#review-002)에 귀속하며 최초 설계 검토 결과로 승인됐다고 간주하지 않는다. 제품 실행 상태는 계속 NOT_RUN이다.

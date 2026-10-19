@@ -14,7 +14,7 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 
 <!-- catalogue -->
 
-- [DEV6 — Oracle·REF-C06-02·로컬 DBMS 클라이언트 조사와 검토](dev6-source-research.md) — DEV6 설계·선행 입력·조사/인수 의무; CLIENT1 미실행
+- [DEV6 — Oracle·ARIES·로컬 DBMS 클라이언트 조사와 검토](dev6-source-research.md) — DEV6 설계·REVIEW-002 상태/취소/결과/버퍼 보완·인수 의무; CLIENT1 미실행
 
 - [DEV5 — 서버 소스 조사와 독립 검토 기록](dev5-source-research.md) — PostgreSQL·MariaDB·CUBRID 실제 revision/열람 근거와 DEV5-REVIEW-002 대기·수명 반례/수정; 제품 실행 증거 아님
 - [DEV5 — Oracle·로컬 DBMS 비교와 후속 설계 검토](dev5-oracle-source-review.md) — Oracle 19c·로컬3개 DBMS의 실제 열람, cleanup 권한·idle 경계와 002 수신 검토; 제품 실행 증거 아님

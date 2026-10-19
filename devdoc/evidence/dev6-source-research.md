@@ -1,4 +1,4 @@
-# DEV6 — Oracle·REF-C06-02·로컬 DBMS 클라이언트 조사와 검토
+# DEV6 — Oracle·ARIES·로컬 DBMS 클라이언트 조사와 검토
 
 2026-10-19 · **실제 문서·선택 소스 열람 / 설계 근거 / 제품 실행·호환·성능 검증 아님**
 
@@ -116,3 +116,72 @@ Oracle/REF-C06-02의 더 넓은 SQL·타입·driver 기능, resident/mixed stora
 최종 판단은 **기본 설계와 PAR01–06을 포함한 D2 채택 가능, 잔여 P1/P2 없음**이다. Native/C 소유권·FFI 경계, partial reply/CancelAck·알려진 commit 보존, JDBC/ODBC 거래 조립, 실제 B3 선행·복구·독립 oracle·성능 인수, 공유 파일의 직렬 반영과 SC04→SC05→SC06 순서를 확인했다. `/root`가 수정을 반영·확인하고 DEV6-DESIGN-001을 **ACCEPTED**로 기록했다. 이는 정적 설계 검토이며 미래 leaf 동결·제품 구현·병렬 개발의 검증을 대신하지 않는다.
 
 이번 작업은 원문·소스 열람과 설계 작성이다. Oracle/REF-C06-02/로컬8개 DBMS build·제품 실행, XADB native/JDBC/ODBC 구현·모델·FFI·성능·실제 DEV5 연동·CLIENT1 인수는 **NOT_RUN**이다. 문서 자동 검사는 push 전용이며 이번 편집 중 실행하지 않았다.
+
+
+<a id="review-002"></a>
+## 5. DEV6-REVIEW-002 재검토와 수정
+
+2026-10-19, 사용자의 Oracle·ARIES·공개 로컬 DBMS 및 추가 로컬 소스 참고 리뷰와 문제 즉시 수정 요청에 따라 `/root`가 다시 검토했다. 최초 설계 채택과 위 독립 검토는 당시 범위의 기록이며 이번 수정의 실행 증거로 승계하지 않는다. 변경은 [REVIEW-002](../contracts/dev6-client-design.md#review-002)에 귀속한다.
+
+### 작업 기준·소유
+
+기준 HEAD는 `795b4c974f44aa73b366f93eeb2dd2f22654ece7`, 수정 직전 tracked diff의 SHA-256은 `02fbf5b7ac42332fa6fceac2f385ed7d916240c2c87fcd50f69e38d7de9d4532`다. 미추적 제품 파일까지 포함한 build fingerprint가 아니다. 검토 시작 시 설계 파일 hash는 `e4ac291a1a883ac989a21531130f0cd60fda6c8485478ee7052af8564d880bff`, 계획은 `72de1af1435749515e63a79e50a7c4c742da027ac14dd51f0924b9387d1814a5`, 이 조사 문서는 `cbe62446db5c68b7054aad2d40e634f1647a4b001db37f1f891b13f659d49044`였다.
+
+작업·계약·통합 담당은 `/root`다. 소유 변경은 DEV6 설계·계획·이 조사 문서이고, 공유 수정은 stage-completion의 DEV6 요구와 문서/폴더 색인의 해당 항목이다. 이미 수정 중이던 engine·transport·성능 도구와 무관한 문서 변경을 보존했다. 공통 의미 수정→계획·공유 색인→별도 읽기 전용 검토 순서로 진행하며 생성물은 만들지 않는다. 원본 checkout을 변경하거나 Git 이력·코드·dependency를 가져오지 않았다.
+
+### 공식 원문·재확인한 공개 소스
+
+이번 열람일은2026-10-19다. 다음은 실제 읽은 범위이며 DBMS 실행 비교가 아니다.
+
+| 자료·부분 | 관찰·적용 |
+| --- | --- |
+| [Oracle19c JDBC coding tips](https://docs.oracle.com/en/database/oracle/oracle-database/19/jjdbc/JDBC-coding-tips.html), C.1–C.2.2 | 직렬 연결 사용, cancel과 interrupt의 차이, SELECT 완료·fetch 배치 확인. 한 API의 전체 조립과 wire request의 수명을 나누고 implicit SELECT 종료를 재검토 |
+| [Java21 Connection](https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Connection.html), setAutoCommit/commit/rollback | 모드가 실제로 바뀔 때의 commit과 같은 모드 no-op, ON의 commit/rollback 오류를 재확인. 추가 로컬 구현의 편의상 no-op을 XADB JDBC 규칙으로 복제하지 않음 |
+| [Java21 Statement](https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Statement.html), getResultSet/getUpdateCount/getMoreResults | 결과가 하나여도 close·현재 결과 소진·-1 종료 표시는 필요. API 이름만 나열한 지원표에 구체 상태 전이 추가 |
+| [ODBC SQLGetData](https://learn.microsoft.com/en-us/sql/odbc/reference/syntax/sqlgetdata-function?view=sql-server-ver17), Arguments·Retrieving Data·fixed-length | 가변 buffer 길이와 고정 C type 크기를 분리. NULL TargetValuePtr 금지·고정형 반복 NO_DATA를 R2-V06에 연결 |
+| [ODBC SQLEndTran](https://learn.microsoft.com/en-us/sql/odbc/reference/syntax/sqlendtran-function?view=sql-server-ver17), Comments — 별도 검토자가 확인 | auto ON의 no-op에서 cursor를 폐기하지 않도록 보완. 실제 transaction 종료·이미 완료한 close·Broken/Fenced의 효과와 구별 |
+| [ARIES 공식 서지](https://research.ibm.com/publications/aries-a-transaction-recovery-method-supporting-fine-granularity-locking-and-partial-rollbacks-using-write-ahead-logging), [1992 원 논문 공개 사본](https://cs.stanford.edu/people/chrismre/cs345/rl/aries.pdf) PDF1·3–6쪽(인쇄94·96–99쪽) | commit log force, WAL, partial/total rollback, redo-only CLR·반복 장애의 근거 확인. DEV6은 client 응답 관측과 engine durable outcome을 구분하고 C03/04/08의 실제 reopen/recrash 의무 유지. ARIES만으로 ACK 전달·재시도 안전성을 증명하지 않음 |
+
+PostgreSQL·MySQL·SQLite·CUBRID는 이번에도 remote/revision과 clean working tree를 실제 확인했다. revision과 파일 hash는 위 [로컬 identity 표](#local)의 같은 네 항목과 일치했다. 이번에 다시 읽은 범위는 다음과 같다.
+
+| checkout·revision | 실제 함수·범위 | 판단 |
+| --- | --- | --- |
+| postgres · `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851` | fe-exec.c의 PQsendQueryStart 1690–1735, PQgetResult 2079–2150 | command admission과 flush/read/result 완료 구분. XADB 복합 API guard·송신 실패 경계와 비교 |
+| mysql-server · `3b99be40f8a31d9396cad10accfd3ba51647d613` | libmysql.cc의 stmt_fetch_row/mysql_stmt_fetch 3908–4005 | 이미 받은 row와 caller buffer의 NULL/truncation 상태를 별도 관리. client cached row와 server EOF를 구분 |
+| sqlite · `43a48f77585a88940c727f33682151418f544059` | vdbeapi.c의 finalize/reset/clear_bindings 진입 105–160 | 실행 종료·재사용·binding 해제를 별도 수명으로 취급. 기존 ODBC binding 보존 규약 유지 |
+| cubrid · `a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5` | cas_handle.c의 hm_srv_handle_free 149–180 | handle 내용·임시 자원·slot 해제 구분. XADB generation/owned resource 경계 유지 |
+
+이 네 source 파일의 bytes는 기존 hash와 같지만 이번 열람 자체를 과거에 수행한 것으로 바꾸지 않는다. 다른 공개 checkout을 이번에 다시 분석했다고 주장하지 않는다.
+
+### 추가 로컬 자료: LOCAL-REF-A
+
+사용자가 지정한 별도 checkout은 중립 식별자 `LOCAL-REF-A`로만 인용한다. HEAD `0682bdd8610c3728810df616c95a858cda675706`, working tree의 변경 항목1개를 관측했으므로 clean으로 표시하지 않는다. 선택 소스의 실제 bytes를 아래 SHA-256으로 식별하며 source fingerprint나 실행 결과로 취급하지 않는다. 원문과 원래 경로는 외부 원본에 그대로 두고 제품/패키지 명칭·원문 경로 inventory를 XADB에 전사하지 않는다.
+
+| ID·부분 | 읽은 내용 | SHA-256 |
+| --- | --- | --- |
+| A1 · C cancel, 294–340·426–474 | statement identity/CID 대상 cancel, 응답 수신과 호출 정리의 분리. 다른 연결 cancel 방식을 XADB에 도입하지 않음 | `50bb22f74e5064eed8d4bfc97a2d2c4ed845773255220e4e246fa2f6b7c83bb7` |
+| A2 · C transaction end, 175–235 | DBC context·인자 확인·transaction 종료 main 호출·진단 반환 경계 | `0595ab115969343adc6f703af4f7bded91202ce06d0e3b511d36c9412a580811` |
+| A3 · C GetData, 433–500 | column ordinal/target type와 bound descriptor의 구분. 정확한 표준 buffer 의미는 공식 ODBC 문서로 판정 | `996488abdb736bad563358c6737bd1c4ff7973d0b3cdc4ef599fbc0f1b4cdb13` |
+| A4 · Java connection, 1182–1208·1569–1594·1627–1678 | commit/rollback·mode 변경 조립. auto ON의 편의 no-op과 재연결 경로는 XADB에 채택하지 않음 | `db59128d6c144787990a6331997846674547cd06de4b52ca399ff824564c89b5` |
+| A5 · Java statement, 471–492·623–665·1136–1168 | 결과 정리·cancel·getMoreResults의 경계. 단일 결과도 종료 상태를 독립 명시해야 한다는 비교 입력 | `8f443f61bd6c96fafa2681ef90d1b40d470a8934f4b0db9c3c75a41edaa1a55d` |
+
+### 발견 사항과 수정
+
+| 우선순위·지적 | 반례·수정·인수 연결 |
+| --- | --- |
+| P2 · request ID의 local 예약/송신 소비 경계 누락 | encode/할당 실패가 ID를 소비하면 다음 요청이 DEV5 연속 ID 검사에서 거절됨. local generation 분리·FIRST enqueue 수락 때 소비; R2-V01/M01 |
+| P1 · 복합 실행의 직렬화·취소 범위 누락 | BindAll terminal 뒤 cancel이 사라지거나 다른 호출이 끼면 취소된 Execute가 실행될 수 있음. public API 전체 guard·cancel latch·남은 deadline 유지; R2-V02/C02/M02 |
+| P1 · implicit SELECT close 뒤 거래 상태 재판정 누락 | ON SELECT close가 Idle로 만든 뒤 COMMIT을 보내면 TxnState로 모드 변경 실패. close terminal 뒤 Idle/Active를 재판정, JDBC/ODBC 차이와 실패 단계 보존; R2-V03/M03 |
+| P2 · server EOF와 client result 수명 경계 불명확 | 마지막 batch를 받은 뒤 rollback/commit해도 남은 local row가 재노출될 수 있음. cached row/offset까지 명시 무효화, implicit EOF의 정상 소비 예외 유지; R2-V04 |
+| P2 · JDBC 결과 소진 전이 누락 | getMoreResults=false만 반환하고 count를 남기면 표준 결과 순회가 끝나지 않음. None 전이·null/-1·close 오류 구체화; R2-V05 |
+| P2 · SQLGetData buffer0의 적용 범위 오류 | 고정 C numeric도 길이 조회로 처리하면 실제 값 복사를 생략. 가변형 probe·고정형 실제 크기·NULL pointer를 분리; R2-V06 |
+
+ARIES 대조에서는 기존 complete terminal ACK·durable outcome·CLR/recrash 분리의 방향을 유지했다. 이 정적 판단을 복구 시험 PASS로 승격하지 않는다. 기본 wire 변경이나 새 client 기능을 추가하지 않았고 미동결 F01–F07을 완료로 바꾸지 않았다.
+
+### 독립 검토·검증 상태
+
+별도 실행 `/root/dev6_boundary_review`가 수정 전 사본 대비 diff, DEV4/DEV5/COMM 원문, 위 Java21 Statement/Connection·ODBC SQLGetData/SQLEndTran 공식 문서와 반례를 읽기 전용으로 검토했다. 빈 CHAR/WCHAR의 terminator 공간 부족과 기존 빈 값 SUCCESS 문구 충돌(P2)을 지적했고, 본문과 R2-V06의 `01004·미소진 → SUCCESS → NO_DATA` 수정을 확인했다. 이어 no-op/진입 거절의 cached row 보존과 이미 완료한 close의 효과 유지 문구·R2-V04 보완도 확인했다.
+
+최종 판단은 **검토 범위의 잔여 P1/P2 없음·정적 설계 채택 가능**이다. `/root`가 client 계약·통합 담당으로 반영을 확인하고 REVIEW-002를 ACCEPTED로 기록했다. 이번 독립 실행은 ARIES/로컬 소스 원문 재열람이나 source hash 재검증까지 수행한 것은 아니다. 그 조사와 identity 기록은 위 `/root`의 실제 열람 범위에 귀속한다.
+
+코드·제품 동작 변경 없이 계약과 인수 의무를 보완했으므로 제품/FFI/모델 실행은 NOT_RUN이다. 문서 자동 검사도 저장소의 push 전용 정책에 따라 실행하지 않았다. commit/push는 이번 작업 범위에 포함하지 않았다.

@@ -113,7 +113,7 @@
       ],
       "required_details": [
         "D6-F01..F07: actual wire/API/ABI/runtime/error and execution profiles frozen before implementation or acceptance",
-        "D6-T01..T18: applicable client/overload/type/error/environment variants, actual server and independent expectations",
+        "D6-T01..T18 and applicable REVIEW-002 R2-V01..V06: client/overload/type/error/environment variants, actual server and independent expectations",
         "D6-C01..C08: complete external ACK, partial send/receive, transaction composition outcomes and current-build disk reopen/recrash",
         "D6-M01..M03 and D6-P01..P04: bounded state exploration, real concurrency/FFI and measured resource/instrumentation costs"
       ]
@@ -132,7 +132,7 @@
       ],
       "required_details": [
         "D6-F01..F07: actual wire/API/ABI/runtime/error and execution profiles frozen before implementation or acceptance",
-        "D6-T01..T18: applicable client/overload/type/error/environment variants, actual server and independent expectations",
+        "D6-T01..T18 and applicable REVIEW-002 R2-V01..V06: client/overload/type/error/environment variants, actual server and independent expectations",
         "D6-C01..C08: complete external ACK, partial send/receive, transaction composition outcomes and current-build disk reopen/recrash",
         "D6-M01..M03 and D6-P01..P04: bounded state exploration, real concurrency/FFI and measured resource/instrumentation costs"
       ]
@@ -151,7 +151,7 @@
       ],
       "required_details": [
         "D6-F01..F07: actual wire/API/ABI/runtime/error and execution profiles frozen before implementation or acceptance",
-        "D6-T01..T18: applicable client/overload/type/error/environment variants, actual server and independent expectations",
+        "D6-T01..T18 and applicable REVIEW-002 R2-V01..V06: client/overload/type/error/environment variants, actual server and independent expectations",
         "D6-C01..C08: complete external ACK, partial send/receive, transaction composition outcomes and current-build disk reopen/recrash",
         "D6-M01..M03 and D6-P01..P04: bounded state exploration, real concurrency/FFI and measured resource/instrumentation costs"
       ]
@@ -942,12 +942,13 @@
         "DEV4 타입/SQL·transaction/metadata/error/cancel의 client별 결과 일치; unsupported 및 buffer/handle 소유권 명확",
         "D6-T01–T18 applicable full leaf inventory, C01–C08 actual external ACK/reopen/recrash, M01–M03 bounded model and DP03 V3 profiles; independent review",
         "JDBC/ODBC explicit transaction API composition preserves each committed outcome; expected-result mismatch has zero effects before DDL precommit; no automatic SQL replay",
+        "DEV6-REVIEW-002 R2-V01–V06: contiguous wire IDs after local failures, whole-operation serialization/cancel/deadline, authoritative state after cursor close, cached-result invalidation, JDBC result exhaustion and ODBC fixed/variable buffer semantics",
         "D6-P01–P04 correctness, owned memory/handle/FD bounds, instrumentation costs and independent raw comparison/replay evidence; missing/uncertain evidence is not PASS"
       ],
       "acceptance_input_status": "BASE_DESIGN_DEFINED_LEAF_API_AND_EXECUTION_PROFILES_PENDING",
       "open_decisions": [
         "D6-F01 with D5-F01: exact D6-W01 wire fields, expected-result pre-effect validation and independent bytes",
-        "D6-F02: every native/JDK21/ODBC operation and overload, type/error/capability mapping and independent expected outcome",
+        "D6-F02: every native/JDK21/ODBC operation and overload, type/error/capability mapping and independent expected outcome; REVIEW-002 compound operation and result-lifetime transitions",
         "D6-F03/F04: actual native/C signatures, isolated FFI package, ownership and unixODBC ABI/length/descriptor matrix",
         "D6-F05/F06: pinned runtime/build/install identity, current B3/Q1/C1 supply and actual driver/controller/fault/reopen entrypoints",
         "D6-F07: actual metrics/source/profile/recipe and preregistered performance comparisons"
