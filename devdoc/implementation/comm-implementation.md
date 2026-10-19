@@ -6,6 +6,21 @@
 
 2026-10-19 [코드 리뷰·수정 기록](../evidence/comm-code-review-20261019.md): driver 취소를 기존 sender·각 I/O 검사에 전달하고, accept의 peer 중단 오류를 listener별 backoff로 격리했다. 관련 COMM 시험·독립 검토는 PASS이며 리뷰 당시 혼합 사본은 별도 DEV2 시험의 lint 실패로 하위 통합 gate가 FAIL이었다. 두 수정만 분리한 commit 대상 사본의 transport 시험은 기본/전체 feature 각각 35개 PASS다. 전체 C1 상태는 유지한다.
 
+## COMM-TEST-002 진행 계약
+
+2026-10-19 COMM 코드리뷰 수정 commit `91cefa6`을 확인한 뒤 사용자의 명시적 재개 요청에 따라 인수 작업을 재개했다. 해당 commit의 driver 취소 전달·accept 오류 격리를 유지한다. 진단 ring의 enqueue 기록은 gate 해제 뒤 실행되므로 flush 기록보다 늦을 수 있다. ring을 FIFO 승인 순서나 fault 도달의 독립 oracle로 사용하지 않는다. allocation 실패 주입은 실제 allocator 호출 직전의 합성 실패이며 OS OOM을 검증했다는 의미가 아니다.
+
+2026-10-19 사용자 `comm 테스트 완료` 요청에 따른 D2 인수 실행기·checker·계측 보완이다. 기존 C1 품질 기준은 유지한다. 작업·계약·통합 담당은 `/root`, 독립 검토 담당은 `/root/comm_acceptance_review`다. 검토 전 변경은 `READY_FOR_REVIEW`이며 이 기록만으로 C1을 승격하지 않는다.
+
+- 기준 commit: `fe8d3f5d2a7744a1c54a26fa9d30c656b974fa7c`; 착수 tracked diff SHA-256: `7fb1a39c51a65d9de0db91616211bd6390286e6c56ed279144bbd9025065dfb7`.
+- 소유 경로: `crates/transport`, `crates/testing/transport-worker`, `scripts/check_comm*.py`, `scripts/test_check_comm*.py`와 실제 추가하는 COMM 전용 실행기·corpus, 이 구현 기록 및 신규 COMM 증거.
+- 공유 변경: transport/worker manifest와 모듈 등록, `devdoc/plans/stage-completion.json`, 관련 단계·계약·문서 색인은 최신 원문의 COMM 항목만 순차 반영한다. foundation AXF1 형식·engine 의미는 변경하지 않는다.
+- 추가 공유 API: `foundation::runtime::Quota::peak()`는 성공한 예약 CAS의 이전 값에서 high-water를 계산한다. 예약 후 별도 `used()` 표본은 동시 release로 실제 peak를 놓칠 수 있다는 독립 검토 지적을 반영한 선택이다. 기존 예약/반환·한도 의미는 유지하고 foundation 회귀 및 DEV2 소비자 회귀를 요구한다. 사후 collector 표본과 중복 ledger 대안을 제외한다.
+- 동시 작업: 착수 때 engine substrate·controller·protocol·engine-worker의 durable performance 변경과 미추적 시험/실행기를 확인했다. 해당 변경을 보존하고 COMM 전용 파일과 섞어 되돌리지 않는다. 최종 회귀는 실제 보존한 source snapshot에 귀속한다.
+- 순서: 미검증 inventory/반례와 독립 검토 → 실패 주입·계측 → 모델/fault/mutant/fuzz/stress/성능 실행기 → profile 동결·source snapshot → 실제 실행·하위 회귀 → 증거 재검토 → C1 판정.
+- 대안과 선택: 기존 focused runner의 PASS를 전체 완료로 재해석하지 않고, 동일 nonblocking port와 독립 peer를 확장한다. 새 async runtime·외부 dependency·wire 형식은 추가하지 않는다. 장시간 검사는 동결한 job별 receipt로 합치고 미실행·미도달·실패를 보존한다.
+- 재검토 조건: 검사기의 거짓 PASS, 필수 도달 witness 부재, 모델 공간 미완주, source identity 변화, 자원/성능 guardrail 실패.
+
 ## 실제 구현과 사용
 
 - [foundation network](../../crates/foundation/src/network.rs): `ByteStream`, `Connector`, `Listener`, `ReadinessWait`, opaque `Registration`과 readiness hint. fd·nix 타입은 공통 API에 노출하지 않는다.

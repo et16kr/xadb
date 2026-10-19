@@ -70,6 +70,20 @@ TCP fragmentation은 packet 경계를 제어했다고 주장하지 않는다. sc
 
 fault 위치의 정확한 call number와 native buffer 설정은 구현된 port/runner에 의존한다. 구현 전 이 표를 완성한 것으로 추정하지 않고 C0/C4 manifest에 receipt 위치·expected error·byte progress·반복·명령을 추가해 독립 검토한다. 현재 focused runner와 receipt는 구현했으나 이 표의 전체 fault profile과 장시간 인수는 미완료다. 실제 실행 범위는 구현 기록을 따른다.
 
+<a id="model-run-profile"></a>
+## 3.1 COMM-TEST-002 유한 모델 실행 프로파일
+
+2026-10-19 구현한 `crates/transport/tests/model.rs`와 `tests/exploration/mod.rs`는 기존 2 connections·RX/TX 각 2 slots·최대 payload 2 bytes·깊이 8을 구체화한다. 기본 제품의 TX4는 유지하고 test-support 생성자가 같은 production quota 경로의 TX slots만 2로 고정한다. RX peer 입력은 독립 SHA-256 encoder로 만든 `empty`, `00`, `0001` 순서다. TX enqueue는 세 payload를 모두 열거한다.
+
+- 이벤트: 연결별 enqueue 3종, 방향별 1 byte/다음 header·payload·digest 경계 진행, 방향별 WouldBlock, EOF, cancel, drain, take_received, 각 외부 lease 반환, 각 live ticket Drop·terminal 수집, 가장 이른 deadline 이동. API상 가능한 무효과 cancel/drain/take/enqueue도 열거한다.
+- I/O 이벤트 직전 공유 단조 시각을 20 ms 진행하여 이전 retry를 만료시킨다. 선택한 성공 progress 뒤 다음 I/O는 WouldBlock으로 막는다. deadline 이동은 `max(now, min(active deadlines))`이고 두 owner가 같은 시각을 관측한다. retry 이전 무재시도·deadline 직전/같음/직후·u64 overflow는 별도 고정 반례다.
+- BFS는 상태와 남은 깊이로 중복 제거하며 두 연결 정체성을 구분한다. actor permutation·partial-order pruning은 하지 않는다. 각 enabled 전이에 대표 parent trace와 전이 하나를 더해 fresh 실제 Connection 두 개에서 재생한다. quota/slots·phase·오류·성공 prefix를 비교하고, trace 종료에서 남은 RX payload/순서와 모든 live ticket Pending/terminal/진행량까지 관측한다.
+- `comm-model-key-v1`: 현재 시각을 모든 timer/retry와 함께 뺀 남은 지연으로 표현한다. Closed의 재사용 불가능한 입력·timer·다음 sequence는 지우되 RX 진행 witness bits, 오류·취소·기존 lease/ticket은 보존한다. 현재 유한 범위에서는 시간 평행이동이 deadline 선택/비교·I/O 시간 증가를 보존한다. 각 packed key는 경계를 확인하는 고정 80 bytes이며 hash digest로 상태 동일성을 추정하지 않는다. 서로 다른 원래 state가 같은 key로 합쳐질 때 enabled event·각 observation·successor key 동등성을 확인하는 별도 회귀를 둔다.
+- 도달 witness: RX 완료→take→release, TX local flush→ticket 수집, RX partial cancel, TX partial cancel, full queue 거절, 두 연결 진행, 두 frame delivery 순서. cleanup cancel 뒤 quota=0 검사는 owner Drop의 ticket 해결 시험을 대신하지 않는다.
+- 공식 후보 안전 예산은 누적 360,000,000 states, 5,000,000,000 transitions, 21,600 seconds다. 상태 추가 직후와 완료 직전에도 검사한다. 예산 초과·미도달은 INCOMPLETE다. 실행 로그·generator/key source hash·정확한 명령·원본 사본을 보존하며 전체 공간 완주 전 PASS로 올리지 않는다.
+
+초기 exploratory r1은 정규화 전 depth 5까지 529,148 states·누적 1,171,355 transitions를 수행하고 4,000,000 누적 상태 안전 예산에서 INCOMPLETE였다. 원본 `artifacts/comm/model-exploratory-n6imzvzv/execution.log`를 유지한다. 새 key·source의 실행으로 이전 실패를 덮어쓰지 않는다. 실행 전 독립 검토는 구현 기록에 별도로 남긴다.
+
 <a id="performance"></a>
 ## 4. 성능과 관측 가능성
 

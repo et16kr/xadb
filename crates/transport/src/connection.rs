@@ -1,10 +1,14 @@
 use crate::{
-    BYTE_BUDGET, CALL_BUDGET, CONNECT_NANOS, DRAIN_NANOS, Error, ErrorKind, FRAME_BUDGET,
-    FRAME_NANOS, IDLE_NANOS, MAX_WIRE_BYTES, Result, Transport, WAIT_NANOS, deadline,
+    BYTE_BUDGET, CALL_BUDGET, CONNECT_NANOS, DRAIN_NANOS, Error, ErrorKind, EventKind,
+    FRAME_BUDGET, FRAME_NANOS, IDLE_NANOS, LatencyHistogram, MAX_WIRE_BYTES, Result, Transport,
+    WAIT_NANOS, deadline,
     resources::{Buffer, Family},
     sender::{ConnectionSender, SendOutcome, Shared},
 };
-use std::{io, sync::Arc};
+use std::{
+    io,
+    sync::{Arc, atomic::Ordering},
+};
 use xadb_foundation::{
     codec::{FRAME_HEADER_BYTES, FRAME_OVERHEAD, decode_frame, inspect_frame_header},
     network::{ByteStream, Connector, Interest, Ready, Registration},
@@ -42,6 +46,22 @@ pub struct ConnectionStats {
     pub attempts: u64,
     /// At least one counter saturated.
     pub overflowed: bool,
+    /// Charged RX/TX backing capacity, including externally held RX leases.
+    pub queue_bytes: [u64; 2],
+    /// Maximum charged RX/TX backing capacity sampled at reservation.
+    pub peak_queue_bytes: [u64; 2],
+    /// Reserved RX/TX slots, including preparation and terminal tickets.
+    pub queue_slots: [u64; 2],
+    /// Maximum reserved RX/TX slots sampled at reservation.
+    pub peak_queue_slots: [u64; 2],
+    /// Application payload bytes copied during accepted TX encoding.
+    pub copied_payload_bytes: u64,
+    /// Observed RX pause time in nanoseconds; sampled on owner control/progress.
+    pub rx_paused_nanos: u64,
+    /// Completed RX frame first-byte-to-validation latency.
+    pub receive_latency: LatencyHistogram,
+    /// Accepted TX enqueue-to-local-flush latency.
+    pub send_latency: LatencyHistogram,
 }
 fn count(counter: &mut u64, amount: usize, overflow: &mut bool) {
     match counter.checked_add(amount as u64) {
@@ -88,6 +108,7 @@ struct Transmit {
     buffer: Buffer,
     index: usize,
     offset: usize,
+    enqueued_at: u64,
 }
 
 /// Single driver owner. No socket I/O/checksum/allocation executes under admission
@@ -108,6 +129,7 @@ pub struct Connection {
     peer_write_closed: bool,
     hangup_hint: bool,
     stats: ConnectionStats,
+    pause_started: Option<u64>,
 }
 impl Transport {
     /// Adopt a caller-owned, already connected stream into a reserved family.
@@ -149,6 +171,7 @@ impl Connection {
             transport.clock.clone(),
             Cancellation::default(),
             !connecting,
+            registration,
         );
         Ok(Self {
             stream,
@@ -170,6 +193,7 @@ impl Connection {
             peer_write_closed: false,
             hangup_hint: false,
             stats: ConnectionStats::default(),
+            pause_started: None,
         })
     }
     /// Obtain a producer handle; Connecting still rejects payloads until opened.
@@ -190,7 +214,15 @@ impl Connection {
     }
     /// Current bounded counters.
     pub fn stats(&self) -> ConnectionStats {
-        self.stats
+        let family = &self.shared.family;
+        let mut stats = self.stats;
+        stats.queue_bytes = [family.rx.used(), family.tx.used()];
+        stats.queue_slots = [family.rx_slots.used(), family.tx_slots.used()];
+        stats.peak_queue_bytes = [family.rx.peak(), family.tx.peak()];
+        stats.peak_queue_slots = [family.rx_slots.peak(), family.tx_slots.peak()];
+        stats.copied_payload_bytes = family.copied_payload_bytes.load(Ordering::Relaxed);
+        stats.overflowed |= stats.copied_payload_bytes == u64::MAX;
+        stats
     }
     /// Exact opaque stream incarnation.
     pub fn registration(&self) -> Registration {
@@ -295,6 +327,13 @@ impl Connection {
         }
         self.phase = ConnectionPhase::Closed;
         self.terminal = Some(error);
+        self.shared.family.diagnostics.record(
+            &self.shared.clock,
+            self.registration,
+            EventKind::Closed,
+            0,
+            Some(error.kind),
+        );
         self.stream.close();
         self.rx = Receive::default();
         if let Some(tx) = self.tx.take() {
@@ -318,6 +357,16 @@ impl Connection {
     }
     fn check(&mut self) -> Result<u64> {
         let now = self.shared.clock.now()?;
+        if let Some(started) = self.pause_started.take() {
+            count(
+                &mut self.stats.rx_paused_nanos,
+                (now - started) as usize,
+                &mut self.stats.overflowed,
+            );
+        }
+        if self.phase == ConnectionPhase::Open && !self.can_read() {
+            self.pause_started = Some(now);
+        }
         if self.shared.cancellation.check().is_err() {
             return Err(ErrorKind::Cancelled.into());
         }
@@ -489,6 +538,15 @@ impl Connection {
             }
             if self.rx.body.is_none() && self.rx.filled == FRAME_HEADER_BYTES {
                 let size = inspect_frame_header(&self.rx.header).map_err(codec_error)?;
+                #[cfg(feature = "test-support")]
+                if self
+                    .shared
+                    .family
+                    .failure
+                    .take(crate::test_support::FailurePoint::ReceiveSlot)
+                {
+                    return Err(ErrorKind::ResourceExhausted.into());
+                }
                 self.rx.slot = Some(
                     self.shared
                         .family
@@ -510,6 +568,15 @@ impl Connection {
                 let body = self.rx.body.take().ok_or(ErrorKind::AdapterViolation)?;
                 decode_frame(&body.bytes).map_err(codec_error)?;
                 let now = self.check()?;
+                let started = self.rx.expires.ok_or(ErrorKind::AdapterViolation)? - FRAME_NANOS;
+                self.stats.receive_latency.observe(now - started);
+                self.shared.family.diagnostics.record(
+                    &self.shared.clock,
+                    self.registration,
+                    EventKind::Received,
+                    body.bytes.len() as u64,
+                    None,
+                );
                 let slot = self.rx.slot.take().ok_or(ErrorKind::AdapterViolation)?;
                 let index = self
                     .received
@@ -563,10 +630,16 @@ impl Connection {
                         .as_mut()
                         .and_then(|s| s.queued.take())
                         .ok_or(ErrorKind::AdapterViolation)?;
+                    let enqueued_at = admission.slots[index]
+                        .as_ref()
+                        .ok_or(ErrorKind::AdapterViolation)?
+                        .deadline
+                        - FRAME_NANOS;
                     self.tx = Some(Transmit {
                         buffer,
                         index,
                         offset: 0,
+                        enqueued_at,
                     });
                 } else {
                     break;
@@ -610,6 +683,15 @@ impl Connection {
                 .is_some_and(|t| t.offset == t.buffer.bytes.len())
             {
                 let tx = self.tx.take().ok_or(ErrorKind::AdapterViolation)?;
+                let elapsed = now - tx.enqueued_at;
+                self.stats.send_latency.observe(elapsed);
+                self.shared.family.diagnostics.record(
+                    &self.shared.clock,
+                    self.registration,
+                    EventKind::Flushed,
+                    elapsed,
+                    None,
+                );
                 self.shared.finish(tx.index, SendOutcome::FlushedLocally);
                 self.idle_expires = deadline(now, IDLE_NANOS)?;
                 frames += 1;

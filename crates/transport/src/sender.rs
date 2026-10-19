@@ -1,5 +1,6 @@
 use crate::{
-    Error, ErrorKind, FRAME_NANOS, Result, deadline,
+    Error, ErrorKind, EventKind, FRAME_NANOS, Result, deadline,
+    diagnostics::increment,
     resources::{Buffer, ClockDomain, Family},
 };
 use std::sync::{Arc, Mutex};
@@ -43,6 +44,7 @@ pub(crate) struct Shared {
     pub(crate) clock: Arc<ClockDomain>,
     pub(crate) cancellation: Cancellation,
     pub(crate) admission: Mutex<Admission>,
+    pub(crate) registration: xadb_foundation::network::Registration,
 }
 impl Shared {
     pub(crate) fn new(
@@ -50,11 +52,13 @@ impl Shared {
         clock: Arc<ClockDomain>,
         cancellation: Cancellation,
         open: bool,
+        registration: xadb_foundation::network::Registration,
     ) -> Arc<Self> {
         Arc::new(Self {
             family,
             clock,
             cancellation,
+            registration,
             admission: Mutex::new(Admission {
                 open,
                 fatal: None,
@@ -107,16 +111,47 @@ impl ConnectionSender {
         if payload.len() > MAX_FRAME_PAYLOAD {
             return Err(ErrorKind::InvalidFrame.into());
         }
-        let slot_charge = self
+        #[cfg(feature = "test-support")]
+        if self
             .0
             .family
-            .tx_slots
-            .reserve(1)
-            .map_err(|_| ErrorKind::Backpressured)?;
+            .failure
+            .take(crate::test_support::FailurePoint::SendSlot)
+        {
+            increment(&self.0.family.diagnostics.backpressured);
+            return Err(ErrorKind::Backpressured.into());
+        }
+        let slot_charge = self.0.family.tx_slots.reserve(1).map_err(|_| {
+            increment(&self.0.family.diagnostics.backpressured);
+            ErrorKind::Backpressured
+        })?;
         let mut buffer = Buffer::allocate(&self.0.family, false, payload.len() + FRAME_OVERHEAD)
-            .map_err(|_| ErrorKind::Backpressured)?;
+            .map_err(|_| {
+                increment(&self.0.family.diagnostics.backpressured);
+                ErrorKind::Backpressured
+            })?;
+        #[cfg(feature = "test-support")]
+        if self
+            .0
+            .family
+            .failure
+            .take(crate::test_support::FailurePoint::Encode)
+        {
+            let short = buffer.bytes.len() - 1;
+            encode_frame_into(payload, &mut buffer.bytes[..short])
+                .map_err(|_| ErrorKind::InvalidFrame)?;
+        }
         encode_frame_into(payload, &mut buffer.bytes).map_err(|_| ErrorKind::InvalidFrame)?;
         let mut admission = self.0.admission.lock().map_err(|_| ErrorKind::Poisoned)?;
+        #[cfg(feature = "test-support")]
+        if self
+            .0
+            .family
+            .failure
+            .take(crate::test_support::FailurePoint::Admission)
+        {
+            return Err(ErrorKind::Closed.into());
+        }
         self.0.check_cancellation(&admission)?;
         if let Some(error) = admission.fatal {
             return Err(error);
@@ -157,6 +192,19 @@ impl ConnectionSender {
             result: None,
             live_ticket: true,
         });
+        let _ = self.0.family.copied_payload_bytes.fetch_update(
+            std::sync::atomic::Ordering::Relaxed,
+            std::sync::atomic::Ordering::Relaxed,
+            |n| Some(n.saturating_add(payload.len() as u64)),
+        );
+        drop(admission);
+        self.0.family.diagnostics.record(
+            &self.0.clock,
+            self.0.registration,
+            EventKind::Enqueued,
+            (payload.len() + FRAME_OVERHEAD) as u64,
+            None,
+        );
         Ok(SendTicket {
             shared: self.0.clone(),
             index,

@@ -1,6 +1,9 @@
 """Negative tests for implemented COMM evidence checks, not the full C-V16 matrix."""
 import unittest
-from check_comm import wire, inspect_wire, check_inventory, check_ready, check_closed, REQUIRED_TESTS
+from check_comm import (
+    FOUNDATION_REQUIRED_TESTS, INSTRUMENTED_REQUIRED_TESTS, REQUIRED_TESTS,
+    check_closed, check_inventory, check_ready, inspect_wire, wire,
+)
 
 
 class CommCheckerTests(unittest.TestCase):
@@ -18,6 +21,14 @@ class CommCheckerTests(unittest.TestCase):
             check_inventory(valid.replace(' ... ok', ' ... ignored', 1))
         with self.assertRaises(ValueError):
             check_inventory(valid+'\ntest result: FAILED')
+
+    def test_all_features_and_foundation_peak_inventories_are_separate_and_required(self):
+        instrumented = '\n'.join(f'test {name} ... ok' for name in sorted(INSTRUMENTED_REQUIRED_TESTS))
+        check_inventory(instrumented, INSTRUMENTED_REQUIRED_TESTS)
+        with self.assertRaises(ValueError):
+            check_inventory(instrumented, INSTRUMENTED_REQUIRED_TESTS | {'two_connections_two_slots_depth_eight_exhaustive_model'})
+        foundation = '\n'.join(f'test {name} ... ok' for name in sorted(FOUNDATION_REQUIRED_TESTS))
+        check_inventory(foundation, FOUNDATION_REQUIRED_TESTS)
 
     def test_wrong_binary_identity_missing_ready_and_peer_history_fail(self):
         valid = {'event':'ready','source_sha256':'abc','pid':42,'profile':'debug'}

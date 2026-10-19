@@ -12,7 +12,8 @@ fn independent_vectors_boundaries_and_header_rejection_before_allocation() {
         encode_frame_into(&payload, &mut output).unwrap();
         assert_eq!(output, expected);
         assert_eq!(
-            inspect_frame_header(&expected[..10]).unwrap(),
+            inspect_frame_header(&expected[..10])
+                .expect("COMM_MUTANT endian: independent little-endian header rejected"),
             expected.len()
         );
         assert_eq!(decode_frame(&expected).unwrap(), payload);
@@ -92,7 +93,10 @@ fn every_small_bit_corruption_is_terminal_without_resynchronization() {
                 let (t, _, s, mut c) = fixture(bad);
                 s.lock().unwrap().eof = true;
                 advance(&mut c);
-                assert!(c.take_received().is_none(), "byte={byte} bit={bit}");
+                assert!(
+                    c.take_received().is_none(),
+                    "COMM_MUTANT checksum: invalid payload delivered byte={byte} bit={bit}"
+                );
                 assert_eq!(c.phase(), ConnectionPhase::Closed);
                 assert_eq!(t.payload_bytes(), 0);
             }

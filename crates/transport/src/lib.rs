@@ -2,11 +2,17 @@
 //! See devdoc/contracts/comm-design.md. Local flush never means peer acknowledgement.
 #![deny(missing_docs)]
 mod connection;
+mod diagnostics;
 mod driver;
 mod resources;
 mod sender;
+#[cfg(feature = "test-support")]
+pub mod test_support;
 
 pub use connection::{Connection, ConnectionPhase, ConnectionStats, ReceivedFrame};
+pub use diagnostics::{
+    DiagnosticEvent, DiagnosticSnapshot, EventKind, Instrumentation, LatencyHistogram,
+};
 pub use driver::{ConnectionId, Driver};
 pub use resources::Transport;
 pub use sender::{ConnectionSender, SendOutcome, SendTicket};

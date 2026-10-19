@@ -109,7 +109,13 @@ impl ByteStream for Stream {
         Ok(None)
     }
     fn close(&mut self) {
-        self.0.lock().unwrap().closed += 1;
+        // A failing assertion can poison the fixture while borrowing its I/O
+        // ledger. Cleanup must preserve the original counterexample rather than
+        // cause a second panic during Connection::drop. No I/O resumes here.
+        self.0
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .closed += 1;
     }
 }
 pub fn frame(payload: &[u8]) -> Vec<u8> {

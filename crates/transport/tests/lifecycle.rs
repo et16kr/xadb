@@ -21,7 +21,14 @@ fn short_io_interrupt_block_and_zero_keep_offsets_and_exact_failure_bytes() {
     assert_eq!(s.lock().unwrap().write_calls, 3);
     clock.set(20_000_000);
     advance(&mut c);
-    assert_eq!(outcome(ticket), SendOutcome::FlushedLocally);
+    let result = ticket
+        .try_take()
+        .unwrap_or_else(|_| panic!("COMM_MUTANT offset-reset: partial send did not complete"));
+    assert_eq!(
+        result,
+        SendOutcome::FlushedLocally,
+        "COMM_MUTANT offset-reset: wrong terminal outcome"
+    );
     assert_eq!(s.lock().unwrap().output, frame(&[1, 2]));
     assert_eq!(t.payload_bytes(), 0);
     for action in [Action::Zero, Action::Overcount, Action::Error] {
@@ -146,7 +153,8 @@ fn last_io_crossing_deadline_never_reports_success_but_keeps_full_progress() {
         SendOutcome::Failed {
             error: ErrorKind::SendTimedOut.into(),
             written_bytes: 42
-        }
+        },
+        "COMM_MUTANT stale-clock: last write crossed deadline but reported success"
     );
     let (_, clock, s, mut c) = fixture(frame(&[]));
     s.lock().unwrap().reads.push_back(Action::Limit(1));
@@ -186,11 +194,14 @@ fn drop_partial_tx_cancel_after_last_write_and_stale_event_are_terminal() {
     advance(&mut c);
     drop(c);
     assert_eq!(
-        outcome(ticket),
+        ticket
+            .try_take()
+            .unwrap_or_else(|_| panic!("COMM_MUTANT drop-pending: owner Drop left ticket Pending")),
         SendOutcome::Failed {
             error: ErrorKind::Closed.into(),
             written_bytes: 3
-        }
+        },
+        "COMM_MUTANT drop-pending: owner Drop lost written prefix"
     );
     let (_, _, s, mut c) = fixture(vec![]);
     let ticket = c.sender().try_send(&[]).unwrap();
@@ -215,7 +226,11 @@ fn drop_partial_tx_cancel_after_last_write_and_stale_event_are_terminal() {
             ..Ready::default()
         },
     );
-    assert_eq!(s.lock().unwrap().write_calls, 0);
+    assert_eq!(
+        s.lock().unwrap().write_calls,
+        0,
+        "COMM_MUTANT stale-event: old generation performed a write"
+    );
     c.cancel();
     assert!(matches!(
         outcome(ticket),
@@ -245,7 +260,12 @@ fn connecting_has_write_interest_without_tx_and_deadlines_are_absolute() {
     let t = Transport::new(clock.clone());
     let s = Arc::new(Mutex::new(Script::default()));
     let mut c = t.connect(&mut TestConnector(s)).unwrap();
-    assert!(c.interest().unwrap().writable);
+    assert!(
+        c.interest()
+            .expect("COMM_MUTANT connect-interest: pending connect has no interest")
+            .writable,
+        "COMM_MUTANT connect-interest: pending connect lacks writable interest"
+    );
     assert_eq!(
         c.sender().try_send(&[]).err().unwrap().kind,
         ErrorKind::Closed

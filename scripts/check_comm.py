@@ -50,6 +50,35 @@ REQUIRED_TESTS = {
     'permanently_ready_connections_each_receive_bounded_turn',
     'retained_hup_never_doubles_per_step_read_budget',
     'error_only_hint_without_socket_error_is_backed_off',
+    'diagnostics::tests::diagnostic_control_storage_fits_driver_budget',
+    'driver_cancel_during_partial_write_stops_before_next_write',
+    'driver_cancel_rejects_preexisting_sender_before_next_step',
+    'driver_cancel_during_read_prevents_delivery_and_write',
+    'aborted_accept_preserves_healthy_connection_and_backs_off_listener',
+    'connection_cancel_keeps_driver_and_sibling_usable',
+    'concurrent_driver_cancel_preserves_only_the_completed_write_prefix',
+    'fatal_accept_error_still_closes_driver_with_original_cause',
+    'global_payload_exact_limit_and_one_byte_over_are_distinguished',
+    'trickle_progress_never_extends_the_first_byte_deadline',
+    'paused_receive_retains_hangup_until_leases_return_and_buffered_frame_is_delivered',
+    'cancellation_after_partial_tx_never_sends_the_next_accepted_frame',
+    'poisoned_fixture_cleanup_preserves_the_original_failure_without_resuming_io',
+    'diagnostics_are_bounded_ordered_and_modes_preserve_bytes_and_results',
+    'rx_pause_and_backpressure_are_observed_without_unbounded_queues',
+    'preserved_codec_corpus_and_mutation_generator_match_independent_oracle',
+    'production_four_slot_events_v3_256_seeds_1024_operations_and_corpus',
+    'producer_lease_cancel_drain_and_drop_thread_races',
+}
+INSTRUMENTED_REQUIRED_TESTS = REQUIRED_TESTS | {
+    'every_send_preparation_failure_returns_all_charges_without_admission',
+    'receive_reservation_and_allocation_failures_are_terminal_and_return_charges',
+    'connection_reservation_failure_precedes_native_creation_and_is_domain_local',
+    'independent_model_depth_two_smoke_checks_every_enabled_transition',
+    'canonical_time_and_terminal_keys_preserve_enabled_events_and_successors',
+}
+FOUNDATION_REQUIRED_TESTS = {
+    'quota_peak_retains_released_reservations_and_excludes_rejections',
+    'quota_peak_keeps_the_concurrent_reservation_high_water_after_join',
 }
 
 
@@ -70,9 +99,9 @@ def inspect_wire(data):
     return data[10:-32]
 
 
-def check_inventory(output):
+def check_inventory(output, required=REQUIRED_TESTS):
     names = set(re.findall(r'^test (\S+) \.\.\. ok$', output, re.M))
-    missing = REQUIRED_TESTS - names
+    missing = required - names
     if missing:
         raise ValueError(f'required tests missing: {sorted(missing)}')
     if re.search(r'test result: FAILED', output):
@@ -258,7 +287,7 @@ def main():
             print(result.stdout.decode(errors='replace'), flush=True)
             raise RuntimeError(f'{name} failed')
         if inventory:
-            check_inventory(result.stdout.decode())
+            check_inventory(result.stdout.decode(), REQUIRED_TESTS if inventory is True else inventory)
         return result.stdout
 
     exit_code = 0
@@ -269,7 +298,8 @@ def main():
         report['contract_sha256'] = {name: digest(ROOT / name) for name in ('devdoc/contracts/comm-design.md', 'devdoc/plans/comm-implementation-plan.md')}
         command('checker-negative-tests', ['python3', '-B', '-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_check_comm.py'])
         command('transport-default', ['cargo', 'test', '-p', 'xadb-transport', '--no-default-features', '--locked', '--offline', '--', '--test-threads=1'], inventory=True)
-        command('transport-instrumented', ['cargo', 'test', '-p', 'xadb-transport', '--all-features', '--locked', '--offline', '--', '--test-threads=1'], inventory=True)
+        command('transport-instrumented', ['cargo', 'test', '-p', 'xadb-transport', '--all-features', '--locked', '--offline', '--', '--test-threads=1'], inventory=INSTRUMENTED_REQUIRED_TESTS)
+        command('foundation-quota-peak', ['cargo', 'test', '-p', 'xadb-foundation', '--test', 'quota_peak', '--locked', '--offline', '--', '--test-threads=1'], inventory=FOUNDATION_REQUIRED_TESTS)
         command('comm-lint', ['cargo', 'clippy', '-p', 'xadb-transport', '-p', 'xadbtest-transport-worker', '--all-features', '--all-targets', '--locked', '--offline', '--', '-D', 'warnings'])
         metadata = json.loads(command('dependency-boundary', ['cargo', 'metadata', '--format-version', '1', '--locked', '--offline', '--filter-platform', 'x86_64-unknown-linux-gnu']))
         packages = {p['id']: p for p in metadata['packages']}
