@@ -1,6 +1,6 @@
 # DEV9 — 제품 인수 구현·검증 계획
 
-2026-10-19 · **DEV9-DESIGN-001 대응 / 독립 수정본 검토 PASS / leaf 동결·구현·SC16·SC17 NOT_RUN**
+2026-10-19 · **DEV9-DESIGN-002 대응 / 독립 수정본 검토 PASS / leaf 동결·구현·SC16·SC17 NOT_RUN**
 
 [상세 설계](../contracts/dev9-qualification-design.md) · [조사·검토](../evidence/dev9-source-research.md) · [단계 정본](development-stages.json) · [완료 계약](stage-completion.json)
 
@@ -20,14 +20,14 @@ XADB-046의 목록·계약·독립 모델·fixture 준비는 조기 착수할 �
 | --- | --- | --- | --- |
 | D9-F01 | 계약 소유자·DEV9 | 104개 부모의 모든 semantic leaf, 공개 grammar/API/overload/property/limit/문서 inventory, 적용성·D3 제외 근거 | SC16 |
 | D9-F02 | DEV6/7/8/PART/NG·DEV9 | 지원 조합과 거절 조합·환경 값·동등성 분할·필수 다중 축 셀·수/분모·coverage closure | SC16·matrix 생성 |
-| D9-F03 | XADBTest·build | baseline/candidate/profile/receipt literal schema, canonical digest·중복/크기/경로 규칙·artifact 역할·상태 전이 | aggregator·receipt 생산 |
+| D9-F03 | XADBTest·build | baseline/candidate/profile/receipt literal schema, canonical digest·중복/크기/경로 규칙·artifact 역할·상태 전이, RunSlot 분모·candidate campaign/dispatch 원장·전체 attempt 대조 | aggregator·receipt 생산 |
 | D9-F04 | 독립 oracle·기능 소유자 | typed expected·합법 history·오류 효과·각 case의 독립 assertion, known-bad·dialect mapping | 셀 correctness 실행 |
-| D9-F05 | engine/server/RP·XADBTest | 실제 crash/fault cut·도달 witness·재장애 schedule·외부 ACK·prepared obligation·복원 closure | 복구·전환·PITR 인수 |
+| D9-F05 | engine/server/RP·XADBTest | 실제 crash/fault cut·도달 witness·재장애 schedule·독립 ACK 보존 경계·연속 이력·prepared obligation·목적/branch/target별 복원 closure | 복구·전환·PITR 인수 |
 | D9-F06 | 성능 담당·DEV8 | workload/data/부하·장비·FS/runtime·계측·한도·반복/기간·TPS/p99/RSS/I/O/RPO/RTO·통계/중단 기준 | candidate 성능 확인 |
-| D9-F07 | XADBTest·platform | worker/event/artifact/oracle의 수치 예산·timeout·process/경로 소유·cleanup·비밀값 처리·보존 | runner·대규모 campaign |
-| D9-F08 | build/package·platform | Linux target/package·toolchain/lockfile/provider·설치 소유 manifest·rollback·재현 recipe·license inventory | 설치·공식 배포 |
+| D9-F07 | XADBTest·platform | worker/event/artifact/oracle의 수치 예산·timeout·process/경로 소유·cleanup·비밀값 처리·원장/observer의 장애 분리·봉인·보존 | runner·대규모 campaign |
+| D9-F08 | build/package·platform | DP06의 첫 배포 대상과 실제 Linux target/package·toolchain/lockfile/provider·설치 소유 manifest·rollback·재현 recipe·license inventory | 설치·공식 배포 |
 | D9-F09 | SQL/client/운영 문서 소유자 | 지원표·한도·오류·실행 예제·runbook·release note와 case 연결 | R16-04·SC17 |
-| D9-F10 | 통합·독립 검토 | evidence 신뢰 등급·승격 규칙·blocker 범위·retest/무효화·버전 applicability·새 기준선 변경 절차 | PRODUCT_QUALIFIED·출시 판단 |
+| D9-F10 | 통합·독립 검토 | evidence 신뢰 등급·승격 규칙·DP06 보호 실행/보존·blocker 범위·retest/무효화·버전 applicability·새 기준선 변경 절차 | PRODUCT_QUALIFIED·공식 사내 배포·출시 판단 |
 
 소유자는 역할 표만 두지 않고 실제 구현 작업 계약에 담당 식별자·수정 경로·공유 변경·기준 지문을 등록한다. D2 범위의 routine 결정은 기존 위임으로 진행하며 제품 기능 축소·SLA·외부 출시만 해당 D3 판단을 적용한다.
 
@@ -37,9 +37,9 @@ XADB-046의 목록·계약·독립 모델·fixture 준비는 조기 착수할 �
 | 묶음 | 연결 | 구현 책임 | 합류 조건 |
 | --- | --- | --- | --- |
 | D9-W01 | XADB-046 / SC16 | 기능 소유 계약과 public surface에서 leaf·variant·case·oracle 추적을 작성 | F01/02/04, 아래 104개 배정과 양방향 누락 0 |
-| D9-W02 | XADB-046 / SC16 | baseline/candidate manifest·receipt validator·aggregator와 known-bad | F03/07/10, 빈집합·stale·누락·기준 변경 거절 |
-| D9-W03 | XADB-047 / SC17 | 실제 engine/SQL/server/client/peer·운영 조합 runner | W01/02, 실제 선행 gate와 F05, T11–T22 |
-| D9-W04 | XADB-047 / SC17 | Linux 설치/제거·fresh build·manual/runbook·version applicability | F08/09/10, T23–T28 |
+| D9-W02 | XADB-046 / SC16 | baseline/candidate manifest·receipt validator·aggregator와 known-bad | F03/07/10, 빈집합·stale·누락·기준 변경 거절, R2-V01 |
+| D9-W03 | XADB-047 / SC17 | 실제 engine/SQL/server/client/peer·운영 조합 runner | W01/02, 실제 선행 gate와 F05, T11–T22·R2-V02/03 |
+| D9-W04 | XADB-047 / SC17 | Linux 설치/제거·fresh build·manual/runbook·version applicability | F08/09/10, T23–T28·R2-V04 |
 | D9-W05 | XADB-047 / SC17 | 성능/capacity/soak와 최종 bundle·독립 판정 | W03/04, F06, T29–T34·P01–P05 |
 
 공통 schema·계약 동결 뒤 기능 소유자별 fixture 작성은 분리할 수 있으나 최종 합류는 동일 candidate manifest에서 수행한다. 빌드/의존 배치 변경은 실제 구현 시 [저장소 정책](../policies/repository-build-plan.md)과 JSON을 갱신한다. 아직 없는 runner·crate·fixture 경로를 구현 목록에 추가하지 않는다.
@@ -120,12 +120,24 @@ R16의 직접 인수 범위는 다음과 같다.
 | D9-T33 | 동일 candidate의 전체 분모·하위 gate·필수 셀·미결함·수치·문서·독립 검토를 재집계. 하나의 필수 비통과도 승격 차단 |
 | D9-T34 | 제품 인수·공식 사내 배포·외부 출시 분리. 개발 N/A/로컬 검증/설계 채택이 출시 승인으로 승격되지 않음 |
 
+<a id="review-002-cases"></a>
+### 5.1 DESIGN-002 추가 반례와 수신
+
+다음은 T 묶음의 의무를 구체화하는 추가 case family다. fixture·literal schema·실제 cut은 해당 F에서 동결하고 모든 세부 slot을 실행한다. 표의 예상 판정은 **설계 반례이며 실행 결과가 아니다**.
+
+| ID·연결 | 반례·정상 대조와 필수 판정 |
+| --- | --- |
+| D9-R2-V01 · T02/05/07/08/33 | 비결정적 필수 3회 중 2회 PASS만 제출, 한 receipt를 다른 반복/shard에 중복 배정, 실패 attempt 또는 campaign 전체 삭제, worker 시작 뒤 controller kill·원장 끝 유실을 거절. 모든 기대 slot·등록 attempt가 대조되고 인프라 INVALID 대체 근거까지 남은 완전한 bundle만 수락. 실제 제품 FAIL 뒤 새 campaign의 PASS는 해소가 아님 |
+| D9-R2-V02 · T15/16/17/32 | exact-cut/PITR에서 target 직전·정확한 commit·직후, 같은 timestamp·다른 branch의 같은 q, `backup Lend > target LSN`이지만 q는 같은 경우, target 미도달·뒤 source CLR/commit 혼입을 검사. 정확한 target 상태는 수락하고 잘못된 prefix는 거절. prepared XID·잠금/가시성·resolve 예약과 외부 격리를 확인. source DB/live WAL/control 접근을 차단한 상태에서 독립 closure 복원→새 ACK→재장애→재대조 |
+| D9-R2-V03 · T08/09/13/15/17 | 대체 witness 없는 DB와 ACK observer 동시 유실, 관측한 성공의 기록 삭제, 뒤 UPDATE로 가려진 ACK 거래 유실, 첫 reopen에서 보인 UNKNOWN 효과가 두 번째 reopen에서 사라지는 history를 거절. 실제 무응답 요청의 합법 UNKNOWN과 관측 인프라 손실을 구분. 목표 cut 앞뒤 관측 witness·전체 연속 이력·prepared 효과를 갖춘 정상 대조 포함 |
+| D9-R2-V04 · T10/23/25/34 | 다른 OS/FS·debug/fault artifact·로컬 grade·보호 job 부정 시험 누락·증거 보존 미구현인 결과를 첫 공식 사내 배포로 승격하는 입력을 거절. DP06 대상·동일 candidate release/V3·보호 권한·보존이 확인된 입력만 해당 승격 가능. internal fresh-build N/A를 버전 호환 PASS로 바꾸지 않음 |
+
 <a id="faults"></a>
 ## 6. Fault·상태·실제 실행
 
 DEV2/3/6/7/8·COMM/PART/NG의 해당 필수 case와 V2/V3 프로파일은 수신 의무다. DEV9에서 작은 신규 smoke로 줄이지 않는다. 새 parser/manifest/aggregator의 malformed·경계 입력, 실제 thread·process·file 효과와 negative fixture를 구현하고 적용 가능한 V2/V3 범위를 D2 검토로 고정한다. V3의 seed/operation·thread/fuzz 기간 등은 [DP03](../policies/development-policy.md#section-4)과 해당 단계의 더 구체적인 계약을 따른다.
 
-fault 축은 allocation·quota·read/write/short write·sync/rename/dirsync·ENOSPC·timeout/cancel·process kill·복구 중 kill·network loss/delay·fencing/provider/key 실패·artifact 수집 실패다. stage owner가 실제 도달 지점을 공급한다. 각 셀은 새 소유 fixture로 실행하고 reached/expected cut·관측 결과·recovery image·cleanup을 저장한다. 비결정적 셀의 반복 수는 기존 프로파일 이상으로 사전 고정한다.
+fault 축은 allocation·quota·read/write/short write·sync/rename/dirsync·ENOSPC·timeout/cancel·process kill·복구 중 kill·network loss/delay·fencing/provider/key 실패·artifact 수집 실패다. stage owner가 실제 도달 지점을 공급한다. 각 셀은 새 소유 fixture로 실행하고 reached/expected cut·관측 결과·recovery image·cleanup을 저장한다. 비결정적 셀의 반복 수는 기존 프로파일 이상으로 사전 고정하고 seed/schedule/반복별 RunSlot에 배정한다. candidate 전체 campaign·dispatch·attempt를 [원장 계약](../contracts/dev9-qualification-design.md#attempt-completeness)으로 대조한다. 장애·PITR의 기대 상태와 observer 보존은 [복구 목적별 계약](../contracts/dev9-qualification-design.md#recovery-target)과 [관측 계약](../contracts/dev9-qualification-design.md#recovery-observation)을 따른다.
 
 독립 검증은 (1) 외부 API 결과/ACK/history, (2) 논리 row/object 관계와 transaction 효과, (3) 구조/무결성·진행점·retention·자원, (4) 재시작/복원 이후 같은 검증으로 구성한다. production decoder의 self-consistency만으로 충분하지 않다. 독립 검사기의 메모리·임시 파일·시간이 한도를 넘으면 결과를 UNKNOWN/INVALID로 남긴다. 시험 인프라 실패를 제품 정상으로 바꾸지 않는다.
 
@@ -147,8 +159,8 @@ DEV8 기본 warmup60초·측정180초·10쌍 AB/BA, p99 최소 표본과 계측 
 <a id="completion"></a>
 ## 8. 완료 bundle과 현재 상태
 
-최종 bundle은 baseline/candidate/profile manifest, clean source와 artifact hash, 104개 부모→확장 leaf→필수 셀 분모, 실제 하위 gate receipt, 각 attempt의 원시 결과·ACK/history·fault 도달·복구/운영/성능 자료·cleanup, runner/oracle 부정 self-test, 설치/license/문서/이관 예제, 미결함 목록과 독립 검토를 포함한다. 비적용 항목과 근거·권한을 별도로 보존한다. 민감 자료는 접근 제어와 redaction 상태를 표시하고 원본 없는 요약만으로 필수 관측을 충족하지 않는다.
+최종 bundle은 baseline/candidate/profile manifest, clean source와 artifact hash, 104개 부모→확장 leaf→필수 셀/RunSlot 분모, candidate 전체 campaign/dispatch 원장, 실제 하위 gate receipt, 각 attempt의 원시 결과·ACK/history·fault 도달·복구/운영/성능 자료·cleanup, runner/oracle 부정 self-test, 설치/license/문서/이관 예제, 미결함 목록과 독립 검토를 포함한다. 비적용 항목과 근거·권한을 별도로 보존한다. 민감 자료는 접근 제어와 redaction 상태를 표시하고 원본 없는 요약만으로 필수 관측을 충족하지 않는다.
 
-SC16은 전체 leaf/variant 동결 전 NOT_RUN이다. SC17은 같은 candidate의 전체 required 셀·실제 CLIENT1/SQL_EXT1/OPS1/P1와 해당 global gate·현재 build 복구·운영·성능·R16이 완결되기 전 NOT_RUN이다. 기존 stage status, evidence_refs=[], run_entrypoint=null은 이번 설계로 바꾸지 않는다. F01–F10·T01–T34·P01–P05는 계획이며 실행 결과가 아니다.
+SC16은 전체 leaf/variant 동결 전 NOT_RUN이다. SC17은 같은 candidate의 전체 required 셀/RunSlot·실제 CLIENT1/SQL_EXT1/OPS1/P1와 해당 global gate·현재 build 복구·운영·성능·R16이 완결되기 전 NOT_RUN이다. 공식 사내 배포에는 [DP06](../policies/development-policy.md#section-7)의 첫 대상·보호 release/V3·보존 의무를 추가 적용한다. 기존 stage status, evidence_refs=[], run_entrypoint=null은 이번 설계로 바꾸지 않는다. F01–F10·T01–T34·R2-V01–04·P01–P05는 계획이며 실행 결과가 아니다.
 
-독립 설계 검토와 채택 기록은 [조사 기록](../evidence/dev9-source-research.md#review)에 둔다. 문서 검사는 pre-push 훅에서 실행하며 이번 편집 중 제품 시험·문서 검증기를 실행하지 않는다. 기존 DEV2/COMM 코드·실행 증거와 무관한 변경은 작업 범위 밖이다.
+현재 수정본의 독립 설계 검토와 채택 기록은 [2차 조사·검토](../evidence/dev9-source-research.md#review-002)에 둔다. DESIGN-001 당시 기록은 [최초 검토](../evidence/dev9-source-research.md#review)로 보존한다. 문서 검사는 pre-push 훅에서 실행하며 이번 편집 중 제품 시험·문서 검증기를 실행하지 않는다. 기존 DEV2/COMM 코드·실행 증거와 무관한 변경은 작업 범위 밖이다.

@@ -333,7 +333,8 @@
       ],
       "required_details": [
         "D9-F01/F02: all 104 parent capabilities expanded into complete semantic leaves and applicable variants, public-surface reconciliation and explicit exclusions",
-        "D9-F03/F04/F07/F10: immutable baseline, candidate/receipt schema, independent oracle and negative checker; D9-T01..T10"
+        "D9-F03/F04/F07/F10: immutable baseline, candidate/receipt schema, independent oracle and negative checker; D9-T01..T10",
+        "DEV9-DESIGN-002: frozen RunSlot denominator including seeds, schedules, repetitions and artifact roles; candidate-wide campaign/dispatch ledger and all-attempt reconciliation; D9-R2-V01"
       ]
     },
     {
@@ -351,7 +352,9 @@
       "required_details": [
         "D9-F01..F10 frozen; CLIENT1/SQL_EXT1/OPS1/P1 and applicable global/feature gates bound to the same candidate manifest",
         "D9-T11..T34 and D9-P01..P05: public paths, current-build recovery, operations, performance, R16 installation/documentation and version applicability",
-        "dev9-qualification-design.md#gates: required-cell completeness and independent review; internal qualification is not external release"
+        "dev9-qualification-design.md#gates: required-cell and RunSlot completeness, all registered attempts and independent review; internal qualification is not external release",
+        "D9-R2-V02/V03: recovery-purpose and timeline/commit/LSN target oracle, independent ACK preservation, continuous recrash history and prepared obligations",
+        "D9-R2-V04: official internal promotion additionally requires DP06 target, protected release/V3 evidence and retention; local qualification alone is insufficient"
       ]
     }
   ],

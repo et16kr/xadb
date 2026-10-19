@@ -4,7 +4,7 @@
 
 <!-- catalogue -->
 
-- [DEV9 — 제품 기능·운영·성능 인수 설계](dev9-qualification-design.md) — SC16/17·기준선/후보 identity·전체 조합·설치/문서·독립 판정; 제품 인수 미실행
+- [DEV9 — 제품 기능·운영·성능 인수 설계](dev9-qualification-design.md) — DESIGN-002 실행 분모·ACK 관측·PITR 목적·공식 배포, SC16/17·전체 조합·독립 판정; 제품 인수 미실행
 
 - [DEV8 — 복제·백업·운영·성능 설계](dev8-operations-design.md) — DESIGN-002 domain·sequence·partition 이동·WAL/control 보완, SC12–15·H1/L1/M1·PITR·보안/운영; OPS1 미실행
 

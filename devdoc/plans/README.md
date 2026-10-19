@@ -4,7 +4,7 @@
 
 <!-- catalogue -->
 
-- [DEV9 — 제품 인수 구현·검증 계획](dev9-implementation-plan.md) — F01–10·104개 요구 수신·T01–34·P01–05·R16 설치/문서·버전 적용성; SC16/17 미실행
+- [DEV9 — 제품 인수 구현·검증 계획](dev9-implementation-plan.md) — F01–10·104개 요구 수신·T01–34·R2-V01–04·P01–05·R16 설치/문서·버전 적용성; SC16/17 미실행
 
 - [DEV8 — 복제·운영 구현·검증 계획](dev8-implementation-plan.md) — F01–10·30개 요구·T01–40·R2-V01–04·P01–07·실제 하위/driver/peer 공급; 제품 인수 미실행
 
