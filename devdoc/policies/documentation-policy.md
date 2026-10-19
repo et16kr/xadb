@@ -1,6 +1,6 @@
 # 문서 운영 기준
 
-2026-10-18 · **DOC-001 문서 운영 / DOC-002 문서 검사 시점을 push로 변경**
+2026-10-19 · **DOC-001 문서 운영 / DOC-002 문서 검사 시점을 push로 변경 / DOC-003 push 전 Rust 포맷 검사 추가**
 
 [문서 진입점](../README.md) · [개발 운영 방침](development-policy.md#section-3) · [기계 판독 색인](../documents.json)
 
@@ -51,7 +51,7 @@ Markdown은 실제 파일로 향하는 상대 링크를 사용한다. 절 참조
 문서 자동 검사는 아래 push 시점에 적용한다. 편집·commit·문서 작업 종료마다 검사하거나 생성 결과를 갱신하지 않는다. 의미·불변식·설계 판단의 검토는 계속하며 자동 검사 PASS를 설계 타당성의 증명으로 사용하지 않는다. 제품 코드의 기능·회귀·복구 시험은 기존 단계별 의무를 적용한다.
 
 <a id="push-gate"></a>
-## Push 직전 문서 검사
+## Push 직전 문서·Rust 포맷 검사
 
 [pre-push 훅](../../scripts/git-hooks/pre-push)이 [push 검사기](../../scripts/check_push.py)를 실행한다. 기존 훅 설정이 없는 checkout에서는 한 번 등록한다. 기존 `core.hooksPath`나 사용자 훅이 있으면 덮어쓰지 않고 소유자와 연결 방식을 정한다.
 
@@ -60,12 +60,27 @@ git config --local core.hooksPath scripts/git-hooks
 ```
 
 - 검사 대상은 Git이 전송하려는 각 ref의 최종 commit이다. annotated tag는 commit으로 해석하고 같은 commit은 한 번 검사한다. 여러 commit 중 하나라도 실패하면 해당 push 전체를 차단한다. 삭제만 하는 ref는 검사할 새 내용이 없어 제외한다.
-- 각 commit을 `git archive`와 `tar`로 임시 디렉터리에 내보내 그 사본의 `python3 devdoc/verify_documents.py`를 실행한다. Python과 `devdoc/requirements.txt`의 검사 의존성이 필요하다. 검사기 누락·해석할 수 없는 commit·export/실행 오류도 push 차단이다.
+- 각 commit을 `git archive`와 `tar`로 임시 디렉터리에 내보내 그 사본에서 `cargo fmt --all --check`, `python3 devdoc/verify_documents.py`를 순서대로 실행한다. 사본의 `rust-toolchain.toml`에 맞는 Cargo·rustfmt, Python과 `devdoc/requirements.txt`의 검사 의존성이 필요하다. 포맷 불일치·검사 도구/manifest/검사기 누락·해석할 수 없는 commit·export/실행 오류도 push 차단이다.
 - 미커밋 변경은 검사 대상에 섞지 않는다. 검사 중 생성하는 `document-validation.json`은 임시 사본에만 기록하고 사본은 종료 시 정리한다. 작업 트리·index·기존 증거를 갱신하거나 검사 결과를 자동 commit하지 않는다. 출력에는 검사 commit과 결과를 남긴다.
-- 현재 검사 범위는 링크/anchor·색인/역할·JSON/Python 구문·일부 단계/패키지/인수 계약·기존 증거 identity다. 이 변경은 검사 시점을 옮기며 검사기의 모든 검출 능력을 인증하지 않는다. 설계 의미의 정확성·제품 실행·원격 보호 CI는 별도다.
+- 포맷 검사는 자동 수정하지 않는다. 실패하면 작업 트리에서 `cargo fmt --all`로 수정하고 해당 수정을 commit에 포함한 뒤 다시 push한다. 로컬 미커밋 수정만으로 포맷이 잘못된 commit을 전송할 수는 없다.
+- 현재 검사 범위는 Rust 포맷과 링크/anchor·색인/역할·JSON/Python 구문·일부 단계/패키지/인수 계약·기존 증거 identity다. DOC-002의 문서 검사 시점은 유지하고 [DOC-003](#doc-003)에서 기존 CI와 같은 Rust 포맷 검사를 추가한다. 설계 의미의 정확성·제품 실행·원격 보호 CI는 별도다.
 - 이 훅은 설치한 로컬 checkout의 push 제약이다. 새 clone에도 설치가 필요하며 원격 서버가 강제하는 branch protection으로 주장하지 않는다. 기존 제품 CI를 대체하지 않는다.
 
 평상시 문서 수정에서는 검사하지 않는다. 훅/검사기 자체를 변경할 때에는 실패를 실제 차단하는지 별도의 좁은 회귀 시험을 적용하고, 제품 단계 완료·배포에는 기존 검증 의무를 유지한다.
+
+<a id="doc-003"></a>
+## DOC-003 결정 기록
+
+| 항목 | 내용 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-19; 구현·회귀·독립 검토 완료 |
+| 근거·담당 | 사용자가 GitHub Actions 포맷 실패 확인 후 push 전 절차에 Rust 포맷 검사를 추가하도록 명시 지시. 작업·계약·통합 담당 `/root` |
+| 선택·이유 | 기존 pre-push 임시 commit 사본에서 `cargo fmt --all --check` 후 문서 검사. 실제 전송할 Rust 소스의 포맷 오류를 원격 실행 전에 차단 |
+| 대안 | 작업 트리 검사만 하면 미커밋 수정이 잘못된 commit을 가릴 수 있음. pre-commit 추가는 사용자가 요청한 push 시점과 다름. 훅의 자동 포맷 수정은 전송할 commit과 작업 트리를 불일치시킬 수 있어 제외 |
+| 소유·대체 | `scripts/check_push.py`, `scripts/test_check_push.py`와 연결된 안내·빌드 색인만 변경. DOC-002의 문서 검사 범위·시점·ref tip 선택·중복 제거·삭제 제외는 유지하고 검사 종류만 추가. 기존 DOC-002의 실행 증거는 당시 기록으로 보존 |
+| 검증 | 변경 전 새 반례 시험은 잘못된 포맷 commit의 push가 허용되어 FAIL. 변경 후 `python3 -B -m unittest discover -s scripts -p test_check_push.py`: 임시 로컬 bare remote에 대한 7개 회귀 PASS. 실제 고정 rustfmt로 포맷 오류 거절·수정 수락·미커밋/스테이징 변경 분리·작업 트리 보존·잘못된 tag가 전체 ref 전송 차단·manifest 누락과 기존 문서 gate 사례 확인. 문서 검증기는 fixture이며 제품 문서 검사·제품 시험·GitHub push는 실행하지 않음 |
+| 독립 검토·적용 | `/root/push_format_review`가 실제 diff·정책·7개 회귀 PASS를 독립 확인하고 기존 HEAD 검사기에서 포맷 반례의 실패도 재현: PASS, 수정 필요 지적 없음. `/root` 반영 확인. 현재 checkout의 `core.hooksPath=scripts/git-hooks`를 확인했으며 기존 훅이 변경된 검사기를 호출함 |
+| 재검토 | CI와 formatter/toolchain 불일치, commit 사본 검사 누락, 잘못된 포맷이 허용됨, 기존 사용자 훅과 충돌 |
 
 <a id="doc-002"></a>
 ## DOC-002 결정 기록

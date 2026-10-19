@@ -824,6 +824,23 @@
   "development_policy_ref": "development-policy.json",
   "performance_engineering_ref": "ai-performance-engineering.json",
   "documentation_policy_ref": "documentation-policy.md",
+  "pre_push_gate": {
+    "normative_ref": "documentation-policy.md#push-gate",
+    "decision_refs": [
+      "documentation-policy.md#doc-002",
+      "documentation-policy.md#doc-003"
+    ],
+    "hook": "scripts/git-hooks/pre-push",
+    "checker": "scripts/check_push.py",
+    "scope": "Each distinct pushed ref tip commit in a temporary git archive export; ref deletions excluded",
+    "commands": [
+      "cargo fmt --all --check",
+      "python3 -B devdoc/verify_documents.py"
+    ],
+    "failure_blocks_push": true,
+    "automatic_formatting": false,
+    "regression_command": "python3 -B -m unittest discover -s scripts -p test_check_push.py"
+  },
   "source_fingerprint_roots": [
     "Cargo.toml",
     "Cargo.lock",

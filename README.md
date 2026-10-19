@@ -38,6 +38,6 @@ DEV1은 DEV0 회귀를, DEV2 실행기는 DEV0/DEV1 회귀를 포함합니다. X
 git config --local core.hooksPath scripts/git-hooks
 ```
 
-이후 `git push`는 전송할 commit의 문서 검사를 통과해야 진행합니다. 기존 훅이 있으면 먼저 보존·연결하며, 세부 범위는 [문서 push 규칙](devdoc/policies/documentation-policy.md#push-gate)을 따릅니다.
+이후 `git push`는 전송할 각 ref의 최종 commit을 임시 사본으로 내보내 `cargo fmt --all --check`와 문서 검사를 모두 통과해야 진행합니다. 포맷 오류는 `cargo fmt --all`로 수정하고 commit에 포함한 뒤 다시 push합니다. 기존 훅이 있으면 먼저 보존·연결하며, 세부 범위는 [push 검사 규칙](devdoc/policies/documentation-policy.md#push-gate)을 따릅니다.
 
 기존 개발 작업의 현재 파일을 독립 저장소로 이관했습니다. 이전 Git 이력을 가져오지 않았으며, 이전 실행 결과를 XADB의 결과로 재표기하지 않습니다. [이관 범위와 상태](devdoc/history/project-migration.md)

@@ -29,7 +29,7 @@ def pushed_commits(repo, lines):
 
 
 def check_commit(repo, commit):
-    """Run the snapshot's verifier; generated reports stay in the temporary export."""
+    """Check Rust format and documents; all checks run in the temporary export."""
     with tempfile.TemporaryDirectory(prefix='xadb-pre-push-') as directory:
         temporary = Path(directory)
         snapshot = temporary / 'snapshot'
@@ -42,6 +42,10 @@ def check_commit(repo, commit):
         if not verifier.is_file() or not verifier.resolve().is_relative_to(snapshot):
             raise ValueError(f'{commit}: missing or external document verifier')
         print(f'XADB pre-push: checking {commit}', flush=True)
+        print('XADB pre-push: cargo fmt --all --check', flush=True)
+        result = subprocess.run(['cargo', 'fmt', '--all', '--check'], cwd=snapshot)
+        if result.returncode:
+            raise ValueError(f'{commit}: Rust format verification failed; push blocked')
         result = subprocess.run([sys.executable, '-B', str(verifier)], cwd=snapshot)
         if result.returncode:
             raise ValueError(f'{commit}: document verification failed; push blocked')

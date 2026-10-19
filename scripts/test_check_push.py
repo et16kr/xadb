@@ -7,6 +7,8 @@ from pathlib import Path
 
 
 SCRIPTS = Path(__file__).resolve().parent
+FORMATTED_RUST = 'pub fn answer() -> u32 {\n    42\n}\n'
+UNFORMATTED_RUST = 'pub fn answer()->u32{42}\n'
 
 
 class PushGateTests(unittest.TestCase):
@@ -34,6 +36,13 @@ class PushGateTests(unittest.TestCase):
             "raise SystemExit(int(Path('verdict').read_text()))\n")
         self.verdict = self.repo / 'verdict'
         self.verdict.write_text('0')
+        # Use the real pinned formatter on a dependency-free Rust fixture.
+        shutil.copy2(SCRIPTS.parent / 'rust-toolchain.toml', self.repo / 'rust-toolchain.toml')
+        (self.repo / 'Cargo.toml').write_text(
+            '[package]\nname = "xadb-push-fixture"\nversion = "0.1.0"\nedition = "2024"\n')
+        (self.repo / 'src').mkdir()
+        self.rust_source = self.repo / 'src/lib.rs'
+        self.rust_source.write_text(FORMATTED_RUST)
         self.commit('valid baseline')
         self.git('config', 'core.hooksPath', 'scripts/git-hooks')
         self.git('remote', 'add', 'origin', str(self.remote))
@@ -100,6 +109,53 @@ class PushGateTests(unittest.TestCase):
         self.git('push', 'origin', 'main', expected=1)
         self.run_command(['python3', 'scripts/check_push.py'], self.repo, 1,
                          input='not a valid update\n')
+
+    def test_rust_format_checks_committed_tip_without_editing_checkout(self):
+        self.git('push', 'origin', 'main')
+        good = self.remote_tip()
+        self.rust_source.write_text(UNFORMATTED_RUST)
+        self.commit('unformatted Rust')
+        self.rust_source.write_text(FORMATTED_RUST)
+        result = self.git('push', 'origin', 'main', expected=1)
+        self.assertIn('Rust format verification failed; push blocked', result.stderr)
+        self.assertEqual(self.remote_tip(), good)
+        self.assertEqual(self.rust_source.read_text(), FORMATTED_RUST)
+
+        fixed = self.commit('formatted Rust')
+        self.rust_source.write_text(UNFORMATTED_RUST)
+        self.git('add', 'src/lib.rs')
+        (self.repo / 'untracked.txt').write_text('in-progress work')
+        status = self.git('status', '--porcelain').stdout
+        staged = self.git('diff', '--cached').stdout
+        self.git('push', 'origin', 'main')
+        self.assertEqual(self.remote_tip(), fixed)
+        self.assertEqual(self.rust_source.read_text(), UNFORMATTED_RUST)
+        self.assertEqual(self.git('status', '--porcelain').stdout, status)
+        self.assertEqual(self.git('diff', '--cached').stdout, staged)
+        self.assertFalse((self.repo / 'devdoc/generated.json').exists())
+
+    def test_unformatted_tag_blocks_all_ref_updates(self):
+        self.git('push', 'origin', 'main')
+        old = self.remote_tip()
+        self.rust_source.write_text(UNFORMATTED_RUST)
+        self.commit('unformatted tagged snapshot')
+        self.git('tag', '-a', 'bad-format', '-m', 'unformatted fixture')
+        self.rust_source.write_text(FORMATTED_RUST)
+        self.commit('formatted main')
+        self.git('push', 'origin', 'main', 'refs/tags/bad-format', expected=1)
+        self.assertEqual(self.remote_tip(), old)
+        refs = self.run_command(['git', '--git-dir', str(self.remote),
+                                 'for-each-ref', '--format=%(refname)'], self.repo)
+        self.assertNotIn('refs/tags/bad-format', refs.stdout)
+
+    def test_missing_cargo_manifest_blocks_push(self):
+        self.git('push', 'origin', 'main')
+        old = self.remote_tip()
+        (self.repo / 'Cargo.toml').unlink()
+        self.commit('missing Cargo manifest')
+        result = self.git('push', 'origin', 'main', expected=1)
+        self.assertIn('Rust format verification failed; push blocked', result.stderr)
+        self.assertEqual(self.remote_tip(), old)
 
 
 if __name__ == '__main__':

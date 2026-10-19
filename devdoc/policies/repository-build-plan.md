@@ -252,7 +252,7 @@ DEV1 검사는 DEV0 회귀와 production foundation/platform의 실제 연결을
 
 현재 `.github/workflows/dev0.yml`은 push/PR에서 `python3 scripts/check_dev1.py`를 실행하고 `artifacts/`를 보존하도록 작성되어 있다. 원격 실행·branch protection·보호 oracle 승격은 미검증이다. 이번에는 CI를 실행하거나 이름을 변경하지 않는다. 후속 CI는 독립 package 검사, 현재 단계 통합, release/profile 조합, 문서 검증을 각각 증거로 남기며 해당 경로가 준비될 때 추가한다.
 
-로컬 문서 push 제약은 [DOC-002](documentation-policy.md#push-gate)의 `scripts/git-hooks/pre-push`와 `scripts/check_push.py`로 구현한다. 기존 `scripts` fingerprint/clean-export 루트 안에 배치한다. 실제 pushed commit의 임시 export에서 검사하며 편집·commit 검사를 추가하지 않는다. `scripts/test_check_push.py`는 임시 로컬 remote에 대한 훅 자체의 회귀다. 로컬 훅과 원격 CI/보호 설정은 별도다.
+로컬 push 제약은 [DOC-002·DOC-003](documentation-policy.md#push-gate)의 `scripts/git-hooks/pre-push`와 `scripts/check_push.py`로 구현한다. 기존 `scripts` fingerprint/clean-export 루트 안에 배치한다. 실제 pushed ref tip commit의 임시 export에서 `cargo fmt --all --check`와 문서 검사를 순서대로 실행하며 편집·commit 검사를 추가하지 않는다. [관리 JSON](repository-build-plan.json)의 `pre_push_gate`가 같은 진입점을 색인한다. `scripts/test_check_push.py`는 임시 로컬 remote에 대한 훅 자체의 회귀다. 로컬 훅과 원격 CI/보호 설정은 별도다.
 
 첫 사내 배포 전에 `packaging/`의 고정 recipe와 설치 smoke를 작성하고 결과는 `artifacts/dist/<version>/<target>/`에 둔다. source revision/dirty digest, toolchain/lockfile, target OS/kernel/filesystem, feature/profile, binary·symbol hash, stage/capability와 인수 증거를 manifest에 담는다. install prefix와 DB 경로는 분리하고, 라이브러리·header/JAR·도구는 해당 capability가 구현된 경우에만 포함한다. 지금 설치 패키지가 존재하거나 배포 검증을 마쳤다는 뜻은 아니다.
 

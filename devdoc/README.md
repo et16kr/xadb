@@ -47,7 +47,7 @@
 
 원문·관련 JSON·폴더 색인·[문서 ID 색인](documents.json)을 함께 갱신합니다. 새 문서의 위치·상태·참조 규칙은 [문서 운영 기준](policies/documentation-policy.md)을 따릅니다.
 
-문서 검사는 **push 직전** 훅에서 수행합니다. 편집·commit 때 반복 실행하지 않습니다. 훅은 전송할 commit의 임시 사본에서 `python3 devdoc/verify_documents.py`를 실행하고 실패하면 push를 차단합니다. 설치와 범위는 [문서 push 규칙](policies/documentation-policy.md#push-gate)을 따릅니다.
+문서 검사는 **push 직전** 훅에서 수행합니다. 편집·commit 때 반복 실행하지 않습니다. 훅은 전송할 각 ref의 최종 commit의 임시 사본에서 `cargo fmt --all --check`, `python3 devdoc/verify_documents.py`를 순서대로 실행하고 하나라도 실패하면 push를 차단합니다. 설치와 범위는 [push 검사 규칙](policies/documentation-policy.md#push-gate)을 따릅니다.
 
 이 명령은 문서·계약·증거 정합성을 검사하며 제품 시험을 실행하지 않습니다. [저장된 결과](document-validation.json)는 해당 실행 당시 결과이며 현재 문서나 DB의 검증 완료로 해석하지 않습니다. 과거 측정 스크립트를 문서 정리 목적으로 다시 실행하지 않습니다.
 
