@@ -677,6 +677,21 @@
       "path": "evidence/dev7-source-research.md",
       "role": "evidence",
       "title": "DEV7 — Oracle·Altibase·로컬 DBMS 조사와 설계 검토"
+    },
+    "dev8-operations-design.md": {
+      "path": "contracts/dev8-operations-design.md",
+      "role": "contracts",
+      "title": "DEV8 — 복제·백업·운영·성능 설계"
+    },
+    "dev8-implementation-plan.md": {
+      "path": "plans/dev8-implementation-plan.md",
+      "role": "plans",
+      "title": "DEV8 — 복제·운영 구현·검증 계획"
+    },
+    "dev8-source-research.md": {
+      "path": "evidence/dev8-source-research.md",
+      "role": "evidence",
+      "title": "DEV8 — Oracle·ARIES·로컬 소스 조사와 설계 검토"
     }
   }
 }

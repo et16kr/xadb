@@ -254,7 +254,16 @@
       "task_ref": "XADB-042",
       "title": "복제·장애전환",
       "acceptance": "등록한 topology와 sync/async 모드마다 ACK·충돌·순서·초기/재동기화·schema·retention·네트워크 단절·노드 재시작·failover/failback을 검사한다. fenced writer의 잘못된 ACK 0, 명세 밖 유실/중복 0 및 모드별 사전 RPO/RTO 기준을 충족한다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
+      ],
+      "required_details": [
+        "D8-F01..F10: applicable engine/API/codec/provider/resource/fault/runtime profiles frozen before implementation or acceptance",
+        "dev8-implementation-plan.md#coverage: all 30 assigned R11-R15 requirements and expanded topology/mode/type/client/operational variants",
+        "D8-T01..T40 and P01..P07: independent ACK/history/closure/fencing, current-build repeated recovery, negative oracle/checker and measured performance evidence"
+      ]
     },
     {
       "id": "SC13",
@@ -263,7 +272,16 @@
       "task_ref": "XADB-043",
       "title": "운영 백업·PITR",
       "acceptance": "전체 backup/archive closure를 별도 빈 환경에 복원하고 목표 commit/time 경계 및 새 timeline을 독립 history로 검증한다. 누락/손상 dependency 거절, restore 중 반복 장애, retention과 실제 RPO/RTO 기준을 검사한다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
+      ],
+      "required_details": [
+        "D8-F01..F10: applicable engine/API/codec/provider/resource/fault/runtime profiles frozen before implementation or acceptance",
+        "dev8-implementation-plan.md#coverage: all 30 assigned R11-R15 requirements and expanded topology/mode/type/client/operational variants",
+        "D8-T01..T40 and P01..P07: independent ACK/history/closure/fencing, current-build repeated recovery, negative oracle/checker and measured performance evidence"
+      ]
     },
     {
       "id": "SC14",
@@ -272,7 +290,16 @@
       "task_ref": "XADB-044",
       "title": "운영·보안·관측",
       "acceptance": "배정된 권한/설정/감사/진단/이관/관리 CLI·화면과 runbook을 실제 환경에서 실행한다. 권한 없는 효과와 민감정보 노출 0, 설정 적용 상태·기계 출력·오류/진행률 일치 및 연결된 UX 인수 기준을 충족한다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
+      ],
+      "required_details": [
+        "D8-F01..F10: applicable engine/API/codec/provider/resource/fault/runtime profiles frozen before implementation or acceptance",
+        "dev8-implementation-plan.md#coverage: all 30 assigned R11-R15 requirements and expanded topology/mode/type/client/operational variants",
+        "D8-T01..T40 and P01..P07: independent ACK/history/closure/fencing, current-build repeated recovery, negative oracle/checker and measured performance evidence"
+      ]
     },
     {
       "id": "SC15",
@@ -281,7 +308,16 @@
       "task_ref": "XADB-045",
       "title": "성능·용량·장시간",
       "acceptance": "candidate 실행 전에 workload/장비/FS/격리/내구성/driver, 데이터 크기·seed·기간·반복 횟수·p99/TPS/RSS/I/O/RPO/RTO/누출 허용치를 고정한다. 모든 필수 조합이 correctness와 각 임계값을 충족해야 하며 평균으로 실패를 숨기거나 실행 후 기준을 낮추지 않는다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
+      ],
+      "required_details": [
+        "D8-F01..F10: applicable engine/API/codec/provider/resource/fault/runtime profiles frozen before implementation or acceptance",
+        "dev8-implementation-plan.md#coverage: all 30 assigned R11-R15 requirements and expanded topology/mode/type/client/operational variants",
+        "D8-T01..T40 and P01..P07: independent ACK/history/closure/fencing, current-build repeated recovery, negative oracle/checker and measured performance evidence"
+      ]
     },
     {
       "id": "SC16",
@@ -453,7 +489,11 @@
         "SC12"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-043",
@@ -467,7 +507,11 @@
         "SC13"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-044",
@@ -481,7 +525,11 @@
         "SC14"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-045",
@@ -498,7 +546,11 @@
         "SC15"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-046",
@@ -1142,22 +1194,28 @@
       "pass_criteria": [
         "XADB-042..045의 모든 필수 topology/복구/운영/workload 조합 PASS; 모드별 ACK/RPO/RTO·fencing·retention 충족",
         "사전 등록한 기간·반복·용량·성능·누출 기준 전부 충족; 의미/내구성을 낮춘 측정은 거절",
-        "해당 단계의 PF 성능 개발 인수: 실제 production 경로·동일 의미·유효한 비교·독립 정답·계측 비용·재현 증거. 미구현/불충분을 PASS로 기록하지 않음"
+        "해당 단계의 PF 성능 개발 인수: 실제 production 경로·동일 의미·유효한 비교·독립 정답·계측 비용·재현 증거. 미구현/불충분을 PASS로 기록하지 않음",
+        "dev8-implementation-plan.md의 30개 요구와 D8-F01–F10·T01–T40·P01–P07의 해당 필수 variant를 모두 인수; H1 성공으로 L1/M1·온라인/증분/PITR·보안/운영·전체 성능을 대체하지 않음. 설계 채택은 실행 증거가 아님"
       ],
       "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
       "open_decisions": [
-        "복제 topology·sync/async·충돌·쓰기 소유·failover 정책",
-        "환경별 workload·데이터·기간·반복과 TPS/p99/RPO/RTO/RSS/I/O·자원 증가 허용치",
-        "운영 보안/이관/runbook·CLI/화면/UX 필수 목록과 전체 기능 통합 조합",
-        "PF 사례별 workload/fixture·실제 recipe·계측 비용/회귀 예산·반복/통계 방법을 구현·실행 전에 확정"
+        "D8-F01/F02: engine port and logical supplement atomicity, RP retention with REBASE/recrash reservation, actual byte/error/client profiles",
+        "D8-F03/F04: concrete fence provider and proof, topology/config transitions, complete origin/conflict/schema/sequence/LOB/XA/capture/apply variants",
+        "D8-F05/F06/F07: backup/archive/restore formats and cut/clock profiles, reviewed TLS/KDF/crypto/key/audit providers and algorithms",
+        "D8-F08/F09/F10: complete admin/CLI/UI/SNMP/migration/runtime matrix, bounded models and full fault inventory, environment-specific resources/performance/replay recipes"
       ],
       "deferred_obligations": [
-        "leaf 준비/국소 profiling은 일찍 가능; 전체 qualification은 실제 DEV6/DEV7 등 의존 기능 구현 후"
+        "leaf 준비/국소 profiling은 일찍 가능; 전체 qualification은 실제 DEV6/DEV7 등 의존 기능 구현 후",
+        "DEV8-DESIGN-001 scopes D-RECOVERY/D-LOGGING design into DEV8; DEV7 R10-03 internals and R10-05 subscription detail remain deferred and are not closed by OPS1"
       ],
       "run_entrypoint": null,
       "evidence_refs": [],
       "execution_status": "NOT_RUN",
-      "official_distribution_status": "NOT_RUN"
+      "official_distribution_status": "NOT_RUN",
+      "design_refs": [
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
+      ]
     },
     {
       "id": "DEV9",

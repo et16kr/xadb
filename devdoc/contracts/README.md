@@ -4,6 +4,8 @@
 
 <!-- catalogue -->
 
+- [DEV8 — 복제·백업·운영·성능 설계](dev8-operations-design.md) — SC12–15·H1/L1/M1·capture/retention·PITR·보안/운영; OPS1 미실행
+
 - [DEV7 — 확장 SQL·프로그래머블 객체·외부 거래 설계](dev7-sql-extensions-design.md) — SC07–11·64개 요구·DESIGN-002 비교 문맥/CALL/XA 보완; leaf 동결·SQL_EXT1 미실행
 
 - [DEV6 — native·JDBC·ODBC 클라이언트 상세 설계](dev6-client-design.md) — DEV6 설계·REVIEW-002 상태/취소/결과/버퍼 보완·인수 의무; CLIENT1 미실행

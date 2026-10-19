@@ -2,6 +2,8 @@
 
 2026-10-18 범위 갱신: undo-store 저장 결정은 [DEV3-DESIGN-003](disk-storage-design.md#undo)이 채택한다. 아래의 “현재 private/COW 유지·미래 undo-store”는 DEV2 기준선/이전 제안의 범위다. DEV3는 영속 undo와 독립 redo 보존을 구현해야 하며 실행은 NOT_RUN이다. RP capture/spool·archive·PITR는 계속 후속 범위이며 DEV3 초기 선행에 넣지 않는다.
 
+2026-10-19: 후속 DEV8의 capture/spool·원자 apply·archive/PITR·owner별 보존을 [운영 설계](dev8-operations-design.md#capture)와 [구현·검증 계획](../plans/dev8-implementation-plan.md)에서 구체화한다. 아래 제안의 목적을 유지하되 실제 DEV3 WAL의 논리 값 공급 여부와 supplement 원자성, 새 consumer pin을 포함한 REBASE 예약은 D8-F01/F04의 구현 전 의무다. 설계 구체화는 RP 실행이나 이 문서의 RU 사례 PASS가 아니다.
+
 
 
 

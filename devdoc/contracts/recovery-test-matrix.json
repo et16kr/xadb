@@ -637,7 +637,11 @@
       ],
       "title": "PITR archive object closure",
       "acceptance": "At the selected storage profile, missing required backup/redo/namespace dependencies reject restore; complete target-boundary closure restores into a new timeline. DEV3 uses base backup plus redo, not old root-only COW object rules.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
+      ]
     },
     {
       "id": "RC-T25",
@@ -651,7 +655,11 @@
       ],
       "title": "Replication consumer retention",
       "acceptance": "Slow consumer pins correct ranges/objects; explicit resync transition; physical refs or logical row-delta path actually present",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
+      ]
     },
     {
       "id": "RC-T26",

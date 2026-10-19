@@ -5,6 +5,8 @@
 <a id="dev3-profile"></a>
 ## DEV3 WAL·undo 프로파일
 
+DEV8의 후속 복제·온라인 backup/archive/PITR는 [운영 설계](dev8-operations-design.md)와 [인수 계획](../plans/dev8-implementation-plan.md)을 따른다. H1의 redo-follow와 일반 restore의 branch/undo를 구분하며, capture·archive pin과 기존 bounded recovery의 양립은 D8-F01에서 별도 동결·검증한다. 아래 DEV2/COW 범위의 설명을 새 물리 복제 계약으로 승계하지 않는다.
+
 단일 ordered L0에 interleaved update/CLR/commit을 기록하고, 영속 UndoRef chain으로 rollback한다. WAL-before-page·steal/no-force와 pending-only doublewrite를 적용한다. FileId와 FILEMAP으로 allocator 이전 bootstrap을 시작하고, DWB retirement 전 주소/슬롯 재사용을 금지한다. pageLSN/identity가 redo 중복 적용을 막는다.
 
 fuzzy checkpoint는 commit 상태 설치까지 일치한 capture LSN·ATT/DPT를 저장한다. analysis는 capture 직후, streaming redo는 최소 recLSN에서 시작한다. 채택 prefix를 먼저 sync하고 recovery epoch/WRITER를 영속 선택한 뒤 CLR을 쓴다. 반복 restart가 그 CLR을 발견해야 하며 최종 STABILIZE 전 user admission을 열지 않는다. source WAL bytes는 보존하지만 home page는 이 규약으로 수정한다.

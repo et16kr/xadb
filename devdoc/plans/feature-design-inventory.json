@@ -18,7 +18,9 @@
     "dev6-client-design.md",
     "dev6-implementation-plan.md",
     "dev7-sql-extensions-design.md",
-    "dev7-implementation-plan.md"
+    "dev7-implementation-plan.md",
+    "dev8-operations-design.md",
+    "dev8-implementation-plan.md"
   ],
   "changes_existing_contracts": false,
   "changes_stage_order": false,
@@ -1259,7 +1261,9 @@
       ],
       "existing_doc_refs": [
         "recovery-logging-design.md",
-        "user-manual-draft.md"
+        "user-manual-draft.md",
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
       ],
       "items": [
         {
@@ -3674,7 +3678,9 @@
         "interface-experience-plan.md",
         "user-manual-draft.md",
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
       ],
       "items": [
         {
@@ -3865,7 +3871,9 @@
       "existing_doc_refs": [
         "replication-undo-analysis.md",
         "recovery-logging-design.md",
-        "product-requirements.md"
+        "product-requirements.md",
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
       ],
       "items": [
         {
@@ -4378,7 +4386,9 @@
       "existing_doc_refs": [
         "interface-experience-plan.md",
         "user-manual-draft.md",
-        "architecture-overview.md"
+        "architecture-overview.md",
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
       ],
       "items": [
         {
@@ -4612,7 +4622,9 @@
       ],
       "existing_doc_refs": [
         "interface-experience-plan.md",
-        "user-manual-draft.md"
+        "user-manual-draft.md",
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
       ],
       "items": [
         {
@@ -4842,7 +4854,9 @@
       "existing_doc_refs": [
         "product-requirements.md",
         "stage-completion.json",
-        "ai-performance-engineering.md"
+        "ai-performance-engineering.md",
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
       ],
       "items": [
         {

@@ -322,5 +322,10 @@
     }
   ],
   "dev3_storage_decision_ref": "disk-storage-design.md#decision",
-  "changes_current_private_cow_baseline_scope": "false applies to DEV2; DEV3 adopts persistent undo via DESIGN-003, replication remains later"
+  "changes_current_private_cow_baseline_scope": "false applies to DEV2; DEV3 adopts persistent undo via DESIGN-003, replication remains later",
+  "dev8_design_refs": [
+    "dev8-operations-design.md",
+    "dev8-implementation-plan.md"
+  ],
+  "dev8_scope_note": "DEV8-DESIGN-001 concretizes capture/spool/archive/PITR on DEV3; source logical data availability and supplemental WAL atomicity remain F01/F04 pre-implementation obligations. No RU case or product execution is claimed."
 }

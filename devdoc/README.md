@@ -20,6 +20,7 @@
 | DEV5 서버·인증/권한·세션·요청/취소 | [DEV5 상세 설계](contracts/dev5-server-design.md), [구현·검증 계획](plans/dev5-implementation-plan.md) | [소스 조사·검토](evidence/dev5-source-research.md), SC03·KU14·PA08·PF11·실제 Q1/C1 선행 증거 |
 | DEV6 native·C ABI·JDBC·ODBC client 설계 | [클라이언트 상세 설계](contracts/dev6-client-design.md), [구현·검증 계획](plans/dev6-implementation-plan.md) | [Oracle·ARIES·로컬 소스 재검토](evidence/dev6-source-research.md#review-002), REVIEW-002·R2-V01–V06, SC04–06·D6-W01·실제 B3 선행; CLIENT1 미실행 |
 | DEV7 확장 SQL·타입·PSM·LOB/spatial·외부 거래 | [DEV7 설계](contracts/dev7-sql-extensions-design.md), [구현·검증 계획](plans/dev7-implementation-plan.md) | [Oracle·ARIES·로컬 소스 재검토](evidence/dev7-review-002.md), DESIGN-002 비교 문맥/CALL/XA·SC07–11·64개 요구·F01–10; SQL_EXT1 미실행 |
+| DEV8 복제·백업/PITR·보안/운영·성능 | [DEV8 설계](contracts/dev8-operations-design.md), [구현·검증 계획](plans/dev8-implementation-plan.md) | [Oracle·ARIES·로컬 소스 조사](evidence/dev8-source-research.md), SC12–15·30개 요구·F01–10·실제 S1/B3 선행; OPS1 미실행 |
 | COMM frame·socket·backpressure·취소 설계 | [COMM 상세 설계](contracts/comm-design.md), [구현·검증 계획](plans/comm-implementation-plan.md) | [소스 조사·검토](evidence/comm-source-research.md), [현재 구현·잔여 인수](implementation/comm-implementation.md), C1·KU12·DEV1 선행 증거; SQL 의미는 DEV5 |
 | 성능 계측·원인 분석·개선 | [AI 성능 개발 계약](contracts/ai-performance-engineering.md) | DP07, 해당 단계 PF 인수 의무 |
 | 기능 명세·설계를 작성할 대상 | [작성 대상 목록](plans/feature-design-inventory.md) | [원문 이름 색인](reference/feature-design-leaf-index.md)과 해당 소유 계약 |

@@ -6,6 +6,8 @@
 
 [아키텍처 비교 보완](../evidence/dev3-dev4-architecture-review.md)은 아래 잠금·undo 수명·배치 flush·자원 예약의 근거다. 기본 설계의 채택과 실행 가능한 알고리즘의 검증을 구분한다.
 
+후속 [DEV8 운영 설계](dev8-operations-design.md)는 이 저장 계약 위의 physical standby·capture/retention·온라인 backup/PITR를 구체화한다. D8-F01의 추가 port·WAL supplement·durable consumer pin과 REBASE/재장애 예약 증명은 해당 기능 구현 전 의무이며, 현재 S1의 offline backup·기본 recovery 완료 조건을 대체하지 않는다.
+
 <a id="scope"></a>
 ## 1. 범위와 대체 관계
 

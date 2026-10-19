@@ -126,14 +126,16 @@
 | R10-04 | 분산 분석 환경 데이터 교환 | HDFS/Hive 등 문서상 입출력 업무를 지원할 경로와 타입 매핑을 제공한다. 기존 Sqoop 구현을 재사용할 의무는 없다. |
 | R10-05 | 변경 분석·구독 기능 | 로그 분석 도구의 사용 목적을 보존할 기능으로 예약한다. 이번에는 상세 명세·logging 조사·인수 사례를 작성하지 않는다. |
 
+DEV8에 배정한 R11–R15의 30개 요구는 [운영 설계](../contracts/dev8-operations-design.md)와 [구현·검증 계획](dev8-implementation-plan.md#coverage)에서 구체화한다. DEV8-DESIGN-001은 이 범위의 recovery/logging·capture/archive·audit/diagnostic 설계를 재개하며, R10-03/R10-05의 별도 보류와 모든 제품 실행 미완료는 유지한다.
+
 ## R11 replication, synchronization and failover
 
 | 요구 | 기능 | 인수 방향 |
 | --- | --- | --- |
 | R11-01 | 단일·다중 쓰기 노드 운영 | active-standby와 active-active 업무별 쓰기 소유·충돌·전환의 외부 계약을 명세한다. 단일 writer만으로 모든 기존 복제 업무를 대체했다고 주장하지 않는다. |
-| R11-02 | 동기·비동기 복제 모드 | 모드별 성공 응답·지연·연결 단절 시 관측 결과를 인수 조건으로 분리한다. commit/logging 순서의 내부 설계는 후속 주제다. |
+| R11-02 | 동기·비동기 복제 모드 | 모드별 성공 응답·지연·연결 단절 시 관측 결과를 인수 조건으로 분리한다. commit/logging·원격 보호 대기의 내부 경계는 DEV8-DESIGN-001을 따른다. |
 | R11-03 | 충돌 탐지·처리·관측 | 중복 key·삭제/갱신 경합과 제약 오류의 처리 결과를 확인하고 누락·덮어쓰기·충돌 건수를 운영자가 판별할 수 있게 한다. |
-| R11-04 | 초기 동기화·부분 대상·재동기화 | 대상 table/partition·데이터 일치·진행률·중단/재시도를 검증한다. 데이터 공급 방식은 이번에 결정하지 않는다. |
+| R11-04 | 초기 동기화·부분 대상·재동기화 | 대상 table/partition·데이터 일치·진행률·중단/재시도를 검증한다. snapshot과 stream pin의 공급 방식은 DEV8-DESIGN-001을 따른다. |
 | R11-05 | 복제 중 schema·sequence 운영 | DDL과 sequence의 대응·변경 승인/거절·양쪽 schema 관측을 검증한다. 기존 데이터 해석이 다른 schema에 적용되지 않게 한다. |
 | R11-06 | 접속 전환·failback·다중 주소 | client 재접속·진행 중 요청의 불명확 결과·중복 실행 위험·계획 전환과 복귀를 명세한다. 투명 재접속만으로 transaction 연속성을 주장하지 않는다. |
 | R11-07 | 복제 관리·상태 조회 | 관계·상태·지연·진행률·오류·start/stop·구성 변경을 운영자가 일관되게 다룰 수 있어야 한다. |
@@ -152,7 +154,7 @@
 | R13-02 | 역할·객체/시스템 권한 | grant/revoke·역할·routine 권한·소유자 변경·session 간 권한 반영을 허용/거절 matrix로 검증한다. |
 | R13-03 | 전송 보호와 인증서 관리 | 보호된 연결·인증서 오류·만료·갱신·비보호 연결 정책을 실제 client별로 시험한다. 오래된 암호 설정을 복제하지 않는다. |
 | R13-04 | 데이터 보호·보안 모듈 연계 | 암호화 데이터의 사용 목적·키 수명·권한·오류 관측을 명세한다. 기존 보안 플러그인 ABI의 동일성은 요구하지 않는다. |
-| R13-05 | 감사 정책·조회 | 대상·성공/실패 조건·주체·시각·행위의 기록과 조회 능력을 보존한다. 감사 기록의 저장/logging 구현은 이번에 설계하지 않는다. |
+| R13-05 | 감사 정책·조회 | 대상·성공/실패 조건·주체·시각·행위의 기록과 조회 능력을 보존한다. 감사 intent/outcome·sink 장애·보존 설계는 DEV8-DESIGN-001을 따른다. |
 
 ## R14 administration, configuration, diagnostics, monitoring and import/export
 
@@ -167,7 +169,7 @@
 | R14-07 | 성능 진단·plan·통계 | plan·추정/실제 행 수·통계 수집/관리·plan 제어 목적을 제공하고 튜닝 전후 결과 동등성을 확인한다. |
 | R14-08 | plan/result cache 제어 | 재사용·무효화·권한/schema/값 변경 시 결과를 확인하고 cache가 없어도 같은 업무를 만족하는 경우 성능 기준으로 동등성을 검증한다. |
 | R14-09 | 모니터링 API·알림·SNMP 연계 | 상태·수치·단위·오류·알림과 기존 SNMP 업무를 지원하는 exporter 등을 제공한다. metric 이름을 바꾸면서 관측 능력을 삭제하지 않는다. |
-| R14-10 | 보호된 진단·관리 도구 묶음 | 문제 판별·상태 점검·오류 해석·profile 기능을 권한과 작업 결과를 갖춘 XADB 도구로 제공한다. 저장/log dump 구조의 설계는 보류한다. |
+| R14-10 | 보호된 진단·관리 도구 묶음 | 문제 판별·상태 점검·오류 해석·profile 기능을 권한과 작업 결과를 갖춘 XADB 도구로 제공한다. bounded bundle·권한·redaction·identity 설계는 DEV8-DESIGN-001을 따른다. |
 | R14-11 | 외부 관리·directory 연계 | DB 도구의 관리/탐색과 OpenLDAP SQL backend 같은 문서상 연계 목적을 표준 client와 실행 예제로 검증한다. |
 
 ## R15 workload performance, capacity, resource limits and RTO/RPO

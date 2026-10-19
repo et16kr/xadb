@@ -266,7 +266,14 @@
       ],
       "channel": "development",
       "execution_status": "NOT_RUN",
-      "completion_ref": "stage-completion.json#DEV8"
+      "completion_ref": "stage-completion.json#DEV8",
+      "design_refs": [
+        "dev8-operations-design.md",
+        "dev8-implementation-plan.md"
+      ],
+      "research_refs": [
+        "dev8-source-research.md"
+      ]
     },
     {
       "id": "DEV9",

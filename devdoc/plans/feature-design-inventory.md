@@ -12,6 +12,8 @@ DEV7의 아키텍처·실패/자원 경계와 64개 요구 배정은 [설계](..
 
 DEV5의 SES/NET/SEC 최소 local server 범위는 [서버 설계](../contracts/dev5-server-design.md)와 [인수 계획](dev5-implementation-plan.md)에서 구체화한다. TCP SQL·TLS·객체 ACL·LOB·driver 등 후속 기능은 미완료 의무로 남기며 전체 topic의 완료로 승격하지 않는다.
 
+DEV8의 복제·backup/archive/PITR·보안/운영·성능과 30개 요구 배정은 [설계](../contracts/dev8-operations-design.md)와 [계획](dev8-implementation-plan.md)에서 구체화한다. REPL/BACKUP/SEC/OPS/TOOLS/PERF의 모든 세부 FS/DS 완료를 뜻하지 않으며 F01–F10과 제품 인수는 미완료다.
+
 ## BASE 제품 범위와 공통 계약
 
 | 항목 | 주제 | 기능 명세 | 설계 |
