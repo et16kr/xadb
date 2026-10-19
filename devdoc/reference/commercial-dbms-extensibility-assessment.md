@@ -8,6 +8,8 @@
 
 평가 기준은 XADB commit `48fd20771a4c97c5677073e30084630187a363e6`와 평가 시 열람한 미커밋 작업 트리, 기존 설계와 보존된 실행 결과다. 작업 트리 전체를 동결한 실행 증거는 없으며, 각 시험 결과의 적용 범위는 해당 보고서의 원래 source 지문을 따른다. 이번 평가·문서화에서 제품 시험이나 비교 benchmark를 새로 실행하지 않았다.
 
+후속 사용자 요청으로 [Oracle·로컬 DBMS 조사와 선제 보완](../evidence/commercial-extensibility-research.md)을 추가했다. 이 보고서의 최초 D0 평가와 아래 기존 증거는 유지하며, 새 D2 의미의 정본은 DEV3-REVIEW-008·DEV4-REVIEW-006 소유 계약이다. 조사 기준 revision·검토 상태·미실행 범위는 해당 기록을 따른다.
+
 <a id="judgment"></a>
 ## 1. 종합 판단
 
@@ -116,3 +118,18 @@ DEV3의 초기 exact-cut backup은 admission drain을 거친 offline 복사다. 
 DEV3의 상태 모델·자원 계산이 성립하지 않거나, 낮은 공간에서 rollback·복구가 진행하지 못하거나, 올바른 결과를 유지한 상태에서 직렬화 비용이 목표 workload를 막으면 설계 대안을 재검토할 필요가 있다. 반대로 DEV3의 실제 인수와 후속 SQL·운영 시험이 쌓이면, 조건부 가능성 판단을 구현·측정에 근거한 구체적인 지원 범위로 좁힐 수 있다.
 
 현 시점의 판단은 **개발을 계속할 기술적 가치가 충분하며 상용 DBMS 수준으로 발전할 경로가 있다**는 것이다. 그 경로의 실현에는 DEV3의 핵심 전환과 DEV7·DEV8 등 후속 기능의 완성이 필요하다. 도달 여부의 근거는 앞으로의 실제 구현·독립 검증·성능·운영 결과다.
+
+<a id="preventive-followup"></a>
+## 8. 한계 점검 후 먼저 보완한 계약
+
+Oracle 19c 공식 문서와 PostgreSQL·MariaDB·CUBRID·SRC-L04의 실제 source revision을 대조했다. 소스별 열람 구간·SHA-256·채택/보류 이유는 [조사 기록](../evidence/commercial-extensibility-research.md)에 있다. 코드 도입이나 외부 DBMS 실행 비교는 하지 않았다.
+
+| 확인한 위험 | 선제 보완 | 남은 구현·증거 |
+| --- | --- | --- |
+| 실행 설정 축소가 이미 영속 인계된 복구 의무까지 줄이는 혼동 | [형식·admission·복구 profile 분리](../contracts/disk-storage-design.md#capacity-profile), 부족한 복구 설정의 첫 write 전 거절 | 실제 control codec·현재 build 재시작/부분 CLR·ACK 인수 |
+| 긴 snapshot·undo 보존에 따른 쓰기 중단의 원인이 불명확함 | [자원/owner별 압력 진단과 회수 후 재개](../contracts/disk-storage-design.md#retention-pressure). 기존 live snapshot 보호 유지 | bounded 진단·장기 reader/churn·quota/실제 회수 시험 |
+| page 교체는 진행하지만 checkpoint WAL floor가 정체됨 | [flush 작업별 service·hot-page redirty 시 admission 제어](../contracts/disk-storage-design.md#flush-progress) | 실제 thread/I/O·유한 drain·WAL floor·no-op busy-loop 부정 사례 |
+| 동시성이 높아도 충돌/재시도로 유효 처리량이 낮음 | [격리·의존관계별 PF09와 durable 성공/원요청 latency](../plans/dev3-implementation-plan.md#performance) | 실측 후 group commit·더 세밀한 validation·gate 분할의 필요성 판단 |
+| 여러 SQL 실행·binding 교체·spill 공존 peak | [기존 합산 quota의 교체/cleanup 경계](../contracts/dev4-sql-design.md#aggregate-pressure)와 다중 session 인수 | T07/08/11/14 실제 메모리·FD·disk·취소/cleanup |
+
+현재 상한·기본 격리·내구성을 변경하지 않고 해당 구현 전에 지켜야 할 경계와 시험을 보강했다. 행 배열/global-q의 DEV2 한계는 기존 DEV3 전환이 담당한다. 대량 거래·확장 SQL·온라인 백업·복제/PITR는 [후속 의무](../evidence/commercial-extensibility-research.md#future-operations)로 유지하며 이번 문서 보완을 해당 기능이나 상용 수준의 달성으로 계산하지 않는다.

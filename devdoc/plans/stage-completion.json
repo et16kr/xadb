@@ -75,7 +75,8 @@
         "D4-T09..T11: transaction/concurrency, current-build durability/reopen and cancellation/quota/spill cleanup",
         "D4-T12..T14: embedded CLI, independent SQL/native oracle and PF10 plan/storage evidence",
         "D4-V17..V24: partial/all-NULL uniqueness, uppercase names, SQL empty-text/native boundary, DDL prior/DDL outcomes and rollback/recrash histories R1-R4",
-        "D4-V27/V28: logical statement rollback versus retained physical/lock charges; independent per-call cancellation/deadline context across a persistent SELECT result"
+        "D4-V27/V28: logical statement rollback versus retained physical/lock charges; independent per-call cancellation/deadline context across a persistent SELECT result",
+        "DEV4-REVIEW-006/D4-T07/T08/T11/T14: multi-session aggregate memory/disk/FD boundaries, old-plus-new binding peak with old binding preserved on rejection, concurrent merge peak and charged failed unlink; cleanup independent of new foreground quota"
       ]
     },
     {
@@ -735,7 +736,8 @@
         "Opcode resource vectors instantiated against actual codecs and simultaneous disk/reserve/WAL/frame/memory/FD limits; progress under boundary pressure and full reservation ownership through rollback",
         "DWB batch 1/8/64 all-file sync and whole-batch retirement/repair/recrash; PF09 sync counts, gate/flush waits and latency guards measured",
         "DEV3-REVIEW-006: DS06/M03 checks logical observed-row versions after every X-lock acquisition before target effect; DS03/05, M04/M06 and RC-T14 restore durable remaining obligations and fixed bootstrap resources across BEGIN-WAL deletion and repeated partial-CLR crashes within all quotas",
-        "DEV3-REVIEW-007: logical rollback does not rewind resource ledgers; every finite crash prefix preserves closure/peak while completion assumes a sufficient crash-free interval and finite obligations"
+        "DEV3-REVIEW-007: logical rollback does not rewind resource ledgers; every finite crash prefix preserves closure/peak while completion assumes a sufficient crash-free interval and finite obligations",
+        "DEV3-REVIEW-008: existing DS03-06/PF09 cover persisted recovery profile versus reduced foreground limits, owner-specific retention pressure and release/reuse, bounded flush service and redirty-pressure drain, and independent conflict/attempt/durable-success performance accounting"
       ],
       "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
       "open_decisions": [
@@ -748,7 +750,8 @@
         "disk-storage-design.md#architecture-review and dev3-implementation-plan.md#state-model: freeze exact guards/actions/corpus, implement independent models and record complete exploration; currently NOT_RUN",
         "dev3-implementation-plan.md#resource-proof: opcode numeric bounds, progress partition and actual admission table remain pending; DWB batch deadlines and performance thresholds fixed before execution",
         "dev3-implementation-plan.md#reuse-boundary: classify actual DEV2 symbols/tests as reuse/adapt/DEV2-only/new; absent durable supply is not supplied, not assumed reusable",
-        "disk-storage-design.md#recovery-reservation: F01/F02/F04/F05 freeze descriptor bytes and atomic transitions, RECOVERY_REBASE two-slot/common-fallback/base-only selector states and reclaim order with both recovery closures, independent accounting and repeated-restart peak proof; model and actual I/O NOT_RUN"
+        "disk-storage-design.md#recovery-reservation: F01/F02/F04/F05 freeze descriptor bytes and atomic transitions, RECOVERY_REBASE two-slot/common-fallback/base-only selector states and reclaim order with both recovery closures, independent accounting and repeated-restart peak proof; model and actual I/O NOT_RUN",
+        "D3-F01/F02/F04/F05: freeze recovery profile control/checks and pre-write settings rejection, pressure diagnostics, flush scheduling/drain thresholds and native isolation/dependency workload matrix; contracts and planned variants are not executed evidence"
       ],
       "deferred_obligations": [
         "PART/NG·고급 저장·제품 최대 성능은 S1 선행 조건 아님"
@@ -759,7 +762,8 @@
       "official_distribution_status": "NOT_RUN",
       "design_refs": [
         "disk-storage-design.md",
-        "dev3-implementation-plan.md"
+        "dev3-implementation-plan.md",
+        "disk-storage-design.md#extensibility-review"
       ],
       "design_decision_ref": "disk-storage-design.md#decision"
     },
@@ -807,7 +811,8 @@
         "DEV4-REVIEW-002의 D4-V17–24: SQL/native 값 경계·문장 최종 UNIQUE·DDL 두 outcome/NotCommittedRecoveryRequired와 R1–R4 rollback/recrash를 DEV3-DESIGN-003 실제 WAL/undo/CLR 경로·독립 이력으로 판정; Oracle 전체 호환이나 미실행 CLR PASS로 확대하지 않음",
         "DEV4-REVIEW-003: D4-V25 all-null unique multi-row lookup; transaction capacity boundaries and prior-statement preservation; actual DEV3 reservation/cleanup handoff and separated attempted/success TPS, conflicts/limits and gate/flush cost",
         "DEV4-REVIEW-004: D4-V26/T09 passes opaque row observations through materialization to immediate-lock validation before target effect; T10/T11 receive actual DEV3 bootstrap/reservation-restoration evidence and distinguish normal admitted recovery from corrupt/I/O rejection",
-        "DEV4-REVIEW-005: D4-V27/V28 actual residual resource accounting after failed statements and per-operation cancel/deadline across persistent result snapshots"
+        "DEV4-REVIEW-005: D4-V27/V28 actual residual resource accounting after failed statements and per-operation cancel/deadline across persistent result snapshots",
+        "DEV4-REVIEW-006: D4-T07/T08/T11/T14 exercise concurrent aggregate budgets, atomic binding replacement peak, spill merge/failed-unlink charges and cleanup ownership without new foreground quota"
       ],
       "acceptance_input_status": "BASE_DESIGN_DEFINED_LEAF_API_AND_EXECUTION_PROFILES_PENDING",
       "open_decisions": [
@@ -817,7 +822,8 @@
         "D4-F05: PF10 fixtures/environment/release recipes, numerical resource/instrumentation/regression budgets and paired measurement schedule",
         "dev4-sql-design.md#capacity-boundary: D4-F02/F05 record actual DEV3-REVIEW-004 supply, reservation ownership and batch/gate profile; design/model acceptance alone is not disk evidence",
         "D4-F02/F04: actual opaque observation signatures and no-wait conflict barriers; R2/T11 low-quota partial-CLR restart and reserve-restore supply evidence remain NOT_RUN",
-        "D4-F02/F04/F05: logical rollback versus retained WAL/CLR/undo/page/SMO/lock ownership and fresh operation context per fetch; actual API, schedules and resource measurements pending"
+        "D4-F02/F04/F05: logical rollback versus retained WAL/CLR/undo/page/SMO/lock ownership and fresh operation context per fetch; actual API, schedules and resource measurements pending",
+        "D4-F02/F03/F05: freeze concurrent memory/disk/FD boundary schedules, old/new binding allocation witnesses and spill cleanup reservations"
       ],
       "deferred_obligations": [
         "server/client·확장 SQL은 후속 의무",
@@ -830,7 +836,8 @@
       "official_distribution_status": "NOT_RUN",
       "design_refs": [
         "dev4-sql-design.md",
-        "dev4-implementation-plan.md"
+        "dev4-implementation-plan.md",
+        "dev4-sql-design.md#extensibility-review"
       ]
     },
     {

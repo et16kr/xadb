@@ -1,6 +1,6 @@
 # DEV4 — embedded 최소 SQL·Oracle 의미 상세 설계
 
-2026-10-19 · **DEV4-DESIGN-001·REVIEW-002–005 ACCEPTED / 미구현·Q1 NOT_RUN**
+2026-10-19 · **DEV4-DESIGN-001·REVIEW-002–006 ACCEPTED / 미구현·Q1 NOT_RUN**
 
 [구현·검증 계획](../plans/dev4-implementation-plan.md) · [실제 소스 조사](../evidence/dev4-source-research.md) · [단계 범위](../plans/development-stages.json) · [완료 계약](../plans/stage-completion.json) · [DEV3 저장 계약](disk-storage-design.md) · [커널 구현 계약](implementation-contracts.md)
 
@@ -248,6 +248,13 @@ sorter는 정렬 key+RowId+projected values를 bounded run으로 기록하고 fa
 
 prepare·execute·plan/node ID에 parse/bind/plan 시간, rows/loops, visited row/page, predicate 통과 수, sort run/spill bytes·merge pass·memory peak, storage I/O와 commit outcome을 연결한다. parameter 원문 값을 기본 진단에 넣지 않는다. 계측 off/상시/상세와 유실을 구분하며 미계측을 0으로 보고하지 않는다. PF10의 실제 release 측정과 독립 결과는 [검증 계획](../plans/dev4-implementation-plan.md#performance)을 따른다.
 
+<a id="aggregate-pressure"></a>
+### SQL 합산 예약과 교체 peak
+
+위 DB당 memory/disk/FD 상한은 session 수나 후속 연산자 수를 곱해 늘리는 예산이 아니다. 각 query의 sort/merge/input/output와 retained prepared/binding/result가 동시에 존재하는 peak를 합산한다. `bind_all`의 이전 binding을 보존한 채 새 binding을 준비하는 구간도 old+new 공존량을 먼저 예약하며, 부족하면 기존 binding을 그대로 유지하고 거절한다. spill 전환도 run 생성/merge에 필요한 실제 workspace·FD·입출력 파일 공존량 안에서만 가능하고, 추정 cardinality가 실제 자원 한도를 대신하지 않는다.
+
+여러 session의 SQL memory 또는 임시 disk/FD가 동시에 부족할 때 무제한 대기/재시도하지 않는다. 첫 effect 전 거절 또는 이미 실행 중인 statement/result의 기존 오류·cleanup 규약을 적용한다. 이미 보유한 자원은 그 소유 수명이 끝날 때 반환하며 실패한 unlink의 bytes는 계속 charge한다. cleanup에 필요한 상태·작업 공간은 해당 실행 admission에 포함하여 새 foreground quota 확보에 의존하지 않는다. engine의 rollback/flush 예약은 별도 보존한다. 조인·hash aggregate·parallel operator를 추가할 때도 이 합산식을 확장하고 실제 spill 의미·취소·cleanup을 별도 동결한다. 이번 DEV4에서 그 연산자들을 구현한 것으로 보지 않는다.
+
 <a id="capacity-boundary"></a>
 ### 7.1 초기 처리 범위와 저장 경로 인수
 
@@ -364,3 +371,15 @@ prepare·execute·plan/node ID에 parse/bind/plan 시간, rows/loops, visited ro
 | 상태·인수·독립 검토 | ACCEPTED. D4-V27/V28·T04/T08/T10/T11·F02/F04/F05에 반영. `/root/dev345_independent_review`가 원문·반례·세 단계 계약/계획/인수 diff를 독립 검토하고 축소 계산을 재실행: 필수 P1/P2 잔여 없음. `/root` 반영 확인. 이전 review identity·실행 결과 유지 |
 | 참고 근거 | 2026-10-19 [Oracle 19c Transactions](https://docs.oracle.com/en/database/oracle/oracle-database/19/cncpt/transactions.html)의 문장 원자성·[읽기 일관성](https://docs.oracle.com/en/database/oracle/oracle-database/19/cncpt/data-concurrency-and-consistency.html), MariaDB `327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4`의 `storage/innobase/include/read0types.h` ReadView/purge를 대조. XADB ledger·Serializable·snapshot 모델은 자체 계약으로 유지 |
 | 실행·재검토 | 산술 반례·축소 계산만 실행. Q1·제품·복구·성능은 NOT_RUN. 잔류 비용 누락·snapshot/operation 수명 혼동 또는 실제 leaf 반례가 생기면 재검토 |
+
+<a id="extensibility-review"></a>
+## DEV4-REVIEW-006 — 동시 SQL 자원 인수 보완
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-19 |
+| 담당·권한 | 작업/SQL 계약/통합 `/root`; 사용자의 확장 한계 점검·선제 보완 요청과 DP01 위임 |
+| 선택·대안 | 기존 DB 합산 quota·spill/cleanup 계약에 binding 교체 peak·cleanup 예약과 다중 session 경계 사례를 명시. query별 상한만 검사하거나 추정 cardinality로 실제 quota를 대체하는 대안은 제외 |
+| 적용·대체 | 기존 의미·수치·stage DAG 유지. D4-T07/T08/T11/T14와 F02/F03/F05의 구체화이며 큰 DML·추가 SQL 연산자 도입은 별도 |
+| 근거·검토 | [소스 조사·반례·독립 검토](../evidence/commercial-extensibility-research.md). `/root/extensibility_review`의 독립 D2 설계 검토 PASS·잔여 필수 P1/P2 없음, 계약/통합 담당 `/root` 반영 확인. 제품·Q1·PF10 NOT_RUN |
+| 재검토 | 다중 연산자·parallel query·큰 bind/LOB 추가, cleanup 자원 순환 또는 실제 합산 peak 초과 |

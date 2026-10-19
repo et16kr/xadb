@@ -48,7 +48,10 @@
         "DWB batch 1/8/64 deadline, effective batch size, sync/dirsync counts, dirty age and rollback/commit p99; no throughput gain claimed before measurement",
         "DEV3-REVIEW-006/D3-M04/M06: durable recovery-obligation handoff with effect/progress; BOOT_RESERVE before repair and RESERVE_RESTORE before redo; consumed CLR bytes versus remaining reserve and allocated extent tokens; RECOVERY_REBASE before new epoch with two fixed slots, durable common fallback and base-only selection; crash-enabled bootstrap graph proves bounded peak without loser completion",
         "DEV3-REVIEW-007: repeated failed statements restore logical effects but retain actual WAL/CLR/undo/page/SMO and transaction-lock charges until owner release; admission rejects before effect at capacity, preserving whole-transaction abort reserve; ledger rewind mutant rejected",
-        "Crash-prefix closure and fixed-peak safety are distinct from completion under finite obligations, a sufficient crash-free interval, terminating successful I/O and fair scheduling; arbitrary infinite crashes do not imply completion"
+        "Crash-prefix closure and fixed-peak safety are distinct from completion under finite obligations, a sufficient crash-free interval, terminating successful I/O and fair scheduling; arbitrary infinite crashes do not imply completion",
+        "DEV3-REVIEW-008: format ceilings, foreground admission limits and persisted recovery resource profile are distinct; current-build lower admission never truncates admitted ATT/undo/CLR obligations; inadequate recovery settings reject before DB writes",
+        "DEV3-REVIEW-008: bounded owner/resource pressure diagnostics at capacity-minus-one/exact/plus-one; preserve live snapshot and reserved cleanup, resume only after actual reclamation; q and LSN remain distinct",
+        "DEV3-REVIEW-008: bounded replacement/checkpoint service under sustained traffic, hot-page redirty and pinned/inflight/clean candidates; separate flush completions from recLSN progress; pressure drain blocks new forward effects but permits finite admitted work/rollback/flush; no no-op busy loop"
       ]
     },
     {
@@ -64,7 +67,8 @@
         "undo/status/page generation reuse, commit-q stamping and logged chain cuts with incoming references",
         "A commit then B update then A aging then B abort then full check and old-slot reuse; active begin WAL reclaimed before abort/restart",
         "D3-M01/M02/M04: persistent edge multiplicity and independently reconstructed counts; transient UndoRef/TxnRef pins acquired before source-latch release; queue cursor and edge release atomic across repeated crash",
-        "No slot reuse until persistent references, active rollback/horizon ownership, transient pins and outgoing release are resolved; full-check plus logical snapshot/rollback oracle"
+        "No slot reuse until persistent references, active rollback/horizon ownership, transient pins and outgoing release are resolved; full-check plus logical snapshot/rollback oracle",
+        "DEV3-REVIEW-008: long reader plus churn reaches explicit resource rejection without expiring the snapshot; release owner, observe actual aging/reuse and admit new work when capacity permits"
       ]
     },
     {
@@ -80,7 +84,8 @@
         "offline drained exact-C backup, source-WAL-free restore then new ACK and restart; full integrity check plus independent history after reopen",
         "restore authenticates baseLSN above all copied pageLSNs; new unflushed ACK then restart redoes the update",
         "Partial batch home success retains every pending slot; repair and sync/retire whole selected batch before later redo writes/reuse; retired raw image and early-retirement mutants rejected",
-        "Checkpoint captures ATT obligations and allocator ownership at one LSN; BEGIN WAL removed and partial CLR followed by ledger loss/restart; recovery epoch/header/WRITER and bootstrap checkpoint handoff/reclaim cuts preserve current/previous closures"
+        "Checkpoint captures ATT obligations and allocator ownership at one LSN; BEGIN WAL removed and partial CLR followed by ledger loss/restart; recovery epoch/header/WRITER and bootstrap checkpoint handoff/reclaim cuts preserve current/previous closures",
+        "DEV3-REVIEW-008: same-build smaller foreground admission with original recovery profile preserves ACKs and completes partial-CLR loser undo; insufficient/unsupported recovery profile rejects before DB writes, then supported configuration reopens; corrupt profile remains a distinct rejection"
       ]
     },
     {
@@ -96,7 +101,8 @@
         "unique old/new key locks, latest committed conflict checks; logical observed-row validation after every X-lock acquisition regardless of wait; deadlock victim full undo",
         "Whole-operation admission before first effect; statement rollback preserves prior successful statements and remaining whole-transaction abort reserve; cancel/deadlock/Drop transfer reservation ownership",
         "DEV3-REVIEW-006/D3-M03: observe then concurrent commit/unlock then immediate X-lock; wait/delete/same-bytes-new-version conflict before target effect; own-write and physical-split controls; opaque statement-bound observation; wait-only/page-only/value-only mutants rejected",
-        "DEV3-REVIEW-007: repeated failed statements restore logical effects but retain actual WAL/CLR/undo/page/SMO and transaction-lock charges until owner release; admission rejects before effect at capacity, preserving whole-transaction abort reserve; ledger rewind mutant rejected"
+        "DEV3-REVIEW-007: repeated failed statements restore logical effects but retain actual WAL/CLR/undo/page/SMO and transaction-lock charges until owner release; admission rejects before effect at capacity, preserving whole-transaction abort reserve; ledger rewind mutant rejected",
+        "DEV3-REVIEW-008/PF09: independent tables, independent rows/keys and real row/key conflicts under native ReadCommitted/Serializable; independent dependency oracle classifies conservative table conflicts; offered/attempted/durable success rates, rejects and full retry latency reported separately"
       ]
     },
     {

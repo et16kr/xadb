@@ -147,6 +147,19 @@ F05는 [자원 벡터 산식](../contracts/disk-storage-design.md#reserve-accoun
 
 [crash 뒤 예약 복원](../contracts/disk-storage-design.md#recovery-reservation)의 추가 필수 fixture는 BEGIN WAL을 회수한 Active 거래와 일부 CLR만 완료한 loser다. runtime ledger를 모두 잃은 새 프로세스에서 checkpoint+WAL만으로 obligation을 복원하고, 기존 extent token·성장 예약·이미 소비한 CLR bytes·남은 CLR/split/status/abort-end를 독립 회계와 대조한다. BOOT_RESERVE·DWB repair·RESERVE_RESTORE·REDO·RECOVERY_REBASE의 공통 fallback/두 슬롯/base-only 선택·epoch/header/WRITER 선택·첫/중간/마지막 CLR·bootstrap checkpoint 인계/회수 전후에 장애를 넣는다. 새 epoch 선택 직후 연속 crash와 두 슬롯이 모두 선택된 초기 상태도 포함한다. 현재/previous closure를 유지한 채 고정 bootstrap peak 안에서 재진입해야 한다. 8 GiB 안의 protected1 GiB와 WAL256 MiB 경계를 동시에 채운 정상 admitted fixture는 공간 재요청 실패로 거절해 PASS할 수 없다. 잘못된 descriptor·실제 I/O 장애의 명시 거절은 별도 case다.
 
+<a id="extension-boundaries"></a>
+### 3.3 규모 확대 전 경계 인수
+
+[DEV3-REVIEW-008](../contracts/disk-storage-design.md#extensibility-review)은 기존 DS03–06/PF09를 다음 반례로 구체화한다. 신규 단계나 후속 운영 기능을 S1 선행으로 추가하지 않는다. 모두 **NOT_RUN**이다.
+
+| 연결 | 필수 사례·판정 | 동결 |
+| --- | --- | --- |
+| DS03/05, D3-M06 | 같은 build·DB의 loser/부분 CLR/ACK를 보존한 채 foreground 거래 한도만 낮춘 정상 reopen. 복구 profile 미충족 memory/frame/FD/disk 설정은 첫 DB write 전 거절하고 원래 profile로 재시도하면 완전 복구. 누락·손상/미지원 profile 및 obligation을 새 한도로 자르는 mutant 거절 | F01/F02/F04/F05: checksummed profile, 실제 부족 자원, 쓰기 미시도 witness |
+| DS03/04/06 | 장기 reader+update/delete churn이 undo/owned/WAL 각 자원 경계에 도달. 부족 자원을 식별하고 effect 전 거절·snapshot 결과 유지·기존 abort 예약 보존. owner 해제 뒤 실제 회수/재사용을 확인한 경우 admission 재개. q/LSN 혼동·진단 중 무한 allocation·필요 undo 조기 회수 mutant 거절 | F02/F05: owner 종류별 bounded 진단·잘림·단위, 필요한 자원−1/동일/+1 |
+| DS03/05, D3-M06, PF09 | 지속 replacement 부하와 오래된 dirty page, 계속 redirty되는 hot page, pinned 후보·진행 중 DWB·dirty 없음. 서비스 기회와 실제 recLSN/floor 전진을 따로 관측. pressure에서 새 forward admission을 닫고 기존 유한 작업·rollback·flush를 진행시킨 뒤 checkpoint 인계. live WAL pin이 남으면 올바르게 거절 유지. 영구 busy/no-op loop·maintenance까지 닫는 mutant 거절 | F02/F05: round별 scan bound·service gap·pressure/drain 재개 조건·실제 thread barrier; 성능 수치는 실행 전 고정 |
+
+새 설정을 낮췄기 때문에 생긴 open 거절은 정상 설정의 복구 성공 인수를 대신하지 않는다. 모델/축소 반례는 실제 I/O·snapshot·thread·현재 build 복구 결과와 별도다.
+
 <a id="faults"></a>
 ## 4. fault와 재현
 
@@ -176,6 +189,10 @@ RSS는 고정 runtime baseline+buffer+metadata+private+system workspace+diagnost
 
 batch deadline은 낮은 부하에서도 1-page flush가 진행되는 시간 상한과 함께 사전 고정한다. 큰 batch의 처리량만으로 작은 요청의 p99·rollback/eviction 지연 악화를 숨기지 않는다. version-edit gate 보유·재시도·대기와 tree/page/row/key lock 대기를 분리 계측한다. gate 분할·group commit·부분 batch retirement는 이 기준선의 실행 결과를 근거로 별도 검토한다.
 
+PF09의 1/2/4 writer profile은 `(독립 table, 같은 table의 서로 다른 행·비충돌 unique key, 같은 행/같은 unique key)` × `(명시 ReadCommitted, 기본 Serializable)`로 나눈다. Serializable의 같은 table false conflict는 현재 계약의 허용 결과지만 발생 비율·재시도 비용을 보고하며 처리 능력으로 숨기지 않는다. ReadCommitted도 실제 행/unique 충돌은 보존한다. 제공 요청 수·시도 TPS·durable 성공 TPS·충돌/limit/timeout·재시도 수와 성공 latency를 따로 기록하고, retry를 허용하는 workload라면 원래 요청부터 최종 결과까지의 latency도 측정한다. 같은 외부 부하/격리/ACK 조건에서만 비교하며 외부 부하율·queue 상한·재시도 정책을 F05에 고정한다. PF09의 추가 성능 비교에 앞선 실제 correctness history가 필수다.
+
+true/false conflict 분류는 engine 오류 이름이 아니라 사전 고정한 read/write·unique key·catalog 의존관계와 독립 기대값으로 판단한다. 서로 다른 행이라도 실제 read 의존이 있으면 독립 workload로 분류하지 않는다. SQL의 현재 Serializable 결과를 native ReadCommitted 수치와 동일 조건의 성능 개선으로 비교하지 않는다.
+
 <a id="freeze"></a>
 ## 6. 구현 전 동결
 
@@ -188,6 +205,8 @@ batch deadline은 낮은 부하에서도 1-page flush가 진행되는 시간 상
 | D3-F05 | opcode별 자원 벡터·최악 CLR/rollback pages·progress frame/FD/WAL·bootstrap/예약 복원과 반복 restart peak·큰 inventory quota·PF09 | 해당 effect 전 산식 대입·경계 인수 필요. 숫자 reservation table·batch deadline·실측 미완료 |
 | D3-F06 | 실제 DEV2 공급 revision/API/format·재사용/adapter/전용/신규 symbol·시험 inventory·선행 leaf·clean export | production 착수와 S1 승격 각각. volatile/DEV2 형식 receipt로 DEV3 영속 충족 금지 |
 | D3-F07 | 담당·기준 commit/dirty digest·독점/공유 경로·중복·병합 순서·통합 검사 | 각 작업 전. 역할 계획만 존재 |
+
+F01/F02/F04/F05에는 [규모 확대 경계 인수](#extension-boundaries)의 profile 거절/복구·pressure·flush/drain·성능 분모 입력도 포함한다. [조사·검토 기록](../evidence/commercial-extensibility-research.md)은 설계 근거이며 동결/실행 완료 receipt가 아니다.
 
 후속 SQL/PART/NG/서버를 새 선행으로 추가하지 않는다. 실제로 없는 runner/artifact를 존재하는 실행 경로로 등록하지 않는다.
 

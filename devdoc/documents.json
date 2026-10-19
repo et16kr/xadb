@@ -652,6 +652,11 @@
       "path": "evidence/dev6-source-research.md",
       "role": "evidence",
       "title": "DEV6 — Oracle·ARIES·로컬 DBMS 클라이언트 조사와 검토"
+    },
+    "commercial-extensibility-research.md": {
+      "path": "evidence/commercial-extensibility-research.md",
+      "role": "evidence",
+      "title": "XADB — 상용 수준 확장 한계 조사와 선제 보완"
     }
   }
 }

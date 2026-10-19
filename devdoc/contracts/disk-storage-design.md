@@ -1,6 +1,6 @@
 # DEV3 — 디스크 저장·인덱스 상세 설계
 
-2026-10-19 · **DEV3-DESIGN-003·REVIEW-004–007 ACCEPTED / 미구현·단계 모델·제품 시험 NOT_RUN**
+2026-10-19 · **DEV3-DESIGN-003·REVIEW-004–008 ACCEPTED / 미구현·단계 모델·제품 시험 NOT_RUN**
 
 [구현 계획](../plans/dev3-implementation-plan.md) · [이번 조사](../evidence/dev3-wal-undo-research.md) · [이전 조사](../evidence/dev3-source-research.md) · [커널 계약](implementation-contracts.md) · [DEV2 계약](dev2-kernel-design.md) · [복구 계약](recovery-logging-design.md) · [인수 항목](disk-test-matrix.json)
 
@@ -209,6 +209,15 @@ doublewrite는 16 MiB의 영속 고정 pool이며 디스크 quota에 포함한�
 
 FILEMAP과 선택된 DWB control은 home allocator에 의존하지 않고 읽을 수 있다. 첫 bootstrap 단계에서 두 control의 identity/digest를 검증한 뒤 **pending image만** FILEMAP의 주소에 복원한다. pending이 있는 주소의 재할당은 retirement 전 금지되므로 slot의 incarnation을 bootstrap 근거로 사용할 수 있다. allocator/status/anchor도 동일 방식으로 먼저 복원하고, WAL allocation/init redo를 적용하면서 일반 page owner/incarnation을 검증한다. healthy home이 더 높은 LSN/incarnation이면 불변식 위반으로 거절하며 오래된 image로 덮지 않는다. 유효 pending 없는 기존 initialized home의 torn/손상은 원칙적으로 REJECT_CORRUPTION이다. 예외는 FILEMAP·allocation generation과 일치하는 **완전한 INIT image 및 그 이후 채택 끝까지의 WAL 전체**가 보존된 경우다. 새 page가 아직 zero/uninitialized home인 no-force 상태도 이 경로에서 INIT부터 재구성한다. delta redo만으로 checksum 오류를 숨기거나 WAL이 끊긴 INIT을 복원 근거로 쓰지 않는다. INIT 복원 대상은 redo에서 초기화하므로 bootstrap 단계의 blanket page-load 거절을 적용하지 않는다. @10 사본이 retired된 뒤 @20을 쓰고 슬롯을 재사용한 경우 @10 raw bytes가 남아 있어도 복구 후보가 아니다. arbitrary cold-page 손상까지 수리한다고 주장하지 않는다. control torn·retirement 불명·allocator torn·page reuse·두 번째 crash가 F04 필수 vector다.
 
+<a id="flush-progress"></a>
+### 9.2 교체 flush와 checkpoint 진행
+
+frame 확보를 위한 교체 flush와 오래된 recLSN을 해소하는 checkpoint flush는 서로 다른 진행 목적이다. dirty page 수만 줄었다고 recovery WAL floor가 전진했다고 판단하지 않는다. F05에서 한 scheduling round의 page 탐색·선택 상한과 두 종류의 작업에 대한 유한 service 간격을 정한다. 지속적인 hot-page 변경/교체 요청 아래에도 오래된 eligible dirty page의 flush 기회를 보장한다. pin·진행 중 DWB 등으로 대상이 불가능하면 이유를 기록하고 다른 bounded 작업 또는 깨움/deadline 대기로 전환한다. 동일한 불가능 후보나 clean 항목만 재선택하는 무진행 busy loop를 금지한다. 별도 thread 수나 다중 coordinator는 여기서 정하지 않는다.
+
+page가 재수정되어 dirty에 남는 경우 image sync 자체와 recLSN/floor 해소를 구별한다. **모든 새 쓰기를 수용하면서 checkpoint가 따라잡는다는 보장은 하지 않는다.** 보존 WAL/dirty backlog가 F05의 사전 고정 한도에 가까워지면 새 foreground 예약을 제한하여 기존 flush·rollback 몫과 진행 기회를 유지한다. 필요한 WAL을 지우거나 WAL-before-page 장벽을 약화하지 않는다. 기존 progress turn·공정한 실행·정상 I/O 전제를 적용하며, latch 보유 I/O나 무제한 dirty-page 목록을 추가하지 않는다. PF09에는 oldest recLSN lag, flush 선택/완료/재dirty 수, 작업별 최대 service gap, 무진행 round와 admission 거절 원인을 포함한다.
+
+초기 recLSN 보수 유지 규약에서는 scheduling만으로 hot page의 floor 전진을 보장하지 않는다. pressure 시 새 forward effect의 admission을 닫고 이미 admitted된 유한 작업의 완료/rollback과 예약 flusher는 계속 허용하여, 재수정되지 않는 image의 sync·DPT 제거·checkpoint 인계가 가능한 구간을 만든다. 이 drain은 client의 다음 COMMIT 요청을 기다리는 offline DDL drain과 다르며 active transaction의 uncommitted page도 기존 steal 규약으로 flush할 수 있다. live retention owner가 여전히 WAL을 요구하면 floor는 그대로이고 새 write 거절을 유지한다. 안전한 post-copy redirty LSN 인계로 drain을 줄이는 최적화는 후속 D2이며 여기서 암묵적으로 도입하지 않는다.
+
 <a id="commit"></a>
 ## 10. WAL·commit·rollback
 
@@ -305,6 +314,15 @@ aging cursor/진행점은 재실행 가능한 logged state다. 메모리 batch·
 
 F05는 각 forward/CLR/SMO/terminal/capture/bootstrap 전후의 `charged + outstanding` 보존과 반복 restart의 고정 peak를 수치로 증명한다. F04는 BEGIN WAL 삭제·부분 CLR·새 epoch 선택·bootstrap checkpoint 인계/회수의 재장애를 포함한다. 이 동결·모델·실제 I/O 인수는 **NOT_RUN**이며 구현 전 미완료 의무다.
 
+<a id="retention-pressure"></a>
+### 13.3 보존 압력과 운영 진단
+
+오래된 snapshot 때문에 undo가 회수되지 않으면 [예약 회계](#reserve-accounting)에 따라 **다음 statement의 첫 effect 전에** 자원 부족을 반환한다. 해당 statement가 이미 적용 중인 예외는 기존 undo/오류 효과를 따른다. 공간이 풀릴 때까지 같은 요청을 내부에서 무한 재시도하거나, live snapshot을 시간만으로 만료시키거나, 필요한 undo를 덮어써 진행시키지 않는다. timeout/cancel은 해당 소유자 종료 경로를 거쳐 실제 pin/undo 소유가 해제된 뒤만 회수 조건을 바꾼다. 이미 예약된 rollback·flush·recovery 몫은 새 write가 빌릴 수 없다.
+
+bounded 진단에는 부족한 자원과 `capacity/charged/reserved/requested`, 보존 이유별 owner 종류·generation, snapshot q 또는 WAL LSN, oldest-owner age, 재사용 가능/실제 회수량을 담는다. q와 LSN을 섞지 않으며 reader가 언제나 WAL도 pin한다고 표시하지 않는다. 최대 항목 수·잘림 표시를 고정하고, 합계는 겹친 보존 범위를 중복 합산하지 않는다. 진단은 회수 결정의 정본이 아니며 pressure 상태에서도 사전 예약된 제한 공간으로 생성한다. 진단 실패가 rollback 진행이나 기존 오류의 확실성을 바꾸지 않는다. 원문 SQL·행·bind 값은 넣지 않는다.
+
+DS03/04는 긴 reader를 유지한 채 churn→명시적 admission 거절→기존 reader 결과 보존→reader 해제→aging/공간 재사용→새 admission 성공을 확인한다. 충분한 공간이 없으면 새 admission은 계속 거절할 수 있다. 보호할 데이터 유실 없이 실제 자원이 반환된 경우의 재개를 검증하며, 전체 DB 쓰기 가용성을 약속하지 않는다. 향후 archive/RP owner는 [별도 확장 의무](../evidence/commercial-extensibility-research.md#future-operations)를 충족하기 전 현재 REBASE의 고정 peak 증명에 포함된 것으로 취급하지 않는다.
+
 <a id="budgets"></a>
 ## 14. 자원·성능
 
@@ -320,6 +338,15 @@ F05는 각 forward/CLR/SMO/terminal/capture/bootstrap 전후의 `charged + outst
 대형 index build의 run/disk 목록은 별도 사전 예약·owned staging이며 외부 정렬의 FD/fan-in·취소 정리가 bounded해야 한다. data/index/row locator/할당 inventory 각각 accessed bytes ≥ configured buffer 4배 기준을 유지한다. inventory는 이제 파일 pack 목록 대신 page/extent allocation inventory다. 필요한 큰 inventory fixture와 quota는 실행 전에 F05에서 정한다. 단지 작은 metadata cache를 넘었다는 것으로 인수를 대체하지 않는다.
 
 PF09는 성공 TPS/충돌률, commit·WAL sync p99, background data flush/doublewrite bytes, page read/hit/pin/latch/lock wait, undo 생성/보존/aging량, 재사용 가능/실제 재사용 공간, checkpoint·정상 reopen·full-check·backup 중단시간, RSS/FD/rollback reserve peak를 기록한다. page-cache miss와 실제 장치 I/O를 구별한다. baseline/candidate는 동일 의미·durability·fixture/환경에서 비교하고 성능 개선을 미리 선언하지 않는다.
+
+<a id="capacity-profile"></a>
+### 14.1 형식 한도·실행 한도·복구 요구량
+
+초기 수치에는 서로 다른 의미가 있다. F01/F05에서 각 한도를 **형식/알고리즘의 표현 상한**, **신규 foreground admission 한도**, **이미 영속 인계된 복구 요구량**으로 분류한다. page/slot/길이/ID 산술과 codec 상한은 검증된 표현의 범위이며 설정 숫자만 올려 확대하지 않는다. 유효한 신규 작업은 표현 상한과 검증된 실행 profile 양쪽을 만족해야 하고, 여러 statement의 거래 누적량도 검사한다. 모든 API 소비자는 engine이 정한 유효 한도를 사용하며 SQL이 더 큰 engine 용량을 추정하지 않는다. 실제 설정 API나 wire capability 필드를 미리 추가하는 결정은 아니다.
+
+같은 build 재시작에서도 **새 foreground 한도는 이미 admitted된 거래의 복구 한도가 아니다.** 초기 구현은 DB 생성 시 선택된 복구 자원 profile을 checksummed control로 식별하고, 해당 profile을 충족하지 못하는 실행 설정은 PREFLIGHT에서 DB 쓰기 전에 거절한다. BOOT_RESERVE/RESERVE_RESTORE는 그 profile과 실제 잔여 obligation을 사용한다. 예를 들어 새 거래 한도를 낮췄다고 checkpoint의 ATT·undo/CLR 잔여량을 자르거나 더 적은 거래만 복구하지 않는다. 같은 profile 안의 신규 admission 축소는 허용할 수 있으나 복구에 필요한 자원을 반환하지 않는다. profile 변경·더 작은 복구 설정 지원은 별도 증명/동결 대상이며 자동 변환하지 않는다.
+
+F01은 profile identity·필수 항목·무결성/지원 여부의 검사 위치를, F05는 실제 opcode bound와 동시 admission 표를 고정한다. 식별자만 일치하고 실제 memory/frame/FD/disk 예약이 부족한 경우도 open 성공으로 표시하지 않는다. 미지원 설정과 손상 descriptor를 다른 원인으로 진단한다. 현재 build에서 정상 profile로 다시 open할 때의 ACK·loser undo 보존을 DS05로 검증하며, 사내 이전 버전 호환 구현을 요구하는 규칙은 아니다.
 
 <a id="acceptance"></a>
 ## 15. 구현 전 동결과 인수
@@ -403,3 +430,16 @@ PF09는 성공 TPS/충돌률, commit·WAL sync p99, background data flush/double
 | 상태·인수·독립 검토 | ACCEPTED. DS03/DS06·M03/M06·F02/F05에 반영. `/root/dev345_independent_review`가 원문·반례·세 단계 계약/계획/인수 diff를 독립 검토하고 회계 등 축소 계산을 재실행: 필수 P1/P2 잔여 없음. `/root` 반영 확인. 이전 review identity·실행 결과 유지 |
 | 참고 근거 | 2026-10-19 [ARIES 원 논문](https://cs.stanford.edu/people/chrismre/cs345/rl/aries.pdf)의 WAL/CLR·공간 예약 원리와 로컬 소스 선택 구간 대조. PostgreSQL `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851`의 `src/backend/storage/buffer/bufmgr.c` FlushBuffer, CUBRID `a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5`의 `src/transaction/log_recovery.c` undo/compensate, MySQL `3b99be40f8a31d9396cad10accfd3ba51647d613`의 `storage/innobase/buf/buf0dblwr.cc` batch 완료, SQLite `43a48f77585a88940c727f33682151418f544059`의 `src/wal.c` reader/checkpoint. 외부 구현과 동일하다는 주장이나 실행 증거가 아님 |
 | 실행·재검토 | 산술 반례·축소 계산만 실행. 기존 단계 모델/제품/복구/성능은 NOT_RUN. 잔류 비용 누락·진행 가정 변경 또는 실제 leaf 반례가 생기면 재검토 |
+
+<a id="extensibility-review"></a>
+## DEV3-REVIEW-008 — 규모 확대 전 자원·진행 경계
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-19 |
+| 담당·권한 | 작업/저장 계약/통합 `/root`. 사용자의 상용 수준 확장 한계 점검·선제 보완 요청과 DP01 위임 |
+| 선택 | 9.2절의 flush service/backlog, 13.3절의 retention pressure/진단, 14.1절의 형식·admission·복구 profile 분리. 기존 DS03–06/PF09에 반례를 연결 |
+| 대안·이유 | 한도 일괄 증가는 복구/예약 증명을 대신하지 못함. 전역 gate 분할·group commit 즉시 구현은 DEV3 기준선 실측과 하위 인수 이전에 복잡성을 늘림. 기존 단일 저장/commit 구조 안의 경계부터 명시 |
+| 적용·대체 | REVIEW-004–007의 자원·진행 규약을 구체화. DEV2 코드·격리·durable ACK·기존 상한·stage DAG 유지. 후속 복제/온라인 백업을 S1 선행 조건에 추가하지 않음 |
+| 근거·검토 | [소스 조사·반례·독립 검토](../evidence/commercial-extensibility-research.md). `/root/extensibility_review`의 독립 D2 설계 검토 PASS·잔여 필수 P1/P2 없음, 계약/통합 담당 `/root` 반영 확인. 제품·모델·성능 NOT_RUN |
+| 재검토 | profile 변경/대량 거래·다중 flush 도입, 장기 pin의 quota 압력, flush starvation, durable archive/RP owner 추가 |

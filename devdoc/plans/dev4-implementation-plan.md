@@ -86,6 +86,9 @@ T09/D4-V26은 `T1 대상 materialization → T2 commit/unlock → T1 즉시 X lo
 
 T09는 [DEV3 snapshot 획득](../contracts/disk-storage-design.md#snapshot-acquisition)의 실제 DS04 선행 증거를 수신하고, idle prepare와 execute 최초 획득을 writer/aging과 교차한다. q10 선택/등록 사이 및 status11 설치/frontier10의 경계에서 catalog/row 결과가 q10과 일치해야 한다. SQL이 engine guard 대신 raw q를 넘기거나 result 인계 중 마지막 horizon 소유를 놓는 mutant를 거절한다. 이 시험은 SQL ReadCommitted 노출을 추가하지 않으며 현재 Serializable·implicit ReadOnly 경로를 검증한다.
 
+<a id="aggregate-pressure"></a>
+T07/T08/T11/T14는 [DEV4-REVIEW-006](../contracts/dev4-sql-design.md#extensibility-review)의 합산 자원 반례를 포함한다. F02/F03/F05에서 2개 이상 session의 prepare/bind 교체와 sort/merge/fetch를 겹쳐 SQL 전체 memory64 MiB·temporary disk1 GiB·FD64 각각의 잔여량−1/동일/+1 경계를 고정한다. 개별 query 한도 이내여도 DB 총량 초과는 거절하고, old+new binding 공존 예약 실패는 이전 binding/metadata로 재실행 가능해야 한다. concurrent merge의 입력+출력 peak와 삭제 실패 bytes는 새 query admission에도 남는다. 한 query의 ENOSPC/cancel/close/crash cleanup이 다른 query의 파일·pin·quota를 해제하지 않아야 하며, 소유 cleanup은 새 foreground 예약 없이 진행한다. 오염/절단 spill 거절·실패 unlink 재시도·복구 뒤 소유 namespace cleanup도 실제 I/O로 확인한다. query별 검사만 하는 mutant, binding 교체 전 이전 charge 해제, 삭제 실패를 반환량으로 계산하는 mutant를 거절한다. 현재 **NOT_RUN**이며 SQL aggregate quota가 이번에 처음 도입된 것은 아니다.
+
 <a id="verification"></a>
 ## 5. 독립성·fault·검증 강도
 
