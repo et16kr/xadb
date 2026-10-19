@@ -25,7 +25,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -38,7 +41,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -51,7 +57,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -64,7 +73,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -77,7 +89,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -90,7 +105,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -103,7 +121,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -116,7 +137,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -129,7 +153,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -142,7 +169,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -155,7 +185,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -168,7 +201,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         }
       ],
@@ -193,7 +229,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -206,7 +245,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -219,7 +261,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -232,7 +277,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -245,7 +293,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -258,7 +309,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -271,7 +325,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         }
       ],
@@ -296,7 +353,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -309,7 +369,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -322,7 +385,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -335,7 +401,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -348,7 +417,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -361,7 +433,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         }
       ],
@@ -474,7 +549,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -487,7 +565,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -500,7 +581,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE",
           "decision_reference": "phase1-scope.json#user_confirmed; native_global_index_across_disk_partitions"
         },
@@ -514,7 +598,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -527,7 +614,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         }
       ],
@@ -554,7 +644,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -567,7 +660,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -580,7 +676,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -593,7 +692,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -606,7 +708,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         }
       ],
@@ -630,7 +735,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -643,7 +751,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -656,7 +767,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -669,7 +783,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -682,7 +799,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -695,7 +815,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -708,7 +831,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -721,7 +847,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -734,7 +863,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -747,7 +879,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -760,7 +895,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         }
       ],
@@ -784,7 +922,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -797,7 +938,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -810,7 +954,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -823,7 +970,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         }
       ],
@@ -848,7 +998,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -861,7 +1014,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -874,7 +1030,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -887,7 +1046,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -900,7 +1062,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -915,7 +1080,9 @@
           "equivalence_evidence": [],
           "design_dependencies": [
             "D-RECOVERY",
-            "D-LOGGING"
+            "D-LOGGING",
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
           ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
@@ -929,7 +1096,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -942,7 +1112,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -955,7 +1128,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         }
       ],
@@ -979,7 +1155,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -992,7 +1171,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -1006,7 +1188,9 @@
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
           "design_dependencies": [
-            "D-LOGGING"
+            "D-LOGGING",
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
           ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
@@ -1020,7 +1204,10 @@
           "detail_expansion_required": true,
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
-          "design_dependencies": [],
+          "design_dependencies": [
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
+          ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         },
         {
@@ -1034,7 +1221,9 @@
           "execution_status": "NOT_RUN",
           "equivalence_evidence": [],
           "design_dependencies": [
-            "D-LOGGING"
+            "D-LOGGING",
+            "dev7-sql-extensions-design.md",
+            "dev7-implementation-plan.md"
           ],
           "requirement_origin": "RETAINED_DESIGN_PROPOSAL_REVIEWED_FOR_XADB_SCOPE"
         }

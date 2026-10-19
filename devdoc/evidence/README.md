@@ -14,6 +14,8 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 
 <!-- catalogue -->
 
+- [DEV7 — Oracle·Altibase·로컬 DBMS 조사와 설계 검토](dev7-source-research.md) — Oracle26ai·Altibase7.3 공식 문서와 실제 로컬8개 revision; 실행 비교·제품 인수 아님
+
 - [상용 수준 확장 한계 조사와 선제 보완](commercial-extensibility-research.md) — Oracle·공개 로컬3개·SRC-L04 실제 revision/hash, DEV3/4 자원·진행·설정/복구 경계와 독립 검토; 제품 인수 증거 아님
 
 - [DEV6 — Oracle·ARIES·로컬 DBMS 클라이언트 조사와 검토](dev6-source-research.md) — DEV6 설계·REVIEW-002 상태/취소/결과/버퍼 보완·인수 의무; CLIENT1 미실행

@@ -234,7 +234,14 @@
       ],
       "channel": "development",
       "execution_status": "NOT_RUN",
-      "completion_ref": "stage-completion.json#DEV7"
+      "completion_ref": "stage-completion.json#DEV7",
+      "design_refs": [
+        "dev7-sql-extensions-design.md",
+        "dev7-implementation-plan.md"
+      ],
+      "research_refs": [
+        "dev7-source-research.md"
+      ]
     },
     {
       "id": "DEV8",

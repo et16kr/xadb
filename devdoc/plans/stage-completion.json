@@ -164,7 +164,16 @@
       "task_ref": "XADB-037",
       "title": "확장 타입·값",
       "acceptance": "배정된 모든 타입/overload/cast의 precision/rounding/overflow/timezone/collation/NULL과 equality/order/hash/key/persistence 벡터를 독립 검산한다. SQL·index·저장·실제 driver의 선언된 지원 조합에서 의미와 오류가 일치해야 한다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev7-sql-extensions-design.md",
+        "dev7-implementation-plan.md"
+      ],
+      "required_details": [
+        "D7-F01..F10: applicable operation/type/API/codec/resource/fault/runtime profiles frozen before implementation or acceptance",
+        "dev7-implementation-plan.md#coverage: all assigned requirements and expanded variants, independent expected values and actual lower/server/client/peer integration",
+        "D7-T01..T32 with applicable C01..C10 and P01..P05: native effects, current-build recovery/recrash, negative oracle/checker and measured resource/performance evidence"
+      ]
     },
     {
       "id": "SC08",
@@ -173,7 +182,16 @@
       "task_ref": "XADB-038",
       "title": "관계 실행·제약·optimizer",
       "acceptance": "join/aggregate/subquery/window/set/재귀·view 등 배정된 관계 기능과 FK/CHECK/savepoint와 고급 plan cache·재최적화·확장 SQL의 prepared 실행을 빈 값·중복·NULL·경합·schema 변경으로 검증한다. 독립 관계 oracle 및 최적화 전후 대조를 함께 사용하고 오류의 statement/transaction 효과와 복구를 검사한다. DEV4/DEV5의 기본 prepare/bind 계약은 선행 기준선이며 DEV7까지 미루지 않는다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev7-sql-extensions-design.md",
+        "dev7-implementation-plan.md"
+      ],
+      "required_details": [
+        "D7-F01..F10: applicable operation/type/API/codec/resource/fault/runtime profiles frozen before implementation or acceptance",
+        "dev7-implementation-plan.md#coverage: all assigned requirements and expanded variants, independent expected values and actual lower/server/client/peer integration",
+        "D7-T01..T32 with applicable C01..C10 and P01..P05: native effects, current-build recovery/recrash, negative oracle/checker and measured resource/performance evidence"
+      ]
     },
     {
       "id": "SC09",
@@ -182,7 +200,16 @@
       "task_ref": "XADB-039",
       "title": "프로그래머블 객체",
       "acceptance": "PSM/trigger/sequence/queue의 배정된 전체 구문·권한·의존성·재귀/오류·동시성·transaction 효과를 검증한다. 생성/변경/삭제 및 재시작 후 상태를 실제 SQL/server/client 경로에서 독립 기대값과 비교한다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev7-sql-extensions-design.md",
+        "dev7-implementation-plan.md"
+      ],
+      "required_details": [
+        "D7-F01..F10: applicable operation/type/API/codec/resource/fault/runtime profiles frozen before implementation or acceptance",
+        "dev7-implementation-plan.md#coverage: all assigned requirements and expanded variants, independent expected values and actual lower/server/client/peer integration",
+        "D7-T01..T32 with applicable C01..C10 and P01..P05: native effects, current-build recovery/recrash, negative oracle/checker and measured resource/performance evidence"
+      ]
     },
     {
       "id": "SC10",
@@ -191,7 +218,16 @@
       "task_ref": "XADB-040",
       "title": "LOB·spatial·저장 확장",
       "acceptance": "배정된 함수/연산/표현 한도의 경계·NULL·큰 값·streaming·index 결과를 독립 값/기하 oracle로 대조한다. 실패/취소·snapshot 수명·quota·디스크 저장 경로 복구를 확인하고 연결 API 지원 조합을 빠짐없이 실행한다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev7-sql-extensions-design.md",
+        "dev7-implementation-plan.md"
+      ],
+      "required_details": [
+        "D7-F01..F10: applicable operation/type/API/codec/resource/fault/runtime profiles frozen before implementation or acceptance",
+        "dev7-implementation-plan.md#coverage: all assigned requirements and expanded variants, independent expected values and actual lower/server/client/peer integration",
+        "D7-T01..T32 with applicable C01..C10 and P01..P05: native effects, current-build recovery/recrash, negative oracle/checker and measured resource/performance evidence"
+      ]
     },
     {
       "id": "SC11",
@@ -200,7 +236,16 @@
       "task_ref": "XADB-041",
       "title": "외부 routine·DB link·XA",
       "acceptance": "격리된 소유 peer/TM에서 명세한 transaction 경계, prepare/commit/rollback, in-doubt, 권한, 연결/응답 유실·중복·재시작·운영 해결을 실행한다. 실제 외부 효과와 독립 history를 비교하며 로컬 호출 성공만으로 PASS하지 않는다.",
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev7-sql-extensions-design.md",
+        "dev7-implementation-plan.md"
+      ],
+      "required_details": [
+        "D7-F01..F10: applicable operation/type/API/codec/resource/fault/runtime profiles frozen before implementation or acceptance",
+        "dev7-implementation-plan.md#coverage: all assigned requirements and expanded variants, independent expected values and actual lower/server/client/peer integration",
+        "D7-T01..T32 with applicable C01..C10 and P01..P05: native effects, current-build recovery/recrash, negative oracle/checker and measured resource/performance evidence"
+      ]
     },
     {
       "id": "SC12",
@@ -320,7 +365,11 @@
         "SC07"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev7-sql-extensions-design.md",
+        "dev7-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-038",
@@ -333,7 +382,11 @@
         "SC08"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev7-sql-extensions-design.md",
+        "dev7-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-039",
@@ -346,7 +399,11 @@
         "SC09"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev7-sql-extensions-design.md",
+        "dev7-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-040",
@@ -360,7 +417,11 @@
         "SC10"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev7-sql-extensions-design.md",
+        "dev7-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-041",
@@ -374,7 +435,11 @@
         "SC11"
       ],
       "detail_expansion_required": true,
-      "execution_status": "NOT_RUN"
+      "execution_status": "NOT_RUN",
+      "design_refs": [
+        "dev7-sql-extensions-design.md",
+        "dev7-implementation-plan.md"
+      ]
     },
     {
       "id": "XADB-042",
@@ -1005,20 +1070,29 @@
       ],
       "pass_criteria": [
         "XADB-037..041에 배정한 전체 필수 기능/variant inventory 완결; 각 leaf의 독립 oracle·오류·원자성·저장/서버/client 통합 PASS",
-        "기능 일부의 사내 배포는 허용하되 필수 task·variant를 제외하거나 미구현을 N/A로 바꿔 DEV7 전체를 닫지 않음"
+        "기능 일부의 사내 배포는 허용하되 필수 task·variant를 제외하거나 미구현을 N/A로 바꿔 DEV7 전체를 닫지 않음",
+        "dev7-implementation-plan.md의 64개 DEV7 요구 배정과 모든 필수 leaf/variant 동결·인수; D7-T01–T32·C01–C10·P01–P05의 적용 셀 전체 및 실제 하위 공급·독립 검토. 설계 채택으로 detail_expansion_required나 실행 상태를 닫지 않음"
       ],
       "acceptance_input_status": "REQUIRES_LEAF_CONTRACT_AND_PROFILE",
       "open_decisions": [
-        "replacement planned_stages에 DEV7이 있는 모든 요구의 세부 배정과 범위 경계",
-        "overload/연산/API·권한·동시성·복구·client 조합, leaf 선행 task와 수치 한도"
+        "D7-F01/F02: complete type/function/overload/cast/grammar/relational-rule and independent vector inventory; current design is not full leaf freeze",
+        "D7-F03/F04: engine D7-STORAGE/RC/RR/constraint/savepoint and catalog/online/PART/NG actual API/format/resource/recovery profiles",
+        "D7-F05/F06/F07: PSM/queue/scheduler/LOB/spatial/external/XA state/byte/flag/dependency and fault profiles",
+        "D7-F08/F09/F10: actual driver/language/TM/environment support matrix, full variant/fault inventory, bounded models, performance and replay recipes",
+        "D-LOGGING: R10-03 internal change extraction and R10-05 detailed subscription/log-analysis design remain deferred; external adapter allocation does not close this obligation"
       ],
       "deferred_obligations": [
-        "PART/NG SQL 노출은 실제 core와 통합 gate 필요; 다른 단계에 배정한 요구도 DEV9에서 누락 검사"
+        "PART/NG SQL 노출은 실제 core와 통합 gate 필요; 다른 단계에 배정한 요구도 DEV9에서 누락 검사",
+        "R10-03 logging internals and R10-05 DEFERRED_BY_USER remain required and unresolved; resume/freeze/execute the owner contract before SQL_EXT1 completion"
       ],
       "run_entrypoint": null,
       "evidence_refs": [],
       "execution_status": "NOT_RUN",
-      "official_distribution_status": "NOT_RUN"
+      "official_distribution_status": "NOT_RUN",
+      "design_refs": [
+        "dev7-sql-extensions-design.md",
+        "dev7-implementation-plan.md"
+      ]
     },
     {
       "id": "DEV8",

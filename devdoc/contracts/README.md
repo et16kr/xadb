@@ -4,6 +4,8 @@
 
 <!-- catalogue -->
 
+- [DEV7 — 확장 SQL·프로그래머블 객체·외부 거래 설계](dev7-sql-extensions-design.md) — SC07–11·64개 요구 배정·타입/관계/PSM/LOB/XA 경계; leaf 동결·SQL_EXT1 미실행
+
 - [DEV6 — native·JDBC·ODBC 클라이언트 상세 설계](dev6-client-design.md) — DEV6 설계·REVIEW-002 상태/취소/결과/버퍼 보완·인수 의무; CLIENT1 미실행
 
 - [DEV5 — 서버·세션·요청 프로토콜 상세 설계](dev5-server-design.md) — local 인증·권한·XSQ1·prepared·취소·자원·외부 ACK, worker 대기 진행·거래 수명·idle 만료·철회 후 정리; B3 미실행

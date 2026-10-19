@@ -657,6 +657,21 @@
       "path": "evidence/commercial-extensibility-research.md",
       "role": "evidence",
       "title": "XADB — 상용 수준 확장 한계 조사와 선제 보완"
+    },
+    "dev7-sql-extensions-design.md": {
+      "path": "contracts/dev7-sql-extensions-design.md",
+      "role": "contracts",
+      "title": "DEV7 — 확장 SQL·프로그래머블 객체·외부 거래 설계"
+    },
+    "dev7-implementation-plan.md": {
+      "path": "plans/dev7-implementation-plan.md",
+      "role": "plans",
+      "title": "DEV7 — 확장 기능 구현·검증 계획"
+    },
+    "dev7-source-research.md": {
+      "path": "evidence/dev7-source-research.md",
+      "role": "evidence",
+      "title": "DEV7 — Oracle·Altibase·로컬 DBMS 조사와 설계 검토"
     }
   }
 }
