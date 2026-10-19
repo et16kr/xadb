@@ -1,6 +1,12 @@
 # XADB 개발 문서
 
-**Markdown 중심으로 관리합니다. HTML은 생성하지 않습니다.** 현재 DEV0·DEV1 최소 기반, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog substrate를 부분 구현했습니다. 후속 streaming controller·catalog 재현과 K0 성능 진단·audit/replay를 포함한 이전 소스에서 DEV0·DEV1 회귀 및 DEV2 P0/K0 leaf를 로컬 검증했습니다. 이 결과는 현재 소스의 검증을 대신하지 않습니다. 최초 성능 비교의 p99 비용 한도는 FAIL이며 성능 인수는 미완료입니다. K1–K5 영속 커널은 구현 연결·독립 정적 검토와 일부 로컬 검증을 마쳤으며, 최종 복구·V3·성능·하위 회귀 인수는 진행 중입니다. 후속 제품 인수는 미완료입니다. 정확한 범위는 [현재 구현](implementation/README.md)과 [개발 단계](plans/development-stages.md)를 확인합니다.
+**Markdown 중심으로 관리합니다. HTML은 생성하지 않습니다.** 현재 DEV0·DEV1 최소 기반, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog substrate를 부분 구현했습니다. 후속 streaming controller·catalog 재현과 K0 성능 진단·audit/replay를 포함한 이전 소스에서 DEV0·DEV1 회귀 및 DEV2 P0/K0 leaf를 로컬 검증했습니다. 이 결과는 현재 소스의 검증을 대신하지 않습니다. 최초 성능 비교의 p99 비용 한도는 FAIL이며 성능 인수는 미완료입니다. K1–K5 영속 커널은 구현 연결·독립 정적 검토를 마쳤으며, 동결 소스에서 복구·V3·하위 회귀의 로컬 실행을 완료했습니다. 일부 계측 비용 한도 실패로 최종 인수는 미완료입니다. 후속 제품 인수는 미완료입니다. 정확한 범위는 [현재 구현](implementation/README.md)과 [개발 단계](plans/development-stages.md)를 확인합니다.
+
+2026-10-19 [DEV2 남은 시험 실행](implementation/dev2-implementation.md#dev2-tests-20261019): 동결 source에서 영속 native 99셀, 9개 30분 target, P0 전수 9,604,608건과 하위 회귀를 완료했다. 성능 후보의 개선 확인과 일부 계측 비용 한도 FAIL을 구분하며 DEV2 전체 인수는 미완료다.
+
+2026-10-19 [DEV2 계측 수정](implementation/dev2-implementation.md#dev2-instrumentation-fix-20261019): CPU 관측과 상세 진단 비용을 수정하고 같은 동결 source에서 ext4 복구 99셀·하위 회귀·필수 성능 시험 36개를 통과했다. 최종 로컬 성능 인수는 INCOMPLETE이며 전체 DEV2 인수는 미완료다.
+
+2026-10-19 [DEV2 새 시험 후 일시 중지](implementation/dev2-implementation.md#dev2-resumed-tests-20261019): 삭제 후 e3 소스로 실행한 11개30분 target 중 11개 PASS와 복구 보완 증거를 보존했다. 집계기 캐시 지문 오류는 별도 기록했으며, 사용자 요청으로 새 성능 측정 전에 중지했다. DEV2 인수는 미완료다.
 
 ## 작업을 시작할 때
 

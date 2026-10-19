@@ -18,6 +18,21 @@ fn campaign_id(value: &str) -> Result<[u8; 16], Box<dyn std::error::Error>> {
 fn execute() -> Result<u8, Box<dyn std::error::Error>> {
     let mut args = std::env::args().skip(1);
     match args.next().as_deref() {
+        Some("run-durable-performance") => {
+            let allowed=["--input","--input-sha256","--worker","--worker-sha256","--artifacts","--run-id"];
+            let mut options=BTreeMap::new();
+            while let Some(key)=args.next() {
+                if !allowed.contains(&key.as_str()) {return Err(format!("unknown option: {key}").into());}
+                let value=args.next().ok_or_else(||format!("missing value: {key}"))?;
+                if options.insert(key,value).is_some() {return Err("duplicate option".into());}
+            }
+            let mut take=|name| options.remove(name).ok_or_else(||format!("missing option: {name}"));
+            let report=xadbtest::durable_performance::run(xadbtest::durable_performance::Options {
+                input:take("--input")?.into(),input_sha256:take("--input-sha256")?,worker:take("--worker")?.into(),worker_sha256:take("--worker-sha256")?,artifacts:take("--artifacts")?.into(),run:campaign_id(&take("--run-id")?)?,
+            })?;
+            println!("{}",serde_json::to_string(&report)?);
+            Ok(0)
+        }
         Some("performance-profile") => {
             if args.next().is_some() { return Err("performance-profile accepts no options".into()); }
             println!("{}", serde_json::to_string_pretty(&xadbtest::performance::profile())?);

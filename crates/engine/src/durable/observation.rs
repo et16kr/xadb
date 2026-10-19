@@ -338,6 +338,11 @@ impl Observations {
         Ok(())
     }
     fn add(&self, target: &AtomicU64, amount: u64) {
+        // Zero has no effect, including at saturation. Avoid an atomic write
+        // for operation labels without byte/item coverage.
+        if amount == 0 {
+            return;
+        }
         let _ = target.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
             Some(value.checked_add(amount).unwrap_or_else(|| {
                 self.saturated.store(true, Ordering::Relaxed);
@@ -456,7 +461,11 @@ impl Span<'_> {
                 let elapsed = end - start;
                 self.owner.add(&c.samples, 1);
                 self.owner.add(&c.sum, elapsed);
-                c.max.fetch_max(elapsed, Ordering::Relaxed);
+                // Max only advances. A concurrent larger update is preserved by
+                // fetch_max; an already sufficient observation needs no write.
+                if elapsed > c.max.load(Ordering::Relaxed) {
+                    c.max.fetch_max(elapsed, Ordering::Relaxed);
+                }
                 let bucket = if elapsed <= 1 {
                     0
                 } else {
@@ -477,5 +486,85 @@ impl Drop for Span<'_> {
         if !self.finished {
             self.record(false, 0);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct TestClock(AtomicU64);
+    impl Clock for TestClock {
+        fn now_nanos(&self) -> u64 {
+            self.0.load(Ordering::Relaxed)
+        }
+    }
+
+    #[test]
+    fn zero_deltas_preserve_saturation_boundary_and_timing_distribution() {
+        let clock = Arc::new(TestClock(AtomicU64::new(0)));
+        let observations =
+            Observations::new(true, Some(clock.clone()), &Quota::new(65536)).unwrap();
+        let counter = AtomicU64::new(u64::MAX);
+        observations.add(&counter, 0);
+        assert!(!observations.saturated.load(Ordering::Relaxed));
+        assert_eq!(counter.load(Ordering::Relaxed), u64::MAX);
+        for duration in [64, 0, 16, 128, 2] {
+            clock.0.store(0, Ordering::Relaxed);
+            let span = observations.start(DurabilityOperation::WalSync, 0, 1);
+            clock.0.store(duration, Ordering::Relaxed);
+            span.finish(true, 0);
+        }
+        let snapshot = observations.snapshot(DurabilityGauges::default());
+        let sync = snapshot.operations.unwrap()[DurabilityOperation::WalSync as usize];
+        assert_eq!((sync.attempts, sync.successes, sync.failures), (5, 5, 0));
+        assert_eq!(sync.items, Some(5));
+        let timing = sync.elapsed.unwrap();
+        assert_eq!(
+            (timing.samples, timing.sum_ns, timing.max_ns),
+            (5, 210, 128)
+        );
+        let mut expected = [0; 64];
+        for bucket in [6, 0, 4, 7, 1] {
+            expected[bucket] = 1;
+        }
+        assert_eq!(timing.log2_ns, expected);
+        observations.add(&counter, 1);
+        assert_eq!(counter.load(Ordering::Relaxed), u64::MAX);
+        assert!(observations.saturated.load(Ordering::Relaxed));
+    }
+
+    #[test]
+    fn concurrent_max_and_histogram_keep_every_completed_scope() {
+        let clock = Arc::new(TestClock(AtomicU64::new(128)));
+        let observations = Observations::new(true, Some(clock), &Quota::new(65536)).unwrap();
+        std::thread::scope(|scope| {
+            for duration in [1, 16, 64, 128] {
+                let observations = &observations;
+                scope.spawn(move || {
+                    for _ in 0..128 {
+                        Span {
+                            owner: observations,
+                            operation: DurabilityOperation::WalSync,
+                            start: Some(128 - duration),
+                            finished: false,
+                        }
+                        .finish(true, 0);
+                    }
+                });
+            }
+        });
+        let snapshot = observations.snapshot(DurabilityGauges::default());
+        let sync = snapshot.operations.unwrap()[DurabilityOperation::WalSync as usize];
+        let timing = sync.elapsed.unwrap();
+        assert_eq!(
+            (timing.samples, timing.sum_ns, timing.max_ns),
+            (512, 26752, 128)
+        );
+        assert_eq!(timing.log2_ns.iter().sum::<u64>(), 512);
+        for bucket in [0, 4, 6, 7] {
+            assert_eq!(timing.log2_ns[bucket], 128);
+        }
+        assert!(!snapshot.counters_saturated);
     }
 }

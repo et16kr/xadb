@@ -323,10 +323,7 @@ impl Control {
                         if matches!(
                             error.kind(),
                             io::ErrorKind::WouldBlock | io::ErrorKind::Interrupted
-                        ) =>
-                    {
-                        ()
-                    }
+                        ) => {}
                     Err(error) => return Err(io_error(error)),
                 };
                 session.poll()?;

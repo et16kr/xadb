@@ -29,12 +29,11 @@
     "dev2-validation.json"
   ],
   "dev2_imported_unvalidated": [],
-  "current_source_validation": "K1_K5_LOCAL_PARTIAL_VALIDATION_FINAL_FROZEN_ACCEPTANCE_PENDING",
+  "current_source_validation": "FROZEN_DEV2_INSTRUMENTATION_REPAIR_LOCAL_VALIDATION_FULL_ACCEPTANCE_PENDING",
   "dev2_unvalidated_implementation": [
-    "K1-K5 production integration and independent static review completed; development unit, transaction, cache-loss, native fault and V2 checks partly executed",
-    "Final frozen native fault campaigns with independent pre-open-image oracle and three fresh repetitions pending",
-    "Full V3 thread/parser/codec profiles, bounded exhaustive exploration and current lower regressions pending",
-    "K1-K5 performance baseline/audit/replay and K0 optimization confirmation pending; initial p99 failures remain"
+    "Full DEV2/B2/D0 acceptance remains incomplete; see frozen instrumentation fix receipt for current local performance outcome",
+    "Full current-worktree qualification excludes unrelated changes after the retained source snapshot",
+    "Eleven V3 targets on the corrected frozen source passed; the six-target wrapper source-cache failure is separately reconciled in dev2-resumed-tests-xadb-20261019-r1.json. Official target-environment qualification, protected CI and official distribution remain NOT_RUN"
   ],
   "evidence_scope": "Historical COMM regression reports validate source e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1: DEV0 8, DEV1 8, DEV2 P0/K0 28 checks. The earlier DEV3/DEV4 documentation commit had the same source fingerprint. These reports do not validate subsequent K1-K5 changes or the current worktree. No product tests were rerun for this reference correction. Historical r3 and separate K0-005 performance reports retain source 6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f; initial sample-p99 guardrail failures and INCOMPLETE performance/K0/DEV2 qualification remain unchanged.",
   "validation_handoff": {
@@ -107,5 +106,52 @@
     "basis": "RECORDED_BASE_PLUS_COMM_CHANGES",
     "current_worktree_validation": "NOT_CLAIMED",
     "c1_status": "INCOMPLETE"
+  },
+  "dev2_local_test_validation": {
+    "status": "LOCAL_EXECUTION_COMPLETE",
+    "source_sha256": "47c84c22f9cf2f5720ba3f39fb310f888a0ca86c7313a9bcd7a7d47294861991",
+    "report_ref": "dev2-completion-xadb-20261019-r1.json",
+    "current_full_worktree_qualification": "NOT_CLAIMED",
+    "native_fault_cases": 99,
+    "v3_targets_30_minutes": 9,
+    "p0_exhaustive_cases": 9604608,
+    "lower_checks": {
+      "DEV0": 8,
+      "DEV1": 8,
+      "DEV2": 28
+    },
+    "pf12_candidate_confirmation": "VALID_IMPROVED_GUARDRAILS_PASS",
+    "instrumentation_acceptance": "INCOMPLETE_GUARDRAIL_FAILURES",
+    "independent_final_performance_review": "PASS_LOCAL_EXECUTION_STATISTICS_AND_RETENTION",
+    "performance_guardrail_failure_campaigns": [
+      "k0_performance:audit-detailed",
+      "k0_performance:audit-replay",
+      "durable_performance:audit",
+      "durable_performance:replay"
+    ]
+  },
+  "dev2_instrumentation_fix_validation": {
+    "evidence_ref": "dev2-instrumentation-fix-xadb-20261019-r1.json",
+    "source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+    "kernel": "PASS_EXT4_99_NATIVE_CASES",
+    "lower_regression": "PASS_28_DEV0_8_DEV1_8",
+    "performance_required_tests": 36,
+    "performance_acceptance": "INCOMPLETE",
+    "whole_worktree_qualification": "NOT_CLAIMED",
+    "full_v3_on_this_source": "SEE_SCOPED_RESUMED_TEST_RESULTS",
+    "stage_status": "INCOMPLETE",
+    "latest_followup_evidence_ref": "dev2-resumed-tests-xadb-20261019-r1.json"
+  },
+  "dev2_resumed_tests_validation": {
+    "evidence_ref": "dev2-resumed-tests-xadb-20261019-r1.json",
+    "source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+    "status": "PAUSED_AFTER_RUNNING_TESTS_AT_USER_REQUEST",
+    "v3_targets": 11,
+    "v3_passed": 11,
+    "six_target_wrapper": "FAIL_SOURCE_CACHE_RECONCILED",
+    "performance_correctness_tests": 36,
+    "new_performance_campaigns": "NOT_RUN_USER_PAUSE",
+    "stage_status": "INCOMPLETE",
+    "whole_worktree_qualification": "NOT_CLAIMED"
   }
 }

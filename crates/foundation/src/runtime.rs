@@ -20,6 +20,7 @@ pub struct Quota(Arc<QuotaState>);
 struct QuotaState {
     limit: u64,
     used: AtomicU64,
+    peak: AtomicU64,
 }
 /// Non-clone lease that returns its accounted units on Drop, without allocation.
 /// Keep it alive as long as the associated resource; it does not own that resource.
@@ -34,11 +35,19 @@ impl Quota {
         Self(Arc::new(QuotaState {
             limit,
             used: AtomicU64::new(0),
+            peak: AtomicU64::new(0),
         }))
     }
     /// Observe the currently reserved units; concurrent reservations may change it immediately.
     pub fn used(&self) -> u64 {
         self.0.used.load(Ordering::Acquire)
+    }
+    /// Highest successfully reserved total in this ledger's lifetime, including
+    /// reservations released before a collector ran. Exact after reservers join;
+    /// during a concurrent reserve this observation may lag the used counter.
+    /// Rejected reservations never raise the peak. Clones share the same peak.
+    pub fn peak(&self) -> u64 {
+        self.0.peak.load(Ordering::Acquire)
     }
     /// Atomically reserve units and return the lease that releases them.
     /// Does not acquire a mutex or wait for units to become available.
@@ -47,12 +56,16 @@ impl Quota {
     /// Returns [`ErrorCode::QuotaExceeded`] on overflow or insufficient capacity,
     /// without changing the ledger. See `real_threads_cannot_overbook_quota`.
     pub fn reserve(&self, amount: u64) -> Result<Reservation> {
-        self.0
+        let previous = self
+            .0
             .used
             .fetch_update(Ordering::AcqRel, Ordering::Acquire, |used| {
                 used.checked_add(amount).filter(|new| *new <= self.0.limit)
             })
             .map_err(|_| Error::new(ErrorCode::QuotaExceeded, "reservation exceeds quota"))?;
+        // The successful CAS returns its pre-reservation count. Reading used()
+        // here would miss a real peak if another owner released in between.
+        self.0.peak.fetch_max(previous + amount, Ordering::AcqRel);
         Ok(Reservation {
             quota: self.clone(),
             amount,

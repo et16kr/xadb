@@ -411,10 +411,10 @@ fn alias(value: u64) -> Result<(), Error> {
 impl Envelope for Request {
     fn validate(&self) -> Result<(), Error> {
         identity(self.version, self.run, self.request, self.actor)?;
-        if let Some(gate) = self.command.gate {
-            if !(1..=MAX_GATES).contains(&gate) || self.command.action.exclusive() {
-                return Err(Error::Invalid("invalid or exclusive rendezvous request"));
-            }
+        if let Some(gate) = self.command.gate
+            && (!(1..=MAX_GATES).contains(&gate) || self.command.action.exclusive())
+        {
+            return Err(Error::Invalid("invalid or exclusive rendezvous request"));
         }
         match &self.command.action {
             Action::ConfigureFault { token, plan } => {
@@ -423,7 +423,7 @@ impl Envelope for Request {
                 }
                 plan.validate()?;
             }
-            Action::ConfigureGate { gate, actors } => {
+            Action::ConfigureGate { gate, actors }
                 if !(1..=MAX_GATES).contains(gate)
                     || !(2..=MAX_PENDING).contains(&actors.len())
                     || actors
@@ -432,22 +432,21 @@ impl Envelope for Request {
                     || actors
                         .iter()
                         .enumerate()
-                        .any(|(index, actor)| actors[..index].contains(actor))
-                {
-                    return Err(Error::Invalid("durable gate participants/id"));
-                }
+                        .any(|(index, actor)| actors[..index].contains(actor)) =>
+            {
+                return Err(Error::Invalid("durable gate participants/id"));
             }
             Action::CreateDatabase { directory }
             | Action::OpenDatabase { directory }
-            | Action::Backup { directory } => {
-                if *directory >= MAX_DIRECTORIES {
-                    return Err(Error::Invalid("durable directory slot"));
-                }
+            | Action::Backup { directory }
+                if *directory >= MAX_DIRECTORIES =>
+            {
+                return Err(Error::Invalid("durable directory slot"));
             }
-            Action::RestoreDatabase { source, target } => {
-                if *source >= MAX_DIRECTORIES || *target >= MAX_DIRECTORIES || source == target {
-                    return Err(Error::Invalid("restore directory slots"));
-                }
+            Action::RestoreDatabase { source, target }
+                if *source >= MAX_DIRECTORIES || *target >= MAX_DIRECTORIES || source == target =>
+            {
+                return Err(Error::Invalid("restore directory slots"));
             }
             Action::Statement {
                 transaction,
@@ -522,8 +521,8 @@ impl Envelope for Response {
             if counters.semantic_revision != 1 {
                 return Err(Error::Invalid("durability metric revision"));
             }
-            if let Some(operations) = &counters.operations {
-                if operations.len() != 21
+            if let Some(operations) = &counters.operations
+                && (operations.len() != 21
                     || operations.iter().enumerate().any(|(index, metric)| {
                         !DURABILITY_METRIC_IDS.contains(&metric.metric_id.as_str())
                             || operations[..index]
@@ -533,10 +532,9 @@ impl Envelope for Response {
                                 .elapsed
                                 .as_ref()
                                 .is_some_and(|timing| timing.log2_ns.len() != 64)
-                    })
-                {
-                    return Err(Error::Invalid("durability metric catalog/histogram"));
-                }
+                    }))
+            {
+                return Err(Error::Invalid("durability metric catalog/histogram"));
             }
         }
         if let Observation::Error { failure } = &self.observation {

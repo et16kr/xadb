@@ -24,7 +24,8 @@ from check_dev2_reference import require_passed_tests
 ROOT = Path(__file__).resolve().parent.parent
 TESTS = {
     'platform-observers': ('xadb-platform', ['--lib'], {
-        'performance::tests::cpu_vectors_reject_partial_invalid_and_extra_fields',
+        'performance::tests::cpu_vectors_reject_negative_invalid_and_overflowing_times',
+        'performance::tests::cpu_observation_tracks_the_calling_thread_while_its_parent_waits',
         'performance::tests::rss_vectors_preserve_units_missing_duplicates_and_overflow',
         'performance::tests::linux_observations_are_optional_and_never_fabricated'}),
     'protocol-performance': ('xadbtest-protocol', ['--test', 'performance'], {

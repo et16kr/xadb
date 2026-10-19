@@ -141,6 +141,9 @@ pub(crate) struct Frame {
     pub next: u64,
 }
 
+// Keep decoded frames inline: boxing would add an unaccounted allocation to
+// every recovery read; this bounded stack value has only one payload variant.
+#[allow(clippy::large_enum_variant)]
 pub(crate) enum FrameRead {
     Complete(Frame),
     /// Only a final active segment may accept this result as an incomplete tail.

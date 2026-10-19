@@ -877,11 +877,10 @@ impl Transaction {
             })?;
             Ok((prepared, change, receipt))
         })()
-        .map_err(|error: TransactionError| {
+        .inspect_err(|_: &TransactionError| {
             shared
                 .transaction_counters
                 .add(&shared.transaction_counters.preparation_failures, 1);
-            error
         })?;
         invoke_hook(&shared, &change, before_publish)?;
         let old = shared.publication.replace(prepared).map_err(|error| {

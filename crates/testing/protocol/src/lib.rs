@@ -1,8 +1,9 @@
 //! Typed XADBTest observations; no engine dependency or worker verdict.
 pub mod durable;
+pub mod durable_performance;
 pub mod engine;
-pub mod frame;
 pub mod fault;
+pub mod frame;
 pub mod history;
 pub mod performance;
 

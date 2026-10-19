@@ -1,0 +1,1656 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-19T01:23:45.045668+00:00",
+  "scope": "D2 diagnostics cost repair and calling-thread CPU observer correctness fix; frozen source only; excludes later unrelated worktree changes and full stage/product qualification",
+  "status": "LOCAL_EXECUTION_COMPLETE_ACCEPTANCE_INCOMPLETE",
+  "dev2_stage_status": "INCOMPLETE",
+  "source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+  "retained_source": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final/source",
+  "initial_source_sha256": "b630facc2d6d63e864131390f82e7ee20ae5d7a3c8d60d5ce40a7d874d71ee31",
+  "comparison_baseline_sha256": "fb74e88963405b8032d32a4ce941176fba3894ec65f92327491a43bd3b5be6dd",
+  "comparison_baseline_scope": "same corrected CPU observer; only two collectors restored to initial implementations",
+  "modified_scope": [
+    "crates/engine/src/diagnostics.rs",
+    "crates/engine/src/durable/observation.rs",
+    "crates/platform/Cargo.toml",
+    "crates/platform/src/performance.rs",
+    "scripts/check_dev2_performance.py",
+    "crates/testing/controller/src/performance.rs",
+    "crates/testing/controller/src/performance/bundle.rs"
+  ],
+  "live_source_sha256_at_rollup": "2bd1460844f849db072a798d41a55755817ff5026fd84cf1fbfde60843a6636d",
+  "live_source_differences": [
+    "crates/testing/transport-worker/src/bin/comm_performance.rs",
+    "scripts/check_comm_performance.py",
+    "scripts/test_check_comm_performance.py"
+  ],
+  "reports": {
+    "kernel_ext4": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final/kernel.json",
+      "bytes": 48907,
+      "sha256": "a0eb86b8def9621b5f5cbb3aba540764ed8531ecbc29233d2357fa981cca1803",
+      "status": "PASS"
+    },
+    "kernel_tmpfs": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final/kernel-tmpfs.json",
+      "bytes": 47641,
+      "sha256": "12dfcb90919e85961ac3f13df3a685c082c3e87e0d0a062fb2c96794eb319933",
+      "status": "PASS"
+    },
+    "lower_regression": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final/lower-regression.json",
+      "bytes": 54980,
+      "sha256": "1b48e784c2550085fd1c5e6cdaf5d8f126535a3c0195abc145e5ac129406012a",
+      "status": "PASS"
+    },
+    "performance_correctness": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-performance-tests/report.json",
+      "bytes": 8394,
+      "sha256": "105c0535de767f626cc9c23811f6d51a0dff5882158e37d56dc9d9c0cf9068cf",
+      "status": "PASS"
+    },
+    "performance_campaigns": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-campaigns/report.json",
+      "bytes": 18443403,
+      "sha256": "48cc89edffe16bb41d4a90f5aa45566167d4dce6528667ab02545b083115cc2b",
+      "status": "PASS"
+    }
+  },
+  "kernel_summary": {
+    "filesystem": "ext4 /dev/nvme0n1p2",
+    "native_campaigns": 3,
+    "native_cases_each": 33,
+    "strict_accepted_total": 99,
+    "engine_units": 29,
+    "transactions": 7,
+    "cache_loss": 15,
+    "independent_python": 101,
+    "runner_selftests": 8,
+    "thread_v2_seeds": 64,
+    "power_loss_qualification": false
+  },
+  "lower_summary": {
+    "checks": 28,
+    "dev0_checks": 8,
+    "dev1_checks": 8,
+    "scope": "P0/K0 volatile leaf and lower regressions; no durability claim"
+  },
+  "performance_tests": {
+    "groups": 8,
+    "required_named_tests": 36
+  },
+  "performance_acceptance": "INCOMPLETE",
+  "comparisons": [
+    {
+      "id": "audit-always",
+      "directory": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-campaigns/audit-always/performance-QkRQFv",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "REGRESSED",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 15824025,
+            "denominator": 14471913
+          },
+          {
+            "numerator": 15901331,
+            "denominator": 14593394
+          },
+          {
+            "numerator": 15825668,
+            "denominator": 14475651
+          },
+          {
+            "numerator": 15906761,
+            "denominator": 14453519
+          },
+          {
+            "numerator": 15929083,
+            "denominator": 14503403
+          },
+          {
+            "numerator": 15843100,
+            "denominator": 14434944
+          },
+          {
+            "numerator": 15813424,
+            "denominator": 14701919
+          },
+          {
+            "numerator": 15856236,
+            "denominator": 14556213
+          },
+          {
+            "numerator": 15855504,
+            "denominator": 14540393
+          },
+          {
+            "numerator": 15829374,
+            "denominator": 14616537
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 15829374,
+            "denominator": 14616537
+          },
+          {
+            "numerator": 15929083,
+            "denominator": 14503403
+          }
+        ],
+        "median": [
+          459630174540628,
+          420963308941686
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 15906761,
+          "denominator": 14453519
+        },
+        "worst_cpu": {
+          "numerator": 15827129,
+          "denominator": 14377352
+        },
+        "worst_external": {
+          "numerator": 22718585,
+          "denominator": 20585334
+        },
+        "worst_sample_p99": {
+          "numerator": 270,
+          "denominator": 250
+        },
+        "worst_process_peak_rss_delta": 12288
+      }
+    },
+    {
+      "id": "audit-detailed",
+      "directory": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-campaigns/audit-detailed/performance-QXbpSR",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "REGRESSED",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 16414994,
+            "denominator": 14436987
+          },
+          {
+            "numerator": 16345803,
+            "denominator": 14426968
+          },
+          {
+            "numerator": 16375168,
+            "denominator": 14568295
+          },
+          {
+            "numerator": 16382252,
+            "denominator": 14566473
+          },
+          {
+            "numerator": 16297431,
+            "denominator": 14551624
+          },
+          {
+            "numerator": 16382833,
+            "denominator": 14518622
+          },
+          {
+            "numerator": 16296500,
+            "denominator": 14455993
+          },
+          {
+            "numerator": 16306439,
+            "denominator": 14585027
+          },
+          {
+            "numerator": 16277023,
+            "denominator": 14431847
+          },
+          {
+            "numerator": 16336706,
+            "denominator": 14536756
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 16297431,
+            "denominator": 14551624
+          },
+          {
+            "numerator": 16345803,
+            "denominator": 14426968
+          }
+        ],
+        "median": [
+          474204247480736,
+          421145663445378
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 16414994,
+          "denominator": 14436987
+        },
+        "worst_cpu": {
+          "numerator": 16332039,
+          "denominator": 14365415
+        },
+        "worst_external": {
+          "numerator": 23374937,
+          "denominator": 20566959
+        },
+        "worst_sample_p99": {
+          "numerator": 281,
+          "denominator": 250
+        },
+        "worst_process_peak_rss_delta": 90112
+      }
+    },
+    {
+      "id": "replay-always",
+      "directory": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-campaigns/replay-always/performance-vbPbZr",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "REGRESSED",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 16019245,
+            "denominator": 14459170
+          },
+          {
+            "numerator": 15807022,
+            "denominator": 14515005
+          },
+          {
+            "numerator": 15808055,
+            "denominator": 14499455
+          },
+          {
+            "numerator": 15843592,
+            "denominator": 14539351
+          },
+          {
+            "numerator": 15922291,
+            "denominator": 14484006
+          },
+          {
+            "numerator": 15859762,
+            "denominator": 14527318
+          },
+          {
+            "numerator": 15817873,
+            "denominator": 14585749
+          },
+          {
+            "numerator": 15808315,
+            "denominator": 14469729
+          },
+          {
+            "numerator": 15782867,
+            "denominator": 14502051
+          },
+          {
+            "numerator": 15829455,
+            "denominator": 14452577
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 15782867,
+            "denominator": 14502051
+          },
+          {
+            "numerator": 15922291,
+            "denominator": 14484006
+          }
+        ],
+        "median": [
+          459606547376200,
+          421276387223380
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 16019245,
+          "denominator": 14459170
+        },
+        "worst_cpu": {
+          "numerator": 15938028,
+          "denominator": 14386000
+        },
+        "worst_external": {
+          "numerator": 22334267,
+          "denominator": 20532304
+        },
+        "worst_sample_p99": {
+          "numerator": 271,
+          "denominator": 250
+        },
+        "worst_process_peak_rss_delta": 24576
+      }
+    },
+    {
+      "id": "replay-detailed",
+      "directory": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-campaigns/replay-detailed/performance-RYQsC0",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "REGRESSED",
+        "guardrails": "FAIL",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 16381611,
+            "denominator": 14515375
+          },
+          {
+            "numerator": 16434651,
+            "denominator": 14477033
+          },
+          {
+            "numerator": 16497961,
+            "denominator": 14640924
+          },
+          {
+            "numerator": 16397721,
+            "denominator": 14618552
+          },
+          {
+            "numerator": 17079804,
+            "denominator": 14454060
+          },
+          {
+            "numerator": 16310386,
+            "denominator": 14592903
+          },
+          {
+            "numerator": 16358778,
+            "denominator": 14549730
+          },
+          {
+            "numerator": 16354420,
+            "denominator": 14494636
+          },
+          {
+            "numerator": 16314033,
+            "denominator": 14478977
+          },
+          {
+            "numerator": 16542796,
+            "denominator": 14504055
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 16397721,
+            "denominator": 14618552
+          },
+          {
+            "numerator": 16542796,
+            "denominator": 14504055
+          }
+        ],
+        "median": [
+          478575759721276,
+          424429728167328
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 17079804,
+          "denominator": 14454060
+        },
+        "worst_cpu": {
+          "numerator": 16454543,
+          "denominator": 14431228
+        },
+        "worst_external": {
+          "numerator": 23264909,
+          "denominator": 20129430
+        },
+        "worst_sample_p99": {
+          "numerator": 290,
+          "denominator": 251
+        },
+        "worst_process_peak_rss_delta": 24576
+      }
+    },
+    {
+      "id": "collector-exploration",
+      "directory": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-campaigns/collector-exploration/performance-h70RaE",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "IMPROVED",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 16401319,
+            "denominator": 18594944
+          },
+          {
+            "numerator": 16404294,
+            "denominator": 18427396
+          },
+          {
+            "numerator": 16351925,
+            "denominator": 18370308
+          },
+          {
+            "numerator": 16295959,
+            "denominator": 18404253
+          },
+          {
+            "numerator": 16390607,
+            "denominator": 18457573
+          },
+          {
+            "numerator": 16328199,
+            "denominator": 18408681
+          },
+          {
+            "numerator": 16461713,
+            "denominator": 18410303
+          },
+          {
+            "numerator": 16464137,
+            "denominator": 18329852
+          },
+          {
+            "numerator": 16373545,
+            "denominator": 18508950
+          },
+          {
+            "numerator": 16316928,
+            "denominator": 18461661
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 16316928,
+            "denominator": 18461661
+          },
+          {
+            "numerator": 16461713,
+            "denominator": 18410303
+          }
+        ],
+        "median": [
+          603108380660394,
+          679559146782426
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 16464137,
+          "denominator": 18329852
+        },
+        "worst_cpu": {
+          "numerator": 16381638,
+          "denominator": 18237374
+        },
+        "worst_external": {
+          "numerator": 23110958,
+          "denominator": 24825305
+        },
+        "worst_sample_p99": {
+          "numerator": 280,
+          "denominator": 301
+        },
+        "worst_process_peak_rss_delta": 69632
+      }
+    },
+    {
+      "id": "collector-confirmation",
+      "directory": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-campaigns/collector-confirmation/performance-sMolc5",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "IMPROVED",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 18424992,
+            "denominator": 20961656
+          },
+          {
+            "numerator": 17980509,
+            "denominator": 20842291
+          },
+          {
+            "numerator": 18412798,
+            "denominator": 20970814
+          },
+          {
+            "numerator": 17787725,
+            "denominator": 21131007
+          },
+          {
+            "numerator": 18278023,
+            "denominator": 20717324
+          },
+          {
+            "numerator": 18242265,
+            "denominator": 20008481
+          },
+          {
+            "numerator": 16326216,
+            "denominator": 18357604
+          },
+          {
+            "numerator": 16423350,
+            "denominator": 18417708
+          },
+          {
+            "numerator": 16555120,
+            "denominator": 18369717
+          },
+          {
+            "numerator": 16316919,
+            "denominator": 18365158
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 17980509,
+            "denominator": 20842291
+          },
+          {
+            "numerator": 16555120,
+            "denominator": 18369717
+          }
+        ],
+        "median": [
+          673721677927390,
+          760953857194384
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 18242265,
+          "denominator": 20008481
+        },
+        "worst_cpu": {
+          "numerator": 18111649,
+          "denominator": 19862381
+        },
+        "worst_external": {
+          "numerator": 27588409,
+          "denominator": 28522769
+        },
+        "worst_sample_p99": {
+          "numerator": 361,
+          "denominator": 361
+        },
+        "worst_process_peak_rss_delta": 8192
+      }
+    },
+    {
+      "id": "collector-replay",
+      "directory": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-campaigns/collector-replay/performance-f51irh",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "IMPROVED",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 16551683,
+            "denominator": 18635860
+          },
+          {
+            "numerator": 16472643,
+            "denominator": 20968269
+          },
+          {
+            "numerator": 18806284,
+            "denominator": 21836203
+          },
+          {
+            "numerator": 16343188,
+            "denominator": 20177501
+          },
+          {
+            "numerator": 16333510,
+            "denominator": 18393382
+          },
+          {
+            "numerator": 16655009,
+            "denominator": 18478333
+          },
+          {
+            "numerator": 16450101,
+            "denominator": 18349168
+          },
+          {
+            "numerator": 16399093,
+            "denominator": 18479314
+          },
+          {
+            "numerator": 16351063,
+            "denominator": 18668533
+          },
+          {
+            "numerator": 16330323,
+            "denominator": 18350150
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 16343188,
+            "denominator": 20177501
+          },
+          {
+            "numerator": 16450101,
+            "denominator": 18349168
+          }
+        ],
+        "median": [
+          603466842014666,
+          679794162999896
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 16655009,
+          "denominator": 18478333
+        },
+        "worst_cpu": {
+          "numerator": 16573411,
+          "denominator": 18387667
+        },
+        "worst_external": {
+          "numerator": 27068424,
+          "denominator": 24887172
+        },
+        "worst_sample_p99": {
+          "numerator": 281,
+          "denominator": 301
+        },
+        "worst_process_peak_rss_delta": 65536
+      }
+    },
+    {
+      "id": "durable-audit",
+      "directory": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-campaigns/durable-audit",
+      "comparison": {
+        "budget": "FAIL",
+        "cause_status": "NOT_RUN",
+        "correctness": "PASS",
+        "guardrails": "FAIL",
+        "interval": [
+          [
+            2694699559,
+            2766694360
+          ],
+          [
+            1365714076,
+            1353933905
+          ]
+        ],
+        "median": [
+          1215239243427552721,
+          1215844846297055018
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "performance_effect": "NO_MATERIAL_CHANGE",
+        "promotion": "INCOMPLETE",
+        "ratios": [
+          [
+            3871800513,
+            3904988096
+          ],
+          [
+            1949089026,
+            1963592087
+          ],
+          [
+            1432924709,
+            1939175689
+          ],
+          [
+            2694699559,
+            2766694360
+          ],
+          [
+            2706182429,
+            2703985445
+          ],
+          [
+            2732927286,
+            2727184115
+          ],
+          [
+            1365714076,
+            1353933905
+          ],
+          [
+            2764934545,
+            2732972292
+          ],
+          [
+            2697441017,
+            2700403442
+          ],
+          [
+            900582069,
+            900491258
+          ]
+        ],
+        "reasons": [
+          "guardrail failed: cycle_p99_ns"
+        ],
+        "validity": "VALID"
+      }
+    },
+    {
+      "id": "durable-replay",
+      "directory": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-campaigns/durable-replay",
+      "comparison": {
+        "budget": "FAIL",
+        "cause_status": "NOT_RUN",
+        "correctness": "PASS",
+        "guardrails": "FAIL",
+        "interval": [
+          [
+            2701987323,
+            2743173551
+          ],
+          [
+            1371143495,
+            1361387793
+          ]
+        ],
+        "median": [
+          2467873100066444485,
+          2474426249508734436
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "performance_effect": "NO_MATERIAL_CHANGE",
+        "promotion": "INCOMPLETE",
+        "ratios": [
+          [
+            1356955431,
+            1354668272
+          ],
+          [
+            1371143495,
+            1361387793
+          ],
+          [
+            906642665,
+            906518351
+          ],
+          [
+            1374889368,
+            1358432791
+          ],
+          [
+            2699632660,
+            2715064219
+          ],
+          [
+            2701987323,
+            2743173551
+          ],
+          [
+            1356344590,
+            1362935649
+          ],
+          [
+            2717518298,
+            2734736047
+          ],
+          [
+            2722013435,
+            2723268246
+          ],
+          [
+            2705015959,
+            2758171528
+          ]
+        ],
+        "reasons": [
+          "guardrail failed: cycle_p99_ns",
+          "guardrail failed: cpu_ns"
+        ],
+        "validity": "VALID"
+      }
+    }
+  ],
+  "exploration": [
+    {
+      "candidate": "candidate1",
+      "source_sha256": "68957fd7a77a0776afae1b1e13dac32d4fd533b9eea904bcc3c361f036eb3b67",
+      "report": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/candidate1/audit-results.json",
+        "bytes": 6045,
+        "sha256": "e9e0f7c62c66744c8d80d9e821fae8014612001c16e920c9ba6a632a265b474e"
+      },
+      "comparisons": [
+        {
+          "mode": "always",
+          "comparison": {
+            "validity": "VALID",
+            "correctness": "PASS",
+            "performance_effect": "REGRESSED",
+            "guardrails": "FAIL",
+            "cause_status": "UNRESOLVED",
+            "promotion": "INCOMPLETE",
+            "reasons": [],
+            "ratios": [
+              {
+                "numerator": 16123419,
+                "denominator": 14820335
+              },
+              {
+                "numerator": 15964879,
+                "denominator": 14581263
+              },
+              {
+                "numerator": 17989348,
+                "denominator": 14541057
+              },
+              {
+                "numerator": 17839725,
+                "denominator": 16216425
+              },
+              {
+                "numerator": 17976493,
+                "denominator": 16226153
+              },
+              {
+                "numerator": 17899458,
+                "denominator": 14477006
+              },
+              {
+                "numerator": 15918411,
+                "denominator": 14508635
+              },
+              {
+                "numerator": 16063165,
+                "denominator": 14700649
+              },
+              {
+                "numerator": 15950322,
+                "denominator": 14679408
+              },
+              {
+                "numerator": 16014954,
+                "denominator": 14511692
+              }
+            ],
+            "interval": [
+              {
+                "numerator": 16123419,
+                "denominator": 14820335
+              },
+              {
+                "numerator": 17899458,
+                "denominator": 14477006
+              }
+            ],
+            "median": [
+              516969776626050,
+              470556382659750
+            ],
+            "nominal_interval_coverage": [
+              1002,
+              1024
+            ],
+            "worst_elapsed": {
+              "numerator": 17989348,
+              "denominator": 14541057
+            },
+            "worst_cpu": {
+              "numerator": 17962137,
+              "denominator": 14368508
+            },
+            "worst_external": {
+              "numerator": 25373171,
+              "denominator": 20659767
+            },
+            "worst_sample_p99": {
+              "numerator": 361,
+              "denominator": 251
+            },
+            "worst_process_peak_rss_delta": 69632
+          }
+        },
+        {
+          "mode": "detailed",
+          "comparison": {
+            "validity": "VALID",
+            "correctness": "PASS",
+            "performance_effect": "REGRESSED",
+            "guardrails": "FAIL",
+            "cause_status": "UNRESOLVED",
+            "promotion": "INCOMPLETE",
+            "reasons": [],
+            "ratios": [
+              {
+                "numerator": 17044320,
+                "denominator": 14496312
+              },
+              {
+                "numerator": 17019133,
+                "denominator": 14563699
+              },
+              {
+                "numerator": 17129401,
+                "denominator": 14586693
+              },
+              {
+                "numerator": 17174446,
+                "denominator": 14679519
+              },
+              {
+                "numerator": 17044871,
+                "denominator": 14582175
+              },
+              {
+                "numerator": 17177022,
+                "denominator": 14590070
+              },
+              {
+                "numerator": 17128109,
+                "denominator": 14539544
+              },
+              {
+                "numerator": 17341613,
+                "denominator": 14639784
+              },
+              {
+                "numerator": 17263836,
+                "denominator": 14585241
+              },
+              {
+                "numerator": 17453103,
+                "denominator": 14497855
+              }
+            ],
+            "interval": [
+              {
+                "numerator": 17044871,
+                "denominator": 14582175
+              },
+              {
+                "numerator": 17341613,
+                "denominator": 14639784
+              }
+            ],
+            "median": [
+              497681292045264,
+              423004413643680
+            ],
+            "nominal_interval_coverage": [
+              1002,
+              1024
+            ],
+            "worst_elapsed": {
+              "numerator": 17453103,
+              "denominator": 14497855
+            },
+            "worst_cpu": {
+              "numerator": 17396536,
+              "denominator": 14266565
+            },
+            "worst_external": {
+              "numerator": 24290183,
+              "denominator": 20590066
+            },
+            "worst_sample_p99": {
+              "numerator": 321,
+              "denominator": 251
+            },
+            "worst_process_peak_rss_delta": 90112
+          }
+        }
+      ]
+    },
+    {
+      "candidate": "candidate2",
+      "source_sha256": "04cefea88cd14c066aad90ed183c082161ff98284c84277410048c6c72070545",
+      "report": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/candidate2/audit-results.json",
+        "bytes": 6045,
+        "sha256": "1d95a83a6ffa0bbaec35e78cb0b626568ff210bcdaf97e6f6c38ec504c5ee6fd"
+      },
+      "comparisons": [
+        {
+          "mode": "always",
+          "comparison": {
+            "validity": "VALID",
+            "correctness": "PASS",
+            "performance_effect": "REGRESSED",
+            "guardrails": "PASS",
+            "cause_status": "UNRESOLVED",
+            "promotion": "INCOMPLETE",
+            "reasons": [],
+            "ratios": [
+              {
+                "numerator": 15984397,
+                "denominator": 14576624
+              },
+              {
+                "numerator": 15985049,
+                "denominator": 14522462
+              },
+              {
+                "numerator": 15972445,
+                "denominator": 14487907
+              },
+              {
+                "numerator": 16048579,
+                "denominator": 14537040
+              },
+              {
+                "numerator": 16021658,
+                "denominator": 14560504
+              },
+              {
+                "numerator": 16030695,
+                "denominator": 14530628
+              },
+              {
+                "numerator": 15971132,
+                "denominator": 14557458
+              },
+              {
+                "numerator": 15999907,
+                "denominator": 14547178
+              },
+              {
+                "numerator": 16029282,
+                "denominator": 14472748
+              },
+              {
+                "numerator": 15940955,
+                "denominator": 14493969
+              }
+            ],
+            "interval": [
+              {
+                "numerator": 15971132,
+                "denominator": 14557458
+              },
+              {
+                "numerator": 16048579,
+                "denominator": 14537040
+              }
+            ],
+            "median": [
+              465424289386692,
+              422908732081696
+            ],
+            "nominal_interval_coverage": [
+              1002,
+              1024
+            ],
+            "worst_elapsed": {
+              "numerator": 16029282,
+              "denominator": 14472748
+            },
+            "worst_cpu": {
+              "numerator": 15986448,
+              "denominator": 14284962
+            },
+            "worst_external": {
+              "numerator": 22632724,
+              "denominator": 20589429
+            },
+            "worst_sample_p99": {
+              "numerator": 271,
+              "denominator": 250
+            },
+            "worst_process_peak_rss_delta": 73728
+          }
+        },
+        {
+          "mode": "detailed",
+          "comparison": {
+            "validity": "VALID",
+            "correctness": "PASS",
+            "performance_effect": "REGRESSED",
+            "guardrails": "FAIL",
+            "cause_status": "UNRESOLVED",
+            "promotion": "INCOMPLETE",
+            "reasons": [],
+            "ratios": [
+              {
+                "numerator": 16621703,
+                "denominator": 14543371
+              },
+              {
+                "numerator": 16450098,
+                "denominator": 14520839
+              },
+              {
+                "numerator": 16528427,
+                "denominator": 14545846
+              },
+              {
+                "numerator": 16688108,
+                "denominator": 14522272
+              },
+              {
+                "numerator": 16482951,
+                "denominator": 14570934
+              },
+              {
+                "numerator": 17205097,
+                "denominator": 14514607
+              },
+              {
+                "numerator": 16452803,
+                "denominator": 14491734
+              },
+              {
+                "numerator": 16538045,
+                "denominator": 14545405
+              },
+              {
+                "numerator": 16538756,
+                "denominator": 14544554
+              },
+              {
+                "numerator": 16455278,
+                "denominator": 14497905
+              }
+            ],
+            "interval": [
+              {
+                "numerator": 16450098,
+                "denominator": 14520839
+              },
+              {
+                "numerator": 16688108,
+                "denominator": 14522272
+              }
+            ],
+            "median": [
+              480972520439005,
+              423150442275260
+            ],
+            "nominal_interval_coverage": [
+              1002,
+              1024
+            ],
+            "worst_elapsed": {
+              "numerator": 17205097,
+              "denominator": 14514607
+            },
+            "worst_cpu": {
+              "numerator": 17240339,
+              "denominator": 14330320
+            },
+            "worst_external": {
+              "numerator": 23487040,
+              "denominator": 20738000
+            },
+            "worst_sample_p99": {
+              "numerator": 281,
+              "denominator": 250
+            },
+            "worst_process_peak_rss_delta": 69632
+          }
+        }
+      ]
+    },
+    {
+      "candidate": "candidate3",
+      "source_sha256": "4bc08a9e4e0e7246119c950ec32429e2ab49ea674e86b152325d471540b0b864",
+      "report": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/candidate3/audit-results.json",
+        "bytes": 6048,
+        "sha256": "8a5785a210fffbcb3c266efaf46c58bb260c0fdb3b04832b0c39e44b5fc5f97c"
+      },
+      "comparisons": [
+        {
+          "mode": "always",
+          "comparison": {
+            "validity": "VALID",
+            "correctness": "PASS",
+            "performance_effect": "REGRESSED",
+            "guardrails": "FAIL",
+            "cause_status": "UNRESOLVED",
+            "promotion": "INCOMPLETE",
+            "reasons": [],
+            "ratios": [
+              {
+                "numerator": 18387415,
+                "denominator": 17039274
+              },
+              {
+                "numerator": 15959141,
+                "denominator": 14586132
+              },
+              {
+                "numerator": 16407598,
+                "denominator": 14587124
+              },
+              {
+                "numerator": 18951092,
+                "denominator": 17116530
+              },
+              {
+                "numerator": 18535927,
+                "denominator": 16623687
+              },
+              {
+                "numerator": 16195237,
+                "denominator": 14975609
+              },
+              {
+                "numerator": 15899608,
+                "denominator": 14670762
+              },
+              {
+                "numerator": 16020296,
+                "denominator": 14619545
+              },
+              {
+                "numerator": 15911089,
+                "denominator": 14710587
+              },
+              {
+                "numerator": 16020416,
+                "denominator": 14558430
+              }
+            ],
+            "interval": [
+              {
+                "numerator": 16195237,
+                "denominator": 14975609
+              },
+              {
+                "numerator": 18535927,
+                "denominator": 16623687
+              }
+            ],
+            "median": [
+              466989532145917,
+              426485226299880
+            ],
+            "nominal_interval_coverage": [
+              1002,
+              1024
+            ],
+            "worst_elapsed": {
+              "numerator": 16407598,
+              "denominator": 14587124
+            },
+            "worst_cpu": {
+              "numerator": 18997464,
+              "denominator": 16853839
+            },
+            "worst_external": {
+              "numerator": 27845053,
+              "denominator": 24860174
+            },
+            "worst_sample_p99": {
+              "numerator": 661,
+              "denominator": 361
+            },
+            "worst_process_peak_rss_delta": 65536
+          }
+        },
+        {
+          "mode": "detailed",
+          "comparison": {
+            "validity": "VALID",
+            "correctness": "PASS",
+            "performance_effect": "INCONCLUSIVE",
+            "guardrails": "FAIL",
+            "cause_status": "UNRESOLVED",
+            "promotion": "INCOMPLETE",
+            "reasons": [],
+            "ratios": [
+              {
+                "numerator": 16410585,
+                "denominator": 14549533
+              },
+              {
+                "numerator": 16399012,
+                "denominator": 15789740
+              },
+              {
+                "numerator": 16366772,
+                "denominator": 14567547
+              },
+              {
+                "numerator": 16443447,
+                "denominator": 14522281
+              },
+              {
+                "numerator": 16381259,
+                "denominator": 14603144
+              },
+              {
+                "numerator": 16505474,
+                "denominator": 14548541
+              },
+              {
+                "numerator": 16581858,
+                "denominator": 14545725
+              },
+              {
+                "numerator": 16401076,
+                "denominator": 14549353
+              },
+              {
+                "numerator": 16470518,
+                "denominator": 14517312
+              },
+              {
+                "numerator": 18823099,
+                "denominator": 20820871
+              }
+            ],
+            "interval": [
+              {
+                "numerator": 16399012,
+                "denominator": 15789740
+              },
+              {
+                "numerator": 16470518,
+                "denominator": 14517312
+              }
+            ],
+            "median": [
+              477391390599013,
+              423372583204298
+            ],
+            "nominal_interval_coverage": [
+              1002,
+              1024
+            ],
+            "worst_elapsed": {
+              "numerator": 16581858,
+              "denominator": 14545725
+            },
+            "worst_cpu": {
+              "numerator": 18693670,
+              "denominator": 15849821
+            },
+            "worst_external": {
+              "numerator": 23832940,
+              "denominator": 20905230
+            },
+            "worst_sample_p99": {
+              "numerator": 281,
+              "denominator": 251
+            },
+            "worst_process_peak_rss_delta": 90112
+          }
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/initial.json",
+      "bytes": 4237,
+      "sha256": "e0c132c5bf0e0f41b8540af015eb95efc44101f2bcec69343619ce7c1f06fa9a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-plan.json",
+      "bytes": 3611,
+      "sha256": "fb57fc2822ae919410916c476a957d4b1324cc6daa26c5523b5fda60bdd9b718"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-change.patch",
+      "bytes": 21755,
+      "sha256": "8dc19279a07fee53dc5b3b3caa3da3716382261b28fbf955551f2080038f89f0"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/cpu-probes.json",
+      "bytes": 1356,
+      "sha256": "ff088acca713a098f4eeecf7aecfd53405c66549f670974068faa28f22ec46df"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/cpu-observer-tests.log",
+      "bytes": 917,
+      "sha256": "10d7c76a55ae5561994852f84fbae2b286386ad7772a955e4e445f462779d052"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/cpu-known-bad.log",
+      "bytes": 2663,
+      "sha256": "da3b17aa7c661b8964fa8b47682df1efc6f0bb29ce5af29370a3110f1ef82361"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/cpu-known-bad.json",
+      "bytes": 733,
+      "sha256": "7a3f38be654816b738072e474d83527c7e01ec1ab3d1bf8787b0cd22a224a91e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/quota-failure.json",
+      "bytes": 471,
+      "sha256": "a54cb184f2dcf57b5f43129ab132f8fb5ac152b8039dcde9e8eaba07b56d43d6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/quota-cleanup.json",
+      "bytes": 1220,
+      "sha256": "caedcd37d0e4d50294da85acf3ccf29fe1eeeaafef373589356ef61ca4ed79cb"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/evidence-deduplication.json",
+      "bytes": 125519,
+      "sha256": "30dcf3717401183dc068e03bdc104f687d8daef62a36732417c892feae637a80"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/completed-evidence-deduplication.json",
+      "bytes": 199242,
+      "sha256": "3538abd3ceed61651c214dacc8e503427c19628cfd3f874882cc491b1827d21e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/candidate2/evidence-deduplication.json",
+      "bytes": 315370,
+      "sha256": "286894d579e1791fafdedc40d717ce9f207ba098862030f959aeb9fa080550b0"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/candidate3/retention.json",
+      "bytes": 24769,
+      "sha256": "bf6ac3dd778b6a9cfca24e2f45154e81fe69c35cc00bfdc692b59369b1d7f491"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final/frozen.json",
+      "bytes": 23168,
+      "sha256": "e4a52b10291cc24cec3a09e30dfc0b76d944d1364461f4081b361a9153b2e657"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/comparison-baseline/frozen.json",
+      "bytes": 23168,
+      "sha256": "5ba500e67c3cf1d0b1f41b4daae288581931e07d30cb97a40d4cdd243c777152"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final/disk-verification-source.json",
+      "bytes": 430,
+      "sha256": "ebabf913b13ebbe923cd0e87a3e5dee8f3821dc9814809958e9fb5bf6aaf3934"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final/disk-retention.json",
+      "bytes": 754365,
+      "sha256": "519893a0956b6b93656f76caa1be43ec118b9d0800e9c7cf822aca63a68b61c6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final/disk-deduplication.json",
+      "bytes": 75403,
+      "sha256": "5b8c0aa91b6302f21435db215e9c46e9e4148a4f7a527cd10a820a91e493c44e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final/tmp-retention.json",
+      "bytes": 2324894,
+      "sha256": "5fe0258fb3fb48fc5263aa65f1d5535dbb972dd425357a91476d3d9e140ac558"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-performance-tests/binary-retention.json",
+      "bytes": 3693,
+      "sha256": "8db0f3bf8e3cd6c4f78ad15d78ca60ab8d4274e71bf1106eb9a48dc2f834aa50"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final_campaigns.py",
+      "bytes": 8315,
+      "sha256": "3c051384e477153644780d61f90accb4024d2ab36706b6fde212275d45a59cf2"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-campaigns/plan.json",
+      "bytes": 78455,
+      "sha256": "c89782b134c5101c0f0c2ad1c18d7d1e2e3094a1e9e532dcb247868ec9272d05"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-environment-ready.json",
+      "bytes": 69812,
+      "sha256": "ffe1d6d8d2888e5e15f885189f629c87c2564d4df2b8ad801a4aaeea9f6cbddf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/remaining-durable-failures.json",
+      "bytes": 636,
+      "sha256": "59566e20cfc62007b8cf8dcbce87de7a0b122619de0b5e3b0208b007aa40c9c5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/remaining-failure-analysis.json",
+      "bytes": 2622,
+      "sha256": "f42b70d215b963c322bfb5f471b178ff877febf28bcd5a85455d455f563e58df"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/final-campaign-summary.json",
+      "bytes": 1136,
+      "sha256": "958863a65ff6721d9c497d47b6b972508d04e0a5213b0f33e8f0e5bffb0de747"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-fix-20261019/independent-review.json",
+      "bytes": 2599,
+      "sha256": "402e94be36fe9d000c0bae60139b20de7618b30acf8cbf0634124cf8e3620798"
+    }
+  ],
+  "failures_preserved": [
+    "original DEV2 instrumentation guardrail failures",
+    "all three collector exploration candidates and all six audit results",
+    "candidate2 terminal combined-counter saturation race found by independent review and fixed in candidate3",
+    "candidate2 native Unix socket path length error",
+    "first final lower regression errno122 tmpfs user quota failure including report-save failure",
+    "old observer assertion failure on calling-thread CPU known-bad test"
+  ],
+  "filesystem_scope_correction": "Initial final kernel run used tmpfs; preserved separately. New full kernel run uses ext4 source/artifacts and TMPDIR; same source fingerprint. Volatile tests are not durability evidence.",
+  "retention": "Original paths/identities retained. Regular files copied or hardlinked with inventory hashes; ephemeral Unix socket nodes recorded but not fabricated. Only reproducible completed build caches removed.",
+  "historical_evidence_ref": "dev2-completion-xadb-20261019-r1.json",
+  "independent_review": {
+    "reviewer": "/root/dev2_test_review",
+    "date": "2026-10-19T01:23:44.897042+00:00",
+    "status": "IMPLEMENTATION_AND_EXECUTION_EVIDENCE_GO_PERFORMANCE_ACCEPTANCE_INCOMPLETE",
+    "static": "GO: reviewed final7file diff, CPU old-reader counterexample, event sequence/drop/capacity/terminal saturation concurrency invariants and durable observations",
+    "kernel_ext4": {
+      "status": "GO",
+      "groups": 18,
+      "strict_native_accepted": 99,
+      "referenced_raw_files": 1617,
+      "additional_bindings": 30,
+      "source_files_matched": 204
+    },
+    "lower_regression": {
+      "status": "GO",
+      "checks": 28,
+      "dev0_checks": 8,
+      "dev1_checks": 8,
+      "raw_logs": 44,
+      "hash_references": 5497,
+      "unique_referenced_files": 5172,
+      "native_sessions": 323,
+      "catalog_sessions": 325
+    },
+    "performance": {
+      "status": "EVIDENCE_GO_ACCEPTANCE_INCOMPLETE",
+      "k0_runs": 140,
+      "durable_runs": 40,
+      "durable_acknowledged_transactions": 23120,
+      "unique_run_ids": 180,
+      "unique_campaign_ids": 9,
+      "checks": "raw expected values, correctness, counter/event/drop, histories, identities, exact rational statistics, lineage and all failed pairs independently checked",
+      "collector_confirmation_median_ratio": 0.8853646926915955,
+      "collector_confirmation_interval": [
+        0.8626935014,
+        0.9012180209
+      ]
+    },
+    "retention": {
+      "tmp_regular_files": 11076,
+      "disk_regular_files": 4004,
+      "ephemeral_nodes_each": 105,
+      "status": "all original/copied bytes hashes modes and full inventories match",
+      "additional_hash_references": 30622
+    },
+    "attribution": "Residual wall/external, p99 and marginal CPU guardrail failures remain. Current evidence does not establish another product-code defect or prove shared-host causality; preserve failed confirmation and seek controlled idle environment for cause separation.",
+    "documentation_summary": "최종 독립 검토자는 7개 파일의 구현·반례·불변식과 ext4 99셀, 하위 28개 검사/DEV0·DEV1 각8개, K0 140회·영속40회의 원시 값·정답·지문·정확 유리수 통계·계보를 대조했다. 영속 ACK 거래23,120건의 TxnId/q·전체 afterimage·source/archive/restore 이미지가 일치하고, run180개/campaign9개 ID는 모두 유일하다. 보존 사본11,076개·4,004개의 원본/사본 bytes·hash·mode·전체 inventory와 추가30,622개 해시 참조도 일치했다. 판정은 구현·실행/보존 증거 GO / 전체 성능 인수 INCOMPLETE이며 `/root`가 반영을 확인했다. 남은 세 campaign 실패와 원인 해석의 한계를 유지한다."
+  },
+  "full_v3_on_this_source": "NOT_RUN",
+  "official_target_environment": "NOT_RUN",
+  "protected_ci": "NOT_RUN",
+  "official_distribution": "NOT_RUN",
+  "document_checks": "NOT_RUN_PRE_PUSH_GATE_ONLY",
+  "commit_or_push": "NOT_REQUESTED_NOT_RUN",
+  "artifact_availability_after_cleanup": {
+    "observed_at": "2026-10-19T14:19:50.338492+00:00",
+    "cause": "User confirmed xadb/artifacts was deleted after disk full.",
+    "historical_execution_results": "unchanged; historical hashes and verdicts are not new execution evidence",
+    "deleted_root": "/home/et16/work/xadb/artifacts/dev2-fix-20261019",
+    "currently_unavailable": "original performance campaigns, CPU probes, retained final report copies, supplemental tests/results under deleted artifacts; no bundle-only replay claim from missing bytes",
+    "surviving_source": "/home/et16/xk-mqsnomp2",
+    "surviving_source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+    "surviving_kernel_report": "/home/et16/xk-mqsnomp2/artifacts/d2k-hmv8bn4m/report.json",
+    "surviving_lower_report": "/tmp/xff-hy0erxc3/artifacts/dev2-reference/check-6o0wu_5p/validation.json",
+    "lower_archive": "/home/et16/xadb-dev2-evidence/r2/lower-retained.tar.gz",
+    "lower_archive_sha256": "ea4efa0a9e77f65eafea3f702f549cb0a7d37358e800ac201bb07fdbbc297d66",
+    "archive_regular_files_verified": 11280,
+    "interrupted_extended": "P0 exhaustive raw result survived; six V3 targets stopped before 1800 seconds and have no final PASS receipt",
+    "new_evidence_root": "/home/et16/xadb-dev2-evidence/r2",
+    "acceptance": "INCOMPLETE"
+  }
+}

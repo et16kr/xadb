@@ -421,3 +421,136 @@ native 캠페인 첫 회는 4개 시험·33개 case와 controller 소유권 부�
 고정 source는 `artifacts/dev2-review-20261019/source/`, SHA-256 `972ee1aa3ed58fd3f6902643543f369482d2e4fc85879aa56c13f3bef6a6488f`다. 이 snapshot에는 별도 작업의 변경도 포함되며 현재 전체 작업 트리와 같다고 추정하지 않는다. 리뷰 수정의 로컬 결과로 DEV2/B2/D0 완료·성능 인수·공식 배포 상태를 승격하지 않는다.
 
 하위 회귀의 최종 보고서는 `artifacts/dev2-review-20261019/dev2-regression.json`(SHA-256 `9ff013d412abefd513bef7d09fc4a5d28b5aef4818212c62d60087c723071dae`)이며 stdout은 `dev2-regression.log`에 보존한다. 독립 검토자는 수정 코드·원래 반례·완료된 집중 시험·고정 source 지문, DEV0/DEV1의 보존 결과와 최종 DEV2 보고서·로그·native/catalog inventory의 지문을 직접 대조했다. 최종 판정은 **D1 수정 통합 차단 지적 없음 / PASS**이며 `/root`가 반영을 확인했다. 검토자는 재시험이나 파일 수정을 하지 않았다.
+
+<a id="dev2-tests-20261019"></a>
+## DEV2-TEST-20261019 — 남은 로컬 시험 실행
+
+**실행·최종 독립 검토 완료 / DEV2·B2·D0·성능 인수 INCOMPLETE.** 사용자 “DEV2의 남은 테스트 완료” 요청에 따라 `/root`가 실행·증거 결합을 맡고 `/root/dev2_test_review`가 원래 계약·반례·diff·원시 결과를 독립 검토했다. 원본 연결은 [실행 receipt](../evidence/dev2-completion-xadb-20261019-r1.json)에 있다. 동결 source는 `47c84c22f9cf2f5720ba3f39fb310f888a0ca86c7313a9bcd7a7d47294861991`이며 이후 다른 작업의 COMM·push 검사 변경을 이번 검증으로 승격하지 않는다. 제품 소스와 기존 미커밋 변경을 보존했다.
+
+| 실행 범위 | 실제 결과 |
+| --- | --- |
+| 영속 커널 release | engine 25개·transaction 7개·cache-loss 15개·독립 Python 101개 PASS. native 33셀을 fresh fixture 3회 실행해 strict 99 ACCEPTED, 누락·중복 0 |
+| 기존 V3 | K0 thread·native Request/Response·durable/fault 4-codec·disk codec·durable thread의 6 target 모두 실제 1,800초 이상 PASS |
+| P0 전수 | 동결 scalar grammar의 9,604,608건 = ACCEPTED 7,003,648 + REJECTED 2,600,960. invalid·incomplete·missing 0. 원래 제외 범위 유지 |
+| 추가 JSON V3 | catalog recipe·performance recipe·Index/BuildReceipt 구조 parser 각 1,800초 이상 PASS. 12 mutation operator와 실제 작업량 확인 |
+| 추가 literal·변이 | 정상 JSON 4개·중복/수치 위반 18개, 3 tests PASS. ACK sync 생략·old-prefix sync 생략·조기 WAL 회수의 빌드된 mutant 3개를 지정한 의미 위반으로 검출. UNKNOWN full-length 손상 잔존 이미지 6셀은 Corruption 거절·원본 bytes 보존 |
+| 하위 회귀 | 고정 사본의 DEV0 8·DEV1 8·DEV2 P0/K0 28 check PASS. default/all-features·보존 corpus·256 seeds×1,024 operations와 독립 build 포함 |
+| 성능 정답·반례 | release 8개 검사 그룹의 필수 35개 named test PASS. 6개 K0 campaign 120회와 영속 audit/replay 40회의 정답·원시 이력 재검증 완료 |
+
+추가 시험은 `artifacts/dev2-completion-20261019-*`의 보존 harness와 명시한 `cfg(test)` 모듈만 붙인 사본에서 실행했다. 원래 제품 파일 inventory와 injection 외 차이를 대조하고 원본·overlay·harness·binary·log 지문을 연결했다. D2의 대안은 새 제품 API를 노출하거나 이미 통과한 시험만 재실행하는 것이었으며, 기존 private parser와 실제 제품 경로를 직접 검사하는 시험 overlay를 선택했다. 의존성을 추가하지 않았다. JSON 장시간 결과는 구조 parser의 검증이며 전체 bundle verifier fuzz가 아니다. config는 원래 parser가 없는 bounded bytes/hash 계약을 확인했다. 손상 6셀은 명시적으로 동결한 잔존 이미지의 거절이며 실제 장치의 부분 영속 증거가 아니다. 시험 도구·parser·형식이 바뀌면 이 profile과 oracle 범위를 재검토한다.
+
+### 성능 측정과 남은 인수
+
+모든 correctness job과 build를 마친 뒤 CPU2에서 같은 입력·기준·10 paired runs를 사용했다. 각 원시 실행을 보존하고 bundle에서 결과를 다시 계산했다. 아래는 candidate/baseline 경과 시간 중앙 비율이며 한도 판정은 원본 정수 비율과 모든 필수 지표를 따른다.
+
+| 비교 | 중앙 비율 | 정답·유효성 | 비용/회귀 한도 |
+| --- | --- | --- | --- |
+| K0 Off/Always audit | 1.1002 | PASS / VALID | PASS |
+| K0 Off/Detailed audit | 1.2836 | PASS / VALID | FAIL |
+| K0 Always bundle 재현 | 1.1011 | PASS / VALID | FAIL |
+| 기존 exclusive replace 후보 탐색 | 0.1612 | PASS / VALID | PASS |
+| 후보의 새 최종 확인 | 0.1620 | PASS / VALID | PASS |
+| 후보의 bundle 재현 | 0.1609 | PASS / VALID | PASS |
+| 영속 Off/Always audit | 0.9876 | PASS / VALID | FAIL — cycle p99 |
+| 영속 bundle 재현 | 0.9973 | PASS / VALID | FAIL — CPU·cycle p99 |
+
+PF12의 후보는 착수 시 존재하던 `VolatileStore::replace`의 exclusive root/table 경로다. 기준선은 같은 source에서 `substrate.rs`만 이전 구현으로 되돌렸고, 나머지 제품 파일은 동일하다. 측정 전 고정한 행 참조 복사량 baseline 8,388,608·candidate 0을 원시 frame 60개에서 확인했다. 최종 확인은 후보 1개·confirmation attempt 1회·새 20 run이며 탐색·확인·재현의 run ID를 재사용하지 않았다. 원인 counter와 end-to-end 개선의 이 범위는 확인됐지만, 기존 analyzer의 `cause_status`·`promotion`을 변경하거나 전체 성능 인수를 PASS로 바꾸지 않았다. 최초 K0 p99 실패와 이번 계측 한도 실패를 모두 유지한다.
+
+### 원본 실패와 재검증
+
+첫 live 하위 회귀는 제품 check 이후 동시 COMM 변경에 따른 source 지문 불일치로 FAIL했다. 원본을 보존하고 같은 동결 사본에서 하위 회귀를 다시 완료했다. 최초 K0 기준선 build는 live workspace와 공유 target을 사용해 선언한 baseline과 다른 embedded source의 실행파일을 만들었고 독립 checker가 비교를 INVALID/FAIL로 거절했다. 원래 20회 이력·binary·잘못된 receipt를 유지했다. 빈 전용 target의 실제 재빌드 후 실행 preflight에서 baseline 지문 `f8782b03…`와 복사량을 확인하고 새 탐색·새 최종 확인·재현을 수행했다. 이 provenance 수정을 기존 실패의 PASS 재표기로 사용하지 않는다. 초기 JSON harness 상수 경로 오류·early-reclaim mutant의 compile 실패도 별도 보존하고 mutant 검출 수에 합산하지 않았다.
+
+공식 대상 환경·보호 CI·공식 배포와 DEV2 전체 인수는 완료하지 않았다. 문서 자동 검사는 push 훅에서 수행하며 이번 편집 중에는 실행하지 않았다.
+
+최종 독립 검토자는 K0 120회·영속 40회의 원시 이력·정답·지문·계보와 정확한 유리수 통계를 대조해 오류 0을 확인했다. 영속 이력의 23,120 ACK 거래와 source/restore/archive bytes, PF12 60개 원시 frame의 복사량도 독립 기대값과 일치했다. 로컬 시험 실행·증거 정합성 검토는 PASS이며 `/root`가 반영을 확인했다. 비용 한도 실패와 전체 인수 INCOMPLETE는 유지한다.
+
+
+<a id="dev2-instrumentation-fix-20261019"></a>
+## DEV2-PF-FIX-20261019 — 계측 비용과 CPU 관측 수정
+
+**D2 / 사용자 실패 해결 요청 / 로컬 실행 결과는 아래 범위에 한정.** `/root`가 구현·통합하고 `/root/dev2_test_review`가 원래 실패·계약·실제 diff·원시 증거를 독립 검토했다. [수정 receipt](../evidence/dev2-instrumentation-fix-xadb-20261019-r1.json)는 앞 절의 실패를 보존한 채 새 실행과 연결한다. 착수 source `b630facc2d6d63e864131390f82e7ee20ae5d7a3c8d60d5ce40a7d874d71ee31`, 최종 동결 source `e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a`에 귀속하며, 이후 COMM 등 동시 변경의 전체 검증으로 확대하지 않는다.
+
+**2026-10-19 보존 상태 갱신:** disk full 뒤 사용자가 `xadb/artifacts`를 삭제했다고 확인했다. 아래 수치는 삭제 전 실제 실행의 역사 기록이며, 현재 원시 bundle의 재현 가능성을 뜻하지 않는다. 최종 e3 소스·ext4 kernel 원본·하위 회귀 원본은 외부 검증 사본에 남아 있고, 하위 자료 11,280개 파일은 해시를 대조한 277MB 압축본으로 추가 보존했다. 삭제된 성능 원시 자료와 보조 시험은 새 실행으로 다시 연결해야 한다. 30분 전에 중단된 6개 V3는 미완료로 유지한다. 구체 경로와 해시는 위 receipt의 `artifact_availability_after_cleanup`을 따른다.
+
+### 원인과 구현 선택
+
+- K0 Detailed의 가득 찬 이벤트 큐에서 매번 mutex를 얻고 별도 sequence를 증가시키던 비용을 줄였다. mutex 소유자만 full 힌트와 emitted를 갱신하고 drop은 별도 포화 counter로 집계한다. 실제 큐 길이로 용량을 재검사하며 accepted sequence는 emitted+dropped+1의 검사된 합이다. drop의 gap·비차단 손실·정확한 완료시도 회계·공개 포화 표시는 유지한다. stale full은 공개된 drop만 허용하며 제품 publication과 분리된다.
+- 영속 관측은 0-byte/item 증가와 이미 충분한 max에 불필요한 원자 쓰기를 생략한다. 실제 WAL sync, clock sample, histogram과 실패 집계는 유지한다. TLS 집계·unsafe·새 큐 구조보다 작은 변경을 선택했다. drain 빈도·경합·공개 metric 의미가 달라지면 복잡성의 비용을 재검토한다.
+- 별도 정확성 결함으로 CPU reader를 고쳤다. `/proc/self/schedstat`의 캐시된 main-task 합 대신 안전한 `CLOCK_THREAD_CPUTIME_ID`로 호출 thread의 구간 경계를 읽는다. 기존 nix 0.30.1의 time feature만 추가했고 package/version/lockfile·전이 의존성·공개 타입은 바꾸지 않았다. 음수·나노초 범위·u64 overflow는 unavailable로 보존한다. 구간·catalog·bundle의 CPU 정의도 함께 수정했다. 이 절 이후 새 실행에는 앞 절의 schedstat 설명을 적용하지 않는다.
+
+코드 소유 범위는 diagnostics.rs, durable/observation.rs, platform/Cargo.toml과 performance.rs, controller의 performance.rs와 performance/bundle.rs, check_dev2_performance.py의 필수 시험 목록이다. 기존 crates/scripts fingerprint·clean export 범위를 사용하며 공개 저장 형식·SQL·격리·내구성 정책은 바꾸지 않았다. 사내 새 fixture와 current-build recovery를 사용했다.
+
+### CPU 반례와 조사 범위
+
+실제 host는 Linux `7.0.0-38-generic`이다. CPU2에서 15ms CPU 구간을 40회 대조한 r2 probe의 schedstat delta는 POSIX thread clock보다 최대 1,001,910ns 작았다. 다른 순서·affinity의 r1 20회도 원문 보존한다. 이는 해당 측정의 관측 오차이며 과거 모든 latency 실패의 원인을 증명하지 않는다. parent가 기다리는 동안 child thread가 20ms CPU를 소비하는 새 반례는 정확한 이전 구현에서 실행 후 assertion FAIL(101), 수정 구현에서 PASS했다.
+
+원문 대조는 upstream Linux v7.0의 [proc_pid_schedstat](https://raw.githubusercontent.com/torvalds/linux/v7.0/fs/proc/base.c), [CPU clock sample](https://raw.githubusercontent.com/torvalds/linux/v7.0/kernel/time/posix-cpu-timers.c), [task_sched_runtime](https://raw.githubusercontent.com/torvalds/linux/v7.0/kernel/sched/core.c)을 읽었다. upstream tag와 배포판의 실제 kernel binary를 동일 revision이라고 주장하지 않는다. raw libc의 workspace unsafe를 피하고 기존 safe platform adapter를 선택했으며, 지원 platform/clock 가용성이 달라지면 재검토한다.
+
+### 탐색·환경 실패의 보존
+
+collector 탐색은 사전 한도 3개였다. candidate1은 full 힌트와 no-op 원자 쓰기 제거, candidate2는 emitted/drop 분리, candidate3는 독립 검토에서 발견한 두 counter의 마지막 동시 overflow 표시 누락을 수정하고 hot path를 분리했다. 여섯 audit의 결과와 비용 한도 실패, 후보2의 검토 반례를 보존한다. 이후 CPU observer 수정은 별도 정확성 결함의 수리이며, 이전 CPU 수치를 소급해 PASS로 바꾸지 않는다. CPU를 고친 공통 baseline에서 두 collector 파일만 이전 구현으로 되돌려 비용 효과를 별도로 비교한다.
+
+초기 후보2 native 실행은 긴 사본 경로가 Linux local socket 경로 상한을 넘어 실패했다. 짧은 /tmp 사본의 kernel 결과는 tmpfs에 한정한다. 이를 확인한 뒤 같은 동결 소스를 /home/et16의 짧은 root로 복사하고 TMPDIR까지 ext4로 지정해 kernel·native 3회 전체를 별도로 검증했다. tmpfs의 PASS를 disk qualification으로 대체하지 않는다. 각 원본과 filesystem 확인을 보존한다. 최종 하위 회귀 첫 회는 user disk quota errno122로 보고서 저장도 실패했다. 원본 log/artifact를 유지했고 완료된 이번 작업의 재생성 가능한 target 캐시만 삭제했다. 완료된 증거의 동일 worker 바이트는 경로·권한·해시를 보존하는 hardlink로 중복 제거했다. 동결 소스·명령을 바꾸지 않고 하위 회귀를 새 directory에서 재실행했다. 이 환경 복구는 성능 비교 재시도가 아니다.
+
+최종 성능은 자체 correctness/build 작업과 CPU2의 sibling CPU18에서 진행 중이던 다른 작업의 soak가 끝난 뒤 실행했다. 다른 공유 host 작업은 원본 environment에 기록한다. 전용 무부하 장비라는 주장은 하지 않는다. workload·seed 20261018·5AB/5BA의 10쌍·wall/CPU/external 1.15·sample p99 1.25·RSS 4MiB 기준은 그대로다. 최종 확인 1회와 별도 bundle replay 1회를 동결했으며 유리한 결과를 고르는 반복은 하지 않는다.
+
+### 새 source의 실제 실행
+
+| 범위 | 결과 |
+| --- | --- |
+| ext4 kernel/current-build recovery | 18개 검사 그룹 PASS. engine 29·transaction 7·cache-loss 15·thread 64 seeds·native 33셀×3회 strict 99 ACCEPTED·독립 oracle 101·runner 반례 8 |
+| DEV0·DEV1·DEV2 P0/K0 하위 회귀 | 각각 8·8·28 check PASS. 실제 native/catalog inventory와 실행 전후 같은 source hash 확인 |
+| 성능 정답·반례 | release 8개 그룹의 필수 36개 named test PASS. CPU old-reader 반례 FAIL과 수정 PASS를 별도로 연결 |
+
+다음 중앙 비율은 candidate/baseline 경과 시간이며, 비용 한도는 모든 pair의 원래 정수 비율과 필수 지표로 판단한다. 같은 CPU observer를 사용하는 두 collector의 비교와 Off 대비 계측 비용을 구분한다.
+
+| 비교 | 중앙 비율 | 유효성 / 정답 | 비용 한도 |
+| --- | --- | --- | --- |
+| K0 Off/Always audit | 1.0919 | VALID / PASS | PASS |
+| K0 Off/Detailed audit | 1.1260 | VALID / PASS | PASS |
+| K0 Always bundle 재현 | 1.0910 | VALID / PASS | PASS |
+| K0 Detailed bundle 재현 | 1.1276 | VALID / PASS | FAIL |
+| collector 비용 탐색 | 0.8875 | VALID / PASS | PASS |
+| collector 새 최종 확인 | 0.8854 | VALID / PASS | PASS |
+| collector bundle 재현 | 0.8877 | VALID / PASS | PASS |
+| 영속 Off/Always audit | 0.9995 | VALID / PASS | FAIL |
+| 영속 bundle 재현 | 0.9974 | VALID / PASS | FAIL |
+
+최종 campaign 실행은 PASS, 사전 동결한 로컬 성능 인수는 INCOMPLETE다. 자동 analyzer의 cause_status/promotion은 원문 그대로 보존하며 stage 완료로 승격하지 않는다.
+
+### 남은 한도 실패와 해석 한계
+
+- K0 Detailed replay의 pair 4(0-based, BA): wall 17,079,804/14,454,060ns=1.181661, 외부 구간 23,264,909/20,129,430ns=1.155766으로 1.15 한도를 초과했다. 같은 pair의 CPU 16,265,331/14,380,860ns와 p99는 PASS다. wall−CPU 차이의 증가가 non-CPU 대기를 시사하지만 scheduler trace가 없어 공유 host를 확정 원인으로 삼지 않는다.
+- 영속 audit pair 7: cycle p99 12,317,483/5,573,277ns=2.210097로 1.25 한도를 초과했다.
+- 영속 replay pair 3: cycle p99 12,297,716/5,448,021ns=2.257281. pair 6: CPU 8,047,409/6,967,256ns=1.155033로 각각 한도를 초과했다.
+
+계측 Off의 cycle p99도 audit에서 5.42–12.27ms, replay에서 5.45–12.40ms로 달랐다. 이 변동과 paired 결과만으로 계측 코드 또는 공유 환경에 원인을 확정하지 않는다. collector 최종 확인의 경과 시간 중앙 비율 0.885365(약11.46% 감소)는 같은 CPU observer와 workload에서 얻은 별도 개선 증거다. 이 국소 개선과 계측 전체 인수의 FAIL을 구분한다. 추가 코드 결함으로 단정하거나 한도를 완화하지 않았으며, 재시도해서 유리한 결과를 고르는 대신 유휴 Linux/ext4 환경의 원인 분리 측정을 남긴다. 사용 가능한 전용 host/유휴 시간대는 사용자에게 확인 중이다.
+
+최종 독립 검토자는 7개 파일의 구현·반례·불변식과 ext4 99셀, 하위 28개 검사/DEV0·DEV1 각8개, K0 140회·영속40회의 원시 값·정답·지문·정확 유리수 통계·계보를 대조했다. 영속 ACK 거래23,120건의 TxnId/q·전체 afterimage·source/archive/restore 이미지가 일치하고, run180개/campaign9개 ID는 모두 유일하다. 보존 사본11,076개·4,004개의 원본/사본 bytes·hash·mode·전체 inventory와 추가30,622개 해시 참조도 일치했다. 판정은 구현·실행/보존 증거 GO / 전체 성능 인수 INCOMPLETE이며 `/root`가 반영을 확인했다. 남은 세 campaign 실패와 원인 해석의 한계를 유지한다.
+
+기존 source의 9개 30분 V3와 P0 전수를 새 source에 소급하지 않는다. 새 source의 full V3·공식 대상 환경·보호 CI·배포는 NOT_RUN이며 DEV2/B2/D0 전체 인수는 INCOMPLETE다. 문서 자동 검사는 push 훅의 책임으로 남겼고 편집 중 실행하지 않았다. commit/push는 하지 않았다.
+
+
+<a id="dev2-resumed-tests-20261019"></a>
+## DEV2 새 시험과 사용자 요청 일시 중지
+
+사용자가 disk full 뒤 `xadb/artifacts`를 삭제했다고 확인했다. 삭제된 원시 자료의 과거 PASS를 현재 검증으로 사용하지 않고, 남아 있는 e3 소스와 kernel·하위 회귀 원본에 새 실행을 연결했다. [새 실행·일시 중지 receipt](../evidence/dev2-resumed-tests-xadb-20261019-r1.json)에 실제 경로·해시·독립 검토와 34개 필수 ID 및 D0 경계 7개의 매핑을 기록했다. 전체 작업 트리의 동시 변경을 검증했다는 뜻은 아니다.
+
+| 실행 범위 | 실제 결과 |
+| --- | --- |
+| e3 30분 V3 | 11개 종료, 11개 target PASS. 기존 kernel/native 6개, JSON 3개, 영속 성능 요청·응답 codec 2개 |
+| 격리·publication | 3개 시험 각각 새 fixture 3회; write skew·empty scan phantom·두 table publication 확인, 의미 변이 2개 검출 |
+| 복구 보완 | read 경계 63개×전후×3회=378개 실제 SIGKILL; 756개 crash/reopen 이미지 독립 해독. unsynced 생존 모델 12셀, retire/fence 3회와 이미지 9개 |
+| 필수 성능 정답 | 36개 named test PASS; PF02/PF07 보완 4개 PASS. CPU old-reader 반례 컴파일 성공 뒤 지정 assertion 실패, 수정 구현 PASS |
+| kernel 의미 변이 | ACK 이전 sync 누락·이전 prefix sync 누락·조기 회수 3개를 지정 assertion에서 검출 |
+| P0·하위·kernel 원본 | e3 P0 전수9,604,608건, 하위28개/DEV0·DEV1각8개, ext4 native99셀의 남아 있는 원본을 연결 |
+
+6개 V3 시험 자체는 모두 1,800초 이상 정상 종료했다. 이후 집계기가 동결 소스 아래 생성된 Python bytecode 한 파일을 지문에 포함하면서 마지막 assertion에서 실패했다. 원본 204개 파일과 시험 바이너리의 바이트는 바뀌지 않았다. 생성 캐시를 별도 경로로 옮겨 보존하자 e3 지문이 복원됐고, 독립 검토자가 해당 캐시를 가상 추가해 오류 당시 지문을 재현했다. target PASS와 원래 집계기 FAIL을 구분하며 집계기 실행을 PASS로 바꾸지 않는다.
+
+보조 시험의 첫 torn-image export는 출력 상위 폴더가 없어 실패했고, 별도 CPU 반례의 첫 준비는 missing_docs로 컴파일 실패했다. 이 준비 실패를 보존했다. 이후 실제 새 실행 결과만 채택했으며 컴파일 실패를 의미 변이 검출로 세지 않는다. 복구 모델과 test-only preemption은 실제 장치 전원 장애나 물리 sector tear를 증명하지 않는다.
+
+실패 원인 조사용 traced 영속 실행 2개는 독립 정답 검사를 통과했다. 해당 부하·trace 아래 측정 cycle wall의99.2216%·99.5747%가 fsync 호출 안에서 소요됐다. 이 수치로 장치 자체 또는 삭제된 이전 실패 pair의 원인을 확정하지 않으며 성능 인수에 사용하지 않는다.
+
+사용자의 “지금 실행중인 테스트가 끝나면 일단 중지” 요청에 따라 위 실행 결과를 보존한 뒤 일시 중지했다. 새 성능9개 campaign은 준비만 했고 **NOT_RUN**이다. 이전 K0 Detailed replay와 영속 audit/replay의 비용 한도 FAIL, PF12/PF13 및 DEV2/B2/D0 전체 인수 **INCOMPLETE**를 유지한다. `/root/dev2_test_review`의 독립 검토는 이번 범위의 정확성 증거에 한정한다. 재개할 때 보존 지문·선행 결과·준비된 집계기의 연결을 확인하고 사전 고정한 유휴 조건을 만족한 뒤 성능 실행을 시작해야 한다.
+
+원본·새 로그는 외부 경로에 보존했다. 중복 worker는 경로·해시·권한을 유지한 hardlink로 정리했고, 하위 원본11,280개 파일은 검증한277MB 압축본도 남겼다. 공식 환경·보호 CI·배포 자격은 이번 로컬 증거의 범위가 아니다. 편집 중 문서 자동 검사는 실행하지 않았으며 commit/push하지 않았다.

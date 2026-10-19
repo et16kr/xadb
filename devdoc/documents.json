@@ -678,6 +678,11 @@
       "role": "evidence",
       "title": "DEV7 — Oracle·Altibase·로컬 DBMS 조사와 설계 검토"
     },
+    "dev2-completion-xadb-20261019-r1.json": {
+      "path": "evidence/dev2-completion-xadb-20261019-r1.json",
+      "role": "evidence",
+      "title": "DEV2 남은 로컬 시험 실행·성능 한도 결과"
+    },
     "dev8-operations-design.md": {
       "path": "contracts/dev8-operations-design.md",
       "role": "contracts",
@@ -712,6 +717,16 @@
       "path": "evidence/dev9-source-research.md",
       "role": "evidence",
       "title": "DEV9 — Oracle·ARIES·로컬 소스 조사와 설계 검토"
+    },
+    "dev2-instrumentation-fix-xadb-20261019-r1.json": {
+      "path": "evidence/dev2-instrumentation-fix-xadb-20261019-r1.json",
+      "role": "evidence",
+      "title": "DEV2 계측 비용·CPU 관측 수정과 고정 소스 검증"
+    },
+    "dev2-resumed-tests-xadb-20261019-r1.json": {
+      "path": "evidence/dev2-resumed-tests-xadb-20261019-r1.json",
+      "role": "evidence",
+      "title": "DEV2 삭제 후 새 시험과 사용자 요청 일시 중지"
     }
   }
 }

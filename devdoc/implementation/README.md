@@ -1,5 +1,9 @@
 # 현재 구현
 
+2026-10-19 [DEV2 계측 수정](dev2-implementation.md#dev2-instrumentation-fix-20261019): CPU 관측과 상세 진단 비용을 수정하고 같은 동결 source에서 ext4 복구 99셀·하위 회귀·필수 성능 시험 36개를 통과했다. 최종 로컬 성능 인수는 INCOMPLETE이며 전체 DEV2 인수는 미완료다.
+
+2026-10-19 [DEV2 남은 로컬 시험](dev2-implementation.md#dev2-tests-20261019)을 완료했다. 영속 99셀·9개 30분 target·P0 전수·하위 회귀와 K0 후보의 확인/재현 결과를 새 receipt에 연결했다. 일부 계측 비용 한도 FAIL로 전체 인수는 INCOMPLETE다.
+
 2026-10-18 · **이관한 실제 코드 / XADB 실행 결과는 아래 증거 참조**
 
 | 범위 | 현재 상태 | 상세 |

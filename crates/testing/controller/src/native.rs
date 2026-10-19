@@ -233,7 +233,14 @@ impl<P: NativeProtocol> NativeSession<P> {
             options.test.worker_args.clone(),
         );
         #[cfg(not(feature = "self-test"))]
-        let (limits, args) = (Limits { request_ms: P::REQUEST_MS, run_ms: P::RUN_MS, ..Limits::default() }, Vec::<String>::new());
+        let (limits, args) = (
+            Limits {
+                request_ms: P::REQUEST_MS,
+                run_ms: P::RUN_MS,
+                ..Limits::default()
+            },
+            Vec::<String>::new(),
+        );
         if [
             limits.input_bytes,
             limits.stdout_bytes,

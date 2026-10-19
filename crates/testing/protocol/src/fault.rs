@@ -191,7 +191,7 @@ impl Envelope for Observation {
                 }
                 if witness.plan.cut.boundary == Boundary::WritePartial
                     && (witness.completed_bytes != Some(1)
-                        || !witness.requested_bytes.is_some_and(|count| count > 1)
+                        || witness.requested_bytes.is_none_or(|count| count <= 1)
                         || witness.offset.is_none())
                 {
                     return Err(Error::Invalid("native partial write lacks actual prefix"));

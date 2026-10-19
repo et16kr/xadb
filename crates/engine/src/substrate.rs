@@ -171,6 +171,8 @@ impl VolatileStore {
     }
 
     /// Replace one complete row. No coercion, upsert or partial column update occurs.
+    /// An exclusively owned current root/table reuses its row-reference storage;
+    /// snapshots and table cursors retain the copy-on-write preparation path.
     ///
     /// # Errors
     /// Stale/missing row, schema/byte or preparation errors leave the root unchanged.
@@ -181,13 +183,26 @@ impl VolatileStore {
             let index = table_index(&self.instance, &self.root, table)?;
             check_row(self.instance.namespace, table.identity, row)?;
             let old = &self.root.tables[index];
-            if old.find(row.row).is_err() {
-                return Err(Error::new(ErrorCode::RowNotFound, "replace missing row"));
-            }
+            let row_index = old
+                .find(row.row)
+                .map_err(|_| Error::new(ErrorCode::RowNotFound, "replace missing row"))?;
             let bytes = catalog::validate_row(&old.schema.spec, &values)?;
             let stored = Arc::new(StoredRow::new(values, bytes, &self.resident)?);
-            let changed =
-                old.edited(row.row, Some(stored), false, &self.resident, &self.counters)?;
+            // Complete every fallible preparation before changing an owned slot.
+            // A RowView owns its StoredRow independently and may keep old bytes.
+            if let Some(root) = Arc::get_mut(&mut self.root)
+                && let Some(table) = Arc::get_mut(&mut root.tables[index])
+            {
+                table.rows[row_index].1 = stored;
+                return Ok(());
+            }
+            let changed = self.root.tables[index].edited(
+                row.row,
+                Some(stored),
+                false,
+                &self.resident,
+                &self.counters,
+            )?;
             self.root = self
                 .root
                 .edited(Some(index), Some(changed), &self.resident)?;

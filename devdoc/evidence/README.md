@@ -68,3 +68,9 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV0 당시 source 채택 사본](dev0-current-source-20261018.json) · [DEV1 당시 source 채택 사본](dev1-current-source-20261018.json) · [DEV2 당시 source 채택 사본](dev2-current-source-20261018.json): 기존 COMM 회귀 JSON과 바이트 동일. 상대 artifact 경로는 [원래 실행 범위](comm-execution-scope-20261018.json)의 root에서 해석한다.
 
 - [K1–K5 영속 커널 검증 체크포인트](dev2-kernel-xadb-20261018-r1.json): 고정 source에서 engine 22·transaction 7·cache-loss 15·동시성 64 seeds와 첫 native 33 cases strict ACCEPTED. 2회차 ENOSPC로 FAIL, 3회차 미실행. 원래 빈 report와 로그를 보존한 사후 재구성 receipt이며 DEV2 완료 증거가 아님.
+
+- [DEV2 남은 시험 실행 — 2026-10-19](dev2-completion-xadb-20261019-r1.json): 동결 source `47c84c22…`의 native 33셀×3회, 9개 30분 target, P0 9,604,608건, 하위 회귀와 변이/JSON 반례 완료. K0 후보의 새 확인·재현은 개선·한도 PASS이며, 일부 계측 비용 한도 FAIL로 DEV2 전체 인수는 INCOMPLETE. 최초 source 지문·빌드 불일치 실패도 보존.
+
+- [DEV2 계측 비용·CPU 관측 수정 — 2026-10-19](dev2-instrumentation-fix-xadb-20261019-r1.json): ext4 kernel 99셀·하위 회귀·36개 필수 성능 시험 PASS, 최종 로컬 성능 인수 INCOMPLETE. 원래 guardrail 실패·탐색·quota 실패와 tmpfs 범위 정정 보존.
+
+- [DEV2 삭제 후 새 시험과 일시 중지 — 2026-10-19](dev2-resumed-tests-xadb-20261019-r1.json): e3 소스의 11개30분 target 중 11개 PASS, 보완 복구·격리·36개 정답 검사. 6개 target 종료 뒤 Python 캐시로 생긴 집계기 FAIL은 독립 소스 대조와 구분해 보존. 사용자 요청으로 새 성능은 미실행, DEV2 인수 미완료.

@@ -580,10 +580,10 @@ impl<W: WriterNamespace> Engine<W> {
                 })
         };
         execute().map_err(|mut error| {
-            if let EngineError::Storage { error, .. } = &mut error {
-                if error.outcome == TransactionOutcome::NotAttempted {
-                    error.outcome = TransactionOutcome::Aborted;
-                }
+            if let EngineError::Storage { error, .. } = &mut error
+                && error.outcome == TransactionOutcome::NotAttempted
+            {
+                error.outcome = TransactionOutcome::Aborted;
             }
             let fence = matches!(&error, EngineError::Storage { error, .. } if error.fenced);
             HookFailure { error, fence }

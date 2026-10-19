@@ -1,6 +1,7 @@
 //! K0 native adapter to the actual volatile substrate. No expected values or verdicts.
 //! A protocol error permanently fences this session before any further engine effect.
 pub mod durable;
+pub mod durable_performance;
 mod fault;
 pub mod performance;
 

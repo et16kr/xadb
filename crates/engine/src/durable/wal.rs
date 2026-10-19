@@ -48,6 +48,9 @@ impl<W: WriterNamespace> Wal<W> {
     /// Caller already validated/stabilized any predecessor and durably selected
     /// fallback when applicable. No IDs or normal readers may escape before this
     /// method and the corresponding CURRENT setup both succeed.
+    // These explicit inputs bind one durable epoch installation to its already
+    // validated predecessor, resource owners and selector serial.
+    #[allow(clippy::too_many_arguments)]
     pub fn install_epoch(
         mut writer: W,
         identity: Identity,

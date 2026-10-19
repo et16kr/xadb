@@ -1,0 +1,2807 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-19T00:26:27.224207+00:00",
+  "scope": "DEV2 remaining local test execution on a frozen mixed working-tree snapshot; excludes unrelated later COMM changes, stage qualification and official distribution",
+  "status": "LOCAL_EXECUTION_COMPLETE",
+  "dev2_stage_status": "INCOMPLETE",
+  "source_sha256": "47c84c22f9cf2f5720ba3f39fb310f888a0ca86c7313a9bcd7a7d47294861991",
+  "retained_source": "/home/et16/work/xadb/artifacts/d2k-8odx2_jn/source",
+  "live_source_sha256_at_rollup": "53f46ddf115b17596ff89bd0dd62260cd0c6764c0cc6009ea01e08493a7a707a",
+  "live_source_differences": [
+    "crates/transport/tests/event_fuzz.rs",
+    "crates/transport/tests/thread_stress.rs",
+    "scripts/check_comm.py",
+    "scripts/check_comm_soak.py",
+    "scripts/check_push.py",
+    "scripts/test_check_comm.py",
+    "scripts/test_check_comm_soak.py",
+    "scripts/test_check_push.py"
+  ],
+  "reports": {
+    "kernel": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-kernel.json",
+      "bytes": 48402,
+      "sha256": "fbd33fd1b250b7b3bfec3d6c30b7c116212144660c8ed6eba02f776790c741d0",
+      "status": "PASS"
+    },
+    "extended": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-extended.json",
+      "bytes": 90517,
+      "sha256": "1cece60e4463431c7ed41d4a40ae1947314b2b133f616fcb0ea17206bcc7a344",
+      "status": "PASS"
+    },
+    "json_v3": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-json/report.json",
+      "bytes": 5008,
+      "sha256": "a70feb478336356cd2315258a1644bd4028c0fa885fe5c3466a83a5d7c34a267",
+      "status": "PASS"
+    },
+    "json_literals": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-literals/report.json",
+      "bytes": 698,
+      "sha256": "a7ef162cea8e64ec062819ab8d4f1be2af1d21e671b65b52c8f5c1186196f75e",
+      "status": "PASS"
+    },
+    "lower_regression": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-regression-frozen.json",
+      "bytes": 56696,
+      "sha256": "2277079151b1c90c51856313b020ec072e40e52b2c2ace5c43ea6d08055aa935",
+      "status": "PASS"
+    },
+    "performance_tests": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-performance-tests/report.json",
+      "bytes": 8308,
+      "sha256": "756b0d29c4466dd31270a2d25ed998601a9d7afec6b267843ecfabfe24cfb6cf",
+      "status": "PASS"
+    },
+    "k0_performance": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/report.json",
+      "bytes": 33570,
+      "sha256": "fcbdf731a93b06dbc5ab3efd42e7eb9667e799f995c108a51fe82424e2630a5e",
+      "status": "PASS"
+    },
+    "durable_performance": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-durable/report.json",
+      "bytes": 18324305,
+      "sha256": "f9627010b7c0970a39d00929498394be7e5dc6576fd63191e3c7cde24559ba51",
+      "status": "PASS"
+    },
+    "mutants_first": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants/report.json",
+      "bytes": 4075,
+      "sha256": "36f194be91a81896e1ae2ba9123ec8f3d4268e3fe5637780ce66170f5088acd4",
+      "status": "FAIL"
+    },
+    "mutants_corrected": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants-r2/report.json",
+      "bytes": 1399,
+      "sha256": "fab97cf4ccf892c93d87b7db9b3dd4eb02b3ba7cf7f19f6bfd35c39bc0314a8f",
+      "status": "PASS"
+    }
+  },
+  "kernel_summary": {
+    "native_fault_campaigns": 3,
+    "native_cases_each": 33,
+    "native_accepted_total": 99,
+    "engine_units": 25,
+    "transactions": 7,
+    "cache_loss": 15,
+    "independent_python_tests": 101
+  },
+  "extended_targets": [
+    {
+      "target": "p0_bounded_exhaustive",
+      "status": "PASS",
+      "elapsed_seconds": 238.02953147300013
+    },
+    {
+      "target": "k0_real_thread_stress",
+      "status": "PASS",
+      "elapsed_seconds": 1800.2507185219997
+    },
+    {
+      "target": "native_request_fuzz",
+      "status": "PASS",
+      "elapsed_seconds": 1800.2470169110002
+    },
+    {
+      "target": "native_response_fuzz",
+      "status": "PASS",
+      "elapsed_seconds": 1800.245636965
+    },
+    {
+      "target": "durable_and_fault_codecs_fuzz",
+      "status": "PASS",
+      "elapsed_seconds": 1800.2436526410002
+    },
+    {
+      "target": "disk_record_fuzz",
+      "status": "PASS",
+      "elapsed_seconds": 1800.24659854
+    },
+    {
+      "target": "durable_thread_stress",
+      "status": "PASS",
+      "elapsed_seconds": 1803.244986059
+    }
+  ],
+  "additional_parser_scope": "Index/BuildReceipt structure parsers and catalog/performance recipe parsers; file/path/config-byte boundaries are separate literal tests, not an end-to-end bundle verifier fuzz claim",
+  "mutant_scope": "fresh test-only source overlays; explicit one-location product mutations; compile errors are not mutant kills",
+  "torn_scope": "six frozen full-length corrupt UNKNOWN-frame residual images, before/around stabilization; explicit external residual selection, not physical partial-persistence qualification",
+  "mutants_accepted": [
+    {
+      "binary_sha256": "a2fdb597d6ad3a74e4b854b1367e0ab68c99a435b503d5a798940023f7bbb568",
+      "build": {
+        "elapsed_seconds": 2.9674873060002938,
+        "exit_code": 0,
+        "remaining_group_signalled": false,
+        "timed_out": false
+      },
+      "build.log": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants/control/build.log",
+        "sha256": "38abee5dc38aede57e7b55ca4ae059507c42e48ded29a5b0c8e02fe6d150d25a"
+      },
+      "execution": {
+        "elapsed_seconds": 0.0034393030000501312,
+        "exit_code": 0,
+        "remaining_group_signalled": false,
+        "timed_out": false
+      },
+      "name": "control",
+      "run.log": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants/control/run.log",
+        "sha256": "c4fbe733d8568fa78a176b402f27f727de5f35ce53286d2d6d1fc4e766937ed2"
+      },
+      "source_sha256": "34affc9e6fe025b22a8150bc073dfc793e7c6bad20d109b0ab7ea460acfac878",
+      "status": "PASS"
+    },
+    {
+      "binary_sha256": "938a1c814ad497dc96e91ffd44054f8be7fe7185183da9c3a974dab68a794802",
+      "build": {
+        "elapsed_seconds": 2.216323291000208,
+        "exit_code": 0,
+        "remaining_group_signalled": false,
+        "timed_out": false
+      },
+      "build.log": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants/ack_before_sync/build.log",
+        "sha256": "5e5828105330832ba0dec58a19ea2af13ff07f86f6fbb31c8aa0705daed13730"
+      },
+      "execution": {
+        "elapsed_seconds": 0.0014155180001580447,
+        "exit_code": 101,
+        "remaining_group_signalled": false,
+        "timed_out": false
+      },
+      "name": "ack_before_sync",
+      "run.log": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants/ack_before_sync/run.log",
+        "sha256": "31d4622a8934187984ba0e7d183b476898b961dea0d04a5965e8d720fa5312a7"
+      },
+      "source_sha256": "835198eff354d225cf7ee71f28fd07a575cf023ef1841e7231f4c00566fde102",
+      "status": "PASS"
+    },
+    {
+      "binary_sha256": "5cd26a9cb0ed3bc50341fadc8df16a0764a4d6a2ad57e251b8342ded2ca00cf2",
+      "build": {
+        "elapsed_seconds": 2.3165579530000286,
+        "exit_code": 0,
+        "remaining_group_signalled": false,
+        "timed_out": false
+      },
+      "build.log": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants/omit_old_prefix_sync/build.log",
+        "sha256": "e5d6a1fd4e734f3077050b9ff97dfb1df8bc41ef8874d0899a50ee083bcbd2a2"
+      },
+      "execution": {
+        "elapsed_seconds": 0.0014011809998919489,
+        "exit_code": 101,
+        "remaining_group_signalled": false,
+        "timed_out": false
+      },
+      "name": "omit_old_prefix_sync",
+      "run.log": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants/omit_old_prefix_sync/run.log",
+        "sha256": "4fe146bb72ae5953b0863f489a91cb221ed85990a18a9256c0823bc3cb57be25"
+      },
+      "source_sha256": "7a1cc068017d0db11ec14e46f711dab06046b90ecd71813b6fff737be449db65",
+      "status": "PASS"
+    },
+    {
+      "binary_sha256": "2cb981220432cad570c069983c8a268b9ff657276622bb058211cfdbfdfbf3a2",
+      "build": {
+        "elapsed_seconds": 2.522923987000013,
+        "exit_code": 0,
+        "remaining_group_signalled": false,
+        "timed_out": false
+      },
+      "build.log": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants-r2/early_reclaim/build.log",
+        "sha256": "31b623e9efef998763d54f040390014ee8156bc33e963533bf677b122e87a82e"
+      },
+      "execution": {
+        "elapsed_seconds": 0.0014588829999411246,
+        "exit_code": 101,
+        "remaining_group_signalled": false,
+        "timed_out": false
+      },
+      "name": "early_reclaim",
+      "run.log": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants-r2/early_reclaim/run.log",
+        "sha256": "25b5c23db7737dc3369466a67e893e7f244c7889073bdd3efd8eb414d0417fa6"
+      },
+      "source_sha256": "b2310dc90694dc2c02948e704284f5675b621eb82084a0c4f62aac17e7d99dff",
+      "status": "PASS"
+    }
+  ],
+  "performance_comparisons": [
+    {
+      "family": "k0_performance",
+      "id": "audit-always",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "REGRESSED",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 16340542,
+            "denominator": 14857792
+          },
+          {
+            "numerator": 16444795,
+            "denominator": 14911984
+          },
+          {
+            "numerator": 16455306,
+            "denominator": 14789125
+          },
+          {
+            "numerator": 16329722,
+            "denominator": 14852904
+          },
+          {
+            "numerator": 16416814,
+            "denominator": 15392124
+          },
+          {
+            "numerator": 16374886,
+            "denominator": 14856550
+          },
+          {
+            "numerator": 16525375,
+            "denominator": 14888099
+          },
+          {
+            "numerator": 16281814,
+            "denominator": 14797091
+          },
+          {
+            "numerator": 16311869,
+            "denominator": 14870457
+          },
+          {
+            "numerator": 16332227,
+            "denominator": 14845840
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 16311869,
+            "denominator": 14870457
+          },
+          {
+            "numerator": 16525375,
+            "denominator": 14888099
+          }
+        ],
+        "median": [
+          483386654705417,
+          439350490902880
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 16455306,
+          "denominator": 14789125
+        },
+        "worst_cpu": {
+          "numerator": 16273982,
+          "denominator": 14584595
+        },
+        "worst_external": {
+          "numerator": 23838215,
+          "denominator": 21327558
+        },
+        "worst_sample_p99": {
+          "numerator": 290,
+          "denominator": 261
+        },
+        "worst_process_peak_rss_delta": 36864
+      }
+    },
+    {
+      "family": "k0_performance",
+      "id": "audit-detailed",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "REGRESSED",
+        "guardrails": "FAIL",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 18966487,
+            "denominator": 15059771
+          },
+          {
+            "numerator": 19361620,
+            "denominator": 14875789
+          },
+          {
+            "numerator": 19012262,
+            "denominator": 15980058
+          },
+          {
+            "numerator": 19029293,
+            "denominator": 16179287
+          },
+          {
+            "numerator": 19278946,
+            "denominator": 14860742
+          },
+          {
+            "numerator": 19165616,
+            "denominator": 14897370
+          },
+          {
+            "numerator": 19226930,
+            "denominator": 14905846
+          },
+          {
+            "numerator": 19110665,
+            "denominator": 14921375
+          },
+          {
+            "numerator": 19992912,
+            "denominator": 14856245
+          },
+          {
+            "numerator": 19057848,
+            "denominator": 16010946
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 19012262,
+            "denominator": 15980058
+          },
+          {
+            "numerator": 19361620,
+            "denominator": 14875789
+          }
+        ],
+        "median": [
+          570675990893050,
+          444578488567500
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 19992912,
+          "denominator": 14856245
+        },
+        "worst_cpu": {
+          "numerator": 19222970,
+          "denominator": 14669586
+        },
+        "worst_external": {
+          "numerator": 28486135,
+          "denominator": 21659302
+        },
+        "worst_sample_p99": {
+          "numerator": 471,
+          "denominator": 261
+        },
+        "worst_process_peak_rss_delta": 45056
+      }
+    },
+    {
+      "family": "k0_performance",
+      "id": "audit-replay",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "REGRESSED",
+        "guardrails": "FAIL",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 16419768,
+            "denominator": 14934523
+          },
+          {
+            "numerator": 16366670,
+            "denominator": 15287519
+          },
+          {
+            "numerator": 16515667,
+            "denominator": 14959720
+          },
+          {
+            "numerator": 16423265,
+            "denominator": 15106372
+          },
+          {
+            "numerator": 16319514,
+            "denominator": 14953880
+          },
+          {
+            "numerator": 16410302,
+            "denominator": 14804654
+          },
+          {
+            "numerator": 16313783,
+            "denominator": 14834469
+          },
+          {
+            "numerator": 16311830,
+            "denominator": 14796188
+          },
+          {
+            "numerator": 16568476,
+            "denominator": 14849016
+          },
+          {
+            "numerator": 17644462,
+            "denominator": 14803662
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 16423265,
+            "denominator": 15106372
+          },
+          {
+            "numerator": 16568476,
+            "denominator": 14849016
+          }
+        ],
+        "median": [
+          483359136727474,
+          438987184408344
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 17644462,
+          "denominator": 14803662
+        },
+        "worst_cpu": {
+          "numerator": 17375583,
+          "denominator": 14681202
+        },
+        "worst_external": {
+          "numerator": 25039190,
+          "denominator": 21285706
+        },
+        "worst_sample_p99": {
+          "numerator": 401,
+          "denominator": 251
+        },
+        "worst_process_peak_rss_delta": 16384
+      }
+    },
+    {
+      "family": "k0_performance",
+      "id": "optimization-exploration",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "IMPROVED",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 14956892,
+            "denominator": 92494268
+          },
+          {
+            "numerator": 14917579,
+            "denominator": 93123802
+          },
+          {
+            "numerator": 14947494,
+            "denominator": 93458237
+          },
+          {
+            "numerator": 14901260,
+            "denominator": 93276353
+          },
+          {
+            "numerator": 15496640,
+            "denominator": 93902541
+          },
+          {
+            "numerator": 14935032,
+            "denominator": 92152436
+          },
+          {
+            "numerator": 14810891,
+            "denominator": 93272576
+          },
+          {
+            "numerator": 14991868,
+            "denominator": 92740123
+          },
+          {
+            "numerator": 15615763,
+            "denominator": 93287649
+          },
+          {
+            "numerator": 14946605,
+            "denominator": 92963385
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 14901260,
+            "denominator": 93276353
+          },
+          {
+            "numerator": 15496640,
+            "denominator": 93902541
+          }
+        ],
+        "median": [
+          2779844782885595,
+          17242871518792710
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 15615763,
+          "denominator": 93287649
+        },
+        "worst_cpu": {
+          "numerator": 15405666,
+          "denominator": 92721009
+        },
+        "worst_external": {
+          "numerator": 24749993,
+          "denominator": 105171124
+        },
+        "worst_sample_p99": {
+          "numerator": 531,
+          "denominator": 1633
+        },
+        "worst_process_peak_rss_delta": 36864
+      }
+    },
+    {
+      "family": "k0_performance",
+      "id": "optimization-confirmation",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "IMPROVED",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 15824003,
+            "denominator": 93503688
+          },
+          {
+            "numerator": 15051052,
+            "denominator": 95123090
+          },
+          {
+            "numerator": 15152653,
+            "denominator": 96071504
+          },
+          {
+            "numerator": 15906710,
+            "denominator": 92782087
+          },
+          {
+            "numerator": 15506563,
+            "denominator": 99760098
+          },
+          {
+            "numerator": 14985070,
+            "denominator": 93070626
+          },
+          {
+            "numerator": 15728477,
+            "denominator": 93240588
+          },
+          {
+            "numerator": 16123154,
+            "denominator": 93946115
+          },
+          {
+            "numerator": 14882599,
+            "denominator": 93895240
+          },
+          {
+            "numerator": 15036126,
+            "denominator": 92218281
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 15152653,
+            "denominator": 96071504
+          },
+          {
+            "numerator": 15906710,
+            "denominator": 92782087
+          }
+        ],
+        "median": [
+          2781319055499546,
+          17165626282627812
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 16123154,
+          "denominator": 93946115
+        },
+        "worst_cpu": {
+          "numerator": 16177649,
+          "denominator": 93461378
+        },
+        "worst_external": {
+          "numerator": 25519844,
+          "denominator": 105898174
+        },
+        "worst_sample_p99": {
+          "numerator": 701,
+          "denominator": 1483
+        },
+        "worst_process_peak_rss_delta": 24576
+      }
+    },
+    {
+      "family": "k0_performance",
+      "id": "optimization-replay",
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "IMPROVED",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 14935301,
+            "denominator": 92951280
+          },
+          {
+            "numerator": 14871663,
+            "denominator": 93084098
+          },
+          {
+            "numerator": 14884857,
+            "denominator": 92474070
+          },
+          {
+            "numerator": 14989072,
+            "denominator": 92987127
+          },
+          {
+            "numerator": 14984072,
+            "denominator": 92715456
+          },
+          {
+            "numerator": 14897251,
+            "denominator": 96228111
+          },
+          {
+            "numerator": 14871393,
+            "denominator": 92417580
+          },
+          {
+            "numerator": 14897663,
+            "denominator": 92441314
+          },
+          {
+            "numerator": 14913351,
+            "denominator": 95004417
+          },
+          {
+            "numerator": 14980187,
+            "denominator": 92450954
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 14913351,
+            "denominator": 95004417
+          },
+          {
+            "numerator": 14984072,
+            "denominator": 92715456
+          }
+        ],
+        "median": [
+          2750840699865570,
+          17092459524301200
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 14980187,
+          "denominator": 92450954
+        },
+        "worst_cpu": {
+          "numerator": 14893379,
+          "denominator": 91813182
+        },
+        "worst_external": {
+          "numerator": 22200011,
+          "denominator": 103600862
+        },
+        "worst_sample_p99": {
+          "numerator": 260,
+          "denominator": 1443
+        },
+        "worst_process_peak_rss_delta": 32768
+      }
+    },
+    {
+      "family": "durable_performance",
+      "id": "audit",
+      "comparison": {
+        "budget": "FAIL",
+        "cause_status": "NOT_RUN",
+        "correctness": "PASS",
+        "guardrails": "FAIL",
+        "interval": [
+          [
+            4031464826,
+            4296845383
+          ],
+          [
+            2164925195,
+            2104414123
+          ]
+        ],
+        "median": [
+          3955919258065918239,
+          4005456132104730164
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "performance_effect": "INCONCLUSIVE",
+        "promotion": "INCOMPLETE",
+        "ratios": [
+          [
+            497730378,
+            502904047
+          ],
+          [
+            4986676264,
+            8731680041
+          ],
+          [
+            4534841305,
+            4199157208
+          ],
+          [
+            4142509999,
+            4227758776
+          ],
+          [
+            3924793293,
+            3982326406
+          ],
+          [
+            798353426,
+            800771481
+          ],
+          [
+            707775400,
+            700768697
+          ],
+          [
+            2164925195,
+            2104414123
+          ],
+          [
+            4302866045,
+            4498647677
+          ],
+          [
+            4031464826,
+            4296845383
+          ]
+        ],
+        "reasons": [
+          "guardrail failed: cycle_p99_ns"
+        ],
+        "validity": "VALID"
+      }
+    },
+    {
+      "family": "durable_performance",
+      "id": "replay",
+      "comparison": {
+        "budget": "FAIL",
+        "cause_status": "NOT_RUN",
+        "correctness": "PASS",
+        "guardrails": "FAIL",
+        "interval": [
+          [
+            4042614038,
+            4168170497
+          ],
+          [
+            4006859681,
+            3968221428
+          ]
+        ],
+        "median": [
+          14141803954117390347,
+          14180224479998001992
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "performance_effect": "NO_MATERIAL_CHANGE",
+        "promotion": "INCOMPLETE",
+        "ratios": [
+          [
+            1302388729,
+            1337750531
+          ],
+          [
+            3976553417,
+            3983190284
+          ],
+          [
+            682689912,
+            683654449
+          ],
+          [
+            4103292779,
+            4020341577
+          ],
+          [
+            4006859681,
+            3968221428
+          ],
+          [
+            486391293,
+            511144936
+          ],
+          [
+            2048581963,
+            2036297266
+          ],
+          [
+            1773328636,
+            1780008419
+          ],
+          [
+            4042614038,
+            4168170497
+          ],
+          [
+            1967607087,
+            2004862415
+          ]
+        ],
+        "reasons": [
+          "guardrail failed: cpu_ns",
+          "guardrail failed: cpu_ns",
+          "guardrail failed: cpu_ns",
+          "guardrail failed: cpu_ns",
+          "guardrail failed: cycle_p99_ns",
+          "guardrail failed: cpu_ns"
+        ],
+        "validity": "VALID"
+      }
+    }
+  ],
+  "guardrail_failure_campaigns": [
+    "k0_performance:audit-detailed",
+    "k0_performance:audit-replay",
+    "durable_performance:audit",
+    "durable_performance:replay"
+  ],
+  "performance_acceptance": "INCOMPLETE",
+  "pf12_cause_counter_observations": [
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        182,
+        150,
+        110,
+        57,
+        253,
+        63,
+        116,
+        149,
+        227,
+        53,
+        117,
+        193,
+        252,
+        213,
+        219,
+        123
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-00-baseline/native-2kUj2r/stdout.bin",
+        "bytes": 1360571,
+        "sha256": "8e43d930ba0ece6d2b61c30057729286a375956c9a0e041e3fd5a8eca0820f01"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        178,
+        214,
+        68,
+        52,
+        167,
+        164,
+        62,
+        168,
+        136,
+        33,
+        118,
+        204,
+        26,
+        80,
+        35,
+        0
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-00-candidate/native-4N7GNg/stdout.bin",
+        "bytes": 1356460,
+        "sha256": "426081ad41c8dc4d4faa4ad9ef02512cabc8231ffa8eb2de6493eafc9be874f6"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        5,
+        49,
+        100,
+        42,
+        65,
+        113,
+        23,
+        12,
+        95,
+        84,
+        87,
+        232,
+        21,
+        102,
+        202,
+        87
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-01-baseline/native-HAGWWg/stdout.bin",
+        "bytes": 1360553,
+        "sha256": "254fee6000772c2825d4cbd26ea112816f7213ea783f07824226f148de4cb77d"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        201,
+        187,
+        187,
+        252,
+        144,
+        194,
+        11,
+        48,
+        130,
+        21,
+        162,
+        87,
+        205,
+        174,
+        238,
+        28
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-01-candidate/native-oMKEdG/stdout.bin",
+        "bytes": 1356469,
+        "sha256": "af0cbe2f3c52d2b70c6f0fc9bc8ec828ae6091f9ae52a6b9ebefc1f2ede059ca"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        185,
+        159,
+        134,
+        206,
+        254,
+        191,
+        39,
+        47,
+        155,
+        163,
+        94,
+        70,
+        72,
+        157,
+        192,
+        99
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-02-baseline/native-peaXRb/stdout.bin",
+        "bytes": 1360566,
+        "sha256": "81900cdb7afac3c6a9673274ab7ac1138dd40d7002a3edbde27a62bbfc7ebcbd"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        32,
+        143,
+        185,
+        181,
+        29,
+        129,
+        181,
+        134,
+        67,
+        130,
+        122,
+        200,
+        216,
+        139,
+        92,
+        136
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-02-candidate/native-gWfBhu/stdout.bin",
+        "bytes": 1356471,
+        "sha256": "f3229fb3aaac6b83955a94c85167a65ab94b26e14375bd3830d2508401b4c5c2"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        255,
+        133,
+        54,
+        18,
+        131,
+        251,
+        120,
+        70,
+        171,
+        209,
+        154,
+        120,
+        51,
+        101,
+        192,
+        56
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-03-baseline/native-n6IRb6/stdout.bin",
+        "bytes": 1360567,
+        "sha256": "b9f5bc97f6ee789b08f8229992f1fd65be7cf58de6a35686269a5705231b7fb6"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        19,
+        144,
+        45,
+        47,
+        79,
+        115,
+        75,
+        214,
+        44,
+        119,
+        101,
+        203,
+        168,
+        131,
+        212,
+        239
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-03-candidate/native-MmbJhj/stdout.bin",
+        "bytes": 1356466,
+        "sha256": "19355d9c388e0a3c95ceb378723dc4538d3a204c0c8b3d5e61b7c1482e3e166b"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        150,
+        115,
+        7,
+        52,
+        211,
+        124,
+        181,
+        53,
+        178,
+        178,
+        203,
+        131,
+        84,
+        126,
+        136,
+        4
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-04-baseline/native-R6EAyV/stdout.bin",
+        "bytes": 1360563,
+        "sha256": "e495b09dbbdff798fe954f6d29eaf11a7a8209f304cab1cfac4a6ee407c82e40"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        38,
+        39,
+        92,
+        162,
+        143,
+        34,
+        243,
+        177,
+        234,
+        10,
+        153,
+        113,
+        39,
+        71,
+        133,
+        33
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-04-candidate/native-db17d7/stdout.bin",
+        "bytes": 1356461,
+        "sha256": "b3e1eb7524c01a08b21acf561ba636acc78b791c94444d52f8ff55dbd34fbb3b"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        80,
+        70,
+        98,
+        174,
+        172,
+        37,
+        192,
+        251,
+        186,
+        106,
+        232,
+        65,
+        216,
+        20,
+        95,
+        77
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-05-baseline/native-B3LWgs/stdout.bin",
+        "bytes": 1360561,
+        "sha256": "8993d980a7f0e8cc0a38e9f2631c8552dec6f0c552bf699434832af71d2e7f55"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        85,
+        187,
+        127,
+        204,
+        59,
+        190,
+        65,
+        36,
+        255,
+        95,
+        52,
+        119,
+        58,
+        179,
+        254,
+        11
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-05-candidate/native-LUeTqy/stdout.bin",
+        "bytes": 1356462,
+        "sha256": "9ef83cd7b7ecfaa11a1d2e449489ec112c78a6524f9d09d92cb985a5342aa39f"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        233,
+        58,
+        254,
+        68,
+        14,
+        53,
+        53,
+        4,
+        158,
+        69,
+        142,
+        220,
+        218,
+        210,
+        187,
+        15
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-06-baseline/native-soqw1J/stdout.bin",
+        "bytes": 1360559,
+        "sha256": "e510d7169b43eeb937c489348fba05d95470ee78090b2828b16390f775341a7c"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        83,
+        148,
+        44,
+        223,
+        202,
+        70,
+        112,
+        227,
+        154,
+        65,
+        81,
+        69,
+        129,
+        139,
+        98,
+        135
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-06-candidate/native-p5awMZ/stdout.bin",
+        "bytes": 1356465,
+        "sha256": "0ad98a47d09926bbd4db78aa80673b60a053130d74981b2686fd56f55b4de742"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        14,
+        238,
+        126,
+        188,
+        235,
+        46,
+        1,
+        35,
+        184,
+        252,
+        31,
+        129,
+        215,
+        193,
+        219,
+        141
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-07-baseline/native-93FDWT/stdout.bin",
+        "bytes": 1360565,
+        "sha256": "e7e20aa3372abe6bebfd49a023763ab41676ab494019192f8a4eed962e33ae2c"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        219,
+        157,
+        105,
+        156,
+        196,
+        203,
+        127,
+        184,
+        193,
+        235,
+        71,
+        28,
+        113,
+        107,
+        88,
+        203
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-07-candidate/native-fciwY1/stdout.bin",
+        "bytes": 1356473,
+        "sha256": "c70b583a41f9d0872eb8955de9606fbee25b9b988f1cd86af9d719d0f62119bb"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        137,
+        198,
+        51,
+        85,
+        195,
+        13,
+        164,
+        162,
+        21,
+        132,
+        210,
+        86,
+        66,
+        31,
+        147,
+        174
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-08-baseline/native-dFsmcj/stdout.bin",
+        "bytes": 1360563,
+        "sha256": "2eac3fd13148903b7144f90ea6aca0e449bcea42f9c5a9c33497e7f59ab0ae74"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        176,
+        251,
+        231,
+        32,
+        104,
+        51,
+        100,
+        22,
+        236,
+        125,
+        192,
+        206,
+        133,
+        60,
+        31,
+        212
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-08-candidate/native-nnrxvQ/stdout.bin",
+        "bytes": 1356472,
+        "sha256": "f735fbebaf412ad97b65623b6d740cafaaac460f365eccd027b084675709c97e"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        76,
+        11,
+        197,
+        239,
+        18,
+        212,
+        193,
+        77,
+        93,
+        179,
+        43,
+        151,
+        219,
+        25,
+        124,
+        63
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-09-baseline/native-lyqpIm/stdout.bin",
+        "bytes": 1360561,
+        "sha256": "a1f099a6cd49de49565cb6d806f4fb6dbd6f296f098ba93799c0f93d3ae0dc87"
+      }
+    },
+    {
+      "campaign": "optimization-exploration",
+      "run": [
+        99,
+        70,
+        189,
+        153,
+        21,
+        39,
+        134,
+        93,
+        239,
+        99,
+        182,
+        153,
+        73,
+        144,
+        244,
+        198
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-exploration/performance-BEVJV7/pair-09-candidate/native-vNxWvD/stdout.bin",
+        "bytes": 1356466,
+        "sha256": "e356a380579cbb916d979779bdef77a365f071f3a83dccf681c7abd4adbbac9e"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        251,
+        3,
+        54,
+        167,
+        104,
+        21,
+        15,
+        151,
+        183,
+        205,
+        220,
+        101,
+        251,
+        211,
+        106,
+        26
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-00-baseline/native-MuhayE/stdout.bin",
+        "bytes": 1360566,
+        "sha256": "8750e58e020ba5e99fec3bafd352d02c07931eabd80c36c8b5e2be00889b3c02"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        36,
+        3,
+        2,
+        44,
+        152,
+        132,
+        154,
+        153,
+        15,
+        33,
+        250,
+        250,
+        195,
+        46,
+        120,
+        161
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-00-candidate/native-ehY6UN/stdout.bin",
+        "bytes": 1356462,
+        "sha256": "a1a52c94aaab6c5c013ee87796c945674932063a67973f9789d52aa23bdcf3da"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        95,
+        24,
+        223,
+        160,
+        67,
+        127,
+        85,
+        253,
+        51,
+        127,
+        55,
+        173,
+        178,
+        84,
+        232,
+        72
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-01-baseline/native-m5yWnE/stdout.bin",
+        "bytes": 1360561,
+        "sha256": "b14d50e0a254c04898e54182443c12de750204cd52eb23dd3f7371ed9a5d5b1a"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        184,
+        227,
+        100,
+        92,
+        179,
+        191,
+        110,
+        9,
+        139,
+        91,
+        205,
+        114,
+        95,
+        53,
+        188,
+        80
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-01-candidate/native-v22Bbs/stdout.bin",
+        "bytes": 1356464,
+        "sha256": "5ea76dbd710b66ec8b8699d6e2b2ba1c8e578bb0925cc55189db2853df7571dc"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        106,
+        40,
+        211,
+        4,
+        191,
+        215,
+        27,
+        218,
+        135,
+        50,
+        248,
+        26,
+        199,
+        63,
+        26,
+        229
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-02-baseline/native-5NiOJb/stdout.bin",
+        "bytes": 1360569,
+        "sha256": "f36dec214030a8f65e326ada744d826b7754b6755e7d9d27db33b9ed79a4a98c"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        201,
+        165,
+        120,
+        212,
+        245,
+        185,
+        121,
+        53,
+        60,
+        222,
+        215,
+        90,
+        59,
+        90,
+        121,
+        113
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-02-candidate/native-kkkk6F/stdout.bin",
+        "bytes": 1356469,
+        "sha256": "421dd6a89354b2436843ba62ad5164a5fb6640393b46ad277c8d4d6b9f788e85"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        149,
+        248,
+        55,
+        142,
+        147,
+        211,
+        23,
+        29,
+        62,
+        156,
+        96,
+        47,
+        214,
+        237,
+        15,
+        103
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-03-baseline/native-fBRxWl/stdout.bin",
+        "bytes": 1360565,
+        "sha256": "0736b7f21c81e45a924873578bdb069b7a9b28b909d79deefbf46c9f4b9a02e5"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        163,
+        56,
+        45,
+        85,
+        252,
+        217,
+        198,
+        214,
+        247,
+        13,
+        103,
+        4,
+        242,
+        110,
+        171,
+        253
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-03-candidate/native-nKT5zX/stdout.bin",
+        "bytes": 1356466,
+        "sha256": "eee107821d65e3e3b1c0f921b7287e05624ce2ab8ccc554c7c9b9d5ad26bb8bf"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        201,
+        210,
+        176,
+        237,
+        207,
+        198,
+        89,
+        63,
+        255,
+        6,
+        6,
+        152,
+        170,
+        152,
+        80,
+        72
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-04-baseline/native-3jIsMe/stdout.bin",
+        "bytes": 1360561,
+        "sha256": "947abc15fe3fd8227a086c2acbc6dc8b4d73b45cc6ed72a903cd0a67bb2a1e28"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        222,
+        60,
+        203,
+        134,
+        88,
+        191,
+        136,
+        83,
+        197,
+        194,
+        81,
+        4,
+        132,
+        191,
+        43,
+        206
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-04-candidate/native-zS9j4y/stdout.bin",
+        "bytes": 1356468,
+        "sha256": "617f58db6a66dae24b78b7236c65ccd149e9aab2548fb0eba0086e561c92ff82"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        253,
+        161,
+        13,
+        234,
+        245,
+        71,
+        197,
+        62,
+        215,
+        40,
+        245,
+        79,
+        8,
+        143,
+        42,
+        230
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-05-baseline/native-xAhfQx/stdout.bin",
+        "bytes": 1360562,
+        "sha256": "36f75c146934c45b9e8a0e5e3b6a6d9532504fdd054a3fa08541647e6a905376"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        98,
+        17,
+        83,
+        0,
+        227,
+        182,
+        185,
+        202,
+        194,
+        252,
+        173,
+        134,
+        149,
+        85,
+        3,
+        228
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-05-candidate/native-izhqQf/stdout.bin",
+        "bytes": 1356465,
+        "sha256": "ebe698d628b0c51e090db74bea78bc79091ddc5a75555d42a3d60149b0d68c83"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        223,
+        205,
+        194,
+        250,
+        141,
+        48,
+        155,
+        142,
+        225,
+        160,
+        113,
+        163,
+        221,
+        202,
+        142,
+        123
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-06-baseline/native-nszTzb/stdout.bin",
+        "bytes": 1360575,
+        "sha256": "01d3d38e9ac8afa482ff98680afdc7d44d6f067ac71b4b1fb7cf1bdc0718378f"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        191,
+        248,
+        164,
+        141,
+        64,
+        39,
+        125,
+        184,
+        21,
+        109,
+        128,
+        255,
+        214,
+        67,
+        31,
+        102
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-06-candidate/native-uC2QGK/stdout.bin",
+        "bytes": 1356481,
+        "sha256": "55e1e0818e35776b8dcd9150e83090238a9c692b7d1b5d60e48d473c5d2703a1"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        32,
+        217,
+        138,
+        50,
+        139,
+        209,
+        177,
+        5,
+        67,
+        61,
+        96,
+        184,
+        232,
+        122,
+        3,
+        118
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-07-baseline/native-dF1bBT/stdout.bin",
+        "bytes": 1360559,
+        "sha256": "25e15d6516e199b30c657fd1e2005914ff01d3005bd70ccae20d2eaae8511fda"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        148,
+        176,
+        97,
+        102,
+        109,
+        59,
+        93,
+        8,
+        125,
+        61,
+        216,
+        172,
+        59,
+        232,
+        147,
+        102
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-07-candidate/native-YNdlIL/stdout.bin",
+        "bytes": 1356464,
+        "sha256": "2f9bd6c90aa27dea42821392f496b72b22d317a1c23862d13242f592cac7f6bb"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        85,
+        246,
+        69,
+        96,
+        163,
+        42,
+        136,
+        2,
+        128,
+        164,
+        132,
+        203,
+        225,
+        236,
+        116,
+        251
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-08-baseline/native-3pJxY7/stdout.bin",
+        "bytes": 1360565,
+        "sha256": "99b72c2b80944a87255dc36ed2159560cfb1d220782cb3f1b295cf006dde6d46"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        187,
+        68,
+        209,
+        198,
+        39,
+        246,
+        239,
+        87,
+        55,
+        166,
+        186,
+        132,
+        16,
+        218,
+        175,
+        208
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-08-candidate/native-l7NhYE/stdout.bin",
+        "bytes": 1356468,
+        "sha256": "cd5ecfa2be1531185b24e13bea78732d81665c115b0257433ef53c6d8c516c4e"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        20,
+        139,
+        146,
+        3,
+        38,
+        157,
+        232,
+        214,
+        150,
+        204,
+        4,
+        29,
+        173,
+        44,
+        29,
+        219
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-09-baseline/native-wZWfdF/stdout.bin",
+        "bytes": 1360559,
+        "sha256": "3ac4166936259b7170d3a653f6e13497fa9dc7496555c5344a220d99cc178a0e"
+      }
+    },
+    {
+      "campaign": "optimization-confirmation",
+      "run": [
+        232,
+        156,
+        4,
+        248,
+        121,
+        224,
+        254,
+        185,
+        100,
+        21,
+        68,
+        9,
+        202,
+        30,
+        67,
+        160
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-confirmation/performance-yaqCFp/pair-09-candidate/native-nEtvzX/stdout.bin",
+        "bytes": 1356465,
+        "sha256": "b1416662249547772875d7699879a1a01043a384fe6ed412759b22bf6370fb52"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        223,
+        71,
+        201,
+        48,
+        34,
+        101,
+        209,
+        154,
+        249,
+        61,
+        83,
+        198,
+        30,
+        129,
+        86,
+        176
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-00-baseline/native-GpWj3Z/stdout.bin",
+        "bytes": 1360563,
+        "sha256": "468e5d847e8abf65fb2d309b14390c55a4fadb3f5852a1773cb3ea92cfa78a96"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        225,
+        217,
+        91,
+        186,
+        136,
+        34,
+        227,
+        222,
+        80,
+        167,
+        247,
+        6,
+        140,
+        233,
+        175,
+        170
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-00-candidate/native-pqEITl/stdout.bin",
+        "bytes": 1356466,
+        "sha256": "7bf1125751aa9d064c2db25f089555bb4ca25fa303877045018df750c39ea1ce"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        206,
+        26,
+        247,
+        146,
+        54,
+        213,
+        89,
+        157,
+        26,
+        150,
+        57,
+        212,
+        199,
+        33,
+        57,
+        178
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-01-baseline/native-waftGl/stdout.bin",
+        "bytes": 1360563,
+        "sha256": "4aeba9a476c8d284798576000e13b9f50f57b916d2e14528296e152d503f56c5"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        81,
+        158,
+        143,
+        160,
+        220,
+        153,
+        218,
+        253,
+        208,
+        2,
+        69,
+        202,
+        93,
+        11,
+        104,
+        177
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-01-candidate/native-HmjUb6/stdout.bin",
+        "bytes": 1356469,
+        "sha256": "1a66151cf09f1800a386fc7ddfc2a0f6d0f53b848f2618a53937207dbf9345a3"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        170,
+        255,
+        149,
+        26,
+        56,
+        40,
+        177,
+        115,
+        65,
+        58,
+        74,
+        65,
+        200,
+        201,
+        255,
+        230
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-02-baseline/native-IdwU5S/stdout.bin",
+        "bytes": 1360563,
+        "sha256": "cbacc9d2cf4ba5d4f5dc25f1192d5e951adc9b8b98bfedc76b48835bbd919a7e"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        185,
+        158,
+        189,
+        203,
+        40,
+        203,
+        254,
+        34,
+        217,
+        47,
+        240,
+        207,
+        251,
+        112,
+        157,
+        49
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-02-candidate/native-KS4hcl/stdout.bin",
+        "bytes": 1356473,
+        "sha256": "451de95ce210699c9af9cb83eaff8f5cdef65084f2ada02b6d437fa10ec82763"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        219,
+        88,
+        55,
+        117,
+        176,
+        4,
+        35,
+        132,
+        143,
+        10,
+        243,
+        255,
+        204,
+        205,
+        55,
+        154
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-03-baseline/native-wL1NCC/stdout.bin",
+        "bytes": 1360563,
+        "sha256": "0a07ade5bfd433a0f3bfd8db88c1839e6516098cba9c8f89cebfdac2a43a60ef"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        86,
+        216,
+        209,
+        130,
+        102,
+        70,
+        207,
+        88,
+        234,
+        65,
+        240,
+        139,
+        59,
+        191,
+        160,
+        83
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-03-candidate/native-HCXiuv/stdout.bin",
+        "bytes": 1356466,
+        "sha256": "9667401d835739377fb2347a23a964c54babdce8f48c3f0df5d2a0ddb736258c"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        81,
+        88,
+        47,
+        151,
+        212,
+        4,
+        14,
+        245,
+        64,
+        12,
+        90,
+        81,
+        107,
+        210,
+        33,
+        83
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-04-baseline/native-fBgyLT/stdout.bin",
+        "bytes": 1360553,
+        "sha256": "f0c0ad7287fbef81dc4e9f7086a515994583cd0d974d49ea1111b12aa4e5e726"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        160,
+        61,
+        234,
+        186,
+        34,
+        86,
+        229,
+        162,
+        112,
+        83,
+        201,
+        180,
+        225,
+        163,
+        251,
+        143
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-04-candidate/native-X08ViO/stdout.bin",
+        "bytes": 1356468,
+        "sha256": "160f91f5e968c7810f7647e1f38dee74620b34c7cdcb66211e2d6198d3956e2d"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        102,
+        192,
+        170,
+        14,
+        229,
+        129,
+        181,
+        206,
+        0,
+        127,
+        53,
+        10,
+        54,
+        27,
+        94,
+        81
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-05-baseline/native-fwdiLW/stdout.bin",
+        "bytes": 1360559,
+        "sha256": "e89879560a92b8d27519d5d4c0c9ebf3064754890c2627a40c82235e3a5a5c0e"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        100,
+        32,
+        81,
+        188,
+        215,
+        169,
+        169,
+        188,
+        83,
+        160,
+        42,
+        140,
+        131,
+        147,
+        156,
+        39
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-05-candidate/native-Xn4qBa/stdout.bin",
+        "bytes": 1356476,
+        "sha256": "b96c7efa5cc337ffc3071bf5a6890db112ea72f0b1dff18572808fb01a19b28f"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        34,
+        54,
+        187,
+        245,
+        51,
+        204,
+        130,
+        74,
+        99,
+        194,
+        35,
+        16,
+        22,
+        36,
+        36,
+        172
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-06-baseline/native-nzmLJK/stdout.bin",
+        "bytes": 1360557,
+        "sha256": "f92e616f96aa1c686f9adcc2eaf22b6ae7f393775f6fb96c477ecdb6f6008349"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        200,
+        197,
+        120,
+        218,
+        3,
+        130,
+        81,
+        159,
+        135,
+        19,
+        209,
+        83,
+        162,
+        50,
+        216,
+        243
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-06-candidate/native-k0TiTM/stdout.bin",
+        "bytes": 1356464,
+        "sha256": "01ab348b3e23a2d3c44b1dce4da6a7ff222af9a4775bae94c60a01af6ef61b28"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        27,
+        36,
+        9,
+        113,
+        103,
+        62,
+        199,
+        69,
+        66,
+        73,
+        66,
+        126,
+        134,
+        14,
+        225,
+        38
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-07-baseline/native-5piLCT/stdout.bin",
+        "bytes": 1360555,
+        "sha256": "a4d824a4d1262b56c3ddc6afc0767c7e493b75b7507a8923b586312ca09a32a9"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        109,
+        24,
+        254,
+        180,
+        38,
+        47,
+        230,
+        180,
+        221,
+        150,
+        245,
+        93,
+        86,
+        163,
+        66,
+        109
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-07-candidate/native-p369Yl/stdout.bin",
+        "bytes": 1356467,
+        "sha256": "17df0d905c6ae3f5ae091034d525eeb9d8d506a916cbcbae9a6bdda582f2dc79"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        207,
+        170,
+        162,
+        81,
+        130,
+        9,
+        81,
+        163,
+        198,
+        244,
+        60,
+        186,
+        150,
+        69,
+        21,
+        174
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-08-baseline/native-iOG8PI/stdout.bin",
+        "bytes": 1360563,
+        "sha256": "ee7fe1c81a3f8612c2f8d72c249c74c5cd97b2b54da3918839d3b957ff6f5298"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        93,
+        24,
+        224,
+        187,
+        101,
+        233,
+        178,
+        201,
+        77,
+        78,
+        32,
+        180,
+        29,
+        95,
+        40,
+        100
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-08-candidate/native-0HNfYp/stdout.bin",
+        "bytes": 1356461,
+        "sha256": "8c3b91e802338adbded02109646c982df94426ca3378a055eae963cece84d09b"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        50,
+        247,
+        166,
+        128,
+        59,
+        26,
+        102,
+        188,
+        80,
+        71,
+        89,
+        164,
+        204,
+        33,
+        29,
+        36
+      ],
+      "candidate": false,
+      "measured_copied_references": 8388608,
+      "expected": 8388608,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-09-baseline/native-xETAaX/stdout.bin",
+        "bytes": 1360559,
+        "sha256": "d2f77f96d6d83a63398744d4e9d044e5ab43d8f4b28508ec4d89b0aa3f582416"
+      }
+    },
+    {
+      "campaign": "optimization-replay",
+      "run": [
+        189,
+        12,
+        227,
+        72,
+        12,
+        227,
+        63,
+        8,
+        1,
+        193,
+        217,
+        168,
+        124,
+        220,
+        4,
+        135
+      ],
+      "candidate": true,
+      "measured_copied_references": 0,
+      "expected": 0,
+      "raw": {
+        "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/optimization-replay/performance-VxdOdM/pair-09-candidate/native-kfm46B/stdout.bin",
+        "bytes": 1356462,
+        "sha256": "0379fbb3ee0d8353dd2dfc48ba61b313f602d262c8be027b0fcb4a6d786020f6"
+      }
+    }
+  ],
+  "pf12_scope": "existing K0 exclusive-replace candidate; 10-pair exploration, one fresh 10-pair confirmation and bundle replay; analyzer cause_status/promotion preserved unchanged",
+  "preserved_failures": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-regression.json",
+      "bytes": 35712,
+      "sha256": "410a05f95c617e2e5cdf2c0f99f2904a03b13d1a42a9f286f2398e318973565c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants/report.json",
+      "bytes": 4075,
+      "sha256": "36f194be91a81896e1ae2ba9123ec8f3d4268e3fe5637780ce66170f5088acd4"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-json/build.log",
+      "bytes": 81205,
+      "sha256": "45f37e49ce2f88211ca0c711a99ed7ec1e35aceaa4c560a022f3009a13939e04"
+    }
+  ],
+  "not_claimed": [
+    "complete DEV2/B2/D0 qualification",
+    "hardware power-loss qualification",
+    "protected CI or official distribution",
+    "current full workspace after unrelated concurrent edits",
+    "erasure of historical p99 guardrail failures"
+  ],
+  "execution_controllers": {
+    "json_v3": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-json/run.py",
+      "bytes": 3725,
+      "sha256": "1171f20925c9898c002cc50138987bf32a16dc6e7f7544baefd0658f8c17642d"
+    },
+    "mutants": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants/run.py",
+      "bytes": 5274,
+      "sha256": "19b2f74ccaea4b2c540eade340a3cfd3f1c6f6dc808ee3971e13aceda4ce8c20"
+    },
+    "mutants_corrected": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-mutants-r2/run.py",
+      "bytes": 5339,
+      "sha256": "c969833d81bb95115b170ef8657d7b53fa3b1d6cc119ec4d4e45f51a396f37bb"
+    },
+    "performance_tests": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-performance-tests/run.py",
+      "bytes": 1851,
+      "sha256": "96b2b4c903e3493416ac96f0c3e499cdf31bbdc3870726ef8e19f4af6dc4bab0"
+    },
+    "k0_performance_corrected": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/run.py",
+      "bytes": 5111,
+      "sha256": "412fa70ffeaa5cfae56eb1f7782adf2deb5b524010b2f34c6bf7da4d443f0766"
+    },
+    "durable_performance_corrected": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-durable/run.py",
+      "bytes": 2555,
+      "sha256": "9ac2c8c5c46d57034d7568af00b09684e1faad4fc0b5a8c558e98b27f3bc01f7"
+    },
+    "rollup": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-summary.py",
+      "bytes": 5863,
+      "sha256": "4581be246eb59dc0c4e3bd79552722d4e53a88ca11d422d5ee4ea6fc0c8b3f3e"
+    }
+  },
+  "baseline_provenance_repair": {
+    "original_invalid_campaign_report": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization/report.json",
+      "bytes": 19295,
+      "sha256": "24d9eb90cef05b6e0a6cd55b234d6b16d73ec5d4765ff80df85aabc7d08f79de"
+    },
+    "clean_rebuild_log": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization/build-baseline-r2.log",
+      "bytes": 1574,
+      "sha256": "c70ae2ad196693defebd7f079d0529e1ca151dfab8cb2eb0960b001fd910fb99"
+    },
+    "actual_execution_preflight": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization-r2/preflight.json",
+      "bytes": 1010,
+      "sha256": "28c69913fd519cdb1d56f72f89d53b34970f198b84cf29559a5e54f5312ba00b"
+    },
+    "cause_profile_frozen_before_original_measurement": {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization/cause-profile.json",
+      "bytes": 578,
+      "sha256": "c9f683f184977a50a100602b6bd07e6eafc18edfe7bbfcb73d1370d59ab35b84"
+    },
+    "reason": "The initial build used the live workspace. A subsequent invocation sharing its target retained an executable whose embedded source was 55ac470b4324591a8f7c6b2a1f92cf89890ddd1415f07cc698753c918bf372a8 instead of intended baseline f8782b03008259713da35f23777276e73c2495c20d653ae9a627e0374ec8a9d5. The independent checker rejected the original comparison. An empty dedicated target rebuilt the intended source; an actual correctness-only execution confirmed embedded identity and 8,388,608 reference copies. Fresh exploration/confirmation/replay use separate run IDs; no invalid run contributes to selection or confirmation."
+  },
+  "orchestration_manifest_history": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-optimization/orchestration-manifest.json",
+      "bytes": 862,
+      "sha256": "8cf0f2498227663291d017e5997a4cf0257cd91be576cf7446ae58a9c08e1c50"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-durable/orchestration-r2.json",
+      "bytes": 348,
+      "sha256": "c99cf2a53f112f02340ee901ed4371b5326382144f93176781f69571e844260b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev2-completion-20261019-durable/report.json.r1-blocked",
+      "bytes": 367,
+      "sha256": "7773216695aebb470d41a94f00861ff7037004a84411b4af5a4ded4b4963876e"
+    }
+  ],
+  "independent_review": {
+    "reviewer": "/root/dev2_test_review",
+    "kernel": "PASS",
+    "extended": "PASS",
+    "json_v3": "PASS",
+    "json_literals": "PASS",
+    "mutants": "PASS",
+    "lower_regression": "PASS",
+    "performance_final": "PASS_LOCAL_EXECUTION_STATISTICS_AND_RETENTION",
+    "integration_owner": "/root",
+    "scope": "local test evidence, not DEV2 acceptance or protected CI",
+    "final_scope": {
+      "k0_raw_runs": 120,
+      "durable_raw_runs": 40,
+      "durable_ack_membership_checks": 23120,
+      "pf12_counter_frames": 60,
+      "statistics": "Exact rational recomputation of paired medians/intervals, order drift and all frozen guardrails agrees with raw evidence",
+      "scope": "Read-only independent review of execution, correctness, provenance, replay and statistics. DEV2/B2/D0 and performance acceptance remain INCOMPLETE."
+    }
+  }
+}

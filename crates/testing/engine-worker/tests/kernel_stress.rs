@@ -111,10 +111,10 @@ impl Fixture {
 }
 impl Drop for Fixture {
     fn drop(&mut self) {
-        if std::thread::panicking() {
-            if let Some(directory) = self.0.take() {
-                eprintln!("retained kernel failure: {}", directory.keep().display());
-            }
+        if std::thread::panicking()
+            && let Some(directory) = self.0.take()
+        {
+            eprintln!("retained kernel failure: {}", directory.keep().display());
         }
     }
 }
@@ -204,7 +204,7 @@ fn one_round(seed: usize, phases: usize, enabled: bool) -> (u64, u64, Samples) {
                 // temporary DoneSignal and prematurely stop the sampler.
                 let _done = (actor == 0).then(|| DoneSignal(done));
                 start.wait();
-                for phase in 0..phases {
+                for (phase, winner_mask) in winner_masks.iter().enumerate().take(phases) {
                     let mut txn = db.begin(TransactionMode::ReadWrite).unwrap();
                     observed(&txn, tables, rows, expected.load(Ordering::Acquire));
                     txn.execute_statement(
@@ -242,7 +242,7 @@ fn one_round(seed: usize, phases: usize, enabled: bool) -> (u64, u64, Samples) {
                         let winner = usize::from(results[0].is_none());
                         let receipt = results[winner].unwrap();
                         assert_eq!(receipt.position, 4 + phase as u64);
-                        winner_masks[phase].store(1 << winner, Ordering::Release);
+                        winner_mask.store(1 << winner, Ordering::Release);
                         expected.store(proposal(seed, phase, winner), Ordering::Release);
                         if phase % 64 == 63 {
                             assert_eq!(db.checkpoint().unwrap().position, receipt.position);
@@ -384,7 +384,7 @@ fn run(extended: bool) {
     let mut visits = [0_u64; 256];
     loop {
         let seed = rounds as usize % seed_count;
-        let (written, read, samples) = one_round(seed, phases, seed % 2 == 0);
+        let (written, read, samples) = one_round(seed, phases, seed.is_multiple_of(2));
         visits[seed] += 1;
         commits += written;
         reads += read;

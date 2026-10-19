@@ -296,7 +296,7 @@ fn run_internal(options: &Options, original: Option<&Path>) -> Result<Report> {
         "cpuinfo":fs::read_to_string("/proc/cpuinfo").ok(),"mountinfo":fs::read_to_string("/proc/self/mountinfo").ok(),
         "numa_online":fs::read_to_string("/sys/devices/system/node/online").ok(),
         "filesystem_probe_path":directory,"host_tuning":"UNCHANGED","arrival":"single-thread closed-loop",
-        "cpu_scope":"main thread schedstat delta","rss_scope":"process VmHWM at sampling time",
+        "cpu_scope":"calling thread CLOCK_THREAD_CPUTIME_ID delta","rss_scope":"process VmHWM at sampling time",
         "controller_build":build(),"baseline_build":recipe.baseline.build,"candidate_build":recipe.candidate.build,
         "metric_catalog":super::profile()});
     save_json(&directory.join("environment.json"), &environment)?;

@@ -62,7 +62,9 @@ fn assert_observations(output: &wire::Output) {
     );
     assert_eq!(
         output.metrics_after.row_references_copied - output.metrics_before.row_references_copied,
-        65536 * u64::from(output.input.row_count)
+        // Warmup has detached the current table from any pinned initial root.
+        // Measured replacements therefore own their row-reference array.
+        0
     );
     assert_eq!(
         output.metrics_before.snapshot_pins,

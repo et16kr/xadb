@@ -5,9 +5,10 @@
 compile_error!("XADBTest DEV0 supports Linux only");
 
 pub mod catalog;
-pub mod durable;
-pub mod fault;
 mod controller;
+pub mod durable;
+pub mod durable_performance;
+pub mod fault;
 pub mod native;
 mod oracle;
 pub mod performance;
