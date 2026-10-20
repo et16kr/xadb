@@ -917,6 +917,46 @@
       "path": "evidence/dev3-storage-formats-dev2-regression-xadb-20261021-r1.json",
       "role": "evidence",
       "title": "DEV3 WAL·할당·행·DWB 표현 소스의 DEV2 P0/K0·DEV0/1 회귀"
+    },
+    "dev3-catalog-format.md": {
+      "path": "contracts/dev3-catalog-format.md",
+      "role": "contracts",
+      "title": "DEV3 table·index catalog 표현"
+    },
+    "dev3-undo-format.md": {
+      "path": "contracts/dev3-undo-format.md",
+      "role": "contracts",
+      "title": "DEV3 undo record·before-image chunk 표현"
+    },
+    "dev3-control-format.md": {
+      "path": "contracts/dev3-control-format.md",
+      "role": "contracts",
+      "title": "DEV3 control·FILEMAP·bootstrap profile 표현"
+    },
+    "dev3-obligation-format.md": {
+      "path": "contracts/dev3-obligation-format.md",
+      "role": "contracts",
+      "title": "DEV3 영속 recovery obligation·WAL 의미 그룹"
+    },
+    "dev3-selector-port.md": {
+      "path": "contracts/dev3-selector-port.md",
+      "role": "contracts",
+      "title": "DEV3 FILEMAP·DWB selector port"
+    },
+    "dev3-metadata-formats-leaf-xadb-20261021-r1.json": {
+      "path": "evidence/dev3-metadata-formats-leaf-xadb-20261021-r1.json",
+      "role": "evidence",
+      "title": "DEV3 catalog·undo·control 표현 통합 원본 실행 결과"
+    },
+    "dev3-metadata-formats-dev2-regression-xadb-20261021-r1.json": {
+      "path": "evidence/dev3-metadata-formats-dev2-regression-xadb-20261021-r1.json",
+      "role": "evidence",
+      "title": "DEV3 catalog·undo·control 표현 소스의 DEV2 P0/K0·DEV0/1 회귀"
+    },
+    "dev3-metadata-formats-dev2-kernel-xadb-20261021-r1.json": {
+      "path": "evidence/dev3-metadata-formats-dev2-kernel-xadb-20261021-r1.json",
+      "role": "evidence",
+      "title": "DEV3 catalog·undo·control 표현 소스의 DEV2 복구 원본 실행 결과"
     }
   }
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify DEV3 page/key/reference/tree/overflow/transaction/WAL/allocation/row/DWB expressions and M02-P01."""
+"""Verify DEV3 storage expressions, including catalog/undo/control, and M02-P01."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -133,6 +133,40 @@ DOUBLEWRITE_TESTS = {
     'doublewrite_fixed_profiles_have_bounded_inventory',
     'doublewrite_slot_sequence_and_envelope_are_bound',
     'doublewrite_slot_encoders_preserve_outputs',
+}
+CATALOG_TESTS = {
+    'catalog_literals_and_borrowed_definitions',
+    'catalog_table_name_column_and_size_bounds',
+    'catalog_index_columns_and_parent_matrix',
+    'catalog_lengths_damage_and_outputs',
+    'catalog_namespace_handle_and_versions',
+    'catalog_tree_values_and_fixed_profiles',
+}
+UNDO_RECORD_TESTS = {
+    'undo_independent_literals_and_layouts',
+    'undo_all_lengths_preserve_outputs',
+    'undo_targets_bind_namespace_owner_and_key',
+    'undo_before_state_matrix',
+    'undo_edges_keep_roles_and_multiplicity',
+    'undo_release_cursor_state_matrix',
+    'undo_rejects_checksummed_damage',
+    'undo_slot_lookup_checks_generation_and_kind',
+    'undo_chunk_boundaries_and_verifier',
+    'undo_chunk_ownership_and_release_resume',
+    'undo_failed_shapes_have_no_effects',
+    'undo_generated_profiles_match_independent_fields',
+}
+CONTROL_TESTS = {
+    'control_profile_literals',
+    'control_filemap_literals',
+    'control_selector_bindings_and_lengths',
+    'control_envelope_corruption_is_rejected',
+    'control_profiles_require_exact_capacities',
+    'control_filemap_cursor_rejects_mixed_inventory',
+    'control_names_and_bootstrap_ownership',
+    'control_filemap_exact_bounds',
+    'control_encoders_preserve_outputs',
+    'control_generated_inventory_profiles',
 }
 MODEL_TEST = 'snapshot_lifecycle_partial_model_exhaustive'
 MODEL_BUDGET_TEST = 'snapshot_model_budget_exhaustion_is_inconclusive'
@@ -317,7 +351,7 @@ def main():
     source = session / 'source'
     report = {
         'schema_version': 1, 'date': datetime.now(timezone.utc).isoformat(),
-        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/WAL/allocation/row/DWB expressions + D3-M02-P01; no disk engine or S1 acceptance',
+        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/WAL/allocation/row/DWB/catalog/undo/control expressions + D3-M02-P01; no disk engine or S1 acceptance',
         'status': 'RUNNING', 'origin': identity(ROOT), 'artifact_directory': str(session),
         'dev3_acceptance': 'INCOMPLETE', 'checks': [], 'builds': [],
         'checker_identity_scope': 'F07 file freeze and before/after disk hashes; not bytecode attestation or protected CI',
@@ -365,6 +399,8 @@ def main():
                 'devdoc/contracts/dev3-transaction-format.md',
                 'devdoc/contracts/dev3-wal-format.md', 'devdoc/contracts/dev3-allocation-format.md',
                 'devdoc/contracts/dev3-row-format.md', 'devdoc/contracts/dev3-doublewrite-format.md',
+                'devdoc/contracts/dev3-catalog-format.md', 'devdoc/contracts/dev3-undo-format.md',
+                'devdoc/contracts/dev3-control-format.md',
                 'devdoc/contracts/dev3-snapshot-model.md']}
         write_json(session / 'manifest.json', report)
         report['toolchain'] = run('toolchain', ['rustc', '-Vv'])
@@ -383,7 +419,9 @@ def main():
                                ('tree_page', TREE_TESTS), ('overflow', OVERFLOW_TESTS),
                                ('transaction_record', TRANSACTION_TESTS),
                                ('wal_frame', WAL_TESTS), ('allocation_page', ALLOCATION_TESTS),
-                               ('row_record', ROW_TESTS), ('doublewrite_control', DOUBLEWRITE_TESTS)]:
+                               ('row_record', ROW_TESTS), ('doublewrite_control', DOUBLEWRITE_TESTS),
+                               ('catalog_record', CATALOG_TESTS), ('undo_record', UNDO_RECORD_TESTS),
+                               ('control', CONTROL_TESTS)]:
             prefix = f'storage::{name}::tests::'
             output = run(name, [page, prefix, '--nocapture', '--test-threads=1'])
             report[f'{name}_tests'] = check_named_tests(output, 0, prefix, expected)

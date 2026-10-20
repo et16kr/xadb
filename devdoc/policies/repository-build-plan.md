@@ -300,3 +300,5 @@ DEV1 검사는 DEV0 회귀와 production foundation/platform의 실제 연결을
 문서 검사 성공은 Cargo build나 DB recovery 성공이 아니다. 현재 DEV2 P0/K0 leaf의 로컬 실행은 [증거 색인](../evidence/README.md)을 따르며, DEV2 전체 인수·후속 단계·release·패키징·원격 CI는 계속 미실행이다. 최초 배치 문서 작성은 제품 소스를 변경하지 않았다. 후속 플랫폼 분리는 실제 DEV1 코드 변경이며, 이전 실행 결과는 `dev0-validation-pre-platform.json`·`dev1-validation-pre-platform.json`으로 보존하고 현재 DEV0/DEV1 결과는 실제 재실행으로 갱신한다.
 
 K0-005에서 worker의 Linux CPU/RSS 관측은 `xadb-platform::performance`가 소유하며 worker→platform normal 간선을 사용한다. engine/reference에는 OS 의존을 추가하지 않는다. controller와 worker는 `crates/testing/build_identity.rs`의 같은 build 지문 산술을 사용하고 기존 sha2 build dependency를 소비한다. 이는 관측 identity이며 독립 정답 계산 공유가 아니다. 현재 source-only export는 `crates/` 전체를 포함하여 helper도 보존한다.
+
+DEV3의 `storage/catalog_record`, `undo_record`, `control`은 각각 [catalog](../contracts/dev3-catalog-format.md), [undo](../contracts/dev3-undo-format.md), [control](../contracts/dev3-control-format.md)의 caller-buffer 표현을 소유한다. 실제 DDL·undo·selector·복구 예약 효과와 분리하며 dependency/source roots는 유지한다. 국소 실행·독립 검토와 후속 통합 소스 결과는 [구현 기록](../implementation/dev3-implementation.md)에서 구별한다.

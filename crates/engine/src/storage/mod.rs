@@ -1,5 +1,7 @@
 pub(crate) mod allocation_page;
 pub(crate) mod anchor;
+pub(crate) mod catalog_record;
+pub(crate) mod control;
 pub(crate) mod doublewrite_control;
 pub(crate) mod key;
 pub(crate) mod overflow;
@@ -7,6 +9,7 @@ pub(crate) mod page;
 pub(crate) mod row_record;
 pub(crate) mod transaction_record;
 pub(crate) mod tree_page;
+pub(crate) mod undo_record;
 pub(crate) mod undo_ref;
 pub(crate) mod volatile;
 pub(crate) mod wal_frame;

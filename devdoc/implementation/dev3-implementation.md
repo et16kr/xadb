@@ -73,6 +73,8 @@ root는 `devdoc/contracts/dev3-catalog-format.md`의 versioned table/index catal
 
 같은 날 control 상세 계약과11개 control·2개 reference·1개 entry literal을 root가 독립 대조하여 수용했다. `/root/dev3_supply`에게 `crates/engine/src/storage/control.rs`, `control_tests.rs`와 `devdoc/contracts/dev3-control-format.md`의 독점 구현·시험을 배정한다. typed selector 확장안 A를 선택하되 이 leaf는 byte 표현만 구현하며 실제 foundation/platform/worker port 확장·I/O fault는 후속 별도 소유로 남긴다. bootstrap1 MiB와 알려진 고정 공간 소계는 전체 F05 인수 근거가 아니다.
 
+root는 `devdoc/contracts/dev3-selector-port.md`에서 FILEMAP/DWB typed selector의 port·fault 경계와 고정 시험을 먼저 정의한다. `/root/dev3_model`의 독립 계약 검토 수용 뒤 `/root/dev3_review`가 `crates/foundation/src/namespace.rs`, `crates/platform/src/namespace.rs`, `crates/platform/tests/contracts.rs`, `crates/testing/protocol/src/fault.rs`, `crates/testing/engine-worker/src/fault.rs`, 새 `fault_tests.rs`, `crates/testing/engine-worker/tests/native_fault.rs`의 exhaustive match 수신을 독점 구현한다. 기존 namespace 효과의 이름을 확장하는 기반 작업이며 DEV3 DB 생성·파일 확장·복구 알고리즘을 구현한 것으로 표시하지 않는다.
+
 <a id="key-leaf"></a>
 ### 복합 key의 제한된 검증
 
@@ -248,11 +250,40 @@ leaf runner는 네 모듈의11/8/10/10개 이름을 고정하여 같은 보존 e
 
 [실제 표현 크기와 자원 계산](../contracts/dev3-resource-bounds.md)은 위 codec 길이를 F05 입력으로 연결한다. 기본8 GiB로 allocator inventory의64 MiB buffer×4 인수를 만족할 수 없음을 독립 산술 검토했다. 제품 기본을 유지한64 GiB 인수 준비 방향과 실제 지원/실행은 구별한다. opcode별 예약과 undo/control/descriptor·실제 I/O 검증은 남는다.
 
+<a id="catalog-undo-control"></a>
+## Catalog·undo·control 표현의 독립 검토
+
+세 번째 단계 commit `c800e81` 뒤 catalog6·undo12·control10개 시험을 가진 표현을 연결했다. root가 catalog를, `/root/dev3_review`가 undo를, `/root/dev3_supply`가 control을 작성했다. 공유 module·runner·색인·통합은 root가 소유한다. 선택 파일의 실제 I/O 확장은 다음 묶음이며 이 표현의 검증 지문에 포함하지 않는다.
+
+| 표현 | 독립 검토·별도 실행 | 결과와 한계 |
+| --- | --- | --- |
+| catalog | `/root/dev3_model`, `artifacts/dev3/catalog-independent-model-r1/review.json` |6시험·독립 literal reader6개 PASS. 다른 DB/timeline의 index/table view 결합을 거절. 생성8,192개는 table 홀수 열 수·index arity2/4만 가지며 전체 열32와arity1..4는 별도 경계/행렬이 검사 |
+| undo | `/root`, `artifacts/dev3/undo-independent-root-idhtzexi/review.json` |12시험 PASS. 독립 검토에서 Free/Releasing 상태·진행점 accessor 누락을 보완. Releasing before-image 노출은 거절하며 실제 undo 적용·회수는 미구현 |
+| control | `/root`, `artifacts/dev3/control-independent-root-_g_0xw1y/review.json` |10시험 PASS. 선택 reference·profile exact tuple·FILEMAP range/누적 count·실패 cursor 보존·canonical data 이름을 검토. 실제 DB open/BOOT_RESERVE·선택 파일 설치는 미구현 |
+| runner 등록 | `/root/dev3_supply`, `artifacts/dev3/leaf-registration-independent-supply-r1/review.json` |실제 컴파일된 신규28시험 이름·세 계약·receipt 필드 대조, 자기시험7개 PASS, 잘못된 합성 결과30종 거절. 전체 제품28시험 실행과 구별 |
+
+catalog 첫 보존 실행 `artifacts/dev3/catalog-leaf-ci_khgn4/validation.json`은6시험·Clippy·fmt 모두 PASS했다. undo의 `undo-leaf-r1`은12시험 PASS 뒤 Clippy `needless_range_loop`로 FAIL했으며, r2 수정과 r3 accessor 보완의 별도 source/로그를 남겼다. control의 `control-supply-r1`은10시험 PASS 뒤 Clippy `nonminimal_bool`로 FAIL했고 같은 의미의 검사식으로 고친 r2가 PASS했다. 고정 분모를 줄이지 않았으며 이전 실패와 원본 receipt를 보존한다.
+
+이 leaf는 caller-buffer 표현이다. UndoRoot의 previous 두 edge만 저장된 sequence를 가지며 Row/Index/Catalog/TxnHead의 UndoRef40에 없는 sequence를 읽었다고 주장하지 않는다. catalog occupied before body는 undo에 아직 연결하지 않는다. FILEMAP의 최대8,192-entry wire 경계와 generated536,448 entries는 기본8GiB admission·실제 inventory 접근량의 증거가 아니다. control 고정 소계23,130,112 bytes도 전체 F05를 대신하지 않는다. `/root/dev3_supply`가 [자원 계산](../contracts/dev3-resource-bounds.md)의 신규6행을 source·계약과 별도 대조하여 산술과 범위가 일치함을 확인했다(문서 SHA-256 `244c4a0355ad4e8d5c3f94789eb640f344342f7c4fb4481ef26fa3c832a63644`).
+
+통합 source는 `/home/et16/x3q-47fzzb7b/source`에 보존했으며 지문은 `f54bf8744a9b3c77caa7d4787e53ac3567bb03ca387369b1cfb6649c45ea2fc9`다. 같은 지문에서 [leaf 원본](../evidence/dev3-metadata-formats-leaf-xadb-20261021-r1.json)의24개 check와 engine 표현110개·foundation scalar3개·부분 모델 정상4/결함8·runner 자기시험7개가 PASS했다. [하위 회귀 원본](../evidence/dev3-metadata-formats-dev2-regression-xadb-20261021-r1.json)의28개 check에서 DEV0/1과 DEV2 P0/K0의 고정 범위·확장 worker 이력을 통과했다. [같은 소스의 복구 원본](../evidence/dev3-metadata-formats-dev2-kernel-xadb-20261021-r1.json)의18개 check와 native99셀·cache-loss/thread·독립 oracle도 PASS다. 복구 receipt SHA-256은 `a9ece36a8c2eacade0a17b545419de341d15adc08d4f525a57615c1d1cc3f79d`다. 이 결과는 실제 DEV3 disk 효과나 전체 인수가 아니다.
+
 <a id="remaining"></a>
 ## 다음 구현의 경계
 
-1. 남은 undo record·선택 FILEMAP/control·recovery obligation·catalog 표현을 구체화한다. 검증한 page/key/tree/reference/status/row/WAL/allocator/DWB 표현은 실제 target 존재·선택·효과를 보장하지 않는다.
+1. 남은 recovery obligation·의미 WAL group·catalog undo 연결을 구체화한다. 검증한 page/key/tree/reference/status/row/WAL/allocator/DWB 표현은 실제 target 존재·선택·효과를 보장하지 않는다.
 2. M01–M06의 고정 유한 범위 검증을 실제 구현의 참조·진행·예약 프로토콜로 연결하고 opcode별 산식을 완료한다. 모델의 제한을 production 병렬 실행에 그대로 가정하지 않는다.
 3. F04/F05의 실제 I/O fault·opcode 자원표·rollback/flush 진행을 동결한 뒤 allocator·buffer·WAL/DWB를 통합한다. DEV2와 새 DEV3의 current-build recovery·실제 thread·DS/PF 시험을 별도로 실행한다.
 
 DEV2 PF04 실패, DEV3 DS01–06·PF09·S1 인수는 남아 있다. 사용자의 후속 지시로 단계별 commit을 수행하며 push·전체 문서 검증은 아직 실행하지 않았다.
+
+<a id="paused-20261021"></a>
+## 2026-10-21 사용자 요청에 따른 중지 경계
+
+사용자가 단계 commit 뒤 중지를 요청하여 catalog·undo·control 표현의 통합 검증을 마지막 실행으로 삼는다. 병렬 작업도 중단했으며 다음 작업은 자동으로 진행하지 않는다.
+
+- FILEMAP/DWB selector port는 독립 계약 검토 뒤7개 source/test 경로에 초안을 작성했지만 compile·시험·Clippy·fmt·독립 소스 검토는 모두 NOT_RUN이다. 이 초안은 표현 검증 commit에서 제외하여 working tree에 보존했다. `artifacts/dev3/selector-port-paused-r1/status.json`, `source/`, `contract.md`, `tracked-draft.patch`에 재개용 원본과 hash가 있다. 별도 실행 세션은 없다.
+- recovery obligation 초안의 최종 hash는 `afe4fc433ab62fa0c58aa6be3ed5172540710c576554442ac0f5f3e679af2a04`다. status incoming count의224-byte home·queue/cursor·최소 opcode projection·terminal 작업 소유 인계는 아직 채택/동결 전이다. r0 vector는 원래 초안 구조 검토 범위이며 새 의미의 제품 검증이 아니다.
+- 실제 page read의 최소 I/O 단위는 조사만 했고 새 계약·제품 코드를 작성하지 않았다. 재개 시 selector source의 첫 검증/독립 검토와 이 단위의 F04/F05 경계를 먼저 확정한다. page read에는 전체 FILEMAP 검증·정확한 파일 길이·열린 handle과 metadata의 결합·generation 고정이 필요하며, root16KiB와 chunk/page 재사용16KiB의 scratch 제안은 아직 미채택이다.
+
+전체 DEV3는 미완료이며 DEV2 PF04 실패도 그대로다. 현재 단계의 source 지문·raw receipt와 미검증 초안을 구분하여 재개한다.

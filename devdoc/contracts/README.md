@@ -55,3 +55,9 @@
 - [replication-undo-plan.json](replication-undo-plan.json)
 
 DEV3의 COW pack 경로는 [in-place·WAL·영속 undo 결정](../contracts/disk-storage-design.md#decision)과 [구현 순서](../plans/dev3-implementation-plan.md#sequence)로 대체한다. 설계와 제품 실행 상태를 구분한다.
+
+- [DEV3 table·index catalog 표현](dev3-catalog-format.md) — 상세 상태·검토·구현·실행 경계는 원문 참조
+- [DEV3 undo record·before-image chunk 표현](dev3-undo-format.md) — 상세 상태·검토·구현·실행 경계는 원문 참조
+- [DEV3 control·FILEMAP·bootstrap profile 표현](dev3-control-format.md) — 상세 상태·검토·구현·실행 경계는 원문 참조
+- [DEV3 영속 recovery obligation·WAL 의미 그룹](dev3-obligation-format.md) — 상세 상태·검토·구현·실행 경계는 원문 참조
+- [DEV3 FILEMAP·DWB selector port](dev3-selector-port.md) — 상세 상태·검토·구현·실행 경계는 원문 참조

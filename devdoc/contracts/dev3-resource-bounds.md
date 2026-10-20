@@ -1,10 +1,10 @@
 # DEV3 실제 표현 크기와 자원 계산
 
-2026-10-20 · **F05 준비 계산 / opcode·실제 I/O 인수 미완료**
+2026-10-21 · **F05 준비 계산 / opcode·실제 I/O 인수 미완료**
 
 [자원 소유 계약](disk-storage-design.md#reserve-accounting) · [고정 profile](disk-storage-design.md#capacity-profile) · [최악 조건 인수](../plans/dev3-implementation-plan.md#resource-proof) · [병렬 소유](../implementation/dev3-implementation.md#wave-2)
 
-이 문서는 이미 구체화한 표현의 bytes를 실제 예약 계산에 연결한다. 숫자가 있는 표현 표만으로 F05가 완료되는 것은 아니다. 아직 undo record·예약 descriptor·선택 checkpoint/FILEMAP의 최종 크기와 실제 tree 변경의 page 집합이 남아 있다. 따라서 아래를 admission된 작업의 완료 보장이나 S2 I/O 실행 승인으로 사용하지 않는다. 필요한 항이 미정인 operation은 첫 effect 전에 거절한다.
+이 문서는 이미 구체화한 표현의 bytes를 실제 예약 계산에 연결한다. 숫자가 있는 표현 표만으로 F05가 완료되는 것은 아니다. undo record·catalog·FILEMAP/profile의 표현 크기는 구체화했으나 예약 descriptor·선택 checkpoint와 실제 tree 변경의 page 집합은 남아 있다. 따라서 아래를 admission된 작업의 완료 보장이나 S2 I/O 실행 승인으로 사용하지 않는다. 필요한 항이 미정인 operation은 첫 effect 전에 거절한다.
 
 ## 1. 이미 구체화한 입력
 
@@ -23,8 +23,14 @@
 | WAL Patch | 길이1..16,280의 연속 after-image, offset72..16,352 안. identity·pageLSN·checksum 변경은 INIT 또는 별도 page 적용 규칙이 소유 |
 | DWB | pool 전체16,777,216. metadata/selector/staging65,536, slot당16,544, slot1,010개, 비대여 잔여2,240. 한 pending batch≤64 |
 | DWB batch metadata | control128+88N+checksum32. N64이면5,792. control 공간의 설치 peak는 실제 길이 대신 고정 선할당65,536에 포함 |
+| undo root | 고정432+target key≤1,032+inline before≤2,048. Row target key0이므로 row 최대2,480; Index before는presence만 저장하며 최대1,464. 공통 page의 row 최대 root는6개, 최소432-byte root는37개 |
+| undo chunk | metadata160+payload≤16,060, 한 page에한cell. canonical before≤131,072라 최대9page; old row overflow와 별도 소유 |
+| catalog cell | header232+typed body. table 최대4,588, index 최대368. catalog occupied before body는 undo codec에 미연결 |
+| 선택 profile·selector | 각각4,096 bytes. FILEMAP/DWB selector와 profile의 전체 digest·generation 결합 |
+| FILEMAP | root224+96K, K≤128으로최대12,512; chunk160+96N, N≤64로최대6,304. root16KiB+128chunk×16KiB인고정container2,113,536을두벌예약 |
+| 알려진 control 고정 소계 | control 계약의23,130,112 bytes는 FILEMAP·profile·DWB·제안REBASE 공간 소계. checkpoint/obligation/epoch를 포함한 전체 F05가 아님 |
 
-각 입력의 정본은 [page](dev3-page-format.md), [tree](dev3-tree-format.md), [key](dev3-key-format.md), [row](dev3-row-format.md), [overflow](dev3-overflow-format.md), [transaction](dev3-transaction-format.md), [allocator](dev3-allocation-format.md), [WAL](dev3-wal-format.md), [DWB](dev3-doublewrite-format.md)이다. 위 상한들을 더할 때 같은 page·token을 두 번 차감하지 않는다. 반대로 서로 다른 page의 공유를 실제 identity 확인 없이 가정하여 줄이지 않는다.
+각 입력의 정본은 [page](dev3-page-format.md), [tree](dev3-tree-format.md), [key](dev3-key-format.md), [row](dev3-row-format.md), [overflow](dev3-overflow-format.md), [transaction](dev3-transaction-format.md), [allocator](dev3-allocation-format.md), [WAL](dev3-wal-format.md), [DWB](dev3-doublewrite-format.md), [undo](dev3-undo-format.md), [catalog](dev3-catalog-format.md), [control](dev3-control-format.md)이다. 위 상한들을 더할 때 같은 page·token을 두 번 차감하지 않는다. 반대로 서로 다른 page의 공유를 실제 identity 확인 없이 가정하여 줄이지 않는다.
 
 WAL full INIT63개와 DWB batch64개는 서로 다른 한도다. 64개의 home flush를 하나의 WAL frame으로 제한하거나, DWB64 때문에 WAL64 INIT을 허용하지 않는다. 하나의 transaction은 여러 완결 WAL 그룹을 사용할 수 있지만 각 그룹의 effect/head/count/progress/obligation은 함께 인계되어야 한다.
 

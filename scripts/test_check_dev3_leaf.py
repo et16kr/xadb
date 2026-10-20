@@ -9,6 +9,7 @@ import unittest
 
 from check_dev3_leaf import (
     ALLOCATION_TESTS, DOUBLEWRITE_TESTS, ROW_TESTS, WAL_TESTS,
+    CATALOG_TESTS, UNDO_RECORD_TESTS, CONTROL_TESTS,
     ANCHOR_TESTS, KEY_TESTS, MODEL_TEST, NEGATIVE_CASES, NORMAL_CASES, PAGE_TESTS, REQUIRED_WITNESSES,
     OVERFLOW_TESTS, SCALAR_KEY_TESTS, TRANSACTION_TESTS, TREE_TESTS, UNDO_REF_TESTS,
     VECTOR_RESULT, VIOLATIONS, check_model_output, check_named_tests,
@@ -115,6 +116,9 @@ class ReceiptTests(unittest.TestCase):
             ('storage::allocation_page::tests::', ALLOCATION_TESTS),
             ('storage::row_record::tests::', ROW_TESTS),
             ('storage::doublewrite_control::tests::', DOUBLEWRITE_TESTS),
+            ('storage::catalog_record::tests::', CATALOG_TESTS),
+            ('storage::undo_record::tests::', UNDO_RECORD_TESTS),
+            ('storage::control::tests::', CONTROL_TESTS),
 
         ]:
             lines = [f'test {prefix}{name} ... ok' for name in sorted(expected)]

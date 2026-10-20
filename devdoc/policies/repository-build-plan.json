@@ -606,6 +606,36 @@
       "responsibility": "Selected DWB control, slot sequence and image validation; no selector or flush effects",
       "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
       "contract_ref": "dev3-doublewrite-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/catalog_record",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Versioned typed table and index definitions; no DDL or visibility effects",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-catalog-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/undo_record",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Root and before-image chunk expressions, role-preserving edges and release metadata; no undo/reclaim effects",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-undo-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/control",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Fixed profile and selected FILEMAP/control expressions; no namespace or reservation effects",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-control-format.md"
     }
   ],
   "builds": [
@@ -1003,7 +1033,7 @@
     "source_roots_changed": false,
     "dependencies_changed": false,
     "full_stage_acceptance": false,
-    "validation_ref": "dev3-leaf-xadb-20261020-r1.json"
+    "validation_ref": "dev3-metadata-formats-leaf-xadb-20261021-r1.json"
   },
   "dev3_selected_models": {
     "implementation_ref": "dev3-implementation.md",

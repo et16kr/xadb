@@ -109,3 +109,9 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 WAL·할당·행·DWB 표현 통합 원본 실행 결과](dev3-storage-formats-leaf-xadb-20261021-r1.json) — 원본 PASS, source e419f2d7…; 전체 DEV3 disk 인수는 미완료.
 
 - [DEV3 WAL·할당·행·DWB 표현 소스의 DEV2 P0/K0·DEV0/1 회귀](dev3-storage-formats-dev2-regression-xadb-20261021-r1.json) — 원본 PASS, source e419f2d7…; 전체 DEV3 disk 인수는 미완료.
+
+- [DEV3 catalog·undo·control 표현 통합 원본 실행 결과](dev3-metadata-formats-leaf-xadb-20261021-r1.json) — 원본 PASS, source f54bf874…; 전체 DEV3 disk 인수는 미완료.
+
+- [DEV3 catalog·undo·control 표현 소스의 DEV2 P0/K0·DEV0/1 회귀](dev3-metadata-formats-dev2-regression-xadb-20261021-r1.json) — 원본 PASS, source f54bf874…; 전체 DEV3 disk 인수는 미완료.
+
+- [DEV3 catalog·undo·control 표현 소스의 DEV2 복구 원본 실행 결과](dev3-metadata-formats-dev2-kernel-xadb-20261021-r1.json) — 원본 PASS, source f54bf874…; 전체 DEV3 disk 인수는 미완료.
