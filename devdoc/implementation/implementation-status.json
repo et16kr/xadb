@@ -31,7 +31,7 @@
   "dev2_imported_unvalidated": [],
   "current_source_validation": "FROZEN_DEV2_INSTRUMENTATION_REPAIR_LOCAL_VALIDATION_FULL_ACCEPTANCE_PENDING",
   "dev2_unvalidated_implementation": [
-    "Full DEV2/B2/D0 acceptance remains incomplete; see frozen instrumentation fix receipt for current local performance outcome",
+    "PF04 instrumentation cost acceptance and final DEV2/B2/D0 closure remain incomplete; PF12/PF13 scoped closure is in dev2-performance-followup-xadb-20261020-r1.json",
     "Full current-worktree qualification excludes unrelated changes after the retained source snapshot",
     "Eleven V3 targets on the corrected frozen source passed; the six-target wrapper source-cache failure is separately reconciled in dev2-resumed-tests-xadb-20261019-r1.json. Official target-environment qualification, protected CI and official distribution remain NOT_RUN"
   ],
@@ -151,6 +151,25 @@
     "six_target_wrapper": "FAIL_SOURCE_CACHE_RECONCILED",
     "performance_correctness_tests": 36,
     "new_performance_campaigns": "NOT_RUN_USER_PAUSE",
+    "stage_status": "INCOMPLETE",
+    "whole_worktree_qualification": "NOT_CLAIMED"
+  },
+  "dev2_performance_followup_validation": {
+    "evidence_ref": "dev2-performance-followup-xadb-20261020-r1.json",
+    "source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+    "status": "DECLARED_NINE_CAMPAIGNS_EXECUTED",
+    "campaigns": 9,
+    "runs": 180,
+    "correctness_pass_runs": 180,
+    "PF12": "COMPLETE_CURRENT_SATURATED_K0_COLLECTOR_SCOPE",
+    "PF13": "COMPLETE_CURRENT_RETAINED_BUNDLE_REPLAY_CAPABILITY",
+    "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
+    "guardrail_failure_campaigns": [
+      "audit-always",
+      "audit-detailed",
+      "durable-audit",
+      "durable-replay"
+    ],
     "stage_status": "INCOMPLETE",
     "whole_worktree_qualification": "NOT_CLAIMED"
   }

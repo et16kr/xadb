@@ -1,0 +1,1138 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-20T00:20:20.995378+00:00",
+  "status": "DECLARED_NINE_CAMPAIGNS_EXECUTED_INSTRUMENTATION_ACCEPTANCE_INCOMPLETE",
+  "scope": "Frozen e3 DEV2 local performance follow-up; actual production workloads, retained raw bundles and independent review. No whole-worktree, official environment or DEV2 completion claim.",
+  "source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+  "comparison_source_sha256": "fb74e88963405b8032d32a4ce941176fba3894ec65f92327491a43bd3b5be6dd",
+  "previous_evidence_ref": "dev2-resumed-tests-xadb-20261019-r1.json",
+  "reports": {
+    "original_plan": {
+      "path": "/home/et16/xp2-r2/final-plan.json",
+      "bytes": 2618,
+      "sha256": "4fd8f62d5a972cd3f7cf823c8b8a8da9895e916463c7ea66dd70a6d12a94349c"
+    },
+    "inputs": {
+      "path": "/home/et16/xp2-r2/input-identities.json",
+      "bytes": 1417,
+      "sha256": "23032323f9fde8fd9d027670a7da1c3f9c622662363f8d6e4dc8aa67c028a101"
+    },
+    "runner_plan": {
+      "path": "/home/et16/xp2-r3/final-plan.json",
+      "bytes": 3132,
+      "sha256": "94b4966a3e7089a889c476bd41901cf2b4781155a27f149a1bf100f9aa153e18"
+    },
+    "runner_identities": {
+      "path": "/home/et16/xp2-r3/runner-identities.json",
+      "bytes": 701,
+      "sha256": "9a57b7cb491eac1cda6627e7e687772aa4d17bb0b267c89d371e5fdefed0f339"
+    },
+    "runner": {
+      "path": "/home/et16/xp2-r3/final_campaigns.py",
+      "bytes": 11904,
+      "sha256": "32edc5a653aebf640371d4e9bb965481d45e78010ef7379606d5e134c5e4a888"
+    },
+    "idle_gate_negative_tests": {
+      "path": "/home/et16/xp2-r3/preparation-tests-retained.log",
+      "bytes": 716,
+      "sha256": "bb0833fcd131d1f806b17c52deeec68da486fc29efc6c548b3f0c9de3c344b23"
+    },
+    "prerequisites": {
+      "path": "/home/et16/xp2-r3/prerequisites-preflight.json",
+      "bytes": 5987,
+      "sha256": "ccdb69aeb2bf7297c83721036a9580f87f899542836dda60b33b2a8678aea097"
+    },
+    "original_execution_failure": {
+      "path": "/home/et16/xp2-r3/final-campaigns/report.json",
+      "bytes": 56983,
+      "sha256": "e88ce3a2cdc903b2fcd8cc0494127d98c189c3bb17439ecbe56817922b7d0680"
+    },
+    "continuation_plan": {
+      "path": "/home/et16/xp2-r4/final-plan.json",
+      "bytes": 3778,
+      "sha256": "04cb148c2a986b35d50a20f44628af38a7e495ce8889e4d970fdefd031417f84"
+    },
+    "continuation_identities": {
+      "path": "/home/et16/xp2-r4/runner-identities.json",
+      "bytes": 1141,
+      "sha256": "e9df525c61575d37fcb0b99f8d0ba0d2309af81e073014286a07afd8e40b875d"
+    },
+    "continuation_runner": {
+      "path": "/home/et16/xp2-r4/final_campaigns.py",
+      "bytes": 10488,
+      "sha256": "5811946c1b2680c7f305c687777bd5283fa67d2ebe3470a77b1e326dfbcac1a3"
+    },
+    "recipe_schema_preflight": {
+      "path": "/home/et16/xp2-r4/recipe-preflight.json",
+      "bytes": 2237,
+      "sha256": "6bd7a9db3e9f0b5263b945b7cf3c1bf364f07407c8c8c90ddf362934b8091c22"
+    },
+    "all_nine_campaigns": {
+      "path": "/home/et16/xp2-r4/final-campaigns/report.json",
+      "bytes": 18379617,
+      "sha256": "bd9cff9907fdef30860701f76dc486a31f70e10a87ddd338809544fafee114e8"
+    },
+    "k0_same_off_control": {
+      "path": "/home/et16/xp2-control-r1/final-campaigns/report.json",
+      "bytes": 31140,
+      "sha256": "cab91a814f30f2a0f0785dca24b6dd1d0857f503698ed409d497ad739300bf84"
+    },
+    "durable_same_off_control": {
+      "path": "/home/et16/xdc-r1/run/report.json",
+      "bytes": 4172515,
+      "sha256": "ebd6262679e5586ed432eab81fd1f9f6fb1312cc9a600eebab578c0208babe57"
+    },
+    "source_projection": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-owner/source-projection.json",
+      "bytes": 2233,
+      "sha256": "beea09a61893c727183e99ca6b637b2b84fc3380f7f8c805dd1f7ca662b9a73a"
+    },
+    "independent_bundle_reverification": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/nine-bundle-reverification.json",
+      "bytes": 5899,
+      "sha256": "b638a8c2a71210c594c427f42557ee5d387be502e5f71abbdb76ed95f3fa4154"
+    },
+    "independent_raw_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/raw-performance-review.json",
+      "bytes": 144999,
+      "sha256": "4c34527488ea27ceac847148724ce3c6995dd4db9a4b6db81b97acbea630551a"
+    },
+    "launch_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/launch-review.json",
+      "bytes": 3770,
+      "sha256": "238ff71f3cb258efd0241171c40a854120204ea85cd504417dc6fb44bbf02e95"
+    },
+    "continuation_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/continuation-review.json",
+      "bytes": 4017,
+      "sha256": "d22047a1390c37d2e189c07c115b6b5df521ce3333c5e5a76eaedcf5f43a9ce1"
+    },
+    "k0_control_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/control-launch-review.json",
+      "bytes": 1738,
+      "sha256": "18127c306f73ec92570ee2f2564bd1665a6f76ecb96844f04f0d6a498557e4fd"
+    },
+    "durable_control_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/durable-control-launch-review.json",
+      "bytes": 2295,
+      "sha256": "a6a958537751a3943ec7fb3f40e90f803aaed357d265519135e1103d9e8518ea"
+    },
+    "k0_pmu_plan": {
+      "path": "/home/et16/xpc-r1/plan.json",
+      "bytes": 7119,
+      "sha256": "d376190699f5fc24416f9a5c738aa78657f890289c5a130aa5f72c17baac8264"
+    },
+    "k0_pmu_identities": {
+      "path": "/home/et16/xpc-r1/identities.json",
+      "bytes": 788,
+      "sha256": "93185b1c3149216745859f32fa09f84a8ef6a09fa7829c6ed5ec085c28e402f6"
+    },
+    "k0_pmu_execution": {
+      "path": "/home/et16/xpc-r1/run/report.json",
+      "bytes": 48730,
+      "sha256": "9600fb85bcb15d5c36e638e849f024c1b9c39fa1a96cd9412df7762fa61a791a"
+    },
+    "k0_pmu_analysis": {
+      "path": "/home/et16/xpc-r1/run/analysis.json",
+      "bytes": 29355,
+      "sha256": "66aae317751cc3a541bd7075df26569fe23d4ad1c82abe541dcb471c13d7b9d3"
+    },
+    "k0_pmu_launch_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/pmu-launch-review.json",
+      "bytes": 2822,
+      "sha256": "3a8ee2d8b1f9a348100b7517af07ae5ce6ae25eccc349ecbab267a828079256b"
+    },
+    "durable_untraced_decomposition": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-owner/durable-control-decomposition.json",
+      "bytes": 25633,
+      "sha256": "18be9f344deff06167bcc13c1da65af99bc2fe898725d39d10618755b3db8238"
+    },
+    "independent_pmu_results_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/pmu-results-review.json",
+      "bytes": 8142,
+      "sha256": "d30a57cc23d53ff69c9fb86cd5fd09bcb661c1f6503493440c50218994ebf451"
+    },
+    "final_document_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/followup-document-review.json",
+      "bytes": 11839,
+      "sha256": "8ea162420d67e52fdf4cd4a4c86af468a54e6030419d0a893614f299fb3e8011"
+    }
+  },
+  "execution": {
+    "campaigns": 9,
+    "runs": 180,
+    "correctness_pass_runs": 180,
+    "guardrail_pass_campaigns": 5,
+    "guardrail_fail_campaigns": [
+      "audit-always",
+      "audit-detailed",
+      "durable-audit",
+      "durable-replay"
+    ],
+    "campaigns_detail": [
+      {
+        "id": "audit-always",
+        "runs": 20,
+        "comparison": {
+          "validity": "VALID",
+          "correctness": "PASS",
+          "performance_effect": "REGRESSED",
+          "guardrails": "FAIL",
+          "cause_status": "UNRESOLVED",
+          "promotion": "INCOMPLETE",
+          "reasons": [],
+          "ratios": [
+            {
+              "numerator": 16229871,
+              "denominator": 16944140
+            },
+            {
+              "numerator": 18600694,
+              "denominator": 16883897
+            },
+            {
+              "numerator": 18691293,
+              "denominator": 16789029
+            },
+            {
+              "numerator": 18390531,
+              "denominator": 16911957
+            },
+            {
+              "numerator": 18433181,
+              "denominator": 17463000
+            },
+            {
+              "numerator": 18472625,
+              "denominator": 14712787
+            },
+            {
+              "numerator": 16011846,
+              "denominator": 14682941
+            },
+            {
+              "numerator": 16054105,
+              "denominator": 14709090
+            },
+            {
+              "numerator": 16016084,
+              "denominator": 14691347
+            },
+            {
+              "numerator": 16112395,
+              "denominator": 15260957
+            }
+          ],
+          "interval": [
+            {
+              "numerator": 18433181,
+              "denominator": 17463000
+            },
+            {
+              "numerator": 18691293,
+              "denominator": 16789029
+            }
+          ],
+          "median": [
+            470398802119606,
+            431424362423054
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "worst_elapsed": {
+            "numerator": 18472625,
+            "denominator": 14712787
+          },
+          "worst_cpu": {
+            "numerator": 18353565,
+            "denominator": 14641862
+          },
+          "worst_external": {
+            "numerator": 27405643,
+            "denominator": 21379301
+          },
+          "worst_sample_p99": {
+            "numerator": 321,
+            "denominator": 251
+          },
+          "worst_process_peak_rss_delta": 40960
+        },
+        "directory": "/home/et16/xp2-r3/final-campaigns/audit-always/performance-LlBpQz",
+        "recipe": {
+          "path": "/home/et16/xp2-r3/final-campaigns/audit-always/performance-LlBpQz/recipe.json",
+          "bytes": 6994,
+          "sha256": "1a0bb7e2b117bc252c7bcf0d61b7c39d5e203b4a45103a980b942ba6df89580a"
+        },
+        "index": {
+          "path": "/home/et16/xp2-r3/final-campaigns/audit-always/performance-LlBpQz/index.json",
+          "bytes": 19948,
+          "sha256": "b1f9a73e6709cd3d76ba2a497dac26e9335a599d4351b934be9cbd19dfdf7ab8"
+        }
+      },
+      {
+        "id": "audit-detailed",
+        "runs": 20,
+        "comparison": {
+          "validity": "VALID",
+          "correctness": "PASS",
+          "performance_effect": "REGRESSED",
+          "guardrails": "FAIL",
+          "cause_status": "UNRESOLVED",
+          "promotion": "INCOMPLETE",
+          "reasons": [],
+          "ratios": [
+            {
+              "numerator": 18915236,
+              "denominator": 15007921
+            },
+            {
+              "numerator": 16465397,
+              "denominator": 14765085
+            },
+            {
+              "numerator": 18957608,
+              "denominator": 14833436
+            },
+            {
+              "numerator": 19059002,
+              "denominator": 16947051
+            },
+            {
+              "numerator": 18966935,
+              "denominator": 16824700
+            },
+            {
+              "numerator": 18971454,
+              "denominator": 16879976
+            },
+            {
+              "numerator": 19104860,
+              "denominator": 14690790
+            },
+            {
+              "numerator": 16489075,
+              "denominator": 14736118
+            },
+            {
+              "numerator": 16464348,
+              "denominator": 16783501
+            },
+            {
+              "numerator": 16502151,
+              "denominator": 14752520
+            }
+          ],
+          "interval": [
+            {
+              "numerator": 16465397,
+              "denominator": 14765085
+            },
+            {
+              "numerator": 18957608,
+              "denominator": 14833436
+            }
+          ],
+          "median": [
+            643225694826106,
+            572131628301552
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "worst_elapsed": {
+            "numerator": 19104860,
+            "denominator": 14690790
+          },
+          "worst_cpu": {
+            "numerator": 18988014,
+            "denominator": 14618914
+          },
+          "worst_external": {
+            "numerator": 29311721,
+            "denominator": 21344758
+          },
+          "worst_sample_p99": {
+            "numerator": 331,
+            "denominator": 251
+          },
+          "worst_process_peak_rss_delta": 118784
+        },
+        "directory": "/home/et16/xp2-r3/final-campaigns/audit-detailed/performance-xl3cpI",
+        "recipe": {
+          "path": "/home/et16/xp2-r3/final-campaigns/audit-detailed/performance-xl3cpI/recipe.json",
+          "bytes": 6973,
+          "sha256": "bc6f8cd2e28ba743d41f4eff450698f19cc7493592a8cf6945e2e006a3d651c4"
+        },
+        "index": {
+          "path": "/home/et16/xp2-r3/final-campaigns/audit-detailed/performance-xl3cpI/index.json",
+          "bytes": 19929,
+          "sha256": "5e3a8b61c7eec6062d46e76b65c592a7ef84d82cbf6c7266213e3a4948a6e37d"
+        }
+      },
+      {
+        "id": "replay-always",
+        "runs": 20,
+        "comparison": {
+          "validity": "VALID",
+          "correctness": "PASS",
+          "performance_effect": "REGRESSED",
+          "guardrails": "PASS",
+          "cause_status": "UNRESOLVED",
+          "promotion": "INCOMPLETE",
+          "reasons": [],
+          "ratios": [
+            {
+              "numerator": 15992324,
+              "denominator": 14687062
+            },
+            {
+              "numerator": 16046972,
+              "denominator": 14683776
+            },
+            {
+              "numerator": 16106147,
+              "denominator": 14712753
+            },
+            {
+              "numerator": 16053375,
+              "denominator": 14878737
+            },
+            {
+              "numerator": 16315317,
+              "denominator": 14750136
+            },
+            {
+              "numerator": 16119454,
+              "denominator": 14710548
+            },
+            {
+              "numerator": 16044196,
+              "denominator": 14665781
+            },
+            {
+              "numerator": 16123873,
+              "denominator": 14790205
+            },
+            {
+              "numerator": 16063297,
+              "denominator": 14667875
+            },
+            {
+              "numerator": 16040121,
+              "denominator": 14817117
+            }
+          ],
+          "interval": [
+            {
+              "numerator": 16040121,
+              "denominator": 14817117
+            },
+            {
+              "numerator": 16119454,
+              "denominator": 14710548
+            }
+          ],
+          "median": [
+            470930757229228,
+            430698086138112
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "worst_elapsed": {
+            "numerator": 16315317,
+            "denominator": 14750136
+          },
+          "worst_cpu": {
+            "numerator": 16233532,
+            "denominator": 14677240
+          },
+          "worst_external": {
+            "numerator": 22896557,
+            "denominator": 20679581
+          },
+          "worst_sample_p99": {
+            "numerator": 280,
+            "denominator": 251
+          },
+          "worst_process_peak_rss_delta": 40960
+        },
+        "directory": "/home/et16/xp2-r3/final-campaigns/replay-always/performance-98t34H",
+        "recipe": {
+          "path": "/home/et16/xp2-r3/final-campaigns/replay-always/performance-98t34H/recipe.json",
+          "bytes": 11399,
+          "sha256": "513bbec965f093524f4ef825e671bc5b77424aa8a0672ee7749185223bf130c3"
+        },
+        "index": {
+          "path": "/home/et16/xp2-r3/final-campaigns/replay-always/performance-98t34H/index.json",
+          "bytes": 20001,
+          "sha256": "5ef8fc67ea66e39a2319d04cbe72a37252cbecf863e82f09d633993089ea7146"
+        }
+      },
+      {
+        "id": "replay-detailed",
+        "runs": 20,
+        "comparison": {
+          "validity": "VALID",
+          "correctness": "PASS",
+          "performance_effect": "REGRESSED",
+          "guardrails": "PASS",
+          "cause_status": "UNRESOLVED",
+          "promotion": "INCOMPLETE",
+          "reasons": [],
+          "ratios": [
+            {
+              "numerator": 16477227,
+              "denominator": 14707494
+            },
+            {
+              "numerator": 16669495,
+              "denominator": 14976399
+            },
+            {
+              "numerator": 16749894,
+              "denominator": 14761171
+            },
+            {
+              "numerator": 16517402,
+              "denominator": 14731743
+            },
+            {
+              "numerator": 16625497,
+              "denominator": 14691693
+            },
+            {
+              "numerator": 16497873,
+              "denominator": 14672916
+            },
+            {
+              "numerator": 16479397,
+              "denominator": 14796642
+            },
+            {
+              "numerator": 16577822,
+              "denominator": 14706753
+            },
+            {
+              "numerator": 16707419,
+              "denominator": 14799598
+            },
+            {
+              "numerator": 16697245,
+              "denominator": 14665982
+            }
+          ],
+          "interval": [
+            {
+              "numerator": 16479397,
+              "denominator": 14796642
+            },
+            {
+              "numerator": 16749894,
+              "denominator": 14761171
+            }
+          ],
+          "median": [
+            485875132905321,
+            431581902803496
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "worst_elapsed": {
+            "numerator": 16697245,
+            "denominator": 14665982
+          },
+          "worst_cpu": {
+            "numerator": 16616958,
+            "denominator": 14588639
+          },
+          "worst_external": {
+            "numerator": 23286547,
+            "denominator": 20646480
+          },
+          "worst_sample_p99": {
+            "numerator": 281,
+            "denominator": 251
+          },
+          "worst_process_peak_rss_delta": 57344
+        },
+        "directory": "/home/et16/xp2-r3/final-campaigns/replay-detailed/performance-22be7m",
+        "recipe": {
+          "path": "/home/et16/xp2-r3/final-campaigns/replay-detailed/performance-22be7m/recipe.json",
+          "bytes": 11373,
+          "sha256": "e40966f2eaa3f0c0d8c1df68eaa70c88e80a4f19538bd72f0842840d9f4653ca"
+        },
+        "index": {
+          "path": "/home/et16/xp2-r3/final-campaigns/replay-detailed/performance-22be7m/index.json",
+          "bytes": 19986,
+          "sha256": "efb10d9a4d9a38a95b78a25e70034f6a4411ffd5055465d8cce8374f353557d6"
+        }
+      },
+      {
+        "id": "collector-exploration",
+        "runs": 20,
+        "comparison": {
+          "validity": "VALID",
+          "correctness": "PASS",
+          "performance_effect": "IMPROVED",
+          "guardrails": "PASS",
+          "cause_status": "UNRESOLVED",
+          "promotion": "INCOMPLETE",
+          "reasons": [],
+          "ratios": [
+            {
+              "numerator": 16502953,
+              "denominator": 18843152
+            },
+            {
+              "numerator": 16615422,
+              "denominator": 18774729
+            },
+            {
+              "numerator": 16648892,
+              "denominator": 18953608
+            },
+            {
+              "numerator": 16566128,
+              "denominator": 18804715
+            },
+            {
+              "numerator": 16530085,
+              "denominator": 18893819
+            },
+            {
+              "numerator": 16517896,
+              "denominator": 18774201
+            },
+            {
+              "numerator": 16578011,
+              "denominator": 18813149
+            },
+            {
+              "numerator": 16448827,
+              "denominator": 18850006
+            },
+            {
+              "numerator": 16573535,
+              "denominator": 19093302
+            },
+            {
+              "numerator": 16619775,
+              "denominator": 18882114
+            }
+          ],
+          "interval": [
+            {
+              "numerator": 16448827,
+              "denominator": 18850006
+            },
+            {
+              "numerator": 16578011,
+              "denominator": 18813149
+            }
+          ],
+          "median": [
+            625643370604060,
+            711677692534416
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "worst_elapsed": {
+            "numerator": 16615422,
+            "denominator": 18774729
+          },
+          "worst_cpu": {
+            "numerator": 16537240,
+            "denominator": 18691043
+          },
+          "worst_external": {
+            "numerator": 24229683,
+            "denominator": 25855622
+          },
+          "worst_sample_p99": {
+            "numerator": 281,
+            "denominator": 311
+          },
+          "worst_process_peak_rss_delta": 32768
+        },
+        "directory": "/home/et16/xp2-r4/final-campaigns/collector-exploration/performance-O39sVC",
+        "recipe": {
+          "path": "/home/et16/xp2-r4/final-campaigns/collector-exploration/performance-O39sVC/recipe.json",
+          "bytes": 7116,
+          "sha256": "f0fa75b2cb80412f789f12141ae6c9f9982f981061335a06484d9c9c6c64f8a2"
+        },
+        "index": {
+          "path": "/home/et16/xp2-r4/final-campaigns/collector-exploration/performance-O39sVC/index.json",
+          "bytes": 19951,
+          "sha256": "be44720a9cf01779f04cb0c354c2e044745c1e10eda44e2e66c6d62916439fde"
+        }
+      },
+      {
+        "id": "collector-confirmation",
+        "runs": 20,
+        "comparison": {
+          "validity": "VALID",
+          "correctness": "PASS",
+          "performance_effect": "IMPROVED",
+          "guardrails": "PASS",
+          "cause_status": "UNRESOLVED",
+          "promotion": "INCOMPLETE",
+          "reasons": [],
+          "ratios": [
+            {
+              "numerator": 16507003,
+              "denominator": 18798846
+            },
+            {
+              "numerator": 16526514,
+              "denominator": 18837655
+            },
+            {
+              "numerator": 16576484,
+              "denominator": 18802849
+            },
+            {
+              "numerator": 16551925,
+              "denominator": 18898462
+            },
+            {
+              "numerator": 16577966,
+              "denominator": 18998342
+            },
+            {
+              "numerator": 16521917,
+              "denominator": 18884741
+            },
+            {
+              "numerator": 16504780,
+              "denominator": 18843524
+            },
+            {
+              "numerator": 16600692,
+              "denominator": 19091842
+            },
+            {
+              "numerator": 16481441,
+              "denominator": 18808869
+            },
+            {
+              "numerator": 16725182,
+              "denominator": 19216522
+            }
+          ],
+          "interval": [
+            {
+              "numerator": 16725182,
+              "denominator": 19216522
+            },
+            {
+              "numerator": 16507003,
+              "denominator": 18798846
+            }
+          ],
+          "median": [
+            623811553632060,
+            712227244520176
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "worst_elapsed": {
+            "numerator": 16576484,
+            "denominator": 18802849
+          },
+          "worst_cpu": {
+            "numerator": 16498322,
+            "denominator": 18716781
+          },
+          "worst_external": {
+            "numerator": 23858565,
+            "denominator": 25898902
+          },
+          "worst_sample_p99": {
+            "numerator": 281,
+            "denominator": 311
+          },
+          "worst_process_peak_rss_delta": 36864
+        },
+        "directory": "/home/et16/xp2-r4/final-campaigns/collector-confirmation/performance-64xpYZ",
+        "recipe": {
+          "path": "/home/et16/xp2-r4/final-campaigns/collector-confirmation/performance-64xpYZ/recipe.json",
+          "bytes": 13144,
+          "sha256": "17dd285a0b2bbcc36a7208b6c41ccd78799b6f38fc174364f9b600188dda0ed1"
+        },
+        "index": {
+          "path": "/home/et16/xp2-r4/final-campaigns/collector-confirmation/performance-64xpYZ/index.json",
+          "bytes": 19941,
+          "sha256": "197c4601794da34d7576e7cf79b3f55fcd6f21dcf27f901e8e4f6ca7d710a6f5"
+        }
+      },
+      {
+        "id": "collector-replay",
+        "runs": 20,
+        "comparison": {
+          "validity": "VALID",
+          "correctness": "PASS",
+          "performance_effect": "IMPROVED",
+          "guardrails": "PASS",
+          "cause_status": "UNRESOLVED",
+          "promotion": "INCOMPLETE",
+          "reasons": [],
+          "ratios": [
+            {
+              "numerator": 16470651,
+              "denominator": 18843171
+            },
+            {
+              "numerator": 16469318,
+              "denominator": 18823858
+            },
+            {
+              "numerator": 16480988,
+              "denominator": 18912597
+            },
+            {
+              "numerator": 16451959,
+              "denominator": 18803975
+            },
+            {
+              "numerator": 16454944,
+              "denominator": 18884084
+            },
+            {
+              "numerator": 16543781,
+              "denominator": 18823237
+            },
+            {
+              "numerator": 16485173,
+              "denominator": 18876266
+            },
+            {
+              "numerator": 16449363,
+              "denominator": 18960838
+            },
+            {
+              "numerator": 16501250,
+              "denominator": 18873000
+            },
+            {
+              "numerator": 16693234,
+              "denominator": 18794427
+            }
+          ],
+          "interval": [
+            {
+              "numerator": 16454944,
+              "denominator": 18884084
+            },
+            {
+              "numerator": 16543781,
+              "denominator": 18823237
+            }
+          ],
+          "median": [
+            621786471786750,
+            711254332566000
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "worst_elapsed": {
+            "numerator": 16693234,
+            "denominator": 18794427
+          },
+          "worst_cpu": {
+            "numerator": 16614255,
+            "denominator": 18706370
+          },
+          "worst_external": {
+            "numerator": 22959613,
+            "denominator": 24985790
+          },
+          "worst_sample_p99": {
+            "numerator": 281,
+            "denominator": 311
+          },
+          "worst_process_peak_rss_delta": 36864
+        },
+        "directory": "/home/et16/xp2-r4/final-campaigns/collector-replay/performance-QRnPCx",
+        "recipe": {
+          "path": "/home/et16/xp2-r4/final-campaigns/collector-replay/performance-QRnPCx/recipe.json",
+          "bytes": 17564,
+          "sha256": "173163e2e51516b8fa5dfdcb4f323c9333bfd2d1acf7c9ce495c5aea92ad5780"
+        },
+        "index": {
+          "path": "/home/et16/xp2-r4/final-campaigns/collector-replay/performance-QRnPCx/index.json",
+          "bytes": 20007,
+          "sha256": "d0771a230b4f4103967dd650ec4cb5cab639bd15e4a710ba373eb63548487292"
+        }
+      },
+      {
+        "id": "durable-audit",
+        "runs": 20,
+        "comparison": {
+          "budget": "FAIL",
+          "cause_status": "NOT_RUN",
+          "correctness": "PASS",
+          "guardrails": "FAIL",
+          "interval": [
+            [
+              2701695085,
+              3585557304
+            ],
+            [
+              686668049,
+              682364589
+            ]
+          ],
+          "median": [
+            264563150773202529,
+            265211978848006589
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "performance_effect": "INCONCLUSIVE",
+          "promotion": "INCOMPLETE",
+          "ratios": [
+            [
+              2713456870,
+              2709725317
+            ],
+            [
+              686668049,
+              682364589
+            ],
+            [
+              677828562,
+              681157351
+            ],
+            [
+              1346299430,
+              1379725447
+            ],
+            [
+              2757107454,
+              2704339105
+            ],
+            [
+              2725468380,
+              2725484573
+            ],
+            [
+              2701695085,
+              3585557304
+            ],
+            [
+              1352278075,
+              2067402904
+            ],
+            [
+              2727905905,
+              2719661136
+            ],
+            [
+              2703819567,
+              2782409357
+            ]
+          ],
+          "reasons": [
+            "guardrail failed: cycle_p99_ns",
+            "guardrail failed: cycle_p99_ns",
+            "guardrail failed: cycle_p99_ns"
+          ],
+          "validity": "VALID"
+        },
+        "directory": "/home/et16/xp2-r4/final-campaigns/durable-audit",
+        "recipe_sha256": "d9ba35923195c26a50f1250183facd4ba9f025747bd6839f6388a0749cbb9150"
+      },
+      {
+        "id": "durable-replay",
+        "runs": 20,
+        "comparison": {
+          "budget": "FAIL",
+          "cause_status": "NOT_RUN",
+          "correctness": "PASS",
+          "guardrails": "FAIL",
+          "interval": [
+            [
+              2703670976,
+              2739753649
+            ],
+            [
+              2757435443,
+              2728969833
+            ]
+          ],
+          "median": [
+            2915923249843677587,
+            2910452495345509044
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "performance_effect": "NO_MATERIAL_CHANGE",
+          "promotion": "INCOMPLETE",
+          "ratios": [
+            [
+              540211255,
+              539319694
+            ],
+            [
+              2703670976,
+              2739753649
+            ],
+            [
+              2757435443,
+              2728969833
+            ],
+            [
+              2754671288,
+              2708467663
+            ],
+            [
+              2711349868,
+              2695398205
+            ],
+            [
+              2691429963,
+              2734763663
+            ],
+            [
+              2735419965,
+              2718269101
+            ],
+            [
+              2696993122,
+              2693520693
+            ],
+            [
+              2703946013,
+              2698262763
+            ],
+            [
+              2726337983,
+              2740575907
+            ]
+          ],
+          "reasons": [
+            "guardrail failed: cpu_ns",
+            "guardrail failed: cycle_p99_ns",
+            "guardrail failed: cycle_p99_ns",
+            "guardrail failed: cpu_ns"
+          ],
+          "validity": "VALID"
+        },
+        "directory": "/home/et16/xp2-r4/final-campaigns/durable-replay",
+        "recipe_sha256": "b0d35ef7ea10708d3460a21fc7b885d8243aeb39c9168d3723780e7c52c4a4c5"
+      }
+    ]
+  },
+  "fixed_profile": {
+    "pairs": 10,
+    "order": "5AB/5BA seed20261018",
+    "elapsed_cpu_external_max_ratio": [
+      115,
+      100
+    ],
+    "p99_max_ratio": [
+      125,
+      100
+    ],
+    "rss_delta_bytes": 4194304,
+    "confirmation_attempts": 1,
+    "measurement_retries": 0
+  },
+  "environment": {
+    "local": "Ubuntu26.04.1 Linux/ext4; not official Ubuntu24.04 qualification",
+    "cpu": 2,
+    "sibling": 18,
+    "filesystem_uuid": "1c377269-2890-4dab-9355-0517ec36b0a1",
+    "physical_device": "nvme1n1",
+    "physical_serial": "S5GYNG0R112060F",
+    "eligibility": "Before each campaign,10seconds CPU2/18 busy<=5%, actual device io_ticks<=5%, no owned DEV2/COMM build/test; polling<=60 without running measurements on busy. Boundary observation does not prove uninterrupted exclusive host access.",
+    "shared_host_settings_changed": false
+  },
+  "runner_corrections": [
+    "Original r2 helpers were prepared only; new r3 binds actual device/UUID/serial, freezes runner/input identities, disables bytecode writes and verifies sources before/after child commands. Eight idle boundary/negative checks passed.",
+    "The missing original /tmp lower report was read from its exact retained archive member and original hash verified; six-V3 wrapper FAIL remains separate from reviewed target PASS.",
+    "r3 completed four campaigns then exited on the inherited invalid kind exploratory before worker creation. Failure and80runs retained. r4 fixed exploration schema and durable result directory handling, froze remaining recipes and resumed only the five unexecuted campaigns; all first-four verdicts included unchanged.",
+    "Completed duplicate executable files use exact-byte/mode checked hardlinks; no failed run or source evidence deleted."
+  ],
+  "controls": {
+    "performance_acceptance": "NOT_APPLICABLE",
+    "k0": {
+      "runs": 20,
+      "both_modes": "off",
+      "correctness": "PASS",
+      "guardrails": "PASS"
+    },
+    "durable": {
+      "runs": 20,
+      "both_observations": false,
+      "correctness": "PASS",
+      "guardrails": "FAIL",
+      "failed_pair": 8,
+      "p99_ratio": [
+        12389622,
+        5480140
+      ]
+    },
+    "interpretation": "Durable tail variation occurs without enabling observations. This does not identify device/scheduler cause or erase prior failures. K0 control stability does not prove a cause for older failed pairs."
+  },
+  "owner_adoption": {
+    "owner": "/root",
+    "independent_reviewer": "/root/dev2_closure_review",
+    "PF12": "COMPLETE_CURRENT_SATURATED_K0_COLLECTOR_SCOPE",
+    "PF13": "COMPLETE_CURRENT_RETAINED_BUNDLE_REPLAY_CAPABILITY",
+    "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
+    "PF12_cause": "Raw completion196608=retained256+dropped196352 per measured run. In single-thread fixture with no intervening drain, full-queue branch skips mutex/sequence RMW on the196352dropped events; this is source-derived causal path reasoning, not direct hardware lock-count measurement. Baseline/final also differ in durable observation code not called by K0; no durable improvement or attribution to individual subchanges.",
+    "PF12_validation": "Fresh confirmation/replay each10pairs IMPROVED+guardPASS; exact LCG/output checking plus previously reviewed same-source release vectors, saturation/drain, lower/current recovery and11V3 evidence. Analyzer cause_status/promotion remains unchanged.",
+    "PF13_validation": "Fresh process/run IDs and separate copied bundle cwd; independently recomputed raw comparisons including honest guardrail failures."
+  },
+  "remaining": [
+    "PF04: identify and resolve instrumentation cost/environment variation under a predeclared comparison without weakening thresholds or choosing favorable reruns",
+    "Final DEV2/B2/D0 owner closure and evidence-backed status update after PF04 is satisfied"
+  ],
+  "dev2_stage_status": "INCOMPLETE",
+  "performance_acceptance": "INCOMPLETE",
+  "official_environment": "NOT_RUN",
+  "protected_ci": "NOT_RUN",
+  "official_distribution": "NOT_RUN",
+  "whole_current_worktree_qualification": "NOT_CLAIMED",
+  "product_source_changed": false,
+  "historical_failures": "All earlier failures, deleted historical raw disclosure and original wrapper failures retain their original identities/verdicts.",
+  "pmu_diagnostic": {
+    "runs": 20,
+    "mode_comparison": "off/detailed",
+    "performance_acceptance": "NOT_APPLICABLE",
+    "worker_uid": 1000,
+    "counter_target": "Owned worker PID after enable acknowledgement through exit, no inheritance",
+    "shared_settings_changed": false,
+    "scope": "Wholeworker counters include setup/warmup/measured loop/output; cannot attribute them exclusively to inner loop. Missing/multiplexed counters retained.",
+    "off_median_measure_ns": 14583896.5,
+    "detailed_median_measure_ns": 16415230.5,
+    "off_median_worker_instructions": 118760783,
+    "detailed_median_worker_instructions": 127411719.5,
+    "off_median_cycles_per_task_clock_ns": 5.199670354086635,
+    "detailed_median_cycles_per_task_clock_ns": 5.199825486294689,
+    "interpretation": "Current diagnostic shows stable measured elapsed/CPU durations and similar wholeworker cycles/taskclock, extra work in Detailed. Original elapsed/CPU outliers were not reproduced. Diagnostic pair5 sampled p99 remains361/251ns=1.438247..., while worst elapsed/CPU ratio is approximately1.13571. This is not an acceptance-qualified comparison and does not establish the cause of prior failures.",
+    "preflight": "Initial ack format assertion failed before payload; trailingNUL handling fixed. cat success and injected privileged attach failure cleanup verified, all receipts retained.",
+    "pair5_sample_p99_ratio": [
+      361,
+      251
+    ]
+  }
+}

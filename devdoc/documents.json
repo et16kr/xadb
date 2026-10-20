@@ -727,6 +727,11 @@
       "path": "evidence/dev2-resumed-tests-xadb-20261019-r1.json",
       "role": "evidence",
       "title": "DEV2 삭제 후 새 시험과 사용자 요청 일시 중지"
+    },
+    "dev2-performance-followup-xadb-20261020-r1.json": {
+      "path": "evidence/dev2-performance-followup-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV2 성능 후속 실행·PF12/PF13 개별 완료와 PF04 잔여 실패"
     }
   }
 }

@@ -554,3 +554,40 @@ collector 탐색은 사전 한도 3개였다. candidate1은 full 힌트와 no-op
 사용자의 “지금 실행중인 테스트가 끝나면 일단 중지” 요청에 따라 위 실행 결과를 보존한 뒤 일시 중지했다. 새 성능9개 campaign은 준비만 했고 **NOT_RUN**이다. 이전 K0 Detailed replay와 영속 audit/replay의 비용 한도 FAIL, PF12/PF13 및 DEV2/B2/D0 전체 인수 **INCOMPLETE**를 유지한다. `/root/dev2_test_review`의 독립 검토는 이번 범위의 정확성 증거에 한정한다. 재개할 때 보존 지문·선행 결과·준비된 집계기의 연결을 확인하고 사전 고정한 유휴 조건을 만족한 뒤 성능 실행을 시작해야 한다.
 
 원본·새 로그는 외부 경로에 보존했다. 중복 worker는 경로·해시·권한을 유지한 hardlink로 정리했고, 하위 원본11,280개 파일은 검증한277MB 압축본도 남겼다. 공식 환경·보호 CI·배포 자격은 이번 로컬 증거의 범위가 아니다. 편집 중 문서 자동 검사는 실행하지 않았으며 commit/push하지 않았다.
+
+<a id="dev2-performance-followup-20261020"></a>
+## DEV2 성능 실행 재개와 남은 인수
+
+**2026-10-20 · D2 / 고정 소스의 로컬 실행 완료, DEV2 인수 INCOMPLETE.** 사용자 재개 요청에 따라 준비된 성능 9개 campaign을 모두 실행했다. [후속 실행 receipt](../evidence/dev2-performance-followup-xadb-20261020-r1.json)는 실제 180개 run, 보존 bundle, 독립 검토와 원래 실패를 연결한다. 제품 코드는 변경하지 않았다. e3 동결 소스와 현재 작업 트리의 공통 DEV2 파일은 같지만, COMM 성능 파일 3개 추가와 동결 Python 캐시 6개 부재로 전체 지문은 다르다. 이를 전체 현재 소스 검증으로 확대하지 않는다.
+
+실행 전에 실제 ext4 UUID·장치 serial과 CPU2/18을 확인했다. 각 campaign 전 10초간 두 CPU busy와 해당 장치 I/O busy가 각각 5% 이하이고 소유 DEV2/COMM 작업이 없을 때만 시작했다. 이 경계 관측은 측정 내내 전용 장비였음을 증명하지 않는다. workload·seed·10쌍(5AB/5BA)과 wall/CPU/external 1.15·표본 p99 1.25·RSS 4MiB 한도는 유지했다. 공유 host 설정을 변경하지 않았다.
+
+| 비교 | 경과 시간 중앙 비율 | 유효성 / 정답 | 비용 한도 |
+| --- | --- | --- | --- |
+| K0 Off/Always audit | 1.0903 | VALID / PASS | FAIL |
+| K0 Off/Detailed audit | 1.1243 | VALID / PASS | FAIL |
+| K0 Always bundle 재현 | 1.0934 | VALID / PASS | PASS |
+| K0 Detailed bundle 재현 | 1.1258 | VALID / PASS | PASS |
+| collector 비용 탐색 | 0.8791 | VALID / PASS | PASS |
+| collector 새 최종 확인 | 0.8759 | VALID / PASS | PASS |
+| collector bundle 재현 | 0.8742 | VALID / PASS | PASS |
+| 영속 Off/Always audit | 0.9976 | VALID / PASS | FAIL |
+| 영속 bundle 재현 | 1.0019 | VALID / PASS | FAIL |
+
+위 비율은 표시용 근삿값이다. 원시 정수 비율로 모든 pair를 판정했고, K0 Always pair5와 Detailed pair0/2/6, 영속 audit의 p99 pair0/1/4, 영속 replay의 CPU pair1/9와 p99 pair2/3에서 한도를 초과했다. 재현이 성공해도 최초 실패를 지우지 않는다.
+
+집계기는 첫 4개 campaign을 마친 뒤 기존 준비 파일의 `exploratory` 값이 실제 recipe enum과 달라 종료했다. worker 실행 전 입력 해석 실패였으며 원본 실패와 80개 run을 보존했다. 별도 continuation에서 `exploration` 및 영속 결과 경로 처리를 고치고 남은 5개만 실행했다. 이미 측정한 campaign은 다시 실행하지 않았다. CPU·장치 유휴 조건의 경계/부정 시험 8개, 실제 controller의 recipe 해석과 worker identity 거절, 실행 전후 source·binary·runner 지문 확인을 거쳤다. 원래 6개 V3 집계기 실패와 과거 삭제 자료의 제한도 유지한다.
+
+### 개별 인수와 원인 분리
+
+`/root/dev2_closure_review`는 K0 원시 160개 실행(본 실행 140개와 대조 20개)의 LCG 읽기값·최종 행·old snapshot을 별도로 계산했다. 영속 본 실행 40개와 대조 20개의 cycle p99·비용 비율도 원시 값에서 재계산했다. 보존된 9개 bundle의 verifier 결과, 정확한 유리수 통계와 실패 pair가 일치했다. `/root`는 다음 범위의 개별 종료를 채택했다.
+
+- **PF12 완료:** 포화 K0 collector의 국소 개선. 최종 확인 약12.41%, 별도 재현 약12.58% 경과 시간 감소와 비용 한도 PASS. 각 측정의 진단 시도196,608건=보존256건+공개 drop196,352건을 확인했다. 단일 thread·측정 중 drain 없음 조건에서 full-queue 분기가 drop 경로의 mutex·sequence RMW를 생략한다는 소스 경로와 관측을 연결했다. 이는 하드웨어 lock 횟수 실측이나 개별 하위 변경의 분리 효과가 아니다. 비교 소스의 영속 관측 변경은 이 K0 경로에서 호출되지 않으며 영속 개선을 주장하지 않는다. 같은 e3 소스의 기존 독립 정답·포화/동시 drain·복구·하위 회귀·11개 V3 증거를 함께 연결했다.
+- **PF13 완료:** 현재 capability의 보존 bundle 재현 기능. 별도 cwd와 새 process/run ID로 baseline/candidate를 실행하고 정답·계보·실패를 재산출했다. 비용 한도 FAIL을 그대로 재현·보존한 결과도 포함한다.
+- **PF04 미완료:** 계측 비용 한도. 실제 측정과 실패 공개는 완료했지만, 네 campaign의 FAIL을 성능 인수 PASS로 바꾸지 않는다. 자동 analyzer의 원래 cause_status/promotion도 변경하지 않는다.
+
+원인 분리용으로 동일 e3 binary·동일 Off 설정의 대조를 K0와 영속 경로에서 각각 고정10쌍 실행했다. 정답은 모두 PASS다. K0는 비용 한도 PASS였고, 영속은 양쪽 모두 관측을 꺼도 pair8 p99가12,389,622/5,480,140ns=약2.26082배로 FAIL했다. 반대 방향 고지연도 있었다. 관측 On이 없어도 tail 변동이 생긴다는 증거이며, 장치·scheduler 원인 확정이나 기존 실패 취소 근거는 아니다. 대조 실험은 성능 인수에 사용하지 않는다.
+
+추가 K0 진단20run은 소유한 UID1000 worker PID에만 PMU를 붙여 수행했다. Off/Detailed 측정 구간 중앙값은14.584/16.415ms, 전체 worker의 instructions 중앙값은118.761/127.412백만이었다. 전체 worker cycles/task-clock은 양쪽 약5.200cycle/ns였고 context switch는 중앙0·최대1이었다. PMU 범위에는 setup·warmup·출력도 포함되므로 측정 loop만의 원인 지표로 쓰지 않는다. 이 진단에서 이전 audit의 경과·CPU 시간 outlier는 재현되지 않았지만, pair5 표본 p99는361/251ns=약1.43825배로 높았다. 이 진단은 인수용 비교가 아니며 p99 관측도 보존한다. 영속 동일Off 실패 pair의 p99 cycle은 두 쪽 모두99.96% 이상 commit 구간에 포함되지만, 그 내부의 sync·kernel·scheduler 원인은 아직 분리하지 못했다. 어느 진단도 기존 비용 한도 실패를 대체하지 않는다.
+
+남은 작업은 **PF04의 원인 구분과 해결을 검증하고 최종 DEV2/B2/D0 종료 증거를 반영하는 것**이다. 11개 V3나 복구 전수를 미실행으로 되돌리지 않는다. 공식 Ubuntu24.04 환경·보호 CI·공식 배포는 로컬 종료와 별도인 NOT_RUN 상태다. 문서 자동 검사는 push 훅에서만 수행한다.

@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-20 [DEV2 성능 후속 실행](dev2-implementation.md#dev2-performance-followup-20261020): 고정 소스의 9개 campaign·180개 run 정답 PASS. PF12 국소 개선·PF13 재현 기능을 개별 검증 완료했으며, PF04 계측 비용 한도와 DEV2/B2/D0 최종 인수가 남아 있다.
+
 2026-10-19 [DEV2 계측 수정](dev2-implementation.md#dev2-instrumentation-fix-20261019): CPU 관측과 상세 진단 비용을 수정하고 같은 동결 source에서 ext4 복구 99셀·하위 회귀·필수 성능 시험 36개를 통과했다. 최종 로컬 성능 인수는 INCOMPLETE이며 전체 DEV2 인수는 미완료다.
 
 2026-10-19 [DEV2 남은 로컬 시험](dev2-implementation.md#dev2-tests-20261019)을 완료했다. 영속 99셀·9개 30분 target·P0 전수·하위 회귀와 K0 후보의 확인/재현 결과를 새 receipt에 연결했다. 일부 계측 비용 한도 FAIL로 전체 인수는 INCOMPLETE다.
@@ -23,7 +25,7 @@
 
 기계 판독 상태의 `evidence_refs`는 현재 소스 지문과 일치하는 검증 주장만 담는다. `historical_evidence_refs`는 원래 소스·명령·check 결과를 그대로 보존한 이전 소스의 증거이며, 현재 소스 검증을 대신하지 않는다. `PREVIOUS_SOURCE_VERIFIED`는 이 구분을 표시한다. 영속 커널의 `IMPLEMENTED_VALIDATION_PENDING`은 코드 구현과 부분 개발 시험이 있어도 최종 인수가 남았다는 상태다. 계획표의 기존 로컬 개발 선행권한이나 DEV2 완료·제품·릴리스 인수 조건을 변경하지 않는다.
 
-P0/K0 시험 성공은 B2/D0나 DEV2 전체 완료를 의미하지 않는다. bounded concurrent exploration, 통합 PF 인수, 영속 경로의 최종 검증은 남은 작업이다. 과거 source snapshot의 PASS를 현재 소스의 PASS로 취급하지 않는다.
+P0/K0 시험 성공은 B2/D0나 DEV2 전체 완료를 의미하지 않는다. e3 동결 소스의 bounded concurrent 전수·영속 복구·11개 V3와 PF12/PF13 결과는 위 후속 기록에 연결한다. PF04 계측 비용 한도와 최종 인수는 미완료이며 과거 source snapshot의 PASS를 전체 현재 소스의 PASS로 취급하지 않는다.
 
 <!-- catalogue -->
 
