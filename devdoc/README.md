@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-20 [DEV2 journal binary 대응](implementation/dev2-implementation.md#dev2-journal-binary-mapping-20261020): 설치 커널의 build ID와 기계어 흐름으로 두 대기 위치를 metadata·commit record 버퍼에 대응했다. 추가 측정 없이 코드 위치만 구분했으며 PF04·DEV2 인수는 미완료다.
+
 2026-10-20 [DEV2 journal 대기 진단](implementation/dev2-implementation.md#dev2-journal-diagnostic-20261020): 고정 Off 1회에서 측정 fsync 512개와 실제 journal 대기 TID·단계를 연결했다. 추적 영향·환경의 거친 확인 조건은 FAIL이므로 시간 비율을 계측 없는 실행에 일반화하지 않으며, PF04·DEV2 인수는 미완료다.
 
 2026-10-20 [DEV2 PF04 가설 검토](implementation/dev2-implementation.md#dev2-pf04-hypothesis-review-20261020): 기존 2,048개 cycle 추적과 설치 버전 커널 소스를 대조했다. 공유 파일시스템의 `max_batch_time` 변경을 해결책으로 삼을 근거는 부족하며, PF04 실패와 DEV2 미완료 상태를 유지한다.

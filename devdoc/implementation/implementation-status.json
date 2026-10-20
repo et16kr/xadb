@@ -213,5 +213,18 @@
     "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
     "stage_status": "INCOMPLETE",
     "whole_worktree_qualification": "NOT_CLAIMED"
+  },
+  "dev2_journal_binary_mapping": {
+    "evidence_ref": "dev2-journal-binary-mapping-xadb-20261020-r1.json",
+    "status": "TWO_CAPTURED_OFFSETS_MAPPED",
+    "new_product_runs": 0,
+    "new_capture_runs": 0,
+    "kernel_build_id": "338e542e384c46228f7a378babc0f9bb2b6a5997",
+    "source_line_method": "STATIC_CONTROL_FLOW_NOT_DWARF",
+    "coarse_environment_perturbation_screen": "FAIL_RETAINED",
+    "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
+    "stage_status": "INCOMPLETE",
+    "performance_acceptance": "NOT_APPLICABLE_STATIC_ANALYSIS",
+    "whole_worktree_qualification": "NOT_CLAIMED"
   }
 }

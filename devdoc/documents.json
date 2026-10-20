@@ -747,6 +747,11 @@
       "path": "evidence/dev2-journal-diagnostic-xadb-20261020-r1.json",
       "role": "evidence",
       "title": "DEV2 실제 journal 대기 TID·단계 진단과 추적 영향 한계"
+    },
+    "dev2-journal-binary-mapping-xadb-20261020-r1.json": {
+      "path": "evidence/dev2-journal-binary-mapping-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV2 journal 대기 stack의 설치 커널 binary 대응과 한계"
     }
   }
 }

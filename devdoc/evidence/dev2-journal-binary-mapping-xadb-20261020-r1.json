@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-20",
+  "classification": "D2_STATIC_DIAGNOSTIC_FOLLOWUP",
+  "owner": "/root",
+  "status": "TWO_CAPTURED_OFFSETS_MAPPED",
+  "review_status": "INDEPENDENT_STATIC_MAPPING_REVIEW_COMPLETE",
+  "previous_evidence_ref": "dev2-journal-diagnostic-xadb-20261020-r1.json",
+  "source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+  "product_changes": 0,
+  "new_product_runs": 0,
+  "new_capture_runs": 0,
+  "host_setting_changes": 0,
+  "running_and_extracted_elf_build_id": "338e542e384c46228f7a378babc0f9bb2b6a5997",
+  "kernel_source_revision": "740b32353f43e9b00d0350d6fa7b29a6667deabd",
+  "reports": {
+    "static_mapping": {
+      "path": "/home/et16/xadb-kernel-7.0.0-38.38-research/binary-offsets-r1/report.json",
+      "bytes": 8895,
+      "sha256": "9f093ed919aafcdce277609f71b30411abf5932bd8aab9f8a8e618d4701a3b2f"
+    },
+    "independent_mapping_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/jbd-binary-mapping-review.json",
+      "bytes": 6761,
+      "sha256": "555bc183742bf1389aba8b043eae00b9c4e0a0da756f51d2642b9003c72a4eb7"
+    },
+    "document_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/jbd-binary-document-review.json",
+      "bytes": 6242,
+      "sha256": "569591e015b5de94540d378de8a41d473d02d4354f3d171a5c2555d03b006069"
+    }
+  },
+  "identity": {
+    "method": "Extracted the installed boot image with the shipped extract-vmlinux; uncompressed ELF GNU build ID matches /sys/kernel/notes; six static/runtime symbol addresses have one KASLR relocation; installed package MD5 entries match retained image/map. This is not an independent reproducible build or package-signature audit.",
+    "boot_scope": "Current boot start precedes the retained capture launch; build ID is checked now against running kernel notes. Capture itself did not store a GNU build ID.",
+    "current_boot_start_utc": "2026-10-19T23:52:44+00:00",
+    "retained_capture_launch_utc": "2026-10-20T01:27:44.163935+00:00"
+  },
+  "method": "Function-entry-aligned x86-64 disassembly, exact rel32 call targets, argument/dataflow and surrounding control flow matched against the already verified exact-version source. Initial arbitrary-byte window disassemblies are retained but excluded from proof.",
+  "dwarf_source_line_mapping": false,
+  "mappings": [
+    {
+      "captured_return_offset": 3587,
+      "call_offset": 3582,
+      "call_address": "0xffffffff81a7d26e",
+      "return_address": "0xffffffff81a7d273",
+      "source_function": "jbd2_journal_commit_transaction",
+      "source_line": 808,
+      "buffer_kind": "TEMPORARY_METADATA_IO_BUFFER",
+      "reason": "Loop uses list head at rsp+0x88; r13 is buffer_head from b_assoc_buffers, call target is __wait_on_buffer, then cond_resched, __brelse/free_buffer_head and shadow-list refiling. This matches io_bufs metadata loop, not log_bufs revoke/descriptor loop.",
+      "retained_measured_wait_overlap_ns": 15661457
+    },
+    {
+      "captured_return_offset": 4778,
+      "call_offset": 4773,
+      "call_address": "0xffffffff81a7d715",
+      "return_address": "0xffffffff81a7d71a",
+      "source_function": "journal_wait_on_commit_record inlined in jbd2_journal_commit_transaction",
+      "source_line": 171,
+      "caller_source_line": 881,
+      "buffer_kind": "COMMIT_RECORD_BUFFER",
+      "reason": "rsp+0x78 is initialized NULL and passed by address as third argument to journal_submit_commit_record; its output is loaded into r14, checked, has dirty cleared, and is passed to __wait_on_buffer. Return branches to buffer_uptodate test and buffer reference release. This is the inlined cbh wait path.",
+      "retained_measured_wait_overlap_ns": 4000554830
+    }
+  ],
+  "excluded_inputs": "The first arbitrary-byte-window disassemblies start inside instructions and are retained only as initial inspection output. Mapping uses the function-entry-aligned disassembly.",
+  "limits": [
+    "Static mapping of the two captured return offsets only; source lines are control-flow correspondence, not DWARF line-table results.",
+    "The captured trace screen FAIL and PF04 four guardrail failures remain unchanged.",
+    "Function elapsed overlap is not physical-device service time or exclusive target-TID I/O ownership.",
+    "Commit-record buffer wait identification does not identify NVMe/cache/flush/scheduler causes or historical failed-pair causes.",
+    "No change to barriers, sync semantics, batching, root mount, or performance thresholds is justified."
+  ],
+  "coarse_environment_perturbation_screen": "FAIL_RETAINED",
+  "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
+  "stage_status": "INCOMPLETE",
+  "performance_acceptance": "NOT_APPLICABLE_STATIC_ANALYSIS",
+  "whole_worktree_qualification": "NOT_CLAIMED",
+  "next_action": "Use this distinction when designing a future discriminating experiment; no new comparison can be justified as a favorable retry. Measurement-host/storage-journal isolation and controllable simultaneous workload information remain needed.",
+  "independent_review": {
+    "reviewer": "/root/dev2_closure_review",
+    "owner_adoption": "/root",
+    "status": "APPROVED_STATIC_MAPPING_WITH_LIMITS",
+    "blocking_findings": 0,
+    "scope": "20 artifact and 2 source/capture bindings; independent exact zstd frame extraction and ELF byte match; ELF/current notes build ID; package image/map and six-symbol relocation; entry-aligned disassembly, exact rel32 targets and argument/dataflow correspondence.",
+    "source_mapping_strength": "Strong static control/dataflow correspondence to exact-version source; not DWARF-certified source lines.",
+    "new_product_or_capture_runs": 0,
+    "acceptance_promotion": false
+  },
+  "document_review": {
+    "reviewer": "/root/dev2_closure_review",
+    "status": "PASS",
+    "blocking_findings": 0,
+    "owner_adoption": "/root",
+    "receipt_projection_omits": [
+      "reports",
+      "document_review"
+    ],
+    "canonical_json": "UTF-8, ensure_ascii=False, sort_keys=True, separators=(comma,colon), no newline",
+    "receipt_projection_bytes": 4610,
+    "receipt_projection_sha256": "1765d319df31d99a7da9c17f6d3ae268840218a2b44e9f3d40e75f492dc155d3"
+  }
+}

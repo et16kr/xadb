@@ -82,3 +82,5 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV2 PF04 가설 검토](dev2-pf04-hypothesis-review-xadb-20261020-r1.json) — 기존 추적·설치 버전 커널 소스의 독립 대조, 추가 Arc 비용과 max_batch_time 설정 가설의 한계; 새 제품 실행·인수 승격 없음
 
 - [DEV2 journal 대기 진단](dev2-journal-diagnostic-xadb-20261020-r1.json) — 고정 Off 1회 정답·512개 fsync/TID/단계 연결; 추적 영향·환경 확인 FAIL, 계측 없는 실행의 원인·성능 인수로 확대하지 않음
+
+- [DEV2 journal binary 대응](dev2-journal-binary-mapping-xadb-20261020-r1.json) — 실행 커널과 build ID가 같은 ELF에서 두 stack 위치를 metadata·commit record 버퍼 대기로 대응; 추가 제품 실행과 성능 인수 승격 없음

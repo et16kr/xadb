@@ -643,3 +643,19 @@ BPF hook은 전역에 연결되며 앞단 PID/dev 조건으로 실제 worker의 
 수집 로그는 소유한 tmpfs 공간에 기록하여 대상 ext4 journal에 로그 append를 추가하지 않았다. 제품 fixture는 ext4에 유지했고, 수집기 종료 뒤 byte/hash가 같은 사본을 보존하고 임시 공간을 제거했다. 실제 수집기에 독립 watchdog180초·강제 종료 유예5초를 두었으며, 부모 종료 helper에서는 짧은6초·유예2초 설정의 실제 root BPF/perf가 부모 종료 뒤 약5.985초에 모두 끝났다. 17개 분석 사전 사례와 정상/입력 전 실패 helper를 확인했다. 초기 header 오판·종료 시 출력 누락·timeout wrapper에 대한 중복 신호·helper 보존 권한 실패도 원본대로 남겼다. 이번 결과는 제품 수정이나 추가 인수 반복의 근거가 아니며, 남은 PF04 네 campaign과 최종 DEV2/B2/D0 인수 상태는 유지한다.
 
 `/root/dev2_closure_review`는 원시 기록에서 512개 cycle/TID/단계/I/O 겹침의 모든 행과 합계를 독립 재계산하고, 보존된 perf binary를 다시 해독하여 export와 일치함을 확인했다. 보존 byte에 독립 정답 checker를 적용하고 receipt에 연결된 파일44개·tmpfs 사본8개·고정 입력17개의 해시, 소유 PID/PGID·BPF link 정리도 확인했다. 차단 지적은0개이며 `/root`는 **추적 자료 한정 승인과 확인 조건 FAIL**을 함께 반영했다. 추적 연결 완료를 PF04 또는 DEV2 완료로 승격하지 않는다.
+
+<a id="dev2-journal-binary-mapping-20261020"></a>
+## DEV2 journal 대기 위치의 binary 대응
+
+**2026-10-20 · D2 / 정적 분석, 추가 제품·수집 실행0회.** [대응 receipt](../evidence/dev2-journal-binary-mapping-xadb-20261020-r1.json)는 앞선 추적의 두 `jbd2_journal_commit_transaction` return offset을 설치 kernel binary와 연결한다. `/boot`의 image를 읽기 전용 복사하여 배포된 추출기로 ELF를 꺼냈고, GNU build ID `338e542e384c46228f7a378babc0f9bb2b6a5997`이 실행 kernel notes와 일치했다. image·System.map은 설치 package의 MD5 항목과 일치하고, 여섯 함수의 map/runtime 주소 차이는 동일했다. 현재 boot 시작은 보존된 추적 시작보다 이전이다. build ID는 이번에 확인했으며 원래 수집 때 직접 저장한 값은 아니다. 재현 build나 배포 서명 검증을 주장하지 않는다.
+
+ELF에는 symbol table·DWARF가 없어 줄 번호를 직접 조회하지 않았다. 함수 시작에서 디코드한 기계어의 호출 대상·인자·분기·해제 흐름을 이미 검토한 동일 버전 source와 대조했다. 처음 임의 byte 위치에서 시작한 부분 disassembly는 명령 경계가 어긋나므로 증거에서 제외했다.
+
+| 기존 stack return offset | 대응하는 대기 | 구분 근거 |
+| --- | --- | --- |
+| +3587 | `io_bufs`의 임시 metadata buffer | `__wait_on_buffer` 뒤 `cond_resched`, buffer 해제와 shadow list 재배치가 이어짐 |
+| +4778 | commit record buffer | `journal_submit_commit_record`의 출력 `cbh`를 읽어 dirty 해제·대기·uptodate 검사·참조 해제하는 inline 경로 |
+
+이 대응은 기존 두 stack에 귀속된 겹침15,661,457ns와4,000,554,830ns의 **코드 위치**를 구분한다. 새로운 시간 측정은 아니다. `io_schedule` 경과 시간의 장치 service time 해석, 각 I/O의 worker TID 소유, 과거 실패 pair 원인 또는 kernel 결함은 여전히 확정하지 않는다. 앞선 추적 영향·환경 확인 FAIL과 PF04 네 비용 한도 FAIL도 유지한다. barrier·sync·mount 설정 변경이나 추가 인수 반복을 이 정적 분석으로 정당화하지 않는다.
+
+`/root/dev2_closure_review`는 압축 frame 경계를 독립적으로 찾아 동일 ELF byte를 재구성하고, 함수 시작에서 다시 디코드해 보존본과 일치함을 확인했다. 두 호출의 실제 상대 주소와 대상, 인자·buffer 수명 흐름, artifact20개와 source/추적 입력2개의 연결을 확인했으며 차단 지적은0개다. `/root`는 정적 코드 대응에 한정하여 반영했다. 다음 비교 실행에는 사용할 host·경로, 다른 writer와 journal을 공유하는지, CPU·스토리지 동시 작업을 통제할 수 있는 시간대가 필요하다.
