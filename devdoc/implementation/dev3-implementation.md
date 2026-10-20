@@ -57,6 +57,10 @@ M03/M06 source 동결 뒤 `/root/dev3_review`는 `devdoc/contracts/dev3-transact
 
 root는 `devdoc/contracts/dev3-overflow-format.md`, `crates/engine/src/storage/overflow.rs`, `overflow_tests.rs`의 row overflow 표현을 담당한다. 기존 page/ref를 소비하는 immutable chunk byte·고정 chain 위치/길이/digest 검산만 정의하며, 실제 page 할당·chain I/O·row 공개·horizon 회수는 포함하지 않는다. 상세 계약과 구현은 다른 담당의 독립 검토 뒤 통합한다.
 
+첫 구현 commit `d58c26b` 이후 `/root/dev3_model`은 `devdoc/contracts/dev3-wal-format.md`, `crates/engine/src/storage/wal_frame.rs`, `wal_frame_tests.rs`를, `/root/dev3_supply`는 `devdoc/contracts/dev3-allocation-format.md`, `crates/engine/src/storage/allocation_page.rs`, `allocation_page_tests.rs`를 독점 담당한다. 각각 byte/ID/한도·독립 vector·상태 판정을 먼저 제안하고 root의 독립 계약 검토 후 표현 구현을 시작한다. 실제 append/sync·redo·extent 확장·예약 token 발급/회수는 F04/F05와 해당 모델 이후 별도 통합한다. 공유 API/형식 변경이 필요하면 먼저 조정하며 root가 공유 module과 색인을 수정한다.
+
+transaction 표현·leaf checker 검토가 끝난 뒤 `/root/dev3_review`는 `devdoc/contracts/dev3-row-format.md`, `crates/engine/src/storage/row_record.rs`, `row_record_tests.rs`의 무효과 row/index version cell과 canonical row bytes를 담당한다. 기존 tree의 value 영역·transaction identity·overflow 표현을 소비하며 schema·visibility·실제 row 변경을 완성한 것으로 처리하지 않는다. 상세 계약을 root가 먼저 검토하고 구현을 진행한다.
+
 <a id="key-leaf"></a>
 ### 복합 key의 제한된 검증
 
@@ -193,6 +197,22 @@ runner 검토에서는 0개 시험·누락 witness·잘못된 반례/JSON 타입
 첫 `artifacts/dev3/leaf-wotbjvtm` 실행은 page/model에 통과했지만 하위 Clippy의 `map_entry`에서 실패했다. [실패 receipt](../evidence/dev3-leaf-xadb-20261020-r0.json)를 보존한다. 수정 후 새 `artifacts/dev3/leaf-q_h1yrhv`에서 최종 검사를 처음부터 실행했다. source export·retained binary·stdout·각 log hash·model witness/counterexample은 이 bundle에 남아 있다. DEV2 kernel의 짧은 export는 `/home/et16/x3k-iag4ivl3`이며 handoff와 명령 로그도 같은 leaf bundle에 보존했다.
 
 실행 증거는 Linux 로컬 개발 환경에 귀속한다. 새로운 계측 성능 비교·30분 DEV3 fuzz/thread·공식 배포·보호 CI는 실행하지 않았다. 계약의 byte/pin 논리 검증과 실제 디스크 엔진 인수를 구별한다.
+
+<a id="tree-overflow-transaction"></a>
+## tree·overflow·거래 표현 통합
+
+첫 commit `d58c26b` 다음 묶음은 [tree](../contracts/dev3-tree-format.md), [overflow](../contracts/dev3-overflow-format.md), [거래 표현](../contracts/dev3-transaction-format.md)의 무효과 codec이다. tree는 정렬·child identity·routing·byte 기준 split 위치를, overflow는 고정 chunk·완결 순서·주소 중복·전체 digest를 검산한다. 거래 표현은 TxnId/TxnRef·물리 StatusSlotRef·논리 행 버전·VersionStamp와192-byte status cell을 구분한다. 실제 tree 변경·파일 I/O·할당·상태 전이·참조 pin·회수·복구 obligation은 아직 연결하지 않았다.
+
+| 독립 검토 | 확인한 내용·실행 범위 |
+| --- | --- |
+| tree: `/root/dev3_model` | 전체 계약·source/tests와6개 독립 golden, 정렬/child alias·분할 보존 검토. 별도 보존 사본에서9개 시험 PASS, `/tmp/xadb-tree-independent-review-0lkwgrdk/validation.json`. root가 DB literal의 `0x11` 표기와 oversize 오류 설명을 정정했으며 source/tests는 불변 |
+| overflow: `/root/dev3_supply` | 순서·동일 주소의 incarnation alias·실패 후 verifier 상태 보존·작은 고정 메모리 검토. 독립 Python으로 literal/profile16개 SHA 검산. root가 visited-only cycle·실패한 finish 뒤 계속 처리·empty/2-cell 반례를 보강하고8개 시험 PASS. 2-cell 입력이 정상 chunk를 포함하도록 마지막 fixture를 정정하여 해당 guard를 직접 검증 |
+| transaction: `/root` | 전체 byte/state/namespace/lookup·encoder 무효과 검토. Python struct로12개 literal을 production 없이 재구성하여 일치 확인.14개 허용 상태·226개 거절 상태, historical epoch와 물리/논리 generation 구별 확인. 별도 기록 `artifacts/dev3/transaction-independent-root/review.json` |
+| leaf runner: `/root/dev3_review` | 실제 Rust tree9/overflow8/transaction8 목록과 runner 대조. 별도7개 자기검사와 malformed 결과59개 모두 거절. `artifacts/dev3/leaf-review-1nwdxoa1/review.json`. hash 검사는 F07 파일 동결·전후 디스크 변경 검출이며 bytecode 인증·compile/read 경쟁 방어·보호 CI가 아님 |
+
+transaction 첫 국소 실행은 V07/V11 hex 전사의 여분 zero로 fixture parser에서 실패했다. `artifacts/dev3/transaction-leaf-33tydcg7`의 source·계약·로그를 보존했다. offset·크기·상태·시험 분모를 바꾸지 않고 전사만 고친 새 실행 `artifacts/dev3/transaction-leaf-6oqixkko`에서8개 시험·engine Clippy·소유 파일 fmt가 통과했다. 실행 당시 계약 hash와 이후 D0 상태 기록을 구별하며 이전 receipt를 덮어쓰지 않았다.
+
+통합 leaf의 보존 source는 `artifacts/dev3/leaf-2lgnrs9h/source`, 지문은 `97171da71471a479063a6d5217d794aebfc7655c7035eadbf4ee178835f547e9`다. 같은 지문의 별도 짧은 export `/home/et16/x3k-ombuok44/source`에서 현재-build DEV2 kernel18개 check, native33셀×3회=99셀·독립 oracle·cache-loss/thread 검사를 통과했다. [원본 복구 receipt](../evidence/dev3-expressions-dev2-kernel-xadb-20261020-r1.json)의 SHA-256은 `a10d020d5cc767fde8379ca8bdca3e9b7b477a07922ad0d3e48612536b233668`이다. DEV2의 기존 capability 회귀이며 DEV3 disk 복구 인수로 확대하지 않는다. 같은 source의 [leaf 통합 원본](../evidence/dev3-expressions-leaf-xadb-20261020-r1.json)과 [하위 회귀 원본](../evidence/dev3-expressions-dev2-regression-xadb-20261020-r1.json)도 PASS다. engine 표현43개(page7/key5/anchor4/UndoRef2/tree9/overflow8/transaction8), foundation scalar3개, 부분 모델 정상4/결함8을 확인했다. DEV0/1과 DEV2 P0/K0 회귀는 해당 runner의 고정 범위이며 성능·30분 stress·DEV3 실제 disk 인수는 포함하지 않는다.
 
 <a id="remaining"></a>
 ## 다음 구현의 경계

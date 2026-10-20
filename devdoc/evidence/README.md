@@ -1,5 +1,9 @@
 # XADB 조사·실행 증거
 
+2026-10-20 [tree·overflow·거래 표현 통합 receipt](dev3-expressions-leaf-xadb-20261020-r1.json)와 [동일 소스의 하위 회귀](dev3-expressions-dev2-regression-xadb-20261020-r1.json)를 보존했다. engine 표현43개·foundation scalar3개·부분 모델 정상4/결함8 및 DEV0/1/2 회귀 PASS이며, 아래 복구 receipt와 같은 지문이다. DEV3 전체 인수는 미완료다.
+
+2026-10-20 [tree·overflow·거래 표현 소스의 DEV2 복구 receipt](dev3-expressions-dev2-kernel-xadb-20261020-r1.json)는 동일 보존 source에서18개 check와 native99셀을 통과했다. 새 DEV3 디스크 복구 증거가 아니며 [표현 통합 범위](../implementation/dev3-implementation.md#tree-overflow-transaction)를 따른다.
+
 2026-10-20 [M01–M06 원본 receipt](dev3-models-xadb-20261020-r1.json)는 동일 보존 source에서 정상457·지정 반례127·예산 검사6·M05 workspace 회귀를 통과했다. M06의20개 비적용 경계는 실행 PASS와 구분한다. 유한 모델 검증이며 실제 disk·thread·전체 S0/F05·DEV3 인수가 아니다. [독립 검토·범위](../implementation/dev3-implementation.md#models-all)를 따른다.
 
 2026-10-20 [M04 원본 receipt](dev3-m04-xadb-20261020-r1.json)는 정상5·결함10과 예산 검사를 별도 보존 source에서 실행했다. cap 미완주 이력을 보존한 정확 상태 동치 적용이며, DPT 기반 I/O 선정·실제 frame mapping은 이 모델의 증거가 아니다. [범위·제한](../implementation/dev3-implementation.md#model-4)을 따른다.

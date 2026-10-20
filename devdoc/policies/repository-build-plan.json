@@ -536,6 +536,36 @@
       "responsibility": "16 KiB internal page envelope codec only; no disk I/O, buffer, cell semantics or S1 acceptance",
       "validation_status": "LOCAL_VERIFIED_ENVELOPE_ONLY",
       "contract_ref": "dev3-page-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/tree_page",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Sorted tree cells, routing and byte split decisions; no tree mutation or I/O",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-tree-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/overflow",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Row overflow chunk and bounded streaming validation; no allocation, I/O or reclamation",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-overflow-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/transaction_record",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Transaction identities, logical row version and status cells; no directory or transaction effects",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-transaction-format.md"
     }
   ],
   "builds": [
@@ -942,7 +972,14 @@
     "progress_receipt_helper": "scripts/dev3_progress_receipts.py",
     "progress_checker_tests": "scripts/test_dev3_progress_receipts.py",
     "explicit_selection_required": true,
-    "registered_models": ["M01", "M02", "M03", "M04", "M05", "M06"],
+    "registered_models": [
+      "M01",
+      "M02",
+      "M03",
+      "M04",
+      "M05",
+      "M06"
+    ],
     "source_roots_changed": false,
     "dependencies_changed": false,
     "full_stage_acceptance": false,

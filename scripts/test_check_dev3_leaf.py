@@ -9,7 +9,8 @@ import unittest
 
 from check_dev3_leaf import (
     ANCHOR_TESTS, KEY_TESTS, MODEL_TEST, NEGATIVE_CASES, NORMAL_CASES, PAGE_TESTS, REQUIRED_WITNESSES,
-    SCALAR_KEY_TESTS, UNDO_REF_TESTS, VECTOR_RESULT, VIOLATIONS, check_model_output, check_named_tests,
+    OVERFLOW_TESTS, SCALAR_KEY_TESTS, TRANSACTION_TESTS, TREE_TESTS, UNDO_REF_TESTS,
+    VECTOR_RESULT, VIOLATIONS, check_model_output, check_named_tests,
     check_page_output, check_vectors, run_logged,
 )
 
@@ -106,6 +107,9 @@ class ReceiptTests(unittest.TestCase):
             ('storage::key::tests::', KEY_TESTS), ('', SCALAR_KEY_TESTS),
             ('storage::anchor::tests::', ANCHOR_TESTS),
             ('storage::undo_ref::tests::', UNDO_REF_TESTS),
+            ('storage::tree_page::tests::', TREE_TESTS),
+            ('storage::overflow::tests::', OVERFLOW_TESTS),
+            ('storage::transaction_record::tests::', TRANSACTION_TESTS),
         ]:
             lines = [f'test {prefix}{name} ... ok' for name in sorted(expected)]
             summary = f'test result: ok. {len(expected)} passed; 0 failed; 0 ignored;'

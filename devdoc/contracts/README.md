@@ -6,6 +6,9 @@
 
 - [DEV3 복합 key 표현](dev3-key-format.md) — F01 scalar/composite·RowId bytes와 무효과 비교; index 실행·unique 인수 제외
 - [DEV3 PageRef·UndoRef·안정 anchor 표현](dev3-reference-format.md) — 참조·root descriptor의 무효과 byte 검증; 실제 pin·SMO·undo 회수 제외
+- [DEV3 공통 tree page 표현](dev3-tree-format.md) — 정렬 cell·경로 선택·byte 기준 분할 위치; 실제 SMO·파일 I/O 제외
+- [DEV3 row overflow 표현](dev3-overflow-format.md) — 고정 chunk·streaming 순서·길이·digest 검산; 실제 할당·읽기·회수 제외
+- [DEV3 거래 identity·상태 표현](dev3-transaction-format.md) — 논리/물리 참조·행 버전·status cell; 실제 directory·거래·복구 효과 제외
 - [DEV3 M01/M02 graph 모델의 두 번째 동결](dev3-undo-model.md) — edge 중복도·논리 undo와 snapshot/pin 확장; 세부 동결·실행 상태는 원문 참조
 - [DEV3 M03 변경 순서·행 관측·진행 모델](dev3-progress-model.md) — 관측 identity·pin/latch·FIFO의 실행 전 모델 계약
 - [DEV3 M06 예약·복구 bootstrap 모델](dev3-reservation-model.md) — 자원 소유·재장애 두 슬롯·진행의 실행 전 모델 계약

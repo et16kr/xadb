@@ -847,6 +847,36 @@
       "path": "evidence/dev3-dev2-regression-xadb-20261020-r1.json",
       "role": "evidence",
       "title": "DEV3 첫 leaf와 같은 소스의 DEV2 P0/K0·DEV0/1 회귀"
+    },
+    "dev3-tree-format.md": {
+      "path": "contracts/dev3-tree-format.md",
+      "role": "contracts",
+      "title": "DEV3 공통 tree page 표현"
+    },
+    "dev3-overflow-format.md": {
+      "path": "contracts/dev3-overflow-format.md",
+      "role": "contracts",
+      "title": "DEV3 row overflow 표현"
+    },
+    "dev3-transaction-format.md": {
+      "path": "contracts/dev3-transaction-format.md",
+      "role": "contracts",
+      "title": "DEV3 거래 identity·상태 cell 표현"
+    },
+    "dev3-expressions-dev2-kernel-xadb-20261020-r1.json": {
+      "path": "evidence/dev3-expressions-dev2-kernel-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV3 tree·overflow·거래 표현 소스의 DEV2 복구 원본 실행 결과"
+    },
+    "dev3-expressions-leaf-xadb-20261020-r1.json": {
+      "path": "evidence/dev3-expressions-leaf-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV3 tree·overflow·거래 표현 통합 원본 실행 결과"
+    },
+    "dev3-expressions-dev2-regression-xadb-20261020-r1.json": {
+      "path": "evidence/dev3-expressions-dev2-regression-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV3 tree·overflow·거래 표현 소스의 DEV2 P0/K0·DEV0/1 회귀"
     }
   }
 }

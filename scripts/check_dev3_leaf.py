@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Verify DEV3 page/key/reference expressions and M02-P01, never DEV3/S1."""
+"""Verify DEV3 page/key/reference/tree/overflow/transaction expressions and M02-P01."""
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -13,6 +14,13 @@ import sys
 import tempfile
 
 sys.dont_write_bytecode = True
+CHECKER_DIRECTORY = Path(__file__).resolve().parent
+# F07 freezes these files during execution. Disk hashes detect ordinary drift;
+# this local check is not bytecode attestation or a defense against compile/read
+# races, preloaded module injection, or a malicious writer.
+LOADED_CHECKER_HASHES = {
+    'scripts/' + name: hashlib.sha256((CHECKER_DIRECTORY / name).read_bytes()).hexdigest()
+    for name in ('check_dev3_leaf.py', 'check_dev0.py', 'comm_campaign.py')}
 from check_dev0 import check_report_paths, digest, source_fingerprint
 from comm_campaign import capture_source, identity, write_json
 
@@ -47,6 +55,37 @@ ANCHOR_TESTS = {
 UNDO_REF_TESTS = {
     'page_and_undo_references_match_independent_literals_and_exact_lengths',
     'reference_decoders_reject_zero_identity_reserved_and_out_of_range_slots',
+}
+TREE_TESTS = {
+    'tree_golden_pages_and_cells',
+    'tree_leaf_lower_bound_matches_typed_oracle',
+    'tree_internal_routing_and_child_expectations',
+    'tree_rejects_checksummed_structural_damage',
+    'tree_enforces_entry_page_and_output_limits',
+    'tree_leaf_split_uses_bytes',
+    'tree_internal_split_promotes_separator',
+    'tree_child_alias_and_kind_level_guards',
+    'tree_encoders_preserve_outputs',
+}
+OVERFLOW_TESTS = {
+    'overflow_head_literal_and_limits',
+    'overflow_page_literal',
+    'overflow_chain_fixed_boundaries',
+    'overflow_rejects_checksummed_damage',
+    'overflow_rejects_links_and_identity',
+    'overflow_verifier_requires_complete_order_and_digest',
+    'overflow_streaming_profiles',
+    'overflow_encoders_preserve_outputs',
+}
+TRANSACTION_TESTS = {
+    'identity_literals_and_limits_are_canonical',
+    'stamp_and_logical_version_identities_are_distinct',
+    'status_literals_preserve_rollback_and_terminal_heads',
+    'all_length_boundaries_reject_without_output_changes',
+    'fixed_corrupt_fields_are_rejected',
+    'status_lookup_binds_logical_and_physical_identity',
+    'state_and_namespace_matrix_is_exact',
+    'generated_transaction_records_roundtrip_without_effects',
 }
 MODEL_TEST = 'snapshot_lifecycle_partial_model_exhaustive'
 MODEL_BUDGET_TEST = 'snapshot_model_budget_exhaustion_is_inconclusive'
@@ -231,9 +270,10 @@ def main():
     source = session / 'source'
     report = {
         'schema_version': 1, 'date': datetime.now(timezone.utc).isoformat(),
-        'scope': 'DEV3 page/key/reference expressions + D3-M02-P01; no disk engine or S1 acceptance',
+        'scope': 'DEV3 page/key/reference/tree/overflow/transaction expressions + D3-M02-P01; no disk engine or S1 acceptance',
         'status': 'RUNNING', 'origin': identity(ROOT), 'artifact_directory': str(session),
         'dev3_acceptance': 'INCOMPLETE', 'checks': [], 'builds': [],
+        'checker_identity_scope': 'F07 file freeze and before/after disk hashes; not bytecode attestation or protected CI',
     }
     environment = os.environ.copy()
     for key in list(environment):
@@ -266,10 +306,16 @@ def main():
     code = 0
     try:
         report['source_sha256'] = capture_source(ROOT, source)
+        report['loaded_checker_sha256'] = LOADED_CHECKER_HASHES
+        for path, expected in LOADED_CHECKER_HASHES.items():
+            if digest(source / path) != expected or digest(ROOT / path) != expected:
+                raise ValueError(f'loaded checker differs from retained source: {path}')
         report['contract_sha256'] = {
             name: digest(source / name) for name in [
                 'devdoc/contracts/dev3-page-format.md', 'devdoc/contracts/dev3-key-format.md',
                 'devdoc/contracts/dev3-reference-format.md',
+                'devdoc/contracts/dev3-tree-format.md', 'devdoc/contracts/dev3-overflow-format.md',
+                'devdoc/contracts/dev3-transaction-format.md',
                 'devdoc/contracts/dev3-snapshot-model.md']}
         write_json(session / 'manifest.json', report)
         report['toolchain'] = run('toolchain', ['rustc', '-Vv'])
@@ -284,7 +330,9 @@ def main():
         report['page_tests'] = check_page_output(output, 0)
         output = run('key', [page, 'storage::key::tests::', '--nocapture', '--test-threads=1'])
         report['key_tests'] = check_named_tests(output, 0, 'storage::key::tests::', KEY_TESTS)
-        for name, expected in [('anchor', ANCHOR_TESTS), ('undo_ref', UNDO_REF_TESTS)]:
+        for name, expected in [('anchor', ANCHOR_TESTS), ('undo_ref', UNDO_REF_TESTS),
+                               ('tree_page', TREE_TESTS), ('overflow', OVERFLOW_TESTS),
+                               ('transaction_record', TRANSACTION_TESTS)]:
             prefix = f'storage::{name}::tests::'
             output = run(name, [page, prefix, '--nocapture', '--test-threads=1'])
             report[f'{name}_tests'] = check_named_tests(output, 0, prefix, expected)
@@ -320,6 +368,9 @@ def main():
         for binary in report['builds']:
             if digest(Path(binary['binary'])) != binary['sha256']:
                 raise ValueError('retained binary changed during verification')
+        for path, expected in LOADED_CHECKER_HASHES.items():
+            if digest(ROOT / path) != expected:
+                raise ValueError(f'loaded checker changed during verification: {path}')
         report['status'] = 'PASS'
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
         report['status'] = 'FAIL'

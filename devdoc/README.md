@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-20 [DEV3 tree·overflow·거래 표현](implementation/dev3-implementation.md#tree-overflow-transaction): 독립 검토와 보존 source의 표현 시험·DEV0/1/2 회귀·같은 source의 DEV2 복구99셀을 통과했다. 실제 DEV3 disk 효과와 전체 인수는 미완료다.
+
 2026-10-20 [DEV3 유한 모델 통합](implementation/dev3-implementation.md#models-all): M01–M06의 고정 범위를 같은 보존 source에서 실행하여 정상457·지정 반례127 PASS를 확인했다. 모델은 실제 disk/thread·opcode 자원표·DEV3 전체 인수를 대신하지 않는다.
 
 2026-10-20 [DEV3 후속 표현·모델](implementation/dev3-implementation.md#models-125): composite key·PageRef·UndoRef·anchor 표현과 M01/M02/M05를 독립 검토·보존 소스로 실행했다. 모델 정상32/결함44 PASS이며 M03/M04/M06 통합·실제 disk·전체 DEV3 인수는 미완료다.

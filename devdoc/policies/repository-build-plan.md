@@ -176,6 +176,9 @@ worker 실행 관계는 controller의 engine import를 뜻하지 않는다. `xad
 | crates/engine/src/storage/key.rs | DEV3 | XADB-028 | 구현된 내부 composite/physical key codec·비교. scalar bytes는 foundation codec 단일 구현, index I/O·unique 실행 제외 |
 | crates/engine/src/storage/anchor.rs | DEV3 | XADB-028 | 안정 root descriptor와 root envelope 대조. 실제 tree/SMO·pin 제외 |
 | crates/engine/src/storage/undo_ref.rs | DEV3 | XADB-028 | PageRef·slot/generation의 UndoRef 표현. 실제 undo record·수명/회수 제외 |
+| crates/engine/src/storage/tree_page.rs | DEV3 | XADB-028 | 공통 tree cell·정렬·routing·byte 분할 표현. 실제 tree 변경·SMO 제외 |
+| crates/engine/src/storage/overflow.rs | DEV3 | XADB-028 | row overflow chunk와 bounded streaming 검산. 실제 할당·I/O·회수 제외 |
+| crates/engine/src/storage/transaction_record.rs | DEV3 | XADB-028 | 거래 identity·논리 행 버전·status cell 표현. 실제 directory·상태 전이·복구 제외 |
 | crates/engine/src/storage/locator | DEV3 | XADB-021 | snapshot별 RowUID 해석·상한 있는 DISK mapping |
 | crates/engine/src/storage/index | DEV3 | XADB-028 | native key·RowUID·cursor와 공통 transaction |
 | crates/engine/src/storage/partition | PART | XADB-030 | membership·routing·local index·원자적 행 이동 |

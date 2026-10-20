@@ -1,0 +1,822 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-20T14:29:48.995693+00:00",
+  "status": "PASS",
+  "scope": "DEV2 retained-source kernel correctness leaf",
+  "dev2_stage_status": "INCOMPLETE",
+  "performance": "NOT_RUN",
+  "full_v3": "NOT_RUN",
+  "bounded_exhaustive": "NOT_RUN",
+  "lower_regression": "NOT_RUN",
+  "protected_ci": "NOT_RUN",
+  "artifact_directory": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g",
+  "checks": [
+    {
+      "id": "kernel-runner-self-tests",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_dev2_kernel.py",
+        "-v"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:29:49.015312+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {},
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.06366931800585007,
+      "binary_sha256_after": {},
+      "finished_at": "2026-10-20T14:29:49.079014+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/kernel-runner-self-tests.log",
+        "sha256": "5eb1787b3577ce010f8461fe678a3c9e01b6fd3c876811cf197403b8f98f80cf"
+      }
+    },
+    {
+      "id": "toolchain",
+      "command": [
+        "rustc",
+        "-Vv"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:29:49.079242+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {},
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.03176181300659664,
+      "binary_sha256_after": {},
+      "finished_at": "2026-10-20T14:29:49.111030+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/toolchain.log",
+        "sha256": "4fdff2578428e9c5c08ddd7a0d3079c1a106b1cdaa46e73e46f7cd32b0fb9cad"
+      }
+    },
+    {
+      "id": "build-engine",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--test",
+        "transaction",
+        "--test",
+        "durable_recovery",
+        "--release",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:29:49.111203+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {},
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 3.7240914950016304,
+      "binary_sha256_after": {},
+      "finished_at": "2026-10-20T14:29:52.835348+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/build-engine.log",
+        "sha256": "95b156f0ccd896b1df7cd3872562b75f16003fdd8002214d96775f92bda7b72d"
+      }
+    },
+    {
+      "id": "build-native",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--test",
+        "native_fault",
+        "--test",
+        "kernel_stress",
+        "--release",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:29:52.903167+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 13.601737338998646,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d"
+      },
+      "finished_at": "2026-10-20T14:30:06.545254+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/build-native.log",
+        "sha256": "0484f60ea00048dc943d95cb876897d15a28275aea7b4b032ffd1e278e8f7b15"
+      }
+    },
+    {
+      "id": "independent-oracle-self-tests",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_dev2_durable*.py",
+        "-v"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:30:06.723467+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.3670145889991545,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:30:07.218330+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/independent-oracle-self-tests.log",
+        "sha256": "15308eaf37765f93b657baaecb3f0ab4b1419a877f7115a47d872e2728072953"
+      }
+    },
+    {
+      "id": "engine-units-inventory",
+      "command": [
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test",
+        "--list"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:30:07.281394+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.001387196003634017,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:30:07.402537+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/engine-units-inventory.log",
+        "sha256": "9f2eaae424be1e2c49c317720a1c69429b689f276b9e7bf226899142d923612d"
+      }
+    },
+    {
+      "id": "engine-units",
+      "command": [
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:30:07.461553+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.6653525330038974,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:30:08.244624+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/engine-units.log",
+        "sha256": "a87546699f3bbc48edcf566c78039e9227876651a2452b1923c226495679bcc6"
+      }
+    },
+    {
+      "id": "transactions-inventory",
+      "command": [
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test",
+        "--list"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:30:08.302886+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.0015622819992131554,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:30:08.421711+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/transactions-inventory.log",
+        "sha256": "b0878b234166172d7220abfc1ab84bbdc5af86cc3907e99a736ea1e8713b9aef"
+      }
+    },
+    {
+      "id": "transactions",
+      "command": [
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:30:08.480685+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.003644571996119339,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:30:08.600706+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/transactions.log",
+        "sha256": "2b33e0fa9ab320620d456b100c5a24cecfed27d47bdc4234163557001ee13a0b"
+      }
+    },
+    {
+      "id": "cache-loss-cuts",
+      "command": [
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:30:08.658415+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 3.3190131150040543,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:30:12.094107+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/cache-loss-cuts.log",
+        "sha256": "60075084dbeba7fbbcbb01bb7bc461c4d19c7e50f07f57a00a40eb88ebfe8127"
+      }
+    },
+    {
+      "id": "kernel-threads-v2",
+      "command": [
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:30:12.152461+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 45.38336929200159,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:30:57.651441+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/kernel-threads-v2.log",
+        "sha256": "acc384f8eb719729ad35e3f4c42dcf8cc6f63d69aa8dcff33328459d48c4de40"
+      },
+      "thread_receipts": {
+        "profile": {
+          "generator": "dev2-durable-thread-v1",
+          "seed_count": 64,
+          "writer_attempts_per_seed": 128,
+          "readers": 4,
+          "writers": 2,
+          "min_seconds": 0,
+          "power_loss": false
+        },
+        "result": {
+          "generator": "dev2-durable-thread-v1",
+          "elapsed_ms": 45377,
+          "rounds": 64,
+          "commits": 4096,
+          "conflicts": 4096,
+          "reader_row_checks": 4502846,
+          "sampler_checks": 2226847,
+          "sampler_overlap_begin": 42603,
+          "sampler_overlap_end": 41973,
+          "sampler_overlap_both": 39201,
+          "seed_visits": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "id": "native-inventory",
+      "command": [
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test",
+        "--list"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:30:57.709681+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.0014080570035730489,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:30:57.822799+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/native-inventory.log",
+        "sha256": "1be06d722cabf6b0840a59e801a30c6ad0ba039032b39ce0462ff25de64cb208"
+      }
+    },
+    {
+      "id": "native-0",
+      "command": [
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:30:57.943997+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 10.079035087001103,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:31:08.136634+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/native-0.log",
+        "sha256": "b67d7b398132c7ae042af798fe14ca7a82ae602fcbfdd2d17d9d7bbd6b546ddd"
+      },
+      "execution": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/execution-0.json",
+        "sha256": "ba45afed741b908d0bf0d54ca4fc4c4d4527fdf46c016a6a8d290168fb8f25f2"
+      }
+    },
+    {
+      "id": "oracle-0",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/dev2_durable_bridge.py",
+        "--artifacts",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/native-0",
+        "--output",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/oracle-0",
+        "--manifest",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/pre-run-manifest.json",
+        "--execution",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/execution-0.json"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:31:08.227306+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.21421548199577956,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:31:08.555899+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/oracle-0.log",
+        "sha256": "c18ca6df392b68022d886747b957fe8c1216ad4cf9c056142869aa41fa98fd13"
+      },
+      "strict_oracle_summary": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/oracle-0/summary.json",
+        "sha256": "c18ca6df392b68022d886747b957fe8c1216ad4cf9c056142869aa41fa98fd13"
+      }
+    },
+    {
+      "id": "native-1",
+      "command": [
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:31:08.646890+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 10.079591790999984,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:31:18.840245+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/native-1.log",
+        "sha256": "da279e635f8e71930771186604d00f55adac07bbfb5e74cc1eb45ec20cd984de"
+      },
+      "execution": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/execution-1.json",
+        "sha256": "9fb6750b75a7b5645eca42d4116d6fc237b7c256c4815b225051b421246664e8"
+      }
+    },
+    {
+      "id": "oracle-1",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/dev2_durable_bridge.py",
+        "--artifacts",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/native-1",
+        "--output",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/oracle-1",
+        "--manifest",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/pre-run-manifest.json",
+        "--execution",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/execution-1.json"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:31:18.930241+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.21410197899967898,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:31:19.259072+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/oracle-1.log",
+        "sha256": "90ba52a48cf33b820ca6152116d038def4a8ddb2821aa1b7dd4fd8e5b91a83ed"
+      },
+      "strict_oracle_summary": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/oracle-1/summary.json",
+        "sha256": "90ba52a48cf33b820ca6152116d038def4a8ddb2821aa1b7dd4fd8e5b91a83ed"
+      }
+    },
+    {
+      "id": "native-2",
+      "command": [
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:31:19.350287+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 10.279836336994777,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:31:29.744571+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/native-2.log",
+        "sha256": "e172cff2662c6204d4dcca561d3aae098b41f5227a6246afee414232fc32d461"
+      },
+      "execution": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/execution-2.json",
+        "sha256": "1de41f19957bcd752ddbbf3ba587c533d1b696195f049889d7f19dd3095f773f"
+      }
+    },
+    {
+      "id": "oracle-2",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/dev2_durable_bridge.py",
+        "--artifacts",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/native-2",
+        "--output",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/oracle-2",
+        "--manifest",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/pre-run-manifest.json",
+        "--execution",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/execution-2.json"
+      ],
+      "cwd": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+      "status": "PASS",
+      "started_at": "2026-10-20T14:31:29.835409+00:00",
+      "timeout_seconds": 1200,
+      "binary_sha256_before": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "remaining_group_signalled": false,
+      "elapsed_seconds": 0.21418579099554336,
+      "binary_sha256_after": {
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+        "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+      },
+      "finished_at": "2026-10-20T14:31:30.165466+00:00",
+      "log": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/oracle-2.log",
+        "sha256": "621a5add0051eaf6152f6f08efc9a2f6f473fe23cd24efc89fca8ffb2c56e91f"
+      },
+      "strict_oracle_summary": {
+        "path": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/oracle-2/summary.json",
+        "sha256": "621a5add0051eaf6152f6f08efc9a2f6f473fe23cd24efc89fca8ffb2c56e91f"
+      }
+    }
+  ],
+  "source_sha256": "97171da71471a479063a6d5217d794aebfc7655c7035eadbf4ee178835f547e9",
+  "source_root": "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/source",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n",
+  "retained_source_sha256_after": "97171da71471a479063a6d5217d794aebfc7655c7035eadbf4ee178835f547e9",
+  "live_source_sha256_after": "97171da71471a479063a6d5217d794aebfc7655c7035eadbf4ee178835f547e9",
+  "current_source_matches": true,
+  "retained_binary_sha256_before": {
+    "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+    "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+    "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+    "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+    "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+    "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+  },
+  "retained_binary_sha256_after": {
+    "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/transaction-test": "2fdc7d9252a18a13f7da4917c4e4dbd5f66e7c0aa361289050f9129af9b5c775",
+    "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/durable_recovery-test": "fac6fff58116f13a56d8323709d18ea9c8084f56a4a80e5b2440f7121b22e56a",
+    "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadb_engine-test": "dbae105bd2637688da1226b289d7dd61be6077589ee6c8643330b3f1af8da64d",
+    "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/xadbtest-durable-worker": "f4b2373070657dd91538795c0bf667d560218051623161ad8427b0db6fe5b54d",
+    "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/kernel_stress-test": "4fb34c65bcbee39ce1cc56cb90782804ceb4dd279e05a023e0a44f804f49ccc4",
+    "/home/et16/x3k-ombuok44/source/artifacts/d2k-08trt29g/binaries/native_fault-test": "52f85199132cc17ca886bd8f5a4fffc6860e4dde4c9347cd56776aff54984e99"
+  }
+}
