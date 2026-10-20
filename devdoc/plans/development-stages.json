@@ -123,7 +123,15 @@
         "dev3-implementation-plan.md",
         "disk-storage-design.md#architecture-review",
         "disk-storage-design.md#conflict-reserve-review"
-      ]
+      ],
+      "leaf_progress": {
+        "implementation_ref": "dev3-implementation.md",
+        "page_contract_ref": "dev3-page-format.md",
+        "partial_model_ref": "dev3-snapshot-model.md",
+        "scope": "Page envelope and M02-P01 only; stage execution_status remains the full disk-path acceptance status",
+        "status": "LOCAL_VERIFIED_LIMITED_SCOPE",
+        "evidence_ref": "dev3-leaf-xadb-20261020-r1.json"
+      }
     },
     {
       "id": "DEV4",

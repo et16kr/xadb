@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "product": "XADB",
-  "date": "2026-10-18",
+  "date": "2026-10-20",
   "storage_engine": "DISK_ONLY",
   "dev0": "PREVIOUS_SOURCE_VERIFIED",
   "dev1": "PREVIOUS_SOURCE_VERIFIED",
@@ -17,7 +17,7 @@
     "independent performance scalar checking and paired instrumentation/replay audit with retained release bundles"
   ],
   "durability": "IMPLEMENTED_VALIDATION_PENDING",
-  "disk_pages_and_indexes": "NOT_IMPLEMENTED",
+  "disk_pages_and_indexes": "PAGE_ENVELOPE_ONLY_NO_DISK_PATH_OR_INDEX",
   "sql": "NOT_IMPLEMENTED",
   "server": "NOT_IMPLEMENTED",
   "product_qualification": "NOT_RUN",
@@ -226,5 +226,24 @@
     "stage_status": "INCOMPLETE",
     "performance_acceptance": "NOT_APPLICABLE_STATIC_ANALYSIS",
     "whole_worktree_qualification": "NOT_CLAIMED"
+  },
+  "dev3_leaf": {
+    "implementation_ref": "dev3-implementation.md",
+    "status": "LOCAL_VERIFIED",
+    "scope": [
+      "page envelope codec",
+      "D3-M02-P01 partial model"
+    ],
+    "full_M02": "NOT_RUN",
+    "disk_io": "NOT_RUN",
+    "S1": "NOT_RUN",
+    "source_sha256": "3bc3dcd16fa443555f6cc084be22870e8c10674a8006c9da827b1a9615094ad1",
+    "evidence_refs": [
+      "dev3-leaf-xadb-20261020-r1.json",
+      "dev3-dev2-regression-xadb-20261020-r1.json",
+      "dev3-dev2-kernel-xadb-20261020-r1.json"
+    ],
+    "failed_attempt_ref": "dev3-leaf-xadb-20261020-r0.json",
+    "independent_review": "PASS"
   }
 }

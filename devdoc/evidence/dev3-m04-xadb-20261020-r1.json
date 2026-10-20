@@ -1,0 +1,1180 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-20T13:49:56.628634+00:00",
+  "scope": "selected DEV3 finite models only; no disk engine or S1 acceptance",
+  "selected_models": [
+    "M04"
+  ],
+  "status": "PASS",
+  "origin": {
+    "revision": "641f28ed666c73f1988bb8102b22c11d6023f3e1",
+    "tracked_diff_sha256": "fd955670a4a09c7eb99444e07781cd35da0e6c3d6a7d02c0ed6fd9ce6b1d4569",
+    "source_sha256": "67bbccfdfa571dc268ea7152ee444680fd7777833dc615ce76bb0c2b4f664070",
+    "lockfile_sha256": "f67269ca67484a0241bf06f22dee740fe6943bfe38d204193ab7fbcddec28a45"
+  },
+  "artifact_directory": "/home/et16/work/xadb/artifacts/dev3/models-7ck61v71",
+  "dev3_acceptance": "INCOMPLETE",
+  "checks": [
+    {
+      "id": "toolchain",
+      "command": [
+        "rustc",
+        "-Vv"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/models-7ck61v71/toolchain.log",
+      "log_sha256": "4fdff2578428e9c5c08ddd7a0d3079c1a106b1cdaa46e73e46f7cd32b0fb9cad",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "checker-self-tests",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_dev3_models.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/models-7ck61v71/checker-self-tests.log",
+      "log_sha256": "64687c347beaf01c2465e40d77de0c8df26f410e2630f8bc9300ce4244039804",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-dev3_recovery_model",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-reference",
+        "--release",
+        "--test",
+        "dev3_recovery_model",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/models-7ck61v71/build-dev3_recovery_model.log",
+      "log_sha256": "a2861a5a31b98e54a7f1971e58ae2ca3aa5f5b65e31105446d292284f00e8184",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "M04",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/models-7ck61v71/dev3_recovery_model-binary",
+        "recovery_atomic_groups_exhaustive",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/models-7ck61v71/M04.log",
+      "log_sha256": "44dcc8caba5972a28bcf466ccdce6c449de5220b30556db588e1eacff07a4e14",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "M04-auxiliary-0",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/models-7ck61v71/dev3_recovery_model-binary",
+        "recovery_model_budget_exhaustion_is_inconclusive",
+        "--exact"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/models-7ck61v71/M04-auxiliary-0.log",
+      "log_sha256": "83c2fc649f2556266844220eb71597db2817cde3ef4bc7222964c63b8b571b88",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "builds": [
+    {
+      "target": "dev3_recovery_model",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/models-7ck61v71/dev3_recovery_model-binary",
+      "sha256": "e1b729306d4bde8f02ef70cd7d7e756783c9be21d6cc9f684dc60f958a85c8fb"
+    }
+  ],
+  "models": {
+    "M04": [
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "clr_chain",
+        "mutant": "none",
+        "status": "PASS",
+        "states": 830107,
+        "transitions": 2321791,
+        "max_depth": 16,
+        "elapsed_ms": 1960,
+        "unexplored": 0,
+        "violation": null,
+        "missing_witnesses": [],
+        "witnesses_replayed": true,
+        "counterexample_replayed": false,
+        "counterexample": [],
+        "witnesses": {
+          "append_apply_gap": [
+            "append_group"
+          ],
+          "boot_recrash": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "crash_prefix_0"
+          ],
+          "boot_reserve": [
+            "crash_prefix_0",
+            "boot_reserve"
+          ],
+          "checkpoint_capture": [
+            "checkpoint_capture"
+          ],
+          "clr_atomic": [
+            "append_group",
+            "prepare_group_frames",
+            "apply_group"
+          ],
+          "group_frames_three": [
+            "append_group",
+            "prepare_group_frames"
+          ],
+          "home_flush": [
+            "home_flush_0"
+          ],
+          "partial_clr_recrash": [
+            "append_group",
+            "crash_prefix_1",
+            "boot_reserve",
+            "analysis",
+            "crash_prefix_1"
+          ],
+          "reader_winner_loser": [
+            "append_group",
+            "prepare_group_frames",
+            "apply_group",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group",
+            "wal_sync",
+            "verify_ready"
+          ],
+          "redo_all_pages": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page"
+          ],
+          "remaining_three": [
+            "append_group",
+            "prepare_group_frames",
+            "apply_group"
+          ],
+          "reservation_restored": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore"
+          ],
+          "restore_recrash": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "crash_prefix_0"
+          ],
+          "two_crashes": [
+            "crash_prefix_0",
+            "crash_prefix_0"
+          ],
+          "writer_recrash": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "rebase",
+            "writer_select",
+            "crash_prefix_0"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "partial_clr",
+        "mutant": "none",
+        "status": "PASS",
+        "states": 158208,
+        "transitions": 443299,
+        "max_depth": 16,
+        "elapsed_ms": 434,
+        "unexplored": 0,
+        "violation": null,
+        "missing_witnesses": [],
+        "witnesses_replayed": true,
+        "counterexample_replayed": false,
+        "counterexample": [],
+        "witnesses": {
+          "append_apply_gap": [
+            "append_group"
+          ],
+          "boot_reserve": [
+            "crash_prefix_1",
+            "boot_reserve"
+          ],
+          "checkpoint_capture": [
+            "checkpoint_capture"
+          ],
+          "clr_atomic": [
+            "append_group"
+          ],
+          "group_frames_three": [
+            "append_group",
+            "prepare_group_frames"
+          ],
+          "home_flush": [
+            "home_flush_0"
+          ],
+          "partial_clr_recrash": [
+            "crash_prefix_1"
+          ],
+          "reader_winner_loser": [
+            "append_group",
+            "prepare_group_frames",
+            "apply_group",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group",
+            "wal_sync",
+            "verify_ready"
+          ],
+          "recovery_writer_clr": [
+            "append_group",
+            "prepare_group_frames",
+            "apply_group"
+          ],
+          "redo_all_pages": [
+            "crash_prefix_1",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page"
+          ],
+          "remaining_three": [
+            "append_group"
+          ],
+          "reservation_restored": [
+            "crash_prefix_1",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore"
+          ],
+          "two_crashes": [
+            "crash_prefix_1"
+          ],
+          "writer_recrash": [
+            "crash_prefix_1"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "cut_queue",
+        "mutant": "none",
+        "status": "PASS",
+        "states": 386833,
+        "transitions": 1086065,
+        "max_depth": 16,
+        "elapsed_ms": 893,
+        "unexplored": 0,
+        "violation": null,
+        "missing_witnesses": [],
+        "witnesses_replayed": true,
+        "counterexample_replayed": false,
+        "counterexample": [],
+        "witnesses": {
+          "append_apply_gap": [
+            "append_group"
+          ],
+          "boot_recrash": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "crash_prefix_0"
+          ],
+          "boot_reserve": [
+            "crash_prefix_0",
+            "boot_reserve"
+          ],
+          "checkpoint_capture": [
+            "checkpoint_capture"
+          ],
+          "cursor_one_generation": [
+            "append_group",
+            "prepare_group_frames",
+            "apply_group",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group"
+          ],
+          "cursor_two_generation": [
+            "append_group",
+            "prepare_group_frames",
+            "apply_group",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group"
+          ],
+          "cut_count_queue": [
+            "append_group",
+            "prepare_group_frames",
+            "apply_group"
+          ],
+          "group_frames_three": [
+            "append_group",
+            "prepare_group_frames"
+          ],
+          "home_flush": [
+            "home_flush_0"
+          ],
+          "redo_all_pages": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page"
+          ],
+          "reservation_restored": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore"
+          ],
+          "restore_recrash": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "crash_prefix_0"
+          ],
+          "two_crashes": [
+            "crash_prefix_0",
+            "crash_prefix_0"
+          ],
+          "writer_recrash": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "rebase",
+            "writer_select",
+            "crash_prefix_0"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "commit_capture",
+        "mutant": "none",
+        "status": "PASS",
+        "states": 479880,
+        "transitions": 1258708,
+        "max_depth": 16,
+        "elapsed_ms": 1267,
+        "unexplored": 0,
+        "violation": null,
+        "missing_witnesses": [],
+        "witnesses_replayed": true,
+        "counterexample_replayed": false,
+        "counterexample": [],
+        "witnesses": {
+          "append_apply_gap": [
+            "prepare_group_frames"
+          ],
+          "boot_recrash": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "crash_prefix_0"
+          ],
+          "boot_reserve": [
+            "crash_prefix_0",
+            "boot_reserve"
+          ],
+          "checkpoint_capture": [
+            "prepare_group_frames",
+            "wal_sync",
+            "apply_group",
+            "checkpoint_capture"
+          ],
+          "clr_atomic": [
+            "prepare_group_frames",
+            "wal_sync",
+            "apply_group",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group"
+          ],
+          "commit_capture_blocked": [
+            "prepare_group_frames"
+          ],
+          "committed_capture": [
+            "prepare_group_frames",
+            "wal_sync",
+            "apply_group",
+            "checkpoint_capture"
+          ],
+          "group_frames_three": [
+            "prepare_group_frames"
+          ],
+          "home_flush": [
+            "home_flush_0"
+          ],
+          "partial_clr_recrash": [
+            "prepare_group_frames",
+            "wal_sync",
+            "apply_group",
+            "append_group",
+            "crash_prefix_2",
+            "boot_reserve",
+            "analysis",
+            "crash_prefix_2"
+          ],
+          "reader_winner_loser": [
+            "prepare_group_frames",
+            "wal_sync",
+            "apply_group",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group",
+            "wal_sync",
+            "verify_ready"
+          ],
+          "redo_all_pages": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page"
+          ],
+          "remaining_three": [
+            "prepare_group_frames",
+            "wal_sync",
+            "apply_group",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group"
+          ],
+          "reservation_restored": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore"
+          ],
+          "restore_recrash": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "crash_prefix_0"
+          ],
+          "two_crashes": [
+            "crash_prefix_0",
+            "crash_prefix_0"
+          ],
+          "writer_recrash": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "rebase",
+            "writer_select",
+            "crash_prefix_0"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "begin_removed",
+        "mutant": "none",
+        "status": "PASS",
+        "states": 166,
+        "transitions": 237,
+        "max_depth": 16,
+        "elapsed_ms": 0,
+        "unexplored": 0,
+        "violation": null,
+        "missing_witnesses": [],
+        "witnesses_replayed": true,
+        "counterexample_replayed": false,
+        "counterexample": [],
+        "witnesses": {
+          "analysis_without_begin": [
+            "boot_reserve",
+            "analysis"
+          ],
+          "append_apply_gap": [
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "rebase",
+            "writer_select",
+            "append_group"
+          ],
+          "boot_recrash": [
+            "boot_reserve",
+            "crash_prefix_0"
+          ],
+          "boot_reserve": [
+            "boot_reserve"
+          ],
+          "checkpoint_capture": [
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "rebase",
+            "writer_select",
+            "checkpoint_capture"
+          ],
+          "clr_atomic": [
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "rebase",
+            "writer_select",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group"
+          ],
+          "group_frames_three": [
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "rebase",
+            "writer_select",
+            "append_group",
+            "prepare_group_frames"
+          ],
+          "recovery_writer_clr": [
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "rebase",
+            "writer_select",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group"
+          ],
+          "redo_all_pages": [
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page"
+          ],
+          "remaining_three": [
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "rebase",
+            "writer_select",
+            "append_group",
+            "prepare_group_frames",
+            "apply_group"
+          ],
+          "reservation_restored": [
+            "boot_reserve",
+            "analysis",
+            "reserve_restore"
+          ],
+          "restore_recrash": [
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "crash_prefix_0"
+          ],
+          "two_crashes": [
+            "crash_prefix_0",
+            "crash_prefix_0"
+          ],
+          "writer_recrash": [
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "redo_page",
+            "rebase",
+            "writer_select",
+            "crash_prefix_0"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "clr_chain",
+        "mutant": "progress_without_effect",
+        "status": "EXPECTED_COUNTEREXAMPLE",
+        "states": 72,
+        "transitions": 116,
+        "max_depth": 3,
+        "elapsed_ms": 0,
+        "unexplored": 60,
+        "violation": "clr_effect_progress",
+        "missing_witnesses": [],
+        "witnesses_replayed": false,
+        "counterexample_replayed": true,
+        "counterexample": [
+          "append_group",
+          "prepare_group_frames",
+          "apply_group"
+        ],
+        "witnesses": {
+          "append_apply_gap": [
+            "append_group"
+          ],
+          "boot_reserve": [
+            "crash_prefix_0",
+            "boot_reserve"
+          ],
+          "checkpoint_capture": [
+            "checkpoint_capture"
+          ],
+          "group_frames_three": [
+            "append_group",
+            "prepare_group_frames"
+          ],
+          "home_flush": [
+            "home_flush_0"
+          ],
+          "two_crashes": [
+            "crash_prefix_0",
+            "crash_prefix_0"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "cut_queue",
+        "mutant": "count_without_cut",
+        "status": "EXPECTED_COUNTEREXAMPLE",
+        "states": 72,
+        "transitions": 116,
+        "max_depth": 3,
+        "elapsed_ms": 0,
+        "unexplored": 60,
+        "violation": "edge_count",
+        "missing_witnesses": [],
+        "witnesses_replayed": false,
+        "counterexample_replayed": true,
+        "counterexample": [
+          "append_group",
+          "prepare_group_frames",
+          "apply_group"
+        ],
+        "witnesses": {
+          "append_apply_gap": [
+            "append_group"
+          ],
+          "boot_reserve": [
+            "crash_prefix_0",
+            "boot_reserve"
+          ],
+          "checkpoint_capture": [
+            "checkpoint_capture"
+          ],
+          "group_frames_three": [
+            "append_group",
+            "prepare_group_frames"
+          ],
+          "home_flush": [
+            "home_flush_0"
+          ],
+          "two_crashes": [
+            "crash_prefix_0",
+            "crash_prefix_0"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "cut_queue",
+        "mutant": "release_without_cursor",
+        "status": "EXPECTED_COUNTEREXAMPLE",
+        "states": 2148,
+        "transitions": 4641,
+        "max_depth": 6,
+        "elapsed_ms": 3,
+        "unexplored": 1267,
+        "violation": "queue_release_once",
+        "missing_witnesses": [],
+        "witnesses_replayed": false,
+        "counterexample_replayed": true,
+        "counterexample": [
+          "append_group",
+          "prepare_group_frames",
+          "apply_group",
+          "append_group",
+          "prepare_group_frames",
+          "apply_group"
+        ],
+        "witnesses": {
+          "append_apply_gap": [
+            "append_group"
+          ],
+          "boot_recrash": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "crash_prefix_0"
+          ],
+          "boot_reserve": [
+            "crash_prefix_0",
+            "boot_reserve"
+          ],
+          "checkpoint_capture": [
+            "checkpoint_capture"
+          ],
+          "cut_count_queue": [
+            "append_group",
+            "prepare_group_frames",
+            "apply_group"
+          ],
+          "group_frames_three": [
+            "append_group",
+            "prepare_group_frames"
+          ],
+          "home_flush": [
+            "home_flush_0"
+          ],
+          "reservation_restored": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore"
+          ],
+          "restore_recrash": [
+            "crash_prefix_0",
+            "boot_reserve",
+            "analysis",
+            "reserve_restore",
+            "crash_prefix_0"
+          ],
+          "two_crashes": [
+            "crash_prefix_0",
+            "crash_prefix_0"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "commit_capture",
+        "mutant": "omit_commit_status",
+        "status": "EXPECTED_COUNTEREXAMPLE",
+        "states": 78,
+        "transitions": 118,
+        "max_depth": 3,
+        "elapsed_ms": 0,
+        "unexplored": 65,
+        "violation": "commit_status",
+        "missing_witnesses": [],
+        "witnesses_replayed": false,
+        "counterexample_replayed": true,
+        "counterexample": [
+          "prepare_group_frames",
+          "wal_sync",
+          "apply_group"
+        ],
+        "witnesses": {
+          "append_apply_gap": [
+            "prepare_group_frames"
+          ],
+          "boot_reserve": [
+            "crash_prefix_0",
+            "boot_reserve"
+          ],
+          "commit_capture_blocked": [
+            "prepare_group_frames"
+          ],
+          "group_frames_three": [
+            "prepare_group_frames"
+          ],
+          "home_flush": [
+            "home_flush_0"
+          ],
+          "two_crashes": [
+            "crash_prefix_0",
+            "crash_prefix_0"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "clr_chain",
+        "mutant": "capture_missing_dpt",
+        "status": "EXPECTED_COUNTEREXAMPLE",
+        "states": 2,
+        "transitions": 2,
+        "max_depth": 1,
+        "elapsed_ms": 0,
+        "unexplored": 2,
+        "violation": "capture_lsn_closure",
+        "missing_witnesses": [],
+        "witnesses_replayed": false,
+        "counterexample_replayed": true,
+        "counterexample": [
+          "checkpoint_capture"
+        ],
+        "witnesses": {
+          "append_apply_gap": [
+            "append_group"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "begin_removed",
+        "mutant": "zero_restored_ledger",
+        "status": "EXPECTED_COUNTEREXAMPLE",
+        "states": 6,
+        "transitions": 7,
+        "max_depth": 3,
+        "elapsed_ms": 0,
+        "unexplored": 3,
+        "violation": "reservation_restore",
+        "missing_witnesses": [],
+        "witnesses_replayed": false,
+        "counterexample_replayed": true,
+        "counterexample": [
+          "boot_reserve",
+          "analysis",
+          "reserve_restore"
+        ],
+        "witnesses": {
+          "analysis_without_begin": [
+            "boot_reserve",
+            "analysis"
+          ],
+          "boot_recrash": [
+            "boot_reserve",
+            "crash_prefix_0"
+          ],
+          "boot_reserve": [
+            "boot_reserve"
+          ],
+          "two_crashes": [
+            "crash_prefix_0",
+            "crash_prefix_0"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "partial_clr",
+        "mutant": "reuse_consumed_clr",
+        "status": "EXPECTED_COUNTEREXAMPLE",
+        "states": 60,
+        "transitions": 95,
+        "max_depth": 3,
+        "elapsed_ms": 0,
+        "unexplored": 49,
+        "violation": "remaining_obligation",
+        "missing_witnesses": [],
+        "witnesses_replayed": false,
+        "counterexample_replayed": true,
+        "counterexample": [
+          "append_group",
+          "prepare_group_frames",
+          "apply_group"
+        ],
+        "witnesses": {
+          "append_apply_gap": [
+            "append_group"
+          ],
+          "boot_reserve": [
+            "crash_prefix_1",
+            "boot_reserve"
+          ],
+          "checkpoint_capture": [
+            "checkpoint_capture"
+          ],
+          "clr_atomic": [
+            "append_group"
+          ],
+          "group_frames_three": [
+            "append_group",
+            "prepare_group_frames"
+          ],
+          "home_flush": [
+            "home_flush_0"
+          ],
+          "partial_clr_recrash": [
+            "crash_prefix_1"
+          ],
+          "remaining_three": [
+            "append_group"
+          ],
+          "two_crashes": [
+            "crash_prefix_1"
+          ],
+          "writer_recrash": [
+            "crash_prefix_1"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "begin_removed",
+        "mutant": "stale_home_ownership",
+        "status": "EXPECTED_COUNTEREXAMPLE",
+        "states": 6,
+        "transitions": 7,
+        "max_depth": 3,
+        "elapsed_ms": 0,
+        "unexplored": 3,
+        "violation": "reservation_restore",
+        "missing_witnesses": [],
+        "witnesses_replayed": false,
+        "counterexample_replayed": true,
+        "counterexample": [
+          "boot_reserve",
+          "analysis",
+          "reserve_restore"
+        ],
+        "witnesses": {
+          "analysis_without_begin": [
+            "boot_reserve",
+            "analysis"
+          ],
+          "boot_recrash": [
+            "boot_reserve",
+            "crash_prefix_0"
+          ],
+          "boot_reserve": [
+            "boot_reserve"
+          ],
+          "two_crashes": [
+            "crash_prefix_0",
+            "crash_prefix_0"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "begin_removed",
+        "mutant": "redo_double_charge",
+        "status": "EXPECTED_COUNTEREXAMPLE",
+        "states": 9,
+        "transitions": 12,
+        "max_depth": 4,
+        "elapsed_ms": 0,
+        "unexplored": 3,
+        "violation": "remaining_obligation",
+        "missing_witnesses": [],
+        "witnesses_replayed": false,
+        "counterexample_replayed": true,
+        "counterexample": [
+          "boot_reserve",
+          "analysis",
+          "reserve_restore",
+          "redo_page"
+        ],
+        "witnesses": {
+          "analysis_without_begin": [
+            "boot_reserve",
+            "analysis"
+          ],
+          "boot_recrash": [
+            "boot_reserve",
+            "crash_prefix_0"
+          ],
+          "boot_reserve": [
+            "boot_reserve"
+          ],
+          "reservation_restored": [
+            "boot_reserve",
+            "analysis",
+            "reserve_restore"
+          ],
+          "two_crashes": [
+            "crash_prefix_0",
+            "crash_prefix_0"
+          ]
+        }
+      },
+      {
+        "scope": "D3-M04-F01",
+        "fixture": "begin_removed",
+        "mutant": "clr_before_writer",
+        "status": "EXPECTED_COUNTEREXAMPLE",
+        "states": 7,
+        "transitions": 8,
+        "max_depth": 3,
+        "elapsed_ms": 0,
+        "unexplored": 4,
+        "violation": "writer_not_selected",
+        "missing_witnesses": [],
+        "witnesses_replayed": false,
+        "counterexample_replayed": true,
+        "counterexample": [
+          "boot_reserve",
+          "analysis",
+          "early_clr"
+        ],
+        "witnesses": {
+          "analysis_without_begin": [
+            "boot_reserve",
+            "analysis"
+          ],
+          "boot_recrash": [
+            "boot_reserve",
+            "crash_prefix_0"
+          ],
+          "boot_reserve": [
+            "boot_reserve"
+          ],
+          "reservation_restored": [
+            "boot_reserve",
+            "analysis",
+            "reserve_restore"
+          ],
+          "two_crashes": [
+            "crash_prefix_0",
+            "crash_prefix_0"
+          ]
+        }
+      }
+    ]
+  },
+  "source_sha256": "67bbccfdfa571dc268ea7152ee444680fd7777833dc615ce76bb0c2b4f664070",
+  "contract_sha256": {
+    "devdoc/contracts/dev3-recovery-model.md": "538c3da2fb359a790d52757665f6dc86787837348b198fb1a494a57f245047b6"
+  },
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n",
+  "source_sha256_after": "67bbccfdfa571dc268ea7152ee444680fd7777833dc615ce76bb0c2b4f664070"
+}

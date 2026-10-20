@@ -1,6 +1,8 @@
 # DEV3 — 구현·병렬 개발·검증 계획
 
-2026-10-19 · **DEV3-DESIGN-003·REVIEW-004–007 ACCEPTED / production·단계 모델·S1 NOT_RUN**
+2026-10-20 · **DEV3-DESIGN-003·REVIEW-004–008 ACCEPTED / 실제 disk path·전체 단계 모델·S1 NOT_RUN**
+
+2026-10-20 [첫 표현 leaf·부분 모델](../implementation/dev3-implementation.md#validation)을 구현·독립 검토하고 같은 소스의 하위 회귀·DEV2 복구 검사를 완료했다. 아래 전체 인수의 NOT_RUN과 page envelope·M02-P01의 제한된 로컬 검증을 구분한다.
 
 [상세 설계](../contracts/disk-storage-design.md) · [이번 조사·검토](../evidence/dev3-wal-undo-research.md) · [이전 조사](../evidence/dev3-source-research.md) · [완료 정본](stage-completion.json) · [DEV2 선행](dev2-implementation-plan.md)
 
@@ -107,7 +109,7 @@ F06에서 수신 commit/dirty digest·실제 crate/API/feature·사용한 실행
 <a id="state-model"></a>
 ### 3.1 D3-M01–M06: 변경·회수의 유한 모델
 
-현재 **모델 구현·탐색 NOT_RUN**이다. 모델은 production page/WAL codec·refcount update 함수를 가져오지 않는다. 상태에는 논리 행/인덱스 이력, 별도 명시 edge graph, generation, rollback target/progress, transient pin, selected WAL/control prefix와 실제 살아남은 page를 둔다. 구현 후보의 stored count와 독립 graph에서 매번 다시 계산한 incoming count를 비교하고, reader의 값과 rollback 결과도 독립 이력으로 검사한다.
+현재 **전체 모델 인수 미완료**다. [M01/M02/M05의 보존 소스 실행](../implementation/dev3-implementation.md#models-125)은 완료했으며 나머지 모델과 실제 disk 인수는 별도 의무다. 모델은 production page/WAL codec·refcount update 함수를 가져오지 않는다. 상태에는 논리 행/인덱스 이력, 별도 명시 edge graph, generation, rollback target/progress, transient pin, selected WAL/control prefix와 실제 살아남은 page를 둔다. 구현 후보의 stored count와 독립 graph에서 매번 다시 계산한 incoming count를 비교하고, reader의 값과 rollback 결과도 독립 이력으로 검사한다.
 
 기본 유한 범위는 writer 2·reader 1·maintenance actor 1, 행 2·index 1·key 두 값과 NULL, undo/status 각 4 slots·각 slot 2 generations, 추상 page 8·buffer frame 3이다. maintenance actor는 aging/checkpoint/flush/restart를 한 번에 하나씩 수행한다. 각 아래 고정 시작 fixture에서 action 길이 최대16, crash 최대2를 탐색하며 generation/ID wrap을 성공 전이로 허용하지 않는다. 한 case의 탐색 보호 상한은 1,000,000 states·8,000,000 transitions이고 상한·시간 제한에 도달하면 INCONCLUSIVE다. 선언 범위의 전수 탐색을 끝내야 PASS이며 seed 시험으로 대체하지 않는다. F02/F03에서 정확한 action·동치류·초기 fixture·시간 예산과 hash를 먼저 고정한다. 범위 변경은 실행 전 D2이며 실패 후 축소하지 않는다.
 
@@ -198,13 +200,13 @@ true/false conflict 분류는 engine 오류 이름이 아니라 사전 고정한
 
 | ID | 산출물 | 완료 시점·현재 상태 |
 | --- | --- | --- |
-| D3-F01 | page/anchor/allocator/undo/status/WAL/CLR/checkpoint/DWB offsets·IDs·digest 범위·논리 행 버전·recovery obligation descriptor·독립 hex vector | 표현 codec 전. 구조 선택만 완료, bytes 미동결 |
+| D3-F01 | page/anchor/allocator/undo/status/WAL/CLR/checkpoint/DWB offsets·IDs·digest 범위·논리 행 버전·recovery obligation descriptor·독립 hex vector | [page envelope만 동결](../contracts/dev3-page-format.md). cell/나머지 bytes는 해당 표현 codec 전 미동결 |
 | D3-F02 | API·isolation·opaque row observation/검증 경계·rank/try-lock/전체 pin 예약·FIFO progress turn/K/workspace/drain 순서·snapshot q/등록 gate와 published horizon·guard 인계·transient reference guard·statement/rollback/cut/queue 상태표 | 해당 소비 구현 전. D3-M01–M06 action/fixture·fairness/진행 판정과 Rust signature 미동결 |
 | D3-F03 | 독립 key/row/index/history·edge graph oracle·negative mutants·case/variant 예상값 | 해당 production leaf 전 D3-M01–M06 전수 완료 필요; 모델/제품 실행 NOT_RUN |
 | D3-F04 | 실제 WAL/DWB batch/home/namespace receipts·allocator/bootstrap 예약·recovery checkpoint 인계/회수·각 장애 cut·반복 recovery | 실제 I/O leaf 전. batch1/8/64·다중 file·repair 재장애 profile 미동결 |
 | D3-F05 | opcode별 자원 벡터·최악 CLR/rollback pages·progress frame/FD/WAL·bootstrap/예약 복원과 반복 restart peak·큰 inventory quota·PF09 | 해당 effect 전 산식 대입·경계 인수 필요. 숫자 reservation table·batch deadline·실측 미완료 |
 | D3-F06 | 실제 DEV2 공급 revision/API/format·재사용/adapter/전용/신규 symbol·시험 inventory·선행 leaf·clean export | production 착수와 S1 승격 각각. volatile/DEV2 형식 receipt로 DEV3 영속 충족 금지 |
-| D3-F07 | 담당·기준 commit/dirty digest·독점/공유 경로·중복·병합 순서·통합 검사 | 각 작업 전. 역할 계획만 존재 |
+| D3-F07 | 담당·기준 commit/dirty digest·독점/공유 경로·중복·병합 순서·통합 검사 | 각 작업 전. [첫 page/model 작업의 실제 배정](../implementation/dev3-implementation.md#wave-1) 완료; 후속 작업은 별도 배정 |
 
 F01/F02/F04/F05에는 [규모 확대 경계 인수](#extension-boundaries)의 profile 거절/복구·pressure·flush/drain·성능 분모 입력도 포함한다. [조사·검토 기록](../evidence/commercial-extensibility-research.md)은 설계 근거이며 동결/실행 완료 receipt가 아니다.
 

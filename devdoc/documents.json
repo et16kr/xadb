@@ -752,6 +752,101 @@
       "path": "evidence/dev2-journal-binary-mapping-xadb-20261020-r1.json",
       "role": "evidence",
       "title": "DEV2 journal 대기 stack의 설치 커널 binary 대응과 한계"
+    },
+    "dev3-models-xadb-20261020-r1.json": {
+      "path": "evidence/dev3-models-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV3 M01–M06 고정 유한 모델의 동일 보존 소스 실행"
+    },
+    "dev3-m04-xadb-20261020-r1.json": {
+      "path": "evidence/dev3-m04-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV3 M04 WAL·CLR 원자 의미 모델의 독립 clean-source 실행"
+    },
+    "dev3-reference-leaf-xadb-20261020-r1.json": {
+      "path": "evidence/dev3-reference-leaf-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV3 PageRef·UndoRef·anchor 표현과 기존 leaf의 제한된 실행"
+    },
+    "dev3-m01-m02-m05-xadb-20261020-r1.json": {
+      "path": "evidence/dev3-m01-m02-m05-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV3 M01·M02·M05 모델의 독립 clean-source 실행"
+    },
+    "dev3-reference-format.md": {
+      "path": "contracts/dev3-reference-format.md",
+      "role": "contracts",
+      "title": "DEV3 PageRef·UndoRef·안정 anchor 표현"
+    },
+    "dev3-undo-model.md": {
+      "path": "contracts/dev3-undo-model.md",
+      "role": "contracts",
+      "title": "DEV3 M01/M02 graph 모델의 두 번째 동결"
+    },
+    "dev3-key-leaf-xadb-20261020-r1.json": {
+      "path": "evidence/dev3-key-leaf-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV3 복합 key 표현·page·부분 snapshot 모델의 제한된 실행"
+    },
+    "dev3-key-format.md": {
+      "path": "contracts/dev3-key-format.md",
+      "role": "contracts",
+      "title": "DEV3 복합 key 표현"
+    },
+    "dev3-progress-model.md": {
+      "path": "contracts/dev3-progress-model.md",
+      "role": "contracts",
+      "title": "DEV3 M03 변경 순서·행 관측·진행 모델"
+    },
+    "dev3-reservation-model.md": {
+      "path": "contracts/dev3-reservation-model.md",
+      "role": "contracts",
+      "title": "DEV3 M06 예약·복구 bootstrap 모델"
+    },
+    "dev3-recovery-model.md": {
+      "path": "contracts/dev3-recovery-model.md",
+      "role": "contracts",
+      "title": "DEV3 WAL·CLR·복구 예약 유한 모델"
+    },
+    "dev3-doublewrite-model.md": {
+      "path": "contracts/dev3-doublewrite-model.md",
+      "role": "contracts",
+      "title": "DEV3 doublewrite batch 유한 모델"
+    },
+    "dev3-page-format.md": {
+      "path": "contracts/dev3-page-format.md",
+      "role": "contracts",
+      "title": "DEV3 page envelope 형식"
+    },
+    "dev3-snapshot-model.md": {
+      "path": "contracts/dev3-snapshot-model.md",
+      "role": "contracts",
+      "title": "DEV3 snapshot 획득·참조 pin의 부분 유한 모델"
+    },
+    "dev3-implementation.md": {
+      "path": "implementation/dev3-implementation.md",
+      "role": "implementation",
+      "title": "DEV3 구현·검증 현황"
+    },
+    "dev3-leaf-xadb-20261020-r0.json": {
+      "path": "evidence/dev3-leaf-xadb-20261020-r0.json",
+      "role": "evidence",
+      "title": "DEV3 첫 통합 실패 기록 — Clippy map_entry"
+    },
+    "dev3-dev2-kernel-xadb-20261020-r1.json": {
+      "path": "evidence/dev3-dev2-kernel-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV3 첫 leaf와 같은 소스의 DEV2 복구 회귀"
+    },
+    "dev3-leaf-xadb-20261020-r1.json": {
+      "path": "evidence/dev3-leaf-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV3 page envelope·부분 snapshot 모델·하위 회귀"
+    },
+    "dev3-dev2-regression-xadb-20261020-r1.json": {
+      "path": "evidence/dev3-dev2-regression-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV3 첫 leaf와 같은 소스의 DEV2 P0/K0·DEV0/1 회귀"
     }
   }
 }

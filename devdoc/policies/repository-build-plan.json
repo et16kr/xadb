@@ -496,6 +496,46 @@
       "task_ref": "XADB-023",
       "status": "PLANNED",
       "responsibility": "디스크 저장 경로를 포괄하는 native global tree. SQL 숨김 table 제외"
+    },
+    {
+      "path": "crates/engine/src/storage/anchor",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Stable root descriptor expression and qualified root envelope validation; no tree SMO or frame pin",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-reference-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/undo_ref",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Stable undo slot wire identity; no undo record, reference pin or reclaim operation",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-reference-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/key",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Bounded composite and RowId key expression/comparison using foundation scalar codec; no index I/O or unique enforcement",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-key-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/page",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "16 KiB internal page envelope codec only; no disk I/O, buffer, cell semantics or S1 acceptance",
+      "validation_status": "LOCAL_VERIFIED_ENVELOPE_ONLY",
+      "contract_ref": "dev3-page-format.md"
     }
   ],
   "builds": [
@@ -884,5 +924,33 @@
     "changes_stage_order": false,
     "reviewer": "/root/testing_layout_review",
     "review_scope": "Baseline-relative paths and package metadata, preserved prior changes/evidence, actual DEV0/DEV1/DEV2 leaf reports and logs, stable source identity and current documentation references"
+  },
+  "dev3_leaf": {
+    "implementation_ref": "dev3-implementation.md",
+    "runner": "scripts/check_dev3_leaf.py",
+    "independent_vectors": "scripts/dev3_page_vectors.py",
+    "model": "crates/testing/reference/tests/dev3_snapshot_model.rs",
+    "source_roots_changed": false,
+    "dependencies_changed": false,
+    "full_stage_acceptance": false,
+    "validation_ref": "dev3-leaf-xadb-20261020-r1.json"
+  },
+  "dev3_selected_models": {
+    "implementation_ref": "dev3-implementation.md",
+    "runner": "scripts/check_dev3_models.py",
+    "checker_tests": "scripts/test_check_dev3_models.py",
+    "progress_receipt_helper": "scripts/dev3_progress_receipts.py",
+    "progress_checker_tests": "scripts/test_dev3_progress_receipts.py",
+    "explicit_selection_required": true,
+    "registered_models": ["M01", "M02", "M03", "M04", "M05", "M06"],
+    "source_roots_changed": false,
+    "dependencies_changed": false,
+    "full_stage_acceptance": false,
+    "execution_status": "LOCAL_SELECTED_MODELS_VERIFIED",
+    "validation_refs": [
+      "dev3-m01-m02-m05-xadb-20261020-r1.json",
+      "dev3-m04-xadb-20261020-r1.json",
+      "dev3-models-xadb-20261020-r1.json"
+    ]
   }
 }

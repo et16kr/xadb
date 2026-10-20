@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-20 [DEV3 첫 leaf](dev3-implementation.md#validation): 내부 page envelope codec과 D3-M02-P01 부분 모델을 구현·독립 검토했다. page7·모델 정상4/결함8·DEV0/1/2 회귀와 같은 소스의 DEV2 복구99셀 PASS. 실제 디스크 경로·전체 모델·S1 인수는 미완료다.
+
 2026-10-20 [DEV2 journal binary 대응](dev2-implementation.md#dev2-journal-binary-mapping-20261020): 설치 커널의 build ID와 기계어 흐름으로 두 대기 위치를 metadata·commit record 버퍼에 대응했다. 추가 측정 없이 코드 위치만 구분했으며 PF04·DEV2 인수는 미완료다.
 
 2026-10-20 [DEV2 journal 대기 진단](dev2-implementation.md#dev2-journal-diagnostic-20261020): 1회 정답 PASS와 측정 512개 fsync의 실제 journal 대기 TID·단계 연결을 확인했다. 추적 영향·환경 확인 조건 FAIL과 기존 PF04 실패를 유지하며 DEV2/B2/D0 최종 인수는 미완료다.
@@ -27,7 +29,8 @@
 | K0 성능 진단·audit/replay | Off/Always/Detailed와 독립 정답·통계·원시 bundle 검증 구현; 최초 p99 비용 한도 FAIL, PF 인수 미완료 | [DEV2](dev2-implementation.md) |
 | COMM 핵심 | frame·Linux local socket·quota·deadline·취소/종료·focused runner 구현, C1 인수 미완료 | [COMM](comm-implementation.md) |
 | 영속 transaction/WAL/recovery | 구현·정적 통합 완료, 최종 인수 대기 | [DEV2 K1–K5](dev2-implementation.md) |
-| disk pages/index·SQL/server/client·replication | 미구현 | DEV3 이후 |
+| DEV3 page envelope·snapshot 부분 모델 | 첫 표현 leaf 구현, 디스크 I/O·index·전체 모델 인수 미완료 | [DEV3](dev3-implementation.md) |
+| SQL/server/client·replication | 미구현 | DEV4 이후 |
 
 [기계 판독 상태](implementation-status.json) · [새 실행 증거](../evidence/README.md) · [이관 기록](../history/project-migration.md)
 
@@ -36,6 +39,8 @@
 P0/K0 시험 성공은 B2/D0나 DEV2 전체 완료를 의미하지 않는다. e3 동결 소스의 bounded concurrent 전수·영속 복구·11개 V3와 PF12/PF13 결과는 위 후속 기록에 연결한다. PF04 계측 비용 한도와 최종 인수는 미완료이며 과거 source snapshot의 PASS를 전체 현재 소스의 PASS로 취급하지 않는다.
 
 <!-- catalogue -->
+
+- [DEV3 구현·검증 현황](dev3-implementation.md)
 
 - [COMM 구현 기록](comm-implementation.md)
 

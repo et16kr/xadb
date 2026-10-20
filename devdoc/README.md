@@ -1,5 +1,11 @@
 # XADB 개발 문서
 
+2026-10-20 [DEV3 유한 모델 통합](implementation/dev3-implementation.md#models-all): M01–M06의 고정 범위를 같은 보존 source에서 실행하여 정상457·지정 반례127 PASS를 확인했다. 모델은 실제 disk/thread·opcode 자원표·DEV3 전체 인수를 대신하지 않는다.
+
+2026-10-20 [DEV3 후속 표현·모델](implementation/dev3-implementation.md#models-125): composite key·PageRef·UndoRef·anchor 표현과 M01/M02/M05를 독립 검토·보존 소스로 실행했다. 모델 정상32/결함44 PASS이며 M03/M04/M06 통합·실제 disk·전체 DEV3 인수는 미완료다.
+
+2026-10-20 [DEV3 첫 leaf](implementation/dev3-implementation.md#validation): 16 KiB page envelope와 snapshot/pin 부분 모델을 병렬 구현·독립 검토했다. page7·모델 정상4/결함8·하위 회귀·동일 소스의 DEV2 복구99셀 PASS. 실제 disk I/O·전체 M02·DEV3/S1 인수는 미완료다.
+
 2026-10-20 [DEV2 journal binary 대응](implementation/dev2-implementation.md#dev2-journal-binary-mapping-20261020): 설치 커널의 build ID와 기계어 흐름으로 두 대기 위치를 metadata·commit record 버퍼에 대응했다. 추가 측정 없이 코드 위치만 구분했으며 PF04·DEV2 인수는 미완료다.
 
 2026-10-20 [DEV2 journal 대기 진단](implementation/dev2-implementation.md#dev2-journal-diagnostic-20261020): 고정 Off 1회에서 측정 fsync 512개와 실제 journal 대기 TID·단계를 연결했다. 추적 영향·환경의 거친 확인 조건은 FAIL이므로 시간 비율을 계측 없는 실행에 일반화하지 않으며, PF04·DEV2 인수는 미완료다.

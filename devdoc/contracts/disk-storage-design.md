@@ -1,17 +1,19 @@
 # DEV3 — 디스크 저장·인덱스 상세 설계
 
-2026-10-19 · **DEV3-DESIGN-003·REVIEW-004–008 ACCEPTED / 미구현·단계 모델·제품 시험 NOT_RUN**
+2026-10-20 · **DEV3-DESIGN-003·REVIEW-004–008 ACCEPTED / page envelope 첫 leaf 구현·전체 단계 모델/제품 시험 NOT_RUN**
 
 [구현 계획](../plans/dev3-implementation-plan.md) · [이번 조사](../evidence/dev3-wal-undo-research.md) · [이전 조사](../evidence/dev3-source-research.md) · [커널 계약](implementation-contracts.md) · [DEV2 계약](dev2-kernel-design.md) · [복구 계약](recovery-logging-design.md) · [인수 항목](disk-test-matrix.json)
 
 [아키텍처 비교 보완](../evidence/dev3-dev4-architecture-review.md)은 아래 잠금·undo 수명·배치 flush·자원 예약의 근거다. 기본 설계의 채택과 실행 가능한 알고리즘의 검증을 구분한다.
+
+[첫 구현 기록](../implementation/dev3-implementation.md)은 공통 [page envelope bytes](dev3-page-format.md)와 [snapshot/pin 부분 모델](dev3-snapshot-model.md)의 범위·소유·검증을 기록한다. 전체 M01–M06·실제 disk path·DS 인수는 미완료다.
 
 후속 [DEV8 운영 설계](dev8-operations-design.md)는 이 저장 계약 위의 physical standby·capture/retention·온라인 backup/PITR를 구체화한다. D8-F01의 추가 port·WAL supplement·durable consumer pin과 REBASE/재장애 예약 증명은 해당 기능 구현 전 의무이며, 현재 S1의 offline backup·기본 recovery 완료 조건을 대체하지 않는다.
 
 <a id="scope"></a>
 ## 1. 범위와 대체 관계
 
-사용자가 선행 리뷰 보완 뒤 COW pack/GC의 재설계를 요청했다. [DEV3-REVIEW-002](#review-followup)를 먼저 검토·반영했고, 이어 **mutable disk page + 단일 WAL + 영속 undo + bounded dirty buffer**를 선택한다. 제품 저장 엔진은 DISK 하나이며 resident/mixed 엔진은 추가하지 않는다. 기존 DEV0/1·DEV2 P0/K0 구현과 실행 증거를 바꾸지 않는다. 영속 DEV2/DEV3는 미구현이다.
+사용자가 선행 리뷰 보완 뒤 COW pack/GC의 재설계를 요청했다. [DEV3-REVIEW-002](#review-followup)를 먼저 검토·반영했고, 이어 **mutable disk page + 단일 WAL + 영속 undo + bounded dirty buffer**를 선택한다. 제품 저장 엔진은 DISK 하나이며 resident/mixed 엔진은 추가하지 않는다. 기존 DEV0/1·DEV2 P0/K0 구현과 실행 증거를 바꾸지 않는다. DEV2 영속 구현·잔여 인수는 [현재 DEV2 기록](../implementation/dev2-implementation.md)을 따르며, DEV3 page 기반 영속 경로는 미구현이다.
 
 DEV3-DESIGN-003은 DEV3-DESIGN-001의 COW tree·sealed pack·root closure GC·전체 재작성 compaction·page-before-commit·root-only disk recovery를 대체한다. DEV3-PARALLEL-001의 pack/COW 작업 분할도 새 계획으로 대체한다. DEV2의 private/COW substrate·AXF1 한 거래 frame·exact checkpoint는 **DEV2 전용 기준선**으로 남으며 DEV3 page 경로에 적용하지 않는다. 상위 계약의 불변 CommittedRoot는 DEV3에서는 논리 snapshot/commit frontier를 뜻한다. mutable page 내용의 불변성이나 root graph 보존을 요구하지 않는다.
 
@@ -57,6 +59,8 @@ PageRef는 `(FileId, page_no, incarnation)`이며 ObjectId/Generation은 기대 
 파일은 engine-owned data/undo 공간이며 고정 크기 extent(초기 64 pages)를 늘려 사용한다. allocation bitmap/free-space metadata는 disk에 두고 bounded cache로 읽는다. 새 파일/길이 확보·header·namespace 영속화가 끝나기 전 그 공간을 참조하는 로그의 durable commit을 허용하지 않는다. 이 장벽은 파일 최초 생성/확장에만 필요하며 매 commit의 새 pack 생성이 아니다. 공개되지 않은 생성 파일은 별도 owned staging 목록으로 관리한다. 선택된 checksummed FILEMAP control에는 DB/FileId·파일명·고정 bootstrap page 주소·예약된 길이가 들어간다. FILEMAP은 data/allocator page에 의존하지 않는 작은 chunked manifest이며 atomic selector+dirsync로 설치한다. 새 파일은 FILEMAP 영속 선택 뒤만 WAL에서 참조한다. drop한 파일 mapping은 필요한 WAL·DWB·checkpoint가 사라질 때까지 남긴다. FILEMAP 손상은 임의 directory 탐색으로 복구하지 않고 거절한다.
 
 page load마다 길이·checksum·identity·owner·kind·slot overlap·정렬·참조 level과 산술 상한을 검사한다. checksum은 torn write를 검출할 뿐 복원 수단이 아니다. [flush 규약](#buffer)의 doublewrite가 복원을 맡는다. F01에서 offsets·record IDs·digest 범위·독립 hex vector를 동결한다.
+
+공통 envelope의 offsets·kind ID·compact slot 배치는 [F01 page 형식](dev3-page-format.md)으로 동결했다. 이 codec은 opaque cell의 key 정렬·참조 child level을 판단하지 않는다. 해당 검증은 tree/undo 등 소유 decoder와 실제 page load의 미완료 의무로 유지한다.
 
 <a id="tree"></a>
 ## 5. 행·B+tree·cursor

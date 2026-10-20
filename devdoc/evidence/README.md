@@ -1,5 +1,13 @@
 # XADB 조사·실행 증거
 
+2026-10-20 [M01–M06 원본 receipt](dev3-models-xadb-20261020-r1.json)는 동일 보존 source에서 정상457·지정 반례127·예산 검사6·M05 workspace 회귀를 통과했다. M06의20개 비적용 경계는 실행 PASS와 구분한다. 유한 모델 검증이며 실제 disk·thread·전체 S0/F05·DEV3 인수가 아니다. [독립 검토·범위](../implementation/dev3-implementation.md#models-all)를 따른다.
+
+2026-10-20 [M04 원본 receipt](dev3-m04-xadb-20261020-r1.json)는 정상5·결함10과 예산 검사를 별도 보존 source에서 실행했다. cap 미완주 이력을 보존한 정확 상태 동치 적용이며, DPT 기반 I/O 선정·실제 frame mapping은 이 모델의 증거가 아니다. [범위·제한](../implementation/dev3-implementation.md#model-4)을 따른다.
+
+2026-10-20 [참조 표현 leaf](dev3-reference-leaf-xadb-20261020-r1.json)는 page7·key5·scalar3·anchor4·reference2·P01 정상4/결함8을 검증했다. 별도 [M01/M02/M05 원본 receipt](dev3-m01-m02-m05-xadb-20261020-r1.json)는 정상32·결함44와 budget·workspace 회귀를 보존 source/release binary로 독립 실행했다. 전체 모델·실제 disk·S1 인수는 미완료이며 [실행 범위](../implementation/dev3-implementation.md#models-125)를 따른다.
+
+2026-10-20 DEV3 [첫 leaf PASS](dev3-leaf-xadb-20261020-r1.json), [하위 회귀](dev3-dev2-regression-xadb-20261020-r1.json), [초기 Clippy 실패](dev3-leaf-xadb-20261020-r0.json)와 [동일 최종 소스의 DEV2 복구 회귀](dev3-dev2-kernel-xadb-20261020-r1.json)를 보존했다. page7·부분 모델 정상4/결함8·DEV0/1/2 회귀·DEV2 native99셀을 검증했다. 실제 DEV3 디스크 복구·전체 모델·S1은 미완료이며 [구현 기록](../implementation/dev3-implementation.md#validation)의 범위에 한정한다.
+
 2026-10-18 · COMM 최종 사본의 DEV0/DEV1/DEV2 보고서는 해당 실행 당시 소스의 회귀 근거이며, 이후 K1–K5 변경을 포함한 현재 소스의 검증 결과가 아니다. K0-005의 별도 성능 근거는 당시 source의 r1 보고서로 보존한다. DEV0 8개·DEV1 8개·DEV2 P0/K0 leaf 28개 check와 새 성능 반례 35개를 실행했다. release 계측 비교 2개와 재현 1개는 각각20개 실행의 정답과 원시 이력 보존을 확인했다. 최초 Always·Detailed 비교의 sample-p99 guardrail은 FAIL이며 성능 인수·승격은 INCOMPLETE다. DEV2·K0 전체, 내구성·protected CI 인수는 완료하지 않았다. r1·r2 회귀 보고서는 당시 source snapshot의 결과로 보존한다. 보고서는 실행기가 생성한 바이트 그대로 복사했다.
 
 r1 당시 DEV0/DEV1은 로컬 범위 PASS다. 당시 DEV2 reference/substrate/frame/worker leaf는 PASS이나 DEV2와 K0 전체는 INCOMPLETE다. r1 당시 영속성·streaming controller·bounded concurrent exploration·PF 인수·30분 stress/fuzz·protected CI는 NOT_RUN이며 안정 제품 qualification이 아니다. `artifacts/` 경로는 해당 로컬 실행 산출물이며 Git으로 배포하지 않는다. 각 보고서의 source hash로 적용 소스를 확인한다.
@@ -13,6 +21,13 @@ DEV4의 [소스·Oracle/ARIES 조사](dev4-source-research.md)는 PostgreSQL·Ma
 COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은 `e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1`이며, 보존된 COMM 회귀 보고서의 실행 전후 지문과 일치한다. `dev0-validation.json`·`dev1-validation.json`·`dev2-validation.json` 문서 ID는 각각 `dev0/1/2-current-source-20261018.json`을 참조한다. 이 세 파일은 `comm-dev0/1/2-xadb-20261018-r1.json`의 byte-identical 사본이며, 원래 COMM 문서 ID·상대 artifact 경로·실행 root와 원본 hash를 유지한다. catalog의 단일 경로 규칙 안에서 기존 참조를 보존하기 위한 채택 사본으로 새 실행이나 재검증 보고서가 아니다. `dev2-performance-validation.json`은 source `6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f`의 별도 성능 진단 r1을 유지한다. 이전 회귀 r1·r2·r3는 원래 파일 경로 ID와 바이트로 보존한다. 이 참조 갱신은 기존 실행의 적용 소스를 확인한 것이며 새 제품 시험 실행이나 진행 중인 DEV2 혼합 작업 트리의 PASS가 아니다. 이전 시험 패키지 재구성의 범위·리뷰는 [경로 재구성 기록](../history/project-migration.md#testing-layout)을 따른다. 이번 병렬 구현·검토·실측 한계는 [K0-005 기록](../implementation/dev2-implementation.md)을 따른다.
 
 <!-- catalogue -->
+
+- [DEV3 복합 key 표현·page·부분 snapshot 모델](dev3-key-leaf-xadb-20261020-r1.json) — 보존 소스의 key5·scalar3·page7·P01; 전체 모델·disk 인수·하위 전체 회귀 제외
+
+- [DEV3 page envelope·부분 snapshot 모델·하위 회귀](dev3-leaf-xadb-20261020-r1.json) — 보존 소스의 실제 leaf 결과
+- [DEV3 첫 leaf와 같은 소스의 DEV2 P0/K0·DEV0/1 회귀](dev3-dev2-regression-xadb-20261020-r1.json) — 28개 check와 하위8/8개 PASS
+- [DEV3 첫 통합 실패 기록](dev3-leaf-xadb-20261020-r0.json) — Clippy map_entry 실패 보존
+- [DEV3 첫 leaf와 같은 소스의 DEV2 복구 회귀](dev3-dev2-kernel-xadb-20261020-r1.json) — 현재-build 공급 회귀, DEV3/S1 인수 미완료
 
 - [DEV9 — Oracle·ARIES·로컬 소스 조사와 설계 검토](dev9-source-research.md) — DESIGN-002 원장·ACK 관측·PITR·공식 배포 재검토, 공개 로컬4개·LOCAL-Q01의 실제 revision/hash; 제품 실행 아님
 

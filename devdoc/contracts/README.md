@@ -4,6 +4,16 @@
 
 <!-- catalogue -->
 
+- [DEV3 복합 key 표현](dev3-key-format.md) — F01 scalar/composite·RowId bytes와 무효과 비교; index 실행·unique 인수 제외
+- [DEV3 PageRef·UndoRef·안정 anchor 표현](dev3-reference-format.md) — 참조·root descriptor의 무효과 byte 검증; 실제 pin·SMO·undo 회수 제외
+- [DEV3 M01/M02 graph 모델의 두 번째 동결](dev3-undo-model.md) — edge 중복도·논리 undo와 snapshot/pin 확장; 세부 동결·실행 상태는 원문 참조
+- [DEV3 M03 변경 순서·행 관측·진행 모델](dev3-progress-model.md) — 관측 identity·pin/latch·FIFO의 실행 전 모델 계약
+- [DEV3 M06 예약·복구 bootstrap 모델](dev3-reservation-model.md) — 자원 소유·재장애 두 슬롯·진행의 실행 전 모델 계약
+- [DEV3 WAL·CLR·복구 예약 유한 모델](dev3-recovery-model.md) — M04 원자 그룹·capture·예약 복원의 실행 전 모델 계약
+- [DEV3 doublewrite batch 유한 모델](dev3-doublewrite-model.md) — M05 다중 file pending·repair·재장애의 실행 전 모델 계약
+- [DEV3 page envelope 형식](dev3-page-format.md) — F01 page bytes·무효과 codec만 동결, cell 의미·내구성 제외
+- [DEV3 snapshot 획득·참조 pin의 부분 유한 모델](dev3-snapshot-model.md) — D3-M02-P01 고정 입력, 전체 M02·실제 thread 인수 제외
+
 - [DEV9 — 제품 기능·운영·성능 인수 설계](dev9-qualification-design.md) — DESIGN-002 실행 분모·ACK 관측·PITR 목적·공식 배포, SC16/17·전체 조합·독립 판정; 제품 인수 미실행
 
 - [DEV8 — 복제·백업·운영·성능 설계](dev8-operations-design.md) — DESIGN-002 domain·sequence·partition 이동·WAL/control 보완, SC12–15·H1/L1/M1·PITR·보안/운영; OPS1 미실행

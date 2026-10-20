@@ -1,5 +1,8 @@
 //! Bounded canonical keys and a current-build frame. This is not a WAL record format.
-use crate::{Error, ErrorCode, Result, value::Value};
+use crate::{
+    Error, ErrorCode, Result,
+    value::{MAX_VALUE_BYTES, Value},
+};
 use sha2::{Digest, Sha256};
 
 /// Maximum current-build frame payload in bytes, excluding header and digest.
@@ -59,46 +62,141 @@ fn allocate(size: usize) -> Result<Vec<u8>> {
 /// Returns [`ErrorCode::LimitExceeded`] for oversized values or
 /// [`ErrorCode::QuotaExceeded`] if output reservation fails.
 pub fn encode_key(value: &Value) -> Result<Vec<u8>> {
-    value.validate()?;
-    let size = match value {
-        Value::Utf8(v) => 3 + 2 * v.len(),
-        Value::Bytes(v) => 3 + 2 * v.len(),
-        _ => 9,
-    };
+    let size = encoded_key_len(value)?;
     let mut key = allocate(size)?;
+    key.resize(size, 0);
+    encode_key_into(value, &mut key)?;
+    Ok(key)
+}
+
+/// Exact scalar key size after escaping, without allocation or external effects.
+///
+/// # Errors
+/// Returns [`ErrorCode::LimitExceeded`] for a value larger than 64 KiB.
+pub fn encoded_key_len(value: &Value) -> Result<usize> {
+    value.validate()?;
+    let bytes = match value {
+        Value::Null => return Ok(1),
+        Value::Bool(_) => return Ok(2),
+        Value::Int64(_) => return Ok(9),
+        Value::Utf8(v) => v.as_bytes(),
+        Value::Bytes(v) => v.as_slice(),
+    };
+    // Value validation bounds this addition even on the smallest supported usize.
+    Ok(3 + bytes.len() + bytes.iter().filter(|b| **b == 0).count())
+}
+
+/// Encode one canonical scalar into an exactly sized caller buffer.
+/// No allocation, I/O, or ownership transfer occurs.
+///
+/// # Errors
+/// Oversized values return [`ErrorCode::LimitExceeded`]; wrong output size returns
+/// [`ErrorCode::InvalidFormat`]. Every error preserves the entire output.
+pub fn encode_key_into(value: &Value, output: &mut [u8]) -> Result<()> {
+    if output.len() != encoded_key_len(value)? {
+        return Err(Error::new(ErrorCode::InvalidFormat, "key buffer size"));
+    }
     let string = match value {
         Value::Null => {
-            key.push(0);
+            output[0] = 0;
             None
         }
         Value::Bool(v) => {
-            key.extend_from_slice(&[1, u8::from(*v)]);
+            output.copy_from_slice(&[1, u8::from(*v)]);
             None
         }
         Value::Int64(v) => {
-            key.push(2);
-            key.extend_from_slice(&((*v as u64) ^ (1_u64 << 63)).to_be_bytes());
+            output[0] = 2;
+            output[1..].copy_from_slice(&((*v as u64) ^ (1_u64 << 63)).to_be_bytes());
             None
         }
         Value::Utf8(v) => {
-            key.push(3);
+            output[0] = 3;
             Some(v.as_bytes())
         }
         Value::Bytes(v) => {
-            key.push(4);
+            output[0] = 4;
             Some(v.as_slice())
         }
     };
     if let Some(bytes) = string {
+        let mut offset = 1;
         for b in bytes {
-            key.push(*b);
+            output[offset] = *b;
+            offset += 1;
             if *b == 0 {
-                key.push(255);
+                output[offset] = 255;
+                offset += 1;
             }
         }
-        key.extend_from_slice(&[0, 0]);
+        output[offset..].copy_from_slice(&[0, 0]);
     }
-    Ok(key)
+    Ok(())
+}
+
+/// Metadata about one validated canonical scalar prefix.
+/// It is not a decoded value or a key ownership capability.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct KeyPrefix {
+    /// Bytes occupied by the first scalar, excluding any following scalars.
+    pub encoded_len: usize,
+    /// Whether the first scalar is NULL.
+    pub is_null: bool,
+}
+
+/// Inspect the first scalar in concatenated canonical keys without allocation.
+/// Validates Bool, escaping, UTF-8, and the decoded 64 KiB value limit.
+/// Following bytes are left to the caller to validate or interpret.
+///
+/// # Errors
+/// Truncated/noncanonical input returns [`ErrorCode::InvalidFormat`]; decoded
+/// variable payloads over 64 KiB return [`ErrorCode::LimitExceeded`].
+pub fn inspect_key_prefix(input: &[u8]) -> Result<KeyPrefix> {
+    let malformed = || Error::new(ErrorCode::InvalidFormat, "invalid canonical key");
+    let tag = *input.first().ok_or_else(malformed)?;
+    let length = match tag {
+        0 => 1,
+        1 if input.get(1).is_some_and(|v| *v <= 1) => 2,
+        2 if input.len() >= 9 => 9,
+        3 | 4 => {
+            let mut offset = 1;
+            let mut segment = 1;
+            let mut decoded_len = 0;
+            loop {
+                let byte = *input.get(offset).ok_or_else(malformed)?;
+                if byte != 0 {
+                    offset += 1;
+                    decoded_len += 1;
+                } else {
+                    // NUL is an ASCII boundary. Each segment between escaped
+                    // NULs must itself be valid UTF-8; no scratch copy is needed.
+                    if tag == 3 && std::str::from_utf8(&input[segment..offset]).is_err() {
+                        return Err(malformed());
+                    }
+                    match input.get(offset + 1) {
+                        Some(0) => break offset + 2,
+                        Some(255) => {
+                            decoded_len += 1;
+                            offset += 2;
+                            segment = offset;
+                        }
+                        _ => return Err(malformed()),
+                    }
+                }
+                if decoded_len > MAX_VALUE_BYTES {
+                    return Err(Error::new(
+                        ErrorCode::LimitExceeded,
+                        "key value exceeds 64 KiB",
+                    ));
+                }
+            }
+        }
+        _ => return Err(malformed()),
+    };
+    Ok(KeyPrefix {
+        encoded_len: length,
+        is_null: tag == 0,
+    })
 }
 
 /// AXF1 | format=1 (u16 LE) | payload length (u32 LE) | payload | SHA256(all preceding).

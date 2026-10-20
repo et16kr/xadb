@@ -172,6 +172,10 @@ worker 실행 관계는 controller의 engine import를 뜻하지 않는다. `xad
 | crates/engine/src/durable/recovery | K3 | XADB-008 | 완결 committed batch replay와 reopen |
 | crates/engine/src/durable/checkpoint | K5 | XADB-009 | generation checkpoint·restore·공통 보존 |
 | crates/engine/src/storage/disk | DEV3 | XADB-021 | in-place page·allocator·dirty buffer·WAL 연계 물리 I/O |
+| crates/engine/src/storage/page.rs | DEV3 | XADB-028 | 구현된 내부 page envelope codec. 실제 I/O·cell 의미와 분리된 표현 leaf |
+| crates/engine/src/storage/key.rs | DEV3 | XADB-028 | 구현된 내부 composite/physical key codec·비교. scalar bytes는 foundation codec 단일 구현, index I/O·unique 실행 제외 |
+| crates/engine/src/storage/anchor.rs | DEV3 | XADB-028 | 안정 root descriptor와 root envelope 대조. 실제 tree/SMO·pin 제외 |
+| crates/engine/src/storage/undo_ref.rs | DEV3 | XADB-028 | PageRef·slot/generation의 UndoRef 표현. 실제 undo record·수명/회수 제외 |
 | crates/engine/src/storage/locator | DEV3 | XADB-021 | snapshot별 RowUID 해석·상한 있는 DISK mapping |
 | crates/engine/src/storage/index | DEV3 | XADB-028 | native key·RowUID·cursor와 공통 transaction |
 | crates/engine/src/storage/partition | PART | XADB-030 | membership·routing·local index·원자적 행 이동 |
@@ -182,6 +186,12 @@ K0의 row/catalog는 작은 실제 production 구현이다. XADB-004 reference�
 2026-10-18 K1–K5 소스 연결에서 `database.rs`·`database/maintenance.rs`, `transaction.rs`·`transaction/`, `publication.rs`, `durable/{codec,changes,wal,recovery,checkpoint,retention,backup,observation}.rs`를 실제 구현했다. namespace port와 Linux 구현은 foundation/platform에 두며 durable worker는 기존 engine-worker 패키지의 별도 `xadbtest-durable-worker` binary다. 새 production crate나 engine→platform/test 간선은 만들지 않는다. 이 경로의 `IMPLEMENTED`는 소스 존재·연결을 뜻하며 현재 빌드·실행 검증은 NOT_RUN이고 DEV2 완료를 뜻하지 않는다. 사용자 지시에 따라 K1–K5 전체 구현 연결 전 실행은 보류했다. 상세 소유·예산·정적 검토는 [DEV2 구현 기록](../implementation/dev2-implementation.md)을 따른다.
 
 `transaction`이 준비·validation·WAL 완료·공개의 순서를 소유한다. `storage`는 명시된 변경/읽기 계약, `durable`은 versioned batch·영속 효과/복원 계약, `catalog`는 metadata 상태를 소유한다. 이들을 합성하는 지점이 engine이며 서로의 manager나 private 물리 포인터에 무제한 접근하는 구조를 허용하지 않는다. 이 역할은 각각 `transaction`, `durable`, `storage` 내부 모듈로 두며, 후속 crate 분리에서도 순환 의존을 전역 singleton으로 우회하지 않는다.
+
+DEV3 첫 표현 leaf는 [page 형식](../contracts/dev3-page-format.md)을 private storage 모듈에 둔다. 기존 foundation의 ID/digest를 소비하며 dependency를 추가하지 않는다. 독립 vectors는 `scripts/dev3_page_vectors.py`와 engine 시험 fixture, snapshot 부분 모델은 reference 시험에 둔다. `scripts/check_dev3_leaf.py --with-regressions`는 보존 소스의 실제 codec·부분 모델과 하위 회귀를 연결하며 전체 DEV3 실행기로 사용하지 않는다. 기존 fingerprint/clean-export roots를 그대로 사용한다.
+
+두 번째 표현 작업의 [composite key](../contracts/dev3-key-format.md)는 caller buffer와 기존 foundation scalar bytes를 사용한다. foundation의 exact-size/encode-into/prefix 검사와 engine의 key 시험을 위 leaf 실행기에 함께 등록한다. M01–M06의 후속 모델은 reference integration tests에 두며 각 모델 계약·실제 receipt와 전체 DEV3 실행을 구분한다.
+
+PageRef·UndoRef·anchor의 [참조 표현](../contracts/dev3-reference-format.md)도 같은 leaf 실행기의 고정 분모다. `scripts/check_dev3_models.py`는 M01–M06을 명시 선택하여 보존 source에서 release binary를 만들고 case·witness·반례·budget 검사 분모를 확인한다. 전체 DEV3 실행기로 사용하지 않는다. 실행기 자기검사는 `scripts/test_check_dev3_models.py`이며 M03/M06의 고정 inventory·형식 검사 helper와 자기검사는 `scripts/dev3_progress_receipts.py`, `scripts/test_dev3_progress_receipts.py`다. 실제 판정에 사용한 checker와 보존 source의 hash를 대조하고 progress helper는 보존 사본에서 직접 읽는다.
 
 DISK는 물리 저장 방식만 분리한다. 공통 RowUID, snapshot, catalog, 원자 공개, WAL/recovery 계약을 유지한다. locator는 DISK 전체를 RAM map에 올리지 않는다. native global은 `storage/index/global`에서 같은 table의 매체 독립 key/RowUID 공간을 구현하고 SQL 숨김 table이나 local index fan-out으로 대신하지 않는다. PART/NG는 초기 SQL의 선행 조건이 아니다.
 
