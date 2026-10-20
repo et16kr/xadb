@@ -1,5 +1,11 @@
 # 기능 계약
 
+- [DEV3 WAL frame·page redo 표현](dev3-wal-format.md) — 무효과 표현과 고정 검증 범위
+- [DEV3 extent 할당 표현](dev3-allocation-format.md) — 무효과 표현과 고정 검증 범위
+- [DEV3 행·인덱스 버전 표현](dev3-row-format.md) — 무효과 표현과 고정 검증 범위
+- [DEV3 selected doublewrite control 표현](dev3-doublewrite-format.md) — 무효과 표현과 고정 검증 범위
+- [DEV3 실제 표현 크기와 자원 계산](dev3-resource-bounds.md) — F05 준비 계산, opcode·실제 I/O 인수 미완료
+
 [개발 문서 안내](../README.md)의 작업 경로를 따라 필요한 문서를 선택한다. 계획·제안·구현·실행 상태는 각 문서에서 확인한다.
 
 <!-- catalogue -->

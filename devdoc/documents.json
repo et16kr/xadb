@@ -877,6 +877,46 @@
       "path": "evidence/dev3-expressions-dev2-regression-xadb-20261020-r1.json",
       "role": "evidence",
       "title": "DEV3 tree·overflow·거래 표현 소스의 DEV2 P0/K0·DEV0/1 회귀"
+    },
+    "dev3-wal-format.md": {
+      "path": "contracts/dev3-wal-format.md",
+      "role": "contracts",
+      "title": "DEV3 WAL frame·page redo 표현"
+    },
+    "dev3-allocation-format.md": {
+      "path": "contracts/dev3-allocation-format.md",
+      "role": "contracts",
+      "title": "DEV3 extent 할당 표현"
+    },
+    "dev3-row-format.md": {
+      "path": "contracts/dev3-row-format.md",
+      "role": "contracts",
+      "title": "DEV3 행·인덱스 버전 표현"
+    },
+    "dev3-doublewrite-format.md": {
+      "path": "contracts/dev3-doublewrite-format.md",
+      "role": "contracts",
+      "title": "DEV3 selected doublewrite control 표현"
+    },
+    "dev3-resource-bounds.md": {
+      "path": "contracts/dev3-resource-bounds.md",
+      "role": "contracts",
+      "title": "DEV3 실제 표현 크기와 자원 계산"
+    },
+    "dev3-storage-formats-dev2-kernel-xadb-20261021-r1.json": {
+      "path": "evidence/dev3-storage-formats-dev2-kernel-xadb-20261021-r1.json",
+      "role": "evidence",
+      "title": "DEV3 WAL·할당·행·DWB 표현 소스의 DEV2 복구 원본 실행 결과"
+    },
+    "dev3-storage-formats-leaf-xadb-20261021-r1.json": {
+      "path": "evidence/dev3-storage-formats-leaf-xadb-20261021-r1.json",
+      "role": "evidence",
+      "title": "DEV3 WAL·할당·행·DWB 표현 통합 원본 실행 결과"
+    },
+    "dev3-storage-formats-dev2-regression-xadb-20261021-r1.json": {
+      "path": "evidence/dev3-storage-formats-dev2-regression-xadb-20261021-r1.json",
+      "role": "evidence",
+      "title": "DEV3 WAL·할당·행·DWB 표현 소스의 DEV2 P0/K0·DEV0/1 회귀"
     }
   }
 }

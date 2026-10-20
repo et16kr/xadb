@@ -566,6 +566,46 @@
       "responsibility": "Transaction identities, logical row version and status cells; no directory or transaction effects",
       "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
       "contract_ref": "dev3-transaction-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/wal_frame",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Interleaved WAL byte frames and page redo records; no append, recovery or semantic-group proof",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-wal-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/allocation_page",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Bounded extent metadata and reservation identities; no allocation or I/O",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-allocation-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/row_record",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Canonical row bytes and versioned row/index cells; no visibility or mutation",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-row-format.md"
+    },
+    {
+      "path": "crates/engine/src/storage/doublewrite_control",
+      "kernel_step": "S1_REPRESENTATION_LEAF",
+      "stage_ref": "DEV3",
+      "task_ref": "XADB-028",
+      "status": "IMPLEMENTED",
+      "responsibility": "Selected DWB control, slot sequence and image validation; no selector or flush effects",
+      "validation_status": "LOCAL_VERIFIED_EXPRESSION_ONLY",
+      "contract_ref": "dev3-doublewrite-format.md"
     }
   ],
   "builds": [

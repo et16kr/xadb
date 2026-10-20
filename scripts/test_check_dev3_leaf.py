@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 from check_dev3_leaf import (
+    ALLOCATION_TESTS, DOUBLEWRITE_TESTS, ROW_TESTS, WAL_TESTS,
     ANCHOR_TESTS, KEY_TESTS, MODEL_TEST, NEGATIVE_CASES, NORMAL_CASES, PAGE_TESTS, REQUIRED_WITNESSES,
     OVERFLOW_TESTS, SCALAR_KEY_TESTS, TRANSACTION_TESTS, TREE_TESTS, UNDO_REF_TESTS,
     VECTOR_RESULT, VIOLATIONS, check_model_output, check_named_tests,
@@ -110,6 +111,11 @@ class ReceiptTests(unittest.TestCase):
             ('storage::tree_page::tests::', TREE_TESTS),
             ('storage::overflow::tests::', OVERFLOW_TESTS),
             ('storage::transaction_record::tests::', TRANSACTION_TESTS),
+            ('storage::wal_frame::tests::', WAL_TESTS),
+            ('storage::allocation_page::tests::', ALLOCATION_TESTS),
+            ('storage::row_record::tests::', ROW_TESTS),
+            ('storage::doublewrite_control::tests::', DOUBLEWRITE_TESTS),
+
         ]:
             lines = [f'test {prefix}{name} ... ok' for name in sorted(expected)]
             summary = f'test result: ok. {len(expected)} passed; 0 failed; 0 ignored;'

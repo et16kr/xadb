@@ -90,7 +90,7 @@ pub(crate) enum PageKind {
 }
 
 impl PageKind {
-    fn from_byte(value: u8) -> Result<Self, PageError> {
+    pub(crate) fn from_byte(value: u8) -> Result<Self, PageError> {
         match value {
             1 => Ok(Self::RowLeaf),
             2 => Ok(Self::RowInternal),
@@ -107,7 +107,7 @@ impl PageKind {
         }
     }
 
-    fn accepts_level(self, level: u8) -> bool {
+    pub(crate) fn accepts_level(self, level: u8) -> bool {
         match self {
             Self::RowInternal | Self::IndexInternal | Self::CatalogInternal => {
                 (1..16).contains(&level)

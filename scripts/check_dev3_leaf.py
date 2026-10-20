@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify DEV3 page/key/reference/tree/overflow/transaction expressions and M02-P01."""
+"""Verify DEV3 page/key/reference/tree/overflow/transaction/WAL/allocation/row/DWB expressions and M02-P01."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -86,6 +86,53 @@ TRANSACTION_TESTS = {
     'status_lookup_binds_logical_and_physical_identity',
     'state_and_namespace_matrix_is_exact',
     'generated_transaction_records_roundtrip_without_effects',
+}
+WAL_TESTS = {
+    'wal_frame_literal_and_kind_matrix',
+    'wal_frame_identity_and_lsn_chain',
+    'wal_tail_classification_is_strict',
+    'wal_rejects_complete_checksum_and_semantic_damage',
+    'wal_patch_records_are_bounded_after_images',
+    'wal_init_records_bind_complete_page_images',
+    'wal_redo_groups_are_canonical_and_borrowed',
+    'wal_exact_frame_and_record_limits',
+    'wal_all_encoders_preserve_output',
+    'wal_generated_profiles_match_independent_fields',
+    'wal_stream_prefix_preserves_following_frames',
+}
+ALLOCATION_TESTS = {
+    'allocation_golden_pages_and_literals',
+    'allocation_geometry_and_metadata_ownership',
+    'allocation_state_matrix_is_exact',
+    'allocation_rejects_checksummed_semantic_damage',
+    'allocation_lookup_binds_state_owner_and_generation',
+    'allocation_reservation_owners_and_namespaces',
+    'allocation_encoders_preserve_outputs_and_generations',
+    'allocation_bounded_scan_profiles',
+}
+ROW_TESTS = {
+    'canonical_row_literals_and_borrowed_values',
+    'canonical_schema_and_size_boundaries',
+    'versioned_row_and_index_literals',
+    'every_short_buffer_and_trailing_input_is_rejected',
+    'fixed_noncanonical_fields_are_rejected',
+    'record_namespace_and_logical_identity_are_bound',
+    'row_payload_and_index_presence_matrices',
+    'materialized_overflow_requires_digest_and_schema',
+    'tree_values_bind_expected_row_ids',
+    'fixed_seed_rows_match_independent_wire_fields',
+}
+DOUBLEWRITE_TESTS = {
+    'doublewrite_literal_controls_and_images',
+    'doublewrite_lengths_and_checksum_damage',
+    'doublewrite_checksummed_semantic_damage',
+    'doublewrite_addresses_slots_and_expectations',
+    'doublewrite_image_validation_binds_every_field',
+    'doublewrite_exact_bounds_and_empty_retirement',
+    'doublewrite_encoders_preserve_outputs',
+    'doublewrite_fixed_profiles_have_bounded_inventory',
+    'doublewrite_slot_sequence_and_envelope_are_bound',
+    'doublewrite_slot_encoders_preserve_outputs',
 }
 MODEL_TEST = 'snapshot_lifecycle_partial_model_exhaustive'
 MODEL_BUDGET_TEST = 'snapshot_model_budget_exhaustion_is_inconclusive'
@@ -270,7 +317,7 @@ def main():
     source = session / 'source'
     report = {
         'schema_version': 1, 'date': datetime.now(timezone.utc).isoformat(),
-        'scope': 'DEV3 page/key/reference/tree/overflow/transaction expressions + D3-M02-P01; no disk engine or S1 acceptance',
+        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/WAL/allocation/row/DWB expressions + D3-M02-P01; no disk engine or S1 acceptance',
         'status': 'RUNNING', 'origin': identity(ROOT), 'artifact_directory': str(session),
         'dev3_acceptance': 'INCOMPLETE', 'checks': [], 'builds': [],
         'checker_identity_scope': 'F07 file freeze and before/after disk hashes; not bytecode attestation or protected CI',
@@ -316,6 +363,8 @@ def main():
                 'devdoc/contracts/dev3-reference-format.md',
                 'devdoc/contracts/dev3-tree-format.md', 'devdoc/contracts/dev3-overflow-format.md',
                 'devdoc/contracts/dev3-transaction-format.md',
+                'devdoc/contracts/dev3-wal-format.md', 'devdoc/contracts/dev3-allocation-format.md',
+                'devdoc/contracts/dev3-row-format.md', 'devdoc/contracts/dev3-doublewrite-format.md',
                 'devdoc/contracts/dev3-snapshot-model.md']}
         write_json(session / 'manifest.json', report)
         report['toolchain'] = run('toolchain', ['rustc', '-Vv'])
@@ -332,7 +381,9 @@ def main():
         report['key_tests'] = check_named_tests(output, 0, 'storage::key::tests::', KEY_TESTS)
         for name, expected in [('anchor', ANCHOR_TESTS), ('undo_ref', UNDO_REF_TESTS),
                                ('tree_page', TREE_TESTS), ('overflow', OVERFLOW_TESTS),
-                               ('transaction_record', TRANSACTION_TESTS)]:
+                               ('transaction_record', TRANSACTION_TESTS),
+                               ('wal_frame', WAL_TESTS), ('allocation_page', ALLOCATION_TESTS),
+                               ('row_record', ROW_TESTS), ('doublewrite_control', DOUBLEWRITE_TESTS)]:
             prefix = f'storage::{name}::tests::'
             output = run(name, [page, prefix, '--nocapture', '--test-threads=1'])
             report[f'{name}_tests'] = check_named_tests(output, 0, prefix, expected)

@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-21 [WAL·할당·행·DWB 표현 소스의 DEV2 복구 receipt](dev3-storage-formats-dev2-kernel-xadb-20261021-r1.json)는 동일 보존 source에서18개 check와 native99셀을 통과했다. 기존 DEV2 capability 회귀이며 DEV3 실제 디스크 복구 인수는 아니다.
+
 2026-10-20 [tree·overflow·거래 표현 통합 receipt](dev3-expressions-leaf-xadb-20261020-r1.json)와 [동일 소스의 하위 회귀](dev3-expressions-dev2-regression-xadb-20261020-r1.json)를 보존했다. engine 표현43개·foundation scalar3개·부분 모델 정상4/결함8 및 DEV0/1/2 회귀 PASS이며, 아래 복구 receipt와 같은 지문이다. DEV3 전체 인수는 미완료다.
 
 2026-10-20 [tree·overflow·거래 표현 소스의 DEV2 복구 receipt](dev3-expressions-dev2-kernel-xadb-20261020-r1.json)는 동일 보존 source에서18개 check와 native99셀을 통과했다. 새 DEV3 디스크 복구 증거가 아니며 [표현 통합 범위](../implementation/dev3-implementation.md#tree-overflow-transaction)를 따른다.
@@ -103,3 +105,7 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV2 journal 대기 진단](dev2-journal-diagnostic-xadb-20261020-r1.json) — 고정 Off 1회 정답·512개 fsync/TID/단계 연결; 추적 영향·환경 확인 FAIL, 계측 없는 실행의 원인·성능 인수로 확대하지 않음
 
 - [DEV2 journal binary 대응](dev2-journal-binary-mapping-xadb-20261020-r1.json) — 실행 커널과 build ID가 같은 ELF에서 두 stack 위치를 metadata·commit record 버퍼 대기로 대응; 추가 제품 실행과 성능 인수 승격 없음
+
+- [DEV3 WAL·할당·행·DWB 표현 통합 원본 실행 결과](dev3-storage-formats-leaf-xadb-20261021-r1.json) — 원본 PASS, source e419f2d7…; 전체 DEV3 disk 인수는 미완료.
+
+- [DEV3 WAL·할당·행·DWB 표현 소스의 DEV2 P0/K0·DEV0/1 회귀](dev3-storage-formats-dev2-regression-xadb-20261021-r1.json) — 원본 PASS, source e419f2d7…; 전체 DEV3 disk 인수는 미완료.

@@ -61,6 +61,18 @@ root는 `devdoc/contracts/dev3-overflow-format.md`, `crates/engine/src/storage/o
 
 transaction 표현·leaf checker 검토가 끝난 뒤 `/root/dev3_review`는 `devdoc/contracts/dev3-row-format.md`, `crates/engine/src/storage/row_record.rs`, `row_record_tests.rs`의 무효과 row/index version cell과 canonical row bytes를 담당한다. 기존 tree의 value 영역·transaction identity·overflow 표현을 소비하며 schema·visibility·실제 row 변경을 완성한 것으로 처리하지 않는다. 상세 계약을 root가 먼저 검토하고 구현을 진행한다.
 
+root는 `devdoc/contracts/dev3-doublewrite-format.md`, `crates/engine/src/storage/doublewrite_control.rs`, `doublewrite_control_tests.rs`의 selected doublewrite control 표현을 담당한다. control/selector/header까지 포함한 고정1010-slot/16 MiB pool의 최대64-page pending batch·identity·digest·sequence를 구체화하며 실제 selector·slot write/sync·home repair/retirement는 포함하지 않는다. 상세 계약과 독립 byte vector를 먼저 작성하여 다른 담당의 검토 후 구현한다. 계약 검토·allocation 독립 검토를 마친 `/root/dev3_model`에게 이 세 파일의 후속 구현·시험 독점 쓰기를 넘기며, root가 완성 소스와 결과를 독립 검토한다. 공유 module·색인은 root 소유를 유지한다.
+
+WAL/row 독립 검토를 마친 뒤 `/root/dev3_review`는 `devdoc/contracts/dev3-undo-format.md`의 undo record·chunk 상세 F01 제안만, `/root/dev3_supply`는 `devdoc/contracts/dev3-control-format.md`의 선택 control/FILEMAP/profile 상세 F01 제안만 독점 작성한다. 아직 제품 파일은 만들지 않는다. root의 계약 검토 뒤 실제 구현 소유·시험을 확정한다. undo의 참조 계수/edge·예약 descriptor와 control의 영속 selector 효과는 표현과 별도이며 근거 없이 완료로 처리하지 않는다. root는 `devdoc/contracts/dev3-resource-bounds.md`의 실제 codec 크기 기반 자원 계산·미완료 항목을 담당하며 공유 runner/색인 단일 쓰기를 유지한다.
+
+DWB 표현을 동결한 뒤 `/root/dev3_model`은 `devdoc/contracts/dev3-obligation-format.md`의 영속 recovery obligation descriptor·원자 WAL group의 F01/F02 제안만 독점 작성한다. 제품 소스·실행은 root 검토 전 진행하지 않는다. root의 자원 계산과 기존 allocator owner·TxnRef/status·WAL frame을 소비하며, 미구현 undo/control과의 연결을 명시한다. source 지문 `e419f2d74f954c3926f70cf7ac39626e8171b09fc50bb0925c707b2c9fedb0f7`의 새 통합 회귀 동안 실행 checker는 동결한다.
+
+root는 `devdoc/contracts/dev3-catalog-format.md`의 versioned table/index catalog cell·typed definition F01 제안을 담당한다. 현재 K0 TableSpec 의미와 DEV3 index 규칙을 재사용하며 이름 조회·DDL/visibility·실제 catalog undo는 별도다. 독립 계약 검토 전 제품 파일을 만들지 않는다.
+
+2026-10-21 undo 상세 계약·20개 literal/2개 page를 root가 수신 검토한 뒤 `/root/dev3_review`에게 `crates/engine/src/storage/undo_record.rs`, `undo_record_tests.rs`와 해당 계약의 독점 구현·시험을 배정한다. root catalog 계약·6개 literal의 독립 검토 수용 뒤 root에게 `crates/engine/src/storage/catalog_record.rs`, `catalog_record_tests.rs`와 해당 계약 구현·시험을 배정한다. 두 leaf는 caller-buffer 무효과 표현이며 공유 module·runner·색인은 root가 순차 연결한다. 세 번째 커밋의 검증 소스와 분리하여 다음 묶음으로 기록한다.
+
+같은 날 control 상세 계약과11개 control·2개 reference·1개 entry literal을 root가 독립 대조하여 수용했다. `/root/dev3_supply`에게 `crates/engine/src/storage/control.rs`, `control_tests.rs`와 `devdoc/contracts/dev3-control-format.md`의 독점 구현·시험을 배정한다. typed selector 확장안 A를 선택하되 이 leaf는 byte 표현만 구현하며 실제 foundation/platform/worker port 확장·I/O fault는 후속 별도 소유로 남긴다. bootstrap1 MiB와 알려진 고정 공간 소계는 전체 F05 인수 근거가 아니다.
+
 <a id="key-leaf"></a>
 ### 복합 key의 제한된 검증
 
@@ -214,10 +226,32 @@ transaction 첫 국소 실행은 V07/V11 hex 전사의 여분 zero로 fixture pa
 
 통합 leaf의 보존 source는 `artifacts/dev3/leaf-2lgnrs9h/source`, 지문은 `97171da71471a479063a6d5217d794aebfc7655c7035eadbf4ee178835f547e9`다. 같은 지문의 별도 짧은 export `/home/et16/x3k-ombuok44/source`에서 현재-build DEV2 kernel18개 check, native33셀×3회=99셀·독립 oracle·cache-loss/thread 검사를 통과했다. [원본 복구 receipt](../evidence/dev3-expressions-dev2-kernel-xadb-20261020-r1.json)의 SHA-256은 `a10d020d5cc767fde8379ca8bdca3e9b7b477a07922ad0d3e48612536b233668`이다. DEV2의 기존 capability 회귀이며 DEV3 disk 복구 인수로 확대하지 않는다. 같은 source의 [leaf 통합 원본](../evidence/dev3-expressions-leaf-xadb-20261020-r1.json)과 [하위 회귀 원본](../evidence/dev3-expressions-dev2-regression-xadb-20261020-r1.json)도 PASS다. engine 표현43개(page7/key5/anchor4/UndoRef2/tree9/overflow8/transaction8), foundation scalar3개, 부분 모델 정상4/결함8을 확인했다. DEV0/1과 DEV2 P0/K0 회귀는 해당 runner의 고정 범위이며 성능·30분 stress·DEV3 실제 disk 인수는 포함하지 않는다.
 
+<a id="wal-allocation-row-doublewrite"></a>
+## WAL·할당·행·doublewrite 표현의 독립 검토
+
+두 번째 단계 commit `519553b` 뒤 네 표현을 함께 연결한다. 공통 page의 kind/level 검사 구현은 바꾸지 않고 crate 내부에서 소비할 수 있도록 visibility만 넓혔다. 실제 파일 I/O·selector·allocator·visibility·WAL append/recovery는 아직 구현하지 않았다.
+
+| 표현 | 작성 / 독립 검토 | 국소 검증·보존 |
+| --- | --- | --- |
+| WAL frame·page redo | `/root/dev3_model` / `/root/dev3_review` | `artifacts/dev3-wal-model-r1/validation.json`의11시험·Clippy PASS. 별도 `artifacts/dev3/wal-review-qyev9udk/review.json`에서11시험과 추가2검사 PASS: 정상 prefix1,365·잘못된 prefix250·재checksum 손상14 |
+| extent allocator | `/root/dev3_supply` / `/root/dev3_model` | `artifacts/dev3-allocation-supply-r1/validation.json`의8시험·Clippy PASS. 별도 `artifacts/dev3-allocation-independent-r1/validation.json`에서도8시험 PASS |
+| canonical row·row/index version | `/root/dev3_review` / `/root/dev3_supply` | `artifacts/dev3/row-leaf-47e3v90a/validation.json`의10시험·Clippy PASS. 별도 `artifacts/dev3-row-independent-r1/validation.json`에서10시험과 독립 literal16개·overflow head 재구성 확인 |
+| selected DWB control·slot | `/root/dev3_model` / `/root` | 계약·source·10시험의 독립 정적 검토는 `artifacts/dev3/doublewrite-independent-root/review.json`. 작성자 최종 `artifacts/dev3-doublewrite-model-r2/validation.json`에서10시험·Clippy·소유 fmt PASS. root가 최종2줄 시험 diff와 상태 기록을 추가 검토한 `artifacts/dev3/doublewrite-independent-root-r2/review.json`도 PASS. 통합 실행은 별도 |
+
+WAL은 partial header의 embedded TxnId DB/timeline/reserved를 도착한 byte부터 대조하고 epoch 필드가 완성되면0을 거절한다. tail 예외는 caller가 증명한 active/unrequired EOF suffix에만 제한한다. byte frame이 semantic group·obligation·실제 recovery를 인증하는 것은 아니다. allocation은64개 항목 전체를 검증하며 namespace/claimant/owner/generation을 대조하지만 실제 token 발급은 수행하지 않는다. row/index의 논리 버전은 각각 해당 entry의 마지막 변경을 뜻하며 unrelated row update 뒤 항상 같다고 가정하지 않는다.
+
+row 첫 Clippy `collapsible_if` 실패는 `artifacts/dev3/row-leaf-reo9zm7v/`에 보존했다. allocation의 첫 Clippy도 같은 병렬 row 실패의 영향을 기록했으며 수정 후 새 로그를 남겼다. allocation/row production 의미나 고정 corpus는 축소하지 않았다. DWB 첫 formatter의 예약어 `gen` 오류, 실수로 live cwd에서 실행한10시험의 NOT_QUALIFIED 기록, 첫 보존 실행의 Clippy `needless_range_loop` 오류는 각각 원본을 보존한다. 마지막 수정은 같은 전체 entry를 enumerate하는 시험 코드이며 production bytes/판정은 바뀌지 않는다.
+
+DWB는 최초 초안의 image-only1,024개 계산을 독립 검토에서 수정했다. 전체16 MiB 안에 control/selector/staging64 KiB와 header·image·checksum을 포함한16,544-byte slot1,010개가 들어간다. 선택 Pending control의 batch id와 slot sequence를 결합하여 target/image가 같아도 이전 batch slot을 거절한다. caller buffer·작은 고정 scratch만 사용하며 정적 호출경로 확인을 runtime allocation 계측으로 주장하지 않는다.
+
+leaf runner는 네 모듈의11/8/10/10개 이름을 고정하여 같은 보존 engine binary에서 실행하고, 각각 정확한 이름·분모·summary와 네 계약 hash를 확인한다. `/root/dev3_review`가 등록 diff·원문과7개 자기검사를 독립 검토하여 PASS했다. `artifacts/dev3/leaf-inventory-review-lc4qe5u9/`에 checker 사본·로그를 보존했다. 합친 source 지문은 `e419f2d74f954c3926f70cf7ac39626e8171b09fc50bb0925c707b2c9fedb0f7`, 보존 경로는 `artifacts/dev3/leaf-iupungbw/source`다. 동일 지문의 짧은 export `/home/et16/x3k-9m6a7i9c/source`에서 현재-build kernel18 check·native99셀·cache-loss/thread·독립 oracle PASS를 확인했다. [원본 복구 receipt](../evidence/dev3-storage-formats-dev2-kernel-xadb-20261021-r1.json)의 SHA-256은 `d3d65e03ab68c6f5f0598a4daadedfc0575358a89963d83be000577badb7cf1b`다. 같은 source의 [leaf 통합 원본](../evidence/dev3-storage-formats-leaf-xadb-20261021-r1.json)과 [하위 회귀 원본](../evidence/dev3-storage-formats-dev2-regression-xadb-20261021-r1.json)도 PASS다. engine 표현82개·foundation scalar3개·부분 모델 정상4/결함8·runner 자기검사7개와 DEV0/1·DEV2 P0/K0 고정 회귀를 확인했다. 새 catalog/undo/control 병렬 구현은 이 지문과 다음 커밋으로 분리하며 이 실행 결과를 적용하지 않는다. 성능·30분 stress·실제 DEV3 disk 인수는 포함하지 않는다.
+
+[실제 표현 크기와 자원 계산](../contracts/dev3-resource-bounds.md)은 위 codec 길이를 F05 입력으로 연결한다. 기본8 GiB로 allocator inventory의64 MiB buffer×4 인수를 만족할 수 없음을 독립 산술 검토했다. 제품 기본을 유지한64 GiB 인수 준비 방향과 실제 지원/실행은 구별한다. opcode별 예약과 undo/control/descriptor·실제 I/O 검증은 남는다.
+
 <a id="remaining"></a>
 ## 다음 구현의 경계
 
-1. XADB-028의 composite key·tree cell·stable anchor/UndoRef/status/WAL 표현을 실제 독립 vector와 함께 동결한다. 공통 envelope만으로 cell 정렬·참조 target 유효성을 보장하지 않는다.
+1. 남은 undo record·선택 FILEMAP/control·recovery obligation·catalog 표현을 구체화한다. 검증한 page/key/tree/reference/status/row/WAL/allocator/DWB 표현은 실제 target 존재·선택·효과를 보장하지 않는다.
 2. M01–M06의 고정 유한 범위 검증을 실제 구현의 참조·진행·예약 프로토콜로 연결하고 opcode별 산식을 완료한다. 모델의 제한을 production 병렬 실행에 그대로 가정하지 않는다.
 3. F04/F05의 실제 I/O fault·opcode 자원표·rollback/flush 진행을 동결한 뒤 allocator·buffer·WAL/DWB를 통합한다. DEV2와 새 DEV3의 current-build recovery·실제 thread·DS/PF 시험을 별도로 실행한다.
 

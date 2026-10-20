@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-21 [DEV3 WAL·할당·행·doublewrite 표현](implementation/dev3-implementation.md#wal-allocation-row-doublewrite): 독립 검토, 같은 보존 source의 engine 표현82개·DEV0/1/2 회귀·DEV2 복구99셀 PASS. 실제 disk 효과와 전체 DEV3 인수는 미완료다.
+
 2026-10-20 [DEV3 tree·overflow·거래 표현](implementation/dev3-implementation.md#tree-overflow-transaction): 독립 검토와 보존 source의 표현 시험·DEV0/1/2 회귀·같은 source의 DEV2 복구99셀을 통과했다. 실제 DEV3 disk 효과와 전체 인수는 미완료다.
 
 2026-10-20 [DEV3 유한 모델 통합](implementation/dev3-implementation.md#models-all): M01–M06의 고정 범위를 같은 보존 source에서 실행하여 정상457·지정 반례127 PASS를 확인했다. 모델은 실제 disk/thread·opcode 자원표·DEV3 전체 인수를 대신하지 않는다.
