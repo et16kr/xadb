@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-20",
+  "classification": "D2_DIAGNOSTIC_ONLY",
+  "owner": "/root",
+  "status": "ONE_FIXED_OFF_DIAGNOSTIC_EXECUTED",
+  "review_status": "INDEPENDENT_RAW_RESULT_REVIEW_COMPLETE",
+  "source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+  "performance_acceptance": "NOT_APPLICABLE_DIAGNOSTIC_ONLY",
+  "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
+  "stage_status": "INCOMPLETE",
+  "whole_worktree_qualification": "NOT_CLAIMED",
+  "product_changes": 0,
+  "host_setting_changes": 0,
+  "reports": {
+    "plan": {
+      "path": "/home/et16/xjbd-r1/plan.json",
+      "bytes": 7444,
+      "sha256": "fbb61cc7a66f0e7977b89cc1db34d762df5439346f433c22e0503f71d1c5afbc"
+    },
+    "identities": {
+      "path": "/home/et16/xjbd-r1/identities.json",
+      "bytes": 1814,
+      "sha256": "731509c2ad94d79e3e2ab02d29c147a33303ab15e645bd64eb5c60bcd1bd7369"
+    },
+    "launch": {
+      "path": "/home/et16/xjbd-r1/launch.json",
+      "bytes": 433,
+      "sha256": "aba1e8135001178af1bce8c5d4489f526676e5aab4a690cc8a1ac5083c9150cf"
+    },
+    "design_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/jbd-causal-design-review.json",
+      "bytes": 11248,
+      "sha256": "d20430a4cbb2cf13fa346b8266291463c72535fab2041daca174fc471692648e"
+    },
+    "initial_prelaunch_findings": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/jbd-prelaunch-findings-r1.json",
+      "bytes": 7583,
+      "sha256": "7810c7215627f0718dad1ae8cdf7bf767abdf709e195eb5206f7cf9c90ddc28c"
+    },
+    "launch_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/jbd-launch-review.json",
+      "bytes": 12288,
+      "sha256": "fa1235d2a169dbd0a2888d75d0f1c2f1ec9a231c4ca80ec40dfaba4f60f996ce"
+    },
+    "report": {
+      "path": "/home/et16/xjbd-r1/run/report.json",
+      "bytes": 14245,
+      "sha256": "188557b876e71919bc52efad4912bb4ba2adccc6d5ab34050c64844d7cef150d"
+    },
+    "journal_analysis": {
+      "path": "/home/et16/xjbd-r1/run/journal-analysis.json",
+      "bytes": 1054111,
+      "sha256": "759c04e04bb2164878b3b5b9211e3f4515f164ead4fb610298e616014e24ef05"
+    },
+    "analyzer_preflight": {
+      "path": "/home/et16/xjbd-r1/analysis-preflight.json",
+      "bytes": 2293,
+      "sha256": "94be00b35a52d2b294eb7e5a2c75ed02cccddf8844c844cc82bb706249a78b43"
+    },
+    "normal_helper": {
+      "path": "/home/et16/xjbd-r1/preflight-r5/normal/receipt.json",
+      "bytes": 9235,
+      "sha256": "32752c9bb16f774b2aa053a3ed4228b3f13074db86cadbebc702a16e65d03ccc"
+    },
+    "injected_helper": {
+      "path": "/home/et16/xjbd-r1/preflight-r5/injected/receipt.json",
+      "bytes": 7053,
+      "sha256": "8f7797a511b8a2555b420c21035490c07ca05f182d7f8646f74835563743072a"
+    },
+    "watchdog_parent_death": {
+      "path": "/home/et16/xjbd-r1/watchdog-preflight-r2/report.json",
+      "bytes": 2565,
+      "sha256": "a1e0f3795584adeb353eda21f59cb8d5855c04970f6cdf3e415efa4a140906df"
+    },
+    "tool_identity": {
+      "path": "/home/et16/xjbd-r1/tool-observations.json",
+      "bytes": 6987,
+      "sha256": "d79fdf51ed2eaf92b302715512a7e5756691f4aecc0f8862caa2812252df58e4"
+    },
+    "independent_correctness": {
+      "path": "/home/et16/xjbd-r1/run/00/independent-output-check.json",
+      "bytes": 84395,
+      "sha256": "3d2c52d3adda5c61c8fca698467e921c9bd1d44ff4a5d0d7d5460535a53933f6"
+    },
+    "results_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/jbd-results-review.json",
+      "bytes": 11691,
+      "sha256": "25b075227d273eef2e210bf9a846512bfca13fa3c1eb8af836a4a35a33a15b20"
+    },
+    "document_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/jbd-document-review.json",
+      "bytes": 6928,
+      "sha256": "e23d3a98cad86760965d6b72a3934863943ce00de3657983a3a22cb998f18b13"
+    }
+  },
+  "fixed_scope": {
+    "product_runs": 1,
+    "observations": false,
+    "seed": 20261018,
+    "warmup": 64,
+    "measure": 512,
+    "worker_cpu": 2,
+    "collector_runner_cpu": 3,
+    "worker_timeout_seconds": 150,
+    "root_collector_independent_watchdog_seconds": 180,
+    "root_collector_kill_after_seconds": 5,
+    "per_collector_file_limit_bytes": 67108864,
+    "repeat_on_failure": false
+  },
+  "observations": {
+    "measured_cycles": 512,
+    "wait_calls": 512,
+    "unique_wait_tids": 512,
+    "zero_wait_cycles": 0,
+    "multiple_wait_cycles": 0,
+    "totals_ns": {
+      "cycle_ns": 4172604214,
+      "fsync_ns": 4140265250,
+      "journal_wait_ns": 4095552972,
+      "io_schedule_overlap_ns": 4016216287,
+      "unclassified_phase_ns": 0,
+      "phase_overlap_ns": {
+        "before_start": 10577434,
+        "start_to_locking": 1147781,
+        "locking_to_flushing": 1684637,
+        "flushing_to_logging": 1049130,
+        "logging_to_end": 4041633116,
+        "after_end": 39460874
+      }
+    },
+    "journal_wait_ns_median": 7946457.5,
+    "measurement_ns": 4173318806,
+    "cycle_p99_ns": 9137805,
+    "emitted_counts": {
+      "0": 606,
+      "2": 3035,
+      "3": 1214,
+      "4": 1214,
+      "1": 606
+    },
+    "boundary_io": []
+  },
+  "coarse_environment_perturbation_screen": {
+    "status": "FAIL",
+    "reference_max_measurement_ns": 2778464859,
+    "limit_ratio": [
+      5,
+      4
+    ],
+    "observed_measurement_ns": 4173318806,
+    "same_time_untraced_control": false,
+    "consequence": "Do not generalize traced timing proportions to untraced execution or historical failed pairs. This different-time screen is not a pure tracing-overhead estimate."
+  },
+  "runtime_evidence": {
+    "wait_correspondence": "512 measured first-source-WAL fsyncs joined to 512 actual jbd2_log_wait_commit calls and distinct journal transaction IDs; all five phase markers present.",
+    "phase_scope": "logging-to-end is a broad marker interval including several I/O and later bookkeeping paths, not a disk service-time measurement.",
+    "io_schedule_scope": "Same journal PID io_schedule function elapsed intervals overlap worker waits; this is temporal overlap, not independent proof that each I/O span belongs to that worker TID.",
+    "stack_overlap_ns": {
+      "bpf_prog_810008a6d8761302_fentry_vmlinux_io_schedule_10+855\nbpf_trampoline_6442576728+75\nbit_wait_io+17\n__wait_on_bit+48\nout_of_line_wait_on_bit+142\n__wait_on_buffer+48\njbd2_journal_commit_transaction+3587\nkjournald2+163\nkthread+247\nret_from_fork+405\nret_from_fork_asm+26": 15661457,
+      "bpf_prog_810008a6d8761302_fentry_vmlinux_io_schedule_10+855\nbpf_trampoline_6442576728+75\nbit_wait_io+17\n__wait_on_bit+48\nout_of_line_wait_on_bit+142\n__wait_on_buffer+48\njbd2_journal_commit_transaction+4778\nkjournald2+163\nkthread+247\nret_from_fork+405\nret_from_fork_asm+26": 4000554830
+    },
+    "correctness": "PASS_EXISTING_INDEPENDENT_ACK_READBACK_WAL_BACKUP_RESTORE_CHECKER"
+  },
+  "capture_controls": {
+    "clock": "perf CLOCK_MONOTONIC and BPF explicit nsecs(monotonic)",
+    "startup": "Full-attachment marker after attach loops; expected 12 probes and live actual BPF process before product payload; BEGIN is not readiness.",
+    "stopping": "Verified actual BPF PID/starttime; SIGUSR1 disables producer predicates and acknowledges, fixed 1s drain, SIGINT directly to actual collectors; mandatory kernel/emitted counter agreement.",
+    "storage": "Private owned tmpfs collector spool; product fixture remains ext4; detached/closed data copied with exact bytes/hash and spool removed.",
+    "parent_death": "Actual root BPF and perf continued after helper parent exited, then terminated under a 6s+2s test watchdog; all groups and BPF links absent. Runtime uses 180s+5s watchdog.",
+    "scope_limit": "Globally attached BPF hooks use early worker PID, filesystem dev or journal PID predicates; only matching records are interpreted. Journal phase observations cover the shared filesystem journal; perf dummy metadata may include other process identity metadata."
+  },
+  "cleanup": {
+    "worker_remaining": false,
+    "collector_groups_remaining": [
+      [],
+      [],
+      []
+    ],
+    "spool_removed": true
+  },
+  "original_preflight_failures": [
+    "r1 attach output location mismatch; no payload",
+    "r2 immediate SIGINT lost pending asynchronous records; detected against END counters",
+    "r4 group interrupt also reached timeout wrapper and BPF ended137; normal stop changed to actual collector PID",
+    "initial parent-death helper omitted user-owned perf output precreation; preservation permission failure retained, owned records rescued"
+  ],
+  "limits": [
+    "One traced Off run cannot establish instrumentation overhead or acceptance.",
+    "Coarse screen FAIL prevents applying measured proportions to untraced performance.",
+    "No physical-device latency, particular commit-record wait site, scheduler cause, kernel defect, or original failed-pair cause is established.",
+    "No new product change or additional acceptance/diagnostic retry follows from this result alone."
+  ],
+  "remaining": [
+    "PF04 audit-always, audit-detailed, durable-audit and durable-replay guardrail failures",
+    "Final DEV2/B2/D0 acceptance after PF04"
+  ],
+  "independent_review": {
+    "reviewer": "/root/dev2_closure_review",
+    "owner_adoption": "/root",
+    "status": "APPROVED_DIAGNOSTIC_EVIDENCE_ONLY_WITH_FAILED_SCREEN",
+    "blocking_findings": 0,
+    "scope": "Independent raw recomputation of all 512 cycle/TID/phase/IO-overlap rows and totals; retained perf binary redecode; frozen independent correctness checker on retained bytes; 44 receipt, 8 tmpfs-copy and 17 frozen-input bindings; process-group and BPF cleanup.",
+    "limits": "Trace correspondence completion only. Failed coarse screen, original PF04 failures and DEV2/B2/D0 incomplete status are retained. No untraced timing, historical failure or device-cause attribution."
+  },
+  "document_review": {
+    "reviewer": "/root/dev2_closure_review",
+    "status": "PASS",
+    "blocking_findings": 0,
+    "owner_adoption": "/root",
+    "receipt_projection_omits": [
+      "reports",
+      "document_review"
+    ],
+    "canonical_json": "UTF-8, ensure_ascii=False, sort_keys=True, separators=(comma,colon), no newline",
+    "receipt_projection_bytes": 5818,
+    "receipt_projection_sha256": "f7ce34c841fbdc00969c13254e64ee2aef906ed076dea2bfa0581bd71d0cc157"
+  }
+}

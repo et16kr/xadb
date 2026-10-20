@@ -198,5 +198,20 @@
     "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
     "stage_status": "INCOMPLETE",
     "whole_worktree_qualification": "NOT_CLAIMED"
+  },
+  "dev2_journal_diagnostic_validation": {
+    "evidence_ref": "dev2-journal-diagnostic-xadb-20261020-r1.json",
+    "source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+    "status": "ONE_FIXED_OFF_DIAGNOSTIC_EXECUTED",
+    "runs": 1,
+    "correctness_pass_runs": 1,
+    "measured_fsync_wait_tid_correspondences": 512,
+    "journal_phase_coverage": "COMPLETE_THIS_TRACE",
+    "coarse_environment_perturbation_screen": "FAIL",
+    "untraced_proportions_or_historical_failure_attribution": "NOT_CLAIMED",
+    "performance_acceptance": "NOT_APPLICABLE_DIAGNOSTIC_ONLY",
+    "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
+    "stage_status": "INCOMPLETE",
+    "whole_worktree_qualification": "NOT_CLAIMED"
   }
 }

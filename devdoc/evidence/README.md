@@ -80,3 +80,5 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV2 fsync·스케줄링 진단](dev2-fsync-diagnostic-xadb-20261020-r1.json) — 고정4run의 정답·추적 연결과 측정2,048개 fsync 시간 분해; 기존 PF04 실패를 유지하는 진단 전용 증거
 
 - [DEV2 PF04 가설 검토](dev2-pf04-hypothesis-review-xadb-20261020-r1.json) — 기존 추적·설치 버전 커널 소스의 독립 대조, 추가 Arc 비용과 max_batch_time 설정 가설의 한계; 새 제품 실행·인수 승격 없음
+
+- [DEV2 journal 대기 진단](dev2-journal-diagnostic-xadb-20261020-r1.json) — 고정 Off 1회 정답·512개 fsync/TID/단계 연결; 추적 영향·환경 확인 FAIL, 계측 없는 실행의 원인·성능 인수로 확대하지 않음

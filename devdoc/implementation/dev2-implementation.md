@@ -626,3 +626,20 @@ K0의 관측 활성 snapshot은 기본 Counters 외에 collector Arc를 별도�
 기존 2,048개 cycle을 깨운 실행 문맥의 PID별로 다시 집계했다. journal thread PID470이 깨우기 전 대기가 각 실행의 cycle 시간 합계 중96.843–98.085%였고 해당 구간 중앙값은5.213–5.251ms였다. PID0 문맥이 깨우기 전 대기의 중앙값은23.284–30.057µs였다. PID0은 idle/interrupt 문맥이며 timer의 증거가 아니다. PID470은 해당 filesystem journal thread로 확인했지만, 깨운 PID만으로 특정 journal transaction·wake 지점·장치 I/O 원인까지 식별하지 못한다. 따라서 **`max_batch_time=0`으로 약5ms 대기가 해결된다는 설명은 현재 근거로 지지되지 않는다.** 다른 writer나 겹친 작업에 batching이 영향을 줄 가능성까지 부정한 것은 아니다.
 
 `/root/dev2_closure_review`는 원본 archive와 Ubuntu patch의 해당 11개 hunk를 독립 재구성하여 최종 9개 파일을 확인하고, 원시 trace에서 2,048개 cycle의 구간별 개수·합·중앙값·범위·미분류를 다시 계산했다. 차이와 차단 지적은 없었고 `/root`가 한계를 포함한 결론을 반영했다. 남은 PF04 네 campaign의 FAIL은 그대로다. 다음 실행은 측정 환경의 사용 조건을 확인하거나 journal 완료 대기를 더 구분할 관측을 사전에 정하고 별도 검토한 뒤 결정한다. 공유 root filesystem remount나 유리한 결과를 얻기 위한 반복 측정을 이 조사로 정당화하지 않는다.
+
+<a id="dev2-journal-diagnostic-20261020"></a>
+## DEV2 실제 journal transaction 대기 진단
+
+**2026-10-20 · D2 / 고정 Off 1회 실행, PF04·DEV2 인수 미완료.** [진단 receipt](../evidence/dev2-journal-diagnostic-xadb-20261020-r1.json)는 이전 깨움 PID 관측에서 구분하지 못했던 실제 대기 함수·journal transaction ID와 단계를 연결한다. 동일 e3 release worker, seed20261018, warmup64·측정512를 사용했고, 실행 전에 소스·실행기·분석기·계획을 고정해 별도 검토했다. 제품 코드와 공유 host 설정은 변경하지 않았다.
+
+**추적 영향·환경의 거친 확인 조건은 FAIL이다.** 측정 경과 시간은4,173,318,806ns로, 사전 고정한 이전 동일Off 최댓값2,778,464,859ns의1.25배를 넘었다. 다른 시점의 비교라 순수 추적 overhead로 분리할 수 없다. 아래 시간 비율은 이번 계측 실행 안에서만 유효하며, 계측 없는 실행이나 과거 실패 pair의 원인을 설명하는 비율로 사용하지 않는다. 재시도는 하지 않았다.
+
+기존 독립 checker의 ACK·행 값·old reader·WAL·backup·restore 정답 검사는 PASS다. 최초 source WAL의 FD 수명과 경로로 측정 fsync512회를 연결했고, 각각 실제 `jbd2_log_wait_commit` 호출과 서로 다른 TID512개를 확인했다. 각 TID의 start/locking/flushing/logging/end marker가 모두 존재하며 미분류 phase는 없다. cycle 시간 합계4,172,604,214ns 중 journal wait가4,095,552,972ns(98.153%), logging→end와 겹친 wait가4,041,633,116ns(96.861%)였다. logging→end는 여러 I/O와 후처리를 포함하는 넓은 구간이며 장치 기록 시간으로 읽지 않는다.
+
+같은 journal PID의 `io_schedule` 함수 경과 구간이 worker wait와 겹친 시간은4,016,216,287ns(전체 cycle의96.252%)였다. kernel stack에는 `__wait_on_buffer`와 `jbd2_journal_commit_transaction`이 나타났다. 이 경과 시간에는 CPU 재개 등도 포함되며, 시간상 겹침만으로 각 I/O가 그 worker TID의 소유라고 확정하지 않는다. 장치 service time, 특정 commit record 대기 지점, kernel 결함 또는 기존 PF04 실패 원인을 확정한 결과가 아니다.
+
+BPF hook은 전역에 연결되며 앞단 PID/dev 조건으로 실제 worker의 wait 함수, 해당 filesystem dev의 phase, 해당 journal PID의 `io_schedule`에 해당하는 기록만 해석했다. perf와 BPF 시계는 모두 명시적 CLOCK_MONOTONIC이다. 12개 probe의 전체 연결과 실제 수집기 생존을 확인한 뒤에만 입력을 보냈다. 종료 시 실제 BPF PID에 producer 중지 신호를 보내 acknowledgment를 받고1초간 출력 배출 후 정지했다. 커널 집계와 출력된 WAIT_IN606·WAIT_OUT606·PHASE3,035·IO_IN1,214·IO_OUT1,214개가 일치했다. 이 전체 수집 개수와 측정512개의 분모는 구분한다.
+
+수집 로그는 소유한 tmpfs 공간에 기록하여 대상 ext4 journal에 로그 append를 추가하지 않았다. 제품 fixture는 ext4에 유지했고, 수집기 종료 뒤 byte/hash가 같은 사본을 보존하고 임시 공간을 제거했다. 실제 수집기에 독립 watchdog180초·강제 종료 유예5초를 두었으며, 부모 종료 helper에서는 짧은6초·유예2초 설정의 실제 root BPF/perf가 부모 종료 뒤 약5.985초에 모두 끝났다. 17개 분석 사전 사례와 정상/입력 전 실패 helper를 확인했다. 초기 header 오판·종료 시 출력 누락·timeout wrapper에 대한 중복 신호·helper 보존 권한 실패도 원본대로 남겼다. 이번 결과는 제품 수정이나 추가 인수 반복의 근거가 아니며, 남은 PF04 네 campaign과 최종 DEV2/B2/D0 인수 상태는 유지한다.
+
+`/root/dev2_closure_review`는 원시 기록에서 512개 cycle/TID/단계/I/O 겹침의 모든 행과 합계를 독립 재계산하고, 보존된 perf binary를 다시 해독하여 export와 일치함을 확인했다. 보존 byte에 독립 정답 checker를 적용하고 receipt에 연결된 파일44개·tmpfs 사본8개·고정 입력17개의 해시, 소유 PID/PGID·BPF link 정리도 확인했다. 차단 지적은0개이며 `/root`는 **추적 자료 한정 승인과 확인 조건 FAIL**을 함께 반영했다. 추적 연결 완료를 PF04 또는 DEV2 완료로 승격하지 않는다.

@@ -742,6 +742,11 @@
       "path": "evidence/dev2-pf04-hypothesis-review-xadb-20261020-r1.json",
       "role": "evidence",
       "title": "DEV2 PF04 추가 Arc·ext4 batching 가설의 근거와 한계"
+    },
+    "dev2-journal-diagnostic-xadb-20261020-r1.json": {
+      "path": "evidence/dev2-journal-diagnostic-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV2 실제 journal 대기 TID·단계 진단과 추적 영향 한계"
     }
   }
 }
