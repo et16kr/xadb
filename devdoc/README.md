@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-20 [DEV2 PF04 가설 검토](implementation/dev2-implementation.md#dev2-pf04-hypothesis-review-20261020): 기존 2,048개 cycle 추적과 설치 버전 커널 소스를 대조했다. 공유 파일시스템의 `max_batch_time` 변경을 해결책으로 삼을 근거는 부족하며, PF04 실패와 DEV2 미완료 상태를 유지한다.
+
 2026-10-20 [DEV2 fsync 진단](implementation/dev2-implementation.md#dev2-fsync-diagnostic-20261020): 고정 4개 실행의 정답·추적 연결 검사를 완료했다. 이 실행의 측정 시간은 주로 worker 깨움 이전 fsync 대기였으며, 기존 PF04 실패와 DEV2 미완료 상태는 유지한다.
 
 2026-10-20 [DEV2 성능 후속 실행](implementation/dev2-implementation.md#dev2-performance-followup-20261020): 준비한 9개 campaign·180개 run의 정답 검사와 재현을 완료했다. PF12 국소 개선과 PF13 재현 기능은 개별 검증 완료이며, PF04의 네 campaign 비용 한도 FAIL로 DEV2 전체 인수는 미완료다.

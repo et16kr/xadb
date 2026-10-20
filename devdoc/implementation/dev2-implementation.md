@@ -611,3 +611,18 @@ collector 탐색은 사전 한도 3개였다. candidate1은 full 힌트와 no-op
 사전 고정한 거친 영향 확인 조건인 이전 동일Off 측정 최댓값2,778,464,859ns의1.25배 이하는4개 모두 충족했다. 서로 다른 시점의 비교이므로 순수한 추적 overhead 추정이나 인수 비용 한도 PASS가 아니다. 16개 analyzer 사전 사례는 누락된 switch-in·잘못된 clockid·손실·외부 PID 등 검출과 모호한 wake의 미분류 보존을 확인했다. 두 수집기를 붙인 직후의 의도한 실패에서 입력 미전달·process 정리도 확인했다. 본 실행 종료 뒤 worker·수집기 잔류는 없었다.
 
 기존 필수34개 ID 중31개 scoped 검토와 PF12/PF13 완료에 더해, 남은 항목은 **PF04의 네 campaign 비용 한도 실패 및 최종 DEV2/B2/D0 종료**다. 이 숫자는 증거 범위의 개수이며 남은 공수의 비율이 아니다. 이번 진단은 특정 제품 결함을 확정하지 않았으므로 임의 코드 수정이나 추가 인수 반복으로 이어가지 않는다. 측정 환경의 사용 조건 또는 새로 검토한 구분 가설을 확보한 뒤 다음 실행을 정하고, 현재까지의 실패와 원래 예산을 유지한다.
+
+<a id="dev2-pf04-hypothesis-review-20261020"></a>
+## DEV2 PF04 후속 가설 검토
+
+**2026-10-20 · D2 / 읽기 전용 조사·독립 검토 완료, PF04·DEV2 인수 미완료.** [가설 검토 receipt](../evidence/dev2-pf04-hypothesis-review-xadb-20261020-r1.json)에 두 후보 설명과 채택하지 않은 이유를 남겼다. 새 제품 실행, 제품 코드 수정, 공유 host 설정 변경은 없다.
+
+K0의 관측 활성 snapshot은 기본 Counters 외에 collector Arc를 별도로 소유한다. 현재 측정 loop에서 추가 clone/drop 65,536쌍이 실행되는 경로를 소스와 동결 binary에서 확인했지만, 그 지점의 시간 기여는 분리하지 못했다. shared Counters에 통합하면 transaction·영속 복구의 크기/할당량에도 영향을 주며, 별도 wrapper는 소유권·할당·간접 참조를 추가한다. snapshot/cursor의 독립 수명과 Off 동작도 보존해야 한다. 기존 최악 CPU 실패를 같은 baseline에서 해소하려면 Always 약8.26%, Detailed 약11.46%의 전체 candidate 시간 감소가 필요하며, 이는 요구량이지 이 후보의 예상 효과가 아니다. 이미 소진한 후보 3개 탐색 예산을 늘릴 근거로 삼지 않았다.
+
+영속 경로는 설치된 Ubuntu kernel package `linux 7.0.0-38.38`과 맞는 공식 source archive·patch를 대조했다. 사용한 원본·패치의 SHA-256과 관련 9개 파일, tag `Ubuntu-7.0.0-38.38`의 commit `740b32353f43e9b00d0350d6fa7b29a6667deabd`를 receipt에 기록했다. 분석 입력은 checksum으로 연결한 archive 재구성이며, 설치 binary의 재현 build나 실제 kernel 호출 stack을 확인한 것은 아니다.
+
+현재 파일시스템에는 fast_commit 기능이 없고 WAL inode에 sync flag가 없다. 이 조건에서 소스가 가리키는 일반 fsync 경로는 file data 대기 후 journal transaction 완료를 기다린다. `max_batch_time`에 따른 지연은 `jbd2_journal_stop`에서 동기 handle·이전과 다른 writer·미완료 batching 시간 등의 조건이 충족될 때 발생한다. 모든 fsync에 무조건 더하는 지연이 아니다. 현재 mount·기능 관측은 추적 이후의 값이며 당시의 함수 경로를 확정하지 않는다.
+
+기존 2,048개 cycle을 깨운 실행 문맥의 PID별로 다시 집계했다. journal thread PID470이 깨우기 전 대기가 각 실행의 cycle 시간 합계 중96.843–98.085%였고 해당 구간 중앙값은5.213–5.251ms였다. PID0 문맥이 깨우기 전 대기의 중앙값은23.284–30.057µs였다. PID0은 idle/interrupt 문맥이며 timer의 증거가 아니다. PID470은 해당 filesystem journal thread로 확인했지만, 깨운 PID만으로 특정 journal transaction·wake 지점·장치 I/O 원인까지 식별하지 못한다. 따라서 **`max_batch_time=0`으로 약5ms 대기가 해결된다는 설명은 현재 근거로 지지되지 않는다.** 다른 writer나 겹친 작업에 batching이 영향을 줄 가능성까지 부정한 것은 아니다.
+
+`/root/dev2_closure_review`는 원본 archive와 Ubuntu patch의 해당 11개 hunk를 독립 재구성하여 최종 9개 파일을 확인하고, 원시 trace에서 2,048개 cycle의 구간별 개수·합·중앙값·범위·미분류를 다시 계산했다. 차이와 차단 지적은 없었고 `/root`가 한계를 포함한 결론을 반영했다. 남은 PF04 네 campaign의 FAIL은 그대로다. 다음 실행은 측정 환경의 사용 조건을 확인하거나 journal 완료 대기를 더 구분할 관측을 사전에 정하고 별도 검토한 뒤 결정한다. 공유 root filesystem remount나 유리한 결과를 얻기 위한 반복 측정을 이 조사로 정당화하지 않는다.

@@ -737,6 +737,11 @@
       "path": "evidence/dev2-fsync-diagnostic-xadb-20261020-r1.json",
       "role": "evidence",
       "title": "DEV2 fsync·스케줄링 진단과 PF04 잔여 인수"
+    },
+    "dev2-pf04-hypothesis-review-xadb-20261020-r1.json": {
+      "path": "evidence/dev2-pf04-hypothesis-review-xadb-20261020-r1.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 추가 Arc·ext4 batching 가설의 근거와 한계"
     }
   }
 }

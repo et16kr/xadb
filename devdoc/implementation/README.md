@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-20 [DEV2 PF04 가설 검토](dev2-implementation.md#dev2-pf04-hypothesis-review-20261020): 새 제품 실행 없이 기존 추적과 커널 소스를 독립 대조했다. 설정 변경이나 추가 후보의 효과를 확정하지 않았으며, PF04와 DEV2/B2/D0 최종 인수는 미완료다.
+
 2026-10-20 [DEV2 fsync 진단](dev2-implementation.md#dev2-fsync-diagnostic-20261020): Off/On/On/Off 4개 실행의 정답과 2,048개 측정 fsync 연결을 확인했다. 이 추적 결과는 PF04 인수 결과를 대체하지 않으며, 원래 네 campaign의 비용 한도 FAIL과 DEV2 미완료를 유지한다.
 
 2026-10-20 [DEV2 성능 후속 실행](dev2-implementation.md#dev2-performance-followup-20261020): 고정 소스의 9개 campaign·180개 run 정답 PASS. PF12 국소 개선·PF13 재현 기능을 개별 검증 완료했으며, PF04 계측 비용 한도와 DEV2/B2/D0 최종 인수가 남아 있다.

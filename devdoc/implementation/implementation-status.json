@@ -184,5 +184,19 @@
     "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
     "stage_status": "INCOMPLETE",
     "whole_worktree_qualification": "NOT_CLAIMED"
+  },
+  "dev2_pf04_hypothesis_review": {
+    "evidence_ref": "dev2-pf04-hypothesis-review-xadb-20261020-r1.json",
+    "status": "READ_ONLY_HYPOTHESIS_REVIEW_COMPLETE",
+    "independent_review": "PASS_WITH_EXPLICIT_LIMITS",
+    "existing_cycles_reaggregated": 2048,
+    "relevant_kernel_source_files_checked": 9,
+    "new_product_runs": 0,
+    "product_changes": 0,
+    "host_setting_changes": 0,
+    "max_batch_time_change_supported_as_remedy": false,
+    "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
+    "stage_status": "INCOMPLETE",
+    "whole_worktree_qualification": "NOT_CLAIMED"
   }
 }

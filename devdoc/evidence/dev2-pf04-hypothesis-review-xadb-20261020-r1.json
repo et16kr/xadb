@@ -1,0 +1,421 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-20",
+  "classification": "D2",
+  "owner": "/root",
+  "status": "READ_ONLY_HYPOTHESIS_REVIEW_COMPLETE",
+  "review_status": "INDEPENDENT_SOURCE_AND_RAW_TRACE_REVIEW_COMPLETE",
+  "performance_acceptance": "NOT_APPLICABLE_NO_NEW_PRODUCT_EXECUTION",
+  "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
+  "stage_status": "INCOMPLETE",
+  "product_source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+  "new_product_runs": 0,
+  "product_changes": 0,
+  "host_setting_changes": 0,
+  "whole_worktree_qualification": "NOT_CLAIMED",
+  "reports": {
+    "download": {
+      "path": "/home/et16/xadb-kernel-7.0.0-38.38-research/download.json",
+      "bytes": 3038,
+      "sha256": "e7c6c1b1be2c596fc499a9d4c6654c4777b4be60e29a9c3adfd528642e69c58d"
+    },
+    "source_manifest": {
+      "path": "/home/et16/xadb-kernel-7.0.0-38.38-research/source-manifest.json",
+      "bytes": 1292,
+      "sha256": "d7c4f47ea4381cf5409d078fd7c0d0ec9aeed9f06f73cf7f5481a509d12632a3"
+    },
+    "source_package_description": {
+      "path": "/home/et16/xadb-kernel-7.0.0-38.38-research/linux_7.0.0-38.38.dsc",
+      "bytes": 7845,
+      "sha256": "016d43577bd8a61629a02e140e3b88072b5ccdd1c90cb1ce2f3c8e5c28756e7e"
+    },
+    "upstream_source_archive": {
+      "path": "/home/et16/xadb-kernel-7.0.0-38.38-research/linux_7.0.0.orig.tar.gz",
+      "bytes": 254937830,
+      "sha256": "c6343795c8c7e4feff55f5b309365c8e0eaf49cd6abcb412e32315313f149536"
+    },
+    "ubuntu_patch_archive": {
+      "path": "/home/et16/xadb-kernel-7.0.0-38.38-research/linux_7.0.0-38.38.diff.gz",
+      "bytes": 3455370,
+      "sha256": "98e913d4a1c1f810e4dcfa573cbcf0f1a3a4427bdcd503722555298a794c52b2"
+    },
+    "selected_patch": {
+      "path": "/home/et16/xadb-kernel-7.0.0-38.38-research/selected.diff",
+      "bytes": 5115,
+      "sha256": "4d642774a78a8a8f3f791e808340da3cb22571abdfc224a3d7b2b99a7cf6e975"
+    },
+    "exact_patch_log": {
+      "path": "/home/et16/xadb-kernel-7.0.0-38.38-research/patch.log",
+      "bytes": 98,
+      "sha256": "836cb2efd3cddfd75dc0e06e182ec4e5f5cc5b03ff016baf8f23ede4022b5e67"
+    },
+    "trace_stratification": {
+      "path": "/home/et16/xadb-kernel-7.0.0-38.38-research/existing-trace-stratification.json",
+      "bytes": 6580,
+      "sha256": "45ddabf757053abfbb3dc122d496b0a7edc12d65481592e0a69c7f912bf6ddf9"
+    },
+    "stratification_script": {
+      "path": "/home/et16/xadb-kernel-7.0.0-38.38-research/analyze_existing.py",
+      "bytes": 3331,
+      "sha256": "c9bfb195fef56878324237bbce9cdf15494548fe1fad9f43b9a845c9d3757adf"
+    },
+    "host_metadata": {
+      "path": "/home/et16/xadb-kernel-7.0.0-38.38-research/host-observations.json",
+      "bytes": 4855,
+      "sha256": "689630171dcdd90484ba4f58dab0117a4f87ffd026144fec810a2a35a0a7eb46"
+    },
+    "journal_thread_identity": {
+      "path": "/home/et16/xadb-kernel-7.0.0-38.38-research/jbd-thread-identity.json",
+      "bytes": 601,
+      "sha256": "ea242447732bdb4a3ddc3652f38fa6188418b3342c1214c1641b040bca2a5acb"
+    },
+    "prior_candidate_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/next-step-review.json",
+      "bytes": 8532,
+      "sha256": "ef2e883147c185dda3f3949de67b9d7fb833978b9dc626b78f8f18afd13c87a3"
+    },
+    "prior_trace_receipt": {
+      "path": "/home/et16/work/xadb/devdoc/evidence/dev2-fsync-diagnostic-xadb-20261020-r1.json",
+      "bytes": 28986,
+      "sha256": "5bb9879baf7ffb2f8f58d5639de127bfe9dd8c15fde3515d5ab42d08489e13c3"
+    },
+    "independent_kernel_path_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/kernel-path-review.json",
+      "bytes": 19845,
+      "sha256": "af795a7b0de52280c0bf6f5335e2b0289cd2f31881db4ad4259f260dce49cdca"
+    },
+    "independent_document_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/hypothesis-document-review.json",
+      "bytes": 9803,
+      "sha256": "f765f5d6f119db3f4029c25a13aaf6f42189829539dbcf3bc6b4b3ece5ecbdfb"
+    }
+  },
+  "kernel_source": {
+    "ubuntu_package_source": "linux 7.0.0-38.38",
+    "git_tag": "Ubuntu-7.0.0-38.38",
+    "tag_object": "a6992b931e773a6c6261abe4c1c417ffeac8bd4d",
+    "peeled_commit": "740b32353f43e9b00d0350d6fa7b29a6667deabd",
+    "archive_reconstruction": "Matching source package orig plus diff; extracted only relevant files, exact patch fuzz=0",
+    "patched_files": [
+      "fs/ext4/fast_commit.c",
+      "fs/ext4/inode.c",
+      "fs/jbd2/journal.c"
+    ],
+    "files": {
+      "include/linux/jbd2.h": "47a3f6f0c6627b0fb7586f529e3ec1c4a43290613c690605bc0d101aa9c1d553",
+      "fs/jbd2/commit.c": "736c3ef6d9795d5677b00b79b7b3092a054b4e77893456d47705b51d361a11da",
+      "fs/jbd2/journal.c": "035d8f7c6c88732d7b5fb7836bb88783973ec1366af6a06eb5e1628e3b96a3ea",
+      "fs/jbd2/transaction.c": "df3acd959c8fb453007c31903456782cfae73bd13356f7c8083f5315bee8c804",
+      "fs/ext4/fast_commit.c": "3a34e7fbf3007a8ff4983782953b59559797e8500cc475e4fb491083d9da5532",
+      "fs/ext4/inode.c": "0fc520d1a2ca8077d47fdf57fc9a57d06fe9e7d46543cadf0cdeacc012ca82c1",
+      "fs/ext4/super.c": "4916dc9690597e0de3e41f0dc957569848135185495302decf77abcfd0b5bdb5",
+      "fs/ext4/ext4_jbd2.c": "c64c97deca88cfe7bdc8af1285bca2183c1abb17e2019f9c9febbfe059487827",
+      "fs/ext4/fsync.c": "d23ce1fbcac09b4e04484af0502f6bbfcabca50144d6e63443ecbc37fd769452"
+    }
+  },
+  "research_urls": [
+    "https://cdn.kernel.org/doc/html/latest/admin-guide/ext4.html",
+    "https://archive.ubuntu.com/ubuntu/pool/main/l/linux/linux_7.0.0-38.38.dsc",
+    "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/resolute"
+  ],
+  "source_fidelity": [
+    "Installed image/modules package version and uname are 7.0.0-38.38/7.0.0-38-generic.",
+    "Read the matching official Ubuntu source package; orig and diff digests match its .dsc. Only 9 relevant files extracted; 3 applicable file patches applied with fuzz 0.",
+    "Git tag resolution is recorded as provenance; analysis used the checksum-bound archive reconstruction, not a git checkout.",
+    "This is source-path analysis, not a reproducible-kernel-build or runtime function-stack verification.",
+    "Official HTTPS URLs and .dsc checksum correspondence are retained; the .dsc OpenPGP signature was not authenticated."
+  ],
+  "hypotheses": [
+    {
+      "id": "K0_EXTRA_DIAGNOSTICS_ARC",
+      "status": "NOT_SELECTED_AS_NEXT_PF04_ACTION",
+      "evidence": "Enabled-mode Snapshot owns an additional collector Arc, separate from base Counters. Fixed 65536-cycle measurement implies 65536 clone/drop pairs. Existing binary retains conditional lock incq at 0x864de and corresponding Snapshot drop lock decq at 0x70bd2. This is source/static-binary derivation, not a hardware count of that site.",
+      "limitations": [
+        "Its time contribution has not been isolated; whole-worker PMU is not per-site attribution.",
+        "Existing worst CPU failures require approximately 8.26% Always or 11.46% Detailed whole-candidate reduction at unchanged baseline. These are required reductions, not predicted effects.",
+        "Embedding Diagnostics into shared Counters changes sizes/charges also used by transaction and durable recovery. A volatile wrapper adds ownership/allocation/indirection and must preserve independent snapshot/cursor lifetime, Off behavior and row quota.",
+        "Previously declared 3-candidate exploration is exhausted. This receipt does not authorize an unplanned fourth candidate or claim an original outlier fix."
+      ]
+    },
+    {
+      "id": "EXT4_MAX_BATCH_TIME_IS_FSYNC_DELAY_FIX",
+      "status": "NOT_SUPPORTED_AS_CONFIGURATION_REMEDY",
+      "observed_current_setting": {
+        "min_batch_time_us": 0,
+        "max_batch_time_us": 15000,
+        "data_mode": "ordered",
+        "barriers": true,
+        "filesystem_uuid": "1c377269-2890-4dab-9355-0517ec36b0a1",
+        "fast_commit_feature_present": false,
+        "wal_inode_sync_flag_present": false
+      },
+      "source_supported_expected_path": [
+        "fs/ext4/fsync.c:141 ext4_sync_file writes/waits file data then calls ext4_fsync_journal",
+        "fs/ext4/fsync.c:110 regular-file journal path calls ext4_fc_commit",
+        "fs/ext4/fast_commit.c:1198 when JOURNAL_FAST_COMMIT is off calls jbd2_complete_transaction",
+        "fs/jbd2/journal.c:787 starts required commit and calls jbd2_log_wait_commit",
+        "fs/jbd2/journal.c:652 waits for j_commit_sequence on j_wait_done_commit",
+        "fs/jbd2/commit.c:1141 commit completion wakes that wait queue"
+      ],
+      "batching_path": "fs/jbd2/transaction.c:1903-1925: max_batch_time sleep is conditional on handle->h_sync, a different j_last_sync_writer PID, a nonzero cap and transaction age below bounded average commit time. It is not an unconditional sleep on every ordinary fsync.",
+      "interpretation": "The retained worker wakes are consistent with journal-completion waiting. The 5ms-class intervals end in waking from PID470, while PID0-context intervals are tens of microseconds. Current settings plus this source/trace evidence do not justify max_batch_time=0 as a fix.",
+      "limits": [
+        "Source-supported expected path is not a captured stack or function-entry trace.",
+        "PID0 is idle/interrupt context, not proof of a timer.",
+        "Current JBD2 average and mount/features observations occurred after the four captures.",
+        "Journal-thread wake does not isolate its I/O, CPU scheduling, journal phase or physical-device cause.",
+        "Waker PID does not identify journal transaction ID or a unique wake site; the journal loop also wakes the completion queue.",
+        "This does not rule out effects of batching on overlapping filesystem work or another writer."
+      ]
+    }
+  ],
+  "retained_trace_rows": [
+    {
+      "slot": "/home/et16/xdt-r1/run/00",
+      "cycle_count": 512,
+      "cycles_by_switch_interval_count": {
+        "2": 491,
+        "3": 21
+      },
+      "pid0": {
+        "interval_count": 511,
+        "before_waking_ns_sum": 12118237,
+        "before_waking_ns_median": 23284,
+        "minimum_ns": 8576,
+        "maximum_ns": 51287
+      },
+      "pid470": {
+        "interval_count": 512,
+        "before_waking_ns_sum": 2746780255,
+        "before_waking_ns_median": 5219735.0,
+        "minimum_ns": 5037461,
+        "maximum_ns": 13090076
+      },
+      "other_waking_pids": {
+        "10279": {
+          "interval_count": 1,
+          "before_waking_ns_sum": 29687,
+          "before_waking_ns_median": 29687,
+          "minimum_ns": 29687,
+          "maximum_ns": 29687
+        },
+        "21165": {
+          "interval_count": 11,
+          "before_waking_ns_sum": 236687,
+          "before_waking_ns_median": 17152,
+          "minimum_ns": 3858,
+          "maximum_ns": 49894
+        },
+        "23036": {
+          "interval_count": 10,
+          "before_waking_ns_sum": 248782,
+          "before_waking_ns_median": 23239.0,
+          "minimum_ns": 18956,
+          "maximum_ns": 38383
+        }
+      },
+      "multiple_pid470_wakes_in_one_fsync": [],
+      "unclassified_or_preempt_interval_ns": 0,
+      "cycle_ns_sum": 2804930090
+    },
+    {
+      "slot": "/home/et16/xdt-r1/run/01",
+      "cycle_count": 512,
+      "cycles_by_switch_interval_count": {
+        "2": 494,
+        "3": 18
+      },
+      "pid0": {
+        "interval_count": 512,
+        "before_waking_ns_sum": 12057602,
+        "before_waking_ns_median": 27732.5,
+        "minimum_ns": 8987,
+        "maximum_ns": 41258
+      },
+      "pid470": {
+        "interval_count": 512,
+        "before_waking_ns_sum": 2680921211,
+        "before_waking_ns_median": 5213203.5,
+        "minimum_ns": 5005080,
+        "maximum_ns": 9124617
+      },
+      "other_waking_pids": {
+        "23036": {
+          "interval_count": 17,
+          "before_waking_ns_sum": 306661,
+          "before_waking_ns_median": 15279,
+          "minimum_ns": 2966,
+          "maximum_ns": 39915
+        }
+      },
+      "multiple_pid470_wakes_in_one_fsync": [],
+      "unclassified_or_preempt_interval_ns": 8356,
+      "cycle_ns_sum": 2733251436
+    },
+    {
+      "slot": "/home/et16/xdt-r1/run/02",
+      "cycle_count": 512,
+      "cycles_by_switch_interval_count": {
+        "2": 488,
+        "3": 24
+      },
+      "pid0": {
+        "interval_count": 509,
+        "before_waking_ns_sum": 13441406,
+        "before_waking_ns_median": 30057,
+        "minimum_ns": 6182,
+        "maximum_ns": 118985
+      },
+      "pid470": {
+        "interval_count": 514,
+        "before_waking_ns_sum": 2724677718,
+        "before_waking_ns_median": 5251482.0,
+        "minimum_ns": 3854896,
+        "maximum_ns": 9145077
+      },
+      "other_waking_pids": {
+        "10228": {
+          "interval_count": 1,
+          "before_waking_ns_sum": 31189,
+          "before_waking_ns_median": 31189,
+          "minimum_ns": 31189,
+          "maximum_ns": 31189
+        },
+        "19552": {
+          "interval_count": 1,
+          "before_waking_ns_sum": 24556,
+          "before_waking_ns_median": 24556,
+          "minimum_ns": 24556,
+          "maximum_ns": 24556
+        },
+        "23036": {
+          "interval_count": 22,
+          "before_waking_ns_sum": 787097,
+          "before_waking_ns_median": 35557.0,
+          "minimum_ns": 16702,
+          "maximum_ns": 55775
+        },
+        "28550": {
+          "interval_count": 1,
+          "before_waking_ns_sum": 33483,
+          "before_waking_ns_median": 33483,
+          "minimum_ns": 33483,
+          "maximum_ns": 33483
+        }
+      },
+      "multiple_pid470_wakes_in_one_fsync": [
+        {
+          "ordinal": 253,
+          "cycle_ns": 10750181,
+          "waker_chain": [
+            0,
+            470,
+            470
+          ]
+        },
+        {
+          "ordinal": 255,
+          "cycle_ns": 10452959,
+          "waker_chain": [
+            0,
+            470,
+            470
+          ]
+        }
+      ],
+      "unclassified_or_preempt_interval_ns": 0,
+      "cycle_ns_sum": 2813498080
+    },
+    {
+      "slot": "/home/et16/xdt-r1/run/03",
+      "cycle_count": 512,
+      "cycles_by_switch_interval_count": {
+        "2": 490,
+        "3": 22
+      },
+      "pid0": {
+        "interval_count": 510,
+        "before_waking_ns_sum": 13240290,
+        "before_waking_ns_median": 29541.0,
+        "minimum_ns": 7073,
+        "maximum_ns": 56617
+      },
+      "pid470": {
+        "interval_count": 513,
+        "before_waking_ns_sum": 2722533591,
+        "before_waking_ns_median": 5231901,
+        "minimum_ns": 5024880,
+        "maximum_ns": 8972664
+      },
+      "other_waking_pids": {
+        "2190": {
+          "interval_count": 1,
+          "before_waking_ns_sum": 40557,
+          "before_waking_ns_median": 40557,
+          "minimum_ns": 40557,
+          "maximum_ns": 40557
+        },
+        "10279": {
+          "interval_count": 1,
+          "before_waking_ns_sum": 12584,
+          "before_waking_ns_median": 12584,
+          "minimum_ns": 12584,
+          "maximum_ns": 12584
+        },
+        "21165": {
+          "interval_count": 21,
+          "before_waking_ns_sum": 663543,
+          "before_waking_ns_median": 26800,
+          "minimum_ns": 8596,
+          "maximum_ns": 68039
+        }
+      },
+      "multiple_pid470_wakes_in_one_fsync": [
+        {
+          "ordinal": 431,
+          "cycle_ns": 10934473,
+          "waker_chain": [
+            0,
+            470,
+            470
+          ]
+        }
+      ],
+      "unclassified_or_preempt_interval_ns": 0,
+      "cycle_ns_sum": 2799025510
+    }
+  ],
+  "next_step": "Keep original PF04 failures and budgets. Resolve the requested dedicated measurement environment information or obtain a separately reviewed discriminating hypothesis with enough evidence before further intervention. Do not remount the shared root filesystem or extend measurement merely to obtain PASS.",
+  "remaining": {
+    "PF04_failed_campaigns": [
+      "audit-always",
+      "audit-detailed",
+      "durable-audit",
+      "durable-replay"
+    ],
+    "DEV2_B2_D0": "FINAL_ACCEPTANCE_INCOMPLETE",
+    "PF12": "COMPLETE_CURRENT_SATURATED_K0_COLLECTOR_SCOPE",
+    "PF13": "COMPLETE_CURRENT_RETAINED_BUNDLE_REPLAY_CAPABILITY",
+    "official_environment_protected_ci_distribution": "NOT_RUN_SEPARATE_FROM_LOCAL_CLOSURE"
+  },
+  "independent_review": {
+    "reviewer": "/root/dev2_closure_review",
+    "owner_adoption": "/root",
+    "status": "PASS_WITH_EXPLICIT_LIMITS",
+    "findings": 0,
+    "scope": "Exact archive reconstruction of 9 relevant source files, raw reaggregation of 2048 retained cycles, source-path interpretation and limits. No new product execution or acceptance promotion."
+  },
+  "document_review": {
+    "reviewer": "/root/dev2_closure_review",
+    "status": "PASS",
+    "findings": 0,
+    "owner_adoption": "/root",
+    "receipt_projection_omits": [
+      "reports",
+      "document_review"
+    ],
+    "canonical_json": "UTF-8, ensure_ascii=False, sort_keys=True, separators=(comma,colon), no newline",
+    "receipt_projection_bytes": 10376,
+    "receipt_projection_sha256": "4375b82bd5a57a09f11bb6b281ea7bd3dca9c2029d1d07fc558a577ef49eb185"
+  }
+}
