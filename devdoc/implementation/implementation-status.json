@@ -172,5 +172,17 @@
     ],
     "stage_status": "INCOMPLETE",
     "whole_worktree_qualification": "NOT_CLAIMED"
+  },
+  "dev2_fsync_diagnostic_validation": {
+    "evidence_ref": "dev2-fsync-diagnostic-xadb-20261020-r1.json",
+    "source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+    "status": "FOUR_DIAGNOSTIC_RUNS_EXECUTED_AND_CHECKED",
+    "runs": 4,
+    "correctness_pass_runs": 4,
+    "measured_fsync_correspondences": 2048,
+    "performance_acceptance": "NOT_APPLICABLE_DIAGNOSTIC_ONLY",
+    "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
+    "stage_status": "INCOMPLETE",
+    "whole_worktree_qualification": "NOT_CLAIMED"
   }
 }

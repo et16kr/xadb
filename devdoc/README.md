@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-20 [DEV2 fsync 진단](implementation/dev2-implementation.md#dev2-fsync-diagnostic-20261020): 고정 4개 실행의 정답·추적 연결 검사를 완료했다. 이 실행의 측정 시간은 주로 worker 깨움 이전 fsync 대기였으며, 기존 PF04 실패와 DEV2 미완료 상태는 유지한다.
+
 2026-10-20 [DEV2 성능 후속 실행](implementation/dev2-implementation.md#dev2-performance-followup-20261020): 준비한 9개 campaign·180개 run의 정답 검사와 재현을 완료했다. PF12 국소 개선과 PF13 재현 기능은 개별 검증 완료이며, PF04의 네 campaign 비용 한도 FAIL로 DEV2 전체 인수는 미완료다.
 
 **Markdown 중심으로 관리합니다. HTML은 생성하지 않습니다.** 현재 DEV0·DEV1 최소 기반, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog substrate를 부분 구현했습니다. 후속 streaming controller·catalog 재현과 K0 성능 진단·audit/replay를 포함한 이전 소스에서 DEV0·DEV1 회귀 및 DEV2 P0/K0 leaf를 로컬 검증했습니다. 이 결과는 현재 소스의 검증을 대신하지 않습니다. 최초 성능 비교의 p99 비용 한도는 FAIL이며 성능 인수는 미완료입니다. K1–K5 영속 커널은 구현 연결·독립 정적 검토를 마쳤으며, 동결 소스에서 복구·V3·하위 회귀의 로컬 실행을 완료했습니다. 일부 계측 비용 한도 실패로 최종 인수는 미완료입니다. 후속 제품 인수는 미완료입니다. 정확한 범위는 [현재 구현](implementation/README.md)과 [개발 단계](plans/development-stages.md)를 확인합니다.

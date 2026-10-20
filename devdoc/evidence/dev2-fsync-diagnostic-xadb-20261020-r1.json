@@ -1,0 +1,762 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-20",
+  "classification": "D2",
+  "owner": "/root",
+  "status": "FOUR_DIAGNOSTIC_RUNS_EXECUTED_AND_CHECKED",
+  "review_status": "INDEPENDENT_RESULT_REVIEW_APPROVED_DIAGNOSTIC_ONLY",
+  "source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+  "whole_worktree_qualification": "NOT_CLAIMED",
+  "performance_acceptance": "NOT_APPLICABLE_DIAGNOSTIC_ONLY",
+  "stage_status": "INCOMPLETE",
+  "purpose": "Distinguish fsync blocked time before waking from wake-to-switch-in runnable delay in the exact existing durable workload. No device-specific attribution and no replacement of untraced acceptance failures.",
+  "predeclared_plan": {
+    "fixed_order": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "runs": 4,
+    "seed": 20261018,
+    "warmup": 64,
+    "measurement": 512,
+    "extra_runs_after_result": 0,
+    "source_unchanged": true,
+    "product_code_changed": false,
+    "worker_cpu": 2,
+    "runner_collector_cpu": 3,
+    "both_collectors_enabled_before_payload": true,
+    "host_settings_changed": false
+  },
+  "capture_scope": [
+    "Owned PID only syscall/switch events; no inheritance",
+    "System-wide wake tracepoints kernel-filtered to target worker PID, includes context of the waker",
+    "perf auto dummy metadata may include other process COMM/MMAP/task metadata; no other PID performance/switch samples requested",
+    "CLOCK_MONOTONIC for both collectors; enable ACK before worker input; no host settings changed"
+  ],
+  "reports": {
+    "plan": {
+      "path": "/home/et16/xdt-r1/plan.json",
+      "bytes": 4185,
+      "sha256": "4ce7607411723d6f1d6ce913c3961cab4f9c22ca751b94d9665d9d28a5919f95"
+    },
+    "input_identities": {
+      "path": "/home/et16/xdt-r1/identities.json",
+      "bytes": 1573,
+      "sha256": "f4b563a6647a7983e088753b06e86c3d05e834cf682eac89449f19ca1f26ce3e"
+    },
+    "runner": {
+      "path": "/home/et16/xdt-r1/trace.py",
+      "bytes": 11182,
+      "sha256": "71939cb6710c14a843f0277440f233c9049ed97a2d1bde4adbbd263cd9ec7da7"
+    },
+    "analyzer": {
+      "path": "/home/et16/xdt-r1/analyze.py",
+      "bytes": 8157,
+      "sha256": "3ba7b6b769972d13d93d7bba1214acc2f724dfa076c4171b2f7370e4a05496f2"
+    },
+    "mapping_analyzer": {
+      "path": "/home/et16/xdt-r1/analyze_campaign.py",
+      "bytes": 3948,
+      "sha256": "fd7b300e4cfe62c37b29d8b1e9758affcc2dcd70a2b23b5cb758063f5bed3711"
+    },
+    "analyzer_negative_preflight": {
+      "path": "/home/et16/xdt-r1/analyzer-preflight-v2.json",
+      "bytes": 582,
+      "sha256": "08074d9dd843ff83edfb709ece5d559a42d98a910cbfac0e0386caaa33d13108"
+    },
+    "injected_cleanup_preflight": {
+      "path": "/home/et16/xdt-r1/cleanup-preflight/receipt.json",
+      "bytes": 3675,
+      "sha256": "bd318c842240336a588d0a82f211b9a41c8155f75f0b3f9998bbffdfaf2ae615"
+    },
+    "final_helper_preflight": {
+      "path": "/home/et16/xdt-r1/final-helper-preflight/receipt.json",
+      "bytes": 5814,
+      "sha256": "b6be6d711f191fa87833ddd6b4ceddccd94d0772179d121954bb51fc1c79e692"
+    },
+    "execution": {
+      "path": "/home/et16/xdt-r1/run/report.json",
+      "bytes": 40079,
+      "sha256": "9f1fede0e1be528085305914eb001b539677e9225eeebc0a4a4d721be1001595"
+    },
+    "analysis": {
+      "path": "/home/et16/xdt-r1/run/analysis.json",
+      "bytes": 3528233,
+      "sha256": "dab0ce09fef649fae1635238113fced784778f7e48f79afadaebf173540f537d"
+    },
+    "idle": {
+      "path": "/home/et16/xdt-r1/run/idle.json",
+      "bytes": 2681,
+      "sha256": "c5ef65e8f2627cedc26ed0aaf22c461acb6d10a1d18fd5627cadb410dc46ee3b"
+    },
+    "host_before": {
+      "path": "/home/et16/xdt-r1/run/host-before.json",
+      "bytes": 72735,
+      "sha256": "1c6fb382a458bfb0b9944c90f53390701db7ae120aa98f3bcfcd15dbc55e35f7"
+    },
+    "host_after": {
+      "path": "/home/et16/xdt-r1/run/host-after.json",
+      "bytes": 72735,
+      "sha256": "d2a4a2f7bc7d1e1faa59f374de395cccef6f8b2c3103f39f6ceacecb7235dfb4"
+    },
+    "launch_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/trace-launch-review.json",
+      "bytes": 7295,
+      "sha256": "fa8a540f028a5b9197437e3c2e3b723ecfcfeaa62beb549c70ebdb1536edd859"
+    },
+    "earlier_performance_receipt": {
+      "path": "/home/et16/work/xadb/devdoc/evidence/dev2-performance-followup-xadb-20261020-r1.json",
+      "bytes": 37137,
+      "sha256": "ac28173f8cdb7925173be0a4ff7f5d3745c486769cb2e28d296d47e9ecb63358"
+    },
+    "source_projection": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-owner/source-projection.json",
+      "bytes": 2233,
+      "sha256": "beea09a61893c727183e99ca6b637b2b84fc3380f7f8c805dd1f7ca662b9a73a"
+    },
+    "independent_results_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/trace-results-review.json",
+      "bytes": 10673,
+      "sha256": "1c82ab31558d436cf2b35ac1e72877cb65ec8264a875df4673332dc09b238868"
+    },
+    "final_document_review": {
+      "path": "/home/et16/xadb-dev2-evidence/r3-review/trace-document-review.json",
+      "bytes": 4349,
+      "sha256": "9b3ed3a0326544426ed10e3b6d493144e714cd095db84fa52a8374eaa0770b48"
+    }
+  },
+  "preflight": {
+    "analyzer_cases": 16,
+    "status": "PASS",
+    "injected_two_collector_failure": "EXPECTED_FAILURE_WITH_NO_PAYLOAD_AND_ZERO_RESIDUAL_PROCESSES",
+    "retained_earlier_failures": [
+      {
+        "path": "/home/et16/xdt-r1/preflight/receipt.json",
+        "bytes": 2615,
+        "sha256": "0197ab4245b0be06bd9757fdc22d6aee58cc8a3d9a499e977c48dc8cad104d36"
+      },
+      {
+        "path": "/home/et16/xdt-r1/dual-preflight/receipt.json",
+        "bytes": 3883,
+        "sha256": "433f3b7bd87e9060ac8f510818143e6d27656bbcec809acb00cd7b3ca1cc64ec"
+      }
+    ],
+    "earlier_warning": "preflight2 header decoding warning retained; final capture removes header print and checks exact clockid/use_clockid fields with perf evlist and chronological order with perf script debug"
+  },
+  "runs": [
+    {
+      "analysis": "PASS",
+      "slot": "/home/et16/xdt-r1/run/00",
+      "observations": false,
+      "correctness": "PASS",
+      "measurement_ns": 2805189892,
+      "cycle_p99_ns": 12656167,
+      "captured_fsyncs": 619,
+      "source_wal_generation": 8,
+      "source_wal_fsyncs_in_generation": 579,
+      "fd_path_witnesses": 1,
+      "measurement_syncs": 512,
+      "totals_ns": {
+        "fsync_ns": 2790981634,
+        "offcpu_ns": 2776277617,
+        "before_waking_ns": 2759413648,
+        "waking_to_wakeup_ns": 8324805,
+        "runnable_ns": 8539164,
+        "unclassified_ns": 0,
+        "on_cpu_or_unobserved_ns": 14704017,
+        "cycle_ns": 2804930090,
+        "commit_ns": 2802251460
+      },
+      "top_six_cycles_totals_ns": {
+        "fsync_ns": 77537195,
+        "offcpu_ns": 77026731,
+        "before_waking_ns": 76543707,
+        "waking_to_wakeup_ns": 236405,
+        "runnable_ns": 246619,
+        "unclassified_ns": 0,
+        "on_cpu_or_unobserved_ns": 510464,
+        "cycle_ns": 78022831,
+        "commit_ns": 77953872
+      },
+      "screen_pass": true,
+      "receipt": {
+        "path": "/home/et16/xdt-r1/run/00/receipt.json",
+        "bytes": 8264,
+        "sha256": "560b25c64cc359e3a22b530864b03384f9eef77b81554c34ba7942f6866b43c4"
+      },
+      "independent_output_check": {
+        "path": "/home/et16/xdt-r1/run/00/independent-output-check.json",
+        "bytes": 84424,
+        "sha256": "371a71bce4266dddf7e06665840d1164e7ec99670d5dc2a76b312cd1d4327d96"
+      },
+      "cleanup": {
+        "remaining_worker": false,
+        "remaining_collector_groups": [
+          [],
+          []
+        ]
+      },
+      "raw_capture_files": {
+        "wakeup.debug.stderr": {
+          "bytes": 25,
+          "sha256": "d760457f9a459836db8c86aa1e430280f8b3c8762575616f72e4aee52e767536"
+        },
+        "syscall.trace.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "wakeup.record.stderr": {
+          "bytes": 161,
+          "sha256": "9f8c6a8b07d161a789264c9bcf39bf0e99d7e9cdb6fb7402ca56bb92c36269f6"
+        },
+        "wakeup.data": {
+          "bytes": 316675,
+          "sha256": "5f0f17e15f8954b97d0bf4e638f2dbd0c27654a489afb5cd4b09fdb5e280a7d5"
+        },
+        "syscall.record.stderr": {
+          "bytes": 162,
+          "sha256": "4aa6f6300b104d881d1842ba661c384acf498ba4ed00f020d6d98a811e714560"
+        },
+        "input.bin": {
+          "bytes": 207,
+          "sha256": "1262c9d141f559ad44de17ff5eed55badd65d95f45b176628a47512d240ae2fe"
+        },
+        "wakeup.attributes.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "syscall.debug.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "wakeup.trace.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "fd-observations.json": {
+          "bytes": 4359,
+          "sha256": "49cf1bf4a96b120ca54c9c61f9f22f1ea97e5fbc92f1ae5445d68b79ccc03b9b"
+        },
+        "syscall.trace.txt": {
+          "bytes": 378952,
+          "sha256": "bbdc18e4b233db86fb8b4fdc3ad8bff68fd4cc2c4e5abad72cb57a797fa8fa38"
+        },
+        "syscall.debug.stderr": {
+          "bytes": 25,
+          "sha256": "d760457f9a459836db8c86aa1e430280f8b3c8762575616f72e4aee52e767536"
+        },
+        "syscall.attributes.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "wakeup.trace.txt": {
+          "bytes": 297153,
+          "sha256": "956a1629e6f77a9af226f17b79902ab7e2a7cf7cffdf76a336479f4b015c6b40"
+        },
+        "stdout.bin": {
+          "bytes": 410035,
+          "sha256": "716d533ba05ff4aa5407eb42760e24776d54d1fd46e3192b4addd15ce7de7f91"
+        },
+        "syscall.attributes.txt": {
+          "bytes": 1989,
+          "sha256": "7d72b4bf2dca1ed9c0eb7f026f70a62362b311abf998bee8214441c0da059bd6"
+        },
+        "wakeup.attributes.txt": {
+          "bytes": 923,
+          "sha256": "32d1c0b0dfe3a0bfccfb54418c2222304fe140f484fe0dae251ec147c46f1dc8"
+        },
+        "wakeup.debug.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "syscall.data": {
+          "bytes": 347883,
+          "sha256": "92097c1d8f248f052e81d0802024b1b425f85c2519a4f41cd4e0eb11eee8522d"
+        }
+      }
+    },
+    {
+      "analysis": "PASS",
+      "slot": "/home/et16/xdt-r1/run/01",
+      "observations": true,
+      "correctness": "PASS",
+      "measurement_ns": 2733537821,
+      "cycle_p99_ns": 5861489,
+      "captured_fsyncs": 619,
+      "source_wal_generation": 8,
+      "source_wal_fsyncs_in_generation": 579,
+      "fd_path_witnesses": 1,
+      "measurement_syncs": 512,
+      "totals_ns": {
+        "fsync_ns": 2721495485,
+        "offcpu_ns": 2708682413,
+        "before_waking_ns": 2693285474,
+        "waking_to_wakeup_ns": 8457277,
+        "runnable_ns": 6931306,
+        "unclassified_ns": 8356,
+        "on_cpu_or_unobserved_ns": 12813072,
+        "cycle_ns": 2733251436,
+        "commit_ns": 2730925525
+      },
+      "top_six_cycles_totals_ns": {
+        "fsync_ns": 38922128,
+        "offcpu_ns": 38518034,
+        "before_waking_ns": 38099482,
+        "waking_to_wakeup_ns": 210997,
+        "runnable_ns": 207555,
+        "unclassified_ns": 0,
+        "on_cpu_or_unobserved_ns": 404094,
+        "cycle_ns": 39323596,
+        "commit_ns": 39262542
+      },
+      "screen_pass": true,
+      "receipt": {
+        "path": "/home/et16/xdt-r1/run/01/receipt.json",
+        "bytes": 8264,
+        "sha256": "e2bae27021350d7262b3b69da188bcbbe16acb29c4a094693c5ab8a61778316c"
+      },
+      "independent_output_check": {
+        "path": "/home/et16/xdt-r1/run/01/independent-output-check.json",
+        "bytes": 561891,
+        "sha256": "81845f4fe16c4bb28af3b54dece7abbabfb4cd4f4904d780e6fc92616c8cfa76"
+      },
+      "cleanup": {
+        "remaining_worker": false,
+        "remaining_collector_groups": [
+          [],
+          []
+        ]
+      },
+      "raw_capture_files": {
+        "wakeup.debug.stderr": {
+          "bytes": 25,
+          "sha256": "d760457f9a459836db8c86aa1e430280f8b3c8762575616f72e4aee52e767536"
+        },
+        "syscall.trace.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "wakeup.record.stderr": {
+          "bytes": 161,
+          "sha256": "81159d9cefc11e5138f9212f51d8c9e86127b4020da35b9cb0163d44f154df58"
+        },
+        "wakeup.data": {
+          "bytes": 315731,
+          "sha256": "4a2ca12917d39bb6890fdaf188664bfd0e9279d61edb5704c2bfc020f903da81"
+        },
+        "syscall.record.stderr": {
+          "bytes": 162,
+          "sha256": "12c024372bbfe8c446977ea6f7afa681925651518804b69ec77e71dd4f94238d"
+        },
+        "input.bin": {
+          "bytes": 208,
+          "sha256": "42e7d68ce16a33cc7c5bbd1c5f4c37e3d3c1ec407e0e967a2bedecc81e4c1b8c"
+        },
+        "wakeup.attributes.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "syscall.debug.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "wakeup.trace.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "fd-observations.json": {
+          "bytes": 4429,
+          "sha256": "5cf4bec5558c3da65807bcbdd5dcb59b7698f9d002990ef56b007772b812fb3a"
+        },
+        "syscall.trace.txt": {
+          "bytes": 378478,
+          "sha256": "755d7c23e7d097d321fef3ce5cd7a03762011b72d546a75c709e3cd3e117e539"
+        },
+        "syscall.debug.stderr": {
+          "bytes": 25,
+          "sha256": "d760457f9a459836db8c86aa1e430280f8b3c8762575616f72e4aee52e767536"
+        },
+        "syscall.attributes.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "wakeup.trace.txt": {
+          "bytes": 296430,
+          "sha256": "45285c8a808236715bcc0f2c79da2bb6137b9fa15e2fd397ed27902c60b9c083"
+        },
+        "stdout.bin": {
+          "bytes": 524102,
+          "sha256": "b6541f9807dba9333b6da1a09a9934f53093fa2ed39f233aacca26e7486b6229"
+        },
+        "syscall.attributes.txt": {
+          "bytes": 1989,
+          "sha256": "7d72b4bf2dca1ed9c0eb7f026f70a62362b311abf998bee8214441c0da059bd6"
+        },
+        "wakeup.attributes.txt": {
+          "bytes": 923,
+          "sha256": "32d1c0b0dfe3a0bfccfb54418c2222304fe140f484fe0dae251ec147c46f1dc8"
+        },
+        "wakeup.debug.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "syscall.data": {
+          "bytes": 347643,
+          "sha256": "0c00e2c6a6cf21280cd75c721d5f9b6792d5f6f1d564df1d10cb1571dfe9f457"
+        }
+      }
+    },
+    {
+      "analysis": "PASS",
+      "slot": "/home/et16/xdt-r1/run/02",
+      "observations": true,
+      "correctness": "PASS",
+      "measurement_ns": 2813969160,
+      "cycle_p99_ns": 6590258,
+      "captured_fsyncs": 619,
+      "source_wal_generation": 8,
+      "source_wal_fsyncs_in_generation": 579,
+      "fd_path_witnesses": 1,
+      "measurement_syncs": 512,
+      "totals_ns": {
+        "fsync_ns": 2792054075,
+        "offcpu_ns": 2769426118,
+        "before_waking_ns": 2738995449,
+        "waking_to_wakeup_ns": 15368896,
+        "runnable_ns": 15061773,
+        "unclassified_ns": 0,
+        "on_cpu_or_unobserved_ns": 22627957,
+        "cycle_ns": 2813498080,
+        "commit_ns": 2810008581
+      },
+      "top_six_cycles_totals_ns": {
+        "fsync_ns": 50952276,
+        "offcpu_ns": 50643021,
+        "before_waking_ns": 47608142,
+        "waking_to_wakeup_ns": 1254482,
+        "runnable_ns": 1780397,
+        "unclassified_ns": 0,
+        "on_cpu_or_unobserved_ns": 309255,
+        "cycle_ns": 51238906,
+        "commit_ns": 51191087
+      },
+      "screen_pass": true,
+      "receipt": {
+        "path": "/home/et16/xdt-r1/run/02/receipt.json",
+        "bytes": 8264,
+        "sha256": "4b2322f90a824a4c9d824d2ebef06c47368157c9581bdb33303a933f975615f4"
+      },
+      "independent_output_check": {
+        "path": "/home/et16/xdt-r1/run/02/independent-output-check.json",
+        "bytes": 561920,
+        "sha256": "c63b77c489f287db3c3674fbecd654be4a7482ace6d72395ce876f544da204c8"
+      },
+      "cleanup": {
+        "remaining_worker": false,
+        "remaining_collector_groups": [
+          [],
+          []
+        ]
+      },
+      "raw_capture_files": {
+        "wakeup.debug.stderr": {
+          "bytes": 25,
+          "sha256": "d760457f9a459836db8c86aa1e430280f8b3c8762575616f72e4aee52e767536"
+        },
+        "syscall.trace.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "wakeup.record.stderr": {
+          "bytes": 161,
+          "sha256": "a2177fc29d516427ecd00f1c283c1a8f82c9d02b4e0f615ed4c99dfefe3cb9b5"
+        },
+        "wakeup.data": {
+          "bytes": 333139,
+          "sha256": "ef927e84ab5271e163b05054311aec3336b3fe8e355e6f4cd1b284adee72cc51"
+        },
+        "syscall.record.stderr": {
+          "bytes": 162,
+          "sha256": "9aa6a12d4ced61b81eb1f31faafb61dcec69eb0418b564068000efee9af3e116"
+        },
+        "input.bin": {
+          "bytes": 203,
+          "sha256": "6aa7861037816240d40e9604f7efb538f24edede9e259da8fc35b4b55fc3588b"
+        },
+        "wakeup.attributes.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "syscall.debug.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "wakeup.trace.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "fd-observations.json": {
+          "bytes": 3987,
+          "sha256": "c3752ab62bfb2dd9eb8c5fd8f582641578a0438254ef75e958484f6eeea64d83"
+        },
+        "syscall.trace.txt": {
+          "bytes": 379426,
+          "sha256": "c6497ae1f1bb99f88311f2a54797640fa6c82f4c028c1ccee14c2a0cd43c8051"
+        },
+        "syscall.debug.stderr": {
+          "bytes": 25,
+          "sha256": "d760457f9a459836db8c86aa1e430280f8b3c8762575616f72e4aee52e767536"
+        },
+        "syscall.attributes.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "wakeup.trace.txt": {
+          "bytes": 297876,
+          "sha256": "e08cc335bfdba3f1a40baa80e864037deb8bfdfff86eabef906af0781d53c6db"
+        },
+        "stdout.bin": {
+          "bytes": 522318,
+          "sha256": "e89e146b60fa21dc324b9e20f22bebda6d68e4b775c75a258180e4ca21410555"
+        },
+        "syscall.attributes.txt": {
+          "bytes": 1989,
+          "sha256": "7d72b4bf2dca1ed9c0eb7f026f70a62362b311abf998bee8214441c0da059bd6"
+        },
+        "wakeup.attributes.txt": {
+          "bytes": 923,
+          "sha256": "32d1c0b0dfe3a0bfccfb54418c2222304fe140f484fe0dae251ec147c46f1dc8"
+        },
+        "wakeup.debug.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "syscall.data": {
+          "bytes": 348123,
+          "sha256": "3252476b6864c958320b04fd4811eaaeb9a4eb803dbaa485daa850e1a9daf934"
+        }
+      }
+    },
+    {
+      "analysis": "PASS",
+      "slot": "/home/et16/xdt-r1/run/03",
+      "observations": false,
+      "correctness": "PASS",
+      "measurement_ns": 2799416666,
+      "cycle_p99_ns": 6299350,
+      "captured_fsyncs": 619,
+      "source_wal_generation": 8,
+      "source_wal_fsyncs_in_generation": 579,
+      "fd_path_witnesses": 1,
+      "measurement_syncs": 512,
+      "totals_ns": {
+        "fsync_ns": 2779648980,
+        "offcpu_ns": 2758537825,
+        "before_waking_ns": 2736490565,
+        "waking_to_wakeup_ns": 11170502,
+        "runnable_ns": 10876758,
+        "unclassified_ns": 0,
+        "on_cpu_or_unobserved_ns": 21111155,
+        "cycle_ns": 2799025510,
+        "commit_ns": 2795651141
+      },
+      "top_six_cycles_totals_ns": {
+        "fsync_ns": 45588741,
+        "offcpu_ns": 45038934,
+        "before_waking_ns": 44509852,
+        "waking_to_wakeup_ns": 261713,
+        "runnable_ns": 267369,
+        "unclassified_ns": 0,
+        "on_cpu_or_unobserved_ns": 549807,
+        "cycle_ns": 46084549,
+        "commit_ns": 46009008
+      },
+      "screen_pass": true,
+      "receipt": {
+        "path": "/home/et16/xdt-r1/run/03/receipt.json",
+        "bytes": 8264,
+        "sha256": "273d9d23451559fb988929e8e35d65bb2e34c597a1b16a5a03f63a9cc5614bcb"
+      },
+      "independent_output_check": {
+        "path": "/home/et16/xdt-r1/run/03/independent-output-check.json",
+        "bytes": 84423,
+        "sha256": "753996a2eda9195109761a5fb3bb84abfa592f49babef73473fec6cb1cf88cfb"
+      },
+      "cleanup": {
+        "remaining_worker": false,
+        "remaining_collector_groups": [
+          [],
+          []
+        ]
+      },
+      "raw_capture_files": {
+        "wakeup.debug.stderr": {
+          "bytes": 25,
+          "sha256": "d760457f9a459836db8c86aa1e430280f8b3c8762575616f72e4aee52e767536"
+        },
+        "syscall.trace.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "wakeup.record.stderr": {
+          "bytes": 161,
+          "sha256": "8532127a7b0d0bc7638ea21e80006cd579e6893195b47609d5670d3051c56675"
+        },
+        "wakeup.data": {
+          "bytes": 316771,
+          "sha256": "0ea57269e5bc2dd06797d14d3265909d0e315fc1a3e808af1f78effdf67a34ee"
+        },
+        "syscall.record.stderr": {
+          "bytes": 162,
+          "sha256": "bdfc8953e805bdb1a5061bf00e7284f6ce57c42fed6655b69efd79c7e245c18a"
+        },
+        "input.bin": {
+          "bytes": 203,
+          "sha256": "fa37286dc88e6cc8df20299934da3a31d39871fb51c54d52ff9c57310cbf4aaa"
+        },
+        "wakeup.attributes.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "syscall.debug.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "wakeup.trace.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "fd-observations.json": {
+          "bytes": 4749,
+          "sha256": "482fb7a09120447c183283df01549325140f7a537d6f837b8d7fb2121d88188d"
+        },
+        "syscall.trace.txt": {
+          "bytes": 379110,
+          "sha256": "b7d18695a3c0fbd4136947c8aa74a5e3abf32fb453df1f16358a1e1ff9e782ad"
+        },
+        "syscall.debug.stderr": {
+          "bytes": 25,
+          "sha256": "d760457f9a459836db8c86aa1e430280f8b3c8762575616f72e4aee52e767536"
+        },
+        "syscall.attributes.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "wakeup.trace.txt": {
+          "bytes": 297394,
+          "sha256": "26399b4a16e84bef8a2a387f801a8c1f1a23522e716a90c1cb67b1fb58c6770c"
+        },
+        "stdout.bin": {
+          "bytes": 410052,
+          "sha256": "61e94826a9762b9a146ea13550fa92e2a7b1d59a4f6eb01ce1dec91a4b48ba8a"
+        },
+        "syscall.attributes.txt": {
+          "bytes": 1989,
+          "sha256": "7d72b4bf2dca1ed9c0eb7f026f70a62362b311abf998bee8214441c0da059bd6"
+        },
+        "wakeup.attributes.txt": {
+          "bytes": 923,
+          "sha256": "32d1c0b0dfe3a0bfccfb54418c2222304fe140f484fe0dae251ec147c46f1dc8"
+        },
+        "wakeup.debug.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "syscall.data": {
+          "bytes": 347963,
+          "sha256": "6bafe51db06d0d1715d3f4d2cd472d630169de17c8f168e7a4650095addc539c"
+        }
+      }
+    }
+  ],
+  "conclusions": {
+    "correctness_pass_runs": 4,
+    "measured_fsync_correspondences": 2048,
+    "first_source_wal_fsyncs_each": 579,
+    "complete_fsync_calls_each": 619,
+    "before_waking_fraction_of_measured_cycle_range_percent": [
+      97.35196,
+      98.53779
+    ],
+    "runnable_fraction_of_measured_cycle_range_percent": [
+      0.25359,
+      0.53534
+    ],
+    "top_six_cycle_runnable_range_percent": [
+      0.31609,
+      3.4747
+    ],
+    "unclassified_ns_by_order": [
+      0,
+      8356,
+      0,
+      0
+    ],
+    "interpretation": "In these captures, most measured-cycle time was fsync off-CPU time before the worker was woken. Wake-to-switch-in runnable delay was smaller in aggregate; the On second run top-six cycles retain a 3.4747% runnable component. This does not establish the cause of historical failed pairs or identify a device defect.",
+    "off_p99_ns": [
+      12656167,
+      6299350
+    ],
+    "on_p99_ns": [
+      5861489,
+      6590258
+    ],
+    "instrumentation_causal_attribution": "UNRESOLVED_FOR_ORIGINAL_FAILED_PAIRS",
+    "product_fix_justified": "NO_SPECIFIC_PRODUCT_DEFECT_IDENTIFIED"
+  },
+  "perturbation_environment_screen": {
+    "reference_path": "/home/et16/xdc-r1/run/report.json",
+    "reference_sha256": "ebd6262679e5586ed432eab81fd1f9f6fb1312cc9a600eebab578c0208babe57",
+    "reference_max_measurement_ns": 2778464859,
+    "limit_ratio": [
+      5,
+      4
+    ],
+    "meaning": "Only a coarse different-time tracing/environment screen; not a pure overhead estimate and not an acceptance threshold",
+    "passed_runs": 4,
+    "pure_tracing_overhead_estimate": "NOT_CLAIMED"
+  },
+  "limitations": [
+    "Four traced slots cannot establish acceptance, untraced instrumentation overhead, or historical failed-pair cause.",
+    "Blocked-before-waking can include filesystem/journal/device work and cannot isolate the device.",
+    "Missing or multiple wake pairs remain unclassified; trace loss/order/clock/FD correspondence failure stays unresolved.",
+    "If perturbation/environment screen fails, do not generalize traced proportions to untraced baseline.",
+    "No extra diagnostic or acceptance retry to obtain a favorable result.",
+    "System-wide wake collector includes incidental perf dummy metadata; do not claim every raw byte describes only the owned worker.",
+    "Original K0 and durable performance guardrail failures are preserved. A traced diagnostic PASS means integrity/correctness/mapping checks passed, not PF04 acceptance.",
+    "Frozen e3 common DEV2 product bytes match current worktree but its full source fingerprint differs; source projection does not qualify the whole current worktree."
+  ],
+  "remaining": {
+    "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL; original audit-always, audit-detailed, durable-audit, durable-replay retain failures",
+    "PF12": "COMPLETE_CURRENT_SATURATED_K0_COLLECTOR_SCOPE",
+    "PF13": "COMPLETE_CURRENT_RETAINED_BUNDLE_REPLAY_CAPABILITY",
+    "DEV2_B2_D0": "FINAL_CLOSURE_PENDING_PF04_AND_EVIDENCE_BACKED_OWNER_INTEGRATION",
+    "required_id_inventory": "31 previously reviewed scoped IDs plus PF12/PF13 now reviewed; PF04 remains out of 34. Counts are evidence coverage, not a percentage of remaining engineering work.",
+    "official_environment_protected_ci_distribution": "NOT_RUN_SEPARATE_FROM_LOCAL_CLOSURE"
+  },
+  "next_step": "Do not add a product change without a discriminating defect hypothesis. Resolve measurement-environment access or another separately reviewed discriminating experiment before another acceptance campaign; preserve all failed evidence and original budgets. No additional performance runs are authorized by this receipt.",
+  "owner_adoption": {
+    "owner": "/root",
+    "reviewer": "/root/dev2_closure_review",
+    "scope": "Adopt independent correctness, capture-integrity and correspondence findings for these four diagnostic runs only. No PF04 or DEV2 acceptance promotion.",
+    "unresolved_review_errors": 0
+  }
+}

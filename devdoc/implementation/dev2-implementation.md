@@ -591,3 +591,23 @@ collector 탐색은 사전 한도 3개였다. candidate1은 full 힌트와 no-op
 추가 K0 진단20run은 소유한 UID1000 worker PID에만 PMU를 붙여 수행했다. Off/Detailed 측정 구간 중앙값은14.584/16.415ms, 전체 worker의 instructions 중앙값은118.761/127.412백만이었다. 전체 worker cycles/task-clock은 양쪽 약5.200cycle/ns였고 context switch는 중앙0·최대1이었다. PMU 범위에는 setup·warmup·출력도 포함되므로 측정 loop만의 원인 지표로 쓰지 않는다. 이 진단에서 이전 audit의 경과·CPU 시간 outlier는 재현되지 않았지만, pair5 표본 p99는361/251ns=약1.43825배로 높았다. 이 진단은 인수용 비교가 아니며 p99 관측도 보존한다. 영속 동일Off 실패 pair의 p99 cycle은 두 쪽 모두99.96% 이상 commit 구간에 포함되지만, 그 내부의 sync·kernel·scheduler 원인은 아직 분리하지 못했다. 어느 진단도 기존 비용 한도 실패를 대체하지 않는다.
 
 남은 작업은 **PF04의 원인 구분과 해결을 검증하고 최종 DEV2/B2/D0 종료 증거를 반영하는 것**이다. 11개 V3나 복구 전수를 미실행으로 되돌리지 않는다. 공식 Ubuntu24.04 환경·보호 CI·공식 배포는 로컬 종료와 별도인 NOT_RUN 상태다. 문서 자동 검사는 push 훅에서만 수행한다.
+
+<a id="dev2-fsync-diagnostic-20261020"></a>
+## DEV2 영속 fsync 대기 구간 진단
+
+**2026-10-20 · D2 / 진단 실행 완료, PF04·DEV2 인수 미완료.** [진단 receipt](../evidence/dev2-fsync-diagnostic-xadb-20261020-r1.json)는 실행 전에 고정하고 독립 검토한 Off/On/On/Off 4개 실행과 원시 추적을 연결한다. 같은 e3 release worker, seed20261018, warmup64·측정512를 사용했다. 제품 코드·공유 host 설정은 변경하지 않았다. 두 수집기의 enable ACK 뒤에만 worker 입력을 전달했고, worker의 fsync/openat/close·CPU 전환과 해당 PID를 깨우는 사건을 같은 CLOCK_MONOTONIC으로 관측했다. wake 수집기의 부수적인 perf metadata에는 다른 process 정보가 포함될 수 있으며, 모든 원시 byte를 worker 전용이라고 주장하지 않는다.
+
+| 고정 순서 | 측정 경과(ms) | cycle p99(ms) | 정답·추적 연결 |
+| --- | --- | --- | --- |
+| Off | 2,805.190 | 12.656 | PASS |
+| On | 2,733.538 | 5.861 | PASS |
+| On | 2,813.969 | 6.590 | PASS |
+| Off | 2,799.417 | 6.299 | PASS |
+
+기존 독립 checker가 각 실행의 578개 실제 ACK·행 값·old reader·WAL·backup·restore와 측정 구간의 file_sync512회·q66→578을 확인했다. 열린 FD의 수명과 `/proc` 경로 증거를 이용하여 최초 source WAL의 fsync579회에서 header·DDL·fixture·warmup67회를 제외한512회를 각 cycle에 연결했다. 2,048개 모두 `fsync 시간 ≤ commit 시간 ≤ cycle 시간`을 만족했다. 단순히 마지막512회를 선택하지 않았다.
+
+이 실행들에서는 전체 측정 cycle 시간의 **97.352–98.538%가 fsync 중 worker 깨움 이전의 off-CPU 구간**이었다. 깨움 완료부터 CPU 재개까지의 runnable 구간은 전체의0.254–0.535%였다. 두 번째 On 실행의 가장 느린6개 cycle에서는 runnable 구간이3.475%였으며, 첫 번째 On 실행의8,356ns는 wake 사건이 모호해 미분류로 보존했다. 이 구분은 해당 추적에서 CPU 재개 대기가 전체 지연의 주된 비중이 아니었음을 보여 준다. 깨움 이전 대기는 filesystem·journal·장치 작업 등을 포함할 수 있어 장치 원인으로 단정하지 않는다. 과거 실패 pair의 원인을 소급 확정하지도 않는다.
+
+사전 고정한 거친 영향 확인 조건인 이전 동일Off 측정 최댓값2,778,464,859ns의1.25배 이하는4개 모두 충족했다. 서로 다른 시점의 비교이므로 순수한 추적 overhead 추정이나 인수 비용 한도 PASS가 아니다. 16개 analyzer 사전 사례는 누락된 switch-in·잘못된 clockid·손실·외부 PID 등 검출과 모호한 wake의 미분류 보존을 확인했다. 두 수집기를 붙인 직후의 의도한 실패에서 입력 미전달·process 정리도 확인했다. 본 실행 종료 뒤 worker·수집기 잔류는 없었다.
+
+기존 필수34개 ID 중31개 scoped 검토와 PF12/PF13 완료에 더해, 남은 항목은 **PF04의 네 campaign 비용 한도 실패 및 최종 DEV2/B2/D0 종료**다. 이 숫자는 증거 범위의 개수이며 남은 공수의 비율이 아니다. 이번 진단은 특정 제품 결함을 확정하지 않았으므로 임의 코드 수정이나 추가 인수 반복으로 이어가지 않는다. 측정 환경의 사용 조건 또는 새로 검토한 구분 가설을 확보한 뒤 다음 실행을 정하고, 현재까지의 실패와 원래 예산을 유지한다.

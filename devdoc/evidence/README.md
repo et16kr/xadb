@@ -76,3 +76,5 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV2 삭제 후 새 시험과 일시 중지 — 2026-10-19](dev2-resumed-tests-xadb-20261019-r1.json): e3 소스의 11개30분 target 중 11개 PASS, 보완 복구·격리·36개 정답 검사. 6개 target 종료 뒤 Python 캐시로 생긴 집계기 FAIL은 독립 소스 대조와 구분해 보존. 사용자 요청으로 새 성능은 미실행, DEV2 인수 미완료.
 
 - [DEV2 성능 후속 실행](dev2-performance-followup-xadb-20261020-r1.json) — 고정 소스9개 campaign·180run 정답 PASS, PF12/PF13 개별 완료와 PF04 비용 한도 FAIL; 동일 Off 대조40run은 진단 전용
+
+- [DEV2 fsync·스케줄링 진단](dev2-fsync-diagnostic-xadb-20261020-r1.json) — 고정4run의 정답·추적 연결과 측정2,048개 fsync 시간 분해; 기존 PF04 실패를 유지하는 진단 전용 증거
