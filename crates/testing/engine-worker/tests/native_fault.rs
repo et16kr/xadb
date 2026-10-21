@@ -337,6 +337,9 @@ fn every_declared_error_cut_has_a_flushed_reached_and_release_receipt() {
                 A::CollectGarbage {}
             }
             T::Current | T::Any => A::Checkpoint {},
+            T::FileMap | T::Doublewrite => {
+                panic!("DEV3 selector targets are outside the fixed DEV2 31-case corpus")
+            }
         };
         let expected_value = if cut.cut.target == T::WalCommit
             && matches!(

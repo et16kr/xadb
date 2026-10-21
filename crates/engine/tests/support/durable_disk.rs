@@ -415,6 +415,15 @@ impl WriterNamespace for Writer {
             writable: mode == OpenMode::ReadWrite,
         })
     }
+    fn open_existing_with_metadata(
+        &mut self,
+        name: &FileName,
+        mode: OpenMode,
+    ) -> NamespaceResult<(File, FileMetadata)> {
+        let file = self.open_existing(name, mode)?;
+        let metadata = self.model.lock().unwrap().metadata(file.inode);
+        Ok((file, metadata))
+    }
     fn metadata(&self, name: &FileName) -> NamespaceResult<Option<FileMetadata>> {
         let model = self.model.lock().unwrap();
         Ok(model

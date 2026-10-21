@@ -196,6 +196,11 @@ K0의 row/catalog는 작은 실제 production 구현이다. XADB-004 reference�
 
 DEV3 첫 표현 leaf는 [page 형식](../contracts/dev3-page-format.md)을 private storage 모듈에 둔다. 기존 foundation의 ID/digest를 소비하며 dependency를 추가하지 않는다. 독립 vectors는 `scripts/dev3_page_vectors.py`와 engine 시험 fixture, snapshot 부분 모델은 reference 시험에 둔다. `scripts/check_dev3_leaf.py --with-regressions`는 보존 소스의 실제 codec·부분 모델과 하위 회귀를 연결하며 전체 DEV3 실행기로 사용하지 않는다. 기존 fingerprint/clean-export roots를 그대로 사용한다.
 
+[DEV3 metadata port](../contracts/dev3-page-io.md)의 실제 Linux 검증은 `crates/platform/tests/namespace_metadata.rs`에 둔다. FILEMAP/DWB selector fault와 metadata 반환의 역할 보존 시험은 `crates/testing/engine-worker/src/fault_tests.rs`, 계측 adapter 시험은 같은 소유 `durable_performance/ports.rs`의 test module에 둔다. 기존 package·source fingerprint/clean-export roots 안의 구현이며 새 dependency·engine→platform 간선은 없다.
+
+선택 page reader는 engine private `storage/page_io.rs`·`page_io_tests.rs`에 두고, 독립 fixture generator는 `scripts/dev3_disk_vectors.py`다. 실제 Linux 조립은 default 제외 engine `test-support` feature의 `testing.rs`를 worker의 dev-dependency에서만 활성화하여 `tests/page_io.rs`에서 검사한다. 기존 worker→engine 간선을 사용하며 정상 engine→platform 의존을 추가하지 않는다. 기본 제품 API와 시험 조립 feature를 receipt에서 구별한다.
+
+
 두 번째 표현 작업의 [composite key](../contracts/dev3-key-format.md)는 caller buffer와 기존 foundation scalar bytes를 사용한다. foundation의 exact-size/encode-into/prefix 검사와 engine의 key 시험을 위 leaf 실행기에 함께 등록한다. M01–M06의 후속 모델은 reference integration tests에 두며 각 모델 계약·실제 receipt와 전체 DEV3 실행을 구분한다.
 
 PageRef·UndoRef·anchor의 [참조 표현](../contracts/dev3-reference-format.md)도 같은 leaf 실행기의 고정 분모다. `scripts/check_dev3_models.py`는 M01–M06을 명시 선택하여 보존 source에서 release binary를 만들고 case·witness·반례·budget 검사 분모를 확인한다. 전체 DEV3 실행기로 사용하지 않는다. 실행기 자기검사는 `scripts/test_check_dev3_models.py`이며 M03/M06의 고정 inventory·형식 검사 helper와 자기검사는 `scripts/dev3_progress_receipts.py`, `scripts/test_dev3_progress_receipts.py`다. 실제 판정에 사용한 checker와 보존 source의 hash를 대조하고 progress helper는 보존 사본에서 직접 읽는다.

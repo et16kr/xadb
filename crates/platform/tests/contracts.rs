@@ -122,6 +122,150 @@ fn cancellation_crosses_threads_and_native_clock_is_monotonic() {
     assert!(clock.now_nanos() >= before);
 }
 
+#[test]
+fn typed_selectors_replace_reopen_and_preserve_reserved_names() {
+    use xadb_foundation::namespace::{
+        DirectoryPort, FileName, NamespaceErrorKind, OpenMode, Selector, WriterNamespace,
+    };
+    use xadb_platform::namespace::LinuxDirectory;
+    let directory = tempfile::tempdir().unwrap();
+    let port = LinuxDirectory::open_existing(directory.path()).unwrap();
+    let mut writer = port.acquire_writer().unwrap();
+    let selectors = [
+        (Selector::Writer, "WRITER"),
+        (Selector::Current, "CURRENT"),
+        (Selector::FileMap, "FILEMAP"),
+        (Selector::Doublewrite, "DWB"),
+    ];
+    let mut expected = std::collections::BTreeMap::new();
+    for (index, (selector, text)) in selectors.into_iter().enumerate() {
+        assert_eq!(selector.as_str(), text);
+        for generation in 1..=2 {
+            let name = FileName::new(&format!("prepared-{index}-{generation}")).unwrap();
+            let payload = format!("{text}-generation-{generation}").into_bytes();
+            let mut file = writer.create_new(&name).unwrap();
+            write_all_at(&mut file, &payload, 0).unwrap();
+            sync(&mut file).unwrap();
+            writer.publish_selector(&name, selector).unwrap();
+            writer.sync_directory().unwrap();
+            drop(file);
+            assert!(writer.metadata(&name).unwrap().is_none());
+            let selected = FileName::new(text).unwrap();
+            let mut reopened = writer.open_existing(&selected, OpenMode::ReadOnly).unwrap();
+            let mut read = vec![0; payload.len()];
+            read_exact_at(&mut reopened, &mut read, 0).unwrap();
+            assert_eq!(read, payload);
+            assert_eq!(
+                writer.metadata(&selected).unwrap().unwrap().length,
+                payload.len() as u64
+            );
+            expected.insert(text, payload);
+            for (name, value) in &expected {
+                assert_eq!(std::fs::read(directory.path().join(name)).unwrap(), *value);
+            }
+        }
+    }
+    for (selector, text) in selectors {
+        let name = FileName::new(text).unwrap();
+        let errors = [
+            writer.create_new(&name).err().unwrap(),
+            writer.remove_retired(&name).unwrap_err(),
+            writer.publish_selector(&name, selector).unwrap_err(),
+        ];
+        for error in errors {
+            assert_eq!(error.kind, NamespaceErrorKind::InvalidName);
+            assert_eq!(error.effect, Effect::Unchanged);
+        }
+        for (name, value) in &expected {
+            assert_eq!(std::fs::read(directory.path().join(name)).unwrap(), *value);
+        }
+    }
+    println!(
+        "XADB_DEV3_SELECTOR_PLATFORM {{\"selectors\":4,\"replacements\":8,\"reserved_rejections\":12,\"scope\":\"native_namespace_not_power_loss\"}}"
+    );
+}
+
+#[test]
+fn typed_selector_preflight_rejects_aliases_without_effects() {
+    use std::os::unix::fs::{MetadataExt, symlink};
+    use xadb_foundation::namespace::{
+        DirectoryPort, FileName, NamespaceErrorKind, Selector, WriterNamespace,
+    };
+    use xadb_platform::namespace::LinuxDirectory;
+    let snapshot = |path: &std::path::Path| {
+        let mut entries = std::fs::read_dir(path)
+            .unwrap()
+            .map(|entry| {
+                let entry = entry.unwrap();
+                let metadata = std::fs::symlink_metadata(entry.path()).unwrap();
+                let link = metadata
+                    .file_type()
+                    .is_symlink()
+                    .then(|| std::fs::read_link(entry.path()).unwrap());
+                (
+                    entry.file_name(),
+                    metadata.ino(),
+                    metadata.nlink(),
+                    link,
+                    std::fs::read(entry.path()).unwrap(),
+                )
+            })
+            .collect::<Vec<_>>();
+        entries.sort();
+        entries
+    };
+    let mut cases = 0;
+    for selected in [Selector::FileMap, Selector::Doublewrite] {
+        for case in 0..5 {
+            let directory = tempfile::tempdir().unwrap();
+            let path = directory.path();
+            std::fs::write(path.join("source"), b"new").unwrap();
+            std::fs::write(path.join("old"), b"selected-old").unwrap();
+            std::fs::write(path.join("prepared"), b"new").unwrap();
+            std::fs::write(path.join(selected.as_str()), b"selected-old").unwrap();
+            match case {
+                0 | 1 => {
+                    std::fs::remove_file(path.join("prepared")).unwrap();
+                    if case == 0 {
+                        symlink("source", path.join("prepared")).unwrap();
+                    } else {
+                        std::fs::hard_link(path.join("source"), path.join("prepared")).unwrap();
+                    }
+                }
+                2 | 3 => {
+                    std::fs::remove_file(path.join(selected.as_str())).unwrap();
+                    if case == 2 {
+                        symlink("old", path.join(selected.as_str())).unwrap();
+                    } else {
+                        std::fs::hard_link(path.join("old"), path.join(selected.as_str())).unwrap();
+                    }
+                }
+                4 => std::fs::remove_file(path.join("prepared")).unwrap(),
+                _ => unreachable!(),
+            }
+            let port = LinuxDirectory::open_existing(path).unwrap();
+            let mut writer = port.acquire_writer().unwrap();
+            let before = snapshot(path);
+            let error = writer
+                .publish_selector(&FileName::new("prepared").unwrap(), selected)
+                .unwrap_err();
+            assert_eq!(error.effect, Effect::Unchanged);
+            assert_eq!(
+                error.kind,
+                if case == 4 {
+                    NamespaceErrorKind::NotFound
+                } else {
+                    NamespaceErrorKind::InvalidType
+                }
+            );
+            assert_eq!(snapshot(path), before, "{selected:?}/{case}");
+            cases += 1;
+        }
+    }
+    assert_eq!(cases, 10);
+    println!("XADB_DEV3_SELECTOR_PREFLIGHT {{\"cases\":10,\"scope\":\"unchanged_preflight\"}}");
+}
+
 #[cfg(feature = "test-support")]
 mod faults {
     use super::*;

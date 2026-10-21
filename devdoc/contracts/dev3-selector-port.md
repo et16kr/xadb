@@ -1,6 +1,6 @@
 # DEV3 FILEMAP·DWB selector port
 
-2026-10-21 · **D3-SELECTOR-PORT 계약 독립 검토 수용 / 제품 초안 동결·사용자 요청 중지 / 실행 없음**
+2026-10-21 · **D3-SELECTOR-PORT 계약·구현 독립 검토 수용 / 같은 소스의 leaf·하위 회귀·현재-build 복구 PASS**
 
 [control 형식과 A 선택](dev3-control-format.md) · [구현 소유](../implementation/dev3-implementation.md#wave-2) · [버전 정책](../policies/version-compatibility-policy.json)
 
@@ -57,3 +57,5 @@ root가 이 계약을 소유하고 `/root/dev3_review`가 foundation/platform/pr
 ## 5. 중지 시점
 
 2026-10-21 사용자 요청으로7개 source/test 초안 작성 뒤 멈췄다. compile·시험·Clippy·fmt·독립 소스 검토는 미실행이며 `artifacts/dev3/selector-port-paused-r1/status.json`에 실행 전 원본을 보존했다. 이 계약의 채택을 제품 실행 PASS로 간주하지 않는다.
+
+2026-10-21 중지 해제 뒤 고정6시험과 독립 구현 검토, 같은 소스의 하위 회귀·현재-build DEV2 복구를 완료했다. [재개 실행 기록](../implementation/dev3-implementation.md#selector-resume-results)은 첫 실패와 최종 source/receipt를 구별한다. 이 port 검증은 선택된 DEV3 control 내용이나 디스크 엔진 복구 인수가 아니다.

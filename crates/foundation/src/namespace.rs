@@ -82,13 +82,17 @@ pub enum OpenMode {
     ReadWrite,
 }
 
-/// The two names that can be selected by same-directory atomic replacement.
+/// Fixed names selected by same-directory atomic replacement.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Selector {
     /// Active writer epoch and segment selection.
     Writer,
     /// Checkpoint and supported fallback selection.
     Current,
+    /// Selected DEV3 physical-file map; its contents belong to the engine.
+    FileMap,
+    /// Selected DEV3 doublewrite control; its contents belong to the engine.
+    Doublewrite,
 }
 
 impl Selector {
@@ -97,6 +101,8 @@ impl Selector {
         match self {
             Self::Writer => "WRITER",
             Self::Current => "CURRENT",
+            Self::FileMap => "FILEMAP",
+            Self::Doublewrite => "DWB",
         }
     }
 }
@@ -256,6 +262,22 @@ pub trait WriterNamespace {
     /// # Errors
     /// Missing, reserved, linked or invalid file types and OS errors leave DB bytes unchanged.
     fn open_existing(&mut self, name: &FileName, mode: OpenMode) -> NamespaceResult<Self::File>;
+
+    /// Open an existing file and observe metadata from that returned handle.
+    ///
+    /// Identity and length must come from the opened file, not a separate path
+    /// lookup. This does not pin the file's length against later resize or
+    /// namespace changes; the caller owns that synchronization. The file retains
+    /// writer exclusion exactly as [`Self::open_existing`] does.
+    ///
+    /// # Errors
+    /// The same preflight rules as `open_existing` apply. Open or handle-metadata
+    /// failure leaves database bytes unchanged and returns no file capability.
+    fn open_existing_with_metadata(
+        &mut self,
+        name: &FileName,
+        mode: OpenMode,
+    ) -> NamespaceResult<(Self::File, FileMetadata)>;
 
     /// Observe one regular file without following links; absence is `None`.
     ///

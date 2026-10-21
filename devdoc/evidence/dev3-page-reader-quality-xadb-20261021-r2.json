@@ -1,0 +1,45 @@
+{
+  "scope": "retained page-reader source Clippy/fmt and observed build features; full regression pending",
+  "source_sha256": "8e86232efcf44310a22b4607c3ff0e70348f1258e05ce8223af1062462735329",
+  "checks": [
+    {
+      "name": "quality-clippy.log",
+      "path": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/quality-clippy.log",
+      "sha256": "99d87055bfba484c0c5ed34efdd3ef147d607ba3faea844adb1e941e4c9c810b",
+      "status": "PASS"
+    },
+    {
+      "name": "quality-fmt.log",
+      "path": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/quality-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "PASS"
+    }
+  ],
+  "build_features": {
+    "build-page.log": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/build-page.log",
+      "sha256": "3f85e265c91fece6c634d72c5e2ad4617d429009aa6cd2134fbd7120f466c33c",
+      "engine_artifacts": [
+        {
+          "target": "xadb_engine",
+          "features": [],
+          "test": true
+        }
+      ]
+    },
+    "build-page-io-native.log": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/build-page-io-native.log",
+      "sha256": "db5cd884af631f4cecf4f555f3fd07138b2cdb443a0b7d3f91038ad3e6707e16",
+      "engine_artifacts": [
+        {
+          "target": "xadb_engine",
+          "features": [
+            "test-support"
+          ],
+          "test": false
+        }
+      ]
+    }
+  },
+  "source_sha256_after": "8e86232efcf44310a22b4607c3ff0e70348f1258e05ce8223af1062462735329"
+}

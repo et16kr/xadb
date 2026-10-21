@@ -115,3 +115,16 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 catalog·undo·control 표현 소스의 DEV2 P0/K0·DEV0/1 회귀](dev3-metadata-formats-dev2-regression-xadb-20261021-r1.json) — 원본 PASS, source f54bf874…; 전체 DEV3 disk 인수는 미완료.
 
 - [DEV3 catalog·undo·control 표현 소스의 DEV2 복구 원본 실행 결과](dev3-metadata-formats-dev2-kernel-xadb-20261021-r1.json) — 원본 PASS, source f54bf874…; 전체 DEV3 disk 인수는 미완료.
+
+- [DEV3 selector·표현·부분 모델 통합 원본 실행 결과](dev3-selector-leaf-xadb-20261021-r2.json) — 해당 보존 소스의 leaf 검증; DEV3 전체 인수 아님
+- [DEV3 selector와 같은 소스의 DEV0/1·DEV2 하위 회귀](dev3-selector-dev2-regression-xadb-20261021-r2.json) — 해당 보존 소스의 leaf 검증; DEV3 전체 인수 아님
+- [DEV3 selector와 같은 소스의 현재-build DEV2 복구 회귀](dev3-selector-dev2-kernel-xadb-20261021-r2.json) — 해당 보존 소스의 leaf 검증; DEV3 전체 인수 아님
+- [DEV3 열린 handle metadata port 원본 실행 결과](dev3-metadata-port-xadb-20261021-r0.json) — 해당 보존 소스의 leaf 검증; DEV3 전체 인수 아님
+
+- [DEV3 선택 page reader 통합 원본 실행 결과](dev3-page-reader-leaf-xadb-20261021-r2.json) — source8e86232e…의 고정 범위; DEV3 전체 인수 아님.
+
+- [DEV3 선택 page reader 소스의 DEV0/1·DEV2 회귀](dev3-page-reader-dev2-regression-xadb-20261021-r2.json) — source8e86232e…의 고정 범위; DEV3 전체 인수 아님.
+
+- [DEV3 선택 page reader 소스의 현재-build DEV2 복구](dev3-page-reader-dev2-kernel-xadb-20261021-r2.json) — source8e86232e…의 고정 범위; DEV3 전체 인수 아님.
+
+- [DEV3 선택 page reader 소스의 Clippy·fmt·build feature 기록](dev3-page-reader-quality-xadb-20261021-r2.json) — source8e86232e…의 고정 범위; DEV3 전체 인수 아님.

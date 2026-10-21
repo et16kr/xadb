@@ -1,0 +1,179 @@
+{
+  "origin": {
+    "revision": "d96bd1a9475f3a77fe156230fad86179c69d5df3",
+    "tracked_diff_sha256": "e0d0166c1e14a74b897efa8d36d60a7fc0d3dc76ea4b3d6451a54a5ea749612d",
+    "source_sha256": "311b9964dd0b64431f8014c8c4829f2beb28415e4adc0760a0665a5699642eee",
+    "lockfile_sha256": "f67269ca67484a0241bf06f22dee740fe6943bfe38d204193ab7fbcddec28a45"
+  },
+  "source_sha256": "311b9964dd0b64431f8014c8c4829f2beb28415e4adc0760a0665a5699642eee",
+  "scope": "opened-handle metadata port; not DEV3 page reader",
+  "checks": [
+    {
+      "id": "build-platform",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-platform",
+        "--test",
+        "namespace_metadata",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/build-platform.log",
+      "log_sha256": "f451c2d5f016d6e50608db00853de3bdbb0a7f39e5429014b6b1131afce86aae",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "platform-0",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/platform-binary",
+        "opened_metadata_binds_exact_handle_and_length",
+        "--exact",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/platform-0.log",
+      "log_sha256": "13a0dd678f2ae99c94807d1290c0d835900f2e8340fbecd613a8e27cb76e1dfe",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "platform-1",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/platform-binary",
+        "replacement_keeps_old_handle_metadata_and_lease",
+        "--exact",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/platform-1.log",
+      "log_sha256": "73ed6563381b1e38b712b8ff70d0ad124738269f6274798fcb4105336f19c719",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "platform-2",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/platform-binary",
+        "opened_metadata_rejects_invalid_names_and_types_without_effects",
+        "--exact",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/platform-2.log",
+      "log_sha256": "389eb8b02bad7874903c6e662f28fb69eab26799ec398ad657157881d2856142",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-worker",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/build-worker.log",
+      "log_sha256": "d6aea64de6f0f9266557afc63df2f005fe227edb64ab66c74647ef5a18a1063a",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "worker-0",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/worker-binary",
+        "fault::tests::dev3_open_metadata_preserves_selector_roles",
+        "--exact",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/worker-0.log",
+      "log_sha256": "ed1b416fb6f9e9f46ea003d30095f48d6b3e11ba227f8c2c5cf979e56d004e4f",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "worker-1",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/worker-binary",
+        "durable_performance::ports::tests::open_metadata_counts_one_success_or_failure",
+        "--exact",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/worker-1.log",
+      "log_sha256": "34f9ebcfbf1856383b7a2a2944c59f18901f1829d1b3b6b30d4d438ccf1ac301",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-foundation",
+        "-p",
+        "xadb-platform",
+        "-p",
+        "xadb-engine",
+        "-p",
+        "xadbtest-engine-worker",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/clippy.log",
+      "log_sha256": "9ea0b7d79ba5e77a11950b8e66f434845bb0b5b92d12e7160779e79f7d5da6f7",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/fmt.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "builds": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/platform-binary",
+      "sha256": "9d14c75a1cd905fddc84bc5aef271b5df4a081ebf5a397df5b2b36549c0b1576"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/metadata-port-r0/worker-binary",
+      "sha256": "2c89bf4c62fd6a2b034745c6e53bb83eba8848723d36cce19a4cb3fea39b687b"
+    }
+  ],
+  "status": "PASS",
+  "source_sha256_after": "311b9964dd0b64431f8014c8c4829f2beb28415e4adc0760a0665a5699642eee"
+}

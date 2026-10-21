@@ -132,7 +132,9 @@ fn check_identity(directory: &File, name: &str, expected: FileIdentity) -> Names
 }
 
 fn reserve_name(name: &FileName, selectors: bool) -> NamespaceResult<()> {
-    if name.as_str() == LOCK_NAME || (selectors && matches!(name.as_str(), "WRITER" | "CURRENT")) {
+    if name.as_str() == LOCK_NAME
+        || (selectors && matches!(name.as_str(), "WRITER" | "CURRENT" | "FILEMAP" | "DWB"))
+    {
         return Err(NamespaceError::new(
             NamespaceErrorKind::InvalidName,
             Effect::Unchanged,
@@ -401,6 +403,22 @@ impl WriterNamespace for LinuxWriterLease {
             return Err(invalid_type("file identity changed while opening"));
         }
         self.retain_file(file, name, Effect::Unchanged)
+    }
+
+    fn open_existing_with_metadata(
+        &mut self,
+        name: &FileName,
+        mode: OpenMode,
+    ) -> NamespaceResult<(Self::File, FileMetadata)> {
+        let file = self.open_existing(name, mode)?;
+        let metadata = file
+            .file
+            .0
+            .metadata()
+            .map_err(|error| failure(error, Effect::Unchanged, "opened handle metadata"))?;
+        let metadata = regular_metadata(&metadata)?;
+        check_identity(&self.state.directory, name.as_str(), metadata.identity)?;
+        Ok((file, metadata))
     }
 
     fn metadata(&self, name: &FileName) -> NamespaceResult<Option<FileMetadata>> {

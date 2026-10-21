@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify DEV3 storage expressions, including catalog/undo/control, and M02-P01."""
+"""Verify DEV3 expressions, selector/metadata ports, bounded reads and M02-P01."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -25,6 +25,28 @@ from check_dev0 import check_report_paths, digest, source_fingerprint
 from comm_campaign import capture_source, identity, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
+PAGE_IO_TESTS = {
+    'selected_map_reads_independent_page_and_all_declared_chunks',
+    'selected_map_rejects_late_damage_and_never_scans_fallback',
+    'selected_map_and_data_require_exact_handle_lengths',
+    'page_request_binds_profile_owner_generation_kind_and_bounds',
+    'every_read_fault_preserves_selection_and_bounded_handles',
+}
+METADATA_PLATFORM_TESTS = {
+    'opened_metadata_binds_exact_handle_and_length',
+    'replacement_keeps_old_handle_metadata_and_lease',
+    'opened_metadata_rejects_invalid_names_and_types_without_effects',
+}
+METADATA_WORKER_TESTS = {'dev3_open_metadata_preserves_selector_roles'}
+METADATA_PERFORMANCE_TESTS = {'open_metadata_counts_one_success_or_failure'}
+PAGE_IO_NATIVE_TESTS = {'native_selected_map_reads_and_rejects_selected_damage'}
+DISK_VECTOR_RESULT = {
+    'dev3-io-profile.bin': (4096, '985651bdbfde061063f76265665c2aff331c9b01486e0be4de60223d6ec327d8'),
+    'dev3-io-selector.bin': (4096, '4b383d1f2ad756630421555efcdef18ea40bba314b07a42333099ef75bf7fbae'),
+    'dev3-io-root.bin': (416, '13e967b9db3b3e29d0bcf2bc6698de6f06b63e9a9b02e91a71bc5a624ba2de69'),
+    'dev3-io-chunk0.bin': (6304, 'e2a132d9659f20a874339bf29328a9b529af734bfbdd72cae510601e744c81ed'),
+    'dev3-io-chunk1.bin': (256, '0f186336d4102cbcc31474f3e3188f55cc3f4ae18c985aa0486e9909baa7e7d9'),
+}
 PAGE_TESTS = {
     'independent_page_vectors_match_every_byte_and_borrow_exact_cells',
     'every_truncation_trailing_byte_and_single_byte_damage_is_rejected',
@@ -168,6 +190,16 @@ CONTROL_TESTS = {
     'control_encoders_preserve_outputs',
     'control_generated_inventory_profiles',
 }
+SELECTOR_PLATFORM_TESTS = {
+    'typed_selectors_replace_reopen_and_preserve_reserved_names',
+    'typed_selector_preflight_rejects_aliases_without_effects',
+}
+SELECTOR_PROTOCOL_TESTS = {'dev3_selector_cut_matrix_and_wire_names'}
+SELECTOR_WORKER_TESTS = {
+    'dev3_selector_faults_preserve_target_lineage_and_certainty',
+    'dev3_selector_write_sync_faults_use_exact_names',
+    'dev3_selector_repeated_unknown_reopens_do_not_cross_targets',
+}
 MODEL_TEST = 'snapshot_lifecycle_partial_model_exhaustive'
 MODEL_BUDGET_TEST = 'snapshot_model_budget_exhaustion_is_inconclusive'
 NORMAL_CASES = {'registration', 'unpublished', 'transient_undo', 'transient_status'}
@@ -222,6 +254,15 @@ NEGATIVE_CASES = {
 
 def check_page_output(output, exit_code):
     return check_named_tests(output, exit_code, 'storage::page::tests::', PAGE_TESTS)
+
+
+def check_disk_vectors(output):
+    expected = {f'{name} {length} {sha}' for name, (length, sha) in DISK_VECTOR_RESULT.items()}
+    lines = output.splitlines()
+    if len(lines) != len(expected) or set(lines) != expected:
+        raise ValueError('disk literal fixture inventory/hash mismatch')
+    return {name: {'bytes': length, 'sha256': sha}
+            for name, (length, sha) in DISK_VECTOR_RESULT.items()}
 
 
 def check_named_tests(output, exit_code, prefix, expected):
@@ -351,7 +392,7 @@ def main():
     source = session / 'source'
     report = {
         'schema_version': 1, 'date': datetime.now(timezone.utc).isoformat(),
-        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/WAL/allocation/row/DWB/catalog/undo/control expressions + D3-M02-P01; no disk engine or S1 acceptance',
+        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads + D3-M02-P01; no disk engine or S1 acceptance',
         'status': 'RUNNING', 'origin': identity(ROOT), 'artifact_directory': str(session),
         'dev3_acceptance': 'INCOMPLETE', 'checks': [], 'builds': [],
         'checker_identity_scope': 'F07 file freeze and before/after disk hashes; not bytecode attestation or protected CI',
@@ -401,6 +442,8 @@ def main():
                 'devdoc/contracts/dev3-row-format.md', 'devdoc/contracts/dev3-doublewrite-format.md',
                 'devdoc/contracts/dev3-catalog-format.md', 'devdoc/contracts/dev3-undo-format.md',
                 'devdoc/contracts/dev3-control-format.md',
+                'devdoc/contracts/dev3-selector-port.md',
+                'devdoc/contracts/dev3-page-io.md',
                 'devdoc/contracts/dev3-snapshot-model.md']}
         write_json(session / 'manifest.json', report)
         report['toolchain'] = run('toolchain', ['rustc', '-Vv'])
@@ -410,6 +453,8 @@ def main():
             raise ValueError('checker self-test inventory did not execute')
         vectors = run('independent-vectors', ['python3', '-B', 'scripts/dev3_page_vectors.py'])
         report['vector_result'] = check_vectors(vectors)
+        vectors = run('independent-disk-vectors', ['python3', '-B', 'scripts/dev3_disk_vectors.py'])
+        report['disk_vector_result'] = check_disk_vectors(vectors)
         page = build('xadb-engine', ['--lib'], 'xadb_engine', 'page')
         output = run('page', [page, 'storage::page::tests::', '--nocapture', '--test-threads=1'])
         report['page_tests'] = check_page_output(output, 0)
@@ -421,13 +466,34 @@ def main():
                                ('wal_frame', WAL_TESTS), ('allocation_page', ALLOCATION_TESTS),
                                ('row_record', ROW_TESTS), ('doublewrite_control', DOUBLEWRITE_TESTS),
                                ('catalog_record', CATALOG_TESTS), ('undo_record', UNDO_RECORD_TESTS),
-                               ('control', CONTROL_TESTS)]:
+                               ('control', CONTROL_TESTS), ('page_io', PAGE_IO_TESTS)]:
             prefix = f'storage::{name}::tests::'
             output = run(name, [page, prefix, '--nocapture', '--test-threads=1'])
             report[f'{name}_tests'] = check_named_tests(output, 0, prefix, expected)
         scalar = build('xadb-foundation', ['--test', 'key_buffer'], 'key_buffer', 'scalar-key')
         output = run('scalar-key', [scalar, '--nocapture', '--test-threads=1'])
         report['scalar_key_tests'] = check_named_tests(output, 0, '', SCALAR_KEY_TESTS)
+        for name, package, target_args, target_name, prefix, test_filter, expected in [
+                ('selector-platform', 'xadb-platform', ['--test', 'contracts'], 'contracts',
+                 '', 'typed_selector', SELECTOR_PLATFORM_TESTS),
+                ('selector-protocol', 'xadbtest-protocol', ['--lib'], 'xadbtest_protocol',
+                 'fault::tests::', 'fault::tests::dev3_selector_', SELECTOR_PROTOCOL_TESTS),
+                ('selector-worker', 'xadbtest-engine-worker', ['--lib'], 'xadbtest_engine_worker',
+                 'fault::tests::', 'fault::tests::dev3_selector_', SELECTOR_WORKER_TESTS),
+                ('metadata-platform', 'xadb-platform', ['--test', 'namespace_metadata'],
+                 'namespace_metadata', '', '', METADATA_PLATFORM_TESTS),
+                ('metadata-worker', 'xadbtest-engine-worker', ['--lib'], 'xadbtest_engine_worker',
+                 'fault::tests::', 'fault::tests::dev3_open_metadata_', METADATA_WORKER_TESTS),
+                ('metadata-performance', 'xadbtest-engine-worker', ['--lib'], 'xadbtest_engine_worker',
+                 'durable_performance::ports::tests::',
+                 'durable_performance::ports::tests::open_metadata_', METADATA_PERFORMANCE_TESTS),
+                ('page-io-native', 'xadbtest-engine-worker', ['--test', 'page_io'], 'page_io',
+                 '', '', PAGE_IO_NATIVE_TESTS)]:
+            binary = build(package, target_args, target_name, name)
+            # Keep witness prints out of libtest's in-progress `test ...` line.
+            # --show-output preserves successful-test witnesses after each result.
+            output = run(name, [binary, test_filter, '--show-output', '--test-threads=1'])
+            report[f'{name}_tests'] = check_named_tests(output, 0, prefix, expected)
         model = build('xadbtest-reference', ['--test', 'dev3_snapshot_model'],
                       'dev3_snapshot_model', 'model')
         output = run('model', [model, MODEL_TEST, '--exact', '--nocapture'],

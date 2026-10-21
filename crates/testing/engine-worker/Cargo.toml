@@ -17,6 +17,7 @@ xadbtest-protocol.workspace = true
 sha2.workspace = true
 
 [dev-dependencies]
+xadb-engine = { workspace = true, features = ["test-support"] }
 xadbtest = { path = "../controller" }
 tempfile.workspace = true
 

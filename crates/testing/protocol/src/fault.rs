@@ -13,6 +13,8 @@ pub enum Target {
     RecoveryOldFile,
     Current,
     Writer,
+    FileMap,
+    Doublewrite,
     Retirement,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -49,7 +51,7 @@ impl Cut {
                 B::WriteBefore | B::WritePartial | B::WriteAfter | B::SyncBefore | B::SyncAfter
             ),
             T::RecoveryOldFile => matches!(self.boundary, B::SyncBefore | B::SyncAfter),
-            T::Current | T::Writer => matches!(
+            T::Current | T::Writer | T::FileMap | T::Doublewrite => matches!(
                 self.boundary,
                 B::WriteBefore
                     | B::WritePartial
@@ -313,5 +315,70 @@ mod tests {
             witness.frame_written_bytes = Some(50);
         }
         assert!(full.validate().is_ok());
+    }
+
+    #[test]
+    fn dev3_selector_cut_matrix_and_wire_names() {
+        let boundaries = [
+            Boundary::CreateBefore,
+            Boundary::CreateAfter,
+            Boundary::WriteBefore,
+            Boundary::WritePartial,
+            Boundary::WriteAfter,
+            Boundary::SyncBefore,
+            Boundary::SyncAfter,
+            Boundary::RenameBefore,
+            Boundary::RenameAfter,
+            Boundary::DirectorySyncBefore,
+            Boundary::DirectorySyncAfter,
+            Boundary::UnlinkBefore,
+            Boundary::UnlinkAfter,
+        ];
+        let mut accepted = 0;
+        let mut rejected = 0;
+        for (target, literal) in [
+            (Target::FileMap, "\"file_map\""),
+            (Target::Doublewrite, "\"doublewrite\""),
+        ] {
+            assert_eq!(serde_json::to_string(&target).unwrap(), literal);
+            assert_eq!(serde_json::from_str::<Target>(literal).unwrap(), target);
+            for boundary in boundaries {
+                let valid = !matches!(
+                    boundary,
+                    Boundary::CreateBefore
+                        | Boundary::CreateAfter
+                        | Boundary::UnlinkBefore
+                        | Boundary::UnlinkAfter
+                );
+                let cut = Cut { target, boundary };
+                assert_eq!(cut.validate().is_ok(), valid, "{target:?}/{boundary:?}");
+                if valid {
+                    accepted += 1;
+                    let observation = reached(target, boundary);
+                    observation.validate().unwrap();
+                    let encoded = crate::frame::encode(&observation).unwrap();
+                    assert_eq!(
+                        crate::frame::read::<Observation>(&mut encoded.as_slice()).unwrap(),
+                        Some(observation.clone())
+                    );
+                    let mut wrong = observation;
+                    if let Event::Reached { witness } = &mut wrong.event {
+                        witness.observed_target = if target == Target::FileMap {
+                            Target::Doublewrite
+                        } else {
+                            Target::FileMap
+                        };
+                    }
+                    assert!(wrong.validate().is_err());
+                } else {
+                    rejected += 1;
+                }
+            }
+        }
+        assert_eq!((accepted, rejected), (18, 8));
+        assert_eq!(VERSION, 1);
+        println!(
+            "XADB_DEV3_SELECTOR_PROTOCOL {{\"cases\":26,\"accepted\":18,\"rejected\":8,\"scope\":\"port_only\"}}"
+        );
     }
 }

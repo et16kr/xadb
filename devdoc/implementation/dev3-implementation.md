@@ -287,3 +287,40 @@ DEV2 PF04 실패, DEV3 DS01–06·PF09·S1 인수는 남아 있다. 사용자의
 - 실제 page read의 최소 I/O 단위는 조사만 했고 새 계약·제품 코드를 작성하지 않았다. 재개 시 selector source의 첫 검증/독립 검토와 이 단위의 F04/F05 경계를 먼저 확정한다. page read에는 전체 FILEMAP 검증·정확한 파일 길이·열린 handle과 metadata의 결합·generation 고정이 필요하며, root16KiB와 chunk/page 재사용16KiB의 scratch 제안은 아직 미채택이다.
 
 전체 DEV3는 미완료이며 DEV2 PF04 실패도 그대로다. 현재 단계의 source 지문·raw receipt와 미검증 초안을 구분하여 재개한다.
+
+<a id="resumed-20261021"></a>
+## 2026-10-21 DEV3 완료 목표 재개
+
+사용자가 중단 지점부터 DEV3 전체 완료를 요청하여 위 중지를 해제했다. 작업·계약·통합 담당은 `/root`, selector 독립 검토는 `/root/dev3_selector_review`다. 기준 commit은 `d96bd1a9475f3a77fe156230fad86179c69d5df3`, 착수 tracked diff SHA-256은 `3c153087da5f2d5ab33c8346ce218e6c08f059dab2698a8ddb1b9b5ec2c62f22`다. 새 `fault_tests.rs`를 포함한 실행 입력 지문은 `e8d134580b646dcee5302559c780248025a940d81c37175a24ca0e8e2e5d41cf`다. 기존 DEV6 관련4개 문서 변경은 보존하며 이 작업의 소유 범위에서 제외한다.
+
+root가 중단된 selector7개 source/test 경로의 수정·검증 소유를 이어받는다. 독립 검토자는 source를 수정하지 않고 계약·diff·고정 반례·실제 결과를 별도 확인한다. 공유 구현 기록·selector 계약·등록/runner는 root가 순차 반영한다. 기존 상세 계약 → 초안 compile·고정6시험 → 독립 검토·필요 수정 → 같은 보존 source의 하위 회귀·현재-build 복구 → 새 증거·상태 갱신 순서다. 원본 중지 사본과 실행 실패는 덮어쓰지 않는다.
+
+`artifacts/dev3/selector-resume-r0/source`에서 첫 compile·고정6시험·관련4개 package Clippy를 통과했다. 포맷 검사만 FAIL이며 원본 로그와 receipt를 같은 bundle에 보존했다. 이 결과는 selector 기반 leaf에 한정하고 실제 DEV3 복구·단계 인수로 승격하지 않는다. 후속 실제 page read는 FILEMAP 전체 검증·열린 handle의 길이/identity·고정 generation·bounded scratch의 F02/F04/F05를 먼저 검토한다. 새 source path는 구현 때 등록하고 문서 자동 검사는 push gate에 유지한다.
+
+### 열린 handle metadata 공급
+
+[page 읽기 제안의 §2](../contracts/dev3-page-io.md)는 `/root/dev3_selector_review`의 별도 검토를 수용한 D2 port다. `/root`가 foundation/platform `namespace.rs`, engine-worker `fault.rs`·`fault_tests.rs`·`durable_performance/ports.rs`, engine `tests/support/durable_disk.rs`, 새 platform `tests/namespace_metadata.rs`를 단일 작성한다. 기준은 selector r2의 보존 사본 `artifacts/dev3/leaf-m2r6ek3c/source`이며 source/test 새5시험과 exact6/2/10/8 및 계수2호출을 고정한다. 기존 `open_existing`의 호출·fault 의미를 보존하고 새 method에서 handle metadata를 반환한다. 공유 runner·배치/문서 색인은 root가 검토 뒤 순차 연결한다.
+
+선행 selector 통합 사본은 수정하지 않는다. metadata port는 별도 `artifacts/dev3/metadata-port-r0/source`에서 compile·5시험·Clippy·fmt를 실행하며 이전 source의 PASS를 이 변경으로 확대하지 않는다. 실제 reader는 아직 구현하지 않았으며 profile DB 결합·정확한 logical read 길이와 남은 API/fault/시험 조립 의무를 별도 계약에 기록했다.
+
+<a id="selector-resume-results"></a>
+### Selector 재개 검증 결과
+
+중단 초안의 원래6시험은 독립 검토에서 통과했다. 첫 통합 r1은 serial `--nocapture`가 시험의 witness 출력을 결과 줄에 끼워 넣어 runner가 정상 실행을 누락으로 판단했다. 출력 순서에 맞는 `--show-output`으로 수정하고 자기시험에 원래 반례를 추가했다. 독립 검토자는 실제 platform2·protocol1·worker3시험과 runner7시험을 별도로 실행하여 수정 결과를 확인했다. 첫 fmt 실패와 runner r1 실패는 `artifacts/dev3/selector-resume-r0/`와 `selector-resume-leaf-r1.json`에 보존했다.
+
+최종 selector source 지문은 `a270ffcfedf4c3696ba131fa0842366625c47ccc410f59afb734afe63777dded`, 보존 경로는 `artifacts/dev3/leaf-m2r6ek3c/source`다. [leaf 원본30check](../evidence/dev3-selector-leaf-xadb-20261021-r2.json), [하위 회귀 원본28check](../evidence/dev3-selector-dev2-regression-xadb-20261021-r2.json), [현재-build 복구 원본18check](../evidence/dev3-selector-dev2-kernel-xadb-20261021-r2.json)가 같은 지문에서 PASS했다. 복구는 native99셀·cache-loss·thread·독립 oracle 범위이며 DEV2 PF04와 DEV3 전체 인수를 완료한 것으로 해석하지 않는다.
+
+metadata port는 [원본 receipt](../evidence/dev3-metadata-port-xadb-20261021-r0.json)의 source `311b9964dd0b64431f8014c8c4829f2beb28415e4adc0760a0665a5699642eee`에서5시험·Clippy·fmt PASS와 별도 독립 검토를 마쳤다. 보존 소스는 `artifacts/dev3/metadata-port-r0/source`, 검토는 `artifacts/dev3/page-io-contract-review-20261021/metadata-port-review.md`다. 이후 page reader를 합친 소스의 하위 회귀는 별도로 실행한다.
+
+<a id="page-reader-results"></a>
+### 선택 page reader 구현과 검증
+
+`/root`가 `storage/page_io.rs`·`page_io_tests.rs`, test-support feature의 `testing.rs`, worker `tests/page_io.rs`, 독립 `scripts/dev3_disk_vectors.py`와5 literal, Cargo·module·runner 등록을 작성했다. `/root/dev3_selector_review`가 별도 D2 계약·구현·runner 검토를 맡는다. 검토한 원문은 `artifacts/dev3/page-io-contract-review-20261021/r3-reader-proposal.md`이며 root32KiB workspace와 최대2 file handles, profile 결합과 모든 selected chunk 검증 후 요청 page를 읽는 경로다. 정상 engine API에 READY를 추가하지 않는다.
+
+첫 컴파일은 Namespace private import와 façade의 Result/Option 혼동을 발견하여 수정했다. 원본 `artifacts/dev3/page-reader-r0/tests.log`·`tests-r1.log`를 보존한다. 내부5시험·read fault56셀과 native 시험은 통과했으나 독립 검토에서 비선택 bank1 fixture의 header/reference가0인 결함을 발견했다. slot1 header와 전이 hash를 바로잡고 bank1 정상 선택을 내부·native에 추가했다. 기존8거절·56fault를 유지하고 native5셀에 정상1셀을 추가했으며, DB mismatch의 data read0도 명시 검사한다. 최종 자체 실행은 `tests-r4.log`·`native-r1.log`다.
+
+통합 r1은 추가 assertion 반영을 위해 하위 회귀 전에 중단했으며 `page-reader-leaf-r1.json`에 FAIL과 종료한 child를 보존한다. 최종 source `8e86232efcf44310a22b4607c3ff0e70348f1258e05ce8223af1062462735329`를 `artifacts/dev3/leaf-_zivd6il/source`에 보존했다. [r2 leaf40check](../evidence/dev3-page-reader-leaf-xadb-20261021-r2.json)·[하위 회귀28check](../evidence/dev3-page-reader-dev2-regression-xadb-20261021-r2.json)와 같은 지문의 짧은 export `/home/et16/x3r-r0z3aarf/source`에서 [현재-build DEV2 복구18check](../evidence/dev3-page-reader-dev2-kernel-xadb-20261021-r2.json)가 PASS했다. engine 표현·reader115시험, selector6·metadata5·native reader1시험(6셀), 기존 scalar3·부분 모델 정상4/결함8과 DEV0/1·DEV2 P0/K0의 고정 회귀를 확인했다. DEV2 복구는 native99셀·cache-loss/thread·독립 oracle 범위다. 첫 kernel handoff r2는 임시 Python bytecode가 포함된 다른 지문이어서 실행하지 않았고 r3 handoff에서 leaf와 exact 지문을 확인했다. [품질·feature 기록](../evidence/dev3-page-reader-quality-xadb-20261021-r2.json)은 Clippy·fmt PASS와 engine 기본 features[] 및 native 조립의 test-support 활성화를 구별한다. 이 기록의 “full regression pending”은 품질 기록 생성 당시 상태이며 완료된 회귀는 위 별도 원본이 증명한다. 전체 DEV3 disk 복구·S1 인수는 미완료다.
+
+사용자의 디스크 정리 요청에 따라 완료된 native worker 실행 파일은 manifest SHA-256·전체 bytes·mode/device가 같은 사본만 hardlink로 통합했다. 데이터 파일·보존 source·로그·receipt 경로와 내용은 유지하며 이후 그 실행 파일을 수정하지 않는다. `artifacts/dev3/completed-worker-cleanup-20261021/summary.json`과 journal에4,814개 통합·약104.29GiB 회수, `incremental-cache-cleanup.json`에 완료된 빌드 캐시 약8.29GiB 제거를 기록했다. 실행 중인 source와 target은 제외했다.
+
+최종 독립 증거 검토 `artifacts/dev3/page-reader-independent-review-20261021/r2-final-evidence-review.json`은 retained source 두 사본·계약16개·checker3개·로그104개·asset58개를 대조하고 위 좁은 통합 범위의 PASS를 확인했다. 기본 feature와 시험 feature, page-reader 지문과 후속 status-home 지문을 구별한다.

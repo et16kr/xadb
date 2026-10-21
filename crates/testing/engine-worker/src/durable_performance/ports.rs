@@ -139,6 +139,27 @@ impl WriterNamespace for Writer {
             counters: Arc::clone(&self.counters),
         })
     }
+    fn open_existing_with_metadata(
+        &mut self,
+        name: &FileName,
+        mode: OpenMode,
+    ) -> NamespaceResult<(File, FileMetadata)> {
+        let result = self.inner.open_existing_with_metadata(name, mode);
+        self.counters.record(
+            Kind::Open,
+            None,
+            result.as_ref().map(|_| None).map_err(|_| ()),
+        );
+        result.map(|(inner, metadata)| {
+            (
+                File {
+                    inner,
+                    counters: Arc::clone(&self.counters),
+                },
+                metadata,
+            )
+        })
+    }
     fn metadata(&self, name: &FileName) -> NamespaceResult<Option<FileMetadata>> {
         self.inner.metadata(name)
     }
@@ -219,5 +240,57 @@ impl FileIo for File {
             result.as_ref().map(|_| None).map_err(|_| ()),
         );
         result
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{fs, os::unix::fs::MetadataExt};
+    use xadb_foundation::{
+        io::read_exact_at,
+        namespace::{FileIdentity, NamespaceErrorKind},
+    };
+
+    #[test]
+    fn open_metadata_counts_one_success_or_failure() {
+        let temporary = tempfile::tempdir().unwrap();
+        fs::write(temporary.path().join("data"), b"value").unwrap();
+        let native = fs::metadata(temporary.path().join("data")).unwrap();
+        let counters = Counters::new();
+        let directory = Directory::new(
+            LinuxDirectory::open_existing(temporary.path()).unwrap(),
+            Arc::clone(&counters),
+        );
+        let mut writer = directory.acquire_writer().unwrap();
+        let (mut file, metadata) = writer
+            .open_existing_with_metadata(&FileName::new("data").unwrap(), OpenMode::ReadOnly)
+            .unwrap();
+        assert_eq!(metadata.length, 5);
+        assert_eq!(
+            metadata.identity,
+            FileIdentity {
+                device: native.dev(),
+                inode: native.ino()
+            }
+        );
+        assert!(
+            matches!(writer.open_existing_with_metadata(&FileName::new("missing").unwrap(), OpenMode::ReadOnly), Err(error) if error.kind == NamespaceErrorKind::NotFound)
+        );
+        let actual = counters.snapshot();
+        let mut expected = Counters::new().snapshot();
+        expected.open.attempts = 2;
+        expected.open.successes = 1;
+        expected.open.failures = 1;
+        assert_eq!(actual, expected);
+        drop(writer);
+        assert!(
+            matches!(directory.acquire_writer(), Err(error) if error.kind == NamespaceErrorKind::Busy)
+        );
+        let mut bytes = [0; 5];
+        read_exact_at(&mut file, &mut bytes, 0).unwrap();
+        assert_eq!(bytes, *b"value");
+        drop(file);
+        drop(directory.acquire_writer().unwrap());
     }
 }

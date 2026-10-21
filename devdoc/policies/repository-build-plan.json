@@ -1033,7 +1033,22 @@
     "source_roots_changed": false,
     "dependencies_changed": false,
     "full_stage_acceptance": false,
-    "validation_ref": "dev3-metadata-formats-leaf-xadb-20261021-r1.json"
+    "validation_ref": "dev3-metadata-formats-leaf-xadb-20261021-r1.json",
+    "namespace_tests": [
+      "crates/platform/tests/namespace_metadata.rs",
+      "crates/testing/engine-worker/src/fault_tests.rs"
+    ],
+    "page_io": {
+      "implementation": "crates/engine/src/storage/page_io.rs",
+      "internal_tests": "crates/engine/src/storage/page_io_tests.rs",
+      "native_tests": "crates/testing/engine-worker/tests/page_io.rs",
+      "independent_vectors": "scripts/dev3_disk_vectors.py",
+      "test_facade": "crates/engine/src/testing.rs",
+      "engine_feature": "test-support",
+      "default_enabled": false,
+      "enabled_by": "xadbtest-engine-worker dev-dependency",
+      "new_package_edges": false
+    }
   },
   "dev3_selected_models": {
     "implementation_ref": "dev3-implementation.md",

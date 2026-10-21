@@ -16,4 +16,7 @@ mod storage;
 pub mod substrate;
 pub mod transaction;
 
+#[cfg(feature = "test-support")]
+pub mod testing;
+
 pub use error::{Error, ErrorCode, Result};

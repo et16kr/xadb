@@ -286,6 +286,16 @@ fn namespace(error: io::Error, after: bool) -> NamespaceError {
     )
 }
 
+/// Exact prepared/selected names identify an effect role, not valid contents.
+/// Data/control payload files and similar prefixes intentionally remain untyped.
+fn selector_role(name: FileName) -> Option<T> {
+    match name.as_str() {
+        "d3-filemap-select-stage" | "FILEMAP" => Some(T::FileMap),
+        "d3-dwb-select-stage" | "DWB" => Some(T::Doublewrite),
+        _ => None,
+    }
+}
+
 pub(crate) struct Directory {
     inner: LinuxDirectory,
     hub: Arc<Hub>,
@@ -337,7 +347,7 @@ impl Writer {
             slot: self.slot,
             name,
             opened,
-            role: T::Any,
+            role: selector_role(name).unwrap_or(T::Any),
             pending: None,
         }
     }
@@ -356,6 +366,14 @@ impl WriterNamespace for Writer {
     fn open_existing(&mut self, name: &FileName, mode: OpenMode) -> NamespaceResult<File> {
         let inner = self.inner.open_existing(name, mode)?;
         Ok(self.file(inner, *name, true))
+    }
+    fn open_existing_with_metadata(
+        &mut self,
+        name: &FileName,
+        mode: OpenMode,
+    ) -> NamespaceResult<(File, FileMetadata)> {
+        let (inner, metadata) = self.inner.open_existing_with_metadata(name, mode)?;
+        Ok((self.file(inner, *name, true), metadata))
     }
     fn metadata(&self, name: &FileName) -> NamespaceResult<Option<FileMetadata>> {
         self.inner.metadata(name)
@@ -386,6 +404,8 @@ impl WriterNamespace for Writer {
         let target = match selected {
             Selector::Current => T::Current,
             Selector::Writer => T::Writer,
+            Selector::FileMap => T::FileMap,
+            Selector::Doublewrite => T::Doublewrite,
         };
         self.hit(target, B::RenameBefore, Some(*temporary), false)?;
         self.inner.publish_selector(temporary, selected)?;
@@ -435,6 +455,13 @@ impl File {
         point
     }
     fn start_frame(&mut self, bytes: &[u8], offset: u64) -> io::Result<()> {
+        if let Some(role) = selector_role(self.name) {
+            // DEV3 selector cuts do not depend on a DEV2 frame prefix, even if
+            // the caller writes bytes which happen to resemble that envelope.
+            self.role = role;
+            self.pending = None;
+            return Ok(());
+        }
         if self
             .pending
             .is_some_and(|frame| frame.next == offset && frame.next < frame.end)
@@ -481,6 +508,9 @@ impl File {
         Ok(())
     }
     fn sync_target(&self) -> T {
+        if let Some(role) = selector_role(self.name) {
+            return role;
+        }
         if self.opened
             && CONTEXT
                 .get()
@@ -493,6 +523,10 @@ impl File {
             .map_or(self.role, |frame| frame.target)
     }
 }
+
+#[cfg(test)]
+#[path = "fault_tests.rs"]
+mod tests;
 impl FileIo for File {
     fn read_at(&mut self, bytes: &mut [u8], offset: u64) -> io::Result<usize> {
         self.inner.read_at(bytes, offset)

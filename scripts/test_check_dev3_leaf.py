@@ -10,6 +10,9 @@ import unittest
 from check_dev3_leaf import (
     ALLOCATION_TESTS, DOUBLEWRITE_TESTS, ROW_TESTS, WAL_TESTS,
     CATALOG_TESTS, UNDO_RECORD_TESTS, CONTROL_TESTS,
+    SELECTOR_PLATFORM_TESTS, SELECTOR_PROTOCOL_TESTS, SELECTOR_WORKER_TESTS,
+    PAGE_IO_TESTS, METADATA_PLATFORM_TESTS, METADATA_WORKER_TESTS,
+    METADATA_PERFORMANCE_TESTS, PAGE_IO_NATIVE_TESTS, DISK_VECTOR_RESULT, check_disk_vectors,
     ANCHOR_TESTS, KEY_TESTS, MODEL_TEST, NEGATIVE_CASES, NORMAL_CASES, PAGE_TESTS, REQUIRED_WITNESSES,
     OVERFLOW_TESTS, SCALAR_KEY_TESTS, TRANSACTION_TESTS, TREE_TESTS, UNDO_REF_TESTS,
     VECTOR_RESULT, VIOLATIONS, check_model_output, check_named_tests,
@@ -49,6 +52,13 @@ class ReceiptTests(unittest.TestCase):
         self.assertEqual(check_page_output(output, 0), sorted(PAGE_TESTS))
         self.assertEqual(check_vectors('XADB_DEV3_PAGE_VECTORS ' + json.dumps(VECTOR_RESULT)),
                          VECTOR_RESULT)
+        disk = '\n'.join(f'{name} {length} {sha}'
+                         for name, (length, sha) in DISK_VECTOR_RESULT.items())
+        self.assertEqual(set(check_disk_vectors(disk)), set(DISK_VECTOR_RESULT))
+        for bad in ['', disk + '\n' + disk, disk.replace('6304', '6303'),
+                    '\n'.join(disk.splitlines()[:-1]), disk + '\nunexpected']:
+            with self.assertRaises(ValueError):
+                check_disk_vectors(bad)
 
     def test_missing_duplicate_wrong_scope_and_budget_exhaustion_are_rejected(self):
         for rows in [self.cases[:-1], self.cases + [self.cases[0]]]:
@@ -107,6 +117,10 @@ class ReceiptTests(unittest.TestCase):
     def test_key_inventory_requires_each_name_once_and_one_exact_summary(self):
         for prefix, expected in [
             ('storage::key::tests::', KEY_TESTS), ('', SCALAR_KEY_TESTS),
+            ('storage::page_io::tests::', PAGE_IO_TESTS),
+            ('', METADATA_PLATFORM_TESTS), ('fault::tests::', METADATA_WORKER_TESTS),
+            ('durable_performance::ports::tests::', METADATA_PERFORMANCE_TESTS),
+            ('', PAGE_IO_NATIVE_TESTS),
             ('storage::anchor::tests::', ANCHOR_TESTS),
             ('storage::undo_ref::tests::', UNDO_REF_TESTS),
             ('storage::tree_page::tests::', TREE_TESTS),
@@ -119,7 +133,9 @@ class ReceiptTests(unittest.TestCase):
             ('storage::catalog_record::tests::', CATALOG_TESTS),
             ('storage::undo_record::tests::', UNDO_RECORD_TESTS),
             ('storage::control::tests::', CONTROL_TESTS),
-
+            ('', SELECTOR_PLATFORM_TESTS),
+            ('fault::tests::', SELECTOR_PROTOCOL_TESTS),
+            ('fault::tests::', SELECTOR_WORKER_TESTS),
         ]:
             lines = [f'test {prefix}{name} ... ok' for name in sorted(expected)]
             summary = f'test result: ok. {len(expected)} passed; 0 failed; 0 ignored;'
@@ -134,6 +150,17 @@ class ReceiptTests(unittest.TestCase):
                 with self.subTest(prefix=prefix, output=wrong, code=code):
                     with self.assertRaises(ValueError):
                         check_named_tests(wrong, code, prefix, expected)
+        # Serial --nocapture interleaves a witness before the result's `ok`;
+        # serial --show-output leaves the result lines intact and prints later.
+        name = sorted(SELECTOR_PLATFORM_TESTS)[0]
+        inline = f'test {name} ... XADB_DEV3_SELECTOR_PREFLIGHT {{"cases":10}}\nok\n'
+        summary = 'test result: ok. 1 passed; 0 failed; 0 ignored;'
+        with self.assertRaises(ValueError):
+            check_named_tests(inline + summary, 0, '', {name})
+        captured = (f'test {name} ... ok\n\nsuccesses:\n'
+                    f'---- {name} stdout ----\nXADB_DEV3_SELECTOR_PREFLIGHT {{"cases":10}}\n'
+                    + summary)
+        self.assertEqual(check_named_tests(captured, 0, '', {name}), [name])
 
     def test_successful_parent_with_live_child_is_failed_and_cleaned_up(self):
         with tempfile.TemporaryDirectory() as directory:

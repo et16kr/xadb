@@ -61,3 +61,5 @@ DEV3의 COW pack 경로는 [in-place·WAL·영속 undo 결정](../contracts/disk
 - [DEV3 control·FILEMAP·bootstrap profile 표현](dev3-control-format.md) — 상세 상태·검토·구현·실행 경계는 원문 참조
 - [DEV3 영속 recovery obligation·WAL 의미 그룹](dev3-obligation-format.md) — 상세 상태·검토·구현·실행 경계는 원문 참조
 - [DEV3 FILEMAP·DWB selector port](dev3-selector-port.md) — 상세 상태·검토·구현·실행 경계는 원문 참조
+
+- [DEV3 선택 FILEMAP과 page 읽기](dev3-page-io.md) — 열린 handle metadata·전체 manifest 검증·bounded 읽기 구현; 고정 범위 검증 완료

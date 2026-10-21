@@ -1,0 +1,1687 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-21T01:10:32.857107+00:00",
+  "scope": "DEV3 page/key/reference/tree/overflow/transaction/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads + D3-M02-P01; no disk engine or S1 acceptance",
+  "status": "PASS",
+  "origin": {
+    "revision": "d96bd1a9475f3a77fe156230fad86179c69d5df3",
+    "tracked_diff_sha256": "62ef514e3dff7ec40a455bd6a83935496afdcca4e6d67f57c1dd606d78782e93",
+    "source_sha256": "8e86232efcf44310a22b4607c3ff0e70348f1258e05ce8223af1062462735329",
+    "lockfile_sha256": "f67269ca67484a0241bf06f22dee740fe6943bfe38d204193ab7fbcddec28a45"
+  },
+  "artifact_directory": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il",
+  "dev3_acceptance": "INCOMPLETE",
+  "checks": [
+    {
+      "id": "toolchain",
+      "command": [
+        "rustc",
+        "-Vv"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/toolchain.log",
+      "log_sha256": "4fdff2578428e9c5c08ddd7a0d3079c1a106b1cdaa46e73e46f7cd32b0fb9cad",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "checker-self-tests",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_dev3_leaf.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/checker-self-tests.log",
+      "log_sha256": "df05c2641e32f683a3b8b79cfbcaaafc40fa732f93ab116e07639104b0cf7bc5",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "independent-vectors",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/dev3_page_vectors.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/independent-vectors.log",
+      "log_sha256": "3fa640f4c4e92365bc6fbe31ff4d66aaf721bb2fa09629973e0a15bdc24e3726",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "independent-disk-vectors",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/dev3_disk_vectors.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/independent-disk-vectors.log",
+      "log_sha256": "dc5bd84edd6751708439efa39204651c74a5cd13d0bd2791c627c0dc55318c9f",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-page",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/build-page.log",
+      "log_sha256": "3f85e265c91fece6c634d72c5e2ad4617d429009aa6cd2134fbd7120f466c33c",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "page",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::page::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page.log",
+      "log_sha256": "b5b7bfe5009d0821dc3308ecb115d6f67c7b235a8b3c59bca1ea49bc82cf42cf",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "key",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::key::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/key.log",
+      "log_sha256": "a33f76cd482067d85737df8cacf00cd6f00099765c5ce584dcb207e63b5c9db8",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "anchor",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::anchor::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/anchor.log",
+      "log_sha256": "5528eebdc7f259281ff31c977d91f39c52d7733d941d7e7f934063e47b84d7c9",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "undo_ref",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::undo_ref::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/undo_ref.log",
+      "log_sha256": "d3d957169f1e7e85e54d37f71f5ee32843385f7ce47bf18cf7a0a71633d90204",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "tree_page",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::tree_page::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/tree_page.log",
+      "log_sha256": "206588073a546f6a73e8a31bee8784d88d381f2e3ef3ab6bac1d6131ca49ffdf",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "overflow",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::overflow::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/overflow.log",
+      "log_sha256": "ffbeeb5ee363e893943a7b501cd739186ad7a542830c9553d80c0e98061260e4",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "transaction_record",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::transaction_record::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/transaction_record.log",
+      "log_sha256": "c5a2845315261c0af57e9b712e451a307e59d3b31efe92c63b188656ad41f18a",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "wal_frame",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::wal_frame::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/wal_frame.log",
+      "log_sha256": "a326736b4a760aec5a696cbff50e10bd93efdbcef1ff36fe792fdb299032041d",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "allocation_page",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::allocation_page::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/allocation_page.log",
+      "log_sha256": "eec49db22968410e8758e750fe672aeeec1e8058e1992884e1180d5e088253ab",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "row_record",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::row_record::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/row_record.log",
+      "log_sha256": "9f397aab66c9820cec9dab5f590d7a3db66e1eb2bcacb02ca9b549c1cde1d6b7",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "doublewrite_control",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::doublewrite_control::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/doublewrite_control.log",
+      "log_sha256": "4ee31f8cff855673012852b5118107538406cd51f63610918326ad37047c6b80",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "catalog_record",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::catalog_record::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/catalog_record.log",
+      "log_sha256": "b2fc0a842e2026330fdc80fcc35a43f23e92062abef86af01d4348d3cc3025b0",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "undo_record",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::undo_record::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/undo_record.log",
+      "log_sha256": "9347a729198136945f4f6a7daedf159b5c9c2a79b063d88c3d76f13090c62dd2",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "control",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::control::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/control.log",
+      "log_sha256": "1f7501759736905153a250144fa20ffba41d13363e1ff4dd066c7e85cbd37e27",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "page_io",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+        "storage::page_io::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page_io.log",
+      "log_sha256": "e5197c85e5b11d45df5569dff64e763505f05ac59f68e4b2601360112d925503",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-scalar-key",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-foundation",
+        "--test",
+        "key_buffer",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/build-scalar-key.log",
+      "log_sha256": "baa23620245af9b8f139ebca5fe91431706b9afb5f08a39342225a29d3a99e60",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "scalar-key",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/scalar-key-binary",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/scalar-key.log",
+      "log_sha256": "e50a70e21c0fbf463fda259be58a44ae66ebe8534bee4ce01d5f83115f3ce88a",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-selector-platform",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-platform",
+        "--test",
+        "contracts",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/build-selector-platform.log",
+      "log_sha256": "c1f975ec8ecadff8436f4541df1795ff676fe5548a25a91c88b94c319400a184",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "selector-platform",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/selector-platform-binary",
+        "typed_selector",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/selector-platform.log",
+      "log_sha256": "a3ebe593acc0237167824a9ffbb3c818553ae5ebb1efc1e75942ae2ee1f88ea3",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-selector-protocol",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-protocol",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/build-selector-protocol.log",
+      "log_sha256": "319e2185055b837109d71939136094ce4816e5d053359a0d5acdde239bbb6b7a",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "selector-protocol",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/selector-protocol-binary",
+        "fault::tests::dev3_selector_",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/selector-protocol.log",
+      "log_sha256": "79985ff17f9b174cde09c685fb25d72e3b4e9edfd31e3f4054e64f9ad7c0e463",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-selector-worker",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/build-selector-worker.log",
+      "log_sha256": "28a19cf677dd5d8ede4416e242640a706d0ebe2446fc6c360fe8497e4bfa6967",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "selector-worker",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/selector-worker-binary",
+        "fault::tests::dev3_selector_",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/selector-worker.log",
+      "log_sha256": "3c64550f60a243408d04a7a3d6380c35def2ebe32dc7ba31f6c4a00fd521fed5",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-metadata-platform",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-platform",
+        "--test",
+        "namespace_metadata",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/build-metadata-platform.log",
+      "log_sha256": "b1b5cbf881c9af76af2f52acaf92e8559087ef98e19ff4230dfb2725dc4670df",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "metadata-platform",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/metadata-platform-binary",
+        "",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/metadata-platform.log",
+      "log_sha256": "917d9d8e58e6daf20a593a53180d9c8677bb713a1dc36201bc4e8edcb4226c72",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-metadata-worker",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/build-metadata-worker.log",
+      "log_sha256": "dac186b5612a8e0f9f059a968e2196a9b35743c70a95e8574203d636f47f1113",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "metadata-worker",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/metadata-worker-binary",
+        "fault::tests::dev3_open_metadata_",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/metadata-worker.log",
+      "log_sha256": "ed1b416fb6f9e9f46ea003d30095f48d6b3e11ba227f8c2c5cf979e56d004e4f",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-metadata-performance",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/build-metadata-performance.log",
+      "log_sha256": "3f35bc56718fdefa68c7e40fe2ae9db54aa33302384874ec1208693e54ba608e",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "metadata-performance",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/metadata-performance-binary",
+        "durable_performance::ports::tests::open_metadata_",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/metadata-performance.log",
+      "log_sha256": "34f9ebcfbf1856383b7a2a2944c59f18901f1829d1b3b6b30d4d438ccf1ac301",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-page-io-native",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--test",
+        "page_io",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/build-page-io-native.log",
+      "log_sha256": "db5cd884af631f4cecf4f555f3fd07138b2cdb443a0b7d3f91038ad3e6707e16",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "page-io-native",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-io-native-binary",
+        "",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-io-native.log",
+      "log_sha256": "9a186d5de95cdd557b8135fff31d4d9a8f26afbfedf387fdf6ede93f2e1bb4eb",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-model",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-reference",
+        "--test",
+        "dev3_snapshot_model",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/build-model.log",
+      "log_sha256": "77b7323885bd25b9fab01bca9efaefe791eb6b74277b8fc5d5b1bd94c3d4ff1a",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "model",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/model-binary",
+        "snapshot_lifecycle_partial_model_exhaustive",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/model.log",
+      "log_sha256": "6d5cfb4da72fbaaf526be153be255b3a9c88ee6119e10a39e713b27b60d8db44",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "model-budget-tests",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/model-binary",
+        "snapshot_model_budget_exhaustion_is_inconclusive",
+        "--exact",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/model-budget-tests.log",
+      "log_sha256": "f5068959fe44e4d2123ab135802b4fec5e393ff6f38be0a7ce299ee583dfa4b0",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "regressions",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/check_dev2_reference.py",
+        "--with-substrate",
+        "--report",
+        "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/regression.json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/regressions.log",
+      "log_sha256": "1730cb0fd3fcc8d5f7b25f76b2fcad2c36f8e4a82caf1bb3e687af17f11c6203",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "builds": [
+    {
+      "name": "page",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-binary",
+      "sha256": "2a2dd24f0fc1d83b8ed2a987d96d9eb33232430e97f7d693ca63664d1c207dc2"
+    },
+    {
+      "name": "scalar-key",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/scalar-key-binary",
+      "sha256": "74606782efbe672eb2c463ebcaa879906cae3732073827941d6d6d25b10e9785"
+    },
+    {
+      "name": "selector-platform",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/selector-platform-binary",
+      "sha256": "bfafad6d268a6882577c4af9d952656826e35c3d6861f2aec4f24c92fac621f6"
+    },
+    {
+      "name": "selector-protocol",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/selector-protocol-binary",
+      "sha256": "1025c0e266e33f67a212d78d171744a6b5d93eb3fab70e3f81dc755fe4182dab"
+    },
+    {
+      "name": "selector-worker",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/selector-worker-binary",
+      "sha256": "d6f0f0e0384a35472f3eb1f2b4484efc19c82e06d5bb753810b61502a52e9fe0"
+    },
+    {
+      "name": "metadata-platform",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/metadata-platform-binary",
+      "sha256": "3034f8c6c935f6894d84e0d2e472466d5deb97be43dd629e48c253459afc1bbf"
+    },
+    {
+      "name": "metadata-worker",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/metadata-worker-binary",
+      "sha256": "d6f0f0e0384a35472f3eb1f2b4484efc19c82e06d5bb753810b61502a52e9fe0"
+    },
+    {
+      "name": "metadata-performance",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/metadata-performance-binary",
+      "sha256": "d6f0f0e0384a35472f3eb1f2b4484efc19c82e06d5bb753810b61502a52e9fe0"
+    },
+    {
+      "name": "page-io-native",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/page-io-native-binary",
+      "sha256": "4f655528685363561bb9584761b76380f1138fc93b8e4a1e43341dfb48735eed"
+    },
+    {
+      "name": "model",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/model-binary",
+      "sha256": "aa06b45b84abe920c1ccf4e36b24a599b56a435cc87bae86ccda931a8f1720be"
+    }
+  ],
+  "checker_identity_scope": "F07 file freeze and before/after disk hashes; not bytecode attestation or protected CI",
+  "source_sha256": "8e86232efcf44310a22b4607c3ff0e70348f1258e05ce8223af1062462735329",
+  "loaded_checker_sha256": {
+    "scripts/check_dev3_leaf.py": "889c0f18bfaa4a46e6e13cecbbf7b8033ca42fcd7e078b9191e51f6c1ccbd1ce",
+    "scripts/check_dev0.py": "b8c7bedbc9c3628b91ea8d8440dc4e061953717d3347f942ebc5cd0ec0d6d324",
+    "scripts/comm_campaign.py": "cd593fcaabc3d0770c502f773bd1a38a0794e1f3ae41165723da42574436d11f"
+  },
+  "contract_sha256": {
+    "devdoc/contracts/dev3-page-format.md": "145acea1f16da02d6868d0cc38e05f696c3b1b18aed356e8842e11e4d01e5fab",
+    "devdoc/contracts/dev3-key-format.md": "234432e7e09e0d4a878db3726bdbf9f76f698c775783e6baf7639ddd9b13cf5e",
+    "devdoc/contracts/dev3-reference-format.md": "cfe3aa659eb6f24cb464197a6860b8e1802c917367faf8be06b7c4e77577cb63",
+    "devdoc/contracts/dev3-tree-format.md": "eec1da65d0a939d262c3f0ec988d73bcb8f9a99162fc59748286d59dd9790394",
+    "devdoc/contracts/dev3-overflow-format.md": "05d231c4bfa640dc78d683d02332541dd164b49cc3b27ca63d2212c10b9dba91",
+    "devdoc/contracts/dev3-transaction-format.md": "8e42893e57644978c4b35f2e8229b655c32a8067f58aa585a6bff6efddf72f4e",
+    "devdoc/contracts/dev3-wal-format.md": "59aa5a93c387a83b98b6b615f287c7c60fb8a47ec87759682fa443255b32f4a0",
+    "devdoc/contracts/dev3-allocation-format.md": "e0127c91a67ca2dfd215332634f831c9b2e968c1b4f6bcf92711e6519801521e",
+    "devdoc/contracts/dev3-row-format.md": "aa4c88a461ef0f1f771c47eef16c6a644d6627a119325bfbb03874c9f3c25f79",
+    "devdoc/contracts/dev3-doublewrite-format.md": "6f9bd6f0a97f2cf685dc0eb5af08199e1ba2876a97ee1e93eeb3c346d7b38487",
+    "devdoc/contracts/dev3-catalog-format.md": "7edfa2d594c7518b07abeb8474ef4c4f4a2f42160288657825896607f01608ce",
+    "devdoc/contracts/dev3-undo-format.md": "adb5791c6f87b2cec6558ff4c67a0d0fbd32165fbb2a0d2cd379f57348df482c",
+    "devdoc/contracts/dev3-control-format.md": "9e1b2124806612d788b10e720a184f58efd2f9dfc9a22876ce6e2edb28c7314f",
+    "devdoc/contracts/dev3-selector-port.md": "ebf01ca89a35ac86e166fe41e0047ecd8421aa1aeb7db46fb8984cfbbf70b398",
+    "devdoc/contracts/dev3-page-io.md": "4e5da957b500f8850ce01e479990d73ead652e90062d1832f522716443eba83c",
+    "devdoc/contracts/dev3-snapshot-model.md": "f0d4cc2484b60fd3830464271a7a72c453f2e5615b856a27c7a9fb1e03cd7e3a"
+  },
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n",
+  "vector_result": {
+    "boundaries": {
+      "accepted_boundaries": 17,
+      "rejected_construction_boundaries": 2
+    },
+    "fixture_sha256": {
+      "dev3-page-v1-cells.bin": "908281ca2193411014868af608a28cc6aa06a129e8f6eb4d554bd12de3f2659c",
+      "dev3-page-v1-empty.bin": "de44e1eda7207bbd7aac6310bb9e307cfe2b37d9bca788056a69569d55735867"
+    },
+    "negative": {
+      "checksummed_semantic_damage": 27,
+      "expected_identity_or_kind_mismatch": 7,
+      "oversized_lengths": 1,
+      "short_lengths": 16384,
+      "single_byte_damage": 16384
+    },
+    "status": "PASS"
+  },
+  "disk_vector_result": {
+    "dev3-io-profile.bin": {
+      "bytes": 4096,
+      "sha256": "985651bdbfde061063f76265665c2aff331c9b01486e0be4de60223d6ec327d8"
+    },
+    "dev3-io-selector.bin": {
+      "bytes": 4096,
+      "sha256": "4b383d1f2ad756630421555efcdef18ea40bba314b07a42333099ef75bf7fbae"
+    },
+    "dev3-io-root.bin": {
+      "bytes": 416,
+      "sha256": "13e967b9db3b3e29d0bcf2bc6698de6f06b63e9a9b02e91a71bc5a624ba2de69"
+    },
+    "dev3-io-chunk0.bin": {
+      "bytes": 6304,
+      "sha256": "e2a132d9659f20a874339bf29328a9b529af734bfbdd72cae510601e744c81ed"
+    },
+    "dev3-io-chunk1.bin": {
+      "bytes": 256,
+      "sha256": "0f186336d4102cbcc31474f3e3188f55cc3f4ae18c985aa0486e9909baa7e7d9"
+    }
+  },
+  "page_tests": [
+    "every_kind_and_internal_level_boundary_is_checked",
+    "every_truncation_trailing_byte_and_single_byte_damage_is_rejected",
+    "exact_page_capacity_and_all_encode_errors_preserve_output",
+    "expected_database_file_page_incarnation_owner_and_kind_are_required",
+    "fixed_64_seed_128_operation_envelope_campaign_preserves_cells",
+    "independent_page_vectors_match_every_byte_and_borrow_exact_cells",
+    "valid_checksum_does_not_hide_invalid_structure_or_zero_identities"
+  ],
+  "key_tests": [
+    "composite_and_row_suffix_match_frozen_literal_vectors",
+    "decoder_rejects_wrong_arity_malformed_scalar_trailing_bytes_and_zero_row",
+    "every_two_column_pair_and_row_tie_agree_with_independent_tuple_ordinals",
+    "exact_escaped_key_limit_excludes_row_suffix_and_rejects_oversize",
+    "invalid_arity_and_small_output_fail_before_any_write"
+  ],
+  "anchor_tests": [
+    "anchor_cell_matches_independent_literal_and_validates_every_tree_level",
+    "anchor_rejects_checksummed_semantic_damage_and_wrong_cell_count",
+    "every_encode_validation_error_preserves_anchor_output",
+    "root_load_requires_database_owner_reference_kind_and_level"
+  ],
+  "undo_ref_tests": [
+    "page_and_undo_references_match_independent_literals_and_exact_lengths",
+    "reference_decoders_reject_zero_identity_reserved_and_out_of_range_slots"
+  ],
+  "tree_page_tests": [
+    "tree_child_alias_and_kind_level_guards",
+    "tree_encoders_preserve_outputs",
+    "tree_enforces_entry_page_and_output_limits",
+    "tree_golden_pages_and_cells",
+    "tree_internal_routing_and_child_expectations",
+    "tree_internal_split_promotes_separator",
+    "tree_leaf_lower_bound_matches_typed_oracle",
+    "tree_leaf_split_uses_bytes",
+    "tree_rejects_checksummed_structural_damage"
+  ],
+  "overflow_tests": [
+    "overflow_chain_fixed_boundaries",
+    "overflow_encoders_preserve_outputs",
+    "overflow_head_literal_and_limits",
+    "overflow_page_literal",
+    "overflow_rejects_checksummed_damage",
+    "overflow_rejects_links_and_identity",
+    "overflow_streaming_profiles",
+    "overflow_verifier_requires_complete_order_and_digest"
+  ],
+  "transaction_record_tests": [
+    "all_length_boundaries_reject_without_output_changes",
+    "fixed_corrupt_fields_are_rejected",
+    "generated_transaction_records_roundtrip_without_effects",
+    "identity_literals_and_limits_are_canonical",
+    "stamp_and_logical_version_identities_are_distinct",
+    "state_and_namespace_matrix_is_exact",
+    "status_literals_preserve_rollback_and_terminal_heads",
+    "status_lookup_binds_logical_and_physical_identity"
+  ],
+  "wal_frame_tests": [
+    "wal_all_encoders_preserve_output",
+    "wal_exact_frame_and_record_limits",
+    "wal_frame_identity_and_lsn_chain",
+    "wal_frame_literal_and_kind_matrix",
+    "wal_generated_profiles_match_independent_fields",
+    "wal_init_records_bind_complete_page_images",
+    "wal_patch_records_are_bounded_after_images",
+    "wal_redo_groups_are_canonical_and_borrowed",
+    "wal_rejects_complete_checksum_and_semantic_damage",
+    "wal_stream_prefix_preserves_following_frames",
+    "wal_tail_classification_is_strict"
+  ],
+  "allocation_page_tests": [
+    "allocation_bounded_scan_profiles",
+    "allocation_encoders_preserve_outputs_and_generations",
+    "allocation_geometry_and_metadata_ownership",
+    "allocation_golden_pages_and_literals",
+    "allocation_lookup_binds_state_owner_and_generation",
+    "allocation_rejects_checksummed_semantic_damage",
+    "allocation_reservation_owners_and_namespaces",
+    "allocation_state_matrix_is_exact"
+  ],
+  "row_record_tests": [
+    "canonical_row_literals_and_borrowed_values",
+    "canonical_schema_and_size_boundaries",
+    "every_short_buffer_and_trailing_input_is_rejected",
+    "fixed_noncanonical_fields_are_rejected",
+    "fixed_seed_rows_match_independent_wire_fields",
+    "materialized_overflow_requires_digest_and_schema",
+    "record_namespace_and_logical_identity_are_bound",
+    "row_payload_and_index_presence_matrices",
+    "tree_values_bind_expected_row_ids",
+    "versioned_row_and_index_literals"
+  ],
+  "doublewrite_control_tests": [
+    "doublewrite_addresses_slots_and_expectations",
+    "doublewrite_checksummed_semantic_damage",
+    "doublewrite_encoders_preserve_outputs",
+    "doublewrite_exact_bounds_and_empty_retirement",
+    "doublewrite_fixed_profiles_have_bounded_inventory",
+    "doublewrite_image_validation_binds_every_field",
+    "doublewrite_lengths_and_checksum_damage",
+    "doublewrite_literal_controls_and_images",
+    "doublewrite_slot_encoders_preserve_outputs",
+    "doublewrite_slot_sequence_and_envelope_are_bound"
+  ],
+  "catalog_record_tests": [
+    "catalog_index_columns_and_parent_matrix",
+    "catalog_lengths_damage_and_outputs",
+    "catalog_literals_and_borrowed_definitions",
+    "catalog_namespace_handle_and_versions",
+    "catalog_table_name_column_and_size_bounds",
+    "catalog_tree_values_and_fixed_profiles"
+  ],
+  "undo_record_tests": [
+    "undo_all_lengths_preserve_outputs",
+    "undo_before_state_matrix",
+    "undo_chunk_boundaries_and_verifier",
+    "undo_chunk_ownership_and_release_resume",
+    "undo_edges_keep_roles_and_multiplicity",
+    "undo_failed_shapes_have_no_effects",
+    "undo_generated_profiles_match_independent_fields",
+    "undo_independent_literals_and_layouts",
+    "undo_rejects_checksummed_damage",
+    "undo_release_cursor_state_matrix",
+    "undo_slot_lookup_checks_generation_and_kind",
+    "undo_targets_bind_namespace_owner_and_key"
+  ],
+  "control_tests": [
+    "control_encoders_preserve_outputs",
+    "control_envelope_corruption_is_rejected",
+    "control_filemap_cursor_rejects_mixed_inventory",
+    "control_filemap_exact_bounds",
+    "control_filemap_literals",
+    "control_generated_inventory_profiles",
+    "control_names_and_bootstrap_ownership",
+    "control_profile_literals",
+    "control_profiles_require_exact_capacities",
+    "control_selector_bindings_and_lengths"
+  ],
+  "page_io_tests": [
+    "every_read_fault_preserves_selection_and_bounded_handles",
+    "page_request_binds_profile_owner_generation_kind_and_bounds",
+    "selected_map_and_data_require_exact_handle_lengths",
+    "selected_map_reads_independent_page_and_all_declared_chunks",
+    "selected_map_rejects_late_damage_and_never_scans_fallback"
+  ],
+  "scalar_key_tests": [
+    "decoded_value_limit_counts_escaped_zero_once_and_utf8_in_bytes",
+    "prefix_rejects_noncanonical_values_without_decoding_allocations",
+    "scalar_buffer_matches_literal_vectors_and_preserves_errors"
+  ],
+  "selector-platform_tests": [
+    "typed_selector_preflight_rejects_aliases_without_effects",
+    "typed_selectors_replace_reopen_and_preserve_reserved_names"
+  ],
+  "selector-protocol_tests": [
+    "dev3_selector_cut_matrix_and_wire_names"
+  ],
+  "selector-worker_tests": [
+    "dev3_selector_faults_preserve_target_lineage_and_certainty",
+    "dev3_selector_repeated_unknown_reopens_do_not_cross_targets",
+    "dev3_selector_write_sync_faults_use_exact_names"
+  ],
+  "metadata-platform_tests": [
+    "opened_metadata_binds_exact_handle_and_length",
+    "opened_metadata_rejects_invalid_names_and_types_without_effects",
+    "replacement_keeps_old_handle_metadata_and_lease"
+  ],
+  "metadata-worker_tests": [
+    "dev3_open_metadata_preserves_selector_roles"
+  ],
+  "metadata-performance_tests": [
+    "open_metadata_counts_one_success_or_failure"
+  ],
+  "page-io-native_tests": [
+    "native_selected_map_reads_and_rejects_selected_damage"
+  ],
+  "model_cases": [
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "registration",
+      "mutant": "none",
+      "status": "PASS",
+      "states": 245,
+      "transitions": 575,
+      "max_depth": 16,
+      "bound_depth": 16,
+      "elapsed_ms": 1,
+      "unexplored": 0,
+      "error": null,
+      "violation": null,
+      "witnesses": {
+        "guard_overlap": [
+          "q_read",
+          "horizon_register",
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "q_read",
+          "horizon_register",
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "q_read",
+          "horizon_register",
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "q10_read_a": [
+          "q_read",
+          "horizon_register",
+          "read_value"
+        ],
+        "q10_selected": [
+          "q_read"
+        ],
+        "registration_cancel_clean": [
+          "registration_cancel"
+        ],
+        "registration_failure_clean": [
+          "registration_fail"
+        ],
+        "registration_gate_blocks_aging": [
+          "q_read"
+        ],
+        "status_reused": [
+          "registration_cancel",
+          "status_install",
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "registration_cancel",
+          "status_install",
+          "frontier_publish",
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ],
+        "unpublished_empty_horizon10": [
+          "registration_cancel",
+          "status_install",
+          "horizon_sample"
+        ]
+      },
+      "counterexample": []
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "unpublished",
+      "mutant": "none",
+      "status": "PASS",
+      "states": 423,
+      "transitions": 1101,
+      "max_depth": 15,
+      "bound_depth": 16,
+      "elapsed_ms": 1,
+      "unexplored": 0,
+      "error": null,
+      "violation": null,
+      "witnesses": {
+        "guard_overlap": [
+          "q_read",
+          "horizon_register",
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "q_read",
+          "horizon_register",
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "q_read",
+          "horizon_register",
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "q10_read_a": [
+          "q_read",
+          "horizon_register",
+          "read_value"
+        ],
+        "q10_selected": [
+          "q_read"
+        ],
+        "q11_read_b": [
+          "frontier_publish",
+          "q_read",
+          "horizon_register",
+          "read_value"
+        ],
+        "registration_cancel_clean": [
+          "registration_cancel"
+        ],
+        "registration_failure_clean": [
+          "registration_fail"
+        ],
+        "registration_gate_blocks_aging": [
+          "q_read"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "frontier_publish",
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ],
+        "unpublished_empty_horizon10": [
+          "horizon_sample"
+        ]
+      },
+      "counterexample": []
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "transient_undo",
+      "mutant": "none",
+      "status": "PASS",
+      "states": 864,
+      "transitions": 2476,
+      "max_depth": 16,
+      "bound_depth": 16,
+      "elapsed_ms": 3,
+      "unexplored": 0,
+      "error": null,
+      "violation": null,
+      "witnesses": {
+        "guard_overlap": [
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "pinned_undo_blocks_reuse": [
+          "horizon_sample",
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "cut"
+        ],
+        "q11_read_b": [
+          "read_value"
+        ],
+        "ref_copied": [
+          "copy_ref"
+        ],
+        "ref_loaded_same_generation": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "load_ref"
+        ],
+        "ref_pinned": [
+          "copy_ref",
+          "pin_ref"
+        ],
+        "reuse_after_blocked_pin_release": [
+          "horizon_sample",
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "cut",
+          "load_ref",
+          "release_ref",
+          "reuse_undo"
+        ],
+        "source_unlatched": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ]
+      },
+      "counterexample": []
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "transient_status",
+      "mutant": "none",
+      "status": "PASS",
+      "states": 814,
+      "transitions": 2262,
+      "max_depth": 16,
+      "bound_depth": 16,
+      "elapsed_ms": 3,
+      "unexplored": 0,
+      "error": null,
+      "violation": null,
+      "witnesses": {
+        "guard_overlap": [
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "pinned_status_blocks_reuse": [
+          "horizon_sample",
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "stamp"
+        ],
+        "q10_read_a": [
+          "read_value"
+        ],
+        "ref_copied": [
+          "copy_ref"
+        ],
+        "ref_loaded_same_generation": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "load_ref"
+        ],
+        "ref_pinned": [
+          "copy_ref",
+          "pin_ref"
+        ],
+        "reuse_after_blocked_pin_release": [
+          "horizon_sample",
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "stamp",
+          "load_ref",
+          "release_ref",
+          "reuse_status"
+        ],
+        "source_unlatched": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "frontier_publish",
+          "guard_release",
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ],
+        "unpublished_empty_horizon10": [
+          "guard_release",
+          "horizon_sample"
+        ]
+      },
+      "counterexample": []
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "registration",
+      "mutant": "early_gate_release",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 48,
+      "transitions": 79,
+      "max_depth": 5,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 21,
+      "error": null,
+      "violation": "reader_history_lost",
+      "witnesses": {
+        "guard_overlap": [
+          "q_read",
+          "horizon_register",
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "q_read",
+          "horizon_register",
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "q_read",
+          "horizon_register",
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "q10_read_a": [
+          "q_read",
+          "horizon_register",
+          "read_value"
+        ],
+        "q10_selected": [
+          "q_read"
+        ],
+        "registration_cancel_clean": [
+          "registration_cancel"
+        ],
+        "registration_failure_clean": [
+          "registration_fail"
+        ],
+        "unpublished_empty_horizon10": [
+          "q_read",
+          "status_install",
+          "horizon_sample"
+        ]
+      },
+      "counterexample": [
+        "q_read",
+        "status_install",
+        "frontier_publish",
+        "horizon_sample",
+        "cut"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "unpublished",
+      "mutant": "unpublished_horizon",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 12,
+      "transitions": 19,
+      "max_depth": 2,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 8,
+      "error": null,
+      "violation": "published_history_lost",
+      "witnesses": {
+        "q10_selected": [
+          "q_read"
+        ],
+        "registration_cancel_clean": [
+          "registration_cancel"
+        ],
+        "registration_failure_clean": [
+          "registration_fail"
+        ],
+        "registration_gate_blocks_aging": [
+          "q_read"
+        ]
+      },
+      "counterexample": [
+        "horizon_sample",
+        "cut"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "unpublished",
+      "mutant": "empty_registry_infinity",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 12,
+      "transitions": 19,
+      "max_depth": 2,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 8,
+      "error": null,
+      "violation": "published_history_lost",
+      "witnesses": {
+        "q10_selected": [
+          "q_read"
+        ],
+        "registration_cancel_clean": [
+          "registration_cancel"
+        ],
+        "registration_failure_clean": [
+          "registration_fail"
+        ],
+        "registration_gate_blocks_aging": [
+          "q_read"
+        ]
+      },
+      "counterexample": [
+        "horizon_sample",
+        "cut"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "registration",
+      "mutant": "guard_handoff_gap",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 8,
+      "transitions": 10,
+      "max_depth": 3,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 5,
+      "error": null,
+      "violation": "guard_owner_lost",
+      "witnesses": {
+        "q10_selected": [
+          "q_read"
+        ],
+        "registration_cancel_clean": [
+          "registration_cancel"
+        ],
+        "registration_failure_clean": [
+          "registration_fail"
+        ],
+        "registration_gate_blocks_aging": [
+          "q_read"
+        ]
+      },
+      "counterexample": [
+        "q_read",
+        "horizon_register",
+        "guard_transfer_begin"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "transient_undo",
+      "mutant": "pin_after_unlatch",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 114,
+      "transitions": 211,
+      "max_depth": 5,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 54,
+      "error": null,
+      "violation": "transient_generation_changed",
+      "witnesses": {
+        "guard_overlap": [
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "q11_read_b": [
+          "read_value"
+        ],
+        "ref_copied": [
+          "copy_ref"
+        ],
+        "ref_loaded_same_generation": [
+          "copy_ref",
+          "source_unlatch",
+          "pin_ref",
+          "load_ref"
+        ],
+        "ref_pinned": [
+          "copy_ref",
+          "source_unlatch",
+          "pin_ref"
+        ],
+        "source_unlatched": [
+          "copy_ref",
+          "source_unlatch"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ]
+      },
+      "counterexample": [
+        "horizon_sample",
+        "copy_ref",
+        "source_unlatch",
+        "cut",
+        "reuse_undo"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "transient_status",
+      "mutant": "pin_after_unlatch",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 130,
+      "transitions": 255,
+      "max_depth": 5,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 59,
+      "error": null,
+      "violation": "transient_generation_changed",
+      "witnesses": {
+        "guard_overlap": [
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "q10_read_a": [
+          "read_value"
+        ],
+        "ref_copied": [
+          "copy_ref"
+        ],
+        "ref_loaded_same_generation": [
+          "copy_ref",
+          "source_unlatch",
+          "pin_ref",
+          "load_ref"
+        ],
+        "ref_pinned": [
+          "copy_ref",
+          "source_unlatch",
+          "pin_ref"
+        ],
+        "source_unlatched": [
+          "copy_ref",
+          "source_unlatch"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "frontier_publish",
+          "guard_release",
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ],
+        "unpublished_empty_horizon10": [
+          "guard_release",
+          "horizon_sample"
+        ]
+      },
+      "counterexample": [
+        "horizon_sample",
+        "copy_ref",
+        "source_unlatch",
+        "stamp",
+        "reuse_status"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "transient_undo",
+      "mutant": "ignore_transient_pin",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 169,
+      "transitions": 336,
+      "max_depth": 6,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 63,
+      "error": null,
+      "violation": "transient_generation_changed",
+      "witnesses": {
+        "guard_overlap": [
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "pinned_undo_blocks_reuse": [
+          "horizon_sample",
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "cut"
+        ],
+        "q11_read_b": [
+          "read_value"
+        ],
+        "ref_copied": [
+          "copy_ref"
+        ],
+        "ref_loaded_same_generation": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "load_ref"
+        ],
+        "ref_pinned": [
+          "copy_ref",
+          "pin_ref"
+        ],
+        "source_unlatched": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ]
+      },
+      "counterexample": [
+        "horizon_sample",
+        "copy_ref",
+        "pin_ref",
+        "source_unlatch",
+        "cut",
+        "reuse_undo"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "transient_status",
+      "mutant": "ignore_transient_pin",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 185,
+      "transitions": 396,
+      "max_depth": 6,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 68,
+      "error": null,
+      "violation": "transient_generation_changed",
+      "witnesses": {
+        "guard_overlap": [
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "pinned_status_blocks_reuse": [
+          "horizon_sample",
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "stamp"
+        ],
+        "q10_read_a": [
+          "read_value"
+        ],
+        "ref_copied": [
+          "copy_ref"
+        ],
+        "ref_loaded_same_generation": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "load_ref"
+        ],
+        "ref_pinned": [
+          "copy_ref",
+          "pin_ref"
+        ],
+        "source_unlatched": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "frontier_publish",
+          "guard_release",
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ],
+        "unpublished_empty_horizon10": [
+          "guard_release",
+          "horizon_sample"
+        ]
+      },
+      "counterexample": [
+        "horizon_sample",
+        "copy_ref",
+        "pin_ref",
+        "source_unlatch",
+        "stamp",
+        "reuse_status"
+      ]
+    }
+  ],
+  "regression": {
+    "report": "/home/et16/work/xadb/artifacts/dev3/leaf-_zivd6il/regression.json",
+    "sha256": "64bae9d1e8974f80ccc028debb9116d3b458588f9ea9965fdd615896e0d1ce68"
+  },
+  "source_sha256_after": "8e86232efcf44310a22b4607c3ff0e70348f1258e05ce8223af1062462735329"
+}
