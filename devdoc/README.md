@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-21 [DEV3 페이지 예약·취소 부분 구현 및 중단](implementation/dev3-implementation.md#allocation-reservation-partial): 메모리 포트의 새 경로와 검토 수정만 제한 검증했다. native/compiler·변경 WAL 관련4시험·전체 단위 인수는 남겨 두고 사용자 요청으로 중단한다. [하부 작업 16개 분류 초안](implementation/dev3-implementation.md#dev3-work-breakdown)으로 진행·잔여 범위를 구분한다.
+
 2026-10-21 [DEV3 최초 doublewrite 설치](implementation/dev3-implementation.md#doublewrite-install-results): XDI1·고정 images 공간·Empty DWB 선택을 구현했다. 기존 동일 source의 runtime10·native3·compiler9·checker31 및 Clippy/fmt 결과를 보존했고 수정 없는 코드는 재시험하지 않는다. 마지막 하위 회귀를 사용자 지시로 중단한 통합 원본은 FAIL이며 dirty/home/recovery·전체 DEV3는 미완료다.
 
 2026-10-21 [DEV3 최초 doublewrite 설치 계약](contracts/dev3-doublewrite-install.md): pristine 세션의 소비·XDI1 선행 설치·Empty 선택과 고정 검증 입력을 독립 D2 검토 후 채택했다. 채택 당시 제품 구현·실행은 NOT_RUN이었으며 이후 최초 설치의 제한 검증은 위 구현 기록을 따른다. 전체 DEV3는 미완료다.

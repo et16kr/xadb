@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-21",
+  "unit": "D3-ALLOC-RESERVE-001",
+  "reviewer": "/root/dev3_selector_review",
+  "implementation_owner": "/root",
+  "status": "PARTIAL_IMPLEMENTATION_COMMIT_ACCEPTABLE",
+  "blockers_for_partial_commit": [],
+  "full_unit_acceptance": false,
+  "full_dev3_acceptance": false,
+  "reviewer_product_execution": false,
+  "reviewer_compiler_or_checker_execution": false,
+  "document_verifier_executed": false,
+  "user_direction": "Stop at a suitable checkpoint and classify DEV3 subwork; preserve partial implementation and stop further execution. Do not retest unchanged code.",
+  "scope": "Read-only product/source/test-wiring delta review plus retained r2/r3/r4 receipt/log/binary identity audit; memory-port partial implementation only.",
+  "original_initial_review_sha256": "e87561c0ef98f5702d9b8d54fb2db9da290cca01602de17f7c702c86c985a724",
+  "partial_review_sha256": "61b8b425675a3f431ad9b04860d76395e4b4685164f088d8bfc31473d499eff2",
+  "product_source_sha256": {
+    "crates/engine/src/storage/wal_io.rs": "21d7ececfffb3237e8b61579fccefe3f44c020f5c1a2d4273951683abe86ceca",
+    "crates/engine/src/storage/wal_io/bootstrap.rs": "45a98e63fb925950d333d9836ab21b410c3a5e6230d6c4f2ba3e70ca5093f2e2",
+    "crates/engine/src/storage/wal_io/doublewrite_install.rs": "cd938b59e33367d2b77e9959f03af0214edd56650fec70bdea811e8335dd1394",
+    "crates/engine/src/storage/wal_io/allocation_reservation.rs": "a493bcc3d3dbd1607a6e39bcf12be717258baf8d07b39e1b1f7e43ca923a0d5e",
+    "crates/engine/src/storage/wal_io/allocation_operation.rs": "a9cddfad225c84ffa355e79fc6f5f543c4818cff77a6ca2ee5a65daf8843c898",
+    "crates/engine/src/storage/wal_io/allocation_reservation_tests.rs": "ca32a867fb432e003e09d84d7f57758aa3e23e8086d6af70412d3d298e4e427b"
+  },
+  "execution_interpretation": {
+    "r2": "8 first runtime groups PASS, preserved source; frozen541 plus4 D1 variants",
+    "r3": "4 targeted groups PASS, AR05 assertion FAIL preserved; owner-tag8+new1, exact original-I/O14, constructor9, oversized owner",
+    "r4": "Only corrected AR05 PASS; product core unchanged from r3; no full final-source suite claimed"
+  },
+  "closed_findings": [
+    "native dispatch after shape/owner/descriptor",
+    "valid Transaction owner vs malformed OwnerRef including epoch256/System-only padding",
+    "AfterStage charge and work high-water held before cut",
+    "terminal P retained until sync and final observation validation",
+    "original lower error classification and constructor rejection observations",
+    "new oversized allocation owner reaches own guard"
+  ],
+  "remaining": [
+    "native two groups / 13 Linux DBs NOT_RUN",
+    "compiler baseline plus6 probes NOT_RUN",
+    "4 affected legacy stage tests NOT_RUN",
+    "Clippy/full allocation-unit acceptance NOT_RUN",
+    "generic full64KiB nested-local measurement/lifetime proof NOT_DONE",
+    "INIT/common dirty buffer/DWB operating flush/reopen/recovery/READY/transaction ACK remain outside this partial implementation"
+  ],
+  "preserve": [
+    "r2/r3/r4 source manifests and archives",
+    "3 retained ELF binaries and all logs",
+    "r3 AR05 original FAIL and corrected r4 result",
+    "original initial review identity"
+  ],
+  "registered_partial_record_checked": "devdoc/evidence/dev3-allocation-reservation-partial-xadb-20261021.json",
+  "registered_reference_count": 30,
+  "registered_attempts_equal_original": true,
+  "current_product_source_matches_r4_manifest": true,
+  "cleanup_performed_by_reviewer": false,
+  "inputs": [
+    {
+      "path": "artifacts/dev3/allocation-reservation-independent-review-20261021/d1-initial-review.md",
+      "sha256": "e87561c0ef98f5702d9b8d54fb2db9da290cca01602de17f7c702c86c985a724"
+    },
+    {
+      "path": "artifacts/dev3/allocation-reservation-independent-review-20261021/d1-initial-review-r0.md",
+      "sha256": "e87561c0ef98f5702d9b8d54fb2db9da290cca01602de17f7c702c86c985a724"
+    },
+    {
+      "path": "artifacts/dev3/allocation-reservation-independent-review-20261021/d1-partial-review.md",
+      "sha256": "61b8b425675a3f431ad9b04860d76395e4b4685164f088d8bfc31473d499eff2"
+    },
+    {
+      "path": "devdoc/evidence/dev3-allocation-reservation-partial-xadb-20261021.json",
+      "sha256": "841f051980779c423c4a032744f74e5c5a7baebab21ceda3519aaeee38048c2d"
+    },
+    {
+      "path": "devdoc/contracts/dev3-allocation-reservation.md",
+      "sha256": "ee14fa00fcd641cf06807fe058c61f5d6222b8e02c8160aea3c3c83b1da986a3"
+    },
+    {
+      "path": "devdoc/implementation/dev3-implementation.md",
+      "sha256": "87fb1fff2663998dd5f1f8f3f36c0af3e25891f81081df87099306bbd7900014"
+    },
+    {
+      "path": "artifacts/dev3/allocation-reservation-dev-20261021/r2-source.json",
+      "sha256": "d507d5a643a17caf1869fd46c2e5db031fd76b4f591b16f9ae50d4cf397bcc27"
+    },
+    {
+      "path": "artifacts/dev3/allocation-reservation-dev-20261021/r2-execution.json",
+      "sha256": "1d2b2f20629e84c584bd7fdfa3827e28cd28f5612d60e911c9044f84701d639b"
+    },
+    {
+      "path": "artifacts/dev3/allocation-reservation-dev-20261021/r3-source.json",
+      "sha256": "cd7ef771eb11439ad0b9ca4b01c614db7f7a6f6e93bd9c7ec9f367861e066607"
+    },
+    {
+      "path": "artifacts/dev3/allocation-reservation-dev-20261021/r3-execution.json",
+      "sha256": "922ac25473b0abebefc364049551d0f9e07ef629b0a115c07bca366d9d3d1d1a"
+    },
+    {
+      "path": "artifacts/dev3/allocation-reservation-dev-20261021/r4-source.json",
+      "sha256": "304e3968fdfd5230fbd741f6504fca24982d10a07f621d1a175735493030c00a"
+    },
+    {
+      "path": "artifacts/dev3/allocation-reservation-dev-20261021/r4-execution.json",
+      "sha256": "159e523f5f9e1161f4e6a01f1e1b8228c1f30302916201a6ed0edb2e619498e2"
+    }
+  ]
+}

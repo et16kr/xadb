@@ -28,9 +28,10 @@ const STAGE_NAME: &str = "d3-writer-stage";
 mod bootstrap;
 #[allow(unused_imports)] // Private downstream assembly remains under test-support.
 pub(crate) use bootstrap::{
-    BootstrapError, Cause as BootstrapCause, DoublewriteInstallCause, DoublewriteInstallError,
-    DoublewriteInstallPhase, DoublewriteStorageSession, FreshStorageSession,
-    Phase as BootstrapPhase,
+    AllocationObservation, AllocationSession, AllocationSessionCause, AllocationSessionError,
+    AllocationSessionPhase, BootstrapError, Cause as BootstrapCause, DoublewriteInstallCause,
+    DoublewriteInstallError, DoublewriteInstallPhase, DoublewriteStorageSession,
+    FreshStorageSession, Phase as BootstrapPhase,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -563,7 +564,17 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
                 }
             }
         }
-        let header = view.header();
+        self.stage_verified(snapshot, view.header(), bytes)
+    }
+
+    // Callers must own validated immutable bytes. The allocation consumer keeps
+    // this behind its private PreparedAllocation, never a raw semantic API.
+    fn stage_verified(
+        &self,
+        snapshot: WalPrefix,
+        header: wal_frame::WalFrameHeader,
+        bytes: &[u8],
+    ) -> Result<WalFrameLocation> {
         let mut state = self.state(Phase::Stage)?;
         if state.state != SlotState::Idle {
             return Err(unchanged(Phase::Stage, Cause::Busy));

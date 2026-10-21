@@ -548,3 +548,41 @@ r0 실행 종료를 확인한 뒤 compiler target4개에서 ELF 실행 파일140
 종료된 통합 leaf의 disposable target5개에서도 ELF144경로/112고유파일과 canonical 실행 파일14개·source·로그·원본 receipt를 보존한 뒤 2589478912bytes(약2.41GiB)를 추가 회수했다. 정리 전후 hash·원래 경로는 `artifacts/dev3/doublewrite-install-leaf-target-cleanup-r2.json`에 남겼다. native DB와 compiler probe 입력은 보존하며 제품 시험은 재실행하지 않았다.
 
 [r14 최종 독립 감사](../evidence/dev3-doublewrite-install-review-xadb-20261021-r2.json)는 staged68경로·설정 source407파일의 동일성, 원본9개 등록과 파생 기록1개, 종료된 선행63/전체64check의 범위를 확인하고 최초 설치 단위의 commit을 수용했다. r12/r13을 재사용했으며 제품·checker·컴파일·문서 verifier·테스트 실행과 native DB 재해시는 하지 않았다. 원본 통합 FAIL·하위 회귀 중단·kernel NOT_RUN 및 전체 DEV3 미완료를 유지한다.
+
+
+<a id="allocation-reservation-partial"></a>
+## 2026-10-21 페이지 예약·취소 부분 구현과 사용자 요청 중단
+
+[D3-ALLOC-RESERVE-001](../contracts/dev3-allocation-reservation.md)을 실제 owner에 연결했다. 최초 DWB 설치 owner를 소비하여 선택된 allocator page0을 읽고, Free→Reserved와 Reserved→Free를 semantic WAL·authoritative frame·descriptor·dirty recLSN에 함께 적용한다. 취소는 소비한 generation을 되돌리지 않으며 첫 recLSN·WAL 보존량·work high-water를 유지한다. stage 직후 unwind에도 예약 자원을 소유하고 sync 및 최종 검산 성공 뒤에만 terminal page token을 반환한다.
+
+[부분 실행 원본](../evidence/dev3-allocation-reservation-partial-xadb-20261021.json)에 source 사본·ELF·로그 SHA와 시도별 결과를 보존했다. r2의 새 runtime8은 첫 실행 PASS다. profile3개×1/8/63 예약·취소의 독립 frame/page/descriptor/item bytes, 고정 의미 반례541개와 D1 추가4개를 대조했다. 검토 후 바뀐 tag 판정·오류 원인·자원 소유 검산만 r3/r4에서 선택했다. r3 AR05는 새 assertion이 기존 WAL의 poison→Fenced 분류를 Poisoned로 잘못 기대하여 FAIL했고 원본을 보존했다. 기대값 정정 후 AR05만 r4에서 PASS했다. 다른 완료된 시험을 반복하지 않았고 DEV0/1/2·전체 leaf/workspace·문서 검사는 실행하지 않았다.
+
+**이 결과는 메모리 포트를 통한 실제 owner 호출의 제한 검증이다.** native2(13DB), compiler baseline+6개 probe, 실제 수정한 WAL stage helper의 관련4시험, Clippy와 전체 allocation 단위 인수는 미완료다. 현재 dirty page는 RAM에 남으며 payload INIT·home/DWB 운영·일반 recovery·READY·transaction ACK를 제공하지 않는다. 사용자의 “적당한 단계에서 중단” 요청에 따라 이 부분 구현을 commit하고 추가 개발·검증을 중단한다. 전체 DEV3 목표와 기존 인수 의무는 유지한다.
+
+재개할 때는 이 원본 source delta와 완료한 사례를 기준으로 미실행 native/compiler/stage helper 검증을 이어간다. 동일 코드의 완료된 시험을 처음부터 다시 돌리지 않는다. 실행 전 원본 source·binary·fixture와 변경 경로의 관계를 확인한다.
+
+<a id="dev3-work-breakdown"></a>
+## DEV3 하부 작업 분류 초안
+
+아래 번호는 독립적인 작업·진척 관리를 위한 분류 초안이다. 기존 DEV3의 기능 범위, S1 인수 조건이나 다른 단계의 선행을 변경하지 않는다. 표현/모델 검증을 실제 제품 기능 완료로 계산하지 않는다. 각 항목 아래에서 구현→변경된 경로의 검증→독립 검토→commit을 닫으며, 서로 필요한 기반은 공급 경계로 연결한다.
+
+| 분류 | 하부 작업 | 현재 상태와 남은 경계 |
+| --- | --- | --- |
+| 3.01 형식·정체성 | page/참조/key/행/tree/WAL/undo/status/control codec | 여러 표현·독립 byte·유한 모델 검증 완료. 실제 효과와 구분 |
+| 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기의 제한 구현 검증. 일반 reopen은 별도 |
+| 3.03 공간 할당 | 예약→취소→INIT 소비→extent 확장→free/reuse | 예약·취소 메모리 포트 부분 검증에서 중단. native/compiler 인수와 나머지 전이 미완료 |
+| 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | genesis·RollbackStart 생산·예약/취소 일부 연결. 일반 opcode/CLR/commit 연결 미완료 |
+| 3.05 dirty buffer·flush | pin/latch·dirty/recLSN·eviction·WAL-before-page·DWB/home/retirement | clean buffer·Empty DWB 최초 설치만 제한 검증. dirty 운영 미완료 |
+| 3.06 트리·행 | mutable tree CRUD·split·root 변경·overflow·stable cursor·locator | 표현·부분 모델 존재. 실제 변경 경로 미완료 |
+| 3.07 인덱스 | point/range scan·presence·PK/UNIQUE·build/취소 | 표현·의미 계약 존재. 실제 인덱스와 statement-final unique 미완료 |
+| 3.08 카탈로그·DDL | table/index 정의·이름·객체 수명·create/drop | 표현 존재. native 원자 DDL과 catalog 변경 미완료 |
+| 3.09 undo·rollback | persistent undo/status·statement rollback·전체 rollback·CLR | 표현·RollbackStart 생산 존재. live undo/CLR 진행 미완료 |
+| 3.10 동시성·가시성 | snapshot 등록·잠금·관측 행 검증·두 격리 수준 | 유한 모델 존재. 실제 reader/writer/ager·잠금 통합 미완료 |
+| 3.11 commit·공개 | 여러 객체 원자 commit·durable ACK/UNKNOWN·frontier | 실제 disk 거래 인수 미완료 |
+| 3.12 재시작 복구 | analysis→redo→undo·예약 복원·loser·반복 장애 | 실제 DEV3 일반 recovery 미완료 |
+| 3.13 checkpoint | fuzzy ATT/DPT capture·WAL floor·fallback | 표현/계약 존재. 실제 checkpoint 인계 미완료 |
+| 3.14 공간 회수 | undo/status/delete aging·horizon·generation 재사용 | 유한 모델 존재. 실제 회수·압력하 진행 미완료 |
+| 3.15 백업·무결성 | offline exact-cut backup·restore·독립 full audit | 실제 DEV3 경로 미완료 |
+| 3.16 자원·성능·최종 인수 | opcode 자원 상한·PF09·DS01–06·KU09/10·RC-T12–14 | 각 기능의 증거를 연결할 최종 인수. 전체 DEV3 미완료 |
+
+3.01–3.05가 실제 저장 기반을 공급하고, 그 위의 3.06–3.11은 undo·동시성·WAL 공급을 함께 요구한다. 3.12의 복구 가능성은 쓰기 경로마다 설계·fault 검증에 반영하며 모든 기능 뒤로 미루지 않는다. checkpoint/회수/백업은 각 선행 경로가 실제로 제공된 뒤 연결한다. 범위가 큰 3.06·3.09·3.12는 표의 화살표/기능마다 다시 개별 완료 항목으로 나눈다.

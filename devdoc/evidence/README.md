@@ -268,3 +268,7 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 최초 DWB 설치 최종 독립 D1 감사 원본](dev3-doublewrite-install-review-xadb-20261021-r2.json) — 기존 r12/r13 결과와 source 동등성 재사용; 새 테스트 없이 제한 설치 단위 commit 수용
 
 - [DEV3 페이지 예약·취소 D2 채택 원본](dev3-allocation-reservation-d2-xadb-20261021-r2.json) — 독립 raw63·의미 반례541·compiler 입력6 동결; 제품 시험 미실행
+
+- [DEV3 페이지 예약·취소 부분 실행 및 중단](dev3-allocation-reservation-partial-xadb-20261021.json) — r2/r3/r4 source·ELF·로그와 원본 FAIL 보존; native/compiler·변경 stage 관련시험은 미완료
+
+- [DEV3 페이지 예약·취소 부분 commit 독립 검토](dev3-allocation-reservation-partial-review-xadb-20261021.json) — 메모리 포트 구현의 부분 commit 수용; 앞선 실행 기록의 pending review를 해소하며 전체 단위 인수·native/compiler 검증은 미완료

@@ -321,3 +321,6 @@ DEV3 최초 저장 세션은 `storage/wal_io/bootstrap`이 기존 genesis WAL ow
 DEV3 최초 doublewrite 설치는 기존 `wal_io/bootstrap`의 private child `doublewrite_install`과 고정 runtime 시험에서 구현한다. 기존 `testing/storage_session` facade와 Linux `support/storage_session` port를 재사용하고 실제 native 진입점 `tests/doublewrite_install.rs`, compiler checker `scripts/check_dev3_doublewrite_borrows.py`, 동결 입력 `tests/fixtures/dev3-doublewrite-install/`을 등록한다. 최초 설치의 제한된 실행·독립 D1 결과를 보존하며 전체 단계 완료가 아니다. 변경 없는 소스의 시험은 반복하지 않는다. 새 의존성이나 source fingerprint 루트 변경은 없다.
 
 D3-DWB-INSTALL-001의 실제 trace·유한 모델과 Linux 파일 inventory 검산은 `scripts/dev3_doublewrite_model.py`, `scripts/dev3_doublewrite_native.py`가 담당하며 고정 반례31의 실제 receipt 변형은 `scripts/dev3_doublewrite_checks.py`, 별도 자기시험은 `scripts/test_dev3_doublewrite_checks.py`, 통합 실행은 `scripts/check_dev3_leaf.py`에 연결한다. 실행 상태는 해당 구현 기록과 실제 receipt를 따른다.
+
+
+DEV3 페이지 예약·취소는 `wal_io/doublewrite_install`의 private child `allocation_reservation`과 전용 `allocation_operation`에서 구현한다. 실제 작성된 runtime 시험과 `tests/fixtures/dev3-allocation-reservation/`의 독립 byte·semantic·compiler 입력만 등록한다. native 실행기와 compiler runner는 아직 작성하지 않아 경로를 선등록하지 않는다. 기존 WAL stage의 공통 복사 helper를 실제 분리했으므로 그 네 관련 시험은 미실행 의무로 남긴다. 부분 실행과 사용자 요청에 따른 중단 지점은 [구현 기록](../implementation/dev3-implementation.md#allocation-reservation-partial)을 따른다. 새 dependency/source root는 없다.

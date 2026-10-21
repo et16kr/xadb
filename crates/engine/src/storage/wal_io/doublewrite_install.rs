@@ -19,6 +19,13 @@ use xadb_foundation::{
     namespace::{FileName, NamespaceError, OpenMode, Selector, WriterNamespace},
 };
 
+#[path = "allocation_reservation.rs"]
+mod allocation_reservation;
+pub(crate) use allocation_reservation::{
+    AllocationObservation, AllocationSession, AllocationSessionError,
+    Cause as AllocationSessionCause, Phase as AllocationSessionPhase,
+};
+
 const WORKSPACE_BYTES: usize = 4 << 20;
 const EMPTY_BYTES: usize = 160;
 const RESERVED_BYTES: usize = 8192;

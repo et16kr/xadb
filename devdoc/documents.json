@@ -1392,6 +1392,16 @@
       "path": "evidence/dev3-allocation-reservation-d2-xadb-20261021-r2.json",
       "role": "evidence",
       "title": "DEV3 실제 페이지 예약·취소 D2 채택 원본"
+    },
+    "dev3-allocation-reservation-partial-xadb-20261021.json": {
+      "path": "evidence/dev3-allocation-reservation-partial-xadb-20261021.json",
+      "role": "evidence",
+      "title": "DEV3 페이지 예약·취소 부분 실행 및 중단 기록"
+    },
+    "dev3-allocation-reservation-partial-review-xadb-20261021.json": {
+      "path": "evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json",
+      "role": "evidence",
+      "title": "DEV3 페이지 예약·취소 부분 commit 독립 D1 판정 원본"
     }
   }
 }

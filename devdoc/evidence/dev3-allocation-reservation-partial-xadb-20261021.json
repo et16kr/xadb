@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-21",
+  "unit": "D3-ALLOC-RESERVE-001",
+  "status": "PARTIAL_RUNTIME_PORT_VERIFIED_USER_REQUESTED_PAUSE",
+  "full_unit_acceptance": false,
+  "full_dev3_acceptance": false,
+  "base_commit": "d443c03",
+  "artifact_directory": "/home/et16/work/xadb/artifacts/dev3/allocation-reservation-dev-20261021",
+  "source_sha256": {
+    "crates/engine/src/storage/wal_io.rs": "21d7ececfffb3237e8b61579fccefe3f44c020f5c1a2d4273951683abe86ceca",
+    "crates/engine/src/storage/wal_io/bootstrap.rs": "45a98e63fb925950d333d9836ab21b410c3a5e6230d6c4f2ba3e70ca5093f2e2",
+    "crates/engine/src/storage/wal_io/doublewrite_install.rs": "cd938b59e33367d2b77e9959f03af0214edd56650fec70bdea811e8335dd1394",
+    "crates/engine/src/storage/wal_io/allocation_reservation.rs": "a493bcc3d3dbd1607a6e39bcf12be717258baf8d07b39e1b1f7e43ca923a0d5e",
+    "crates/engine/src/storage/wal_io/allocation_operation.rs": "a9cddfad225c84ffa355e79fc6f5f543c4818cff77a6ca2ee5a65daf8843c898",
+    "crates/engine/src/storage/wal_io/allocation_reservation_tests.rs": "ca32a867fb432e003e09d84d7f57758aa3e23e8086d6af70412d3d298e4e427b"
+  },
+  "evidence_sha256": {
+    "r2-source.json": "d507d5a643a17caf1869fd46c2e5db031fd76b4f591b16f9ae50d4cf397bcc27",
+    "r2-source.tar.gz": "4155829a91a8169addfb1a168ac00c1847814fba8c2c9f9c5bb28d2aeb215f14",
+    "r2-execution.json": "1d2b2f20629e84c584bd7fdfa3827e28cd28f5612d60e911c9044f84701d639b",
+    "r2-engine-tests": "2bb903560d62649275744e019560ab8209b1cad6ddd198d7b987298b704d930d",
+    "r3-source.json": "cd7ef771eb11439ad0b9ca4b01c614db7f7a6f6e93bd9c7ec9f367861e066607",
+    "r3-source.tar.gz": "a4c3d6aa31158c133881c72931ac40fb64f241cc5ab914664efd39775596e09d",
+    "r3-execution.json": "922ac25473b0abebefc364049551d0f9e07ef629b0a115c07bca366d9d3d1d1a",
+    "r3-engine-tests": "b66b7c0acd4fcdc150fb9843052796595ae7c671a5daee4927479b897632a952",
+    "r4-source.json": "304e3968fdfd5230fbd741f6504fca24982d10a07f621d1a175735493030c00a",
+    "r4-source.tar.gz": "6aa11c3eec3552f5092fd88cbf40670ea9734b0d646a82deb9fbc24a62f25f21",
+    "r4-execution.json": "159e523f5f9e1161f4e6a01f1e1b8228c1f30302916201a6ed0edb2e619498e2",
+    "r4-engine-tests": "c1c197f525e6580309309ba546cd173a33cc5d6111d354cad974eba94fe56f11",
+    "allocation_ar01_constructor_resources_and_read_only.r2.log": "a72cfcd910756f00f3795cf3992f35da963043903bc86445b503d14ba7f68715",
+    "allocation_ar02_exact_independent_sequences.r2.log": "0b1772c7167e1a4eba0e25decd171270db34008bf252d36aaf74589860a5d49a",
+    "allocation_ar03_preflight_boundaries_preserve_authority.r2.log": "5c8124f390e3eef7241dcd21da5f37c1ae29c866a2d1e31042fa1dc405c4f076",
+    "allocation_ar04_frozen_semantic_negatives.r2.log": "89f2e8d981da2821693bc572232e59e3f95260f4ee92dbf6831d2584d15a986b",
+    "allocation_ar04_frozen_semantic_negatives.r3.log": "90a0468f83c44e048e957198c93591aef486d5abf938b04cb8d63d440dd74376",
+    "allocation_ar05_stage_cuts_and_fencing.r2.log": "dd0bda466f35033fda45a2baf1b549a586c695002878eccc9de16e3703cd2eb7",
+    "allocation_ar05_stage_cuts_and_fencing.r3.log": "d1bb74e027b2eaca4e91722da0e0954f8a2f43a72d8967408b65c677ab51a5d9",
+    "allocation_ar05_stage_cuts_and_fencing.r4.log": "28ec54f8acb8711c9319c14eabe13de7a1ae9f59cb30b4b32c3bfe8d35c548ec",
+    "allocation_ar06_write_sync_faults.r2.log": "3ab552a9f7e7e9960c0eaf7db7f28d5c489f73585a38e716333a2ab9bd05dc27",
+    "allocation_ar06_write_sync_faults.r3.log": "337191b15535ca32713d169be666e9ec92ca9ad14e78bf280faca97db2b80619",
+    "allocation_ar07_terminal_barrier_and_retained_protection.r2.log": "944726f1532bbda76f7f386da3abb8dcc9f91ec2dd986d3c982e324cfdfd3292",
+    "allocation_ar08_constructor_rejections.r2.log": "54409a911ea13da5dd57d0b858b113524e0cabbe9aee05e712efe56f37484469",
+    "allocation_ar08_constructor_rejections.r3.log": "8090ff39a4bea3592a39900ef9d33544528857f1541aca4bfbe440340c1ef711",
+    "allocation_constructor_new_owner_size_boundary.r3.log": "34f521c1780c47e351940495d88072f78d07071f0f97d87b00f1305ff9dd7aea",
+    "compile-r1.log": "280fc9c37702b7acf0bb3450ccc0517c0ab3ae9c47c08ab9ef1946b0a7e8d77f",
+    "compile-r2.log": "2254fb53e091deaf727b2a986e4fa217580cd443a8cbd0060933b97cb4ef6b49",
+    "compile-r3.log": "c3ae8992b309582a9910004c9abfd456e89150bf77dcf0a59a3c5936d3917b2f",
+    "compile-r4.log": "611e3c016948c406453908dc48fbaf5c70b0b85a93e83858f05317223127286b"
+  },
+  "attempts": {
+    "r2": {
+      "binary_sha256": "2bb903560d62649275744e019560ab8209b1cad6ddd198d7b987298b704d930d",
+      "source": "r2-source.json",
+      "results": [
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar02_exact_independent_sequences",
+          "exit": 0,
+          "seconds": 6.343,
+          "log": "allocation_ar02_exact_independent_sequences.r2.log"
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar04_frozen_semantic_negatives",
+          "exit": 0,
+          "seconds": 0.652,
+          "log": "allocation_ar04_frozen_semantic_negatives.r2.log"
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar01_constructor_resources_and_read_only",
+          "exit": 0,
+          "seconds": 1.906,
+          "log": "allocation_ar01_constructor_resources_and_read_only.r2.log"
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar03_preflight_boundaries_preserve_authority",
+          "exit": 0,
+          "seconds": 8.15,
+          "log": "allocation_ar03_preflight_boundaries_preserve_authority.r2.log"
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar05_stage_cuts_and_fencing",
+          "exit": 0,
+          "seconds": 5.8,
+          "log": "allocation_ar05_stage_cuts_and_fencing.r2.log"
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar06_write_sync_faults",
+          "exit": 0,
+          "seconds": 16.452,
+          "log": "allocation_ar06_write_sync_faults.r2.log"
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar07_terminal_barrier_and_retained_protection",
+          "exit": 0,
+          "seconds": 0.085,
+          "log": "allocation_ar07_terminal_barrier_and_retained_protection.r2.log"
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar08_constructor_rejections",
+          "exit": 0,
+          "seconds": 5.567,
+          "log": "allocation_ar08_constructor_rejections.r2.log"
+        }
+      ]
+    },
+    "r3": {
+      "binary_sha256": "b66b7c0acd4fcdc150fb9843052796595ae7c671a5daee4927479b897632a952",
+      "source": "r3-source.json",
+      "results": [
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar04_frozen_semantic_negatives",
+          "exit": 0,
+          "seconds": 0.09,
+          "log": "allocation_ar04_frozen_semantic_negatives.r3.log",
+          "selection": {
+            "XADB_ALLOC_OWNER_TAG_REVIEW": "1",
+            "XADB_ALLOC_ERROR_REVIEW": "1"
+          }
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar05_stage_cuts_and_fencing",
+          "exit": 101,
+          "seconds": 2.914,
+          "log": "allocation_ar05_stage_cuts_and_fencing.r3.log",
+          "selection": {
+            "XADB_ALLOC_OWNER_TAG_REVIEW": "1",
+            "XADB_ALLOC_ERROR_REVIEW": "1"
+          }
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar06_write_sync_faults",
+          "exit": 0,
+          "seconds": 8.902,
+          "log": "allocation_ar06_write_sync_faults.r3.log",
+          "selection": {
+            "XADB_ALLOC_OWNER_TAG_REVIEW": "1",
+            "XADB_ALLOC_ERROR_REVIEW": "1"
+          }
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar08_constructor_rejections",
+          "exit": 0,
+          "seconds": 5.681,
+          "log": "allocation_ar08_constructor_rejections.r3.log",
+          "selection": {
+            "XADB_ALLOC_OWNER_TAG_REVIEW": "1",
+            "XADB_ALLOC_ERROR_REVIEW": "1"
+          }
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_constructor_new_owner_size_boundary",
+          "exit": 0,
+          "seconds": 0.655,
+          "log": "allocation_constructor_new_owner_size_boundary.r3.log",
+          "selection": {
+            "XADB_ALLOC_OWNER_TAG_REVIEW": "1",
+            "XADB_ALLOC_ERROR_REVIEW": "1"
+          }
+        }
+      ]
+    },
+    "r4": {
+      "source": "r4-source.json",
+      "binary_sha256": "c1c197f525e6580309309ba546cd173a33cc5d6111d354cad974eba94fe56f11",
+      "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar05_stage_cuts_and_fencing",
+      "exit": 0,
+      "seconds": 5.903,
+      "log": "allocation_ar05_stage_cuts_and_fencing.r4.log"
+    }
+  },
+  "interpretation": [
+    "r2: eight first-execution runtime groups PASS; AR04 covers frozen541 plus four D1 counterexamples",
+    "r3: only changed/new assertions selected; owner-tag8+new1, original-I/O error14 cells, constructor causes and new owner size boundary PASS; AR05 FAIL preserved",
+    "r3 AR05: new expectation incorrectly required lower Poisoned after existing WAL state() had already classified poison as Fenced; product lower behavior was not changed",
+    "r4: only corrected AR05 rerun, PASS; all other completed test groups were not repeated",
+    "No full final-source suite was run. Source deltas and per-case evidence apply; r2/r3 results are not relabeled as new r4 executions."
+  ],
+  "pending": [
+    "native two groups / 13 Linux databases: NOT_RUN, adapter/runner not yet written",
+    "compiler baseline plus six frozen probes: NOT_RUN, runner not yet written",
+    "four affected existing WAL stage tests: NOT_RUN",
+    "Clippy / full allocation-unit acceptance: NOT_RUN",
+    "payload INIT / dirty buffer / home DWB / reopen / READY / transaction ACK: not implemented by this unit",
+    "complete nested-local component memory bound measurement/proof: NOT_DONE"
+  ],
+  "file_size_boundary": "Oversized AllocationSession reached and rejected; File>16KiB cannot reach it because File is retained in upstream owner. No unchanged upstream rejection test rerun.",
+  "user_test_policy": "Only new/changed code selected; no DEV0/1/2 or broad leaf/workspace tests; document verifier not run (pre-push only).",
+  "review_status": "PENDING_FINAL_PARTIAL_REVIEW",
+  "cleanup": {
+    "removed_path": "artifacts/dev3/allocation-reservation-build-r0",
+    "allocated_bytes_freed": 363978752,
+    "preserved": "r2/r3/r4 source archives, manifests, executable test binaries, logs and original failed receipt",
+    "reason": "dedicated build cache no longer needed at user-requested pause"
+  }
+}

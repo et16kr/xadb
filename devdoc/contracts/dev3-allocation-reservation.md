@@ -1,6 +1,6 @@
 # DEV3 실제 페이지 예약·취소
 
-2026-10-21 · **D3-ALLOC-RESERVE-001 D2 ACCEPTED / 채택 시 제품 실행 NOT_RUN; 현재 구현·검증 진행 중**
+2026-10-21 · **D3-ALLOC-RESERVE-001 D2 ACCEPTED / 채택 시 제품 실행 NOT_RUN; 메모리 포트 부분 검증 후 사용자 요청 중단**
 
 [저장 설계](disk-storage-design.md) · [할당 표현](dev3-allocation-format.md) · [의미 WAL·복구 의무](dev3-obligation-format.md) · [최초 DWB 설치](dev3-doublewrite-install.md) · [현재 구현](../implementation/dev3-implementation.md)
 
@@ -139,3 +139,14 @@ compiler probes는기존공통owner의재시험이아니라새AllocationSession�
 stage copy helper를실제분리한경우기존시험중`wal_slot_writes_exact_logical_and_physical_prefixes`, `wal_slot_rejects_boundaries_before_effect`, `wal_io_releases_gate_and_protects_slot`, `bootstrap_wal_requires_selected_mapping`만그변경경로의회귀로선택한다. 분리하지않고기존stage를그대로두면이네시험도재실행하지않는다. 다른unchanged기능은실행목록에포함하지않는다.
 
 독립 채택 기록은 [r2 원본 결정](../evidence/dev3-allocation-reservation-d2-xadb-20261021-r2.json)이다. 검토 입력 aggregate는 `da04f60725ff8c887d69b549a0e6dcf5384de00ff55786a54171e63270d94883`, 최종 corpus SHA는 `29d35145aee0b18c49bef06ea449cd9bd25157a0167fc2b741bfc5458c1102b4`다. 해당 판정은 제품 시험 PASS가 아니다.
+
+
+## 10. 2026-10-21 구현 점검의 보완과 중단 범위
+
+stage 성공 직후 이미 계산한 batch·terminal-pending·recLSN·work high-water를 먼저 소유하고, 그 다음 frame/descriptor/counter를 infallible하게 적용한다. AfterStage unwind에서도 staged WAL 외에 component 회계가 T/P/M을 계속 반영한다. cancel은 sync뿐 아니라 최종 상태 검산까지 성공한 뒤 P를 반환한다. 이 보완은 기존 전이·wire bytes를 바꾸지 않는다.
+
+OwnerRef 공통 padding은193..200이며 System 전용225..232는 SystemWorkRef decoder가 검산한다. 유효 TxnRef(tag1, writer epoch256 포함)는 IdentityMismatch, unknown tag나 malformed body는 Corrupt다. native kind 판정은 group/owner/descriptor 뒤 native 단계에서 수행한다. 기존 WAL stage의 poison은 is_fenced에서 Fenced로 관측되며 그 원래 lower cause를 보존한다. constructor는 별도 health 검사가 직접 Poisoned를 보존한다.
+
+64KiB component 예산은 phase별로 계산한다. constructor는 owner≤16KiB + 동시에 열린 reader File 2개 각각≤16KiB + 나머지 임시 상태≤16KiB다. operation은 owner≤16KiB + 임시 entries/codec≤16KiB + plan≤4KiB이며 caller frame16KiB/operation80KiB/flush4MiB/WAL slot1MiB는 별도 공급이다. 메모리 포트에서 concrete owner2504bytes(시험 hook 포함), File32bytes, plan296bytes, 동시 FD3/상시FD1을 관측했다. 앞 절의 FD5는 보수 예산이며 현재 실제 보유 수가5라는 뜻이 아니다. 이 phase 분해는 예산이며 전체 nested-local 동시 생존량의 실측·증명은 아직 완료하지 않았다. File>16KiB는 기존 Genesis/Fresh owner 자체를 초과하여 새 entry point까지 도달하지 못한다. 새 allocation owner만16KiB를 초과하는 경우는 직접 검증하며, 변경 없는 하위 과대 File 시험은 재실행하지 않는다.
+
+사용자가 적당한 단계의 중단과 하부 기능 분류를 요청했다. 메모리 포트 기반 부분 구현을 보존하고 native2·compiler6(+baseline)·수정된 stage helper의 관련4시험·전체 단위 인수는 미완료로 남긴다. 세부 source/실행/실패와 중단 지점은 [부분 구현 기록](../implementation/dev3-implementation.md#allocation-reservation-partial)을 따른다.
