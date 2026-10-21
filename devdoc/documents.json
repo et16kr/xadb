@@ -1155,7 +1155,7 @@
     },
     "dev3-wal-io.md": {
       "path": "contracts/dev3-wal-io.md",
-      "role": "contract",
+      "role": "contracts",
       "title": "DEV3 genesis WAL 설치·append/sync"
     },
     "dev3-genesis-wal-local-xadb-20261021-r6.json": {
