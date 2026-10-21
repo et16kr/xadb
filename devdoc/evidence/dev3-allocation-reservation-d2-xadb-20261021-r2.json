@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-21",
+  "reviewer": "/root/dev3_selector_review",
+  "decision": "ACCEPTED",
+  "unit": "D3-ALLOC-RESERVE-001",
+  "implementation_may_begin": true,
+  "blockers": [],
+  "owner_contract": "devdoc/contracts/dev3-allocation-reservation.md",
+  "owner_contract_sha256": "3761ad4822227e2e9bcffe2b1ff5e19c92ce581a9b604f29c30504c8a0856f5a",
+  "accepted_sections": "1-9; acceptance status/record links may be added by owner without altering normative content",
+  "input_manifest": "r2-inputs.json",
+  "input_manifest_sha256": "1cded7e7100e169ff8c369d2138c8c38dce1cfc3905218fbede8ffe5a8958258",
+  "input_aggregate_sha256": "da04f60725ff8c887d69b549a0e6dcf5384de00ff55786a54171e63270d94883",
+  "review": "r2-review.md",
+  "review_sha256": "6973d301ced0b8ecbe3676ceb95886bb62bac2f2ac3179db0cb91442613bc086",
+  "raw_arithmetic_evidence": [
+    {
+      "path": "r2-raw-audit.py",
+      "sha256": "7fb21276d06f2f116f44840fefbdeba9a3c01b20fc02942158c5f031e55609d4"
+    },
+    {
+      "path": "r2-raw-audit.json",
+      "sha256": "81ed121dde05f0f35093201dcbe9e9032ee0d952612e07fee74d53ce4984e71c"
+    },
+    {
+      "path": "r2-final-delta.py",
+      "sha256": "34214f0744a09794e17b360918906ec758e7243bd5c617574f8bfbfdaf56b978"
+    },
+    {
+      "path": "r2-final-delta.json",
+      "sha256": "699438da883b7fd7d63a70064e26694b0e7c9be7d7da7d1d8377ae3fffc3a673"
+    }
+  ],
+  "accepted_corpus": {
+    "literal_count": 63,
+    "literal_bytes": 811008,
+    "semantic_mutations": 541,
+    "semantic_sha256": "29d35145aee0b18c49bef06ea449cd9bd25157a0167fc2b741bfc5458c1102b4",
+    "error_counts": {
+      "UnsupportedOperation": 2,
+      "UnsupportedNativeBody": 1,
+      "Corrupt": 334,
+      "IdentityMismatch": 4,
+      "OrderMismatch": 7,
+      "StateMismatch": 6,
+      "BudgetMismatch": 4,
+      "InventoryMismatch": 172,
+      "PageMismatch": 11
+    },
+    "runtime_suites": 8,
+    "native_suites": 2,
+    "native_databases": 13,
+    "compiler_probes": 6,
+    "negative_compiler_probes": 5,
+    "positive_compiler_probes": 1,
+    "legacy_stage_tests_max_if_modified": 4
+  },
+  "closed_findings": [
+    "separate progress80KiB; flush4MiB untouched",
+    "protected B+R+T+P+M and terminal pending claim",
+    "cumulative fence/poison effects; healthy-only Unchanged",
+    "reserve +2/cancel +1/no cancel work-id issuance",
+    "private prepared stage authority and exclusive live apply",
+    "coherent four allocation transition negatives plus cancel descriptor digest",
+    "14 group owner reserved-byte cases and valid alternate OwnerRef tag"
+  ],
+  "execution": "NOT_RUN",
+  "product_tests_executed": false,
+  "compiler_executed": false,
+  "repository_checker_executed": false,
+  "document_verifier_executed": false,
+  "cleanup_executed": false,
+  "pure_cancel_requires_new_queue": false,
+  "recovery_authorized_by_this_unit": false,
+  "global_f05_complete": false,
+  "dev3_complete": false,
+  "D1_obligations": [
+    "frozen changed-code runtime/native/compiler cases and exact errors/effects",
+    "actual retained source/ELF/file/log provenance",
+    "concrete/nested resource ledger",
+    "no unchanged-code retests or implied full-stage completion"
+  ],
+  "reviewer_initial_recipe_limitation": "Preserved writes-only audit misclassified the copies-only recipe as no-op while new input arrived; final-delta applies copies and confirms the intended lower-valid coherent counterexample. Not a product failure."
+}

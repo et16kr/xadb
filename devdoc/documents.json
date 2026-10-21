@@ -1382,6 +1382,16 @@
       "path": "evidence/dev3-doublewrite-install-review-xadb-20261021-r2.json",
       "role": "evidence",
       "title": "DEV3 최초 DWB 설치 변경 범위 최종 독립 D1 감사 원본"
+    },
+    "dev3-allocation-reservation.md": {
+      "path": "contracts/dev3-allocation-reservation.md",
+      "role": "contracts",
+      "title": "DEV3 실제 페이지 예약·취소"
+    },
+    "dev3-allocation-reservation-d2-xadb-20261021-r2.json": {
+      "path": "evidence/dev3-allocation-reservation-d2-xadb-20261021-r2.json",
+      "role": "evidence",
+      "title": "DEV3 실제 페이지 예약·취소 D2 채택 원본"
     }
   }
 }
