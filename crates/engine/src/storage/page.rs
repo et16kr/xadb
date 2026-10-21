@@ -155,13 +155,18 @@ impl<'a> PageView<'a> {
     }
 
     pub(crate) fn cell(&self, slot: usize) -> Option<&'a [u8]> {
+        self.cell_range(slot).map(|range| &self.bytes[range])
+    }
+
+    /// Exact span from the already validated immutable directory, not a pin.
+    pub(super) fn cell_range(&self, slot: usize) -> Option<std::ops::Range<usize>> {
         if slot >= self.slots {
             return None;
         }
         let entry = HEADER_BYTES + 4 * slot;
         let start = usize::from(read_u16(self.bytes, entry));
         let length = usize::from(read_u16(self.bytes, entry + 2));
-        Some(&self.bytes[start..start + length])
+        Some(start..start + length)
     }
 }
 

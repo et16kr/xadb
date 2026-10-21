@@ -1,0 +1,407 @@
+//! Full-state byte observations for transaction RollbackStart only.
+//! Contract: `devdoc/contracts/dev3-obligation-format.md`, section 13.
+//! No append, page mutation, source pin, reservation restoration or apply permit.
+#![allow(dead_code)] // Awaiting the separately reviewed runtime consumer.
+
+use super::{
+    allocation_page::{ExtentAddress, ReservationOwner, SystemWorkRef},
+    control::{ControlKind, ControlRef, PROFILE_BYTES, Profile},
+    obligation::{DescriptorSpec, ObligationError, OwnerState, ResourcePeak, decode_descriptor},
+    page::{DIGEST_OFFSET, PageError, PageIdentity, PageKind},
+    status_home::{MAX_HOME_SLOTS, STATUS_HOME_BYTES, StatusHome, decode_status_home_page},
+    transaction_record::{
+        RollbackState, StatusSlotRef, TransactionState, TransactionStatus, TransactionStatusCell,
+        TxnRef,
+    },
+    wal_frame::{
+        FrameExpectation, FrameKind, RedoKind, WalError, WalFrameHeader, decode_redo_record,
+        decode_semantic_envelope,
+    },
+};
+use xadb_foundation::codec::content_digest;
+
+const FRAME_BYTES: usize = 3040;
+const GROUP_BYTES: usize = 2848;
+const DESCRIPTOR: std::ops::Range<usize> = 192..1728;
+const OPERATION: std::ops::Range<usize> = 1728..1984;
+const NATIVE: std::ops::Range<usize> = 1984..2560;
+const REDO: std::ops::Range<usize> = 2560..2848;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum SemanticError {
+    InvalidInput,
+    Truncated,
+    UnsupportedFormat,
+    UnsupportedOperation,
+    Corrupt,
+    IdentityMismatch,
+    OrderMismatch,
+    BudgetMismatch,
+}
+type Result<T> = std::result::Result<T, SemanticError>;
+
+/// Trusted selected context, never recovered by copying identities from a frame.
+/// The caller owns adopted-prefix and before-state lifetimes across observation.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct RollbackStartExpected {
+    pub(crate) frame: FrameExpectation,
+    pub(crate) profile: Profile,
+    pub(crate) actor: TxnRef,
+    pub(crate) location: StatusSlotRef,
+    pub(crate) page: PageIdentity,
+}
+
+/// Immutable observation of this call's bytes; not a runtime capability.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct RollbackStartObservation {
+    header: WalFrameHeader,
+    after: DescriptorSpec,
+    location: StatusSlotRef,
+}
+impl RollbackStartObservation {
+    pub(crate) fn header(self) -> WalFrameHeader {
+        self.header
+    }
+    pub(crate) fn after_descriptor(self) -> DescriptorSpec {
+        self.after
+    }
+    pub(crate) fn status_location(self) -> StatusSlotRef {
+        self.location
+    }
+}
+
+impl From<WalError> for SemanticError {
+    fn from(error: WalError) -> Self {
+        match error {
+            WalError::InvalidInput => Self::InvalidInput,
+            WalError::Truncated => Self::Truncated,
+            WalError::UnsupportedFormat => Self::UnsupportedFormat,
+            WalError::IdentityMismatch => Self::IdentityMismatch,
+            WalError::OrderMismatch => Self::OrderMismatch,
+            WalError::Corrupt | WalError::NoSpace | WalError::TooLarge => Self::Corrupt,
+        }
+    }
+}
+impl From<PageError> for SemanticError {
+    fn from(error: PageError) -> Self {
+        match error {
+            PageError::UnsupportedFormat => Self::UnsupportedFormat,
+            PageError::IdentityMismatch => Self::IdentityMismatch,
+            PageError::InvalidInput
+            | PageError::Corrupt
+            | PageError::KindMismatch
+            | PageError::NoSpace => Self::Corrupt,
+        }
+    }
+}
+impl From<ObligationError> for SemanticError {
+    fn from(error: ObligationError) -> Self {
+        match error {
+            ObligationError::UnsupportedFormat => Self::UnsupportedFormat,
+            ObligationError::IdentityMismatch => Self::IdentityMismatch,
+            ObligationError::InvalidInput
+            | ObligationError::Corrupt
+            | ObligationError::UnsupportedWorkBody => Self::Corrupt,
+        }
+    }
+}
+fn u16_at(bytes: &[u8], offset: usize) -> u16 {
+    u16::from_le_bytes([bytes[offset], bytes[offset + 1]])
+}
+fn u32_at(bytes: &[u8], offset: usize) -> u32 {
+    let mut value = [0; 4];
+    value.copy_from_slice(&bytes[offset..offset + 4]);
+    u32::from_le_bytes(value)
+}
+fn u64_at(bytes: &[u8], offset: usize) -> u64 {
+    let mut value = [0; 8];
+    value.copy_from_slice(&bytes[offset..offset + 8]);
+    u64::from_le_bytes(value)
+}
+fn zero(bytes: &[u8]) -> bool {
+    bytes.iter().all(|byte| *byte == 0)
+}
+
+fn validate_expected(expected: RollbackStartExpected) -> Result<ControlRef> {
+    let namespace = expected.profile.spec().namespace;
+    let stream = expected.frame.stream;
+    let actor = expected.actor.id();
+    if stream.database != namespace.database
+        || stream.timeline != namespace.timeline
+        || stream.writer_epoch == 0
+        || actor.database != namespace.database
+        || actor.timeline != namespace.timeline
+        || expected.page.database != namespace.database
+        || expected.location.page() != expected.page.page
+        || expected.location.generation() != expected.actor.generation()
+        || usize::from(expected.location.slot()) >= MAX_HOME_SLOTS
+        || expected.page.page.page_no.is_multiple_of(64)
+        || ExtentAddress::containing(expected.page.page).is_err()
+    {
+        return Err(SemanticError::InvalidInput);
+    }
+    Ok(ControlRef {
+        kind: ControlKind::Profile,
+        slot: 0,
+        index: 0,
+        generation: expected.profile.spec().generation,
+        encoded_len: PROFILE_BYTES as u32,
+        digest: expected.profile.digest(),
+    })
+}
+
+fn group_owner(bytes: &[u8]) -> Result<ReservationOwner> {
+    if !zero(&bytes[1..8]) {
+        return Err(SemanticError::Corrupt);
+    }
+    match bytes[0] {
+        1 => TxnRef::decode(&bytes[8..56])
+            .map(ReservationOwner::Transaction)
+            .map_err(|_| SemanticError::Corrupt),
+        2 => SystemWorkRef::decode(&bytes[8..56])
+            .map(ReservationOwner::System)
+            .map_err(|_| SemanticError::Corrupt),
+        _ => Err(SemanticError::Corrupt),
+    }
+}
+
+fn validate_group_header(
+    group: &[u8],
+    header: WalFrameHeader,
+    actor: TxnRef,
+    before: &DescriptorSpec,
+    before_bytes: &[u8],
+) -> Result<()> {
+    if u16_at(group, 8) != 192
+        || !zero(&group[10..12])
+        || u32_at(group, 12) as usize != GROUP_BYTES
+        || u32_at(group, 120) != 1536
+        || u16_at(group, 124) != 1
+        || !zero(&group[126..132])
+        || u16_at(group, 132) != 1
+        || !zero(&group[134..136])
+        || u32_at(group, 136) != 576
+        || !zero(&group[140..152])
+        || u32_at(group, 152) != 288
+        || !zero(&group[156..192])
+    {
+        return Err(SemanticError::Corrupt);
+    }
+    if group_owner(&group[32..88])? != ReservationOwner::Transaction(actor)
+        || header.txn != Some(actor.id())
+    {
+        return Err(SemanticError::IdentityMismatch);
+    }
+    if u64_at(group, 16) != header.lsn
+        || u64_at(group, 24) != before.chain.apply
+        || header.previous_txn_lsn != before.chain.apply
+        || group[88..120] != content_digest(before_bytes)
+    {
+        return Err(SemanticError::OrderMismatch);
+    }
+    Ok(())
+}
+
+fn validate_transition(
+    before: &DescriptorSpec,
+    after: &DescriptorSpec,
+    old_status: TransactionStatus,
+    header: WalFrameHeader,
+    operation: &[u8],
+) -> Result<()> {
+    if after.chain.apply != header.lsn
+        || after.chain.previous != before.chain.apply
+        || after.chain.birth != before.chain.birth
+        || before.chain.groups.checked_add(1) != Some(after.chain.groups)
+    {
+        return Err(SemanticError::OrderMismatch);
+    }
+    let next = old_status.undo_head();
+    let status = TransactionStatus::new(
+        old_status.reference(),
+        TransactionState::Aborting(RollbackState::Transaction { next }),
+        next,
+    )
+    .map_err(|_| SemanticError::Corrupt)?;
+    if after.owner != OwnerState::Transaction(status) {
+        return Err(SemanticError::Corrupt);
+    }
+    // One exact opcode-specific core avoids accepting unused fields or an absent
+    // ref's hidden bytes. This fixed local is not a public encoder or apply plan.
+    let mut core = [0; 256];
+    core[..2].copy_from_slice(&3_u16.to_le_bytes());
+    core[4..8].copy_from_slice(&256_u32.to_le_bytes());
+    if let Some(reference) = next {
+        core[2..4].copy_from_slice(&2_u16.to_le_bytes());
+        reference
+            .encode(&mut core[72..112])
+            .map_err(|_| SemanticError::Corrupt)?;
+    }
+    if operation != core {
+        return Err(SemanticError::Corrupt);
+    }
+    Ok(())
+}
+
+fn validate_budget(before: &DescriptorSpec, after: &DescriptorSpec) -> Result<()> {
+    let mut remaining = before.remaining;
+    let status = &mut remaining[3];
+    status.steps = status
+        .steps
+        .checked_sub(1)
+        .ok_or(SemanticError::BudgetMismatch)?;
+    status.wal = status
+        .wal
+        .checked_sub(FRAME_BYTES as u64)
+        .ok_or(SemanticError::BudgetMismatch)?;
+    status.protected = status
+        .protected
+        .checked_sub(FRAME_BYTES as u64)
+        .ok_or(SemanticError::BudgetMismatch)?;
+    if status.steps == 0 {
+        status.peak = ResourcePeak::default();
+    }
+    if remaining != after.remaining
+        || before.consumed_wal.checked_add(FRAME_BYTES as u64) != Some(after.consumed_wal)
+        || before.consumed_control != after.consumed_control
+        || before.inventory != after.inventory
+        || before.minimum_wal_lsn != after.minimum_wal_lsn
+        || before.last_mutation_sequence != after.last_mutation_sequence
+    {
+        return Err(SemanticError::BudgetMismatch);
+    }
+    Ok(())
+}
+
+/// Observe the exact Active -> full-transaction Aborting transition. Every page
+/// cell is validated; only the selected home, page LSN and checksum may differ.
+/// Inputs remain unchanged on success and error. No I/O/allocation/locks occur.
+///
+/// Caller-supplied expected context and adopted before-state must remain stable;
+/// this call does not prove undo liveness or future resource sufficiency. Errors
+/// are known/no-effect and ordered as the section-13 fixed corpus specifies.
+pub(crate) fn observe_rollback_start(
+    frame: &[u8],
+    expected: RollbackStartExpected,
+    before_descriptor: &[u8],
+    before_page: &[u8],
+    after_page: &[u8],
+) -> Result<RollbackStartObservation> {
+    let profile = validate_expected(expected)?;
+    let owner = ReservationOwner::Transaction(expected.actor);
+    let before = decode_descriptor(before_descriptor, owner, profile)?;
+    let OwnerState::Transaction(old_status) = before.owner else {
+        return Err(SemanticError::UnsupportedOperation);
+    };
+    if old_status.state() != TransactionState::Active {
+        return Err(SemanticError::UnsupportedOperation);
+    }
+    if before.chain.apply > expected.frame.previous_lsn {
+        return Err(SemanticError::OrderMismatch);
+    }
+    let envelope = decode_semantic_envelope(frame, expected.frame)?;
+    let header = envelope.header;
+    if header.kind != FrameKind::Update {
+        return Err(SemanticError::Corrupt);
+    }
+    let group = envelope.payload;
+    if group.len() < 8 || &group[..4] != b"XSG1" {
+        return Err(SemanticError::Corrupt);
+    }
+    if u16_at(group, 4) != 1 {
+        return Err(SemanticError::UnsupportedFormat);
+    }
+    if u16_at(group, 6) != 3 {
+        return Err(SemanticError::UnsupportedOperation);
+    }
+    if frame.len() != FRAME_BYTES || group.len() != GROUP_BYTES || envelope.record_count != 1 {
+        return Err(SemanticError::Corrupt);
+    }
+    validate_group_header(group, header, expected.actor, &before, before_descriptor)?;
+    let after = decode_descriptor(&group[DESCRIPTOR], owner, profile)?;
+    validate_transition(&before, &after, old_status, header, &group[OPERATION])?;
+    let native = &group[NATIVE];
+    let slot = expected.location.slot();
+    if native[0] != 5
+        || native[1] != 3
+        || u16_at(native, 2) != 0
+        || u16_at(native, 4) != slot
+        || u16_at(native, 6) != slot
+        || u32_at(native, 12) != STATUS_HOME_BYTES as u32
+        || u32_at(native, 16) != STATUS_HOME_BYTES as u32
+        || u32_at(native, 20) != 576
+        || !zero(&native[88..128])
+        || content_digest(&native[128..352]) != native[24..56]
+        || content_digest(&native[352..576]) != native[56..88]
+    {
+        return Err(SemanticError::Corrupt);
+    }
+    let old_home = StatusHome::decode(&native[128..352])?;
+    let new_home = StatusHome::decode(&native[352..576])?;
+    if old_home.core() != TransactionStatusCell::Occupied(old_status)
+        || new_home.core()
+            != match after.owner {
+                OwnerState::Transaction(status) => TransactionStatusCell::Occupied(status),
+                _ => return Err(SemanticError::Corrupt),
+            }
+        || old_home.incoming() != new_home.incoming()
+    {
+        return Err(SemanticError::Corrupt);
+    }
+    let redo = decode_redo_record(header, &group[REDO])?;
+    if redo.kind != RedoKind::Patch
+        || redo.target.kind != PageKind::TransactionStatus
+        || redo.target.level != 0
+    {
+        return Err(SemanticError::Corrupt);
+    }
+    if redo.target.page != expected.page.page
+        || redo.target.owner != expected.page.owner
+        || redo.target.owner_generation != expected.page.owner_generation
+    {
+        return Err(SemanticError::IdentityMismatch);
+    }
+    let namespace = expected.profile.spec().namespace;
+    let old_page = decode_status_home_page(before_page, expected.page, namespace)?;
+    let new_page = decode_status_home_page(after_page, expected.page, namespace)?;
+    let actual_old = old_page.lookup(expected.actor, expected.location)?;
+    let actual_new = new_page.lookup(expected.actor, expected.location)?;
+    if old_page.lsn() > expected.frame.previous_lsn
+        || new_page.lsn() != header.lsn
+        || redo.prior_lsn != old_page.lsn()
+    {
+        return Err(SemanticError::OrderMismatch);
+    }
+    let range = old_page
+        .cell_range(usize::from(slot))
+        .ok_or(SemanticError::IdentityMismatch)?;
+    if new_page.cell_range(usize::from(slot)) != Some(range.clone())
+        || range.len() != STATUS_HOME_BYTES
+        || usize::from(u16_at(native, 8)) != range.start
+        || usize::from(u16_at(native, 10)) != range.start
+        || usize::from(redo.offset) != range.start
+        || redo.data != &native[352..576]
+        || actual_old != old_home
+        || actual_new != new_home
+        || old_page.cell_bytes(usize::from(slot)) != Some(&native[128..352])
+        || new_page.cell_bytes(usize::from(slot)) != Some(&native[352..576])
+    {
+        return Err(SemanticError::Corrupt);
+    }
+    if before_page[..64] != after_page[..64]
+        || before_page[72..range.start] != after_page[72..range.start]
+        || before_page[range.end..DIGEST_OFFSET] != after_page[range.end..DIGEST_OFFSET]
+    {
+        return Err(SemanticError::Corrupt);
+    }
+    validate_budget(&before, &after)?;
+    Ok(RollbackStartObservation {
+        header,
+        after,
+        location: expected.location,
+    })
+}
+
+#[cfg(test)]
+#[path = "semantic_group_tests.rs"]
+mod tests;

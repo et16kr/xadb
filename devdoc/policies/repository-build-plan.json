@@ -1134,5 +1134,34 @@
     "dependencies_changed": false,
     "full_stage_acceptance": false,
     "local_tests": 20
+  },
+  "dev3_rollback_start_observation": {
+    "implementation_ref": "dev3-implementation.md",
+    "contract_ref": "dev3-obligation-format.md#13-rollbackstart의-full-state-결합-검산",
+    "source": [
+      "crates/engine/src/storage/semantic_group.rs",
+      "crates/engine/src/storage/semantic_group_tests.rs"
+    ],
+    "shared_lower_helpers": [
+      "crates/engine/src/storage/page.rs",
+      "crates/engine/src/storage/status_home.rs",
+      "crates/engine/src/storage/wal_frame.rs"
+    ],
+    "fixtures": [
+      "crates/engine/tests/fixtures/dev3-rollback-start-empty-head-after-descriptor.bin",
+      "crates/engine/tests/fixtures/dev3-rollback-start-empty-head-after-page.bin",
+      "crates/engine/tests/fixtures/dev3-rollback-start-empty-head-before-descriptor.bin",
+      "crates/engine/tests/fixtures/dev3-rollback-start-empty-head-before-page.bin",
+      "crates/engine/tests/fixtures/dev3-rollback-start-empty-head-frame.bin",
+      "crates/engine/tests/fixtures/dev3-rollback-start-with-head-after-descriptor.bin",
+      "crates/engine/tests/fixtures/dev3-rollback-start-with-head-after-page.bin",
+      "crates/engine/tests/fixtures/dev3-rollback-start-with-head-before-descriptor.bin",
+      "crates/engine/tests/fixtures/dev3-rollback-start-with-head-before-page.bin",
+      "crates/engine/tests/fixtures/dev3-rollback-start-with-head-frame.bin"
+    ],
+    "source_roots_changed": false,
+    "dependencies_changed": false,
+    "full_stage_acceptance": false,
+    "local_tests": 12
   }
 }

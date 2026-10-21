@@ -10,6 +10,7 @@ mod ownership;
 pub(crate) mod page;
 pub(crate) mod page_io;
 pub(crate) mod row_record;
+mod semantic_group;
 mod status_home;
 pub(crate) mod transaction_record;
 pub(crate) mod tree_page;

@@ -1,10 +1,10 @@
 # DEV3 영속 recovery obligation·WAL 의미 그룹
 
-2026-10-21 · **D3-OBLIGATION-F01/F02 부분 계약 / §12 descriptor 표현 D2 수용·구현·동일 소스 회귀 PASS / 전체 의미 그룹·복구 미구현**
+2026-10-21 · **D3-OBLIGATION-F01/F02 부분 계약 / §12 descriptor 표현·§13 RollbackStart 결합 관측 구현 / 전체 의미 적용·복구 미구현**
 
 [예약 인계](disk-storage-design.md#recovery-reservation) · [변경 규약](disk-storage-design.md#mutation-protocol) · [REBASE](disk-storage-design.md#recovery-rebase) · [profile](disk-storage-design.md#capacity-profile) · [WAL frame](dev3-wal-format.md) · [거래](dev3-transaction-format.md) · [allocator](dev3-allocation-format.md) · [undo](dev3-undo-format.md) · [실제 크기 계산](dev3-resource-bounds.md) · [M04](dev3-recovery-model.md) · [M06](dev3-reservation-model.md) · [소유 범위](../implementation/dev3-implementation.md#wave-2)
 
-이 문서는 거래·system 작업의 **남은 복구 의무를 정해진 bytes로 인계하는 최소 표현**과 그 표현을 WAL의 효과·진행점에 결합하는 규칙을 제안한다. 원래 초안 작성자는 `/root/dev3_model`이다. 재개 뒤 `/root`가 §12의 좁은 descriptor 표현 구현·통합을 맡고 `/root/dev3_selector_review`가 독립 검토한다. §12 밖에서는 [ownership 별도 계약](dev3-ownership-format.md)의 bytes·합계·물리 충돌 관측만 추가 수용했다. 나머지 의미 그룹·완전한 inventory closure·복구는 여전히 제안이며 frame codec이나 기본 제품 API에 연결하지 않는다.
+이 문서는 거래·system 작업의 **남은 복구 의무를 정해진 bytes로 인계하는 최소 표현**과 그 표현을 WAL의 효과·진행점에 결합하는 규칙을 제안한다. 원래 초안 작성자는 `/root/dev3_model`이다. 재개 뒤 `/root`가 §12의 descriptor 표현과 §13의 RollbackStart 결합 관측을 구현·통합하고 `/root/dev3_selector_review`가 독립 검토한다. [ownership 별도 계약](dev3-ownership-format.md)의 bytes·합계·물리 충돌·현재 intent 검산도 좁은 관측 범위로 수용했다. 나머지 의미 그룹·완전한 inventory closure·실제 적용·복구는 여전히 제안이며 기본 제품 API에 연결하지 않는다.
 
 descriptor의 형식 수락, checkpoint closure 검산, 실제 page 적용·복구 성공은 서로 다른 결과다. 기존 WAL `Opaque`를 descriptor로 간주하지 않는다. 아래 의미 그룹도 실제 before page·native record·자원 profile을 대조하는 적용기가 없으면 복구 완료를 뜻하지 않는다. **TxnRef incoming count의 실제 갱신·WAL 결합, retirement queue, CURRENT/WRITER/checkpoint의 최종 선택 형식, opcode별 F05 상한은 아직 미완료**다. 이 항목이 필요한 opcode를 구조만 맞는 payload로 성공시키지 않는다.
 
@@ -241,7 +241,7 @@ rebase가 loser 완료를 기다리거나 새 epoch를 먼저 써야 하는 순�
 
 ## 6. WAL SemanticGroup 표현
 
-기존 `XWF1` frame version1에 payload-format **SemanticGroup2**를 추가하는 안이다. 현재 제품 codec은2를 지원하지 않는다. 이 문서는 기존 Opaque0/PageRedo1을 수정하지 않으며 DEV2 `AXF1`나 거래 전체 frame를 재사용하지 않는다. 전체 frame 한도1,048,576 bytes와 stream header160/trailer32는 유지한다.
+기존 `XWF1` frame version1에 payload-format **SemanticGroup2**를 추가하는 안이다. §13의 RollbackStart exact 관측 helper만2를 지원한다. 일반 FrameView/encode_frame/scan_frame_prefix는 계속2를 거절하며 다른 operation·실제 append/apply는 미지원이다. 이 문서는 기존 Opaque0/PageRedo1을 수정하지 않으며 DEV2 `AXF1`나 거래 전체 frame를 재사용하지 않는다. 전체 frame 한도1,048,576 bytes와 stream header160/trailer32는 유지한다.
 
 한 의미 그룹은 **owner 한 개**만 변경한다. 다른 owner의 token을 같은 group에서 암묵적으로 가져오지 않는다. 이 초기 범위의 inter-owner 직접 transfer는 UnsupportedOperation이다. 기존 source edge가 다른 거래의 undo/status를 가리키는 것은 허용하며 그 target count 변경은 owner identity 변경과 다른 의미다.
 
@@ -348,7 +348,7 @@ before/after inventory의 count/digest와 budget category 합계가 after descri
 
 1. outer stream identity와 정확한 previous stream LSN, group/header/owner/LSN/previous owner LSN, previous descriptor SHA를 검산한다. Transaction의 outer TxnId는 owner와 같고 outer previous-txn LSN은 previous-owner LSN이다. System outer TxnId는zero지만 group의 SystemWorkRef는 필수다.
 2. Begin/SystemBegin은 미존재 owner만 생성하며 birth=apply, previous=0, group count1이다. 나머지는 존재하는 nonterminal owner의 정확한 직전 상태만 받는다. birth/profile/owner는 유지하고 count는+1이다. apply LSN을 byte offset으로 증가시키지 않는다.
-3. checkpoint에는 writer의 TxnId local high-water와 system kind별 work-id high-water가 포함돼야 한다. 새 Begin은 현재 writer epoch와 증가한 local을 사용한다. old epoch TxnId는 기존 owner의 CLR/terminal에만 허용한다. 초기 SystemBegin은 kind별 새 증가 id와 generation1을 사용하고 id wrap/reuse를 하지 않는다. 이미 존재하는 descriptor의 generation은 그대로 보존한다. terminal owner를 ATT에서 제거한 뒤 같은 identity를 새 Begin으로 부활시키지 않는다.
+3. checkpoint에는 writer의 TxnId local high-water와 system kind별 work-id high-water가 포함돼야 한다. 새 Begin은 현재 writer epoch와 증가한 local을 사용한다. old epoch TxnId는 이미 채택된 기존 Active owner의 RollbackStart와 기존 owner의 CLR/terminal에 허용한다. RollbackStart도 원래 TxnRef와 generation을 유지하며 새 Begin이나 포괄적인 recovery 우회 권한으로 해석하지 않는다. 초기 SystemBegin은 kind별 새 증가 id와 generation1을 사용하고 id wrap/reuse를 하지 않는다. 이미 존재하는 descriptor의 generation은 그대로 보존한다. terminal owner를 ATT에서 제거한 뒤 같은 identity를 새 Begin으로 부활시키지 않는다.
 4. native before는 실제 고정한 old page/slot/value와 같고 after는 실제 redo 적용 결과와 같다. required native 효과·status/undo/head·edge/count·inventory·descriptor를 opcode별로 대조한다. effect 없는 CLR progress, count 없는 cut, cursor 없는 release를 거절한다.
 5. after status/progress/OperationCore가 일치한다. statement 완료는 앞선 statement의 전체 abort 의무를 남긴다. terminal은 남은 head·status·retirement 작업의 durable owner/credit을 같은 group으로 인계한 뒤에만 종료된 의무와 불필요 reservation을 반환한다. ATT/descriptor를 지운 뒤에도 필요한 credit을 반환하면 안 된다. 현재 초안의 단일-owner InventoryDelta에는 이런 인계가 없으므로 queue·새 owner·credit 인계와 상한이 동결될 때까지 Commit/AbortEnd 실제 적용은 Unsupported다. durable terminal adoption 전에는 실제 예약을 빌려주지 않는다.
 6. WAL consumed 누계의 증가는 exact frame length다. budget 감소는 해당 step의 실제 소비와 증명된 불필요 잔여 반환이며, 증가에는 첫 effect 전 admission이 필요하다. after remaining이 실제 opcode의 미래 최악 비용 이상인지 F05 표와 검산한다. encode 성공만으로 이 조건을 생략하지 않는다.
@@ -417,7 +417,7 @@ F03 oracle은 candidate decode/summary를 기대값으로 사용하지 않는다
 
 ## 10. 미완료와 다음 검토
 
-§12의 고정 descriptor 표현과 [별도 수용된 ownership 관측](dev3-ownership-format.md)만 구현할 수 있다. 완전한 ownership closure·실제 의미 적용은 다음을 닫기 전까지 **구현 시작 승인 전 초안**이다.
+§12의 고정 descriptor 표현, §13의 RollbackStart 결합 관측과 [별도 수용된 ownership 관측](dev3-ownership-format.md)을 구현할 수 있다. 완전한 ownership closure·실제 의미 적용은 다음을 닫기 전까지 **구현 시작 승인 전 초안**이다.
 
 - 등록된 kind5/6의 실제 namespace/선택 형식 수용, checkpoint의 정확한 current/previous·WRITER/high-water closure.
 - system4의 nested operation 검산, N_max와 inventory3 bank·checkpoint2개·전체 fixed 보호 영역의 F05 수치.
@@ -481,3 +481,183 @@ encode는 정확1536-byte output만 수락하며 고정1536-byte scratch에서 �
 §12 D2 수용 원문 SHA-256은 `745efe83c3e7fd2cc3d9ea03c465045503d95eafcb03e335a0183af40752ec1a`다. 독립 검토 `artifacts/dev3/obligation-resume-review-20261021/r2-descriptor-review.md`는 inventory 개수의 u128 상·하한과 conditional reserved corpus 보완 뒤 좁은 표현만 수용했다. 현재 상태 표기는 이 검토 원문의 의미나 고정 분모를 바꾸지 않는다.
 
 §12 구현과 같은 source의 좁은 통합·하위 회귀·현재-build DEV2 복구 결과는 [구현 기록](../implementation/dev3-implementation.md#obligation-descriptor-results)에 보존한다. 전체 inventory/의미 그룹·실제 예약 인계와 DEV3 복구의 실행 상태는 미완료다.
+
+
+## 13. RollbackStart의 full state 결합 검산
+
+2026-10-21 · **D2 수용 / 구현·국소 시험·독립 재현 PASS**. 작성·통합은 `/root`, 독립 검토는 `/root/dev3_selector_review`다. 다음 API/corpus와13.8의 구체화를 함께 채택한다. 상충하는 세부 오류/dispatch는13.8이 우선하며 실제 적용 권한은 부여하지 않는다. 같은 source의 통합·하위 회귀 상태는 [구현 기록](../implementation/dev3-implementation.md#rollback-start-results)을 따른다.
+
+### 13.1. 지원 결과와 입력
+
+새 private `storage/semantic_group.rs`·`semantic_group_tests.rs`에서 전체 거래의 Active→Aborting(Transaction) 한 전이만 검증한다. `observe_rollback_start(frame, expected, before_descriptor, before_page, after_page)`는 exact bytes 사이의 결합을 반환한다. 결과 `RollbackStartObservation`은 frame header, after DescriptorSpec, status location을 가진 immutable 관측이다. ApplyPlan/ReservationRestored/READY로 변환하는 API가 없다. append/encode/page write·pin·분석 prefix 채택·미래 F05 충분성을 실행하지 않는다. 현재 inventory intent 관측을 입력 권한으로 요구하거나 그 결과로 복원 성공을 추정하지 않는다.
+
+`RollbackStartExpected`의 필드는 `FrameExpectation`, decoded `Profile`, actor `TxnRef`, `StatusSlotRef`, full status `PageIdentity`다. Profile은 기존 완전한 profile decoder만 생성하며 namespace/generation/digest에서 exact ControlRef를 구성하여 before/after descriptor에 결합한다. stream DB/timeline, profile namespace, actor namespace, PageIdentity DB는 같아야 한다. location.page는 expected PageIdentity.page와 같고 location.generation은 actor.generation과 같다. slot<71, data page index%64!=0, extent 끝×16384는 u64 범위여야 한다. writer epoch와 actor epoch의 숫자 비교로 owner 존재를 인증하지 않는다. caller가 supplied before descriptor와 stream prefix의 채택·수명을 보장한다.
+
+실제 input의 profile/owner/schema/page identity를 기대값으로 다시 읽어 자기 검산하지 않는다. decoder는 borrowed input과 고정 locals만 사용한다. input 제외 source-level 동시 workspace≤8KiB를 정적 size/보수적 local 합으로 확인하며 compiler stack 측정이나 실제 전체 복구 예산의 증거로 쓰지 않는다.
+
+### 13.2. exact 전이·group·page
+
+frame은 XWF1 version1, outer Update2, payload SemanticGroup2, count1, exact3040 bytes다. group은 XSG1 version1/op3/header192/length2848, after descriptor1536, OperationCore256, NativeEffect576(B1), E/C/D0, Redo288(R1)이다. header count/length/reserved/owner/apply와 previous descriptor hash가 정확하다. Unknown version/payload는 UnsupportedFormat, operation≠3은 UnsupportedOperation이다. 다른 정상 operation을 opaque 성공으로 노출하지 않는다.
+
+before descriptor의 TransactionActive만 지원한다. 그룹과 outer의 original TxnId/previous-owner LSN/after owner가 expected actor와 같다. after chain apply=frameLSN, previous=before.apply, birth/profile/owner 유지, groups=checked+1. before.apply≤trusted previous stream LSN이다. group.previous와 outer.previous_txn은 before.apply이고 before descriptor 전체 SHA가 일치한다. apply의 동일/역행·groups overflow는 거절한다.
+
+after status는 Aborting(Transaction{next:before.head}), head 유지, target 없음이다. OperationCore.next도 같은 ref40이고 flag bit1은 존재와 정확히 같다. 나머지 current/target/statement/mutation/undoSequence/q/cursor/logical digest/reserved는0이다. incoming은 before/after home에서 같다. unchanged head는 같은 graph edge이며 새 next의 raw 값 검산이 실제 Live undo 확인·고정 pin을 발급하지 않는다.
+
+두 full page를 status-home loader로 완전 검증한다. NativeEffect는 kind5/flags3/redoindex0, before/after slot과 실제 offset 동일, length224, SHA와 full bytes가 실제 home와 같다. Redo는 Patch1/statuskind9/level0, full target이 expected identity와 같고 offset=해당 home의 실제 offset/length224/data=afterhome다. priorLSN=beforepageLSN, afterpageLSN=frameLSN이다. `beforepageLSN≤trusted previous_stream_lsn<frameLSN`이며 owner.apply와pageLSN사이의대소/equality는강제하지않는다.
+
+선택 home224·pageLSN64..71·checksum tail32 외 before/after page bytes는 전부 같다. 다른 cell이 valid하게 변경되어도 거절한다. 실제 head/incoming과 다른graphfield불변을 확인하여 E/C/D0을 결합한다. 이미 적용한 recovery page에 대한 REDO skip은 구현하지 않는다.
+
+### 13.3. 비용의 정확 보존
+
+r1 결정대로 category Status4에서 step1/WAL3040/protected3040을 checked 차감한다. consumed_wal은checked+3040,consumed_control불변이다. 다른4category모든field, Status의control/growth/page/undo/status consumables, inventory claim 전체, minimumWalLSN,lastMutation은보존한다. Status.steps>0이면peak6개유지,0이면peak0이고zero-step규칙으로다른잔여도0이어야한다. Clr step/count는줄이지않는다.
+
+이는3040bytes의명시한비용산술일치이다. 감소한protected는outstanding예약몫이며retained/charged보호공간을실제free했다고판정하지않는다. 미래CLR/terminal충분성·globalledger·actualprofileadmission은별도이다. 실제효과소비자는그증명을추가해야한다.
+
+### 13.4. 모듈 경계와 오류
+
+`semantic_group → wal_frame/status_home/obligation/control` 한 방향이다. wal_frame의 frame envelope와 single redo 검산을 같은 의미의 낮은 helper로 공유한다. 기존 일반 FrameView/encode_frame/scan_frame_prefix는Opaque0/PageRedo1만지원하며tag2를계속Unsupported로거절한다. 새로운exactsemanticenvelopehelper는tag2만수락한다. partial-header의legacy허용범위를넓히지않는다. borrowed envelope에는semantic완료권한이없고새groupconsumer만전부검증한뒤관측을반환한다. single redo helper는기존validate_frame_record가소비하는동일shape/LSN/INIT검사를공유한다.
+
+page owner의 `PageView::cell_range(slot)`는검증된directory에서start..end를반환하며기존cell도이를소비한다. StatusHomePage는필요한pageLSN/cellrange/rawcell만immutablegetter로전달한다. 상위module이directoryoffset공식을복제하거나pointeraddress를빼서위치를구하지않는다. 이getter는pin/lifetimecapability가아니다.
+
+오류는 InvalidInput,Truncated,UnsupportedFormat,UnsupportedOperation,Corrupt,IdentityMismatch,OrderMismatch,BudgetMismatch다. 순서:
+
+1. expected context 모순은InvalidInput.
+2. before descriptor를trusted owner/profile로decode. 형식손상Corrupt/unsupportedversionUnsupportedFormat/identity다름IdentityMismatch. beforestate가Active아니면UnsupportedOperation, before.apply>prevstream이면OrderMismatch.
+3. outer exact envelope를검증한다. validproperprefix는Truncated; unknownversion/payloadUnsupportedFormat,identity다름IdentityMismatch,LSN/predecessor오류OrderMismatch,길이/trailing/checksum/shapeCorrupt. 완전한envelope의unknowngroupoperation은UnsupportedOperation.
+4. supportedgroup의header/afterdescriptor/core/native/redo형식과ownerchain을검증한다. 구조Corrupt,identityIdentityMismatch,previous/hash/chainOrderMismatch.
+5. 두fullpage를검증하고actualtarget/cell/content/whitelist를대조한다. identity차이IdentityMismatch,잘못된canonicalbytes/body결합Corrupt,pageLSN조건OrderMismatch.
+6. typed-valid before/after descriptor 사이의비용/보존필드오류는BudgetMismatch다. descriptor 자체의zero-step형식오류는앞선Corrupt다.
+
+입력bytes는오류/성공모두불변이다. 이후 source변경·동시page변경은검산후수명계약의몫이다.
+
+### 13.5. 독립 literal
+
+`artifacts/dev3/rollback-start-vectors-r1/vectors.py`·vectors.json에 fullrawbytes를계산했다. profile1과2-iteminventory는보조입력이며제품fixture후보는None/Some head각각 frame3040·beforedescriptor1536·afterdescriptor1536·beforepage16384·afterpage16384의10개다. 소스포함actualprofile1/2/3은기존intent3literal을재사용한다.
+
+DB=bytes1..16,timeline17,streamepoch19,actorTxnepoch18/local19/generation20,profilegen23. actorbeforeapply30/previous20/birth20/groups2,afterapply40/previous30/birth20/groups3;prevstream37. before/afterconsumed8192/11232,minimumWal20,lastmutation1. inventoryPage129/inc9와UndoSlot(page130/inc12/slot0/gen11)는Clrcategory이고change30,각units1,count2/growth0이다.
+
+statuspage FileId(2,1)/page65/inc4,Object55/gen56,pageLSN35→40. slot0은다른ActiveTxn(local20/gen21)/incoming7,slot1은actor/incoming2이다. actorcelloffset15904이다. Some head는FileId(2,1)/page131/inc9/slot1/gen7이며next로보존한다. scalarcore/homebytes는원문offset에서생성한다. originalr0은reservedPage65가실제statusPage65와겹치는제안입력이었으므로r1에서129/130으로분리했다. r0은제안이력이며채택fixture로쓰지않는다.
+
+beforeClrrow는(steps2,wal4096,page1,undo1,frames2,memory65536,files1,dwb1,protected22964),Terminalrow는(steps1,wal4096,frames1,memory16384,files1,dwb1,protected4096),Statusrow는(steps1,wal3040,frames1,memory65536,files1,dwb1,protected3040)이며나머지값0이다. afterStatus는0이고다른row는그대로다. 이수치는literal의비용일치입력이며미래opcode충분성증거가아니다.
+
+### 13.6. 고정12시험
+
+| 이름 | 고정 범위 |
+| --- | --- |
+| rollback_start_literals_bind_full_state |10literal의길이/SHA/필드와None/Some각각actualpage/core/home/owner/predecessor/next/consumed일치. 3실제profile과기대ref대조. source input전후불변|
+| rollback_start_lengths_and_damage |2frame의모든properprefix0..3039와trailing1거절;2beforedescriptor의properprefix0..1535와trailing1거절;4before/afterpage의properprefix0..16383와trailing1거절.2frame의각byte bit0 총6080손상거절|
+| rollback_start_group_sections_are_exact | group magic/version/headerbytes/length/flags와count B/E/C/D/R·각sectionlength·reserved각byte를fresh원본에서변경후SHA재계산하여거절. group version2UnsupportedFormat, op1/2/4..11/0/65535UnsupportedOperation. frame payload0/1/3UnsupportedFormat. exactshape외extra/trailingsection거절|
+| rollback_start_owner_chain_and_profile_are_bound | trusted DB/timeline/stream epoch/prevstream/Txnlocal/generation/status ObjectId/Generation/Profile generation/digest의유효불일치. group owner/prev/hash,afterowner/profile/birth/previous/groups 변경;beforegroupsMAX의overflow. nativepage의selfcopiedidentity를context로사용하지않음|
+| rollback_start_operation_core_matches_head |None/Some 정상; current/target/statement/mutation/UndoSequence/q/cursors/digest각필드nonzero,unknownflags·reserved각byte거절;next없음/다른ref/flag불일치,afterhead다름,target있음,AbortingStatement/Active/Committed/Aborted로afterstate변경거절. beforeAbortingStatement/AbortingTransaction/Committed/AbortedUnsupportedOperation|
+| rollback_start_status_pages_are_complete |비선택cell의손상·wrongnamespace·duplicateTxnId·Freeincomingnonzero 거절. slot0/1/70 정상(valid71홈page),slot71·freeactor·wronggeneration·otherTxn조회거절. literal2홈중다른home변경없이actor만전이|
+| rollback_start_redo_and_native_match_exact_cell | nativekind/flags/index/before·afterslot/offset/length/SHA/body각불일치,redo kind/target FileId/page/inc/owner/gen/kind/level/prior/offset/length/data각불일치거절. body/redo는mutatedpage와같지만expectedcontext다른경우도거절. Nativebefore192/after192의oldlayout거절|
+| rollback_start_preserves_other_page_bytes |두page가각각canonical인상태로다른homeincoming/core를바꾸고SHA재계산한반례;cell삽입/제거/순서변경으로directory변경;pageowner/gen변경. 선택home의incoming/head도같이바꾼반례. afterpageLSN/전체SHA만갱신하고oldhome유지거절. wholeoldpage복사로다른home를되감은반례|
+| rollback_start_cost_transfer_is_exact |steps1→0과2→1정상;Status WAL/protected3040−1/동일/+1 경계와 after정확차감;consumedMAX−3040정상/MAX−3039 overflow;Status steps0과beforewal/protected부족;4다른category의14field각각변경·Statusconsumable5필드변경·peak6변경·inventory4필드/minimumWal/lastMutation/consumedControl변경. typed-valid변형의BudgetMismatch와zero-step형식Corrupt를구별. 13.8의 고정 matrix 적용|
+| rollback_start_ordering_uses_stream_and_page_positions |ownerapply30/page35/prev37/new40와ownerapply36/page35/prev37/new40정상. pageLSN0/37정상,38/40/41거절. ownerapply37정상,38거절. frameLSNMAX정상과equal/decreasing/0거절. 원래owner epoch와새stream epoch달라도정상;recovery권한은주장안함|
+| rollback_start_legacy_frames_and_limits_are_preserved |기존wal11시험전체유지. Opaque/PageRedoexactfixture·1MiBbound·alllegacytail분모는원래그대로. 새로운tag2를legacyexact/prefix가Unsupported로거절(보이는tag전의partial결과는원래규칙);tag2redo를groupheader에서iterator로읽는오류없음. sharedgetter의page/status기존시험도유지|
+| rollback_start_generated_profiles_match_independent_transition |seed64×sample128=8192아래raw생성식. expectedrawbytes/수치에서관측비교;제품encoder로정답생성안함. source-level8KiB예산및immutableinput확인|
+
+13.8의 독립 검토 보완표가 비용 matrix·reserved offset·오류 우선순위의 정본이다. 이를 포함하여 D2를 수용했으며, 채택은 제품 실행 결과가 아니다.
+
+### 13.7. 생성식
+
+n=128seed+sample,b=100+16n. profileID=1+n%3,profilegen23;actorlocal19+n,generation20+n,epoch18+n%2;stream epoch20+n%3. beforeapply=b+3+3(n%2),previous=b+2,birth=b+1,groups2;prevstream=b+7,new=b+10,pageLSNbefore=b+5. lastmutation1+n,minimumWal=b+1,inventorychange=b+3. consumedbefore8192+3040n,after+3040.
+
+statuspage file(2,1),page65+64(n%3),inc4+n,Object55/gen56. home3개이며actor slot=n%3,다른두Txnlocal20000+3n+slot/gen21+slot,headNone/stateActive/incoming7+slot로고정해중복안됨. actorincoming=n%9. actorheadSome iff n%2=1,이때UndoRef file(2,2)/page131+64(n%5)/inc9+n/slot n%37/gen7+n. next는그대로다.
+
+inventory는file(2,3)의Page129/inc9와UndoSlot130/inc12/slot0/gen11,categoryClr/units1/change=b+3이며ownerordinal0이다. Clr/Terminal은literal행과같다. beforeStatus.steps=1+n%2,wal=protected=3040×steps,peak는literal과같고after.steps−1,wal/protected−3040,남은step0이면peak0이다. 다른값0이다. afterpage의actualcell만바꾸고LSN/checksum을갱신한다. key/row/index/WALapply/실제reservation복원은이생성식의범위가아니다.
+
+
+### 13.8. 독립 검토의 고정 보완표
+
+#### 13.8.1. 의미/API와 dispatch
+
+현재 Active→Aborting(Transaction)만 지원하는 범위, 원래 actor epoch 유지, before owner.apply와 pageLSN의 별도 stream 상한, full expected PageIdentity/Profile, 선택 home 밖 모든 page byte 불변, Status category의3040 차감은 서로 일관된다. `semantic_group → allocation_page/transaction_record/undo_ref/page/control/obligation/status_home/wal_frame` 의존은 기존 하위 owner decoder 재사용을 위한 것이다. generic owner codec이나 상위 역참조가 필요하지 않다.
+
+새 exact semantic envelope는 완전한 outer self-reported 길이·checksum·stream 의미를 검사한 뒤 group dispatch로 들어간다. **고정3040/2848은 opcode3을 식별한 뒤 요구한다.** complete payload가8bytes 미만이면Corrupt, 최소8bytes에서 magic/version을 검사하고 op≠3이면UnsupportedOperation이다. known operation1/2/4..11과unknown0/65535에 다른 operation의 shape를 요구하지 않는다. opcode3이면 header192/2848·정확 section·frame3040을 검사한다. 완전한 envelope+8byte group/op1은UnsupportedOperation, 같은 op3은Corrupt인 반례를 각각 추가한다. outer known kind≠Update는Corrupt, unknown outer kind는 기존UnsupportedFormat이다.
+
+Expected 내부의 namespace 불일치, location.page≠expected.identity.page, location.generation≠actor.generation, slot71/81, extent metadata page, 전체 extent 끝의 byte 위치 overflow는InvalidInput이다. 이 행은 malformed frame/before descriptor와 함께 주어도 우선한다. 유효 expected namespace를 바꾸는 identity 반례는 Profile/actor/stream/page DB를 함께 바꾸어 expected 자체가 유효하게 유지되게 한다. decoded Profile의 digest 반례는 raw Profile의 다른 유효 값으로 다시 decode해 만들며 private struct의 불가능 상태를 만들지 않는다.
+
+#### 13.8.2. 정확 오류와 반례 구성
+
+r2의 expected→before descriptor→outer→supported group/chain→full pages→비용 순서를 유지한다. 앞선 checksum/형식 오류가 목표 반례를 가리지 않도록 필요한 모든 envelope/descriptor/page SHA와 native SHA를 고친다. 실제 before descriptor가 바뀌면 group.previous_descriptor_sha도 갱신한다. 상태 전이 반례는 해당 descriptor/core/home/native/redo 사본을 함께 바꿔 각 표현이 유효하도록 만든다.
+
+| 입력·조건 | expected |
+| --- | --- |
+| 정상 frame의 proper prefix0..3039 | Truncated |
+| before descriptor proper prefix0..1535, full page proper prefix0..16383 | Corrupt |
+| 위 세 입력의 trailing1 | Corrupt |
+| outer/group/descriptor 자체 version≠1, outer payload0/1/3 | UnsupportedFormat |
+| descriptor에 embedded된 core XTS1 version≠1 | Corrupt: 기존 obligation decoder가 nested error를 감쌈 |
+| 실제 full page XDP1, home XSH1, embedded XTS1 version≠1 | UnsupportedFormat: 기존 page/status-home decoder의 전파를 보존. 비선택 home 변형으로 독립 도달 검산 |
+| valid wrong PageKind의 KindMismatch, unknown page kind, 잘못된 level | Corrupt로 명시 매핑 |
+| unknown redo kind | UnsupportedFormat: 기존 single redo decoder와 같음 |
+| valid Init redo 또는 다른 known native kind를 opcode3에 연결 | Corrupt: 필수 Patch/StatusHome shape와 모순 |
+| 형식이 정상인 다른 Transaction/System group owner, valid after owner/profile 불일치 | IdentityMismatch |
+| malformed owner tag/reserved/TxnRef/SystemWorkRef | Corrupt |
+| valid non-Active before Transaction 상태4종 | UnsupportedOperation |
+| Free core를 before descriptor로 제공 | Corrupt: valid Descriptor가 아님 |
+| after 상태가 typed-valid Active/Statement-Aborting/Committed/Aborted, 잘못된 head/next/target | Corrupt: 지원 전이·OperationCore와 모순 |
+| before.apply>prevstream, frameLSN0/equal/decreasing, before pageLSN>prevstream, after pageLSN≠frameLSN | OrderMismatch |
+| group.previous/outer.previousTxn/after.previous/after.apply/after.birth/groups/previous SHA의 유효 불일치 | OrderMismatch |
+| outer.previousTxn0 또는>prevstream | Corrupt: 기존 envelope shape가 먼저 거절 |
+| before.groups=MAX, valid after.groups=3과 정상 chain/SHA | OrderMismatch: checked +1 불가. after.groups0으로 바꾸어 앞선 Corrupt를 만들지 않음 |
+| 실제 page의 identity 또는 선택 slot의 다른 TxnRef/generation/Free/존재하지 않는 slot | IdentityMismatch |
+| actual full page reserved/중복TxnId/old192혼합/Free count비영/비선택body·외부bytes 변경 | Corrupt |
+| 비선택 occupied home의 다른DB/timeline | IdentityMismatch |
+| native kind/flags/index/slot/offset/length/digest/body, redo의 실제target/offset/data 불일치 | 구조·선택결합은Corrupt; valid physical/logical target identity 불일치는IdentityMismatch. priorLSN<frameLSN인 유효 불일치는OrderMismatch로 고정. priorLSN>=frameLSN은 기존 redo validator의 앞선Corrupt |
+| typed-valid 비용·inventory/minWal/mutation/consumed 보존 불일치 | BudgetMismatch |
+| zero-step인데 나머지row가 비영, 잘못된 inventory cardinality/합계/aggregate | Corrupt: descriptor 자체 부적합 |
+
+상태 mismatch 반례에서 Committed에는nonzero q를, AbortingStatement에는유효 rollback discriminator를 넣고 after descriptor tag도 맞춘다. 정상 `before.apply36/pageLSN35/prevstream37/frame40`과 `30/35/37/40`을 둘 다 유지한다. pageLSN0은 byte 의미상 허용되지만 실제 복구 이력을 인증하지 않는다.
+
+bit0 손상6080개를 전부Corrupt로 고정하면 기존 envelope 오류 우선순위와 충돌한다. lower prefix 우선순위를 보존할 때 각3040 frame에서 UnsupportedFormat은 offsets4,5,7의3개, IdentityMismatch는24..51 및72..95의52개, OrderMismatch는64..71의8개, 나머지2977개는Corrupt다. 두frame 합계는6/104/16/5954다. 이 표는 **사전 기대값**이며 제품 실행 결과가 아니다. 재hash하지 않은 body 손상은 outer trailer가 먼저 거절한다.
+
+#### 13.8.3. typed-valid 비용 matrix
+
+모든 row의 steps가양수이고 모든 donor field가충분한 별도 dense baseline을 사용한다. category c=1..5의 before row14값 순서(steps,wal,control,growth,pages,undo,status,frames,memory,locks,registry,files,dwb,protected)는:
+
+`[3,10000+100c,100+c,4MiB,2,2,2,10+c,100000+1000c,20+c,30+c,40+c,50+c,20000+100c]`.
+
+정상 after는 Status c4에서steps1/wal3040/protected3040만뺀다. inventory T30/G20/K5/items40, change30, before/apply30→after40, minWal20,lastMutation1,consumedControl64,consumedWal8192→11232다. inventory digest는 동일한32bytes다. 이 baseline은 descriptor 형식·전이 검산용 주장이고 실제40-item closure 인증으로 사용하지 않는다. 실제 inventory를 함께 만들고 싶다면 category마다 Page/Undo/Status 각2개와 count2 Growth2개인40개를 모두 겹치지 않게 배치하면 같은 수치가 된다.
+
+각 변형은 새 baseline에서 시작하며 독립 재계산한 aggregate growth bytes·peak maxima6·protected sum·descriptor SHA·frame SHA를 반영한다. 먼저 기존 descriptor decoder가성공하는 것을 assert하고 새 observer의 exact BudgetMismatch를 확인한다. 아래148개는 `r2-budget-matrix.json`에 고정했으며 별도 Python 산술 감사가 모두 형식 제약을 만족함을 확인했다.
+
+| matrix | 변형과 분모 |
+| --- | --- |
+| 다른4category×14fields×± |112개. pages/undo/status는±1, growth는±1MiB하고 **Status row의 같은field를 반대로 이동**해 전체 token/growth/claim을보존한다. 그 외field는해당scalar만±1 |
+| Status control/growth/pages/undo/status×± |10개. control단독±1, growth/token은Clr row와반대이동 |
+| Status peak6×± |12개. steps2가남는baseline에서각peak를±1. summary는다시계산 |
+| inventory change/items/digest/growthExtents |8개. change30±1, items40±1(여전히35..50), digest는byte0 또는31의bit0, growthExtents20±1은Status.growth±1MiB와aggregate를함께수정 |
+| minimumWal/lastMutation/consumedControl×± |6개. 각각20/1/64±1 |
+
+count/digest/growth는 Claim 전체 보존 의무를 검산한다. growthExtents case는 필연적으로 row growth도 바뀌므로 isolated branch 증거라고 쓰지 않는다. paired category 반례에서는 inventory 전체를 그대로 두므로 row별 보존 검사를 직접 통과할 수 없다.
+
+추가 경계는 기존 r2처럼 별도로 둔다. 정상steps1→0은Status row 전체0, 정상2→1은peak유지다. before.steps0 반례는그row 전체0으로만들어typed-valid를유지한다. wal/protected3039/3040/3041은각각필드에적용하며, steps1·after전체0이면부족/정확/무단잔액반환을검산한다(다른필드는정상3040). steps2에서3041→1은정상이다. steps0·after잔액1은형식Corrupt로별도둔다. consumed beforeMAX−3040/afterMAX는정상, beforeMAX−3039/afterMAX는두descriptor가형식상유효한BudgetMismatch이다. overflow를wrapped0 after값으로만시험하지않는다.
+
+#### 13.8.4. reserved 위치·분모
+
+`r2-reserved-offsets.json`은 모든 absolute index와 section상대index를 담는다. 아래범위는inclusive다. 전체zero field와 conditional absentref는별도 의미행이며 header reserved와혼동하지않는다.
+
+| section | 상대 reserved/해당Transaction whole-zero |
+| --- | --- |
+| outer |10..11,22..23,52..55,100..103,120..127 |
+| group |10..11,33..39,68..71,134..135,156..191 |
+| descriptor |7,12..15,17..23,52..55,98..99,116..127,196..199,225..231,352..479,480..543,632..639,1352..1503; 각row640+128j의+1..7/+120..127; Some head258..263; Some after next338..343 |
+| operation |240..255; Some next98..103 |
+| native header |88..127 |
+| occupied home |16..31,68..71,97..103; Some head130..135; Some after next210..215 |
+| redo header |3,60..63 |
+| full page |78..127 + 각home 상대위치. gap[lower,upper)는별도canonicalzero영역 |
+
+frame sectionbases는 outer0/group160/afterdesc352/op1888/nativeheader2144/nativebefore2272/nativeafter2496/redoheader2720/redoafterhome2784다. None frame681,Some frame729=1410개다. 별도 before descriptor None468/Some474=942개, full pages None104+104/Some110+116=434개이다. **여덟 독립 input 역할 총2786개 reserved-byte mutation**을 fresh원본에서각각1로바꾸고 enclosingSHA를고친 뒤Corrupt를assert한다. afterdescriptor standalone fixture는frame내동일bytes이므로중복분모를만들지않는다.
+
+OperationCore의 unused statement/mutation/UndoSeq/current/target/q/cursors/logicaldigest와unknownflags, absent optionalref bytes, statuscore의q/rollback/target 의미는기존필드별음성행으로별도검산한다. page gap은reserved집합에서제외되지만canonical검산을유지하고첫/중간/마지막byte재hash반례를둔다.
+
+#### 13.8.5. 독립 실행과 제한
+
+raw generator를 reviewer 전용 폴더에서 다시 실행해12개원문과byte-identical을확인했다. 별도 raw audit가정수offset·SHA·section길이·ownerchain·Profile·budget summary·page directory·home/core·NativeEffect·Redo·allowed-page-diff를직접대조했다. frame3040/group2848/actoroffset15904와incoming2불변·8192→11232를확인했다. reserved input2786 위치는중복없고원문이0이며dense148cases는모두독립typed-valid산술을통과했다.
+
+실패한 reviewer 스크립트 최초 SyntaxError는 `r2-raw-audit-attempt1.py/.log`에그대로보존했다. 수정은reviewer artifact만했으며제품source·문서·fixture를바꾸지않았다. 제품테스트/새build/문서verifier는실행하지않았다. 코드의8KiB동시workspace, 실제generichelper의legacy전분모보존, immutableinputs, generated8192와고정12시험은구현후D1·보존실행에서확인할의무다.
+
+D2 채택 입력의 SHA-256은 `7c8ad96387ea38b89c860e7f0b17c8b3bc184dbf87f0ca5d1dac4c27659121c7`다. 원문과 독립 보완표는 `artifacts/dev3/semantic-followup-review-20261021/r3-root-adopted-contract-input.md` 및 `r3-root-adoption.json`에 고정했다. 제품 fixture는 `rollback-start-vectors-r1`의10개 bytes를 사용한다.

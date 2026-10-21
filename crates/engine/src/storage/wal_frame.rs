@@ -367,22 +367,33 @@ fn validate_frame_record(
     bytes: &[u8],
     previous: &mut Option<(u64, u64)>,
 ) -> Result<(), WalError> {
-    let record = parse_record(bytes)?;
+    let record = decode_redo_record(header, bytes)?;
     let address = (read_u64(bytes, 8), record.target.page.page_no);
     if previous.is_some_and(|last| last >= address) {
         return Err(WalError::Corrupt);
     }
     *previous = Some(address);
+    Ok(())
+}
+
+/// Validate one complete record's shape and enclosing LSN. This supplies no
+/// semantic group, actual before-page or reservation authority.
+pub(super) fn decode_redo_record(
+    header: WalFrameHeader,
+    bytes: &[u8],
+) -> Result<RedoRecordView<'_>, WalError> {
+    let record = parse_record(bytes)?;
     match record.kind {
-        RedoKind::Patch if record.prior_lsn >= header.lsn => Err(WalError::Corrupt),
-        RedoKind::Patch => Ok(()),
+        RedoKind::Patch if record.prior_lsn >= header.lsn => return Err(WalError::Corrupt),
+        RedoKind::Patch => (),
         RedoKind::Init => validate_init(
             header.stream.database,
             header.lsn,
             record.target,
             record.data,
-        ),
+        )?,
     }
+    Ok(record)
 }
 
 /// Validate every input, including the final record, before returning exact bytes.
@@ -481,7 +492,17 @@ fn visible_equals(
     }
     Ok(())
 }
-fn validate_header_prefix(bytes: &[u8], expected: FrameExpectation) -> Result<(), WalError> {
+#[derive(Clone, Copy)]
+enum PayloadMode {
+    Legacy,
+    Semantic,
+}
+
+fn validate_header_prefix(
+    bytes: &[u8],
+    expected: FrameExpectation,
+    mode: PayloadMode,
+) -> Result<(), WalError> {
     if !valid_stream(expected.stream) {
         return Err(WalError::InvalidInput);
     }
@@ -520,7 +541,12 @@ fn validate_header_prefix(bytes: &[u8], expected: FrameExpectation) -> Result<()
         &expected.previous_lsn.to_le_bytes(),
         WalError::OrderMismatch,
     )?;
-    if bytes.len() >= 8 && bytes[7] > 1 {
+    if bytes.len() >= 8
+        && match mode {
+            PayloadMode::Legacy => bytes[7] > 1,
+            PayloadMode::Semantic => bytes[7] != 2,
+        }
+    {
         return Err(WalError::UnsupportedFormat);
     }
     if bytes.len() >= 16
@@ -611,12 +637,10 @@ fn complete_frame<'a>(
     bytes: &'a [u8],
     expected: FrameExpectation,
 ) -> Result<FrameView<'a>, WalError> {
-    if content_digest(&bytes[..bytes.len() - 32]) != bytes[bytes.len() - 32..] {
-        return Err(WalError::Corrupt);
-    }
-    let header = parsed_header(bytes, expected);
-    let payload = &bytes[FRAME_HEADER_BYTES..bytes.len() - 32];
-    let count = read_u16(bytes, 20);
+    let envelope = complete_envelope(bytes, expected)?;
+    let header = envelope.header;
+    let payload = envelope.payload;
+    let count = envelope.record_count;
     if bytes[7] == 1 {
         let mut previous = None;
         let mut cursor = 0usize;
@@ -655,7 +679,7 @@ pub(crate) fn scan_frame_prefix(
     if input.is_empty() {
         return Ok(FrameScan::End);
     }
-    validate_header_prefix(input, expected)?;
+    validate_header_prefix(input, expected, PayloadMode::Legacy)?;
     if input.len() < FRAME_HEADER_BYTES || input.len() < read_u32(input, 12) as usize {
         return if policy == TailPolicy::ActiveUnrequiredEof {
             Ok(FrameScan::Incomplete)
@@ -679,6 +703,44 @@ pub(crate) fn decode_frame(
         FrameScan::Complete { .. } => Err(WalError::Corrupt),
         FrameScan::End | FrameScan::Incomplete => Err(WalError::Truncated),
     }
+}
+
+/// Envelope only: payload bytes and count have not passed semantic validation.
+/// In particular there is no redo iterator over these bytes.
+pub(super) struct FrameEnvelope<'a> {
+    pub(super) header: WalFrameHeader,
+    pub(super) payload: &'a [u8],
+    pub(super) record_count: u16,
+}
+
+fn complete_envelope(
+    bytes: &[u8],
+    expected: FrameExpectation,
+) -> Result<FrameEnvelope<'_>, WalError> {
+    if content_digest(&bytes[..bytes.len() - 32]) != bytes[bytes.len() - 32..] {
+        return Err(WalError::Corrupt);
+    }
+    Ok(FrameEnvelope {
+        header: parsed_header(bytes, expected),
+        payload: &bytes[FRAME_HEADER_BYTES..bytes.len() - 32],
+        record_count: read_u16(bytes, 20),
+    })
+}
+
+/// Exact tag-2 envelope, with the same prefix identity, length, order and digest
+/// rules as legacy frames. The upper consumer must validate the entire group.
+pub(super) fn decode_semantic_envelope(
+    input: &[u8],
+    expected: FrameExpectation,
+) -> Result<FrameEnvelope<'_>, WalError> {
+    validate_header_prefix(input, expected, PayloadMode::Semantic)?;
+    if input.len() < FRAME_HEADER_BYTES || input.len() < read_u32(input, 12) as usize {
+        return Err(WalError::Truncated);
+    }
+    if input.len() != read_u32(input, 12) as usize {
+        return Err(WalError::Corrupt);
+    }
+    complete_envelope(input, expected)
 }
 
 #[cfg(test)]

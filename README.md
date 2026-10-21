@@ -6,7 +6,7 @@ XADB는 **오픈소스 DBMS를 참고하여, AI가 이해하고 개발하기 좋
 
 PostgreSQL·MariaDB·CUBRID·SQLite 등 공개 DBMS의 문서와 구현을 비교 자료로 사용합니다. 각 기능의 의미와 인수 기준은 XADB 계약으로 정하며, 참고 제품의 SQL·파일·wire 호환이나 성능 우월성을 자동으로 주장하지 않습니다. [제품 방향](devdoc/plans/project-direction.md) · [공개 참고 자료와 로컬 소스 경로](devdoc/reference/opensource-references.md)
 
-현재 DEV0 검증 도구, DEV1 공통 의미·Linux 효과 경계, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog·native worker의 일부 구현을 이관했습니다. 외부 streaming controller와 독립 catalog 판정·저장 recipe 재실행 경로를 추가 이관했으며, 시험 패키지를 재구성한 당시 소스에서 DEV0·DEV1 회귀와 DEV2 P0/K0 leaf 검증을 실제 실행했습니다. **K1–K5 영속 transaction/WAL/recovery는 구현 연결·일부 로컬 검증을 마쳤으며 최종 인수는 대기 중입니다. DEV3는 저장 표현과 선택 page 읽기를 부분 구현했으며 실제 page 쓰기·buffer·index 연산·복구 인수는 미완료입니다. SQL·서버도 아직 구현되지 않았습니다.** 이전 회귀 결과는 현재 소스의 검증을 대신하지 않습니다. K0의 임시 메모리 상태는 커널 개발 기반이며 독립 메모리 DBMS 제품이 아닙니다. [현재 구현과 실행 상태](devdoc/implementation/README.md)
+현재 DEV0 검증 도구, DEV1 공통 의미·Linux 효과 경계, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog·native worker의 일부 구현을 이관했습니다. 외부 streaming controller와 독립 catalog 판정·저장 recipe 재실행 경로를 추가 이관했으며, 시험 패키지를 재구성한 당시 소스에서 DEV0·DEV1 회귀와 DEV2 P0/K0 leaf 검증을 실제 실행했습니다. **K1–K5 영속 transaction/WAL/recovery는 구현 연결·일부 로컬 검증을 마쳤으며 최종 인수는 대기 중입니다. DEV3는 저장 표현·선택 page 읽기·RollbackStart의 descriptor/page/WAL 결합 검산을 부분 구현했으며 실제 page 쓰기·buffer·index 연산·복구 인수는 미완료입니다. SQL·서버도 아직 구현되지 않았습니다.** 이전 회귀 결과는 현재 소스의 검증을 대신하지 않습니다. K0의 임시 메모리 상태는 커널 개발 기반이며 독립 메모리 DBMS 제품이 아닙니다. [현재 구현과 실행 상태](devdoc/implementation/README.md)
 
 COMM의 AXF1 stream·Linux local socket·quota·deadline·취소/종료와 focused 시험 실행기를 추가했습니다. 전체 C1 인수는 미완료이며 [COMM 구현 기록](devdoc/implementation/comm-implementation.md)에서 검증 범위와 잔여 작업을 확인합니다.
 

@@ -1,0 +1,260 @@
+{
+  "origin": {
+    "revision": "ff6617c566f60e9ec6ba74d7b00dc9b3a812bd87",
+    "tracked_diff_sha256": "98c2a6981981b5249f8ee80392f3464947546dc65f284fbb649175465e4657af",
+    "source_sha256": "99bec497054e4095c4c5cbedb7e30ae89f9cc4cbc9910670f04deafabb5b472a",
+    "lockfile_sha256": "f67269ca67484a0241bf06f22dee740fe6943bfe38d204193ab7fbcddec28a45"
+  },
+  "source_sha256": "99bec497054e4095c4c5cbedb7e30ae89f9cc4cbc9910670f04deafabb5b472a",
+  "scope": "RollbackStart full descriptor/status-page/WAL byte observation; no append/write/source-pin/restoration/apply authority",
+  "lower_regression": "NOT_RUN_ON_THIS_SOURCE",
+  "source": "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/source",
+  "checks": [
+    {
+      "id": "build",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/build.log",
+      "log_sha256": "2b19bbd53685f8e2807a7a8dace106b5413b4389faa4fceed6e65b494e14ef4c",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "semantic_group",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/engine-binary",
+        "storage::semantic_group::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/semantic_group.log",
+      "log_sha256": "efa2fb266ae3c44f8eb9f08d3c4c2073d799b4cff9421ed8bd3d2ffefda65147",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "wal_frame",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/engine-binary",
+        "storage::wal_frame::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/wal_frame.log",
+      "log_sha256": "92470a3715f50c47d60c193f3010b742d7b3ca1d3aa9862e13de0d4421693afd",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "page",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/engine-binary",
+        "storage::page::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/page.log",
+      "log_sha256": "151e6d5f7c8b90d4c45691ede6b9149df8be6f97989d8e15b74a360cb6b7c6ab",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "status_home",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/engine-binary",
+        "storage::status_home::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/status_home.log",
+      "log_sha256": "5896195f2d2d9a28375c1c1f76ddc6f1b1bfe16cf0fa14cb5aad29aaa97480f9",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "obligation",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/engine-binary",
+        "storage::obligation::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/obligation.log",
+      "log_sha256": "17052bf918c25d627687506d5ce6e762ef2a9a6418a3885b876aa8b4f7e97403",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "control",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/engine-binary",
+        "storage::control::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/control.log",
+      "log_sha256": "26b109c8c769d120979bea75bf444192c90d693b19525157e35917879ab458e7",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "transaction_record",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/engine-binary",
+        "storage::transaction_record::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/transaction_record.log",
+      "log_sha256": "f08cb32aebf41a491d5d3e7800dbf8f4f4b3d8b401c845513f45c6302ed29e92",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/clippy.log",
+      "log_sha256": "3efe276de2c97b461628338e1113f6a3c4476b85ff4ccb336aa0284c3f8d4780",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/fmt.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "contract_sha256": {
+    "devdoc/contracts/dev3-obligation-format.md": "3235cd61e87c47f080b67e1153a35cfa788b540cfb94d5b54a45f30aa6187d37",
+    "devdoc/contracts/dev3-wal-format.md": "59aa5a93c387a83b98b6b615f287c7c60fb8a47ec87759682fa443255b32f4a0",
+    "devdoc/contracts/dev3-page-format.md": "145acea1f16da02d6868d0cc38e05f696c3b1b18aed356e8842e11e4d01e5fab",
+    "devdoc/contracts/dev3-status-home.md": "2e65df7184d6a0d8ad0f87f65cf3ead2bf35fe40e4e5e5e2ed2ffdbeba5d7b6b",
+    "devdoc/contracts/dev3-transaction-format.md": "a1bdd346fa8369c8f3f110e122fc2e3850980fef6b12aaa6a5d61eb663ddde6e",
+    "devdoc/contracts/dev3-control-format.md": "ca0cc1e4264741b7b8ff21ebde31e7fb16333584e7c9f6fc8925df51c1c4bddc"
+  },
+  "binary": {
+    "path": "/home/et16/work/xadb/artifacts/dev3/rollback-start-retained-r1/engine-binary",
+    "sha256": "994bad52fdba471d338d4c4484a068626c36b0dfc5dd6dcd1339cd0e9bb48d2d",
+    "features": []
+  },
+  "tests": {
+    "semantic_group": [
+      "rollback_start_cost_transfer_is_exact",
+      "rollback_start_generated_profiles_match_independent_transition",
+      "rollback_start_group_sections_are_exact",
+      "rollback_start_legacy_frames_and_limits_are_preserved",
+      "rollback_start_lengths_and_damage",
+      "rollback_start_literals_bind_full_state",
+      "rollback_start_operation_core_matches_head",
+      "rollback_start_ordering_uses_stream_and_page_positions",
+      "rollback_start_owner_chain_and_profile_are_bound",
+      "rollback_start_preserves_other_page_bytes",
+      "rollback_start_redo_and_native_match_exact_cell",
+      "rollback_start_status_pages_are_complete"
+    ],
+    "wal_frame": [
+      "wal_all_encoders_preserve_output",
+      "wal_exact_frame_and_record_limits",
+      "wal_frame_identity_and_lsn_chain",
+      "wal_frame_literal_and_kind_matrix",
+      "wal_generated_profiles_match_independent_fields",
+      "wal_init_records_bind_complete_page_images",
+      "wal_patch_records_are_bounded_after_images",
+      "wal_redo_groups_are_canonical_and_borrowed",
+      "wal_rejects_complete_checksum_and_semantic_damage",
+      "wal_stream_prefix_preserves_following_frames",
+      "wal_tail_classification_is_strict"
+    ],
+    "page": [
+      "every_kind_and_internal_level_boundary_is_checked",
+      "every_truncation_trailing_byte_and_single_byte_damage_is_rejected",
+      "exact_page_capacity_and_all_encode_errors_preserve_output",
+      "expected_database_file_page_incarnation_owner_and_kind_are_required",
+      "fixed_64_seed_128_operation_envelope_campaign_preserves_cells",
+      "independent_page_vectors_match_every_byte_and_borrow_exact_cells",
+      "valid_checksum_does_not_hide_invalid_structure_or_zero_identities"
+    ],
+    "status_home": [
+      "status_home_count_delta_is_checked_and_atomic",
+      "status_home_encoder_errors_preserve_output",
+      "status_home_generated_profiles_match_independent_fields",
+      "status_home_literals_match_core_and_count",
+      "status_home_lookup_rejects_stale_aliases",
+      "status_home_page_validates_all_slots_and_namespace",
+      "status_home_rejects_lengths_headers_and_free_references"
+    ],
+    "obligation": [
+      "descriptor_budget_sums_peaks_and_growth_are_exact",
+      "descriptor_empty_inventory_and_chain_boundaries",
+      "descriptor_encoder_errors_preserve_output",
+      "descriptor_expected_context_and_unsupported_work_root",
+      "descriptor_generated_profiles_match_independent_fields",
+      "descriptor_lengths_and_every_byte_damage_reject",
+      "descriptor_literals_bind_exact_owner_profile_and_state",
+      "descriptor_reserved_and_semantic_damage_reject_after_checksum"
+    ],
+    "control": [
+      "control_encoders_preserve_outputs",
+      "control_envelope_corruption_is_rejected",
+      "control_filemap_cursor_rejects_mixed_inventory",
+      "control_filemap_exact_bounds",
+      "control_filemap_literals",
+      "control_generated_inventory_profiles",
+      "control_names_and_bootstrap_ownership",
+      "control_profile_literals",
+      "control_profiles_require_exact_capacities",
+      "control_selector_bindings_and_lengths"
+    ],
+    "transaction_record": [
+      "all_length_boundaries_reject_without_output_changes",
+      "fixed_corrupt_fields_are_rejected",
+      "generated_transaction_records_roundtrip_without_effects",
+      "identity_literals_and_limits_are_canonical",
+      "stamp_and_logical_version_identities_are_distinct",
+      "state_and_namespace_matrix_is_exact",
+      "status_literals_preserve_rollback_and_terminal_heads",
+      "status_lookup_binds_logical_and_physical_identity"
+    ]
+  },
+  "source_sha256_after": "99bec497054e4095c4c5cbedb7e30ae89f9cc4cbc9910670f04deafabb5b472a",
+  "status": "PASS"
+}

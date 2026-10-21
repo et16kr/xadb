@@ -79,6 +79,18 @@ pub(crate) struct StatusHomePage<'a> {
 }
 
 impl StatusHomePage<'_> {
+    pub(super) fn lsn(&self) -> u64 {
+        self.page.header().lsn.0
+    }
+
+    pub(super) fn cell_range(&self, slot: usize) -> Option<std::ops::Range<usize>> {
+        self.page.cell_range(slot)
+    }
+
+    pub(super) fn cell_bytes(&self, slot: usize) -> Option<&[u8]> {
+        self.page.cell(slot)
+    }
+
     pub(crate) fn len(&self) -> usize {
         self.page.len()
     }
