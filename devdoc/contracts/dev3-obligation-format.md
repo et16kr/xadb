@@ -4,9 +4,9 @@
 
 [예약 인계](disk-storage-design.md#recovery-reservation) · [변경 규약](disk-storage-design.md#mutation-protocol) · [REBASE](disk-storage-design.md#recovery-rebase) · [profile](disk-storage-design.md#capacity-profile) · [WAL frame](dev3-wal-format.md) · [거래](dev3-transaction-format.md) · [allocator](dev3-allocation-format.md) · [undo](dev3-undo-format.md) · [실제 크기 계산](dev3-resource-bounds.md) · [M04](dev3-recovery-model.md) · [M06](dev3-reservation-model.md) · [소유 범위](../implementation/dev3-implementation.md#wave-2)
 
-이 문서는 거래·system 작업의 **남은 복구 의무를 정해진 bytes로 인계하는 최소 표현**과 그 표현을 WAL의 효과·진행점에 결합하는 규칙을 제안한다. 원래 초안 작성자는 `/root/dev3_model`이다. 재개 뒤 `/root`가 §12의 좁은 descriptor 표현 구현·통합을 맡고 `/root/dev3_selector_review`가 독립 검토한다. §12 밖의 의미 그룹·inventory·복구는 여전히 제안이며 frame codec이나 기본 제품 API에 연결하지 않는다.
+이 문서는 거래·system 작업의 **남은 복구 의무를 정해진 bytes로 인계하는 최소 표현**과 그 표현을 WAL의 효과·진행점에 결합하는 규칙을 제안한다. 원래 초안 작성자는 `/root/dev3_model`이다. 재개 뒤 `/root`가 §12의 좁은 descriptor 표현 구현·통합을 맡고 `/root/dev3_selector_review`가 독립 검토한다. §12 밖에서는 [ownership 별도 계약](dev3-ownership-format.md)의 bytes·합계·물리 충돌 관측만 추가 수용했다. 나머지 의미 그룹·완전한 inventory closure·복구는 여전히 제안이며 frame codec이나 기본 제품 API에 연결하지 않는다.
 
-descriptor의 형식 수락, checkpoint closure 검산, 실제 page 적용·복구 성공은 서로 다른 결과다. 기존 WAL `Opaque`를 descriptor로 간주하지 않는다. 아래 의미 그룹도 실제 before page·native record·자원 profile을 대조하는 적용기가 없으면 복구 완료를 뜻하지 않는다. **TxnRef incoming count의 home 위치, retirement queue, CURRENT/WRITER/checkpoint의 최종 선택 형식, opcode별 F05 상한은 아직 미완료**다. 이 항목이 필요한 opcode를 구조만 맞는 payload로 성공시키지 않는다.
+descriptor의 형식 수락, checkpoint closure 검산, 실제 page 적용·복구 성공은 서로 다른 결과다. 기존 WAL `Opaque`를 descriptor로 간주하지 않는다. 아래 의미 그룹도 실제 before page·native record·자원 profile을 대조하는 적용기가 없으면 복구 완료를 뜻하지 않는다. **TxnRef incoming count의 실제 갱신·WAL 결합, retirement queue, CURRENT/WRITER/checkpoint의 최종 선택 형식, opcode별 F05 상한은 아직 미완료**다. 이 항목이 필요한 opcode를 구조만 맞는 payload로 성공시키지 않는다.
 
 ## 1. 선택과 독립 검토 대상
 
@@ -30,7 +30,7 @@ descriptor의 형식 수락, checkpoint closure 검산, 실제 page 적용·복�
 
 control 참조는 병렬 control 계약의 제안과 같은64 bytes를 사용한다. offset0 kind,1 bank/slot,2..3 zero,4..7 object index:u32,8..15 generation:u64,16..19 exact logical encoded length:u32,20..31 zero,32..63 해당 logical bytes 전체의 SHA-256이다. namespace는 ref를 소유한 checksummed 상위 object와 신뢰한 expected context에서 전달한다. 물리 slot의 나머지 padding은 hash 길이에 포함하지 않는다. generation/length는 nonzero다.
 
-Profile ref는 kind1/slot0/index0/length4096이다. 이 문서는 control tag **OwnershipRoot5, OwnershipChunk6**을 제안한다. 기존 Profile/Filemap/DWB tag의 변경 권한을 가져오지 않는다. tag 등록은 control owner와 통합 담당의 D2 수락 이후다. root는 bank0..2/index0, chunk는 같은 bank/index0..chunk_count−1이다. 뒤에서 설명하는 chunk aggregate hash 때문에 root에 chunk ref 배열을 전부 둘 필요는 없다.
+Profile ref는 kind1/slot0/index0/length4096이다. [ownership 별도 D2](dev3-ownership-format.md)는 control tag **OwnershipRoot5, OwnershipChunk6**의 표현 등록을 수용한다. 기존 Profile/Filemap/DWB tag의 변경 권한을 가져오지 않는다. 실제 namespace 파일명·선택·설치는 이번 등록 범위 밖이다. root는 bank0..2/index0, chunk는 같은 bank/index0..chunk_count−1이다. 뒤에서 설명하는 chunk aggregate hash 때문에 root에 chunk ref 배열을 전부 둘 필요는 없다.
 
 checkpoint가 제공해야 할 기대값은 DB/timeline, immutable profile ref, capture LSN, 선택된 root ref 및 owner 표다. 입력 descriptor나 chunk에서 expected 값을 복사해 자기 자신과 비교하지 않는다. reference bytes의 형식 수락만으로 대상 object의 존재·hash·namespace 검산이 완료되지는 않는다.
 
@@ -189,7 +189,7 @@ chunk header는 root와 같은 magic/version, offset6=Chunk2,7=같은 bank,8=128
 
 root를 선택한 뒤 chunk index0..C−1의 **모든** bytes와 identity/length/checksum/order/중복·overlap을 검사하고 root의 aggregate digest까지 일치해야 closure 검산이 끝난다. 마지막 chunk 손상을 앞 chunk 성공으로 덮지 않는다. SHA를 다시 계산한 논리 오류도 count/owner/순서/범위 검산이 따로 거절해야 한다.
 
-PageToken과 slot/growth의 교차 overlap은 한 번의 kind순 정렬만으로 전부 드러나지 않는다. 별도 bounded pass로 각 resource의 alias를 검사한다. 초기 정확한 검산 방식은 current item 하나를 들고 다른 kind의 stream을 다시 순회하는 방식이다. RAM은 bounded지만 O(N²) I/O 가능성이 있으므로 성능/정상 startup 인수 완료로 주장하지 않는다. 이후 더 나은 bounded join/색인은 독립 검토 대상이며, 검산 자체를 생략하는 최적화는 허용하지 않는다.
+PageToken과 slot/growth의 교차 overlap은 한 번의 kind순 정렬만으로 전부 드러나지 않는다. 별도 bounded pass로 각 resource의 alias를 검사한다. [별도 ownership 계약](dev3-ownership-format.md)은 네 kind cursor의 merge와 첫 owner 합계 pass로 성공5C read·고정 메모리 검산을 수용했다. 이 결과는 owner-local intent 유일성·slot 실재·전체 closure를 증명하지 않는다. 실제 startup I/O/성능 인수는 남아 있으며 검산 자체를 생략하는 최적화는 허용하지 않는다.
 
 ### 4.3 Prefix 복원과 RAM
 
@@ -417,9 +417,9 @@ F03 oracle은 candidate decode/summary를 기대값으로 사용하지 않는다
 
 ## 10. 미완료와 다음 검토
 
-§12의 고정 descriptor 표현만 독립 검토 뒤 구현할 수 있다. 나머지 ownership/header·실제 의미 적용은 다음을 닫기 전까지 **구현 시작 승인 전 초안**이다.
+§12의 고정 descriptor 표현과 [별도 수용된 ownership 관측](dev3-ownership-format.md)만 구현할 수 있다. 완전한 ownership closure·실제 의미 적용은 다음을 닫기 전까지 **구현 시작 승인 전 초안**이다.
 
-- control owner의 kind5/6과 namespace/선택 형식 수용, checkpoint의 정확한 current/previous·WRITER/high-water closure.
+- 등록된 kind5/6의 실제 namespace/선택 형식 수용, checkpoint의 정확한 current/previous·WRITER/high-water closure.
 - system4의 nested operation 검산, N_max와 inventory3 bank·checkpoint2개·전체 fixed 보호 영역의 F05 수치.
 - NativeEffect의 logical projection과 실제 opcode 필수 section 표. status incoming count/queue/retirement native bytes.
 - 7 literal의 모든 입력·SHA와12 test의 정확한 negative/matrix 분모. 초안 표를 실행 증거로 쓰지 않음.

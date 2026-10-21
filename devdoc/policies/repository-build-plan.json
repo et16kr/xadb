@@ -1108,5 +1108,28 @@
     "dependencies_changed": false,
     "full_stage_acceptance": false,
     "local_tests": 8
+  },
+  "dev3_ownership_observation": {
+    "implementation_ref": "dev3-implementation.md",
+    "contract_ref": "dev3-ownership-format.md",
+    "source": [
+      "crates/engine/src/storage/ownership.rs",
+      "crates/engine/src/storage/ownership_tests.rs"
+    ],
+    "fixtures": [
+      "crates/engine/tests/fixtures/dev3-ownership-boundary-chunk0.bin",
+      "crates/engine/tests/fixtures/dev3-ownership-boundary-chunk1.bin",
+      "crates/engine/tests/fixtures/dev3-ownership-boundary-root.bin",
+      "crates/engine/tests/fixtures/dev3-ownership-boundary-txn.bin",
+      "crates/engine/tests/fixtures/dev3-ownership-empty-root.bin",
+      "crates/engine/tests/fixtures/dev3-ownership-mixed-chunk.bin",
+      "crates/engine/tests/fixtures/dev3-ownership-mixed-root.bin",
+      "crates/engine/tests/fixtures/dev3-ownership-mixed-system.bin",
+      "crates/engine/tests/fixtures/dev3-ownership-mixed-txn.bin"
+    ],
+    "source_roots_changed": false,
+    "dependencies_changed": false,
+    "full_stage_acceptance": false,
+    "local_tests": 12
   }
 }

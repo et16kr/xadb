@@ -352,3 +352,16 @@ runner의8개 exact 시험 등록은 `artifacts/dev3/obligation-independent-revi
 완료된 descriptor 통합 실행도 `artifacts/dev3/obligation-worker-cleanup-20261021/summary.json`과 journal에서 worker890개·3개 동일 binary를 대조하여 약19.49GiB를 추가 회수했다. SHA 불일치로 보존해야 할 사본은0개였으며 검증 경로·bytes와 data는 유지했다.
 
 최종 독립 검토 `artifacts/dev3/obligation-independent-review-20261021/r3-final-evidence-review.json`은 retained source 두 사본·승인 제품 입력10개와 runner2개·계약18개·checker3개·로그106개·고유 hash 경로1,394개를 대조했다. native99의 result/consistency·완전한 inventory와 binary hash를 확인했고, kernel engine의159 PASS와 기존30분 fuzz1 ignored를 구분했다. 이 descriptor 표현 단위의 commit 차단 사항은 없으며 전체 DEV3 인수로 승격하지 않는다.
+
+<a id="ownership-observation-results"></a>
+### Ownership bytes·합계·물리 충돌의 bounded 관측
+
+`/root`가 [ownership 검산 계약](../contracts/dev3-ownership-format.md)의 제품 구현·통합을, `/root/dev3_selector_review`가 독립 검토를 맡는다. 선행 통합 source는 `7dabd13a01a71460f68fa3644a94803943e11501fd6c8ff92127d0b686a8827e`이며 descriptor 단위 commit은 `d94bb32`다. 독립 D2 수용 뒤 private `ownership.rs`와 시험·9 literal, ControlKind5/6과 validate-only descriptor helper를 단일 작성한다. 공유 module·runner·색인·배치 등록은 root가 순차 반영한다.4×16KiB scratch와 고정 owner 통계·4-way merge로 관측 bytes/합계/물리 충돌을 확인하며 실제 intent 유일성·slot 상태·선택 source 고정·RESERVE_RESTORE 성공은 제공하지 않는다. 제품 compile과 초기 고정12시험·관련 control10/descriptor8·Clippy/fmt를 통과했다. 독립 검토에서 category 검산이 count 오류에 가려지는 시험 공백을 찾아 총합을 보존하는30개 반례를 추가했다. chunk의 선언 count/길이 모순이 identity 오류로 분류되던 구현도 Corrupt로 수정했으며 수정 후12시험이 PASS했다. 최종 보존 source의 독립 재현·하위 회귀 결과는 아래와 같다.
+
+완료된 descriptor leaf의 disposable Cargo target도 `artifacts/dev3/obligation-worker-cleanup-20261021/build-cache-cleanup.json`에서 정리했다. 별도 보존10개 binary의 SHA를 전후 확인했으며 약3.38GiB를 회수했다. 현재 ownership 검증에 쓰는 target은 유지한다.
+
+최종 국소 source `31ab0f0140d244ef21826292cb986790cffac2a8e71f5ed5c8d10650e89e42bc`는 `artifacts/dev3/ownership-retained-r2/source`에 보존했다. [국소 원본](../evidence/dev3-ownership-local-xadb-20261021-r2.json)의 ownership12·control10·descriptor8·Clippy/fmt는 PASS다. 독립 검토 `artifacts/dev3/ownership-independent-review-20261021/r2-retained-evidence-review.json`은 실제 보존 binary의30시험과 source/binary/hash를 재현했다. 초기 r0/r1은 count/길이 오류 분류 수정 전 사본으로 원래 결과를 보존하며 최종 소스로 대체 해석하지 않는다. 같은 source의 [DEV2 kernel18check·native99셀](../evidence/dev3-ownership-dev2-kernel-xadb-20261021-r1.json), [통합 leaf43check](../evidence/dev3-ownership-leaf-xadb-20261021-r1.json), [하위 회귀28check](../evidence/dev3-ownership-dev2-regression-xadb-20261021-r1.json)도 PASS했다. 통합 source는 `artifacts/dev3/leaf-8v68xoiu/source`와 `/home/et16/x3i-egjna3v3/source`에 보존했다. engine 표현·reader142시험 및 기존 selector·metadata·native reader·부분 모델과 DEV0/1·DEV2 P0/K0의 고정 회귀다. 실제 inventory slot 상태·현재 intent 유일성·복구 예약 복원과 전체 DEV3 인수는 미완료다.
+
+완료된 초기 ownership r0/r1 target에서 약0.43GiB, kernel target에서 약0.49GiB를 제거하고 보존 binary hash를 확인했다. kernel worker206개를1개 동일 binary로 hardlink 통합하여 약5.03GiB를 추가 회수했다. `artifacts/dev3/ownership-cache-cleanup-20261021/`과 `ownership-kernel-worker-cleanup-20261021/`에 경로·전후 hash·journal이 있다. 현재 실행 중인 leaf는 제외했다.
+
+최종 독립 검토 `artifacts/dev3/ownership-independent-review-20261021/r4-final-evidence-review.json`은 같은 source의 leaf43·하위 회귀28·DEV1/DEV0 각8·kernel18check 결과와 계약19개·checker3개·로그111개·asset hash 참조474개를 대조했다. kernel crash 이미지의 상세 해시는 선행 `r3-kernel-partial-review.json`의3,550개 참조 대조와 연결했다. 추가 제품 재실행이나 전체 DEV3 인수로 표시하지 않으며, 이 ownership 관측 단위의 commit 차단 사항은 없다.

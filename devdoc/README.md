@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-21 [DEV3 ownership 관측](implementation/dev3-implementation.md#ownership-observation-results): 고정 공간으로 inventory bytes·owner별 합계·물리 충돌을 검증했다. 같은 소스의 leaf43·하위 회귀28·DEV2 복구18check(native99셀)·Clippy/fmt PASS이며 intent 유일성·실제 예약 복원·DEV3 인수는 미완료다.
+
 2026-10-21 [DEV3 재개·선택 page 읽기](implementation/dev3-implementation.md#page-reader-results): selector·열린 handle metadata·제한된 page 읽기를 구현하고 같은 보존 source의 leaf·DEV0/1/2 회귀·DEV2 복구99셀을 통과했다. 전체 DEV3 완료 목표로 계속 진행하며 실제 쓰기·복구·S1 인수는 남아 있다.
 
 2026-10-21 [DEV3 catalog·undo·control 표현](implementation/dev3-implementation.md#catalog-undo-control): 동일 보존 source에서 표현110개·DEV0/1/2 회귀·DEV2 복구99셀 PASS. 이 단계 commit 뒤 [사용자 요청으로 중지](implementation/dev3-implementation.md#paused-20261021)하며 전체 DEV3는 미완료다.

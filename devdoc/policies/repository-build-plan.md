@@ -204,6 +204,8 @@ DEV3 첫 표현 leaf는 [page 형식](../contracts/dev3-page-format.md)을 priva
 
 [복구 의무 descriptor](../contracts/dev3-obligation-format.md#12-독립-descriptor-표현-leaf-제안)는 private `storage/obligation.rs`·`obligation_tests.rs`와 engine의3개1536-byte literal에 둔다. dependency/feature·기본 제품 API 변경 없이 owner/profile/budget 표현만 검산한다. inventory closure·예약 복원·WAL 적용 타입으로 승격하지 않는다.
 
+[Ownership 관측](../contracts/dev3-ownership-format.md)은 private `storage/ownership.rs`·`ownership_tests.rs`와9개 literal에 둔다. 기존 descriptor/control 참조를 소비하며 caller의4×16KiB scratch와 고정 통계로 bytes·budget·물리 충돌을 검산한다. 새 dependency/feature·source root는 없으며 intent 유일성·예약 복원·실제 선택 I/O는 후속 의무다.
+
 두 번째 표현 작업의 [composite key](../contracts/dev3-key-format.md)는 caller buffer와 기존 foundation scalar bytes를 사용한다. foundation의 exact-size/encode-into/prefix 검사와 engine의 key 시험을 위 leaf 실행기에 함께 등록한다. M01–M06의 후속 모델은 reference integration tests에 두며 각 모델 계약·실제 receipt와 전체 DEV3 실행을 구분한다.
 
 PageRef·UndoRef·anchor의 [참조 표현](../contracts/dev3-reference-format.md)도 같은 leaf 실행기의 고정 분모다. `scripts/check_dev3_models.py`는 M01–M06을 명시 선택하여 보존 source에서 release binary를 만들고 case·witness·반례·budget 검사 분모를 확인한다. 전체 DEV3 실행기로 사용하지 않는다. 실행기 자기검사는 `scripts/test_check_dev3_models.py`이며 M03/M06의 고정 inventory·형식 검사 helper와 자기검사는 `scripts/dev3_progress_receipts.py`, `scripts/test_dev3_progress_receipts.py`다. 실제 판정에 사용한 checker와 보존 source의 hash를 대조하고 progress helper는 보존 사본에서 직접 읽는다.

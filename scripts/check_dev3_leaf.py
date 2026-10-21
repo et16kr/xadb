@@ -25,6 +25,20 @@ from check_dev0 import check_report_paths, digest, source_fingerprint
 from comm_campaign import capture_source, identity, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
+OWNERSHIP_TESTS = {
+    'inventory_literals_bind_all_bytes_and_owners',
+    'inventory_root_chunk_truncation_and_damage_reject',
+    'inventory_reserved_and_header_damage_reject_after_checksum',
+    'inventory_expected_owners_and_capture_are_required',
+    'inventory_item_bounds_and_generations_are_checked',
+    'inventory_canonical_order_spans_chunk_boundaries',
+    'inventory_owner_digests_and_category_budgets_are_exact',
+    'inventory_physical_aliases_and_intervals_match_pairwise_oracle',
+    'inventory_all_lanes_drain_and_bind_repeated_bytes',
+    'inventory_source_failures_and_workspace_are_bounded',
+    'inventory_intent_uniqueness_is_explicitly_not_proven',
+    'inventory_generated_profiles_match_independent_fields',
+}
 OBLIGATION_TESTS = {
     'descriptor_literals_bind_exact_owner_profile_and_state',
     'descriptor_lengths_and_every_byte_damage_reject',
@@ -411,7 +425,7 @@ def main():
     source = session / 'source'
     report = {
         'schema_version': 1, 'date': datetime.now(timezone.utc).isoformat(),
-        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/status-home/obligation-descriptor/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads + D3-M02-P01; no disk engine or S1 acceptance',
+        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/status-home/obligation-descriptor/ownership-observation/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads + D3-M02-P01; no disk engine or S1 acceptance',
         'status': 'RUNNING', 'origin': identity(ROOT), 'artifact_directory': str(session),
         'dev3_acceptance': 'INCOMPLETE', 'checks': [], 'builds': [],
         'checker_identity_scope': 'F07 file freeze and before/after disk hashes; not bytecode attestation or protected CI',
@@ -459,6 +473,7 @@ def main():
                 'devdoc/contracts/dev3-transaction-format.md',
                 'devdoc/contracts/dev3-status-home.md',
                 'devdoc/contracts/dev3-obligation-format.md',
+                'devdoc/contracts/dev3-ownership-format.md',
                 'devdoc/contracts/dev3-wal-format.md', 'devdoc/contracts/dev3-allocation-format.md',
                 'devdoc/contracts/dev3-row-format.md', 'devdoc/contracts/dev3-doublewrite-format.md',
                 'devdoc/contracts/dev3-catalog-format.md', 'devdoc/contracts/dev3-undo-format.md',
@@ -486,6 +501,7 @@ def main():
                                ('transaction_record', TRANSACTION_TESTS),
                                ('status_home', STATUS_HOME_TESTS),
                                ('obligation', OBLIGATION_TESTS),
+                               ('ownership', OWNERSHIP_TESTS),
                                ('wal_frame', WAL_TESTS), ('allocation_page', ALLOCATION_TESTS),
                                ('row_record', ROW_TESTS), ('doublewrite_control', DOUBLEWRITE_TESTS),
                                ('catalog_record', CATALOG_TESTS), ('undo_record', UNDO_RECORD_TESTS),

@@ -6,6 +6,7 @@ pub(crate) mod doublewrite_control;
 pub(crate) mod key;
 mod obligation;
 pub(crate) mod overflow;
+mod ownership;
 pub(crate) mod page;
 pub(crate) mod page_io;
 pub(crate) mod row_record;

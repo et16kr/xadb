@@ -75,16 +75,16 @@ ControlRef는 namespace를 중복 저장하지 않는다. 그 reference를 담�
 
 | ref offset | bytes | 값 |
 | --- | --- | --- |
-| 0 | 1 | Profile1, FileMapRoot2, FileMapChunk3, Doublewrite4 |
-| 1 | 1 | file slot; Profile0, 나머지0/1 |
+| 0 | 1 | Profile1, FileMapRoot2, FileMapChunk3, Doublewrite4, OwnershipRoot5, OwnershipChunk6 |
+| 1 | 1 | file slot; Profile0, FileMap/DWB0/1, Ownership0..2 |
 | 2 | 2 | reserved0 |
-| 4 | 4 | object index; chunk0..127, 그 밖0 |
+| 4 | 4 | object index; FileMapChunk0..127, OwnershipChunk0..u32MAX, 그 밖0 |
 | 8 | 8 | nonzero generation |
 | 16 | 4 | exact logical encoded length |
 | 20 | 12 | reserved0 |
 | 32 | 32 | trailer 포함 전체 logical bytes SHA-256 |
 
-Profile 길이는4,096, root는`224+96K`(0≤K≤128), chunk는`160+96N`(1≤N≤64), DWB는`160+88N`(0≤N≤64)다. all-zero digest를 sentinel로 해석하지 않는다. 다른 kind/slot/index/length 조합은 거절한다. 이 reference를 만들었다고 대상 파일이나 체크포인트/ownership closure가 존재하는 것은 아니다. 후속 obligation/checkpoint kind 등록은 그 body의 별도 D2와 함께 수행한다.
+Profile 길이는4,096, root는`224+96K`(0≤K≤128), chunk는`160+96N`(1≤N≤64), DWB는`160+88N`(0≤N≤64)다. all-zero digest를 sentinel로 해석하지 않는다. 다른 kind/slot/index/length 조합은 거절한다. 이 reference를 만들었다고 대상 파일이나 체크포인트/ownership closure가 존재하는 것은 아니다. [ownership의 별도 D2](dev3-ownership-format.md)로 kind5/6을 등록했다. OwnershipRoot 길이는`160+56O`(0≤O≤36), OwnershipChunk는`160+96I`(1≤I≤169)다. 두 새 kind의 물리 파일명은 미동결이므로 `control_file_name`은 UnsupportedFormat을 반환하고 기존 selector는 계속 FileMapRoot/Doublewrite만 소비한다. 후속 checkpoint 등록과 실제 ownership 선택·설치는 별도 계약이 필요하다.
 
 selector는 정확4,096 bytes이며 마지막32 bytes는 앞4,064 bytes의 SHA-256이다.
 

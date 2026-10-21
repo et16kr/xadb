@@ -241,6 +241,11 @@ fn validate(spec: &DescriptorSpec) -> Result<Summary> {
     })
 }
 
+/// Recheck a caller-assembled descriptor without allocating an encoding buffer.
+pub(crate) fn validate_descriptor(spec: &DescriptorSpec) -> Result<()> {
+    validate(spec).map(|_| ())
+}
+
 fn get(input: &[u8], offset: usize) -> u64 {
     let mut value = [0; 8];
     value.copy_from_slice(&input[offset..offset + 8]);

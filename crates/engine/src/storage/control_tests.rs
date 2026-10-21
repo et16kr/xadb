@@ -514,13 +514,103 @@ fn control_selector_bindings_and_lengths() {
             .and_then(|selected| decode_filemap_root(&map.root, selected.reference, p).map(|_| ()));
         assert!(result.is_err(), "binding {case}");
     }
-    for kind in [0, 5, 255] {
+    for kind in [0, 7, 255] {
         let mut bytes = hex(literals[0]);
         bytes[0] = kind;
         assert_eq!(
             ControlRef::decode(&bytes),
             Err(ControlError::UnsupportedFormat)
         );
+    }
+    for (kind, minimum, maximum, stride) in [
+        (ControlKind::OwnershipRoot, 160, 2176, 56),
+        (ControlKind::OwnershipChunk, 256, 16384, 96),
+    ] {
+        for slot in 0..=2 {
+            for encoded_len in [minimum, minimum + stride, maximum] {
+                let reference = ControlRef {
+                    kind,
+                    slot,
+                    index: 0,
+                    generation: 60,
+                    encoded_len,
+                    digest: [3; 32],
+                };
+                let mut bytes = [0; 64];
+                reference.encode(&mut bytes).unwrap();
+                assert_eq!(ControlRef::decode(&bytes).unwrap(), reference);
+                assert_eq!(
+                    control_file_name(reference),
+                    Err(ControlError::UnsupportedFormat)
+                );
+                for role in [SelectorRole::FileMap, SelectorRole::Doublewrite] {
+                    let mut output = [0xa5; SELECTOR_BYTES];
+                    assert!(
+                        encode_selector(
+                            role,
+                            SelectedControl {
+                                generation: 2,
+                                reference
+                            },
+                            p,
+                            &mut output
+                        )
+                        .is_err()
+                    );
+                    assert!(output.iter().all(|byte| *byte == 0xa5));
+                    assert!(
+                        decode_selector(&selector_wire(role as u8, 2, reference, 1), role, p)
+                            .is_err()
+                    );
+                }
+            }
+        }
+        let valid = ControlRef {
+            kind,
+            slot: 2,
+            index: 0,
+            generation: 60,
+            encoded_len: minimum,
+            digest: [3; 32],
+        };
+        for invalid in [
+            ControlRef { slot: 3, ..valid },
+            ControlRef {
+                generation: 0,
+                ..valid
+            },
+            ControlRef {
+                encoded_len: minimum - 1,
+                ..valid
+            },
+            ControlRef {
+                encoded_len: minimum + 1,
+                ..valid
+            },
+            ControlRef {
+                encoded_len: maximum + 1,
+                ..valid
+            },
+        ] {
+            let mut output = [0xa5; 64];
+            assert!(invalid.encode(&mut output).is_err());
+            assert_eq!(output, [0xa5; 64]);
+        }
+        let indexed = ControlRef {
+            index: u32::MAX,
+            ..valid
+        };
+        assert_eq!(
+            indexed.encode(&mut [0; 64]).is_ok(),
+            kind == ControlKind::OwnershipChunk
+        );
+        if kind == ControlKind::OwnershipRoot {
+            assert!(
+                ControlRef { index: 1, ..valid }
+                    .encode(&mut [0; 64])
+                    .is_err()
+            );
+        }
     }
 }
 

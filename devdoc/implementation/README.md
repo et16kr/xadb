@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-21 [DEV3 ownership 관측](dev3-implementation.md#ownership-observation-results): 고정 공간으로 inventory bytes·owner별 합계·물리 충돌을 검증했다. 같은 소스의 leaf43·하위 회귀28·DEV2 복구18check(native99셀)·Clippy/fmt PASS이며 intent 유일성·실제 예약 복원·DEV3 인수는 미완료다.
+
 2026-10-21 [DEV3 상태 home·obligation descriptor](dev3-implementation.md#obligation-descriptor-results): incoming count와 복구 budget의 고정 표현을 구현·독립 검토했다. 같은 통합 소스의 leaf42·하위 회귀28·DEV2 복구18check(native99셀)·Clippy/fmt PASS이며 실제 예약 복원·DEV3 인수는 미완료다.
 
 2026-10-21 [DEV3 재개·선택 page 읽기](dev3-implementation.md#page-reader-results): selector와 열린 handle metadata를 연결하여 실제 선택 page 읽기를 검증했다. 같은 보존 소스의 leaf·하위 회귀·DEV2 복구99셀 PASS이며 전체 DEV3 인수는 계속 미완료다.

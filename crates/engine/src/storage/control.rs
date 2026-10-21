@@ -49,6 +49,8 @@ pub(crate) enum ControlKind {
     FileMapRoot = 2,
     FileMapChunk = 3,
     Doublewrite = 4,
+    OwnershipRoot = 5,
+    OwnershipChunk = 6,
 }
 impl ControlKind {
     fn decode(value: u8) -> Result<Self> {
@@ -57,6 +59,8 @@ impl ControlKind {
             2 => Ok(Self::FileMapRoot),
             3 => Ok(Self::FileMapChunk),
             4 => Ok(Self::Doublewrite),
+            5 => Ok(Self::OwnershipRoot),
+            6 => Ok(Self::OwnershipChunk),
             _ => Err(ControlError::UnsupportedFormat),
         }
     }
@@ -86,12 +90,25 @@ impl ControlRef {
                 (160..=doublewrite_control::MAX_CONTROL_BYTES).contains(&length)
                     && (length - 160).is_multiple_of(doublewrite_control::ENTRY_BYTES)
             }
+            ControlKind::OwnershipRoot => {
+                (160..=2176).contains(&length) && (length - 160).is_multiple_of(56)
+            }
+            ControlKind::OwnershipChunk => {
+                (256..=16384).contains(&length) && (length - 160).is_multiple_of(96)
+            }
         };
+        let ownership = matches!(
+            self.kind,
+            ControlKind::OwnershipRoot | ControlKind::OwnershipChunk
+        );
         if self.generation == 0
-            || self.slot > 1
+            || self.slot > if ownership { 2 } else { 1 }
             || (self.kind == ControlKind::Profile && self.slot != 0)
             || (self.kind == ControlKind::FileMapChunk && self.index >= MAX_CHUNKS as u32)
-            || (self.kind != ControlKind::FileMapChunk && self.index != 0)
+            || (!matches!(
+                self.kind,
+                ControlKind::FileMapChunk | ControlKind::OwnershipChunk
+            ) && self.index != 0)
             || !length_valid
         {
             return Err(ControlError::InvalidInput);
@@ -925,6 +942,9 @@ pub(crate) fn control_file_name(reference: ControlRef) -> Result<FileName> {
         (ControlKind::FileMapRoot | ControlKind::FileMapChunk, _) => "d3-filemap-1",
         (ControlKind::Doublewrite, 0) => "d3-dwb-0",
         (ControlKind::Doublewrite, _) => "d3-dwb-1",
+        (ControlKind::OwnershipRoot | ControlKind::OwnershipChunk, _) => {
+            return Err(ControlError::UnsupportedFormat);
+        }
     };
     Ok(FileName::new(name).expect("fixed canonical filename"))
 }

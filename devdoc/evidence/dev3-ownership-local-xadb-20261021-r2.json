@@ -1,0 +1,160 @@
+{
+  "origin": {
+    "revision": "d94bb32271a381b0ef32804e112b708139a92392",
+    "tracked_diff_sha256": "7f3d0dcf8faab79f0e1fef8c154a9e6d52c412d895c163d8ad4c516b882504e8",
+    "source_sha256": "31ab0f0140d244ef21826292cb986790cffac2a8e71f5ed5c8d10650e89e42bc",
+    "lockfile_sha256": "f67269ca67484a0241bf06f22dee740fe6943bfe38d204193ab7fbcddec28a45"
+  },
+  "source_sha256": "31ab0f0140d244ef21826292cb986790cffac2a8e71f5ed5c8d10650e89e42bc",
+  "scope": "ownership byte/accounting/physical-overlap observation only; intent uniqueness, reservation restoration and disk effects not proven",
+  "lower_regression": "NOT_RUN_ON_THIS_SOURCE",
+  "source": "/home/et16/work/xadb/artifacts/dev3/ownership-retained-r2/source",
+  "checks": [
+    {
+      "id": "build",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/ownership-retained-r2/build.log",
+      "log_sha256": "7239f66cfefc88efc3fb36a6da782261066fd77641f57a1896061aa28e7be827",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "ownership",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/ownership-retained-r2/engine-binary",
+        "storage::ownership::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/ownership-retained-r2/ownership.log",
+      "log_sha256": "efeee76faf172db2104c96f6a6b1d6137b49144da8ce82d2a2adc5045172e470",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "control",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/ownership-retained-r2/engine-binary",
+        "storage::control::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/ownership-retained-r2/control.log",
+      "log_sha256": "976adef5db32bd3c81431604b1044e5972164a8e1fea34e2177a564ba2f4624b",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "obligation",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/ownership-retained-r2/engine-binary",
+        "storage::obligation::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/ownership-retained-r2/obligation.log",
+      "log_sha256": "12f4e434616d3fad1b20604ae9c0be6cbbcdb86db1b4fd90311f2571fd1ac4dc",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/ownership-retained-r2/clippy.log",
+      "log_sha256": "a92b6877bf6719d0ccb7f57460a53156a090de9889fc3b94f104a67192393dae",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/ownership-retained-r2/fmt.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "contract_sha256": {
+    "devdoc/contracts/dev3-ownership-format.md": "714cd2a773055d9a34c0d4f0ac737c2bc6d9c80f74034c2a4ad4e1413611734d",
+    "devdoc/contracts/dev3-control-format.md": "ca0cc1e4264741b7b8ff21ebde31e7fb16333584e7c9f6fc8925df51c1c4bddc",
+    "devdoc/contracts/dev3-obligation-format.md": "bc2fcd3f9598f06ef1c93be1e7d2f340df4c36a74b7566a5ae6e1d4b94a0e364"
+  },
+  "binary": {
+    "path": "/home/et16/work/xadb/artifacts/dev3/ownership-retained-r2/engine-binary",
+    "sha256": "2907d22c110084e4868e77157063c499593de6cbeb4e53c6742655bf9fbac119",
+    "features": []
+  },
+  "tests": {
+    "ownership": [
+      "inventory_all_lanes_drain_and_bind_repeated_bytes",
+      "inventory_canonical_order_spans_chunk_boundaries",
+      "inventory_expected_owners_and_capture_are_required",
+      "inventory_generated_profiles_match_independent_fields",
+      "inventory_intent_uniqueness_is_explicitly_not_proven",
+      "inventory_item_bounds_and_generations_are_checked",
+      "inventory_literals_bind_all_bytes_and_owners",
+      "inventory_owner_digests_and_category_budgets_are_exact",
+      "inventory_physical_aliases_and_intervals_match_pairwise_oracle",
+      "inventory_reserved_and_header_damage_reject_after_checksum",
+      "inventory_root_chunk_truncation_and_damage_reject",
+      "inventory_source_failures_and_workspace_are_bounded"
+    ],
+    "control": [
+      "control_encoders_preserve_outputs",
+      "control_envelope_corruption_is_rejected",
+      "control_filemap_cursor_rejects_mixed_inventory",
+      "control_filemap_exact_bounds",
+      "control_filemap_literals",
+      "control_generated_inventory_profiles",
+      "control_names_and_bootstrap_ownership",
+      "control_profile_literals",
+      "control_profiles_require_exact_capacities",
+      "control_selector_bindings_and_lengths"
+    ],
+    "obligation": [
+      "descriptor_budget_sums_peaks_and_growth_are_exact",
+      "descriptor_empty_inventory_and_chain_boundaries",
+      "descriptor_encoder_errors_preserve_output",
+      "descriptor_expected_context_and_unsupported_work_root",
+      "descriptor_generated_profiles_match_independent_fields",
+      "descriptor_lengths_and_every_byte_damage_reject",
+      "descriptor_literals_bind_exact_owner_profile_and_state",
+      "descriptor_reserved_and_semantic_damage_reject_after_checksum"
+    ]
+  },
+  "source_sha256_after": "31ab0f0140d244ef21826292cb986790cffac2a8e71f5ed5c8d10650e89e42bc",
+  "status": "PASS"
+}
