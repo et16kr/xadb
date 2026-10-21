@@ -4,10 +4,10 @@
 
 - **수정이 발생하지 않은 코드에 대해서는 테스트를 실행하지 않는다.** 새로 작성하거나 수정한 코드에 해당하는 테스트만 선택한다. 마지막 검증 이후의 실제 코드 diff를 기준으로 범위를 정하고, 실행 전에 변경 내용과 선택한 테스트의 관계를 확인한다.
 - 상위 기능 추가, 작업 단위·commit 변경, 저장소 전체 source fingerprint 변경, 통합 또는 단계 완료라는 이유만으로 변경 없는 하위 코드의 테스트를 반복하지 않는다. 같은 코드의 이미 완료된 테스트도 반복하지 않는다.
-- **DEV0·DEV1·DEV2 테스트는 사용자가 금지를 해제하기 전까지 실행하지 않는다.** 해당 코드에 수정이 생겨도 이 별도 금지는 유지한다.
-- 금지된 테스트나 변경 없는 코드의 테스트를 포함하는 전체 workspace 테스트·하위 회귀 wrapper·전체 DEV3 leaf 실행도 금지한다. 다른 검사 명령을 통해 간접 실행하거나 필터 없는 일괄 실행으로 우회하지 않는다.
-- 기존 테스트 결과는 원래 source·실행 범위의 증거로 보존한다. 생략·금지·중단된 테스트를 새 실행의 PASS로 표시하지 않는다.
-- 이 사용자 지시는 아래 안내와 `devdoc/`의 기존 V2/V3·하위 회귀·현재-build 복구·단계 인수 실행 요구보다 우선한다. 기존 요구를 근거로 금지된 테스트를 재개하지 않는다.
+- DEV 단계와 관계없이 새로 작성하거나 수정한 코드에는 필요한 테스트를 수행한다. 특정 단계 자체를 테스트 금지 대상으로 삼지 않는다.
+- 전체 workspace 테스트·하위 회귀 wrapper·전체 leaf 실행처럼 변경 없는 코드의 테스트까지 포함하는 일괄 실행은 금지한다. 실행 범위를 변경한 코드에 해당하는 테스트로 좁힌다.
+- 기존 테스트 결과는 원래 source·실행 범위의 증거로 보존한다. 생략·중단된 테스트를 새 실행의 PASS로 표시하지 않는다.
+- 이 사용자 지시는 아래 안내와 `devdoc/`의 기존 V2/V3·하위 회귀·현재-build 복구·단계 인수 실행 요구보다 우선한다. 기존 요구를 이유로 변경 없는 코드의 테스트를 반복하지 않는다.
 
 ## Repository guidance
 
@@ -23,5 +23,5 @@
 - Follow `repository-build-plan.md` and its JSON for roles, packages, dependencies, fingerprints and clean exports. Add planned paths only with implementation.
 - Read `implementation-contracts.md` before kernel changes and `version-compatibility-policy.json` before published-format or semantic changes. Development builds use fresh fixtures; current-build recovery checks remain mandatory.
 - Document verification is a pre-push gate, not an edit or commit requirement. Use the repository's `scripts/git-hooks/pre-push` hook (`git config --local core.hooksPath scripts/git-hooks` when no existing hooks need preserving). It runs `cargo fmt --all --check` and document verification for each pushed ref's tip commit in a temporary export and blocks on either failure. Uncommitted formatting fixes do not satisfy the gate; do not rerun document checks while editing. See `devdoc/policies/documentation-policy.md#push-gate`. Product execution checks retain their stage-specific requirements.
-- Historical lower-stage entry points (execution prohibited by the user instruction above): DEV0 `python3 scripts/check_dev0.py`; DEV1 plus DEV0 regression `python3 scripts/check_dev1.py`; DEV2 current P0/K0 leaf plus lower regressions `python3 scripts/check_dev2_reference.py --with-substrate`.
+- Stage entry points are references, not automatic execution requirements; apply the changed-code test scope above before selecting commands. DEV0: `python3 scripts/check_dev0.py`; DEV1 plus DEV0 regression: `python3 scripts/check_dev1.py`; DEV2 current P0/K0 leaf plus lower regressions: `python3 scripts/check_dev2_reference.py --with-substrate`.
 - This is a separate repository. Do not modify the source checkout or import its Git history. Imported prior progress is not a fresh XADB verification result.
