@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "trace_events": 1050,
+  "cuts": 676,
+  "images": 6804,
+  "max_images_per_cut": 16,
+  "profile_for_durable_model": 1,
+  "frozen_inputs": {
+    "manifest.json": "2e35b50c42b21f12448e98c8e2825d1bfaa73dc4bc1f72dca0c5cafb79aa3d5f",
+    "effects.json": "c6ff7445cc963eda23cdd88135ed20fbb9200ae3a47858d1585457f54cbe83b8",
+    "durable-images.json": "ac79632d406c9487e0fe44d24c9c3a13879bfceac27dd6ef5e9a1ba3c684c86e",
+    "checker-negatives.json": "7d6c24f3920bffba99f918b4defd71b2b40f72a89aea5a5843c5910210413b47"
+  },
+  "scope": "r6 bounded prefix-loss corpus; no recovery or power-loss execution",
+  "source_sha256": "edec600699a4b157c17636819923bb34fc0c30d5e1bd532ce6a1cc780b84910f",
+  "producer_binary": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/page-binary",
+  "producer_binary_sha256": "68ba597d01f46f2a7dafbe4a92146f8ad5366228ebb8a91838220bc694191140",
+  "producer_log": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/wal_io::bootstrap.log",
+  "producer_log_sha256": "f31e1b4a180c962b17622e7cf7a35e4b40a30d84a008b003a5ccfd74081006ac"
+}

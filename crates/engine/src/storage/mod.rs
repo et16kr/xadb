@@ -12,6 +12,7 @@ pub(crate) mod page_io;
 pub(crate) mod read_buffer;
 pub(crate) mod row_record;
 mod semantic_group;
+mod session_fence;
 mod status_home;
 pub(crate) mod transaction_record;
 pub(crate) mod tree_page;

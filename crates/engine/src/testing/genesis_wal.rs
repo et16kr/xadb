@@ -50,6 +50,7 @@ impl From<wal_io::WalIoError> for GenesisWalFailure {
                 Cause::Io(_) => "io",
                 Cause::IdentityMismatch => "identity_mismatch",
                 Cause::LengthMismatch => "length_mismatch",
+                Cause::MappingMismatch => "mapping_mismatch",
                 Cause::Capacity => "capacity",
                 Cause::ArithmeticOverflow => "arithmetic_overflow",
                 Cause::Poisoned => "poisoned",

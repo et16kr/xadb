@@ -3,6 +3,7 @@
 
 /// Native assembly for the limited fresh genesis WAL session.
 pub mod genesis_wal;
+pub mod storage_session;
 
 use crate::{
     api::{DatabaseId, Namespace},
@@ -57,6 +58,12 @@ pub enum PageReadFailure {
     MissingMapping,
     /// Page offset exceeds the selected extent.
     OutOfBounds,
+    /// The fresh session already has a borrowed reader.
+    Busy,
+    /// The shared storage session has failed permanently.
+    Fenced,
+    /// A namespace lock was poisoned.
+    Poisoned,
 }
 
 impl From<PageIoError> for PageReadFailure {
@@ -71,6 +78,9 @@ impl From<PageIoError> for PageReadFailure {
             PageIoError::LengthMismatch => Self::LengthMismatch,
             PageIoError::MissingMapping => Self::MissingMapping,
             PageIoError::OutOfBounds => Self::OutOfBounds,
+            PageIoError::Busy => Self::Busy,
+            PageIoError::Fenced => Self::Fenced,
+            PageIoError::Poisoned => Self::Poisoned,
         }
     }
 }
@@ -148,6 +158,8 @@ pub enum BufferTraceFailure {
     GenerationExhausted,
     /// An internal lock/state failure fenced this instance.
     Poisoned,
+    /// The owning storage session is fenced.
+    Fenced,
 }
 impl From<crate::storage::read_buffer::BufferError> for BufferTraceFailure {
     fn from(error: crate::storage::read_buffer::BufferError) -> Self {
@@ -160,6 +172,7 @@ impl From<crate::storage::read_buffer::BufferError> for BufferTraceFailure {
             BufferError::PinLimit => Self::PinLimit,
             BufferError::GenerationExhausted => Self::GenerationExhausted,
             BufferError::Poisoned => Self::Poisoned,
+            BufferError::Fenced => Self::Fenced,
         }
     }
 }

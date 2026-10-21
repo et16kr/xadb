@@ -935,7 +935,7 @@ fn wal_io_releases_gate_and_protects_slot() {
             let session_ref = &session;
             let a_ref = &a;
             let worker = scope.spawn(move || {
-                session_ref.stage_inner(a_ref, || {
+                session_ref.stage_inner(a_ref, None, || {
                     entered.send(()).unwrap();
                     resume.recv_timeout(Duration::from_secs(5)).unwrap();
                 })

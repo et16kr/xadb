@@ -222,3 +222,19 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 최초 저장 세션 통합 r0 timeout FAIL 원본](dev3-storage-session-leaf-xadb-20261021-r0.json) — 원래 source·결정/실행 상태를 보존하며 후속 실행 PASS를 대신하지 않는다.
 
 - [DEV3 하위 회귀 wrapper 독립 D1 원본](dev3-storage-session-aggregate-d1-xadb-20261021-r0.json) — 실제 timeout 포함 자기시험12 PASS; 새 전체 통합 검증 대체 아님
+
+- [DEV3 최초 저장 세션 품질 검사 원본](dev3-storage-session-quality-xadb-20261021-r1.json) — sourceedec6006…의 fresh 설치·공통 fence; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 최초 저장 세션 소유권 compiler8 원본](dev3-storage-session-borrows-xadb-20261021-r1.json) — sourceedec6006…의 fresh 설치·공통 fence; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 최초 저장 세션 실제 효과·유한 durable 모델 원본](dev3-storage-session-model-xadb-20261021-r1.json) — sourceedec6006…의 fresh 설치·공통 fence; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 최초 저장 세션 실제 ext4 장애·SIGKILL 검산 원본](dev3-storage-session-native-xadb-20261021-r1.json) — sourceedec6006…의 fresh 설치·공통 fence; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 최초 저장 세션 통합 실행 원본](dev3-storage-session-leaf-xadb-20261021-r1.json) — sourceedec6006…의 fresh 설치·공통 fence; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 최초 저장 세션 DEV0/1/2 회귀 원본](dev3-storage-session-dev2-regression-xadb-20261021-r1.json) — sourceedec6006…의 fresh 설치·공통 fence; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 최초 저장 세션 DEV2 현재-build 복구 원본](dev3-storage-session-dev2-kernel-xadb-20261021-r1.json) — sourceedec6006…의 fresh 설치·공통 fence; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 최초 저장 세션 최종 독립 감사 원본](dev3-storage-session-review-xadb-20261021-r1.json) — sourceedec6006…의 제한된 구현·원본 실행·staged source 감사 PASS; 전체 DEV3 미완료

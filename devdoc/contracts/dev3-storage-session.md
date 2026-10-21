@@ -1,8 +1,10 @@
 # DEV3 최초 저장 세션·FILEMAP 설치 계약
 
-2026-10-21 · **D3-STORAGE-SESSION-001 D2 독립 검토 수용 / 제품 구현·실행 NOT_RUN**
+2026-10-21 · **D3-STORAGE-SESSION-001 D2 독립 검토 수용 / 제한 구현·실행 결과는 구현 기록 참조**
 
 [저장 소유](disk-storage-design.md) · [WAL 설치](dev3-wal-io.md) · [선택 page 읽기](dev3-page-io.md) · [읽기 buffer](dev3-read-buffer.md) · [control 표현](dev3-control-format.md) · [자원 계산](dev3-resource-bounds.md)
+
+[제한된 실제 구현·검증](../implementation/dev3-implementation.md#storage-session-results)은 채택 당시 준비 자료와 구별한다.
 
 계약·구현·통합 담당은 `/root`, 독립 검토자는 `/root/dev3_selector_review`다. 아래 규범 본문은 구현 전에 고정한 r6 제안과 V2 검증 입력이다. 이 문서의 준비·채택은 파일 설치·현재-build 복구·전체 DEV3 완료 증거가 아니다. 기존 DEV2 PF04 실패와 전체 DEV3 인수 미완료를 유지한다.
 

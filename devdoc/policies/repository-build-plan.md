@@ -314,3 +314,6 @@ DEV1 검사는 DEV0 회귀와 production foundation/platform의 실제 연결을
 K0-005에서 worker의 Linux CPU/RSS 관측은 `xadb-platform::performance`가 소유하며 worker→platform normal 간선을 사용한다. engine/reference에는 OS 의존을 추가하지 않는다. controller와 worker는 `crates/testing/build_identity.rs`의 같은 build 지문 산술을 사용하고 기존 sha2 build dependency를 소비한다. 이는 관측 identity이며 독립 정답 계산 공유가 아니다. 현재 source-only export는 `crates/` 전체를 포함하여 helper도 보존한다.
 
 DEV3의 `storage/catalog_record`, `undo_record`, `control`은 각각 [catalog](../contracts/dev3-catalog-format.md), [undo](../contracts/dev3-undo-format.md), [control](../contracts/dev3-control-format.md)의 caller-buffer 표현을 소유한다. 실제 DDL·undo·selector·복구 예약 효과와 분리하며 dependency/source roots는 유지한다. 국소 실행·독립 검토와 후속 통합 소스 결과는 [구현 기록](../implementation/dev3-implementation.md)에서 구별한다.
+
+
+DEV3 최초 저장 세션은 `storage/wal_io/bootstrap`이 기존 genesis WAL owner 안에서 extent·FILEMAP 설치를 조립한다. 공통 차단 상태는 하위 `storage/session_fence`, 읽기 lease·buffer 연결은 기존 `page_io`·`read_buffer`가 소유한다. `testing/storage_session`과 engine-worker의 `storage_session`/`support/storage_session`은 시험용 관측 경계다. `scripts/check_dev3_storage_borrows.py`, `dev3_storage_model.py`, `dev3_storage_native.py`, `test_dev3_storage_checks.py`와 두 기존 fixture 루트의 `dev3-storage-session` 입력을 실제 구현과 함께 등록한다. 기존 source fingerprint/clean export 루트와 Cargo 의존성은 유지하며, 검증 결과와 제한 범위는 [구현 기록](../implementation/dev3-implementation.md)을 따른다.

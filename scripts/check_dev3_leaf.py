@@ -21,13 +21,26 @@ CHECKER_DIRECTORY = Path(__file__).resolve().parent
 LOADED_CHECKER_HASHES = {
     'scripts/' + name: hashlib.sha256((CHECKER_DIRECTORY / name).read_bytes()).hexdigest()
     for name in ('check_dev3_leaf.py', 'check_dev0.py', 'comm_campaign.py',
-                 'dev3_wal_slot_model.py', 'dev3_wal_durable_model.py')}
+                 'dev3_wal_slot_model.py', 'dev3_wal_durable_model.py',
+                 'dev3_storage_model.py', 'dev3_storage_native.py')}
 from check_dev0 import check_report_paths, digest, source_fingerprint
 from comm_campaign import capture_source, identity, write_json
 from dev3_wal_slot_model import evaluate as evaluate_wal_slot
 from dev3_wal_durable_model import evaluate as evaluate_wal_durable
+from dev3_storage_model import evaluate as evaluate_storage_model
+from dev3_storage_native import evaluate as evaluate_storage_native
 
 ROOT = Path(__file__).resolve().parent.parent
+STORAGE_TESTS = {
+    'bootstrap_literals_and_geometry', 'bootstrap_descriptor_rejects_damage',
+    'bootstrap_requires_fresh_namespace', 'bootstrap_installs_exact_order',
+    'bootstrap_faults_preserve_artifacts', 'bootstrap_short_io_is_bounded',
+    'bootstrap_readback_binds_installed_objects', 'bootstrap_reader_and_wal_make_progress',
+    'bootstrap_wal_requires_selected_mapping', 'bootstrap_buffer_preserves_shared_concurrency',
+    'bootstrap_shared_fence_cleans_claims', 'bootstrap_workspace_and_handles_are_bounded',
+}
+STORAGE_NATIVE_TESTS = {'bootstrap_native_profiles_and_lease', 'bootstrap_native_fault_images',
+                        'bootstrap_native_kill_images'}
 WAL_IO_TESTS = {
     'genesis_codec_literals_and_damage',
     'genesis_requires_exact_empty_namespace',
@@ -502,13 +515,14 @@ def main():
     }
     environment = os.environ.copy()
     for key in list(environment):
-        if key.startswith(('XADBTEST_', 'XADB_WAL_', 'CARGO_PROFILE_')) or key in (
+        if key.startswith(('XADBTEST_', 'XADB_WAL_', 'XADB_STORAGE_', 'CARGO_PROFILE_')) or key in (
                 'RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS', 'RUSTC_WRAPPER',
                 'RUSTC_WORKSPACE_WRAPPER', 'RUSTC', 'RUSTDOC', 'RUSTUP_TOOLCHAIN',
                 'RUST_TEST_THREADS'):
             environment.pop(key)
     environment['CARGO_TARGET_DIR'] = str(source / 'target')
     environment['XADB_WAL_NATIVE_ARTIFACT_PARENT'] = str(session / 'genesis-native-artifacts')
+    environment['XADB_STORAGE_NATIVE_ARTIFACT_PARENT'] = str(session / 'storage-native-artifacts')
 
     def run(name, command, timeout=600):
         return run_logged(name, command, source, environment, session, report['checks'], timeout)
@@ -553,6 +567,7 @@ def main():
                 'devdoc/contracts/dev3-page-io.md',
                 'devdoc/contracts/dev3-read-buffer.md',
                 'devdoc/contracts/dev3-wal-io.md',
+                'devdoc/contracts/dev3-storage-session.md',
                 'devdoc/contracts/dev3-snapshot-model.md']}
         write_json(session / 'manifest.json', report)
         report['toolchain'] = run('toolchain', ['rustc', '-Vv'])
@@ -588,6 +603,22 @@ def main():
                 or any(row.get('status') != 'PASS' for row in wal_receipt['cases'])):
             raise ValueError('WAL borrow compiler checks did not verify this source')
         report['wal_borrows'] = {'report': str(wal_borrow_report), 'sha256': digest(wal_borrow_report)}
+        storage_self_tests = run('storage-checker-self-tests', ['python3', '-B', '-m', 'unittest',
+                                 'discover', '-s', 'scripts', '-p', 'test_dev3_storage_checks.py'])
+        if not re.search(r'^Ran 3 tests in .+\n\nOK$', storage_self_tests, re.M):
+            raise ValueError('storage checker counterexamples did not execute')
+        storage_borrow_report = session / 'storage-borrows.json'
+        run('storage-borrow-compiler-checks', ['python3', '-B', 'scripts/check_dev3_storage_borrows.py',
+            '--artifact-parent', str(session), '--report', str(storage_borrow_report)])
+        storage_receipt = json.loads(storage_borrow_report.read_text())
+        if (storage_receipt.get('status') != 'PASS'
+                or storage_receipt.get('source_sha256') != report['source_sha256']
+                or len(storage_receipt.get('cases', [])) != 8
+                or {row['name'] for row in storage_receipt['cases']} !=
+                   {'baseline', 'shared_thread', 'buffer_thread', 'session', 'slot', 'root', 'scratch', 'writer'}
+                or any(row.get('status') != 'PASS' for row in storage_receipt['cases'])):
+            raise ValueError('storage borrow compiler checks did not verify this source')
+        report['storage_borrows'] = {'report': str(storage_borrow_report), 'sha256': digest(storage_borrow_report)}
         wal_self_tests = run('wal-model-checker-self-tests', ['python3', '-B', '-m', 'unittest',
                             'discover', '-s', 'scripts', '-p', 'test_dev3_wal_models.py'])
         if not re.search(r'^Ran 3 tests in .+\n\nOK$', wal_self_tests, re.M):
@@ -612,10 +643,11 @@ def main():
                                ('row_record', ROW_TESTS), ('doublewrite_control', DOUBLEWRITE_TESTS),
                                ('catalog_record', CATALOG_TESTS), ('undo_record', UNDO_RECORD_TESTS),
                                ('control', CONTROL_TESTS), ('page_io', PAGE_IO_TESTS),
-                               ('read_buffer', READ_BUFFER_TESTS), ('wal_io', WAL_IO_TESTS)]:
+                               ('read_buffer', READ_BUFFER_TESTS), ('wal_io', WAL_IO_TESTS),
+                               ('wal_io::bootstrap', STORAGE_TESTS)]:
             prefix = f'storage::{name}::tests::'
             # Intentional poison panics must not split libtest's named result line.
-            output_mode = '--show-output' if name in ('read_buffer', 'wal_io') else '--nocapture'
+            output_mode = '--show-output' if name in ('read_buffer', 'wal_io', 'wal_io::bootstrap') else '--nocapture'
             output = run(name, [page, prefix, output_mode, '--test-threads=1'])
             report[f'{name}_tests'] = check_named_tests(output, 0, prefix, expected)
             if name == 'wal_io':
@@ -626,6 +658,15 @@ def main():
                 model_report = session / 'wal-models.json'
                 write_json(model_report, models)
                 report['wal_models'] = {'report': str(model_report), 'sha256': digest(model_report)}
+            if name == 'wal_io::bootstrap':
+                model_report = session / 'storage-model.json'
+                model_result = evaluate_storage_model(output, source)
+                model_result.update(source_sha256=report['source_sha256'], producer_binary=page,
+                                    producer_binary_sha256=digest(Path(page)),
+                                    producer_log=str(session / 'wal_io::bootstrap.log'),
+                                    producer_log_sha256=digest(session / 'wal_io::bootstrap.log'))
+                write_json(model_report, model_result)
+                report['storage_model'] = {'report': str(model_report), 'sha256': digest(model_report)}
         scalar = build('xadb-foundation', ['--test', 'key_buffer'], 'key_buffer', 'scalar-key')
         output = run('scalar-key', [scalar, '--nocapture', '--test-threads=1'])
         report['scalar_key_tests'] = check_named_tests(output, 0, '', SCALAR_KEY_TESTS)
@@ -648,12 +689,22 @@ def main():
                 ('read-buffer-native', 'xadbtest-engine-worker', ['--test', 'read_buffer'], 'read_buffer',
                  '', '', READ_BUFFER_NATIVE_TESTS),
                 ('wal-io-native', 'xadbtest-engine-worker', ['--test', 'genesis_wal'], 'genesis_wal',
-                 '', '', WAL_IO_NATIVE_TESTS)]:
+                 '', '', WAL_IO_NATIVE_TESTS),
+                ('storage-native', 'xadbtest-engine-worker', ['--test', 'storage_session'], 'storage_session',
+                 '', '', STORAGE_NATIVE_TESTS)]:
             binary = build(package, target_args, target_name, name)
             # Keep witness prints out of libtest's in-progress `test ...` line.
             # --show-output preserves successful-test witnesses after each result.
             output = run(name, [binary, test_filter, '--show-output', '--test-threads=1'])
             report[f'{name}_tests'] = check_named_tests(output, 0, prefix, expected)
+            if name == 'storage-native':
+                native_report = session / 'storage-native.json'
+                native_result = evaluate_storage_native(output, source, session / 'storage-native-artifacts',
+                                                        binary, report['source_sha256'])
+                native_result.update(producer_log=str(session / 'storage-native.log'),
+                                     producer_log_sha256=digest(session / 'storage-native.log'))
+                write_json(native_report, native_result)
+                report['storage_native'] = {'report': str(native_report), 'sha256': digest(native_report)}
         model = build('xadbtest-reference', ['--test', 'dev3_snapshot_model'],
                       'dev3_snapshot_model', 'model')
         output = run('model', [model, MODEL_TEST, '--exact', '--nocapture'],

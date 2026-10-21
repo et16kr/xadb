@@ -12,6 +12,7 @@ use super::{
     control::Profile,
     page::{PAGE_BYTES, PageIdentity, PageKind, PageView, decode_page},
     page_io::{PageFileReader, PageIoError, validate_page_request},
+    session_fence::SessionFence,
 };
 use xadb_foundation::namespace::WriterNamespace;
 
@@ -24,10 +25,14 @@ pub(crate) enum BufferError {
     PinLimit,
     GenerationExhausted,
     Poisoned,
+    Fenced,
 }
 impl From<PageIoError> for BufferError {
     fn from(error: PageIoError) -> Self {
-        Self::Read(error)
+        match error {
+            PageIoError::Fenced => Self::Fenced,
+            error => Self::Read(error),
+        }
     }
 }
 type Result<T> = std::result::Result<T, BufferError>;
@@ -95,6 +100,7 @@ pub(crate) struct ReadBuffer<'source, 'memory, W: WriterNamespace> {
     hand: Mutex<usize>,
     loader: Mutex<Loader<'source, 'memory, W>>,
     fenced: AtomicBool,
+    session_fence: Option<&'source SessionFence>,
 }
 
 impl<'source, 'memory, W: WriterNamespace> ReadBuffer<'source, 'memory, W> {
@@ -105,21 +111,38 @@ impl<'source, 'memory, W: WriterNamespace> ReadBuffer<'source, 'memory, W> {
         frames: &'memory mut [ReadFrame],
         load_scratch: &'memory mut [u8; PAGE_BYTES],
     ) -> Result<Self> {
+        let session_fence = reader.session_fence();
+        let _unwind = session_fence.map(SessionFence::unwind_guard);
         let profile = reader.profile();
         let selector_generation = reader.selector_generation();
+        let poison = || {
+            if let Some(fence) = session_fence {
+                fence.fence();
+            }
+            BufferError::Poisoned
+        };
+        for frame in frames.iter_mut() {
+            if frame.content.get_mut().is_err() {
+                return Err(poison());
+            }
+            let header = frame.header.get_mut().map_err(|_| poison())?;
+            if header.pins != 0 || matches!(header.state, State::Loading(_)) {
+                return Err(poison());
+            }
+        }
+        if session_fence.is_some_and(SessionFence::is_fenced) {
+            return Err(BufferError::Fenced);
+        }
         if frames.is_empty() || frames.len() as u64 > profile.buffer_bytes() / PAGE_BYTES as u64 {
             return Err(BufferError::InvalidCapacity);
         }
         for frame in frames.iter_mut() {
-            if frame.content.get_mut().is_err() {
-                return Err(BufferError::Poisoned);
-            }
-            let header = frame.header.get_mut().map_err(|_| BufferError::Poisoned)?;
-            if header.pins != 0 || matches!(header.state, State::Loading(_)) {
-                return Err(BufferError::Poisoned);
-            }
+            let header = frame.header.get_mut().map_err(|_| poison())?;
             header.state = State::Empty;
             header.referenced = false;
+        }
+        if session_fence.is_some_and(SessionFence::is_fenced) {
+            return Err(BufferError::Fenced);
         }
         Ok(Self {
             frames,
@@ -131,19 +154,31 @@ impl<'source, 'memory, W: WriterNamespace> ReadBuffer<'source, 'memory, W> {
                 scratch: load_scratch,
             }),
             fenced: AtomicBool::new(false),
+            session_fence,
         })
     }
 
     fn live(&self) -> Result<()> {
         if self.fenced.load(Ordering::Acquire) {
             Err(BufferError::Poisoned)
+        } else if self.session_fence.is_some_and(SessionFence::is_fenced) {
+            Err(BufferError::Fenced)
         } else {
             Ok(())
         }
     }
     fn fence(&self) -> BufferError {
         self.fenced.store(true, Ordering::Release);
+        if let Some(fence) = self.session_fence {
+            fence.fence();
+        }
         BufferError::Poisoned
+    }
+    fn unwind_guard(&self) -> BufferUnwind<'_> {
+        BufferUnwind {
+            local: &self.fenced,
+            session: self.session_fence,
+        }
     }
     fn lock<'a, T>(&self, mutex: &'a Mutex<T>) -> Result<MutexGuard<'a, T>> {
         mutex.lock().map_err(|_| self.fence())
@@ -156,6 +191,24 @@ impl<'source, 'memory, W: WriterNamespace> ReadBuffer<'source, 'memory, W> {
         kind: PageKind,
         level: u8,
     ) -> Result<PagePin<'_, 'source, 'memory, W>> {
+        #[cfg(test)]
+        {
+            self.pin_inner(identity, kind, level, || {})
+        }
+        #[cfg(not(test))]
+        {
+            self.pin_inner(identity, kind, level)
+        }
+    }
+
+    fn pin_inner(
+        &self,
+        identity: PageIdentity,
+        kind: PageKind,
+        level: u8,
+        #[cfg(test)] before_hit_return: impl FnOnce(),
+    ) -> Result<PagePin<'_, 'source, 'memory, W>> {
+        let _unwind = self.unwind_guard();
         self.live()?;
         validate_page_request(self.profile, identity, kind, level)?;
         let request = Request {
@@ -182,6 +235,13 @@ impl<'source, 'memory, W: WriterNamespace> ReadBuffer<'source, 'memory, W> {
             }
             header.pins = header.pins.checked_add(1).ok_or(BufferError::PinLimit)?;
             header.referenced = true;
+            #[cfg(test)]
+            before_hit_return();
+            if let Err(error) = self.live() {
+                // Cancel only this acquisition; existing pins remain owned.
+                header.pins -= 1;
+                return Err(error);
+            }
             return Ok(PagePin {
                 buffer: self,
                 index,
@@ -244,7 +304,12 @@ impl<'source, 'memory, W: WriterNamespace> ReadBuffer<'source, 'memory, W> {
         let mut loader = self.lock(&self.loader)?;
         self.live()?;
         let Loader { reader, scratch } = &mut *loader;
-        reader.read_page(request.identity, request.kind, request.level, scratch)?;
+        reader
+            .read_page(request.identity, request.kind, request.level, scratch)
+            .map_err(|error| match error {
+                PageIoError::Poisoned => self.fence(),
+                error => BufferError::from(error),
+            })?;
         let mut content = self.frames[index]
             .content
             .write()
@@ -270,16 +335,29 @@ impl<W: WriterNamespace> LoadClaim<'_, '_, '_, W> {
         {
             return Err(self.buffer.fence());
         }
-        self.buffer.live()?;
-        header.state = if success {
+        // Common fencing cancels a healthy claim rather than orphaning Loading.
+        // Local poison or a mismatched header must never be repaired here.
+        if self.buffer.fenced.load(Ordering::Acquire) {
+            return Err(BufferError::Poisoned);
+        }
+        let cancelled = self
+            .buffer
+            .session_fence
+            .is_some_and(SessionFence::is_fenced);
+        let publish = success && !cancelled;
+        header.state = if publish {
             State::Clean(self.request)
         } else {
             State::Empty
         };
-        header.pins = u32::from(success);
-        header.referenced = success;
+        header.pins = u32::from(publish);
+        header.referenced = publish;
         self.armed = false;
-        Ok(())
+        if success && cancelled {
+            Err(BufferError::Fenced)
+        } else {
+            Ok(())
+        }
     }
 }
 impl<W: WriterNamespace> Drop for LoadClaim<'_, '_, '_, W> {
@@ -299,6 +377,7 @@ pub(crate) struct PagePin<'pool, 'source, 'memory, W: WriterNamespace> {
 }
 impl<W: WriterNamespace> PagePin<'_, '_, '_, W> {
     pub(crate) fn read(&self) -> Result<PageReadGuard<'_>> {
+        let _unwind = self.buffer.unwind_guard();
         self.buffer.live()?;
         {
             let header = self.buffer.lock(&self.buffer.frames[self.index].header)?;
@@ -318,11 +397,15 @@ impl<W: WriterNamespace> PagePin<'_, '_, '_, W> {
             content,
             request: self.request,
             fenced: &self.buffer.fenced,
+            session_fence: self.buffer.session_fence,
         })
     }
 }
 impl<W: WriterNamespace> Drop for PagePin<'_, '_, '_, W> {
     fn drop(&mut self) {
+        if std::thread::panicking() {
+            self.buffer.fence();
+        }
         let Ok(mut header) = self.buffer.frames[self.index].header.lock() else {
             self.buffer.fence();
             return;
@@ -342,21 +425,116 @@ pub(crate) struct PageReadGuard<'pin> {
     content: RwLockReadGuard<'pin, [u8; PAGE_BYTES]>,
     request: Request,
     fenced: &'pin AtomicBool,
+    session_fence: Option<&'pin SessionFence>,
 }
 impl PageReadGuard<'_> {
     pub(crate) fn bytes(&self) -> &[u8; PAGE_BYTES] {
         &self.content
     }
     pub(crate) fn view(&self) -> Result<PageView<'_>> {
+        #[cfg(test)]
+        {
+            self.view_inner(|| {})
+        }
+        #[cfg(not(test))]
+        {
+            self.view_inner()
+        }
+    }
+
+    #[cfg(test)]
+    pub(super) fn test_view_with_pause(&self, pause: impl FnOnce()) -> Result<PageView<'_>> {
+        self.view_inner(pause)
+    }
+
+    fn view_inner(&self, #[cfg(test)] before_final_check: impl FnOnce()) -> Result<PageView<'_>> {
+        let _unwind = BufferUnwind {
+            local: self.fenced,
+            session: self.session_fence,
+        };
         if self.fenced.load(Ordering::Acquire) {
             return Err(BufferError::Poisoned);
         }
+        if self.session_fence.is_some_and(SessionFence::is_fenced) {
+            return Err(BufferError::Fenced);
+        }
         let page = decode_page(&*self.content, self.request.identity, self.request.kind);
         match page {
-            Ok(page) if page.header().level == self.request.level => Ok(page),
+            Ok(page) if page.header().level == self.request.level => {
+                #[cfg(test)]
+                before_final_check();
+                if self.fenced.load(Ordering::Acquire) {
+                    return Err(BufferError::Poisoned);
+                }
+                if self.session_fence.is_some_and(SessionFence::is_fenced) {
+                    return Err(BufferError::Fenced);
+                }
+                Ok(page)
+            }
             _ => {
                 self.fenced.store(true, Ordering::Release);
+                if let Some(fence) = self.session_fence {
+                    fence.fence();
+                }
                 Err(BufferError::Poisoned)
+            }
+        }
+    }
+}
+
+struct BufferUnwind<'a> {
+    local: &'a AtomicBool,
+    session: Option<&'a SessionFence>,
+}
+
+#[cfg(test)]
+impl<W: WriterNamespace> ReadBuffer<'_, '_, W> {
+    // Narrow state witnesses for the shared-session failure schedules. No runtime
+    // capability or header mutation is exposed outside cfg(test).
+    pub(super) fn test_frame_states(&self) -> Vec<(u8, u32, bool)> {
+        self.frames
+            .iter()
+            .map(|frame| {
+                let header = frame.header.lock().unwrap();
+                (
+                    match header.state {
+                        State::Empty => 0,
+                        State::Loading(_) => 1,
+                        State::Clean(_) => 2,
+                    },
+                    header.pins,
+                    header.referenced,
+                )
+            })
+            .collect()
+    }
+
+    pub(super) fn test_hit_with_pause(
+        &self,
+        identity: PageIdentity,
+        pause: impl FnOnce(),
+    ) -> Result<()> {
+        self.pin_inner(identity, PageKind::Allocation, 0, pause)
+            .map(drop)
+    }
+
+    pub(super) fn test_poison_header(&self, index: usize) {
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _header = self.frames[index].header.lock().unwrap();
+            panic!("fixed shared-buffer header poison");
+        }));
+    }
+
+    pub(super) fn test_is_locally_fenced(&self) -> bool {
+        self.fenced.load(Ordering::Acquire)
+    }
+}
+impl Drop for BufferUnwind<'_> {
+    fn drop(&mut self) {
+        if std::thread::panicking() {
+            self.local.store(true, Ordering::Release);
+            if let Some(fence) = self.session {
+                fence.fence();
             }
         }
     }

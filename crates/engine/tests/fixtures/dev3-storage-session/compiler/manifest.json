@@ -1,0 +1,62 @@
+{
+  "cases": [
+    {
+      "expected_code": null,
+      "name": "baseline",
+      "primary_line": null
+    },
+    {
+      "bytes": 941,
+      "expected_code": null,
+      "name": "shared_thread",
+      "primary_line": null,
+      "sha256": "41b14c63a1da9227dadbf727b7744aec5c34057cf820daccfa98e004e4223f4b"
+    },
+    {
+      "bytes": 1026,
+      "expected_code": null,
+      "name": "buffer_thread",
+      "primary_line": null,
+      "sha256": "9883c342026e8fed92e86d79e6f5583eebd504f2ed3de242fd6d282040b8f856"
+    },
+    {
+      "bytes": 715,
+      "expected_code": "E0505",
+      "name": "session",
+      "primary_line": 8,
+      "sha256": "c70e40580e9daad3076fa9e3eb10148705a567b79af50164b1b008cffccb6aa5"
+    },
+    {
+      "bytes": 757,
+      "expected_code": "E0499",
+      "name": "slot",
+      "primary_line": 8,
+      "sha256": "8a2676d46e3ca163e3723a41106257bac6db2b3b6638d715e9fbbd50127330d9"
+    },
+    {
+      "bytes": 757,
+      "expected_code": "E0499",
+      "name": "root",
+      "primary_line": 8,
+      "sha256": "dd90d3af5c4896368587d93523f06a7c7b8b49138e5f20cbb3b4e3ffb9c4ad7b"
+    },
+    {
+      "bytes": 760,
+      "expected_code": "E0499",
+      "name": "scratch",
+      "primary_line": 8,
+      "sha256": "5f913705e84b64b82ac2c766dfddffd4f983c6edb1bcb9fe4d7898d5e0a978a9"
+    },
+    {
+      "bytes": 730,
+      "expected_code": "E0382",
+      "name": "writer",
+      "primary_line": 8,
+      "sha256": "6ebae304dde6d6aff46f3382027e1826907ccb04991daebec406c689dff2bc67"
+    }
+  ],
+  "probe_relative_path": "crates/engine/src/bootstrap_borrow_probe.rs",
+  "requires_actual_unmodified_baseline": true,
+  "status": "PROPOSED_NOT_COMPILED",
+  "unrelated_diagnostics_are_failures": true
+}

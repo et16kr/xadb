@@ -1,0 +1,40 @@
+{
+  "status": "PROPOSED_INPUTS_NOT_PRODUCT_EXECUTION",
+  "baseline": {
+    "effects": "r5-inputs/effects.json",
+    "images": "r5-inputs/durable-images.json",
+    "manifest": "r5-inputs/manifest.json"
+  },
+  "assertion": "Every mutation below must be rejected; a skipped, unreached or timed-out check fails. An unchanged independently generated baseline must pass before each group.",
+  "trace_mutants": [
+    {"id": "T01", "mutation": "remove logical event index82 (data sync)", "expected": "FAIL_EFFECT_CENSUS"},
+    {"id": "T02", "mutation": "change event82 op to directory_sync without changing index", "expected": "FAIL_EFFECT_ORDER"},
+    {"id": "T03", "mutation": "change event16 op to sync,name=d3-bootstrap (omit descriptor directory barrier)", "expected": "FAIL_EFFECT_ORDER"},
+    {"id": "T04", "mutation": "remove event343 (last bank1 write)", "expected": "FAIL_EFFECT_CENSUS"},
+    {"id": "T05", "mutation": "duplicate event85 with its same index and bytes", "expected": "FAIL_EFFECT_CENSUS"},
+    {"id": "T06", "mutation": "event18 allocation write byte0 xor1, preserve size/name/offset", "expected": "FAIL_EFFECT_BYTES"},
+    {"id": "T07", "mutation": "event347 selector write carries a correctly resealed selector for bank1 generation2 plus matching valid target fixture", "expected": "FAIL_EFFECT_BYTES"}
+  ],
+  "image_mutants": [
+    {"id": "I01", "cut": 17, "side": "after", "mutation": "choose the first image containing the data filename, remove d3-bootstrap", "expected": "FAIL_DURABLE_IMAGE"},
+    {"id": "I02", "cut": 81, "side": "after", "mutation": "append final FILEMAP entry from cut350 after to the first image", "expected": "FAIL_DURABLE_IMAGE"},
+    {"id": "I03", "cut": 350, "side": "after", "mutation": "remove d3-filemap-1 from the only image", "expected": "FAIL_DURABLE_IMAGE"},
+    {"id": "I04", "cut": 349, "side": "after", "mutation": "retain only the image with FILEMAP and discard none/stage alternatives", "expected": "FAIL_DURABLE_IMAGE"},
+    {"id": "I05", "cut": 350, "side": "after", "mutation": "add d3-filemap-select-stage with FILEMAP length/hash while retaining FILEMAP", "expected": "FAIL_DURABLE_IMAGE"},
+    {"id": "I06", "cut": 350, "side": "after", "mutation": "change data-file sha256 first hex digit to the next digit modulo16", "expected": "FAIL_DURABLE_IMAGE"},
+    {"id": "I07", "cut": 350, "side": "after", "mutation": "remove cut350 after entirely", "expected": "FAIL_CUT_CENSUS"}
+  ],
+  "native_receipt_mutants": [
+    {"id": "N01", "mutation": "expected hook15 reported as14", "expected": "FAIL_HOOK"},
+    {"id": "N02", "mutation": "duplicate expected hook15 before parent kill", "expected": "FAIL_HOOK"},
+    {"id": "N03", "mutation": "no hook by fixed deadline", "expected": "FAIL_TIMEOUT"},
+    {"id": "N04", "mutation": "recorded binary SHA first hex digit differs from actual retained binary", "expected": "FAIL_BINARY_IDENTITY"},
+    {"id": "N05", "mutation": "recorded source SHA first hex digit differs from frozen source", "expected": "FAIL_SOURCE_IDENTITY"},
+    {"id": "N06", "mutation": "injected error-after event82 reported success", "expected": "FAIL_EXPECTED_FAILURE"},
+    {"id": "N07", "mutation": "native final inventory omits bank1", "expected": "FAIL_EXTERNAL_IMAGE"},
+    {"id": "N08", "mutation": "native final inventory adds unknown regular file other of length0", "expected": "FAIL_EXTERNAL_IMAGE"},
+    {"id": "N09", "mutation": "fresh partial namespace is reported resumable or DB READY", "expected": "FAIL_SCOPE"},
+    {"id": "N10", "mutation": "final inventory LOCK absent or length1 (two variants)", "expected": "FAIL_LOCK"}
+  ],
+  "compiler_checker_negatives": "Reuse the existing exact-code/primary-span checker self-tests; add the new bootstrap probe path and verify a diagnostic from a different path or a non-primary expected line is rejected. No missing import/visibility error counts as a lifetime rejection."
+}

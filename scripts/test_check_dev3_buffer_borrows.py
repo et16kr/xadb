@@ -70,6 +70,16 @@ class BorrowDiagnosticTests(unittest.TestCase):
             text, line = wal_probe(kind)
             self.assertIsNotNone(line)
             self.assertIn('// expected diagnostic', text.splitlines()[line - 1])
+        from check_dev3_storage_borrows import PROBE as STORAGE_PROBE, inputs
+        self.assertEqual(len(inputs()), 8)
+        error['spans'][0].update(file_name=STORAGE_PROBE, line_start=8, line_end=8)
+        self.assertEqual(check_diagnostics(output([error]), 101, 'E0499', 8,
+                                          probe_path=STORAGE_PROBE)[0]['code'], 'E0499')
+        for path, primary in ((WAL_PROBE, True), (STORAGE_PROBE, False)):
+            candidate = copy.deepcopy(error)
+            candidate['spans'][0].update(file_name=path, is_primary=primary)
+            with self.assertRaises(ValueError):
+                check_diagnostics(output([candidate]), 101, 'E0499', 8, probe_path=STORAGE_PROBE)
 
     def test_timeout_preserves_both_partial_logs(self):
         with tempfile.TemporaryDirectory() as directory:

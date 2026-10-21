@@ -491,3 +491,37 @@ source `f08f01d72f06a9578a129927a7a17dfe2450734e8fbd86dcfeb8c11e4da4d515`를 `ar
 2026-10-21 [최초 저장 세션 계약](../contracts/dev3-storage-session.md)을 독립 D2 검토 후 채택했다. 최초 extent·FILEMAP 두 bank·영속 staging descriptor, WAL/reader의 단일 namespace owner, 한 reader lease와 공통 fence, 실패 시 partial artifact/interval 보존을 구체화했다. 동결한 기대 bytes/효과/유한 장애 모델·compiler 입력은 준비 자료이며 제품 실행은 NOT_RUN이다.
 
 이 등록의 제품 source는 직전 RollbackStart producer `f08f01d72f06a9578a129927a7a17dfe2450734e8fbd86dcfeb8c11e4da4d515` 그대로다. 그 검증 결과를 새 저장 세션의 실행 증거로 표시하지 않는다. 구현·runtime12/native3/compiler8·동일 source 하위 회귀·현재-build 복구·독립 D1을 수행한 뒤 별도 결과를 기록한다. 전체 DEV3 및 DEV2 PF04 상태는 변경하지 않는다.
+
+
+<a id="storage-session-results"></a>
+## 최초 저장 세션의 실제 설치·공통 fence
+
+계약 commit `0e72e3c` 뒤 `/root`가 [최초 저장 세션 계약](../contracts/dev3-storage-session.md)의 D1 구현·통합을 맡고 `/root/dev3_selector_review`가 독립 검토를 맡는다. 기존 WAL owner 안에서 첫1MiB extent, FILEMAP 두 bank,4096-byte staging descriptor와 selector를 설치한다. 한 borrowed reader와 WAL의 공통 fence를 연결하고 reader의 namespace MutexGuard는 개별 open 동안만 보유한다. Frame/guard의 local poison은 공통 fence보다 먼저 판정하며 실패·unwind 뒤 실제 interval과 partial artifact를 보존한다. 고정 초기 mapping 밖의 typed PageRedo는 append 전에 거절한다. 후속 dirty frame·home write·tag2 append·reopen/recovery·S1 인수는 남아 있다.
+
+구현 중 독립 검토에서 constructor의 poison/common/capacity 우선순위, guard.view의 마지막 local 검사와 reader container Drop보다 앞선 lease 해제 문제를 수정했다. 마지막 문제는 container Drop을 실제 thread에서 멈춘 동안 두 번째 reader가 Busy인 반례로 닫았다. r0 runtime12와 보강한 r1 runtime12·native3·compiler8은 개발 사본의 결과로 보존한다. r1 source는 `bab17bc8f786bdac04316e1c0713bb042fb5b51f4d88914284d1f34bcbf84fb7`, 원본 위치는 `artifacts/dev3/storage-session-draft-r1/`다. 이 사본의 native3은 정상3profile·오류676·SIGKILL39건을 실행했지만 후속 inode/compile-time source identity·외부 checker 보강 이전이다. 최종 소스 검증과 구별한다.
+
+독립 source/type audit `artifacts/dev3/storage-session-independent-review-20261021/r6-resource-ledger.md`는 prepare41992·stream50184·readback65536의 보수적 상한에 실제 중첩 codec/SHA와 readback의 추가 File2개를 포함한다. caller scratch49152를 별도로 더한 peak는114688이다. 실제 타입은 Fresh504·Genesis328·File32·plan168·names645·entries4096·reader384·cursor224였으며 scalar 분할11528은16384 reserve 안에 든다. 이 회계는 소스에서 소유한 값의 상한이며 compiler stack/RSS나 전체 F05 인증이 아니다. oversized owner/File의 무효과 거절과3개 profile에서 reader128회 수명·handle peak3도 고정 시험에 포함한다.
+
+첫 통합 후보 source `c1fddc280d79d5c8a0d62d07474b25addba5704b963cfcb5d7a558b67a81a174`를 `artifacts/dev3/leaf-xl_o1n30/source`에 보존했다. engine/engine-worker all-targets/all-features Clippy와 fmt는 PASS다. 이 후보의 개별 검증과 마지막 하위 회귀 실패는 아래 후속 기록과 구분한다. 문서 verifier는 편집·commit 중 실행하지 않는다.
+
+완료된 개발 사본의 disposable target만 정리했다. r0의221634377bytes와 r1 runtime/native·compiler의1099680180bytes를 제거했고, 각 `cleanup.json`에 경로와 보존 hash를 남겼다. 원본 소스·로그·실행 binary·compiler probe·native DB는 보존했다.
+
+
+같은 c1fddc28… 후보의 현재-build DEV2 kernel18check/native99셀은 PASS다. 원본 `artifacts/dev3/storage-session-kernel-r0.json`과 짧은 export `/home/et16/x3s-r46qtfly/source/artifacts/d2k-c7_ibny2`를 보존한다. 독립 r8 감사는 source4개·계약22개·loaded checker7개·실행 파일6개·source-bound manifest201개와 native image102디렉터리/696파일을 대조했다. engine235 PASS·기존 장시간 fuzz1 ignored, transaction7·cache-loss15·native33×3의 범위를 구별하며 새로운 DEV3 reopen 결과로 표시하지 않는다.
+
+완료 kernel 감사 뒤 동일 worker206개를 hash/전체 bytes/mode/device 확인 후 hardlink 통합하여5496356864bytes를 회수했다. disposable target에서도 실행 파일6개의 hash를 전후 확인한 뒤545452032bytes를 정리했다. `artifacts/dev3/storage-session-kernel-worker-cleanup-20261021/summary.json`과 `storage-session-kernel-target-cleanup-20261021.json`에 원래 identity와 정리 기록을 남겼다. 별도의 완료 Clippy target336781897bytes도 제거했으며 진행 중 leaf·하위 회귀는 정리하지 않았다.
+
+
+c1fddc28… 통합 r0는 마지막 하위 회귀에서 FAIL했다. DEV2→DEV1의600초 전체 제한이 먼저 끝났고 DEV3 실행기가 남은 process group을 SIGKILL했다. 원본 [실패 receipt](../evidence/dev3-storage-session-leaf-xadb-20261021-r0.json)의58개 선행 check 성공을 전체 통합 성공으로 표시하지 않는다. 미완성 DEV0/1 receipt와 소실된 nested PIPE 출력은 복원한 실행 증거로 만들지 않는다. 이후 [전체 시간 예산 D2](../contracts/dev3-storage-session.md#aggregate-regression-budget)와 부분 로그 보존을 채택했으며 새 source로 전 분모를 검증한다.
+
+r0 실행 종료를 확인한 뒤 compiler target4개에서 ELF 실행 파일140경로/110고유파일을 별도 보존하고 disposable object/cache의2379948032bytes(약2.22GiB)를 정리했다. `artifacts/dev3/storage-session-failed-target-cleanup-20261021.json`에 원래 실행 파일 경로/hash·로그 hash·FAIL receipt를 연결했다. source·native DB·compiler probe·개별 PASS/최종 FAIL을 보존했다.
+
+
+하위 회귀 wrapper 보완은 commit `ed1fc29`에 분리했다. 새 후보 source `edec600699a4b157c17636819923bb34fc0c30d5e1bd532ce6a1cc780b84910f`의 변경은 c1fddc28… 대비 DEV0/1/2 runner와 evidence 자기시험4개 파일뿐이며 저장 세션 제품·고정 입력은 같다. `artifacts/dev3/leaf-8tl81at8/source`에서 새 runtime12/native3/compiler8·model을 실행했다. r13 독립 감사는 실제 trace1050·durable676cut/6804image와 native718DB/5172files·715child의 source/binary/실제 inode를 확인했다. r12는 같은 source의 kernel18/native99·quality3과 source4개·계약22개·checker7개·binary6개·manifest201개를 확인했다. 최종 [leaf59](../evidence/dev3-storage-session-leaf-xadb-20261021-r1.json)와 [하위 회귀28](../evidence/dev3-storage-session-dev2-regression-xadb-20261021-r1.json)이 PASS다. DEV0 workspace self-tests는594.62초, DEV1의 DEV0 회귀 전체는609.92초였으며 새 사전 고정 예산 안에서 완료했다. DEV2의 controller/catalog256seed 확장 이력은 각각311.80/315.97초에 PASS였다. 이 시간은 성능 인수 증거가 아니다. quality·compiler·model·native·leaf·하위 회귀·kernel의 원본7개 receipt를 byte 단위로 동일하게 등록했다. stage의 execution_status=NOT_RUN과 DEV2 PF04 실패, dirty/home/recovery 및 전체 DEV3 인수 미완료는 유지한다.
+
+새 kernel 감사 뒤 worker206개를 동일한 실행 파일로 hardlink 통합하여5496356864bytes를 회수했다. kernel target의545439744bytes와 완료 Clippy/주 checkout의 미사용 incremental cache1285644288bytes도 정리했다. 기록은 `storage-session-kernel-worker-cleanup-r1-20261021/summary.json`, `storage-session-kernel-target-cleanup-r1-20261021.json`, `storage-session-idle-cache-cleanup-20261021.json`이다. 진행 중 leaf/하위 회귀 target·DB는 제외했으며 완료 kernel의6개 실행 파일과 원본 로그·source·native image를 보존했다.
+
+
+최종 [r14 독립 감사](../evidence/dev3-storage-session-review-xadb-20261021-r1.json)는 staged81경로와 source368파일의 지문 일치, leaf59·하위28·DEV0/1각8, named33suite/229시험, 원본7개 등록을 확인했다. lower native323/catalog325세션과124로그·17471hash 참조를 검산하고 차단 지적 없이 제한된 단위의 통합을 수용했다. r12/r13의 kernel·새 기능 감사는 재사용했으며 검토자가 제품 시험을 재실행한 것은 아니다. 최초600초 timeout FAIL 원본은 그대로 보존한다.
+
+최종 감사 뒤 완료 leaf의 worker684개를2개 동일 binary group으로 hardlink 통합하여15731716096bytes를 회수했다. target4개에서는 ELF156경로/122고유 실행 파일을 별도 보존한 뒤2585403392bytes를 정리했다. 두 정리의 추가 회수량은 약17.06GiB이며 원래13개 실행 파일·소스·probe·로그·원본 receipt·native DB를 유지했다. 기록은 `artifacts/dev3/storage-session-leaf-worker-cleanup-r1-20261021/summary.json`과 `storage-session-leaf-target-cleanup-r1-20261021.json`이다. 정리 전후 source/실행 파일/log/receipt hash가 같음을 확인했으며 공유 hardlink 실행 파일은 이후 in-place rebuild 대상으로 사용하지 않는다.

@@ -1,0 +1,356 @@
+{
+  "scope": "private fresh storage baseline1/positive2/negative5 compiler probes",
+  "status": "PASS",
+  "artifact_directory": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb",
+  "cases": [
+    {
+      "name": "baseline",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/baseline",
+      "source_sha256": "edec600699a4b157c17636819923bb34fc0c30d5e1bd532ce6a1cc780b84910f",
+      "expected_code": null,
+      "expected_line": null,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/baseline-logs/compiler.jsonl",
+      "stdout_sha256": "0afb2ba3770628c84ab46ec5deb88c15dc7875a067c93996280eb4dfe0dd16bc",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/baseline-logs/compiler.stderr",
+      "stderr_sha256": "f50ebb8b55caf87fadff02d84edffbee8857c3f011828e5c6a92facea0fb6abb",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": []
+    },
+    {
+      "name": "shared_thread",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/shared_thread/source",
+      "source_sha256": "751bf232101c83c0d0ee5bd68916294df74fe0f4d745af11ef77f786e54ecfd1",
+      "expected_code": null,
+      "expected_line": null,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/shared_thread/compiler.jsonl",
+      "stdout_sha256": "db831ffecb651db8243093aca16597373f92825d1370323c65e4950c0a028242",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/shared_thread/compiler.stderr",
+      "stderr_sha256": "22fc513723a756d3b0744600fed66267c1bdbeeba939181968f8eecd28ea2293",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": []
+    },
+    {
+      "name": "buffer_thread",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/buffer_thread/source",
+      "source_sha256": "a3cd4bfb09ebfc073ca03f876af8c46197c8597f93703ced3a0f12926f411fe2",
+      "expected_code": null,
+      "expected_line": null,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/buffer_thread/compiler.jsonl",
+      "stdout_sha256": "aba9b78b87d61793dee6909d38bc796de6ccbc97c33c8200dd397277e8ad3777",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/buffer_thread/compiler.stderr",
+      "stderr_sha256": "ac16cd41ec1107a8bb4944005c05c66afaee8b7d653250349cf4acb14b2effff",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": []
+    },
+    {
+      "name": "session",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/session/source",
+      "source_sha256": "5ad2e6d9c08c9a0335e5e30cc125318aeed9ce919fec5239440628edce79c1c1",
+      "expected_code": "E0505",
+      "expected_line": 8,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/session/compiler.jsonl",
+      "stdout_sha256": "baefa301b7fc0050eeddde4ab31f09b021a70ec5c645be5e097b1b2457263c1c",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/session/compiler.stderr",
+      "stderr_sha256": "cf4532f7162657df30d41a4cd0f8cd2b1c1070932202ae91b546212101ac90c3",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0505",
+          "primary_span": {
+            "byte_end": 631,
+            "byte_start": 624,
+            "column_end": 17,
+            "column_start": 10,
+            "expansion": null,
+            "file_name": "crates/engine/src/bootstrap_borrow_probe.rs",
+            "is_primary": true,
+            "label": "move out of `session` occurs here",
+            "line_end": 8,
+            "line_start": 8,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 17,
+                "highlight_start": 10,
+                "text": "    drop(session); // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "slot",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/slot/source",
+      "source_sha256": "e16a1fb4b342ece5a673fe0512031910cd8a1d7b7b3e32ec4aae9e01c9dc9e61",
+      "expected_code": "E0499",
+      "expected_line": 8,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/slot/compiler.jsonl",
+      "stdout_sha256": "a78398f97ad651bf00ed5782b3b15a7a8d589c737d7aa4e08ac53148a5375ef4",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/slot/compiler.stderr",
+      "stderr_sha256": "6b4af039681249c6b31c0347f111671d1b18ce86a4cb19cbf4e75d47d3f43e1b",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0499",
+          "primary_span": {
+            "byte_end": 641,
+            "byte_start": 631,
+            "column_end": 27,
+            "column_start": 17,
+            "expansion": null,
+            "file_name": "crates/engine/src/bootstrap_borrow_probe.rs",
+            "is_primary": true,
+            "label": "second mutable borrow occurs here",
+            "line_end": 8,
+            "line_start": 8,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 27,
+                "highlight_start": 17,
+                "text": "    let alias = &mut *slot; // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "root",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/root/source",
+      "source_sha256": "2f2417db2580161800c05edd51e8f963467cb158c1fe7059a1d44d2e59a700b7",
+      "expected_code": "E0499",
+      "expected_line": 8,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/root/compiler.jsonl",
+      "stdout_sha256": "e93d033d96dca4a6e4faadf7d809e41bae652da4d4e2559350d259f3b6f50586",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/root/compiler.stderr",
+      "stderr_sha256": "0a8b9994ac6df516f7df1a852ee1601b86837fe525ea0efd6b682009bd3390fd",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0499",
+          "primary_span": {
+            "byte_end": 641,
+            "byte_start": 631,
+            "column_end": 27,
+            "column_start": 17,
+            "expansion": null,
+            "file_name": "crates/engine/src/bootstrap_borrow_probe.rs",
+            "is_primary": true,
+            "label": "second mutable borrow occurs here",
+            "line_end": 8,
+            "line_start": 8,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 27,
+                "highlight_start": 17,
+                "text": "    let alias = &mut *root; // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "scratch",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/scratch/source",
+      "source_sha256": "f5aea0cbc96207697f1b1d1bbec26670cc42208da3949b4719bb5ac760dbe616",
+      "expected_code": "E0499",
+      "expected_line": 8,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/scratch/compiler.jsonl",
+      "stdout_sha256": "31fd4e793473dbfc9f6ad88d334f0c5efdd7969b2948160bf619dde176bff3f6",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/scratch/compiler.stderr",
+      "stderr_sha256": "2ad7b0a7cd1adea6b53f862df0c87d8501ef72d74ae616b1e7555b34c054c4f4",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0499",
+          "primary_span": {
+            "byte_end": 644,
+            "byte_start": 631,
+            "column_end": 30,
+            "column_start": 17,
+            "expansion": null,
+            "file_name": "crates/engine/src/bootstrap_borrow_probe.rs",
+            "is_primary": true,
+            "label": "second mutable borrow occurs here",
+            "line_end": 8,
+            "line_start": 8,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 30,
+                "highlight_start": 17,
+                "text": "    let alias = &mut *scratch; // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "writer",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/writer/source",
+      "source_sha256": "431d8d9b393665f26ef20c6a5c498b6f4d7bcc342d1a3950f56f164030ce75f2",
+      "expected_code": "E0382",
+      "expected_line": 8,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/writer/compiler.jsonl",
+      "stdout_sha256": "6bb164f2b2e3c48a1b1d636ce8d873d644fe1ff5f19453d4057f2f7be8d34e29",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/writer/compiler.stderr",
+      "stderr_sha256": "78106bbc6a4ec2b02eec0feb2114194d9f6285d415fb3f8cf949d9f66f565db4",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0382",
+          "primary_span": {
+            "byte_end": 646,
+            "byte_start": 640,
+            "column_end": 32,
+            "column_start": 26,
+            "expansion": null,
+            "file_name": "crates/engine/src/bootstrap_borrow_probe.rs",
+            "is_primary": true,
+            "label": "value used here after move",
+            "line_end": 8,
+            "line_start": 8,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 32,
+                "highlight_start": 26,
+                "text": "    std::hint::black_box(writer); // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "checker_sha256": {
+    "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/scripts/check_dev3_storage_borrows.py": "9accb36beb235d346dfaf0b42ced410a548e8a24f18f0d8c18cb6fc853b39528",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/scripts/check_dev3_buffer_borrows.py": "5a984bf3d94c2c39dd6d359f29e474668269c862ae3f1e73751712ca25d635c3",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/scripts/check_dev0.py": "91175fdd7c7158fb4db44390d36506f545eb160a89a47cfffde61900fbec813a",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/scripts/comm_campaign.py": "cd593fcaabc3d0770c502f773bd1a38a0794e1f3ae41165723da42574436d11f",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/crates/engine/tests/fixtures/dev3-storage-session/compiler/manifest.json": "47a5bd5b9a697fe7a8b85f8d889452a538d83379099ebe023c43c6c7b697ecc7",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/crates/engine/tests/fixtures/dev3-storage-session/compiler/buffer_thread.rs": "9883c342026e8fed92e86d79e6f5583eebd504f2ed3de242fd6d282040b8f856",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/crates/engine/tests/fixtures/dev3-storage-session/compiler/root.rs": "dd90d3af5c4896368587d93523f06a7c7b8b49138e5f20cbb3b4e3ffb9c4ad7b",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/crates/engine/tests/fixtures/dev3-storage-session/compiler/scratch.rs": "5f913705e84b64b82ac2c766dfddffd4f983c6edb1bcb9fe4d7898d5e0a978a9",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/crates/engine/tests/fixtures/dev3-storage-session/compiler/session.rs": "c70e40580e9daad3076fa9e3eb10148705a567b79af50164b1b008cffccb6aa5",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/crates/engine/tests/fixtures/dev3-storage-session/compiler/shared_thread.rs": "41b14c63a1da9227dadbf727b7744aec5c34057cf820daccfa98e004e4223f4b",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/crates/engine/tests/fixtures/dev3-storage-session/compiler/slot.rs": "8a2676d46e3ca163e3723a41106257bac6db2b3b6638d715e9fbbd50127330d9",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/crates/engine/tests/fixtures/dev3-storage-session/compiler/writer.rs": "6ebae304dde6d6aff46f3382027e1826907ccb04991daebec406c689dff2bc67"
+  },
+  "source_sha256": "edec600699a4b157c17636819923bb34fc0c30d5e1bd532ce6a1cc780b84910f",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n"
+}

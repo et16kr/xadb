@@ -1,0 +1,57 @@
+{
+  "scope": "storage session final-source quality; no stage acceptance",
+  "status": "PASS",
+  "source": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source",
+  "source_sha256": "edec600699a4b157c17636819923bb34fc0c30d5e1bd532ce6a1cc780b84910f",
+  "checks": [
+    {
+      "id": "toolchain",
+      "command": [
+        "rustc",
+        "-Vv"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/storage-session-quality-r1/toolchain.log",
+      "log_sha256": "4fdff2578428e9c5c08ddd7a0d3079c1a106b1cdaa46e73e46f7cd32b0fb9cad",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "-p",
+        "xadbtest-engine-worker",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/storage-session-quality-r1/clippy.log",
+      "log_sha256": "5941260bef3e5cb06dc2a7d4aee0d606273bb4a2ae3ccc59a97b917648b6fe14",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/storage-session-quality-r1/fmt.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ]
+}

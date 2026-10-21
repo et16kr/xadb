@@ -1,0 +1,74 @@
+{
+  "status": "PASS_LIMITED_FRESH_STORAGE_UNIT_COMMIT_NO_BLOCKERS",
+  "source_sha256": "edec600699a4b157c17636819923bb34fc0c30d5e1bd532ce6a1cc780b84910f",
+  "blocking_findings": [],
+  "commit_scope": "Reviewed81 staged paths, stage0 source368 files; only D0 audit/actual-cleanup facts may follow without product change",
+  "checks": {
+    "leaf": 59,
+    "lower": 28,
+    "dev1": 8,
+    "dev0": 8,
+    "kernel": 18,
+    "quality": 3
+  },
+  "named_suites": 33,
+  "named_tests": 229,
+  "engine_named_suites": 22,
+  "engine_named_tests": 206,
+  "registered_raw_copies": 7,
+  "prior_kernel_r12_and_new_unit_r13_reused": true,
+  "reviewer_product_execution": "NONE",
+  "document_verifier": "NOT_RUN",
+  "source_shared_doc_edits": "NONE",
+  "cleanup_authorized": true,
+  "cleanup_executed_by_reviewer": false,
+  "cleanup_scope": {
+    "worker_root": "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/artifacts",
+    "observed_workers": 686,
+    "matching_binary_mode_device_groups": 2,
+    "targets": [
+      "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/source/target",
+      "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/buffer-borrows-93xplbeq/target",
+      "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/storage-borrows-uwnqmicb/target",
+      "/home/et16/work/xadb/artifacts/dev3/leaf-8tl81at8/wal-borrows-aqhudysd/target"
+    ],
+    "executable_elf_paths": 156,
+    "unique_executable_elf_hash_mode": 122,
+    "script_hashes": [
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/deduplicate_storage_session_leaf_workers_r1_20261021.py",
+        "sha256": "dc663180495abcf34025087ec14a2f0fb1a649540ceaa2d598b9211677a3eeb4"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/cleanup_storage_session_leaf_targets_r1_20261021.py",
+        "sha256": "80cf3e02e986dcd6d7c57407a17ae8f56f15f947854296a85db27c04226a68d3"
+      }
+    ],
+    "conditions": [
+      "Only these completed leaf worker duplicates and these four target directories",
+      "Manifest SHA plus actual full byte equality and same mode/uid/gid/device before hardlink; preserve intentional hash mutants",
+      "Treat retained worker binaries as immutable; never in-place rebuild shared hardlink paths",
+      "Before target deletion retain and hash every executable ELF with original-to-retained mapping; retained13 leaf binaries remain at original paths",
+      "Preserve source/probe exports, all receipts/manifests/logs and all native/raw/recovered database images; no DB file dedup or mutation",
+      "Run from repository root after fresh no-active-owner check; write exclusive journals/plans, then verify source/binaries/receipts/log hashes",
+      "Report actual cleanup counts only after successful execution; this decision does not itself prove cleanup"
+    ]
+  },
+  "dev3_execution_status": "NOT_RUN",
+  "dev2_pf04_failure_preserved": true,
+  "current_build_export_after_commit_required": true,
+  "artifacts": {
+    "r14-final-decision.md": "557269c12bf7dae8fc3ea77e5a0d9966b2b9a5886619663d13d37d07ce49b65f",
+    "r14-final-evidence-audit.py": "5d9b14f52b0412b201e4709422eaef9271688bc95096a5ea582312132899e6ae",
+    "r14-final-evidence-audit.log": "69685de2d0c86b248a493efebe667c0ffe17548236252a90279874134c3ab21f",
+    "r14-final-evidence-audit-initial-reviewer-error.log": "b3dce8059a0605493189933f9727a8962276ad230e52d1af3fba06b33110de8d",
+    "r14-final-evidence-review.json": "88e1c423aea31b74dd8430c94696cc363d03cf486dda637ea9115d4eb8d176ad",
+    "r14-staged-source-audit.py": "58d72fbb1b5c6721e244d30ea545412ab13b41d5cccf743da2b88709afe88753",
+    "r14-staged-source-audit.log": "474b1dd8f12061e52b534f4cbba698ce38b9bce07a10d7553ae3ba65aae4e55f",
+    "r14-staged-source-review.json": "a6f093a9ef50a1e94f0afadd25725bf97af53f7675434afb9d94ea16db6fd0dc",
+    "r14-d0-cleanup-audit.py": "220db258cd3accf598b51bed0eff1b0ab0038cb469d450992a536b3b4fd96689",
+    "r14-d0-cleanup-audit.log": "feb748ff6dceada69b601ea2a8a746d97cc8bd6a9de3523cc91e5a66de38951c",
+    "r14-d0-cleanup-review.json": "5077a847a6aa3cbde795625b7d4dff1c271be288940ee36230c4f785d8d73045",
+    "r14-live-contract-d0.diff": "e45db986e175d1c273860c251caab89b4175368cd131d6ae83d9243a49345e74"
+  }
+}

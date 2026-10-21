@@ -3,13 +3,12 @@
 //! See devdoc/contracts/dev3-wal-io.md. No existing epoch is reopened for append.
 #![allow(dead_code)] // Awaiting the separately reviewed semantic transaction owner.
 
-use std::sync::{
-    Mutex, MutexGuard,
-    atomic::{AtomicBool, Ordering},
-};
+use std::sync::{Mutex, MutexGuard};
 
 use super::{
     control::{self, ControlError, Profile, ProfileSpec},
+    page::FileId,
+    session_fence::SessionFence,
     wal_frame::{self, FrameExpectation, MAX_FRAME_BYTES, WalError, WalStreamIdentity},
 };
 use crate::api::{DatabaseId, Namespace};
@@ -25,6 +24,12 @@ pub(crate) const WAL_FILE_CAP: u64 = 256 << 20;
 pub(crate) const WAL_NAME: &str = "d3-wal-00000001";
 const PROFILE_NAME: &str = "d3-profile";
 const STAGE_NAME: &str = "d3-writer-stage";
+
+mod bootstrap;
+#[allow(unused_imports)] // Private downstream assembly remains under test-support.
+pub(crate) use bootstrap::{
+    BootstrapError, Cause as BootstrapCause, FreshStorageSession, Phase as BootstrapPhase,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {
@@ -62,6 +67,7 @@ pub(crate) enum Cause {
     Io(xadb_foundation::Error),
     IdentityMismatch,
     LengthMismatch,
+    MappingMismatch,
     Capacity,
     ArithmeticOverflow,
     Poisoned,
@@ -285,7 +291,8 @@ pub(crate) struct GenesisWalSession<'m, W: WriterNamespace> {
     _writer: Mutex<W>,
     file: Mutex<W::File>,
     append: Mutex<AppendState<'m>>,
-    fenced: AtomicBool,
+    fenced: SessionFence,
+    profile: Profile,
 }
 
 fn name(value: &str) -> Result<FileName> {
@@ -478,16 +485,17 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
                 state: SlotState::Idle,
                 prefix,
             }),
-            fenced: AtomicBool::new(false),
+            fenced: SessionFence::new(),
+            profile,
         })
     }
 
     /// Poison is observable without acquiring a possibly held mutex.
     pub(crate) fn is_fenced(&self) -> bool {
         if self.append.is_poisoned() || self.file.is_poisoned() || self._writer.is_poisoned() {
-            self.fenced.store(true, Ordering::Release);
+            self.fenced.fence();
         }
-        self.fenced.load(Ordering::Acquire)
+        self.fenced.is_fenced()
     }
 
     fn state(&self, phase: Phase) -> Result<MutexGuard<'_, AppendState<'m>>> {
@@ -495,7 +503,7 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
             return Err(attempted(phase, Cause::Fenced));
         }
         let state = self.append.lock().map_err(|_| {
-            self.fenced.store(true, Ordering::Release);
+            self.fenced.fence();
             attempted(phase, Cause::Poisoned)
         })?;
         if self.is_fenced() {
@@ -505,6 +513,7 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
     }
 
     pub(crate) fn prefix(&self) -> Result<WalPrefix> {
+        let _unwind = self.fenced.unwind_guard();
         Ok(self.state(Phase::Observe)?.prefix)
     }
 
@@ -512,11 +521,11 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
     pub(crate) fn try_stage(&self, bytes: &[u8]) -> Result<WalFrameLocation> {
         #[cfg(test)]
         {
-            self.stage_inner(bytes, || {})
+            self.stage_inner(bytes, None, || {})
         }
         #[cfg(not(test))]
         {
-            self.stage_inner(bytes)
+            self.stage_inner(bytes, None)
         }
     }
 
@@ -524,9 +533,10 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
     fn stage_inner(
         &self,
         bytes: &[u8],
+        mapping: Option<(FileId, u64)>,
         #[cfg(test)] after_snapshot: impl FnOnce(),
     ) -> Result<WalFrameLocation> {
-        let _unwind = UnwindFence(&self.fenced);
+        let _unwind = self.fenced.unwind_guard();
         let snapshot = {
             let state = self.state(Phase::Stage)?;
             if state.state != SlotState::Idle {
@@ -544,6 +554,13 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
             },
         )
         .map_err(|e| unchanged(Phase::Stage, Cause::Frame(e)))?;
+        if let Some((file, pages)) = mapping {
+            for record in view.redo_records() {
+                if record.target.page.file != file || record.target.page.page_no >= pages {
+                    return Err(unchanged(Phase::Stage, Cause::MappingMismatch));
+                }
+            }
+        }
         let header = view.header();
         let mut state = self.state(Phase::Stage)?;
         if state.state != SlotState::Idle {
@@ -570,7 +587,7 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
             end,
         };
         let slot = state.slot.as_mut().ok_or_else(|| {
-            self.fenced.store(true, Ordering::Release);
+            self.fenced.fence();
             attempted(Phase::Stage, Cause::Poisoned)
         })?;
         slot[..bytes.len()].copy_from_slice(bytes);
@@ -583,6 +600,7 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
     /// Move the single protected interval to I/O ownership before any write.
     /// No append or namespace mutex is held during file I/O or file-lock waiting.
     pub(crate) fn sync_pending(&self) -> Result<WalSyncObservation> {
+        let _unwind = self.fenced.unwind_guard();
         let (slot, frame) = {
             let mut state = self.state(Phase::Write)?;
             let frame = match state.state {
@@ -591,7 +609,7 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
                 SlotState::Complete(frame) => frame,
             };
             let slot = state.slot.take().ok_or_else(|| {
-                self.fenced.store(true, Ordering::Release);
+                self.fenced.fence();
                 attempted(Phase::Write, Cause::Poisoned)
             })?;
             state.state = SlotState::IoOwned(frame);
@@ -637,22 +655,14 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
     }
 }
 
-struct UnwindFence<'a>(&'a AtomicBool);
-impl Drop for UnwindFence<'_> {
-    fn drop(&mut self) {
-        if std::thread::panicking() {
-            self.0.store(true, Ordering::Release);
-        }
-    }
-}
 struct IoFence<'a> {
-    fenced: &'a AtomicBool,
+    fenced: &'a SessionFence,
     armed: bool,
 }
 impl Drop for IoFence<'_> {
     fn drop(&mut self) {
         if self.armed {
-            self.fenced.store(true, Ordering::Release);
+            self.fenced.fence();
         }
     }
 }
