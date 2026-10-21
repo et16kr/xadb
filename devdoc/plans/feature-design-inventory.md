@@ -360,7 +360,7 @@ DEV9의 제품 기준선·요구/variant 추적·같은 후보의 증거 판정�
 | TOOLS-07 | 데이터 비교 | 키·타입·NULL·float·snapshot·차이 출력 | chunk 비교·독립 normalization·대량 scan·진단 |
 | TOOLS-08 | 선택 동기화 | 불일치 해소 방향·충돌·dry run·원자성·취소 | 변경 계획·적용·재검증·이력·권한 |
 | TOOLS-09 | 전환과 결과 검증 | 이관 cutover·잔여 변경·검증·rollback 업무 | 전환 절차·증거·정합성 확인·운영 조정 |
-| TOOLS-10 | 관리와 dump 도구 묶음 | altierr/passwd/profile/wrap/checkServer/dump 계열 대응 | 공용 API/decoder·읽기 전용·보안·packaging |
+| TOOLS-10 | 관리와 dump 도구 묶음 | 오류 코드 조회·암호 관리·성능 분석·소스 래핑·서버 상태 점검·덤프 | 공용 API/decoder·읽기 전용·보안·packaging |
 | TOOLS-11 | 서비스와 컨테이너 운영 도구 | start/stop/health·service·container/Kubernetes 업무 범위 | lifecycle adapter·설정·영속 volume·복제 연계 |
 
 ## PERF 성능 용량과 운영 품질

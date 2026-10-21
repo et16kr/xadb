@@ -4804,7 +4804,7 @@
           "title": "관리와 dump 도구 묶음",
           "spec_id": "FS-TOOLS-10",
           "design_id": "DS-TOOLS-10",
-          "spec_scope": "altierr/passwd/profile/wrap/checkServer/dump 계열 대응",
+          "spec_scope": "오류 코드 조회·암호 관리·성능 분석·소스 래핑·서버 상태 점검·덤프",
           "design_scope": "공용 API/decoder·읽기 전용·보안·packaging",
           "stage_refs": [
             "DEV8"
