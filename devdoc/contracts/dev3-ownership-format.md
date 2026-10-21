@@ -4,7 +4,7 @@
 
 [obligation의 §4](dev3-obligation-format.md#4-큰-ownership-inventory) · [control](dev3-control-format.md) · [allocator](dev3-allocation-format.md) · [status home](dev3-status-home.md) · [구현 기록](../implementation/dev3-implementation.md)
 
-작성·구현·통합은 `/root`, 독립 검토는 `/root/dev3_selector_review`다. 이 계약은 immutable ownership root/chunk·Item96의 표현과 전체 bytes·물리 충돌·owner별 budget/digest 검산을 공급한다. intent 유일성은 이 결과에 포함되지 않는다. 실제 선택 파일의 I/O, checkpoint 설치, WAL delta 재생, slot admission과 reference retirement는 포함하지 않는다. root의 owner 상한36은 이 표현의 한도이며 system4·ATT32의 실제 진행 보장이나 F05 충분성의 증거가 아니다. 채택 전 제품 코드를 작성하지 않는다.
+작성·구현·통합은 `/root`, 독립 검토는 `/root/dev3_selector_review`다. §1–6은 immutable ownership root/chunk·Item96의 표현과 전체 bytes·물리 충돌·owner별 budget/digest 검산을 공급한다. intent 유일성은 이 약한 결과에 포함되지 않으며, §7의 별도 API가 실제 profile과 현재 inventory intent 유일성을 함께 검산한다. 실제 선택 파일의 I/O, checkpoint 설치, WAL delta 재생, slot admission과 reference retirement는 포함하지 않는다. root의 owner 상한36은 이 표현의 한도이며 system4·ATT32의 실제 진행 보장이나 F05 충분성의 증거가 아니다. 채택 전 제품 코드를 작성하지 않는다.
 
 ## 1. 선택과 경계
 
@@ -63,7 +63,7 @@ private `storage/ownership.rs`·`ownership_tests.rs`에서 caller 소유의 root
 
 고정 working set은 scratch64KiB, 최대36 owner의 hash·count/budget 통계,4 cursor, validate-only descriptor 검산과 item96이다. root bytes≤2176와 최대36 descriptor는 caller 입력이다. 기존 obligation의 validate를 재사용하는 `validate_descriptor(&DescriptorSpec)` helper를 추가하여 encoder의 중첩1536+1536-byte scratch를 만들지 않는다. implementation size_of 증거에서 private verifier state≤14KiB, 가장 깊은 call의 고정 local/배열 보수적 합≤2KiB로 입력 제외 총 workspace≤80KiB임을 검사한다. compiler stack-frame/OS thread stack의 실측 상한으로 해석하지 않는다. 이 수치는 전체 BOOT_RESERVE12MiB 완료가 아니다.
 
-growth intent의 owner-local 유일성은 이 leaf에서 미검증으로 남긴다(A 선택). sequence 의미를 검산기에 맞추어 resource-local로 바꾸는 대안 B와 immutable intent순 보조 목록 C를 비교했다. canonical key가 interval 순서이므로 intent 중복은 물리 merge에서 드러나지 않는다. 실제 RESERVE_RESTORE/완전한 closure 성공 전에는 **현재 inventory 안의 intent 유일성 검산**과 과거 재사용 금지 검산이 별도로 필요하다. 이후 WAL 적용만으로 checkpoint 이전의 중복을 잡을 수 없으므로 이를 후속 WAL scan 의무로만 전가하지 않는다. C와 같은 추가 표현·경로의 D2 수용과 실제 시험 전에는 현재 Observation을 복구 성공으로 승격하지 않는다. 원래 §4의 모든 의미를 검사하는 것처럼 이름 짓지 않는다.
+growth intent의 owner-local 유일성은 이 leaf에서 미검증으로 남긴다(A 선택). sequence 의미를 검산기에 맞추어 resource-local로 바꾸는 대안 B와 immutable intent순 보조 목록 C를 비교했다. canonical key가 interval 순서이므로 intent 중복은 물리 merge에서 드러나지 않는다. 실제 RESERVE_RESTORE/완전한 closure 성공 전에는 **현재 inventory 안의 intent 유일성 검산**과 과거 재사용 금지 검산이 별도로 필요하다. 추가 API의 현재 intent 검산은 아래 §7에서 따로 수용하며 원래 Observation의 의미는 유지한다. 이후 WAL 적용만으로 checkpoint 이전의 중복을 잡을 수 없으므로 이를 후속 WAL scan 의무로만 전가하지 않는다. C와 같은 추가 표현·경로의 D2 수용과 실제 시험 전에는 현재 Observation을 복구 성공으로 승격하지 않는다. 원래 §4의 모든 의미를 검사하는 것처럼 이름 짓지 않는다.
 
 오류 순서는 (1) 기대 context와 descriptor의 잘못된 값·순서·중복·상한은 InvalidInput, (2) root의 exact length/magic/layout·reserved·count/산술·checksum·owner wire/order 결함은 Corrupt(유효 envelope의 unknown version만 UnsupportedFormat), (3) 구조가 유효한 root의 namespace/bank/generation/capture/전체 digest/owner 목록이 기대값과 다르면 IdentityMismatch다. 기대 identity와 결합된 root의 N>item_limit은 LimitExceeded다. root가 유효해도 descriptor의 counts/digest와 맞지 않으면 첫 pass 끝에서 Corrupt다. callback 오류는 Source, 잘못된 반환 길이는 Corrupt다. chunk의 형식/체크섬을 먼저 확인하고 유효한 header identity가 root와 다르면 IdentityMismatch, item/순서/합계/전체 aggregate 차이는 Corrupt다. 오류 뒤 resume 기능은 없고 새 호출로 시작한다.
 
@@ -117,3 +117,44 @@ D2 수용 원문 SHA-256은 `1d67ef69a1e3103c609d2c036a589a364945eda69c86293e59f
 숫자 순서 corpus의 metadata page·physical alias 구분은 `artifacts/dev3/ownership-design-review-20261021/r2-numeric-corpus-review.md`에서 별도 수용했다. 원래 literal bytes와 충돌·복구 의미는 변경하지 않는다.
 
 제품 구현의 category별 검산 반례30개 보강과 chunk count/length의 Corrupt 선검사를 독립 검토했다. 국소 소스와30개 관련 시험·Clippy/fmt·독립 재현은 [구현 기록](../implementation/dev3-implementation.md#ownership-observation-results)에 있으며 전체 DEV3·예약 복원은 미완료다.
+
+## 7. 실제 profile과 현재 inventory intent의 결합
+
+2026-10-21 · D2 수용 / 국소 구현·독립 재현·같은 source의 하위 통합 및 DEV2 커널 회귀 PASS. `/root`가 구현·통합하고 `/root/dev3_selector_review`가 독립 검토한다. 기존 §1–6의 약한 관측 API와 bytes는 보존한다. 이 추가 결과도 historical nonreuse·실제 owned+reserved admission·selected-source 수명·slot 상태·WAL 효과·RESERVE_RESTORE 성공을 포함하지 않는다.
+
+### 입력과 상한
+
+`verify_profile_inventory(root, expected, descriptors, profile, source, scratch, intents)`를 같은 private ownership 모듈에 둔다. profile은 완전한 bootstrap decoder만 생성할 수 있는 `Profile`이다. namespace, generation, digest와 exact PROFILE_BYTES(4096)의 ControlRef를 expected.profile과 결합한다. 기존 expected validation 뒤 profile 불일치는 InvalidInput/read0다. 실제 profile1/2/3은 모두 owned8GiB이다. 미래64GiB는 지원하지 않는다.
+
+최대36개 검증된 descriptor의 inventory.growth_extents를 u128로 합산하고 extent1MiB를 곱한다. profile.owned_bytes보다 크면 LimitExceeded/read0다. 이 합계는 기존 descriptor validator가 검산한 remaining growth 합과 같다. 모든 실제 Growth item은 count>=1이며 기존 첫 pass가 count/digest/category/growth 합계를 검산한다. 따라서 성공 입력의 Growth 항목수 G는 8192 이하이며 모든 item을 올바르게 세고 확인한다. descriptor가 작게 거짓말한 경우에도 실제 growth item8193번째에서는 배열 접근 전에 Corrupt로 실패한다.
+
+`IntentWorkspace`는 caller 소유의 `[[u64;2];8192]`이고 key는 [owner ordinal, full u64 intent]다. ordinal은 같은 검증된 canonical root owner 표와 결합하므로 full owner를 축약해도 충돌/누락이 없다. 더 많은 파일·category·generation을 key에 넣지 않는다. 같은 owner+intent의 다른file/base/category는 모두 중복이다. 서로 다른 owner의 같은 intent는 정상이다. source를 재검사하는 별도 invocation의 Observation과 조립하지 않는다.
+
+### 실행과 오류
+
+기존5pass를 private common implementation으로 공유하고 첫 sequential pass에서만 growth key를 기록한다. old verify_inventory는 key 수집을 하지 않는다. 새 함수는 원래 모든 bytes/owner/category/physical 검사를 수행한 후 key를 in-place 정렬하고 이웃 중복을 Corrupt로 거절한다. 각 호출은 len을0부터 시작하므로 이전 성공/실패의 workspace 내용은 의미가 없으며, 오류 뒤 scratch/key contents는 정의하지 않는다. 정확 오류 순서는 expected/descriptor → profile → global quota → root/기존5pass → intent duplicate다. 0 items는 read0이고, success는 항상5C다. source 실패·late aggregate 변화·physical alias 오류를 기존과 동일하게 전달한다.
+
+정렬은 고정 iterative heapsort로 확정한다. sift-down과 bottom-up heap build/extract만 쓰고 recursion/heap allocation이 없다. 8192×16=128KiB + 기존 verifier<=80KiB + 정렬의 상수 local만 필요하며 추가 source bytes buffer는 없다. source-level workspace 상한을216KiB로 보수적으로 제한하되 compiler stack/BOOT_RESERVE12MiB 전체 증거로 부르지 않는다.
+
+성공 타입 `ProfileInventoryObservation`은 원래 observation과 growth_items/growth_bytes를 포함한다. current-inventory intent만 검증하며 ReservationRestored 등 capability 이름/변환은 없다. accepted profile 값은 호출 내 copy로만 관측한다.
+
+### 고정8시험 제안
+
+1. profile_inventory_binds_real_profiles: 독립 raw PROFILE1/2/3 bytes와 원래 mixed bytes에서 derived descriptor ref만 치환한 입력. 실제 decoder로 생성된 profile과 exact refs로5C 관측. empty0/read0도 각profile 확인.
+2. profile_inventory_rejects_profile_mismatch_before_reads: DB,timeline,generation,digest,valid profileID mismatch, reference-only 기존 profile 각각 InvalidInput/read0. descriptors는 expected ref와 일치하여 다른 validate 오류로 가리지 않음.
+3. profile_inventory_enforces_growth_quota: 8191/8192 extents 정상;8193 거절/read0;36owner aggregate8192/8193; u64 growth-byte 합 overflow 사례는 각각 유효한 descriptor36개를 사용하여 u128 quota rejection(extent수 합의 u64 overflow는 이36-owner 범위에서 주장하지 않음). 한 item count8192 정상으로 item수와 extent수 구별.
+4. profile_inventory_rejects_owner_local_intent_aliases: 같은owner+intent의 서로다른file/base/category, prefix와 마지막chunk사이 duplicate 거절; 다른owner 같은intent 정상. intent1/255/256/u64MAX와 full numeric order. 기존 약한 Observation은 여전히2기존범위밖사례를허용함.
+5. profile_inventory_checks_full_capacity_and_lying_claims:8192개 각각count1인 서로안겹치는growth, 서로다른intent 정상/read5C;역순intent도정상;8193actual Growth item+작은claim은Corrupt/배열범위넘지않음. 이 입력의 valid descriptor는 pages1+growth8192 extents/items8193을 주장하여 cardinality와quota선검사를통과하고 실제8193번째key guard에도달한다. 실제stream은page0/growth8193이고digest는실제stream과같다. 최대capacity끝중복거절.
+6. profile_inventory_reuses_workspace_after_failures: 성공→중복실패→source실패→다른빈/정상 성공을 같은workspace로 실행; sentinel tail 제외; success5C,원본입력불변.
+7. profile_inventory_keeps_all_validation_passes: 기존 mixed2owner+growth input 실제profile치환. second/lastpass의source byte변경,source error,physical collision,count/digest/category오차를 새entry에서도거절. mutable source의첫pass/다음pass키변경은aggregate로실패.
+8. profile_inventory_intents_match_independent_sets: seed64×sample128=8192 작은raw growth목록(0..16개)에서독립 BTreeSet<(ownerordinal,intent)> 판정과결과비교. 파일/base는비충돌고정;category·owner·intent분포분리. 정렬 자체는0,1,2,8191,8192 reverse/constant/alternating/ascending를독립stdsort와비교; sourceworkspace size<=216KiB를명시확인.
+
+모든 입력 생성은 기존 raw test helper를 사용하되 product verifier/Item.key로 정답을 만들지 않는다. profile bytes는 독립Python offset/constants/SHA로 생성하여 실제 profile decoder와 비교한다. 기존 reference-only fixture를 덮어쓰지 않는다. 새source파일이필요없으면 기존ownership파일 내에유지한다. code/runner/contract검토와 같은source제품검증·Clippy/fmt·하위회귀·현재-build복구는 별도로 기록한다.
+
+### 생성 corpus의 정확 식과 정렬 선택
+
+n=128×seed+sample, seed=0..63/sample=0..127, N=n%17. item i=0..N−1은 kind Growth4, owner=(n+i)%2, category=1+(n+i)%5, FileId=(2<<32)|(1+i%3), base=256(1+i), count=1+(n+i)%3, intent=1+((n/17)+3i)%(1+n%9), changeLSN30이다. 같은file i차3이면12extent떨어져 count최대3과겹치지않는다. raw 정렬은 kind/file/base/intent/owner/category순이며 independent BTreeSet key(owner,intent)가 중복이면Corrupt, 아니면성공이다. descriptor별budget/count/digest는 rawbytes에서산출하고 실제PROFILE1을결합한다. old12시험의생성식/fixture는변경하지않는다.
+
+정렬은 fixed iterative heapsort로선택한다. len0/1은무효과, build는역순internalnodes, extract는len−1..1이다. sift-down은현재root와두child중최댓값을교환하여계속한다. 재귀/heap/동적배열없으며index산술은len<=8192안이다. workspace는 caller가직접할당하는 `type IntentWorkspace = [[u64;2];8192]`로두고len은호출local이다. 큰constructor 반환temp를만들지않는다.
+
+독립 D2 원문 SHA-256은 `7edea76367fc082c8b15df54aab6855c188ebab706dc3cf11f1e5fe165d2932e`이며 `artifacts/dev3/ownership-intent-design-review-20261021/reviewer-r2-acceptance.json`에서 수용했다. 3개 실제 profile fixture는 DB=bytes1..16/timeline17/generation23, 각각4096 bytes다. 독립 generator는 `artifacts/dev3/ownership-intent-vectors-r0/profiles.py`다. full SHA는 ID1 `fff74c31eeef815940cbc0e0d6fb42810d6222a657efe95982137b410cddaf31`, ID2 `cf628a9cefbd704738e58b29abcec9d9171001f769e4b897142e04ba2882eeff`, ID3 `b361d47bcaf7fc771fd8e727af40992d589de7b0c9e0958fe031b64ae46cb920`이다. 이 계산과 D2 수용은 제품 실행 증거가 아니다.

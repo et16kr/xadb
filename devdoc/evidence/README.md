@@ -156,3 +156,11 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 ownership 통합 원본 실행 결과](dev3-ownership-leaf-xadb-20261021-r1.json) — 동일 source의 제한된 실행 범위 PASS; 전체 DEV3 인수 미완료
 
 - [DEV3 ownership 소스의 DEV0/1/2 회귀 실행 결과](dev3-ownership-dev2-regression-xadb-20261021-r1.json) — 동일 source의 제한된 실행 범위 PASS; 전체 DEV3 인수 미완료
+
+- [DEV3 현재 intent 검산 국소 실행 결과](dev3-ownership-intent-local-xadb-20261021-r0.json) — 실제 profile/current intent의 국소 범위 및 같은 source의 기존 복구 회귀; 전체 DEV3 인수 미완료
+
+- [DEV3 현재 intent 소스의 DEV2 복구 실행 결과](dev3-ownership-intent-dev2-kernel-xadb-20261021-r0.json) — 실제 profile/current intent의 국소 범위 및 같은 source의 기존 복구 회귀; 전체 DEV3 인수 미완료
+
+- [DEV3 현재 intent 통합 원본 실행 결과](dev3-ownership-intent-leaf-xadb-20261021-r0.json) — source e83efc08…의 고정 범위 PASS; 실제 예약 복원·전체 DEV3 인수 미완료
+
+- [DEV3 현재 intent 소스의 DEV0/1/2 회귀 실행 결과](dev3-ownership-intent-dev2-regression-xadb-20261021-r0.json) — source e83efc08…의 고정 범위 PASS; 실제 예약 복원·전체 DEV3 인수 미완료

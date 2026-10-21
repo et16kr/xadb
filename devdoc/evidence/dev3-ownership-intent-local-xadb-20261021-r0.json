@@ -1,0 +1,168 @@
+{
+  "origin": {
+    "revision": "93d4a37e1217d90398fc52e1b40ebee3017a8487",
+    "tracked_diff_sha256": "03f874d9ecc83b1930f529e733343c880731ad5804f87c45b5096d2946d04e19",
+    "source_sha256": "e83efc08cfdd1c0233343dc936b3f682361f9385750cbca155fdb1e66f64836f",
+    "lockfile_sha256": "f67269ca67484a0241bf06f22dee740fe6943bfe38d204193ab7fbcddec28a45"
+  },
+  "source_sha256": "e83efc08cfdd1c0233343dc936b3f682361f9385750cbca155fdb1e66f64836f",
+  "scope": "profile-bound ownership bytes/accounting/physical-overlap and current intent uniqueness; historical nonreuse, restoration and effects not proven",
+  "lower_regression": "NOT_RUN_ON_THIS_SOURCE",
+  "source": "/home/et16/work/xadb/artifacts/dev3/ownership-intent-retained-r0/source",
+  "checks": [
+    {
+      "id": "build",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/ownership-intent-retained-r0/build.log",
+      "log_sha256": "9ae2f0895f984d8f82c9d55246df04670a97667c45b561514fdd7c7b5b5949c4",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "ownership",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/ownership-intent-retained-r0/engine-binary",
+        "storage::ownership::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/ownership-intent-retained-r0/ownership.log",
+      "log_sha256": "6e6ac51c9d0302c1640f3bb945124b235ae2a842d4a8ff7d13545ee61122995c",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "control",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/ownership-intent-retained-r0/engine-binary",
+        "storage::control::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/ownership-intent-retained-r0/control.log",
+      "log_sha256": "bc3b34ba4aeee510e9a6fd85475a9bb9a64d84adddedd9dbc13841d746549af9",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "obligation",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/ownership-intent-retained-r0/engine-binary",
+        "storage::obligation::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/ownership-intent-retained-r0/obligation.log",
+      "log_sha256": "92b3e9a69910d9b14ec70be739665ddf35805047079059ec2e8b8e575012d42f",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/ownership-intent-retained-r0/clippy.log",
+      "log_sha256": "8898756d8a9ef402963b9b2eb680b0bdf05217d7fe6f97d720d116a61afb8f94",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/ownership-intent-retained-r0/fmt.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "contract_sha256": {
+    "devdoc/contracts/dev3-ownership-format.md": "5c3bbcaabf70f7c1b88fd85875da3a16c3f876431f75e33b2f24967b2adc09f3",
+    "devdoc/contracts/dev3-control-format.md": "ca0cc1e4264741b7b8ff21ebde31e7fb16333584e7c9f6fc8925df51c1c4bddc",
+    "devdoc/contracts/dev3-obligation-format.md": "357796ca749e541c3d415a10ef1bd7d55e1642063dbe0d00e923965b081d6669"
+  },
+  "binary": {
+    "path": "/home/et16/work/xadb/artifacts/dev3/ownership-intent-retained-r0/engine-binary",
+    "sha256": "b6a23033f9174cf9d63fa0099047a3e3a6d3599cc788f74b9b7ce88476ae562c",
+    "features": []
+  },
+  "tests": {
+    "ownership": [
+      "inventory_all_lanes_drain_and_bind_repeated_bytes",
+      "inventory_canonical_order_spans_chunk_boundaries",
+      "inventory_expected_owners_and_capture_are_required",
+      "inventory_generated_profiles_match_independent_fields",
+      "inventory_intent_uniqueness_is_explicitly_not_proven",
+      "inventory_item_bounds_and_generations_are_checked",
+      "inventory_literals_bind_all_bytes_and_owners",
+      "inventory_owner_digests_and_category_budgets_are_exact",
+      "inventory_physical_aliases_and_intervals_match_pairwise_oracle",
+      "inventory_reserved_and_header_damage_reject_after_checksum",
+      "inventory_root_chunk_truncation_and_damage_reject",
+      "inventory_source_failures_and_workspace_are_bounded",
+      "profile_inventory_binds_real_profiles",
+      "profile_inventory_checks_full_capacity_and_lying_claims",
+      "profile_inventory_enforces_growth_quota",
+      "profile_inventory_intents_match_independent_sets",
+      "profile_inventory_keeps_all_validation_passes",
+      "profile_inventory_rejects_owner_local_intent_aliases",
+      "profile_inventory_rejects_profile_mismatch_before_reads",
+      "profile_inventory_reuses_workspace_after_failures"
+    ],
+    "control": [
+      "control_encoders_preserve_outputs",
+      "control_envelope_corruption_is_rejected",
+      "control_filemap_cursor_rejects_mixed_inventory",
+      "control_filemap_exact_bounds",
+      "control_filemap_literals",
+      "control_generated_inventory_profiles",
+      "control_names_and_bootstrap_ownership",
+      "control_profile_literals",
+      "control_profiles_require_exact_capacities",
+      "control_selector_bindings_and_lengths"
+    ],
+    "obligation": [
+      "descriptor_budget_sums_peaks_and_growth_are_exact",
+      "descriptor_empty_inventory_and_chain_boundaries",
+      "descriptor_encoder_errors_preserve_output",
+      "descriptor_expected_context_and_unsupported_work_root",
+      "descriptor_generated_profiles_match_independent_fields",
+      "descriptor_lengths_and_every_byte_damage_reject",
+      "descriptor_literals_bind_exact_owner_profile_and_state",
+      "descriptor_reserved_and_semantic_damage_reject_after_checksum"
+    ]
+  },
+  "source_sha256_after": "e83efc08cfdd1c0233343dc936b3f682361f9385750cbca155fdb1e66f64836f",
+  "status": "PASS"
+}

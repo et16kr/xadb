@@ -1636,3 +1636,567 @@ fn inventory_generated_profiles_match_independent_fields() {
     }
     assert_eq!(count, 8192);
 }
+
+const INTENT_PROFILES: [&[u8]; 3] = [
+    include_bytes!("../../tests/fixtures/dev3-ownership-profile1.bin"),
+    include_bytes!("../../tests/fixtures/dev3-ownership-profile2.bin"),
+    include_bytes!("../../tests/fixtures/dev3-ownership-profile3.bin"),
+];
+fn real_profile(id: usize) -> Profile {
+    super::super::control::decode_bootstrap_profile(INTENT_PROFILES[id - 1], Some(ns())).unwrap()
+}
+fn profile_reference(p: Profile) -> ControlRef {
+    ControlRef {
+        kind: ControlKind::Profile,
+        slot: 0,
+        index: 0,
+        generation: p.spec().generation,
+        encoded_len: 4096,
+        digest: p.digest(),
+    }
+}
+impl Case {
+    fn bind_profile(mut self, p: Profile) -> Self {
+        self.expected.profile = profile_reference(p);
+        for d in &mut self.descriptors {
+            d.profile = self.expected.profile;
+        }
+        self
+    }
+    fn run_profile(
+        &self,
+        p: Profile,
+        intents: &mut IntentWorkspace,
+    ) -> (Result<ProfileInventoryObservation>, Vec<u64>) {
+        let mut source = TestSource::new(self.chunks.clone());
+        let mut scratch = Box::new([[0; PAGE_BYTES]; 4]);
+        let result = verify_profile_inventory(
+            &self.root,
+            self.expected,
+            &self.descriptors,
+            p,
+            &mut source,
+            &mut scratch,
+            intents,
+        );
+        (result, source.trace)
+    }
+}
+fn growth_items(size: usize) -> Vec<Raw> {
+    (0..size)
+        .map(|i| Raw {
+            intent: i as u64 + 1,
+            ..Raw::new(4, 64 * (i as u64 + 1))
+        })
+        .collect()
+}
+fn growth_case(items: Vec<Raw>) -> Case {
+    Case::new(vec![txn(19, 20)], items, 0, 60, 60).bind_profile(real_profile(1))
+}
+fn all_owners() -> Vec<ReservationOwner> {
+    let mut list: Vec<_> = (0..32).map(|i| txn(19 + i, 20)).collect();
+    list.extend(
+        [
+            SystemWorkKind::AllocationMaintenance,
+            SystemWorkKind::StructuralChange,
+            SystemWorkKind::Aging,
+            SystemWorkKind::Checkpoint,
+        ]
+        .map(|kind| sys(kind, 21)),
+    );
+    list
+}
+
+#[test]
+fn profile_inventory_binds_real_profiles() {
+    let hashes = [
+        "fff74c31eeef815940cbc0e0d6fb42810d6222a657efe95982137b410cddaf31",
+        "cf628a9cefbd704738e58b29abcec9d9171001f769e4b897142e04ba2882eeff",
+        "b361d47bcaf7fc771fd8e727af40992d589de7b0c9e0958fe031b64ae46cb920",
+    ];
+    let mut keys = Box::new([[0; 2]; MAX_GROWTH_ITEMS]);
+    for id in 1..=3 {
+        let bytes = INTENT_PROFILES[id - 1];
+        assert_eq!(bytes.len(), 4096);
+        assert_eq!(content_digest(bytes), hex(hashes[id - 1]));
+        assert_eq!(u32_at(bytes, 128), id as u32);
+        assert_eq!(u64_at(bytes, 136), 8 << 30);
+        assert_eq!(u64_at(bytes, 168), [4, 16, 64][id - 1] << 20);
+        let p = real_profile(id);
+        assert_eq!(p.spec().namespace, ns());
+        assert_eq!(p.spec().generation, 23);
+        assert_eq!(p.digest(), hex(hashes[id - 1]));
+        let c = Case::mixed().bind_profile(p);
+        // The independent inventory bytes/owners do not change with profile ID.
+        assert_eq!(c.root, MIXED_ROOT);
+        assert_eq!(c.chunks[0], MIXED_CHUNK);
+        let (result, calls) = c.run_profile(p, &mut keys);
+        let result = result.unwrap();
+        assert_eq!(result.inventory, c.accepted());
+        assert_eq!((result.growth_items, result.growth_bytes), (1, 1 << 20));
+        assert_eq!(calls, [0; 5]);
+        for owner_list in [vec![], owners()] {
+            let empty = Case::new(owner_list, vec![], 0, 60, 60).bind_profile(p);
+            let (result, calls) = empty.run_profile(p, &mut keys);
+            assert_eq!(result.unwrap().growth_items, 0);
+            assert_eq!(result.unwrap().growth_bytes, 0);
+            assert_eq!(result.unwrap().inventory.items, 0);
+            assert!(calls.is_empty());
+        }
+    }
+}
+
+#[test]
+fn profile_inventory_rejects_profile_mismatch_before_reads() {
+    let p = real_profile(1);
+    let c = Case::mixed().bind_profile(p);
+    let mut keys = Box::new([[0; 2]; MAX_GROWTH_ITEMS]);
+    // Valid but different profile identity: never use the wire namespace as expected.
+    for field in 0..4 {
+        let mut bytes = INTENT_PROFILES[0].to_vec();
+        match field {
+            0 => bytes[16] ^= 1,
+            1 => put64(&mut bytes, 32, 18),
+            2 => put64(&mut bytes, 40, 24),
+            3 => bytes = INTENT_PROFILES[1].to_vec(),
+            _ => unreachable!(),
+        }
+        seal(&mut bytes);
+        let other = super::super::control::decode_bootstrap_profile(&bytes, None).unwrap();
+        let (result, reads) = c.run_profile(other, &mut keys);
+        assert_eq!(result, Err(InventoryError::InvalidInput));
+        assert!(reads.is_empty());
+    }
+    let mut wrong_digest = c.clone();
+    wrong_digest.expected.profile.digest[0] ^= 1;
+    for d in &mut wrong_digest.descriptors {
+        d.profile = wrong_digest.expected.profile;
+        validate_descriptor(d).unwrap();
+    }
+    for other in [wrong_digest, Case::mixed()] {
+        let (result, reads) = other.run_profile(p, &mut keys);
+        assert_eq!(result, Err(InventoryError::InvalidInput));
+        assert!(reads.is_empty());
+    }
+    // Error priority: profile binding precedes an excessive global growth claim.
+    let excessive = growth_case(vec![Raw {
+        count: 8193,
+        ..Raw::new(4, 64)
+    }]);
+    let (result, reads) = excessive.run_profile(real_profile(2), &mut keys);
+    assert_eq!(result, Err(InventoryError::InvalidInput));
+    assert!(reads.is_empty());
+}
+
+#[test]
+fn profile_inventory_enforces_growth_quota() {
+    let p = real_profile(1);
+    let mut keys = Box::new([[0; 2]; MAX_GROWTH_ITEMS]);
+    for count in [8191, 8192, 8193] {
+        let c = growth_case(vec![Raw {
+            count,
+            ..Raw::new(4, 64)
+        }]);
+        let (result, calls) = c.run_profile(p, &mut keys);
+        if count <= 8192 {
+            let observation = result.unwrap();
+            assert_eq!(observation.growth_items, 1);
+            assert_eq!(observation.growth_bytes, count * (1 << 20));
+            assert_eq!(calls.len(), 5);
+        } else {
+            assert_eq!(result, Err(InventoryError::LimitExceeded));
+            assert!(calls.is_empty());
+            let mut malformed_root = c.clone();
+            malformed_root.root.clear();
+            assert_eq!(malformed_root.run_profile(p, &mut keys).0, result);
+        }
+    }
+    for total in [8192, 8193] {
+        let items: Vec<_> = (0..36)
+            .map(|i| Raw {
+                owner: i,
+                file: FILE + u64::from(i),
+                count: if i == 35 { total - 35 } else { 1 },
+                ..Raw::new(4, 64)
+            })
+            .collect();
+        let c = Case::new(all_owners(), items, 0, 60, 60).bind_profile(p);
+        let (result, reads) = c.run_profile(p, &mut keys);
+        if total == 8192 {
+            let observation = result.unwrap();
+            assert_eq!(observation.growth_items, 36);
+            assert_eq!(observation.growth_bytes, 8 << 30);
+            assert_eq!(reads.len(), 5);
+        } else {
+            assert_eq!(result, Err(InventoryError::LimitExceeded));
+            assert!(reads.is_empty());
+        }
+    }
+    // Each descriptor fits u64; their byte total does not. Quota checking is wide.
+    let mut huge = Case::new(all_owners(), vec![], 0, 60, 60).bind_profile(p);
+    for d in &mut huge.descriptors {
+        d.inventory.items = 1;
+        d.inventory.change_lsn = 60;
+        d.inventory.growth_extents = u64::MAX / (1 << 20);
+        d.remaining[0].steps = 1;
+        d.remaining[0].growth = d.inventory.growth_extents * (1 << 20);
+        validate_descriptor(d).unwrap();
+    }
+    let expected_bytes: u128 = huge
+        .descriptors
+        .iter()
+        .map(|d| u128::from(d.remaining[0].growth))
+        .sum();
+    assert!(expected_bytes > u128::from(u64::MAX));
+    let (result, reads) = huge.run_profile(p, &mut keys);
+    assert_eq!(result, Err(InventoryError::LimitExceeded));
+    assert!(reads.is_empty());
+}
+
+#[test]
+fn profile_inventory_rejects_owner_local_intent_aliases() {
+    let p = real_profile(1);
+    let mut keys = Box::new([[0; 2]; MAX_GROWTH_ITEMS]);
+    let a = Raw {
+        intent: 7,
+        ..Raw::new(4, 64)
+    };
+    for b in [
+        Raw {
+            file: FILE + 1,
+            ..a
+        },
+        Raw { page: 128, ..a },
+        Raw {
+            page: 128,
+            category: 2,
+            ..a
+        },
+    ] {
+        let c = growth_case(vec![a, b]);
+        assert_eq!(c.accepted().items, 2); // Preserve the original observation scope.
+        let (result, reads) = c.run_profile(p, &mut keys);
+        assert_eq!(result, Err(InventoryError::Corrupt));
+        assert_eq!(reads.len(), 5); // Intent failure is after all physical passes.
+    }
+    let distinct_owners = Case::new(
+        owners(),
+        vec![
+            a,
+            Raw {
+                owner: 1,
+                page: 128,
+                ..a
+            },
+        ],
+        0,
+        60,
+        60,
+    )
+    .bind_profile(p);
+    assert_eq!(
+        distinct_owners
+            .run_profile(p, &mut keys)
+            .0
+            .unwrap()
+            .growth_items,
+        2
+    );
+    let mut cross_chunk = growth_items(170);
+    cross_chunk[169].intent = cross_chunk[0].intent;
+    let (result, reads) = growth_case(cross_chunk).run_profile(p, &mut keys);
+    assert_eq!(result, Err(InventoryError::Corrupt));
+    assert_eq!(reads.len(), 10);
+    let numeric: Vec<_> = [u64::MAX, 256, 1, 255]
+        .into_iter()
+        .enumerate()
+        .map(|(i, intent)| Raw {
+            intent,
+            ..Raw::new(4, 64 * (i as u64 + 1))
+        })
+        .collect();
+    assert_eq!(
+        growth_case(numeric)
+            .run_profile(p, &mut keys)
+            .0
+            .unwrap()
+            .growth_items,
+        4
+    );
+    assert_eq!(&keys[..4], &[[0, 1], [0, 255], [0, 256], [0, u64::MAX]]);
+}
+
+#[test]
+fn profile_inventory_checks_full_capacity_and_lying_claims() {
+    let p = real_profile(1);
+    let mut keys = Box::new([[0; 2]; MAX_GROWTH_ITEMS]);
+    for reverse in [false, true] {
+        let mut items = growth_items(8192);
+        if reverse {
+            for (i, item) in items.iter_mut().enumerate() {
+                item.intent = 8192 - i as u64;
+            }
+        }
+        let c = growth_case(items);
+        let (result, reads) = c.run_profile(p, &mut keys);
+        let observation = result.unwrap();
+        assert_eq!(
+            (observation.growth_items, observation.growth_bytes),
+            (8192, 8 << 30)
+        );
+        assert_eq!(observation.inventory.chunks, 49);
+        assert_eq!(reads.len(), 245);
+        assert_eq!(keys[0], [0, 1]);
+        assert_eq!(keys[8191], [0, 8192]);
+    }
+    let mut duplicate = growth_items(8192);
+    duplicate[8191].intent = 1;
+    assert_eq!(
+        growth_case(duplicate).run_profile(p, &mut keys).0,
+        Err(InventoryError::Corrupt)
+    );
+    let mut lying = growth_case(growth_items(8193));
+    // A valid 8193-item claim with one page token keeps the claim <=8 GiB.
+    // Actual bytes have 8193 growth items, so the array guard is reached first.
+    let d = &mut lying.descriptors[0];
+    d.inventory.growth_extents = 8192;
+    d.remaining[0].growth = 8 << 30;
+    d.remaining[0].pages = 1;
+    validate_descriptor(d).unwrap();
+    let (result, reads) = lying.run_profile(p, &mut keys);
+    assert_eq!(result, Err(InventoryError::Corrupt));
+    assert_eq!(reads.len(), 49);
+    assert_eq!(keys[8191], [0, 8192]);
+}
+
+#[test]
+fn profile_inventory_reuses_workspace_after_failures() {
+    let p = real_profile(1);
+    let mut keys = Box::new([[u64::MAX; 2]; MAX_GROWTH_ITEMS]);
+    let mut scratch = Box::new([[0; PAGE_BYTES]; 4]);
+    let good = growth_case(growth_items(4));
+    let before_root = good.root.clone();
+    let before_chunks = good.chunks.clone();
+    let before_descriptors = good.descriptors.clone();
+    assert_eq!(good.run_profile(p, &mut keys).0.unwrap().growth_items, 4);
+    let mut duplicate = growth_items(2);
+    duplicate[1].intent = 1;
+    assert_eq!(
+        growth_case(duplicate).run_profile(p, &mut keys).0,
+        Err(InventoryError::Corrupt)
+    );
+    let mut source = TestSource::new(good.chunks.clone());
+    source.failure = Some(Failure::Error(2));
+    assert_eq!(
+        verify_profile_inventory(
+            &good.root,
+            good.expected,
+            &good.descriptors,
+            p,
+            &mut source,
+            &mut scratch,
+            &mut keys
+        ),
+        Err(InventoryError::Source)
+    );
+    assert_eq!(
+        growth_case(vec![])
+            .run_profile(p, &mut keys)
+            .0
+            .unwrap()
+            .growth_items,
+        0
+    );
+    assert_eq!(
+        good.run_profile(p, &mut keys)
+            .0
+            .unwrap()
+            .inventory
+            .read_calls,
+        5
+    );
+    assert!(keys[4..].iter().all(|key| *key == [u64::MAX; 2]));
+    assert_eq!(good.root, before_root);
+    assert_eq!(good.chunks, before_chunks);
+    assert_eq!(good.descriptors, before_descriptors);
+}
+
+#[test]
+fn profile_inventory_keeps_all_validation_passes() {
+    let p = real_profile(1);
+    let c = Case::mixed().bind_profile(p);
+    let mut keys = Box::new([[0; 2]; MAX_GROWTH_ITEMS]);
+    let mut scratch = Box::new([[0; PAGE_BYTES]; 4]);
+    for call in 1..=5 {
+        for drift in [false, true] {
+            let mut source = TestSource::new(c.chunks.clone());
+            source.failure = Some(if drift {
+                Failure::Drift(call, 0)
+            } else {
+                Failure::Error(call)
+            });
+            assert_eq!(
+                verify_profile_inventory(
+                    &c.root,
+                    c.expected,
+                    &c.descriptors,
+                    p,
+                    &mut source,
+                    &mut scratch,
+                    &mut keys
+                ),
+                Err(if drift {
+                    InventoryError::Corrupt
+                } else {
+                    InventoryError::Source
+                })
+            );
+        }
+    }
+    // Change the actual intent while preserving each delivered chunk checksum.
+    struct IntentDrift {
+        inner: TestSource,
+        visit: usize,
+    }
+    impl InventorySource for IntentDrift {
+        fn read_chunk(&mut self, index: u64, out: &mut [u8; PAGE_BYTES]) -> Result<usize> {
+            let len = self.inner.read_chunk(index, out)?;
+            if self.inner.visits[index as usize] == self.visit {
+                put64(out, 128 + 4 * 96 + 32, 77);
+                seal(&mut out[..len]);
+            }
+            Ok(len)
+        }
+    }
+    for visit in 1..=5 {
+        let mut source = IntentDrift {
+            inner: TestSource::new(c.chunks.clone()),
+            visit,
+        };
+        assert_eq!(
+            verify_profile_inventory(
+                &c.root,
+                c.expected,
+                &c.descriptors,
+                p,
+                &mut source,
+                &mut scratch,
+                &mut keys
+            ),
+            Err(InventoryError::Corrupt)
+        );
+    }
+    let a = Raw::new(4, 64);
+    let physical = growth_case(vec![a, Raw { intent: 2, ..a }]);
+    assert_eq!(
+        physical.run_profile(p, &mut keys).0,
+        Err(InventoryError::Corrupt)
+    );
+    for field in 0..3 {
+        let mut bad = c.clone();
+        let d = &mut bad.descriptors[0];
+        match field {
+            0 => {
+                d.inventory.items += 1;
+                d.remaining[0].pages += 1;
+            }
+            1 => d.inventory.digest[0] ^= 1,
+            2 => {
+                d.remaining[0].pages -= 1;
+                d.remaining[3].pages += 1;
+            }
+            _ => unreachable!(),
+        }
+        validate_descriptor(d).unwrap();
+        assert_eq!(
+            bad.run_profile(p, &mut keys).0,
+            Err(InventoryError::Corrupt)
+        );
+    }
+    // A duplicate key must not mask a failed later source read.
+    let mut repeated = growth_items(2);
+    repeated[1].intent = 1;
+    let duplicate = growth_case(repeated);
+    let mut source = TestSource::new(duplicate.chunks.clone());
+    source.failure = Some(Failure::Error(5));
+    assert_eq!(
+        verify_profile_inventory(
+            &duplicate.root,
+            duplicate.expected,
+            &duplicate.descriptors,
+            p,
+            &mut source,
+            &mut scratch,
+            &mut keys
+        ),
+        Err(InventoryError::Source)
+    );
+}
+
+#[test]
+fn profile_inventory_intents_match_independent_sets() {
+    use std::collections::BTreeSet;
+    let p = real_profile(1);
+    let mut keys = Box::new([[0; 2]; MAX_GROWTH_ITEMS]);
+    let (mut accepted, mut rejected) = (0, 0);
+    for seed in 0..64_u64 {
+        for sample in 0..128_u64 {
+            let n = 128 * seed + sample;
+            let items: Vec<_> = (0..n % 17)
+                .map(|i| Raw {
+                    owner: ((n + i) % 2) as u16,
+                    category: (1 + (n + i) % 5) as u8,
+                    file: (2 << 32) | (1 + i % 3),
+                    count: 1 + (n + i) % 3,
+                    intent: 1 + ((n / 17) + 3 * i) % (1 + n % 9),
+                    ..Raw::new(4, 256 * (1 + i))
+                })
+                .collect();
+            assert!(pairwise(&items));
+            let independent: BTreeSet<_> = items.iter().map(|r| (r.owner, r.intent)).collect();
+            let unique = independent.len() == items.len();
+            let bytes: u128 = items.iter().map(|r| u128::from(r.count) * 1048576).sum();
+            let c = Case::new(owners(), items.clone(), 0, 60, 60).bind_profile(p);
+            let (result, reads) = c.run_profile(p, &mut keys);
+            if unique {
+                accepted += 1;
+                let observation = result.unwrap();
+                assert_eq!(observation.growth_items, items.len() as u64);
+                assert_eq!(u128::from(observation.growth_bytes), bytes);
+                assert_eq!(observation.inventory.items, items.len() as u64);
+            } else {
+                rejected += 1;
+                assert_eq!(result, Err(InventoryError::Corrupt));
+            }
+            assert_eq!(reads.len(), 5 * items.len().div_ceil(169));
+        }
+    }
+    assert_eq!((accepted, rejected), (3157, 5035));
+    // A separate standard sorter is only the test oracle for the constant-space sorter.
+    for len in [0, 1, 2, 8191, 8192] {
+        for pattern in 0..4 {
+            let mut actual: Vec<_> = (0..len)
+                .map(|i| match pattern {
+                    0 => [0, i as u64],
+                    1 => [0, (len - i) as u64],
+                    2 => [1, u64::MAX],
+                    3 => [(i % 2) as u64, (len - i) as u64],
+                    _ => unreachable!(),
+                })
+                .collect();
+            let mut expected = actual.clone();
+            expected.sort_unstable();
+            sort_intents(&mut actual);
+            assert_eq!(actual, expected);
+        }
+    }
+    assert_eq!(std::mem::size_of::<IntentWorkspace>(), 128 * 1024);
+    assert!(
+        std::mem::size_of::<IntentWorkspace>()
+            + 80 * 1024
+            + std::mem::size_of::<IntentCollector<'_>>()
+            + std::mem::size_of::<Profile>()
+            + 8 * std::mem::size_of::<usize>()
+            <= 216 * 1024
+    );
+}

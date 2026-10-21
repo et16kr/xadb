@@ -204,7 +204,7 @@ DEV3 첫 표현 leaf는 [page 형식](../contracts/dev3-page-format.md)을 priva
 
 [복구 의무 descriptor](../contracts/dev3-obligation-format.md#12-독립-descriptor-표현-leaf-제안)는 private `storage/obligation.rs`·`obligation_tests.rs`와 engine의3개1536-byte literal에 둔다. dependency/feature·기본 제품 API 변경 없이 owner/profile/budget 표현만 검산한다. inventory closure·예약 복원·WAL 적용 타입으로 승격하지 않는다.
 
-[Ownership 관측](../contracts/dev3-ownership-format.md)은 private `storage/ownership.rs`·`ownership_tests.rs`와9개 literal에 둔다. 기존 descriptor/control 참조를 소비하며 caller의4×16KiB scratch와 고정 통계로 bytes·budget·물리 충돌을 검산한다. 새 dependency/feature·source root는 없으며 intent 유일성·예약 복원·실제 선택 I/O는 후속 의무다.
+[Ownership 관측](../contracts/dev3-ownership-format.md)은 private `storage/ownership.rs`·`ownership_tests.rs`와 inventory9개·실제 profile3개 literal에 둔다. 기존 descriptor/control 참조를 소비하며 caller의4×16KiB scratch와 고정 통계로 bytes·budget·물리 충돌을 검산한다. 새 dependency/feature·source root는 없다. 추가 API는 decoded profile과 결합하고128KiB 고정 key 공간으로 현재 growth intent 유일성을 검산한다. 과거 intent 재사용·예약 복원·실제 선택 I/O는 후속 의무다.
 
 두 번째 표현 작업의 [composite key](../contracts/dev3-key-format.md)는 caller buffer와 기존 foundation scalar bytes를 사용한다. foundation의 exact-size/encode-into/prefix 검사와 engine의 key 시험을 위 leaf 실행기에 함께 등록한다. M01–M06의 후속 모델은 reference integration tests에 두며 각 모델 계약·실제 receipt와 전체 DEV3 실행을 구분한다.
 

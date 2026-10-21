@@ -38,6 +38,14 @@ OWNERSHIP_TESTS = {
     'inventory_source_failures_and_workspace_are_bounded',
     'inventory_intent_uniqueness_is_explicitly_not_proven',
     'inventory_generated_profiles_match_independent_fields',
+    'profile_inventory_binds_real_profiles',
+    'profile_inventory_rejects_profile_mismatch_before_reads',
+    'profile_inventory_enforces_growth_quota',
+    'profile_inventory_rejects_owner_local_intent_aliases',
+    'profile_inventory_checks_full_capacity_and_lying_claims',
+    'profile_inventory_reuses_workspace_after_failures',
+    'profile_inventory_keeps_all_validation_passes',
+    'profile_inventory_intents_match_independent_sets',
 }
 OBLIGATION_TESTS = {
     'descriptor_literals_bind_exact_owner_profile_and_state',

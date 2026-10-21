@@ -1125,11 +1125,14 @@
       "crates/engine/tests/fixtures/dev3-ownership-mixed-chunk.bin",
       "crates/engine/tests/fixtures/dev3-ownership-mixed-root.bin",
       "crates/engine/tests/fixtures/dev3-ownership-mixed-system.bin",
-      "crates/engine/tests/fixtures/dev3-ownership-mixed-txn.bin"
+      "crates/engine/tests/fixtures/dev3-ownership-mixed-txn.bin",
+      "crates/engine/tests/fixtures/dev3-ownership-profile1.bin",
+      "crates/engine/tests/fixtures/dev3-ownership-profile2.bin",
+      "crates/engine/tests/fixtures/dev3-ownership-profile3.bin"
     ],
     "source_roots_changed": false,
     "dependencies_changed": false,
     "full_stage_acceptance": false,
-    "local_tests": 12
+    "local_tests": 20
   }
 }

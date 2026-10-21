@@ -1,11 +1,12 @@
 //! Bounded inventory byte/accounting/physical-overlap observations.
 //! Contract: `devdoc/contracts/dev3-ownership-format.md`.
-//! Intent uniqueness and reservation restoration are deliberately NOT proven.
+//! The profile-bound entry also checks current owner-local growth intents.
+//! Neither entry proves historical nonreuse or reservation restoration.
 #![allow(dead_code)] // Awaiting the distinct selected-source and restore consumers.
 
 use super::{
     allocation_page::{ExtentAddress, ReservationOwner, SystemWorkRef},
-    control::{ControlKind, ControlRef},
+    control::{ControlKind, ControlRef, EXTENT_BYTES, PROFILE_BYTES, Profile},
     obligation::{DescriptorSpec, OwnerState, WorkPhase, validate_descriptor},
     page::{FileId, PAGE_BYTES, PageRef},
     status_home::MAX_HOME_SLOTS,
@@ -17,6 +18,9 @@ use crate::api::{DatabaseId, Namespace};
 use xadb_foundation::codec::{ContentHasher, content_digest};
 
 pub(crate) const MAX_OWNERS: usize = 36;
+pub(crate) const MAX_GROWTH_ITEMS: usize = 8192;
+/// Caller-provided storage; no hidden large constructor or inventory-sized heap.
+pub(crate) type IntentWorkspace = [[u64; 2]; MAX_GROWTH_ITEMS];
 const ITEM_BYTES: usize = 96;
 const CHUNK_ITEMS: u64 = 169;
 type Result<T> = std::result::Result<T, InventoryError>;
@@ -54,6 +58,117 @@ pub(crate) struct InventoryObservation {
     pub(crate) items: u64,
     pub(crate) chunks: u64,
     pub(crate) read_calls: u64,
+}
+
+/// Complete observed inventory with a matching fixed profile and unique current
+/// owner-local growth intents. No source pin, admission or restoration authority.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct ProfileInventoryObservation {
+    pub(crate) inventory: InventoryObservation,
+    pub(crate) growth_items: u64,
+    pub(crate) growth_bytes: u64,
+}
+
+struct IntentCollector<'a> {
+    keys: &'a mut IntentWorkspace,
+    len: usize,
+}
+impl IntentCollector<'_> {
+    fn accept(&mut self, item: Item) -> Result<()> {
+        if item.kind() == 4 {
+            let key = self.keys.get_mut(self.len).ok_or(InventoryError::Corrupt)?;
+            *key = [item.owner() as u64, u64_at(&item.bytes, 32)];
+            self.len += 1;
+        }
+        Ok(())
+    }
+    fn finish(&mut self) -> Result<u64> {
+        let keys = &mut self.keys[..self.len];
+        sort_intents(keys);
+        if keys.windows(2).any(|pair| pair[0] == pair[1]) {
+            return Err(InventoryError::Corrupt);
+        }
+        Ok(self.len as u64)
+    }
+}
+
+/// Iterative heapsort keeps sorting scratch constant as well as heap-free.
+/// Only the initialized prefix is passed; keys remain bound to this root's
+/// validated owner ordinals. No truncation of the full u64 intent is permitted.
+fn sort_intents(keys: &mut [[u64; 2]]) {
+    fn sift_down(keys: &mut [[u64; 2]], mut root: usize) {
+        while root < keys.len() / 2 {
+            let mut child = root * 2 + 1;
+            if child + 1 < keys.len() && keys[child] < keys[child + 1] {
+                child += 1;
+            }
+            if keys[root] >= keys[child] {
+                break;
+            }
+            keys.swap(root, child);
+            root = child;
+        }
+    }
+    for root in (0..keys.len() / 2).rev() {
+        sift_down(keys, root);
+    }
+    for end in (1..keys.len()).rev() {
+        keys.swap(0, end);
+        sift_down(&mut keys[..end], 0);
+    }
+}
+
+/// Validate the real fixed profile before any source read, then collect intents
+/// during the same first pass used by the complete byte/accounting observation.
+/// Workspace may change on failure; a new call always starts with an empty set.
+pub(crate) fn verify_profile_inventory(
+    root_bytes: &[u8],
+    expected: InventoryExpected,
+    descriptors: &[DescriptorSpec],
+    profile: Profile,
+    source: &mut impl InventorySource,
+    scratch: &mut [[u8; PAGE_BYTES]; 4],
+    intents: &mut IntentWorkspace,
+) -> Result<ProfileInventoryObservation> {
+    validate_expected(expected, descriptors)?;
+    let spec = profile.spec();
+    if spec.namespace != expected.namespace
+        || spec.generation != expected.profile.generation
+        || profile.digest() != expected.profile.digest
+        || expected.profile.encoded_len as usize != PROFILE_BYTES
+    {
+        return Err(InventoryError::InvalidInput);
+    }
+    // Each descriptor has a checked extent count. The bounded 36-owner sum and
+    // byte conversion fit u128 even when the corresponding u64 byte sum does not.
+    let growth_bytes = descriptors
+        .iter()
+        .map(|descriptor| u128::from(descriptor.inventory.growth_extents))
+        .sum::<u128>()
+        * u128::from(EXTENT_BYTES);
+    if growth_bytes > u128::from(profile.owned_bytes())
+        || growth_bytes / u128::from(EXTENT_BYTES) > MAX_GROWTH_ITEMS as u128
+    {
+        return Err(InventoryError::LimitExceeded);
+    }
+    let mut collector = IntentCollector {
+        keys: intents,
+        len: 0,
+    };
+    let inventory = observe_inventory(
+        root_bytes,
+        expected,
+        descriptors,
+        source,
+        scratch,
+        Some(&mut collector),
+    )?;
+    let growth_items = collector.finish()?;
+    Ok(ProfileInventoryObservation {
+        inventory,
+        growth_items,
+        growth_bytes: growth_bytes as u64, // Checked against the real 8 GiB profile.
+    })
 }
 
 fn u16_at(bytes: &[u8], offset: usize) -> u16 {
@@ -583,6 +698,17 @@ pub(crate) fn verify_inventory(
     scratch: &mut [[u8; PAGE_BYTES]; 4],
 ) -> Result<InventoryObservation> {
     validate_expected(expected, descriptors)?;
+    observe_inventory(root_bytes, expected, descriptors, source, scratch, None)
+}
+
+fn observe_inventory(
+    root_bytes: &[u8],
+    expected: InventoryExpected,
+    descriptors: &[DescriptorSpec],
+    source: &mut impl InventorySource,
+    scratch: &mut [[u8; PAGE_BYTES]; 4],
+    mut intents: Option<&mut IntentCollector<'_>>,
+) -> Result<InventoryObservation> {
     let root = decode_root(root_bytes, expected, descriptors)?;
     let mut state = VerifierState {
         totals: std::array::from_fn(|_| OwnerTotals::default()),
@@ -593,6 +719,9 @@ pub(crate) fn verify_inventory(
     while let Some(item) =
         state.cursors[0].next(root, descriptors, source, &mut scratch[0], &mut calls)?
     {
+        if let Some(collector) = intents.as_mut() {
+            collector.accept(item)?;
+        }
         let totals = &mut state.totals[item.owner()];
         let mut normalized = item.bytes;
         normalized[2..4].fill(0);
