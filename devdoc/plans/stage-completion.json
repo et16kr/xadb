@@ -915,9 +915,11 @@
         "implementation_ref": "dev3-implementation.md",
         "page_contract_ref": "dev3-page-format.md",
         "partial_model_ref": "dev3-snapshot-model.md",
-        "scope": "Page envelope and M02-P01 only; stage execution_status remains the full disk-path acceptance status",
+        "scope": "Fixed storage expressions including status homes, selector/metadata ports, bounded selected-page reads and M02-P01; full disk-path acceptance remains NOT_RUN",
         "status": "LOCAL_VERIFIED_LIMITED_SCOPE",
-        "evidence_ref": "dev3-leaf-xadb-20261020-r1.json"
+        "evidence_ref": "dev3-status-home-leaf-xadb-20261021-r1.json",
+        "page_io_contract_ref": "dev3-page-io.md",
+        "status_home_contract_ref": "dev3-status-home.md"
       }
     },
     {

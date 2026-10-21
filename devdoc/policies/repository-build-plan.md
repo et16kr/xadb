@@ -200,6 +200,8 @@ DEV3 첫 표현 leaf는 [page 형식](../contracts/dev3-page-format.md)을 priva
 
 선택 page reader는 engine private `storage/page_io.rs`·`page_io_tests.rs`에 두고, 독립 fixture generator는 `scripts/dev3_disk_vectors.py`다. 실제 Linux 조립은 default 제외 engine `test-support` feature의 `testing.rs`를 worker의 dev-dependency에서만 활성화하여 `tests/page_io.rs`에서 검사한다. 기존 worker→engine 간선을 사용하며 정상 engine→platform 의존을 추가하지 않는다. 기본 제품 API와 시험 조립 feature를 receipt에서 구별한다.
 
+[거래 상태의 영속 home](../contracts/dev3-status-home.md)는 private `storage/status_home.rs`·`status_home_tests.rs`와 engine의3개 literal fixture에 둔다. 기존192-byte core와 구 loader는 기존 표현 범위로 유지하고224-byte home·71-slot 검산은 별도 loader가 소유한다. 새 dependency/feature나 기본 제품 API는 없다. 무효과 표현 검증을 실제 count 갱신·terminal 회수로 해석하지 않는다.
+
 
 두 번째 표현 작업의 [composite key](../contracts/dev3-key-format.md)는 caller buffer와 기존 foundation scalar bytes를 사용한다. foundation의 exact-size/encode-into/prefix 검사와 engine의 key 시험을 위 leaf 실행기에 함께 등록한다. M01–M06의 후속 모델은 reference integration tests에 두며 각 모델 계약·실제 receipt와 전체 DEV3 실행을 구분한다.
 

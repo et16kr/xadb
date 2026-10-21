@@ -324,3 +324,16 @@ metadata port는 [원본 receipt](../evidence/dev3-metadata-port-xadb-20261021-r
 사용자의 디스크 정리 요청에 따라 완료된 native worker 실행 파일은 manifest SHA-256·전체 bytes·mode/device가 같은 사본만 hardlink로 통합했다. 데이터 파일·보존 source·로그·receipt 경로와 내용은 유지하며 이후 그 실행 파일을 수정하지 않는다. `artifacts/dev3/completed-worker-cleanup-20261021/summary.json`과 journal에4,814개 통합·약104.29GiB 회수, `incremental-cache-cleanup.json`에 완료된 빌드 캐시 약8.29GiB 제거를 기록했다. 실행 중인 source와 target은 제외했다.
 
 최종 독립 증거 검토 `artifacts/dev3/page-reader-independent-review-20261021/r2-final-evidence-review.json`은 retained source 두 사본·계약16개·checker3개·로그104개·asset58개를 대조하고 위 좁은 통합 범위의 PASS를 확인했다. 기본 feature와 시험 feature, page-reader 지문과 후속 status-home 지문을 구별한다.
+
+<a id="status-home-results"></a>
+### 상태 core와 영속 incoming count의 결합
+
+selector·선택 page reader 단위를 `1811579`로 commit한 뒤, `/root`가 [224-byte 상태 home](../contracts/dev3-status-home.md)의 private codec·page loader와7시험·3개 독립 literal을 연결했다. 논리 core192·기존82-slot 표현은 보존하고 새 home loader는71-slot 한도·모든 cell·DB/timeline·동일 TxnId 중복·참조 generation을 확인한다. 순수 incoming 계산은 제거를 먼저 검사하므로 net0이어도 기존 count보다 많은 edge를 제거할 수 없다. 실제 count 변경·queue·terminal·WAL 적용은 미구현이다.
+
+국소 source `ea3ba171acbcb22147fbb06f60738215d67bf74694e3b41d3c0ac9764131d885`의 [원본 실행](../evidence/dev3-status-home-local-xadb-20261021-r0.json)은7시험·Clippy·fmt PASS다. count64셀(정상29·거절35), 독립 입력식8,192개, embedded core 부정23개를 검증했다. `/root/dev3_selector_review`의 `artifacts/dev3/status-home-independent-review-20261021/r1-evidence-review.json`은 실제 binary를 별도 재실행하고3 literal을 독립 재구성했다. 이 국소 source에는 하위 회귀를 실행하지 않았다.
+
+runner 등록 뒤 source `dd7163fbe37164c2c1a6ae75304ad416e9a1407583ae4e9391191c2bca72e790`를 `artifacts/dev3/leaf-g7shzdyd/source`에 보존했다. [같은 source의 현재-build DEV2 복구](../evidence/dev3-status-home-dev2-kernel-xadb-20261021-r1.json)18check·native99셀과 [Clippy·fmt](../evidence/dev3-status-home-quality-xadb-20261021-r1.json)는 PASS다. [통합 leaf41check](../evidence/dev3-status-home-leaf-xadb-20261021-r1.json)·[하위 회귀28check](../evidence/dev3-status-home-dev2-regression-xadb-20261021-r1.json)도 PASS했다. engine 표현·reader122시험과 기존 selector·metadata·native reader·부분 모델 및 DEV0/1·DEV2 P0/K0의 고정 범위다. 실제 DEV3 복구·S1 인수는 미완료다.
+
+완료된 page reader 실행의 worker890개를 같은 manifest SHA·bytes의3개 binary로 hardlink 통합하여 약19.49GiB, 완료된 disposable Cargo target을 제거하여 약3.90GiB를 추가 회수했다. 검증 binary·source·로그와 data는 보존했다. 원본 journal과 요약은 `artifacts/dev3/page-reader-worker-cleanup-20261021/`에 있으며 상태 home의 실행 중 target은 제외했다.
+
+최종 독립 검토 `artifacts/dev3/status-home-independent-review-20261021/r3-final-evidence-review.json`은 같은 지문의 source 두 사본·승인 제품 입력7개·로그105개·고유 asset 경로1,392개와 계약17개·loaded checker3개를 대조했다. 현재-build kernel의3×33개 결과·consistency·controller negative inventory도 확인하여 이 좁은 상태 home 단위의 commit 차단 사항이 없음을 기록했다.

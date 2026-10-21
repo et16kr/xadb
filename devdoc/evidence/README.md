@@ -128,3 +128,13 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 선택 page reader 소스의 현재-build DEV2 복구](dev3-page-reader-dev2-kernel-xadb-20261021-r2.json) — source8e86232e…의 고정 범위; DEV3 전체 인수 아님.
 
 - [DEV3 선택 page reader 소스의 Clippy·fmt·build feature 기록](dev3-page-reader-quality-xadb-20261021-r2.json) — source8e86232e…의 고정 범위; DEV3 전체 인수 아님.
+
+- [DEV3 상태 home 표현의 국소 실행 결과](dev3-status-home-local-xadb-20261021-r0.json) — 고정된 해당 소스·검증 범위; 실제 상태 갱신·DEV3 복구 인수 아님.
+
+- [DEV3 상태 home 통합 소스의 현재-build DEV2 복구](dev3-status-home-dev2-kernel-xadb-20261021-r1.json) — 고정된 해당 소스·검증 범위; 실제 상태 갱신·DEV3 복구 인수 아님.
+
+- [DEV3 상태 home 통합 소스의 Clippy·fmt 실행 결과](dev3-status-home-quality-xadb-20261021-r1.json) — 고정된 해당 소스·검증 범위; 실제 상태 갱신·DEV3 복구 인수 아님.
+
+- [DEV3 상태 home 표현 통합 원본 실행 결과](dev3-status-home-leaf-xadb-20261021-r1.json) — source dd7163fb…의 고정 범위; 실제 DEV3 복구·S1 인수 아님.
+
+- [DEV3 상태 home 통합 소스의 DEV0/1·DEV2 회귀](dev3-status-home-dev2-regression-xadb-20261021-r1.json) — source dd7163fb…의 고정 범위; 실제 DEV3 복구·S1 인수 아님.

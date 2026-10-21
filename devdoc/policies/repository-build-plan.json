@@ -1074,5 +1074,22 @@
       "dev3-m04-xadb-20261020-r1.json",
       "dev3-models-xadb-20261020-r1.json"
     ]
+  },
+  "dev3_status_home": {
+    "implementation_ref": "dev3-implementation.md",
+    "contract_ref": "dev3-status-home.md",
+    "source": [
+      "crates/engine/src/storage/status_home.rs",
+      "crates/engine/src/storage/status_home_tests.rs"
+    ],
+    "fixtures": [
+      "crates/engine/tests/fixtures/dev3-status-home-active.bin",
+      "crates/engine/tests/fixtures/dev3-status-home-committed.bin",
+      "crates/engine/tests/fixtures/dev3-status-home-free.bin"
+    ],
+    "source_roots_changed": false,
+    "dependencies_changed": false,
+    "full_stage_acceptance": false,
+    "local_tests": 7
   }
 }

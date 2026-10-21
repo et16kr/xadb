@@ -983,6 +983,11 @@
       "role": "evidence",
       "title": "DEV3 열린 handle metadata port 원본 실행 결과"
     },
+    "dev3-status-home.md": {
+      "path": "contracts/dev3-status-home.md",
+      "role": "contracts",
+      "title": "DEV3 거래 상태의 영속 home"
+    },
     "dev3-page-reader-leaf-xadb-20261021-r2.json": {
       "path": "evidence/dev3-page-reader-leaf-xadb-20261021-r2.json",
       "role": "evidence",
@@ -1002,6 +1007,31 @@
       "path": "evidence/dev3-page-reader-quality-xadb-20261021-r2.json",
       "role": "evidence",
       "title": "DEV3 선택 page reader 소스의 Clippy·fmt·build feature 기록"
+    },
+    "dev3-status-home-local-xadb-20261021-r0.json": {
+      "path": "evidence/dev3-status-home-local-xadb-20261021-r0.json",
+      "role": "evidence",
+      "title": "DEV3 상태 home 표현의 국소 실행 결과"
+    },
+    "dev3-status-home-dev2-kernel-xadb-20261021-r1.json": {
+      "path": "evidence/dev3-status-home-dev2-kernel-xadb-20261021-r1.json",
+      "role": "evidence",
+      "title": "DEV3 상태 home 통합 소스의 현재-build DEV2 복구"
+    },
+    "dev3-status-home-quality-xadb-20261021-r1.json": {
+      "path": "evidence/dev3-status-home-quality-xadb-20261021-r1.json",
+      "role": "evidence",
+      "title": "DEV3 상태 home 통합 소스의 Clippy·fmt 실행 결과"
+    },
+    "dev3-status-home-leaf-xadb-20261021-r1.json": {
+      "path": "evidence/dev3-status-home-leaf-xadb-20261021-r1.json",
+      "role": "evidence",
+      "title": "DEV3 상태 home 표현 통합 원본 실행 결과"
+    },
+    "dev3-status-home-dev2-regression-xadb-20261021-r1.json": {
+      "path": "evidence/dev3-status-home-dev2-regression-xadb-20261021-r1.json",
+      "role": "evidence",
+      "title": "DEV3 상태 home 통합 소스의 DEV0/1·DEV2 회귀"
     }
   }
 }

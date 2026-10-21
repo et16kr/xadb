@@ -25,6 +25,15 @@ from check_dev0 import check_report_paths, digest, source_fingerprint
 from comm_campaign import capture_source, identity, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
+STATUS_HOME_TESTS = {
+    'status_home_literals_match_core_and_count',
+    'status_home_rejects_lengths_headers_and_free_references',
+    'status_home_encoder_errors_preserve_output',
+    'status_home_count_delta_is_checked_and_atomic',
+    'status_home_page_validates_all_slots_and_namespace',
+    'status_home_lookup_rejects_stale_aliases',
+    'status_home_generated_profiles_match_independent_fields',
+}
 PAGE_IO_TESTS = {
     'selected_map_reads_independent_page_and_all_declared_chunks',
     'selected_map_rejects_late_damage_and_never_scans_fallback',
@@ -392,7 +401,7 @@ def main():
     source = session / 'source'
     report = {
         'schema_version': 1, 'date': datetime.now(timezone.utc).isoformat(),
-        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads + D3-M02-P01; no disk engine or S1 acceptance',
+        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/status-home/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads + D3-M02-P01; no disk engine or S1 acceptance',
         'status': 'RUNNING', 'origin': identity(ROOT), 'artifact_directory': str(session),
         'dev3_acceptance': 'INCOMPLETE', 'checks': [], 'builds': [],
         'checker_identity_scope': 'F07 file freeze and before/after disk hashes; not bytecode attestation or protected CI',
@@ -438,6 +447,7 @@ def main():
                 'devdoc/contracts/dev3-reference-format.md',
                 'devdoc/contracts/dev3-tree-format.md', 'devdoc/contracts/dev3-overflow-format.md',
                 'devdoc/contracts/dev3-transaction-format.md',
+                'devdoc/contracts/dev3-status-home.md',
                 'devdoc/contracts/dev3-wal-format.md', 'devdoc/contracts/dev3-allocation-format.md',
                 'devdoc/contracts/dev3-row-format.md', 'devdoc/contracts/dev3-doublewrite-format.md',
                 'devdoc/contracts/dev3-catalog-format.md', 'devdoc/contracts/dev3-undo-format.md',
@@ -463,6 +473,7 @@ def main():
         for name, expected in [('anchor', ANCHOR_TESTS), ('undo_ref', UNDO_REF_TESTS),
                                ('tree_page', TREE_TESTS), ('overflow', OVERFLOW_TESTS),
                                ('transaction_record', TRANSACTION_TESTS),
+                               ('status_home', STATUS_HOME_TESTS),
                                ('wal_frame', WAL_TESTS), ('allocation_page', ALLOCATION_TESTS),
                                ('row_record', ROW_TESTS), ('doublewrite_control', DOUBLEWRITE_TESTS),
                                ('catalog_record', CATALOG_TESTS), ('undo_record', UNDO_RECORD_TESTS),

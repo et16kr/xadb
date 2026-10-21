@@ -70,4 +70,4 @@ XADB-SCOPE-001이 이전 제품의 저장 범위와 외부 대체 gate를 대체
 
 [완료 계약](stage-completion.json)의 모든 필수 task·gate·case와 독립 리뷰를 충족해야 해당 단계를 완료한다. 각 leaf의 PASS를 단계 전체 완료로 확대하지 않는다. DEV0·DEV1 로컬 검증과 DEV2 일부 구현 상태는 [현재 구현](../implementation/README.md)에 기록한다. 공개 저장소의 존재는 제품 qualification이나 안정 릴리스 호환을 보장하지 않는다.
 
-DEV3의 [첫 page envelope·M02-P01 부분 모델](../implementation/dev3-implementation.md)은 별도 `leaf_progress`로 연결한다. DEV3 `execution_status=NOT_RUN`은 전체 디스크 경로의 단계 인수 상태이며 제한된 표현/model 실행이 없다는 뜻으로 읽지 않는다.
+DEV3의 [상태 home를 포함한 표현·selector/metadata port·제한된 선택 page 읽기·M02-P01 부분 모델](../implementation/dev3-implementation.md)은 별도 `leaf_progress`로 연결한다. DEV3 `execution_status=NOT_RUN`은 전체 디스크 경로의 단계 인수 상태이며 제한된 표현/model 실행이 없다는 뜻으로 읽지 않는다.

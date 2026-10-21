@@ -1,0 +1,43 @@
+{
+  "scope": "status-home integration retained source quality; regression recorded separately",
+  "status": "PASS",
+  "source_sha256": "dd7163fbe37164c2c1a6ae75304ad416e9a1407583ae4e9391191c2bca72e790",
+  "source_sha256_after": "dd7163fbe37164c2c1a6ae75304ad416e9a1407583ae4e9391191c2bca72e790",
+  "checks": [
+    {
+      "id": "quality-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-g7shzdyd/quality-clippy.log",
+      "log_sha256": "31c0c5d387d95cbca87658b7adc7da59f6334cc5e1d6ba7f164f9e838383e26f",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "quality-fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-g7shzdyd/quality-fmt.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ]
+}

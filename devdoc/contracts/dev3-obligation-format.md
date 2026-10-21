@@ -305,7 +305,7 @@ NativeEffect는128-byte header와 full before cell bytes, full after cell bytes�
 
 header offset0 kind(Row1/Index2/UndoRoot3/UndoChunk4/TxnStatus5/AllocationCell6/Catalog7),1 flags(before bit0/after bit1),2 redo index:u16,4 before slot:u16,6 after slot:u16,8 before cell offset:u16,10 after cell offset:u16,12 before length:u32,16 after length:u32,20 record length:u32=`128+before+after`,24 beforeSHA32,56 afterSHA32,88..127 zero다. absent cell의 slot은65535, offset/length/digest는0이다. before와 after가 모두 없으면 거절한다. array는 `(redo index, after slot 또는 before slot, kind)` 순서이며 같은 physical cell에 중복 효과를 두지 않는다.
 
-두 body는 해당 native decoder로 추가 검산한다. expected namespace/schema/target/owner는 caller의 안정화된 context에서 받는다. raw bytes의 SHA만 맞고 native decoder가 없는 kind는 UnsupportedNativeBody다. UndoRoot/UndoChunk는 별도 undo 계약, status192는 기존 거래 계약, allocator cell6208은 기존 allocator 계약을 소비한다. catalog body는 해당 leaf의 독립 동결 뒤에만 지원한다.
+두 body는 해당 native decoder로 추가 검산한다. expected namespace/schema/target/owner는 caller의 안정화된 context에서 받는다. raw bytes의 SHA만 맞고 native decoder가 없는 kind는 UnsupportedNativeBody다. UndoRoot/UndoChunk는 별도 undo 계약, status의 논리 core192는 기존 거래 계약, allocator cell6208은 기존 allocator 계약을 소비한다. count를 함께 적용하는 status native body는 [home224 제안](dev3-status-home.md)의 full before/after를 요구하며 core192만으로 성공시키지 않는다. home224의 독립 채택·codec과 의미 적용기의 결합 검산 전에는 해당 opcode를 지원하지 않는다. catalog body는 해당 leaf의 독립 동결 뒤에만 지원한다.
 
 after bytes는 해당 PageRedo의 실제 after span에 정확히 포함되어야 한다. Init은 공통 page의 실제 slot directory/identity까지 대조한다. Patch는 offset 범위와 after bytes 일치만으로 old page의 slot directory까지 인증하지 않는다. **F02 before/after page 검산기**가 old canonical page와 patch 적용 후 canonical page에서 slot·cell 전체 bytes/target을 확인해야 적용 허가가 된다. 제거되는 cell은 after absent와 실제 after page의 slot/entry 제거가 일치해야 한다.
 
@@ -328,9 +328,9 @@ EdgeChange128은 offset0 source NativeEffect index:u16,2 role:u8,3..7 zero,8 old
 
 array는 `(source effect index,role)` 순서이며 중복 role은 없다. before/after native field에서 추출한 실제 old/new reference와 위 role별 loaded/new-root sequence context를 **함께** 비교한다. Row/Index/TxnHead의 field40 bytes만으로 ReferenceTarget56 전체를 추출할 수 있다고 주장하지 않는다. raw parser가 `Set`으로 중복 target을 제거하지 않는다. 같은 undo의 previous-txn/version 두 field가 한 target을 가리키면 그 target의 incoming을2 증가/감소시킨다. old=new인 불필요한 delta는 거절한다.
 
-CountChange96은 offset0 target56,56 before count:u64,64 after count:u64,72 target NativeEffect index:u16,74..95 zero다. target 순서이며 중복 target은 없다. 별도로 열거한 EdgeChange multiset에서 각 target에 대한 add/remove를 합산하고 checked 산술로 `after=before+adds−removes`를 검산한다. source의 실제 before/after graph에서 바뀐 edge가 delta에 누락돼도 거절한다. count가 바뀌지 않은 target은 CountChange를 싣지 않는다.
+CountChange96은 offset0 target56,56 before count:u64,64 after count:u64,72 target NativeEffect index:u16,74..95 zero다. target 순서이며 중복 target은 없다. 별도로 열거한 EdgeChange multiset에서 각 target에 대한 add/remove를 합산하고 먼저 `before>=removes`를 검사하고 checked 산술로 `after=(before−removes)+adds`를 검산한다. source의 실제 before/after graph에서 바뀐 edge가 delta에 누락돼도 거절한다. count가 바뀌지 않은 target은 CountChange를 싣지 않는다. 그러나 EdgeChange가 닿는 **모든** target은 net0이라도 안정화된 home proof를 제공해야 한다. proof의 정확한 identity/generation과 `before>=removes`를 확인한다. Undo target은 Live/non-Releasing이며, TxnRef target은 occupied status home와 opcode별 허용 상태여야 한다. before0에서 한 edge 제거와 같은 target으로 한 edge 추가를 net0으로 상쇄해 성공시키지 않는다. net0 proof는 읽기 전제이고 page write가 없는 NativeEffect를 만들라는 요구가 아니다. proof의 정확한 API·고정 수명·WAL replay 검산은 F02에서 별도 동결해야 하며, 그 입력이 없으면 적용을 승인하지 않는다.
 
-UndoRoot의 stored incoming은 byte offset80에 있어 해당 NativeEffect와 결합할 수 있다. **status192에는 TxnRef incoming count field가 없다.** status count의 별도 home representation이 동결되기 전에는 tag2 CountChange를 실제 적용 가능한 것으로 승인하지 않는다. tag2의 구조를 읽을 수 있다는 사실을 persistence 구현으로 세지 않는다. queue의 durable 소유·cursor가 필요한 cut/release도 해당 native format 없이 적용 허가를 내리지 않는다.
+UndoRoot의 stored incoming은 byte offset80에 있어 해당 NativeEffect와 결합할 수 있다. **status192에는 TxnRef incoming count field가 없다.** status count의 별도 [home representation](dev3-status-home.md)이 동결·구현되고 같은 native effect의 incoming offset8에 CountChange가 결합되기 전에는 tag2 CountChange를 실제 적용 가능한 것으로 승인하지 않는다. tag2의 구조를 읽을 수 있다는 사실을 persistence 구현으로 세지 않는다. queue의 durable 소유·cursor가 필요한 cut/release도 해당 native format 없이 적용 허가를 내리지 않는다.
 
 ### 6.5 InventoryDelta208
 
@@ -350,7 +350,7 @@ before/after inventory의 count/digest와 budget category 합계가 after descri
 2. Begin/SystemBegin은 미존재 owner만 생성하며 birth=apply, previous=0, group count1이다. 나머지는 존재하는 nonterminal owner의 정확한 직전 상태만 받는다. birth/profile/owner는 유지하고 count는+1이다. apply LSN을 byte offset으로 증가시키지 않는다.
 3. checkpoint에는 writer의 TxnId local high-water와 system kind별 work-id high-water가 포함돼야 한다. 새 Begin은 현재 writer epoch와 증가한 local을 사용한다. old epoch TxnId는 기존 owner의 CLR/terminal에만 허용한다. 초기 SystemBegin은 kind별 새 증가 id와 generation1을 사용하고 id wrap/reuse를 하지 않는다. 이미 존재하는 descriptor의 generation은 그대로 보존한다. terminal owner를 ATT에서 제거한 뒤 같은 identity를 새 Begin으로 부활시키지 않는다.
 4. native before는 실제 고정한 old page/slot/value와 같고 after는 실제 redo 적용 결과와 같다. required native 효과·status/undo/head·edge/count·inventory·descriptor를 opcode별로 대조한다. effect 없는 CLR progress, count 없는 cut, cursor 없는 release를 거절한다.
-5. after status/progress/OperationCore가 일치한다. statement 완료는 앞선 statement의 전체 abort 의무를 남긴다. terminal은 모든 필요한 종료 의무를 소비하고 남은 reservation 반환을 같은 group에 기록하되, durable terminal adoption 전에는 실제 예약을 빌려주지 않는다.
+5. after status/progress/OperationCore가 일치한다. statement 완료는 앞선 statement의 전체 abort 의무를 남긴다. terminal은 남은 head·status·retirement 작업의 durable owner/credit을 같은 group으로 인계한 뒤에만 종료된 의무와 불필요 reservation을 반환한다. ATT/descriptor를 지운 뒤에도 필요한 credit을 반환하면 안 된다. 현재 초안의 단일-owner InventoryDelta에는 이런 인계가 없으므로 queue·새 owner·credit 인계와 상한이 동결될 때까지 Commit/AbortEnd 실제 적용은 Unsupported다. durable terminal adoption 전에는 실제 예약을 빌려주지 않는다.
 6. WAL consumed 누계의 증가는 exact frame length다. budget 감소는 해당 step의 실제 소비와 증명된 불필요 잔여 반환이며, 증가에는 첫 effect 전 admission이 필요하다. after remaining이 실제 opcode의 미래 최악 비용 이상인지 F05 표와 검산한다. encode 성공만으로 이 조건을 생략하지 않는다.
 7. 전체 frame를 준비한 뒤 version-edit gate·필수 page latch 아래 generation/head/ownership을 재검증한다. 새 page나 reserve가 필요해지면 아무 효과 없이 준비 단계로 되돌아간다. partial pin을 붙잡고 I/O/자원 대기하지 않는다.
 
@@ -426,3 +426,9 @@ F03 oracle은 candidate decode/summary를 기대값으로 사용하지 않는다
 - 실제 append/sync·group 적용·allocator/slot 예약·inventory streaming/restore·rebase·writer 선택, current-build F04 crash/reopen과 F05 진행 증명.
 
 이 문서만으로 “reservation 복원 완료”, “의미 group 적용 가능”, “S1/DEV3 완료”를 표시하지 않는다. 구현 범위를 descriptor codec으로 한정하면 별도 부분 결과로 기록하고 미동결 group/closure를 성공 stub으로 채우지 않는다.
+
+## 11. 2026-10-21 재개 독립 검토
+
+`/root/dev3_selector_review`가 초안의 net0 count와 terminal credit 유실 반례를 제시했다. `/root`는 §6.4에 모든 touched target의 선행 count/state proof, §7에 terminal 뒤의 durable owner/credit 인계가 없는 opcode의 Unsupported 경계를 반영했다. 이는 미완성 opcode의 실행 승인이 아니다. 별도224-byte status home는 prefix32+기존core192로 제안하며, 채택 시 NativeEffect의 before/after 각각32 bytes와 Patch32 bytes가 늘어 RollbackStart group2848/frame3040, 단일 home의 page offset16128/length224가 된다. r0의 group2752/frame2944·offset16160/length192 원본은 당시192-core 초안으로 그대로 보존하고 새 home vector로 재표기하지 않는다.
+
+현재 남은 핵심은 queue record·진행·보호 credit 인계, native logical projection과 opcode별 필수 section, net0 target proof API, inventory 반복 scan의 작업량·정상 reopen 예산이다. 이 문서 전체 D2 채택과 제품 구현은 아직 완료하지 않았다.

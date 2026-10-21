@@ -63,3 +63,5 @@ DEV3의 COW pack 경로는 [in-place·WAL·영속 undo 결정](../contracts/disk
 - [DEV3 FILEMAP·DWB selector port](dev3-selector-port.md) — 상세 상태·검토·구현·실행 경계는 원문 참조
 
 - [DEV3 선택 FILEMAP과 page 읽기](dev3-page-io.md) — 열린 handle metadata·전체 manifest 검증·bounded 읽기 구현; 고정 범위 검증 완료
+
+- [DEV3 거래 상태의 영속 home](dev3-status-home.md) — core192와 incoming count를 결합하는224-byte 표현; 독립 검토·7시험 PASS, 실제 갱신·복구 미구현

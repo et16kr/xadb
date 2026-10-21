@@ -16,7 +16,7 @@
 | row | canonical bytes5..131,072. inline≤2,048이면 row header168+body로 최대2,216. 큰 값의 row cell은 header168+overflow head64=232 |
 | row overflow | chunk payload≤16,092, 최대9개 page, chunk metadata128. head64가 root·총 bytes·chunk count·digest를 결합 |
 | index presence | 고정160-byte value. key가 같아도 RowId가 다른 entry는 별개이며 undo/논리 버전 의미를 유지 |
-| transaction status | core192, 공통 page에 최대82 slots. 영속 recovery obligation descriptor는 아직 포함하지 않음 |
+| transaction status | 논리 core192의 원래 표현은 최대82 slots. [영속 home](dev3-status-home.md)는 prefix32+core192=224로 최대71 slots이며 incoming count를 포함한다. 영속 recovery obligation descriptor·queue credit은 별도 |
 | allocator | extent64 pages=1,048,576 bytes, 첫 page는 metadata, payload63 pages. cell64+64×96=6,208 bytes, 공통 page 전체는16,384 bytes |
 | WAL frame | header160+trailer32=192. PageRedo는 각64-byte header+data, 전체≤1,048,576 |
 | WAL INIT | full page16,384를 포함하여 subrecord16,448. frame당 최대63개, `192+63×16,448=1,036,416`; 64개면1,052,864로 한도 초과 |

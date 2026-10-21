@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-21 [DEV3 재개·선택 page 읽기](dev3-implementation.md#page-reader-results): selector와 열린 handle metadata를 연결하여 실제 선택 page 읽기를 검증했다. 같은 보존 소스의 leaf·하위 회귀·DEV2 복구99셀 PASS이며 전체 DEV3 인수는 계속 미완료다.
+
 2026-10-20 [DEV3 첫 leaf](dev3-implementation.md#validation): 내부 page envelope codec과 D3-M02-P01 부분 모델을 구현·독립 검토했다. page7·모델 정상4/결함8·DEV0/1/2 회귀와 같은 소스의 DEV2 복구99셀 PASS. 실제 디스크 경로·전체 모델·S1 인수는 미완료다.
 
 2026-10-20 [DEV2 journal binary 대응](dev2-implementation.md#dev2-journal-binary-mapping-20261020): 설치 커널의 build ID와 기계어 흐름으로 두 대기 위치를 metadata·commit record 버퍼에 대응했다. 추가 측정 없이 코드 위치만 구분했으며 PF04·DEV2 인수는 미완료다.
@@ -29,7 +31,7 @@
 | K0 성능 진단·audit/replay | Off/Always/Detailed와 독립 정답·통계·원시 bundle 검증 구현; 최초 p99 비용 한도 FAIL, PF 인수 미완료 | [DEV2](dev2-implementation.md) |
 | COMM 핵심 | frame·Linux local socket·quota·deadline·취소/종료·focused runner 구현, C1 인수 미완료 | [COMM](comm-implementation.md) |
 | 영속 transaction/WAL/recovery | 구현·정적 통합 완료, 최종 인수 대기 | [DEV2 K1–K5](dev2-implementation.md) |
-| DEV3 page envelope·snapshot 부분 모델 | 첫 표현 leaf 구현, 디스크 I/O·index·전체 모델 인수 미완료 | [DEV3](dev3-implementation.md) |
+| DEV3 저장 표현·선택 page 읽기·상태 모델 | 고정 표현·bounded 읽기 leaf 검증, 실제 쓰기·복구·S1 인수 미완료 | [DEV3](dev3-implementation.md) |
 | SQL/server/client·replication | 미구현 | DEV4 이후 |
 
 [기계 판독 상태](implementation-status.json) · [새 실행 증거](../evidence/README.md) · [이관 기록](../history/project-migration.md)

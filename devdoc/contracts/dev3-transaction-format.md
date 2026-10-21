@@ -8,6 +8,8 @@
 
 아래 모든 다중 byte 정수는 little-endian이다. raw Rust struct layout을 저장하지 않는다. decode는 정확한 길이만 수락하며 encode의 모든 오류는 output 전체를 보존한다. 현재 개발 형식은 새 fixtures를 사용하고, 이 leaf의 채택·단위 시험은 전체 F01·DEV3·S1 완료나 현재 build의 실제 recovery 인수를 뜻하지 않는다.
 
+2026-10-21 후속 [영속 home 계약](dev3-status-home.md)은 이192-byte core를 그대로 포함한224-byte home와71-slot loader를 정의한다. 이 문서의192-byte page와82-slot 한도는 원래 표현 leaf 범위이며, 새 persistence 소비자는 home loader의 더 좁은 한도를 사용한다. 이전 fixture와 검증 결과를 새 home 실행으로 재표기하지 않는다.
+
 ## 1. Identity와 namespace
 
 ### TxnId: 40 bytes

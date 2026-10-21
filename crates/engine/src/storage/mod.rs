@@ -8,6 +8,7 @@ pub(crate) mod overflow;
 pub(crate) mod page;
 pub(crate) mod page_io;
 pub(crate) mod row_record;
+mod status_home;
 pub(crate) mod transaction_record;
 pub(crate) mod tree_page;
 pub(crate) mod undo_record;

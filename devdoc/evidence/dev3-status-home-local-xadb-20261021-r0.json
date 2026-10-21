@@ -1,0 +1,96 @@
+{
+  "origin": {
+    "revision": "5772b13d23ceac10c2d221c63e1d61ad152d132e",
+    "tracked_diff_sha256": "6ead9f91ad66189949081eef56a114b6ad2b07648bd4b4883530e059c8aaebc3",
+    "source_sha256": "ea3ba171acbcb22147fbb06f60738215d67bf74694e3b41d3c0ac9764131d885",
+    "lockfile_sha256": "f67269ca67484a0241bf06f22dee740fe6943bfe38d204193ab7fbcddec28a45"
+  },
+  "source_sha256": "ea3ba171acbcb22147fbb06f60738215d67bf74694e3b41d3c0ac9764131d885",
+  "scope": "status home representation only; lower regression NOT_RUN on this source",
+  "checks": [
+    {
+      "id": "build",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/status-home-retained-r0/build.log",
+      "log_sha256": "a06953637a6fe0949b1f27d9c4b3e620b38b3b06a40ee4a76d0bc2404cc12656",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "status-home",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-home-retained-r0/engine-binary",
+        "storage::status_home::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/status-home-retained-r0/status-home.log",
+      "log_sha256": "4af6691e83f070e288f49792e685b595551c8b4b4805b0fb2c761801190fcc45",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/status-home-retained-r0/clippy.log",
+      "log_sha256": "b9e9e2e0870b69e7b5ea1b1ab711498295e67e8c47d262657ac04a4a7b9b16be",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/status-home-retained-r0/fmt.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "binary": {
+    "path": "/home/et16/work/xadb/artifacts/dev3/status-home-retained-r0/engine-binary",
+    "sha256": "ca4b04172f6bcb0d0c3f6f2c0e655255ba8290630d8569ca125fa5167b87f006",
+    "features": []
+  },
+  "tests": [
+    "status_home_count_delta_is_checked_and_atomic",
+    "status_home_encoder_errors_preserve_output",
+    "status_home_generated_profiles_match_independent_fields",
+    "status_home_literals_match_core_and_count",
+    "status_home_lookup_rejects_stale_aliases",
+    "status_home_page_validates_all_slots_and_namespace",
+    "status_home_rejects_lengths_headers_and_free_references"
+  ],
+  "source_sha256_after": "ea3ba171acbcb22147fbb06f60738215d67bf74694e3b41d3c0ac9764131d885",
+  "status": "PASS"
+}
