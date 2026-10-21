@@ -1,0 +1,2033 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-21T08:24:35.791573+00:00",
+  "scope": "DEV3 page/key/reference/tree/overflow/transaction/status-home/obligation-descriptor/ownership-observation/RollbackStart-full-state-observation/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads/clean buffer + D3-M02-P01; no disk engine or S1 acceptance",
+  "status": "PASS",
+  "origin": {
+    "revision": "a14656724ea67f2bbf4289dfcdb66eacb7356694",
+    "tracked_diff_sha256": "6c9497c3b69c142b9b65b8946c7dcafe90286923d5a5231e10ad9ff6849d2b68",
+    "source_sha256": "3493fa223b10e6393ae019e131eccaa6274f39e77a73b6ec0aa38975378f87f2",
+    "lockfile_sha256": "f67269ca67484a0241bf06f22dee740fe6943bfe38d204193ab7fbcddec28a45"
+  },
+  "artifact_directory": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd",
+  "dev3_acceptance": "INCOMPLETE",
+  "checks": [
+    {
+      "id": "toolchain",
+      "command": [
+        "rustc",
+        "-Vv"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/toolchain.log",
+      "log_sha256": "4fdff2578428e9c5c08ddd7a0d3079c1a106b1cdaa46e73e46f7cd32b0fb9cad",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "checker-self-tests",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_dev3_leaf.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/checker-self-tests.log",
+      "log_sha256": "82224d4851a291c4259dcadb25f9b89fd3a54667e2ca50f0ac8688c80505b423",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "buffer-borrow-checker-self-tests",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_dev3_buffer_borrows.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/buffer-borrow-checker-self-tests.log",
+      "log_sha256": "9c472f57e00c870d22483a65a11d5102785b901369e9b3780e1f06609f6c2ec1",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "buffer-borrow-compiler-checks",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/check_dev3_buffer_borrows.py",
+        "--artifact-parent",
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd",
+        "--report",
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/buffer-borrows.json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/buffer-borrow-compiler-checks.log",
+      "log_sha256": "70682e6ffdb853106e29a134c7bc5f88c06a84d660bfddd926fcc8aee0c3f5e5",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "wal-borrow-compiler-checks",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/check_dev3_wal_borrows.py",
+        "--artifact-parent",
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd",
+        "--report",
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/wal-borrows.json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/wal-borrow-compiler-checks.log",
+      "log_sha256": "e75d252b488cc498ff01822b54db047874a14b5b50febf2a4a55594b7b2497ff",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "wal-model-checker-self-tests",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_dev3_wal_models.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/wal-model-checker-self-tests.log",
+      "log_sha256": "372ee57a30b8a8b17bb056a0814266786a922da7dcf4139f4f9a2457745d6424",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "independent-vectors",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/dev3_page_vectors.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/independent-vectors.log",
+      "log_sha256": "3fa640f4c4e92365bc6fbe31ff4d66aaf721bb2fa09629973e0a15bdc24e3726",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "independent-disk-vectors",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/dev3_disk_vectors.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/independent-disk-vectors.log",
+      "log_sha256": "dc5bd84edd6751708439efa39204651c74a5cd13d0bd2791c627c0dc55318c9f",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-page",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/build-page.log",
+      "log_sha256": "ad068b625e2bc3a08e6f3df83d27b2bece2a6fd8c3510eedea15efa477c4683f",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "page",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::page::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page.log",
+      "log_sha256": "95fc63e2f266cc912a42f0083f0b740ac307e82039052daec59d8d573c675def",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "key",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::key::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/key.log",
+      "log_sha256": "1fb3d42e00f27f75da15f7cf36c3ca98799eab667affb26914d3e9cc84c1327c",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "anchor",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::anchor::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/anchor.log",
+      "log_sha256": "87c5a9598982fb68170b80e4f671bd6e64457eb06d843e099c08b435717e81b2",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "undo_ref",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::undo_ref::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/undo_ref.log",
+      "log_sha256": "f81c70e254e36241fb719ee963c8364382ed520e8f37e4fcf057e9a6fcd966ff",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "tree_page",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::tree_page::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/tree_page.log",
+      "log_sha256": "9fe1a7488c0726564b16c843b2aabbc152447edbfb69f82b21345e3b1dcdb497",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "overflow",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::overflow::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/overflow.log",
+      "log_sha256": "7e89e2f0bb29ed8e88a2bd3ea4e6a541a7d3fafdd077504e3c36040c2a319020",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "transaction_record",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::transaction_record::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/transaction_record.log",
+      "log_sha256": "3f22727a63c8b5a90b7b7c8e904f96dc7aaa4ccc4f8916d2f75fa53bcd0bf916",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "status_home",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::status_home::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/status_home.log",
+      "log_sha256": "59fcedeeeccce604981d84194c7368fe6c38b77bf24f911a6f47f9e90fe820cb",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "obligation",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::obligation::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/obligation.log",
+      "log_sha256": "ad5b35435a2f1591663a16c82e427278312a4f9f68256cf403e0ee54484f01ed",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "ownership",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::ownership::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/ownership.log",
+      "log_sha256": "9251ac73e2aeeb4706f8e5449ca3d2e5533ee13aa2c530e7e0b43b50469e672d",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "semantic_group",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::semantic_group::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/semantic_group.log",
+      "log_sha256": "40aed0705d6197f165f86724a629349ac4045bb70b62cbfdcc1dadef3be4cd39",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "wal_frame",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::wal_frame::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/wal_frame.log",
+      "log_sha256": "6b7c7407c4132757d96268c010f11d147d21648f934f07641304c56288046077",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "allocation_page",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::allocation_page::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/allocation_page.log",
+      "log_sha256": "7ec178021cfd4d2c9c64b50e6bfe19655a78917153c889a33855aebf8172fbbf",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "row_record",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::row_record::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/row_record.log",
+      "log_sha256": "5cd10085c03be7f14a73e380051500cb8d401ac954d5f53b39ef3e24768cd39b",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "doublewrite_control",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::doublewrite_control::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/doublewrite_control.log",
+      "log_sha256": "1f07b248ba7a82bb547d1a583fa440edcb39aad8b22801ef443e10c47d935f2b",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "catalog_record",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::catalog_record::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/catalog_record.log",
+      "log_sha256": "3f73c266e9042a55f54243354139f279ee4ef370f1be28bf4e1e65f559a5ceef",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "undo_record",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::undo_record::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/undo_record.log",
+      "log_sha256": "6dd21825ff44be2435372af6f0778ec6080ca05e6409433f0310e15b652277b5",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "control",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::control::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/control.log",
+      "log_sha256": "95d139428c3c195aed574edeaf947660e4f1aecc64b28247c57ad806edc5d9c6",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "page_io",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::page_io::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page_io.log",
+      "log_sha256": "a068aa8d1668b1d7aa1a9141a76a80c9f572c2725f35a3f7f4660b02c14c0538",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "read_buffer",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::read_buffer::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/read_buffer.log",
+      "log_sha256": "516695018c223fda9ed4004fd8631f1073bd9210bcba73e4391f7727683e6c69",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "wal_io",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+        "storage::wal_io::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/wal_io.log",
+      "log_sha256": "510b7502a61c00847010c51ab0e22ceb34b88de83be49980efb195566d0d4c38",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-scalar-key",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-foundation",
+        "--test",
+        "key_buffer",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/build-scalar-key.log",
+      "log_sha256": "b2b3f08548a46a971e03355c082bd22fe85b132df5983e03508a09f7977255f2",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "scalar-key",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/scalar-key-binary",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/scalar-key.log",
+      "log_sha256": "e50a70e21c0fbf463fda259be58a44ae66ebe8534bee4ce01d5f83115f3ce88a",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-selector-platform",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-platform",
+        "--test",
+        "contracts",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/build-selector-platform.log",
+      "log_sha256": "3e3531886952e33e49ec2af759eea47846f911dd346b57960d168684b1218462",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "selector-platform",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/selector-platform-binary",
+        "typed_selector",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/selector-platform.log",
+      "log_sha256": "a3ebe593acc0237167824a9ffbb3c818553ae5ebb1efc1e75942ae2ee1f88ea3",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-selector-protocol",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-protocol",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/build-selector-protocol.log",
+      "log_sha256": "9f7429dbd978b67270c08714bbc1e9965bba88c95abf4739386870dd93425b84",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "selector-protocol",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/selector-protocol-binary",
+        "fault::tests::dev3_selector_",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/selector-protocol.log",
+      "log_sha256": "79985ff17f9b174cde09c685fb25d72e3b4e9edfd31e3f4054e64f9ad7c0e463",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-selector-worker",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/build-selector-worker.log",
+      "log_sha256": "09a3e936ea873a37568bb787689d8851bb225ad01b1120c06454c14c0560c680",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "selector-worker",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/selector-worker-binary",
+        "fault::tests::dev3_selector_",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/selector-worker.log",
+      "log_sha256": "3c64550f60a243408d04a7a3d6380c35def2ebe32dc7ba31f6c4a00fd521fed5",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-metadata-platform",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-platform",
+        "--test",
+        "namespace_metadata",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/build-metadata-platform.log",
+      "log_sha256": "d1b8fe1b1ac7eee5062f7f82a29a4ceef92e74d0aa34c5f27c51ba3d608ea981",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "metadata-platform",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/metadata-platform-binary",
+        "",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/metadata-platform.log",
+      "log_sha256": "917d9d8e58e6daf20a593a53180d9c8677bb713a1dc36201bc4e8edcb4226c72",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-metadata-worker",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/build-metadata-worker.log",
+      "log_sha256": "1fd759b96cbd337949a82ab4c634a17d0068adc1b06cb749fda1fac5033c5d37",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "metadata-worker",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/metadata-worker-binary",
+        "fault::tests::dev3_open_metadata_",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/metadata-worker.log",
+      "log_sha256": "ed1b416fb6f9e9f46ea003d30095f48d6b3e11ba227f8c2c5cf979e56d004e4f",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-metadata-performance",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/build-metadata-performance.log",
+      "log_sha256": "be53c6c06527e2f79dbd4d182b2be29003159f0f36c4a7ddd121bab37998c68f",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "metadata-performance",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/metadata-performance-binary",
+        "durable_performance::ports::tests::open_metadata_",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/metadata-performance.log",
+      "log_sha256": "34f9ebcfbf1856383b7a2a2944c59f18901f1829d1b3b6b30d4d438ccf1ac301",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-page-io-native",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--test",
+        "page_io",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/build-page-io-native.log",
+      "log_sha256": "95898c84a7bd9f2ae1f5d2d53f7519f569308edc8a850dbf3c9b34f2760dbafc",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "page-io-native",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-io-native-binary",
+        "",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-io-native.log",
+      "log_sha256": "944481e5e11e2af7f45dd5d0a4398614b4ad23d47dd2356355d130a91028d2a1",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-read-buffer-native",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--test",
+        "read_buffer",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/build-read-buffer-native.log",
+      "log_sha256": "af3faee0b418e76ff2837e6ec61ece8e1f10dca4a88388a14bc5291fe1e7c2ac",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "read-buffer-native",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/read-buffer-native-binary",
+        "",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/read-buffer-native.log",
+      "log_sha256": "e8b3cdea060aa97b85517d948aad6954e0b3bd5343e0a35e733ee54609eee4c4",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-wal-io-native",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--test",
+        "genesis_wal",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/build-wal-io-native.log",
+      "log_sha256": "aea6d4f96f05427324d36ec0e422133ea37e404c584766acb1847eaf47024fb1",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "wal-io-native",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/wal-io-native-binary",
+        "",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/wal-io-native.log",
+      "log_sha256": "6e2652c12002975bbe6e3cc98dcb6ec1205f08be56ac829101234b11b63ba6fd",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-model",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-reference",
+        "--test",
+        "dev3_snapshot_model",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/build-model.log",
+      "log_sha256": "9ef976885ee6c18b0c1cc8912c9a237d8073286ebec59cdcccc46181b8fa4f41",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "model",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/model-binary",
+        "snapshot_lifecycle_partial_model_exhaustive",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/model.log",
+      "log_sha256": "b2835d866f4ad8fe2046bf08f426a818a5b75f233f9a048139e807bdcbe09308",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "model-budget-tests",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/model-binary",
+        "snapshot_model_budget_exhaustion_is_inconclusive",
+        "--exact",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/model-budget-tests.log",
+      "log_sha256": "f5068959fe44e4d2123ab135802b4fec5e393ff6f38be0a7ce299ee583dfa4b0",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "regressions",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/check_dev2_reference.py",
+        "--with-substrate",
+        "--report",
+        "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/regression.json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/regressions.log",
+      "log_sha256": "08c863ba6e002578ddb0180f5e1b1fa2880c15f7823a36aa8c373d274b44004e",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "builds": [
+    {
+      "name": "page",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-binary",
+      "sha256": "091b2d341fc84b584bbb871e55774f7bae7483be43b742b1a2f1f4062b293384"
+    },
+    {
+      "name": "scalar-key",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/scalar-key-binary",
+      "sha256": "58cbed19e62e51020ceeee043f5d26cf961d04126a09fd8c7c8511429980e884"
+    },
+    {
+      "name": "selector-platform",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/selector-platform-binary",
+      "sha256": "65591204390885dbd8b52bd65292aee65fd562df2e2cea924950ebe5ba0cbc22"
+    },
+    {
+      "name": "selector-protocol",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/selector-protocol-binary",
+      "sha256": "ec4a89571edc3fc9719c4f7e81a12e2a2f53366fc07e89b54bdbcbe44c8d572f"
+    },
+    {
+      "name": "selector-worker",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/selector-worker-binary",
+      "sha256": "409f98f25d18645f51e744b1fd14d7253e4c9c39a43f6c6c385cfe882d00d744"
+    },
+    {
+      "name": "metadata-platform",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/metadata-platform-binary",
+      "sha256": "3dd44e08321a045201db4a8fc43e5e50848f73f4259a47e8a516c629cf356017"
+    },
+    {
+      "name": "metadata-worker",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/metadata-worker-binary",
+      "sha256": "409f98f25d18645f51e744b1fd14d7253e4c9c39a43f6c6c385cfe882d00d744"
+    },
+    {
+      "name": "metadata-performance",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/metadata-performance-binary",
+      "sha256": "409f98f25d18645f51e744b1fd14d7253e4c9c39a43f6c6c385cfe882d00d744"
+    },
+    {
+      "name": "page-io-native",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/page-io-native-binary",
+      "sha256": "86b4e2ec13ef9503edca2d4b0dab5d68a5950b7ad143a902e4b699d53422aa0d"
+    },
+    {
+      "name": "read-buffer-native",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/read-buffer-native-binary",
+      "sha256": "811ffb0c861daf005cb7a9ed6b72d94cd6490e3a7eab2eeb31b2ac265647b227"
+    },
+    {
+      "name": "wal-io-native",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/wal-io-native-binary",
+      "sha256": "fa8dbd6814374eb5932df515a1f4f730f8cb6e1624c3365eda3bb3e039374db6"
+    },
+    {
+      "name": "model",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/model-binary",
+      "sha256": "0fc465b30a09c98159084b1b55f9e6c2acd28d831b6a1a0c509577f9f144f501"
+    }
+  ],
+  "checker_identity_scope": "F07 file freeze and before/after disk hashes; not bytecode attestation or protected CI",
+  "source_sha256": "3493fa223b10e6393ae019e131eccaa6274f39e77a73b6ec0aa38975378f87f2",
+  "loaded_checker_sha256": {
+    "scripts/check_dev3_leaf.py": "1a77936b51df01df8429f18ae8c90295819fcc4e53566dd2dcbf7f01a057fb4f",
+    "scripts/check_dev0.py": "b8c7bedbc9c3628b91ea8d8440dc4e061953717d3347f942ebc5cd0ec0d6d324",
+    "scripts/comm_campaign.py": "cd593fcaabc3d0770c502f773bd1a38a0794e1f3ae41165723da42574436d11f",
+    "scripts/dev3_wal_slot_model.py": "d8d53f613fceb4b90a39aed313ac1f038b4093a90a0ea8681e0c21718ede8433",
+    "scripts/dev3_wal_durable_model.py": "9273b01b302e97c45697159b4eb98fbd0645b06e715db7bec8c96ec15405a84c"
+  },
+  "contract_sha256": {
+    "devdoc/contracts/dev3-page-format.md": "145acea1f16da02d6868d0cc38e05f696c3b1b18aed356e8842e11e4d01e5fab",
+    "devdoc/contracts/dev3-key-format.md": "234432e7e09e0d4a878db3726bdbf9f76f698c775783e6baf7639ddd9b13cf5e",
+    "devdoc/contracts/dev3-reference-format.md": "cfe3aa659eb6f24cb464197a6860b8e1802c917367faf8be06b7c4e77577cb63",
+    "devdoc/contracts/dev3-tree-format.md": "eec1da65d0a939d262c3f0ec988d73bcb8f9a99162fc59748286d59dd9790394",
+    "devdoc/contracts/dev3-overflow-format.md": "05d231c4bfa640dc78d683d02332541dd164b49cc3b27ca63d2212c10b9dba91",
+    "devdoc/contracts/dev3-transaction-format.md": "a1bdd346fa8369c8f3f110e122fc2e3850980fef6b12aaa6a5d61eb663ddde6e",
+    "devdoc/contracts/dev3-status-home.md": "2e65df7184d6a0d8ad0f87f65cf3ead2bf35fe40e4e5e5e2ed2ffdbeba5d7b6b",
+    "devdoc/contracts/dev3-obligation-format.md": "6d8426492b3971e96ac394af20b2576aba2d22caa64292f9ca34b022042aa095",
+    "devdoc/contracts/dev3-ownership-format.md": "d2df0f79140d931085da3f4e064a8445659ede9f8ae8dc3952154c32a5f234d5",
+    "devdoc/contracts/dev3-wal-format.md": "59aa5a93c387a83b98b6b615f287c7c60fb8a47ec87759682fa443255b32f4a0",
+    "devdoc/contracts/dev3-allocation-format.md": "e0127c91a67ca2dfd215332634f831c9b2e968c1b4f6bcf92711e6519801521e",
+    "devdoc/contracts/dev3-row-format.md": "aa4c88a461ef0f1f771c47eef16c6a644d6627a119325bfbb03874c9f3c25f79",
+    "devdoc/contracts/dev3-doublewrite-format.md": "6f9bd6f0a97f2cf685dc0eb5af08199e1ba2876a97ee1e93eeb3c346d7b38487",
+    "devdoc/contracts/dev3-catalog-format.md": "7edfa2d594c7518b07abeb8474ef4c4f4a2f42160288657825896607f01608ce",
+    "devdoc/contracts/dev3-undo-format.md": "adb5791c6f87b2cec6558ff4c67a0d0fbd32165fbb2a0d2cd379f57348df482c",
+    "devdoc/contracts/dev3-control-format.md": "ef0edaa80c6aebcf22a7028a9503dadd8c890227d62070021edd8474953ed0cd",
+    "devdoc/contracts/dev3-selector-port.md": "fe6a7ac38e343d0aaf683e674296642cce8871083d4865d432d1afa96a130d51",
+    "devdoc/contracts/dev3-page-io.md": "027164acb6cadf346180c316d5806462b7e97e482df9669cdb1cfacec5d3edfc",
+    "devdoc/contracts/dev3-read-buffer.md": "99baed768d954f7b28bfc26359da966959cd7114913bdb2a4fef22ad2fd5cb61",
+    "devdoc/contracts/dev3-wal-io.md": "22c6816c97be0abe89a4a4ee5d1ee8dce1933c2d50781e8daf65a3086f59d32b",
+    "devdoc/contracts/dev3-snapshot-model.md": "f0d4cc2484b60fd3830464271a7a72c453f2e5615b856a27c7a9fb1e03cd7e3a"
+  },
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n",
+  "buffer_borrows": {
+    "report": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/buffer-borrows.json",
+    "sha256": "c61787486d51c7a0b5360a525cdc604b90b4bf77dea96a26424c5268737d0d1d"
+  },
+  "wal_borrows": {
+    "report": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/wal-borrows.json",
+    "sha256": "f574c67f972e2f63e33442b63d47eef7ccacf71a9bcdc46a1742afd45cd3c3df"
+  },
+  "vector_result": {
+    "boundaries": {
+      "accepted_boundaries": 17,
+      "rejected_construction_boundaries": 2
+    },
+    "fixture_sha256": {
+      "dev3-page-v1-cells.bin": "908281ca2193411014868af608a28cc6aa06a129e8f6eb4d554bd12de3f2659c",
+      "dev3-page-v1-empty.bin": "de44e1eda7207bbd7aac6310bb9e307cfe2b37d9bca788056a69569d55735867"
+    },
+    "negative": {
+      "checksummed_semantic_damage": 27,
+      "expected_identity_or_kind_mismatch": 7,
+      "oversized_lengths": 1,
+      "short_lengths": 16384,
+      "single_byte_damage": 16384
+    },
+    "status": "PASS"
+  },
+  "disk_vector_result": {
+    "dev3-io-profile.bin": {
+      "bytes": 4096,
+      "sha256": "985651bdbfde061063f76265665c2aff331c9b01486e0be4de60223d6ec327d8"
+    },
+    "dev3-io-selector.bin": {
+      "bytes": 4096,
+      "sha256": "4b383d1f2ad756630421555efcdef18ea40bba314b07a42333099ef75bf7fbae"
+    },
+    "dev3-io-root.bin": {
+      "bytes": 416,
+      "sha256": "13e967b9db3b3e29d0bcf2bc6698de6f06b63e9a9b02e91a71bc5a624ba2de69"
+    },
+    "dev3-io-chunk0.bin": {
+      "bytes": 6304,
+      "sha256": "e2a132d9659f20a874339bf29328a9b529af734bfbdd72cae510601e744c81ed"
+    },
+    "dev3-io-chunk1.bin": {
+      "bytes": 256,
+      "sha256": "0f186336d4102cbcc31474f3e3188f55cc3f4ae18c985aa0486e9909baa7e7d9"
+    }
+  },
+  "page_tests": [
+    "every_kind_and_internal_level_boundary_is_checked",
+    "every_truncation_trailing_byte_and_single_byte_damage_is_rejected",
+    "exact_page_capacity_and_all_encode_errors_preserve_output",
+    "expected_database_file_page_incarnation_owner_and_kind_are_required",
+    "fixed_64_seed_128_operation_envelope_campaign_preserves_cells",
+    "independent_page_vectors_match_every_byte_and_borrow_exact_cells",
+    "valid_checksum_does_not_hide_invalid_structure_or_zero_identities"
+  ],
+  "key_tests": [
+    "composite_and_row_suffix_match_frozen_literal_vectors",
+    "decoder_rejects_wrong_arity_malformed_scalar_trailing_bytes_and_zero_row",
+    "every_two_column_pair_and_row_tie_agree_with_independent_tuple_ordinals",
+    "exact_escaped_key_limit_excludes_row_suffix_and_rejects_oversize",
+    "invalid_arity_and_small_output_fail_before_any_write"
+  ],
+  "anchor_tests": [
+    "anchor_cell_matches_independent_literal_and_validates_every_tree_level",
+    "anchor_rejects_checksummed_semantic_damage_and_wrong_cell_count",
+    "every_encode_validation_error_preserves_anchor_output",
+    "root_load_requires_database_owner_reference_kind_and_level"
+  ],
+  "undo_ref_tests": [
+    "page_and_undo_references_match_independent_literals_and_exact_lengths",
+    "reference_decoders_reject_zero_identity_reserved_and_out_of_range_slots"
+  ],
+  "tree_page_tests": [
+    "tree_child_alias_and_kind_level_guards",
+    "tree_encoders_preserve_outputs",
+    "tree_enforces_entry_page_and_output_limits",
+    "tree_golden_pages_and_cells",
+    "tree_internal_routing_and_child_expectations",
+    "tree_internal_split_promotes_separator",
+    "tree_leaf_lower_bound_matches_typed_oracle",
+    "tree_leaf_split_uses_bytes",
+    "tree_rejects_checksummed_structural_damage"
+  ],
+  "overflow_tests": [
+    "overflow_chain_fixed_boundaries",
+    "overflow_encoders_preserve_outputs",
+    "overflow_head_literal_and_limits",
+    "overflow_page_literal",
+    "overflow_rejects_checksummed_damage",
+    "overflow_rejects_links_and_identity",
+    "overflow_streaming_profiles",
+    "overflow_verifier_requires_complete_order_and_digest"
+  ],
+  "transaction_record_tests": [
+    "all_length_boundaries_reject_without_output_changes",
+    "fixed_corrupt_fields_are_rejected",
+    "generated_transaction_records_roundtrip_without_effects",
+    "identity_literals_and_limits_are_canonical",
+    "stamp_and_logical_version_identities_are_distinct",
+    "state_and_namespace_matrix_is_exact",
+    "status_literals_preserve_rollback_and_terminal_heads",
+    "status_lookup_binds_logical_and_physical_identity"
+  ],
+  "status_home_tests": [
+    "status_home_count_delta_is_checked_and_atomic",
+    "status_home_encoder_errors_preserve_output",
+    "status_home_generated_profiles_match_independent_fields",
+    "status_home_literals_match_core_and_count",
+    "status_home_lookup_rejects_stale_aliases",
+    "status_home_page_validates_all_slots_and_namespace",
+    "status_home_rejects_lengths_headers_and_free_references"
+  ],
+  "obligation_tests": [
+    "descriptor_budget_sums_peaks_and_growth_are_exact",
+    "descriptor_empty_inventory_and_chain_boundaries",
+    "descriptor_encoder_errors_preserve_output",
+    "descriptor_expected_context_and_unsupported_work_root",
+    "descriptor_generated_profiles_match_independent_fields",
+    "descriptor_lengths_and_every_byte_damage_reject",
+    "descriptor_literals_bind_exact_owner_profile_and_state",
+    "descriptor_reserved_and_semantic_damage_reject_after_checksum"
+  ],
+  "ownership_tests": [
+    "inventory_all_lanes_drain_and_bind_repeated_bytes",
+    "inventory_canonical_order_spans_chunk_boundaries",
+    "inventory_expected_owners_and_capture_are_required",
+    "inventory_generated_profiles_match_independent_fields",
+    "inventory_intent_uniqueness_is_explicitly_not_proven",
+    "inventory_item_bounds_and_generations_are_checked",
+    "inventory_literals_bind_all_bytes_and_owners",
+    "inventory_owner_digests_and_category_budgets_are_exact",
+    "inventory_physical_aliases_and_intervals_match_pairwise_oracle",
+    "inventory_reserved_and_header_damage_reject_after_checksum",
+    "inventory_root_chunk_truncation_and_damage_reject",
+    "inventory_source_failures_and_workspace_are_bounded",
+    "profile_inventory_binds_real_profiles",
+    "profile_inventory_checks_full_capacity_and_lying_claims",
+    "profile_inventory_enforces_growth_quota",
+    "profile_inventory_intents_match_independent_sets",
+    "profile_inventory_keeps_all_validation_passes",
+    "profile_inventory_rejects_owner_local_intent_aliases",
+    "profile_inventory_rejects_profile_mismatch_before_reads",
+    "profile_inventory_reuses_workspace_after_failures"
+  ],
+  "semantic_group_tests": [
+    "rollback_materialization_generated_pages_match_independent_bytes",
+    "rollback_materialization_keeps_semantic_cost_checks",
+    "rollback_materialization_matches_literal_pages",
+    "rollback_materialization_rejects_unbound_inputs",
+    "rollback_materialization_scratch_reuse_requires_success",
+    "rollback_start_cost_transfer_is_exact",
+    "rollback_start_generated_profiles_match_independent_transition",
+    "rollback_start_group_sections_are_exact",
+    "rollback_start_legacy_frames_and_limits_are_preserved",
+    "rollback_start_lengths_and_damage",
+    "rollback_start_literals_bind_full_state",
+    "rollback_start_operation_core_matches_head",
+    "rollback_start_ordering_uses_stream_and_page_positions",
+    "rollback_start_owner_chain_and_profile_are_bound",
+    "rollback_start_preserves_other_page_bytes",
+    "rollback_start_redo_and_native_match_exact_cell",
+    "rollback_start_status_pages_are_complete"
+  ],
+  "wal_frame_tests": [
+    "wal_all_encoders_preserve_output",
+    "wal_exact_frame_and_record_limits",
+    "wal_frame_identity_and_lsn_chain",
+    "wal_frame_literal_and_kind_matrix",
+    "wal_generated_profiles_match_independent_fields",
+    "wal_init_records_bind_complete_page_images",
+    "wal_patch_records_are_bounded_after_images",
+    "wal_redo_groups_are_canonical_and_borrowed",
+    "wal_rejects_complete_checksum_and_semantic_damage",
+    "wal_stream_prefix_preserves_following_frames",
+    "wal_tail_classification_is_strict"
+  ],
+  "allocation_page_tests": [
+    "allocation_bounded_scan_profiles",
+    "allocation_encoders_preserve_outputs_and_generations",
+    "allocation_geometry_and_metadata_ownership",
+    "allocation_golden_pages_and_literals",
+    "allocation_lookup_binds_state_owner_and_generation",
+    "allocation_rejects_checksummed_semantic_damage",
+    "allocation_reservation_owners_and_namespaces",
+    "allocation_state_matrix_is_exact"
+  ],
+  "row_record_tests": [
+    "canonical_row_literals_and_borrowed_values",
+    "canonical_schema_and_size_boundaries",
+    "every_short_buffer_and_trailing_input_is_rejected",
+    "fixed_noncanonical_fields_are_rejected",
+    "fixed_seed_rows_match_independent_wire_fields",
+    "materialized_overflow_requires_digest_and_schema",
+    "record_namespace_and_logical_identity_are_bound",
+    "row_payload_and_index_presence_matrices",
+    "tree_values_bind_expected_row_ids",
+    "versioned_row_and_index_literals"
+  ],
+  "doublewrite_control_tests": [
+    "doublewrite_addresses_slots_and_expectations",
+    "doublewrite_checksummed_semantic_damage",
+    "doublewrite_encoders_preserve_outputs",
+    "doublewrite_exact_bounds_and_empty_retirement",
+    "doublewrite_fixed_profiles_have_bounded_inventory",
+    "doublewrite_image_validation_binds_every_field",
+    "doublewrite_lengths_and_checksum_damage",
+    "doublewrite_literal_controls_and_images",
+    "doublewrite_slot_encoders_preserve_outputs",
+    "doublewrite_slot_sequence_and_envelope_are_bound"
+  ],
+  "catalog_record_tests": [
+    "catalog_index_columns_and_parent_matrix",
+    "catalog_lengths_damage_and_outputs",
+    "catalog_literals_and_borrowed_definitions",
+    "catalog_namespace_handle_and_versions",
+    "catalog_table_name_column_and_size_bounds",
+    "catalog_tree_values_and_fixed_profiles"
+  ],
+  "undo_record_tests": [
+    "undo_all_lengths_preserve_outputs",
+    "undo_before_state_matrix",
+    "undo_chunk_boundaries_and_verifier",
+    "undo_chunk_ownership_and_release_resume",
+    "undo_edges_keep_roles_and_multiplicity",
+    "undo_failed_shapes_have_no_effects",
+    "undo_generated_profiles_match_independent_fields",
+    "undo_independent_literals_and_layouts",
+    "undo_rejects_checksummed_damage",
+    "undo_release_cursor_state_matrix",
+    "undo_slot_lookup_checks_generation_and_kind",
+    "undo_targets_bind_namespace_owner_and_key"
+  ],
+  "control_tests": [
+    "control_encoders_preserve_outputs",
+    "control_envelope_corruption_is_rejected",
+    "control_filemap_cursor_rejects_mixed_inventory",
+    "control_filemap_exact_bounds",
+    "control_filemap_literals",
+    "control_generated_inventory_profiles",
+    "control_names_and_bootstrap_ownership",
+    "control_profile_literals",
+    "control_profiles_require_exact_capacities",
+    "control_selector_bindings_and_lengths"
+  ],
+  "page_io_tests": [
+    "every_read_fault_preserves_selection_and_bounded_handles",
+    "page_request_binds_profile_owner_generation_kind_and_bounds",
+    "selected_map_and_data_require_exact_handle_lengths",
+    "selected_map_reads_independent_page_and_all_declared_chunks",
+    "selected_map_rejects_late_damage_and_never_scans_fallback"
+  ],
+  "read_buffer_tests": [
+    "read_buffer_capacity_and_profile_bounds",
+    "read_buffer_clock_and_pins_bound_replacement",
+    "read_buffer_concurrent_pins_prevent_aba",
+    "read_buffer_generated_sequences_match_reference_clock",
+    "read_buffer_identity_never_aliases_cached_pages",
+    "read_buffer_limits_and_poison_fence",
+    "read_buffer_load_failure_releases_claim",
+    "read_buffer_loading_deduplicates_and_keeps_hits_live",
+    "read_buffer_pins_selected_bytes_and_hits",
+    "read_buffer_workspace_can_only_be_reused_after_release"
+  ],
+  "wal_io_tests": [
+    "genesis_codec_literals_and_damage",
+    "genesis_install_faults_preserve_partial_namespace",
+    "genesis_installs_in_durable_order",
+    "genesis_requires_exact_empty_namespace",
+    "wal_generated_prefixes_match_independent_bytes",
+    "wal_io_faults_fence_without_replay",
+    "wal_io_releases_gate_and_protects_slot",
+    "wal_slot_rejects_boundaries_before_effect",
+    "wal_slot_writes_exact_logical_and_physical_prefixes",
+    "wal_workspace_and_handles_remain_bounded"
+  ],
+  "wal_models": {
+    "report": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/wal-models.json",
+    "sha256": "09a3ada5598f72318dae34e35849951e26bed58910d5889f9299b17ecbd9c1bd"
+  },
+  "scalar_key_tests": [
+    "decoded_value_limit_counts_escaped_zero_once_and_utf8_in_bytes",
+    "prefix_rejects_noncanonical_values_without_decoding_allocations",
+    "scalar_buffer_matches_literal_vectors_and_preserves_errors"
+  ],
+  "selector-platform_tests": [
+    "typed_selector_preflight_rejects_aliases_without_effects",
+    "typed_selectors_replace_reopen_and_preserve_reserved_names"
+  ],
+  "selector-protocol_tests": [
+    "dev3_selector_cut_matrix_and_wire_names"
+  ],
+  "selector-worker_tests": [
+    "dev3_selector_faults_preserve_target_lineage_and_certainty",
+    "dev3_selector_repeated_unknown_reopens_do_not_cross_targets",
+    "dev3_selector_write_sync_faults_use_exact_names"
+  ],
+  "metadata-platform_tests": [
+    "opened_metadata_binds_exact_handle_and_length",
+    "opened_metadata_rejects_invalid_names_and_types_without_effects",
+    "replacement_keeps_old_handle_metadata_and_lease"
+  ],
+  "metadata-worker_tests": [
+    "dev3_open_metadata_preserves_selector_roles"
+  ],
+  "metadata-performance_tests": [
+    "open_metadata_counts_one_success_or_failure"
+  ],
+  "page-io-native_tests": [
+    "native_selected_map_reads_and_rejects_selected_damage"
+  ],
+  "read-buffer-native_tests": [
+    "native_read_buffer_hits_evictions_and_reopen",
+    "native_read_buffer_rejects_bad_load_and_recovers"
+  ],
+  "wal-io-native_tests": [
+    "native_genesis_faults_preserve_partial_files",
+    "native_genesis_installs_and_appends_exact_bytes",
+    "native_genesis_process_kills_preserve_observed_prefixes"
+  ],
+  "model_cases": [
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "registration",
+      "mutant": "none",
+      "status": "PASS",
+      "states": 245,
+      "transitions": 575,
+      "max_depth": 16,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 0,
+      "error": null,
+      "violation": null,
+      "witnesses": {
+        "guard_overlap": [
+          "q_read",
+          "horizon_register",
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "q_read",
+          "horizon_register",
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "q_read",
+          "horizon_register",
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "q10_read_a": [
+          "q_read",
+          "horizon_register",
+          "read_value"
+        ],
+        "q10_selected": [
+          "q_read"
+        ],
+        "registration_cancel_clean": [
+          "registration_cancel"
+        ],
+        "registration_failure_clean": [
+          "registration_fail"
+        ],
+        "registration_gate_blocks_aging": [
+          "q_read"
+        ],
+        "status_reused": [
+          "registration_cancel",
+          "status_install",
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "registration_cancel",
+          "status_install",
+          "frontier_publish",
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ],
+        "unpublished_empty_horizon10": [
+          "registration_cancel",
+          "status_install",
+          "horizon_sample"
+        ]
+      },
+      "counterexample": []
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "unpublished",
+      "mutant": "none",
+      "status": "PASS",
+      "states": 423,
+      "transitions": 1101,
+      "max_depth": 15,
+      "bound_depth": 16,
+      "elapsed_ms": 1,
+      "unexplored": 0,
+      "error": null,
+      "violation": null,
+      "witnesses": {
+        "guard_overlap": [
+          "q_read",
+          "horizon_register",
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "q_read",
+          "horizon_register",
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "q_read",
+          "horizon_register",
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "q10_read_a": [
+          "q_read",
+          "horizon_register",
+          "read_value"
+        ],
+        "q10_selected": [
+          "q_read"
+        ],
+        "q11_read_b": [
+          "frontier_publish",
+          "q_read",
+          "horizon_register",
+          "read_value"
+        ],
+        "registration_cancel_clean": [
+          "registration_cancel"
+        ],
+        "registration_failure_clean": [
+          "registration_fail"
+        ],
+        "registration_gate_blocks_aging": [
+          "q_read"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "frontier_publish",
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ],
+        "unpublished_empty_horizon10": [
+          "horizon_sample"
+        ]
+      },
+      "counterexample": []
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "transient_undo",
+      "mutant": "none",
+      "status": "PASS",
+      "states": 864,
+      "transitions": 2476,
+      "max_depth": 16,
+      "bound_depth": 16,
+      "elapsed_ms": 3,
+      "unexplored": 0,
+      "error": null,
+      "violation": null,
+      "witnesses": {
+        "guard_overlap": [
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "pinned_undo_blocks_reuse": [
+          "horizon_sample",
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "cut"
+        ],
+        "q11_read_b": [
+          "read_value"
+        ],
+        "ref_copied": [
+          "copy_ref"
+        ],
+        "ref_loaded_same_generation": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "load_ref"
+        ],
+        "ref_pinned": [
+          "copy_ref",
+          "pin_ref"
+        ],
+        "reuse_after_blocked_pin_release": [
+          "horizon_sample",
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "cut",
+          "load_ref",
+          "release_ref",
+          "reuse_undo"
+        ],
+        "source_unlatched": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ]
+      },
+      "counterexample": []
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "transient_status",
+      "mutant": "none",
+      "status": "PASS",
+      "states": 814,
+      "transitions": 2262,
+      "max_depth": 16,
+      "bound_depth": 16,
+      "elapsed_ms": 3,
+      "unexplored": 0,
+      "error": null,
+      "violation": null,
+      "witnesses": {
+        "guard_overlap": [
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "pinned_status_blocks_reuse": [
+          "horizon_sample",
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "stamp"
+        ],
+        "q10_read_a": [
+          "read_value"
+        ],
+        "ref_copied": [
+          "copy_ref"
+        ],
+        "ref_loaded_same_generation": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "load_ref"
+        ],
+        "ref_pinned": [
+          "copy_ref",
+          "pin_ref"
+        ],
+        "reuse_after_blocked_pin_release": [
+          "horizon_sample",
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "stamp",
+          "load_ref",
+          "release_ref",
+          "reuse_status"
+        ],
+        "source_unlatched": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "frontier_publish",
+          "guard_release",
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ],
+        "unpublished_empty_horizon10": [
+          "guard_release",
+          "horizon_sample"
+        ]
+      },
+      "counterexample": []
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "registration",
+      "mutant": "early_gate_release",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 48,
+      "transitions": 79,
+      "max_depth": 5,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 21,
+      "error": null,
+      "violation": "reader_history_lost",
+      "witnesses": {
+        "guard_overlap": [
+          "q_read",
+          "horizon_register",
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "q_read",
+          "horizon_register",
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "q_read",
+          "horizon_register",
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "q10_read_a": [
+          "q_read",
+          "horizon_register",
+          "read_value"
+        ],
+        "q10_selected": [
+          "q_read"
+        ],
+        "registration_cancel_clean": [
+          "registration_cancel"
+        ],
+        "registration_failure_clean": [
+          "registration_fail"
+        ],
+        "unpublished_empty_horizon10": [
+          "q_read",
+          "status_install",
+          "horizon_sample"
+        ]
+      },
+      "counterexample": [
+        "q_read",
+        "status_install",
+        "frontier_publish",
+        "horizon_sample",
+        "cut"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "unpublished",
+      "mutant": "unpublished_horizon",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 12,
+      "transitions": 19,
+      "max_depth": 2,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 8,
+      "error": null,
+      "violation": "published_history_lost",
+      "witnesses": {
+        "q10_selected": [
+          "q_read"
+        ],
+        "registration_cancel_clean": [
+          "registration_cancel"
+        ],
+        "registration_failure_clean": [
+          "registration_fail"
+        ],
+        "registration_gate_blocks_aging": [
+          "q_read"
+        ]
+      },
+      "counterexample": [
+        "horizon_sample",
+        "cut"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "unpublished",
+      "mutant": "empty_registry_infinity",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 12,
+      "transitions": 19,
+      "max_depth": 2,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 8,
+      "error": null,
+      "violation": "published_history_lost",
+      "witnesses": {
+        "q10_selected": [
+          "q_read"
+        ],
+        "registration_cancel_clean": [
+          "registration_cancel"
+        ],
+        "registration_failure_clean": [
+          "registration_fail"
+        ],
+        "registration_gate_blocks_aging": [
+          "q_read"
+        ]
+      },
+      "counterexample": [
+        "horizon_sample",
+        "cut"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "registration",
+      "mutant": "guard_handoff_gap",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 8,
+      "transitions": 10,
+      "max_depth": 3,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 5,
+      "error": null,
+      "violation": "guard_owner_lost",
+      "witnesses": {
+        "q10_selected": [
+          "q_read"
+        ],
+        "registration_cancel_clean": [
+          "registration_cancel"
+        ],
+        "registration_failure_clean": [
+          "registration_fail"
+        ],
+        "registration_gate_blocks_aging": [
+          "q_read"
+        ]
+      },
+      "counterexample": [
+        "q_read",
+        "horizon_register",
+        "guard_transfer_begin"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "transient_undo",
+      "mutant": "pin_after_unlatch",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 114,
+      "transitions": 211,
+      "max_depth": 5,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 54,
+      "error": null,
+      "violation": "transient_generation_changed",
+      "witnesses": {
+        "guard_overlap": [
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "q11_read_b": [
+          "read_value"
+        ],
+        "ref_copied": [
+          "copy_ref"
+        ],
+        "ref_loaded_same_generation": [
+          "copy_ref",
+          "source_unlatch",
+          "pin_ref",
+          "load_ref"
+        ],
+        "ref_pinned": [
+          "copy_ref",
+          "source_unlatch",
+          "pin_ref"
+        ],
+        "source_unlatched": [
+          "copy_ref",
+          "source_unlatch"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ]
+      },
+      "counterexample": [
+        "horizon_sample",
+        "copy_ref",
+        "source_unlatch",
+        "cut",
+        "reuse_undo"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "transient_status",
+      "mutant": "pin_after_unlatch",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 130,
+      "transitions": 255,
+      "max_depth": 5,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 59,
+      "error": null,
+      "violation": "transient_generation_changed",
+      "witnesses": {
+        "guard_overlap": [
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "q10_read_a": [
+          "read_value"
+        ],
+        "ref_copied": [
+          "copy_ref"
+        ],
+        "ref_loaded_same_generation": [
+          "copy_ref",
+          "source_unlatch",
+          "pin_ref",
+          "load_ref"
+        ],
+        "ref_pinned": [
+          "copy_ref",
+          "source_unlatch",
+          "pin_ref"
+        ],
+        "source_unlatched": [
+          "copy_ref",
+          "source_unlatch"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "frontier_publish",
+          "guard_release",
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ],
+        "unpublished_empty_horizon10": [
+          "guard_release",
+          "horizon_sample"
+        ]
+      },
+      "counterexample": [
+        "horizon_sample",
+        "copy_ref",
+        "source_unlatch",
+        "stamp",
+        "reuse_status"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "transient_undo",
+      "mutant": "ignore_transient_pin",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 169,
+      "transitions": 336,
+      "max_depth": 6,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 63,
+      "error": null,
+      "violation": "transient_generation_changed",
+      "witnesses": {
+        "guard_overlap": [
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "pinned_undo_blocks_reuse": [
+          "horizon_sample",
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "cut"
+        ],
+        "q11_read_b": [
+          "read_value"
+        ],
+        "ref_copied": [
+          "copy_ref"
+        ],
+        "ref_loaded_same_generation": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "load_ref"
+        ],
+        "ref_pinned": [
+          "copy_ref",
+          "pin_ref"
+        ],
+        "source_unlatched": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ]
+      },
+      "counterexample": [
+        "horizon_sample",
+        "copy_ref",
+        "pin_ref",
+        "source_unlatch",
+        "cut",
+        "reuse_undo"
+      ]
+    },
+    {
+      "scope": "D3-M02-P01",
+      "fixture": "transient_status",
+      "mutant": "ignore_transient_pin",
+      "status": "EXPECTED_COUNTEREXAMPLE",
+      "states": 185,
+      "transitions": 396,
+      "max_depth": 6,
+      "bound_depth": 16,
+      "elapsed_ms": 0,
+      "unexplored": 68,
+      "error": null,
+      "violation": "transient_generation_changed",
+      "witnesses": {
+        "guard_overlap": [
+          "guard_transfer_begin",
+          "guard_transfer_register"
+        ],
+        "guard_release_clean": [
+          "guard_release"
+        ],
+        "guard_transfer_complete": [
+          "guard_transfer_begin",
+          "guard_transfer_register",
+          "guard_transfer_release_old"
+        ],
+        "pinned_status_blocks_reuse": [
+          "horizon_sample",
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "stamp"
+        ],
+        "q10_read_a": [
+          "read_value"
+        ],
+        "ref_copied": [
+          "copy_ref"
+        ],
+        "ref_loaded_same_generation": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch",
+          "load_ref"
+        ],
+        "ref_pinned": [
+          "copy_ref",
+          "pin_ref"
+        ],
+        "source_unlatched": [
+          "copy_ref",
+          "pin_ref",
+          "source_unlatch"
+        ],
+        "status_reused": [
+          "horizon_sample",
+          "stamp",
+          "reuse_status"
+        ],
+        "undo_reused": [
+          "frontier_publish",
+          "guard_release",
+          "horizon_sample",
+          "cut",
+          "reuse_undo"
+        ],
+        "unpublished_empty_horizon10": [
+          "guard_release",
+          "horizon_sample"
+        ]
+      },
+      "counterexample": [
+        "horizon_sample",
+        "copy_ref",
+        "pin_ref",
+        "source_unlatch",
+        "stamp",
+        "reuse_status"
+      ]
+    }
+  ],
+  "regression": {
+    "report": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/regression.json",
+    "sha256": "9877e84f700806a6d98394198a8a5537e43e5d7283f009e7a06d886cc7d2ecb0"
+  },
+  "source_sha256_after": "3493fa223b10e6393ae019e131eccaa6274f39e77a73b6ec0aa38975378f87f2"
+}

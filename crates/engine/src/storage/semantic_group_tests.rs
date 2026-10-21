@@ -1253,11 +1253,8 @@ fn change64(b: &mut [u8], offset: usize, amount: i64) {
     };
     put64(b, offset, new);
 }
-#[test]
-fn rollback_start_cost_transfer_is_exact() {
+fn for_cost_mismatches(mut check: impl FnMut(&Case)) {
     let base = Case::dense();
-    base.valid_descriptors();
-    assert!(base.observe().is_ok());
     let mut cases = 0;
     for row in [0, 1, 2, 4] {
         for field in 0..14 {
@@ -1270,7 +1267,7 @@ fn rollback_start_cost_transfer_is_exact() {
                 }
                 bad.refresh();
                 bad.valid_descriptors();
-                rejected(&bad, SemanticError::BudgetMismatch);
+                check(&bad);
                 cases += 1;
             }
         }
@@ -1285,7 +1282,7 @@ fn rollback_start_cost_transfer_is_exact() {
             }
             bad.refresh();
             bad.valid_descriptors();
-            rejected(&bad, SemanticError::BudgetMismatch);
+            check(&bad);
             cases += 1;
         }
     }
@@ -1295,7 +1292,7 @@ fn rollback_start_cost_transfer_is_exact() {
             change64(&mut bad.after, 1032 + 8 * field, sign);
             bad.refresh();
             bad.valid_descriptors();
-            rejected(&bad, SemanticError::BudgetMismatch);
+            check(&bad);
             cases += 1;
         }
     }
@@ -1313,7 +1310,7 @@ fn rollback_start_cost_transfer_is_exact() {
         }
         bad.refresh();
         bad.valid_descriptors();
-        rejected(&bad, SemanticError::BudgetMismatch);
+        check(&bad);
         cases += 1;
     }
     for offset in [1336, 1344, 616] {
@@ -1322,11 +1319,19 @@ fn rollback_start_cost_transfer_is_exact() {
             change64(&mut bad.after, offset, sign);
             bad.refresh();
             bad.valid_descriptors();
-            rejected(&bad, SemanticError::BudgetMismatch);
+            check(&bad);
             cases += 1;
         }
     }
     assert_eq!(cases, 148);
+}
+
+#[test]
+fn rollback_start_cost_transfer_is_exact() {
+    let base = Case::dense();
+    base.valid_descriptors();
+    assert!(base.observe().is_ok());
+    for_cost_mismatches(|bad| rejected(bad, SemanticError::BudgetMismatch));
     for offset in [1032, 1040, 1136] {
         for sign in [-1, 1] {
             let mut bad = base.clone();
@@ -1660,4 +1665,278 @@ fn rollback_start_generated_profiles_match_independent_transition() {
             );
         }
     }
+}
+
+impl Case {
+    fn materialize(&self, output: &mut [u8; PAGE_BYTES]) -> Result<RollbackStartObservation> {
+        materialize_rollback_start(&self.frame, self.expected, &self.before, &self.old, output)
+    }
+}
+
+fn materialized_matches(c: &Case) {
+    let inputs = (c.frame.clone(), c.before.clone(), c.old.clone());
+    let mut output = [0xa7; PAGE_BYTES];
+    assert_eq!(c.materialize(&mut output).unwrap(), c.observe().unwrap());
+    assert_eq!(output.as_slice(), c.new);
+    assert_eq!(inputs, (c.frame.clone(), c.before.clone(), c.old.clone()));
+}
+
+fn materialized_rejected(c: &Case, error: SemanticError) {
+    let inputs = (c.frame.clone(), c.before.clone(), c.old.clone());
+    let mut output = [0xa7; PAGE_BYTES];
+    assert_eq!(c.materialize(&mut output), Err(error));
+    assert_eq!(inputs, (c.frame.clone(), c.before.clone(), c.old.clone()));
+    // No assertion treats a failed call's unpublished output as a usable page.
+}
+
+#[test]
+fn rollback_materialization_matches_literal_pages() {
+    for head in 0..2 {
+        let c = Case::literal(head);
+        materialized_matches(&c);
+        let range = cell_range(&c.old, c.expected.location.slot() as usize);
+        assert_eq!(&c.old[..64], &c.new[..64]);
+        assert_eq!(&c.old[72..range.start], &c.new[72..range.start]);
+        assert_eq!(
+            &c.old[range.end..DIGEST_OFFSET],
+            &c.new[range.end..DIGEST_OFFSET]
+        );
+    }
+}
+
+#[test]
+fn rollback_materialization_rejects_unbound_inputs() {
+    let base = Case::literal(0);
+    let mut cases = Vec::new();
+    for variant in 0..3 {
+        let mut c = base.clone();
+        match variant {
+            0 => c.expected.page.database = DatabaseId::new([0x22; 16]).unwrap(),
+            1 => {
+                c.expected.location =
+                    StatusSlotRef::new(page_identity(66, 4).page, 1, generation_value(20)).unwrap()
+            }
+            _ => {
+                c.expected.location =
+                    StatusSlotRef::new(c.expected.page.page, 1, generation_value(21)).unwrap()
+            }
+        }
+        cases.push((c, SemanticError::InvalidInput));
+    }
+    for variant in 0..4 {
+        let mut c = base.clone();
+        match variant {
+            0 => c.frame[24] ^= 1,
+            1 => put64(&mut c.frame, 40, 18),
+            2 => put32(&mut c.frame, 48, 20),
+            _ => put64(&mut c.frame, 64, 36),
+        }
+        frame_seal(&mut c.frame);
+        cases.push((
+            c,
+            if variant == 3 {
+                SemanticError::OrderMismatch
+            } else {
+                SemanticError::IdentityMismatch
+            },
+        ));
+    }
+    for variant in 0..6 {
+        let mut c = base.clone();
+        let error = match variant {
+            0 => {
+                c.frame.pop();
+                SemanticError::Truncated
+            }
+            1 => {
+                c.frame.push(0);
+                SemanticError::Corrupt
+            }
+            2 => {
+                c.frame[3039] ^= 1;
+                SemanticError::Corrupt
+            }
+            3 => {
+                c.frame[7] = 0;
+                frame_seal(&mut c.frame);
+                SemanticError::UnsupportedFormat
+            }
+            4 => {
+                put16(&mut c.frame, 166, 1);
+                frame_seal(&mut c.frame);
+                SemanticError::UnsupportedOperation
+            }
+            _ => {
+                put16(&mut c.frame, 164, 2);
+                frame_seal(&mut c.frame);
+                SemanticError::UnsupportedFormat
+            }
+        };
+        cases.push((c, error));
+    }
+    for offset in [2728, 2736, 2744, 2752, 2760] {
+        let mut c = base.clone();
+        change64(&mut c.frame, offset, 1);
+        frame_seal(&mut c.frame);
+        cases.push((c, SemanticError::IdentityMismatch));
+    }
+    let mut c = base.clone();
+    c.frame[2720] = 3;
+    frame_seal(&mut c.frame);
+    cases.push((c, SemanticError::UnsupportedFormat));
+    for sign in [-1, 1] {
+        let mut c = base.clone();
+        let offset = i32::from(u16_at(&c.frame, 2776)) + sign;
+        put16(&mut c.frame, 2776, offset as u16);
+        frame_seal(&mut c.frame);
+        cases.push((c, SemanticError::Corrupt));
+        let mut c = base.clone();
+        let length = (224 + sign) as u16;
+        if sign < 0 {
+            c.frame.remove(3007);
+        } else {
+            c.frame.insert(3008, 0);
+        }
+        let total = c.frame.len() as u32;
+        put32(&mut c.frame, 12, total);
+        put32(&mut c.frame, 16, total - 192);
+        put32(&mut c.frame, 172, total - 192);
+        put32(&mut c.frame, 312, u32::from(length) + 64);
+        put32(&mut c.frame, 2724, u32::from(length) + 64);
+        put16(&mut c.frame, 2778, length);
+        frame_seal(&mut c.frame);
+        cases.push((c, SemanticError::Corrupt));
+    }
+    for variant in 0..3 {
+        let mut c = base.clone();
+        match variant {
+            0 => {
+                change64(&mut c.old, 24, 1);
+                seal(&mut c.old);
+            }
+            1 => c.old[PAGE_BYTES - 1] ^= 1,
+            _ => {
+                let range = cell_range(&c.old, 0);
+                c.old[range.start + 16] = 1;
+                seal(&mut c.old);
+            }
+        }
+        cases.push((
+            c,
+            if variant == 0 {
+                SemanticError::IdentityMismatch
+            } else {
+                SemanticError::Corrupt
+            },
+        ));
+    }
+    for prior in [34, 36] {
+        let mut c = base.clone();
+        put64(&mut c.frame, 2768, prior);
+        frame_seal(&mut c.frame);
+        cases.push((c, SemanticError::OrderMismatch));
+    }
+    assert_eq!(cases.len(), 28);
+    for (c, error) in cases {
+        materialized_rejected(&c, error);
+    }
+}
+
+#[test]
+fn rollback_materialization_keeps_semantic_cost_checks() {
+    let mut count = 0;
+    for_cost_mismatches(|c| {
+        materialized_rejected(c, SemanticError::BudgetMismatch);
+        count += 1;
+    });
+    assert_eq!(count, 148);
+    for variant in 0..12 {
+        let mut c = Case::literal(0);
+        match variant {
+            0 => c.frame[2144] = 4,
+            1 => c.frame[2145] = 1,
+            2 => put16(&mut c.frame, 2148, 0),
+            3 => put16(&mut c.frame, 2150, 0),
+            4 | 5 => {
+                let offset = if variant == 4 { 2152 } else { 2154 };
+                let value = u16_at(&c.frame, offset) - 1;
+                put16(&mut c.frame, offset, value);
+            }
+            6 => put32(&mut c.frame, 2156, 223),
+            7 => put32(&mut c.frame, 2160, 223),
+            8 => c.frame[2168] ^= 1,
+            9 => c.frame[2200] ^= 1,
+            10 => {
+                change64(&mut c.frame, 2280, 1);
+                let hash = content_digest(&c.frame[2272..2496]);
+                c.frame[2168..2200].copy_from_slice(&hash);
+            }
+            _ => {
+                change64(&mut c.frame, 2504, 1);
+                let hash = content_digest(&c.frame[2496..2720]);
+                c.frame[2200..2232].copy_from_slice(&hash);
+                c.frame.copy_within(2496..2720, 2784);
+            }
+        }
+        frame_seal(&mut c.frame);
+        materialized_rejected(&c, SemanticError::Corrupt);
+    }
+}
+
+#[test]
+fn rollback_materialization_generated_pages_match_independent_bytes() {
+    for seed in 0..64 {
+        for sample in 0..128 {
+            materialized_matches(&generated(seed * 128 + sample));
+        }
+    }
+}
+
+#[test]
+fn rollback_materialization_scratch_reuse_requires_success() {
+    let mut scratch = [0xa7; PAGE_BYTES];
+    let first = Case::literal(0);
+    first.materialize(&mut scratch).unwrap();
+    assert_eq!(scratch.as_slice(), first.new);
+    let mut bad = Case::literal(1);
+    change64(&mut bad.after, 1336, 1);
+    bad.refresh();
+    bad.valid_descriptors();
+    assert_eq!(
+        bad.materialize(&mut scratch),
+        Err(SemanticError::BudgetMismatch)
+    );
+    let second = Case::literal(1);
+    second.materialize(&mut scratch).unwrap();
+    assert_eq!(scratch.as_slice(), second.new);
+    for page_lsn in [40, 41] {
+        let mut c = first.clone();
+        put64(&mut c.old, 64, page_lsn);
+        seal(&mut c.old);
+        materialized_rejected(&c, SemanticError::OrderMismatch);
+    }
+    for (page_lsn, frame_lsn) in [(0, 40), (35, u64::MAX)] {
+        let mut c = first.clone();
+        c.chain(30, page_lsn, 37, frame_lsn);
+        materialized_matches(&c);
+    }
+    let mut init = vec![0; 64];
+    init[0] = 2;
+    init[1] = 9;
+    put32(&mut init, 4, 16448);
+    init[8..48].copy_from_slice(&first.frame[2728..2768]);
+    put16(&mut init, 58, 16384);
+    init.extend_from_slice(&first.new);
+    assert!(decode_redo_record(first.observe().unwrap().header(), &init).is_ok());
+    let mut expanded = first.clone();
+    expanded.frame.truncate(2720);
+    expanded.frame.extend_from_slice(&init);
+    expanded.frame.extend_from_slice(&[0; 32]);
+    let total = expanded.frame.len() as u32;
+    put32(&mut expanded.frame, 12, total);
+    put32(&mut expanded.frame, 16, total - 192);
+    put32(&mut expanded.frame, 172, total - 192);
+    put32(&mut expanded.frame, 312, 16448);
+    frame_seal(&mut expanded.frame);
+    materialized_rejected(&expanded, SemanticError::Corrupt);
 }

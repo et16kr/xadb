@@ -442,3 +442,24 @@ root와 독립 reviewer의 역할·확정 범위는 `artifacts/dev3/genesis-wal-
 최종 독립 감사 `artifacts/dev3/genesis-wal-independent-review-20261021/r8-final-decision.json`은 같은 source의 leaf54·하위28·DEV0/1각8·kernel18/native99·국소11, 고정31suite202개와 원본7개의 byte 일치를 확인했다. 로그127개·hash 참조10,175개/8,495경로, native323/catalog325 세션과 실제 compiler/model 연결도 검산했다. staged source가 실행본과 같고 이 제한 WAL 단위의 commit 차단 사항은 없다. 문서 verifier는 실행하지 않았으며 전체 DEV3 NOT_RUN은 유지한다.
 
 `8d7f547` commit의 clean export가 최종 검증 source3162fc43…와 같고 작업 트리가 깨끗함을 `artifacts/dev3/genesis-wal-commit-verification-20261021.json`으로 확인했다. 독립 감사 뒤 완료 leaf의 worker684개를 같은 bytes의 binary2개로 통합해 약14.52GiB를 회수했고, 국소/통합/compiler target5개에서 보존 binary14개의 hash를 전후 확인하며 약4.69GiB를 정리했다. `genesis-wal-final-leaf-worker-cleanup-20261021/summary.json`과 `genesis-wal-final-target-cleanup-20261021.json`에 경로·hash·원래 identity·회수량을 남겼으며 source export·raw receipt·로그·compiler probe·장애 data는 유지한다.
+
+
+<a id="rollback-materialization-results"></a>
+### RollbackStart status page 구성
+
+[소유 계약 §14](../contracts/dev3-obligation-format.md#rollback-materialization)의 D2 입력 결합 `9c85d61c1272524ca946be02674476b9e103b948f25ff37fdd9214524beaba4a`를 독립 수용했다. root가 기존 semantic observer에 caller scratch 구성 함수를 연결하고 기존12+새5시험을 구현했다. 독립 reviewer는 D1을 담당한다. 준비 단계의 raw literal2 계산과 실제 제품 실행은 구별하며 후속 결과는 아래에 기록한다. live dirty frame·tag2 append·예약 복원·DEV3 전체 인수는 제공하지 않는다.
+
+
+source `3493fa223b10e6393ae019e131eccaa6274f39e77a73b6ec0aa38975378f87f2`를 `artifacts/dev3/rollback-materialization-quality-r1/source`에 보존했다. [국소 원본](../evidence/dev3-rollback-materialization-local-xadb-20261021-r1.json)은 semantic17(기존12+추가5), checker 자기시험7, all-targets/all-features Clippy와 fmt를 통과했다. 구성 결과는 기존 literal2의 전체16KiB와 같고, 고정64×128의8192개 독립 raw after page와 비교했다. expected/frame/redo/before의28개 반례와 typed-valid 비용148+native12개를 exact 오류로 거절하며 immutable 입력 보존을 확인했다. 동일 scratch의 성공→late 실패→성공, pageLSN/prior0·frameLSN MAX와 strict 이전상태 검산, valid Init 거절도 포함한다. 실패한 output은 폐기하며 native I/O·thread 효과나 live 적용 권한을 새로 제공하지 않는다.
+
+같은 source의 [통합 leaf54check](../evidence/dev3-rollback-materialization-leaf-xadb-20261021-r0.json)와 [하위 회귀28check](../evidence/dev3-rollback-materialization-dev2-regression-xadb-20261021-r0.json)는 `artifacts/dev3/leaf-zahj6ekd/source`에서 PASS했다. [DEV2 current-build kernel18check](../evidence/dev3-rollback-materialization-dev2-kernel-xadb-20261021-r0.json)은 `/home/et16/x3m-uas5dv0l/source`의 짧은 export에 보존한다. 실제 native99셀과 DEV2 복구 결과는 기존 현재-build 회귀이며 DEV3 recovery 인수가 아니다. DEV2 PF04 실패·전체 DEV3 execution_status NOT_RUN은 유지한다. 편집/commit 중 문서 verifier는 실행하지 않는다.
+
+독립 D1 `artifacts/dev3/rollback-materialize-independent-review-20261021/r2-d1-decision.json`은 원래 observer 오류 순서·12시험과 비용 경계가 보존되었고 추가5시험이 채택 계약에 맞음을 확인했다. 보존 engine binary로 semantic17·checker7을 독립 재실행해 PASS했다. wrapper와 중첩 observer의 고정 source/type 회계는10,592bytes로 검토했으며 caller16KiB output을 별도로 구분했다. 이는 정확한 compiler stack/RSS 측정이나 runtime admission·전체 F05의 증명이 아니다. 추가 page-sized local·heap·I/O·lock·unsafe·의존성은 없다.
+
+독립 kernel 감사 `rollback-materialize-independent-review-20261021/r3-kernel-decision.json`은18check·native33×3=99, image102디렉터리/696파일, pre-open447/post633hash, run manifest201, Cargo와 보존6binary·features[]를 확인했다. hash 참조3,529개/2,896고유경로와 원래 driver/log가 일치했다. kernel engine216 PASS·기존 장시간 fuzz1 ignored를 구분한다. 제한 단위의 검토 PASS를 전체 DEV3나 새 recovery 결과로 확대하지 않는다.
+
+완료 kernel 감사 뒤 동일 worker206개를 SHA·전체 bytes·mode·device 확인 후 hardlink로 통합해5,417,885,696bytes(약5.05GiB)를 회수했다. disposable target의537,837,568bytes(약0.50GiB)도 보존6binary의 hash를 전후 확인한 뒤 정리했다. `artifacts/dev3/rollback-materialization-kernel-worker-cleanup-20261021/summary.json`과 `rollback-materialization-kernel-target-cleanup-20261021.json`에 원래 경로·hash·회수량을 남겼으며 source·raw receipt·로그·native image는 보존한다.
+
+최종 독립 감사 `artifacts/dev3/rollback-materialize-independent-review-20261021/r4-final-decision.json`은 leaf54·하위28·DEV0/1각8·kernel18/native99·국소6과 고정31suite207시험(engine21suite187개)을 확인했다. 등록 원본4개가 byte 단위로 같고 로그122개·hash 참조10,156개/8,489고유경로, native323/catalog325세션·필수 lower85시험의 증거가 일치했다. staged314 source의 지문도 실행 source3493fa22…와 같으며 이 제한 단위의 commit 차단 사항은 없다. 이후 D0 정리·감사 기록 외 제품 source를 바꾸지 않았다.
+
+최종 독립 감사 뒤 완료 leaf worker684개를 동일 bytes의 binary2개로 hardlink 통합해15,589,957,632bytes(약14.52GiB)를 회수했다. 국소/통합/compiler target5개도 보존 binary14개의 hash를 전후 확인한 뒤4,524,736,512bytes(약4.21GiB)를 정리했다. `artifacts/dev3/rollback-materialization-leaf-worker-cleanup-20261021/summary.json`과 `rollback-materialization-final-target-cleanup-20261021.json`에 경로·hash·회수량을 보존한다. 이번 단위의 kernel 정리를 포함한 회수량은 약24.28GiB이며 source·raw receipt·로그·compiler probe·native data는 유지한다. 정리 후 파일시스템의 여유 공간은131GiB였다.

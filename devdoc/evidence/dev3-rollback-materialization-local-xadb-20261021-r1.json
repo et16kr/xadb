@@ -1,0 +1,134 @@
+{
+  "status": "PASS",
+  "scope": "RollbackStart unpublished page construction; no live dirty page, WAL effect or recovery",
+  "source_sha256": "3493fa223b10e6393ae019e131eccaa6274f39e77a73b6ec0aa38975378f87f2",
+  "checks": [
+    {
+      "id": "toolchain",
+      "command": [
+        "rustc",
+        "-Vv"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-materialization-quality-r1/toolchain.log",
+      "log_sha256": "4fdff2578428e9c5c08ddd7a0d3079c1a106b1cdaa46e73e46f7cd32b0fb9cad",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "engine-build",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-default-features",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-materialization-quality-r1/engine-build.log",
+      "log_sha256": "3f104432aac2ed89fcfc83da2c11b28610f05a59b599e1497559ca46c1cf2ee3",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "semantic-runtime",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/rollback-materialization-quality-r1/engine-test-binary",
+        "storage::semantic_group::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-materialization-quality-r1/semantic-runtime.log",
+      "log_sha256": "198a5998e22fbecab987dd49febfcb513af3efbded51ed72dea4560b395dca35",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "leaf-self",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_dev3_leaf.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-materialization-quality-r1/leaf-self.log",
+      "log_sha256": "82224d4851a291c4259dcadb25f9b89fd3a54667e2ca50f0ac8688c80505b423",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-materialization-quality-r1/clippy.log",
+      "log_sha256": "9fca1bb35923f92271a4dbca1fbf7bdc653a85fd1783a9971d5d58b384804064",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-materialization-quality-r1/format.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "builds": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/rollback-materialization-quality-r1/engine-test-binary",
+      "sha256": "42aba8cc732d7e3b7b9bc2a26997b263268998cea01310ea50c1de8d72a3b976"
+    }
+  ],
+  "driver_sha256": "81e6f9504e947157fe0f5603ab18d3d3108b18bd13552d94fb6cbcc0c8c0f4ed",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n",
+  "runtime_tests": [
+    "rollback_materialization_generated_pages_match_independent_bytes",
+    "rollback_materialization_keeps_semantic_cost_checks",
+    "rollback_materialization_matches_literal_pages",
+    "rollback_materialization_rejects_unbound_inputs",
+    "rollback_materialization_scratch_reuse_requires_success",
+    "rollback_start_cost_transfer_is_exact",
+    "rollback_start_generated_profiles_match_independent_transition",
+    "rollback_start_group_sections_are_exact",
+    "rollback_start_legacy_frames_and_limits_are_preserved",
+    "rollback_start_lengths_and_damage",
+    "rollback_start_literals_bind_full_state",
+    "rollback_start_operation_core_matches_head",
+    "rollback_start_ordering_uses_stream_and_page_positions",
+    "rollback_start_owner_chain_and_profile_are_bound",
+    "rollback_start_preserves_other_page_bytes",
+    "rollback_start_redo_and_native_match_exact_cell",
+    "rollback_start_status_pages_are_complete"
+  ]
+}

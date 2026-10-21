@@ -196,3 +196,11 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 genesis WAL 소스의 DEV2 현재-build 복구 원본](dev3-genesis-wal-dev2-kernel-xadb-20261021-r1.json) — source3162fc43…의 fresh genesis·한 slot physical append/sync; 일반 recovery·전체 DEV3 인수 미완료
 
 - [DEV3 genesis WAL native 시험 격리 반복 원본](dev3-genesis-wal-parallel-native-xadb-20261021-r1.json) — source3162fc43…의 fresh genesis·한 slot physical append/sync; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 RollbackStart page 구성 국소 실행 원본](dev3-rollback-materialization-local-xadb-20261021-r1.json) — source3493fa22…의 unpublished status page 구성; live dirty frame·WAL apply·전체 DEV3 인수 미완료
+
+- [DEV3 RollbackStart page 구성 통합 실행 원본](dev3-rollback-materialization-leaf-xadb-20261021-r0.json) — source3493fa22…의 unpublished status page 구성; live dirty frame·WAL apply·전체 DEV3 인수 미완료
+
+- [DEV3 RollbackStart page 구성 소스의 DEV0/1/2 회귀 원본](dev3-rollback-materialization-dev2-regression-xadb-20261021-r0.json) — source3493fa22…의 unpublished status page 구성; live dirty frame·WAL apply·전체 DEV3 인수 미완료
+
+- [DEV3 RollbackStart page 구성 소스의 DEV2 현재 빌드 복구 원본](dev3-rollback-materialization-dev2-kernel-xadb-20261021-r0.json) — source3493fa22…의 unpublished status page 구성; live dirty frame·WAL apply·전체 DEV3 인수 미완료

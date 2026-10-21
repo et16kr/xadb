@@ -1162,7 +1162,14 @@
     "source_roots_changed": false,
     "dependencies_changed": false,
     "full_stage_acceptance": false,
-    "local_tests": 12
+    "local_tests": 12,
+    "materialization": {
+      "status": "locally_verified_limited_scope",
+      "contract_ref": "dev3-obligation-format.md#rollback-materialization",
+      "additional_tests": 5,
+      "combined_tests": 17,
+      "scope": "unpublished caller status page only; no dirty frame or physical WAL authority"
+    }
   },
   "dev3_read_buffer": {
     "status": "locally_verified_limited_scope",

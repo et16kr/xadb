@@ -1,21 +1,21 @@
-//! Full-state byte observations for transaction RollbackStart only.
-//! Contract: `devdoc/contracts/dev3-obligation-format.md`, section 13.
-//! No append, page mutation, source pin, reservation restoration or apply permit.
+//! Full-state observations and unpublished status-page construction for RollbackStart.
+//! Contract: `devdoc/contracts/dev3-obligation-format.md`, sections 13–14.
+//! No append, live page mutation, source pin, reservation restoration or apply permit.
 #![allow(dead_code)] // Awaiting the separately reviewed runtime consumer.
 
 use super::{
     allocation_page::{ExtentAddress, ReservationOwner, SystemWorkRef},
     control::{ControlKind, ControlRef, PROFILE_BYTES, Profile},
     obligation::{DescriptorSpec, ObligationError, OwnerState, ResourcePeak, decode_descriptor},
-    page::{DIGEST_OFFSET, PageError, PageIdentity, PageKind},
+    page::{DIGEST_OFFSET, PAGE_BYTES, PageError, PageIdentity, PageKind},
     status_home::{MAX_HOME_SLOTS, STATUS_HOME_BYTES, StatusHome, decode_status_home_page},
     transaction_record::{
         RollbackState, StatusSlotRef, TransactionState, TransactionStatus, TransactionStatusCell,
         TxnRef,
     },
     wal_frame::{
-        FrameExpectation, FrameKind, RedoKind, WalError, WalFrameHeader, decode_redo_record,
-        decode_semantic_envelope,
+        FrameEnvelope, FrameExpectation, FrameKind, RedoKind, RedoRecordView, WalError,
+        WalFrameHeader, decode_redo_record, decode_semantic_envelope,
     },
 };
 use xadb_foundation::codec::content_digest;
@@ -273,6 +273,92 @@ fn validate_budget(before: &DescriptorSpec, after: &DescriptorSpec) -> Result<()
     Ok(())
 }
 
+fn rollback_envelope(frame: &[u8], expected: FrameExpectation) -> Result<FrameEnvelope<'_>> {
+    let envelope = decode_semantic_envelope(frame, expected)?;
+    let header = envelope.header;
+    if header.kind != FrameKind::Update {
+        return Err(SemanticError::Corrupt);
+    }
+    let group = envelope.payload;
+    if group.len() < 8 || &group[..4] != b"XSG1" {
+        return Err(SemanticError::Corrupt);
+    }
+    if u16_at(group, 4) != 1 {
+        return Err(SemanticError::UnsupportedFormat);
+    }
+    if u16_at(group, 6) != 3 {
+        return Err(SemanticError::UnsupportedOperation);
+    }
+    if frame.len() != FRAME_BYTES || group.len() != GROUP_BYTES || envelope.record_count != 1 {
+        return Err(SemanticError::Corrupt);
+    }
+    Ok(envelope)
+}
+
+fn rollback_redo<'a>(
+    header: WalFrameHeader,
+    group: &'a [u8],
+    expected: RollbackStartExpected,
+) -> Result<RedoRecordView<'a>> {
+    let redo = decode_redo_record(header, &group[REDO])?;
+    if redo.kind != RedoKind::Patch
+        || redo.target.kind != PageKind::TransactionStatus
+        || redo.target.level != 0
+    {
+        return Err(SemanticError::Corrupt);
+    }
+    if redo.target.page != expected.page.page
+        || redo.target.owner != expected.page.owner
+        || redo.target.owner_generation != expected.page.owner_generation
+    {
+        return Err(SemanticError::IdentityMismatch);
+    }
+    Ok(redo)
+}
+
+/// Construct an unpublished status-page image from the bound RollbackStart patch.
+/// Success returns only a byte observation; it grants no live-frame or WAL authority.
+/// Immutable inputs are preserved. On any error the caller must discard output,
+/// which may already contain an image rejected by the final semantic/cost checks.
+/// Uses the caller's one 16 KiB output, with no page-sized local copy or I/O.
+pub(crate) fn materialize_rollback_start(
+    frame: &[u8],
+    expected: RollbackStartExpected,
+    before_descriptor: &[u8],
+    before_page: &[u8],
+    output: &mut [u8; PAGE_BYTES],
+) -> Result<RollbackStartObservation> {
+    validate_expected(expected)?;
+    let envelope = rollback_envelope(frame, expected.frame)?;
+    let redo = rollback_redo(envelope.header, envelope.payload, expected)?;
+    let old = decode_status_home_page(
+        before_page,
+        expected.page,
+        expected.profile.spec().namespace,
+    )?;
+    old.lookup(expected.actor, expected.location)?;
+    if old.lsn() > expected.frame.previous_lsn || redo.prior_lsn != old.lsn() {
+        return Err(SemanticError::OrderMismatch);
+    }
+    let range = old
+        .cell_range(usize::from(expected.location.slot()))
+        .ok_or(SemanticError::IdentityMismatch)?;
+    if range.len() != STATUS_HOME_BYTES
+        || usize::from(redo.offset) != range.start
+        || redo.data.len() != range.len()
+    {
+        return Err(SemanticError::Corrupt);
+    }
+    output.copy_from_slice(before_page);
+    output[range].copy_from_slice(redo.data);
+    output[64..72].copy_from_slice(&envelope.header.lsn.to_le_bytes());
+    let digest = content_digest(&output[..DIGEST_OFFSET]);
+    output[DIGEST_OFFSET..].copy_from_slice(&digest);
+    // Byte construction alone does not bind the owner transition or its budget.
+    // The existing full-state observer remains the final authority for this result.
+    observe_rollback_start(frame, expected, before_descriptor, before_page, output)
+}
+
 /// Observe the exact Active -> full-transaction Aborting transition. Every page
 /// cell is validated; only the selected home, page LSN and checksum may differ.
 /// Inputs remain unchanged on success and error. No I/O/allocation/locks occur.
@@ -299,24 +385,9 @@ pub(crate) fn observe_rollback_start(
     if before.chain.apply > expected.frame.previous_lsn {
         return Err(SemanticError::OrderMismatch);
     }
-    let envelope = decode_semantic_envelope(frame, expected.frame)?;
+    let envelope = rollback_envelope(frame, expected.frame)?;
     let header = envelope.header;
-    if header.kind != FrameKind::Update {
-        return Err(SemanticError::Corrupt);
-    }
     let group = envelope.payload;
-    if group.len() < 8 || &group[..4] != b"XSG1" {
-        return Err(SemanticError::Corrupt);
-    }
-    if u16_at(group, 4) != 1 {
-        return Err(SemanticError::UnsupportedFormat);
-    }
-    if u16_at(group, 6) != 3 {
-        return Err(SemanticError::UnsupportedOperation);
-    }
-    if frame.len() != FRAME_BYTES || group.len() != GROUP_BYTES || envelope.record_count != 1 {
-        return Err(SemanticError::Corrupt);
-    }
     validate_group_header(group, header, expected.actor, &before, before_descriptor)?;
     let after = decode_descriptor(&group[DESCRIPTOR], owner, profile)?;
     validate_transition(&before, &after, old_status, header, &group[OPERATION])?;
@@ -348,19 +419,7 @@ pub(crate) fn observe_rollback_start(
     {
         return Err(SemanticError::Corrupt);
     }
-    let redo = decode_redo_record(header, &group[REDO])?;
-    if redo.kind != RedoKind::Patch
-        || redo.target.kind != PageKind::TransactionStatus
-        || redo.target.level != 0
-    {
-        return Err(SemanticError::Corrupt);
-    }
-    if redo.target.page != expected.page.page
-        || redo.target.owner != expected.page.owner
-        || redo.target.owner_generation != expected.page.owner_generation
-    {
-        return Err(SemanticError::IdentityMismatch);
-    }
+    let redo = rollback_redo(header, group, expected)?;
     let namespace = expected.profile.spec().namespace;
     let old_page = decode_status_home_page(before_page, expected.page, namespace)?;
     let new_page = decode_status_home_page(after_page, expected.page, namespace)?;

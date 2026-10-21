@@ -62,6 +62,11 @@ READ_BUFFER_NATIVE_TESTS = {
     'native_read_buffer_rejects_bad_load_and_recovers',
 }
 SEMANTIC_GROUP_TESTS = {
+    'rollback_materialization_matches_literal_pages',
+    'rollback_materialization_rejects_unbound_inputs',
+    'rollback_materialization_keeps_semantic_cost_checks',
+    'rollback_materialization_generated_pages_match_independent_bytes',
+    'rollback_materialization_scratch_reuse_requires_success',
     'rollback_start_literals_bind_full_state',
     'rollback_start_lengths_and_damage',
     'rollback_start_group_sections_are_exact',

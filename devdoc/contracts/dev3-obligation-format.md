@@ -661,3 +661,54 @@ raw generator를 reviewer 전용 폴더에서 다시 실행해12개원문과byte
 실패한 reviewer 스크립트 최초 SyntaxError는 `r2-raw-audit-attempt1.py/.log`에그대로보존했다. 수정은reviewer artifact만했으며제품source·문서·fixture를바꾸지않았다. 제품테스트/새build/문서verifier는실행하지않았다. 코드의8KiB동시workspace, 실제generichelper의legacy전분모보존, immutableinputs, generated8192와고정12시험은구현후D1·보존실행에서확인할의무다.
 
 D2 채택 입력의 SHA-256은 `7c8ad96387ea38b89c860e7f0b17c8b3bc184dbf87f0ca5d1dac4c27659121c7`다. 원문과 독립 보완표는 `artifacts/dev3/semantic-followup-review-20261021/r3-root-adopted-contract-input.md` 및 `r3-root-adoption.json`에 고정했다. 제품 fixture는 `rollback-start-vectors-r1`의10개 bytes를 사용한다.
+
+
+<a id="rollback-materialization"></a>
+## 14. RollbackStart status page 구성
+
+2026-10-21 · **D3-ROLLBACK-MATERIALIZE-001 D2 ACCEPTED / 제한된 구현·로컬 검증 완료**
+
+`/root`가 작업·계약·통합을 담당하고 `/root/dev3_selector_review`가 독립 수용했다. 입력 결합 SHA `9c85d61c1272524ca946be02674476b9e103b948f25ff37fdd9214524beaba4a`와 고정9입력·10fixture는 `artifacts/dev3/rollback-materialize-independent-review-20261021/r1-d2-decision.json`에 있다. 이 채택은 제품 실행 증거가 아니다.
+
+### 선택과 API
+
+일반 PageRedo 적용은 tree arity/schema·undo owner·allocation 승인 같은 추가 context가 필요하다. 먼저 §13의 full-transaction Active→Aborting 한 전이에서 실제 after page를 caller scratch로 구성하고 기존 의미 검산에 연결한다. 별도 일반 codec이나 wire 형식을 추가하지 않는다.
+
+`materialize_rollback_start(frame, expected, before_descriptor, before_page, output: &mut [u8; PAGE_BYTES]) -> Result<RollbackStartObservation, SemanticError>`는 기존 `storage/semantic_group.rs`에 둔다. expected와 immutable 입력은 §13과 같다. output은 caller 소유의 unpublished16KiB 사본 하나이며 성공 때만 전체 bytes가 유효하다. 오류 때 일부 또는 전체 변경될 수 있어 폐기해야 한다. immutable 입력은 항상 보존한다. heap·file·lock·callback·unsafe·추가 page-sized 내부 scratch가 없다. caller scratch는 이후 소비자가 자신의 workspace에 한 번 계상해야 하며 이 byte 함수가 runtime admission·전역 F05를 집행하지 않는다. 실제 local 크기는 wrapper와 중첩 observer의 임시값을 함께 검토한다.
+
+결과는 기존 immutable 관측이다. live dirty frame·WAL tag2 append·page write/flush·예약 복원·DB READY·commit·recovery capability가 아니다. Init/재사용 승인과 pageLSN>=frame의 recovery skip은 지원하지 않는다. 확대 시 별도 D2가 필요하다.
+
+### 구성과 최종 검산
+
+1. expected 내부 일관성, trusted stream을 사용하는 complete enclosing SemanticGroup frame, Update/op3/version1, frame3040/group2848/record1을 검증한다. field가 공개된 RedoRecordView 단독값을 신뢰 입력으로 받지 않는다.
+2. 기존 single redo decoder로 고정 redo section을 검증하고 Patch/TransactionStatus/level0와 expected page/owner/generation을 대조한다. 기존 observer와 동일한 envelope/target 검사를 공유할 수 있지만 기존 순서·오류 표는 유지한다.
+3. full before page를 status-home decoder와 Profile namespace로 검증한다. actor/location의 실제 home을 찾고 `redo.prior_lsn == pageLSN <= expected.previous_lsn`을 검사한다. 실제 선택 home range가224bytes이고 redo offset/data length와 같아야 한다.
+4. before 전체를 output에 복사한 뒤 선택 home range만 redo.data로 바꾼다. pageLSN64..72를 enclosing frame LSN으로, 마지막32bytes를 앞16,352bytes의 SHA-256으로 바꾼다. identity·directory·다른 home·free bytes는 보존한다.
+5. original immutable input과 구성한 output으로 기존 `observe_rollback_start`를 호출한다. descriptor chain·native before/after·전체 status page·예약 비용까지 통과해야 관측을 반환한다. late 실패는 output 폐기이며 성공 적용으로 세지 않는다.
+
+새 함수의 복합 오류 우선순위는 observer와 동일하다고 약속하지 않는다. expected 모순은 먼저 InvalidInput이며 enclosing/target/prior 오류는 기존 owner 범주를 따른다. 재적용된 page와 더 최신 page는 strict prior 검사로 거절하며 성공 skip을 반환하지 않는다. 기존 observer12시험과 원래 비용 경계는 유지한다.
+
+### 고정5시험
+
+| 시험 | 분모·기대값 |
+| --- | --- |
+| `rollback_materialization_matches_literal_pages` | 기존 empty-head/with-head2개에서 독립 after16KiB와 전체 bytes·관측 일치. 선택 home224·LSN8·checksum32 밖은 보존 |
+| `rollback_materialization_rejects_unbound_inputs` | 아래28개 개별 반례의 exact 오류·immutable 입력 보존. 오류 output은 유효 page로 검사하지 않음 |
+| `rollback_materialization_keeps_semantic_cost_checks` | §13.8.3 원래 typed-valid 비용148개 BudgetMismatch 및 아래 native12개 Corrupt. 원래 generator를 시험 전용 helper로 공유하고 추가 기존 비용 경계는 유지 |
+| `rollback_materialization_generated_pages_match_independent_bytes` | 기존 §13.7 seed64×128=8192의 raw integer-offset Case를 사용해 구성한 전체16KiB·관측과 독립 after bytes·descriptor 대조 |
+| `rollback_materialization_scratch_reuse_requires_success` | 동일 scratch의 정상empty→with-head late cost실패→정상with-head. 정상pageLSN/prior0, frameLSN MAX. prior35를 유지한 beforeLSN40/41 재입력은 OrderMismatch. valid Init 별도1개는 Corrupt |
+
+28개는 InvalidInput3(expected.page DB만 다름/location.page만 다름/location generation만 다름), IdentityMismatch9(frame DB/timeline/epoch3+redo의 유효 file/page/incarnation/owner/generation5+before page file1), OrderMismatch3(frame predecessor1+prior34/36), UnsupportedFormat3(payload tag0/groupversion2/unknown redo kind3), UnsupportedOperation1(op1), Truncated1(frame proper prefix), Corrupt8(trailing/checksum2+Patch offset±1/length±1의4+before checksum/비선택home reserved2)다. 목표 검사 전에 필요한 digest는 다시 맞춘다. expected의3모순과 frame의 identity3변경을 섞지 않는다. Patch 길이 변경은 record/outer/group의 선언 길이도 맞춘 뒤 opcode3 fixed-size에서 거절한다. 잘린 input이나 추가 input이 panic을 내면 실패다.
+
+native12는 fresh literal0에서 kind5→4, flags absolute2145의3→1, before/after slot1→0, before/after offset−1, before/after length224→223, before/after SHA 첫byte xor1, before incoming+1와 before SHA 갱신, after incoming+1와 after SHA·redo data 함께 갱신이다. enclosing frame SHA를 모두 맞춘다. native bytes2..3은 redo index:u16(현재0)이며 flags와 구별한다. 마지막2개는 실제 before 결합과 incoming 보존을 각각 검산한다.
+
+정상 pageLSN0은 redo.prior도0으로 바꾸고 owner.apply30/previous stream37은 유지한다. 정상 frameLSN MAX는 after.apply/group.LSN/after pageLSN까지 맞추며 wrap 성공을 허용하지 않는다. strict40/41은 redo.prior35를 유지한다. valid Init은 기존 시험처럼 expected target/frameLSN40의 완전한16KiB image를 가진 record를 만들고 single redo decoder의 성공을 먼저 확인한 뒤, 조정한 complete outer/group을 새 함수가 Corrupt로 거절하는지 본다. 이 추가 경계1개는28·160에 합산하지 않는다.
+
+같은 source에서 semantic17(기존12+새5)·all-targets Clippy/fmt·통합 leaf·DEV0/1/2 회귀·DEV2 current-build recovery를 실행하고 D1을 받는다. 새 I/O/thread 효과가 없으므로 새로운 native crash/stress 분모를 만들지 않는다. 실제 dirty page·WAL apply·전체 DEV3 인수는 계속 별도다.
+
+### 소스 연구와 재검토
+
+[로컬 소스 목록](../reference/opensource-references.md)의 PostgreSQL 실제 revision `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851`, clean checkout의 `src/backend/access/transam/xlogutils.c`390–450행을 읽었다(SHA256 `e1584d353432243f7fa6649cb946a8e633745c0712683ac62467bcc166b82748`). 복원·LSN 설치·dirty 표시와 redo skip의 경계를 참고했고 XADB의 trusted prior equality와 full semantic 검산을 유지한다. PostgreSQL의 recovery skip/live buffer 권한을 이 scratch API에 도입하지 않는다. 소스·Git 이력은 가져오지 않았다. scratch가 live frame으로 공개되거나 Init/skip·opcode·예약·tag2 append를 확대할 때 재검토한다.
+
+
+§14의 실제 source3493fa22…·고정 corpus·통합/하위 회귀·독립 검토는 [구현 기록](../implementation/dev3-implementation.md#rollback-materialization-results)을 따른다. 이 결과는 live 적용·예약·전체 DEV3 인수로 승격하지 않는다.
