@@ -293,3 +293,7 @@ generated n=128×seed+sample, file count=1+n mod130, slot=n mod2, generation=23+
 자체 첫 실행 `artifacts/dev3/control-supply-r1/validation.json`은 보존 export에서10개 시험을 통과했지만 Clippy의 extent-end 검사식 단순화 지적으로 전체 FAIL을 보존했다. 의미가 같은 `Option::is_none_or` 검사로 한 줄을 바꾼 r2는 `artifacts/dev3/control-supply-r2/validation.json`에 source/binary/contract hash·명령·원로그를 보존했고, 동일 export의10개 시험(9.13초), targeted rustfmt, engine lib/tests all-features Clippy가 모두 PASS다. 고정 분모는 줄이지 않았고 generated8,192 inventories의 entry536,448개를 검산했다. 제품 source 두 파일과 실행 사본은 동결했으며, workspace shared module·namespace port는 수정하지 않고 시험 export에서만 module을 연결했다. 실행 후 이 상태 문단은 결과를 수신하여 갱신했으므로 r2의 실행 당시 contract hash와 구분한다.
 
 root가 최종 source 전체를 독립 검토하고 별도 사본에서 고정10시험을 통과했다(`artifacts/dev3/control-independent-root-_g_0xw1y/review.json`). metadata extent 주소·cursor 실패 상태 보존·최종 item까지의 encoder 사전 검산을 확인했다. 이 상태 수신은 실행 계약 bytes와 구별하며 통합 source의 회귀 결과는 별도 기록한다.
+
+## 최초 저장 세션의 후속 D2 계약
+
+[최초 저장 세션](dev3-storage-session.md)은 fresh 전용 immutable `d3-bootstrap`4096-byte staging descriptor를 정의한다. 이 descriptor의 file sync·directory sync 뒤에만 초기 data/FILEMAP 파일을 만든다. canonical `d3-filemap-select-stage` 이름은 유지하고 descriptor는 성공/실패 뒤에도 보존한다. 제안된1MiB rebase 슬롯이나 일반 growth/resume descriptor를 대체하지 않는다. D2 채택이며 실제 설치는 NOT_RUN이다.

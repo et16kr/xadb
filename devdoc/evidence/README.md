@@ -212,3 +212,5 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 RollbackStart WAL·page 생산 DEV0/1/2 회귀 원본](dev3-rollback-producer-dev2-regression-xadb-20261021-r0.json) — sourcef08f01d7…의 caller frame/page 생산; tag2 append·live 적용·전체 DEV3 인수 미완료
 
 - [DEV3 RollbackStart WAL·page 생산 DEV2 현재 빌드 복구 원본](dev3-rollback-producer-dev2-kernel-xadb-20261021-r0.json) — sourcef08f01d7…의 caller frame/page 생산; tag2 append·live 적용·전체 DEV3 인수 미완료
+
+- [DEV3 최초 저장 세션 D2 검토 원본](dev3-storage-session-d2-xadb-20261021-r2.json) · [49개 동결 입력 원본](dev3-storage-session-inputs-xadb-20261021-r6.json) — 설계 수용이며 제품 실행 증거는 아님

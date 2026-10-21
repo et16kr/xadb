@@ -121,3 +121,7 @@ native 조립은 engine의 새 **default 제외 `test-support` feature**에서�
 내부 source의 수락/거절 경계를 validator의 정상 결과로 계산하지 않는다. slot 생성이나 native test의 파일 write는 fixture 준비이며 실제 DB 생성·내구성 인수로 집계하지 않는다. reader의 메모리 상한은 구현의 고정 buffer/정적 타입과 계수 adapter의 handle 관측으로 확인하며 allocator 전체 OOM 복구·OS device read량으로 확대하지 않는다.
 
 2026-10-21 구현 검토에서 bank0 bytes를 bank1 이름에 복사한 초기 시험 fixture가 정상 비선택 bank가 아니라는 반례를 확인했다. 위 bank1 정상 대조를 추가하고 기존 거절8개·native5개를 유지한 채 native 정상1개를 추가했다. 제품 reader 의미나 fault56셀을 축소하지 않는다. 이전 로그는 `artifacts/dev3/page-reader-r0/`에 보존한다.
+
+## 최초 저장 세션의 후속 D2 계약
+
+후속 [최초 저장 세션](dev3-storage-session.md)은 namespace를 변경하지 않는 owner의 수명과 atomic 한 reader lease를 통해 선택을 고정한다. 각 open 때 full Profile/SelectedControl을 owner 기대값에 대조하고 namespace mutex는 파일 open 동안만 보유한다. 기존 exclusive reader API는 유지한다. 이 shared 경계는 D2 채택·구현/실행 NOT_RUN이다.

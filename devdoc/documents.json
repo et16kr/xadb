@@ -1232,6 +1232,21 @@
       "path": "evidence/dev3-rollback-producer-dev2-kernel-xadb-20261021-r0.json",
       "role": "evidence",
       "title": "DEV3 RollbackStart WAL·page 생산 DEV2 현재 빌드 복구 원본"
+    },
+    "dev3-storage-session.md": {
+      "path": "contracts/dev3-storage-session.md",
+      "role": "contracts",
+      "title": "DEV3 최초 저장 세션·FILEMAP 설치 계약"
+    },
+    "dev3-storage-session-d2-xadb-20261021-r2.json": {
+      "path": "evidence/dev3-storage-session-d2-xadb-20261021-r2.json",
+      "role": "evidence",
+      "title": "DEV3 최초 저장 세션 독립 D2 수용 원본"
+    },
+    "dev3-storage-session-inputs-xadb-20261021-r6.json": {
+      "path": "evidence/dev3-storage-session-inputs-xadb-20261021-r6.json",
+      "role": "evidence",
+      "title": "DEV3 최초 저장 세션49개 동결 입력 원본"
     }
   }
 }

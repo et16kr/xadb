@@ -484,3 +484,10 @@ source `f08f01d72f06a9578a129927a7a17dfe2450734e8fbd86dcfeb8c11e4da4d515`를 `ar
 최종 독립 감사 `artifacts/dev3/rollback-producer-independent-review-20261021/r6-final-decision.json`은 국소7·leaf54·하위28·DEV0/1각8·kernel18/native99와 고정31suite214시험(engine21suite194개)을 확인했다. 등록 원본4개가 byte 단위로 같고 로그123개·hash 참조10,212개/8,543고유경로, native323/catalog325세션·필수 lower85시험의 증거가 일치했다. staged21개 변경과 제품314개 파일의 지문도 실행 sourcef08f01d7…와 같으며 이 제한 단위의 commit 차단 사항은 없다. 후속 변경은 실제 감사·정리 결과의 D0 기록으로 제한하며 제품 source를 바꾸지 않는다. 정리 검토에서는 보존 실행 파일19개와 정확한 대상4개를 확인했다. 접근 가능한 `/proc` 관측의 한계를 남겼고 완료 receipt·root의 실행 종료와 정리 중 새 실행 금지를 함께 전제로 삼았다.
 
 최종 감사 뒤 leaf worker684개를 동일 bytes의 binary2개로 hardlink 통합해15,589,957,632bytes(약14.52GiB)를 회수했다. 국소/통합/compiler target4개도 보존 binary13개의 hash를 전후 확인한 뒤4,253,200,384bytes(약3.96GiB)를 정리했다. `artifacts/dev3/rollback-producer-leaf-worker-cleanup-20261021/summary.json`과 `rollback-producer-final-target-cleanup-20261021.json`에 경로·hash·회수량을 보존한다. kernel 정리를 포함한 이번 단위의 총 회수량은 약24.03GiB이며 source·raw receipt·로그·compiler probe·native data는 유지한다. `rollback-producer-cleanup-summary-20261021.json`의 정리 직후 파일시스템 여유 공간은 약128.75GiB다.
+
+<a id="storage-session-design"></a>
+## 최초 저장 세션의 구현 전 계약 수신
+
+2026-10-21 [최초 저장 세션 계약](../contracts/dev3-storage-session.md)을 독립 D2 검토 후 채택했다. 최초 extent·FILEMAP 두 bank·영속 staging descriptor, WAL/reader의 단일 namespace owner, 한 reader lease와 공통 fence, 실패 시 partial artifact/interval 보존을 구체화했다. 동결한 기대 bytes/효과/유한 장애 모델·compiler 입력은 준비 자료이며 제품 실행은 NOT_RUN이다.
+
+이 등록의 제품 source는 직전 RollbackStart producer `f08f01d72f06a9578a129927a7a17dfe2450734e8fbd86dcfeb8c11e4da4d515` 그대로다. 그 검증 결과를 새 저장 세션의 실행 증거로 표시하지 않는다. 구현·runtime12/native3/compiler8·동일 source 하위 회귀·현재-build 복구·독립 D1을 수행한 뒤 별도 결과를 기록한다. 전체 DEV3 및 DEV2 PF04 상태는 변경하지 않는다.

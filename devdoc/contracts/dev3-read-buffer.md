@@ -123,3 +123,7 @@ Shared use across scoped threads relies solely on Rust auto traits: the concrete
 The pool overhead <=4096-byte assertion covers its own scalar/control/loader fields when instantiated with the supported Linux writer/file and the fixed fake test writer/file. Both concrete size_of values are checked in their corresponding unit/native test assembly; it is not a bound on every possible generic W or W::File. Caller frame overhead is checked as size_of(ReadFrame)-16384 <=256. Profile maximum4096 therefore bounds frame overhead at1,048,576 bytes. The concrete pool overhead adds at most4096. Loader output/root/control scratch are three distinct16KiB workspaces(49,152 bytes), separately charged outside replacement payload. Underlying OS/runtime allocations, externally supplied port-owned memory, full metadata/system quota integration and RSS remain outside this leaf's proved scope. A generic external port cannot claim that these fixed concrete-port size assertions bound its own hidden allocations.
 
 Future dirty/transaction integration must reserve the same frame payload once and separately charge this metadata and workspace in the existing global owners. It may not start a second buffer alongside this exclusive selected reader or count this isolated capacity check as full F05 admission/rollback/recovery proof.
+
+## 최초 저장 세션의 후속 D2 계약
+
+후속 [최초 저장 세션](dev3-storage-session.md)은 reader/WAL과 공유하는 영구 fence를 추가하고 cached hit·read/view·healthy Loading claim 취소·조건부 pin Drop의 경합을 구체화한다. 원래 standalone 읽기 buffer 결과를 shared 구현의 실행 증거로 재사용하지 않는다. D2 채택이며 구현/실행 NOT_RUN이다.

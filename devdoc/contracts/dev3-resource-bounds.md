@@ -68,3 +68,7 @@ DS03/PF09의 각 inventory 접근량은 configured buffer의4배 이상이다. �
 ## Genesis WAL component의 metadata 분할
 
 [별도 D2](dev3-wal-io.md)로 기존 metadata/cache8MiB 안에 WAL slot1MiB와 component metadata/설치 scratch64KiB를 고정 배정한다. locator1MiB와 겹치지 않으며 나머지는6,225,920 bytes(5.9375MiB)다. system16MiB의 flush4MiB/maintenance12MiB는 유지한다. 실제 component bounds를 검증해야 하며 이 배정만으로 frame headers/ATT/FD 등 전체 engine ledger나 F05를 충족했다고 하지 않는다.
+
+## 최초 저장 세션의 후속 D2 계약
+
+[최초 저장 세션의 자원 계약](dev3-storage-session.md)은 이 한정 operation에 fixed5,296,128/max273,727,488/protected4,247,552 logical bytes, caller48KiB와 phase별 fixed local 최대64KiB를 고정했다. readback의 추가File2개를 모두 포함하며 source/type ledger·실제 handle 계측은 아직 NOT_RUN이다. global F05/admission·DWB/checkpoint/복구 예약의 미완료 의무는 유지한다.

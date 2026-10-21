@@ -215,3 +215,7 @@ phase별image수는 createP전후1/2, writeP2/4, syncP4/2, createE2/4, writeE4/8
 `genesis_installs_in_durable_order`의 실제 FileIo/WriterNamespace 14개 effect와 raw write bytes를 `scripts/dev3_wal_durable_model.py`가 D2 때 고정한 `tests/fixtures/dev3-genesis-wal-durable.json`과 대조한다. slot113/1246·mutant4는 별도 `scripts/dev3_wal_slot_model.py`의 추상 유한 계산이다. 실제 trace와의 연결도 28cut/82image의 한정 장애 모델이며 장치 전체 power-loss 증명·recovery 실행으로 확대하지 않는다. native24개 SIGKILL은 별도 pagecache 관측이다.
 
 최종 source3162fc43…의 실행·독립 검토·남은 의무는 [구현 기록](../implementation/dev3-implementation.md#genesis-wal-results)을 따른다. raw receipt의 원래 source·실패·실행 분모는 보존한다.
+
+## 최초 저장 세션의 후속 D2 계약
+
+후속 [최초 저장 세션](dev3-storage-session.md)은 이 genesis owner를 내부에 유지하고 설치된 mapping에 대한 typed WAL 참조 검사·공통 fence를 결합한다. D2 채택이며 현재 구현·실행으로 승격하지 않는다. 기존 standalone genesis의12 mutation/오류/slot 의미와 그 실행 이력은 유지한다.

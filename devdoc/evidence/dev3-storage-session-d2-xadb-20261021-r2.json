@@ -1,0 +1,93 @@
+{
+  "decision_id": "DEV3_FRESH_STORAGE_SESSION_R6_D2",
+  "status": "ACCEPTED",
+  "decision_kind": "D2 independent design and frozen oracle review",
+  "owner_implementer_integrator": "/root",
+  "independent_reviewer": "/root/dev3_selector_review",
+  "implementation_may_proceed": true,
+  "integration_complete": false,
+  "product_execution": "NOT_RUN",
+  "base_commit": "50525f17f4989da82db71b2411ff24d132456b3e",
+  "base_source_sha256": "f08f01d72f06a9578a129927a7a17dfe2450734e8fbd86dcfeb8c11e4da4d515",
+  "accepted_design_input_count": 49,
+  "accepted_design_aggregate_sha256": "160686f413309ae84503372d7cb0a554cccfe9c24ec7feccdbdf62034c0977a7",
+  "accepted_aggregate_method": "SHA256(concat(path + NUL + sha256 + LF) in stored manifest files row order, equal to pathlib.Path component ordering)",
+  "root_freeze": {
+    "path": "artifacts/dev3/storage-session-preparation-20261021/r6-freeze.json",
+    "sha256": "09f5044d22e8d20a116c6e123f9f094bbf17f6c66907f5df0b4b0e281a0efe1c"
+  },
+  "reviewed_capture": {
+    "path": "r2-inputs.json",
+    "bytes": 22628,
+    "sha256": "e97777b82990ae75dd7a2c86e2adb2eef043f57361dc8843d1cd31b8a128ea1c"
+  },
+  "reviewed_capture_aggregate_sha256": "e55cdcd7734d14d73790b9dd58982d05daec969eec7f51ec62d0c75df2f60e8d",
+  "review": {
+    "path": "r2-d2-review.md",
+    "bytes": 10820,
+    "sha256": "13a262e9dae58397d195f43fab5749fd968e2f094457b9ae880338cd827b4782"
+  },
+  "independent_checks": [
+    {
+      "path": "r1-arithmetic-review.json",
+      "bytes": 4181,
+      "sha256": "2a1353879f621756226881868fd7a46bd31da5f13da9d0501727c316dda0f423"
+    },
+    {
+      "path": "r2-final-input-audit.json",
+      "bytes": 1581,
+      "sha256": "c82814f32d5dde48381b4a41326b58c3621dddb444a26ca788ac676449a5948c"
+    }
+  ],
+  "historical_findings": [
+    {
+      "path": "r0-decision.json",
+      "bytes": 1650,
+      "sha256": "478f558b870a7f866d93052dbbae75f4e24514203f2baf6115489dc0e8581791"
+    },
+    {
+      "path": "r1-resource-finding.json",
+      "bytes": 1801,
+      "sha256": "fbc212ff4ab5f065b56f41d2922befd9fa34679f5fd5ce6f723771b097c71272"
+    }
+  ],
+  "resolved_findings": [
+    "R1 canonical FILEMAP staging name",
+    "R2 common fence cannot orphan healthy Loading claim",
+    "R3 conditional healthy Drop/final-check cleanup",
+    "R4 full Profile/SelectedControl comparison every shared open",
+    "R5 exact Idle/Complete/IoOwned interval and error ownership",
+    "R6 corrected arithmetic and frozen scopes",
+    "R7 typed-valid alternate profile/map and full-page-hash inputs",
+    "R8 readback accounts for both additional File values"
+  ],
+  "blockers": [],
+  "accepted_scope": [
+    "fresh-only typed namespace owner and staged immutable fixed bootstrap",
+    "immutable data/FILEMAP reader and existing clean buffer with one atomic reader lease",
+    "short namespace open mutex, safe Send conditions, lower shared permanent fence",
+    "existing physical WAL append restricted to installed mapping after full trusted decode",
+    "frozen new runtime12/native3/compiler8 and independent raw/effect/model/checker inputs"
+  ],
+  "execution_obligations": [
+    "actual phase-specific <=64KiB source/type ledger plus separate48KiB caller scratch",
+    "exact failure/cause/lease/claim/Drop/fence concurrency and compiler evidence",
+    "exact350/338 effects, native676 API faults and39 process kills with external images",
+    "full existing suites plus same-source DEV3 leaf/lower DEV0/1/2 and current-build native99 recovery",
+    "independent D1 implementation and final receipt audit before integration"
+  ],
+  "explicit_exclusions": [
+    "CURRENT/DWB/checkpoint or normal database open/recovery/resume",
+    "semantic-group append/live page mutation/transaction ACK",
+    "global F05 restoration/admission and complete reservation accounting",
+    "hardware power-loss completeness or performance qualification",
+    "full DEV3/DS01-06/S1 completion; DEV2 PF04 remains failed"
+  ],
+  "clarifications": [
+    "Fixed1MiB slot length is a type invariant; runtime preflight cases are profile0/4 and concrete owner size. Slot exclusivity is checked by compiler probes.",
+    "Root freeze row order, not string-path sort, determines aggregate. Inputs themselves were unchanged."
+  ],
+  "product_or_shared_docs_modified": false,
+  "product_build_tests_native_or_compiler_executed": false,
+  "document_verifier_executed": false
+}
