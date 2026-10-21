@@ -1,0 +1,25 @@
+1	create	d3-dwb-stage	0	0
+2	write	d3-dwb-stage	0	16384
+3	sync	d3-dwb-stage	0	0
+4	directory_sync		0	0
+5	create	d3-dwb-images	0	0
+6	write	d3-dwb-images	0	4194304
+7	write	d3-dwb-images	4194304	4194304
+8	write	d3-dwb-images	8388608	4194304
+9	write	d3-dwb-images	12582912	4128768
+10	sync	d3-dwb-images	0	0
+11	create	d3-dwb-0	0	0
+12	write	d3-dwb-0	0	16384
+13	sync	d3-dwb-0	0	0
+14	create	d3-dwb-1	0	0
+15	write	d3-dwb-1	0	16384
+16	sync	d3-dwb-1	0	0
+17	create	d3-dwb-reserved	0	0
+18	write	d3-dwb-reserved	0	8192
+19	sync	d3-dwb-reserved	0	0
+20	directory_sync		0	0
+21	create	d3-dwb-select-stage	0	0
+22	write	d3-dwb-select-stage	0	4096
+23	sync	d3-dwb-select-stage	0	0
+24	publish	d3-dwb-select-stage	0	0
+25	directory_sync		0	0

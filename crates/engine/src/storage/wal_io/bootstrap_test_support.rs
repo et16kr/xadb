@@ -145,10 +145,16 @@ pub(super) struct State {
     pub read_fail: Option<usize>,
     pub metadata_change: Option<(usize, bool)>,
     pub read_events: Vec<Event>,
+    pub read_effect_counts: Vec<usize>,
+    pub open_modes: Vec<OpenMode>,
     pub read_plan: Option<Plan>,
+    pub configured_read_hits: usize,
+    pub continuation_read_hits: usize,
+    read_continuation: Option<usize>,
     pub read_pause: Option<Pause>,
     pub drop_pause: Option<Pause>,
     pub read_edits: Vec<(usize, String, Vec<u8>)>,
+    pub read_insert: Option<(usize, String, Entry)>,
     pub length_delta: Option<(usize, i64)>,
 }
 impl State {
@@ -169,10 +175,16 @@ impl State {
             read_fail: None,
             metadata_change: None,
             read_events: Vec::new(),
+            read_effect_counts: Vec::new(),
+            open_modes: Vec::new(),
             read_plan: None,
+            configured_read_hits: 0,
+            continuation_read_hits: 0,
+            read_continuation: None,
             read_pause: None,
             drop_pause: None,
             read_edits: Vec::new(),
+            read_insert: None,
             length_delta: None,
         }
     }
@@ -289,6 +301,8 @@ fn read_begin(
         let mut s = state.lock().unwrap();
         let at = s.reads;
         s.reads += 1;
+        let effect_count = s.events.len();
+        s.read_effect_counts.push(effect_count);
         s.read_events.push(Event {
             kind,
             name: name.into(),
@@ -297,6 +311,10 @@ fn read_begin(
             data: Vec::new(),
             returned: None,
         });
+        if s.read_insert.as_ref().is_some_and(|entry| entry.0 == at) {
+            let (_, name, entry) = s.read_insert.take().unwrap();
+            assert!(s.files.insert(name, entry).is_none());
+        }
         let mut i = 0;
         while i < s.read_edits.len() {
             if s.read_edits[i].0 == at {
@@ -311,6 +329,11 @@ fn read_begin(
         let action = s.read_plan.filter(|p| p.at == at).map(|p| p.action);
         if action.is_some() {
             s.hit += 1;
+            if s.read_continuation == Some(at) {
+                s.continuation_read_hits += 1;
+            } else {
+                s.configured_read_hits += 1;
+            }
         }
         let pause = if s.read_pause.as_ref().is_some_and(|p| p.at == at) {
             s.read_pause.take()
@@ -367,6 +390,7 @@ impl FileIo for File {
             output[..count].copy_from_slice(&entry.bytes[offset as usize..offset as usize + count]);
             s.read_events[at].data = output[..count].to_vec();
             if matches!(action, Some(Action::PrefixError | Action::PrefixEof)) {
+                s.read_continuation = Some(at + 1);
                 s.read_plan = Some(Plan {
                     at: at + 1,
                     action: if action == Some(Action::PrefixEof) {
@@ -482,8 +506,9 @@ impl WriterNamespace for Writer {
     fn open_existing_with_metadata(
         &mut self,
         name: &FileName,
-        _: OpenMode,
+        mode: OpenMode,
     ) -> NamespaceResult<(File, FileMetadata)> {
+        self.0.lock().unwrap().open_modes.push(mode);
         let (at, action) = read_begin(&self.0, "open", name.as_str(), 0, 0)
             .map_err(|_| ns_error(Effect::Unchanged))?;
         let metadata = {
@@ -557,7 +582,10 @@ impl WriterNamespace for Writer {
         temporary: &FileName,
         selected: Selector,
     ) -> NamespaceResult<()> {
-        assert!(matches!(selected, Selector::Writer | Selector::FileMap));
+        assert!(matches!(
+            selected,
+            Selector::Writer | Selector::FileMap | Selector::Doublewrite
+        ));
         let (at, action) = begin(&self.0, "publish", temporary.as_str(), 0, 0)
             .map_err(|_| ns_error(Effect::Unchanged))?;
         {

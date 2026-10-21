@@ -529,4 +529,22 @@ r0 실행 종료를 확인한 뒤 compiler target4개에서 ELF 실행 파일140
 <a id="doublewrite-install-contract"></a>
 ## 최초 DWB 설치 계약 채택
 
-2026-10-21 [D3-DWB-INSTALL-001](../contracts/dev3-doublewrite-install.md)을 r9 독립 D2 검토 뒤 채택했다. literal12·effect25·observation32·model50cut/308image/max32 및 semantic47의 정확 오류를 제품과 독립적으로 계산했다. 제품 source·runtime10/native3/compiler9·하위 회귀는 아직 NOT_RUN이며 이 정적 검토를 실행 PASS로 세지 않는다. `/root`가 구현·통합, `/root/dev3_selector_review`가 별도 검토를 맡는다. dirty/home/일반 복구·전체 DEV3와 DEV2 PF04 해결은 남아 있다.
+2026-10-21 [D3-DWB-INSTALL-001](../contracts/dev3-doublewrite-install.md)을 r9 독립 D2 검토 뒤 채택했다. literal12·effect25·observation32·model50cut/308image/max32 및 semantic47의 정확 오류를 제품과 독립적으로 계산했다. 채택 당시 제품 source·runtime10/native3/compiler9·하위 회귀는 NOT_RUN이었으며 이 정적 검토를 실행 PASS로 세지 않는다. 이후 실행은 아래 실제 경로 기록으로 구분한다. `/root`가 구현·통합, `/root/dev3_selector_review`가 별도 검토를 맡는다. dirty/home/일반 복구·전체 DEV3와 DEV2 PF04 해결은 남아 있다.
+
+<a id="doublewrite-install-results"></a>
+## 최초 DWB 설치의 실제 경로
+
+계약 commit `df01ec4` 뒤 `/root`가 D3-DWB-INSTALL-001의 구현·통합, `/root/dev3_selector_review`가 독립 D1을 맡는다. pristine Fresh를 소비하여 XDI1 staging descriptor, 고정 images 공간, Empty control이 있는 bank0·zero-filled bank1과 DWB selector를 설치하고 전체 bytes와 namespace identity를 readback한다. 반환 owner는 caller의 4MiB workspace를 계속 빌리고 clean reader와 공통 fence만 제공한다. dirty frame·Pending batch·home write·retirement·일반 reopen/recovery는 후속 의무다.
+
+독립 초기 검토의 short I/O 전체 trace, configured trigger와 read continuation 구분, 원래 Namespace kind/io_kind 검산을 반영했다. 후속 검토에서는 실제 실행 결과를 이용한 checker31 반례와 native 오류의 원래 code/kind/effect/io_kind 비교를 보강했다. 제품의 의미·동결 입력·시험 분모·예산은 바꾸지 않았다. `artifacts/dev3/doublewrite-install-draft-r2/`의 source `4e594d598c104d2ebddc34ef9e749bc432d66b0173e90b0c75605355609cfbf0`에서 runtime10·native3·compiler9·checker 자기시험4·진단 parser7·Clippy/fmt가 PASS다. 실제 trace75·observation96, 모델50cut/308image/max32, native92DB(정상3/오류50/SIGKILL39), 실제 관측 결과를 변형한 checker31도 대조했다. 개발 검증을 최종 V2나 전체 DEV3 완료로 확대하지 않는다.
+
+첫 통합 후보 `b09c98a5…`는 checker 보완으로 대체되어 실행 중 SIGINT로 종료했다. 원래 FAIL과 source/log를 `artifacts/dev3/doublewrite-install-v2-r0.json` 및 interruption 기록에 남겼다. 후속 r1 driver는 Git metadata가 없는 export에서 leaf origin 조회가 실패하여 제품 시험을 시작하지 못했으며 원래 로그·FAIL을 보존했다. 같은 source의 r2 driver는 leaf의 자체 snapshot과 짧은 경로의 kernel/quality export를 사용했다. [통합 원본](../evidence/dev3-doublewrite-install-leaf-xadb-20261021-r2.json)의 선행63check는 완료됐으나 마지막 하위 회귀를 당시 사용자 지시로 SIGINT 중단하여 최종 상태는 FAIL이다. [중단 원본](../evidence/dev3-doublewrite-install-user-stop-xadb-20261021-r2.json)과 [종료 관측](../evidence/dev3-doublewrite-install-stop-terminal-xadb-20261021-r2.json)을 보존한다. queued DEV2 kernel은 NOT_RUN이며 r2 driver의 후속 quality도 실행하지 않았다. 이미 같은 source에서 완료한 국소 Clippy/fmt 결과와 구별한다. DEV2 PF04 실패·전체 DEV3 미완료는 유지한다.
+
+완료 개발 r0/r1/r2와 중단된 통합 r0의 target만 정리하여 합계 약2.64GiB를 회수했다. 각 `doublewrite-install-*-target-cleanup-r0/r1/r2.json`에 ELF 실행 파일96경로(각 정리의 고유파일 수 합계46)의 보존 경로/hash, source·로그·원래 receipt 지문을 남겼다. source·compiler probe·native DB·실행 binary는 보존했다.
+
+
+사용자는 이후 테스트 방침을 **단계에 관계없이 수정한 코드만 시험하고, 수정 없는 코드는 재시험하지 않는다**로 정정했다. [AGENTS.md](../../AGENTS.md)의 commit `4273343`과 [소유 계약의 적용 범위](../contracts/dev3-doublewrite-install.md#changed-code-test-scope)를 따른다. 현재 source fingerprint가 기존 4e594d59…와 같아 제품·하위 회귀를 추가 실행하지 않았다. [변경 범위 검증 정리](../evidence/dev3-doublewrite-install-scoped-xadb-20261021-r2.json)는 기존 실행의 파생 기록이다. [국소 실행](../evidence/dev3-doublewrite-install-local-xadb-20261021-r2.json)·[compiler](../evidence/dev3-doublewrite-install-borrows-xadb-20261021-r2.json)·[모델](../evidence/dev3-doublewrite-install-model-xadb-20261021-r2.json)·[native](../evidence/dev3-doublewrite-install-native-xadb-20261021-r2.json), [r12 D1](../evidence/dev3-doublewrite-install-d1-local-xadb-20261021-r2.json)·[r13 개별 완료 감사](../evidence/dev3-doublewrite-install-d1-partial-xadb-20261021-r2.json)는 원본 byte 그대로 등록했다. 최초 Empty DWB 설치의 제한 검증만 주장하며 원본 통합 FAIL을 전체 PASS로 승격하지 않는다.
+
+종료된 통합 leaf의 disposable target5개에서도 ELF144경로/112고유파일과 canonical 실행 파일14개·source·로그·원본 receipt를 보존한 뒤 2589478912bytes(약2.41GiB)를 추가 회수했다. 정리 전후 hash·원래 경로는 `artifacts/dev3/doublewrite-install-leaf-target-cleanup-r2.json`에 남겼다. native DB와 compiler probe 입력은 보존하며 제품 시험은 재실행하지 않았다.
+
+[r14 최종 독립 감사](../evidence/dev3-doublewrite-install-review-xadb-20261021-r2.json)는 staged68경로·설정 source407파일의 동일성, 원본9개 등록과 파생 기록1개, 종료된 선행63/전체64check의 범위를 확인하고 최초 설치 단위의 commit을 수용했다. r12/r13을 재사용했으며 제품·checker·컴파일·문서 verifier·테스트 실행과 native DB 재해시는 하지 않았다. 원본 통합 FAIL·하위 회귀 중단·kernel NOT_RUN 및 전체 DEV3 미완료를 유지한다.

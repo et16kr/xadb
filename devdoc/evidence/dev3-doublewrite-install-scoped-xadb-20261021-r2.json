@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-21",
+  "status": "LOCAL_VERIFIED_LIMITED_SCOPE",
+  "scope": "D3-DWB-INSTALL-001 initial Empty DWB installation and borrowed clean reader; derived audit of existing execution only",
+  "source_sha256": "4e594d598c104d2ebddc34ef9e749bc432d66b0173e90b0c75605355609cfbf0",
+  "source_unchanged_since_execution": true,
+  "new_test_execution": false,
+  "user_instruction": "Test only newly written or modified code; no repeated tests for unchanged code. This applies to all DEV stages. There is no blanket DEV0/DEV1/DEV2 prohibition.",
+  "instruction_commit": "4273343",
+  "runtime_tests": 10,
+  "native_tests": 3,
+  "compiler_probes": 9,
+  "checker_negative_cases": 31,
+  "model_cuts": 50,
+  "model_images": 308,
+  "model_maximum_images_per_cut": 32,
+  "native_databases": 92,
+  "native_children": 89,
+  "native_files": 1152,
+  "existing_local_quality": "PASS",
+  "existing_leaf_completed_checks": 63,
+  "existing_leaf_total_checks": 64,
+  "original_aggregate_leaf_status": "FAIL",
+  "lower_regressions": "INTERRUPTED_BY_USER",
+  "queued_current_build_dev2_kernel": "NOT_RUN_CANCELLED_BY_USER",
+  "lower_reexecution_decision": "NOT_RUN_UNCHANGED_CODE",
+  "original_stop_instruction": "Preserved as historical evidence; later user clarification supersedes stage-wide prohibition.",
+  "integration_review": "ACCEPTED_LIMITED_SCOPE_D1",
+  "dev3_acceptance": "NOT_RUN",
+  "excluded_capabilities": [
+    "dirty buffer",
+    "Pending batch",
+    "home write",
+    "retirement",
+    "ordinary reopen/recovery",
+    "full DEV3 acceptance"
+  ],
+  "original_receipts": [
+    {
+      "original": "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-draft-r2/report.json",
+      "registered": "/home/et16/work/xadb/devdoc/evidence/dev3-doublewrite-install-local-xadb-20261021-r2.json",
+      "sha256": "e0801d6e5f438fe39f2723b53c2364069be696417de106653329e466e413cf9a"
+    },
+    {
+      "original": "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-leaf-r2.json",
+      "registered": "/home/et16/work/xadb/devdoc/evidence/dev3-doublewrite-install-leaf-xadb-20261021-r2.json",
+      "sha256": "e6dd5c1dd9faf29701d8ef72180ccee073c7561db5f5e95148f2b5e6a13e78ca"
+    },
+    {
+      "original": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/doublewrite-borrows.json",
+      "registered": "/home/et16/work/xadb/devdoc/evidence/dev3-doublewrite-install-borrows-xadb-20261021-r2.json",
+      "sha256": "2851abd6ee334a2841954d63df985447e0363dbdc2b9bd83010178c8b170d0fc"
+    },
+    {
+      "original": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/doublewrite-model.json",
+      "registered": "/home/et16/work/xadb/devdoc/evidence/dev3-doublewrite-install-model-xadb-20261021-r2.json",
+      "sha256": "0281096e852ca23e80800729fc4ab56e7df32906390617716d519aa593071d4d"
+    },
+    {
+      "original": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/doublewrite-native.json",
+      "registered": "/home/et16/work/xadb/devdoc/evidence/dev3-doublewrite-install-native-xadb-20261021-r2.json",
+      "sha256": "bca1492d32f9c1317e52e1ef7f33db5c5d294bd0f49a2bfdc50d8c2de9f7c45d"
+    },
+    {
+      "original": "/home/et16/work/xadb/artifacts/dev3/user-stop-lower-regressions-20261021.json",
+      "registered": "/home/et16/work/xadb/devdoc/evidence/dev3-doublewrite-install-user-stop-xadb-20261021-r2.json",
+      "sha256": "e693612976e9ec05814b91cbaaaec9dd1579b41c7d6f564f546e0ee463d1571b"
+    },
+    {
+      "original": "/home/et16/work/xadb/artifacts/dev3/user-stop-lower-regressions-terminal-20261021.json",
+      "registered": "/home/et16/work/xadb/devdoc/evidence/dev3-doublewrite-install-stop-terminal-xadb-20261021-r2.json",
+      "sha256": "6a182684ebc913824e14d8ad46d774cceb7012693f337a4ef465c37cd2c54f3f"
+    },
+    {
+      "original": "/home/et16/work/xadb/artifacts/dev3/dirty-storage-independent-review-20261021/r12-decision.json",
+      "registered": "/home/et16/work/xadb/devdoc/evidence/dev3-doublewrite-install-d1-local-xadb-20261021-r2.json",
+      "sha256": "95a33f53cc1e502209286d1b19f6697d216b91e365d167241ae12a445f6cd7dc"
+    },
+    {
+      "original": "/home/et16/work/xadb/artifacts/dev3/dirty-storage-independent-review-20261021/r13-decision.json",
+      "registered": "/home/et16/work/xadb/devdoc/evidence/dev3-doublewrite-install-d1-partial-xadb-20261021-r2.json",
+      "sha256": "b9fda3f7c3f0e417f532f53ad6127f180ded704dda2011869dbd3bad5480288e"
+    }
+  ],
+  "integration_review_ref": "dev3-doublewrite-install-review-xadb-20261021-r2.json",
+  "integration_review_sha256": "9255651a688772be376629dbe795d449ed3f1f56a746aa1c5657f322d5fd847c"
+}

@@ -1,0 +1,203 @@
+{
+  "content_flips": [
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-profile",
+      "offset": 0
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-stage",
+      "offset": 0
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-stage",
+      "offset": 80
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-stage",
+      "offset": 16383
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "DWB",
+      "offset": 0
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "DWB",
+      "offset": 48
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "DWB",
+      "offset": 112
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-0",
+      "offset": 0
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-0",
+      "offset": 160
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-0",
+      "offset": 16383
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-1",
+      "offset": 0
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-1",
+      "offset": 16383
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-reserved",
+      "offset": 0
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-reserved",
+      "offset": 8191
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-images",
+      "offset": 0
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-images",
+      "offset": 4194303
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-images",
+      "offset": 4194304
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-images",
+      "offset": 8388608
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-images",
+      "offset": 12582912
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-images",
+      "offset": 16709440
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "name": "d3-dwb-images",
+      "offset": 16711679
+    }
+  ],
+  "late_stage_residue": 1,
+  "metadata": [
+    {
+      "action": "open_length_minus1",
+      "name": "d3-profile"
+    },
+    {
+      "action": "open_length_plus1",
+      "name": "d3-profile"
+    },
+    {
+      "action": "named_inode_changed",
+      "name": "d3-profile"
+    },
+    {
+      "action": "open_length_minus1",
+      "name": "d3-dwb-stage"
+    },
+    {
+      "action": "open_length_plus1",
+      "name": "d3-dwb-stage"
+    },
+    {
+      "action": "named_inode_changed",
+      "name": "d3-dwb-stage"
+    },
+    {
+      "action": "open_length_minus1",
+      "name": "DWB"
+    },
+    {
+      "action": "open_length_plus1",
+      "name": "DWB"
+    },
+    {
+      "action": "named_inode_changed",
+      "name": "DWB"
+    },
+    {
+      "action": "open_length_minus1",
+      "name": "d3-dwb-0"
+    },
+    {
+      "action": "open_length_plus1",
+      "name": "d3-dwb-0"
+    },
+    {
+      "action": "named_inode_changed",
+      "name": "d3-dwb-0"
+    },
+    {
+      "action": "open_length_minus1",
+      "name": "d3-dwb-1"
+    },
+    {
+      "action": "open_length_plus1",
+      "name": "d3-dwb-1"
+    },
+    {
+      "action": "named_inode_changed",
+      "name": "d3-dwb-1"
+    },
+    {
+      "action": "open_length_minus1",
+      "name": "d3-dwb-reserved"
+    },
+    {
+      "action": "open_length_plus1",
+      "name": "d3-dwb-reserved"
+    },
+    {
+      "action": "named_inode_changed",
+      "name": "d3-dwb-reserved"
+    },
+    {
+      "action": "open_length_minus1",
+      "name": "d3-dwb-images"
+    },
+    {
+      "action": "open_length_plus1",
+      "name": "d3-dwb-images"
+    },
+    {
+      "action": "named_inode_changed",
+      "name": "d3-dwb-images"
+    }
+  ],
+  "status": "PROPOSED_NOT_RUN",
+  "valid_foreign": [
+    "profile2_with_same_namespace",
+    "descriptor_other_namespace_resealed",
+    "initial_empty_batch1_resealed",
+    "selector_other_generation_resealed"
+  ]
+}

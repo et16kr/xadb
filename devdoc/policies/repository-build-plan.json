@@ -1316,5 +1316,75 @@
     "borrow_negative_count": 5,
     "borrow_positive_count": 2,
     "borrow_unmodified_baseline_count": 1
+  },
+  "dev3_doublewrite_install": {
+    "status": "implemented_locally_verified_limited_scope",
+    "contract_ref": "dev3-doublewrite-install.md",
+    "source": [
+      "crates/engine/src/storage/wal_io/doublewrite_install.rs",
+      "crates/engine/src/storage/wal_io/doublewrite_install_tests.rs"
+    ],
+    "shared_source": [
+      "crates/engine/src/storage/wal_io.rs",
+      "crates/engine/src/storage/wal_io/bootstrap.rs",
+      "crates/engine/src/storage/wal_io/bootstrap_test_support.rs",
+      "crates/engine/src/testing/storage_session.rs"
+    ],
+    "native_tests": "crates/testing/engine-worker/tests/doublewrite_install.rs",
+    "native_support": "crates/testing/engine-worker/tests/support/storage_session.rs",
+    "borrow_checks": [
+      "scripts/check_dev3_doublewrite_borrows.py",
+      "scripts/test_check_dev3_buffer_borrows.py"
+    ],
+    "fixtures": [
+      "tests/fixtures/dev3-doublewrite-install/checker-negatives.json",
+      "tests/fixtures/dev3-doublewrite-install/compiler/active_reader.rs",
+      "tests/fixtures/dev3-doublewrite-install/compiler/fresh.rs",
+      "tests/fixtures/dev3-doublewrite-install/compiler/installed_reader.rs",
+      "tests/fixtures/dev3-doublewrite-install/compiler/manifest.json",
+      "tests/fixtures/dev3-doublewrite-install/compiler/raw_stage.rs",
+      "tests/fixtures/dev3-doublewrite-install/compiler/release.rs",
+      "tests/fixtures/dev3-doublewrite-install/compiler/shared_thread.rs",
+      "tests/fixtures/dev3-doublewrite-install/compiler/slot.rs",
+      "tests/fixtures/dev3-doublewrite-install/compiler/workspace.rs",
+      "tests/fixtures/dev3-doublewrite-install/durable-images.json",
+      "tests/fixtures/dev3-doublewrite-install/effects.json",
+      "tests/fixtures/dev3-doublewrite-install/effects.tsv",
+      "tests/fixtures/dev3-doublewrite-install/literal/profile1-DWB.bin",
+      "tests/fixtures/dev3-doublewrite-install/literal/profile1-d3-dwb-stage.bin",
+      "tests/fixtures/dev3-doublewrite-install/literal/profile1-empty.bin",
+      "tests/fixtures/dev3-doublewrite-install/literal/profile1-reference.bin",
+      "tests/fixtures/dev3-doublewrite-install/literal/profile2-DWB.bin",
+      "tests/fixtures/dev3-doublewrite-install/literal/profile2-d3-dwb-stage.bin",
+      "tests/fixtures/dev3-doublewrite-install/literal/profile2-empty.bin",
+      "tests/fixtures/dev3-doublewrite-install/literal/profile2-reference.bin",
+      "tests/fixtures/dev3-doublewrite-install/literal/profile3-DWB.bin",
+      "tests/fixtures/dev3-doublewrite-install/literal/profile3-d3-dwb-stage.bin",
+      "tests/fixtures/dev3-doublewrite-install/literal/profile3-empty.bin",
+      "tests/fixtures/dev3-doublewrite-install/literal/profile3-reference.bin",
+      "tests/fixtures/dev3-doublewrite-install/manifest.json",
+      "tests/fixtures/dev3-doublewrite-install/observations.json",
+      "tests/fixtures/dev3-doublewrite-install/observations.tsv",
+      "tests/fixtures/dev3-doublewrite-install/semantic-expectations.json",
+      "tests/fixtures/dev3-doublewrite-install/semantic-expectations.tsv",
+      "tests/fixtures/dev3-doublewrite-install/semantic-negatives.json"
+    ],
+    "scope": "pristine Fresh consumed into initial Empty DWB and clean reader owner; no Dirty/home/recovery/READY",
+    "local_tests": 10,
+    "native_test_count": 3,
+    "borrow_negative_count": 6,
+    "borrow_positive_count": 2,
+    "borrow_unmodified_baseline_count": 1,
+    "dependencies_changed": false,
+    "source_roots_changed": false,
+    "full_stage_acceptance": false,
+    "checkers": [
+      "scripts/dev3_doublewrite_model.py",
+      "scripts/dev3_doublewrite_native.py",
+      "scripts/test_dev3_doublewrite_checks.py",
+      "scripts/check_dev3_leaf.py",
+      "scripts/dev3_doublewrite_checks.py"
+    ],
+    "evidence_ref": "dev3-doublewrite-install-scoped-xadb-20261021-r2.json"
   }
 }

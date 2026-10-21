@@ -33,6 +33,13 @@ const FIXED_BYTES: u64 =
 const MAX_OWNED_BYTES: u64 = FIXED_BYTES - super::CONTROL_BYTES as u64 + super::WAL_FILE_CAP;
 const PROTECTED_BYTES: u64 = FIXED_BYTES - control::EXTENT_BYTES;
 
+#[path = "doublewrite_install.rs"]
+mod doublewrite_install;
+pub(crate) use doublewrite_install::{
+    Cause as DoublewriteInstallCause, DoublewriteInstallError, DoublewriteStorageSession,
+    Phase as DoublewriteInstallPhase,
+};
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {
     Preflight,

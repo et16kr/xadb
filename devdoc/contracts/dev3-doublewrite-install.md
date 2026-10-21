@@ -1,6 +1,6 @@
 # DEV3 최초 doublewrite 설치 계약
 
-2026-10-21 · **D3-DWB-INSTALL-001 / D2 ACCEPTED / 구현·제품 실행 NOT_RUN**
+2026-10-21 · **D3-DWB-INSTALL-001 / D2 ACCEPTED / 최초 설치 구현·제한 검증 완료; 전체 DEV3 미완료**
 
 [저장 세션](dev3-storage-session.md) · [DWB 표현](dev3-doublewrite-format.md) · [control](dev3-control-format.md) · [자원 회계](dev3-resource-bounds.md) · [독립 D2 결정](../evidence/dev3-doublewrite-install-d2-xadb-20261021-r9.json)
 
@@ -148,7 +148,14 @@ checker-negatives.json은 trace7/image7/native12/observation5=31 known-bad cases
 
 ## 통합·승격
 
-V1: exact10runtime, native3,compiler9, independent actual trace/model/native/observations, checkerknown-bad31, engine/worker all-targets/all-features Clippy·fmt. V2: 같은 frozen source에서 DEV3 current leaf+하위DEV0/1/2회귀와 current-build DEV2 kernel18/native99. 기존 aggregate1200/1800/2400/3600 및 percommand 한도는 유지하며 이 단위로 변경하지 않는다. 장시간V3/PF/전체DEV3를 이 제한PASS로 표시하지 않는다. 원본FAIL은 보존한다.
+최초 채택 당시 V1은 exact10runtime, native3, compiler9, independent actual trace/model/native/observations, checkerknown-bad31, engine/worker all-targets/all-features Clippy·fmt였다. 당시 V2는 같은 frozen source의 DEV3 current leaf·하위DEV0/1/2회귀·current-build DEV2 kernel18/native99를 요구했다. 이 일괄 재실행 요구는 아래 사용자 지시로 대체한다. 원본 계약·실행 FAIL의 identity와 기존 aggregate1200/1800/2400/3600·percommand 한도는 보존한다. 장시간V3/PF/전체DEV3를 제한 검증의 PASS로 표시하지 않는다.
+
+<a id="changed-code-test-scope"></a>
+## 변경한 코드로 한정한 검증 — 사용자 지시
+
+2026-10-21 사용자가 수정 없는 코드의 반복 테스트를 금지하고 [AGENTS.md](../../AGENTS.md)에 반영하도록 지시했다. 이후 DEV0·1·2 자체 금지가 아니라 **단계와 관계없이 새로 작성하거나 수정한 코드만 테스트**한다는 뜻으로 명확히 정정했다(commit `4273343`). 이 명시적 사용자 결정은 기존 V2/V3·하위 회귀 일괄 재실행 요구보다 우선한다. 테스트 선택 전 마지막 검증 이후 실제 diff를 확인하고 이미 완료한 같은 코드의 시험은 재실행하지 않는다.
+
+이 단위의 source4e594d59…는 기존 runtime10·native3·compiler9·checker31·Clippy/fmt 완료 뒤 바뀌지 않았다. [변경 범위 검증 정리](../evidence/dev3-doublewrite-install-scoped-xadb-20261021-r2.json)는 그 원본 결과를 연결한 파생 기록이며 새 실행이 아니다. 통합 leaf의 선행63check는 완료했고 마지막 하위 회귀는 당시 사용자 지시로 중단되어 원본 전체 상태는 FAIL이다. 이어 실행할 DEV2 kernel은 NOT_RUN이다. 이를 새로운 하위 회귀·복구 PASS로 바꾸지 않는다. 독립 검토는 기존 r12/r13 감사와 종료 상태·현재 diff의 읽기 전용 확인을 사용한다. 제품의 geometry·effect·오류·자원·고정 입력은 이 실행 범위 변경으로 수정하지 않는다. 상세 구현·제약은 [구현 기록](../implementation/dev3-implementation.md#doublewrite-install-results)을 따른다.
 
 freeze 뒤 root가 구현·검증하고 별도 reviewer가 실제 diff·독립기대값·정상/실패 raw evidence·same-source identity를 검토한다. 새 contracts/implementation/evidence/catalog/readme는 원본identity를 유지하여 등록하며 검토채택과 실제실행을 별도표시한다. user의 meaningful-unit commit·unused-data cleanup 요청을 계속 적용한다.
 

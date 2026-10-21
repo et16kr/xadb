@@ -1,0 +1,496 @@
+{
+  "cases": [
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-profile",
+      "offset": 0,
+      "target_observation": 10
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-stage",
+      "offset": 0,
+      "target_observation": 13
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-stage",
+      "offset": 80,
+      "target_observation": 13
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-stage",
+      "offset": 16383,
+      "target_observation": 13
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "Control(Corrupt)",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "DWB",
+      "offset": 0,
+      "target_observation": 16
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "Control(Corrupt)",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "DWB",
+      "offset": 48,
+      "target_observation": 16
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "Control(Corrupt)",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "DWB",
+      "offset": 112,
+      "target_observation": 16
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "Control(IdentityMismatch)",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-0",
+      "offset": 0,
+      "target_observation": 19
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-0",
+      "offset": 160,
+      "target_observation": 19
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-0",
+      "offset": 16383,
+      "target_observation": 19
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-1",
+      "offset": 0,
+      "target_observation": 22
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-1",
+      "offset": 16383,
+      "target_observation": 22
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-reserved",
+      "offset": 0,
+      "target_observation": 25
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-reserved",
+      "offset": 8191,
+      "target_observation": 25
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-images",
+      "offset": 0,
+      "target_observation": 28
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-images",
+      "offset": 4194303,
+      "target_observation": 28
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-images",
+      "offset": 4194304,
+      "target_observation": 29
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-images",
+      "offset": 8388608,
+      "target_observation": 30
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-images",
+      "offset": 12582912,
+      "target_observation": 31
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-images",
+      "offset": 16709440,
+      "target_observation": 31
+    },
+    {
+      "action": "xor_1_before_corresponding_read",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-images",
+      "offset": 16711679,
+      "target_observation": 31
+    },
+    {
+      "action": "profile2_with_same_namespace",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-profile",
+      "target_observation": 10
+    },
+    {
+      "action": "descriptor_other_namespace_resealed",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "ContentMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-stage",
+      "target_observation": 13
+    },
+    {
+      "action": "initial_empty_batch1_resealed",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "Control(IdentityMismatch)",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-0",
+      "target_observation": 19
+    },
+    {
+      "action": "selector_other_generation_resealed",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "SelectionMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "DWB",
+      "target_observation": 16
+    },
+    {
+      "action": "open_length_minus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-profile",
+      "target_observation": 8
+    },
+    {
+      "action": "open_length_plus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-profile",
+      "target_observation": 8
+    },
+    {
+      "action": "named_inode_changed",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "IdentityMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-profile",
+      "target_observation": 9
+    },
+    {
+      "action": "open_length_minus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-stage",
+      "target_observation": 11
+    },
+    {
+      "action": "open_length_plus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-stage",
+      "target_observation": 11
+    },
+    {
+      "action": "named_inode_changed",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "IdentityMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-stage",
+      "target_observation": 12
+    },
+    {
+      "action": "open_length_minus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "DWB",
+      "target_observation": 14
+    },
+    {
+      "action": "open_length_plus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "DWB",
+      "target_observation": 14
+    },
+    {
+      "action": "named_inode_changed",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "IdentityMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "DWB",
+      "target_observation": 15
+    },
+    {
+      "action": "open_length_minus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-0",
+      "target_observation": 17
+    },
+    {
+      "action": "open_length_plus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-0",
+      "target_observation": 17
+    },
+    {
+      "action": "named_inode_changed",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "IdentityMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-0",
+      "target_observation": 18
+    },
+    {
+      "action": "open_length_minus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-1",
+      "target_observation": 20
+    },
+    {
+      "action": "open_length_plus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-1",
+      "target_observation": 20
+    },
+    {
+      "action": "named_inode_changed",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "IdentityMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-1",
+      "target_observation": 21
+    },
+    {
+      "action": "open_length_minus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-reserved",
+      "target_observation": 23
+    },
+    {
+      "action": "open_length_plus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-reserved",
+      "target_observation": 23
+    },
+    {
+      "action": "named_inode_changed",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "IdentityMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-reserved",
+      "target_observation": 24
+    },
+    {
+      "action": "open_length_minus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-images",
+      "target_observation": 26
+    },
+    {
+      "action": "open_length_plus1",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "LengthMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-images",
+      "target_observation": 26
+    },
+    {
+      "action": "named_inode_changed",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "IdentityMismatch",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-images",
+      "target_observation": 27
+    },
+    {
+      "action": "late_stage_residue",
+      "attempted": 25,
+      "completed": 25,
+      "expected_cause": "Residue",
+      "expected_effect": "CallerMustResolve",
+      "expected_phase": "Readback",
+      "name": "d3-dwb-select-stage",
+      "target_observation": 32
+    }
+  ],
+  "status": "PROPOSED_NOT_RUN"
+}

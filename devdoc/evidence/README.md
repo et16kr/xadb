@@ -244,3 +244,25 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 최초 DWB 설치 r6 동결 입력 원본](dev3-doublewrite-install-inputs-xadb-20261021-r6.json) — D2 설계·입력 채택이며 제품 실행 NOT_RUN
 
 - [DEV3 최초 DWB 설치 r8 보충 입력 원본](dev3-doublewrite-install-inputs-xadb-20261021-r8.json) — D2 설계·입력 채택이며 제품 실행 NOT_RUN
+
+- [DEV3 최초 DWB 설치 runtime10·native3·compiler9 및 품질 실행 원본](dev3-doublewrite-install-local-xadb-20261021-r2.json) — 실행 당시 상태와 identity 보존; 전체 DEV3 인수 증거 아님
+
+- [DEV3 최초 DWB 설치 하위 회귀 중단으로 FAIL한 통합 실행 원본](dev3-doublewrite-install-leaf-xadb-20261021-r2.json) — 실행 당시 상태와 identity 보존; 전체 DEV3 인수 증거 아님
+
+- [DEV3 최초 DWB 설치 소유권 compiler9 원본](dev3-doublewrite-install-borrows-xadb-20261021-r2.json) — 실행 당시 상태와 identity 보존; 전체 DEV3 인수 증거 아님
+
+- [DEV3 최초 DWB 설치 실제 trace·관측·유한 모델 및 checker19 원본](dev3-doublewrite-install-model-xadb-20261021-r2.json) — 실행 당시 상태와 identity 보존; 전체 DEV3 인수 증거 아님
+
+- [DEV3 최초 DWB 설치 실제 ext4 설치·장애·종료 및 checker12 원본](dev3-doublewrite-install-native-xadb-20261021-r2.json) — 실행 당시 상태와 identity 보존; 전체 DEV3 인수 증거 아님
+
+- [DEV3 최초 DWB 설치 사용자 지시에 따른 당시 하위 회귀 중단 원본](dev3-doublewrite-install-user-stop-xadb-20261021-r2.json) — 실행 당시 상태와 identity 보존; 전체 DEV3 인수 증거 아님
+
+- [DEV3 최초 DWB 설치 하위 회귀 종료·kernel 미실행 원본](dev3-doublewrite-install-stop-terminal-xadb-20261021-r2.json) — 실행 당시 상태와 identity 보존; 전체 DEV3 인수 증거 아님
+
+- [DEV3 최초 DWB 설치 국소 실행·소스 독립 D1 검토 원본](dev3-doublewrite-install-d1-local-xadb-20261021-r2.json) — 실행 당시 상태와 identity 보존; 전체 DEV3 인수 증거 아님
+
+- [DEV3 최초 DWB 설치 완료한 개별 검증의 독립 D1 감사 원본](dev3-doublewrite-install-d1-partial-xadb-20261021-r2.json) — 실행 당시 상태와 identity 보존; 전체 DEV3 인수 증거 아님
+
+- [DEV3 최초 DWB 설치 변경 범위 검증 정리](dev3-doublewrite-install-scoped-xadb-20261021-r2.json) — 기존 runtime10·native3·compiler9·checker31 결과; 통합 원본 FAIL과 미실행 범위 구분, 새 실행 아님
+
+- [DEV3 최초 DWB 설치 최종 독립 D1 감사 원본](dev3-doublewrite-install-review-xadb-20261021-r2.json) — 기존 r12/r13 결과와 source 동등성 재사용; 새 테스트 없이 제한 설치 단위 commit 수용

@@ -80,6 +80,16 @@ class BorrowDiagnosticTests(unittest.TestCase):
             candidate['spans'][0].update(file_name=path, is_primary=primary)
             with self.assertRaises(ValueError):
                 check_diagnostics(output([candidate]), 101, 'E0499', 8, probe_path=STORAGE_PROBE)
+        from check_dev3_doublewrite_borrows import PROBE as DWB_PROBE, inputs as dwb_inputs
+        self.assertEqual(len(dwb_inputs()), 9)
+        error['spans'][0].update(file_name=DWB_PROBE, is_primary=True)
+        self.assertEqual(check_diagnostics(output([error]), 101, 'E0499', 8,
+                                          probe_path=DWB_PROBE)[0]['code'], 'E0499')
+        for path, primary in ((STORAGE_PROBE, True), (DWB_PROBE, False)):
+            candidate = copy.deepcopy(error)
+            candidate['spans'][0].update(file_name=path, is_primary=primary)
+            with self.assertRaises(ValueError):
+                check_diagnostics(output([candidate]), 101, 'E0499', 8, probe_path=DWB_PROBE)
 
     def test_timeout_preserves_both_partial_logs(self):
         with tempfile.TemporaryDirectory() as directory:

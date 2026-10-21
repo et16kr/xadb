@@ -1,0 +1,990 @@
+{
+  "status": "PASS",
+  "checker_counterexamples": [
+    {
+      "case": "wrong_source",
+      "status": "EXPECTED_REJECTION",
+      "failure": "FAIL_SOURCE_IDENTITY"
+    },
+    {
+      "case": "wrong_binary",
+      "status": "EXPECTED_REJECTION",
+      "failure": "FAIL_BINARY_IDENTITY"
+    },
+    {
+      "case": "missing_child",
+      "status": "EXPECTED_REJECTION",
+      "failure": "FAIL_NATIVE_CENSUS"
+    },
+    {
+      "case": "duplicate_child",
+      "status": "EXPECTED_REJECTION",
+      "failure": "FAIL_NATIVE_CENSUS"
+    },
+    {
+      "case": "wrong_hook_index",
+      "status": "EXPECTED_REJECTION",
+      "failure": "FAIL_HOOK"
+    },
+    {
+      "case": "wrong_side",
+      "status": "EXPECTED_REJECTION",
+      "failure": "FAIL_HOOK"
+    },
+    {
+      "case": "missing_hook",
+      "status": "EXPECTED_REJECTION",
+      "failure": "FAIL_HOOK"
+    },
+    {
+      "case": "missed_deadline",
+      "status": "EXPECTED_REJECTION",
+      "failure": "FAIL_TIMEOUT"
+    },
+    {
+      "case": "wrong_file_hash",
+      "status": "EXPECTED_REJECTION",
+      "failure": "FAIL_EXTERNAL_IMAGE"
+    },
+    {
+      "case": "wrong_inode",
+      "status": "EXPECTED_REJECTION",
+      "failure": "FAIL_EXTERNAL_IMAGE"
+    },
+    {
+      "case": "wrong_length",
+      "status": "EXPECTED_REJECTION",
+      "failure": "FAIL_EXTERNAL_IMAGE"
+    },
+    {
+      "case": "old_files_changed",
+      "status": "EXPECTED_REJECTION",
+      "failure": "FAIL_OLD_FILES"
+    }
+  ],
+  "source_sha256": "4e594d598c104d2ebddc34ef9e749bc432d66b0173e90b0c75605355609cfbf0",
+  "binary": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/doublewrite-native-binary",
+  "binary_sha256": "2c6b2060b6d00a670e70acaf5c0a17502f8ccce85e8853c61758952683cd36a8",
+  "profiles": 3,
+  "faults": 50,
+  "kills": 39,
+  "databases": 92,
+  "results": [
+    {
+      "scope": "doublewrite_native_faults",
+      "cases": 50,
+      "report": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/result.json",
+      "sha256": "85a6f6cfcd84cbf7c4986f288507d05b0a06f30b50a5720e5b4e037a404b3fc3",
+      "worker_evidence": [
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/1-before",
+          "files": {
+            "worker.json": "b696323bd26647068a795651fa025d24f697f52b1e2a050fdfe387f3aff2afd8",
+            "before.json": "460355447aa28337efbc341fba70cdc88eff04a62a33f1243f770d1177f0b1d9",
+            "process.json": "532f69325f81b1fc4e1b9af70a904e76d5e963d046dbfae67888201394f22873",
+            "stdout.log": "b5a82ee06cd7b0cafd31f355126806b850d91190f3d8f76b370dfb113d903548",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/1-after",
+          "files": {
+            "worker.json": "d32134f316fa52b46648d9fa5847646fc6018c36e2fa6708f05d6b7d5e6d0da4",
+            "before.json": "4654bd02a5317edcdbbe4077e7d834bbccaa710a5c059b84b7bd451424c841ff",
+            "process.json": "169997c4afd2725fd3b20e86f69ae2a90710fc6feda225636e5cec59b2bb2ed6",
+            "stdout.log": "b5a82ee06cd7b0cafd31f355126806b850d91190f3d8f76b370dfb113d903548",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/2-before",
+          "files": {
+            "worker.json": "189ec5cadb005b184f3e5dca059cfc955786d319ac50dda16bec02155ca3e8e8",
+            "before.json": "792f2288058467a2cf08401cc2f3870c617978cdf01d149983dd91c96dfcd5ef",
+            "process.json": "2b0d3eadffdad3eec4191fc263bfa7f33a327492531175477232e0a3e1c639cb",
+            "stdout.log": "b5a82ee06cd7b0cafd31f355126806b850d91190f3d8f76b370dfb113d903548",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/2-after",
+          "files": {
+            "worker.json": "59696db14c2a9b8bbbac85114aa72e010a97b3f78c53bf8fa10aba6cb26b6c33",
+            "before.json": "be57edd33de886bd1a5e2f48b461040af86afceec813d4eaba7bf6855b5695b6",
+            "process.json": "69fba307156e29df19d3235d8fd83a672cd12073ac86d92cf73dd6dd0825d536",
+            "stdout.log": "37267658fcc08413d6436abcb663be797bca71d22510bceab195ac626f5eaa38",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/3-before",
+          "files": {
+            "worker.json": "6de090d32c95e47149c80832529097c2d216ca9ad80d5f76702bb03ed4b483eb",
+            "before.json": "7d9e56f8c33a319a3057b1ddb18150dfb253367e681b6f27c03367fab7e08c04",
+            "process.json": "3923537e6f9ca6589e6167cd7e407b6f36ef2a5f9858188ef105cadccecc5fa1",
+            "stdout.log": "b5a82ee06cd7b0cafd31f355126806b850d91190f3d8f76b370dfb113d903548",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/3-after",
+          "files": {
+            "worker.json": "f504cf55d0d75fd987500bdf4340511827027de3eb2cf86f05c9456fd7e9dfeb",
+            "before.json": "306e53739a2bf3ee55da504e1cbd29f622c2f5169618fbaf550d149b9988dcfe",
+            "process.json": "2fd1563d1083aae0ffc47af509a6dc0fbfba9036203c5905f5c9cb3ce997b406",
+            "stdout.log": "96068ab696f760d05e3a322bb623989091a87c06fd9f5d2c9ff2f4916c271927",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/4-before",
+          "files": {
+            "worker.json": "790773466c98aff90a5e2dea8a097787a8bc28d374e6dbca885bf03124480f25",
+            "before.json": "129f5c11e3732b7515a9869e0e32888a355cb72c3d73e518e419d1c461480122",
+            "process.json": "2b0d3eadffdad3eec4191fc263bfa7f33a327492531175477232e0a3e1c639cb",
+            "stdout.log": "b5a82ee06cd7b0cafd31f355126806b850d91190f3d8f76b370dfb113d903548",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/4-after",
+          "files": {
+            "worker.json": "1f93d404bb00d6aecaf051c20994fd6eaca95a74693366e288421256cc6c5a26",
+            "before.json": "bd59b6af4ec355ac9a41e2f4cc038500fcc6e1b9f52abea18a9e0894457c90b3",
+            "process.json": "f3d899bc9f180b234fa8ca398cd1470a619d5a185b7e8191ce9bca6c1f6954d3",
+            "stdout.log": "37267658fcc08413d6436abcb663be797bca71d22510bceab195ac626f5eaa38",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/5-before",
+          "files": {
+            "worker.json": "1b08099f0ee2540ad3d5f9be673018ad70567e2fdeb14a6ec11147ff92b9e7ef",
+            "before.json": "8affdc8fd7e6849ba8a15eea3e4da3f2232749eee691a5bb799df9f7d4341ce1",
+            "process.json": "532f69325f81b1fc4e1b9af70a904e76d5e963d046dbfae67888201394f22873",
+            "stdout.log": "b5a82ee06cd7b0cafd31f355126806b850d91190f3d8f76b370dfb113d903548",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/5-after",
+          "files": {
+            "worker.json": "5f82154003168a04399cb2c09c3a9ced178bd28a5cec99809409d655e095c941",
+            "before.json": "fe9a1ae024c738cc8cde299b5aa6522b728dd96c804b3bcf9fdb601708c50ae8",
+            "process.json": "3923537e6f9ca6589e6167cd7e407b6f36ef2a5f9858188ef105cadccecc5fa1",
+            "stdout.log": "b5a82ee06cd7b0cafd31f355126806b850d91190f3d8f76b370dfb113d903548",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/6-before",
+          "files": {
+            "worker.json": "70f1ef4bb911c24e4575744218284c1c413fa6b6673a756bd4ab79a981b07459",
+            "before.json": "57c500080a50aca773af4d21664da5676eeeb5eea4ce4172deb9e7a3d728c449",
+            "process.json": "9f96af3f0261c5a0f9e564339e49c0949e7a598031ac013ce85e7aafcee3f992",
+            "stdout.log": "37267658fcc08413d6436abcb663be797bca71d22510bceab195ac626f5eaa38",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/6-after",
+          "files": {
+            "worker.json": "c9fa151c65b7e0e1949ca7ab01cebd2990447187d074f012fcb7278b70dd5575",
+            "before.json": "15375246ec433adec5257f06d711d926376d7a1ea99193ed292c3b5c399a35a3",
+            "process.json": "145a9151b709906bfb5b23d846045c555cf5c8e96a91c962117a591a1b8ab42b",
+            "stdout.log": "b5a82ee06cd7b0cafd31f355126806b850d91190f3d8f76b370dfb113d903548",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/7-before",
+          "files": {
+            "worker.json": "1dfed8b2af33cb9c78a8c43bff21cc9cb7236ef9c9fa29aac7aa51ef028d5346",
+            "before.json": "42cb18c6056c6bf1b293d167ae2e15434ebdb6f8d556937a80e3f92e7939ba56",
+            "process.json": "7f369dccd1047c7cbdef4dd7194534f3c69e94ec7b5ffdaa058c231d8d444270",
+            "stdout.log": "0e754c00046778aad42c9d60b0d0b8975a4e90cc39d161a212b5fb7594093704",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/7-after",
+          "files": {
+            "worker.json": "cbd4ce5acc340a67483dcdec1d46e8db5634cbb1f31a77b473490204650bbbaa",
+            "before.json": "d430f89d0a6c40ad3a3b7c1e83beadf11882abeb8a244671e42f4111f151f7e9",
+            "process.json": "bf06fe63ac41c6dac667e8d78c12d3ace8b48f300a1c029fe403a0e9206e984b",
+            "stdout.log": "37267658fcc08413d6436abcb663be797bca71d22510bceab195ac626f5eaa38",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/8-before",
+          "files": {
+            "worker.json": "1638786669743b4ceefcb39aef6b9b4b79eff52e813c212052bdeaaf5902bb07",
+            "before.json": "c48f18768815abab0f401043cb9cfb5db041581668f0a7b3a4f0a103f3f397df",
+            "process.json": "0b3b0a879e5bcad5fedebd348a9e9a046fce9b173a84d0e9af0a0881300a5aa2",
+            "stdout.log": "37267658fcc08413d6436abcb663be797bca71d22510bceab195ac626f5eaa38",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/8-after",
+          "files": {
+            "worker.json": "b51e0c5c9eacb7f886d14c68574493501b8aaee16e00379f3a13cb43471c1dc7",
+            "before.json": "2b7a38c8d23276c6d3ee2cc7979db681e320ca6905610f4febadfdc1f913b96b",
+            "process.json": "0b3b0a879e5bcad5fedebd348a9e9a046fce9b173a84d0e9af0a0881300a5aa2",
+            "stdout.log": "37267658fcc08413d6436abcb663be797bca71d22510bceab195ac626f5eaa38",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/9-before",
+          "files": {
+            "worker.json": "01f1244b9fc37424a92ccc20c2590f4aaa30001bdeb1bba08179792689c5c3fa",
+            "before.json": "02eb6cf996178d9f107700ad3f9047a2836b5c4f1db814ab531eef79e6cc740f",
+            "process.json": "4afae632558cdb369da0df28a2608ffcac33dc18a3dec9bf19f253a365dd5b97",
+            "stdout.log": "37267658fcc08413d6436abcb663be797bca71d22510bceab195ac626f5eaa38",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/9-after",
+          "files": {
+            "worker.json": "f535dbf6247cbb20df836dbc5891850f3a191b97b7b22d2403356cd02fee4163",
+            "before.json": "f46a916c04928c374a0e4d0f4443f482e23b743b6f738190076610842411c40e",
+            "process.json": "9f96af3f0261c5a0f9e564339e49c0949e7a598031ac013ce85e7aafcee3f992",
+            "stdout.log": "b5a82ee06cd7b0cafd31f355126806b850d91190f3d8f76b370dfb113d903548",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/10-before",
+          "files": {
+            "worker.json": "5243663a2f637670d8e44e3ce4ad5b2c5b61445b55d4d859c7c636c2c2cc1763",
+            "before.json": "879321cdab8fa3abb4c97526bd06fdc168a8798d4fb667c29ea70dbfff6b595d",
+            "process.json": "2004bf314dcbe89b3154edca74ea982dd729c0dd409735aa322331a09d057334",
+            "stdout.log": "96068ab696f760d05e3a322bb623989091a87c06fd9f5d2c9ff2f4916c271927",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/10-after",
+          "files": {
+            "worker.json": "3a96c0fd33fbaf8014353c0b87227e88723e34ad91375f60653a611cfcff88cc",
+            "before.json": "5942c2cd115f15ead618f257c4f97782c3ccf878e54049df147425d9ca70e044",
+            "process.json": "300a826ffbf3db0445f9b5f34b5943f28f6650159d912fdc5e24e38a966b5285",
+            "stdout.log": "f82e08109283eedb49c3dd95d9bef88364090243163d10a0ce249c51c9a205a5",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/11-before",
+          "files": {
+            "worker.json": "077831083b0cca09ff595b445346a32fbad5847bedd444bff648d4cee0a2493b",
+            "before.json": "af54f43e5324c78ff0ed86b50508f56d81c9d6b1555cac7e83529eab931574ae",
+            "process.json": "f9b2eb06b8a8f839ed93eeef7c50d45378fc2b3c9a547abaac07d67258128738",
+            "stdout.log": "233c61cbd99e005167e83391e13fc9085e6568bceb3aa2c77d377bc162422a95",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/11-after",
+          "files": {
+            "worker.json": "1802bf93a14202d284390c4d794b90f2e1397789ad6b84010e36b683dd2cabd4",
+            "before.json": "c93920010c78969b3aee63e2b720e659f22b517ffecab95f62022deaa2a0fce2",
+            "process.json": "9f0640b60bd1e9aa61b2aa600e6345b06149758864d9d64ce8a4a345119e0132",
+            "stdout.log": "233c61cbd99e005167e83391e13fc9085e6568bceb3aa2c77d377bc162422a95",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/12-before",
+          "files": {
+            "worker.json": "21d7cc36d7bafeb9d0ac9ce74509c8f5c8809c2d2533b9724dce4df128b1dafe",
+            "before.json": "5b46832f19abc2b40f7ec1b5457997dfa698d02e903ac1787c30772d8447b38c",
+            "process.json": "2c839e9f6e729e611a554ade93c236d06c790cec043dfb73a01df6f760945176",
+            "stdout.log": "978f41820348eaed893bc5505d48604070a186c20bc24418954d6946f76e52fc",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/12-after",
+          "files": {
+            "worker.json": "ecde0c6f2e01d617045c51b2e3cb77ed49d40b4334917ad25239cdaeaf87d39a",
+            "before.json": "b3dd16216503f522b805b0097b68fea6a22379c907183e05f251a622029100da",
+            "process.json": "0be90c1fcb0eb775e5a5e215686ed5fa0dfd8f18924eb0a0a82b28e838cfef38",
+            "stdout.log": "824583d0412c5c3d9346c988f01c082369efcdb3a71c8efce14209d9ffa8b3e4",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/13-before",
+          "files": {
+            "worker.json": "3387ebde46a1211db398e7c39f4c89a07f371404cb26fc65f004cf9afd985459",
+            "before.json": "fc0c09cd5c1beeccd34181ee247d235167edccb803192cd50bf20aca98b44b49",
+            "process.json": "f9b2eb06b8a8f839ed93eeef7c50d45378fc2b3c9a547abaac07d67258128738",
+            "stdout.log": "233c61cbd99e005167e83391e13fc9085e6568bceb3aa2c77d377bc162422a95",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/13-after",
+          "files": {
+            "worker.json": "d1fb712e9963678f2e6c37f0f794d83b6369dfa9740465280c0d9485badf2947",
+            "before.json": "84774e64fe3b22d31a15e3c8a205269eb772d5e8baba5e80bbcc59915d9a906a",
+            "process.json": "82ebf65586986b3ce9c53e1fe79eff6616e7abcc6720c353a60d52548584f9b1",
+            "stdout.log": "233c61cbd99e005167e83391e13fc9085e6568bceb3aa2c77d377bc162422a95",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/14-before",
+          "files": {
+            "worker.json": "e43324443ee6f4131de944cbacdc508a104062f580fcdbd68b312e1d9f059ef3",
+            "before.json": "b9f38d1c466f7f7f62649e6f33207dd0eef4a17271866e51e1ba41bee6d5f3af",
+            "process.json": "cb5ab4e7dbf7f7a43c1de2d42dc49e6d63a9dc86debeb8f45f953169c01c4fb0",
+            "stdout.log": "42fa702d344df68f64b20ae757d85fb18d561b6698fca1594a60fd59990e16f8",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/14-after",
+          "files": {
+            "worker.json": "b582e754d72bdd90e148b56d8f373b0e1d4e0329368510c66b3198ff0efe1974",
+            "before.json": "cff0773ddb71aa3575e79400a550993f43eb92de52c727adaf2a26ff10e12782",
+            "process.json": "82ebf65586986b3ce9c53e1fe79eff6616e7abcc6720c353a60d52548584f9b1",
+            "stdout.log": "233c61cbd99e005167e83391e13fc9085e6568bceb3aa2c77d377bc162422a95",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/15-before",
+          "files": {
+            "worker.json": "5fcbb01022e337e6b267848ae60faba43d7e0ce5f07705646f81cb07d8f2f23e",
+            "before.json": "d941f3927b98fc7353c4715098b15e16119c60ea2bcc54632d755ab8eca8c90f",
+            "process.json": "12d48590e36cd08190719a929b9016aaec401d50612fbf4c58a7dec9155ae6b7",
+            "stdout.log": "233c61cbd99e005167e83391e13fc9085e6568bceb3aa2c77d377bc162422a95",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/15-after",
+          "files": {
+            "worker.json": "a2ea76ad14470db02d71a0abb609b676ae590d4ff4ed5182d29ac461b982ef57",
+            "before.json": "c0982951538bdf1ff4a82a3a9d501ed7c46b559b11df83e15590801cd493a1f5",
+            "process.json": "7401c65cde72fad78c964aa9a6d6e3aeaa157962060a991b6193388f4b464c3b",
+            "stdout.log": "debd3542088bc20fddc6988d96e79cc3b716d32be339e20a4293816abe0b24ec",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/16-before",
+          "files": {
+            "worker.json": "6c15ec68dc8628eb1d95cfe33cde2bc12d819503f9f9e0ba89ecef7d7a2f5866",
+            "before.json": "718b3314c13455806b005d14fd060de55118a74d1819dcded815acac79a0950f",
+            "process.json": "be2b42067246cc1f70bb4c0f818b3868d7d1e2f9c188049c75ae4e13199afb94",
+            "stdout.log": "debd3542088bc20fddc6988d96e79cc3b716d32be339e20a4293816abe0b24ec",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/16-after",
+          "files": {
+            "worker.json": "d643218fb025b69b1017679038136d1049c90d899352b2afdc6a85fb35b4b11b",
+            "before.json": "2c5418d2c6155941e6332ce45d0114cf4b8288a39c1960b18e4e097f80bbd8f5",
+            "process.json": "3e432ea52921b5dc06e22b9b10b7aaa773793c6c8a404e3cd96eccabc62effcb",
+            "stdout.log": "e290fc5f60c5be02c9b5c6401a46a1a14166619f4df0ad735c521868228c6807",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/17-before",
+          "files": {
+            "worker.json": "88eea19f8d8cc9348032cf3407e6735499e6468da3c4fba5da9496fca104e6af",
+            "before.json": "512ce2e257f103a90bf36cfd123f2fe4d583fb149d1e970b2b90a94d47040db1",
+            "process.json": "3e432ea52921b5dc06e22b9b10b7aaa773793c6c8a404e3cd96eccabc62effcb",
+            "stdout.log": "e290fc5f60c5be02c9b5c6401a46a1a14166619f4df0ad735c521868228c6807",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/17-after",
+          "files": {
+            "worker.json": "abb912232411caa7224da9855eded1b364cdbe1706d0ff4f35f4014fa4121741",
+            "before.json": "4c06fe3e0d2809eba8248c2d2cf0fc676f096084233623e5c566c9ce233b0387",
+            "process.json": "5bc9a03e11495f3613f79fcbc645a2489c61c3ed6184952f3c0bdab1bb583ab5",
+            "stdout.log": "e290fc5f60c5be02c9b5c6401a46a1a14166619f4df0ad735c521868228c6807",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/18-before",
+          "files": {
+            "worker.json": "e2cad3fa5c5b8e648d7c6ac9c5bc903ec7c9a45001671097ccd86f6f71f158df",
+            "before.json": "174eff69c631e12991c637e525bcefa9204ba683da5f00715bc4af166dea9fb0",
+            "process.json": "278caac4568687173474490e359d13c2d6a041e29b3204fb09a09a4ee7bfee87",
+            "stdout.log": "e290fc5f60c5be02c9b5c6401a46a1a14166619f4df0ad735c521868228c6807",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/18-after",
+          "files": {
+            "worker.json": "3d82387cc5c1396a60eef9e18baa14ca2d5c9ba77d644c46bc52ab9d36bc1eb3",
+            "before.json": "6707c38c82d59fa49491e328f872beaeaca39d3d183133cf5b39fc376c447cdb",
+            "process.json": "1319c367156d70d0ae787097c844cc82c0057a73ce3c3ad0c1b5fac69d5c582f",
+            "stdout.log": "e290fc5f60c5be02c9b5c6401a46a1a14166619f4df0ad735c521868228c6807",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/19-before",
+          "files": {
+            "worker.json": "35b792c7b7924e66f9e05352850e0d0eaf53e96f5a4d33b2f9e175c637aa0c34",
+            "before.json": "161f3ad2b0a69c4e5e74e5bfdbd2740f73c14ba16c2e361c1ba1283c6a719dd6",
+            "process.json": "1319c367156d70d0ae787097c844cc82c0057a73ce3c3ad0c1b5fac69d5c582f",
+            "stdout.log": "e290fc5f60c5be02c9b5c6401a46a1a14166619f4df0ad735c521868228c6807",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/19-after",
+          "files": {
+            "worker.json": "b958c864fbda846cec8233d6a2d73557259fc1d1c50858aee50b87267aad6b23",
+            "before.json": "478c95635a198e7e8d8e6a5d27a444bbd7c06b7b1d88bb8454426247be6f5184",
+            "process.json": "b5d8f3face3d6c6b2a5431f6ed8e51ba6b5ec8aed72df255b6f221bbca8c039a",
+            "stdout.log": "9f289ac63b2ebb71373db5f08e31bb583f730a3622ddf16e670789d13a3c69d6",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/20-before",
+          "files": {
+            "worker.json": "b611c86462dba38eef72d4e84c38c6819bd573c458760f2b2dbd44ed0cd1a872",
+            "before.json": "27df20ac195f6fcebeaf2e18c1f1abe47834de78c9148d5e60cc7a2cbf662ee5",
+            "process.json": "278caac4568687173474490e359d13c2d6a041e29b3204fb09a09a4ee7bfee87",
+            "stdout.log": "e290fc5f60c5be02c9b5c6401a46a1a14166619f4df0ad735c521868228c6807",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/20-after",
+          "files": {
+            "worker.json": "bd7837a9ea1b0b862dfa8f1985b0f34c14cc28cf38c5d837d9f0f6fcbb287796",
+            "before.json": "9b1bf429c0779ff7bc0e6e7d61100ccbef131ee42f8c681749692b5699425803",
+            "process.json": "adbec49fb4e8aed5621af495ee99f046b3eb1d73dbb29210c8685760cbd78372",
+            "stdout.log": "9f289ac63b2ebb71373db5f08e31bb583f730a3622ddf16e670789d13a3c69d6",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/21-before",
+          "files": {
+            "worker.json": "dbb2ab1e00a5ad36715a15acaaddbb146a676080adff084d452c96aa1c6a619d",
+            "before.json": "4c564a7592b3fa08cf454aa3f9f9922cb506832add4b89ffaa61d12a3f537cde",
+            "process.json": "96b832a853848223c256aea0d58ab88d22db80f3f7e068e1bc76c65f9fe2c0c4",
+            "stdout.log": "e290fc5f60c5be02c9b5c6401a46a1a14166619f4df0ad735c521868228c6807",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/21-after",
+          "files": {
+            "worker.json": "aa0a9f6653008140291157a03f18a6331340c71a23092e9388b5cacb7fa51685",
+            "before.json": "b826374954e6a885573e43cfb108c53c11857f1f14a943b6675553fde410955d",
+            "process.json": "0be90c1fcb0eb775e5a5e215686ed5fa0dfd8f18924eb0a0a82b28e838cfef38",
+            "stdout.log": "824583d0412c5c3d9346c988f01c082369efcdb3a71c8efce14209d9ffa8b3e4",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/22-before",
+          "files": {
+            "worker.json": "2cd9ecc5393349157f4d52828090da97058f037d7968e60d6d2b28018dcca332",
+            "before.json": "291d3b3f5b82adb53452f21e15a4b2e1be2fc19fcb28d99a06014ba56ff3f927",
+            "process.json": "59184d352590725eeda0a17ecb9c7aa199fc1ea57cbc4ef2bd04906138715e7e",
+            "stdout.log": "e290fc5f60c5be02c9b5c6401a46a1a14166619f4df0ad735c521868228c6807",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/22-after",
+          "files": {
+            "worker.json": "330161457fc2374a3b586ec8ac9a4c72ede1d0a31261e1b6c17845c04b3ade7d",
+            "before.json": "34cb7e6a8079f3be4485af0bce618bd320113bc09e51beeaf8009e0566a1f586",
+            "process.json": "5bc9a03e11495f3613f79fcbc645a2489c61c3ed6184952f3c0bdab1bb583ab5",
+            "stdout.log": "e290fc5f60c5be02c9b5c6401a46a1a14166619f4df0ad735c521868228c6807",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/23-before",
+          "files": {
+            "worker.json": "d46d36b95fcc4afb571bb469ff60674228caa033283eb3e7c3f2fe6f788924c5",
+            "before.json": "d172817ae1db0b896cf5c70d248cf59c2d386059e9ea43c6871ccbca2f8c5f0e",
+            "process.json": "5bc9a03e11495f3613f79fcbc645a2489c61c3ed6184952f3c0bdab1bb583ab5",
+            "stdout.log": "e290fc5f60c5be02c9b5c6401a46a1a14166619f4df0ad735c521868228c6807",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/23-after",
+          "files": {
+            "worker.json": "bcf43618f79a7ae2b1e2a9698dca5c52735eb042fcd592a63258a52abcaeed07",
+            "before.json": "1278b6748b3c527ef1ccee8d5da775894769c785015e586b1f248d6c7e83d8a0",
+            "process.json": "4f14f6c9d615a1b580aba4913cab098bc865c1f1c142153ae007d3dfbd76580b",
+            "stdout.log": "9f289ac63b2ebb71373db5f08e31bb583f730a3622ddf16e670789d13a3c69d6",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/24-before",
+          "files": {
+            "worker.json": "4d6cafe99d5c26ebfb3c07210b49c02185ecf4320e2015db8d1993c0940aa19d",
+            "before.json": "693a9bbf10f34a8a56d519311420f689c93d907b8c58674910c13049b35b0a8d",
+            "process.json": "2dfa8a2ece1489d3a7b8a2d97ee474f5fc01d8c538d16214f0eb7014055b2716",
+            "stdout.log": "9506028ca7bfc4e5a3d27cffc044cca7894336adc6e9eab80ac703eb756117c8",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/24-after",
+          "files": {
+            "worker.json": "8211f6018c296e1aa2c9fed0ef7910a65a3aac3926a7d6c7a9c1a2ea379f7ea6",
+            "before.json": "01b7704b3549814d42c8330b5ab287f480cb90c0cd722af3ce7afb585319ccb5",
+            "process.json": "2dfa8a2ece1489d3a7b8a2d97ee474f5fc01d8c538d16214f0eb7014055b2716",
+            "stdout.log": "9506028ca7bfc4e5a3d27cffc044cca7894336adc6e9eab80ac703eb756117c8",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/25-before",
+          "files": {
+            "worker.json": "f4f75a0c4ebc0df1cdc8407c7360b65d08a56c379dc0195e4af7c291042a425d",
+            "before.json": "c4f4ddbb9d9984d085cbd11fd113fe5030132a9603eaebfb9bdb37406aeab39f",
+            "process.json": "f9ca83732a1cd7ed0bd9c6c6dbddf594a55267463bebf5169f7daad895123753",
+            "stdout.log": "041910256e0ef030f06543fd60d26fdcc6f1ded8b50a014fe8bf7809942b4686",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-faults-728217-1792589056804451182/25-after",
+          "files": {
+            "worker.json": "9c8ec63599e9e1529583355138f7b47cb8550344abaee05e4fcf925f69b23a17",
+            "before.json": "1da2fda51df2ce2c57040900b2dacce844aad38b4b1fb411b8f745a7c02d0c6e",
+            "process.json": "f9ca83732a1cd7ed0bd9c6c6dbddf594a55267463bebf5169f7daad895123753",
+            "stdout.log": "041910256e0ef030f06543fd60d26fdcc6f1ded8b50a014fe8bf7809942b4686",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        }
+      ]
+    },
+    {
+      "scope": "doublewrite_native_profiles",
+      "cases": 3,
+      "report": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-profiles-728217-1792589080925031970/result.json",
+      "sha256": "8cc8d35e40ada07a1b31b281315c16afff1649a49aafef5fa9e7bd0ce55c1143",
+      "worker_evidence": []
+    },
+    {
+      "scope": "doublewrite_native_kills",
+      "cases": 39,
+      "report": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/result.json",
+      "sha256": "7d9f230bfc769872443056d84f8a47420e475bbbe3a8e27ec684143bdc9f3d5c",
+      "worker_evidence": [
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-4-0",
+          "files": {
+            "worker.json": "bcc72fa6117803ae82174a61c83377c60e1e516b507257f2aa4db4cea713249b",
+            "before.json": "f5632a1bd6926b2aa9ba50a4e0269e60f633dd70c0d23657dd7c19e17d197472",
+            "process.json": "e8914a940017a3e5d1bfecf0797f6cbe8456ab0487ab91cfadd390c418e19510",
+            "stdout.log": "4876254a295fc90e747b13c85e8602a970055a9dcf43ed39bb33234fba7e9c72",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-4-1",
+          "files": {
+            "worker.json": "ce47b9b18bb7c1a5b50e0261c76e69672e5a2a0d0718fcd4f78b86d554e3dc45",
+            "before.json": "cac968082cbe49ad6fdb1d3b1780194603011cf79d8c67ea8ca4d263bed8028e",
+            "process.json": "882d59014282f6ec311adbf3fd086cef520d52022e7e02780c756b7280075d68",
+            "stdout.log": "4876254a295fc90e747b13c85e8602a970055a9dcf43ed39bb33234fba7e9c72",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-4-2",
+          "files": {
+            "worker.json": "5547dbd2dc497043ac5caba30a3b2d63f8aa93c9ea01b300f85eba5c43c84187",
+            "before.json": "51c01170eec82d5d2996815a9176107fd0e02203d4bb5a441e8d30add99412c7",
+            "process.json": "2194eaae9b74f6f261f2fbd60753a576b83fe1024c48f1a072fd698e6aab7d6a",
+            "stdout.log": "4876254a295fc90e747b13c85e8602a970055a9dcf43ed39bb33234fba7e9c72",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-6-0",
+          "files": {
+            "worker.json": "cf85c8e3ea78239443e5258f16c267f496d3b46bb6caaaa3b4c788f96b0cd428",
+            "before.json": "96820c6c51e93417161b12d048c21a55ea676061612e354216bead2e99a8b85b",
+            "process.json": "2194eaae9b74f6f261f2fbd60753a576b83fe1024c48f1a072fd698e6aab7d6a",
+            "stdout.log": "6be3e3f46c440d6628b8d70037196ee36b3f97a1d44430cfc9743584d37655b9",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-6-1",
+          "files": {
+            "worker.json": "f68e7f40844ab56dd0203ecb66f8b058329a664061521531d351272e187f9f89",
+            "before.json": "00d96989f1dd3090bf1d46d28b59c929a420ec12a6b1df785b8c4f7ca2527ffe",
+            "process.json": "e8914a940017a3e5d1bfecf0797f6cbe8456ab0487ab91cfadd390c418e19510",
+            "stdout.log": "6be3e3f46c440d6628b8d70037196ee36b3f97a1d44430cfc9743584d37655b9",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-6-2",
+          "files": {
+            "worker.json": "26b005fa78f871a8d853845054d4bc3f4e309c7a422eb3f3a800ed5acc4636da",
+            "before.json": "c54968ac05dbbec1014337bf7f9cf231372c0aa70305c298a7bfae9f346a5708",
+            "process.json": "e8914a940017a3e5d1bfecf0797f6cbe8456ab0487ab91cfadd390c418e19510",
+            "stdout.log": "6be3e3f46c440d6628b8d70037196ee36b3f97a1d44430cfc9743584d37655b9",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-7-0",
+          "files": {
+            "worker.json": "f0396ab17d446df65234020d1db7aa4e76527bebcb6ccc39c30857168d23c271",
+            "before.json": "d823373858ebf448ae9a4c3c27e0bd8bbceb4d8126a3e12b8d0643abdef2575c",
+            "process.json": "929c45332eb0a76c0a94962cb02cc856a86770af1c7882fe7731f9cebf2e95e1",
+            "stdout.log": "7a27d37b447c5e3c950b7bdca36523f4668648626c42934f49106a6bf4d850db",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-7-1",
+          "files": {
+            "worker.json": "5ff9a1a13bd0896784f001418eb2e5773aa6541cfcb8080f13453149872afd3b",
+            "before.json": "29f15f2c270707ac0374498894d332d42461a1a9cb44eb61ec04b7922cac816f",
+            "process.json": "eedd09d1e31039bbb6fc919168ac69d8bb7663c82e894623b4a75405a381cf3a",
+            "stdout.log": "7a27d37b447c5e3c950b7bdca36523f4668648626c42934f49106a6bf4d850db",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-7-2",
+          "files": {
+            "worker.json": "0ea1a0eeb20e56dacb119784c7fb85e81ba7bd5c8ef61e8ae9af08cae18adbbe",
+            "before.json": "ab91f32cebd31bde031e6743a8a85aaa0dcfd913bea1aae0a3261ac9be484358",
+            "process.json": "eedd09d1e31039bbb6fc919168ac69d8bb7663c82e894623b4a75405a381cf3a",
+            "stdout.log": "7a27d37b447c5e3c950b7bdca36523f4668648626c42934f49106a6bf4d850db",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-8-0",
+          "files": {
+            "worker.json": "6e8ac980e22722091f0bb5deda76808d85315a02ee1cd318330f76c8c8ba9e15",
+            "before.json": "30628bd8f68cc4fadcda3e79fcda8568e291026a51a8de8ffef4985a9b33ac65",
+            "process.json": "dbb36d5924e19513fd14ae65be17acaa6188265f74ffda7f523fb14df225ed46",
+            "stdout.log": "8c55b21c52124dc812b8b0dec1a415122e42271005279c22a3de323b4a221af3",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-8-1",
+          "files": {
+            "worker.json": "6d6bcd740622a7eb12ac3cea21590408e67f60229889cea732254615d8f137d9",
+            "before.json": "f9519e0c90b1d87b653f4b09c21f4d38a4794a33d53bb3425ba57c96d0d22892",
+            "process.json": "8c739873137b7130d97ef66ad32ec190816954a266cd203a7375d45f93f2a302",
+            "stdout.log": "8c55b21c52124dc812b8b0dec1a415122e42271005279c22a3de323b4a221af3",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-8-2",
+          "files": {
+            "worker.json": "2dd1f86118bf4149e6f9729a9a11b76a90c681f9409ecd1b36f0a26d006ac026",
+            "before.json": "11319ffaad8b4291194b46ae91952e5fc43988c66f2b16283eedf691cf461f1d",
+            "process.json": "882d59014282f6ec311adbf3fd086cef520d52022e7e02780c756b7280075d68",
+            "stdout.log": "8c55b21c52124dc812b8b0dec1a415122e42271005279c22a3de323b4a221af3",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-9-0",
+          "files": {
+            "worker.json": "4d38f10138276adbc0ca20880402474c81d38255410ee285eae62cdaeceb40b6",
+            "before.json": "d44be3a2361f685d99d85324c2848e4c498c3c0106c49ea5005646a98648d124",
+            "process.json": "64ef30d1d3c2476367f0dfb14306e938bb435bc530637c2dadaab8202b6db763",
+            "stdout.log": "de3e04ebc4ae7a8664c4c7d5d3b9556e8ef9abff3140ab9c2c398a9bda3887fb",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-9-1",
+          "files": {
+            "worker.json": "f02e1bd93e14454c7fbbc2f338693c3305aff6760ca1d66e477e6158c6cc3b6b",
+            "before.json": "c22cfe3fec518962b8940f3ac9bfa5b7493bde3587653b38433979efd35b8cf7",
+            "process.json": "bb9d2c9e62cd544ec22ed5bd30de75f119bb720af03fa2dee214f6d77e738a0c",
+            "stdout.log": "de3e04ebc4ae7a8664c4c7d5d3b9556e8ef9abff3140ab9c2c398a9bda3887fb",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-9-2",
+          "files": {
+            "worker.json": "b0bf0a9611b3e2710a93ec64939d8586306793c73c7231760eab487abedd14b9",
+            "before.json": "b06ae46f2f495b5b8505f14f25e3c7579f5f0e38f70bb35c2703ad09795e94b6",
+            "process.json": "c8621a5c5f15cce393062fa70cb022fb74c9e8e64a8839cf2a309555ab46d342",
+            "stdout.log": "de3e04ebc4ae7a8664c4c7d5d3b9556e8ef9abff3140ab9c2c398a9bda3887fb",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-10-0",
+          "files": {
+            "worker.json": "29313abae7afa7a0fe433ad2f1d7c747b23ca80eb65d6ecb41f8fd154ebcbe1b",
+            "before.json": "ed5f6fc3e8529666f815924eb9a1938b7df15f16e51e210a184e816a9d2d3668",
+            "process.json": "cc4b1887d0a314928ec133fabad311cdd24cfb87e261ab154d70d93e9008c622",
+            "stdout.log": "6adb6b2b5aaa9b19dfa21633678f74e2ec650772f6bc4b792bbb702886da3d12",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-10-1",
+          "files": {
+            "worker.json": "2267804536a3e6536b8140ca40ecaad1357f02ab1ec4840b8a8c5aed97e16d87",
+            "before.json": "58adff41d874ba60508f60b7258b14b16bbfc210549a03623484dc8cb35d41f8",
+            "process.json": "62dd7b73879ba4f6c8a453a22e8dc17bc755d104a2e4f9331ef4757349e157ed",
+            "stdout.log": "6adb6b2b5aaa9b19dfa21633678f74e2ec650772f6bc4b792bbb702886da3d12",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-10-2",
+          "files": {
+            "worker.json": "9d2f3fa7262a6f5f9667cc6b9f8ae7595bbe03ecb0ee4f0e9d9524c19774004f",
+            "before.json": "87c7afdad350ff612f645734b3591f48fc6eaf07f607914324d274cd97a425d3",
+            "process.json": "929c45332eb0a76c0a94962cb02cc856a86770af1c7882fe7731f9cebf2e95e1",
+            "stdout.log": "6adb6b2b5aaa9b19dfa21633678f74e2ec650772f6bc4b792bbb702886da3d12",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-13-0",
+          "files": {
+            "worker.json": "2a41e69c5dd1cecda08690c12baffcde63c334e54602e5811eb77de09ed121a9",
+            "before.json": "286cdda377c55358aced25b0db988789ab40273192e1ccd7b8a26a3ad33c28f5",
+            "process.json": "0d25a1f99a9c4c65dec06c25691e803671c128c9603a8a2efd567055781a9ae2",
+            "stdout.log": "64578edddba024c691fe0b8942568a9e76b4c39dfde18c9bdce50a8edf57b383",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-13-1",
+          "files": {
+            "worker.json": "b89651e4f3a6da971daab1e015c58a438922c8c50820f17de116613cbca693ba",
+            "before.json": "1da3d37022e332776a48cae72e089195877aa1787277ff9efff382bf56f47c45",
+            "process.json": "cc4b1887d0a314928ec133fabad311cdd24cfb87e261ab154d70d93e9008c622",
+            "stdout.log": "64578edddba024c691fe0b8942568a9e76b4c39dfde18c9bdce50a8edf57b383",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-13-2",
+          "files": {
+            "worker.json": "353ee8b3838a6088b2c91bd044b187fe4ce8b066bde11667e60d9ca62c7b7fc3",
+            "before.json": "85edc2ff3d3c77130e7901bc4ccee6b4c1d5a6933f6790413c82dfd36216179f",
+            "process.json": "fd56036c5d033ce3eb67cf47215e08a2a55d3de3ace35faba93179e4e8d76a65",
+            "stdout.log": "64578edddba024c691fe0b8942568a9e76b4c39dfde18c9bdce50a8edf57b383",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-16-0",
+          "files": {
+            "worker.json": "cf3b6b5cbb0d543665ad3927f53a96e001e1eba860feb1b9831dbd689543626d",
+            "before.json": "48cc6f4e8254d0b20548bdb2e3c220c27db28d707663c8d3b18fc92c9757dcfe",
+            "process.json": "1bd7ec5556993549ca182b3767ae111df5babf3ac1a6c0a8943d783351a37ac9",
+            "stdout.log": "a14eff1ce4edf4c4dcc884e150ddec7cc44ecaeb8087d4d264ad1d87c8c478c5",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-16-1",
+          "files": {
+            "worker.json": "9e11ed1051f6a749451df645907c38ff1e827a01c383fc8858477756f22a9023",
+            "before.json": "e10e89b02c8ec369d8ffa43d30a416f9e090d33aec598354a21613c4d470b102",
+            "process.json": "5c6f2852326d85a3c092dc548c3cfd75227fc63504e5c61ab4fbd607b11e7c16",
+            "stdout.log": "a14eff1ce4edf4c4dcc884e150ddec7cc44ecaeb8087d4d264ad1d87c8c478c5",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-16-2",
+          "files": {
+            "worker.json": "7a0b89f4ca57e1fbce0141326273a14ebf4a29a8e938ab82bdcc549ee2ced497",
+            "before.json": "43fa000a77adaa28e56bc75c5c12c53a78352e9a3ae59fd24c69dd272c680132",
+            "process.json": "71d4cfe50ce7fe08a54242b164e0389574c8411d4d6950499559477d3617be15",
+            "stdout.log": "a14eff1ce4edf4c4dcc884e150ddec7cc44ecaeb8087d4d264ad1d87c8c478c5",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-19-0",
+          "files": {
+            "worker.json": "a539b47eb2cc7ca7a902d5d2ee6b45ef9f0722e60bee9a395dfebdd0fb22ed59",
+            "before.json": "35c72a98dfada13f98686d8c6276fa10202e67512b5878af1949a0ab223cdb77",
+            "process.json": "ed2f301adfbbe9782cbb35a2be55f5f7d81775ec4ce792ed11e0b4e5c64b73fb",
+            "stdout.log": "7cddd4632083a0f3651c47a6081ac5618505b142319e4bc3c59c8d5b2119ee6b",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-19-1",
+          "files": {
+            "worker.json": "ddc17143e3ee946925c56755a6b6dfa5404bcf3b808ac39976e90bfa78dd8b8e",
+            "before.json": "984b04ec8eeb6cdab55bbdcf776ce926b40bde6d8b16678dad07ce4f4db0901c",
+            "process.json": "c20f183362006869cabb288a7e9c799a3b60d095ccdd205c00b94636f0c75bb9",
+            "stdout.log": "7cddd4632083a0f3651c47a6081ac5618505b142319e4bc3c59c8d5b2119ee6b",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-19-2",
+          "files": {
+            "worker.json": "c2f967801e0b9366a75d3cf33334ad0f85d2f69ece6b1cfe0e244f43f27df9c7",
+            "before.json": "14af126db932c2556c823339816be94bd4cdc2ff9fb11514a4bd88e20b5c86d0",
+            "process.json": "c125ef74b3a96f3b714ad9262dcbe41f48aa52c2f5142f379420997acc4b9022",
+            "stdout.log": "7cddd4632083a0f3651c47a6081ac5618505b142319e4bc3c59c8d5b2119ee6b",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-20-0",
+          "files": {
+            "worker.json": "86028659a5a484f3f750ad270d3818e432a0ecf16cc183a8935e525285a36126",
+            "before.json": "4ab49046fc8bda4a779c29652979617a39a7730dd10e2e9858770972fc1ae71a",
+            "process.json": "ed2f301adfbbe9782cbb35a2be55f5f7d81775ec4ce792ed11e0b4e5c64b73fb",
+            "stdout.log": "addcb7635d785c938c69fb6aea6c4331540c0405ae7e1e1adba2195c2829f42f",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-20-1",
+          "files": {
+            "worker.json": "52e09cea650429d5e018cb07a7c95e43ef5a7eea52c195b02a6437ae689cc181",
+            "before.json": "cd3829133754928003ec1fac8f0fe78f5bd63486c32115ea964146eef7b9c805",
+            "process.json": "7f2f8e04a513ec61c4e5e9f3638cb82291a40305b780c7e543a82e398ad96770",
+            "stdout.log": "addcb7635d785c938c69fb6aea6c4331540c0405ae7e1e1adba2195c2829f42f",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-20-2",
+          "files": {
+            "worker.json": "0de6a691698e883a154dcb01a7fb127a5794ab40aa6c07e77cf049c12951641c",
+            "before.json": "b7f8dd5150ee1a8322b622c90713d005bc933454b77cac31494905a7a648e572",
+            "process.json": "ed2f301adfbbe9782cbb35a2be55f5f7d81775ec4ce792ed11e0b4e5c64b73fb",
+            "stdout.log": "addcb7635d785c938c69fb6aea6c4331540c0405ae7e1e1adba2195c2829f42f",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-23-0",
+          "files": {
+            "worker.json": "255f56bbf4319692ea85cfedf06d9f6900ce0d16d0fc6b4b79492109deae749d",
+            "before.json": "8003add6c12c8cdc1201401325baede99dd4cb5d2122ea159cae607539961d32",
+            "process.json": "700cff028c1710b0dbf29e935afb5f13987a5373e55eab0fe778961f4db06dc5",
+            "stdout.log": "bd573556079793f34ef2837035f410b5fc430ee1cadf7b30bd446571812e8d31",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-23-1",
+          "files": {
+            "worker.json": "3c08b165125cac2daf4edadc389c02e528e8b73915fc32578ba5ac9c1692df16",
+            "before.json": "543b918e28547cf92ea7c339079da8d8424460e93a9cf2a053ef1ee4e9d0e08e",
+            "process.json": "3252583c107a7042acf0512a671f895fba425c62756527a1d95c1404de995d77",
+            "stdout.log": "bd573556079793f34ef2837035f410b5fc430ee1cadf7b30bd446571812e8d31",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-23-2",
+          "files": {
+            "worker.json": "22094be1f93c7c020bdfdadba688a245532b34d4c203b41db97310cea0a81ed1",
+            "before.json": "3eac93f89cfbc596c24538059fac549ac297b388db60da03c5a16c4db3037c8e",
+            "process.json": "3dffe6cdfa3f20c0b8aafd2a9a0b4e397c5dab75ae3b349bfbbc3f01e5a59e4f",
+            "stdout.log": "bd573556079793f34ef2837035f410b5fc430ee1cadf7b30bd446571812e8d31",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-24-0",
+          "files": {
+            "worker.json": "c3e08931cd145d110942cad3dae53c61a65cae4e7832579e2b9267d03aa6803e",
+            "before.json": "f3d1eab2eea5a5950753fe415badb9894e86c5eb6d95aa137018ae6fa63b1a73",
+            "process.json": "5c6f2852326d85a3c092dc548c3cfd75227fc63504e5c61ab4fbd607b11e7c16",
+            "stdout.log": "6e1abb822ce173b75e73dbd673a91b414b544288e0012ef6f8d14967662095a8",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-24-1",
+          "files": {
+            "worker.json": "28169cc781c652461ae93402ba7659fe5d7b8fb3e2708f566f0d807c92819ae8",
+            "before.json": "508b3727f5a0d89fb2b737f357b84a8902e4187944820c423700a5495ef43208",
+            "process.json": "5c6f2852326d85a3c092dc548c3cfd75227fc63504e5c61ab4fbd607b11e7c16",
+            "stdout.log": "6e1abb822ce173b75e73dbd673a91b414b544288e0012ef6f8d14967662095a8",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-24-2",
+          "files": {
+            "worker.json": "103d4aa225f0423387fa6619c3eafa3e185167fe9293bfd227e73b64ba5e7718",
+            "before.json": "0217fdf103c1752dca3bf0c89bac62fd062078fc77ea29b159e455b3e1af1afa",
+            "process.json": "fcaab4a85d05f44a598c930f4c3e767aa32fed935b40c0ddfec253777b87563b",
+            "stdout.log": "6e1abb822ce173b75e73dbd673a91b414b544288e0012ef6f8d14967662095a8",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-25-0",
+          "files": {
+            "worker.json": "103fe7e2903e9980e65c66ed74b7686f8646892b1f2e5a0007138c3744b58476",
+            "before.json": "459a01cd46f720448dac7798be8a43b0dfd996b9d79d71f21654fcfd5e4d65e1",
+            "process.json": "238fff6d1ace90c9a4a46480aa35fde7ceaae25004389f97839086638aee9689",
+            "stdout.log": "0200bd196743674e42f9263734205d093281fa988e73ea3a2d48c95d759012ac",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-25-1",
+          "files": {
+            "worker.json": "b2c70626606fa28562b7b761596b65bc62d1a38fd6641a266d2380dd6cf7fad4",
+            "before.json": "653af35da27398fdb30a0d65b6e7385d10975f832878e896905ce2aa3322bbea",
+            "process.json": "3476feab405517062e14afb82ddf215b1143295c7d17bb712a3a3ef0af6c4ee5",
+            "stdout.log": "0200bd196743674e42f9263734205d093281fa988e73ea3a2d48c95d759012ac",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "case": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/storage-native-artifacts/storage-dwb-kills-728217-1792589082868651952/effect-25-2",
+          "files": {
+            "worker.json": "9668c4a85f272f79b19ab8e40d294e73be2fae3eac4908f9e57c174428dc9244",
+            "before.json": "7043fe68d54b8b16a077e0106f9566ebc6c5bf675ca5ef248a87ad3ed81fae19",
+            "process.json": "7f2f8e04a513ec61c4e5e9f3638cb82291a40305b780c7e543a82e398ad96770",
+            "stdout.log": "0200bd196743674e42f9263734205d093281fa988e73ea3a2d48c95d759012ac",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        }
+      ]
+    }
+  ],
+  "scope": "retained ext4 process effects and unchanged Fresh files; no power-loss recovery",
+  "producer_log": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/doublewrite-native.log",
+  "producer_log_sha256": "96d4afd9adcee700cf41b8f8b4ef703f658cb5b4c84db9c3e01051eb6b4df74c"
+}

@@ -1,0 +1,202 @@
+[
+  {
+    "index": 1,
+    "length": 0,
+    "name": "d3-dwb-stage",
+    "offset": 0,
+    "op": "create",
+    "to": ""
+  },
+  {
+    "index": 2,
+    "length": 16384,
+    "name": "d3-dwb-stage",
+    "offset": 0,
+    "op": "write",
+    "to": ""
+  },
+  {
+    "index": 3,
+    "length": 0,
+    "name": "d3-dwb-stage",
+    "offset": 0,
+    "op": "sync",
+    "to": ""
+  },
+  {
+    "index": 4,
+    "length": 0,
+    "name": "",
+    "offset": 0,
+    "op": "directory_sync",
+    "to": ""
+  },
+  {
+    "index": 5,
+    "length": 0,
+    "name": "d3-dwb-images",
+    "offset": 0,
+    "op": "create",
+    "to": ""
+  },
+  {
+    "index": 6,
+    "length": 4194304,
+    "name": "d3-dwb-images",
+    "offset": 0,
+    "op": "write",
+    "to": ""
+  },
+  {
+    "index": 7,
+    "length": 4194304,
+    "name": "d3-dwb-images",
+    "offset": 4194304,
+    "op": "write",
+    "to": ""
+  },
+  {
+    "index": 8,
+    "length": 4194304,
+    "name": "d3-dwb-images",
+    "offset": 8388608,
+    "op": "write",
+    "to": ""
+  },
+  {
+    "index": 9,
+    "length": 4128768,
+    "name": "d3-dwb-images",
+    "offset": 12582912,
+    "op": "write",
+    "to": ""
+  },
+  {
+    "index": 10,
+    "length": 0,
+    "name": "d3-dwb-images",
+    "offset": 0,
+    "op": "sync",
+    "to": ""
+  },
+  {
+    "index": 11,
+    "length": 0,
+    "name": "d3-dwb-0",
+    "offset": 0,
+    "op": "create",
+    "to": ""
+  },
+  {
+    "index": 12,
+    "length": 16384,
+    "name": "d3-dwb-0",
+    "offset": 0,
+    "op": "write",
+    "to": ""
+  },
+  {
+    "index": 13,
+    "length": 0,
+    "name": "d3-dwb-0",
+    "offset": 0,
+    "op": "sync",
+    "to": ""
+  },
+  {
+    "index": 14,
+    "length": 0,
+    "name": "d3-dwb-1",
+    "offset": 0,
+    "op": "create",
+    "to": ""
+  },
+  {
+    "index": 15,
+    "length": 16384,
+    "name": "d3-dwb-1",
+    "offset": 0,
+    "op": "write",
+    "to": ""
+  },
+  {
+    "index": 16,
+    "length": 0,
+    "name": "d3-dwb-1",
+    "offset": 0,
+    "op": "sync",
+    "to": ""
+  },
+  {
+    "index": 17,
+    "length": 0,
+    "name": "d3-dwb-reserved",
+    "offset": 0,
+    "op": "create",
+    "to": ""
+  },
+  {
+    "index": 18,
+    "length": 8192,
+    "name": "d3-dwb-reserved",
+    "offset": 0,
+    "op": "write",
+    "to": ""
+  },
+  {
+    "index": 19,
+    "length": 0,
+    "name": "d3-dwb-reserved",
+    "offset": 0,
+    "op": "sync",
+    "to": ""
+  },
+  {
+    "index": 20,
+    "length": 0,
+    "name": "",
+    "offset": 0,
+    "op": "directory_sync",
+    "to": ""
+  },
+  {
+    "index": 21,
+    "length": 0,
+    "name": "d3-dwb-select-stage",
+    "offset": 0,
+    "op": "create",
+    "to": ""
+  },
+  {
+    "index": 22,
+    "length": 4096,
+    "name": "d3-dwb-select-stage",
+    "offset": 0,
+    "op": "write",
+    "to": ""
+  },
+  {
+    "index": 23,
+    "length": 0,
+    "name": "d3-dwb-select-stage",
+    "offset": 0,
+    "op": "sync",
+    "to": ""
+  },
+  {
+    "index": 24,
+    "length": 0,
+    "name": "d3-dwb-select-stage",
+    "offset": 0,
+    "op": "publish",
+    "to": "DWB"
+  },
+  {
+    "index": 25,
+    "length": 0,
+    "name": "",
+    "offset": 0,
+    "op": "directory_sync",
+    "to": ""
+  }
+]

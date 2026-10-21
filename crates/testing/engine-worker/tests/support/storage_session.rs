@@ -180,6 +180,8 @@ pub struct Trace {
     pub fault: Option<Fault>,
     pub hit: usize,
     pub cut: Option<String>,
+    /// An explicit index for a different consuming installation's frozen cuts.
+    pub cut_index: Option<usize>,
     pub hook_path: Option<PathBuf>,
     pub handles: usize,
     pub peak: usize,
@@ -237,8 +239,10 @@ fn finish(trace: &Arc<Mutex<Trace>>, at: usize, completed_bytes: Option<usize>) 
         return Err(fault());
     }
     if let Some(cut) = &t.cut {
-        let expected = CUTS.iter().find(|(name, _)| *name == cut).unwrap();
-        if expected.1 == at {
+        let expected = t
+            .cut_index
+            .unwrap_or_else(|| CUTS.iter().find(|(name, _)| *name == cut).unwrap().1);
+        if expected == at {
             let path = t.hook_path.as_ref().unwrap();
             write_json(
                 path,
@@ -384,4 +388,52 @@ pub fn assert_install_events(events: &[Value], count: usize) {
         assert_eq!(event["kind"], kind);
         assert_eq!(event["name"], name);
     }
+}
+
+fn storage_literal(id: u32, name: &str) -> Vec<u8> {
+    fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join(format!(
+        "../../engine/tests/fixtures/dev3-storage-session/literal/profile{id}-{name}.bin"
+    )))
+    .unwrap()
+}
+pub fn expected_storage_objects(db: [u8; 16], id: u32) -> BTreeMap<String, Vec<u8>> {
+    // Independent literal offset substitution. No engine control/page encoder.
+    let (profile, wal, writer) = expected_controls(db, id);
+    let mut allocation = storage_literal(id, "allocation");
+    allocation[8..24].copy_from_slice(&db);
+    seal(&mut allocation);
+    let mut chunk = storage_literal(id, "chunk");
+    chunk[16..32].copy_from_slice(&db);
+    seal(&mut chunk);
+    let mut root = storage_literal(id, "root");
+    root[16..32].copy_from_slice(&db);
+    root[224..256].copy_from_slice(&content_digest(&chunk));
+    seal(&mut root);
+    let mut selector = storage_literal(id, "FILEMAP");
+    selector[8..24].copy_from_slice(&db);
+    selector[48..80].copy_from_slice(&content_digest(&profile));
+    selector[112..144].copy_from_slice(&content_digest(&root));
+    seal(&mut selector);
+    let mut descriptor = storage_literal(id, "d3-bootstrap");
+    descriptor[16..32].copy_from_slice(&db);
+    descriptor[48..80].copy_from_slice(&content_digest(&profile));
+    descriptor[176..208].copy_from_slice(&content_digest(&root));
+    descriptor[208..240].copy_from_slice(&content_digest(&allocation));
+    seal(&mut descriptor);
+    let mut data = vec![0; 1048576];
+    data[..16384].copy_from_slice(&allocation);
+    let mut bank0 = vec![0; 2113536];
+    bank0[..320].copy_from_slice(&root);
+    bank0[16384..16640].copy_from_slice(&chunk);
+    BTreeMap::from([
+        ("LOCK".into(), Vec::new()),
+        ("d3-profile".into(), profile),
+        (WAL.into(), wal),
+        ("WRITER".into(), writer),
+        ("d3-bootstrap".into(), descriptor),
+        ("d3-data-0000000100000001".into(), data),
+        ("d3-filemap-0".into(), bank0),
+        ("d3-filemap-1".into(), vec![0; 2113536]),
+        ("FILEMAP".into(), selector),
+    ])
 }

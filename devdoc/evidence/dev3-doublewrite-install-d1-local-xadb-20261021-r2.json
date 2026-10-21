@@ -1,0 +1,101 @@
+{
+  "V2": "PENDING_TERMINAL_SAME_SOURCE_EVIDENCE",
+  "actual_checker_mutants": 31,
+  "blockers": [],
+  "cleanup_permission": "NOT_GRANTED_IN_THIS_REVIEW",
+  "commit_acceptance": "PENDING_V2_AND_D0_AUDIT",
+  "compiler": 9,
+  "core_identical_to_r0": true,
+  "decision": "PASS",
+  "documentation_verifier": "NOT_RUN",
+  "native_children": 89,
+  "native_databases": 92,
+  "native_files_exact": 1152,
+  "native_named": 3,
+  "product_or_repository_checker_execution_by_reviewer": "NOT_RUN",
+  "r10_findings": "CLOSED",
+  "r11_actual_baseline_checker_gap": "CLOSED",
+  "r11_original_native_lower_error_gap": "CLOSED",
+  "reference_hashes": {
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r10-decision.json": {
+      "bytes": 1787,
+      "sha256": "ae03287cae9bf35c93dcbe67940d7d6bbe88385a539bd16fdab59dc285c1afb2"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r10-static-calculation.json": {
+      "bytes": 1584,
+      "sha256": "2417980ae4505c268337952c325fc4b9c925dddb7dedf778c661aa1bf1ddc48b"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r11-decision.json": {
+      "bytes": 616,
+      "sha256": "3daa112baebd37a0ea174ddf278ee0e0db917cd8de5b5711af8e834d0eb57889"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r11-evidence-calculation.json": {
+      "bytes": 970,
+      "sha256": "086522f4e41c9c6541109a90c1faa9fb813990a53a5d4401151470d7439d6fd8"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r11-inputs.json": {
+      "bytes": 129201,
+      "sha256": "28f3ffb5d74d470443ea1cf4b40f586cc4e287ab887888878108f64452075cd5"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r11-review.md": {
+      "bytes": 3738,
+      "sha256": "2f995296f32a6099ac1668cfa370ac9f72f94fef4ec2f8aa6e30a6656715678b"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r12-evidence-audit.log": {
+      "bytes": 1611,
+      "sha256": "50eba9eac72d1485855acc3aeca8eecf1238c36ac93aacf6fed477811463b65d"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r12-evidence-audit.py": {
+      "bytes": 15671,
+      "sha256": "e1e6e6c3348a20318b7f92bde5f368be257db795126ec5a2746bf050be62f918"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r12-evidence-calculation.json": {
+      "bytes": 1793,
+      "sha256": "5be35216961876ca56188231026b6c08483701a60c6fe1db9bee04be5f503404"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r12-inputs.json": {
+      "bytes": 136708,
+      "sha256": "eaa2f114401b7043c13a57a5d791fa9316039c3bf506e75f944633b491e96e17"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r12-review.md": {
+      "bytes": 5415,
+      "sha256": "d32e8128646039731377fe201cba15f63f3914d3b6c0aba0127114fa3c79c0d9"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r9-d2-decision.json": {
+      "bytes": 4304,
+      "sha256": "dd2308d96dedb55700d9450d3b1093c03be11791040d425ee8259c24040c4d52"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r9-inputs.json": {
+      "bytes": 9403,
+      "sha256": "49fb48289b2ddae731904e6c1de5b2af989af6409b5a0a4487334249162184f8"
+    },
+    "artifacts/dev3/doublewrite-install-draft-r2/independent-check.log": {
+      "bytes": 53,
+      "sha256": "7e1e41e66b6b8bd38767cfffc174ca8da6de99b4378b8738954a1fa2575fba81"
+    },
+    "artifacts/dev3/doublewrite-install-draft-r2/model-checked.json": {
+      "bytes": 3385,
+      "sha256": "7236b4f60651dc60096c7ec9c3ed73203b3b7e32e3df50ec57f4bff44b31dfe3"
+    },
+    "artifacts/dev3/doublewrite-install-draft-r2/native-checked.json": {
+      "bytes": 63174,
+      "sha256": "687c33c34f633f19acbb34bb95e1baac6154e52d713dd631b8fca042e1f1a15a"
+    },
+    "artifacts/dev3/doublewrite-install-draft-r2/report.json": {
+      "bytes": 4508,
+      "sha256": "e0801d6e5f438fe39f2723b53c2364069be696417de106653329e466e413cf9a"
+    },
+    "artifacts/dev3/doublewrite-install-draft-r2/source.json": {
+      "bytes": 369,
+      "sha256": "cbcb98ab1f803359870b7f893845c3b648d70217373b084f7632c2105f9b9fda"
+    },
+    "artifacts/dev3/doublewrite-install-draft-r2/source/devdoc/contracts/dev3-doublewrite-install.md": {
+      "bytes": 27297,
+      "sha256": "0550f26c089b8c034c2e24ade3ef5442435a38e6bf6dd0846cd9af7c03076aac"
+    }
+  },
+  "runtime": 10,
+  "scope": "Independent D1 static, corpus, runner registration and retained r2 local evidence; V2 pending",
+  "source_sha256": "4e594d598c104d2ebddc34ef9e749bc432d66b0173e90b0c75605355609cfbf0",
+  "stage_completion": "NOT_CLAIMED"
+}

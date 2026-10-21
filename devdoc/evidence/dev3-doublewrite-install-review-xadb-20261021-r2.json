@@ -1,0 +1,62 @@
+{
+  "DEV2_PF04": "PRIOR_FAILURE_RETAINED",
+  "blockers": [],
+  "cleanup_actions_by_reviewer": "NONE",
+  "commit_allowed": true,
+  "completed_leaf_checks": 63,
+  "decision": "PASS",
+  "derived_scoped_records": 1,
+  "full_DEV3_acceptance": "NOT_RUN_INCOMPLETE",
+  "instruction_commit": "4273343958f151fcdf5e5ed1a4c3d0625444c6a4",
+  "local_quality": "EXISTING_SAME_SOURCE_PASS_REUSED",
+  "lower_regressions": "INTERRUPTED_BY_USER",
+  "native_database_rehash_count": 0,
+  "new_test_execution": false,
+  "original_full_V2_profile": "NOT_COMPLETED_NOT_CLAIMED",
+  "original_leaf_status": "FAIL",
+  "original_registered_receipts": 9,
+  "post_decision_D0_allowed": [
+    "Register/link this original decision without modifying prior original receipts",
+    "Update derived integration_review to accepted limited-scope D1",
+    "Append factual existing cleanup journal summary",
+    "Commit unchanged product source and verify clean-export source identity without tests"
+  ],
+  "product_checker_compile_doc_verifier_execution": "NOT_RUN",
+  "product_source_sha256": "4e594d598c104d2ebddc34ef9e749bc432d66b0173e90b0c75605355609cfbf0",
+  "queued_current_build_dev2_kernel": "NOT_RUN_CANCELLED_BY_USER",
+  "r12_r13_reused": true,
+  "reused_evidence_hashes": {
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r12-decision.json": {
+      "bytes": 4577,
+      "sha256": "95a33f53cc1e502209286d1b19f6697d216b91e365d167241ae12a445f6cd7dc"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r13-decision.json": {
+      "bytes": 2846,
+      "sha256": "b9fda3f7c3f0e417f532f53ad6127f180ded704dda2011869dbd3bad5480288e"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r14-calculation.json": {
+      "bytes": 17550,
+      "sha256": "c303385bc70504e13dc17baf89bf816c56f642b8a0626206bd3e32c90bf63b2c"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r14-delta-audit.log": {
+      "bytes": 1710,
+      "sha256": "31dfd2abd191f5b67e03c184cd68bac275c8a1048ae1546f9e7ce5a5a1b9d8d4"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r14-delta-audit.py": {
+      "bytes": 9848,
+      "sha256": "316d1e0807052a0c22d102801ba951615f924173967d0abf8050d80af3943b8c"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r14-inputs.json": {
+      "bytes": 30442,
+      "sha256": "68ae44754208ef68f4bc317b6f8317ce7c9a476f29085f4f6115896909610d57"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r14-review.md": {
+      "bytes": 5598,
+      "sha256": "c35a82e122c169aa807d0a1618bc842638ca64e787227691c2780c05b946697b"
+    }
+  },
+  "scope": "Final D1/D0 closure of initial Empty DWB installation using unchanged-code evidence under explicit user test-scope instruction",
+  "staged_changed_paths": 68,
+  "staged_source_files": 407,
+  "total_leaf_checks": 64
+}

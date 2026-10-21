@@ -1,0 +1,69 @@
+{
+  "actual_checker_mutants": 31,
+  "aggregate_leaf": "NOT_APPROVED",
+  "blockers": [],
+  "build_artifacts_verified": 14,
+  "cleanup_permission": "NOT_GRANTED",
+  "compiler": 9,
+  "completed_product_named_suites": 35,
+  "completed_product_named_tests": 242,
+  "contract_hashes_verified": 23,
+  "current_build_kernel": "PENDING",
+  "decision": "PASS_COMPLETED_LEAF_UNITS_ONLY",
+  "engine_named_suites": 23,
+  "engine_named_tests": 216,
+  "input_hashes": {
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r12-decision.json": {
+      "bytes": 4577,
+      "sha256": "95a33f53cc1e502209286d1b19f6697d216b91e365d167241ae12a445f6cd7dc"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r13-evidence-audit.log": {
+      "bytes": 4058,
+      "sha256": "1c44de4ebc5d76dcfda912b6ea8d14e6ee6456f6d2f64b3dc897eebcb1077bc5"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r13-evidence-audit.py": {
+      "bytes": 22460,
+      "sha256": "671bc0cf31dfadf1d79319162a113ebca8deebebb7fa08b1e0d571189380152c"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r13-evidence-calculation.json": {
+      "bytes": 4756,
+      "sha256": "e25362fda4b8eb3fb5b8cbbc83a6dfa9e9dc2b95a43b6006f1703968b020779a"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r13-inputs.json": {
+      "bytes": 168697,
+      "sha256": "d96cefb05598997f1b893dbe9a828c2cd5e9304780baaa8bb30fee3d466bf0ba"
+    },
+    "artifacts/dev3/dirty-storage-independent-review-20261021/r13-review.md": {
+      "bytes": 4883,
+      "sha256": "0f6d2a3c67cfa253411457823b5d1f6573190be6e6cf2de90afc661ce43de615"
+    },
+    "artifacts/dev3/leaf-2xmuuzi7/doublewrite-borrows.json": {
+      "bytes": 17396,
+      "sha256": "2851abd6ee334a2841954d63df985447e0363dbdc2b9bd83010178c8b170d0fc"
+    },
+    "artifacts/dev3/leaf-2xmuuzi7/doublewrite-model.json": {
+      "bytes": 3861,
+      "sha256": "0281096e852ca23e80800729fc4ab56e7df32906390617716d519aa593071d4d"
+    },
+    "artifacts/dev3/leaf-2xmuuzi7/doublewrite-native.json": {
+      "bytes": 63549,
+      "sha256": "bca1492d32f9c1317e52e1ef7f33db5c5d294bd0f49a2bfdc50d8c2de9f7c45d"
+    },
+    "artifacts/dev3/leaf-2xmuuzi7/manifest.json": {
+      "bytes": 4924,
+      "sha256": "10acb721267604ff449c6c06ef999eb3aec98331ca810b6d5691c412a93be250"
+    }
+  },
+  "integration_commit_acceptance": "PENDING_TERMINAL_EVIDENCE_AND_D0",
+  "leaf_manifest_state_at_review": "RUNNING",
+  "loaded_checker_hashes_verified": 10,
+  "lower_regression": "PENDING",
+  "native_children": 89,
+  "native_databases": 92,
+  "native_files_byte_metadata_verified": 1152,
+  "native_named": 3,
+  "reviewer_product_checker_doc_verifier_execution": "NOT_RUN",
+  "runtime": 10,
+  "separate_model_harness_tests": 2,
+  "source_sha256": "4e594d598c104d2ebddc34ef9e749bc432d66b0173e90b0c75605355609cfbf0"
+}

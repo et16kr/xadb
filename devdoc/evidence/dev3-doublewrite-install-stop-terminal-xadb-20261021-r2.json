@@ -1,0 +1,8 @@
+{
+  "date": "2026-10-21T13:33:19.404118+00:00",
+  "status": "STOPPED",
+  "owned_live_processes": [],
+  "active_lower_stage_runner_pids": [],
+  "driver_report": "artifacts/dev3/doublewrite-install-v2-r2.json",
+  "queued_kernel": "NOT_RUN_CANCELLED_BY_USER"
+}

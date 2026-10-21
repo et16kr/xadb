@@ -28,7 +28,9 @@ const STAGE_NAME: &str = "d3-writer-stage";
 mod bootstrap;
 #[allow(unused_imports)] // Private downstream assembly remains under test-support.
 pub(crate) use bootstrap::{
-    BootstrapError, Cause as BootstrapCause, FreshStorageSession, Phase as BootstrapPhase,
+    BootstrapError, Cause as BootstrapCause, DoublewriteInstallCause, DoublewriteInstallError,
+    DoublewriteInstallPhase, DoublewriteStorageSession, FreshStorageSession,
+    Phase as BootstrapPhase,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -317,3 +317,7 @@ DEV3의 `storage/catalog_record`, `undo_record`, `control`은 각각 [catalog](.
 
 
 DEV3 최초 저장 세션은 `storage/wal_io/bootstrap`이 기존 genesis WAL owner 안에서 extent·FILEMAP 설치를 조립한다. 공통 차단 상태는 하위 `storage/session_fence`, 읽기 lease·buffer 연결은 기존 `page_io`·`read_buffer`가 소유한다. `testing/storage_session`과 engine-worker의 `storage_session`/`support/storage_session`은 시험용 관측 경계다. `scripts/check_dev3_storage_borrows.py`, `dev3_storage_model.py`, `dev3_storage_native.py`, `test_dev3_storage_checks.py`와 두 기존 fixture 루트의 `dev3-storage-session` 입력을 실제 구현과 함께 등록한다. 기존 source fingerprint/clean export 루트와 Cargo 의존성은 유지하며, 검증 결과와 제한 범위는 [구현 기록](../implementation/dev3-implementation.md)을 따른다.
+
+DEV3 최초 doublewrite 설치는 기존 `wal_io/bootstrap`의 private child `doublewrite_install`과 고정 runtime 시험에서 구현한다. 기존 `testing/storage_session` facade와 Linux `support/storage_session` port를 재사용하고 실제 native 진입점 `tests/doublewrite_install.rs`, compiler checker `scripts/check_dev3_doublewrite_borrows.py`, 동결 입력 `tests/fixtures/dev3-doublewrite-install/`을 등록한다. 최초 설치의 제한된 실행·독립 D1 결과를 보존하며 전체 단계 완료가 아니다. 변경 없는 소스의 시험은 반복하지 않는다. 새 의존성이나 source fingerprint 루트 변경은 없다.
+
+D3-DWB-INSTALL-001의 실제 trace·유한 모델과 Linux 파일 inventory 검산은 `scripts/dev3_doublewrite_model.py`, `scripts/dev3_doublewrite_native.py`가 담당하며 고정 반례31의 실제 receipt 변형은 `scripts/dev3_doublewrite_checks.py`, 별도 자기시험은 `scripts/test_dev3_doublewrite_checks.py`, 통합 실행은 `scripts/check_dev3_leaf.py`에 연결한다. 실행 상태는 해당 구현 기록과 실제 receipt를 따른다.

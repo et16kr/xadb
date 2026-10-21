@@ -1,0 +1,41 @@
+{
+  "images": [
+    "missing_cut",
+    "duplicate_cut",
+    "missing_image",
+    "extra_image",
+    "wrong_name",
+    "wrong_length",
+    "wrong_digest"
+  ],
+  "native": [
+    "wrong_source",
+    "wrong_binary",
+    "missing_child",
+    "duplicate_child",
+    "wrong_hook_index",
+    "wrong_side",
+    "missing_hook",
+    "missed_deadline",
+    "wrong_file_hash",
+    "wrong_inode",
+    "wrong_length",
+    "old_files_changed"
+  ],
+  "observations": [
+    "missing_observation",
+    "wrong_phase",
+    "wrong_name",
+    "wrong_offset",
+    "wrong_length"
+  ],
+  "trace": [
+    "missing_event",
+    "duplicate_event",
+    "wrong_order",
+    "wrong_name",
+    "wrong_offset",
+    "wrong_length",
+    "wrong_digest"
+  ]
+}

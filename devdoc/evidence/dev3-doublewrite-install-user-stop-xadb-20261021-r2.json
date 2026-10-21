@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-21T13:32:44.361151+00:00",
+  "authorization": "User explicitly forbids future DEV0/DEV1/DEV2 tests, including currently running lower regressions and queued DEV2 kernel checks",
+  "action": "SIGINT enclosing leaf runner to terminate its owned lower regression process group and fail the driver before queued kernel execution",
+  "leaf_pid": 719337,
+  "observed_owned_processes": {
+    "719337": {
+      "ppid": 719335,
+      "pgrp": 719335,
+      "starttime": "4585597",
+      "args": [
+        "python3",
+        "-B",
+        "scripts/check_dev3_leaf.py",
+        "--with-regressions",
+        "--report",
+        "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-leaf-r2.json"
+      ]
+    },
+    "728762": {
+      "ppid": 719337,
+      "pgrp": 728762,
+      "starttime": "4625846",
+      "args": [
+        "python3",
+        "-B",
+        "scripts/check_dev2_reference.py",
+        "--with-substrate",
+        "--report",
+        "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/regression.json"
+      ]
+    },
+    "728763": {
+      "ppid": 728762,
+      "pgrp": 728762,
+      "starttime": "4625850",
+      "args": [
+        "python3",
+        "scripts/check_dev1.py",
+        "--report",
+        "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/artifacts/dev2-reference/check-5qylmb9j/dev1-regression.json"
+      ]
+    },
+    "728764": {
+      "ppid": 728763,
+      "pgrp": 728762,
+      "starttime": "4625854",
+      "args": [
+        "python3",
+        "scripts/check_dev0.py",
+        "--report",
+        "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/artifacts/dev1/check-epcz4o3o/dev0-regression.json"
+      ]
+    },
+    "729721": {
+      "ppid": 728764,
+      "pgrp": 728762,
+      "starttime": "4626513",
+      "args": [
+        "/home/et16/.rustup/toolchains/1.95.0-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--workspace",
+        "--all-features",
+        "--locked"
+      ]
+    },
+    "745370": {
+      "ppid": 729721,
+      "pgrp": 728762,
+      "starttime": "4664553",
+      "args": [
+        "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/target/debug/deps/storage_session-db4528bd3e90837b"
+      ]
+    }
+  }
+}

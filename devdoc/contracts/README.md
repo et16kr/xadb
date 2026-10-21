@@ -78,4 +78,4 @@ DEV3의 COW pack 경로는 [in-place·WAL·영속 undo 결정](../contracts/disk
 
 - [DEV3 최초 저장 세션·FILEMAP 설치](dev3-storage-session.md) — D2 수용·고정 bootstrap/소유권/fence/검증 입력; 제한 실행 결과는 현재 구현 참조
 
-- [DEV3 최초 doublewrite 설치](dev3-doublewrite-install.md) — pristine 세션 consume·XDI1·Empty 선택·고정 장애 입력의 D2 채택; 제품 실행 NOT_RUN
+- [DEV3 최초 doublewrite 설치](dev3-doublewrite-install.md) — pristine 세션 consume·XDI1·Empty 선택·고정 장애 입력; 최초 설치 구현·제한 검증과 변경 코드만 시험하는 사용자 지시

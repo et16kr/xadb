@@ -1,0 +1,126 @@
+{
+  "status": "PASS",
+  "checker_counterexamples": {
+    "trace": [
+      {
+        "case": "missing_event",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_EFFECT_CENSUS"
+      },
+      {
+        "case": "duplicate_event",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_EFFECT_CENSUS"
+      },
+      {
+        "case": "wrong_order",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_EFFECT_ORDER"
+      },
+      {
+        "case": "wrong_name",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_EFFECT_ORDER"
+      },
+      {
+        "case": "wrong_offset",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_EFFECT_ORDER"
+      },
+      {
+        "case": "wrong_length",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_EFFECT_ORDER"
+      },
+      {
+        "case": "wrong_digest",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_EFFECT_BYTES"
+      }
+    ],
+    "images": [
+      {
+        "case": "missing_cut",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_CUT_CENSUS"
+      },
+      {
+        "case": "duplicate_cut",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_CUT_CENSUS"
+      },
+      {
+        "case": "missing_image",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_DURABLE_IMAGE"
+      },
+      {
+        "case": "extra_image",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_DURABLE_IMAGE"
+      },
+      {
+        "case": "wrong_name",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_DURABLE_IMAGE"
+      },
+      {
+        "case": "wrong_length",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_DURABLE_IMAGE"
+      },
+      {
+        "case": "wrong_digest",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_DURABLE_IMAGE"
+      }
+    ],
+    "observations": [
+      {
+        "case": "missing_observation",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_OBSERVATION_CENSUS"
+      },
+      {
+        "case": "wrong_phase",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_OBSERVATION_ORDER"
+      },
+      {
+        "case": "wrong_name",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_OBSERVATION_ORDER"
+      },
+      {
+        "case": "wrong_offset",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_OBSERVATION_ORDER"
+      },
+      {
+        "case": "wrong_length",
+        "status": "EXPECTED_REJECTION",
+        "failure": "FAIL_OBSERVATION_ORDER"
+      }
+    ]
+  },
+  "trace_events": 75,
+  "observations": 96,
+  "cuts": 50,
+  "images": 308,
+  "max_images_per_cut": 32,
+  "bound_per_cut": 256,
+  "frozen_inputs": {
+    "manifest.json": "b794e062669d4e7442d1398a484dadfaafd193ab5ff9de70788a6a8177139811",
+    "effects.json": "772282407afdc00bd95309bb6bac38023bacc9376c43ae6ce0c8ec3b15e04a01",
+    "observations.json": "93350869a7a0226fa091571379e9a203c1b74158c9234228b3b950983f980dad",
+    "durable-images.json": "3a8dbc86b9bc3d62e3a61acb0985583481d70fd3bb836bef3c3148e81bbc4362",
+    "checker-negatives.json": "8a04184424648a966a9c97d6c82b3b3fa2a41e04abab3983e3724ceb8c0cb192",
+    "semantic-expectations.json": "ed2fc5c585465113b5409bfc27c12566145b423c3f9eae148f5bbc08e5ea8314"
+  },
+  "scope": "fixed prefix-loss model; no recovery or power-loss execution",
+  "source_sha256": "4e594d598c104d2ebddc34ef9e749bc432d66b0173e90b0c75605355609cfbf0",
+  "producer_binary": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/page-binary",
+  "producer_binary_sha256": "5e04ff5276b7e17098dfca653f62c13af9fa46b186db5a0f85769ef5070f4346",
+  "producer_log": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/wal_io::bootstrap::doublewrite_install.log",
+  "producer_log_sha256": "70512c17c4dac64dcf8c4a5927f28c232680f41b2af1ea5a1939e7e60a74df58"
+}

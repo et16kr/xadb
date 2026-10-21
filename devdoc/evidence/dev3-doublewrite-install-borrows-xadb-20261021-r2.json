@@ -1,0 +1,408 @@
+{
+  "scope": "private doublewrite owner baseline1/positive2/negative6 compiler probes",
+  "status": "PASS",
+  "artifact_directory": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w",
+  "cases": [
+    {
+      "name": "baseline",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/baseline",
+      "source_sha256": "4e594d598c104d2ebddc34ef9e749bc432d66b0173e90b0c75605355609cfbf0",
+      "expected_code": null,
+      "expected_line": null,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/baseline-logs/compiler.jsonl",
+      "stdout_sha256": "cce8399cc3518c8261007703ee9f9bb386d1bfb89a2ada4d1880418a57cb0e0e",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/baseline-logs/compiler.stderr",
+      "stderr_sha256": "70038e53ca19867b52588842b2ccd450a4e3a5777b8fb32a5f5953e94df11891",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": []
+    },
+    {
+      "name": "release",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/release/source",
+      "source_sha256": "68789c576a5222f65bdb0361e4c6124223a5b3793cda67fd5c9a2f760a0bc589",
+      "expected_code": null,
+      "expected_line": null,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/release/compiler.jsonl",
+      "stdout_sha256": "4824fee1e5e084082c54cda785d42c18c801fec42977eb25c7d0d970abf3dfcc",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/release/compiler.stderr",
+      "stderr_sha256": "deb93f11c85bb4bd6acc3485b5d50a7c17e5ef68d577955b7f336956484c2f85",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": []
+    },
+    {
+      "name": "shared_thread",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/shared_thread/source",
+      "source_sha256": "990b28e04ebfa1af2cc21593f1f3517d61f2d597029e8e2f6fd5ddf995a2be0d",
+      "expected_code": null,
+      "expected_line": null,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/shared_thread/compiler.jsonl",
+      "stdout_sha256": "933d49cc31b5a9fe6f0e7b65421046426c6ba2f2d78afd90de2e4fd4dc14944c",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/shared_thread/compiler.stderr",
+      "stderr_sha256": "dd4498f31ee5c3832cdd6ed5574d166aee75038e580bf1e1cd523d807de77b2c",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": []
+    },
+    {
+      "name": "fresh",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/fresh/source",
+      "source_sha256": "021b8fb415afe643ecab06f85da2d2a917bc9d269390eda20d0f51f9560164ea",
+      "expected_code": "E0382",
+      "expected_line": 8,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/fresh/compiler.jsonl",
+      "stdout_sha256": "ec945eaec70af864c84153189af8ca812ea66e194d0108d88cf6ffeef7dcf53b",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/fresh/compiler.stderr",
+      "stderr_sha256": "688f92e9d7a00e0648ca3ad787fc2e9f0a5827e10a9afae4a6e6879bcfe92743",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0382",
+          "primary_span": {
+            "byte_end": 533,
+            "byte_start": 528,
+            "column_end": 31,
+            "column_start": 26,
+            "expansion": null,
+            "file_name": "crates/engine/src/doublewrite_install_borrow_probe.rs",
+            "is_primary": true,
+            "label": "value borrowed here after move",
+            "line_end": 8,
+            "line_start": 8,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 31,
+                "highlight_start": 26,
+                "text": "    std::hint::black_box(fresh.is_fenced()); // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "active_reader",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/active_reader/source",
+      "source_sha256": "215bc8b3a93bda406ed1e153f8067708ca460d4f6e52984888100678344d548a",
+      "expected_code": "E0505",
+      "expected_line": 8,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/active_reader/compiler.jsonl",
+      "stdout_sha256": "1062c1a5e72b5758ec6d464d3496bc635501ca912f28d8652bab31309b92ef99",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/active_reader/compiler.stderr",
+      "stderr_sha256": "99006588db4124ad2939946781545719803118594607602c1848cd87767acf1a",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0505",
+          "primary_span": {
+            "byte_end": 521,
+            "byte_start": 516,
+            "column_end": 26,
+            "column_start": 21,
+            "expansion": null,
+            "file_name": "crates/engine/src/doublewrite_install_borrow_probe.rs",
+            "is_primary": true,
+            "label": "move out of `fresh` occurs here",
+            "line_end": 8,
+            "line_start": 8,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 26,
+                "highlight_start": 21,
+                "text": "    let installed = fresh.install_doublewrite(workspace).unwrap(); // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "workspace",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/workspace/source",
+      "source_sha256": "dbc98c8f7fafeb4a9aaddc302215dee79e5f31421ca61f2414b5416d678e7083",
+      "expected_code": "E0499",
+      "expected_line": 8,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/workspace/compiler.jsonl",
+      "stdout_sha256": "7322a923505bdf324f3db1031396481723061db4b7cfe8caec4eec5b4e36c38f",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/workspace/compiler.stderr",
+      "stderr_sha256": "55decf9db3887d634fe22020aa460fa4cd6f261efc06865f51fd74f4710db7f6",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0499",
+          "primary_span": {
+            "byte_end": 543,
+            "byte_start": 528,
+            "column_end": 41,
+            "column_start": 26,
+            "expansion": null,
+            "file_name": "crates/engine/src/doublewrite_install_borrow_probe.rs",
+            "is_primary": true,
+            "label": "second mutable borrow occurs here",
+            "line_end": 8,
+            "line_start": 8,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 41,
+                "highlight_start": 26,
+                "text": "    std::hint::black_box(&mut *workspace); // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "slot",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/slot/source",
+      "source_sha256": "b452b5d7f4b0baf12eda046230637a6982b180f1f17df845793e24437e9c76e0",
+      "expected_code": "E0499",
+      "expected_line": 8,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/slot/compiler.jsonl",
+      "stdout_sha256": "d79b36c6111bf594f662e5123b3fd7a352aec86a5e74f518a16c59547b497b98",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/slot/compiler.stderr",
+      "stderr_sha256": "3392b2dba3a30fab88ea05925113f300c5f4d2ea41bcbc128b56046e477af326",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0499",
+          "primary_span": {
+            "byte_end": 538,
+            "byte_start": 528,
+            "column_end": 36,
+            "column_start": 26,
+            "expansion": null,
+            "file_name": "crates/engine/src/doublewrite_install_borrow_probe.rs",
+            "is_primary": true,
+            "label": "second mutable borrow occurs here",
+            "line_end": 8,
+            "line_start": 8,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 36,
+                "highlight_start": 26,
+                "text": "    std::hint::black_box(&mut *slot); // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "installed_reader",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/installed_reader/source",
+      "source_sha256": "e0f2990945fd0a15ee386f352fc2eaebcccd1b3ca49b634cc7e1be305b459bf4",
+      "expected_code": "E0505",
+      "expected_line": 8,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/installed_reader/compiler.jsonl",
+      "stdout_sha256": "88b56ba2a985d06833d90b857bb3b6cd84eefffe8818a2dded1377d0a36ce0a7",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/installed_reader/compiler.stderr",
+      "stderr_sha256": "9f01b9cfea40ef48e2dd20c16c8e6da0fc889250426eeb24e44d661a14a6afd5",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0505",
+          "primary_span": {
+            "byte_end": 581,
+            "byte_start": 572,
+            "column_end": 19,
+            "column_start": 10,
+            "expansion": null,
+            "file_name": "crates/engine/src/doublewrite_install_borrow_probe.rs",
+            "is_primary": true,
+            "label": "move out of `installed` occurs here",
+            "line_end": 8,
+            "line_start": 8,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 19,
+                "highlight_start": 10,
+                "text": "    drop(installed); // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "raw_stage",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/raw_stage/source",
+      "source_sha256": "503d2d27cca3db95cb872de71af794fae99478950f4190e85065ecf6aae5fed9",
+      "expected_code": "E0599",
+      "expected_line": 8,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/raw_stage/compiler.jsonl",
+      "stdout_sha256": "2e932d60a6a980e1efb939e4f597dc400384c54a3d26ea959ab5cf254bf79284",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/dwb-install-borrows-c6e3t06w/raw_stage/compiler.stderr",
+      "stderr_sha256": "9f21b4eb1b781e9b7aa86659513bd9253067e2e9f2069980c84e015af428776e",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0599",
+          "primary_span": {
+            "byte_end": 547,
+            "byte_start": 538,
+            "column_end": 45,
+            "column_start": 36,
+            "expansion": null,
+            "file_name": "crates/engine/src/doublewrite_install_borrow_probe.rs",
+            "is_primary": true,
+            "label": "method not found in `DoublewriteStorageSession<'_, '_, W>`",
+            "line_end": 8,
+            "line_start": 8,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 45,
+                "highlight_start": 36,
+                "text": "    std::hint::black_box(installed.try_stage(&[])); // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "checker_sha256": {
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/scripts/check_dev3_doublewrite_borrows.py": "6ea394d426d1c319089526cd1d09653b30197822dc58cb0e34b2f2eeb8c7981d",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/scripts/check_dev3_buffer_borrows.py": "5a984bf3d94c2c39dd6d359f29e474668269c862ae3f1e73751712ca25d635c3",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/scripts/check_dev0.py": "91175fdd7c7158fb4db44390d36506f545eb160a89a47cfffde61900fbec813a",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/scripts/comm_campaign.py": "cd593fcaabc3d0770c502f773bd1a38a0794e1f3ae41165723da42574436d11f",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/tests/fixtures/dev3-doublewrite-install/compiler/manifest.json": "384cf71fa6eecb3b55511ce4b64bd36b520ca5f376f54a45f1e1b388484b0409",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/tests/fixtures/dev3-doublewrite-install/compiler/active_reader.rs": "79fb328be0d1d658a2b100dabd7f40b41d57ec1220d99b63f3e033bdf5f1105a",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/tests/fixtures/dev3-doublewrite-install/compiler/fresh.rs": "5a018737a54b4e72dcb4819766ef66461b3668000801ce9ebef09c0691c54859",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/tests/fixtures/dev3-doublewrite-install/compiler/installed_reader.rs": "8749c6ec7eeb0397ddf12e81701746976e342ffbe030ef7feaeba84818ed809e",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/tests/fixtures/dev3-doublewrite-install/compiler/raw_stage.rs": "1b3a55a8b38adfa405fd3ce7b8dcfcad4c6515c84a021ead71da5c7eac91ef5e",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/tests/fixtures/dev3-doublewrite-install/compiler/release.rs": "7527436d474bfea697a2690329fbb78393ee41f8ed4e4e231d368ab5d69ae5ce",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/tests/fixtures/dev3-doublewrite-install/compiler/shared_thread.rs": "6a432bd432b74c1a93612e33bd26e41996e9b5c637c16d96161b9f9ff38c111a",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/tests/fixtures/dev3-doublewrite-install/compiler/slot.rs": "c24aa5f0bd066af934d0ee60601bc8c677275a06e1060dab08749ffa47b73e64",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2xmuuzi7/source/tests/fixtures/dev3-doublewrite-install/compiler/workspace.rs": "0273bca9b968767ec83b10695e05e40c9bbd57a186d2cbd4fcf99f5b6c03e6a6"
+  },
+  "source_sha256": "4e594d598c104d2ebddc34ef9e749bc432d66b0173e90b0c75605355609cfbf0",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n"
+}

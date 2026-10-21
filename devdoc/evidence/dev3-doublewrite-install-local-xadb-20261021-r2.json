@@ -1,0 +1,153 @@
+{
+  "scope": "D3-DWB-INSTALL-001 development runtime10/native3/compiler9/checker31 from actual receipts/diagnostic parser and quality; no V2 or final D1",
+  "source": "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-draft-r2/source",
+  "source_sha256": "4e594d598c104d2ebddc34ef9e749bc432d66b0173e90b0c75605355609cfbf0",
+  "checks": [
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "doublewrite_install_",
+        "--locked",
+        "--offline",
+        "--",
+        "--test-threads=1",
+        "--show-output"
+      ],
+      "log": "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-draft-r2/0.log",
+      "exit_code": 0,
+      "status": "PASS",
+      "timeout_seconds": 600,
+      "timed_out": false,
+      "elapsed_seconds": 25.619327629996405,
+      "log_sha256": "b28bfa44ff0ac3b3b1ad4308d9da6469a70a0d5cf7eec83dde650d55a6f9dae8"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--test",
+        "doublewrite_install",
+        "--locked",
+        "--offline",
+        "--",
+        "--test-threads=1",
+        "--show-output"
+      ],
+      "log": "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-draft-r2/1.log",
+      "exit_code": 0,
+      "status": "PASS",
+      "timeout_seconds": 600,
+      "timed_out": false,
+      "elapsed_seconds": 51.402295599000354,
+      "log_sha256": "158f90d657232a910ac38fa19f28b0c2c85725981710e4584ab2f790b86b67e9"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "scripts/check_dev3_doublewrite_borrows.py",
+        "--artifact-parent",
+        "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-draft-r2/compiler",
+        "--report",
+        "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-draft-r2/compiler.json"
+      ],
+      "log": "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-draft-r2/2.log",
+      "exit_code": 0,
+      "status": "PASS",
+      "timeout_seconds": 600,
+      "timed_out": false,
+      "elapsed_seconds": 10.734494698001072,
+      "log_sha256": "f50a02b01188c516a00166ffc7562c2b2f3d03030d1a21a2f5aad110bff583ce"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_dev3_buffer_borrows.py"
+      ],
+      "log": "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-draft-r2/3.log",
+      "exit_code": 0,
+      "status": "PASS",
+      "timeout_seconds": 600,
+      "timed_out": false,
+      "elapsed_seconds": 0.26453068100090604,
+      "log_sha256": "0ecc23664cf6e0e8526970fd539057019ee7ce63fe454e555fe9375c1713e627"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_dev3_doublewrite_checks.py"
+      ],
+      "log": "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-draft-r2/4.log",
+      "exit_code": 0,
+      "status": "PASS",
+      "timeout_seconds": 600,
+      "timed_out": false,
+      "elapsed_seconds": 0.16451159799908055,
+      "log_sha256": "57e7af0423c2f8e7810fcc69441d12782f6240c1b2a1cfd9fef7a763926dfc14"
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "-p",
+        "xadbtest-engine-worker",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "log": "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-draft-r2/5.log",
+      "exit_code": 0,
+      "status": "PASS",
+      "timeout_seconds": 600,
+      "timed_out": false,
+      "elapsed_seconds": 4.773611126001924,
+      "log_sha256": "090ba5a6b558bfaf4ea99f2a582d86fb2713ce97c0ab236e7c4f25d13b0c60a0"
+    },
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "log": "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-draft-r2/6.log",
+      "exit_code": 0,
+      "status": "PASS",
+      "timeout_seconds": 600,
+      "timed_out": false,
+      "elapsed_seconds": 0.5649811629991746,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "status": "PASS",
+  "independent_checks": {
+    "status": "PASS",
+    "log": "/home/et16/work/xadb/artifacts/dev3/doublewrite-install-draft-r2/independent-check.log"
+  }
+}

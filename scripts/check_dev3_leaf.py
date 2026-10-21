@@ -22,15 +22,29 @@ LOADED_CHECKER_HASHES = {
     'scripts/' + name: hashlib.sha256((CHECKER_DIRECTORY / name).read_bytes()).hexdigest()
     for name in ('check_dev3_leaf.py', 'check_dev0.py', 'comm_campaign.py',
                  'dev3_wal_slot_model.py', 'dev3_wal_durable_model.py',
-                 'dev3_storage_model.py', 'dev3_storage_native.py')}
+                 'dev3_storage_model.py', 'dev3_storage_native.py',
+                 'dev3_doublewrite_model.py', 'dev3_doublewrite_native.py', 'dev3_doublewrite_checks.py')}
 from check_dev0 import check_report_paths, digest, source_fingerprint
 from comm_campaign import capture_source, identity, write_json
 from dev3_wal_slot_model import evaluate as evaluate_wal_slot
 from dev3_wal_durable_model import evaluate as evaluate_wal_durable
 from dev3_storage_model import evaluate as evaluate_storage_model
 from dev3_storage_native import evaluate as evaluate_storage_native
+from dev3_doublewrite_model import evaluate as evaluate_doublewrite_model
+from dev3_doublewrite_native import evaluate as evaluate_doublewrite_native
 
 ROOT = Path(__file__).resolve().parent.parent
+DOUBLEWRITE_INSTALL_TESTS = {
+    'doublewrite_install_literal_profiles', 'doublewrite_install_pristine_preflight',
+    'doublewrite_install_namespace_preflight', 'doublewrite_install_effect_failures',
+    'doublewrite_install_effect_unwinds', 'doublewrite_install_short_io',
+    'doublewrite_install_observation_failures', 'doublewrite_install_readback_rejects',
+    'doublewrite_install_descriptor_and_workspace', 'doublewrite_install_resource_and_drop',
+}
+DOUBLEWRITE_INSTALL_NATIVE_TESTS = {
+    'doublewrite_install_native_profiles', 'doublewrite_install_native_faults',
+    'doublewrite_install_native_sigkill',
+}
 STORAGE_TESTS = {
     'bootstrap_literals_and_geometry', 'bootstrap_descriptor_rejects_damage',
     'bootstrap_requires_fresh_namespace', 'bootstrap_installs_exact_order',
@@ -508,7 +522,7 @@ def main():
     source = session / 'source'
     report = {
         'schema_version': 1, 'date': datetime.now(timezone.utc).isoformat(),
-        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/status-home/obligation-descriptor/ownership-observation/RollbackStart-full-state-observation/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads/clean buffer + D3-M02-P01; no disk engine or S1 acceptance',
+        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/status-home/obligation-descriptor/ownership-observation/RollbackStart-full-state-observation/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads/clean buffer + fresh storage and initial Empty DWB installation + D3-M02-P01; no disk engine or S1 acceptance',
         'status': 'RUNNING', 'origin': identity(ROOT), 'artifact_directory': str(session),
         'dev3_acceptance': 'INCOMPLETE', 'checks': [], 'builds': [],
         'checker_identity_scope': 'F07 file freeze and before/after disk hashes; not bytecode attestation or protected CI',
@@ -568,6 +582,7 @@ def main():
                 'devdoc/contracts/dev3-read-buffer.md',
                 'devdoc/contracts/dev3-wal-io.md',
                 'devdoc/contracts/dev3-storage-session.md',
+                'devdoc/contracts/dev3-doublewrite-install.md',
                 'devdoc/contracts/dev3-snapshot-model.md']}
         write_json(session / 'manifest.json', report)
         report['toolchain'] = run('toolchain', ['rustc', '-Vv'])
@@ -619,6 +634,22 @@ def main():
                 or any(row.get('status') != 'PASS' for row in storage_receipt['cases'])):
             raise ValueError('storage borrow compiler checks did not verify this source')
         report['storage_borrows'] = {'report': str(storage_borrow_report), 'sha256': digest(storage_borrow_report)}
+        doublewrite_self_tests = run('doublewrite-checker-self-tests', ['python3', '-B', '-m', 'unittest',
+                                     'discover', '-s', 'scripts', '-p', 'test_dev3_doublewrite_checks.py'])
+        if not re.search(r'^Ran 4 tests in .+\n\nOK$', doublewrite_self_tests, re.M):
+            raise ValueError('doublewrite checker counterexamples did not execute')
+        doublewrite_borrow_report = session / 'doublewrite-borrows.json'
+        run('doublewrite-borrow-compiler-checks', ['python3', '-B', 'scripts/check_dev3_doublewrite_borrows.py',
+            '--artifact-parent', str(session), '--report', str(doublewrite_borrow_report)])
+        doublewrite_receipt = json.loads(doublewrite_borrow_report.read_text())
+        if (doublewrite_receipt.get('status') != 'PASS'
+                or doublewrite_receipt.get('source_sha256') != report['source_sha256']
+                or len(doublewrite_receipt.get('cases', [])) != 9
+                or {row['name'] for row in doublewrite_receipt['cases']} !=
+                   {'baseline', 'fresh', 'active_reader', 'workspace', 'slot', 'installed_reader', 'raw_stage', 'release', 'shared_thread'}
+                or any(row.get('status') != 'PASS' for row in doublewrite_receipt['cases'])):
+            raise ValueError('doublewrite borrow compiler checks did not verify this source')
+        report['doublewrite_borrows'] = {'report': str(doublewrite_borrow_report), 'sha256': digest(doublewrite_borrow_report)}
         wal_self_tests = run('wal-model-checker-self-tests', ['python3', '-B', '-m', 'unittest',
                             'discover', '-s', 'scripts', '-p', 'test_dev3_wal_models.py'])
         if not re.search(r'^Ran 3 tests in .+\n\nOK$', wal_self_tests, re.M):
@@ -644,10 +675,11 @@ def main():
                                ('catalog_record', CATALOG_TESTS), ('undo_record', UNDO_RECORD_TESTS),
                                ('control', CONTROL_TESTS), ('page_io', PAGE_IO_TESTS),
                                ('read_buffer', READ_BUFFER_TESTS), ('wal_io', WAL_IO_TESTS),
-                               ('wal_io::bootstrap', STORAGE_TESTS)]:
+                               ('wal_io::bootstrap', STORAGE_TESTS),
+                               ('wal_io::bootstrap::doublewrite_install', DOUBLEWRITE_INSTALL_TESTS)]:
             prefix = f'storage::{name}::tests::'
             # Intentional poison panics must not split libtest's named result line.
-            output_mode = '--show-output' if name in ('read_buffer', 'wal_io', 'wal_io::bootstrap') else '--nocapture'
+            output_mode = '--show-output' if name in ('read_buffer', 'wal_io', 'wal_io::bootstrap', 'wal_io::bootstrap::doublewrite_install') else '--nocapture'
             output = run(name, [page, prefix, output_mode, '--test-threads=1'])
             report[f'{name}_tests'] = check_named_tests(output, 0, prefix, expected)
             if name == 'wal_io':
@@ -667,6 +699,15 @@ def main():
                                     producer_log_sha256=digest(session / 'wal_io::bootstrap.log'))
                 write_json(model_report, model_result)
                 report['storage_model'] = {'report': str(model_report), 'sha256': digest(model_report)}
+            if name == 'wal_io::bootstrap::doublewrite_install':
+                model_report = session / 'doublewrite-model.json'
+                model_result = evaluate_doublewrite_model(output, source)
+                model_result.update(source_sha256=report['source_sha256'], producer_binary=page,
+                                    producer_binary_sha256=digest(Path(page)),
+                                    producer_log=str(session / f'{name}.log'),
+                                    producer_log_sha256=digest(session / f'{name}.log'))
+                write_json(model_report, model_result)
+                report['doublewrite_model'] = {'report': str(model_report), 'sha256': digest(model_report)}
         scalar = build('xadb-foundation', ['--test', 'key_buffer'], 'key_buffer', 'scalar-key')
         output = run('scalar-key', [scalar, '--nocapture', '--test-threads=1'])
         report['scalar_key_tests'] = check_named_tests(output, 0, '', SCALAR_KEY_TESTS)
@@ -691,7 +732,9 @@ def main():
                 ('wal-io-native', 'xadbtest-engine-worker', ['--test', 'genesis_wal'], 'genesis_wal',
                  '', '', WAL_IO_NATIVE_TESTS),
                 ('storage-native', 'xadbtest-engine-worker', ['--test', 'storage_session'], 'storage_session',
-                 '', '', STORAGE_NATIVE_TESTS)]:
+                 '', '', STORAGE_NATIVE_TESTS),
+                ('doublewrite-native', 'xadbtest-engine-worker', ['--test', 'doublewrite_install'], 'doublewrite_install',
+                 '', '', DOUBLEWRITE_INSTALL_NATIVE_TESTS)]:
             binary = build(package, target_args, target_name, name)
             # Keep witness prints out of libtest's in-progress `test ...` line.
             # --show-output preserves successful-test witnesses after each result.
@@ -705,6 +748,14 @@ def main():
                                      producer_log_sha256=digest(session / 'storage-native.log'))
                 write_json(native_report, native_result)
                 report['storage_native'] = {'report': str(native_report), 'sha256': digest(native_report)}
+            if name == 'doublewrite-native':
+                native_report = session / 'doublewrite-native.json'
+                native_result = evaluate_doublewrite_native(output, source, session / 'storage-native-artifacts',
+                                                            binary, report['source_sha256'])
+                native_result.update(producer_log=str(session / 'doublewrite-native.log'),
+                                     producer_log_sha256=digest(session / 'doublewrite-native.log'))
+                write_json(native_report, native_result)
+                report['doublewrite_native'] = {'report': str(native_report), 'sha256': digest(native_report)}
         model = build('xadbtest-reference', ['--test', 'dev3_snapshot_model'],
                       'dev3_snapshot_model', 'model')
         output = run('model', [model, MODEL_TEST, '--exact', '--nocapture'],

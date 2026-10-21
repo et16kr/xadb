@@ -29,53 +29,6 @@ const DATA: &str = "d3-data-0000000100000001";
 const BANK0: &str = "d3-filemap-0";
 const BANK1: &str = "d3-filemap-1";
 
-fn literal(id: u32, name: &str) -> Vec<u8> {
-    fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join(format!(
-        "../../engine/tests/fixtures/dev3-storage-session/literal/profile{id}-{name}.bin"
-    )))
-    .unwrap()
-}
-fn expected_objects(db: [u8; 16], id: u32) -> BTreeMap<String, Vec<u8>> {
-    // Independent literal offset substitution. No engine control/page encoder.
-    let (profile, wal, writer) = expected_controls(db, id);
-    let mut allocation = literal(id, "allocation");
-    allocation[8..24].copy_from_slice(&db);
-    seal(&mut allocation);
-    let mut chunk = literal(id, "chunk");
-    chunk[16..32].copy_from_slice(&db);
-    seal(&mut chunk);
-    let mut root = literal(id, "root");
-    root[16..32].copy_from_slice(&db);
-    root[224..256].copy_from_slice(&content_digest(&chunk));
-    seal(&mut root);
-    let mut selector = literal(id, "FILEMAP");
-    selector[8..24].copy_from_slice(&db);
-    selector[48..80].copy_from_slice(&content_digest(&profile));
-    selector[112..144].copy_from_slice(&content_digest(&root));
-    seal(&mut selector);
-    let mut descriptor = literal(id, "d3-bootstrap");
-    descriptor[16..32].copy_from_slice(&db);
-    descriptor[48..80].copy_from_slice(&content_digest(&profile));
-    descriptor[176..208].copy_from_slice(&content_digest(&root));
-    descriptor[208..240].copy_from_slice(&content_digest(&allocation));
-    seal(&mut descriptor);
-    let mut data = vec![0; 1048576];
-    data[..16384].copy_from_slice(&allocation);
-    let mut bank0 = vec![0; 2113536];
-    bank0[..320].copy_from_slice(&root);
-    bank0[16384..16640].copy_from_slice(&chunk);
-    BTreeMap::from([
-        ("LOCK".into(), Vec::new()),
-        ("d3-profile".into(), profile),
-        (WAL.into(), wal),
-        ("WRITER".into(), writer),
-        ("d3-bootstrap".into(), descriptor),
-        (DATA.into(), data),
-        (BANK0.into(), bank0),
-        (BANK1.into(), vec![0; 2113536]),
-        ("FILEMAP".into(), selector),
-    ])
-}
 fn plan() -> Vec<(&'static str, &'static str, u64, usize)> {
     let mut out = Vec::new();
     for (name, length, stride) in [
@@ -111,7 +64,7 @@ fn plan() -> Vec<(&'static str, &'static str, u64, usize)> {
     out
 }
 fn expected_prefix(db: [u8; 16], completed: usize) -> BTreeMap<String, Vec<u8>> {
-    let objects = expected_objects(db, 1);
+    let objects = expected_storage_objects(db, 1);
     let mut out = BTreeMap::from([("LOCK".into(), Vec::new())]);
     for (kind, name, offset, length) in plan().into_iter().take(completed) {
         let selected = match name {
@@ -253,7 +206,7 @@ fn bootstrap_native_profiles_and_lease() {
         let prefix = session.prefix().unwrap();
         assert_ne!(prefix.database, [0; 16]);
         assert_eq!(trace.lock().unwrap().entropy, Some(prefix.database));
-        let mut expected = expected_objects(prefix.database, id);
+        let mut expected = expected_storage_objects(prefix.database, id);
         assert!(inventory(&path) == expected);
         let before = file_manifest(&path);
         let port = LinuxDirectory::open_existing(&path).unwrap();

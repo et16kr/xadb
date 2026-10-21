@@ -915,16 +915,17 @@
         "implementation_ref": "dev3-implementation.md",
         "page_contract_ref": "dev3-page-format.md",
         "partial_model_ref": "dev3-snapshot-model.md",
-        "scope": "Fixed storage expressions, descriptor/profile-bound inventory, full-state RollbackStart observation and caller-owned frame/status-page production, selector/metadata ports, selected-page reads, bounded clean buffer pins/clock and fresh genesis physical WAL append/sync, initial extent/FILEMAP installation and borrowed reader/WAL shared fence plus M02-P01; dirty buffer, page writes, tag2 append, historical intent nonreuse, reservation restoration, live semantic application, ordinary reopen/recovery and full disk-path acceptance remain incomplete",
+        "scope": "Fixed storage expressions, descriptor/profile-bound inventory, full-state RollbackStart observation and caller-owned frame/status-page production, selector/metadata ports, selected-page reads, bounded clean buffer pins/clock and fresh genesis physical WAL append/sync, initial extent/FILEMAP installation and borrowed reader/WAL shared fence, initial XDI1/Empty DWB installation plus M02-P01; dirty buffer, page writes, tag2 append, historical intent nonreuse, reservation restoration, live semantic application, ordinary reopen/recovery and full disk-path acceptance remain incomplete",
         "status": "LOCAL_VERIFIED_LIMITED_SCOPE",
-        "evidence_ref": "dev3-storage-session-leaf-xadb-20261021-r1.json",
+        "evidence_ref": "dev3-doublewrite-install-scoped-xadb-20261021-r2.json",
         "page_io_contract_ref": "dev3-page-io.md",
         "status_home_contract_ref": "dev3-status-home.md",
         "obligation_contract_ref": "dev3-obligation-format.md",
         "ownership_contract_ref": "dev3-ownership-format.md",
         "read_buffer_contract_ref": "dev3-read-buffer.md",
         "wal_io_contract_ref": "dev3-wal-io.md",
-        "storage_session_contract_ref": "dev3-storage-session.md"
+        "storage_session_contract_ref": "dev3-storage-session.md",
+        "doublewrite_install_contract_ref": "dev3-doublewrite-install.md"
       }
     },
     {
