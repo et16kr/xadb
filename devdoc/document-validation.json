@@ -1,21 +1,21 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-10-18T23:37:53.454748+09:00",
+  "date": "2026-10-22T01:10:49.620384+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 55,
+      "links": 109,
       "duplicate_ids": 0,
-      "sha256": "cf3661b844547d6ed626306ffd38aa0279f227a83a3bd8c813df7e95722848c4"
+      "sha256": "d3315e95c5bf0bd4673d146d2a8625bc720ed4940f3386af2c8d6ea96c79df72"
     },
     {
       "file": "devdoc/contracts/README.md",
-      "links": 24,
+      "links": 77,
       "duplicate_ids": 0,
-      "sha256": "ef7cca8e5376afa9512e5d033b709649e70a544950bc56e5565b1dcac6a846d1"
+      "sha256": "d7315e5d9d333a7d41b6c87b59861debe2e578ba3991c2c6d3a9d026401ee88a"
     },
     {
       "file": "devdoc/contracts/ai-performance-engineering.md",
@@ -36,22 +36,328 @@
       "sha256": "66a7f5b00b6882e2bc0327be9689779060a9e76805ec0ac2f51e508cbba58001"
     },
     {
-      "file": "devdoc/contracts/dev4-sql-design.md",
-      "links": 28,
+      "file": "devdoc/contracts/dev3-allocation-format.md",
+      "links": 11,
       "duplicate_ids": 0,
-      "sha256": "427ce2c26d94c49f7e994b40479384a2d7251e4703a41854d4de17b550b99b84"
+      "sha256": "e0127c91a67ca2dfd215332634f831c9b2e968c1b4f6bcf92711e6519801521e"
+    },
+    {
+      "file": "devdoc/contracts/dev3-allocation-reservation.md",
+      "links": 8,
+      "duplicate_ids": 0,
+      "sha256": "ee14fa00fcd641cf06807fe058c61f5d6222b8e02c8160aea3c3c83b1da986a3"
+    },
+    {
+      "file": "devdoc/contracts/dev3-catalog-format.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "7edfa2d594c7518b07abeb8474ef4c4f4a2f42160288657825896607f01608ce"
+    },
+    {
+      "file": "devdoc/contracts/dev3-control-format.md",
+      "links": 14,
+      "duplicate_ids": 0,
+      "sha256": "d68d24493c64f39cad7035a66a0b0e33854a7ef1e2b7ebcf80f0cf952b32acf3"
+    },
+    {
+      "file": "devdoc/contracts/dev3-doublewrite-format.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "4c46df90d03c47167de5d9918d1d4a5b41f231250efd1fa098864cb7256ca295"
+    },
+    {
+      "file": "devdoc/contracts/dev3-doublewrite-install.md",
+      "links": 10,
+      "duplicate_ids": 0,
+      "sha256": "2227136d2f16ce27ea63b6c3ad48ce329290dc461aaaff22305f0a81d45409cb"
+    },
+    {
+      "file": "devdoc/contracts/dev3-doublewrite-model.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "b496f51ca7b9080149c6769d102301b402dca0c67c3f1e59b3b9ca92262875cc"
+    },
+    {
+      "file": "devdoc/contracts/dev3-key-format.md",
+      "links": 3,
+      "duplicate_ids": 0,
+      "sha256": "234432e7e09e0d4a878db3726bdbf9f76f698c775783e6baf7639ddd9b13cf5e"
+    },
+    {
+      "file": "devdoc/contracts/dev3-obligation-format.md",
+      "links": 24,
+      "duplicate_ids": 0,
+      "sha256": "88df442bb4e9caf29abe7c3719f84e0a339aaf9cb1d9c097c8e2ea183d6c0643"
+    },
+    {
+      "file": "devdoc/contracts/dev3-overflow-format.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "05d231c4bfa640dc78d683d02332541dd164b49cc3b27ca63d2212c10b9dba91"
+    },
+    {
+      "file": "devdoc/contracts/dev3-ownership-format.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "d2df0f79140d931085da3f4e064a8445659ede9f8ae8dc3952154c32a5f234d5"
+    },
+    {
+      "file": "devdoc/contracts/dev3-page-format.md",
+      "links": 2,
+      "duplicate_ids": 0,
+      "sha256": "145acea1f16da02d6868d0cc38e05f696c3b1b18aed356e8842e11e4d01e5fab"
+    },
+    {
+      "file": "devdoc/contracts/dev3-page-io.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "0002d7b251b981a4ee3e3b159bc7ae99a2700b0957fb466d7b775933608193cf"
+    },
+    {
+      "file": "devdoc/contracts/dev3-progress-model.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "1c08f98c6a7c1c7ce716bac9ec539b4ae223b9ba0de5dd1dd939f318ccd99a95"
+    },
+    {
+      "file": "devdoc/contracts/dev3-read-buffer.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "6e87a0efe26344de942a8f0207258efd9b5eb2d247667ce2f3977db3ad9587ad"
+    },
+    {
+      "file": "devdoc/contracts/dev3-recovery-model.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "538c3da2fb359a790d52757665f6dc86787837348b198fb1a494a57f245047b6"
+    },
+    {
+      "file": "devdoc/contracts/dev3-reference-format.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "cfe3aa659eb6f24cb464197a6860b8e1802c917367faf8be06b7c4e77577cb63"
+    },
+    {
+      "file": "devdoc/contracts/dev3-reservation-model.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "c34f1893694cef8db111487641662b40a7219bd5584f2e8c47fa2d09856c21e3"
+    },
+    {
+      "file": "devdoc/contracts/dev3-resource-bounds.md",
+      "links": 20,
+      "duplicate_ids": 0,
+      "sha256": "6028076e79bd328bfdf6e876f2ebc775037c30dcd42e0d3b0635f2935b65c933"
+    },
+    {
+      "file": "devdoc/contracts/dev3-row-format.md",
+      "links": 9,
+      "duplicate_ids": 0,
+      "sha256": "aa4c88a461ef0f1f771c47eef16c6a644d6627a119325bfbb03874c9f3c25f79"
+    },
+    {
+      "file": "devdoc/contracts/dev3-selector-port.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "fe6a7ac38e343d0aaf683e674296642cce8871083d4865d432d1afa96a130d51"
+    },
+    {
+      "file": "devdoc/contracts/dev3-snapshot-model.md",
+      "links": 5,
+      "duplicate_ids": 0,
+      "sha256": "f0d4cc2484b60fd3830464271a7a72c453f2e5615b856a27c7a9fb1e03cd7e3a"
+    },
+    {
+      "file": "devdoc/contracts/dev3-status-home.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "2e65df7184d6a0d8ad0f87f65cf3ead2bf35fe40e4e5e5e2ed2ffdbeba5d7b6b"
+    },
+    {
+      "file": "devdoc/contracts/dev3-storage-session.md",
+      "links": 14,
+      "duplicate_ids": 0,
+      "sha256": "382210af6b750de6fefa0ca5103c7a0dec9997e0e21c6dd2f95c260e3994b7a8"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-01-formats.md",
+      "links": 25,
+      "duplicate_ids": 0,
+      "sha256": "3080a781f576fc00aee57f3cc8b7eddb04b69c3286f82154f0038729392223a3"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-02-files-reads.md",
+      "links": 11,
+      "duplicate_ids": 0,
+      "sha256": "ee5963fb35b2050c05d7ffc93584c47467a831a5eda29c5b2709b9bd6993cffe"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-03-allocation.md",
+      "links": 11,
+      "duplicate_ids": 0,
+      "sha256": "969c90a36b31334bb21369b0e97f8e99752446af39ff9febfc3d1b38c9941adc"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-04-wal.md",
+      "links": 9,
+      "duplicate_ids": 0,
+      "sha256": "aa358c68e744768e426ae15ff283786ff945f9b2b7f047e6cc9f28075922eb93"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-05-buffer-flush.md",
+      "links": 23,
+      "duplicate_ids": 0,
+      "sha256": "cd9a3b050980c2bf61dea1093fb9f28745e8df387f5096cee66ac486700721f7"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-06-tree-rows.md",
+      "links": 24,
+      "duplicate_ids": 0,
+      "sha256": "fae77bc2cee18baf21d1fe93232fe9bea25b74c5c42dbd1ea8c7e9b0741d71c6"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-07-indexes.md",
+      "links": 16,
+      "duplicate_ids": 0,
+      "sha256": "fe0fa91e8571aaf5ae3993f611f7337b16b3f4f6c22736fd89d33b9c0729b8a3"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-08-catalog-ddl.md",
+      "links": 7,
+      "duplicate_ids": 0,
+      "sha256": "df2fe7d6875d489b66925b475b60f9104b69eef91fbf376999d08177313a412c"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-09-undo-rollback.md",
+      "links": 23,
+      "duplicate_ids": 0,
+      "sha256": "75fa36115af4a38d708f100699358b026c5cd4c83b3c49af60f315f54e740d42"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-10-concurrency.md",
+      "links": 20,
+      "duplicate_ids": 0,
+      "sha256": "22e141b4e119dc16a37f374cc2d5b9329e8619fdaead4576028d9755b452229d"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-11-commit.md",
+      "links": 20,
+      "duplicate_ids": 0,
+      "sha256": "d5fc612662f1c12112d306212c5b640787f984774ccc9ea4f0188cb0098db669"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-12-recovery.md",
+      "links": 10,
+      "duplicate_ids": 0,
+      "sha256": "27606f1b78e948596003ebac28f6c6eec99a01decab4a8a2783a18000e836086"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-13-checkpoint.md",
+      "links": 17,
+      "duplicate_ids": 0,
+      "sha256": "244369ce25bff05c7aa16cdf2b89031dcee9413b7533a3f24588826d17d9aedf"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-14-reclamation.md",
+      "links": 19,
+      "duplicate_ids": 0,
+      "sha256": "a2e2a311633746b03874270c8f999cdc3201faeeb16245a50c2f5c5cb5e0067a"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-15-backup-integrity.md",
+      "links": 21,
+      "duplicate_ids": 0,
+      "sha256": "eb4707bfe0b9beb5150038d86275038ea9cfd45a9056ac864b8bfaaa5e897231"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-16-qualification.md",
+      "links": 7,
+      "duplicate_ids": 0,
+      "sha256": "634a076617e96261d866b52a146ed1f05daf5d6a2d0157513b61c377c3491679"
+    },
+    {
+      "file": "devdoc/contracts/dev3-task-designs.md",
+      "links": 26,
+      "duplicate_ids": 0,
+      "sha256": "52067784ffb0df35f691ce735bc04ed7858d967ec716df695f4552f8487a9aac"
+    },
+    {
+      "file": "devdoc/contracts/dev3-transaction-format.md",
+      "links": 10,
+      "duplicate_ids": 0,
+      "sha256": "a1bdd346fa8369c8f3f110e122fc2e3850980fef6b12aaa6a5d61eb663ddde6e"
+    },
+    {
+      "file": "devdoc/contracts/dev3-tree-format.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "eec1da65d0a939d262c3f0ec988d73bcb8f9a99162fc59748286d59dd9790394"
+    },
+    {
+      "file": "devdoc/contracts/dev3-undo-format.md",
+      "links": 13,
+      "duplicate_ids": 0,
+      "sha256": "adb5791c6f87b2cec6558ff4c67a0d0fbd32165fbb2a0d2cd379f57348df482c"
+    },
+    {
+      "file": "devdoc/contracts/dev3-undo-model.md",
+      "links": 4,
+      "duplicate_ids": 0,
+      "sha256": "1ef4165e3e407f1e5a6be567f4ba185c1885b08f501287c75d83c3c252ad795a"
+    },
+    {
+      "file": "devdoc/contracts/dev3-wal-format.md",
+      "links": 9,
+      "duplicate_ids": 0,
+      "sha256": "a70d61590a020399cdd33d21b0c6b4ee42bd4aec6a73ec4ad4040ed9a54698c8"
+    },
+    {
+      "file": "devdoc/contracts/dev3-wal-io.md",
+      "links": 7,
+      "duplicate_ids": 0,
+      "sha256": "9ea9df81eeb7f76965ba22534ff0081e0d1bb6c42244081d2687c2680e68c119"
+    },
+    {
+      "file": "devdoc/contracts/dev4-sql-design.md",
+      "links": 33,
+      "duplicate_ids": 0,
+      "sha256": "f10f2a72555a784e705ec867d3e2c1b57a5934cc8d8a34683219c71cfc7a2001"
     },
     {
       "file": "devdoc/contracts/dev5-server-design.md",
-      "links": 15,
+      "links": 19,
       "duplicate_ids": 0,
-      "sha256": "889b36bbc25eeb9b65719883fc14b69e5b1b97616680f3cccca8eee2ecc30671"
+      "sha256": "444a672a319e25a37cfd25dfa724bfd3d775a79f3edddefda86fb917967568b1"
+    },
+    {
+      "file": "devdoc/contracts/dev6-client-design.md",
+      "links": 13,
+      "duplicate_ids": 0,
+      "sha256": "996dd73ddca7593c63d88adaa293d5cf5d2db6a17ef8c41b02adc067f846616a"
+    },
+    {
+      "file": "devdoc/contracts/dev7-sql-extensions-design.md",
+      "links": 19,
+      "duplicate_ids": 0,
+      "sha256": "d21d890628f0b6ea105fe7c1ab0d50a05d626d350a1cae0ddd2f83e2f51226aa"
+    },
+    {
+      "file": "devdoc/contracts/dev8-operations-design.md",
+      "links": 12,
+      "duplicate_ids": 0,
+      "sha256": "524e9195090f0f6b77b5055f5b2d10d5568b7a99983162ff97fe73b577d5c610"
+    },
+    {
+      "file": "devdoc/contracts/dev9-qualification-design.md",
+      "links": 22,
+      "duplicate_ids": 0,
+      "sha256": "add85b47fe31535a799b5b895a6330588fee90c14b07c6b15063faff1a7f45ca"
     },
     {
       "file": "devdoc/contracts/disk-storage-design.md",
-      "links": 29,
+      "links": 39,
       "duplicate_ids": 0,
-      "sha256": "d9aa86617b88b18cf2011f4796d758ee38d701f84bc8f64ad948a3ba72d898ae"
+      "sha256": "f83140b1f5f0d4899ead85905346415cbcfdf77b25d8d7c51fcb7c3c7344ea01"
     },
     {
       "file": "devdoc/contracts/implementation-contracts.md",
@@ -61,21 +367,27 @@
     },
     {
       "file": "devdoc/contracts/recovery-logging-design.md",
-      "links": 24,
+      "links": 26,
       "duplicate_ids": 0,
-      "sha256": "bf3d233ad3bc30926619236b9b380e5ff56260ce6d7187b0c56fbe35391c7c2a"
+      "sha256": "c91aeb3649e97d4eb7ae39125d0bf1a8d5f0ef8ce6a661e1d65e84a46f40aa87"
     },
     {
       "file": "devdoc/contracts/replication-undo-analysis.md",
-      "links": 2,
+      "links": 4,
       "duplicate_ids": 0,
-      "sha256": "c30416903295cc9661b0e422adc8019cc03d37586758f7a406ae16ad4bc02c25"
+      "sha256": "ae1854bb1c534f977fdc1f03d7e77581f2fb4a158f38ee4d97a64ead316f5b3f"
     },
     {
       "file": "devdoc/evidence/README.md",
-      "links": 34,
+      "links": 160,
       "duplicate_ids": 0,
-      "sha256": "c266fbb324fc9ff2174a802630e14f11a8f84a6fb5306ad340a97ddb69ac4dba"
+      "sha256": "98bfe2b37637178c774f8bbc0ea6d8236ca7518bf8551cc25167a871ebf61d4b"
+    },
+    {
+      "file": "devdoc/evidence/comm-code-review-20261019.md",
+      "links": 6,
+      "duplicate_ids": 0,
+      "sha256": "320f9ca085b0c7f6c9bd2feb0640994fedf99131889fa784cb7e063723e93b35"
     },
     {
       "file": "devdoc/evidence/comm-source-research.md",
@@ -84,22 +396,28 @@
       "sha256": "039f09d2d51ac0eb8ff952da77bb6114f100191e46b706172ce6f1c92018301c"
     },
     {
-      "file": "devdoc/evidence/dev3-dev4-architecture-review.md",
-      "links": 9,
+      "file": "devdoc/evidence/commercial-extensibility-research.md",
+      "links": 14,
       "duplicate_ids": 0,
-      "sha256": "2a6c35b25895744d16b6488c7cff7e3dd0142f137766d9698bab5e3a6dd828f9"
+      "sha256": "de1500e71fe65812e294e8c1541951589371ee8919b4e3f57c8709bc366b47ef"
+    },
+    {
+      "file": "devdoc/evidence/dev3-dev4-architecture-review.md",
+      "links": 7,
+      "duplicate_ids": 0,
+      "sha256": "6bead8f96c9e0167893bd5138155876ef80700cf7a4abd950f1a38ca38039a0e"
     },
     {
       "file": "devdoc/evidence/dev3-source-research.md",
       "links": 3,
       "duplicate_ids": 0,
-      "sha256": "1f063e81870121a5cfdc297f3cc4e49b45267acf2c471ee12f408ab72a989bd6"
+      "sha256": "2d58b1d0401a6cde3158023613019e443d98609aa23aa47f5cd163966531181d"
     },
     {
       "file": "devdoc/evidence/dev3-wal-undo-research.md",
-      "links": 11,
+      "links": 9,
       "duplicate_ids": 0,
-      "sha256": "223dfa25ad5717d65ab0b847794c7a1de8c695cfbf83af002d3c0654ebaf6c73"
+      "sha256": "366414bd39eff914d666cb165d710d9179c1b0bd94fa864b18fe3cf91e410a04"
     },
     {
       "file": "devdoc/evidence/dev4-source-research.md",
@@ -118,6 +436,42 @@
       "links": 15,
       "duplicate_ids": 0,
       "sha256": "f3afcfc8dad60c32caac5386a6c1b6516be2630b03b63d9a98df78ca3f312eeb"
+    },
+    {
+      "file": "devdoc/evidence/dev6-source-research.md",
+      "links": 45,
+      "duplicate_ids": 0,
+      "sha256": "e8bd1ba24855c3d90199c4b7006ae324c5631d5d21fd82de5430c2893b75d302"
+    },
+    {
+      "file": "devdoc/evidence/dev7-review-002.md",
+      "links": 7,
+      "duplicate_ids": 0,
+      "sha256": "ed7cc486f60778f549871659728d484b289fb13717f61b9824176ae010565b7d"
+    },
+    {
+      "file": "devdoc/evidence/dev7-source-research.md",
+      "links": 15,
+      "duplicate_ids": 0,
+      "sha256": "95a29beeb26f720799ab8a1e33a33795e10176348c7516b3c40bc66d6c2098a6"
+    },
+    {
+      "file": "devdoc/evidence/dev8-review-002.md",
+      "links": 22,
+      "duplicate_ids": 0,
+      "sha256": "a945ba03e5a3e8b9eea50f2d1d76cf650dfda5498d1cb7ec2249646aad3471e2"
+    },
+    {
+      "file": "devdoc/evidence/dev8-source-research.md",
+      "links": 17,
+      "duplicate_ids": 0,
+      "sha256": "e11fb38cb5876d72619ed76fb6bd2a4def788001f9c6d8fa21ad27476036882d"
+    },
+    {
+      "file": "devdoc/evidence/dev9-source-research.md",
+      "links": 29,
+      "duplicate_ids": 0,
+      "sha256": "52d10a0d19d0fabdb994c700a7b8ad9ae868172d02dfcdb9ab87e1642639e097"
     },
     {
       "file": "devdoc/examples/AGENT_WORKFLOW.example.md",
@@ -145,15 +499,15 @@
     },
     {
       "file": "devdoc/implementation/README.md",
-      "links": 19,
+      "links": 46,
       "duplicate_ids": 0,
-      "sha256": "3f0a1eb87ee78fa668d6e9d61fc77460037688397f5669789064e2aac902148a"
+      "sha256": "f7edf0fe5a9101d31b2110240891bffc10214c39b7ff49c0686af48cb80a246e"
     },
     {
       "file": "devdoc/implementation/comm-implementation.md",
-      "links": 18,
+      "links": 19,
       "duplicate_ids": 0,
-      "sha256": "6e1ef0dcd7f710aeb09e4ce71c3e6357bdaac824853ae6b5aa7a44e74324d8ab"
+      "sha256": "507cdd7872eb633fdb4f975959a886e2f98d3f3173856b81636dac88beeb77d3"
     },
     {
       "file": "devdoc/implementation/dev0-implementation.md",
@@ -169,15 +523,21 @@
     },
     {
       "file": "devdoc/implementation/dev2-implementation.md",
-      "links": 13,
+      "links": 39,
       "duplicate_ids": 0,
-      "sha256": "b789993b1c8c0e7df6a901c9a85a4b7ca4112600b291f7a76c2dae72da60746d"
+      "sha256": "440ce5b76149ac841ad989817bbb7189479eb264377c93893b6827d6876cd5a6"
+    },
+    {
+      "file": "devdoc/implementation/dev3-implementation.md",
+      "links": 119,
+      "duplicate_ids": 0,
+      "sha256": "a1dfeb317d5d8d6eae3c3f3edaa079cd9189afd3c5939a1c2435b0db8aa79f21"
     },
     {
       "file": "devdoc/plans/README.md",
-      "links": 20,
+      "links": 28,
       "duplicate_ids": 0,
-      "sha256": "4c404231eb3809777affcc08270f5f26bd6afc4269e932b6b65e643b78022539"
+      "sha256": "dbf4ac50c35b5c6ea8c2df0e628b97d67aed0626f6bb3183e6216db188560b76"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",
@@ -189,7 +549,7 @@
       "file": "devdoc/plans/comm-implementation-plan.md",
       "links": 8,
       "duplicate_ids": 0,
-      "sha256": "699f4873d42044743f34a77f2556d9dd0085f7cac77ae6fc971a7fe799088926"
+      "sha256": "3617a11a6a849469fe98805f68419c83b421b17a1e55bdea4f67dfb2c081bd56"
     },
     {
       "file": "devdoc/plans/dev2-implementation-plan.md",
@@ -199,33 +559,63 @@
     },
     {
       "file": "devdoc/plans/dev3-implementation-plan.md",
-      "links": 23,
+      "links": 81,
       "duplicate_ids": 0,
-      "sha256": "cd3dca51e047db34b26a4bc85ea32438093fcdccef468e3234da49c17af82ff8"
+      "sha256": "1f126b12c8f0b338dab0b3ee4491ae8e2a1779ac80a80a332f1ead4b115f6b34"
+    },
+    {
+      "file": "devdoc/plans/dev3-test-plan.md",
+      "links": 38,
+      "duplicate_ids": 0,
+      "sha256": "15f06f18182232986b55a00b9c25b280f005d3f586c76552c4087ccebc3ab3f4"
     },
     {
       "file": "devdoc/plans/dev4-implementation-plan.md",
-      "links": 11,
+      "links": 13,
       "duplicate_ids": 0,
-      "sha256": "1a9f9ff9a2298910f2392f7ee28e7f79740ee12cc65aea45447b0143618a3ff9"
+      "sha256": "f3c4216ac962ebb84957e90cbe5ce591d019c6bb57cec8b99f297c06ac86c070"
     },
     {
       "file": "devdoc/plans/dev5-implementation-plan.md",
-      "links": 5,
+      "links": 7,
       "duplicate_ids": 0,
-      "sha256": "7df0624b2443e99af79d8e87fc747a4f4a4874ba61f84a2c2703b2008e5b68c4"
+      "sha256": "22d05738325cf48c214f66ad726b26d967ce561937c3d0ce18e4828a0b76c3b4"
+    },
+    {
+      "file": "devdoc/plans/dev6-implementation-plan.md",
+      "links": 11,
+      "duplicate_ids": 0,
+      "sha256": "46335ef4f07e46b6cedd6240c97c26034d8a7ca6d3d881a7ba10216338bffebf"
+    },
+    {
+      "file": "devdoc/plans/dev7-implementation-plan.md",
+      "links": 72,
+      "duplicate_ids": 0,
+      "sha256": "aa531cf3ae767d2b6ba24eb928c98238c6e0b795108b8825b59d62f66c23229a"
+    },
+    {
+      "file": "devdoc/plans/dev8-implementation-plan.md",
+      "links": 38,
+      "duplicate_ids": 0,
+      "sha256": "2b158ddcac81b68526c141c3d126506a296006bba3a13de5cedf789514564138"
+    },
+    {
+      "file": "devdoc/plans/dev9-implementation-plan.md",
+      "links": 13,
+      "duplicate_ids": 0,
+      "sha256": "9428e8a0cd3d2698e8646a2dcd7cad30705a432b44c3becd4193f35fd6192933"
     },
     {
       "file": "devdoc/plans/development-stages.md",
-      "links": 22,
+      "links": 32,
       "duplicate_ids": 0,
-      "sha256": "ce1be767590ee13ec6513ca914ff7874d7abbb992355b83eb16eda0310cd1bdb"
+      "sha256": "3fad6ecf2436ce660ceda2d5be7cdf14721b9a8db8d7a5369caa137728ce2a9a"
     },
     {
       "file": "devdoc/plans/feature-design-inventory.md",
-      "links": 9,
+      "links": 17,
       "duplicate_ids": 0,
-      "sha256": "5dc9c8ae0214d1daefa7565a00f6eccaa89babadb0e608c38b0123cd5b3657c6"
+      "sha256": "c707bf25819d541464daa32c31c9abeb749c44837051c39ce3404eb3eeea9fd8"
     },
     {
       "file": "devdoc/plans/phase1-product-baseline.md",
@@ -235,9 +625,9 @@
     },
     {
       "file": "devdoc/plans/product-requirements.md",
-      "links": 3,
+      "links": 5,
       "duplicate_ids": 0,
-      "sha256": "fcfaa6c4107f0aa601fe7ab41f04b5d6b67ee03f685776d382c6603e69c700af"
+      "sha256": "c6338e2ee76a2752cd2669d30c4dc67a865f926f9bb1e052e1dffec4f5ba7370"
     },
     {
       "file": "devdoc/plans/project-direction.md",
@@ -271,9 +661,9 @@
     },
     {
       "file": "devdoc/policies/documentation-policy.md",
-      "links": 6,
+      "links": 7,
       "duplicate_ids": 0,
-      "sha256": "0d3523df2ccb08e30d6da0fb75b1420a7136654d095ec385a79d4c19c4ec7c14"
+      "sha256": "8723afdcc8706f0b0bc85ecedc6bf5be8179dce015a2836c04806d747e4f0780"
     },
     {
       "file": "devdoc/policies/parallel-development-policy.md",
@@ -283,21 +673,27 @@
     },
     {
       "file": "devdoc/policies/repository-build-plan.md",
-      "links": 23,
+      "links": 38,
       "duplicate_ids": 0,
-      "sha256": "ef2a12c31c5d702fb0018eb294a5c7913adc0c924821a73d1e40e1813a1470c0"
+      "sha256": "0aac44b4ff6a925b53631c1b3dd78b2efcfebe91482468ce66f3c3199ba4ee06"
     },
     {
       "file": "devdoc/reference/README.md",
-      "links": 12,
+      "links": 13,
       "duplicate_ids": 0,
-      "sha256": "96c3c9ebec8911e54b734b35655443b02ac31046af388c2c5a609846bcb621c5"
+      "sha256": "fe0adee43a0b29c7c0d3d80947653663376d38363c2a372fb7096ca059b6f864"
     },
     {
       "file": "devdoc/reference/architecture-overview.md",
       "links": 66,
       "duplicate_ids": 0,
       "sha256": "145192e055d474a946f2a42c735b751d134fd734594e7c2792b3483f8c9278b4"
+    },
+    {
+      "file": "devdoc/reference/commercial-dbms-extensibility-assessment.md",
+      "links": 44,
+      "duplicate_ids": 0,
+      "sha256": "07039992ae73fb847773f1a4a3716ea7f0de302eaf438287a9ca4e1844de3e52"
     },
     {
       "file": "devdoc/reference/feature-design-leaf-index.md",
@@ -339,19 +735,19 @@
       "file": "devdoc/reference/user-manual-draft.md",
       "links": 20,
       "duplicate_ids": 0,
-      "sha256": "b32811f2ab25d71317eeff2e448da7b0f289ed499f48d8d6678d52a99d1af3c5"
+      "sha256": "f2e783ae74529552ea3aced26462629ba3b8db26eed35612e896a3385fb14763"
     },
     {
       "file": "README.md",
       "links": 9,
       "duplicate_ids": 0,
-      "sha256": "48f7c8b1a86f3f4f06d4bbdf91f5717c9d3364e109e2f9f467ef4922254dafe5"
+      "sha256": "c16d2397fa4ffa006a39c454740a4e9b1c63350c1a5cc8c21e8ef9cbc5637e2a"
     },
     {
       "file": "AGENTS.md",
-      "links": 1,
+      "links": 2,
       "duplicate_ids": 0,
-      "sha256": "a525666674936a2fdca5066fcfbf539b4e037f4a4632f4628f36b9f40bcbb7b9"
+      "sha256": "6d83fba684cfde2d8576bf42384a7aa1c215ce8e45d64098b7e7b3801a20ba06"
     }
   ],
   "scope": "Markdown/JSON/navigation, stage/task/case/package contracts and current source evidence identity; no product tests or historical measurements executed"

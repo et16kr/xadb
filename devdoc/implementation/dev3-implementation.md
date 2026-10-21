@@ -562,27 +562,31 @@ r0 실행 종료를 확인한 뒤 compiler target4개에서 ELF 실행 파일140
 재개할 때는 이 원본 source delta와 완료한 사례를 기준으로 미실행 native/compiler/stage helper 검증을 이어간다. 동일 코드의 완료된 시험을 처음부터 다시 돌리지 않는다. 실행 전 원본 source·binary·fixture와 변경 경로의 관계를 확인한다.
 
 <a id="dev3-work-breakdown"></a>
-## DEV3 하부 작업 분류 초안
+## DEV3 하부 작업 분류와 현재 상태
 
-아래 번호는 독립적인 작업·진척 관리를 위한 분류 초안이다. 기존 DEV3의 기능 범위, S1 인수 조건이나 다른 단계의 선행을 변경하지 않는다. 표현/모델 검증을 실제 제품 기능 완료로 계산하지 않는다. 각 항목 아래에서 구현→변경된 경로의 검증→독립 검토→commit을 닫으며, 서로 필요한 기반은 공급 경계로 연결한다.
+각 작업의 개발 상세 명세와 처리·상태 설계도는 [16개 작업별 문서](../contracts/dev3-task-designs.md)에 있다. 이 설계 작성은 아래 실제 구현·검증 상태를 변경하지 않는다.
+
+2026-10-22 보완: 기존 16개 분류의 ID를 유지하며 현재 구현 범위를 아래에 정리한다. 실행 순서·하위 작업의 선행/산출물/완료 조건은 [잔여 작업 계획](../plans/dev3-implementation-plan.md#remaining-work)이 소유한다. [작업 크기·우선순위·병렬 운영](../plans/dev3-implementation-plan.md#work-organization)에 따라 실제 배정은 검증 가능한 하위 작업으로 하고 분류 수를 진행률로 환산하지 않는다. 번호는 실행 순서가 아니며 기존 DEV3 기능 범위·S1 인수 조건·다른 단계의 선행을 변경하지 않는다. 표현/모델 검증을 실제 제품 기능 완료로 계산하지 않는다.
 
 | 분류 | 하부 작업 | 현재 상태와 남은 경계 |
 | --- | --- | --- |
 | 3.01 형식·정체성 | page/참조/key/행/tree/WAL/undo/status/control codec | 여러 표현·독립 byte·유한 모델 검증 완료. 실제 효과와 구분 |
 | 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기의 제한 구현 검증. 일반 reopen은 별도 |
-| 3.03 공간 할당 | 예약→취소→INIT 소비→extent 확장→free/reuse | 예약·취소 메모리 포트 부분 검증에서 중단. native/compiler 인수와 나머지 전이 미완료 |
+| 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | 메모리 포트 부분 검증. native2/13DB·compiler baseline+6 probes·변경 WAL stage4시험·Clippy·component64KiB의 nested-local 동시 생존량 증명이 남음. 나머지 전이 미완료 |
 | 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | genesis·RollbackStart 생산·예약/취소 일부 연결. 일반 opcode/CLR/commit 연결 미완료 |
-| 3.05 dirty buffer·flush | pin/latch·dirty/recLSN·eviction·WAL-before-page·DWB/home/retirement | clean buffer·Empty DWB 최초 설치만 제한 검증. dirty 운영 미완료 |
+| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | clean buffer·Empty DWB 최초 설치만 제한 검증. dirty 운영 미완료 |
 | 3.06 트리·행 | mutable tree CRUD·split·root 변경·overflow·stable cursor·locator | 표현·부분 모델 존재. 실제 변경 경로 미완료 |
 | 3.07 인덱스 | point/range scan·presence·PK/UNIQUE·build/취소 | 표현·의미 계약 존재. 실제 인덱스와 statement-final unique 미완료 |
 | 3.08 카탈로그·DDL | table/index 정의·이름·객체 수명·create/drop | 표현 존재. native 원자 DDL과 catalog 변경 미완료 |
 | 3.09 undo·rollback | persistent undo/status·statement rollback·전체 rollback·CLR | 표현·RollbackStart 생산 존재. live undo/CLR 진행 미완료 |
 | 3.10 동시성·가시성 | snapshot 등록·잠금·관측 행 검증·두 격리 수준 | 유한 모델 존재. 실제 reader/writer/ager·잠금 통합 미완료 |
 | 3.11 commit·공개 | 여러 객체 원자 commit·durable ACK/UNKNOWN·frontier | 실제 disk 거래 인수 미완료 |
-| 3.12 재시작 복구 | analysis→redo→undo·예약 복원·loser·반복 장애 | 실제 DEV3 일반 recovery 미완료 |
+| 3.12 재시작 복구 | preflight/bootstrap·DWB repair·analysis/예약 복원·redo·REBASE·epoch/WRITER·undo/verify·STABILIZE/READY | [장벽별 8개 작업](../plans/dev3-implementation-plan.md#recovery-remaining)으로 분리. 실제 일반 recovery·반복 장애 인수 미완료 |
 | 3.13 checkpoint | fuzzy ATT/DPT capture·WAL floor·fallback | 표현/계약 존재. 실제 checkpoint 인계 미완료 |
 | 3.14 공간 회수 | undo/status/delete aging·horizon·generation 재사용 | 유한 모델 존재. 실제 회수·압력하 진행 미완료 |
-| 3.15 백업·무결성 | offline exact-cut backup·restore·독립 full audit | 실제 DEV3 경로 미완료 |
-| 3.16 자원·성능·최종 인수 | opcode 자원 상한·PF09·DS01–06·KU09/10·RC-T12–14 | 각 기능의 증거를 연결할 최종 인수. 전체 DEV3 미완료 |
+| 3.15 백업·무결성 | S3/fault 인수용 full audit·독립 이력, 이후 offline exact-cut backup/restore | 실제 DEV3 경로 미완료. audit 공급은 backup 완료를 기다리지 않음 |
+| 3.16 자원 종합·성능·최종 인수 | 항목별 자원 회계 종합·PF09·DS01–06·KU09/10·RC-T12–14 | opcode별 F05는 각 effect 전 선행. 이 항목은 증거 종합과 남은 인수이며 전체 DEV3 미완료 |
 
-3.01–3.05가 실제 저장 기반을 공급하고, 그 위의 3.06–3.11은 undo·동시성·WAL 공급을 함께 요구한다. 3.12의 복구 가능성은 쓰기 경로마다 설계·fault 검증에 반영하며 모든 기능 뒤로 미루지 않는다. checkpoint/회수/백업은 각 선행 경로가 실제로 제공된 뒤 연결한다. 범위가 큰 3.06·3.09·3.12는 표의 화살표/기능마다 다시 개별 완료 항목으로 나눈다.
+다음 재개 우선 단위는 [3.03.1 예약·취소의 미완료 의무](../plans/dev3-implementation-plan.md#allocation-remaining)다. [원본 부분 검토](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)의 remaining을 기준으로 하며, 완료된 무변경 runtime 사례는 반복하지 않는다. 각 새 쓰기 경로의 자원 계산·복구 의미·fault 입력은 그 경로 전에 정한다. free/reuse는 회수 가능성 판정을, 실제 행 변경은 undo/status 기반을 먼저 수신하되 서로 전체 분류 완료를 요구하지 않는다. 복구 전용 REBASE는 정상 fuzzy checkpoint와 별도이며 선행으로 공급한다. 이번 계획 보완에서 제품 코드·실행 증거·완료 상태를 변경하지 않았다.
+
+현재 병렬 재개 후보는 [native와 compiler 전용 작업](../plans/dev3-implementation-plan.md#parallel-execution-plan)이다. 64KiB 분석·공통 수정·stage 검증은 총괄이 조정하고 독립 검토자를 별도로 둔다. 실제 담당/경로·기준 source·자원 profile을 고정하기 전에는 작업 배정이나 동시 실행 완료로 기록하지 않는다.

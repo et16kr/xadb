@@ -1402,6 +1402,96 @@
       "path": "evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json",
       "role": "evidence",
       "title": "DEV3 페이지 예약·취소 부분 commit 독립 D1 판정 원본"
+    },
+    "dev3-task-designs.md": {
+      "path": "contracts/dev3-task-designs.md",
+      "role": "contracts",
+      "title": "DEV3 — 16개 작업의 개발 상세 명세·설계도"
+    },
+    "dev3-task-01-formats.md": {
+      "path": "contracts/dev3-task-01-formats.md",
+      "role": "contracts",
+      "title": "DEV3 3.01 — 형식·정체성 개발 상세 명세와 설계도"
+    },
+    "dev3-task-02-files-reads.md": {
+      "path": "contracts/dev3-task-02-files-reads.md",
+      "role": "contracts",
+      "title": "DEV3 3.02 — 파일·읽기 기반 개발 상세 명세와 설계도"
+    },
+    "dev3-task-03-allocation.md": {
+      "path": "contracts/dev3-task-03-allocation.md",
+      "role": "contracts",
+      "title": "DEV3 3.03 — 공간 할당 개발 상세 명세와 설계도"
+    },
+    "dev3-task-04-wal.md": {
+      "path": "contracts/dev3-task-04-wal.md",
+      "role": "contracts",
+      "title": "DEV3 3.04 — WAL 변경 경로 개발 상세 명세와 설계도"
+    },
+    "dev3-task-05-buffer-flush.md": {
+      "path": "contracts/dev3-task-05-buffer-flush.md",
+      "role": "contracts",
+      "title": "DEV3 3.05 — dirty buffer·flush 개발 상세 명세와 설계도"
+    },
+    "dev3-task-06-tree-rows.md": {
+      "path": "contracts/dev3-task-06-tree-rows.md",
+      "role": "contracts",
+      "title": "DEV3 3.06 — 트리·행 개발 상세 명세와 설계도"
+    },
+    "dev3-task-07-indexes.md": {
+      "path": "contracts/dev3-task-07-indexes.md",
+      "role": "contracts",
+      "title": "DEV3 3.07 — 인덱스 개발 상세 명세와 설계도"
+    },
+    "dev3-task-08-catalog-ddl.md": {
+      "path": "contracts/dev3-task-08-catalog-ddl.md",
+      "role": "contracts",
+      "title": "DEV3 3.08 — 카탈로그·DDL 개발 상세 명세와 설계도"
+    },
+    "dev3-task-09-undo-rollback.md": {
+      "path": "contracts/dev3-task-09-undo-rollback.md",
+      "role": "contracts",
+      "title": "DEV3 3.09 — undo·rollback 개발 상세 명세와 설계도"
+    },
+    "dev3-task-10-concurrency.md": {
+      "path": "contracts/dev3-task-10-concurrency.md",
+      "role": "contracts",
+      "title": "DEV3 3.10 — 동시성·가시성 개발 상세 명세와 설계도"
+    },
+    "dev3-task-11-commit.md": {
+      "path": "contracts/dev3-task-11-commit.md",
+      "role": "contracts",
+      "title": "DEV3 3.11 — commit·공개 개발 상세 명세와 설계도"
+    },
+    "dev3-task-12-recovery.md": {
+      "path": "contracts/dev3-task-12-recovery.md",
+      "role": "contracts",
+      "title": "DEV3 3.12 — 재시작 복구 개발 상세 명세와 설계도"
+    },
+    "dev3-task-13-checkpoint.md": {
+      "path": "contracts/dev3-task-13-checkpoint.md",
+      "role": "contracts",
+      "title": "DEV3 3.13 — checkpoint 개발 상세 명세와 설계도"
+    },
+    "dev3-task-14-reclamation.md": {
+      "path": "contracts/dev3-task-14-reclamation.md",
+      "role": "contracts",
+      "title": "DEV3 3.14 — 공간 회수 개발 상세 명세와 설계도"
+    },
+    "dev3-task-15-backup-integrity.md": {
+      "path": "contracts/dev3-task-15-backup-integrity.md",
+      "role": "contracts",
+      "title": "DEV3 3.15 — 백업·무결성 개발 상세 명세와 설계도"
+    },
+    "dev3-task-16-qualification.md": {
+      "path": "contracts/dev3-task-16-qualification.md",
+      "role": "contracts",
+      "title": "DEV3 3.16 — 자원 종합·성능·최종 인수 개발 상세 명세와 설계도"
+    },
+    "dev3-test-plan.md": {
+      "path": "plans/dev3-test-plan.md",
+      "role": "plans",
+      "title": "DEV3 — 단계별 필수 테스트와 구현 동반 테스트 추가 계획"
     }
   }
 }

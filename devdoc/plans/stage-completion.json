@@ -908,6 +908,10 @@
       "design_refs": [
         "disk-storage-design.md",
         "dev3-implementation-plan.md",
+        "dev3-implementation-plan.md#remaining-work",
+        "dev3-implementation-plan.md#work-organization",
+        "dev3-task-designs.md",
+        "dev3-test-plan.md",
         "disk-storage-design.md#extensibility-review"
       ],
       "design_decision_ref": "disk-storage-design.md#decision",

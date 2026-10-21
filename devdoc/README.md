@@ -1,5 +1,11 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV3 단계별 필수 테스트·구현 동반 테스트 추가 계획](plans/dev3-test-plan.md): 중간 단계는 변경 기능의 필수 사례만 실행하고, 새 테스트·fixture·oracle는 구현과 함께 작성한다. 최신 사용자 지시에 따라 DEV3 최종 S5에서 전체 DEV3 inventory를 전수 실행하며, 장시간·대규모·전체 조합은 그 최종 인수에 배정한다. 이번에는 계획만 작성하고 제품·테스트 코드를 실행하지 않는다.
+
+2026-10-22 [DEV3 16개 작업별 개발 상세 명세·설계도](contracts/dev3-task-designs.md): 각 작업의 요구·입출력/소유·상태/처리 순서·오류/복구·자원·하위 개발 단위·독립 인수를 개별 문서로 작성한다. 기존 owner 계약과 현재 미완료 상태를 유지하며 제품 개발·시험 재개 기록은 아니다.
+
+2026-10-22 [DEV3 잔여 작업 계획 보완](plans/dev3-implementation-plan.md#remaining-work): 16개 분류에 선행 공급·완료 조건·인수 연결을 추가했다. [작업 크기·우선순위·병렬 운영](plans/dev3-implementation-plan.md#work-organization)은 큰 묶음의 추가 분해, 5개 우선 실행 묶음과 총괄1·작업2·독립검토1의 초기 배치를 정한다. 예약·취소의 미완료 검증과64KiB 증명, effect 전 F05, 복구 장벽8개를 유지한다. 실제 제품 개발·병렬 배정·시험을 재개한 기록은 아니며 [현재 상태](implementation/dev3-implementation.md#dev3-work-breakdown)와 전체 DEV3 미완료를 유지한다.
+
 2026-10-21 [DEV3 페이지 예약·취소 부분 구현 및 중단](implementation/dev3-implementation.md#allocation-reservation-partial): 메모리 포트의 새 경로와 검토 수정만 제한 검증했다. native/compiler·변경 WAL 관련4시험·전체 단위 인수는 남겨 두고 사용자 요청으로 중단한다. [하부 작업 16개 분류 초안](implementation/dev3-implementation.md#dev3-work-breakdown)으로 진행·잔여 범위를 구분한다.
 
 2026-10-21 [DEV3 최초 doublewrite 설치](implementation/dev3-implementation.md#doublewrite-install-results): XDI1·고정 images 공간·Empty DWB 선택을 구현했다. 기존 동일 source의 runtime10·native3·compiler9·checker31 및 Clippy/fmt 결과를 보존했고 수정 없는 코드는 재시험하지 않는다. 마지막 하위 회귀를 사용자 지시로 중단한 통합 원본은 FAIL이며 dirty/home/recovery·전체 DEV3는 미완료다.
@@ -69,6 +75,8 @@
 | 다음 기능·단계 완료 판단 | [개발 단계](plans/development-stages.md) | [완료 계약](plans/stage-completion.json), [하위 계층 결정](plans/bottom-up-development.md) |
 | 현재 foundation/platform·XADBTest 변경 | [구현 색인](implementation/README.md) | DEV0/DEV1 계약·현재 소스·실행 결과 |
 | DEV2 커널·WAL·복구 변경 | [구현 계약](contracts/implementation-contracts.md), [DEV2 상세 설계](contracts/dev2-kernel-design.md) | [DEV2 구현·검증 계획](plans/dev2-implementation-plan.md), 해당 복구·저장 소유 계약 |
+| DEV3 16개 작업의 개별 상세 명세·설계도 | [작업별 색인](contracts/dev3-task-designs.md#catalogue) | [공급 설계도](contracts/dev3-task-designs.md#dependency-map)·각 문서의 요구/상태/알고리즘/오류/자원/인수·기존 owner 정본 우선 |
+| DEV3 단계별 필수 시험·구현과 함께 추가할 테스트 | [테스트 계획](plans/dev3-test-plan.md#stages) | [16개 작업별 목록](plans/dev3-test-plan.md#task-tests)·[현재 예약/취소 잔여](plans/dev3-test-plan.md#allocation-first)·[최종 전수 범위](plans/dev3-test-plan.md#final-suite) |
 | DEV3 디스크 page·buffer·index 설계와 병렬 개발 | [DEV3 상세 설계](contracts/disk-storage-design.md), [구현·병렬 개발·검증 계획](plans/dev3-implementation-plan.md#parallel-development) | [WAL·undo 재설계 조사](evidence/dev3-wal-undo-research.md), [아키텍처 비교 보완](evidence/dev3-dev4-architecture-review.md), DS01–06·상태 모델·관측 행 버전·복구 예약 복원·DEV2 수신 |
 | DEV4 최소 SQL·Oracle 의미·prepared 실행·embedded CLI | [DEV4 상세 설계](contracts/dev4-sql-design.md), [구현·검증 계획](plans/dev4-implementation-plan.md) | [소스·Oracle/ARIES 조사](evidence/dev4-source-research.md), [초기 처리 범위](contracts/dev4-sql-design.md#capacity-boundary), SC02·KU13·PF10·D4-V26 행 충돌·실제 DEV3 선행 증거 |
 | DEV5 서버·인증/권한·세션·요청/취소 | [DEV5 상세 설계](contracts/dev5-server-design.md), [구현·검증 계획](plans/dev5-implementation-plan.md) | [소스 조사·검토](evidence/dev5-source-research.md), SC03·KU14·PA08·PF11·실제 Q1/C1 선행 증거 |

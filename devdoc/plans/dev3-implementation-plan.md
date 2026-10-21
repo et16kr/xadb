@@ -4,10 +4,14 @@
 
 2026-10-20 [첫 표현 leaf·부분 모델](../implementation/dev3-implementation.md#validation)을 구현·독립 검토하고 같은 소스의 하위 회귀·DEV2 복구 검사를 완료했다. 아래 전체 인수의 NOT_RUN과 page envelope·M02-P01의 제한된 로컬 검증을 구분한다.
 
-[상세 설계](../contracts/disk-storage-design.md) · [이번 조사·검토](../evidence/dev3-wal-undo-research.md) · [이전 조사](../evidence/dev3-source-research.md) · [완료 정본](stage-completion.json) · [DEV2 선행](dev2-implementation-plan.md)
+2026-10-22 [잔여 작업 분해](#remaining-work)는 기존 16개 분류에 공급 의존성·완료 조건·인수 연결을 보완한다. [작업 크기·우선순위·병렬 운영](#work-organization)은 대분류를 유지하면서 실제 배정 단위를 나누고 현재 재개 후보를 정한다. 현재 부분 구현과 원본 실행 결과는 [구현 기록](../implementation/dev3-implementation.md#dev3-work-breakdown)에 남기며 이 계획 보완으로 제품 완료 상태를 바꾸지 않는다. 아래 과거 하위 회귀·동일 build 실행 문구에도 [변경된 코드만 시험하는 사용자 지시](../../AGENTS.md)가 우선한다.
+
+[16개 작업별 상세 명세·설계도](../contracts/dev3-task-designs.md) · [상세 설계](../contracts/disk-storage-design.md) · [이번 조사·검토](../evidence/dev3-wal-undo-research.md) · [이전 조사](../evidence/dev3-source-research.md) · [완료 정본](stage-completion.json) · [DEV2 선행](dev2-implementation-plan.md)
 
 <a id="entry"></a>
 ## 1. 착수와 완료
+
+2026-10-22 후속 사용자 지시의 [단계별 테스트 계획](dev3-test-plan.md)이 실행 시점을 구체화한다. 중간 단계에는 변경 기능의 필수 시험만 적용하고, 테스트·fixture·oracle는 구현과 함께 추가한다. **DEV3 최종 S5는 확정 DEV3 inventory 전수 실행**이며 기존 무변경/전수 금지의 한정 예외다. 장시간·대규모·전체 조합은 최종 인수에 배정하며 DEV0/1/2·workspace 전수 wrapper로 확대하지 않는다. 아래 인수 목록은 전체 의무이고 매번 실행할 목록이 아니다.
 
 선행 REVIEW-002를 반영·독립 검토한 다음, DESIGN-003으로 COW pack 경로를 in-place page·WAL·영속 undo로 대체한다. 이 계획은 이전 DESIGN-001/PARALLEL-001의 구현 작업 분할을 대체한다. 실제 구현·수신 API·실행 증거가 없는 항목은 여전히 미완료다. DEV2 부분 구현 중에도 설계·oracle 준비는 가능하지만 volatile P0/K0 PASS로 영속 선행을 충족했다고 하지 않는다.
 
@@ -48,7 +52,7 @@ S0–S5는 DEV3 내부 묶음이며 제품 gate S1과 구분한다. 기존 DAG *
 | S2 실제 기반 | XADB-021 | extent 파일·allocator·buffer·WAL append/flush·doublewrite·mutable tree·row/undo/status | XADB-005/008/028 선행. short I/O·eviction·steal·logical undo·split 통합. 아직 전체 durable commit 주장 금지 |
 | S3 거래·영속 통합 | XADB-022 | row/index/catalog·statement-final unique·잠금·두 isolation·commit/CLR·analysis/redo/undo | XADB-009/021 선행. durable ACK/UNKNOWN·재장애·독립 history와 full-check; 이 뒤 실제 disk capability 판단 |
 | S4 checkpoint·공간·backup | XADB-029 | fuzzy ATT/DPT checkpoint·WAL floor·undo/status/delete aging·offline exact backup/restore | XADB-022/028 선행. 긴 reader/transaction·낮은 공간·begin-WAL 삭제 뒤 undo·재사용 generation |
-| S5 전체 인수 | 네 task 전체 | DS01–06·RC-T12–14·KU09/10·PF09·하위 회귀와 재현 bundle | stage-completion의 모든 의무와 독립 검토. 일부 leaf PASS로 제품 S1 승격 금지 |
+| S5 전체 인수 | 네 task 전체 | [최종 DEV3 전수 inventory](dev3-test-plan.md#final-suite): DS01–06·RC-T12–14·KU09/10·PF09·실제 변경한 하위 공급 수신과 재현 bundle | stage-completion의 모든 의무와 독립 검토. 일부 leaf PASS로 제품 S1 승격 금지 |
 
 <a id="parallel-development"></a>
 ### 2.1 조건부 병렬 범위
@@ -85,6 +89,193 @@ F06에서 수신 commit/dirty digest·실제 crate/API/feature·사용한 실행
 ### 2.4 공유 파일
 
 [병렬 정책](../policies/parallel-development-policy.md#section-2)의 change_coordination을 실제 작업마다 기록한다. page/WAL/UndoRef 공통 표현은 D3-C, tree는 D3-T, transaction/publication/durable은 D3-I가 단일 작성자를 조정한다. foundation effect·platform adapter 변경은 소유자 patch 뒤 소비하며 engine에서 platform 직접 import를 추가하지 않는다. lib/mod·Cargo·runner/checker 등록·README/documents.json은 통합 담당이 최신 원문에 좁게 반영한다. 문서 검사·document-validation.json 생성은 **push gate에서만** 한다. 제품 지문/실행 증거는 합친 실제 코드 기준으로 별도 검증한다.
+
+<a id="remaining-work"></a>
+### 2.5 잔여 작업의 공급·완료 경계
+
+각 분류의 기능 요구·입출력/소유·처리 설계도·오류/복구·자원·인수 상세는 [작업별 명세 색인](../contracts/dev3-task-designs.md#catalogue)에서 읽는다. 이 계획은 순서·공급·배정 기준의 정본이며 상세 문서가 기존 owner의 미채택 형식/API/수치를 자동 동결하지 않는다.
+
+3.01–3.16은 [기존 분류](../implementation/dev3-implementation.md#dev3-work-breakdown)의 ID를 유지한다. 번호는 실행 순서가 아니며 XADB-028 → XADB-021 → XADB-022 → XADB-029의 기존 단계 경계를 바꾸지 않는다. 아래 하위 ID는 작업 분해이며 새 API 이름·구현된 runner·완료 증거가 아니다. 미래 leaf의 담당·실제 symbol·변경 경로·고정 입력은 착수 때 채운다.
+
+**공급 완료와 통합 인수를 구분한다.** 선행은 해당 행의 좁은 산출물과 검증 범위만 뜻하며 상위 분류 전체 완료를 뜻하지 않는다. 내부 page/tree/undo 기반을 검증해 공급해도 rollback·복구·공개가 연결되지 않은 사용자 변경 API를 완성으로 공개하지 않는다. 후속 소비자 연결 때 새로 바뀐 경로의 통합 검증을 추가하고 기존 공급 시험의 PASS를 반복하지 않는다. 각 쓰기 경로의 recovery 의미·fault 입력은 해당 leaf 전에 정하며, 실제 미연결 recovery 인수는 명시적으로 남긴다.
+
+<a id="work-entry-exit"></a>
+#### 공통 착수·완료 기록
+
+| 기록 | 착수·완료에 필요한 내용 |
+| --- | --- |
+| 소유·산출물 | 하위 작업 ID, 실제 작업/계약/통합 담당·독립 검토자, 기준 commit/dirty digest, 좁은 변경 경로, 공급할 API/상태 전이와 제외 범위(F07) |
+| 선행 수신 | 아래 선행 ID의 실제 공급 symbol·revision·증거 범위. DEV2 소비는 reuse/adapt/DEV2-only/new와 미공급 항목을 F06에 기록 |
+| 계약·독립 입력 | 해당 owner 계약, F01 byte·F02 상태/오류/수명, F03 독립 기대값·모델·known-bad. 기존 모델은 원래 source/공간의 증거로 수신하고 새 실행으로 표시하지 않음 |
+| 첫 effect 전 | F04의 실제 fault cut·독립 관측과 **해당 opcode의 F05 수치 예약표**를 고정. forward·실패 cleanup·CLR/전체 abort·bootstrap까지 필요한 소유, 동시 생존 메모리/FD/frame/WAL·disk 한도와 반환 시점을 계산. 미정인 opcode는 첫 effect 전에 거절 |
+| 검증 범위 | 마지막 관련 검증의 source와 실제 diff를 case별로 연결. 새 코드·변경 경로 및 그 변경에 남은 미실행 의무만 선택하고 명령·입력·source/binary·결과를 보존. 완료 사례의 무변경 재실행, workspace/전체 leaf/하위 회귀 wrapper 일괄 실행 금지 |
+| 완료 판정 | 아래 산출물의 정상·경계·오류·해당 실제 I/O/thread/reopen 결과와 독립 검토를 연결. 공급 완료·통합 미완료를 별도 기록하고, 미실행은 NOT_RUN, 기존 FAIL·중단은 원래 결과로 보존. 문서 자동 검사는 push gate에서만 수행 |
+
+F05는 3.16까지 미루는 작업이 아니다. [opcode 자원 계산](#resource-proof)과 [실제 표현 상한](../contracts/dev3-resource-bounds.md)을 각 effect의 선행으로 소비하고 그 구현의 자원·진행 경계를 검증한다. 실제 I/O 결과는 구현 후 얻는 완료 증거이며 이를 사전 실행 PASS로 가정하지 않는다. 3.16은 이미 확보한 항목별 회계의 합과 남은 통합 인수·PF09를 담당한다. 이 문서의 case 연결은 인수 의무의 위치이며 전체 suite 재실행 지시가 아니다.
+
+#### 16개 분류의 계약·기존 task·인수 연결
+
+| 분류 | 소유 계약과 기존 task | 공급·인수 연결 |
+| --- | --- | --- |
+| 3.01 형식·정체성 | [표현 계약 색인](../contracts/README.md), [F01–03](#freeze); XADB-028 | 소비하는 표현별 독립 bytes·오류 vector. 전체 codec 완료를 모든 leaf의 공통 선행으로 삼지 않음 |
+| 3.02 파일·읽기 기반 | [저장 세션](../contracts/dev3-storage-session.md), [page I/O](../contracts/dev3-page-io.md); XADB-021 | 실제 설치·선택 읽기의 공급 경계. 일반 open은 3.12; DS02/03/05 |
+| 3.03 공간 할당 | [예약·취소](../contracts/dev3-allocation-reservation.md), [할당 표현](../contracts/dev3-allocation-format.md); XADB-021, 회수 통합 XADB-029 | 아래 3.03.1–4; DS02/03/04/05·RC-T14 |
+| 3.04 WAL 변경 경로 | [WAL I/O](../contracts/dev3-wal-io.md), [WAL 표현](../contracts/dev3-wal-format.md), [obligation](../contracts/dev3-obligation-format.md); XADB-021/022 | 아래 3.04.1–2; DS02/05·KU10·RC-T12/14 |
+| 3.05 dirty buffer·flush | [clean buffer 공급](../contracts/dev3-read-buffer.md), [buffer·DWB 소유 규약](../contracts/disk-storage-design.md#buffer); XADB-021 | 아래 3.05.1–3; DS02/03/05·PF09 |
+| 3.06 트리·행 | [tree](../contracts/dev3-tree-format.md), [row](../contracts/dev3-row-format.md), [overflow](../contracts/dev3-overflow-format.md); XADB-021 | 아래 3.06.1–3; DS01/03·KU09 |
+| 3.07 인덱스 | [UNIQUE·statement](../contracts/disk-storage-design.md#keys); XADB-022 | 3.06.2/3·3.09.1·3.10.1의 해당 공급 뒤 presence/point/range와 statement-final PK/UNIQUE, 이후 build/취소를 구분. 대상별 3.09.2/3와 통합해 독립 row↔index 일치·key 교환·부분 NULL·실패 cleanup 인수; DS01/06·KU09/10 |
+| 3.08 카탈로그·DDL | [catalog 표현](../contracts/dev3-catalog-format.md), [직접 API](../contracts/disk-storage-design.md#ownership); XADB-022 | 3.06.1·3.09.1·3.10.1의 해당 공급 뒤 정의/이름/수명 변경. 대상별 3.09.2/3 및 3.11/3.12와 create/drop 원자성을 인수하며 retirement는 3.14 연결; DS02/04/06·KU10 |
+| 3.09 undo·rollback | [undo](../contracts/dev3-undo-format.md), [상태 home](../contracts/dev3-status-home.md), [rollback](../contracts/disk-storage-design.md#commit); XADB-021/022 | 아래 3.09.1–3; DS02/04/06·RC-T13/14 |
+| 3.10 동시성·가시성 | [변경 순서](../contracts/disk-storage-design.md#mutation-protocol), [snapshot 획득](../contracts/disk-storage-design.md#snapshot-acquisition); 공통 guard는 XADB-021, 거래 통합은 XADB-022 | 3.10.1은 F02와 하위 동기화 공급을 수신해 snapshot/publication/registry guard·transient pin·progress turn/잠금 primitive를 먼저 공급. 3.10.2는 3.06·3.09의 해당 공급과 3.11.1을 소비해 두 격리·관측 행 충돌·deadlock victim 통합. 실제 reader/writer/ager·즉시 X-lock 반례; DS04/06·KU10 |
+| 3.11 commit·공개 | [WAL·commit](../contracts/disk-storage-design.md#commit); XADB-022 | 3.04.2·3.09.1·3.10.1과 해당 행/index/catalog 변경 공급 뒤 3.11.1 commit attempt/sync/status/frontier. 3.11.2는 3.09.3·3.10.2·3.12.8과 다중 객체 ACK/UNKNOWN·Fenced를 통합 인수. data flush 없는 commit·외부 witness; DS02·KU10·RC-T12 |
+| 3.12 재시작 복구 | [정상 recovery](../contracts/disk-storage-design.md#recovery), [예약 복원](../contracts/disk-storage-design.md#recovery-reservation); XADB-022 | 아래 3.12.1–8; DS02/03/04/05·RC-T12–14 |
+| 3.13 checkpoint | [fuzzy checkpoint](../contracts/disk-storage-design.md#checkpoint); XADB-029 | 3.05/3.09/3.11/3.12의 해당 공급 뒤 capture와 current/previous fallback·WAL floor/회수를 분리. 동시 수정/flush와 ATT/DPT 누락 검출; DS05·RC-T14 |
+| 3.14 공간 회수 | [참조·회수](../contracts/disk-storage-design.md#undo-lifecycle), [자원 진행](../contracts/disk-storage-design.md#reclaim); XADB-029 | 3.14.1은 3.05.3·3.09.1·3.10.1·3.11.1의 해당 공급 뒤 eligibility/horizon·마지막 pin/영속 edge/DWB 참조 판정, 3.14.2는 3.03.4와 실제 해제·재사용/압력 해소 인수. 긴 reader/Active 거래·begin-WAL 제거 뒤 abort 보호; DS03/04/05·RC-T13/14 |
+| 3.15 백업·무결성 | [full audit](../contracts/disk-storage-design.md#recovery), [exact-cut backup](../contracts/disk-storage-design.md#checkpoint); 검증 기반은 XADB-022, backup은 XADB-029 | 3.15.1 bounded full audit·독립 이력은 S3/fault 인수까지 공급, 3.15.2 offline exact-C backup/restore는 영속 통합 뒤. 정상 open과 audit 비용 분리, source-WAL 없는 restore→새 ACK→reopen; DS02/03/05 |
+| 3.16 자원 종합·성능·최종 인수 | [F05](#resource-proof), [PF09](#performance), [완료 정본](stage-completion.json); 네 task 공통 | 개별 opcode의 선행 계산을 취합해 동시 한도/진행 검산, 남은 PF09·DS01–06·KU09/10·RC-T12–14 의무를 연결. 필수 인수에 미실행·미해결 실패가 남으면 S1 미완료. 해결된 과거 FAIL·중단 원본도 보존 |
+
+3.10.1은 3.05/3.09의 완료를 선행으로 요구하지 않는다. guard/turn 자체의 수명·순서·thread 증거를 먼저 공급하고, 실제 flusher drain·undo·commit과의 의미는 각 소비 경로 및 3.10.2에서 통합 인수한다. 3.14.1도 실제 회수 가능성 판정을 먼저 공급하고 free/reuse 결과는 3.14.2에서 연결한다. 3.15.1의 검사기·독립 기대값 준비는 S0부터 진행하며 backup 완료를 기다리지 않는다. 정상 open에 변경 없는 cold table 전수 검사를 추가하지 않는다.
+
+<a id="allocation-remaining"></a>
+#### 3.03–3.05: 할당·WAL·dirty/flush 공급
+
+| ID·산출물 | 직접 선행 | 완료 조건·남길 경계 |
+| --- | --- | --- |
+| 3.03.1 예약·취소 부분 구현의 잔여 인수 | [부분 source·case 기록](../evidence/dev3-allocation-reservation-partial-xadb-20261021.json), [독립 검토의 remaining](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json) | native 2그룹/13 Linux DB의 adapter·runner 구현과 실행, compiler baseline+6 probe runner 구현과 실행, 수정된 WAL stage 관련4시험, 관련 Clippy, **generic nested-local 동시 생존량의 component64KiB 측정·수명 증명**, 독립 검토. 원래 runtime 결과와 합쳐 제한 allocation 단위를 판정하며 INIT/home/recovery/READY/거래 ACK를 제공했다고 하지 않음 |
+| 3.03.2 Reserved→INIT 소비 | 3.03.1, 3.04.1, 3.05.1, 해당 page 표현 | token·generation·descriptor·page INIT를 같은 복구 가능한 WAL 그룹으로 인계하고 오류/취소에서 소유 보존. 해당 opcode의 독립 bytes·fault/예약 경계 |
+| 3.03.3 extent 확장·FILEMAP 인계 | 3.03.2, 3.05.3, 3.02의 namespace/selector 공급 | 파일 성장·선택 metadata·WAL/예약 소유의 부분 I/O·불명 결과를 검증. 선택 전후 closure와 실제 charged bytes 보존 |
+| 3.03.4 eligible page free/reuse | 3.14.1의 회수 가능성 판정, 3.03.2, 3.04.1, 3.05.3 | 마지막 transient pin·영속 edge·pending DWB 참조가 제거된 대상만 free/reuse. generation 증가·stale reference 거절·새 incarnation INIT의 WAL 원자 인계. 3.14.2의 전체 회수 인수는 후속 |
+| 3.04.1 semantic stage/apply 공통 경계 | 해당 3.01 표현, 기존 fresh WAL·fence 공급, 3.10.1의 변경 guard | caller 준비→stage→authoritative page/descriptor/recLSN 소유 인계, stage 직후 unwind·오류에도 예약 보존. opcode별 producer는 해당 소비 작업에서 추가 |
+| 3.04.2 일반 append/sync·owner chain | 3.04.1, 해당 frame/owner 표현 | interleaved 완결 frame·LSN/owner predecessor·append/sync/불명 결과를 검증. CLR·commit의 의미 생산과 공개 인수는 3.09/3.11에 귀속 |
+| 3.05.1 dirty 등록·pin/latch·recLSN | 3.04.1, 3.10.1의 guard/turn, 기존 selected clean buffer | authoritative frame의 dirty 전환·첫 recLSN·redirty·pin 수명과 실패 소유 보존. 아직 home flush 완료를 주장하지 않음 |
+| 3.05.2 WAL→DWB→home flush | 3.05.1, 3.04.2, 기존 Empty DWB 설치 | WAL durable 경계 후 image sync·pending 선택·다중 file home write/sync. batch1/8/64·torn/부분 I/O·redirty에서 pending과 예약 보존 |
+| 3.05.3 retirement·eviction·압력하 진행 | 3.05.2, 3.10.1의 progress turn | 모든 file sync 후 whole-batch retirement, pin 없는 frame 교체, bounded scan/service·pressure drain에서 기존 작업의 진행. repair/recrash 통합은 3.12.2/8과 판정 |
+
+3.03.1은 현재 재개 우선 단위다. 이미 완료한 runtime8과 r3/r4 선택 사례 중 변경 없는 코드는 재실행하지 않으며, source delta와 원래 실패를 보존한다. 일반 WAL/dirty 기반을 기다리는 INIT·확장·free/reuse를 이 제한 예약·취소 단위의 선행으로 되돌리지 않는다.
+
+<a id="tree-undo-remaining"></a>
+#### 3.06·3.09: 공통 tree·행·undo의 순환 없는 공급
+
+| ID·산출물 | 직접 선행 | 완료 조건·남길 경계 |
+| --- | --- | --- |
+| 3.06.1 공통 mutable tree 구조 경로 | 3.03.2, 3.04.2, 3.05.3, 해당 tree/anchor 표현 | page 탐색·구조 변경·split/root·빈 leaf의 구조적 unlink/retirement 등록을 system 그룹으로 처리하고 bounded pin·stable anchor 보존. 실제 공간 반환은 3.14.1→3.03.4→3.14.2에서 연결하며 사용자 거래의 행 undo 완료와 구분 |
+| 3.09.1 live undo/status 기반 | 3.03.2, 3.04.2, 3.05.3, undo/status/obligation 표현 | undo record/chunk·상태 home·head/edge·잔여 예약을 영속 그룹으로 연결. 아직 모든 행/인덱스 rollback 완료를 주장하지 않음 |
+| 3.06.2 행 CRUD·overflow 내부 변경 | 3.06.1, 3.09.1, 3.10.1의 필요한 guard/잠금 공급 | row/overflow before·after·UndoRef/관측 identity를 연결하고 공간·오류 경계를 검증. 사용자 변경 API의 완료는 3.09.2/3·3.10.2와 통합 뒤 판정 |
+| 3.06.3 stable cursor·locator | 3.06.1/2, 3.10.1의 snapshot/guard 공급 | split/delete/이동에도 anchor·RowUID와 snapshot 결과 보존, locator working set·메모리 상한 검증. 인덱스 소비는 3.07에서 연결 |
+| 3.09.2 logical undo·CLR 단위 적용 | 3.09.1, 해당 3.06.2/3.07/3.08 내부 변경 공급, 3.04.2 | 현재 물리 위치의 undo 효과·UndoNextRef·obligation을 같은 CLR 그룹으로 적용. 다른 거래/완결 SMO 보존, 재삽입 split 예약, redo-only·멱등 진행 검증 |
+| 3.09.3 statement/full rollback 종료 | 3.09.2, 3.10.1의 lock/guard 공급 | statement mark까지 복원해 이전 statement 보존, 전체 abort는 durable abort-end·상태 확인 뒤 잠금 해제. WAL/CLR·SMO·retained lock 회계를 mark로 되감지 않으며 오류는 Fenced/RecoveryRequired. 반복 crash는 3.12.7/8에서 연결 |
+
+행→인덱스→catalog 등 새 대상 opcode를 붙일 때마다 해당 producer와 3.09.2/3의 소비를 하나의 통합 단위로 닫는다. 아직 없는 모든 미래 대상의 rollback을 tree/undo primitive 공급의 선행으로 삼지 않는다. 반대로 primitive의 제한 검증만으로 그 대상의 statement 원자성을 완료 처리하지 않는다.
+
+<a id="recovery-remaining"></a>
+#### 3.12: 복구 장벽별 구현과 통합 인수
+
+[정본의 장벽 순서](../contracts/disk-storage-design.md#recovery)를 그대로 사용한다. 각 행은 앞 장벽의 공급을 소비하며 최초 분석용 선택 control/표현은 해당 3.01/3.02에서 준비한다. 정상 운영의 fuzzy capture 생산·WAL 회수와의 통합은 3.13에서 추가한다. **RECOVERY_REBASE를 3.13 전체 완료 뒤로 미루지 않는다.**
+
+| ID·산출물 | 직접 선행 | 완료 조건·인수 경계 |
+| --- | --- | --- |
+| 3.12.1 LEASE·PREFLIGHT/SELECT·BOOT_RESERVE | 3.02의 lease/선택 공급, 해당 control/profile 표현·F05 | DB write 전에 profile·실제 자원·namespace 검증 및 고정 bootstrap 예약. 낮춘 foreground 한도로 기존 obligation을 축소하지 않고 admission은 닫음 |
+| 3.12.2 DOUBLEWRITE_REPAIR | 3.12.1, 3.05.2/3의 pending/retirement 공급 | 선택된 pending image로 torn home 복원·모든 file sync·retirement. 유효 pending이 없어도 FILEMAP/allocation generation과 일치하는 완전 INIT 및 채택 끝까지의 WAL 전체가 보존되면 redo에서 재구성하며, 그 밖의 initialized home 손상은 거절. repair 중 재장애는 3.12.8 |
+| 3.12.3 ANALYSIS·RESERVE_RESTORE | 3.12.2, 해당 WAL/descriptor/선택 checkpoint 입력 | capture 직후부터 채택 prefix의 ATT/loser/UndoRef·예약 inventory 재구성. stale home allocator를 최신 소유로 사용하지 않으며 **REDO 추가 효과 전에** 잔여 예약을 한 번 인계 |
+| 3.12.4 streaming REDO | 3.12.3, 3.04/3.05와 해당 변경 opcode | complete WAL·CLR을 incarnation/pageLSN으로 적용. 전체 DPT를 RAM에 적재하지 않고 source WAL 불변·tail/손상 판정·WAL-before-page를 검증 |
+| 3.12.5 RECOVERY_REBASE | 3.12.4, 3.05.3, 전용 두 슬롯/selector 표현·고정 예약 | home/undo/status/allocator flush 후 self-contained base 인계. current/previous·공통 fallback·base-only·old/new 합집합을 보존하고 안전한 회수 후 다음 epoch 여유 확보. 새 WAL에 의존하지 않음 |
+| 3.12.6 RECOVERY_LOG_OPEN | 3.12.5, 3.04.2, epoch/header·WRITER namespace 공급 | base의 완결 LSN 다음 epoch/header sync 및 WRITER 영속 선택. 이 선택 전 새 CLR append 및 그 효과의 home write 금지; 재시작 시 새 epoch 발견 가능 |
+| 3.12.7 UNDO·VERIFY_RECOVERY | 3.12.6, 해당 3.09.2/3 | loser만 남은 UndoNextRef부터 처리하고 완료 CLR 재실행으로 효과 중복 금지. terminal/예약·실제 복구 page 검증, 미완료 undo를 ABORTED로 응답하지 않음 |
+| 3.12.8 STABILIZE·RESUME/READY·재장애 인수 | 3.12.7, 3.11.1의 commit/공개 공급, 3.15.1 | base+WAL/CLR/epoch/namespace 영속 장벽 뒤에만 admission 재개. 각 장벽과 epoch 선택 직후·부분 CLR에서 반복 crash, 새 ACK 뒤 reopen, 독립 이력/full audit. 고정 peak와 정상 admitted 복구 성공을 손상/I/O 거절 사례와 분리 |
+
+3.12.8의 전체 연결 전에 각 구현된 장벽의 변경 경로와 fault를 좁게 검증한다. 마지막에 증거를 종합한다는 이유로 완료된 무변경 사례를 다시 실행하지 않는다. source-WAL 없는 restore는 3.15.2, begin-WAL 제거 뒤 Active/부분 CLR 복구는 3.13/3.14 연결 인수로 이어지며, 이 의무가 남으면 전체 DEV3는 미완료다.
+
+<a id="work-breakdown-review"></a>
+#### D3-WORK-BREAKDOWN-001 — 작업 분해 보완 기록
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-22. 기존 owner 계약의 공급·인수 배정 구체화이며 새 제품 의미/형식/한도 결정은 없음 |
+| 권한·소유 | 사용자의 DEV3 분류 검증 후 보완 요청. 작업/계약/통합 `/root`, 독립 검토 `/root/dev3_breakdown_review`; 기준 HEAD `a285043b91571cef83dacda49fcf2a63e99160d2`, 착수 worktree clean |
+| 선택·대안 | 16개 기능 분류는 유지하고 이 계획에 실제 선행·산출물·완료 조건을 배정. 번호순 전체 완료 방식은 undo/회수의 공급 순환과 F05 지연을 만들므로 채택하지 않음 |
+| 범위·연결 | 이 계획, 구현 현황의 현재 분류, 진입/폴더 색인, DEV3 단계 JSON의 계획 참조. 기존 문서 ID/경로/제목과 task DAG·S1 인수 조건 유지; 새 runner·product path·원본 evidence 변경 없음 |
+| 검토·검증 | `/root/dev3_breakdown_review`가 7개 문서의 diff·소유 계약·원본 부분 검토를 읽기 전용 대조하여 PASS, 필수 수정 지적 없음. anchor·INIT 복원 예외·reuse의 INIT 선행·과거 FAIL 구분과 tree/guard/commit 공급 순환 방지 보완을 확인했고 `/root`가 반영 확인. `git diff --check` PASS. 제품 코드 변경·제품 시험·compiler/Clippy·문서 자동 검사·push 없음. 검토 PASS는 계획 정합성에 한정 |
+| 대체·재검토 | 구현 기록의 분류 초안을 실행 순서로 읽는 해석을 이 절로 구체화. owner/API 변경, 선행 순환, 인수 case 미배정, 신규 opcode 자원표 누락 시 재검토 |
+
+<a id="work-organization"></a>
+### 2.6 작업 크기·우선순위·병렬 운영
+
+**16개 대분류는 유지한다.** 기능의 위치와 책임을 찾는 분류로 사용하고, 실제 배정·검토·완료는 하위 작업으로 관리한다. 개수를 맞추기 위한 합치기/분할이나 기존 ID 재번호 부여는 하지 않는다. 3.01 표현, 각 opcode의 F05, F03 독립 검증과 3.15.1 audit 준비는 여러 개발 구간에서 소비한다. 3.16은 이미 확보한 증거의 종합과 남은 인수이며 이 활동들을 마지막까지 미루는 장소가 아니다.
+
+분류마다 분량·위험이 다르므로 **완료 분류 수/16 또는 완료 하위 작업 수로 DEV3 진행률을 계산하지 않는다.** 현재 보고에는 제공된 capability, 검증 범위/source, 다음 소비자를 막는 미공급 항목, 미실행·미해결 인수 의무를 적는다. 예상 작업량은 변경할 상태 전이·공유 API 수·fault/경계 사례·미정 설계와 검토 부담으로 설명하고, 미측정 시간이나 병렬 속도 향상을 확정값으로 제시하지 않는다.
+
+<a id="work-sizing"></a>
+#### 작업 크기와 추가 분해
+
+한 작업은 **명확한 불변식 또는 상태 전이를 구현하고 정상·실패·자원 수명을 독립적으로 검토할 수 있는 크기**로 닫는다. 코드 줄 수·함수 수·commit 수를 기준으로 균등 분할하지 않는다. 한 불변식을 여러 함수가 함께 구현하면 같은 작업으로 유지하고, 서로 다른 산출물·검증 환경·소비자를 한 작업이 모두 기다리게 되면 나눈다. 실제 담당은 [공통 착수 기록](#work-entry-exit)에 좁은 경로·선행·완료 사례를 확정한다.
+
+아래는 앞 절의 큰 묶음을 배정할 때 사용하는 추가 하위 ID다. 기존 상위 ID·계약·인수 의무는 유지하고, 상위의 완료에는 적용되는 모든 하위 의무가 필요하다. 하위 분할로 fault 분모를 줄이거나 이미 성공한 시험을 다시 실행하지 않는다. 새 ID는 아직 구현·배정·실행 결과가 아니다.
+
+| 상위 묶음 | 배정 가능한 하위 작업 | 닫는 경계·공유 제한 |
+| --- | --- | --- |
+| 3.03.1 예약·취소 잔여 인수 | 3.03.1.a native adapter/runner·13DB, .b compiler baseline+6 probes, .c component64KiB 동시 생존량/수명 증명, .d 변경 WAL stage4시험·관련 quality·단위 결과 취합 | a/b는 별도 전용 경로에서 병렬 준비. c에서 제품 수정이 필요하면 해당 source를 소비하는 작업과 먼저 조정. d는 원래 source별 결과와 새 delta를 연결하며 독립 검토 뒤 상위 완료 판정 |
+| 3.07 인덱스 | 3.07.1 presence·point/range/full scan, 3.07.2 PK/statement-final UNIQUE·key lock, 3.07.3 build·취소/실패 cleanup | 3.07.1과 해당 tree/undo 공급 뒤 나머지 연결. 3.07.2는 부분 NULL·key 교환·최종 중복·이전 statement 보존, 3.07.3은 bounded staging·FD·취소 소유 반환. 공통 tree 복제 금지 |
+| 3.08 카탈로그·DDL | 3.08.1 정의/이름·versioned catalog 내부 변경, 3.08.2 native create/drop 원자성·객체 retirement 인계 | 3.08.1은 tree/undo primitive로 공급하고 공개 DDL 인수는 rollback·commit/recovery 연결 뒤. index build와 catalog 공개 순서는 한 통합 담당이 연결 |
+| 3.10.1 동시성 primitive | 3.10.1.a guard/rank·잠금 기반, .b snapshot/publication/registry·transient pin, .c FIFO progress turn·admission/drain | 계약상 공통 rank와 guard API를 먼저 합친 뒤 구현. 실제 buffer/undo·commit을 소비하는 통합은 각 후속 작업에서 수행. 전체 거래 인수를 이 primitive의 선행으로 되돌리지 않음 |
+| 3.10.2 동시성 통합 | 3.10.2.a 두 격리 수준·statement snapshot, .b 관측 행 버전·즉시/대기 X-lock 충돌, .c deadlock victim·취소/전체 undo | 3.11.1 등 앞 절의 실제 공급을 소비하고 사례별 정상 이력/전체 abort를 확인. transaction/lock 공통 상태를 동시에 수정하지 않으며 파일이 나뉘어도 의미 변경은 조정 |
+| 3.12.8 복구 종료·재장애 | 3.12.8.a STABILIZE·RESUME/READY 구현, .b 장벽별 재장애·새 ACK/reopen·audit 연결 인수 | a는 영속 장벽과 admission을, b는 실제 도달 cut·정상 복구/거절·고정 peak와 독립 이력을 닫음. fault 입력/checker 준비는 각 장벽 구현 전부터 진행 |
+| 3.13 checkpoint | 3.13.1 fuzzy ATT/DPT capture, 3.13.2 current/previous 선택·fallback, 3.13.3 WAL floor·안전한 회수 | capture→선택 인계→회수 순서. 동시 수정/flush·ATT/DPT 누락·previous closure 보호를 연결. 3.12.5 복구 전용 REBASE와 별도 |
+| 3.14 회수, 3.15 백업·무결성 | 기존 3.14.1 eligibility와 3.14.2 실제 해제/재사용 유지; 3.15.1 audit 공급, 3.15.2.a offline exact-C backup, .b restore→새 ACK→reopen | eligibility는 실제 반환과 구분하고 free/reuse를 통해 통합. audit 준비는 S0부터, 제품 검사는 해당 데이터 경로 공급 뒤. backup 생산과 source-WAL 없는 restore 인수도 구분 |
+
+3.06 tree·행, 3.09 undo 및 3.12의 나머지 장벽도 앞 절의 하위 작업을 기준으로 한다. 예를 들어 split과 root 변경의 실패 상태가 별도 독립 작업이면 착수 때 더 나누되, 작업 수가 같아지도록 전체 DEV3의 leaf 수를 미리 고정하지 않는다.
+
+<a id="work-priority"></a>
+#### 우선 실행 묶음
+
+우선순위는 다른 작업을 여는 공급, 실패 시 재작업이 큰 불변식, 현재 부분 구현의 미완료 의무를 기준으로 정한다. 아래 순서는 작업 선택 기준이며 새로운 DEV 단계나 각 묶음 전체 완료 장벽이 아니다. 구체 진입은 [직접 선행](#remaining-work)을 따르고, 독립 준비는 필요한 실제 공급을 기다리는 동안 진행할 수 있다.
+
+| 우선순위 | 먼저 닫을 공급·통합 | 함께 준비할 것 |
+| --- | --- | --- |
+| 1 | 3.03.1의 남은 native/compiler·메모리 증명·변경 stage 검증과 독립 검토 | 다음 3.10.1 guard/rank 계약, 해당 F03 oracle·F04 fault 입력. 현재 예약·취소 완료에 일반 dirty/recovery 전체를 요구하지 않음 |
+| 2 | 3.10.1 필요한 guard → 3.04 stage/append → 3.05.1 dirty와 3.03.2 INIT → 3.05.2/3 DWB/home·retirement/진행 | 각 opcode F05, 실제 필요에 맞춘 3.03.3 extent 확장, 구현된 쓰기 경로의 최소 복구/장애 입력 |
+| 3 | 3.06.1 공통 tree와 3.09.1 live undo/status → 행/overflow·cursor와 대상별 rollback | 독립 row/index/history·full audit 기반. 공통 page/undo 경계가 고정되면 tree와 undo의 전용 부분을 병렬 준비 |
+| 4 | 3.07 인덱스·3.08 catalog, 3.11.1 공개 공급 후 3.10.2 동시성, 3.12 장벽과 3.11.2 다중 객체 인수 | 실제 공급이 생기는 대로 좁게 연결. 모든 기능 뒤에 복구를 한 번에 설계하지 않고 각 쓰기 경로의 인계·fault를 앞에서 준비 |
+| 5 | 3.13 checkpoint·3.14 회수/3.03.4 reuse·3.15.2 backup/restore·3.16 남은 PF09/최종 인수 | 계측·큰 fixture·자원/시간 profile은 일찍 준비. 성능 판정은 해당 correctness 확보 뒤, 모든 선행 결과는 원래 source/case 범위로 취합 |
+
+자원 증명·독립 검증·fault 설계는 전 구간에 걸쳐 수행한다. 개발 중 아직 제공하지 않은 durability/rollback/복구 기능의 인수는 명시적으로 남기며, 뒤 묶음에 있다는 이유로 해당 effect의 F05나 필수 실패 처리를 미루지 않는다.
+
+<a id="parallel-execution-plan"></a>
+#### 초기 병렬 배치와 순차 통합
+
+DEV3 재개 시 기본 배치는 **총괄·통합 1명 + 작업 담당 2명 + 독립 검토자 1명**으로 계획한다. 동시에 진행하는 구현 작업은 우선 두 개로 제한하고, 총괄도 제품 구현에 들어가면 그 작업을 같은 수에 포함해 배정을 조정한다. 읽기 전용 분석·검토는 함께 진행할 수 있다. 인원 수에 따른 속도 향상은 측정하지 않았으며, 실제 검토 대기·공통 수정·병합 재작업과 자원 경합을 보고 이후 배치를 조정한다. 이 문서 수정은 제품 개발 재개나 실제 작업 배정의 실행 기록이 아니다.
+
+| 역할 후보 | 현재 3.03.1의 담당 범위 | 병합·검토 경계 |
+| --- | --- | --- |
+| 총괄·통합 | 64KiB 분석/증명, 공통 제품 수정 조정, 변경 WAL stage4시험·quality 범위 선정·결과 취합 | 공통 owner/stage·모듈/runner 등록·색인 단일 작성. 제품 수정 시 구현 작업 수를 조정하며 그 수정도 별도 검토자가 확인 |
+| 작업 담당 A | native adapter/runner와 고정 2그룹/13 Linux DB 사례 | 전용 native 경로만 소유. production encoder를 정답으로 쓰지 않고 실제 bytes/오류/fence를 독립 기대값과 대조 |
+| 작업 담당 B | compiler baseline·6개 수명 probe와 runner | 전용 compiler fixture/driver만 소유. 공유 API 수정은 총괄에 전달하고 자기 시험을 위해 다른 담당 소스를 수정하지 않음 |
+| 독립 검토자 | 계약·독립 입력·각 diff·실행 결과·source/case 범위 | 자신의 구현을 독립 검토하지 않음. 검토자가 수정 구현을 맡으면 그 부분의 별도 검토를 다시 배정 |
+
+착수 시 F07에 실제 담당·기준 commit/dirty digest·존재하는 전용/공유 경로·병합 순서를 기록한다. 현재 없는 native/compiler runner는 신규 산출물이며 이 역할 표로 실행 가능하다고 주장하지 않는다. 공통 API/형식/입력 변경은 단일 담당이 먼저 합치고 소비자가 그 기준을 수신한다. 서로 다른 파일이나 worktree도 같은 의미를 바꾸면 독립 작업이 아니다.
+
+병렬 준비는 같은 mutable source에서 임의로 실행하면서 결과를 합치는 방식으로 하지 않는다. 각 실행의 source/binary/fixture와 case를 고정·보존하고, 공유 코드가 바뀌면 영향받는 작업의 입력을 갱신해 **실제 변경 경로만** 다시 검증한다. native와 compiler의 실제 동시 실행은 격리 fixture·출력/build 경로 및 사전 고정 자원/timeout profile이 허용할 때만 선택하고, 경합이 관측되면 순차 실행한다. PF09 측정과 장치 부하 작업을 겹쳐 성능 결과를 왜곡하지 않는다. 기존 결과를 최종 source에서 새로 실행한 PASS로 바꾸지 않는다.
+
+| 후속 영역 | 병렬로 준비 가능한 범위 | 순차로 연결할 경계 |
+| --- | --- | --- |
+| allocator·WAL·buffer | 공통 guard/page/WAL·예약 API 동결 뒤 전용 구현·독립 fault 입력 | 같은 owner/stage 상태 수정, WAL→DWB→home·retirement 인계 |
+| tree·undo/status | 최소 실제 할당/WAL/flush 공급 뒤 서로 다른 전용 경로 | 공통 tree 작성, row/UndoRef/head·obligation의 원자 변경 |
+| 인덱스·catalog | tree·undo·snapshot 공급 뒤 전용 presence/정의 경로 | 공통 tree 수정, index build/DDL 공개·실패 rollback |
+| commit·recovery·checkpoint·회수 | 독립 oracle·fault recipe·해시/receipt 등 전용 검증 준비 | transaction/publication·base/epoch/selector·WAL floor/retention 전이는 한 통합 담당이 순차 반영 |
+
+병렬 병합이 끝났다는 이유만으로 전체 workspace·leaf·하위 회귀를 실행하지 않는다. [변경 코드 기준](../../AGENTS.md)에 따라 필요한 실제 통합 경로와 남은 의무만 선택한다. 선행 API가 계속 바뀌거나 두 작업이 같은 상태 전이를 반복 수정하면 해당 영역을 먼저 순차화하고, 분리 가능한 전용 준비·독립 검토를 계속한다.
+
+<a id="work-organization-review"></a>
+#### D3-WORK-BREAKDOWN-002 — 작업 크기·우선순위·병렬 운영
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-22. DEV3 내부 작업 배정 기준 구체화; 제품 의미/형식/인수 변경 없음 |
+| 권한·소유 | 사용자의 개수·순서·구성·분량·우선순위·병렬 가능성 검토 후 문서 수정 요청. 작업/계약/통합 `/root`, 독립 검토 `/root/dev3_breakdown_review` |
+| 기준·기존 변경 | HEAD `a285043b91571cef83dacda49fcf2a63e99160d2`; 앞선 7개 문서 dirty 변경과 D3-WORK-BREAKDOWN-001 보존. 시작 사본 `/tmp/xadb-dev3-work-priority-wa0cxb4j`, 기존 diff SHA-256 `08de68896ff77638662b01e63026ccae51ba556947a2d7efb87c5392feff9410` |
+| 선택·대안 | 16개 기능 분류 유지·작은 검증 단위 배정·공급 중심 우선순위·초기 구현 작업2개. 번호순 실행, 작업 수 기반 진행률, 공유 상태의 무조정 동시 수정은 채택하지 않음 |
+| 범위·연결 | 기존 계획·현재 상태의 안내·진입/폴더 색인·DEV3 단계 JSON 계획 참조. 기존 문서 ID/경로/제목 유지; 새 제품 파일·runner·원본 evidence 수정 없음 |
+| 검토·검증 | `/root/dev3_breakdown_review`가 시작 사본 대비 7개 문서의 변경을 읽기 전용 검토하여 PASS, 필수 수정 지적 없음. 기존 16개 분류/공급 경계·001 보존, 추가 분해·우선순위의 비차단 준비, 구현 작업 수·공유 코드 순차 통합·source별 증거/변경 경로 검증을 확인했고 `/root`가 반영 확인. `git diff --check` PASS. 제품 개발/병렬 배정 실행·시험·compiler/Clippy·문서 자동 검사·push 없음 |
+| 관계·재검토 | D3-WORK-BREAKDOWN-001의 공급/완료 경계를 유지하며 배정 크기와 순서를 보완. 공통 API 변경·선행 순환·검토 적체·병합 재작업·실행 자원 경합 시 배치를 재검토 |
 
 <a id="acceptance"></a>
 ## 3. 필수 인수

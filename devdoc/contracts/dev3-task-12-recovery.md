@@ -1,0 +1,139 @@
+# DEV3 3.12 — 재시작 복구 개발 상세 명세와 설계도
+
+2026-10-22 · **작업 상세 설계 / 표현·제한 모델 존재 / 일반 recovery·READY 미구현**
+
+[공통 규칙](dev3-task-designs.md) · [복구 정본](disk-storage-design.md#recovery) · [예약 복원](disk-storage-design.md#recovery-reservation) · [REBASE](disk-storage-design.md#recovery-rebase) · [장벽별 기존 작업](../plans/dev3-implementation-plan.md#recovery-remaining)
+
+## 1. 목적·입력·보장
+
+선택된 control·namespace·완결 WAL prefix와 영속 undo를 이용해 ACK 거래를 보존하고 loser를 제거한 뒤 새 쓰기를 허용한다. 전원 상실 모델·프로세스 kill·합성 I/O fault를 구분한다. 성공 sync의 보존, active tail의 제한된 불완전 frame 제외, 완전 길이 checksum 오류 거절은 기존 의미를 유지한다.
+
+입력은 exclusive lease, 생성 때의 checksummed recovery profile, 검증한 FILEMAP/DWB·checkpoint 또는 base closure, epoch/WRITER chain, caller 소유 고정 workspace다. output은 모든 장벽을 통과한 READY owner 또는 원인·실패 장벽·소유 보존을 담은 오류다. partial recovery를 usable reader/writer로 반환하지 않는다.
+
+소스 WAL bytes는 수정하지 않는다. WAL 회수는 완전한 새 closure가 영속 인계된 뒤의 별도 unlink/dirsync다. home page는 redo/undo/DWB 규약에 따라 변경할 수 있으므로 DEV2의 source-page 불변 규칙을 그대로 적용하지 않는다.
+
+## 2. 핵심 요구
+
+| 요구 ID | 명세 |
+| --- | --- |
+| 3.12-R1 | 모든 장벽 동안 foreground admission을 닫는다. profile·실제 memory/frame/FD/disk 부족은 DB write 전 판정하고 새 foreground 한도로 과거 obligation을 줄이지 않음 |
+| 3.12-R2 | BOOT_RESERVE는 home allocator/undo를 먼저 읽지 않고 선택 control/profile/namespace로 고정 몫을 확보. repair·analysis를 시작할 자원의 순환 의존 금지 |
+| 3.12-R3 | RESERVE_RESTORE는 같은 채택 prefix의 descriptor·논리 inventory를 대조해 REDO의 추가 효과 전에 한 번 인계. stale home allocator·0으로 초기화한 ledger 사용 금지 |
+| 3.12-R4 | REDO는 winner/loser 모두의 완결 이력을 streaming 반복. incarnation/pageLSN으로 적용 여부를 판정하고 전체 DPT를 RAM에 복제하지 않음 |
+| 3.12-R5 | REBASE는 새 WAL 전에 home·undo/status·예약 closure를 고정 두 슬롯에 인계. 새 epoch와 잔여 undo 예약을 함께 확보할 때까지 LOG_OPEN 금지 |
+| 3.12-R6 | recovery epoch/header sync와 WRITER 영속 선택 전 새 CLR append·그 효과의 home write 금지. CLR effect와 UndoNextRef는 원자 복구 |
+| 3.12-R7 | VERIFY_RECOVERY는 실제 복구 대상과 terminal/예약을 검사. 정상 open에 변경 없는 cold table 전체 검사를 추가하지 않음 |
+| 3.12-R8 | STABILIZE 뒤만 READY. 모든 유한 crash prefix에서 closure·고정 peak 보존; 완료 보장은 충분한 무장애 구간·정상 종료 I/O·공정한 actor를 전제 |
+
+## 3. 장벽 설계도
+
+```mermaid
+flowchart TD
+  A[LEASE] --> B[PREFLIGHT와 SELECT]
+  B --> C[BOOT_RESERVE]
+  C --> D[DOUBLEWRITE_REPAIR]
+  D --> E[ANALYSIS]
+  E --> F[RESERVE_RESTORE]
+  F --> G[streaming REDO]
+  G --> H[RECOVERY_REBASE]
+  H --> I[RECOVERY_LOG_OPEN]
+  I --> J[UNDO]
+  J --> K[VERIFY_RECOVERY]
+  K --> L[STABILIZE]
+  L --> M[RESUME와 READY]
+  H -. 재장애 .-> A
+  I -. 재장애 .-> A
+  J -. 재장애 .-> A
+  L -. 재장애 .-> A
+```
+
+하나의 recovery owner가 장벽 진행과 자원 인계를 소유한다. 각 단계는 다음 단계가 소비할 검증된 결과만 반환하며 raw profile decode 성공·physical WAL prefix 관측만으로 장벽을 건너뛰지 못하게 한다. 정상 예상 거절과 실제 변경 뒤 fence의 오류 범위를 분리한다.
+
+## 4. 3.12.1 — LEASE·PREFLIGHT/SELECT·BOOT_RESERVE
+
+1. writer lease를 획득하고 fixed root profile의 exact length/format/checksum·지원 profile·namespace를 검증한다. 이 이후 선택 대상의 expected identity를 전달한다.
+2. FILEMAP/DWB와 명시 current/previous·base continuation을 검산한다. 손상 selector 대신 임의 큰 파일 번호·raw DWB·directory 탐색으로 대안을 만들지 않는다. checkpoint fallback은 3.13의 완전 closure 조건을 따른다.
+3. 생성 때 선택된 recovery profile의 실제 자원과 이미 영속화된 작업 요구를 수용할 수 있는지 확인한다. 신규 foreground admission 축소와 복구 요구량은 별개다.
+4. DWB repair·streaming analysis/redo·두 REBASE 슬롯·selector staging·기존 closure와 공존 peak·epoch/header/WRITER 여유를 확보한다. home undo를 읽기 위해 먼저 undo를 분석해야 하는 순환을 만들지 않는다.
+
+선행은 3.02의 lease/선택 읽기와 해당 control/F05다. 성공 output은 repair에 사용할 trusted mapping·selected control·bootstrap reservation이며 READY가 아니다.
+
+## 5. 3.12.2 — DOUBLEWRITE_REPAIR
+
+선택된 pending batch만 읽어 slot sequence·DB/FileId/page/incarnation/pageLSN/image hash를 검산한다. 같은 주소의 새 flush/reuse는 retirement까지 금지한다. 모든 home image를 복원하고 **모든 대상 file sync 후 batch 전체 retirement를 영속 선택**한다. 일부 file 실패나 control 불명은 모든 pending/불명 소유를 보존한다.
+
+healthy home이 pending보다 더 높은 LSN/incarnation이면 오래된 image로 덮지 않고 불변식 오류로 거절한다. 유효 pending 없는 initialized home 손상은 원칙적으로 거절한다. 예외는 FILEMAP·allocation generation과 일치하는 완전 INIT와 그 이후 채택 끝까지의 WAL 전체가 남은 경우다. 이 경우 REDO가 INIT부터 재구성하도록 표시하며 bootstrap에서 blanket page-load 거절하지 않는다. zero/uninitialized no-force home도 이 경로로 다룬다. delta WAL만으로 checksum 오류를 숨기지 않는다.
+
+선행은 3.05.2/3의 pending·retirement 공급이다. repair 중 두 번째 장애에도 남은 선택 pending에서 재실행하고 retired raw image를 부활시키지 않는다.
+
+## 6. 3.12.3 — ANALYSIS·RESERVE_RESTORE
+
+| 재구성 항목 | 계산·불변식 |
+| --- | --- |
+| ATT·loser | capture 시점 ATT로 seed한 뒤 **capture LSN 직후**부터 채택 끝까지 replay. terminal 거래를 부활시키거나 winner를 undo하지 않음 |
+| owner 상태 | latest UndoRef/rollback target/progress·previous-owner LSN/SHA·generation과 완결 그룹 누계를 검산 |
+| 예약 inventory | immutable checkpoint inventory와 이후 WAL before/after delta로 동일 prefix의 소유를 재구성. home allocator를 정본으로 사용하지 않음 |
+| ledger | existing file bytes와 page token, unrealized growth, retained WAL/이미 쓴 CLR와 remaining을 분리. 중복 차감/예약 재사용 금지 |
+| 인계 | 모든 자원 부등식과 descriptor/inventory 합계를 확인한 뒤 recovery owner에게 정확히 한 번 인계 |
+
+최대 admitted32 ATT와 실제 승인된 bounded system 작업만 상주한다. 전체 allocator/undo inventory를 RAM에 적재하지 않고 bounded stream으로 검산한다. system owner 수·inventory bank의 제안 수치를 완성된 지원 profile로 가정하지 않는다. REDO 완료 뒤 home allocator/undo/status와 같은 prefix를 다시 대조하되 예약을 다시 차감하지 않는다.
+
+## 7. 3.12.4 — streaming REDO
+
+`redo_start=min(capture LSN, checkpoint DPT 최소 recLSN)`에서 채택 끝까지 관련 완결 page redo를 읽는다. DPT가 비어 있거나 base-only인 경우의 sentinel/시작 위치는 선택 body의 F01에서 명시한다. ANALYSIS 시작 위치와 혼동하지 않는다.
+
+1. frame/owner chain·semantic 검산을 통과한 완결 그룹만 적용한다. allocation/INIT·tree SMO·undo/status·CLR·progress/obligation도 같은 대상이다.
+2. 각 page/redo 대상의 FILEMAP·owner·incarnation·prior/pageLSN을 대조하여 이미 반영한 대상만 건너뛰고 미반영 대상은 적용한다. 한 page가 반영되었다는 이유로 다중 page 그룹 전체를 건너뛰지 않는다. 그룹의 의미·참조·진행 검산은 유지하며 다른 세대를 단순 LSN 대소만으로 승인하지 않는다.
+3. page load가 실패하면 선택 pending 또는 앞 절의 완전 INIT 복원 근거만 사용한다. 필요한 WAL 중간 손상·완전 frame checksum 오류는 거절한다.
+4. buffer pressure로 flush가 필요하면 채택 source prefix의 해당 LSN과 namespace를 먼저 sync 확인하고 WAL→DWB→home 순서를 따른다. 새 recovery WAL을 이 단계에서 만들지 않는다.
+
+진행 메모리는 bounded buffer·stream cursor·ATT·고정 workspace이며 DB 크기 비례 DPT/전체 page 목록을 만들지 않는다.
+
+## 8. 3.12.5 — RECOVERY_REBASE
+
+이 장벽은 admission이 닫힌 복구 전용이다. 3.13의 정상 fuzzy checkpoint 생산을 기다리지 않고, 기존 generic CURRENT/XWS1 genesis codec이 완성 body를 제공한다고 가정하지 않는다.
+
+1. 채택 끝 L까지 source WAL/namespace를 sync한다. REDO 관련 dirty data/undo/status/allocator를 전부 DWB flush·file sync·retirement하고 DPT empty를 확정한다. cold table 전수 순회는 하지 않는다.
+2. ATT/UndoRef/progress·remaining obligation·ownership root·commit/publication 상태·L·predecessor tip을 묶은 self-contained descriptor를 비선택 슬롯에 write/sync한다. 과거 L 이하 WAL bytes가 없어도 필요한 base closure가 완전해야 한다.
+3. `current=새 base, previous=기존 closure`를 영속 선택하고, `current=previous=새 base`를 다시 선택하여 다른 슬롯의 옛 참조를 먼저 해제한다.
+4. 비선택 다른 슬롯에 같은 L descriptor를 write/sync한 뒤 `current=두 번째 base, previous=첫 base`를 영속 선택한다. 둘이 이미 같은 L이면 불필요한 재기록을 생략할 수 있다.
+5. 시작부터 두 슬롯 모두 선택 중이면 먼저 **source WAL/namespace까지 포함한 최신 current closure**를 current/previous 공통 fallback으로 영속 선택해 한 슬롯을 비운다. durable 선택 전에는 그 슬롯을 덮지 않는다.
+6. selector는 base identity와 **base-only writer continuation**을 원자 선택한다. 별도 오래된 CURRENT/WRITER를 따라가 회수한 epoch를 다시 요구하지 않는다.
+7. 두 base 인계 뒤 다른 live owner도 요구하지 않는 old WAL/control만 unlink/dirsync한다. 실패한 삭제 bytes는 charged이며 selector 불명은 old/new 합집합 closure를 보호한다.
+8. 회수 뒤 새 epoch와 남은 UNDO 예약을 동시에 확보한 뒤만 LOG_OPEN으로 넘어간다. loser 완료를 기다려야 공간을 얻는 순환은 금지한다.
+
+두 bootstrap 슬롯·selector staging은 고정 공간을 재사용한다. restart마다 임시 파일을 늘려서 고정 peak를 만족한 척하지 않는다. 구체 descriptor·ownership bank body와 설치 peak의 미완료 항목은 F01/F05에서 먼저 닫는다.
+
+## 9. 3.12.6–8 — 새 WAL·UNDO·검증·공개
+
+| ID·단계 | 처리·완료 조건 |
+| --- | --- |
+| 3.12.6 LOG_OPEN | 인증된 base L 다음의 새 recovery epoch/header를 연결해 sync하고 그 base identity를 참조하는 WRITER를 영속 선택. LSN wrap/재사용 금지. 새 epoch/header bytes를 쓰기 전에 quota에 charge |
+| 3.12.7 UNDO | loser의 남은 UndoNextRef에서 logical undo. 현재 물리 위치의 effect·head/edge/count·progress·obligation을 같은 CLR로 기록. CLR은 redo-only, 완료한 undo는 반복하지 않음 |
+| 3.12.7 VERIFY_RECOVERY | 실제 redo/undo한 page·allocator·terminal 상태·예약 인계를 검사. 모든 undo와 durable abort-end 전에 ABORTED 성공 금지 |
+| 3.12.8.a STABILIZE/RESUME | 선택 base+후속 WAL/CLR·epoch/namespace 영속성 확인, 필요 home write는 DWB. 실패 시 admission/READY/reclaim 금지. 선택 WRITER를 되돌리지 않음 |
+| 3.12.8.b 연결 인수 | 각 장벽 반복 crash·새 ACK 뒤 reopen, 독립 이력과 3.15.1 full audit로 결과 대조 |
+
+commit/publication의 공급은 3.11.1, logical undo는 3.09.2/3에서 받는다. full audit는 S3/fault 인수에 연결하되 정상 startup 필수 전체 scan으로 넣지 않는다. 필요한 recovery page/WAL 손상과 읽지 않은 임의 cold page 손상의 발견 시점을 구분한다.
+
+## 10. 장애·자원 인수 표
+
+| 사례 | 독립 판정 |
+| --- | --- |
+| profile 부족/손상/미지원 | DB write 미시도·정확 원인. 정상 profile 재개에서 ACK/loser 보존; 이 거절을 정상 복구 성공으로 세지 않음 |
+| DWB repair·각 file sync·retirement cut | 전체 batch pending 소유, 재장애 뒤 최신 incarnation 보존, raw retired image 배제 |
+| 다중 page 그룹의 일부 home만 반영된 cut | 대상별 incarnation/pageLSN으로 이미 반영한 page만 skip, 나머지 redo 완료. 한 page를 근거로 그룹 전체를 skip하는 mutant 거절 |
+| BEGIN WAL 제거+Active loser | checkpoint+WAL inventory에서 같은 잔여량 복원, 영속 UndoRef만으로 abort |
+| 첫/중간/마지막 CLR cut | effect와 progress 동시 redo, 남은 chain만 수행, 이미 쓴 CLR bytes를 remaining으로 부활시키지 않음 |
+| 두 슬롯 선택·공통 fallback·base-only cut | 모든 중간 선택에 완전 old/new closure, 불명 합집합 보호, 선택 중 슬롯 overwrite 금지 |
+| epoch 선택 직후 연속 crash | 다음 REBASE가 해당 epoch를 포함해 고정 peak 내 회수/재사용, restart 횟수 비례 공간 누적 없음 |
+| STABILIZE 실패·READY 뒤 새 ACK | 실패 중 admission 없음; 성공 뒤 ACK는 두 번째 reopen에도 보존 |
+| 같은 WAL/dirty 양, DB256MiB/1GiB | 정상 open I/O가 cold 전체 scan으로 증가하지 않음; audit 시간/bytes는 별도 기록 |
+
+8GiB 안 protected1GiB·WAL256MiB·4/16/64MiB buffer·전용 flush4MiB/단일 maintenance12MiB를 동시에 적용한다. 정상 admitted 이미지의 복구를 단순 quota 부족 거절로 끝내고 성공 인수하지 않는다. fixed bootstrap와 잔여 obligation의 모든 허용 cut 전후 수치 보존, 실제 peak·진행 witness를 제출한다.
+
+## 11. 구현 진입·추가 동결·종료
+
+현재 DEV3 표현 진입점은 [control.rs](../../crates/engine/src/storage/control.rs), [ownership.rs](../../crates/engine/src/storage/ownership.rs), [obligation.rs](../../crates/engine/src/storage/obligation.rs), [wal_io.rs](../../crates/engine/src/storage/wal_io.rs)다. [기존 durable recovery](../../crates/engine/src/durable/recovery.rs)는 DEV2 의미의 수신 비교 대상이며 이 알고리즘의 구현 완료가 아니다.
+
+각 장벽 착수 전에 exact control/epoch/closure bytes, 허용 selector 상태, empty-DPT sentinel, inventory bank·owner bound, 각 fault cut와 정상/거절 oracle, source-WAL/namespace 보존 규칙, bootstrap 수치표를 동결한다. 3.12.1–7의 변경 경로를 좁게 검증하고 3.12.8은 새 연결 경로와 미완료 의무를 닫는다. 기존 완료 시험을 종합을 이유로 재실행하지 않는다. DS02–05·RC-T12–14의 미실행/미해결 항목이 남으면 전체 복구·S1은 미완료다.

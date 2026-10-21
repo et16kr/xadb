@@ -10,6 +10,29 @@
 
 <!-- catalogue -->
 
+## DEV3 작업별 상세 명세·설계도
+
+[공통 경계·공급 설계도·인수 규칙](dev3-task-designs.md) 아래 기존 16개 작업을 각각 상세화한다. 기존 소유 계약을 유지하며 설계 작성과 제품 구현·실행은 구분한다.
+
+- [3.01 형식·정체성](dev3-task-01-formats.md)
+- [3.02 파일·읽기 기반](dev3-task-02-files-reads.md)
+- [3.03 공간 할당](dev3-task-03-allocation.md)
+- [3.04 WAL 변경 경로](dev3-task-04-wal.md)
+- [3.05 dirty buffer·flush](dev3-task-05-buffer-flush.md)
+- [3.06 트리·행](dev3-task-06-tree-rows.md)
+- [3.07 인덱스](dev3-task-07-indexes.md)
+- [3.08 카탈로그·DDL](dev3-task-08-catalog-ddl.md)
+- [3.09 undo·rollback](dev3-task-09-undo-rollback.md)
+- [3.10 동시성·가시성](dev3-task-10-concurrency.md)
+- [3.11 commit·공개](dev3-task-11-commit.md)
+- [3.12 재시작 복구](dev3-task-12-recovery.md)
+- [3.13 checkpoint](dev3-task-13-checkpoint.md)
+- [3.14 공간 회수](dev3-task-14-reclamation.md)
+- [3.15 백업·무결성](dev3-task-15-backup-integrity.md)
+- [3.16 자원 종합·성능·최종 인수](dev3-task-16-qualification.md)
+
+## 기존 소유 계약과 참고 문서
+
 - [DEV3 selected clean page buffer](dev3-read-buffer.md) — 실제 선택 reader·pin·bounded clock의 채택 계약; dirty buffer·전체 S2 미완료
 
 - [DEV3 복합 key 표현](dev3-key-format.md) — F01 scalar/composite·RowId bytes와 무효과 비교; index 실행·unique 인수 제외
