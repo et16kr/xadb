@@ -418,3 +418,6 @@ source `e83efc08cfdd1c0233343dc936b3f682361f9385750cbca155fdb1e66f64836f`를 `ar
 
 
 최종 독립 감사 `artifacts/dev3/read-buffer-independent-review-20261021/r7-final-evidence-review.json`은 leaf49·하위28·DEV0/1각8check,29개 고정 named suite의189시험(engine20 suite172개 포함), 원본5개의 byte 일치와 로그123개·asset hash 참조10,173개/8,500고유경로를 확인했다. 소스/시험의 차단 사항은 없었다. 문서 수동 대조에서 발견한 development-stages.json의 이전 leaf_progress를 stage-completion.json의 같은 제한 범위와 맞췄다. 문서 verifier는 편집/commit 중 실행하지 않으며, DEV3 전체 execution_status는 NOT_RUN으로 유지한다.
+
+
+`d6d62d4` commit의 clean export가 최종 검증 source `061c0d9e…`와 같고 worktree가 깨끗함을 `artifacts/dev3/read-buffer-commit-verification-20261021.json`으로 확인했다. 최종 독립 결정 `read-buffer-independent-review-20261021/r7-final-decision.json`은 이 제한 clean buffer 단위의 commit 차단 사항이 없음을 기록한다. 완료된 leaf의 worker684개는 SHA·전체 bytes·mode·device를 확인한 뒤 동일 binary2개로 통합해 약14.47GiB를 회수했고, 국소/통합/compiler의 disposable target3개에서도 보존 binary14개의 hash를 확인하며 약4.56GiB를 제거했다. `artifacts/dev3/read-buffer-final-leaf-worker-cleanup-20261021/summary.json`과 `read-buffer-cache-cleanup-20261021/final-targets.json`에 경로·hash·journal을 남겼다. source export·raw receipt·로그·compiler probe·장애 data는 유지한다.
