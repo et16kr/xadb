@@ -2,7 +2,7 @@
 
 2026-10-19 · **DEV7-DESIGN-001·002 D2 설계 채택·독립 정적 검토 PASS / leaf 동결·구현·SC07–SC11·SQL_EXT1 NOT_RUN**
 
-[구현·검증 계획](../plans/dev7-implementation-plan.md) · [Oracle·Altibase·로컬 소스 조사](../evidence/dev7-source-research.md) · [완료 계약](../plans/stage-completion.json) · [기능 요구](../plans/capability-inventory.json)
+[구현·검증 계획](../plans/dev7-implementation-plan.md) · [Oracle·로컬 소스 조사](../evidence/dev7-source-research.md) · [완료 계약](../plans/stage-completion.json) · [기능 요구](../plans/capability-inventory.json)
 
 이 문서는 XADB-037–041의 아키텍처·의미·실패 경계와 구현 전 동결 의무를 정한다. DEV7에 배정된 9개 요구군의 64개 요구를 [배정표](../plans/dev7-implementation-plan.md#coverage)로 추적한다. 모든 함수 overload·wire byte·물리 opcode가 동결된 최종 구현 명세라는 뜻은 아니다. [F01–F10](../plans/dev7-implementation-plan.md#freeze)의 미완료 입력은 해당 구현을 막으며, 후속 leaf의 의무를 삭제하거나 N/A로 바꾸지 않는다.
 
@@ -226,7 +226,7 @@ plan/node→estimated/actual rows·loops·memory peak·spill bytes/pass·skew fa
 | 항목 | 기록 |
 | --- | --- |
 | 분류·상태·일자 | D2 · ACCEPTED (아키텍처 설계 범위) · 2026-10-19 |
-| 담당·권한 | 설계·계약·통합 `/root`; 사용자의 DEV7 설계 및 Oracle·Altibase·로컬 DBMS 참고 요청, DP01의 기존 위임 |
+| 담당·권한 | 설계·계약·통합 `/root`; 사용자의 DEV7 설계 및 Oracle·로컬 DBMS 참고 요청, DP01의 기존 위임 |
 | 선택 | bounded pull 실행과 spill, 의미 descriptor, 보수적인 FK/prepare 보호, interpreted PSM, disk LOB, process 격리 외부 효과와 명시 2PC |
 | 대안 | 전체 DBMS dialect 복제·무제한 materialization·무조건 cache/자동 재실행·in-process 외부 routine·순차 remote commit의 원자 주장 배제. vector/JIT·fine-grained FK 등은 측정·기능 근거 뒤 재검토 |
 | 적용·대체 | 기존 DEV7 범위/SC07–11을 구체화. D7-STORAGE·RR/RC·XA는 별도 공급 profile로만 하위 capability를 확장. DEV2/3/4 기본 증거·기존 ABI·안정 버전 의무를 소급 대체하지 않음. 비교 문맥·CALL 거래 제어·XA 완료/복구 조회의 보완은 아래 DEV7-DESIGN-002가 해당 부분을 대체 |

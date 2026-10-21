@@ -158,7 +158,7 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 | D7-T31 | 부정 oracle/검사기·전체 복구 | wrong binary/profile·미도달 cut·누락 variant·빈 trace·stale expected·관계/복구 mutant 거절, 실제 native/SQL/외부 history 비교 |
 | D7-T32 | 성능·재현·하위 회귀 | 아래 P01–P05와 관련 최신 source의 하위 단계 전체 필수 검사, 독립 검토 뒤 leaf/단계 상태 분리 |
 
-의미가 같은 지원 path는 동일 fixture와 expected를 통과해야 한다. 독립 oracle은 production expression evaluator·key codec·optimizer를 정답 계산에 import하지 않는다. 작은 finite relation enumerator, decimal/rational 모델, explicit geometry fixtures, 별도 transaction/XA 상태 모델을 사용한다. Oracle/Altibase/다른 DBMS 실행 비교는 동작이 명세상 일치하는 셀의 보조 근거이며 XADB 독립 정답을 대신하지 않는다. 이번에는 비교 실행하지 않았다.
+의미가 같은 지원 path는 동일 fixture와 expected를 통과해야 한다. 독립 oracle은 production expression evaluator·key codec·optimizer를 정답 계산에 import하지 않는다. 작은 finite relation enumerator, decimal/rational 모델, explicit geometry fixtures, 별도 transaction/XA 상태 모델을 사용한다. Oracle/다른 DBMS 실행 비교는 동작이 명세상 일치하는 셀의 보조 근거이며 XADB 독립 정답을 대신하지 않는다. 이번에는 비교 실행하지 않았다.
 
 <a id="faults"></a>
 ## 6. 필수 fault·동시성·재장애 행렬

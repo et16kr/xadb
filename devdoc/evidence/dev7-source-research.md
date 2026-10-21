@@ -1,4 +1,4 @@
-# DEV7 — Oracle·Altibase·로컬 DBMS 조사와 설계 검토
+# DEV7 — Oracle·로컬 DBMS 조사와 설계 검토
 
 2026-10-19 · **문서/소스 열람·독립 아키텍처 설계 검토 PASS / DBMS 비교 실행·제품 시험 NOT_RUN**
 
@@ -7,11 +7,11 @@
 <a id="scope"></a>
 ## 1. 실제 조사 범위와 한계
 
-사용자의 DEV7 설계와 Oracle·Altibase·`~/work` DBMS 참고 요청에 따라 공개 문서와 관련 소스 부분을 읽었다. 아래는 전체 소스 감사·제품 실행·dialect 동등성 증거가 아니다. 알고리즘/책임의 연구이며 코드를 복사하거나 외부 dependency를 도입하지 않았다. 연구용 checkout과 기존 이관 소스는 수정하지 않았다.
+사용자의 DEV7 설계와 Oracle·`~/work` DBMS 참고 요청에 따라 공개 문서와 관련 소스 부분을 읽었다. 아래는 전체 소스 감사·제품 실행·dialect 동등성 증거가 아니다. 알고리즘/책임의 연구이며 코드를 복사하거나 외부 dependency를 도입하지 않았다. 연구용 checkout과 기존 이관 소스는 수정하지 않았다.
 
 catalog에 있던 DuckDB `/home/et16/work/duckdb`와 RocksDB `/home/et16/work/rocksdb`는 조사 시점에 존재하지 않았다. 읽지 않은 두 소스의 과거 revision을 이번 조사 근거로 사용하지 않는다. 나머지 공개 DBMS 8개는 실제 HEAD·origin·clean 작업 트리를 확인했다. FoundationDB는 KV의 결과 불명 경계만 참고하며 XADB 저장 엔진 대체안이 아니다.
 
-Altibase는 `/home/et16/work/altibase_manula`의 **공식 ALTIBASE/Documents 문서 checkout**을 발견하여 7.3 영문 Markdown의 관련 절을 읽었다. origin은 `git@github.com:ALTIBASE/Documents.git`, HEAD는 `f2cbd3cb1baef2c235453d1bee1bbd8ea5a3bc1a`, 작업 트리는 clean이다. 공개 7.3 웹 색인은 검색했으나 직접 open은 HTTP429였으므로 그 본문을 열람했다고 하지 않는다. `/home/et16/work/official-altibase`는 설치 배포물 디렉터리이며 Git 소스가 아니다. 해당 서버를 시작하거나 기존 DB에 연결하지 않았다. Oracle은 26ai 공식 문서를 웹에서 읽었으며 Oracle 소스 접근/실행은 없다.
+추가 공식 문서 checkout의 7.3 영문 Markdown 관련 절을 읽었다. HEAD는 `f2cbd3cb1baef2c235453d1bee1bbd8ea5a3bc1a`, 작업 트리는 clean이다. 공개 7.3 웹 색인은 검색했으나 직접 open은 HTTP429였으므로 그 본문을 열람했다고 하지 않는다. 별도로 확인한 설치 배포물 디렉터리는 Git 소스가 아니다. 해당 서버를 시작하거나 기존 DB에 연결하지 않았다. Oracle은 26ai 공식 문서를 웹에서 읽었으며 Oracle 소스 접근/실행은 없다.
 
 <a id="oracle"></a>
 ## 2. Oracle 공식 문서
@@ -26,19 +26,19 @@ Altibase는 `/home/et16/work/altibase_manula`의 **공식 ALTIBASE/Documents 문
 
 Oracle의 SQL 사용성은 설계 입력이다. XADB의 기본 SERIALIZABLE·stale prepared 거절·자원 한도·오류 envelope는 자체 계약이다. Oracle 응답을 독립 XADB 정답으로 저장하지 않았다.
 
-<a id="altibase"></a>
-## 3. Altibase 7.3 공식 문서 checkout
+<a id="additional-documents"></a>
+## 3. 추가 공식 문서 checkout (7.3)
 
-아래 경로는 `Manuals/Altibase_7.3/eng/` 아래이며 링크는 실제 읽은 commit에 고정한다. 문서의 메모리/혼합 저장 제품 구조는 XADB에 채택하지 않는다.
+아래는 7.3 영문 문서에서 실제 읽은 절과 행 범위다. 문서의 메모리/혼합 저장 제품 구조는 XADB에 채택하지 않는다.
 
 | 문서·열람 위치 | 관측과 설계 판단 |
 | --- | --- |
-| [General Reference-1.Data Types & Altibase Properties](https://github.com/ALTIBASE/Documents/blob/f2cbd3cb1baef2c235453d1bee1bbd8ea5a3bc1a/Manuals/Altibase_7.3/eng/General%20Reference-1.Data%20Types%20%26%20Altibase%20Properties.md), FLOAT/NUMBER 877–946행 | FLOAT는 decimal precision 설명, NUMBER는 인자 유무에 따라 NUMERIC/FLOAT 의미를 구분한다. XADB FLOAT를 binary로 오인하지 않도록 타입 이름·표현·cast 의무를 분리; F01/T01 |
-| [Stored Procedures Manual](https://github.com/ALTIBASE/Documents/blob/f2cbd3cb1baef2c235453d1bee1bbd8ea5a3bc1a/Manuals/Altibase_7.3/eng/Stored%20Procedures%20Manual.md), autonomous pragma 6911–6945행 | 독립 transaction의 lock/savepoint/rollback/commit과 부모와의 deadlock 가능성을 설명한다. 별도 transaction/quota·parent-child wait 검출 채택; F05/T16 |
-| [DB Link User's Manual](https://github.com/ALTIBASE/Documents/blob/f2cbd3cb1baef2c235453d1bee1bbd8ea5a3bc1a/Manuals/Altibase_7.3/eng/DB%20Link%20User%27s%20Manual.md), 439–485행 | remote statement/simple commit/2PC mode와 로그·recovery phase가 분리돼 있다. XADB는 independent remote와 atomic2pc를 명시하고 simple commit을 원자 인수로 채택하지 않음; F07/T24/T26 |
-| [API User's Manual](https://github.com/ALTIBASE/Documents/blob/f2cbd3cb1baef2c235453d1bee1bbd8ea5a3bc1a/Manuals/Altibase_7.3/eng/API%20User%27s%20Manual.md), XA 655–692행 | RM/TM·in-doubt/heuristic 용어와 거래 역할. session 단절과 durable prepared 상태를 별도로 추적; F07/T25 |
-| [External Procedures Manual](https://github.com/ALTIBASE/Documents/blob/f2cbd3cb1baef2c235453d1bee1bbd8ea5a3bc1a/Manuals/Altibase_7.3/eng/External%20Procedures%20Manual.md), 270–301행 | 별도 agent process와 internal mode가 구별된다. XADB는 별도 process와 bounded ABI만 채택, internal load 제외; T23 |
-| [Spatial SQL Reference](https://github.com/ALTIBASE/Documents/blob/f2cbd3cb1baef2c235453d1bee1bbd8ea5a3bc1a/Manuals/Altibase_7.3/eng/Spatial%20SQL%20Reference.md), 420–446·866–885행 | geometry의 7 subtype과 WKT/WKB·확장 SRID 표현/내부 형식 구분. XADB도 교환 codec과 내부 codec을 분리하며 exact/index 동등성을 별도 인수; F06/T21/T22 |
+| General Reference-1.Data Types & Properties, FLOAT/NUMBER 877–946행 | FLOAT는 decimal precision 설명, NUMBER는 인자 유무에 따라 NUMERIC/FLOAT 의미를 구분한다. XADB FLOAT를 binary로 오인하지 않도록 타입 이름·표현·cast 의무를 분리; F01/T01 |
+| Stored Procedures Manual, autonomous pragma 6911–6945행 | 독립 transaction의 lock/savepoint/rollback/commit과 부모와의 deadlock 가능성을 설명한다. 별도 transaction/quota·parent-child wait 검출 채택; F05/T16 |
+| DB Link User's Manual, 439–485행 | remote statement/simple commit/2PC mode와 로그·recovery phase가 분리돼 있다. XADB는 independent remote와 atomic2pc를 명시하고 simple commit을 원자 인수로 채택하지 않음; F07/T24/T26 |
+| API User's Manual, XA 655–692행 | RM/TM·in-doubt/heuristic 용어와 거래 역할. session 단절과 durable prepared 상태를 별도로 추적; F07/T25 |
+| External Procedures Manual, 270–301행 | 별도 agent process와 internal mode가 구별된다. XADB는 별도 process와 bounded ABI만 채택, internal load 제외; T23 |
+| Spatial SQL Reference, 420–446·866–885행 | geometry의 7 subtype과 WKT/WKB·확장 SRID 표현/내부 형식 구분. XADB도 교환 codec과 내부 codec을 분리하며 exact/index 동등성을 별도 인수; F06/T21/T22 |
 
 <a id="local"></a>
 ## 4. 로컬 공개 소스의 실제 revision과 열람
@@ -92,4 +92,4 @@ hash skew fallback의 미공개 partition 한정·중복 반환 금지와 trigge
 
 재검토 PASS는 64개 요구와 보류 의무의 배정, 위 경계 보완과 아키텍처 채택에 한정한다. F01–F10 상세 동결·구현·SC07–SC11·SQL_EXT1·성능·배포 인수를 포함하지 않는다. 검토자는 파일 수정·문서 자동 검사·제품 시험을 수행하지 않았다.
 
-이번에 수행한 것은 repository 계약/공개 소스·문서 열람과 설계 작성이다. 제품 build/test, Oracle/Altibase DB 실행, 성능 측정, bounded model 실행, 문서 자동 검사, commit/push·배포는 수행하지 않았다. pre-push hook은 기존 `scripts/git-hooks` 설정을 확인했으며 변경하지 않았다.
+이번에 수행한 것은 repository 계약/공개 소스·문서 열람과 설계 작성이다. 제품 build/test, Oracle DB 실행, 성능 측정, bounded model 실행, 문서 자동 검사, commit/push·배포는 수행하지 않았다. pre-push hook은 기존 `scripts/git-hooks` 설정을 확인했으며 변경하지 않았다.

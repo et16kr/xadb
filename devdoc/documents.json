@@ -676,7 +676,7 @@
     "dev7-source-research.md": {
       "path": "evidence/dev7-source-research.md",
       "role": "evidence",
-      "title": "DEV7 — Oracle·Altibase·로컬 DBMS 조사와 설계 검토"
+      "title": "DEV7 — Oracle·로컬 DBMS 조사와 설계 검토"
     },
     "dev2-completion-xadb-20261019-r1.json": {
       "path": "evidence/dev2-completion-xadb-20261019-r1.json",

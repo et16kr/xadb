@@ -37,7 +37,7 @@
 | MySQL `3b99be40f8a31d9396cad10accfd3ba51647d613` | `sql/xa/sql_xa_commit.cc` 80–210: prepared commit·실패/재시도 경계. 일부 구현의 unilateral rollback 분기는 XADB의 durable prepared 결정 불변 규칙으로 가져오지 않음 |
 | SQLite `43a48f77585a88940c727f33682151418f544059` | `src/fkey.c` 19–99: immediate/deferred 제약과 statement rollback 경계. counter 구현 자체를 정답으로 복사하지 않음 |
 | CUBRID `a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5` | `src/query/serial.c` 1180–1260: sequence 변경 redo와 system operation, non-cycle 범위 경계. 이 부분만으로 전체 발급 내구성을 인증하지 않음 |
-| SOURCE-L1 `0682bdd8610c3728810df616c95a858cda675706` | `/home/et16/work/altidev4`의 `src/qp/qsx/qsxEnv.cpp` 849–925·`qsxExecutor.cpp` 6287–6333: routine rollback·문맥별 제한. `src/mm/mmd/mmdXa.cpp` 723–777·1945–1985: heuristic 전용 forget과 prepared/heuristic recover 합집합 |
+| SOURCE-L1 `0682bdd8610c3728810df616c95a858cda675706` | `src/qp/qsx/qsxEnv.cpp` 849–925·`qsxExecutor.cpp` 6287–6333: routine rollback·문맥별 제한. `src/mm/mmd/mmdXa.cpp` 723–777·1945–1985: heuristic 전용 forget과 prepared/heuristic recover 합집합 |
 
 ## 발견 사항과 반영
 
