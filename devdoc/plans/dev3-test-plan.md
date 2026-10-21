@@ -65,7 +65,7 @@
 
 | 작업·주 단계 | 중간 필수: 해당 구현/변경 때 실행 | 구현과 함께 추가할 테스트 | S5에서 실행할 전체 범위 |
 | --- | --- | --- | --- |
-| [3.05 dirty·flush](../contracts/dev3-task-05-buffer-flush.md), S2 | dirty 첫 recLSN과 redirty 보존; WAL sync→DWB image sync→pending→home sync→전체 retirement 순서; 두 file 중 부분 실패에서 pending 보존; reuse 금지; 작은 buffer에서 flusher 진행 | **NT05**: effect 순서 독립 trace, redirty/copy barrier, 다중 file pending·retirement fault와 오래된 image 재적용 mutant, bounded 진행 관측 | 설계 3.05-C01–3.05-C15의 해당 전체 변형, batch1/8/64×profile×fault, eviction/oldest/WAL-service·장시간 pressure와 PF09 |
+| [3.05 dirty·flush](../contracts/dev3-task-05-buffer-flush.md), S2 | dirty 첫 recLSN과 redirty 보존; WAL sync→DWB image sync→pending→home sync→전체 retirement 순서; 두 file 중 부분 실패에서 pending 보존; reuse 금지; 작은 buffer에서 flusher 진행 | **NT05**: effect 순서 독립 trace, redirty/copy barrier, 다중 file pending·retirement fault와 오래된 image 재적용 mutant, bounded 진행 관측 | 설계 3.05-C01–3.05-C16의 해당 전체 변형, batch1/8/64×profile×fault, eviction/oldest/WAL-service·장시간 pressure와 PF09 |
 | [3.06 tree·행](../contracts/dev3-task-06-tree-rows.md), S2/S3 | empty→insert/search, split/root 변경·삭제 경계, inline↔overflow, row의 before/after·undo 연결, split/delete 사이 cursor 순서·누락/중복, locator stale 거절 | **NT06**: 독립 ordered tuple/history, split/compaction/overflow fixture, logical row identity와 statement token, cursor 재탐색·caller guard 수명 시험 | T06-01–T06-16과 선언한 전체 변형, 최대 row·tree 높이·이동/overflow 손상·4배 row/locator |
 | [3.07 index](../contracts/dev3-task-07-indexes.md), S3 | row↔presence/scan 일치; PK NULL; 부분 NULL 중복 거절·전체 NULL 허용; statement key 교환/최종 중복·이전 statement 보존; build 성공과 취소/실패의 staging 소유 | **NT07**: 독립 key→row 기대값, unique/key-lock barrier, statement-final 결과, offline build·cleanup·drain 중 flusher 진행 입력 | 전체 index 수/키 경계·point/range/full scan·unique 경합·external sort run/FD·build fault 조합 |
 | [3.08 catalog·DDL](../contracts/dev3-task-08-catalog-ddl.md), S3 | 정의/이름·열 위치 경계, create/drop의 catalog·객체 원자성, 실패 rollback, 옛 snapshot과 drop/recreate generation, index build와 catalog 공개의 동일 commit 장벽 | **NT08**: 독립 catalog 상태표·이름 충돌·잘못된 position, DDL 전후 객체 집합, create/drop cut와 orphan/retired 소유 fixture | table/index/DDL 객체 조합·전체 실패 cut·과거 snapshot·복구/audit 결합 |
@@ -74,7 +74,7 @@
 
 | 작업·주 단계 | 중간 필수: 해당 구현/변경 때 실행 | 구현과 함께 추가할 테스트 | S5에서 실행할 전체 범위 |
 | --- | --- | --- | --- |
-| [3.09 undo·rollback](../contracts/dev3-task-09-undo-rollback.md), S2/S3 | head·두 previous edge·incoming의 같은 그룹; statement mark 복원/이전 statement 보존; 현재 tree의 logical undo가 타 거래·완결 SMO 보존; CLR effect+progress·예약; durable AbortEnd 뒤 잠금 해제; 실패 fence | **NT09**: 독립 edge multiset/typed 이력, 새 대상(row/index/catalog)별 undo fixture, split 뒤 rollback·재삽입 예약, ledger가 mark로 되감기지 않는 반복 실패 입력 | 3.09-C01–3.09-C16 및 선언 변형, chunk/release·target 교차·first/middle/last CLR 재장애·저공간 조합 |
+| [3.09 undo·rollback](../contracts/dev3-task-09-undo-rollback.md), S2/S3 | head·두 previous edge·incoming의 같은 그룹; statement mark 복원/이전 statement 보존; 현재 tree의 logical undo가 타 거래·완결 SMO 보존; CLR effect+progress·예약; durable AbortEnd 뒤 잠금 해제; 실패 fence | **NT09**: 독립 edge multiset/typed 이력, 새 대상(row/index/catalog)별 undo fixture, split 뒤 rollback·재삽입 예약, ledger가 mark로 되감기지 않는 반복 실패 입력 | 3.09-C01–3.09-C17 및 선언 변형, chunk/release·target 교차·first/middle/last CLR 재장애·저공간 조합 |
 | [3.10 동시성](../contracts/dev3-task-10-concurrency.md), S2 primitive/S3 통합 | 새 guard/rank·모든 pin 준비 또는 반환; q 선택+등록·status11/frontier10; pin 인계 공백 없음; FIFO 준비 중 flusher; RC 문장 안정/다음 문장 새 commit; Serializable 의존 충돌; 즉시 X-lock 뒤 관측 버전 비교·victim 전체 undo | **NT10**: 소유권 compiler probe, sleep에 의존하지 않는 실제 thread barrier, q10 기대값·lock/observe 이력·ticket 진행, deadlock/cancel fixture | C10-01–C10-16 및 선언 변형, 두 isolation×충돌 종류×진입 경로, 실제 thread 장시간 stress |
 | [3.11 commit](../contracts/dev3-task-11-commit.md), S3 | commit 전/첫 byte 시도 후 오류 구분, WAL sync 뒤 Committed→frontier→ACK, no-force/steal, 다중 객체 전부 또는 전무, UNKNOWN/ACK 외부 관측, ACK 뒤 reopen 보존 | **NT11**: engine 밖 ACK/UNKNOWN witness와 독립 원자 이력, sync/status/frontier/reply barrier, terminal owner·credit 원자 인계·오류 fixture | 모든 commit cut·다중 객체/거래·WAL/DWB 상태 조합, 정상/거절 복구 분리. 미동결 terminal 형식은 먼저 동결 |
 | [3.12 recovery](../contracts/dev3-task-12-recovery.md), S3 | 각 장벽의 [아래 필수 인수](#recovery-minimum). 새로 연결한 장벽과 직접 앞뒤 인계를 검증하고 무변경 앞 장벽 전체를 재실행하지 않음 | **NT12**: source prefix·ATT/DPT·obligation의 독립 snapshot, 대상별 redo 기대값, 두 슬롯 closure·epoch/WRITER·새 프로세스 fixture, 장벽 도달/재장애 controller | 장벽·namespace·quota·fault 전체와 반복 reopen, BEGIN-WAL 제거/부분 CLR, 고정 peak와 정상 startup 규모 비교 |
@@ -84,11 +84,27 @@
 | 작업·주 단계 | 중간 필수: 해당 구현/변경 때 실행 | 구현과 함께 추가할 테스트 | S5에서 실행할 전체 범위 |
 | --- | --- | --- | --- |
 | [3.13 checkpoint](../contracts/dev3-task-13-checkpoint.md), S4 | 완료 등록 prefix의 ATT/DPT/ownership 동일 cut; CommitAttempted 미해결 시 capture 금지; 누락 검출; current/previous와 old/new 합집합 보호; floor→Retiring→unlink/dirsync·charge 반환 | **NT13**: capture와 수정/flush thread barrier, 독립 prefix inventory·chunk digest·floor, 누락/조기삭제 mutant, selector 불명 fixture | 3.13-C01–3.13-C15 및 전체 변형, fuzzy capture×dirty/owner·fallback×fault·WAL 회수 전체 |
-| [3.14 회수](../contracts/dev3-task-14-reclamation.md), S4 | q/rollback/pin 보존 중 free 금지·해제 후 실제 reuse; edge/cursor/count 동일 그룹; Committed(q) stamp; queue 작업 소유와 final Free 구별; begin-WAL 제거 뒤 Active abort; quota 거절 후 기존 abort 진행 | **NT14**: 독립 ref graph·보존 이유/실제 반환량, release role/chunk cut·generation ABA, old overflow 별도 retirement·owner 해제 후 admission fixture | R14-01–R14-16 및 전체 변형, 장기 reader/churn·retention owner·slot/page/extent·재장애 조합 |
+| [3.14 회수](../contracts/dev3-task-14-reclamation.md), S4 | q/rollback/pin 보존 중 free 금지·해제 후 실제 reuse; edge/cursor/count 동일 그룹; Committed(q) stamp; queue 작업 소유와 final Free 구별; begin-WAL 제거 뒤 Active abort; quota 거절 후 기존 abort 진행 | **NT14**: 독립 ref graph·보존 이유/실제 반환량, release role/chunk cut·generation ABA, old overflow 별도 retirement·owner 해제 후 admission fixture | R14-01–R14-17 및 전체 변형, 장기 reader/churn·retention owner·slot/page/extent·재장애 조합 |
 | [3.15 audit·backup](../contracts/dev3-task-15-backup-integrity.md), S0 준비/S3 audit/S4 backup | 작은 고정 DB의 row↔index/catalog/allocation/undo audit 및 대표 손상 검출; drain timeout에 기존 commit/rollback/flusher 진행; exact-C 복사→source WAL 없는 restore→새 ACK→reopen·source 보존 | **NT15**: typed 전체 기대값·known-bad DB, stream audit/FD 계측, drain·copy·선택·새 timeline namespace 인계 fixture와 실제 destination sync 관측 | 전체 무결성 규칙·손상 종류·backup/restore cut·대형 DB·취소·재장애. namespace 인계 미동결 동안 restore 성공을 주장하지 않음 |
 | [3.16 자원·성능·최종 인수](../contracts/dev3-task-16-qualification.md), 전 단계/S5 | 새 opcode의 forward/cleanup/abort F05와 자원−1/동일/+1; 작은 fixture에서 계측·집계 정상/known-bad; 변경 회계의 중복/누락·잔여량 보존 | **NT16**: opcode 자원표와 독립 ledger, 실제 RSS/FD/pin/I/O 관측, 4배 fixture·PF09 workload·전수 inventory와 누락/오집계 거절 checker | [FT01–FT10 전체](#final-suite), 최대·대형 profile, PF09와 증거 종합. 중간 단계마다 성능 전수 실행하지 않음 |
 
 인수 표의 case 번호는 각 작업 문서 안에서만 해석한다. “전체 변형”의 실제 입력·cut·seed·개수는 소유 계약의 분모를 유지하여 실행 전에 고정하며 사후 결과에 맞춰 축소하지 않는다. 위 핵심 목록은 동일 source의 기존 시험을 반복하거나, 아직 없는 모든 소비자 구현을 현재 작업의 선행으로 만드는 지시가 아니다.
+
+<a id="design-review-009"></a>
+### 3.5 DEV3-REVIEW-009에서 보완한 구현 동반 반례
+
+[2026-10-22 설계 비교 리뷰](../evidence/dev3-task-design-review-20261022.md)의 보완을 해당 NT 묶음에 포함한다. 아래는 **새 테스트 명세**이며 실행 결과가 아니다. 해당 경로를 구현할 때 작은 핵심 반례를 중간 필수로 작성·선택하고, 전체 profile/cut 변형은 S5 inventory에 포함한다. 이번 문서 수정으로 제품 시험을 실행하지 않는다.
+
+| 리뷰 항목 | 해당 작업·중간 필수 반례 | S5 연결 |
+| --- | --- | --- |
+| F1 flush claim | NT03/05/14: copy 뒤 Pending 전·retirement 뒤 RAM finalize 전 free/reuse 차단, claim/free 동시 등록과 안전한 취소 후 진행. 3.05-C16·R14-17·T06-06 | FT04/05/06/07, batch/profile/cut 전체 |
+| F2 전체 own UNIQUE | NT07/10: S1 own INSERT/UPDATE의 키와 S2 충돌 시 S2만 rollback; S1 DELETE/key 이동 뒤 S2 키 재사용·같은 full key 재검사는 정상. 3.07-T10 | FT03/05, NULL·격리·statement 조합 |
+| F3 table/index drop | NT08:0/1/8 종속 index와 table의 같은 DDL commit, 옛 snapshot 보존, 마지막 집합 검산과 공개 사이 create/drop 경합. 3.08-T6 | FT03/04/07, 모든 그룹/commit cut |
+| F4 부분 rollback 뒤 재undo | NT09: S1 성공→S2 mark rollback→S3 변경→전체 abort에서 S2 재undo0, StatementFinish 전후 crash·BEGIN/옛 CLR WAL 회수. 3.09-C17 | FT03/04/07, 대상/chain/cut 전체 |
+| F5 REDO 검사 단계 | NT12: capture 전 terminal owner가 ATT에 없고 일부 status/count page만 최신인 그룹에서 필요한 page만 redo, ledger 재채택0·runtime before 검사 오용 거절. 3.12.4 | FT04/07, 혼합 page 상태·opcode 전체 |
+| F6 부분 rollback 중 crash | NT09/12: Aborting(Statement) loser가 mark 이후 남은 전체 거래 undo·AbortEnd까지 완료. mark에서 Active/READY 조기 성공 mutant 거절. 3.09-C17·3.12.7 | FT04/07, 부분/종료 직후·재장애 |
+| F7 restore 잔여 의무 | NT15/16: loser0이지만 terminal queue/credit이 남은 backup을 source WAL 없이 복원; 새 admission 전 동일 소유·예약 인계, credit0 초기화 거절. 3.15-T9 | FT04/06/07, queue/namespace·새 ACK/reopen |
+| F8 backup drain 진행 | NT15: 기존 rollback/terminal이 공유12MiB를 요구할 때 drain이 workspace/turn을 독점하지 않음; backup 자신의 checkpoint도 진행. 3.15-T6 | FT05/07, 기존 작업·timeout/cancel 조합 |
 
 <a id="allocation-first"></a>
 ## 4. 지금 남아 있는 3.03.1의 필수 테스트

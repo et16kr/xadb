@@ -25,7 +25,7 @@ snapshot과 rollback이 요구하는 값을 보존하면서 불필요해진 undo
 | 3.14-R5 | zero incoming과 horizon/rollback/transient 조건을 모두 만족할 때만 Releasing. 새 edge가 Releasing을 target으로 삼지 않음 | DS03/04 |
 | 3.14-R6 | outgoing role·chunk를 durable cursor로 한 번씩 반환. 이미 반환한 chunk를 다시 읽어 다음 위치를 찾지 않음 | DS03/05·RC-T14 |
 | 3.14-R7 | index key 정리→row/overflow 참조 제거→slot/extent 반환 순서를 유지. old row overflow는 별도 logged retirement owner가 보존 | DS03/04·3.06/07/08 |
-| 3.14-R8 | 마지막 영속 edge·transient pin·DWB retirement와 정확 generation을 적용 시 검산하고 3.03.4에 반환. stale/ABA·wrap 거절 | DS03/04/05 |
+| 3.14-R8 | 마지막 영속 edge·transient pin·prepared/inflight flush claim·DWB retirement와 정확 generation을 적용 시 검산하고 3.03.4에 반환. stale/ABA·wrap 거절 | DS03/04/05 |
 | 3.14-R9 | 낮은 공간에서도 기존 예약으로 bounded aging/rollback/flush 진행. 정상 거래 종료나 먼저 회수될 공간에 자기 완료를 의존하지 않음 | DS03·M06 |
 | 3.14-R10 | 압력 때 새 effect 전 거절과 bounded 원인 진단. 실제 returned bytes/page token/재사용/FS 반환을 구분하고 long snapshot을 강제 만료하지 않음 | DS03/04·PF09 |
 
@@ -37,7 +37,7 @@ snapshot과 rollback이 요구하는 값을 보존하면서 불필요해진 undo
 | status edge | row/index/catalog Transaction stamp·undo before Transaction stamp. undo creator의 TxnId/original status generation은 생성 identity이며 status lookup edge 아님 |
 | transient reference pin | source latch 해제 전 등록한 exact 대상의 generation 수명. edge cut 후에도 마지막 pin 전 reuse 금지 |
 | queue/retirement | cleanup 진행점·old overflow·retired object·orphan build의 영속 owner와 credit. membership만으로 값 필요성/Free를 추정하지 않음 |
-| DWB/control/recovery | pending DWB 주소와 current/previous checkpoint·FILEMAP/WAL closure가 필요한 mapping/bytes. page free와 control/WAL 삭제 조건을 합치지 않음 |
+| DWB/control/recovery | image copy 전부터 pending retirement의 영속 완료와 RAM finalize까지 유지하는 physical-address flush claim, pending DWB 주소, current/previous checkpoint·FILEMAP/WAL closure가 필요한 mapping/bytes. reader pin이 없거나 control pending이 비어 있어도 flush claim이 남으면 free/reuse 금지. page free와 control/WAL 삭제 조건을 합치지 않음 |
 
 <a id="interfaces"></a>
 ## 3. 입력·출력·소유 인계 설계
@@ -49,7 +49,7 @@ snapshot과 rollback이 요구하는 값을 보존하면서 불필요해진 undo
 | terminal 인계 | terminal status/head, 남은 undo/retirement 소유와 credits | durable queue owner·진행 책임. 실제 bytes와 원자 그룹은 미동결 |
 | stamp/cut | expected live source·대상 generation·원자 removed/added edge 집합 | 새 stamp/link·count·queue/progress·WAL 인계. old creator identity는 유지 |
 | release batch | Releasing root와 durable cursor/released/next, 대상 allocator 소유 | 다음 durable cursor와 실제 반환량. 한 batch 실패를 완료 전체로 집계하지 않음 |
-| allocator 반환 | 최신 eligibility와 exact generation·DWB/pin 부재 | 3.03.4의 Free/새 reservation/INIT 전이. 판정만으로 실제 bytes 차감하지 않음 |
+| allocator 반환 | 최신 eligibility와 exact generation·flush claim/DWB/pin 부재 | 3.03.4의 Free/새 reservation/INIT 전이. 판정만으로 실제 bytes 차감하지 않음 |
 | pressure 진단 | 제한된 소유 스냅샷·ledger 값 | 자원/owner 종류·q 또는 LSN·age·잘림 표시·실제 회수량. 진단은 회수 권한 아님 |
 
 읽은 후보가 stale이면 최신 상태에서 다시 판정한다. 손상·count 불일치·유효해야 할 edge 대상 소실을 정상 보류/NotFound로 숨기지 않는다. queue/record view는 caller bytes를 빌리는 표현이며 pin·lock·write 권한을 대신하지 않는다.
@@ -105,7 +105,7 @@ sequenceDiagram
 1. terminal/retired owner의 영속 queue나 segment cursor에서 bounded 후보를 읽는다. owner generation·진행 LSN·정확 record/page identity를 검산한다. 후보 발견과 actual reclamation을 구분한다.
 2. 필요한 forward/release WAL·전체 pin·ref registry·workspace를 예약하고 latch 밖에서 page를 준비한다. 공유 maintenance12MiB는 3.10의 선택된 turn owner만 얻으며 대기 시 반환한다.
 3. version-edit gate 아래 tree/page/append/registry 전에 publication에서 Q를 읽고 해제한다. registry에서 H=min(Q, 등록 q들)와 rollback/object/backup 소유를 구한다. 빈 registry를 무한대 horizon으로 해석하지 않는다.
-4. 실제 source/target의 generation·현재 link·incoming multiset·pin·DWB/retirement 조건을 재검사한다. 오래된 before-image에 남은 옛 link가 현재도 유효하다고 추정하지 않는다. 준비가 달라졌으면 모든 적용 latch/gate를 놓고 재탐색한다.
+4. 실제 source/target의 generation·현재 link·incoming multiset·pin·flush claim·DWB/retirement 조건을 재검사한다. flush claim은 page incarnation과 별도로 물리 주소의 재사용을 차단하며, claim 획득과 allocator free/reuse 판정을 같은 소유권 경계에서 serialize한다. image가 private workspace에 복사되어 page pin이 해제된 뒤에도 claim을 검사한다. 오래된 before-image에 남은 옛 link가 현재도 유효하다고 추정하지 않는다. 준비가 달라졌으면 모든 적용 latch/gate를 놓고 재탐색한다.
 5. 필요한 모든 snapshot 값과 Active rollback을 재구성할 수 있을 때만 해당 stamp/cut/release를 허용한다. 미충족은 보류 이유와 진행 cursor의 계약에 따라 다음 bounded 작업으로 넘긴다. active 거래 종료를 기다리며 workspace를 붙잡지 않는다.
 
 ### 5.2 terminal status·commit-q stamp
@@ -129,14 +129,14 @@ sequenceDiagram
 2. 기존 undo 형식의 고정 cursor를 따른다. 0→1은 previous-version, 1→2는 previous-transaction, 2→3은 before status 참조를 처리한다. 없는 edge도 처리 완료로 진행하며 각 role의 제거/count 변화와 cursor 갱신을 같은 WAL 그룹으로 묶는다.
 3. cursor3에서 before stamp region은 zero다. chunk가 있으면 같은 그룹으로 release-next=head.root를 설치한다. Releasing의 raw before metadata를 reader/rollback 값으로 노출하지 않는다.
 4. 현재 release-next의 chunk identity/index/header를 검산하고 next를 확보한다. allocator 반환·next 인계·released+1을 같은 그룹으로 처리한다. 이미 반환한 앞 chunk를 읽어 진행을 재구성하지 않는다. 마지막은 released=count와 next zero를 함께 남긴다.
-5. cursor3/count완료 뒤 queue 소유·마지막 pin·DWB retirement와 관련 참조 제거를 다시 확인하고 root slot을 반환한다. cell offset compaction은 가능해도 안정 directory slot index는 유지한다. 재점유는 checked generation 증가이며 MAX는 재사용하지 않는다.
+5. cursor3/count완료 뒤 queue 소유·마지막 pin·해당 page 반환에 필요한 flush claim 해제·DWB retirement와 관련 참조 제거를 다시 확인하고 root slot을 반환한다. cell offset compaction은 가능해도 안정 directory slot index는 유지한다. 재점유는 checked generation 증가이며 MAX는 재사용하지 않는다.
 
 ### 5.5 index·row·overflow·object의 반환 순서
 
 1. snapshot에 필요한 versioned index key/presence를 먼저 보존/정리한다. 논리 삭제라는 이유로 tree entry를 즉시 제거하지 않는다. 그 뒤 row/tombstone과 overflow 참조를 제거한다.
 2. 교체된 old row overflow는 undo root에 저장되지 않는다. canonical before의 별도 undo chunks가 있다는 사실만으로 old chain을 즉시 반환하지 않는다. 별도 logged retirement owner가 head·allocator inventory·snapshot/rollback 필요성을 인계받아야 한다.
 3. retired table/index/anchor와 orphan build는 catalog generation·allocation ownership·transaction status를 검산하고 필요한 old snapshot/object/backup 소유가 끝난 뒤 bounded batch로 정리한다. 같은 이름의 재생성은 다른 generation이다.
-4. 구조 unlink는 retirement 등록까지 공급한다. eligible page/slot/extent는 3.03.4가 최신 조건과 DWB whole-batch retirement를 확인하여 Free로 만들고 새 allocation은 새 incarnation INIT으로 보호한다. mapping/control/WAL 보존은 해당 owner가 끝내기 전 제거하지 않는다.
+4. 구조 unlink는 retirement 등록까지 공급한다. eligible page/slot/extent는 3.03.4가 최신 조건과 해당 물리 page의 flush claim 해제·DWB whole-batch retirement를 확인하여 Free로 만들고 새 allocation은 새 incarnation INIT으로 보호한다. pending 선택 전 준비된 old-generation image와 retirement 선택 뒤 RAM finalize 이전의 claim도 반환을 막는다. mapping/control/WAL 보존은 해당 owner가 끝내기 전 제거하지 않는다.
 5. 내부 Free page 증가, 실제 새 allocation에 재사용된 page, owned file bytes 감소, filesystem 반환량을 별도로 계측한다. extent 안 page가 Free여도 이미 실현된 file bytes는 계속 charged일 수 있다. S1은 online shrink/OS 반환을 필수로 요구하지 않는다.
 
 ### 5.6 WAL 보존과 회수 압력
@@ -197,6 +197,7 @@ sequenceDiagram
 | R14-14 |4MiB buffer·낮은 quota·여러 유지보수와 flusher 필요 상황. partial pin/workspace 대기 없음, rollback이 선행 aging 없이 완료 | R9, DS03·M06 |
 | R14-15 | release/CLR/terminal queue·current/previous closure 인계 cut와 반복 crash. 같은 page/token 중복 반환·잔여 credit 소실 없음 | R3/6/9, RC-T14 |
 | R14-16 | 진단 최대 항목·잘림·겹친 소유·q/LSN·실제 file bytes/Free pages/reused/FS 반환. bounded 생성·오류 certainty 보존 | R10, DS03·PF09 |
+| R14-17 | old generation image copy 뒤 page pin 해제/pending 선택 전, pending retirement 영속화 뒤 RAM finalize 전을 각각 barrier로 멈추고 free/reuse 요청. 두 구간 모두 physical-address flush claim이 반환을 막으며, claim 종료 뒤만 새 generation INIT 가능. pending/reader pin만 확인하는 mutant와 old image가 새 generation home을 덮는 결과를 거절 | R8, DS03/05 |
 
 BEGIN WAL 회수와 actual free가 없는 표현 시험은 R14-13/실제 반환 PASS가 아니다. 변경한 production 경로와 남은 통합 의무만 선택하며 동일한 무변경 표현/모델·workspace/leaf/하위 wrapper는 반복하지 않는다. 기존 실패·중단·미실행 기록을 새 성공으로 대체하지 않는다.
 
@@ -219,7 +220,7 @@ BEGIN WAL 회수와 actual free가 없는 표현 시험은 R14-13/실제 반환 
 | --- | --- |
 | F01 queue/retirement | terminal owner·credits·status/head 인계, old row overflow retirement record·allocator inventory, catalog/retired object/orphan 진행 record. bytes/IDs/checksum·원자 효과 미동결 |
 | F01/F02 semantic 그룹 | stamp·cut·outgoing role release·chunk 반환·slot Free·queue enqueue/dequeue와 progress/obligation의 exact before/after. count와 durable cursor가 분리되는 중간 상태 금지 |
-| F02 eligibility API | 최신 gate에서 사용할 소유/guard, source pin·DWB retirement·queue claim 경합, stale 후보·Releasing target·MAX generation 처리·오류 효과 |
+| F02 eligibility API | 최신 gate에서 사용할 소유/guard, source pin·physical-address flush claim·DWB retirement·queue claim 경합, claim 획득/해제와 allocator free/reuse의 원자 조정, stale 후보·Releasing target·MAX generation 처리·오류 효과 |
 | F03/F04 | independent graph/snapshot/rollback/byte ledger·negative mutants, 실제 thread barrier와 stage/DWB/home/queue/allocator/restart cut, begin WAL 제거 witness |
 | F05 | queue 크기·batch당 page/edge/chunk 수·WAL/credit·메모리·frame/FD·retirement worst-case, maintenance/progress 예약·반복 restart 고정 peak·bounded 진단 항목수 |
 | F06/F07 | 실제 3.05.3/3.09.1/3.10.1/3.11.1 수신과3.03.4 소비 계약, source/case identity·독립 검토·단일 owner와 병합 순서 |

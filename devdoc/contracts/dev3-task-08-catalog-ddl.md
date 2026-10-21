@@ -18,7 +18,7 @@ SQL 없이 native API로 table/index 정의를 생성·조회·폐기하고, row
 | 3.08-R2 | index 정의는 mode·서로 다른 column position 1–4개·table당≤8·PK≤1을 검산. 각 position은 0-based이며 `0..table_column_count-1` 안에 있어야 함. PK는 기존 nonnullable column만 허용. parent ObjectId/Generation/SchemaEpoch 모두 일치 |
 | 3.08-R3 | lookup은 snapshot/statement token과 namespace를 받는다. own 정의 변경과 committed q를 undo 가시성으로 판정하고 retired가 visible이면 없음으로 반환 |
 | 3.08-R4 | handle은 DB/timeline/open identity와 ObjectId/Generation/SchemaEpoch·snapshot 소유에 결합. 이름 재사용을 동일 객체 재사용으로 간주하지 않음 |
-| 3.08-R5 | create/drop은 독립 원자 거래다. catalog 정의·anchor·index와 allocation ownership을 WAL/undo/commit으로 연결하고 중간 정의를 사용자에게 공개하지 않음 |
+| 3.08-R5 | create/drop은 독립 원자 거래다. catalog 정의·anchor·index와 allocation ownership을 WAL/undo/commit으로 연결하고 중간 정의를 사용자에게 공개하지 않음. table drop은 해당 generation의 모든 종속 index 정의와 table 정의를 같은 DDL 결과로 retire |
 | 3.08-R6 | retired cell도 typed body와 anchor를 유지. old snapshot·WAL/DWB/checkpoint·undo가 요구하는 동안 물리 객체/mapping을 지우지 않음 |
 | 3.08-R7 | namespace 중복·한도·취소·build 실패는 첫 effect 전 거절 또는 실제 rollback 뒤 결과. 실패 뒤 보이지 않는 staging 객체도 소유 없이 유실하지 않음 |
 
@@ -31,7 +31,7 @@ SQL 없이 native API로 table/index 정의를 생성·조회·폐기하고, row
 | 이름 lookup/정의 lookup | 등록된 snapshot, namespace/name 또는 trusted handle | caller-owned 정의 또는 guard에 묶인 view. visible retired는 정상 부재, 손상은 오류 |
 | create table | 검증한 TableSpec, DDL owner와 예약 | 새 ObjectId/Generation/SchemaEpoch·anchor를 가진 미공개 변경; commit 후만 성공 handle |
 | create index | parent의 정확한 정의 identity, IndexSpec | 3.07.3의 검증된 build 결과와 catalog 등록을 하나의 DDL 거래로 인계 |
-| drop table/index | 현재 handle·schema 검산·DDL owner | versioned retired 정의·영속 retirement 작업 소유. 즉시 physical free 아님 |
+| drop table/index | 현재 handle·schema 검산·DDL owner와 안정화한 종속 index 집합 | table drop은 table+종속 index 전체, index drop은 해당 index의 versioned retired 정의·영속 retirement 작업 소유. 즉시 physical free 아님 |
 | validate handle | engine이 발급한 identity와 현재 정의 | stale generation/schema 거절 또는 기존 snapshot에서의 정당한 옛 정의 접근 |
 
 이 표는 논리 계약이며 신규 Rust signature의 채택이 아니다. 기존 [catalog.rs](../../crates/engine/src/catalog.rs)의 TableSpec 의미와 [catalog_record.rs](../../crates/engine/src/storage/catalog_record.rs)의 borrowed 표현을 수신하되, 현재 K0/DEV2 catalog 저장 경로를 DEV3 disk 구현으로 취급하지 않는다.
@@ -61,7 +61,7 @@ flowchart TD
 2. ObjectId/generation/schema 발급·anchor·tree·catalog cell·undo·최악 abort·staging 자원을 첫 effect 전에 예약한다. 발급 high-water는 실패 후 임의로 되감지 않는다.
 3. index build는 새 거래/maintenance admission close·기존 거래/cursor/작업 drain을 거친다. 기존 commit/rollback·필요한 전용 flusher·진행 중인 작업의 완료 경로는 계속 허용하며, drain 뒤에도 build에 필요한 전용 flusher를 막지 않는다. timeout은 Busy와 gate 복원이다. build 결과를 catalog와 별개로 먼저 공개하지 않는다.
 4. gate 밖 준비 후 공통 rank로 catalog/native before·parent identity·namespace를 재검사한다. complete WAL 그룹으로 정의와 undo/head/edge/count·obligation·ownership을 적용한다.
-5. create 성공은 commit의 durable 결과/공개까지 연결한다. drop은 retired version을 먼저 공개하고 old definition/anchor를 보존한다. 동일 이름 재생성은 다른 generation으로 판정한다.
+5. create 성공은 commit의 durable 결과/공개까지 연결한다. table drop은 정확한 parent ObjectId/Generation에 속한 최대8 index를 bounded 집합으로 수집하고, table과 종속 index의 retired version을 같은 DDL transaction으로 공개한다. 적용 전 집합을 다시 검산하여 concurrent create/drop index가 누락되지 않게 하며 집합이 바뀌면 재준비한다. index drop은 parent table을 retire하지 않고 남은 index/PK 집합을 재검산한다. drop 이후 snapshot에서 visible index만 남고 parent table이 없는 상태를 허용하지 않는다. old snapshot은 기존 table/index 정의와 anchor를 함께 보존한다. 동일 이름 재생성은 다른 generation으로 판정한다.
 6. 실제 물리 회수는 index→row/overflow 등의 참조 제거와 horizon/undo/DWB 조건을 충족한 뒤 별도 bounded owner 작업으로 진행한다. catalog row 하나 삭제만으로 모든 공간이 반환되었다고 하지 않는다.
 
 ## 5. 오류·취소·복구
@@ -81,6 +81,8 @@ flowchart TD
 
 catalog cache는 metadata8MiB 합계 안에 둔다. 모든 정의/이름/retired 객체를 무제한 RAM map으로 만드는 방식은 제외한다. 이름 조회의 초기 구현은 bounded catalog 순회로 구성할 수 있으나 실제 탐색 비용·잠금/validation·cache hit 검산은 F02/F05에서 확정한다. name index를 새로 도입한다면 그 자체 WAL/undo/정합성 의무를 추가한다.
 
+table drop의 F05는 table 한 cell만 계산하지 않는다. 최대8 종속 index 정의·각 undo/head/count·retirement owner·전체 rollback·commit 비용을 합산한다. 여러 WAL 그룹으로 적용하더라도 사용자에게 보이는 원자성은 같은 DDL transaction의 공개에 의해 유지한다. 구체 DDL lock/admission은 F02에서 동결하며, 마지막 집합 재검사와 commit 사이에 종속 index를 추가할 수 있는 공백을 허용하지 않는다.
+
 | ID | 산출물 | 종료 조건 |
 | --- | --- | --- |
 | 3.08.1 | snapshot 정의 읽기·이름/parent/집합 검산·versioned 내부 변경 | catalog body의 undo 표현/producer와 before/after·namespace/generation 의미 검증. 사용자 DDL 원자성 완료와 구분 |
@@ -97,5 +99,6 @@ catalog cache는 metadata8MiB 합계 안에 둔다. 모든 정의/이름/retired
 | DS04 | reader가 옛 정의를 pin한 동안 drop/recreate; 옛 anchor 유지와 새 generation 분리, reader 종료 뒤만 회수 |
 | DS03/실제 자원 | catalog cache 초과·외부 sort spill/FD·취소·재장애에서 charged/staging 소유와 반환 확인 |
 | full audit | visible catalog↔anchor owner, index parent identity·정의·실제 row/index 결과의 양방향 일치 |
+| 3.08-T6 / DS02·DS04·KU10 | table에0/1/8 index를 둔 drop과 concurrent create/drop index를 barrier로 교차. 같은 DDL q 이전 snapshot에는 table+옛 index가 보이고 이후 snapshot에는 모두 부재; 단독 index drop은 parent·다른 index 유지. 각 catalog 그룹/commit cut의 rollback·restart에서 visible orphan index 금지. table만 retire하거나 마지막 집합 검산 뒤 index를 추가하는 mutant 거절 |
 
 leaf 착수 전 name namespace의 범위/lookup 알고리즘·DDL admission/lock 오류 우선순위·ObjectId/SchemaEpoch 발급 인계·catalog undo/retirement record·각 opcode F05를 구체화한다. 명세에 적힌 후보를 이미 존재하는 API나 새 채택 형식으로 승격하지 않는다. 기존 표현 시험은 무변경이면 재실행하지 않고 새 효과/연결만 검증한다.

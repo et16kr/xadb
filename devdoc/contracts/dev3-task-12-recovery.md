@@ -82,10 +82,13 @@ healthy home이 pending보다 더 높은 LSN/incarnation이면 오래된 image�
 
 `redo_start=min(capture LSN, checkpoint DPT 최소 recLSN)`에서 채택 끝까지 관련 완결 page redo를 읽는다. DPT가 비어 있거나 base-only인 경우의 sentinel/시작 위치는 선택 body의 F01에서 명시한다. ANALYSIS 시작 위치와 혼동하지 않는다.
 
-1. frame/owner chain·semantic 검산을 통과한 완결 그룹만 적용한다. allocation/INIT·tree SMO·undo/status·CLR·progress/obligation도 같은 대상이다.
-2. 각 page/redo 대상의 FILEMAP·owner·incarnation·prior/pageLSN을 대조하여 이미 반영한 대상만 건너뛰고 미반영 대상은 적용한다. 한 page가 반영되었다는 이유로 다중 page 그룹 전체를 건너뛰지 않는다. 그룹의 의미·참조·진행 검산은 유지하며 다른 세대를 단순 LSN 대소만으로 승인하지 않는다.
-3. page load가 실패하면 선택 pending 또는 앞 절의 완전 INIT 복원 근거만 사용한다. 필요한 WAL 중간 손상·완전 frame checksum 오류는 거절한다.
-4. buffer pressure로 flush가 필요하면 채택 source prefix의 해당 LSN과 namespace를 먼저 sync 확인하고 WAL→DWB→home 순서를 따른다. 새 recovery WAL을 이 단계에서 만들지 않는다.
+1. WAL 내부의 frame/stream·opcode·native/redo·edge/count·progress 결합을 검산한 완결 그룹만 적용한다. allocation/INIT·tree SMO·undo/status·CLR·progress/obligation도 같은 대상이다. **runtime의 현재 before page와 nonterminal owner를 요구하는 `validate_group`를 REDO에 그대로 적용하지 않는다.** capture 이전 terminal owner는 ATT에 없을 수 있고, home page들은 이미 서로 다른 후속 LSN까지 반영되어 있을 수 있다.
+2. 현재 owner chain/descriptor·inventory/ledger의 전이는 ANALYSIS에서 capture 직후부터 한 번만 채택한다. capture 이전 redo frame를 그 owner 전이에 다시 넣지 않고, page redo에서 reservation/count delta를 현재 ledger에 재차 더하거나 빼지 않는다. WAL에 기록된 의미 결합 검산, 같은 prefix의 owner 상태 채택, 물리 page 재적용의 세 책임을 구별한다. net0 proof 등 runtime에만 있는 입력의 replay 검증 근거는 F01/F02에서 동결하며 checksum 검증만으로 생략하지 않는다.
+3. 각 page/redo 대상의 FILEMAP·owner·incarnation·prior/pageLSN을 대조하여 이미 반영한 대상만 건너뛰고 미반영 대상은 적용한다. 동일 incarnation에서 `pageLSN >= frameLSN`이면 그 page에 과거 native before/after 전체 일치를 다시 요구하지 않는다. 미반영 Patch는 정확한 prior pageLSN과 해당 opcode의 page-local 적용 조건을 검산한다. 한 page가 반영되었다는 이유로 다중 page 그룹 전체를 건너뛰지 않는다. 다른 세대는 LSN 대소만으로 승인하지 않고 선택 allocator/재사용 이력의 별도 근거를 요구한다.
+4. page load가 실패하면 선택 pending 또는 앞 절의 완전 INIT 복원 근거만 사용한다. 필요한 WAL 중간 손상·완전 frame checksum 오류는 거절한다.
+5. buffer pressure로 flush가 필요하면 채택 source prefix의 해당 LSN과 namespace를 먼저 sync 확인하고 WAL→DWB→home 순서를 따른다. 새 recovery WAL을 이 단계에서 만들지 않는다.
+
+실제 복구 대상의 page 간 참조·count·head 관계는 관련 page가 같은 채택 prefix까지 복구된 뒤 VERIFY_RECOVERY에서 확인한다. 변경 없는 전체 graph는 3.15의 별도 full audit 범위다. 각 page의 canonical bounds/identity 검사와 WAL 내부 결합은 계속 수행하되, 다중 page 그룹의 중간 mixed 상태를 일시적인 전역 graph 모순이라는 이유로 거절하거나 이미 최신인 page를 과거 before로 되감지 않는다.
 
 진행 메모리는 bounded buffer·stream cursor·ATT·고정 workspace이며 DB 크기 비례 DPT/전체 page 목록을 만들지 않는다.
 
@@ -109,7 +112,7 @@ healthy home이 pending보다 더 높은 LSN/incarnation이면 오래된 image�
 | ID·단계 | 처리·완료 조건 |
 | --- | --- |
 | 3.12.6 LOG_OPEN | 인증된 base L 다음의 새 recovery epoch/header를 연결해 sync하고 그 base identity를 참조하는 WRITER를 영속 선택. LSN wrap/재사용 금지. 새 epoch/header bytes를 쓰기 전에 quota에 charge |
-| 3.12.7 UNDO | loser의 남은 UndoNextRef에서 logical undo. 현재 물리 위치의 effect·head/edge/count·progress·obligation을 같은 CLR로 기록. CLR은 redo-only, 완료한 undo는 반복하지 않음 |
+| 3.12.7 UNDO | loser의 남은 UndoNextRef에서 logical undo. 현재 물리 위치의 effect·head/edge/count·progress·obligation을 같은 CLR로 기록. CLR은 redo-only, 완료한 undo는 반복하지 않음. Aborting(Statement) loser도 보상된 suffix를 제외한 전체 거래 undo·AbortEnd까지 마치며 mark 도달을 Active/READY 완료로 세지 않음 |
 | 3.12.7 VERIFY_RECOVERY | 실제 redo/undo한 page·allocator·terminal 상태·예약 인계를 검사. 모든 undo와 durable abort-end 전에 ABORTED 성공 금지 |
 | 3.12.8.a STABILIZE/RESUME | 선택 base+후속 WAL/CLR·epoch/namespace 영속성 확인, 필요 home write는 DWB. 실패 시 admission/READY/reclaim 금지. 선택 WRITER를 되돌리지 않음 |
 | 3.12.8.b 연결 인수 | 각 장벽 반복 crash·새 ACK 뒤 reopen, 독립 이력과 3.15.1 full audit로 결과 대조 |
@@ -123,7 +126,9 @@ commit/publication의 공급은 3.11.1, logical undo는 3.09.2/3에서 받는다
 | profile 부족/손상/미지원 | DB write 미시도·정확 원인. 정상 profile 재개에서 ACK/loser 보존; 이 거절을 정상 복구 성공으로 세지 않음 |
 | DWB repair·각 file sync·retirement cut | 전체 batch pending 소유, 재장애 뒤 최신 incarnation 보존, raw retired image 배제 |
 | 다중 page 그룹의 일부 home만 반영된 cut | 대상별 incarnation/pageLSN으로 이미 반영한 page만 skip, 나머지 redo 완료. 한 page를 근거로 그룹 전체를 skip하는 mutant 거절 |
+| capture 전 terminal 거래의 dirty page와 이미 더 최신인 status/count page | ATT에 없는 terminal owner를 부활시키지 않고 필요한 page만 redo. runtime before validator 재사용·ledger 이중 차감·중간 graph 불일치 거절 mutant 검출 |
 | BEGIN WAL 제거+Active loser | checkpoint+WAL inventory에서 같은 잔여량 복원, 영속 UndoRef만으로 abort |
+| 부분 rollback 중/StatementFinish 직후 crash, 후속 statement와 옛 CLR WAL 회수 | 보상된 suffix 재undo0, 남은 transaction 전체 rollback·AbortEnd, mark에서 Active/READY로 조기 복귀0 |
 | 첫/중간/마지막 CLR cut | effect와 progress 동시 redo, 남은 chain만 수행, 이미 쓴 CLR bytes를 remaining으로 부활시키지 않음 |
 | 두 슬롯 선택·공통 fallback·base-only cut | 모든 중간 선택에 완전 old/new closure, 불명 합집합 보호, 선택 중 슬롯 overwrite 금지 |
 | epoch 선택 직후 연속 crash | 다음 REBASE가 해당 epoch를 포함해 고정 peak 내 회수/재사용, restart 횟수 비례 공간 누적 없음 |

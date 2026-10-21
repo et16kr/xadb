@@ -18,7 +18,7 @@
 | 3.03-R2 | cancel은 자기 active batch만 Reserved(g)→Free(g). generation·work high-water·retained WAL·첫 recLSN을 되감지 않음 |
 | 3.03-R3 | INIT 소비는 실제 token·generation·예상 owner/kind를 검산하고 allocation 상태·완전 INIT·descriptor/inventory를 같은 복구 가능한 그룹으로 인계 |
 | 3.03-R4 | growth는 실제 파일 길이/header/namespace와 FILEMAP 영속 선택 뒤만 새 주소를 WAL/DWB에서 참조. 부분 성장 bytes와 미소비 예약을 따로 보존 |
-| 3.03-R5 | free/reuse는 3.14.1의 판정에 더해 마지막 pin·영속 edge·pending DWB 부재를 적용 시 재검사. 새 incarnation INIT 없이 과거 payload를 새 page로 공개하지 않음 |
+| 3.03-R5 | free/reuse는 3.14.1의 판정에 더해 마지막 pin·영속 edge·prepared/in-flight flush claim·pending DWB 부재를 적용 시 재검사. claim은 image copy 전부터 보호하며 Pending 선택 전도 재사용 불가. 새 incarnation INIT 없이 과거 payload를 새 page로 공개하지 않음 |
 | 3.03-R6 | owner별 inventory와 descriptor의 item count/digest·previous LSN을 대조. token 중복 예약·다른 claimant 취소·stale home allocator 사용 금지 |
 
 ```mermaid
@@ -43,11 +43,13 @@ stateDiagram-v2
 | 기존 reserve_pages/cancel_reserved | count1..63 / 내부 active batch | consuming AllocationSession과 `&mut self`; caller raw item으로 취소 불가 |
 | INIT 소비 | opaque 예약 token, 기대 page kind/owner, 준비된 완전 image | raw PageRef만으로 소비 불가. stage 성공 뒤 token을 재사용하지 못함 |
 | extent 성장 | 성장 intent·고유 FileId/길이·예약량 | 선택 전 staging owner, 선택 뒤 FILEMAP closure가 소유. 불명 구간은 반환 금지 |
-| eligible free/reuse | 대상 generation과 회수 판정, 관련 guard | 판정을 오래 보관해 권한처럼 재사용하지 않고 적용 gate 안 최신 참조 재검사 |
+| eligible free/reuse | 대상 generation과 회수 판정, 관련 guard | 판정을 오래 보관해 권한처럼 재사용하지 않고 적용 gate 안 최신 참조·flush claim 재검사. claim 등록과 free 적용을 같은 주소의 경쟁 없는 경계에서 직렬화 |
 
 reserve/cancel은 fence→count/state→metadata/descriptor/inventory→generation/counter headroom→WAL/protected capacity→prepared bytes→동일 prefix stage→live metadata/descriptor/recLSN→write/sync→terminal token 반환 순서다. stage 이후에는 fallible 준비를 하지 않는다. terminal sync 전 P(page-token bytes)는 남으며, Finished descriptor의 잔여0을 조기 반환 신호로 쓰지 않는다.
 
 INIT/growth/free는 3.04의 의미 적용 경계와 3.05의 dirty frame 소유를 소비한다. 별도 allocator만 먼저 써 두고 WAL로 나중 보정하는 전이는 금지한다. split/rollback이 받은 page token은 일반 foreground에 빌려주지 않는다.
+
+flush image의 보호는 DWB Pending 선택보다 먼저 시작한다. 같은 물리 주소의 claim을 image copy 전에 등록하고, 선택된 batch의 전체 retirement 영속화와 RAM finalize가 모두 끝난 뒤 반환한다. copy(g) 뒤 아직 Pending이 없다는 이유로 g를 free/reuse하면 늦게 도착한 old-g image가 g+1 home을 덮을 수 있다. 따라서 마지막 reader pin이0이어도 이 claim이 있으면 free/reuse를 진행하지 않는다. claim 획득과 free 전이 중 하나만 먼저 성공하도록 조정하며 정확 guard/rank·무효과 취소는 3.05의 F02에서 동결한다. 실패/fence는 claim의 보호를 정상 반환으로 지우지 않는다.
 
 ## 4. 하위 개발 단위와 직접 선행
 
@@ -71,6 +73,6 @@ INIT/growth/free는 3.04의 의미 적용 경계와 3.05의 dirty frame 소유�
 
 기존 runtime8과 r3/r4의 실제 결과·FAIL은 보존한다. 무변경 완료 사례를 다시 돌리지 않는다. 남은 native는 정상3DB(profile1/2/3)와 reserve/cancel×write-before/half/after·sync-before/after의10DB다. 원래 제한인 각30초, 총13DB≤312MiB 등은 [고정 입력](dev3-allocation-reservation.md)을 따른다.
 
-INIT에는 잘못된 claimant/generation·중복 소비·부분 stage·torn zero home의 완전 INIT 복원을, growth에는 file/FILEMAP 선택 cut와 실제 bytes 회계를, reuse에는 마지막 pin/DWB retirement 경합·stale reference·generation MAX를 고정한다. DS02/03/04/05·RC-T14로 연결한다.
+INIT에는 잘못된 claimant/generation·중복 소비·부분 stage·torn zero home의 완전 INIT 복원을, growth에는 file/FILEMAP 선택 cut와 실제 bytes 회계를, reuse에는 마지막 pin/flush claim/DWB retirement 경합·stale reference·generation MAX를 고정한다. 특히 [3.05-C16](dev3-task-05-buffer-flush.md#acceptance)의 copy 전 claim·Pending 전·retirement 뒤 RAM finalize 전 경합에서 free/reuse가 차단되고 완전 종료 뒤만 진행하는지 검산한다. DS02/03/04/05·RC-T14로 연결한다.
 
 일반 INIT/growth/free의 semantic opcode, extent/FILEMAP 인계 body, exact F05와 fault vector는 해당 leaf 전에 추가 동결한다. 현재 진입점은 [allocation_reservation.rs](../../crates/engine/src/storage/wal_io/allocation_reservation.rs), [allocation_operation.rs](../../crates/engine/src/storage/wal_io/allocation_operation.rs), [allocation_page.rs](../../crates/engine/src/storage/allocation_page.rs)다. 제한 예약 단위와 전체 allocator 완료를 구분한다.

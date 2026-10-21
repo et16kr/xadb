@@ -25,7 +25,8 @@ engine의 storage/transaction/durable/catalog가 자신이 소유한 invariant�
 | 3.15-R7 | destination 파일·manifest·namespace의 영속화 뒤에만 backup 성공. 취소/복사 실패는 source C를 유지하고 불완전 destination을 성공 backup으로 선택하지 않음 |
 | 3.15-R8 | restore는 빈 소유 경로에 완전 closure와 full integrity를 검증한 뒤 새 timeline/writer epoch·base q=C·genesis WAL/checkpoint/control·고정 bootstrap 슬롯을 설치하고 sync 후 개방 |
 | 3.15-R9 | backup manifest는 source 완결 WAL high-water LSN을 인증. 모든 copied pageLSN이 그 이하이며 새 timeline의 첫 LSN은 그보다 큼. q=C와 baseLSN을 혼용하지 않음 |
-| 3.15-R10 | drain한 backup의 loser/미완결 recovery obligation이 없음을 검증한 뒤 새 ledger를 빈 상태로 시작. source WAL 없이 restore→새 unflushed ACK→두 번째 reopen을 인수 |
+| 3.15-R10 | drain한 backup의 loser abort obligation은0이어야 하지만 terminal retained queue·credit까지0이라고 추정하지 않는다. 남은 maintenance ownership/credit을 새 base ledger에 검증하여 인계하며, 전체 빈 ledger는 모든 관련 의무의 종료를 증명한 경우에만 허용. source WAL 없이 restore→새 unflushed ACK→두 번째 reopen을 인수 |
+| 3.15-R11 | drain 대기 중 기존 작업의 종료에 필요한 공유 maintenance workspace·진행 turn을 backup이 독점하지 않는다. 새 외부 admission 차단과 기존 거래의 rollback/terminal·진행 작업 완료·backup 소유 flush/checkpoint 허용을 구별 |
 
 | 연산 경계 | 입력·신뢰 기준 | 결과·소유 |
 | --- | --- | --- |
@@ -73,9 +74,9 @@ flowchart TD
 
 ## 4. offline exact-C backup 알고리즘
 
-1. source의 건강 상태와 destination 소유/빈 상태·형식을 확인하고 backup/workspace·FD·staging·실패 cleanup 자원을 준비한다. source path와 destination을 구별하고 source 파일을 destination 정리 대상으로 삼지 않는다.
-2. 새 거래/maintenance admission을 닫고 기존 거래/cursor·진행 중 aging/DDL의 정상 종료를 기다린다. page/tree/append/publication latch나 부분 pin을 보유한 drain 대기는 금지한다. 기존 commit/rollback과 필요한 flusher는 계속 진행해야 한다. timeout이면 자신이 소유한 drain만 해제하고 Busy를 반환한다.
-3. drain 완료 후 published C와 source의 채택된 완결 WAL 경계를 고정한다. Active/Aborting/CommitAttempted·미완결 system obligation이 없는지 확인한다. terminal retained 참조나 allocated 저장 공간은 이 사실만으로 삭제하지 않는다.
+1. source의 건강 상태와 destination 소유/빈 상태·형식을 확인하고 backup/workspace·FD·staging·실패 cleanup 자원을 준비한다. 이 준비의 capacity 예약과 공유12MiB workspace/진행 turn의 실제 독점 획득을 구별한다. 기존 작업이 같은 workspace를 요구할 수 있으므로 drain 전부터 독점한 채 기다리지 않는다. source path와 destination을 구별하고 source 파일을 destination 정리 대상으로 삼지 않는다.
+2. 새 거래/maintenance의 외부 admission을 닫고 기존 거래/cursor·진행 중 aging/DDL의 정상 종료를 기다린다. page/tree/append/publication latch나 부분 pin·공유 maintenance workspace/turn을 보유한 drain 대기는 금지한다. 기존 commit/rollback/terminal과 이미 시작한 작업의 예약된 하위 단계·필요 flusher는 계속 진행해야 한다. backup 자신이 실행할 flush/checkpoint는 drain owner의 명시 권한으로 진행하며 닫힌 외부 admission을 다시 기다리지 않는다. timeout이면 자신이 소유한 drain만 해제하고 Busy를 반환한다.
+3. drain 완료 후 published C와 source의 채택된 완결 WAL 경계를 고정한다. Active/Aborting/CommitAttempted 거래와 실행 중인 미완결 변경 그룹이 없는지 확인한다. 대기 중인 terminal retained maintenance queue/obligation·credit은0으로 가정하지 않고 backup closure와 restore base ledger로 인계한다. terminal retained 참조나 allocated 저장 공간은 loser 부재만으로 삭제하지 않는다.
 4. 모든 dirty data/undo/status/allocator를 WAL-first·선택 pending DWB·home sync·whole-batch retirement로 안정화한다. 필수 checkpoint를 완결하고 CURRENT 선택을 영속화한다. C와 파일/page closure를 유지한 채 mutation을 중지한다.
 5. allocation/file metadata가 정의하는 closure를 bounded 순회하여 destination에 streaming 복사한다. mutable source file을 reflink/immutable이라고 가정하지 않는다. free 공간·padding과 allocated contents의 destination 표현 및 필요한 physical 길이는 동결할 manifest/restore 계약에 따른다.
 6. 각 복사 파일의 내용/길이·digest·소유를 검산하고 backup manifest에 source identity·C·완결 WAL high-water와 완전 closure를 연결한다. destination files→manifest→선택/namespace의 필요한 sync를 모두 확인한 뒤만 성공한다.
@@ -121,7 +122,7 @@ flowchart TD
 
 restore는 backup 선택·형식·manifest/digest·모든 file/page closure를 source identity로 검증한다. source WAL 파일이 없어도 backup 자체로 C를 재구성할 수 있어야 한다. manifest가 인증한 완결 high-water보다 큰 copied pageLSN이 하나라도 있으면 거절한다. high-water가 표현 최댓값이어서 더 큰 첫 LSN을 만들 수 없다면 첫 destination 설치 effect 전에 거절하며 wrap/0 초기화하지 않는다.
 
-drain한 backup에 loser·미완결 recovery obligation이 없음을 실제로 검증한다. 이를 근거로 새 timeline의 recovery ledger를 빈 상태로 시작하며 corrupt ATT/descriptor를 조용히 버려 빈 것으로 맞추지 않는다. terminal retained undo/status/queue·영속 incoming은 별개 수명이다. 남은 참조를 올바르게 보존하거나 검증된 base로 인계하는 규칙이 있어야 하고, ledger가 비었다는 이유로 page·status를 임의 Free로 만들지 않는다.
+drain한 backup에 Active/Aborting loser와 실행 중인 미완결 변경 그룹이 없고, loser abort obligation이0임을 실제로 검증한다. **이는 terminal retained undo/status/retirement queue의 소유와 남은 처리 credit까지0이라는 증명이 아니다.** 아직 남은 유지보수 의무·영속 incoming·실제 charged bytes를 backup closure에 포함하고, 새 namespace의 검증된 base ledger에 같은 의무와 credit을 인계한다. 전체 ledger를 빈 상태로 시작하려면 해당 queue/retained 작업까지 모두 종료되었다는 별도 검증이 필요하다. corrupt ATT/descriptor를 버리거나 queue를 복사하면서 credit만0으로 만들지 않으며, loser 부재만으로 page·status를 Free로 만들지 않는다. 이 인계 형식이 미동결이면 source-WAL-free restore는 Unsupported다.
 
 새 timeline·writer epoch, base q=C와 manifest high-water를 인증한 baseLSN, genesis WAL/checkpoint/control 및 고정 bootstrap 슬롯을 설치한다. 새 timeline의 첫 LSN은 source high-water보다 커야 한다. 새 namespace의 파일/선택·필요한 sync가 완료되기 전 READY를 노출하지 않는다. 설치 중 crash는 완성되지 않은 destination을 정상 DB로 열지 않으며 source backup의 bytes·선택을 수정하지 않는다.
 
@@ -153,7 +154,7 @@ PF09에는 audit page/edge 방문·재순회 수·read bytes/시간, 정상 open
 | --- | --- | --- |
 | 3.15.1 bounded full audit·독립 이력 | S0부터 F03 입력·known-bad·checker 준비. 실제 실행은 관련3.01/3.02·tree/row/index/catalog/undo/allocator 읽기 공급을 단계별 소비 | bounded 전체 coverage·양방향 row/index·incoming/소유 검산과 외부 이력. S3/fault 및3.12.8에 공급하며 backup 완료를 기다리지 않음 |
 | 3.15.2.a offline exact-C backup | 영속 통합,3.05 flush/retirement,3.10 admission,3.11 terminal,3.13 완결 checkpoint와 관련3.15.1 | drain→C→flush/checkpoint→stream copy→완료 선택. timeout/취소/부분 I/O·source 보존 및 fixed memory/FD 인수 |
-| 3.15.2.b restore→새 ACK→reopen | 3.15.2.a closure,3.15.1 audit,3.02/3.12 설치/READY와3.11 ACK 공급, 새 namespace 인계 동결 | source WAL 없는 full restore·빈 obligation 검산·새 timeline/baseLSN/고정 bootstrap 설치, 새 unflushed ACK와 두 번째 reopen 보존 |
+| 3.15.2.b restore→새 ACK→reopen | 3.15.2.a closure,3.15.1 audit,3.02/3.12 설치/READY와3.11 ACK 공급, 새 namespace 인계 동결 | source WAL 없는 full restore·loser abort obligation0/retained maintenance 소유·credit 검산·새 timeline/baseLSN/고정 bootstrap 설치, 새 unflushed ACK와 두 번째 reopen 보존 |
 
 3.15.1의 독립 input/checker 변경도 D2 검토를 받으며 candidate 변경과 oracle 기준을 한 담당의 자기 승인으로 동시에 바꾸지 않는다. product 경로와 외부 checker의 책임·원본 expected identity를 분리한다. 일부 leaf의 audit 공급 완료를 아직 없는 전체 대상의 full audit PASS로 기록하지 않는다.
 
@@ -168,10 +169,10 @@ PF09에는 audit page/edge 방문·재순회 수·read bytes/시간, 정상 open
 | 3.15-T3 graph multiset | 동일 target으로 향하는 두 다른 영속 field, count−1/+1, dangling/stale generation·queue 유실·undo cycle/sequence 위조. count와 logical snapshot/rollback 결과를 별도로 판정 | DS03/04, RC-T13/14 |
 | 3.15-T4 bounded audit | row/index/locator/allocation inventory 각각 buffer4배와 고정4/16/64MiB profile. RAM·FD·target batch/재순회 peak, 추가 spill0, finding 잘림/timeout이 완료를 위장하지 않음 | DS03, PF09 |
 | 3.15-T5 open/audit 분리 | 같은0/소량 WAL·dirty-page 수의256MiB/1GiB. 정상 reopen의 non-full-scan 경계, 접근하지 않은 cold page 손상이 첫 read/audit에서 거절됨을 따로 관측 | DS03/05, PF09 |
-| 3.15-T6 drain | 긴 reader·Active 거래·진행 aging/DDL에서 backup 대기와 timeout. 기존 commit/rollback 완료 허용, 강제만료 없음·Busy 뒤 정상 admission, C가 drain 후 고정됨 | DS04/05 |
+| 3.15-T6 drain | 긴 reader·Active 거래·진행 aging/DDL에서 backup 대기와 timeout. 기존 rollback/terminal이 공유12MiB workspace를 필요로 하는 schedule, 닫힌 admission 아래 backup의 checkpoint를 포함. drain 중 workspace 독점/하위 작업 재admission 교착0, 강제만료 없음·Busy 뒤 정상 admission, C가 drain 후 고정됨 | DS03/04/05 |
 | 3.15-T7 backup cut | 여러 file의 DWB pending/home sync/retirement·checkpoint·copy/manifest/선택/dirsync 전후 실패/취소. source C 보존과 불완전 destination 미선택, 성공 backup 전체 closure | DS02/05, RC-T14 |
 | 3.15-T8 restore 거절 | missing/truncated/mismatched file·manifest digest, copied pageLSN>high-water, high-water MAX, 미지원 profile, nonempty destination, loser/obligation 위조, 새 namespace 인계 오류. 예상 거절과 source 보존 | DS02/05 |
-| 3.15-T9 source-WAL-free | source WAL 접근 불가한 완전 backup만 제공. 새 timeline·base q=C·첫LSN>high-water·모든 pageLSN 검산, empty obligation·고정 bootstrap 및 full audit | DS02/05 |
+| 3.15-T9 source-WAL-free | source WAL 접근 불가한 완전 backup만 제공. 새 timeline·base q=C·첫LSN>high-water·모든 pageLSN 검산, loser abort obligation0·retained maintenance 소유/credit 인계·고정 bootstrap 및 full audit. ACK 뒤 aging 미완료 queue를 둔 fixture에서 credit0 초기화 mutant 거절, 복원 뒤 새 foreground admission 전에 예약 보존 검산 | DS02/03/04/05 |
 | 3.15-T10 새 ACK와 재open | T9 뒤 새 변경 ACK를 외부 관측하고 home flush 전 crash. 두 번째 reopen에서 새 redo 적용, C와 새 ACK·row/index/catalog 일치. LSN0 초기화로 redo를 건너뛰는 mutant 거절 | DS02/05, RC-T12/14 |
 | 3.15-T11 독립 oracle | ACK된 이전 값을 후속 거래가 덮어쓴 이력·UNKNOWN/확정 ABORT·missing receipt known-bad. 최종 데이터 동일만으로 ACK 유실을 은폐하지 못하고 checker가 의도 결함을 검출 | DS02, RC-T12 |
 
@@ -188,7 +189,7 @@ full audit와 독립 history 모두 성공해야 해당 인수 경로를 통과�
 | [durable/backup.rs](../../crates/engine/src/durable/backup.rs) | DEV2 immutable archive의 `inspect_checkpoint/inspect_archive/copy_archive` 참고. DEV3 mutable page drain·새 timeline identity 인계·일반 restore를 이미 공급한 것으로 보지 않음 |
 | [controller/oracle.rs](../../crates/testing/controller/src/oracle.rs), [controller/durable.rs](../../crates/testing/controller/src/durable.rs) | 기존 controller의 typed expected 비교·외부 process 관측/actor 경계. DEV3 full graph/history oracle의 새 case와 protocol은 별도 동결 |
 
-F01은 backup manifest/완료 selector·allocated/free physical copy 표현, authenticated source high-water/baseLSN, 복사 identity의 새 timeline 인계, 새 genesis/checkpoint/control·bootstrap의 정확 bytes를 고정한다. F02는 audit 대상별 순회/coverage·읽기 기준, admission drain 소유/timeout, destination 소유와 취소/cleanup/restart, empty obligation 판정과 retained terminal 참조 보존을 고정한다. 현재 control codec의 지원 범위를 임의 확대하지 않는다.
+F01은 backup manifest/완료 selector·allocated/free physical copy 표현, authenticated source high-water/baseLSN, 복사 identity의 새 timeline 인계, 새 genesis/checkpoint/control·bootstrap의 정확 bytes를 고정한다. F02는 audit 대상별 순회/coverage·읽기 기준, admission drain 소유/timeout·공유 workspace 반환과 기존 작업/backup 하위 단계의 진행 권한, destination 소유와 취소/cleanup/restart, loser abort obligation0 판정과 retained terminal 참조/queue/credit의 base ledger 인계를 고정한다. 현재 control codec의 지원 범위를 임의 확대하지 않는다.
 
 F03은 typed 이력·row/index 대응·명시 edge multiset·known-bad bytes, F04는 drain/flush/copy/selection/restore/새 ACK의 실제 cut, F05는 target batch·재순회/시간·복사 buffer·FD·destination disk/cleanup peak와 full-audit receipt 상한을 동결한다. F06은 DEV2-only archive와 재사용 가능한 foundation port를 구별하고 F07은 audit/checker·backup/restore·control 공유 파일의 수정 소유를 정한다.
 

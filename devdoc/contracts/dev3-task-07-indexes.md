@@ -21,7 +21,7 @@
 | 3.07-R3 | presence와 VersionStamp·UndoRef를 함께 보존. 동일 full key 제거/재추가는 하나의 presence 이력으로 처리하고 과거 snapshot이 요구하는 absent entry를 즉시 물리 삭제하지 않음 |
 | 3.07-R4 | point/range/full scan은 같은 statement snapshot과 own writes를 사용. 현재 구조에서 마지막 full key 다음을 재탐색하고 index entry 및 해당 row의 가시성을 해석하여 독립 row 결과와 일치 |
 | 3.07-R5 | UNIQUE는 전체 NULL만 중복 예외. 부분 NULL은 위치를 포함한 동일 tuple끼리 충돌. PK NULL은 거절. statement 중간 중복으로 key 교환을 거절하지 않고 최종 집합을 검사 |
-| 3.07-R6 | 영향받는 old/new unique key를 `(index generation, encoded key)`별로 정렬해 예약·잠금. all-null 예외는 unique conflict lock에서 제외. 최신 committed 상태와 own final delta를 대조하고 잠금은 transaction 종료까지 보유 |
+| 3.07-R6 | 영향받는 old/new unique key를 `(index generation, encoded key)`별로 정렬해 예약·잠금. all-null 예외는 unique conflict lock에서 제외. 최신 committed 상태와 이전 성공 statement까지 포함한 transaction 전체의 own 최종 상태를 대조하고 잠금은 transaction 종료까지 보유 |
 | 3.07-R7 | statement 실패는 mark까지 logical undo하여 이전 성공 statement를 보존. 전체 abort·deadlock victim은 전체 undo와 terminal 확인 뒤 잠금을 해제. WAL/CLR·잔류 page·잠금 ledger를 mark로 되감지 않음 |
 | 3.07-R8 | offline build는 admission close/drain, bounded external sort, 비공개 객체 구성·검증, catalog commit으로 연결. 취소·실패·crash의 staging과 할당 소유를 보존하고 완료되지 않은 인덱스를 공개하지 않음 |
 
@@ -31,7 +31,7 @@
 | presence 변경 준비 | 같은 statement token, row 관측값, old/new key와 기존 presence/version, undo·WAL·page·잠금 예약 | 적용 전에 재검사할 before 상태와 준비 그룹. row owner가 발급한 mutation identity를 소비하며 index가 별도 행 버전을 발급하지 않음 |
 | presence 적용 | 정렬된 guard/latch와 authoritative frame, 검증된 before 상태, consuming 예약 | presence/undo/head/edge/count/obligation을 완결 WAL 그룹에 연결. 이후 dirty/flush와 logical undo owner가 인계 |
 | point/range/full 조회 | index object/anchor, 같은 statement의 snapshot guard, typed bound와 출력 용량 | 호출자 buffer의 visible RowUID/row 결과와 continuation. page/undo에서 빌린 bytes를 latch 밖에 노출하지 않음 |
-| statement-final 검사 | 해당 statement의 최종 key 변화, 보유 unique key locks, 최신 committed 상태 | 성공이면 statement 성공 인계. duplicate이면 mark rollback 필요; 검사 오류만으로 복원 완료를 응답하지 않음 |
+| statement-final 검사 | 해당 statement의 최종 key 변화, 이전 성공 statement의 미변경 own presence, 보유 unique key locks, 최신 committed 상태 | 성공이면 statement 성공 인계. duplicate이면 mark rollback 필요; 검사 오류만으로 복원 완료를 응답하지 않음 |
 | build/취소 | DDL owner, drain 권한, 신규 object identity와 사전 예약한 staging/file/page 소유 | 검증된 비공개 tree 또는 cleanup 진행 소유. 공개 결과는 catalog/commit owner가 확정 |
 
 table/index의 DB·timeline·open identity, parent table generation/schema epoch와 anchor를 신뢰한 owner 문맥에서 검증한다. payload에 저장된 identity를 expected 값으로 되읽지 않는다. 동일 숫자 ObjectId·RowId라도 다른 table/namespace를 결합하지 않는다.
@@ -72,7 +72,7 @@ point 조회는 같은 composite의 모든 RowId 후보를 가시성 검사한�
 
 ## 4. statement-final UNIQUE와 잠금 설계
 
-최종 검사 대상은 영향받는 기존 entry를 제거한 뒤의 최종 new 집합이다. own final delta 내부 중복과 잠금 아래 다른 거래의 최신 committed entry를 각각 검사한다. statement snapshot만 조회하면 그 뒤 commit된 duplicate를 놓칠 수 있으므로 가시성 조회와 unique conflict 조회를 구별한다. old/new unique keys를 정렬하여 잠근 뒤 검사하고, 잠금 보유 중 page latch를 잡는 짧은 적용 구간 외에 I/O/추가 잠금 대기는 공통 순서를 따른다.
+최종 검사 대상은 영향받는 unique key 범위에서 다른 거래의 최신 committed 상태에 **이전 성공 statement를 포함한 transaction 전체의 own 최종 presence**를 반영한 집합이다. 이번 statement의 delta 내부 중복뿐 아니라 이번 statement가 건드리지 않은 이전 own entry와의 충돌도 검사한다. 기존 entry를 제외할 때에는 실제로 대체·삭제한 full key와 그 최종 presence를 식별하며, 같은 encoded key의 모든 RowId나 자신의 TxnRef를 가진 모든 entry를 제외하지 않는다. self 재검사는 동일 full key를 두 행으로 세지 않는다. statement snapshot만 조회하면 그 뒤 commit된 duplicate를 놓칠 수 있으므로 가시성 조회와 unique conflict 조회를 구별한다. old/new unique keys를 정렬하여 잠근 뒤 검사하고, 잠금 보유 중 page latch를 잡는 짧은 적용 구간 외에 I/O/추가 잠금 대기는 공통 순서를 따른다.
 
 ```mermaid
 sequenceDiagram
@@ -86,8 +86,8 @@ sequenceDiagram
   K-->>S: 획득 또는 victim 취소
   S->>X: 입력 순서의 row와 presence 변경
   S->>C: 잠금 아래 최신 committed 후보 조회
-  C-->>S: own 영향 old 집합을 제외한 후보
-  S->>S: 최종 new 집합 내부와 외부 duplicate 검사
+  C-->>S: 실제 대체 full key를 제외한 committed 후보
+  S->>S: 이전 own presence와 이번 final delta를 합쳐 duplicate 검사
   alt 최종 집합 유효
     S-->>S: statement 성공, undo와 locks 유지
   else duplicate 또는 statement 오류
@@ -98,6 +98,8 @@ sequenceDiagram
 ```
 
 예를 들어 row A의 key1과 row B의 key2를 한 statement에서 서로 교환하면 최종 집합 `{A:key2,B:key1}`은 성공해야 한다. 최종적으로 둘 다 key2가 되면 실패하고 이전 statement의 효과는 남긴다. `(1,NULL)` 두 개는 충돌하고 `(NULL,NULL)` 두 개는 허용한다. all-null은 unique conflict lock 예외이지만 row lock·객체 수명·undo·자원 규칙까지 면제하지 않는다.
+
+같은 거래에서 S1이 `A:key7`을 삽입하고 성공한 뒤 S2가 `B:key7`을 삽입하면, S1이 아직 미커밋이어도 S2만 UNIQUE 실패로 rollback해야 한다. 반대로 S1에서 기존 A:key7을 삭제하거나 key8로 옮겼다면 S2의 B:key7은 성공할 수 있어야 하므로 이전 statement의 own absent도 반영한다. S2가 A를 삭제하거나 다른 key로 옮긴 뒤 B를 key7에 넣는 경우도 최종 집합이 유효하면 성공한다. 이미 가진 key lock의 재획득 성공은 이 검사를 생략할 근거가 아니다.
 
 deadlock은 공통 wait-for graph와 victim 규칙을 소비한다. 단순 unique duplicate는 statement rollback, SerializationConflict/deadlock victim의 전체 abort는 transaction owner의 규약을 따른다. full undo 또는 terminal 확인 전에 잠금을 풀거나 성공 ABORT를 응답하지 않는다. 같은 실패 statement를 반복할 때 WAL/CLR와 회수 전 undo·완결 SMO·보유 잠금은 계속 charge한다.
 
@@ -142,7 +144,7 @@ F05는 transaction의 mutation256·논리 payload1MiB와 별도로 실제 최대
 
 build는 transaction private 예산과 유지보수 workspace 소유를 구분한다. 공통 12MiB 단일 유지보수 workspace를 사용한다면 대기 중 turn/상위 lock/page pin을 보유하지 않고, 전용4MiB flusher 공간을 빌리지 않는다. FD128 및 owned8GiB 안 protected1GiB·WAL256MiB를 동시에 만족한다. fixed 수치는 [자원 정본](dev3-resource-bounds.md)을 따르며 실제 run 크기·fan-in·목록 상한·각 opcode 예약표는 아직 미동결이다.
 
-presence 삭제와 undo 완료는 즉시 공간 반환이 아니다. snapshot/Active rollback·영속 edge·transient pin·DWB pending이 필요한 동안 보존하며 3.14 eligibility와 3.03 free/reuse를 통해 반환한다. crash 뒤 예약은 checkpoint+WAL의 같은 채택 prefix에서 3.12가 복원한다. index undo가 거래 BEGIN WAL을 필수로 요구하는 새 역방향 WAL 의존성을 만들지 않는다.
+presence 삭제와 undo 완료는 즉시 공간 반환이 아니다. snapshot/Active rollback·영속 edge·transient pin·physical-address flush claim·DWB pending이 필요한 동안 보존하며 3.14 eligibility와 3.03 free/reuse를 통해 반환한다. crash 뒤 예약은 checkpoint+WAL의 같은 채택 prefix에서 3.12가 복원한다. index undo가 거래 BEGIN WAL을 필수로 요구하는 새 역방향 WAL 의존성을 만들지 않는다.
 
 ## 7. 하위 구현 단위와 완료 판정
 
@@ -169,6 +171,7 @@ presence 삭제와 undo 완료는 즉시 공간 반환이 아니다. snapshot/Ac
 | 3.07-T7 반복 실패 회계 | WAL floor가 pin된 상태에서 성공 S1 뒤 실패 S2 반복. 실제 WAL/CLR·잔류 undo/page·retained lock 누적과 다음 admission 사전 거절, 전체 abort 예약 보존 | DS03/06, RC-T14 |
 | 3.07-T8 build 경계 | empty/nonempty·8 index 한도·중복 존재 table·buffer보다 큰 key working set. run/merge·FD/메모리 peak, 정의/row 대응, nullable PK·partial NULL 검증 | DS01/03/06 |
 | 3.07-T9 build 중단·공개 | drain timeout, run 생성/merge/tree 설치/검증/catalog commit 전후 취소와 crash. 미공개 소유만 cleanup, ACK 공개 객체 보존, UNKNOWN은 복구 판정. source row와 기존 index 보존 | DS02/06, KU10, RC-T12/14 |
+| 3.07-T10 이전 own statement와 UNIQUE | 같은 거래 S1에서 A:key7 INSERT/UPDATE 성공 후 S2에서 B:key7 INSERT/UPDATE. S2만 실패하고 S1 유지; S1 또는 S2가 A:key7을 DELETE/key 이동한 뒤 B:key7이면 성공, 동일 full-key self 재검사는 중복 아님. 이번 delta+다른 committed만 검사하거나 own TxnRef 전체를 제외하거나 이전 own absent를 무시하는 mutant 거절 | DS06, KU10 |
 
 F03의 typed row 이력에서 key tuple과 visible presence를 독립 생성한다. production key encoder·tree walk·replay를 기대값 생성에 사용하지 않는다. 바뀐 index 경로의 실제 Linux reopen/다중 객체 fault가 구현되면 그 경로와 외부 ACK/UNKNOWN 이력을 연결하고 full audit에서 row→index와 index→row를 각각 검사한다. 정상 open마다 변경 없는 전체 index를 검사하는 의무로 바꾸지 않는다.
 
@@ -183,7 +186,7 @@ F03의 typed row 이력에서 key tuple과 visible presence를 독립 생성한�
 | [storage/undo_record.rs](../../crates/engine/src/storage/undo_record.rs) | index target/before 표현을 소비. logical undo·CLR·edge 이전은3.09 공급으로 확장 |
 | [transaction/read.rs](../../crates/engine/src/transaction/read.rs) | 기존 transaction read/cursor의 API 문맥 확인용. 현재 DEV2 substrate의 구현을 DEV3 disk index 공급으로 간주하지 않음 |
 
-착수 전 F01/F02에는 index 변경 opcode/native body와 logical undo body, bound 자료형·cursor private revision 수명, 최신 committed conflict 조회와 scan의 구분, statement final-delta 자료구조·정렬/중복 제거·streaming 입력 분할, index build owner/cleanup 진행점·catalog 공개 연결을 고정한다. 기존 frame/row/index bytes를 이 문서에서 다시 정의하지 않는다. 현재 허용되지 않은 semantic body를 일반 codec이 수락한다고 가정하지 않는다.
+착수 전 F01/F02에는 index 변경 opcode/native body와 logical undo body, bound 자료형·cursor private revision 수명, 최신 committed conflict 조회와 scan의 구분, 이전 own presence를 포함하는 transaction 최종 상태와 statement final-delta의 결합·정렬/중복 제거·streaming 입력 분할, index build owner/cleanup 진행점·catalog 공개 연결을 고정한다. 기존 frame/row/index bytes를 이 문서에서 다시 정의하지 않는다. 현재 허용되지 않은 semantic body를 일반 codec이 수락한다고 가정하지 않는다.
 
 F04에는 presence append/apply·각 CLR·build staging/namespace·catalog 공개의 실제 cut과 외부 관측을, F05에는 key lock 수·batch/scan 재시도·동시 생존 workspace·run/fan-in/FD·forward/rollback/build cleanup 예약표를 고정한다. F06은 DEV2 경로의 reuse/adapt/DEV2-only/new를 실제 symbol별로 기록하고 F07은 공통 tree/transaction/catalog와 전용 index 구현 경로의 단일 소유를 정한다.
 

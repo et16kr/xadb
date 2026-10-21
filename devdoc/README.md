@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV3 16개 설계의 ARIES·Oracle·로컬 DBMS 병렬 리뷰](evidence/dev3-task-design-review-20261022.md): flush/reuse·UNIQUE·DDL·undo/recovery·backup/restore의8개 설계 반례를 보완하고 구현 동반 인수에 연결했다. 제품 코드·테스트 실행과 DEV3 완료 승격은 없다.
+
 2026-10-22 [push 전 Clippy 검사 보완](policies/documentation-policy.md#doc-004): 기존 fmt·문서 gate가 검출하지 못한 테스트 전용 lint 2건을 수정하고 Actions와 같은 Clippy 정적 검사를 추가한다. [관련 hook 시험2개·새 gate 회귀3개](implementation/dev3-implementation.md#allocation-lint-fix)의 제한 검증과 기존 미완료 인수를 구별한다.
 
 2026-10-22 [DEV3 단계별 필수 테스트·구현 동반 테스트 추가 계획](plans/dev3-test-plan.md): 중간 단계는 변경 기능의 필수 사례만 실행하고, 새 테스트·fixture·oracle는 구현과 함께 작성한다. 최신 사용자 지시에 따라 DEV3 최종 S5에서 전체 DEV3 inventory를 전수 실행하며, 장시간·대규모·전체 조합은 그 최종 인수에 배정한다.

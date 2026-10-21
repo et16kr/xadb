@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-task-design-review-20261022.md": {
+      "path": "evidence/dev3-task-design-review-20261022.md",
+      "role": "evidence",
+      "title": "DEV3 16개 상세 설계 — ARIES·Oracle·로컬 DBMS 비교 리뷰"
+    },
     "comm-code-review-20261019.md": {
       "path": "evidence/comm-code-review-20261019.md",
       "role": "evidence",

@@ -33,7 +33,7 @@
 | 3.05-R5 | 모든 image write/sync 뒤 전체 Pending control의 선택+dirsync를 완료하고 home write한다. incomplete image subset은 선택하지 않으며 raw 슬롯 존재만으로 권한을 만들지 않는다 | 3.05.2, DS02/05 |
 | 3.05-R6 | 모든 대상 file sync 뒤 batch 전체 retirement 선택을 영속화한다. 일부 file 성공으로 슬롯 일부를 먼저 반환하지 않는다. selector 불명은 fence와 보수적 보존으로 처리한다 | 3.05.3, DS02/05 |
 | 3.05-R7 | retirement 이후 현재 identity/counter가 복사 시점과 같은 frame만 clean/DPT 제거한다. redirty면 Dirty와 기존 보수적 recLSN을 유지한다 | 3.05.1/3, DS05 |
-| 3.05-R8 | 같은 물리 주소는 batch 안에 한 번, pending retirement 전 후속 flush·재할당은 금지한다. control coordinator는 하나이며 I/O 동안 상태 mutex를 보유하지 않는다 | 3.05.2/3, DS03/05 |
+| 3.05-R8 | 같은 물리 주소는 batch 안에 한 번. image copy 전 주소 claim 등록부터 전체 retirement 영속화와 RAM finalize까지 후속 flush·free/reuse를 금지한다. Pending 선택 전도 보호하며 claim 등록과 allocator 적용은 경쟁 없이 직렬화한다. control coordinator는 하나이며 I/O 동안 상태 mutex를 보유하지 않는다 | 3.05.2/3, DS03/05 |
 | 3.05-R9 | 교체 flush와 오래된 recLSN 해소를 각각 유한 service 간격으로 선택한다. 불가능 후보의 반복 busy loop를 막고 full batch를 기다리지 않는 deadline을 둔다 | 3.05.3, PF09 |
 | 3.05-R10 | 압력 때 새 forward effect admission을 닫고 기존 유한 작업·rollback·전용 flusher를 진행시킨다. live retention owner를 제거하거나 client의 다음 COMMIT을 기다려 진행을 주장하지 않는다 | 3.05.3, DS03/05 |
 | 3.05-R11 | shared session fence·poison·불명 I/O의 원래 cause/effect/certainty를 보존한다. Drop은 sync·retirement·성공 rollback을 수행하지 않는다 | 전 단위, DS02 |
@@ -54,7 +54,7 @@
 | retirement/finalize | 같은 batch의 모든 home sync, 현재 선택 control | 영속 retirement 뒤 slot 반환, 조건부 clean/DPT 제거 | redirty는 Dirty 유지. 선택 불명은 slot·주소 보호 해제 금지 |
 | bounded 상태 관측 | 건강한 owner의 한정 snapshot | dirty/selected/completed/redirtied 수·oldest recLSN·service gap·pressure 원인 | 진단은 회수/ACK 권한이 아니며 기존 오류를 가리지 않음 |
 
-frame pin은 교체 방지 수명이다. transaction visibility나 undo/status 영속 edge의 수명을 대신하지 않는다. flush claim은 image 완료까지 frame identity를 유지하고 같은 주소의 중복 flush를 막는 소유이며 reader pin과 구별한다. claim·pin의 구체 결합과 redirty 허용은 F02에서 검증하되 content latch를 I/O까지 연장하지 않는다.
+frame pin은 교체 방지 수명이다. transaction visibility나 undo/status 영속 edge의 수명을 대신하지 않는다. flush claim은 image copy 전부터 frame identity와 물리 주소를 보호하여 중복 flush·allocator free/reuse를 막는 소유이며 reader pin과 구별한다. reader pin0이나 DWB Pending 부재는 이 claim을 무시할 근거가 아니다. claim 등록과 allocator의 최종 free/reuse 검사를 같은 주소의 경쟁 없는 경계에서 직렬화하고, 전체 retirement 영속화 후 RAM finalize까지 완료해야 주소 보호를 반환한다. 영속 효과 전 무효과 취소가 확인된 경우의 claim 반환과 실패/fence 뒤 보호 인계, claim·pin의 구체 결합은 F02에서 검증하되 content latch를 I/O까지 연장하지 않는다. 같은 incarnation의 redirty는 기존 규약대로 허용한다.
 
 <a id="state"></a>
 ## 4. frame과 batch 상태 설계도
@@ -107,7 +107,7 @@ stateDiagram-v2
 2. [공통 rank](disk-storage-design.md#mutation-protocol)에 따라 version-edit gate, 필요한 tree gate, 정렬한 page content latch를 획득한다. try-latch 실패나 before identity/version 불일치는 이번 적용의 gate/latch를 모두 놓고 재준비한다. buffer map/예약 mutex를 함께 보유하지 않는다.
 3. 3.04.1의 완결 stage 뒤 page bytes·pageLSN·counter와 해당 owner의 descriptor/ATT/DPT를 등록한다. Clean→Dirty의 recLSN은 그 page를 처음 dirty로 만든 complete WAL 그룹에 결합하고, Dirty/Flushing 재수정은 기존 recLSN을 보존한다. 논리 record LSN과 physical offset의 정확 변환은 WAL owner의 F01/F02에 연결한다.
 4. 모든 등록이 끝나야 gate를 놓는다. 등록 공간 부족을 이 시점에 처음 발견하지 않도록 사전 예약한다. stage 뒤 오류는 부분 페이지를 이전 상태로 간주하지 않고 공통 fence한다.
-5. flusher는 gate 밖에서 목적별 bounded 후보를 선정한다. 주소 중복·기존 pending·stale generation을 제외하고 실제 slot/control/FD·4MiB workspace와 frame claim을 확보한다. content latch를 얻은 뒤 identity/incarnation/pageLSN/counter와 완전 image를 복사하고 즉시 해제한다. checksum·codec 작업의 잠금 밖 수행과 snapshot 안정성을 F02에 연결한다.
+5. flusher는 gate 밖에서 목적별 bounded 후보를 선정한다. 주소 중복·기존 claim/pending·stale generation을 제외하고 실제 slot/control/FD·4MiB workspace와 frame/주소 claim을 확보한다. claim 등록과 allocator 최종 free/reuse 적용을 직렬화하고 before identity를 재검사한 뒤에만 content latch 아래 identity/incarnation/pageLSN/counter와 완전 image를 복사하고 즉시 latch를 해제한다. claim은 Pending 선택까지의 대기와 모든 I/O에도 유지한다. checksum·codec 작업의 잠금 밖 수행과 snapshot 안정성을 F02에 연결한다.
 6. 봉인 전 각 image와 descriptor의 일치, pageLSN nonzero, 목록의 물리 주소 정렬·slot 유일성을 검산한다. 1–64개 안의 현재 모인 batch를 deadline까지 봉인하며 transaction snapshot으로 해석하지 않는다. eligible page가 없으면 이유와 wake/deadline을 남기고 무진행 round를 끝낸다.
 
 ### 5.2 WAL→DWB→home와 retirement
@@ -139,8 +139,8 @@ sequenceDiagram
 3. 기존 선택 control·profile·FILEMAP에 결합한 새 Pending control을 설치하고 atomic replace+dirsync를 완료한다. control/selector의 실제 write/sync/publish cut, generation·high-water와 XDI1 재사용은 leaf에서 동결한 절차만 사용한다.
 4. FILEMAP으로 검산한 home 주소에 image를 write한다. 대상 종류가 data/index/undo/status/allocator라고 해서 장벽을 생략하지 않는다. 주소/길이·namespace owner 확인을 raw image의 자기 선언으로 대체하지 않는다.
 5. batch의 서로 다른 모든 대상 file을 sync하고 file별 결과를 남긴다. 하나라도 실패/불명이면 전체 batch를 pending으로 보존하며 fence한다. 성공한 file의 슬롯도 재사용하지 않는다.
-6. 전체 retirement control의 영속 선택 뒤 슬롯을 반환한다. 같은 주소의 후속 flush·free/reuse 허용을 이 완료와 연결한다. 일반적인 이전 control fallback이나 raw 슬롯 scan은 하지 않는다.
-7. 현재 frame identity/generation/counter와 복사 관측을 **경쟁 없는 등록 경계에서** 재검사한다. 일치하면 Clean 전환과 DPT 제거를 함께 완료한다. 불일치한 counter는 redirty로 남기고 최초 recLSN을 유지한다. 비교와 DPT 제거 사이의 writer 경합으로 새 dirty 등록을 지우는 구현을 금지한다. 정확 guard/rank는 F02에서 동결한다.
+6. 전체 retirement control의 영속 선택 뒤 슬롯을 반환할 수 있다. 물리 주소의 claim은 다음 RAM finalize가 끝날 때까지 유지하여 이 사이 후속 flush·free/reuse를 허용하지 않는다. 일반적인 이전 control fallback이나 raw 슬롯 scan은 하지 않는다.
+7. 현재 frame identity/generation/counter와 복사 관측을 **경쟁 없는 등록 경계에서** 재검사한다. 일치하면 Clean 전환과 DPT 제거를 함께 완료한다. 불일치한 counter는 redirty로 남기고 최초 recLSN을 유지한다. 비교와 DPT 제거 사이의 writer 경합으로 새 dirty 등록을 지우는 구현을 금지한다. 이 finalize 뒤 주소 claim을 반환하고 다음 owner가 최신 frame/allocator 상태를 재검사한다. 정확 guard/rank는 F02에서 동결한다.
 
 ### 5.3 교체와 압력하 진행
 
@@ -164,7 +164,7 @@ WAL 보존/dirty backlog 압력에서는 새 forward effect admission을 닫고 
 | Pending 선택/dirsync 실패·불명 | home 진행 중단. old/new 가능한 선택의 보호 합집합과 슬롯 예약 보존 | reopen의 selector 검증, 3.12.2 |
 | home 부분 write·file sync 일부 실패 | whole batch pending 보존. 일부 성공 슬롯 retirement 금지 | 3.12.2 repair |
 | retirement 선택 실패·불명 | pending일 수 있는 전체 batch 보호. frame clean·DPT 제거·slot 재사용 금지 | 3.12.2/8 repair·recrash |
-| retirement 성공 후 RAM finalize 중 오류 | 영속 retirement 사실을 되돌리지 않음. stale completion·registry 불변식 위반이면 fence | reopen의 선택 상태와 WAL/redo |
+| retirement 성공 후 RAM finalize 중 오류 | 영속 retirement 사실을 되돌리지 않음. 주소 claim을 정상 반환으로 지우지 않고 stale completion·registry 불변식 위반이면 fence | reopen의 선택 상태와 WAL/redo |
 | pin/claim Drop·poison | Drop에 영속 효과 없음. 정상 참조 반환과 불변식 fence를 구별하고 poison을 지우지 않음 | owner 수명 종료 |
 | 취소·종료 요청 | client 취소가 이미 선택된 batch를 폐기하는 권한이 아님. 완료·예약 보존·fence의 정확 경계를 F02로 동결 | buffer/DWB 단독 owner |
 
@@ -242,6 +242,7 @@ F05는 4/16/64MiB 각각에서 `charged + outstanding_reserved <= capacity`를 �
 | 3.05-C13 | selected pending+손상 home, allocator/status home torn, repair 중 두 번째 crash, retired raw @10/home @20 | 선택 batch만 repair·전체 sync/retire, old raw 부활0, READY는 3.12의 나머지 장벽까지 금지 | 3.12.2/8, DS05 |
 | 3.05-C14 | Pending 없는 torn home의 완전 INIT+연속 WAL, INIT 누락·중간 WAL gap, higher home LSN/incarnation | 허용된 INIT redo만 재구성, 그 밖 손상 거절·오래된 image 덮어쓰기0 | 3.12.2/4, DS02/05 |
 | 3.05-C15 | active transaction steal, commit 뒤 아직 dirty인 data, capture와 dirty/remove 경쟁 | flush가 commit을 만들지 않고 commit에 data force 없음, capture에서 필요한 recLSN 누락 없음 | 소비자 통합, DS02/05 |
+| 3.05-C16 | reader pin0인 g의 claim 등록과 free 경쟁, copy 뒤 Pending 전 정지, retirement 뒤 RAM finalize 전 정지, 각 구간의 g+1 재할당·후속 flush 시도 | claim과 free 중 하나만 먼저 성공. claim 보유 중 free/reuse·후속 flush0, old-g home write가 g+1을 덮는 mutant 거절. 무효과 취소 또는 retirement+finalize 뒤만 최신 상태 재검사·진행 | 3.03.4·3.05.3·3.14.2, DS03/05 |
 
 메모리 포트의 effect trace, 실제 Linux write/sync·namespace 관측, 실제 thread schedule, crash 뒤 reopen/repair는 각각 별도 증거다. 강제 종료 관측을 실제 전원 장애로 표시하지 않는다. PF09는 WAL/DWB/home bytes와 sync 수, 선택/완료/redirty, oldest recLSN lag, 목적별 최대 service gap, 무진행 round·admission 원인, RSS/FD·예약 peak를 기록한다. 1/8/64의 성능 차이는 같은 의미·내구성·fixture로 측정한 뒤만 주장한다.
 
@@ -253,7 +254,7 @@ F05는 4/16/64MiB 각각에서 `charged + outstanding_reserved <= capacity`를 �
 | 항목 | 추가로 고정할 내용 | 해당 효과의 착수 경계 |
 | --- | --- | --- |
 | F01 운영 제어 | batch id의 durable high-water·재장애 발급, control generation·selector bank 교체, XDI1→운영 stage 인계, exact lengths·잔여물/손상 판정 | 최초 Pending 선택 전 |
-| F02 owner·guard | consuming dirty session 전환, live reader/frames 수명, dirty header·DPT entry 표현, 전체 pin 예약·flush claim·cancel/Drop·poison 규칙 | 3.05.1 구현 전 |
+| F02 owner·guard | consuming dirty session 전환, live reader/frames 수명, dirty header·DPT entry 표현, 전체 pin 예약·copy 전 주소 claim과 allocator free의 원자 경계·retirement/finalize 보호 인계·cancel/Drop·poison 규칙 | 3.05.1 구현 전 |
 | F02 등록 원자성 | recLSN의 WAL 위치 대응, counter 폭/소진, stage→DPT 등록, copy와 clean/DPT 제거의 rank·경쟁 방지 | 첫 dirty apply 전 |
 | F04 효과·복구 | operation별 실제 I/O 순서·before/partial/after cut, torn/control 불명·재사용·repair/recrash, 독립 expected와 고정 분모 | 새 효과 시험 구현 전 |
 | F05 메모리·FD | concrete owner·nested local·64 image/slot/control 동시 peak, metadata/DPT·file별 sync 집합·전체 pin 수·각 profile 동시 admission | 첫 해당 effect 전 |

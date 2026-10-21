@@ -12,7 +12,7 @@
 
 ## DEV3 작업별 상세 명세·설계도
 
-[공통 경계·공급 설계도·인수 규칙](dev3-task-designs.md) 아래 기존 16개 작업을 각각 상세화한다. 기존 소유 계약을 유지하며 설계 작성과 제품 구현·실행은 구분한다.
+[공통 경계·공급 설계도·인수 규칙](dev3-task-designs.md) 아래 기존 16개 작업을 각각 상세화한다. 기존 소유 계약을 유지하며 설계 작성과 제품 구현·실행은 구분한다. [2026-10-22 비교 리뷰](../evidence/dev3-task-design-review-20261022.md)의 반례 보완은 [DEV3-REVIEW-009](disk-storage-design.md#task-review-009)와 연결한다.
 
 - [3.01 형식·정체성](dev3-task-01-formats.md)
 - [3.02 파일·읽기 기반](dev3-task-02-files-reads.md)

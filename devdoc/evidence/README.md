@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-22 [DEV3 16개 상세 설계 비교 리뷰](dev3-task-design-review-20261022.md) — ARIES·Oracle 공식 자료와 실제 PostgreSQL·MySQL·MariaDB·CUBRID·SQLite revision을 대조한8개 설계 보완·문서별 판정·교차검토. 제품 실행 증거가 아니다.
+
 2026-10-21 [WAL·할당·행·DWB 표현 소스의 DEV2 복구 receipt](dev3-storage-formats-dev2-kernel-xadb-20261021-r1.json)는 동일 보존 source에서18개 check와 native99셀을 통과했다. 기존 DEV2 capability 회귀이며 DEV3 실제 디스크 복구 인수는 아니다.
 
 2026-10-20 [tree·overflow·거래 표현 통합 receipt](dev3-expressions-leaf-xadb-20261020-r1.json)와 [동일 소스의 하위 회귀](dev3-expressions-dev2-regression-xadb-20261020-r1.json)를 보존했다. engine 표현43개·foundation scalar3개·부분 모델 정상4/결함8 및 DEV0/1/2 회귀 PASS이며, 아래 복구 receipt와 같은 지문이다. DEV3 전체 인수는 미완료다.

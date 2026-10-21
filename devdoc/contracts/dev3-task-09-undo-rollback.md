@@ -38,6 +38,7 @@
 | 3.09-R12 | 시작 WAL이 회수된 Active 거래도 UndoRef chain과 선택된 상태/예약에서 rollback 가능해야 한다. 부족한 자원을 나중 checkpoint/aging으로 조달하는 순환을 금지한다 | RC-T13/14 |
 | 3.09-R13 | reference를 source latch 밖으로 가져갈 때 bounded transient pin을 먼저 등록한다. horizon/rollback/queue/pin은 incoming과 별도 회수 금지 조건이다 | DS04 |
 | 3.09-R14 | terminal 이후 남은 undo/status/retirement 작업은 durable owner/credit으로 인계한다. 그 형식이 미동결이면 terminal 적용은 Unsupported다 | DS02/04, F01/F05 |
+| 3.09-R15 | 부분 rollback에서 이미 보상한 suffix는 Active 복귀·새 변경·checkpoint·재시작 뒤의 rollback에서 다시 undo하지 않는다. 보존용 참조와 남은 undo 시작점을 구별하며 BEGIN/CLR WAL 회수 뒤에도 이 구별이 영속 상태에서 복원되어야 한다 | 3.09.3, RC-T13/14 |
 
 <a id="graph"></a>
 ## 3. 참조·상태의 세부 설계도
@@ -149,6 +150,10 @@ sequenceDiagram
 
 statement 진입에서 현재 undo chain의 mark와 statement identity를 고정한다. 실패 시 mark 이후의 해당 거래 효과를 역순으로 CLR 적용하고 `next==target`까지 진행한다. StatementFinish는 Active 복귀와 남은 full transaction abort 의무를 결합한다. 이전 statement의 성공 효과·transaction lock·reserve를 보존하고 mutation sequence/TxnId/UndoSequence를 재사용하지 않는다.
 
+**mark 도달 뒤 `next`만 지우고 보상 전 head를 그대로 새 rollback 시작점으로 사용하는 것은 금지한다.** Active 표현에는 rollback next가 없고 현행 full RollbackStart는 head를 시작점으로 소비하므로, CLR/StatementFinish는 다음 full abort가 이전 성공 statement의 남은 undo에서 이어지도록 영속 head/link와 edge/count·retirement 소유를 함께 인계해야 한다. 보상된 undo를 snapshot/참조/회수를 위해 보존하는 일은 그것을 다시 실행할 undo로 남기는 일과 다르다. 구체 head 전이·보존 anchor/queue·credit 형식은 F01/F02에서 동결하며, 아직 없는 skip 표나 WAL prevLSN 탐색을 암묵적으로 도입하지 않는다. 뒤의 새 forward undo도 보상된 suffix를 다시 자기 previous-transaction 경로에 연결해서는 안 된다.
+
+재시작의 Aborting(Statement)는 정상 세션의 statement만 실패한 결과가 아니라 미완료 loser 거래다. 이미 보상한 suffix를 건너뛴 채 남은 전체 transaction undo와 AbortEnd까지 완료해야 한다. mark 도달을 이유로 Active를 READY에 남기지 않으며, statement→full 전환·head/next·잔여 예약의 원자 결합은 3.12가 소비할 F02 의무다.
+
 전체 rollback은 target=None으로 남은 chain 전체를 처리한다. next=None은 undo 완료 위치다. 이후 남은 status/undo/old overflow/aging 작업의 durable owner와 credit을 terminal 그룹에 인계하고 abort-end를 영속화하며 상태를 확인한다. **그 뒤에만** 거래 잠금을 반환하고 ABORTED를 확정한다. terminal queue 형식·단일 owner descriptor에서의 안전한 인계가 동결되지 않은 현재 상태에서 정상 AbortEnd를 구현했다고 표시하지 않는다.
 
 timeout/cancel·deadlock victim도 같은 실제 rollback을 완료해야 한다. rollback I/O 실패 또는 stage 이후 불완전 적용은 Fenced/RecoveryRequired이며 공유 변경이 모두 사라졌다고 답하지 않는다. commit record 첫 byte 시도 이후의 결과 불명은 3.11의 UNKNOWN이며 정상 precommit abort로 바꾸지 않는다. Drop은 숨은 undo/sync/terminal 성공을 실행하지 않고 소유 인계 또는 fence 의무를 따른다. statement 도중 full abort로 전환하는 정확 상태/소유 절차와 취소 재진입은 F02로 별도 동결한다.
@@ -169,7 +174,7 @@ timeout/cancel·deadlock victim도 같은 실제 rollback을 완료해야 한다
 | terminal 뒤 head/incoming 남음 | queue/credit과 참조를 보존하며 3.14가 eligibility·release 수행 | DS04 |
 | begin WAL이 회수됨 | 선택된 checkpoint/obligation·undo/status에서 복원. 삭제한 prevLSN을 undo 필수 입력으로 요구하지 않음 | RC-T13/14 |
 
-회수자는 Live→Releasing 전 incoming0 외에 horizon·Active rollback·queue owner·마지막 transient pin·DWB pending을 확인한다. Releasing의 previous-version→previous-transaction→before status role별 cursor와 count 변경을 같은 logged 그룹으로 처리한다. chunk 반환은 next를 먼저 검산하고 allocator 반환·release-next·released count를 함께 인계하며 반환한 page를 다시 읽어 다음 주소를 찾지 않는다. 이 실행은 3.14와 3.03.4의 소유지만, 3.09는 그 수명과 충돌하지 않는 edge를 공급해야 한다.
+회수자는 Live→Releasing 전 incoming0 외에 horizon·Active rollback·queue owner·마지막 transient pin·prepared/in-flight flush claim·DWB pending을 확인한다. Releasing의 previous-version→previous-transaction→before status role별 cursor와 count 변경을 같은 logged 그룹으로 처리한다. chunk 반환은 next를 먼저 검산하고 allocator 반환·release-next·released count를 함께 인계하며 반환한 page를 다시 읽어 다음 주소를 찾지 않는다. 이 실행은 3.14와 3.03.4의 소유지만, 3.09는 그 수명과 충돌하지 않는 edge를 공급해야 한다.
 
 <a id="resources"></a>
 ## 7. F05 자원과 ledger
@@ -240,6 +245,7 @@ statement mark 복귀 뒤에도 이미 쓴 WAL/CLR, 완료 SMO, 아직 회수되
 | 3.09-C14 | Active begin WAL 실제 제거 후 abort/restart, 작은 신규 admission 설정 | 선택 profile/남은 obligation 전체 복원, 잘린 자원/owner 복구 거절, 삭제 WAL 재요구0 | RC-T13/14 |
 | 3.09-C15 | 각 buffer/quota 경계−1/동일/+1·경쟁 reader·foreground 반복 실패 | 첫 effect 전 거절, 기존 rollback/flush 진행·고정 peak, checkpoint/aging 선행 대기 없음 | DS03/04·F05 |
 | 3.09-C16 | catalog target 유효+occupied body/Missing/retire, 미동결 terminal 인계 | 지원 범위 밖 효과 명시 거절, opaque 성공0. 대상 동결 후 producer/CLR/종료를 함께 새 인수 | 3.08/3.09 |
+| 3.09-C17 | S1 성공→S2 여러 변경 후 mark rollback→S3 같은 target 재변경→전체 abort; StatementFinish 전후 crash와 BEGIN/옛 CLR WAL 회수 변형 | S2의 보상 record 재undo0, S1/S3의 남은 undo만 한 번 수행, 보존 graph/credit 유실0. Aborting(Statement) loser는 mark에 멈추지 않고 durable AbortEnd까지 완료 | DS04/06, RC-T13/14 |
 
 fault 기대값에는 각 group의 before/after page·role별 edge·stored count·status core/head/next·descriptor·remaining/retained·slot generation을 포함한다. 논리 값이 맞더라도 count/소유 유실을 PASS로 보지 않고, count가 맞더라도 필요한 snapshot/rollback 버전 유실을 PASS로 보지 않는다. 지속 crash의 완료를 보장하지 않으며 모든 유한 crash prefix의 안전성과 마지막 장애 뒤 충분한 정상 실행에서 종료를 별도 검증한다.
 
@@ -251,7 +257,7 @@ fault 기대값에는 각 group의 before/after page·role별 edge·stored count
 | 동결 항목 | 구체 미완료 입력 | 착수 경계 |
 | --- | --- | --- |
 | F01 identity/status | durable UndoSequence/TxnId high-water, bounded status directory의 bytes·설치/제거·generation/INIT 결합 | 실제 발급·live lookup 전 |
-| F01/F02 native 의미 | 대상별 canonical logical projection, Forward/CLR·StatementFinish의 page/edge/count/descriptor 결합·오류 | 해당 producer/CLR 첫 effect 전 |
+| F01/F02 native 의미 | 대상별 canonical logical projection, Forward/CLR·StatementFinish의 page/edge/count/descriptor 결합·오류, 부분 rollback 뒤 effective undo head와 retained suffix 소유의 영속 분리 | 해당 producer/CLR 첫 effect 전 |
 | F02 수명·재검사 | transient pin capacity/guard·target proof·net0 home proof, rollback next/mark·cut 경합·retry와 FIFO K | live edge/rollback 적용 전 |
 | F01 terminal/retirement | old overflow inventory, durable queue body·owner/credit 인계, Commit/AbortEnd 뒤 ATT 제거·예약 반환 순서 | 관련 forward/terminal 효과 전 |
 | F02 종료·실패 | statement→full abort 전환·재진입/취소·Drop 인계, abort-end/상태/lock 반환의 정확 경계와 typed error | 3.09.3 적용 전 |

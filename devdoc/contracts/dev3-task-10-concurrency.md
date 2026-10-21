@@ -112,7 +112,7 @@ sequenceDiagram
 
 | 구분 | snapshot·읽기 | commit/충돌 검증 |
 | --- | --- | --- |
-| ReadCommitted | statement 진입마다 published q를 등록. 같은 statement의 scan/mutation은 같은 token, own writes는 자기 변경으로 해석 | row X lock 후 observation 비교와 latest committed+own final delta의 UNIQUE. 서로 다른 행·비충돌 key writer는 함께 성공 가능 |
+| ReadCommitted | statement 진입마다 published q를 등록. 같은 statement의 scan/mutation은 같은 token, own writes는 자기 변경으로 해석 | row X lock 후 observation 비교와 latest committed+이전 성공 statement를 포함한 transaction 전체 own 최종 상태의 UNIQUE. 서로 다른 행·비충돌 key writer는 함께 성공 가능 |
 | Serializable | 기본 모드. transaction 시작 q를 유지하고 statement/cursor가 같은 소유를 공유 | read/write table·absence/range의 generation과 catalog namespace/generation을 등록. coordinator 아래 해당 마지막 committed 변경 q≤start_q 검사 |
 
 가시성 resolver는 Committed(q)와 TxnRef/status를 구분하고 다른 거래의 미완료/나중 commit 효과를 undo로 제거한다. status가 먼저 committed여도 commit_q>snapshot_q이면 새 값을 읽지 않는다. row/index/catalog는 같은 transaction 상태와 frontier 공개 계약을 사용한다. own writes와 undo before-image의 상세 판정은 3.06/3.09와 연결하며 새 별도 visibility 알고리즘을 복제하지 않는다.

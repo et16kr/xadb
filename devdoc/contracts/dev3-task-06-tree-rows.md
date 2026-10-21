@@ -160,7 +160,7 @@ overflow 교체는 새 chain을 완성하여 row 변경과 인계한다. 공개�
 | 실제 page·undo·overflow 손상, 필요한 edge 소실 | 정상 부재/old hint로 낮추지 않음. 원래 cause를 유지하고 소유 계약에 따라 Fenced/RecoveryRequired |
 | stage 뒤 부분 apply·불명 write/sync·poison | 공통 fence, raw writer/page 사용 차단, uncertain charge 보존. `Drop`으로 숨은 sync/성공 rollback 금지 |
 | 구조/행 WAL 뒤 crash | 3.12에서 완결 구조/row/undo/status/INIT 그룹을 REDO. 완료 SMO는 보존하고 loser의 논리 row 효과만 현재 위치에서 CLR로 취소 |
-| unlink·overflow 교체 뒤 회수 | retirement/horizon·영속 edge·rollback 소유·transient pin·DWB pending 해제 확인 후 3.14.1→3.03.4→3.14.2. unlink만으로 Free 선언 금지 |
+| unlink·overflow 교체 뒤 회수 | retirement/horizon·영속 edge·rollback 소유·transient pin·physical-address flush claim·DWB pending 해제 확인 후 3.14.1→3.03.4→3.14.2. unlink만으로 Free 선언 금지 |
 
 예약 rollback과 필수 구조 유지보수는 try 재시도만으로 진행을 주장하지 않는다. F02의 K 뒤 FIFO turn을 요청하며 대기 전 page pin과 공유 maintenance workspace를 반환한다. 준비 단계에는 전용 flusher를 허용하고, 적용 단계에서만 bounded content 구간을 drain한다. tree/row leaf가 별도의 lock rank나 workspace 대기 규칙을 만들지 않는다.
 
@@ -191,7 +191,7 @@ overflow 교체는 새 chain을 완성하여 row 변경과 인계한다. 공개�
 | T06-03 | 비용이 편향된 entry와 C/H/전체 후보 경계. 독립 boundary/pivot 전수 계산과 실제 두 page·parent key range 일치 | R3, DS01 |
 | T06-04 | leaf→internal 연쇄 split·root level 경계·anchor revision 경계. root 변경에도 anchor identity와 logical row identity 보존 | R2/3, DS01/03 |
 | T06-05 | split 뒤 다른 row writer 변경 후 원래 사용자 abort. split·다른 writer 보존, 현재 tree에서 원래 row만 undo | R3/5, 3.09.2·KU09/10 |
-| T06-06 | 빈 leaf unlink·ancestor 경계·마지막 row 삭제. retired 목록 일치, pin/DWB가 남으면 free 불가, root 표현 적법 | R3/10, DS03·3.14 |
+| T06-06 | 빈 leaf unlink·ancestor 경계·마지막 row 삭제. retired 목록 일치, pin/flush claim/DWB가 남으면 free 불가, root 표현 적법 | R3/10, DS03·3.14 |
 | T06-07 | INSERT/UPDATE/DELETE·same-bytes UPDATE·앞선 statement의 own-write 버전을 현재 statement에서 다시 관측, immediate/wait/already-held X lock 세 경로. 이전 token 재사용은 거절 | R4/5, 3.10.2·DS06 |
 | T06-08 | 다른 DB/open/table generation·다른 statement/RowId observation 및 잠금 뒤 삭제. spoof 거절 또는 규정된 conflict, 최신 버전으로 덮어쓰기 검출 | R4, KU09/10 |
 | T06-09 | inline2,047/2,048/2,049와 overflow 최대131,072 경계, inline↔overflow·overflow↔overflow·DELETE/abort. 독립 canonical 값과 old/new/undo 소유 대조 | R5/6, DS03/04 |

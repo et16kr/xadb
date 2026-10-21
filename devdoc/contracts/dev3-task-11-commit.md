@@ -124,7 +124,7 @@ sequenceDiagram
 
 checkpoint capture는 commit coordinator와 version-edit 경계에서 등록까지 끝난 prefix만 수신한다. CommitAttempted 거래의 sync·status 설치가 끝나지 않은 채 terminal을 생략하거나 Active로 되돌린 capture를 만들지 않는다. 불명 commit이면 checkpoint를 진행하지 않는다. 실제 capture와 WAL floor는 3.13이 소유한다.
 
-terminal commit이 채택되면 loser abort 의무는 끝나지만 retained head/incoming·aged stamp·queue 작업은 남을 수 있다. ATT의 active owner 제거와 queue의 영속 owner/credit 인계를 동일 의미 그룹으로 동결해야 한다. terminal의 count0, 남은 undo 없는 core, zero outstanding 표현을 개별적으로 보았다는 이유만으로 무조건 전부 반환하지 않는다. status/undo slot 재사용은 edge·queue·snapshot/rollback·transient pin·DWB 소유를 모두 해소한 3.14/3.03 경로에서 수행한다.
+terminal commit이 채택되면 loser abort 의무는 끝나지만 retained head/incoming·aged stamp·queue 작업은 남을 수 있다. ATT의 active owner 제거와 queue의 영속 owner/credit 인계를 동일 의미 그룹으로 동결해야 한다. terminal의 count0, 남은 undo 없는 core, zero outstanding 표현을 개별적으로 보았다는 이유만으로 무조건 전부 반환하지 않는다. status/undo slot 재사용은 edge·queue·snapshot/rollback·transient pin·prepared/in-flight flush claim·DWB 소유를 모두 해소한 3.14/3.03 경로에서 수행한다.
 
 ## 6. 오류·복구·자원 표
 
