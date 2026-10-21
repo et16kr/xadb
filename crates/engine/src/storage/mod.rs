@@ -19,3 +19,4 @@ pub(crate) mod undo_record;
 pub(crate) mod undo_ref;
 pub(crate) mod volatile;
 pub(crate) mod wal_frame;
+pub(crate) mod wal_io;

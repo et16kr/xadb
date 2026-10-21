@@ -46,7 +46,7 @@ def probe_source(kind, positive):
     return text, marker
 
 
-def check_diagnostics(output, returncode, expected_code=None, expected_line=None):
+def check_diagnostics(output, returncode, expected_code=None, expected_line=None, *, probe_path=PROBE):
     """Require a successful baseline or exactly one coded primary probe error."""
     messages = [json.loads(line) for line in output.splitlines() if line.startswith('{')]
     finishes = [m for m in messages if m.get('reason') == 'build-finished']
@@ -64,7 +64,7 @@ def check_diagnostics(output, returncode, expected_code=None, expected_line=None
     if (error.get('code') or {}).get('code') != expected_code:
         raise ValueError('wrong compiler error code')
     primary = [s for s in error.get('spans', []) if s.get('is_primary') is True]
-    if len(primary) != 1 or primary[0].get('file_name') != PROBE or (
+    if len(primary) != 1 or primary[0].get('file_name') != probe_path or (
             primary[0].get('line_start'), primary[0].get('line_end')) != (expected_line, expected_line):
         raise ValueError('error is not at the expected probe expression')
     return [{'code': expected_code, 'primary_span': primary[0]}]

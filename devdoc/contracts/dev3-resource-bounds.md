@@ -63,3 +63,8 @@ DS03/PF09의 각 inventory 접근량은 configured buffer의4배 이상이다. �
 - 선택 control의 고정 bootstrap peak, checkpoint 두 슬롯과 old/new 합집합 closure, 새 epoch 직후 재장애에서도 추가 누적 없는 인계.
 
 하나의 group이63개 full page redo로 표현되지 않는다면 형식을 초과한 frame을 쓰지 않고, 중간 상태도 복구 가능한 system/transaction 그룹으로 나누는 알고리즘을 먼저 검토한다. 단지 encoded-size 오류를 반환하는 것으로 이미 effect를 시작한 작업의 rollback 진행 보장을 대신하지 않는다. F05 완료에는 이 구체 표, 경계−1/동일/+1의 독립 계산, 실제 I/O·thread·fault 결과가 필요하다.
+
+
+## Genesis WAL component의 metadata 분할
+
+[별도 D2](dev3-wal-io.md)로 기존 metadata/cache8MiB 안에 WAL slot1MiB와 component metadata/설치 scratch64KiB를 고정 배정한다. locator1MiB와 겹치지 않으며 나머지는6,225,920 bytes(5.9375MiB)다. system16MiB의 flush4MiB/maintenance12MiB는 유지한다. 실제 component bounds를 검증해야 하며 이 배정만으로 frame headers/ATT/FD 등 전체 engine ledger나 F05를 충족했다고 하지 않는다.

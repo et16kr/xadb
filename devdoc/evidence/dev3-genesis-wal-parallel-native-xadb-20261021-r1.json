@@ -1,0 +1,201 @@
+{
+  "status": "PASS",
+  "scope": "32 executions of fixed native3 under 3-thread libtest scheduling with suite-level FD lifetime isolation",
+  "source_sha256": "3162fc43600dba0ed74d7b0fbe10b732c71e50fb24002df6153934982c0a03d8",
+  "binary": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/native-test-binary",
+  "binary_sha256": "d9fbbb2ec30ae480c1e1d2379501d264f1dff2bb4faacfebd730c1633615f2a8",
+  "rows": [
+    {
+      "run": 0,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-0.log",
+      "sha256": "ba250613432db24c2dd968f1b3b947f0e543a761caba4036b8281f9af6fd0c5b"
+    },
+    {
+      "run": 1,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-1.log",
+      "sha256": "f531ca6b9a408815dcf31eae086ba942169b2f64db37d1316c5c0246d2ebc0b5"
+    },
+    {
+      "run": 2,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-2.log",
+      "sha256": "d964d5b5203f8abc5a37e9747f7f7a738f4a67bcfff742e22619afa2374e612e"
+    },
+    {
+      "run": 3,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-3.log",
+      "sha256": "54ea33d652303cc483ee8ea3233eed1449e4c2625f6a78b6016e28b597a016e1"
+    },
+    {
+      "run": 4,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-4.log",
+      "sha256": "95afc3659cf0e0ed1b0dd142e201f50a557c42c8833747b86b671120ac955522"
+    },
+    {
+      "run": 5,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-5.log",
+      "sha256": "dae1409b32b83cb5948ca764d2f5410fa40d8d01b3c6282999a571a0002d080d"
+    },
+    {
+      "run": 6,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-6.log",
+      "sha256": "859d18893a175e2a81bb4d83516d34755380426bcf61d124fe4bab2baeab6d6a"
+    },
+    {
+      "run": 7,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-7.log",
+      "sha256": "fb7e51b215464a66bf7ead50fb5a31f8c13520ef14ece227f504f031340cb948"
+    },
+    {
+      "run": 8,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-8.log",
+      "sha256": "4c7a9ccd560862d9363388ab0671e5ee82fc07132c5485b9dd2c5c154ddc6186"
+    },
+    {
+      "run": 9,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-9.log",
+      "sha256": "5f7fe66fe29c3cecc2930aad2dc548f2f79ed5b95f980d9582a022268bdc769b"
+    },
+    {
+      "run": 10,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-10.log",
+      "sha256": "79c681129dada68456a6cfa9a710c221dc0ccd6be295580a56fa62accabd8172"
+    },
+    {
+      "run": 11,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-11.log",
+      "sha256": "c44de5e5151b3f04963695bc800d4f4cc30c9d2e6127d697661d73cf1a46ea85"
+    },
+    {
+      "run": 12,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-12.log",
+      "sha256": "da02dadf2ed2a01bedbf97b53a79954403bcd6f0669f13c0b9747b5ae8d242ea"
+    },
+    {
+      "run": 13,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-13.log",
+      "sha256": "086eab086fe28c05338fb8dc6b16a7aeec74051d2f28797088db58e540472966"
+    },
+    {
+      "run": 14,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-14.log",
+      "sha256": "f6b3601ffc28471c117418dd9dc316fc86dd5647ec33cdfddef9991735c513c7"
+    },
+    {
+      "run": 15,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-15.log",
+      "sha256": "e785cb6b21fb3aa1ecf6e6eff03defe3fdcc7ba103a191186090ff15594d2198"
+    },
+    {
+      "run": 16,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-16.log",
+      "sha256": "acc3ffc6d906238c626c66f9700f7dcd5b3bfa758f2b9568f346bb19a68c4224"
+    },
+    {
+      "run": 17,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-17.log",
+      "sha256": "9122d4189079005aaf3e9b3f223e40d4267154a425bbf8a8b4b67acecd7d553b"
+    },
+    {
+      "run": 18,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-18.log",
+      "sha256": "328106f4f742ac3eb844f453379c8c0d22359110433aea30a2af97026e389567"
+    },
+    {
+      "run": 19,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-19.log",
+      "sha256": "c7080dc84ed471e63b801b6a8bc5895d9bed9ed2051960e17b999782a4cacec7"
+    },
+    {
+      "run": 20,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-20.log",
+      "sha256": "00950a567d8c199ffa49357020794425799ea7dcf4791657e4d1fac730cc215b"
+    },
+    {
+      "run": 21,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-21.log",
+      "sha256": "814873f714d26818945fae5b81a5fc34f90b051b3abfeec1157cc99b3c01b1eb"
+    },
+    {
+      "run": 22,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-22.log",
+      "sha256": "29bc7a63d9bb1b19c434e679b278686a6ce0d9c6a9a0b49739361f229a2c6089"
+    },
+    {
+      "run": 23,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-23.log",
+      "sha256": "1d934a3215cc92031dbc9819c6c9fdbea59cc11f66de6b859398a5ec3c27a604"
+    },
+    {
+      "run": 24,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-24.log",
+      "sha256": "c4d0e0acb4988480ea79ae97f610faeb88c4e20955d069b27e43daf988349ad3"
+    },
+    {
+      "run": 25,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-25.log",
+      "sha256": "788a9b8d903e0676156cc5f65af78b6d2ae17564edb02a1b044449d557a0d06b"
+    },
+    {
+      "run": 26,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-26.log",
+      "sha256": "3935a942ee079775d0d60b3f4bd4ecd174c72ea97377545d6d10fe16d1638fba"
+    },
+    {
+      "run": 27,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-27.log",
+      "sha256": "46cfbe11b6711b1e532a1e531423afc213607de1cfe88c9db52b96b9a587c23b"
+    },
+    {
+      "run": 28,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-28.log",
+      "sha256": "5ef6b674f0358a632e5dd12890c7902f02aee8eceb29ef83968b01348bd2d52c"
+    },
+    {
+      "run": 29,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-29.log",
+      "sha256": "25f5aab1b7c3fc7f1c1ea794c03f8aa4c856513632f0dab32330aec879765b38"
+    },
+    {
+      "run": 30,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-30.log",
+      "sha256": "820b0c9ab3bdb9f42589c9191e5efc66b333b085d29fe7441a702f1199d40833"
+    },
+    {
+      "run": 31,
+      "exit": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-parallel-native-verified-r1/run-31.log",
+      "sha256": "1b9b1277891df6799a809e859287c4b657e840c4b4cd732028d648f30a38663a"
+    }
+  ]
+}

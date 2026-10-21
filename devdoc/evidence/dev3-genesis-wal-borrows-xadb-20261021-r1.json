@@ -1,0 +1,169 @@
+{
+  "scope": "private genesis WAL baseline1/positive1/negative2 compiler probes",
+  "status": "PASS",
+  "artifact_directory": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed",
+  "cases": [
+    {
+      "name": "baseline",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed/baseline",
+      "source_sha256": "3162fc43600dba0ed74d7b0fbe10b732c71e50fb24002df6153934982c0a03d8",
+      "expected_code": null,
+      "expected_line": null,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed/baseline-logs/compiler.jsonl",
+      "stdout_sha256": "6438f001ec38db7565ed18907294f09614c202113154cf4b832f88215d47dbbb",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed/baseline-logs/compiler.stderr",
+      "stderr_sha256": "50dda15384592557b771104136a41f91765df510a510c7d2c918a1aee216fabd",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": []
+    },
+    {
+      "name": "prepared",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed/prepared/source",
+      "source_sha256": "a82fbee200128202f7c61cf2cdecec1027f071af2931584f73a4a25c2fefc018",
+      "expected_code": null,
+      "expected_line": null,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed/prepared/compiler.jsonl",
+      "stdout_sha256": "e096d7dad88c38f351712569d9733b40a98ee4964b23f0bafa14f8977e5e06c0",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed/prepared/compiler.stderr",
+      "stderr_sha256": "1d8ec00af3f4ed65520a356ad21ad5055641d30b1fdf310ac8ac0b4921efe4e3",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": []
+    },
+    {
+      "name": "slot",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed/slot/source",
+      "source_sha256": "b50b6129c6603c61a44c76766bf4860e54a969f1a0b18bc1ab032ec06957ceaf",
+      "expected_code": "E0499",
+      "expected_line": 6,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed/slot/compiler.jsonl",
+      "stdout_sha256": "7ce6187f5e3b23a7e20b71b84d8e917dd62f93fcde431fb309e7ca5a3ea24424",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed/slot/compiler.stderr",
+      "stderr_sha256": "267eaf930900e3336ce07f5cf03f4ba67678ff6dcef30403d453ad1a55ed2be2",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0499",
+          "primary_span": {
+            "byte_end": 330,
+            "byte_start": 320,
+            "column_end": 27,
+            "column_start": 17,
+            "expansion": null,
+            "file_name": "crates/engine/src/wal_borrow_probe.rs",
+            "is_primary": true,
+            "label": "second mutable borrow occurs here",
+            "line_end": 6,
+            "line_start": 6,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 27,
+                "highlight_start": 17,
+                "text": "    let alias = &mut *slot; // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "two_sessions",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed/two_sessions/source",
+      "source_sha256": "f1b255e194711c96ea1806d413d89d7826fb966464a90958f0a373b0fe02efe4",
+      "expected_code": "E0499",
+      "expected_line": 6,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed/two_sessions/compiler.jsonl",
+      "stdout_sha256": "fbdaf5142c30499bb831d466046f74568ed645287bc6cd085bc93d6d930ac03e",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/wal-borrows-u2_e40ed/two_sessions/compiler.stderr",
+      "stderr_sha256": "482e00c76fa0ca024c0d1a5f26c6cf2d140ed0b95ec66dfe50d22bf73c7c8c59",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0499",
+          "primary_span": {
+            "byte_end": 363,
+            "byte_start": 359,
+            "column_end": 60,
+            "column_start": 56,
+            "expansion": null,
+            "file_name": "crates/engine/src/wal_borrow_probe.rs",
+            "is_primary": true,
+            "label": "second mutable borrow occurs here",
+            "line_end": 6,
+            "line_start": 6,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 60,
+                "highlight_start": 56,
+                "text": "    let second = GenesisWalSession::create(writer2, 1, slot, scratch).unwrap(); // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "checker_sha256": {
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/source/scripts/check_dev3_wal_borrows.py": "1039853842b5096cf184baa079d1047049930d5274fa62a084a432dce48cb528",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/source/scripts/check_dev3_buffer_borrows.py": "5a984bf3d94c2c39dd6d359f29e474668269c862ae3f1e73751712ca25d635c3",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/source/scripts/check_dev0.py": "b8c7bedbc9c3628b91ea8d8440dc4e061953717d3347f942ebc5cd0ec0d6d324",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-2l_rfcl3/source/scripts/comm_campaign.py": "cd593fcaabc3d0770c502f773bd1a38a0794e1f3ae41165723da42574436d11f"
+  },
+  "source_sha256": "3162fc43600dba0ed74d7b0fbe10b732c71e50fb24002df6153934982c0a03d8",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n"
+}

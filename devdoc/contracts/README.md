@@ -71,3 +71,5 @@ DEV3의 COW pack 경로는 [in-place·WAL·영속 undo 결정](../contracts/disk
 - [DEV3 ownership inventory 검산](dev3-ownership-format.md) — bytes·물리 충돌·owner별 합계 및 실제 profile/current intent의 D2 수용; 현재 intent 구현·국소 및 하위 회귀 PASS, 실제 예약 복원 미완료
 
 - [DEV3 RollbackStart의 full state 결합](dev3-obligation-format.md#13-rollbackstart의-full-state-결합-검산) — D2 수용 뒤 구현·고정12시험 검증 진행; 실제 WAL append·page 쓰기·예약 복원 미구현
+
+- [DEV3 genesis WAL 설치·append/sync](dev3-wal-io.md) — fresh namespace의 첫 epoch·physical sync; D2 채택·고정 범위 로컬 검증 완료, 일반 recovery·전체 인수 미완료

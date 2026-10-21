@@ -1,6 +1,9 @@
 //! Narrow native-test assembly for unfinished storage leaves, not DB readiness.
 //! Available only with the explicit `test-support` feature.
 
+/// Native assembly for the limited fresh genesis WAL session.
+pub mod genesis_wal;
+
 use crate::{
     api::{DatabaseId, Namespace},
     storage::{

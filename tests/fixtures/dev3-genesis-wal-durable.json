@@ -1,0 +1,1620 @@
+{
+  "scope": "independent frozen D2 durable-image input, not product execution",
+  "source_sha256": "353d5c8073f036b45817a07ef6a71690247b712a1c861e964b58023ef5e7cf6b",
+  "d2_accepted_aggregate_sha256": "47c1bcab04b203135e1b59b25a5e06190dddf364c191f24a555c67409e0972ae",
+  "cuts": 28,
+  "image_count": 82,
+  "frame_sha256": "1843c357f512c44522cc7a99dfe2b263145c6a70179325b3a934c64997677991",
+  "rows": [
+    {
+      "cut": "profile_create:before",
+      "image_count": 1,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "profile_create:after",
+      "image_count": 2,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "profile_write:before",
+      "image_count": 2,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "profile_write:after",
+      "image_count": 4,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 2048,
+              "sha256": "ed4220affc728228457a30690129440d1bbd31938374540b50bc81d01658b619"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "profile_sync:before",
+      "image_count": 4,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 2048,
+              "sha256": "ed4220affc728228457a30690129440d1bbd31938374540b50bc81d01658b619"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "profile_sync:after",
+      "image_count": 2,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "epoch_create:before",
+      "image_count": 2,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "epoch_create:after",
+      "image_count": 4,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-wal-00000001": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "epoch_write:before",
+      "image_count": 4,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-wal-00000001": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "epoch_write:after",
+      "image_count": 8,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-wal-00000001": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-wal-00000001": {
+              "length": 2048,
+              "sha256": "69e9a21894f6ce65f52b907c1ce9a76854856d352e42cb8b4466996d4596a1d7"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 2048,
+              "sha256": "69e9a21894f6ce65f52b907c1ce9a76854856d352e42cb8b4466996d4596a1d7"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "epoch_sync:before",
+      "image_count": 8,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-wal-00000001": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-wal-00000001": {
+              "length": 2048,
+              "sha256": "69e9a21894f6ce65f52b907c1ce9a76854856d352e42cb8b4466996d4596a1d7"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 2048,
+              "sha256": "69e9a21894f6ce65f52b907c1ce9a76854856d352e42cb8b4466996d4596a1d7"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "epoch_sync:after",
+      "image_count": 4,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "initial_directory_sync:before",
+      "image_count": 4,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": true,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "initial_directory_sync:after",
+      "image_count": 1,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "writer_stage_create:before",
+      "image_count": 1,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "writer_stage_create:after",
+      "image_count": 2,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "d3-writer-stage": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "writer_stage_write:before",
+      "image_count": 2,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "d3-writer-stage": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "writer_stage_write:after",
+      "image_count": 4,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "d3-writer-stage": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "d3-writer-stage": {
+              "length": 2048,
+              "sha256": "25c286f2b38e2676e8229e348b76b6fd6500dba2e4575a223f0efc85cceb8459"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "d3-writer-stage": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "writer_stage_sync:before",
+      "image_count": 4,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "d3-writer-stage": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "d3-writer-stage": {
+              "length": 2048,
+              "sha256": "25c286f2b38e2676e8229e348b76b6fd6500dba2e4575a223f0efc85cceb8459"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "d3-writer-stage": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "writer_stage_sync:after",
+      "image_count": 2,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "d3-writer-stage": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "writer_publish:before",
+      "image_count": 2,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "d3-writer-stage": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "writer_publish:after",
+      "image_count": 3,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "d3-writer-stage": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "WRITER": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": true,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "selected_directory_sync:before",
+      "image_count": 3,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "d3-writer-stage": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": false,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "WRITER": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": true,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "selected_directory_sync:after",
+      "image_count": 1,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "WRITER": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": true,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "first_frame_write:before",
+      "image_count": 1,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "WRITER": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": true,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "first_frame_write:after",
+      "image_count": 3,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "WRITER": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": true,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4192,
+              "sha256": "3487c1ec7baabe05151a022cfdac1c19747a7036bd61968ff7df456646e3dcd4"
+            },
+            "WRITER": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": true,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4288,
+              "sha256": "78e2538c41f713de5361b059b4df3318593a07d6ed36f86cd2536d67499dd45d"
+            },
+            "WRITER": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": true,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "first_frame_sync:before",
+      "image_count": 3,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4096,
+              "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+            },
+            "WRITER": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": true,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4192,
+              "sha256": "3487c1ec7baabe05151a022cfdac1c19747a7036bd61968ff7df456646e3dcd4"
+            },
+            "WRITER": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": true,
+          "db_ready": false
+        },
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4288,
+              "sha256": "78e2538c41f713de5361b059b4df3318593a07d6ed36f86cd2536d67499dd45d"
+            },
+            "WRITER": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": true,
+          "db_ready": false
+        }
+      ]
+    },
+    {
+      "cut": "first_frame_sync:after",
+      "image_count": 1,
+      "images": [
+        {
+          "files": {
+            "LOCK": {
+              "length": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "d3-profile": {
+              "length": 4096,
+              "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            },
+            "d3-wal-00000001": {
+              "length": 4288,
+              "sha256": "78e2538c41f713de5361b059b4df3318593a07d6ed36f86cd2536d67499dd45d"
+            },
+            "WRITER": {
+              "length": 4096,
+              "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            }
+          },
+          "fresh_install_eligible": false,
+          "selected_genesis": true,
+          "db_ready": false
+        }
+      ]
+    }
+  ]
+}

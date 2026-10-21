@@ -6,7 +6,7 @@
 
 이 leaf의 범위는 고정 profile, FILEMAP의 root/chunk, 선택 reference와 FILEMAP/DWB selector의 **무효과 byte 표현**이다. 실제 namespace·create/write/sync/rename·file growth·checkpoint capture·reservation restore·복구 선택·READY는 구현하지 않는다. 아래 형식·크기·주소·시험 분모와 독립 literal14개는 root D2 검토에서 수용했다(`artifacts/dev3/control-contract-root-review-r1/review.json`). 실제 효과와 전체 자원 충족을 수용한 것은 아니다. 다른 동결 codec의 bytes를 변경하지 않는다.
 
-CURRENT/WRITER의 checkpoint·WAL epoch body, ATT/system obligation 및 immutable ownership inventory의 내용은 이 계약의 성공 decoder가 아니다. 이 leaf를 구현하더라도 그것들이 준비되지 않은 DB 생성/open/recovery는 지원하지 않는다. 특히 profile ID를 읽었다는 사실을 BOOT_RESERVE 성공이나 F05 완료로 변환하는 API를 두지 않는다.
+CURRENT/WRITER의 checkpoint·WAL epoch body, ATT/system obligation 및 immutable ownership inventory의 내용은 이 계약의 성공 decoder가 아니다. 별도 [genesis WAL 계약](dev3-wal-io.md)이 fresh namespace에 한정한 XWE1/XWS1의 설치를 정의한다. 이 XDC1/XCS1 leaf가 일반 CURRENT·recovery WRITER를 지원하게 되는 것은 아니다. 이 leaf를 구현하더라도 그것들이 준비되지 않은 DB 생성/open/recovery는 지원하지 않는다. 특히 profile ID를 읽었다는 사실을 BOOT_RESERVE 성공이나 F05 완료로 변환하는 API를 두지 않는다.
 
 ## 1. 선택 경계와 두 대안
 

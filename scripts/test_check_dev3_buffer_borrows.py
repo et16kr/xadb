@@ -53,6 +53,24 @@ class BorrowDiagnosticTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 check_diagnostics(text, rc)
 
+    def test_explicit_probe_path_keeps_exact_span_and_code(self):
+        from check_dev3_wal_borrows import PROBE as WAL_PROBE, probe_source as wal_probe
+        error = copy.deepcopy(self.error)
+        error['code']['code'] = 'E0499'
+        error['spans'][0]['file_name'] = WAL_PROBE
+        self.assertEqual(check_diagnostics(output([error]), 101, 'E0499', 7,
+                                          probe_path=WAL_PROBE)[0]['code'], 'E0499')
+        for path in (PROBE, WAL_PROBE + '.wrong'):
+            with self.assertRaises(ValueError):
+                check_diagnostics(output([error]), 101, 'E0499', 7, probe_path=path)
+        with self.assertRaises(ValueError):
+            check_diagnostics(output([error]), 101, 'E0499', 8, probe_path=WAL_PROBE)
+        self.assertIsNone(wal_probe('prepared')[1])
+        for kind in ('slot', 'two_sessions'):
+            text, line = wal_probe(kind)
+            self.assertIsNotNone(line)
+            self.assertIn('// expected diagnostic', text.splitlines()[line - 1])
+
     def test_timeout_preserves_both_partial_logs(self):
         with tempfile.TemporaryDirectory() as directory:
             root, row = Path(directory), {}

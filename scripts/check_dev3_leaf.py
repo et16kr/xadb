@@ -20,11 +20,31 @@ CHECKER_DIRECTORY = Path(__file__).resolve().parent
 # races, preloaded module injection, or a malicious writer.
 LOADED_CHECKER_HASHES = {
     'scripts/' + name: hashlib.sha256((CHECKER_DIRECTORY / name).read_bytes()).hexdigest()
-    for name in ('check_dev3_leaf.py', 'check_dev0.py', 'comm_campaign.py')}
+    for name in ('check_dev3_leaf.py', 'check_dev0.py', 'comm_campaign.py',
+                 'dev3_wal_slot_model.py', 'dev3_wal_durable_model.py')}
 from check_dev0 import check_report_paths, digest, source_fingerprint
 from comm_campaign import capture_source, identity, write_json
+from dev3_wal_slot_model import evaluate as evaluate_wal_slot
+from dev3_wal_durable_model import evaluate as evaluate_wal_durable
 
 ROOT = Path(__file__).resolve().parent.parent
+WAL_IO_TESTS = {
+    'genesis_codec_literals_and_damage',
+    'genesis_requires_exact_empty_namespace',
+    'genesis_installs_in_durable_order',
+    'genesis_install_faults_preserve_partial_namespace',
+    'wal_slot_writes_exact_logical_and_physical_prefixes',
+    'wal_slot_rejects_boundaries_before_effect',
+    'wal_io_faults_fence_without_replay',
+    'wal_io_releases_gate_and_protects_slot',
+    'wal_generated_prefixes_match_independent_bytes',
+    'wal_workspace_and_handles_remain_bounded',
+}
+WAL_IO_NATIVE_TESTS = {
+    'native_genesis_installs_and_appends_exact_bytes',
+    'native_genesis_faults_preserve_partial_files',
+    'native_genesis_process_kills_preserve_observed_prefixes',
+}
 READ_BUFFER_TESTS = {
     'read_buffer_pins_selected_bytes_and_hits',
     'read_buffer_capacity_and_profile_bounds',
@@ -470,12 +490,13 @@ def main():
     }
     environment = os.environ.copy()
     for key in list(environment):
-        if key.startswith(('XADBTEST_', 'CARGO_PROFILE_')) or key in (
+        if key.startswith(('XADBTEST_', 'XADB_WAL_', 'CARGO_PROFILE_')) or key in (
                 'RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS', 'RUSTC_WRAPPER',
                 'RUSTC_WORKSPACE_WRAPPER', 'RUSTC', 'RUSTDOC', 'RUSTUP_TOOLCHAIN',
                 'RUST_TEST_THREADS'):
             environment.pop(key)
     environment['CARGO_TARGET_DIR'] = str(source / 'target')
+    environment['XADB_WAL_NATIVE_ARTIFACT_PARENT'] = str(session / 'genesis-native-artifacts')
 
     def run(name, command, timeout=600):
         return run_logged(name, command, source, environment, session, report['checks'], timeout)
@@ -519,6 +540,7 @@ def main():
                 'devdoc/contracts/dev3-selector-port.md',
                 'devdoc/contracts/dev3-page-io.md',
                 'devdoc/contracts/dev3-read-buffer.md',
+                'devdoc/contracts/dev3-wal-io.md',
                 'devdoc/contracts/dev3-snapshot-model.md']}
         write_json(session / 'manifest.json', report)
         report['toolchain'] = run('toolchain', ['rustc', '-Vv'])
@@ -528,7 +550,7 @@ def main():
             raise ValueError('checker self-test inventory did not execute')
         borrow_self_tests = run('buffer-borrow-checker-self-tests', ['python3', '-B', '-m', 'unittest',
                                     'discover', '-s', 'scripts', '-p', 'test_check_dev3_buffer_borrows.py'])
-        if not re.search(r'^Ran 6 tests in .+\n\nOK$', borrow_self_tests, re.M):
+        if not re.search(r'^Ran 7 tests in .+\n\nOK$', borrow_self_tests, re.M):
             raise ValueError('buffer borrow checker self-test inventory did not execute')
         borrow_report = session / 'buffer-borrows.json'
         run('buffer-borrow-compiler-checks', ['python3', '-B', 'scripts/check_dev3_buffer_borrows.py',
@@ -543,6 +565,21 @@ def main():
                 or any(row.get('status') != 'PASS' for row in borrow_receipt['cases'])):
             raise ValueError('buffer borrow compiler checks did not verify this source')
         report['buffer_borrows'] = {'report': str(borrow_report), 'sha256': digest(borrow_report)}
+        wal_borrow_report = session / 'wal-borrows.json'
+        run('wal-borrow-compiler-checks', ['python3', '-B', 'scripts/check_dev3_wal_borrows.py',
+            '--artifact-parent', str(session), '--report', str(wal_borrow_report)])
+        wal_receipt = json.loads(wal_borrow_report.read_text())
+        if (wal_receipt.get('status') != 'PASS'
+                or wal_receipt.get('source_sha256') != report['source_sha256']
+                or len(wal_receipt.get('cases', [])) != 4
+                or {row['name'] for row in wal_receipt['cases']} != {'baseline', 'prepared', 'slot', 'two_sessions'}
+                or any(row.get('status') != 'PASS' for row in wal_receipt['cases'])):
+            raise ValueError('WAL borrow compiler checks did not verify this source')
+        report['wal_borrows'] = {'report': str(wal_borrow_report), 'sha256': digest(wal_borrow_report)}
+        wal_self_tests = run('wal-model-checker-self-tests', ['python3', '-B', '-m', 'unittest',
+                            'discover', '-s', 'scripts', '-p', 'test_dev3_wal_models.py'])
+        if not re.search(r'^Ran 3 tests in .+\n\nOK$', wal_self_tests, re.M):
+            raise ValueError('WAL model checker self-test inventory did not execute')
         vectors = run('independent-vectors', ['python3', '-B', 'scripts/dev3_page_vectors.py'])
         report['vector_result'] = check_vectors(vectors)
         vectors = run('independent-disk-vectors', ['python3', '-B', 'scripts/dev3_disk_vectors.py'])
@@ -563,12 +600,20 @@ def main():
                                ('row_record', ROW_TESTS), ('doublewrite_control', DOUBLEWRITE_TESTS),
                                ('catalog_record', CATALOG_TESTS), ('undo_record', UNDO_RECORD_TESTS),
                                ('control', CONTROL_TESTS), ('page_io', PAGE_IO_TESTS),
-                               ('read_buffer', READ_BUFFER_TESTS)]:
+                               ('read_buffer', READ_BUFFER_TESTS), ('wal_io', WAL_IO_TESTS)]:
             prefix = f'storage::{name}::tests::'
             # Intentional poison panics must not split libtest's named result line.
-            output_mode = '--show-output' if name == 'read_buffer' else '--nocapture'
+            output_mode = '--show-output' if name in ('read_buffer', 'wal_io') else '--nocapture'
             output = run(name, [page, prefix, output_mode, '--test-threads=1'])
             report[f'{name}_tests'] = check_named_tests(output, 0, prefix, expected)
+            if name == 'wal_io':
+                models = {'slot': evaluate_wal_slot(), 'durable': evaluate_wal_durable(output, source),
+                          'source_sha256': report['source_sha256'],
+                          'producer_binary': page, 'producer_binary_sha256': digest(Path(page)),
+                          'producer_log': str(session / 'wal_io.log'), 'producer_log_sha256': digest(session / 'wal_io.log')}
+                model_report = session / 'wal-models.json'
+                write_json(model_report, models)
+                report['wal_models'] = {'report': str(model_report), 'sha256': digest(model_report)}
         scalar = build('xadb-foundation', ['--test', 'key_buffer'], 'key_buffer', 'scalar-key')
         output = run('scalar-key', [scalar, '--nocapture', '--test-threads=1'])
         report['scalar_key_tests'] = check_named_tests(output, 0, '', SCALAR_KEY_TESTS)
@@ -589,7 +634,9 @@ def main():
                 ('page-io-native', 'xadbtest-engine-worker', ['--test', 'page_io'], 'page_io',
                  '', '', PAGE_IO_NATIVE_TESTS),
                 ('read-buffer-native', 'xadbtest-engine-worker', ['--test', 'read_buffer'], 'read_buffer',
-                 '', '', READ_BUFFER_NATIVE_TESTS)]:
+                 '', '', READ_BUFFER_NATIVE_TESTS),
+                ('wal-io-native', 'xadbtest-engine-worker', ['--test', 'genesis_wal'], 'genesis_wal',
+                 '', '', WAL_IO_NATIVE_TESTS)]:
             binary = build(package, target_args, target_name, name)
             # Keep witness prints out of libtest's in-progress `test ...` line.
             # --show-output preserves successful-test witnesses after each result.

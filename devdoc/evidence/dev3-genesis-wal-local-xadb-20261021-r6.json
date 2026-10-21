@@ -1,0 +1,233 @@
+{
+  "status": "PASS",
+  "scope": "limited genesis WAL only, full DEV3 incomplete",
+  "source_sha256": "3162fc43600dba0ed74d7b0fbe10b732c71e50fb24002df6153934982c0a03d8",
+  "checks": [
+    {
+      "id": "toolchain",
+      "command": [
+        "rustc",
+        "-Vv"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/toolchain.log",
+      "log_sha256": "4fdff2578428e9c5c08ddd7a0d3079c1a106b1cdaa46e73e46f7cd32b0fb9cad",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "engine-build",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-default-features",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/engine-build.log",
+      "log_sha256": "3db042f601125ae0dcb9051ede8732c2bac16dcd1f7a590572458c6865fea571",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "wal-runtime",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/engine-test-binary",
+        "storage::wal_io::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/wal-runtime.log",
+      "log_sha256": "17c4d93b44788c25232aa19b2918a0c7f34a80ed23688535de4330527bae86c1",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "native-build",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--test",
+        "genesis_wal",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/native-build.log",
+      "log_sha256": "2d2f1fdad980946d81fd100b39447ba366cd0700979ccb34621f62864185af2a",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "native-runtime",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/native-test-binary",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/native-runtime.log",
+      "log_sha256": "7ddac379a2926009f0b4029ec4b554cb37b7f489f3502e4d574473a1fc239531",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "borrow-self",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_dev3_buffer_borrows.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/borrow-self.log",
+      "log_sha256": "a5c446338bd33e50928320025fc792ca567b0f5b571f502af8fb3f171d2184fb",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "model-self",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_dev3_wal_models.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/model-self.log",
+      "log_sha256": "edb4e2159c923ea45a32656078835cdf531c3d7b414c670dd786978875cb0678",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "leaf-self",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_dev3_leaf.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/leaf-self.log",
+      "log_sha256": "df05c2641e32f683a3b8b79cfbcaaafc40fa732f93ab116e07639104b0cf7bc5",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "borrows",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/check_dev3_wal_borrows.py",
+        "--artifact-parent",
+        "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6",
+        "--report",
+        "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/borrows.json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/borrows.log",
+      "log_sha256": "513cf2f6a12baa8146fea0089e8073b43887bb411063f7d1dcb675e584587003",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "-p",
+        "xadbtest-engine-worker",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/clippy.log",
+      "log_sha256": "f15c47fcd9c6b16530c1544916baad172087ca180d069b89c4e448b4816b8151",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/format.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "builds": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/engine-test-binary",
+      "sha256": "9c7c9dc5ffca5f6ab963f7ea1bccd2bdfeb4677b77530a30e316d69112d0245b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/native-test-binary",
+      "sha256": "d9fbbb2ec30ae480c1e1d2379501d264f1dff2bb4faacfebd730c1633615f2a8"
+    }
+  ],
+  "driver_sha256": "76fe02bb9fd85874847737aa1b9a432c63ab25589cb77f8d6957d8b288dddc68",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n",
+  "runtime_tests": [
+    "genesis_codec_literals_and_damage",
+    "genesis_install_faults_preserve_partial_namespace",
+    "genesis_installs_in_durable_order",
+    "genesis_requires_exact_empty_namespace",
+    "wal_generated_prefixes_match_independent_bytes",
+    "wal_io_faults_fence_without_replay",
+    "wal_io_releases_gate_and_protects_slot",
+    "wal_slot_rejects_boundaries_before_effect",
+    "wal_slot_writes_exact_logical_and_physical_prefixes",
+    "wal_workspace_and_handles_remain_bounded"
+  ],
+  "models": {
+    "path": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/models.json",
+    "sha256": "54baa1d5af640e0e4910ae47f3098332de200cd14ac50de1241351e37d905656"
+  },
+  "native_tests": [
+    "native_genesis_faults_preserve_partial_files",
+    "native_genesis_installs_and_appends_exact_bytes",
+    "native_genesis_process_kills_preserve_observed_prefixes"
+  ],
+  "borrows": {
+    "path": "/home/et16/work/xadb/artifacts/dev3/genesis-wal-quality-r6/borrows.json",
+    "sha256": "c0c451c411728b78bda1a6e479761528bb30ec24a78c4f2188019c86412eb2dd"
+  }
+}

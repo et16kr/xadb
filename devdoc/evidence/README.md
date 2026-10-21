@@ -182,3 +182,17 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 읽기 버퍼 소스의 DEV0/1/2 회귀 실행 결과](dev3-read-buffer-dev2-regression-xadb-20261021-r1.json) — source061c0d9e…의 selected clean page·pin·clock; dirty buffer·전체 DEV3 인수 미완료
 
 - [DEV3 읽기 버퍼 소스의 DEV2 현재-build 복구 실행 결과](dev3-read-buffer-dev2-kernel-xadb-20261021-r1.json) — source061c0d9e…의 selected clean page·pin·clock; dirty buffer·전체 DEV3 인수 미완료
+
+- [DEV3 genesis WAL 국소 원본 실행 결과](dev3-genesis-wal-local-xadb-20261021-r6.json) — source3162fc43…의 fresh genesis·한 slot physical append/sync; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 genesis WAL slot 수명 compiler 원본 결과](dev3-genesis-wal-borrows-xadb-20261021-r1.json) — source3162fc43…의 fresh genesis·한 slot physical append/sync; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 genesis WAL 실제 port trace·유한 모델 검산 원본](dev3-genesis-wal-models-xadb-20261021-r1.json) — source3162fc43…의 fresh genesis·한 slot physical append/sync; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 genesis WAL 통합 원본 실행 결과](dev3-genesis-wal-leaf-xadb-20261021-r1.json) — source3162fc43…의 fresh genesis·한 slot physical append/sync; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 genesis WAL 소스의 DEV0/1/2 회귀 원본](dev3-genesis-wal-dev2-regression-xadb-20261021-r1.json) — source3162fc43…의 fresh genesis·한 slot physical append/sync; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 genesis WAL 소스의 DEV2 현재-build 복구 원본](dev3-genesis-wal-dev2-kernel-xadb-20261021-r1.json) — source3162fc43…의 fresh genesis·한 slot physical append/sync; 일반 recovery·전체 DEV3 인수 미완료
+
+- [DEV3 genesis WAL native 시험 격리 반복 원본](dev3-genesis-wal-parallel-native-xadb-20261021-r1.json) — source3162fc43…의 fresh genesis·한 slot physical append/sync; 일반 recovery·전체 DEV3 인수 미완료

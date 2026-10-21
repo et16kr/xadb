@@ -1187,5 +1187,42 @@
     "source_roots_changed": false,
     "dependencies_changed": false,
     "full_stage_acceptance": false
+  },
+  "dev3_genesis_wal": {
+    "status": "locally_verified_limited_scope",
+    "contract_ref": "dev3-wal-io.md",
+    "source": [
+      "crates/engine/src/storage/wal_io.rs",
+      "crates/engine/src/storage/wal_io_test_support.rs",
+      "crates/engine/src/storage/wal_io_tests.rs",
+      "crates/engine/src/testing/genesis_wal.rs"
+    ],
+    "scope": "fresh genesis namespace and one physical legacy frame slot; no DB READY, semantic apply or recovery",
+    "dependencies_changed": false,
+    "source_roots_changed": false,
+    "full_stage_acceptance": false,
+    "native_tests": "crates/testing/engine-worker/tests/genesis_wal.rs",
+    "native_support": "crates/testing/engine-worker/tests/support/genesis_wal.rs",
+    "borrow_checks": [
+      "scripts/check_dev3_wal_borrows.py",
+      "scripts/check_dev3_buffer_borrows.py",
+      "scripts/test_check_dev3_buffer_borrows.py"
+    ],
+    "model_checks": [
+      "scripts/dev3_wal_slot_model.py",
+      "scripts/dev3_wal_durable_model.py",
+      "scripts/test_dev3_wal_models.py",
+      "tests/fixtures/dev3-genesis-wal-durable.json"
+    ],
+    "fixtures": [
+      "crates/engine/tests/fixtures/dev3-genesis-profile.bin",
+      "crates/engine/tests/fixtures/dev3-genesis-epoch.bin",
+      "crates/engine/tests/fixtures/dev3-genesis-writer.bin"
+    ],
+    "local_tests": 10,
+    "native_test_count": 3,
+    "borrow_negative_count": 2,
+    "borrow_positive_count": 1,
+    "borrow_unmodified_baseline_count": 1
   }
 }
