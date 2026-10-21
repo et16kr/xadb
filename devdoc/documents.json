@@ -1247,6 +1247,26 @@
       "path": "evidence/dev3-storage-session-inputs-xadb-20261021-r6.json",
       "role": "evidence",
       "title": "DEV3 최초 저장 세션49개 동결 입력 원본"
+    },
+    "dev3-storage-session-aggregate-proposal-xadb-20261021-r0.json": {
+      "path": "evidence/dev3-storage-session-aggregate-proposal-xadb-20261021-r0.json",
+      "role": "evidence",
+      "title": "DEV3 하위 회귀 aggregate 예산 제안 원본"
+    },
+    "dev3-storage-session-aggregate-review-xadb-20261021-r0.json": {
+      "path": "evidence/dev3-storage-session-aggregate-review-xadb-20261021-r0.json",
+      "role": "evidence",
+      "title": "DEV3 하위 회귀 aggregate 예산 독립 D2 원본"
+    },
+    "dev3-storage-session-leaf-xadb-20261021-r0.json": {
+      "path": "evidence/dev3-storage-session-leaf-xadb-20261021-r0.json",
+      "role": "evidence",
+      "title": "DEV3 최초 저장 세션 통합 r0 timeout FAIL 원본"
+    },
+    "dev3-storage-session-aggregate-d1-xadb-20261021-r0.json": {
+      "path": "evidence/dev3-storage-session-aggregate-d1-xadb-20261021-r0.json",
+      "role": "evidence",
+      "title": "DEV3 하위 회귀 wrapper 독립 D1 원본"
     }
   }
 }

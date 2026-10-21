@@ -1,0 +1,38 @@
+{
+  "status": "PROPOSED_NOT_ADOPTED",
+  "classification": "D2_AGGREGATE_EXECUTION_BUDGET_ONLY",
+  "failed_receipt": {
+    "path": "/home/et16/work/xadb/artifacts/dev3/storage-session-leaf-r0.json",
+    "sha256": "f5ee58a90e9944a6cad152d2bd58d60978b6e999934dd4b33403b6f4e234774c",
+    "status": "FAIL"
+  },
+  "historical_workspace_logs": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/leaf-d_x7eels/source/artifacts/dev0/check-ni7cpkf9/self-tests.log",
+      "sha256": "86266e1c3027f12fb3969faf95552a76279f74ff0b476a5c26974fb1a21f5443",
+      "libtest_seconds_sum": 509.59,
+      "groups": 80
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/leaf-zahj6ekd/source/artifacts/dev0/check-q8yeaoh1/self-tests.log",
+      "sha256": "e4513dfc697e88570c94778c9f1d46eaf8d6a5bc3b1a06be3f0d787ecc333202",
+      "libtest_seconds_sum": 503.92,
+      "groups": 80
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/source/artifacts/dev0/check-c5f77mh3/self-tests.log",
+      "sha256": "b13aab9cc5182d8987fd6fd7e80bcdaa5084b27ce3a47b92b7186a0ca4069d79",
+      "libtest_seconds_sum": 500.76,
+      "groups": 79
+    }
+  ],
+  "proposed_seconds": {
+    "DEV0_workspace_self_tests": 1200,
+    "DEV1_dev0_regression": 1800,
+    "DEV2_dev1_regression": 2400,
+    "DEV3_dev2_regressions": 3600
+  },
+  "unchanged": "all other command budgets; native hook60s/exit10s/runtime rendezvous5s; model states/transitions/action limits; cases, input hashes and required suites",
+  "rationale": "Parent aggregate budgets must allow child workspace and subsequent independent builds. Prior workspace ~510s plus new runtime~10.48/native~86.16 exceeds old600s; these are execution guards, not product performance acceptance. No automatic retries or retroactive PASS. New source fingerprint and new immutable run required.",
+  "partial_logs": "Proposed direct-to-file command stdout/stderr in DEV0/1/2 wrappers preserves partial output when timed out. Keep inherited process group; DEV3 outer runner retains ownership/cleanup. No new nested process sessions."
+}

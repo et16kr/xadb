@@ -262,3 +262,24 @@ The shared lower fence owner will be storage/session_fence.rs, consumed by wal_i
 책임·위임은 기존 DEV3 완료 요청과 개발 운영 방침 D2에 따른다. r3/r5의 이름·실패 정리·자원 누락을 r6이 대체하며, canonical stage 이름·healthy claim 정리·매 reader의 full Profile/SelectedControl 결합·C/L 보존·실제2개 추가File의 단계별 ledger를 반영했다. 독립 검토자의 자기 판정 원본은 그대로 보존한다.
 
 재검토 조건은 live data/FILEMAP 변경 도입, reader 수 확대, 파일·scratch/owner 크기 증가, 형식/ID 발급 변경, fence/Drop/오류 순서 변경, 고정 검증 분모·독립 oracle 변경이다. 상세 구현 및 same-source runtime12/native3/compiler8·leaf/lower/current-build native99·독립 D1은 아직 NOT_RUN이다. CURRENT/DWB·dirty page·거래·정상 recovery·READY·F05·DEV3 전체 완료는 이 채택으로 승격하지 않는다.
+
+
+<a id="aggregate-regression-budget"></a>
+## 하위 회귀 실행기의 전체 시간 예산
+
+2026-10-21 `D3-STORAGE-AGGREGATE-001`은 ACCEPTED D2다. 담당은 root, 독립 검토는 `/root/dev3_selector_review`이며 DEV3 완료·검증에 관한 기존 사용자 위임을 적용한다. [고정 제안](../evidence/dev3-storage-session-aggregate-proposal-xadb-20261021-r0.json)과 [독립 검토 원본](../evidence/dev3-storage-session-aggregate-review-xadb-20261021-r0.json)을 따른다. 채택 시 새 예산의 제품 실행은 NOT_RUN이다.
+
+직전 workspace 시험의 libtest 시간 합은 약510초였으며 신규 저장 세션 runtime/native가 약97초 추가되었다. [최초 통합 r0](../evidence/dev3-storage-session-leaf-xadb-20261021-r0.json)은 DEV2→DEV1의600초 제한에서 실패했으며 그 FAIL을 보존한다. 이 관측은 전체 경과 시간의 정확한 합이나 제품 성능 인수가 아니다.
+
+| 실행 묶음 | 전체 제한(초) |
+| --- | ---: |
+| DEV0 workspace self-tests | 1200 |
+| DEV1의 DEV0 회귀 호출 | 1800 |
+| DEV2의 DEV1 회귀 호출 | 2400 |
+| DEV3의 DEV2 하위 회귀 호출 | 3600(기존 유지) |
+
+앞의 세 호출에만 기존600초를 대체한다. 개별 command의 다른600/30초, native hook60초·exit10초, runtime rendezvous5초와 모델 시간/상태/전이/action 한도, corpus·필수 시험은 변경하지 않는다. 예산 전체 일괄 확대나 필수 시험 제외는 채택하지 않았다. 새 source 지문·별도 실행으로 검증하며 제한에 도달하면 다시 FAIL이다. 각 계층의 예산은 관측한 고정 분모의 실행 보호 한도이며 모든 자식의 최악 시간을 동시에 보장하지 않는다. 분모 증가나 재차 timeout이면 실행 전 D2로 재검토한다.
+
+DEV0/1/2의 중첩 command wrapper는 exclusive regular log에 stdout/stderr를 직접 기록한다. timeout 시 partial log/hash·명령·예산·경과 시간·FAIL을 남기고 미관측 exit code는 null로 기록한다. 중첩 process session을 새로 만들지 않아 DEV3 외부 실행기의 process-group 정리를 유지한다. 단독 DEV0/1/2에서 모든 descendant의 종료를 새로 보장하지 않는다. 정상·지정 nonzero 반환 계약은 유지하며 실제 timeout/부분 로그 보존과 기존 로그 덮어쓰기 거절을 검증한다.
+
+[구현 독립 D1](../evidence/dev3-storage-session-aggregate-d1-xadb-20261021-r0.json)은 실제 자기시험12개와 변경4개 파일을 확인했다. timeout 뒤 inherited descendant가 잠시 출력할 수 있으므로 실패 시 즉시 기록한 log hash는 외부 소유자의 정리 전 snapshot일 수 있다. 완전한 종료나 새 통합 PASS를 이 결과에서 추정하지 않는다.

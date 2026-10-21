@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import time
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE_PATHS = ('Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml', 'crates', 'tests', 'scripts', '.github')
@@ -69,6 +70,31 @@ def write_report(path, report):
         stream.write(contents)
 
 
+def run_logged_command(argv, *, cwd, environment, log, record, timeout_seconds=600):
+    """Retain partial output and a failed command row on aggregate timeout.
+
+    Keep the inherited process group: an enclosing DEV3 runner owns group cleanup.
+    Standalone lower-stage callers do not gain a descendant-cleanup guarantee.
+    """
+    record.update(exit_code=None, status='FAIL', timeout_seconds=timeout_seconds,
+                  timed_out=False)
+    started = time.monotonic()
+    try:
+        with log.open('xb') as output:
+            result = subprocess.run(argv, cwd=cwd, env=environment, stdout=output,
+                                    stderr=subprocess.STDOUT, timeout=timeout_seconds)
+        record['exit_code'] = result.returncode
+        result.stdout = log.read_bytes()
+        return result
+    except subprocess.TimeoutExpired:
+        record['timed_out'] = True
+        raise
+    finally:
+        record['elapsed_seconds'] = time.monotonic() - started
+        if log.is_file():
+            record['log_sha256'] = digest(log)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--report', type=Path, help='optional new validation JSON; existing paths are rejected')
@@ -97,15 +123,15 @@ def main():
         'protected_ci_execution': 'NOT_RUN',
     }
 
-    def command(name, argv, expected=0):
+    def command(name, argv, expected=0, timeout_seconds=600):
         print(f'{name}: {" ".join(argv)}', flush=True)
-        result = subprocess.run(argv, cwd=ROOT, env=environment, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, timeout=600)
         log = session / (name + '.log')
-        log.write_bytes(result.stdout)
-        checks.append({'id': name, 'command': argv, 'exit_code': result.returncode,
-                       'expected_exit_code': expected, 'status': 'PASS' if result.returncode == expected else 'FAIL',
-                       'log': str(log.relative_to(ROOT)), 'log_sha256': digest(log)})
+        record = {'id': name, 'command': argv, 'expected_exit_code': expected,
+                  'log': str(log.relative_to(ROOT))}
+        checks.append(record)
+        result = run_logged_command(argv, cwd=ROOT, environment=environment, log=log,
+                                    record=record, timeout_seconds=timeout_seconds)
+        record['status'] = 'PASS' if result.returncode == expected else 'FAIL'
         print(result.stdout.decode(errors='replace'), end='', flush=True)
         if result.returncode != expected:
             raise RuntimeError(f'{name}: expected {expected}, got {result.returncode}')
@@ -118,7 +144,9 @@ def main():
         command('evidence-self-tests', ['python3', '-B', 'scripts/test_check_evidence.py'])
         command('format', ['cargo', 'fmt', '--all', '--check'])
         command('lint', ['cargo', 'clippy', '--workspace', '--all-targets', '--all-features', '--locked', '--', '-D', 'warnings'])
-        command('self-tests', ['cargo', 'test', '--workspace', '--all-features', '--locked'])
+        # Whole-workspace aggregate; individual native/model deadlines remain unchanged.
+        command('self-tests', ['cargo', 'test', '--workspace', '--all-features', '--locked'],
+                timeout_seconds=1200)
         command('default-build', ['cargo', 'build', '--workspace', '--locked'])
         controller = ROOT / 'target/debug/xadbtest'
         worker = ROOT / 'target/debug/xadbtest-fixture-worker'

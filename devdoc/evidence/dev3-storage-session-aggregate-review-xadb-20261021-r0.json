@@ -1,0 +1,39 @@
+{
+  "status": "ACCEPTED_D2_AGGREGATE_EXECUTION_BUDGET_ONLY",
+  "proposal": "artifacts/dev3/storage-session-preparation-20261021/r7-regression-budget-proposal.json",
+  "proposal_sha256": "8b52d47037f03ff38e6298d24e7214c1e0f87a449d6795458775a79d530ec7e2",
+  "fixed_seconds": {
+    "DEV0_workspace_self_tests": 1200,
+    "DEV1_dev0_regression": 1800,
+    "DEV2_dev1_regression": 2400,
+    "DEV3_dev2_regressions": 3600
+  },
+  "partial_log_design": "Accepted: exclusive regular log opened before command, direct merged stdout/stderr, inherited process group, read log after ordinary completion. No new process sessions or universal descendant cleanup claim.",
+  "conditions": [
+    "1200 only DEV0 workspace self-tests command; DEV1 DEV0 aggregate1800; DEV2 DEV1 aggregate2400; outer leaf DEV2 aggregate3600 unchanged",
+    "Exclusive regular log opened before subprocess; merged stdout/stderr streamed to file; existing return/print behavior after completion",
+    "On timeout preserve command row/log/hash/timeout/elapsed and FAIL; direct exit code unobserved must be null or explicitly unknown, not fabricated",
+    "Keep inherited process group for nested wrappers; no new nested sessions",
+    "Small actual timeout+partial-log preservation selftest; unchanged normal/expected-nonzero behavior",
+    "New immutable source/run fingerprint; retain original FAIL unchanged"
+  ],
+  "unchanged": [
+    "all other per-command deadlines600/30",
+    "native hook60/exit10",
+    "runtime rendezvous5",
+    "model graph/time/action/state/transitions bounds",
+    "corpus/case counts/expected outcome/frozen literals",
+    "original c1fddc leaf FAIL receipt"
+  ],
+  "failure_scope": "Actual DEV2->DEV1 aggregate600 timeout followed by outer inherited process-group cleanup; incomplete nested stdout and absent DEV0/DEV1 receipts cannot be reconstructed as execution PASS.",
+  "reexecution_required": "All new wrapper source captured under new fingerprint and immutable run; original successful narrower c1fddc results retain original source identity.",
+  "implementation_D1": "PENDING",
+  "product_execution": "NOT_RUN_NEW_BUDGET",
+  "cleanup_authorized": false,
+  "artifacts": {
+    "r10-inputs.json": "fea43228fb7c2104e57be54b46912c3162a7711239313fbb12cc34f75f781f62",
+    "r10-budget-audit.py": "7e7b8d7f38c6749806512a5a68caf0e32d7d912371cb300e01acc47fca3838f2",
+    "r10-budget-audit.json": "0d81a912b07540eeaebe465bdebc475062717ecf3557a4bb4ad69e62c0403a74",
+    "r10-budget-audit.log": "9b6ad1f2db6076b79cd68492f5d5a0d43d4a0d034c44a52a4c5de4fffed6e4a6"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "status": "PASS_D1_WRAPPER_FIX_READY_FOR_NEW_SOURCE_VERIFICATION",
+  "source_sha256": "edec600699a4b157c17636819923bb34fc0c30d5e1bd532ce6a1cc780b84910f",
+  "blocking_findings": [],
+  "d2_decision": "r10-d2-decision.json",
+  "selftests": 12,
+  "exact_source_changes": [
+    "scripts/check_dev0.py",
+    "scripts/check_dev1.py",
+    "scripts/check_dev2_reference.py",
+    "scripts/test_check_evidence.py"
+  ],
+  "new_full_source_execution": "NOT_RUN_BY_REVIEWER",
+  "cleanup_authorized": false,
+  "preserve_original_failure": true,
+  "limitations": [
+    "No new standalone descendant cleanup guarantee",
+    "Failure log hash can remain a snapshot until existing outer owner completes group cleanup",
+    "No product acceptance or performance claim from raised aggregate guard"
+  ],
+  "artifacts": {
+    "r11-wrapper-review.json": "95655667121d5dc83d45adb38334688316d723290f35d909939303f6443d69dd",
+    "r11-wrapper-audit.py": "77a5276e68b3b413a6900a21b65c6f44d035c60a2522cca9fe6c5dc3009c5c70",
+    "r11-wrapper-audit.log": "a581a16f755790c30566e6ee99703139e4b64567dd5709713d0dc7b658d08f59",
+    "r11-wrapper.diff": "f960b8a5125dce1a2e5987978cd6e293a83072f6bbf0c1d9fc4537ee8bbd8e68",
+    "r11-evidence-selftests.log": "e3303f433a1a0fb5b65cb1a39e482cee8c473eda6c4be87cfbd4800a24ef7c75",
+    "r11-review.md": "c9e5e77f7e878604decc58f2c1cea75f019ed540bd0781349dcf8c63c5ec6985"
+  }
+}

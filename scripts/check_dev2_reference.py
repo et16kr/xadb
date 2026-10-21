@@ -12,7 +12,7 @@ import sys
 import tempfile
 
 sys.dont_write_bytecode = True
-from check_dev0 import check_report_paths, source_fingerprint, verify_source_identity, write_report
+from check_dev0 import check_report_paths, run_logged_command, source_fingerprint, verify_source_identity, write_report
 
 ROOT = Path(__file__).resolve().parent.parent
 # Frozen acceptance inventory: do not derive it from whichever tests happen to build.
@@ -199,15 +199,15 @@ def main():
         report['native_frame_codec'] = 'IN_SCOPE_SELF_TEST_ONLY'
         report['v3_30_minute_codec_fuzz'] = 'NOT_RUN'
 
-    def command(name, argv, cwd=None):
+    def command(name, argv, cwd=None, timeout_seconds=600):
         print(f'{name}: {" ".join(argv)}', flush=True)
-        result = subprocess.run(argv, cwd=cwd or ROOT, env=environment, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, timeout=600)
         log = session / f'{name}.log'
-        log.write_bytes(result.stdout)
-        checks.append({'id': name, 'command': argv, 'cwd': str(cwd or ROOT), 'exit_code': result.returncode,
-                       'status': 'PASS' if result.returncode == 0 else 'FAIL',
-                       'log': str(log.relative_to(ROOT)), 'log_sha256': digest(log)})
+        record = {'id': name, 'command': argv, 'cwd': str(cwd or ROOT),
+                  'log': str(log.relative_to(ROOT))}
+        checks.append(record)
+        result = run_logged_command(argv, cwd=cwd or ROOT, environment=environment, log=log,
+                                    record=record, timeout_seconds=timeout_seconds)
+        record['status'] = 'PASS' if result.returncode == 0 else 'FAIL'
         if result.returncode != 0:
             print(result.stdout.decode(errors='replace'))
             raise RuntimeError(f'{name} failed')
@@ -333,7 +333,8 @@ def main():
         # Freeze profiles in the owned run before compilation or execution.
         write_report(session / 'profiles.json', report['profiles'])
         regression_path = session / 'dev1-regression.json'
-        command('dev1-regression', ['python3', 'scripts/check_dev1.py', '--report', str(regression_path)])
+        command('dev1-regression', ['python3', 'scripts/check_dev1.py', '--report', str(regression_path)],
+                timeout_seconds=2400)
         regression = json.loads(regression_path.read_text())
         if regression['status'] != 'PASS':
             raise RuntimeError('lower regression did not pass')

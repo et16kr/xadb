@@ -13,7 +13,7 @@ import tempfile
 
 # Verification imports must not mutate the source fingerprint with bytecode caches.
 sys.dont_write_bytecode = True
-from check_dev0 import check_report_paths, source_fingerprint, verify_source_identity, write_report
+from check_dev0 import check_report_paths, run_logged_command, source_fingerprint, verify_source_identity, write_report
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -47,15 +47,15 @@ def main():
         'cross_version_compatibility': 'NOT_REQUIRED_INTERNAL_FRESH_BUILD',
     }
 
-    def command(name, argv, expected=0, display_output=True):
+    def command(name, argv, expected=0, display_output=True, timeout_seconds=600):
         print(f'{name}: {" ".join(argv)}', flush=True)
-        result = subprocess.run(argv, cwd=ROOT, env=environment, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, timeout=600)
         log = session / (name + '.log')
-        log.write_bytes(result.stdout)
-        checks.append({'id': name, 'command': argv, 'exit_code': result.returncode,
-                       'expected_exit_code': expected, 'status': 'PASS' if result.returncode == expected else 'FAIL',
-                       'log': str(log.relative_to(ROOT)), 'log_sha256': digest(log)})
+        record = {'id': name, 'command': argv, 'expected_exit_code': expected,
+                  'log': str(log.relative_to(ROOT))}
+        checks.append(record)
+        result = run_logged_command(argv, cwd=ROOT, environment=environment, log=log,
+                                    record=record, timeout_seconds=timeout_seconds)
+        record['status'] = 'PASS' if result.returncode == expected else 'FAIL'
         if display_output or result.returncode != expected:
             print(result.stdout.decode(errors='replace'), end='', flush=True)
         if result.returncode != expected:
@@ -68,7 +68,8 @@ def main():
         report['source_sha256_before'] = source_before
         # Includes fmt, clippy, all feature workspace tests, clean runtime and fresh source build.
         regression_path = session / 'dev0-regression.json'
-        command('dev0-regression', ['python3', 'scripts/check_dev0.py', '--report', str(regression_path)])
+        command('dev0-regression', ['python3', 'scripts/check_dev0.py', '--report', str(regression_path)],
+                timeout_seconds=1800)
         regression = json.loads(regression_path.read_text())
         if regression['status'] != 'PASS':
             raise RuntimeError('DEV0 regression did not pass')

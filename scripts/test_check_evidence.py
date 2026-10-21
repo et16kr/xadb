@@ -3,7 +3,9 @@
 import hashlib
 import contextlib
 import io
+import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -14,6 +16,42 @@ from check_dev0 import check_report_paths, source_fingerprint, verify_source_ide
 
 
 class EvidenceIdentityTests(unittest.TestCase):
+    def test_actual_timeout_retains_partial_output_and_failed_identity(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            log = Path(temporary) / 'timeout.log'
+            record = {}
+            with self.assertRaises(subprocess.TimeoutExpired):
+                check_dev0.run_logged_command(
+                    [sys.executable, '-B', '-c',
+                     'import time; print("retained before timeout", flush=True); time.sleep(30)'],
+                    cwd=temporary, environment=os.environ.copy(), log=log,
+                    record=record, timeout_seconds=1)
+            self.assertEqual(log.read_bytes(), b'retained before timeout\n')
+            self.assertEqual(record['status'], 'FAIL')
+            self.assertTrue(record['timed_out'])
+            self.assertIsNone(record['exit_code'])
+            self.assertEqual(record['timeout_seconds'], 1)
+            self.assertGreaterEqual(record['elapsed_seconds'], 1)
+            self.assertEqual(record['log_sha256'], hashlib.sha256(log.read_bytes()).hexdigest())
+
+    def test_logged_command_preserves_nonzero_exit_and_never_overwrites_log(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            log = Path(temporary) / 'failure.log'
+            record = {}
+            result = check_dev0.run_logged_command(
+                [sys.executable, '-B', '-c', 'import sys; print("failed"); sys.exit(7)'],
+                cwd=temporary, environment=os.environ.copy(), log=log, record=record)
+            self.assertEqual(result.returncode, 7)
+            self.assertEqual(result.stdout, b'failed\n')
+            self.assertEqual(record['exit_code'], 7)
+            self.assertEqual(record['status'], 'FAIL')
+            self.assertFalse(record['timed_out'])
+            with self.assertRaises(FileExistsError):
+                check_dev0.run_logged_command(
+                    [sys.executable, '-B', '-c', 'print("replacement")'], cwd=temporary,
+                    environment=os.environ.copy(), log=log, record={})
+            self.assertEqual(log.read_bytes(), b'failed\n')
+
     def test_both_cli_entrypoints_reject_existing_reports_before_any_command(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
