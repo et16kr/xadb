@@ -1,0 +1,111 @@
+{
+  "adopted_scope": [
+    "pristine Fresh consumed with actual state/no live reader/no fence checks",
+    "installer-private immutable XDI1 in existing d3-dwb-stage after write/sync/dirsync",
+    "canonical DWB bytes and initial Empty selector actual effect plan25/readback32",
+    "bounded workspace/type/FD accounting and clean reader-only returned owner",
+    "all failures consume/fence/preserve; no resume/delete/retry success"
+  ],
+  "artifacts": {
+    "r7-audit.log": {
+      "bytes": 235,
+      "sha256": "5f62b6ea15f4ebd8b8ffaac21fbc6dfa51fc27205edd055c2996081ac0672a49"
+    },
+    "r7-audit.py": {
+      "bytes": 12426,
+      "sha256": "09ed6dc50f999669ec96bb1b2ba58aaaf67f6bc1e160c2302ce8a37c13fd4c13"
+    },
+    "r7-independent-calculation.json": {
+      "bytes": 7810,
+      "sha256": "43f9dc2f9836411b89acad8b7ace13480dd302c17f7d36e6710edbd29bfc8c4f"
+    },
+    "r7-inputs.json": {
+      "bytes": 16449,
+      "sha256": "36fce7fef111dc37d94651c6a1a4725b37f3d31e16d8e622a4dccf01d2a859bb"
+    },
+    "r7-r6-provisional-decision.json": {
+      "bytes": 2203,
+      "sha256": "386afff59887e0aad817288aa0821fd699f905eb40354b7091149aa9a72b3238"
+    },
+    "r7-review.md": {
+      "bytes": 9563,
+      "sha256": "3f31d02d683c3daebe47deee51dd9ab149c6643126fb834f4f272dd207459bd3"
+    },
+    "r9-closure-audit.log": {
+      "bytes": 342,
+      "sha256": "ddc693cc65bb55382ea4f70aaa9751d996d315cbdb1e40dcba1ebaf673b1874c"
+    },
+    "r9-closure-audit.py": {
+      "bytes": 6243,
+      "sha256": "afbea43a64dfcb375d67fa83d9e93b4b89bfb78e28a5b4345f7950d2fa8bb33b"
+    },
+    "r9-closure-calculation.json": {
+      "bytes": 2137,
+      "sha256": "1628e8c077e24c1adb6926e82defae0e941fce2dc6d6e444e67e2730a8b89def"
+    },
+    "r9-inputs.json": {
+      "bytes": 9403,
+      "sha256": "49fb48289b2ddae731904e6c1de5b2af989af6409b5a0a4487334249162184f8"
+    },
+    "r9-review.md": {
+      "bytes": 4335,
+      "sha256": "93054f752d00524259f71c3ac4ce8530002d862aeb30119577e7009f2db04da3"
+    }
+  },
+  "blockers": [],
+  "classification": "D2",
+  "cleanup": "NOT_RUN",
+  "contract_implementation_integration_owner": "/root",
+  "date": "2026-10-21",
+  "decision": "ACCEPTED",
+  "doc_verifier": "NOT_RUN",
+  "head": "bbb5bf468bf6cd2b4dacf18426b61590b1438419",
+  "implementation_may_begin_after_owner_adoption": true,
+  "independent_static_calculation": {
+    "checker_negative_inputs": 31,
+    "compiler_inputs": 9,
+    "effects": 25,
+    "installed_data_control_files_each": 14,
+    "literal_bytes_exact": 12,
+    "max_images_per_cut": 32,
+    "model_cuts": 50,
+    "model_images": 308,
+    "native_children_arithmetic": 89,
+    "native_databases_arithmetic": 92,
+    "observations": 32,
+    "profiles": 3,
+    "semantic_cases": 47,
+    "status": "PASS"
+  },
+  "not_accepted_as_complete": [
+    "product execution and implementation D1",
+    "Dirty/DPT/home page mutation",
+    "batch highwater issuance, pending/retirement or whole-batch barriers",
+    "allocator INIT and semantic authorization/F05/global resource restoration",
+    "reopen/recovery/CURRENT/READY",
+    "full DEV3 or DEV2 PF04"
+  ],
+  "prior_verified_clean_source_fingerprint": "edec600699a4b157c17636819923bb34fc0c30d5e1bd532ce6a1cc780b84910f",
+  "product_D1_acceptance": "NOT_RUN",
+  "product_execution": "NOT_RUN",
+  "r6_freeze": {
+    "aggregate": "5b94036b64baa9a2fbc2f0c9e3babed06d4543a9465cdf28afbf26685854ae67",
+    "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-freeze.json",
+    "sha256": "3165ee3060f9e5331a73076e760dc3b4621a09f37aa9722105a5b7e31cc20646",
+    "unchanged_original_inputs": 31
+  },
+  "r8_freeze": {
+    "aggregate": "acac9191362e7f6c866ca9a2c463ba8156fbbc6b68b9f7a5eede703ce688c1d2",
+    "path": "artifacts/dev3/dirty-storage-preparation-20261021/r8-freeze.json",
+    "sha256": "21d76153927825490064b3ba0a5f5a17aba23998a5b085f10bc2c11ab85a9d3f"
+  },
+  "resolved": [
+    "R7-1 exact logical mutation counters distinct from retry subcalls",
+    "R7-2 one-shot bounded short I/O and exact original lower errors",
+    "R7-3 exact 47-case readback error/reachability oracle",
+    "same metadata64KiB reuse, complete retained owner inclusion",
+    "component FD scope versus caller directory, unchanged LOCK native inventory"
+  ],
+  "reviewer": "/root/dev3_selector_review",
+  "unit": "D3-DWB-INSTALL-001"
+}

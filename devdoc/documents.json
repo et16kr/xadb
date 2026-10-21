@@ -1307,6 +1307,26 @@
       "path": "evidence/dev3-storage-session-review-xadb-20261021-r1.json",
       "role": "evidence",
       "title": "DEV3 최초 저장 세션 최종 독립 감사 원본"
+    },
+    "dev3-doublewrite-install.md": {
+      "path": "contracts/dev3-doublewrite-install.md",
+      "role": "contracts",
+      "title": "DEV3 최초 doublewrite 설치 계약"
+    },
+    "dev3-doublewrite-install-d2-xadb-20261021-r9.json": {
+      "path": "evidence/dev3-doublewrite-install-d2-xadb-20261021-r9.json",
+      "role": "evidence",
+      "title": "DEV3 최초 DWB 설치 독립 D2 결정 원본"
+    },
+    "dev3-doublewrite-install-inputs-xadb-20261021-r6.json": {
+      "path": "evidence/dev3-doublewrite-install-inputs-xadb-20261021-r6.json",
+      "role": "evidence",
+      "title": "DEV3 최초 DWB 설치 r6 동결 입력 원본"
+    },
+    "dev3-doublewrite-install-inputs-xadb-20261021-r8.json": {
+      "path": "evidence/dev3-doublewrite-install-inputs-xadb-20261021-r8.json",
+      "role": "evidence",
+      "title": "DEV3 최초 DWB 설치 r8 보충 입력 원본"
     }
   }
 }

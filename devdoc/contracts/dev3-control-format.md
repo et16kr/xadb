@@ -297,3 +297,7 @@ root가 최종 source 전체를 독립 검토하고 별도 사본에서 고정10
 ## 최초 저장 세션의 후속 D2 계약
 
 [최초 저장 세션](dev3-storage-session.md)은 fresh 전용 immutable `d3-bootstrap`4096-byte staging descriptor를 정의한다. 이 descriptor의 file sync·directory sync 뒤에만 초기 data/FILEMAP 파일을 만든다. canonical `d3-filemap-select-stage` 이름은 유지하고 descriptor는 성공/실패 뒤에도 보존한다. 제안된1MiB rebase 슬롯이나 일반 growth/resume descriptor를 대체하지 않는다. D2 채택이며 실제 설치는 NOT_RUN이다.
+
+## 최초 DWB 설치의 후속 D2
+
+[설치 계약](dev3-doublewrite-install.md)은 canonical 16MiB 안의 d3-dwb-stage16KiB를 immutable XDI1 설치 descriptor로 사용한다. 초기 Empty 선택의25효과/32관측을 고정하며 기존 XDW1/XCS1 bytes와 reserved8KiB·tail2240을 유지한다. 성공 뒤 stage 재사용은 별도 D2이고 현재 제품 실행 NOT_RUN이다.

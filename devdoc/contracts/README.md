@@ -77,3 +77,5 @@ DEV3의 COW pack 경로는 [in-place·WAL·영속 undo 결정](../contracts/disk
 - [DEV3 RollbackStart WAL·상태 page 생산](dev3-obligation-format.md#rollback-producer) — D2 수용·semantic22/WAL13 및 같은 source 하위 회귀 PASS; tag2 append·live 적용·전체 DEV3 인수는 미완료
 
 - [DEV3 최초 저장 세션·FILEMAP 설치](dev3-storage-session.md) — D2 수용·고정 bootstrap/소유권/fence/검증 입력; 제한 실행 결과는 현재 구현 참조
+
+- [DEV3 최초 doublewrite 설치](dev3-doublewrite-install.md) — pristine 세션 consume·XDI1·Empty 선택·고정 장애 입력의 D2 채택; 제품 실행 NOT_RUN

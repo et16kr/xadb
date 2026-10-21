@@ -285,3 +285,7 @@ The shared lower fence owner will be storage/session_fence.rs, consumed by wal_i
 DEV0/1/2의 중첩 command wrapper는 exclusive regular log에 stdout/stderr를 직접 기록한다. timeout 시 partial log/hash·명령·예산·경과 시간·FAIL을 남기고 미관측 exit code는 null로 기록한다. 중첩 process session을 새로 만들지 않아 DEV3 외부 실행기의 process-group 정리를 유지한다. 단독 DEV0/1/2에서 모든 descendant의 종료를 새로 보장하지 않는다. 정상·지정 nonzero 반환 계약은 유지하며 실제 timeout/부분 로그 보존과 기존 로그 덮어쓰기 거절을 검증한다.
 
 [구현 독립 D1](../evidence/dev3-storage-session-aggregate-d1-xadb-20261021-r0.json)은 실제 자기시험12개와 변경4개 파일을 확인했다. timeout 뒤 inherited descendant가 잠시 출력할 수 있으므로 실패 시 즉시 기록한 log hash는 외부 소유자의 정리 전 snapshot일 수 있다. 완전한 종료나 새 통합 PASS를 이 결과에서 추정하지 않는다.
+
+## 최초 DWB 설치로의 소비
+
+[별도 D2 계약](dev3-doublewrite-install.md)은 pristine Fresh를 소비하여 최초 DWB를 설치하고 clean reader 전용 owner를 반환한다. 기존 Fresh API는 유지하며 이후 owner에는 raw WAL stage/sync를 노출하지 않는다. D2 채택이고 제품 실행은 NOT_RUN이다.

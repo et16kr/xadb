@@ -238,3 +238,9 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 최초 저장 세션 DEV2 현재-build 복구 원본](dev3-storage-session-dev2-kernel-xadb-20261021-r1.json) — sourceedec6006…의 fresh 설치·공통 fence; 일반 recovery·전체 DEV3 인수 미완료
 
 - [DEV3 최초 저장 세션 최종 독립 감사 원본](dev3-storage-session-review-xadb-20261021-r1.json) — sourceedec6006…의 제한된 구현·원본 실행·staged source 감사 PASS; 전체 DEV3 미완료
+
+- [DEV3 최초 DWB 설치 독립 D2 결정 원본](dev3-doublewrite-install-d2-xadb-20261021-r9.json) — D2 설계·입력 채택이며 제품 실행 NOT_RUN
+
+- [DEV3 최초 DWB 설치 r6 동결 입력 원본](dev3-doublewrite-install-inputs-xadb-20261021-r6.json) — D2 설계·입력 채택이며 제품 실행 NOT_RUN
+
+- [DEV3 최초 DWB 설치 r8 보충 입력 원본](dev3-doublewrite-install-inputs-xadb-20261021-r8.json) — D2 설계·입력 채택이며 제품 실행 NOT_RUN

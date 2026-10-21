@@ -1,0 +1,27 @@
+{
+  "aggregate_sha256": "acac9191362e7f6c866ca9a2c463ba8156fbbc6b68b9f7a5eede703ce688c1d2",
+  "files": [
+    {
+      "bytes": 6876,
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-freeze.json",
+      "sha256": "3165ee3060f9e5331a73076e760dc3b4621a09f37aa9722105a5b7e31cc20646"
+    },
+    {
+      "bytes": 5885,
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r8-clarifications.md",
+      "sha256": "c3c5c5ea89c1d5785c580de71f53165e2920a4c2328cf8c5ee389320375fb811"
+    },
+    {
+      "bytes": 14057,
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r8-semantic-negatives.json",
+      "sha256": "ed2fc5c585465113b5409bfc27c12566145b423c3f9eae148f5bbc08e5ea8314"
+    },
+    {
+      "bytes": 2767,
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r8-freeze.py",
+      "sha256": "6dc916456e299d23f1b4418b40fbb378ea78ad2f7bb54c19427832adbb7a3570"
+    }
+  ],
+  "product_execution": "NOT_RUN",
+  "status": "PROPOSED_REVIEW_INPUTS"
+}

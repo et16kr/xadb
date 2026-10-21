@@ -1,0 +1,162 @@
+{
+  "status": "PROPOSED_REVIEW_INPUTS",
+  "product_execution": "NOT_RUN",
+  "files": [
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-proposal.md",
+      "bytes": 13255,
+      "sha256": "65991fbf99b0619cadc2e3b9766f04a9ad8bc72f3bc8884a0b7a604b16898203"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-verification.md",
+      "bytes": 7864,
+      "sha256": "c45f8f67aa1221d3114cb7e840849c2321bdce4c288534cc133b8bba5c8ee949"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs.py",
+      "bytes": 6237,
+      "sha256": "907c9cc8444bf45613d4b381e88a192ee917b500e70d7138f90735223d7752cb"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-verification-inputs.py",
+      "bytes": 5016,
+      "sha256": "05e9fa1ccc29fee6dde1709f6485c691da7bb84d4b15db36fc260478fd718e3a"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/checker-negatives.json",
+      "bytes": 719,
+      "sha256": "8a04184424648a966a9c97d6c82b3b3fa2a41e04abab3983e3724ceb8c0cb192"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/compiler/active_reader.rs",
+      "bytes": 644,
+      "sha256": "79fb328be0d1d658a2b100dabd7f40b41d57ec1220d99b63f3e033bdf5f1105a"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/compiler/fresh.rs",
+      "bytes": 622,
+      "sha256": "5a018737a54b4e72dcb4819766ef66461b3668000801ce9ebef09c0691c54859"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/compiler/installed_reader.rs",
+      "bytes": 665,
+      "sha256": "8749c6ec7eeb0397ddf12e81701746976e342ffbe030ef7feaeba84818ed809e"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/compiler/manifest.json",
+      "bytes": 1931,
+      "sha256": "384cf71fa6eecb3b55511ce4b64bd36b520ca5f376f54a45f1e1b388484b0409"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/compiler/raw_stage.rs",
+      "bytes": 580,
+      "sha256": "1b3a55a8b38adfa405fd3ce7b8dcfcad4c6515c84a021ead71da5c7eac91ef5e"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/compiler/release.rs",
+      "bytes": 661,
+      "sha256": "7527436d474bfea697a2690329fbb78393ee41f8ed4e4e231d368ab5d69ae5ce"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/compiler/shared_thread.rs",
+      "bytes": 902,
+      "sha256": "6a432bd432b74c1a93612e33bd26e41996e9b5c637c16d96161b9f9ff38c111a"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/compiler/slot.rs",
+      "bytes": 615,
+      "sha256": "c24aa5f0bd066af934d0ee60601bc8c677275a06e1060dab08749ffa47b73e64"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/compiler/workspace.rs",
+      "bytes": 620,
+      "sha256": "0273bca9b968767ec83b10695e05e40c9bbd57a186d2cbd4fcf99f5b6c03e6a6"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/durable-images.json",
+      "bytes": 569862,
+      "sha256": "3a8dbc86b9bc3d62e3a61acb0985583481d70fd3bb836bef3c3148e81bbc4362"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/effects.json",
+      "bytes": 3070,
+      "sha256": "772282407afdc00bd95309bb6bac38023bacc9376c43ae6ce0c8ec3b15e04a01"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/literal/profile1-DWB.bin",
+      "bytes": 4096,
+      "sha256": "cb6bf13860cbaae778790c11792c124331fd1966e937c06274e8b27df5f59853"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/literal/profile1-d3-dwb-stage.bin",
+      "bytes": 16384,
+      "sha256": "5e34179a24da916fe95001734f35cae4a6cc0c1a605226e69d863d8957a15577"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/literal/profile1-empty.bin",
+      "bytes": 160,
+      "sha256": "1844acb9ff705f98946c337445d7381cca13ffaccba7556479361b209af76d5d"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/literal/profile1-reference.bin",
+      "bytes": 64,
+      "sha256": "78fb6c2a7712146197faf85ddfb35d1d825a8fd218d9cd49d5b2a4b70b779dcd"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/literal/profile2-DWB.bin",
+      "bytes": 4096,
+      "sha256": "29ff7cdf1c32a5b7dfa65b87e5d0ba5d37dd8f2e70e6d44a7fdf30339328c049"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/literal/profile2-d3-dwb-stage.bin",
+      "bytes": 16384,
+      "sha256": "c976cec9b2e89cf917db8c97c2af5b8e167575acc2bd655f4e0f55f51f8f62b5"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/literal/profile2-empty.bin",
+      "bytes": 160,
+      "sha256": "1844acb9ff705f98946c337445d7381cca13ffaccba7556479361b209af76d5d"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/literal/profile2-reference.bin",
+      "bytes": 64,
+      "sha256": "78fb6c2a7712146197faf85ddfb35d1d825a8fd218d9cd49d5b2a4b70b779dcd"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/literal/profile3-DWB.bin",
+      "bytes": 4096,
+      "sha256": "d47680be5ddd47331126e2b32487781157216125c0d1f33be94aef3ae15e83fb"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/literal/profile3-d3-dwb-stage.bin",
+      "bytes": 16384,
+      "sha256": "4a04c6838da5a735ec621bfb82758cdac88681238cdee34cf94c1ac1dc5fd92b"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/literal/profile3-empty.bin",
+      "bytes": 160,
+      "sha256": "1844acb9ff705f98946c337445d7381cca13ffaccba7556479361b209af76d5d"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/literal/profile3-reference.bin",
+      "bytes": 64,
+      "sha256": "78fb6c2a7712146197faf85ddfb35d1d825a8fd218d9cd49d5b2a4b70b779dcd"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/manifest.json",
+      "bytes": 8573,
+      "sha256": "b794e062669d4e7442d1398a484dadfaafd193ab5ff9de70788a6a8177139811"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/observations.json",
+      "bytes": 4314,
+      "sha256": "93350869a7a0226fa091571379e9a203c1b74158c9234228b3b950983f980dad"
+    },
+    {
+      "path": "artifacts/dev3/dirty-storage-preparation-20261021/r6-inputs/semantic-negatives.json",
+      "bytes": 4301,
+      "sha256": "e4a64613be952914dfc84782743fdaf2bf2352fc74cd2cec9ec65ead1d2b5872"
+    }
+  ],
+  "aggregate": "5b94036b64baa9a2fbc2f0c9e3babed06d4543a9465cdf28afbf26685854ae67"
+}

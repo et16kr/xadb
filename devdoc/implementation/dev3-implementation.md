@@ -525,3 +525,8 @@ r0 실행 종료를 확인한 뒤 compiler target4개에서 ELF 실행 파일140
 최종 [r14 독립 감사](../evidence/dev3-storage-session-review-xadb-20261021-r1.json)는 staged81경로와 source368파일의 지문 일치, leaf59·하위28·DEV0/1각8, named33suite/229시험, 원본7개 등록을 확인했다. lower native323/catalog325세션과124로그·17471hash 참조를 검산하고 차단 지적 없이 제한된 단위의 통합을 수용했다. r12/r13의 kernel·새 기능 감사는 재사용했으며 검토자가 제품 시험을 재실행한 것은 아니다. 최초600초 timeout FAIL 원본은 그대로 보존한다.
 
 최종 감사 뒤 완료 leaf의 worker684개를2개 동일 binary group으로 hardlink 통합하여15731716096bytes를 회수했다. target4개에서는 ELF156경로/122고유 실행 파일을 별도 보존한 뒤2585403392bytes를 정리했다. 두 정리의 추가 회수량은 약17.06GiB이며 원래13개 실행 파일·소스·probe·로그·원본 receipt·native DB를 유지했다. 기록은 `artifacts/dev3/storage-session-leaf-worker-cleanup-r1-20261021/summary.json`과 `storage-session-leaf-target-cleanup-r1-20261021.json`이다. 정리 전후 source/실행 파일/log/receipt hash가 같음을 확인했으며 공유 hardlink 실행 파일은 이후 in-place rebuild 대상으로 사용하지 않는다.
+
+<a id="doublewrite-install-contract"></a>
+## 최초 DWB 설치 계약 채택
+
+2026-10-21 [D3-DWB-INSTALL-001](../contracts/dev3-doublewrite-install.md)을 r9 독립 D2 검토 뒤 채택했다. literal12·effect25·observation32·model50cut/308image/max32 및 semantic47의 정확 오류를 제품과 독립적으로 계산했다. 제품 source·runtime10/native3/compiler9·하위 회귀는 아직 NOT_RUN이며 이 정적 검토를 실행 PASS로 세지 않는다. `/root`가 구현·통합, `/root/dev3_selector_review`가 별도 검토를 맡는다. dirty/home/일반 복구·전체 DEV3와 DEV2 PF04 해결은 남아 있다.

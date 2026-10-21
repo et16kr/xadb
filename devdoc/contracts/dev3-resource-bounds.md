@@ -72,3 +72,7 @@ DS03/PF09의 각 inventory 접근량은 configured buffer의4배 이상이다. �
 ## 최초 저장 세션의 후속 D2 계약
 
 [최초 저장 세션의 자원 계약](dev3-storage-session.md)은 이 한정 operation에 fixed5,296,128/max273,727,488/protected4,247,552 logical bytes, caller48KiB와 phase별 fixed local 최대64KiB를 고정했다. readback의 추가File2개를 모두 포함하며 source/type ledger·실제 handle 계측은 아직 NOT_RUN이다. global F05/admission·DWB/checkpoint/복구 예약의 미완료 의무는 유지한다.
+
+## 최초 DWB 설치의 제한 회계
+
+[설치 계약](dev3-doublewrite-install.md)은 기존 Fresh에 DWB16,777,216bytes를 한 번 더하여 fixed22,073,344/max290,504,704/protected21,024,768을 고정한다. 첫 실제 file 총량22,069,248과 미래 selector 교체4096 예약은 구별한다. caller4MiB는 system flush 몫이며 metadata component64KiB는 retained Fresh를 포함해 재사용한다. caller directory는 component4FD 밖의 추가1FD다. D2 산술 채택이며 실제 type/handle·전체 F05 인수는 미완료다.

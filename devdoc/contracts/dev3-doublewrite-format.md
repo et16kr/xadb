@@ -147,3 +147,7 @@ generated profile의 n=128×seed+sample이다. n mod5=0은 Empty, 나머지는 P
 2026-10-21 `/root`가 구현 source·고정10개 시험을 독립 정적 검토하여 차단 지적 없이 수용했다(`artifacts/dev3/doublewrite-independent-root/review.json`). 첫 보존 source에서10tests는 PASS였으나 Clippy의 시험 반복문 지적으로 합산 결과는 FAIL로 보존했다(`artifacts/dev3-doublewrite-model-r1/validation.json`). 반복문만 iterator/enumerate로 고치고 동일분모를 새source에서 재검증한다. 첫 live-cwd 오호출은 별도 NOT_QUALIFIED로 보존했고 clean source 실행으로 세지 않았다. 실제 DWB I/O/복구 인수는 계속 미완료다.
 
 2026-10-21 최종 작성자 국소 검증: `artifacts/dev3-doublewrite-model-r2/validation.json`의 보존 source에서고정10tests·생성8,192 controls·engine all-targets/all-features Clippy·소유파일rustfmt가 PASS다. `/root`가 두 줄 반복문 수정도 독립 확인하여 corpus/판정불변을 수용했다. 제품 codec bytes/조건은 첫 source 검토 때와 같다. 실행 당시 계약 사본은 r2/source에 보존하며 이 문단과 상태만 실행 뒤 갱신했다. 통합 runner·실제 DWB I/O·전체 DEV3 인수는 이 국소 receipt로 대체하지 않는다.
+
+## 최초 DWB 설치의 후속 D2
+
+[설치 계약](dev3-doublewrite-install.md)은 기존 XDW1 Empty와 XCS1 selector를 실제 fresh 파일에 설치하는 순서를 고정한다. d3-dwb-stage의 최초 phase는 installer 전용 XDI1이며 generic XDW1 decoder나 resume authority로 사용하지 않는다. 후속 batch·home write·retirement는 미구현이며 이번 설치도 제품 실행 NOT_RUN이다.
