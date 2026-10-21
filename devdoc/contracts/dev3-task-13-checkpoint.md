@@ -4,7 +4,7 @@
 
 [공통 규칙](dev3-task-designs.md) · [구현 계획](../plans/dev3-implementation-plan.md#remaining-work) · [checkpoint 정본](disk-storage-design.md#checkpoint) · [복구 정본](disk-storage-design.md#recovery) · [control 표현](dev3-control-format.md) · [obligation](dev3-obligation-format.md)
 
-이 작업은 정상 실행 중 이미 등록이 끝난 WAL prefix와 같은 시점의 ATT/DPT·진행/예약 소유를 capture하고, 완전한 checkpoint closure를 current/previous로 선택하며, 그 선택과 live owner가 더 이상 필요로 하지 않는 WAL만 회수하는 개발 명세다. 새 checkpoint/CURRENT body·자원 상한·성공 API를 채택하지 않는다. 이번 문서 작성에서 제품 코드·시험·compiler·Clippy·문서 자동 검사는 실행하지 않는다.
+이 작업은 정상 실행 중 이미 등록이 끝난 WAL prefix와 같은 시점의 ATT/DPT·진행/예약 소유를 capture하고, 완전한 checkpoint closure를 current/previous로 선택하며, 그 선택과 live owner가 더 이상 필요로 하지 않는 WAL만 회수하는 개발 명세다. 새 checkpoint/CURRENT body·자원 상한·성공 API를 채택하지 않는다.
 
 <a id="scope"></a>
 ## 1. 목적·선행·책임
@@ -210,7 +210,7 @@ DEV3 checkpoint의 새 source/module 경로는 실제 구현과 함께만 등록
 <a id="acceptance"></a>
 ## 9. 독립 인수 case
 
-다음은 모두 후속 검증 명세이며 이번 문서에서 제품 실행은 **NOT_RUN**이다. oracle는 명시 event history에서 cut별 ATT/head/next·descriptor·edge/ownership·DPT·q와 필요한 WAL 파일 집합을 독립 계산한다. production capture/recovery/encoder가 expected를 만드는 구조를 사용하지 않는다.
+다음 case의 실행 상태는 **NOT_RUN**이다. oracle는 명시 event history에서 cut별 ATT/head/next·descriptor·edge/ownership·DPT·q와 필요한 WAL 파일 집합을 독립 계산한다. production capture/recovery/encoder가 expected를 만드는 구조를 사용하지 않는다.
 
 | case ID | 독립 입력·반례 | 기대 결과 | 연결 |
 | --- | --- | --- | --- |

@@ -9,7 +9,7 @@
 
 안정 anchor에서 현재 B+tree 구조를 찾고, RowUID를 물리 위치와 분리하여 행과 과거 버전을 읽고 변경하는 경로를 만든다. row/index/catalog가 공유하는 tree 구조는 3.06.1, row와 overflow의 내부 변경은 3.06.2, 재탐색 cursor와 locator는 3.06.3으로 공급한다. index presence·UNIQUE는 3.07, catalog 의미는 3.08, 논리 rollback과 종료는 3.09, snapshot·잠금 통합은 3.10, commit 공개는 3.11이 소유한다.
 
-현재 [tree 표현](dev3-tree-format.md), [row 표현](dev3-row-format.md), [overflow 표현](dev3-overflow-format.md), [참조·anchor 표현](dev3-reference-format.md)은 bytes와 국소 검산을 제공한다. split 계획 계산도 page를 변경하지 않는다. [기존 구현 기록](../implementation/dev3-implementation.md#tree-overflow-transaction)의 표현·모델 결과를 실제 탐색·SMO·row CRUD·거래 완료나 새 실행 결과로 확대하지 않는다. 이 문서는 제품 코드를 추가하거나 시험을 실행한 기록이 아니다.
+현재 [tree 표현](dev3-tree-format.md), [row 표현](dev3-row-format.md), [overflow 표현](dev3-overflow-format.md), [참조·anchor 표현](dev3-reference-format.md)은 bytes와 국소 검산을 제공한다. split 계획 계산도 page를 변경하지 않는다. [기존 구현 기록](../implementation/dev3-implementation.md#tree-overflow-transaction)의 표현·모델 결과를 실제 탐색·SMO·row CRUD·거래 완료나 새 실행 결과로 확대하지 않는다.
 
 상태명과 논리 연산명은 설계 표기다. 아래 알고리즘은 채택된 소유 계약의 실행 의무를 구체화하며, 아직 없는 공개 API·semantic opcode·추가 page field·수치 예약표를 확정하지 않는다. 그 항목은 [착수 전 동결](#freeze) 뒤 해당 effect를 구현한다.
 
@@ -182,7 +182,7 @@ overflow 교체는 새 chain을 완성하여 row 변경과 인계한다. 공개�
 <a id="acceptance"></a>
 ## 8. 독립 인수 사례
 
-다음은 실행할 case의 명세이며 모두 이번 작성으로는 NOT_RUN이다. 기대값은 typed 정렬 목록·행 변경 이력·명시 edge multiset·독립 bytes에서 계산하고 production encoder/탐색/undo 결과로 만들지 않는다. 각 leaf 전에 exact fixture·seed·cut·명령·시간/메모리 한도와 부정 판정기를 고정한다.
+다음 case의 실행 상태는 NOT_RUN이다. 기대값은 typed 정렬 목록·행 변경 이력·명시 edge multiset·독립 bytes에서 계산하고 production encoder/탐색/undo 결과로 만들지 않는다. 각 leaf 전에 exact fixture·seed·cut·명령·시간/메모리 한도와 부정 판정기를 고정한다.
 
 | Case | 입력·독립 판정 | 요구·인수 |
 | --- | --- | --- |

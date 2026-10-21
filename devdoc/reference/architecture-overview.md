@@ -11,7 +11,7 @@ DEV3 저장 경로의 현행 정본은 [disk-storage-design](../contracts/disk-s
 
 
 
-**추가 설계 요구:** 일반 재현·테스트·디버깅·리뷰가 보안 중단을 유발할 만한 불필요한 행위를 요구하지 않아야 한다. [14.4–14.12절](#execution-design)은 OpenAI 공식 지침을 참고해 **합성 데이터·소유한 테스트 자원·엔진 내부 fault·읽기 전용 진단**으로 정상 개발을 끝내는 설계다. 우선순위는 중단 예방이며, 기록 보존은 보조 수단이다. OpenAI가 인증하거나 무중단을 보증한 체계라는 뜻은 아니다. 핵심 실행 흐름은 **DB에서 발견 → [모듈별 최소 재현](#module-reproduction) → 국소 수정 → 필요한 통합 회귀**이며, [Astra/Luna 역할 분담](#agent-routing)과 [파일 중심 증거 전달](#artifact-evidence)을 함께 설계했다.
+**추가 설계 요구:** 일반 재현·테스트·디버깅·리뷰가 보안 중단을 유발할 만한 불필요한 행위를 요구하지 않아야 한다. [14.4–14.12절](#execution-design)은 OpenAI 공식 지침을 참고해 **합성 데이터·소유한 테스트 자원·엔진 내부 fault·읽기 전용 진단**으로 정상 개발을 끝내는 설계다. 우선순위는 중단 예방이며, 기록 보존은 보조 수단이다. 핵심 실행 흐름은 **DB에서 발견 → [모듈별 최소 재현](#module-reproduction) → 국소 수정 → 필요한 통합 회귀**이며, [Astra/Luna 역할 분담](#agent-routing)과 [파일 중심 증거 전달](#artifact-evidence)을 함께 설계했다.
 
 디스크 파티션을 포괄하는 native global index는 NG 단계에서 개발한다. 초기 DEV4 SQL의 선행 조건은 아니며 실제 구현·인수는 단계별 계약을 따른다. 아래 명령, API, 디렉터리, 단계별 기준은 별도 표시가 없으면 **앞으로 구현할 계약**이다. 조사용 Python 모델을 실행한 것과 실제 DB를 검증한 것을 구분한다.
 
@@ -686,7 +686,7 @@ A에서 invariant 위반 발견
 | 성능 | 의미를 유지하며 측정·가설·개선 | baseline과 동일 durability/isolation/config |
 | 승격 | evidence manifest와 current status 갱신 | 기계 판정 통과, 의미 변경은 ADR 반영 |
 
-역할은 설계자·구현자·검증자·원인 분석자로 구분할 수 있지만, **여러 AI가 동의했다고 증거가 독립인 것은 아니다.** 같은 프롬프트·잘못된 expected·동일 reference 코드를 공유하면 오류도 공유한다. 서로 다른 oracle, held-out workload, mutation, 사람의 제품 의미 판단을 조합한다. 이 보고서 작성 과정에서 별도 에이전트를 실행한 것은 아니다.
+역할은 설계자·구현자·검증자·원인 분석자로 구분할 수 있지만, **여러 AI가 동의했다고 증거가 독립인 것은 아니다.** 같은 프롬프트·잘못된 expected·동일 reference 코드를 공유하면 오류도 공유한다. 서로 다른 oracle, held-out workload, mutation, 사람의 제품 의미 판단을 조합한다.
 
 ### 14.2 사람과 자동화의 경계
 
@@ -696,7 +696,7 @@ A에서 invariant 위반 발견
 
 ### 14.3 작업 상태와 정지 규칙
 
-상태는 `DESIGNED → IMPLEMENTED → VERIFIED → INTERNAL_VERSION`으로 승격하고, 외부 출시는 별도의 `PRODUCT_QUALIFIED → EXTERNAL_RELEASE` 조건을 만족해야 한다. 테스트를 작성했지만 실행하지 못한 기능은 IMPLEMENTED에 남긴다. 정해진 반례를 해결할 때까지 계속 진행하되, 동일 실패에서 새 정보가 없으면 재현 환경·oracle·가설을 재검토한다. 예를 들어 세 번의 구분 실험에서도 가설이 줄지 않으면 diagnostic bundle을 정리하고 접근을 바꾸는 규칙을 파일럿에서 조정한다. 이 횟수는 성공 확률을 보장하는 수학 상수가 아니다.
+상태는 `DESIGNED → IMPLEMENTED → VERIFIED → INTERNAL_VERSION`으로 승격하고, 외부 출시는 별도의 `PRODUCT_QUALIFIED → EXTERNAL_RELEASE` 조건을 만족해야 한다. 테스트를 작성했지만 실행하지 못한 기능은 IMPLEMENTED에 남긴다. 정해진 반례를 해결할 때까지 계속 진행하되, 동일 실패에서 새 정보가 없으면 재현 환경·oracle·가설을 재검토한다. 예를 들어 세 번의 구분 실험에서도 가설이 줄지 않으면 diagnostic bundle을 정리하고 접근을 바꾸는 규칙을 파일럿에서 조정한다.
 
 에이전트에게는 한 작업의 `목적 / 비목표 / 계약 / 관련 경계 / 실행 명령 / 완료 증거 / 알려진 반례`를 제공한다. 전체 repository 문서를 항상 읽게 하지 않고 현재 module의 entry document에서 정확한 구현·테스트·ADR로 이동하게 한다.
 
@@ -846,7 +846,7 @@ XADB의 초기 운영안은 **Astra가 설계·원인 가설·최종 검토를 �
 
 Auto-review의 명시적 거절은 우회 실행이 아니라 실제로 더 안전한 대안이나 사용자 확인을 요구한다. 역할 분담은 **적합한 모델을 작업 전에 선택하는 운영 설계**이며, 거절된 행동을 다른 모델에 대신 시키는 경로가 아니다. [OpenAI: denials](https://learn.chatgpt.com/docs/sandboxing/auto-review#denials-and-failure-behavior)
 
-[agent-routing-policy.example.json](../examples/agent-routing-policy.example.json)에 분류·재배정 계약을 제공한다. 현재 사용자 model 설정을 변경하거나 실제 sub-agent를 실행한 것은 아니다.
+[agent-routing-policy.example.json](../examples/agent-routing-policy.example.json)에 분류·재배정 계약을 제공한다.
 
 <a id="artifact-evidence"></a>
 

@@ -11,7 +11,7 @@
 
 B3의 첫 서버는 Linux의 **소유 Unix pathname socket**, 단일 DB, peer UID 인증, DB 단위 권한, bounded worker pool과 세션별 직렬 실행을 제공한다. DEV4의 direct SQL·prepare/bind/execute/fetch/metadata/close, autocommit·명시 거래·DDL 두 outcome을 모두 전달한다. DEV6의 완성된 driver 없이 독립 local protocol client로 인수한다.
 
-C1의 IPv4/IPv6 loopback transport 시험은 하위 회귀로 유지한다. DEV5 최초 SQL listener는 Unix만 열며 TCP SQL 접속 설정은 명시 Unsupported다. loopback을 인증으로 취급하지 않는다. 원격/TCP SQL·TLS·password/SASL·계정/GRANT SQL·객체별 ACL·세션 재개·durable 요청 중복 제거·LOB API·multiplexing은 미지원으로 협상하고 후속 의무를 보존한다. 아래의 bounded message 분할은 LOB 저장 기능이 아니다. resident/mixed-storage 엔진과 새로운 SQL dialect는 범위 밖이다.
+C1의 IPv4/IPv6 loopback transport 시험은 하위 회귀로 유지한다. DEV5 최초 SQL listener는 Unix만 열며 TCP SQL 접속 설정은 명시 Unsupported다. loopback을 인증으로 취급하지 않는다. 원격/TCP SQL·TLS·password/SASL·계정/GRANT SQL·객체별 ACL·세션 재개·durable 요청 중복 제거·LOB API·multiplexing은 미지원으로 협상하고 후속 의무를 보존한다. 아래의 bounded message 분할은 LOB 저장 기능이 아니다. SQL 의미는 DEV4 계약을 따른다.
 
 | 소유자 | 책임·허용 방향 |
 | --- | --- |

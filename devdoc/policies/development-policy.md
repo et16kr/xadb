@@ -88,7 +88,7 @@ seed는 목록·generator 버전·hash를 실행 전에 고정한다. operation 
 
 구체적인 crash cut·schedule·메모리/시간 한도·명령은 해당 leaf 구현 전에 계약 담당이 고정하고 검토한다. 긴 suite는 job으로 분할하되 완료 판정에서는 모든 필수 결과를 합친다. 시간 초과·미도달·오류는 PASS가 아니다. 반복 성공으로 앞선 실패를 지우지 않고, 불안정 시험은 결함·담당·재현 자료를 남긴다. 필수 시험을 제외하려면 동등한 검출 근거를 D2로 검토하며 제품 검증 전에는 승격하지 않는다.
 
-수치 확대·축소는 실행 이전 D2 프로파일 변경으로 관리한다. 현재 실패를 없애려는 사후 축소는 금지한다. 고객 SLA와 제품 최대 용량은 이 예산에서 추정하지 않는다. V3 자동 실행·야간 job은 아직 없으며 이 결정이 예약 작업을 생성하지 않는다.
+수치 확대·축소는 실행 이전 D2 프로파일 변경으로 관리한다. 현재 실패를 없애려는 사후 축소는 금지한다. 고객 SLA와 제품 최대 용량은 이 예산에서 추정하지 않는다. V3 자동 실행·야간 job은 미구현이다.
 
 <a id="section-5"></a>
 
@@ -143,7 +143,7 @@ budget을 초과한 시도와 중단도 분모·비용에 포함한다. 정확�
 
 Rust library가 최종 executable의 panic 전략을 단독 결정한다고 가정하지 않는다. embedded/FFI 제공 시 호출자 경계와 panic 전파 방지 계약을 별도로 검증한다. symbol을 분리할 경우 원본·실행 binary·symbol의 대응 hash와 실제 symbolization을 확인한다. 성능 profile 변경도 동일 의미의 release 시험을 다시 수행한다.
 
-보호된 검증은 candidate가 oracle·runner 정책·최종 결과를 동시에 바꿀 수 없는 별도 job/권한으로 운영한다. candidate의 검사 코드 변경은 D2로 먼저 검토하고 보호된 기준을 갱신한 뒤 후보를 검사한다. 통합 필수 check와 검토 기록을 보호 branch에 적용하고, 배포 job은 같은 source·binary·fixture·oracle identity의 V3 증거만 승격한다. 보호 설정·runner·artifact 접근 분리의 부정 시험이 끝나기 전에는 로컬 검증만 주장한다. 이 문서가 원격 설정이나 배포 권한을 변경하지 않는다.
+보호된 검증은 candidate가 oracle·runner 정책·최종 결과를 동시에 바꿀 수 없는 별도 job/권한으로 운영한다. candidate의 검사 코드 변경은 D2로 먼저 검토하고 보호된 기준을 갱신한 뒤 후보를 검사한다. 통합 필수 check와 검토 기록을 보호 branch에 적용하고, 배포 job은 같은 source·binary·fixture·oracle identity의 V3 증거만 승격한다. 보호 설정·runner·artifact 접근 분리의 부정 시험이 끝나기 전에는 로컬 검증만 주장한다.
 
 사내 배포 bundle과 인수 증거는 배포 후 최소 90일 보존하고 해결되지 않은 결함의 근거는 해결 후 90일까지 유지한다. 안정 릴리스 기준선과 호환 fixture는 해당 major의 지원·호환 의무가 끝날 때까지 보존한다. 현재 CI의 14일 artifact 보관은 공식 배포 증거 보관을 충족하지 않으므로 별도 보관 구현이 필요하다.
 

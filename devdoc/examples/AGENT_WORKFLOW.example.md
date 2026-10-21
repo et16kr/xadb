@@ -61,4 +61,3 @@ source/build/case/recipe 지문, 필수 witness·oracle, 자원 정리, 정보 �
 반례·국소 수정·독립 검증·재진입 기록과 AI pilot 절차는 [ai-development-method.md](../policies/ai-development-method.md)를 따른다.
 
 참고: [OpenAI의 Astra 작업 지침](https://learn.chatgpt.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra).
-이 템플릿은 OpenAI의 인증이나 무중단 보증이 아니다.

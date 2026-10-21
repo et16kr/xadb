@@ -30,7 +30,7 @@
 
 여기서 상용 DBMS 수준은 선언한 업무 범위에서 관계형 기능, 데이터 규모, 동시 실행, 장애 복구, 접속·보안, 운영 도구와 예측 가능한 성능을 함께 제공하는 수준을 뜻한다. 단일 인증 기준이나 모든 상용 제품 기능의 합집합을 뜻하지 않는다. 특정 제품과 동일한 SQL·ABI·내부 구현·성능을 약속하는 평가도 아니다.
 
-평가 대상은 [제품 방향](../plans/project-direction.md)의 Linux·Rust 기반 DISK 관계형 DBMS다. 메모리 전용·혼합 저장 제품 엔진은 범위 밖이며 버퍼 캐시, 질의 작업 메모리, snapshot pin과 자원 한도는 계속 필요하다. 최종 제품 범위와 완료 여부는 [기능 요구](../plans/product-requirements.md), [단계 완료 계약](../plans/stage-completion.json), 해당 소유 계약이 정한다. DEV9의 선언한 capability 인수와 모든 상용 DBMS 업무의 충족은 구별한다.
+평가 대상은 [제품 방향](../plans/project-direction.md)의 Linux·Rust 기반 DISK 관계형 DBMS다. 최종 제품 범위와 완료 여부는 [기능 요구](../plans/product-requirements.md), [단계 완료 계약](../plans/stage-completion.json), 해당 소유 계약이 정한다. DEV9의 선언한 capability 인수와 모든 상용 DBMS 업무의 충족은 구별한다.
 
 <a id="current-state"></a>
 ## 3. 현재 진행 상태와 남은 거리

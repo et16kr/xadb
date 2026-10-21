@@ -23,7 +23,7 @@
 
 기존 계획 위치 `crates/client`, `clients/jdbc`, `crates/odbc`를 따른다. C facade의 별도 FFI package 경계·실제 파일·platform 조립 의존은 D6-F03 구현 때 RB04/06으로 확정한다. 이번 설계로 빈 package·manifest·source fingerprint 경로를 추가하지 않는다. Rust/Java가 wire 구현을 각각 갖지만 field/값 의미의 정본은 DEV5 하나이며 literal conformance corpus를 공유한다. production encoder를 oracle decoder와 공유하지 않는다. 공통 계약 동결 후 Native/C·JDBC·ODBC·독립 검증 도구는 [병렬 개발 표](../plans/dev6-implementation-plan.md#parallel)의 선행 조건·소유 범위 안에서 동시에 개발할 수 있다. SC04→SC05→SC06의 실제 인수 순서는 유지한다.
 
-TCP SQL·TLS·password·원격 인증·Windows/macOS·pool/XA·failover·batch/array·LOB·CallableStatement·generated keys·scroll/update cursor·여러 active result·async public API는 후속 leaf다. 영구 제외나 구현 완료로 처리하지 않는다. 후속 type/SQL은 DEV7, remote 보안은 DEV5/COMM 확장, 안정 client→server 호환은 VERSION_RELEASE에서 인수한다. 로컬 driver를 위해 메모리 DBMS 엔진·혼합 저장·새 SQL dialect를 추가하지 않는다.
+TCP SQL·TLS·password·원격 인증·Windows/macOS·pool/XA·failover·batch/array·LOB·CallableStatement·generated keys·scroll/update cursor·여러 active result·async public API는 후속 leaf다. 영구 제외나 구현 완료로 처리하지 않는다. 후속 type/SQL은 DEV7, remote 보안은 DEV5/COMM 확장, 안정 client→server 호환은 VERSION_RELEASE에서 인수한다.
 
 <a id="protocol"></a>
 ## 2. 서버 수신 계약과 wire 경계

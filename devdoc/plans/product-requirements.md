@@ -4,7 +4,7 @@
 
 [제품 방향](project-direction.md) · [기능 정본](capability-inventory.json) · [작성 대상](feature-design-inventory.md)
 
-기존 개발 작업의 기능과 독립 인수 아이디어를 디스크 DBMS 범위로 검토해 유지했다. 각 항목은 XADB 기능 제안이며 특정 제품 전체 대체나 동일 SQL 지원을 의미하지 않는다. source 조사·leaf 명세·실제 구현·시험은 따로 기록한다.
+기존 개발 작업의 기능과 독립 인수 아이디어를 디스크 DBMS 범위로 검토해 유지했다. 각 항목은 XADB의 기능과 인수 조건을 제안한다. source 조사·leaf 명세·실제 구현·시험은 따로 기록한다.
 
 ## R01 SQL and relational execution
 

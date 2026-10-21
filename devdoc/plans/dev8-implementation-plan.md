@@ -203,4 +203,4 @@ bundle에는 source revision+dirty digest·clean export·binary/runtime/feature�
 
 OPS1은 SC12–15, RC-T24/25, PF08/14와 실제 기능별 DEV6/7/PART/NG 조합의 모든 필수 leaf를 만족해야 한다. F01–F10의 미동결, H1만 구현, online/incremental/M1 미실행, TLS/키/감사/provider 누락, 미측정 RPO/RTO·soak와 부정 checker는 전체 완료를 막는다. DEV7 R10의 보류를 이 단계 결과로 해제하지 않는다. 고객 릴리스·SLA는 별도 판단이다.
 
-문서 자동 검사는 [pre-push](../policies/documentation-policy.md#push-gate)에서만 수행한다. 이번 문서 작성 중에는 실행하지 않는다. 제품 코드·fixture·runner를 추가하지 않았으므로 제품 시험도 NOT_RUN이다.
+문서 검사는 [pre-push 규칙](../policies/documentation-policy.md#push-gate)을 따른다. 제품 시험의 실행 상태는 NOT_RUN이다.

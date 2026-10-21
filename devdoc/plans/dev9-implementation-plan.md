@@ -163,4 +163,4 @@ DEV8 기본 warmup60초·측정180초·10쌍 AB/BA, p99 최소 표본과 계측 
 
 SC16은 전체 leaf/variant 동결 전 NOT_RUN이다. SC17은 같은 candidate의 전체 required 셀/RunSlot·실제 CLIENT1/SQL_EXT1/OPS1/P1와 해당 global gate·현재 build 복구·운영·성능·R16이 완결되기 전 NOT_RUN이다. 공식 사내 배포에는 [DP06](../policies/development-policy.md#section-7)의 첫 대상·보호 release/V3·보존 의무를 추가 적용한다. 기존 stage status, evidence_refs=[], run_entrypoint=null은 이번 설계로 바꾸지 않는다. F01–F10·T01–T34·R2-V01–04·P01–P05는 계획이며 실행 결과가 아니다.
 
-현재 수정본의 독립 설계 검토와 채택 기록은 [2차 조사·검토](../evidence/dev9-source-research.md#review-002)에 둔다. DESIGN-001 당시 기록은 [최초 검토](../evidence/dev9-source-research.md#review)로 보존한다. 문서 검사는 pre-push 훅에서 실행하며 이번 편집 중 제품 시험·문서 검증기를 실행하지 않는다. 기존 DEV2/COMM 코드·실행 증거와 무관한 변경은 작업 범위 밖이다.
+현재 수정본의 독립 설계 검토와 채택 기록은 [2차 조사·검토](../evidence/dev9-source-research.md#review-002)에 둔다. DESIGN-001 당시 기록은 [최초 검토](../evidence/dev9-source-research.md#review)로 보존한다. 문서 검사는 [pre-push 규칙](../policies/documentation-policy.md#push-gate)을 따른다. 기존 DEV2/COMM 코드·실행 증거와 무관한 변경은 작업 범위 밖이다.

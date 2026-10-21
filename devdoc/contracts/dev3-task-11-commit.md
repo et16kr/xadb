@@ -155,7 +155,7 @@ transaction/publication·ATT/terminal·WAL writer를 바꾸는 부분은 하나�
 
 ## 8. 독립 인수·관측 설계
 
-아래 case는 앞으로 구현할 경로의 인수 명세이며 이번 문서 작성의 실행 결과가 아니다. 실제 cut의 도달 여부·source/binary/fixture·독립 expected history·시간/자원 한도를 먼저 고정한다. candidate의 자체 `synced=true`나 성공 문자열은 진단만 제공하며 controller가 실제 응답을 받았다는 증거를 대체하지 않는다.
+아래 case는 앞으로 구현할 경로의 인수 명세다. 실제 cut의 도달 여부·source/binary/fixture·독립 expected history·시간/자원 한도를 먼저 고정한다. candidate의 자체 `synced=true`나 성공 문자열은 진단만 제공하며 controller가 실제 응답을 받았다는 증거를 대체하지 않는다.
 
 | Case | 입력·독립 판정 | 연결 |
 | --- | --- | --- |

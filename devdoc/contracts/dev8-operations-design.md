@@ -9,7 +9,7 @@
 <a id="scope"></a>
 ## 1. 범위와 기존 계약의 관계
 
-DEV8은 디스크 기반 XADB의 복제·운영 복구·보안/관리·성능 인수를 구체화한다. R11–R15의 30개 필수 요구를 [배정표](../plans/dev8-implementation-plan.md#coverage)에 연결한다. Linux/Rust, 유한 buffer와 작업 메모리, 하위 계층부터의 구현, 독립 oracle, 현재 build의 반복 복구를 유지한다. resident database·혼합 저장 엔진은 도입하지 않는다. 공개 DBMS와 논문의 관측은 설계 입력이며 동일 SQL·wire·알고리즘·성능 보증이 아니다.
+DEV8은 디스크 기반 XADB의 복제·운영 복구·보안/관리·성능 인수를 구체화한다. R11–R15의 30개 필수 요구를 [배정표](../plans/dev8-implementation-plan.md#coverage)에 연결한다. Linux/Rust, 유한 buffer와 작업 메모리, 하위 계층부터의 구현, 독립 oracle, 현재 build의 반복 복구를 유지한다. 공개 DBMS와 논문의 관측은 설계 입력이며 동일 SQL·wire·알고리즘·성능 보증이 아니다.
 
 DEV3-DESIGN-003의 **in-place page, 단일 ordered WAL, 영속 UndoRef, WAL-before-page, steal/no-force, CLR, fuzzy checkpoint, bounded recovery 예약**이 저장 정본이다. DEV2 private/COW·root-only journal과 과거 L1/L2 제안을 DEV8의 물리 복제나 온라인 백업에 적용하지 않는다. DEV3 offline exact-cut backup은 그대로 유지하고 온라인 backup·archive·PITR를 별도 capability로 추가한다. ARIES의 이력 재실행·CLR·media recovery 원칙을 참고하되 XADB의 독립 undo-store와 공간 예약은 자체 계약이다.
 

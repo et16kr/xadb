@@ -197,6 +197,6 @@ driver 소유 quota·control reserve·FD/handle 상한 위반0, close 완료 뒤
 
 작업·client 계약·통합 담당은 `/root`다. 사용자 요청과 DP01 D2 위임 안에서 설계3문서, DEV5 수신 경계, 단계/완료 계약·작성 목록·색인을 수정했다. 추가 요청에 따라 PAR01–06의 병렬 가능 여부·선행 계약·파일 소유·합류·직렬 인수 순서를 표시했다. 진행 중인 engine/transport 코드·DEV3/4 설계·실행 보고서는 다른 작업 소유로 보존했다. 공유 문서는 최신 원문의 해당 DEV6 절만 반영했다. source checkout은 읽기만 했으며 코드/이력·외부 dependency를 가져오지 않았다.
 
-`/root/dev6_design_review`의 기본 설계·병렬 계획 독립 검토와 지적 수정 확인을 [조사 기록](../evidence/dev6-source-research.md#review)에 남기고 D2 설계를 채택했다. 실제 F01–F07 동결·모델·Rust/Java/C/ODBC 구현·B3 연동·성능·하위 회귀·CLIENT1은 모두 남아 있다. 이번 작업에서는 제품 시험이나 문서 자동 검사를 실행하지 않았다. 문서 자동 검사는 repository pre-push gate에서 적용한다.
+`/root/dev6_design_review`의 기본 설계·병렬 계획 독립 검토와 지적 수정 확인을 [조사 기록](../evidence/dev6-source-research.md#review)에 남기고 D2 설계를 채택했다. 실제 F01–F07 동결·모델·Rust/Java/C/ODBC 구현·B3 연동·성능·하위 회귀·CLIENT1은 모두 남아 있다. 문서 자동 검사는 repository pre-push gate에서 적용한다.
 
 후속 [DEV6-REVIEW-002](../contracts/dev6-client-design.md#review-002)는 사용자 리뷰·즉시 수정 요청에 따른 별도 보완이다. 현재 계획의 R2-V01–V06과 F01/F02/F04·C02·M01–M03 변경은 [새 조사·검토 기록](../evidence/dev6-source-research.md#review-002)에 귀속하며 최초 설계 검토 결과로 승인됐다고 간주하지 않는다. 제품 실행 상태는 계속 NOT_RUN이다.

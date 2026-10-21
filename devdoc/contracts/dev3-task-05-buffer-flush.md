@@ -4,7 +4,7 @@
 
 [공통 규칙](dev3-task-designs.md) · [구현 계획 3.05.1–3](../plans/dev3-implementation-plan.md#remaining-work) · [buffer 정본](disk-storage-design.md#buffer) · [batch 정본](disk-storage-design.md#doublewrite-batch) · [진행 정본](disk-storage-design.md#flush-progress) · [실제 구현](../implementation/dev3-implementation.md)
 
-이 문서는 XADB의 같은 저장 owner 안에서 clean page 읽기를 authoritative dirty frame과 영속 flush로 확장할 개발 명세다. bytes·형식·자원 수치의 정본을 바꾸지 않는다. 아래 논리 연산·상태는 설계 표기이며 새 Rust API가 이미 존재하거나 DWB 운영 권한이 채택되었다는 뜻이 아니다. 이번 작성에서는 제품 코드·시험·compiler·Clippy·문서 자동 검사를 실행하지 않는다.
+이 문서는 XADB의 같은 저장 owner 안에서 clean page 읽기를 authoritative dirty frame과 영속 flush로 확장할 개발 명세다. bytes·형식·자원 수치의 정본을 바꾸지 않는다. 아래 논리 연산·상태는 설계 표기이며 새 Rust API가 이미 존재하거나 DWB 운영 권한이 채택되었다는 뜻이 아니다.
 
 <a id="scope"></a>
 ## 1. 목적·선행·소유 경계

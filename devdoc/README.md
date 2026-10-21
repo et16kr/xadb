@@ -2,11 +2,11 @@
 
 2026-10-22 [push 전 Clippy 검사 보완](policies/documentation-policy.md#doc-004): 기존 fmt·문서 gate가 검출하지 못한 테스트 전용 lint 2건을 수정하고 Actions와 같은 Clippy 정적 검사를 추가한다. [관련 hook 시험2개·새 gate 회귀3개](implementation/dev3-implementation.md#allocation-lint-fix)의 제한 검증과 기존 미완료 인수를 구별한다.
 
-2026-10-22 [DEV3 단계별 필수 테스트·구현 동반 테스트 추가 계획](plans/dev3-test-plan.md): 중간 단계는 변경 기능의 필수 사례만 실행하고, 새 테스트·fixture·oracle는 구현과 함께 작성한다. 최신 사용자 지시에 따라 DEV3 최종 S5에서 전체 DEV3 inventory를 전수 실행하며, 장시간·대규모·전체 조합은 그 최종 인수에 배정한다. 이번에는 계획만 작성하고 제품·테스트 코드를 실행하지 않는다.
+2026-10-22 [DEV3 단계별 필수 테스트·구현 동반 테스트 추가 계획](plans/dev3-test-plan.md): 중간 단계는 변경 기능의 필수 사례만 실행하고, 새 테스트·fixture·oracle는 구현과 함께 작성한다. 최신 사용자 지시에 따라 DEV3 최종 S5에서 전체 DEV3 inventory를 전수 실행하며, 장시간·대규모·전체 조합은 그 최종 인수에 배정한다.
 
-2026-10-22 [DEV3 16개 작업별 개발 상세 명세·설계도](contracts/dev3-task-designs.md): 각 작업의 요구·입출력/소유·상태/처리 순서·오류/복구·자원·하위 개발 단위·독립 인수를 개별 문서로 작성한다. 기존 owner 계약과 현재 미완료 상태를 유지하며 제품 개발·시험 재개 기록은 아니다.
+2026-10-22 [DEV3 16개 작업별 개발 상세 명세·설계도](contracts/dev3-task-designs.md): 각 작업의 요구·입출력/소유·상태/처리 순서·오류/복구·자원·하위 개발 단위·독립 인수를 개별 문서로 작성한다.
 
-2026-10-22 [DEV3 잔여 작업 계획 보완](plans/dev3-implementation-plan.md#remaining-work): 16개 분류에 선행 공급·완료 조건·인수 연결을 추가했다. [작업 크기·우선순위·병렬 운영](plans/dev3-implementation-plan.md#work-organization)은 큰 묶음의 추가 분해, 5개 우선 실행 묶음과 총괄1·작업2·독립검토1의 초기 배치를 정한다. 예약·취소의 미완료 검증과64KiB 증명, effect 전 F05, 복구 장벽8개를 유지한다. 실제 제품 개발·병렬 배정·시험을 재개한 기록은 아니며 [현재 상태](implementation/dev3-implementation.md#dev3-work-breakdown)와 전체 DEV3 미완료를 유지한다.
+2026-10-22 [DEV3 잔여 작업 계획 보완](plans/dev3-implementation-plan.md#remaining-work): 16개 분류에 선행 공급·완료 조건·인수 연결을 추가했다. [작업 크기·우선순위·병렬 운영](plans/dev3-implementation-plan.md#work-organization)은 큰 묶음의 추가 분해, 5개 우선 실행 묶음과 총괄1·작업2·독립검토1의 초기 배치를 정한다. 예약·취소의 미완료 검증과64KiB 증명, effect 전 F05, 복구 장벽8개를 유지한다. 구현·인수 현황은 [현재 상태](implementation/dev3-implementation.md#dev3-work-breakdown)를 따른다.
 
 2026-10-21 [DEV3 페이지 예약·취소 부분 구현 및 중단](implementation/dev3-implementation.md#allocation-reservation-partial): 메모리 포트의 새 경로와 검토 수정만 제한 검증했다. native/compiler·변경 WAL 관련4시험·전체 단위 인수는 남겨 두고 사용자 요청으로 중단한다. [하부 작업 16개 분류 초안](implementation/dev3-implementation.md#dev3-work-breakdown)으로 진행·잔여 범위를 구분한다.
 
@@ -56,7 +56,7 @@
 
 2026-10-20 [DEV2 성능 후속 실행](implementation/dev2-implementation.md#dev2-performance-followup-20261020): 준비한 9개 campaign·180개 run의 정답 검사와 재현을 완료했다. PF12 국소 개선과 PF13 재현 기능은 개별 검증 완료이며, PF04의 네 campaign 비용 한도 FAIL로 DEV2 전체 인수는 미완료다.
 
-**Markdown 중심으로 관리합니다. HTML은 생성하지 않습니다.** 현재 DEV0·DEV1 최소 기반, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog substrate를 부분 구현했습니다. 후속 streaming controller·catalog 재현과 K0 성능 진단·audit/replay를 포함한 이전 소스에서 DEV0·DEV1 회귀 및 DEV2 P0/K0 leaf를 로컬 검증했습니다. 이 결과는 현재 소스의 검증을 대신하지 않습니다. 최초 성능 비교의 p99 비용 한도는 FAIL이며 성능 인수는 미완료입니다. K1–K5 영속 커널은 구현 연결·독립 정적 검토를 마쳤으며, 동결 소스에서 복구·V3·하위 회귀의 로컬 실행을 완료했습니다. 일부 계측 비용 한도 실패로 최종 인수는 미완료입니다. 후속 제품 인수는 미완료입니다. 정확한 범위는 [현재 구현](implementation/README.md)과 [개발 단계](plans/development-stages.md)를 확인합니다.
+현재 DEV0·DEV1 최소 기반, DEV2 P0 독립 이력 oracle와 K0 volatile 행·catalog substrate를 부분 구현했습니다. 후속 streaming controller·catalog 재현과 K0 성능 진단·audit/replay를 포함한 이전 소스에서 DEV0·DEV1 회귀 및 DEV2 P0/K0 leaf를 로컬 검증했습니다. 이 결과는 현재 소스의 검증을 대신하지 않습니다. 최초 성능 비교의 p99 비용 한도는 FAIL이며 성능 인수는 미완료입니다. K1–K5 영속 커널은 구현 연결·독립 정적 검토를 마쳤으며, 동결 소스에서 복구·V3·하위 회귀의 로컬 실행을 완료했습니다. 일부 계측 비용 한도 실패로 최종 인수는 미완료입니다. 후속 제품 인수는 미완료입니다. 정확한 범위는 [현재 구현](implementation/README.md)과 [개발 단계](plans/development-stages.md)를 확인합니다.
 
 2026-10-19 [DEV2 남은 시험 실행](implementation/dev2-implementation.md#dev2-tests-20261019): 동결 source에서 영속 native 99셀, 9개 30분 target, P0 전수 9,604,608건과 하위 회귀를 완료했다. 성능 후보의 개선 확인과 일부 계측 비용 한도 FAIL을 구분하며 DEV2 전체 인수는 미완료다.
 

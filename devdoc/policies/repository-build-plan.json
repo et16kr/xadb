@@ -793,7 +793,7 @@
         "tests",
         "devdoc"
       ],
-      "note": "전체 대체 인수. 별도 거대 대체 engine crate는 만들지 않음"
+      "note": "선언한 제품 기능·운영·성능 인수. 기존 제품 패키지와 시험 도구를 사용"
     },
     {
       "stage_ref": "COMM",
@@ -898,7 +898,7 @@
     {
       "id": "RB06",
       "before": "후속 crate 분리·구성 요소 추가 전",
-      "decision": "의존 DAG·공개 경계·전체 대체 leaf를 검토. 모듈마다 crate를 기계적으로 만들지 않음"
+      "decision": "의존 DAG·공개 경계·제품 인수 단위를 검토. 모듈마다 crate를 기계적으로 만들지 않음"
     },
     {
       "id": "RB07",

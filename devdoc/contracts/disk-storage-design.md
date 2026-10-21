@@ -13,7 +13,7 @@
 <a id="scope"></a>
 ## 1. 범위와 대체 관계
 
-사용자가 선행 리뷰 보완 뒤 COW pack/GC의 재설계를 요청했다. [DEV3-REVIEW-002](#review-followup)를 먼저 검토·반영했고, 이어 **mutable disk page + 단일 WAL + 영속 undo + bounded dirty buffer**를 선택한다. 제품 저장 엔진은 DISK 하나이며 resident/mixed 엔진은 추가하지 않는다. 기존 DEV0/1·DEV2 P0/K0 구현과 실행 증거를 바꾸지 않는다. DEV2 영속 구현·잔여 인수는 [현재 DEV2 기록](../implementation/dev2-implementation.md)을 따르며, DEV3 page 기반 영속 경로는 미구현이다.
+사용자가 선행 리뷰 보완 뒤 COW pack/GC의 재설계를 요청했다. [DEV3-REVIEW-002](#review-followup)를 먼저 검토·반영했고, 이어 **mutable disk page + 단일 WAL + 영속 undo + bounded dirty buffer**를 선택한다. 제품 저장 엔진은 [제품 방향](../plans/project-direction.md)에 따라 DISK 하나로 개발한다. 기존 DEV0/1·DEV2 P0/K0 구현과 실행 증거를 바꾸지 않는다. DEV2 영속 구현·잔여 인수는 [현재 DEV2 기록](../implementation/dev2-implementation.md)을 따르며, DEV3 page 기반 영속 경로는 미구현이다.
 
 DEV3-DESIGN-003은 DEV3-DESIGN-001의 COW tree·sealed pack·root closure GC·전체 재작성 compaction·page-before-commit·root-only disk recovery를 대체한다. DEV3-PARALLEL-001의 pack/COW 작업 분할도 새 계획으로 대체한다. DEV2의 private/COW substrate·AXF1 한 거래 frame·exact checkpoint는 **DEV2 전용 기준선**으로 남으며 DEV3 page 경로에 적용하지 않는다. 상위 계약의 불변 CommittedRoot는 DEV3에서는 논리 snapshot/commit frontier를 뜻한다. mutable page 내용의 불변성이나 root graph 보존을 요구하지 않는다.
 

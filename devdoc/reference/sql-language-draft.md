@@ -12,7 +12,7 @@
 
 ## 1 범위와 표기
 
-현재 구현된 DEV1 타입·codec은 SQL parser나 저장 엔진이 아니다. 아래 예제의 기대 결과는 명세를 위한 수작업 기대값이며 실행 결과가 아니다. 구문을 구현할 때 parser뿐 아니라 실제 DISK 저장·거래·오류·복구 경로와 연결해 검증한다.
+아래 예제의 기대 결과는 명세를 위한 수작업 기대값이며 실행 결과가 아니다. 구문을 구현할 때 parser뿐 아니라 실제 DISK 저장·거래·오류·복구 경로와 연결해 검증한다.
 
 초기 범위는 CREATE/DROP TABLE, CREATE/DROP INDEX, SELECT, INSERT, UPDATE, DELETE, BEGIN, COMMIT, ROLLBACK과 autocommit 제어다. join·subquery·집계·window·DISTINCT·CTE·UNION·함수·산술식·암묵 cast·명시 SAVEPOINT·ALTER·외래 키·CHECK·PSM·partition SQL은 이 초안의 실행 범위 밖이다. 후속 기능 요구에서 삭제하는 것은 아니다.
 
@@ -188,7 +188,7 @@ OFF에서는 트랜잭션이 없을 때 첫 SELECT/DML이 트랜잭션을 시작
 
 ## 7 예제와 기대 결과
 
-모든 사례는 **PLANNED_NOT_RUN**이다. 별도 언급이 없으면 다음 fixture를 새로 구성한 독립 사례이며, 각 actor는 autocommit ON·활성 트랜잭션 없음 상태의 새 세션에서 시작한다. DISK에서 같은 논리 결과를 확인해야 한다. STORAGE 치환은 저장·복구 시험을 실행했다는 뜻이 아니다.
+모든 사례는 **PLANNED_NOT_RUN**이다. 별도 언급이 없으면 다음 fixture를 새로 구성한 독립 사례이며, 각 actor는 autocommit ON·활성 트랜잭션 없음 상태의 새 세션에서 시작한다. DISK에서 같은 논리 결과를 확인해야 한다.
 
 <!-- sql-example: SQL-01 -->
 **문법 제안·실행 미검증**

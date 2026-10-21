@@ -4,7 +4,7 @@
 
 [공통 규칙](dev3-task-designs.md) · [구현 계획](../plans/dev3-implementation-plan.md#remaining-work) · [undo 정본](disk-storage-design.md#undo) · [참조 수명](disk-storage-design.md#undo-lifecycle) · [rollback 정본](disk-storage-design.md#commit) · [실제 구현](../implementation/dev3-implementation.md)
 
-이 작업은 영속 undo/status를 변경 그룹에 연결하고, 현재 tree에서 대상을 다시 찾아 논리 undo를 redo-only CLR로 적용하며, statement mark 또는 전체 거래의 종료까지 진행한다. 형식·guard·자원표의 미동결 부분을 새 API나 정상 효과로 승인하지 않는다. 이번 문서 작성은 제품 구현·시험·compiler·Clippy·문서 자동 검사 실행이 아니다.
+이 작업은 영속 undo/status를 변경 그룹에 연결하고, 현재 tree에서 대상을 다시 찾아 논리 undo를 redo-only CLR로 적용하며, statement mark 또는 전체 거래의 종료까지 진행한다. 형식·guard·자원표의 미동결 부분을 새 API나 정상 효과로 승인하지 않는다.
 
 <a id="scope"></a>
 ## 1. 목적·선행·책임
@@ -220,7 +220,7 @@ statement mark 복귀 뒤에도 이미 쓴 WAL/CLR, 완료 SMO, 아직 회수되
 <a id="acceptance"></a>
 ## 9. 독립 인수 case
 
-모두 앞으로 구현할 명세이며 이번 문서의 제품 실행 결과는 **NOT_RUN**이다. reference graph는 edge의 set이 아닌 role을 가진 multiset, status graph와 before values, transaction chain과 statement mark를 별도로 계산한다. production undo/CLR codec·replay의 결과를 oracle로 재사용하지 않는다. model·메모리 port·실제 thread·Linux I/O/reopen 증거를 구분한다.
+다음 case의 실행 상태는 **NOT_RUN**이다. reference graph는 edge의 set이 아닌 role을 가진 multiset, status graph와 before values, transaction chain과 statement mark를 별도로 계산한다. production undo/CLR codec·replay의 결과를 oracle로 재사용하지 않는다. model·메모리 port·실제 thread·Linux I/O/reopen 증거를 구분한다.
 
 | case ID | 독립 입력·반례 | 기대 결과 | 연결 |
 | --- | --- | --- | --- |

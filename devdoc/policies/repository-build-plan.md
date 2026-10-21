@@ -29,7 +29,7 @@
 
 ## 2. 배치의 책임
 
-공통 의미와 OS 효과, kernel과 SQL, production과 독립 oracle를 구분한다. 저장·거래·로그·복구는 초기에는 하나의 engine crate 안의 소유 모듈로 연결하고 실제 독립 경계가 생길 때 분리한다. 기존 개발 코드의 이관이며 특정 외부 구현과 동일한 계층이라고 주장하지 않는다.
+공통 의미와 OS 효과, kernel과 SQL, production과 독립 oracle를 구분한다. 저장·거래·로그·복구는 초기에는 하나의 engine crate 안의 소유 모듈로 연결하고 실제 독립 경계가 생길 때 분리한다.
 
 <a id="section-3"></a>
 
@@ -239,7 +239,7 @@ DISK는 물리 저장 방식만 분리한다. 공통 RowUID, snapshot, catalog, 
 | DEV6 | crates/client, clients/jdbc, crates/odbc | native → JDBC → ODBC |
 | DEV7 | crates/sql, crates/foundation | 기능에 따라 저장·server도 확장. 전체 leaf 검토 후 package 분리 |
 | DEV8 | crates/replication, benches, packaging | 복제·PITR·운영·장시간 검증. 기본 진단은 하위 단계부터 |
-| DEV9 | tests, devdoc | 전체 대체 인수. 별도 거대 대체 engine crate는 만들지 않음 |
+| DEV9 | tests, devdoc | 선언한 제품 기능·운영·성능 인수. 기존 제품 패키지와 시험 도구를 사용 |
 | COMM | crates/transport | engine 없이 독립 검증 |
 | PART | crates/engine/src/storage/partition | DEV3 뒤 구현 |
 | NG | crates/engine/src/storage/index/global | PART 뒤 구현. SQL 기능 검증은 별도로 DEV5 필요 |
@@ -269,7 +269,7 @@ DISK는 물리 저장 방식만 분리한다. 공통 RowUID, snapshot, catalog, 
 
 DEV1 검사는 DEV0 회귀와 production foundation/platform의 실제 연결을 포함한다. 후속 checker도 하위 회귀·독립 build·실제 integration을 포함하되, 테스트 수와 실행 명령을 먼저 발명하지 않는다. default, test-instrumented, release에서 같은 의미 계약을 검사하고, release 기능 조합은 첫 사내 배포 전에 확정한다. 미래 feature를 추가하면 `--all-features`가 모든 지원 조합을 대표하는지 재검토한다.
 
-기존 `sure/release`, 재귀 Make, `build_all`의 clean+build, 환경별 절대 경로·전역 include 관행을 그대로 옮기지 않는다. Cargo가 manifest DAG로 증분 빌드 순서를 결정하고 단계 checker가 검증 순서를 소유한다. 문서는 Markdown으로 관리하며 HTML 생성 경로는 사용하지 않는다.
+기존 `sure/release`, 재귀 Make, `build_all`의 clean+build, 환경별 절대 경로·전역 include 관행을 그대로 옮기지 않는다. Cargo가 manifest DAG로 증분 빌드 순서를 결정하고 단계 checker가 검증 순서를 소유한다. 문서 형식과 검사는 [문서 운영 기준](documentation-policy.md)을 따른다.
 
 현재 실행 소스 fingerprint와 clean export는 `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, `crates`, `tests`, `scripts`, `.github`를 포함한다. 새 `clients/`, `benches/`, `packaging/` 등 실행 입력 루트를 도입할 때 **`scripts/check_dev0.py`, `crates/testing/controller/build.rs`, clean-export 목록, `devdoc/verify_documents.py`의 증거 identity 범위**를 함께 갱신한다. 새 루트의 코드가 증거 hash에서 빠진 상태로 검증 완료를 주장하지 않는다. 설계 Markdown/JSON은 별도 문서 지문으로 검증한다.
 
@@ -279,7 +279,7 @@ DEV1 검사는 DEV0 회귀와 production foundation/platform의 실제 연결을
 
 첫 사내 배포의 qualification 대상·release profile·panic·feature·패키지·증거 보관·보호 승격 방침은 [개발 운영 방침 DP06](development-policy.md)으로 채택했다. Ubuntu 24.04/x86_64/ext4를 최초 대상에 한정하며, 정확한 image/kernel/device identity·recipe와 실제 검증은 배포 작업에서 완성한다. 현재 Cargo profile·CI 설정이 이 계획으로 변경되거나 지원 qualification을 통과한 상태는 아니다.
 
-현재 `.github/workflows/dev0.yml`은 push/PR에서 `python3 scripts/check_dev1.py`를 실행하고 `artifacts/`를 보존하도록 작성되어 있다. 원격 실행·branch protection·보호 oracle 승격은 미검증이다. 이번에는 CI를 실행하거나 이름을 변경하지 않는다. 후속 CI는 독립 package 검사, 현재 단계 통합, release/profile 조합, 문서 검증을 각각 증거로 남기며 해당 경로가 준비될 때 추가한다.
+현재 `.github/workflows/dev0.yml`은 push/PR에서 `python3 scripts/check_dev1.py`를 실행하고 `artifacts/`를 보존하도록 작성되어 있다. 원격 실행·branch protection·보호 oracle 승격은 미검증이다. 후속 CI는 독립 package 검사, 현재 단계 통합, release/profile 조합, 문서 검증을 각각 증거로 남기며 해당 경로가 준비될 때 추가한다.
 
 로컬 push 제약은 [DOC-002·DOC-003·DOC-004](documentation-policy.md#push-gate)의 `scripts/git-hooks/pre-push`와 `scripts/check_push.py`로 구현한다. 기존 `scripts` fingerprint/clean-export 루트 안에 배치한다. 실제 pushed ref tip commit의 임시 export에서 `cargo fmt --all --check`, Actions와 같은 workspace/target/feature 범위의 Clippy, 문서 검사를 순서대로 실행하며 편집·commit 검사를 추가하지 않는다. Clippy는 테스트 코드를 정적 검사하며 기능 시험은 실행하지 않는다. [관리 JSON](repository-build-plan.json)의 `pre_push_gate`가 같은 진입점을 색인한다. `scripts/test_check_push.py`는 임시 로컬 remote에 대한 훅 자체의 회귀다. 로컬 훅과 원격 CI/보호 설정은 별도다.
 
@@ -297,7 +297,7 @@ DEV1 검사는 DEV0 회귀와 production foundation/platform의 실제 연결을
 | RB03 | 첫 사내 배포 전 | DP06의 채택 환경·release 방침을 구현. 정확한 image/kernel/device identity, capability별 feature 목록·설치 recipe·보호 승격과 실제 qualification 증거 확정 |
 | RB04 | DEV6 구현 전 | native ABI/FFI 소유권, JDBC 빌드 도구/JDK, ODBC driver manager와 패키징 |
 | RB05 | 실행 입력 루트·generator 추가 전 | source fingerprint·build identity·clean export·문서의 증거 identity 범위를 함께 확장. generator 입력·version 기록 |
-| RB06 | 후속 crate 분리·구성 요소 추가 전 | 의존 DAG·공개 경계·전체 대체 leaf를 검토. 모듈마다 crate를 기계적으로 만들지 않음 |
+| RB06 | 후속 crate 분리·구성 요소 추가 전 | 의존 DAG·공개 경계·제품 인수 단위를 검토. 모듈마다 crate를 기계적으로 만들지 않음 |
 | RB07 | 새 OS 지원 결정 시 | 파일 영속화·잠금·시간·대기/취소 계약과 OS/CPU/FS 조합, 실제 복구·회귀·패키징·CI 증거를 확정. 컴파일 성공만으로 지원 선언 금지 |
 
 위 항목은 배치 정책의 미결정이 아니라 각 구현·배포 단계의 선행 입력이다. 새 crate가 필요하면 책임/공개 경계·역방향 의존 금지·독립 fixture·integration·실행 입력 hash를 함께 검토하고 이 Markdown/JSON을 같은 변경에서 수정한다.

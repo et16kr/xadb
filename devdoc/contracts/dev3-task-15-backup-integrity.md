@@ -159,7 +159,7 @@ PF09에는 audit page/edge 방문·재순회 수·read bytes/시간, 정상 open
 
 ## 8. 독립 인수 case
 
-이번 문서 작성은 제품·시험 실행이 아니다. 다음 case별 source/diff·고정 입력·실제 cut·예상 결과와 자원/시간 상한을 구현 전에 정한다. 변경 없는 하위 codec/회귀 전체를 반복하지 않고 새 audit/backup/restore 경로와 그 경로의 남은 의무를 선택한다.
+다음 case별 source/diff·고정 입력·실제 cut·예상 결과와 자원/시간 상한을 구현 전에 정한다. 변경 없는 하위 codec/회귀 전체를 반복하지 않고 새 audit/backup/restore 경로와 그 경로의 남은 의무를 선택한다.
 
 | Case | 입력·필수 판정 | 연결 |
 | --- | --- | --- |

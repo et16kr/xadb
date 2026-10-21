@@ -19,7 +19,7 @@
 
 단계 DAG의 DEV7 진입은 DEV4 그대로다. 순수 의미 설계·독립 vector 준비에 DEV5/6 전체를 요구하지 않지만 server/driver/외부 효과를 인수할 때는 실제 공급이 필요하다. 실행 순서와 task 의존성은 [계획](../plans/dev7-implementation-plan.md#sequence)을 따른다.
 
-Linux·Rust·단일 DISK 제품 엔진, [DEV3 in-place/WAL/영속 undo](disk-storage-design.md), [DEV4](dev4-sql-design.md)의 미인용 이름 대문자·SQL 빈 text 입력 NULL·기본 SERIALIZABLE·DDL 전 commit 경계, [DEV5](dev5-server-design.md)의 요청/권한/UNKNOWN, [DEV6](dev6-client-design.md)의 수명/오류를 유지한다. 메모리 전용 테이블·혼합 저장 엔진·기존 DBMS 전체 호환은 도입하지 않는다. query workspace·spill·buffer·cache는 필요하다.
+Linux·Rust·단일 DISK 제품 엔진, [DEV3 in-place/WAL/영속 undo](disk-storage-design.md), [DEV4](dev4-sql-design.md)의 미인용 이름 대문자·SQL 빈 text 입력 NULL·기본 SERIALIZABLE·DDL 전 commit 경계, [DEV5](dev5-server-design.md)의 요청/권한/UNKNOWN, [DEV6](dev6-client-design.md)의 수명/오류를 유지한다. query workspace·spill·buffer·cache는 필요하다.
 
 현재-build fresh fixture에서 format/type/protocol profile을 새로 동결한다. 안정 릴리스의 이전 버전 호환은 [버전 정책](../policies/version-compatibility-policy.json)의 별도 의무다. DEV2 volatile 결과나 현재 미커밋 코드·문서 채택으로 S1/Q1/CLIENT1 완료를 추정하지 않는다.
 

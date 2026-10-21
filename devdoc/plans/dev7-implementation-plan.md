@@ -197,7 +197,7 @@ DP03의 V2 64 seeds×최대128 operations, V3 256×최대1,024를 적용하고 �
 
 workload cell당 warmup30초·측정60초를 기본으로 최소10쌍 AB/BA 교대한다. p99는 각 run10,000개 이상 완료 operation을 확보하며 부족하면 NOT_ESTIMABLE·인수 미완료로 남기고 사전 profile을 D2로 확장한다. LOB/XA 긴 operation도 짧은 표본의 최대값을 p99로 포장하지 않는다. raw timestamp·count·분포·paired CI 계산법을 고정하고 noise가 크면 더 측정한다. 결과가 유리한 workload만 선택하지 않는다. 기능 때문에 필요한 spill/2PC는 단순 구현보다 빨라야만 채택하는 대상이 아니며, 그 비용과 현재 한도 안의 정상 진행을 별도 보고한다.
 
-하위 DEV0/DEV1/현재 DEV2 검사와 해당 시점의 실제 S1/Q1/B3/C1/CLIENT1/PART/NG runner를 입력 manifest로 연결한다. 아직 없는 실행 명령을 성공한 것처럼 적지 않는다. 문서 자동 검사는 [pre-push](../policies/documentation-policy.md#push-gate)에서만 수행하며 이번 설계 편집 중에는 실행하지 않는다.
+하위 DEV0/DEV1/현재 DEV2 검사와 해당 시점의 실제 S1/Q1/B3/C1/CLIENT1/PART/NG runner를 입력 manifest로 연결한다. 아직 없는 실행 명령을 성공한 것처럼 적지 않는다. 문서 검사는 [pre-push 규칙](../policies/documentation-policy.md#push-gate)을 따른다.
 
 <a id="completion"></a>
 ## 8. 완료 증거와 남은 상태

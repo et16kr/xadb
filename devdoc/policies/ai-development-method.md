@@ -23,7 +23,7 @@ AI에게 개발을 맡길 수 있으려면 문제, 변경 범위, 실패 증거,
 | [OpenAI: Evaluation best practices](https://developers.openai.com/api/docs/guides/evaluation-best-practices) | task-specific 평가를 일찍 시작하고 실제 분포·사람의 판단과 연결 | 명세 오류는 전문가 review, 재현·불변식은 결정적 검사. 한 점수로 correctness를 상쇄하지 않음 |
 | [Anthropic: Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) | 환경 초기화와 점진적 기능 작업, 진행 기록, 실행 검증의 중요성 | 깨끗한 시작·작은 변경·재진입 smoke. 웹 앱 사례의 효과를 DB에 그대로 일반화하지 않고 XADB pilot에서 검증 |
 
-위 자료는 DB 개발 완료율이나 보안 무중단을 보증하지 않는다. 아래 작업 절차의 채택과 커널·진단·보호 검증 기반의 구현·실행 상태는 별개다. 커널 설계의 승인 범위는 해당 소유 계약을 따른다.
+아래 작업 절차의 채택과 커널·진단·보호 검증 기반의 구현·실행 상태는 별개다. 커널 설계의 승인 범위는 해당 소유 계약을 따른다.
 
 **서비스 의존성 주의:** 2026-10-18 확인한 공식 공지에 따르면 OpenAI Evals 플랫폼은 2026-10-31 읽기 전용 전환, 2026-11-30 dashboard/API 종료 예정이다. 평가 방법론은 참고하되 해당 서비스에 신규 필수 의존성을 만들지 않는다. XADB의 task corpus와 결과는 자체 versioned 파일로 보존하고 모델 실행은 교체 가능한 adapter로 연결한다. [OpenAI deprecations](https://developers.openai.com/api/docs/deprecations)
 
@@ -112,7 +112,7 @@ product FAIL 뒤 cleanup ERROR가 발생해도 제품 결함을 지우지 않는
 
 Astra와 Luna 역할은 작업 시작 전 corpus 성능과 비용으로 배정한다. 정상 tool 실패·일시적 인프라 장애·제품 테스트 실패는 각 유형의 복구 절차를 사용한다. **정책/안전 중단이나 원인 불명 중단을 Luna 자동 전환으로 계속 실행하지 않는다.** 필요한 경우 중단 이유를 확인하고 원래 작업을 승인된 정상 개발 절차로 재설계한다. 파일에만 쓰고 나중에 다른 모델에게 읽히는 방식도 안전 경계를 우회하는 해결책이 아니다.
 
-중단 예방은 measurable 목표다. OpenAI의 특정 승인 경로가 영구 무중단을 보증한다는 주장은 하지 않는다. 과거 Astra/Luna 차이가 모델 정책, 문맥, 도구 동작 중 무엇 때문이었는지는 실제 통지·trace 없이 단정할 수 없다. 기존 보고서의 [실행 설계](../reference/architecture-overview.md#execution-design)와 [모델 역할](../reference/architecture-overview.md#agent-routing)을 유지한다.
+중단 예방은 measurable 목표다. 과거 Astra/Luna 차이가 모델 정책, 문맥, 도구 동작 중 무엇 때문이었는지는 실제 통지·trace 없이 단정할 수 없다. 기존 보고서의 [실행 설계](../reference/architecture-overview.md#execution-design)와 [모델 역할](../reference/architecture-overview.md#agent-routing)을 유지한다.
 
 <a id="section-7"></a>
 

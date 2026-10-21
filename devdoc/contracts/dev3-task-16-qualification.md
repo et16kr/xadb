@@ -110,6 +110,6 @@ Serializable 같은 table false conflict를 허용하더라도 충돌률/재시�
 
 증거 대응표는 `의무 ID / 사례·변형 / 실제 source·binary·fixture / 마지막 실행 범위·원래 결과 / 이후 관련 diff / 신규 실행 필요 여부·이유 / 독립 검토 / 남은 의무`를 갖는다. 재사용한 과거 결과는 그대로 표시한다. root fingerprint만 달라진 경우 source의 관련 경로를 대조하고 무변경 case를 재실행하지 않는다. 새로운 연결 코드에는 그 연결을 검증하는 case를 선택한다.
 
-제품 코드를 수정하지 않는 이번 작업에서는 제품 시험·compiler/Clippy·문서 verifier를 실행하지 않는다. 문서 검사는 push gate에서 수행한다. 원본 FAIL·중단 receipt를 수정하거나 omitted case를 새 PASS로 만드는 집계는 금지한다.
+문서 검사는 push gate에서 수행한다. 원본 FAIL·중단 receipt를 수정하거나 omitted case를 새 PASS로 만드는 집계는 금지한다.
 
-완료를 선언하려면 실제 DS/KU/RC/PF 의무를 모두 추적하고, source별 적용 범위·변경 경로 증거·검토 결과·정상/거절/미실행 분모를 명확히 해야 한다. 단순 완료 문서 수/16, 모델 case 수, 코드량으로 진행률을 만들지 않는다. 이 문서의 작성 완료는 전체 DEV3나 제품 S1의 완료가 아니다.
+완료를 선언하려면 실제 DS/KU/RC/PF 의무를 모두 추적하고, source별 적용 범위·변경 경로 증거·검토 결과·정상/거절/미실행 분모를 명확히 해야 한다. 단순 완료 문서 수/16, 모델 case 수, 코드량으로 진행률을 만들지 않는다.

@@ -395,7 +395,7 @@ native 캠페인 첫 회는 4개 시험·33개 case와 controller 소유권 부�
 
 ### 다른 DBMS와 대조한 책임
 
-공개 자료는 리뷰 질문의 근거이며 XADB와 같은 구현·SQL·성능이라는 주장이 아니다. 로컬 checkout은 읽기 전용으로 사용했고 아래 실제 HEAD와 clean worktree를 확인했다. resident/mixed-storage 제품 엔진을 도입하지 않는다.
+공개 자료는 리뷰 질문의 근거이며 XADB와 같은 구현·SQL·성능이라는 주장이 아니다. 로컬 checkout은 읽기 전용으로 사용했고 아래 실제 HEAD와 clean worktree를 확인했다.
 
 | 자료·실제 revision | 읽은 경계·XADB 적용 |
 | --- | --- |

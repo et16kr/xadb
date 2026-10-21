@@ -35,7 +35,7 @@ ACK는 선언한 fault model에서 complete durable commit을 뜻한다. commit 
 <a id="section-5"></a>
 ## 5. 공개·호환
 
-개발 버전은 새 DB·fixture를 사용한다. 연구용 소스 공개에는 실제 상태와 제약을 명시한다. 안정 릴리스의 이전 형식·SQL·client 호환 기준선은 [버전 정책](../policies/version-compatibility-policy.json)으로 별도 선언한다. 개발 저장소는 공개하지만 안정 배포·운영 인수 시험은 이번 이관으로 완료되지 않는다.
+개발 버전은 새 DB·fixture를 사용한다. 연구용 소스 공개에는 실제 상태와 제약을 명시한다. 안정 릴리스의 이전 형식·SQL·client 호환 기준선은 [버전 정책](../policies/version-compatibility-policy.json)으로 별도 선언한다.
 
 <a id="section-7"></a>
 ## 7. D0의 일곱 경계

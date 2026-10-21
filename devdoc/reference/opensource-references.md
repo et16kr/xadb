@@ -1,12 +1,12 @@
 # 공개 DBMS 참고 자료
 
-2026-10-18 · **XADB의 향후 비교·연구 입력 / 코드 도입·제품 호환·성능 검증 아님**
+2026-10-18 · **XADB의 비교·연구용 소스와 문서 목록**
 
 ## 로컬 소스 경로
 
 현재 작업 환경에는 아래 10개 저장소를 `/home/et16/work` 아래에 복제했다. XADB 루트 `/home/et16/work/xadb`에서는 각각 `../postgres`, `../mariadb`와 같은 형제 디렉터리다. 다른 환경에서는 같은 공식 저장소의 checkout 위치를 확인해 사용한다. 이 경로는 연구용이며 XADB의 빌드 의존성이나 필수 검증 입력이 아니다.
 
-`소스 진입점`은 각 checkout 루트 기준 상대 경로다. 해당 경로의 존재를 확인했으며 전체 구현 분석이나 비교 시험을 완료했다는 뜻은 아니다. 기능 작업에 필요한 책임부터 선택해 읽는다.
+`소스 진입점`은 각 checkout 루트 기준 상대 경로다. 기능 작업에 필요한 책임부터 선택해 읽는다.
 
 | 대상 | 로컬 절대 경로 | 공식 소스 | 검토할 책임·소스 진입점 |
 | --- | --- | --- | --- |
@@ -58,7 +58,7 @@ git -C /home/et16/work/cubrid status --short
 | WiredTiger | [Transactions](https://source.wiredtiger.com/develop/arch-transaction.html), [소스](https://github.com/wiredtiger/wiredtiger) | 직접 storage API, transaction/checkpoint와 자원 관리의 비교 후보 |
 | toyDB | [공식 저장소](https://github.com/erikgrinaker/toydb) | 이해 가능한 Rust SQL DBMS의 학습·검증 범위와 비교 |
 
-이번 이관에서 PostgreSQL internals, MariaDB architecture, SQLite architecture/testing의 공식 문서 진입점을 확인했다. 각 소스 저장소의 전체 구현을 분석하거나 특정 commit을 기준으로 XADB와 비교 시험한 것은 아니다. WiredTiger·toyDB의 세부 구현 연구도 해당 기능 작업 때 별도로 수행한다.
+이번 이관에서 PostgreSQL internals, MariaDB architecture, SQLite architecture/testing의 공식 문서 진입점을 확인했다. WiredTiger·toyDB의 세부 구현 연구도 해당 기능 작업 때 별도로 수행한다.
 
 WiredTiger·toyDB는 위 10개 로컬 checkout에 포함되지 않은 추가 비교 후보다.
 

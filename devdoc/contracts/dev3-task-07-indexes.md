@@ -156,7 +156,7 @@ presence 삭제와 undo 완료는 즉시 공간 반환이 아니다. snapshot/Ac
 
 ## 8. 독립 인수 case
 
-아래는 실행할 입력·판정의 명세이며 이번 작성으로 실행한 결과가 아니다. 각 case의 구체 seed/크기·cut·명령·시간/자원 한도를 leaf 전에 동결하고 마지막 관련 검증 뒤의 실제 코드 diff에 대응하는 case만 선택한다. 기존 codec·하위 leaf PASS는 원래 source 범위로 수신한다.
+아래는 구현할 경로의 인수 입력·판정 명세다. 각 case의 구체 seed/크기·cut·명령·시간/자원 한도를 leaf 전에 동결하고 마지막 관련 검증 뒤의 실제 코드 diff에 대응하는 case만 선택한다. 기존 codec·하위 leaf PASS는 원래 source 범위로 수신한다.
 
 | Case | 독립 입력·필수 판정 | 연결 |
 | --- | --- | --- |

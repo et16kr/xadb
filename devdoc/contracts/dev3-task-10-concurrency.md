@@ -9,7 +9,7 @@
 
 mutable page 위에서 snapshot과 참조 수명을 보존하고, 충돌을 명시적으로 종료하며, 예약된 rollback·flush가 진행할 수 있는 동기화 경계를 만든다. 3.10.1은 guard/rank·snapshot/publication/registry·transient pin·FIFO progress turn의 primitive 공급이다. 3.10.2는 3.06/3.09의 해당 경로와 3.11.1의 commit 공개를 소비하여 두 격리 수준·관측 행 충돌·deadlock/취소를 실제 거래에 연결한다.
 
-primitive의 수명·순서·thread 검증은 dirty buffer·undo·commit 전체 완료를 기다리지 않는다. 반대로 guard 단독 검증은 reader/writer/ager·실제 rollback·durable 공개 통합 인수가 아니다. [snapshot 부분 모델](dev3-snapshot-model.md)과 [전체 모델 계획](../plans/dev3-implementation-plan.md#state-model)의 원래 결과는 해당 source와 유한 범위의 증거로 보존한다. 이 문서 작성은 새 실행이나 제품 상태 승격이 아니다.
+primitive의 수명·순서·thread 검증은 dirty buffer·undo·commit 전체 완료를 기다리지 않는다. 반대로 guard 단독 검증은 reader/writer/ager·실제 rollback·durable 공개 통합 인수가 아니다. [snapshot 부분 모델](dev3-snapshot-model.md)과 [전체 모델 계획](../plans/dev3-implementation-plan.md#state-model)의 원래 결과는 해당 source와 유한 범위의 증거로 보존한다.
 
 아래 상태명은 설계 표기다. 채택된 잠금 순서와 가시성 의미는 유지하며 정확한 Rust guard/API·rank 표현·K·slot 수·오류 우선순위는 [착수 전 동결](#freeze)에 남긴다. 기존 DEV2 publication/retention 경로를 이름만으로 DEV3 공급이라고 간주하지 않는다.
 
@@ -194,7 +194,7 @@ transaction/lock/publication 공통 의미는 한 owner가 조정한다. 파일�
 <a id="acceptance"></a>
 ## 9. 독립 thread·통합 인수
 
-아래 case는 이번 문서 작성으로 NOT_RUN이다. 모델/primitive/실제 thread/실제 disk 이력을 구분하고 barrier 도달·owner/rank·등록·반환·expected/actual을 기록한다. 시간 지연만으로 원하는 interleaving이 발생했다고 추정하지 않는다.
+다음 case의 실행 상태는 NOT_RUN이다. 모델/primitive/실제 thread/실제 disk 이력을 구분하고 barrier 도달·owner/rank·등록·반환·expected/actual을 기록한다. 시간 지연만으로 원하는 interleaving이 발생했다고 추정하지 않는다.
 
 | Case | 고정해야 할 schedule·독립 판정 | 요구·인수 |
 | --- | --- | --- |
@@ -244,4 +244,4 @@ transaction/lock/publication 공통 의미는 한 owner가 조정한다. 파일�
 | F05 | entry/waiter/ticket/guard 크기·최대 동시 슬롯·handoff 중첩·callback 없는 진단, 전체 pin/workspace/abort 예약과 지원 profile별 admission |
 | F06/F07 | DEV2 재사용/adapt/전용/new inventory·실제 공급 source, 공통 transaction/publication 단일 owner와 소비자 수신·독립 검토·병합 순서 |
 
-위 항목이 필요한 effect는 미동결 상태로 실행하지 않는다. 문서 작성과 기존 모델 채택은 실제 동시성 인수·진행 보장·durable transaction 완료를 대신하지 않는다.
+위 항목이 필요한 effect는 미동결 상태로 실행하지 않는다.

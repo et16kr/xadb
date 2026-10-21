@@ -52,7 +52,7 @@ DEV2의 K0–K5는 [하위 계층 계획](bottom-up-development.md)과 [커널 �
 <a id="section-4"></a>
 ## 4. 단계 완료와 공개
 
-단계 완료는 해당 capability의 실제 증거를 요구한다. DEV9는 XADB가 선언한 제품 범위를 검증한다. 연구용 소스 공개는 완성된 DBMS 보장이 아니며, 안정 릴리스 qualification과 별도다. 저장소는 현재 Public이며 최종 목표와 초기 구현 상태를 함께 공개한다.
+단계 완료는 해당 capability의 실제 증거를 요구한다. DEV9는 XADB가 선언한 제품 범위를 검증한다. 저장소는 현재 Public이며 최종 목표와 초기 구현 상태를 함께 공개한다.
 
 <a id="section-5"></a>
 ## 5. 운영·성능·확장
