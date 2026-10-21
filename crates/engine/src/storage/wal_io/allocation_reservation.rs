@@ -454,7 +454,7 @@ impl AllocationState<'_, '_> {
             .ok_or_else(|| reject(Cause::Capacity))?;
         let _ = protected; // Admission precedes stage; no charge is returned here.
         #[cfg(test)]
-        tests::cut(self, tests::Point::AfterSnapshot, wal);
+        tests::cut(self, tests::Point::Snapshot, wal);
         let plan = operation::Plan {
             profile: installed.fresh.plan.profile,
             identity: self.identity,
@@ -489,11 +489,11 @@ impl AllocationState<'_, '_> {
         self.descriptor.copy_from_slice(&frame_work[352..1888]);
         self.modification_counter += 1;
         #[cfg(test)]
-        tests::cut(self, tests::Point::AfterApply, wal);
+        tests::cut(self, tests::Point::Apply, wal);
         wal.sync_pending()
             .map_err(|e| fatal(installed, Phase::Sync, Cause::Wal(e)))?;
         #[cfg(test)]
-        tests::cut(self, tests::Point::AfterSync, wal);
+        tests::cut(self, tests::Point::Sync, wal);
         health(installed, Phase::Sync)?;
         let prefix = wal
             .prefix()

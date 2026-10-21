@@ -1,6 +1,6 @@
 # 문서 운영 기준
 
-2026-10-19 · **DOC-001 문서 운영 / DOC-002 문서 검사 시점을 push로 변경 / DOC-003 push 전 Rust 포맷 검사 추가**
+2026-10-22 · **DOC-001 문서 운영 / DOC-002 push 시점 검사 / DOC-003 Rust 포맷 / DOC-004 Clippy 추가**
 
 [문서 진입점](../README.md) · [개발 운영 방침](development-policy.md#section-3) · [기계 판독 색인](../documents.json)
 
@@ -51,7 +51,7 @@ Markdown은 실제 파일로 향하는 상대 링크를 사용한다. 절 참조
 문서 자동 검사는 아래 push 시점에 적용한다. 편집·commit·문서 작업 종료마다 검사하거나 생성 결과를 갱신하지 않는다. 의미·불변식·설계 판단의 검토는 계속하며 자동 검사 PASS를 설계 타당성의 증명으로 사용하지 않는다. 제품 코드의 기능·회귀·복구 시험은 기존 단계별 의무를 적용한다.
 
 <a id="push-gate"></a>
-## Push 직전 문서·Rust 포맷 검사
+## Push 직전 Rust 포맷·Clippy·문서 검사
 
 [pre-push 훅](../../scripts/git-hooks/pre-push)이 [push 검사기](../../scripts/check_push.py)를 실행한다. 기존 훅 설정이 없는 checkout에서는 한 번 등록한다. 기존 `core.hooksPath`나 사용자 훅이 있으면 덮어쓰지 않고 소유자와 연결 방식을 정한다.
 
@@ -60,13 +60,28 @@ git config --local core.hooksPath scripts/git-hooks
 ```
 
 - 검사 대상은 Git이 전송하려는 각 ref의 최종 commit이다. annotated tag는 commit으로 해석하고 같은 commit은 한 번 검사한다. 여러 commit 중 하나라도 실패하면 해당 push 전체를 차단한다. 삭제만 하는 ref는 검사할 새 내용이 없어 제외한다.
-- 각 commit을 `git archive`와 `tar`로 임시 디렉터리에 내보내 그 사본에서 `cargo fmt --all --check`, `python3 devdoc/verify_documents.py`를 순서대로 실행한다. 사본의 `rust-toolchain.toml`에 맞는 Cargo·rustfmt, Python과 `devdoc/requirements.txt`의 검사 의존성이 필요하다. 포맷 불일치·검사 도구/manifest/검사기 누락·해석할 수 없는 commit·export/실행 오류도 push 차단이다.
-- 미커밋 변경은 검사 대상에 섞지 않는다. 검사 중 생성하는 `document-validation.json`은 임시 사본에만 기록하고 사본은 종료 시 정리한다. 작업 트리·index·기존 증거를 갱신하거나 검사 결과를 자동 commit하지 않는다. 출력에는 검사 commit과 결과를 남긴다.
+- 각 commit을 `git archive`와 `tar`로 임시 디렉터리에 내보내 그 사본에서 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`, `python3 -B devdoc/verify_documents.py`를 순서대로 실행한다. 사본의 `rust-toolchain.toml`에 맞는 Cargo·rustfmt·Clippy, 고정 `Cargo.lock`과 crate 의존성, Python과 `devdoc/requirements.txt`의 검사 의존성이 필요하다. 포맷 불일치·lint 경고·검사 도구/manifest/lockfile/검사기 누락·해석할 수 없는 commit·export/실행 오류도 push 차단이다.
+- 미커밋 변경은 검사 대상에 섞지 않는다. Clippy의 `CARGO_TARGET_DIR`는 export 밖의 별도 임시 target으로 고정하며 상속된 target 경로를 사용하지 않는다. 검사 중 생성하는 `document-validation.json`은 임시 사본에만 기록하고 사본과 target은 종료 시 정리한다. 작업 트리·index·기존 증거를 갱신하거나 검사 결과를 자동 commit하지 않는다. 출력에는 검사 commit과 결과를 남긴다.
 - 포맷 검사는 자동 수정하지 않는다. 실패하면 작업 트리에서 `cargo fmt --all`로 수정하고 해당 수정을 commit에 포함한 뒤 다시 push한다. 로컬 미커밋 수정만으로 포맷이 잘못된 commit을 전송할 수는 없다.
-- 현재 검사 범위는 Rust 포맷과 링크/anchor·색인/역할·JSON/Python 구문·일부 단계/패키지/인수 계약·기존 증거 identity다. DOC-002의 문서 검사 시점은 유지하고 [DOC-003](#doc-003)에서 기존 CI와 같은 Rust 포맷 검사를 추가한다. 설계 의미의 정확성·제품 실행·원격 보호 CI는 별도다.
+- 현재 검사 범위는 Rust 포맷·Clippy와 링크/anchor·색인/역할·JSON/Python 구문·일부 단계/패키지/인수 계약·기존 증거 identity다. [DOC-004](#doc-004)의 Clippy는 Actions와 같은 workspace/target/feature 범위로 테스트 코드까지 정적 검사하지만 테스트 사례를 실행하지 않는다. 제품 기능 시험은 변경 코드의 필수 사례로 제한하며 전체 DEV0/1/2·leaf wrapper를 push 훅에서 실행하지 않는다. 설계 의미의 정확성·제품 실행·원격 보호 CI는 별도다.
 - 이 훅은 설치한 로컬 checkout의 push 제약이다. 새 clone에도 설치가 필요하며 원격 서버가 강제하는 branch protection으로 주장하지 않는다. 기존 제품 CI를 대체하지 않는다.
 
 평상시 문서 수정에서는 검사하지 않는다. 훅/검사기 자체를 변경할 때에는 실패를 실제 차단하는지 별도의 좁은 회귀 시험을 적용하고, 제품 단계 완료·배포에는 기존 검증 의무를 유지한다.
+
+<a id="doc-004"></a>
+## DOC-004 결정 기록
+
+| 항목 | 내용 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-22; 구현·선택 회귀·독립 검토 완료 |
+| 근거·담당 | 사용자가 Actions의 `enum_variant_names`·`type_complexity` 실패와 기존 검사 누락을 보고. 작업·계약·통합 담당 `/root` |
+| 원인 | DOC-003은 fmt와 문서만 검사하며 Clippy를 실행하지 않았다. 예약·취소 부분 구현의 Clippy도 당시 NOT_RUN으로 남아 있어 테스트 전용 Rust 코드의 lint가 원격 DEV0에서 처음 거절됨 |
+| 선택·이유 | 기존 commit export의 fmt와 문서 검사 사이에 Actions의 Clippy 명령을 그대로 추가. `--all-targets --all-features --locked -- -D warnings`로 테스트 코드·비기본 feature·lockfile까지 확인하되 기능 시험은 실행하지 않음 |
+| 대안 | fmt·문서만으로 Rust lint를 검출할 수 없음. package/feature 일부만 검사하면 Actions 범위와 달라 누락 가능. DEV0/1 wrapper 실행은 무변경 기능 시험까지 반복하므로 제외 |
+| 소유·대체 | `scripts/check_push.py`, `scripts/test_check_push.py`와 안내·빌드 색인을 갱신. DOC-002의 시점·commit 선택·작업 트리 분리 및 DOC-003의 fmt 검사는 유지. 과거 결정·실행 증거는 소급 변경하지 않음 |
+| 검증 | 변경 전 새 반례는 형식이 정상인 테스트 전용 lint 오류 commit의 push가 허용되어 FAIL. 변경 후 `scripts.test_check_push.PushGateTests`의 `test_clippy_checks_test_targets_and_committed_tip`, `test_clippy_checks_nondefault_feature_type_complexity`, `test_clippy_requires_committed_lockfile` 3개만 `python3 -B -m unittest`로 선택하여 PASS. 실제 고정 Clippy로 두 lint 거절·수정 commit 수락·dirty/index 분리·상속 target 격리·lockfile 누락 차단을 확인. 문서 verifier는 fixture이며 기존7개 시험·제품 전체 시험은 반복하지 않음 |
+| 독립 검토·적용 | `/root/dev3_tree_design`이12개 파일 diff의 D1/D2 범위를 읽기 전용 검토하여 PASS, 필수 수정 지적 없음. hook 위치·panic·생산 경로·Copy capture 수명·commit/target 격리·명령/정책 일치를 직접 확인하고 RED·gate3·AR05/07·engine Clippy 결과는 총괄이 전달한 실행 출력과 대조. 검토자는 재실행하지 않았으며 `/root`가 반영 확인. 현재 checkout은 기존 `core.hooksPath=scripts/git-hooks`로 변경 검사기를 호출하며 실제 push의 fmt·Clippy·문서 검증 결과는 실행 시 별도로 확인 |
+| 재검토 | Actions 명령/toolchain과 불일치, 테스트 전용 lint 누락, 미커밋 source나 상속 target 혼입, 검사 실패를 허용하는 훅 |
 
 <a id="doc-003"></a>
 ## DOC-003 결정 기록

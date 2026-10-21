@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Check the committed tips in Git's pre-push input, without editing the checkout."""
+import os
 import re
 import subprocess
 import sys
@@ -29,7 +30,7 @@ def pushed_commits(repo, lines):
 
 
 def check_commit(repo, commit):
-    """Check Rust format and documents; all checks run in the temporary export."""
+    """Check Rust format, Clippy and documents in the committed export, not tests."""
     with tempfile.TemporaryDirectory(prefix='xadb-pre-push-') as directory:
         temporary = Path(directory)
         snapshot = temporary / 'snapshot'
@@ -46,6 +47,15 @@ def check_commit(repo, commit):
         result = subprocess.run(['cargo', 'fmt', '--all', '--check'], cwd=snapshot)
         if result.returncode:
             raise ValueError(f'{commit}: Rust format verification failed; push blocked')
+        # Match the Actions lint scope, including cfg(test) and nondefault features.
+        # Clippy compiles/checks test targets but does not execute their test cases.
+        environment = dict(os.environ, CARGO_TARGET_DIR=str(temporary / 'target'))
+        clippy = ['cargo', 'clippy', '--workspace', '--all-targets', '--all-features',
+                  '--locked', '--', '-D', 'warnings']
+        print('XADB pre-push: ' + ' '.join(clippy), flush=True)
+        result = subprocess.run(clippy, cwd=snapshot, env=environment)
+        if result.returncode:
+            raise ValueError(f'{commit}: Clippy verification failed; push blocked')
         result = subprocess.run([sys.executable, '-B', str(verifier)], cwd=snapshot)
         if result.returncode:
             raise ValueError(f'{commit}: document verification failed; push blocked')

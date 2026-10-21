@@ -561,6 +561,22 @@ r0 실행 종료를 확인한 뒤 compiler target4개에서 ELF 실행 파일140
 
 재개할 때는 이 원본 source delta와 완료한 사례를 기준으로 미실행 native/compiler/stage helper 검증을 이어간다. 동일 코드의 완료된 시험을 처음부터 다시 돌리지 않는다. 실행 전 원본 source·binary·fixture와 변경 경로의 관계를 확인한다.
 
+<a id="allocation-lint-fix"></a>
+## 2026-10-22 예약·취소 테스트 hook의 Clippy 수정
+
+Actions의 DEV1→DEV0 정적 검사에서 `allocation_reservation_tests.rs`의 `enum_variant_names`와 `type_complexity`를 거절했다. 당시 push gate는 fmt·문서 검사만 실행했으므로 두 Rust lint를 검출할 수 없었다. 위 부분 구현의 Clippy 미실행 기록은 당시 결과로 보존한다.
+
+`Point`의 공통 `After` 접두사를 제거하고 네 값의 의미를 “해당 단계 직후”로 명시했다. 부모의 `cfg(test)` 참조와 시험 분기만 함께 바꾸었으며 hook 위치·panic 진단·생산 경로는 유지했다. terminal 관측 tuple은 이름 있는 `TerminalCapture`와 `CaptureSlot`으로 바꾸고 `Copy` 값으로 읽어 동기화 장벽에서 mutex guard를 보유하지 않는다.
+
+이번 코드 diff는 fault hook 이름·분기와 terminal 관측 표현에 한정한다. 다음 두 시험을 `cargo test -p xadb-engine --lib <전체 시험명> --locked -- --exact`로 각각 실행하여 각1개 PASS, 각254개 제외를 확인했다.
+
+- `storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar05_stage_cuts_and_fencing`
+- `storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar07_terminal_barrier_and_retained_protection`
+
+`cargo clippy -p xadb-engine --all-targets --all-features --locked -- -D warnings`도 PASS했다. 이는 현재 checkout의 해당 package 정적 검사이며 과거 NOT_RUN을 소급 PASS로 바꾸거나 allocation 전체 인수를 완료한 기록이 아니다. native2/13DB·compiler baseline+6 probes·원래 WAL stage 관련4시험·component64KiB 증명과 전체 DEV3 인수는 남아 있다. 같은 코드의 다른 완료된 runtime 사례나 DEV0/1/2·전체 workspace 기능 시험은 실행하지 않았다.
+
+재발 방지는 [DOC-004](../policies/documentation-policy.md#doc-004)의 commit export Clippy gate로 구현했다. 새 gate 회귀3개만 선택하여 PASS했고 기존7개는 반복하지 않았다. 실제 push의 workspace Clippy·fmt·문서 검증은 별도 gate이며 기능 시험을 실행하지 않는다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 
@@ -572,7 +588,7 @@ r0 실행 종료를 확인한 뒤 compiler target4개에서 ELF 실행 파일140
 | --- | --- | --- |
 | 3.01 형식·정체성 | page/참조/key/행/tree/WAL/undo/status/control codec | 여러 표현·독립 byte·유한 모델 검증 완료. 실제 효과와 구분 |
 | 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기의 제한 구현 검증. 일반 reopen은 별도 |
-| 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | 메모리 포트 부분 검증. native2/13DB·compiler baseline+6 probes·변경 WAL stage4시험·Clippy·component64KiB의 nested-local 동시 생존량 증명이 남음. 나머지 전이 미완료 |
+| 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | 메모리 포트 부분 검증. [테스트 hook lint 수정·관련 Clippy](#allocation-lint-fix)는 확인. native2/13DB·compiler baseline+6 probes·변경 WAL stage4시험·component64KiB의 nested-local 동시 생존량 증명이 남음. 나머지 전이 미완료 |
 | 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | genesis·RollbackStart 생산·예약/취소 일부 연결. 일반 opcode/CLR/commit 연결 미완료 |
 | 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | clean buffer·Empty DWB 최초 설치만 제한 검증. dirty 운영 미완료 |
 | 3.06 트리·행 | mutable tree CRUD·split·root 변경·overflow·stable cursor·locator | 표현·부분 모델 존재. 실제 변경 경로 미완료 |

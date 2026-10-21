@@ -119,12 +119,22 @@ fn assert_fenced(owner: &mut AllocationSession<'_, '_, '_, '_, Writer>) {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// Fault boundaries immediately after the named phase.
 pub(super) enum Point {
-    AfterSnapshot,
-    AfterStage,
-    AfterApply,
-    AfterSync,
+    Snapshot,
+    Stage,
+    Apply,
+    Sync,
 }
+#[derive(Clone, Copy)]
+pub(super) struct TerminalCapture {
+    reserved_page_bytes: u64,
+    protected_bytes: u64,
+    complete_offset: u64,
+    synced_offset: u64,
+}
+type CaptureSlot = Arc<Mutex<Option<TerminalCapture>>>;
+
 #[derive(Clone)]
 pub(super) enum Hook {
     Busy,
@@ -135,14 +145,14 @@ pub(super) enum Hook {
     Panic(Point),
     Fence,
     CorruptAfterSync,
-    Capture(Arc<Mutex<Option<(u64, u64, u64, u64)>>>),
+    Capture(CaptureSlot),
 }
 pub(super) fn stage_cut<W: WriterNamespace>(
     hook: Option<&Hook>,
     _: &wal::GenesisWalSession<'_, W>,
 ) {
     assert!(
-        !matches!(hook, Some(Hook::Panic(Point::AfterStage))),
+        !matches!(hook, Some(Hook::Panic(Point::Stage))),
         "allocation AfterStage unwind"
     );
 }
@@ -155,8 +165,8 @@ pub(super) fn cut<W: WriterNamespace>(
         return;
     };
     match (point, hook) {
-        (p, Hook::Panic(wanted)) if p == wanted => panic!("allocation {point:?} unwind"),
-        (Point::AfterSnapshot, Hook::Busy) => {
+        (p, Hook::Panic(wanted)) if p == wanted => panic!("allocation After{point:?} unwind"),
+        (Point::Snapshot, Hook::Busy) => {
             let mut a = wal.append.lock().unwrap();
             a.state = wal::SlotState::Complete(wal::WalFrameLocation {
                 stream: a.prefix.stream,
@@ -168,22 +178,20 @@ pub(super) fn cut<W: WriterNamespace>(
                 end: a.prefix.complete_offset + 1,
             });
         }
-        (Point::AfterSnapshot, Hook::Offset) => {
-            wal.append.lock().unwrap().prefix.complete_offset += 1
-        }
-        (Point::AfterSnapshot, Hook::Lsn) => wal.append.lock().unwrap().prefix.complete_lsn += 1,
-        (Point::AfterSnapshot, Hook::Missing) => {
+        (Point::Snapshot, Hook::Offset) => wal.append.lock().unwrap().prefix.complete_offset += 1,
+        (Point::Snapshot, Hook::Lsn) => wal.append.lock().unwrap().prefix.complete_lsn += 1,
+        (Point::Snapshot, Hook::Missing) => {
             wal.append.lock().unwrap().slot.take();
         }
-        (Point::AfterSnapshot, Hook::Poison) => {
+        (Point::Snapshot, Hook::Poison) => {
             let _ = catch_unwind(AssertUnwindSafe(|| {
                 let _guard = wal.append.lock().unwrap();
                 panic!("allocation append poison");
             }));
         }
-        (Point::AfterSync, Hook::Fence) => wal.fenced.fence(),
-        (Point::AfterSync, Hook::CorruptAfterSync) => state.descriptor[0] ^= 1,
-        (Point::AfterApply, Hook::Capture(record)) => {
+        (Point::Sync, Hook::Fence) => wal.fenced.fence(),
+        (Point::Sync, Hook::CorruptAfterSync) => state.descriptor[0] ^= 1,
+        (Point::Apply, Hook::Capture(record)) => {
             assert!(state.terminal_pending);
             assert_eq!(state.rec_lsn, Some(PageLsn(1)));
             assert_eq!(state.descriptor[353], 4); // Finished
@@ -196,12 +204,12 @@ pub(super) fn cut<W: WriterNamespace>(
             }
             let prefix = wal.prefix().unwrap();
             let p = state.batch.unwrap().count() as u64 * PAGE_BYTES as u64;
-            *record.lock().unwrap() = Some((
-                p,
-                state.protection(prefix).unwrap(),
-                prefix.complete_offset,
-                prefix.synced_offset,
-            ));
+            *record.lock().unwrap() = Some(TerminalCapture {
+                reserved_page_bytes: p,
+                protected_bytes: state.protection(prefix).unwrap(),
+                complete_offset: prefix.complete_offset,
+                synced_offset: prefix.synced_offset,
+            });
         }
         _ => (),
     }
@@ -694,7 +702,7 @@ fn allocation_ar05_stage_cuts_and_fencing() {
             assert_eq!(files(s), old_files);
         });
     }
-    for point in [Point::AfterStage, Point::AfterApply] {
+    for point in [Point::Stage, Point::Apply] {
         for cancel in [false, true] {
             with_owner(1, |o, s| {
                 if cancel {
@@ -726,7 +734,7 @@ fn allocation_ar05_stage_cuts_and_fencing() {
                     o.state.protection(prefix),
                     Some(21024768 + 2 * 22656 + 9 * 16384)
                 );
-                if point == Point::AfterStage {
+                if point == Point::Stage {
                     assert_eq!(*o.state.frame, old_page);
                     assert_eq!(o.state.descriptor, old_descriptor);
                 }
@@ -931,10 +939,13 @@ fn allocation_ar07_terminal_barrier_and_retained_protection() {
                 result
             });
             entered_rx.recv_timeout(Duration::from_secs(5)).unwrap();
-            let (tokens, protected, complete, synced) = record.lock().unwrap().unwrap();
-            assert_eq!(tokens, 8 * 16384);
-            assert_eq!(protected, first.protected_bytes);
-            assert_eq!((complete, synced), (49408, 26752));
+            let captured = record.lock().unwrap().unwrap();
+            assert_eq!(captured.reserved_page_bytes, 8 * 16384);
+            assert_eq!(captured.protected_bytes, first.protected_bytes);
+            assert_eq!(
+                (captured.complete_offset, captured.synced_offset),
+                (49408, 26752)
+            );
             assert!(done_rx.try_recv().is_err());
             release_tx.send(()).unwrap();
             let view = handle.join().unwrap().unwrap();

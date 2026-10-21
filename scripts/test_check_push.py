@@ -1,4 +1,5 @@
 """Exercise the pre-push gate against disposable repositories and a local remote."""
+import os
 import shutil
 import subprocess
 import tempfile
@@ -36,13 +37,15 @@ class PushGateTests(unittest.TestCase):
             "raise SystemExit(int(Path('verdict').read_text()))\n")
         self.verdict = self.repo / 'verdict'
         self.verdict.write_text('0')
-        # Use the real pinned formatter on a dependency-free Rust fixture.
+        # Use the real pinned formatter and Clippy on a dependency-free fixture.
         shutil.copy2(SCRIPTS.parent / 'rust-toolchain.toml', self.repo / 'rust-toolchain.toml')
         (self.repo / 'Cargo.toml').write_text(
-            '[package]\nname = "xadb-push-fixture"\nversion = "0.1.0"\nedition = "2024"\n')
+            '[package]\nname = "xadb-push-fixture"\nversion = "0.1.0"\nedition = "2024"\n'
+            '[features]\nlint-fixture = []\n')
         (self.repo / 'src').mkdir()
         self.rust_source = self.repo / 'src/lib.rs'
         self.rust_source.write_text(FORMATTED_RUST)
+        self.run_command(['cargo', 'generate-lockfile', '--offline'], self.repo)
         self.commit('valid baseline')
         self.git('config', 'core.hooksPath', 'scripts/git-hooks')
         self.git('remote', 'add', 'origin', str(self.remote))
@@ -155,6 +158,72 @@ class PushGateTests(unittest.TestCase):
         self.commit('missing Cargo manifest')
         result = self.git('push', 'origin', 'main', expected=1)
         self.assertIn('Rust format verification failed; push blocked', result.stderr)
+        self.assertEqual(self.remote_tip(), old)
+
+    def test_clippy_checks_test_targets_and_committed_tip(self):
+        self.git('push', 'origin', 'main')
+        old = self.remote_tip()
+        bad_source = '''#[cfg(test)]
+mod tests {
+    enum Point { AfterSnapshot, AfterStage, AfterApply, AfterSync }
+    #[test]
+    fn fixture() {
+        let _ = [Point::AfterSnapshot, Point::AfterStage,
+                 Point::AfterApply, Point::AfterSync];
+    }
+}
+'''
+        self.rust_source.write_text(bad_source)
+        self.run_command(['cargo', 'fmt', '--all'], self.repo)
+        self.run_command(['cargo', 'fmt', '--all', '--check'], self.repo)
+        self.commit('formatted test-only lint error')
+        self.rust_source.write_text(FORMATTED_RUST)
+        result = self.git('push', 'origin', 'main', expected=1)
+        self.assertIn('Clippy verification failed; push blocked', result.stderr)
+        self.assertIn('enum_variant_names', result.stdout + result.stderr)
+        self.assertEqual(self.remote_tip(), old)
+
+        fixed = self.commit('fixed lint')
+        self.rust_source.write_text(bad_source)
+        self.git('add', 'src/lib.rs')
+        status = self.git('status', '--porcelain').stdout
+        staged = self.git('diff', '--cached').stdout
+        external_target = self.repo / 'unexpected-build-output'
+        environment = dict(os.environ, CARGO_TARGET_DIR=str(external_target))
+        self.run_command(['git', 'push', 'origin', 'main'], self.repo, env=environment)
+        self.assertEqual(self.remote_tip(), fixed)
+        self.assertEqual(self.git('status', '--porcelain').stdout, status)
+        self.assertEqual(self.git('diff', '--cached').stdout, staged)
+        self.assertFalse(external_target.exists())
+        self.assertFalse((self.repo / 'devdoc/generated.json').exists())
+
+    def test_clippy_checks_nondefault_feature_type_complexity(self):
+        self.git('push', 'origin', 'main')
+        old = self.remote_tip()
+        self.rust_source.write_text('''#[cfg(all(test, feature = "lint-fixture"))]
+mod tests {
+    use std::sync::{Arc, Mutex};
+    fn capture(_: Arc<Mutex<Option<(u64, u64, u64, u64)>>>) {}
+    #[test]
+    fn fixture() { capture(Arc::new(Mutex::new(None))); }
+}
+''')
+        self.run_command(['cargo', 'fmt', '--all'], self.repo)
+        self.run_command(['cargo', 'fmt', '--all', '--check'], self.repo)
+        self.commit('nondefault feature lint error')
+        result = self.git('push', 'origin', 'main', expected=1)
+        self.assertIn('Clippy verification failed; push blocked', result.stderr)
+        self.assertIn('type_complexity', result.stdout + result.stderr)
+        self.assertEqual(self.remote_tip(), old)
+
+    def test_clippy_requires_committed_lockfile(self):
+        self.git('push', 'origin', 'main')
+        old = self.remote_tip()
+        (self.repo / 'Cargo.lock').unlink()
+        self.commit('missing lockfile')
+        result = self.git('push', 'origin', 'main', expected=1)
+        self.assertIn('Clippy verification failed; push blocked', result.stderr)
+        self.assertIn('--locked', result.stdout + result.stderr)
         self.assertEqual(self.remote_tip(), old)
 
 

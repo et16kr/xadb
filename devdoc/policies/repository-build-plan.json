@@ -968,13 +968,15 @@
     "normative_ref": "documentation-policy.md#push-gate",
     "decision_refs": [
       "documentation-policy.md#doc-002",
-      "documentation-policy.md#doc-003"
+      "documentation-policy.md#doc-003",
+      "documentation-policy.md#doc-004"
     ],
     "hook": "scripts/git-hooks/pre-push",
     "checker": "scripts/check_push.py",
     "scope": "Each distinct pushed ref tip commit in a temporary git archive export; ref deletions excluded",
     "commands": [
       "cargo fmt --all --check",
+      "cargo clippy --workspace --all-targets --all-features --locked -- -D warnings",
       "python3 -B devdoc/verify_documents.py"
     ],
     "failure_blocks_push": true,

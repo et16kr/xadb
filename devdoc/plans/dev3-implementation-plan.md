@@ -141,7 +141,7 @@ F05는 3.16까지 미루는 작업이 아니다. [opcode 자원 계산](#resourc
 
 | ID·산출물 | 직접 선행 | 완료 조건·남길 경계 |
 | --- | --- | --- |
-| 3.03.1 예약·취소 부분 구현의 잔여 인수 | [부분 source·case 기록](../evidence/dev3-allocation-reservation-partial-xadb-20261021.json), [독립 검토의 remaining](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json) | native 2그룹/13 Linux DB의 adapter·runner 구현과 실행, compiler baseline+6 probe runner 구현과 실행, 수정된 WAL stage 관련4시험, 관련 Clippy, **generic nested-local 동시 생존량의 component64KiB 측정·수명 증명**, 독립 검토. 원래 runtime 결과와 합쳐 제한 allocation 단위를 판정하며 INIT/home/recovery/READY/거래 ACK를 제공했다고 하지 않음 |
+| 3.03.1 예약·취소 부분 구현의 잔여 인수 | [부분 source·case 기록](../evidence/dev3-allocation-reservation-partial-xadb-20261021.json), [독립 검토의 remaining](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json) | native 2그룹/13 Linux DB의 adapter·runner 구현과 실행, compiler baseline+6 probe runner 구현과 실행, 수정된 WAL stage 관련4시험, **generic nested-local 동시 생존량의 component64KiB 측정·수명 증명**, 독립 검토. [2026-10-22 관련 Clippy 확인](../implementation/dev3-implementation.md#allocation-lint-fix) 이후 추가 코드 diff의 필요한 정적 검사만 선택. 원래 runtime 결과와 합쳐 제한 allocation 단위를 판정하며 INIT/home/recovery/READY/거래 ACK를 제공했다고 하지 않음 |
 | 3.03.2 Reserved→INIT 소비 | 3.03.1, 3.04.1, 3.05.1, 해당 page 표현 | token·generation·descriptor·page INIT를 같은 복구 가능한 WAL 그룹으로 인계하고 오류/취소에서 소유 보존. 해당 opcode의 독립 bytes·fault/예약 경계 |
 | 3.03.3 extent 확장·FILEMAP 인계 | 3.03.2, 3.05.3, 3.02의 namespace/selector 공급 | 파일 성장·선택 metadata·WAL/예약 소유의 부분 I/O·불명 결과를 검증. 선택 전후 closure와 실제 charged bytes 보존 |
 | 3.03.4 eligible page free/reuse | 3.14.1의 회수 가능성 판정, 3.03.2, 3.04.1, 3.05.3 | 마지막 transient pin·영속 edge·pending DWB 참조가 제거된 대상만 free/reuse. generation 증가·stale reference 거절·새 incarnation INIT의 WAL 원자 인계. 3.14.2의 전체 회수 인수는 후속 |

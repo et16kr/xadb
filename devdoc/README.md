@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [push 전 Clippy 검사 보완](policies/documentation-policy.md#doc-004): 기존 fmt·문서 gate가 검출하지 못한 테스트 전용 lint 2건을 수정하고 Actions와 같은 Clippy 정적 검사를 추가한다. [관련 hook 시험2개·새 gate 회귀3개](implementation/dev3-implementation.md#allocation-lint-fix)의 제한 검증과 기존 미완료 인수를 구별한다.
+
 2026-10-22 [DEV3 단계별 필수 테스트·구현 동반 테스트 추가 계획](plans/dev3-test-plan.md): 중간 단계는 변경 기능의 필수 사례만 실행하고, 새 테스트·fixture·oracle는 구현과 함께 작성한다. 최신 사용자 지시에 따라 DEV3 최종 S5에서 전체 DEV3 inventory를 전수 실행하며, 장시간·대규모·전체 조합은 그 최종 인수에 배정한다. 이번에는 계획만 작성하고 제품·테스트 코드를 실행하지 않는다.
 
 2026-10-22 [DEV3 16개 작업별 개발 상세 명세·설계도](contracts/dev3-task-designs.md): 각 작업의 요구·입출력/소유·상태/처리 순서·오류/복구·자원·하위 개발 단위·독립 인수를 개별 문서로 작성한다. 기존 owner 계약과 현재 미완료 상태를 유지하며 제품 개발·시험 재개 기록은 아니다.
@@ -112,7 +114,7 @@
 
 원문·관련 JSON·폴더 색인·[문서 ID 색인](documents.json)을 함께 갱신합니다. 새 문서의 위치·상태·참조 규칙은 [문서 운영 기준](policies/documentation-policy.md)을 따릅니다.
 
-문서 검사는 **push 직전** 훅에서 수행합니다. 편집·commit 때 반복 실행하지 않습니다. 훅은 전송할 각 ref의 최종 commit의 임시 사본에서 `cargo fmt --all --check`, `python3 devdoc/verify_documents.py`를 순서대로 실행하고 하나라도 실패하면 push를 차단합니다. 설치와 범위는 [push 검사 규칙](policies/documentation-policy.md#push-gate)을 따릅니다.
+문서 검사는 **push 직전** 훅에서 수행합니다. 편집·commit 때 반복 실행하지 않습니다. 훅은 전송할 각 ref의 최종 commit의 임시 사본에서 Rust 포맷, Actions와 같은 Clippy, 문서 검사를 순서대로 실행하고 하나라도 실패하면 push를 차단합니다. Clippy는 테스트 코드를 정적 검사하며 기능 시험은 실행하지 않습니다. 명령·설치·범위는 [push 검사 규칙](policies/documentation-policy.md#push-gate)을 따릅니다.
 
 이 명령은 문서·계약·증거 정합성을 검사하며 제품 시험을 실행하지 않습니다. [저장된 결과](document-validation.json)는 해당 실행 당시 결과이며 현재 문서나 DB의 검증 완료로 해석하지 않습니다. 과거 측정 스크립트를 문서 정리 목적으로 다시 실행하지 않습니다.
 
