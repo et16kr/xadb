@@ -127,6 +127,10 @@ impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
         })
     }
 
+    pub(super) fn profile(&self) -> Profile {
+        self.profile
+    }
+
     pub(crate) fn selector_generation(&self) -> u64 {
         self.selected.generation
     }
@@ -167,14 +171,7 @@ impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
         level: u8,
         output: &'b mut [u8; PAGE_BYTES],
     ) -> Result<PageView<'b>> {
-        if expected.database != self.profile.spec().namespace.database {
-            return Err(PageIoError::IdentityMismatch);
-        }
-        if !kind.accepts_level(level)
-            || expected.page.page_no.is_multiple_of(64) != (kind == PageKind::Allocation)
-        {
-            return Err(PageIoError::InvalidRequest);
-        }
+        validate_page_request(self.profile, expected, kind, level)?;
         let entry = self.mapping(expected.page.file)?;
         let offset = expected
             .page
@@ -206,6 +203,27 @@ impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
     }
 }
 
+pub(super) fn validate_page_request(
+    profile: Profile,
+    expected: PageIdentity,
+    kind: PageKind,
+    level: u8,
+) -> Result<()> {
+    if expected.database != profile.spec().namespace.database {
+        return Err(PageIoError::IdentityMismatch);
+    }
+    if !kind.accepts_level(level)
+        || expected.page.page_no.is_multiple_of(64) != (kind == PageKind::Allocation)
+    {
+        return Err(PageIoError::InvalidRequest);
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 #[path = "page_io_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "page_io_test_support.rs"]
+pub(super) mod test_support;

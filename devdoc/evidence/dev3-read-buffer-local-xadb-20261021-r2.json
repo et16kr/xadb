@@ -1,0 +1,285 @@
+{
+  "origin": {
+    "revision": "1f85de8f4d6175a6465e27a1e8704756d3c9b42f",
+    "tracked_diff_sha256": "79f0ea6e8e861f469a1a5009580abe3ab639e1f821f76b003a6e0e23f1b00d10",
+    "source_sha256": "061c0d9ee7ace9d623370513471d3778d41956cd4c6e4b7a141d1e4176ab703c",
+    "lockfile_sha256": "f67269ca67484a0241bf06f22dee740fe6943bfe38d204193ab7fbcddec28a45"
+  },
+  "scope": "selected clean ReadBuffer actual reads/pins/clock only; no dirty buffer or full DEV3 acceptance",
+  "source": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/source",
+  "checks": [
+    {
+      "id": "build-engine",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/build-engine.log",
+      "log_sha256": "2cc10681f66c1e9249d420c6695d7494e34124a564e5bef29d13deb659eef683",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "read_buffer",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/engine-binary",
+        "storage::read_buffer::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/read_buffer.log",
+      "log_sha256": "62cbbcc6694b4fe2cf3fa80bc5993af93bcae30af32c55123df41b321995d133",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "page_io",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/engine-binary",
+        "storage::page_io::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/page_io.log",
+      "log_sha256": "e2470d1d1345d7287790fbb42fc84d96b756a8ad24564da2a6e5142d760312bc",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "page",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/engine-binary",
+        "storage::page::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/page.log",
+      "log_sha256": "f89eeb401876ce9e22d4adbd38985eae009de8ea9655f3a116ce4471abf0ba59",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "control",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/engine-binary",
+        "storage::control::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/control.log",
+      "log_sha256": "0e04c836411710d9f6f7c60697a2bbe6d7be2787dfa857c51226c14525fe1c00",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-native-read_buffer",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--test",
+        "read_buffer",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/build-native-read_buffer.log",
+      "log_sha256": "e072b8210f743d94cc92b9372749556022eca13758db2b61b602e5b983097b12",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "native-read_buffer",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/native-read_buffer-binary",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/native-read_buffer.log",
+      "log_sha256": "966bf6961c1435ebe8b2151ba63052b29a080e7e47d066f0b676e2e3932f7b36",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "build-native-page_io",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadbtest-engine-worker",
+        "--test",
+        "page_io",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/build-native-page_io.log",
+      "log_sha256": "a3877c339399e52029cfb81db4437ab6ed6993298d066d1ec65d4e9574213aa7",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "native-page_io",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/native-page_io-binary",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/native-page_io.log",
+      "log_sha256": "4a514ce8f7595d7ec861fd04a6a8cda5dc71fb83806e380d3e72a020f919515a",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "borrow-checker-self-tests",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_dev3_buffer_borrows.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/borrow-checker-self-tests.log",
+      "log_sha256": "916ef58ed8ecbb734f78b68dd63218a2e8f1bd9a5d4cb4d0504560bef6fb95b9",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/clippy.log",
+      "log_sha256": "d433205ac6afbc51127511cd7f3d33d4c5a65cbb0a7b9c1dd6e1906030dc5b88",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/fmt.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "builds": [
+    {
+      "name": "engine",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/engine-binary",
+      "sha256": "5e6d8468d977471443306847b838c51c311a97447a9a09d9622503b548c0441e"
+    },
+    {
+      "name": "native-read_buffer",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/native-read_buffer-binary",
+      "sha256": "76d62363dd6437ea05be260dae8870b0ebb39a28640b356e9b9dddbfc13b45ed"
+    },
+    {
+      "name": "native-page_io",
+      "binary": "/home/et16/work/xadb/artifacts/dev3/read-buffer-retained-r2/native-page_io-binary",
+      "sha256": "a6b4d1f7bb14c0c927b80c10d89c7fa1e32b9980420e43a291af37c2df3a57fa"
+    }
+  ],
+  "required_tests": {
+    "read_buffer": [
+      "read_buffer_capacity_and_profile_bounds",
+      "read_buffer_clock_and_pins_bound_replacement",
+      "read_buffer_concurrent_pins_prevent_aba",
+      "read_buffer_generated_sequences_match_reference_clock",
+      "read_buffer_identity_never_aliases_cached_pages",
+      "read_buffer_limits_and_poison_fence",
+      "read_buffer_load_failure_releases_claim",
+      "read_buffer_loading_deduplicates_and_keeps_hits_live",
+      "read_buffer_pins_selected_bytes_and_hits",
+      "read_buffer_workspace_can_only_be_reused_after_release"
+    ],
+    "page_io": [
+      "every_read_fault_preserves_selection_and_bounded_handles",
+      "page_request_binds_profile_owner_generation_kind_and_bounds",
+      "selected_map_and_data_require_exact_handle_lengths",
+      "selected_map_reads_independent_page_and_all_declared_chunks",
+      "selected_map_rejects_late_damage_and_never_scans_fallback"
+    ],
+    "page": [
+      "every_kind_and_internal_level_boundary_is_checked",
+      "every_truncation_trailing_byte_and_single_byte_damage_is_rejected",
+      "exact_page_capacity_and_all_encode_errors_preserve_output",
+      "expected_database_file_page_incarnation_owner_and_kind_are_required",
+      "fixed_64_seed_128_operation_envelope_campaign_preserves_cells",
+      "independent_page_vectors_match_every_byte_and_borrow_exact_cells",
+      "valid_checksum_does_not_hide_invalid_structure_or_zero_identities"
+    ],
+    "control": [
+      "control_encoders_preserve_outputs",
+      "control_envelope_corruption_is_rejected",
+      "control_filemap_cursor_rejects_mixed_inventory",
+      "control_filemap_exact_bounds",
+      "control_filemap_literals",
+      "control_generated_inventory_profiles",
+      "control_names_and_bootstrap_ownership",
+      "control_profile_literals",
+      "control_profiles_require_exact_capacities",
+      "control_selector_bindings_and_lengths"
+    ],
+    "native-read_buffer": [
+      "native_read_buffer_hits_evictions_and_reopen",
+      "native_read_buffer_rejects_bad_load_and_recovers"
+    ],
+    "native-page_io": [
+      "native_selected_map_reads_and_rejects_selected_damage"
+    ]
+  },
+  "status": "PASS",
+  "lower_regression": "NOT_RUN_ON_THIS_SOURCE",
+  "source_sha256": "061c0d9ee7ace9d623370513471d3778d41956cd4c6e4b7a141d1e4176ab703c",
+  "contract_sha256": {
+    "devdoc/contracts/dev3-read-buffer.md": "4029f7409d6fc5a9331853c65529b52633700293fe391e35083c293e9b3bc919",
+    "devdoc/contracts/dev3-page-io.md": "027164acb6cadf346180c316d5806462b7e97e482df9669cdb1cfacec5d3edfc",
+    "devdoc/contracts/dev3-page-format.md": "145acea1f16da02d6868d0cc38e05f696c3b1b18aed356e8842e11e4d01e5fab",
+    "devdoc/contracts/dev3-control-format.md": "ca0cc1e4264741b7b8ff21ebde31e7fb16333584e7c9f6fc8925df51c1c4bddc"
+  },
+  "buffer_borrows": {
+    "report": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows.json",
+    "sha256": "0c4551da990c4c2b14c7fb7fa5d0ceff5e4643a1fd19d3eecdf46bdb26d1d6e7"
+  }
+}

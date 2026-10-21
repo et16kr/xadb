@@ -1163,5 +1163,29 @@
     "dependencies_changed": false,
     "full_stage_acceptance": false,
     "local_tests": 12
+  },
+  "dev3_read_buffer": {
+    "status": "locally_verified_limited_scope",
+    "contract_ref": "dev3-read-buffer.md",
+    "implementation": "crates/engine/src/storage/read_buffer.rs",
+    "shared_test_support": "crates/engine/src/storage/page_io_test_support.rs",
+    "scope": "selected clean pages only; full S2/DEV3 incomplete",
+    "source": [
+      "crates/engine/src/storage/read_buffer.rs",
+      "crates/engine/src/storage/read_buffer_tests.rs"
+    ],
+    "native_tests": "crates/testing/engine-worker/tests/read_buffer.rs",
+    "native_shared_fixture": "crates/testing/engine-worker/tests/support/selected_pages.rs",
+    "borrow_checks": [
+      "scripts/check_dev3_buffer_borrows.py",
+      "scripts/test_check_dev3_buffer_borrows.py"
+    ],
+    "local_tests": 10,
+    "native_test_count": 2,
+    "borrow_negative_count": 3,
+    "borrow_positive_count": 3,
+    "source_roots_changed": false,
+    "dependencies_changed": false,
+    "full_stage_acceptance": false
   }
 }

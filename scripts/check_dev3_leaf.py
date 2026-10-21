@@ -25,6 +25,22 @@ from check_dev0 import check_report_paths, digest, source_fingerprint
 from comm_campaign import capture_source, identity, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
+READ_BUFFER_TESTS = {
+    'read_buffer_pins_selected_bytes_and_hits',
+    'read_buffer_capacity_and_profile_bounds',
+    'read_buffer_clock_and_pins_bound_replacement',
+    'read_buffer_identity_never_aliases_cached_pages',
+    'read_buffer_load_failure_releases_claim',
+    'read_buffer_loading_deduplicates_and_keeps_hits_live',
+    'read_buffer_concurrent_pins_prevent_aba',
+    'read_buffer_limits_and_poison_fence',
+    'read_buffer_generated_sequences_match_reference_clock',
+    'read_buffer_workspace_can_only_be_reused_after_release',
+}
+READ_BUFFER_NATIVE_TESTS = {
+    'native_read_buffer_hits_evictions_and_reopen',
+    'native_read_buffer_rejects_bad_load_and_recovers',
+}
 SEMANTIC_GROUP_TESTS = {
     'rollback_start_literals_bind_full_state',
     'rollback_start_lengths_and_damage',
@@ -447,7 +463,7 @@ def main():
     source = session / 'source'
     report = {
         'schema_version': 1, 'date': datetime.now(timezone.utc).isoformat(),
-        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/status-home/obligation-descriptor/ownership-observation/RollbackStart-full-state-observation/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads + D3-M02-P01; no disk engine or S1 acceptance',
+        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/status-home/obligation-descriptor/ownership-observation/RollbackStart-full-state-observation/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads/clean buffer + D3-M02-P01; no disk engine or S1 acceptance',
         'status': 'RUNNING', 'origin': identity(ROOT), 'artifact_directory': str(session),
         'dev3_acceptance': 'INCOMPLETE', 'checks': [], 'builds': [],
         'checker_identity_scope': 'F07 file freeze and before/after disk hashes; not bytecode attestation or protected CI',
@@ -502,6 +518,7 @@ def main():
                 'devdoc/contracts/dev3-control-format.md',
                 'devdoc/contracts/dev3-selector-port.md',
                 'devdoc/contracts/dev3-page-io.md',
+                'devdoc/contracts/dev3-read-buffer.md',
                 'devdoc/contracts/dev3-snapshot-model.md']}
         write_json(session / 'manifest.json', report)
         report['toolchain'] = run('toolchain', ['rustc', '-Vv'])
@@ -509,6 +526,23 @@ def main():
                                                '-s', 'scripts', '-p', 'test_check_dev3_leaf.py'])
         if not re.search(r'^Ran 7 tests in .+\n\nOK$', self_tests, re.M):
             raise ValueError('checker self-test inventory did not execute')
+        borrow_self_tests = run('buffer-borrow-checker-self-tests', ['python3', '-B', '-m', 'unittest',
+                                    'discover', '-s', 'scripts', '-p', 'test_check_dev3_buffer_borrows.py'])
+        if not re.search(r'^Ran 6 tests in .+\n\nOK$', borrow_self_tests, re.M):
+            raise ValueError('buffer borrow checker self-test inventory did not execute')
+        borrow_report = session / 'buffer-borrows.json'
+        run('buffer-borrow-compiler-checks', ['python3', '-B', 'scripts/check_dev3_buffer_borrows.py',
+            '--artifact-parent', str(session), '--report', str(borrow_report)])
+        borrow_receipt = json.loads(borrow_report.read_text())
+        expected_cases = {'baseline', 'pool-positive', 'pool-negative', 'pin-positive', 'pin-negative',
+                          'frames-positive', 'frames-negative'}
+        if (borrow_receipt.get('status') != 'PASS'
+                or borrow_receipt.get('source_sha256') != report['source_sha256']
+                or len(borrow_receipt.get('cases', [])) != 7
+                or {row['name'] for row in borrow_receipt['cases']} != expected_cases
+                or any(row.get('status') != 'PASS' for row in borrow_receipt['cases'])):
+            raise ValueError('buffer borrow compiler checks did not verify this source')
+        report['buffer_borrows'] = {'report': str(borrow_report), 'sha256': digest(borrow_report)}
         vectors = run('independent-vectors', ['python3', '-B', 'scripts/dev3_page_vectors.py'])
         report['vector_result'] = check_vectors(vectors)
         vectors = run('independent-disk-vectors', ['python3', '-B', 'scripts/dev3_disk_vectors.py'])
@@ -528,9 +562,12 @@ def main():
                                ('wal_frame', WAL_TESTS), ('allocation_page', ALLOCATION_TESTS),
                                ('row_record', ROW_TESTS), ('doublewrite_control', DOUBLEWRITE_TESTS),
                                ('catalog_record', CATALOG_TESTS), ('undo_record', UNDO_RECORD_TESTS),
-                               ('control', CONTROL_TESTS), ('page_io', PAGE_IO_TESTS)]:
+                               ('control', CONTROL_TESTS), ('page_io', PAGE_IO_TESTS),
+                               ('read_buffer', READ_BUFFER_TESTS)]:
             prefix = f'storage::{name}::tests::'
-            output = run(name, [page, prefix, '--nocapture', '--test-threads=1'])
+            # Intentional poison panics must not split libtest's named result line.
+            output_mode = '--show-output' if name == 'read_buffer' else '--nocapture'
+            output = run(name, [page, prefix, output_mode, '--test-threads=1'])
             report[f'{name}_tests'] = check_named_tests(output, 0, prefix, expected)
         scalar = build('xadb-foundation', ['--test', 'key_buffer'], 'key_buffer', 'scalar-key')
         output = run('scalar-key', [scalar, '--nocapture', '--test-threads=1'])
@@ -550,7 +587,9 @@ def main():
                  'durable_performance::ports::tests::',
                  'durable_performance::ports::tests::open_metadata_', METADATA_PERFORMANCE_TESTS),
                 ('page-io-native', 'xadbtest-engine-worker', ['--test', 'page_io'], 'page_io',
-                 '', '', PAGE_IO_NATIVE_TESTS)]:
+                 '', '', PAGE_IO_NATIVE_TESTS),
+                ('read-buffer-native', 'xadbtest-engine-worker', ['--test', 'read_buffer'], 'read_buffer',
+                 '', '', READ_BUFFER_NATIVE_TESTS)]:
             binary = build(package, target_args, target_name, name)
             # Keep witness prints out of libtest's in-progress `test ...` line.
             # --show-output preserves successful-test witnesses after each result.

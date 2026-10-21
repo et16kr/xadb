@@ -1,0 +1,271 @@
+{
+  "scope": "three private buffer lifetime compiler checks and three positive baselines",
+  "status": "PASS",
+  "artifact_directory": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d",
+  "cases": [
+    {
+      "name": "baseline",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/baseline",
+      "source_sha256": "061c0d9ee7ace9d623370513471d3778d41956cd4c6e4b7a141d1e4176ab703c",
+      "expected_code": null,
+      "expected_line": null,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/baseline-logs/compiler.jsonl",
+      "stdout_sha256": "14370f1f8b80637bea9fdefc0f0fa2a2f1310b1b2fbdfdc93e36d3db50258166",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/baseline-logs/compiler.stderr",
+      "stderr_sha256": "15c76c39c51f20e5f330929bf429e5f1f67638acf9f17d0d6ecf40ea2cf6e0dd",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": []
+    },
+    {
+      "name": "pool-positive",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/pool-positive/source",
+      "source_sha256": "6b3f0f02f0c368245f74b951fda26388becc8af36cbded10aa6437da30f709c7",
+      "expected_code": null,
+      "expected_line": null,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/pool-positive/compiler.jsonl",
+      "stdout_sha256": "12c3cceb09bfe739d576f747afdfcdce0938f77571c0ba8d87db4a637cafb4ab",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/pool-positive/compiler.stderr",
+      "stderr_sha256": "6393a8b5b6715c1a2ba7b00b1457d763a20865fd5f6d1218b85f3e40e7a2de2e",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": []
+    },
+    {
+      "name": "pool-negative",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/pool-negative/source",
+      "source_sha256": "0807cb70128b544d7f8495318b390b67fa3d6d7d61779ce45db6c78428181421",
+      "expected_code": "E0505",
+      "expected_line": 7,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/pool-negative/compiler.jsonl",
+      "stdout_sha256": "5d08e412650ce94d6fb898ba55eb5a2329a705cf7dd140cdc647737369d33244",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/pool-negative/compiler.stderr",
+      "stderr_sha256": "27835f484bae3419e604f12521cede831a2e2243197d5fccb38ecdc39d962472",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0505",
+          "primary_span": {
+            "byte_end": 493,
+            "byte_start": 487,
+            "column_end": 16,
+            "column_start": 10,
+            "expansion": null,
+            "file_name": "crates/engine/src/buffer_borrow_probe.rs",
+            "is_primary": true,
+            "label": "move out of `buffer` occurs here",
+            "line_end": 7,
+            "line_start": 7,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 16,
+                "highlight_start": 10,
+                "text": "    drop(buffer); // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "pin-positive",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/pin-positive/source",
+      "source_sha256": "c571ec3562fe413421d74d2d4dc598c15fbb666de11f75a526fc26bfeb670de7",
+      "expected_code": null,
+      "expected_line": null,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/pin-positive/compiler.jsonl",
+      "stdout_sha256": "2cbbd4d60b1678aa527b8e304125dc52bcfc67451e7ae9e40ff803315970170a",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/pin-positive/compiler.stderr",
+      "stderr_sha256": "7d96ea5d1988d5e15c2f05e79151a0cd0be3c128a6f1d121bf234f52b774fcfd",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": []
+    },
+    {
+      "name": "pin-negative",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/pin-negative/source",
+      "source_sha256": "2ee3296b35661c989dbe9c720e12c25bed70713f75505f3cd60635be5eb7c16a",
+      "expected_code": "E0505",
+      "expected_line": 8,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/pin-negative/compiler.jsonl",
+      "stdout_sha256": "d1e85a79f7deae1ccf2e9b5c625dfcc02ae0164ad1e6bed31486254d7c053414",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/pin-negative/compiler.stderr",
+      "stderr_sha256": "c5e4ca4cdbc4a6a25007c76ad887c00060882224d936e49a858646ecbb474cb8",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0505",
+          "primary_span": {
+            "byte_end": 527,
+            "byte_start": 524,
+            "column_end": 13,
+            "column_start": 10,
+            "expansion": null,
+            "file_name": "crates/engine/src/buffer_borrow_probe.rs",
+            "is_primary": true,
+            "label": "move out of `pin` occurs here",
+            "line_end": 8,
+            "line_start": 8,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 13,
+                "highlight_start": 10,
+                "text": "    drop(pin); // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "frames-positive",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/frames-positive/source",
+      "source_sha256": "46e387cf255e6e49e15b42715059ffe6c8d323e34d35e561a343f85881ea96e2",
+      "expected_code": null,
+      "expected_line": null,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/frames-positive/compiler.jsonl",
+      "stdout_sha256": "adf5a123475784014b6f6082809c9fd11e5c55aac210bf66aa05b1aee0c20fef",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/frames-positive/compiler.stderr",
+      "stderr_sha256": "81bf7ec8e18650a81ce8fc4fde513ea66637a217eb86f7b2d28add7fa8ef8c36",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": []
+    },
+    {
+      "name": "frames-negative",
+      "source": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/frames-negative/source",
+      "source_sha256": "bce8114ea79cd86ddb77b15dc9ebfe382c89f5d26bd919ef41c9c87054131f9d",
+      "expected_code": "E0499",
+      "expected_line": 6,
+      "status": "PASS",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "stdout": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/frames-negative/compiler.jsonl",
+      "stdout_sha256": "858bbe71388b0b672bde7adaed2e16cd79cd567c5064d6bda292e0df30254a2a",
+      "stderr": "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/buffer-borrows-dkdazd8d/frames-negative/compiler.stderr",
+      "stderr_sha256": "407f9eecda547e54fb922c98a70e208295ed00dc93a3a3c0dea839b073530419",
+      "interrupted": false,
+      "remaining_group_signalled": false,
+      "diagnostics": [
+        {
+          "code": "E0499",
+          "primary_span": {
+            "byte_end": 439,
+            "byte_start": 427,
+            "column_end": 29,
+            "column_start": 17,
+            "expansion": null,
+            "file_name": "crates/engine/src/buffer_borrow_probe.rs",
+            "is_primary": true,
+            "label": "second mutable borrow occurs here",
+            "line_end": 6,
+            "line_start": 6,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 29,
+                "highlight_start": 17,
+                "text": "    let alias = &mut *frames; // expected diagnostic"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "checker_sha256": {
+    "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/source/scripts/check_dev3_buffer_borrows.py": "59ec7d7c2cfe2d9472fbb9913ba4f4b2354433d4cdb3076939df540f53212eef",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/source/scripts/check_dev0.py": "b8c7bedbc9c3628b91ea8d8440dc4e061953717d3347f942ebc5cd0ec0d6d324",
+    "/home/et16/work/xadb/artifacts/dev3/leaf-rjjwn_eo/source/scripts/comm_campaign.py": "cd593fcaabc3d0770c502f773bd1a38a0794e1f3ae41165723da42574436d11f"
+  },
+  "source_sha256": "061c0d9ee7ace9d623370513471d3778d41956cd4c6e4b7a141d1e4176ab703c",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n"
+}

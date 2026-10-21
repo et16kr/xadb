@@ -395,3 +395,26 @@ source `e83efc08cfdd1c0233343dc936b3f682361f9385750cbca155fdb1e66f64836f`를 `ar
 완료된 초기 국소 target 약0.23GiB와 kernel target 약0.62GiB를 제거하고 별도 보존 binary hash를 확인했다. kernel worker206개는 동일 binary1개로 통합하여 약5.03GiB를 추가 회수했다. `artifacts/dev3/rollback-start-cache-cleanup-20261021/` 및 `rollback-start-kernel-worker-cleanup-20261021/summary.json`에 원본 경로·hash·journal을 남겼고 source·로그·장애 data·receipt는 보존했다.
 
 최종 독립 감사 `artifacts/dev3/rollback-start-independent-review-20261021/r5-final-evidence-review.json`은 같은 source의 전체 결과, 로그116개·asset hash 참조10101개/8442경로·계약19개·checker3개·승인 제품 입력6개·고정27 suite와 등록 원본4개의 byte 일치를 확인했다. 보존 소스의 당시 계약 hash와 이후 상태 문구 정정을 구분했으며, 이 RollbackStart 관측 단위의 commit 차단 사항은 없다. append·page 적용·예약 복원·DEV3 전체 완료 증거로 승격하지 않는다.
+
+
+`1f85de8` commit 뒤 완료된 RollbackStart leaf의 worker684개를 동일 binary2개로 통합하여 약14.46GiB, leaf·국소 사본의 disposable target에서 약3.94GiB를 추가 회수했다. `artifacts/dev3/rollback-start-leaf-worker-cleanup-20261021/summary.json`과 `rollback-start-cache-cleanup-20261021/final-targets.json`에 전체 journal과 별도 보존11개 binary 검산을 남겼다. source·receipt·로그·crash data는 보존했다.
+
+<a id="read-buffer-results"></a>
+### 선택된 clean page의 bounded buffer
+
+선행 commit `1f85de8`과 source `99bec497054e4095c4c5cbedb7e30ae89f9cc4cbc9910670f04deafabb5b472a` 뒤 [읽기 버퍼 계약](../contracts/dev3-read-buffer.md)을 통합한다. D2 r4 채택 입력 결합 SHA는 `3f4fb31c76815daf587d01af63acf1f4678f78acf1ced3a4f70574c215daf554`다. `/root`가 storage/read_buffer·고정10시험·cfg(test) 공통 reader port·page_io의 순수 preflight·module·native test façade와2시험·borrow compiler runner·소유 계약·배치·색인을 순차 작성한다. 기존 `/root/dev3_selector_review`는 독립 D1 검토를 맡는다. 별도 crate·dependency·제품 엔진은 추가하지 않는다. actual selected reader를 사용하지만 dirty page·write/flush·거래 예약·전체 S2/DEV3 완료는 제공하지 않는다. 구현 초안의 compile 및 국소 정적 검토는 전체 시험 성공을 대신하지 않는다.
+
+
+최종 source `061c0d9ee7ace9d623370513471d3778d41956cd4c6e4b7a141d1e4176ab703c`를 `artifacts/dev3/read-buffer-retained-r2/source`에 보존했다. [국소 원본](../evidence/dev3-read-buffer-local-xadb-20261021-r2.json)은 buffer10·기존 reader5·page7·control10과 native buffer2·기존 native reader1의35시험 및 Clippy/fmt PASS다. 독립 clock model의8,192단계와 실제 두 thread의8,192 ABA cycle, typed-valid alias18·preflight6·read fault16(정상8/오류8)·손상6종을 확인했다. 기존 reader의5시험·56 fault cell과 native6 fixture는 보존했다. [compiler 원본](../evidence/dev3-read-buffer-borrows-xadb-20261021-r1.json)은 unmodified baseline1·positive3 compile과 negative3의 exact E0505/E0499·primary probe span을 확인했고, checker 자기시험6개가 잘못된 진단과 timeout/잔존 프로세스의 거절을 검증했다. 이 결과는 runtime allocation/RSS나 전체 F05를 인증하지 않는다.
+
+독립 D1에서 다른 FileId의 같은 page 번호를 동시에 읽는 반례와 실제 Loading 중 unwind 직후 fence 관측을 보완했다. source `ea367cc3…`의 r1은35시험·compiler7·현재-build kernel18/native99 PASS이나 최종 runner 소스와 구별한다. 초기 leaf r0는 의도적 panic 출력이 `--nocapture` 결과 행을 나누는 문제를 단일 시험으로 재현한 뒤 명시 중단했으며, partial FAIL receipt와 interruption log를 보존했다. buffer suite만 `--show-output`으로 바꿨다. 제품 코드/시험은 바뀌지 않았으며 `artifacts/dev3/read-buffer-independent-review-20261021/r3-static-corpus-review.json`과 `r4-runner-mode-review.json`에 독립 검토를 남겼다. 최초 compile의 closure/타입·Rustdoc 오류와 수정 전 로그도 원래 결과로 보존한다.
+
+같은 최종 source의 [DEV2 kernel18check/native99셀](../evidence/dev3-read-buffer-dev2-kernel-xadb-20261021-r1.json)은 `/home/et16/x3b-f3kamred/source`의 짧은 export에서 PASS했다. [통합 leaf49check](../evidence/dev3-read-buffer-leaf-xadb-20261021-r1.json)와 [하위 회귀28check](../evidence/dev3-read-buffer-dev2-regression-xadb-20261021-r1.json)도 PASS했다. 통합 source는 `artifacts/dev3/leaf-rjjwn_eo/source`에 보존했고 engine 표현·reader·buffer172시험, native buffer·기존 selector/metadata/reader·부분 모델과 DEV0/1·DEV2 회귀를 포함한다. 실제 dirty page·WAL append/sync·write/flush·거래 예약 복원·DEV3 복구와 전체 인수는 남아 있다.
+
+완료된 이전 kernel r0의 worker206개를 동일 binary1개로 통합해 약5.03GiB를 회수했다. 완료/명시 중단된 국소·compiler·leaf·kernel의 disposable target6개에서도 보존 binary hash를 전후 검산하고 약3.34GiB를 제거했다. `artifacts/dev3/read-buffer-old-kernel-worker-cleanup-20261021/summary.json`과 `read-buffer-cache-cleanup-20261021/superseded-targets.json`에 전체 journal과 원래 identity를 보존했으며 final 실행 source·로그·장애 data는 유지했다.
+
+
+최종 source의 국소35시험·compiler7개 결과는 독립 검토자가 보존 binary를 직접 재실행하고 실제 compiler 진단/primary span을 대조했다(`artifacts/dev3/read-buffer-independent-review-20261021/r5-retained-borrow-review.json`). 최종 DEV2 kernel의18check·native33종×3회와 binary/build·장애 image hash도 별도로 검산했다(`r6-kernel-partial-review.json`). 이 검토 뒤 final kernel의 동일 worker206개를1개로 통합해 약5.03GiB, disposable target에서 약0.63GiB를 회수했다. `artifacts/dev3/read-buffer-final-kernel-worker-cleanup-20261021/summary.json`과 `read-buffer-cache-cleanup-20261021/final-kernel-target.json`에 hash·원래 identity·회수량을 남겼고 보존 실행 binary6개·source·로그·장애 data는 유지했다.
+
+
+최종 독립 감사 `artifacts/dev3/read-buffer-independent-review-20261021/r7-final-evidence-review.json`은 leaf49·하위28·DEV0/1각8check,29개 고정 named suite의189시험(engine20 suite172개 포함), 원본5개의 byte 일치와 로그123개·asset hash 참조10,173개/8,500고유경로를 확인했다. 소스/시험의 차단 사항은 없었다. 문서 수동 대조에서 발견한 development-stages.json의 이전 leaf_progress를 stage-completion.json의 같은 제한 범위와 맞췄다. 문서 verifier는 편집/commit 중 실행하지 않으며, DEV3 전체 execution_status는 NOT_RUN으로 유지한다.

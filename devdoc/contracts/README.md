@@ -10,6 +10,8 @@
 
 <!-- catalogue -->
 
+- [DEV3 selected clean page buffer](dev3-read-buffer.md) — 실제 선택 reader·pin·bounded clock의 채택 계약; dirty buffer·전체 S2 미완료
+
 - [DEV3 복합 key 표현](dev3-key-format.md) — F01 scalar/composite·RowId bytes와 무효과 비교; index 실행·unique 인수 제외
 - [DEV3 PageRef·UndoRef·안정 anchor 표현](dev3-reference-format.md) — 참조·root descriptor의 무효과 byte 검증; 실제 pin·SMO·undo 회수 제외
 - [DEV3 공통 tree page 표현](dev3-tree-format.md) — 정렬 cell·경로 선택·byte 기준 분할 위치; 실제 SMO·파일 I/O 제외

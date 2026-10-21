@@ -172,3 +172,13 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 RollbackStart 통합 원본 실행 결과](dev3-rollback-start-leaf-xadb-20261021-r0.json) — source99bec497…의 제한된 결합 관측·같은 build 하위 회귀; 실제 DEV3 적용·전체 인수 미완료
 
 - [DEV3 RollbackStart 소스의 DEV0/1/2 회귀 실행 결과](dev3-rollback-start-dev2-regression-xadb-20261021-r0.json) — source99bec497…의 제한된 결합 관측·같은 build 하위 회귀; 실제 DEV3 적용·전체 인수 미완료
+
+- [DEV3 읽기 버퍼 국소 원본 실행 결과](dev3-read-buffer-local-xadb-20261021-r2.json) — source061c0d9e…의 selected clean page·pin·clock; dirty buffer·전체 DEV3 인수 미완료
+
+- [DEV3 읽기 버퍼 수명 compiler 원본 실행 결과](dev3-read-buffer-borrows-xadb-20261021-r1.json) — source061c0d9e…의 selected clean page·pin·clock; dirty buffer·전체 DEV3 인수 미완료
+
+- [DEV3 읽기 버퍼 통합 원본 실행 결과](dev3-read-buffer-leaf-xadb-20261021-r1.json) — source061c0d9e…의 selected clean page·pin·clock; dirty buffer·전체 DEV3 인수 미완료
+
+- [DEV3 읽기 버퍼 소스의 DEV0/1/2 회귀 실행 결과](dev3-read-buffer-dev2-regression-xadb-20261021-r1.json) — source061c0d9e…의 selected clean page·pin·clock; dirty buffer·전체 DEV3 인수 미완료
+
+- [DEV3 읽기 버퍼 소스의 DEV2 현재-build 복구 실행 결과](dev3-read-buffer-dev2-kernel-xadb-20261021-r1.json) — source061c0d9e…의 selected clean page·pin·clock; dirty buffer·전체 DEV3 인수 미완료

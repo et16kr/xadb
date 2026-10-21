@@ -915,13 +915,14 @@
         "implementation_ref": "dev3-implementation.md",
         "page_contract_ref": "dev3-page-format.md",
         "partial_model_ref": "dev3-snapshot-model.md",
-        "scope": "Fixed storage expressions, descriptor/profile-bound inventory and full-state RollbackStart byte observations, selector/metadata ports, selected-page reads and M02-P01; historical intent nonreuse, reservation restoration, semantic application and full disk-path acceptance remain incomplete",
+        "scope": "Fixed storage expressions, descriptor/profile-bound inventory and full-state RollbackStart observations, selector/metadata ports, selected-page reads and bounded clean buffer pins/clock plus M02-P01; dirty buffer, historical intent nonreuse, reservation restoration, semantic application and full disk-path acceptance remain incomplete",
         "status": "LOCAL_VERIFIED_LIMITED_SCOPE",
-        "evidence_ref": "dev3-rollback-start-leaf-xadb-20261021-r0.json",
+        "evidence_ref": "dev3-read-buffer-leaf-xadb-20261021-r1.json",
         "page_io_contract_ref": "dev3-page-io.md",
         "status_home_contract_ref": "dev3-status-home.md",
         "obligation_contract_ref": "dev3-obligation-format.md",
-        "ownership_contract_ref": "dev3-ownership-format.md"
+        "ownership_contract_ref": "dev3-ownership-format.md",
+        "read_buffer_contract_ref": "dev3-read-buffer.md"
       }
     },
     {
