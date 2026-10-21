@@ -138,3 +138,13 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 상태 home 표현 통합 원본 실행 결과](dev3-status-home-leaf-xadb-20261021-r1.json) — source dd7163fb…의 고정 범위; 실제 DEV3 복구·S1 인수 아님.
 
 - [DEV3 상태 home 통합 소스의 DEV0/1·DEV2 회귀](dev3-status-home-dev2-regression-xadb-20261021-r1.json) — source dd7163fb…의 고정 범위; 실제 DEV3 복구·S1 인수 아님.
+
+- [DEV3 obligation descriptor의 국소 실행 결과](dev3-obligation-local-xadb-20261021-r0.json) — 고정된 해당 소스·검증 범위; 실제 예약 인계·DEV3 복구 인수 아님.
+
+- [DEV3 obligation descriptor 통합 소스의 현재-build DEV2 복구](dev3-obligation-dev2-kernel-xadb-20261021-r1.json) — 고정된 해당 소스·검증 범위; 실제 예약 인계·DEV3 복구 인수 아님.
+
+- [DEV3 obligation descriptor 통합 소스의 Clippy·fmt 실행 결과](dev3-obligation-quality-xadb-20261021-r1.json) — 고정된 해당 소스·검증 범위; 실제 예약 인계·DEV3 복구 인수 아님.
+
+- [DEV3 obligation descriptor 통합 원본 실행 결과](dev3-obligation-leaf-xadb-20261021-r2.json) — source 7dabd13a…의 고정 범위; 실제 DEV3 복구·S1 인수 아님.
+
+- [DEV3 obligation descriptor 통합 소스의 DEV0/1·DEV2 회귀](dev3-obligation-dev2-regression-xadb-20261021-r2.json) — source 7dabd13a…의 고정 범위; 실제 DEV3 복구·S1 인수 아님.

@@ -1,0 +1,93 @@
+{
+  "scope": "obligation descriptor representation only; no inventory, admission, persistence or recovery",
+  "status": "PASS",
+  "source": "/home/et16/work/xadb/artifacts/dev3/obligation-retained-r0/source",
+  "source_sha256": "33aea0a6aa08aa609efa2bb34406a09ebf676e1d1733e7098720c66d0b294154",
+  "contract_sha256": "38d6485c3e2591899728ddbe9ed16916419299729ff7f8b7f0e10ded5cc16438",
+  "lower_regression": "NOT_RUN_ON_THIS_SOURCE",
+  "checks": [
+    {
+      "id": "build",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/obligation-retained-r0/build.log",
+      "log_sha256": "faf702d82da48ebb178548adafc410568679fa066c3fa570e0102dcb8fdcdade",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "descriptor",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/obligation-retained-r0/engine-binary",
+        "storage::obligation::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/obligation-retained-r0/descriptor.log",
+      "log_sha256": "1cb97c74efd7efc8d20c0d0dd9d74949fe42860a9c2474db657ee8bf91dffe9a",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/obligation-retained-r0/clippy.log",
+      "log_sha256": "ba64ada50cc6ff17f312fb714419dd0e407aadf33933f578b4d54a699f6e8c12",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/obligation-retained-r0/fmt.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "binary": {
+    "binary": "/home/et16/work/xadb/artifacts/dev3/obligation-retained-r0/engine-binary",
+    "sha256": "d99b1eb4068642dbbea6e52041807d828254a7340031fb61affd03b880a4765f"
+  },
+  "tests": [
+    "descriptor_budget_sums_peaks_and_growth_are_exact",
+    "descriptor_empty_inventory_and_chain_boundaries",
+    "descriptor_encoder_errors_preserve_output",
+    "descriptor_expected_context_and_unsupported_work_root",
+    "descriptor_generated_profiles_match_independent_fields",
+    "descriptor_lengths_and_every_byte_damage_reject",
+    "descriptor_literals_bind_exact_owner_profile_and_state",
+    "descriptor_reserved_and_semantic_damage_reject_after_checksum"
+  ],
+  "source_sha256_after": "33aea0a6aa08aa609efa2bb34406a09ebf676e1d1733e7098720c66d0b294154"
+}

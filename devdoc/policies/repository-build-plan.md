@@ -202,6 +202,7 @@ DEV3 첫 표현 leaf는 [page 형식](../contracts/dev3-page-format.md)을 priva
 
 [거래 상태의 영속 home](../contracts/dev3-status-home.md)는 private `storage/status_home.rs`·`status_home_tests.rs`와 engine의3개 literal fixture에 둔다. 기존192-byte core와 구 loader는 기존 표현 범위로 유지하고224-byte home·71-slot 검산은 별도 loader가 소유한다. 새 dependency/feature나 기본 제품 API는 없다. 무효과 표현 검증을 실제 count 갱신·terminal 회수로 해석하지 않는다.
 
+[복구 의무 descriptor](../contracts/dev3-obligation-format.md#12-독립-descriptor-표현-leaf-제안)는 private `storage/obligation.rs`·`obligation_tests.rs`와 engine의3개1536-byte literal에 둔다. dependency/feature·기본 제품 API 변경 없이 owner/profile/budget 표현만 검산한다. inventory closure·예약 복원·WAL 적용 타입으로 승격하지 않는다.
 
 두 번째 표현 작업의 [composite key](../contracts/dev3-key-format.md)는 caller buffer와 기존 foundation scalar bytes를 사용한다. foundation의 exact-size/encode-into/prefix 검사와 engine의 key 시험을 위 leaf 실행기에 함께 등록한다. M01–M06의 후속 모델은 reference integration tests에 두며 각 모델 계약·실제 receipt와 전체 DEV3 실행을 구분한다.
 

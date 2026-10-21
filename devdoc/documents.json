@@ -1032,6 +1032,31 @@
       "path": "evidence/dev3-status-home-dev2-regression-xadb-20261021-r1.json",
       "role": "evidence",
       "title": "DEV3 상태 home 통합 소스의 DEV0/1·DEV2 회귀"
+    },
+    "dev3-obligation-local-xadb-20261021-r0.json": {
+      "path": "evidence/dev3-obligation-local-xadb-20261021-r0.json",
+      "role": "evidence",
+      "title": "DEV3 obligation descriptor의 국소 실행 결과"
+    },
+    "dev3-obligation-dev2-kernel-xadb-20261021-r1.json": {
+      "path": "evidence/dev3-obligation-dev2-kernel-xadb-20261021-r1.json",
+      "role": "evidence",
+      "title": "DEV3 obligation descriptor 통합 소스의 현재-build DEV2 복구"
+    },
+    "dev3-obligation-quality-xadb-20261021-r1.json": {
+      "path": "evidence/dev3-obligation-quality-xadb-20261021-r1.json",
+      "role": "evidence",
+      "title": "DEV3 obligation descriptor 통합 소스의 Clippy·fmt 실행 결과"
+    },
+    "dev3-obligation-leaf-xadb-20261021-r2.json": {
+      "path": "evidence/dev3-obligation-leaf-xadb-20261021-r2.json",
+      "role": "evidence",
+      "title": "DEV3 obligation descriptor 통합 원본 실행 결과"
+    },
+    "dev3-obligation-dev2-regression-xadb-20261021-r2.json": {
+      "path": "evidence/dev3-obligation-dev2-regression-xadb-20261021-r2.json",
+      "role": "evidence",
+      "title": "DEV3 obligation descriptor 통합 소스의 DEV0/1·DEV2 회귀"
     }
   }
 }

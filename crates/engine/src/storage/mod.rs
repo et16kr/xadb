@@ -4,6 +4,7 @@ pub(crate) mod catalog_record;
 pub(crate) mod control;
 pub(crate) mod doublewrite_control;
 pub(crate) mod key;
+mod obligation;
 pub(crate) mod overflow;
 pub(crate) mod page;
 pub(crate) mod page_io;

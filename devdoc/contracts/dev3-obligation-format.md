@@ -1,10 +1,10 @@
 # DEV3 영속 recovery obligation·WAL 의미 그룹
 
-2026-10-21 · **D3-OBLIGATION-F01/F02 초안 / D2 독립 검토 대기 / 제품 구현·실행 없음**
+2026-10-21 · **D3-OBLIGATION-F01/F02 부분 계약 / §12 descriptor 표현 D2 수용·구현·동일 소스 회귀 PASS / 전체 의미 그룹·복구 미구현**
 
 [예약 인계](disk-storage-design.md#recovery-reservation) · [변경 규약](disk-storage-design.md#mutation-protocol) · [REBASE](disk-storage-design.md#recovery-rebase) · [profile](disk-storage-design.md#capacity-profile) · [WAL frame](dev3-wal-format.md) · [거래](dev3-transaction-format.md) · [allocator](dev3-allocation-format.md) · [undo](dev3-undo-format.md) · [실제 크기 계산](dev3-resource-bounds.md) · [M04](dev3-recovery-model.md) · [M06](dev3-reservation-model.md) · [소유 범위](../implementation/dev3-implementation.md#wave-2)
 
-이 문서는 거래·system 작업의 **남은 복구 의무를 정해진 bytes로 인계하는 최소 표현**과 그 표현을 WAL의 효과·진행점에 결합하는 규칙을 제안한다. 작성자는 `/root/dev3_model`, 계약·통합 검토자는 `/root`다. 이 단계는 계약만 작성한다. 기존 제품 소스, 공개 API, frame codec, runner를 변경하거나 실행하지 않는다.
+이 문서는 거래·system 작업의 **남은 복구 의무를 정해진 bytes로 인계하는 최소 표현**과 그 표현을 WAL의 효과·진행점에 결합하는 규칙을 제안한다. 원래 초안 작성자는 `/root/dev3_model`이다. 재개 뒤 `/root`가 §12의 좁은 descriptor 표현 구현·통합을 맡고 `/root/dev3_selector_review`가 독립 검토한다. §12 밖의 의미 그룹·inventory·복구는 여전히 제안이며 frame codec이나 기본 제품 API에 연결하지 않는다.
 
 descriptor의 형식 수락, checkpoint closure 검산, 실제 page 적용·복구 성공은 서로 다른 결과다. 기존 WAL `Opaque`를 descriptor로 간주하지 않는다. 아래 의미 그룹도 실제 before page·native record·자원 profile을 대조하는 적용기가 없으면 복구 완료를 뜻하지 않는다. **TxnRef incoming count의 home 위치, retirement queue, CURRENT/WRITER/checkpoint의 최종 선택 형식, opcode별 F05 상한은 아직 미완료**다. 이 항목이 필요한 opcode를 구조만 맞는 payload로 성공시키지 않는다.
 
@@ -417,7 +417,7 @@ F03 oracle은 candidate decode/summary를 기대값으로 사용하지 않는다
 
 ## 10. 미완료와 다음 검토
 
-현재는 정확한 descriptor/ownership/header 제안까지이며 다음을 닫기 전에는 **구현 시작 승인 전 초안**이다.
+§12의 고정 descriptor 표현만 독립 검토 뒤 구현할 수 있다. 나머지 ownership/header·실제 의미 적용은 다음을 닫기 전까지 **구현 시작 승인 전 초안**이다.
 
 - control owner의 kind5/6과 namespace/선택 형식 수용, checkpoint의 정확한 current/previous·WRITER/high-water closure.
 - system4의 nested operation 검산, N_max와 inventory3 bank·checkpoint2개·전체 fixed 보호 영역의 F05 수치.
@@ -432,3 +432,52 @@ F03 oracle은 candidate decode/summary를 기대값으로 사용하지 않는다
 `/root/dev3_selector_review`가 초안의 net0 count와 terminal credit 유실 반례를 제시했다. `/root`는 §6.4에 모든 touched target의 선행 count/state proof, §7에 terminal 뒤의 durable owner/credit 인계가 없는 opcode의 Unsupported 경계를 반영했다. 이는 미완성 opcode의 실행 승인이 아니다. 별도224-byte status home는 prefix32+기존core192로 제안하며, 채택 시 NativeEffect의 before/after 각각32 bytes와 Patch32 bytes가 늘어 RollbackStart group2848/frame3040, 단일 home의 page offset16128/length224가 된다. r0의 group2752/frame2944·offset16160/length192 원본은 당시192-core 초안으로 그대로 보존하고 새 home vector로 재표기하지 않는다.
 
 현재 남은 핵심은 queue record·진행·보호 credit 인계, native logical projection과 opcode별 필수 section, net0 target proof API, inventory 반복 scan의 작업량·정상 reopen 예산이다. 이 문서 전체 D2 채택과 제품 구현은 아직 완료하지 않았다.
+
+## 12. 독립 descriptor 표현 leaf 제안
+
+2026-10-21 작성·구현·통합 `/root`, 독립 검토 `/root/dev3_selector_review`. 이 절은 §2의 OwnerRef56과 기존 Profile ref64, §3의1536-byte descriptor·budget128만 구체화한다. §4 이후 ownership stream·semantic group·terminal·복구 적용은 포함하지 않는다. 기존 초안 bytes를 줄이거나 opaque body를 성공 stub으로 수락하는 대안 대신, 검증 가능한 고정 표현을 먼저 공급한다. D2 검토 전에는 이 절의 제품 코드를 작성하지 않는다.
+
+### 12.1 API·오류·상태
+
+private `storage/obligation.rs`와 `obligation_tests.rs`에 둔다. `DescriptorSpec`은 owner 상태, chain(apply/previous/birth/groups), Profile ref, inventory claim(change_lsn/items/digest/growth_extents), consumed WAL/control, 고정5개 budget, minimum_wal_lsn, last_mutation_sequence를 가진 값이다. `OwnerState`는 `Transaction(TransactionStatus)` 또는 `System(SystemProgress)`다. SystemProgress는 기존 SystemWorkRef와 phase/sequence/cursor/limit를 가지며 이 leaf에는 work-root가 없다. wire의 owner·state tag는 이 값에서 유도한다. None/Free owner는 만들지 않는다.
+
+`encode_descriptor(spec: &DescriptorSpec, output: &mut [u8])`와 `decode_descriptor(bytes, expected_owner: ReservationOwner, expected_profile: ControlRef) -> DescriptorSpec`를 제공한다. spec 자체는 공개된 내부 필드를 가진 미검증 입력 값이며 encode 때마다 검증한다. decode의 기대 owner/profile은 신뢰한 WAL/checkpoint context가 공급하며 입력에서 복사한 값으로 대신하지 않는다. full owner에는 DB/timeline/epoch 또는 system kind/id와 generation이 포함된다. 이 codec은 실제 profile bytes·inventory나 before descriptor를 읽지 않으므로 대상 존재·예약 충분성·predecessor의 실제 동일성을 증명하지 않는다. expected profile도 기존 Profile ref의 구조를 만족해야 한다.
+
+오류는 InvalidInput(호출자의 잘못된 spec/기대값/출력길이), Corrupt(입력 bytes·내부 모순), UnsupportedFormat(알 수 없는 descriptor version), UnsupportedWorkBody(유효 checksum의 system work-root가 nonzero), IdentityMismatch(형식 유효 입력의 owner/profile이 기대값과 다름)로 구분한다. embedded core/control의 알 수 없는 tag/version은 Corrupt다. descriptor version 외 다른 내부 enum tag는 Corrupt로 거절한다. 입력길이는 정확1536이며 magic/길이를 검사한 뒤 version을 구별한다. checksum 불일치도 Corrupt다.
+
+encode는 정확1536-byte output만 수락하며 고정1536-byte scratch에서 전부 검증한 뒤 복사한다. caller input/output 외 heap/I/O/lock은0이다. typed spec와 scratch는 고정 크기이며 개수 비례 allocation이 없다. 실제 count/home 변경·WAL append·자원 획득은 없다.
+
+### 12.2 추가 내부 정합성
+
+- apply/birth/groups는 nonzero. previous=0이면 birth=apply·groups=1이다. previous>0이면 birth≤previous<apply·groups≥2다. 이 식은 실제 이전 descriptor hash나 consumed 누계의 단조성을 검증하지 않는다.
+- inventory_change_lsn은0 또는 apply 이하. items>0이면 change_lsn>0이다. items=0이면 digest=SHA256(empty), growth_extents=0, 모든 budget의 page/undo/status token 수도0이다. 비어 있지 않은 inventory digest는 opaque32 bytes이며 실제 item stream과의 대조는 후속 closure가 맡는다. items=0이어도 이전 release의 change_lsn은 남을 수 있다.
+- Item96의4종으로 표현 가능한 개수여야 한다. T=5행의 page/undo/status token 전체합, G=growth_extents, K=growth>0인 row수라 두고 `T+K ≤ items ≤ T+G`를 u128 산술로 검사한다. 각 growth item은 양수 extent수와 한 category를 가지므로 최소 K개·최대 G개다. 이는 실제 item identity/digest/overlap 검증을 대신하지 않는다. T+G가u64를 넘더라도 items가하한이상인유효표현은이론상상한의overflow로거절하지않는다.
+- growth bytes는 growth_extents×1,048,576의 checked 결과이며5개 budget growth 합과 같다. 각 row growth도 extent 크기의 배수다. protected 합과 growth 합은 checked sum이다. budget의 WAL/control/page/undo/status 각각의5행 합도 u64 범위여야 한다. steps는 category별 다른 단위이므로 합산하지 않는다.
+- step0 row는 모든 수치0이고 tag는 원래1..5 순서다. step>0의 비용이0인 표현은 수락할 수 있지만 실제 opcode admission이 아니다. 최대6 peak는5개 row의 각각 max, protected는 정확 sum이다. decoder는 저장된7개 aggregate와 비교한다.
+- minimum_wal_lsn은0 또는 apply 이하. System의 last_mutation_sequence는0이다. Transaction terminal 상태도 표현할 수 있지만 terminal 실행/ATT 제거를 승인하지 않는다.
+- System kind는 owner kind와 같고 sequence는 nonzero, cursor≤limit다. phase는 Prepared1/Running2/Finishing3/Finished4만 허용한다. wire SystemActive5는 phase1..3, SystemFinished6은 phase4·cursor=limit다. 없는 work-root64는zero, work-state hash는SHA256(empty)다. Transaction은 system128이zero이며 owner와 occupied status의 full TxnRef 및 state tag가 일치한다.
+
+### 12.3 독립 입력과 고정8시험
+
+기존 r0의 descriptor-active/aborting/system3 literal을 원래 hash 그대로 사용한다. reference-only PROFILE가 실제 선택된 XDC1이 아님을 유지한다. 시험에서 기대 Profile ref를 raw 정수와 그 reference-only fixture의 독립 SHA로 구성한다. 이3개를 현재 codec으로 검증하는 새 실행은 r0 계산 자체와 별도다. core의 Committed/Aborted 및 SystemFinished는 raw field·정수와 SHA로 새 정상 variant를 구성하고 실제 terminal 효과를 주장하지 않는다.
+
+| 고정 시험명 | 정확 범위 |
+| --- | --- |
+| `descriptor_literals_bind_exact_owner_profile_and_state` | 기존3 literal의1536 bytes·SHA·독립 필드와 encode 비교. 거래4 state tag의5 variant(Active, Aborting Statement, Aborting Transaction, Committed, Aborted)·System4종×4phase=16 정상 상태를 추가하고 Free는 거절 |
+| `descriptor_lengths_and_every_byte_damage_reject` |3 literal×prefix0..1535 및1537 거절, 각1536 byte의 bit0 한 번 변경=4608 checksum/형식 거절. 다른 bit 전수라고 주장하지 않음 |
+| `descriptor_reserved_and_semantic_damage_reject_after_checksum` | reserved의 모든 byte를 하나씩 변경·재hash: 공통7·12..15·480..543·632..639·1352..1503, OwnerRef1..7, 각row1..7·120..127, SystemProgress354..359의6byte. Transaction의system128 zero도각byte변형128개를거절. 별도 state/owner/status/profile/phase/chain/budget/aggregate 오류의 아래 표 전부 |
+| `descriptor_budget_sums_peaks_and_growth_are_exact` |5 category 각각에 한 row만 활성화하여14개 필드의 offset와 peak/sum 검산. row0/4의 WAL/control/page/undo/status/protected/growth 합 overflow7종, growth_extents×1MiB overflow,0/MAX peak, step0/extent배수 위반을 검증 |
+| `descriptor_expected_context_and_unsupported_work_root` | 다른 DB/timeline/epoch/local/generation의 기대 TxnRef5개, 다른 system kind/id/generation3개, 다른 profile generation/digest2개는IdentityMismatch. malformed expected profile 및 timeline0 owner construction은InvalidInput. work-root 각64 byte의 단일 nonzero는UnsupportedWorkBody |
+| `descriptor_encoder_errors_preserve_output` | 모든 출력길이0..1535·1537,12.2의 잘못된 spec을 각 fresh sentinel에서 거절. 정상 정확1536. source spec와 입력 literal 불변 |
+| `descriptor_empty_inventory_and_chain_boundaries` | 첫/후속 chain·count0/비zero·빈 digest·release 뒤change_lsn·minimumWal 경계·System mutation sequence 경계. inventory 개수는(T,G,K)=(0,0,0)/(2,0,0)/(2,3,1)/(2,3,2) 각각하한−1(음수제외)/하한/상한/상한+1을비교하고T=MAX−1/G2/K1/itemsMAX도정상이다. actual predecessor를 읽는 시험으로 주장하지 않음 |
+| `descriptor_generated_profiles_match_independent_fields` | seed0..63×sample0..127=8192. 아래 입력식·raw offset·u128 산술의 독립 기대값으로 검산 |
+
+재checksum 부정 corpus는 base Active에서 state0/7, owner tag0/3·owner generation21(embedded20), core state mismatch·Free, profile kind2/slot1/index1/generation0/length4095, apply0/previous=apply/birth0/birth>previous/groups0/첫생성groups2/inventory_change>apply/minimumWal>apply, 각row tag0/틀린순서·step0에서WAL1·growth1, 저장 growth bytes 불일치,7개aggregate 각각+1이다. System base에서 core1byte·kind불일치·phase0/5·sequence0·cursor>limit·Finished+cursor<limit·active+phase4·finished+phase1·work-state digest 불일치·mutation_sequence1을 거절한다. 모든 변형은 fresh original을 복사하고 마지막 SHA를 다시 계산한다.
+
+생성식은 `n=128×seed+sample`, kind=`n%6`로 Transaction Active/AbortingStatement/Committed/Aborted/SystemActive/SystemFinished를 순환한다. 거래DB=bytes1..16/timeline17/epoch18/local19+n/generation20+seed이며 head/target/next는없고 commit q=21+sample이다. System kind=1+seed%4/id21+n/gen22+seed, sequence=1+n/cursor=sample/limit=128이며 Finished만cursor=limit다. active phase=1+n%3. chain은 apply=100+n, previous=0/birth=apply/groups1, inventory count0·emptySHA·growth0·change0이다. category `(seed+sample)%5` 하나에 steps1, WAL=192+sample, control=seed, memory=4096+8n, frame=1+sample%4, lock=seed%3, registry=sample%5, FD1, DWB=sample%2, protected=1024+n을 넣고 나머지 row0이다. token/growth는0이다. consumed WAL=2n/control=n, minimumWal은sample홀수에apply이고그밖0, mutation sequence는거래만n이다. budgets/protected/peak를 입력식의 별도 정수로 검사한다.
+
+이8시험과 기존 표현·reader leaf, 현재-build DEV2 회귀를 다음 통합 지문에서 검증한다. native fault/thread는 무효과 codec에 N/A다. 전체 DEV3 복구·queue·opcode F05·실제 append의 미검증 의무는 유지한다. 시험 이름·입력식·거절 분모를 구현 뒤 조용히 축소하지 않는다.
+
+§12 D2 수용 원문 SHA-256은 `745efe83c3e7fd2cc3d9ea03c465045503d95eafcb03e335a0183af40752ec1a`다. 독립 검토 `artifacts/dev3/obligation-resume-review-20261021/r2-descriptor-review.md`는 inventory 개수의 u128 상·하한과 conditional reserved corpus 보완 뒤 좁은 표현만 수용했다. 현재 상태 표기는 이 검토 원문의 의미나 고정 분모를 바꾸지 않는다.
+
+§12 구현과 같은 source의 좁은 통합·하위 회귀·현재-build DEV2 복구 결과는 [구현 기록](../implementation/dev3-implementation.md#obligation-descriptor-results)에 보존한다. 전체 inventory/의미 그룹·실제 예약 인계와 DEV3 복구의 실행 상태는 미완료다.

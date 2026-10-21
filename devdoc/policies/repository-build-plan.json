@@ -1091,5 +1091,22 @@
     "dependencies_changed": false,
     "full_stage_acceptance": false,
     "local_tests": 7
+  },
+  "dev3_obligation_descriptor": {
+    "implementation_ref": "dev3-implementation.md",
+    "contract_ref": "dev3-obligation-format.md",
+    "source": [
+      "crates/engine/src/storage/obligation.rs",
+      "crates/engine/src/storage/obligation_tests.rs"
+    ],
+    "fixtures": [
+      "crates/engine/tests/fixtures/dev3-obligation-active.bin",
+      "crates/engine/tests/fixtures/dev3-obligation-aborting.bin",
+      "crates/engine/tests/fixtures/dev3-obligation-system.bin"
+    ],
+    "source_roots_changed": false,
+    "dependencies_changed": false,
+    "full_stage_acceptance": false,
+    "local_tests": 8
   }
 }

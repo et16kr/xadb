@@ -25,6 +25,16 @@ from check_dev0 import check_report_paths, digest, source_fingerprint
 from comm_campaign import capture_source, identity, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
+OBLIGATION_TESTS = {
+    'descriptor_literals_bind_exact_owner_profile_and_state',
+    'descriptor_lengths_and_every_byte_damage_reject',
+    'descriptor_reserved_and_semantic_damage_reject_after_checksum',
+    'descriptor_budget_sums_peaks_and_growth_are_exact',
+    'descriptor_expected_context_and_unsupported_work_root',
+    'descriptor_encoder_errors_preserve_output',
+    'descriptor_empty_inventory_and_chain_boundaries',
+    'descriptor_generated_profiles_match_independent_fields',
+}
 STATUS_HOME_TESTS = {
     'status_home_literals_match_core_and_count',
     'status_home_rejects_lengths_headers_and_free_references',
@@ -401,7 +411,7 @@ def main():
     source = session / 'source'
     report = {
         'schema_version': 1, 'date': datetime.now(timezone.utc).isoformat(),
-        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/status-home/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads + D3-M02-P01; no disk engine or S1 acceptance',
+        'scope': 'DEV3 page/key/reference/tree/overflow/transaction/status-home/obligation-descriptor/WAL/allocation/row/DWB/catalog/undo/control expressions + selector/metadata effect ports + bounded selected-page reads + D3-M02-P01; no disk engine or S1 acceptance',
         'status': 'RUNNING', 'origin': identity(ROOT), 'artifact_directory': str(session),
         'dev3_acceptance': 'INCOMPLETE', 'checks': [], 'builds': [],
         'checker_identity_scope': 'F07 file freeze and before/after disk hashes; not bytecode attestation or protected CI',
@@ -448,6 +458,7 @@ def main():
                 'devdoc/contracts/dev3-tree-format.md', 'devdoc/contracts/dev3-overflow-format.md',
                 'devdoc/contracts/dev3-transaction-format.md',
                 'devdoc/contracts/dev3-status-home.md',
+                'devdoc/contracts/dev3-obligation-format.md',
                 'devdoc/contracts/dev3-wal-format.md', 'devdoc/contracts/dev3-allocation-format.md',
                 'devdoc/contracts/dev3-row-format.md', 'devdoc/contracts/dev3-doublewrite-format.md',
                 'devdoc/contracts/dev3-catalog-format.md', 'devdoc/contracts/dev3-undo-format.md',
@@ -474,6 +485,7 @@ def main():
                                ('tree_page', TREE_TESTS), ('overflow', OVERFLOW_TESTS),
                                ('transaction_record', TRANSACTION_TESTS),
                                ('status_home', STATUS_HOME_TESTS),
+                               ('obligation', OBLIGATION_TESTS),
                                ('wal_frame', WAL_TESTS), ('allocation_page', ALLOCATION_TESTS),
                                ('row_record', ROW_TESTS), ('doublewrite_control', DOUBLEWRITE_TESTS),
                                ('catalog_record', CATALOG_TESTS), ('undo_record', UNDO_RECORD_TESTS),

@@ -337,3 +337,18 @@ runner 등록 뒤 source `dd7163fbe37164c2c1a6ae75304ad416e9a1407583ae4e9391191c
 완료된 page reader 실행의 worker890개를 같은 manifest SHA·bytes의3개 binary로 hardlink 통합하여 약19.49GiB, 완료된 disposable Cargo target을 제거하여 약3.90GiB를 추가 회수했다. 검증 binary·source·로그와 data는 보존했다. 원본 journal과 요약은 `artifacts/dev3/page-reader-worker-cleanup-20261021/`에 있으며 상태 home의 실행 중 target은 제외했다.
 
 최종 독립 검토 `artifacts/dev3/status-home-independent-review-20261021/r3-final-evidence-review.json`은 같은 지문의 source 두 사본·승인 제품 입력7개·로그105개·고유 asset 경로1,392개와 계약17개·loaded checker3개를 대조했다. 현재-build kernel의3×33개 결과·consistency·controller negative inventory도 확인하여 이 좁은 상태 home 단위의 commit 차단 사항이 없음을 기록했다.
+
+<a id="obligation-descriptor-results"></a>
+### 복구 obligation descriptor 표현
+
+상태 home 단위를 `63c0ebd`로 commit한 뒤 `/root`가 [obligation §12](../contracts/dev3-obligation-format.md#12-독립-descriptor-표현-leaf-제안)의 private `obligation.rs`·`obligation_tests.rs`,3개1536-byte literal과 고정8시험을 구현했다. 5개 budget의 checked 합/peak, growth bytes와 item cardinality, full owner/profile·chain·SystemProgress를 검증한다. 실제 inventory·이전 descriptor나 profile 파일을 읽지는 않으며 admission·WAL 의미 적용·terminal 인계는 미구현이다.
+
+독립 검토의 초기 지적에 따라 u128 cardinality 상·하한과 conditional reserved corpus를 보완했다. 국소 source `33aea0a6aa08aa609efa2bb34406a09ebf676e1d1733e7098720c66d0b294154`의 [원본 실행](../evidence/dev3-obligation-local-xadb-20261021-r0.json)은8시험·Clippy·fmt PASS다. 기존 r0 literal3개의 의미와 hash는 보존했고 4,608개 bit0 손상·잘림·재checksum 논리 오류·8,192개 독립 입력식을 검증했다. `artifacts/dev3/obligation-independent-review-20261021/r1-retained-evidence-review.json`은 실제 보존 binary의8시험을 별도로 재실행했다. 이 국소 source에는 하위 회귀를 실행하지 않았다.
+
+runner의8개 exact 시험 등록은 `artifacts/dev3/obligation-independent-review-20261021/r2-runner-review.json`으로 별도 검토했다. 통합 source `7dabd13a01a71460f68fa3644a94803943e11501fd6c8ff92127d0b686a8827e`를 `artifacts/dev3/leaf-_4j_9p1u/source`와 `/home/et16/x3o-q75pibfb/source`에 보존했다. clean export에서 실행한 최초 leaf r1은 `.git` identity가 없어 제품 실행 전에 실패했고 원본 log와 launch-failure receipt를 보존했다. repository에서 같은 source의 r2를 실행했다. [현재-build DEV2 kernel18check·native99셀](../evidence/dev3-obligation-dev2-kernel-xadb-20261021-r1.json)과 [Clippy·fmt](../evidence/dev3-obligation-quality-xadb-20261021-r1.json)는 PASS다. [통합 leaf42check](../evidence/dev3-obligation-leaf-xadb-20261021-r2.json)·[하위 회귀28check](../evidence/dev3-obligation-dev2-regression-xadb-20261021-r2.json)도 PASS했다. engine 표현·reader130시험 및 기존 selector·metadata·native reader·부분 모델과 DEV0/1·DEV2 P0/K0의 고정 회귀다. 실제 DEV3 복구·S1 인수는 미완료다.
+
+완료된 상태 home worker890개를3개 동일 binary로 통합하여 약19.49GiB를 추가 회수했다. `artifacts/dev3/status-home-worker-cleanup-20261021/summary.json`과 journal은 manifest SHA·bytes 대조 및 원본 data/source/log 보존을 기록한다. 실행 중 descriptor bundle은 제외했다. 별도 `build-cache-cleanup.json`에 완료된 disposable Cargo target 약3.58GiB 제거와 보존 binary 확인을 기록했다.
+
+완료된 descriptor 통합 실행도 `artifacts/dev3/obligation-worker-cleanup-20261021/summary.json`과 journal에서 worker890개·3개 동일 binary를 대조하여 약19.49GiB를 추가 회수했다. SHA 불일치로 보존해야 할 사본은0개였으며 검증 경로·bytes와 data는 유지했다.
+
+최종 독립 검토 `artifacts/dev3/obligation-independent-review-20261021/r3-final-evidence-review.json`은 retained source 두 사본·승인 제품 입력10개와 runner2개·계약18개·checker3개·로그106개·고유 hash 경로1,394개를 대조했다. native99의 result/consistency·완전한 inventory와 binary hash를 확인했고, kernel engine의159 PASS와 기존30분 fuzz1 ignored를 구분했다. 이 descriptor 표현 단위의 commit 차단 사항은 없으며 전체 DEV3 인수로 승격하지 않는다.

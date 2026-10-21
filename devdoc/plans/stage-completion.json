@@ -915,11 +915,12 @@
         "implementation_ref": "dev3-implementation.md",
         "page_contract_ref": "dev3-page-format.md",
         "partial_model_ref": "dev3-snapshot-model.md",
-        "scope": "Fixed storage expressions including status homes, selector/metadata ports, bounded selected-page reads and M02-P01; full disk-path acceptance remains NOT_RUN",
+        "scope": "Fixed storage expressions including status homes and obligation descriptors, selector/metadata ports, bounded selected-page reads and M02-P01; full disk-path acceptance remains NOT_RUN",
         "status": "LOCAL_VERIFIED_LIMITED_SCOPE",
-        "evidence_ref": "dev3-status-home-leaf-xadb-20261021-r1.json",
+        "evidence_ref": "dev3-obligation-leaf-xadb-20261021-r2.json",
         "page_io_contract_ref": "dev3-page-io.md",
-        "status_home_contract_ref": "dev3-status-home.md"
+        "status_home_contract_ref": "dev3-status-home.md",
+        "obligation_contract_ref": "dev3-obligation-format.md"
       }
     },
     {
