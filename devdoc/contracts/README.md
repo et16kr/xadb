@@ -73,3 +73,5 @@ DEV3의 COW pack 경로는 [in-place·WAL·영속 undo 결정](../contracts/disk
 - [DEV3 RollbackStart의 full state 결합·임시 page 구성](dev3-obligation-format.md#rollback-materialization) — D2 수용·기존12+구성5시험과 동일 source 하위 회귀 PASS; live 적용·semantic WAL append·예약 복원 미완료
 
 - [DEV3 genesis WAL 설치·append/sync](dev3-wal-io.md) — fresh namespace의 첫 epoch·physical sync; D2 채택·고정 범위 로컬 검증 완료, 일반 recovery·전체 인수 미완료
+
+- [DEV3 RollbackStart WAL·상태 page 생산](dev3-obligation-format.md#rollback-producer) — D2 수용·semantic22/WAL13 및 같은 source 하위 회귀 PASS; tag2 append·live 적용·전체 DEV3 인수는 미완료

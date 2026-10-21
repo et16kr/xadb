@@ -857,3 +857,136 @@ fn wal_stream_prefix_preserves_following_frames() {
     );
     assert!(scan_frame_prefix(&[7], expected(c), TailPolicy::ActiveUnrequiredEof).is_err());
 }
+
+fn rollback_header() -> WalFrameHeader {
+    WalFrameHeader {
+        stream: WalStreamIdentity {
+            writer_epoch: 19,
+            ..stream()
+        },
+        kind: FrameKind::Update,
+        lsn: 40,
+        previous_lsn: 37,
+        previous_txn_lsn: 30,
+        ..base()
+    }
+}
+
+fn legacy_rejects_semantic(bytes: &[u8], header: WalFrameHeader) {
+    assert!(matches!(
+        decode_frame(bytes, expected(header)),
+        Err(WalError::UnsupportedFormat)
+    ));
+    for tail in [
+        TailPolicy::ForbidIncomplete,
+        TailPolicy::ActiveUnrequiredEof,
+    ] {
+        assert!(matches!(
+            scan_frame_prefix(bytes, expected(header), tail),
+            Err(WalError::UnsupportedFormat)
+        ));
+    }
+}
+
+#[test]
+fn wal_semantic_finalizer_preserves_payload_and_legacy_boundary() {
+    let literals: [&[u8]; 2] = [
+        include_bytes!("../../tests/fixtures/dev3-rollback-start-empty-head-frame.bin"),
+        include_bytes!("../../tests/fixtures/dev3-rollback-start-with-head-frame.bin"),
+    ];
+    let header = rollback_header();
+    let mut successes = 0;
+    for literal in literals {
+        let mut output = literal.to_vec();
+        output[..160].fill(0x91);
+        output[3008..].fill(0xa7);
+        finish_semantic_envelope(header, 1, &mut output).unwrap();
+        assert_eq!(output, literal);
+        let envelope = decode_semantic_envelope(&output, expected(header)).unwrap();
+        assert_eq!(envelope.header, header);
+        assert_eq!(envelope.record_count, 1);
+        assert_eq!(envelope.payload, &literal[160..3008]);
+        legacy_rejects_semantic(&output, header);
+        successes += 1;
+    }
+    for length in [192, 1_048_576] {
+        for count in [0_u16, u16::MAX] {
+            let mut output = vec![0xa7; length];
+            let payload = output[160..length - 32].to_vec();
+            // Independent header: the frozen literal with only the three
+            // declared container fields changed by raw integer arithmetic.
+            let mut oracle_header = literals[0][..160].to_vec();
+            oracle_header[12..16].copy_from_slice(&(length as u32).to_le_bytes());
+            oracle_header[16..20].copy_from_slice(&((length - 192) as u32).to_le_bytes());
+            oracle_header[20..22].copy_from_slice(&count.to_le_bytes());
+            let digest = content_digest(&oracle_header[..128]);
+            oracle_header[128..].copy_from_slice(&digest);
+            finish_semantic_envelope(header, count, &mut output).unwrap();
+            assert_eq!(&output[..160], oracle_header);
+            assert_eq!(&output[160..length - 32], payload);
+            assert_eq!(
+                &output[length - 32..],
+                content_digest(&output[..length - 32])
+            );
+            let envelope = decode_semantic_envelope(&output, expected(header)).unwrap();
+            assert_eq!(envelope.header, header);
+            assert_eq!(envelope.record_count, count);
+            assert_eq!(envelope.payload, payload);
+            legacy_rejects_semantic(&output, header);
+            successes += 1;
+        }
+    }
+    assert_eq!(successes, 6);
+}
+
+#[test]
+fn wal_semantic_finalizer_rejects_header_and_size_without_mutation() {
+    let mut errors = 0;
+    for variant in 0..10 {
+        let mut header = rollback_header();
+        match variant {
+            0 => header.stream.timeline = 0,
+            1 => header.stream.writer_epoch = 0,
+            2 => header.lsn = 0,
+            3 => header.lsn = header.previous_lsn,
+            4 => header.previous_lsn = header.lsn + 1,
+            5 => header.txn = None,
+            6 => header.txn.as_mut().unwrap().database = DatabaseId::new([8; 16]).unwrap(),
+            7 => header.txn.as_mut().unwrap().timeline = 18,
+            8 => header.previous_txn_lsn = 0,
+            _ => header.previous_txn_lsn = header.previous_lsn + 1,
+        }
+        let mut output = [0xa7; 3040];
+        assert_eq!(
+            finish_semantic_envelope(header, 1, &mut output),
+            Err(WalError::InvalidInput)
+        );
+        assert_eq!(output, [0xa7; 3040]);
+        errors += 1;
+    }
+    for (length, error) in [
+        (0, WalError::NoSpace),
+        (191, WalError::NoSpace),
+        (1_048_577, WalError::TooLarge),
+    ] {
+        let mut output = vec![0xa7; length];
+        assert_eq!(
+            finish_semantic_envelope(rollback_header(), 1, &mut output),
+            Err(error)
+        );
+        assert!(output.iter().all(|byte| *byte == 0xa7));
+        errors += 1;
+    }
+    for length in [0, 1_048_577] {
+        let mut header = rollback_header();
+        header.lsn = 0;
+        let mut output = vec![0xa7; length];
+        assert_eq!(
+            finish_semantic_envelope(header, 1, &mut output),
+            Err(WalError::InvalidInput)
+        );
+        assert!(output.iter().all(|byte| *byte == 0xa7));
+        errors += 1;
+    }
+    assert_eq!(errors, 15);
+}

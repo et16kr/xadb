@@ -712,3 +712,64 @@ native12는 fresh literal0에서 kind5→4, flags absolute2145의3→1, before/a
 
 
 §14의 실제 source3493fa22…·고정 corpus·통합/하위 회귀·독립 검토는 [구현 기록](../implementation/dev3-implementation.md#rollback-materialization-results)을 따른다. 이 결과는 live 적용·예약·전체 DEV3 인수로 승격하지 않는다.
+
+
+<a id="rollback-producer"></a>
+## 15. RollbackStart WAL·상태 page 생산
+
+2026-10-21 · **D3-ROLLBACK-PRODUCER-001 D2 ACCEPTED / 제한된 구현·로컬 검증 완료**
+
+`/root`가 계약·구현·통합을 담당하고 `/root/dev3_selector_review`가 독립 검토한다. 최종 제안과 원래 계약/source/checker/fixture, 준비 산술의 결합 SHA `0d56ec96adab9ec85953df20d29653cbb0f6c3023241045054e35bbe1cbe95f1`는 `artifacts/dev3/rollback-producer-independent-review-20261021/r2-d2-decision.json`에 보존한다. 이 채택은 제품 실행 증거가 아니다. 기준 commit은 `2473a8f3433b810ddcd55c89189bf0979760304c`, source는3493fa22…다.
+
+### 선택·범위·자원
+
+§13/14는 주어진 frame을 검산·구성하지만 before 상태에서 frame을 생산하지 않는다. 같은 의미 소유자에 좁은 생산자를 추가한다. 상위의 XWF1 header 복제, legacy payload 수락 범위 확대, 별도 전체 frame/page scratch와 descriptor raw-offset 생산 대안은 기존 소유·예산 경계를 우회하므로 채택하지 않는다. 기존 typed descriptor/status/redo encoder와 낮은 header 소유자를 재사용하고, 마지막에 기존 materializer/observer를 호출한다.
+
+`produce_rollback_start(expected, lsn, before_descriptor, before_page, frame_output: &mut [u8; 3040], page_output: &mut [u8; PAGE_BYTES]) -> Result<RollbackStartObservation, SemanticError>`를 기존 `storage/semantic_group.rs`에 둔다. immutable 입력은 보존한다. caller의 서로 다른 unpublished output 두 개는19424bytes이며 오류 때 둘 다 폐기한다. 성공만 전체 frame/page의 유효한 관측이다. 출력의 고정 배열 크기는 새 동적 용량 오류를 만들지 않는다.
+
+heap·I/O·lock·callback·unsafe·새 dependency나 내부 전체 frame/page 사본은 없다. private frame 구성 helper가 끝난 뒤 materializer를 호출한다. decoder/encoder의 임시값과 중첩 호출을 포함한 고정 source/type 회계는 caller 출력 제외16KiB 이내로 검토한다. descriptor1536·home224·transaction192·header160과 기존 observer graph를 빠뜨리지 않는다. 이는 정확한 compiler stack/RSS 측정이나 runtime admission·전체 F05 증명이 아니다. 새 opcode·영속 format·tag2 append·dirty frame·예약 복원·READY·recovery 권한을 제공하지 않는다.
+
+### 전이와 오류 순서
+
+1. 기존 expected 내부 검사를 먼저 한다. 모순은InvalidInput이며 lsn0 또는 lsn≤previous stream도InvalidInput이다. malformed before bytes보다 먼저 거절한다.
+2. trusted actor/profile로 전체 before descriptor를 decode하여 기존 오류를 유지한다. Active 외 상태는UnsupportedOperation, before.apply>previous stream은OrderMismatch다.
+3. 전체 before status page와 비선택home까지 검증하고 실제 actor/location을 조회한다. 선택 core와 descriptor status가 다르면Corrupt, pageLSN>previous stream이면OrderMismatch다.
+4. after는 full Transaction Aborting, next=head/head보존이다. chain.apply=lsn, previous=before.apply, birth보존, groups의checked+1 overflow는OrderMismatch다. 다른 owner/inventory/profile/minimumWal/lastMutation/consumedControl과 무관한 category를 바꾸지 않는다.
+5. Status category에서만 step1/WAL3040/protected3040을checked 차감하고 consumedWal을3040더한다. underflow/overflow는BudgetMismatch다. 잔여step0이면 peak6개만0으로 한다. 그때 WAL/protected/control/growth/page/undo/status 잔여가 남으면 유효 after descriptor를 만들 수 없으므로BudgetMismatch다. 전체 derived descriptor를 encode 전에 검증한다. Terminal·CLR category는 소모하지 않는다. 기존 observer가 외부 malformed after에 반환하는Corrupt 순서는 유지한다.
+6. caller frame 안에 기존 XSG1/op3/group2848를 구성한다. actual before hash·owner chain, 기존 descriptor encoder의after1536, optional next만 있는core256, actual old/new home과 보존 incoming을 담은native576, 실제range/target/prior의Patch288을 넣는다. 새 home·offset·incoming을 별도 caller 값으로 받지 않는다. lower finalizer로Update/tag2/count1·actor의 원래TxnId·previousTxn=before.apply를 설치한다.
+7. 원래 inputs와 구성한 frame으로 §14 materializer를 호출해 caller page를 만들고 전체 의미·비용 검산이 성공해야 관측을 반환한다. byte 구성만으로 live 적용 권한을 발행하지 않는다.
+
+### 낮은 envelope finalizer
+
+기존 `storage/wal_frame.rs`에 `pub(super) finish_semantic_envelope(header: WalFrameHeader, record_count: u16, output: &mut [u8]) -> Result<(), WalError>`를 둔다. output은 준비한 payload와 header160/trailer32 공간을 포함한 **전체 frame slice**다. header 검증을 먼저 하고 길이<192는NoSpace, 길이>1,048,576은TooLarge로 거절한다. 오류에는 output 전체를 보존한다. 성공 때 payload160..len−32를 보존하고 tag2 header와 전체 SHA만 설치한다. count0/65535와 임의 payload도 envelope 값으로만 수락하며 group·opcode·redo의 의미 검증이나 적용 권한은 없다. 기존 encode_frame과 private header 조립을 공유하고 legacy 오류·suffix 보존·tag2 거절을 유지한다.
+
+### 고정 시험과 정답
+
+기존semantic17와WAL11을 유지하고 semantic5/WAL2를 추가한다. 같은31개 named suite 안의 총 분모를 정확히 갱신한다. 원래literal2와raw offset 생성8192개의 전체frame/page가 독립 정답이며 product encoder·생산자로expected를 계산하지 않는다.
+
+| 추가 시험 | 고정 범위 |
+| --- | --- |
+| `rollback_producer_matches_literal_frames_and_pages` | empty/with-head2개와기존dense1개. frame3040/page16384전체·after descriptor·관측 대조, immutable보존 |
+| `rollback_producer_rejects_invalid_before_context` | 아래29개 exact오류, literal2의before descriptor properprefix1536+page properprefix16384와trailing각1의총35844, expected/lsn우선복합2개 |
+| `rollback_producer_budget_and_lsn_boundaries` | typed-valid before예산실패11개와정상경계10개, 전체expected frame/page대조 |
+| `rollback_producer_generated_frames_match_independent_bytes` | §13.7의raw seed64×128=8192전체frame/page/after 대조 |
+| `rollback_producer_reuses_unpublished_outputs` | 동일출력쌍으로empty성공→예산실패→with-head성공, 실패출력폐기 |
+| `wal_semantic_finalizer_preserves_payload_and_legacy_boundary` | literal2+length{192,1048576}×count{0,65535}의4셀=6정상. payload보존·독립header/digest, envelope수락과legacyexact/두TailPolicy거절 구분 |
+| `wal_semantic_finalizer_rejects_header_and_size_without_mutation` | 아래15오류에서전체output불변, 원래11WAL시험보존 |
+
+29개는InvalidInput6(expected.pageDB만/location.page만/location.generation만/lsn0·37·36), IdentityMismatch8(actorlocal20·유효Profile2·expectedfile/incarnation/owner/owner_generation4·slot0다른actor/slot2없음), UnsupportedFormat2(descriptor/pageversion2), UnsupportedOperation4(AbortingTransaction/AbortingStatement/Committed/Aborted), OrderMismatch3(beforeapply38/pageLSN38/groupsMAX), Corrupt6(descriptor/pageSHA·비선택home reserved·duplicateTxnId·같은actor의다른validhead·잘못된pagekind)다. identity만바꿀때expected.location도같은PageRef를유지하고목표검사까지필요한SHA를맞춘다. 복합2개는expected모순+빈before+잘못된lsn, validexpected+잘못된lsn+빈before다. 두 복합 시험은 preflight가 malformed source보다 먼저임을 구별한다. expected와 lsn 오류는 모두InvalidInput이므로 둘 사이의 상대 순서는 이 실행만으로 구별하지 못하며 D1 source 검토로 확인한다.
+
+예산실패11개는Statusrow전체0, WAL3039, protected3039, consumedMAX−3039 및마지막step에WAL3041/protected3041/control1/growth1extent/pages1/undo1/status1이남는7개다. 각각기존before decoder성공을먼저확인한다. pages는CLR.pages1을Status.pages1로, undo는CLR.undo1을Status.undo1로, status는CLR.undo1을Status.status1로옮긴다. growth는inventorygrowth1/items3으로맞춘다. 이inventorydigest는opaqueclaim이며actualinventory내용검증으로주장하지않는다. raw산술입력11개와script는제안단계에보존했다.
+
+정상10개는steps2/WAL3041/protected3041→steps1/WAL1/protected1, consumedMAX−3040→MAX, pageLSN0/37, ownerapply37, frameLSNMAX, groupsMAX−1→MAX,71home의actor슬롯0/1/70이다. 다른row/소유token/inventory/consumedControl/peak보존은dense와8192생성시험으로함께대조한다.
+
+lower15오류는timeline0/epoch0/lsn0/lsn=prev/prev>lsn/txn없음/txnDB다름/txnTimeline다름/previousTxn0/previousTxn>prev의InvalidInput10개, length0/191의NoSpace2개,길이1,048,577의TooLarge1개, 잘못된header+짧은/초과length의InvalidInput2개다. 정상lowercontainer도semantic적용승인을뜻하지않는다. 생산자출력은상위전체검산을따로통과한다.
+
+### 검증·연구·재검토
+
+같은동결source에서semantic22·WAL13·checker7·all-targets/all-featuresClippy/fmt·전체leaf·DEV0/1/2회귀·현재buildDEV2복구native99를실행하고D1및최종raw증거감사를받는다. 새I/O/thread효과가없어새nativecrash성공을주장하지않는다. DEV2PF04실패·전체DEV3NOT_RUN은유지하며문서검사는pushgate에한정한다.
+
+[로컬참고목록](../reference/opensource-references.md)의PostgreSQL cleanrevision `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851`, `src/backend/access/transam/xloginsert.c`150–214/404–452/625–678행(SHA `beaf574f4527b69608a70cf6c5a7a91c7d35656fb2e9b8fe1eb16053421f9f5e`)에서준비/삽입분리와boundedpayload/fixedheader조립을참고했다. source/history를가져오지않았다. tag2실제append·live적용·다른opcode·inventory변경·16KiB회계초과에는별도재검토가필요하다.
+
+
+§15의 동일 source 제품 실행·독립 검토·통합 증거는 [구현 기록](../implementation/dev3-implementation.md#rollback-producer-results)을 따른다. 실제 tag2 append·dirty frame·전체 DEV3 인수는 별도다.

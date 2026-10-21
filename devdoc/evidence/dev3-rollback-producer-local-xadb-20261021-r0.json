@@ -1,0 +1,168 @@
+{
+  "status": "PASS",
+  "scope": "RollbackStart caller-owned frame and page production; no live dirty page, WAL effect or recovery",
+  "source_sha256": "f08f01d72f06a9578a129927a7a17dfe2450734e8fbd86dcfeb8c11e4da4d515",
+  "checks": [
+    {
+      "id": "toolchain",
+      "command": [
+        "rustc",
+        "-Vv"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-producer-quality-r0/toolchain.log",
+      "log_sha256": "4fdff2578428e9c5c08ddd7a0d3079c1a106b1cdaa46e73e46f7cd32b0fb9cad",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "engine-build",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-default-features",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-producer-quality-r0/engine-build.log",
+      "log_sha256": "57b6f3ccf26b49ec1f2063dba704344cf6c66a4f4e2647c69234268f454b8063",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "semantic-runtime",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/rollback-producer-quality-r0/engine-test-binary",
+        "storage::semantic_group::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-producer-quality-r0/semantic-runtime.log",
+      "log_sha256": "6ae8c1c565b565b914eb1eb20d81fd2732a019df258203b5f28888c20fc98b3b",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "wal-runtime",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/rollback-producer-quality-r0/engine-test-binary",
+        "storage::wal_frame::tests::",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-producer-quality-r0/wal-runtime.log",
+      "log_sha256": "c41b061ca4d0290f54b0d9fde93974aa84229e56d0188d18be29a47ba1a45032",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "leaf-self",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_check_dev3_leaf.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-producer-quality-r0/leaf-self.log",
+      "log_sha256": "df05c2641e32f683a3b8b79cfbcaaafc40fa732f93ab116e07639104b0cf7bc5",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-producer-quality-r0/clippy.log",
+      "log_sha256": "1ea8dc5092c8d26612b7a21657e6a4800c409076960bc8e47687242cbd83847d",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    },
+    {
+      "id": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "/home/et16/work/xadb/artifacts/dev3/rollback-producer-quality-r0/format.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "interrupted": false,
+      "remaining_group_signalled": false
+    }
+  ],
+  "builds": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/rollback-producer-quality-r0/engine-test-binary",
+      "sha256": "cd053a0219f801fb4e28da02ddb7a22719b9bfc0d88135229769787f76200f28"
+    }
+  ],
+  "driver_sha256": "155a06c4826fcbff7842307e04bb24bbad76708f9c01909f72c6316d58ce1485",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n",
+  "runtime_tests": [
+    "rollback_materialization_generated_pages_match_independent_bytes",
+    "rollback_materialization_keeps_semantic_cost_checks",
+    "rollback_materialization_matches_literal_pages",
+    "rollback_materialization_rejects_unbound_inputs",
+    "rollback_materialization_scratch_reuse_requires_success",
+    "rollback_producer_budget_and_lsn_boundaries",
+    "rollback_producer_generated_frames_match_independent_bytes",
+    "rollback_producer_matches_literal_frames_and_pages",
+    "rollback_producer_rejects_invalid_before_context",
+    "rollback_producer_reuses_unpublished_outputs",
+    "rollback_start_cost_transfer_is_exact",
+    "rollback_start_generated_profiles_match_independent_transition",
+    "rollback_start_group_sections_are_exact",
+    "rollback_start_legacy_frames_and_limits_are_preserved",
+    "rollback_start_lengths_and_damage",
+    "rollback_start_literals_bind_full_state",
+    "rollback_start_operation_core_matches_head",
+    "rollback_start_ordering_uses_stream_and_page_positions",
+    "rollback_start_owner_chain_and_profile_are_bound",
+    "rollback_start_preserves_other_page_bytes",
+    "rollback_start_redo_and_native_match_exact_cell",
+    "rollback_start_status_pages_are_complete"
+  ],
+  "wal_tests": [
+    "wal_all_encoders_preserve_output",
+    "wal_exact_frame_and_record_limits",
+    "wal_frame_identity_and_lsn_chain",
+    "wal_frame_literal_and_kind_matrix",
+    "wal_generated_profiles_match_independent_fields",
+    "wal_init_records_bind_complete_page_images",
+    "wal_patch_records_are_bounded_after_images",
+    "wal_redo_groups_are_canonical_and_borrowed",
+    "wal_rejects_complete_checksum_and_semantic_damage",
+    "wal_semantic_finalizer_preserves_payload_and_legacy_boundary",
+    "wal_semantic_finalizer_rejects_header_and_size_without_mutation",
+    "wal_stream_prefix_preserves_following_frames",
+    "wal_tail_classification_is_strict"
+  ]
+}

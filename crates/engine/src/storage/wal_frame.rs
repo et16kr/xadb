@@ -429,16 +429,14 @@ pub(crate) fn frame_encoded_len(
         .filter(|length| *length <= MAX_FRAME_BYTES)
         .ok_or(WalError::TooLarge)
 }
-/// No output byte changes on failure; bytes beyond the returned prefix survive.
-pub(crate) fn encode_frame<'a>(
+// The caller validates the header and bounded complete-frame length before use.
+// Keep the wire header in one owner for legacy payloads and semantic envelopes.
+fn encoded_header(
     header: WalFrameHeader,
-    payload: FramePayload<'_>,
-    output: &'a mut [u8],
-) -> Result<&'a [u8], WalError> {
-    let length = frame_encoded_len(header, payload)?;
-    if output.len() < length {
-        return Err(WalError::NoSpace);
-    }
+    length: usize,
+    payload_tag: u8,
+    record_count: u16,
+) -> Result<[u8; FRAME_HEADER_BYTES], WalError> {
     let mut bytes = [0; FRAME_HEADER_BYTES];
     bytes[..4].copy_from_slice(b"XWF1");
     bytes[4..6].copy_from_slice(&1u16.to_le_bytes());
@@ -446,10 +444,8 @@ pub(crate) fn encode_frame<'a>(
     bytes[8..10].copy_from_slice(&(FRAME_HEADER_BYTES as u16).to_le_bytes());
     bytes[12..16].copy_from_slice(&(length as u32).to_le_bytes());
     bytes[16..20].copy_from_slice(&((length - FRAME_OVERHEAD_BYTES) as u32).to_le_bytes());
-    if let FramePayload::PageRedo(records) = payload {
-        bytes[7] = 1;
-        bytes[20..22].copy_from_slice(&(records.len() as u16).to_le_bytes());
-    }
+    bytes[7] = payload_tag;
+    bytes[20..22].copy_from_slice(&record_count.to_le_bytes());
     bytes[24..40].copy_from_slice(&header.stream.database.bytes());
     put_u64(&mut bytes, 40, header.stream.timeline);
     bytes[48..52].copy_from_slice(&header.stream.writer_epoch.to_le_bytes());
@@ -461,6 +457,48 @@ pub(crate) fn encode_frame<'a>(
     put_u64(&mut bytes, 112, header.previous_txn_lsn);
     let digest = content_digest(&bytes[..128]);
     bytes[128..].copy_from_slice(&digest);
+    Ok(bytes)
+}
+
+/// Finish only an enclosing tag-2 frame around the caller's prepared payload.
+/// The slice is the whole frame, including header and trailer placeholders.
+/// Errors preserve all output; success preserves payload bytes. Count and body
+/// carry no semantic validation or apply authority, even when this succeeds.
+pub(super) fn finish_semantic_envelope(
+    header: WalFrameHeader,
+    record_count: u16,
+    output: &mut [u8],
+) -> Result<(), WalError> {
+    validate_header(header)?;
+    let length = output.len();
+    if length < FRAME_OVERHEAD_BYTES {
+        return Err(WalError::NoSpace);
+    }
+    if length > MAX_FRAME_BYTES {
+        return Err(WalError::TooLarge);
+    }
+    let bytes = encoded_header(header, length, 2, record_count)?;
+    output[..FRAME_HEADER_BYTES].copy_from_slice(&bytes);
+    let digest = content_digest(&output[..length - 32]);
+    output[length - 32..].copy_from_slice(&digest);
+    Ok(())
+}
+
+/// No output byte changes on failure; bytes beyond the returned prefix survive.
+pub(crate) fn encode_frame<'a>(
+    header: WalFrameHeader,
+    payload: FramePayload<'_>,
+    output: &'a mut [u8],
+) -> Result<&'a [u8], WalError> {
+    let length = frame_encoded_len(header, payload)?;
+    if output.len() < length {
+        return Err(WalError::NoSpace);
+    }
+    let (tag, count) = match payload {
+        FramePayload::Opaque(_) => (0, 0),
+        FramePayload::PageRedo(records) => (1, records.len() as u16),
+    };
+    let bytes = encoded_header(header, length, tag, count)?;
     output[..FRAME_HEADER_BYTES].copy_from_slice(&bytes);
     let mut cursor = FRAME_HEADER_BYTES;
     match payload {

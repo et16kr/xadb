@@ -62,6 +62,11 @@ READ_BUFFER_NATIVE_TESTS = {
     'native_read_buffer_rejects_bad_load_and_recovers',
 }
 SEMANTIC_GROUP_TESTS = {
+    'rollback_producer_matches_literal_frames_and_pages',
+    'rollback_producer_rejects_invalid_before_context',
+    'rollback_producer_budget_and_lsn_boundaries',
+    'rollback_producer_generated_frames_match_independent_bytes',
+    'rollback_producer_reuses_unpublished_outputs',
     'rollback_materialization_matches_literal_pages',
     'rollback_materialization_rejects_unbound_inputs',
     'rollback_materialization_keeps_semantic_cost_checks',
@@ -206,6 +211,8 @@ TRANSACTION_TESTS = {
     'generated_transaction_records_roundtrip_without_effects',
 }
 WAL_TESTS = {
+    'wal_semantic_finalizer_preserves_payload_and_legacy_boundary',
+    'wal_semantic_finalizer_rejects_header_and_size_without_mutation',
     'wal_frame_literal_and_kind_matrix',
     'wal_frame_identity_and_lsn_chain',
     'wal_tail_classification_is_strict',

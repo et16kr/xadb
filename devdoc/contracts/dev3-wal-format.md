@@ -178,3 +178,8 @@ N01–N28은 다음 각 필드 한 개를 손상한 표다. checksum은 손상 �
 이 시험은 표현의 무효과·byte 경계다. 실제 interleaved append/short I/O·sync·fencing·checkpoint capture·reservation restore·CLR/undo·재장애·DS/F04/F05/V3를 대신하지 않는다.
 
 실행 전 revision: `/root`가 frame/redo byte 계약을 독립 검토하여 D2 수용했다. 최초 candidate 실행 전에 다른 V2 codec profile과 맞춰 생성 분모를64×32에서64×128=8,192로 확대했다. frame/record 범위와 literal은 유지했다. `PageLsn`의 end position은 논리 LSN이며 byte offset 산술을 의미하지 않는다. 채택·구현은 semantic group 인수 또는 실행 증거가 아니다.
+
+
+## SemanticGroup 생산 경계
+
+[RollbackStart 생산 계약](dev3-obligation-format.md#rollback-producer)의 D3-ROLLBACK-PRODUCER-001 D2에 따라 기존 legacy encoder와 header 조립을 공유하는 `finish_semantic_envelope`를 추가한다. 준비한 전체 frame slice에서 payload를 보존하고 tag2 header/trailer만 설치한다. header를 먼저 검증하고 길이<192는NoSpace, >1,048,576은TooLarge이며 오류 때 output 전체를 유지한다. count0/65535와 임의 payload의 envelope 수락은 opcode·redo·적용 권한을 뜻하지 않는다. 기존 exact/prefix와 GenesisWalSession은 tag2를 계속 거절한다. 고정 추가2시험·상위 생산5시험과 실제 실행 상태는 위 소유 계약과 구현 기록을 따른다. 채택만으로 실행 완료를 주장하지 않는다.

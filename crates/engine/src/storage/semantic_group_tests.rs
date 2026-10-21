@@ -1940,3 +1940,358 @@ fn rollback_materialization_scratch_reuse_requires_success() {
     frame_seal(&mut expanded.frame);
     materialized_rejected(&expanded, SemanticError::Corrupt);
 }
+
+impl Case {
+    fn produce(
+        &self,
+        frame: &mut [u8; FRAME_BYTES],
+        page: &mut [u8; PAGE_BYTES],
+    ) -> Result<RollbackStartObservation> {
+        produce_rollback_start(
+            self.expected,
+            u64_at(&self.frame, 56),
+            &self.before,
+            &self.old,
+            frame,
+            page,
+        )
+    }
+}
+
+#[track_caller]
+fn produced_matches(c: &Case) {
+    let original = (c.before.clone(), c.old.clone());
+    let mut frame = [0x91; FRAME_BYTES];
+    let mut page = [0xa7; PAGE_BYTES];
+    let result = c.produce(&mut frame, &mut page).unwrap();
+    // Both complete expected byte strings came from literals/raw test arithmetic.
+    assert_eq!(frame.as_slice(), c.frame);
+    assert_eq!(page.as_slice(), c.new);
+    assert_eq!(&frame[352..1888], c.after);
+    assert_eq!(result, c.observe().unwrap());
+    assert_eq!(original, (c.before.clone(), c.old.clone()));
+}
+
+#[track_caller]
+fn producer_rejected(c: &Case, error: SemanticError) {
+    let original = (c.before.clone(), c.old.clone());
+    let mut frame = [0x91; FRAME_BYTES];
+    let mut page = [0xa7; PAGE_BYTES];
+    assert_eq!(c.produce(&mut frame, &mut page), Err(error));
+    assert_eq!(original, (c.before.clone(), c.old.clone()));
+    // Discard both unpublished outputs without interpreting bytes after failure.
+}
+
+#[test]
+fn rollback_producer_matches_literal_frames_and_pages() {
+    for head in 0..2 {
+        produced_matches(&Case::literal(head));
+    }
+    produced_matches(&Case::dense());
+}
+
+#[test]
+fn rollback_producer_rejects_invalid_before_context() {
+    let original = Case::literal(0);
+    let mut errors = [0; 6];
+    for variant in 0..29 {
+        let mut c = original.clone();
+        let error = match variant {
+            0..=5 => {
+                match variant {
+                    0 => c.expected.page.database = DatabaseId::new([8; 16]).unwrap(),
+                    1 => {
+                        c.expected.location = StatusSlotRef::new(
+                            PageRef {
+                                page_no: 66,
+                                ..c.expected.page.page
+                            },
+                            1,
+                            generation_value(20),
+                        )
+                        .unwrap();
+                    }
+                    2 => {
+                        c.expected.location =
+                            StatusSlotRef::new(c.expected.page.page, 1, generation_value(21))
+                                .unwrap()
+                    }
+                    _ => put64(&mut c.frame, 56, [0, 37, 36][variant - 3]),
+                }
+                errors[0] += 1;
+                SemanticError::InvalidInput
+            }
+            6..=13 => {
+                match variant {
+                    6 => c.expected.actor = txn(18, 20, 20),
+                    7 => {
+                        c.expected.profile =
+                            decode_bootstrap_profile(PROFILES[1], Some(ns())).unwrap()
+                    }
+                    8..=11 => {
+                        match variant {
+                            8 => c.expected.page.page.file = FileId::new(FILE + 1).unwrap(),
+                            9 => c.expected.page.page.incarnation = generation_value(5),
+                            10 => c.expected.page.owner = ObjectId::new(57).unwrap(),
+                            _ => c.expected.page.owner_generation = generation_value(57),
+                        }
+                        c.expected.location =
+                            StatusSlotRef::new(c.expected.page.page, 1, generation_value(20))
+                                .unwrap();
+                    }
+                    _ => {
+                        c.expected.location = StatusSlotRef::new(
+                            c.expected.page.page,
+                            if variant == 12 { 0 } else { 2 },
+                            generation_value(20),
+                        )
+                        .unwrap()
+                    }
+                }
+                errors[1] += 1;
+                SemanticError::IdentityMismatch
+            }
+            14..=15 => {
+                let b = if variant == 14 {
+                    &mut c.before
+                } else {
+                    &mut c.old
+                };
+                put16(b, 4, 2);
+                seal(b);
+                errors[2] += 1;
+                SemanticError::UnsupportedFormat
+            }
+            16..=19 => {
+                let state = [2, 3, 4, 5][variant - 16];
+                c.before[166] = if state == 5 { 2 } else { state };
+                c.before[167] = match state {
+                    2 => 1,
+                    5 => 2,
+                    _ => 0,
+                };
+                put64(&mut c.before, 216, u64::from(state == 3));
+                c.status_pages();
+                c.valid_descriptors();
+                errors[3] += 1;
+                SemanticError::UnsupportedOperation
+            }
+            20..=22 => {
+                match variant {
+                    20 => {
+                        put64(&mut c.before, 72, 38);
+                        seal(&mut c.before);
+                    }
+                    21 => {
+                        put64(&mut c.old, 64, 38);
+                        seal(&mut c.old);
+                    }
+                    _ => {
+                        put64(&mut c.before, 624, u64::MAX);
+                        seal(&mut c.before);
+                    }
+                }
+                c.valid_descriptors();
+                errors[4] += 1;
+                SemanticError::OrderMismatch
+            }
+            _ => {
+                match variant {
+                    23 => c.before[1504] ^= 1,
+                    24 => c.old[DIGEST_OFFSET] ^= 1,
+                    25 => {
+                        let r = cell_range(&c.old, 0);
+                        c.old[r.start + 16] = 1;
+                        seal(&mut c.old);
+                    }
+                    26 => {
+                        let r = cell_range(&c.old, 0);
+                        put64(&mut c.old, r.start + 72, 19);
+                        seal(&mut c.old);
+                    }
+                    27 => {
+                        let r = cell_range(&c.old, 1);
+                        let core = raw_core(
+                            &raw_txn(18, 19, 20),
+                            Some(raw_undo(FILE, 133, 9, 1, 7)),
+                            false,
+                        );
+                        c.old[r].copy_from_slice(&raw_home(&core, 2));
+                        seal(&mut c.old);
+                    }
+                    _ => {
+                        c.old[6] = 1;
+                        seal(&mut c.old);
+                    }
+                }
+                errors[5] += 1;
+                SemanticError::Corrupt
+            }
+        };
+        producer_rejected(&c, error);
+    }
+    assert_eq!(errors, [6, 8, 2, 4, 3, 6]);
+    let mut length_errors = 0;
+    for head in 0..2 {
+        let baseline = Case::literal(head);
+        for descriptor in [true, false] {
+            let length = if descriptor {
+                baseline.before.len()
+            } else {
+                baseline.old.len()
+            };
+            for end in 0..length {
+                let mut c = baseline.clone();
+                if descriptor {
+                    c.before.truncate(end);
+                } else {
+                    c.old.truncate(end);
+                }
+                producer_rejected(&c, SemanticError::Corrupt);
+                length_errors += 1;
+            }
+            let mut c = baseline.clone();
+            if descriptor {
+                c.before.push(0);
+            } else {
+                c.old.push(0);
+            }
+            producer_rejected(&c, SemanticError::Corrupt);
+            length_errors += 1;
+        }
+    }
+    assert_eq!(length_errors, 35844);
+    for inconsistent_expected in [true, false] {
+        let mut c = original.clone();
+        if inconsistent_expected {
+            c.expected.page.database = DatabaseId::new([8; 16]).unwrap();
+        }
+        put64(&mut c.frame, 56, 0);
+        c.before.clear();
+        c.old.clear();
+        producer_rejected(&c, SemanticError::InvalidInput);
+    }
+    // Same error class: these two prove preflight precedes source decode, while
+    // expected-before-LSN order is separately checked in the source review.
+}
+
+// Independent raw mutations fixed before implementation in the D2 input audit.
+fn producer_budget_failure(variant: usize) -> Case {
+    let mut c = Case::literal(0);
+    match variant {
+        0 => c.before[1032..1144].fill(0),
+        1 => put64(&mut c.before, 1040, 3039),
+        2 => put64(&mut c.before, 1136, 3039),
+        3 => put64(&mut c.before, 608, u64::MAX - 3039),
+        4 => put64(&mut c.before, 1040, 3041),
+        5 => put64(&mut c.before, 1136, 3041),
+        6 => put64(&mut c.before, 1048, 1),
+        7 => {
+            put64(&mut c.before, 1056, 1 << 20);
+            put64(&mut c.before, 592, 1);
+            put64(&mut c.before, 552, 3);
+        }
+        8..=10 => {
+            let field = [4, 5, 6][variant - 8];
+            put64(&mut c.before, 1032 + 8 * field, 1);
+            put64(&mut c.before, 648 + 8 * if variant == 8 { 4 } else { 5 }, 0);
+        }
+        _ => panic!("fixed eleven-input census"),
+    }
+    budget_summary(&mut c.before);
+    c
+}
+
+#[test]
+fn rollback_producer_budget_and_lsn_boundaries() {
+    let hashes = [
+        "b7ddb88711fd64392e2111b1b0d85f69a17f4e3626eb2cae8b487053067a49f0",
+        "488e29429388e45e9699a0faba1ef60ef3bf4c03d5934aef840563d35c95736a",
+        "35f4aaf94239477035ad5c99967c99ef67837c5a771e66762d18763638cebeb0",
+        "102d953de5d8a61b330a1d69e96b53666d1c6de01fec113ae710a6d251145705",
+        "2ed113a2da2571728d02e5caa293c7d5a4bd79843e7c4bc8156091df2ddea623",
+        "6f667aae0eb919354f61140859f103de3ece1744552c0ab80df47671741c769a",
+        "69baa5b4cf6c061869c4eca1f66d679d00427dd8410dc9734ca377351228af8f",
+        "0b3cdc6ec4da03d53b9ed3bdaa63b7abe6a1380acc0078e3b34cbb9febbafde8",
+        "d37a40cba805ed074441f41cc3acb0bedfd6a647cbb1670e0b3691dd70edc8a8",
+        "8ec626e7350c8770b5e3cbcec0a3e8ab0e30e0a06150e4efb470cba3924a26bb",
+        "a8ea71f1372ed611b15cd897fcef8aec34032e715556a627450c0f69975aec59",
+    ];
+    for (variant, digest) in hashes.into_iter().enumerate() {
+        let c = producer_budget_failure(variant);
+        assert_eq!(content_digest(&c.before), sha(digest));
+        // Prove each input reaches derivation, rather than a malformed decoder path.
+        decode_descriptor(
+            &c.before,
+            ReservationOwner::Transaction(c.expected.actor),
+            validate_expected(c.expected).unwrap(),
+        )
+        .unwrap();
+        producer_rejected(&c, SemanticError::BudgetMismatch);
+    }
+    for variant in 0..10 {
+        let mut c = Case::literal(0);
+        match variant {
+            0 => {
+                put64(&mut c.before, 1032, 2);
+                put64(&mut c.before, 1040, 3041);
+                put64(&mut c.before, 1136, 3041);
+                c.after[1024..1152].copy_from_slice(&c.before[1024..1152]);
+                for offset in [1032, 1040, 1136] {
+                    put64(&mut c.after, offset, 1);
+                }
+                c.refresh();
+            }
+            1 => {
+                put64(&mut c.before, 608, u64::MAX - 3040);
+                put64(&mut c.after, 608, u64::MAX);
+                c.refresh();
+            }
+            2 => c.chain(30, 0, 37, 40),
+            3 => c.chain(30, 37, 37, 40),
+            4 => c.chain(37, 35, 37, 40),
+            5 => c.chain(30, 35, 37, u64::MAX),
+            6 => {
+                put64(&mut c.before, 624, u64::MAX - 1);
+                put64(&mut c.after, 624, u64::MAX);
+                c.refresh();
+            }
+            _ => c.rehome(71, [0, 1, 70][variant - 7]),
+        }
+        produced_matches(&c);
+    }
+}
+
+#[test]
+fn rollback_producer_generated_frames_match_independent_bytes() {
+    for seed in 0..64 {
+        for sample in 0..128 {
+            produced_matches(&generated(128 * seed + sample));
+        }
+    }
+}
+
+#[test]
+fn rollback_producer_reuses_unpublished_outputs() {
+    let mut frame = [0x91; FRAME_BYTES];
+    let mut page = [0xa7; PAGE_BYTES];
+    let empty = Case::literal(0);
+    let failed = producer_budget_failure(4);
+    let headed = Case::literal(1);
+    for (c, error) in [
+        (&empty, None),
+        (&failed, Some(SemanticError::BudgetMismatch)),
+        (&headed, None),
+    ] {
+        let inputs = (c.before.clone(), c.old.clone());
+        let result = c.produce(&mut frame, &mut page);
+        if let Some(error) = error {
+            assert_eq!(result, Err(error));
+        } else {
+            assert_eq!(result.unwrap(), c.observe().unwrap());
+            assert_eq!(frame.as_slice(), c.frame);
+            assert_eq!(page.as_slice(), c.new);
+        }
+        assert_eq!(inputs, (c.before.clone(), c.old.clone()));
+    }
+}

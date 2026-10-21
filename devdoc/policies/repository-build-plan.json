@@ -1169,6 +1169,15 @@
       "additional_tests": 5,
       "combined_tests": 17,
       "scope": "unpublished caller status page only; no dirty frame or physical WAL authority"
+    },
+    "producer": {
+      "status": "locally_verified_limited_scope",
+      "contract_ref": "dev3-obligation-format.md#rollback-producer",
+      "additional_semantic_tests": 5,
+      "combined_semantic_tests": 22,
+      "additional_wal_tests": 2,
+      "combined_wal_tests": 13,
+      "scope": "caller-owned RollbackStart frame and status page only; no tag2 append or dirty frame authority"
     }
   },
   "dev3_read_buffer": {

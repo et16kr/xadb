@@ -1,12 +1,15 @@
-//! Full-state observations and unpublished status-page construction for RollbackStart.
-//! Contract: `devdoc/contracts/dev3-obligation-format.md`, sections 13–14.
+//! Full-state observations and unpublished frame/page production for RollbackStart.
+//! Contract: `devdoc/contracts/dev3-obligation-format.md`, sections 13–15.
 //! No append, live page mutation, source pin, reservation restoration or apply permit.
 #![allow(dead_code)] // Awaiting the separately reviewed runtime consumer.
 
 use super::{
     allocation_page::{ExtentAddress, ReservationOwner, SystemWorkRef},
     control::{ControlKind, ControlRef, PROFILE_BYTES, Profile},
-    obligation::{DescriptorSpec, ObligationError, OwnerState, ResourcePeak, decode_descriptor},
+    obligation::{
+        DescriptorSpec, ObligationError, OwnerState, ResourcePeak, decode_descriptor,
+        encode_descriptor, validate_descriptor,
+    },
     page::{DIGEST_OFFSET, PAGE_BYTES, PageError, PageIdentity, PageKind},
     status_home::{MAX_HOME_SLOTS, STATUS_HOME_BYTES, StatusHome, decode_status_home_page},
     transaction_record::{
@@ -14,8 +17,9 @@ use super::{
         TxnRef,
     },
     wal_frame::{
-        FrameEnvelope, FrameExpectation, FrameKind, RedoKind, RedoRecordView, WalError,
-        WalFrameHeader, decode_redo_record, decode_semantic_envelope,
+        FrameEnvelope, FrameExpectation, FrameKind, RedoKind, RedoRecordView, RedoTarget, WalError,
+        WalFrameHeader, decode_redo_record, decode_semantic_envelope, encode_patch_record,
+        finish_semantic_envelope,
     },
 };
 use xadb_foundation::codec::content_digest;
@@ -314,6 +318,192 @@ fn rollback_redo<'a>(
         return Err(SemanticError::IdentityMismatch);
     }
     Ok(redo)
+}
+
+/// Produce the exact RollbackStart frame and its unpublished after page.
+/// The caller owns both fixed outputs and must discard both on any error.
+/// Immutable before inputs survive; success is only an observation, not an
+/// append, reservation, live-frame or recovery capability. No I/O occurs.
+pub(crate) fn produce_rollback_start(
+    expected: RollbackStartExpected,
+    lsn: u64,
+    before_descriptor: &[u8],
+    before_page: &[u8],
+    frame_output: &mut [u8; FRAME_BYTES],
+    page_output: &mut [u8; PAGE_BYTES],
+) -> Result<RollbackStartObservation> {
+    let profile = validate_expected(expected)?;
+    if lsn == 0 || lsn <= expected.frame.previous_lsn {
+        return Err(SemanticError::InvalidInput);
+    }
+    // End the descriptor/encoder local scope before entering materialization.
+    build_rollback_frame(
+        expected,
+        profile,
+        lsn,
+        before_descriptor,
+        before_page,
+        frame_output,
+    )?;
+    materialize_rollback_start(
+        frame_output,
+        expected,
+        before_descriptor,
+        before_page,
+        page_output,
+    )
+}
+
+fn build_rollback_frame(
+    expected: RollbackStartExpected,
+    profile: ControlRef,
+    lsn: u64,
+    before_descriptor: &[u8],
+    before_page: &[u8],
+    output: &mut [u8; FRAME_BYTES],
+) -> Result<()> {
+    let before = decode_descriptor(
+        before_descriptor,
+        ReservationOwner::Transaction(expected.actor),
+        profile,
+    )?;
+    let OwnerState::Transaction(old_status) = before.owner else {
+        return Err(SemanticError::UnsupportedOperation);
+    };
+    if old_status.state() != TransactionState::Active {
+        return Err(SemanticError::UnsupportedOperation);
+    }
+    if before.chain.apply > expected.frame.previous_lsn {
+        return Err(SemanticError::OrderMismatch);
+    }
+    let old_page = decode_status_home_page(
+        before_page,
+        expected.page,
+        expected.profile.spec().namespace,
+    )?;
+    let old_home = old_page.lookup(expected.actor, expected.location)?;
+    if old_home.core() != TransactionStatusCell::Occupied(old_status) {
+        return Err(SemanticError::Corrupt);
+    }
+    if old_page.lsn() > expected.frame.previous_lsn {
+        return Err(SemanticError::OrderMismatch);
+    }
+    let range = old_page
+        .cell_range(usize::from(expected.location.slot()))
+        .ok_or(SemanticError::IdentityMismatch)?;
+    let next = old_status.undo_head();
+    let status = TransactionStatus::new(
+        expected.actor,
+        TransactionState::Aborting(RollbackState::Transaction { next }),
+        next,
+    )
+    .map_err(|_| SemanticError::Corrupt)?;
+    let mut after = before;
+    after.owner = OwnerState::Transaction(status);
+    after.chain.apply = lsn;
+    after.chain.previous = before.chain.apply;
+    after.chain.groups = before
+        .chain
+        .groups
+        .checked_add(1)
+        .ok_or(SemanticError::OrderMismatch)?;
+    let remaining = &mut after.remaining[3];
+    remaining.steps = remaining
+        .steps
+        .checked_sub(1)
+        .ok_or(SemanticError::BudgetMismatch)?;
+    remaining.wal = remaining
+        .wal
+        .checked_sub(FRAME_BYTES as u64)
+        .ok_or(SemanticError::BudgetMismatch)?;
+    remaining.protected = remaining
+        .protected
+        .checked_sub(FRAME_BYTES as u64)
+        .ok_or(SemanticError::BudgetMismatch)?;
+    if remaining.steps == 0 {
+        remaining.peak = ResourcePeak::default();
+    }
+    after.consumed_wal = before
+        .consumed_wal
+        .checked_add(FRAME_BYTES as u64)
+        .ok_or(SemanticError::BudgetMismatch)?;
+    // A valid before descriptor may leave nonzero consumables at step zero.
+    // Do not erase them or confuse this impossible budget with corrupt input.
+    validate_descriptor(&after).map_err(|_| SemanticError::BudgetMismatch)?;
+
+    output.fill(0);
+    let group = &mut output[160..FRAME_BYTES - 32];
+    group[..4].copy_from_slice(b"XSG1");
+    group[4..6].copy_from_slice(&1_u16.to_le_bytes());
+    group[6..8].copy_from_slice(&3_u16.to_le_bytes());
+    group[8..10].copy_from_slice(&192_u16.to_le_bytes());
+    group[12..16].copy_from_slice(&(GROUP_BYTES as u32).to_le_bytes());
+    group[16..24].copy_from_slice(&lsn.to_le_bytes());
+    group[24..32].copy_from_slice(&before.chain.apply.to_le_bytes());
+    group[32] = 1;
+    expected.actor.encode(&mut group[40..88])?;
+    group[88..120].copy_from_slice(&content_digest(before_descriptor));
+    group[120..124].copy_from_slice(&1536_u32.to_le_bytes());
+    group[124..126].copy_from_slice(&1_u16.to_le_bytes());
+    group[132..134].copy_from_slice(&1_u16.to_le_bytes());
+    group[136..140].copy_from_slice(&576_u32.to_le_bytes());
+    group[152..156].copy_from_slice(&288_u32.to_le_bytes());
+    encode_descriptor(&after, &mut group[DESCRIPTOR])?;
+    let operation = &mut group[OPERATION];
+    operation[..2].copy_from_slice(&3_u16.to_le_bytes());
+    operation[4..8].copy_from_slice(&256_u32.to_le_bytes());
+    if let Some(reference) = next {
+        operation[2..4].copy_from_slice(&2_u16.to_le_bytes());
+        reference.encode(&mut operation[72..112])?;
+    }
+    let native = &mut group[NATIVE];
+    native[0] = 5;
+    native[1] = 3;
+    for offset in [4, 6] {
+        native[offset..offset + 2].copy_from_slice(&expected.location.slot().to_le_bytes());
+    }
+    for offset in [8, 10] {
+        native[offset..offset + 2].copy_from_slice(&(range.start as u16).to_le_bytes());
+    }
+    for offset in [12, 16] {
+        native[offset..offset + 4].copy_from_slice(&(STATUS_HOME_BYTES as u32).to_le_bytes());
+    }
+    native[20..24].copy_from_slice(&576_u32.to_le_bytes());
+    native[128..352].copy_from_slice(&before_page[range.clone()]);
+    StatusHome::new(TransactionStatusCell::Occupied(status), old_home.incoming())?
+        .encode(&mut native[352..576])?;
+    let old_digest = content_digest(&native[128..352]);
+    let new_digest = content_digest(&native[352..576]);
+    native[24..56].copy_from_slice(&old_digest);
+    native[56..88].copy_from_slice(&new_digest);
+    // Borrow the prepared new home directly; no second home/frame/page array.
+    let (prepared, redo) = group.split_at_mut(REDO.start);
+    encode_patch_record(
+        RedoTarget {
+            page: expected.page.page,
+            owner: expected.page.owner,
+            owner_generation: expected.page.owner_generation,
+            kind: PageKind::TransactionStatus,
+            level: 0,
+        },
+        old_page.lsn(),
+        range.start as u16,
+        &prepared[NATIVE.start + 352..NATIVE.end],
+        redo,
+    )?;
+    finish_semantic_envelope(
+        WalFrameHeader {
+            stream: expected.frame.stream,
+            kind: FrameKind::Update,
+            lsn,
+            previous_lsn: expected.frame.previous_lsn,
+            txn: Some(expected.actor.id()),
+            previous_txn_lsn: before.chain.apply,
+        },
+        1,
+        output,
+    )?;
+    Ok(())
 }
 
 /// Construct an unpublished status-page image from the bound RollbackStart patch.
