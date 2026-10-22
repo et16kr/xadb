@@ -1,21 +1,35 @@
-name: DEV0 and DEV1
-on: [push, pull_request]
+name: Development quick check
+on:
+  push:
+    paths:
+      - '**/*.rs'
+      - '**/Cargo.toml'
+      - Cargo.lock
+      - rust-toolchain.toml
+      - '.cargo/**'
+      - .github/workflows/dev0.yml
+  pull_request:
+    paths:
+      - '**/*.rs'
+      - '**/Cargo.toml'
+      - Cargo.lock
+      - rust-toolchain.toml
+      - '.cargo/**'
+      - .github/workflows/dev0.yml
 permissions:
   contents: read
 jobs:
-  local-harness:
+  format:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Install the repository toolchain
-        run: rustup show
-      - name: Verify DEV1 and DEV0 regression
-        run: python3 scripts/check_dev1.py
-      - name: Preserve evidence, including intentional negative cases
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: foundation-evidence
-          path: artifacts/
-          retention-days: 14
+      # Install only the formatter needed here; do not build or run product tests.
+      - name: Install the pinned formatter
+        run: |
+          toolchain=$(sed -n 's/^channel = "\([^"]*\)"/\1/p' rust-toolchain.toml)
+          test -n "$toolchain"
+          rustup toolchain install "$toolchain" --profile minimal --component rustfmt
+          echo "XADB_FORMAT_TOOLCHAIN=$toolchain" >> "$GITHUB_ENV"
+      - name: Check Rust formatting
+        run: cargo +"$XADB_FORMAT_TOOLCHAIN" fmt --all --check

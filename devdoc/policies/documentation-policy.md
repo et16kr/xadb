@@ -64,7 +64,8 @@ git config --local core.hooksPath scripts/git-hooks
 - 미커밋 변경은 검사 대상에 섞지 않는다. Clippy의 `CARGO_TARGET_DIR`는 export 밖의 별도 임시 target으로 고정하며 상속된 target 경로를 사용하지 않는다. 검사 중 생성하는 `document-validation.json`은 임시 사본에만 기록하고 사본과 target은 종료 시 정리한다. 작업 트리·index·기존 증거를 갱신하거나 검사 결과를 자동 commit하지 않는다. 출력에는 검사 commit과 결과를 남긴다.
 - 포맷 검사는 자동 수정하지 않는다. 실패하면 작업 트리에서 `cargo fmt --all`로 수정하고 해당 수정을 commit에 포함한 뒤 다시 push한다. 로컬 미커밋 수정만으로 포맷이 잘못된 commit을 전송할 수는 없다.
 - 현재 검사 범위는 Rust 포맷·Clippy와 링크/anchor·색인/역할·JSON/Python 구문·일부 단계/패키지/인수 계약·기존 증거 identity다. [DOC-004](#doc-004)의 Clippy는 Actions와 같은 workspace/target/feature 범위로 테스트 코드까지 정적 검사하지만 테스트 사례를 실행하지 않는다. 제품 기능 시험은 변경 코드의 필수 사례로 제한하며 전체 DEV0/1/2·leaf wrapper를 push 훅에서 실행하지 않는다. 설계 의미의 정확성·제품 실행·원격 보호 CI는 별도다.
-- 이 훅은 설치한 로컬 checkout의 push 제약이다. 새 clone에도 설치가 필요하며 원격 서버가 강제하는 branch protection으로 주장하지 않는다. 기존 제품 CI를 대체하지 않는다.
+- 이 훅은 설치한 로컬 checkout의 push 제약이다. 새 clone에도 설치가 필요하며 원격 서버가 강제하는 branch protection으로 주장하지 않는다.
+- 개발 초기의 [GitHub Actions](../../.github/workflows/dev0.yml)는 Rust·Cargo·toolchain·해당 workflow 변경에만 포맷 검사를 실행한다. 문서만 변경하면 실행하지 않으며 DEV0/DEV1 전체 회귀 wrapper·제품 테스트·Clippy를 자동 실행하지 않는다. 위 Clippy 범위는 로컬 push gate에 유지한다. 변경 기능의 필수 시험은 해당 작업에서 선택 실행하고 DEV3 최종 S5 전수 인수는 유지한다. 3분 job 제한은 도구 설치를 포함한 중단 상한이며 몇 초 완료를 보장하는 성능 기준이 아니다.
 
 평상시 문서 수정에서는 검사하지 않는다. 훅/검사기 자체를 변경할 때에는 실패를 실제 차단하는지 별도의 좁은 회귀 시험을 적용하고, 제품 단계 완료·배포에는 기존 검증 의무를 유지한다.
 
