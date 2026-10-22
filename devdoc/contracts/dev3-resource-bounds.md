@@ -48,6 +48,20 @@ DS03/PF09의 각 inventory 접근량은 configured buffer의4배 이상이다. �
 
 후속 D2 검토 제안은 **제품 기본8 GiB와 그 안의 protected1 GiB를 유지하면서, 대형 inventory 인수에만 owned quota64 GiB의 명시 profile을 추가**하는 것이다. 유지보수 공간·WAL256 MiB·buffer4/16/64 MiB·transaction/operation 한도는 임의 확대하지 않는다. 해당 fixture에서43,241 extents 이상을 실제 소유·접근하고, 나머지 공간에 WAL/control·protected 몫·row/index/locator 작업량이 모두 들어가는 전체 회계를 제출해야 한다. `/root/dev3_supply`가 세 최소 extent 수와 각 n−1 미달, bytes 합계를 별도로 계산하여 확인했다. 제품 기본과 구별한64 GiB 인수 준비 방향을 D2 검토에서 수용했으며, 아직 전체 회계·구현·실행 전이므로 지원 profile이나 실행 PASS로 취급하지 않는다. sparse 파일의 apparent size만으로 실제 allocation inventory나 공간 확보를 입증하지 않는다.
 
+<a id="qualification-profile-preparation"></a>
+### 2.1 64GiB 인수 profile의 선행 준비
+
+[방향 리뷰 후속 결정](../plans/dev3-implementation-plan.md#direction-review-adoption)은64GiB를 대형 인수의 준비 목표로 유지하고 준비 완료 조건을 아래처럼 배정한다. 현재 [control의 지원 tuple](dev3-control-format.md)은 ID1/2/3의 owned8GiB이며 이번 문서 변경은 새 ID·tuple·codec 지원을 추가하지 않는다. 기본 profile·protected1GiB·WAL256MiB·메모리 한도를 일괄 확대하지 않는다.
+
+| 산출물·담당 작업 | 완료 조건·시점 |
+| --- | --- |
+| profile/배치 설계 · 3.01/3.03, 3.16 취합 | 실제 성장 경로를 동결하기 전에 새 checksummed profile tuple·지원/거절·fresh fixture와 file/extent 배치를 D2 검토한다. FILEMAP 최대8,192 mapping은 file 수이며 extent 수가 아니다. 여러 extent를 한 file에 배치할 수 있는 기존 표현을 먼저 검토하고43,241 files나 형식 증액을 선결하지 않음 |
+| 전체 수치 회계 · 각 opcode owner, 3.16 취합 | fixture 생성 전43,241개 이상 실제 extent의45,341,474,816 bytes에 extent 밖 WAL/control/DWB·old/new 선택 closure·staging·recovery peak를 더해64GiB 안의 charged+outstanding을 계산한다. protected는 그 안의 분할이고 page token은 실현 extent와 중복 차감하지 않는다. row/index/locator4배 집합의 실제 배치를 함께 증명하며 공간이 겹친다는 가정으로 소계를 누락하지 않음 |
+| 표현·workspace 점검 · 3.03/3.12 | profile을 소비하는 codec/checked 산술과 기존8GiB에서 유도된 growth/intent inventory·고정 배열·bootstrap scan 상한을 추적한다. 특히 현재 growth workspace의8,192-entry bound를64GiB 지원으로 간주하지 않는다. 필요 변경은 기존 memory budget 안의 알고리즘·예약표와 함께 검토하고 실제 diff만 검증 |
+| 실행 환경·fixture 계획 · 3.16 | S5 준비 완료 이전에 장치의 실제 가용 공간·fixture/원본/장애 clone 동시 소유·생성/복구 시간 예산·정리 소유를 기록한다. 생성기는 구현과 함께 작은 정상/known-bad로 검증하고 실제 대형 생성·접근·성능 실행은 S5에 배정한다. sparse apparent size·반복 읽기로 인수량을 대체하지 않음 |
+
+64GiB 전체 회계가 성립하지 않으면 quota 숫자만 올리거나4배 분모를 줄이지 않고 배치·알고리즘·profile을 다시 D2 검토한다. 각 산출물은 현재 미공급이며 profile 지원·대형 fixture 존재·PF09 PASS와 구별한다. 이 준비는3.16 말미의 일괄 작업이 아니라 growth/recovery/fixture 소비자의 선행이다.
+
 ## 3. opcode별로 남은 동결
 
 최종 표는 user row insert/update/delete, 각 index presence 변경, catalog DDL, tree split/root/empty-leaf 처리, undo link/cut/release, allocation reserve/INIT/free, commit/abort-end, CLR, checkpoint/capture/rebase/epoch 설치, DWB flush/repair/retirement를 각각 구분한다.

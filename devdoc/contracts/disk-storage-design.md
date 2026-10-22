@@ -377,7 +377,7 @@ F01은 profile identity·필수 항목·무결성/지원 여부의 검사 위치
 <a id="parallel-development"></a>
 ## 16. 작업 경계
 
-공통 identity/page/WAL/undo/visibility 계약→page/allocator·WAL·buffer/flush 표현→row/undo/status와 구조 tree 통합→index/catalog/statement→recovery/checkpoint/aging/backup 순으로 합친다. pack 전용 병렬 역할은 폐기한다. undo와 WAL, dirty buffer와 doublewrite는 독립으로 성공했다고 durability를 주장할 수 없다. 실제 소유와 최소 선행 leaf는 [구현 계획](../plans/dev3-implementation-plan.md#parallel-development)을 따른다.
+공통 identity/page/WAL/undo/visibility 계약→page/allocator·WAL·buffer/flush와 현재 연산의 제한 복구→일반 buffer·row/undo/status와 구조 tree→첫 행 대상의 statement rollback·commit·전체 복구 장벽→index/catalog의 나머지 기능과 대상별 거래·복구→checkpoint/aging/backup 순으로 합친다. 첫 행의 실제 table/anchor 공급은 필요하지만 index/catalog 전체 완료를 commit·복구의 선행으로 두지 않는다. [방향 리뷰 후속 결정](../plans/dev3-implementation-plan.md#direction-review-adoption)과 [현재 우선순위](../plans/dev3-implementation-plan.md#work-priority)가 선택 순서를 소유한다. 제한 복구는 일반 READY가 아니며 전체 task DAG·S1 인수는 유지한다. pack 전용 병렬 역할은 폐기한다. undo와 WAL, dirty buffer와 doublewrite는 독립으로 성공했다고 durability를 주장할 수 없다. 실제 소유와 최소 선행 leaf는 [구현 계획](../plans/dev3-implementation-plan.md#parallel-development)을 따른다.
 
 <a id="review-followup"></a>
 ## DEV3-REVIEW-002 — 먼저 반영한 리뷰 보완

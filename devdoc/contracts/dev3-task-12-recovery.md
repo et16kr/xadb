@@ -12,6 +12,20 @@
 
 소스 WAL bytes는 수정하지 않는다. WAL 회수는 완전한 새 closure가 영속 인계된 뒤의 별도 unlink/dirsync다. home page는 redo/undo/DWB 규약에 따라 변경할 수 있으므로 DEV2의 source-page 불변 규칙을 그대로 적용하지 않는다.
 
+<a id="early-recovery"></a>
+### 1.1 현재 쓰기 경로를 먼저 연결하는 제한 복구
+
+[방향 리뷰 후속 결정](../plans/dev3-implementation-plan.md#direction-review-adoption)에 따라 첫 목표는 현재 reserve/cancel·Status INIT·flush가 만든 파일을 새 프로세스에서 복원·검산하는 것이다. 아래3.12.1–4의 공급을 조기에 구현하되3.12 전체 완료나 일반 open API로 공개하지 않는다. 정확 지원 prefix·opcode·control 조합은 실제 producer와 F01/F02/F05를 대조해 동결한다. 그 전에 미지원 연산을 no-op으로 읽는 replay를 작성하지 않는다.
+
+1. LEASE/PREFLIGHT/SELECT에서 profile·namespace·선택 closure·bootstrap 예약을 검산하고 admission을 닫는다. 지원 여부 판정에 필요한 WAL/control을 검산해 미지원 입력은 가능한 첫 변경 전에 거절한다. 뒤늦게 손상/미지원 의미가 드러나면 기존 오류·fence를 보존하고 성공으로 반환하지 않는다.
+2. 선택된 Pending만으로 DWB repair·sync·retirement를 수행한다. raw retired 슬롯은 복원 근거가 아니다. pending 없는 torn home의 완전 INIT+연속 WAL 예외와 healthy higher-pageLSN 거절은 아래 정본을 그대로 따른다.
+3. 채택 prefix의 예약·owner·상태를 ANALYSIS/RESERVE_RESTORE로 정확히 재구성한 뒤 page별 REDO를 수행한다. 일부 home만 반영된 그룹을 통째로 skip하지 않는다. 미종료 owner·obligation을 버려 제한 범위를 맞추지 않는다.
+4. 결과는 닫힌 복구 owner 안의 bounded inspection으로 확인한다. 현재 allocator/Status의 실제 page·identity·generation·pageLSN·ledger를 독립 기대값과 대조하고 원본 WAL을 보존한다. 결과가 필요한 caller scratch·수명·최종 flush 여부는 F02/F05에서 고정한다. 검사 뒤에도 일반 쓰기·거래 API와 admission은 열지 않는다.
+
+정상 완결 prefix, WAL만 durable인 상태, allocator/Status의 혼합 home, 선택 Pending/torn home, retirement 뒤 raw 슬롯, repair 중 장애 후 다른 프로세스의 재진입을 작은 필수 사례로 준비한다. 아직 지원하지 않는 branch는 NOT_RUN/미공급으로 남기고 의미를 지운 fixture로 완료 처리하지 않는다. 이 inspection은 일반 VERIFY_RECOVERY나 공개 READY를 대체하지 않는다.3.12.5–8을 미구현이라는 이유로 N/A 처리하지 않으며 source WAL 회수·새 epoch·CLR·거래 종료/ACK 권한도 제공하지 않는다.
+
+첫 행 거래에서는 아래 모든 장벽을 연결한다. 정상 profile에서 이미 admitted된 작업이 quota 경계에 있어도 기존 예약으로 완료되는 대표 사례와 각 유한 crash prefix의 고정 peak를 필수로 확인한다. 부족 실행 설정/손상/I/O 실패의 거절은 별도 분모이며 정상 복구 성공을 대신하지 않는다. 전체 slot/owner/profile 조합·장시간 캠페인은 S5에 남긴다.
+
 ## 2. 핵심 요구
 
 | 요구 ID | 명세 |

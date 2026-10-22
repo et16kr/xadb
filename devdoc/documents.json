@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-direction-review-20261022.md": {
+      "path": "evidence/dev3-direction-review-20261022.md",
+      "role": "evidence",
+      "title": "DEV3 진행 방향·설계 점검 — Status home flush 이후"
+    },
     "dev3-concurrency-admission-20261022.md": {
       "path": "evidence/dev3-concurrency-admission-20261022.md",
       "role": "evidence",
@@ -1568,16 +1573,6 @@
       "role": "evidence",
       "title": "DEV5 작업 분류 — ARIES·Oracle·로컬 DBMS 조사"
     },
-    "dev7-work-breakdown.md": {
-      "path": "plans/dev7-work-breakdown.md",
-      "role": "plans",
-      "title": "DEV7 — 36개 세부 작업 분류와 공급·인수 연결"
-    },
-    "dev7-work-breakdown-research.md": {
-      "path": "evidence/dev7-work-breakdown-research.md",
-      "role": "evidence",
-      "title": "DEV7 세부 분류 — ARIES·Oracle·로컬 DBMS 조사"
-    },
     "dev6-work-breakdown.md": {
       "path": "plans/dev6-work-breakdown.md",
       "role": "plans",
@@ -1597,6 +1592,16 @@
       "path": "evidence/dev6-work-breakdown-review-20261022-r2.md",
       "role": "evidence",
       "title": "DEV6 작업 배정 2차 점검 — API 분량과 인수 연결"
+    },
+    "dev7-work-breakdown.md": {
+      "path": "plans/dev7-work-breakdown.md",
+      "role": "plans",
+      "title": "DEV7 — 36개 세부 작업 분류와 공급·인수 연결"
+    },
+    "dev7-work-breakdown-research.md": {
+      "path": "evidence/dev7-work-breakdown-research.md",
+      "role": "evidence",
+      "title": "DEV7 세부 분류 — ARIES·Oracle·로컬 DBMS 조사"
     },
     "dev3-dirty-stage.md": {
       "path": "contracts/dev3-dirty-stage.md",

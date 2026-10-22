@@ -41,7 +41,7 @@
 
 ```mermaid
 flowchart TD
-  F[3.02 파일과 선택 읽기] --> A[3.03.1 예약 취소 잔여 인수]
+  F[3.02 파일과 선택 읽기] --> A[3.03.1 제한 예약 취소 공급]
   G[3.10.1 guard와 progress turn] --> W[3.04.1 stage와 apply]
   W --> B[3.05.1 dirty 등록]
   A --> I[3.03.2 INIT]
@@ -49,26 +49,40 @@ flowchart TD
   W --> L[3.04.2 append와 sync]
   L --> D[3.05.2와 3 flush retirement]
   B --> D
-  I --> T[3.06.1 구조 tree]
-  I --> U[3.09.1 undo와 status]
-  D --> T
-  D --> U
+  I --> E0[3.12.1부터 4 현재 연산의 제한 복구]
+  D --> E0
+  I --> B2[3.05 일반 page 수명과 권한]
+  D --> B2
+  B2 --> T[3.06.1 구조 tree]
+  B2 --> U[3.09.1 undo와 status]
   T --> R[3.06.2와 3 행 cursor]
   U --> R
+  G --> R
   R --> X[3.07 인덱스]
   T --> CAT[3.08.1 catalog 내부 변경]
   U --> CAT
   G --> CAT
+  L --> C0[3.11.1 공통 terminal 공개 primitive]
+  U --> C0
+  G --> C0
+  CAT --> TC[최소 catalog create와 영속 table 공급]
+  C0 --> TC
+  TC --> R
   R --> V[대상별 3.09.2와 3 rollback]
-  X --> V
-  CAT --> V
-  X --> C[3.11.1 commit 공개 공급]
-  CAT --> C
+  X -. 대상 확장 .-> V
+  CAT -. 대상 확장 .-> V
+  R --> C[3.11.1 첫 행 commit 공개 공급]
+  C0 --> C
+  X -. 대상 확장 .-> C
+  CAT -. 대상 확장 .-> C
   C --> N[3.10.2 동시성 통합]
-  V --> E[3.12 복구 장벽]
+  V --> E[3.12 전체 장벽과 첫 행 복구]
+  C --> E
   D --> E
   E --> Q[3.11.2 다중 객체 인수]
   N --> Q
+  X --> Q
+  CAT --> Q
   E --> K[3.13 정상 checkpoint]
   C --> H[3.14.1 eligibility]
   H --> J[3.03.4 free와 reuse]
@@ -79,6 +93,8 @@ flowchart TD
   Z --> S
   O --> S
 ```
+
+[현재 우선순위](../plans/dev3-implementation-plan.md#work-priority)는 제한 복구(E0)를 먼저 연결하지만 이것을 일반 pool(B2)의 기술 공급으로 요구하지 않는다. B2의 실제 입력은 INIT·WAL/flush와 필요한 guard다. E0는 일반 READY를 반환하지 않는다. 점선은 새 대상의 후속 확장으로, index/catalog 전체를 첫 행 commit/복구의 선행으로 두지 않는다.3.11.1 공통 terminal/공개 primitive→최소 catalog create의 commit→성공한 영속 table handle→첫 행 거래 인수로 공급하여 table 생성이 자신의 행 거래 완료를 기다리는 순환을 막는다. 최소 catalog 변경에도 해당 undo/commit/recovery 의미를 갖춰야 하며3.11.2의 다중 객체·두 isolation 인수는 그대로 남는다.
 
 RECOVERY_REBASE는 3.12.5에서 공급하며 3.13의 fuzzy checkpoint 완료를 기다리지 않는다. audit 입력/검사기는 S0부터 준비한다. 3.14.1은 회수 가능성의 판정, 3.03.4는 allocator의 실제 전이, 3.14.2는 end-to-end 반환 인수다. 3.10.1 primitive는 실제 buffer/undo/commit 통합보다 먼저 공급한다. catalog 내부 변경은 구조 tree·undo·guard에서 직접 공급하고, 이후 index build/DDL 공개는 3.07.3·3.08.2에서 연결한다.
 

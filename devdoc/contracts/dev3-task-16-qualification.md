@@ -92,6 +92,21 @@ row/index/locator/allocation inventory의 **각 실제 접근 집합**이 config
 
 Serializable 같은 table false conflict를 허용하더라도 충돌률/재시도 비용을 숨기지 않는다. native RC와 SQL Serializable의 수치를 동일 의미 성능 개선으로 비교하지 않는다. group commit·gate 분할·부분 batch retirement는 측정 뒤 별도 설계 변경이다.
 
+<a id="observation-delivery"></a>
+### 6.1 계측의 공급 시점과 집계 계약
+
+[방향 리뷰 후속 결정](../plans/dev3-implementation-plan.md#direction-review-adoption)에 따라 계측을 최종 PF09 직전에 붙이지 않는다. 각 기능 구현과 함께 아래 관측을 공급하고 작은 fixture에서 필수 집계 분기를 검증한다. 긴 부하·대형 working set·profile 전체 조합의 성능 판정은 S5다.
+
+| 공급 owner | 구현 동반 관측 |
+| --- | --- |
+| 3.04/3.11 WAL·commit | 요청→시도→WAL sync→status/terminal 의미 설치→frontier/응답을 구별한다. WAL 대기와 실제 sync, Commit 설치 장벽에서 막힌 후속 producer 대기를 각각 기록하며 실패·UNKNOWN·취소도 해당 분모에 남김 |
+| 3.05 flush | image write/sync·Pending control/dirsync·home write/sync·retirement control/dirsync별 횟수/bytes/시간, 실제 batch page 수와 selected/completed/redirtied를 기록. batch 설정값을 실제 평균으로 보고하지 않음 |
+| 3.10/3.16 충돌·진행 | 원래 요청·재시도·성공 commit·충돌·quota 거절·fence를 분리하고 대기/실행 시간과 최종 outcome을 결합한다. true/false conflict는 독립 workload 관계로 판정하며 실패를 제외한 latency만으로 개선을 주장하지 않음 |
+
+F02/F05에는 monotonic clock·구간 시작/끝·중첩 구간의 중복 합산 방지·counter overflow·trace 누락/잘림·샘플링·메모리 상한을 고정한다. 미계측 값은0으로 출력하지 않는다. latch 안 I/O·동적 allocation·진단 대기를 추가하지 않으며 기존 진단/metadata 예산에 포함한다. clock/진단 실패가 원래 거래 결과를 바꾸거나 숨기지 않도록 실패 의미도 고정한다. 계측 자체의 비용과 활성화 조건을 남기고 같은 조건에서만 성능을 비교한다. 이 절은 계측 구현 완료나 측정 전 gate 분할/group commit 채택을 뜻하지 않는다.
+
+64GiB 준비의 담당·시점·지원 승격 조건은 [자원 정본](dev3-resource-bounds.md#qualification-profile-preparation)에 둔다. 각 기능 owner의 미정 F05를 이 작업으로 이월해 effect를 먼저 허용하지 않는다.
+
 ## 7. 인수 추적 행렬
 
 | 의무 | 공급·통합 담당 작업 | 결과에서 확인할 핵심 |

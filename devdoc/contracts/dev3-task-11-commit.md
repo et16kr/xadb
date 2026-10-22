@@ -8,7 +8,18 @@
 
 한 거래가 변경한 row/index/catalog의 가시성을 하나의 commit 결정으로 전환한다. commit record까지의 WAL sync를 확인한 뒤 status와 published frontier를 순서대로 설치하고, 그 뒤에만 durable 성공을 응답한다. data page 전체 flush는 commit의 선행이 아니며 page가 아직 home에 없거나 uncommitted page가 이미 flush된 두 경우 모두 redo/undo로 복원할 수 있어야 한다.
 
-3.11.1은 3.04.2의 append/sync와 공통 fence, 3.09.1의 live undo/status, 3.10.1의 coordinator·guard/publication/registry 공급 및 대상별 row/index/catalog 변경 공급을 소비한다. 공급하는 것은 commit attempt/sync/status/frontier 경계다. 이 공급을 소비하는 3.10.2 전체 동시성 인수를 다시 3.11.1의 선행으로 요구하지 않는다. 3.11.2는 3.09.3·3.10.2·3.12.8과 다중 객체 ACK/UNKNOWN을 통합한다.
+3.11.1은 3.04.2의 append/sync와 공통 fence, 3.09.1의 live undo/status, 3.10.1의 coordinator·guard/publication/registry 공급 및 **그때 지원하는 대상**의 변경 공급을 소비한다. index/catalog 전체 완료는 첫 행 대상 commit의 선행이 아니다. 공급하는 것은 commit attempt/sync/status/frontier 경계다. 이 공급을 소비하는 3.10.2 전체 동시성 인수를 다시 3.11.1의 선행으로 요구하지 않는다. 3.11.2는 3.09.3·3.10.2·3.12.8과 다중 객체 ACK/UNKNOWN을 통합한다.
+
+<a id="first-row-integration"></a>
+### 첫 행 거래의 연결 완료 조건
+
+[현재 우선순위](../plans/dev3-implementation-plan.md#work-priority)의 세 번째 목표는 작은 실제 행 거래다. 지원하는 row opcode부터3.06.2→3.09.2/3→3.11.1→3.12.5–8을 연결하고 index/catalog의 나머지 대상은 이후 같은 경로에 추가한다. fixture의 table/anchor·identity는 실제 영속 생성·선택 경로로 공급하며 임의 handle·RAM 전용 table로 대체하지 않는다. 이에 필요한 최소 catalog 공급은 선행이고 전체 DDL/build 기능은 선행이 아니다.
+
+공급 순서는3.11.1 공통 terminal/공개 primitive→최소 catalog create와 해당 undo/commit 의미의 연결→성공한 영속 table handle→첫 행 거래 인수다. 공통 primitive를 첫 행 거래 완료 뒤에만 공급하는 순환을 만들지 않는다. 최소 catalog 생성도 실제 recovery에서 재현되어야 하며 codec 성공이나 임의 사전 생성 파일로 원자성·identity 검산을 대신하지 않는다.
+
+첫 연결도 해당 opcode의 before image·UndoRef/head·status incoming edge·잔여 예약과 CLR 진행점을 하나의 규약으로 소비한다. terminal queue의 표현·credit·종료 소유, 필요한 잠금/관측 검증·commit 설치 장벽·fence가 동결되지 않았으면 terminal opcode를 허용하지 않는다. 인덱스 없는 지원 fixture를 사용할 수 있으나 실제 존재하는 index/constraint를 건너뛰는 모드는 만들지 않는다.
+
+완료에는 작은 fixture의 no-force ACK 후 새 프로세스 복구, uncommitted steal 뒤 loser 제거, 실패 statement 이전 결과 보존과 full abort, commit 불명 결과, 부분 CLR 재장애와 정상 admitted quota 경계의 복구 성공이 필요하다. [복구 정본](dev3-task-12-recovery.md)의 REBASE/LOG_OPEN/UNDO/VERIFY/STABILIZE·새 ACK 후 재개를 생략하지 않는다. 이 결과는 지원 opcode의 연결 증거이며 전체 CRUD·두 isolation·다중 객체·전체 DEV3 인수를 대신하지 않는다. 신규 사례는 [통합 목표별 시험](../plans/dev3-test-plan.md#direction-integration)에 배정한다.
 
 transaction owner는 최종 검사·commit 상태·오류 certainty를, durable owner는 WAL의 실제 시도/sync prefix와 namespace를, storage owner는 authoritative status home·dirty/recLSN을, publication owner는 작은 CommittedView/frontier를 관리한다. 실제 page flush/복구/terminal aging은 각 owner에게 인계한다. 같은 이름의 DEV2 private/COW commit hook과 publication 구현은 비교 입력이며 DEV3 disk commit 공급으로 간주하지 않는다.
 

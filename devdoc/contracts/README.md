@@ -1,5 +1,7 @@
 # 기능 계약
 
+2026-10-22 [DEV3 방향 리뷰 반영](../plans/dev3-implementation-plan.md#direction-review-adoption): [일반 page 수명](dev3-task-05-buffer-flush.md#operational-pool), [첫 행 거래](dev3-task-11-commit.md#first-row-integration), [제한 복구](dev3-task-12-recovery.md#early-recovery), [64GiB 준비](dev3-resource-bounds.md#qualification-profile-preparation), [계측 공급](dev3-task-16-qualification.md#observation-delivery)의 경계를 구체화했다.
+
 - [DEV3 Status home flush](dev3-status-home-flush.md): consuming bound·sealed target·zero/exact home·순차 whole batch1·자원/선택 입력.
 
 - [DEV3 폐쇄 두-frame Status INIT](dev3-status-init.md): 실제 reserve 권한·두 image RAM 공개·동일 WAL requirement·두-pin reader·자원 한도.

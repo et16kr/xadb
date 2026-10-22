@@ -1,10 +1,12 @@
 # 개발 계획
 
+2026-10-22 [DEV3 방향 리뷰 후속 결정](dev3-implementation-plan.md#direction-review-adoption)과 [현재 우선순위](dev3-implementation-plan.md#work-priority): 제한 복구·일반 page 수명·첫 행 거래의 완료 조건,64GiB/계측 선행 준비와 [DIR01–05 시험 배정](dev3-test-plan.md#direction-integration).
+
 [개발 문서 안내](../README.md)의 작업 경로를 따라 필요한 문서를 선택한다. 계획·제안·구현·실행 상태는 각 문서에서 확인한다.
 
 <!-- catalogue -->
 
-- [DEV3 — 단계별 필수 테스트와 구현 동반 테스트 추가 계획](dev3-test-plan.md) — 중간 변경 기능의 필수 사례·[16개 항목 보완](dev3-test-plan.md#item-review)·[실행 셀/중복 방지](dev3-test-plan.md#case-inventory)·[시간/준비 비용](dev3-test-plan.md#cost-control)·3.03.1 잔여/복구8장벽·최종 S5 DEV3 전수
+- [DEV3 — 단계별 필수 테스트와 구현 동반 테스트 추가 계획](dev3-test-plan.md) — 중간 변경 기능의 필수 사례·[16개 항목 보완](dev3-test-plan.md#item-review)·[실행 셀/중복 방지](dev3-test-plan.md#case-inventory)·[시간/준비 비용](dev3-test-plan.md#cost-control)·3.03.1 완료 기록/복구8장벽·최종 S5 DEV3 전수
 
 - [DEV9 — 제품 인수 구현·검증 계획](dev9-implementation-plan.md) — F01–10·104개 요구 수신·T01–34·R2-V01–04·P01–05·R16 설치/문서·버전 적용성; SC16/17 미실행
 

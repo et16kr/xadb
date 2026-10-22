@@ -652,6 +652,8 @@ prepare12208/readback14788·Fresh role424/Mutable role792 bytes의 실제 typed 
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 
+2026-10-22 후속 [방향 리뷰 반영](../plans/dev3-implementation-plan.md#direction-review-adoption)은 현재 제한 쓰기의 복구→일반 page 수명/live undo→첫 행 거래 연결의 순서와 완료 조건을 정리한다. 위 종료·인계는 당시 기록으로 보존한다. 아래 제품 구현 상태는 그대로이며3.12.1.a의 실제 API/F05·64GiB 지원·새 시험/계측은 아직 미공급이다. 설계 반영으로 READY·거래 ACK 또는 DEV3/S5 완료를 주장하지 않는다.
+
 각 작업의 개발 상세 명세와 처리·상태 설계도는 [16개 작업별 문서](../contracts/dev3-task-designs.md)에 있다. 이 설계 작성은 아래 실제 구현·검증 상태를 변경하지 않는다.
 
 2026-10-22 보완: 기존 16개 분류의 ID를 유지하며 현재 구현 범위를 아래에 정리한다. 실행 순서·하위 작업의 선행/산출물/완료 조건은 [잔여 작업 계획](../plans/dev3-implementation-plan.md#remaining-work)이 소유한다. [작업 크기·우선순위·병렬 운영](../plans/dev3-implementation-plan.md#work-organization)에 따라 실제 배정은 검증 가능한 하위 작업으로 하고 분류 수를 진행률로 환산하지 않는다. 번호는 실행 순서가 아니며 기존 DEV3 기능 범위·S1 인수 조건·다른 단계의 선행을 변경하지 않는다. 표현/모델 검증을 실제 제품 기능 완료로 계산하지 않는다.

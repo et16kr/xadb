@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-22 [DEV3 진행 방향·설계 점검](dev3-direction-review-20261022.md) — Status home flush 이후의 정적 검토와 [후속 반영 추적](dev3-direction-review-20261022.md#adoption-followup). 제한 복구·일반 buffer·첫 행 거래·64GiB/계측 준비의 소유 계약을 연결하며 최초 리뷰와 후속 D2 상태·남은 구현을 구별한다.
+
 2026-10-22 [DEV3 Status home flush](dev3-status-home-flush-20261022.md) · [source별 실행 색인](dev3-status-home-flush-20261022.json): 필수43·compiler6·native3와 실제77 layout를 확인했다. 원 FAIL/완료 prefix를 보존하며 최종 독립 D1 수용, S5 추가588·전체 DEV3 미완료다.
 
 2026-10-22 [DEV3 폐쇄 두-frame Status INIT](dev3-status-init-20261022.md) · [source별 실행 색인](dev3-status-init-20261022.json): 실제 reserve→두 RAM image 공개→동일 WAL requirement의 durable 확인과 두-pin reader를 연결했다. 필수93·shared1·compiler13·native3의 source별 결과와 원 FAIL을 보존한다. 제한 단위의 최종 독립 D1을 수용했으며 Status home flush·일반 recovery·전체 DEV3는 미완료다.

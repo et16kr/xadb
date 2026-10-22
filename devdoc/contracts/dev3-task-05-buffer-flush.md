@@ -1,6 +1,6 @@
 # DEV3 3.05 — dirty buffer·flush 개발 상세 명세와 설계도
 
-2026-10-22 · **작업 상세 설계 / D2 상세화 수용 / 제한 dirty·allocator flush·Status INIT 공급 / 일반 pool·batch8/64·복구 인수 미완료**
+2026-10-22 · **작업 상세 설계 / D2 상세화 수용 / 제한 dirty·allocator/Status flush 공급 / 일반 pool·batch8/64·복구 인수 미완료**
 
 [공통 규칙](dev3-task-designs.md) · [구현 계획 3.05.1–3](../plans/dev3-implementation-plan.md#remaining-work) · [buffer 정본](disk-storage-design.md#buffer) · [batch 정본](disk-storage-design.md#doublewrite-batch) · [진행 정본](disk-storage-design.md#flush-progress) · [실제 구현](../implementation/dev3-implementation.md)
 
@@ -21,7 +21,21 @@
 
 현재 [clean buffer](dev3-read-buffer.md)는 Empty/Loading/Clean, caller frame·pin·clock과 고정 selected namespace 읽기만 구현했다. [최초 DWB 설치](dev3-doublewrite-install.md)는 FreshStorageSession을 소비하여 Empty selector와 고정 파일을 설치하고 clean reader를 제공한다. 두 공급 모두 mutable home, dirty/DPT, pending batch 발급·retirement·일반 reopen/repair 권한을 제공하지 않는다. 기존 제한 시험 결과나 중단된 통합 결과를 이 작업의 PASS로 승격하지 않는다.
 
-구체 제한 공급은 [dirty stage](dev3-dirty-stage.md), [allocator 한 페이지 flush](dev3-allocator-flush.md), [폐쇄 Status INIT](dev3-status-init.md)의 소유 계약과 원 실행 기록을 따른다. [Status home flush](dev3-status-home-flush.md)는3.03.2.b의 별도 소비형 owner·두 target 순차 batch1을 작성한 상태이며 runtime NOT_RUN이다. 아래 일반 batch8/64·다중 file·eviction/pressure와 recovery 의무를 이 제한 단위로 완료 처리하지 않는다.
+구체 제한 공급은 [dirty stage](dev3-dirty-stage.md), [allocator 한 페이지 flush](dev3-allocator-flush.md), [폐쇄 Status INIT](dev3-status-init.md)의 소유 계약과 원 실행 기록을 따른다. [Status home flush](dev3-status-home-flush.md)는3.03.2.b의 별도 소비형 owner·두 target 순차 batch1의 [제한 선택 인수](../evidence/dev3-status-home-flush-20261022.md)를 마쳤다. 원 FAIL과 S5 추가 NOT_RUN은 보존한다. 아래 일반 batch8/64·다중 file·eviction/pressure와 recovery 의무를 이 제한 단위로 완료 처리하지 않는다.
+
+<a id="operational-pool"></a>
+### 1.1 tree·live Status가 소비할 일반 page 수명
+
+[방향 리뷰 후속 결정](../plans/dev3-implementation-plan.md#direction-review-adoption)에 따라 다음 공급은 제한 target 수의 증액이 아니라 실제 page 수명 전체다. 기존 두 target/최초 Status home predicate를 완화한 것만으로 일반 pool 완료를 선언하지 않는다.
+
+| 경계 | 소비 전에 고정할 계약과 완료 조건 |
+| --- | --- |
+| 단일 권한 | DB/FileId/page_no마다 load·변경·flush를 조정하는 하나의 authoritative 등록을 사용한다. incarnation/generation은 주소 권한 안에서 검산한다. 기존 불변 selected clean reader와 mutable pool을 동시에 같은 home의 독립 권한으로 사용하지 않도록 consuming 전환·실패 반환·live pin 처리와 접근 배제를 F02에 고정한다 |
+| 등록·퇴출·재읽기 | 실제 quota 안에서 page를 등록하고 load→dirty→flush→clean→evict→reload를 연결한다. dirty/flush/pin 소유가 남으면 퇴출하지 않으며, 재읽기는 최신 선택 namespace·allocator identity와 durable pageLSN을 검산한다. unbounded map이나 모든 page 상주로 확장하지 않음 |
+| 반복 변경 | 최초 zero/동일 image 검사와 일반 live Status의 합법적 이전 image→새 image 전이를 구분한다. 이전 pageLSN·정체성·완결 WAL 보호를 검산하고 stale completion·redirty·주소 claim/free 경쟁으로 최신 dirty 상태를 지우지 않는다 |
+| 실제 공급 | 첫 tree/live undo가 요구하는 page 종류·전체 pin 집합·동시 작업을 F05에 대입한다. 최소한 실제 frame 수를 넘는 작은 작업 집합의 eviction/reload, 반복 Status 변경, writer/flush와 clean-reader 배제를 새 구현의 필수 사례로 확인한다. batch8/64·대형 압력의 전체 조합은 S5로 유지 |
+
+기존 제한 owner는 원 공급 증거로 보존하되 일반 소비자가 병행 우회 경로로 사용하지 못하게 한다. 정확 전환 API·지원 page 종류·capacity·오류는 해당 구현의 F01/F02/F05에서 독립 검토하며 이 절로 새 제품 API를 이미 공급했다고 하지 않는다.
 
 <a id="requirements"></a>
 ## 2. 요구 ID와 불변식

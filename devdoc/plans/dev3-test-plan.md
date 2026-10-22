@@ -157,9 +157,9 @@
 이 표의 “공동”은 이름이 비슷한 시험을 삭제하는 규칙이 아니다. 같은 실행이 각각의 계약 assertion과 실제 소비 경로를 충족하는지 확인한다. 예를 들어 모델의 claim/free 반례와 실제 thread 경합은 별도 실행이며, 상위 호출자가 새로 연결되면 그 연결 사례가 필요하다.
 
 <a id="allocation-first"></a>
-## 4. 지금 남아 있는 3.03.1의 필수 테스트
+## 4. 3.03.1의 필수 테스트 배정과 완료 기록
 
-현재 재개 순서의 첫 작업은 이미 부분 구현된 예약·취소다. [부분 실행 원본](../evidence/dev3-allocation-reservation-partial-xadb-20261021.json)과 [독립 검토 remaining](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)을 기준으로 아래만 닫는다.
+아래는 부분 구현 당시 [실행 원본](../evidence/dev3-allocation-reservation-partial-xadb-20261021.json)과 [독립 검토 remaining](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)에 배정한 필수 작업이다. 현재는 아래2026-10-22 인수 기록까지 완료했으며 현재 재개·무변경 재실행 목록이 아니다. 후속 선택은 [현재 우선순위](dev3-implementation-plan.md#work-priority)와 실제 diff를 따른다.
 
 | 필수 작업 | 추가할 것·판정 | 반복하지 않을 것 |
 | --- | --- | --- |
@@ -194,6 +194,21 @@ native 13DB는 새로 부풀린 전수 행렬이 아니라 기존 제한 단위�
 | 3.12.8 STABILIZE/READY | 장벽 실패 시 READY 금지; 성공 뒤 새 ACK→두 번째 reopen 보존; 연결한 경로의 재장애·소형 full audit | 외부 admission/ACK 관측, controller cut 도달 기록·재현 bundle |
 
 각 장벽의 모든 slot/owner/batch/profile 조합과 반복 장애 캠페인은 S5에 둔다. 다만 이번에 구현한 영속 선택 자체가 특정 중간 cut에서 깨지는지 확인하는 핵심 사례는 최종까지 미루지 않는다. 제품의 복구 성공을 선언하는 실제 연결에는 새 프로세스·현재 build의 복구가 필요하다.
+
+<a id="direction-integration"></a>
+### 5.1 방향 리뷰의 통합 목표별 시험 배정
+
+[D3-DIRECTION-001](dev3-implementation-plan.md#direction-review-adoption)의 완료 조건을 기존 NT owner에 배정한다. 아래 DIR01–05는 명세 추적 ID이며 실행 가능한 test 이름·추가 완료 결과가 아니다. 실제 구현과 함께 [case inventory](#case-inventory)에 source·정확 selector·fixture·oracle·중간/S5 변형을 등록한다. 기존 인수·seed·cut·최종 budget은 줄이지 않고 같은 실행의 assertion은 중복 실행 없이 연결한다.
+
+| ID·owner | 구현 동반 중간 필수 | 최종 S5 확대·판정 경계 |
+| --- | --- | --- |
+| DIR01 · NT12/03/05 | 실제 reserve/cancel·Status INIT/flush producer의 정상 prefix, WAL만 durable, 두 home 혼합, Pending/torn, retired raw 슬롯, repair 재장애를 새 프로세스에서 복원·검산. 미지원 prefix 거절·닫힌 admission·원 WAL 보존을 확인 | 장벽별 전체 cut/profile/batch 조합. 제한 inspection을 READY/ACK 결과로 집계하지 않음 |
+| DIR02 · NT05/09 | 단일 주소 권한·기존 clean reader 전환/접근 배제, 실제 frame 수를 넘는 작은 집합의 eviction/reload, 반복 Status 변경, stale completion/redirty·pin/claim 경쟁 | batch1/8/64·다중 file·전체 page 종류/압력 profile. 단순 target 상수 증액을 pool 인수로 보지 않음 |
+| DIR03 · NT06/09/10/11/12/15 | 실제 영속 table/anchor의 작은 행 거래에서 no-force ACK 보존·steal loser 제거·statement 이전 결과 보존/full abort·UNKNOWN·부분 CLR 재장애. 정상 admitted quota 경계의 완료·REBASE/epoch 인계 peak와 새 ACK 뒤 재시작을 독립 이력/ledger로 확인 | 전체 row/index/catalog·isolation·CLR/REBASE 조합과 긴 chain. 설정 부족/손상 거절과 정상 복구 성공 분모를 분리; terminal queue 등 미공급을 N/A 처리하지 않음 |
+| DIR04 · NT01/03/12/16 | 새 인수 profile/성장 코드가 생길 때 tuple 지원/거절·checked 산술·FILEMAP 배치·intent bound·실제 예약 한도와 작은 fixture 생성기 known-bad를 확인 |64GiB 전체 회계·실제 allocator/row/index/locator 각각4배 접근·대형 생성/장치 I/O. 문서 산술을 제품 지원이나 실제 공간 증거로 세지 않음 |
+| DIR05 · NT04/05/10/11/16 | 새 계측 경로의 정상/실패/취소·UNKNOWN·충돌/거절 분모, 구간 중복·trace 잘림·실제 batch 수를 작은 고정 입력으로 검산 | PF09 전체 workload·지연/처리량·계측 비용과 장기 자원 profile. 미계측0·성공만의 분모로 비용을 숨기지 않음 |
+
+새 연결의 필수 사례를 구현 시 실행하되 기존 하위 시험을 통째로 다시 호출하지 않는다. 현 시점 DIR01–05는 미작성/미실행이며 문서 반영만으로 제품 테스트를 시작하지 않는다. S5의 확정 DEV3 inventory 전수 예외는 그대로 유지한다.
 
 <a id="test-delivery"></a>
 ## 6. 추가 테스트를 구현에 동반하는 방법

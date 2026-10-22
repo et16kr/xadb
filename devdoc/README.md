@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV3 진행 방향·설계 점검과 반영 추적](evidence/dev3-direction-review-20261022.md#adoption-followup): 기본 저장 구조를 유지하고 제한 복구→일반 buffer/live undo→첫 행 거래 순으로 연결한다. [후속 결정](plans/dev3-implementation-plan.md#direction-review-adoption)·소유 계약·공급도·시험 배정에 완료 조건과64GiB/계측 준비를 반영했다. 제품 구현·새 시험 실행은 없다.
+
 2026-10-22 [DEV3 작은 단위 종료·인계](implementation/dev3-implementation.md#paused-after-status-home-flush): Status home flush까지 구현·선택 인수·commit을 완료했다. 복구 진입은 사전 열람만 진행했으며 새 코드·확정 설계·시험은 없다. 사용자 요청에 따라 기존 작업을 정리하고 새 하위 작업은 시작하지 않는다. 전체 DEV3·최종 S5는 미완료다.
 
 2026-10-22 [DEV3 Status home flush](implementation/dev3-implementation.md#status-home-flush): 실제 두 target의 순차 DWB/home·whole retirement·조건부 finalize를 연결했다. 필수43·compiler6·native3의 source별 증거와 원 FAIL을 보존하며 제한 단위의 최종 독립 D1을 수용했다. 일반 recovery·전체 DEV3는 미완료다.
@@ -24,9 +26,9 @@
 
 2026-10-22 [DEV3 16개 설계 2차 비교 리뷰](evidence/dev3-task-design-review-20261022-r2.md): ARIES·Oracle·로컬6개 DBMS를 대조하여 Commit 의미 설치 순서·offline build drain·backup 최종 WAL cut을 보완했다. 이전 리뷰와 실행 결과는 보존하며 제품 구현·시험 실행은 없다.
 
-2026-10-22 [DEV6 작업 분배 개선](plans/dev6-work-breakdown.md): 18개 책임·55개 기존 묶음 아래 최하위 배정 단위를72개에서80개로 보완했다. [ARIES·Oracle·로컬5개 후속 점검](evidence/dev6-work-breakdown-review-20261022-r2.md)으로 C ABI·JDBC·ODBC 분량, DB capability/type-info 인수 연결과 [실제 성능 호출 경계](plans/dev6-implementation-plan.md#execution-budget)를 명시했다. 기존 의미·SC04→SC05→SC06·미실행 상태를 유지한다.
-
 2026-10-22 [DEV7 36개 세부 작업 분류](plans/dev7-work-breakdown.md): ARIES·Oracle·로컬8개 DBMS 소스를 참고하여 기존 큰 묶음을 하위 배정 단위·직접 선행·산출물·완료/인수로 나누고 64개 요구에 연결했다. 제품 구현·시험은 재개하지 않았으며 F01–F10·SQL_EXT1 미완료와 logging 보류를 유지한다.
+
+2026-10-22 [DEV6 작업 분배 개선](plans/dev6-work-breakdown.md): 18개 책임·55개 기존 묶음 아래 최하위 배정 단위를72개에서80개로 보완했다. [ARIES·Oracle·로컬5개 후속 점검](evidence/dev6-work-breakdown-review-20261022-r2.md)으로 C ABI·JDBC·ODBC 분량, DB capability/type-info 인수 연결과 [실제 성능 호출 경계](plans/dev6-implementation-plan.md#execution-budget)를 명시했다. 기존 의미·SC04→SC05→SC06·미실행 상태를 유지한다.
 
 2026-10-22 [DEV4 18개 세부 작업 분류](plans/dev4-work-breakdown.md): 기존 D4-0–7을 하위 공급·통합 인수 단위로 나누고 선행·산출물·완료 조건·T01–14/V01–28/F01–05를 연결했다. [ARIES·Oracle19c·로컬 DBMS 조사](evidence/dev4-source-research.md#work-breakdown-20261022)를 참고했으며 제품 구현·시험 실행과 Q1 완료 승격은 없다.
 
