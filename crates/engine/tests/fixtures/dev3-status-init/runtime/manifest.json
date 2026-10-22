@@ -1,0 +1,108 @@
+{
+  "status": "INPUT_ONLY_NOT_RUN",
+  "mandatory": {
+    "CF": 61,
+    "WI": 24,
+    "WM": 8
+  },
+  "additional_s5": {
+    "authority": 18,
+    "install": 18,
+    "retry": 16,
+    "WI": 48,
+    "WM": 16
+  },
+  "separate": {
+    "shared_resource": 1,
+    "native": 3,
+    "compiler": 14
+  },
+  "resource_caps": {
+    "XADB_STATUS_INIT_RESOURCE": {
+      "pool_delta": 512,
+      "base_delta": 64,
+      "control_delta": 1536,
+      "plans": 4096,
+      "temporaries": 16384,
+      "status_codec": 8192,
+      "reader": 3584,
+      "obligation": 768,
+      "permit": 768,
+      "upper_caller": 768,
+      "final_observation_join": 768,
+      "permit_commit_join": 768,
+      "reservation": 256,
+      "attempt_error": 512,
+      "bound": 28672,
+      "bound_result": 28672,
+      "dirty_hot": 196608,
+      "dirty_cold": 196608
+    },
+    "XADB_STATUS_INIT_NATIVE_LAYOUT": {
+      "pool_delta": 512,
+      "claim_record": 256,
+      "claim_slot": 256,
+      "init_pin_set": 512,
+      "version_guard": 128,
+      "claim_key": 256,
+      "claim_key_result": 256,
+      "targets": 640,
+      "targets_result": 640,
+      "write": 640,
+      "write_result": 640,
+      "prepared": 1024,
+      "prepared_result": 1024,
+      "fenced_registry": 64,
+      "accounting": 512
+    },
+    "DIRTY_TYPE": {
+      "registration_option": 128,
+      "pin_accounting": 512,
+      "pin_set": 64,
+      "registration_result": 32,
+      "pin_guard": 32,
+      "pin_lock_result": 32,
+      "pin_guard_and_result": 64,
+      "read_guard": 32,
+      "write_guard": 32,
+      "pool": 25072,
+      "frame": 256,
+      "entry": 96,
+      "optional_entry": 96,
+      "stamp": 112,
+      "stamp_result": 112,
+      "observation": 192,
+      "observation_result": 192,
+      "read_targets": 256,
+      "write_targets": 256,
+      "dpt_stamp": 128,
+      "dirty_error": 32,
+      "small_result": 32,
+      "installation": 192,
+      "optional_installation": 192,
+      "install_permit": 384,
+      "writer_control": 4096,
+      "bound": 25136,
+      "bound_result": 25152,
+      "storage": 32768
+    }
+  },
+  "marker_order_overrides": {
+    "CF02": ["CF02-01", "CF02-03", "CF02-02"],
+    "CF15": ["CF15-02", "CF15-01", "CF15-03"]
+  },
+  "retry_aliases": [
+    "SR-P3-C1-INIT",
+    "SR-P3-C1-CANCEL"
+  ],
+  "native_profile_cancellations": {
+    "1": 0,
+    "2": 0,
+    "3": 1
+  },
+  "runtime_aggregate_seconds": 120,
+  "s5_aggregate_seconds": 1200,
+  "native_seconds_each": 30,
+  "native_bytes_each": 25165824,
+  "native_bytes_total": 75497472
+}

@@ -338,3 +338,7 @@ DEV3 페이지 예약·취소는 `wal_io/doublewrite_install`의 private child `
 ## DEV3 불변 Status bootstrap
 
 [Status bootstrap 계약](../contracts/dev3-status-bootstrap.md)의 실제 제품 변경·시험·fixture·checker는 관리 JSON의 `dev3_status_bootstrap`에 등록한다. 새 crate/source root/dependency 없이 plan2 영속 역할과 borrowed role·old adapter guard를 공급한다. [선택 실행](../evidence/dev3-status-bootstrap-20261022.md)의 제한 단위 독립 검토를 수용했으며 실제 INIT·일반 recovery·전체 DEV3 인수는 미완료다.
+
+## DEV3 폐쇄 두-frame Status INIT
+
+[Status INIT 계약](../contracts/dev3-status-init.md)의 실제 제품·시험·독립 literal·compiler/runtime checker는 관리 JSON의 `dev3_status_init`에 등록한다. 새 crate/source root/dependency 없이 exact reserve→두 image RAM 공개→동일 stage requirement의 durable 확인과 immutable 두-pin reader를 공급한다. 선택 인수와 제한 단위의 독립 검토를 수용했으며 Status home flush·일반 recovery·전체 DEV3는 미완료다.

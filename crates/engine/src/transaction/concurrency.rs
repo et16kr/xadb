@@ -15,6 +15,12 @@ use xadb_foundation::error::Effect;
 #[path = "concurrency_test_support.rs"]
 pub(super) mod test_support;
 
+/// Test-only injection for a downstream owner's checked admission cleanup.
+#[cfg(test)]
+pub(crate) fn diagnostic_poison_state(core: &PageConcurrency<'_>) {
+    test_support::poison_state(core);
+}
+
 pub(crate) const FOREGROUND_OWNERS: usize = 32;
 pub(crate) const OWNER_SLOTS: usize = FOREGROUND_OWNERS + 2;
 const MAINTENANCE_SLOT: usize = FOREGROUND_OWNERS;

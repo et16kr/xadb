@@ -15,12 +15,7 @@ impl Claim {
     pub(super) fn valid(&self, pool: &SharedPool<'_, '_, '_, '_>, last_attempt: u64) -> bool {
         self.attempt != 0
             && self.attempt == last_attempt
-            && pool.directory.get(self.index).copied().flatten() == Some(self.registration)
-            && pool
-                .frames
-                .get(self.index)
-                .and_then(|frame| frame.registration)
-                == Some(self.registration)
+            && pool.resolve_registration(self.index) == Some(&self.registration)
             && self.registration.generation == 1
             && self.captured.is_none_or(|stamp| {
                 stamp.identity == self.registration.request.identity
@@ -108,10 +103,14 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         output: &mut [u8; PAGE_BYTES],
     ) -> Result<Option<CapturedPage<'c, 's>>> {
         self.check_flusher(owner)?;
-        let index = self
-            .directory
-            .iter()
-            .position(|entry| entry.as_ref().is_some_and(|entry| entry.request == request))
+        if !self.registrations_valid() {
+            return Err(self.fatal(Cause::Invariant));
+        }
+        let index = (0..self.frames.len())
+            .position(|index| {
+                self.resolve_registration(index)
+                    .is_some_and(|entry| entry.request == request)
+            })
             .ok_or_else(|| unchanged(Cause::MissingTarget))?;
         let registration = *self.registration(index)?;
         let attempt = {

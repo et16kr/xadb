@@ -32,6 +32,14 @@ pub(crate) use mutable_storage::{
     AllocationWriter, AllocatorFlushError, AllocatorFlusher, BoundAllocation, DirtyAllocationError,
     DirtyReader, FlushProgress, MutableStorageError, MutableStorageOwner,
 };
+#[allow(unused_imports)]
+pub(crate) use mutable_storage::{
+    BeforeEffectError, BoundStatusBootstrap, InitAttemptError, InitializedStatusObservation,
+    ReservedStatus, StatusBootstrapWriter, StatusInitError, StatusReadGuard, StatusReader,
+};
+pub(in crate::storage) use mutable_storage::{
+    CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
+};
 pub(in crate::storage) use mutable_storage::{DirtyInstallPermit, FlushFinalizePermit};
 
 const WORKSPACE_BYTES: usize = 4 << 20;

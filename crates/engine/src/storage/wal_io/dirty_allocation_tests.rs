@@ -1485,7 +1485,7 @@ fn type_ceilings() {
     let layout = frame_test::layout();
     for (name, actual, limit) in [
         ("registration_option", layout.registration_option, 128),
-        ("pin_accounting", layout.accounting, 256),
+        ("pin_accounting", layout.accounting, 512),
         ("pin_set", layout.pin_set, 64),
         ("registration_result", layout.registration_result, 32),
         ("pin_guard", layout.pin_guard, 32),
@@ -1497,7 +1497,7 @@ fn type_ceilings() {
         ),
         ("read_guard", layout.read_guard, 32),
         ("write_guard", layout.write_guard, 32),
-        ("pool", layout.pool, 24560),
+        ("pool", layout.pool, 25072),
     ] {
         assert!(actual <= limit, "{name}: {actual} > {limit}");
         println!("DIRTY_TYPE {name} {actual} {limit}");
@@ -1532,12 +1532,12 @@ fn type_ceilings() {
     ceiling!(
         "bound",
         BoundAllocation<'_, '_, '_, '_, '_, '_, '_, port::Writer>,
-        24560
+        25136
     );
     ceiling!(
         "bound_result",
         super::super::Result<BoundAllocation<'_, '_, '_, '_, '_, '_, '_, port::Writer>>,
-        24576
+        25152
     );
     ceiling!("storage", MutableStorageOwner<'_, '_, port::Writer>, 32768);
     assert_eq!(OPERATION_BYTES, 98304);
@@ -1550,9 +1550,14 @@ fn type_ceilings() {
     assert!(deep <= 65536);
     let generic = 4 * 192 + 4 * 112 + 2 * 96 + 6 * 32 + 2 * 32 + 4 * 32 + 32 * 8;
     assert_eq!(generic, 2048);
-    let active = 60672 + 34 * 2048;
-    let cold = 60672 + 90112;
-    assert_eq!((active, cold), (130304, 150784));
+    let pool_delta = dirty_frame::init_pool_delta_bytes();
+    let control_delta = base_delta();
+    let retained = 60672 + pool_delta + control_delta;
+    let active = retained + 34 * 2048;
+    let cold =
+        retained + 90112 + (5 * pool_delta + 2048).max(3 * pool_delta + 8 * control_delta + 2048);
+    assert_eq!((active, cold), super::super::shared_dirty_peaks());
+    assert!(pool_delta <= 512 && control_delta <= 64);
     assert!(active <= 196608 && cold <= 196608);
     println!(
         "DIRTY_DEEP_SOURCE owner={owner} control={control} plans={} temporaries={} generic=2048 moved=2048 total={deep} limit=65536",
@@ -1560,7 +1565,7 @@ fn type_ceilings() {
         budget::TEMPORARIES
     );
     println!(
-        "DIRTY_SOURCE_LEDGER generic=2048 retained=60672 active=130304 cold=150784 control_limit=196608 constructor_limit=90112 physical_stack=NOT_MEASURED allocations=NOT_MEASURED"
+        "DIRTY_SOURCE_LEDGER generic=2048 retained={retained} active={active} cold={cold} control_limit=196608 constructor_limit=90112 physical_stack=NOT_MEASURED allocations=NOT_MEASURED"
     );
 }
 #[test]
@@ -1701,4 +1706,10 @@ fn dirty_da07_resource_cleanup() {
     case("DA07", 13);
     negative_oracle();
     complete("DA07", 13);
+}
+
+// Only the changed shared layout/budget boundary; old DA07 cases are not rerun.
+#[test]
+fn dirty_shared_resource_after_closed_init() {
+    type_ceilings();
 }

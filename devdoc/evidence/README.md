@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-22 [DEV3 폐쇄 두-frame Status INIT](dev3-status-init-20261022.md): 실제 reserve→두 RAM image 공개→동일 WAL requirement의 durable 확인과 두-pin reader를 연결했다. 필수93·shared1·compiler13·native3의 source별 결과와 원 FAIL을 보존한다. 제한 단위의 최종 독립 D1을 수용했으며 Status home flush·일반 recovery·전체 DEV3는 미완료다.
+
 2026-10-22 [DEV3 불변 Status bootstrap](dev3-status-bootstrap-20261022.md) · [실행 색인](dev3-status-bootstrap-20261022.json): 새 필수32·변경 parser1·native1·compiler semantic3/control1과 source별 checker를 검증했다. 제한 단위의 최종 독립 검토를 수용했으며 INIT·전체 DEV3는 미완료다.
 
 2026-10-22 [DEV3 allocator 한 페이지 flush](dev3-allocator-flush-20261022.md) · [source별 실행 색인](dev3-allocator-flush-20261022.json): 필수76의 source별 실행·native3의 bytes/FD·WAL30·compiler12·자원 전제를 검증했다. 원 FAIL·관측 불완전과 완료 prefix를 구분하며 제한 단위의 독립 검토를 수용했다. 전체 DEV3는 미완료다.

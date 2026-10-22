@@ -620,6 +620,15 @@ Actions의 DEV1→DEV0 정적 검사에서 `allocation_reservation_tests.rs`의 
 
 prepare12208/readback14788·Fresh role424/Mutable role792 bytes의 실제 typed census와 generic reader padding 초과의 effect 전 거절을 확인했다. component65536·caller scratch49152를 증액하지 않았으며 stack/RSS 측정은 아니다. 새 S5 추가65는 작성/NOT_RUN이다. 실제 INIT·membership·거래 directory·일반 recovery/READY·전체 DEV3 인수는 미완료다.
 
+<a id="status-init"></a>
+## 폐쇄 두-frame Status INIT
+
+[소유 계약](../contracts/dev3-status-init.md)의3.03.2.a는 실제 reserve의 exact 권한에서 allocator/Status 두 image를 같은 stage로 설치하고, 마지막 publication과 동일 requirement의 durable 확인 뒤 claim을 반환한다. whole pin/precheck·unwind fence·retained obligation을 유지하며 immutable 두-pin reader가 현재 membership과 Free cell을 검증한다.
+
+[선택 인수](../evidence/dev3-status-init-20261022.md)·[source별 색인](../evidence/dev3-status-init-20261022.json)은 필수93을 성공 그룹83·CF12 파생 감사2·CF06 완료 prefix7·수정08 exact1로 구분한다. shared 자원 selector1, compiler semantic13과 별도 baseline, 실제 native3/16효과/66,427,744bytes, checker unique8 및 변경 method4만의 후속 실행을 보존한다. 원 compile/runtime/compiler/checker FAIL은 유지하며 최종 fmt/engine Clippy PASS다. 제한 단위의 최종 독립 D1을 수용했다.
+
+실제 dirty hot191424/cold157408≤196608, reader3480≤3584, exclusive source join≤8192와 padded generic readback 거절을 확인했다. 원 예약을 증액하지 않았으며 stack/RSS 측정이 아니다. S5 추가116은 작성/NOT_RUN, 새 runtime union209다. Status home flush·실제 clean-before-INIT·writer/flusher 경쟁·일반 recovery/거래 directory/READY 및 전체 DEV3는 미완료다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 
@@ -630,10 +639,10 @@ prepare12208/readback14788·Fresh role424/Mutable role792 bytes의 실제 typed 
 | 분류 | 하부 작업 | 현재 상태와 남은 경계 |
 | --- | --- | --- |
 | 3.01 형식·정체성 | page/참조/key/행/tree/WAL/undo/status/control codec | 여러 표현·독립 byte·유한 모델 검증 완료. 실제 효과와 구분 |
-| 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기와 [불변 Status bootstrap 역할](#status-bootstrap)의 제한 구현 검증. 실제 INIT·일반 reopen은 별도 |
-| 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | [3.03.1 예약·취소 잔여 인수](#allocation-reservation-accepted): native13DB·compiler·WAL4·중첩 자원/64KiB 경로 검증과 독립 판정 연결. INIT·확장·free/reuse 미완료 |
-| 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | [실제 dirty stage 첫 소비자](#dirty-stage)와 [authentic WAL requirement/flush force](#allocator-flush), genesis·RollbackStart 생산·예약/취소 연결. 일반 opcode/CLR/commit 연결 미완료 |
-| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator1 dirty 기반](#dirty-stage)과 [한 페이지 flush·whole retirement](#allocator-flush) 제한 검증. INIT·일반 pool·batch8/64·다중 file·압력하 진행 미완료 |
+| 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기와 [불변 Status bootstrap 역할](#status-bootstrap)의 제한 구현 검증. 일반 reopen은 미완료 |
+| 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | [예약·취소](#allocation-reservation-accepted)와 [한 Status INIT](#status-init)의 제한 연결. Status home flush·일반 INIT·확장·free/reuse 미완료 |
+| 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | [dirty stage](#dirty-stage)·[authentic WAL requirement/flush force](#allocator-flush)·[Status INIT 두 image](#status-init), genesis·RollbackStart·예약/취소 연결. 일반 opcode/CLR/commit 연결 미완료 |
+| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)와 [폐쇄 두-frame INIT/reader](#status-init) 제한 검증. Status home flush·일반 pool·batch8/64·다중 file·압력하 진행 미완료 |
 | 3.06 트리·행 | mutable tree CRUD·split·root 변경·overflow·stable cursor·locator | 표현·부분 모델 존재. 실제 변경 경로 미완료 |
 | 3.07 인덱스 | point/range scan·presence·PK/UNIQUE·build/취소 | 표현·의미 계약 존재. 실제 인덱스와 statement-final unique 미완료 |
 | 3.08 카탈로그·DDL | table/index 정의·이름·객체 수명·create/drop | 표현 존재. native 원자 DDL과 catalog 변경 미완료 |
@@ -646,6 +655,6 @@ prepare12208/readback14788·Fresh role424/Mutable role792 bytes의 실제 typed 
 | 3.15 백업·무결성 | S3/fault 인수용 full audit·독립 이력, 이후 offline exact-cut backup/restore | 실제 DEV3 경로 미완료. audit 공급은 backup 완료를 기다리지 않음 |
 | 3.16 자원 종합·성능·최종 인수 | 항목별 자원 회계 종합·PF09·DS01–06·KU09/10·RC-T12–14 | opcode별 F05는 각 effect 전 선행. 이 항목은 증거 종합과 남은 인수이며 전체 DEV3 미완료 |
 
-기존 재개 우선 단위 [3.03.1 예약·취소](../plans/dev3-implementation-plan.md#allocation-remaining)는 위 인수 기록을 따른다. 3.10.1.a.1의 공통 admission/version gate는 위 기록을 따르며 dirty frame·typed stage/apply 첫 소비자는 위 기록을 따른다. allocator1 한 페이지 flush 공급을 마쳤으며 다음 실제 공급은 status owner의 영속 binding과 예약 payload INIT, 실제 추가 dirty target이다. [원본 부분 검토](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)의 remaining을 기준으로 하며, 완료된 무변경 runtime 사례는 반복하지 않는다. 각 새 쓰기 경로의 자원 계산·복구 의미·fault 입력은 그 경로 전에 정한다. free/reuse는 회수 가능성 판정을, 실제 행 변경은 undo/status 기반을 먼저 수신하되 서로 전체 분류 완료를 요구하지 않는다. 복구 전용 REBASE는 정상 fuzzy checkpoint와 별도이며 선행으로 공급한다. 계획 작성 당시의 미실행 상태와 이후 위 단위별 구현·실행 기록을 구분한다.
+기존 재개 우선 단위 [3.03.1 예약·취소](../plans/dev3-implementation-plan.md#allocation-remaining)는 위 인수 기록을 따른다. 3.10.1.a.1의 공통 admission/version gate는 위 기록을 따르며 dirty frame·typed stage/apply 첫 소비자는 위 기록을 따른다. allocator1 한 페이지 flush와 Status owner의 영속 binding·예약 payload INIT 공급을 마쳤으며 다음 실제 공급은 Status home flush와 두 target의 flush 순서·경합이다. [원본 부분 검토](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)의 remaining을 기준으로 하며, 완료된 무변경 runtime 사례는 반복하지 않는다. 각 새 쓰기 경로의 자원 계산·복구 의미·fault 입력은 그 경로 전에 정한다. free/reuse는 회수 가능성 판정을, 실제 행 변경은 undo/status 기반을 먼저 수신하되 서로 전체 분류 완료를 요구하지 않는다. 복구 전용 REBASE는 정상 fuzzy checkpoint와 별도이며 선행으로 공급한다. 계획 작성 당시의 미실행 상태와 이후 위 단위별 구현·실행 기록을 구분한다.
 
 예약·취소의 [native와 compiler 병렬 작업](../plans/dev3-implementation-plan.md#parallel-execution-plan)은 해당 인수 기록에 실제 담당·source·결과를 연결했다. 64KiB 분석·공통 수정·stage 검증은 총괄이 조정하고 독립 검토자를 별도로 둔다. 실제 담당/경로·기준 source·자원 profile을 고정하기 전에는 작업 배정이나 동시 실행 완료로 기록하지 않는다.

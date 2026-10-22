@@ -183,6 +183,7 @@ pub(super) fn typed_fits() -> bool {
         && std::mem::size_of::<Option<InstallObligation<'_>>>() <= 192
         && std::mem::size_of::<InstallPermit<'_, '_, '_>>() <= 384
         && std::mem::size_of::<Result<FrameStamp>>() <= 192
+        && base_delta() <= 64
 }
 
 pub(super) struct WriterControl<'s, 'o> {
@@ -193,8 +194,31 @@ pub(super) struct WriterControl<'s, 'o> {
     pub(super) work_high_water: u64,
     pub(super) terminal_pending: bool,
     pub(super) installation: Option<InstallObligation<'s>>,
+    budget: OperationBudget,
     #[cfg(test)]
     hook: Option<std::sync::Arc<test_support::Hook>>,
+}
+
+/// Layout only: no second control value is constructed or kept alive.
+/// Preserve the exact pre-Status fields (including the diagnostic-only hook)
+/// so both plan1 and plan2 account for the shared trusted-budget field growth.
+#[allow(dead_code)]
+struct BaselineWriterControl<'s, 'o> {
+    operation: &'o mut [u8; OPERATION_BYTES],
+    identity: PageIdentity,
+    descriptor: [u8; 1536],
+    batch: Option<Batch>,
+    work_high_water: u64,
+    terminal_pending: bool,
+    installation: Option<InstallObligation<'s>>,
+    #[cfg(test)]
+    hook: Option<std::sync::Arc<test_support::Hook>>,
+}
+pub(super) fn baseline_control_bytes() -> usize {
+    std::mem::size_of::<BaselineWriterControl<'_, '_>>()
+}
+pub(super) fn base_delta() -> usize {
+    std::mem::size_of::<WriterControl<'_, '_>>().saturating_sub(baseline_control_bytes())
 }
 impl<'s, 'o> WriterControl<'s, 'o> {
     pub(super) fn new(operation: &'o mut [u8; OPERATION_BYTES], identity: PageIdentity) -> Self {
@@ -206,6 +230,27 @@ impl<'s, 'o> WriterControl<'s, 'o> {
             work_high_water: 0,
             terminal_pending: false,
             installation: None,
+            budget: OperationBudget::Dirty98304,
+            #[cfg(test)]
+            hook: None,
+        }
+    }
+
+    /// Only the plan2 bound wraps this control with the remaining16KiB image.
+    /// The ordinary writer is never exposed by that bound after INIT.
+    pub(super) fn new_status(
+        operation: &'o mut [u8; OPERATION_BYTES],
+        identity: PageIdentity,
+    ) -> Self {
+        Self {
+            operation,
+            identity,
+            descriptor: [0; 1536],
+            batch: None,
+            work_high_water: 0,
+            terminal_pending: false,
+            installation: None,
+            budget: OperationBudget::StatusInit114688,
             #[cfg(test)]
             hook: None,
         }
@@ -254,7 +299,7 @@ impl<'s, 'o> WriterControl<'s, 'o> {
             batch,
             &self.descriptor,
             self.work_high_water,
-            OperationBudget::Dirty98304,
+            self.budget,
         )
         .map_err(Cause::Semantic)?;
         let retained = prefix
@@ -263,7 +308,7 @@ impl<'s, 'o> WriterControl<'s, 'o> {
             .ok_or(Cause::Invariant)?;
         let (terminal, tokens) = match batch {
             Some(batch) => (
-                operation::frame_length(batch.count()) as u64,
+                self.budget.terminal_wal(batch.count()),
                 batch.count() as u64 * PAGE_BYTES as u64,
             ),
             None => (0, 0),
@@ -300,7 +345,7 @@ impl<'s, 'o> WriterControl<'s, 'o> {
         stamp: &FrameStamp,
         count: Option<usize>,
     ) -> Result<Batch> {
-        if count.is_some_and(|n| !(1..=63).contains(&n)) {
+        if count.is_some_and(|n| !self.budget.accepts_count(n)) {
             return Err(reject(Cause::InvalidInput));
         }
         if count.is_some() && self.batch.is_some() {
@@ -379,9 +424,16 @@ impl<'s, 'o> WriterControl<'s, 'o> {
             .modification_counter
             .checked_add(steps)
             .ok_or_else(|| reject(Cause::CounterExhausted))?;
+        let additional_wal = if count.is_some() {
+            (operation::frame_length(batch.count()) as u64)
+                .checked_add(self.budget.terminal_wal(batch.count()))
+                .ok_or_else(|| reject(Cause::Capacity))?
+        } else {
+            operation::frame_length(batch.count()) as u64
+        };
         let future = prefix
             .complete_offset
-            .checked_add(operation::frame_length(batch.count()) as u64 * steps)
+            .checked_add(additional_wal)
             .filter(|end| *end <= crate::storage::wal_io::WAL_FILE_CAP)
             .ok_or_else(|| reject(Cause::Capacity))?;
         super::super::PROTECTED_BYTES
@@ -536,21 +588,16 @@ impl<'s, 'c, W: WriterNamespace> AllocationWriter<'_, 's, 'c, '_, '_, '_, '_, '_
         let (before, after) = rest.split_at_mut(PAGE_BYTES);
         let before: &[u8; PAGE_BYTES] = (&*before).try_into().expect("fixed before image");
         let after: &mut [u8; PAGE_BYTES] = after.try_into().expect("fixed after image");
-        let prepared = operation::prepare_with_budget(
-            plan,
-            before,
-            frame_work,
-            after,
-            OperationBudget::Dirty98304,
-        )
-        .map_err(|e| {
-            storage.session_fence().fence();
-            error(
-                Phase::Prepare,
-                Effect::CallerMustResolve,
-                Cause::Semantic(e),
-            )
-        })?;
+        let prepared =
+            operation::prepare_with_budget(plan, before, frame_work, after, control.budget)
+                .map_err(|e| {
+                    storage.session_fence().fence();
+                    error(
+                        Phase::Prepare,
+                        Effect::CallerMustResolve,
+                        Cause::Semantic(e),
+                    )
+                })?;
         let after_descriptor = prepared.descriptor_bytes();
         let mut write = self
             .pool

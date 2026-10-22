@@ -14,6 +14,7 @@ fn fixture(budget: OperationBudget, part: &str) -> Vec<u8> {
         OperationBudget::Dirty98304 => {
             std::fs::read(format!("{DIRTY_INPUT}/p1-n1-{part}")).unwrap()
         }
+        OperationBudget::StatusInit114688 => unreachable!("separate INIT input"),
     }
 }
 
@@ -59,6 +60,7 @@ fn allocation_resource_profiles_exact_context() {
             let opposite = match budget {
                 OperationBudget::Exclusive81920 => OperationBudget::Dirty98304,
                 OperationBudget::Dirty98304 => OperationBudget::Exclusive81920,
+                OperationBudget::StatusInit114688 => unreachable!("separate INIT input"),
             };
             let mut output = boxed::<FRAME_WORK_BYTES>();
             let mut after = boxed::<PAGE_BYTES>();
@@ -78,6 +80,7 @@ fn allocation_resource_profiles_exact_context() {
                     )
                     .unwrap();
                 }
+                OperationBudget::StatusInit114688 => unreachable!("separate INIT input"),
             }
             let reserve_frame = fixture(budget, "reserve.frame");
             let reserve_page = page_fixture(budget, "reserve.page");
@@ -170,6 +173,7 @@ fn allocation_resource_profiles_exact_context() {
                     )
                     .unwrap();
                 }
+                OperationBudget::StatusInit114688 => unreachable!("separate INIT input"),
             }
             let cancel_frame = fixture(budget, "cancel.frame");
             let cancel_page = page_fixture(budget, "cancel.page");

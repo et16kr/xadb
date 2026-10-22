@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV3 폐쇄 두-frame Status INIT](dev3-status-init.md): 실제 reserve 권한·두 image RAM 공개·동일 WAL requirement·두-pin reader·자원 한도.
+
 - [DEV3 불변 Status bootstrap](dev3-status-bootstrap.md): plan2 영속 역할·typed borrowed role·old allocator 경계·효과 전 자원 거절.
 
 - [DEV3 allocator 한 페이지 flush](dev3-allocator-flush.md): sealed capture·WAL force·DWB/home·whole retirement·조건부 RAM finalize의 제한 소유 계약.

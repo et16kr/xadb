@@ -1,0 +1,467 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-22",
+  "unit": "D3-STATUS-INIT-001",
+  "status": "ACCEPT_SCOPED_UNIT",
+  "base_commit": "38132353659935ab581f16521716e301e255a23e",
+  "contract_ref": "dev3-status-init.md",
+  "full_stage_acceptance": false,
+  "scope": "one closed Status target, actual reserve/INIT two-image RAM publication, same requirement durability and immutable two-pin read; no Status home flush/recovery/transaction issuance",
+  "source_policy": "source-specific results and original failures retained; no unchanged completed product cases repeated",
+  "source_snapshots": [
+    {
+      "path": "artifacts/dev3/resume-20261022/status-init-build-r0/result.json",
+      "sha256": "77d3627f5479cb8a9699cd610d410ada849a323164dfd2f64068510df3d4cbd0",
+      "bytes": 419,
+      "status": "FAIL",
+      "source_sha256": "5dcb72a0d3d6b0794805d1205d8a533511a98d5dd291336c3819b8d0450ec854",
+      "scope": "compilation only; no test cases executed"
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-init-build-r1/result.json",
+      "sha256": "6094b6b7ae15a7573e1d6a0d27633df707b2daa59daa39473b53e168d34856fa",
+      "bytes": 518,
+      "status": "FAIL",
+      "source_sha256": "6a6a3bc78544f0c3fa86ff14628b72f143a00087b0f852909ae082d63b830ead",
+      "scope": "compilation only; no test cases executed"
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-init-build-r2/result.json",
+      "sha256": "67309260568b369d6ee9b111dcdc4708fabe434847b6347e5f4f997ede7cb220",
+      "bytes": 702,
+      "status": "PASS",
+      "source_sha256": "e04e520a1de52d7b70238847fb8d08aee965928091202bb77f6e9ccfcb5c6230",
+      "scope": "compilation only; no test cases executed",
+      "binary_sha256": "59ebde61f7e92306fa4843ec9d34d37edc9ccea81f4378483f461bea654121c1"
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-init-build-r3/result.json",
+      "sha256": "d77e97d40091a87bc035adc16dc847824e4730b84e5c62eacf579b78a4092b34",
+      "bytes": 703,
+      "status": "PASS",
+      "source_sha256": "ef0ee34a5b6141d63ab34fd7c0c246b9658777b912f6c30e1d190b1fc31cfd8e",
+      "scope": "compilation only; no test cases executed",
+      "binary_sha256": "876302ad06af30091748eba05c6057dbde514d9f338dd1ee6fdb336984236365"
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-init-build-r4/result.json",
+      "sha256": "98f121ea5187c30c0a471d9e74e4ad963869511d05879b53b15065148df711c0",
+      "bytes": 703,
+      "status": "PASS",
+      "source_sha256": "f32ee47e4ba168892e0ab0cb9816b61f22aab34395c20b7f08ff7417c8aefdbb",
+      "scope": "compilation only; no test cases executed",
+      "binary_sha256": "064b54aa44f74149b3dedd325578bf9e540f110a2b1d78f5351016cd98b2083f"
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-init-build-r5/result.json",
+      "sha256": "a91878b59fea8e7a2888f86d8c86004f8ebdeb7671a73449f0771f51811d824c",
+      "bytes": 703,
+      "status": "PASS",
+      "source_sha256": "c01a18ca662796bccd1f523b11473cf2b2a6a230a2dd359d5878148d1f0cb8df",
+      "scope": "compilation only; no test cases executed",
+      "binary_sha256": "ba4472dfed7fbe63e8d211f6477b716de66d92930955b9e922c466575d197e0e"
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-init-build-r6/result.json",
+      "sha256": "2bd21f5dc364d787292ec7b03afeabafd854eacab0a935fe8ff1e010a4dd9668",
+      "bytes": 518,
+      "status": "FAIL",
+      "source_sha256": "8f7e371d70bb4e3d80a22126d50c5f58cbe03b8172ee1351036268b3bc617c11",
+      "scope": "compilation only; no test cases executed"
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-init-build-r7/result.json",
+      "sha256": "0072b7cddb7b628e111faea21a326a066a7a1c4b05bdcce48862696de727c272",
+      "bytes": 704,
+      "status": "PASS",
+      "source_sha256": "c1f3365a46fc5f9741bc2e07397561f6ac5c529b9d85712a1f7d0e6d9b38da22",
+      "scope": "compilation only; no test cases executed",
+      "binary_sha256": "37bf34dbdaac8abb844ccf8ceccccb6468f13a4d1f68ba2e955d6ffe9f5f13ec"
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-init-build-r8/result.json",
+      "sha256": "2ef2be0f9c5328d4911f3d53a083074fcd61e0708f1df9ed367b9928f855c260",
+      "bytes": 703,
+      "status": "PASS",
+      "source_sha256": "f6fc84cd6586f7014a9942cde6e68fb4be3ab7e965f0e144be898adef40804c6",
+      "scope": "compilation only; no test cases executed",
+      "binary_sha256": "8aff07d5d76df18da9b60b25c64b46d6b3521fd1a1ec99422ecddc96343085b0"
+    }
+  ],
+  "execution": {
+    "mandatory": {
+      "unique_cases": 93,
+      "new_runtime_cases": 93,
+      "case_basis": {
+        "whole_success_groups": 83,
+        "derived_cf12_two_cases_from_completed_libtest": 2,
+        "derived_cf06_01_through_07_completed_prefix": 7,
+        "corrected_cf06_08_exact_run": 1
+      },
+      "raw_receipts": [
+        {
+          "path": "artifacts/dev3/resume-20261022/status-init-resources-r0/result.json",
+          "sha256": "a38b36e2e24adcfff014935e97d0e9a00867c78123a79f944d4fe38290c153e5",
+          "bytes": 10573
+        },
+        {
+          "path": "artifacts/dev3/resume-20261022/status-init-mandatory-r0/result.json",
+          "sha256": "25b6ecc3a0d0b1d16a75a886a0aa652437a079751c29b25db92b111477116fd2",
+          "bytes": 13269
+        },
+        {
+          "path": "artifacts/dev3/resume-20261022/status-init-mandatory-r1/result.json",
+          "sha256": "dd530b72cf24931545badc495d6d4ae9965619c6f8dd8ef8552a3571ace55138",
+          "bytes": 12863
+        },
+        {
+          "path": "artifacts/dev3/resume-20261022/status-init-mandatory-r2/result.json",
+          "sha256": "cd0ef55fe20aa7dc4c0dfffa8a56e18a066e7a011a163622fc465e2f06db485e",
+          "bytes": 52334
+        },
+        {
+          "path": "artifacts/dev3/resume-20261022/status-init-mandatory-r3/result.json",
+          "sha256": "870f06d0c62cd29485c0ed5ed936c62228ab039529a6119370c19666d602a776",
+          "bytes": 5597
+        },
+        {
+          "path": "artifacts/dev3/resume-20261022/status-init-mandatory-r4/result.json",
+          "sha256": "59630a908eb5e819b57cd3788a1e7db44fd981b629f43c17c4bee7e6cccb81c4",
+          "bytes": 5460
+        }
+      ],
+      "derived_read_only_audit": {
+        "path": "artifacts/dev3/resume-20261022/status-init-runtime-read-audit-r1.json",
+        "sha256": "353ffb2ecf8062c357b1e439da3605a41e92ec92a6adb3da05fa68b358e2dc32",
+        "bytes": 50697
+      },
+      "elapsed_seconds_including_original_failures": 15.466826012998354,
+      "aggregate_limit_seconds": 120,
+      "changed_shared_resource_selectors": 1,
+      "shared_receipt": {
+        "path": "artifacts/dev3/resume-20261022/status-init-mandatory-r2/result.json",
+        "sha256": "cd0ef55fe20aa7dc4c0dfffa8a56e18a066e7a011a163622fc465e2f06db485e",
+        "bytes": 52334
+      },
+      "derived_cf06_prefix_and_repair_audit": {
+        "path": "artifacts/dev3/resume-20261022/review/closed-init-cf06-read-audit-r2.json",
+        "sha256": "932573430f4af1bdf1b6f6b9e9a86fe49a5b37f9fad5a6ed96da38c908bbf2b1",
+        "bytes": 2455
+      }
+    },
+    "compiler": {
+      "semantic_unique_pass": 13,
+      "infrastructure_baseline_identity_count": 1,
+      "actual_compiler_invocations": 16,
+      "baseline_actual_invocations": 2,
+      "elapsed_seconds_including_original_failure": 23.8236890900007,
+      "aggregate_limit_seconds": 60,
+      "receipts": [
+        {
+          "path": "artifacts/dev3/resume-20261022/status-init-compiler-r0.json",
+          "sha256": "d26669079231665f03d529404a4754f5e3e2eb57b969e7f7e02b090c90df753a",
+          "bytes": 47749
+        },
+        {
+          "path": "artifacts/dev3/resume-20261022/status-init-compiler-r1.json",
+          "sha256": "b99ba324ffb784d613d30962e7b434551ecd6127b10b5dcc36e92ed69e59b42a",
+          "bytes": 104483
+        }
+      ],
+      "original_failure": "IC03 raw constructor rejected with intended E0451 plus unrelated private Batch diagnostic; injection moved inside allowed producer child without product visibility change; only failed/unrun IC03-12 selected next"
+    },
+    "native": {
+      "profiles": 3,
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/status-init-native-r0/result.json",
+        "sha256": "8ad976ea3de5ce8150c5011c83990915c56e14ff3d1bf949a14867c8aa981068",
+        "bytes": 19989
+      },
+      "seconds": 3.498078559001442,
+      "total_bytes": 66427744,
+      "mutation_effects": 16,
+      "observations": [
+        {
+          "profile": 1,
+          "bytes": 22128448,
+          "effects": 4,
+          "resources": {
+            "wrapped_peak": 1,
+            "wrapped_final": 0,
+            "observed_fd_peak": 3,
+            "observed_fd_final": 0
+          }
+        },
+        {
+          "profile": 2,
+          "bytes": 22128448,
+          "effects": 4,
+          "resources": {
+            "wrapped_peak": 1,
+            "wrapped_final": 0,
+            "observed_fd_peak": 3,
+            "observed_fd_final": 0
+          }
+        },
+        {
+          "profile": 3,
+          "bytes": 22170848,
+          "effects": 8,
+          "resources": {
+            "wrapped_peak": 1,
+            "wrapped_final": 0,
+            "observed_fd_peak": 3,
+            "observed_fd_final": 0
+          }
+        }
+      ],
+      "scope": "actual Linux namespace; full database bytes/inodes, exact WAL/descriptor/RAM and unchanged DWB/home; FD boundary samples, not physical peak; no reopen/flush credit"
+    },
+    "checkers": {
+      "unique_methods": 8,
+      "original_compiler_four": {
+        "path": "artifacts/dev3/resume-20261022/status-init-compiler-checker-r0/result.json",
+        "sha256": "123aa418750bac7ffac597bcf2affccce3a2e7bab67576cffc8873f9109061f2",
+        "bytes": 778
+      },
+      "original_runtime_four": {
+        "path": "artifacts/dev3/resume-20261022/status-init-runtime-checker-r0/result.json",
+        "sha256": "2960223f51ce2c074e0ce87262fcbca0e733f9f6fe9c6fdc23e8c0e9bfb1f4ac",
+        "bytes": 762
+      },
+      "changed_method_only_reruns": {
+        "compiler": 1,
+        "runtime": 3,
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/status-init-checker-delta-r1/result.json",
+          "sha256": "a5d050b5c193da5b79fcdedcdb44bcd5ab5ab0a9212b5f6895997a2ad1b850af",
+          "bytes": 1298
+        }
+      },
+      "unchanged_methods_not_repeated": true
+    },
+    "quality": {
+      "final": {
+        "path": "artifacts/dev3/resume-20261022/status-init-quality-r1/result.json",
+        "sha256": "ba159c410b784d0f30fead1e7a36d7d82dd90e0f43f9096aae760dff77939ada",
+        "bytes": 1036
+      },
+      "original_failure": {
+        "path": "artifacts/dev3/resume-20261022/status-init-quality-r0/result.json",
+        "sha256": "a296af17593315f0c0cee95dc2fd11d7d7e971688fcc4e124cbfa6f56a1b835a",
+        "bytes": 960
+      },
+      "final_source_sha256": "7e95ec6876990b6a4349713b5876c26a01fe27d5ee29070db735063df974869a",
+      "scope": "engine fmt/Clippy all-targets/all-features static only; no document verification",
+      "post_runtime_change": "equivalent let-chain, explicit type and unused re-export cleanup, narrow bounded-inline-result lint reasons; CF06-08 final oracle removes redundant diagnostic pre-assert, same postcondition retained"
+    }
+  },
+  "expanded": {
+    "status": "S5_NOT_RUN",
+    "mandatory_aliases": 93,
+    "additional_cases": 116,
+    "new_runtime_union_cases": 209,
+    "additional": {
+      "authority": 18,
+      "install_schedules": 18,
+      "retry_histories": 16,
+      "wire": 48,
+      "materializer": 16
+    },
+    "retry_aliases": [
+      "SR-P3-C1-INIT",
+      "SR-P3-C1-CANCEL"
+    ],
+    "native_compiler_shared_separate": true
+  },
+  "inputs": {
+    "literals": {
+      "path": "tests/fixtures/dev3-status-init/manifest.json",
+      "sha256": "4e294715665bad4cac6cd2ce94de46a9a7c6f5797caf726bf76f5bc0a4c4ca90",
+      "bytes": 177137
+    },
+    "literal_count": 858,
+    "histories": 24,
+    "generator": {
+      "path": "scripts/dev3_status_init_literals.py",
+      "sha256": "aa11d72231c0703ef1981ca9f44598a2c24928224186befa591f7717ac9c578b",
+      "bytes": 13700
+    },
+    "runtime": {
+      "path": "crates/engine/tests/fixtures/dev3-status-init/runtime/manifest.json",
+      "sha256": "04a59a300db989ede8eb5ca0ef8c64f3150792530347bea750732a851a2a36f0",
+      "bytes": 2514
+    },
+    "compiler": {
+      "path": "crates/engine/tests/fixtures/dev3-status-init/compiler/manifest.json",
+      "sha256": "d01dd5f092f01dad9a11acefeea59809b570f0212541e8f992097858e05b15ae",
+      "bytes": 7449
+    }
+  },
+  "resource": {
+    "kind": "logical source-value bounds and actual Rust type layout; not ABI-stack/RSS",
+    "actual": {
+      "pool_delta": 352,
+      "base_delta": 0,
+      "control_delta": 352,
+      "plans": 2656,
+      "temporaries": 14560,
+      "status_codec": 7336,
+      "reader": 3480,
+      "obligation": 328,
+      "permit": 216,
+      "upper_caller": 576,
+      "final_observation_join": 608,
+      "permit_commit_join": 456,
+      "reservation": 112,
+      "attempt_error": 184,
+      "bound": 18976,
+      "dirty_hot": 191424,
+      "dirty_cold": 157408
+    },
+    "padded_readback_totals": [
+      65860,
+      72036
+    ],
+    "deep_cap": 65536,
+    "initializer_exclusive_cap": 8192,
+    "protected_limit_branch": "NOT_APPLICABLE; maximum289488896 below1073741824; actual trusted descriptor/arithmetic checked",
+    "ledgers": [
+      {
+        "path": "artifacts/dev3/resume-20261022/closed-init-resource-addendum-r3.md",
+        "sha256": "b7104039cbb77dda080affcdbf0964ce97092d5fa69d5abfd34b277d86365f17",
+        "bytes": 37825
+      },
+      {
+        "path": "artifacts/dev3/resume-20261022/closed-init-reader-caller-addendum-r2.md",
+        "sha256": "71021f3ebf30a71845ccd01aa5699c2528a857f3bd278e11047c8772ce767d14",
+        "bytes": 1681
+      },
+      {
+        "path": "artifacts/dev3/resume-20261022/closed-init-native-source-ledger-r0.md",
+        "sha256": "43ee6f8d08ff404f943ee6f97640f867fc24da5439fa449b119f2587eeccffb2",
+        "bytes": 7147
+      },
+      {
+        "path": "artifacts/dev3/resume-20261022/closed-init-upper-source-ledger-r0.md",
+        "sha256": "d0fee84379412a94652972180245171be10e1b4e6e7124abadff5fc617246161",
+        "bytes": 4797
+      },
+      {
+        "path": "artifacts/dev3/resume-20261022/closed-init-cf17-layout-correction-r1.md",
+        "sha256": "482b7c6f427dbbee459df8b7f0725ec9d2f656e3e3109dee1fb0bc5ef09b2359",
+        "bytes": 1162
+      },
+      {
+        "path": "artifacts/dev3/resume-20261022/closed-init-cf17-layout-correction-r2.md",
+        "sha256": "d7e6a63fa138c1c8730b1da2e721584696c13e552a0cc1e0cc2d4a23cb6182a1",
+        "bytes": 624
+      }
+    ]
+  },
+  "original_failures_preserved": [
+    "compile r0:8 borrow errors",
+    "compile r1:9 source/test type/borrow errors",
+    "compile r6:2 test u64/PageLsn type errors",
+    "compiler r0:IC03 extra private Batch diagnostic",
+    "runtime r0:CF06-01 checked post-cancel effects as if before cancel",
+    "runtime r1:CF12 checker incorrectly expected sixth named variant; actual C6 belongs to CF12-01",
+    "runtime r3:CF06-08 test compared pre-injection pool-wide publication in allocator diagnostic",
+    "quality r0:collapsible-if and bounded inline result lint"
+  ],
+  "reviews": [
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-combined-d2-review-r2.md",
+      "sha256": "e1949b0448ac7211f26f9f9e4210fb60a07d63d2beb33fca5006497ce64afc69",
+      "bytes": 8320
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-d2-bridge-addendum-r0.md",
+      "sha256": "807fa01ad0fc2b5f05003317fcb0fb5857ef3540012c9b9b1106147060d72436",
+      "bytes": 3463
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-wire-input-read-review-r0.md",
+      "sha256": "95a4d857178bfbf487f1a1b9948e1d98d4e319fa4e0870c96cd9b654390d0e16",
+      "bytes": 4890
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-init-upper-source-review-r0.md",
+      "sha256": "0514b0258d272f4e9610ebeed02db13de62abd1c97c69e73a148eee4633d4339",
+      "bytes": 5226
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-native-source-review-r0.md",
+      "sha256": "c5c9a83ab812da3c55312b2014f863ea4e0059b3388af516e0aad04ec38f5608",
+      "bytes": 6840
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-producer-wire-review-r0.md",
+      "sha256": "7cd75f2592d3cc421a22fee83698ab7bf6f1e756961d4fe3927fdf36a16ba7aa",
+      "bytes": 4990
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-reader-caller-review-r1.md",
+      "sha256": "6a6f483aacd2ff16bc22d42a31b7e304ab80a41e653339daf37038022cab407e",
+      "bytes": 2819
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-protocol-preexecution-review-r0.md",
+      "sha256": "9f59f1ea31423e31cd39c60b24cdd756a5ad1b842b9bf266d4a4f48770daa30b",
+      "bytes": 3577
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-protocol-input-addendum-r1.md",
+      "sha256": "2c5c7a66e5ec5ff91a95adb1d7e58349037785dc8d926abca71ec7df7e9983f3",
+      "bytes": 1914
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-compiler-preexecution-review-r0.md",
+      "sha256": "f3789fb6f2ed90410e875e0fbfff2421b998b33bd193e37738dbd64c014e0d87",
+      "bytes": 2408
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-native-ledger-review-r1.md",
+      "sha256": "262d6dd4da77e517e54cb6f096bea4de44f42af0709ee660c89f10e895b6c758",
+      "bytes": 3016
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-upper-native-join-review-r1.md",
+      "sha256": "465ef16a883ad4c942a2d4d61951e7fb49407c295d8ac8bc049c24806133fa26",
+      "bytes": 4631
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-compiler-ic03-read-addendum-r1.md",
+      "sha256": "5eeaaccce069c4e43d63674c90ca9493c2dcd04e5719fa7ee5cca3a91b1de5f6",
+      "bytes": 1170
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-runtime-native-input-review-r1.md",
+      "sha256": "4ec2147a8b0d1c7d9f5f8b391a7dd518e1edc8ca8f95ddd72906a3075f36d3de",
+      "bytes": 3051
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/closed-init-cf17-inventory-clarification-r0.md",
+      "sha256": "bad3b4c0362c2c7f678031983a48ea4e1030f4c0ff927c5fce98abe3bbd74bfd",
+      "bytes": 4853
+    }
+  ],
+  "pending": [
+    "Status home flush and immutable payload target policy, real clean-before-INIT, flusher competition",
+    "generic batch8/64/multiple files",
+    "transaction directory/issuance and general tree/undo",
+    "ordinary recovery/READY and current-build recovery acceptance",
+    "full DEV3 S5 inventory"
+  ],
+  "document_verifier": "NOT_RUN; pre-push only; no push requested",
+  "final_independent_review": {
+    "path": "artifacts/dev3/resume-20261022/review/closed-init-final-d1-review-r0.md",
+    "sha256": "4b643f26af5e55a2f00515aa0a9ec3e67954b8f0968d3f6e8fcc99cc95215015",
+    "bytes": 6532
+  },
+  "final_source_join_audit": {
+    "path": "artifacts/dev3/resume-20261022/review/closed-init-final-source-join-audit-r0.json",
+    "sha256": "3703976f7347c02f7f1027017dff2a9b3bf95a93fa0bc59baf2ac58167363a16",
+    "bytes": 9140
+  }
+}

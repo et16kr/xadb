@@ -31,6 +31,18 @@ pub(in crate::storage) use dirty_allocation::InstallPermit as DirtyInstallPermit
 pub(crate) use dirty_allocation::{AllocationWriter, DirtyAllocationError};
 use dirty_allocation::{OPERATION_BYTES, WriterControl};
 
+#[path = "status_init.rs"]
+mod status_init;
+#[path = "status_init_operation.rs"]
+mod status_init_operation;
+pub(crate) use status_init::{
+    BeforeEffectError, BoundStatusBootstrap, InitAttemptError, InitializedStatusObservation,
+    ReservedStatus, StatusBootstrapWriter, StatusInitError, StatusReadGuard, StatusReader,
+};
+pub(in crate::storage) use status_init::{
+    CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
+};
+
 #[path = "allocator_flush.rs"]
 mod allocator_flush;
 #[path = "flush_io.rs"]
@@ -402,15 +414,18 @@ fn fits<W: WriterNamespace>() -> bool {
     let control = size_of::<WriterControl<'_, '_>>();
     let reader = size_of::<PageFileReader<'_, W>>();
     let file = size_of::<W::File>();
+    let (hot, cold) = shared_dirty_peaks();
     owner <= 32768
+        && hot <= 196608
+        && cold <= 196608
         && control <= 4096
         && file <= 16384
         && dirty_frame::fits()
         && dirty_allocation::typed_fits()
         && wal::durability_types_fit()
         && allocator_flush::fits::<W>()
-        && size_of::<BoundAllocation<'_, '_, '_, '_, '_, '_, '_, W>>() <= 24560
-        && size_of::<Result<BoundAllocation<'_, '_, '_, '_, '_, '_, '_, W>>>() <= 24576
+        && size_of::<BoundAllocation<'_, '_, '_, '_, '_, '_, '_, W>>() <= 25136
+        && size_of::<Result<BoundAllocation<'_, '_, '_, '_, '_, '_, '_, W>>>() <= 25152
         && budget::COMMON <= 7168
         && budget::HASH <= 2048
         && budget::TEMPORARIES <= 16384
@@ -429,6 +444,18 @@ fn fits<W: WriterNamespace>() -> bool {
             + 2048
             + wal::DURABILITY_CALL_BYTES
             <= 65536
+}
+
+/// New shared pool and trusted-budget fields also live in allocator-only bounds.
+/// Their source-value constructor copies stay in the original dirty reservation.
+pub(super) fn shared_dirty_peaks() -> (usize, usize) {
+    let pool = dirty_frame::init_pool_delta_bytes();
+    let control = dirty_allocation::base_delta();
+    let retained = 60672 + pool + control;
+    (
+        retained + 34 * 2048,
+        retained + 90112 + (5 * pool + 2048).max(3 * pool + 8 * control + 2048),
+    )
 }
 
 /// Read-only diagnostic for a failed pre-effect resource admission. This does

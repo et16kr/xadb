@@ -46,6 +46,14 @@ pub(crate) use doublewrite_install::{
     AllocationWriter, AllocatorFlushError, AllocatorFlusher, BoundAllocation, DirtyAllocationError,
     DirtyReader, FlushProgress, MutableStorageError, MutableStorageOwner,
 };
+#[allow(unused_imports)]
+pub(crate) use doublewrite_install::{
+    BeforeEffectError, BoundStatusBootstrap, InitAttemptError, InitializedStatusObservation,
+    ReservedStatus, StatusBootstrapWriter, StatusInitError, StatusReadGuard, StatusReader,
+};
+pub(in crate::storage) use doublewrite_install::{
+    CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
+};
 pub(in crate::storage) use doublewrite_install::{DirtyInstallPermit, FlushFinalizePermit};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -15,7 +15,7 @@ use std::{
     marker::PhantomData,
     rc::Rc,
     sync::{
-        Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockError,
+        Mutex, MutexGuard, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockError,
         atomic::AtomicU8,
     },
 };
@@ -24,6 +24,9 @@ use xadb_foundation::error::Effect;
 #[path = "dirty_flush.rs"]
 mod flush;
 pub(in crate::storage) use flush::{CapturedPage, FinalizedPage};
+#[path = "dirty_init.rs"]
+mod init;
+pub(in crate::storage) use init::{InitClaimKey, InitWriteTargets};
 
 pub(crate) const MAX_FRAMES: usize = 64;
 pub(crate) const MAX_TARGETS: usize = 2;
@@ -43,6 +46,7 @@ pub(crate) enum Cause {
     Busy,
     Stale,
     CounterExhausted,
+    AlreadyInitialized,
     Concurrency(concurrency::Cause),
 }
 
@@ -126,6 +130,12 @@ struct FrameContent<'d> {
     dirty: bool,
 }
 impl FrameContent<'_> {
+    fn fresh(&self) -> bool {
+        !self.dirty
+            && self.page_lsn.0 == 0
+            && self.modification_counter == 0
+            && self.rec_lsn.is_none()
+    }
     fn valid(&self) -> bool {
         if self.dirty {
             self.modification_counter != 0
@@ -168,7 +178,7 @@ impl<'d> DirtyFrame<'d> {
             .content
             .get_mut()
             .map_err(|_| unchanged(Cause::Poisoned))?;
-        if !content.valid() || content.dirty {
+        if !content.fresh() {
             return Err(unchanged(Cause::Invariant));
         }
         Ok(())
@@ -217,6 +227,7 @@ pub(crate) struct DirtyObservation {
 struct PinAccounting {
     counts: [u16; MAX_FRAMES],
     total: u16,
+    init_claim: Option<init::InitClaimSlot>,
 }
 
 // The receipt and DPT entry are installed/removed together under content→registry.
@@ -232,6 +243,8 @@ struct DirtyRegistry<'s> {
 pub(crate) struct SharedPool<'c, 's, 'p, 'd> {
     frames: &'p [DirtyFrame<'d>],
     directory: [Option<Registration>; MAX_FRAMES],
+    closed_index: Option<usize>,
+    publication: OnceLock<Registration>,
     pins: Mutex<PinAccounting>,
     dpt: Mutex<DirtyRegistry<'s>>,
     core: &'c PageConcurrency<'s>,
@@ -244,6 +257,8 @@ pub(crate) struct SharedPool<'c, 's, 'p, 'd> {
     release_pause: Mutex<Option<test_support::FencePause>>,
     #[cfg(test)]
     flush_pause: Mutex<Option<(test_support::FlushPoint, test_support::FencePause)>>,
+    #[cfg(test)]
+    init_pause: Mutex<Option<(init::test_support::InitPoint, test_support::FencePause)>>,
 }
 impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
     pub(in crate::storage) fn new(
@@ -287,9 +302,12 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         Ok(Self {
             frames,
             directory,
+            closed_index: None,
+            publication: OnceLock::new(),
             pins: Mutex::new(PinAccounting {
                 counts: [0; MAX_FRAMES],
                 total: 0,
+                init_claim: None,
             }),
             dpt: Mutex::new(DirtyRegistry {
                 entries: [None; MAX_FRAMES],
@@ -307,6 +325,8 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             release_pause: Mutex::new(None),
             #[cfg(test)]
             flush_pause: Mutex::new(None),
+            #[cfg(test)]
+            init_pause: Mutex::new(None),
         })
     }
 
@@ -334,9 +354,17 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         }
     }
     fn pins_valid(&self, pins: &PinAccounting) -> bool {
+        if !self.registrations_valid() || !self.init_pins_valid(pins) {
+            return false;
+        }
         let mut sum = 0u16;
         for (index, count) in pins.counts.iter().enumerate() {
-            if *count > MAX_FRAME_PINS || (self.directory[index].is_none() && *count != 0) {
+            let initialized = self.resolve_registration(index).is_some();
+            let initializer_pin = pins
+                .init_claim
+                .as_ref()
+                .is_some_and(|slot| slot.initializer_pins_held && self.closed_index == Some(index));
+            if *count > MAX_FRAME_PINS || (!initialized && *count != u16::from(initializer_pin)) {
                 return false;
             }
             let Some(next) = sum.checked_add(*count) else {
@@ -356,22 +384,24 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         Ok(pins)
     }
     fn dpt_valid(&self, dpt: &DirtyRegistry<'s>) -> bool {
-        dpt.claim
-            .as_ref()
-            .is_none_or(|claim| claim.valid(self, dpt.last_attempt))
+        self.registrations_valid()
+            && dpt
+                .claim
+                .as_ref()
+                .is_none_or(|claim| claim.valid(self, dpt.last_attempt))
             && dpt.entries.iter().enumerate().all(|(index, entry)| {
                 match (entry, dpt.requirements[index]) {
                     (None, None) => true,
-                    (Some(entry), Some(requirement)) => {
-                        self.directory[index].as_ref().is_some_and(|registration| {
+                    (Some(entry), Some(requirement)) => self
+                        .resolve_registration(index)
+                        .is_some_and(|registration| {
                             entry.identity == registration.request.identity
                                 && entry.generation == registration.generation
                                 && entry.rec_lsn.0 != 0
                                 && entry.modification_counter != 0
                                 && requirement.uses_fence(self.fence)
                                 && requirement.location().lsn >= entry.rec_lsn.0
-                        })
-                    }
+                        }),
                     _ => false,
                 }
             })
@@ -385,22 +415,28 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         }
         Ok(dpt)
     }
-    fn registration(&self, index: usize) -> Result<&Registration> {
-        let registration = self
-            .directory
-            .get(index)
-            .and_then(Option::as_ref)
-            .ok_or_else(|| self.fatal(Cause::Invariant))?;
-        if registration.generation != 1
-            || self
-                .frames
-                .get(index)
-                .and_then(|frame| frame.registration.as_ref())
-                != Some(registration)
-        {
-            return Err(self.fatal(Cause::Invariant));
+    /// Non-locking, validated resolution of the two immutable registration sources.
+    fn resolve_registration(&self, index: usize) -> Option<&Registration> {
+        let frame = self.frames.get(index)?;
+        let original = self.directory.get(index)?.as_ref();
+        if self.closed_index == Some(index) {
+            if original.is_some() || frame.registration.is_some() {
+                return None;
+            }
+            self.publication.get().filter(|value| value.generation == 1)
+        } else {
+            original
+                .filter(|value| value.generation == 1 && frame.registration.as_ref() == Some(value))
         }
-        Ok(registration)
+    }
+    fn registration(&self, index: usize) -> Result<&Registration> {
+        self.resolve_registration(index)
+            .ok_or_else(|| self.fatal(Cause::Invariant))
+    }
+    /// Immutable published lookup; this grants no pin or content authority.
+    pub(in crate::storage) fn target_request(&self, index: usize) -> Result<&TargetRequest> {
+        self.health()?;
+        Ok(&self.registration(index)?.request)
     }
     fn stamp(&self, index: usize, content: &FrameContent<'_>) -> Result<FrameStamp> {
         let registration = self.registration(index)?;
@@ -446,6 +482,9 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         if !owner.check_binding(self.core).map_err(DirtyError::from)? {
             return Err(unchanged(Cause::BindingMismatch));
         }
+        if !self.registrations_valid() {
+            return Err(self.fatal(Cause::Invariant));
+        }
         if requests.is_empty() || requests.len() > MAX_TARGETS {
             return Err(unchanged(Cause::Shape));
         }
@@ -454,12 +493,9 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         }
         let mut indices = [0; MAX_TARGETS];
         for (at, request) in requests.iter().enumerate() {
-            indices[at] = self
-                .directory
-                .iter()
-                .position(|entry| {
-                    entry
-                        .as_ref()
+            indices[at] = (0..self.frames.len())
+                .position(|index| {
+                    self.resolve_registration(index)
                         .is_some_and(|entry| entry.request == *request)
                 })
                 .ok_or_else(|| unchanged(Cause::MissingTarget))?;
@@ -643,6 +679,13 @@ pub(crate) struct ReadTargets<'a, 'b, 'c, 's, 'p, 'd> {
 impl ReadTargets<'_, '_, '_, '_, '_, '_> {
     fn len(&self) -> usize {
         self.pins.as_ref().map_or(0, |pins| pins.len)
+    }
+    pub(in crate::storage) fn target_request(&self, at: usize) -> Result<&TargetRequest> {
+        let pins = self.pins.as_ref().expect("live read targets");
+        if at >= pins.len {
+            return Err(unchanged(Cause::Shape));
+        }
+        pins.pool.target_request(pins.indices[at])
     }
     pub(crate) fn observe(&self, at: usize) -> Result<DirtyObservation> {
         let pins = self.pins.as_ref().expect("live read targets");
@@ -904,7 +947,7 @@ pub(in crate::storage) fn fits() -> bool {
     size_of::<DirtyFrame<'_>>() <= 256
         && size_of::<Option<Registration>>() <= 128
         && size_of::<Option<DirtyEntry>>() <= 128
-        && size_of::<PinAccounting>() <= 256
+        && size_of::<PinAccounting>() <= 512
         && size_of::<PinSet<'_, '_, '_, '_, '_>>() <= 64
         && size_of::<ReadTargets<'_, '_, '_, '_, '_, '_>>() <= 256
         && size_of::<WriteTargets<'_, '_, '_, '_, '_, '_>>() <= 256
@@ -925,7 +968,17 @@ pub(in crate::storage) fn fits() -> bool {
         && size_of::<Option<WalRequirement<'_>>>() <= 128
         && size_of::<DirtyRegistry<'_>>() <= 16384
         && flush::fits()
+        && init::fits()
 }
+
+pub(in crate::storage) fn init_pool_delta_bytes() -> usize {
+    init::pool_delta_bytes()
+}
+pub(in crate::storage) fn init_fits() -> bool {
+    fits()
+}
+#[cfg(test)]
+pub(in crate::storage) use init::test_support as init_test_support;
 
 /// Increment beyond the previously reserved entries-only DPT. Constructor
 /// accounting uses this actual target-layout delta, including alignment.
@@ -1049,8 +1102,8 @@ pub(crate) mod test_support {
         Panic,
     }
     pub(super) struct FencePause {
-        arrived: SyncSender<()>,
-        resume: Receiver<Resume>,
+        pub(super) arrived: SyncSender<()>,
+        pub(super) resume: Receiver<Resume>,
     }
     pub(crate) fn install_fence_pause(
         pool: &SharedPool<'_, '_, '_, '_>,
@@ -1135,7 +1188,7 @@ pub(crate) mod test_support {
             .content
             .read()
             .unwrap_or_else(|error| error.into_inner());
-        let registration = pool.frames[index].registration.unwrap();
+        let registration = *pool.resolve_registration(index).unwrap();
         output.copy_from_slice(content.bytes);
         let entry = pool
             .dpt

@@ -1,0 +1,5478 @@
+{
+  "status": "ADOPTED_INPUTS_PRODUCT_NOT_RUN",
+  "canonical_fixture": true,
+  "product_execution": false,
+  "checker_or_selftest_execution": false,
+  "generation_is_not_validation": true,
+  "generator_sha256": "aa11d72231c0703ef1981ca9f44598a2c24928224186befa591f7717ac9c578b",
+  "input_provenance": [
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-d3-profile.bin",
+      "bytes": 4096,
+      "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-d3-profile.bin",
+      "bytes": 4096,
+      "sha256": "e45db9f3b6d87837bc2d626f641034c7b647b711fe8c761990731eb5db16052f"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-d3-profile.bin",
+      "bytes": 4096,
+      "sha256": "e86fdb05e8a470f64fa351b9626cd667b45824d40ef0bbe376f9c1bfcc4765d0"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-allocation.bin",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-allocation.bin",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-allocation.bin",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    }
+  ],
+  "init_sections": [
+    [
+      "physical_header",
+      0,
+      160
+    ],
+    [
+      "group_header",
+      160,
+      352
+    ],
+    [
+      "descriptor",
+      352,
+      1888
+    ],
+    [
+      "core",
+      1888,
+      2144
+    ],
+    [
+      "allocator_native",
+      2144,
+      14688
+    ],
+    [
+      "status_native",
+      14688,
+      15040
+    ],
+    [
+      "consume",
+      15040,
+      15248
+    ],
+    [
+      "allocator_patch",
+      15248,
+      21520
+    ],
+    [
+      "status_init",
+      21520,
+      37968
+    ],
+    [
+      "frame_sha256",
+      37968,
+      38000
+    ]
+  ],
+  "scenarios": [
+    {
+      "profile": 1,
+      "cancellations": 0,
+      "terminal": "init",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "init",
+          "terminal_bytes": 38000,
+          "consumed_wal": 59200
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 1,
+      "cancellations": 0,
+      "terminal": "cancel",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 1,
+      "cancellations": 1,
+      "terminal": "init",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "init",
+          "terminal_bytes": 38000,
+          "consumed_wal": 59200
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 1,
+      "cancellations": 1,
+      "terminal": "cancel",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 1,
+      "cancellations": 2,
+      "terminal": "init",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 3,
+          "birth_lsn": 5,
+          "terminal_lsn": 6,
+          "page_incarnation": 4,
+          "slot_generation": 1,
+          "terminal": "init",
+          "terminal_bytes": 38000,
+          "consumed_wal": 59200
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 1,
+      "cancellations": 2,
+      "terminal": "cancel",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 3,
+          "birth_lsn": 5,
+          "terminal_lsn": 6,
+          "page_incarnation": 4,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 1,
+      "cancellations": 8,
+      "terminal": "init",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 3,
+          "birth_lsn": 5,
+          "terminal_lsn": 6,
+          "page_incarnation": 4,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 4,
+          "birth_lsn": 7,
+          "terminal_lsn": 8,
+          "page_incarnation": 5,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 5,
+          "birth_lsn": 9,
+          "terminal_lsn": 10,
+          "page_incarnation": 6,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 6,
+          "birth_lsn": 11,
+          "terminal_lsn": 12,
+          "page_incarnation": 7,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 7,
+          "birth_lsn": 13,
+          "terminal_lsn": 14,
+          "page_incarnation": 8,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 8,
+          "birth_lsn": 15,
+          "terminal_lsn": 16,
+          "page_incarnation": 9,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 9,
+          "birth_lsn": 17,
+          "terminal_lsn": 18,
+          "page_incarnation": 10,
+          "slot_generation": 1,
+          "terminal": "init",
+          "terminal_bytes": 38000,
+          "consumed_wal": 59200
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 1,
+      "cancellations": 8,
+      "terminal": "cancel",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 3,
+          "birth_lsn": 5,
+          "terminal_lsn": 6,
+          "page_incarnation": 4,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 4,
+          "birth_lsn": 7,
+          "terminal_lsn": 8,
+          "page_incarnation": 5,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 5,
+          "birth_lsn": 9,
+          "terminal_lsn": 10,
+          "page_incarnation": 6,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 6,
+          "birth_lsn": 11,
+          "terminal_lsn": 12,
+          "page_incarnation": 7,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 7,
+          "birth_lsn": 13,
+          "terminal_lsn": 14,
+          "page_incarnation": 8,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 8,
+          "birth_lsn": 15,
+          "terminal_lsn": 16,
+          "page_incarnation": 9,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 9,
+          "birth_lsn": 17,
+          "terminal_lsn": 18,
+          "page_incarnation": 10,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 2,
+      "cancellations": 0,
+      "terminal": "init",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "init",
+          "terminal_bytes": 38000,
+          "consumed_wal": 59200
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 2,
+      "cancellations": 0,
+      "terminal": "cancel",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 2,
+      "cancellations": 1,
+      "terminal": "init",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "init",
+          "terminal_bytes": 38000,
+          "consumed_wal": 59200
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 2,
+      "cancellations": 1,
+      "terminal": "cancel",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 2,
+      "cancellations": 2,
+      "terminal": "init",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 3,
+          "birth_lsn": 5,
+          "terminal_lsn": 6,
+          "page_incarnation": 4,
+          "slot_generation": 1,
+          "terminal": "init",
+          "terminal_bytes": 38000,
+          "consumed_wal": 59200
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 2,
+      "cancellations": 2,
+      "terminal": "cancel",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 3,
+          "birth_lsn": 5,
+          "terminal_lsn": 6,
+          "page_incarnation": 4,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 2,
+      "cancellations": 8,
+      "terminal": "init",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 3,
+          "birth_lsn": 5,
+          "terminal_lsn": 6,
+          "page_incarnation": 4,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 4,
+          "birth_lsn": 7,
+          "terminal_lsn": 8,
+          "page_incarnation": 5,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 5,
+          "birth_lsn": 9,
+          "terminal_lsn": 10,
+          "page_incarnation": 6,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 6,
+          "birth_lsn": 11,
+          "terminal_lsn": 12,
+          "page_incarnation": 7,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 7,
+          "birth_lsn": 13,
+          "terminal_lsn": 14,
+          "page_incarnation": 8,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 8,
+          "birth_lsn": 15,
+          "terminal_lsn": 16,
+          "page_incarnation": 9,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 9,
+          "birth_lsn": 17,
+          "terminal_lsn": 18,
+          "page_incarnation": 10,
+          "slot_generation": 1,
+          "terminal": "init",
+          "terminal_bytes": 38000,
+          "consumed_wal": 59200
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 2,
+      "cancellations": 8,
+      "terminal": "cancel",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 3,
+          "birth_lsn": 5,
+          "terminal_lsn": 6,
+          "page_incarnation": 4,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 4,
+          "birth_lsn": 7,
+          "terminal_lsn": 8,
+          "page_incarnation": 5,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 5,
+          "birth_lsn": 9,
+          "terminal_lsn": 10,
+          "page_incarnation": 6,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 6,
+          "birth_lsn": 11,
+          "terminal_lsn": 12,
+          "page_incarnation": 7,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 7,
+          "birth_lsn": 13,
+          "terminal_lsn": 14,
+          "page_incarnation": 8,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 8,
+          "birth_lsn": 15,
+          "terminal_lsn": 16,
+          "page_incarnation": 9,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 9,
+          "birth_lsn": 17,
+          "terminal_lsn": 18,
+          "page_incarnation": 10,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 3,
+      "cancellations": 0,
+      "terminal": "init",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "init",
+          "terminal_bytes": 38000,
+          "consumed_wal": 59200
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 3,
+      "cancellations": 0,
+      "terminal": "cancel",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 3,
+      "cancellations": 1,
+      "terminal": "init",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "init",
+          "terminal_bytes": 38000,
+          "consumed_wal": 59200
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 3,
+      "cancellations": 1,
+      "terminal": "cancel",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 3,
+      "cancellations": 2,
+      "terminal": "init",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 3,
+          "birth_lsn": 5,
+          "terminal_lsn": 6,
+          "page_incarnation": 4,
+          "slot_generation": 1,
+          "terminal": "init",
+          "terminal_bytes": 38000,
+          "consumed_wal": 59200
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 3,
+      "cancellations": 2,
+      "terminal": "cancel",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 3,
+          "birth_lsn": 5,
+          "terminal_lsn": 6,
+          "page_incarnation": 4,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 3,
+      "cancellations": 8,
+      "terminal": "init",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 3,
+          "birth_lsn": 5,
+          "terminal_lsn": 6,
+          "page_incarnation": 4,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 4,
+          "birth_lsn": 7,
+          "terminal_lsn": 8,
+          "page_incarnation": 5,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 5,
+          "birth_lsn": 9,
+          "terminal_lsn": 10,
+          "page_incarnation": 6,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 6,
+          "birth_lsn": 11,
+          "terminal_lsn": 12,
+          "page_incarnation": 7,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 7,
+          "birth_lsn": 13,
+          "terminal_lsn": 14,
+          "page_incarnation": 8,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 8,
+          "birth_lsn": 15,
+          "terminal_lsn": 16,
+          "page_incarnation": 9,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 9,
+          "birth_lsn": 17,
+          "terminal_lsn": 18,
+          "page_incarnation": 10,
+          "slot_generation": 1,
+          "terminal": "init",
+          "terminal_bytes": 38000,
+          "consumed_wal": 59200
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    },
+    {
+      "profile": 3,
+      "cancellations": 8,
+      "terminal": "cancel",
+      "history": [
+        {
+          "work": 1,
+          "birth_lsn": 1,
+          "terminal_lsn": 2,
+          "page_incarnation": 2,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 2,
+          "birth_lsn": 3,
+          "terminal_lsn": 4,
+          "page_incarnation": 3,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 3,
+          "birth_lsn": 5,
+          "terminal_lsn": 6,
+          "page_incarnation": 4,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 4,
+          "birth_lsn": 7,
+          "terminal_lsn": 8,
+          "page_incarnation": 5,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 5,
+          "birth_lsn": 9,
+          "terminal_lsn": 10,
+          "page_incarnation": 6,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 6,
+          "birth_lsn": 11,
+          "terminal_lsn": 12,
+          "page_incarnation": 7,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 7,
+          "birth_lsn": 13,
+          "terminal_lsn": 14,
+          "page_incarnation": 8,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 8,
+          "birth_lsn": 15,
+          "terminal_lsn": 16,
+          "page_incarnation": 9,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        },
+        {
+          "work": 9,
+          "birth_lsn": 17,
+          "terminal_lsn": 18,
+          "page_incarnation": 10,
+          "slot_generation": 1,
+          "terminal": "cancel",
+          "terminal_bytes": 21200,
+          "consumed_wal": 42400
+        }
+      ],
+      "selection_status": "INPUT_ONLY_NOT_RUN"
+    }
+  ],
+  "literals": [
+    {
+      "path": "p1-cancel0-cancel/wal.frames-only",
+      "bytes": 42400,
+      "sha256": "faab4d66b6b984a32ade31f16c1d347eab117d6afe71b141d6ce6cd816db4bfd"
+    },
+    {
+      "path": "p1-cancel0-cancel/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel0-cancel/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p1-cancel0-cancel/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p1-cancel0-cancel/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p1-cancel0-cancel/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "c14d64d3f78aab403ee3d30034705037ef590bf5e1adb49cdf6e2c8140a8f23c"
+    },
+    {
+      "path": "p1-cancel0-cancel/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "c7c6b1fdd2c4dc85206596e750bddfa12c90c2326dfe863094b577148dd683f6"
+    },
+    {
+      "path": "p1-cancel0-cancel/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2de2661adc5e53d91a7dccb24535163cc698cefb17d79e93293f57c400f3f3e5"
+    },
+    {
+      "path": "p1-cancel0-cancel/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "caf1a406d6522e7627753ad6ec24f3f57bbde869a87f1beeae2192655f29e30c"
+    },
+    {
+      "path": "p1-cancel0-cancel/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p1-cancel0-init/wal.frames-only",
+      "bytes": 59200,
+      "sha256": "d097adf5e8e571ef187e4ee991044dfcec5a0005d2ab22cbd413563952b59e0b"
+    },
+    {
+      "path": "p1-cancel0-init/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "17d7a60c2ec1b702a5d38531ed0c10d4dd3dec3b3d947de37bc980158ca3d37b"
+    },
+    {
+      "path": "p1-cancel0-init/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p1-cancel0-init/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p1-cancel0-init/work1-init.delta",
+      "bytes": 208,
+      "sha256": "c4bc3be20764575d14eef802c4dd60ef5b8f5858847bdf457086e53aef3f13cc"
+    },
+    {
+      "path": "p1-cancel0-init/work1-init.descriptor",
+      "bytes": 1536,
+      "sha256": "4cbd1f6b773dfdcde339c2ad2424e0dd749f47b15dc017c3e54e0d382c83bd6e"
+    },
+    {
+      "path": "p1-cancel0-init/work1-init.wal",
+      "bytes": 38000,
+      "sha256": "cd6d0d45770bafb3f5eb2e5feab3c0c064200f06c19c8b0660efef5ae9f42e09"
+    },
+    {
+      "path": "p1-cancel0-init/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2de2661adc5e53d91a7dccb24535163cc698cefb17d79e93293f57c400f3f3e5"
+    },
+    {
+      "path": "p1-cancel0-init/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "caf1a406d6522e7627753ad6ec24f3f57bbde869a87f1beeae2192655f29e30c"
+    },
+    {
+      "path": "p1-cancel0-init/work1-status.after",
+      "bytes": 16384,
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "p1-cancel0-init/work1-status.home",
+      "bytes": 224,
+      "sha256": "148e608d3514dae16e00f27c35aadc8ccddc5e311319b0733d460d40c4d45d50"
+    },
+    {
+      "path": "p1-cancel0-init/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p1-cancel1-cancel/wal.frames-only",
+      "bytes": 84800,
+      "sha256": "b5ff6d8e2b7d8f2a6f932777746875c851b66d3c089091ca025a735d07ddf975"
+    },
+    {
+      "path": "p1-cancel1-cancel/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel1-cancel/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p1-cancel1-cancel/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p1-cancel1-cancel/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p1-cancel1-cancel/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "c14d64d3f78aab403ee3d30034705037ef590bf5e1adb49cdf6e2c8140a8f23c"
+    },
+    {
+      "path": "p1-cancel1-cancel/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "c7c6b1fdd2c4dc85206596e750bddfa12c90c2326dfe863094b577148dd683f6"
+    },
+    {
+      "path": "p1-cancel1-cancel/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2de2661adc5e53d91a7dccb24535163cc698cefb17d79e93293f57c400f3f3e5"
+    },
+    {
+      "path": "p1-cancel1-cancel/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "caf1a406d6522e7627753ad6ec24f3f57bbde869a87f1beeae2192655f29e30c"
+    },
+    {
+      "path": "p1-cancel1-cancel/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p1-cancel1-cancel/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p1-cancel1-cancel/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel1-cancel/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p1-cancel1-cancel/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p1-cancel1-cancel/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "f1c8720ce2269117c03606044eed35a1d5e0ada35806b1273550a437e8d2168f"
+    },
+    {
+      "path": "p1-cancel1-cancel/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "0e326c7ff575f7a5062e5c973b3f56f6e291da3d7f31587839eba4379bbcc733"
+    },
+    {
+      "path": "p1-cancel1-cancel/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "cfb18049cb328db066b4c09da2ddd0c1732f2b3bcc6254b4282db592adad684c"
+    },
+    {
+      "path": "p1-cancel1-cancel/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9a253208fc6efe342a3c67634a3eafca4fe7c88058bb73419ed073381272cfad"
+    },
+    {
+      "path": "p1-cancel1-cancel/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p1-cancel1-init/wal.frames-only",
+      "bytes": 101600,
+      "sha256": "3a4344f2e2efb9ef3f5e532f06e8f206f5cf2ec4c6c1bdf5716e11c730d5d4b9"
+    },
+    {
+      "path": "p1-cancel1-init/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel1-init/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p1-cancel1-init/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p1-cancel1-init/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p1-cancel1-init/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "c14d64d3f78aab403ee3d30034705037ef590bf5e1adb49cdf6e2c8140a8f23c"
+    },
+    {
+      "path": "p1-cancel1-init/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "c7c6b1fdd2c4dc85206596e750bddfa12c90c2326dfe863094b577148dd683f6"
+    },
+    {
+      "path": "p1-cancel1-init/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2de2661adc5e53d91a7dccb24535163cc698cefb17d79e93293f57c400f3f3e5"
+    },
+    {
+      "path": "p1-cancel1-init/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "caf1a406d6522e7627753ad6ec24f3f57bbde869a87f1beeae2192655f29e30c"
+    },
+    {
+      "path": "p1-cancel1-init/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p1-cancel1-init/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "046ad904e39e3d2873cdf31f8d05729261d0cd33fabaa58c8abd332f5c185a81"
+    },
+    {
+      "path": "p1-cancel1-init/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel1-init/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p1-cancel1-init/work2-init.delta",
+      "bytes": 208,
+      "sha256": "7ca93b99d654b1b352eab4d0d554e3146fe1544cdbe5a2fd8bf11356e48282b1"
+    },
+    {
+      "path": "p1-cancel1-init/work2-init.descriptor",
+      "bytes": 1536,
+      "sha256": "e7b989ff581fc3e6c02c5e1d7327868d5bbca0809118c50dcf3414f70bd879ca"
+    },
+    {
+      "path": "p1-cancel1-init/work2-init.wal",
+      "bytes": 38000,
+      "sha256": "f3d3e9dc8c1f4e748ed692ce63e4784293c12ed1b186fb1845e63758a99bbe78"
+    },
+    {
+      "path": "p1-cancel1-init/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "cfb18049cb328db066b4c09da2ddd0c1732f2b3bcc6254b4282db592adad684c"
+    },
+    {
+      "path": "p1-cancel1-init/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9a253208fc6efe342a3c67634a3eafca4fe7c88058bb73419ed073381272cfad"
+    },
+    {
+      "path": "p1-cancel1-init/work2-status.after",
+      "bytes": 16384,
+      "sha256": "91142dd11d4269ec9bd744cd1cc294f629a740e0146167379d0b9e5f3453049b"
+    },
+    {
+      "path": "p1-cancel1-init/work2-status.home",
+      "bytes": 224,
+      "sha256": "148e608d3514dae16e00f27c35aadc8ccddc5e311319b0733d460d40c4d45d50"
+    },
+    {
+      "path": "p1-cancel1-init/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p1-cancel2-cancel/wal.frames-only",
+      "bytes": 127200,
+      "sha256": "7bdece08d81fd1a1edf6d79826ded8ce7b112f648ce6f75ae20a309a794a557e"
+    },
+    {
+      "path": "p1-cancel2-cancel/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel2-cancel/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p1-cancel2-cancel/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p1-cancel2-cancel/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p1-cancel2-cancel/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "c14d64d3f78aab403ee3d30034705037ef590bf5e1adb49cdf6e2c8140a8f23c"
+    },
+    {
+      "path": "p1-cancel2-cancel/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "c7c6b1fdd2c4dc85206596e750bddfa12c90c2326dfe863094b577148dd683f6"
+    },
+    {
+      "path": "p1-cancel2-cancel/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2de2661adc5e53d91a7dccb24535163cc698cefb17d79e93293f57c400f3f3e5"
+    },
+    {
+      "path": "p1-cancel2-cancel/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "caf1a406d6522e7627753ad6ec24f3f57bbde869a87f1beeae2192655f29e30c"
+    },
+    {
+      "path": "p1-cancel2-cancel/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p1-cancel2-cancel/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p1-cancel2-cancel/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel2-cancel/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p1-cancel2-cancel/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p1-cancel2-cancel/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "f1c8720ce2269117c03606044eed35a1d5e0ada35806b1273550a437e8d2168f"
+    },
+    {
+      "path": "p1-cancel2-cancel/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "0e326c7ff575f7a5062e5c973b3f56f6e291da3d7f31587839eba4379bbcc733"
+    },
+    {
+      "path": "p1-cancel2-cancel/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "cfb18049cb328db066b4c09da2ddd0c1732f2b3bcc6254b4282db592adad684c"
+    },
+    {
+      "path": "p1-cancel2-cancel/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9a253208fc6efe342a3c67634a3eafca4fe7c88058bb73419ed073381272cfad"
+    },
+    {
+      "path": "p1-cancel2-cancel/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p1-cancel2-cancel/work3-allocator.after",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p1-cancel2-cancel/work3-allocator.before",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p1-cancel2-cancel/work3-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "a0d09bebaf1c8cc83b2defbbb3ede15e5264d916c8634fbaf70145d736f62e53"
+    },
+    {
+      "path": "p1-cancel2-cancel/work3-cancel.delta",
+      "bytes": 208,
+      "sha256": "529a65056b5f8bfef24d348489f63ea28eedcd522c9c565084ec5eda84064006"
+    },
+    {
+      "path": "p1-cancel2-cancel/work3-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "0e7b6f2ae7994e47e2381573559227c811193a53f31ff22334f72cb53eb3209d"
+    },
+    {
+      "path": "p1-cancel2-cancel/work3-cancel.wal",
+      "bytes": 21200,
+      "sha256": "436d399b868e310f0ac00c46041b6c2dc258fbc1d46fabbd47889685f966a64d"
+    },
+    {
+      "path": "p1-cancel2-cancel/work3-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "cab7aec26598565411cba6171cd4879d67cd077a2aa932817ccb41d58641ca63"
+    },
+    {
+      "path": "p1-cancel2-cancel/work3-reserve.wal",
+      "bytes": 21200,
+      "sha256": "7347b4483d17728b569551b147ba91be635a220cedba39a987a912049d6d67a7"
+    },
+    {
+      "path": "p1-cancel2-cancel/work3-token.bin",
+      "bytes": 96,
+      "sha256": "285c72b1e127cbc2c6d05a15ce330f5b9e4af84001778a67e1678cb34d465c74"
+    },
+    {
+      "path": "p1-cancel2-init/wal.frames-only",
+      "bytes": 144000,
+      "sha256": "f54d07c7f5077f0c5a50276ce62a58716dad03d0d729b3d3d37f18fbe7d0e5ac"
+    },
+    {
+      "path": "p1-cancel2-init/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel2-init/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p1-cancel2-init/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p1-cancel2-init/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p1-cancel2-init/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "c14d64d3f78aab403ee3d30034705037ef590bf5e1adb49cdf6e2c8140a8f23c"
+    },
+    {
+      "path": "p1-cancel2-init/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "c7c6b1fdd2c4dc85206596e750bddfa12c90c2326dfe863094b577148dd683f6"
+    },
+    {
+      "path": "p1-cancel2-init/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2de2661adc5e53d91a7dccb24535163cc698cefb17d79e93293f57c400f3f3e5"
+    },
+    {
+      "path": "p1-cancel2-init/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "caf1a406d6522e7627753ad6ec24f3f57bbde869a87f1beeae2192655f29e30c"
+    },
+    {
+      "path": "p1-cancel2-init/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p1-cancel2-init/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p1-cancel2-init/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel2-init/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p1-cancel2-init/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p1-cancel2-init/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "f1c8720ce2269117c03606044eed35a1d5e0ada35806b1273550a437e8d2168f"
+    },
+    {
+      "path": "p1-cancel2-init/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "0e326c7ff575f7a5062e5c973b3f56f6e291da3d7f31587839eba4379bbcc733"
+    },
+    {
+      "path": "p1-cancel2-init/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "cfb18049cb328db066b4c09da2ddd0c1732f2b3bcc6254b4282db592adad684c"
+    },
+    {
+      "path": "p1-cancel2-init/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9a253208fc6efe342a3c67634a3eafca4fe7c88058bb73419ed073381272cfad"
+    },
+    {
+      "path": "p1-cancel2-init/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p1-cancel2-init/work3-allocator.after",
+      "bytes": 16384,
+      "sha256": "46b9aa20fd9c143c80899b7c36eed6116826e50cea39bd05243a5896e6ac31c7"
+    },
+    {
+      "path": "p1-cancel2-init/work3-allocator.before",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p1-cancel2-init/work3-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "a0d09bebaf1c8cc83b2defbbb3ede15e5264d916c8634fbaf70145d736f62e53"
+    },
+    {
+      "path": "p1-cancel2-init/work3-init.delta",
+      "bytes": 208,
+      "sha256": "8b4063fec1c12804251d9058c75d9a1051ed428482c325fb835598458dda51df"
+    },
+    {
+      "path": "p1-cancel2-init/work3-init.descriptor",
+      "bytes": 1536,
+      "sha256": "cc4a45aafbe803922045622dc6b779ca335e0ed46d4ac80f9f2c20c0d8ce14a5"
+    },
+    {
+      "path": "p1-cancel2-init/work3-init.wal",
+      "bytes": 38000,
+      "sha256": "1b83533f993642df157c50ab0464de331405640c79f98af6d5ac82897dc22d6b"
+    },
+    {
+      "path": "p1-cancel2-init/work3-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "cab7aec26598565411cba6171cd4879d67cd077a2aa932817ccb41d58641ca63"
+    },
+    {
+      "path": "p1-cancel2-init/work3-reserve.wal",
+      "bytes": 21200,
+      "sha256": "7347b4483d17728b569551b147ba91be635a220cedba39a987a912049d6d67a7"
+    },
+    {
+      "path": "p1-cancel2-init/work3-status.after",
+      "bytes": 16384,
+      "sha256": "bf1c8845af6fd18e944d40521fb14740e9bad5cc2bbe3cc7cc2ad4ffa069ee4a"
+    },
+    {
+      "path": "p1-cancel2-init/work3-status.home",
+      "bytes": 224,
+      "sha256": "148e608d3514dae16e00f27c35aadc8ccddc5e311319b0733d460d40c4d45d50"
+    },
+    {
+      "path": "p1-cancel2-init/work3-token.bin",
+      "bytes": 96,
+      "sha256": "285c72b1e127cbc2c6d05a15ce330f5b9e4af84001778a67e1678cb34d465c74"
+    },
+    {
+      "path": "p1-cancel8-cancel/wal.frames-only",
+      "bytes": 381600,
+      "sha256": "c04e9fe4ee160a79460d279d62d8077c3f1b44118bcf3297896aa61886bc8ad9"
+    },
+    {
+      "path": "p1-cancel8-cancel/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel8-cancel/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p1-cancel8-cancel/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p1-cancel8-cancel/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p1-cancel8-cancel/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "c14d64d3f78aab403ee3d30034705037ef590bf5e1adb49cdf6e2c8140a8f23c"
+    },
+    {
+      "path": "p1-cancel8-cancel/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "c7c6b1fdd2c4dc85206596e750bddfa12c90c2326dfe863094b577148dd683f6"
+    },
+    {
+      "path": "p1-cancel8-cancel/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2de2661adc5e53d91a7dccb24535163cc698cefb17d79e93293f57c400f3f3e5"
+    },
+    {
+      "path": "p1-cancel8-cancel/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "caf1a406d6522e7627753ad6ec24f3f57bbde869a87f1beeae2192655f29e30c"
+    },
+    {
+      "path": "p1-cancel8-cancel/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p1-cancel8-cancel/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p1-cancel8-cancel/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel8-cancel/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p1-cancel8-cancel/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p1-cancel8-cancel/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "f1c8720ce2269117c03606044eed35a1d5e0ada35806b1273550a437e8d2168f"
+    },
+    {
+      "path": "p1-cancel8-cancel/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "0e326c7ff575f7a5062e5c973b3f56f6e291da3d7f31587839eba4379bbcc733"
+    },
+    {
+      "path": "p1-cancel8-cancel/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "cfb18049cb328db066b4c09da2ddd0c1732f2b3bcc6254b4282db592adad684c"
+    },
+    {
+      "path": "p1-cancel8-cancel/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9a253208fc6efe342a3c67634a3eafca4fe7c88058bb73419ed073381272cfad"
+    },
+    {
+      "path": "p1-cancel8-cancel/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p1-cancel8-cancel/work3-allocator.after",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p1-cancel8-cancel/work3-allocator.before",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p1-cancel8-cancel/work3-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "a0d09bebaf1c8cc83b2defbbb3ede15e5264d916c8634fbaf70145d736f62e53"
+    },
+    {
+      "path": "p1-cancel8-cancel/work3-cancel.delta",
+      "bytes": 208,
+      "sha256": "529a65056b5f8bfef24d348489f63ea28eedcd522c9c565084ec5eda84064006"
+    },
+    {
+      "path": "p1-cancel8-cancel/work3-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "0e7b6f2ae7994e47e2381573559227c811193a53f31ff22334f72cb53eb3209d"
+    },
+    {
+      "path": "p1-cancel8-cancel/work3-cancel.wal",
+      "bytes": 21200,
+      "sha256": "436d399b868e310f0ac00c46041b6c2dc258fbc1d46fabbd47889685f966a64d"
+    },
+    {
+      "path": "p1-cancel8-cancel/work3-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "cab7aec26598565411cba6171cd4879d67cd077a2aa932817ccb41d58641ca63"
+    },
+    {
+      "path": "p1-cancel8-cancel/work3-reserve.wal",
+      "bytes": 21200,
+      "sha256": "7347b4483d17728b569551b147ba91be635a220cedba39a987a912049d6d67a7"
+    },
+    {
+      "path": "p1-cancel8-cancel/work3-token.bin",
+      "bytes": 96,
+      "sha256": "285c72b1e127cbc2c6d05a15ce330f5b9e4af84001778a67e1678cb34d465c74"
+    },
+    {
+      "path": "p1-cancel8-cancel/work4-allocator.after",
+      "bytes": 16384,
+      "sha256": "902b29ccdb9000ec20c60d73e2603e237f266ab7f6dba3fc4a261938fe826a6e"
+    },
+    {
+      "path": "p1-cancel8-cancel/work4-allocator.before",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p1-cancel8-cancel/work4-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "e09a5f52363f8e499fab0456a6b28b205113d4c2bf5e57e6ec72df97015fe5a6"
+    },
+    {
+      "path": "p1-cancel8-cancel/work4-cancel.delta",
+      "bytes": 208,
+      "sha256": "b7efa5cfc8d0dd02be36a419cd1bc74b2d39e97ba1f4a7df0be732543396d78c"
+    },
+    {
+      "path": "p1-cancel8-cancel/work4-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "4b7c83bcd1914ede933042e4bafa11654135bf94344785a141fdcc83bfff124c"
+    },
+    {
+      "path": "p1-cancel8-cancel/work4-cancel.wal",
+      "bytes": 21200,
+      "sha256": "6c99af026efa86298dd8613ea91b6a0811e9654090a855c08c0b08f0628261ec"
+    },
+    {
+      "path": "p1-cancel8-cancel/work4-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "e4cfb452663f3c46447bfb2613750841b210a947a23a8594ff07ecda77bdd9a2"
+    },
+    {
+      "path": "p1-cancel8-cancel/work4-reserve.wal",
+      "bytes": 21200,
+      "sha256": "f0711a8c6ca3837091685fbedfe78cc902772276fbfb18c703020f0178abe994"
+    },
+    {
+      "path": "p1-cancel8-cancel/work4-token.bin",
+      "bytes": 96,
+      "sha256": "f91b196c0de913fdecbb51ab3eb23b3da69b514b6f0465c037323f80a7cfb968"
+    },
+    {
+      "path": "p1-cancel8-cancel/work5-allocator.after",
+      "bytes": 16384,
+      "sha256": "74efc3b19664293c83893e552a0b7fccf6835bba05b41444655a086a06e886c2"
+    },
+    {
+      "path": "p1-cancel8-cancel/work5-allocator.before",
+      "bytes": 16384,
+      "sha256": "902b29ccdb9000ec20c60d73e2603e237f266ab7f6dba3fc4a261938fe826a6e"
+    },
+    {
+      "path": "p1-cancel8-cancel/work5-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "ee407d3b0b3cbe2c17a04fae6d5c040e9793abc597516545f7133508107c3e05"
+    },
+    {
+      "path": "p1-cancel8-cancel/work5-cancel.delta",
+      "bytes": 208,
+      "sha256": "185b77f53f7bf6e7014b2c97e3a7646811dd7741dd0b9b4faed905341c54679d"
+    },
+    {
+      "path": "p1-cancel8-cancel/work5-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "e6fcb5d9bcc4f38449aa4ba7278fb36bba87f3f762133fb7e99036efe3ceec17"
+    },
+    {
+      "path": "p1-cancel8-cancel/work5-cancel.wal",
+      "bytes": 21200,
+      "sha256": "be8d5627e42351ff6c62565cc2ea2744f996f354b8053e46b15cb99d40ed49fb"
+    },
+    {
+      "path": "p1-cancel8-cancel/work5-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "0595a8bd5ecde24e8edd05ad3e2185634951f32637100e740d37194b92029035"
+    },
+    {
+      "path": "p1-cancel8-cancel/work5-reserve.wal",
+      "bytes": 21200,
+      "sha256": "cd1389f3f68078fa592ac7a36b81c77bbd1bf319a035af70b3c497ebb28f4dc2"
+    },
+    {
+      "path": "p1-cancel8-cancel/work5-token.bin",
+      "bytes": 96,
+      "sha256": "a5ee89ca648c16b5ac8e97958cfbaa406f8f450850fec4e6713bb3cb74e0509f"
+    },
+    {
+      "path": "p1-cancel8-cancel/work6-allocator.after",
+      "bytes": 16384,
+      "sha256": "dd5526a1964ced3800a9aa4a099acb4164bbd37ab415e8fadb906f70b02ef56e"
+    },
+    {
+      "path": "p1-cancel8-cancel/work6-allocator.before",
+      "bytes": 16384,
+      "sha256": "74efc3b19664293c83893e552a0b7fccf6835bba05b41444655a086a06e886c2"
+    },
+    {
+      "path": "p1-cancel8-cancel/work6-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "0876ebcc1f6df93fd803a6ccb957cb6623b41f6a4ed531987fffc3f574df7439"
+    },
+    {
+      "path": "p1-cancel8-cancel/work6-cancel.delta",
+      "bytes": 208,
+      "sha256": "27aa74a440daa2d5e0301347ccbd50506ec8024b8ffd2bef7a59e82d55d6e63a"
+    },
+    {
+      "path": "p1-cancel8-cancel/work6-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "a4bc2f6c05108a21c77112c08446951118a5e3fa7a639a68d5c7b87b4ebb4d78"
+    },
+    {
+      "path": "p1-cancel8-cancel/work6-cancel.wal",
+      "bytes": 21200,
+      "sha256": "8840d924be53c5ccdd833a794c64a3ca5a37c5f71a653467eeaa07cd5d46050e"
+    },
+    {
+      "path": "p1-cancel8-cancel/work6-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "ddec08e9d831139b53aa19f71e01af70c44f138657ed2ab6e88c3fbad6f04f8d"
+    },
+    {
+      "path": "p1-cancel8-cancel/work6-reserve.wal",
+      "bytes": 21200,
+      "sha256": "282dcff23cba350c8ca26ff87228b6809f8b395631eab2de62c3af7f5b381fa6"
+    },
+    {
+      "path": "p1-cancel8-cancel/work6-token.bin",
+      "bytes": 96,
+      "sha256": "165a1c5228918154e439fbda8b5d8fc3cbd87c871729ad383590b93a9a6e4ef2"
+    },
+    {
+      "path": "p1-cancel8-cancel/work7-allocator.after",
+      "bytes": 16384,
+      "sha256": "eabd7a2a503d10e50d8702fe8d6dd05617aad9b1c8193a43400a2636d31c8dd8"
+    },
+    {
+      "path": "p1-cancel8-cancel/work7-allocator.before",
+      "bytes": 16384,
+      "sha256": "dd5526a1964ced3800a9aa4a099acb4164bbd37ab415e8fadb906f70b02ef56e"
+    },
+    {
+      "path": "p1-cancel8-cancel/work7-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "1f0928b07b002c376c0ea7c80ed46f56c7c718ec31113e33f9258ae19ea5d2d0"
+    },
+    {
+      "path": "p1-cancel8-cancel/work7-cancel.delta",
+      "bytes": 208,
+      "sha256": "d3ec20aa1fb7dba7b2efdf27c269d6c28018492e9b556129289539ef986ded1b"
+    },
+    {
+      "path": "p1-cancel8-cancel/work7-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "cd477eec7b810642c91c6a240a294ff5a9f6c2c6acf0afc96f8648657e251c40"
+    },
+    {
+      "path": "p1-cancel8-cancel/work7-cancel.wal",
+      "bytes": 21200,
+      "sha256": "a5a731629e92954f4deb497e9551221d10197b04dbcbbf0b442cd937d968cfe4"
+    },
+    {
+      "path": "p1-cancel8-cancel/work7-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "90f3ed50906ab0a35d858ce168ecb50d6ab3b65a5ccf3d2f7f1a5d5ed1600f82"
+    },
+    {
+      "path": "p1-cancel8-cancel/work7-reserve.wal",
+      "bytes": 21200,
+      "sha256": "5ca0e5388d36ffed82008fcb8b384bd2da3eb688db50b72351c1ee406f9a7b1b"
+    },
+    {
+      "path": "p1-cancel8-cancel/work7-token.bin",
+      "bytes": 96,
+      "sha256": "a8df7e830724b3fa65351dd7b6d3be33647318240115f4fcf6703a7a13aff48b"
+    },
+    {
+      "path": "p1-cancel8-cancel/work8-allocator.after",
+      "bytes": 16384,
+      "sha256": "4395c9000b185f1a9b8d735caa83782077a809a8fdcd2e6f40f99b4a7f5dbebe"
+    },
+    {
+      "path": "p1-cancel8-cancel/work8-allocator.before",
+      "bytes": 16384,
+      "sha256": "eabd7a2a503d10e50d8702fe8d6dd05617aad9b1c8193a43400a2636d31c8dd8"
+    },
+    {
+      "path": "p1-cancel8-cancel/work8-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "c6257ff13e48730719589524695a7f99d558ca3b4906d9beaaf30d6ccdbe041e"
+    },
+    {
+      "path": "p1-cancel8-cancel/work8-cancel.delta",
+      "bytes": 208,
+      "sha256": "7ea653bd9322ea7ace65ce795a57fab9eb402aabdc5cca7663ed172ec575ccba"
+    },
+    {
+      "path": "p1-cancel8-cancel/work8-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "10bce0dad8f357d1830a6ffcf6d8bc3b7fbabca93b63d463ad598bb08a7103be"
+    },
+    {
+      "path": "p1-cancel8-cancel/work8-cancel.wal",
+      "bytes": 21200,
+      "sha256": "05ae56b86873a4611f6c73b8599ff95006ade4d1c8abe8d8f8b6c91cc245c1d6"
+    },
+    {
+      "path": "p1-cancel8-cancel/work8-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "30f16beadf4d8fc5bc986369c732582475187796d3910efcd54ee1cab5bb07b1"
+    },
+    {
+      "path": "p1-cancel8-cancel/work8-reserve.wal",
+      "bytes": 21200,
+      "sha256": "a85b2a502656f544e8d0c4ba9189bd1540a641e60f380df36b3cd37ebe49640b"
+    },
+    {
+      "path": "p1-cancel8-cancel/work8-token.bin",
+      "bytes": 96,
+      "sha256": "57fcfca7eacf1473d5fd2a18d5f3a28e0a13fa8ea1a227e0d7315058bf907d13"
+    },
+    {
+      "path": "p1-cancel8-cancel/work9-allocator.after",
+      "bytes": 16384,
+      "sha256": "d9ae90c24ce6462686c69cab2595fddd045a38dae83523062a21de63c22e6046"
+    },
+    {
+      "path": "p1-cancel8-cancel/work9-allocator.before",
+      "bytes": 16384,
+      "sha256": "4395c9000b185f1a9b8d735caa83782077a809a8fdcd2e6f40f99b4a7f5dbebe"
+    },
+    {
+      "path": "p1-cancel8-cancel/work9-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "4c533dcb608970af41b1fd7889a67485d900d9ffd0f60d0c18b659b5b0c4cdd7"
+    },
+    {
+      "path": "p1-cancel8-cancel/work9-cancel.delta",
+      "bytes": 208,
+      "sha256": "3615b01b365d14be2b039f8726dcd269078e7df11c5bf2ad345eb5491e0388a8"
+    },
+    {
+      "path": "p1-cancel8-cancel/work9-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "4de5597467f100b1d139223baf013f06836f437a874624000765360a3f4afbe1"
+    },
+    {
+      "path": "p1-cancel8-cancel/work9-cancel.wal",
+      "bytes": 21200,
+      "sha256": "b3b1493dda13cd9cf5e4532333db9cb4fc015da584fd2052c4147c47c29bfe8b"
+    },
+    {
+      "path": "p1-cancel8-cancel/work9-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "d4a5c0d432c2adb71283fbcd3a673e6bc0ae1751010c8643079c88a36f432568"
+    },
+    {
+      "path": "p1-cancel8-cancel/work9-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9f77111ec88ae42d4c9f15c94d99348e38200a7c788fe849701187f80fb56741"
+    },
+    {
+      "path": "p1-cancel8-cancel/work9-token.bin",
+      "bytes": 96,
+      "sha256": "8bc600d081a865a9492de0dc257316d5fa7f4a06e28c60027b449cefcac8a98f"
+    },
+    {
+      "path": "p1-cancel8-init/wal.frames-only",
+      "bytes": 398400,
+      "sha256": "268db36af92c238eb88ae04738171317a712e312f90b90dd4905bab12b906dee"
+    },
+    {
+      "path": "p1-cancel8-init/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel8-init/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p1-cancel8-init/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p1-cancel8-init/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p1-cancel8-init/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "c14d64d3f78aab403ee3d30034705037ef590bf5e1adb49cdf6e2c8140a8f23c"
+    },
+    {
+      "path": "p1-cancel8-init/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "c7c6b1fdd2c4dc85206596e750bddfa12c90c2326dfe863094b577148dd683f6"
+    },
+    {
+      "path": "p1-cancel8-init/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2de2661adc5e53d91a7dccb24535163cc698cefb17d79e93293f57c400f3f3e5"
+    },
+    {
+      "path": "p1-cancel8-init/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "caf1a406d6522e7627753ad6ec24f3f57bbde869a87f1beeae2192655f29e30c"
+    },
+    {
+      "path": "p1-cancel8-init/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p1-cancel8-init/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p1-cancel8-init/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p1-cancel8-init/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p1-cancel8-init/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p1-cancel8-init/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "f1c8720ce2269117c03606044eed35a1d5e0ada35806b1273550a437e8d2168f"
+    },
+    {
+      "path": "p1-cancel8-init/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "0e326c7ff575f7a5062e5c973b3f56f6e291da3d7f31587839eba4379bbcc733"
+    },
+    {
+      "path": "p1-cancel8-init/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "cfb18049cb328db066b4c09da2ddd0c1732f2b3bcc6254b4282db592adad684c"
+    },
+    {
+      "path": "p1-cancel8-init/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9a253208fc6efe342a3c67634a3eafca4fe7c88058bb73419ed073381272cfad"
+    },
+    {
+      "path": "p1-cancel8-init/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p1-cancel8-init/work3-allocator.after",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p1-cancel8-init/work3-allocator.before",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p1-cancel8-init/work3-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "a0d09bebaf1c8cc83b2defbbb3ede15e5264d916c8634fbaf70145d736f62e53"
+    },
+    {
+      "path": "p1-cancel8-init/work3-cancel.delta",
+      "bytes": 208,
+      "sha256": "529a65056b5f8bfef24d348489f63ea28eedcd522c9c565084ec5eda84064006"
+    },
+    {
+      "path": "p1-cancel8-init/work3-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "0e7b6f2ae7994e47e2381573559227c811193a53f31ff22334f72cb53eb3209d"
+    },
+    {
+      "path": "p1-cancel8-init/work3-cancel.wal",
+      "bytes": 21200,
+      "sha256": "436d399b868e310f0ac00c46041b6c2dc258fbc1d46fabbd47889685f966a64d"
+    },
+    {
+      "path": "p1-cancel8-init/work3-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "cab7aec26598565411cba6171cd4879d67cd077a2aa932817ccb41d58641ca63"
+    },
+    {
+      "path": "p1-cancel8-init/work3-reserve.wal",
+      "bytes": 21200,
+      "sha256": "7347b4483d17728b569551b147ba91be635a220cedba39a987a912049d6d67a7"
+    },
+    {
+      "path": "p1-cancel8-init/work3-token.bin",
+      "bytes": 96,
+      "sha256": "285c72b1e127cbc2c6d05a15ce330f5b9e4af84001778a67e1678cb34d465c74"
+    },
+    {
+      "path": "p1-cancel8-init/work4-allocator.after",
+      "bytes": 16384,
+      "sha256": "902b29ccdb9000ec20c60d73e2603e237f266ab7f6dba3fc4a261938fe826a6e"
+    },
+    {
+      "path": "p1-cancel8-init/work4-allocator.before",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p1-cancel8-init/work4-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "e09a5f52363f8e499fab0456a6b28b205113d4c2bf5e57e6ec72df97015fe5a6"
+    },
+    {
+      "path": "p1-cancel8-init/work4-cancel.delta",
+      "bytes": 208,
+      "sha256": "b7efa5cfc8d0dd02be36a419cd1bc74b2d39e97ba1f4a7df0be732543396d78c"
+    },
+    {
+      "path": "p1-cancel8-init/work4-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "4b7c83bcd1914ede933042e4bafa11654135bf94344785a141fdcc83bfff124c"
+    },
+    {
+      "path": "p1-cancel8-init/work4-cancel.wal",
+      "bytes": 21200,
+      "sha256": "6c99af026efa86298dd8613ea91b6a0811e9654090a855c08c0b08f0628261ec"
+    },
+    {
+      "path": "p1-cancel8-init/work4-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "e4cfb452663f3c46447bfb2613750841b210a947a23a8594ff07ecda77bdd9a2"
+    },
+    {
+      "path": "p1-cancel8-init/work4-reserve.wal",
+      "bytes": 21200,
+      "sha256": "f0711a8c6ca3837091685fbedfe78cc902772276fbfb18c703020f0178abe994"
+    },
+    {
+      "path": "p1-cancel8-init/work4-token.bin",
+      "bytes": 96,
+      "sha256": "f91b196c0de913fdecbb51ab3eb23b3da69b514b6f0465c037323f80a7cfb968"
+    },
+    {
+      "path": "p1-cancel8-init/work5-allocator.after",
+      "bytes": 16384,
+      "sha256": "74efc3b19664293c83893e552a0b7fccf6835bba05b41444655a086a06e886c2"
+    },
+    {
+      "path": "p1-cancel8-init/work5-allocator.before",
+      "bytes": 16384,
+      "sha256": "902b29ccdb9000ec20c60d73e2603e237f266ab7f6dba3fc4a261938fe826a6e"
+    },
+    {
+      "path": "p1-cancel8-init/work5-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "ee407d3b0b3cbe2c17a04fae6d5c040e9793abc597516545f7133508107c3e05"
+    },
+    {
+      "path": "p1-cancel8-init/work5-cancel.delta",
+      "bytes": 208,
+      "sha256": "185b77f53f7bf6e7014b2c97e3a7646811dd7741dd0b9b4faed905341c54679d"
+    },
+    {
+      "path": "p1-cancel8-init/work5-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "e6fcb5d9bcc4f38449aa4ba7278fb36bba87f3f762133fb7e99036efe3ceec17"
+    },
+    {
+      "path": "p1-cancel8-init/work5-cancel.wal",
+      "bytes": 21200,
+      "sha256": "be8d5627e42351ff6c62565cc2ea2744f996f354b8053e46b15cb99d40ed49fb"
+    },
+    {
+      "path": "p1-cancel8-init/work5-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "0595a8bd5ecde24e8edd05ad3e2185634951f32637100e740d37194b92029035"
+    },
+    {
+      "path": "p1-cancel8-init/work5-reserve.wal",
+      "bytes": 21200,
+      "sha256": "cd1389f3f68078fa592ac7a36b81c77bbd1bf319a035af70b3c497ebb28f4dc2"
+    },
+    {
+      "path": "p1-cancel8-init/work5-token.bin",
+      "bytes": 96,
+      "sha256": "a5ee89ca648c16b5ac8e97958cfbaa406f8f450850fec4e6713bb3cb74e0509f"
+    },
+    {
+      "path": "p1-cancel8-init/work6-allocator.after",
+      "bytes": 16384,
+      "sha256": "dd5526a1964ced3800a9aa4a099acb4164bbd37ab415e8fadb906f70b02ef56e"
+    },
+    {
+      "path": "p1-cancel8-init/work6-allocator.before",
+      "bytes": 16384,
+      "sha256": "74efc3b19664293c83893e552a0b7fccf6835bba05b41444655a086a06e886c2"
+    },
+    {
+      "path": "p1-cancel8-init/work6-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "0876ebcc1f6df93fd803a6ccb957cb6623b41f6a4ed531987fffc3f574df7439"
+    },
+    {
+      "path": "p1-cancel8-init/work6-cancel.delta",
+      "bytes": 208,
+      "sha256": "27aa74a440daa2d5e0301347ccbd50506ec8024b8ffd2bef7a59e82d55d6e63a"
+    },
+    {
+      "path": "p1-cancel8-init/work6-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "a4bc2f6c05108a21c77112c08446951118a5e3fa7a639a68d5c7b87b4ebb4d78"
+    },
+    {
+      "path": "p1-cancel8-init/work6-cancel.wal",
+      "bytes": 21200,
+      "sha256": "8840d924be53c5ccdd833a794c64a3ca5a37c5f71a653467eeaa07cd5d46050e"
+    },
+    {
+      "path": "p1-cancel8-init/work6-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "ddec08e9d831139b53aa19f71e01af70c44f138657ed2ab6e88c3fbad6f04f8d"
+    },
+    {
+      "path": "p1-cancel8-init/work6-reserve.wal",
+      "bytes": 21200,
+      "sha256": "282dcff23cba350c8ca26ff87228b6809f8b395631eab2de62c3af7f5b381fa6"
+    },
+    {
+      "path": "p1-cancel8-init/work6-token.bin",
+      "bytes": 96,
+      "sha256": "165a1c5228918154e439fbda8b5d8fc3cbd87c871729ad383590b93a9a6e4ef2"
+    },
+    {
+      "path": "p1-cancel8-init/work7-allocator.after",
+      "bytes": 16384,
+      "sha256": "eabd7a2a503d10e50d8702fe8d6dd05617aad9b1c8193a43400a2636d31c8dd8"
+    },
+    {
+      "path": "p1-cancel8-init/work7-allocator.before",
+      "bytes": 16384,
+      "sha256": "dd5526a1964ced3800a9aa4a099acb4164bbd37ab415e8fadb906f70b02ef56e"
+    },
+    {
+      "path": "p1-cancel8-init/work7-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "1f0928b07b002c376c0ea7c80ed46f56c7c718ec31113e33f9258ae19ea5d2d0"
+    },
+    {
+      "path": "p1-cancel8-init/work7-cancel.delta",
+      "bytes": 208,
+      "sha256": "d3ec20aa1fb7dba7b2efdf27c269d6c28018492e9b556129289539ef986ded1b"
+    },
+    {
+      "path": "p1-cancel8-init/work7-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "cd477eec7b810642c91c6a240a294ff5a9f6c2c6acf0afc96f8648657e251c40"
+    },
+    {
+      "path": "p1-cancel8-init/work7-cancel.wal",
+      "bytes": 21200,
+      "sha256": "a5a731629e92954f4deb497e9551221d10197b04dbcbbf0b442cd937d968cfe4"
+    },
+    {
+      "path": "p1-cancel8-init/work7-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "90f3ed50906ab0a35d858ce168ecb50d6ab3b65a5ccf3d2f7f1a5d5ed1600f82"
+    },
+    {
+      "path": "p1-cancel8-init/work7-reserve.wal",
+      "bytes": 21200,
+      "sha256": "5ca0e5388d36ffed82008fcb8b384bd2da3eb688db50b72351c1ee406f9a7b1b"
+    },
+    {
+      "path": "p1-cancel8-init/work7-token.bin",
+      "bytes": 96,
+      "sha256": "a8df7e830724b3fa65351dd7b6d3be33647318240115f4fcf6703a7a13aff48b"
+    },
+    {
+      "path": "p1-cancel8-init/work8-allocator.after",
+      "bytes": 16384,
+      "sha256": "4395c9000b185f1a9b8d735caa83782077a809a8fdcd2e6f40f99b4a7f5dbebe"
+    },
+    {
+      "path": "p1-cancel8-init/work8-allocator.before",
+      "bytes": 16384,
+      "sha256": "eabd7a2a503d10e50d8702fe8d6dd05617aad9b1c8193a43400a2636d31c8dd8"
+    },
+    {
+      "path": "p1-cancel8-init/work8-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "c6257ff13e48730719589524695a7f99d558ca3b4906d9beaaf30d6ccdbe041e"
+    },
+    {
+      "path": "p1-cancel8-init/work8-cancel.delta",
+      "bytes": 208,
+      "sha256": "7ea653bd9322ea7ace65ce795a57fab9eb402aabdc5cca7663ed172ec575ccba"
+    },
+    {
+      "path": "p1-cancel8-init/work8-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "10bce0dad8f357d1830a6ffcf6d8bc3b7fbabca93b63d463ad598bb08a7103be"
+    },
+    {
+      "path": "p1-cancel8-init/work8-cancel.wal",
+      "bytes": 21200,
+      "sha256": "05ae56b86873a4611f6c73b8599ff95006ade4d1c8abe8d8f8b6c91cc245c1d6"
+    },
+    {
+      "path": "p1-cancel8-init/work8-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "30f16beadf4d8fc5bc986369c732582475187796d3910efcd54ee1cab5bb07b1"
+    },
+    {
+      "path": "p1-cancel8-init/work8-reserve.wal",
+      "bytes": 21200,
+      "sha256": "a85b2a502656f544e8d0c4ba9189bd1540a641e60f380df36b3cd37ebe49640b"
+    },
+    {
+      "path": "p1-cancel8-init/work8-token.bin",
+      "bytes": 96,
+      "sha256": "57fcfca7eacf1473d5fd2a18d5f3a28e0a13fa8ea1a227e0d7315058bf907d13"
+    },
+    {
+      "path": "p1-cancel8-init/work9-allocator.after",
+      "bytes": 16384,
+      "sha256": "5bbd913992a3f6739835bc31e1ee3ff4c22672f5b04a216116cdb7bf7f978ceb"
+    },
+    {
+      "path": "p1-cancel8-init/work9-allocator.before",
+      "bytes": 16384,
+      "sha256": "4395c9000b185f1a9b8d735caa83782077a809a8fdcd2e6f40f99b4a7f5dbebe"
+    },
+    {
+      "path": "p1-cancel8-init/work9-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "4c533dcb608970af41b1fd7889a67485d900d9ffd0f60d0c18b659b5b0c4cdd7"
+    },
+    {
+      "path": "p1-cancel8-init/work9-init.delta",
+      "bytes": 208,
+      "sha256": "d6909004e57899f7c7ce0ce1d04e5451ff95deab4c3fa67a577eec159cc074a2"
+    },
+    {
+      "path": "p1-cancel8-init/work9-init.descriptor",
+      "bytes": 1536,
+      "sha256": "76abcaef0b2b34dfa42b2fc958995d4473970f36733759d8a75dfaff623de674"
+    },
+    {
+      "path": "p1-cancel8-init/work9-init.wal",
+      "bytes": 38000,
+      "sha256": "d5e55aeebf01ab32be8bff125ecbc9a79430acc8486b3bbc20946ad783adae68"
+    },
+    {
+      "path": "p1-cancel8-init/work9-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "d4a5c0d432c2adb71283fbcd3a673e6bc0ae1751010c8643079c88a36f432568"
+    },
+    {
+      "path": "p1-cancel8-init/work9-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9f77111ec88ae42d4c9f15c94d99348e38200a7c788fe849701187f80fb56741"
+    },
+    {
+      "path": "p1-cancel8-init/work9-status.after",
+      "bytes": 16384,
+      "sha256": "0c30cbdd3a0f71c1798eb2674a8ddd5c50937be0d05b227c44e051777f5bcf24"
+    },
+    {
+      "path": "p1-cancel8-init/work9-status.home",
+      "bytes": 224,
+      "sha256": "148e608d3514dae16e00f27c35aadc8ccddc5e311319b0733d460d40c4d45d50"
+    },
+    {
+      "path": "p1-cancel8-init/work9-token.bin",
+      "bytes": 96,
+      "sha256": "8bc600d081a865a9492de0dc257316d5fa7f4a06e28c60027b449cefcac8a98f"
+    },
+    {
+      "path": "p2-cancel0-cancel/wal.frames-only",
+      "bytes": 42400,
+      "sha256": "6bbf0ceb8f9a58cfa20f5d59a64c26c9161399904ce25749cd656a4c16e4d1ac"
+    },
+    {
+      "path": "p2-cancel0-cancel/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel0-cancel/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p2-cancel0-cancel/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p2-cancel0-cancel/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p2-cancel0-cancel/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "42e1f099d365e85ecba0eba9a92098689bdf417c29759fc7dea401e74659e0dc"
+    },
+    {
+      "path": "p2-cancel0-cancel/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "b2104e4528c9871db15027b361b464a07883d2dbe99f2458412533b3817dce61"
+    },
+    {
+      "path": "p2-cancel0-cancel/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "8b718058feab9aae77e444314d50cb3a45a12858b9def024d3839c12614ad22d"
+    },
+    {
+      "path": "p2-cancel0-cancel/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "50febfc4495e2bd0b68892f320eeb552e63ebca430f3c9ef354fc1a13309fdf0"
+    },
+    {
+      "path": "p2-cancel0-cancel/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p2-cancel0-init/wal.frames-only",
+      "bytes": 59200,
+      "sha256": "5b8975c3b83737643794cb44cd3720cc23ef16746a26da1fccd0838405b96c0c"
+    },
+    {
+      "path": "p2-cancel0-init/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "17d7a60c2ec1b702a5d38531ed0c10d4dd3dec3b3d947de37bc980158ca3d37b"
+    },
+    {
+      "path": "p2-cancel0-init/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p2-cancel0-init/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p2-cancel0-init/work1-init.delta",
+      "bytes": 208,
+      "sha256": "c4bc3be20764575d14eef802c4dd60ef5b8f5858847bdf457086e53aef3f13cc"
+    },
+    {
+      "path": "p2-cancel0-init/work1-init.descriptor",
+      "bytes": 1536,
+      "sha256": "96332ce0959838974fd0e260ed32139a6f505274529456da754d883fec7368a5"
+    },
+    {
+      "path": "p2-cancel0-init/work1-init.wal",
+      "bytes": 38000,
+      "sha256": "120acc6351a227da433af587cb307672ee9c208b22c54f3b9da26ea0ae7829a1"
+    },
+    {
+      "path": "p2-cancel0-init/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "8b718058feab9aae77e444314d50cb3a45a12858b9def024d3839c12614ad22d"
+    },
+    {
+      "path": "p2-cancel0-init/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "50febfc4495e2bd0b68892f320eeb552e63ebca430f3c9ef354fc1a13309fdf0"
+    },
+    {
+      "path": "p2-cancel0-init/work1-status.after",
+      "bytes": 16384,
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "p2-cancel0-init/work1-status.home",
+      "bytes": 224,
+      "sha256": "148e608d3514dae16e00f27c35aadc8ccddc5e311319b0733d460d40c4d45d50"
+    },
+    {
+      "path": "p2-cancel0-init/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p2-cancel1-cancel/wal.frames-only",
+      "bytes": 84800,
+      "sha256": "b269ec711fa27cf74c2c3bdac372ce0f8f0596849900738e256fa629d8458353"
+    },
+    {
+      "path": "p2-cancel1-cancel/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel1-cancel/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p2-cancel1-cancel/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p2-cancel1-cancel/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p2-cancel1-cancel/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "42e1f099d365e85ecba0eba9a92098689bdf417c29759fc7dea401e74659e0dc"
+    },
+    {
+      "path": "p2-cancel1-cancel/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "b2104e4528c9871db15027b361b464a07883d2dbe99f2458412533b3817dce61"
+    },
+    {
+      "path": "p2-cancel1-cancel/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "8b718058feab9aae77e444314d50cb3a45a12858b9def024d3839c12614ad22d"
+    },
+    {
+      "path": "p2-cancel1-cancel/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "50febfc4495e2bd0b68892f320eeb552e63ebca430f3c9ef354fc1a13309fdf0"
+    },
+    {
+      "path": "p2-cancel1-cancel/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p2-cancel1-cancel/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p2-cancel1-cancel/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel1-cancel/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p2-cancel1-cancel/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p2-cancel1-cancel/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "40d8408d32cd2b940aff57a274e3ef1e5c65f15267c0b529ca65da5a3c794cab"
+    },
+    {
+      "path": "p2-cancel1-cancel/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "52e5153e70e61987e763fbb164ed930f1422428422850b063dd5617138d6ef16"
+    },
+    {
+      "path": "p2-cancel1-cancel/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "228489e75ee2562cc8f7e8467e8c2b828189c525246b0307c6769c36c00f3820"
+    },
+    {
+      "path": "p2-cancel1-cancel/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9e1b7121a5147c6d858b537e4a155d5784d3b3dee1878f0502c07d3414894762"
+    },
+    {
+      "path": "p2-cancel1-cancel/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p2-cancel1-init/wal.frames-only",
+      "bytes": 101600,
+      "sha256": "05e42ed067f5e47633c6fb84f7c4a3fe33b7badd7f2f734fb24f25a5f65a8ad6"
+    },
+    {
+      "path": "p2-cancel1-init/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel1-init/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p2-cancel1-init/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p2-cancel1-init/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p2-cancel1-init/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "42e1f099d365e85ecba0eba9a92098689bdf417c29759fc7dea401e74659e0dc"
+    },
+    {
+      "path": "p2-cancel1-init/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "b2104e4528c9871db15027b361b464a07883d2dbe99f2458412533b3817dce61"
+    },
+    {
+      "path": "p2-cancel1-init/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "8b718058feab9aae77e444314d50cb3a45a12858b9def024d3839c12614ad22d"
+    },
+    {
+      "path": "p2-cancel1-init/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "50febfc4495e2bd0b68892f320eeb552e63ebca430f3c9ef354fc1a13309fdf0"
+    },
+    {
+      "path": "p2-cancel1-init/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p2-cancel1-init/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "046ad904e39e3d2873cdf31f8d05729261d0cd33fabaa58c8abd332f5c185a81"
+    },
+    {
+      "path": "p2-cancel1-init/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel1-init/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p2-cancel1-init/work2-init.delta",
+      "bytes": 208,
+      "sha256": "7ca93b99d654b1b352eab4d0d554e3146fe1544cdbe5a2fd8bf11356e48282b1"
+    },
+    {
+      "path": "p2-cancel1-init/work2-init.descriptor",
+      "bytes": 1536,
+      "sha256": "5e117f19a75a20de3c4c62f43a7ff896e238ac3ea886b10dd6f6ff0a5f5d5996"
+    },
+    {
+      "path": "p2-cancel1-init/work2-init.wal",
+      "bytes": 38000,
+      "sha256": "d6721fbe906d3da74c074658113266e1157280f586c93175263ab0cce910b10a"
+    },
+    {
+      "path": "p2-cancel1-init/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "228489e75ee2562cc8f7e8467e8c2b828189c525246b0307c6769c36c00f3820"
+    },
+    {
+      "path": "p2-cancel1-init/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9e1b7121a5147c6d858b537e4a155d5784d3b3dee1878f0502c07d3414894762"
+    },
+    {
+      "path": "p2-cancel1-init/work2-status.after",
+      "bytes": 16384,
+      "sha256": "91142dd11d4269ec9bd744cd1cc294f629a740e0146167379d0b9e5f3453049b"
+    },
+    {
+      "path": "p2-cancel1-init/work2-status.home",
+      "bytes": 224,
+      "sha256": "148e608d3514dae16e00f27c35aadc8ccddc5e311319b0733d460d40c4d45d50"
+    },
+    {
+      "path": "p2-cancel1-init/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p2-cancel2-cancel/wal.frames-only",
+      "bytes": 127200,
+      "sha256": "f804809b72db38a85dfe35a9b441c600787f19f9a53c2a3e93991e9e61a74069"
+    },
+    {
+      "path": "p2-cancel2-cancel/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel2-cancel/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p2-cancel2-cancel/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p2-cancel2-cancel/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p2-cancel2-cancel/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "42e1f099d365e85ecba0eba9a92098689bdf417c29759fc7dea401e74659e0dc"
+    },
+    {
+      "path": "p2-cancel2-cancel/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "b2104e4528c9871db15027b361b464a07883d2dbe99f2458412533b3817dce61"
+    },
+    {
+      "path": "p2-cancel2-cancel/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "8b718058feab9aae77e444314d50cb3a45a12858b9def024d3839c12614ad22d"
+    },
+    {
+      "path": "p2-cancel2-cancel/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "50febfc4495e2bd0b68892f320eeb552e63ebca430f3c9ef354fc1a13309fdf0"
+    },
+    {
+      "path": "p2-cancel2-cancel/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p2-cancel2-cancel/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p2-cancel2-cancel/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel2-cancel/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p2-cancel2-cancel/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p2-cancel2-cancel/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "40d8408d32cd2b940aff57a274e3ef1e5c65f15267c0b529ca65da5a3c794cab"
+    },
+    {
+      "path": "p2-cancel2-cancel/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "52e5153e70e61987e763fbb164ed930f1422428422850b063dd5617138d6ef16"
+    },
+    {
+      "path": "p2-cancel2-cancel/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "228489e75ee2562cc8f7e8467e8c2b828189c525246b0307c6769c36c00f3820"
+    },
+    {
+      "path": "p2-cancel2-cancel/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9e1b7121a5147c6d858b537e4a155d5784d3b3dee1878f0502c07d3414894762"
+    },
+    {
+      "path": "p2-cancel2-cancel/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p2-cancel2-cancel/work3-allocator.after",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p2-cancel2-cancel/work3-allocator.before",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p2-cancel2-cancel/work3-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "a0d09bebaf1c8cc83b2defbbb3ede15e5264d916c8634fbaf70145d736f62e53"
+    },
+    {
+      "path": "p2-cancel2-cancel/work3-cancel.delta",
+      "bytes": 208,
+      "sha256": "529a65056b5f8bfef24d348489f63ea28eedcd522c9c565084ec5eda84064006"
+    },
+    {
+      "path": "p2-cancel2-cancel/work3-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "15623aa7047ff67343e4f96e419b1e813ddec9e94306674f7c82c2db20de44ec"
+    },
+    {
+      "path": "p2-cancel2-cancel/work3-cancel.wal",
+      "bytes": 21200,
+      "sha256": "1139f3c3647487937cf74a21882bebfb24fb2e339334d61554b25a4969dd383a"
+    },
+    {
+      "path": "p2-cancel2-cancel/work3-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "e60a7130371d752dc9872b7ad8bb59cd97e5186496b41f0bb78084b38b070ec2"
+    },
+    {
+      "path": "p2-cancel2-cancel/work3-reserve.wal",
+      "bytes": 21200,
+      "sha256": "2170b781e0101b902d09b883db7ee82c217ec4bcb2f8db8ef9b65d34fded836e"
+    },
+    {
+      "path": "p2-cancel2-cancel/work3-token.bin",
+      "bytes": 96,
+      "sha256": "285c72b1e127cbc2c6d05a15ce330f5b9e4af84001778a67e1678cb34d465c74"
+    },
+    {
+      "path": "p2-cancel2-init/wal.frames-only",
+      "bytes": 144000,
+      "sha256": "cb7b0c1fac312a5f1e3487e708c0354c568199680e37a8b6bcfc667211e2b6d3"
+    },
+    {
+      "path": "p2-cancel2-init/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel2-init/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p2-cancel2-init/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p2-cancel2-init/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p2-cancel2-init/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "42e1f099d365e85ecba0eba9a92098689bdf417c29759fc7dea401e74659e0dc"
+    },
+    {
+      "path": "p2-cancel2-init/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "b2104e4528c9871db15027b361b464a07883d2dbe99f2458412533b3817dce61"
+    },
+    {
+      "path": "p2-cancel2-init/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "8b718058feab9aae77e444314d50cb3a45a12858b9def024d3839c12614ad22d"
+    },
+    {
+      "path": "p2-cancel2-init/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "50febfc4495e2bd0b68892f320eeb552e63ebca430f3c9ef354fc1a13309fdf0"
+    },
+    {
+      "path": "p2-cancel2-init/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p2-cancel2-init/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p2-cancel2-init/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel2-init/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p2-cancel2-init/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p2-cancel2-init/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "40d8408d32cd2b940aff57a274e3ef1e5c65f15267c0b529ca65da5a3c794cab"
+    },
+    {
+      "path": "p2-cancel2-init/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "52e5153e70e61987e763fbb164ed930f1422428422850b063dd5617138d6ef16"
+    },
+    {
+      "path": "p2-cancel2-init/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "228489e75ee2562cc8f7e8467e8c2b828189c525246b0307c6769c36c00f3820"
+    },
+    {
+      "path": "p2-cancel2-init/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9e1b7121a5147c6d858b537e4a155d5784d3b3dee1878f0502c07d3414894762"
+    },
+    {
+      "path": "p2-cancel2-init/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p2-cancel2-init/work3-allocator.after",
+      "bytes": 16384,
+      "sha256": "46b9aa20fd9c143c80899b7c36eed6116826e50cea39bd05243a5896e6ac31c7"
+    },
+    {
+      "path": "p2-cancel2-init/work3-allocator.before",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p2-cancel2-init/work3-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "a0d09bebaf1c8cc83b2defbbb3ede15e5264d916c8634fbaf70145d736f62e53"
+    },
+    {
+      "path": "p2-cancel2-init/work3-init.delta",
+      "bytes": 208,
+      "sha256": "8b4063fec1c12804251d9058c75d9a1051ed428482c325fb835598458dda51df"
+    },
+    {
+      "path": "p2-cancel2-init/work3-init.descriptor",
+      "bytes": 1536,
+      "sha256": "47fbd3bdccbe77028018a66ba2018da6755f69f843f3e0300b491b1a2f28f1e2"
+    },
+    {
+      "path": "p2-cancel2-init/work3-init.wal",
+      "bytes": 38000,
+      "sha256": "346d133ad6cb5195fa7a368daa00d7f537438befc5a6cd4635ffbc6a492f3a24"
+    },
+    {
+      "path": "p2-cancel2-init/work3-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "e60a7130371d752dc9872b7ad8bb59cd97e5186496b41f0bb78084b38b070ec2"
+    },
+    {
+      "path": "p2-cancel2-init/work3-reserve.wal",
+      "bytes": 21200,
+      "sha256": "2170b781e0101b902d09b883db7ee82c217ec4bcb2f8db8ef9b65d34fded836e"
+    },
+    {
+      "path": "p2-cancel2-init/work3-status.after",
+      "bytes": 16384,
+      "sha256": "bf1c8845af6fd18e944d40521fb14740e9bad5cc2bbe3cc7cc2ad4ffa069ee4a"
+    },
+    {
+      "path": "p2-cancel2-init/work3-status.home",
+      "bytes": 224,
+      "sha256": "148e608d3514dae16e00f27c35aadc8ccddc5e311319b0733d460d40c4d45d50"
+    },
+    {
+      "path": "p2-cancel2-init/work3-token.bin",
+      "bytes": 96,
+      "sha256": "285c72b1e127cbc2c6d05a15ce330f5b9e4af84001778a67e1678cb34d465c74"
+    },
+    {
+      "path": "p2-cancel8-cancel/wal.frames-only",
+      "bytes": 381600,
+      "sha256": "c199818ae902b33943d0018a6f2ef01ec0319f60d7ae8bb8c0391e104e6c6e6d"
+    },
+    {
+      "path": "p2-cancel8-cancel/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel8-cancel/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p2-cancel8-cancel/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p2-cancel8-cancel/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p2-cancel8-cancel/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "42e1f099d365e85ecba0eba9a92098689bdf417c29759fc7dea401e74659e0dc"
+    },
+    {
+      "path": "p2-cancel8-cancel/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "b2104e4528c9871db15027b361b464a07883d2dbe99f2458412533b3817dce61"
+    },
+    {
+      "path": "p2-cancel8-cancel/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "8b718058feab9aae77e444314d50cb3a45a12858b9def024d3839c12614ad22d"
+    },
+    {
+      "path": "p2-cancel8-cancel/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "50febfc4495e2bd0b68892f320eeb552e63ebca430f3c9ef354fc1a13309fdf0"
+    },
+    {
+      "path": "p2-cancel8-cancel/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p2-cancel8-cancel/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p2-cancel8-cancel/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel8-cancel/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p2-cancel8-cancel/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p2-cancel8-cancel/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "40d8408d32cd2b940aff57a274e3ef1e5c65f15267c0b529ca65da5a3c794cab"
+    },
+    {
+      "path": "p2-cancel8-cancel/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "52e5153e70e61987e763fbb164ed930f1422428422850b063dd5617138d6ef16"
+    },
+    {
+      "path": "p2-cancel8-cancel/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "228489e75ee2562cc8f7e8467e8c2b828189c525246b0307c6769c36c00f3820"
+    },
+    {
+      "path": "p2-cancel8-cancel/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9e1b7121a5147c6d858b537e4a155d5784d3b3dee1878f0502c07d3414894762"
+    },
+    {
+      "path": "p2-cancel8-cancel/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p2-cancel8-cancel/work3-allocator.after",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p2-cancel8-cancel/work3-allocator.before",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p2-cancel8-cancel/work3-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "a0d09bebaf1c8cc83b2defbbb3ede15e5264d916c8634fbaf70145d736f62e53"
+    },
+    {
+      "path": "p2-cancel8-cancel/work3-cancel.delta",
+      "bytes": 208,
+      "sha256": "529a65056b5f8bfef24d348489f63ea28eedcd522c9c565084ec5eda84064006"
+    },
+    {
+      "path": "p2-cancel8-cancel/work3-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "15623aa7047ff67343e4f96e419b1e813ddec9e94306674f7c82c2db20de44ec"
+    },
+    {
+      "path": "p2-cancel8-cancel/work3-cancel.wal",
+      "bytes": 21200,
+      "sha256": "1139f3c3647487937cf74a21882bebfb24fb2e339334d61554b25a4969dd383a"
+    },
+    {
+      "path": "p2-cancel8-cancel/work3-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "e60a7130371d752dc9872b7ad8bb59cd97e5186496b41f0bb78084b38b070ec2"
+    },
+    {
+      "path": "p2-cancel8-cancel/work3-reserve.wal",
+      "bytes": 21200,
+      "sha256": "2170b781e0101b902d09b883db7ee82c217ec4bcb2f8db8ef9b65d34fded836e"
+    },
+    {
+      "path": "p2-cancel8-cancel/work3-token.bin",
+      "bytes": 96,
+      "sha256": "285c72b1e127cbc2c6d05a15ce330f5b9e4af84001778a67e1678cb34d465c74"
+    },
+    {
+      "path": "p2-cancel8-cancel/work4-allocator.after",
+      "bytes": 16384,
+      "sha256": "902b29ccdb9000ec20c60d73e2603e237f266ab7f6dba3fc4a261938fe826a6e"
+    },
+    {
+      "path": "p2-cancel8-cancel/work4-allocator.before",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p2-cancel8-cancel/work4-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "e09a5f52363f8e499fab0456a6b28b205113d4c2bf5e57e6ec72df97015fe5a6"
+    },
+    {
+      "path": "p2-cancel8-cancel/work4-cancel.delta",
+      "bytes": 208,
+      "sha256": "b7efa5cfc8d0dd02be36a419cd1bc74b2d39e97ba1f4a7df0be732543396d78c"
+    },
+    {
+      "path": "p2-cancel8-cancel/work4-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "7f6f5b7839d8923f1203d27bc32662e89b266f1b6413e985d8ab72a79b98fa89"
+    },
+    {
+      "path": "p2-cancel8-cancel/work4-cancel.wal",
+      "bytes": 21200,
+      "sha256": "eae0c0e4057bf946e3fa18537a19f7985d566c546b1db143cdeb0d5cd5126c92"
+    },
+    {
+      "path": "p2-cancel8-cancel/work4-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "ffe7be5d10093a5d6e12fa83f60dd186fdc07f41b3cb32edc561164484872696"
+    },
+    {
+      "path": "p2-cancel8-cancel/work4-reserve.wal",
+      "bytes": 21200,
+      "sha256": "73094b98f6610d7ffb46a6f47715c171365450025ce9155edefe2d41cbc2b144"
+    },
+    {
+      "path": "p2-cancel8-cancel/work4-token.bin",
+      "bytes": 96,
+      "sha256": "f91b196c0de913fdecbb51ab3eb23b3da69b514b6f0465c037323f80a7cfb968"
+    },
+    {
+      "path": "p2-cancel8-cancel/work5-allocator.after",
+      "bytes": 16384,
+      "sha256": "74efc3b19664293c83893e552a0b7fccf6835bba05b41444655a086a06e886c2"
+    },
+    {
+      "path": "p2-cancel8-cancel/work5-allocator.before",
+      "bytes": 16384,
+      "sha256": "902b29ccdb9000ec20c60d73e2603e237f266ab7f6dba3fc4a261938fe826a6e"
+    },
+    {
+      "path": "p2-cancel8-cancel/work5-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "ee407d3b0b3cbe2c17a04fae6d5c040e9793abc597516545f7133508107c3e05"
+    },
+    {
+      "path": "p2-cancel8-cancel/work5-cancel.delta",
+      "bytes": 208,
+      "sha256": "185b77f53f7bf6e7014b2c97e3a7646811dd7741dd0b9b4faed905341c54679d"
+    },
+    {
+      "path": "p2-cancel8-cancel/work5-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "82cea8bc852ab3dcf81881c5f009c84f57603638a1048eca22c7f0c3570cbd26"
+    },
+    {
+      "path": "p2-cancel8-cancel/work5-cancel.wal",
+      "bytes": 21200,
+      "sha256": "727569c0316df64580284375ca44c46a3eea035cf6eb16f512ea88bca72e9b4b"
+    },
+    {
+      "path": "p2-cancel8-cancel/work5-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "fc7fbf39ad7fce909d183050125231120c35f37a21407f4d0169e0b799a5a2bd"
+    },
+    {
+      "path": "p2-cancel8-cancel/work5-reserve.wal",
+      "bytes": 21200,
+      "sha256": "3155bfe473db85b7abcad3ef570d527719e34dd1bcd9e9cc6cc7fa307759ccc8"
+    },
+    {
+      "path": "p2-cancel8-cancel/work5-token.bin",
+      "bytes": 96,
+      "sha256": "a5ee89ca648c16b5ac8e97958cfbaa406f8f450850fec4e6713bb3cb74e0509f"
+    },
+    {
+      "path": "p2-cancel8-cancel/work6-allocator.after",
+      "bytes": 16384,
+      "sha256": "dd5526a1964ced3800a9aa4a099acb4164bbd37ab415e8fadb906f70b02ef56e"
+    },
+    {
+      "path": "p2-cancel8-cancel/work6-allocator.before",
+      "bytes": 16384,
+      "sha256": "74efc3b19664293c83893e552a0b7fccf6835bba05b41444655a086a06e886c2"
+    },
+    {
+      "path": "p2-cancel8-cancel/work6-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "0876ebcc1f6df93fd803a6ccb957cb6623b41f6a4ed531987fffc3f574df7439"
+    },
+    {
+      "path": "p2-cancel8-cancel/work6-cancel.delta",
+      "bytes": 208,
+      "sha256": "27aa74a440daa2d5e0301347ccbd50506ec8024b8ffd2bef7a59e82d55d6e63a"
+    },
+    {
+      "path": "p2-cancel8-cancel/work6-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "420c6ea238acfa118b6b4ca2510f298070961929e3ff9bd9b53a32614aaf2365"
+    },
+    {
+      "path": "p2-cancel8-cancel/work6-cancel.wal",
+      "bytes": 21200,
+      "sha256": "08828171c1bcb60f3a5cf33c7d928be95b02c41c3ef08b2cad2b396916a0f8de"
+    },
+    {
+      "path": "p2-cancel8-cancel/work6-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "efecec5cf847eaa11aaeebceb850e63bde37afddfd84fa3ae3325edf997bcf66"
+    },
+    {
+      "path": "p2-cancel8-cancel/work6-reserve.wal",
+      "bytes": 21200,
+      "sha256": "4072c80d0c731173acc36cebbbbc278891e6615c5423edc13f91097bf272df16"
+    },
+    {
+      "path": "p2-cancel8-cancel/work6-token.bin",
+      "bytes": 96,
+      "sha256": "165a1c5228918154e439fbda8b5d8fc3cbd87c871729ad383590b93a9a6e4ef2"
+    },
+    {
+      "path": "p2-cancel8-cancel/work7-allocator.after",
+      "bytes": 16384,
+      "sha256": "eabd7a2a503d10e50d8702fe8d6dd05617aad9b1c8193a43400a2636d31c8dd8"
+    },
+    {
+      "path": "p2-cancel8-cancel/work7-allocator.before",
+      "bytes": 16384,
+      "sha256": "dd5526a1964ced3800a9aa4a099acb4164bbd37ab415e8fadb906f70b02ef56e"
+    },
+    {
+      "path": "p2-cancel8-cancel/work7-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "1f0928b07b002c376c0ea7c80ed46f56c7c718ec31113e33f9258ae19ea5d2d0"
+    },
+    {
+      "path": "p2-cancel8-cancel/work7-cancel.delta",
+      "bytes": 208,
+      "sha256": "d3ec20aa1fb7dba7b2efdf27c269d6c28018492e9b556129289539ef986ded1b"
+    },
+    {
+      "path": "p2-cancel8-cancel/work7-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "975608660e53f52ffb2ca3d194efcc36ede9ea63538275e0ffd73e4d7258b4df"
+    },
+    {
+      "path": "p2-cancel8-cancel/work7-cancel.wal",
+      "bytes": 21200,
+      "sha256": "fa84f3c16eac8122c6a33f1ce29901a3031e2579b85b66ce030810f5e6972279"
+    },
+    {
+      "path": "p2-cancel8-cancel/work7-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "a0340212fb4743718614cb9d6c5cacf4c9986aaae3a42f2250fbf6c605d0e2cf"
+    },
+    {
+      "path": "p2-cancel8-cancel/work7-reserve.wal",
+      "bytes": 21200,
+      "sha256": "0879eab8867bb1a22a1c9443689877bbdbde93e3b4e0e9d6b8c4ca8b72035d4f"
+    },
+    {
+      "path": "p2-cancel8-cancel/work7-token.bin",
+      "bytes": 96,
+      "sha256": "a8df7e830724b3fa65351dd7b6d3be33647318240115f4fcf6703a7a13aff48b"
+    },
+    {
+      "path": "p2-cancel8-cancel/work8-allocator.after",
+      "bytes": 16384,
+      "sha256": "4395c9000b185f1a9b8d735caa83782077a809a8fdcd2e6f40f99b4a7f5dbebe"
+    },
+    {
+      "path": "p2-cancel8-cancel/work8-allocator.before",
+      "bytes": 16384,
+      "sha256": "eabd7a2a503d10e50d8702fe8d6dd05617aad9b1c8193a43400a2636d31c8dd8"
+    },
+    {
+      "path": "p2-cancel8-cancel/work8-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "c6257ff13e48730719589524695a7f99d558ca3b4906d9beaaf30d6ccdbe041e"
+    },
+    {
+      "path": "p2-cancel8-cancel/work8-cancel.delta",
+      "bytes": 208,
+      "sha256": "7ea653bd9322ea7ace65ce795a57fab9eb402aabdc5cca7663ed172ec575ccba"
+    },
+    {
+      "path": "p2-cancel8-cancel/work8-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "bf303ea97b9142c5d933ec5fdebe455de177c170927382e4b7fb9952194efb68"
+    },
+    {
+      "path": "p2-cancel8-cancel/work8-cancel.wal",
+      "bytes": 21200,
+      "sha256": "8d4a0829df48cc2ed8f0a54674a851c73e0bfc2e1b5449cdd138ed91c9101e78"
+    },
+    {
+      "path": "p2-cancel8-cancel/work8-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "f87bc8acd9639191ea360dcf3089fe1d86ade5a4d3450058d2bba34f4e2618d9"
+    },
+    {
+      "path": "p2-cancel8-cancel/work8-reserve.wal",
+      "bytes": 21200,
+      "sha256": "a714f95d2eae70713a946dc674a68152ba06b2eaea66be2890f2a37bfea5872c"
+    },
+    {
+      "path": "p2-cancel8-cancel/work8-token.bin",
+      "bytes": 96,
+      "sha256": "57fcfca7eacf1473d5fd2a18d5f3a28e0a13fa8ea1a227e0d7315058bf907d13"
+    },
+    {
+      "path": "p2-cancel8-cancel/work9-allocator.after",
+      "bytes": 16384,
+      "sha256": "d9ae90c24ce6462686c69cab2595fddd045a38dae83523062a21de63c22e6046"
+    },
+    {
+      "path": "p2-cancel8-cancel/work9-allocator.before",
+      "bytes": 16384,
+      "sha256": "4395c9000b185f1a9b8d735caa83782077a809a8fdcd2e6f40f99b4a7f5dbebe"
+    },
+    {
+      "path": "p2-cancel8-cancel/work9-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "4c533dcb608970af41b1fd7889a67485d900d9ffd0f60d0c18b659b5b0c4cdd7"
+    },
+    {
+      "path": "p2-cancel8-cancel/work9-cancel.delta",
+      "bytes": 208,
+      "sha256": "3615b01b365d14be2b039f8726dcd269078e7df11c5bf2ad345eb5491e0388a8"
+    },
+    {
+      "path": "p2-cancel8-cancel/work9-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "7d33dc41a86cc68e5cef16dbc68af4fa2c2c547683f0c136b91d29f44ae40f88"
+    },
+    {
+      "path": "p2-cancel8-cancel/work9-cancel.wal",
+      "bytes": 21200,
+      "sha256": "4aa4fe6b7ceea42868439df498b6666e317191f63db6649cd40cb66f2ab5b60b"
+    },
+    {
+      "path": "p2-cancel8-cancel/work9-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "c31f3618df48db47f86cba920220e7e4fc21fcf8ea22f66005a11cd733213ae2"
+    },
+    {
+      "path": "p2-cancel8-cancel/work9-reserve.wal",
+      "bytes": 21200,
+      "sha256": "b15b3c6d1331b12945a577655c3ace477c056fd2f187d7fe56ac3057d7e1374a"
+    },
+    {
+      "path": "p2-cancel8-cancel/work9-token.bin",
+      "bytes": 96,
+      "sha256": "8bc600d081a865a9492de0dc257316d5fa7f4a06e28c60027b449cefcac8a98f"
+    },
+    {
+      "path": "p2-cancel8-init/wal.frames-only",
+      "bytes": 398400,
+      "sha256": "da829e972acefbb09e611e619275ab1aa859958f15a4ae710917309b67f4cff2"
+    },
+    {
+      "path": "p2-cancel8-init/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel8-init/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p2-cancel8-init/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p2-cancel8-init/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p2-cancel8-init/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "42e1f099d365e85ecba0eba9a92098689bdf417c29759fc7dea401e74659e0dc"
+    },
+    {
+      "path": "p2-cancel8-init/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "b2104e4528c9871db15027b361b464a07883d2dbe99f2458412533b3817dce61"
+    },
+    {
+      "path": "p2-cancel8-init/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "8b718058feab9aae77e444314d50cb3a45a12858b9def024d3839c12614ad22d"
+    },
+    {
+      "path": "p2-cancel8-init/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "50febfc4495e2bd0b68892f320eeb552e63ebca430f3c9ef354fc1a13309fdf0"
+    },
+    {
+      "path": "p2-cancel8-init/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p2-cancel8-init/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p2-cancel8-init/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p2-cancel8-init/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p2-cancel8-init/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p2-cancel8-init/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "40d8408d32cd2b940aff57a274e3ef1e5c65f15267c0b529ca65da5a3c794cab"
+    },
+    {
+      "path": "p2-cancel8-init/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "52e5153e70e61987e763fbb164ed930f1422428422850b063dd5617138d6ef16"
+    },
+    {
+      "path": "p2-cancel8-init/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "228489e75ee2562cc8f7e8467e8c2b828189c525246b0307c6769c36c00f3820"
+    },
+    {
+      "path": "p2-cancel8-init/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "9e1b7121a5147c6d858b537e4a155d5784d3b3dee1878f0502c07d3414894762"
+    },
+    {
+      "path": "p2-cancel8-init/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p2-cancel8-init/work3-allocator.after",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p2-cancel8-init/work3-allocator.before",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p2-cancel8-init/work3-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "a0d09bebaf1c8cc83b2defbbb3ede15e5264d916c8634fbaf70145d736f62e53"
+    },
+    {
+      "path": "p2-cancel8-init/work3-cancel.delta",
+      "bytes": 208,
+      "sha256": "529a65056b5f8bfef24d348489f63ea28eedcd522c9c565084ec5eda84064006"
+    },
+    {
+      "path": "p2-cancel8-init/work3-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "15623aa7047ff67343e4f96e419b1e813ddec9e94306674f7c82c2db20de44ec"
+    },
+    {
+      "path": "p2-cancel8-init/work3-cancel.wal",
+      "bytes": 21200,
+      "sha256": "1139f3c3647487937cf74a21882bebfb24fb2e339334d61554b25a4969dd383a"
+    },
+    {
+      "path": "p2-cancel8-init/work3-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "e60a7130371d752dc9872b7ad8bb59cd97e5186496b41f0bb78084b38b070ec2"
+    },
+    {
+      "path": "p2-cancel8-init/work3-reserve.wal",
+      "bytes": 21200,
+      "sha256": "2170b781e0101b902d09b883db7ee82c217ec4bcb2f8db8ef9b65d34fded836e"
+    },
+    {
+      "path": "p2-cancel8-init/work3-token.bin",
+      "bytes": 96,
+      "sha256": "285c72b1e127cbc2c6d05a15ce330f5b9e4af84001778a67e1678cb34d465c74"
+    },
+    {
+      "path": "p2-cancel8-init/work4-allocator.after",
+      "bytes": 16384,
+      "sha256": "902b29ccdb9000ec20c60d73e2603e237f266ab7f6dba3fc4a261938fe826a6e"
+    },
+    {
+      "path": "p2-cancel8-init/work4-allocator.before",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p2-cancel8-init/work4-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "e09a5f52363f8e499fab0456a6b28b205113d4c2bf5e57e6ec72df97015fe5a6"
+    },
+    {
+      "path": "p2-cancel8-init/work4-cancel.delta",
+      "bytes": 208,
+      "sha256": "b7efa5cfc8d0dd02be36a419cd1bc74b2d39e97ba1f4a7df0be732543396d78c"
+    },
+    {
+      "path": "p2-cancel8-init/work4-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "7f6f5b7839d8923f1203d27bc32662e89b266f1b6413e985d8ab72a79b98fa89"
+    },
+    {
+      "path": "p2-cancel8-init/work4-cancel.wal",
+      "bytes": 21200,
+      "sha256": "eae0c0e4057bf946e3fa18537a19f7985d566c546b1db143cdeb0d5cd5126c92"
+    },
+    {
+      "path": "p2-cancel8-init/work4-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "ffe7be5d10093a5d6e12fa83f60dd186fdc07f41b3cb32edc561164484872696"
+    },
+    {
+      "path": "p2-cancel8-init/work4-reserve.wal",
+      "bytes": 21200,
+      "sha256": "73094b98f6610d7ffb46a6f47715c171365450025ce9155edefe2d41cbc2b144"
+    },
+    {
+      "path": "p2-cancel8-init/work4-token.bin",
+      "bytes": 96,
+      "sha256": "f91b196c0de913fdecbb51ab3eb23b3da69b514b6f0465c037323f80a7cfb968"
+    },
+    {
+      "path": "p2-cancel8-init/work5-allocator.after",
+      "bytes": 16384,
+      "sha256": "74efc3b19664293c83893e552a0b7fccf6835bba05b41444655a086a06e886c2"
+    },
+    {
+      "path": "p2-cancel8-init/work5-allocator.before",
+      "bytes": 16384,
+      "sha256": "902b29ccdb9000ec20c60d73e2603e237f266ab7f6dba3fc4a261938fe826a6e"
+    },
+    {
+      "path": "p2-cancel8-init/work5-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "ee407d3b0b3cbe2c17a04fae6d5c040e9793abc597516545f7133508107c3e05"
+    },
+    {
+      "path": "p2-cancel8-init/work5-cancel.delta",
+      "bytes": 208,
+      "sha256": "185b77f53f7bf6e7014b2c97e3a7646811dd7741dd0b9b4faed905341c54679d"
+    },
+    {
+      "path": "p2-cancel8-init/work5-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "82cea8bc852ab3dcf81881c5f009c84f57603638a1048eca22c7f0c3570cbd26"
+    },
+    {
+      "path": "p2-cancel8-init/work5-cancel.wal",
+      "bytes": 21200,
+      "sha256": "727569c0316df64580284375ca44c46a3eea035cf6eb16f512ea88bca72e9b4b"
+    },
+    {
+      "path": "p2-cancel8-init/work5-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "fc7fbf39ad7fce909d183050125231120c35f37a21407f4d0169e0b799a5a2bd"
+    },
+    {
+      "path": "p2-cancel8-init/work5-reserve.wal",
+      "bytes": 21200,
+      "sha256": "3155bfe473db85b7abcad3ef570d527719e34dd1bcd9e9cc6cc7fa307759ccc8"
+    },
+    {
+      "path": "p2-cancel8-init/work5-token.bin",
+      "bytes": 96,
+      "sha256": "a5ee89ca648c16b5ac8e97958cfbaa406f8f450850fec4e6713bb3cb74e0509f"
+    },
+    {
+      "path": "p2-cancel8-init/work6-allocator.after",
+      "bytes": 16384,
+      "sha256": "dd5526a1964ced3800a9aa4a099acb4164bbd37ab415e8fadb906f70b02ef56e"
+    },
+    {
+      "path": "p2-cancel8-init/work6-allocator.before",
+      "bytes": 16384,
+      "sha256": "74efc3b19664293c83893e552a0b7fccf6835bba05b41444655a086a06e886c2"
+    },
+    {
+      "path": "p2-cancel8-init/work6-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "0876ebcc1f6df93fd803a6ccb957cb6623b41f6a4ed531987fffc3f574df7439"
+    },
+    {
+      "path": "p2-cancel8-init/work6-cancel.delta",
+      "bytes": 208,
+      "sha256": "27aa74a440daa2d5e0301347ccbd50506ec8024b8ffd2bef7a59e82d55d6e63a"
+    },
+    {
+      "path": "p2-cancel8-init/work6-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "420c6ea238acfa118b6b4ca2510f298070961929e3ff9bd9b53a32614aaf2365"
+    },
+    {
+      "path": "p2-cancel8-init/work6-cancel.wal",
+      "bytes": 21200,
+      "sha256": "08828171c1bcb60f3a5cf33c7d928be95b02c41c3ef08b2cad2b396916a0f8de"
+    },
+    {
+      "path": "p2-cancel8-init/work6-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "efecec5cf847eaa11aaeebceb850e63bde37afddfd84fa3ae3325edf997bcf66"
+    },
+    {
+      "path": "p2-cancel8-init/work6-reserve.wal",
+      "bytes": 21200,
+      "sha256": "4072c80d0c731173acc36cebbbbc278891e6615c5423edc13f91097bf272df16"
+    },
+    {
+      "path": "p2-cancel8-init/work6-token.bin",
+      "bytes": 96,
+      "sha256": "165a1c5228918154e439fbda8b5d8fc3cbd87c871729ad383590b93a9a6e4ef2"
+    },
+    {
+      "path": "p2-cancel8-init/work7-allocator.after",
+      "bytes": 16384,
+      "sha256": "eabd7a2a503d10e50d8702fe8d6dd05617aad9b1c8193a43400a2636d31c8dd8"
+    },
+    {
+      "path": "p2-cancel8-init/work7-allocator.before",
+      "bytes": 16384,
+      "sha256": "dd5526a1964ced3800a9aa4a099acb4164bbd37ab415e8fadb906f70b02ef56e"
+    },
+    {
+      "path": "p2-cancel8-init/work7-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "1f0928b07b002c376c0ea7c80ed46f56c7c718ec31113e33f9258ae19ea5d2d0"
+    },
+    {
+      "path": "p2-cancel8-init/work7-cancel.delta",
+      "bytes": 208,
+      "sha256": "d3ec20aa1fb7dba7b2efdf27c269d6c28018492e9b556129289539ef986ded1b"
+    },
+    {
+      "path": "p2-cancel8-init/work7-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "975608660e53f52ffb2ca3d194efcc36ede9ea63538275e0ffd73e4d7258b4df"
+    },
+    {
+      "path": "p2-cancel8-init/work7-cancel.wal",
+      "bytes": 21200,
+      "sha256": "fa84f3c16eac8122c6a33f1ce29901a3031e2579b85b66ce030810f5e6972279"
+    },
+    {
+      "path": "p2-cancel8-init/work7-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "a0340212fb4743718614cb9d6c5cacf4c9986aaae3a42f2250fbf6c605d0e2cf"
+    },
+    {
+      "path": "p2-cancel8-init/work7-reserve.wal",
+      "bytes": 21200,
+      "sha256": "0879eab8867bb1a22a1c9443689877bbdbde93e3b4e0e9d6b8c4ca8b72035d4f"
+    },
+    {
+      "path": "p2-cancel8-init/work7-token.bin",
+      "bytes": 96,
+      "sha256": "a8df7e830724b3fa65351dd7b6d3be33647318240115f4fcf6703a7a13aff48b"
+    },
+    {
+      "path": "p2-cancel8-init/work8-allocator.after",
+      "bytes": 16384,
+      "sha256": "4395c9000b185f1a9b8d735caa83782077a809a8fdcd2e6f40f99b4a7f5dbebe"
+    },
+    {
+      "path": "p2-cancel8-init/work8-allocator.before",
+      "bytes": 16384,
+      "sha256": "eabd7a2a503d10e50d8702fe8d6dd05617aad9b1c8193a43400a2636d31c8dd8"
+    },
+    {
+      "path": "p2-cancel8-init/work8-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "c6257ff13e48730719589524695a7f99d558ca3b4906d9beaaf30d6ccdbe041e"
+    },
+    {
+      "path": "p2-cancel8-init/work8-cancel.delta",
+      "bytes": 208,
+      "sha256": "7ea653bd9322ea7ace65ce795a57fab9eb402aabdc5cca7663ed172ec575ccba"
+    },
+    {
+      "path": "p2-cancel8-init/work8-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "bf303ea97b9142c5d933ec5fdebe455de177c170927382e4b7fb9952194efb68"
+    },
+    {
+      "path": "p2-cancel8-init/work8-cancel.wal",
+      "bytes": 21200,
+      "sha256": "8d4a0829df48cc2ed8f0a54674a851c73e0bfc2e1b5449cdd138ed91c9101e78"
+    },
+    {
+      "path": "p2-cancel8-init/work8-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "f87bc8acd9639191ea360dcf3089fe1d86ade5a4d3450058d2bba34f4e2618d9"
+    },
+    {
+      "path": "p2-cancel8-init/work8-reserve.wal",
+      "bytes": 21200,
+      "sha256": "a714f95d2eae70713a946dc674a68152ba06b2eaea66be2890f2a37bfea5872c"
+    },
+    {
+      "path": "p2-cancel8-init/work8-token.bin",
+      "bytes": 96,
+      "sha256": "57fcfca7eacf1473d5fd2a18d5f3a28e0a13fa8ea1a227e0d7315058bf907d13"
+    },
+    {
+      "path": "p2-cancel8-init/work9-allocator.after",
+      "bytes": 16384,
+      "sha256": "5bbd913992a3f6739835bc31e1ee3ff4c22672f5b04a216116cdb7bf7f978ceb"
+    },
+    {
+      "path": "p2-cancel8-init/work9-allocator.before",
+      "bytes": 16384,
+      "sha256": "4395c9000b185f1a9b8d735caa83782077a809a8fdcd2e6f40f99b4a7f5dbebe"
+    },
+    {
+      "path": "p2-cancel8-init/work9-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "4c533dcb608970af41b1fd7889a67485d900d9ffd0f60d0c18b659b5b0c4cdd7"
+    },
+    {
+      "path": "p2-cancel8-init/work9-init.delta",
+      "bytes": 208,
+      "sha256": "d6909004e57899f7c7ce0ce1d04e5451ff95deab4c3fa67a577eec159cc074a2"
+    },
+    {
+      "path": "p2-cancel8-init/work9-init.descriptor",
+      "bytes": 1536,
+      "sha256": "9565f4174f84acc101d94093a93df598f1bfab72ae56087eebbcef04b3d8194f"
+    },
+    {
+      "path": "p2-cancel8-init/work9-init.wal",
+      "bytes": 38000,
+      "sha256": "add18b4503d681172b71a9c0b3026c675f54eefa618b8b23750d67309021abf4"
+    },
+    {
+      "path": "p2-cancel8-init/work9-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "c31f3618df48db47f86cba920220e7e4fc21fcf8ea22f66005a11cd733213ae2"
+    },
+    {
+      "path": "p2-cancel8-init/work9-reserve.wal",
+      "bytes": 21200,
+      "sha256": "b15b3c6d1331b12945a577655c3ace477c056fd2f187d7fe56ac3057d7e1374a"
+    },
+    {
+      "path": "p2-cancel8-init/work9-status.after",
+      "bytes": 16384,
+      "sha256": "0c30cbdd3a0f71c1798eb2674a8ddd5c50937be0d05b227c44e051777f5bcf24"
+    },
+    {
+      "path": "p2-cancel8-init/work9-status.home",
+      "bytes": 224,
+      "sha256": "148e608d3514dae16e00f27c35aadc8ccddc5e311319b0733d460d40c4d45d50"
+    },
+    {
+      "path": "p2-cancel8-init/work9-token.bin",
+      "bytes": 96,
+      "sha256": "8bc600d081a865a9492de0dc257316d5fa7f4a06e28c60027b449cefcac8a98f"
+    },
+    {
+      "path": "p3-cancel0-cancel/wal.frames-only",
+      "bytes": 42400,
+      "sha256": "03ccbc72c9b8122d1e5be4f58260d106b58470530db6e28dc4c488cabb9b6643"
+    },
+    {
+      "path": "p3-cancel0-cancel/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel0-cancel/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p3-cancel0-cancel/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p3-cancel0-cancel/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p3-cancel0-cancel/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "7f736e5b9e027296c5c94e8a8e5b27425511653c2fc8e5834a6409a8ff94d2b1"
+    },
+    {
+      "path": "p3-cancel0-cancel/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "87b4534bb4c62886147a4edf6d8715c82125720dfd5c7b0d315883d9e06abf6b"
+    },
+    {
+      "path": "p3-cancel0-cancel/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "5dae280f25440d434af9b4019f778800cca8914ad1e86681f92007a4d03ed041"
+    },
+    {
+      "path": "p3-cancel0-cancel/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "71a01e31d439783b02d3c407eb8bca641cbbaf940c7b037cc9c2d47595f8d5de"
+    },
+    {
+      "path": "p3-cancel0-cancel/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p3-cancel0-init/wal.frames-only",
+      "bytes": 59200,
+      "sha256": "1ebc6392280bf95b9bb6e819f1b09a79f7528bdd489814b5ba9c016ebfead038"
+    },
+    {
+      "path": "p3-cancel0-init/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "17d7a60c2ec1b702a5d38531ed0c10d4dd3dec3b3d947de37bc980158ca3d37b"
+    },
+    {
+      "path": "p3-cancel0-init/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p3-cancel0-init/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p3-cancel0-init/work1-init.delta",
+      "bytes": 208,
+      "sha256": "c4bc3be20764575d14eef802c4dd60ef5b8f5858847bdf457086e53aef3f13cc"
+    },
+    {
+      "path": "p3-cancel0-init/work1-init.descriptor",
+      "bytes": 1536,
+      "sha256": "bbf9af4c1353f5825dbc91af44d7fad71c37728b93786233fd521f7080001fc1"
+    },
+    {
+      "path": "p3-cancel0-init/work1-init.wal",
+      "bytes": 38000,
+      "sha256": "9c7051545325d18906a80734aa70e8b5063f0a7e5be8be9ef93e7c4880f9b0d7"
+    },
+    {
+      "path": "p3-cancel0-init/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "5dae280f25440d434af9b4019f778800cca8914ad1e86681f92007a4d03ed041"
+    },
+    {
+      "path": "p3-cancel0-init/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "71a01e31d439783b02d3c407eb8bca641cbbaf940c7b037cc9c2d47595f8d5de"
+    },
+    {
+      "path": "p3-cancel0-init/work1-status.after",
+      "bytes": 16384,
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "p3-cancel0-init/work1-status.home",
+      "bytes": 224,
+      "sha256": "148e608d3514dae16e00f27c35aadc8ccddc5e311319b0733d460d40c4d45d50"
+    },
+    {
+      "path": "p3-cancel0-init/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p3-cancel1-cancel/wal.frames-only",
+      "bytes": 84800,
+      "sha256": "b27b163555660e9dabb672aef9390aa78ecb4435919f15c6ec55ca3824ff4b3c"
+    },
+    {
+      "path": "p3-cancel1-cancel/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel1-cancel/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p3-cancel1-cancel/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p3-cancel1-cancel/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p3-cancel1-cancel/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "7f736e5b9e027296c5c94e8a8e5b27425511653c2fc8e5834a6409a8ff94d2b1"
+    },
+    {
+      "path": "p3-cancel1-cancel/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "87b4534bb4c62886147a4edf6d8715c82125720dfd5c7b0d315883d9e06abf6b"
+    },
+    {
+      "path": "p3-cancel1-cancel/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "5dae280f25440d434af9b4019f778800cca8914ad1e86681f92007a4d03ed041"
+    },
+    {
+      "path": "p3-cancel1-cancel/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "71a01e31d439783b02d3c407eb8bca641cbbaf940c7b037cc9c2d47595f8d5de"
+    },
+    {
+      "path": "p3-cancel1-cancel/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p3-cancel1-cancel/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p3-cancel1-cancel/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel1-cancel/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p3-cancel1-cancel/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p3-cancel1-cancel/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "064c7f68c7b832e44e5bfa8593aeb9fd70f84fb9ca514673dba46e184253486d"
+    },
+    {
+      "path": "p3-cancel1-cancel/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "54171f8ba7ce0076a9404e312f1ab74994d6ecd2e745f463a323a6b295d6e947"
+    },
+    {
+      "path": "p3-cancel1-cancel/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2e4e1f14af4663b407cd05c9b79ebf66e1b64c4e37ed1b6dbd83ed48e416b57e"
+    },
+    {
+      "path": "p3-cancel1-cancel/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "0c8c97be306fa5e1331ea8084da91be09e3ed5c4aae0a7655d471e24b630e79f"
+    },
+    {
+      "path": "p3-cancel1-cancel/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p3-cancel1-init/wal.frames-only",
+      "bytes": 101600,
+      "sha256": "a2bcb909775f989e61d3bbb214f9461c7028d7a0b70d7d484932392e06f28070"
+    },
+    {
+      "path": "p3-cancel1-init/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel1-init/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p3-cancel1-init/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p3-cancel1-init/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p3-cancel1-init/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "7f736e5b9e027296c5c94e8a8e5b27425511653c2fc8e5834a6409a8ff94d2b1"
+    },
+    {
+      "path": "p3-cancel1-init/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "87b4534bb4c62886147a4edf6d8715c82125720dfd5c7b0d315883d9e06abf6b"
+    },
+    {
+      "path": "p3-cancel1-init/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "5dae280f25440d434af9b4019f778800cca8914ad1e86681f92007a4d03ed041"
+    },
+    {
+      "path": "p3-cancel1-init/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "71a01e31d439783b02d3c407eb8bca641cbbaf940c7b037cc9c2d47595f8d5de"
+    },
+    {
+      "path": "p3-cancel1-init/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p3-cancel1-init/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "046ad904e39e3d2873cdf31f8d05729261d0cd33fabaa58c8abd332f5c185a81"
+    },
+    {
+      "path": "p3-cancel1-init/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel1-init/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p3-cancel1-init/work2-init.delta",
+      "bytes": 208,
+      "sha256": "7ca93b99d654b1b352eab4d0d554e3146fe1544cdbe5a2fd8bf11356e48282b1"
+    },
+    {
+      "path": "p3-cancel1-init/work2-init.descriptor",
+      "bytes": 1536,
+      "sha256": "b70cc05349ff8df02c2089b38cde3d154e09d8e5c02d6cac2f35f04f1abba2f0"
+    },
+    {
+      "path": "p3-cancel1-init/work2-init.wal",
+      "bytes": 38000,
+      "sha256": "ed430e6c09ae9b9ccd9ddcce751638247dbe1bedc386f6056f65b0b89f28c76c"
+    },
+    {
+      "path": "p3-cancel1-init/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2e4e1f14af4663b407cd05c9b79ebf66e1b64c4e37ed1b6dbd83ed48e416b57e"
+    },
+    {
+      "path": "p3-cancel1-init/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "0c8c97be306fa5e1331ea8084da91be09e3ed5c4aae0a7655d471e24b630e79f"
+    },
+    {
+      "path": "p3-cancel1-init/work2-status.after",
+      "bytes": 16384,
+      "sha256": "91142dd11d4269ec9bd744cd1cc294f629a740e0146167379d0b9e5f3453049b"
+    },
+    {
+      "path": "p3-cancel1-init/work2-status.home",
+      "bytes": 224,
+      "sha256": "148e608d3514dae16e00f27c35aadc8ccddc5e311319b0733d460d40c4d45d50"
+    },
+    {
+      "path": "p3-cancel1-init/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p3-cancel2-cancel/wal.frames-only",
+      "bytes": 127200,
+      "sha256": "e535cf112ca66e27b7ba0d9b2379926b81b9621c07125bdd7cadeb28a5c70a41"
+    },
+    {
+      "path": "p3-cancel2-cancel/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel2-cancel/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p3-cancel2-cancel/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p3-cancel2-cancel/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p3-cancel2-cancel/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "7f736e5b9e027296c5c94e8a8e5b27425511653c2fc8e5834a6409a8ff94d2b1"
+    },
+    {
+      "path": "p3-cancel2-cancel/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "87b4534bb4c62886147a4edf6d8715c82125720dfd5c7b0d315883d9e06abf6b"
+    },
+    {
+      "path": "p3-cancel2-cancel/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "5dae280f25440d434af9b4019f778800cca8914ad1e86681f92007a4d03ed041"
+    },
+    {
+      "path": "p3-cancel2-cancel/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "71a01e31d439783b02d3c407eb8bca641cbbaf940c7b037cc9c2d47595f8d5de"
+    },
+    {
+      "path": "p3-cancel2-cancel/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p3-cancel2-cancel/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p3-cancel2-cancel/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel2-cancel/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p3-cancel2-cancel/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p3-cancel2-cancel/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "064c7f68c7b832e44e5bfa8593aeb9fd70f84fb9ca514673dba46e184253486d"
+    },
+    {
+      "path": "p3-cancel2-cancel/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "54171f8ba7ce0076a9404e312f1ab74994d6ecd2e745f463a323a6b295d6e947"
+    },
+    {
+      "path": "p3-cancel2-cancel/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2e4e1f14af4663b407cd05c9b79ebf66e1b64c4e37ed1b6dbd83ed48e416b57e"
+    },
+    {
+      "path": "p3-cancel2-cancel/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "0c8c97be306fa5e1331ea8084da91be09e3ed5c4aae0a7655d471e24b630e79f"
+    },
+    {
+      "path": "p3-cancel2-cancel/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p3-cancel2-cancel/work3-allocator.after",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p3-cancel2-cancel/work3-allocator.before",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p3-cancel2-cancel/work3-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "a0d09bebaf1c8cc83b2defbbb3ede15e5264d916c8634fbaf70145d736f62e53"
+    },
+    {
+      "path": "p3-cancel2-cancel/work3-cancel.delta",
+      "bytes": 208,
+      "sha256": "529a65056b5f8bfef24d348489f63ea28eedcd522c9c565084ec5eda84064006"
+    },
+    {
+      "path": "p3-cancel2-cancel/work3-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "aa6feb710d531ad240e3ddb7cfb39340cde5471cdddb735e82835f9c10f04b3e"
+    },
+    {
+      "path": "p3-cancel2-cancel/work3-cancel.wal",
+      "bytes": 21200,
+      "sha256": "0472196b4e2c385a42a38d9f3d1d6ccb9ad4adfefbb41d47d4a90e9039cd0c2d"
+    },
+    {
+      "path": "p3-cancel2-cancel/work3-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "ed4f3a65a31de4bc49d9e0b7f047aa97b61bd110d4300f407bae3275d62d7ec6"
+    },
+    {
+      "path": "p3-cancel2-cancel/work3-reserve.wal",
+      "bytes": 21200,
+      "sha256": "f0ea8ba8631ddf78d341e98d89036a93d824706e98a57210e846130fe0e643b9"
+    },
+    {
+      "path": "p3-cancel2-cancel/work3-token.bin",
+      "bytes": 96,
+      "sha256": "285c72b1e127cbc2c6d05a15ce330f5b9e4af84001778a67e1678cb34d465c74"
+    },
+    {
+      "path": "p3-cancel2-init/wal.frames-only",
+      "bytes": 144000,
+      "sha256": "95005f0152531165bf9aade50e23bd703f1a375bfe9ff6e43ed8bc91225b4a5e"
+    },
+    {
+      "path": "p3-cancel2-init/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel2-init/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p3-cancel2-init/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p3-cancel2-init/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p3-cancel2-init/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "7f736e5b9e027296c5c94e8a8e5b27425511653c2fc8e5834a6409a8ff94d2b1"
+    },
+    {
+      "path": "p3-cancel2-init/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "87b4534bb4c62886147a4edf6d8715c82125720dfd5c7b0d315883d9e06abf6b"
+    },
+    {
+      "path": "p3-cancel2-init/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "5dae280f25440d434af9b4019f778800cca8914ad1e86681f92007a4d03ed041"
+    },
+    {
+      "path": "p3-cancel2-init/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "71a01e31d439783b02d3c407eb8bca641cbbaf940c7b037cc9c2d47595f8d5de"
+    },
+    {
+      "path": "p3-cancel2-init/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p3-cancel2-init/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p3-cancel2-init/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel2-init/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p3-cancel2-init/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p3-cancel2-init/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "064c7f68c7b832e44e5bfa8593aeb9fd70f84fb9ca514673dba46e184253486d"
+    },
+    {
+      "path": "p3-cancel2-init/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "54171f8ba7ce0076a9404e312f1ab74994d6ecd2e745f463a323a6b295d6e947"
+    },
+    {
+      "path": "p3-cancel2-init/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2e4e1f14af4663b407cd05c9b79ebf66e1b64c4e37ed1b6dbd83ed48e416b57e"
+    },
+    {
+      "path": "p3-cancel2-init/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "0c8c97be306fa5e1331ea8084da91be09e3ed5c4aae0a7655d471e24b630e79f"
+    },
+    {
+      "path": "p3-cancel2-init/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p3-cancel2-init/work3-allocator.after",
+      "bytes": 16384,
+      "sha256": "46b9aa20fd9c143c80899b7c36eed6116826e50cea39bd05243a5896e6ac31c7"
+    },
+    {
+      "path": "p3-cancel2-init/work3-allocator.before",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p3-cancel2-init/work3-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "a0d09bebaf1c8cc83b2defbbb3ede15e5264d916c8634fbaf70145d736f62e53"
+    },
+    {
+      "path": "p3-cancel2-init/work3-init.delta",
+      "bytes": 208,
+      "sha256": "8b4063fec1c12804251d9058c75d9a1051ed428482c325fb835598458dda51df"
+    },
+    {
+      "path": "p3-cancel2-init/work3-init.descriptor",
+      "bytes": 1536,
+      "sha256": "a634bafddb1def51711181c14c58be41375e165c64e5da7dbe8718fd0a3e355b"
+    },
+    {
+      "path": "p3-cancel2-init/work3-init.wal",
+      "bytes": 38000,
+      "sha256": "235ea57b065e5ab831875f4b874e8b977f025d0ab7d9bf47028589f07c7e1fcb"
+    },
+    {
+      "path": "p3-cancel2-init/work3-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "ed4f3a65a31de4bc49d9e0b7f047aa97b61bd110d4300f407bae3275d62d7ec6"
+    },
+    {
+      "path": "p3-cancel2-init/work3-reserve.wal",
+      "bytes": 21200,
+      "sha256": "f0ea8ba8631ddf78d341e98d89036a93d824706e98a57210e846130fe0e643b9"
+    },
+    {
+      "path": "p3-cancel2-init/work3-status.after",
+      "bytes": 16384,
+      "sha256": "bf1c8845af6fd18e944d40521fb14740e9bad5cc2bbe3cc7cc2ad4ffa069ee4a"
+    },
+    {
+      "path": "p3-cancel2-init/work3-status.home",
+      "bytes": 224,
+      "sha256": "148e608d3514dae16e00f27c35aadc8ccddc5e311319b0733d460d40c4d45d50"
+    },
+    {
+      "path": "p3-cancel2-init/work3-token.bin",
+      "bytes": 96,
+      "sha256": "285c72b1e127cbc2c6d05a15ce330f5b9e4af84001778a67e1678cb34d465c74"
+    },
+    {
+      "path": "p3-cancel8-cancel/wal.frames-only",
+      "bytes": 381600,
+      "sha256": "cf061c11b906c086232ef7d0c09e26992d2cb7b5dbcb06679a72551fa08162d9"
+    },
+    {
+      "path": "p3-cancel8-cancel/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel8-cancel/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p3-cancel8-cancel/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p3-cancel8-cancel/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p3-cancel8-cancel/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "7f736e5b9e027296c5c94e8a8e5b27425511653c2fc8e5834a6409a8ff94d2b1"
+    },
+    {
+      "path": "p3-cancel8-cancel/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "87b4534bb4c62886147a4edf6d8715c82125720dfd5c7b0d315883d9e06abf6b"
+    },
+    {
+      "path": "p3-cancel8-cancel/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "5dae280f25440d434af9b4019f778800cca8914ad1e86681f92007a4d03ed041"
+    },
+    {
+      "path": "p3-cancel8-cancel/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "71a01e31d439783b02d3c407eb8bca641cbbaf940c7b037cc9c2d47595f8d5de"
+    },
+    {
+      "path": "p3-cancel8-cancel/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p3-cancel8-cancel/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p3-cancel8-cancel/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel8-cancel/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p3-cancel8-cancel/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p3-cancel8-cancel/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "064c7f68c7b832e44e5bfa8593aeb9fd70f84fb9ca514673dba46e184253486d"
+    },
+    {
+      "path": "p3-cancel8-cancel/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "54171f8ba7ce0076a9404e312f1ab74994d6ecd2e745f463a323a6b295d6e947"
+    },
+    {
+      "path": "p3-cancel8-cancel/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2e4e1f14af4663b407cd05c9b79ebf66e1b64c4e37ed1b6dbd83ed48e416b57e"
+    },
+    {
+      "path": "p3-cancel8-cancel/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "0c8c97be306fa5e1331ea8084da91be09e3ed5c4aae0a7655d471e24b630e79f"
+    },
+    {
+      "path": "p3-cancel8-cancel/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p3-cancel8-cancel/work3-allocator.after",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p3-cancel8-cancel/work3-allocator.before",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p3-cancel8-cancel/work3-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "a0d09bebaf1c8cc83b2defbbb3ede15e5264d916c8634fbaf70145d736f62e53"
+    },
+    {
+      "path": "p3-cancel8-cancel/work3-cancel.delta",
+      "bytes": 208,
+      "sha256": "529a65056b5f8bfef24d348489f63ea28eedcd522c9c565084ec5eda84064006"
+    },
+    {
+      "path": "p3-cancel8-cancel/work3-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "aa6feb710d531ad240e3ddb7cfb39340cde5471cdddb735e82835f9c10f04b3e"
+    },
+    {
+      "path": "p3-cancel8-cancel/work3-cancel.wal",
+      "bytes": 21200,
+      "sha256": "0472196b4e2c385a42a38d9f3d1d6ccb9ad4adfefbb41d47d4a90e9039cd0c2d"
+    },
+    {
+      "path": "p3-cancel8-cancel/work3-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "ed4f3a65a31de4bc49d9e0b7f047aa97b61bd110d4300f407bae3275d62d7ec6"
+    },
+    {
+      "path": "p3-cancel8-cancel/work3-reserve.wal",
+      "bytes": 21200,
+      "sha256": "f0ea8ba8631ddf78d341e98d89036a93d824706e98a57210e846130fe0e643b9"
+    },
+    {
+      "path": "p3-cancel8-cancel/work3-token.bin",
+      "bytes": 96,
+      "sha256": "285c72b1e127cbc2c6d05a15ce330f5b9e4af84001778a67e1678cb34d465c74"
+    },
+    {
+      "path": "p3-cancel8-cancel/work4-allocator.after",
+      "bytes": 16384,
+      "sha256": "902b29ccdb9000ec20c60d73e2603e237f266ab7f6dba3fc4a261938fe826a6e"
+    },
+    {
+      "path": "p3-cancel8-cancel/work4-allocator.before",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p3-cancel8-cancel/work4-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "e09a5f52363f8e499fab0456a6b28b205113d4c2bf5e57e6ec72df97015fe5a6"
+    },
+    {
+      "path": "p3-cancel8-cancel/work4-cancel.delta",
+      "bytes": 208,
+      "sha256": "b7efa5cfc8d0dd02be36a419cd1bc74b2d39e97ba1f4a7df0be732543396d78c"
+    },
+    {
+      "path": "p3-cancel8-cancel/work4-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "de757492324e740f675914b875f70e527aa2748be7bd0ebac519e3a65dff07f2"
+    },
+    {
+      "path": "p3-cancel8-cancel/work4-cancel.wal",
+      "bytes": 21200,
+      "sha256": "f1ef0d5823ef66b1018a9dd36493b4275685718329f96d9d267fd0af8092219c"
+    },
+    {
+      "path": "p3-cancel8-cancel/work4-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "c1e54f9f1bc3679d09369193a1edc1795c9f429b3ae08196307d4ba1bc0c4c1a"
+    },
+    {
+      "path": "p3-cancel8-cancel/work4-reserve.wal",
+      "bytes": 21200,
+      "sha256": "86f0c2dfcc581f504b00272089ae0e38f4b33435fcc5b304a3477a4741543caf"
+    },
+    {
+      "path": "p3-cancel8-cancel/work4-token.bin",
+      "bytes": 96,
+      "sha256": "f91b196c0de913fdecbb51ab3eb23b3da69b514b6f0465c037323f80a7cfb968"
+    },
+    {
+      "path": "p3-cancel8-cancel/work5-allocator.after",
+      "bytes": 16384,
+      "sha256": "74efc3b19664293c83893e552a0b7fccf6835bba05b41444655a086a06e886c2"
+    },
+    {
+      "path": "p3-cancel8-cancel/work5-allocator.before",
+      "bytes": 16384,
+      "sha256": "902b29ccdb9000ec20c60d73e2603e237f266ab7f6dba3fc4a261938fe826a6e"
+    },
+    {
+      "path": "p3-cancel8-cancel/work5-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "ee407d3b0b3cbe2c17a04fae6d5c040e9793abc597516545f7133508107c3e05"
+    },
+    {
+      "path": "p3-cancel8-cancel/work5-cancel.delta",
+      "bytes": 208,
+      "sha256": "185b77f53f7bf6e7014b2c97e3a7646811dd7741dd0b9b4faed905341c54679d"
+    },
+    {
+      "path": "p3-cancel8-cancel/work5-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "a9358ff8855ea631c1e6e2f996bdef88381380eb87ea3534c83d5f56c4d53a3c"
+    },
+    {
+      "path": "p3-cancel8-cancel/work5-cancel.wal",
+      "bytes": 21200,
+      "sha256": "92c7db9902790976eddf40942f2803472682cd3094a31a60e0aadbebc3b13352"
+    },
+    {
+      "path": "p3-cancel8-cancel/work5-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "1654b3c096898e973504829821744d49e2f64181c44d90ab29f35593927e4e76"
+    },
+    {
+      "path": "p3-cancel8-cancel/work5-reserve.wal",
+      "bytes": 21200,
+      "sha256": "a458434d1ef0aae2ef36772dbbb26a89652e15da0fd2c83a35f6bc44d5867dd6"
+    },
+    {
+      "path": "p3-cancel8-cancel/work5-token.bin",
+      "bytes": 96,
+      "sha256": "a5ee89ca648c16b5ac8e97958cfbaa406f8f450850fec4e6713bb3cb74e0509f"
+    },
+    {
+      "path": "p3-cancel8-cancel/work6-allocator.after",
+      "bytes": 16384,
+      "sha256": "dd5526a1964ced3800a9aa4a099acb4164bbd37ab415e8fadb906f70b02ef56e"
+    },
+    {
+      "path": "p3-cancel8-cancel/work6-allocator.before",
+      "bytes": 16384,
+      "sha256": "74efc3b19664293c83893e552a0b7fccf6835bba05b41444655a086a06e886c2"
+    },
+    {
+      "path": "p3-cancel8-cancel/work6-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "0876ebcc1f6df93fd803a6ccb957cb6623b41f6a4ed531987fffc3f574df7439"
+    },
+    {
+      "path": "p3-cancel8-cancel/work6-cancel.delta",
+      "bytes": 208,
+      "sha256": "27aa74a440daa2d5e0301347ccbd50506ec8024b8ffd2bef7a59e82d55d6e63a"
+    },
+    {
+      "path": "p3-cancel8-cancel/work6-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "d4ee2ecaf543c95710690b72d0ae07cc314184356b406a279374ad31cf984b7f"
+    },
+    {
+      "path": "p3-cancel8-cancel/work6-cancel.wal",
+      "bytes": 21200,
+      "sha256": "fd95252697adbe0cca3914537874f42262b449fa6d766fe7781f553d275519d2"
+    },
+    {
+      "path": "p3-cancel8-cancel/work6-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "99f541191a9f73f9809fd08f6351a3d32104583092ec42fdaa25e0c3f119946b"
+    },
+    {
+      "path": "p3-cancel8-cancel/work6-reserve.wal",
+      "bytes": 21200,
+      "sha256": "aa3c2647e6ceab6d0a0779d0c42bb8c9223c6b50befff86efd3f1576362c4bdd"
+    },
+    {
+      "path": "p3-cancel8-cancel/work6-token.bin",
+      "bytes": 96,
+      "sha256": "165a1c5228918154e439fbda8b5d8fc3cbd87c871729ad383590b93a9a6e4ef2"
+    },
+    {
+      "path": "p3-cancel8-cancel/work7-allocator.after",
+      "bytes": 16384,
+      "sha256": "eabd7a2a503d10e50d8702fe8d6dd05617aad9b1c8193a43400a2636d31c8dd8"
+    },
+    {
+      "path": "p3-cancel8-cancel/work7-allocator.before",
+      "bytes": 16384,
+      "sha256": "dd5526a1964ced3800a9aa4a099acb4164bbd37ab415e8fadb906f70b02ef56e"
+    },
+    {
+      "path": "p3-cancel8-cancel/work7-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "1f0928b07b002c376c0ea7c80ed46f56c7c718ec31113e33f9258ae19ea5d2d0"
+    },
+    {
+      "path": "p3-cancel8-cancel/work7-cancel.delta",
+      "bytes": 208,
+      "sha256": "d3ec20aa1fb7dba7b2efdf27c269d6c28018492e9b556129289539ef986ded1b"
+    },
+    {
+      "path": "p3-cancel8-cancel/work7-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "c0c193ae3c8d3251a2320841b1d368d33b9700abc46a9006523fb7ec965532f2"
+    },
+    {
+      "path": "p3-cancel8-cancel/work7-cancel.wal",
+      "bytes": 21200,
+      "sha256": "785a9e49262b9ef7f383209aa9f133e09fbb25a8c45a31f68a702b5e17307552"
+    },
+    {
+      "path": "p3-cancel8-cancel/work7-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "62b44bbf44cf9f0c0f3e32ad4a54cd9eae81bb6143134bc690400cc14a5a5857"
+    },
+    {
+      "path": "p3-cancel8-cancel/work7-reserve.wal",
+      "bytes": 21200,
+      "sha256": "1c04a512360c9797d5bfcc969e8be5f963ea31556117f53414f64249f0ab92fa"
+    },
+    {
+      "path": "p3-cancel8-cancel/work7-token.bin",
+      "bytes": 96,
+      "sha256": "a8df7e830724b3fa65351dd7b6d3be33647318240115f4fcf6703a7a13aff48b"
+    },
+    {
+      "path": "p3-cancel8-cancel/work8-allocator.after",
+      "bytes": 16384,
+      "sha256": "4395c9000b185f1a9b8d735caa83782077a809a8fdcd2e6f40f99b4a7f5dbebe"
+    },
+    {
+      "path": "p3-cancel8-cancel/work8-allocator.before",
+      "bytes": 16384,
+      "sha256": "eabd7a2a503d10e50d8702fe8d6dd05617aad9b1c8193a43400a2636d31c8dd8"
+    },
+    {
+      "path": "p3-cancel8-cancel/work8-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "c6257ff13e48730719589524695a7f99d558ca3b4906d9beaaf30d6ccdbe041e"
+    },
+    {
+      "path": "p3-cancel8-cancel/work8-cancel.delta",
+      "bytes": 208,
+      "sha256": "7ea653bd9322ea7ace65ce795a57fab9eb402aabdc5cca7663ed172ec575ccba"
+    },
+    {
+      "path": "p3-cancel8-cancel/work8-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "6441e3d9a9cf9a08e5a32178737b1a252dd12c077b4685f7f091ef530c1a26ff"
+    },
+    {
+      "path": "p3-cancel8-cancel/work8-cancel.wal",
+      "bytes": 21200,
+      "sha256": "7f26b894ebb74926e37d8290a64af73abc940a641ccfd38e92df14c4b81d8951"
+    },
+    {
+      "path": "p3-cancel8-cancel/work8-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "3fcfd2224eb2eb8f2cf051d09186bce52e50822c1eb64edc564c285495309636"
+    },
+    {
+      "path": "p3-cancel8-cancel/work8-reserve.wal",
+      "bytes": 21200,
+      "sha256": "5372ce01561a1d14e45706352525fd97e7d80bac84987e44ccfdda2c729d6672"
+    },
+    {
+      "path": "p3-cancel8-cancel/work8-token.bin",
+      "bytes": 96,
+      "sha256": "57fcfca7eacf1473d5fd2a18d5f3a28e0a13fa8ea1a227e0d7315058bf907d13"
+    },
+    {
+      "path": "p3-cancel8-cancel/work9-allocator.after",
+      "bytes": 16384,
+      "sha256": "d9ae90c24ce6462686c69cab2595fddd045a38dae83523062a21de63c22e6046"
+    },
+    {
+      "path": "p3-cancel8-cancel/work9-allocator.before",
+      "bytes": 16384,
+      "sha256": "4395c9000b185f1a9b8d735caa83782077a809a8fdcd2e6f40f99b4a7f5dbebe"
+    },
+    {
+      "path": "p3-cancel8-cancel/work9-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "4c533dcb608970af41b1fd7889a67485d900d9ffd0f60d0c18b659b5b0c4cdd7"
+    },
+    {
+      "path": "p3-cancel8-cancel/work9-cancel.delta",
+      "bytes": 208,
+      "sha256": "3615b01b365d14be2b039f8726dcd269078e7df11c5bf2ad345eb5491e0388a8"
+    },
+    {
+      "path": "p3-cancel8-cancel/work9-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "67711c92fb6ca6a72f34bc18dfdafa638794f397feac0b9b54b7ad8e3438280e"
+    },
+    {
+      "path": "p3-cancel8-cancel/work9-cancel.wal",
+      "bytes": 21200,
+      "sha256": "007de04689418619b969b42ba7f12b20c942b5ccea0bf93018652a58aa80e417"
+    },
+    {
+      "path": "p3-cancel8-cancel/work9-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "1ea75f446b79cb9360bb668e442f9c7df3c388eca10396622ba27d92338b11ee"
+    },
+    {
+      "path": "p3-cancel8-cancel/work9-reserve.wal",
+      "bytes": 21200,
+      "sha256": "1f43ae20f490f9993072c5ffa6c5c169ccb0ae59a2d11bae1f4b6b7b2274bf2f"
+    },
+    {
+      "path": "p3-cancel8-cancel/work9-token.bin",
+      "bytes": 96,
+      "sha256": "8bc600d081a865a9492de0dc257316d5fa7f4a06e28c60027b449cefcac8a98f"
+    },
+    {
+      "path": "p3-cancel8-init/wal.frames-only",
+      "bytes": 398400,
+      "sha256": "5f5d247b6d93fa4a03ceb44d83e6bb23b7c6e1b2ebf1441d914588ade7e79016"
+    },
+    {
+      "path": "p3-cancel8-init/work1-allocator.after",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel8-init/work1-allocator.before",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "p3-cancel8-init/work1-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47"
+    },
+    {
+      "path": "p3-cancel8-init/work1-cancel.delta",
+      "bytes": 208,
+      "sha256": "b9d0f90c6350161aae7e77eb62d6c2644ed49cd2e2531359c1880e23441c9875"
+    },
+    {
+      "path": "p3-cancel8-init/work1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "7f736e5b9e027296c5c94e8a8e5b27425511653c2fc8e5834a6409a8ff94d2b1"
+    },
+    {
+      "path": "p3-cancel8-init/work1-cancel.wal",
+      "bytes": 21200,
+      "sha256": "87b4534bb4c62886147a4edf6d8715c82125720dfd5c7b0d315883d9e06abf6b"
+    },
+    {
+      "path": "p3-cancel8-init/work1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "5dae280f25440d434af9b4019f778800cca8914ad1e86681f92007a4d03ed041"
+    },
+    {
+      "path": "p3-cancel8-init/work1-reserve.wal",
+      "bytes": 21200,
+      "sha256": "71a01e31d439783b02d3c407eb8bca641cbbaf940c7b037cc9c2d47595f8d5de"
+    },
+    {
+      "path": "p3-cancel8-init/work1-token.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a"
+    },
+    {
+      "path": "p3-cancel8-init/work2-allocator.after",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p3-cancel8-init/work2-allocator.before",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8"
+    },
+    {
+      "path": "p3-cancel8-init/work2-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "af6bcace8cfb38f089b6e6b1e2c8c760e2460c312d9d64aefc47e83ac34b2dbc"
+    },
+    {
+      "path": "p3-cancel8-init/work2-cancel.delta",
+      "bytes": 208,
+      "sha256": "2ac60429ad866a0ee75edd2593ada5c79652d46e4b60dd7fdc6c6d4cd792c521"
+    },
+    {
+      "path": "p3-cancel8-init/work2-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "064c7f68c7b832e44e5bfa8593aeb9fd70f84fb9ca514673dba46e184253486d"
+    },
+    {
+      "path": "p3-cancel8-init/work2-cancel.wal",
+      "bytes": 21200,
+      "sha256": "54171f8ba7ce0076a9404e312f1ab74994d6ecd2e745f463a323a6b295d6e947"
+    },
+    {
+      "path": "p3-cancel8-init/work2-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "2e4e1f14af4663b407cd05c9b79ebf66e1b64c4e37ed1b6dbd83ed48e416b57e"
+    },
+    {
+      "path": "p3-cancel8-init/work2-reserve.wal",
+      "bytes": 21200,
+      "sha256": "0c8c97be306fa5e1331ea8084da91be09e3ed5c4aae0a7655d471e24b630e79f"
+    },
+    {
+      "path": "p3-cancel8-init/work2-token.bin",
+      "bytes": 96,
+      "sha256": "7e67800096b7eb2d2264263801061d84644525b8d2621d45ab9c2312a54db53c"
+    },
+    {
+      "path": "p3-cancel8-init/work3-allocator.after",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p3-cancel8-init/work3-allocator.before",
+      "bytes": 16384,
+      "sha256": "7834e0b84d43a348742c5b2b63317ec3d7f112579c0209393c9d03d5112d4c85"
+    },
+    {
+      "path": "p3-cancel8-init/work3-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "a0d09bebaf1c8cc83b2defbbb3ede15e5264d916c8634fbaf70145d736f62e53"
+    },
+    {
+      "path": "p3-cancel8-init/work3-cancel.delta",
+      "bytes": 208,
+      "sha256": "529a65056b5f8bfef24d348489f63ea28eedcd522c9c565084ec5eda84064006"
+    },
+    {
+      "path": "p3-cancel8-init/work3-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "aa6feb710d531ad240e3ddb7cfb39340cde5471cdddb735e82835f9c10f04b3e"
+    },
+    {
+      "path": "p3-cancel8-init/work3-cancel.wal",
+      "bytes": 21200,
+      "sha256": "0472196b4e2c385a42a38d9f3d1d6ccb9ad4adfefbb41d47d4a90e9039cd0c2d"
+    },
+    {
+      "path": "p3-cancel8-init/work3-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "ed4f3a65a31de4bc49d9e0b7f047aa97b61bd110d4300f407bae3275d62d7ec6"
+    },
+    {
+      "path": "p3-cancel8-init/work3-reserve.wal",
+      "bytes": 21200,
+      "sha256": "f0ea8ba8631ddf78d341e98d89036a93d824706e98a57210e846130fe0e643b9"
+    },
+    {
+      "path": "p3-cancel8-init/work3-token.bin",
+      "bytes": 96,
+      "sha256": "285c72b1e127cbc2c6d05a15ce330f5b9e4af84001778a67e1678cb34d465c74"
+    },
+    {
+      "path": "p3-cancel8-init/work4-allocator.after",
+      "bytes": 16384,
+      "sha256": "902b29ccdb9000ec20c60d73e2603e237f266ab7f6dba3fc4a261938fe826a6e"
+    },
+    {
+      "path": "p3-cancel8-init/work4-allocator.before",
+      "bytes": 16384,
+      "sha256": "769fb5f18b08a2497df3e4d6b4a247267b070577d9657fd78c8d321908a03d2e"
+    },
+    {
+      "path": "p3-cancel8-init/work4-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "e09a5f52363f8e499fab0456a6b28b205113d4c2bf5e57e6ec72df97015fe5a6"
+    },
+    {
+      "path": "p3-cancel8-init/work4-cancel.delta",
+      "bytes": 208,
+      "sha256": "b7efa5cfc8d0dd02be36a419cd1bc74b2d39e97ba1f4a7df0be732543396d78c"
+    },
+    {
+      "path": "p3-cancel8-init/work4-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "de757492324e740f675914b875f70e527aa2748be7bd0ebac519e3a65dff07f2"
+    },
+    {
+      "path": "p3-cancel8-init/work4-cancel.wal",
+      "bytes": 21200,
+      "sha256": "f1ef0d5823ef66b1018a9dd36493b4275685718329f96d9d267fd0af8092219c"
+    },
+    {
+      "path": "p3-cancel8-init/work4-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "c1e54f9f1bc3679d09369193a1edc1795c9f429b3ae08196307d4ba1bc0c4c1a"
+    },
+    {
+      "path": "p3-cancel8-init/work4-reserve.wal",
+      "bytes": 21200,
+      "sha256": "86f0c2dfcc581f504b00272089ae0e38f4b33435fcc5b304a3477a4741543caf"
+    },
+    {
+      "path": "p3-cancel8-init/work4-token.bin",
+      "bytes": 96,
+      "sha256": "f91b196c0de913fdecbb51ab3eb23b3da69b514b6f0465c037323f80a7cfb968"
+    },
+    {
+      "path": "p3-cancel8-init/work5-allocator.after",
+      "bytes": 16384,
+      "sha256": "74efc3b19664293c83893e552a0b7fccf6835bba05b41444655a086a06e886c2"
+    },
+    {
+      "path": "p3-cancel8-init/work5-allocator.before",
+      "bytes": 16384,
+      "sha256": "902b29ccdb9000ec20c60d73e2603e237f266ab7f6dba3fc4a261938fe826a6e"
+    },
+    {
+      "path": "p3-cancel8-init/work5-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "ee407d3b0b3cbe2c17a04fae6d5c040e9793abc597516545f7133508107c3e05"
+    },
+    {
+      "path": "p3-cancel8-init/work5-cancel.delta",
+      "bytes": 208,
+      "sha256": "185b77f53f7bf6e7014b2c97e3a7646811dd7741dd0b9b4faed905341c54679d"
+    },
+    {
+      "path": "p3-cancel8-init/work5-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "a9358ff8855ea631c1e6e2f996bdef88381380eb87ea3534c83d5f56c4d53a3c"
+    },
+    {
+      "path": "p3-cancel8-init/work5-cancel.wal",
+      "bytes": 21200,
+      "sha256": "92c7db9902790976eddf40942f2803472682cd3094a31a60e0aadbebc3b13352"
+    },
+    {
+      "path": "p3-cancel8-init/work5-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "1654b3c096898e973504829821744d49e2f64181c44d90ab29f35593927e4e76"
+    },
+    {
+      "path": "p3-cancel8-init/work5-reserve.wal",
+      "bytes": 21200,
+      "sha256": "a458434d1ef0aae2ef36772dbbb26a89652e15da0fd2c83a35f6bc44d5867dd6"
+    },
+    {
+      "path": "p3-cancel8-init/work5-token.bin",
+      "bytes": 96,
+      "sha256": "a5ee89ca648c16b5ac8e97958cfbaa406f8f450850fec4e6713bb3cb74e0509f"
+    },
+    {
+      "path": "p3-cancel8-init/work6-allocator.after",
+      "bytes": 16384,
+      "sha256": "dd5526a1964ced3800a9aa4a099acb4164bbd37ab415e8fadb906f70b02ef56e"
+    },
+    {
+      "path": "p3-cancel8-init/work6-allocator.before",
+      "bytes": 16384,
+      "sha256": "74efc3b19664293c83893e552a0b7fccf6835bba05b41444655a086a06e886c2"
+    },
+    {
+      "path": "p3-cancel8-init/work6-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "0876ebcc1f6df93fd803a6ccb957cb6623b41f6a4ed531987fffc3f574df7439"
+    },
+    {
+      "path": "p3-cancel8-init/work6-cancel.delta",
+      "bytes": 208,
+      "sha256": "27aa74a440daa2d5e0301347ccbd50506ec8024b8ffd2bef7a59e82d55d6e63a"
+    },
+    {
+      "path": "p3-cancel8-init/work6-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "d4ee2ecaf543c95710690b72d0ae07cc314184356b406a279374ad31cf984b7f"
+    },
+    {
+      "path": "p3-cancel8-init/work6-cancel.wal",
+      "bytes": 21200,
+      "sha256": "fd95252697adbe0cca3914537874f42262b449fa6d766fe7781f553d275519d2"
+    },
+    {
+      "path": "p3-cancel8-init/work6-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "99f541191a9f73f9809fd08f6351a3d32104583092ec42fdaa25e0c3f119946b"
+    },
+    {
+      "path": "p3-cancel8-init/work6-reserve.wal",
+      "bytes": 21200,
+      "sha256": "aa3c2647e6ceab6d0a0779d0c42bb8c9223c6b50befff86efd3f1576362c4bdd"
+    },
+    {
+      "path": "p3-cancel8-init/work6-token.bin",
+      "bytes": 96,
+      "sha256": "165a1c5228918154e439fbda8b5d8fc3cbd87c871729ad383590b93a9a6e4ef2"
+    },
+    {
+      "path": "p3-cancel8-init/work7-allocator.after",
+      "bytes": 16384,
+      "sha256": "eabd7a2a503d10e50d8702fe8d6dd05617aad9b1c8193a43400a2636d31c8dd8"
+    },
+    {
+      "path": "p3-cancel8-init/work7-allocator.before",
+      "bytes": 16384,
+      "sha256": "dd5526a1964ced3800a9aa4a099acb4164bbd37ab415e8fadb906f70b02ef56e"
+    },
+    {
+      "path": "p3-cancel8-init/work7-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "1f0928b07b002c376c0ea7c80ed46f56c7c718ec31113e33f9258ae19ea5d2d0"
+    },
+    {
+      "path": "p3-cancel8-init/work7-cancel.delta",
+      "bytes": 208,
+      "sha256": "d3ec20aa1fb7dba7b2efdf27c269d6c28018492e9b556129289539ef986ded1b"
+    },
+    {
+      "path": "p3-cancel8-init/work7-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "c0c193ae3c8d3251a2320841b1d368d33b9700abc46a9006523fb7ec965532f2"
+    },
+    {
+      "path": "p3-cancel8-init/work7-cancel.wal",
+      "bytes": 21200,
+      "sha256": "785a9e49262b9ef7f383209aa9f133e09fbb25a8c45a31f68a702b5e17307552"
+    },
+    {
+      "path": "p3-cancel8-init/work7-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "62b44bbf44cf9f0c0f3e32ad4a54cd9eae81bb6143134bc690400cc14a5a5857"
+    },
+    {
+      "path": "p3-cancel8-init/work7-reserve.wal",
+      "bytes": 21200,
+      "sha256": "1c04a512360c9797d5bfcc969e8be5f963ea31556117f53414f64249f0ab92fa"
+    },
+    {
+      "path": "p3-cancel8-init/work7-token.bin",
+      "bytes": 96,
+      "sha256": "a8df7e830724b3fa65351dd7b6d3be33647318240115f4fcf6703a7a13aff48b"
+    },
+    {
+      "path": "p3-cancel8-init/work8-allocator.after",
+      "bytes": 16384,
+      "sha256": "4395c9000b185f1a9b8d735caa83782077a809a8fdcd2e6f40f99b4a7f5dbebe"
+    },
+    {
+      "path": "p3-cancel8-init/work8-allocator.before",
+      "bytes": 16384,
+      "sha256": "eabd7a2a503d10e50d8702fe8d6dd05617aad9b1c8193a43400a2636d31c8dd8"
+    },
+    {
+      "path": "p3-cancel8-init/work8-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "c6257ff13e48730719589524695a7f99d558ca3b4906d9beaaf30d6ccdbe041e"
+    },
+    {
+      "path": "p3-cancel8-init/work8-cancel.delta",
+      "bytes": 208,
+      "sha256": "7ea653bd9322ea7ace65ce795a57fab9eb402aabdc5cca7663ed172ec575ccba"
+    },
+    {
+      "path": "p3-cancel8-init/work8-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "6441e3d9a9cf9a08e5a32178737b1a252dd12c077b4685f7f091ef530c1a26ff"
+    },
+    {
+      "path": "p3-cancel8-init/work8-cancel.wal",
+      "bytes": 21200,
+      "sha256": "7f26b894ebb74926e37d8290a64af73abc940a641ccfd38e92df14c4b81d8951"
+    },
+    {
+      "path": "p3-cancel8-init/work8-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "3fcfd2224eb2eb8f2cf051d09186bce52e50822c1eb64edc564c285495309636"
+    },
+    {
+      "path": "p3-cancel8-init/work8-reserve.wal",
+      "bytes": 21200,
+      "sha256": "5372ce01561a1d14e45706352525fd97e7d80bac84987e44ccfdda2c729d6672"
+    },
+    {
+      "path": "p3-cancel8-init/work8-token.bin",
+      "bytes": 96,
+      "sha256": "57fcfca7eacf1473d5fd2a18d5f3a28e0a13fa8ea1a227e0d7315058bf907d13"
+    },
+    {
+      "path": "p3-cancel8-init/work9-allocator.after",
+      "bytes": 16384,
+      "sha256": "5bbd913992a3f6739835bc31e1ee3ff4c22672f5b04a216116cdb7bf7f978ceb"
+    },
+    {
+      "path": "p3-cancel8-init/work9-allocator.before",
+      "bytes": 16384,
+      "sha256": "4395c9000b185f1a9b8d735caa83782077a809a8fdcd2e6f40f99b4a7f5dbebe"
+    },
+    {
+      "path": "p3-cancel8-init/work9-allocator.reserved",
+      "bytes": 16384,
+      "sha256": "4c533dcb608970af41b1fd7889a67485d900d9ffd0f60d0c18b659b5b0c4cdd7"
+    },
+    {
+      "path": "p3-cancel8-init/work9-init.delta",
+      "bytes": 208,
+      "sha256": "d6909004e57899f7c7ce0ce1d04e5451ff95deab4c3fa67a577eec159cc074a2"
+    },
+    {
+      "path": "p3-cancel8-init/work9-init.descriptor",
+      "bytes": 1536,
+      "sha256": "dc2a87e46b9db7ded7ecdb814ccd39b9a1b7dac417cf4c40e97affe499c46cf5"
+    },
+    {
+      "path": "p3-cancel8-init/work9-init.wal",
+      "bytes": 38000,
+      "sha256": "93a454312ddb59cc0f0ed168760f3a81edb353bb5062500c9ca059ddc6f7d797"
+    },
+    {
+      "path": "p3-cancel8-init/work9-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "1ea75f446b79cb9360bb668e442f9c7df3c388eca10396622ba27d92338b11ee"
+    },
+    {
+      "path": "p3-cancel8-init/work9-reserve.wal",
+      "bytes": 21200,
+      "sha256": "1f43ae20f490f9993072c5ffa6c5c169ccb0ae59a2d11bae1f4b6b7b2274bf2f"
+    },
+    {
+      "path": "p3-cancel8-init/work9-status.after",
+      "bytes": 16384,
+      "sha256": "0c30cbdd3a0f71c1798eb2674a8ddd5c50937be0d05b227c44e051777f5bcf24"
+    },
+    {
+      "path": "p3-cancel8-init/work9-status.home",
+      "bytes": 224,
+      "sha256": "148e608d3514dae16e00f27c35aadc8ccddc5e311319b0733d460d40c4d45d50"
+    },
+    {
+      "path": "p3-cancel8-init/work9-token.bin",
+      "bytes": 96,
+      "sha256": "8bc600d081a865a9492de0dc257316d5fa7f4a06e28c60027b449cefcac8a98f"
+    }
+  ]
+}

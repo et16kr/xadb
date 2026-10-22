@@ -44,13 +44,44 @@ type Result<T> = std::result::Result<T, SemanticError>;
 pub(in super::super) enum OperationBudget {
     Exclusive81920,
     Dirty98304,
+    StatusInit114688,
 }
 impl OperationBudget {
-    const fn memory(self) -> u64 {
+    pub(in super::super) const fn memory(self) -> u64 {
         match self {
             Self::Exclusive81920 => 81920,
             Self::Dirty98304 => 98304,
+            Self::StatusInit114688 => 114688,
         }
+    }
+
+    pub(in super::super) fn accepts_count(self, count: usize) -> bool {
+        (1..=63).contains(&count) && (self != Self::StatusInit114688 || count == 1)
+    }
+
+    pub(in super::super) fn terminal_wal(self, count: usize) -> u64 {
+        if self == Self::StatusInit114688 {
+            38000
+        } else {
+            frame_length(count) as u64
+        }
+    }
+
+    pub(in super::super) const fn terminal_frames(self) -> u64 {
+        if matches!(self, Self::StatusInit114688) {
+            2
+        } else {
+            1
+        }
+    }
+
+    pub(in super::super) fn terminal_protected(self, count: usize) -> u64 {
+        self.terminal_wal(count)
+            + if self == Self::StatusInit114688 {
+                2
+            } else {
+                count as u64
+            } * PAGE_BYTES as u64
     }
 }
 
@@ -199,15 +230,15 @@ fn descriptor(
     if !cancel {
         remaining[2] = RemainingBudget {
             steps: 1,
-            wal: length,
+            wal: budget.terminal_wal(batch.count()),
             pages: n,
             peak: ResourcePeak {
-                frames: 1,
+                frames: budget.terminal_frames(),
                 memory: budget.memory(),
                 files: 1,
                 ..ResourcePeak::default()
             },
-            protected: length + n * PAGE_BYTES as u64,
+            protected: budget.terminal_protected(batch.count()),
             ..RemainingBudget::default()
         };
     }
@@ -306,7 +337,9 @@ fn validate_reserved(
     budget: OperationBudget,
 ) -> Result<()> {
     require(
-        batch.mask & 1 == 0 && (1..=63).contains(&batch.count()) && batch.owner.id() == high_water,
+        batch.mask & 1 == 0
+            && budget.accepts_count(batch.count())
+            && batch.owner.id() == high_water,
         SemanticError::StateMismatch,
     )?;
     let current = obligation::decode_descriptor(
@@ -354,7 +387,7 @@ fn validate_finished(
         return Err(SemanticError::StateMismatch);
     };
     require(
-        (1..=63).contains(&progress.limit),
+        (1..=63).contains(&progress.limit) && budget.accepts_count(progress.limit as usize),
         SemanticError::StateMismatch,
     )?;
     // Only cardinality enters Finished; no token remains in this descriptor.
@@ -448,7 +481,7 @@ fn encode_prepared(
     let h = header(plan)?;
     let n = plan.batch.count();
     require(
-        (1..=63).contains(&n)
+        budget.accepts_count(n)
             && plan.batch.mask & 1 == 0
             && plan.cancel == plan.before_descriptor.is_some(),
         SemanticError::StateMismatch,
@@ -610,6 +643,10 @@ pub(in super::super) fn validate_with_budget(
     after: &[u8; PAGE_BYTES],
     budget: OperationBudget,
 ) -> Result<()> {
+    require(
+        budget.accepts_count(plan.batch.count()),
+        SemanticError::StateMismatch,
+    )?;
     // Preserve error precedence while retiring header/descriptor decoder locals
     // before native/page/inventory validation enters its nested codec calls.
     let header = validate_header(&plan, bytes)?;

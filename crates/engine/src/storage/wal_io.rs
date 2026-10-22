@@ -41,6 +41,14 @@ pub(crate) use bootstrap::{
     AllocationWriter, AllocatorFlushError, AllocatorFlusher, BoundAllocation, DirtyAllocationError,
     DirtyReader, FlushProgress, MutableStorageError, MutableStorageOwner,
 };
+#[allow(unused_imports)]
+pub(crate) use bootstrap::{
+    BeforeEffectError, BoundStatusBootstrap, InitAttemptError, InitializedStatusObservation,
+    ReservedStatus, StatusBootstrapWriter, StatusInitError, StatusReadGuard, StatusReader,
+};
+pub(in crate::storage) use bootstrap::{
+    CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
+};
 pub(in crate::storage) use bootstrap::{DirtyInstallPermit, FlushFinalizePermit};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
