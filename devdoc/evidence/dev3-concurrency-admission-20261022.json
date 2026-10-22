@@ -1,0 +1,474 @@
+{
+  "schema_version": 1,
+  "generated_utc": "2026-10-22T01:47:30.595018+00:00",
+  "unit": "D3-CONCURRENCY-ADMISSION-001",
+  "work_item": "3.10.1.a.1",
+  "status": "ACCEPT_SCOPED_UNIT",
+  "full_unit_acceptance": true,
+  "full_dev3_acceptance": false,
+  "policy": [
+    "Results remain bound to original tested source, binary, inputs, commands and logs.",
+    "Mid-stage execution selects new or actually modified code only.",
+    "FAIL and NOT_RUN originals remain unchanged.",
+    "This index is derived by file reading and hashing, not by running tests."
+  ],
+  "scope": "bounded role owners, apply/content admission and actual exclusive version mutex; Commit installation is private cfg(test) simulation only",
+  "inputs": {
+    "d2_draft": {
+      "path": "artifacts/dev3/resume-20261022/guard-contract-draft.md",
+      "sha256": "088d1f3399ce79e4e152000b24e98048184c09c470799d35907ec8451c4454fc",
+      "bytes": 27612
+    },
+    "runtime_r2": {
+      "path": "artifacts/dev3/resume-20261022/guard-tests-input-r2/plan.md",
+      "sha256": "4eb5fff1d191e7a49aafe223109fcd983b6b04615039f9f5b3a52c726c569bb2",
+      "bytes": 9937
+    },
+    "runtime_identity_r2": {
+      "path": "artifacts/dev3/resume-20261022/guard-tests-input-r2/identity.json",
+      "sha256": "26dd80e98001cefedb7d4800ecfd30d773f1aa70a9655a7ac285b5383c43f049",
+      "bytes": 1196
+    },
+    "implementation_ledger": {
+      "path": "artifacts/dev3/resume-20261022/guard-implementation-notes.md",
+      "sha256": "1aa15d93db495da26e538ca68245aa74143d8c133ea08bb0527042a641fc889d",
+      "bytes": 10153
+    }
+  },
+  "results": {
+    "compiler": {
+      "status": "PASS",
+      "count": 12,
+      "source_sha256": "f1d64dbc73190b96e38c7098dd6de6a52b6adee35d4ddb67a1ca5cc39a8c3ec3",
+      "seconds": 13.596409724000296,
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/guard-compiler-r0/result.json",
+        "sha256": "ec615f10df67b4d4a444dfa95a23eeb91aec2e754be889debd4ad0e815ea2d3f",
+        "bytes": 108232
+      },
+      "binary_kind": "cargo-check compiler metadata; no runtime executable"
+    },
+    "compiler_checker": {
+      "status": "PASS",
+      "count": 4,
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/guard-checker-r0/result.json",
+        "sha256": "ea5ab4c687eeae312f014ad17e66fb5428ecda7ce52943d7a9aa090c51e8b376",
+        "bytes": 2481
+      }
+    },
+    "runtime_checker": {
+      "status": "PASS",
+      "count": 4,
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/guard-runtime-checker-r0/result.json",
+        "sha256": "ca08585e7cd111baec55fff7c8e49d9a566eb6eaf9ce603201a827e4172d445e",
+        "bytes": 1146
+      }
+    },
+    "runtime": {
+      "status": "PASS",
+      "groups": 7,
+      "cases": 45,
+      "source_sha256": "e9eda90aaa91015823fddbc7302fb45dcb5ab995aed7327ea707929eb3273cd4",
+      "binary_sha256": "e5c30e106298cca29b7a39a3892d469b928a4422c996cf0616ebb9b1d7c5012f",
+      "seconds": 5.205167121998784,
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/guard-runtime-r1/runtime/result.json",
+        "sha256": "07e04eedf91c028958a51860622c904024b8338dfffdd7c149605e246f546156",
+        "bytes": 9119
+      },
+      "build_receipt": {
+        "path": "artifacts/dev3/resume-20261022/guard-runtime-r1/build.json",
+        "sha256": "d4509faddac91e94adad652cd46541011c7557844766480501cf87a1d23b8288",
+        "bytes": 1882
+      },
+      "source_manifest": {
+        "path": "artifacts/dev3/resume-20261022/guard-runtime-r1/source-files.json",
+        "sha256": "812d7d31079255b0695512f369b3a14a3d93d22dce40d59a8a24eec62a87c9dc",
+        "bytes": 64471
+      },
+      "groups_detail": [
+        {
+          "id": "GA01",
+          "status": "PASS",
+          "cases": [
+            "GA01-01",
+            "GA01-03",
+            "GA01-04",
+            "GA01-02",
+            "GA01-05",
+            "GA01-06",
+            "GA01-07",
+            "GA01-08",
+            "GA01-09",
+            "GA01-10"
+          ],
+          "seconds": 0.004074050999406609
+        },
+        {
+          "id": "GA02",
+          "status": "PASS",
+          "cases": [
+            "GA02-01",
+            "GA02-02"
+          ],
+          "seconds": 0.003440157000113686
+        },
+        {
+          "id": "GA03",
+          "status": "PASS",
+          "cases": [
+            "GA03-01",
+            "GA03-02",
+            "GA03-03",
+            "GA03-04"
+          ],
+          "seconds": 0.00328318100036995
+        },
+        {
+          "id": "GA04",
+          "status": "PASS",
+          "cases": [
+            "GA04-01",
+            "GA04-02",
+            "GA04-03",
+            "GA04-04"
+          ],
+          "seconds": 0.0032417819993497687
+        },
+        {
+          "id": "GA05",
+          "status": "PASS",
+          "cases": [
+            "GA05-01",
+            "GA05-02",
+            "GA05-03",
+            "GA05-04",
+            "GA05-05",
+            "GA05-06",
+            "GA05-07",
+            "GA05-08",
+            "GA05-09",
+            "GA05-10"
+          ],
+          "seconds": 0.003275426000072912
+        },
+        {
+          "id": "GA06",
+          "status": "PASS",
+          "cases": [
+            "GA06-01",
+            "GA06-02",
+            "GA06-03",
+            "GA06-04",
+            "GA06-05",
+            "GA06-06",
+            "GA06-07",
+            "GA06-08",
+            "GA06-09",
+            "GA06-10",
+            "GA06-11",
+            "GA06-12"
+          ],
+          "seconds": 5.023864286999924
+        },
+        {
+          "id": "GA07",
+          "status": "PASS",
+          "cases": [
+            "GA07-01",
+            "GA07-02",
+            "GA07-03"
+          ],
+          "seconds": 0.16398823799954698
+        }
+      ]
+    },
+    "final_static": {
+      "status": "PASS",
+      "source_sha256": "cb1dbccd476680bbaba89f922d6e039f17c6c6da7102958012c6f40a941e95b2",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/guard-quality-r2/result.json",
+        "sha256": "a380a8989417dd2d04172df636e4a657456f0437ae6d6bc157cbb955c10a0450",
+        "bytes": 1791
+      },
+      "source_manifest": {
+        "path": "artifacts/dev3/resume-20261022/guard-quality-r2/source-files.json",
+        "sha256": "bd9f8f9e184820e8c27df9448266fece108e4856412943205b705220aa110f3f",
+        "bytes": 64471
+      },
+      "runtime_status": "NOT_RUN; semantic-equivalent let-chain lint delta only; preserve r1 runtime source"
+    }
+  },
+  "resource": {
+    "concrete_layouts": [
+      {
+        "type": "core",
+        "actual_bytes": 760,
+        "ceiling_bytes": 2048
+      },
+      {
+        "type": "owner",
+        "actual_bytes": 24,
+        "ceiling_bytes": 64
+      },
+      {
+        "type": "apply",
+        "actual_bytes": 16,
+        "ceiling_bytes": 80
+      },
+      {
+        "type": "content",
+        "actual_bytes": 8,
+        "ceiling_bytes": 80
+      },
+      {
+        "type": "version",
+        "actual_bytes": 40,
+        "ceiling_bytes": 384
+      },
+      {
+        "type": "simulated_stage",
+        "actual_bytes": 80,
+        "ceiling_bytes": 384
+      },
+      {
+        "type": "simulated_pending",
+        "actual_bytes": 48,
+        "ceiling_bytes": 384
+      },
+      {
+        "type": "simulated_install",
+        "actual_bytes": 64,
+        "ceiling_bytes": 384
+      },
+      {
+        "type": "slot",
+        "actual_bytes": 16,
+        "ceiling_bytes": 16
+      },
+      {
+        "type": "slots",
+        "actual_bytes": 544,
+        "ceiling_bytes": 544
+      },
+      {
+        "type": "state",
+        "actual_bytes": 600,
+        "ceiling_bytes": 1024
+      },
+      {
+        "type": "state_mutex",
+        "actual_bytes": 608,
+        "ceiling_bytes": 1040
+      },
+      {
+        "type": "core_result",
+        "actual_bytes": 760,
+        "ceiling_bytes": 2056
+      },
+      {
+        "type": "state_guard",
+        "actual_bytes": 16,
+        "ceiling_bytes": 16
+      },
+      {
+        "type": "lock_result",
+        "actual_bytes": 24,
+        "ceiling_bytes": 24
+      },
+      {
+        "type": "try_lock_result",
+        "actual_bytes": 24,
+        "ceiling_bytes": 24
+      },
+      {
+        "type": "cleanup_pair",
+        "actual_bytes": 24,
+        "ceiling_bytes": 24
+      },
+      {
+        "type": "small_result",
+        "actual_bytes": 2,
+        "ceiling_bytes": 8
+      },
+      {
+        "type": "small_error",
+        "actual_bytes": 2,
+        "ceiling_bytes": 8
+      },
+      {
+        "type": "optional_error",
+        "actual_bytes": 2,
+        "ceiling_bytes": 8
+      },
+      {
+        "type": "iterator",
+        "actual_bytes": 24,
+        "ceiling_bytes": 24
+      },
+      {
+        "type": "iterator_item",
+        "actual_bytes": 16,
+        "ceiling_bytes": 24
+      },
+      {
+        "type": "reference",
+        "actual_bytes": 8,
+        "ceiling_bytes": 8
+      },
+      {
+        "type": "optional_reference",
+        "actual_bytes": 8,
+        "ceiling_bytes": 8
+      },
+      {
+        "type": "usize",
+        "actual_bytes": 8,
+        "ceiling_bytes": 8
+      },
+      {
+        "type": "oracle",
+        "actual_bytes": 368,
+        "ceiling_bytes": 1024
+      },
+      {
+        "type": "observation",
+        "actual_bytes": 600,
+        "ceiling_bytes": 1024
+      }
+    ],
+    "retained_control_bytes": 7248,
+    "source_nested_temporary_bytes": 896,
+    "source_constructor_bytes": 7832,
+    "negative_oracle_cases": 20,
+    "physical_stack": "NOT_MEASURED",
+    "global_caller_bound": "NOT_IMPLEMENTED",
+    "global_64k_ingress_acceptance": false
+  },
+  "failures": [
+    {
+      "status": "FAIL",
+      "scope": "r0 build E0505 in test-only Result temporary; no runtime tests executed",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/guard-runtime-r0/build.json",
+        "sha256": "b8daad03184eb142da83f8e66aaf7d1931f3dd5ed659575b33e21d410775ba0f",
+        "bytes": 1612
+      }
+    },
+    {
+      "status": "FAIL",
+      "scope": "r1 quality: fmt PASS, Clippy collapsible_if in test-only guard Drop",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/guard-runtime-r1/quality/result.json",
+        "sha256": "d27ba9c62df4e2010729e685b891ca06317ffd93439b7ff018dd91f52425fc23",
+        "bytes": 1508
+      }
+    }
+  ],
+  "diff_dispositions": [
+    {
+      "from": "compiler-r0",
+      "to": "runtime-r1",
+      "change": "explicit checked failure cleanup and test-only simulation/oracles; public API and lifetime invariants unchanged",
+      "validation": "new GA01-GA07, no repeat GA08"
+    },
+    {
+      "from": "runtime-r0",
+      "to": "runtime-r1",
+      "change": "test Result temporary inner scope only",
+      "validation": "r0 had no runtime; r1 first mandatory seven"
+    },
+    {
+      "from": "runtime-r1",
+      "to": "quality-r2",
+      "change": "test-only nested if combined into equivalent short-circuit let-chain",
+      "validation": "independent semantic equivalence review plus final static checks; no repeated runtime"
+    }
+  ],
+  "reviews": {
+    "d2": {
+      "path": "artifacts/dev3/resume-20261022/review/guard-draft-review-r1.md",
+      "sha256": "38dbc47488324c78a5d45828ea6fae2dd1251b9237e70167446d4c2ff92d5907",
+      "bytes": 2349
+    },
+    "core_d1": {
+      "path": "artifacts/dev3/resume-20261022/review/guard-core-source-review-r0.md",
+      "sha256": "b10c5b10e670132f6feb75c139ec502bb1365b84bc15fa3f98f125fcc3f9294b",
+      "bytes": 7379
+    },
+    "runtime_source": {
+      "path": "artifacts/dev3/resume-20261022/review/guard-runtime-source-preexecution-r0.md",
+      "sha256": "cb60ae0a0b9a93ed04c6b02906dd8dc36d1df73899a03a2e7b2f2d723bf335cb",
+      "bytes": 7763
+    },
+    "runner_resource": {
+      "path": "artifacts/dev3/resume-20261022/review/guard-runtime-runner-resource-preexecution-r0.md",
+      "sha256": "e8525cbd24353082166e47bf797ed80a1b94047bfa4f9a7d69177562136f38bb",
+      "bytes": 3612
+    },
+    "compiler_audit": {
+      "path": "artifacts/dev3/resume-20261022/review/guard-compiler-evidence-audit-r0.json",
+      "sha256": "1a0f671b060e56e243d7a1e2d10828b39ef7c88ff7aa20c456b65fbef049a8e8",
+      "bytes": 81934
+    },
+    "runtime_audit": {
+      "path": "artifacts/dev3/resume-20261022/review/guard-runtime-evidence-audit-r0.json",
+      "sha256": "402e249e1d67fedbcc6d671ba527dbe69fddfef304621b3d52025155140875dd",
+      "bytes": 218671
+    },
+    "final_d1": {
+      "path": "artifacts/dev3/resume-20261022/review/guard-final-review-r0.md",
+      "sha256": "c424fee49c58e757f733473abd77212f8b232c617653150cfb5f7d097b801e79",
+      "bytes": 6645
+    },
+    "final_quality_audit": {
+      "path": "artifacts/dev3/resume-20261022/review/guard-final-quality-audit-r0.json",
+      "sha256": "6fa4e0951435c5245a5d30b6add31132304b815f0ca2bdb2009756c6f07e9006",
+      "bytes": 172942
+    }
+  },
+  "independent_identity_audits": {
+    "compiler": {
+      "count": 201,
+      "all_match": true
+    },
+    "runtime": {
+      "count": 562,
+      "all_match": true
+    },
+    "final_quality": {
+      "count": 527,
+      "all_match": true
+    }
+  },
+  "not_run": [
+    {
+      "scope": "expanded S5 schedules",
+      "count": 512,
+      "groups": 4,
+      "status": "NOT_RUN"
+    },
+    {
+      "scope": "unchanged DEV0/1/2, lower wrappers, workspace or prior storage tests",
+      "status": "NOT_RUN"
+    },
+    {
+      "scope": "final quality-r2 runtime rerun",
+      "status": "NOT_RUN"
+    },
+    {
+      "scope": "DEV3 complete S5 inventory",
+      "status": "NOT_RUN"
+    }
+  ],
+  "not_claimed": [
+    "actual Commit/WAL/status/DPT installation integration",
+    "page/tree/append rank or transaction locks",
+    "snapshot/publication/transient pins/FIFO progress",
+    "global resource/physical stack certification",
+    "home/DWB flush or recovery/reopen/READY/transaction ACK",
+    "whole 3.10.1.a or whole DEV3 completion"
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "unit": "D3-CONCURRENCY-ADMISSION-001",
+  "probe_relative_path": "crates/engine/src/concurrency_borrow_probe.rs",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_diagnostics_are_failures": true,
+  "compiler_budget_seconds": 30,
+  "cases": [
+    {
+      "name": "baseline",
+      "reason": "Unmodified actual engine compiles before any negative probe.",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "release",
+      "reason": "Sequential release permits owner and core reuse without aliasing.",
+      "expected_code": null,
+      "primary_line": null,
+      "bytes": 558,
+      "sha256": "cf2ee55be0c561b42a393a8c57f4640b313c720f1885c029eb0225b6d33c65df"
+    },
+    {
+      "name": "owner_send",
+      "reason": "Owner cannot move into a Send consumer.",
+      "expected_code": "E0277",
+      "primary_line": 10,
+      "bytes": 549,
+      "sha256": "bd7ef51fec65679026402f285ee020d5cc613e5b4d88fe95aa78db10c90ccb67"
+    },
+    {
+      "name": "owner_sync",
+      "reason": "Owner cannot be shared through a Sync consumer.",
+      "expected_code": "E0277",
+      "primary_line": 10,
+      "bytes": 551,
+      "sha256": "b8ce620f8f34f8fa90a451e1a86766c463a7ac885099c3b81a1a5c54031bed92"
+    },
+    {
+      "name": "apply_reborrow",
+      "reason": "Live apply admission exclusively borrows its owner.",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "bytes": 494,
+      "sha256": "98eb0aa5850dbf0ad93611bb1a93f6518ec258ca5aae42c30f305d899687f8b2"
+    },
+    {
+      "name": "content_reborrow",
+      "reason": "Live content admission exclusively borrows its owner.",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "bytes": 494,
+      "sha256": "8c783c7f8ca33f21ce70a2e2f5ee9cdc2c3ed54a648d7addf6ec648ccc976e18"
+    },
+    {
+      "name": "version_reborrow",
+      "reason": "Live version guard retains the owner admission.",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "bytes": 517,
+      "sha256": "2c21b1e60e69ec787c50c465433d9217fe75c7bf954f6e48d9a08c6604313c8a"
+    },
+    {
+      "name": "owner_drop",
+      "reason": "An owner outlives its borrowed apply guard.",
+      "expected_code": "E0505",
+      "primary_line": 10,
+      "bytes": 480,
+      "sha256": "f1a68c29052bb1a78ad2264356c9a35c6618edbb7d7fe05357e5578b19f63750"
+    },
+    {
+      "name": "core_drop",
+      "reason": "A core outlives its issued owner.",
+      "expected_code": "E0505",
+      "primary_line": 10,
+      "bytes": 480,
+      "sha256": "649994ad267465ae7393ebde7a1562896b65c9e075e07a809c30d6b14fe0a301"
+    },
+    {
+      "name": "fence_drop",
+      "reason": "The original shared fence outlives the core.",
+      "expected_code": "E0505",
+      "primary_line": 10,
+      "bytes": 493,
+      "sha256": "a845d72511c5e3229f7ae1854afa02b82370ab4ce99c2701aeb63b190e83d9b5"
+    },
+    {
+      "name": "owner_clone",
+      "reason": "Issued owner authority is not Clone.",
+      "expected_code": "E0599",
+      "primary_line": 10,
+      "bytes": 524,
+      "sha256": "4291e52354437fadc5c6e8e3e222ce3b9ce6fee294b226170369ce1e46776dbf"
+    },
+    {
+      "name": "pending_setter",
+      "reason": "No caller-made durable Commit setter exists.",
+      "expected_code": "E0599",
+      "primary_line": 10,
+      "bytes": 527,
+      "sha256": "5dd5d34fce7ee431bd0df5b47075bdeb2cc7c9daf2aa37a9036f9aec8663baa4"
+    }
+  ]
+}

@@ -3,6 +3,21 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-concurrency-admission-20261022.md": {
+      "path": "evidence/dev3-concurrency-admission-20261022.md",
+      "role": "evidence",
+      "title": "DEV3 적용 admission·version gate 인수"
+    },
+    "dev3-concurrency-admission-20261022.json": {
+      "path": "evidence/dev3-concurrency-admission-20261022.json",
+      "role": "evidence",
+      "title": "DEV3 적용 admission·version gate source별 실행 색인"
+    },
+    "dev3-concurrency-admission.md": {
+      "path": "contracts/dev3-concurrency-admission.md",
+      "role": "contracts",
+      "title": "DEV3 적용 admission·version gate와 후속 Commit 설치 명세"
+    },
     "dev3-allocation-reservation-acceptance-20261022.md": {
       "path": "evidence/dev3-allocation-reservation-acceptance-20261022.md",
       "role": "evidence",

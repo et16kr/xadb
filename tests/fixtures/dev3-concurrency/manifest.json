@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "status": "NOT_RUN",
+  "owner_contract_sha256": "088d1f3399ce79e4e152000b24e98048184c09c470799d35907ec8451c4454fc",
+  "normal_groups": 7,
+  "normal_case_count": 45,
+  "normal_cases": {
+    "GA01": [
+      "full_capacity",
+      "role_partitions",
+      "lowest_slot_reuse",
+      "reserved_slot_reuse",
+      "maximum_generation_maintenance",
+      "maximum_generation_flusher",
+      "all_retired_foreground",
+      "mixed_retired_occupied",
+      "corrupt_free_max",
+      "simulated_install_generation_max"
+    ],
+    "GA02": [
+      "foreground_first",
+      "maintenance_first"
+    ],
+    "GA03": [
+      "pre_idle0",
+      "pre_idle1",
+      "post_idle0",
+      "post_idle1"
+    ],
+    "GA04": [
+      "saturated_pending",
+      "small_pending",
+      "wrong_core_origin_fenced",
+      "pending_retry_keeps_token"
+    ],
+    "GA05": [
+      "owner_unwind",
+      "apply_unwind",
+      "content_unwind",
+      "version_unwind",
+      "sim_not_attempted_cancel",
+      "sim_unchanged_reject",
+      "sim_attempted_unwind",
+      "sim_pending_drop",
+      "sim_install_failure",
+      "after_version_lock_unwind"
+    ],
+    "GA06": [
+      "state_poison",
+      "version_poison",
+      "blocked_drop",
+      "overcount_drop",
+      "undercount_drop",
+      "fenced_all_entries",
+      "busy_cleanup_poison",
+      "busy_cleanup_overcount",
+      "pending_cleanup_poison",
+      "pending_cleanup_overcount",
+      "first_fatal_cause_preserved",
+      "fence_after_completed_cleanup"
+    ],
+    "GA07": [
+      "type_ceilings",
+      "all_live_control",
+      "independent_negative_oracles"
+    ]
+  },
+  "expanded_groups": 4,
+  "expanded_schedule_count": 512,
+  "expanded_per_family": 128,
+  "watchdog_seconds_per_step": 5,
+  "narrow_bundle_timeout_seconds": 120,
+  "selection": {
+    "normal": "exact concurrency_ga01...ga07 selectors",
+    "expanded": "ignored exact concurrency_s5_ga02...ga05 selectors",
+    "single_expanded_id_env": "XADB_CONCURRENCY_SCHEDULE"
+  },
+  "files": {
+    "normal-cases.tsv": "466c40eb4ceed9f2f6410650247667eb7bfbaa34170ddbd6af93ed59ac9c7448",
+    "expanded-schedules.tsv": "3af494f2cc91b2860c2d185e0f283649872946a865c777da8a8e33143e6756d9"
+  },
+  "negative_oracle_count": 20,
+  "parsed_schedule_ceiling_bytes": 384,
+  "fixture_parsing": "bounded iterator; no 512-record collection or clone",
+  "blocked_drop_noncompletion_window_seconds": 5
+}

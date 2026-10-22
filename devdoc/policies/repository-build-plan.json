@@ -1508,5 +1508,53 @@
     ],
     "dependency_scope": "xadb-platform local dev-dependency only for actual Linux native allocation tests; production still foundation only; no external package change",
     "historical_evidence_ref": "dev3-allocation-reservation-partial-xadb-20261021.json"
+  },
+  "dev3_concurrency_admission": {
+    "status": "accepted_scoped_admission_and_version_gate",
+    "contract_ref": "dev3-concurrency-admission.md",
+    "source": [
+      "crates/engine/src/transaction/concurrency.rs",
+      "crates/engine/src/transaction/concurrency_test_support.rs",
+      "crates/engine/src/transaction/concurrency_tests.rs",
+      "crates/engine/src/transaction/concurrency_resource_tests.rs"
+    ],
+    "shared_source": [
+      "crates/engine/src/transaction.rs",
+      "crates/engine/src/storage/mod.rs",
+      "crates/engine/src/storage/session_fence.rs"
+    ],
+    "fixtures": [
+      "crates/engine/tests/fixtures/dev3-concurrency/compiler/apply_reborrow.rs",
+      "crates/engine/tests/fixtures/dev3-concurrency/compiler/content_reborrow.rs",
+      "crates/engine/tests/fixtures/dev3-concurrency/compiler/core_drop.rs",
+      "crates/engine/tests/fixtures/dev3-concurrency/compiler/fence_drop.rs",
+      "crates/engine/tests/fixtures/dev3-concurrency/compiler/manifest.json",
+      "crates/engine/tests/fixtures/dev3-concurrency/compiler/owner_clone.rs",
+      "crates/engine/tests/fixtures/dev3-concurrency/compiler/owner_drop.rs",
+      "crates/engine/tests/fixtures/dev3-concurrency/compiler/owner_send.rs",
+      "crates/engine/tests/fixtures/dev3-concurrency/compiler/owner_sync.rs",
+      "crates/engine/tests/fixtures/dev3-concurrency/compiler/pending_setter.rs",
+      "crates/engine/tests/fixtures/dev3-concurrency/compiler/release.rs",
+      "crates/engine/tests/fixtures/dev3-concurrency/compiler/version_reborrow.rs",
+      "tests/fixtures/dev3-concurrency/normal-cases.tsv",
+      "tests/fixtures/dev3-concurrency/expanded-schedules.tsv",
+      "tests/fixtures/dev3-concurrency/manifest.json"
+    ],
+    "checks": [
+      "scripts/check_dev3_concurrency_borrows.py",
+      "scripts/test_check_dev3_concurrency_borrows.py",
+      "scripts/check_dev3_concurrency_runtime.py",
+      "scripts/test_check_dev3_concurrency_runtime.py"
+    ],
+    "dependencies_changed": false,
+    "source_roots_changed": false,
+    "full_stage_acceptance": false,
+    "scope": "3.10.1.a.1 bounded apply/content admission and actual exclusive version gate; Commit state transitions remain cfg(test) simulation",
+    "pending": [
+      "actual page/WAL/Commit installation integration",
+      "remaining 3.10.1 rank, locks, snapshot, pin and FIFO",
+      "DEV3 final S5 inventory"
+    ],
+    "evidence_ref": "dev3-concurrency-admission-20261022.json"
   }
 }

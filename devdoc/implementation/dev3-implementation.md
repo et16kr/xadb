@@ -584,6 +584,15 @@ Actions의 DEV1→DEV0 정적 검사에서 `allocation_reservation_tests.rs`의 
 
 독립 검토가 D1/D2를 수용하여 제한된 예약·취소 3.03.1의 잔여 인수를 완료했다. source별 범위와 판정은 위 단위 기록을 따른다. INIT·운영 dirty buffer·home/DWB flush·일반 recovery·READY·거래 ACK와 전체 DEV3/S5는 여전히 미완료다. 다음 공급은 3.10.1.a의 apply/content/version guard이며 이후 semantic stage/apply와 dirty 기반을 연결한다.
 
+<a id="concurrency-admission"></a>
+## 2026-10-22 적용 admission·version gate 3.10.1.a.1
+
+[소유 계약](../contracts/dev3-concurrency-admission.md) 아래34-owner 역할 분할·apply/content admission·실제 exclusive version mutex를 구현했다. 기존 SessionFence를 빌리며 별도 fence를 복제하지 않는다. non-Clone/non-Send·독점 borrow, checked generation/retirement, version 진입 전후 검사, unwind fence-before-release와 blocking Drop 회계를 검증했다. expected 거절의 정리 중 처음 관측한 poison/손상/fence도 CallerMustResolve로 반환한다. Commit stage/pending/install은 cfg(test) 모의 명세만 제공한다.
+
+[인수 기록](../evidence/dev3-concurrency-admission-20261022.md)과 [실행 색인](../evidence/dev3-concurrency-admission-20261022.json)은 원래 source의 compiler12, 새 checker4+4, runtime7그룹/45사례(독립 부정20·layout27 포함)를 보존한다. runtime은5.205초였고 최종 fmt/engine Clippy도 PASS했다. 최초 test 임시수명 빌드FAIL과 test-only ClippyFAIL을 보존했으며 의미가 같은 let-chain 정리 뒤 runtime은 반복하지 않았다. 확대512개 스케줄은 준비했지만 NOT_RUN이다. source 논리 control7248·nested temporary896·constructor7832bytes와 실제 target layout을 구분하며 전체64KiB ingress/물리 stack을 인증하지 않는다.
+
+독립 D1과 F05 target-layout 검토가 제한 .a.1 단위 인수를 수용했다. 3.10.1.a의 나머지 page/tree rank·거래 잠금, snapshot·transient pin·FIFO, 실제 dirty/WAL/Commit 소비와 DEV3 S5는 미완료다. 다음 실제 공급은 같은 저장 owner의 authoritative dirty frame·content latch와 typed stage/apply 결합이다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 
@@ -602,7 +611,7 @@ Actions의 DEV1→DEV0 정적 검사에서 `allocation_reservation_tests.rs`의 
 | 3.07 인덱스 | point/range scan·presence·PK/UNIQUE·build/취소 | 표현·의미 계약 존재. 실제 인덱스와 statement-final unique 미완료 |
 | 3.08 카탈로그·DDL | table/index 정의·이름·객체 수명·create/drop | 표현 존재. native 원자 DDL과 catalog 변경 미완료 |
 | 3.09 undo·rollback | persistent undo/status·statement rollback·전체 rollback·CLR | 표현·RollbackStart 생산 존재. live undo/CLR 진행 미완료 |
-| 3.10 동시성·가시성 | snapshot 등록·잠금·관측 행 검증·두 격리 수준 | 유한 모델 존재. 실제 reader/writer/ager·잠금 통합 미완료 |
+| 3.10 동시성·가시성 | snapshot 등록·잠금·관측 행 검증·두 격리 수준 | [3.10.1.a.1 실제 admission/version gate](#concurrency-admission) 제한 검증. page/tree rank·거래 잠금·snapshot/pin/FIFO와 reader/writer/ager 실제 통합 미완료 |
 | 3.11 commit·공개 | 여러 객체 원자 commit·durable ACK/UNKNOWN·frontier | 실제 disk 거래 인수 미완료 |
 | 3.12 재시작 복구 | preflight/bootstrap·DWB repair·analysis/예약 복원·redo·REBASE·epoch/WRITER·undo/verify·STABILIZE/READY | [장벽별 8개 작업](../plans/dev3-implementation-plan.md#recovery-remaining)으로 분리. 실제 일반 recovery·반복 장애 인수 미완료 |
 | 3.13 checkpoint | fuzzy ATT/DPT capture·WAL floor·fallback | 표현/계약 존재. 실제 checkpoint 인계 미완료 |
@@ -610,6 +619,6 @@ Actions의 DEV1→DEV0 정적 검사에서 `allocation_reservation_tests.rs`의 
 | 3.15 백업·무결성 | S3/fault 인수용 full audit·독립 이력, 이후 offline exact-cut backup/restore | 실제 DEV3 경로 미완료. audit 공급은 backup 완료를 기다리지 않음 |
 | 3.16 자원 종합·성능·최종 인수 | 항목별 자원 회계 종합·PF09·DS01–06·KU09/10·RC-T12–14 | opcode별 F05는 각 effect 전 선행. 이 항목은 증거 종합과 남은 인수이며 전체 DEV3 미완료 |
 
-기존 재개 우선 단위 [3.03.1 예약·취소](../plans/dev3-implementation-plan.md#allocation-remaining)는 위 인수 기록을 따른다. 다음은 3.10.1.a의 공통 guard 공급이다. [원본 부분 검토](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)의 remaining을 기준으로 하며, 완료된 무변경 runtime 사례는 반복하지 않는다. 각 새 쓰기 경로의 자원 계산·복구 의미·fault 입력은 그 경로 전에 정한다. free/reuse는 회수 가능성 판정을, 실제 행 변경은 undo/status 기반을 먼저 수신하되 서로 전체 분류 완료를 요구하지 않는다. 복구 전용 REBASE는 정상 fuzzy checkpoint와 별도이며 선행으로 공급한다. 이번 계획 보완에서 제품 코드·실행 증거·완료 상태를 변경하지 않았다.
+기존 재개 우선 단위 [3.03.1 예약·취소](../plans/dev3-implementation-plan.md#allocation-remaining)는 위 인수 기록을 따른다. 3.10.1.a.1의 공통 admission/version gate는 위 기록을 따르며 다음 실제 공급은 dirty frame·typed stage/apply 결합이다. [원본 부분 검토](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)의 remaining을 기준으로 하며, 완료된 무변경 runtime 사례는 반복하지 않는다. 각 새 쓰기 경로의 자원 계산·복구 의미·fault 입력은 그 경로 전에 정한다. free/reuse는 회수 가능성 판정을, 실제 행 변경은 undo/status 기반을 먼저 수신하되 서로 전체 분류 완료를 요구하지 않는다. 복구 전용 REBASE는 정상 fuzzy checkpoint와 별도이며 선행으로 공급한다. 계획 작성 당시의 미실행 상태와 이후 위 단위별 구현·실행 기록을 구분한다.
 
-이번 [native와 compiler 병렬 작업](../plans/dev3-implementation-plan.md#parallel-execution-plan)은 위 인수 기록에 실제 담당·source·결과를 연결했다. 64KiB 분석·공통 수정·stage 검증은 총괄이 조정하고 독립 검토자를 별도로 둔다. 실제 담당/경로·기준 source·자원 profile을 고정하기 전에는 작업 배정이나 동시 실행 완료로 기록하지 않는다.
+예약·취소의 [native와 compiler 병렬 작업](../plans/dev3-implementation-plan.md#parallel-execution-plan)은 해당 인수 기록에 실제 담당·source·결과를 연결했다. 64KiB 분석·공통 수정·stage 검증은 총괄이 조정하고 독립 검토자를 별도로 둔다. 실제 담당/경로·기준 source·자원 profile을 고정하기 전에는 작업 배정이나 동시 실행 완료로 기록하지 않는다.

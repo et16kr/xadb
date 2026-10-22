@@ -2,18 +2,18 @@
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
-pub(super) struct SessionFence(AtomicBool);
+pub(crate) struct SessionFence(AtomicBool);
 
 impl SessionFence {
-    pub(super) const fn new() -> Self {
+    pub(crate) const fn new() -> Self {
         Self(AtomicBool::new(false))
     }
 
-    pub(super) fn is_fenced(&self) -> bool {
+    pub(crate) fn is_fenced(&self) -> bool {
         self.0.load(Ordering::Acquire)
     }
 
-    pub(super) fn fence(&self) {
+    pub(crate) fn fence(&self) {
         self.0.store(true, Ordering::Release);
     }
 

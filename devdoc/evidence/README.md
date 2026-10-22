@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-22 [DEV3 적용 admission·version gate](dev3-concurrency-admission-20261022.md) · [source별 실행 색인](dev3-concurrency-admission-20261022.json): 신규 runtime7그룹/45사례·compiler12·자원27 layout과 원래 실패를 연결한다. Commit은 test-only 모의 명세, 확대512와 전체 DEV3는 미완료다.
+
 2026-10-22 [DEV3 예약·취소 잔여 인수](dev3-allocation-reservation-acceptance-20261022.md) · [source별 실행 색인](dev3-allocation-reservation-acceptance-20261022.json): native13DB·compiler·WAL4·64KiB 검증과 원래 실패를 연결한다. 제한 단위 판정과 전체 DEV3/S5 미완료를 구분한다.
 
 2026-10-22 [DEV3 예약·취소 중첩 자원 검토](dev3-allocation-resource-review-20261022.md) — aggregate 타입/수명 guard와 native/compiler 잔여 검증. 실제 stack 실패와 수정·재검증 결과를 별도로 보존하며 전체 DEV3 완료와 구별한다.

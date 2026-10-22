@@ -3,6 +3,7 @@
 //! durable wrapper and uses the crate-private commit hook under the coordinator.
 //! Statement rollback drops only staged allocations and never allocates.
 
+pub(crate) mod concurrency;
 mod metrics;
 mod read;
 #[cfg(test)]

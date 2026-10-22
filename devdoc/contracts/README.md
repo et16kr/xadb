@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV3 적용 admission·version gate](dev3-concurrency-admission.md): 3.10.1.a.1 계약 채택, 실제 guard와 후속 Commit 모의 명세의 범위 구분.
+
 - [DEV3 WAL frame·page redo 표현](dev3-wal-format.md) — 무효과 표현과 고정 검증 범위
 - [DEV3 extent 할당 표현](dev3-allocation-format.md) — 무효과 표현과 고정 검증 범위
 - [DEV3 행·인덱스 버전 표현](dev3-row-format.md) — 무효과 표현과 고정 검증 범위
