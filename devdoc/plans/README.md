@@ -10,7 +10,7 @@
 
 - [DEV8 — 복제·운영 구현·검증 계획](dev8-implementation-plan.md) — F01–10·30개 요구·T01–40·R2-V01–04·P01–07·실제 하위/driver/peer 공급; 제품 인수 미실행
 
-- [DEV7 — 36개 세부 작업 분류](dev7-work-breakdown.md) — 135개 하위 작업·공급/통합 인수·위험 우선 준비와 64개 요구 연결; 기존 의미·미실행 상태 유지
+- [DEV7 — 36개 세부 작업 분류](dev7-work-breakdown.md) — 140개 하위 작업·제약 설치/큐/worker/온라인 복구 인계·분량/우선순위/실행 비용과 64개 요구 연결; 기존 의미·미실행 상태 유지
 - [DEV7 — 확장 기능 구현·검증 계획](dev7-implementation-plan.md) — F01–10·64개 요구·T01–32·DESIGN-002 비교/CALL/XA 반례·fault/성능; 구현·제품 인수 미실행
 
 - [DEV6 — 18개 세부 작업 분류와 공급·인수 계획](dev6-work-breakdown.md) — 55개 기존 묶음·80개 최하위 배정 단위, C ABI/JDBC/ODBC 분량·DB capability/type-info 인수 연결·작은 실제 연결 우선순위; 제품 실행 NOT_RUN

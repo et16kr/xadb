@@ -8,6 +8,8 @@
 
 후속 [분배 검토·D7-WBS-002](../evidence/dev7-work-breakdown-review-20261022.md#applied)는 36개 분류를 유지하고 하위 작업을115개에서135개로 나눴다. 실제 배정의 [하위 공급·완료 경계](dev7-work-breakdown.md#leaf-handoffs)와 [위험 우선 준비 순서](dev7-work-breakdown.md#supply-map)를 적용한다. 아래 I01–07은 상위 인수 묶음이며 모든 하위 구현의 일괄 직렬 장벽이 아니다.
 
+[D7-WBS-003 후속 검토](../evidence/dev7-work-breakdown-review-20261022-r2.md)는 제약 설치/cascade·queue 재시도·scheduler worker·온라인 복구 책임을140개 하위 작업으로 보완한다. [분량·실행 비용·우선 배정 기준](dev7-work-breakdown.md#allocation)을 적용하며64개 요구·제품 범위·수치 한도·D-LOGGING 보류는 유지한다.
+
 시험 실행은 [현재 사용자 지시](../../AGENTS.md)가 우선한다. 마지막 관련 검증 이후 실제 코드 diff의 필수 사례만 선택하고 무변경 하위 코드·완료 시험·전체 wrapper를 반복하지 않는다. DEV3 S5의 전수 실행 예외는 DEV7에 적용하지 않는다. 아래 전체 인수 의무는 각 원래 source/case 증거와 남은 변경 경로의 결과를 취합하는 기준이며 일괄 재실행 지시가 아니다.
 
 <a id="entry"></a>
@@ -36,6 +38,8 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 | D7-F10 | 성능/통합 담당 | release/environment/fixture/oracle identity·계측 mode·수치 guardrail·순서·원시 bundle·통계와 replay recipe. 첫 측정 전 |
 
 F04의 증분 refresh는 7.18.4에서 지원 질의·변경분 공급 방식·적용 cut·중복/누락 방지·진척/보존·동시 DML/재시작 기대값을 먼저 고정한다. 같은 7.18.4가 선택 방식의 실제 공급 구현과 독립 공급 인수를 맡고, 그 결과를 받아 7.18.5가 적용/통합을 인수한다. D-LOGGING 보류를 유지하며 선택 방식이 그 공급을 요구할 때만 해당 차단을 기록한다. F08은 기능×실제 adapter/runtime별 지원 셀과 설치/연결 준비를 초기부터 작성한다. F09는 각 배정 leaf의 공급 완료와 소비 통합 사례를 구별한다. F10은 P01 등의 row 폭·입력/중간 cardinality·projection·skew·파일 공존 peak와 **정상 완료 셀/한도 거절 셀**을 측정 전에 나눈다. 기존 기능/성능 목표를 한도 거절 사례로 대체하지 않는다.
+
+F03/F04의 제약 설치 입력은7.18.1 catalog 공급→7.17.5의 기존 데이터 scan/동시 DML 보호→설치 공개/실패 복원으로 배정한다. 지원하는 CREATE/ALTER의 enforcement·기존 데이터 검증 상태와 optimizer 사용 조건을 동결하며, Oracle의 NOVALIDATE/RELY 등 추가 모드를 채택한 것은 아니다. F05는7.24.1의 거래 queue와 .4의 retry/dedup/dead-letter 상태 전이, .2의 durable job/due/lease와 .5의 실제 worker 결과를 구별한다. F04/F09의7.25.4 담당은 온라인 상태/owner/복구 분기를 초기에 공급하고 .1–3의 실제 처리와 전이별 재장애를 통합한다. 상태표만으로 실행을 인수하지 않는다.
 
 완료 계약의 `detail_expansion_required=true`는 위 작업이 실제로 끝날 때만 변경한다. 현 계획의 T01–T32는 인수 책임 묶음이며 overload별 전체 leaf 목록이나 실제 시험 수가 아니다. 미결정 byte/ABI를 구현자가 추측해 소비하지 않는다.
 
@@ -145,15 +149,15 @@ F04의 증분 refresh는 7.18.4에서 지원 질의·변경분 공급 방식·�
 | D7-T08 | set/pivot/재귀 | ALL multiplicity·NULL set 동등·pivot 빈 cell/type 결합·tree/diamond/cycle·경로별 cycle·UNION 전역 dedup·한도 초과 incomplete |
 | D7-T09 | MERGE/INSERT SELECT/RETURNING | Halloween·동일 target 중복 source·관측 후 concurrent update·unique 최종 상태·trigger/cascade 영향·실패 후 반환 prefix 없음 |
 | D7-T10 | optimizer/stats/cache | rule별 전제 위반 known-bad, 비교 문맥을 합친 equality 추론·hash/key 공유 mutant 거절, stats stale/skew, 권한 철회/search path/tz/collation/DDL race, metadata 변경 ReprepareRequired·old plan pin·cache full |
-| D7-T11 | FK/CHECK/격리/잠금 | 부모 삭제와 자식 삽입 race, composite NULL·self-reference·cycle/cascade·deferred fix/commit fail, RC/RR/Serializable 허용/금지 history·NOWAIT/cancel/deadlock. 서로 이전 B/A 잠금 뒤 dynamic SQL/trigger로 A/B를 요청하는 역순 반례·기존 잠금 해제 없음·Prepared victim 제외 |
+| D7-T11 | FK/CHECK/격리/잠금 | 부모 삭제와 자식 삽입 race, composite NULL·self-reference·cycle/cascade·deferred fix/commit fail, RC/RR/Serializable 허용/금지 history·NOWAIT/cancel/deadlock. 서로 이전 B/A 잠금 뒤 dynamic SQL/trigger로 A/B를 요청하는 역순 반례·기존 잠금 해제 없음·Prepared victim 제외. 7.17.5 설치 전 위반 행·검증 중 DML·취소/실패와 T13 설치 공개 인계 |
 | D7-T12 | savepoint/확장 거래 | marker 재지정/release·LOB/queue/constraint rollback·read/lock 유지·반복 rollback 후 WAL/CLR 잔류 과금·limit/limit+1·undo 재장애. 호출 frame별 같은 이름 분리·다른 frame/implicit marker 접근 거절·return/unwind 정리와 전체64 상한 |
-| D7-T13 | DDL/view/materialized result | precommit 성공 뒤 DDL 실패의 두 outcome·generation/권한·refresh 실패 old generation 유지·CTAS/default/type 변환·재시작. 증분 지원 질의별 변경 누락/중복·rollback·동시 DML·재시작의 결과/진척을 원질의·full refresh와 독립 대조; full 성공만으로 증분 PASS 금지 |
+| D7-T13 | DDL/view/materialized result | precommit 성공 뒤 DDL 실패의 두 outcome·generation/권한·refresh 실패 old generation 유지·CTAS/default/type 변환·재시작. 제약 설치 실패의 old metadata 유지·검증/공개 cut·미검증 제약을 이용한 rewrite 거절·cache epoch를 T10/T11과 연결. 증분 지원 질의별 변경 누락/중복·rollback·동시 DML·재시작의 결과/진척을 원질의·full refresh와 독립 대조; full 성공만으로 증분 PASS 금지 |
 | D7-T14 | PART/NG SQL | range/list/hash·pruning/no-prune·행 이동·partition lifecycle·local/global index+extended type·DDL와 stale plan, 실제 core 공급 |
 | D7-T15 | PSM/exception/cursor/record/array | IN/OUT/INOUT·overload·dynamic SQL 권한·handled/unhandled 오류·CALL 원자성·합산 recursion/step budget·취소. 호출 전 INSERT/사용자 savepoint 후 CALL 안의 전체 ROLLBACK·외부 marker ROLLBACK TO/RELEASE/이름 재지정이 이전 변경을 침범하지 않음. 직접/동적/중첩/trigger 각각 거래 제어 거절·자기 marker만 허용·종료된 거래를 handler가 부활시키지 않음. DML+첫 result spool 뒤 다음 식 오류/취소/quota 초과에서 CALL rollback·OUT/row 공개0; 반환 REF CURSOR의 spool/handle 수명 |
 | D7-T16 | package/autonomous | session state 격리·generation invalidation·pool reset·parent rollback과 child commit·self-lock deadlock·child UNKNOWN |
 | D7-T17 | trigger/sequence | trigger 순서/mutating table/cascade 최종 제약·재귀·sequence reserve 전후 crash·non-cycle 재사용0·CURRVAL session·gap 허용 |
-| D7-T18 | queue/scheduler/built-ins | 다중 consumer·rollback 재소비·lease fencing·duplicate delivery·dead-letter·wall clock jump·권한 철회·external effect UNKNOWN |
-| D7-T19 | 온라인 객체 변경 | Building/CatchUp/Switching 매 cut·delta overflow·writer fence·구/신 generation reader·switch 후 취소/cleanup·재시작 |
+| D7-T18 | queue/scheduler/built-ins | 다중 consumer·rollback 재소비·lease fencing·duplicate delivery·dead-letter·wall clock jump·권한 철회·external effect UNKNOWN. queue의 거래 효과와 retry 상태의 rollback/확정·reopen 구분, job 상태와 실제 worker의 lease 상실/늦은 결과·중단/정리·재시작 인수를 별도 사례로 선택 |
+| D7-T19 | 온라인 객체 변경 | Building/CatchUp/Switching 매 cut·delta overflow·writer fence·구/신 generation reader·switch 후 취소/cleanup·재시작. 7.25.4 상태/owner 복원에 .1–3 실제 처리와 stale owner·반복 crash를 연결하며 build만 구현한 결과를 switch/회수 PASS로 확대하지 않음 |
 | D7-T20 | LOB | NULL/empty·64KiB scalar와 구분·큰 값/offset/Unicode 부분쓰기·chunk 누락/중복·stale locator·snapshot aging·cancel/ENOSPC·recrash |
 | D7-T21 | geometry/spatial index | 모든 geometry subtype·empty/invalid·SRID mismatch·ring boundary·touch/contain/overlap/distance·연산 한도·bbox false negative0·full exact 대조 |
 | D7-T22 | 파일/대형 교환 | WKT/WKB byte order/길이·EWKB SRID·shapefile attribute/encoding·부분 파일/truncation·lossy conversion 명시 거절·export/import |
@@ -178,7 +182,7 @@ F04의 증분 refresh는 7.18.4에서 지원 질의·변경분 공급 방식·�
 | D7-C01 | DML·cascade·trigger·LOB chunk/descriptor·undo/CLR의 각 영속 경계 | statement prefix만 남는 성공0; ACK 거래 보존·rollback 확정 전 성공 오류 금지 |
 | D7-C02 | sequence 범위 WAL 시도/완료/발급·재시작 | non-cycle 확정 발급 재사용0, gap 허용; sync 불명 상태 재발급 금지 |
 | D7-C03 | queue claim/ack·scheduler lease/result, consumer 외부 효과 전후 | row 효과와 외부 효과 분리, 중복/UNKNOWN 표시·stale worker fencing |
-| D7-C04 | refresh/online job build·delta drain·switch record/sync·공개·old 회수; 선택한 증분 방식의 변경분 적용/진척 영속 경계 | complete old 또는 complete new identity, 반쪽 catalog/index0; cleanup 재장애. 증분은 결과/진척 불일치로 인한 중복·누락0; 실제 경계는 F04/F09 동결 |
+| D7-C04 | refresh/online job build·delta drain·switch record/sync·공개·old 회수; 제약 검증/설치 공개; 선택한 증분 방식의 변경분 적용/진척 영속 경계 | complete old 또는 complete new identity, 반쪽 catalog/index0; cleanup 재장애·stale online owner의 전이 거절·설치 실패 metadata 보존. 증분은 결과/진척 불일치로 인한 중복·누락0; 실제 경계는 F04/F09 동결 |
 | D7-C05 | RM prepare record 쓰기/sync·응답 직전/유실·cancel/close·checkpoint·reopen | 불완전 prepare는 loser, durable prepare는 in-doubt 보존·잠금/undo/validation fence 복원; prepare 시도 뒤 불명은 close 때문에 abort하지 않음 |
 | D7-C06 | coordinator prepare 요청 전후·YES 일부/전체·decision append/sync·전달/ACK | 손상과 decision 부재 구별; 확정 COMMIT을 ABORT로 바꾸지 않음; 두 RM의 상반 확정0 |
 | D7-C07 | RM commit/abort intent·CLR·visibility·terminal receipt/retirement·heuristic force/forget·확장 ACK/frontier·DDL/backup drain/shutdown | 보존 중 decision 재전달·회수 뒤 NOTA와 UNKNOWN 구별; 정상 회수에 TM 추가 메시지 불필요. heuristic force 응답 유실 뒤 recover 노출·forget 영속 후 부활0, 미완료/heuristic/미ACK 기록의 조기 삭제0·반복 crash 후 예약 복원·예약 resolve lane 진행·backup Busy·Prepared 영속 인계 |

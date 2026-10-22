@@ -1,15 +1,17 @@
 # DEV7 — 36개 세부 작업 분류와 공급·인수 연결
 
-2026-10-22 · **36개 분류·135개 하위 작업 / D7-WBS-002 채택·독립 정적 검토 PASS / 상세 동결·제품 구현·실행 NOT_RUN**
+2026-10-22 · **36개 분류·140개 하위 작업 / D7-WBS-003 채택·독립 정적 검토 PASS / 상세 동결·제품 구현·실행 NOT_RUN**
 
 [개발 문서](../README.md) · [기존 구현·검증 계획](dev7-implementation-plan.md) · [설계 정본](../contracts/dev7-sql-extensions-design.md) · [ARIES·Oracle·로컬 소스 조사](../evidence/dev7-work-breakdown-research.md)
 
 <a id="scope"></a>
 ## 1. 분류 범위와 읽는 방법
 
-DEV3의 [공급·완료 경계](dev3-implementation-plan.md#remaining-work)처럼 DEV7의 큰 구현 묶음을 **36개 분류(7.01–7.36)·135개 하위 작업**으로 나눈다. 하위 작업 수에는 logging의 보류 추적 7.35.3 한 항목을 포함한다. 기능 위치를 찾는 대분류와 실제 배정할 하위 작업을 구분한다. DEV7의 범위가 더 넓으므로 DEV3의 16개에 개수를 맞추지 않는다. 번호는 실행 순서·같은 작업량·진행률이 아니다. 작업마다 기존 산출물·선행 공급·완료 조건·인수 책임을 연결하며 새로운 SQL 의미·API·byte·수치 한도를 채택하지 않는다.
+DEV3의 [공급·완료 경계](dev3-implementation-plan.md#remaining-work)처럼 DEV7의 큰 구현 묶음을 **36개 분류(7.01–7.36)·140개 하위 작업**으로 나눈다. 하위 작업 수에는 logging의 보류 추적 7.35.3 한 항목을 포함한다. 기능 위치를 찾는 대분류와 실제 배정할 하위 작업을 구분한다. DEV7의 범위가 더 넓으므로 DEV3의 16개에 개수를 맞추지 않는다. 번호는 실행 순서·같은 작업량·진행률이 아니다. 작업마다 기존 산출물·선행 공급·완료 조건·인수 책임을 연결하며 새로운 SQL 의미·API·byte·수치 한도를 채택하지 않는다.
 
 [분배 검토와 보완](../evidence/dev7-work-breakdown-review-20261022.md#applied)에 따라 초기115개 중 큰 책임을 추가 분해했다. 기존 상위 ID·64개 요구·필수 범위는 유지하며 변경한 하위 ID의 이동은 [대응표](#leaf-handoffs)에 기록한다. 초기115개 분류의 조사 기록은 당시 증거로 보존한다.
+
+[후속 검토 D7-WBS-003](../evidence/dev7-work-breakdown-review-20261022-r2.md)은 135개에서 제약 설치/cascade·queue 상태·scheduler worker·온라인 복구 담당을 추가 분리했다. 번호만 더 나누지 않고 [배정 크기와 우선 선택](#allocation)을 함께 적용한다. 기존 D7-WBS-002 검토 지문과 결과는 당시 증거로 보존한다.
 
 XADB-037–041, SC07–SC11, D7-I01–I07, F01–F10, T01–T32, C01–C10, P01–P05의 ID는 유지한다. 아래에서 F/T/C/P 접두어를 생략한 숫자도 모두 기존 `D7-` ID다. **7.xx는 개발 작업, Txx는 인수 묶음**이며 같은 번호끼리 대응하지 않는다. [64개 요구 배정표](dev7-implementation-plan.md#coverage)에 작업 번호를 추가하여 원래 요구를 보존한다.
 
@@ -80,8 +82,8 @@ XADB-037–041, SC07–SC11, D7-I01–I07, F01–F10, T01–T32, C01–C10, P01�
 | --- | --- | --- | --- |
 | 7.15 격리·명시 잠금 / engine·SQL | 7.15.1 RC/RR/Serializable history·관측 재검증; 7.15.2 row/range/table·NOWAIT/WAIT/cancel; 7.15.3 SQL/session mode | S1 snapshot/lock/validation·Q1 거래 | RC 문장/RR 거래 snapshot·RR write skew 구분, phantom 보호·deadlock full abort, Prepared victim 제외는 7.31 합류; T11, M01 |
 | 7.16 savepoint·실패 경계 / engine·SQL | 7.16.1 marker/generation·재지정/release; 7.16.2 native undo/CLR·복원 경계 공급; 7.16.3 호출 frame marker 인계 | S1 statement/full undo·recovery, DEV4 오류 | read dependency/거래 lock과 누적 WAL 보존, 반복 rollback·재장애. deferred ledger의 실제 복원 합류는 7.17.3, LOB/queue는 해당 소비 구현 때 인수; T12, C01, M01 |
-| 7.17 CHECK·FK·deferred / engine·SQL | 7.17.1 row CHECK·기존 PK/UNIQUE 연결; 7.17.2 parent/child 보호 probe·cascade; 7.17.3 deferred ledger·commit 검사 | S1 key/index/commit, 7.05의 허용 식, 해당 7.15/16 | 부모 삭제/자식 삽입·self/cycle·동적 역순 lock, 최종 제약·실패 rollback. snapshot SELECT를 보호 probe로 대신하지 않음; T11/12, C01 |
-| 7.18 catalog·DDL·view/refresh / catalog·SQL | 7.18.1 dependency·metadata/DDL·index lifecycle; 7.18.2 view·간접 이름; 7.18.3 물리화·full refresh; 7.18.4 incremental 지원 질의·변경분 계약/공급 구현; 7.18.5 incremental 적용·진척/재시작 인수 | S1 catalog/commit·Q1 DDL, 해당 관계/DML·7.17; 증분 적용은 7.18.4의 실제 공급 | DDL 전 commit과 DDL 결과 구별, refresh 실패 old generation 유지·plan 무효화·reopen. 증분은 중복/누락·동시 DML·재시작 후 원질의/full 대조. full 성공으로 대신하지 않으며 F04 동결·D-LOGGING 보류 유지. online은 7.25; T13, C04 |
+| 7.17 CHECK·FK·deferred / engine·catalog·SQL | 7.17.1 row CHECK·기존 PK/UNIQUE 연결; 7.17.2 parent/child 보호 probe; 7.17.3 deferred ledger·commit 검사; 7.17.4 cascade worklist·최종 제약 합류; 7.17.5 제약 설치·기존 데이터 검증/공개 | S1 key/index/commit, 7.05의 허용 식, 해당 7.15/16; 설치는 7.18.1의 catalog lifecycle | 부모 삭제/자식 삽입·self/cycle·동적 역순 lock·최종 제약·실패 rollback. 기존 위반 행/설치 중 DML과 공개 실패를 별도 인수. snapshot SELECT를 보호 probe로 대신하지 않음; T11/12/13, C01/04 |
+| 7.18 catalog·DDL·view/refresh / catalog·SQL | 7.18.1 dependency·metadata/DDL·index lifecycle; 7.18.2 view·간접 이름; 7.18.3 물리화·full refresh; 7.18.4 incremental 지원 질의·변경분 계약/공급 구현; 7.18.5 incremental 적용·진척/재시작 인수 | .1은 S1 catalog/commit·Q1 DDL의 기반 공급; 소비 기능만 해당 관계/DML·7.17 수신; 증분 적용은 .4의 실제 공급 | DDL 전 commit과 DDL 결과 구별, refresh 실패 old generation 유지·plan 무효화·reopen. 증분은 중복/누락·동시 DML·재시작 후 원질의/full 대조. full 성공으로 대신하지 않으며 F04 동결·D-LOGGING 보류 유지. online은 7.25; T13, C04 |
 | 7.19 PART/NG SQL / SQL·storage | 7.19.1 분할 정의·pruning; 7.19.2 행 이동·local/global index; 7.19.3 lifecycle·관측 | 실제 P1/H2/H3의 해당 API, 7.18·관련 extended type/DML | prune/no-prune 대조·추가/삭제/분할/병합/교환·stale plan. core 미공급을 SQL 성공으로 숨기지 않음; T14 |
 
 <a id="programmable"></a>
@@ -95,8 +97,8 @@ XADB-037–041, SC07–SC11, D7-I01–I07, F01–F10, T01–T32, C01–C10, P01�
 | 7.21 package·autonomous / SQL·server·engine | 7.21.1 package state/의존·generation; 7.21.2 자식 transaction·독립 outcome; 7.21.3 pool reset·취소 | 7.20의 frame, 7.15/16, B3 세션·S1 commit | 세션 격리·부모 rollback 뒤 자식 commit 보존·self-lock deadlock·child UNKNOWN, 일반 중첩 CALL과 구분; T16/28 |
 | 7.22 trigger / SQL·engine | 7.22.1 등록·실행 순서·OLD/NEW; 7.22.2 cascade/재귀·mutating table; 7.22.3 statement-final 제약/rollback 합류 | 7.20의 호출 기반, S1/DEV4 DML, 7.17/18 | 동적 lock closure·최종 UNIQUE/FK·trigger 오류와 RETURNING 비공개. 7.12의 확장 DML 합류는 후속이며 상호 전체 완료를 요구하지 않음; T09/15/17, C01 |
 | 7.23 sequence / catalog·engine·SQL | 7.23.1 범위 예약·WAL; 7.23.2 NEXTVAL/CURRVAL·cache/session; 7.23.3 lifecycle·재시작 | S1 catalog/WAL/복구, F05의 발급 계약 | non-cycle 확정 발급 재사용0·gap 허용·불명 sync 뒤 재발급 금지. 일반 row rollback과 효과 구분; T17, C02 |
-| 7.24 queue·scheduler·built-in package / engine·server·SQL | 7.24.1 transactional enqueue/claim/ack; 7.24.2 lease/fencing·scheduler/cancel; 7.24.3 관리/통신 ACL·effect API | queue는 S1·7.16, job은 해당 7.20/B3 권한·worker | rollback 재소비·stale worker·중복 전달·clock jump·dead-letter, 외부 효과 certainty 분리. 세 하위 단위별 인수; T18, C03, M05 |
-| 7.25 온라인 객체 변경 / catalog·storage·server | 7.25.1 build/delta capture; 7.25.2 catch-up/writer fence/switch; 7.25.3 abort/old 회수·복구 | 7.18의 lifecycle·S1 commit/회수, 해당 index/PART 공급 | 각 상태 cut·delta overflow·old/new reader·switch 후 취소·재장애. Prepared와 충돌 시 resolve 차단 없이 자기 작업 Busy; T19, C04/07 |
+| 7.24 queue·scheduler·built-in package / engine·server·SQL | 7.24.1 transactional enqueue/claim/ack; 7.24.2 job 정의·due/missed-run·lease/run generation; 7.24.3 관리/통신 ACL·effect API; 7.24.4 queue retry/dedup·dead-letter 영속 상태; 7.24.5 실제 worker 실행·취소/권한·종료/재시작 합류 | queue는 S1·7.16, job 상태는 S1·B3; worker는 .2·해당 7.20/B3 실행 API | rollback 재소비·stale worker·중복 전달·clock jump·dead-letter, 외부 효과 certainty 분리. queue native·job 상태·실제 실행을 따로 인수; T18, C03, M05 |
+| 7.25 온라인 객체 변경 / catalog·storage·server | 7.25.1 build/delta capture; 7.25.2 catch-up/writer fence/switch; 7.25.3 abort/old 회수; 7.25.4 durable job 상태·owner fencing·복구 분기/통합 | 7.18.1의 lifecycle·S1 commit/회수, 해당 index/PART 공급; .4 상태 공급 뒤 .1–3 전이별 합류 | 각 상태 cut·delta overflow·old/new reader·switch 후 취소·재장애. 복구는 첫 effect부터 동반하며 Prepared와 충돌 시 resolve 차단 없이 자기 작업 Busy; T19, C04/07 |
 
 <a id="storage"></a>
 ## 7. 저장 한도·LOB·공간: 7.26–7.28
@@ -158,6 +160,9 @@ XADB-037–041, SC07–SC11, D7-I01–I07, F01–F10, T01–T32, C01–C10, P01�
 | 7.08.3 | 7.08.1·F02 전제 → semi/anti·decorrelation | NULL/cardinality known-bad → 실제 채택한 .2/.4/.5 경로별 합류. 모두 완료까지 기본 경로를 막지 않음 |
 | 7.16.1/2/3 | .1 marker → .2 native rollback/CLR → .3 invocation marker 수신 계약 | native rollback/재장애는 deferred 구현과 독립. .3 공급 뒤 7.20 frame/호출 합류 |
 | 7.17.3 | 7.17의 제약 식/보호 probe·7.16.1/2 → deferred ledger/commit 검사 | fix/commit fail·marker 복원 → T11/T12/C01. 이 합류가 7.16 native 공급을 소급 차단하지 않음 |
+| 7.17.2/4 | .2는 S1·7.15 보호 잠금/관측 → parent/child probe; .4는 .2·7.16 native·해당 7.26 예약 → cascade worklist/최종 검사 | probe의 부모 삭제/자식 삽입 race와 cascade의 cycle/중복 target·NOT NULL/rollback을 각각 인수. native cascade는 PSM을 기다리지 않고 7.22가 실제 trigger 경로를 추가 합류 |
+| 7.17.5 | .1/.2의 해당 제약·7.18.1 catalog/DDL·S1 scan/잠금/commit → 지원 DDL의 기존 데이터 검증·설치/삭제 | 기존 위반 행·scan 중 취소/동시 DML·공개 전후 crash에서 정의와 데이터의 일치, 실패 old metadata 유지·cache 무효화 → T11/T13/C04. 제약 enforcement와 기존 데이터 검증 상태를 F03/F04에서 구별; Oracle NOVALIDATE/RELY 문법을 자동 도입하지 않음 |
+| 7.18.1 / 7.13.1 / 7.14.2 | 7.18.1이 제약 정의/검증 상태의 catalog 계약을 공급하고 7.17.5가 해당 설치를 구현; optimizer/cache가 그 상태·epoch를 수신 | 검증하지 않은 제약을 근거로 행을 제거하는 rewrite 거절·stale plan 재검사. catalog 기반 공급은 제약 설치 전체를 기다리지 않음 |
 | 7.18.3 | 7.18.1/2·해당 관계 실행·S1 shadow/switch → full refresh | 실패 old 유지·원질의 대조·reopen → T13/C04 |
 | 7.18.4 | F04·7.18 dependency·해당 관계 의미 → 증분 지원표/변경분 계약 동결 뒤 선택 방식의 실제 공급 구현 | 지원 질의·적용 cut·중복/누락·보존/진척·동시 DML 기대값 고정, 실제 변경분 생성/보존·rollback/재시작의 독립 공급 인수 → .5 구현. 구체 byte/API는 해당 D2 동결 전 미확정; 보류 기능을 필요로 하면 차단 유지 |
 | 7.18.5 | 7.18.4의 실제 변경분 공급·S1 원자 적용/복구·7.18.3 대조 경로 → 증분 적용 | 중복/누락·rollback·동시 변경·재시작 후 원질의/full 대조 → T13/C04. full 결과 diff만으로 증분 공급을 인증하지 않음 |
@@ -167,6 +172,11 @@ XADB-037–041, SC07–SC11, D7-I01–I07, F01–F10, T01–T32, C01–C10, P01�
 | 7.20.2 | 7.20.4·7.07·해당 관계 실행 → cursor 수명 | close/취소·snapshot/spool 소유 → .3 REF CURSOR 합류 |
 | 7.20.7 | 7.20.4/5·일반 binder·B3 권한 → dynamic SQL | definer/호출자 권한·직접/동적 같은 거래 차단 → .3 및 trigger 경로 |
 | 7.20.3 | 7.20.4/5·7.07.2·7.16; cursor/복합 값/동적 SQL은 해당 .2/.6/.7 → atomic CALL | 실패 OUT/row0·성공 spool/handle 수명 → 7.33.2. 각 지원 variant를 추가할 때 관련 합류 사례 추가 |
+| 7.23.1/2/3 | S1 catalog/WAL/recovery·F05 → .1 예약; .1 → .2 SQL/session 발급; .1/.2 → .3 lifecycle/restart | reserve→sync→발급과 불명 sync 뒤 정지·non-cycle 재사용0. .1은 PSM 비의존 native 공급, CALL/trigger 사용은 소비 시 합류 |
+| 7.24.1/4 | S1 table/index·7.16·해당 7.26 → .1 거래 queue; .1·F05 재시도 상태 → .4 retry/dedup/dead-letter | rollback 재소비와 재시도 상태의 확정/rollback 경계를 별도 고정·reopen. row claim 잠금과 lease generation을 혼동하지 않고 native 인수에 scheduler/PSM 전체를 요구하지 않음 |
+| 7.24.2/5 | .2는 S1·F05·B3 job 권한 → durable 정의/due/lease/attempt 상태; .5는 .2·B3 worker·해당 7.20 호출 → 실행/취소/회수 | 상태 공급은 clock jump·missed-run·lease 경합을 인수; 실제 worker는 stale 결과 반영 거절·권한 철회·restart/외부 UNKNOWN·자원 반환을 인수. .5 전체를 .2의 공급 완료 장벽으로 삼지 않으며 사용자 공개는 양쪽 합류 뒤 |
+| 7.24.3 | B3 ACL·해당 endpoint/effect 공급·7.20 호출 → 관리/통신 package | API/endpoint별 권한·취소·외부 certainty. queue/job worker가 이 기능의 무조건 선행은 아님 |
+| 7.25.4/1/2/3 | .4는 F04·7.18.1·S1 → durable 상태/owner/복구 분기 공급; .1은 .4+snapshot/capture; .2는 .1+writer fence; .3은 .4+각 전이의 abort/retire 자원 | .4 담당이 .1–3의 실제 redo/undo/cleanup 처리를 모아 복구 인수. 각 effect와 같은 변경에서 crash/recrash를 작성하고 switch 전 old 유지·switch 후 new 유지/old 회수·stale owner를 확인. .4 초기 공급과 전체 온라인 인수는 별개 |
 | 7.26.1/2/3 | 실제 S1·XADB-029·소비 opcode → .1 공존 peak; .1 → .2 admission/profile; .2 → .3 rollback/복구 | 실제 effect 전 .1/.2 수신, 큰 거래/LOB 공개 전 .3 인수. 소비별 .1 입력 작성은 관계/PSM 전체 완료와 독립 |
 | 7.28.1/2 | 7.01·F06 → geometry codec; .1+기하 dependency → topology/predicate | invalid/empty/SRID·경계 fixture → index/각 연산 |
 | 7.28.3/4/5/6 | .3은 .1/.2+S1 index; .4는 .1+실제 파일 adapter; .5/.6은 .1/.2+F06 지원표/자원 | 각각 false-negative0/무손실 파일/독립 거리/생성 geometry fixture와 한도·취소. 서로 불필요한 전체 완료 장벽 없음 |
@@ -200,6 +210,15 @@ XADB-037–041, SC07–SC11, D7-I01–I07, F01–F10, T01–T32, C01–C10, P01�
 | 7.34.2 / 7.34.3 | PDO 7.34.2·.NET 7.34.4 / framework 7.34.3·원격 연결 7.34.5 |
 | 7.35.2 | HDFS 7.35.2, Hive 7.35.4 |
 
+D7-WBS-003은 위115→135 대응을 보존하고 다음5개 ID를 추가한다. 기존 ID를 다른 기능에 재사용하지 않는다.
+
+| 135개 기준 책임 | 140개 기준 배정 |
+| --- | --- |
+| 7.17.2 probe·cascade | probe는 .2, cascade worklist/최종 검사는 .4 |
+| 7.17과7.18.1에 암묵적으로 걸린 제약 DDL | catalog 기반은7.18.1, 기존 데이터 검증/설치 통합은7.17.5 |
+| 7.24.1/2의 queue 재시도·scheduler 실행 | 거래 queue는 .1, retry/dedup/dead-letter는 .4; job/due/lease 상태는 .2, 실제 worker는 .5 |
+| 7.25.1/3의 job 상태·복구 | 전이별 구현은 .1–3, 상태/owner/recovery 통합 담당은 .4 |
+
 <a id="supply-map"></a>
 ## 10. 공급 흐름과 선택 순서
 
@@ -219,8 +238,15 @@ flowchart TD
   D --> P[7.19 PART/NG SQL]
   T --> CALL[7.20 PSM CALL]
   R --> CALL
-  CALL --> OBJ[7.21–24 프로그래머블 객체]
-  D --> ONLINE[7.25 온라인 변경]
+  CALL --> OBJ[7.21–22 package와 trigger]
+  K --> SEQ[7.23 native sequence]
+  K --> QUEUE[7.24.1/4 native queue]
+  T -. savepoint 공급 .-> QUEUE
+  K --> JOB[7.24.2 job 상태]
+  JOB --> WORKER[7.24.5 실제 worker]
+  CALL -. 해당 job 호출 .-> WORKER
+  D --> LIFE[7.25.4 상태와 복구 공급]
+  LIFE --> ONLINE[7.25.1–3 전이별 구현과 복구 합류]
   K --> L[7.26 저장 한도]
   L -. 해당 effect 전 예약 .-> Q
   L -. cascade 등 확장 effect .-> T
@@ -240,10 +266,10 @@ flowchart TD
 
 | 선택 순서 | 우선 공급 | 함께 준비할 입력 |
 | --- | --- | --- |
-| 0 | 해당 leaf의 F 입력·7.36.1/2·7.26.1 소비 opcode 산식, 7.31 준비/복구/해소 계약 | library·실제 runtime/peer/TM 지원표와 준비 경로. 모든 F 전체 동결이 아닌 관련 위험의 선행 해소 |
-| 1 | 7.01.1과 필요한 family → 해당 codec, 7.06/07 최소 공급·관련 7.15–17 native·7.18 dependency | 독립 vector·bag/history, F08 metadata·최소 type 왕복. 큰 효과 전 7.26.1/2 수신 |
+| 0 | 해당 leaf의 F 입력·7.36.1/2·7.26.1 소비 opcode 산식, 7.31 준비/복구/해소 및7.25.4 상태 계약 | library·실제 runtime/peer/TM 지원표와 준비 경로. 모든 F 전체 동결이 아닌 관련 위험의 선행 해소 |
+| 1 | 7.01.1과 필요한 family → 해당 codec, 7.06/07 최소 공급·관련 7.15–17 native·7.18.1 dependency | 독립 vector·bag/history, F08 metadata·최소 type 왕복. 제약 설치는7.18.1→7.17.5, 큰 효과 전7.26.1/2 수신 |
 | 2 | 7.08–12 기준선·7.18.3 full refresh·해당 driver 연결, 필요한 7.26.3 | 기준 실행 후 해당 7.13/14 최적화. cache 권한/metadata 안전성과 성능 선택을 구별 |
-| 3 | 해당 SC08 공급에서 7.20–24, 7.27/28, 실제 선행을 갖춘 7.31 native | CALL/LOB 결과 수명·예약 resolve 진행. 관계/PSM 전체를 XA 설계 준비의 장벽으로 삼지 않으며 상위 인수 선행은 유지 |
+| 3 | 해당 SC08 공급에서 7.20–22·7.24.5, 7.27/28, 실제 선행을 갖춘 7.31 native | 7.23·7.24.1/2/4의 native는 필요한 S1/F 공급 뒤 먼저 진행 가능. CALL/LOB 결과 수명·예약 resolve 진행. 관계/PSM 전체를 XA 설계 준비의 장벽으로 삼지 않으며 상위 인수 선행은 유지 |
 | 4 | 7.25·7.18.5·PART/NG 해당 leaf, 7.31→7.33.6→7.32 실제 두 RM/TM·Atomic2pc, 7.34/35 adapter | 환경 준비는 초기부터, 실제 연결은 공급 후. 기본 ReadOnly link/독립 routine 등 준비된 leaf는 이 전체를 기다리지 않음 |
 | 5 | 7.36의 남은 자원·성능·증거 통합 | 각 case의 원래 결과와 관련 diff 검증. 미해결 보류·미공급을 완료로 표시하지 않음 |
 
@@ -251,9 +277,29 @@ flowchart TD
 
 공유 descriptor·transaction·wire 계약의 동결/통합은 한 소유자가 조정하며 기능별 구현 담당은 필요한 공급을 받은 단위를 인수까지 닫는다. 분류 수·파일 수를 맞추는 분할이나 진행 중 작업 수 자체의 확대를 목표로 삼지 않는다. 실제 병렬 작업을 시작할 경우 기존 [소유 정책](../policies/parallel-development-policy.md)을 적용한다. 이번에는 제품 구현 담당을 배치하거나 제품 개발을 재개하지 않았다.
 
+<a id="allocation"></a>
+## 10.1 배정 크기·분류·우선순위의 적용
+
+36개는 탐색용 분류,140개는 책임 목록이다. **담당 한 명의 실제 배정은 관련 variant를 정한 공급→첫 소비→실패 인수 한 단위**로 잡는다. 서로 다른 영속 결정이나 외부 runtime를 독립적으로 완결할 수 있으면 나누되, 원자성의 내부 단계를 독립 공개 API로 쪼개지는 않는다. 아래는 최초 배정 기준이며 실측 인일·팀 수·진행률 가중치가 아니다.
+
+| 작업 성격·대상 | 분량 판단과 나눌 경계 | 우선 배정·완료 범위 |
+| --- | --- | --- |
+| 공통 공급 —7.01/06/07/18.1 | 소비자가 많지만 모든 타입/연산을 한 번에 끝낼 필요 없음. 단일 계약 담당의 조정 비용 포함 | 필요한 값 family·plan node·수명 공급 하나와 실제 소비 하나. 한도/cleanup은 첫 경로부터 |
+| 의미/알고리즘 —7.02–05/08–11/13 | decimal·window·재귀는 정수 범위보다 훨씬 큼. 지원 operation/frame/rule별 독립 expected로 배정 | 기준 실행→해당 최적 경로. 독립 evaluator 없이 두 구현의 일치를 완료로 세지 않음 |
+| 거래 통합 —7.12/15–17/21–24/26 | 잠금·marker·trigger/cascade/큰 값의 교차 실패가 구현량을 지배. 공통 effect/최종 검사 소유는 유지 | probe→cascade, catalog→설치, queue 거래→재시도 상태, job 상태→worker 순. 각 좁은 native 뒤 실제 SQL 소비 합류 |
+| 영속 lifecycle —7.18.3–5/19/25/27/31–32 | 새 상태·재장애·회수·실제 I/O가 큰 작업. 성공 경로만 먼저 끝내는 배정은 부적절 | 상태/예약/복구를 먼저 정하고 실제 전이마다 fault와 소비 인수. 특히7.25.4/7.31은 초기에 설계 위험 확인 |
+| 외부 환경 —7.28.4/29–30/33–35 | 기능×adapter/runtime가 분량을 늘림. 설치·인증·clean build·권한/단절 인수를 포함 | 지원 runtime와 접근 가능성은 순서0, 실제 연결은 native 공급 뒤. fixture·예제만 끝나면 환경 통합은 미완료 |
+| 검증/성능 —7.36 | oracle/known-bad는 각 구현 담당과 독립 검토가 연결하고 실제 실행 비용은 별도 산정 | F09/F10에서 필수 case 수·fixture 준비·고유 실행 셀·측정 시간을 기록. 공통 준비를 공유해도 미실행 variant를 PASS로 계산하지 않음 |
+
+실제 시간 추정은 각 배정에서 `신규/재사용 범위 + 상태/fault 수 + fixture/oracle + 외부 환경 + 검토/통합`의 근거와 불확실성으로 남긴다. P01–P05는 workload 셀 하나도 기본10쌍×2실행×(warmup30초+측정60초)=**최소30분**이며 fixture/reopen·10,000개 표본 확보·replay는 별도다. F10은 이를 실제 고유 셀 수에 곱해 예약하고 관련 없는 기존 시험을 비용에 다시 넣지 않는다. 이 계산은 실행 결과나 새 budget/품질 기준이 아니다.
+
+다음 작업은 (1) 실제 공급과 관련 F 입력이 있는지, (2) 데이터/결과 정확성·복구 위험을 줄이는지, (3) 여러 소비자를 여는지, (4) 작은 실제 통합을 닫을 수 있는지 순으로 고른다. 실제 의존 DAG 없이 고정된 완공일·critical path를 주장하지 않는다. 공급이 없는 leaf는 차단 원인과 공급 담당을 남기고, 준비된 다른 leaf를 선택한다. 작은 작업 수를 채우기 위해 고위험 거래/외부 연동만 뒤에 몰아두지 않는다.
+
 <a id="status"></a>
 ## 11. 이번 분류의 상태
 
 초기115개 분류의 작업·통합 담당은 `/root`였으며 D0 문서 배정이었다. 후속 사용자 요청에 따른 **D7-WBS-002**는 135개 하위 작업·공급 인계·위험 우선 준비·인수 구체화를 보완하며 D2로 독립 검토한다. 기존 DESIGN-001/002의 제품 의미·상위 DAG·한도·보류를 바꾸지 않는다. [결정·소유·검토 기록](../evidence/dev7-work-breakdown-review-20261022.md#applied)을 따르며 새로운 API/형식/의미를 구체화할 후속 leaf의 D1/D2 검토는 별도다.
+
+현재 **D7-WBS-003**의5개 추가 분해·설치/복구 인수·배정 기준은 [후속 결정과 검토](../evidence/dev7-work-breakdown-review-20261022-r2.md#decision)를 따른다. 이전135개 상태를 현재140개 완료로 소급 계산하지 않는다.
 
 36개 분류와 64개 요구의 연결을 작성했으며 F01–F10 상세 동결·구현·제품 인수는 미완료다. [이번 조사 기록](../evidence/dev7-work-breakdown-research.md)은 실제 열람 revision·위치·적용/비채택 이유를 남긴다. 제품 코드·테스트·빌드·DBMS 실행 비교를 수행하지 않았고 문서 자동 검사는 push gate에 남긴다. 이 분류만으로 DEV3 개발 재개나 DEV7 실행을 승인한 것으로 해석하지 않는다.

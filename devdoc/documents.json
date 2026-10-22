@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev7-work-breakdown-review-20261022-r2.md": {
+      "path": "evidence/dev7-work-breakdown-review-20261022-r2.md",
+      "role": "evidence",
+      "title": "DEV7 작업 분배 후속 검토 — 제약 설치·작업 수명·분량"
+    },
     "dev5-work-breakdown-review-20261022.md": {
       "path": "evidence/dev5-work-breakdown-review-20261022.md",
       "role": "evidence",
