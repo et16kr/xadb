@@ -140,6 +140,8 @@ worker 실행 관계는 controller의 engine import를 뜻하지 않는다. `xad
 
 ## 4.2 허용 의존성과 실제 의존성의 대조
 
+2026-10-22 DEV3 예약·취소 native 시험은 `xadb-engine`의 `dev-dependencies`에 기존 로컬 `xadb-platform`을 연결한다. 실제 Linux namespace/FileIo를 시험 전용 adapter로 조립하기 위한 의존이며 제품의 normal/build 의존은 `xadb-foundation`만 유지한다. 새 외부 패키지·버전·feature는 추가하지 않는다. [할당 자원·시험 기록](../evidence/dev3-allocation-resource-review-20261022.md)과 관리 JSON의 전용 source/checker/fixture 목록을 따른다.
+
 소유 계약이 정한 **허용 의존성**과 manifest·소스·빌드에서 확인한 **실제 의존성**을 분리한다. 실제 그래프에 새 경로가 생겼다는 이유로 허용 목록을 자동 갱신하지 않는다. 위반은 구현을 고치거나, 필요한 계약 변경을 D2로 검토한 뒤 목록과 근거를 함께 수정한다. 외부 crate를 새로 채택하는 경우에는 DP04도 적용한다. 이 기준의 참고 근거는 [XADB-METHOD-001](coding-convention.md#selective-design-reference)이다.
 
 새 경계를 구현하거나 의존성을 바꿀 때는 다음을 기존 작업 기록의 해당 범위에 남긴다. 단순 helper마다 별도 manifest를 만들지 않는다.

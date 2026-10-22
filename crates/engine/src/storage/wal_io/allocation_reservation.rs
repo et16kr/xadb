@@ -16,9 +16,20 @@ use xadb_foundation::{error::Effect, identity::Generation, namespace::WriterName
 mod operation;
 use operation::{Batch, SemanticError};
 
+#[path = "allocation_budget.rs"]
+mod budget;
+
 #[cfg(test)]
 #[path = "allocation_reservation_tests.rs"]
 mod tests;
+
+#[cfg(all(test, target_os = "linux"))]
+#[path = "allocation_native_tests.rs"]
+mod native_tests;
+
+#[cfg(all(test, target_os = "linux"))]
+#[path = "allocation_resource_tests.rs"]
+mod resource_tests;
 
 const OPERATION_BYTES: usize = 81920;
 const FRAME_WORK_BYTES: usize = 65536;
@@ -145,10 +156,7 @@ impl<'m, 'w, W: WriterNamespace> DoublewriteStorageSession<'m, 'w, W> {
             let _unwind = self.fresh.wal.fenced.unwind_guard();
             (|| {
                 let fail = |cause| fatal(&self, Phase::Constructor, cause);
-                if std::mem::size_of::<AllocationSession<'m, 'w, 'p, 'o, W>>() > 16384
-                    || std::mem::size_of::<W::File>() > 16384
-                    || std::mem::size_of::<operation::Plan>() > 4096
-                {
+                if !budget::fits::<W>() {
                     return Err(fail(Cause::Capacity));
                 }
                 health(&self, Phase::Constructor)?;
@@ -368,13 +376,14 @@ impl AllocationState<'_, '_> {
         })
     }
 
-    fn change<W: WriterNamespace>(
-        &mut self,
+    // Finish preflight's page scan and admission arithmetic before the producer
+    // and independent validator enter their nested codec calls.
+    fn plan_change<W: WriterNamespace>(
+        &self,
         installed: &DoublewriteStorageSession<'_, '_, W>,
         count: Option<usize>,
-    ) -> Result<AllocationObservation> {
+    ) -> Result<(wal::WalPrefix, Batch)> {
         let wal = &installed.fresh.wal;
-        let _unwind = wal.fenced.unwind_guard();
         health(installed, Phase::Preflight)?;
         if count.is_some_and(|n| !(1..=63).contains(&n)) {
             return Err(reject(Cause::InvalidInput));
@@ -453,6 +462,17 @@ impl AllocationState<'_, '_> {
             .filter(|v| *v <= PROTECTED_LIMIT)
             .ok_or_else(|| reject(Cause::Capacity))?;
         let _ = protected; // Admission precedes stage; no charge is returned here.
+        Ok((prefix, batch))
+    }
+
+    fn change<W: WriterNamespace>(
+        &mut self,
+        installed: &DoublewriteStorageSession<'_, '_, W>,
+        count: Option<usize>,
+    ) -> Result<AllocationObservation> {
+        let wal = &installed.fresh.wal;
+        let _unwind = wal.fenced.unwind_guard();
+        let (prefix, batch) = self.plan_change(installed, count)?;
         #[cfg(test)]
         tests::cut(self, tests::Point::Snapshot, wal);
         let plan = operation::Plan {

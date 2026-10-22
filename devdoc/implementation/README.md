@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-22 [DEV3 예약·취소 잔여 인수](dev3-implementation.md#allocation-reservation-accepted): native13DB·compiler baseline+6·관련 WAL4 및64KiB stack 경로를 검증하고 원래 실패와 source별 결과를 보존했다. 제한 단위의 독립 판정은 인수 기록을 따르며 전체 DEV3/S5는 미완료다.
+
 2026-10-22 [DEV3 분류별 현재 상태](dev3-implementation.md#dev3-work-breakdown)와 [잔여 작업 계획](../plans/dev3-implementation-plan.md#remaining-work)을 연결했다. 예약·취소의 남은 검증·64KiB 증명 및 [작업 크기·우선순위·병렬 배치](../plans/dev3-implementation-plan.md#work-organization)를 명시했다. 분류 수로 진행률을 계산하지 않으며 새 제품 실행·완료 승격은 없다.
 
 2026-10-21 [DEV3 페이지 예약·취소 부분 구현 및 중단](dev3-implementation.md#allocation-reservation-partial): 메모리 포트의 새 경로와 검토 수정만 제한 검증했다. native/compiler·변경 WAL 관련4시험·전체 단위 인수는 남겨 두고 사용자 요청으로 중단한다. [하부 작업 16개 분류 초안](dev3-implementation.md#dev3-work-breakdown)으로 진행·잔여 범위를 구분한다.

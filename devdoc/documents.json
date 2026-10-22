@@ -3,6 +3,21 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-allocation-reservation-acceptance-20261022.md": {
+      "path": "evidence/dev3-allocation-reservation-acceptance-20261022.md",
+      "role": "evidence",
+      "title": "DEV3 예약·취소 3.03.1 잔여 인수"
+    },
+    "dev3-allocation-reservation-acceptance-20261022.json": {
+      "path": "evidence/dev3-allocation-reservation-acceptance-20261022.json",
+      "role": "evidence",
+      "title": "DEV3 예약·취소 3.03.1 source별 실행 색인"
+    },
+    "dev3-allocation-resource-review-20261022.md": {
+      "path": "evidence/dev3-allocation-resource-review-20261022.md",
+      "role": "evidence",
+      "title": "DEV3 예약·취소의 중첩 자원 검토"
+    },
     "dev7-work-breakdown-review-20261022-r2.md": {
       "path": "evidence/dev7-work-breakdown-review-20261022-r2.md",
       "role": "evidence",

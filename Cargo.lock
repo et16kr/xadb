@@ -328,6 +328,7 @@ name = "xadb-engine"
 version = "0.1.0"
 dependencies = [
  "xadb-foundation",
+ "xadb-platform",
 ]
 
 [[package]]

@@ -150,3 +150,14 @@ OwnerRef 공통 padding은193..200이며 System 전용225..232는 SystemWorkRef 
 64KiB component 예산은 phase별로 계산한다. constructor는 owner≤16KiB + 동시에 열린 reader File 2개 각각≤16KiB + 나머지 임시 상태≤16KiB다. operation은 owner≤16KiB + 임시 entries/codec≤16KiB + plan≤4KiB이며 caller frame16KiB/operation80KiB/flush4MiB/WAL slot1MiB는 별도 공급이다. 메모리 포트에서 concrete owner2504bytes(시험 hook 포함), File32bytes, plan296bytes, 동시 FD3/상시FD1을 관측했다. 앞 절의 FD5는 보수 예산이며 현재 실제 보유 수가5라는 뜻이 아니다. 이 phase 분해는 예산이며 전체 nested-local 동시 생존량의 실측·증명은 아직 완료하지 않았다. File>16KiB는 기존 Genesis/Fresh owner 자체를 초과하여 새 entry point까지 도달하지 못한다. 새 allocation owner만16KiB를 초과하는 경우는 직접 검증하며, 변경 없는 하위 과대 File 시험은 재실행하지 않는다.
 
 사용자가 적당한 단계의 중단과 하부 기능 분류를 요청했다. 메모리 포트 기반 부분 구현을 보존하고 native2·compiler6(+baseline)·수정된 stage helper의 관련4시험·전체 단위 인수는 미완료로 남긴다. 세부 source/실행/실패와 중단 지점은 [부분 구현 기록](../implementation/dev3-implementation.md#allocation-reservation-partial)을 따른다.
+
+<a id="component-budget"></a>
+## 11. D3-ALLOC-RESOURCE-002 — 중첩 값과 실제 stack 구분
+
+2026-10-22 재개에서 기존64KiB 예산을 [자원 검토](../evidence/dev3-allocation-resource-review-20261022.md)에 따라 구체화한다. D2 검토·실행 상태는 그 기록을 따르며 위2026-10-21 중단 기록은 당시 상태로 보존한다. WAL/page bytes·전이·보호 quota는 변경하지 않는다.
+
+constructor 첫 읽기 전에 owner/File 각16KiB 상한 외에 `sizeof(owner)+sizeof(PageFileReader)+sizeof(File)+constructor temporaries≤65536`을 확인한다. reader 전체를 세므로 generic File의 padding·alignment와 부가 metadata가 누락되지 않는다. operation은 네 개 Plan 복사본의 합≤4096, 단계별 중첩 임시값의 최댓값≤16384, owner와의 합≤65536을 확인한다. [실제 계산](../../crates/engine/src/storage/wal_io/allocation_budget.rs)은 고정 타입 크기와 검토된 동시 생존 개수를 사용하며 실패는 기존 constructor Capacity/fence/소비 오류 경로다.
+
+entries64와 producer의 encode_prepared 호출은 최종 validate 전에 끝나며, preflight의 plan_change와 validate_header 호출도 각 후속 decoder 전에 끝난다. 반면 cancel의 prepare→validate→validate_transition→validate_live→descriptor chain은 descriptor5개·remaining 배열 iterator2개·공통 임시값·SHA 작업량을 동시에 보수 계산한다. 이 값은 source에서 소유한 값의 상한이며 compiler의 이동 복사본·ABI/최적화 stack frame·임의 generic adapter 내부 할당·전체 process RSS의 상한으로 확대하지 않는다. caller frame16KiB·operation80KiB·flush4MiB·WAL slot1MiB는 별도 공급이며 한 번씩 센다.
+
+실제 stack 관측은 별도 신규 시험에서 준비한 owner를 scoped thread로 넘겨 constructor·N63 reserve/cancel·observe/drop을 실행한다. `/proc/maps`의 VMA는 guard/인접 anonymous 영역이 합쳐질 수 있어 thread stack 크기의 정답으로 쓰지 않는다. 고정 Linux x86_64 실행의 외부 debugger가 Rust runtime의 원래 `pthread_attr_getstack`/`pthread_attr_getguardsize` 반환만 읽고 TID·thread 이름·local marker·ELF/source identity를 연결한다. inferior 함수 호출은 하지 않는다. 실제 stack≤65536과 marker 범위, 정확1개 시험의 성공을 모두 확인해야 PASS다. 이 intrusive 관측은 성능 측정·모든 오류 경로·다른 adapter/target의 stack 증거가 아니다. process VmHWM도 별도 관측으로 남긴다.

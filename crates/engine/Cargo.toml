@@ -11,5 +11,8 @@ test-support = []
 [dependencies]
 xadb-foundation.workspace = true
 
+[dev-dependencies]
+xadb-platform.workspace = true
+
 [lints]
 workspace = true

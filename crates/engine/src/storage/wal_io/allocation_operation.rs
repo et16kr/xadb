@@ -251,83 +251,97 @@ pub(super) fn validate_live(
         SemanticError::InventoryMismatch,
     )?;
     if let Some(batch) = batch {
-        require(
-            batch.mask & 1 == 0
-                && (1..=63).contains(&batch.count())
-                && batch.owner.id() == high_water,
-            SemanticError::StateMismatch,
-        )?;
-        let current = obligation::decode_descriptor(
-            raw,
-            ReservationOwner::System(batch.owner),
-            profile_ref(profile),
-        )
-        .map_err(descriptor_error)?;
-        require(
-            current
-                == descriptor(
-                    profile,
-                    batch,
-                    batch.birth,
-                    false,
-                    item_digest(page, batch, true)?,
-                ),
-            SemanticError::StateMismatch,
-        )?;
-        require(
-            page.header().lsn.0 == batch.birth,
-            SemanticError::OrderMismatch,
-        )
+        validate_reserved(page, &profile, &batch, raw, high_water)
     } else if high_water == 0 {
         require(
             zero(raw) && page.header().lsn == PageLsn(0),
             SemanticError::StateMismatch,
         )
     } else {
-        let owner = SystemWorkRef::new(
-            profile.spec().namespace,
-            allocation_page::SystemWorkKind::AllocationMaintenance,
-            high_water,
-            Generation::new(1).expect("nonzero"),
-        )
-        .map_err(|_| SemanticError::IdentityMismatch)?;
-        let current = obligation::decode_descriptor(
-            raw,
-            ReservationOwner::System(owner),
-            profile_ref(profile),
-        )
-        .map_err(descriptor_error)?;
-        let OwnerState::System(progress) = current.owner else {
-            return Err(SemanticError::StateMismatch);
-        };
-        require(
-            (1..=63).contains(&progress.limit),
-            SemanticError::StateMismatch,
-        )?;
-        // Only cardinality enters Finished; no token remains in this descriptor.
-        let mask = u64::MAX >> (63 - progress.limit) & !1;
-        let batch = Batch {
-            owner,
-            mask,
-            birth: page
-                .header()
-                .lsn
-                .0
-                .checked_sub(1)
-                .ok_or(SemanticError::OrderMismatch)?,
-        };
-        require(
-            current
-                == descriptor(
-                    profile,
-                    batch,
-                    page.header().lsn.0,
-                    true,
-                    content_digest(&[]),
-                ),
-            SemanticError::StateMismatch,
-        )
+        validate_finished(page, &profile, raw, high_water)
     }
+}
+
+fn validate_reserved(
+    page: &AllocationPage<'_>,
+    profile: &Profile,
+    batch: &Batch,
+    raw: &[u8],
+    high_water: u64,
+) -> Result<()> {
+    require(
+        batch.mask & 1 == 0 && (1..=63).contains(&batch.count()) && batch.owner.id() == high_water,
+        SemanticError::StateMismatch,
+    )?;
+    let current = obligation::decode_descriptor(
+        raw,
+        ReservationOwner::System(batch.owner),
+        profile_ref(*profile),
+    )
+    .map_err(descriptor_error)?;
+    require(
+        current
+            == descriptor(
+                *profile,
+                *batch,
+                batch.birth,
+                false,
+                item_digest(page, *batch, true)?,
+            ),
+        SemanticError::StateMismatch,
+    )?;
+    require(
+        page.header().lsn.0 == batch.birth,
+        SemanticError::OrderMismatch,
+    )
+}
+
+fn validate_finished(
+    page: &AllocationPage<'_>,
+    profile: &Profile,
+    raw: &[u8],
+    high_water: u64,
+) -> Result<()> {
+    let owner = SystemWorkRef::new(
+        profile.spec().namespace,
+        allocation_page::SystemWorkKind::AllocationMaintenance,
+        high_water,
+        Generation::new(1).expect("nonzero"),
+    )
+    .map_err(|_| SemanticError::IdentityMismatch)?;
+    let current =
+        obligation::decode_descriptor(raw, ReservationOwner::System(owner), profile_ref(*profile))
+            .map_err(descriptor_error)?;
+    let OwnerState::System(progress) = current.owner else {
+        return Err(SemanticError::StateMismatch);
+    };
+    require(
+        (1..=63).contains(&progress.limit),
+        SemanticError::StateMismatch,
+    )?;
+    // Only cardinality enters Finished; no token remains in this descriptor.
+    let mask = u64::MAX >> (63 - progress.limit) & !1;
+    let batch = Batch {
+        owner,
+        mask,
+        birth: page
+            .header()
+            .lsn
+            .0
+            .checked_sub(1)
+            .ok_or(SemanticError::OrderMismatch)?,
+    };
+    require(
+        current
+            == descriptor(
+                *profile,
+                batch,
+                page.header().lsn.0,
+                true,
+                content_digest(&[]),
+            ),
+        SemanticError::StateMismatch,
+    )
 }
 
 /// The bytes and header are borrowed only after full transition validation.
@@ -352,6 +366,24 @@ pub(super) fn prepare<'a>(
     output: &'a mut [u8],
     after: &mut [u8; PAGE_BYTES],
 ) -> Result<PreparedAllocation<'a>> {
+    // End the producer's array/descriptor stack frame before full validation.
+    // Only this wrapper can turn the independently checked bytes into authority.
+    let h = encode_prepared(plan, before, output, after)?;
+    let raw = &output[..frame_length(plan.batch.count())];
+    validate(plan, before, raw, after)?;
+    Ok(PreparedAllocation {
+        bytes: raw,
+        prefix: plan.prefix,
+        header: h,
+    })
+}
+
+fn encode_prepared(
+    plan: Plan<'_>,
+    before: &[u8; PAGE_BYTES],
+    output: &mut [u8],
+    after: &mut [u8; PAGE_BYTES],
+) -> Result<WalFrameHeader> {
     let h = header(plan)?;
     let n = plan.batch.count();
     require(
@@ -478,12 +510,7 @@ pub(super) fn prepare<'a>(
     )
     .map_err(frame_error)?;
     wal_frame::finish_semantic_envelope(h, 1, raw).map_err(frame_error)?;
-    validate(plan, before, raw, after)?;
-    Ok(PreparedAllocation {
-        bytes: raw,
-        prefix: plan.prefix,
-        header: h,
-    })
+    Ok(h)
 }
 fn changed_entry(old: AllocationEntry, batch: Batch, cancel: bool) -> Result<AllocationEntry> {
     match old {
@@ -510,6 +537,20 @@ pub(super) fn validate(
     bytes: &[u8],
     after: &[u8; PAGE_BYTES],
 ) -> Result<()> {
+    // Preserve error precedence while retiring header/descriptor decoder locals
+    // before native/page/inventory validation enters its nested codec calls.
+    let header = validate_header(&plan, bytes)?;
+    let descriptor = obligation::decode_descriptor(
+        &bytes[352..1888],
+        ReservationOwner::System(plan.batch.owner),
+        profile_ref(plan.profile),
+    )
+    .map_err(descriptor_error)?;
+    validate_descriptor(&plan, bytes, header, &descriptor)?;
+    validate_transition(&plan, before, bytes, after, header, &descriptor)
+}
+
+fn validate_header(plan: &Plan<'_>, bytes: &[u8]) -> Result<WalFrameHeader> {
     use SemanticError::*;
     let n = plan.batch.count();
     require(
@@ -525,7 +566,7 @@ pub(super) fn validate(
     )
     .map_err(frame_error)?;
     require(bytes.len() == frame_length(n), Corrupt)?;
-    let h = header(plan)?;
+    let h = header(*plan)?;
     require(env.header == h && env.record_count == 1, OrderMismatch)?;
     let op = if plan.cancel { 10 } else { 8 };
     require(
@@ -572,12 +613,18 @@ pub(super) fn validate(
     )?;
     let old_sha = plan.before_descriptor.map_or([0; 32], content_digest);
     require(bytes[248..280] == old_sha, OrderMismatch)?;
-    let desc = obligation::decode_descriptor(
-        &bytes[352..1888],
-        ReservationOwner::System(owner),
-        profile_ref(plan.profile),
-    )
-    .map_err(descriptor_error)?;
+    Ok(h)
+}
+
+fn validate_descriptor(
+    plan: &Plan<'_>,
+    bytes: &[u8],
+    h: WalFrameHeader,
+    desc: &DescriptorSpec,
+) -> Result<()> {
+    use SemanticError::*;
+    let n = plan.batch.count();
+    let previous = if plan.cancel { plan.batch.birth } else { 0 };
     let expected_chain = OwnerChain {
         apply: h.lsn,
         previous,
@@ -586,7 +633,7 @@ pub(super) fn validate(
     };
     require(desc.chain == expected_chain, OrderMismatch)?;
     let expected_progress = OwnerState::System(SystemProgress {
-        reference: owner,
+        reference: plan.batch.owner,
         phase: if plan.cancel {
             WorkPhase::Finished
         } else {
@@ -608,6 +655,19 @@ pub(super) fn validate(
         get64(bytes, 2048) == 0 && get64(bytes, 2056) == if plan.cancel { n as u64 } else { 0 },
         StateMismatch,
     )?;
+    Ok(())
+}
+
+fn validate_transition(
+    plan: &Plan<'_>,
+    before: &[u8; PAGE_BYTES],
+    bytes: &[u8],
+    after: &[u8; PAGE_BYTES],
+    h: WalFrameHeader,
+    desc: &DescriptorSpec,
+) -> Result<()> {
+    use SemanticError::*;
+    let n = plan.batch.count();
     require(bytes[2144] == 6, UnsupportedNativeBody)?;
     require(
         bytes[2145] == 3

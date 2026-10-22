@@ -1390,12 +1390,15 @@
     "evidence_ref": "dev3-doublewrite-install-scoped-xadb-20261021-r2.json"
   },
   "dev3_allocation_reservation": {
-    "status": "partial_implementation_runtime_port_verified_native_and_borrows_pending",
+    "status": "scoped_reserve_cancel_verified_full_dev3_pending",
     "contract_ref": "dev3-allocation-reservation.md",
     "source": [
       "crates/engine/src/storage/wal_io/allocation_reservation.rs",
       "crates/engine/src/storage/wal_io/allocation_operation.rs",
-      "crates/engine/src/storage/wal_io/allocation_reservation_tests.rs"
+      "crates/engine/src/storage/wal_io/allocation_reservation_tests.rs",
+      "crates/engine/src/storage/wal_io/allocation_budget.rs",
+      "crates/engine/src/storage/wal_io/allocation_native_tests.rs",
+      "crates/engine/src/storage/wal_io/allocation_resource_tests.rs"
     ],
     "shared_source": [
       "crates/engine/src/storage/wal_io.rs",
@@ -1475,17 +1478,35 @@
       "tests/fixtures/dev3-allocation-reservation/p3-n8-reserve.frame",
       "tests/fixtures/dev3-allocation-reservation/p3-n8-reserve.page",
       "tests/fixtures/dev3-allocation-reservation/semantic-negatives.json",
-      "tests/fixtures/dev3-allocation-reservation/semantic-negatives.tsv"
+      "tests/fixtures/dev3-allocation-reservation/semantic-negatives.tsv",
+      "crates/engine/tests/fixtures/dev3-allocation-reservation/compiler/flush.rs",
+      "crates/engine/tests/fixtures/dev3-allocation-reservation/compiler/frame.rs",
+      "crates/engine/tests/fixtures/dev3-allocation-reservation/compiler/installed.rs",
+      "crates/engine/tests/fixtures/dev3-allocation-reservation/compiler/manifest.json",
+      "crates/engine/tests/fixtures/dev3-allocation-reservation/compiler/operation.rs",
+      "crates/engine/tests/fixtures/dev3-allocation-reservation/compiler/release.rs",
+      "crates/engine/tests/fixtures/dev3-allocation-reservation/compiler/slot.rs"
     ],
-    "dependencies_changed": false,
+    "dependencies_changed": true,
     "source_roots_changed": false,
     "full_stage_acceptance": false,
     "pending": [
-      "native2 (13 databases)",
-      "compiler baseline plus 6 probes",
-      "four selected tests for modified WAL stage helper",
-      "full allocation-unit acceptance"
+      "payload INIT consumption",
+      "operational dirty buffer and WAL/DWB/home flush",
+      "extent growth and eligible free/reuse",
+      "general recovery, READY and transaction ACK",
+      "DEV3 S5 final frozen inventory"
     ],
-    "evidence_ref": "dev3-allocation-reservation-partial-xadb-20261021.json"
+    "evidence_ref": "dev3-allocation-reservation-acceptance-20261022.json",
+    "checks": [
+      "scripts/check_dev3_allocation_borrows.py",
+      "scripts/test_check_dev3_allocation_borrows.py",
+      "scripts/dev3_allocation_native.py",
+      "scripts/test_dev3_allocation_native.py",
+      "scripts/check_dev3_allocation_stack.py",
+      "scripts/test_check_dev3_allocation_stack.py"
+    ],
+    "dependency_scope": "xadb-platform local dev-dependency only for actual Linux native allocation tests; production still foundation only; no external package change",
+    "historical_evidence_ref": "dev3-allocation-reservation-partial-xadb-20261021.json"
   }
 }

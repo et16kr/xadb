@@ -1,0 +1,1513 @@
+{
+  "schema_version": 1,
+  "generated_utc": "2026-10-22T01:07:35.257701+00:00",
+  "unit": "D3-ALLOC-RESERVE-001",
+  "work_item": "3.03.1",
+  "status": "ACCEPT_SCOPED_UNIT",
+  "full_unit_acceptance": true,
+  "full_dev3_acceptance": false,
+  "policy": [
+    "Each result remains bound to its original source/ELF/checker.",
+    "Old FAIL and NOT_RUN records are retained; later PASS never relabels them.",
+    "Only changed/new code tests were selected during intermediate work.",
+    "This index is file-reading/hash derivation only; no tests were run to create it.",
+    "Independent D1 completion review remains pending; DEV3 S5 inventory was not run."
+  ],
+  "completion_candidate": {
+    "source_id": "resource-r6",
+    "status": "ACCEPT_SCOPED_UNIT",
+    "latest_affected_cases": [
+      "resource-r6 stack PASS",
+      "resource-r6 AR03 PASS",
+      "resource-r5 AR04 PASS",
+      "resource-r3 AR02 PASS"
+    ],
+    "interpretation": "Prior runtime/native/compiler/WAL evidence remains valid only for its original tested scope/source. Changed-path results are layered by actual diff, not relabeled as a final-source full-suite run.",
+    "not_run": [
+      {
+        "scope": "DEV3 final S5 full inventory",
+        "status": "NOT_RUN"
+      },
+      {
+        "scope": "unchanged DEV0/DEV1/DEV2/workspace/lower wrappers during resume",
+        "status": "NOT_RUN"
+      },
+      {
+        "scope": "full allocation inventory on final r6 source",
+        "status": "NOT_RUN",
+        "reason": "Changed-code-only intermediate policy; source-specific evidence is retained."
+      }
+    ],
+    "not_claimed": [
+      "recovery/reopen",
+      "power-loss durability",
+      "payload INIT/dirty-buffer/home DWB installation",
+      "READY or transaction ACK",
+      "global F05 completion",
+      "full DEV3 completion"
+    ]
+  },
+  "integrity_audit": {
+    "method": "Read-only SHA-256/file-size comparisons against original recorded hashes",
+    "checked_recorded_artifacts": 617,
+    "mismatches": [],
+    "source_fingerprint_mismatches": [],
+    "status": "VERIFIED"
+  },
+  "detailed_index": {
+    "path": "artifacts/dev3/resume-20261022/allocation-acceptance-index.json",
+    "sha256": "ab35d232da091a29fd9d191bf063f62e8d1c18725e01f30fc05b709c953d84e5",
+    "bytes": 282995
+  },
+  "sources": {
+    "runtime-20261021-r2": {
+      "identity_kind": "original file manifest and source archive; no invented workspace fingerprint",
+      "file_manifest": {
+        "path": "artifacts/dev3/allocation-reservation-dev-20261021/r2-source.json",
+        "sha256": "d507d5a643a17caf1869fd46c2e5db031fd76b4f591b16f9ae50d4cf397bcc27",
+        "bytes": 93818,
+        "recorded_sha256": "d507d5a643a17caf1869fd46c2e5db031fd76b4f591b16f9ae50d4cf397bcc27",
+        "matches_recorded": true
+      },
+      "source_archive": {
+        "path": "artifacts/dev3/allocation-reservation-dev-20261021/r2-source.tar.gz",
+        "sha256": "4155829a91a8169addfb1a168ac00c1847814fba8c2c9f9c5bb28d2aeb215f14",
+        "bytes": 3008303,
+        "recorded_sha256": "4155829a91a8169addfb1a168ac00c1847814fba8c2c9f9c5bb28d2aeb215f14",
+        "matches_recorded": true
+      }
+    },
+    "runtime-20261021-r3": {
+      "identity_kind": "original file manifest and source archive; no invented workspace fingerprint",
+      "file_manifest": {
+        "path": "artifacts/dev3/allocation-reservation-dev-20261021/r3-source.json",
+        "sha256": "cd7ef771eb11439ad0b9ca4b01c614db7f7a6f6e93bd9c7ec9f367861e066607",
+        "bytes": 93818,
+        "recorded_sha256": "cd7ef771eb11439ad0b9ca4b01c614db7f7a6f6e93bd9c7ec9f367861e066607",
+        "matches_recorded": true
+      },
+      "source_archive": {
+        "path": "artifacts/dev3/allocation-reservation-dev-20261021/r3-source.tar.gz",
+        "sha256": "a4c3d6aa31158c133881c72931ac40fb64f241cc5ab914664efd39775596e09d",
+        "bytes": 3009586,
+        "recorded_sha256": "a4c3d6aa31158c133881c72931ac40fb64f241cc5ab914664efd39775596e09d",
+        "matches_recorded": true
+      }
+    },
+    "runtime-20261021-r4": {
+      "identity_kind": "original file manifest and source archive; no invented workspace fingerprint",
+      "file_manifest": {
+        "path": "artifacts/dev3/allocation-reservation-dev-20261021/r4-source.json",
+        "sha256": "304e3968fdfd5230fbd741f6504fca24982d10a07f621d1a175735493030c00a",
+        "bytes": 93818,
+        "recorded_sha256": "304e3968fdfd5230fbd741f6504fca24982d10a07f621d1a175735493030c00a",
+        "matches_recorded": true
+      },
+      "source_archive": {
+        "path": "artifacts/dev3/allocation-reservation-dev-20261021/r4-source.tar.gz",
+        "sha256": "6aa11c3eec3552f5092fd88cbf40670ea9734b0d646a82deb9fbc24a62f25f21",
+        "bytes": 3009660,
+        "recorded_sha256": "6aa11c3eec3552f5092fd88cbf40670ea9734b0d646a82deb9fbc24a62f25f21",
+        "matches_recorded": true
+      }
+    },
+    "wal4": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/wal4/source",
+      "fingerprint_sha256": "ee8785bf23605a538bc0875714670a78811c33b3e3de328438c4f1bed66a6889",
+      "observed_fingerprint_sha256": "ee8785bf23605a538bc0875714670a78811c33b3e3de328438c4f1bed66a6889",
+      "fingerprint_matches": true,
+      "file_manifest": {
+        "path": "artifacts/dev3/resume-20261022/wal4/source-files.json",
+        "sha256": "fb2fa58d537b7503237d7b3312849266e567a4d486d1fadec25e85bf38cb6e84",
+        "bytes": 99079
+      }
+    },
+    "native13": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/allocation-native-attempt1/source",
+      "fingerprint_sha256": "a18a8ae67306264d246ffc5b06aa3452036fceead4ba863971b3826aa1f0aef8",
+      "observed_fingerprint_sha256": "a18a8ae67306264d246ffc5b06aa3452036fceead4ba863971b3826aa1f0aef8",
+      "fingerprint_matches": true
+    },
+    "compiler": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/compiler-r0-source",
+      "fingerprint_sha256": "d94aba79692d1671678879ee00cc9d60b152e0767396a2bd7722aa2e46a24dc4",
+      "observed_fingerprint_sha256": "d94aba79692d1671678879ee00cc9d60b152e0767396a2bd7722aa2e46a24dc4",
+      "fingerprint_matches": true
+    },
+    "compiler-baseline": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/allocation-borrows-l_9dgtov/baseline",
+      "fingerprint_sha256": "d94aba79692d1671678879ee00cc9d60b152e0767396a2bd7722aa2e46a24dc4",
+      "observed_fingerprint_sha256": "d94aba79692d1671678879ee00cc9d60b152e0767396a2bd7722aa2e46a24dc4",
+      "fingerprint_matches": true
+    },
+    "compiler-release": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/allocation-borrows-l_9dgtov/release/source",
+      "fingerprint_sha256": "f0c977f9a87bb6ecdecc1d27aa760de1ea38a619c78c080bf55ea3c3c47d10da",
+      "observed_fingerprint_sha256": "f0c977f9a87bb6ecdecc1d27aa760de1ea38a619c78c080bf55ea3c3c47d10da",
+      "fingerprint_matches": true
+    },
+    "compiler-installed": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/allocation-borrows-l_9dgtov/installed/source",
+      "fingerprint_sha256": "cb1dd110d0f652237a54f013e75f6e3e9499b344aeb5194fc291b049f1908eab",
+      "observed_fingerprint_sha256": "cb1dd110d0f652237a54f013e75f6e3e9499b344aeb5194fc291b049f1908eab",
+      "fingerprint_matches": true
+    },
+    "compiler-frame": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/allocation-borrows-l_9dgtov/frame/source",
+      "fingerprint_sha256": "10257984bfccd9c7312b2234d48fd2489cb8c05b2f9e2a2a3da6302959e11e64",
+      "observed_fingerprint_sha256": "10257984bfccd9c7312b2234d48fd2489cb8c05b2f9e2a2a3da6302959e11e64",
+      "fingerprint_matches": true
+    },
+    "compiler-operation": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/allocation-borrows-l_9dgtov/operation/source",
+      "fingerprint_sha256": "1e56eb4045e9d6de071cf75d9b3b45073fc4866b3fd77ad7bbd6978861654f86",
+      "observed_fingerprint_sha256": "1e56eb4045e9d6de071cf75d9b3b45073fc4866b3fd77ad7bbd6978861654f86",
+      "fingerprint_matches": true
+    },
+    "compiler-flush": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/allocation-borrows-l_9dgtov/flush/source",
+      "fingerprint_sha256": "96481242013437f3676cb2a2bbad0a5518df2bef9c5648a01843a6105b1f2dfa",
+      "observed_fingerprint_sha256": "96481242013437f3676cb2a2bbad0a5518df2bef9c5648a01843a6105b1f2dfa",
+      "fingerprint_matches": true
+    },
+    "compiler-slot": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/allocation-borrows-l_9dgtov/slot/source",
+      "fingerprint_sha256": "396e04c690a89989e9cf3a7783b1a6413d5e07d30a93f48dfbb50110ea9130f2",
+      "observed_fingerprint_sha256": "396e04c690a89989e9cf3a7783b1a6413d5e07d30a93f48dfbb50110ea9130f2",
+      "fingerprint_matches": true
+    },
+    "resource-r0": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r0/source",
+      "fingerprint_sha256": "a18a8ae67306264d246ffc5b06aa3452036fceead4ba863971b3826aa1f0aef8",
+      "observed_fingerprint_sha256": "a18a8ae67306264d246ffc5b06aa3452036fceead4ba863971b3826aa1f0aef8",
+      "fingerprint_matches": true,
+      "file_manifest": {
+        "path": "artifacts/dev3/resume-20261022/resource-r0/source-files.json",
+        "sha256": "851e0fa27448169346a4c606d123c622e4ece7fcbdc90bb3ec0eef2d49377135",
+        "bytes": 99930
+      }
+    },
+    "resource-r1": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r1/source",
+      "fingerprint_sha256": "0bc3485d1714902cebfad11a380adcf9f58633fe0c7c304d0a78d6f461797d15",
+      "observed_fingerprint_sha256": "0bc3485d1714902cebfad11a380adcf9f58633fe0c7c304d0a78d6f461797d15",
+      "fingerprint_matches": true,
+      "file_manifest": {
+        "path": "artifacts/dev3/resume-20261022/resource-r1/source-files.json",
+        "sha256": "50e9ef841ab7b3b59370ac81291b1818906b200b39360533d264d5eee546bdcf",
+        "bytes": 100188
+      }
+    },
+    "resource-r2": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r2/source",
+      "fingerprint_sha256": "358dcf5225f6c362aac45f10ee2405fa180954263357cd9fcdfc4777b696e4bc",
+      "observed_fingerprint_sha256": "358dcf5225f6c362aac45f10ee2405fa180954263357cd9fcdfc4777b696e4bc",
+      "fingerprint_matches": true,
+      "file_manifest": {
+        "path": "artifacts/dev3/resume-20261022/resource-r2/source-files.json",
+        "sha256": "d14f4ab9c1deed75dbbbb9bcb6da894cf6cfb146ffc728394ccff4ad77c9f07c",
+        "bytes": 100188
+      }
+    },
+    "resource-r3": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r3/source",
+      "fingerprint_sha256": "d3af51c16efa042c1f344200eba2c1b2f7a8fe85f852bda6091d28edd15d6f0a",
+      "observed_fingerprint_sha256": "d3af51c16efa042c1f344200eba2c1b2f7a8fe85f852bda6091d28edd15d6f0a",
+      "fingerprint_matches": true,
+      "file_manifest": {
+        "path": "artifacts/dev3/resume-20261022/resource-r3/source-files.json",
+        "sha256": "16361abd0a8fa3b529d33957118ef370cf9a6dadc5aeaef8169a7219e7592927",
+        "bytes": 100550
+      }
+    },
+    "resource-r4": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r4/source",
+      "fingerprint_sha256": "14b63bbef9a802de7007566f148940b5f4828792801b73a8a266b0fb97ac190a",
+      "observed_fingerprint_sha256": "14b63bbef9a802de7007566f148940b5f4828792801b73a8a266b0fb97ac190a",
+      "fingerprint_matches": true,
+      "file_manifest": {
+        "path": "artifacts/dev3/resume-20261022/resource-r4/source-files.json",
+        "sha256": "03cb106fca88577a6567211966141ad1fb7b601dedb995f506381d3f0493879e",
+        "bytes": 100550
+      }
+    },
+    "resource-r5": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r5/source",
+      "fingerprint_sha256": "827ae194ce5383d093cab140ce0fb96d1fbddd09bcf382936c5a6f30333948e5",
+      "observed_fingerprint_sha256": "827ae194ce5383d093cab140ce0fb96d1fbddd09bcf382936c5a6f30333948e5",
+      "fingerprint_matches": true,
+      "file_manifest": {
+        "path": "artifacts/dev3/resume-20261022/resource-r5/source-files.json",
+        "sha256": "3140553ffa04c8109a2b478f88a3912c3b93db126e8ca03eeead51915af68f48",
+        "bytes": 62512
+      }
+    },
+    "resource-r6": {
+      "path": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r6/source",
+      "fingerprint_sha256": "0f503243faa7cf120088bf2f1384040e325e55601491d6b2898e411d109379a6",
+      "observed_fingerprint_sha256": "0f503243faa7cf120088bf2f1384040e325e55601491d6b2898e411d109379a6",
+      "fingerprint_matches": true,
+      "file_manifest": {
+        "path": "artifacts/dev3/resume-20261022/resource-r6/source-files.json",
+        "sha256": "a152ce5af085e60b186c1ef3220e2f2ac637b57e9169d6e1a4a53a628e9de3e2",
+        "bytes": 62512
+      }
+    }
+  },
+  "historical_runtime": {
+    "receipt": {
+      "path": "devdoc/evidence/dev3-allocation-reservation-partial-xadb-20261021.json",
+      "sha256": "841f051980779c423c4a032744f74e5c5a7baebab21ceda3519aaeee38048c2d",
+      "bytes": 11356
+    },
+    "original_status": "PARTIAL_RUNTIME_PORT_VERIFIED_USER_REQUESTED_PAUSE",
+    "first_runtime_group_count": 8,
+    "reexecuted_during_resume": false,
+    "interpretation": [
+      "r2: eight first-execution runtime groups PASS; AR04 covers frozen541 plus four D1 counterexamples",
+      "r3: only changed/new assertions selected; owner-tag8+new1, original-I/O error14 cells, constructor causes and new owner size boundary PASS; AR05 FAIL preserved",
+      "r3 AR05: new expectation incorrectly required lower Poisoned after existing WAL state() had already classified poison as Fenced; product lower behavior was not changed",
+      "r4: only corrected AR05 rerun, PASS; all other completed test groups were not repeated",
+      "No full final-source suite was run. Source deltas and per-case evidence apply; r2/r3 results are not relabeled as new r4 executions."
+    ]
+  },
+  "wal_stage_cases": {
+    "status": "PASS",
+    "source_id": "wal4",
+    "receipt": {
+      "path": "artifacts/dev3/resume-20261022/wal4/result.json",
+      "sha256": "44babf845817c78f7c29bcf923a11ddc929dfb7f2441006ee419ab8441c7eb91",
+      "bytes": 1815
+    },
+    "selection_receipt": {
+      "path": "artifacts/dev3/resume-20261022/wal4/selection.json",
+      "sha256": "5ff5a2e601417af5fa86875f2657fa77af430651f83bedee1ab68053367a2a5d",
+      "bytes": 3020
+    },
+    "selected_count": 4,
+    "binary": {
+      "path": "artifacts/dev3/resume-20261022/wal4/target/debug/deps/xadb_engine-78d118be013812ce",
+      "sha256": "e55d0d657c71bb8fbcd30623a5c47f9e2a9e9f77cdff010869fd6799b903dbc5",
+      "bytes": 42481792,
+      "recorded_sha256": "e55d0d657c71bb8fbcd30623a5c47f9e2a9e9f77cdff010869fd6799b903dbc5",
+      "matches_recorded": true
+    },
+    "cases": [
+      {
+        "name": "storage::wal_io::tests::wal_slot_writes_exact_logical_and_physical_prefixes",
+        "exit": 0,
+        "status": "PASS",
+        "seconds": 0.004043083000397019,
+        "log": "wal_slot_writes_exact_logical_and_physical_prefixes.log",
+        "log_sha256": "5877e458f8d0dbc9ba56a5a7411f5c4dd670af63ea4ced6941c58c25e9cde4a6",
+        "log_artifact": {
+          "path": "artifacts/dev3/resume-20261022/wal4/wal_slot_writes_exact_logical_and_physical_prefixes.log",
+          "sha256": "5877e458f8d0dbc9ba56a5a7411f5c4dd670af63ea4ced6941c58c25e9cde4a6",
+          "bytes": 202,
+          "recorded_sha256": "5877e458f8d0dbc9ba56a5a7411f5c4dd670af63ea4ced6941c58c25e9cde4a6",
+          "matches_recorded": true
+        }
+      },
+      {
+        "name": "storage::wal_io::tests::wal_slot_rejects_boundaries_before_effect",
+        "exit": 0,
+        "status": "PASS",
+        "seconds": 0.055461451999690325,
+        "log": "wal_slot_rejects_boundaries_before_effect.log",
+        "log_sha256": "5b72028d93253322c237a7719318e65208dab9f09c90adc1a75fdec0654c9211",
+        "log_artifact": {
+          "path": "artifacts/dev3/resume-20261022/wal4/wal_slot_rejects_boundaries_before_effect.log",
+          "sha256": "5b72028d93253322c237a7719318e65208dab9f09c90adc1a75fdec0654c9211",
+          "bytes": 192,
+          "recorded_sha256": "5b72028d93253322c237a7719318e65208dab9f09c90adc1a75fdec0654c9211",
+          "matches_recorded": true
+        }
+      },
+      {
+        "name": "storage::wal_io::tests::wal_io_releases_gate_and_protects_slot",
+        "exit": 0,
+        "status": "PASS",
+        "seconds": 0.007328357999995205,
+        "log": "wal_io_releases_gate_and_protects_slot.log",
+        "log_sha256": "77c73928193bb85a6a56a90cc4c1e2362eb350fbf759e99a64eaba3edbb33fc9",
+        "log_artifact": {
+          "path": "artifacts/dev3/resume-20261022/wal4/wal_io_releases_gate_and_protects_slot.log",
+          "sha256": "77c73928193bb85a6a56a90cc4c1e2362eb350fbf759e99a64eaba3edbb33fc9",
+          "bytes": 387,
+          "recorded_sha256": "77c73928193bb85a6a56a90cc4c1e2362eb350fbf759e99a64eaba3edbb33fc9",
+          "matches_recorded": true
+        }
+      },
+      {
+        "name": "storage::wal_io::bootstrap::tests::bootstrap_wal_requires_selected_mapping",
+        "exit": 0,
+        "status": "PASS",
+        "seconds": 0.09065657099972668,
+        "log": "bootstrap_wal_requires_selected_mapping.log",
+        "log_sha256": "0a4dd2921f4817bdff53e14e7347397193b990cd0a1037a78d343bf526602fd6",
+        "log_artifact": {
+          "path": "artifacts/dev3/resume-20261022/wal4/bootstrap_wal_requires_selected_mapping.log",
+          "sha256": "0a4dd2921f4817bdff53e14e7347397193b990cd0a1037a78d343bf526602fd6",
+          "bytes": 201,
+          "recorded_sha256": "0a4dd2921f4817bdff53e14e7347397193b990cd0a1037a78d343bf526602fd6",
+          "matches_recorded": true
+        }
+      }
+    ]
+  },
+  "native": {
+    "status": "PASS",
+    "scope": "native allocation WAL; no recovery or power-loss claim",
+    "source_id": "native13",
+    "receipt": {
+      "path": "artifacts/dev3/resume-20261022/allocation-native-attempt1/native/result.json",
+      "sha256": "7cfba3571d6459db77622c93d843cf5ec31dd9bc396c89de20e99ee5e64dcecb",
+      "bytes": 86378
+    },
+    "binary": {
+      "path": "artifacts/dev3/resume-20261022/allocation-native-attempt1/native/allocation-native-worker-03bfc72ce20264b1a06a8438c2bcbbbd524608830748e60a9db6fc422ba7325b",
+      "sha256": "03bfc72ce20264b1a06a8438c2bcbbbd524608830748e60a9db6fc422ba7325b",
+      "bytes": 46397584,
+      "recorded_sha256": "03bfc72ce20264b1a06a8438c2bcbbbd524608830748e60a9db6fc422ba7325b",
+      "matches_recorded": true
+    },
+    "groups": 2,
+    "databases": 13,
+    "fixture_manifest_sha256": "872c11b8645035849bf87859d418dd484394528ca21746768a2a30b2e092202d",
+    "literal_count": 63,
+    "literal_bytes": 811008,
+    "limits": {
+      "case_timeout_seconds": 30,
+      "database_limit_bytes": 25165824,
+      "total_limit_bytes": 327155712
+    },
+    "statistics": {
+      "total_database_bytes": 288063808,
+      "maximum_database_bytes": 22225152,
+      "maximum_case_seconds": 1.2663952909997533,
+      "total_controller_seconds": 15.329712780000136
+    },
+    "cases": [
+      {
+        "id": "p1-profiles",
+        "status": "PASS",
+        "profile": 1,
+        "operation": "profiles",
+        "cut": ""
+      },
+      {
+        "id": "p2-profiles",
+        "status": "PASS",
+        "profile": 2,
+        "operation": "profiles",
+        "cut": ""
+      },
+      {
+        "id": "p3-profiles",
+        "status": "PASS",
+        "profile": 3,
+        "operation": "profiles",
+        "cut": ""
+      },
+      {
+        "id": "p1-reserve-write-before",
+        "status": "PASS",
+        "profile": 1,
+        "operation": "reserve",
+        "cut": "write-before"
+      },
+      {
+        "id": "p1-reserve-write-half",
+        "status": "PASS",
+        "profile": 1,
+        "operation": "reserve",
+        "cut": "write-half"
+      },
+      {
+        "id": "p1-reserve-write-after",
+        "status": "PASS",
+        "profile": 1,
+        "operation": "reserve",
+        "cut": "write-after"
+      },
+      {
+        "id": "p1-reserve-sync-before",
+        "status": "PASS",
+        "profile": 1,
+        "operation": "reserve",
+        "cut": "sync-before"
+      },
+      {
+        "id": "p1-reserve-sync-after",
+        "status": "PASS",
+        "profile": 1,
+        "operation": "reserve",
+        "cut": "sync-after"
+      },
+      {
+        "id": "p1-cancel-write-before",
+        "status": "PASS",
+        "profile": 1,
+        "operation": "cancel",
+        "cut": "write-before"
+      },
+      {
+        "id": "p1-cancel-write-half",
+        "status": "PASS",
+        "profile": 1,
+        "operation": "cancel",
+        "cut": "write-half"
+      },
+      {
+        "id": "p1-cancel-write-after",
+        "status": "PASS",
+        "profile": 1,
+        "operation": "cancel",
+        "cut": "write-after"
+      },
+      {
+        "id": "p1-cancel-sync-before",
+        "status": "PASS",
+        "profile": 1,
+        "operation": "cancel",
+        "cut": "sync-before"
+      },
+      {
+        "id": "p1-cancel-sync-after",
+        "status": "PASS",
+        "profile": 1,
+        "operation": "cancel",
+        "cut": "sync-after"
+      }
+    ]
+  },
+  "compiler": {
+    "scope": "D3-ALLOC-RESERVE-001 baseline1/positive1/negative5 compiler probes",
+    "status": "PASS",
+    "artifact_directory": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/allocation-borrows-l_9dgtov",
+    "inventory": [
+      "baseline",
+      "installed",
+      "frame",
+      "operation",
+      "flush",
+      "slot",
+      "release"
+    ],
+    "compiler_budget_seconds": 30,
+    "compiler_elapsed_seconds": 8.065407555000547,
+    "source_policy": "all cases compile copies of one preserved source export",
+    "binary_kind": "cargo-check compiler metadata; no runtime executable",
+    "selected": [
+      "baseline",
+      "release",
+      "installed",
+      "frame",
+      "operation",
+      "flush",
+      "slot"
+    ],
+    "not_run": [],
+    "source_id": "compiler",
+    "receipt": {
+      "path": "artifacts/dev3/resume-20261022/allocation-compiler-result.json",
+      "sha256": "0b89fddd0c0cdef3c792b55c09e79760e00d705ef0670d5fc06fdf9915c071a1",
+      "bytes": 59968
+    }
+  },
+  "checker_selftests": [
+    {
+      "id": "native-checker",
+      "status": "PASS",
+      "selected_tests": 3,
+      "source_id": "native13",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/allocation-native-attempt1/checker-process.json",
+        "sha256": "1b34d508603e2d6e2182ffa5384721b6da6274f40a5637a713c0e00cd881fd14",
+        "bytes": 207
+      },
+      "log": {
+        "path": "artifacts/dev3/resume-20261022/allocation-native-attempt1/checker.stderr.log",
+        "sha256": "9cabf2a182463b73d2628bf32c0544f2e6be90e41cc621438ef1ad2d10dcf670",
+        "bytes": 516
+      },
+      "product_tests_executed": false
+    },
+    {
+      "id": "compiler-checker",
+      "status": "PASS",
+      "selected_tests": 8,
+      "source_id": "compiler",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/compiler-r0-selftest.json",
+        "sha256": "ca1206c7a76505583c994d95952eba71f75807f2d617a8b1bcf980a91b1610e2",
+        "bytes": 787
+      },
+      "log": {
+        "path": "artifacts/dev3/resume-20261022/compiler-r0-selftest.stderr",
+        "sha256": "c6352adff70a6982c739a1cd77bbb43d2425eefd2dc2112b92b0ceebf2a6ca31",
+        "bytes": 106
+      },
+      "product_tests_executed": false
+    },
+    {
+      "id": "stack-checker-initial",
+      "status": "PASS",
+      "selected_tests": 3,
+      "source_id": null,
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/stack-diagnostic/observer-r0/checker-receipt.json",
+        "sha256": "7206e3b25b2a92c1b3d637faef9db1c72ac4dce2d4c582bf3122ab55e5a8c0b1",
+        "bytes": 517
+      },
+      "log": {
+        "path": "artifacts/dev3/resume-20261022/stack-diagnostic/observer-r0/checker.stderr.log",
+        "sha256": "8f70f6d6bbd18687cc9c4392fdccf533808f235be838c4195ca6cdf2c0bf3a36",
+        "bytes": 579
+      },
+      "product_tests_executed": false
+    },
+    {
+      "id": "stack-checker-cleanup-delta",
+      "status": "PASS",
+      "selected_tests": 1,
+      "source_id": null,
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/stack-diagnostic/observer-cleanup-r1/receipt.json",
+        "sha256": "0b486874b16ca654cdc36fa31361f20d46d99cbfd644848e22c35afa2d1c35c6",
+        "bytes": 598
+      },
+      "log": {
+        "path": "artifacts/dev3/resume-20261022/stack-diagnostic/observer-cleanup-r1/stderr.log",
+        "sha256": "eaec0fef33d1231069a684143b8633537129fe57f06d685fd3ba17238cbbf60f",
+        "bytes": 264
+      },
+      "product_tests_executed": false
+    },
+    {
+      "id": "stack-checker-signal-delta",
+      "status": "PASS",
+      "selected_tests": 1,
+      "source_id": null,
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/stack-diagnostic/signal-r3/selftest.json",
+        "sha256": "53fdb5d2f0f6213328bfe7c612d19db938a4d8b8c39b3c15e7feae0eee5c4c98",
+        "bytes": 652
+      },
+      "log": {
+        "path": "artifacts/dev3/resume-20261022/stack-diagnostic/signal-r3/selftest.stderr.log",
+        "sha256": "41f78f0dc45cd57acac31b272e6356f83c2a482ff19f95fd1014fcb71867fdab",
+        "bytes": 266
+      },
+      "product_tests_executed": false
+    }
+  ],
+  "resource_revisions": [
+    {
+      "revision": "r0",
+      "source_id": "resource-r0",
+      "selection": {
+        "path": "artifacts/dev3/resume-20261022/resource-r0/selection.json",
+        "sha256": "52ee4c250c7f126208eac09965774813c52037fd54b646653f03dee736943c1a",
+        "bytes": 711
+      },
+      "reason": "New resource proof tests only; size inventory and concrete stack mapping independent of completed runtime8; no old cases.",
+      "cases": [
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::resource_tests::allocation_component_layout_inventory",
+          "exit": 0,
+          "status": "PASS",
+          "seconds": 0.0014990360000410874,
+          "log": "allocation_component_layout_inventory.log",
+          "log_sha256": "fea59aa236effb2b9de6663e80476ab7da5f0e4765d31e2653b75d9e845eef3f",
+          "log_artifact": {
+            "path": "artifacts/dev3/resume-20261022/resource-r0/allocation_component_layout_inventory.log",
+            "sha256": "fea59aa236effb2b9de6663e80476ab7da5f0e4765d31e2653b75d9e845eef3f",
+            "bytes": 386,
+            "recorded_sha256": "fea59aa236effb2b9de6663e80476ab7da5f0e4765d31e2653b75d9e845eef3f",
+            "matches_recorded": true
+          }
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::resource_tests::allocation_component_runs_with_observed_64k_stack",
+          "exit": 101,
+          "status": "FAIL",
+          "seconds": 0.07541237999976147,
+          "log": "allocation_component_runs_with_observed_64k_stack.log",
+          "log_sha256": "c264ad52e10bf19f87912ded55ba36685d449e82643baedc04296bf171676b21",
+          "log_artifact": {
+            "path": "artifacts/dev3/resume-20261022/resource-r0/allocation_component_runs_with_observed_64k_stack.log",
+            "sha256": "c264ad52e10bf19f87912ded55ba36685d449e82643baedc04296bf171676b21",
+            "bytes": 957,
+            "recorded_sha256": "c264ad52e10bf19f87912ded55ba36685d449e82643baedc04296bf171676b21",
+            "matches_recorded": true
+          }
+        }
+      ],
+      "build_status": "PASS",
+      "test_status": "FAIL",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/resource-r0/result.json",
+        "sha256": "d962ab25c202da137ef031bc14b95b29ad10ad74aa827ae6eb52fb6c706a09fc",
+        "bytes": 2700
+      },
+      "binary": {
+        "path": "artifacts/dev3/resume-20261022/resource-r0/target/debug/deps/xadb_engine-577b03c2b1ec4865",
+        "sha256": "f1eda398100bd3c6a4a43ff3691eff1e915d8d996621ec2c6bb6f6572739798e",
+        "bytes": 46400240,
+        "recorded_sha256": "f1eda398100bd3c6a4a43ff3691eff1e915d8d996621ec2c6bb6f6572739798e",
+        "matches_recorded": true
+      }
+    },
+    {
+      "revision": "r1",
+      "source_id": "resource-r1",
+      "selection": {
+        "path": "artifacts/dev3/resume-20261022/resource-r1/selection.json",
+        "sha256": "69d05c309ebd3bf7f89423de6fa721a96550b2a1eb3e4f61fd226590b448d878",
+        "bytes": 499
+      },
+      "reason": "Changed aggregate constructor bound and complete inventory expressions, valid padded File and oversized owner/File; stack test will be separately observed once controller ready. No old runtime cases.",
+      "cases": [],
+      "build_status": "NOT_RUN",
+      "test_status": "NOT_RUN",
+      "not_run_reason": "Frozen intermediate snapshot retained; no build/test receipt exists. It is not treated as PASS."
+    },
+    {
+      "revision": "r2",
+      "source_id": "resource-r2",
+      "selection": {
+        "path": "artifacts/dev3/resume-20261022/resource-r2/selection.json",
+        "sha256": "88ee07ad690548f7547a2d83f518cbe04b9808e713b3f29151dadacbab98b9b1",
+        "bytes": 499
+      },
+      "reason": "Changed aggregate constructor bound and complete inventory expressions, valid padded File and oversized owner/File; stack test will be separately observed once controller ready. No old runtime cases.",
+      "cases": [
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::resource_tests::allocation_component_layout_inventory",
+          "exit": 0,
+          "status": "PASS",
+          "seconds": 0.0018014530000982631,
+          "log": "allocation_component_layout_inventory.log",
+          "log_sha256": "0bac2ae3e257ad1cca80a00fb27b835349306623788700c5ae62cf4268dbdc0f",
+          "log_artifact": {
+            "path": "artifacts/dev3/resume-20261022/resource-r2/allocation_component_layout_inventory.log",
+            "sha256": "0bac2ae3e257ad1cca80a00fb27b835349306623788700c5ae62cf4268dbdc0f",
+            "bytes": 544,
+            "recorded_sha256": "0bac2ae3e257ad1cca80a00fb27b835349306623788700c5ae62cf4268dbdc0f",
+            "matches_recorded": true
+          }
+        }
+      ],
+      "build_status": "PASS",
+      "test_status": "FAIL",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/resource-r2/result.json",
+        "sha256": "cae34eb9f08afd7265da30dfa80c64200bd98291c08ee8e294cd3e79add368f3",
+        "bytes": 1457
+      },
+      "binary": {
+        "path": "artifacts/dev3/resume-20261022/resource-r2/target/debug/deps/xadb_engine-577b03c2b1ec4865",
+        "sha256": "317644a12c1ae58ff5347ce1a8a93f33f11b391b38000cb0fb55fd6d23fe3afe",
+        "bytes": 46459096,
+        "recorded_sha256": "317644a12c1ae58ff5347ce1a8a93f33f11b391b38000cb0fb55fd6d23fe3afe",
+        "matches_recorded": true
+      },
+      "stack": {
+        "status": "FAIL",
+        "failure": "FAIL_INFERIOR_EXIT",
+        "source_sha256": "358dcf5225f6c362aac45f10ee2405fa180954263357cd9fcdfc4777b696e4bc",
+        "binary_sha256": "317644a12c1ae58ff5347ce1a8a93f33f11b391b38000cb0fb55fd6d23fe3afe",
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/stack-diagnostic/observer-r0/execution/result.json",
+          "sha256": "09c751d3988da81a57b2ae0054d6da700fc467cb433939c07226fa458d5191a3",
+          "bytes": 2708
+        },
+        "process": {
+          "command": [
+            "/usr/bin/gdb",
+            "--nx",
+            "--batch",
+            "-x",
+            "/home/et16/work/xadb/artifacts/dev3/resume-20261022/stack-diagnostic/observer-r0/execution/observer.gdb",
+            "--args",
+            "/home/et16/work/xadb/artifacts/dev3/resume-20261022/stack-diagnostic/observer-r0/execution/allocation-stack-worker-317644a12c1ae58ff5347ce1a8a93f33f11b391b38000cb0fb55fd6d23fe3afe",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::resource_tests::allocation_component_runs_with_observed_64k_stack",
+            "--ignored",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "timeout_seconds": 30,
+          "pid": 85048,
+          "seconds": 0.36442557699956524
+        },
+        "binary": {
+          "path": "artifacts/dev3/resume-20261022/stack-diagnostic/observer-r0/execution/allocation-stack-worker-317644a12c1ae58ff5347ce1a8a93f33f11b391b38000cb0fb55fd6d23fe3afe",
+          "sha256": "317644a12c1ae58ff5347ce1a8a93f33f11b391b38000cb0fb55fd6d23fe3afe",
+          "bytes": 46459096,
+          "recorded_sha256": "317644a12c1ae58ff5347ce1a8a93f33f11b391b38000cb0fb55fd6d23fe3afe",
+          "matches_recorded": true
+        },
+        "preserved_artifacts": [
+          {
+            "path": "artifacts/dev3/resume-20261022/stack-diagnostic/observer-r0/execution/allocation-stack-worker-317644a12c1ae58ff5347ce1a8a93f33f11b391b38000cb0fb55fd6d23fe3afe",
+            "sha256": "317644a12c1ae58ff5347ce1a8a93f33f11b391b38000cb0fb55fd6d23fe3afe",
+            "bytes": 46459096,
+            "recorded_sha256": "317644a12c1ae58ff5347ce1a8a93f33f11b391b38000cb0fb55fd6d23fe3afe",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/stack-diagnostic/observer-r0/execution/gdb-version.log",
+            "sha256": "9b5495d8757987c35c55cd0298b09d32ca596b86680fb4e538f72f038a69c34d",
+            "bytes": 285,
+            "recorded_sha256": "9b5495d8757987c35c55cd0298b09d32ca596b86680fb4e538f72f038a69c34d",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/stack-diagnostic/observer-r0/execution/observer.gdb",
+            "sha256": "6e3a9e3fd6635fae6a6fd29c0635b5ec8f4b1e35503a6af2da50552d3c14ec01",
+            "bytes": 1762,
+            "recorded_sha256": "6e3a9e3fd6635fae6a6fd29c0635b5ec8f4b1e35503a6af2da50552d3c14ec01",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/stack-diagnostic/observer-r0/execution/stderr.log",
+            "sha256": "d126d45533a39945f38007aee01c45540634e51516ae7a0dc7029c8db082cbf1",
+            "bytes": 420,
+            "recorded_sha256": "d126d45533a39945f38007aee01c45540634e51516ae7a0dc7029c8db082cbf1",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/stack-diagnostic/observer-r0/execution/stdout.log",
+            "sha256": "6d46daa9921da3ff396c04ec102e323cbaf214624a8cb702f9c6497d2f6e2239",
+            "bytes": 1763,
+            "recorded_sha256": "6d46daa9921da3ff396c04ec102e323cbaf214624a8cb702f9c6497d2f6e2239",
+            "matches_recorded": true
+          }
+        ],
+        "gdb_binary": {
+          "path": "/usr/bin/gdb",
+          "sha256": "e5272927fc1b40345748dfa4133ec2a50caeb5f209a44099dd2c48679911c59c",
+          "bytes": 10894536,
+          "recorded_sha256": "e5272927fc1b40345748dfa4133ec2a50caeb5f209a44099dd2c48679911c59c",
+          "matches_recorded": true
+        },
+        "target_exit": [
+          {
+            "binary": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/stack-diagnostic/observer-r0/execution/allocation-stack-worker-317644a12c1ae58ff5347ce1a8a93f33f11b391b38000cb0fb55fd6d23fe3afe",
+            "code": null,
+            "kind": "exit"
+          }
+        ],
+        "signal_count": 0
+      },
+      "quality": {
+        "command": [
+          "cargo",
+          "clippy",
+          "-p",
+          "xadb-engine",
+          "--all-targets",
+          "--all-features",
+          "--locked",
+          "--offline",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit": 0,
+        "seconds": 5.635587993000172,
+        "status": "PASS",
+        "log_sha256": "765283d57a96f5ad8cc914c10dab04644f111cbd5e2dc79134bf358c2917b6c8",
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/resource-r2/quality.json",
+          "sha256": "892b521f807e64d4a087185825d945119391d6f9c849eea000b2e004aa626a27",
+          "bytes": 339
+        },
+        "retained_logs": [
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r2/clippy.log",
+            "sha256": "765283d57a96f5ad8cc914c10dab04644f111cbd5e2dc79134bf358c2917b6c8",
+            "bytes": 799
+          }
+        ]
+      }
+    },
+    {
+      "revision": "r3",
+      "source_id": "resource-r3",
+      "selection": {
+        "path": "artifacts/dev3/resume-20261022/resource-r3/selection.json",
+        "sha256": "7106c6d94b3ac1c4ad491b43d6c2fd5547b39579c2027689e010a0ebc4efd158",
+        "bytes": 670
+      },
+      "reason": "Changed allocation_operation producer/validator helper frames to reduce overlapping debug stack; AR02 validates exact bytes, AR04 preserves exact rejection order. New stack test reruns only after this product diff. Guard/layout, compiler, native13, WAL4 unchanged and not rerun.",
+      "cases": [
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar02_exact_independent_sequences",
+          "exit": 0,
+          "status": "PASS",
+          "seconds": 6.378660227000182,
+          "log": "allocation_ar02_exact_independent_sequences.log",
+          "log_sha256": "00ed18bd04f4216177d1d7f73be4e2ca1ac1429f018b4a94ea385299ec81c3d8",
+          "log_artifact": {
+            "path": "artifacts/dev3/resume-20261022/resource-r3/allocation_ar02_exact_independent_sequences.log",
+            "sha256": "00ed18bd04f4216177d1d7f73be4e2ca1ac1429f018b4a94ea385299ec81c3d8",
+            "bytes": 250,
+            "recorded_sha256": "00ed18bd04f4216177d1d7f73be4e2ca1ac1429f018b4a94ea385299ec81c3d8",
+            "matches_recorded": true
+          }
+        },
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar04_frozen_semantic_negatives",
+          "exit": 0,
+          "status": "PASS",
+          "seconds": 0.6535683189995325,
+          "log": "allocation_ar04_frozen_semantic_negatives.log",
+          "log_sha256": "7f85369deafe6f41e02cb9a3da2b036a675a019d70fa9a52805c2a2f232bbfe8",
+          "log_artifact": {
+            "path": "artifacts/dev3/resume-20261022/resource-r3/allocation_ar04_frozen_semantic_negatives.log",
+            "sha256": "7f85369deafe6f41e02cb9a3da2b036a675a019d70fa9a52805c2a2f232bbfe8",
+            "bytes": 283,
+            "recorded_sha256": "7f85369deafe6f41e02cb9a3da2b036a675a019d70fa9a52805c2a2f232bbfe8",
+            "matches_recorded": true
+          }
+        }
+      ],
+      "build_status": "PASS",
+      "test_status": "FAIL",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/resource-r3/result.json",
+        "sha256": "29f67cfa2e333c19dcc881a3cbec90f6054a55cb6e662d6caeaa4cdc375e4773",
+        "bytes": 1263
+      },
+      "binary": {
+        "path": "artifacts/dev3/resume-20261022/resource-r3/target/debug/deps/xadb_engine-577b03c2b1ec4865",
+        "sha256": "5adcbb0ab83487773b65c26c825d575372caf78c22b57a61e68f3545ac86403b",
+        "bytes": 46467344,
+        "recorded_sha256": "5adcbb0ab83487773b65c26c825d575372caf78c22b57a61e68f3545ac86403b",
+        "matches_recorded": true
+      },
+      "stack": {
+        "status": "FAIL",
+        "failure": "FAIL_INFERIOR_EXIT",
+        "source_sha256": "d3af51c16efa042c1f344200eba2c1b2f7a8fe85f852bda6091d28edd15d6f0a",
+        "binary_sha256": "5adcbb0ab83487773b65c26c825d575372caf78c22b57a61e68f3545ac86403b",
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/resource-r3/stack/result.json",
+          "sha256": "0a2e7379a371718ca0c87245ab80a1e65def63986ca75521cd0e3d5e3196a8c8",
+          "bytes": 2470
+        },
+        "process": {
+          "command": [
+            "/usr/bin/gdb",
+            "--nx",
+            "--batch",
+            "-x",
+            "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r3/stack/observer.gdb",
+            "--args",
+            "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r3/stack/allocation-stack-worker-5adcbb0ab83487773b65c26c825d575372caf78c22b57a61e68f3545ac86403b",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::resource_tests::allocation_component_runs_with_observed_64k_stack",
+            "--ignored",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "timeout_seconds": 30,
+          "pid": 86994,
+          "seconds": 0.3642949269997189
+        },
+        "binary": {
+          "path": "artifacts/dev3/resume-20261022/resource-r3/stack/allocation-stack-worker-5adcbb0ab83487773b65c26c825d575372caf78c22b57a61e68f3545ac86403b",
+          "sha256": "5adcbb0ab83487773b65c26c825d575372caf78c22b57a61e68f3545ac86403b",
+          "bytes": 46467344,
+          "recorded_sha256": "5adcbb0ab83487773b65c26c825d575372caf78c22b57a61e68f3545ac86403b",
+          "matches_recorded": true
+        },
+        "preserved_artifacts": [
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r3/stack/allocation-stack-worker-5adcbb0ab83487773b65c26c825d575372caf78c22b57a61e68f3545ac86403b",
+            "sha256": "5adcbb0ab83487773b65c26c825d575372caf78c22b57a61e68f3545ac86403b",
+            "bytes": 46467344,
+            "recorded_sha256": "5adcbb0ab83487773b65c26c825d575372caf78c22b57a61e68f3545ac86403b",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r3/stack/gdb-version.log",
+            "sha256": "9b5495d8757987c35c55cd0298b09d32ca596b86680fb4e538f72f038a69c34d",
+            "bytes": 285,
+            "recorded_sha256": "9b5495d8757987c35c55cd0298b09d32ca596b86680fb4e538f72f038a69c34d",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r3/stack/observer.gdb",
+            "sha256": "6e3a9e3fd6635fae6a6fd29c0635b5ec8f4b1e35503a6af2da50552d3c14ec01",
+            "bytes": 1762,
+            "recorded_sha256": "6e3a9e3fd6635fae6a6fd29c0635b5ec8f4b1e35503a6af2da50552d3c14ec01",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r3/stack/stderr.log",
+            "sha256": "d6f7a22e49571cbdf92db6ec66c58129300f3da8539c33f8cd13c09afacc817a",
+            "bytes": 399,
+            "recorded_sha256": "d6f7a22e49571cbdf92db6ec66c58129300f3da8539c33f8cd13c09afacc817a",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r3/stack/stdout.log",
+            "sha256": "595b9a6c861cd556c4bacb503fd624e00954cff7f89c027ec29ce008d0207c72",
+            "bytes": 1742,
+            "recorded_sha256": "595b9a6c861cd556c4bacb503fd624e00954cff7f89c027ec29ce008d0207c72",
+            "matches_recorded": true
+          }
+        ],
+        "gdb_binary": {
+          "path": "/usr/bin/gdb",
+          "sha256": "e5272927fc1b40345748dfa4133ec2a50caeb5f209a44099dd2c48679911c59c",
+          "bytes": 10894536,
+          "recorded_sha256": "e5272927fc1b40345748dfa4133ec2a50caeb5f209a44099dd2c48679911c59c",
+          "matches_recorded": true
+        },
+        "target_exit": [
+          {
+            "binary": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r3/stack/allocation-stack-worker-5adcbb0ab83487773b65c26c825d575372caf78c22b57a61e68f3545ac86403b",
+            "code": null,
+            "kind": "exit"
+          }
+        ],
+        "signal_count": 0
+      }
+    },
+    {
+      "revision": "r4",
+      "source_id": "resource-r4",
+      "selection": {
+        "path": "artifacts/dev3/resume-20261022/resource-r4/selection.json",
+        "sha256": "38775e71219fccb7c90966af701468a3578ee753e65f1b277d0dcb04038e870f",
+        "bytes": 400
+      },
+      "reason": "Borrow helper Profile/Batch to retain proven Copy count, box test prepared owner to avoid large closure environment copies. Only failing stack test selected. Changed AR02/AR04 producer validation already tested r3; signatures here preserve values, real full N63 success will be stack case.",
+      "cases": [],
+      "build_status": "PASS",
+      "test_status": "FAIL",
+      "build_receipt": {
+        "path": "artifacts/dev3/resume-20261022/resource-r4/build.json",
+        "sha256": "b7d3b9c73a5585ecd7d0cd58b63badb15a2202c2c76e83ece194aea7a449bd95",
+        "bytes": 539
+      },
+      "binary": {
+        "path": "artifacts/dev3/resume-20261022/resource-r4/target/debug/deps/xadb_engine-577b03c2b1ec4865",
+        "sha256": "3ec4b23e17b619f5c1c38383b4a19d0a451b5c12941ae6c8e6251e544d2f6b12",
+        "bytes": 46474048,
+        "recorded_sha256": "3ec4b23e17b619f5c1c38383b4a19d0a451b5c12941ae6c8e6251e544d2f6b12",
+        "matches_recorded": true
+      },
+      "stack": {
+        "status": "FAIL",
+        "failure": "FAIL_INFERIOR_SIGNAL",
+        "source_sha256": "14b63bbef9a802de7007566f148940b5f4828792801b73a8a266b0fb97ac190a",
+        "binary_sha256": "3ec4b23e17b619f5c1c38383b4a19d0a451b5c12941ae6c8e6251e544d2f6b12",
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/resource-r4/stack/result.json",
+          "sha256": "f28bc76dfde6c96937101e7b644c4599fa0c3e288abe2b379aa0fd1a93fc63a8",
+          "bytes": 2472
+        },
+        "process": {
+          "command": [
+            "/usr/bin/gdb",
+            "--nx",
+            "--batch",
+            "-x",
+            "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r4/stack/observer.gdb",
+            "--args",
+            "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r4/stack/allocation-stack-worker-3ec4b23e17b619f5c1c38383b4a19d0a451b5c12941ae6c8e6251e544d2f6b12",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::resource_tests::allocation_component_runs_with_observed_64k_stack",
+            "--ignored",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "timeout_seconds": 30,
+          "pid": 88500,
+          "seconds": 0.3643565340007626
+        },
+        "binary": {
+          "path": "artifacts/dev3/resume-20261022/resource-r4/stack/allocation-stack-worker-3ec4b23e17b619f5c1c38383b4a19d0a451b5c12941ae6c8e6251e544d2f6b12",
+          "sha256": "3ec4b23e17b619f5c1c38383b4a19d0a451b5c12941ae6c8e6251e544d2f6b12",
+          "bytes": 46474048,
+          "recorded_sha256": "3ec4b23e17b619f5c1c38383b4a19d0a451b5c12941ae6c8e6251e544d2f6b12",
+          "matches_recorded": true
+        },
+        "preserved_artifacts": [
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r4/stack/allocation-stack-worker-3ec4b23e17b619f5c1c38383b4a19d0a451b5c12941ae6c8e6251e544d2f6b12",
+            "sha256": "3ec4b23e17b619f5c1c38383b4a19d0a451b5c12941ae6c8e6251e544d2f6b12",
+            "bytes": 46474048,
+            "recorded_sha256": "3ec4b23e17b619f5c1c38383b4a19d0a451b5c12941ae6c8e6251e544d2f6b12",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r4/stack/gdb-version.log",
+            "sha256": "9b5495d8757987c35c55cd0298b09d32ca596b86680fb4e538f72f038a69c34d",
+            "bytes": 285,
+            "recorded_sha256": "9b5495d8757987c35c55cd0298b09d32ca596b86680fb4e538f72f038a69c34d",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r4/stack/observer.gdb",
+            "sha256": "de0f6fa400e703d0dad823d3c16a8e9970b9757a43f2ef76c35fbfcbe6c09daa",
+            "bytes": 2641,
+            "recorded_sha256": "de0f6fa400e703d0dad823d3c16a8e9970b9757a43f2ef76c35fbfcbe6c09daa",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r4/stack/stderr.log",
+            "sha256": "1ffd3b0cd28c6b6deb302afa9538b0d7ef967ac0ec3598bc6433e7d85ffd6526",
+            "bytes": 399,
+            "recorded_sha256": "1ffd3b0cd28c6b6deb302afa9538b0d7ef967ac0ec3598bc6433e7d85ffd6526",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r4/stack/stdout.log",
+            "sha256": "efbf4c9a66c807e9ed2cdf0f23e902610bd2b36bb51f703346fdd6e0619e8835",
+            "bytes": 15462,
+            "recorded_sha256": "efbf4c9a66c807e9ed2cdf0f23e902610bd2b36bb51f703346fdd6e0619e8835",
+            "matches_recorded": true
+          }
+        ],
+        "gdb_binary": {
+          "path": "/usr/bin/gdb",
+          "sha256": "e5272927fc1b40345748dfa4133ec2a50caeb5f209a44099dd2c48679911c59c",
+          "bytes": 10894536,
+          "recorded_sha256": "e5272927fc1b40345748dfa4133ec2a50caeb5f209a44099dd2c48679911c59c",
+          "matches_recorded": true
+        },
+        "target_exit": [
+          {
+            "binary": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r4/stack/allocation-stack-worker-3ec4b23e17b619f5c1c38383b4a19d0a451b5c12941ae6c8e6251e544d2f6b12",
+            "code": null,
+            "kind": "exit"
+          }
+        ],
+        "signal_count": 1,
+        "signal": {
+          "name": "SIGSEGV",
+          "thread_id": 88514,
+          "pthread_stack_bytes": 65536,
+          "fault_sp_minus_stack_base": -1232,
+          "frame_count": 34,
+          "chain": [
+            "xadb_foundation::codec::content_digest",
+            "xadb_engine::storage::obligation::validate",
+            "xadb_engine::storage::obligation::decode_descriptor",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::operation::validate_header",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::operation::validate",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::operation::prepare",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::AllocationState::change<xadb_engine::storage::wal_io::bootstrap::test_support::Writer>",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::AllocationSession<xadb_engine::storage::wal_io::bootstrap::test_support::Writer>::cancel_reserved<xadb_engine::storage::wal_io::bootstrap::test_support::Writer>",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::resource_tests::allocation_component_runs_with_observed_64k_stack::{closure#0}::{closure#0}"
+          ]
+        }
+      }
+    },
+    {
+      "revision": "r5",
+      "source_id": "resource-r5",
+      "selection": {
+        "path": "artifacts/dev3/resume-20261022/resource-r5/selection.json",
+        "sha256": "ea3341ee384f817046f6f9cdabb9bec9b7ef365cbff6e2f25f71b3eb43357cf9",
+        "bytes": 343
+      },
+      "reason": "Retire validate_header before descriptor decoding, retain predicate/error order. Select previously failing stack and AR04 directly covering modified validation branches. Do not repeat r3 AR02 or original native/compiler/WAL results.",
+      "cases": [
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar04_frozen_semantic_negatives",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r5/target/debug/deps/xadb_engine-577b03c2b1ec4865",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar04_frozen_semantic_negatives",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "source_fingerprint": "827ae194ce5383d093cab140ce0fb96d1fbddd09bcf382936c5a6f30333948e5",
+          "binary_sha256": "a9a9798881ec405eb66292c7cadfdeab1f2383912b8f0b8836e9d9b73934bdb0",
+          "exit": 0,
+          "seconds": 0.6597445620000144,
+          "log_sha256": "b62cb4ca4b15b09f8591fc50fdecd262bc735656f481254810110f09969611a0",
+          "status": "PASS",
+          "receipt": {
+            "path": "artifacts/dev3/resume-20261022/resource-r5/ar04.json",
+            "sha256": "4ce4d8cea1aa54da4ea056d32a88b4fe4ab951a4ec24a58b338655f5be9205c9",
+            "bytes": 791
+          },
+          "log_artifact": {
+            "path": "artifacts/dev3/resume-20261022/resource-r5/ar04.log",
+            "sha256": "b62cb4ca4b15b09f8591fc50fdecd262bc735656f481254810110f09969611a0",
+            "bytes": 283,
+            "recorded_sha256": "b62cb4ca4b15b09f8591fc50fdecd262bc735656f481254810110f09969611a0",
+            "matches_recorded": true
+          }
+        }
+      ],
+      "build_status": "PASS",
+      "test_status": "FAIL",
+      "build_receipt": {
+        "path": "artifacts/dev3/resume-20261022/resource-r5/build.json",
+        "sha256": "82283d545c7212509aee6d0412efa9eea3f306dc2f8443773fc7a5a10c939b01",
+        "bytes": 539
+      },
+      "binary": {
+        "path": "artifacts/dev3/resume-20261022/resource-r5/target/debug/deps/xadb_engine-577b03c2b1ec4865",
+        "sha256": "a9a9798881ec405eb66292c7cadfdeab1f2383912b8f0b8836e9d9b73934bdb0",
+        "bytes": 46471504,
+        "recorded_sha256": "a9a9798881ec405eb66292c7cadfdeab1f2383912b8f0b8836e9d9b73934bdb0",
+        "matches_recorded": true
+      },
+      "stack": {
+        "status": "FAIL",
+        "failure": "FAIL_INFERIOR_SIGNAL",
+        "source_sha256": "827ae194ce5383d093cab140ce0fb96d1fbddd09bcf382936c5a6f30333948e5",
+        "binary_sha256": "a9a9798881ec405eb66292c7cadfdeab1f2383912b8f0b8836e9d9b73934bdb0",
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/resource-r5/stack/result.json",
+          "sha256": "9912b34fdf22d20347c9d28ae9dccaa5e64f2b1308fba690448985b546ff64c5",
+          "bytes": 2473
+        },
+        "process": {
+          "command": [
+            "/usr/bin/gdb",
+            "--nx",
+            "--batch",
+            "-x",
+            "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r5/stack/observer.gdb",
+            "--args",
+            "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r5/stack/allocation-stack-worker-a9a9798881ec405eb66292c7cadfdeab1f2383912b8f0b8836e9d9b73934bdb0",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::resource_tests::allocation_component_runs_with_observed_64k_stack",
+            "--ignored",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "timeout_seconds": 30,
+          "pid": 89522,
+          "seconds": 0.36432753000008233
+        },
+        "binary": {
+          "path": "artifacts/dev3/resume-20261022/resource-r5/stack/allocation-stack-worker-a9a9798881ec405eb66292c7cadfdeab1f2383912b8f0b8836e9d9b73934bdb0",
+          "sha256": "a9a9798881ec405eb66292c7cadfdeab1f2383912b8f0b8836e9d9b73934bdb0",
+          "bytes": 46471504,
+          "recorded_sha256": "a9a9798881ec405eb66292c7cadfdeab1f2383912b8f0b8836e9d9b73934bdb0",
+          "matches_recorded": true
+        },
+        "preserved_artifacts": [
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r5/stack/allocation-stack-worker-a9a9798881ec405eb66292c7cadfdeab1f2383912b8f0b8836e9d9b73934bdb0",
+            "sha256": "a9a9798881ec405eb66292c7cadfdeab1f2383912b8f0b8836e9d9b73934bdb0",
+            "bytes": 46471504,
+            "recorded_sha256": "a9a9798881ec405eb66292c7cadfdeab1f2383912b8f0b8836e9d9b73934bdb0",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r5/stack/gdb-version.log",
+            "sha256": "9b5495d8757987c35c55cd0298b09d32ca596b86680fb4e538f72f038a69c34d",
+            "bytes": 285,
+            "recorded_sha256": "9b5495d8757987c35c55cd0298b09d32ca596b86680fb4e538f72f038a69c34d",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r5/stack/observer.gdb",
+            "sha256": "de0f6fa400e703d0dad823d3c16a8e9970b9757a43f2ef76c35fbfcbe6c09daa",
+            "bytes": 2641,
+            "recorded_sha256": "de0f6fa400e703d0dad823d3c16a8e9970b9757a43f2ef76c35fbfcbe6c09daa",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r5/stack/stderr.log",
+            "sha256": "7f4b25c4c61d9f95eb53e0a49b87e9ff3388595bed4eb6a92e3df9edb693327c",
+            "bytes": 399,
+            "recorded_sha256": "7f4b25c4c61d9f95eb53e0a49b87e9ff3388595bed4eb6a92e3df9edb693327c",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r5/stack/stdout.log",
+            "sha256": "4368a9387c0f1b54deff78d83d613a1e0b330df2f30ea06ce63244d0db077403",
+            "bytes": 14441,
+            "recorded_sha256": "4368a9387c0f1b54deff78d83d613a1e0b330df2f30ea06ce63244d0db077403",
+            "matches_recorded": true
+          }
+        ],
+        "gdb_binary": {
+          "path": "/usr/bin/gdb",
+          "sha256": "e5272927fc1b40345748dfa4133ec2a50caeb5f209a44099dd2c48679911c59c",
+          "bytes": 10894536,
+          "recorded_sha256": "e5272927fc1b40345748dfa4133ec2a50caeb5f209a44099dd2c48679911c59c",
+          "matches_recorded": true
+        },
+        "target_exit": [
+          {
+            "binary": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r5/stack/allocation-stack-worker-a9a9798881ec405eb66292c7cadfdeab1f2383912b8f0b8836e9d9b73934bdb0",
+            "code": null,
+            "kind": "exit"
+          }
+        ],
+        "signal_count": 1,
+        "signal": {
+          "name": "SIGSEGV",
+          "thread_id": 89536,
+          "pthread_stack_bytes": 65536,
+          "fault_sp_minus_stack_base": -392,
+          "frame_count": 32,
+          "chain": [
+            "xadb_foundation::codec::content_digest",
+            "xadb_engine::storage::obligation::decode_descriptor",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::operation::validate_reserved",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::operation::validate_live",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::operation::validate_transition",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::operation::validate",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::operation::prepare",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::AllocationState::change<xadb_engine::storage::wal_io::bootstrap::test_support::Writer>",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::AllocationSession<xadb_engine::storage::wal_io::bootstrap::test_support::Writer>::cancel_reserved<xadb_engine::storage::wal_io::bootstrap::test_support::Writer>",
+            "xadb_engine::storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::resource_tests::allocation_component_runs_with_observed_64k_stack::{closure#0}::{closure#0}"
+          ]
+        }
+      }
+    },
+    {
+      "revision": "r6",
+      "source_id": "resource-r6",
+      "selection": {
+        "path": "artifacts/dev3/resume-20261022/resource-r6/selection.json",
+        "sha256": "9076be5d99f64a43e063f15d1b8680afa320019d681c255bd3d3556bc6572329",
+        "bytes": 331
+      },
+      "reason": "Extract read-only preflight from change to end page scan/admission locals before nested codecs. Only failed stack case plus directly affected AR03 preflight boundaries. r5 AR04 passed and its validator code is unchanged.",
+      "cases": [
+        {
+          "name": "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar03_preflight_boundaries_preserve_authority",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r6/target/debug/deps/xadb_engine-577b03c2b1ec4865",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::tests::allocation_ar03_preflight_boundaries_preserve_authority",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "source_fingerprint": "0f503243faa7cf120088bf2f1384040e325e55601491d6b2898e411d109379a6",
+          "binary_sha256": "a5bfa0b18bcd690e265765edb15d6186ae725a5177ba3af09204a7c0639996d5",
+          "exit": 0,
+          "seconds": 8.348856870000418,
+          "log_sha256": "be9ed777c4ec994d035b276435577771e6cf9f93a84ae445b81556a76d16e76a",
+          "status": "PASS",
+          "receipt": {
+            "path": "artifacts/dev3/resume-20261022/resource-r6/ar03.json",
+            "sha256": "9f3104056e8d17a97bedc33a72590999aed8cf4009247ac1df43d6eedb3fdf26",
+            "bytes": 818
+          },
+          "log_artifact": {
+            "path": "artifacts/dev3/resume-20261022/resource-r6/ar03.log",
+            "sha256": "be9ed777c4ec994d035b276435577771e6cf9f93a84ae445b81556a76d16e76a",
+            "bytes": 262,
+            "recorded_sha256": "be9ed777c4ec994d035b276435577771e6cf9f93a84ae445b81556a76d16e76a",
+            "matches_recorded": true
+          }
+        }
+      ],
+      "build_status": "PASS",
+      "test_status": "PASS",
+      "build_receipt": {
+        "path": "artifacts/dev3/resume-20261022/resource-r6/build.json",
+        "sha256": "ab02538738aee4329da66e94a4d18ba21438a7d16e1aa3cf9ad1b15108c5624c",
+        "bytes": 539
+      },
+      "binary": {
+        "path": "artifacts/dev3/resume-20261022/resource-r6/target/debug/deps/xadb_engine-577b03c2b1ec4865",
+        "sha256": "a5bfa0b18bcd690e265765edb15d6186ae725a5177ba3af09204a7c0639996d5",
+        "bytes": 46470640,
+        "recorded_sha256": "a5bfa0b18bcd690e265765edb15d6186ae725a5177ba3af09204a7c0639996d5",
+        "matches_recorded": true
+      },
+      "stack": {
+        "status": "PASS",
+        "source_sha256": "0f503243faa7cf120088bf2f1384040e325e55601491d6b2898e411d109379a6",
+        "binary_sha256": "a5bfa0b18bcd690e265765edb15d6186ae725a5177ba3af09204a7c0639996d5",
+        "pthread_stack_bytes": 65536,
+        "pthread_guard_bytes": 4096,
+        "marker_address": 138057653066567,
+        "maps_vma_bytes": 69632,
+        "compiled_source_sha256": "0f503243faa7cf120088bf2f1384040e325e55601491d6b2898e411d109379a6",
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/resource-r6/stack/result.json",
+          "sha256": "f6b90effef578784203622aaebdbceae11c46c5084e4f643368f230b53adad4d",
+          "bytes": 3916
+        },
+        "process": {
+          "command": [
+            "/usr/bin/gdb",
+            "--nx",
+            "--batch",
+            "-x",
+            "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r6/stack/observer.gdb",
+            "--args",
+            "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r6/stack/allocation-stack-worker-a5bfa0b18bcd690e265765edb15d6186ae725a5177ba3af09204a7c0639996d5",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::allocation_reservation::resource_tests::allocation_component_runs_with_observed_64k_stack",
+            "--ignored",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "timeout_seconds": 30,
+          "pid": 90587,
+          "seconds": 0.3140671430001021
+        },
+        "binary": {
+          "path": "artifacts/dev3/resume-20261022/resource-r6/stack/allocation-stack-worker-a5bfa0b18bcd690e265765edb15d6186ae725a5177ba3af09204a7c0639996d5",
+          "sha256": "a5bfa0b18bcd690e265765edb15d6186ae725a5177ba3af09204a7c0639996d5",
+          "bytes": 46470640,
+          "recorded_sha256": "a5bfa0b18bcd690e265765edb15d6186ae725a5177ba3af09204a7c0639996d5",
+          "matches_recorded": true
+        },
+        "preserved_artifacts": [
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r6/stack/allocation-stack-worker-a5bfa0b18bcd690e265765edb15d6186ae725a5177ba3af09204a7c0639996d5",
+            "sha256": "a5bfa0b18bcd690e265765edb15d6186ae725a5177ba3af09204a7c0639996d5",
+            "bytes": 46470640,
+            "recorded_sha256": "a5bfa0b18bcd690e265765edb15d6186ae725a5177ba3af09204a7c0639996d5",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r6/stack/gdb-version.log",
+            "sha256": "9b5495d8757987c35c55cd0298b09d32ca596b86680fb4e538f72f038a69c34d",
+            "bytes": 285,
+            "recorded_sha256": "9b5495d8757987c35c55cd0298b09d32ca596b86680fb4e538f72f038a69c34d",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r6/stack/observer.gdb",
+            "sha256": "de0f6fa400e703d0dad823d3c16a8e9970b9757a43f2ef76c35fbfcbe6c09daa",
+            "bytes": 2641,
+            "recorded_sha256": "de0f6fa400e703d0dad823d3c16a8e9970b9757a43f2ef76c35fbfcbe6c09daa",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r6/stack/stderr.log",
+            "sha256": "7ea4c1b12a0cdc61f3261503967bfa8ebecd2576934359ecb9e39da14c818d0f",
+            "bytes": 399,
+            "recorded_sha256": "7ea4c1b12a0cdc61f3261503967bfa8ebecd2576934359ecb9e39da14c818d0f",
+            "matches_recorded": true
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r6/stack/stdout.log",
+            "sha256": "c520a5045f50262a9b589846d6e4eeb4f9ab55e4a6da0718273fdff5c7450450",
+            "bytes": 1630,
+            "recorded_sha256": "c520a5045f50262a9b589846d6e4eeb4f9ab55e4a6da0718273fdff5c7450450",
+            "matches_recorded": true
+          }
+        ],
+        "gdb_binary": {
+          "path": "/usr/bin/gdb",
+          "sha256": "e5272927fc1b40345748dfa4133ec2a50caeb5f209a44099dd2c48679911c59c",
+          "bytes": 10894536,
+          "recorded_sha256": "e5272927fc1b40345748dfa4133ec2a50caeb5f209a44099dd2c48679911c59c",
+          "matches_recorded": true
+        },
+        "target_exit": [
+          {
+            "binary": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/resource-r6/stack/allocation-stack-worker-a5bfa0b18bcd690e265765edb15d6186ae725a5177ba3af09204a7c0639996d5",
+            "code": 0,
+            "kind": "exit"
+          }
+        ],
+        "signal_count": 0
+      },
+      "quality": {
+        "source_fingerprint": "0f503243faa7cf120088bf2f1384040e325e55601491d6b2898e411d109379a6",
+        "checks": [
+          {
+            "id": "format",
+            "command": [
+              "rustfmt",
+              "--edition",
+              "2024",
+              "--check",
+              "crates/engine/src/storage/wal_io/allocation_reservation.rs",
+              "crates/engine/src/storage/wal_io/allocation_operation.rs"
+            ],
+            "exit": 0,
+            "seconds": 0.03836184400006459,
+            "status": "PASS"
+          },
+          {
+            "id": "clippy",
+            "command": [
+              "cargo",
+              "clippy",
+              "-p",
+              "xadb-engine",
+              "--all-targets",
+              "--all-features",
+              "--locked",
+              "--offline",
+              "--",
+              "-D",
+              "warnings"
+            ],
+            "exit": 0,
+            "seconds": 5.64951176500017,
+            "status": "PASS"
+          }
+        ],
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/resource-r6/quality.json",
+          "sha256": "697bfa492875feb22a40c967933326d98ba4b4b73005626e40f71f9cefb7797a",
+          "bytes": 815
+        },
+        "retained_logs": [
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r6/clippy.log",
+            "sha256": "9699c6c4ef18fa81b1995798d8dbd67347d657a07597cd33d8e8cdc3a4587322",
+            "bytes": 799
+          },
+          {
+            "path": "artifacts/dev3/resume-20261022/resource-r6/format.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          }
+        ]
+      }
+    }
+  ],
+  "diagnostics_summary": {
+    "original_stack_failures_preserved": [
+      "resource-r0 VMA assertion",
+      "observer-r0 real SIGSEGV",
+      "resource-r3 real SIGSEGV",
+      "signal-r3 diagnostic real SIGSEGV",
+      "resource-r4 real SIGSEGV",
+      "resource-r5 real SIGSEGV"
+    ],
+    "r1": "NOT_RUN source-only capture",
+    "latest": "resource-r6 exact1 stack PASS",
+    "detail_ref": "artifacts/dev3/resume-20261022/allocation-acceptance-index.json"
+  },
+  "independent_review": {
+    "reviewer": "/root/allocation_review",
+    "decision": "D1 ACCEPT_SCOPED_UNIT / D2 resource contract ACCEPT",
+    "path": "artifacts/dev3/resume-20261022/review/allocation-final-review-r0.md",
+    "sha256": "dd07041a9a818106dfee33f48d586de1a086730bb1259f8c527c9ad0930f1dad",
+    "scope": "3.03.1 reserve/cancel only; no final-source full suite or full DEV3 claim",
+    "final_index_addendum": {
+      "path": "artifacts/dev3/resume-20261022/review/allocation-final-review-r1.md",
+      "sha256": "2a44c9763bdceac5a02ce565edb490a3055c3abd07a788745a428b618059ecdc"
+    }
+  }
+}

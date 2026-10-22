@@ -1,0 +1,68 @@
+{
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_diagnostics_are_failures": true,
+  "probe_relative_path": "crates/engine/src/allocation_reservation_borrow_probe.rs",
+  "cases": [
+    {
+      "name": "baseline",
+      "expected_code": null,
+      "primary_line": null,
+      "reason": "The unmodified frozen xadb-engine library must compile before ownership rejection is accepted."
+    },
+    {
+      "name": "installed",
+      "expected_code": "E0382",
+      "primary_line": 10,
+      "bytes": 668,
+      "sha256": "6e9f25586f38ffefd3ce1264f2da4db550e71b0fdc77e7a0f11653c269526de1",
+      "reason": "AllocationSession consumes the installed DoublewriteStorageSession; using the moved installed owner must fail."
+    },
+    {
+      "name": "frame",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "bytes": 658,
+      "sha256": "ef1732e882845fd1072f11a757df2165f2e798572f2e748e3237c11ee9971c6d",
+      "reason": "AllocationSession retains the exclusive metadata frame borrow until its last use."
+    },
+    {
+      "name": "operation",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "bytes": 662,
+      "sha256": "41a9acc37d852939733b93817c1ab571ab14a11b05499e9aee33a7cf6b0ce3a7",
+      "reason": "AllocationSession retains the exclusive operation workspace borrow until its last use."
+    },
+    {
+      "name": "flush",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "bytes": 658,
+      "sha256": "3a435ca8f64b42478236d6c317bd84ed6ed5115c3979d1304e40886d04ecd379",
+      "reason": "AllocationSession transitively retains the exclusive doublewrite flush workspace borrow until its last use."
+    },
+    {
+      "name": "slot",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "bytes": 657,
+      "sha256": "c4d00d1ad0840a521f1f746f40b81a0f0a3228c1130857c8f47b49e77b5f908a",
+      "reason": "AllocationSession transitively retains the exclusive WAL slot borrow until its last use."
+    },
+    {
+      "name": "release",
+      "expected_code": null,
+      "primary_line": null,
+      "bytes": 651,
+      "sha256": "5f9b292308cbc9845f86554921a1d75a5402f65f48ef8626fc517cc8cb97a417",
+      "reason": "Dropping AllocationSession returns all four caller borrows: metadata frame, operation workspace, flush workspace and WAL slot."
+    }
+  ],
+  "origin": {
+    "path": "artifacts/dev3/allocation-reservation-preparation-20261021/r4-inputs/compiler",
+    "manifest_sha256": "7b078b955e9efe7e606f43d7902b7e32a3d9dca8238f40409e6c01606e5b9b82",
+    "probe_bytes_unchanged": true
+  },
+  "compiler_budget_seconds": 30
+}

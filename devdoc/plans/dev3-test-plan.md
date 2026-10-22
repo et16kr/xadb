@@ -169,6 +169,8 @@
 | 변경 WAL stage 4시험 | 원래 미검증 WAL 변경과 현재 source를 대조한 뒤 관련 4개 exact case. 공통 코드가 추가로 바뀌면 직접 영향 case만 추가 | genesis WAL 전체 runtime/native suite |
 | 관련 quality·독립 검토 | 변경 target/feature의 필요한 compile·Clippy, 새 결과와 기존 source별 증거 취합 | workspace Clippy/test·전체 wrapper |
 
+2026-10-22 구현 결과는 [3.03.1 인수 기록](../evidence/dev3-allocation-reservation-acceptance-20261022.md)에 연결한다. native는 `dev3_allocation_native.py`의13개 child 선택, compiler는 `check_dev3_allocation_borrows.py`의 baseline+6 입력, 자원은 `allocation_component_layout_inventory`와 `check_dev3_allocation_stack.py`가 선택하는 `allocation_component_runs_with_observed_64k_stack`을 공급했다. 새 checker의 개별 selftest도 원래 source 결과와 함께 S5 inventory 입력이다. 중간 실행의 원래 FAIL을 지우지 않으며 이 목록은 아직 미구현된 DEV3 전체 시험을 대체하지 않는다.
+
 runtime8 및 r3/r4에서 이미 확인한 선택 사례는 관련 코드가 같으면 중간 단계에서 재실행하지 않는다. 새로운 native/compiler 코드와 실제 미검증 변경은 검증한다. 이 단위의 성공으로 INIT·home flush·일반 recovery·거래 ACK를 완료 처리하지 않는다. S5에서는 최종 DEV3 inventory에 포함된 예약·취소 시험도 전수 대상이다.
 
 native 13DB는 새로 부풀린 전수 행렬이 아니라 기존 제한 단위의 고정 필수 입력이다. 정상3DB는 profile1/2/3의 reserve/cancel 1→8→63 cycle, 장애10DB는 profile1·N8의 reserve/cancel×write-before/half/after·sync-before/after다. compiler는 정상 baseline과 installed owner 재사용·frame/operation/flush/WAL slot 중첩 변경 거절, owner 종료 뒤 반환 성공을 구별한다.
@@ -223,7 +225,7 @@ native 13DB는 새로 부풀린 전수 행렬이 아니라 기존 제한 단위�
 | `xadbtest-engine-worker`의 `page_io`, `read_buffer`, `genesis_wal`, `storage_session`, `doublewrite_install` test target | 실제 제한 native 공급. target와 정확한 함수로 선택 가능하나 일반 dirty/commit/recovery 인수가 아님 |
 | [check_dev3_leaf.py](../../scripts/check_dev3_leaf.py) | 현재 `--report`·`--with-regressions`만 있고 개별 case selector 없음. 중간 실행에 사용하지 않으며 이 기존 leaf만으로 S5 전수 충족 불가 |
 | 기존 [buffer](../../scripts/check_dev3_buffer_borrows.py)·[WAL](../../scripts/check_dev3_wal_borrows.py)·[storage](../../scripts/check_dev3_storage_borrows.py)·[DWB](../../scripts/check_dev3_doublewrite_borrows.py) compiler runner | 기존 수명 경계에 한정하며 현재 개별 probe selector 없음. 새 변경에 필요한 probe만 고를 수 있도록 해당 구현 때 제공 |
-| 신규 NT 묶음의 미공급 영역 | allocation native/compiler, 운영 dirty/flush, live tree/undo·index/DDL, 일반 commit/recovery/audit 등의 시험은 해당 기능과 함께 추가. 기존 표현/모델 결과로 대신하지 않음 |
+| 신규 NT 묶음의 미공급 영역 | allocation native/compiler/resource는 위 기록에 공급; 운영 dirty/flush, live tree/undo·index/DDL, 일반 commit/recovery/audit 등의 시험은 해당 기능과 함께 추가. 기존 표현/모델 결과로 대신하지 않음 |
 
 <a id="case-inventory"></a>
 ### 6.1 의무에서 실제 실행 case까지의 목록

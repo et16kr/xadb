@@ -1,5 +1,9 @@
 # XADB 조사·실행 증거
 
+2026-10-22 [DEV3 예약·취소 잔여 인수](dev3-allocation-reservation-acceptance-20261022.md) · [source별 실행 색인](dev3-allocation-reservation-acceptance-20261022.json): native13DB·compiler·WAL4·64KiB 검증과 원래 실패를 연결한다. 제한 단위 판정과 전체 DEV3/S5 미완료를 구분한다.
+
+2026-10-22 [DEV3 예약·취소 중첩 자원 검토](dev3-allocation-resource-review-20261022.md) — aggregate 타입/수명 guard와 native/compiler 잔여 검증. 실제 stack 실패와 수정·재검증 결과를 별도로 보존하며 전체 DEV3 완료와 구별한다.
+
 2026-10-22 [DEV4 분배 재점검 003 조사](dev4-source-research.md#work-review-003-research) — ARIES 원문 일부·Oracle19c·로컬5개 DBMS의6개 파일을 대조해 앞단 선행·오류 소유·시험 준비 분량을 보완. 기존18개 분류와 원래 조사 identity 유지, 제품/외부 DBMS 시험 미실행.
 
 2026-10-22 [DEV7 분배 후속 검토](dev7-work-breakdown-review-20261022-r2.md) — ARIES·Oracle·로컬4개 실제 소스 대조,135→140개 책임과 제약 설치·온라인 복구·queue/worker·분량/실행 비용 보완. 제품 실행 증거가 아니다.
