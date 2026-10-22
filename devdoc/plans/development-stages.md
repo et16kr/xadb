@@ -29,7 +29,7 @@ DEV5의 local Unix 인증·권한·세션·XSQ1·prepared·취소·종료와 외
 
 DEV6의 native/C facade→JDBC→ODBC 범위는 [클라이언트 설계](../contracts/dev6-client-design.md), 실제 B3 선행·SC04–06·D6-F01–F07·부분 buffer/취소/UNKNOWN·성능 인수는 [구현 계획](dev6-implementation-plan.md)을 따른다. 공통 계약 동결 후 독립 모듈의 [병렬 개발](dev6-implementation-plan.md#parallel)은 가능하며 SC04→SC05→SC06은 실제 인수 순서다. D2 설계 채택과 leaf 동결·구현·CLIENT1 완료는 별개이며 실행은 NOT_RUN이다.
 
-DEV7의 확장 타입·관계 실행·PSM·LOB/spatial·외부 routine/DB link/XA는 [상세 설계](../contracts/dev7-sql-extensions-design.md)와 [구현·검증 계획](dev7-implementation-plan.md)을 따른다. 9개 요구군의 64개 필수 요구를 배정했으며 F01–F10의 세부 동결과 실제 제품 실행은 미완료다. SC07–SC11·SQL_EXT1은 NOT_RUN이고 PART/NG·server/client·외부 peer의 선행 증거를 해당 leaf에서 요구한다.
+DEV7의 확장 타입·관계 실행·PSM·LOB/spatial·외부 routine/DB link/XA는 [상세 설계](../contracts/dev7-sql-extensions-design.md)와 [구현·검증 계획](dev7-implementation-plan.md)을 따른다. 9개 요구군의 64개 필수 요구를 [36개 세부 작업](dev7-work-breakdown.md)에 연결했으며 F01–F10의 세부 동결과 실제 제품 실행은 미완료다. SC07–SC11·SQL_EXT1은 NOT_RUN이고 PART/NG·server/client·외부 peer의 선행 증거를 해당 leaf에서 요구한다.
 
 DEV8의 복제 H1/L1/M1·capture/retention·온라인 백업/PITR·보안/운영은 [상세 설계](../contracts/dev8-operations-design.md)와 [구현·검증 계획](dev8-implementation-plan.md)을 따른다. R11–R15의 30개 요구와 SC12–15·RC-T24/25·PF08/14를 배정했다. 설계 준비는 가능하지만 실제 S1/B3와 기능별 DEV6/7/PART/NG 공급, F01–F10 동결·전체 variant 실행 전 OPS1은 NOT_RUN이다.
 

@@ -44,6 +44,8 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV8 — Oracle·ARIES·로컬 소스 조사와 설계 검토](dev8-source-research.md) — 공개 로컬4개·LOCAL-R01 실제 revision/hash와 설계 선택; 제품 실행 아님
 - [DEV8 — 운영 설계 2차 검토](dev8-review-002.md) — domain별 중복 제거·sequence 보호·partition 이동·WAL/control cut 보완, Oracle/ARIES·로컬 소스 근거; 제품 실행 아님
 
+- [DEV7 세부 분류 — ARIES·Oracle·로컬 DBMS 조사](dev7-work-breakdown-research.md) — 2026-10-22 실제 로컬8개 revision/열람·공식 자료와 36개 분류의 근거; 제품 비교 실행 아님
+
 - [DEV7 — 비교 문맥·CALL·XA 설계 재검토](dev7-review-002.md) — Oracle·ARIES·실제 로컬 소스 revision, 네 계약 반례와 DESIGN-002 보완·독립 검토 상태; 제품 인수 아님
 
 - [DEV7 — Oracle·로컬 DBMS 조사와 설계 검토](dev7-source-research.md) — Oracle26ai 등 공식 문서와 실제 로컬8개 revision; 실행 비교·제품 인수 아님

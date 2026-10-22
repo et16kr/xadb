@@ -2,12 +2,16 @@
 
 2026-10-19 · **DEV7-DESIGN-001·002 채택·독립 정적 검토 PASS 대응 / leaf 동결·구현·SC07–SC11·SQL_EXT1 NOT_RUN**
 
-[상세 설계](../contracts/dev7-sql-extensions-design.md) · [조사·독립 검토](../evidence/dev7-source-research.md) · [단계 JSON](development-stages.json) · [완료 계약](stage-completion.json)
+[36개 세부 작업](dev7-work-breakdown.md) · [상세 설계](../contracts/dev7-sql-extensions-design.md) · [조사·독립 검토](../evidence/dev7-source-research.md) · [단계 JSON](development-stages.json) · [완료 계약](stage-completion.json)
+
+2026-10-22 [7.01–7.36 세부 분류](dev7-work-breakdown.md)는 각 작업의 하위 배정 단위·직접 선행·산출물·완료/인수 연결을 정리한다. 아래 64개 요구에 세부 작업 번호를 연결했으며 F01–F10 동결·제품 구현/실행 상태는 유지한다. [ARIES·Oracle·로컬8개 소스 조사](../evidence/dev7-work-breakdown-research.md)를 근거로 기존 책임을 분류했다.
+
+시험 실행은 [현재 사용자 지시](../../AGENTS.md)가 우선한다. 마지막 관련 검증 이후 실제 코드 diff의 필수 사례만 선택하고 무변경 하위 코드·완료 시험·전체 wrapper를 반복하지 않는다. DEV3 S5의 전수 실행 예외는 DEV7에 적용하지 않는다. 아래 전체 인수 의무는 각 원래 source/case 증거와 남은 변경 경로의 결과를 취합하는 기준이며 일괄 재실행 지시가 아니다.
 
 <a id="entry"></a>
 ## 1. 착수와 완료 조건
 
-설계·독립 expected vector·모델 준비는 지금 가능하다. production SQL 통합은 현재 source identity의 실제 DEV4 Q1·DEV3 S1·하위 회귀를 입력으로 받는다. server 기능은 B3/C1, driver 기능은 CLIENT1의 실제 해당 API, PART/NG 노출은 P1/H2/H3가 추가된다. 코드 존재·채택된 계약·과거 dirty tree 실행을 실제 공급 증거로 대체하지 않는다.
+설계·독립 expected vector·모델 준비는 지금 가능하다. production SQL 통합은 실제 DEV4 Q1·DEV3 S1 공급 API와 해당 source/case 증거를 입력으로 받고 이후 관련 diff를 검증한다. server 기능은 B3/C1, driver 기능은 CLIENT1의 실제 해당 API, PART/NG 노출은 P1/H2/H3가 추가된다. 코드 존재·채택된 계약·과거 dirty tree 실행을 실제 공급 증거로 대체하지 않는다.
 
 각 leaf는 `의미/오류·수치 동결 → 독립 oracle/known-bad → 하위 native 공급 → SQL 구현 → 해당 server/client 통합 → 현재-build 복구/자원/성능 → 독립 검토` 순서로 인수한다. 부분 내부 공개는 가능하지만 64개 요구의 필수 operation·type·client·fault variant를 제외하여 SQL_EXT1을 닫지 않는다. DEV7 checker/worker command는 아직 없고 `run_entrypoint=null`이다.
 
@@ -42,7 +46,7 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 | D7-I04 | XADB-039 PSM·trigger·sequence·queue·scheduler·온라인 lifecycle | I02/I03·F05, 실제 server 권한/worker. 온라인 변경은 F04 공급 |
 | D7-I05 | XADB-040 LOB·geometry·spatial index·파일/stream adapter | I01·XADB-029·F03/F06; SQL→B3/CLIENT1 실제 공급과 합류 |
 | D7-I06 | XADB-041 외부 worker·link·XA RM/coordinator·외부 변경 adapter/분석 교환 | I04·XADB-036·F07/F08; prepared native 인수 후 두 RM/TM 연결. 변경 추출·logging 내부와 R10-05 상세는 D-LOGGING 보류 |
-| D7-I07 | 각 feature의 실제 driver/도구·언어 업무·전체 인수 | 해당 I01–I06·F08/F09/F10. 독립 검토와 모든 하위 회귀 뒤 SQL_EXT1 |
+| D7-I07 | 각 feature의 실제 driver/도구·언어 업무·전체 인수 | 해당 I01–I06·F08/F09/F10. 독립 검토·하위 공급 증거와 관련 변경 경로 인수 뒤 SQL_EXT1 |
 
 한 함수마다 crate를 만들지 않는다. sql의 값 바인딩/관계/optimizer/PSM과 engine의 거래/catalog/LOB/index, server의 coordinator/worker, client의 adapter를 책임별 파일로 구현한다. 공통 값/오류·wire·engine API는 한 담당이 변경하고 소비 모듈이 별도 정의를 복제하지 않는다. 계획 package와 허용 의존성은 [저장소 정책](../policies/repository-build-plan.md)의 정본이다.
 
@@ -51,74 +55,76 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 <a id="coverage"></a>
 ## 4. 요구 배정표
 
-`capability-inventory.json`에서 planned_stages에 DEV7이 있는 R01/02/03/05/06/07/08/09/10의 64개 요구를 모두 배정한다. 아래 행은 **필수 책임의 보존**이며 specification/implementation/equivalence PASS가 아니다. 기존 하위 단계가 담당한 부분은 회귀하고 DEV7의 추가 variant만 확장한다. 상세 함수/API 목록은 F01–F09로 남는다.
+`capability-inventory.json`에서 planned_stages에 DEV7이 있는 R01/02/03/05/06/07/08/09/10의 64개 요구를 모두 배정한다. 아래 행은 **필수 책임의 보존**이며 specification/implementation/equivalence PASS가 아니다. 기존 하위 단계가 담당한 부분의 결과는 원래 source/case 범위로 보존하고 DEV7의 추가 variant·변경 경로를 검증한다. 상세 함수/API 목록은 F01–F09로 남는다.
 
-| 요구 | 보존하는 기능 | 주 작업 / 인수 | 설계 / 주 시험 |
-| --- | --- | --- | --- |
-| R01-01 | 관계 조회와 중복·NULL 의미 | XADB-038 / SC08 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T05 |
-| R01-02 | 내부·외부·교차 조인 | XADB-038 / SC08 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T05 |
-| R01-03 | 상관 subquery와 lateral 조회 | XADB-038 / SC08 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T05 |
-| R01-04 | 집계·다중 grouping | XADB-038 / SC08 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T06 |
-| R01-05 | window 분석 | XADB-038 / SC08 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T07 |
-| R01-06 | 집합 연산·정렬·부분 결과 | XADB-038 / SC08 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T08 |
-| R01-07 | 재귀·계층 탐색 | XADB-038 / SC08 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T08 |
-| R01-08 | 행·열 전환 | XADB-038 / SC08 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T08 |
-| R01-09 | 복합 DML·upsert·변경 결과 반환 | XADB-038 / SC08 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T09 |
-| R01-10 | view·이름 간접 참조 | XADB-038 / SC08 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T13 |
-| R01-11 | 조회 결과의 물리화·갱신 | XADB-038 / SC08 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T13 |
-| R01-12 | 객체 생성·변경·삭제·메타데이터 | XADB-038 / SC08 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T13 |
-| R02-01 | 정수·고정소수·근사수 표현 | XADB-037 / SC07 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T01 |
-| R02-02 | 문자·국제 문자·길이 의미 | XADB-037 / SC07 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T02 |
-| R02-03 | byte·가변 byte·bit 값 | XADB-037 / SC07 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T02 |
-| R02-04 | 날짜·시간·표현 변환 | XADB-037 / SC07 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T03 |
-| R02-05 | 수치·문자·시간·변환 함수 | XADB-037 / SC07 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T04 |
-| R02-06 | 암호·해시 관련 SQL 기능 | XADB-037 / SC07 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T04 |
-| R02-07 | 조건·cast·정규식·표현식 | XADB-037 / SC07 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T04 |
-| R03-01 | 명시 transaction·autocommit·read-only | XADB-038 / SC08 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T11 |
-| R03-02 | statement 실패·savepoint | XADB-038 / SC08 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T12 |
-| R03-03 | READ COMMITTED·REPEATABLE READ·SERIALIZABLE의 업무 능력 | XADB-038 / SC08 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T11 |
-| R03-04 | 명시 잠금·대기 제어 | XADB-038 / SC08 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T11 |
-| R03-05 | 세션 상태·동시 사용 | XADB-038 / SC08 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T28 |
-| R03-06 | 구조화 오류·재시도 범위 | XADB-038 / SC08 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T12 |
-| R05-01 | range·list·hash 분할 | XADB-038 / SC08 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T14 |
-| R05-02 | partition pruning | XADB-038 / SC08 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T14 |
-| R05-03 | 디스크 partition과 행 이동 | XADB-038 / SC08 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T14 |
-| R05-04 | partition 추가·삭제·분할·병합·교환 | XADB-038 / SC08 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T14 |
-| R05-05 | 분할 객체 관리와 관측 | XADB-038 / SC08 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T14 |
-| R06-01 | 정렬·보조·복합 index 접근 | XADB-038 / SC08 | [optimizer](../contracts/dev7-sql-extensions-design.md#optimizer) · D7-T10 |
-| R06-02 | primary·unique·NOT NULL 제약 | XADB-038 / SC08 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T11 |
-| R06-03 | 참조 무결성과 CHECK | XADB-038 / SC08 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T11 |
-| R06-04 | local·global index 범위 | XADB-038 / SC08 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T14 |
-| R06-05 | index lifecycle·유효성·재구성 | XADB-038 / SC08 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T13 |
-| R07-01 | procedure·function·호출 인자 | XADB-039 / SC09 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T15 |
-| R07-02 | 제어 흐름·예외·dynamic SQL | XADB-039 / SC09 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T15 |
-| R07-03 | cursor·record·배열·사용자 타입 | XADB-039 / SC09 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T15 |
-| R07-04 | package·session 상태·의존 객체 | XADB-039 / SC09 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T16 |
-| R07-05 | 독립 transaction을 사용하는 routine | XADB-039 / SC09 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T16 |
-| R07-06 | trigger | XADB-039 / SC09 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T17 |
-| R07-07 | sequence | XADB-039 / SC09 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T17 |
-| R07-08 | 작업 스케줄러 | XADB-039 / SC09 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T18 |
-| R07-09 | 내장 package의 관리·통신 기능 | XADB-039 / SC09 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T18 |
-| R07-10 | 온라인 객체 변경 능력 | XADB-039 / SC09 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T19 |
-| R07-11 | transactional queue·메시지 소비 | XADB-039 / SC09 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T18 |
-| R08-01 | LOB 값과 부분 읽기·쓰기 | XADB-040 / SC10 | [storage-extension](../contracts/dev7-sql-extensions-design.md#storage-extension) · D7-T20 |
-| R08-02 | 공간 값·교환 표현 | XADB-040 / SC10 | [storage-extension](../contracts/dev7-sql-extensions-design.md#storage-extension) · D7-T21 |
-| R08-03 | 공간 관계·분석·색인 | XADB-040 / SC10 | [storage-extension](../contracts/dev7-sql-extensions-design.md#storage-extension) · D7-T21 |
-| R08-04 | 공간 client API와 파일 적재 | XADB-040 / SC10 | [storage-extension](../contracts/dev7-sql-extensions-design.md#storage-extension) · D7-T22 |
-| R09-01 | C/C++ 호출형 client | XADB-041 / SC11 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T28 |
-| R09-02 | JDBC 표준 업무 | XADB-041 / SC11 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T28 |
-| R09-03 | ODBC 표준 업무 | XADB-041 / SC11 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T28 |
-| R09-04 | embedded SQL 개발 능력 | XADB-041 / SC11 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T29 |
-| R09-05 | PHP/PDO·.NET 및 언어 연결 | XADB-041 / SC11 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T29 |
-| R09-06 | XA·외부 transaction manager 연동 | XADB-041 / SC11 | [xa](../contracts/dev7-sql-extensions-design.md#xa) · D7-T25 |
-| R09-07 | 큰/배열 인자·결과·취소 | XADB-041 / SC11 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T28 |
-| R09-08 | 도구·framework 상호운용 | XADB-041 / SC11 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T29 |
-| R09-09 | 로컬·원격 접속과 전송 제약 | XADB-041 / SC11 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T29 |
-| R10-01 | 외부 DB 조회·원격 실행 | XADB-041 / SC11 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T24 |
-| R10-02 | 외부 C/C++ routine 호출 | XADB-041 / SC11 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T23 |
-| R10-03 | 이종 DB 변경 전달 | XADB-041 / SC11 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T27 |
-| R10-04 | 분산 분석 환경 데이터 교환 | XADB-041 / SC11 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T27 |
-| R10-05 | 변경 분석·구독 기능 | XADB-041 / SC11 | [필수 예약](../contracts/dev7-sql-extensions-design.md#external) · D-LOGGING 보류, 상세 인수 사례 미작성 |
+| 요구 | 보존하는 기능 | 주 작업 / 인수 | 세부 작업 | 설계 / 주 시험 |
+| --- | --- | --- | --- | --- |
+| R01-01 | 관계 조회와 중복·NULL 의미 | XADB-038 / SC08 | 7.06·7.07 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T05 |
+| R01-02 | 내부·외부·교차 조인 | XADB-038 / SC08 | 7.08 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T05 |
+| R01-03 | 상관 subquery와 lateral 조회 | XADB-038 / SC08 | 7.08 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T05 |
+| R01-04 | 집계·다중 grouping | XADB-038 / SC08 | 7.09 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T06 |
+| R01-05 | window 분석 | XADB-038 / SC08 | 7.10 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T07 |
+| R01-06 | 집합 연산·정렬·부분 결과 | XADB-038 / SC08 | 7.11 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T08 |
+| R01-07 | 재귀·계층 탐색 | XADB-038 / SC08 | 7.11 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T08 |
+| R01-08 | 행·열 전환 | XADB-038 / SC08 | 7.11 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T08 |
+| R01-09 | 복합 DML·upsert·변경 결과 반환 | XADB-038 / SC08 | 7.12 | [relational](../contracts/dev7-sql-extensions-design.md#relational) · D7-T09 |
+| R01-10 | view·이름 간접 참조 | XADB-038 / SC08 | 7.18 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T13 |
+| R01-11 | 조회 결과의 물리화·갱신 | XADB-038 / SC08 | 7.18 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T13 |
+| R01-12 | 객체 생성·변경·삭제·메타데이터 | XADB-038 / SC08 | 7.18·7.25 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T13 |
+| R02-01 | 정수·고정소수·근사수 표현 | XADB-037 / SC07 | 7.01·7.02 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T01 |
+| R02-02 | 문자·국제 문자·길이 의미 | XADB-037 / SC07 | 7.01·7.03 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T02 |
+| R02-03 | byte·가변 byte·bit 값 | XADB-037 / SC07 | 7.01·7.03 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T02 |
+| R02-04 | 날짜·시간·표현 변환 | XADB-037 / SC07 | 7.01·7.04 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T03 |
+| R02-05 | 수치·문자·시간·변환 함수 | XADB-037 / SC07 | 7.05 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T04 |
+| R02-06 | 암호·해시 관련 SQL 기능 | XADB-037 / SC07 | 7.05 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T04 |
+| R02-07 | 조건·cast·정규식·표현식 | XADB-037 / SC07 | 7.05 | [types](../contracts/dev7-sql-extensions-design.md#types) · D7-T04 |
+| R03-01 | 명시 transaction·autocommit·read-only | XADB-038 / SC08 | 7.15 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T11 |
+| R03-02 | statement 실패·savepoint | XADB-038 / SC08 | 7.16 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T12 |
+| R03-03 | READ COMMITTED·REPEATABLE READ·SERIALIZABLE의 업무 능력 | XADB-038 / SC08 | 7.15 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T11 |
+| R03-04 | 명시 잠금·대기 제어 | XADB-038 / SC08 | 7.15 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T11 |
+| R03-05 | 세션 상태·동시 사용 | XADB-038 / SC08 | 7.21·7.33 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T28 |
+| R03-06 | 구조화 오류·재시도 범위 | XADB-038 / SC08 | 7.16·7.33 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T12 |
+| R05-01 | range·list·hash 분할 | XADB-038 / SC08 | 7.19 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T14 |
+| R05-02 | partition pruning | XADB-038 / SC08 | 7.19 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T14 |
+| R05-03 | 디스크 partition과 행 이동 | XADB-038 / SC08 | 7.19 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T14 |
+| R05-04 | partition 추가·삭제·분할·병합·교환 | XADB-038 / SC08 | 7.19 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T14 |
+| R05-05 | 분할 객체 관리와 관측 | XADB-038 / SC08 | 7.19 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T14 |
+| R06-01 | 정렬·보조·복합 index 접근 | XADB-038 / SC08 | 7.01·7.13 | [optimizer](../contracts/dev7-sql-extensions-design.md#optimizer) · D7-T10 |
+| R06-02 | primary·unique·NOT NULL 제약 | XADB-038 / SC08 | 7.17 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T11 |
+| R06-03 | 참조 무결성과 CHECK | XADB-038 / SC08 | 7.17 | [constraints](../contracts/dev7-sql-extensions-design.md#constraints) · D7-T11 |
+| R06-04 | local·global index 범위 | XADB-038 / SC08 | 7.19 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T14 |
+| R06-05 | index lifecycle·유효성·재구성 | XADB-038 / SC08 | 7.18·7.25 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T13 |
+| R07-01 | procedure·function·호출 인자 | XADB-039 / SC09 | 7.20 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T15 |
+| R07-02 | 제어 흐름·예외·dynamic SQL | XADB-039 / SC09 | 7.20 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T15 |
+| R07-03 | cursor·record·배열·사용자 타입 | XADB-039 / SC09 | 7.20 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T15 |
+| R07-04 | package·session 상태·의존 객체 | XADB-039 / SC09 | 7.21 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T16 |
+| R07-05 | 독립 transaction을 사용하는 routine | XADB-039 / SC09 | 7.21 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T16 |
+| R07-06 | trigger | XADB-039 / SC09 | 7.22 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T17 |
+| R07-07 | sequence | XADB-039 / SC09 | 7.23 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T17 |
+| R07-08 | 작업 스케줄러 | XADB-039 / SC09 | 7.24 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T18 |
+| R07-09 | 내장 package의 관리·통신 기능 | XADB-039 / SC09 | 7.24 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T18 |
+| R07-10 | 온라인 객체 변경 능력 | XADB-039 / SC09 | 7.25 | [objects](../contracts/dev7-sql-extensions-design.md#objects) · D7-T19 |
+| R07-11 | transactional queue·메시지 소비 | XADB-039 / SC09 | 7.24 | [psm](../contracts/dev7-sql-extensions-design.md#psm) · D7-T18 |
+| R08-01 | LOB 값과 부분 읽기·쓰기 | XADB-040 / SC10 | 7.26·7.27 | [storage-extension](../contracts/dev7-sql-extensions-design.md#storage-extension) · D7-T20 |
+| R08-02 | 공간 값·교환 표현 | XADB-040 / SC10 | 7.28 | [storage-extension](../contracts/dev7-sql-extensions-design.md#storage-extension) · D7-T21 |
+| R08-03 | 공간 관계·분석·색인 | XADB-040 / SC10 | 7.28 | [storage-extension](../contracts/dev7-sql-extensions-design.md#storage-extension) · D7-T21 |
+| R08-04 | 공간 client API와 파일 적재 | XADB-040 / SC10 | 7.28·7.33 | [storage-extension](../contracts/dev7-sql-extensions-design.md#storage-extension) · D7-T22 |
+| R09-01 | C/C++ 호출형 client | XADB-041 / SC11 | 7.33 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T28 |
+| R09-02 | JDBC 표준 업무 | XADB-041 / SC11 | 7.33 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T28 |
+| R09-03 | ODBC 표준 업무 | XADB-041 / SC11 | 7.33 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T28 |
+| R09-04 | embedded SQL 개발 능력 | XADB-041 / SC11 | 7.34 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T29 |
+| R09-05 | PHP/PDO·.NET 및 언어 연결 | XADB-041 / SC11 | 7.34 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T29 |
+| R09-06 | XA·외부 transaction manager 연동 | XADB-041 / SC11 | 7.31·7.32·7.33 | [xa](../contracts/dev7-sql-extensions-design.md#xa) · D7-T25 |
+| R09-07 | 큰/배열 인자·결과·취소 | XADB-041 / SC11 | 7.33 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T28 |
+| R09-08 | 도구·framework 상호운용 | XADB-041 / SC11 | 7.34 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T29 |
+| R09-09 | 로컬·원격 접속과 전송 제약 | XADB-041 / SC11 | 7.34 | [clients](../contracts/dev7-sql-extensions-design.md#clients) · D7-T29 |
+| R10-01 | 외부 DB 조회·원격 실행 | XADB-041 / SC11 | 7.30 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T24 |
+| R10-02 | 외부 C/C++ routine 호출 | XADB-041 / SC11 | 7.29 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T23 |
+| R10-03 | 이종 DB 변경 전달 | XADB-041 / SC11 | 7.35.1·7.35.3 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T27 |
+| R10-04 | 분산 분석 환경 데이터 교환 | XADB-041 / SC11 | 7.35.2 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T27 |
+| R10-05 | 변경 분석·구독 기능 | XADB-041 / SC11 | 7.35.3 (보류) | [필수 예약](../contracts/dev7-sql-extensions-design.md#external) · D-LOGGING 보류, 상세 인수 사례 미작성 |
+
+세부 번호의 산출물·직접 선행·인수는 [36개 분류](dev7-work-breakdown.md#values)에서 찾는다. 7.07 실행 자원·7.14 cache·7.36 검증은 여러 요구에 걸친 공통 작업이며 행마다 전체 번호를 반복하지 않는다. 7.35.3의 보류는 분류 완료로 해제되지 않는다.
 
 <a id="acceptance"></a>
 ## 5. 필수 인수 묶음
@@ -156,7 +162,7 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 | D7-T29 | embedded SQL/언어/framework/remote | 생성 소스 clean build·host indicator/array/thread·PHP/PDO/.NET 실제 업무·framework metadata·TLS/auth failure와 정상 연결 |
 | D7-T30 | 합산 자원·spill/cleanup | 각 node와 다중 query의 resident peak, skew fallback·동시 merge·FD/disk full·unlink 실패 잔류·prepared 압력·cleanup 독립 진행. 정상 XA receipt retirement의 bounded 진행과 heuristic/미ACK 보존 압력 분리·recover scan pin/metadata 합산 |
 | D7-T31 | 부정 oracle/검사기·전체 복구 | wrong binary/profile·미도달 cut·누락 variant·빈 trace·stale expected·관계/복구 mutant 거절, 실제 native/SQL/외부 history 비교 |
-| D7-T32 | 성능·재현·하위 회귀 | 아래 P01–P05와 관련 최신 source의 하위 단계 전체 필수 검사, 독립 검토 뒤 leaf/단계 상태 분리 |
+| D7-T32 | 성능·재현·하위 회귀 | 아래 P01–P05·하위 공급의 원래 source/case 증거·관련 실제 diff 인수, 독립 검토 뒤 leaf/단계 상태 분리 |
 
 의미가 같은 지원 path는 동일 fixture와 expected를 통과해야 한다. 독립 oracle은 production expression evaluator·key codec·optimizer를 정답 계산에 import하지 않는다. 작은 finite relation enumerator, decimal/rational 모델, explicit geometry fixtures, 별도 transaction/XA 상태 모델을 사용한다. Oracle/다른 DBMS 실행 비교는 동작이 명세상 일치하는 셀의 보조 근거이며 XADB 독립 정답을 대신하지 않는다. 이번에는 비교 실행하지 않았다.
 
@@ -197,11 +203,11 @@ DP03의 V2 64 seeds×최대128 operations, V3 256×최대1,024를 적용하고 �
 
 workload cell당 warmup30초·측정60초를 기본으로 최소10쌍 AB/BA 교대한다. p99는 각 run10,000개 이상 완료 operation을 확보하며 부족하면 NOT_ESTIMABLE·인수 미완료로 남기고 사전 profile을 D2로 확장한다. LOB/XA 긴 operation도 짧은 표본의 최대값을 p99로 포장하지 않는다. raw timestamp·count·분포·paired CI 계산법을 고정하고 noise가 크면 더 측정한다. 결과가 유리한 workload만 선택하지 않는다. 기능 때문에 필요한 spill/2PC는 단순 구현보다 빨라야만 채택하는 대상이 아니며, 그 비용과 현재 한도 안의 정상 진행을 별도 보고한다.
 
-하위 DEV0/DEV1/현재 DEV2 검사와 해당 시점의 실제 S1/Q1/B3/C1/CLIENT1/PART/NG runner를 입력 manifest로 연결한다. 아직 없는 실행 명령을 성공한 것처럼 적지 않는다. 문서 검사는 [pre-push 규칙](../policies/documentation-policy.md#push-gate)을 따른다.
+하위 DEV0/DEV1/DEV2 및 실제 S1/Q1/B3/C1/CLIENT1/PART/NG 공급의 원래 source/case 결과와 runner를 입력 manifest로 연결한다. 변경된 코드에 대응하는 미완료 검증만 선택하고 새로운 source fingerprint만을 이유로 무변경 시험을 반복하지 않는다. 아직 없는 실행 명령을 성공한 것처럼 적지 않는다. 문서 검사는 [pre-push 규칙](../policies/documentation-policy.md#push-gate)을 따른다.
 
 <a id="completion"></a>
 ## 8. 완료 증거와 남은 상태
 
 leaf bundle은 source revision+dirty digest·export/binary/runtime/fixture/oracle hash, capability/operation/variant 목록, source-to-case 연결, 외부 ACK·원시 이력·fault reachability·모든 결과, 독립 검토자와 미해결 문제를 포함한다. actual result가 없는 expected 표는 증거가 아니다. 잘못된 binary/미도달/누락을 거절하는 checker 자체의 부정 시험도 필수다.
 
-설계 채택 이후에도 F01–F10 동결과 모든 제품 실행은 NOT_RUN이다. [DEV7-DESIGN-002 재검토](../evidence/dev7-review-002.md)의 네 반례와 위 확장 인수도 실제 실행 의무로 남는다. SC07–SC11 각 leaf PASS를 전체 DEV7 PASS로 확대하지 않는다. PART/NG·언어 adapter·온라인 변경·이종 sink 등 어렵거나 선행이 부족한 항목도 필수 배정표에 남긴다. R10-03 logging 내부·R10-05 상세의 D-LOGGING 보류도 해제·설계·실행 전까지 전체 완료의 미해결 의무다. 전체 overload/variant 확장 완료와 모든 필수 통합·현재-build recovery·자원·성능·하위 회귀가 끝나야 SQL_EXT1을 완료한다.
+설계 채택 이후에도 F01–F10 동결과 모든 제품 실행은 NOT_RUN이다. [DEV7-DESIGN-002 재검토](../evidence/dev7-review-002.md)의 네 반례와 위 확장 인수도 실제 실행 의무로 남는다. SC07–SC11 각 leaf PASS를 전체 DEV7 PASS로 확대하지 않는다. PART/NG·언어 adapter·온라인 변경·이종 sink 등 어렵거나 선행이 부족한 항목도 필수 배정표에 남긴다. R10-03 logging 내부·R10-05 상세의 D-LOGGING 보류도 해제·설계·실행 전까지 전체 완료의 미해결 의무다. 전체 overload/variant 확장 완료와 모든 필수 통합·현재-build recovery·자원·성능 의무와 하위 공급 증거/관련 diff 검증이 충족되어야 SQL_EXT1을 완료한다.

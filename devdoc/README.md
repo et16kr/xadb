@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV7 36개 세부 작업 분류](plans/dev7-work-breakdown.md): ARIES·Oracle·로컬8개 DBMS 소스를 참고하여 기존 큰 묶음을 하위 배정 단위·직접 선행·산출물·완료/인수로 나누고 64개 요구에 연결했다. 제품 구현·시험은 재개하지 않았으며 F01–F10·SQL_EXT1 미완료와 logging 보류를 유지한다.
+
 2026-10-22 [DEV4 18개 세부 작업 분류](plans/dev4-work-breakdown.md): 기존 D4-0–7을 하위 공급·통합 인수 단위로 나누고 선행·산출물·완료 조건·T01–14/V01–28/F01–05를 연결했다. [ARIES·Oracle19c·로컬 DBMS 조사](evidence/dev4-source-research.md#work-breakdown-20261022)를 참고했으며 제품 구현·시험 실행과 Q1 완료 승격은 없다.
 
 2026-10-22 [DEV5 16개 분류·44개 하위 작업](plans/dev5-work-breakdown.md): DEV3 방식으로 직접 선행·산출물·완료 조건·인수 대응·우선순위를 정리했다. [ARIES·Oracle19c·로컬5개 DBMS 조사](evidence/dev5-work-breakdown-research-20261022.md)를 근거로 요청·worker·취소·정리·commit 결과·외부 ACK 책임을 구분한다. 제품 개발·시험 재개와 B3 완료 승격은 없다.
@@ -90,7 +92,7 @@
 | DEV4 최소 SQL·Oracle 의미·prepared 실행·embedded CLI | [DEV4 상세 설계](contracts/dev4-sql-design.md), [구현·검증 계획](plans/dev4-implementation-plan.md) | [소스·Oracle/ARIES 조사](evidence/dev4-source-research.md), [초기 처리 범위](contracts/dev4-sql-design.md#capacity-boundary), SC02·KU13·PF10·D4-V26 행 충돌·실제 DEV3 선행 증거 |
 | DEV5 서버·인증/권한·세션·요청/취소 | [DEV5 상세 설계](contracts/dev5-server-design.md), [16개 분류·44개 하위 작업](plans/dev5-work-breakdown.md#catalogue), [구현·검증 계획](plans/dev5-implementation-plan.md) | [ARIES·Oracle·로컬 DBMS 분류 근거](evidence/dev5-work-breakdown-research-20261022.md), SC03·KU14·PA08·PF11·실제 Q1/C1 선행 증거 |
 | DEV6 native·C ABI·JDBC·ODBC client 설계 | [클라이언트 상세 설계](contracts/dev6-client-design.md), [구현·검증 계획](plans/dev6-implementation-plan.md) | [Oracle·ARIES·로컬 소스 재검토](evidence/dev6-source-research.md#review-002), REVIEW-002·R2-V01–V06, SC04–06·D6-W01·실제 B3 선행; CLIENT1 미실행 |
-| DEV7 확장 SQL·타입·PSM·LOB/spatial·외부 거래 | [DEV7 설계](contracts/dev7-sql-extensions-design.md), [구현·검증 계획](plans/dev7-implementation-plan.md) | [Oracle·ARIES·로컬 소스 재검토](evidence/dev7-review-002.md), DESIGN-002 비교 문맥/CALL/XA·SC07–11·64개 요구·F01–10; SQL_EXT1 미실행 |
+| DEV7 확장 SQL·타입·PSM·LOB/spatial·외부 거래 | [36개 세부 분류](plans/dev7-work-breakdown.md), [DEV7 설계](contracts/dev7-sql-extensions-design.md), [구현·검증 계획](plans/dev7-implementation-plan.md) | [Oracle·ARIES·로컬 소스 재검토](evidence/dev7-review-002.md), DESIGN-002 비교 문맥/CALL/XA·SC07–11·64개 요구·F01–10; SQL_EXT1 미실행 |
 | DEV8 복제·백업/PITR·보안/운영·성능 | [DEV8 설계](contracts/dev8-operations-design.md), [구현·검증 계획](plans/dev8-implementation-plan.md) | [Oracle·ARIES·로컬 소스 2차 검토](evidence/dev8-review-002.md), DESIGN-002 domain/sequence/partition/control·R2-V01–04·SC12–15·30개 요구·실제 S1/B3 선행; OPS1 미실행 |
 | DEV9 제품 기능·운영·성능 인수와 설치/문서 | [DEV9 설계](contracts/dev9-qualification-design.md), [구현·검증 계획](plans/dev9-implementation-plan.md) | [Oracle·ARIES·로컬 소스 재검토](evidence/dev9-source-research.md#review-002), DESIGN-002 실행 분모/ACK 관측/PITR/배포·R2-V01–04·SC16/17·104개 요구; PRODUCT_QUALIFIED 미실행 |
 | COMM frame·socket·backpressure·취소 설계 | [COMM 상세 설계](contracts/comm-design.md), [구현·검증 계획](plans/comm-implementation-plan.md) | [소스 조사·검토](evidence/comm-source-research.md), [현재 구현·잔여 인수](implementation/comm-implementation.md), C1·KU12·DEV1 선행 증거; SQL 의미는 DEV5 |

@@ -167,7 +167,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev7-work-breakdown.md"
       ],
       "required_details": [
         "D7-F01..F10: applicable operation/type/API/codec/resource/fault/runtime profiles frozen before implementation or acceptance",
@@ -185,7 +186,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev7-work-breakdown.md"
       ],
       "required_details": [
         "D7-F01..F10: applicable operation/type/API/codec/resource/fault/runtime profiles frozen before implementation or acceptance",
@@ -203,7 +205,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev7-work-breakdown.md"
       ],
       "required_details": [
         "D7-F01..F10: applicable operation/type/API/codec/resource/fault/runtime profiles frozen before implementation or acceptance",
@@ -221,7 +224,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev7-work-breakdown.md"
       ],
       "required_details": [
         "D7-F01..F10: applicable operation/type/API/codec/resource/fault/runtime profiles frozen before implementation or acceptance",
@@ -239,7 +243,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev7-work-breakdown.md"
       ],
       "required_details": [
         "D7-F01..F10: applicable operation/type/API/codec/resource/fault/runtime profiles frozen before implementation or acceptance",
@@ -424,7 +429,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev7-work-breakdown.md"
       ]
     },
     {
@@ -441,7 +447,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev7-work-breakdown.md"
       ]
     },
     {
@@ -458,7 +465,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev7-work-breakdown.md"
       ]
     },
     {
@@ -476,7 +484,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev7-work-breakdown.md"
       ]
     },
     {
@@ -494,7 +503,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev7-work-breakdown.md"
       ]
     },
     {
@@ -1194,7 +1204,8 @@
       "official_distribution_status": "NOT_RUN",
       "design_refs": [
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev7-work-breakdown.md"
       ]
     },
     {

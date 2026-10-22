@@ -259,10 +259,12 @@
       "completion_ref": "stage-completion.json#DEV7",
       "design_refs": [
         "dev7-sql-extensions-design.md",
-        "dev7-implementation-plan.md"
+        "dev7-implementation-plan.md",
+        "dev7-work-breakdown.md"
       ],
       "research_refs": [
-        "dev7-source-research.md"
+        "dev7-source-research.md",
+        "dev7-work-breakdown-research.md"
       ]
     },
     {
