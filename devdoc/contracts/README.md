@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV3 현재 genesis의 실제 닫힌 복구](dev3-recovery-effects.md): 실물 bootstrap·선택 Pending 수리·한 번 예약 인계·page별 REDO의 제한 구현설계 D2를 수용했다. 제품 구현 중이며 시험은 NOT_RUN이다.
+
 - [DEV3 현행 WAL prefix의 닫힌 분석](dev3-recovery-prefix.md): actual reserve/cancel·Status INIT의 canonical owner·inventory·RAM image 분석과 초기 SELECT/물리 복구의 경계. 선택 검증과 제한 단위 최종 D1을 수용했다.
 
 - [DEV3 초기 복구 입력 선택](dev3-recovery-select.md): 3.12.1.a의 초기 control·exclusive lease·header-only WAL 선택, 닫힌 inspection·오류·자원·필수 인수의 채택 계약.

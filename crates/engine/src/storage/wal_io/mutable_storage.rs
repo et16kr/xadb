@@ -38,8 +38,9 @@ mod status_init;
 #[path = "status_init_operation.rs"]
 mod status_init_operation;
 pub(crate) use recovery_prefix::{
-    Cause as RecoveryPrefixCause, Phase as RecoveryPrefixPhase,
-    ProducerMode as RecoveryProducerMode, RecoveryPrefix, RecoveryPrefixError,
+    Cause as RecoveryPrefixCause, ClosedRecovery, Phase as RecoveryPrefixPhase,
+    ProducerMode as RecoveryProducerMode, RecoveryAcquireError, RecoveryCause, RecoveryError,
+    RecoveryFailure, RecoveryInspection, RecoveryPhase, RecoveryPrefix, RecoveryPrefixError,
     RecoveryPrefixObservation,
 };
 pub(crate) use status_init::{

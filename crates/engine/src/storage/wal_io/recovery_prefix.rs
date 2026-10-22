@@ -380,6 +380,24 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
         expected: Option<Namespace>,
         workspace: &'a mut [u8; WORKSPACE_BYTES],
     ) -> Result<Self> {
+        let mut acquired = false;
+        Self::acquire_internal(directory, expected, workspace, false, &mut acquired)
+    }
+    fn acquire_for_effect<D: DirectoryPort<Writer = W>>(
+        directory: &D,
+        expected: Option<Namespace>,
+        workspace: &'a mut [u8; WORKSPACE_BYTES],
+        acquired: &mut bool,
+    ) -> Result<Self> {
+        Self::acquire_internal(directory, expected, workspace, true, acquired)
+    }
+    fn acquire_internal<D: DirectoryPort<Writer = W>>(
+        directory: &D,
+        expected: Option<Namespace>,
+        workspace: &'a mut [u8; WORKSPACE_BYTES],
+        reserved_only: bool,
+        acquired: &mut bool,
+    ) -> Result<Self> {
         if !fits::<W>() {
             return Err(error(Phase::Preflight, Cause::Capacity));
         }
@@ -396,11 +414,13 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
                 effect: cause.effect,
                 cause: Cause::Namespace(cause),
             })?;
+        *acquired = true;
         for path in BLOCKED {
             if writer
                 .metadata(&name(path))
                 .map_err(|e| error(Phase::Preflight, Cause::Namespace(e)))?
                 .is_some()
+                && !(reserved_only && matches!(path, "d3-rebase-0" | "d3-rebase-1"))
             {
                 return Err(error(Phase::Preflight, Cause::UnsupportedClosure));
             }
@@ -702,6 +722,16 @@ fn analyze<F: xadb_foundation::io::FileIo>(
     observation: &mut RecoveryPrefixObservation,
     allocator: PageIdentity,
 ) -> Result<()> {
+    analyze_with(source, workspace, observation, allocator, |_, _, _, _| true)
+}
+// Pure canonical continuation hook. Physical pages never enter adopt_frame.
+fn analyze_with<F: xadb_foundation::io::FileIo>(
+    source: &mut F,
+    workspace: &mut [u8; WORKSPACE_BYTES],
+    observation: &mut RecoveryPrefixObservation,
+    allocator: PageIdentity,
+    mut visit: impl FnMut(WalFrameHeader, &[u8], &[u8; PAGE_BYTES], Option<&[u8; PAGE_BYTES]>) -> bool,
+) -> Result<()> {
     let (frame, rest) = workspace.split_at_mut(FRAME);
     let (before, rest) = rest.split_at_mut(PAGE_BYTES);
     let (after, rest) = rest.split_at_mut(PAGE_BYTES);
@@ -798,6 +828,14 @@ fn analyze<F: xadb_foundation::io::FileIo>(
         observation.complete_offset = offset.checked_add(length as u64).ok_or_else(arithmetic)?;
         observation.complete_lsn = header.lsn;
         account(observation)?;
+        if !visit(
+            header,
+            &frame[..length],
+            before,
+            observation.status_initialized.then_some(&*status),
+        ) {
+            return Ok(());
+        }
     }
     Ok(())
 }
@@ -1205,3 +1243,10 @@ mod native;
 #[cfg(test)]
 #[path = "recovery_prefix_tests.rs"]
 mod tests;
+
+#[path = "recovery_effect/mod.rs"]
+mod effect;
+pub(crate) use effect::{
+    ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
+    RecoveryInspection, RecoveryPhase,
+};

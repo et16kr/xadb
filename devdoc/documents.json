@@ -3,6 +3,21 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-recovery-effects-20261023.md": {
+      "path": "evidence/dev3-recovery-effects-20261023.md",
+      "role": "evidence",
+      "title": "DEV3 현재 genesis 실제 닫힌 복구 인수"
+    },
+    "dev3-recovery-effects-20261023.json": {
+      "path": "evidence/dev3-recovery-effects-20261023.json",
+      "role": "evidence",
+      "title": "DEV3 현재 genesis 실제 닫힌 복구 source별 실행 색인"
+    },
+    "dev3-recovery-effects.md": {
+      "path": "contracts/dev3-recovery-effects.md",
+      "role": "contracts",
+      "title": "DEV3 현재 genesis의 실제 닫힌 복구"
+    },
     "dev3-recovery-prefix-20261022.md": {
       "path": "evidence/dev3-recovery-prefix-20261022.md",
       "role": "evidence",

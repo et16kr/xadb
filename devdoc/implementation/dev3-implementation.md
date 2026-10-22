@@ -673,10 +673,23 @@ source census는 mock33336/native33408≤64KiB, caller256KiB 별도다. native �
 
 S5 matrix304·alias31·추가273과 별도 native PL01은 작성·NOT_RUN이다. 무변경 하위 wrapper·완료 시험·SELECT 나머지164를 반복하지 않았다. 다음은 실제 BOOT 자원·예약 인계·Pending repair·page별 REDO·repair 재장애다. 일반 recovery/READY·전체 DEV3/S5 인수와 push 전용 문서 검사는 미완료다.
 
+<a id="recovery-effects"></a>
+## 현재 genesis의 실제 닫힌 복구 — 선택 검증·최종 독립 D1 수용
+
+2026-10-23 [소유 계약](../contracts/dev3-recovery-effects.md)의 제한 구현설계 D2와 첫 실행 gate를 별도 검토한 뒤 수용했다. 제품 기준 `e6153995bdc6a708346db4039efaf963d5c7b618`, 착수 HEAD `e9cc2737a392b2a1ce726346bb36298c62ca438c`의 기존 CI 변경을 구별한다. 고정 두 슬롯 실제 provisioning·source 안정화·historical Pending 수리·same-prefix 예약 한 번 인계·page별 REDO와 별도 recovery DWB flush를 구현했다. consuming owner는 lease/source File·caller maintenance12MiB/flush4MiB 전체 대여를 유지하며 성공/실패 모두 닫힌 관측만 제공한다.
+
+[실제 검증](../evidence/dev3-recovery-effects-20261023.md)·[source별 색인](../evidence/dev3-recovery-effects-20261023.json): runtime 고유393 완료 단언은 r3 완결 job381·원 실패 job의 EN001–007 완료 단언7·r4 완결 job5로 나뉜다. native는 r3 NR01–14와 r4 실패/미도달17이력의 고유31/95worker이며 원 실패 producer까지 전체96worker를 보존한다. r3 compiler9+control1·r1 checker30과 r4 변경 method1·최종 r4 fmt/engine Clippy를 확인했다. 완료 무변경 사례와 하위 wrapper를 반복하지 않았다. 전체393/31을 마지막 binary에서 재실행한 결과가 아니며 원 FAIL·loop 뒤 gate 미도달과 후속 읽기 감사 시점도 구별한다. 별도 최종 독립 D1을 수용했으며 남은 필수 수정은 없다.
+
+native typed source census는 outer9008+max(prefix33408, inventory3320, work31160)=42416≤64KiB, W16/File48이고 caller16MiB 대여는 별도다.62개 post-lease 관측과 FD peak5/final0·closed File peak2를 확인했다. 고유31 DB 최종525file·747824793bytes, 원 실패까지 전체541file·769957337bytes≤768MiB, 최대24322304bytes≤24MiB와 failed snapshot/기타 증거 한도를 확인했다. failed ledger의 마지막 확인 charge와 실제 raw 물리 길이를 구별한다. 일반 OOM/OS stack/RSS나 전역 disk 선확보 증거는 아니다.
+
+최종 source `b02136125e51902c166d453835466c0150fbaeabb18e255ecbf0b4e9053d216a`, ELF `d6107928b47368e8c1d929d8cebdd8e05825afbc7aba7f1c6b940e8d82f357c5`다. r0 fixture 사전 검토 미채택, r1 compile·r2 lint·r3 두 harness 실패와 최소 수정은 원본으로 보존했다. 제품 로직은 r2 뒤 불변이며 r4는 EN008 fault 해제와 native cut18의 정확 typed/raw 검증만 바꿨다. S5 runtime matrix3504·alias36·추가3468과 native matrix63·alias7·추가56은 작성·NOT_RUN이다.
+
+사용자 요청에 따라 이 단위의 최종 독립 검토·local commit 뒤 멈추며 다음 leaf는 시작하지 않는다. 기존 readonly Prefix 공개 제한과 원 증거를 보존한다. 일반 fixed BOOT/F05·REBASE body/continuation/reclaim·새 epoch/CLR/undo/READY·전체 task12/DEV3/S5는 미완료다. 문서 verifier는 push 전용으로 이번 편집·commit에서는 실행하지 않는다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 
-2026-10-22 후속 [방향 리뷰 반영](../plans/dev3-implementation-plan.md#direction-review-adoption)은 제한 쓰기의 복구→일반 page 수명/live undo→첫 행 거래 연결 순서를 정리한다. 위 종료·인계는 당시 기록으로 보존하며, 후속 [초기 입력 선택](#recovery-select)과 [현행 prefix의 닫힌 분석](#recovery-prefix)의 실제 API·source/type 회계·선택 인수를 구별한다. BOOT_RESERVE·현재 producer nonempty 복원·64GiB 지원·새 운영 계측과 일반 READY·거래 ACK·DEV3/S5는 미완료다.
+2026-10-22 후속 [방향 리뷰 반영](../plans/dev3-implementation-plan.md#direction-review-adoption)은 제한 쓰기의 복구→일반 page 수명/live undo→첫 행 거래 연결 순서를 정리한다. 위 종료·인계는 당시 기록으로 보존하며, 후속 [초기 입력 선택](#recovery-select)·[현행 prefix 분석](#recovery-prefix)·[현재 genesis의 실제 닫힌 복구](#recovery-effects)의 실제 API·source/type 회계·선택 인수를 구별한다. 제한된 BOOT·nonempty 복구와 일반 BOOT/F05·64GiB 지원·새 운영 계측·READY·거래 ACK·DEV3/S5의 미완료를 구별한다.
 
 각 작업의 개발 상세 명세와 처리·상태 설계도는 [16개 작업별 문서](../contracts/dev3-task-designs.md)에 있다. 이 설계 작성은 아래 실제 구현·검증 상태를 변경하지 않는다.
 
@@ -695,12 +708,12 @@ S5 matrix304·alias31·추가273과 별도 native PL01은 작성·NOT_RUN이다.
 | 3.09 undo·rollback | persistent undo/status·statement rollback·전체 rollback·CLR | 표현·RollbackStart 생산 존재. live undo/CLR 진행 미완료 |
 | 3.10 동시성·가시성 | snapshot 등록·잠금·관측 행 검증·두 격리 수준 | [3.10.1.a.1 실제 admission/version gate](#concurrency-admission) 제한 검증. page/tree rank·거래 잠금·snapshot/pin/FIFO와 reader/writer/ager 실제 통합 미완료 |
 | 3.11 commit·공개 | 여러 객체 원자 commit·durable ACK/UNKNOWN·frontier | 실제 disk 거래 인수 미완료 |
-| 3.12 재시작 복구 | preflight/bootstrap·DWB repair·analysis/예약 복원·redo·REBASE·epoch/WRITER·undo/verify·STABILIZE/READY | [초기 입력 SELECT 3.12.1.a](#recovery-select)의 제한 인수 완료. [장벽별 8개 작업](../plans/dev3-implementation-plan.md#recovery-remaining) 중 BOOT_RESERVE·nonempty prefix 복원·일반 recovery/READY·반복 장애 인수 미완료 |
+| 3.12 재시작 복구 | preflight/bootstrap·DWB repair·analysis/예약 복원·redo·REBASE·epoch/WRITER·undo/verify·STABILIZE/READY | [초기 입력 SELECT](#recovery-select)·[prefix 분석](#recovery-prefix)의 제한 인수와 [현재 genesis 실제 닫힌 복구](#recovery-effects)의 선택 검증. [장벽별 8개 작업](../plans/dev3-implementation-plan.md#recovery-remaining)의 일반 BOOT/F05·REBASE/새 epoch·undo/READY·전체 반복 장애 인수 미완료 |
 | 3.13 checkpoint | fuzzy ATT/DPT capture·WAL floor·fallback | 표현/계약 존재. 실제 checkpoint 인계 미완료 |
 | 3.14 공간 회수 | undo/status/delete aging·horizon·generation 재사용 | 유한 모델 존재. 실제 회수·압력하 진행 미완료 |
 | 3.15 백업·무결성 | S3/fault 인수용 full audit·독립 이력, 이후 offline exact-cut backup/restore | 실제 DEV3 경로 미완료. audit 공급은 backup 완료를 기다리지 않음 |
 | 3.16 자원 종합·성능·최종 인수 | 항목별 자원 회계 종합·PF09·DS01–06·KU09/10·RC-T12–14 | opcode별 F05는 각 effect 전 선행. 이 항목은 증거 종합과 남은 인수이며 전체 DEV3 미완료 |
 
-기존 재개 우선 단위 [3.03.1 예약·취소](../plans/dev3-implementation-plan.md#allocation-remaining)는 위 인수 기록을 따른다. 3.10.1.a.1의 공통 admission/version gate는 위 기록을 따르며 dirty frame·typed stage/apply 첫 소비자는 위 기록을 따른다. allocator1 한 페이지 flush와 Status owner의 영속 binding·예약 payload INIT에 이어 [Status home flush와 두 target의 순차 flush](#status-home-flush)까지 제한 인수를 마쳤다. 후속 복구 진입의 [초기 SELECT](#recovery-select)는 제한 인수를 마쳤으며 BOOT_RESERVE·현재 producer prefix의 실제 복원 연결은 남아 있다. [원본 부분 검토](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)의 remaining은 역사적 상태로 보존하고 이후 단위별 인수 기록을 함께 읽으며, 완료된 무변경 runtime 사례는 반복하지 않는다. 각 새 쓰기 경로의 자원 계산·복구 의미·fault 입력은 그 경로 전에 정한다. free/reuse는 회수 가능성 판정을, 실제 행 변경은 undo/status 기반을 먼저 수신하되 서로 전체 분류 완료를 요구하지 않는다. 복구 전용 REBASE는 정상 fuzzy checkpoint와 별도이며 선행으로 공급한다. 계획 작성 당시의 미실행 상태와 이후 위 단위별 구현·실행 기록을 구분한다.
+기존 재개 우선 단위 [3.03.1 예약·취소](../plans/dev3-implementation-plan.md#allocation-remaining)는 위 인수 기록을 따른다. 3.10.1.a.1의 공통 admission/version gate는 위 기록을 따르며 dirty frame·typed stage/apply 첫 소비자는 위 기록을 따른다. allocator1 한 페이지 flush와 Status owner의 영속 binding·예약 payload INIT에 이어 [Status home flush와 두 target의 순차 flush](#status-home-flush)까지 제한 인수를 마쳤다. 후속 복구 진입의 [초기 SELECT](#recovery-select)와 [prefix 분석](#recovery-prefix)에 이어 [현재 genesis 실제 닫힌 복구](#recovery-effects)를 선택 검증했다. 일반 BOOT/F05·REBASE/새 epoch·undo/READY는 남아 있다. [원본 부분 검토](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)의 remaining은 역사적 상태로 보존하고 이후 단위별 인수 기록을 함께 읽으며, 완료된 무변경 runtime 사례는 반복하지 않는다. 각 새 쓰기 경로의 자원 계산·복구 의미·fault 입력은 그 경로 전에 정한다. free/reuse는 회수 가능성 판정을, 실제 행 변경은 undo/status 기반을 먼저 수신하되 서로 전체 분류 완료를 요구하지 않는다. 복구 전용 REBASE는 정상 fuzzy checkpoint와 별도이며 선행으로 공급한다. 계획 작성 당시의 미실행 상태와 이후 위 단위별 구현·실행 기록을 구분한다.
 
 예약·취소의 [native와 compiler 병렬 작업](../plans/dev3-implementation-plan.md#parallel-execution-plan)은 해당 인수 기록에 실제 담당·source·결과를 연결했다. 64KiB 분석·공통 수정·stage 검증은 총괄이 조정하고 독립 검토자를 별도로 둔다. 실제 담당/경로·기준 source·자원 profile을 고정하기 전에는 작업 배정이나 동시 실행 완료로 기록하지 않는다.

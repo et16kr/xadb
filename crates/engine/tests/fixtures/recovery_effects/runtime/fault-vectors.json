@@ -1,0 +1,1941 @@
+{
+  "schema": 1,
+  "unit": "closed-recovery-effects",
+  "status": "AUTHORED_NOT_RUN",
+  "fixture": "profile1 exclusive count1 reserve; absent slots; source length25296",
+  "preinspect_read_calls": 57,
+  "effect_read_calls": 56,
+  "mutation_calls": 70,
+  "existing_prevalidation_calls": 36,
+  "normal_mutations": {
+    "absent_boot": 37,
+    "existing_boot": 35,
+    "source": 2,
+    "allocator_flush": 31
+  },
+  "rows": {
+    "prefix_reads": [
+      {
+        "operation": "metadata",
+        "name": "CURRENT",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-current-stage",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-rebase-0",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-rebase-1",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-writer-stage",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-filemap-select-stage",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "open",
+        "name": "d3-profile",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-profile",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "read",
+        "name": "d3-profile",
+        "offset": 0,
+        "length": 4096
+      },
+      {
+        "operation": "open",
+        "name": "FILEMAP",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "FILEMAP",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "read",
+        "name": "FILEMAP",
+        "offset": 0,
+        "length": 4096
+      },
+      {
+        "operation": "open",
+        "name": "d3-profile",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-profile",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "read",
+        "name": "d3-profile",
+        "offset": 0,
+        "length": 4096
+      },
+      {
+        "operation": "open",
+        "name": "FILEMAP",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "FILEMAP",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "read",
+        "name": "FILEMAP",
+        "offset": 0,
+        "length": 4096
+      },
+      {
+        "operation": "open",
+        "name": "d3-filemap-0",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-filemap-0",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "read",
+        "name": "d3-filemap-0",
+        "offset": 0,
+        "length": 320
+      },
+      {
+        "operation": "read",
+        "name": "d3-filemap-0",
+        "offset": 16384,
+        "length": 256
+      },
+      {
+        "operation": "open",
+        "name": "d3-bootstrap",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-bootstrap",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "read",
+        "name": "d3-bootstrap",
+        "offset": 0,
+        "length": 4096
+      },
+      {
+        "operation": "open",
+        "name": "DWB",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "DWB",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "read",
+        "name": "DWB",
+        "offset": 0,
+        "length": 4096
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-0",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-0",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "read",
+        "name": "d3-dwb-0",
+        "offset": 0,
+        "length": 160
+      },
+      {
+        "operation": "open",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "open",
+        "name": "d3-filemap-0",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-filemap-0",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "open",
+        "name": "d3-filemap-1",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-filemap-1",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-0",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-0",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-images",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-images",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-reserved",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-reserved",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "open",
+        "name": "d3-wal-00000001",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-wal-00000001",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "read",
+        "name": "d3-wal-00000001",
+        "offset": 0,
+        "length": 4096
+      },
+      {
+        "operation": "open",
+        "name": "WRITER",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "metadata",
+        "name": "WRITER",
+        "offset": 0,
+        "length": 0
+      },
+      {
+        "operation": "read",
+        "name": "WRITER",
+        "offset": 0,
+        "length": 4096
+      },
+      {
+        "operation": "read",
+        "name": "d3-wal-00000001",
+        "offset": 4096,
+        "length": 160
+      },
+      {
+        "operation": "read",
+        "name": "d3-wal-00000001",
+        "offset": 4256,
+        "length": 21040
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-wal-00000001",
+        "offset": 0,
+        "length": 0
+      }
+    ],
+    "effect_reads": [
+      {
+        "operation": "open",
+        "name": "d3-rebase-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-rebase-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "open",
+        "name": "d3-rebase-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-rebase-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "open",
+        "name": "d3-rebase-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-rebase-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "open",
+        "name": "d3-rebase-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-rebase-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-rebase-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-rebase-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-wal-00000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-wal-00000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "SourceStabilize"
+      },
+      {
+        "operation": "open",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Redo"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Redo"
+      },
+      {
+        "operation": "read",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 16384,
+        "phase": "Redo"
+      },
+      {
+        "operation": "read",
+        "name": "d3-wal-00000001",
+        "offset": 4096,
+        "length": 160,
+        "phase": "Redo"
+      },
+      {
+        "operation": "read",
+        "name": "d3-wal-00000001",
+        "offset": 4256,
+        "length": 21040,
+        "phase": "Redo"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-wal-00000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-images",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-images",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "open",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "open",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Verify"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Verify"
+      },
+      {
+        "operation": "read",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 16384,
+        "phase": "Verify"
+      },
+      {
+        "operation": "open",
+        "name": "DWB",
+        "offset": 0,
+        "length": 0,
+        "phase": "Verify"
+      },
+      {
+        "operation": "metadata",
+        "name": "DWB",
+        "offset": 0,
+        "length": 0,
+        "phase": "Verify"
+      },
+      {
+        "operation": "read",
+        "name": "DWB",
+        "offset": 0,
+        "length": 4096,
+        "phase": "Verify"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Verify"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Verify"
+      },
+      {
+        "operation": "read",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 160,
+        "phase": "Verify"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-wal-00000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Snapshot"
+      }
+    ],
+    "mutations": [
+      {
+        "operation": "create",
+        "name": "d3-rebase-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 0,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 65536,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 131072,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 196608,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 262144,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 327680,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 393216,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 458752,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 524288,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 589824,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 655360,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 720896,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 786432,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 851968,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 917504,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-0",
+        "offset": 983040,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-rebase-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "create",
+        "name": "d3-rebase-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 0,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 65536,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 131072,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 196608,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 262144,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 327680,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 393216,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 458752,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 524288,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 589824,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 655360,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 720896,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 786432,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 851968,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 917504,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "write",
+        "name": "d3-rebase-1",
+        "offset": 983040,
+        "length": 65536,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-rebase-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "dirsync",
+        "name": "",
+        "offset": 0,
+        "length": 0,
+        "phase": "BootstrapProvision"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-wal-00000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "SourceStabilize"
+      },
+      {
+        "operation": "dirsync",
+        "name": "",
+        "offset": 0,
+        "length": 0,
+        "phase": "SourceStabilize"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 16384,
+        "phase": "Flush"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 16384,
+        "phase": "Flush"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "create",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 4096,
+        "phase": "Flush"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "publish",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "dirsync",
+        "name": "",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-images",
+        "offset": 0,
+        "length": 16544,
+        "phase": "Flush"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-images",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 16384,
+        "phase": "Flush"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-0",
+        "offset": 0,
+        "length": 16384,
+        "phase": "Flush"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "create",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 4096,
+        "phase": "Flush"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "publish",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "dirsync",
+        "name": "",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "write",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 16384,
+        "phase": "Flush"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 16384,
+        "phase": "Flush"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 16384,
+        "phase": "Flush"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "create",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 4096,
+        "phase": "Flush"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "publish",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "operation": "dirsync",
+        "name": "",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      }
+    ],
+    "pending_reads": [
+      {
+        "operation": "open",
+        "name": "DWB",
+        "offset": 0,
+        "length": 0,
+        "phase": "PendingValidate"
+      },
+      {
+        "operation": "metadata",
+        "name": "DWB",
+        "offset": 0,
+        "length": 0,
+        "phase": "PendingValidate"
+      },
+      {
+        "operation": "read",
+        "name": "DWB",
+        "offset": 0,
+        "length": 4096,
+        "phase": "PendingValidate"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "PendingValidate"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "PendingValidate"
+      },
+      {
+        "operation": "read",
+        "name": "d3-dwb-0",
+        "offset": 0,
+        "length": 248,
+        "phase": "PendingValidate"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-images",
+        "offset": 0,
+        "length": 0,
+        "phase": "PendingValidate"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-images",
+        "offset": 0,
+        "length": 0,
+        "phase": "PendingValidate"
+      },
+      {
+        "operation": "read",
+        "name": "d3-dwb-images",
+        "offset": 0,
+        "length": 16544,
+        "phase": "PendingValidate"
+      },
+      {
+        "operation": "open",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "PendingValidate"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "PendingValidate"
+      },
+      {
+        "operation": "read",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 16384,
+        "phase": "PendingValidate"
+      },
+      {
+        "operation": "open",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "PendingHome"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "PendingHome"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "open",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      }
+    ],
+    "pending_mutations": [
+      {
+        "operation": "write",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 16384,
+        "phase": "PendingHome"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "PendingHome"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 16384,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 16384,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "create",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "write",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 4096,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "sync",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "publish",
+        "name": "d3-dwb-select-stage",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      },
+      {
+        "operation": "dirsync",
+        "name": "",
+        "offset": 0,
+        "length": 0,
+        "phase": "Retirement"
+      }
+    ],
+    "existing_prevalidation": [
+      {
+        "operation": "open",
+        "name": "d3-rebase-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-rebase-0",
+        "offset": 0,
+        "length": 0,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 0,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 65536,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 131072,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 196608,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 262144,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 327680,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 393216,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 458752,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 524288,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 589824,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 655360,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 720896,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 786432,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 851968,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 917504,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-0",
+        "offset": 983040,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "open",
+        "name": "d3-rebase-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "metadata",
+        "name": "d3-rebase-1",
+        "offset": 0,
+        "length": 0,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 0,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 65536,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 131072,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 196608,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 262144,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 327680,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 393216,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 458752,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 524288,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 589824,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 655360,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 720896,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 786432,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 851968,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 917504,
+        "length": 65536,
+        "phase": "Inventory"
+      },
+      {
+        "operation": "read",
+        "name": "d3-rebase-1",
+        "offset": 983040,
+        "length": 65536,
+        "phase": "Inventory"
+      }
+    ],
+    "status_home_new_reads": [
+      {
+        "absolute_index": 74,
+        "operation": "open",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Redo"
+      },
+      {
+        "absolute_index": 75,
+        "operation": "metadata",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Redo"
+      },
+      {
+        "absolute_index": 76,
+        "operation": "read",
+        "name": "d3-data-0000000100000001",
+        "offset": 16384,
+        "length": 16384,
+        "phase": "Redo"
+      },
+      {
+        "absolute_index": 128,
+        "operation": "open",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "absolute_index": 129,
+        "operation": "metadata",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      },
+      {
+        "absolute_index": 141,
+        "operation": "open",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Verify"
+      },
+      {
+        "absolute_index": 142,
+        "operation": "metadata",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Verify"
+      },
+      {
+        "absolute_index": 143,
+        "operation": "read",
+        "name": "d3-data-0000000100000001",
+        "offset": 16384,
+        "length": 16384,
+        "phase": "Verify"
+      }
+    ],
+    "status_home_new_mutations": [
+      {
+        "absolute_index": 90,
+        "operation": "write",
+        "name": "d3-data-0000000100000001",
+        "offset": 16384,
+        "length": 16384,
+        "phase": "Flush"
+      },
+      {
+        "absolute_index": 91,
+        "operation": "sync",
+        "name": "d3-data-0000000100000001",
+        "offset": 0,
+        "length": 0,
+        "phase": "Flush"
+      }
+    ],
+    "inventory": [
+      {
+        "operation": "inventory",
+        "name": ".",
+        "offset": 0,
+        "length": 18,
+        "phase": "Inventory"
+      }
+    ]
+  },
+  "boot_before_union": {
+    "count": 85,
+    "inventory": [
+      "EI001"
+    ],
+    "absent_mutations": [
+      "EF001",
+      "EF003",
+      "EF005",
+      "EF007",
+      "EF009",
+      "EF011",
+      "EF013",
+      "EF015",
+      "EF017",
+      "EF019",
+      "EF021",
+      "EF023",
+      "EF025",
+      "EF027",
+      "EF029",
+      "EF031",
+      "EF033",
+      "EF035",
+      "EF037",
+      "EF039",
+      "EF041",
+      "EF043",
+      "EF045",
+      "EF047",
+      "EF049",
+      "EF051",
+      "EF053",
+      "EF055",
+      "EF057",
+      "EF059",
+      "EF061",
+      "EF063",
+      "EF065",
+      "EF067",
+      "EF069",
+      "EF071",
+      "EF073"
+    ],
+    "absent_read_metadata": [
+      "ER001",
+      "ER002",
+      "ER003",
+      "ER004",
+      "ER005",
+      "ER006",
+      "ER007",
+      "ER008",
+      "ER009",
+      "ER010",
+      "ER011"
+    ],
+    "existing_full_prevalidation": [
+      "EE001",
+      "EE002",
+      "EE003",
+      "EE004",
+      "EE005",
+      "EE006",
+      "EE007",
+      "EE008",
+      "EE009",
+      "EE010",
+      "EE011",
+      "EE012",
+      "EE013",
+      "EE014",
+      "EE015",
+      "EE016",
+      "EE017",
+      "EE018",
+      "EE019",
+      "EE020",
+      "EE021",
+      "EE022",
+      "EE023",
+      "EE024",
+      "EE025",
+      "EE026",
+      "EE027",
+      "EE028",
+      "EE029",
+      "EE030",
+      "EE031",
+      "EE032",
+      "EE033",
+      "EE034",
+      "EE035",
+      "EE036"
+    ],
+    "source_separate": [
+      "EF075",
+      "EF077",
+      "ER012"
+    ]
+  },
+  "site_mapping": {
+    "EF": "mutations[ordinal/2], Before/After",
+    "ER": "effect_reads[ordinal], Before",
+    "EE": "full existing_prevalidation[ordinal], Before",
+    "EI": "inventory[0], Before",
+    "EP": "pending_reads[0..22] Before; pending_mutations[0..11] Before/After",
+    "EV": "status_home_new_reads[0..8] Before; status_home_new_mutations[0..2] Before/After",
+    "EX": "profiles1/2/3 \u00d7 lengths0/1/65535/65536/65537/1048575/1048576 \u00d7 existing_mutations68 \u00d7 Before/After",
+    "EY": "profiles1/2/3 \u00d7 lengths0/1/17/65535/65536/65537/1048575/1048576 \u00d7 per-length complete prevalidation calls \u00d7 Before/After; 36 full-profile1 Before aliases EE"
+  }
+}

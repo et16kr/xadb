@@ -69,6 +69,8 @@ flowchart TD
 
 [현행 WAL prefix 분석 계약](dev3-recovery-prefix.md)은 actual reserve/cancel·Status INIT의 owner·descriptor·inventory와 canonical RAM image를 닫힌 owner 안에서 재구성하는 후속 공급이다. [선택 실행과 제한 단위 최종 D1](../evidence/dev3-recovery-prefix-20261022.md)을 수용했다. home 무독해·무변경의 분석을 BOOT_RESERVE·Pending repair·물리 REDO의 완료로 세지 않는다.
 
+[실제 닫힌 복구 계약](dev3-recovery-effects.md)은 고정 두 슬롯의 실제 provisioning, source 안정화, 선택 Pending 수리, 한 번 예약 인계와 page별 REDO를 연결한다. 2026-10-23 제한 구현설계 D2와 첫 실행 gate를 수용한 뒤 [선택 검증](../evidence/dev3-recovery-effects-20261023.md)을 마쳤다. 필수393의 source별 완료 단언·native31·compiler9+control1·checker30/변경1을 구별하며 제한 단위 최종 독립 D1을 수용했다. 일반 REBASE·새 epoch·READY와 전체 F05는 남아 있다.
+
 1. writer lease를 획득하고 fixed root profile의 exact length/format/checksum·지원 profile·namespace를 검증한다. 이 이후 선택 대상의 expected identity를 전달한다.
 2. FILEMAP/DWB와 명시 current/previous·base continuation을 검산한다. 손상 selector 대신 임의 큰 파일 번호·raw DWB·directory 탐색으로 대안을 만들지 않는다. checkpoint fallback은 3.13의 완전 closure 조건을 따른다.
 3. 생성 때 선택된 recovery profile의 실제 자원과 이미 영속화된 작업 요구를 수용할 수 있는지 확인한다. 신규 foreground admission 축소와 복구 요구량은 별개다.

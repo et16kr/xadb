@@ -4182,5 +4182,64 @@
       "DEV3 final S5"
     ],
     "verified_source_fingerprint": "2468c48df6c8821d301c30130e6702c847494d1f646fa1e5f16ecb091c8fcd42"
+  },
+  "dev3_recovery_effects": {
+    "status": "accepted_scoped_unit",
+    "contract_ref": "dev3-recovery-effects.md",
+    "scope": "current-genesis closed physical provisioning/Pending repair/one-time handoff/pagewise REDO; no READY",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io.rs",
+      "crates/engine/src/storage/wal_io/bootstrap.rs",
+      "crates/engine/src/storage/wal_io/doublewrite_install.rs",
+      "crates/engine/src/storage/wal_io/mutable_storage.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/bootstrap.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/mod.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/native_tests.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/physical.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/port_io.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/resources.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/selection.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/test_faults.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/tests.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/types.rs",
+      "crates/engine/src/storage/wal_io/recovery_prefix.rs",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/borrowed_image_immutable.rs",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/failed_owner_reborrow.rs",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/flush_reborrow.rs",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/maintenance_reborrow.rs",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/manifest.json",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/observation_borrow.rs",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/owner_move.rs",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/positive.rs",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/private_fields.rs",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/raw_writer_missing.rs",
+      "crates/engine/tests/fixtures/recovery_effects/native/manifest.json",
+      "crates/engine/tests/fixtures/recovery_effects/runtime/fault-vectors.json",
+      "crates/engine/tests/fixtures/recovery_effects/runtime/manifest.json",
+      "scripts/dev3_recovery_effects.py",
+      "scripts/dev3_recovery_effects_compiler.py",
+      "scripts/dev3_recovery_effects_inputs.py",
+      "scripts/dev3_recovery_effects_native.py",
+      "scripts/dev3_recovery_effects_oracle.py",
+      "scripts/dev3_recovery_effects_vectors.py",
+      "scripts/test_dev3_recovery_effects.py",
+      "scripts/test_dev3_recovery_effects_compiler.py",
+      "scripts/test_dev3_recovery_effects_native.py"
+    ],
+    "dependencies_changed": false,
+    "source_roots_changed": false,
+    "full_stage_acceptance": false,
+    "product_execution": "source-specific393 completed assertions:386 complete-job cases+7 completed assertions in original failed job; native31/95workers, compiler9+control1, checker30 and changed method1",
+    "pending": [
+      "general BOOT/F05, REBASE body/continuation/reclaim, new epoch/CLR/undo/READY",
+      "DEV3 final S5"
+    ],
+    "evidence_refs": [
+      "dev3-recovery-effects-20261023.md",
+      "dev3-recovery-effects-20261023.json"
+    ],
+    "final_source_fingerprint": "b02136125e51902c166d453835466c0150fbaeabb18e255ecbf0b4e9053d216a",
+    "all_tests_on_final_source": false,
+    "independent_D1": "ACCEPTED; source-specific original results retained"
   }
 }

@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-23 [DEV3 현재 genesis의 실제 닫힌 복구](implementation/dev3-implementation.md#recovery-effects): 고정 두 슬롯 provisioning·source 안정화·historical Pending 수리·예약 한 번 인계·page별 REDO를 연결했다. [source별 검증](evidence/dev3-recovery-effects-20261023.md)은 필수393의 완결 job386·실패 job 내 완료 단언7과 native31/95worker·compiler9+control1·checker30/변경1을 구별한다. 제한 단위 최종 독립 D1을 수용했으며 일반 복구/READY·전체 DEV3/S5는 미완료다.
+
 2026-10-22 [DEV3 현행 WAL prefix 분석](implementation/dev3-implementation.md#recovery-prefix): 실제 reserve/cancel·Status INIT의 canonical RAM 상태와 잔여 의무를 닫힌 owner에 재구성했다. [source별 검증](evidence/dev3-recovery-prefix-20261022.md)은 새 unit231의 완료 단언(완결 job223·실패 job 내8), native31·compiler8+control1·checker15·변경 수신6을 구별한다. 제한 단위의 최종 독립 D1을 수용했으며 실제 Pending 수리·물리 REDO·전체 DEV3/S5는 남아 있다.
 
 2026-10-22 [DEV3 첫 복구 입력 선택](implementation/dev3-implementation.md#recovery-select): 초기 FILEMAP·Empty DWB·genesis header-only WAL의 [닫힌 선택](contracts/dev3-recovery-select.md)을 구현하고 [필수170·관련4 재검증·native8·compiler5+control1·checker15](evidence/dev3-recovery-select-20261022.md)와 독립 D1을 수용했다. 원 FAIL/source별 결과를 보존하며 nonempty 복원·BOOT_RESERVE·일반 recovery/READY·최종 S5는 남아 있다.

@@ -184,6 +184,8 @@ native 13DB는 새로 부풀린 전수 행렬이 아니라 기존 제한 단위�
 
 후속 [현행 WAL prefix 분석](../contracts/dev3-recovery-prefix.md)은 실제 reserve/cancel·Status INIT를 canonical RAM 상태로 재구성하는 제한 공급이다. 신규 prefix/scanner/native/compiler/checker와 변경 pure helper만 검증한다. Pending metadata·혼합 home 독립성의 읽기 전용 분석을 Pending repair·물리 REDO 성공으로 집계하지 않는다. scanner의 EOF 전수·긴 반복·확대 profile 조합은 별도 S5 selector에 유지한다. [선택 실행](../evidence/dev3-recovery-prefix-20261022.md)은 신규231의 완료 단언(완결 job223·실패 job 내8)과 native31·compiler8+control1·checker15·변경 RS6을 source별로 보존하며 제한 단위 최종 D1을 수용했다.
 
+[실제 닫힌 복구](../contracts/dev3-recovery-effects.md)는 제한 구현설계 D2와 첫 실행 gate 뒤 새 BOOT·source 안정화·Pending repair·예약 한 번 인계·page별 REDO와 직접 변경 수신만 [선택 검증](../evidence/dev3-recovery-effects-20261023.md)했다. 초기 semantic75 후보에서 exact393/16함수(semantic·BOOT·named104+fault289), native31/95worker, compiler9+control1, checker30을 동결했다. 결과는 완결 job386·원 실패 job 내 완료 단언7과 source별 원 FAIL/최소 재선택을 구별한다. 제한 단위 최종 독립 D1을 수용했다. 기존 완료 prefix/SELECT·하위 wrapper를 반복하지 않았으며 S5 runtime matrix3504/alias36/추가3468·native matrix63/alias7/추가56은 작성·NOT_RUN으로 유지한다.
+
 새 장벽의 핵심 정상·거절·소유 인계만 먼저 확인한다. 실제 crash/reopen이 아직 연결되지 않은 부분은 메모리 포트의 상태 전이 증거로 표시하고, 그 소비자가 연결될 때 아래 실제 reopen 의무를 닫는다. 공통 controller를 준비하되 완성되지 않은 하위 결과를 성공 복구로 집계하지 않는다.
 
 | 하위 작업 | 중간 필수 사례 | 함께 추가할 입력·관측 |

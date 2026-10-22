@@ -47,6 +47,12 @@ pub(crate) use bootstrap::{
     InitializedStatusObservation, IntoFlushError, ReservedStatus, StatusBootstrapWriter,
     StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard, StatusReader,
 };
+#[allow(unused_imports)] // Closed prefix observations await the next recovery barrier.
+pub(crate) use bootstrap::{
+    ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
+    RecoveryInspection, RecoveryPhase, RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError,
+    RecoveryPrefixObservation, RecoveryPrefixPhase, RecoveryProducerMode,
+};
 pub(in crate::storage) use bootstrap::{
     CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
 };
@@ -54,11 +60,6 @@ pub(in crate::storage) use bootstrap::{DirtyInstallPermit, FlushFinalizePermit};
 pub(in crate::storage) use bootstrap::{
     InitialRecoveryError, inspect_initial_bootstrap, recovery_preparation_bytes,
     recovery_reader_bytes,
-};
-#[allow(unused_imports)] // Closed prefix observations await the next recovery barrier.
-pub(crate) use bootstrap::{
-    RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError, RecoveryPrefixObservation,
-    RecoveryPrefixPhase, RecoveryProducerMode,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

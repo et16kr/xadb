@@ -52,14 +52,15 @@ pub(crate) use doublewrite_install::{
     InitializedStatusObservation, IntoFlushError, ReservedStatus, StatusBootstrapWriter,
     StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard, StatusReader,
 };
+pub(crate) use doublewrite_install::{
+    ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
+    RecoveryInspection, RecoveryPhase, RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError,
+    RecoveryPrefixObservation, RecoveryPrefixPhase, RecoveryProducerMode,
+};
 pub(in crate::storage) use doublewrite_install::{
     CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
 };
 pub(in crate::storage) use doublewrite_install::{DirtyInstallPermit, FlushFinalizePermit};
-pub(crate) use doublewrite_install::{
-    RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError, RecoveryPrefixObservation,
-    RecoveryPrefixPhase, RecoveryProducerMode,
-};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {
