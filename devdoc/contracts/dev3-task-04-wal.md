@@ -20,6 +20,7 @@
 | 3.04-R4 | update/CLR/system 변경은 고정 slot에 bounded copy한 뒤 authoritative page/descriptor/recLSN 등록을 같은 변경 구간에서 마침. Commit의 Committed status·terminal 공개 설치는 sync 뒤 3.11의 별도 경계에서 수행. append 뒤 허용된 적용의 부분 실패는 Fenced |
 | 3.04-R5 | I/O claim이 pending bytes를 독점한 뒤 gate를 놓고 write_all_at/sync. 완료 전 slot overwrite·중복 sync·동일 불명 frame 재전송 금지 |
 | 3.04-R6 | 성공 sync는 실제 완결 LSN/offset prefix만 전진. 실패/unwind/poison에서는 원래 effect/cause를 보존하며 synced로 추측하지 않음 |
+| 3.04-R7 | Commit stage부터 sync 뒤 status/terminal·descriptor·dirty/DPT 설치 완료까지 전역 의미 설치 장벽 유지. 물리 slot Idle만으로 후속 page-effect 그룹 stage/apply를 허용하지 않음 |
 
 | 연산 경계 | 입력 | 출력·수명 |
 | --- | --- | --- |
@@ -51,6 +52,8 @@ sequenceDiagram
 
 slot의 물리 상태는 `Idle → Complete → IoOwned → Idle`, 오류/poison은 `Fenced`다. Complete가 되었다고 해당 거래가 commit된 것은 아니다. semantic 적용 중 실패하면 page 일부를 계속 사용하거나 뒤 그룹을 stage하지 않는다.
 
+이 물리 상태와 [의미 설치 장벽](disk-storage-design.md#commit-installation-order)은 별개다. 일반 update/CLR/system은 stage 구간에서 설치를 마치지만 Commit은 sync 뒤 설치까지 같은 의미 소유를 유지한다. `Idle && 의미 설치 완료`를 모두 확인해야 다음 page-effect 그룹을 stage할 수 있다. T1 Commit@c가 아직 status page P에 없는데 T2가 P의 다른 status slot을 @c+1로 설치·flush하는 순서는 금지한다. 장벽은 준비/읽기/이전 image의 flush를 막는 I/O mutex가 아니며, Commit의 선예약 continuation만 미설치 효과를 완료한다. 대기 producer는 turn·pin·공유 workspace와 적용 lock을 반환하여 continuation을 막지 않는다. 설치 실패/fence 뒤 Idle로 돌아왔다는 이유로 append를 재개하지 않는다.
+
 prepare snapshot과 실제 stage 사이에 다른 producer가 진행할 수 있으므로 재검사한다. Busy이면 slot bytes를 덮지 않는다. 같은 LSN이라도 offset/owner before SHA가 달라진 요청은 stale다. input frame에서 expected predecessor를 가져오지 않는다. stage/apply 성공 뒤 I/O 대기를 위해 page/tree/version/append lock을 유지하지 않는다.
 
 ## 4. 프레임·예약·오류 처리
@@ -74,5 +77,7 @@ WAL slot1MiB와 component64KiB는 metadata8MiB 안의 기존 배정이다. calle
 독립 입력은 정상 interleaving, wrong predecessor/hash·owner generation·중복/누락 그룹, hash를 다시 맞춘 native/redo 불일치, stale snapshot/Busy, apply 전후 unwind, 각 write/sync before/partial/after, durable 후 공개 실패다. 외부 관측으로 complete와 synced prefix를 구분한다. DS02/05·KU10·RC-T12/14의 해당 변경 경로에 연결하고 무변경 genesis/codec 시험은 반복하지 않는다.
 
 ## 6. 착수 전 동결·완료 조건
+
+의미 설치 장벽의 opaque owner·물리 Idle과의 조합, Commit continuation의 자체 admission, 대기자의 turn/공유 workspace 반환·양도, 취소 시 pending bytes와 첫 byte certainty, 오류 뒤 fence를 F02/F05에 포함한다. 후속 그룹의 설치 순서와 공유 status page 반례는 [3.11-T11](dev3-task-11-commit.md#installation-barrier)의 계약과 함께 인수한다.
 
 일반 opcode별 native effect와 descriptor transition, API의 정확 오류 우선순위·guard 수명, owner inventory 인계, frame 분할 중간 상태와 F05를 구현 전에 동결한다. 현재 [wal_io.rs](../../crates/engine/src/storage/wal_io.rs), [semantic_group.rs](../../crates/engine/src/storage/semantic_group.rs), [obligation.rs](../../crates/engine/src/storage/obligation.rs)의 실제 지원 범위를 기준으로 확장한다. append/sync 공급 완료는 commit/rollback/recovery의 상위 인수를 대신하지 않는다.

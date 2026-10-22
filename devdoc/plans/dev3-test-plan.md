@@ -106,6 +106,17 @@
 | F7 restore 잔여 의무 | NT15/16: loser0이지만 terminal queue/credit이 남은 backup을 source WAL 없이 복원; 새 admission 전 동일 소유·예약 인계, credit0 초기화 거절. 3.15-T9 | FT04/06/07, queue/namespace·새 ACK/reopen |
 | F8 backup drain 진행 | NT15: 기존 rollback/terminal이 공유12MiB를 요구할 때 drain이 workspace/turn을 독점하지 않음; backup 자신의 checkpoint도 진행. 3.15-T6 | FT05/07, 기존 작업·timeout/cancel 조합 |
 
+<a id="design-review-010"></a>
+### 3.6 DEV3-REVIEW-010의 설치 순서·drain·backup cut
+
+[16개 설계 2차 리뷰](../evidence/dev3-task-design-review-20261022-r2.md)의 세 보완을 구현 동반 명세로 추가한다. 이번에는 테스트 코드를 작성하거나 실행하지 않는다. 해당 새 경로 구현 시 작은 반례가 중간 필수이며, 전체 변형은 기존 S5 DEV3 inventory에 포함한다.
+
+| 리뷰 항목 | 해당 작업·중간 필수 반례 | S5 연결 |
+| --- | --- | --- |
+| R2-F1 Commit 설치 순서 | NT04/05/10/11/12: Commit@c sync 뒤 설치 전 정지→같은 status page의 다른 slot update/CLR/aging 시도. 물리 Idle에도 후속 stage 차단, 전체 설치 뒤 재개, 기존 image flush의 redirty 보존·대기 maintenance의 turn 양도·오류 fence. 3.11-T11과 각 cut의 winner/status·terminal 이력 검산 | FT03/04/05/07, 공유 page·생산 opcode·취소/fault 전체 |
+| R2-F2 build drain | NT07/08/10: 기존 rollback이 공유12MiB/turn을 요구할 때 build 대기, 자기 거래 drain 방지, 닫힌 외부 admission 아래 catalog commit/실패 cleanup 진행. 3.07-T11 | FT03/05/07, timeout/cancel·동시 drain·staging 전체 |
+| R2-F3 최종 backup cut | NT13/15: drain 뒤 checkpoint가 WAL L0→L1을 전진시켜도 논리 C 불변. manifest/base ledger는 최종 sync된 L1 cut, restore 첫 LSN>L1·새 unflushed ACK/reopen. 3.15-T12 | FT04/06/07, checkpoint/manifest cut·retained owner 조합 |
+
 <a id="allocation-first"></a>
 ## 4. 지금 남아 있는 3.03.1의 필수 테스트
 

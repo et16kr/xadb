@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-task-design-review-20261022-r2.md": {
+      "path": "evidence/dev3-task-design-review-20261022-r2.md",
+      "role": "evidence",
+      "title": "DEV3 16개 상세 설계 — 2차 비교 리뷰와 설치 순서 보완"
+    },
     "dev3-task-design-review-20261022.md": {
       "path": "evidence/dev3-task-design-review-20261022.md",
       "role": "evidence",

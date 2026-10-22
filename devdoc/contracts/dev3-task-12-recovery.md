@@ -92,6 +92,8 @@ healthy home이 pending보다 더 높은 LSN/incarnation이면 오래된 image�
 
 진행 메모리는 bounded buffer·stream cursor·ATT·고정 workspace이며 DB 크기 비례 DPT/전체 page 목록을 만들지 않는다.
 
+pageLSN skip의 생산 전제는 [Commit 설치 장벽](disk-storage-design.md#commit-installation-order)을 포함한 동일 page의 WAL/적용 순서다. durable Commit@c의 status 설치 전에 같은 page의 다른 slot을 @c+1로 적용·flush하는 생산 경로를 허용하지 않는다. recovery가 모든 높은 pageLSN을 별도 과거 image와 비교하는 방식으로 이 생산 결함을 가리지 않는다. NT11/12의 부정 fixture는 T1 winner의 status/terminal 누락과 높은 pageLSN을 함께 만들어 외부 이력·full audit가 검출하도록 한다.
+
 ## 8. 3.12.5 — RECOVERY_REBASE
 
 이 장벽은 admission이 닫힌 복구 전용이다. 3.13의 정상 fuzzy checkpoint 생산을 기다리지 않고, 기존 generic CURRENT/XWS1 genesis codec이 완성 body를 제공한다고 가정하지 않는다.

@@ -66,6 +66,8 @@ flowchart TD
 
 ## 5. 오류·취소·복구
 
+offline create-index는 [3.07의 drain owner 규약](dev3-task-07-indexes.md)을 소비한다. 미효과 build 작업을 자기 drain 대상에 넣지 않고 DDL 거래는 drain 뒤 시작한다. drain 대기는 공유 workspace/turn을 보유하지 않으며, catalog 공개·commit과 실패 rollback/cleanup에는 같은 owner의 하위 진행 권한을 인계한다. 외부 maintenance admission이 닫혔다는 이유로 이 종료 경로를 다시 대기시키지 않는다.
+
 | 경계 | 요구 결과 |
 | --- | --- |
 | 입력·중복·정의 관계 오류 | effect 전 거절. parent schema가 달라진 경우 그 상태를 정의 성공으로 숨기지 않음 |

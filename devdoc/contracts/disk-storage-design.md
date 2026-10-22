@@ -107,6 +107,8 @@ transaction lock과 page latch는 분리한다. 기다리는 lock을 가진 채 
 
 DDL은 독립 원자 거래다. offline index build는 admission close/drain 후 bounded external sort·검증·신규 object를 build하고 catalog 등록을 commit한다. build 중 crash의 미공개 object는 allocation owner 기록으로 정리한다. drop은 versioned catalog에서 retire 상태를 공개하고 old snapshot의 객체/anchor를 horizon까지 유지한다. table drop은 현재 종속 index 전체(최대8개)와 table 정의를 같은 DDL commit으로 retire하며, index만 drop할 때에는 table을 유지한다. 잠금/guard를 얻은 뒤 종속 집합과 generation을 재검사하여 동시 index 생성·삭제를 놓치지 않는다. drop 전 snapshot에는 기존 table/index 집합을 함께 보존하고 drop 이후에는 보이는 index의 table이 사라진 상태를 허용하지 않는다. 같은 이름의 재생성은 다른 generation이다. online index build는 후속이다.
 
+offline index build의 capacity 예약은 workspace/turn 독점과 다르다. 기존 거래/cursor를 drain할 때 공유12MiB·turn·pin·적용 lock을 보유하지 않는다. 미효과 build 작업 owner는 기존 거래의 drain 집합에 넣지 않고, build DDL 거래는 drain 완료 뒤 시작한다. 기존 사용자 거래를 숨은 commit 또는 재분류로 제외하지 않는다. sort/tree·catalog commit·실패 rollback/cleanup은 같은 drain owner의 하위 권한으로 진행하여 닫힌 외부 admission을 다시 기다리지 않는다. timeout/cancel은 자기 drain 소유만 반환한다.
+
 <a id="mutation-protocol"></a>
 ### 7.1 다중 페이지 변경과 잠금 순서
 
@@ -123,6 +125,11 @@ DDL은 독립 원자 거래다. offline index build는 admission close/drain 후
 commit/checkpoint가 여러 경계를 함께 잡을 때 순서는 `commit coordinator → version-edit gate → tree gates → page latches → WAL append gate → 짧은 ATT/DPT/참조 registry leaf lock`이다. 사용하지 않는 중간 항은 생략한다. registry leaf lock에서는 상위 lock 요청·I/O·allocation을 하지 않으며 buffer map/예약 잠금은 위 적용 구간과 함께 잡지 않는다. flusher는 content latch에서 이미지를 복사한 뒤 해제하고 I/O하므로 역순으로 gate를 요청하지 않는다. DWB control은 별도 단일 작업 소유권으로 조정하며 그 상태 mutex를 I/O 중 보유하지 않는다.
 
 commit의 status 설치는 WAL sync 뒤 위 순서로 수행하고, page/tree/append/registry latch를 놓은 뒤 coordinator 아래 publication lock에서 frontier를 전진시킨다. capture는 coordinator와 version-edit gate 아래 **등록까지 끝난** prefix만 선택한다. status가 먼저 Committed가 되어도 `commit_q > snapshot_q`인 reader는 새 값을 읽지 않는다. 실제 Rust guard·rank 표·try 실패 cleanup은 D3-F02에서 동결한다.
+
+<a id="commit-installation-order"></a>
+**WAL의 물리 sync 완료와 page 효과의 설치 완료를 분리한다.** Commit@c는 sync 뒤 status·terminal queue/credit·descriptor·dirty/DPT를 설치하므로, stage에서 얻은 전역 의미 설치 소유를 그 등록 전체가 끝날 때까지 유지한다. 이 동안 물리 slot이 Idle로 돌아와도 후속 update/CLR/SMO/aging 등 page 효과를 가진 그룹의 stage/apply를 허용하지 않는다. 같은 status page의 다른 slot을 Commit보다 먼저 @c+1로 변경하면 `pageLSN>=c`여도 Commit 효과가 없는 image가 flush되어 REDO가 이를 건너뛸 수 있다. 초기 구현은 단일 WAL의 전역 장벽을 선택하며 page별 미설치 목록이나 sync 전 Committed 설치를 도입하지 않는다. 이미 설치된 이전 image의 읽기/flush는 허용하고, 모든 page의 LSN은 그 page에 대한 선행 효과가 빠짐없이 설치되었음을 뜻해야 한다.
+
+이 설치 소유는 I/O 동안 보유하는 version/page/append/coordinator mutex나 FIFO turn이 아니다. 기다리는 producer는 적용 lock·turn·pin·공유 workspace를 반환한다. Commit continuation은 자기 장벽을 통과하여 선예약한 자원으로 설치할 수 있어야 하며, 먼저 선택된 다른 maintenance도 장벽을 기다리며 turn을 붙잡지 않고 양도·재진입한다. stage 이후 취소/실패는 pending Commit을 나중에 쓸 수 있는 상태로 남긴 채 장벽을 정상 해제하지 않는다. 첫 byte 미시도와 pending 제거가 증명된 취소의 정확 경계는 F02에서 동결하고, 불명/부분 설치·poison은 fence한다. 설치 완료 뒤 장벽을 놓아도 frontier/ACK는 기존 coordinator 순서를 따른다. 물리 WAL API의 Idle/prefix 관측은 이 의미 권한을 발급하지 않는다.
 
 **예약된 rollback/필수 유지보수는 try-latch의 공정성에 의존하지 않는다.** F02에서 먼저 고정한 유한 재시도 횟수 K 뒤 FIFO progress turn을 요청한다. 모든 적용 진입과 reader/flusher의 content-latch 구간은 turn admission에 참여하며, admission 요청/대기는 coordinator·version/tree/page/append/registry 잠금 밖에서 한다. turn 대기자는 실제 maintenance workspace와 page pin을 모두 반환하고 자기 자원 예약 token·논리 작업 소유만 유지한다. 공유 12 MiB workspace는 **선택된 turn owner만 획득**하며 이를 사용하는 유지보수 단계는 빠른 try 경로부터 먼저 turn에 참여한다. 일반 경로도 workspace를 가진 채 turn/admission을 기다릴 수 없다. 별도 4 MiB flusher workspace는 이 획득 순서에 종속되지 않는다. 진행 중 latch 구간은 유한하며 I/O·사용자 callback·다른 admission 대기를 포함하지 않는다. 한 turn은 다음 두 단계로 실행한다.
 
@@ -282,6 +289,8 @@ WAL 삭제 floor는 current/previous checkpoint 각각의 redo_start, live dirty
 exact-cut backup의 초기 방식은 **offline admission drain**이다. 새 거래/maintenance의 외부 admission을 닫고 기존 거래·cursor의 정상 종료와 진행 중 aging/DDL의 완료를 기다린다. backup의 capacity 예약과 공유12MiB workspace/진행 turn의 실제 독점 획득을 구별하며, 기존 작업의 종료에 필요한 workspace/turn을 가진 채 drain을 기다리지 않는다. 기존 commit/rollback/terminal·이미 시작한 작업의 예약된 하위 단계와 전용 flusher는 drain 중 허용하며 timeout이면 gate를 복원하고 Busy를 반환한다. reader 강제 만료나 숨은 commit을 하지 않는다. drain 뒤 C를 고정하고 모든 dirty data/undo/status/allocator를 WAL-first/doublewrite로 flush+sync한다. backup 소유의 flush/checkpoint는 명시적 drain 권한으로 진행하여 자신이 닫은 외부 admission을 다시 기다리지 않는다. 완결 checkpoint를 선택하고 mutation을 중지한 상태에서 allocated pages/파일 metadata를 streaming 복사한다. backup 파일과 manifest·namespace를 sync한 뒤만 성공을 알리고 admission을 복원한다. clone reflink나 immutable live datafile을 가정하지 않는다. 취소/복사 실패는 source C를 유지하고 불완전 destination은 성공 backup으로 선택하지 않는다.
 
 restore는 빈 소유 경로에 완전 backup closure 검증→전체 무결성 검사→새 timeline·writer epoch·base q=C와 genesis WAL/checkpoint/control·고정 bootstrap 슬롯 선택→sync 후 개방한다. drain한 backup에는 loser가 없으므로 검증된 **loser abort obligation**은0이다. terminal retained undo/status·aging/retirement queue의 소유·credit·실제 charged bytes까지0이라는 뜻은 아니다. 남은 작업과 예약을 새 namespace의 base ledger에 검증하여 인계하고, 모든 해당 소유의 종료를 확인한 경우에만 전체 obligation ledger를 빈 것으로 시작한다. source WAL 없이도 이 인계를 복구할 수 있어야 하며 live page나 잔여 예약을 임의로 Free/0으로 만들지 않는다. backup manifest는 source의 완결 WAL high-water LSN을 포함한다. 새 timeline의 첫 LSN은 그보다 크게 시작하여 복사된 pageLSN을 새 WAL이 잘못 건너뛰지 않게 한다. 모든 복사 pageLSN이 manifest high-water 이하인지 검증하고 이 baseLSN은 새 control에서 인증한다. source WAL 파일 자체는 필요하지 않다. source WAL 없이 복원→새 commit ACK→두 번째 restart를 검사한다. online backup/PITR/replication은 후속 계약이며 offline exact cut을 그것들의 완료로 주장하지 않는다.
+
+backup의 논리 C는 drain 직후 고정하지만 manifest의 물리 WAL high-water L은 flush/retirement·checkpoint 선택이 끝난 뒤 확정한다. checkpoint begin/end 등 그 사이의 완결 WAL도 포함해 sync하고 ownership/base ledger를 같은 최종 cut에 결합한다. 추가 page 효과가 있으면 그 dirty와 closure도 먼저 안정화한다. 이후 복사 동안 WAL/page/ownership은 고정하며 restore 첫 LSN은 이 L보다 커야 한다. drain 때 관측한 LSN을 최종 high-water로 재사용하지 않는다.
 
 <a id="reclaim"></a>
 ## 13. 공간 재사용·진행 보장
@@ -470,3 +479,18 @@ F01은 profile identity·필수 항목·무결성/지원 여부의 검사 위치
 | 근거·독립 검토 | [8개 반례·16문서 판정·실제 소스 revision·교차검토](../evidence/dev3-task-design-review-20261022.md). `/root/review_storage`·`/root/review_tree`가 본인 작성 외 상세 수정·관련 정본을 교차검토. `/root/review_storage`가 공통 정본·신규 보고서·인수/색인 연결 최종 검토 PASS, 잔여 필수 P1/P2 없음. `/root` 반영 확인 |
 | 실행·남은 의무 | 문서만 수정. 제품 시험·compiler/Clippy·문서 자동 검사·commit/push 없음. 새 case는 구현 동반 명세. F01/F02/F05·terminal queue/credit·복구/restore 형식의 미동결과 DEV3/S1 미완료 유지 |
 | 재검토 | claim/free 경합·own presence 누락·DDL 의존 집합 변화·보상 suffix 재실행·정상 REDO 거절·복원 credit 소실·drain 교착 또는 새 운영 경로/형식 도입 |
+
+<a id="task-review-010"></a>
+## DEV3-REVIEW-010 — Commit 설치 순서와 유지보수 인계
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-22 |
+| 담당·권한 | 작업/계약/통합 `/root`, 독립 검토 `/root/independent_review`. 사용자의 16개 설계 비교 리뷰·즉시 수정·단일 commit 요청, AGENTS/DP01 독립 검토 규칙 |
+| 기준·범위 | HEAD `def35fb1e274040eb55d78fa68948ba1610166c1`, 착수 clean. 기존 REVIEW-009 이후 16개 문서 재검토. 동시 DEV4/DEV5 작업은 별도이며 이번 변경·commit에서 제외 |
+| 선택 | Commit stage부터 sync 뒤 전체 의미 설치까지 전역 stage/apply 장벽, drain 중 workspace/turn 반환과 build owner의 하위 진행 권한, flush/checkpoint 뒤 최종 backup WAL high-water와 ownership cut |
+| 대안·이유 | 단일 commit coordinator/물리 Idle만으로 일반 producer의 shared-page 추월을 막을 수 없음. page별 미설치 목록은 초기 복잡성을 늘리고, sync 전 Committed 공개·I/O 동안 latch 보유는 기존 불변식 위반. 전역 장벽의 대기 비용은 PF09에서 측정. drain과 backup은 기존 소유/상한 안에서 순서를 보완 |
+| 적용·대체 | §7/7.1/12와 3.04/05/07/08/10/11/12/13/15/16·테스트 계획. REVIEW-009를 유지하며 물리 sync 뒤 의미 admission 재개 조건과 backup 최종 L 확정 시점을 구체화. byte 형식·격리·ACK 의미·기본 한도·단계 DAG 변경 없음 |
+| 근거·독립 검토 | [반례·16문서 판정·실제 source revision](../evidence/dev3-task-design-review-20261022-r2.md). `/root/independent_review`가 최종 설계 diff·보고서·case/NT/FT·PF09·색인 연결을 독립 검토: PASS, 잔여 필수 P1/P2 없음. `/root` 반영 확인 |
+| 실행·남은 의무 | 문서만 변경. 제품 시험·compiler/Clippy·문서 verifier·push 미실행. 3.11-T11·3.07-T11·3.15-T12는 구현 동반 인수 명세. 일반 Commit/terminal·F01/F02/F05와 DEV3/S1은 미완료 |
+| 재검토 | 지연 설치 추월·장벽/turn 교착·staged Commit 취소 오류, build 종료 정체, 복사 cut 불일치 또는 page별 병렬 설치/group commit 도입 |

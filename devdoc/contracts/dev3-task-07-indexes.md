@@ -124,6 +124,8 @@ stateDiagram-v2
 
 build는 새 거래·maintenance admission을 닫고 기존 거래/cursor와 이미 진행 중인 작업의 정상 종료를 기다린다. 기존 commit/rollback, 필요한 전용 flusher와 이미 진행 중인 작업의 완료 경로는 계속 허용한다. drain 뒤에도 build에 필요한 전용 flusher의 진행을 막지 않는다. timeout이면 소유한 gate를 복원하고 Busy를 반환한다. 긴 reader를 강제 만료하거나 숨은 commit을 하지 않는다. 이 drain은 dirty-pressure의 forward-effect 제한과 같은 것으로 구현하지 않는다.
 
+capacity 예약과 공유12MiB workspace/turn의 독점 획득을 구별한다. drain 대기자는 workspace·turn·page pin·적용 lock을 보유하지 않아 기존 거래의 rollback/terminal이 같은 자원으로 끝날 수 있어야 한다. 미효과 build 작업 owner는 drain할 기존 거래가 아니며, build DDL 거래는 drain 완료 뒤 owner 권한으로 시작한다. 기존 사용자 거래를 이 owner로 재분류하거나 숨은 commit으로 제외하지 않는다. build의 sort/tree·catalog 공개·commit·실패 rollback/cleanup 하위 단계는 닫힌 외부 admission을 다시 기다리지 않는 동일 drain owner 권한을 소비한다. 동시 다른 drain 요청과 timeout/cancel은 자신이 얻은 소유만 반환하며 타 작업의 gate를 열지 않는다. 구체 admission token·취소와 하위 작업 전달은 F02에 동결한다.
+
 drain한 안정 row 집합을 bounded 순회하여 `(composite, RowId)` run을 만들고 고정 fan-in으로 합친다. run bytes·목록·FD·merge buffer·새 tree/undo/allocator/WAL을 사전에 계산한다. 중복 key의 PK/Unique 검사는 정렬 이웃 비교와 독립 typed tuple 기대값으로 인수하며 all-null 예외를 유지한다. 임시 파일도 engine-owned staging 목록과 generation/owner에 귀속한다. 단순 directory scan이나 파일명만으로 삭제 대상을 정하지 않는다.
 
 완성 tree와 정의를 연결하는 catalog 등록은 3.08의 독립 원자 DDL 거래에 속한다. 공개 이전 실패는 object/allocator ownership과 cleanup 진행점으로 정리하고, 공개 시도 이후 certainty는 3.11/3.12가 판정한다. commit이 채택된 tree를 미공개 orphan으로 정리하지 않는다. 취소·crash 뒤 정리도 bounded batch와 예약으로 진행하며 사용자 abort로 이미 완결된 tree SMO를 역으로 되돌리지 않는다.
@@ -172,6 +174,7 @@ presence 삭제와 undo 완료는 즉시 공간 반환이 아니다. snapshot/Ac
 | 3.07-T8 build 경계 | empty/nonempty·8 index 한도·중복 존재 table·buffer보다 큰 key working set. run/merge·FD/메모리 peak, 정의/row 대응, nullable PK·partial NULL 검증 | DS01/03/06 |
 | 3.07-T9 build 중단·공개 | drain timeout, run 생성/merge/tree 설치/검증/catalog commit 전후 취소와 crash. 미공개 소유만 cleanup, ACK 공개 객체 보존, UNKNOWN은 복구 판정. source row와 기존 index 보존 | DS02/06, KU10, RC-T12/14 |
 | 3.07-T10 이전 own statement와 UNIQUE | 같은 거래 S1에서 A:key7 INSERT/UPDATE 성공 후 S2에서 B:key7 INSERT/UPDATE. S2만 실패하고 S1 유지; S1 또는 S2가 A:key7을 DELETE/key 이동한 뒤 B:key7이면 성공, 동일 full-key self 재검사는 중복 아님. 이번 delta+다른 committed만 검사하거나 own TxnRef 전체를 제외하거나 이전 own absent를 무시하는 mutant 거절 | DS06, KU10 |
+| 3.07-T11 build drain 진행 | 기존 거래의 rollback/terminal이 공유12MiB/turn을 요구할 때 build drain. workspace/turn 독점 대기0, 자기 build 거래 drain0, 닫힌 외부 admission 아래 sort/tree·catalog commit 및 실패 cleanup 진행. timeout/cancel·동시 다른 drain 뒤 소유한 gate만 반환 | DS03/06, NT08/10, KU10 |
 
 F03의 typed row 이력에서 key tuple과 visible presence를 독립 생성한다. production key encoder·tree walk·replay를 기대값 생성에 사용하지 않는다. 바뀐 index 경로의 실제 Linux reopen/다중 객체 fault가 구현되면 그 경로와 외부 ACK/UNKNOWN 이력을 연결하고 full audit에서 row→index와 index→row를 각각 검사한다. 정상 open마다 변경 없는 전체 index를 검사하는 의무로 바꾸지 않는다.
 

@@ -81,6 +81,7 @@ row/index/locator/allocation inventory의 **각 실제 접근 집합**이 config
 | CRUD·point/range | 1/2/4 writer/reader, 요청·시도·durable 성공 TPS, 성공 latency와 원래 요청부터 retry 포함 latency |
 | 충돌 분해 | 독립 table / 같은 table 다른 행·비충돌 key / 같은 행·unique key × RC/Serializable. 실제 read/write/key/catalog 의존으로 true/false conflict 판정 |
 | WAL·DWB | commit/WAL sync p99, batch1/8/64의 실제 평균 크기·pages/s, image/home/control bytes와 file sync/dirsync 횟수 |
+| Commit 설치 장벽 | stage→sync→전체 status/terminal 등록 시간, 후속 producer 대기 시간·양도/재진입 횟수. 물리 sync와 의미 설치 대기를 분리하고 원래 요청 latency에는 둘 다 포함 |
 | flush·진행 | oldest recLSN lag·dirty age·선택/완료/redirty·서비스 최대 간격·무진행 round·admission 거절 원인·rollback/eviction latency |
 | snapshot/aging | 긴 reader·Active 거래, undo 생성/보존/회수·owner/horizon lag, 실제 재사용, WAL floor와 undo 수명 분리 |
 | checkpoint/reopen/audit | 같은 WAL/dirty 양에서 DB256MiB/1GiB, 정상 read bytes/시간과 REBASE flush/selector/회수, full audit 별도 |

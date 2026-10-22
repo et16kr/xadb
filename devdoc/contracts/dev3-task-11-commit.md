@@ -28,6 +28,7 @@ transaction owner는 최종 검사·commit 상태·오류 certainty를, durable 
 | 3.11-R8 | status=q11·frontier=q10 구간에도 snapshot10과 그 복원에 필요한 undo/객체를 보존. frontier 공개 lock 안 allocation/I/O/callback 없음 |
 | 3.11-R9 | terminal 뒤 ATT 제거·abort 예약 반환과 retained undo/status·aging queue의 영속 인계를 구분. head/count0이나 Committed decode만으로 slot/free/reuse 승인 금지 |
 | 3.11-R10 | 별도 controller의 실제 ACK/ABORT/UNKNOWN 이력과 transaction별 witness로 durability를 판정. 후속 overwrite가 이전 ACK 유실을 숨기지 않도록 전체 이력과 복구 상태를 함께 대조 |
+| 3.11-R11 | Commit stage→sync→status/terminal·descriptor·dirty/DPT 설치 완료 동안 전역 의미 설치 장벽을 소유. 후속 page-effect WAL 그룹의 추월과 물리 Idle만으로의 admission 재개 금지 |
 
 | 설계 연산 | 입력·사전조건 | 출력·소유 |
 | --- | --- | --- |
@@ -102,6 +103,13 @@ sequenceDiagram
 
 그림의 coordinator는 commit 순서를 나타내며 모든 구간에서 같은 mutex guard를 보유하라는 뜻이 아니다. 실제 guard/rank·단일 commit 소유와 suspension/revalidation 방식은 F02에서 고정한다. status 적용의 turn/admission 요청·대기는 coordinator/version/tree/page/append/registry lock 밖이어야 한다. sync 뒤 status 자원을 새로 quota 요청하거나 coordinator를 잡은 채 FIFO turn을 기다리는 경로는 허용하지 않는다. 이 설계를 구현할 때는 순서 소유를 잃지 않는 인계와 공정한 진행을 별도 검토한다.
 
+<a id="installation-barrier"></a>
+### Commit의 지연 설치와 pageLSN 순서
+
+단일 commit coordinator만으로 일반 update·CLR·SMO의 page 적용 순서는 보호되지 않는다. [전역 의미 설치 장벽](disk-storage-design.md#commit-installation-order)을 Commit stage와 원자적으로 획득하고, durable 결정의 모든 status/terminal·descriptor·dirty/DPT 설치가 끝난 뒤 반환한다. sync가 물리 WAL slot을 Idle로 돌려주더라도 이 장벽은 남는다. 다른 거래가 같은 71-slot status page의 다른 slot을 더 높은 LSN으로 갱신·flush하면 앞선 Commit 효과가 없는 높은 pageLSN이 남으므로, 초기 구현은 모든 후속 page-effect 그룹의 stage/apply를 막는다. page 일부 설치나 물리 sync 성공만으로 장벽을 반환하지 않는다.
+
+기존 reader와 이미 설치된 image의 flusher는 계속 진행한다. sync 전에 복사된 낮은 LSN image는 정상이며, 그 copy 뒤 Commit을 설치하면 dirty counter 차이로 Dirty/recLSN을 보존한다. Commit continuation은 자기 장벽을 통과하고 선예약한 자원을 소비한다. 다른 producer가 장벽을 기다릴 때에는 turn·공유 workspace·pin·적용 lock을 반환해야 한다. 특히 FIFO head인 다른 maintenance가 장벽을 기다리며 turn을 점유해 continuation을 막는 순환을 금지한다. 양도·재진입과 대기자 깨움, stage 전후 취소·unwind의 소유는 F02에서 함께 동결한다. 이미 staged된 Commit을 나중에 쓸 수 있는 채로 정상 abort/장벽 반환을 하지 않는다. 설치 실패는 fence, durable 이후의 결정은 commit으로 유지한다. frontier 공개와 ACK는 장벽 반환 이후에도 기존 순서를 지킨다.
+
 ## 5. snapshot·checkpoint·terminal 수명과의 연결
 
 status11이 설치되고 frontier가 아직10이면 새 snapshot은10을 선택할 수 있다. reader는 `commit_q > snapshot_q`인 새 버전을 undo로 제거한다. snapshot 획득은 version-edit gate 아래 published q를 읽고 같은 gate에서 horizon 등록을 완료하며, aging은 `H=min(published q, registered snapshot q)`와 rollback/객체 소유를 함께 확인한다. reader가 없다는 이유로 status11의 undo를 먼저 회수하지 않는다.
@@ -169,6 +177,7 @@ transaction/publication·ATT/terminal·WAL writer를 바꾸는 부분은 하나�
 | 3.11-T8 terminal 소유 | retained head/incoming이 있는 commit, ATT 제거·queue/credit 인계 cut·재장애. active abort 예약과 retained queue 비용 구분, 영속 owner 유실·count0 조기 Free mutant 거절 | DS03/04/05, RC-T14 |
 | 3.11-T9 ACK 이력 보호 | T1 ACK 값을 T2가 나중 overwrite한 fixture와 transaction별 독립 witness. 최종 row만 같은 ACK 유실 known-bad 입력도 checker가 거절. controller ACK 관측 이후 candidate만 crash | DS02, RC-T12 |
 | 3.11-T10 재장애·새 ACK | 첫 UNKNOWN의 recovery·RESUME 후 새 transaction ACK, 두 번째 crash/reopen. 합법 UNKNOWN 채택과 두 세대 ACK, source WAL/namespace 보존 대조 | DS02/05, RC-T12/14 |
+| 3.11-T11 지연 설치 순서 | T1 Commit@c sync 직후 status 설치 전 정지하고, 같은 status page의 다른 slot을 갱신하는 T2 update/CLR/aging을 시도. physical Idle에도 후속 stage0, T1 전체 등록 뒤만 재개. 앞선 maintenance head가 turn을 양도하여 continuation 진행, 이전 image flush의 redirty 보존, 설치 오류 뒤 fence. 각 장벽 cut→reopen에서 T1 winner/status·terminal 일치; @c 누락/P@c+1 mutant는 독립 이력·audit로 거절 | DS02/04/05, NT04/05/10/11/12, RC-T12/14 |
 
 controller는 candidate 프로세스와 분리하고 crash 대상에서 제외한다. 응답 관측 이력은 transaction identity·expected delta·실제 outcome과 순서를 포함하며 candidate 출력으로 재구성하지 않는다. controller까지 잃으면 ACK 관측을 미확정으로 남긴다. transaction별 witness의 구체 저장/대조 방식은 F03에서 고정하여 후속 overwrite가 어느 거래의 유실을 가리는지 검사한다. witness 자체를 제품 commit 기록의 대체로 사용하지 않는다.
 

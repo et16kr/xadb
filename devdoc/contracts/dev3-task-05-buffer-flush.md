@@ -112,6 +112,8 @@ stateDiagram-v2
 
 ### 5.2 WAL→DWB→home와 retirement
 
+복사된 pageLSN은 그 page의 선행 효과에 미설치 공백이 없음을 전제로 한다. [Commit 설치 장벽](disk-storage-design.md#commit-installation-order)이 후속 page 변경의 추월을 막으며, flusher가 높은 WAL synced prefix만 보고 아직 설치되지 않은 Commit을 page image에 반영된 것으로 간주하지 않는다. 장벽 중 이전 image의 flush는 허용하고, 이후 Commit 설치는 기존 redirty/counter 규약을 따른다.
+
 ```mermaid
 sequenceDiagram
   participant B as dirty buffer

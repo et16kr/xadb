@@ -162,6 +162,8 @@ stateDiagram-v2
 
 종료하는 I/O와 공정한 actor 실행 아래의 진행을 검증한다. 모든 try 순간을 새 reader가 선점하는 공정한 starvation schedule도 drain 뒤 배제해야 한다. 무제한 try loop, 준비 전부터 flusher 차단, 상위 lock을 가진 ticket 대기, workspace를 가진 admission 대기는 허용하지 않는다. 모델 depth16까지 오류가 없다는 결과는 진행 증명이 아니며 fair cycle 검산/감소 증명과 실제 thread witness를 따로 남긴다.
 
+[Commit 설치 장벽](disk-storage-design.md#commit-installation-order)은 turn과 별도 소유다. 물리 WAL sync 뒤에도 미설치 Commit이 있으면 다른 page-effect producer는 stage를 기다리되 turn·pin·공유 workspace를 반환한다. 이미 FIFO head로 선택된 maintenance도 장벽을 기다리며 head를 점유하지 않고 양도·재진입하여 Commit continuation이 자기 장벽을 통과해 설치를 마칠 수 있게 한다. 기존 reader·이전 image의 전용 flusher는 계속 허용한다. F02의 ticket/취소/깨움 규약과 NT10/11에 이 순환의 부정 사례를 포함한다.
+
 <a id="resources"></a>
 ## 7. 자원·오류·복구 경계
 

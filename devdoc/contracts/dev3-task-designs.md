@@ -6,6 +6,8 @@
 
 2026-10-22 [ARIES·Oracle·로컬 DBMS 비교 리뷰](../evidence/dev3-task-design-review-20261022.md)에서8개 반례를 보완했다. 후속 결정은 [DEV3-REVIEW-009](disk-storage-design.md#task-review-009), 신규 구현 동반 case는 [테스트 계획](../plans/dev3-test-plan.md#design-review-009)이 소유하며 아래 최초 작성 결정·실행 상태는 당시 기록으로 보존한다.
 
+같은 날 [2차 비교 리뷰](../evidence/dev3-task-design-review-20261022-r2.md)에서 Commit의 WAL/설치 순서·build drain 진행·backup 최종 물리 cut을 보완했다. [DEV3-REVIEW-010](disk-storage-design.md#task-review-010)과 [추가 인수 명세](../plans/dev3-test-plan.md#design-review-010)를 따르며, 이전 리뷰·실행 결과의 identity는 유지한다.
+
 기존 3.01–3.16 분류마다 개발 상세 명세와 세부 설계도를 제공한다. 각 문서는 기능 요구, 입력·출력과 소유권, 상태·처리 순서, 실패·복구, 자원 계산, 하위 구현 단위와 인수를 묶는다. 번호는 실행 순서나 균등한 작업량이 아니다. 현재 구현 상태는 구현 문서가, 순서·배정은 기존 계획이, bytes와 제품 의미는 각 소유 계약이 계속 소유한다.
 
 이 문서군은 기존 계약을 구현 가능한 경계로 풀어 쓴다. 미채택 opcode·control body·수치 예약표를 새로 채택한 것으로 만들지 않는다. 아래의 논리 연산명·상태명은 설계 표기이며 실제 Rust symbol이나 공개 API의 존재를 주장하지 않는다. 각 문서의 마지막 절은 **해당 leaf 착수 전에 추가 동결할 구체 항목**을 식별한다. 그 항목이 필요한 effect는 동결·독립 검토 전 실행할 수 없다.

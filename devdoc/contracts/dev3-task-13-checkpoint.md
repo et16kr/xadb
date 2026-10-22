@@ -99,6 +99,8 @@ current와 previous가 같은 closure를 가리키면 물리 파일 bytes는 한
 
 ### 5.1 3.13.1: fuzzy capture
 
+물리 WAL slot의 Idle 또는 synced prefix는 capture 가능 여부가 아니다. [Commit 의미 설치 장벽](disk-storage-design.md#commit-installation-order)이 남아 있으면 status/terminal·descriptor·DPT 등록이 끝나지 않은 것이므로 capture하지 않는다. 대기하면서 turn·공유 workspace를 보유해 그 Commit continuation을 막아서도 안 된다.
+
 1. 기존 profile·WAL/dirty/owner ledger에서 checkpoint 작업을 admission한다. capture 버퍼·chunk/control staging·WAL bytes·FD·최대 closure 공존을 예약한다. 공유12MiB workspace의 작업은 3.10.1 turn에 참여하고 workspace를 보유한 turn 대기를 만들지 않는다.
 2. 동결된 의미의 begin-checkpoint 기록을 complete WAL로 설치한다. 진행 중 checkpoint가 요구하는 WAL 구간과 임시 소유를 등록하여 CURRENT 선택 전 회수에서 보호한다. begin LSN, capture LSN, end LSN을 별도 값으로 다룬다.
 3. coordinator 아래 CommitAttempted의 sync/상태 설치가 끝났는지 확인한다. 미완료면 필요한 대기를 gate/latch 밖에서 조정하고 capture를 다시 시도한다. 불명 commit은 진행 중단/fence이며 추측한 상태로 capture하지 않는다.
