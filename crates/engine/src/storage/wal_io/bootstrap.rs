@@ -168,6 +168,75 @@ struct BootstrapPlan {
     selected: SelectedControl,
     allocation_digest: [u8; 32],
 }
+
+/// Pure expected initial bytes, with no durable/session/replay authority.
+pub(in crate::storage) struct InitialRecoveryExpectation {
+    pub(in crate::storage) plan: u64,
+    pub(in crate::storage) filemap: SelectedControl,
+    pub(in crate::storage) doublewrite: SelectedControl,
+    pub(in crate::storage) stage_digest: [u8; 32],
+}
+
+#[derive(Debug)]
+pub(in crate::storage) enum InitialRecoveryError {
+    Bootstrap(BootstrapError),
+    Doublewrite(DoublewriteInstallCause),
+}
+impl From<BootstrapError> for InitialRecoveryError {
+    fn from(error: BootstrapError) -> Self {
+        Self::Bootstrap(error)
+    }
+}
+
+/// The caller has read exact XBS1 bytes into scratch[0][..4096]. The
+/// authenticated digest is retained before preparation reuses all three pages.
+/// This shares the producer's canonical encoders; it never inspects home bytes.
+pub(in crate::storage) fn inspect_initial_bootstrap(
+    profile: Profile,
+    selected: SelectedControl,
+    scratch: &mut [[u8; PAGE_BYTES]; 3],
+) -> std::result::Result<InitialRecoveryExpectation, InitialRecoveryError> {
+    let bytes = &scratch[0][..super::CONTROL_BYTES];
+    super::check_control(bytes, profile, b"XBS1").map_err(control_error)?;
+    let kind = match super::u64_at(bytes, 280) {
+        1 => BootstrapPlanKind::AllocatorOnly,
+        2 => BootstrapPlanKind::StatusBootstrap,
+        _ => return Err(failed(Phase::Prepare, Cause::UnsupportedPlan).into()),
+    };
+    let actual_digest = content_digest(bytes);
+    let plan = BootstrapPlan::prepare_for_kind(profile, scratch, kind)?;
+    if selected != plan.selected {
+        return Err(failed(Phase::Prepare, Cause::IdentityMismatch).into());
+    }
+    let expected = plan
+        .encode_descriptor(&mut scratch[0])
+        .map_err(control_error)?;
+    if actual_digest != content_digest(expected) {
+        return Err(control_error(ControlError::Corrupt).into());
+    }
+    let (doublewrite, stage_digest) =
+        doublewrite_install::initial_recovery_expectation(&plan, &mut scratch[0])
+            .map_err(InitialRecoveryError::Doublewrite)?;
+    Ok(InitialRecoveryExpectation {
+        plan: kind.version(),
+        filemap: plan.selected,
+        doublewrite,
+        stage_digest,
+    })
+}
+
+/// Conservative source-owned nested join; caller page storage is separate.
+pub(in crate::storage) fn recovery_preparation_bytes<W: WriterNamespace>() -> usize {
+    use std::mem::size_of;
+    let bootstrap =
+        source_budget::<W>().prepare_nested + size_of::<[AllocationEntry; EXTENT_PAGES]>() + 1032;
+    bootstrap.max(doublewrite_install::recovery_preparation_bytes() + size_of::<BootstrapPlan>())
+        + 2 * size_of::<InitialRecoveryExpectation>()
+}
+
+pub(in crate::storage) fn recovery_reader_bytes<W: WriterNamespace>() -> usize {
+    source_budget::<W>().readback_nested
+}
 impl BootstrapPlan {
     fn prepare(profile: Profile, scratch: &mut [[u8; PAGE_BYTES]; 3]) -> Result<Self> {
         Self::prepare_for_kind(profile, scratch, BootstrapPlanKind::AllocatorOnly)

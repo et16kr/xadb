@@ -51,6 +51,10 @@ pub(in crate::storage) use bootstrap::{
     CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
 };
 pub(in crate::storage) use bootstrap::{DirtyInstallPermit, FlushFinalizePermit};
+pub(in crate::storage) use bootstrap::{
+    InitialRecoveryError, inspect_initial_bootstrap, recovery_preparation_bytes,
+    recovery_reader_bytes,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {

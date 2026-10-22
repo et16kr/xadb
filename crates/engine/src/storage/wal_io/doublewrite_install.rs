@@ -202,6 +202,18 @@ impl InstallPlan {
         bootstrap: &BootstrapPlan,
         workspace: &mut [u8; WORKSPACE_BYTES],
     ) -> std::result::Result<Self, Cause> {
+        Self::prepare_inner(bootstrap, workspace)
+    }
+
+    // The pure preparation uses one page, independently of the installation's
+    // larger zero-stream workspace. Keep one encoder for both consumers.
+    fn prepare_inner(
+        bootstrap: &BootstrapPlan,
+        workspace: &mut [u8],
+    ) -> std::result::Result<Self, Cause> {
+        if workspace.len() < PAGE_BYTES {
+            return Err(Cause::Capacity);
+        }
         if MAX_OWNED_BYTES > bootstrap.profile.owned_bytes() || PROTECTED_BYTES > 1 << 30 {
             return Err(Cause::Capacity);
         }
@@ -289,6 +301,32 @@ impl InstallPlan {
         out[PAGE_BYTES - 32..].copy_from_slice(&digest);
         Ok(out)
     }
+}
+
+pub(super) fn initial_recovery_expectation(
+    bootstrap: &BootstrapPlan,
+    workspace: &mut [u8; PAGE_BYTES],
+) -> std::result::Result<(SelectedControl, [u8; 32]), Cause> {
+    let plan = InstallPlan::prepare_inner(bootstrap, workspace)?;
+    Ok((plan.selected, plan.descriptor_digest))
+}
+
+pub(super) fn recovery_preparation_bytes() -> usize {
+    use std::mem::size_of;
+    use xadb_foundation::codec::ContentHasher;
+    // Enclosing/returned plan, encode_empty header and inventory iterator,
+    // selector reference bytes, descriptor qword table, codec result carriers,
+    // and the same pinned SHA-256 call allowance as bootstrap source_budget.
+    4 * size_of::<InstallPlan>()
+        + 8 * size_of::<Profile>()
+        + 8 * size_of::<SelectedControl>()
+        + 8 * size_of::<ControlRef>()
+        + 4 * size_of::<ControlHeader>()
+        + 4 * size_of::<std::result::Result<InstallPlan, Cause>>()
+        + 4 * size_of::<ContentHasher>()
+        + 1536 // Pinned SHA implementation call closure.
+        + 128 + 64 + 512 // Fixed header/ref/descriptor field tables.
+        + 1024 // Bounded refs, iterators, scalar and enum-tag carriers.
 }
 
 fn encode_empty(profile: Profile, output: &mut [u8]) -> std::result::Result<&[u8], Cause> {

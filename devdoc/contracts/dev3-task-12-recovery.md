@@ -65,6 +65,8 @@ flowchart TD
 
 ## 4. 3.12.1 — LEASE·PREFLIGHT/SELECT·BOOT_RESERVE
 
+[첫 3.12.1.a 소유 계약](dev3-recovery-select.md)은 초기 control·header-only WAL을 읽기 전용으로 선택하는 제한 단위를 구체화한다. BOOT_RESERVE·nonempty tag2 prefix·Pending 복구·전체3.12.1–4 인수와 구별하며, 실제 상태는 [구현 기록](../implementation/dev3-implementation.md#recovery-select)을 따른다.
+
 1. writer lease를 획득하고 fixed root profile의 exact length/format/checksum·지원 profile·namespace를 검증한다. 이 이후 선택 대상의 expected identity를 전달한다.
 2. FILEMAP/DWB와 명시 current/previous·base continuation을 검산한다. 손상 selector 대신 임의 큰 파일 번호·raw DWB·directory 탐색으로 대안을 만들지 않는다. checkpoint fallback은 3.13의 완전 closure 조건을 따른다.
 3. 생성 때 선택된 recovery profile의 실제 자원과 이미 영속화된 작업 요구를 수용할 수 있는지 확인한다. 신규 foreground admission 축소와 복구 요구량은 별개다.

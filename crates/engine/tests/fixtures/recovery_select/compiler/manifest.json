@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "unit": "D3-RECOVERY-SELECT-001",
+  "status": "INPUT_ONLY_NOT_RUN",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_error_diagnostics_are_failures": true,
+  "compiler_budget_seconds": 60,
+  "semantic_case_count": 5,
+  "infrastructure_control_count": 1,
+  "negative_returncode": 101,
+  "probe_relative_path": "crates/engine/src/storage/recovery_select_borrow_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+  "cases": [
+    {
+      "name": "baseline",
+      "semantic_id": null,
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "reason": "baseline",
+      "probe_relative_path": "crates/engine/src/storage/recovery_select_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs"
+    },
+    {
+      "name": "positive",
+      "semantic_id": "BC00",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "reason": "positive",
+      "probe_relative_path": "crates/engine/src/storage/recovery_select_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 664,
+      "sha256": "9173dafcdbe5b973add515da68be55f6693e87721c9c7fb2d2a30c2b315aa506"
+    },
+    {
+      "name": "owner_move",
+      "semantic_id": "BC01",
+      "expected_code": "E0382",
+      "primary_line": 6,
+      "primary_spans": "one",
+      "reason": "owner move",
+      "probe_relative_path": "crates/engine/src/storage/recovery_select_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 275,
+      "sha256": "c761dca8c86bd7988399744a1c3e30348164ffcaacf6b79711d1ee9ebb719bc3"
+    },
+    {
+      "name": "observation_borrow",
+      "semantic_id": "BC02",
+      "expected_code": "E0505",
+      "primary_line": 6,
+      "primary_spans": "one",
+      "reason": "observation borrow",
+      "probe_relative_path": "crates/engine/src/storage/recovery_select_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 310,
+      "sha256": "edff8d16f5b42f7c0221eea33faa671127dd3ba534b521be7a18412975841d72"
+    },
+    {
+      "name": "private_fields",
+      "semantic_id": "BC03",
+      "expected_code": "E0451",
+      "primary_line": 5,
+      "primary_spans": "all_on_line",
+      "reason": "private fields",
+      "probe_relative_path": "crates/engine/src/storage/recovery_select_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 329,
+      "sha256": "3fce071305fb95f1ef39cb380d2a0d6628a59662264826556a9026e62fb739e3"
+    },
+    {
+      "name": "into_writer_missing",
+      "semantic_id": "BC04",
+      "expected_code": "E0599",
+      "primary_line": 5,
+      "primary_spans": "one",
+      "reason": "into writer missing",
+      "probe_relative_path": "crates/engine/src/storage/recovery_select_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 250,
+      "sha256": "253cb3e0b5c0433bb8c0e6efb7268aeb4f6b0bdb4d3b1d89ffc8c8a2d38cb1f9"
+    }
+  ]
+}

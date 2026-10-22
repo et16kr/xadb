@@ -311,7 +311,7 @@ DEV3 재개 시 기본 배치는 **총괄·통합 1명 + 작업 담당 2명 + �
 | 검토·검증 | `/root/direction_independent_review`가 시작 사본의 해시와 변경15개 Markdown·원 owner 계약을 대조하여 최종 D2 PASS. 초안 P2의 우선순위/공급 의존성 혼동을 수정하고 공통 terminal→최소 catalog→table→행 거래 공급을 명시했다. 통합 차단 잔여 지적 없음, `/root` 반영 확인. `git diff --check` PASS. 제품 코드·시험·compiler/Clippy·문서 자동 검사·commit/push 없음. 기존 실행 결과와 당시 결정의 identity 보존; 검토 PASS는 문서·설계 경계에 한정 |
 | 재검토 조건 | 최소 table 공급의 순환, 제한 복구의 일반 READY 오인, 정상 admitted 복구/고정 peak 반례, 일반 pool의 중복 권한,64GiB 전체 회계 불성립, 계측에서 드러난 병목. 해당 owner 계약을 조정하고 새/변경 코드만 검증 |
 
-다음 개발 단위는3.12.1.a의 정확 supported closure·오류·예약·검산 결과 수명을 동결하는 것이다. 그 leaf 하나의 성공과 첫 번째 통합 목표인3.12.1–4의 복원·검산 완료를 따로 보고한다. 설계 분할·문서 수·시험 수로 진행률을 올리지 않으며 공급 기능·미공급 소비자·남은 인수로 보고한다.
+첫3.12.1.a의 [초기 입력 선택 계약](../contracts/dev3-recovery-select.md)과 [제한 인수](../implementation/dev3-implementation.md#recovery-select)는 header-only WAL·초기 Empty DWB의 닫힌 선택을 공급했다. 다음은 실제 BOOT_RESERVE와 현재 producer prefix의 지원 의미를 확정해 후속 장벽에 연결하는 단위다. 그 leaf 하나의 성공과 첫 번째 통합 목표인3.12.1–4의 복원·검산 완료를 따로 보고한다. 설계 분할·문서 수·시험 수로 진행률을 올리지 않으며 공급 기능·미공급 소비자·남은 인수로 보고한다.
 
 우선순위는 공급 의존성과 구별한다. 일반 pool의 실제 입력은 INIT·WAL/flush·필요한 guard이며 제한 복구 완료를 소비 API의 선행으로 추가하지 않는다. 조기3.12 공급은 현재 S2 쓰기 경로의 복구 연결이고 XADB-022/S3 전체 완료가 아니다. 첫 행의 table 공급은3.11.1 공통 terminal/공개 primitive→최소 catalog create의 commit→영속 table handle→첫 행 거래 인수로 연결하며 기존 task 완료 DAG와 실제 선행 수신 의무를 유지한다.
 

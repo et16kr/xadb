@@ -142,7 +142,9 @@
         "read_buffer_contract_ref": "dev3-read-buffer.md",
         "wal_io_contract_ref": "dev3-wal-io.md",
         "storage_session_contract_ref": "dev3-storage-session.md",
-        "doublewrite_install_contract_ref": "dev3-doublewrite-install.md"
+        "doublewrite_install_contract_ref": "dev3-doublewrite-install.md",
+        "recovery_select_contract_ref": "dev3-recovery-select.md",
+        "recovery_select_evidence_ref": "dev3-recovery-select-20261022.json"
       }
     },
     {

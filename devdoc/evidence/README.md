@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-22 [DEV3 초기 복구 입력 선택 인수](dev3-recovery-select-20261022.md) · [source별 실행 색인](dev3-recovery-select-20261022.json): 필수170·변경 helper4·native8·compiler5+control1·checker15와 원 FAIL 보존. 일반 recovery/READY·S5와 구별한다.
+
 2026-10-22 [DEV3 진행 방향·설계 점검](dev3-direction-review-20261022.md) — Status home flush 이후의 정적 검토와 [후속 반영 추적](dev3-direction-review-20261022.md#adoption-followup). 제한 복구·일반 buffer·첫 행 거래·64GiB/계측 준비의 소유 계약을 연결하며 최초 리뷰와 후속 D2 상태·남은 구현을 구별한다.
 
 2026-10-22 [DEV3 Status home flush](dev3-status-home-flush-20261022.md) · [source별 실행 색인](dev3-status-home-flush-20261022.json): 필수43·compiler6·native3와 실제77 layout를 확인했다. 원 FAIL/완료 prefix를 보존하며 최종 독립 D1 수용, S5 추가588·전체 DEV3 미완료다.

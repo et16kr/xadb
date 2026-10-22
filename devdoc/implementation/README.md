@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-22 [DEV3 첫 복구 입력 선택](dev3-implementation.md#recovery-select): 초기 control·exclusive lease·header-only WAL의 [닫힌 선택](../contracts/dev3-recovery-select.md)을 구현하고 [source별 선택 인수](../evidence/dev3-recovery-select-20261022.md)와 독립 D1을 수용했다. BOOT_RESERVE·nonempty 복원·일반 recovery/READY·S5는 미완료다. 아래 종료·인계는 당시 기록으로 보존한다.
+
 2026-10-22 [DEV3 작은 단위 종료·인계](dev3-implementation.md#paused-after-status-home-flush): [Status home flush](dev3-implementation.md#status-home-flush)의 제한 인수와 commit을 마쳤다. 복구 진입은 사전 열람 상태로 보류하며 새 하위 작업을 시작하지 않는다. 전체 DEV3·최종 S5는 미완료다.
 
 2026-10-22 [DEV3 폐쇄 두-frame Status INIT](dev3-implementation.md#status-init): 실제 reserve→두 RAM image 공개→동일 WAL requirement의 durable 확인과 두-pin reader를 연결했다. 필수93·shared1·compiler13·native3의 source별 결과와 원 FAIL을 보존한다. 제한 단위의 최종 독립 D1을 수용했으며 Status home flush·일반 recovery·전체 DEV3는 미완료다.
