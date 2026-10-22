@@ -71,7 +71,7 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 
 - [DEV5 — 서버 소스 조사와 독립 검토 기록](dev5-source-research.md) — PostgreSQL·MariaDB·CUBRID 실제 revision/열람 근거와 DEV5-REVIEW-002 대기·수명 반례/수정; 제품 실행 증거 아님
 - [DEV5 — Oracle·로컬 DBMS 비교와 후속 설계 검토](dev5-oracle-source-review.md) — Oracle 19c·로컬3개 DBMS의 실제 열람, cleanup 권한·idle 경계와 002 수신 검토; 제품 실행 증거 아님
-- [DEV5 작업 분배 재검토와 개선 근거](dev5-work-breakdown-review-20261022.md) — 최초44→64개 하위 단위, 하위 공급·outcome/전송 선행·검증 분량 보완과 별도 검토; 제품 실행 없음
+- [DEV5 작업 분배 재검토와 개선 근거](dev5-work-breakdown-review-20261022.md) — 최초44→64개 하위 단위와 후속003의 close/fetch 순환·일반 거래/cleanup 조기 인수·실행 분량 보완, ARIES·Oracle·로컬5개 소스 및 별도 검토; 제품 실행 없음
 - [DEV5 작업 분류 — ARIES·Oracle·로컬 DBMS 조사](dev5-work-breakdown-research-20261022.md) — 2026-10-22 원문·로컬5checkout/8파일의 revision·hash·선택 범위와16개 분류의 근거; 제품 실행 증거 아님
 
 - [DEV3·DEV4 아키텍처 비교와 설계 보완](dev3-dev4-architecture-review.md) — 실제 source revision·교차 상태/자원/batch 보완과 독립 검토; 모델·제품 실행 증거 아님

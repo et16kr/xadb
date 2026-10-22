@@ -78,3 +78,56 @@ CUBRID의 commit/abort request 속성이 다르고 handler는 내부 거래 상�
 수정한 것은 작업 공급·배정·완료 경계다. 실제 signature/byte layout·자원 peak·모델 공간·실행 recipe 동결과 필요한 구현/검증은 여전히 미완료다. 기존 evidence의 source·실행 결과와44개 당시 조사/검토 identity를 보존한다.
 
 독립 검토에서 발견한3건은 다음과 같이 해소했다. D5-S02의 key/UNIQUE 대기는3.07.2, offline build는3.07.3으로 바로잡았다. D5-S06은 platform의 독립 supervisor 공급과5.14.3의 종료 통합을 분리하여 자기 선행을 제거했다. PF11은 P01–03의 paired 비용/CI와 P04의5초 startup 제외60초·매1초 진행 인수를 구분했다. 추가로 outcome 표현이 모든 성공에 commit receipt를 요구하지 않도록 한정하고 실제 commit 소비의 선행 및 좁은 startup/fence의 조기 공급을 명시했다. 검토자는 자동 검사·제품 시험을 실행하지 않았으며 계획 채택을 실제 API 가능성·성능 최적성 인증으로 확대하지 않았다.
+
+<a id="followup-003"></a>
+## 5. 003 후속 검토 — 내부 인계·조기 실제 연결·분량
+
+2026-10-22 · **D5-WORK-BREAKDOWN-003 D2 ACCEPTED / 문서 수정 / 제품·B3·PF11 NOT_RUN**
+
+같은 사용자 요청으로 현재64개 작업을 다시 검토했다. 앞의002 당시 관측·검토 기록은 그대로 보존한다. **16개 책임과64개 ID는 적절하지만, 완료 조건까지 따라가면 fetch/close의 숨은 순환과 큰 통합 작업의 불필요한 선행이 남는다.** 따라서 숫자를 더 늘리거나 기능을 이동하는 대신7개 큰 항목에15개 내부 인계·완료 단위를 두었다. 독립 검토와 계약 대조에 기반한 계획 판단이며 구현 가능성·성능의 절대 최적성을 측정한 결과는 아니다.
+
+| 발견·반례 | 수정한 분배·우선순위 | 유지하는 의무 |
+| --- | --- | --- |
+| 5.09.3은 EOF/재실행 인수를 포함하는데 fetch5.11.1이5.09.3 전체를 선행으로 요구. 완료 조건까지 해석하면 순환하거나 mock EOF로 닫게 됨 | 5.09.3a close/invalidation 공급→5.11.1 실제 fetch→5.09.3b EOF/close/reexecute | stale·old catalog·metadata·pin/plan/bind와10,000회 확대. 좁은 공급으로 부모 작업 전체 완료 금지 |
+| 일반 DML/COMMIT terminal 송신5.11.3이 fetch 전체를 기다려 조기 C05/06가 literal reply에 머무를 수 있음 | 5.11.3a 일반 terminal과b fetch batch 분리;5.15.8에 실제a 공급 명시.5.15.9는 실제 DDL outcome 연결 추가 | durable outcome·partial send·CancelAck·외부 완결 ACK 구별, T/C 전체 분모 |
+| C08의 cancel/FIN·CLR/recovery도 모두 shutdown5.14.3 뒤. 취소·cleanup의 선행이 다시 fetch/DDL/revoke/모든 timer 전체에 묶임 | 5.12.2a 일반/b result,5.13.2a close/FIN/b 확장 수명,5.15.10a 일반 재장애/b trigger·종료로 분리. 종료 subset만5.14.3 수신 | 같은 cleanup owner·미완료 undo 성공 위장 금지·fence·grace 실패·재복구. 확장 trigger도 해당 실제 공급 직후 인수 |
+| 고정4-worker holder 진행이 DDL drain 통합까지 지연되고 서버 DDL adapter의 직접 선행도 불명확 | 5.08.3a 일반 COMMIT/ROLLBACK/close를 조기 인수. b는5.10.2 실제 DDL adapter와 D5-S02 drain 공급을 함께 수신 | timeout/worker 증설로 진행 결함 은폐 금지. 실제4-worker와 M02의 역할 구분 |
+| 권한 통합5.05.2 전체가 DDL/handle을 기다림. 이를 cleanup 선행으로 쓰면 result/idle도 DDL 뒤로 돌아감 | a 일반 거래 revoke/b DDL/c prepared-result로 구분. cleanup은a/c 수신, DDL 권한 경로만b 추가 | Oracle와 다른 XADB COMMIT 권한 재확인·자기 cleanup 예외·prior/ddl 두 outcome 유지 |
+| PF11 비교1셀30분만으로 전체 분량을 추정하면 workload/계측 조합·준비/분석·재현 비용이 빠짐 | F04/F05별 실행 분모·도구/fixture·실행·분석 대장. 기본14 workload에 비교2종을 택하면14시간이라는 조건부 산술 예시 | 기존 profile/수치·실행 전 동결·P04 구분. 예시로 새 조합 실행을 강제하거나 무변경 완료 시험을 반복하지 않음 |
+
+[첫 실제 연결](../plans/dev5-work-breakdown.md#first-integration)은 인증된 direct DML·COMMIT/ROLLBACK의 socket 결과와 취소/FIN undo·holder 진행·관련 reopen까지 묶는다. 준비→작은 실제 연결→prepared/fetch와 DDL 확장→정식 lifecycle→잔여 확대/PF11 순서이며, SQL/engine/transport 공급과 정식 Serving/B3 gate는 그대로다. 공통 상태 담당과 독립 oracle 담당의 책임은 분리하되 새로운 production 상태 기계를 복제하지 않는다.
+
+### 이번에 직접 다시 읽은 외부 원문
+
+| 자료·버전·열람 부분 | 이번 판단에 사용한 내용·한계 |
+| --- | --- |
+| [ARIES 원 논문](https://cs.stanford.edu/people/chrismre/cs345/rl/aries.pdf),1992, §5.2·§6.3·Fig.13 주변 | 부분 rollback 이후 진행과 restart의 CLR/남은 undo를 구별한다. cleanup 재장애 검증을 서버 종료 구현과 독립 배정할 근거로 사용. ARIES 알고리즘·선택적 restart·wire protocol을 새로 도입하지 않음 |
+| [Oracle19c COMMIT](https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/COMMIT.html), Purpose·Prerequisites·WAIT | DDL 전후 commit·영속화 뒤 응답 유실을 대조하여 일반 terminal/DDL 두 결과/외부 ACK를 별도 인수. Oracle 일반 COMMIT의 권한 규칙과 XADB의 선택을 구별 |
+| [Oracle19c Transactions](https://docs.oracle.com/en/database/oracle/oracle-database/19/cncpt/transactions.html), Statement-Level Atomicity·Transaction Guard 개요 | statement 성공/commit과 실패 문장의 rollback 범위를 대조. 첫 실제 연결에 S1 성공/S2 실패를 포함. 결과 조회·자동 replay는 별도 기능이므로 추가하지 않음 |
+| [Oracle19c JDBC Troubleshooting](https://docs.oracle.com/en/database/oracle/oracle-database/19/jjdbc/JDBC-troubleshooting.html), E.1.2·E.1.4 | statement/result/connection 명시 정리와 cancel 신호·실제 실행 결과의 구분. close 공급·EOF 통합과 일반/result 취소를 나누는 근거. timeout을 rollback 완료 보장으로 해석하지 않음 |
+
+### 이번 로컬 소스 범위와 identity
+
+위3절의 다섯 checkout에서 origin·HEAD·작업 트리를 다시 확인했다. PostgreSQL `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851`, MariaDB `327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4`, CUBRID `a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5`, MySQL `3b99be40f8a31d9396cad10accfd3ba51647d613`, SQLite `43a48f77585a88940c727f33682151418f544059`이며 위 origin과 일치하고 모두 clean이었다. 아래는 이번 직접 열람한5개 파일이며 이전9개 전부의 재열람으로 주장하지 않는다.
+
+| checkout·파일·읽은 줄·관측 | SHA-256 |
+| --- | --- |
+| PostgreSQL `src/backend/tcop/postgres.c`3530–3675: connection loss·query cancel·idle/transaction timeout의 처리 분리 | `86182ec057c0482d38b9df5d555d4a0a50b003d4051ff2a60914ad9ffa67720b` |
+| MariaDB `sql/threadpool_generic.cc`612–687,1275–1327: wait의 active-thread 회계와 wake/create·stall 대처 | `4f37bdd44fedd6c8c9284e81c44c5566fc6da87c3522a5688a3d05fb7e8f9632` |
+| CUBRID `src/communication/network_interface_sr.cpp`3369–3442: 내부 commit/abort state를 받아 pack한 뒤 송신 | `755f3ea598daa9f77deeb14f7df690489fe3ca8cce07068307a9025871bc0f2f` |
+| MySQL `sql/sql_prepare.cc`1810–1915,2000–2065: parameter 설정 뒤 execute, cursor/parameter reset과 statement deallocate 분리 | `d9e60c6f7d95b61f31513044c73ecdf3345539c8d7f8975a4a10e009959dbf52` |
+| SQLite `src/vdbeapi.c`95–158: finalize의 reset/delete와 reset의 reset/rewind | `144068f8686000e049168e665773bb5e6769e3ecc5a7a6e455e8418d53db91a5` |
+
+MariaDB의 동적 worker 보충을 XADB 고정4-worker의 해법으로 복사하지 않고 실제 park/resume·holder 인수를 앞당겼다. CUBRID의 결과/송신 구분은 작은 일반 terminal 연결의 근거로, MySQL/SQLite의 수명 구분은 close primitive와 실제 EOF/재실행 인수 분리의 근거로 사용했다. PostgreSQL의 오류 이후 거래 의미·MySQL 무응답 close·SQLite pointer API는 XADB 계약에 이식하지 않는다. 다른5개 로컬 DBMS는 이번 DEV5 서버 인계 질문에 대한 직접 열람 대상이 아니며 전체10개 조사로 표현하지 않는다.
+
+### 작업·독립 검토·실행 기록
+
+| 항목 | 이번003 기록 |
+| --- | --- |
+| 권한·담당 | 사용자 DEV5 분배 검증·개선 즉시 반영·1회 commit 요청. 작업/계약/통합 `/root`; DP01에 따른 별도 AI 검토 `/root/dev5_dependency_review` |
+| 기준·소유 | 수정 전 HEAD `49bb781098c073323a2fe634f527e637cddcfcd4`, 기준 사본·dirty identity `/tmp/xadb-dev5-review-r3-a_1upmzk`. DEV5 계획/상위 안내·이 후속 조사, 공유 README의 DEV5 문장·단계 JSON의003 참조만 변경 |
+| 동시 작업 | DEV3 제품/fixture/검증 도구·DEV4/6/7 문서 및 공용 색인의 변경을 관측. 최신본의 좁은 DEV5 수정만 반영하며 이 작업의 commit에 무관한 변경을 포함하지 않음. 기존 문서 ID/경로는 유지하여 documents.json 등록 추가 없음 |
+| 독립 검토 | `/root/dev5_dependency_review`가 최초64개·owner·직접/암묵 선행과 수정9개 파일의 DEV5 범위를 독립 대조. close/fetch 순환·일반 송신/취소/cleanup·holder 선행을 보완하고, 권한a/c·DDL만b 수신과 종료 경로만5.14.3 선행을 재확인.7개 부모/15개 내부 단위·F/T/C/M/P·Q1/C1/Serving/B3·조건부14시간 예산과 ARIES/Oracle 원문·로컬5개 지정 파일/hash를 직접 확인. 채택 가능·잔여 필수 P1/P2 없음; `/root` 계약/통합 담당 반영 확인 |
+| 실행 상태 | 공식 원문·로컬 소스 읽기와 문서 수정. 제품/모델/복구/성능 시험·fmt/Clippy·문서 자동 검사·push는 실행하지 않음. 제품 변경이 없는 이 요청에 DEV3 동시 변경의 테스트를 섞지 않음 |
+
+전체 시험 의무·미동결 F01–05·제품 미구현/B3 NOT_RUN은 유지한다. 계획 채택과 실제 구현 검증을 구별하며 기존 실행 결과·source identity를 소급 변경하지 않는다.

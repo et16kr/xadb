@@ -17,7 +17,7 @@
 - [DEV6 — 클라이언트 구현·검증 계획](dev6-implementation-plan.md) — DEV6 설계·REVIEW-002 인수 의무와 driver별 실행 선택·cell 분모·기계 시간 예산; CLIENT1 미실행
 
 - [DEV5 — 서버 구현·검증 계획](dev5-implementation-plan.md) — D5-F01–05·T01–14·worker 대기/만료·철회 후 정리 반례·crash cut·PF11 및 DEV6 이관
-- [DEV5 — 서버 개발 작업 분류와 공급·인수 계획](dev5-work-breakdown.md) — 16개 분류·64개 하위 작업, D5-S01–06 공급 배정·작업 성격/분량·조기 검증·기존 인수 대응; 제품 미구현·B3 NOT_RUN
+- [DEV5 — 서버 개발 작업 분류와 공급·인수 계획](dev5-work-breakdown.md) — 16개 분류·64개 하위 작업, D5-S01–06 공급 배정·7개 큰 항목의15개 내부 인계·close/fetch 선행·일반 거래 조기 검증·실행 분량·기존 인수 대응; 제품 미구현·B3 NOT_RUN
 
 - [architecture-decisions.json](architecture-decisions.json)
 - [하위 계층부터 개발하는 순서](bottom-up-development.md)

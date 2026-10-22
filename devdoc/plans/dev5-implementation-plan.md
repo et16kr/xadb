@@ -42,7 +42,9 @@ frame/UID/권한 callback의 실제 하위 계약이 부족하면 해당 소유�
 <a id="sequence"></a>
 ## 3. 구현 순서·책임 배치
 
-아래 I01–I06은 상위 묶음이다. 실제 착수·검토·인계는 [세부 작업의 직접 선행](dev5-work-breakdown.md#tasks)과 [공급 우선순위](dev5-work-breakdown.md#order)를 따른다. 특히 cleanup primitive·독립 oracle·자원 회계는 I05/I06까지 미루지 않는다. [D5-WORK-BREAKDOWN-002](dev5-work-breakdown.md#decision-002)는 공통 outcome5.10.4→일반 거래5.10.3→DDL5.10.2, fetch와 분리한 전송5.11.2, 독립 client/harness5.15.2/3의 조기 공급을 배정한다. 실제 기능별 crash5.15.8/9와 shutdown 재장애5.15.10, 모델·thread·fuzz·수명·PF11 도구/실행은 별도 완료로 기록하며 아래 모든 T/C/M/P 의무와 정식 Serving/B3 gate를 유지한다.
+아래 I01–I06은 상위 묶음이다. 실제 착수·검토·인계는 [세부 작업의 직접 선행](dev5-work-breakdown.md#tasks)과 [공급 우선순위](dev5-work-breakdown.md#order)를 따른다. 특히 cleanup primitive·독립 oracle·자원 회계는 I05/I06까지 미루지 않는다. [D5-WORK-BREAKDOWN-002](dev5-work-breakdown.md#decision-002)는 공통 outcome5.10.4→일반 거래5.10.3→DDL5.10.2, fetch와 분리한 전송5.11.2, 독립 client/harness5.15.2/3의 조기 공급을 배정한다. 실제 기능별 crash5.15.8/9와 cleanup 재장애5.15.10, 모델·thread·fuzz·수명·PF11 도구/실행은 별도 완료로 기록하며 아래 모든 T/C/M/P 의무와 정식 Serving/B3 gate를 유지한다.
+
+[003 내부 인계 보완](dev5-work-breakdown.md#handoff-units)은7개 큰 항목의15개 내부 완료 단위를 정의한다. close 공급5.09.3a→fetch5.11.1→EOF/재실행5.09.3b 순서로 숨은 순환을 제거한다. 일반 terminal5.11.3a→취소5.12.2a→CloseSession/FIN5.13.2a→CLR/재복구5.15.10a와 holder5.08.3a를 먼저 연결하며, 5.15.10b의 종료 재장애만 정식 shutdown을 기다린다. [첫 실제 연결](dev5-work-breakdown.md#first-integration)과 [실행 분량 대장](dev5-work-breakdown.md#execution-budget)을 사용하고, 부모 ID의 완료에는 모든 내부 단위를 요구한다.
 
 | 순서 | 작업·소유 책임 | 인수 후 다음 입력 |
 | --- | --- | --- |

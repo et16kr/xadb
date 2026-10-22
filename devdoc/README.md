@@ -18,7 +18,7 @@
 
 2026-10-22 [DEV4 18개 세부 작업 분류](plans/dev4-work-breakdown.md): 기존 D4-0–7을 하위 공급·통합 인수 단위로 나누고 선행·산출물·완료 조건·T01–14/V01–28/F01–05를 연결했다. [ARIES·Oracle19c·로컬 DBMS 조사](evidence/dev4-source-research.md#work-breakdown-20261022)를 참고했으며 제품 구현·시험 실행과 Q1 완료 승격은 없다.
 
-2026-10-22 [DEV5 16개 분류·64개 하위 작업](plans/dev5-work-breakdown.md): [ARIES·Oracle19c·로컬5개 DBMS 재검토](evidence/dev5-work-breakdown-review-20261022.md)를 반영해 최초44개를 세분화했다. D5-S01–06 하위 공급을 배정하고 공통 outcome·전송·독립 도구를 앞당기며 복구/모델/성능 인수를 분리한다. 제품 개발·시험 재개와 B3 완료 승격은 없다.
+2026-10-22 [DEV5 분배·인계 순서 후속 보완](plans/dev5-work-breakdown.md#decision-003):16개 분류·64개 ID를 유지하고7개 큰 항목을15개 내부 완료 단위로 나눴다. close→fetch→EOF 선행을 바로잡고 일반 terminal·취소/FIN·holder 진행·CLR 재장애를 조기에 연결한다. [ARIES·Oracle·로컬5개 후속 근거](evidence/dev5-work-breakdown-review-20261022.md#followup-003)와 실행 분량 대장을 반영하며 제품 개발·시험 재개와 B3 승격은 없다.
 
 2026-10-22 [DEV3 16개 설계의 ARIES·Oracle·로컬 DBMS 병렬 리뷰](evidence/dev3-task-design-review-20261022.md): flush/reuse·UNIQUE·DDL·undo/recovery·backup/restore의8개 설계 반례를 보완하고 구현 동반 인수에 연결했다. 제품 코드·테스트 실행과 DEV3 완료 승격은 없다.
 

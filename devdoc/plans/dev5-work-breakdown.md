@@ -1,10 +1,12 @@
 # DEV5 — 서버 개발 작업 분류와 공급·인수 계획
 
-2026-10-22 · **D5-WORK-BREAKDOWN-002 D2 ACCEPTED / 16개 분류·64개 하위 작업 / 제품·B3·PF11 NOT_RUN**
+2026-10-22 · **D5-WORK-BREAKDOWN-003 D2 ACCEPTED / 16개 분류·64개 하위 작업의 내부 인계 보완 / 제품·B3·PF11 NOT_RUN**
 
 [서버 소유 계약](../contracts/dev5-server-design.md) · [기존 구현·검증 계획](dev5-implementation-plan.md) · [ARIES·Oracle·로컬 DBMS 조사](../evidence/dev5-work-breakdown-research-20261022.md) · [DEV3 분해 방식](dev3-implementation-plan.md#remaining-work) · [완료 정본](stage-completion.json)
 
 DEV3처럼 기능의 위치를 찾는 대분류와 실제 개발·검토·인계하는 하위 작업을 구분한다. 기존 D5-I01–I06의 큰 묶음을 5.01–5.16, 하위 64개 작업으로 나눈다. 최초 44개 작업의 공급 경계·분량을 재검토하여 20개를 추가하고 일부 기존 ID의 범위를 좁혔다. [변경 대응표](#revision-map)가 이전 ID와 현재 완료 범위를 연결한다. 번호는 실행 순서·진행률이 아니며 XADB-012/033·DEV5/B3의 범위와 DEV4/COMM 선행을 바꾸지 않는다. 각 행은 계획된 산출물이지 존재하는 API·runner·명령이 아니다. 개별 API·byte layout·모델 공간·자원 peak는 D5-F01–F05에서 해당 구현 전에 동결한다.
+
+[003 후속 검토](#decision-003)는 64개 ID와 전체 의무를 유지하면서 큰 통합 항목의 [내부 인계 단위](#handoff-units)를 분리한다. 특히 close 공급→fetch→EOF 인수의 숨은 순환을 해소하고 일반 commit 응답·취소/FIN·CLR 재장애를 DDL/fetch/shutdown 전체보다 먼저 연결한다. 이전 001/002 조사·채택 기록은 당시 범위로 보존한다.
 
 이번 요청은 **분류 재검토·개선 반영·완료 후 1회 commit**이다. 제품 개발·시험을 재개하지 않는다. 아래 인수 항목은 모두 PLANNED_NOT_RUN이며 독립 설계 검토가 실행 PASS를 대신하지 않는다. DEV3 최종 S5의 전수 재실행 예외를 DEV5로 확대하지 않는다. 시험 선택은 [사용자 지시](../../AGENTS.md)와 [이 문서의 증거 수신 규칙](#verification)을 따른다.
 
@@ -65,7 +67,7 @@ D5-S02의 engine 등록과 D5-S03의 SQL 실행 소유 공급을 먼저 검토�
 <a id="tasks"></a>
 ## 3. 하위 개발 단위
 
-각 표의 선행은 **기능 구현에 필요한 최소 공급**이다. 실제 server 통합은 위 공통 gate를 추가로 만족해야 한다. 계약·fixture·오류 vector 준비는 해당 공급 전에도 가능하다. 동일 분류 안의 단위도 완료 경계를 구별한다.
+각 표의 선행은 **기능 구현에 필요한 최소 공급**이다. 실제 server 통합은 위 공통 gate를 추가로 만족해야 한다. 계약·fixture·오류 vector 준비는 해당 공급 전에도 가능하다. 동일 분류 안의 단위도 완료 경계를 구별한다. `a/b/c`를 붙인 ID는 아래 [내부 인계표](#handoff-units)의 좁은 공급을 가리키며, 접미사 없는 부모 ID의 완료에는 그 내부 단위 전부가 필요하다.
 
 <a id="task-01"></a>
 ### 5.01 공급 계약·개발 입력 — 2개
@@ -108,7 +110,7 @@ D5-S02의 engine 등록과 D5-S03의 SQL 실행 소유 공급을 먼저 검토�
 | ID·산출물 | 직접 선행 | 완료 조건·인수 경계 |
 | --- | --- | --- |
 | 5.05.1 class별 authorization adapter | 5.04.4, D5-S04, F02 | read/write/ddl/connect·COMMIT 사용 권한 재확인, snapshot 획득의 권한 선형화점, DDL precommit 전후 호출 위치. SQL prefix/client class를 믿지 않음. 자기 cleanup의 session/handle 소유와 일반 gate 예외를 고정 policy callback vector로 검증; reload 통합은5.05.2 |
-| 5.05.2 revoke·DDL·cleanup 통합 | 5.05.1, 5.04.3, 5.09.3, 5.10.2, 5.13.1 | prepare 뒤 revoke·fetch/Describe 검사·write 철회 후 COMMIT 거절/Active 유지. parser가 판정한 자기 ROLLBACK/close/cancel은 새 권한 없이 정리, 위조 cleanup/교차 token 거절. prior commit 뒤 ddl 거절은 두 outcome·reopen으로 확인. T04/07/10/12 |
+| 5.05.2 revoke·DDL·cleanup 통합 | [5.05.2a–c 경로별 선행](#handoff-units) | 일반 COMMIT 권한·DDL 두 outcome·prepared/fetch 철회를 별도 인수. 자기 cleanup·교차 token/위조 class 거절과 T04/07/10/12 전체 의무는 유지. DDL/fetch 미완료가 일반 거래 revoke 인수를 막지 않음 |
 
 <a id="task-06"></a>
 ### 5.06 세션·요청 정체성 — 2개
@@ -134,7 +136,7 @@ D5-S02의 engine 등록과 D5-S03의 SQL 실행 소유 공급을 먼저 검토�
 | --- | --- | --- |
 | 5.08.1 세션 직렬 배정·completion 반환 | 5.06.2, 5.07.2/3 | worker4·round-robin·세션 단일 실행 owner, completion 뒤 worker 반환. I/O owner는 SQL/disk/undo/join 금지, TX 공간 대기로 worker 점유 금지. 모델/mock과 실제 SQL 연결을 구별 |
 | 5.08.2 wait registration·runnable 인계 | 5.08.1, D5-S02의 wait 공급, F03 | 조건 검사/등록 원자화·unlock/cancel 경합·stale wake 격리, 고정 runnable slot에 generation별 한 번 인계. worker·상위 latch·부분 pin을 점유하지 않음. 공급 계층 primitive와 scheduler 인계를 좁게 검증; SQL continuation 실행은5.08.4 |
-| 5.08.3 holder·DDL drain·cleanup 진행 통합 | 5.08.4, 5.10.1/3, 5.13.1, D5-S02의 실제 DDL drain 공급 | A가 lock 보유·B–E가 대기한 실제4-worker에서 A의 COMMIT/ROLLBACK/close 진행. offline DDL drain/admission에도 적용. T08/12·M02, bounded model과 실제 thread 결과 분리. 일반 timeout으로 waiter를 제거해야만 holder가 진행하면 실패 |
+| 5.08.3 holder·DDL drain·cleanup 진행 통합 | [5.08.3a/b 경로별 선행](#handoff-units) | 실제4-worker의 holder COMMIT/ROLLBACK/close를 먼저, 서버 DDL drain/admission을 다음에 인수. T08/12·M02 전체 유지. bounded model과 실제 thread 결과 분리; 일반 timeout으로 waiter를 제거해야만 holder가 진행하면 실패 |
 | 5.08.4 SQL continuation 재개·취소 인계 | 5.08.2, D5-S03/05, F03 | 같은 generation/statement/deadline·기존 변경/예약을 유지해 한 worker만 재개/cleanup. latch·부분 pin·stack borrow 잔류 금지와 thread 이동 검증. SQL 처음부터 재실행·timeout 대체 금지. narrow 실제 SQL 공급 검증 뒤 holder·DDL 진행은5.08.3 |
 
 <a id="task-09"></a>
@@ -144,7 +146,7 @@ D5-S02의 engine 등록과 D5-S03의 SQL 실행 소유 공급을 먼저 검토�
 | --- | --- | --- |
 | 5.09.1 Prepare·Describe·handle 소유 | 5.02.2/3, 5.05.1, 5.08.1, 실제 DEV4 prepared 공급 | SELECT/DML prepare·typed hint/metadata, 권한·session·generation 검사, session64 statements/result1 한도. raw 주소·SQL 재파싱 우회 금지. T06, D6-W01 |
 | 5.09.2 BindAll 원자 교체 | 5.09.1, 5.03.2, 5.07.2, 실제 DEV4 bind 공급 | count/type/NULL/빈 text/binary·caller buffer 해제·큰 bind. old+new peak를 예약하고 실패 시 이전 binding 전부 보존. UTF-8 빈 값 정규화는 SQL에서 한 번. 실행/commit을 binding 완료와 합치지 않음. T02/06 |
-| 5.09.3 stale·close·재실행 수명 | 5.09.4, D5-S05의 invalidation/cleanup 공급 | DROP/recreate·index/schema epoch·권한 변경·old catalog, CloseStatement/CloseResult와 invalid metadata 의미 유지. EOF/close/reexecute 최소 반례와 pin/plan/bind 회계. 10,000회 확대 fixture는5.15.14와 함께 작성. T07; 새 schema 의미 도입 없음 |
+| 5.09.3 stale·close·재실행 수명 | [5.09.3a 공급→5.11.1→5.09.3b 인수](#handoff-units) | DROP/recreate·index/schema epoch·권한 변경·old catalog, CloseStatement/CloseResult·invalid metadata 의미 유지. 먼저 close/invalidation 공급을 검증하고 fetch 뒤 EOF/close/reexecute·pin/plan/bind를 인수. 10,000회 확대 fixture는5.15.14. T07; 새 schema 의미 없음 |
 | 5.09.4 prepared Execute·expected_result 연결 | 5.09.2, 5.08.4, 5.10.3/4, D5-S04, 실제 Q1 | prepared class의 expected_result를 거래 시작·첫 효과 전에 검사. literal/native와 direct 결과·outcome 대조, 문자열 치환 mutant 거절. binding 교체 성공과 실행 성공/commit 구별. commit 의미는5.10.3 공급을 함께 인수. T06/10 |
 
 <a id="task-10"></a>
@@ -162,9 +164,9 @@ D5-S02의 engine 등록과 D5-S03의 SQL 실행 소유 공급을 먼저 검토�
 
 | ID·산출물 | 직접 선행 | 완료 조건·인수 경계 |
 | --- | --- | --- |
-| 5.11.1 fetch·snapshot·operation context | 5.09.3/4, 5.06.2, 5.07.2, 5.08.4 | Execute(N)의 종료 context와 살아 있는 result snapshot 분리. Fetch(N+1)은 새 context·같은 snapshot, park는 원래 deadline 유지. 1..128 rows/canonical256 KiB·wire512 KiB·RowBufferTooSmall 위치 보존, EOF/미완료 close 구분. T06/07/09 |
+| 5.11.1 fetch·snapshot·operation context | 5.09.3a/4, 5.06.2, 5.07.2, 5.08.4 | Execute(N)의 종료 context와 살아 있는 result snapshot 분리. Fetch(N+1)은 새 context·같은 snapshot, park는 원래 deadline 유지. 1..128 rows/canonical256 KiB·wire512 KiB·RowBufferTooSmall 위치 보존, EOF/미완료 close 구분. T06/07/09;5.09.3b의 EOF 통합 완료를 선행으로 요구하지 않음 |
 | 5.11.2 owned reply·fragmentation·TX 기반 | 5.02.3, 5.06.2, 5.07.2/3, 5.12.1, 실제 C1 | 소유 bytes와 고정 terminal로 실제 socket의 부분 송신·backpressure·TX ticket 반환을 검증. output 대기로 worker를 점유하지 않고 Reply 조각 사이 CancelAck 삽입 금지. 전체 enqueue 뒤 ordinary admission, RX 분류 전 완료 ticket 회수. fetch 완성 없이 literal reply로 검증하며 SQL 성공 증거로 세지 않음. T02/05/08/09 |
-| 5.11.3 SQL 결과·fetch·CancelAck 전송 통합 | 5.11.1/2, 5.10.3, 5.12.1 | 실제 owned batch·terminal과 TX를 연결하고 slow peer/부분 송신 중 worker·pin·output credit을 검증. client는 terminal+자신의 CancelAck 완결 뒤 다음 요청. local flush≠외부 ACK. DDL 두 outcome 전송은5.10.2·5.15.9에서 추가 인수. T02/05/06/08/09 |
+| 5.11.3 SQL 결과·fetch·CancelAck 전송 통합 | [5.11.3a 일반 terminal / b fetch 선행](#handoff-units) | 실제 일반 DML/COMMIT terminal 전송을 먼저 인수하고 owned fetch batch를 추가. slow peer/부분 송신·worker/pin/output credit, terminal+CancelAck 완결 장벽을 각 경로에 적용. local flush≠외부 ACK. DDL 전송은5.10.2·5.15.9에서 추가. T02/05/06/08/09 |
 
 <a id="task-12"></a>
 ### 5.12 취소·deadline·수명 만료 — 6개
@@ -172,7 +174,7 @@ D5-S02의 engine 등록과 D5-S03의 SQL 실행 소유 공급을 먼저 검토�
 | ID·산출물 | 직접 선행 | 완료 조건·인수 경계 |
 | --- | --- | --- |
 | 5.12.1 generation 취소 신호·CancelAck | 5.02.2/3, 5.06.2, 5.07.3, 5.08.1 | 같은 인증 연결의 현재 요청만 신호, Requested/NotActive·동일 target 합치기·다른 target flood 거절. terminal/cancel 선형화·이전 ID가 다음 fetch에 영향0. T05/09·M01 |
-| 5.12.2 phase별 취소·disconnect 결과 | 5.12.1, 5.08.4, 5.10.3, 5.11.1, 5.13.1 | assembly/queued/running/parked/CommitAttempted/terminal/send별 기존 효과. statement undo와 전체 cleanup 구분, commit 시도 이후 결과 대기·확정 terminal 불변. DDL의 두 결과는5.10.2·5.15.9에서 추가 인수. 취소 신호만으로 abort 성공 금지. T09·C03/05/08 |
+| 5.12.2 phase별 취소·disconnect 결과 | [5.12.2a 일반 거래 / b fetch 선행](#handoff-units) | assembly/queued/running/parked/CommitAttempted/terminal/send별 효과와 statement undo/전체 cleanup 구분. 일반 거래를 먼저, result context를 후속 인수. commit 시도 뒤 결과 대기·확정 terminal 불변, 신호만으로 abort 성공 금지. DDL은5.10.2·5.15.9. T09·C03/05/08 |
 | 5.12.3 공통 clock·deadline 표현과 등록 | 5.01.2, 5.06.2, 공유 Clock 공급 | 공유 monotonic epoch, checked 시각 산술·역행/overflow 실패, request/transaction generation별 고정 timer slot과 해제 소유. fake Clock 경계 직전/동일/직후·late timer를 검증. 만료 효과는5.12.4–6/5.14.3에서 소비하며 이 기반이 실제 undo 완료를 요구하지 않음 |
 | 5.12.4 handshake·assembly·ordinary·output timer | 5.12.3, 5.07.3 | handshake5/assembly30/ordinary 기본30초·1..30,000ms/output10초를 각 시작·종료점에 연결. trickle/park 재개로 연장 없음. 기반은 가짜 소비자·실제 Clock adapter로, 해당 request/전송/cleanup 소비 연결은5.12.2·5.13.2와 검증. 시간 도달은 신호이며 undo/commit 완료 보장 아님. T02/03/09 |
 | 5.12.5 Ready·Active/result idle 종료 | 5.12.3, 5.12.2, 5.13.1 | Ready/terminal→완결 요청 worker 인계 사이만 session60/Active·result30초 적용. running/parked 제외·부분 byte/Cancel로 갱신 금지. 다음 호출 없이 Closing·전체 cleanup, 기존 terminal 보존. fake 경계와 실제 timer/포화 인수. T09/12 |
@@ -184,7 +186,7 @@ D5-S02의 engine 등록과 D5-S03의 SQL 실행 소유 공급을 먼저 검토�
 | ID·산출물 | 직접 선행 | 완료 조건·인수 경계 |
 | --- | --- | --- |
 | 5.13.1 cleanup 소유 인계 primitive | 5.07.3, 5.08.4, D5-S05의 실제 engine/SQL cleanup 공급 | result/statement/txn/continuation을 단일 cleanup owner에 인계, 예약 slot로 진행·완료 또는 recovery 인계 전 재사용 금지. Drop은 allocation/hidden commit/blocking join 없음. trigger별 실제 연결 전에 단독 실패·중복 인계 검증 |
-| 5.13.2 close·FIN·revoke·만료 cleanup 통합 | 5.13.1, 5.05.2, 5.09.3, 5.10.3, 5.11.3, 5.12.2/4/5/6 | 자기 권한 철회 후 정리·새 업무 거절, output 포화에서도 전체 undo·기존 terminal 보존. 미완료 undo를 정상 ABORTED/slot 반환으로 표시하지 않음. 반복 disconnect와32 slot·T04/08/09/12·C08 |
+| 5.13.2 close·FIN·revoke·만료 cleanup 통합 | [5.13.2a close/FIN / b 확장 수명 선행](#handoff-units) | 일반 거래 CloseSession/FIN의 전체 undo를 먼저 연결하고 revoke·result·idle·거래 수명 trigger를 추가. output 포화·기존 terminal 보존·32 slot 회계·미완료 undo의 ABORTED/반환 금지. T04/08/09/12·C08 전체 의무 유지 |
 | 5.13.3 engine fence·panic·복구 인계 | 5.13.1, 5.10.3, engine 실패 계약 | durable I/O UNKNOWN/poison을 모든 세션 admission에 반영, 새 연결로 우회 금지. client만 UNKNOWN인 응답 유실과 구별. recovery 소유 전 lease/undo 강제 해제 금지. T09/12/13의 fault 경로 |
 
 <a id="task-14"></a>
@@ -208,9 +210,9 @@ D5-S02의 engine 등록과 D5-S03의 SQL 실행 소유 공급을 먼저 검토�
 | 5.15.5 독립 SQL·outcome 기대값 | 5.01.2, F01/F04의 해당 의미 | literal/native 기대 rows/index/catalog·state/effect/certainty, prior/ddl 두 identity와 request/query/commit 구별. production SQL/replay/상태 전이를 정답 생성에 공유하지 않음. 부분 bind·권한/cleanup 우회·오류 outcome mutant를 각 기능과 함께 공급. T04/06/07/09/10/11/13 |
 | 5.15.6 외부 ACK history·receipt·부정 판정 | 5.01.2, F04의 history 계약 | 독립 durable history/도달 receipt·source/binary/fixture 소유와 손상/빈/유실 검출 도구. 완결 client 수신만 ACK이며 server 로그/local flush 사용 mutant·wrong binary·누락 cut 거절. 실제 candidate 연결은5.15.2/3; 관측되지 않은 ACK를 합성하지 않음 |
 | 5.15.7 정식 서버 protocol 인수 | 5.15.2/5/6, 5.14.2, 실제 XADB-032 | 실제 Unix server로 T03–11/13의 해당 요청·결과·ACK 수신을 인수. 독립 client는 DEV6 driver 완성을 기다리지 않음. 좁은 fixture 검증의 receipt를 정식 Serving 증거로 바꾸지 않음 |
-| 5.15.8 일반 요청·commit·전송 crash 인수 | 5.15.3, 5.10.3, 5.11.2, 5.13.3, 5.14.1; 각 cut의 실제 소비 경로 | C01–06 각 하위 cut의 receipt 뒤 장애 주입. 그때까지 실제 수신한 history만 사용; C06만 대상 완결 COMMITTED/ABORTED ACK 후 kill. ACK commit 보존·확정 abort 비가시·UNKNOWN 원자성, 두 번 reopen. 정식 Serving/shutdown 완성 전에는 테스트 전용 좁은 조립으로 기록하고5.15.7·5.16.3에서 실제 통합 의무를 별도 수신 |
-| 5.15.9 DDL 두 거래·응답 유실 crash 인수 | 5.15.3, 5.10.2, 5.05.2, 5.11.2, 5.13.3, 5.14.1 | C07 precommit durable→native DDL 전, DDL durable→reply 전을 각각 도달·reopen. prior만/둘 모두 보존과 권한 거절 뒤 outcome·두 identity 확인. ACK 전 cut에 대상 ACK를 필수 선행으로 붙이지 않음. 일반 거래 C01–06 전체 완료를 이 사례의 선행으로 요구하지 않음 |
-| 5.15.10 cleanup·CLR·shutdown·재복구 인수 | 5.15.3, 5.13.2/3, 5.14.3, 실제 engine 재장애 hook | C08의 cancel/disconnect/종료 cleanup·CLR·recovery redo/undo 중 재장애. 완료 cleanup만 ABORTED, 나머지 RecoveryRequired/Fenced, 반복 복구 뒤 원자성·외부 ACK 보존. timeout/강제 종료를 정상 graceful 성공으로 세지 않음 |
+| 5.15.8 일반 요청·commit·전송 crash 인수 | 5.15.3, 5.10.3, 5.11.3a, 5.13.3, 5.14.1; 각 cut의 실제 소비 경로 | C01–06 각 하위 cut의 receipt 뒤 장애 주입. 그때까지 실제 수신한 history만 사용; C06만 대상 완결 COMMITTED/ABORTED ACK 후 kill. ACK commit 보존·확정 abort 비가시·UNKNOWN 원자성, 두 번 reopen. literal reply만인5.11.2로 SQL 송신 cut를 닫지 않음. 정식 Serving 전 좁은 조립과5.15.7의 실제 통합을 구분 |
+| 5.15.9 DDL 두 거래·응답 유실 crash 인수 | 5.15.3, 5.10.2, 5.05.2b, 5.11.3a와 실제 DDL outcome 연결, 5.13.3, 5.14.1 | C07 precommit durable→native DDL 전, DDL durable→reply 전을 각각 도달·reopen. prior만/둘 모두 보존과 권한 거절 뒤 outcome·두 identity 확인. ACK 전 cut에 대상 ACK를 필수 선행으로 붙이지 않음. 일반 거래 C01–06 전체 완료를 이 사례의 선행으로 요구하지 않음 |
+| 5.15.10 cleanup·CLR·shutdown·재복구 인수 | [5.15.10a 일반 cleanup / b 종료 선행](#handoff-units) | C08의 cancel/FIN·CLR/recovery 재장애를 shutdown 전 좁은 실제 조립에서 인수하고 정식 종료 경로를 별도 추가. 완료 cleanup만 ABORTED, 나머지 RecoveryRequired/Fenced·외부 ACK 보존. timeout/강제 종료를 정상 graceful 성공으로 세지 않음 |
 | 5.15.11 M02 자원·worker 진행 모델 | 5.01.2, F03의 M02 입력, 5.15.5 | 기존 holder/waiter/worker 축소 모델과 output/cleanup 포화·wait 등록·wake/cancel 경합의 유한 공간/공정성 동결. holder 무진행·wake 유실·cleanup credit 대기 mutant 거절. 실제 OS I/O의 시간 상한으로 확대하지 않음 |
 | 5.15.12 실제 thread·schedule·property 인수 | 5.15.4/11의 독립 기대값, 해당5.03–14 실제 공급 | T08/09/12의 barrier와4-worker·32session 사례, 기존 property64/256 seeds·128/1,024 operations·관련30분 stress를 선택 가능하게 작성. 기능별 필요한 새 사례와 미실행 확대 사례를 구분. 모델 PASS를 실제 thread 결과로 대체하지 않음 |
 | 5.15.13 protocol·입력 fuzz 인수 | 5.15.1, 해당5.02/03/04/09 실제 공급 | 관련 target별 기존30분 fuzz·보존 corpus와 malformed/경계 길이·allocation 반환을 선택 실행 가능하게 작성. target별 source/seed/corpus/도달/실패를 기록하고 무변경 완료 target 재실행 금지 |
@@ -226,6 +228,31 @@ D5-S02의 engine 등록과 D5-S03의 SQL 실행 소유 공급을 먼저 검토�
 | 5.16.3 B3 증거 집계·DEV6 이관 | 해당5.02–14 실행 증거, 5.15.7–14, 5.16.4/5 | SC03/KU14/PA08/PF11 및 T01–14/C01–08/M01–02/P01–04 분모·source·잔여를 집계. 미실행/FAIL/INCONCLUSIVE면 B3 미완료. D6-W01 codec/metadata/state·취소·capability·실제 recipe 이관; driver/remote/TLS/ACL/resume 완료로 확대하지 않음 |
 | 5.16.4 PF11 비용 측정·통계·confirmation | 5.16.2, 5.15.7, 대상5.15.8–10의 정확성 증거 | P01–03 실제 경로의 off/상시/상세·10 paired blocks·95% CI와 기존5% throughput/10% p99 한도를 측정하고 개선 주장 시 독립10쌍 confirmation. P04는 기존5초 startup 제외60초·매1초 정상 client 완료·quota·output timeout 뒤 cleanup의 진행 인수를 별도로 판정. 미실행/환경·정확성 실패/불확실성을 PASS로 바꾸지 않음 |
 | 5.16.5 PF11 원인 판별·새 세션 재현 | 5.16.2, 5.15.7, 해당 경로 정확성 증거 | queue/worker CPU/WAL/output의 사전 주입 원인과 외부 latency·내부 span을 대조. 공유 WAL 중복 귀속·trace loss·민감 본문 제외. 같은 bundle을 새 세션에서 replay하고 검출·재현을 인수. 비용 측정과 별도 완료이며 PF11은 둘 다 요구 |
+
+<a id="handoff-units"></a>
+## 3.1 큰 통합 작업의 내부 인계
+
+아래는 기존 64개 작업 중 7개의 내부 공급·인수 분리다. 부모 행의 포괄 선행 대신 **해당 내부 단위의 직접 선행**을 적용한다. 그 선행이 가진 공통 gate·전이적 공급은 그대로 필요하다. `a`만 수신하면 상태는 부분 완료이며, `b/c`와 부모 행의 전체 의무까지 닫혀야 부모 ID를 완료로 표시한다. fixture/명령/receipt도 내부 단위별 선택과 범위 식별이 가능해야 한다. 새 기능·파일 수나 일수 할당이 아니다.
+
+| 내부 단위·담당 책임 | 직접 선행 | 별도 완료·소비 경계 |
+| --- | --- | --- |
+| 5.05.2a 일반 거래 revoke | 5.05.1, 5.04.3, 5.10.3, 5.13.1 | 새 epoch의 write 철회 뒤 COMMIT 거절·Active 보존과 자기 ROLLBACK 허용. SQL/권한 담당이 일반 거래 이력으로 인수 |
+| 5.05.2b DDL revoke | 5.05.1, 5.04.3, 5.10.2, 5.13.1 | prior commit 권한 거절/commit 뒤 ddl 거절·두 outcome·reopen. 5.15.9가 수신하며 prepared/fetch 철회 완료는 선행 아님 |
+| 5.05.2c prepared/result·cleanup 권한 | 5.05.1, 5.04.3, 5.09.3a/4, 5.11.1, 5.13.1 | prepare 뒤 revoke·Describe/Bind/Execute/Fetch 재검사·소유 close/cancel 허용·교차/위조 token 거절. 전체 trigger cleanup은5.13.2b에서 추가 인수 |
+| 5.08.3a 일반 holder 진행 | 5.08.4, 5.10.1/3, 5.13.2a, D5-S02의 실제 row/key wait 공급 | A holder·B–E waiter의 실제4-worker COMMIT/ROLLBACK/close 진행. scheduler/SQL 담당이 T08/12 최소 반례를 먼저 인수; DDL 대기 공급 완료는 선행 아님 |
+| 5.08.3b DDL drain·admission 진행 | 5.08.4, 5.10.2, 5.13.2의 해당 cleanup 공급, D5-S02의 실제 DDL drain 공급 | 서버 DDL adapter를 통한 drain·새 admission 대기·holder 정리. native/mock drain만으로 서버 통합 완료 금지. result holder는5.11.1·5.13.2b 수신 뒤 추가 인수 |
+| 5.09.3a close·invalidation 공급 | 5.09.4, D5-S05의 invalidation/cleanup 공급 | stale/generation 검사·CloseStatement/CloseResult의 단일 소유·metadata·해제 primitive. fetch가 요구하는 미완료 result close를 공급하며 EOF/reexecute 실증을 완료 조건에 섞지 않음 |
+| 5.09.3b EOF·close·재실행 수명 인수 | 5.09.3a, 5.11.1 | 실제 EOF/부분 fetch→close/reexecute·DROP/recreate·old catalog에서 pin/plan/bind/descriptor를 대조. wire 연결 차이는5.11.3b, 반복 확대는5.15.14가 인수 |
+| 5.11.3a 일반 거래 terminal 전송 | 5.11.2, 5.10.3, 5.12.1 | 실제 DML/COMMIT/ROLLBACK 결과와 CancelAck를 socket에 연결. 작은 terminal의 backpressure/부분 송신·최종 수신·credit 반환을 검증. 5.15.8은 literal 전송 대신 이 공급을 사용 |
+| 5.11.3b fetch batch 전송 | 5.11.3a, 5.11.1 | owned rows·다중 fragment/slow reader·pin과 output credit·Reply/CancelAck 순서. fetch의 wire 인수이며 query EOF·transaction commit을 혼동하지 않음 |
+| 5.12.2a 일반 거래 취소·disconnect 결과 | 5.12.1, 5.08.4, 5.10.3, 5.11.3a, 5.13.1 | 일반 요청의 assembly/queue/run/park/commit/terminal/send별 신호와 undo·certainty. send 경합은 실제 전송을 사용. 명시 거래의 statement rollback과 FIN의 전체 cleanup을 구별 |
+| 5.12.2b result context 취소 | 5.12.2a, 5.11.1/3b | Execute(N) 종료 뒤 Fetch(N+1)의 새 context·동일 snapshot·late cancel 격리·park deadline 보존. 미완료 query와 명시 거래 효과는 DEV4 그대로 |
+| 5.13.2a 일반 CloseSession·FIN cleanup | 5.13.1/3, 5.03.2, 5.10.3, 5.11.3a, 5.12.2a/4 | 실제 일반 거래의 close/FIN·output timeout을 예약 cleanup에 연결. TX 포화에서도 전체 undo, terminal 보존·slot 반환 지연·오류 fence. 5.08.3a·5.15.10a의 좁은 공급 |
+| 5.13.2b revoke·result·만료 cleanup | 5.13.2a, 5.05.2a/c, 5.09.3, 5.11.3b, 5.12.2b/5/6; DDL 권한 사례는5.05.2b 추가 | 권한/idle/거래 수명·result/statement 소유를 같은 cleanup에 통합. trigger 중첩·32 slot·반복 disconnect, 부모 T04/08/09/12 전체 인수. result/idle의 인수는 DDL 권한 사례 완료를 기다리지 않음 |
+| 5.15.10a 일반 cleanup·CLR·재복구 | 5.15.3, 5.12.2a, 5.13.2a/3, 5.14.1, 실제 engine 재장애 hook | C08의 cancel/FIN cleanup·CLR·recovery redo/undo 재장애를 좁은 실제 조립에서 확인. undo 미완료의 성공 위장·ACK 유실·부분 복구 거절. shutdown 미완료를 별도로 유지 |
+| 5.15.10b 확장 trigger·종료 재장애 | 5.15.3, 5.13.2/3의 해당 trigger 공급, 실제 engine 재장애 hook; 종료 경로만5.14.3 추가 | result/revoke/만료의 C08 연결 차이는 해당 공급 직후 인수하고, 정식 shutdown·grace 실패·supervisor 인계는 종료 공급 뒤 인수. 부모 완료에는 둘 다 필요. 10a의 완료된 무변경 사례를 반복하지 않고 원래 evidence와 영향 검토를 수신 |
+
+`5.09.3a → 5.11.1 → 5.09.3b`로 EOF의 숨은 순환을 끊는다. `5.11.3a → 5.12.2a → 5.13.2a → 5.15.10a`에는 fetch/DDL/shutdown 전체가 필요하지 않다. DDL 취소/전송의 두 outcome은5.10.2·5.15.9에서 별도로 확인하며 일반 거래 인수로 대신하지 않는다. 공통 session/scheduler/cancel/cleanup 상태 담당이 이 경계의 변경과 소유 이동을 함께 검토한다.
 
 <a id="order"></a>
 ## 4. 공급 순서와 작업 크기
@@ -244,14 +271,20 @@ flowchart TD
   O --> Q
   W --> C[5.13.1 cleanup 인계]
   Q --> D[5.10.2 DDL 합성]
-  Q --> F[5.11.1/3 fetch·실제 전송]
-  C --> T[5.12.2/5/6 취소·수명·5.13 통합]
+  Q --> G[5.11.3a 일반 terminal·실제 전송]
+  Q --> F[5.09.3a → 5.11.1 fetch → 5.09.3b]
+  C --> U[5.12.2a·5.13.2a 일반 취소·FIN]
+  G --> U
+  U --> H[5.08.3a holder 진행·5.15.10a CLR 재장애]
+  C --> T[5.12.2b/5/6·5.13.2b 수명 통합]
   F --> T
+  P --> G
   P --> F
-  Q --> V[5.15.3/8 일반 crash·reopen]
+  G --> V[5.15.3/8 일반 crash·reopen]
   D --> V2[5.15.9 DDL crash]
   T --> L[5.14 정식 Serving·shutdown]
-  L --> V3[5.15.7/10 정식 client·cleanup 재장애]
+  L --> V3[5.15.7·5.15.10b 정식 client·종료 재장애]
+  H --> Z
   V --> Z[5.16.4/5 PF11·5.16.3 B3]
   V2 --> Z
   V3 --> Z
@@ -259,17 +292,24 @@ flowchart TD
 
 그림은 주요 공급만 표시하며 각 leaf 표의 선행이 정본이다. 5.12.3 공통 timer와5.12.4 transport/request timer,5.15.4/11 모델·5.16.1 계측 계약은 초기에 준비한다. 5.07.1은 회계 기반이며 미래 소비 코드 전체의 실측 완료가 선행이 아니다. 실제 소비마다 peak와 반환을 인수한다.
 
-**준비·좁은 조립·정식 Serving·B3를 구분한다.** 독립 client와 literal reply 전송은 실제 C1 위에서 SQL 없이 준비할 수 있다. 일반 거래 crash는 필요한 실제 Q1/C1/engine·lease/recovery·오류/fence 공급이 준비된 시험 전용 조립에서 검증하며 없는 기능을 공개하지 않는다. 이 조립은5.14.2의 정식 Serving을 대체하지 않는다. 실제 정식 서버의 연결 차이는5.15.7과 관련 새 통합 사례에서 인수하고, 이미 같은 경로에서 완료한 무변경 사례는 source/연결 영향 검토로 수신한다. C08의 shutdown 재장애는5.14.3 뒤이며 C01–07 모두에 shutdown 완료를 요구하지 않는다.
+**준비·좁은 조립·정식 Serving·B3를 구분한다.** 독립 client와 literal reply 전송은 실제 C1 위에서 SQL 없이 준비할 수 있다. 일반 거래 crash는 필요한 실제 Q1/C1/engine·lease/recovery·오류/fence 공급이 준비된 시험 전용 조립에서 검증하며 없는 기능을 공개하지 않는다. 이 조립은5.14.2의 정식 Serving을 대체하지 않는다. 실제 정식 서버의 연결 차이는5.15.7과 관련 새 통합 사례에서 인수하고, 이미 같은 경로에서 완료한 무변경 사례는 source/연결 영향 검토로 수신한다. C08의 cancel/FIN·CLR/recovery 부분은5.15.10a에서 조기에 인수한다. 5.15.10b 중 shutdown 재장애만5.14.3 뒤이며 C01–07과 C08의5.15.10a 범위에 shutdown 완료를 요구하지 않는다.
 
 | 우선 묶음 | 착수·공급할 것 | 완료로 확대하지 않을 것 |
 | --- | --- | --- |
 | A · 위험한 하위 공급과 공통 입력 | 5.01/D5-S01–06 배정, F01–03, 5.02, 5.07.1, 5.10.4, 5.12.3, 5.15.1/4/5/6/11·5.16.1 준비 | 실제 signature/소유 이동·worker 진행 미확인을 mock PASS로 해소하지 않음 |
 | B · 입력·자원·대기·전송 기반 | 5.04/05.1, 5.06/07, 5.03, 5.08.1/2/4, 5.12.1/4, 5.11.2, 5.15.2 | wire/예약·인증·등록/재개·전송의 좁은 공급. 정식 Serving 인수 아님 |
-| C · SQL과 실패 경계 함께 연결 | 5.09, 5.10.1/3→5.10.2, 5.11.1/3, 5.13.1/3, 5.14.1, 5.12.2/5/6, 5.15.3/8/9의 해당 cut | cancel/commit/cleanup 불변식 없이 사용자 변경 API 완료 금지. 소켓/복구를 최종 묶음까지 전부 미루지 않음 |
-| D · 실제 lifecycle·수명 인수 | 5.05.2, 5.08.3, 5.13.2, 5.14.2/3, 5.15.7/10/12/13/14의 해당 공급 | 모델/실제 thread/socket·재장애·반복 수명을 분리. 도구는 앞서 준비하고 각 변경의 필요한 사례를 먼저 수행 |
+| C · 일반 거래와 실패 경계 먼저 연결 | 5.10.1/3·5.11.3a·5.12.2a·5.13.1/2a/3·5.14.1, 5.08.3a·5.05.2a, 5.15.3/8/10a의 해당 cut. 그 뒤5.09/11의 fetch·5.10.2/5.05.2b/5.15.9 DDL을 공급별 확장 | [첫 실제 연결](#first-integration)은 일반 commit 응답·취소/FIN undo·holder 진행·관련 reopen까지. 좁은 공급 완료로 부모 ID나 Serving을 완료 처리하지 않음 |
+| D · 실제 lifecycle·수명 인수 | 5.05.2c, 5.08.3b, 5.09.3b, 5.11.3b, 5.12.2b/5/6, 5.13.2b, 5.14.2/3, 5.15.7/10b/12/13/14의 해당 공급 | 모델/실제 thread/socket·재장애·반복 수명을 분리. 도구는 앞서 준비하고 각 변경의 필요한 사례를 먼저 수행 |
 | E · 잔여 확대·성능·증거 종합 | 5.15의 남은 의무, 5.16.2 준비 뒤5.16.4/5 실행, 5.16.3 | 묶음·전체 fingerprint 변경을 이유로 무변경 완료 시험 반복 금지 |
 
 각 묶음은 새 DEV 단계·전체 실행 명령이 아니다. 모델/도구/계측은 해당 소비 기능과 함께 만들며 확대 실행의 미완료를 남긴다. 고정 worker4/session32·시간/메모리 수치는 기존 기준선이지 최적성의 실측 결과가 아니다. 구조 변경이 필요하면 F03의 실제 소유/진행 근거와 PF11 비용을 D2에서 비교하며, 이번 분류만으로 worker 증설·async runtime을 채택하지 않는다.
+
+<a id="first-integration"></a>
+### 첫 실제 연결과 우선순위
+
+공통 F01–04와 실제 Q1/C1·lease/recovery·인증/예산·대기/cleanup 공급을 수신한 뒤, 준비된 단일 DISK fixture에서 **인증 → direct DML → 명시 COMMIT/ROLLBACK → 완결 client 결과 → reopen**을 먼저 연결한다. 같은 연결에서 S1 성공/S2 실패의 statement rollback, commit 경계 취소·FIN의 전체 cleanup, holder 진행, C02–06·C08의5.15.10a에 해당하는 cut와 known-bad를 함께 인수한다. fixture는 하위 owner가 준비하며 server가 누락된 DDL을 우회 구현하지 않는다. C01 decode/admission 효과0도 해당 연결에서 닫는다.
+
+이 첫 연결은 일반 경로의 필요한 기능·실패 사례를 묶은 작업 단위이며 새 공개 capability나 B3 gate가 아니다. Q1/C1 선행을 완화하지 않고 정식 Serving 전 시험 조립으로 기록한다. 다음에 prepared/bind·result/fetch/수명, DDL precommit/권한·drain, 나머지 만료·정식 종료를 각 공급에 맞춰 추가한다. DDL과 result 어느 한쪽의 전체 완료를 다른 쪽의 선행으로 요구하지 않는다. 각 신규 연결의 필수 검증은 그 구현과 함께 수행하고 긴 미실행 확대 의무를 별도 보존한다.
 
 <a id="work-size"></a>
 ### 분량·담당·완료 단위
@@ -282,9 +322,23 @@ flowchart TD
 | 실제 인수 실행 | 5.15.7–10/12–14, 5.16.4/5 | 각 T/C/M/P와 실제 cut·target·schedule·source를 분모로 기록. 긴 반복/부하·환경 준비·분석량을 leaf1개라는 이유로 작게 추정하지 않음 |
 | 증거 집계/이관 | 5.16.3 | 새로운 실행과 원래 결과 수신을 구별. 미실행·FAIL·INCONCLUSIVE와 남은 하위 공급을 보존 |
 
-5.16.4의 P01–03에서90초 실행을 baseline/candidate 각각10쌍 수행하면 비교1셀만30분이며 fixture 재설정·복구·분석은 별도다. 이는 기존 profile의 산술 설명으로 전체 실행시간 약속이나 추가 반복 요구가 아니다. 총64개·문서/파일 수·예상 일수로 진행률을 계산하지 않고 leaf별 공급/구현/필수 검증/미실행 확대/검토 상태를 기록한다.
+5.16.4의 P01–03에서90초 실행을 baseline/candidate 각각10쌍 수행하면 비교1셀만30분이며 fixture 재설정·복구·분석은 별도다. [실행 분량 대장](#execution-budget)에 전체 셀과 준비 비용을 산정한다. 총64개·문서/파일 수·예상 일수로 진행률을 계산하지 않고 leaf별 공급/구현/필수 검증/미실행 확대/검토 상태를 기록한다.
 
 기본은 단일 구현 담당과 별도 검토자다. 미래 병렬 구현은 공통 F01/F02/F03와 실제 파일 소유부터 정한다. session/scheduler/cancel/cleanup은 하나의 전이·소유 계약 담당 아래 통합하며 무조정 동시 변경하지 않는다. 독립 oracle는 production 알고리즘을 공유하지 않고 공유 Markdown/JSON/Cargo는 통합 담당이 순차 반영한다.
+
+<a id="execution-budget"></a>
+### 실행 분량·준비 비용의 사전 산정
+
+| 작업군 | 착수 때 기록할 분모·준비량 | 완료·우선순위 판단 |
+| --- | --- | --- |
+| 5.08/12/13의 소유·진행 통합 | wait 종류×trigger×phase 중 해당 변경의 실제 case, supply API/Send·lock order, 고정 schedule·최악 자원 | 가장 먼저 공급 가능성을 확인. 내부 인계별 단일 담당+별도 검토; 큰 통합 하나를 끝낼 때까지 반례를 미루지 않음 |
+| 5.15.8–10 복구 | C01–08의 하위 cut·장애 축·도달 hook·독립 ACK·fixture/reopen 횟수, 비결정 cell의 기존3회 | F04에서 중복 없는 cell 소유와 recipe를 고정. 일반/DDL/종료 경로별 실행. 하위 엔진 시험과 서버 연결 시험을 중복 합산하지 않음 |
+| 5.15.4/11/12–14 모델·확대 | M01/02의 actor/action·탐색 상한·완주량, seed/operation·stress·fuzz target·수명 반복 수, 도구 known-bad와 실제 실행 시간 | 모델 cutoff는 미완료. 필수 기능 사례와 확대 selector를 분리하고 이미 검증한 무변경 사례는 다시 실행하지 않음 |
+| 5.16.2/4/5 PF11 | P01–03의 workload/client/거래/계측 비교 셀, P04 별도 진행 profile, fixture 생성·reset·spill 공간·sample 보관·분석·재현 준비 | F05에서 전체 예상 시간과 disk/FD를 계산하고 관련 정확성 수신 뒤 실행. 계측 도구 준비·비용 측정·원인 판별/새 세션 재현을 별도 완료로 기록 |
+
+PF11 예산 예시는 P01의 client4조합+P02의 table2×거래모드2×client2조합+P03의 client2조합으로 기본14 workload 셀이다. 각 workload에서 off→상시와 off→상세를 각각 독립10쌍 비교한다면28개 비교 셀×30분=**14시간**이며 P03을 scan/sort/spill별로 더 나누면 그만큼 늘어난다. 이는 선택 가능한 recipe의 산술 예시이고 확정 inventory나 새 시험 의무가 아니다. fixture/reset·P04·원인 주입/replay·실패 분석·조건부 confirmation10쌍은 별도다. 실제 셀/비교 방식은 기존 PF11 계약을 만족하도록 F05에서 사전 동결하고 실측을 보고 조합을 줄이지 않는다.
+
+구현 난도와 실행 대기 시간을 분리해 추정한다. 조정/표현 작업, 실제 소유·I/O 통합, 독립 oracle 준비, 장시간 인수는 같은 한 행이어도 분량이 다르다. 근거 없는 일수·속도 향상률은 제시하지 않으며, 첫 실제 연결의 결과로 후속 추정을 갱신하되 필수 품질 기준은 유지한다.
 
 <a id="coverage"></a>
 ## 5. 기존 동결·인수 의무의 담당
@@ -304,7 +358,7 @@ flowchart TD
 | T12 / T13 / T14 | 5.12.5/6·5.13/14·5.15.10/12/14 / 5.15.1–3/5–10·5.10.3 / 5.16.1/2/4/5 |
 | C01 / C02 / C03 | decode→admission5.03/07 / statement undo5.10/13 / commit 시도·sync5.10.3·5.12.2; 실제 장애5.15.8 |
 | C04 / C05 / C06 | durable/publish5.10.3 / enqueue/부분 전송/flush5.11.2/3 / 외부 완결 ACK5.15.2/6; 실제 장애5.15.8 |
-| C07 / C08 | DDL 두 commit5.10.2·실제5.15.9 / cleanup·CLR·반복 recovery5.13/14·실제5.15.10 |
+| C07 / C08 | DDL 두 commit5.10.2·실제5.15.9 / 일반 cleanup·CLR·반복 recovery5.13.2a/3·5.15.10a, 종료5.14.3·5.15.10b |
 | M01 / M02 | 독립 모델5.15.4·대상5.06/08/12/13 / 독립 모델5.15.11·예약/worker/TX/cleanup 대상5.07/08/11/13 |
 | 확대 property/thread / fuzz / 반복 수명 | 5.15.12 / 5.15.13 / 5.15.14; 각 기능 구현과 함께 fixture 작성, 원래 수치/미실행 의무 유지 |
 | P01–04 / SC03·KU14·PA08·PF11 / B3 | 준비5.16.2·실행5.16.4/5 / 관련 T/C/M/P 증거5.16.3 집계. XADB-012 공급과 XADB-033 실제 client 인수는 대체 불가 |
@@ -362,6 +416,8 @@ T11은 engine 격리를 다시 구현하는 작업이 아니라 실제 서버를
 <a id="decision-002"></a>
 ## 8. D5-WORK-BREAKDOWN-002 — 공급 배정·작업 크기·조기 검증 개선
 
+아래002 기록은 당시 채택 범위다.7개 큰 항목의 선행·완료 시점은 [003](#decision-003)이 부분 대체하며, 그 밖의 공급 배정·64개 ID·품질 의무는 유지한다.
+
 | 항목 | 기록 |
 | --- | --- |
 | 분류·상태·일자 | D2 · ACCEPTED · 2026-10-22. 독립 검토·수정 재확인과 계약/통합 담당 반영 확인. 제품·B3·PF11 NOT_RUN |
@@ -373,3 +429,18 @@ T11은 engine 격리를 다시 구현하는 작업이 아니라 실제 서버를
 | 독립 검토 | `/root/dev5_allocation_review`가 실제 diff·owner 계약·44→64 대응·공급/선행·T/C/M/P 분모·정식 Serving/B3·소스 identity를 읽기 전용 검토. key/build 공급 번호, supervisor 공급/소비 자기 선행, P01–03 비용/P04 진행 구분의3건을 수정하고 재확인. outcome receipt 범위·실제 commit 선행·우선 묶음도 재확인하여 채택 가능·잔여 필수 지적 없음. `/root` 계약/통합 담당이 반영 확인 |
 | 실행·범위 | 문서 계획/조사·색인/관련 JSON 참조만 변경. 제품·모델·복구·성능 테스트, fmt/Clippy·자동 문서 검사·push 미실행. 사용자 지시의1회 commit 대상으로 DEV5 범위만 선택하며 동시 변경은 제외 |
 | 재검토 | 공급 owner/API 미배정, continuation/Send 불가, fixture와 Serving 증거 혼동, terminal/cleanup 순환, 인수 분모 누락 또는 실측에서 고정 profile 부적합 |
+
+<a id="decision-003"></a>
+## 9. D5-WORK-BREAKDOWN-003 — 내부 인계·조기 실제 연결·실행 분량
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-22. 독립 검토·수정 재확인 및 계약/통합 담당 반영 확인. 제품·B3·PF11 NOT_RUN |
+| 권한·담당 | 사용자의 DEV5 분배/분량/우선순위/내용/분류 비교와 발견 개선 즉시 수정·완료 뒤1회 commit 지시. 작업/계약/통합 `/root`, 별도 읽기 검토 `/root/dev5_dependency_review` |
+| 기준·동시 변경 | 수정 전 HEAD `49bb781098c073323a2fe634f527e637cddcfcd4`, 사본/dirty identity `/tmp/xadb-dev5-review-r3-a_1upmzk`. DEV3 제품·DEV4/6/7 문서·공용 색인 동시 변경을 보존하고 DEV5 범위만 선택 |
+| 비교·선택 | 16개 책임·64개 ID는 유지. 모두 새 ID로 늘리는 안은 기존 참조/완료 대응 비용만 늘려 제외. 부모 전체 완료를 선행으로 유지하는 안은 close/fetch의 숨은 순환과 핵심 오류 검증 지연을 남김.7개 큰 항목의15개 내부 인계로 좁은 공급·전체 완료를 구별 |
+| 적용·대체 | 002의 해당 선행·인수 시점을 [내부 인계표](#handoff-units)로 구체화·부분 대체. 일반 terminal→취소/FIN→holder/CLR 재장애를 조기 연결하고 DDL/fetch/종료를 실제 공급별 확장. 부모 전체 의무·소유 계약·시험 분모/수치·S1/Q1/C1/Serving/B3 gate는 유지 |
+| 분량·근거 | [실행 대장](#execution-budget)은 구현/도구/실행/분석을 구분하고 PF11 전체 셀 비용을 조건부 예시로 산정. [새 직접 열람과 변경 대응](../evidence/dev5-work-breakdown-review-20261022.md#followup-003)은 ARIES·Oracle19c 공식4원문·로컬5개 소스의 범위/revision/hash를 보존. 절대 최적 성능·개발 기간을 주장하지 않음 |
+| 독립 검토 | `/root/dev5_dependency_review`가 원래 계획·owner·반례 및9개 파일의 DEV5 diff를 읽기 전용 검토.7개/15개 대응·직접/암묵 선행·일반 terminal/cleanup·DDL adapter·조건부 종료 선행, F/T/C/M/P 분모·Q1/C1/Serving/B3·14시간 예산의 조건부 범위를 재확인. ARIES/Oracle 원문·로컬5개 지정 파일/hash도 직접 대조. 채택 가능·잔여 필수 P1/P2 없음. `/root` 계약/통합 담당이 반영 확인 |
+| 실행·범위 | Markdown 계획/조사·안내와 기존 단계 JSON의003 참조만 변경. 제품/모델/복구/성능 테스트·fmt/Clippy·자동 문서 검사·push 미실행. 기존 evidence와 다른 작업의 source/결과 보존 |
+| 재검토 | 내부 공급을 전체 완료로 처리, close/fetch·권한/cleanup 선행 재순환, 실제 terminal/DDL adapter 없이 mock으로 인수, Q1/C1/Serving gate 완화, 셀 분모 누락 또는 실측에서 분량 가정 불일치 |

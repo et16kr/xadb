@@ -1101,6 +1101,7 @@
         "dev5-implementation-plan.md",
         "dev5-work-breakdown.md",
         "dev5-work-breakdown.md#decision-002",
+        "dev5-work-breakdown.md#decision-003",
         "dev5-work-breakdown-review-20261022.md"
       ],
       "design_decision_ref": "dev5-server-design.md#decision"
