@@ -326,3 +326,7 @@ D3-DWB-INSTALL-001의 실제 trace·유한 모델과 Linux 파일 inventory 검�
 
 
 DEV3 페이지 예약·취소는 `wal_io/doublewrite_install`의 private child `allocation_reservation`과 전용 `allocation_operation`에서 구현한다. 실제 작성된 runtime 시험과 `tests/fixtures/dev3-allocation-reservation/`의 독립 byte·semantic·compiler 입력만 등록한다. native 실행기와 compiler runner는 아직 작성하지 않아 경로를 선등록하지 않는다. 기존 WAL stage의 공통 복사 helper를 실제 분리했으므로 그 네 관련 시험은 미실행 의무로 남긴다. 부분 실행과 사용자 요청에 따른 중단 지점은 [구현 기록](../implementation/dev3-implementation.md#allocation-reservation-partial)을 따른다. 새 dependency/source root는 없다.
+
+## DEV3 첫 dirty stage 소비자
+
+[dirty frame·stage 계약](../contracts/dev3-dirty-stage.md)의 실제 경로는 관리 JSON의 `dev3_dirty_stage`에 등록한다. borrowed payload·고정 directory/pin/DPT, mutable storage 조립과 allocator reserve/cancel 소비, 각각의 신규 oracle/runtime/native/compiler 입력을 공급한다. 제품 의존성·crate·source root 변경은 없다. [제한 단위 인수](../evidence/dev3-dirty-stage-20261022.md)를 수용했으며 INIT·flush·일반 복구와 전체 DEV3 완료를 뜻하지 않는다.

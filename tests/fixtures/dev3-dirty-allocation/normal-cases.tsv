@@ -1,0 +1,54 @@
+id	group	name	kind	expected
+DA01-01	DA01	fresh_binding_shared_fence	ACTUAL_BINDING	OK; fresh frame bytes; no write/sync
+DA01-02	DA01	wrong_fence	ACTUAL_BINDING	MutableStorage.BindingMismatch/Unchanged; claim unchanged
+DA01-03	DA01	same_fence_wrong_core	ACTUAL_CONSUMER	Dirty.BindingMismatch/Unchanged for idle and forgotten-Apply origin; no fence during rejection; pins0
+DA01-04	DA01	empty_frames	ACTUAL_BINDING	MutableStorage.Shape/Unchanged; reads0
+DA01-05	DA01	65_frames	ACTUAL_BINDING	MutableStorage.Shape/Unchanged; reads0
+DA01-06	DA01	second_binding	ACTUAL_BINDING	BOUND and actual read-paused CLAIMED loser: MutableStorage.AlreadyBound/Unchanged; additional reads/writes0; loser payload/workspace/registration unchanged
+DA01-07	DA01	claimed_read_failure	ACTUAL_BINDING	MutableStorage.PageIo/CallerMustResolve; Abandoned+fenced
+DA01-08	DA01	resplit_then_drop	ACTUAL_BINDING	OK same identity/generation; final Abandoned+fenced
+DA02-01	DA02	reserve1_full_independent_bytes	ACTUAL_CONSUMER	OK; full WAL/page/descriptor; recLSN1; DPT counter 1
+DA02-02	DA02	cancel1_full_independent_bytes	ACTUAL_CONSUMER	OK; full WAL/page/descriptor; recLSN1; DPT counter 2
+DA03-01	DA03	one_reader_then_writer	ACTUAL_THREADS	Revalidate Frame.Busy/Unchanged then OK; held page unchanged
+DA03-02	DA03	two_readers_then_writer	ACTUAL_THREADS	Busy after first reader release; OK only after both release
+DA03-03	DA03	writer_then_reader	ACTUAL_THREADS	reader Dirty.Busy/Unchanged at AfterStageOwned; after release sees installed bytes
+DA03-04	DA03	second_target_busy	TEST_ONLY_TWO_TARGET_THREADS	Dirty.Busy/Unchanged; first content+whole pin rollback
+DA03-05	DA03	duplicate_and_missing_target	TEST_ONLY_TWO_TARGET	Dirty.DuplicateTarget then MissingTarget/Unchanged; pins0
+DA04-01	DA04	snapshot_counter_changed	TEST_ONLY_SNAPSHOT_MUTATION_WITH_THREAD_ACK	Revalidate Frame.Stale/Unchanged; no stage; injected coherent metadata preserved
+DA04-02	DA04	expected_stamp_identity	TEST_ONLY_EXPECTED_STAMP	Dirty.Stale/Unchanged; no frame/WAL mutation
+DA04-03	DA04	expected_stamp_generation	TEST_ONLY_EXPECTED_STAMP	Dirty.Stale/Unchanged; no frame/WAL mutation
+DA04-04	DA04	expected_stamp_page_lsn	TEST_ONLY_EXPECTED_STAMP	Dirty.Stale/Unchanged; no frame/WAL mutation
+DA04-05	DA04	expected_stamp_counter	TEST_ONLY_EXPECTED_STAMP	Dirty.Stale/Unchanged; no frame/WAL mutation
+DA05-01	DA05	reserve1_AfterStageOwned	ACTUAL_THREADS_WITH_PANIC_CUT	PANIC caught; common fence before content/version release; exact adopted S1-S4 partial state; complete ahead synced; retained installation
+DA05-02	DA05	reserve1_AfterPageInstalled	ACTUAL_THREADS_WITH_PANIC_CUT	PANIC caught; common fence before content/version release; exact adopted S1-S4 partial state; complete ahead synced; retained installation
+DA05-03	DA05	reserve1_AfterDescriptorInstalled	ACTUAL_THREADS_WITH_PANIC_CUT	PANIC caught; common fence before content/version release; exact adopted S1-S4 partial state; complete ahead synced; retained installation
+DA05-04	DA05	reserve1_AfterDptInstalled	ACTUAL_THREADS_WITH_PANIC_CUT	PANIC caught; common fence before content/version release; exact adopted S1-S4 partial state; complete ahead synced; retained installation
+DA05-05	DA05	cancel1_AfterStageOwned	ACTUAL_THREADS_WITH_PANIC_CUT	PANIC caught; common fence before content/version release; exact adopted S1-S4 partial state; complete ahead synced; retained installation
+DA05-06	DA05	cancel1_AfterPageInstalled	ACTUAL_THREADS_WITH_PANIC_CUT	PANIC caught; common fence before content/version release; exact adopted S1-S4 partial state; complete ahead synced; retained installation
+DA05-07	DA05	cancel1_AfterDescriptorInstalled	ACTUAL_THREADS_WITH_PANIC_CUT	PANIC caught; common fence before content/version release; exact adopted S1-S4 partial state; complete ahead synced; retained installation
+DA05-08	DA05	cancel1_AfterDptInstalled	ACTUAL_THREADS_WITH_PANIC_CUT	PANIC caught; common fence before content/version release; exact adopted S1-S4 partial state; complete ahead synced; retained installation
+DA06-01	DA06	reserve1_write_before	ACTUAL_LOWER_PORT_FAULT	Sync CallerMustResolve -> Wal.Write Io original source; complete ahead synced; dirty retained
+DA06-02	DA06	reserve1_write_half	ACTUAL_LOWER_PORT_FAULT	Sync CallerMustResolve -> Wal.Write Io original source; complete ahead synced; dirty retained
+DA06-03	DA06	reserve1_write_after	ACTUAL_LOWER_PORT_FAULT	Sync CallerMustResolve -> Wal.Write Io original source; complete ahead synced; dirty retained
+DA06-04	DA06	reserve1_sync_before	ACTUAL_LOWER_PORT_FAULT	Sync CallerMustResolve -> Wal.Sync Io original source; complete ahead synced; dirty retained
+DA06-05	DA06	reserve1_sync_after	ACTUAL_LOWER_PORT_FAULT	Sync CallerMustResolve -> Wal.Sync Io original source; complete ahead synced; dirty retained
+DA06-06	DA06	cancel1_write_before	ACTUAL_LOWER_PORT_FAULT	Sync CallerMustResolve -> Wal.Write Io original source; complete ahead synced; dirty retained
+DA06-07	DA06	cancel1_write_half	ACTUAL_LOWER_PORT_FAULT	Sync CallerMustResolve -> Wal.Write Io original source; complete ahead synced; dirty retained
+DA06-08	DA06	cancel1_write_after	ACTUAL_LOWER_PORT_FAULT	Sync CallerMustResolve -> Wal.Write Io original source; complete ahead synced; dirty retained
+DA06-09	DA06	cancel1_sync_before	ACTUAL_LOWER_PORT_FAULT	Sync CallerMustResolve -> Wal.Sync Io original source; complete ahead synced; dirty retained
+DA06-10	DA06	cancel1_sync_after	ACTUAL_LOWER_PORT_FAULT	Sync CallerMustResolve -> Wal.Sync Io original source; complete ahead synced; dirty retained
+DA06-11	DA06	reader_during_write_success	ACTUAL_THREADS_WITH_LOWER_IO_PAUSE	reader sees installed bytes while I/O paused; zero pins/version/content held by writer; OK
+DA06-12	DA06	reader_during_write_failure	ACTUAL_THREADS_WITH_LOWER_IO_PAUSE	reader sees installed bytes while I/O paused; zero pins/version/content held by writer; original lower error then fresh read Fenced
+DA07-01	DA07	actual_one_target_34	ACTUAL_ONE_TARGET	34 live owners/pins; exact full return
+DA07-02	DA07	mechanical_two_targets_68	TEST_ONLY_TWO_TARGET	34 live owners*2 pins=68; exact full return
+DA07-03	DA07	synthetic_69th	TEST_ONLY_CAPACITY_SEAM	Dirty.Capacity/Unchanged; synthetic counts68 preserved
+DA07-04	DA07	generation_zero	TEST_ONLY_REGISTRATION_CORRUPTION	Dirty.Invariant/CallerMustResolve; common fence
+DA07-05	DA07	generation_max	TEST_ONLY_REGISTRATION_CORRUPTION	Dirty.Invariant/CallerMustResolve; common fence
+DA07-06	DA07	counter_max	TEST_ONLY_COUNTER_BOUNDARY	Preflight CounterExhausted/Unchanged; no stage
+DA07-07	DA07	content_poison	TEST_ONLY_POISON	Snapshot Frame.Poisoned/CallerMustResolve
+DA07-08	DA07	dpt_poison	TEST_ONLY_POISON	Snapshot Frame.Poisoned/CallerMustResolve
+DA07-09	DA07	pins_poison	TEST_ONLY_POISON	Snapshot Frame.Poisoned/CallerMustResolve
+DA07-10	DA07	cleanup_discovers_fatal	TEST_ONLY_CLEANUP_SEAM	expected Busy upgraded to first cleanup Poisoned/Invariant CallerMustResolve
+DA07-11	DA07	first_fatal_preserved	TEST_ONLY_CLEANUP_SEAM	first Poisoned remains when later cleanup sees another fatal
+DA07-12	DA07	type_and_source_ceilings	RESOURCE	concrete types and source-value ledger; not physical stack/allocation observation
+DA07-13	DA07	independent_bad_witnesses	INDEPENDENT_CHECKER	reject each named bad snapshot/trace; no product mutant execution

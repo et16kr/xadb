@@ -593,6 +593,15 @@ Actions의 DEV1→DEV0 정적 검사에서 `allocation_reservation_tests.rs`의 
 
 독립 D1과 F05 target-layout 검토가 제한 .a.1 단위 인수를 수용했다. 3.10.1.a의 나머지 page/tree rank·거래 잠금, snapshot·transient pin·FIFO, 실제 dirty/WAL/Commit 소비와 DEV3 S5는 미완료다. 다음 실제 공급은 같은 저장 owner의 authoritative dirty frame·content latch와 typed stage/apply 결합이다.
 
+<a id="dirty-stage"></a>
+## 첫 dirty frame·stage 소비자
+
+[채택 계약](../contracts/dev3-dirty-stage.md)의3.05.1-A/B +3.04.1.a는 실제 allocator1에 caller borrowed payload·전체 pin set·ordered content·version/append/DPT 순서를 연결한다. immutable after-image를 소유한 private permit으로 reserve/cancel을 설치하고, guard/pin 반환 뒤 sync하며 실패한 staged obligation과 첫 recLSN을 보존한다.
+
+[인수 기록](../evidence/dev3-dirty-stage-20261022.md)과 [실행 색인](../evidence/dev3-dirty-stage-20261022.json)은 mandatory53를 원래 r1 완료 prefix6, r2 repair2, 정규6그룹45로 구별한다. 독립 부정55·compiler18·native3·새 checker6+6+4·oracle4 및 resource-context Rust1/10사례를 검증했다. 원 profile 집계 오류와 runtime r0/r1 FAIL은 보존하며 통과한 무변경 코드를 반복하지 않았다. 최종 fmt/engine Clippy는 PASS다.
+
+실제 source-value 상한과 layout을 검산했으며 physical stack/RSS를 새로 측정하지 않았다. S5 normal18operation 확대는 작성/NOT_RUN이다. INIT·동적 target 등록·flush·retirement·FIFO·일반 recovery/READY와 전체 DEV3는 남아 있다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 
@@ -605,8 +614,8 @@ Actions의 DEV1→DEV0 정적 검사에서 `allocation_reservation_tests.rs`의 
 | 3.01 형식·정체성 | page/참조/key/행/tree/WAL/undo/status/control codec | 여러 표현·독립 byte·유한 모델 검증 완료. 실제 효과와 구분 |
 | 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기의 제한 구현 검증. 일반 reopen은 별도 |
 | 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | [3.03.1 예약·취소 잔여 인수](#allocation-reservation-accepted): native13DB·compiler·WAL4·중첩 자원/64KiB 경로 검증과 독립 판정 연결. INIT·확장·free/reuse 미완료 |
-| 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | genesis·RollbackStart 생산·예약/취소 일부 연결. 일반 opcode/CLR/commit 연결 미완료 |
-| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | clean buffer·Empty DWB 최초 설치만 제한 검증. dirty 운영 미완료 |
+| 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | [실제 dirty stage 첫 소비자](#dirty-stage)와 genesis·RollbackStart 생산·예약/취소 연결. 일반 opcode/CLR/commit 연결 미완료 |
+| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator1 dirty/pin/content/first recLSN/DPT](#dirty-stage) 제한 검증. INIT·일반 pool·flush·retirement·압력하 진행 미완료 |
 | 3.06 트리·행 | mutable tree CRUD·split·root 변경·overflow·stable cursor·locator | 표현·부분 모델 존재. 실제 변경 경로 미완료 |
 | 3.07 인덱스 | point/range scan·presence·PK/UNIQUE·build/취소 | 표현·의미 계약 존재. 실제 인덱스와 statement-final unique 미완료 |
 | 3.08 카탈로그·DDL | table/index 정의·이름·객체 수명·create/drop | 표현 존재. native 원자 DDL과 catalog 변경 미완료 |
@@ -619,6 +628,6 @@ Actions의 DEV1→DEV0 정적 검사에서 `allocation_reservation_tests.rs`의 
 | 3.15 백업·무결성 | S3/fault 인수용 full audit·독립 이력, 이후 offline exact-cut backup/restore | 실제 DEV3 경로 미완료. audit 공급은 backup 완료를 기다리지 않음 |
 | 3.16 자원 종합·성능·최종 인수 | 항목별 자원 회계 종합·PF09·DS01–06·KU09/10·RC-T12–14 | opcode별 F05는 각 effect 전 선행. 이 항목은 증거 종합과 남은 인수이며 전체 DEV3 미완료 |
 
-기존 재개 우선 단위 [3.03.1 예약·취소](../plans/dev3-implementation-plan.md#allocation-remaining)는 위 인수 기록을 따른다. 3.10.1.a.1의 공통 admission/version gate는 위 기록을 따르며 다음 실제 공급은 dirty frame·typed stage/apply 결합이다. [원본 부분 검토](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)의 remaining을 기준으로 하며, 완료된 무변경 runtime 사례는 반복하지 않는다. 각 새 쓰기 경로의 자원 계산·복구 의미·fault 입력은 그 경로 전에 정한다. free/reuse는 회수 가능성 판정을, 실제 행 변경은 undo/status 기반을 먼저 수신하되 서로 전체 분류 완료를 요구하지 않는다. 복구 전용 REBASE는 정상 fuzzy checkpoint와 별도이며 선행으로 공급한다. 계획 작성 당시의 미실행 상태와 이후 위 단위별 구현·실행 기록을 구분한다.
+기존 재개 우선 단위 [3.03.1 예약·취소](../plans/dev3-implementation-plan.md#allocation-remaining)는 위 인수 기록을 따른다. 3.10.1.a.1의 공통 admission/version gate는 위 기록을 따르며 dirty frame·typed stage/apply 첫 소비자는 위 기록을 따른다. 다음 실제 공급은 예약 payload INIT와 후속 flush 결합이다. [원본 부분 검토](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)의 remaining을 기준으로 하며, 완료된 무변경 runtime 사례는 반복하지 않는다. 각 새 쓰기 경로의 자원 계산·복구 의미·fault 입력은 그 경로 전에 정한다. free/reuse는 회수 가능성 판정을, 실제 행 변경은 undo/status 기반을 먼저 수신하되 서로 전체 분류 완료를 요구하지 않는다. 복구 전용 REBASE는 정상 fuzzy checkpoint와 별도이며 선행으로 공급한다. 계획 작성 당시의 미실행 상태와 이후 위 단위별 구현·실행 기록을 구분한다.
 
 예약·취소의 [native와 compiler 병렬 작업](../plans/dev3-implementation-plan.md#parallel-execution-plan)은 해당 인수 기록에 실제 담당·source·결과를 연결했다. 64KiB 분석·공통 수정·stage 검증은 총괄이 조정하고 독립 검토자를 별도로 둔다. 실제 담당/경로·기준 source·자원 profile을 고정하기 전에는 작업 배정이나 동시 실행 완료로 기록하지 않는다.

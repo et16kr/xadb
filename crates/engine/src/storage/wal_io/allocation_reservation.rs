@@ -13,11 +13,11 @@ use std::sync::atomic::Ordering;
 use xadb_foundation::{error::Effect, identity::Generation, namespace::WriterNamespace};
 
 #[path = "allocation_operation.rs"]
-mod operation;
+pub(super) mod operation;
 use operation::{Batch, SemanticError};
 
 #[path = "allocation_budget.rs"]
-mod budget;
+pub(super) mod budget;
 
 #[cfg(test)]
 #[path = "allocation_reservation_tests.rs"]

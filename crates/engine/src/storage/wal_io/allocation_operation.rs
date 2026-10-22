@@ -38,27 +38,43 @@ pub(crate) enum SemanticError {
 }
 type Result<T> = std::result::Result<T, SemanticError>;
 
+/// Trusted caller workspace contract, never selected from serialized bytes.
+/// The dirty consumer keeps a separate before image while producing its frame.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) struct Batch {
-    pub(super) owner: SystemWorkRef,
-    pub(super) mask: u64,
-    pub(super) birth: u64,
+pub(in super::super) enum OperationBudget {
+    Exclusive81920,
+    Dirty98304,
+}
+impl OperationBudget {
+    const fn memory(self) -> u64 {
+        match self {
+            Self::Exclusive81920 => 81920,
+            Self::Dirty98304 => 98304,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in super::super) struct Batch {
+    pub(in super::super) owner: SystemWorkRef,
+    pub(in super::super) mask: u64,
+    pub(in super::super) birth: u64,
 }
 impl Batch {
-    pub(super) fn count(self) -> usize {
+    pub(in super::super) fn count(self) -> usize {
         self.mask.count_ones() as usize
     }
 }
 #[derive(Clone, Copy)]
-pub(super) struct Plan<'a> {
-    pub(super) profile: Profile,
-    pub(super) identity: PageIdentity,
-    pub(super) prefix: wal::WalPrefix,
-    pub(super) batch: Batch,
-    pub(super) cancel: bool,
-    pub(super) before_descriptor: Option<&'a [u8]>,
+pub(in super::super) struct Plan<'a> {
+    pub(in super::super) profile: Profile,
+    pub(in super::super) identity: PageIdentity,
+    pub(in super::super) prefix: wal::WalPrefix,
+    pub(in super::super) batch: Batch,
+    pub(in super::super) cancel: bool,
+    pub(in super::super) before_descriptor: Option<&'a [u8]>,
 }
-pub(super) fn frame_length(n: usize) -> usize {
+pub(in super::super) fn frame_length(n: usize) -> usize {
     20992 + 208 * n
 }
 fn put16(b: &mut [u8], o: usize, v: u16) {
@@ -175,6 +191,7 @@ fn descriptor(
     lsn: u64,
     cancel: bool,
     digest: [u8; 32],
+    budget: OperationBudget,
 ) -> DescriptorSpec {
     let n = batch.count() as u64;
     let length = frame_length(n as usize) as u64;
@@ -186,7 +203,7 @@ fn descriptor(
             pages: n,
             peak: ResourcePeak {
                 frames: 1,
-                memory: 81920,
+                memory: budget.memory(),
                 files: 1,
                 ..ResourcePeak::default()
             },
@@ -227,12 +244,30 @@ fn descriptor(
     }
 }
 
-pub(super) fn validate_live(
+pub(in super::super) fn validate_live(
     page: &AllocationPage<'_>,
     profile: Profile,
     batch: Option<Batch>,
     raw: &[u8],
     high_water: u64,
+) -> Result<()> {
+    validate_live_with_budget(
+        page,
+        profile,
+        batch,
+        raw,
+        high_water,
+        OperationBudget::Exclusive81920,
+    )
+}
+
+pub(in super::super) fn validate_live_with_budget(
+    page: &AllocationPage<'_>,
+    profile: Profile,
+    batch: Option<Batch>,
+    raw: &[u8],
+    high_water: u64,
+    budget: OperationBudget,
 ) -> Result<()> {
     let mut observed_mask = 0;
     for i in 1..64 {
@@ -251,14 +286,14 @@ pub(super) fn validate_live(
         SemanticError::InventoryMismatch,
     )?;
     if let Some(batch) = batch {
-        validate_reserved(page, &profile, &batch, raw, high_water)
+        validate_reserved(page, &profile, &batch, raw, high_water, budget)
     } else if high_water == 0 {
         require(
             zero(raw) && page.header().lsn == PageLsn(0),
             SemanticError::StateMismatch,
         )
     } else {
-        validate_finished(page, &profile, raw, high_water)
+        validate_finished(page, &profile, raw, high_water, budget)
     }
 }
 
@@ -268,6 +303,7 @@ fn validate_reserved(
     batch: &Batch,
     raw: &[u8],
     high_water: u64,
+    budget: OperationBudget,
 ) -> Result<()> {
     require(
         batch.mask & 1 == 0 && (1..=63).contains(&batch.count()) && batch.owner.id() == high_water,
@@ -287,6 +323,7 @@ fn validate_reserved(
                 batch.birth,
                 false,
                 item_digest(page, *batch, true)?,
+                budget,
             ),
         SemanticError::StateMismatch,
     )?;
@@ -301,6 +338,7 @@ fn validate_finished(
     profile: &Profile,
     raw: &[u8],
     high_water: u64,
+    budget: OperationBudget,
 ) -> Result<()> {
     let owner = SystemWorkRef::new(
         profile.spec().namespace,
@@ -339,6 +377,7 @@ fn validate_finished(
                 page.header().lsn.0,
                 true,
                 content_digest(&[]),
+                budget,
             ),
         SemanticError::StateMismatch,
     )
@@ -346,13 +385,17 @@ fn validate_finished(
 
 /// The bytes and header are borrowed only after full transition validation.
 /// Its fields and constructor are private to this module.
-pub(super) struct PreparedAllocation<'a> {
+pub(in super::super) struct PreparedAllocation<'a> {
     bytes: &'a [u8],
     prefix: wal::WalPrefix,
     header: WalFrameHeader,
 }
-impl PreparedAllocation<'_> {
-    pub(super) fn stage<W: WriterNamespace>(
+impl<'a> PreparedAllocation<'a> {
+    pub(in super::super) fn descriptor_bytes(&self) -> &'a [u8] {
+        &self.bytes[352..1888]
+    }
+
+    pub(in super::super) fn stage<W: WriterNamespace>(
         self,
         wal: &wal::GenesisWalSession<'_, W>,
     ) -> std::result::Result<wal::WalFrameLocation, wal::WalIoError> {
@@ -360,17 +403,27 @@ impl PreparedAllocation<'_> {
     }
 }
 
-pub(super) fn prepare<'a>(
+pub(in super::super) fn prepare<'a>(
     plan: Plan<'_>,
     before: &[u8; PAGE_BYTES],
     output: &'a mut [u8],
     after: &mut [u8; PAGE_BYTES],
 ) -> Result<PreparedAllocation<'a>> {
+    prepare_with_budget(plan, before, output, after, OperationBudget::Exclusive81920)
+}
+
+pub(in super::super) fn prepare_with_budget<'a>(
+    plan: Plan<'_>,
+    before: &[u8; PAGE_BYTES],
+    output: &'a mut [u8],
+    after: &mut [u8; PAGE_BYTES],
+    budget: OperationBudget,
+) -> Result<PreparedAllocation<'a>> {
     // End the producer's array/descriptor stack frame before full validation.
     // Only this wrapper can turn the independently checked bytes into authority.
-    let h = encode_prepared(plan, before, output, after)?;
+    let h = encode_prepared(plan, before, output, after, budget)?;
     let raw = &output[..frame_length(plan.batch.count())];
-    validate(plan, before, raw, after)?;
+    validate_with_budget(plan, before, raw, after, budget)?;
     Ok(PreparedAllocation {
         bytes: raw,
         prefix: plan.prefix,
@@ -383,6 +436,7 @@ fn encode_prepared(
     before: &[u8; PAGE_BYTES],
     output: &mut [u8],
     after: &mut [u8; PAGE_BYTES],
+    budget: OperationBudget,
 ) -> Result<WalFrameHeader> {
     let h = header(plan)?;
     let n = plan.batch.count();
@@ -491,6 +545,7 @@ fn encode_prepared(
         h.lsn,
         plan.cancel,
         digest.digest(),
+        budget,
     );
     obligation::encode_descriptor(&spec, &mut raw[352..1888]).map_err(descriptor_error)?;
     let redo = DELTAS + 208 * n;
@@ -531,11 +586,22 @@ fn changed_entry(old: AllocationEntry, batch: Batch, cancel: bool) -> Result<All
 
 // Full validation also serves the private raw-negative seam. It does not itself
 // publish an apply capability; prepare alone owns the immutable final borrow.
-pub(super) fn validate(
+#[cfg(test)]
+pub(in super::super) fn validate(
     plan: Plan<'_>,
     before: &[u8; PAGE_BYTES],
     bytes: &[u8],
     after: &[u8; PAGE_BYTES],
+) -> Result<()> {
+    validate_with_budget(plan, before, bytes, after, OperationBudget::Exclusive81920)
+}
+
+pub(in super::super) fn validate_with_budget(
+    plan: Plan<'_>,
+    before: &[u8; PAGE_BYTES],
+    bytes: &[u8],
+    after: &[u8; PAGE_BYTES],
+    budget: OperationBudget,
 ) -> Result<()> {
     // Preserve error precedence while retiring header/descriptor decoder locals
     // before native/page/inventory validation enters its nested codec calls.
@@ -547,7 +613,7 @@ pub(super) fn validate(
     )
     .map_err(descriptor_error)?;
     validate_descriptor(&plan, bytes, header, &descriptor)?;
-    validate_transition(&plan, before, bytes, after, header, &descriptor)
+    validate_transition(&plan, before, bytes, after, header, &descriptor, budget)
 }
 
 fn validate_header(plan: &Plan<'_>, bytes: &[u8]) -> Result<WalFrameHeader> {
@@ -665,6 +731,7 @@ fn validate_transition(
     after: &[u8; PAGE_BYTES],
     h: WalFrameHeader,
     desc: &DescriptorSpec,
+    budget: OperationBudget,
 ) -> Result<()> {
     use SemanticError::*;
     let n = plan.batch.count();
@@ -711,12 +778,13 @@ fn validate_transition(
         PageMismatch,
     )?;
     if plan.cancel {
-        validate_live(
+        validate_live_with_budget(
             &old,
             plan.profile,
             Some(plan.batch),
             plan.before_descriptor.ok_or(StateMismatch)?,
             plan.batch.owner.id(),
+            budget,
         )?;
     } else {
         require(
@@ -798,6 +866,7 @@ fn validate_transition(
         h.lsn,
         plan.cancel,
         digest.digest(),
+        budget,
     );
     require(desc.inventory == expected.inventory, InventoryMismatch)?;
     require(

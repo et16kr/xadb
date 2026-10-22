@@ -22,7 +22,7 @@ use xadb_foundation::{
 
 // These counts intentionally include values whose lifetimes do not overlap.
 // Bulk entry/descriptor arrays and Plan copies are charged separately below.
-pub(super) const COMMON: usize = 4 * size_of::<AllocationPage<'static>>()
+pub(in super::super) const COMMON: usize = 4 * size_of::<AllocationPage<'static>>()
     + 4 * size_of::<PageHeader>()
     + 4 * size_of::<PageIdentity>()
     + 4 * size_of::<WalFrameHeader>()
@@ -40,22 +40,23 @@ pub(super) const COMMON: usize = 4 * size_of::<AllocationPage<'static>>()
 
 // Fixed sha2-0.10.9 state plus nested block/output/compression storage, reviewed
 // for the pinned x86/soft implementation. A dependency change requires review.
-pub(super) const HASH: usize = 4 * size_of::<ContentHasher>() + 1536;
-pub(super) const ENTRIES: usize = 72 * size_of::<AllocationEntry>() + COMMON + HASH;
-pub(super) const ENCODE: usize = size_of::<DescriptorSpec>() + 1536 + COMMON + HASH;
+pub(in super::super) const HASH: usize = 4 * size_of::<ContentHasher>() + 1536;
+pub(in super::super) const ENTRIES: usize = 72 * size_of::<AllocationEntry>() + COMMON + HASH;
+pub(in super::super) const ENCODE: usize = size_of::<DescriptorSpec>() + 1536 + COMMON + HASH;
 // validate's retained descriptor -> validate_live.current -> expected/decoded
 // descriptor, with one spare descriptor for returns. The producer has already
 // returned. Include two copied row iterators with their start/end positions.
-pub(super) const DESCRIPTORS: usize = 5 * size_of::<DescriptorSpec>()
+pub(in super::super) const DESCRIPTORS: usize = 5 * size_of::<DescriptorSpec>()
     + 2 * (size_of::<[RemainingBudget; 5]>() + 2 * size_of::<usize>())
     + COMMON
     + HASH;
-pub(super) const TEMPORARIES: usize = max(ENTRIES, max(ENCODE, DESCRIPTORS));
-pub(super) const PLANS: usize = 4 * size_of::<Plan<'static>>();
+pub(in super::super) const TEMPORARIES: usize = max(ENTRIES, max(ENCODE, DESCRIPTORS));
+// The trusted workspace-budget wrappers retain two additional copied Plans.
+pub(in super::super) const PLANS: usize = 6 * size_of::<Plan<'static>>() + 128;
 
 // The reader and its retained File are not in this pool. A second File is open
 // only while read_page reads the allocator; both are counted in fits below.
-pub(super) const CONSTRUCTOR: usize = 12 * size_of::<Profile>()
+pub(in super::super) const CONSTRUCTOR: usize = 12 * size_of::<Profile>()
     + 8 * size_of::<SelectedControl>()
     + 4 * size_of::<FileMapRoot<'static>>()
     + 2 * size_of::<FileMapCursor<'static>>()
@@ -78,7 +79,7 @@ const fn max(left: usize, right: usize) -> usize {
     if left > right { left } else { right }
 }
 
-pub(super) fn fits<W: WriterNamespace>() -> bool {
+pub(in super::super) fn fits<W: WriterNamespace>() -> bool {
     let owner = size_of::<AllocationSession<'_, '_, '_, '_, W>>();
     let file = size_of::<W::File>();
     let reader = size_of::<PageFileReader<'_, W>>();

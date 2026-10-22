@@ -168,6 +168,17 @@ pub(crate) struct PageConcurrency<'f> {
 }
 
 impl<'f> PageConcurrency<'f> {
+    #[cfg(test)]
+    pub(crate) fn diagnostic_version_busy(&self) -> bool {
+        matches!(self.version.try_lock(), Err(TryLockError::WouldBlock))
+    }
+
+    /// Assembly checks the original fence by identity; a matching value is not
+    /// another session's authority. This neither admits work nor resets a fence.
+    pub(crate) fn uses_fence(&self, fence: &SessionFence) -> bool {
+        std::ptr::eq(self.fence, fence)
+    }
+
     /// Constructor owns no heap, page, file or WAL space. Concrete control-size
     /// ceilings do not bound external callers' stacks or establish global 64 KiB admission.
     pub(crate) fn new(fence: &'f SessionFence) -> Result<Self> {
@@ -301,6 +312,28 @@ pub(crate) struct Owner<'c, 'f> {
 }
 
 impl<'c, 'f> Owner<'c, 'f> {
+    /// Distinct cores may borrow the same fence, so consumers bind this exact
+    /// core before charging pins or entering an admission section.
+    pub(crate) fn belongs_to(&self, core: &PageConcurrency<'_>) -> bool {
+        std::ptr::eq(self.core, core)
+    }
+
+    pub(crate) fn check_idle(&self) -> Result<()> {
+        let state = self.core.entry_state()?;
+        self.check_mode(&state, Mode::Idle)
+    }
+
+    /// Known session/state failure wins; a foreign healthy core is rejected
+    /// before checking this owner's mode or altering either core's accounting.
+    pub(crate) fn check_binding(&self, expected: &PageConcurrency<'_>) -> Result<bool> {
+        let state = self.core.entry_state()?;
+        if !self.belongs_to(expected) {
+            return Ok(false);
+        }
+        self.check_mode(&state, Mode::Idle)?;
+        Ok(true)
+    }
+
     fn check_mode(&self, state: &State, mode: Mode) -> Result<()> {
         if state.slots[self.index]
             != (OwnerSlot {
@@ -354,7 +387,10 @@ impl<'c, 'f> Owner<'c, 'f> {
             state.active_content = count;
             state.slots[self.index].mode = Mode::Content;
         }
-        Ok(ContentAdmission { owner: Some(self) })
+        Ok(ContentAdmission {
+            core: self.core,
+            owner: Some(self),
+        })
     }
 
     fn release_admission(&self, mode: Mode) -> Result<()> {
@@ -442,7 +478,18 @@ impl Drop for ApplyAdmission<'_, '_, '_> {
 }
 
 pub(crate) struct ContentAdmission<'o, 'c, 'f> {
+    core: &'c PageConcurrency<'f>,
     owner: Option<&'o mut Owner<'c, 'f>>,
+}
+impl ContentAdmission<'_, '_, '_> {
+    /// Consumers release actual content latches first, then retain a cleanup
+    /// failure instead of returning an earlier healthy Busy rejection.
+    pub(crate) fn release_checked(mut self) -> Result<()> {
+        match self.owner.take() {
+            Some(owner) => owner.release_admission(Mode::Content),
+            None => Err(self.core.fatal(Cause::Invariant)),
+        }
+    }
 }
 impl Drop for ContentAdmission<'_, '_, '_> {
     fn drop(&mut self) {
@@ -460,6 +507,17 @@ pub(crate) struct VersionEditGuard<'o, 'c, 'f> {
     admission: Option<ApplyAdmission<'o, 'c, 'f>>,
 }
 impl<'o, 'c, 'f> VersionEditGuard<'o, 'c, 'f> {
+    /// Called after consumer content guards are released. The gate is returned
+    /// before the leaf admission state is acquired for checked cleanup.
+    pub(crate) fn release_checked(mut self) -> Result<()> {
+        self.core.fence_unwind();
+        drop(self.gate.take());
+        match self.admission.take() {
+            Some(admission) => admission.release_checked(),
+            None => Err(self.core.fatal(Cause::Invariant)),
+        }
+    }
+
     fn acquire_version(&mut self) -> Result<()> {
         let admission = self
             .admission

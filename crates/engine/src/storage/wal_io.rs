@@ -26,12 +26,18 @@ const PROFILE_NAME: &str = "d3-profile";
 const STAGE_NAME: &str = "d3-writer-stage";
 
 mod bootstrap;
+pub(in crate::storage) use bootstrap::DirtyInstallPermit;
 #[allow(unused_imports)] // Private downstream assembly remains under test-support.
 pub(crate) use bootstrap::{
     AllocationObservation, AllocationSession, AllocationSessionCause, AllocationSessionError,
     AllocationSessionPhase, BootstrapError, Cause as BootstrapCause, DoublewriteInstallCause,
     DoublewriteInstallError, DoublewriteInstallPhase, DoublewriteStorageSession,
     FreshStorageSession, Phase as BootstrapPhase,
+};
+#[allow(unused_imports)] // The scoped dirty owner is being integrated with its consumers.
+pub(crate) use bootstrap::{
+    AllocationWriter, BoundAllocation, DirtyAllocationError, DirtyReader, MutableStorageError,
+    MutableStorageOwner,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -26,6 +26,14 @@ pub(crate) use allocation_reservation::{
     Cause as AllocationSessionCause, Phase as AllocationSessionPhase,
 };
 
+#[path = "mutable_storage.rs"]
+mod mutable_storage;
+pub(in crate::storage) use mutable_storage::DirtyInstallPermit;
+pub(crate) use mutable_storage::{
+    AllocationWriter, BoundAllocation, DirtyAllocationError, DirtyReader, MutableStorageError,
+    MutableStorageOwner,
+};
+
 const WORKSPACE_BYTES: usize = 4 << 20;
 const EMPTY_BYTES: usize = 160;
 const RESERVED_BYTES: usize = 8192;

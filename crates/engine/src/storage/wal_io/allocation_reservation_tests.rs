@@ -10,6 +10,9 @@ use std::{
 };
 use xadb_foundation::codec::content_digest;
 
+#[path = "allocation_budget_profile_tests.rs"]
+mod budget_profiles;
+
 const INPUT: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tests/fixtures/dev3-allocation-reservation"

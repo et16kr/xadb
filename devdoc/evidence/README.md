@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-22 [DEV3 첫 dirty frame·stage 소비자](dev3-dirty-stage-20261022.md) · [source별 실행 색인](dev3-dirty-stage-20261022.json): mandatory53의 source별 완료 범위, compiler18·native3·새 oracle/checker와 원본 실패를 보존한다. INIT·flush·일반 복구와 전체 DEV3는 미완료다.
+
 2026-10-22 [DEV3 적용 admission·version gate](dev3-concurrency-admission-20261022.md) · [source별 실행 색인](dev3-concurrency-admission-20261022.json): 신규 runtime7그룹/45사례·compiler12·자원27 layout과 원래 실패를 연결한다. Commit은 test-only 모의 명세, 확대512와 전체 DEV3는 미완료다.
 
 2026-10-22 [DEV3 예약·취소 잔여 인수](dev3-allocation-reservation-acceptance-20261022.md) · [source별 실행 색인](dev3-allocation-reservation-acceptance-20261022.json): native13DB·compiler·WAL4·64KiB 검증과 원래 실패를 연결한다. 제한 단위 판정과 전체 DEV3/S5 미완료를 구분한다.

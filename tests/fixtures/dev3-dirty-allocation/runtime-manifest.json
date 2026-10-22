@@ -1,0 +1,125 @@
+{
+  "schema": "xadb-dev3-dirty-runtime-input-v1",
+  "status": "IMPLEMENTED_NOT_RUN_REVIEW_PENDING",
+  "contract": "artifacts/dev3/resume-20261022/dirty-stage-contract-draft.md",
+  "contract_sha256": "00c9422692d87543a4fd3e2a6d60a801466d948c0a34e5ac7196ed94de98200d",
+  "mandatory_cases": 53,
+  "group_counts": {
+    "DA01": 8,
+    "DA02": 2,
+    "DA03": 5,
+    "DA04": 5,
+    "DA05": 8,
+    "DA06": 12,
+    "DA07": 13
+  },
+  "selectors": {
+    "DA01": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_da01_binding_authority",
+    "DA02": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_da02_allocator_consumer",
+    "DA03": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_da03_content_exclusion",
+    "DA04": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_da04_prepared_stamps",
+    "DA05": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_da05_staged_obligations",
+    "DA06": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_da06_sync_and_errors",
+    "DA07": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_da07_resource_cleanup"
+  },
+  "normal_fixture": "tests/fixtures/dev3-dirty-allocation/normal-cases.tsv",
+  "normal_sha256": "e0ecb512478c472d221b01bfb210d5a6eff0abb0ae6938f5d4ff2fc1e30b0015",
+  "step_watchdog_seconds": 5,
+  "group_external_watchdog_seconds": 120,
+  "s5": {
+    "normal": {
+      "status": "IMPLEMENTED_NOT_RUN",
+      "fixture": "tests/fixtures/dev3-dirty-allocation/expanded-history.tsv",
+      "sha256": "4007c0772ec3ba1d8ea1f003d50bc93b245a1f9c67a383d58c94956e9947838b",
+      "operations": 18,
+      "sessions": 3,
+      "exact_selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_s5_expanded_history",
+      "ignored": true
+    },
+    "contention": "PLANNED_NOT_IMPLEMENTED",
+    "cuts": "PLANNED_NOT_IMPLEMENTED",
+    "faults": "PLANNED_NOT_IMPLEMENTED"
+  },
+  "native3": "SEPARATE_NOT_IMPLEMENTED",
+  "execution": {
+    "product": "NOT_RUN",
+    "compiler": "NOT_RUN",
+    "checker": "NOT_RUN"
+  },
+  "pending_exact_seams": [],
+  "independent_checker": {
+    "named_rejections": 55,
+    "status": "NOT_RUN",
+    "actual_witness_users": [
+      "DA05 partial state and acknowledged fence-before-content release",
+      "DA06 writer guard absence at actual lower write pause"
+    ]
+  },
+  "case_variants": {
+    "DA01-03": [
+      "idle wrong core",
+      "forgotten Apply origin wrong core; later origin Drop fence separate"
+    ],
+    "DA01-06": [
+      "BOUND loser",
+      "actual read-paused CLAIMED loser"
+    ],
+    "DA07-10": [
+      "Busy upgraded to cleanup Poisoned",
+      "Busy upgraded to cleanup Invariant"
+    ],
+    "DA01-07": [
+      "configured actual read_plan BeforeError at0",
+      "configured_read_hits1/continuation0/hit1; actual open d3-profile offset0 length0 returnedNone; no file write"
+    ]
+  },
+  "implementation_files": {
+    "crates/engine/src/storage/wal_io/dirty_allocation_tests.rs": "c7ed252308bc50cc1ec0cfed8523ece8c7990bfe359a230bb83aa2d31e1defea",
+    "crates/engine/src/storage/wal_io/dirty_allocation_test_support.rs": "dd9101850c31f66ab387be02d9976216252f018d801b3d4abbe28b0c6754a520"
+  },
+  "source_ledger": {
+    "generic_whole_chain": 2048,
+    "retained": 60672,
+    "active_34": 130304,
+    "cold_constructor_total": 150784,
+    "control_limit": 196608,
+    "cold_phase_limit": 90112,
+    "deep_component_limit": 65536,
+    "physical_stack": "NOT_MEASURED",
+    "allocations": "NOT_MEASURED"
+  },
+  "runner": {
+    "path": "scripts/check_dev3_dirty_runtime.py",
+    "sha256": "c416bed496bd83232e1038f59878eaa4ceccb19612702200735597a200da9e7b",
+    "bundle_budget_seconds": 120,
+    "selftest_path": "scripts/test_check_dev3_dirty_runtime.py",
+    "selftest_sha256": "3fdf0207c660e5e28463d51e89dfc45169b1b6bd095d8cbd6d131dc77786c2f6",
+    "selftest_methods": 6,
+    "selftest_status": "NOT_RUN"
+  },
+  "revision": "r4",
+  "resource_correction": {
+    "reason": "The accepted ledger reserves two lock carriers, each <=32 bytes; their aggregate is <=64, not <=32.",
+    "pin_guard_and_result_limit": 64,
+    "prior_source_sha256": "ab1c84919f26b0a553d5a98268e22f6357d38d677f9e29fb66cccd5331eb1917",
+    "prior_runtime": "dirty-runtime-r0: DA01 FAIL Capacity before first bind; DA02-07 NOT_RUN; original result retained",
+    "execution": "NOT_RUN",
+    "individual_ceilings": {
+      "pin_guard": 32,
+      "pin_lock_result": 32
+    }
+  },
+  "narrow_repair": {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_da01_readback_and_resplit_repair",
+    "ignored": true,
+    "cases": [
+      "DA01-07",
+      "DA01-08"
+    ],
+    "completion": "DIRTY_REPAIR_COMPLETE DA01 2",
+    "s5_inventory": "EXCLUDED_ALTERNATIVE_WRAPPER; full DA01 owns normal inventory",
+    "reason": "r1 DA01 reached case07 then failed because legacy read_fail was unused. Cases01-06 and CLAIMED loser remain original-source prefix evidence, not repeated here.",
+    "prior_source_sha256": "ba10969dce070cb4a51f7948aa61853d0c23753e879193eefc0606bafccfd5a3",
+    "execution": "NOT_RUN"
+  }
+}

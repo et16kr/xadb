@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "status": "FROZEN_INPUT_NOT_RUN",
+  "cases": [
+    "normal",
+    "reserve-write-half",
+    "cancel-sync-after"
+  ],
+  "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::native_tests::dirty_allocation_native_selected",
+  "case_timeout_seconds": 30,
+  "database_limit_bytes": 25165824,
+  "total_limit_bytes": 75497472,
+  "source_compile_environment": "XADB_DIRTY_SOURCE_SHA256",
+  "profile": 1,
+  "count": 1,
+  "scope": "Actual Linux file I/O after dirty install, preserving unchanged home/DWB; no general recovery or power-loss claim"
+}

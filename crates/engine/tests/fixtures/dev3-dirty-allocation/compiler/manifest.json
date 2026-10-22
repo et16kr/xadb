@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "unit": "D3-DIRTY-ALLOCATION-001",
+  "probe_relative_path": "crates/engine/src/storage/dirty_borrow_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_diagnostics_are_failures": true,
+  "compiler_budget_seconds": 60,
+  "cases": [
+    {
+      "name": "baseline",
+      "reason": "Unmodified actual engine source compiles before any injected dirty-boundary program.",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none"
+    },
+    {
+      "name": "release",
+      "reason": "Actual generic installed storage assembles dirty views, actual reserve/cancel signatures and scoped Sync reader, then releases borrows and re-splits; sealed permit installer signatures type-check without minting authority.",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "bytes": 2166,
+      "sha256": "5f0e57a8a3bfa874f2d08853d8e54406801ddd918165f7d6bef5a1bb3bfc2f0b"
+    },
+    {
+      "name": "old_reader_consume",
+      "reason": "A live original clean reader prevents consuming its installed namespace.",
+      "expected_code": "E0505",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 855,
+      "sha256": "ef6bbb1f7a6f3394221161b19545ba5ee6cd1ecb38990a55f3a01ef79b45910d"
+    },
+    {
+      "name": "storage_drop",
+      "reason": "The actual storage/fence owner outlives a bound dirty pool.",
+      "expected_code": "E0505",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 887,
+      "sha256": "4ac19e5c63af6e9f52cdabadbdf76d8e3d3e60bf63537e7c986e0c103a58b2f7"
+    },
+    {
+      "name": "core_drop",
+      "reason": "The exact external core outlives its bound pool.",
+      "expected_code": "E0505",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 884,
+      "sha256": "482623d606a2f3a574aaec0b23b863421b47cdd8cdfc750900a50f9732af1846"
+    },
+    {
+      "name": "frames_reborrow",
+      "reason": "Bound registration retains the exclusive frame-wrapper slice borrow.",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 926,
+      "sha256": "9abf49cfb5c79f5357b18345411418d2993a1f5e044fc96f7014969e9207789d"
+    },
+    {
+      "name": "payload_reborrow",
+      "reason": "A borrowed DirtyFrame payload cannot be mutably aliased during the binding.",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 942,
+      "sha256": "ac2d3b1d1b9d66ef8b81e0410bcbbfd56d629f04a20910e8ee5f726c79707cee"
+    },
+    {
+      "name": "workspace_reborrow",
+      "reason": "The bound writer retains its real98304-byte operation workspace.",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 930,
+      "sha256": "44ec73c82d7355f026e4b67f5f944119d3f386a9179f6ee9f37abf679945442f"
+    },
+    {
+      "name": "bound_move",
+      "reason": "A live writer/read split borrows the stable bound owner.",
+      "expected_code": "E0505",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 927,
+      "sha256": "b48e8c5a6c3b907c81941eda09c6e4d874431f6dd3302ff4a8eb75c9c22df993"
+    },
+    {
+      "name": "bound_resplit",
+      "reason": "Only one field-disjoint writer/read split is live at once.",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 937,
+      "sha256": "7c837f3b63ca816eb037fecdf4bf6954bb977d0cf8e317279b4af6314f9ade72"
+    },
+    {
+      "name": "owner_reborrow",
+      "reason": "An actual dirty content guard retains the exclusive operation Owner.",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 1057,
+      "sha256": "65cdd88b4081dc46826215681f1eead9a5f8f75360d207777dc4eca0e5da0e89"
+    },
+    {
+      "name": "pins_reuse",
+      "reason": "Consuming dirty pins into an actual read guard transfers their ownership once.",
+      "expected_code": "E0382",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 729,
+      "sha256": "7984418cbdd114408a5ed803b9c4bf2e5ea63d50070ea5da3464d230c62e1031"
+    },
+    {
+      "name": "read_mutable",
+      "reason": "An actual read guard exposes only immutable page bytes.",
+      "expected_code": "E0308",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 678,
+      "sha256": "2bd0dd010a5a0621c23f62bad8035e751aba3c72a01b244619b90ff05532793b"
+    },
+    {
+      "name": "read_sync",
+      "reason": "The actual dirty read guard is not Sync even though its reader view is Sync.",
+      "expected_code": "E0277",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 612,
+      "sha256": "131fbb0cbb69e504801f294dee54c2fc3932a09af67db2090eb0384873a45f77"
+    },
+    {
+      "name": "write_sync",
+      "reason": "The actual dirty version/content write guard cannot be shared across threads.",
+      "expected_code": "E0277",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 615,
+      "sha256": "993fbd8528145a800c90cee718aff521b210fdfa31bc6c59311247e968cd2b5f"
+    },
+    {
+      "name": "raw_lsn",
+      "reason": "A raw LSN cannot substitute for a sealed successful-stage install permit.",
+      "expected_code": "E0308",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 633,
+      "sha256": "2c392bd81310cc93736184b6fa2b5aae39eade1891016d10a0e6650c5275c955"
+    },
+    {
+      "name": "permit_private",
+      "reason": "Only the actual producer module may construct the sealed exact-core/after-image permit.",
+      "expected_code": "E0451",
+      "primary_line": 10,
+      "primary_spans": "all_on_line",
+      "bytes": 742,
+      "sha256": "77f54df91e8f4d31b474d6b4a1ff3c7ddf6df26df60e85cfd4f880db1f96faa5"
+    },
+    {
+      "name": "permit_clone",
+      "reason": "The sealed install permit is not Clone.",
+      "expected_code": "E0599",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 632,
+      "sha256": "32909f02289010ed9b4b3f76c1c931de4218ecb180c3f3b73f0807583e811ad8"
+    }
+  ]
+}

@@ -1,0 +1,1354 @@
+{
+  "schema_version": 1,
+  "status": "GENERATED_ORACLE_INPUTS_NOT_PRODUCT_EXECUTION",
+  "product_tests": "NOT_RUN",
+  "compiler_tests": "NOT_RUN",
+  "oracle_selftests": "NOT_RUN",
+  "resource_context": {
+    "name": "Dirty98304",
+    "terminal_memory": 98304,
+    "selection": "trusted owner context; not inferred from wire",
+    "descriptor_offsets": {
+      "terminal_row_memory": 968,
+      "aggregate_memory": 1288
+    }
+  },
+  "generator": {
+    "path": "scripts/dev3_dirty_allocation_oracle.py",
+    "sha256": "ec5ee899b075db837ade8c5fc030a59ba667e9287e1d6b155c467b03407b3bf2",
+    "runtime_dependencies": [
+      "Python standard library only"
+    ]
+  },
+  "algorithm_provenance_not_runtime_dependencies": {
+    "artifacts/dev3/allocation-reservation-preparation-20261021/r4-literals.py": "18d7a69412776f1a50e3f658dd66d117b98953b6e91c8e3619b2b19ba1436ffc",
+    "artifacts/dev3/allocation-reservation-independent-review-20261021/r2-raw-audit.py": "7fb21276d06f2f116f44840fefbdeba9a3c01b20fc02942158c5f031e55609d4"
+  },
+  "contracts_read": {
+    "devdoc/contracts/dev3-allocation-reservation.md": "c05c52738a6942203a87d03549d2de7fa562f54ef35c68d8c486b855af6d5ed3",
+    "devdoc/contracts/dev3-allocation-format.md": "e0127c91a67ca2dfd215332634f831c9b2e968c1b4f6bcf92711e6519801521e",
+    "devdoc/contracts/dev3-obligation-format.md": "88df442bb4e9caf29abe7c3719f84e0a339aaf9cb1d9c097c8e2ea183d6c0643",
+    "devdoc/contracts/dev3-wal-format.md": "a70d61590a020399cdd33d21b0c6b4ee42bd4aec6a73ec4ad4040ed9a54698c8"
+  },
+  "inputs": [
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-d3-profile.bin",
+      "bytes": 4096,
+      "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-d3-profile.bin",
+      "bytes": 4096,
+      "sha256": "e45db9f3b6d87837bc2d626f641034c7b647b711fe8c761990731eb5db16052f"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-d3-profile.bin",
+      "bytes": 4096,
+      "sha256": "e86fdb05e8a470f64fa351b9626cd667b45824d40ef0bbe376f9c1bfcc4765d0"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-allocation.bin",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-allocation.bin",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-allocation.bin",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    }
+  ],
+  "legacy_manifest_sha256": "872c11b8645035849bf87859d418dd484394528ca21746768a2a30b2e092202d",
+  "history_per_profile": [
+    "reserve1",
+    "cancel1",
+    "reserve8",
+    "cancel8",
+    "reserve63",
+    "cancel63"
+  ],
+  "literal_count": 63,
+  "literal_bytes": 811008,
+  "operation_count": 18,
+  "intermediate_operation_count": 2,
+  "s5_operation_count": 18,
+  "operations": [
+    {
+      "id": "DA-ORACLE-P1-N1-RESERVE",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "INTERMEDIATE_AND_S5",
+      "profile": 1,
+      "count": 1,
+      "work_id": 1,
+      "operation": "reserve",
+      "opcode": 8,
+      "lsn": 1,
+      "previous_lsn": 0,
+      "birth_lsn": 1,
+      "wal_start": 4096,
+      "frame_bytes": 21200,
+      "wal_end": 25296,
+      "page_lsn": 1,
+      "modification_counter": 1,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 98304,
+      "before_descriptor_sha256": null,
+      "outputs": {
+        "frame": "p1-n1-reserve.frame",
+        "page": "p1-n1-reserve.page",
+        "descriptor": "p1-n1-reserve.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P1-N1-CANCEL",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "INTERMEDIATE_AND_S5",
+      "profile": 1,
+      "count": 1,
+      "work_id": 1,
+      "operation": "cancel",
+      "opcode": 10,
+      "lsn": 2,
+      "previous_lsn": 1,
+      "birth_lsn": 1,
+      "wal_start": 25296,
+      "frame_bytes": 21200,
+      "wal_end": 46496,
+      "page_lsn": 2,
+      "modification_counter": 2,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 0,
+      "before_descriptor_sha256": "17d206e590ff8ffc809956167ea70710ed70c291d06139e7fad0158f588e0ac2",
+      "outputs": {
+        "frame": "p1-n1-cancel.frame",
+        "page": "p1-n1-cancel.page",
+        "descriptor": "p1-n1-cancel.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P1-N8-RESERVE",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 1,
+      "count": 8,
+      "work_id": 2,
+      "operation": "reserve",
+      "opcode": 8,
+      "lsn": 3,
+      "previous_lsn": 2,
+      "birth_lsn": 3,
+      "wal_start": 46496,
+      "frame_bytes": 22656,
+      "wal_end": 69152,
+      "page_lsn": 3,
+      "modification_counter": 3,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 98304,
+      "before_descriptor_sha256": null,
+      "outputs": {
+        "frame": "p1-n8-reserve.frame",
+        "page": "p1-n8-reserve.page",
+        "descriptor": "p1-n8-reserve.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P1-N8-CANCEL",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 1,
+      "count": 8,
+      "work_id": 2,
+      "operation": "cancel",
+      "opcode": 10,
+      "lsn": 4,
+      "previous_lsn": 3,
+      "birth_lsn": 3,
+      "wal_start": 69152,
+      "frame_bytes": 22656,
+      "wal_end": 91808,
+      "page_lsn": 4,
+      "modification_counter": 4,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 0,
+      "before_descriptor_sha256": "276cf0b946eb63f5e06cb8b4feee6bef7cbbd04b355a0b66d8885a124d6098e1",
+      "outputs": {
+        "frame": "p1-n8-cancel.frame",
+        "page": "p1-n8-cancel.page",
+        "descriptor": "p1-n8-cancel.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P1-N63-RESERVE",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 1,
+      "count": 63,
+      "work_id": 3,
+      "operation": "reserve",
+      "opcode": 8,
+      "lsn": 5,
+      "previous_lsn": 4,
+      "birth_lsn": 5,
+      "wal_start": 91808,
+      "frame_bytes": 34096,
+      "wal_end": 125904,
+      "page_lsn": 5,
+      "modification_counter": 5,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 98304,
+      "before_descriptor_sha256": null,
+      "outputs": {
+        "frame": "p1-n63-reserve.frame",
+        "page": "p1-n63-reserve.page",
+        "descriptor": "p1-n63-reserve.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P1-N63-CANCEL",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 1,
+      "count": 63,
+      "work_id": 3,
+      "operation": "cancel",
+      "opcode": 10,
+      "lsn": 6,
+      "previous_lsn": 5,
+      "birth_lsn": 5,
+      "wal_start": 125904,
+      "frame_bytes": 34096,
+      "wal_end": 160000,
+      "page_lsn": 6,
+      "modification_counter": 6,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 0,
+      "before_descriptor_sha256": "035fe807dbf709c310da93376747b020f545585f555a26466b634ebdae3eea6b",
+      "outputs": {
+        "frame": "p1-n63-cancel.frame",
+        "page": "p1-n63-cancel.page",
+        "descriptor": "p1-n63-cancel.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P2-N1-RESERVE",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 2,
+      "count": 1,
+      "work_id": 1,
+      "operation": "reserve",
+      "opcode": 8,
+      "lsn": 1,
+      "previous_lsn": 0,
+      "birth_lsn": 1,
+      "wal_start": 4096,
+      "frame_bytes": 21200,
+      "wal_end": 25296,
+      "page_lsn": 1,
+      "modification_counter": 1,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 98304,
+      "before_descriptor_sha256": null,
+      "outputs": {
+        "frame": "p2-n1-reserve.frame",
+        "page": "p2-n1-reserve.page",
+        "descriptor": "p2-n1-reserve.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P2-N1-CANCEL",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 2,
+      "count": 1,
+      "work_id": 1,
+      "operation": "cancel",
+      "opcode": 10,
+      "lsn": 2,
+      "previous_lsn": 1,
+      "birth_lsn": 1,
+      "wal_start": 25296,
+      "frame_bytes": 21200,
+      "wal_end": 46496,
+      "page_lsn": 2,
+      "modification_counter": 2,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 0,
+      "before_descriptor_sha256": "6d3d34edd42076947cdc4875829d846bf220bbf2910e703a3011a202aa0e0482",
+      "outputs": {
+        "frame": "p2-n1-cancel.frame",
+        "page": "p2-n1-cancel.page",
+        "descriptor": "p2-n1-cancel.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P2-N8-RESERVE",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 2,
+      "count": 8,
+      "work_id": 2,
+      "operation": "reserve",
+      "opcode": 8,
+      "lsn": 3,
+      "previous_lsn": 2,
+      "birth_lsn": 3,
+      "wal_start": 46496,
+      "frame_bytes": 22656,
+      "wal_end": 69152,
+      "page_lsn": 3,
+      "modification_counter": 3,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 98304,
+      "before_descriptor_sha256": null,
+      "outputs": {
+        "frame": "p2-n8-reserve.frame",
+        "page": "p2-n8-reserve.page",
+        "descriptor": "p2-n8-reserve.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P2-N8-CANCEL",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 2,
+      "count": 8,
+      "work_id": 2,
+      "operation": "cancel",
+      "opcode": 10,
+      "lsn": 4,
+      "previous_lsn": 3,
+      "birth_lsn": 3,
+      "wal_start": 69152,
+      "frame_bytes": 22656,
+      "wal_end": 91808,
+      "page_lsn": 4,
+      "modification_counter": 4,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 0,
+      "before_descriptor_sha256": "cbf7bffff470738f05b2afbaad5e432c0b76dc95f169440c951fd4651d071cc4",
+      "outputs": {
+        "frame": "p2-n8-cancel.frame",
+        "page": "p2-n8-cancel.page",
+        "descriptor": "p2-n8-cancel.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P2-N63-RESERVE",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 2,
+      "count": 63,
+      "work_id": 3,
+      "operation": "reserve",
+      "opcode": 8,
+      "lsn": 5,
+      "previous_lsn": 4,
+      "birth_lsn": 5,
+      "wal_start": 91808,
+      "frame_bytes": 34096,
+      "wal_end": 125904,
+      "page_lsn": 5,
+      "modification_counter": 5,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 98304,
+      "before_descriptor_sha256": null,
+      "outputs": {
+        "frame": "p2-n63-reserve.frame",
+        "page": "p2-n63-reserve.page",
+        "descriptor": "p2-n63-reserve.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P2-N63-CANCEL",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 2,
+      "count": 63,
+      "work_id": 3,
+      "operation": "cancel",
+      "opcode": 10,
+      "lsn": 6,
+      "previous_lsn": 5,
+      "birth_lsn": 5,
+      "wal_start": 125904,
+      "frame_bytes": 34096,
+      "wal_end": 160000,
+      "page_lsn": 6,
+      "modification_counter": 6,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 0,
+      "before_descriptor_sha256": "7278ebbc900164d223ceae8f53dc60aa8c12769c0ce1c1ed567fc6825a99e2f6",
+      "outputs": {
+        "frame": "p2-n63-cancel.frame",
+        "page": "p2-n63-cancel.page",
+        "descriptor": "p2-n63-cancel.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P3-N1-RESERVE",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 3,
+      "count": 1,
+      "work_id": 1,
+      "operation": "reserve",
+      "opcode": 8,
+      "lsn": 1,
+      "previous_lsn": 0,
+      "birth_lsn": 1,
+      "wal_start": 4096,
+      "frame_bytes": 21200,
+      "wal_end": 25296,
+      "page_lsn": 1,
+      "modification_counter": 1,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 98304,
+      "before_descriptor_sha256": null,
+      "outputs": {
+        "frame": "p3-n1-reserve.frame",
+        "page": "p3-n1-reserve.page",
+        "descriptor": "p3-n1-reserve.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P3-N1-CANCEL",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 3,
+      "count": 1,
+      "work_id": 1,
+      "operation": "cancel",
+      "opcode": 10,
+      "lsn": 2,
+      "previous_lsn": 1,
+      "birth_lsn": 1,
+      "wal_start": 25296,
+      "frame_bytes": 21200,
+      "wal_end": 46496,
+      "page_lsn": 2,
+      "modification_counter": 2,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 0,
+      "before_descriptor_sha256": "3f48b86e025da3b125340fb56ed7fe62b90cad8908c4c3073a293955ceaa40a4",
+      "outputs": {
+        "frame": "p3-n1-cancel.frame",
+        "page": "p3-n1-cancel.page",
+        "descriptor": "p3-n1-cancel.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P3-N8-RESERVE",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 3,
+      "count": 8,
+      "work_id": 2,
+      "operation": "reserve",
+      "opcode": 8,
+      "lsn": 3,
+      "previous_lsn": 2,
+      "birth_lsn": 3,
+      "wal_start": 46496,
+      "frame_bytes": 22656,
+      "wal_end": 69152,
+      "page_lsn": 3,
+      "modification_counter": 3,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 98304,
+      "before_descriptor_sha256": null,
+      "outputs": {
+        "frame": "p3-n8-reserve.frame",
+        "page": "p3-n8-reserve.page",
+        "descriptor": "p3-n8-reserve.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P3-N8-CANCEL",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 3,
+      "count": 8,
+      "work_id": 2,
+      "operation": "cancel",
+      "opcode": 10,
+      "lsn": 4,
+      "previous_lsn": 3,
+      "birth_lsn": 3,
+      "wal_start": 69152,
+      "frame_bytes": 22656,
+      "wal_end": 91808,
+      "page_lsn": 4,
+      "modification_counter": 4,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 0,
+      "before_descriptor_sha256": "ce1b237a3f9934ef47e3712b37ef6d52b5ce9b431e495e246c00259b596eebeb",
+      "outputs": {
+        "frame": "p3-n8-cancel.frame",
+        "page": "p3-n8-cancel.page",
+        "descriptor": "p3-n8-cancel.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P3-N63-RESERVE",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 3,
+      "count": 63,
+      "work_id": 3,
+      "operation": "reserve",
+      "opcode": 8,
+      "lsn": 5,
+      "previous_lsn": 4,
+      "birth_lsn": 5,
+      "wal_start": 91808,
+      "frame_bytes": 34096,
+      "wal_end": 125904,
+      "page_lsn": 5,
+      "modification_counter": 5,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 98304,
+      "before_descriptor_sha256": null,
+      "outputs": {
+        "frame": "p3-n63-reserve.frame",
+        "page": "p3-n63-reserve.page",
+        "descriptor": "p3-n63-reserve.descriptor"
+      }
+    },
+    {
+      "id": "DA-ORACLE-P3-N63-CANCEL",
+      "status": "NOT_RUN",
+      "resource_context": "Dirty98304",
+      "selection": "S5_ONLY",
+      "profile": 3,
+      "count": 63,
+      "work_id": 3,
+      "operation": "cancel",
+      "opcode": 10,
+      "lsn": 6,
+      "previous_lsn": 5,
+      "birth_lsn": 5,
+      "wal_start": 125904,
+      "frame_bytes": 34096,
+      "wal_end": 160000,
+      "page_lsn": 6,
+      "modification_counter": 6,
+      "first_rec_lsn": 1,
+      "descriptor_terminal_memory": 0,
+      "before_descriptor_sha256": "956290bb0e08a30e4cf404676d518ef996260f80fa46477e4962e7461189f14f",
+      "outputs": {
+        "frame": "p3-n63-cancel.frame",
+        "page": "p3-n63-cancel.page",
+        "descriptor": "p3-n63-cancel.descriptor"
+      }
+    }
+  ],
+  "cycles": [
+    {
+      "profile": 1,
+      "count": 1,
+      "work_id": 1,
+      "reserve_lsn": 1,
+      "cancel_lsn": 2,
+      "wal_end": 46496,
+      "frame_bytes": 21200,
+      "first_rec_lsn": 1
+    },
+    {
+      "profile": 1,
+      "count": 8,
+      "work_id": 2,
+      "reserve_lsn": 3,
+      "cancel_lsn": 4,
+      "wal_end": 91808,
+      "frame_bytes": 22656,
+      "first_rec_lsn": 1
+    },
+    {
+      "profile": 1,
+      "count": 63,
+      "work_id": 3,
+      "reserve_lsn": 5,
+      "cancel_lsn": 6,
+      "wal_end": 160000,
+      "frame_bytes": 34096,
+      "first_rec_lsn": 1
+    },
+    {
+      "profile": 2,
+      "count": 1,
+      "work_id": 1,
+      "reserve_lsn": 1,
+      "cancel_lsn": 2,
+      "wal_end": 46496,
+      "frame_bytes": 21200,
+      "first_rec_lsn": 1
+    },
+    {
+      "profile": 2,
+      "count": 8,
+      "work_id": 2,
+      "reserve_lsn": 3,
+      "cancel_lsn": 4,
+      "wal_end": 91808,
+      "frame_bytes": 22656,
+      "first_rec_lsn": 1
+    },
+    {
+      "profile": 2,
+      "count": 63,
+      "work_id": 3,
+      "reserve_lsn": 5,
+      "cancel_lsn": 6,
+      "wal_end": 160000,
+      "frame_bytes": 34096,
+      "first_rec_lsn": 1
+    },
+    {
+      "profile": 3,
+      "count": 1,
+      "work_id": 1,
+      "reserve_lsn": 1,
+      "cancel_lsn": 2,
+      "wal_end": 46496,
+      "frame_bytes": 21200,
+      "first_rec_lsn": 1
+    },
+    {
+      "profile": 3,
+      "count": 8,
+      "work_id": 2,
+      "reserve_lsn": 3,
+      "cancel_lsn": 4,
+      "wal_end": 91808,
+      "frame_bytes": 22656,
+      "first_rec_lsn": 1
+    },
+    {
+      "profile": 3,
+      "count": 63,
+      "work_id": 3,
+      "reserve_lsn": 5,
+      "cancel_lsn": 6,
+      "wal_end": 160000,
+      "frame_bytes": 34096,
+      "first_rec_lsn": 1
+    }
+  ],
+  "literals": [
+    {
+      "path": "p1-n1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "c14d64d3f78aab403ee3d30034705037ef590bf5e1adb49cdf6e2c8140a8f23c",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n1-cancel.descriptor",
+        "sha256": "c14d64d3f78aab403ee3d30034705037ef590bf5e1adb49cdf6e2c8140a8f23c",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n1-cancel.frame",
+      "bytes": 21200,
+      "sha256": "0def302c5576ea43a118079f1a4b0e71fe183148192a78e4e4ba394ac9e35bf5",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n1-cancel.frame",
+        "sha256": "baccf7acb6194bf2dda8f530e76ad11bc469768d908e2f5ad1e605e08a715f39",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n1-cancel.page",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n1-cancel.page",
+        "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n1-items.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n1-items.bin",
+        "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "17d206e590ff8ffc809956167ea70710ed70c291d06139e7fad0158f588e0ac2",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n1-reserve.descriptor",
+        "sha256": "43f046a3b100d66d44046e86293cefcaa4ee57e211e9fd9bf7f60ff9ccd0ab09",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n1-reserve.frame",
+      "bytes": 21200,
+      "sha256": "a389cf555a8bb4f6c9a65f7bf3be2760c5b4d28f068761281688231454dbb1c1",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n1-reserve.frame",
+        "sha256": "98c3a7de227afdfbb7287b2896082b9465ff744c0bde1e36093c21546187e818",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n1-reserve.page",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n1-reserve.page",
+        "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n63-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "3fe808827d8aeb9e0c103ce1797ddcedd33b4ed6f4823d1109b7e37076d18c55",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n63-cancel.descriptor",
+        "sha256": "3fe808827d8aeb9e0c103ce1797ddcedd33b4ed6f4823d1109b7e37076d18c55",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n63-cancel.frame",
+      "bytes": 34096,
+      "sha256": "994b1432c96be2030df32aa076cdc11b3e7eab985c9c38f83f411a38b715b256",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n63-cancel.frame",
+        "sha256": "b0f0670602d9e140b7950318038bfe5f670b3e80617237f27f0d6dbab1cc9f80",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n63-cancel.page",
+      "bytes": 16384,
+      "sha256": "a1d6a1eba3306a996fa0ce9b902fffaa9344a6c129bb0541099b2be91a7cc2b2",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n63-cancel.page",
+        "sha256": "a1d6a1eba3306a996fa0ce9b902fffaa9344a6c129bb0541099b2be91a7cc2b2",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n63-items.bin",
+      "bytes": 6048,
+      "sha256": "765025a50023a19ba1c5658eea4e3b277b28a160f8c79ad0ed32e3e2e8fef17f",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n63-items.bin",
+        "sha256": "765025a50023a19ba1c5658eea4e3b277b28a160f8c79ad0ed32e3e2e8fef17f",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n63-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "035fe807dbf709c310da93376747b020f545585f555a26466b634ebdae3eea6b",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n63-reserve.descriptor",
+        "sha256": "134cc9edd0c45a2e207f901ffb59122db3ca82d3f837067cf5b2cae71fe60eda",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n63-reserve.frame",
+      "bytes": 34096,
+      "sha256": "dd4fda984f4fc5190c28df402d256f912072e5ecf030cc3ce5832d3d6865130b",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n63-reserve.frame",
+        "sha256": "231bfaee83ba963c42a1761d2bef1ee0003ec4a6314c78df87faec3b8d91b4a6",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n63-reserve.page",
+      "bytes": 16384,
+      "sha256": "dcb2f2a60020f797018c4668707dbe1f791a8af256bb4975972220b0d350b909",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n63-reserve.page",
+        "sha256": "dcb2f2a60020f797018c4668707dbe1f791a8af256bb4975972220b0d350b909",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n8-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "0c29ab94d8e7dff91f2512da50ee0ab576f61d8d6568074c97408de5b0a9f004",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n8-cancel.descriptor",
+        "sha256": "0c29ab94d8e7dff91f2512da50ee0ab576f61d8d6568074c97408de5b0a9f004",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n8-cancel.frame",
+      "bytes": 22656,
+      "sha256": "b314c4839012436ad07eecf72bfe376591de3c7247ecf7c8c5cdeee88cde6ce4",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n8-cancel.frame",
+        "sha256": "39171d01cbcb678ded430f43c8f7e8fbaa832956db3dc6eda13c3f8d3bea1285",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n8-cancel.page",
+      "bytes": 16384,
+      "sha256": "65cf1967f30d6689caa029eed3d1d664ca94c576a9d37981456a1cf348c554c5",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n8-cancel.page",
+        "sha256": "65cf1967f30d6689caa029eed3d1d664ca94c576a9d37981456a1cf348c554c5",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n8-items.bin",
+      "bytes": 768,
+      "sha256": "f177b919a18eacc4b21ce9f09e3ef89ab9b1060034033e170a3b25e49e3ba25b",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n8-items.bin",
+        "sha256": "f177b919a18eacc4b21ce9f09e3ef89ab9b1060034033e170a3b25e49e3ba25b",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n8-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "276cf0b946eb63f5e06cb8b4feee6bef7cbbd04b355a0b66d8885a124d6098e1",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n8-reserve.descriptor",
+        "sha256": "db4733d0b3e63c8a5e3faf01f625117b76e175e78e4e75737b039333c8fbe8b0",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n8-reserve.frame",
+      "bytes": 22656,
+      "sha256": "9fd2e527a41ce749ba47a268daebdf017e8787d69b3f3765cd1d468868c401a1",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n8-reserve.frame",
+        "sha256": "ae6c18d1e9fbf36ca26e8488e076fe6c084afc9122bbba5a2705a42d348e6edd",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p1-n8-reserve.page",
+      "bytes": 16384,
+      "sha256": "c186c4d9ac03e7748517268518d59a5146383402da9bba69722199c3d291aa22",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p1-n8-reserve.page",
+        "sha256": "c186c4d9ac03e7748517268518d59a5146383402da9bba69722199c3d291aa22",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "42e1f099d365e85ecba0eba9a92098689bdf417c29759fc7dea401e74659e0dc",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n1-cancel.descriptor",
+        "sha256": "42e1f099d365e85ecba0eba9a92098689bdf417c29759fc7dea401e74659e0dc",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n1-cancel.frame",
+      "bytes": 21200,
+      "sha256": "bc2c44845f8e624d534141851828d081f06228b5cf3867d9a9350d9bfad153cf",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n1-cancel.frame",
+        "sha256": "62dfd812a620b1deb89b351dec8161c6f7fa4657f527fd77f19dc4a60f326989",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n1-cancel.page",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n1-cancel.page",
+        "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n1-items.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n1-items.bin",
+        "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "6d3d34edd42076947cdc4875829d846bf220bbf2910e703a3011a202aa0e0482",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n1-reserve.descriptor",
+        "sha256": "7fc4959da8eea6320be1ea06830a96c367cc9836d95e185f876ad712abb8aa3e",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n1-reserve.frame",
+      "bytes": 21200,
+      "sha256": "3a61bc6bcf8c5f3a7945382566152693dbc94d647e75c9c26b6672ee9fc324a6",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n1-reserve.frame",
+        "sha256": "04518aaf906ad9c4ce8c3d497ad372547e1d65fff16aa0ce2af1041d3cda5508",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n1-reserve.page",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n1-reserve.page",
+        "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n63-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "9ab09f139a7a853984656c21edd8c57190e5273d2e06f1aed8910d8a6913e79d",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n63-cancel.descriptor",
+        "sha256": "9ab09f139a7a853984656c21edd8c57190e5273d2e06f1aed8910d8a6913e79d",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n63-cancel.frame",
+      "bytes": 34096,
+      "sha256": "653479b2812b6a50a86c52ebcc2a726a37c5ab2ab6d6d79cb7b0954819c51797",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n63-cancel.frame",
+        "sha256": "5eea3f26df4c2e5ffd88bacec7ed95b7486067e021643ec90c4b639473520b1c",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n63-cancel.page",
+      "bytes": 16384,
+      "sha256": "a1d6a1eba3306a996fa0ce9b902fffaa9344a6c129bb0541099b2be91a7cc2b2",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n63-cancel.page",
+        "sha256": "a1d6a1eba3306a996fa0ce9b902fffaa9344a6c129bb0541099b2be91a7cc2b2",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n63-items.bin",
+      "bytes": 6048,
+      "sha256": "765025a50023a19ba1c5658eea4e3b277b28a160f8c79ad0ed32e3e2e8fef17f",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n63-items.bin",
+        "sha256": "765025a50023a19ba1c5658eea4e3b277b28a160f8c79ad0ed32e3e2e8fef17f",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n63-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "7278ebbc900164d223ceae8f53dc60aa8c12769c0ce1c1ed567fc6825a99e2f6",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n63-reserve.descriptor",
+        "sha256": "a36e9f24d0f270e6da6e99be237251ec16a4e866b2404912bcc08f5947da7d4d",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n63-reserve.frame",
+      "bytes": 34096,
+      "sha256": "31ad0e31af169783294863e916f7a4b5c0d395a2e8fb9ac709ca13f42afc26a9",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n63-reserve.frame",
+        "sha256": "fc4f9fb943c4dc615a045655d03583209438350e1ff814346395e2a1890760de",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n63-reserve.page",
+      "bytes": 16384,
+      "sha256": "dcb2f2a60020f797018c4668707dbe1f791a8af256bb4975972220b0d350b909",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n63-reserve.page",
+        "sha256": "dcb2f2a60020f797018c4668707dbe1f791a8af256bb4975972220b0d350b909",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n8-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "f7bb8f48bfbbe53223269d175032f595fd6ade1ef47f1442dd0a5bc5630c0d0c",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n8-cancel.descriptor",
+        "sha256": "f7bb8f48bfbbe53223269d175032f595fd6ade1ef47f1442dd0a5bc5630c0d0c",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n8-cancel.frame",
+      "bytes": 22656,
+      "sha256": "63e61267badb2ec124becbd05f14b1c83f35b81b9ffbfac49384c6a3fc312d39",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n8-cancel.frame",
+        "sha256": "b063f97623c5107561965830d03d05b114a9606da0dc667617754b2fa43fd141",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n8-cancel.page",
+      "bytes": 16384,
+      "sha256": "65cf1967f30d6689caa029eed3d1d664ca94c576a9d37981456a1cf348c554c5",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n8-cancel.page",
+        "sha256": "65cf1967f30d6689caa029eed3d1d664ca94c576a9d37981456a1cf348c554c5",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n8-items.bin",
+      "bytes": 768,
+      "sha256": "f177b919a18eacc4b21ce9f09e3ef89ab9b1060034033e170a3b25e49e3ba25b",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n8-items.bin",
+        "sha256": "f177b919a18eacc4b21ce9f09e3ef89ab9b1060034033e170a3b25e49e3ba25b",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n8-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "cbf7bffff470738f05b2afbaad5e432c0b76dc95f169440c951fd4651d071cc4",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n8-reserve.descriptor",
+        "sha256": "9727e0225fad000db007dd06983c4e965f6fbe47524829c20c297397634a9312",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n8-reserve.frame",
+      "bytes": 22656,
+      "sha256": "465d9cd08b8544d9c6553abe0da1248717bc19eea83f367fb57020b92b48d1f9",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n8-reserve.frame",
+        "sha256": "70af87bb9b678bded4289a8e58f4b7012b65994913b4f49bbb8c391f046a9870",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p2-n8-reserve.page",
+      "bytes": 16384,
+      "sha256": "c186c4d9ac03e7748517268518d59a5146383402da9bba69722199c3d291aa22",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p2-n8-reserve.page",
+        "sha256": "c186c4d9ac03e7748517268518d59a5146383402da9bba69722199c3d291aa22",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n1-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "7f736e5b9e027296c5c94e8a8e5b27425511653c2fc8e5834a6409a8ff94d2b1",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n1-cancel.descriptor",
+        "sha256": "7f736e5b9e027296c5c94e8a8e5b27425511653c2fc8e5834a6409a8ff94d2b1",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n1-cancel.frame",
+      "bytes": 21200,
+      "sha256": "809e49dd7d3d9a31f0a98e9e1e167d62c71783e88ba2e90a01956a935a548f0e",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n1-cancel.frame",
+        "sha256": "0c8c0fc1c98960ab45d5209e17308f8bb97ece52d03eb9a3a4aa4bc7a1dd2ee6",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n1-cancel.page",
+      "bytes": 16384,
+      "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n1-cancel.page",
+        "sha256": "fb6c62811f543b76dcb76dbbc7e918e4e9210f443ed4b611cc8d35ca1e6c3fc8",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n1-items.bin",
+      "bytes": 96,
+      "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n1-items.bin",
+        "sha256": "7b59669b6b1815ad145191dc69c8dafb359aeb428572d3f7c87275fe8210964a",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n1-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "3f48b86e025da3b125340fb56ed7fe62b90cad8908c4c3073a293955ceaa40a4",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n1-reserve.descriptor",
+        "sha256": "0e81fcd905f9d309243bc9e3fea642b09a470c7deb5f39640fc043a268d77245",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n1-reserve.frame",
+      "bytes": 21200,
+      "sha256": "c9e8e320564169fd4749906c32d7cfede2b0453088501a3d19c9be86f67b192f",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n1-reserve.frame",
+        "sha256": "20028ca412c1f4f9d139e984b3ad4aa16d354d9b9278643aa64cb3f59f9decba",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n1-reserve.page",
+      "bytes": 16384,
+      "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n1-reserve.page",
+        "sha256": "56d37a6feb1ca0e63a2880f49e2abb13359e8838a31e0214bff52769bd521f47",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n63-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "40a71928cda2cb351f10b8b93322b58507b4e108ecdaabb5466df87cc7f43f5e",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n63-cancel.descriptor",
+        "sha256": "40a71928cda2cb351f10b8b93322b58507b4e108ecdaabb5466df87cc7f43f5e",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n63-cancel.frame",
+      "bytes": 34096,
+      "sha256": "bff3bc623425994234efaf22b7581c159a3f8fa61c8b24f1040a63463fa2ac81",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n63-cancel.frame",
+        "sha256": "316d3ee2f94f83568d25454925797f021566daef127e002b178dee5fc00466bd",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n63-cancel.page",
+      "bytes": 16384,
+      "sha256": "a1d6a1eba3306a996fa0ce9b902fffaa9344a6c129bb0541099b2be91a7cc2b2",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n63-cancel.page",
+        "sha256": "a1d6a1eba3306a996fa0ce9b902fffaa9344a6c129bb0541099b2be91a7cc2b2",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n63-items.bin",
+      "bytes": 6048,
+      "sha256": "765025a50023a19ba1c5658eea4e3b277b28a160f8c79ad0ed32e3e2e8fef17f",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n63-items.bin",
+        "sha256": "765025a50023a19ba1c5658eea4e3b277b28a160f8c79ad0ed32e3e2e8fef17f",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n63-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "956290bb0e08a30e4cf404676d518ef996260f80fa46477e4962e7461189f14f",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n63-reserve.descriptor",
+        "sha256": "8a67d57e27643b13db31d4e2700c895b7c6412eeacd2b6e542f15d4afe9bf416",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n63-reserve.frame",
+      "bytes": 34096,
+      "sha256": "f4650599508e134ef21dd9679eca5b0c27e0c9d2c3b38477bd0805ba91072754",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n63-reserve.frame",
+        "sha256": "e19e6d8fd8ee5c196f5a6a2452cf0fb762ab82124037f37cd32d929ba8f4b5dd",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n63-reserve.page",
+      "bytes": 16384,
+      "sha256": "dcb2f2a60020f797018c4668707dbe1f791a8af256bb4975972220b0d350b909",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n63-reserve.page",
+        "sha256": "dcb2f2a60020f797018c4668707dbe1f791a8af256bb4975972220b0d350b909",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n8-cancel.descriptor",
+      "bytes": 1536,
+      "sha256": "ea2fbbc0a661dc447970be20996b1ac82b297e14d73d0c8d5b6f87904bf49134",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n8-cancel.descriptor",
+        "sha256": "ea2fbbc0a661dc447970be20996b1ac82b297e14d73d0c8d5b6f87904bf49134",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n8-cancel.frame",
+      "bytes": 22656,
+      "sha256": "97cf198ee3d8893a0b2331ced6be8ea56a6b0ba3ef77a318e94c26f9f0d9f45d",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n8-cancel.frame",
+        "sha256": "df541118f8b6dc199efc29b0d218bfbadb968833a774853df0af356eb30d7c40",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n8-cancel.page",
+      "bytes": 16384,
+      "sha256": "65cf1967f30d6689caa029eed3d1d664ca94c576a9d37981456a1cf348c554c5",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n8-cancel.page",
+        "sha256": "65cf1967f30d6689caa029eed3d1d664ca94c576a9d37981456a1cf348c554c5",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n8-items.bin",
+      "bytes": 768,
+      "sha256": "f177b919a18eacc4b21ce9f09e3ef89ab9b1060034033e170a3b25e49e3ba25b",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n8-items.bin",
+        "sha256": "f177b919a18eacc4b21ce9f09e3ef89ab9b1060034033e170a3b25e49e3ba25b",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n8-reserve.descriptor",
+      "bytes": 1536,
+      "sha256": "ce1b237a3f9934ef47e3712b37ef6d52b5ce9b431e495e246c00259b596eebeb",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n8-reserve.descriptor",
+        "sha256": "4668644c12d371b2bda90bca937283bf921413640eae65a83a195e54e141bbbd",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n8-reserve.frame",
+      "bytes": 22656,
+      "sha256": "7b583463a741136e5776c23fad2a853548a4c87c1175ec7038efc1e5bfe8586e",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n8-reserve.frame",
+        "sha256": "13f14337f7568a4bcedaf1e011ec0546e94951c8e459ff112fb0fc05101b00ee",
+        "same_bytes_by_sha256": false,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    },
+    {
+      "path": "p3-n8-reserve.page",
+      "bytes": 16384,
+      "sha256": "c186c4d9ac03e7748517268518d59a5146383402da9bba69722199c3d291aa22",
+      "legacy_provenance": {
+        "path": "tests/fixtures/dev3-allocation-reservation/p3-n8-reserve.page",
+        "sha256": "c186c4d9ac03e7748517268518d59a5146383402da9bba69722199c3d291aa22",
+        "same_bytes_by_sha256": true,
+        "usage": "PROVENANCE_ONLY_NOT_PRODUCT_EXECUTION"
+      }
+    }
+  ]
+}

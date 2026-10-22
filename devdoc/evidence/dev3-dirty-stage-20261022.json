@@ -1,0 +1,451 @@
+{
+  "schema_version": 1,
+  "generated_utc": "2026-10-22T02:57:35.593893+00:00",
+  "unit": "D3-DIRTY-ALLOCATION-001",
+  "work_items": [
+    "3.05.1-A/B",
+    "3.04.1.a"
+  ],
+  "status": "ACCEPT_SCOPED_UNIT",
+  "full_dev3_acceptance": false,
+  "scope": "actual allocator1 dirty frame/pin/content/DPT/first-recLSN plus guarded reserve/cancel stage consumer; no INIT/flush/retirement/Commit/general recovery/READY",
+  "policy": [
+    "Preserve original source, binary, input and FAIL/NOT_RUN identities.",
+    "Read/hash aggregation only; no tests executed by this evidence writer.",
+    "53 mandatory runtime cases combine original source-bound prefix6, repair2 and first-execution45; full DA01 failed group stays FAIL."
+  ],
+  "inputs": {
+    "d2": {
+      "path": "artifacts/dev3/resume-20261022/dirty-stage-contract-draft.md",
+      "sha256": "00c9422692d87543a4fd3e2a6d60a801466d948c0a34e5ac7196ed94de98200d",
+      "bytes": 51519
+    },
+    "d2_delta": {
+      "path": "artifacts/dev3/resume-20261022/dirty-implementation-notes.md",
+      "sha256": "93ab268a3a880ed18e3c3b2eb6aadcbb5178477c36f9799e9d7d7ab35239fc9c",
+      "bytes": 6476
+    },
+    "compiler": {
+      "path": "artifacts/dev3/resume-20261022/dirty-compiler-input-freeze.md",
+      "sha256": "3ba743a29e604ab1f092a2a9b2710c0d6ff365709eccb42bd2e56c3180f6efb8",
+      "bytes": 3821
+    },
+    "runtime_r4": {
+      "path": "artifacts/dev3/resume-20261022/dirty-runtime-input-r4/plan.md",
+      "sha256": "08eccadcacf3ff056a0148f31b97f9e958a96b76e3dfbecef0d76aa8584aaab0",
+      "bytes": 2065
+    }
+  },
+  "results": {
+    "context_profiles": {
+      "status": "ACCEPT_SCOPED_EXECUTION",
+      "rust_tests": 1,
+      "case_markers": 10,
+      "oracle_selftests": 4,
+      "source_sha256": "c81b1df8aca0bd5265f8e96338b0c110fc5de283c69be512f9bbdbad5ac7af2a",
+      "original_aggregate_status": "FAIL",
+      "original": {
+        "path": "artifacts/dev3/resume-20261022/dirty-profiles-r0/result.json",
+        "sha256": "10d001f68f37b2185751958e05cc4c1874ada522671feca72d40d1a33fd3ad02",
+        "bytes": 4001
+      },
+      "audit": {
+        "path": "artifacts/dev3/resume-20261022/review/dirty-profile-execution-audit-r0.json",
+        "sha256": "e91a6e2dddd90fb791204e76e8bac97f7c1d64ce3830faad0bd306cbb1c4335b",
+        "bytes": 3789
+      },
+      "review": {
+        "path": "artifacts/dev3/resume-20261022/review/dirty-profile-execution-review-r0.md",
+        "sha256": "e434cc9186b4b73ff595f8250950233195a6bc3f418e8464910223bef29fedba",
+        "bytes": 2266
+      },
+      "reason": "ephemeral collector omitted libtest-prefixed first marker and expected wrong completion spacing; actual assertions and oracle4 succeeded; no rerun"
+    },
+    "compiler": {
+      "status": "PASS",
+      "count": 18,
+      "source_sha256": "d3321f4dbe007ef7d43404722ad3ca50fa612824d0bb74093a9e51e5940ba9c3",
+      "seconds": 21.550103613997635,
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/dirty-compiler-r0/result.json",
+        "sha256": "f1c983f842909761d8b95fa8b17f1d80a00456db6c3c57d0759bea860da235cd",
+        "bytes": 167197
+      },
+      "checker_selftests": 6,
+      "checker_log": {
+        "path": "artifacts/dev3/resume-20261022/dirty-compiler-r0/selftests.stderr",
+        "sha256": "65378dcad145da2497120819bebfc3c46534dce9714ce064b3d809a56654aca2",
+        "bytes": 104
+      },
+      "source_capture_note": "initial a8e080... plus one generated checker .pyc yields actual d332...; all compiler18 bind actual preserved d332 source",
+      "review": {
+        "path": "artifacts/dev3/resume-20261022/review/dirty-compiler-execution-review-r0.md",
+        "sha256": "7a03cfdaae30b049919add655f58593546bab7f8749d9cd708619263cf5309d8",
+        "bytes": 2076
+      }
+    },
+    "runtime": {
+      "status": "SOURCE_SCOPED_CASE_COVERAGE",
+      "mandatory_cases": 53,
+      "single_source_full_group_pass": false,
+      "segments": [
+        {
+          "status": "AUDITED_COMPLETED_PREFIX",
+          "cases": [
+            "DA01-01",
+            "DA01-02",
+            "DA01-03",
+            "DA01-04",
+            "DA01-05",
+            "DA01-06"
+          ],
+          "source_sha256": "aa03231acebe8e940047f96e61be27e65923831a4ff1599a19029a4c1a92b5d4",
+          "binary_sha256": "981ba2e453cf75ccfb47b05bd88bba98f7c6897efeebea685b5b456de6a3bf1e",
+          "original_group_status": "FAIL",
+          "original": {
+            "path": "artifacts/dev3/resume-20261022/dirty-runtime-r1/runtime/result.json",
+            "sha256": "51302b60f195b458957d57e1ef8f227e73614d4ce003f4d4855a3609dfd3b095",
+            "bytes": 3302
+          },
+          "review": {
+            "path": "artifacts/dev3/resume-20261022/review/dirty-runtime-resource-prefix-review-r0.md",
+            "sha256": "f5d1c50691c6010330ab00c07b470b38a565f80db82e9a28386860950d4872e9",
+            "bytes": 4662
+          }
+        },
+        {
+          "status": "PASS",
+          "cases": [
+            "DA01-07",
+            "DA01-08"
+          ],
+          "source_sha256": "54f3f819639979ce1ba49819f8231a4a6239a1648ec33605471f972835760a6e",
+          "receipt": {
+            "path": "artifacts/dev3/resume-20261022/dirty-runtime-r2/da01-repair-result.json",
+            "sha256": "b9e91f4b9d3ff8e360ba7ba750cf5d27942b0e0507b8ac29617e0cbe09701ccd",
+            "bytes": 480
+          },
+          "stdout": {
+            "path": "artifacts/dev3/resume-20261022/dirty-runtime-r2/da01-repair.stdout",
+            "sha256": "5eb430efdcf6f94cd3b51adb5a157ca6011d8f2679b4b7ed2490b075cbe8fb1c",
+            "bytes": 323
+          },
+          "note": "07 corrected real fault plan,08 first execution; ignored repair selector excluded from S5 full DA01 inventory"
+        },
+        {
+          "status": "PASS",
+          "groups": 6,
+          "cases": 45,
+          "independent_negatives": 55,
+          "source_sha256": "54f3f819639979ce1ba49819f8231a4a6239a1648ec33605471f972835760a6e",
+          "binary_sha256": "e30fbad61f37f22b16e514caab0d48e36b57d4f2ac580d280ca5f2a252acfabd",
+          "seconds": 24.325157140996453,
+          "receipt": {
+            "path": "artifacts/dev3/resume-20261022/dirty-runtime-r2/runtime/result.json",
+            "sha256": "e6eec8b682d2cd7790d6887b2a9eb9ebafa8ca56786f250edbd73d7fd2547c51",
+            "bytes": 9336
+          },
+          "groups_detail": [
+            {
+              "id": "DA02",
+              "cases": [
+                "DA02-01",
+                "DA02-02"
+              ],
+              "seconds": 0.9654063649995805
+            },
+            {
+              "id": "DA03",
+              "cases": [
+                "DA03-01",
+                "DA03-02",
+                "DA03-03",
+                "DA03-04",
+                "DA03-05"
+              ],
+              "seconds": 1.817431924999255
+            },
+            {
+              "id": "DA04",
+              "cases": [
+                "DA04-01",
+                "DA04-02",
+                "DA04-03",
+                "DA04-04",
+                "DA04-05"
+              ],
+              "seconds": 3.2693561720006983
+            },
+            {
+              "id": "DA05",
+              "cases": [
+                "DA05-01",
+                "DA05-02",
+                "DA05-03",
+                "DA05-04",
+                "DA05-05",
+                "DA05-06",
+                "DA05-07",
+                "DA05-08"
+              ],
+              "seconds": 5.172572328998285
+            },
+            {
+              "id": "DA06",
+              "cases": [
+                "DA06-01",
+                "DA06-02",
+                "DA06-03",
+                "DA06-04",
+                "DA06-05",
+                "DA06-06",
+                "DA06-07",
+                "DA06-08",
+                "DA06-09",
+                "DA06-10",
+                "DA06-11",
+                "DA06-12"
+              ],
+              "seconds": 7.727095541999006
+            },
+            {
+              "id": "DA07",
+              "cases": [
+                "DA07-01",
+                "DA07-02",
+                "DA07-03",
+                "DA07-04",
+                "DA07-05",
+                "DA07-06",
+                "DA07-07",
+                "DA07-08",
+                "DA07-09",
+                "DA07-10",
+                "DA07-11",
+                "DA07-12",
+                "DA07-13"
+              ],
+              "seconds": 5.373294807999628
+            }
+          ]
+        }
+      ]
+    },
+    "native": {
+      "status": "PASS",
+      "cases": 3,
+      "source_sha256": "54f3f819639979ce1ba49819f8231a4a6239a1648ec33605471f972835760a6e",
+      "binary_sha256": "e30fbad61f37f22b16e514caab0d48e36b57d4f2ac580d280ca5f2a252acfabd",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/dirty-runtime-r2/native/result.json",
+        "sha256": "3435169f0dec2b97c134a9105a7f1bf6120434552d5dc25102042f860995b2e9",
+        "bytes": 48903
+      },
+      "kinds": [
+        "normal",
+        "reserve-write-half",
+        "cancel-sync-after"
+      ],
+      "database_bytes": 66303144,
+      "scope": "actual Linux selected WAL bytes/fault prefixes; unchanged home/DWB identity; retained exact O/IoOwned and no pins at I/O; no crash recovery/power-loss claim"
+    },
+    "new_checkers": {
+      "runtime": {
+        "count": 6,
+        "status": "PASS",
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/dirty-runtime-r0/runtime-selftests.stderr",
+          "sha256": "62cfbeb2911bb226088bfb0918eb4b05008ea70b20bce854ee2ca8a564bd37a5",
+          "bytes": 104
+        }
+      },
+      "native": {
+        "count": 4,
+        "status": "PASS",
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/dirty-runtime-r1/native-selftests.stderr",
+          "sha256": "feabb4add9e2ca3374e538560634d1ec97dc4f4ce89aab12f3d726e36ea9b2f6",
+          "bytes": 102
+        }
+      }
+    },
+    "layout_diagnostic": {
+      "status": "OBSERVED_NOT_RESOURCE_SUITE_ACCEPTANCE",
+      "source_sha256": "aa03231acebe8e940047f96e61be27e65923831a4ff1599a19029a4c1a92b5d4",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/dirty-runtime-r1/layout-diagnostic.stdout",
+        "sha256": "1051a5faae7f420b6110c4e5e4d9962a5cc2fe72ae46dfc734d6775d909fd19f",
+        "bytes": 1241
+      },
+      "pin_guard_bytes": 16,
+      "pin_lock_result_bytes": 24,
+      "obligation_bytes": 192,
+      "option_obligation_bytes": 192,
+      "permit_bytes": 208,
+      "writer_source_aggregate_bytes": 23224,
+      "physical_stack": "NOT_MEASURED"
+    },
+    "quality": {
+      "status": "PASS",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/dirty-quality-r0/result.json",
+        "sha256": "b2c6da7365fb122e07e780a0888c68a745471a0622e9f94aab4414dd2efbc801",
+        "bytes": 1212
+      },
+      "scope": "cargo fmt all check and engine all-target/all-feature Clippy; no tests executed",
+      "evidence_limit": "command completion retained in tool outputs, receipt identifies tool session/chunk; no separately captured stdout file"
+    }
+  },
+  "original_failures": [
+    {
+      "path": "artifacts/dev3/resume-20261022/dirty-profiles-r0/result.json",
+      "sha256": "10d001f68f37b2185751958e05cc4c1874ada522671feca72d40d1a33fd3ad02",
+      "bytes": 4001
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/dirty-runtime-r0/result.json",
+      "sha256": "77e0638e88059f9c86366418be4f5d06dad157250cfbe4f7445ccdd8bf7051d6",
+      "bytes": 2547
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/dirty-runtime-r0/runtime/result.json",
+      "sha256": "a4c4d44fa2c7b9129d38d0a1d78026f482efe944cdcdfe5d1c52025900ec8876",
+      "bytes": 3302
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/dirty-runtime-r1/result.json",
+      "sha256": "105050a6de61583d9c350a5f07597423d151e80efafded58425caa99c199ef59",
+      "bytes": 3257
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/dirty-runtime-r1/runtime/result.json",
+      "sha256": "51302b60f195b458957d57e1ef8f227e73614d4ce003f4d4855a3609dfd3b095",
+      "bytes": 3302
+    }
+  ],
+  "reviews": [
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-compiler-execution-review-r0.md",
+      "sha256": "7a03cfdaae30b049919add655f58593546bab7f8749d9cd708619263cf5309d8",
+      "bytes": 2076
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-compiler-preexecution-review-r0.md",
+      "sha256": "bbdcc385f8e25caeb86d42b91cc6659171c245a1deb5702239f85d1958479346",
+      "bytes": 3121
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-native-preexecution-review-r0.md",
+      "sha256": "49e4d140e242b5e5dc240fee72c24afb08aa07b4a06982236bf1a55a93b6acba",
+      "bytes": 4017
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-profile-execution-review-r0.md",
+      "sha256": "e434cc9186b4b73ff595f8250950233195a6bc3f418e8464910223bef29fedba",
+      "bytes": 2266
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-profile-preexecution-review-r0.md",
+      "sha256": "3f7d09ff4b828a2f30a383439dc44c997256e11b47324ed68c0e28917f9ab547",
+      "bytes": 4877
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-runtime-preexecution-review-r0.md",
+      "sha256": "1678508c4a08c8804ea7e5372616e83875824db523bfb006c5e8cd4296bec184",
+      "bytes": 7820
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-runtime-repair-input-review-r0.md",
+      "sha256": "aad18ad6c410c93bfbd743d2f49e00f1df0761fccad5e779215e2e104ab28750",
+      "bytes": 2473
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-runtime-resource-prefix-review-r0.md",
+      "sha256": "f5d1c50691c6010330ab00c07b470b38a565f80db82e9a28386860950d4872e9",
+      "bytes": 4662
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-stage-d2-implementation-addendum-r0.md",
+      "sha256": "31368dff80d649f1beeb1e1d71cdfa21114bfe3934814fec538523faaa348882",
+      "bytes": 7044
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-stage-d2-input-r1.md",
+      "sha256": "00c9422692d87543a4fd3e2a6d60a801466d948c0a34e5ac7196ed94de98200d",
+      "bytes": 51519
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-stage-d2-review-r0.md",
+      "sha256": "2b692c005732177fe17391a676d9bc7d62a207203a4cd1f6a90dc5b519793241",
+      "bytes": 10591
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-stage-d2-review-r1.md",
+      "sha256": "0fe3d2f9a0f1c6fdfdd15a6b402197f1ebff3728ac58a94428e805f7ce4558b7",
+      "bytes": 7959
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/dirty-stage-final-review-r0.md",
+      "sha256": "eaa5322c2a1ec550e64063756d8944068c10559547179267087f8efb1bdb7a4c",
+      "bytes": 8734
+    }
+  ],
+  "source_retention": [
+    {
+      "path": "artifacts/dev3/resume-20261022/dirty-runtime-r0/source-files.json",
+      "sha256": "a93199ab374e4742691bdd9cc006ced0a0c9b4d3c832be004ca3538bf0b96ad1",
+      "bytes": 110093
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/dirty-runtime-r1/source-files.json",
+      "sha256": "ca5bda99d191a9148413e0a6eeca72d8c852894e59fbaf71dbe4c92f55963e00",
+      "bytes": 110093
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/dirty-runtime-r2/source-files.json",
+      "sha256": "a51de03e18b5bc6286d7c95c998a892079a99d0a4fcd73da3f5d1e9596506426",
+      "bytes": 110093
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/dirty-runtime-r2/build-receipt.json",
+      "sha256": "15604b0136ebc99da71fd009e44289fa6f32ef61f3e371db01e6b4e308ea9cf8",
+      "bytes": 904
+    }
+  ],
+  "s5": {
+    "expanded_normal_history_operations": 18,
+    "expanded_normal_status": "IMPLEMENTED_NOT_RUN",
+    "contention_cut_fault_cross_products": "PLANNED_NOT_IMPLEMENTED",
+    "full_dev3_inventory": "NOT_FROZEN_NOT_RUN"
+  },
+  "not_executed": [
+    "unchanged lower tests",
+    "DEV0/1/2 wrappers",
+    "whole workspace tests",
+    "document verifier",
+    "S5 expanded tests"
+  ],
+  "remaining": [
+    "INIT and registered-target lifecycle",
+    "flush/retirement/FIFO and general mutable pool",
+    "tree/row/index/catalog/undo/Commit execution",
+    "general recovery/checkpoint/reclamation/backup",
+    "whole DEV3 S5 qualification"
+  ],
+  "full_unit_acceptance": true,
+  "final_review": {
+    "path": "artifacts/dev3/resume-20261022/review/dirty-stage-final-review-r0.md",
+    "sha256": "eaa5322c2a1ec550e64063756d8944068c10559547179267087f8efb1bdb7a4c",
+    "bytes": 8734
+  },
+  "final_audit": {
+    "path": "artifacts/dev3/resume-20261022/review/dirty-runtime-final-audit-r0.json",
+    "sha256": "bc95133bcdeb32b4cb67e308a414f795accebcbca49d5408ab14307a27624415",
+    "bytes": 11852
+  },
+  "registration_review": {
+    "path": "artifacts/dev3/resume-20261022/review/dirty-stage-registration-addendum-r0.md",
+    "sha256": "97a5129b9ca3aab995a37b478d141312720e72cda5e748cd5e3969b3d0bc244c",
+    "bytes": 2559
+  }
+}

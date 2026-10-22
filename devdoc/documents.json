@@ -1597,6 +1597,21 @@
       "path": "evidence/dev6-work-breakdown-review-20261022-r2.md",
       "role": "evidence",
       "title": "DEV6 작업 배정 2차 점검 — API 분량과 인수 연결"
+    },
+    "dev3-dirty-stage.md": {
+      "path": "contracts/dev3-dirty-stage.md",
+      "role": "contracts",
+      "title": "DEV3 dirty frame·예약/취소의 stage 설치 계약"
+    },
+    "dev3-dirty-stage-20261022.md": {
+      "path": "evidence/dev3-dirty-stage-20261022.md",
+      "role": "evidence",
+      "title": "DEV3 첫 dirty frame·stage 소비자 인수"
+    },
+    "dev3-dirty-stage-20261022.json": {
+      "path": "evidence/dev3-dirty-stage-20261022.json",
+      "role": "evidence",
+      "title": "DEV3 dirty stage source별 실행 색인"
     }
   }
 }
