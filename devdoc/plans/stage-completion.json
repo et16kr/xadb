@@ -998,13 +998,14 @@
       "acceptance_input_status": "BASE_DESIGN_DEFINED_LEAF_API_AND_EXECUTION_PROFILES_PENDING",
       "open_decisions": [
         "D4-F01/F02: actual DEV3-DESIGN-003 API handoff, shared scan/mutation statement token, table validation, uppercase/text normalization/native boundary, Rust signatures, DDL two outcomes/RecoveryRequired and cleanup ownership/error/handle/metadata vectors",
-        "D4-F03: temporary spill codec, owner cleanup API and allocation/FD/disk fault inventory",
+        "D4-F03: temporary spill codec, owner cleanup API and allocation/FD/disk fault inventory; compare actual DEV3 index-build sorter reuse versus separate SQL mechanics in dev4-work-breakdown.md#sort-reuse before implementation, preserving comparator and staging ownership semantics",
         "D4-F04: SC02/KU13 full variant inventory including V17-V24 and R1-R4, independent oracle mutants, two-outcome worker protocol and executable commands",
-        "D4-F05: PF10 fixtures/environment/release recipes, numerical resource/instrumentation/regression budgets and paired measurement schedule",
+        "D4-F05: PF10 fixtures/environment/release recipes, numerical resource/instrumentation/regression budgets and paired measurement schedule; P10-A through P10-E are allocated separately to 4.18.2.1 through 4.18.2.5",
         "dev4-sql-design.md#capacity-boundary: D4-F02/F05 record actual DEV3-REVIEW-004 supply, reservation ownership and batch/gate profile; design/model acceptance alone is not disk evidence",
         "D4-F02/F04: actual opaque observation signatures and no-wait conflict barriers; R2/T11 low-quota partial-CLR restart and reserve-restore supply evidence remain NOT_RUN",
         "D4-F02/F04/F05: logical rollback versus retained WAL/CLR/undo/page/SMO/lock ownership and fresh operation context per fetch; actual API, schedules and resource measurements pending",
-        "D4-F02/F03/F05: freeze concurrent memory/disk/FD boundary schedules, old/new binding allocation witnesses and spill cleanup reservations"
+        "D4-F02/F03/F05: freeze concurrent memory/disk/FD boundary schedules, old/new binding allocation witnesses and spill cleanup reservations",
+        "D4-WORK-BREAKDOWN-002: F02 lifecycle transition ownership is integrated by 4.13 from 4.12/4.13/4.14 contracts; F04 assigns independent bounded lifecycle model/explorer and known-bad completion to 4.16.1/3, with R1/R2/R3/R4 and checkpoint/restore separately allocated in 4.17. Each case records its primary execution-unit owner, consumers, required variants, changed-code scope and original receipt; allocation is not execution evidence"
       ],
       "deferred_obligations": [
         "server/client·확장 SQL은 후속 의무",
