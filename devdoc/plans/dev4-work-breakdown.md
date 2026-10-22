@@ -1,6 +1,6 @@
 # DEV4 — 세부 작업 분류와 공급·인수 계획
 
-2026-10-22 · **18개 분류·기존 55개 작업 ID 유지 / D4-WORK-BREAKDOWN-001·002 ACCEPTED / 제품·Q1 NOT_RUN**
+2026-10-22 · **18개 분류·기존 55개 작업 ID 유지 / D4-WORK-BREAKDOWN-001–003 ACCEPTED / 제품·Q1 NOT_RUN**
 
 [SQL 의미 정본](../contracts/dev4-sql-design.md) · [기존 구현·검증 계획](dev4-implementation-plan.md) · [이번 ARIES·Oracle·로컬 소스 조사](../evidence/dev4-source-research.md#work-breakdown-20261022) · [단계 완료 정본](stage-completion.json) · [DEV3 분해 방식](dev3-implementation-plan.md#remaining-work)
 
@@ -9,6 +9,8 @@
 DEV3처럼 큰 책임을 분류하고 각 책임을 좁은 공급 단위와 소비 경로의 통합 인수로 나눈다. 의미·API의 소유자는 기존 SQL/engine 계약이고, 이 문서는 작업 범위·직접 선행·산출물·인수 연결을 소유한다. 실제 Rust signature·spill bytes·runner·수치 profile은 D4-F01–F05에서 아직 동결해야 한다. 이번 요청으로 제품 구현·시험 실행을 재개하지 않는다.
 
 후속 [분배 검토 002](#work-review-002)는 기존 55개 ID를 보존하면서 큰 작업 아래에 `4.xx.y.z` 실행 단위를 추가한다. 하위 단위를 펼친 부모 ID는 범위·인수 수합용이며 부모와 자식을 별도 완료량으로 중복 계산하지 않는다. 55는 공수·동시 배정 수가 아니다. [초기 영속 경로](#sequence), [상태 통합·독립 모델](#lifecycle-model), [정렬 재사용 판단](#sort-reuse)을 실제 배정에 적용한다.
+
+[재점검 003](#work-review-003)은 같은 18개 책임을 유지하고, 앞단의 실제 선행·공통 오류 변환·시험 도구 공급을 더 좁힌다. [분량 비교](#workload-review)는 구현·검증 준비의 상대적 부담과 미확정 입력을 구분하며 실측 일정으로 사용하지 않는다.
 
 <a id="catalogue"></a>
 ## 1. 전체 18개 분류
@@ -94,9 +96,20 @@ DEV3처럼 큰 책임을 분류하고 각 책임을 좁은 공급 단위와 소�
 
 | 하위 ID·산출물 | 직접 선행 | 완료 조건 |
 | --- | --- | --- |
-| 4.03.1 SELECT·predicate AST | 4.02.1/2, F01 | NOT/AND/OR 우선순위·괄호·비교·IS NULL·projection/ORDER BY/LIMIT. AST8,192·모든 재귀 nesting64의 경계와 단락 이전 전체 구문 검사 |
-| 4.03.2 DML·DDL·거래 AST | 4.03.1의 공통 parser, 4.02.3 | 네 DDL·세 DML·거래 제어의 지원 production, marker 허용 위치. DDL type_length는 구문과 precommit 이후 값 검사를 분리 |
-| 4.03.3 진단·malformed 입력 | 4.03.1/2 | Syntax/Unsupported·원문 span/EOF, 잘린 token·알려진 후속 구문·한도±1 corpus. parser fuzz 입력/기대 거절은 구현과 함께 작성하며 Q1 완료로 승격하지 않음 |
+| 4.03.1 공통 parser·SELECT·predicate AST | 아래 4.03.1.1–3 | 공통 입력과 SELECT/predicate 산출물을 수합. AST8,192·모든 재귀 nesting64와 단락 이전 전체 구문 검사 |
+| 4.03.2 DML·DDL·거래 AST | 아래 4.03.2.1–3 | 네 DDL·세 DML·거래 제어의 지원 production, marker 허용 위치. DDL type_length는 구문과 precommit 이후 값 검사를 분리 |
+| 4.03.3 진단·malformed 입력 | 해당 4.03.1/2의 구현 경로 | Syntax/Unsupported·원문 span/EOF, 잘린 token·알려진 후속 구문·한도±1 corpus. 각 문장 구현과 동시에 공급하고 전체 parser 완료를 기다리지 않음 |
+
+| 실행 단위 | 직접 선행 | 공급·종료 조건 |
+| --- | --- | --- |
+| 4.03.1.1 공통 parser 기반 | 4.02.1/2/3, F01 | token cursor·이름/scalar/marker 표현·dispatch·종료 검사·node/depth 예산. SELECT clause 구현 없이 공급 가능 |
+| 4.03.1.2 predicate | 4.03.1.1 | NOT/AND/OR·괄호·비교·IS NULL의 bounded 표현. UPDATE/DELETE와 SELECT가 같은 표현을 소비 |
+| 4.03.1.3 SELECT clause | 4.03.1.1/2 | projection/FROM/ORDER BY/LIMIT·전체 문장 진단. sorter나 실행기의 완성이 선행은 아님 |
+| 4.03.2.1 INSERT·거래 제어 | 4.03.1.1 | VALUES·열/tuple과 BEGIN/COMMIT/ROLLBACK/SET AUTOCOMMIT. 초기 INSERT/commit 경로가 SELECT parser를 기다리지 않음 |
+| 4.03.2.2 UPDATE/DELETE | 4.03.1.1/2 | SET·선택 WHERE·문장 종류별 marker/진단. SELECT projection/order/limit은 비필수 |
+| 4.03.2.3 DDL | 4.03.1.1 | 네 DDL·제약 정의·type_length 원문 보존. semantic validation은 4.10에 전달하며 parser에서 catalog를 조회하지 않음 |
+
+4.03.3의 corpus·진단과 T01 인수는 위 각 공급에 붙인다. 자식 일부의 성공을 모든 문법 지원으로 표시하지 않으며 parser fuzz 의무는 [시험 선택](#test-scope)에 따라 관련 변경에 연결한다.
 
 <a id="task-04"></a>
 ## 6. 4.04 — SQL 값·NULL·predicate
@@ -107,7 +120,7 @@ DEV3처럼 큰 책임을 분류하고 각 책임을 좁은 공급 단위와 소�
 | --- | --- | --- |
 | 4.04.1 typed scalar 입력 | 4.02.1, F01 | Int64 min/max±1, Bool/Utf8/Binary·typed/untyped NULL 구분, checked 길이·대입 한도. 암묵 cast·절단 없이 오류 |
 | 4.04.2 text 정규화·대입 검사 | 4.04.1 | 원래 타입 확인 뒤 SQL literal/bind의 빈 Utf8만 typed NULL. native 빈 Utf8·빈 Binary·공백/NUL 보존, NOT NULL·목적 열 길이와 V19/20 |
-| 4.04.3 3값 predicate·비교 | 4.03.1, 4.04.1/2 | 독립 T/F/U 표와 모든 지원 타입 비교·IS NULL. WHERE는 TRUE만 통과하며 key total order·sort NULL 위치와 SQL 일반 비교를 구분 |
+| 4.04.3 3값 predicate·비교 | 4.03.1.2, 4.04.1/2 | 독립 T/F/U 표와 모든 지원 타입 비교·IS NULL. WHERE는 TRUE만 통과하며 key total order·sort NULL 위치와 SQL 일반 비교를 구분 |
 
 <a id="task-05"></a>
 ## 7. 4.05 — catalog binding·metadata
@@ -129,7 +142,7 @@ DEV3처럼 큰 책임을 분류하고 각 책임을 좁은 공급 단위와 소�
 | --- | --- | --- |
 | 4.06.1 RowScan 기준 plan | 4.05.2, F02 | node ID·typed operand/parameter slot·dependency 목록. private page/root 주소 없이 scan→filter→sort 필요 표시→project→limit 표현 |
 | 4.06.2 point/range 선택 | 4.06.1, 실제 DEV3 index/key 공급 | leading equality prefix+다음 range·잔여 predicate·고정 후보 순위. OR/NOT fallback, 일반 `= NULL`과 IS NULL 구별, all-null unique의 복수 행 보존 |
-| 4.06.3 실행 view에서 유효성 검사 | 4.06.1/2의 해당 plan, 4.13.1 | 동일 engine guard에서 DB/timeline/open·table/index identity/정의 대조 후 첫 row 접근 전 StalePlan. data commit만으로 stale 금지, 자동 reprepare·이름 재검색 금지 |
+| 4.06.3 실행 view에서 유효성 검사 | 4.05.1/2의 해당 bound dependency·F02, 4.13.1; SELECT access path 연결은 해당 4.06.1/2 | 동일 engine guard에서 DB/timeline/open·table/index identity/정의 대조 후 첫 row 접근/효과 전 StalePlan. SELECT/DML이 같은 검사를 소비하며 INSERT에 RowScan plan을 요구하지 않음. data commit만으로 stale 금지, 자동 reprepare·이름 재검색 금지 |
 
 index path의 실제 결과는 4.07.3에서 literal·native·force-scan과 대조한다. planner 단독의 plan 모양 검사는 그 결과 동등성을 대신하지 않는다.
 
@@ -191,8 +204,8 @@ F03 준비에서 SQL/engine 계약 담당은 [DEV3 offline build](../contracts/d
 
 | 실행 단위 | 직접 선행 | 공급·종료 조건 |
 | --- | --- | --- |
-| 4.09.1.1 INSERT 입력 | 4.05의 INSERT binding, 4.04, 4.13.1·4.14.1.1 | 열/tuple·omitted NULL·타입/bytes·남은 mutation/payload 한도. RowScan/projection/result 완료를 선행으로 두지 않음 |
-| 4.09.1.2 UPDATE/DELETE 대상 | 해당 4.05, 4.07.1의 filter cursor, 4.13.1·4.14.1.1 | RowUID·원래 값·opaque observation을 제한 목록에 수집, mutation 전에 cursor close·같은 statement token 유지. SELECT projection/LIMIT은 비필수 |
+| 4.09.1.1 INSERT 입력 | 4.03.2.1·4.05의 INSERT binding, 4.04.1/2, 4.06.3·4.13.1·4.14.1.1 | 열/tuple·omitted NULL·타입/bytes·남은 mutation/payload 한도. RowScan/projection/result 완료를 선행으로 두지 않음 |
+| 4.09.1.2 UPDATE/DELETE 대상 | 4.03.2.2·해당 4.05, 4.06.3·4.07.1의 filter cursor, 4.13.1·4.14.1.1 | RowUID·원래 값·opaque observation을 제한 목록에 수집, mutation 전에 cursor close·같은 statement token 유지. SELECT projection/LIMIT은 비필수 |
 | 4.09.2.1 INSERT statement | 4.09.1.1, native mutation/finish | VALUES 순서·count·모든 index 원자성·최종 UNIQUE. 명시 거래 안의 statement 성공이며 autocommit은 4.13.2.1에서 결합 |
 | 4.09.2.2 UPDATE/DELETE statement | 4.09.1.2, native mutation/finish | RowId 순서·한 번씩·동일 값 UPDATE count·Halloween 방지. 두 문장 종류를 각각 선택 가능한 사례로 공급 |
 | 4.09.3.1 statement 실패·용량 | 해당 4.09.2.1 또는 .2, 4.14.2·4.14.3.1 | 중간 key/quota·최종 UNIQUE·취소·256/257에서 S2만 복원하고 S1 보존·partial count 금지. INSERT 사례를 먼저 공급하고 UPDATE/DELETE는 해당 구현에 붙임 |
@@ -208,7 +221,7 @@ SQL의 자체 역 DML·hidden retry·여러 commit 분할은 금지한다. runti
 
 | 하위 ID·산출물 | 직접 선행 | 완료 조건 |
 | --- | --- | --- |
-| 4.10.1 precommit 이전 진입 판정 | 4.03.2/3, 4.13.1, 해당 F02 | 지원 문법·namespace·session/handle·ResultBusy·사전 취소만으로 진입 판단. 진입 거절은 기존 상태 유지: Active이면 prior/ddl 모두 NotAttempted, Idle이면 prior=NotPresent·ddl=NotAttempted |
+| 4.10.1 precommit 이전 진입 판정 | 4.03.2.3·해당 4.03.3, 4.13.1, 해당 F02 | 지원 문법·namespace·session/handle·ResultBusy·사전 취소만으로 진입 판단. 진입 거절은 기존 상태 유지: Active이면 prior/ddl 모두 NotAttempted, Idle이면 prior=NotPresent·ddl=NotAttempted |
 | 4.10.2 새 catalog의 DDL lowering | 4.05.1/2의 공통 binding, 실제 DEV3 원자 DDL 공급 | precommit 뒤 호출하는 semantic 검증. CREATE/DROP TABLE/INDEX·PK nullable 강화·소유 제약 index 보호·부분 NULL·index/key 한도. PK/UNIQUE 포함 create는 하나의 native DDL |
 | 4.10.3 이전 거래 종료→독립 DDL | 4.10.1/2, 4.13.2.1의 commit adapter, 4.14.2 | Active이면 prior=Committed 뒤 새 catalog 검증/DDL, Idle이면 prior=NotPresent로 독립 DDL. 이름·길이 오류도 이미 commit된 DML 유지. prior의 NotPresent와 두 거래의 NotAttempted/Committed/Aborted/NotCommittedRecoveryRequired/Unknown·receipt를 정본의 적용 범위대로 반환; V21/22 |
 
@@ -245,12 +258,14 @@ DDL semantic validation을 일반 DML binding 순서에 끼워 precommit보다 �
 
 | 하위 ID·산출물 | 직접 선행 | 완료 조건 |
 | --- | --- | --- |
-| 4.13.1 상태·statement scope 공급 | F02, 실제 DEV3 transaction/snapshot/undo 공급, 4.14.1.1 | Idle/Active/Fenced·ON/OFF·BEGIN과 API 진입 오류, begin/finish/취소의 token 소유. SELECT/DML이 소비할 최소 경계를 먼저 제공; guard 대신 raw q 재구성 금지 |
+| 4.13.1 상태·statement scope·오류 공급 | 아래 4.13.1.1/2 | SELECT/DML이 소비할 상태와 공통 오류 변환을 별도 공급하고 수합. guard 대신 raw q 재구성 금지 |
 | 4.13.2 COMMIT·autocommit 통합 | 아래 4.13.2.1–3 | DML commit·SELECT ReadOnly 해제·명시 ReadWrite validation을 구분하여 수합 |
 | 4.13.3 ROLLBACK·오류·종료 통합 | 아래 4.13.3.1/2 | result 없는 거래 종료를 먼저 공급하고 result 취소·무효화와 통합. UNKNOWN 자동 retry/rollback 금지 |
 
 | 실행 단위 | 직접 선행 | 공급·종료 조건 |
 | --- | --- | --- |
+| 4.13.1.1 session·statement 상태 | F02, 실제 DEV3 transaction/snapshot/undo 공급, 4.14.1.1 | Idle/Active/Fenced·ON/OFF·BEGIN·begin/finish/취소 token 소유와 진입 전/후 상태. 오류 표현은 4.13.1.2와 결합하고 다른 문장 전체를 기다리지 않음 |
+| 4.13.1.2 공통 SQL 오류 변환 | 해당 F01/F02의 오류 vector·foundation/engine 오류 계약 | code/phase/span·effect/state/certainty/retry_scope·원인 engine code, DDL 두 outcome의 공통 표현/변환. 입력 진단과 cleanup 결과를 합칠 때 RecoveryRequired/Fenced·확정 commit을 보존. 독립 literal 반례로 검산하고 첫 SQL 소비에 공급 |
 | 4.13.2.1 commit adapter·작은 DML | 4.13.1, 4.14.2·4.14.3.1, 실제 engine commit; SQL 결합은 4.09.2.1·4.09.3.1의 INSERT 부분 | commit attempt/sync/공개/응답·certainty·fencing 전달. Idle ON INSERT는 COMMITTED 뒤 count; 명시/OFF INSERT는 statement 성공 count와 Active를 유지하고 별도 COMMIT outcome을 인수. SELECT/result·다른 DML·DDL을 기다리지 않고 native fixture의 commit 경계도 소비 |
 | 4.13.2.2 ON SELECT 종료 | 4.13.1·4.12.2, 4.14.3.1 | EOF/close/terminal error의 ReadOnly 해제·durable receipt 없음, API 진입 오류/RowBufferTooSmall 상태 보존 |
 | 4.13.2.3 명시 ReadWrite validation | 4.13.2.1, 해당 4.07/4.09·4.12 | OFF/BEGIN의 무변경 validation·같은 table 충돌·독립 table 성공. 해당 SQL 경로별로 T09 인수 |
@@ -258,6 +273,8 @@ DDL semantic validation을 일반 DML binding 순서에 끼워 precommit보다 �
 | 4.13.3.2 result를 포함한 종료 | 4.13.3.1·4.12.2, 해당 4.13.2·4.14.3 | result 취소→undo 확인·generation 무효화, 앞선 DML·알려진 commit 결과 유지. 4.12.3과 같은 통합 증거 연결 |
 
 4.13.1은 DML 전체에 의존하지 않는다. 4.13.2/3에서 그 소비 결과를 인수하므로 session과 executor의 서로 다른 전체 완료를 선행으로 요구하는 순환을 만들지 않는다. 현재 SQL Serializable만 소비하고 Oracle READ COMMITTED를 노출하지 않는다.
+
+4.13.1.2의 구현 담당은 SQL 공통 오류 경계를 소유하고, 각 기능은 자기 phase·실제 cleanup/outcome 입력을 공급한다. 담당 분류와 코드 의존은 구분한다. 공통 오류 표현을 사용하려고 lexer/parser가 session runtime을 호출하거나 의존하게 만들지 않으며 실제 배치는 F01/F02에서 정한다. CLI·worker는 이 결과를 표시/기록하며 오류 효과를 다시 판정하지 않는다. 이 단위는 engine rollback·commit을 실행하거나 SQLSTATE를 정하는 두 번째 manager가 아니다. T01/03/07–11의 관련 오류와 4.16.3.1의 잘못된 효과·certainty 반례를 연결한다.
 
 <a id="lifecycle-model"></a>
 ### 상태 통합 책임과 유한 모델 배정
@@ -269,8 +286,8 @@ DDL semantic validation을 일반 DML binding 순서에 끼워 precommit보다 �
 | 산출물·담당 작업 | 선행·동결 | 완료 조건 |
 | --- | --- | --- |
 | 상태/action 계약: 4.12.1·4.13.1·4.14.2, 4.13 통합 담당 수합 | F02 준비; 설계는 production 선행과 독립 | 위 상태표와 generation·parameter 동치류·불가능 전이·예외를 별도 검토. 구현은 실제 공급·해당 동결 뒤 |
-| 독립 모델 입력·탐색기: 4.16.1 | 위 F02 상태/action 동결, F04 model recipe | 기존 의무인 2 session·각 prepared2개·활성 result1개/session·operation 길이6 이내의 유한 공간. 상태/전이 최대 수와 종료 상한을 실행 전에 계산·고정; production 전이 함수를 정답으로 재사용하지 않음 |
-| 모델 완주·known-bad: 4.16.3 | 4.16.1의 새 모델 코드·입력 | stale generation 수락·늦은 cancel 전파·result 해제와 거래 commit 혼동·undo 미완료를 Idle로 낮추는 mutant 거절. 탐색 완주 receipt, 미도달·상한 도달은 INCONCLUSIVE. 실제 I/O/thread 인수를 대체하지 않음 |
+| 독립 모델 입력·탐색기: 4.16.1.2 | 위 F02 상태/action 동결, F04 model recipe | 기존 의무인 2 session·각 prepared2개·활성 result1개/session·operation 길이6 이내의 유한 공간. 상태/전이 최대 수와 종료 상한을 실행 전에 계산·고정; production 전이 함수를 정답으로 재사용하지 않음 |
+| 모델 완주·known-bad: 4.16.3.2 | 4.16.1.2의 새 모델 코드·입력 | stale generation 수락·늦은 cancel 전파·result 해제와 거래 commit 혼동·undo 미완료를 Idle로 낮추는 mutant 거절. 탐색 완주 receipt, 미도달·상한 도달은 INCONCLUSIVE. 실제 I/O/thread 인수를 대체하지 않음 |
 | 실제 교차 수명: 4.12.3·4.13.3.2·4.14.4 | 해당 소비 경로·4.16.2 관측 | 같은 상태/action ID로 T08/09/11·V15/16/28의 실제 결과와 소유 회수/인계를 연결. 모델 PASS를 제품 PASS로 승격하지 않음 |
 
 <a id="task-14"></a>
@@ -320,6 +337,17 @@ DDL semantic validation을 일반 DML binding 순서에 끼워 precommit보다 �
 
 4.16은 기능 구현과 함께 테스트를 추가하는 공통 책임이다. 모든 제품 기능이 끝난 뒤 oracle를 처음 만들지 않는다. 긴 fuzz/부하/조합의 실행 입력과 검증 강도는 원래 계획을 유지하되 실제 실행 선택은 아래 사용자 지시를 따른다.
 
+| 실행 단위 | 직접 선행 | 공급·종료 조건 |
+| --- | --- | --- |
+| 4.16.1.1 literal·case inventory | T/V 의미 정본으로 준비; 실행 oracle 구현은 해당 F04 동결 뒤 | 입력·독립 기대값·N/A 이유·주 담당 ID·최소/확대 변형을 F04에 공급. 첫 INSERT/오류 사례부터 준비하며 미래 전체 조합을 초기 경로의 선행으로 두지 않음 |
+| 4.16.1.2 상태 모델 입력·탐색기 | F02 상태/action으로 recipe·상한 준비; 탐색기 구현은 해당 F04 동결 뒤 | 기존 유한 공간·상한을 F04에 공급하고 동결 뒤 독립 전이 계산 구현. SQL worker 없이 공급 가능 |
+| 4.16.2.1 typed SQL/native 관측 adapter | 해당 F04·4.16.1.1, 실제 해당 SQL/engine API | row/count/error·metadata·prefix/terminal·outcome 관측. CLI 출력에 의존하지 않고 최초 경로부터 공급 |
+| 4.16.2.2 외부 ACK·fault 연결 | 4.16.2.1의 해당 관측, 기존 controller/engine fault port·F04 | worker 밖 ACK·transaction identity와 실제 cut witness·fresh fixture를 연결. 4.17.1의 SQL/engine cut 대조에 공급하며 R1–R4 전체 실행 완료는 선행이 아님 |
+| 4.16.3.1 판정 부정 사례·coverage | 해당 4.16.1.1·4.16.2.1; crash 판정은 4.16.2.2 | wrong row/bag/order/error/ACK·누락/미도달·잘못된 binary/recipe 거절. 실행한 경로와 남은 inventory 구분, production 오류 변환을 기대값 계산에 사용하지 않음 |
+| 4.16.3.2 모델 완주·known-bad | 4.16.1.2 | [수명 모델](#lifecycle-model)의 고정 공간 완주·지정 mutant 거절, 상한 도달은 INCONCLUSIVE. 실제 SQL adapter 완성을 기다리지 않음 |
+
+4.16.1/2/3은 이 자식의 범위 수합이며 별도 구현 묶음으로 중복 배정하지 않는다. F04 입력의 준비와 동결 후 oracle/adapter 구현을 구분하여 inventory 자신의 준비에 F04 완료를 요구하지 않는다. 복구 fault 정의/판정의 owner는 4.17, 관측 전달의 owner는 4.16이다. 같은 ACK 수집기나 verdict를 두 번 만들지 않는다.
+
 <a id="task-17"></a>
 ## 19. 4.17 — rollback·ACK·disk 복구 통합
 
@@ -327,7 +355,7 @@ DDL semantic validation을 일반 DML binding 순서에 끼워 precommit보다 �
 
 | 하위 ID·산출물 | 직접 선행 | 완료 조건 |
 | --- | --- | --- |
-| 4.17.1 fault·ACK 관측 연결 | 4.16.2, 해당 DEV3 WAL/undo/CLR·복구 실제 증거 | update WAL과 첫 commit record 시도 구별, append/sync/공개/응답·undo/CLR·flush 도달 witness. 소유 worker의 kill·short write/sync 오류·fresh fixture 식별 |
+| 4.17.1 fault·ACK 관측 연결 | 4.16.2.2의 해당 관측, 해당 DEV3 WAL/undo/CLR·복구 실제 증거 | update WAL과 첫 commit record 시도 구별, append/sync/공개/응답·undo/CLR·flush 도달 witness. 소유 worker의 kill·short write/sync 오류·fresh fixture 식별 |
 | 4.17.2 R1/R2·rollback 재장애 | 아래 4.17.2.1/2 | statement rollback 완료 뒤 commit과 rollback 중 미commit crash를 별도 인수 |
 | 4.17.3 R3/R4·checkpoint/restore | 아래 4.17.3.1–3 | DML 응답 유실·DDL 두 거래·checkpoint/restore 교차의 별도 identity/결과 수합 |
 
@@ -374,7 +402,7 @@ ARIES는 partial/total rollback·WAL·redo-only CLR·반복 장애를 구분할 
 | 묶음 | 먼저 준비·공급할 단위 | 뒤에서 닫을 소비·인수 |
 | --- | --- | --- |
 | A: 공통 입력·관측 | 4.01.1/2, 4.16.1 상태 모델/literal, 4.18.1; 4.14.1.1·4.14.2·4.14.3.1·4.12.1·4.13.1의 해당 기반 | F01/F02·실제 DEV3 공급. 4.16.2의 최소 row/error/ACK 관측과 4.17.1 fault adapter를 첫 소비 경로 전에 연결 |
-| B: 작은 영속 SQL 경로 | 필요한 4.02–4.05, 4.09.1.1→4.09.2.1→4.09.3.1의 INSERT→4.13.2.1·4.13.3.1; 별도로 4.06.1/3→4.07.1/2→4.12.2·4.13.2.2 | native로 준비한 정본 fixture에서 직접 INSERT·COMMIT·reopen, scan/fetch/close. SQL DDL·index 선택·sort 전체를 기다리지 않음. native fixture를 SQL CREATE 성공 증거로 계산하지 않음 |
+| B: 작은 영속 SQL 경로 | 4.02→4.03.1.1/2.1·해당 4.03.3→4.04.1/2·4.05의 INSERT binding→4.06.3→4.09.1.1/2.1/3.1→4.13.2.1·4.13.3.1; 별도로 SELECT 표현→4.06.1/3→4.07.1/2→4.12.2·4.13.2.2 | native로 준비한 정본 fixture에서 직접 INSERT·COMMIT·reopen, scan/fetch/close. SQL DDL·index 선택·sort 전체를 기다리지 않음. native fixture를 SQL CREATE 성공 증거로 계산하지 않음 |
 | C: 실패·내구성 경계 | 4.17.2.1/2·4.17.3.1, 해당 4.09.3.3 | 초기 INSERT의 S2 실패/S1 보존, 전체 abort·R1/R2/R3·RecoveryRequired. 실제 rollback 중 crash·반복 recovery·ACK 독립 판정 |
 | D: 문장·상태 확장 | 4.11.1/2/3, 4.09.1.2/2.2/3.2, 4.13.2.3/3.2·4.12.3, 4.10.1/2/3→4.17.3.2 | prepared/UPDATE/DELETE·관측 충돌·DDL 두 outcome과 R4. parameter slot·타입 문맥·metadata는 B의 표현 준비 때부터 4.05/4.11이 함께 동결 |
 | E: index·sort·합산 소비 | 4.06.2, 4.08.1→4.08.2.1–3→4.08.3.1/2, 해당 4.14.1.2/3.2·4.14.4, 4.07.3 | index와 sorter는 선행 충족 시 별도 진행. memory/binding pressure는 D부터, disk/FD pressure는 해당 sorter 소비부터 인수 |
@@ -385,6 +413,34 @@ ARIES는 partial/total rollback·WAL·redo-only CLR·반복 장애를 구분할 
 분량은 변경할 상태·I/O/fault 종류·소유 인계·독립 oracle/harness 개발량으로 추정한다. 4.02.2의 이름 정규화와 4.08.2.3의 merge, 4.17의 crash 이력을 동등한 1건으로 환산하지 않는다. 초기 배정 후 실제 구현·검토·선택 시험·재작업 시간을 별도 기록하여 다음 단위의 추정에 반영한다. 기능 수·문서 분량이나 아직 측정하지 않은 속도로 기간·효율을 확정하지 않는다.
 
 이번 작업에서 구현 agent·파일 소유를 배정하지 않는다. 향후 서로 겹치지 않는 lexer/vector 준비·sorter·CLI 표시를 분리할 수 있어도 공통 BoundStatement/오류·session/result·문서 JSON의 변경은 통합 담당이 순차 반영한다. 실제 배정 시 [파일 소유 정책](../policies/parallel-development-policy.md)에 따라 기준 revision·독점/공유 경로·수신 산출물·검토자를 기록한다.
+
+<a id="workload-review"></a>
+### 18개 책임의 분량·불확실성 재점검
+
+아래는 현재 계약에서 예상되는 **상대적 준비/구현/검증 부담**이며 기간·인원·완료율 추정이 아니다. `큼`은 별도 I/O·소유 인계·독립 harness가 여러 개 있다는 뜻이다. 실제 API와 최소 사례를 확인한 뒤 [착수 기록](#entry-exit)에 공수 범위를 적는다. 기존 18개를 균등 분배하거나 모두 독립 개발자에게 하나씩 배정하는 근거로 사용하지 않는다.
+
+| 분류 | 상대 부담·주 불확실성 | 배정 판단·첫 종료점 |
+| --- | --- | --- |
+| 4.01 공급/동결 | 중간, DEV3 실제 공급에 따라 변동 큼 | 공통 문서 전부의 완료 대신 소비 leaf별 API·receipt 차이 목록. 외부 대기는 구현 공수와 별도 기록 |
+| 4.02 lexer | 중간, bytes/span·경계 corpus | 세 하위 단위 유지. token/span과 단일 문장 경계를 B에 먼저 공급 |
+| 4.03 parser | 중간, 공통 재귀 예산·문장별 오류 | 위 여섯 자식과 구현 동반 진단. INSERT/거래 제어에 SELECT clause를 선행시키지 않음 |
+| 4.04 값/타입 | 중간, SQL/native 빈 text·3값 교차 | scalar/입력 정규화 먼저, predicate 뒤. 이미 존재하는 foundation 의미를 중복 구현하지 않음 |
+| 4.05 binder | 중간~큼, catalog guard·parameter/metadata | 공통 identity 공급과 문장별 binding 인수 구분. INSERT의 column/type dependency를 먼저 공급 |
+| 4.06 planner | 중간, composite bound·stale race | 공통 dependency 검사를 SELECT plan에서 분리 공급; index 선택/동등성은 별도 종료 |
+| 4.07 SELECT | 중간~큼, snapshot·pull/EOF | scan/filter 공급 후 projection/result 통합. UPDATE/DELETE에 projection 전체를 요구하지 않음 |
+| 4.08 sorter | 큼, 실제 temp port·merge peak·I/O 실패 | 기존 run/spill/merge/cleanup 단위를 유지. F03 재사용 판단·최대 record 예약 검토를 조기 준비 |
+| 4.09 DML | 큼, 단일 statement·observation·undo | INSERT 먼저, 대상 조회/변경·충돌·잔류 회계 각각 인수. 행 조회와 mutation 사이 token 보존 |
+| 4.10 DDL | 중간~큼, precommit 뒤 오류·두 outcome | 세 기존 단위 유지. 작은 CREATE TABLE 조립부터 공급하되 index build/drain의 native 구현은 DEV3 책임 |
+| 4.11 prepared | 중간~큼, 추론·불변 metadata·교체 peak | B의 표현 준비 때 marker/dependency 계약, 반복 실행은 해당 SELECT/DML과 연결 |
+| 4.12 result | 큼, generation·오류/EOF·거래 수명 | slot 기반 먼저, bounded fetch 뒤, 종료 교차 인수. 4.13 수명 통합 담당과 같은 상태표 사용 |
+| 4.13 session | 큼, commit/abort·fence·오류 우선순위 | 상태/공통 오류와 commit/abort adapter를 A/B에 공급. SELECT 종료·명시 validation·DDL 두 결과는 해당 소비와 연결 |
+| 4.14 자원/취소 | 큼, 합산 peak·실패 cleanup | memory/context/engine 인계 먼저; disk/FD/temp는 sorter 전 공급. cleanup 예약을 마지막 통합으로 미루지 않음 |
+| 4.15 CLI | 중간, streaming·출력·EOF/SIGINT | embedded facade는 B의 해당 공급부터, 표시/전체 batch 인수는 뒤. CLI 전체가 worker의 선행이 아님 |
+| 4.16 시험 도구 | 큼, 독립 oracle·상태 탐색·관측 | literal/inventory·모델·typed adapter·외부 ACK를 각각 공급. 모델 완주와 runtime verdict를 별도 완료 |
+| 4.17 복구 인수 | 큼, 실제 cut 도달·재장애·fixture | R1/R2/R3부터 각 이력 인수. R4/restore와 남은 문장·index 변형은 실제 소비 가능 시 추가 |
+| 4.18 계측/수합 | 중간~큼, 환경/fixture·비교 비용 | 계측은 첫 기능, PF10은 각 군의 동등 결과 확보 뒤. closure 문서와 실측 실행 시간을 분리 |
+
+즉시 줄여야 할 위험은 **상태/오류·native 공급·외부 ACK 연결**, 조기 설계 확인이 필요한 큰 작업은 **sorter의 최대 record/merge 예약과 독립 상태 공간**이다. 후자의 설계 준비를 A부터 하되 구현 전체·모델 완주를 첫 INSERT의 추가 장벽으로 만들지 않는다. 최적화·shared cache·새 범용 실행 framework는 현재 범위에 추가하지 않는다. 실측 전에는 이 배치가 유일한 최선이라고 단정하지 않으며, 첫 공급의 API 부족·검토 재작업·harness 준비 비용을 기록해 다음 배정을 조정한다.
 
 <a id="test-scope"></a>
 ## 22. 인수 연결과 시험 선택
@@ -399,6 +455,8 @@ ARIES는 partial/total rollback·WAL·redo-only CLR·반복 장애를 구분할 
 4.16.1/3에서 T별 담당을 펼칠 때 다음 교차 항목을 빠뜨리지 않는다: T03↔4.10 DDL 두 결과, T04/09↔4.09 즉시 잠금 observation, T07/08/11/14↔4.14 합산 pressure, T10/11↔4.17 R1–R4, T12↔4.15 typed 출력, T13↔4.16 known-bad, T14↔4.18 실제 disk 비용. Oracle differential은 선택 연구이며 XADB literal/history oracle를 대체하지 않는다.
 
 F04의 case inventory는 각 case의 주 담당 실행 ID 하나, 소비 작업, 최소/확대 변형, 관련 코드 diff, 명령·fixture·oracle·원래 receipt를 연결한다. 같은 통합 결과를 소비자들이 참조할 수 있지만 실행 건수·공수는 중복 집계하지 않는다. 부모 T/V 요구를 자식으로 펼칠 때 미배정/NOT_RUN 변형도 남긴다. 유한 상태 모델은 4.16.1/3, R1/R2/R3/R4는 각각 4.17.2.1/.2/3.1/3.2, PF10-A–E는 4.18.2.1–5에 연결한다.
+
+003의 좁은 배정에서 parser T01은 4.03의 각 자식+4.03.3, 공통 오류 vector는 4.13.1.2, literal/coverage는 4.16.1.1/3.1, 유한 모델은 4.16.1.2/3.2, ACK 관측은 4.16.2.2→4.17.1로 연결한다. 기존 부모 ID 참조도 유효하며 이 세분화로 T/V/F·R1–R4/PF10의 필수 변형을 삭제하지 않는다.
 
 <a id="decision"></a>
 ## 23. D4-WORK-BREAKDOWN-001 기록
@@ -430,3 +488,20 @@ F04의 case inventory는 각 case의 주 담당 실행 ID 하나, 소비 작업,
 | 범위·순서 | 작업 계획→기존 구현 계획·stage-completion의 동결/배정 연결→조사/색인. 기존 문서 ID·경로·title 유지하여 documents.json mapping 변경 불필요. 제품·DEV3 owner·기존 실행 evidence·run_entrypoint/status는 변경하지 않음 |
 | 검토·검증 | `/root/dev4_work_review`가 DEV4 7개 문서 변경과 SQL·DEV3 owner 정본을 읽기 전용 D2 검토. 4.13.2.1의 Idle ON count와 명시/OFF statement 성공·Active 유지 조건을 구분한 P2 수정 재확인 후 채택 가능, P1/P2 잔여 없음. 공급 DAG·인수 배정·상태/자원 소유·시험 범위·NOT_RUN 보존 확인, 로컬5개 checkout identity·10개 파일 SHA-256·명시 열람 범위를 직접 대조. Oracle/ARIES는 조사자의 열람 기록 검토 범위. 동시 DEV3/5/6/7 변경 및 DEV5 공급 절은 제외하며 `/root`가 반영 확인. 제품 코드 변경·제품 시험·compiler/Clippy·문서 자동 검사·push 미실행. 사용자가 후속 push 요청을 취소하고 DEV4만 완료·commit하도록 범위를 확정했으므로 전체 문서 자동 gate는 실행하지 않음. 문서 검사는 DOC-002의 향후 push gate에서 수행 |
 | 대체·재검토 | 001의 대분류·ID·범위와 당시 검토 기록 보존; 현행 실행 배정/우선순위는 002로 구체화. 실제 API/소유·원자성 불일치, 배정 누락·선행 순환, sorter 재사용의 의미 차이, 초기 공수 추정과 실제 기록 차이에서 재검토 |
+
+002의 당시 검토·identity는 보존하고 후속 선행·분량·공통 책임 보완은 아래 003에 기록한다.
+
+<a id="work-review-003"></a>
+## 25. D4-WORK-BREAKDOWN-003 — 앞단 선행·오류 소유·검증 준비량 재점검
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-22. 작업 공급·분량 판단 구체화, 기존 SQL 의미·API 형식·수치·DEV3 진입 조건 유지 |
+| 권한·담당 | 사용자의 DEV4 분배·분량·우선순위·내용·분류 검증, ARIES·Oracle·로컬 DBMS 대조, 개선 즉시 수정과 완료 뒤 한 번 commit 요청. 작업/계약/통합 `/root` |
+| 기준·기존 변경 | 시작 HEAD `f6c965b9b133ffc083532215f98905f89e00c26f`. 사본 `/tmp/xadb-dev4-review3-base-h2e4vrcn`, identity SHA-256 `d71902f56e2392a51e64060ec2718a1fae3e482d25badfdee90734b9ab0f653b`. 기존 DEV3/5·공유 색인 변경은 보존. 작업 중 DEV5 commit `49bb781`과 후속 DEV3/6/7 변경을 관측했으며 그 변경·DEV5 공급 절을 이번 검토·commit으로 재승인하지 않음 |
+| 선택·대안 | 18개 책임 유지. 공통 parser→INSERT/거래와 predicate→SELECT/UPDATE/DELETE를 분리, bound dependency 검사에서 RowScan 전체 선행을 제거. 4.13에 공통 SQL 오류 변환을 배정하고 4.16의 모델/관측/ACK/판정 준비를 별도 공급. 18개 균등 공수 배정·작업 수 맞추기·전체 front end/worker 완료 후 작은 영속 경로 착수는 채택하지 않음 |
+| 근거·한계 | [003 실제 조사](../evidence/dev4-source-research.md#work-review-003-research): ARIES의 partial/total/restart undo·commit WAL, Oracle19c의 처리 단계·문장 원자성, 로컬5개 DBMS의 실제 revision·6개 파일 선택 열람. 분류 최적성·기간·병렬 속도 향상의 실측 증명은 없음 |
+| 소유·분량 | 공통 오류 owner는 4.13, phase/cleanup 공급은 각 기능, 관측 전달은 4.16, 복구 cut/판정은 4.17. [18개 상대 부담](#workload-review)과 첫 종료점을 명시. 실제 담당/파일·공수 범위는 구현 착수 때 기록 |
+| 범위·검증 | 작업 계획·기존 구현 계획·기존 조사·세 README의 DEV4 안내. 기존 ID/title/path 유지로 documents.json 신규 등록 없음. 제품 코드·시험·compiler/Clippy·문서 자동 검사·push 미실행; Q1 NOT_RUN·DEV3 미완료 보존. 자동 문서 검사는 DOC-002 push gate에서 수행 |
+| 독립 검토 | `/root/dev4_review3`가 DEV4 계획2개·조사1개·README3개의 해당 변경과 SQL/정책 정본을 읽기 전용 검토: 채택 가능, 잔여 P1/P2 없음. 동일 guard·오류/cleanup·DDL 두 outcome·인수/NOT_RUN 보존 확인. F04 준비→동결→구현 구분과 각 기능의 오류 공급·lexer/parser의 session runtime 역의존 금지 보완을 재확인. 로컬5개 HEAD/origin/tracked 상태·6파일 hash/명시 범위, ARIES PDF hash·인쇄97–100쪽·Oracle 공식 두 문서를 직접 대조. 동시 DEV3/5/6/7 변경·DEV5 공급 절 제외, 제품 시험·문서 자동 검사·compiler/Clippy 미실행. `/root`가 반영 확인 |
+| 대체·재검토 | 001/002의 기존 의미·당시 검토는 유지하며 현행 좁은 공급·책임은003으로 구체화. 실제 선행 순환/오류 분기 누락·DEV3 API 변화·추정과 실제 비용 차이 때 해당 작업 배정을 재검토 |

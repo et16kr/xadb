@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV4 분배 재점검 003](plans/dev4-work-breakdown.md#work-review-003): 18개 책임을 유지하면서 초기 INSERT의 parser·dependency 선행을 좁히고 공통 오류 변환·독립 모델·관측/ACK 담당을 구체화했다. [18개 상대 분량과 첫 종료점](plans/dev4-work-breakdown.md#workload-review), [ARIES·Oracle·로컬5개 DBMS 근거](evidence/dev4-source-research.md#work-review-003-research)를 연결한다. 제품 구현·시험과 Q1 승격은 없다.
+
 2026-10-22 [DEV7 분배 후속 검토](evidence/dev7-work-breakdown-review-20261022-r2.md): 36개 분류를 유지하고 제약 설치/cascade·queue 재시도·scheduler worker·온라인 복구를 **140개 하위 작업**으로 보완했다. [배정 크기·우선순위·실행 비용](plans/dev7-work-breakdown.md#allocation)과 native sequence/queue의 독립 공급을 명시한다. 제품 구현·시험과 logging 보류는 유지한다.
 
 2026-10-22 [DEV7 작업 분배 검토·보완](evidence/dev7-work-breakdown-review-20261022.md): ARIES·Oracle·로컬8개 DBMS를 대조해 36개 분류를 유지하고 하위 작업을115개에서135개로 나눴다. [공급·인수 연결](plans/dev7-work-breakdown.md#leaf-handoffs), 저장/XA 위험의 선행 준비·증분 refresh·성능 workload 한도를 보완했다. 제품 개발·시험 재개와 logging 보류 해제는 없다.

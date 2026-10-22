@@ -6,6 +6,8 @@
 
 2026-10-22 [18개 세부 작업 분류](dev4-work-breakdown.md#catalogue)는 아래 D4-0–7을 공급·소비 단위로 나누고 선행·산출물·완료 조건·기존 인수를 연결한다. 후속 [분배 보완 002](dev4-work-breakdown.md#work-review-002)는 기존55개 ID 아래 큰 작업을 더 나누고 INSERT·commit/reopen·rollback을 먼저 연결하며, 상태 모델·R1–R4·PF10 개별 산출물을 배정한다. [공급 순서](dev4-work-breakdown.md#sequence)와 [시험 선택](dev4-work-breakdown.md#test-scope)을 함께 적용한다. 아래 과거 전체/하위 회귀·V2/V3·current-build closure 문구에도 [변경된 코드만 시험하는 사용자 지시](../../AGENTS.md)가 우선한다. DEV3 S5의 전수 예외를 DEV4에 확대하지 않는다. 제품·Q1 상태는 NOT_RUN을 유지한다.
 
+[재점검 003](dev4-work-breakdown.md#work-review-003)은 공통 parser/INSERT와 SELECT clause 선행을 나누고, bound dependency 검사를 SELECT/DML 공통으로 공급하며, 오류 변환·독립 모델·typed 관측·외부 ACK의 담당을 구체화한다. [상대 분량·첫 종료점](dev4-work-breakdown.md#workload-review)은 구현/검증 준비 비용을 포함한 배정 기준이며 실측 일정이 아니다.
+
 <a id="entry"></a>
 ## 1. 착수와 완료를 구분한다
 
@@ -58,6 +60,8 @@ DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01�
 
 002의 배정에 따라 F02에는 [수명 통합 상태/action 표](dev4-work-breakdown.md#lifecycle-model)와 유한 모델 입력을, F03에는 [DEV3 sorter 재사용·분리 판단](dev4-work-breakdown.md#sort-reuse)을 포함한다. F04는 각 case의 주 담당 실행 ID·소비자·최소/확대 변형·관련 diff·원래 receipt를 연결하며 상태 탐색기/known-bad·R1–R4·restore를 각각 선택 가능하게 동결한다. F05는 P10-A–E별 fixture/수치 예산/명령을 동결한다. 준비 산출물과 동결 완료 후의 구현 소비를 구분하여 F03/F05 자신을 준비 작업의 완료 선행으로 두지 않는다.
 
+003에서 F01/F02 오류 vector의 실제 변환 구현은4.13.1.2가 소유하고 각 기능이 phase·실제 cleanup/outcome을 공급한다. F04 literal/coverage는4.16.1.1/3.1, typed 관측은4.16.2.1, 외부 ACK/fault 전달은4.16.2.2에 배정한다. CLI·worker가 별도 오류 효과 판정을 만들거나 실제 engine 결과를 정답 계산에 공유하지 않는다.
+
 <a id="acceptance"></a>
 ## 4. Q1 필수 인수 행렬
 
@@ -104,7 +108,7 @@ V1은 신규 vector/원래 반례와 인접 경계, V2는 관련 전체 property
 
 작은 handle/session 상태 모델은 2 session, 각 prepared 2개, 활성 result 1개/session, operation 길이 6 이내의 유한 공간을 F02의 명시 action/parameter 동치류로 전수 탐색한다. 탐색 상태/전이 최대 수·완주 receipt는 구현 전에 계산·고정하고 상한 도달은 INCONCLUSIVE다. 이 모델과 실제 thread·I/O 검증은 서로 대체하지 않는다.
 
-상태 계약은 4.12.1·4.13.1·4.14.2가 공급하고 4.13 수명 통합 담당이 수합한다. 독립 모델 입력/탐색기는 4.16.1, 완주·known-bad는 4.16.3, 실제 교차 수명은 4.12.3·4.13.3.2·4.14.4에 배정한다. 모델의 정상/오류 전이를 production 구현으로 정답 계산하지 않는다. 구체 산출물과 실제 배정 기록은 [상태 모델 표](dev4-work-breakdown.md#lifecycle-model)를 따른다.
+상태 계약은 4.12.1·4.13.1·4.14.2가 공급하고 4.13 수명 통합 담당이 수합한다. 독립 모델 입력/탐색기는 4.16.1.2, 완주·known-bad는 4.16.3.2, 실제 교차 수명은 4.12.3·4.13.3.2·4.14.4에 배정한다. 모델의 정상/오류 전이를 production 구현으로 정답 계산하지 않는다. 구체 산출물과 실제 배정 기록은 [상태 모델 표](dev4-work-breakdown.md#lifecycle-model)를 따른다.
 
 fault 목록은 DEV2/DEV3 필수 cuts를 그대로 유지하고 SQL 경계의 prepare/bind·대상 materialization·engine statement 호출·sort run write/merge·fetch prefix·응답 관측 cuts를 추가한다. crash 대상은 소유 worker만이며 외부 controller의 ACK 이력을 보존한다. kill을 power-loss 증거로 확대하지 않는다. 새 fixture와 현재 build의 reopen/restore가 필수이며 사내 이전 버전 호환은 요구하지 않는다.
 

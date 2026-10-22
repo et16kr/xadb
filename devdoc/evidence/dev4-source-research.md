@@ -162,3 +162,47 @@ ARIES는 [IBM 공식 서지](https://research.ibm.com/publications/aries-a-trans
 | 책임 개수를 공수·진행률로 오인 | 기존 ID 유지·자식 단위 배정·부모 중복 집계 금지, 실제 범위/불확실성/검토·시험 비용 기록 | 사람/agent별 실제 구현 배정·일정 추정은 착수 시 수행 |
 
 외부 DBMS의 파일 구성을 XADB의 작업 개수로 복사하지 않았다. 위 소스와 정본을 이용한 작업 조직 판단이며 제품 의미 변경·소스 도입·시험 실행 증거가 아니다. 수정·독립 검토·commit 범위는 [002 작업 기록](../plans/dev4-work-breakdown.md#work-review-002)을 따른다.
+
+<a id="work-review-003-research"></a>
+## 2026-10-22 — 003 앞단 선행·공통 책임·분량 재점검
+
+**설계/계획 검토 근거 · 제품·외부 DBMS 실행 NOT_RUN.** 같은 날 기존 002가 반영된 HEAD에서 재검토했다. 기존 18개 분류를 다시 늘리는 대신, 작은 영속 경로의 선행 표와 오류/시험 도구 담당이 실제 배정 가능한지 확인했다. 결과와 별도 검토는 [003 기록](../plans/dev4-work-breakdown.md#work-review-003), 18개 항목의 상대 부담은 [분량 표](../plans/dev4-work-breakdown.md#workload-review)를 따른다. 과거 조사 범위와 검토 identity는 변경하지 않는다.
+
+### 이번에 확인한 로컬 소스
+
+다섯 checkout 모두 아래 origin·HEAD를 다시 확인했으며 `git status --short --untracked-files=no`는 비어 있었다. 원본을 수정하거나 빌드/시험하지 않았다. untracked 파일 감사나 각 DBMS 전체 구현 검증은 아니며, 행 번호는 해당 revision 기준이다.
+
+| checkout | 실제 HEAD | origin |
+| --- | --- | --- |
+| `/home/et16/work/postgres` | `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851` | [postgres/postgres](https://github.com/postgres/postgres) |
+| `/home/et16/work/mariadb` | `327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4` | [MariaDB/server](https://github.com/MariaDB/server) |
+| `/home/et16/work/cubrid` | `a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5` | [CUBRID/cubrid](https://github.com/CUBRID/cubrid) |
+| `/home/et16/work/sqlite` | `43a48f77585a88940c727f33682151418f544059` | [sqlite/sqlite](https://github.com/sqlite/sqlite) |
+| `/home/et16/work/mysql-server` | `3b99be40f8a31d9396cad10accfd3ba51647d613` | [mysql/mysql-server](https://github.com/mysql/mysql-server) |
+
+| 파일·실제 열람 행 | 관측과 적용 판단 | 전체 파일 SHA-256 |
+| --- | --- | --- |
+| [PostgreSQL analyze.c](https://github.com/postgres/postgres/blob/45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851/src/backend/parser/analyze.c), 324–405·649–725 | 문장별 transform 분기와 INSERT VALUES/general SELECT 분리. XADB의 제한된 VALUES INSERT에 SELECT clause 전체를 선행시키지 않을 근거. PostgreSQL AST나 전체 기능을 이식하는 결정은 아님 | `93eaf63c0f60bc3ca2562f528d81bc6bef9177751273791e26c35f9b6f93e80c` |
+| [MariaDB transaction.cc](https://github.com/MariaDB/server/blob/327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4/sql/transaction.cc), 463–499·530–586 | statement commit/rollback과 multi-statement 상태의 별도 경계. 작은 statement 성공과 거래 commit 인수를 나눈 기존 우선순위 유지 | `2f63b3189e257bce3cfe5303f64811ddc774604a9294c92d95b74833208f2dd8` |
+| [SQLite vdbeaux.c](https://github.com/sqlite/sqlite/blob/43a48f77585a88940c727f33682151418f544059/src/vdbeaux.c), 3220–3295·3450–3515 | statement 종료에서 I/O 오류를 반환하고 상위 종료가 오류를 승격/거래 rollback. XADB도 cleanup 결과를 잃지 않는 공통 오류 변환의 구현 담당을 명시. SQLite의 transaction/error 의미 전체를 XADB에 적용하지 않음 | `b5861fefc82cb754987635deab85abc4062883200202e08ff609f185af91bae6` |
+| [CUBRID execute_statement.c](https://github.com/CUBRID/cubrid/blob/a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5/src/query/execute_statement.c), 4088–4131 | 공통 compile context와 문장별 prepare 분기. 공통 표현/오류는 공유하되 SELECT 완료를 모든 DML의 선행으로 만들지 않음 | `92ada15819057a15438a502a88578e354be1675de227a728aae33c55fe904d0d` |
+| [CUBRID log_recovery.c](https://github.com/CUBRID/cubrid/blob/a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5/src/transaction/log_recovery.c), 4928–4960 | compensation 기록을 redo-only로 취급하고 다음 undo 위치로 이동. SQL 오류 전달과 실제 engine 반복 복구의 검증 책임을 구분 | `346275b089af2ff3231b3eb224fb6a7d8e9e5811e958762980dc11b978d28058` |
+| [MySQL sql_parse.cc](https://github.com/mysql/mysql-server/blob/3b99be40f8a31d9396cad10accfd3ba51647d613/sql/sql_parse.cc), 3340–3390 | implicit precommit와 그 뒤 실행 경계·명시 sync point. DDL을 일반 DML binding과 합치지 않고 기존4.10/R4 배정을 유지 | `87343f539682ebca3620b4ca6966680a6ffcb5ab937768cad3fc28d2ec11fc8d` |
+
+### ARIES·Oracle 원문
+
+[ARIES IBM 서지](https://research.ibm.com/publications/aries-a-transaction-recovery-method-supporting-fine-granularity-locking-and-partial-rollbacks-using-write-ahead-logging)와 [CMU 원문 PDF](https://www.cs.cmu.edu/~15849g/readings/mohan92.pdf)를 확인했다. 웹 도구의 CMU fetch timeout 뒤 HTTP로 받아 `pdftotext -f 4 -l 7`로 PDF4–7쪽(인쇄97–100쪽)의 WAL-before-page·commit log 영속화·partial/total/restart undo·redo-only CLR 설명을 읽었다. 전체 PDF SHA-256은 `6131bcee36c21e669d41204ef2b2320cb458b5d3bd9b7cf3e7758afe8ed3495f`로 앞선 사본과 같으나 이번 열람 범위는 위 부분에 한정한다. [Berkeley 사본](https://people.eecs.berkeley.edu/~brewer/cs262/Aries2.pdf)도 조회했지만 판단은 CMU 사본의 실제 추출 본문을 사용했다. 원문/그림 전체 검증·새 ARIES 구현은 없다.
+
+Oracle19c [SQL Processing for Application Developers §8.1.1](https://docs.oracle.com/en/database/oracle/oracle-database/19/adfns/sql-processing-for-application-developers.html)에서 문장 종류에 따라 필요한 parse/bind/execute/fetch 단계가 다름을 확인했다. [Transactions의 End of a Transaction·Statement-Level Atomicity](https://docs.oracle.com/en/database/oracle/oracle-database/19/cncpt/transactions.html)에서 statement 성공과 transaction commit의 구분, 실패한 문장만 복원하고 이전 성공 작업을 남기는 경계, DDL 전후 commit을 확인했다. XADB의 owned bind·명시적인 DDL 조립·Serializable·오류/fence는 기존 정본을 따른다. Oracle의 주소 참조 bind·자동 replay·기본 격리·SQL 문법을 새로 도입하지 않는다.
+
+### 판정·대안·수정
+
+| 검토 축 | 판정·수정 | 유지·한계 |
+| --- | --- | --- |
+| 분류 | lexer/parser/binder/planner/executor·수명·oracle/복구의18개 책임 유지 | ARIES 복구를 SQL에 재구현하거나 DBMS별 파일 수로 분류 수를 정하지 않음 |
+| 선행·우선순위 | 공통 parser와 SELECT clause 분리, INSERT에 필요한 scalar/binding/dependency만 공급. SELECT/DML의 공통 stale 검사는 RowScan 전체에 종속시키지 않음 | 기존 B/C의 작은 영속 경로·R1–R3 우선·DEV3 진입 gate 유지 |
+| 내용·소유 | 4.13.1.2에 phase/cleanup/outcome을 보존하는 공통 오류 변환 담당 추가 | 오류 의미는 이미 SQL 정본에 있음. CLI/worker는 표시·관측하고 engine undo/commit 소유를 복제하지 않음 |
+| 시험 준비량 | 4.16을 literal/inventory·모델·typed adapter·외부 ACK·negative verdict·모델 완주로 좁힘 | 공통 harness 중복 개발·모델 완주를 최초 INSERT의 새 장벽으로 삼는 배정 방지. 기존 인수는 모두 남음 |
+| 분량·배정 | 18개별 상대 부담·불확실성·첫 종료점 명시. sorter 최대 record/merge 예약·상태 공간은 조기 설계 확인 | 공수 균등 배정과 근거 없는 일수/효율 보장 제외. 실제 supply·검토/재작업·fixture 준비 비용으로 추정 갱신 |
+
+위 수정은 원문에서 도출한 XADB 작업 조직 판단이며 외부 자료 자체가 최적 작업 수·기간을 증명하지 않는다. 제품 의미·현행 수치 profile·Q1/시험 정책을 변경하거나 새 실행 PASS를 만들지 않았다.

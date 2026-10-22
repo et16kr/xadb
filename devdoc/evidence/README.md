@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-22 [DEV4 분배 재점검 003 조사](dev4-source-research.md#work-review-003-research) — ARIES 원문 일부·Oracle19c·로컬5개 DBMS의6개 파일을 대조해 앞단 선행·오류 소유·시험 준비 분량을 보완. 기존18개 분류와 원래 조사 identity 유지, 제품/외부 DBMS 시험 미실행.
+
 2026-10-22 [DEV7 분배 후속 검토](dev7-work-breakdown-review-20261022-r2.md) — ARIES·Oracle·로컬4개 실제 소스 대조,135→140개 책임과 제약 설치·온라인 복구·queue/worker·분량/실행 비용 보완. 제품 실행 증거가 아니다.
 
 2026-10-22 [DEV7 작업 분배 검토·보완](dev7-work-breakdown-review-20261022.md) — ARIES·Oracle·로컬8개 DBMS 대조, 36개 분류 유지·115→135개 하위 작업과 공급/인수·위험 우선순위 보완. 제품 실행 증거가 아니다.
