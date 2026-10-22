@@ -169,6 +169,7 @@
       "design_refs": [
         "dev4-sql-design.md",
         "dev4-implementation-plan.md",
+        "dev4-work-breakdown.md",
         "dev4-sql-design.md#architecture-review",
         "dev4-sql-design.md#conflict-reserve-review"
       ]

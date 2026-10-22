@@ -24,6 +24,7 @@
 - [DEV2 — 조사 결과와 구현·검증 계획](dev2-implementation-plan.md)
 - [DEV3 — 구현·병렬 개발·검증 계획](dev3-implementation-plan.md) — [16개 작업별 상세 명세·설계도](../contracts/dev3-task-designs.md), [잔여 16개 분류의 선행·완료 조건](dev3-implementation-plan.md#remaining-work), [작업 크기·우선순위·병렬 배치](dev3-implementation-plan.md#work-organization), 예약·취소 잔여 인수·effect 전 F05·복구 장벽8개·D3-M01–M06·DEV2 수신·DS/PF 연결
 - [DEV4 — embedded SQL 구현·검증 계획](dev4-implementation-plan.md) — Oracle 의미·DDL 두 outcome·관측 버전 전달·rollback/recrash/예약 복원·실제 저장 공급 인수
+- [DEV4 — 세부 작업 분류와 공급·인수 계획](dev4-work-breakdown.md) — 4.01–4.18과 하위 단위·직접 선행/완료 조건·D4-0–7 및 T/V/F 연결·ARIES/Oracle/로컬 소스 근거; 구현·Q1 미실행
 - [development-stages.json](development-stages.json)
 - [XADB 개발 단계](development-stages.md)
 - [feature-design-inventory.json](feature-design-inventory.json)

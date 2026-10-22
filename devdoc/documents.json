@@ -518,6 +518,11 @@
       "role": "contracts",
       "title": "DEV4 — embedded 최소 SQL·Oracle 의미 상세 설계"
     },
+    "dev4-work-breakdown.md": {
+      "path": "plans/dev4-work-breakdown.md",
+      "role": "plans",
+      "title": "DEV4 — 세부 작업 분류와 공급·인수 계획"
+    },
     "dev4-implementation-plan.md": {
       "path": "plans/dev4-implementation-plan.md",
       "role": "plans",

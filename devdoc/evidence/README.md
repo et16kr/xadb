@@ -24,6 +24,8 @@ r1 당시 DEV0/DEV1은 로컬 범위 PASS다. 당시 DEV2 reference/substrate/fr
 
 DEV3의 [소스 조사](dev3-source-research.md)는 실제 revision·열람 범위의 기록이며 DBMS build·제품 실행 또는 S1 PASS 증거가 아니다.
 
+2026-10-22 [DEV4 작업 분류 추가 조사](dev4-source-research.md#work-breakdown-20261022)는 실제 4개 checkout의 11개 파일 열람 범위·hash, Oracle19c 문서와 ARIES 원문 일부를 기록한다. [18개 작업 분류](../plans/dev4-work-breakdown.md)의 근거이며 제품·외부 DBMS 실행은 없다.
+
 DEV4의 [소스·Oracle/ARIES 조사](dev4-source-research.md)는 PostgreSQL·MariaDB·CUBRID·SQLite의 SQL/prepared 및 복구 경계와 Oracle 19c 공식 문서·ARIES 초록/원 논문의 명시한 부분을 읽은 기록이다. SQL 구현·Oracle 실행 비교·Q1 PASS 증거가 아니다.
 
 COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은 `e873f96b2b791d0c655dfb4019de4db6209a4f1ab02359f57e4f861815b62ad1`이며, 보존된 COMM 회귀 보고서의 실행 전후 지문과 일치한다. `dev0-validation.json`·`dev1-validation.json`·`dev2-validation.json` 문서 ID는 각각 `dev0/1/2-current-source-20261018.json`을 참조한다. 이 세 파일은 `comm-dev0/1/2-xadb-20261018-r1.json`의 byte-identical 사본이며, 원래 COMM 문서 ID·상대 artifact 경로·실행 root와 원본 hash를 유지한다. catalog의 단일 경로 규칙 안에서 기존 참조를 보존하기 위한 채택 사본으로 새 실행이나 재검증 보고서가 아니다. `dev2-performance-validation.json`은 source `6e58ed3534a1c996a0d5bf9ea56e3f4e81d6dc95bc2b67fc704589f12b4a0e8f`의 별도 성능 진단 r1을 유지한다. 이전 회귀 r1·r2·r3는 원래 파일 경로 ID와 바이트로 보존한다. 이 참조 갱신은 기존 실행의 적용 소스를 확인한 것이며 새 제품 시험 실행이나 진행 중인 DEV2 혼합 작업 트리의 PASS가 아니다. 이전 시험 패키지 재구성의 범위·리뷰는 [경로 재구성 기록](../history/project-migration.md#testing-layout)을 따른다. 이번 병렬 구현·검토·실측 한계는 [K0-005 기록](../implementation/dev2-implementation.md)을 따른다.

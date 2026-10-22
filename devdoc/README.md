@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV4 18개 세부 작업 분류](plans/dev4-work-breakdown.md): 기존 D4-0–7을 하위 공급·통합 인수 단위로 나누고 선행·산출물·완료 조건·T01–14/V01–28/F01–05를 연결했다. [ARIES·Oracle19c·로컬 DBMS 조사](evidence/dev4-source-research.md#work-breakdown-20261022)를 참고했으며 제품 구현·시험 실행과 Q1 완료 승격은 없다.
+
 2026-10-22 [DEV5 16개 분류·44개 하위 작업](plans/dev5-work-breakdown.md): DEV3 방식으로 직접 선행·산출물·완료 조건·인수 대응·우선순위를 정리했다. [ARIES·Oracle19c·로컬5개 DBMS 조사](evidence/dev5-work-breakdown-research-20261022.md)를 근거로 요청·worker·취소·정리·commit 결과·외부 ACK 책임을 구분한다. 제품 개발·시험 재개와 B3 완료 승격은 없다.
 
 2026-10-22 [DEV3 16개 설계의 ARIES·Oracle·로컬 DBMS 병렬 리뷰](evidence/dev3-task-design-review-20261022.md): flush/reuse·UNIQUE·DDL·undo/recovery·backup/restore의8개 설계 반례를 보완하고 구현 동반 인수에 연결했다. 제품 코드·테스트 실행과 DEV3 완료 승격은 없다.
@@ -84,6 +86,7 @@
 | DEV3 16개 작업의 개별 상세 명세·설계도 | [작업별 색인](contracts/dev3-task-designs.md#catalogue) | [공급 설계도](contracts/dev3-task-designs.md#dependency-map)·각 문서의 요구/상태/알고리즘/오류/자원/인수·기존 owner 정본 우선 |
 | DEV3 단계별 필수 시험·구현과 함께 추가할 테스트 | [테스트 계획](plans/dev3-test-plan.md#stages) | [16개 작업별 목록](plans/dev3-test-plan.md#task-tests)·[현재 예약/취소 잔여](plans/dev3-test-plan.md#allocation-first)·[최종 전수 범위](plans/dev3-test-plan.md#final-suite) |
 | DEV3 디스크 page·buffer·index 설계와 병렬 개발 | [DEV3 상세 설계](contracts/disk-storage-design.md), [구현·병렬 개발·검증 계획](plans/dev3-implementation-plan.md#parallel-development) | [WAL·undo 재설계 조사](evidence/dev3-wal-undo-research.md), [아키텍처 비교 보완](evidence/dev3-dev4-architecture-review.md), DS01–06·상태 모델·관측 행 버전·복구 예약 복원·DEV2 수신 |
+| DEV4 작업 분류·개발 순서·공급/완료 조건 | [18개 세부 작업](plans/dev4-work-breakdown.md#catalogue) | [공급 순서](plans/dev4-work-breakdown.md#sequence)·[시험 선택](plans/dev4-work-breakdown.md#test-scope)·[실제 조사 범위](evidence/dev4-source-research.md#work-breakdown-20261022); 기존 SQL/engine 정본 우선 |
 | DEV4 최소 SQL·Oracle 의미·prepared 실행·embedded CLI | [DEV4 상세 설계](contracts/dev4-sql-design.md), [구현·검증 계획](plans/dev4-implementation-plan.md) | [소스·Oracle/ARIES 조사](evidence/dev4-source-research.md), [초기 처리 범위](contracts/dev4-sql-design.md#capacity-boundary), SC02·KU13·PF10·D4-V26 행 충돌·실제 DEV3 선행 증거 |
 | DEV5 서버·인증/권한·세션·요청/취소 | [DEV5 상세 설계](contracts/dev5-server-design.md), [16개 분류·44개 하위 작업](plans/dev5-work-breakdown.md#catalogue), [구현·검증 계획](plans/dev5-implementation-plan.md) | [ARIES·Oracle·로컬 DBMS 분류 근거](evidence/dev5-work-breakdown-research-20261022.md), SC03·KU14·PA08·PF11·실제 Q1/C1 선행 증거 |
 | DEV6 native·C ABI·JDBC·ODBC client 설계 | [클라이언트 상세 설계](contracts/dev6-client-design.md), [구현·검증 계획](plans/dev6-implementation-plan.md) | [Oracle·ARIES·로컬 소스 재검토](evidence/dev6-source-research.md#review-002), REVIEW-002·R2-V01–V06, SC04–06·D6-W01·실제 B3 선행; CLIENT1 미실행 |

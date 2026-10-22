@@ -60,3 +60,55 @@ line 범위는 위 revision의 관측 위치이고, hash는 부분 발췌가 아
 공개 소스의 보상 로그 동작도 실제 읽었다. `/home/et16/work/cubrid`의 origin은 `https://github.com/CUBRID/cubrid.git`, HEAD는 `a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5`이며 tracked 변경은 없었다. [src/transaction/log_recovery.c](https://github.com/CUBRID/cubrid/blob/a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5/src/transaction/log_recovery.c)의 270–330, 4579–4665, 4900–4955행을 읽었다. undo의 compensate 기록과 `LOG_COMPENSATE`의 redo-only 처리·`undo_nxlsa` 연결을 확인했다. 파일 전체 SHA-256은 `346275b089af2ff3231b3eb224fb6a7d8e9e5811e958762980dc11b978d28058`이다. 빌드·실행·코드 도입은 하지 않았다.
 
 선택의 정본은 [DEV4-REVIEW-002](../contracts/dev4-sql-design.md#oracle-review), 반례는 D4-V17–24와 [R1–R4](../plans/dev4-implementation-plan.md#rollback-recovery)다. 이 조사와 설계 채택은 XADB의 내구성·Oracle differential·Q1 PASS 증거가 아니다.
+
+<a id="work-breakdown-20261022"></a>
+## 2026-10-22 — DEV4 세부 작업 분류 조사
+
+**선택 소스·원문 열람 / 작업 분류 근거 / 제품·외부 DBMS 시험 NOT_RUN.** 조사자는 `/root`다. 사용자의 DEV4 분류 요청에 따라 기존 설계를 [18개 작업과 공급·인수 단위](../plans/dev4-work-breakdown.md#catalogue)로 나누기 위해 front end, prepared 수명, statement/transaction 종료, sort/spill, 복구 수신 경계를 다시 읽었다. 앞선 2026-10-18 조사·독립 검토의 identity는 그대로 보존하며 이번 열람을 과거 설계 채택의 새로운 실행 증거로 대입하지 않는다.
+
+### 실제 checkout·열람 범위
+
+각 checkout의 `remote get-url origin`, `rev-parse HEAD`, `status --short --untracked-files=no`를 확인했다. 아래 네 checkout의 tracked 변경은 없었으며 원본 checkout을 수정·빌드·실행하지 않았다. untracked 파일이나 전체 DBMS 기능의 감사는 아니다. catalog의 `/home/et16/work/duckdb`는 이번 환경에서 경로가 없어 열람 대상에 포함하지 않았다. 나머지 catalog 전체를 조사했다고 주장하지 않는다.
+
+| checkout | 실제 HEAD | 확인한 origin |
+| --- | --- | --- |
+| `/home/et16/work/postgres` | `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851` | [postgres/postgres](https://github.com/postgres/postgres) |
+| `/home/et16/work/mariadb` | `327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4` | [MariaDB/server](https://github.com/MariaDB/server) |
+| `/home/et16/work/cubrid` | `a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5` | [CUBRID/cubrid](https://github.com/CUBRID/cubrid) |
+| `/home/et16/work/sqlite` | `43a48f77585a88940c727f33682151418f544059` | [sqlite/sqlite](https://github.com/sqlite/sqlite) |
+
+행 범위는 위 실제 revision의 위치다. SHA-256은 파일 전체 bytes이며 열람은 명시한 범위에 한정한다. 주석에 기술된 설계와 구현된 분기에서 관측한 책임을 구분했고 함수 전체·동시성 전체를 검증한 것으로 확대하지 않는다.
+
+| ID | 파일·실제 읽은 행 | 관측·분류 연결 | 전체 파일 SHA-256 |
+| --- | --- | --- | --- |
+| W01 | [postgres analyze.c](https://github.com/postgres/postgres/blob/45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851/src/backend/parser/analyze.c), 109–157 | raw tree→Query와 parameter 타입 입력. 4.03 parser·4.05 binder·4.11 parameter를 구분 | `93eaf63c0f60bc3ca2562f528d81bc6bef9177751273791e26c35f9b6f93e80c` |
+| W02 | [postgres plancache.c](https://github.com/postgres/postgres/blob/45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851/src/backend/utils/cache/plancache.c), 679–750·860–905 | 재검증/lock 재획득의 경합 설명, fixed result descriptor 변경 거절. 4.06 dependency·4.11/12 metadata/수명 연결 | `51b5941f39cd91b7de11c9701cd4decfd173a3681f05b2be8c013ea21a84bbaf` |
+| W03 | [postgres nodeSort.c](https://github.com/postgres/postgres/blob/45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851/src/backend/executor/nodeSort.c), 26–80·97–169 | 하위 node 입력→sort→후속 fetch 책임. 4.07 실행과 4.08 sort 공급 경계 | `6ba1b4ff7a3f2e208c8f3b784bff61e182e47a44bd22a88744998b9850c112db` |
+| W04 | [postgres tuplesort.c](https://github.com/postgres/postgres/blob/45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851/src/backend/utils/sort/tuplesort.c), 1–125 | 머리말의 bounded memory·run 생성·k-way merge·최종 merge/임시 저장 설명. 4.08.1/2와 4.14 자원 인수 분해 | `dc140a5018871fe263b585f4e8a7c9ab364b7d9533a6188b4279ab9ce3135641` |
+| W05 | [mariadb sql_prepare.cc](https://github.com/MariaDB/server/blob/327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4/sql/sql_prepare.cc), 20–92·4790–4853·4890–4927 | prepare metadata와 execute 값 전달, metadata invalidation의 제한 reprepare. 4.11 별도 수명·4.06 실행 전 검사 | `1c83c960cac5f4e6be24132045e1d9afd9eed4fd374b464c9245d70a7c670fbd` |
+| W06 | [mariadb transaction.cc](https://github.com/MariaDB/server/blob/327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4/sql/transaction.cc), 463–586 | trans_commit_stmt/trans_rollback_stmt가 engine transaction 경계와 active multi-statement 상태를 다룸. 4.09 statement와 4.13 전체 거래 조립 구분 | `2f63b3189e257bce3cfe5303f64811ddc774604a9294c92d95b74833208f2dd8` |
+| W07 | [cubrid execute_statement.c](https://github.com/CUBRID/cubrid/blob/a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5/src/query/execute_statement.c), 4074–4245 | prepare 가능한 질의와 direct 처리 문장 종류의 구분·dispatch. 4.10 DDL·4.11 prepared·4.13 거래 제어 분리 | `92ada15819057a15438a502a88578e354be1675de227a728aae33c55fe904d0d` |
+| W08 | [cubrid log_recovery.c](https://github.com/CUBRID/cubrid/blob/a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5/src/transaction/log_recovery.c), 270–330·4925–4955 | 보상 기록의 생성·undo dispatch와 LOG_COMPENSATE의 redo-only/undo_nxlsa 이동. 4.17의 rollback/recrash 수신 경계 | `346275b089af2ff3231b3eb224fb6a7d8e9e5811e958762980dc11b978d28058` |
+| W09 | [sqlite vdbeapi.c](https://github.com/sqlite/sqlite/blob/43a48f77585a88940c727f33682151418f544059/src/vdbeapi.c), 120–174·1730–1809 | reset/clear_bindings 분리, busy bind 거절·길이/destructor. 4.11 owned bind와 4.12 result/handle 수명 | `144068f8686000e049168e665773bb5e6769e3ecc5a7a6e455e8418d53db91a5` |
+| W10 | [sqlite vdbeaux.c](https://github.com/sqlite/sqlite/blob/43a48f77585a88940c727f33682151418f544059/src/vdbeaux.c), 3240–3305·3450–3505 | statement savepoint rollback/release, 정리 오류 승격·전체 rollback·change count 처리. 4.09·4.13·4.14의 별도 실패/소유 인수 | `b5861fefc82cb754987635deab85abc4062883200202e08ff609f185af91bae6` |
+| W11 | [sqlite vdbesort.c](https://github.com/sqlite/sqlite/blob/43a48f77585a88940c727f33682151418f544059/src/vdbesort.c), 12–130 | 머리말의 Write/Rewind/Next/Close 순서와 메모리 초과 시 PMA·bounded merge 설명. 4.08 run/merge/cleanup 분리 | `f7d6cc2cd7ea02d4eb15e119d1b29d8aac063ec8a57fe6ea7168d0899c9fef17` |
+
+### Oracle·ARIES 원문
+
+Oracle은 기존 비교 기준인 **19c** 문서를 열람했으며 Oracle DB 실행은 하지 않았다. ARIES는 공식 서지와 CMU 공개 사본의 PDF 1–7쪽(인쇄94–100쪽) 텍스트를 읽었다. 전문·도표 전체를 검토한 기록은 아니다. 웹 도구의 Berkeley/CMU/UMich PDF 읽기가 timeout되어 CMU 사본을 별도 HTTP로 내려받아 `pdftotext`로 해당 쪽만 읽었으며 저장소에는 편입하지 않았다. 사본 SHA-256은 `6131bcee36c21e669d41204ef2b2320cb458b5d3bd9b7cf3e7758afe8ed3495f`다.
+
+| ID·실제 자료/부분 | 확인한 의미 | XADB 작업 분류·한계 |
+| --- | --- | --- |
+| O01 [Oracle19c SQL](https://docs.oracle.com/en/database/oracle/oracle-database/19/cncpt/sql.html), Stages of SQL Processing·SQL Parsing | parse·optimization·row source·execution 책임, syntax/semantic 검사 구분 | 4.02–07을 분리하는 참고. 기존 recursive-descent·규칙 기반 plan·pull 실행 유지; Oracle optimizer·shared pool 도입 아님 |
+| O02 [Oracle19c Transactions](https://docs.oracle.com/en/database/oracle/oracle-database/19/cncpt/transactions.html), Statement-Level Atomicity·End of a Transaction | 성공 statement와 commit을 구별하며 실패 문장은 앞선 성공 문장을 보존할 수 있음 | 4.09 runtime rollback·4.13 거래 종료·4.17 crash 인수를 구분. XADB의 전체 conflict abort·fencing은 XADB 정본으로 판단 |
+| O03 [Oracle19c COMMIT](https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/COMMIT.html), Purpose·WAIT | 유효 DDL 전 commit과 성공 DDL 후 commit, durable 기록과 응답 수신 사이 실패 가능 | 4.10 두 outcome과 4.17 R3/R4. XADB 지원 문법·진입 거절 경계 유지, NOWAIT·자동 replay 도입 없음 |
+| O04 [Oracle19c Nulls](https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/Nulls.html), 길이0 character·비교/조건 | 빈 character/NULL·UNKNOWN과 IS NULL 구분 | 4.04 입력 의미·4.06/07 NULL index 결과·4.11 bind vector 연결. native 빈 Utf8까지 바꾸지 않음 |
+| A01 [ARIES 공식 서지](https://research.ibm.com/publications/aries-a-transaction-recovery-method-supporting-fine-granularity-locking-and-partial-rollbacks-using-write-ahead-logging), [1992 원문 CMU 사본](https://www.cs.cmu.edu/~15849g/readings/mohan92.pdf), PDF1–7쪽 텍스트 | WAL/page LSN·commit log 영속화, partial/total/restart undo, redo-only CLR와 반복 장애 시 rollback 기록 | 4.01 실제 DEV3 복구 공급과 4.17 R1–R4의 경계. SQL 내 저장 복구 재구현·ARIES와 XADB UndoRef 동일성·SQL SAVEPOINT 추가 근거가 아님 |
+
+### 분류에 반영한 판단
+
+W01/O01을 따라 구문·binding·계획·실행을 별도 산출물로, W02/W05/W09를 따라 metadata·owned binding·result generation을 별도 수명으로 나눴다. W03/W04/W11의 임시 정렬 처리에서는 run 표현·merge·cleanup을 구분해 4.08에 배정하고 기존 합산 quota/old+new peak는 4.14에서 소비자와 연결한다. 외부 시스템의 memory 정책·병렬 sorter·자동 reprepare를 XADB 정책으로 채택하지 않았다.
+
+O02/W06/W10은 문장 실패와 거래 종료를 분리해 검토할 근거다. XADB의 문장 최종 UNIQUE, 실제 잔류 WAL/CLR·undo·잠금 회계, NotCommittedRecoveryRequired는 현행 owner 계약을 유지한다. W07/O03에 따라 DDL을 prepared DML과 분리하고 precommit 이후 새 catalog 검증·두 outcome을 4.10에 배정했다. A01/W08의 복구 경계는 4.17에 배정하되 page/CLR의 구현 owner는 DEV3로 유지한다.
+
+이 판단은 기존 계약을 빠짐없이 작업에 배정하기 위한 것이다. 새 SQL 의미·외부 dialect 동일성·자원 한도 적정성·실제 처리 성능을 증명하지 않는다. 이번 문서의 검토 상태와 commit 범위는 [작업 기록](../plans/dev4-work-breakdown.md#decision)을 따른다.

@@ -4,6 +4,8 @@
 
 [SQL 소유 계약](../contracts/dev4-sql-design.md) · [소스 조사](../evidence/dev4-source-research.md) · [단계 완료](stage-completion.json) · [저장 선행](dev3-implementation-plan.md) · [개발 운영](../policies/development-policy.md)
 
+2026-10-22 [18개 세부 작업 분류](dev4-work-breakdown.md#catalogue)는 아래 D4-0–7을 공급·소비 단위로 나누고 선행·산출물·완료 조건·기존 인수를 연결한다. [공급 순서](dev4-work-breakdown.md#sequence)와 [시험 선택](dev4-work-breakdown.md#test-scope)을 함께 적용한다. 아래 과거 전체/하위 회귀·V2/V3·current-build closure 문구에도 [변경된 코드만 시험하는 사용자 지시](../../AGENTS.md)가 우선한다. DEV3 S5의 전수 예외를 DEV4에 확대하지 않는다. 제품·Q1 상태는 NOT_RUN을 유지한다.
+
 <a id="entry"></a>
 ## 1. 착수와 완료를 구분한다
 
@@ -26,7 +28,7 @@ DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01�
 <a id="sequence"></a>
 ## 2. 구현 순서와 소유
 
-아래 D4 단계는 XADB-011 내부 leaf이며 새 제품 stage나 완료 gate가 아니다. 실제 배정·병렬 실행은 아직 없다. 파일은 기존 계획 패키지 안에서 구현할 때만 추가하고 Cargo/지문/clean export를 함께 등록한다. 문법·의미 정의와 independent oracle의 생산 구현은 분리한다.
+아래 D4 단계는 XADB-011 내부 leaf이며 새 제품 stage나 완료 gate가 아니다. [4.01–4.18 작업 분류](dev4-work-breakdown.md#catalogue)는 이 순서의 세부 배정이며 전체 분류의 완료를 서로 선행으로 묶지 않는다. 실제 배정·병렬 실행은 아직 없다. 파일은 기존 계획 패키지 안에서 구현할 때만 추가하고 Cargo/지문/clean export를 함께 등록한다. 문법·의미 정의와 independent oracle의 생산 구현은 분리한다.
 
 | 순서 | 책임·산출물 | 선행·완료 범위 |
 | --- | --- | --- |
