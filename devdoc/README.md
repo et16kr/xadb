@@ -8,7 +8,7 @@
 
 2026-10-22 [DEV3 16개 설계 2차 비교 리뷰](evidence/dev3-task-design-review-20261022-r2.md): ARIES·Oracle·로컬6개 DBMS를 대조하여 Commit 의미 설치 순서·offline build drain·backup 최종 WAL cut을 보완했다. 이전 리뷰와 실행 결과는 보존하며 제품 구현·시험 실행은 없다.
 
-2026-10-22 [DEV6 작업 분배 개선](plans/dev6-work-breakdown.md): 18개 책임·55개 기존 묶음의 큰 항목을 추가 완료 단위로 나누고 ODBC 직접 선행·공통/구현 담당·조기 연결 순서를 구체화했다. [ARIES·Oracle·로컬6개 재검토](evidence/dev6-work-breakdown-review-20261022.md)와 [실행 선택·시간 예산](plans/dev6-implementation-plan.md#execution-budget)을 연결하며 기존 의미·SC04→SC05→SC06·미실행 상태를 유지한다.
+2026-10-22 [DEV6 작업 분배 개선](plans/dev6-work-breakdown.md): 18개 책임·55개 기존 묶음 아래 최하위 배정 단위를72개에서80개로 보완했다. [ARIES·Oracle·로컬5개 후속 점검](evidence/dev6-work-breakdown-review-20261022-r2.md)으로 C ABI·JDBC·ODBC 분량, DB capability/type-info 인수 연결과 [실제 성능 호출 경계](plans/dev6-implementation-plan.md#execution-budget)를 명시했다. 기존 의미·SC04→SC05→SC06·미실행 상태를 유지한다.
 
 2026-10-22 [DEV7 36개 세부 작업 분류](plans/dev7-work-breakdown.md): ARIES·Oracle·로컬8개 DBMS 소스를 참고하여 기존 큰 묶음을 하위 배정 단위·직접 선행·산출물·완료/인수로 나누고 64개 요구에 연결했다. 제품 구현·시험은 재개하지 않았으며 F01–F10·SQL_EXT1 미완료와 logging 보류를 유지한다.
 

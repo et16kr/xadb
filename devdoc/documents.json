@@ -1557,6 +1557,11 @@
       "path": "evidence/dev6-work-breakdown-review-20261022.md",
       "role": "evidence",
       "title": "DEV6 작업 분배 재검토와 개선 근거"
+    },
+    "dev6-work-breakdown-review-20261022-r2.md": {
+      "path": "evidence/dev6-work-breakdown-review-20261022-r2.md",
+      "role": "evidence",
+      "title": "DEV6 작업 배정 2차 점검 — API 분량과 인수 연결"
     }
   }
 }

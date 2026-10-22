@@ -8,6 +8,8 @@
 
 후속 [D6-WORK-BREAKDOWN-002](dev6-work-breakdown.md#decision-002)는 기존 55개 묶음의 큰 항목을 추가 완료 단위로 나누고 ODBC 직접 선행·[공통/구현 책임](dev6-work-breakdown.md#ownership)·[작은 실제 연결 우선순위](dev6-work-breakdown.md#priority)를 구체화한다. [재검토 근거](../evidence/dev6-work-breakdown-review-20261022.md)와 아래 [실행 선택·예산](#execution-budget)을 함께 적용하며 기존 제품 의미·필수 인수 기준은 유지한다.
 
+추가 [배정 재점검](../evidence/dev6-work-breakdown-review-20261022-r2.md)은 기존 의미 안에서 C ABI·JDBC·ODBC의 큰 항목을 나눠 최하위 배정 단위를72개에서80개로 전개한다. [DB capability·type-info 결과·직접 실행의 인수 연결](dev6-work-breakdown.md#handoffs)과 실제 성능 호출 경계를 명시하며 F01–07·API 의미·SC 순서·실행 상태는 유지한다.
+
 <a id="entry"></a>
 ## 1. 설계·구현·인수 진입
 
@@ -213,9 +215,11 @@ driver 소유 quota·control reserve·FD/handle 상한 위반0, close 완료 뒤
 | 실행 묶음 | driver/profile/cut별 독립 bundle·entrypoint·순서·seed·source/binary/environment identity. 중단·FAIL·미도달·불확실성 보존; 다른 bundle 성공으로 대체 불가 |
 | 증거 재사용 | 완료한 공통 도구 시험과 각 driver의 실제 증거를 구별. 필요한 비교·재현 의무의 기존 결과를 연결하고 새 fingerprint·SC 완료라는 이유로 다시 실행하지 않음 |
 
-기본 성능 cell 하나를 **driver 하나·계측 mode 하나·workload 설정 하나**에 대한 baseline/candidate 비교로 잡으면 `20쌍 × 2실행 × (warmup30초 + 측정60초) = 3,600초`, 즉 **1시간**이다. fixture 구성·reopen·추가 JVM warmup·분석/재현 비용은 별도다. 서로 다른 workload 설정을 같은 cell이라고 합치거나 통계의 반복 수와 driver 수를 섞지 않는다.
+`driver3종`은 Native/C·JDBC·ODBC의 인수 계열 수다. 실제 F07 cell은 **Rust 공개 API / C facade / JDBC / ODBC DM 중 어느 호출 경계를 측정하는지** 별도로 기록한다. Rust core만 측정하고 C 복사/FFI 비용까지 검증됐다고 하지 않으며, ODBC 직접 library 호출과 DM 경유도 구별한다. 이는 모든 workload를 네 경계에 무조건 곱하라는 새 시험 기준이 아니다. 기존 T18/P01–04 의무에서 선택한 경계·공통 core 증거의 적용 한계·남은 adapter 측정 의무를 명시해 실제 cell 수와 예산을 계산한다.
 
-예산 계산 예로 P01을 연결3종×direct/prepare2종=6cell, P02를 fetch3종×크기2종=6cell로 모두 전개하고 각각 driver3종·계측mode3종의 baseline/candidate 비교를 수행하면 `(6+6)×3×3×1시간 = 108시간`이다. 이는 **조합 전개를 가정한 예시**이며 확정 inventory·실행 결과·최소 전체 기간이 아니다. P03/P04·복구·추가 warmup·재현은 포함하지 않는다. F07에서는 실제 비교 쌍과 재사용 가능한 기존 증거를 명시하여 중복 계산·중복 실행을 방지한다.
+기본 성능 cell 하나를 **실제 호출 경계 하나·계측 mode 하나·workload 설정 하나**에 대한 baseline/candidate 비교로 잡으면 `20쌍 × 2실행 × (warmup30초 + 측정60초) = 3,600초`, 즉 **1시간**이다. fixture 구성·reopen·추가 JVM warmup·분석/재현 비용은 별도다. 서로 다른 workload 설정을 같은 cell이라고 합치거나 통계의 반복 수와 driver 수를 섞지 않는다.
+
+예산 계산 예로 P01을 연결3종×direct/prepare2종=6cell, P02를 fetch3종×크기2종=6cell로 모두 전개하고 각각 driver3종(계열마다 호출 경계 하나 가정)·계측mode3종의 baseline/candidate 비교를 수행하면 `(6+6)×3×3×1시간 = 108시간`이다. 이는 **조합 전개를 가정한 예시**이며 확정 inventory·실행 결과·최소 전체 기간이 아니다. P03/P04·복구·추가 warmup·재현은 포함하지 않는다. F07에서는 실제 비교 쌍과 재사용 가능한 기존 증거를 명시하여 중복 계산·중복 실행을 방지한다.
 
 예산이 크면 독립 bundle의 실행 일정과 준비 작업을 나누고 측정 host의 경쟁 부하를 통제한다. 이번 보완으로 기존 20 paired runs·DP03 profile·필수 cut/model/성능 guardrail을 축소하지 않는다. 수치나 필수 조합을 바꿔야 하면 실행 전 기존 D2 절차와 동등한 검출 근거를 적용하며 실패 뒤 임의 축소하지 않는다. DEV3 최종 S5 예외를 DEV6 최종 전수 실행의 근거로 사용하지 않는다.
 

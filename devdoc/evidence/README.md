@@ -62,6 +62,7 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 
 - [DEV6 세부 분류 — ARIES·Oracle·로컬 DBMS 조사](dev6-work-breakdown-research-20261022.md) — 2026-10-22 실제 원문·6개 checkout revision/hash·18개 분류 적용과 정적 검토; 제품 실행 없음
 - [DEV6 작업 분배 재검토와 개선 근거](dev6-work-breakdown-review-20261022.md) — ARIES·Oracle·로컬6개 재열람, 추가 완료 단위·ODBC 선행·담당/분량/실행 예산 보완과 별도 검토; 제품 실행 없음
+- [DEV6 작업 배정 2차 점검 — API 분량과 인수 연결](dev6-work-breakdown-review-20261022-r2.md) — ARIES·Oracle·로컬5개 대조, 72→80개 배정 단위·capability/type-info 소비 연결·성능 호출 경계; D0 문서 보완·제품 실행 없음
 - [DEV6 — Oracle·ARIES·로컬 DBMS 클라이언트 조사와 검토](dev6-source-research.md) — DEV6 설계·REVIEW-002 상태/취소/결과/버퍼 보완·인수 의무; CLIENT1 미실행
 
 - [DEV5 — 서버 소스 조사와 독립 검토 기록](dev5-source-research.md) — PostgreSQL·MariaDB·CUBRID 실제 revision/열람 근거와 DEV5-REVIEW-002 대기·수명 반례/수정; 제품 실행 증거 아님
