@@ -638,6 +638,17 @@ prepare12208/readback14788·Fresh role424/Mutable role792 bytes의 실제 typed 
 
 원 dirty196608/flush65536·I/O8192·component65536·4MiB workspace 예약을 증액하지 않는다. 실제77 layout와 source/return-carrier guard, Status codec/FILEMAP 수명 분리를 검산했으며 stack/RSS 측정이 아니다. .a와 allocator의 원 결과를 보존하고 변경 없는 하위 시험을 반복하지 않는다. 일반 pool/batch8/64/multifile·free/reuse·recovery/READY·전체 DEV3는 미완료다.
 
+<a id="paused-after-status-home-flush"></a>
+## 2026-10-22 작은 단위 종료·인계
+
+사용자의 “하던 것만 작은 단위로 완료해서 commit하고 새 작업 단위를 시작하지 않는다”는 요청에 따라, 마지막 제품 완료 경계를 [Status home flush 3.03.2.b](#status-home-flush)로 고정하고 작업을 정리한다. allocator flush `0968838`, Status bootstrap `3813235`, Status INIT `d5c2628`, Status home flush `771713a`는 각각 commit을 마쳤다. 전체 DEV3·최종 S5 인수는 미완료다.
+
+마지막 단위의 필수43·compiler semantic6·native3·checker unique16과 독립 D1 결과는 [기존 선택 증거](../evidence/dev3-status-home-flush-20261022.md)를 그대로 보존한다. source별 성공과 원 FAIL을 구별하며 S5 추가588은 작성·NOT_RUN이다. 이번 종료 정리는 문서만 변경하므로 제품 시험·컴파일·정적 검사와 push 전용 문서 검사를 새로 실행하지 않는다.
+
+후속 후보 3.12.1.a의 LEASE/PREFLIGHT/SELECT는 총괄과 `/root/allocation_compiler`, `/root/allocation_native`가 기존 계약·소스·시험 입력을 읽은 상태에서 멈췄다. 두 담당의 proposal 파일은 미작성이고 제품·시험 코드 변경도 없다. API·오류·자원 상한·지원 범위·시험 inventory는 미확정이며 D2 채택이나 구현 완료로 계산하지 않는다. BOOT_RESERVE·repair·일반 recovery/READY는 남은 작업으로 유지한다.
+
+현재 진행하던 제품 코드의 미커밋 변경은 없다. 재개 시에는 [잔여 작업 순서](../plans/dev3-implementation-plan.md#work-organization)와 위 완료 경계를 확인해 후속 후보를 결정한다. 이 인계 기록 자체는 후속 구현·시험을 시작하는 지시가 아니다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 
@@ -664,6 +675,6 @@ prepare12208/readback14788·Fresh role424/Mutable role792 bytes의 실제 typed 
 | 3.15 백업·무결성 | S3/fault 인수용 full audit·독립 이력, 이후 offline exact-cut backup/restore | 실제 DEV3 경로 미완료. audit 공급은 backup 완료를 기다리지 않음 |
 | 3.16 자원 종합·성능·최종 인수 | 항목별 자원 회계 종합·PF09·DS01–06·KU09/10·RC-T12–14 | opcode별 F05는 각 effect 전 선행. 이 항목은 증거 종합과 남은 인수이며 전체 DEV3 미완료 |
 
-기존 재개 우선 단위 [3.03.1 예약·취소](../plans/dev3-implementation-plan.md#allocation-remaining)는 위 인수 기록을 따른다. 3.10.1.a.1의 공통 admission/version gate는 위 기록을 따르며 dirty frame·typed stage/apply 첫 소비자는 위 기록을 따른다. allocator1 한 페이지 flush와 Status owner의 영속 binding·예약 payload INIT 공급을 마쳤으며 다음 실제 공급은 Status home flush와 두 target의 flush 순서·경합이다. [원본 부분 검토](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)의 remaining을 기준으로 하며, 완료된 무변경 runtime 사례는 반복하지 않는다. 각 새 쓰기 경로의 자원 계산·복구 의미·fault 입력은 그 경로 전에 정한다. free/reuse는 회수 가능성 판정을, 실제 행 변경은 undo/status 기반을 먼저 수신하되 서로 전체 분류 완료를 요구하지 않는다. 복구 전용 REBASE는 정상 fuzzy checkpoint와 별도이며 선행으로 공급한다. 계획 작성 당시의 미실행 상태와 이후 위 단위별 구현·실행 기록을 구분한다.
+기존 재개 우선 단위 [3.03.1 예약·취소](../plans/dev3-implementation-plan.md#allocation-remaining)는 위 인수 기록을 따른다. 3.10.1.a.1의 공통 admission/version gate는 위 기록을 따르며 dirty frame·typed stage/apply 첫 소비자는 위 기록을 따른다. allocator1 한 페이지 flush와 Status owner의 영속 binding·예약 payload INIT에 이어 [Status home flush와 두 target의 순차 flush](#status-home-flush)까지 제한 인수를 마쳤다. 후속 복구 진입 후보는 [종료·인계 기록](#paused-after-status-home-flush)의 사전 열람 상태로 보류한다. [원본 부분 검토](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)의 remaining은 역사적 상태로 보존하고 이후 단위별 인수 기록을 함께 읽으며, 완료된 무변경 runtime 사례는 반복하지 않는다. 각 새 쓰기 경로의 자원 계산·복구 의미·fault 입력은 그 경로 전에 정한다. free/reuse는 회수 가능성 판정을, 실제 행 변경은 undo/status 기반을 먼저 수신하되 서로 전체 분류 완료를 요구하지 않는다. 복구 전용 REBASE는 정상 fuzzy checkpoint와 별도이며 선행으로 공급한다. 계획 작성 당시의 미실행 상태와 이후 위 단위별 구현·실행 기록을 구분한다.
 
 예약·취소의 [native와 compiler 병렬 작업](../plans/dev3-implementation-plan.md#parallel-execution-plan)은 해당 인수 기록에 실제 담당·source·결과를 연결했다. 64KiB 분석·공통 수정·stage 검증은 총괄이 조정하고 독립 검토자를 별도로 둔다. 실제 담당/경로·기준 source·자원 profile을 고정하기 전에는 작업 배정이나 동시 실행 완료로 기록하지 않는다.

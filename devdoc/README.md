@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV3 작은 단위 종료·인계](implementation/dev3-implementation.md#paused-after-status-home-flush): Status home flush까지 구현·선택 인수·commit을 완료했다. 복구 진입은 사전 열람만 진행했으며 새 코드·확정 설계·시험은 없다. 사용자 요청에 따라 기존 작업을 정리하고 새 하위 작업은 시작하지 않는다. 전체 DEV3·최종 S5는 미완료다.
+
 2026-10-22 [DEV3 Status home flush](implementation/dev3-implementation.md#status-home-flush): 실제 두 target의 순차 DWB/home·whole retirement·조건부 finalize를 연결했다. 필수43·compiler6·native3의 source별 증거와 원 FAIL을 보존하며 제한 단위의 최종 독립 D1을 수용했다. 일반 recovery·전체 DEV3는 미완료다.
 
 2026-10-22 [DEV3 폐쇄 두-frame Status INIT](implementation/dev3-implementation.md#status-init): 실제 reserve→두 RAM image 공개→동일 WAL requirement의 durable 확인과 두-pin reader를 연결했다. 필수93·shared1·compiler13·native3의 source별 결과와 원 FAIL을 보존한다. 제한 단위의 최종 독립 D1을 수용했으며 Status home flush·일반 recovery·전체 DEV3는 미완료다.
