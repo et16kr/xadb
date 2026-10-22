@@ -4,6 +4,8 @@
 
 [서버 상세 설계](../contracts/dev5-server-design.md) · [소스 조사·검토](../evidence/dev5-source-research.md) · [단계 JSON](development-stages.json) · [완료 계약](stage-completion.json)
 
+2026-10-22 [16개 분류·44개 하위 작업](dev5-work-breakdown.md#catalogue)으로 D5-I01–I06을 세분화했다. 직접 선행·산출물·완료 조건·F/T/C/M/P 대응과 우선 공급 순서는 해당 계획을 따른다. [ARIES·Oracle·로컬5개 DBMS 조사](../evidence/dev5-work-breakdown-research-20261022.md)는 분류 근거이며 제품 실행 증거가 아니다. 아래 과거 하위 회귀·V3 문구에도 [변경 코드만 시험하는 사용자 지시](../../AGENTS.md)가 우선한다. DEV3 S5 전수 예외는 DEV5에 적용하지 않으며, B3는 원래 증거를 수신하고 미실행·변경/실패 경로의 의무를 닫아 판정한다.
+
 이 계획은 XADB-012 서버 조립과 XADB-033 실제 client 인수의 순서·선행·동결 입력을 정한다. 구현될 파일·runner·명령이 존재한다고 주장하지 않으며 빈 package나 fingerprint/clean-export 경로를 추가하지 않는다. DEV6 driver 완성은 B3의 선행 조건이 아니다.
 
 <a id="entry"></a>
@@ -37,6 +39,8 @@ frame/UID/권한 callback의 실제 하위 계약이 부족하면 해당 소유�
 
 <a id="sequence"></a>
 ## 3. 구현 순서·책임 배치
+
+아래 I01–I06은 상위 묶음이다. 실제 착수·검토·인계는 [세부 작업의 직접 선행](dev5-work-breakdown.md#tasks)과 [공급 우선순위](dev5-work-breakdown.md#order)를 따른다. 특히 cleanup primitive·독립 oracle·자원 회계는 I05/I06까지 미루지 않는다.
 
 | 순서 | 작업·소유 책임 | 인수 후 다음 입력 |
 | --- | --- | --- |

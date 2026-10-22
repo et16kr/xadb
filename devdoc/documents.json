@@ -1497,6 +1497,16 @@
       "path": "plans/dev3-test-plan.md",
       "role": "plans",
       "title": "DEV3 — 단계별 필수 테스트와 구현 동반 테스트 추가 계획"
+    },
+    "dev5-work-breakdown.md": {
+      "path": "plans/dev5-work-breakdown.md",
+      "role": "plans",
+      "title": "DEV5 — 서버 개발 작업 분류와 공급·인수 계획"
+    },
+    "dev5-work-breakdown-research-20261022.md": {
+      "path": "evidence/dev5-work-breakdown-research-20261022.md",
+      "role": "evidence",
+      "title": "DEV5 작업 분류 — ARIES·Oracle·로컬 DBMS 조사"
     }
   }
 }

@@ -15,6 +15,7 @@
 - [DEV6 — 클라이언트 구현·검증 계획](dev6-implementation-plan.md) — DEV6 설계·REVIEW-002 상태/취소/결과/버퍼 보완·인수 의무; CLIENT1 미실행
 
 - [DEV5 — 서버 구현·검증 계획](dev5-implementation-plan.md) — D5-F01–05·T01–14·worker 대기/만료·철회 후 정리 반례·crash cut·PF11 및 DEV6 이관
+- [DEV5 — 서버 개발 작업 분류와 공급·인수 계획](dev5-work-breakdown.md) — DEV3 방식16개 분류·44개 하위 작업, 직접 선행·완료 조건·기존 인수 대응·우선순위; 제품 미구현·B3 NOT_RUN
 
 - [architecture-decisions.json](architecture-decisions.json)
 - [하위 계층부터 개발하는 순서](bottom-up-development.md)

@@ -1080,7 +1080,8 @@
       "official_distribution_status": "NOT_RUN",
       "design_refs": [
         "dev5-server-design.md",
-        "dev5-implementation-plan.md"
+        "dev5-implementation-plan.md",
+        "dev5-work-breakdown.md"
       ],
       "design_decision_ref": "dev5-server-design.md#decision"
     },
