@@ -82,8 +82,8 @@ pub(super) struct BeforeWait {
     arrived: mpsc::SyncSender<()>,
     release: mpsc::Receiver<()>,
 }
-pub(super) fn pause_before_wait(
-    session: &GenesisWalSession<'_, Writer>,
+pub(super) fn pause_before_wait<W: WriterNamespace>(
+    session: &GenesisWalSession<'_, W>,
 ) -> (mpsc::Receiver<()>, mpsc::SyncSender<()>) {
     let (arrived, arrival) = mpsc::sync_channel(1);
     let (resume, release) = mpsc::sync_channel(1);

@@ -36,11 +36,13 @@ mod status_init;
 #[path = "status_init_operation.rs"]
 mod status_init_operation;
 pub(crate) use status_init::{
-    BeforeEffectError, BoundStatusBootstrap, InitAttemptError, InitializedStatusObservation,
-    ReservedStatus, StatusBootstrapWriter, StatusInitError, StatusReadGuard, StatusReader,
+    BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, InitAttemptError,
+    InitializedStatusObservation, IntoFlushError, ReservedStatus, StatusBootstrapWriter,
+    StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard, StatusReader,
 };
 pub(in crate::storage) use status_init::{
     CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
+    StatusFlushAuthority,
 };
 
 #[path = "allocator_flush.rs"]

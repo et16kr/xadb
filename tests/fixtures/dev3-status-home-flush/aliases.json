@@ -1,0 +1,14 @@
+{
+  "action": "same Status batch, cut and failure mode; same first complete allocator batch for AS",
+  "aliases": {
+    "PF01": "SF-P1-SA-PREFIX-10",
+    "PF02": "SF-P1-SA-AFTER-19",
+    "PF03": "SF-P1-SA-PREFIX-21",
+    "PF04": "SF-P1-SA-AFTER-22",
+    "PF05": "SF-P1-SA-AFTER-31",
+    "PF08": "SF-P1-AS-PREFIX-21"
+  },
+  "oracle": "same full affected regions, protection union, lower error, retained claim/fence and no RAM clean",
+  "setup": "profile1/cancel0/fresh selected DWB, actual INIT, target order AS or SA",
+  "status": "ADOPTED_SETUP_ACTION_ORACLE_ALIAS"
+}

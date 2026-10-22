@@ -4,7 +4,7 @@
 
 [불변 역할](dev3-status-bootstrap.md) · [할당](dev3-task-03-allocation.md) · [dirty stage](dev3-dirty-stage.md) · [buffer/flush](dev3-task-05-buffer-flush.md) · [시험 계획](../plans/dev3-test-plan.md)
 
-3.03.2.a는 실제 durable reserve의 한 payload를 Status 역할로 INIT하고 allocator와 Status RAM 두 image를 같은 WAL 그룹으로 공개한다. immutable bootstrap 역할, 현재 allocator membership, 성공한 stage의 requirement는 각각 별도 권한이다. 이 단위는 Status home flush·일반 recovery·거래 발급·READY를 공급하지 않는다. 다음3.03.2.b의 의무와 전체 DEV3 완료 조건은 유지한다.
+3.03.2.a는 실제 durable reserve의 한 payload를 Status 역할로 INIT하고 allocator와 Status RAM 두 image를 같은 WAL 그룹으로 공개한다. immutable bootstrap 역할, 현재 allocator membership, 성공한 stage의 requirement는 각각 별도 권한이다. 이 단위는 Status home flush·일반 recovery·거래 발급·READY를 공급하지 않는다. 다음 [3.03.2.b Status home flush](dev3-status-home-flush.md)의 별도 소유 계약과 전체 DEV3 완료 조건은 유지한다.
 
 ## 권한과 생애
 
@@ -74,7 +74,7 @@ CF17-02/03은 각 generic 한도와 다른 deep 식이 맞더라도 readback 총
 | WM01–08 materializer |8 |profiles2/3의16 |
 | 합계 |93 |116 |
 
-CF13/14는 .b로 이관되어 .a에서0이며 PASS가 아니다. CF12의 두 flush target 경쟁, CF13의 writer/flusher force 경쟁, CF14의 실제 clean-before-INIT, CF15의 published-and-cleaned 재사용 거절, Status native home 검사는 .b의 미완료 의무다. PF01–08과504 physical schedules/두 flush 순서도 .a 분모에 없다. CF18의8개 known-bad witness는 synthetic checker이며 실제 CF08/12 schedule을 대신하지 않는다.
+CF13/14는 .b로 이관되어 .a에서0이며 PASS가 아니다. CF12의 두 flush target 경쟁, CF13의 writer/flusher force 경쟁, CF14의 실제 clean-before-INIT, CF15의 published-and-cleaned 재사용 거절, Status native home 검사는 .b의 미완료 의무다. PF01–08과 두 flush 순서는 .a 분모에 없다. 초기504 physical schedule 제안은 보존하고, .b의 확정570 tuples 및 mandatory alias6/S5 추가588은 [별도 inventory](dev3-status-home-flush.md#inventory)가 소유한다. CF18의8개 known-bad witness는 synthetic checker이며 실제 CF08/12 schedule을 대신하지 않는다.
 
 S5 retry18 중 실제 CF16과 같은 profile3/count1/terminal2를 alias로 빼고16을 추가한다. 초기 제안의 profile1 alias 표기는 실제 입력 tuple에 맞춰 정정한다. S5 전체209=93+116이며 bootstrap97은 별도 기존 분모다. compiler semantic13+infrastructure baseline1, native profile3, changed shared-resource leaf1 및 새 harness selftests는 별도 분모다. 확대·장시간 시험은 S5에서 실행하고 중간의 완료 사례는 코드 diff 없이 반복하지 않는다.
 

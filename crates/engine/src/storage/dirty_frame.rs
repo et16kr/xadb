@@ -334,6 +334,15 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         self.core
     }
 
+    /// Read-only origin comparison; this cannot create a binding or a claim.
+    pub(in crate::storage) fn uses_storage_origin(
+        &self,
+        binding: &AtomicU8,
+        fence: &SessionFence,
+    ) -> bool {
+        std::ptr::eq(self.binding, binding) && std::ptr::eq(self.fence, fence)
+    }
+
     fn fatal(&self, cause: Cause) -> DirtyError {
         self.fence.fence();
         DirtyError {

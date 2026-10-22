@@ -48,6 +48,10 @@ impl std::fmt::Debug for CapturedPage<'_, '_> {
     }
 }
 impl<'s> CapturedPage<'_, 's> {
+    pub(in crate::storage) fn uses_core(&self, core: &PageConcurrency<'s>) -> bool {
+        std::ptr::eq(self.core, core)
+    }
+
     pub(in crate::storage) fn stamp(&self) -> FrameStamp {
         self.stamp
     }

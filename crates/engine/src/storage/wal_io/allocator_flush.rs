@@ -120,6 +120,18 @@ impl<'c, 's> FlushFinalizePermit<'_, 'c, 's> {
         std::ptr::eq(self.capture, capture) && self.retired.matches(capture)
     }
 }
+impl<'a, 'c, 's> FlushFinalizePermit<'a, 'c, 's> {
+    /// Only an actual whole-retirement capability can authorize another owner.
+    /// Raw page observations and matching LSNs cannot construct this permit.
+    pub(super) fn from_retired(
+        capture: &'a CapturedPage<'c, 's>,
+        retired: &'a RetiredBatch<'s>,
+    ) -> Option<Self> {
+        retired
+            .matches(capture)
+            .then_some(Self { capture, retired })
+    }
+}
 
 impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> AllocatorFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W> {
     pub(crate) fn snapshot(&self) -> FlushSnapshot {

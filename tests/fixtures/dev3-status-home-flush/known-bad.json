@@ -1,0 +1,403 @@
+{
+  "negatives": [
+    {
+      "expected_rejection": "N01",
+      "id": "N01",
+      "witness": {
+        "continuation_io": 0,
+        "equal_lsn_bytes_equal": true,
+        "events": [
+          "claim",
+          "capture",
+          "wal_durable",
+          "issuance_durable",
+          "image_write",
+          "image_sync",
+          "pending_durable",
+          "home_write",
+          "home_sync",
+          "retirement_durable",
+          "finalize",
+          "claim_return",
+          "slot_reuse"
+        ],
+        "exclusive_claim": true,
+        "extent_exact": true,
+        "home_lsn_allowed": true,
+        "published": true,
+        "retained_target_unchanged": true,
+        "role_exact": true,
+        "sealed_target": false,
+        "zero_home_authorized": true
+      }
+    },
+    {
+      "expected_rejection": "N02",
+      "id": "N02",
+      "witness": {
+        "continuation_io": 0,
+        "equal_lsn_bytes_equal": true,
+        "events": [
+          "claim",
+          "capture",
+          "wal_durable",
+          "issuance_durable",
+          "image_write",
+          "image_sync",
+          "pending_durable",
+          "home_write",
+          "home_sync",
+          "retirement_durable",
+          "finalize",
+          "claim_return",
+          "slot_reuse"
+        ],
+        "exclusive_claim": true,
+        "extent_exact": true,
+        "home_lsn_allowed": true,
+        "published": false,
+        "retained_target_unchanged": true,
+        "role_exact": true,
+        "sealed_target": true,
+        "zero_home_authorized": true
+      }
+    },
+    {
+      "expected_rejection": "N03",
+      "id": "N03",
+      "witness": {
+        "continuation_io": 0,
+        "equal_lsn_bytes_equal": true,
+        "events": [
+          "claim",
+          "capture",
+          "wal_durable",
+          "issuance_durable",
+          "image_write",
+          "image_sync",
+          "pending_durable",
+          "home_write",
+          "home_sync",
+          "retirement_durable",
+          "finalize",
+          "claim_return",
+          "slot_reuse"
+        ],
+        "exclusive_claim": true,
+        "extent_exact": true,
+        "home_lsn_allowed": true,
+        "published": true,
+        "retained_target_unchanged": true,
+        "role_exact": false,
+        "sealed_target": true,
+        "zero_home_authorized": true
+      }
+    },
+    {
+      "expected_rejection": "N04",
+      "id": "N04",
+      "witness": {
+        "continuation_io": 0,
+        "equal_lsn_bytes_equal": true,
+        "events": [
+          "claim",
+          "capture",
+          "wal_durable",
+          "issuance_durable",
+          "image_write",
+          "image_sync",
+          "pending_durable",
+          "home_write",
+          "home_sync",
+          "retirement_durable",
+          "finalize",
+          "claim_return",
+          "slot_reuse"
+        ],
+        "exclusive_claim": true,
+        "extent_exact": false,
+        "home_lsn_allowed": true,
+        "published": true,
+        "retained_target_unchanged": true,
+        "role_exact": true,
+        "sealed_target": true,
+        "zero_home_authorized": true
+      }
+    },
+    {
+      "expected_rejection": "N05",
+      "id": "N05",
+      "witness": {
+        "continuation_io": 0,
+        "equal_lsn_bytes_equal": true,
+        "events": [
+          "claim",
+          "capture",
+          "wal_durable",
+          "issuance_durable",
+          "image_write",
+          "image_sync",
+          "pending_durable",
+          "home_write",
+          "home_sync",
+          "retirement_durable",
+          "finalize",
+          "claim_return",
+          "slot_reuse"
+        ],
+        "exclusive_claim": false,
+        "extent_exact": true,
+        "home_lsn_allowed": true,
+        "published": true,
+        "retained_target_unchanged": true,
+        "role_exact": true,
+        "sealed_target": true,
+        "zero_home_authorized": true
+      }
+    },
+    {
+      "expected_rejection": "N06",
+      "id": "N06",
+      "witness": {
+        "continuation_io": 0,
+        "equal_lsn_bytes_equal": true,
+        "events": [
+          "claim",
+          "capture",
+          "wal_durable",
+          "issuance_durable",
+          "image_write",
+          "image_sync",
+          "pending_durable",
+          "home_write",
+          "home_sync",
+          "retirement_durable",
+          "finalize",
+          "claim_return",
+          "slot_reuse"
+        ],
+        "exclusive_claim": true,
+        "extent_exact": true,
+        "home_lsn_allowed": true,
+        "published": true,
+        "retained_target_unchanged": true,
+        "role_exact": true,
+        "sealed_target": true,
+        "zero_home_authorized": false
+      }
+    },
+    {
+      "expected_rejection": "N07",
+      "id": "N07",
+      "witness": {
+        "continuation_io": 0,
+        "equal_lsn_bytes_equal": true,
+        "events": [
+          "claim",
+          "capture",
+          "wal_durable",
+          "issuance_durable",
+          "image_write",
+          "image_sync",
+          "pending_durable",
+          "home_write",
+          "home_sync",
+          "retirement_durable",
+          "finalize",
+          "claim_return",
+          "slot_reuse"
+        ],
+        "exclusive_claim": true,
+        "extent_exact": true,
+        "home_lsn_allowed": false,
+        "published": true,
+        "retained_target_unchanged": true,
+        "role_exact": true,
+        "sealed_target": true,
+        "zero_home_authorized": true
+      }
+    },
+    {
+      "expected_rejection": "N08",
+      "id": "N08",
+      "witness": {
+        "continuation_io": 0,
+        "equal_lsn_bytes_equal": false,
+        "events": [
+          "claim",
+          "capture",
+          "wal_durable",
+          "issuance_durable",
+          "image_write",
+          "image_sync",
+          "pending_durable",
+          "home_write",
+          "home_sync",
+          "retirement_durable",
+          "finalize",
+          "claim_return",
+          "slot_reuse"
+        ],
+        "exclusive_claim": true,
+        "extent_exact": true,
+        "home_lsn_allowed": true,
+        "published": true,
+        "retained_target_unchanged": true,
+        "role_exact": true,
+        "sealed_target": true,
+        "zero_home_authorized": true
+      }
+    },
+    {
+      "expected_rejection": "N09",
+      "id": "N09",
+      "witness": {
+        "continuation_io": 0,
+        "equal_lsn_bytes_equal": true,
+        "events": [
+          "claim",
+          "capture",
+          "wal_durable",
+          "issuance_durable",
+          "image_write",
+          "image_sync",
+          "pending_durable",
+          "home_write",
+          "retirement_durable",
+          "home_sync",
+          "finalize",
+          "claim_return",
+          "slot_reuse"
+        ],
+        "exclusive_claim": true,
+        "extent_exact": true,
+        "home_lsn_allowed": true,
+        "published": true,
+        "retained_target_unchanged": true,
+        "role_exact": true,
+        "sealed_target": true,
+        "zero_home_authorized": true
+      }
+    },
+    {
+      "expected_rejection": "N10",
+      "id": "N10",
+      "witness": {
+        "continuation_io": 0,
+        "equal_lsn_bytes_equal": true,
+        "events": [
+          "claim",
+          "capture",
+          "wal_durable",
+          "issuance_durable",
+          "image_write",
+          "image_sync",
+          "pending_durable",
+          "home_write",
+          "home_sync",
+          "finalize",
+          "retirement_durable",
+          "claim_return",
+          "slot_reuse"
+        ],
+        "exclusive_claim": true,
+        "extent_exact": true,
+        "home_lsn_allowed": true,
+        "published": true,
+        "retained_target_unchanged": true,
+        "role_exact": true,
+        "sealed_target": true,
+        "zero_home_authorized": true
+      }
+    },
+    {
+      "expected_rejection": "N11",
+      "id": "N11",
+      "witness": {
+        "continuation_io": 0,
+        "equal_lsn_bytes_equal": true,
+        "events": [
+          "claim",
+          "capture",
+          "wal_durable",
+          "issuance_durable",
+          "image_write",
+          "image_sync",
+          "pending_durable",
+          "home_write",
+          "home_sync",
+          "retirement_durable",
+          "finalize",
+          "claim_return",
+          "slot_reuse"
+        ],
+        "exclusive_claim": true,
+        "extent_exact": true,
+        "home_lsn_allowed": true,
+        "published": true,
+        "retained_target_unchanged": false,
+        "role_exact": true,
+        "sealed_target": true,
+        "zero_home_authorized": true
+      }
+    },
+    {
+      "expected_rejection": "N12",
+      "id": "N12",
+      "witness": {
+        "continuation_io": 1,
+        "equal_lsn_bytes_equal": true,
+        "events": [
+          "claim",
+          "capture",
+          "wal_durable",
+          "issuance_durable",
+          "image_write",
+          "image_sync",
+          "pending_durable",
+          "home_write",
+          "home_sync",
+          "retirement_durable",
+          "finalize",
+          "claim_return",
+          "slot_reuse"
+        ],
+        "exclusive_claim": true,
+        "extent_exact": true,
+        "home_lsn_allowed": true,
+        "published": true,
+        "retained_target_unchanged": true,
+        "role_exact": true,
+        "sealed_target": true,
+        "zero_home_authorized": true
+      }
+    }
+  ],
+  "valid": {
+    "continuation_io": 0,
+    "equal_lsn_bytes_equal": true,
+    "events": [
+      "claim",
+      "capture",
+      "wal_durable",
+      "issuance_durable",
+      "image_write",
+      "image_sync",
+      "pending_durable",
+      "home_write",
+      "home_sync",
+      "retirement_durable",
+      "finalize",
+      "claim_return",
+      "slot_reuse"
+    ],
+    "exclusive_claim": true,
+    "extent_exact": true,
+    "home_lsn_allowed": true,
+    "published": true,
+    "retained_target_unchanged": true,
+    "role_exact": true,
+    "sealed_target": true,
+    "zero_home_authorized": true
+  }
+}

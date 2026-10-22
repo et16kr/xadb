@@ -1,6 +1,6 @@
 # DEV3 3.05 — dirty buffer·flush 개발 상세 명세와 설계도
 
-2026-10-22 · **작업 상세 설계 / D2 상세화 수용 / clean buffer·Empty DWB 설치의 제한 공급만 존재 / dirty 운영·home flush·복구 인수 미완료**
+2026-10-22 · **작업 상세 설계 / D2 상세화 수용 / 제한 dirty·allocator flush·Status INIT 공급 / 일반 pool·batch8/64·복구 인수 미완료**
 
 [공통 규칙](dev3-task-designs.md) · [구현 계획 3.05.1–3](../plans/dev3-implementation-plan.md#remaining-work) · [buffer 정본](disk-storage-design.md#buffer) · [batch 정본](disk-storage-design.md#doublewrite-batch) · [진행 정본](disk-storage-design.md#flush-progress) · [실제 구현](../implementation/dev3-implementation.md)
 
@@ -20,6 +20,8 @@
 3.03.2는 3.05.1을 받아 Reserved→INIT를 연결한다. INIT 구현 전체를 3.05.1의 새 선행으로 되돌리지 않는다. 3.05.2/3의 최소 fixture는 해당 page 표현과 완결 변경 그룹으로 구성하고, row/index/catalog 전체 구현을 기다리지 않는다. 3.06.1·3.09.1은 3.05.3의 공급을 소비하며, 3.13은 dirty/DPT capture와 flush 완료를 사용하여 WAL floor를 판정한다. WAL 삭제·페이지 free/reuse·READY·commit ACK는 각각의 상위 owner가 소유한다.
 
 현재 [clean buffer](dev3-read-buffer.md)는 Empty/Loading/Clean, caller frame·pin·clock과 고정 selected namespace 읽기만 구현했다. [최초 DWB 설치](dev3-doublewrite-install.md)는 FreshStorageSession을 소비하여 Empty selector와 고정 파일을 설치하고 clean reader를 제공한다. 두 공급 모두 mutable home, dirty/DPT, pending batch 발급·retirement·일반 reopen/repair 권한을 제공하지 않는다. 기존 제한 시험 결과나 중단된 통합 결과를 이 작업의 PASS로 승격하지 않는다.
+
+구체 제한 공급은 [dirty stage](dev3-dirty-stage.md), [allocator 한 페이지 flush](dev3-allocator-flush.md), [폐쇄 Status INIT](dev3-status-init.md)의 소유 계약과 원 실행 기록을 따른다. [Status home flush](dev3-status-home-flush.md)는3.03.2.b의 별도 소비형 owner·두 target 순차 batch1을 작성한 상태이며 runtime NOT_RUN이다. 아래 일반 batch8/64·다중 file·eviction/pressure와 recovery 의무를 이 제한 단위로 완료 처리하지 않는다.
 
 <a id="requirements"></a>
 ## 2. 요구 ID와 불변식

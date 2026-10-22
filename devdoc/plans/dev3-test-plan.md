@@ -247,6 +247,24 @@ NT16의 inventory는 **기능 구현과 함께 채우는 실행 명세**다. 이
 
 selector/집계기 구현 때에는 작은 가짜 결과로 `0건·오타·예상 밖 실행·중복/누락 ID·wrong binary·cut 미도달·timeout·중단·손상 receipt`의 거절과 정상 수락을 검증한다. 단순 합계가 아니라 **예상 ID 집합과 관측 ID 집합의 일치**를 판정한다. 의도한 corruption 거절은 그 거절 case의 성공일 수 있지만, 정상 reopen 의무의 실패를 대신할 수 없다. compile-fail probe는 baseline 성공 후 의도한 타입/수명 오류를 확인하며 무관한 syntax/import/toolchain 실패는 성공이 아니다.
 
+<a id="status-home-flush"></a>
+### 6.2 3.03.2.b Status home flush의 확정된 신규 입력
+
+[D3-STATUS-FLUSH-001 소유 계약](../contracts/dev3-status-home-flush.md#inventory)의 구현 동반 입력이다. NT03/NT05를 연결하며 기존 .a·allocator-only의 무변경 사례를 중간에 반복하지 않는다. [source별 선택 실행](../evidence/dev3-status-home-flush-20261022.md)은 필수43·compiler6·native3의 실제 결과와 원 FAIL을 보존한다. 입력 채택과 actual layout·독립 D1·실행 결과를 구분하며 S5 추가588은 NOT_RUN이다.
+
+| 선택 분모 | 실제 입력과 시점 |
+| --- | --- |
+| 중간 필수43 | BN6+BA10+BH10+BR6+PF8+RF3. Rust42행과 Python RF03 witness1행을 구별; named variants는 각 행에 정확히 연결 |
+| RF03 | valid witness+known-bad12, 합계12개의 제품 mutant 실행으로 세지 않음 |
+| 최종 S5 추가588 | physical570=3profiles×AS/SA×(before31+after31+prefix11+short11+Interrupted11) 중 PF01–05/PF08의 exact alias6을 제외한564; cancel1/2/8/31×profiles3×AS/SA history24 |
+| unique runtime/witness631 | mandatory43+S5추가588.637은 alias 전 합계이며 실행수나 unique 분모로 사용하지 않음 |
+| compiler semantic6+control1 | BC00 positive consuming/Before reuse/release/resplit, BC01–05 move/borrow/privacy/raw-authority 거절. 별도 무수정 baseline1은 semantic6에 포함하지 않음 |
+| native3 | profile1/2/3의 새 actual DB, exact current workflow·WAL/DWB/two homes와 namespace/FD/effect 검산. DB별30초/24MiB·총72MiB; 현재-build recovery 증거와 구별 |
+
+[독립 fixture](../../tests/fixtures/dev3-status-home-flush/manifest.json)와 [runtime 선택표](../../crates/engine/tests/fixtures/dev3-status-home-flush/runtime/manifest.json), [compiler 입력](../../crates/engine/tests/fixtures/dev3-status-home-flush/compiler/manifest.json)을 source/binary/helper hash에 결합한다. `XADB_STATUS_FLUSH_CASES`는 exact case를 선택하며 mandatory와 ignored S5 selector가 분리된다. BEGIN→variant→CASE 및 COMPLETE의 실제 ID/순서·개수와 libtest 결과를 함께 검산한다.0개 실행·다른 binary·누락/중복·timeout은 실패다.
+
+필수 aggregate120초/S5 aggregate1200초/compiler선택30초에 build/setup은 포함하지 않고 별도 기록한다. actual thread의 각 ACK/release는5초로 제한하며 watchdog 종료를 성공으로 세지 않는다. namespace FileIdentity 교체, 실제 whole retirement 뒤 poison, original lower cause/effect/certainty, full bytes와 known/possible exact selected references, failed continuation의 I/O0을 필수로 검산한다. 일반 header/checksum 실패를 checksum-valid semantic 손상이나 healthy zero/exact-home 경계의 대용으로 쓰지 않는다. native worker/harness의 실제 profile별 tuple은 별도 동결하고 미작성·미실행은 PASS로 승격하지 않는다.
+
 <a id="final-suite"></a>
 ## 7. S5 — DEV3 최종 전수 테스트
 

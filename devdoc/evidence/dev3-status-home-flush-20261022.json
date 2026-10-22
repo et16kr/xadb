@@ -1,0 +1,2300 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-22",
+  "unit": "D3-STATUS-FLUSH-001",
+  "status": "ACCEPT_SCOPED_UNIT",
+  "base_commit": "d5c26281d239a40b414184360698d06594ee9487",
+  "contract_ref": "dev3-status-home-flush.md",
+  "full_stage_acceptance": false,
+  "scope": "one actual INIT-published Status and its allocator, separate whole batch1 flushes; no general recovery/reopen/READY",
+  "source_policy": "original failures and per-source evidence retained; no unchanged completed cases repeated",
+  "source_snapshots": [
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-compile-r0/result.json",
+      "sha256": "ed5f7716c3d35dd2475f574601e79c0a7fae390cddac04e93cc4dc566b12c334",
+      "bytes": 527,
+      "status": "FAIL",
+      "source_sha256": "4e4810899723167414248ac482322206aeaf037785a176be327a64780078ce40",
+      "scope": "compilation only; no test cases executed",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--all-features",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "errors": 12,
+      "seconds": 6.277117251000163
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-compile-r1/result.json",
+      "sha256": "751ec6ec17dd554b9beeacd78ca7aa211a76d292515c31dbe29587aa20479d1b",
+      "bytes": 719,
+      "status": "PASS",
+      "source_sha256": "6e122f0c38bbc92010f20ff8b1c41f02383392bf92c3560347d2db7bf1b68567",
+      "binary_sha256": "4b8f78f500a45bfada01c4a924ed5a15506545bbead7159a688747a899caf0bd",
+      "scope": "compilation only; no test cases executed",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--all-features",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "errors": 0,
+      "seconds": 8.179650615002174
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-compile-r2/result.json",
+      "sha256": "352b3df3cea153d477eb16cb08cc5961dbdca4f4dd6d307dadc0e0323694e6e8",
+      "bytes": 718,
+      "status": "PASS",
+      "source_sha256": "abeb25254fe8b3e13ebc902c663ef5c498919b01731274d95f008bb8beae4be7",
+      "binary_sha256": "b36486fd6f984cd6a3c2e767d908b93f8519ab409e60136e907a6c70ab5fb5e0",
+      "scope": "compilation only; no test cases executed",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--all-features",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "errors": 0,
+      "seconds": 8.43090842699894
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-compile-r3/result.json",
+      "sha256": "c2b825ecadfbd122770ee22113acb6c0ca9c7f99effeb41d4c97ea936d856c77",
+      "bytes": 718,
+      "status": "PASS",
+      "source_sha256": "8ce135f8af523c024ee39dadfe4944fae66c6985051d5d691a7d21ff634a3094",
+      "binary_sha256": "0baf4aeaf2e8a4bda5cbde0d74295029b19549beeede958b2d39c9a3469ef55c",
+      "scope": "compilation only; no test cases executed",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--all-features",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "errors": 0,
+      "seconds": 8.53221481899891
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-compile-r4/result.json",
+      "sha256": "972a6430a1ba7b4febcfed700ddfb95ecd9077ebb6cc75f0014c242c50800ea8",
+      "bytes": 718,
+      "status": "PASS",
+      "source_sha256": "77abf3aee1e480f2529bfa430463e3f0969fe2746e1031f573dee8deffa6aaa9",
+      "binary_sha256": "1cd266d654fa7836110a1b255925e9fb3f2364d6744277a3b58a68f461537d7c",
+      "scope": "compilation only; no test cases executed",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--all-features",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "errors": 0,
+      "seconds": 8.38209658499909
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-compile-r5/result.json",
+      "sha256": "335c505318845de73e673d0ffb0b79fc779549a80e54536f96414e4b89fabfe2",
+      "bytes": 719,
+      "status": "PASS",
+      "source_sha256": "381499a754702e48b59d69ffa702d7383081e438bb0a2b3972c2204d102f1a89",
+      "binary_sha256": "389b31024c25fbe62981442f4f1ec2a9e5bb7c3a7e1f5d6c5aff9428b830e09e",
+      "scope": "compilation only; no test cases executed",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--all-features",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "errors": 0,
+      "seconds": 9.482828272000916
+    }
+  ],
+  "execution": {
+    "mandatory": {
+      "unique_cases": 43,
+      "rust_cases": 42,
+      "python_witness_cases": 1,
+      "whole_success_cases": 42,
+      "derived_completed_prefix_cases": [
+        "BA01"
+      ],
+      "original_parent_group_status": "FAIL",
+      "reports": [
+        {
+          "path": "artifacts/dev3/resume-20261022/status-home-flush-resource-r0/result.json",
+          "sha256": "5c80fe6e1056c6631c0e578f0e2c6537bfe85893c6d45f670122e974106f4159",
+          "bytes": 20964,
+          "status": "PASS",
+          "source_sha256": "abeb25254fe8b3e13ebc902c663ef5c498919b01731274d95f008bb8beae4be7",
+          "binary_sha256": "b36486fd6f984cd6a3c2e767d908b93f8519ab409e60136e907a6c70ab5fb5e0",
+          "selected": [
+            "RF01"
+          ],
+          "completed_selected": [
+            "RF01"
+          ],
+          "elapsed_seconds": {
+            "mandatory": 0.0045787679991917685
+          },
+          "groups": [
+            {
+              "selected": [
+                "RF01"
+              ],
+              "status": "PASS",
+              "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_rf",
+              "executor": "rust-product",
+              "command": [
+                "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-compile-r2/test-binary",
+                "--exact",
+                "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_rf",
+                "--nocapture",
+                "--test-threads=1"
+              ],
+              "environment": {
+                "XADB_STATUS_FLUSH_CASES": "RF01"
+              },
+              "exit_code": 0,
+              "elapsed_seconds": 0.0045787679991917685,
+              "raw_case_begin": [
+                "RF01"
+              ],
+              "raw_case_completed": [
+                "RF01"
+              ],
+              "logs": [
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-resource-r0/RF01/stdout.log",
+                  "sha256": "c322bbafb354c0a2f72913fb67fc2145a4c1c610b05a7a8dcf6007478de13572",
+                  "bytes": 3987
+                },
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-resource-r0/RF01/stderr.log",
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r0/result.json",
+          "sha256": "f0367c5232b9f3c48f9f714b7c558557e36a4964169d7d9d72da6b8c554ab4ff",
+          "bytes": 21010,
+          "status": "FAIL",
+          "source_sha256": "8ce135f8af523c024ee39dadfe4944fae66c6985051d5d691a7d21ff634a3094",
+          "binary_sha256": "0baf4aeaf2e8a4bda5cbde0d74295029b19549beeede958b2d39c9a3469ef55c",
+          "selected": [
+            "BN01",
+            "BN02",
+            "BN03",
+            "BN04",
+            "BN05",
+            "BN06",
+            "BA01",
+            "BA02",
+            "BA03",
+            "BA04",
+            "BA05",
+            "BA06",
+            "BA07",
+            "BA08",
+            "BA09",
+            "BA10",
+            "BH01",
+            "BH02",
+            "BH03",
+            "BH04",
+            "BH05",
+            "BH06",
+            "BH07",
+            "BH08",
+            "BH09",
+            "BH10",
+            "BR01",
+            "BR02",
+            "BR03",
+            "BR04",
+            "BR05",
+            "BR06",
+            "PF01",
+            "PF02",
+            "PF03",
+            "PF04",
+            "PF05",
+            "PF06",
+            "PF07",
+            "PF08",
+            "RF02",
+            "RF03"
+          ],
+          "completed_selected": [
+            "BN01",
+            "BN02",
+            "BN03",
+            "BN04",
+            "BN05",
+            "BN06"
+          ],
+          "elapsed_seconds": {
+            "mandatory": 5.538525338000909
+          },
+          "error": "FAIL_WORKER_OR_TIMEOUT",
+          "groups": [
+            {
+              "selected": [
+                "BN01",
+                "BN02",
+                "BN03",
+                "BN04",
+                "BN05",
+                "BN06"
+              ],
+              "status": "PASS",
+              "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_bn",
+              "executor": "rust-product",
+              "command": [
+                "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-compile-r3/test-binary",
+                "--exact",
+                "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_bn",
+                "--nocapture",
+                "--test-threads=1"
+              ],
+              "environment": {
+                "XADB_STATUS_FLUSH_CASES": "BN01,BN02,BN03,BN04,BN05,BN06"
+              },
+              "exit_code": 0,
+              "elapsed_seconds": 3.4706104559991218,
+              "raw_case_begin": [
+                "BN01",
+                "BN02",
+                "BN03",
+                "BN04",
+                "BN05",
+                "BN06"
+              ],
+              "raw_case_completed": [
+                "BN01",
+                "BN02",
+                "BN03",
+                "BN04",
+                "BN05",
+                "BN06"
+              ],
+              "logs": [
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r0/BN01/stdout.log",
+                  "sha256": "645deb57df2c704460f86f26ea38ad32c3ebe6c94b78757cf217e0cb9d66d188",
+                  "bytes": 581
+                },
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r0/BN01/stderr.log",
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                }
+              ]
+            },
+            {
+              "selected": [
+                "BA01",
+                "BA02",
+                "BA03",
+                "BA04",
+                "BA05",
+                "BA06",
+                "BA07",
+                "BA08",
+                "BA09",
+                "BA10"
+              ],
+              "status": "FAIL",
+              "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_ba",
+              "executor": "rust-product",
+              "command": [
+                "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-compile-r3/test-binary",
+                "--exact",
+                "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_ba",
+                "--nocapture",
+                "--test-threads=1"
+              ],
+              "environment": {
+                "XADB_STATUS_FLUSH_CASES": "BA01,BA02,BA03,BA04,BA05,BA06,BA07,BA08,BA09,BA10"
+              },
+              "exit_code": 101,
+              "elapsed_seconds": 2.067914882001787,
+              "raw_case_begin": [
+                "BA01",
+                "BA02"
+              ],
+              "raw_case_completed": [
+                "BA01"
+              ],
+              "logs": [
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r0/BA01/stdout.log",
+                  "sha256": "0aba0a5046480208832c79e5a03066bdfb4a15e6154bede3c0c2d848f56ad22d",
+                  "bytes": 583
+                },
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r0/BA01/stderr.log",
+                  "sha256": "036892f6c1fcbe122e0f047feec1c900614a6931a78a6c51ccb9c6f03a30f5f3",
+                  "bytes": 393
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/result.json",
+          "sha256": "e9b5c097472aa0fcb35e2ec7d65f8f8b3170cfd83bd9e9e29e3d6937d3256b49",
+          "bytes": 29691,
+          "status": "PASS",
+          "source_sha256": "77abf3aee1e480f2529bfa430463e3f0969fe2746e1031f573dee8deffa6aaa9",
+          "binary_sha256": "1cd266d654fa7836110a1b255925e9fb3f2364d6744277a3b58a68f461537d7c",
+          "selected": [
+            "BA02",
+            "BA03",
+            "BA04",
+            "BA05",
+            "BA06",
+            "BA07",
+            "BA08",
+            "BA09",
+            "BA10",
+            "BH01",
+            "BH02",
+            "BH03",
+            "BH04",
+            "BH05",
+            "BH06",
+            "BH07",
+            "BH08",
+            "BH09",
+            "BH10",
+            "BR01",
+            "BR02",
+            "BR03",
+            "BR04",
+            "BR05",
+            "BR06",
+            "PF01",
+            "PF02",
+            "PF03",
+            "PF04",
+            "PF05",
+            "PF06",
+            "PF07",
+            "PF08",
+            "RF02",
+            "RF03"
+          ],
+          "completed_selected": [
+            "BA02",
+            "BA03",
+            "BA04",
+            "BA05",
+            "BA06",
+            "BA07",
+            "BA08",
+            "BA09",
+            "BA10",
+            "BH01",
+            "BH02",
+            "BH03",
+            "BH04",
+            "BH05",
+            "BH06",
+            "BH07",
+            "BH08",
+            "BH09",
+            "BH10",
+            "BR01",
+            "BR02",
+            "BR03",
+            "BR04",
+            "BR05",
+            "BR06",
+            "PF01",
+            "PF02",
+            "PF03",
+            "PF04",
+            "PF05",
+            "PF06",
+            "PF07",
+            "PF08",
+            "RF02",
+            "RF03"
+          ],
+          "elapsed_seconds": {
+            "mandatory": 37.9845976620054
+          },
+          "groups": [
+            {
+              "selected": [
+                "BA02",
+                "BA03",
+                "BA04",
+                "BA05",
+                "BA06",
+                "BA07",
+                "BA08",
+                "BA09",
+                "BA10"
+              ],
+              "status": "PASS",
+              "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_ba",
+              "executor": "rust-product",
+              "command": [
+                "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-compile-r4/test-binary",
+                "--exact",
+                "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_ba",
+                "--nocapture",
+                "--test-threads=1"
+              ],
+              "environment": {
+                "XADB_STATUS_FLUSH_CASES": "BA02,BA03,BA04,BA05,BA06,BA07,BA08,BA09,BA10"
+              },
+              "exit_code": 0,
+              "elapsed_seconds": 7.476640192002378,
+              "raw_case_begin": [
+                "BA02",
+                "BA03",
+                "BA04",
+                "BA05",
+                "BA06",
+                "BA07",
+                "BA08",
+                "BA09",
+                "BA10"
+              ],
+              "raw_case_completed": [
+                "BA02",
+                "BA03",
+                "BA04",
+                "BA05",
+                "BA06",
+                "BA07",
+                "BA08",
+                "BA09",
+                "BA10"
+              ],
+              "logs": [
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/BA02/stdout.log",
+                  "sha256": "03856e6696ee0ea6f98738c9790a2b808c94c942596d73cb37e16d37b57cbd8c",
+                  "bytes": 1811
+                },
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/BA02/stderr.log",
+                  "sha256": "b4daab4511244d599a1d16b7d52b7c480770a027dd5cf75b072e104dffb1ba22",
+                  "bytes": 226
+                }
+              ]
+            },
+            {
+              "selected": [
+                "BH01",
+                "BH02",
+                "BH03",
+                "BH04",
+                "BH05",
+                "BH06",
+                "BH07",
+                "BH08",
+                "BH09",
+                "BH10"
+              ],
+              "status": "PASS",
+              "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_bh",
+              "executor": "rust-product",
+              "command": [
+                "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-compile-r4/test-binary",
+                "--exact",
+                "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_bh",
+                "--nocapture",
+                "--test-threads=1"
+              ],
+              "environment": {
+                "XADB_STATUS_FLUSH_CASES": "BH01,BH02,BH03,BH04,BH05,BH06,BH07,BH08,BH09,BH10"
+              },
+              "exit_code": 0,
+              "elapsed_seconds": 11.383141960002831,
+              "raw_case_begin": [
+                "BH01",
+                "BH02",
+                "BH03",
+                "BH04",
+                "BH05",
+                "BH06",
+                "BH07",
+                "BH08",
+                "BH09",
+                "BH10"
+              ],
+              "raw_case_completed": [
+                "BH01",
+                "BH02",
+                "BH03",
+                "BH04",
+                "BH05",
+                "BH06",
+                "BH07",
+                "BH08",
+                "BH09",
+                "BH10"
+              ],
+              "logs": [
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/BH01/stdout.log",
+                  "sha256": "1bc0b945fa80a9f992f79f2167e3a5aaf4d981f3ff9d9792479a84978151245f",
+                  "bytes": 1236
+                },
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/BH01/stderr.log",
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                }
+              ]
+            },
+            {
+              "selected": [
+                "BR01",
+                "BR02",
+                "BR03",
+                "BR04",
+                "BR05",
+                "BR06"
+              ],
+              "status": "PASS",
+              "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_br",
+              "executor": "rust-product",
+              "command": [
+                "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-compile-r4/test-binary",
+                "--exact",
+                "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_br",
+                "--nocapture",
+                "--test-threads=1"
+              ],
+              "environment": {
+                "XADB_STATUS_FLUSH_CASES": "BR01,BR02,BR03,BR04,BR05,BR06"
+              },
+              "exit_code": 0,
+              "elapsed_seconds": 5.272877864001202,
+              "raw_case_begin": [
+                "BR01",
+                "BR02",
+                "BR03",
+                "BR04",
+                "BR05",
+                "BR06"
+              ],
+              "raw_case_completed": [
+                "BR01",
+                "BR02",
+                "BR03",
+                "BR04",
+                "BR05",
+                "BR06"
+              ],
+              "logs": [
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/BR01/stdout.log",
+                  "sha256": "42a033cb5bff34179b830c107bc13682da074e2bcecd51f81ed46cbd63f84d90",
+                  "bytes": 787
+                },
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/BR01/stderr.log",
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                }
+              ]
+            },
+            {
+              "selected": [
+                "PF01",
+                "PF02",
+                "PF03",
+                "PF04",
+                "PF05",
+                "PF06",
+                "PF07",
+                "PF08"
+              ],
+              "status": "PASS",
+              "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_pf",
+              "executor": "rust-product",
+              "command": [
+                "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-compile-r4/test-binary",
+                "--exact",
+                "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_pf",
+                "--nocapture",
+                "--test-threads=1"
+              ],
+              "environment": {
+                "XADB_STATUS_FLUSH_CASES": "PF01,PF02,PF03,PF04,PF05,PF06,PF07,PF08"
+              },
+              "exit_code": 0,
+              "elapsed_seconds": 8.027968206999503,
+              "raw_case_begin": [
+                "PF01",
+                "PF02",
+                "PF03",
+                "PF04",
+                "PF05",
+                "PF06",
+                "PF07",
+                "PF08"
+              ],
+              "raw_case_completed": [
+                "PF01",
+                "PF02",
+                "PF03",
+                "PF04",
+                "PF05",
+                "PF06",
+                "PF07",
+                "PF08"
+              ],
+              "logs": [
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/PF01/stdout.log",
+                  "sha256": "49261dde50c15fa68db8e7227766e202f4c5b8accc4f6ced538f30f4729de1d4",
+                  "bytes": 685
+                },
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/PF01/stderr.log",
+                  "sha256": "8cac58c304f600b4404086fe093471438ab47459ab768b15ade6f89dbf6f3075",
+                  "bytes": 189
+                }
+              ]
+            },
+            {
+              "selected": [
+                "RF02"
+              ],
+              "status": "PASS",
+              "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_rf",
+              "executor": "rust-product",
+              "command": [
+                "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-compile-r4/test-binary",
+                "--exact",
+                "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::status_flush_rf",
+                "--nocapture",
+                "--test-threads=1"
+              ],
+              "environment": {
+                "XADB_STATUS_FLUSH_CASES": "RF02"
+              },
+              "exit_code": 0,
+              "elapsed_seconds": 5.8238036160000775,
+              "raw_case_begin": [
+                "RF02"
+              ],
+              "raw_case_completed": [
+                "RF02"
+              ],
+              "logs": [
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/RF02/stdout.log",
+                  "sha256": "18c94e0404277e79e55fa33cf31f1a769f07f056f20d88fa9a60a3cc1a29cd92",
+                  "bytes": 556
+                },
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/RF02/stderr.log",
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                }
+              ]
+            },
+            {
+              "selected": [
+                "RF03"
+              ],
+              "status": "PASS",
+              "selector": "python:RF03",
+              "executor": "python-independent-witness",
+              "exit_code": 0,
+              "elapsed_seconds": 0.00016582299940637313,
+              "raw_case_begin": [
+                "RF03"
+              ],
+              "raw_case_completed": [
+                "RF03"
+              ],
+              "logs": [
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/RF03/stdout.log",
+                  "sha256": "d49d00d4fbb7a843757b3afff6757260b1900043f9f1db3ed0a1cb093c839487",
+                  "bytes": 105
+                },
+                {
+                  "path": "artifacts/dev3/resume-20261022/status-home-flush-mandatory-r1/RF03/stderr.log",
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "seconds_including_original_failure": 43.5277017680055,
+      "budget_seconds": 120
+    },
+    "compiler": {
+      "semantic_unique": 6,
+      "infrastructure_calls": 2,
+      "actual_compiler_calls": 9,
+      "reports": [
+        {
+          "path": "artifacts/dev3/resume-20261022/status-home-flush-compiler-r0.json",
+          "sha256": "95f07dda2ee6e10599a231642d5dcddd57ebbac9e338f6b5d1064ec89124b51a",
+          "bytes": 20549,
+          "status": "FAIL",
+          "source_sha256": "6e122f0c38bbc92010f20ff8b1c41f02383392bf92c3560347d2db7bf1b68567",
+          "semantic_pass": [],
+          "infrastructure_pass": [
+            "baseline"
+          ],
+          "not_run": [
+            "old_bound_moved",
+            "flusher_reborrow",
+            "authority_private",
+            "storage_borrow",
+            "raw_authority"
+          ],
+          "compiler_elapsed_seconds": 3.6368669959992985,
+          "error": "positive/baseline did not compile",
+          "attempts": [
+            {
+              "name": "baseline",
+              "semantic_id": null,
+              "status": "PASS",
+              "source_sha256": "6e122f0c38bbc92010f20ff8b1c41f02383392bf92c3560347d2db7bf1b68567",
+              "command": [
+                "cargo",
+                "check",
+                "-p",
+                "xadb-engine",
+                "--lib",
+                "--locked",
+                "--offline",
+                "--message-format=json"
+              ],
+              "returncode": 0,
+              "expected_code": null,
+              "expected_line": null,
+              "expected_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+              "stdout_sha256": "bb0c03b5a79230843aa0b8441e1c2dfb4f7a7509ca046ca8612c5974e232466c",
+              "stderr_sha256": "c14fb5674e8889c55b146947dc676de3f1e6af8217769b821c60125da495885d",
+              "elapsed_seconds": 2.1697603840002557,
+              "diagnostics": []
+            },
+            {
+              "name": "release",
+              "semantic_id": "BC00",
+              "status": "FAIL",
+              "source_sha256": "ff9239e4243b53d1b29702ea75101d074b8df70555bb6d83ece556adca7ec058",
+              "command": [
+                "cargo",
+                "check",
+                "-p",
+                "xadb-engine",
+                "--lib",
+                "--locked",
+                "--offline",
+                "--message-format=json"
+              ],
+              "returncode": 101,
+              "expected_code": null,
+              "expected_line": null,
+              "expected_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+              "stdout_sha256": "dbbec29d2ffccc981129e988afeb0739398bd03e131cfa6c6a313f379e439eca",
+              "stderr_sha256": "a72067aa25789037c7ec2b751f07afdfe179aa5de5ae42f7771f573c0b95228c",
+              "patch_sha256": "f78444068c817b5258e149a33a76d6caf57f8a74ee30880073a5f2b3de33d513",
+              "elapsed_seconds": 1.4671066119990428
+            }
+          ]
+        },
+        {
+          "path": "artifacts/dev3/resume-20261022/status-home-flush-compiler-r1.json",
+          "sha256": "16ada6e6914d088f4ef6cff1800a90f21b9a21d7cc8ff973310294fd2ab3d32e",
+          "bytes": 65026,
+          "status": "PASS",
+          "source_sha256": "abeb25254fe8b3e13ebc902c663ef5c498919b01731274d95f008bb8beae4be7",
+          "semantic_pass": [
+            "BC00",
+            "BC01",
+            "BC02",
+            "BC03",
+            "BC04",
+            "BC05"
+          ],
+          "infrastructure_pass": [
+            "baseline"
+          ],
+          "not_run": [],
+          "compiler_elapsed_seconds": 10.669408345998818,
+          "attempts": [
+            {
+              "name": "baseline",
+              "semantic_id": null,
+              "status": "PASS",
+              "source_sha256": "abeb25254fe8b3e13ebc902c663ef5c498919b01731274d95f008bb8beae4be7",
+              "command": [
+                "cargo",
+                "check",
+                "-p",
+                "xadb-engine",
+                "--lib",
+                "--locked",
+                "--offline",
+                "--message-format=json"
+              ],
+              "returncode": 0,
+              "expected_code": null,
+              "expected_line": null,
+              "expected_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+              "stdout_sha256": "4ac9cc7b90a19b704536d6fa2b04f31a27385582b481d84b03c6216c6f825b58",
+              "stderr_sha256": "a8f769f2abc9d27ca97de2df86c549a360e3653558194183f8e0ff30f0b25421",
+              "elapsed_seconds": 2.0681947480006784,
+              "diagnostics": []
+            },
+            {
+              "name": "release",
+              "semantic_id": "BC00",
+              "status": "PASS",
+              "source_sha256": "e292c42eac808b46d363dfa29a3cab3182050f5cfdbadbe376434dc41c0271fb",
+              "command": [
+                "cargo",
+                "check",
+                "-p",
+                "xadb-engine",
+                "--lib",
+                "--locked",
+                "--offline",
+                "--message-format=json"
+              ],
+              "returncode": 0,
+              "expected_code": null,
+              "expected_line": null,
+              "expected_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+              "stdout_sha256": "45d3c02ef3e33c4611b2090695fcc8af4fa5ea2b3fce704d655cb921a225ea9a",
+              "stderr_sha256": "000e7cf95be550e07b77127fae8f08dc5e16997866814087f61625a3c2c965a8",
+              "patch_sha256": "11a23b2693b128e22dbcd75edab25c9276541c888d59a118de845ffbf3f65bb7",
+              "elapsed_seconds": 1.5171694640011992,
+              "diagnostics": []
+            },
+            {
+              "name": "old_bound_moved",
+              "semantic_id": "BC01",
+              "status": "PASS",
+              "source_sha256": "7bf57613d049e7af4e40c11c7849d2432b562177d1d3a0516b9bc64476d6ef85",
+              "command": [
+                "cargo",
+                "check",
+                "-p",
+                "xadb-engine",
+                "--lib",
+                "--locked",
+                "--offline",
+                "--message-format=json"
+              ],
+              "returncode": 101,
+              "expected_code": "E0382",
+              "expected_line": 10,
+              "expected_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+              "stdout_sha256": "2989f714a67185c154a0877c539df4c671f0f9558a089d3b58982e3895dfff54",
+              "stderr_sha256": "9e895b8d2a77962e2f057b971dd0a9a47221e4e44cae84b26e6eef922ef934ef",
+              "patch_sha256": "fb8d0695e833ab301b477e7d9450f4d0954eb20d60a9f17ff7a1a3467f81b02b",
+              "elapsed_seconds": 1.4172113579988945,
+              "diagnostics": [
+                {
+                  "code": "E0382",
+                  "primary_spans": [
+                    {
+                      "byte_end": 513,
+                      "byte_start": 510,
+                      "column_end": 20,
+                      "column_start": 17,
+                      "expansion": null,
+                      "file_name": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+                      "is_primary": true,
+                      "label": "value borrowed here after move",
+                      "line_end": 10,
+                      "line_start": 10,
+                      "suggested_replacement": null,
+                      "suggestion_applicability": null,
+                      "text": [
+                        {
+                          "highlight_end": 20,
+                          "highlight_start": 17,
+                          "text": "    let views = old.split(); // expected diagnostic"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "flusher_reborrow",
+              "semantic_id": "BC02",
+              "status": "PASS",
+              "source_sha256": "2b27480f2f5eccbd8f303ae102b2b034b1d861bf74e2dcfb9ed57a423fce349b",
+              "command": [
+                "cargo",
+                "check",
+                "-p",
+                "xadb-engine",
+                "--lib",
+                "--locked",
+                "--offline",
+                "--message-format=json"
+              ],
+              "returncode": 101,
+              "expected_code": "E0499",
+              "expected_line": 10,
+              "expected_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+              "stdout_sha256": "f01ec9adb76114b90607402cba328f4541f79cf5c1d38f63bf9b1d3687228f46",
+              "stderr_sha256": "30dfea899396a84edefa2edaf0bcf5dd973205fdd9372309dce6648f6a304840",
+              "patch_sha256": "c0537018e5ac1167f9b45c8c89e2527d46674424ab01a7a2f68566cf1e015c8f",
+              "elapsed_seconds": 1.36643660199843,
+              "diagnostics": [
+                {
+                  "code": "E0499",
+                  "primary_spans": [
+                    {
+                      "byte_end": 545,
+                      "byte_start": 540,
+                      "column_end": 23,
+                      "column_start": 18,
+                      "expansion": null,
+                      "file_name": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+                      "is_primary": true,
+                      "label": "second mutable borrow occurs here",
+                      "line_end": 10,
+                      "line_start": 10,
+                      "suggested_replacement": null,
+                      "suggestion_applicability": null,
+                      "text": [
+                        {
+                          "highlight_end": 23,
+                          "highlight_start": 18,
+                          "text": "    let second = bound.split_with_flush(); // expected diagnostic"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "authority_private",
+              "semantic_id": "BC03",
+              "status": "PASS",
+              "source_sha256": "9740e16dd3d05bcea074e8d78a2c324995a02f55bec83b57ac53b0c68c5e8d50",
+              "command": [
+                "cargo",
+                "check",
+                "-p",
+                "xadb-engine",
+                "--lib",
+                "--locked",
+                "--offline",
+                "--message-format=json"
+              ],
+              "returncode": 101,
+              "expected_code": "E0451",
+              "expected_line": 10,
+              "expected_path": "crates/engine/src/storage/wal_io/status_home_flush_bridge_probe.rs",
+              "stdout_sha256": "a1704ca2b385e6c8d62aeda39d95dd8a23e3a4a695cffda8941d99eb2c3e29a4",
+              "stderr_sha256": "621df278cd55756028d27ee28861f1eabc419b83711d5ca98ad454dd7c1d7cdb",
+              "patch_sha256": "bcd68141a989dca58fa10f1481d640f100ccc93356b1abf39fa5b698c4a01efd",
+              "elapsed_seconds": 1.4669740559984348,
+              "diagnostics": [
+                {
+                  "code": "E0451",
+                  "primary_spans": [
+                    {
+                      "byte_end": 521,
+                      "byte_start": 512,
+                      "column_end": 52,
+                      "column_start": 43,
+                      "expansion": null,
+                      "file_name": "crates/engine/src/storage/wal_io/status_home_flush_bridge_probe.rs",
+                      "is_primary": true,
+                      "label": "fields `core`, `binding`, `fence`, `request` and `allocator` are private",
+                      "line_end": 10,
+                      "line_start": 10,
+                      "suggested_replacement": null,
+                      "suggestion_applicability": null,
+                      "text": [
+                        {
+                          "highlight_end": 52,
+                          "highlight_start": 43,
+                          "text": "    let copied = StatusFlushAuthority { ..authority }; // expected diagnostic"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "storage_borrow",
+              "semantic_id": "BC04",
+              "status": "PASS",
+              "source_sha256": "7cc12315066341ddfc1edc883f71533f4698645607417328714437f8fa115a90",
+              "command": [
+                "cargo",
+                "check",
+                "-p",
+                "xadb-engine",
+                "--lib",
+                "--locked",
+                "--offline",
+                "--message-format=json"
+              ],
+              "returncode": 101,
+              "expected_code": "E0505",
+              "expected_line": 10,
+              "expected_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+              "stdout_sha256": "b846aaa8e1c724d566868510319254970c238289de06d57a798fc5eeadff681b",
+              "stderr_sha256": "df8f9ecb02ccfd5c5cd86cf6ffe5fe88c285f09e1729a5be39e93ab0d9b9d414",
+              "patch_sha256": "5d0c4985426f2a027c8dc5867f7cd60675a73f0b69d94b17f193f8e64cf45c2f",
+              "elapsed_seconds": 1.4167863680013397,
+              "diagnostics": [
+                {
+                  "code": "E0505",
+                  "primary_spans": [
+                    {
+                      "byte_end": 690,
+                      "byte_start": 683,
+                      "column_end": 17,
+                      "column_start": 10,
+                      "expansion": null,
+                      "file_name": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+                      "is_primary": true,
+                      "label": "move out of `storage` occurs here",
+                      "line_end": 10,
+                      "line_start": 10,
+                      "suggested_replacement": null,
+                      "suggestion_applicability": null,
+                      "text": [
+                        {
+                          "highlight_end": 17,
+                          "highlight_start": 10,
+                          "text": "    drop(storage); // expected diagnostic"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "raw_authority",
+              "semantic_id": "BC05",
+              "status": "PASS",
+              "source_sha256": "195a3899e7054bab0e6c0f42f8b0bfc84a1920362a51ff9521736287a605103b",
+              "command": [
+                "cargo",
+                "check",
+                "-p",
+                "xadb-engine",
+                "--lib",
+                "--locked",
+                "--offline",
+                "--message-format=json"
+              ],
+              "returncode": 101,
+              "expected_code": "E0308",
+              "expected_line": 10,
+              "expected_path": "crates/engine/src/storage/wal_io/status_home_flush_bridge_probe.rs",
+              "stdout_sha256": "361f6da8187c917cd9131aa3236800c4e6b7c95ff322d0eaaa77eb1afec4fc0e",
+              "stderr_sha256": "c16eb0ef9f0e19911be387c01e09547ca7c7bfa64c7a64df776177720bb298c0",
+              "patch_sha256": "e1e454b9f6e05f26b3bd6c8d1807d3357469593aa2724acf105d9f325cb5a4db",
+              "elapsed_seconds": 1.4166357499998412,
+              "diagnostics": [
+                {
+                  "code": "E0308",
+                  "primary_spans": [
+                    {
+                      "byte_end": 649,
+                      "byte_start": 645,
+                      "column_end": 58,
+                      "column_start": 54,
+                      "expansion": null,
+                      "file_name": "crates/engine/src/storage/wal_io/status_home_flush_bridge_probe.rs",
+                      "is_primary": true,
+                      "label": "expected `&StatusFlushAuthority<'_, '_>`, found `&PageLsn`",
+                      "line_end": 10,
+                      "line_start": 10,
+                      "suggested_replacement": null,
+                      "suggestion_applicability": null,
+                      "text": [
+                        {
+                          "highlight_end": 58,
+                          "highlight_start": 54,
+                          "text": "    let result = io.prepare_status(storage, capture, &lsn); // expected diagnostic"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "seconds": 14.306275341998116,
+      "budget_seconds": 30
+    },
+    "native": {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-native-r0/result.json",
+      "sha256": "83d68d26a373c27dd3cafddb8073a6aafed73960a658f801fb8b98abdd8b820b",
+      "bytes": 23314,
+      "status": "PASS",
+      "source_sha256": "381499a754702e48b59d69ffa702d7383081e438bb0a2b3972c2204d102f1a89",
+      "binary_sha256": "389b31024c25fbe62981442f4f1ec2a9e5bb7c3a7e1f5d6c5aff9428b830e09e",
+      "selected_profiles": [
+        1,
+        2,
+        3
+      ],
+      "databases_completed": 3,
+      "runtime_seconds": 8.555174793000333,
+      "case_seconds": 30,
+      "database_limit": 25165824,
+      "total_limit": 75497472,
+      "native_input_sha256": "f8309cd9750e585ff41aadaaeb68fb8ad00630e744d581be465e68111724a354",
+      "checker_sha256": {
+        "scripts/dev3_doublewrite_model.py": "86bcef553137e2d6e42e7b9faa8df8cabdf352bb6a6b0a2b12477e3c0c8a0e76",
+        "scripts/dev3_allocator_flush_native.py": "d4a23441659bb7cd0575d26f096a0e2d6063f6ad1188f390298fc46f83cff6bc",
+        "scripts/check_dev3_allocator_flush_runtime.py": "9af351b506c3870290a2df02c74d51937f397ae4dbaff8cf6717a4ffba108815",
+        "scripts/dev3_status_home_flush.py": "a774d1616fb2b922a6a69d993cf74bd239111ec9802fa163b713233c48040b5b",
+        "scripts/comm_campaign.py": "cd593fcaabc3d0770c502f773bd1a38a0794e1f3ae41165723da42574436d11f",
+        "scripts/dev3_doublewrite_checks.py": "2830dbd22e91661c6111a317b0743b59a2c604273af767456950e05758902457",
+        "scripts/check_dev3_allocation_stack.py": "b3c533437f2061921f69f0954918b0ab90e6c50949d8047975dc519c00f85c09",
+        "scripts/test_dev3_status_home_flush_native.py": "f604100a666047237bfe46690d9ead056fe695d98345b503693268f88483bcc5",
+        "scripts/check_dev0.py": "91175fdd7c7158fb4db44390d36506f545eb160a89a47cfffde61900fbec813a",
+        "scripts/dev3_doublewrite_native.py": "c2c90b764b95c89b7e31df9cd238a2ca41744e0e6f75d313d8f1b24ddc1e788c",
+        "scripts/dev3_status_home_flush_literals.py": "9e52cfc78c1ef093bcdde66af24d5ea974f0e4b7d45cb948edc9c1f26f516eb3",
+        "scripts/dev3_storage_model.py": "371ed5b856f63dd3eb5cbb02d5f3e669cb3ebdfda5c3d61a537bd8ed07db782e",
+        "scripts/dev3_storage_native.py": "ef51196fcc3cdd84ce64c165d6ef66edba99ea4f25a71c3a49c7cda19282ecdc",
+        "scripts/dev3_status_home_flush_native.py": "87d14df3f90043b3baa89134aa27e7e1ac70ede5944ed255b91cab8dfe02e241"
+      },
+      "native_cases": [
+        {
+          "profile": 1,
+          "status": "PASS",
+          "process": {
+            "command": [
+              "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-native-r0/status-flush-native-389b31024c25fbe62981442f4f1ec2a9e5bb7c3a7e1f5d6c5aff9428b830e09e",
+              "--exact",
+              "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::worker_status_home_flush_native",
+              "--ignored",
+              "--nocapture",
+              "--test-threads=1"
+            ],
+            "binary_sha256": "389b31024c25fbe62981442f4f1ec2a9e5bb7c3a7e1f5d6c5aff9428b830e09e",
+            "database_root": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-native-r0/p1/database",
+            "timeout_seconds": 30,
+            "timed_out": false,
+            "exit_code": 0,
+            "fd_samples": 2318,
+            "sampled_database_fd_peak": 5,
+            "sampled_database_bytes_peak": 22132544,
+            "sample_errors": [],
+            "proc_terminal_unavailable": [
+              {
+                "classification": "PROC_OBSERVATION_UNAVAILABLE_WITH_TERMINAL_CHILD",
+                "errno": 13,
+                "path": "/proc/188457/fd",
+                "message": "[Errno 13] Permission denied: '/proc/188457/fd'",
+                "poll_before": null,
+                "poll_after": 0,
+                "stop_before": false,
+                "stop_after": false
+              }
+            ],
+            "pid": 188457,
+            "elapsed_seconds": 2.567982567001309
+          },
+          "batches": 2,
+          "logical_flush_effects": 62,
+          "database_bytes": 22128448,
+          "files": {
+            "DWB": [
+              4096,
+              66312,
+              25329160,
+              1,
+              "4c6c56325b3366509d1a72f11b7590c26d0f5cb9f3cfc2bb076ee96cb7cb6918"
+            ],
+            "FILEMAP": [
+              4096,
+              66312,
+              25329148,
+              1,
+              "092301de885e2485c51c6d2a4a8a42fae1c1b87eced274a0af8eaca844c72280"
+            ],
+            "LOCK": [
+              0,
+              66312,
+              25329140,
+              1,
+              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            ],
+            "WRITER": [
+              4096,
+              66312,
+              25329143,
+              1,
+              "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+            ],
+            "d3-bootstrap": [
+              4096,
+              66312,
+              25329144,
+              1,
+              "c44b414270ed3898d5cf71424c835caffaa86151f00a78dfc26b40d7c188253c"
+            ],
+            "d3-data-0000000100000001": [
+              1048576,
+              66312,
+              25329145,
+              1,
+              "ce2346fb6bc58d04a5deff538b9a8d35692ab31636d2e1fcd2c2007207da50f5"
+            ],
+            "d3-dwb-0": [
+              16384,
+              66312,
+              25329151,
+              1,
+              "e9a11ddd3b4b67ac021968037d7db055e2674e398118c7824945e486652d7c5e"
+            ],
+            "d3-dwb-1": [
+              16384,
+              66312,
+              25329152,
+              1,
+              "735e3359cf814b6ea90e0eb5d7797ec7ac32f16e00d220cb71678d71716a62d5"
+            ],
+            "d3-dwb-images": [
+              16711680,
+              66312,
+              25329150,
+              1,
+              "a16725f35e01b5dd1b9baa2f1ec7c7d047b88f677de822a727b7b47aa5b65329"
+            ],
+            "d3-dwb-reserved": [
+              8192,
+              66312,
+              25329153,
+              1,
+              "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+            ],
+            "d3-dwb-stage": [
+              16384,
+              66312,
+              25329149,
+              1,
+              "e9a11ddd3b4b67ac021968037d7db055e2674e398118c7824945e486652d7c5e"
+            ],
+            "d3-filemap-0": [
+              2113536,
+              66312,
+              25329146,
+              1,
+              "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+            ],
+            "d3-filemap-1": [
+              2113536,
+              66312,
+              25329147,
+              1,
+              "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+            ],
+            "d3-profile": [
+              4096,
+              66312,
+              25329141,
+              1,
+              "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+            ],
+            "d3-wal-00000001": [
+              63296,
+              66312,
+              25329142,
+              1,
+              "57d68aadfe267641ad8a75af4acd151b6c14aadbde42c5711c6bfb875f12d94a"
+            ]
+          },
+          "fd": {
+            "baseline": 3,
+            "boundary_peak": 4,
+            "final": 0,
+            "observations": 151,
+            "scope": "exact source boundary observations; direct inventory and continuous peaks excluded"
+          },
+          "fixed_owned_charge_bytes": 22073344,
+          "fixed_owned_budget_bytes": 22073344,
+          "wal_bytes": 63296,
+          "wal_append_bytes": 59200,
+          "replacement_peak_bound_bytes": 22132544,
+          "evidence": {
+            "after.tsv": "4b1914f82b52c64a7be56ea5ecb976c46c64740f609f0d43f1a4327b1b52eb40",
+            "allocator.after": "17d7a60c2ec1b702a5d38531ed0c10d4dd3dec3b3d947de37bc980158ca3d37b",
+            "batch1.after.tsv": "0c7fc949d0ce3a63f90d0114f4f4454d98c2e96d4d80761c0be69b9fbb481fc4",
+            "batch1.clean.tsv": "8a7f66f7092c6842489be88de51117e4e96eeb2297ba8f218419a2122bb28b69",
+            "batch1.events.tsv": "8ea32ce0e3223974648050c7b2a0abea69370c32d740de52ceafd4060f9e4fe4",
+            "batch2.after.tsv": "4b1914f82b52c64a7be56ea5ecb976c46c64740f609f0d43f1a4327b1b52eb40",
+            "batch2.clean.tsv": "7349c495fa658d383fb2ec8ed2fc1814199d84edd5bf2f5e20b70a41f84808a0",
+            "batch2.events.tsv": "17a4b5bf4736a2d70be717741fb3b27c07673bcd5486fb3e2958f8d415706ba4",
+            "before.tsv": "6ce1ee20db46d791884804187753d6890f093aab481d775c19bd3d5a2da10cd2",
+            "events.tsv": "e366025cc4f70dfc19a92b10f404dd27e8efd92fd5c70afb8e8f816a528a3534",
+            "fd-events.tsv": "7ff4892221c4715abf84af7625fe5a5494840d4178460041565d5087d46cfc26",
+            "fd.tsv": "9ad2c3360e9e42c80b4c01b9062e5fa2829b28c55523a448a045399ba9ab639e",
+            "owner-state.tsv": "611d7d9d198e07c87b8ed2d814d1a11c08341b9a9e2c0ee67d53c3780dbe0d66",
+            "owner.descriptor": "4cbd1f6b773dfdcde339c2ad2424e0dd749f47b15dc017c3e54e0d382c83bd6e",
+            "process.json": "c0ba08ed5d6d4ecf0270c27a7cf7ebe79909553e7308190fcba7595f7a69ea6f",
+            "ram.tsv": "20e8be09baa38e99008d3a777a9bc6209fa0eb02b2a896df01fc1a162e8be272",
+            "resources.tsv": "da9e1196995972885a2f202363018e31bbd29d74b956d1e1a53378f5684bdc82",
+            "status.after": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdout.log": "59723dccf12418fff27d67f7bbb33624e0399ed70dfd2caff726dfc91cbed3a2",
+            "wal-header.bin": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c",
+            "wal.complete": "57d68aadfe267641ad8a75af4acd151b6c14aadbde42c5711c6bfb875f12d94a"
+          }
+        },
+        {
+          "profile": 2,
+          "status": "PASS",
+          "process": {
+            "command": [
+              "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-native-r0/status-flush-native-389b31024c25fbe62981442f4f1ec2a9e5bb7c3a7e1f5d6c5aff9428b830e09e",
+              "--exact",
+              "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::worker_status_home_flush_native",
+              "--ignored",
+              "--nocapture",
+              "--test-threads=1"
+            ],
+            "binary_sha256": "389b31024c25fbe62981442f4f1ec2a9e5bb7c3a7e1f5d6c5aff9428b830e09e",
+            "database_root": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-native-r0/p2/database",
+            "timeout_seconds": 30,
+            "timed_out": false,
+            "exit_code": 0,
+            "fd_samples": 2338,
+            "sampled_database_fd_peak": 5,
+            "sampled_database_bytes_peak": 22132544,
+            "sample_errors": [],
+            "proc_terminal_unavailable": [
+              {
+                "classification": "PROC_OBSERVATION_UNAVAILABLE_WITH_TERMINAL_CHILD",
+                "errno": 13,
+                "path": "/proc/188463/fd",
+                "message": "[Errno 13] Permission denied: '/proc/188463/fd'",
+                "poll_before": null,
+                "poll_after": 0,
+                "stop_before": false,
+                "stop_after": false
+              }
+            ],
+            "pid": 188463,
+            "elapsed_seconds": 2.618324817998655
+          },
+          "batches": 2,
+          "logical_flush_effects": 62,
+          "database_bytes": 22128448,
+          "files": {
+            "DWB": [
+              4096,
+              66312,
+              25329199,
+              1,
+              "d3792e449acd660d6f85676d6322cd7998200db9fde268c519f08a4dc3832de7"
+            ],
+            "FILEMAP": [
+              4096,
+              66312,
+              25329187,
+              1,
+              "2178cc00031e741ad9515ca4e650b0b13d24655bbd80cde01a4ec1d3637d7838"
+            ],
+            "LOCK": [
+              0,
+              66312,
+              25329179,
+              1,
+              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            ],
+            "WRITER": [
+              4096,
+              66312,
+              25329182,
+              1,
+              "d3c1d2c10732339248417a3cfde8b61f056eac8e1856e5cf18a0a9dc6f200b84"
+            ],
+            "d3-bootstrap": [
+              4096,
+              66312,
+              25329183,
+              1,
+              "112a4dea5856f96948c4496d36ad893bda468c611dbb5be2a6230843585a137f"
+            ],
+            "d3-data-0000000100000001": [
+              1048576,
+              66312,
+              25329184,
+              1,
+              "ce2346fb6bc58d04a5deff538b9a8d35692ab31636d2e1fcd2c2007207da50f5"
+            ],
+            "d3-dwb-0": [
+              16384,
+              66312,
+              25329190,
+              1,
+              "e9a11ddd3b4b67ac021968037d7db055e2674e398118c7824945e486652d7c5e"
+            ],
+            "d3-dwb-1": [
+              16384,
+              66312,
+              25329191,
+              1,
+              "e621ab1410fdb2b22f5a650ff6f322033f9eec647997f4b6dcacc12980810013"
+            ],
+            "d3-dwb-images": [
+              16711680,
+              66312,
+              25329189,
+              1,
+              "4cf20680dc038d9f2caca9b9cfc52938f74e6ca0bd613c0ebc12b844c4da0d6d"
+            ],
+            "d3-dwb-reserved": [
+              8192,
+              66312,
+              25329192,
+              1,
+              "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+            ],
+            "d3-dwb-stage": [
+              16384,
+              66312,
+              25329188,
+              1,
+              "e9a11ddd3b4b67ac021968037d7db055e2674e398118c7824945e486652d7c5e"
+            ],
+            "d3-filemap-0": [
+              2113536,
+              66312,
+              25329185,
+              1,
+              "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+            ],
+            "d3-filemap-1": [
+              2113536,
+              66312,
+              25329186,
+              1,
+              "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+            ],
+            "d3-profile": [
+              4096,
+              66312,
+              25329180,
+              1,
+              "e45db9f3b6d87837bc2d626f641034c7b647b711fe8c761990731eb5db16052f"
+            ],
+            "d3-wal-00000001": [
+              63296,
+              66312,
+              25329181,
+              1,
+              "a0468ac5f4e7e87231fc9e376e0a9db7b97abebf8f816de45798948f015b8327"
+            ]
+          },
+          "fd": {
+            "baseline": 3,
+            "boundary_peak": 4,
+            "final": 0,
+            "observations": 151,
+            "scope": "exact source boundary observations; direct inventory and continuous peaks excluded"
+          },
+          "fixed_owned_charge_bytes": 22073344,
+          "fixed_owned_budget_bytes": 22073344,
+          "wal_bytes": 63296,
+          "wal_append_bytes": 59200,
+          "replacement_peak_bound_bytes": 22132544,
+          "evidence": {
+            "after.tsv": "4337d3304044e705c507fb8b34b46e4ece80ed88159d91c86f17156101eebd70",
+            "allocator.after": "17d7a60c2ec1b702a5d38531ed0c10d4dd3dec3b3d947de37bc980158ca3d37b",
+            "batch1.after.tsv": "8ff544827b3ce0df585bd4b9c2057ca83166d3fc1ab14d7af7b1d14eac2df3cb",
+            "batch1.clean.tsv": "58abb26f4f0d8778bca3559ba9c33df1758ddf40a669f4774f0a4577221bad17",
+            "batch1.events.tsv": "64454631be195a4a9562039d4da31dcb9ae081b3df36fbdce5729e9cff9f608e",
+            "batch2.after.tsv": "4337d3304044e705c507fb8b34b46e4ece80ed88159d91c86f17156101eebd70",
+            "batch2.clean.tsv": "fe5a20da9c049630a3df158efe84c8d1a5a34aaac0246505eac6e7f6d42d606d",
+            "batch2.events.tsv": "ab14df97b216e277e985097351ef19ba1bbeb2bd05451ec2e21a3079bfe622cc",
+            "before.tsv": "a3c03b996f0e1efdab4ea4575e01c8b92209d1679149494c178b57ef11529d15",
+            "events.tsv": "6a62767251f0056fe4354e84378ebe1fa7f621205166faa6ef2268563706b9bf",
+            "fd-events.tsv": "7ff4892221c4715abf84af7625fe5a5494840d4178460041565d5087d46cfc26",
+            "fd.tsv": "9ad2c3360e9e42c80b4c01b9062e5fa2829b28c55523a448a045399ba9ab639e",
+            "owner-state.tsv": "611d7d9d198e07c87b8ed2d814d1a11c08341b9a9e2c0ee67d53c3780dbe0d66",
+            "owner.descriptor": "96332ce0959838974fd0e260ed32139a6f505274529456da754d883fec7368a5",
+            "process.json": "3643bb834168a0f745d440df9ab969dd6eecf5684def1fbddac99f43828e065e",
+            "ram.tsv": "20e8be09baa38e99008d3a777a9bc6209fa0eb02b2a896df01fc1a162e8be272",
+            "resources.tsv": "da9e1196995972885a2f202363018e31bbd29d74b956d1e1a53378f5684bdc82",
+            "status.after": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdout.log": "05c970d99bd580df1a7be57ec55d4731c34d8888ec3ded33f7ca9bfc47636537",
+            "wal-header.bin": "42b0c945b2b50a3a045032a762dd30a0038ea297a48b2e3801ecaf2153b23bc4",
+            "wal.complete": "a0468ac5f4e7e87231fc9e376e0a9db7b97abebf8f816de45798948f015b8327"
+          }
+        },
+        {
+          "profile": 3,
+          "status": "PASS",
+          "process": {
+            "command": [
+              "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-native-r0/status-flush-native-389b31024c25fbe62981442f4f1ec2a9e5bb7c3a7e1f5d6c5aff9428b830e09e",
+              "--exact",
+              "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::worker_status_home_flush_native",
+              "--ignored",
+              "--nocapture",
+              "--test-threads=1"
+            ],
+            "binary_sha256": "389b31024c25fbe62981442f4f1ec2a9e5bb7c3a7e1f5d6c5aff9428b830e09e",
+            "database_root": "/home/et16/work/xadb/artifacts/dev3/resume-20261022/status-home-flush-native-r0/p3/database",
+            "timeout_seconds": 30,
+            "timed_out": false,
+            "exit_code": 0,
+            "fd_samples": 3003,
+            "sampled_database_fd_peak": 5,
+            "sampled_database_bytes_peak": 22174944,
+            "sample_errors": [],
+            "proc_terminal_unavailable": [
+              {
+                "classification": "PROC_OBSERVATION_UNAVAILABLE_WITH_TERMINAL_CHILD",
+                "errno": 13,
+                "path": "/proc/188467/fd",
+                "message": "[Errno 13] Permission denied: '/proc/188467/fd'",
+                "poll_before": null,
+                "poll_after": 0,
+                "stop_before": false,
+                "stop_after": false
+              }
+            ],
+            "pid": 188467,
+            "elapsed_seconds": 3.3688674080003693
+          },
+          "batches": 3,
+          "logical_flush_effects": 93,
+          "database_bytes": 22170848,
+          "files": {
+            "DWB": [
+              4096,
+              66312,
+              25329241,
+              1,
+              "4104660205cce078556c7d7247d918a142ae207ed0e2b5f6fd761affb8372e8e"
+            ],
+            "FILEMAP": [
+              4096,
+              66312,
+              25329226,
+              1,
+              "64713dfe9448bf0c17302ff26fd9c9be844df8c2ee318693428677508e6597db"
+            ],
+            "LOCK": [
+              0,
+              66312,
+              25329218,
+              1,
+              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            ],
+            "WRITER": [
+              4096,
+              66312,
+              25329221,
+              1,
+              "c287387733e9969e28b169f4267a9988453e5639db6ed245b7b3e4cf010da584"
+            ],
+            "d3-bootstrap": [
+              4096,
+              66312,
+              25329222,
+              1,
+              "7bdb5e081ed80ef78a19adce57ca09c87457aec1cce1ff4dfe72ba6e4abdc8c4"
+            ],
+            "d3-data-0000000100000001": [
+              1048576,
+              66312,
+              25329223,
+              1,
+              "48520efb0fe3d30d5b68a87c0d27018934a521293fc78742fa92b16fbad0981a"
+            ],
+            "d3-dwb-0": [
+              16384,
+              66312,
+              25329229,
+              1,
+              "8e790c99bccaf7a017df51fd389510c9607512ec03ab9f60e84f07f955645d35"
+            ],
+            "d3-dwb-1": [
+              16384,
+              66312,
+              25329230,
+              1,
+              "01cb7e0bd1ec9394f3236c1e449dcd863370d5cdb2f839e507eff2008dd6b0b1"
+            ],
+            "d3-dwb-images": [
+              16711680,
+              66312,
+              25329228,
+              1,
+              "8e82659043483bda86f4df0e74b90adc946949aef93356a6c73921430c84c92f"
+            ],
+            "d3-dwb-reserved": [
+              8192,
+              66312,
+              25329231,
+              1,
+              "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+            ],
+            "d3-dwb-stage": [
+              16384,
+              66312,
+              25329227,
+              1,
+              "01cb7e0bd1ec9394f3236c1e449dcd863370d5cdb2f839e507eff2008dd6b0b1"
+            ],
+            "d3-filemap-0": [
+              2113536,
+              66312,
+              25329224,
+              1,
+              "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+            ],
+            "d3-filemap-1": [
+              2113536,
+              66312,
+              25329225,
+              1,
+              "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+            ],
+            "d3-profile": [
+              4096,
+              66312,
+              25329219,
+              1,
+              "e86fdb05e8a470f64fa351b9626cd667b45824d40ef0bbe376f9c1bfcc4765d0"
+            ],
+            "d3-wal-00000001": [
+              105696,
+              66312,
+              25329220,
+              1,
+              "0ce1904242b28de8e7b0fda3afde1900fdbf3d3d74ade8e46eb89cad105d414a"
+            ]
+          },
+          "fd": {
+            "baseline": 3,
+            "boundary_peak": 4,
+            "final": 0,
+            "observations": 227,
+            "scope": "exact source boundary observations; direct inventory and continuous peaks excluded"
+          },
+          "fixed_owned_charge_bytes": 22073344,
+          "fixed_owned_budget_bytes": 22073344,
+          "wal_bytes": 105696,
+          "wal_append_bytes": 101600,
+          "replacement_peak_bound_bytes": 22174944,
+          "evidence": {
+            "after.tsv": "b5c1ae24696ea69a4552edf553d0206ec9dab33a2291cef75e86528e9776762a",
+            "allocator.after": "046ad904e39e3d2873cdf31f8d05729261d0cd33fabaa58c8abd332f5c185a81",
+            "batch1.after.tsv": "7d046d330a0de09a7e8e95319ab053f8c30fba30deade716dc87459d2ed93cbb",
+            "batch1.clean.tsv": "def1cd28417854b12e591652ab0e87ed03dff77b589818a178adcc19c633a3a3",
+            "batch1.events.tsv": "8ea32ce0e3223974648050c7b2a0abea69370c32d740de52ceafd4060f9e4fe4",
+            "batch2.after.tsv": "2cd319d11ea9ce744ad511cc77ff2bac5fae12c4c5becb4dc5fb9d0e1c105d89",
+            "batch2.clean.tsv": "5debb2eaf105f93145330ddae14ccf3cc09acebde13d0dee456b9cabb276a7be",
+            "batch2.events.tsv": "17a4b5bf4736a2d70be717741fb3b27c07673bcd5486fb3e2958f8d415706ba4",
+            "batch3.after.tsv": "b5c1ae24696ea69a4552edf553d0206ec9dab33a2291cef75e86528e9776762a",
+            "batch3.clean.tsv": "63c842216d788b30669c1697c635a3d4eed74844737026b67f06808ea2122c92",
+            "batch3.events.tsv": "8ea32ce0e3223974648050c7b2a0abea69370c32d740de52ceafd4060f9e4fe4",
+            "before.tsv": "64db8a5558bee12d98dead2059f069d1334bf15d6f7660835eadaffd884be463",
+            "events.tsv": "97c2ff290936dbe147602a9c1f600f9b51d7b5e98ad442cf731269cc9b158369",
+            "fd-events.tsv": "c8dc8a6db1617bcbd81dab2c03ac82bdbdfac795052b7a69bd12519255e6362d",
+            "fd.tsv": "9ad2c3360e9e42c80b4c01b9062e5fa2829b28c55523a448a045399ba9ab639e",
+            "owner-state.tsv": "611d7d9d198e07c87b8ed2d814d1a11c08341b9a9e2c0ee67d53c3780dbe0d66",
+            "owner.descriptor": "b70cc05349ff8df02c2089b38cde3d154e09d8e5c02d6cac2f35f04f1abba2f0",
+            "process.json": "4ecb0feee449483eb9cad69d60e886a9bcb45286a1d4975d7148e870408f352e",
+            "ram.tsv": "2f95e2a74d1a59b9b5c9bf5f5cc1c91de02bad68ffed81169bc353c5db4a91f8",
+            "resources.tsv": "da9e1196995972885a2f202363018e31bbd29d74b956d1e1a53378f5684bdc82",
+            "status.after": "91142dd11d4269ec9bd744cd1cc294f629a740e0146167379d0b9e5f3453049b",
+            "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdout.log": "43fa043ef6f6c69afc10aae926c33c2b3bd4e33983a9e59c028c7aab65766164",
+            "wal-header.bin": "757b6691fc587bbc4692131c6bfa054c68805e54c98cc58371475ac69b7d6d09",
+            "wal.complete": "0ce1904242b28de8e7b0fda3afde1900fdbf3d3d74ade8e46eb89cad105d414a"
+          }
+        }
+      ]
+    },
+    "checkers": {
+      "unique_methods": 16,
+      "additional_changed_method_calls": 1,
+      "reports": [
+        {
+          "path": "artifacts/dev3/resume-20261022/status-home-flush-checkers-r0/result.json",
+          "sha256": "e58bff1a4c530fd805cafa910d4f338169b1ffd35e1abd5e7666226463123d5d",
+          "bytes": 2146,
+          "status": "PASS",
+          "source_sha256": "abeb25254fe8b3e13ebc902c663ef5c498919b01731274d95f008bb8beae4be7",
+          "final_source_sha256": "abeb25254fe8b3e13ebc902c663ef5c498919b01731274d95f008bb8beae4be7",
+          "scope": "new .b compiler checker4, independent literal checker4, runtime checker4 only; synthetic controls are not product execution",
+          "cases": [
+            {
+              "module": "test_check_dev3_status_home_flush_borrows",
+              "command": [
+                "python3",
+                "-B",
+                "-m",
+                "unittest",
+                "-v",
+                "test_check_dev3_status_home_flush_borrows"
+              ],
+              "returncode": 0,
+              "seconds": 0.06413006400180166,
+              "test_source_sha256": "2571429210cb1594dd76ba33ca8481ccad3f4d1a5a1732c823d0fd815bdd8af1",
+              "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "stderr_sha256": "d53ddc99c9238ac04b0514de2bcb6ed9573fae939161f835b313b4d7af67a572"
+            },
+            {
+              "module": "test_dev3_status_home_flush_literals",
+              "command": [
+                "python3",
+                "-B",
+                "-m",
+                "unittest",
+                "-v",
+                "test_dev3_status_home_flush_literals"
+              ],
+              "returncode": 0,
+              "seconds": 0.5646872479992453,
+              "test_source_sha256": "96daef3b8880b52901acb569541013fa67ee366ac70cb8d712c43b4fc31c82d4",
+              "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "stderr_sha256": "abe0e3f6882a0d9f305dc8c1785f7802f2f9801d8025a95252b60c29fb369224"
+            },
+            {
+              "module": "test_dev3_status_home_flush",
+              "command": [
+                "python3",
+                "-B",
+                "-m",
+                "unittest",
+                "-v",
+                "test_dev3_status_home_flush"
+              ],
+              "returncode": 0,
+              "seconds": 0.21428576199832605,
+              "test_source_sha256": "b30e3f97c00f8bcadd52b6df109573e55abeb0950315806b0c97db3ee66df9a9",
+              "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "stderr_sha256": "401fe53074b20962ecf0c32caa529e6b0437fb0c7de2b4a7404a69af6b5284ac"
+            }
+          ]
+        },
+        {
+          "path": "artifacts/dev3/resume-20261022/status-home-flush-native-checker-r0/result.json",
+          "sha256": "d6a05373810155299a08cea01dbc74316ffdc3b9c27eb0f64fd2acdfe08c5f68",
+          "bytes": 657,
+          "status": "PASS",
+          "source_sha256": "8ce135f8af523c024ee39dadfe4944fae66c6985051d5d691a7d21ff634a3094",
+          "final_source_sha256": "8ce135f8af523c024ee39dadfe4944fae66c6985051d5d691a7d21ff634a3094",
+          "scope": "new native checker4 first execution; synthetic controls, no native/product worker execution",
+          "command": [
+            "python3",
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_dev3_status_home_flush_native"
+          ],
+          "returncode": 0,
+          "seconds": 4.3608767869991425,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "958c8817ebba83546488036cba73cb6abaf3316ac0549045ac373197c3f9a0cc"
+        },
+        {
+          "path": "artifacts/dev3/resume-20261022/status-home-flush-native-checker-r1/result.json",
+          "sha256": "f060197d48c7364400c1d62bf2eb6668729d5ca4fdee9056b248f78f501b8554",
+          "bytes": 646,
+          "status": "PASS",
+          "source_sha256": "381499a754702e48b59d69ffa702d7383081e438bb0a2b3972c2204d102f1a89",
+          "scope": "changed native final-owner artifact checker1 only; unchanged three checker methods omitted",
+          "command": [
+            "python3",
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_dev3_status_home_flush_native.StatusFlushNativeChecks.test_complete_artifact_and_independent_corruption_rejection"
+          ],
+          "returncode": 0,
+          "seconds": 8.946928656001546,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "8b8619f7d572f25f99050db557a0f5a1d641c6d53f79c740f7c0b9622acd0a2d"
+        }
+      ]
+    },
+    "static": [
+      {
+        "path": "artifacts/dev3/resume-20261022/status-home-flush-static-r0/result.json",
+        "sha256": "679caaa3c6d61834f47fffc2651348c4582be583e86fcd5d62f5e2711c1be8a7",
+        "bytes": 684,
+        "status": "FAIL",
+        "source_sha256": "abeb25254fe8b3e13ebc902c663ef5c498919b01731274d95f008bb8beae4be7",
+        "scope": "format and engine static checks only; no test cases executed",
+        "commands": [
+          {
+            "command": [
+              "cargo",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "returncode": 0,
+            "seconds": 0.7150469059997704
+          },
+          {
+            "command": [
+              "cargo",
+              "clippy",
+              "-p",
+              "xadb-engine",
+              "--all-targets",
+              "--all-features",
+              "--locked",
+              "--offline",
+              "--",
+              "-D",
+              "warnings"
+            ],
+            "returncode": 101,
+            "seconds": 8.078917138998804
+          }
+        ]
+      },
+      {
+        "path": "artifacts/dev3/resume-20261022/status-home-flush-static-r1/result.json",
+        "sha256": "2c46ceb1304d279d96c6230d37c7c2e353dabde99de58a8658e9e05c8852aeac",
+        "bytes": 701,
+        "status": "PASS",
+        "source_sha256": "77abf3aee1e480f2529bfa430463e3f0969fe2746e1031f573dee8deffa6aaa9",
+        "scope": "format and engine static checks after narrow lint fixes; no test cases executed",
+        "commands": [
+          {
+            "command": [
+              "cargo",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "returncode": 0,
+            "seconds": 0.7148241150025569
+          },
+          {
+            "command": [
+              "cargo",
+              "clippy",
+              "-p",
+              "xadb-engine",
+              "--all-targets",
+              "--all-features",
+              "--locked",
+              "--offline",
+              "--",
+              "-D",
+              "warnings"
+            ],
+            "returncode": 0,
+            "seconds": 6.776653298002202
+          }
+        ]
+      },
+      {
+        "path": "artifacts/dev3/resume-20261022/status-home-flush-static-r2/result.json",
+        "sha256": "617e242dc080a646c7fcea4ff706e341ac257b0ed0463392247a3b0074147098",
+        "bytes": 699,
+        "status": "PASS",
+        "source_sha256": "381499a754702e48b59d69ffa702d7383081e438bb0a2b3972c2204d102f1a89",
+        "scope": "native final-owner assertion delta static verification; no test cases executed",
+        "commands": [
+          {
+            "command": [
+              "cargo",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "returncode": 0,
+            "seconds": 0.7235043280015816
+          },
+          {
+            "command": [
+              "cargo",
+              "clippy",
+              "-p",
+              "xadb-engine",
+              "--all-targets",
+              "--all-features",
+              "--locked",
+              "--offline",
+              "--",
+              "-D",
+              "warnings"
+            ],
+            "returncode": 0,
+            "seconds": 6.64242729200123
+          }
+        ]
+      }
+    ]
+  },
+  "final_inventory": {
+    "mandatory": [
+      "BN01",
+      "BN02",
+      "BN03",
+      "BN04",
+      "BN05",
+      "BN06",
+      "BA01",
+      "BA02",
+      "BA03",
+      "BA04",
+      "BA05",
+      "BA06",
+      "BA07",
+      "BA08",
+      "BA09",
+      "BA10",
+      "BH01",
+      "BH02",
+      "BH03",
+      "BH04",
+      "BH05",
+      "BH06",
+      "BH07",
+      "BH08",
+      "BH09",
+      "BH10",
+      "BR01",
+      "BR02",
+      "BR03",
+      "BR04",
+      "BR05",
+      "BR06",
+      "PF01",
+      "PF02",
+      "PF03",
+      "PF04",
+      "PF05",
+      "PF06",
+      "PF07",
+      "PF08",
+      "RF01",
+      "RF02",
+      "RF03"
+    ],
+    "s5_faults": 564,
+    "s5_histories": 24,
+    "s5_additional": 588,
+    "unique_runtime_and_witness": 631,
+    "s5_status": "NOT_RUN",
+    "physical_faults_before_alias": 570,
+    "exact_mandatory_aliases": 6,
+    "pre_alias_total": 637
+  },
+  "inputs": [
+    {
+      "path": "tests/fixtures/dev3-status-home-flush/manifest.json",
+      "sha256": "245dfef3871ee84ac86e2a681266a8b0ca8807c3e3bbd069d60d001d367255e1",
+      "bytes": 174656
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-status-home-flush/runtime/manifest.json",
+      "sha256": "6bfeb4a276eb055e6b5914b7324920bab89f20d0e815f4de23650575110f1d54",
+      "bytes": 224523
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-status-home-flush/compiler/manifest.json",
+      "sha256": "7765a8bd490edb3b90eda41904425a82ea241aa809d3c640138e768a53c979b3",
+      "bytes": 4229
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-status-home-flush/native/manifest.json",
+      "sha256": "f8309cd9750e585ff41aadaaeb68fb8ad00630e744d581be465e68111724a354",
+      "bytes": 10569
+    }
+  ],
+  "decisions": [
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-owner-decisions-r1.md",
+      "sha256": "a7b72dcba7a6f58c0266431be038013d9ffc633925a3dc985774ad9461f51aac",
+      "bytes": 8210
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-upper-source-ledger-r0.md",
+      "sha256": "e9732aa9c61a4abfa5c46f20d66994964f4e378c4830a4841779021be724076b",
+      "bytes": 6440
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-upper-source-ledger-r0.sources.json",
+      "sha256": "b02ddfebad0e95282eadbe836cd102848abfdbc81387961e593ba807a8f872bc",
+      "bytes": 1255
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-io-source-ledger-r0.md",
+      "sha256": "d1b09db8fc34dd756e98d0d6171b7f43043c7221ca021c311efbb89d9d0a9186",
+      "bytes": 10918
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-io-source-ledger-r0.sources.json",
+      "sha256": "79c4da2fae1916ede47cd147fbf5833bbaf47cee9ea39bf53d40a54abe9e7e1c",
+      "bytes": 3506
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-io-lint-correction-r0.json",
+      "sha256": "bbf0061c4a045719ccd90de216d34c90a140412925b5f84e08a88e132b715139",
+      "bytes": 882
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-native-input-r0.json",
+      "sha256": "013779e9db08665fcaadd6178bed32a36cf7acbd332d95cc3ece1f67ea8b90c6",
+      "bytes": 813
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-home-flush-native-input-r1.json",
+      "sha256": "d8c6273cad8fc0f563cae2d13ba94a8cceddc18321fba6acd424b7352ae87312",
+      "bytes": 1024
+    }
+  ],
+  "independent_reviews": [
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-authority-input-review-r0.md",
+      "sha256": "fdf768192ad2f97891a1fddb02dae50f4d2a48e604c94d663ca129c427c9b9dd",
+      "bytes": 5267
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-ba01-prefix-audit-r0.json",
+      "sha256": "6c6181fba2547e4b052d62d2d5ffdde5835e30a87fdd7f1db7b82d5076440aaa",
+      "bytes": 2440
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-ba01-prefix-review-r0.md",
+      "sha256": "bd6721824c05e739b23b188a3b91691777c2611aa257aa813121259809efe2ff",
+      "bytes": 1690
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-checker-read-audit-r0.json",
+      "sha256": "99a93dc91a96305cbe69a5d28a48f88714ebffc5aed3d2f4ef0283a0444f7375",
+      "bytes": 4160
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-compiler-execution-read-audit-r0.json",
+      "sha256": "e9da9668479b86c350422a78c280ad73d790ee7f90f95c256291ba129efbc0fd",
+      "bytes": 6118
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-compiler-input-review-r0.md",
+      "sha256": "1f8fe84806d5ceacb7ed8e2f56a81340f7f3864e552733d00f30f43e2e43be03",
+      "bytes": 2590
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-compiler-io-identities-r0.json",
+      "sha256": "4b60f931d999b390185c5b002c16aec105ea5300a8e618b70ffbbe7b0526fa46",
+      "bytes": 6471
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-d2-acceptance-r1.md",
+      "sha256": "7254a39252dbb969347551915d2b76fa5cd25b16562f0013d26fe8a062611554",
+      "bytes": 4307
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-d2-read-identities-r0.json",
+      "sha256": "3c75c85b397df0950d2d15c397e6937f30645484619782c161f604ddd2fb5235",
+      "bytes": 3222
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-d2-review-r0.md",
+      "sha256": "834e6a032ad920f44f7501bd9985012c349fd0ccbc895ff2ab5f21f48ca20888",
+      "bytes": 11039
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-document-draft-read-r0.json",
+      "sha256": "9691588ebca1d72e6d6f6282534572a17290e6ff1c518fb636c0dd780327b25e",
+      "bytes": 921
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-document-draft-review-r0.md",
+      "sha256": "e1f92bdaca5a87f3d28cc887fc5deea073a0352b51a975f9c902f5ba0d8ba7fa",
+      "bytes": 1761
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-final-d1-r0.md",
+      "sha256": "2e0f4da7630b42fa20ac549b993dc4c4763501cd180e1940ba3091db76c7bc80",
+      "bytes": 5510
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-home-input-review-r0.md",
+      "sha256": "09ff14abf29aed9acf4d9778a58241af58e74db7eb6ca6f156db691d658b3711",
+      "bytes": 3273
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-io-ledger-review-r1.md",
+      "sha256": "05625867ba5ab68602fe80e884faf99fbab2b9cfcf152cdee0c9a2b4cba7917e",
+      "bytes": 3397
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-io-source-review-r0.md",
+      "sha256": "e2486644923d9b20482231d82046ede8c491b4adcdd971fae873cd268eef752c",
+      "bytes": 3491
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-literal-read-audit-r1.json",
+      "sha256": "618451754dd57d837031ec16c965a6f3b6a9fa5c54e63d7d6c45fc54b994390e",
+      "bytes": 2216
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-literal-review-r1.md",
+      "sha256": "24731dcab5616610a74734b51de58afedff4eacde8801a8ff2521c0482d79e8e",
+      "bytes": 1951
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-mandatory-read-audit-r0.json",
+      "sha256": "c8d675bef0fcc78b1a2b9585758b612d6dec6cbac766ac1a33f2e3c30b3e1cc3",
+      "bytes": 13590
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-native-evidence-audit-r0.json",
+      "sha256": "32ac61553639665f5d38b89805df53192d595dba1a9b4aa32f3661290d3e4236",
+      "bytes": 62018
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-native-evidence-review-r0.md",
+      "sha256": "4160c6d98c009ecd4d6164600c2c25d61b6d913165d11739ba4c6c4f3f87ee92",
+      "bytes": 5166
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-native-input-review-r0.md",
+      "sha256": "6237e6d4e03ecf7e5bdaccdf7a07ee2f25e172380c39c0bd33f64f00a95162b3",
+      "bytes": 5617
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-native-input-review-r1.md",
+      "sha256": "aba89fb461eb7cf04fc9c7a70cb213ba596d000417a8331587968a5253ee73ed",
+      "bytes": 2635
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-non-native-d1-r0.md",
+      "sha256": "8183ae6c65935036ee1d09ec6aa7e1e203a00470fdea8c8e29c71386e07fb80f",
+      "bytes": 5064
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-registered-read-addendum-r1.json",
+      "sha256": "8adb21ee7d13ad993b3cfcde3ac7ff09227208957d566ce185a1248c755912ae",
+      "bytes": 2527
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-registered-read-audit-r0.json",
+      "sha256": "6ffccab413c8aba063d7afaaa63126a7b6082bb6780e4b68c7cb86736c1de447",
+      "bytes": 36252
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-resource-input-review-r1.md",
+      "sha256": "e293019664f97d1e5afebe1fa68b8c57952e46b54f09eb6ba6e6d4dcde71f650",
+      "bytes": 2331
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-runtime-input-read-audit-r0.json",
+      "sha256": "49892c7641e9fcb627cfe3b42a7b127ce14e79e018bb5e585f52ae759a401c8d",
+      "bytes": 5280
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-runtime-input-review-r0.md",
+      "sha256": "d651d6703bb0f48b4148e75fa8b894497d1f6df2ea634ab4d5757b5e9a8389fc",
+      "bytes": 3026
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-upper-closure-r1.md",
+      "sha256": "8c64dad734f947d42687596f90762c85d5048ae71a2b402a703766f96b9a3d41",
+      "bytes": 1433
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-upper-ledger-acceptance-r0.md",
+      "sha256": "d32f3e375af96e823dfbe0f1fe1d5474323b711cf3224175462217174a59fa02",
+      "bytes": 6517
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-upper-read-identities-r0.json",
+      "sha256": "a108982bb94359db3a00d4dc0296729fef0b386f7ce9c2fd003a4846abe91762",
+      "bytes": 1453
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-upper-resource-read-audit-r0.json",
+      "sha256": "3d8a7a7b2577ab0ae3708e0670888f3f7528f5ecbf3009ae8dab1231f58bed42",
+      "bytes": 5288
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-home-flush-upper-source-review-r0.md",
+      "sha256": "173bcc3cbfccd14325fc6f98f5c6ec4fb8c90fa78eac75fc4690c2c8e17de55f",
+      "bytes": 4443
+    }
+  ],
+  "preservation": "artifacts paths are local immutable receipts, not distributed files; their original hashes and source identities are retained",
+  "not_claimed": [
+    "DEV3 completion",
+    "S5 execution",
+    "general recovery/reopen/READY",
+    "batch8/64 or multifile flush",
+    "physical stack or continuous FD peak",
+    "performance qualification"
+  ]
+}

@@ -629,6 +629,15 @@ prepare12208/readback14788·Fresh role424/Mutable role792 bytes의 실제 typed 
 
 실제 dirty hot191424/cold157408≤196608, reader3480≤3584, exclusive source join≤8192와 padded generic readback 거절을 확인했다. 원 예약을 증액하지 않았으며 stack/RSS 측정이 아니다. S5 추가116은 작성/NOT_RUN, 새 runtime union209다. Status home flush·실제 clean-before-INIT·writer/flusher 경쟁·일반 recovery/거래 directory/READY 및 전체 DEV3는 미완료다.
 
+<a id="status-home-flush"></a>
+## Status home flush의 선택 인수
+
+[소유 계약](../contracts/dev3-status-home-flush.md)의3.03.2.b는 기존 bound를 소비하는 별도 owner와 sealed Status authority를 작성했다. 실제 publication의 allocator/Status를 각각 whole batch1로 capture→WAL force→DWB→home→retirement→조건부 finalize하며, Ready/WaitingWal/RetiredPendingFinalize에서 exact target을 보존한다. Status home은 zero 또는 정확한 현재 image만 허용하고 기존 allocator predicate는 유지한다.
+
+[source별 선택 증거](../evidence/dev3-status-home-flush-20261022.md)와 [실행 색인](../evidence/dev3-status-home-flush-20261022.json)에 필수43=Rust42+RF03 witness1, compiler semantic6, native3, checker unique16을 연결했다. strict 성공42행과 원 실패 그룹의 완료 BA01 prefix1을 구분하며 원 FAIL을 보존한다. native는 실제7batch/flush217효과와 전체 파일·WAL·최종 owner 상태를 검산했다. S5 추가588=physical570의 exact mandatory alias6을 제외한564+history24는 작성/NOT_RUN이며 unique runtime/witness631이다. 제한 단위의 최종 독립 D1을 수용했다.
+
+원 dirty196608/flush65536·I/O8192·component65536·4MiB workspace 예약을 증액하지 않는다. 실제77 layout와 source/return-carrier guard, Status codec/FILEMAP 수명 분리를 검산했으며 stack/RSS 측정이 아니다. .a와 allocator의 원 결과를 보존하고 변경 없는 하위 시험을 반복하지 않는다. 일반 pool/batch8/64/multifile·free/reuse·recovery/READY·전체 DEV3는 미완료다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 
@@ -640,9 +649,9 @@ prepare12208/readback14788·Fresh role424/Mutable role792 bytes의 실제 typed 
 | --- | --- | --- |
 | 3.01 형식·정체성 | page/참조/key/행/tree/WAL/undo/status/control codec | 여러 표현·독립 byte·유한 모델 검증 완료. 실제 효과와 구분 |
 | 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기와 [불변 Status bootstrap 역할](#status-bootstrap)의 제한 구현 검증. 일반 reopen은 미완료 |
-| 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | [예약·취소](#allocation-reservation-accepted)와 [한 Status INIT](#status-init)의 제한 연결. Status home flush·일반 INIT·확장·free/reuse 미완료 |
+| 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | [예약·취소](#allocation-reservation-accepted)와 [한 Status INIT](#status-init)의 제한 연결. [Status home flush](#status-home-flush)의 제한 선택 인수. 일반 INIT·확장·free/reuse 미완료 |
 | 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | [dirty stage](#dirty-stage)·[authentic WAL requirement/flush force](#allocator-flush)·[Status INIT 두 image](#status-init), genesis·RollbackStart·예약/취소 연결. 일반 opcode/CLR/commit 연결 미완료 |
-| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)와 [폐쇄 두-frame INIT/reader](#status-init) 제한 검증. Status home flush·일반 pool·batch8/64·다중 file·압력하 진행 미완료 |
+| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)와 [폐쇄 두-frame INIT/reader](#status-init) 제한 검증. [Status home flush](#status-home-flush)의 제한 선택 인수. 일반 pool·batch8/64·다중 file·압력하 진행 미완료 |
 | 3.06 트리·행 | mutable tree CRUD·split·root 변경·overflow·stable cursor·locator | 표현·부분 모델 존재. 실제 변경 경로 미완료 |
 | 3.07 인덱스 | point/range scan·presence·PK/UNIQUE·build/취소 | 표현·의미 계약 존재. 실제 인덱스와 statement-final unique 미완료 |
 | 3.08 카탈로그·DDL | table/index 정의·이름·객체 수명·create/drop | 표현 존재. native 원자 DDL과 catalog 변경 미완료 |

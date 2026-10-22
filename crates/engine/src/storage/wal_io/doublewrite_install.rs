@@ -34,8 +34,9 @@ pub(crate) use mutable_storage::{
 };
 #[allow(unused_imports)]
 pub(crate) use mutable_storage::{
-    BeforeEffectError, BoundStatusBootstrap, InitAttemptError, InitializedStatusObservation,
-    ReservedStatus, StatusBootstrapWriter, StatusInitError, StatusReadGuard, StatusReader,
+    BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, InitAttemptError,
+    InitializedStatusObservation, IntoFlushError, ReservedStatus, StatusBootstrapWriter,
+    StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard, StatusReader,
 };
 pub(in crate::storage) use mutable_storage::{
     CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,

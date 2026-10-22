@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV3 Status home flush](implementation/dev3-implementation.md#status-home-flush): 실제 두 target의 순차 DWB/home·whole retirement·조건부 finalize를 연결했다. 필수43·compiler6·native3의 source별 증거와 원 FAIL을 보존하며 제한 단위의 최종 독립 D1을 수용했다. 일반 recovery·전체 DEV3는 미완료다.
+
 2026-10-22 [DEV3 폐쇄 두-frame Status INIT](implementation/dev3-implementation.md#status-init): 실제 reserve→두 RAM image 공개→동일 WAL requirement의 durable 확인과 두-pin reader를 연결했다. 필수93·shared1·compiler13·native3의 source별 결과와 원 FAIL을 보존한다. 제한 단위의 최종 독립 D1을 수용했으며 Status home flush·일반 recovery·전체 DEV3는 미완료다.
 
 2026-10-22 [DEV3 불변 Status bootstrap](implementation/dev3-implementation.md#status-bootstrap): plan2 영속 역할과 typed borrow·old adapter 거절을 구현했다. 새 필수32·변경 parser1·native1·compiler semantic3와 별도 control1을 검증했다. 제한 단위의 최종 독립 검토를 수용했으며 INIT·일반 recovery·전체 DEV3는 미완료다.

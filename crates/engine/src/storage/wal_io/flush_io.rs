@@ -1,14 +1,15 @@
 //! Actual one-image DWB execution after sealed capture and WAL durability.
 //! The exclusive bound control retains this state through RAM finalization.
 
-use super::MutableStorageOwner;
+use super::super::allocation_reservation::operation::SemanticError;
+use super::{MutableStorageOwner, StatusFlushAuthority};
 use crate::storage::{
     allocation_page::{self, AllocationError},
     control::{
         self, ControlError, ControlKind, ControlRef, FileMapEntry, Profile, SelectedControl,
         SelectorRole,
     },
-    dirty_frame::{CapturedPage, FrameStamp},
+    dirty_frame::{CapturedPage, FrameStamp, TargetRequest},
     doublewrite_control::{
         self as dwb, ControlHeader, ControlState, DoublewriteError, PendingImage,
     },
@@ -88,6 +89,7 @@ pub(super) enum Cause {
     Control(ControlError),
     Doublewrite(DoublewriteError),
     Allocation(AllocationError),
+    Status(SemanticError),
     Namespace(NamespaceError),
     Io(xadb_foundation::Error),
 }
@@ -114,8 +116,35 @@ pub(super) struct FlushIoError {
 pub(super) type Result<T> = std::result::Result<T, FlushIoError>;
 type Inner<T> = std::result::Result<T, Cause>;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum TargetClass {
+    Allocator,
+    Status,
+}
+
+/// This private selector borrows an actual upper authority. A page kind alone
+/// cannot select the Status predicates or manufacture the authority.
 #[derive(Clone, Copy)]
+enum PolicyRef<'a, 'c, 's> {
+    Allocator,
+    Status(&'a StatusFlushAuthority<'c, 's>),
+}
+impl PolicyRef<'_, '_, '_> {
+    fn class(self) -> TargetClass {
+        match self {
+            Self::Allocator => TargetClass::Allocator,
+            Self::Status(_) => TargetClass::Status,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+// stamp.identity plus kind/level is the complete TargetRequest. Keeping its
+// identity once avoids a second owned PageIdentity in each return carrier.
 struct Prepared {
+    class: TargetClass,
+    kind: PageKind,
+    level: u8,
     stamp: FrameStamp,
     attempt: u64,
     requirement: WalFrameLocation,
@@ -127,12 +156,20 @@ struct Prepared {
     home_offset: u64,
 }
 
+struct MappedHome {
+    mapping: FileMapEntry,
+    identity: FileIdentity,
+    offset: u64,
+}
+
 /// Constructible only after this executor confirms home sync and retirement.
 /// Not Clone/Copy: the caller borrows it to authorize conditional RAM finalize.
 pub(super) struct RetiredBatch<'s> {
     binding: &'s AtomicU8,
     attempt: u64,
     stamp: FrameStamp,
+    kind: PageKind,
+    level: u8,
     selected: SelectedControl,
     batch: u64,
 }
@@ -141,6 +178,9 @@ impl RetiredBatch<'_> {
         std::ptr::eq(self.binding, capture.binding())
             && self.attempt == capture.attempt()
             && self.stamp == capture.stamp()
+            && self.stamp.identity == capture.request().identity
+            && self.kind == capture.request().kind
+            && self.level == capture.request().level
     }
 }
 
@@ -274,6 +314,24 @@ impl<'s, 'w> FlushIo<'s, 'w> {
         storage: &MutableStorageOwner<'_, '_, W>,
         capture: &CapturedPage<'_, '_>,
     ) -> Result<()> {
+        self.prepare_with_policy(storage, capture, PolicyRef::Allocator)
+    }
+
+    pub(super) fn prepare_status<W: WriterNamespace>(
+        &mut self,
+        storage: &MutableStorageOwner<'_, '_, W>,
+        capture: &CapturedPage<'_, '_>,
+        authority: &StatusFlushAuthority<'_, '_>,
+    ) -> Result<()> {
+        self.prepare_with_policy(storage, capture, PolicyRef::Status(authority))
+    }
+
+    fn prepare_with_policy<W: WriterNamespace>(
+        &mut self,
+        storage: &MutableStorageOwner<'_, '_, W>,
+        capture: &CapturedPage<'_, '_>,
+        policy: PolicyRef<'_, '_, '_>,
+    ) -> Result<()> {
         if let Some(error) = &self.failure {
             return Err(error.clone());
         }
@@ -285,7 +343,7 @@ impl<'s, 'w> FlushIo<'s, 'w> {
             self.preflight::<W>().map_err(|error| error.cause)?;
             self.observation.phase = Phase::Prepare;
             live(storage)?;
-            validate_capture(storage, capture)?;
+            validate_capture(storage, capture, policy)?;
             if !std::ptr::eq(self.binding, capture.binding())
                 || !std::ptr::eq(self.fence, storage.session_fence())
             {
@@ -295,74 +353,87 @@ impl<'s, 'w> FlushIo<'s, 'w> {
             self.observation.completed = 0;
             self.observation.homes_synced = false;
             self.observation.retirement_selected = false;
-            let profile = storage.profile();
-            {
-                let page = allocation_page::decode_allocation_page(
-                    &self.workspace[..PAGE_BYTES],
-                    capture.stamp().identity,
-                    profile.spec().namespace,
-                )
-                .map_err(Cause::Allocation)?;
-                if page.header().lsn != capture.stamp().page_lsn {
-                    return Err(Cause::ContentMismatch);
-                }
-            }
-            let digest = content_digest(&self.workspace[..PAGE_BYTES]);
+            // Image checksum/Free decoding ends before FILEMAP and home I/O.
+            validate_image(storage, self.workspace, capture, policy)?;
             read_selection(storage, self.workspace, &self.observation)?;
-            let mapping = read_mapping(storage, self.workspace, capture)?;
-            let home_offset = capture
-                .stamp()
-                .identity
-                .page
-                .page_no
-                .checked_mul(PAGE_BYTES as u64)
-                .filter(|offset| {
-                    offset
-                        .checked_add(PAGE_BYTES as u64)
-                        .is_some_and(|end| end <= mapping.mapped_bytes)
-                })
-                .ok_or(Cause::Capacity)?;
-            let home_identity = read_home(storage, self.workspace, mapping, home_offset, capture)?;
-            let batch = self
-                .observation
-                .last_issued
-                .checked_add(1)
-                .ok_or(Cause::Capacity)?;
-            let selections = encode_selections(
-                self.workspace,
-                profile,
-                self.observation.known,
-                batch,
-                capture,
-                digest,
-            )?;
-            {
-                let (image, rest) = self.workspace.split_at_mut(PAGE_BYTES);
-                // Reborrow three disjoint intervals without copying a page temporary.
-                let (slot, controls) = rest.split_at_mut(dwb::SLOT_BYTES);
-                let pending = control::decode_selected_doublewrite(
-                    &controls[PAGE_BYTES..PAGE_BYTES + 248],
-                    selections[1].reference,
-                    profile,
-                )
-                .map_err(Cause::Control)?;
-                dwb::encode_slot(&pending, 0, image, slot).map_err(Cause::Doublewrite)?;
-            }
-            self.prepared = Some(Prepared {
-                stamp: capture.stamp(),
-                attempt: capture.attempt(),
-                requirement: capture.requirement().location(),
-                selections,
-                batch,
-                digest,
-                mapping,
-                home_identity,
-                home_offset,
-            });
+            let home = {
+                let mapping = read_mapping(storage, self.workspace, capture, policy)?;
+                let offset = capture
+                    .stamp()
+                    .identity
+                    .page
+                    .page_no
+                    .checked_mul(PAGE_BYTES as u64)
+                    .filter(|offset| {
+                        offset
+                            .checked_add(PAGE_BYTES as u64)
+                            .is_some_and(|end| end <= mapping.mapped_bytes)
+                    })
+                    .ok_or(Cause::Capacity)?;
+                let identity =
+                    read_home(storage, self.workspace, &mapping, offset, capture, policy)?;
+                MappedHome {
+                    mapping,
+                    identity,
+                    offset,
+                }
+            };
+            // No decoder or File remains alive. Construct Prepared directly in
+            // retained storage, avoiding an extra full Prepared return carrier.
+            self.encode_prepared(storage.profile(), capture, &home, policy.class())?;
             self.observation.state = State::Prepared;
             live(storage)
         })();
         self.complete_result(result)
+    }
+
+    fn encode_prepared(
+        &mut self,
+        profile: Profile,
+        capture: &CapturedPage<'_, '_>,
+        home: &MappedHome,
+        class: TargetClass,
+    ) -> Inner<()> {
+        let batch = self
+            .observation
+            .last_issued
+            .checked_add(1)
+            .ok_or(Cause::Capacity)?;
+        let digest = content_digest(&self.workspace[..PAGE_BYTES]);
+        let selections = encode_selections(
+            self.workspace,
+            profile,
+            self.observation.known,
+            batch,
+            capture,
+            digest,
+        )?;
+        {
+            let (image, rest) = self.workspace.split_at_mut(PAGE_BYTES);
+            let (slot, controls) = rest.split_at_mut(dwb::SLOT_BYTES);
+            let pending = control::decode_selected_doublewrite(
+                &controls[PAGE_BYTES..PAGE_BYTES + 248],
+                selections[1].reference,
+                profile,
+            )
+            .map_err(Cause::Control)?;
+            dwb::encode_slot(&pending, 0, image, slot).map_err(Cause::Doublewrite)?;
+        }
+        self.prepared = Some(Prepared {
+            class,
+            kind: capture.request().kind,
+            level: capture.request().level,
+            stamp: capture.stamp(),
+            attempt: capture.attempt(),
+            requirement: capture.requirement().location(),
+            selections,
+            batch,
+            digest,
+            mapping: home.mapping,
+            home_identity: home.identity,
+            home_offset: home.offset,
+        });
+        Ok(())
     }
 
     pub(super) fn execute<W: WriterNamespace>(
@@ -371,26 +442,51 @@ impl<'s, 'w> FlushIo<'s, 'w> {
         capture: &CapturedPage<'_, 's>,
         durable: &DurableWal<'s>,
     ) -> Result<RetiredBatch<'s>> {
+        self.execute_with_policy(storage, capture, PolicyRef::Allocator, durable)
+    }
+
+    pub(super) fn execute_status<W: WriterNamespace>(
+        &mut self,
+        storage: &'s MutableStorageOwner<'_, '_, W>,
+        capture: &CapturedPage<'_, 's>,
+        authority: &StatusFlushAuthority<'_, 's>,
+        durable: &DurableWal<'s>,
+    ) -> Result<RetiredBatch<'s>> {
+        self.execute_with_policy(storage, capture, PolicyRef::Status(authority), durable)
+    }
+
+    fn execute_with_policy<W: WriterNamespace>(
+        &mut self,
+        storage: &'s MutableStorageOwner<'_, '_, W>,
+        capture: &CapturedPage<'_, 's>,
+        policy: PolicyRef<'_, '_, 's>,
+        durable: &DurableWal<'s>,
+    ) -> Result<RetiredBatch<'s>> {
         if let Some(error) = &self.failure {
             return Err(error.clone());
         }
         let _unwind = self.fence.unwind_guard();
         let result = (|| {
             live(storage)?;
-            validate_capture(storage, capture)?;
+            validate_capture(storage, capture, policy)?;
             if !std::ptr::eq(self.binding, capture.binding())
                 || !std::ptr::eq(self.fence, storage.session_fence())
             {
                 return Err(Cause::IdentityMismatch);
             }
-            let prepared = self.prepared.ok_or(Cause::Invariant)?;
+            let prepared = self.prepared.as_ref().ok_or(Cause::Invariant)?;
             if self.observation.state != State::Prepared
-                || !prepared_matches(&prepared, capture)
+                || prepared.class != policy.class()
+                || !prepared_matches(prepared, capture)
                 || !durable.confirms(&capture.requirement())
                 || content_digest(&self.workspace[..PAGE_BYTES]) != prepared.digest
             {
                 return Err(Cause::Invariant);
             }
+            // Recheck the exact trusted mapping without namespace or FILEMAP
+            // reads. These temporary identities end before the Prepared copy.
+            validate_mapping(storage, &prepared.mapping, capture, policy)?;
+            let prepared = *prepared;
             self.observation.state = State::Executing;
             select(storage, self.workspace, &mut self.observation, &prepared, 0)?;
             {
@@ -446,6 +542,8 @@ impl<'s, 'w> FlushIo<'s, 'w> {
                 binding: capture.binding(),
                 attempt: prepared.attempt,
                 stamp: prepared.stamp,
+                kind: prepared.kind,
+                level: prepared.level,
                 selected: prepared.selections[2],
                 batch: prepared.batch,
             })
@@ -483,6 +581,12 @@ impl<'s, 'w> FlushIo<'s, 'w> {
                 && self.observation.retirement_selected
                 && prepared.attempt == retired.attempt
                 && prepared.stamp == retired.stamp
+                && prepared.kind == retired.kind
+                && prepared.level == retired.level
+                && match prepared.class {
+                    TargetClass::Allocator => retired.kind == PageKind::Allocation,
+                    TargetClass::Status => retired.kind == PageKind::TransactionStatus,
+                }
                 && prepared.selections[2] == retired.selected
                 && prepared.batch == retired.batch
         });
@@ -500,6 +604,9 @@ impl<'s, 'w> FlushIo<'s, 'w> {
 
 fn prepared_matches(prepared: &Prepared, capture: &CapturedPage<'_, '_>) -> bool {
     prepared.stamp == capture.stamp()
+        && prepared.stamp.identity == capture.request().identity
+        && prepared.kind == capture.request().kind
+        && prepared.level == capture.request().level
         && prepared.attempt == capture.attempt()
         && prepared.requirement == capture.requirement().location()
 }
@@ -507,6 +614,7 @@ fn prepared_matches(prepared: &Prepared, capture: &CapturedPage<'_, '_>) -> bool
 fn validate_capture<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
     capture: &CapturedPage<'_, '_>,
+    policy: PolicyRef<'_, '_, '_>,
 ) -> Inner<()> {
     let stamp = capture.stamp();
     let request = capture.request();
@@ -520,12 +628,53 @@ fn validate_capture<W: WriterNamespace>(
             .rec_lsn
             .is_none_or(|lsn| lsn.0 == 0 || lsn.0 > stamp.page_lsn.0)
         || request.identity != stamp.identity
-        || request.kind != PageKind::Allocation
         || request.level != 0
         || stamp.identity.database != storage.profile().spec().namespace.database
         || capture.requirement().location().lsn != stamp.page_lsn.0
     {
         return Err(Cause::IdentityMismatch);
+    }
+    match policy {
+        PolicyRef::Allocator if request.kind != PageKind::Allocation => {
+            Err(Cause::IdentityMismatch)
+        }
+        PolicyRef::Status(authority)
+            if request.kind != PageKind::TransactionStatus
+                || request.identity.page.page_no != 1
+                || !authority.matching(capture) =>
+        {
+            Err(Cause::IdentityMismatch)
+        }
+        _ => Ok(()),
+    }
+}
+
+fn validate_image<W: WriterNamespace>(
+    storage: &MutableStorageOwner<'_, '_, W>,
+    workspace: &[u8; WORKSPACE_BYTES],
+    capture: &CapturedPage<'_, '_>,
+    policy: PolicyRef<'_, '_, '_>,
+) -> Inner<()> {
+    let lsn = match policy {
+        PolicyRef::Allocator => {
+            let page = allocation_page::decode_allocation_page(
+                &workspace[..PAGE_BYTES],
+                capture.stamp().identity,
+                storage.profile().spec().namespace,
+            )
+            .map_err(Cause::Allocation)?;
+            page.header().lsn
+        }
+        PolicyRef::Status(authority) => authority
+            .image_lsn(
+                (&workspace[..PAGE_BYTES])
+                    .try_into()
+                    .expect("fixed capture interval"),
+            )
+            .map_err(Cause::Status)?,
+    };
+    if lsn != capture.stamp().page_lsn {
+        return Err(Cause::ContentMismatch);
     }
     Ok(())
 }
@@ -664,6 +813,18 @@ fn read_mapping<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
     workspace: &mut [u8; WORKSPACE_BYTES],
     capture: &CapturedPage<'_, '_>,
+    policy: PolicyRef<'_, '_, '_>,
+) -> Inner<FileMapEntry> {
+    // The cursor and its codec carriers return before policy identity checks.
+    let entry = read_mapping_entry(storage, workspace, capture.request().identity.page.file)?;
+    validate_mapping(storage, &entry, capture, policy)?;
+    Ok(entry)
+}
+
+fn read_mapping_entry<W: WriterNamespace>(
+    storage: &MutableStorageOwner<'_, '_, W>,
+    workspace: &mut [u8; WORKSPACE_BYTES],
+    requested_file: crate::storage::page::FileId,
 ) -> Inner<FileMapEntry> {
     let selector = &mut workspace[CURRENT_SELECTOR..CURRENT_SELECTOR + control::SELECTOR_BYTES];
     read_file(
@@ -705,33 +866,108 @@ fn read_mapping<W: WriterNamespace>(
         let chunk = cursor.accept(&scratch[..length]).map_err(Cause::Control)?;
         for index in 0..chunk.summary().files as usize {
             let entry = chunk.entry(index).ok_or(Cause::MissingMapping)?;
-            if entry.file == capture.stamp().identity.page.file && found.replace(entry).is_some() {
+            if entry.file == requested_file && found.replace(entry).is_some() {
                 return Err(Cause::Invariant);
             }
         }
     }
     cursor.finish().map_err(Cause::Control)?;
-    let entry = found.ok_or(Cause::MissingMapping)?;
-    if entry.state != control::FileState::Live
-        || entry
-            .metadata_identity(
-                profile.spec().namespace,
-                capture.stamp().identity.page.page_no,
-            )
-            .map_err(Cause::Control)?
-            != capture.stamp().identity
-    {
+    found.ok_or(Cause::MissingMapping)
+}
+
+fn validate_mapping<W: WriterNamespace>(
+    storage: &MutableStorageOwner<'_, '_, W>,
+    entry: &FileMapEntry,
+    capture: &CapturedPage<'_, '_>,
+    policy: PolicyRef<'_, '_, '_>,
+) -> Inner<()> {
+    if entry.state != control::FileState::Live {
         return Err(Cause::IdentityMismatch);
     }
-    Ok(entry)
+    match policy {
+        PolicyRef::Allocator => {
+            if entry
+                .metadata_identity(
+                    storage.profile().spec().namespace,
+                    capture.stamp().identity.page.page_no,
+                )
+                .map_err(Cause::Control)?
+                != capture.stamp().identity
+            {
+                return Err(Cause::IdentityMismatch);
+            }
+        }
+        PolicyRef::Status(authority) => {
+            let request = authority.request();
+            let allocator = authority.allocator();
+            if !authority.matching(capture)
+                || request.kind != PageKind::TransactionStatus
+                || request.level != 0
+                || request.identity.page.page_no != 1
+                || allocator.page.page_no != 0
+                || request.identity.database != allocator.database
+                || request.identity.page.file != allocator.page.file
+                || entry.file != request.identity.page.file
+                || entry
+                    .metadata_identity(storage.profile().spec().namespace, 0)
+                    .map_err(Cause::Control)?
+                    != *allocator
+            {
+                return Err(Cause::IdentityMismatch);
+            }
+        }
+    }
+    Ok(())
 }
 
 fn read_home<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
     workspace: &mut [u8; WORKSPACE_BYTES],
-    mapping: FileMapEntry,
+    mapping: &FileMapEntry,
     offset: u64,
     capture: &CapturedPage<'_, '_>,
+    policy: PolicyRef<'_, '_, '_>,
+) -> Inner<FileIdentity> {
+    // Close the File before either page/hash or Free semantics are entered.
+    let identity = read_home_bytes(storage, workspace, mapping, offset)?;
+    let image = &workspace[..PAGE_BYTES];
+    let home = &workspace[HOME_START..HOME_START + PAGE_BYTES];
+    match policy {
+        PolicyRef::Allocator => {
+            let page = allocation_page::decode_allocation_page(
+                home,
+                capture.stamp().identity,
+                storage.profile().spec().namespace,
+            )
+            .map_err(Cause::Allocation)?;
+            if page.header().lsn.0 > capture.stamp().page_lsn.0
+                || (page.header().lsn == capture.stamp().page_lsn && home != image)
+            {
+                return Err(Cause::ContentMismatch);
+            }
+        }
+        PolicyRef::Status(authority) => {
+            if home.iter().any(|byte| *byte != 0) {
+                let lsn = authority
+                    .envelope_lsn(home.try_into().expect("fixed home interval"))
+                    .map_err(Cause::Status)?;
+                // The immutable first Status incarnation has one actual image.
+                // Equality to the validated copy proves canonical Free state;
+                // no occupied-cell decoder or speculative repair is admitted.
+                if lsn != capture.stamp().page_lsn || home != image {
+                    return Err(Cause::ContentMismatch);
+                }
+            }
+        }
+    }
+    Ok(identity)
+}
+
+fn read_home_bytes<W: WriterNamespace>(
+    storage: &MutableStorageOwner<'_, '_, W>,
+    workspace: &mut [u8; WORKSPACE_BYTES],
+    mapping: &FileMapEntry,
+    offset: u64,
 ) -> Inner<FileIdentity> {
     let (mut file, identity) = open_exact(
         storage,
@@ -739,20 +975,8 @@ fn read_home<W: WriterNamespace>(
         mapping.mapped_bytes,
         OpenMode::ReadOnly,
     )?;
-    let (image, rest) = workspace.split_at_mut(PAGE_BYTES);
-    let home = &mut rest[HOME_START - PAGE_BYTES..HOME_START];
+    let home = &mut workspace[HOME_START..HOME_START + PAGE_BYTES];
     read_exact_at(&mut file, home, offset).map_err(Cause::Io)?;
-    let page = allocation_page::decode_allocation_page(
-        home,
-        capture.stamp().identity,
-        storage.profile().spec().namespace,
-    )
-    .map_err(Cause::Allocation)?;
-    if page.header().lsn.0 > capture.stamp().page_lsn.0
-        || (page.header().lsn == capture.stamp().page_lsn && home != image)
-    {
-        return Err(Cause::ContentMismatch);
-    }
     Ok(identity)
 }
 
@@ -979,6 +1203,12 @@ pub(super) fn fits<W: WriterNamespace>() -> bool {
         && size_of::<FlushIoError>() <= 128
         && file <= 8192
         && temporary_types_fit()
+        && status_types_fit()
+        && encode_outer_bytes() <= 3072
+        && execute_outer_bytes() <= 4096
+        && io_phase_layout()
+            .iter()
+            .all(|(_, actual, cap)| actual <= cap)
         && owner
             .checked_add(size_of::<FlushIo<'_, '_>>())
             .and_then(|n| file.checked_mul(4).and_then(|files| n.checked_add(files)))
@@ -1060,6 +1290,170 @@ fn temporary_layout() -> [(&'static str, usize, usize); 28] {
     ]
 }
 
+// The Status codec runs as checksum/envelope then canonical Free, never with
+// a FILEMAP cursor, retained page view, generic File or Prepared initializer.
+// These are initialized source-value envelopes, not ABI stack measurements.
+fn status_codec_bytes() -> usize {
+    use crate::storage::{
+        page::{PageHeader, PageIdentity, PageView},
+        status_home::StatusHome,
+        transaction_record::TransactionStatusCell,
+    };
+    use xadb_foundation::codec::ContentHasher;
+    let references = 16 * size_of::<&()>()
+        + 16 * size_of::<&[u8]>()
+        + size_of::<[usize; 8]>()
+        + 2 * size_of::<Option<std::ops::Range<usize>>>();
+    let scalar = size_of::<PageLsn>().max(size_of::<std::result::Result<PageLsn, SemanticError>>());
+    let view = size_of::<PageView<'_>>()
+        .max(size_of::<
+            std::result::Result<PageView<'_>, crate::storage::page::PageError>,
+        >())
+        .max(size_of::<std::result::Result<PageView<'_>, SemanticError>>());
+    let envelope = 4 * size_of::<ContentHasher>()
+        + 1536
+        + 3 * size_of::<PageIdentity>()
+        + 3 * view
+        + 2 * size_of::<PageHeader>()
+        + 6 * scalar
+        + 3 * 32
+        + references;
+    let free = 4 * size_of::<StatusHome>().max(size_of::<
+        std::result::Result<StatusHome, crate::storage::page::PageError>,
+    >()) + 4 * size_of::<TransactionStatusCell>().max(size_of::<
+        std::result::Result<TransactionStatusCell, crate::storage::page::PageError>,
+    >()) + 6 * scalar
+        + 64
+        + references;
+    envelope.max(free)
+}
+
+fn io_scaffolding_bytes() -> usize {
+    12 * size_of::<&()>()
+        + 8 * size_of::<&[u8]>()
+        + 4 * size_of::<Cause>().max(size_of::<Inner<()>>())
+        + 96
+}
+
+fn encode_outer_bytes() -> usize {
+    2 * size_of::<[SelectedControl; 3]>().max(size_of::<Inner<[SelectedControl; 3]>>())
+        + 2 * size_of::<FrameStamp>()
+        + size_of::<WalFrameLocation>()
+        + size_of::<Profile>()
+        + 64
+        + 2 * size_of::<MappedHome>()
+        + size_of::<Prepared>()
+        + size_of::<TargetRequest>()
+        + size_of::<TargetClass>()
+        + 2 * size_of::<Cause>().max(size_of::<Inner<()>>())
+        + 512
+}
+
+fn execute_outer_bytes() -> usize {
+    size_of::<Prepared>()
+        + 8 * size_of::<RetiredBatch<'_>>()
+            .max(size_of::<Inner<RetiredBatch<'_>>>())
+            .max(size_of::<Result<RetiredBatch<'_>>>())
+        + size_of::<SelectedControl>()
+        + 3 * size_of::<xadb_foundation::namespace::FileMetadata>()
+        + 4 * size_of::<Cause>().max(size_of::<Inner<()>>())
+        + size_of::<IoObservation>()
+        + 256
+        + size_of::<TargetClass>()
+        + size_of::<PolicyRef<'_, '_, '_>>()
+}
+
+fn io_phase_layout() -> [(&'static str, usize, usize); 10] {
+    let scaffold = io_scaffolding_bytes();
+    [
+        ("StatusCodec", status_codec_bytes(), 3840),
+        ("IoScaffolding", scaffold, 768),
+        ("EncodeOuter", encode_outer_bytes(), 3072),
+        ("ExecuteOuter", execute_outer_bytes(), 4096),
+        ("StatusImagePhase", status_codec_bytes() + scaffold, 8192),
+        ("SelectionPhase", scaffold + 3072 + 1536 + 1024, 8192),
+        ("FileMapPhase", scaffold + 3056 + 1536 + 1024, 8192),
+        (
+            "StatusHomePhase",
+            status_codec_bytes() + scaffold + size_of::<FileMapEntry>() + size_of::<FileIdentity>(),
+            8192,
+        ),
+        // There are no filename/port carriers in direct workspace encoding.
+        ("EncodePhase", encode_outer_bytes() + 3072 + 1536, 8192),
+        (
+            "ExecutePhase",
+            // The execution phase has no page/FILEMAP/control decoding.
+            // Its forwarding return family is charged eight times above.
+            execute_outer_bytes() + 1536 + 1024,
+            8192,
+        ),
+    ]
+}
+
+fn status_types_fit() -> bool {
+    status_temporary_layout()
+        .iter()
+        .all(|(_, actual, cap)| actual <= cap)
+}
+
+// This table is evaluated after the old 28-row table has returned. Neither
+// table is live in any codec/I/O phase; no larger combined product array exists.
+fn status_temporary_layout() -> [(&'static str, usize, usize); 18] {
+    use crate::storage::{
+        page::{PageError, PageIdentity, PageView},
+        status_home::StatusHome,
+        transaction_record::TransactionStatusCell,
+    };
+    [
+        ("TargetClass", size_of::<TargetClass>(), 8),
+        ("PolicyRef", size_of::<PolicyRef<'_, '_, '_>>(), 16),
+        ("MappedHome", size_of::<MappedHome>(), 160),
+        ("FileMapEntryInner", size_of::<Inner<FileMapEntry>>(), 96),
+        ("FileMapEntryOption", size_of::<Option<FileMapEntry>>(), 96),
+        ("ControlHeader", size_of::<ControlHeader>(), 96),
+        ("RetiredInner", size_of::<Inner<RetiredBatch<'_>>>(), 256),
+        ("RetiredResult", size_of::<Result<RetiredBatch<'_>>>(), 256),
+        ("PageIdentity", size_of::<PageIdentity>(), 80),
+        (
+            "PageViewResult",
+            size_of::<std::result::Result<PageView<'_>, PageError>>(),
+            128,
+        ),
+        (
+            "PageViewSemanticResult",
+            size_of::<std::result::Result<PageView<'_>, SemanticError>>(),
+            128,
+        ),
+        ("StatusHome", size_of::<StatusHome>(), 256),
+        (
+            "StatusHomeResult",
+            size_of::<std::result::Result<StatusHome, PageError>>(),
+            256,
+        ),
+        ("StatusCell", size_of::<TransactionStatusCell>(), 224),
+        (
+            "StatusCellResult",
+            size_of::<std::result::Result<TransactionStatusCell, PageError>>(),
+            224,
+        ),
+        (
+            "PageLsnResult",
+            size_of::<std::result::Result<PageLsn, SemanticError>>(),
+            32,
+        ),
+        (
+            "OptionRange",
+            size_of::<Option<std::ops::Range<usize>>>(),
+            32,
+        ),
+        (
+            "StatusHash",
+            4 * size_of::<xadb_foundation::codec::ContentHasher>() + 1536,
+            2048,
+        ),
+    ]
+}
+
 // The parent owns a claim even in the pre-prepare capture window. Its unwind
 // and Bound Drop guards fence that window. Once prepared, this owner also
 // fences its own abandonment. Dropping a temporary view never drops this owner.
@@ -1101,6 +1495,11 @@ pub(super) mod test_support {
         ]);
         values
     }
+    pub(crate) fn status_layout() -> Vec<(&'static str, usize, usize)> {
+        let mut values = status_temporary_layout().to_vec();
+        values.extend(io_phase_layout());
+        values
+    }
     pub(crate) fn corrupt_selection(io: &mut FlushIo<'_, '_>, possible: bool) {
         assert_eq!(io.observation.state, State::Ready);
         if possible {
@@ -1108,6 +1507,28 @@ pub(super) mod test_support {
         } else {
             io.observation.known.reference.encoded_len = 248;
             io.observation.possible[0] = Some(io.observation.known);
+        }
+    }
+    /// Corrupt only retained association after valid preparation. The actual
+    /// capture, authority and durability proof remain untouched in the caller.
+    pub(crate) fn corrupt_target_association(io: &mut FlushIo<'_, '_>, variant: u8) {
+        assert_eq!(io.observation.state, State::Prepared);
+        let prepared = io.prepared.as_mut().expect("prepared association");
+        match variant {
+            0 => {
+                prepared.class = match prepared.class {
+                    TargetClass::Allocator => TargetClass::Status,
+                    TargetClass::Status => TargetClass::Allocator,
+                };
+            }
+            1 => {
+                prepared.kind = match prepared.kind {
+                    PageKind::TransactionStatus => PageKind::Allocation,
+                    _ => PageKind::TransactionStatus,
+                };
+            }
+            2 => prepared.level = 1,
+            _ => panic!("unknown prepared association corruption"),
         }
     }
 }

@@ -342,3 +342,7 @@ DEV3 페이지 예약·취소는 `wal_io/doublewrite_install`의 private child `
 ## DEV3 폐쇄 두-frame Status INIT
 
 [Status INIT 계약](../contracts/dev3-status-init.md)의 실제 제품·시험·독립 literal·compiler/runtime checker는 관리 JSON의 `dev3_status_init`에 등록한다. 새 crate/source root/dependency 없이 exact reserve→두 image RAM 공개→동일 stage requirement의 durable 확인과 immutable 두-pin reader를 공급한다. 선택 인수와 제한 단위의 독립 검토를 수용했으며 Status home flush·일반 recovery·전체 DEV3는 미완료다.
+
+## DEV3 Status home flush
+
+[Status home flush 계약](../contracts/dev3-status-home-flush.md)의 실제 제품·시험7개, shared bridge 변경, 독립 literal/compiler/runtime/native fixture와 checker를 관리 JSON의 `dev3_status_home_flush`에 등록한다. 새 crate/source root/dependency 없이 기존 bound를 소비하고 published Status와 allocator를 순차 whole batch1로 flush한다. [source별 선택 인수](../evidence/dev3-status-home-flush-20261022.md)의 필수43·compiler6·native3 실행과 원 FAIL을 보존하며 제한 단위의 최종 독립 D1을 수용했다. 일반 recovery/reopen/READY와 전체 DEV3/S5는 미완료다.

@@ -1,0 +1,5 @@
+variant	expected_cause	origin	prefix
+not-live	IdentityMismatch	TEST_ONLY trusted-plan plus selected FILEMAP bytes	filemap/not-live
+wrong-extent	Control::Corrupt	TEST_ONLY trusted-plan plus selected FILEMAP bytes	filemap/wrong-extent
+short-mapped	Control::Corrupt	TEST_ONLY trusted-plan plus selected FILEMAP bytes	filemap/short-mapped
+missing	MissingMapping	TEST_ONLY trusted-plan plus selected FILEMAP bytes	filemap/missing

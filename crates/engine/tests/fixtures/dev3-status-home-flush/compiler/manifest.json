@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "unit": "D3-STATUS-FLUSH-001",
+  "status": "INPUT_ONLY_NOT_RUN",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_error_diagnostics_are_failures": true,
+  "compiler_budget_seconds": 30,
+  "semantic_case_count": 6,
+  "infrastructure_control_count": 1,
+  "negative_returncode": 101,
+  "probe_relative_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+  "producer_probe_relative_path": "crates/engine/src/storage/wal_io/status_home_flush_bridge_probe.rs",
+  "producer_anchor_relative_path": "crates/engine/src/storage/wal_io/mutable_storage.rs",
+  "cases": [
+    {
+      "name": "baseline",
+      "semantic_id": null,
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "reason": "unmodified source control",
+      "probe_relative_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs"
+    },
+    {
+      "name": "release",
+      "semantic_id": "BC00",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "reason": "actual consuming assembly, Before original-bound reuse, triple release/resplit and external-core positive storage move",
+      "probe_relative_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 2465,
+      "sha256": "b3751359cdf5aa02d60c7f399b52b49d27812489bc232f7e267874c24cd3dea4"
+    },
+    {
+      "name": "old_bound_moved",
+      "semantic_id": "BC01",
+      "expected_code": "E0382",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "reason": "old bound cannot be used after into_with_flush consumes it",
+      "probe_relative_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 579,
+      "sha256": "2d1d7d1d133b0cf95d3ade6081a9f10b27dd44d65aa19e93ca9bdf9be8b7cb6d"
+    },
+    {
+      "name": "flusher_reborrow",
+      "semantic_id": "BC02",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "reason": "new flusher loan excludes another split until release",
+      "probe_relative_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 651,
+      "sha256": "47f139f02431bb10bc708da4084f38529233c7a023c365c283deea3b5991dd64"
+    },
+    {
+      "name": "authority_private",
+      "semantic_id": "BC03",
+      "expected_code": "E0451",
+      "primary_line": 10,
+      "primary_spans": "all_on_line",
+      "reason": "storage sibling cannot reconstruct private StatusFlushAuthority fields",
+      "probe_relative_path": "crates/engine/src/storage/wal_io/status_home_flush_bridge_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/wal_io/mutable_storage.rs",
+      "bytes": 568,
+      "sha256": "9dad4f2ebbe708f8d03e7d8de9b6f39d18313c847b6a8b259cbe35764936a7ec"
+    },
+    {
+      "name": "storage_borrow",
+      "semantic_id": "BC04",
+      "expected_code": "E0505",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "reason": "new wrapper retains storage borrow; external core input avoids an independent local core-to-storage borrow",
+      "probe_relative_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 735,
+      "sha256": "baeb8a717ec8120f2945d8e2a6af3ad224ca21f3708f86be1d8f00ed579e5bbc"
+    },
+    {
+      "name": "raw_authority",
+      "semantic_id": "BC05",
+      "expected_code": "E0308",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "reason": "raw PageLsn cannot substitute for StatusFlushAuthority in lower bridge",
+      "probe_relative_path": "crates/engine/src/storage/wal_io/status_home_flush_bridge_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/wal_io/mutable_storage.rs",
+      "bytes": 695,
+      "sha256": "33cfb1ecee1bbb5bacefc3094a2a521092ca4eec6c31a5b832b84bea12da9ab0"
+    }
+  ]
+}

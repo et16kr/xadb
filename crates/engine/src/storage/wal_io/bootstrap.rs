@@ -48,8 +48,9 @@ pub(crate) use doublewrite_install::{
 };
 #[allow(unused_imports)]
 pub(crate) use doublewrite_install::{
-    BeforeEffectError, BoundStatusBootstrap, InitAttemptError, InitializedStatusObservation,
-    ReservedStatus, StatusBootstrapWriter, StatusInitError, StatusReadGuard, StatusReader,
+    BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, InitAttemptError,
+    InitializedStatusObservation, IntoFlushError, ReservedStatus, StatusBootstrapWriter,
+    StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard, StatusReader,
 };
 pub(in crate::storage) use doublewrite_install::{
     CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,

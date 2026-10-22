@@ -1,6 +1,7 @@
 //! One reserved Status page, atomically installed in a closed two-frame pool.
 //! The immutable bootstrap role, mutable allocator membership and retained WAL
-//! requirement are distinct authorities. No home flush or transaction is exposed.
+//! requirement are distinct authorities. The separate consuming flush adapter
+//! preserves this owner's existing layout and one-shot binding.
 
 use super::super::allocation_reservation::{
     AllocationObservation, budget,
@@ -42,6 +43,13 @@ const READ_CALL: usize = 3584;
 #[cfg(test)]
 #[path = "status_init_tests.rs"]
 mod tests;
+
+#[path = "status_home_flush.rs"]
+mod status_flush;
+pub(in crate::storage) use status_flush::StatusFlushAuthority;
+pub(crate) use status_flush::{
+    BoundStatusWithFlush, IntoFlushError, StatusFlushError, StatusFlusher,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {
@@ -704,6 +712,8 @@ impl<'s, 'c, W: WriterNamespace> StatusBootstrapWriter<'_, 's, 'c, '_, '_, '_, '
             .as_ref()
             .expect("actual stage retains obligation")
             .requirement;
+        #[cfg(test)]
+        status_flush::before_init_force(&storage.binding);
         storage.wal().wait_durable(&requirement).map_err(|e| {
             storage.session_fence().fence();
             error(Phase::Sync, Effect::CallerMustResolve, Cause::Wal(e))

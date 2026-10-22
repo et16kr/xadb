@@ -704,12 +704,15 @@ pub(super) fn materialize_init(
 }
 
 /// Reader's Status checksum/page phase ends before canonical Free decoding.
-fn status_lsn(bytes: &[u8; PAGE_BYTES], identity: &PageIdentity) -> Result<PageLsn> {
+pub(super) fn status_lsn(bytes: &[u8; PAGE_BYTES], identity: &PageIdentity) -> Result<PageLsn> {
     let lsn = status_envelope(bytes, identity)?;
     validate_free_home(&bytes[HOME])?;
     Ok(lsn)
 }
-fn status_envelope(bytes: &[u8; PAGE_BYTES], identity: &PageIdentity) -> Result<PageLsn> {
+pub(super) fn status_envelope(
+    bytes: &[u8; PAGE_BYTES],
+    identity: &PageIdentity,
+) -> Result<PageLsn> {
     let page = page::decode_page(bytes, *identity, PageKind::TransactionStatus)
         .map_err(|_| SemanticError::PageMismatch)?;
     require(
