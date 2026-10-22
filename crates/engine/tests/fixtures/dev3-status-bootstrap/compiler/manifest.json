@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "unit": "D3-STATUS-BOOTSTRAP-001",
+  "probe_relative_path": "crates/engine/src/storage/status_role_borrow_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_error_diagnostics_are_failures": true,
+  "compiler_budget_seconds": 60,
+  "semantic_case_count": 3,
+  "infrastructure_control_count": 1,
+  "negative_returncode": 101,
+  "cases": [
+    {
+      "name": "baseline",
+      "semantic_id": null,
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "reason": "Unmodified preserved-source infrastructure control; outside semantic three-case denominator."
+    },
+    {
+      "name": "positive",
+      "semantic_id": "NC00",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "reason": "Actual create_status signature, immutable borrowed role getters, role scope exit then owner move/reborrow/drop type-check; no function executes.",
+      "bytes": 1083,
+      "sha256": "af868d5886a1954313cd2cc58b1ad6a18424c863d22686157815c93ecde03232"
+    },
+    {
+      "name": "private_constructor",
+      "semantic_id": "NC01",
+      "expected_code": "E0451",
+      "primary_line": 5,
+      "primary_spans": "all_on_line",
+      "reason": "An external storage sibling cannot reconstruct StatusRole with private plan/fence fields, even using an authentic role as struct-update input.",
+      "bytes": 168,
+      "sha256": "ad4b1c97dee19205952ddc98c4f2a9c03b68e24fe78e1b0a37c9a0daf9ab877e"
+    },
+    {
+      "name": "owner_drop",
+      "semantic_id": "NC02",
+      "expected_code": "E0505",
+      "primary_line": 7,
+      "primary_spans": "one",
+      "reason": "A borrowed role used after owner drop keeps the actual FreshStorageSession owner alive.",
+      "bytes": 317,
+      "sha256": "5cf80b90c3c50c2fe67e8076225414ca80bb7e59122ee175db32d7940882be69"
+    }
+  ]
+}

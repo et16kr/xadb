@@ -1,0 +1,704 @@
+[
+  {
+    "id": "SB-S5-P1-E1-W0-H2",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 0,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E1-W1-H0",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 0,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P1-E1-W1-H1",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 1,
+    "mandatory_alias": false,
+    "expected": "Ok"
+  },
+  {
+    "id": "SB-S5-P1-E1-W1-H2",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P1-E1-W1-H3",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 3,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P1-E1-W1-H18446744073709551615",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 18446744073709551615,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P1-E1-W2-H0",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 0,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E1-W2-H1",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 1,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E1-W2-H2",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 2,
+    "mandatory_alias": true,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E1-W2-H3",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 3,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E1-W2-H18446744073709551615",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 18446744073709551615,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E1-W3-H2",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 3,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E1-W18446744073709551615-H2",
+    "profile": 1,
+    "expected_plan": 1,
+    "wire_plan": 18446744073709551615,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E2-W0-H2",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 0,
+    "highwater": 2,
+    "mandatory_alias": true,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E2-W1-H0",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 0,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E2-W1-H1",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 1,
+    "mandatory_alias": true,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E2-W1-H2",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 2,
+    "mandatory_alias": true,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E2-W1-H3",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 3,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E2-W1-H18446744073709551615",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 18446744073709551615,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E2-W2-H0",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 0,
+    "mandatory_alias": true,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P1-E2-W2-H1",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 1,
+    "mandatory_alias": true,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P1-E2-W2-H2",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 2,
+    "mandatory_alias": true,
+    "expected": "Ok"
+  },
+  {
+    "id": "SB-S5-P1-E2-W2-H3",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 3,
+    "mandatory_alias": true,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P1-E2-W2-H18446744073709551615",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 18446744073709551615,
+    "mandatory_alias": true,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P1-E2-W3-H2",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 3,
+    "highwater": 2,
+    "mandatory_alias": true,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P1-E2-W18446744073709551615-H2",
+    "profile": 1,
+    "expected_plan": 2,
+    "wire_plan": 18446744073709551615,
+    "highwater": 2,
+    "mandatory_alias": true,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E1-W0-H2",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 0,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E1-W1-H0",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 0,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P2-E1-W1-H1",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 1,
+    "mandatory_alias": false,
+    "expected": "Ok"
+  },
+  {
+    "id": "SB-S5-P2-E1-W1-H2",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P2-E1-W1-H3",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 3,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P2-E1-W1-H18446744073709551615",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 18446744073709551615,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P2-E1-W2-H0",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 0,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E1-W2-H1",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 1,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E1-W2-H2",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E1-W2-H3",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 3,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E1-W2-H18446744073709551615",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 18446744073709551615,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E1-W3-H2",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 3,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E1-W18446744073709551615-H2",
+    "profile": 2,
+    "expected_plan": 1,
+    "wire_plan": 18446744073709551615,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E2-W0-H2",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 0,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E2-W1-H0",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 0,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E2-W1-H1",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 1,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E2-W1-H2",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E2-W1-H3",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 3,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E2-W1-H18446744073709551615",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 18446744073709551615,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E2-W2-H0",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 0,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P2-E2-W2-H1",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 1,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P2-E2-W2-H2",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 2,
+    "mandatory_alias": true,
+    "expected": "Ok"
+  },
+  {
+    "id": "SB-S5-P2-E2-W2-H3",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 3,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P2-E2-W2-H18446744073709551615",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 18446744073709551615,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P2-E2-W3-H2",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 3,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P2-E2-W18446744073709551615-H2",
+    "profile": 2,
+    "expected_plan": 2,
+    "wire_plan": 18446744073709551615,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E1-W0-H2",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 0,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E1-W1-H0",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 0,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P3-E1-W1-H1",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 1,
+    "mandatory_alias": false,
+    "expected": "Ok"
+  },
+  {
+    "id": "SB-S5-P3-E1-W1-H2",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P3-E1-W1-H3",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 3,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P3-E1-W1-H18446744073709551615",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 1,
+    "highwater": 18446744073709551615,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P3-E1-W2-H0",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 0,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E1-W2-H1",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 1,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E1-W2-H2",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E1-W2-H3",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 3,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E1-W2-H18446744073709551615",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 2,
+    "highwater": 18446744073709551615,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E1-W3-H2",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 3,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E1-W18446744073709551615-H2",
+    "profile": 3,
+    "expected_plan": 1,
+    "wire_plan": 18446744073709551615,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E2-W0-H2",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 0,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E2-W1-H0",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 0,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E2-W1-H1",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 1,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E2-W1-H2",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E2-W1-H3",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 3,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E2-W1-H18446744073709551615",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 1,
+    "highwater": 18446744073709551615,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E2-W2-H0",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 0,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P3-E2-W2-H1",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 1,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P3-E2-W2-H2",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 2,
+    "mandatory_alias": true,
+    "expected": "Ok"
+  },
+  {
+    "id": "SB-S5-P3-E2-W2-H3",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 3,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P3-E2-W2-H18446744073709551615",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 2,
+    "highwater": 18446744073709551615,
+    "mandatory_alias": false,
+    "expected": "Corrupt"
+  },
+  {
+    "id": "SB-S5-P3-E2-W3-H2",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 3,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  },
+  {
+    "id": "SB-S5-P3-E2-W18446744073709551615-H2",
+    "profile": 3,
+    "expected_plan": 2,
+    "wire_plan": 18446744073709551615,
+    "highwater": 2,
+    "mandatory_alias": false,
+    "expected": "UnsupportedFormat"
+  }
+]

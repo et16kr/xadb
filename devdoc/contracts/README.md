@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV3 불변 Status bootstrap](dev3-status-bootstrap.md): plan2 영속 역할·typed borrowed role·old allocator 경계·효과 전 자원 거절.
+
 - [DEV3 allocator 한 페이지 flush](dev3-allocator-flush.md): sealed capture·WAL force·DWB/home·whole retirement·조건부 RAM finalize의 제한 소유 계약.
 
 - [DEV3 dirty frame·stage 설치](dev3-dirty-stage.md): 3.05.1-A/B + 3.04.1.a 첫 allocator 소비자·pin/content·DPT의 채택 계약.

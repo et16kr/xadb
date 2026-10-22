@@ -6,6 +6,7 @@ use std::sync::atomic::AtomicBool;
 use super::{
     GenesisWalSession, MAX_FRAME_BYTES, WalFrameLocation, WalIoError, WalPrefix, WalSyncObservation,
 };
+use crate::api::Namespace;
 use crate::storage::{
     allocation_page::{self, AllocationEntry, AllocationError, EXTENT_PAGES},
     control::{
@@ -14,6 +15,7 @@ use crate::storage::{
     },
     page::{FileId, PAGE_BYTES, PageHeader, PageIdentity, PageKind, PageLsn},
     page_io::{PageFileReader, PageIoError},
+    session_fence::SessionFence,
 };
 use xadb_foundation::{
     codec::content_digest,
@@ -49,6 +51,7 @@ pub(in crate::storage) use doublewrite_install::{DirtyInstallPermit, FlushFinali
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {
     Preflight,
+    Role,
     Genesis,
     Prepare,
     DescriptorCreate,
@@ -89,6 +92,7 @@ pub(crate) enum Cause {
     Namespace(NamespaceError),
     Io(xadb_foundation::Error),
     InvalidInput,
+    UnsupportedPlan,
     Capacity,
     IdentityMismatch,
     LengthMismatch,
@@ -126,15 +130,45 @@ fn fixed_entry() -> std::result::Result<FileMapEntry, ControlError> {
     })
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum BootstrapPlanKind {
+    AllocatorOnly,
+    StatusBootstrap,
+}
+impl BootstrapPlanKind {
+    const fn version(self) -> u64 {
+        match self {
+            Self::AllocatorOnly => 1,
+            Self::StatusBootstrap => 2,
+        }
+    }
+
+    const fn issued_object_high_water(self) -> u64 {
+        match self {
+            Self::AllocatorOnly => 1,
+            Self::StatusBootstrap => 2,
+        }
+    }
+}
+
 /// Hashes originate only from private preparation of the actual profile/geometry.
 /// No arbitrary caller-supplied digest or durable resume authority is admitted.
 struct BootstrapPlan {
+    kind: BootstrapPlanKind,
     profile: Profile,
     selected: SelectedControl,
     allocation_digest: [u8; 32],
 }
 impl BootstrapPlan {
     fn prepare(profile: Profile, scratch: &mut [[u8; PAGE_BYTES]; 3]) -> Result<Self> {
+        Self::prepare_for_kind(profile, scratch, BootstrapPlanKind::AllocatorOnly)
+    }
+
+    fn prepare_for_kind(
+        profile: Profile,
+        scratch: &mut [[u8; PAGE_BYTES]; 3],
+        kind: BootstrapPlanKind,
+    ) -> Result<Self> {
         super::genesis_profile(profile).map_err(control_error)?;
         if MAX_OWNED_BYTES > profile.owned_bytes() || PROTECTED_BYTES > 1 << 30 {
             return Err(failed(Phase::Prepare, Cause::Capacity));
@@ -222,6 +256,7 @@ impl BootstrapPlan {
             },
         };
         let plan = Self {
+            kind,
             profile,
             selected,
             allocation_digest,
@@ -269,7 +304,7 @@ impl BootstrapPlan {
             (96, 1),
             (104, 1),
             (112, 1),
-            (120, 1),
+            (120, self.kind.issued_object_high_water()),
             (128, 1),
             (136, 1),
             (240, FIXED_BYTES),
@@ -277,7 +312,7 @@ impl BootstrapPlan {
             (256, PROTECTED_BYTES),
             (264, 2 * control::CONTAINER_BYTES),
             (272, 1),
-            (280, 1),
+            (280, self.kind.version()),
         ] {
             super::put64(bytes, offset, value);
         }
@@ -295,7 +330,10 @@ impl BootstrapPlan {
         {
             return Err(ControlError::Corrupt);
         }
-        if bytes[4..6] != 1u16.to_le_bytes() || bytes[6] != 1 || super::u64_at(bytes, 280) != 1 {
+        if bytes[4..6] != 1u16.to_le_bytes()
+            || bytes[6] != 1
+            || super::u64_at(bytes, 280) != self.kind.version()
+        {
             return Err(ControlError::UnsupportedFormat);
         }
         for range in [7..8, 12..16, 146..148, 164..176, 288..4064] {
@@ -309,7 +347,7 @@ impl BootstrapPlan {
             (96, 1),
             (104, 1),
             (112, 1),
-            (120, 1),
+            (120, self.kind.issued_object_high_water()),
             (128, 1),
             (136, 1),
             (152, 1),
@@ -520,6 +558,44 @@ fn readback<W: WriterNamespace>(
     Ok(())
 }
 
+/// An immutable system-object role issued only by a completed plan2 bootstrap.
+/// This borrow cannot initialize payload pages or grant transaction admission.
+/// Identity getters remain observations after fencing; future mutation owners
+/// must recheck health and the exact originating plan/fence.
+pub(crate) struct StatusRole<'s> {
+    plan: &'s BootstrapPlan,
+    fence: &'s SessionFence,
+}
+impl StatusRole<'_> {
+    pub(crate) fn namespace(&self) -> Namespace {
+        self.plan.profile.spec().namespace
+    }
+
+    pub(crate) fn object(&self) -> ObjectId {
+        ObjectId::new(2).expect("fixed nonzero status object")
+    }
+
+    pub(crate) fn generation(&self) -> Generation {
+        Generation::new(1).expect("fixed nonzero status generation")
+    }
+
+    pub(crate) fn kind(&self) -> PageKind {
+        PageKind::TransactionStatus
+    }
+
+    pub(crate) fn level(&self) -> u8 {
+        0
+    }
+
+    pub(crate) fn issued_object_high_water(&self) -> u64 {
+        self.plan.kind.issued_object_high_water()
+    }
+
+    pub(crate) fn uses_fence(&self, fence: &SessionFence) -> bool {
+        std::ptr::eq(self.fence, fence)
+    }
+}
+
 /// Immutable namespace capability plus one physical WAL slot. Returned readers
 /// borrow this owner and all caller scratch; there is no raw writer escape hatch.
 pub(crate) struct FreshStorageSession<'m, W: WriterNamespace> {
@@ -527,6 +603,112 @@ pub(crate) struct FreshStorageSession<'m, W: WriterNamespace> {
     plan: BootstrapPlan,
     reader_active: AtomicBool,
 }
+
+// Source-owned live values, not ABI stack. Counts include copies/return scratch
+// across prepare→control/page codecs and readback→reader→cursor→decoder. The
+// 64-entry preparation array and non-Copy owner/File values are charged outside
+// nested locals; caller page buffers are never copied into this allowance.
+struct SourceBudget {
+    prepare_nested: usize,
+    readback_nested: usize,
+    fresh_role: usize,
+    mutable_role: usize,
+}
+fn source_budget<W: WriterNamespace>() -> SourceBudget {
+    use crate::storage::{
+        allocation_page::{AllocationPage, ExtentAddress},
+        control::{ChunkLocation, FileMapChunk, FileMapCursor, FileMapRoot, ProfileSpec},
+        page::PageView,
+    };
+    use std::mem::size_of;
+    use xadb_foundation::{codec::ContentHasher, namespace::FileMetadata};
+
+    type RoleResult = std::result::Result<StatusRole<'static>, BootstrapError>;
+    type MutableRoleResult = std::result::Result<StatusRole<'static>, MutableStorageError>;
+    let result_carrier = [
+        size_of::<BootstrapError>(),
+        size_of::<Result<BootstrapPlan>>(),
+        size_of::<std::result::Result<FileMapRoot<'_>, ControlError>>(),
+        size_of::<std::result::Result<FileMapChunk<'_>, ControlError>>(),
+        size_of::<std::result::Result<ChunkDescriptor, ControlError>>(),
+        size_of::<std::result::Result<PageView<'_>, PageIoError>>(),
+        size_of::<std::result::Result<AllocationPage<'_>, AllocationError>>(),
+    ]
+    .into_iter()
+    .fold(0, usize::max);
+    // Same pinned SHA-256 source allowance as allocation_budget::HASH.
+    let hash = 4 * size_of::<ContentHasher>() + 1536;
+    let common = 2 * size_of::<BootstrapPlan>()
+        + 12 * size_of::<Profile>()
+        + 8 * size_of::<ProfileSpec>()
+        + 8 * size_of::<Namespace>()
+        + 8 * size_of::<MapIdentity>()
+        + 6 * size_of::<MapSummary>()
+        + 8 * size_of::<FileMapEntry>()
+        + 6 * size_of::<ChunkDescriptor>()
+        + 8 * size_of::<ControlRef>()
+        + 4 * size_of::<SelectedControl>()
+        + 6 * size_of::<PageHeader>()
+        + 6 * size_of::<PageIdentity>()
+        + 8 * size_of::<AllocationEntry>()
+        + 4 * size_of::<ExtentAddress>()
+        + 4 * size_of::<PageView<'_>>()
+        + 2 * size_of::<AllocationPage<'_>>()
+        + 1024 // Fixed codec byte arrays/field tables; no page image.
+        + 1536 // Bounded refs/scalars/iterators/private envelope and enum tags.
+        + 6 * result_carrier
+        + hash;
+    // Account for the enclosing reader's padding as well as its non-File fields.
+    let reader_control = size_of::<PageFileReader<'_, W>>().saturating_sub(size_of::<W::File>());
+    let fresh_role = 2 * size_of::<StatusRole<'_>>()
+        + 3 * size_of::<RoleResult>()
+        + size_of::<Option<super::Cause>>()
+        + size_of::<WalIoError>()
+        + size_of::<BootstrapError>()
+        + 16 * size_of::<usize>();
+    SourceBudget {
+        prepare_nested: common + 672,
+        readback_nested: common
+            + 160
+            + 4 * size_of::<SelectedControl>()
+            + 4 * size_of::<FileMapRoot<'_>>()
+            + 2 * size_of::<FileMapCursor<'_>>()
+            + 3 * size_of::<FileMapChunk<'_>>()
+            + 4 * size_of::<ChunkLocation>()
+            + 2 * size_of::<MapSummary>()
+            + 4 * size_of::<FileName>()
+            + 4 * size_of::<FileMetadata>()
+            + reader_control,
+        fresh_role,
+        mutable_role: fresh_role
+            + 2 * size_of::<MutableStorageError>()
+            + 2 * size_of::<MutableRoleResult>()
+            + size_of::<BootstrapError>()
+            + 12 * size_of::<usize>(),
+    }
+}
+
+fn source_budget_fits<W: WriterNamespace>() -> bool {
+    use std::mem::size_of;
+    let owner = size_of::<FreshStorageSession<'_, W>>();
+    let file = size_of::<W::File>();
+    if owner > 16384 || file > 16384 {
+        return false;
+    }
+    let budget = source_budget::<W>();
+    size_of::<BootstrapPlanKind>() <= 8
+        && size_of::<StatusRole<'_>>() <= 32
+        && size_of::<[AllocationEntry; EXTENT_PAGES]>() <= 8192
+        && budget.prepare_nested <= 16384
+        && budget.readback_nested <= 16384
+        && budget.fresh_role <= 1024
+        && budget.mutable_role <= 2048
+        && owner + size_of::<[AllocationEntry; EXTENT_PAGES]>() + 1032 + budget.prepare_nested
+            <= 65536
+        && owner + file + 1032 + budget.prepare_nested <= 65536
+        && owner + 2 * file + budget.readback_nested <= 65536
+}
+
 impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
     pub(crate) fn create(
         writer: W,
@@ -534,7 +716,41 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
         slot: &'m mut [u8; MAX_FRAME_BYTES],
         scratch: &mut [[u8; PAGE_BYTES]; 3],
     ) -> Result<Self> {
-        if !(1..=3).contains(&profile_id) || std::mem::size_of::<Self>() > 16384 {
+        Self::create_for_kind(
+            writer,
+            profile_id,
+            slot,
+            scratch,
+            BootstrapPlanKind::AllocatorOnly,
+        )
+    }
+
+    /// Install immutable Status role2/gen1 in a fresh namespace's plan2.
+    /// A successful result follows the complete install and descriptor readback;
+    /// failures preserve the existing cumulative artifact/effect contract.
+    pub(crate) fn create_status(
+        writer: W,
+        profile_id: u32,
+        slot: &'m mut [u8; MAX_FRAME_BYTES],
+        scratch: &mut [[u8; PAGE_BYTES]; 3],
+    ) -> Result<Self> {
+        Self::create_for_kind(
+            writer,
+            profile_id,
+            slot,
+            scratch,
+            BootstrapPlanKind::StatusBootstrap,
+        )
+    }
+
+    fn create_for_kind(
+        writer: W,
+        profile_id: u32,
+        slot: &'m mut [u8; MAX_FRAME_BYTES],
+        scratch: &mut [[u8; PAGE_BYTES]; 3],
+        kind: BootstrapPlanKind,
+    ) -> Result<Self> {
+        if !(1..=3).contains(&profile_id) || !source_budget_fits::<W>() {
             return Err(BootstrapError {
                 phase: Phase::Preflight,
                 effect: Effect::Unchanged,
@@ -547,7 +763,12 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
                 effect: error.effect,
                 cause: Cause::Wal(error),
             })?;
-        let plan = BootstrapPlan::prepare(wal.profile, scratch)?;
+        let plan = match kind {
+            BootstrapPlanKind::AllocatorOnly => BootstrapPlan::prepare(wal.profile, scratch)?,
+            BootstrapPlanKind::StatusBootstrap => {
+                BootstrapPlan::prepare_for_kind(wal.profile, scratch, kind)?
+            }
+        };
         {
             let writer = wal._writer.get_mut().map_err(|_| {
                 failed(
@@ -568,6 +789,40 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
             wal,
             plan,
             reader_active: AtomicBool::new(false),
+        })
+    }
+
+    /// Borrow the completed plan2's immutable role. No I/O or payload authority.
+    /// Poison/fence precedes plan rejection and never clears the shared fence.
+    pub(crate) fn status_role(&self) -> Result<StatusRole<'_>> {
+        let cause = if self.wal.append.is_poisoned()
+            || self.wal.file.is_poisoned()
+            || self.wal._writer.is_poisoned()
+        {
+            Some(super::Cause::Poisoned)
+        } else if self.wal.fenced.is_fenced() {
+            Some(super::Cause::Fenced)
+        } else {
+            None
+        };
+        if let Some(cause) = cause {
+            self.wal.fenced.fence();
+            self.wal.completion.notify_all();
+            return Err(failed(
+                Phase::Role,
+                Cause::Wal(super::attempted(super::Phase::Observe, cause)),
+            ));
+        }
+        if self.plan.kind != BootstrapPlanKind::StatusBootstrap {
+            return Err(BootstrapError {
+                phase: Phase::Role,
+                effect: Effect::Unchanged,
+                cause: Cause::UnsupportedPlan,
+            });
+        }
+        Ok(StatusRole {
+            plan: &self.plan,
+            fence: &self.wal.fenced,
         })
     }
 

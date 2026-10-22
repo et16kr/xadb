@@ -1,0 +1,54 @@
+{
+  "status": "PREPARED_NOT_EXECUTED",
+  "literals": [
+    {
+      "profile": 1,
+      "file": "profile1-d3-bootstrap.bin",
+      "source": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-d3-bootstrap.bin",
+      "source_sha256": "432ec3fc6b77eda76c8ae7ec0a64ffc00dde9656bbab1cbd4f52661b3b3be053"
+    },
+    {
+      "profile": 2,
+      "file": "profile2-d3-bootstrap.bin",
+      "source": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-d3-bootstrap.bin",
+      "source_sha256": "1839be899c063de4fb96110406d67831f101e1666d4120908bb906b809634e4b"
+    },
+    {
+      "profile": 3,
+      "file": "profile3-d3-bootstrap.bin",
+      "source": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-d3-bootstrap.bin",
+      "source_sha256": "5e1b39b979938541835affd5e1a32ab92289c97f03118d0bfb65fba67cd7ad00"
+    }
+  ],
+  "files": {
+    "effects.tsv": {
+      "bytes": 34661,
+      "sha256": "9a8cdf14f72e74ecc760fd9e5cd0d0629a7d3d8d03993dd5174081b4e2e78dab"
+    },
+    "partial-files.tsv": {
+      "bytes": 4234,
+      "sha256": "c182bbe301668d852476713e3051671cd9cf4dd2563d17b4f63cb982261ef8a2"
+    },
+    "profile1-d3-bootstrap.bin": {
+      "bytes": 4096,
+      "sha256": "c44b414270ed3898d5cf71424c835caffaa86151f00a78dfc26b40d7c188253c"
+    },
+    "profile2-d3-bootstrap.bin": {
+      "bytes": 4096,
+      "sha256": "112a4dea5856f96948c4496d36ad893bda468c611dbb5be2a6230843585a137f"
+    },
+    "profile3-d3-bootstrap.bin": {
+      "bytes": 4096,
+      "sha256": "7bdb5e081ed80ef78a19adce57ca09c87457aec1cce1ff4dfe72ba6e4abdc8c4"
+    },
+    "s5-matrix.json": {
+      "bytes": 15008,
+      "sha256": "acc0949a74b359b89f5b5d228b4f24ce91c3064c52d1b9c0806b5f2551909728"
+    }
+  },
+  "inputs": {
+    "tests/fixtures/dev3-storage-session/effects.json": "c6ff7445cc963eda23cdd88135ed20fbb9200ae3a47858d1585457f54cbe83b8",
+    "scripts/dev3_storage_model.py": "371ed5b856f63dd3eb5cbb02d5f3e669cb3ebdfda5c3d61a537bd8ed07db782e",
+    "scripts/dev3_storage_native.py": "ef51196fcc3cdd84ce64c165d6ef66edba99ea4f25a71c3a49c7cda19282ecdc"
+  }
+}

@@ -44,6 +44,10 @@ const CLAIMED: u8 = 1;
 const BOUND: u8 = 2;
 const ABANDONED: u8 = 3;
 
+#[cfg(test)]
+#[path = "status_bootstrap_tests.rs"]
+mod status_bootstrap_tests;
+
 #[derive(Debug)]
 pub(crate) enum Cause {
     Fenced,
@@ -53,6 +57,8 @@ pub(crate) enum Cause {
     AlreadyBound,
     Shape,
     Capacity,
+    UnsupportedPlan,
+    Bootstrap(super::super::BootstrapError),
     Frame(DirtyError),
     Wal(wal::WalIoError),
     PageIo(PageIoError),
@@ -126,6 +132,18 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
         &self.fresh.wal
     }
 
+    /// Borrow the original immutable bootstrap role without consuming binding.
+    /// Mutable workspace health stays typed; the fresh error is preserved whole.
+    pub(crate) fn status_role(&self) -> Result<super::super::StatusRole<'_>> {
+        self.health()?;
+        self.fresh
+            .status_role()
+            .map_err(|error| MutableStorageError {
+                effect: error.effect,
+                cause: Cause::Bootstrap(error),
+            })
+    }
+
     /// Shape/resource rejection precedes the atomic claim and every readback.
     /// Claimed failure is permanently abandoned; caller scratch is then invalid.
     pub(crate) fn bind_allocator<'s, 'c, 'p, 'd: 'p, 'o>(
@@ -135,6 +153,9 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
         operation: &'o mut [u8; OPERATION_BYTES],
     ) -> Result<BoundAllocation<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         self.health()?;
+        if self.fresh.plan.kind != super::super::BootstrapPlanKind::AllocatorOnly {
+            return Err(unchanged(Cause::UnsupportedPlan));
+        }
         if !core.uses_fence(self.session_fence()) {
             return Err(unchanged(Cause::BindingMismatch));
         }

@@ -34,7 +34,7 @@ pub(crate) use bootstrap::{
     AllocationObservation, AllocationSession, AllocationSessionCause, AllocationSessionError,
     AllocationSessionPhase, BootstrapError, Cause as BootstrapCause, DoublewriteInstallCause,
     DoublewriteInstallError, DoublewriteInstallPhase, DoublewriteStorageSession,
-    FreshStorageSession, Phase as BootstrapPhase,
+    FreshStorageSession, Phase as BootstrapPhase, StatusRole,
 };
 #[allow(unused_imports)] // The scoped dirty owner is being integrated with its consumers.
 pub(crate) use bootstrap::{

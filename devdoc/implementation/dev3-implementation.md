@@ -611,6 +611,15 @@ Actions의 DEV1→DEV0 정적 검사에서 `allocation_reservation_tests.rs`의 
 
 31개 실제 layout과 source 수명 식, File/aggregate effect 전 거절을 확인했다. hot63960/cold48576≤새65536, concrete deep24624, 기존 dirty와 합계262144다. physical stack/RSS/latency는 측정하지 않았다. S5 batch1 확대972는 작성/NOT_RUN이며 batch8/64·다중 file·INIT·new owner·free/reuse·eviction/pressure·일반 recovery/READY와 전체 DEV3는 미완료다.
 
+<a id="status-bootstrap"></a>
+## 불변 Status bootstrap 역할
+
+[소유 계약](../contracts/dev3-status-bootstrap.md)은 실제 `d3-bootstrap` plan2의 immutable ObjectId2/gen1/kind9/level0 역할을 공급한다. `create_status`의 전체 설치/readback 뒤 `StatusRole`을 대여하며 poison/fence 우선순위와 owner 수명을 보존한다. 기존 allocator adapter는 plan2를 변경 효과 전에 거절한다. 소비형 adapter의 기존 owner 소비/fence 책임은 유지한다.
+
+[선택 인수](../evidence/dev3-status-bootstrap-20261022.md)·[source별 실행 색인](../evidence/dev3-status-bootstrap-20261022.json)은 새5leaf/32case, 변경 decoder의 기존 corpus1, 실제 native profile1 DB1/350효과/5,296,128bytes, compiler semantic3와 별도 infrastructure baseline1의 PASS를 보존한다. 새 checker7과 이후 수정한1method만의 추가 검증을 구분한다. 보존 source `cf219808…`의 fmt/engine Clippy PASS이며 제한 단위의 최종 독립 D1을 수용했다.
+
+prepare12208/readback14788·Fresh role424/Mutable role792 bytes의 실제 typed census와 generic reader padding 초과의 effect 전 거절을 확인했다. component65536·caller scratch49152를 증액하지 않았으며 stack/RSS 측정은 아니다. 새 S5 추가65는 작성/NOT_RUN이다. 실제 INIT·membership·거래 directory·일반 recovery/READY·전체 DEV3 인수는 미완료다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 
@@ -621,7 +630,7 @@ Actions의 DEV1→DEV0 정적 검사에서 `allocation_reservation_tests.rs`의 
 | 분류 | 하부 작업 | 현재 상태와 남은 경계 |
 | --- | --- | --- |
 | 3.01 형식·정체성 | page/참조/key/행/tree/WAL/undo/status/control codec | 여러 표현·독립 byte·유한 모델 검증 완료. 실제 효과와 구분 |
-| 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기의 제한 구현 검증. 일반 reopen은 별도 |
+| 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기와 [불변 Status bootstrap 역할](#status-bootstrap)의 제한 구현 검증. 실제 INIT·일반 reopen은 별도 |
 | 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | [3.03.1 예약·취소 잔여 인수](#allocation-reservation-accepted): native13DB·compiler·WAL4·중첩 자원/64KiB 경로 검증과 독립 판정 연결. INIT·확장·free/reuse 미완료 |
 | 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | [실제 dirty stage 첫 소비자](#dirty-stage)와 [authentic WAL requirement/flush force](#allocator-flush), genesis·RollbackStart 생산·예약/취소 연결. 일반 opcode/CLR/commit 연결 미완료 |
 | 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator1 dirty 기반](#dirty-stage)과 [한 페이지 flush·whole retirement](#allocator-flush) 제한 검증. INIT·일반 pool·batch8/64·다중 file·압력하 진행 미완료 |

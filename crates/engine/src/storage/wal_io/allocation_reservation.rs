@@ -49,6 +49,7 @@ pub(crate) enum Phase {
 #[derive(Debug)]
 pub(crate) enum Cause {
     InvalidInput,
+    UnsupportedPlan,
     ActiveReservation,
     NoReservation,
     Exhausted,
@@ -160,6 +161,9 @@ impl<'m, 'w, W: WriterNamespace> DoublewriteStorageSession<'m, 'w, W> {
                     return Err(fail(Cause::Capacity));
                 }
                 health(&self, Phase::Constructor)?;
+                if self.fresh.plan.kind != super::super::BootstrapPlanKind::AllocatorOnly {
+                    return Err(fail(Cause::UnsupportedPlan));
+                }
                 let prefix = self.fresh.wal.prefix().map_err(|e| fail(Cause::Wal(e)))?;
                 if self.fresh.reader_active.load(Ordering::Acquire)
                     || prefix.complete_lsn != 0

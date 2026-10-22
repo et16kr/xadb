@@ -1,0 +1,365 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-22",
+  "unit": "D3-STATUS-BOOTSTRAP-001",
+  "status": "ACCEPT_SCOPED_UNIT",
+  "base_commit": "09688384da7e4f2f34b9f3f2938c1f9c07a072b3",
+  "contract_ref": "dev3-status-bootstrap.md",
+  "full_stage_acceptance": false,
+  "scope": "immutable plan2 Status role after full fresh install/readback; no actual INIT/membership/recovery",
+  "product_source_sha256": "cf219808ec8357b3f35ec4ac3646825ea9b2563e0fcbf6faa210f7cd2780a768",
+  "binary_sha256": "7e9c5a1f98f8f796887047966b598dbfa50bde239de5855ae2b4ab3b3243cbc7",
+  "build": {
+    "path": "artifacts/dev3/resume-20261022/status-bootstrap-runtime-r0/build-result.json",
+    "sha256": "0d6d82504059725314facb909f0453f3e6cfdbc1070fd5809bbea4885344df23",
+    "bytes": 1226
+  },
+  "execution": {
+    "mandatory": {
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/status-bootstrap-mandatory-r0/result.json",
+        "sha256": "a32b54abbe09c8c109f26f069da03684d3d9d04de73e3b635d4d358dc14a8041",
+        "bytes": 9277
+      },
+      "new_rust_leaves": 5,
+      "new_cases": 32,
+      "resource_named_variants": 2,
+      "forwarding_named_variants": 3,
+      "existing_changed_parser_selectors": 1,
+      "native_databases": 1
+    },
+    "compiler": {
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/status-role-compiler-r0-result.json",
+        "sha256": "49c5699ef8733476992975fff48387a03e6343add64a9355e44b31c2808dce6a",
+        "bytes": 39763
+      },
+      "semantic_cases": 3,
+      "infrastructure_baseline": 1,
+      "actual_compiler_invocations": 4
+    },
+    "checkers": [
+      {
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/status-role-checkers-r0/result.json",
+          "sha256": "9bdc3656f2b9b727057aad31a8cbcc0989aea22a42287107a16ca7e4429f7915",
+          "bytes": 532
+        },
+        "new_cases": 4
+      },
+      {
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/status-bootstrap-checkers-r0/result.json",
+          "sha256": "be3f5bc57e21708a6a41ee9854b6dd7ab8a49574e445788d509b51c51541250b",
+          "bytes": 538
+        },
+        "new_cases": 3
+      },
+      {
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/status-bootstrap-checkers-r1/result.json",
+          "sha256": "78806a5ab3461eb0300ef529e1fac1110517dfa1e010315ea0e9be9fca98e5d1",
+          "bytes": 587
+        },
+        "changed_method_only_rerun": 1,
+        "unchanged_cases_not_repeated": true
+      }
+    ],
+    "fmt": {
+      "path": "artifacts/dev3/resume-20261022/status-bootstrap-runtime-r0/fmt-result.json",
+      "sha256": "c4b4b99c77baa31c663d4f19f5c21fe50c03ecc9d108305b969f2e4f38dac076",
+      "bytes": 607
+    },
+    "clippy": {
+      "path": "artifacts/dev3/resume-20261022/status-bootstrap-runtime-r0/clippy-result.json",
+      "sha256": "99d32bfaede71fd84d2a5f942f96ae7ac7e1ed33ec9e1b115cfb5065b7862d9e",
+      "bytes": 728
+    }
+  },
+  "expanded": {
+    "status": "S5_NOT_RUN",
+    "matrix_rows": 78,
+    "mandatory_aliases": 13,
+    "additional_cases": 65,
+    "new_runtime_union_cases": 97,
+    "compiler_native_old_parser_separate": true
+  },
+  "native": {
+    "profile": 1,
+    "effects": 350,
+    "files": [
+      {
+        "name": "FILEMAP",
+        "bytes": 4096,
+        "sha256": "f13300651caf29ce6a98c1c4724808a03108e157f220977f2f3d78ef12204ec9",
+        "device": 66312,
+        "inode": 23244572
+      },
+      {
+        "name": "LOCK",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "device": 66312,
+        "inode": 23244564
+      },
+      {
+        "name": "WRITER",
+        "bytes": 4096,
+        "sha256": "a135788d8b806a667686c8c48fb7f18b9879cfa53f64d61d368591998b7bc01d",
+        "device": 66312,
+        "inode": 23244567
+      },
+      {
+        "name": "d3-bootstrap",
+        "bytes": 4096,
+        "sha256": "7b3099d16ec0bddde2136c808018f94db2866d1d63346df91987e456d5dd12c7",
+        "device": 66312,
+        "inode": 23244568
+      },
+      {
+        "name": "d3-data-0000000100000001",
+        "bytes": 1048576,
+        "sha256": "785d142ea6164926e408ea4a67761f9cf2cfb1819e7746c43010403465c5680a",
+        "device": 66312,
+        "inode": 23244569
+      },
+      {
+        "name": "d3-filemap-0",
+        "bytes": 2113536,
+        "sha256": "20b9fb3526b7cc1ebaad01f534a778d94bc0f817aa51846836c1bf23d908589e",
+        "device": 66312,
+        "inode": 23244570
+      },
+      {
+        "name": "d3-filemap-1",
+        "bytes": 2113536,
+        "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199",
+        "device": 66312,
+        "inode": 23244571
+      },
+      {
+        "name": "d3-profile",
+        "bytes": 4096,
+        "sha256": "ce2ff7675ef195d6b3046d02daf3a4bf61c082a0f1d5163df06ada9fd014e5e5",
+        "device": 66312,
+        "inode": 23244565
+      },
+      {
+        "name": "d3-wal-00000001",
+        "bytes": 4096,
+        "sha256": "3f1b0e81af9e5ddaf3a94796f568db85ff8e4b018b08bfb65af06154480c15cc",
+        "device": 66312,
+        "inode": 23244566
+      }
+    ],
+    "total_bytes": 5296128,
+    "wrapped_file_peak": 3,
+    "wrapped_file_final": 0,
+    "live_db_fd_observation": 3,
+    "final_db_fd_observation": 0,
+    "scope": "fresh creator and immutable role only; no recovery or INIT"
+  },
+  "source_value_ledger": {
+    "path": "artifacts/dev3/resume-20261022/status-bootstrap-source-notes-r1.md",
+    "sha256": "8a2c122be420e5c25035daad556faa5b9d4252227dadb0e31dbf0987ad491a50",
+    "bytes": 10762
+  },
+  "actual_layout": {
+    "kind": 1,
+    "role": 16,
+    "plan": 176,
+    "fresh": 560,
+    "mutable": 848,
+    "prepare_nested": 12208,
+    "readback_nested": 14788,
+    "fresh_role_nested": 424,
+    "mutable_role_nested": 792,
+    "component_cap": 65536,
+    "caller_scratch": 49152,
+    "physical_stack_rss": "NOT_MEASURED"
+  },
+  "independent_inputs": [
+    {
+      "path": "artifacts/dev3/resume-20261022/status-bootstrap-inputs-r0.py",
+      "sha256": "742787febb3eb60a8dd889845792d6f7b910c0f3b5ee05960ceb6de7fbf5d3ba",
+      "bytes": 1737
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/status-bootstrap-inputs-r1.py",
+      "sha256": "ac962b0f4f6c0426465fd2349637d9f2419c7a45fc6bf7c5b8657f597597a6ca",
+      "bytes": 3758
+    },
+    {
+      "path": "tests/fixtures/dev3-status-bootstrap/manifest.json",
+      "sha256": "c6709aad1b6ca062a4bd0b9a9993ea8a9e6686aeac21211617914bdc5457dfc4",
+      "bytes": 2082
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-status-bootstrap/compiler/manifest.json",
+      "sha256": "e492d62879d2a6fa664ca9ef65c48aa6fa7f1fe6f4533a37b6b1fade8fefc075",
+      "bytes": 1946
+    }
+  ],
+  "reviews": [
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-bootstrap-subset-d2-r0.md",
+      "sha256": "3891eb62438d2f474f4f0c46e2f29cf241ca563ce76d5edebfb8a65897386cb7",
+      "bytes": 13467
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-bootstrap-literal-read-audit-r0.json",
+      "sha256": "4407c7514592876706941516ad41eac702a20fa82a29208dc794e2099c159e62",
+      "bytes": 3424
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-bootstrap-preexecution-d1-r1.md",
+      "sha256": "21ca479f50452c7142de13c15bc550dc915a8c40ee2770851fa8c80e247b5485",
+      "bytes": 5654
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-role-compiler-input-review-r0.md",
+      "sha256": "f88716812c1aaad3c5139cc92d0bdf770b397d16ebe2eff824309a3ede7b9d87",
+      "bytes": 2517
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-role-compiler-execution-read-audit-r0.json",
+      "sha256": "f7532622028862cee6b49bc30d981151619242570e86e59a82ae4a2847d7796f",
+      "bytes": 22633
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-bootstrap-execution-read-audit-r0.json",
+      "sha256": "cb29ccba6073c40f03609e82fde354d875fd9b48c0ac0a41b0d14d7ae2e70870",
+      "bytes": 16040
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/status-bootstrap-registered-read-audit-r0.json",
+      "sha256": "938dc71403eab3e029988ffbd3c3b6be9f7311c53aeb6d67ab80bb6a74a8ce70",
+      "bytes": 8065
+    }
+  ],
+  "implementation_files": [
+    {
+      "path": "crates/engine/src/storage/wal_io.rs",
+      "sha256": "d79a57e0caa163fbea84f48d0dd312f5f5a293457e01bdff222990e8f33df779",
+      "bytes": 34140
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/bootstrap.rs",
+      "sha256": "32d59b05aadf9ca907e1cbee06e22eea44b29f70a0a9a8cc48d856cc40048571",
+      "bytes": 30833
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/mutable_storage.rs",
+      "sha256": "d36ad30e13bc3ccdbfdc24474fe3356e11f13b6a444e9e632b9bcb07be0b531c",
+      "bytes": 17128
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/allocation_reservation.rs",
+      "sha256": "a944d444d1a444bfa2ec509274422fc570988c77f73b8d514e473e69791037ad",
+      "bytes": 19887
+    },
+    {
+      "path": "crates/engine/src/testing/storage_session.rs",
+      "sha256": "b204a5d888853a2625aa751daf884cdc61db3e5b1c4c0d4a1f98544eee7bab5c",
+      "bytes": 13026
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/status_bootstrap_tests.rs",
+      "sha256": "b537db06514594989d3d7c538aef048b4f92e94fec0770e91e4f2474a862a0f4",
+      "bytes": 33594
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/status_bootstrap_native_tests.rs",
+      "sha256": "c2b64c01752ccfdc9fdd97cf6c3c0636d97146aebebfeaf75a05a55230aa6945",
+      "bytes": 6101
+    },
+    {
+      "path": "scripts/check_dev3_status_role_borrows.py",
+      "sha256": "25b2cee894486b186686858b44bbfd4be8fcfe916810b10df11b1ebfb7c65aa9",
+      "bytes": 14557
+    },
+    {
+      "path": "scripts/test_check_dev3_status_role_borrows.py",
+      "sha256": "65c4dab873b8298e266ffb364ed906e7d2b6d6bf5cf9e51cf24f4a77f259190d",
+      "bytes": 5088
+    },
+    {
+      "path": "scripts/dev3_status_bootstrap.py",
+      "sha256": "0eef5d167c9da441740eeca01943bfbff7e9579db6dbe94f05317cdb9ce7f475",
+      "bytes": 9460
+    },
+    {
+      "path": "scripts/test_dev3_status_bootstrap.py",
+      "sha256": "5bf26748f8f2d7ed7511eb912c66100cd106bc844a4a3803861601fd87a6ff1b",
+      "bytes": 5106
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-status-bootstrap/compiler/manifest.json",
+      "sha256": "e492d62879d2a6fa664ca9ef65c48aa6fa7f1fe6f4533a37b6b1fade8fefc075",
+      "bytes": 1946
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-status-bootstrap/compiler/owner_drop.rs",
+      "sha256": "5cf80b90c3c50c2fe67e8076225414ca80bb7e59122ee175db32d7940882be69",
+      "bytes": 317
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-status-bootstrap/compiler/positive.rs",
+      "sha256": "af868d5886a1954313cd2cc58b1ad6a18424c863d22686157815c93ecde03232",
+      "bytes": 1083
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-status-bootstrap/compiler/private_constructor.rs",
+      "sha256": "ad4b1c97dee19205952ddc98c4f2a9c03b68e24fe78e1b0a37c9a0daf9ab877e",
+      "bytes": 168
+    },
+    {
+      "path": "tests/fixtures/dev3-status-bootstrap/effects.tsv",
+      "sha256": "9a8cdf14f72e74ecc760fd9e5cd0d0629a7d3d8d03993dd5174081b4e2e78dab",
+      "bytes": 34661
+    },
+    {
+      "path": "tests/fixtures/dev3-status-bootstrap/manifest.json",
+      "sha256": "c6709aad1b6ca062a4bd0b9a9993ea8a9e6686aeac21211617914bdc5457dfc4",
+      "bytes": 2082
+    },
+    {
+      "path": "tests/fixtures/dev3-status-bootstrap/partial-files.tsv",
+      "sha256": "c182bbe301668d852476713e3051671cd9cf4dd2563d17b4f63cb982261ef8a2",
+      "bytes": 4234
+    },
+    {
+      "path": "tests/fixtures/dev3-status-bootstrap/profile1-d3-bootstrap.bin",
+      "sha256": "c44b414270ed3898d5cf71424c835caffaa86151f00a78dfc26b40d7c188253c",
+      "bytes": 4096
+    },
+    {
+      "path": "tests/fixtures/dev3-status-bootstrap/profile2-d3-bootstrap.bin",
+      "sha256": "112a4dea5856f96948c4496d36ad893bda468c611dbb5be2a6230843585a137f",
+      "bytes": 4096
+    },
+    {
+      "path": "tests/fixtures/dev3-status-bootstrap/profile3-d3-bootstrap.bin",
+      "sha256": "7bdb5e081ed80ef78a19adce57ca09c87457aec1cce1ff4dfe72ba6e4abdc8c4",
+      "bytes": 4096
+    },
+    {
+      "path": "tests/fixtures/dev3-status-bootstrap/s5-matrix.json",
+      "sha256": "acc0949a74b359b89f5b5d228b4f24ce91c3064c52d1b9c0806b5f2551909728",
+      "bytes": 15008
+    }
+  ],
+  "preserved_failures": [],
+  "pending": [
+    "actual reserve/Status INIT and closed frame registration",
+    "current membership and transaction directory",
+    "two-page and batch8/64/multi-file flush",
+    "ordinary recovery/READY",
+    "full DEV3 S5 inventory"
+  ],
+  "final_independent_review": {
+    "path": "artifacts/dev3/resume-20261022/review/status-bootstrap-final-d1-r0.md",
+    "sha256": "98eed919fd01a2fbef4695a2942463534931686197e2ba86c919c5b6d99722b0",
+    "bytes": 7950
+  }
+}

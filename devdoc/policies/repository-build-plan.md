@@ -334,3 +334,7 @@ DEV3 페이지 예약·취소는 `wal_io/doublewrite_install`의 private child `
 ## DEV3 allocator 한 페이지 flush
 
 [flush 소유 계약](../contracts/dev3-allocator-flush.md)의 실제 source/fixture/checker는 관리 JSON의 `dev3_allocator_flush_one`에 등록한다. fixed registry에 authentic WAL requirement와 claim을 보유하고 실제 capture→WAL→DWB→home→whole retirement→조건부 RAM finalize를 연결한다. 기존 source root/crate/dependency는 유지한다. [source별 선택 인수](../evidence/dev3-allocator-flush-20261022.md)는 제한 단위로 수용했으며 batch8/64·다중 file·INIT·ordinary recovery·전체 DEV3 완료를 뜻하지 않는다.
+
+## DEV3 불변 Status bootstrap
+
+[Status bootstrap 계약](../contracts/dev3-status-bootstrap.md)의 실제 제품 변경·시험·fixture·checker는 관리 JSON의 `dev3_status_bootstrap`에 등록한다. 새 crate/source root/dependency 없이 plan2 영속 역할과 borrowed role·old adapter guard를 공급한다. [선택 실행](../evidence/dev3-status-bootstrap-20261022.md)의 제한 단위 독립 검토를 수용했으며 실제 INIT·일반 recovery·전체 DEV3 인수는 미완료다.

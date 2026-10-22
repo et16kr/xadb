@@ -1627,6 +1627,21 @@
       "path": "evidence/dev3-allocator-flush-20261022.json",
       "role": "evidence",
       "title": "DEV3 allocator flush source별 실행 색인"
+    },
+    "dev3-status-bootstrap.md": {
+      "path": "contracts/dev3-status-bootstrap.md",
+      "role": "contracts",
+      "title": "DEV3 불변 Status bootstrap 소유 계약"
+    },
+    "dev3-status-bootstrap-20261022.md": {
+      "path": "evidence/dev3-status-bootstrap-20261022.md",
+      "role": "evidence",
+      "title": "DEV3 불변 Status bootstrap 선택 인수"
+    },
+    "dev3-status-bootstrap-20261022.json": {
+      "path": "evidence/dev3-status-bootstrap-20261022.json",
+      "role": "evidence",
+      "title": "DEV3 Status bootstrap source별 실행 색인"
     }
   }
 }

@@ -2293,5 +2293,51 @@
       "DEV3 final S5 inventory"
     ],
     "evidence_ref": "dev3-allocator-flush-20261022.json"
+  },
+  "dev3_status_bootstrap": {
+    "status": "accepted_scoped_unit",
+    "contract_ref": "dev3-status-bootstrap.md",
+    "scope": "immutable plan2 Status role after full fresh install/readback; no actual INIT/membership/recovery",
+    "source": [
+      "crates/engine/src/storage/wal_io/status_bootstrap_tests.rs",
+      "crates/engine/src/storage/wal_io/status_bootstrap_native_tests.rs"
+    ],
+    "shared_source": [
+      "crates/engine/src/storage/wal_io.rs",
+      "crates/engine/src/storage/wal_io/bootstrap.rs",
+      "crates/engine/src/storage/wal_io/mutable_storage.rs",
+      "crates/engine/src/storage/wal_io/allocation_reservation.rs",
+      "crates/engine/src/testing/storage_session.rs"
+    ],
+    "fixtures": [
+      "crates/engine/tests/fixtures/dev3-status-bootstrap/compiler/manifest.json",
+      "crates/engine/tests/fixtures/dev3-status-bootstrap/compiler/owner_drop.rs",
+      "crates/engine/tests/fixtures/dev3-status-bootstrap/compiler/positive.rs",
+      "crates/engine/tests/fixtures/dev3-status-bootstrap/compiler/private_constructor.rs",
+      "tests/fixtures/dev3-status-bootstrap/effects.tsv",
+      "tests/fixtures/dev3-status-bootstrap/manifest.json",
+      "tests/fixtures/dev3-status-bootstrap/partial-files.tsv",
+      "tests/fixtures/dev3-status-bootstrap/profile1-d3-bootstrap.bin",
+      "tests/fixtures/dev3-status-bootstrap/profile2-d3-bootstrap.bin",
+      "tests/fixtures/dev3-status-bootstrap/profile3-d3-bootstrap.bin",
+      "tests/fixtures/dev3-status-bootstrap/s5-matrix.json"
+    ],
+    "checks": [
+      "scripts/check_dev3_status_role_borrows.py",
+      "scripts/test_check_dev3_status_role_borrows.py",
+      "scripts/dev3_status_bootstrap.py",
+      "scripts/test_dev3_status_bootstrap.py"
+    ],
+    "dependencies_changed": false,
+    "source_roots_changed": false,
+    "full_stage_acceptance": false,
+    "pending": [
+      "actual reserve/Status INIT and closed frame registration",
+      "current membership and transaction directory",
+      "two-page and batch8/64/multi-file flush",
+      "ordinary recovery/READY",
+      "full DEV3 S5 inventory"
+    ],
+    "evidence_ref": "dev3-status-bootstrap-20261022.json"
   }
 }

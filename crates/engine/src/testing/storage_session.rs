@@ -38,6 +38,7 @@ impl From<BootstrapError> for StorageFailure {
     fn from(error: BootstrapError) -> Self {
         let phase = match error.phase {
             Phase::Preflight => "preflight",
+            Phase::Role => "role",
             Phase::Genesis => "genesis",
             Phase::Prepare => "prepare",
             Phase::DescriptorCreate => "descriptor_create",
@@ -69,6 +70,7 @@ impl From<BootstrapError> for StorageFailure {
             Cause::Namespace(_) => ("namespace", None),
             Cause::Io(_) => ("io", None),
             Cause::InvalidInput => ("invalid_input", None),
+            Cause::UnsupportedPlan => ("unsupported_plan", None),
             Cause::Capacity => ("capacity", None),
             Cause::IdentityMismatch => ("identity_mismatch", None),
             Cause::LengthMismatch => ("length_mismatch", None),
