@@ -31,10 +31,17 @@ pub(in crate::storage) use dirty_allocation::InstallPermit as DirtyInstallPermit
 pub(crate) use dirty_allocation::{AllocationWriter, DirtyAllocationError};
 use dirty_allocation::{OPERATION_BYTES, WriterControl};
 
+#[path = "recovery_prefix.rs"]
+mod recovery_prefix;
 #[path = "status_init.rs"]
 mod status_init;
 #[path = "status_init_operation.rs"]
 mod status_init_operation;
+pub(crate) use recovery_prefix::{
+    Cause as RecoveryPrefixCause, Phase as RecoveryPrefixPhase,
+    ProducerMode as RecoveryProducerMode, RecoveryPrefix, RecoveryPrefixError,
+    RecoveryPrefixObservation,
+};
 pub(crate) use status_init::{
     BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, InitAttemptError,
     InitializedStatusObservation, IntoFlushError, ReservedStatus, StatusBootstrapWriter,

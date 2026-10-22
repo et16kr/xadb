@@ -1,0 +1,2734 @@
+{
+  "schema": 1,
+  "contract": "devdoc/contracts/dev3-recovery-prefix.md",
+  "purpose": "semantic envelope observation only; no group/adoption authority",
+  "case_env": "XADB_RECOVERY_PREFIX_CASES",
+  "markers": {
+    "begin": "RECOVERY_PREFIX_CASE_BEGIN\t{id}",
+    "pass": "RECOVERY_PREFIX_CASE\t{id}\tPASS",
+    "complete": "RECOVERY_PREFIX_COMPLETE count={count}"
+  },
+  "groups": {
+    "mandatory": [
+      "WP001",
+      "WP002",
+      "WP003",
+      "WP004",
+      "WP005",
+      "WP006",
+      "WP007",
+      "WP008",
+      "WP009",
+      "WP010",
+      "WP011",
+      "WP012",
+      "WP013",
+      "WP014",
+      "WP015",
+      "WP016",
+      "WP017",
+      "WP018",
+      "WP021",
+      "WP022",
+      "WP023",
+      "WP024",
+      "WP026",
+      "WP027",
+      "WP028",
+      "WP031",
+      "WP019",
+      "WP020",
+      "WP025",
+      "WP029",
+      "WP030",
+      "WP032",
+      "WP033",
+      "WP034",
+      "WP035",
+      "WP036",
+      "WP037",
+      "WP038",
+      "WP039",
+      "WP040",
+      "WP041",
+      "WP042"
+    ],
+    "s5_additional": [
+      "WPS002",
+      "WPS003",
+      "WPS004",
+      "WPS006",
+      "WPS007",
+      "WPS008",
+      "WPS009",
+      "WPS010",
+      "WPS011",
+      "WPS012",
+      "WPS013",
+      "WPS014",
+      "WPS015",
+      "WPS016",
+      "WPS017",
+      "WPS018",
+      "WPS019",
+      "WPS020",
+      "WPS021",
+      "WPS022",
+      "WPS023",
+      "WPS024",
+      "WPS025",
+      "WPS026",
+      "WPS027",
+      "WPS028",
+      "WPS029",
+      "WPS030",
+      "WPS031",
+      "WPS032",
+      "WPS033",
+      "WPS034",
+      "WPS035",
+      "WPS036",
+      "WPS037",
+      "WPS038",
+      "WPS039",
+      "WPS040",
+      "WPS041",
+      "WPS042",
+      "WPS043",
+      "WPS044",
+      "WPS045",
+      "WPS046",
+      "WPS047",
+      "WPS048",
+      "WPS049",
+      "WPS050",
+      "WPS051",
+      "WPS052",
+      "WPS053",
+      "WPS054",
+      "WPS055",
+      "WPS056",
+      "WPS057",
+      "WPS058",
+      "WPS059",
+      "WPS060",
+      "WPS061",
+      "WPS062",
+      "WPS063",
+      "WPS064",
+      "WPS065",
+      "WPS066",
+      "WPS067",
+      "WPS068",
+      "WPS069",
+      "WPS070",
+      "WPS071",
+      "WPS072",
+      "WPS073",
+      "WPS074",
+      "WPS075",
+      "WPS076",
+      "WPS077",
+      "WPS078",
+      "WPS079",
+      "WPS080",
+      "WPS081",
+      "WPS082",
+      "WPS083",
+      "WPS084",
+      "WPS085",
+      "WPS086",
+      "WPS087",
+      "WPS088",
+      "WPS089",
+      "WPS090",
+      "WPS091",
+      "WPS092",
+      "WPS093",
+      "WPS094",
+      "WPS095",
+      "WPS096",
+      "WPS097",
+      "WPS098",
+      "WPS099",
+      "WPS100",
+      "WPS101",
+      "WPS102",
+      "WPS103",
+      "WPS104",
+      "WPS105",
+      "WPS106",
+      "WPS107",
+      "WPS108",
+      "WPS109",
+      "WPS110",
+      "WPS111",
+      "WPS112",
+      "WPS113",
+      "WPS114",
+      "WPS115",
+      "WPS116",
+      "WPS117",
+      "WPS118",
+      "WPS119",
+      "WPS120",
+      "WPS121",
+      "WPS122",
+      "WPS123",
+      "WPS124",
+      "WPS125",
+      "WPS126",
+      "WPS127",
+      "WPS128",
+      "WPS129",
+      "WPS130",
+      "WPS131",
+      "WPS132",
+      "WPS133",
+      "WPS134",
+      "WPS135",
+      "WPS136",
+      "WPS137",
+      "WPS138",
+      "WPS139",
+      "WPS140",
+      "WPS141",
+      "WPS142",
+      "WPS143",
+      "WPS144",
+      "WPS145",
+      "WPS146",
+      "WPS147",
+      "WPS148",
+      "WPS149",
+      "WPS150",
+      "WPS151",
+      "WPS152",
+      "WPS153",
+      "WPS154",
+      "WPS155",
+      "WPS156",
+      "WPS157",
+      "WPS158",
+      "WPS161",
+      "WPS162",
+      "WPS163",
+      "WPS164",
+      "WPS165",
+      "WPS166",
+      "WPS167",
+      "WPS168",
+      "WPS169",
+      "WPS170",
+      "WPS171",
+      "WPS172",
+      "WPS173",
+      "WPS174",
+      "WPS175",
+      "WPS176",
+      "WPS177",
+      "WPS178",
+      "WPS179",
+      "WPS180",
+      "WPS181",
+      "WPS182",
+      "WPS183",
+      "WPS184",
+      "WPS185",
+      "WPS186",
+      "WPS187",
+      "WPS188",
+      "WPS189",
+      "WPS190",
+      "WPS191",
+      "WPS192",
+      "WPS193",
+      "WPS194",
+      "WPS195",
+      "WPS196",
+      "WPS197",
+      "WPS198",
+      "WPS199",
+      "WPS200",
+      "WPS201",
+      "WPS202",
+      "WPS203",
+      "WPS204",
+      "WPS205",
+      "WPS206",
+      "WPS207",
+      "WPS208",
+      "WPS209",
+      "WPS210",
+      "WPS212",
+      "WPS213",
+      "WPS214",
+      "WPS215",
+      "WPS216",
+      "WPS217",
+      "WPS218",
+      "WPS219",
+      "WPS220",
+      "WPS221",
+      "WPS222",
+      "WPS223",
+      "WPS224",
+      "WPS225",
+      "WPS226",
+      "WPS227",
+      "WPS228",
+      "WPS229",
+      "WPS230",
+      "WPS231",
+      "WPS232",
+      "WPS233",
+      "WPS234",
+      "WPS235",
+      "WPS236",
+      "WPS237",
+      "WPS238",
+      "WPS239",
+      "WPS240",
+      "WPS241",
+      "WPS242"
+    ],
+    "s5_matrix_all": [
+      "WPS000",
+      "WPS001",
+      "WPS002",
+      "WPS003",
+      "WPS004",
+      "WPS005",
+      "WPS006",
+      "WPS007",
+      "WPS008",
+      "WPS009",
+      "WPS010",
+      "WPS011",
+      "WPS012",
+      "WPS013",
+      "WPS014",
+      "WPS015",
+      "WPS016",
+      "WPS017",
+      "WPS018",
+      "WPS019",
+      "WPS020",
+      "WPS021",
+      "WPS022",
+      "WPS023",
+      "WPS024",
+      "WPS025",
+      "WPS026",
+      "WPS027",
+      "WPS028",
+      "WPS029",
+      "WPS030",
+      "WPS031",
+      "WPS032",
+      "WPS033",
+      "WPS034",
+      "WPS035",
+      "WPS036",
+      "WPS037",
+      "WPS038",
+      "WPS039",
+      "WPS040",
+      "WPS041",
+      "WPS042",
+      "WPS043",
+      "WPS044",
+      "WPS045",
+      "WPS046",
+      "WPS047",
+      "WPS048",
+      "WPS049",
+      "WPS050",
+      "WPS051",
+      "WPS052",
+      "WPS053",
+      "WPS054",
+      "WPS055",
+      "WPS056",
+      "WPS057",
+      "WPS058",
+      "WPS059",
+      "WPS060",
+      "WPS061",
+      "WPS062",
+      "WPS063",
+      "WPS064",
+      "WPS065",
+      "WPS066",
+      "WPS067",
+      "WPS068",
+      "WPS069",
+      "WPS070",
+      "WPS071",
+      "WPS072",
+      "WPS073",
+      "WPS074",
+      "WPS075",
+      "WPS076",
+      "WPS077",
+      "WPS078",
+      "WPS079",
+      "WPS080",
+      "WPS081",
+      "WPS082",
+      "WPS083",
+      "WPS084",
+      "WPS085",
+      "WPS086",
+      "WPS087",
+      "WPS088",
+      "WPS089",
+      "WPS090",
+      "WPS091",
+      "WPS092",
+      "WPS093",
+      "WPS094",
+      "WPS095",
+      "WPS096",
+      "WPS097",
+      "WPS098",
+      "WPS099",
+      "WPS100",
+      "WPS101",
+      "WPS102",
+      "WPS103",
+      "WPS104",
+      "WPS105",
+      "WPS106",
+      "WPS107",
+      "WPS108",
+      "WPS109",
+      "WPS110",
+      "WPS111",
+      "WPS112",
+      "WPS113",
+      "WPS114",
+      "WPS115",
+      "WPS116",
+      "WPS117",
+      "WPS118",
+      "WPS119",
+      "WPS120",
+      "WPS121",
+      "WPS122",
+      "WPS123",
+      "WPS124",
+      "WPS125",
+      "WPS126",
+      "WPS127",
+      "WPS128",
+      "WPS129",
+      "WPS130",
+      "WPS131",
+      "WPS132",
+      "WPS133",
+      "WPS134",
+      "WPS135",
+      "WPS136",
+      "WPS137",
+      "WPS138",
+      "WPS139",
+      "WPS140",
+      "WPS141",
+      "WPS142",
+      "WPS143",
+      "WPS144",
+      "WPS145",
+      "WPS146",
+      "WPS147",
+      "WPS148",
+      "WPS149",
+      "WPS150",
+      "WPS151",
+      "WPS152",
+      "WPS153",
+      "WPS154",
+      "WPS155",
+      "WPS156",
+      "WPS157",
+      "WPS158",
+      "WPS159",
+      "WPS160",
+      "WPS161",
+      "WPS162",
+      "WPS163",
+      "WPS164",
+      "WPS165",
+      "WPS166",
+      "WPS167",
+      "WPS168",
+      "WPS169",
+      "WPS170",
+      "WPS171",
+      "WPS172",
+      "WPS173",
+      "WPS174",
+      "WPS175",
+      "WPS176",
+      "WPS177",
+      "WPS178",
+      "WPS179",
+      "WPS180",
+      "WPS181",
+      "WPS182",
+      "WPS183",
+      "WPS184",
+      "WPS185",
+      "WPS186",
+      "WPS187",
+      "WPS188",
+      "WPS189",
+      "WPS190",
+      "WPS191",
+      "WPS192",
+      "WPS193",
+      "WPS194",
+      "WPS195",
+      "WPS196",
+      "WPS197",
+      "WPS198",
+      "WPS199",
+      "WPS200",
+      "WPS201",
+      "WPS202",
+      "WPS203",
+      "WPS204",
+      "WPS205",
+      "WPS206",
+      "WPS207",
+      "WPS208",
+      "WPS209",
+      "WPS210",
+      "WPS211",
+      "WPS212",
+      "WPS213",
+      "WPS214",
+      "WPS215",
+      "WPS216",
+      "WPS217",
+      "WPS218",
+      "WPS219",
+      "WPS220",
+      "WPS221",
+      "WPS222",
+      "WPS223",
+      "WPS224",
+      "WPS225",
+      "WPS226",
+      "WPS227",
+      "WPS228",
+      "WPS229",
+      "WPS230",
+      "WPS231",
+      "WPS232",
+      "WPS233",
+      "WPS234",
+      "WPS235",
+      "WPS236",
+      "WPS237",
+      "WPS238",
+      "WPS239",
+      "WPS240",
+      "WPS241",
+      "WPS242",
+      "WPS243"
+    ],
+    "aliases": {
+      "WPS000": "WP001",
+      "WPS001": "WP006",
+      "WPS005": "WP007",
+      "WPS159": "WP008",
+      "WPS160": "WP009",
+      "WPS211": "WP010",
+      "WPS243": "WP011"
+    },
+    "s5": [
+      "WPS002",
+      "WPS003",
+      "WPS004",
+      "WPS006",
+      "WPS007",
+      "WPS008",
+      "WPS009",
+      "WPS010",
+      "WPS011",
+      "WPS012",
+      "WPS013",
+      "WPS014",
+      "WPS015",
+      "WPS016",
+      "WPS017",
+      "WPS018",
+      "WPS019",
+      "WPS020",
+      "WPS021",
+      "WPS022",
+      "WPS023",
+      "WPS024",
+      "WPS025",
+      "WPS026",
+      "WPS027",
+      "WPS028",
+      "WPS029",
+      "WPS030",
+      "WPS031",
+      "WPS032",
+      "WPS033",
+      "WPS034",
+      "WPS035",
+      "WPS036",
+      "WPS037",
+      "WPS038",
+      "WPS039",
+      "WPS040",
+      "WPS041",
+      "WPS042",
+      "WPS043",
+      "WPS044",
+      "WPS045",
+      "WPS046",
+      "WPS047",
+      "WPS048",
+      "WPS049",
+      "WPS050",
+      "WPS051",
+      "WPS052",
+      "WPS053",
+      "WPS054",
+      "WPS055",
+      "WPS056",
+      "WPS057",
+      "WPS058",
+      "WPS059",
+      "WPS060",
+      "WPS061",
+      "WPS062",
+      "WPS063",
+      "WPS064",
+      "WPS065",
+      "WPS066",
+      "WPS067",
+      "WPS068",
+      "WPS069",
+      "WPS070",
+      "WPS071",
+      "WPS072",
+      "WPS073",
+      "WPS074",
+      "WPS075",
+      "WPS076",
+      "WPS077",
+      "WPS078",
+      "WPS079",
+      "WPS080",
+      "WPS081",
+      "WPS082",
+      "WPS083",
+      "WPS084",
+      "WPS085",
+      "WPS086",
+      "WPS087",
+      "WPS088",
+      "WPS089",
+      "WPS090",
+      "WPS091",
+      "WPS092",
+      "WPS093",
+      "WPS094",
+      "WPS095",
+      "WPS096",
+      "WPS097",
+      "WPS098",
+      "WPS099",
+      "WPS100",
+      "WPS101",
+      "WPS102",
+      "WPS103",
+      "WPS104",
+      "WPS105",
+      "WPS106",
+      "WPS107",
+      "WPS108",
+      "WPS109",
+      "WPS110",
+      "WPS111",
+      "WPS112",
+      "WPS113",
+      "WPS114",
+      "WPS115",
+      "WPS116",
+      "WPS117",
+      "WPS118",
+      "WPS119",
+      "WPS120",
+      "WPS121",
+      "WPS122",
+      "WPS123",
+      "WPS124",
+      "WPS125",
+      "WPS126",
+      "WPS127",
+      "WPS128",
+      "WPS129",
+      "WPS130",
+      "WPS131",
+      "WPS132",
+      "WPS133",
+      "WPS134",
+      "WPS135",
+      "WPS136",
+      "WPS137",
+      "WPS138",
+      "WPS139",
+      "WPS140",
+      "WPS141",
+      "WPS142",
+      "WPS143",
+      "WPS144",
+      "WPS145",
+      "WPS146",
+      "WPS147",
+      "WPS148",
+      "WPS149",
+      "WPS150",
+      "WPS151",
+      "WPS152",
+      "WPS153",
+      "WPS154",
+      "WPS155",
+      "WPS156",
+      "WPS157",
+      "WPS158",
+      "WPS161",
+      "WPS162",
+      "WPS163",
+      "WPS164",
+      "WPS165",
+      "WPS166",
+      "WPS167",
+      "WPS168",
+      "WPS169",
+      "WPS170",
+      "WPS171",
+      "WPS172",
+      "WPS173",
+      "WPS174",
+      "WPS175",
+      "WPS176",
+      "WPS177",
+      "WPS178",
+      "WPS179",
+      "WPS180",
+      "WPS181",
+      "WPS182",
+      "WPS183",
+      "WPS184",
+      "WPS185",
+      "WPS186",
+      "WPS187",
+      "WPS188",
+      "WPS189",
+      "WPS190",
+      "WPS191",
+      "WPS192",
+      "WPS193",
+      "WPS194",
+      "WPS195",
+      "WPS196",
+      "WPS197",
+      "WPS198",
+      "WPS199",
+      "WPS200",
+      "WPS201",
+      "WPS202",
+      "WPS203",
+      "WPS204",
+      "WPS205",
+      "WPS206",
+      "WPS207",
+      "WPS208",
+      "WPS209",
+      "WPS210",
+      "WPS212",
+      "WPS213",
+      "WPS214",
+      "WPS215",
+      "WPS216",
+      "WPS217",
+      "WPS218",
+      "WPS219",
+      "WPS220",
+      "WPS221",
+      "WPS222",
+      "WPS223",
+      "WPS224",
+      "WPS225",
+      "WPS226",
+      "WPS227",
+      "WPS228",
+      "WPS229",
+      "WPS230",
+      "WPS231",
+      "WPS232",
+      "WPS233",
+      "WPS234",
+      "WPS235",
+      "WPS236",
+      "WPS237",
+      "WPS238",
+      "WPS239",
+      "WPS240",
+      "WPS241",
+      "WPS242"
+    ]
+  },
+  "counts": {
+    "mandatory": 42,
+    "s5_matrix_all": 244,
+    "aliases": 7,
+    "s5_additional": 237,
+    "unique_runtime": 279
+  },
+  "literal": {
+    "length": 244,
+    "sha256": "ab73766b742b85bcfd0ee93e6ff0b2ab2c1fbb55f8708996869c5c75f5877635",
+    "hex": "5857463101000302a0000000f400000034000000010000003131313131313131313131313131313101000000000000000100000000000000020000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000bafefa81b88ee08670a1b089a3ec89dfcbd5e5bf404dfdb903ee1bc166a63ee3a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a51f0ca5d52e2ce7118cad91ef10952b7226cb657ffade3b1015bc6fee30e1c1f1",
+    "oracle": "Python struct/hashlib; no production WAL encoder"
+  },
+  "cases": [
+    {
+      "id": "WP001",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_observes_only_envelope",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP002",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_observes_only_envelope",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP003",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_observes_only_envelope",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP004",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_observes_only_envelope",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP005",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_observes_only_envelope",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP006",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_incomplete_boundaries",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP007",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_incomplete_boundaries",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP008",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_incomplete_boundaries",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP009",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_incomplete_boundaries",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP010",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_incomplete_boundaries",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP011",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_incomplete_boundaries",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP012",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_incomplete_boundaries",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP013",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_incomplete_boundaries",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP014",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP015",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP016",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP017",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP018",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP021",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP022",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP023",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP024",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP026",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP027",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP028",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP031",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP019",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP020",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP025",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP029",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP030",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_visible_rejections",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP032",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_complete_checksum_and_order",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP033",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_complete_checksum_and_order",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP034",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_complete_checksum_and_order",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP035",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_complete_checksum_and_order",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP036",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_preserves_input_and_borrow",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP037",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_preserves_input_and_borrow",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP038",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_header_length_bounds",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP039",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_header_length_bounds",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP040",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_header_length_bounds",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP041",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_header_length_bounds",
+      "group": "mandatory"
+    },
+    {
+      "id": "WP042",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_header_length_bounds",
+      "group": "mandatory"
+    },
+    {
+      "id": "WPS000",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 0,
+      "mandatory_alias": "WP001"
+    },
+    {
+      "id": "WPS001",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 1,
+      "mandatory_alias": "WP006"
+    },
+    {
+      "id": "WPS002",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 2,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS003",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 3,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS004",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 4,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS005",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 5,
+      "mandatory_alias": "WP007"
+    },
+    {
+      "id": "WPS006",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 6,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS007",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 7,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS008",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 8,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS009",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 9,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS010",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 10,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS011",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 11,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS012",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 12,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS013",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 13,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS014",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 14,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS015",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 15,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS016",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 16,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS017",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 17,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS018",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 18,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS019",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 19,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS020",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 20,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS021",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 21,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS022",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 22,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS023",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 23,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS024",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 24,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS025",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 25,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS026",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 26,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS027",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 27,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS028",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 28,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS029",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 29,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS030",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 30,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS031",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 31,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS032",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 32,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS033",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 33,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS034",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 34,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS035",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 35,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS036",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 36,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS037",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 37,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS038",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 38,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS039",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 39,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS040",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 40,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS041",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 41,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS042",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 42,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS043",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 43,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS044",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 44,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS045",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 45,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS046",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 46,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS047",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 47,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS048",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 48,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS049",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 49,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS050",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 50,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS051",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 51,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS052",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 52,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS053",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 53,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS054",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 54,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS055",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 55,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS056",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 56,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS057",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 57,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS058",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 58,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS059",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 59,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS060",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 60,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS061",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 61,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS062",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 62,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS063",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 63,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS064",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 64,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS065",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 65,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS066",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 66,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS067",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 67,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS068",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 68,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS069",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 69,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS070",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 70,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS071",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 71,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS072",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 72,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS073",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 73,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS074",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 74,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS075",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 75,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS076",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 76,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS077",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 77,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS078",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 78,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS079",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 79,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS080",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 80,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS081",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 81,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS082",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 82,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS083",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 83,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS084",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 84,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS085",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 85,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS086",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 86,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS087",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 87,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS088",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 88,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS089",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 89,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS090",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 90,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS091",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 91,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS092",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 92,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS093",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 93,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS094",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 94,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS095",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 95,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS096",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 96,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS097",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 97,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS098",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 98,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS099",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 99,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS100",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 100,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS101",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 101,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS102",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 102,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS103",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 103,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS104",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 104,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS105",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 105,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS106",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 106,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS107",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 107,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS108",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 108,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS109",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 109,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS110",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 110,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS111",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 111,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS112",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 112,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS113",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 113,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS114",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 114,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS115",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 115,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS116",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 116,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS117",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 117,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS118",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 118,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS119",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 119,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS120",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 120,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS121",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 121,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS122",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 122,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS123",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 123,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS124",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 124,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS125",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 125,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS126",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 126,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS127",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 127,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS128",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 128,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS129",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 129,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS130",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 130,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS131",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 131,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS132",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 132,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS133",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 133,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS134",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 134,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS135",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 135,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS136",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 136,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS137",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 137,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS138",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 138,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS139",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 139,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS140",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 140,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS141",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 141,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS142",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 142,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS143",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 143,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS144",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 144,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS145",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 145,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS146",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 146,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS147",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 147,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS148",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 148,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS149",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 149,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS150",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 150,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS151",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 151,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS152",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 152,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS153",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 153,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS154",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 154,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS155",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 155,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS156",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 156,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS157",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 157,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS158",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 158,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS159",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 159,
+      "mandatory_alias": "WP008"
+    },
+    {
+      "id": "WPS160",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 160,
+      "mandatory_alias": "WP009"
+    },
+    {
+      "id": "WPS161",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 161,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS162",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 162,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS163",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 163,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS164",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 164,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS165",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 165,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS166",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 166,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS167",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 167,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS168",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 168,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS169",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 169,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS170",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 170,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS171",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 171,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS172",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 172,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS173",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 173,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS174",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 174,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS175",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 175,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS176",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 176,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS177",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 177,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS178",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 178,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS179",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 179,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS180",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 180,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS181",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 181,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS182",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 182,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS183",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 183,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS184",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 184,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS185",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 185,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS186",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 186,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS187",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 187,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS188",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 188,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS189",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 189,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS190",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 190,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS191",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 191,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS192",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 192,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS193",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 193,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS194",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 194,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS195",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 195,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS196",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 196,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS197",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 197,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS198",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 198,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS199",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 199,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS200",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 200,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS201",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 201,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS202",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 202,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS203",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 203,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS204",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 204,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS205",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 205,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS206",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 206,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS207",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 207,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS208",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 208,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS209",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 209,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS210",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 210,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS211",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 211,
+      "mandatory_alias": "WP010"
+    },
+    {
+      "id": "WPS212",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 212,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS213",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 213,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS214",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 214,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS215",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 215,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS216",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 216,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS217",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 217,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS218",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 218,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS219",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 219,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS220",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 220,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS221",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 221,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS222",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 222,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS223",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 223,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS224",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 224,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS225",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 225,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS226",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 226,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS227",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 227,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS228",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 228,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS229",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 229,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS230",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 230,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS231",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 231,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS232",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 232,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS233",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 233,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS234",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 234,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS235",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 235,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS236",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 236,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS237",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 237,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS238",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 238,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS239",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 239,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS240",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 240,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS241",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 241,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS242",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 242,
+      "mandatory_alias": null
+    },
+    {
+      "id": "WPS243",
+      "selector": "storage::wal_frame::semantic_prefix_tests::semantic_prefix_s5_every_eof",
+      "group": "s5_matrix",
+      "cut": 243,
+      "mandatory_alias": "WP011"
+    }
+  ],
+  "case_order": "Per-selector marker order equals cases order; IDs are not sorted numerically.",
+  "budget_seconds": {
+    "mandatory": {
+      "per_job": 30,
+      "aggregate": 120
+    },
+    "s5": {
+      "per_job": 1200,
+      "aggregate": 1200
+    }
+  }
+}

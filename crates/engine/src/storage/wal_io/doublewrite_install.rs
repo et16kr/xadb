@@ -42,6 +42,10 @@ pub(in crate::storage) use mutable_storage::{
     CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
 };
 pub(in crate::storage) use mutable_storage::{DirtyInstallPermit, FlushFinalizePermit};
+pub(crate) use mutable_storage::{
+    RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError, RecoveryPrefixObservation,
+    RecoveryPrefixPhase, RecoveryProducerMode,
+};
 
 const WORKSPACE_BYTES: usize = 4 << 20;
 const EMPTY_BYTES: usize = 160;

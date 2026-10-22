@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV3 현행 WAL prefix의 닫힌 분석](dev3-recovery-prefix.md): actual reserve/cancel·Status INIT의 canonical owner·inventory·RAM image 분석과 초기 SELECT/물리 복구의 경계. 선택 검증과 제한 단위 최종 D1을 수용했다.
+
 - [DEV3 초기 복구 입력 선택](dev3-recovery-select.md): 3.12.1.a의 초기 control·exclusive lease·header-only WAL 선택, 닫힌 inspection·오류·자원·필수 인수의 채택 계약.
 
 2026-10-22 [DEV3 방향 리뷰 반영](../plans/dev3-implementation-plan.md#direction-review-adoption): [일반 page 수명](dev3-task-05-buffer-flush.md#operational-pool), [첫 행 거래](dev3-task-11-commit.md#first-row-integration), [제한 복구](dev3-task-12-recovery.md#early-recovery), [64GiB 준비](dev3-resource-bounds.md#qualification-profile-preparation), [계측 공급](dev3-task-16-qualification.md#observation-delivery)의 경계를 구체화했다.

@@ -56,6 +56,10 @@ pub(in crate::storage) use doublewrite_install::{
     CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
 };
 pub(in crate::storage) use doublewrite_install::{DirtyInstallPermit, FlushFinalizePermit};
+pub(crate) use doublewrite_install::{
+    RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError, RecoveryPrefixObservation,
+    RecoveryPrefixPhase, RecoveryProducerMode,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {
@@ -196,33 +200,44 @@ pub(in crate::storage) fn inspect_initial_bootstrap(
     selected: SelectedControl,
     scratch: &mut [[u8; PAGE_BYTES]; 3],
 ) -> std::result::Result<InitialRecoveryExpectation, InitialRecoveryError> {
+    let plan = prepare_recovery_bootstrap(profile, selected, scratch)?;
+    let (doublewrite, stage_digest) =
+        doublewrite_install::initial_recovery_expectation(&plan, &mut scratch[0])
+            .map_err(InitialRecoveryError::Doublewrite)?;
+    Ok(InitialRecoveryExpectation {
+        plan: plan.kind.version(),
+        filemap: plan.selected,
+        doublewrite,
+        stage_digest,
+    })
+}
+
+/// Canonical genesis bytes only. Keeps the authenticated LSN0 allocator in
+/// scratch[0]; no installed session, live role or recovery reservation is made.
+fn prepare_recovery_bootstrap(
+    profile: Profile,
+    selected: SelectedControl,
+    scratch: &mut [[u8; PAGE_BYTES]; 3],
+) -> Result<BootstrapPlan> {
     let bytes = &scratch[0][..super::CONTROL_BYTES];
     super::check_control(bytes, profile, b"XBS1").map_err(control_error)?;
     let kind = match super::u64_at(bytes, 280) {
         1 => BootstrapPlanKind::AllocatorOnly,
         2 => BootstrapPlanKind::StatusBootstrap,
-        _ => return Err(failed(Phase::Prepare, Cause::UnsupportedPlan).into()),
+        _ => return Err(failed(Phase::Prepare, Cause::UnsupportedPlan)),
     };
     let actual_digest = content_digest(bytes);
     let plan = BootstrapPlan::prepare_for_kind(profile, scratch, kind)?;
     if selected != plan.selected {
-        return Err(failed(Phase::Prepare, Cause::IdentityMismatch).into());
+        return Err(failed(Phase::Prepare, Cause::IdentityMismatch));
     }
     let expected = plan
-        .encode_descriptor(&mut scratch[0])
+        .encode_descriptor(&mut scratch[2])
         .map_err(control_error)?;
     if actual_digest != content_digest(expected) {
-        return Err(control_error(ControlError::Corrupt).into());
+        return Err(control_error(ControlError::Corrupt));
     }
-    let (doublewrite, stage_digest) =
-        doublewrite_install::initial_recovery_expectation(&plan, &mut scratch[0])
-            .map_err(InitialRecoveryError::Doublewrite)?;
-    Ok(InitialRecoveryExpectation {
-        plan: kind.version(),
-        filemap: plan.selected,
-        doublewrite,
-        stage_digest,
-    })
+    Ok(plan)
 }
 
 /// Conservative source-owned nested join; caller page storage is separate.
@@ -230,6 +245,11 @@ pub(in crate::storage) fn recovery_preparation_bytes<W: WriterNamespace>() -> us
     use std::mem::size_of;
     let bootstrap =
         source_budget::<W>().prepare_nested + size_of::<[AllocationEntry; EXTENT_PAGES]>() + 1032;
+    // prepare_recovery_bootstrap -> prepare_for_kind replaces the old
+    // prepare -> prepare_for_kind result-wrapper depth. The existing two Plan
+    // values and six largest Result carriers cover that same simultaneous set.
+    // Descriptor re-encoding follows prepare_for_kind's return; DWB preparation
+    // follows prepare_recovery_bootstrap's return, so those phases do not stack.
     bootstrap.max(doublewrite_install::recovery_preparation_bytes() + size_of::<BootstrapPlan>())
         + 2 * size_of::<InitialRecoveryExpectation>()
 }

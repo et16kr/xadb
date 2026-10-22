@@ -4129,5 +4129,58 @@
       "DEV3 final S5 inventory; additional588 cases NOT_RUN"
     ],
     "evidence_ref": "dev3-status-home-flush-20261022.json"
+  },
+  "dev3_recovery_prefix": {
+    "status": "accepted_scoped_unit",
+    "contract_ref": "dev3-recovery-prefix.md",
+    "evidence_ref": "dev3-recovery-prefix-20261022.json",
+    "scope": "read-only current-producer canonical prefix/owner/ledger observations; no repair/REDO/READY",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_frame.rs",
+      "crates/engine/src/storage/wal_io.rs",
+      "crates/engine/src/storage/wal_io/allocation_budget.rs",
+      "crates/engine/src/storage/wal_io/allocation_operation.rs",
+      "crates/engine/src/storage/wal_io/bootstrap.rs",
+      "crates/engine/src/storage/wal_io/doublewrite_install.rs",
+      "crates/engine/src/storage/wal_io/mutable_storage.rs",
+      "crates/engine/src/storage/wal_io/recovery_prefix.rs",
+      "crates/engine/src/storage/wal_io/recovery_prefix_native_tests.rs",
+      "crates/engine/src/storage/wal_io/recovery_prefix_tests.rs",
+      "crates/engine/src/storage/wal_io/status_init_operation.rs",
+      "crates/engine/src/storage/wal_semantic_prefix_tests.rs",
+      "crates/engine/tests/fixtures/recovery_prefix/compiler/borrowed_image_immutable.rs",
+      "crates/engine/tests/fixtures/recovery_prefix/compiler/into_writer_missing.rs",
+      "crates/engine/tests/fixtures/recovery_prefix/compiler/manifest.json",
+      "crates/engine/tests/fixtures/recovery_prefix/compiler/observation_borrow.rs",
+      "crates/engine/tests/fixtures/recovery_prefix/compiler/owner_move.rs",
+      "crates/engine/tests/fixtures/recovery_prefix/compiler/positive.rs",
+      "crates/engine/tests/fixtures/recovery_prefix/compiler/private_fields.rs",
+      "crates/engine/tests/fixtures/recovery_prefix/compiler/workspace_move.rs",
+      "crates/engine/tests/fixtures/recovery_prefix/compiler/workspace_reborrow.rs",
+      "crates/engine/tests/fixtures/recovery_prefix/native/long_manifest.json",
+      "crates/engine/tests/fixtures/recovery_prefix/native/manifest.json",
+      "crates/engine/tests/fixtures/recovery_prefix/runtime/manifest.json",
+      "crates/engine/tests/fixtures/recovery_prefix/semantic_prefix/manifest.json",
+      "scripts/dev3_recovery_prefix.py",
+      "scripts/dev3_recovery_prefix_compiler.py",
+      "scripts/dev3_recovery_prefix_inputs.py",
+      "scripts/dev3_recovery_prefix_long_inputs.py",
+      "scripts/dev3_recovery_prefix_long_native.py",
+      "scripts/dev3_recovery_prefix_native.py",
+      "scripts/test_dev3_recovery_prefix.py",
+      "scripts/test_dev3_recovery_prefix_compiler.py",
+      "scripts/test_dev3_recovery_prefix_native.py"
+    ],
+    "dependencies_changed": false,
+    "source_roots_changed": false,
+    "full_stage_acceptance": false,
+    "pending": [
+      "actual BOOT_RESERVE and reservation handoff",
+      "selected Pending image repair",
+      "physical pagewise REDO and restart after repair faults",
+      "ordinary recovery/READY",
+      "DEV3 final S5"
+    ],
+    "verified_source_fingerprint": "2468c48df6c8821d301c30130e6702c847494d1f646fa1e5f16ecb091c8fcd42"
   }
 }

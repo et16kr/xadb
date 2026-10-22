@@ -662,10 +662,21 @@ prepare12208/readback14788·Fresh role424/Mutable role792 bytes의 실제 typed 
 
 S5 matrix1176·mandatory alias48·추가1128은 작성·NOT_RUN이다. BOOT_RESERVE·repair·일반 recovery/READY·전체 DEV3·최종 S5는 미완료다. 다음은 선택 owner의 실제 profile 예약과 producer prefix의 지원 의미를 확정해 후속 장벽에 연결하는 단위다. 문서 자동 검사는 push 전용으로 유지한다.
 
+<a id="recovery-prefix"></a>
+## 현행 WAL prefix의 닫힌 분석 — 선택 검증
+
+기준 HEAD `412bd7b8477cde8abee86de4c5d18611f9d66385` 뒤 [소유 계약](../contracts/dev3-recovery-prefix.md)에 따라 실제 reserve/cancel·Status INIT의 tag2 WAL을 canonical RAM 상태로 분석하는 후속 공급을 구현했다. pure expected context·immutable bootstrap을 공유하며 live role/fence/권한과 기존 초기 SELECT 제한을 유지한다. lease·source WAL File·caller256KiB borrow를 보유한 owner는 allocator/선택적 Status/descriptor·active owner와 남은 의무만 관측한다.
+
+[실제 검증](../evidence/dev3-recovery-prefix-20261022.md)·[source별 색인](../evidence/dev3-recovery-prefix-20261022.json): 새 scanner42·core189의 고유231 완료 단언을 확인했고 완결 job223과 원 실패 job 내 완료 단언8을 구별한다. r3의 관련 RS6·native31/64worker·compiler8+control1, r1 checker15, 최종 r5 fmt/engine Clippy를 보존한다. 전체231을 마지막 binary에서 재실행한 결과가 아니며 원 compile/static/runtime FAIL을 유지한다. fixture 수정 뒤 해당 두 실패만 재검증했다. 별도 최종 독립 D1을 수용했으며 남은 필수 수정은 없다.
+
+source census는 mock33336/native33408≤64KiB, caller256KiB 별도다. native 폐쇄 분석 Filepeak2·mutation0, producer 포함 FD5·모두 final0을 확인했다. selected Pending metadata와 그 historical LSN의 canonical digest를 검산하며 raw image/home 수리를 인증하지 않는다. active reserve를 버리거나 terminal로 바꾸지 않고 actual owned/selector credit/remaining page credit/topup과 terminal 주소 union을 구별한다.
+
+S5 matrix304·alias31·추가273과 별도 native PL01은 작성·NOT_RUN이다. 무변경 하위 wrapper·완료 시험·SELECT 나머지164를 반복하지 않았다. 다음은 실제 BOOT 자원·예약 인계·Pending repair·page별 REDO·repair 재장애다. 일반 recovery/READY·전체 DEV3/S5 인수와 push 전용 문서 검사는 미완료다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 
-2026-10-22 후속 [방향 리뷰 반영](../plans/dev3-implementation-plan.md#direction-review-adoption)은 제한 쓰기의 복구→일반 page 수명/live undo→첫 행 거래 연결 순서를 정리한다. 위 종료·인계는 당시 기록으로 보존하며, 후속 [3.12.1.a 초기 입력 선택](#recovery-select)의 실제 API·제한 source/type 회계·선택 인수를 구별한다. BOOT_RESERVE·현재 producer nonempty 복원·64GiB 지원·새 운영 계측과 일반 READY·거래 ACK·DEV3/S5는 미완료다.
+2026-10-22 후속 [방향 리뷰 반영](../plans/dev3-implementation-plan.md#direction-review-adoption)은 제한 쓰기의 복구→일반 page 수명/live undo→첫 행 거래 연결 순서를 정리한다. 위 종료·인계는 당시 기록으로 보존하며, 후속 [초기 입력 선택](#recovery-select)과 [현행 prefix의 닫힌 분석](#recovery-prefix)의 실제 API·source/type 회계·선택 인수를 구별한다. BOOT_RESERVE·현재 producer nonempty 복원·64GiB 지원·새 운영 계측과 일반 READY·거래 ACK·DEV3/S5는 미완료다.
 
 각 작업의 개발 상세 명세와 처리·상태 설계도는 [16개 작업별 문서](../contracts/dev3-task-designs.md)에 있다. 이 설계 작성은 아래 실제 구현·검증 상태를 변경하지 않는다.
 

@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-22 [DEV3 현행 WAL prefix 분석](dev3-implementation.md#recovery-prefix): 실제 reserve/cancel·Status INIT의 canonical RAM 상태와 잔여 의무를 닫힌 owner에 재구성했다. [source별 검증](../evidence/dev3-recovery-prefix-20261022.md)은 새 unit231의 완료 단언(완결 job223·실패 job 내8), native31·compiler8+control1·checker15·변경 수신6을 구별한다. 제한 단위의 최종 독립 D1을 수용했으며 실제 Pending 수리·물리 REDO·전체 DEV3/S5는 남아 있다.
+
 2026-10-22 [DEV3 첫 복구 입력 선택](dev3-implementation.md#recovery-select): 초기 control·exclusive lease·header-only WAL의 [닫힌 선택](../contracts/dev3-recovery-select.md)을 구현하고 [source별 선택 인수](../evidence/dev3-recovery-select-20261022.md)와 독립 D1을 수용했다. BOOT_RESERVE·nonempty 복원·일반 recovery/READY·S5는 미완료다. 아래 종료·인계는 당시 기록으로 보존한다.
 
 2026-10-22 [DEV3 작은 단위 종료·인계](dev3-implementation.md#paused-after-status-home-flush): [Status home flush](dev3-implementation.md#status-home-flush)의 제한 인수와 commit을 마쳤다. 복구 진입은 사전 열람 상태로 보류하며 새 하위 작업을 시작하지 않는다. 전체 DEV3·최종 S5는 미완료다.

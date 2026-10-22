@@ -751,6 +751,63 @@ pub(super) struct FrameEnvelope<'a> {
     pub(super) record_count: u16,
 }
 
+/// A physical-prefix observation only. The complete envelope's payload still
+/// needs its opcode, owner, inventory and redo coupling validated by its owner.
+pub(super) enum SemanticFrameScan<'a> {
+    End,
+    Incomplete,
+    Complete {
+        envelope: FrameEnvelope<'a>,
+        consumed: usize,
+    },
+}
+
+/// Inspect a complete semantic header without allocating its declared body.
+/// The length has the existing format bound; it grants no adoption authority.
+/// A streaming caller must compare this length with physical EOF and validate
+/// the complete checksum before adopting or classifying an oversized frame.
+pub(super) fn semantic_frame_length(
+    header: &[u8],
+    expected: FrameExpectation,
+) -> Result<usize, WalError> {
+    validate_header_prefix(header, expected, PayloadMode::Semantic)?;
+    if header.len() < FRAME_HEADER_BYTES {
+        return Err(WalError::Truncated);
+    }
+    Ok(read_u32(header, 12) as usize)
+}
+
+/// Observe one semantic frame at the current physical cursor. Incomplete input
+/// is permitted only when the caller establishes selected-active, unrequired
+/// EOF. All visible header fields are checked before that decision. No source
+/// bytes are changed, no resynchronization is attempted, and only the first
+/// complete envelope is returned even when later bytes are present.
+pub(super) fn scan_semantic_prefix(
+    input: &[u8],
+    expected: FrameExpectation,
+    policy: TailPolicy,
+) -> Result<SemanticFrameScan<'_>, WalError> {
+    if !valid_stream(expected.stream) {
+        return Err(WalError::InvalidInput);
+    }
+    if input.is_empty() {
+        return Ok(SemanticFrameScan::End);
+    }
+    validate_header_prefix(input, expected, PayloadMode::Semantic)?;
+    if input.len() < FRAME_HEADER_BYTES || input.len() < read_u32(input, 12) as usize {
+        return if policy == TailPolicy::ActiveUnrequiredEof {
+            Ok(SemanticFrameScan::Incomplete)
+        } else {
+            Err(WalError::Truncated)
+        };
+    }
+    let consumed = read_u32(input, 12) as usize;
+    Ok(SemanticFrameScan::Complete {
+        envelope: complete_envelope(&input[..consumed], expected)?,
+        consumed,
+    })
+}
+
 fn complete_envelope(
     bytes: &[u8],
     expected: FrameExpectation,
@@ -784,3 +841,7 @@ pub(super) fn decode_semantic_envelope(
 #[cfg(test)]
 #[path = "wal_frame_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "wal_semantic_prefix_tests.rs"]
+mod semantic_prefix_tests;

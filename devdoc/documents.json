@@ -3,6 +3,21 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-recovery-prefix-20261022.md": {
+      "path": "evidence/dev3-recovery-prefix-20261022.md",
+      "role": "evidence",
+      "title": "DEV3 현행 WAL prefix 분석 인수"
+    },
+    "dev3-recovery-prefix-20261022.json": {
+      "path": "evidence/dev3-recovery-prefix-20261022.json",
+      "role": "evidence",
+      "title": "DEV3 현행 WAL prefix 분석 source별 실행 색인"
+    },
+    "dev3-recovery-prefix.md": {
+      "path": "contracts/dev3-recovery-prefix.md",
+      "role": "contracts",
+      "title": "DEV3 현행 WAL prefix의 닫힌 분석"
+    },
     "dev3-recovery-select-20261022.md": {
       "path": "evidence/dev3-recovery-select-20261022.md",
       "role": "evidence",

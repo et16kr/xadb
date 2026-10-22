@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV3 현행 WAL prefix 분석](implementation/dev3-implementation.md#recovery-prefix): 실제 reserve/cancel·Status INIT의 canonical RAM 상태와 잔여 의무를 닫힌 owner에 재구성했다. [source별 검증](evidence/dev3-recovery-prefix-20261022.md)은 새 unit231의 완료 단언(완결 job223·실패 job 내8), native31·compiler8+control1·checker15·변경 수신6을 구별한다. 제한 단위의 최종 독립 D1을 수용했으며 실제 Pending 수리·물리 REDO·전체 DEV3/S5는 남아 있다.
+
 2026-10-22 [DEV3 첫 복구 입력 선택](implementation/dev3-implementation.md#recovery-select): 초기 FILEMAP·Empty DWB·genesis header-only WAL의 [닫힌 선택](contracts/dev3-recovery-select.md)을 구현하고 [필수170·관련4 재검증·native8·compiler5+control1·checker15](evidence/dev3-recovery-select-20261022.md)와 독립 D1을 수용했다. 원 FAIL/source별 결과를 보존하며 nonempty 복원·BOOT_RESERVE·일반 recovery/READY·최종 S5는 남아 있다.
 
 2026-10-22 [DEV3 개발 모델·독립 검토 운영](plans/dev3-implementation-plan.md#model-roles): GPT-6.1 Sol을 주 개발 모델로 사용하고 핵심 복구·동시성 설계는 가능하면 Astra가 별도 검토한다. 첫 평가 단위와 판단 기준을 명시하며 기존 D1/D2 검토·변경 코드 시험·S5 전수 인수는 유지한다. 모델 비교 실행·제품 개발 재개·앱 설정 변경은 없다.

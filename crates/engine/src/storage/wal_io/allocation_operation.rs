@@ -105,6 +105,48 @@ pub(in super::super) struct Plan<'a> {
     pub(in super::super) cancel: bool,
     pub(in super::super) before_descriptor: Option<&'a [u8]>,
 }
+/// Pure semantic context. Its before image is either the live fixed page or
+/// a canonical page derived from authenticated genesis and prior accepted WAL.
+/// No synced-prefix, session, stage or physical-home authority is represented.
+#[derive(Clone, Copy)]
+pub(in super::super) struct AnalysisExpected<'a> {
+    pub(in super::super) profile: Profile,
+    pub(in super::super) identity: PageIdentity,
+    pub(in super::super) frame: FrameExpectation,
+    pub(in super::super) batch: Batch,
+    pub(in super::super) cancel: bool,
+    pub(in super::super) before_descriptor: Option<&'a [u8]>,
+}
+impl<'a> From<Plan<'a>> for AnalysisExpected<'a> {
+    fn from(plan: Plan<'a>) -> Self {
+        Self {
+            profile: plan.profile,
+            identity: plan.identity,
+            frame: FrameExpectation {
+                stream: plan.prefix.stream,
+                previous_lsn: plan.prefix.complete_lsn,
+            },
+            batch: plan.batch,
+            cancel: plan.cancel,
+            before_descriptor: plan.before_descriptor,
+        }
+    }
+}
+fn analysis_header(expected: &AnalysisExpected<'_>) -> Result<WalFrameHeader> {
+    Ok(WalFrameHeader {
+        stream: expected.frame.stream,
+        kind: FrameKind::System,
+        lsn: expected
+            .frame
+            .previous_lsn
+            .checked_add(1)
+            .ok_or(SemanticError::OrderMismatch)?,
+        previous_lsn: expected.frame.previous_lsn,
+        txn: None,
+        previous_txn_lsn: 0,
+    })
+}
+
 pub(in super::super) fn frame_length(n: usize) -> usize {
     20992 + 208 * n
 }
@@ -643,6 +685,17 @@ pub(in super::super) fn validate_with_budget(
     after: &[u8; PAGE_BYTES],
     budget: OperationBudget,
 ) -> Result<()> {
+    let expected = AnalysisExpected::from(plan);
+    validate_analysis_with_budget(expected, before, bytes, after, budget)
+}
+
+pub(in super::super) fn validate_analysis_with_budget(
+    plan: AnalysisExpected<'_>,
+    before: &[u8; PAGE_BYTES],
+    bytes: &[u8],
+    after: &[u8; PAGE_BYTES],
+    budget: OperationBudget,
+) -> Result<()> {
     require(
         budget.accepts_count(plan.batch.count()),
         SemanticError::StateMismatch,
@@ -660,7 +713,7 @@ pub(in super::super) fn validate_with_budget(
     validate_transition(&plan, before, bytes, after, header, &descriptor, budget)
 }
 
-fn validate_header(plan: &Plan<'_>, bytes: &[u8]) -> Result<WalFrameHeader> {
+fn validate_header(plan: &AnalysisExpected<'_>, bytes: &[u8]) -> Result<WalFrameHeader> {
     use SemanticError::*;
     let n = plan.batch.count();
     require(
@@ -670,13 +723,13 @@ fn validate_header(plan: &Plan<'_>, bytes: &[u8]) -> Result<WalFrameHeader> {
     let env = wal_frame::decode_semantic_envelope(
         bytes,
         FrameExpectation {
-            stream: plan.prefix.stream,
-            previous_lsn: plan.prefix.complete_lsn,
+            stream: plan.frame.stream,
+            previous_lsn: plan.frame.previous_lsn,
         },
     )
     .map_err(frame_error)?;
     require(bytes.len() == frame_length(n), Corrupt)?;
-    let h = header(*plan)?;
+    let h = analysis_header(plan)?;
     require(env.header == h && env.record_count == 1, OrderMismatch)?;
     let op = if plan.cancel { 10 } else { 8 };
     require(
@@ -727,7 +780,7 @@ fn validate_header(plan: &Plan<'_>, bytes: &[u8]) -> Result<WalFrameHeader> {
 }
 
 fn validate_descriptor(
-    plan: &Plan<'_>,
+    plan: &AnalysisExpected<'_>,
     bytes: &[u8],
     h: WalFrameHeader,
     desc: &DescriptorSpec,
@@ -769,7 +822,7 @@ fn validate_descriptor(
 }
 
 fn validate_transition(
-    plan: &Plan<'_>,
+    plan: &AnalysisExpected<'_>,
     before: &[u8; PAGE_BYTES],
     bytes: &[u8],
     after: &[u8; PAGE_BYTES],
@@ -814,7 +867,7 @@ fn validate_transition(
     )
     .map_err(|_| PageMismatch)?;
     require(
-        old.header().lsn.0 == plan.prefix.complete_lsn && new.header().lsn.0 == h.lsn,
+        old.header().lsn.0 == plan.frame.previous_lsn && new.header().lsn.0 == h.lsn,
         OrderMismatch,
     )?;
     require(
@@ -922,4 +975,33 @@ fn validate_transition(
         BudgetMismatch,
     )?;
     Ok(())
+}
+
+/// Discardable RAM analysis output, never a live apply/stage permit. Physical
+/// mixed home pages must not be supplied as this canonical before image.
+pub(in super::super) fn materialize_analysis(
+    expected: AnalysisExpected<'_>,
+    before: &[u8; PAGE_BYTES],
+    bytes: &[u8],
+    after: &mut [u8; PAGE_BYTES],
+    budget: OperationBudget,
+) -> Result<()> {
+    let header = validate_header(&expected, bytes)?;
+    let old = allocation_page::decode_allocation_page(
+        before,
+        expected.identity,
+        expected.profile.spec().namespace,
+    )
+    .map_err(|_| SemanticError::PageMismatch)?;
+    allocation_page::encode_allocation_page(
+        PageHeader {
+            lsn: PageLsn(header.lsn),
+            ..old.header()
+        },
+        expected.profile.spec().namespace,
+        &bytes[NEW_CELL],
+        after,
+    )
+    .map_err(|_| SemanticError::PageMismatch)?;
+    validate_analysis_with_budget(expected, before, bytes, after, budget)
 }

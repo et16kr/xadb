@@ -1,7 +1,10 @@
 //! Source-owned live-value bound for D3-ALLOC-RESERVE-001, separate from ABI stack.
 //! Counts include Copy arguments along the deepest call chain. Moved non-Copy
 //! owners count once; caller buffers and a port's own storage remain separate.
-use super::{AllocationSession, Batch, operation::Plan};
+use super::{
+    AllocationSession, Batch,
+    operation::{AnalysisExpected, Plan},
+};
 use crate::storage::{
     allocation_page::{AllocationEntry, AllocationPage},
     control::{
@@ -52,7 +55,8 @@ pub(in super::super) const DESCRIPTORS: usize = 5 * size_of::<DescriptorSpec>()
     + HASH;
 pub(in super::super) const TEMPORARIES: usize = max(ENTRIES, max(ENCODE, DESCRIPTORS));
 // The trusted workspace-budget wrappers retain two additional copied Plans.
-pub(in super::super) const PLANS: usize = 6 * size_of::<Plan<'static>>() + 128;
+pub(in super::super) const PLANS: usize =
+    6 * size_of::<Plan<'static>>() + 2 * size_of::<AnalysisExpected<'static>>() + 128;
 
 // The reader and its retained File are not in this pool. A second File is open
 // only while read_page reads the allocator; both are counted in fits below.

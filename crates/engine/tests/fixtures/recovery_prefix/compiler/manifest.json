@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "unit": "D3-RECOVERY-PREFIX-001",
+  "status": "INPUT_ONLY_NOT_RUN",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_error_diagnostics_are_failures": true,
+  "compiler_budget_seconds": 60,
+  "semantic_case_count": 8,
+  "infrastructure_control_count": 1,
+  "negative_returncode": 101,
+  "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+  "cases": [
+    {
+      "name": "baseline",
+      "semantic_id": null,
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "reason": "baseline",
+      "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs"
+    },
+    {
+      "name": "positive",
+      "semantic_id": "BC00",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "reason": "positive",
+      "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 502,
+      "sha256": "a166c35b5025b9b274991c68874a0f03c0b10cf47e9e6e9c279c387536b2a1d4"
+    },
+    {
+      "name": "workspace_reborrow",
+      "semantic_id": "BC01",
+      "expected_code": "E0499",
+      "primary_line": 6,
+      "primary_spans": "one",
+      "reason": "workspace reborrow",
+      "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 404,
+      "sha256": "10f4c2079ad1db205814aa94fc63de29c3df95a045985c96ab52e4a10b0716e1"
+    },
+    {
+      "name": "workspace_move",
+      "semantic_id": "BC02",
+      "expected_code": "E0505",
+      "primary_line": 6,
+      "primary_spans": "one",
+      "reason": "workspace move",
+      "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 357,
+      "sha256": "afb5795982bd9c386c9dbc3127726b4f7f5acf3d075406ae1230fa5e75dfb3ce"
+    },
+    {
+      "name": "owner_move",
+      "semantic_id": "BC03",
+      "expected_code": "E0382",
+      "primary_line": 6,
+      "primary_spans": "one",
+      "reason": "owner move",
+      "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 264,
+      "sha256": "85d58e4a718307289af2c104bde1b6fe650fd55dbc84b736f0759bd06387e089"
+    },
+    {
+      "name": "observation_borrow",
+      "semantic_id": "BC04",
+      "expected_code": "E0505",
+      "primary_line": 6,
+      "primary_spans": "one",
+      "reason": "observation borrow",
+      "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 299,
+      "sha256": "ced425a528c106a9c9f224b5f26e773b82681552f7c7456c226e04ca73f80586"
+    },
+    {
+      "name": "private_fields",
+      "semantic_id": "BC05",
+      "expected_code": "E0616",
+      "primary_line": 5,
+      "primary_spans": "one",
+      "reason": "private fields",
+      "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 240,
+      "sha256": "32a59b326960a696485c052352f8b0c18fcc52e83b4304706b0d1992718a3999"
+    },
+    {
+      "name": "into_writer_missing",
+      "semantic_id": "BC06",
+      "expected_code": "E0599",
+      "primary_line": 5,
+      "primary_spans": "one",
+      "reason": "into writer missing",
+      "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 239,
+      "sha256": "40e915012eaebaee02354aa5a6acc6dfb714eaaa1790ca1193d8dc2628671f80"
+    },
+    {
+      "name": "borrowed_image_immutable",
+      "semantic_id": "BC07",
+      "expected_code": "E0594",
+      "primary_line": 6,
+      "primary_spans": "one",
+      "reason": "borrowed image immutable",
+      "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 259,
+      "sha256": "6f1efec45b66f541a6599748c26a1f278994d9ce54fcd47e3480b72f45004ebd"
+    }
+  ]
+}

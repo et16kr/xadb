@@ -1,0 +1,2808 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-22",
+  "unit": "D3-RECOVERY-PREFIX-001",
+  "status": "ACCEPT_SCOPED_UNIT",
+  "base_commit": "412bd7b8477cde8abee86de4c5d18611f9d66385",
+  "contract_ref": "dev3-recovery-prefix.md",
+  "full_stage_acceptance": false,
+  "scope": "closed read-only current-producer WAL canonical RAM analysis; no BOOT_RESERVE/reservation restoration/Pending image repair/physical REDO/READY",
+  "sources": [
+    {
+      "name": "r0",
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/source-r0",
+      "source_sha256": "1eb84474229f23ef0231fe2f95fcaf00b70fdfbc70f02e2dc364852feb612213",
+      "build_status": "NOT_RUN"
+    },
+    {
+      "name": "r1",
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/source-r1",
+      "source_sha256": "feef07075eb4b6a15be51460c1f4a19b6443132fcf42b712c6b7948ca0f2c49d",
+      "build_status": "FAIL",
+      "binary_sha256": null,
+      "build_receipt": "artifacts/dev3-recovery-prefix-20261022-r0/build-r1/receipt.json"
+    },
+    {
+      "name": "r2",
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/source-r2",
+      "source_sha256": "c3d237db433228c20a9ec3f859c07feea477ed10fd45daebbc64c7dbe768a657",
+      "build_status": "PASS",
+      "binary_sha256": "673fa1b3f50545da5cadb48ae916aa0a86d288b49e4889b1200e43cf0b936d68",
+      "build_receipt": "artifacts/dev3-recovery-prefix-20261022-r0/build-r2/receipt.json"
+    },
+    {
+      "name": "r3",
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/source-r3",
+      "source_sha256": "b2e8d487db6ebc8abaafc33a997de67d0e9e05549e325bd7405e122e1bd2feed",
+      "build_status": "PASS",
+      "binary_sha256": "1f446f386936a0ed11ab3400f61e2e65594821918f1bc942b27576aeb0e98e9b",
+      "build_receipt": "artifacts/dev3-recovery-prefix-20261022-r0/build-r3/receipt.json"
+    },
+    {
+      "name": "r4",
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/source-r4",
+      "source_sha256": "8c32508d7f747492ac205909c8788a66c6bd4e36069c6430d54b278e14ae6230",
+      "build_status": "PASS",
+      "binary_sha256": "5e13df2f8b1992611915acee6f42cd34551d32d101e8d8a4b8f55924fe637110",
+      "build_receipt": "artifacts/dev3-recovery-prefix-20261022-r0/build-r4/receipt.json"
+    },
+    {
+      "name": "r5",
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/source-r5",
+      "source_sha256": "2468c48df6c8821d301c30130e6702c847494d1f646fa1e5f16ecb091c8fcd42",
+      "build_status": "PASS",
+      "binary_sha256": "0559cf83a551796504d74d112eb0d7274b9295f04f88212143c12da088cbee95",
+      "build_receipt": "artifacts/dev3-recovery-prefix-20261022-r0/build-r5/receipt.json"
+    }
+  ],
+  "runtime": {
+    "unique_mandatory": 231,
+    "core": 189,
+    "semantic_scanner": 42,
+    "complete_job_cases": 223,
+    "completed_assertions_in_failed_jobs": 8,
+    "all_on_last_binary": false,
+    "runs": [
+      {
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "sha256": "3cdf29e1d2e6c408e52074a7c5d3240a916dc2c92b60469f226581b883b25ef9",
+        "source": "source-r3",
+        "status": "FAIL",
+        "selected": [
+          "WP001",
+          "WP002",
+          "WP003",
+          "WP004",
+          "WP005",
+          "WP006",
+          "WP007",
+          "WP008",
+          "WP009",
+          "WP010",
+          "WP011",
+          "WP012",
+          "WP013",
+          "WP014",
+          "WP015",
+          "WP016",
+          "WP017",
+          "WP018",
+          "WP021",
+          "WP022",
+          "WP023",
+          "WP024",
+          "WP026",
+          "WP027",
+          "WP028",
+          "WP031",
+          "WP019",
+          "WP020",
+          "WP025",
+          "WP029",
+          "WP030",
+          "WP032",
+          "WP033",
+          "WP034",
+          "WP035",
+          "WP036",
+          "WP037",
+          "WP038",
+          "WP039",
+          "WP040",
+          "WP041",
+          "WP042",
+          "PPN001",
+          "PPN002",
+          "PPN003",
+          "PPN004",
+          "PPN005",
+          "PPN006",
+          "PPN007",
+          "PPN008",
+          "PPN009",
+          "PPN010",
+          "PPN011",
+          "PPN012",
+          "PPN013",
+          "PPN014",
+          "PPN015",
+          "PPN016",
+          "PPN017",
+          "PPN018",
+          "PPN019",
+          "PPN020",
+          "PPN021",
+          "PPN022",
+          "PPN023",
+          "PPN024",
+          "PPN025",
+          "PPN026",
+          "PPN027",
+          "PPN028",
+          "PPN029",
+          "PPD001",
+          "PPD002",
+          "PPD003",
+          "PPD004",
+          "PPD005",
+          "PPD006",
+          "PPD007",
+          "PPD008",
+          "PPD009",
+          "PPD010",
+          "PPD011",
+          "PPD012",
+          "PPD013",
+          "PPD014",
+          "PPD015",
+          "PPD016",
+          "PPD017",
+          "PPD018",
+          "PPD019",
+          "PPD020",
+          "PPD021",
+          "PPD022",
+          "PPD023",
+          "PPD024",
+          "PPT001",
+          "PPT002",
+          "PPT003",
+          "PPT004",
+          "PPT005",
+          "PPT006",
+          "PPT007",
+          "PPT008",
+          "PPT009",
+          "PPT010",
+          "PPT011",
+          "PPT012",
+          "PPW001",
+          "PPW002",
+          "PPW003",
+          "PPW004",
+          "PPW005",
+          "PPW006",
+          "PPW007",
+          "PPW008",
+          "PPW009",
+          "PPL001",
+          "PPL002",
+          "PPL003",
+          "PPL004",
+          "PPL005",
+          "PPL006",
+          "PPL007",
+          "PPL008",
+          "PPL009",
+          "PPL010",
+          "PPL011",
+          "PPL012",
+          "PPG001",
+          "PPG002",
+          "PPG003",
+          "PPG004",
+          "PPG005",
+          "PPG006",
+          "PPG007",
+          "PPG008",
+          "PPG009",
+          "PPG010",
+          "PPG011",
+          "PPG012",
+          "PPG013",
+          "PPG014",
+          "PPG015",
+          "PPG016",
+          "PPG017",
+          "PPG018",
+          "PPG019",
+          "PPF001",
+          "PPF002",
+          "PPF003",
+          "PPF004",
+          "PPF005",
+          "PPF006",
+          "PPF007",
+          "PPF008",
+          "PPF009",
+          "PPF010",
+          "PPF011",
+          "PPF012",
+          "PPF013",
+          "PPF014",
+          "PPF015",
+          "PPF016",
+          "PPF017",
+          "PPF018",
+          "PPF019",
+          "PPF020",
+          "PPF021",
+          "PPF022",
+          "PPF023",
+          "PPF024",
+          "PPF025",
+          "PPF026",
+          "PPF027",
+          "PPF028",
+          "PPF029",
+          "PPF030",
+          "PPF031",
+          "PPF032",
+          "PPF033",
+          "PPF034",
+          "PPF035",
+          "PPF036",
+          "PPF037",
+          "PPF038",
+          "PPF039",
+          "PPF040",
+          "PPF041",
+          "PPF042",
+          "PPF043",
+          "PPF044",
+          "PPF045",
+          "PPF046",
+          "PPF047",
+          "PPF048",
+          "PPF049",
+          "PPF050",
+          "PPF051",
+          "PPF052",
+          "PPF053",
+          "PPF054",
+          "PPF055",
+          "PPF056",
+          "PPF057",
+          "PPF058",
+          "PPF059",
+          "PPF060",
+          "PPF061",
+          "PPF062",
+          "PPF063",
+          "PPF064",
+          "PPF065",
+          "PPF066",
+          "PPF067",
+          "PPF068",
+          "PPB001",
+          "PPB002",
+          "PPB003",
+          "PPB004",
+          "PPB005",
+          "PPR001",
+          "PPR002",
+          "PPR003",
+          "PPR004",
+          "PPR005",
+          "PPS001",
+          "PPS002",
+          "PPS003",
+          "PPS004",
+          "PPS005",
+          "PPS006"
+        ],
+        "job_pass_cases": [
+          "WP001",
+          "WP002",
+          "WP003",
+          "WP004",
+          "WP005",
+          "WP006",
+          "WP007",
+          "WP008",
+          "WP009",
+          "WP010",
+          "WP011",
+          "WP012",
+          "WP013",
+          "WP014",
+          "WP015",
+          "WP016",
+          "WP017",
+          "WP018",
+          "WP021",
+          "WP022",
+          "WP023",
+          "WP024",
+          "WP026",
+          "WP027",
+          "WP028",
+          "WP031",
+          "WP019",
+          "WP020",
+          "WP025",
+          "WP029",
+          "WP030",
+          "WP032",
+          "WP033",
+          "WP034",
+          "WP035",
+          "WP036",
+          "WP037",
+          "WP038",
+          "WP039",
+          "WP040",
+          "WP041",
+          "WP042"
+        ],
+        "partial_assertions": [
+          "PPN001",
+          "PPN002"
+        ],
+        "not_reached": [
+          "PPN004",
+          "PPN005",
+          "PPN006",
+          "PPN007",
+          "PPN008",
+          "PPN009",
+          "PPN010",
+          "PPN011",
+          "PPN012",
+          "PPN013",
+          "PPN014",
+          "PPN015",
+          "PPN016",
+          "PPN017",
+          "PPN018",
+          "PPN019",
+          "PPN020",
+          "PPN021",
+          "PPN022",
+          "PPN023",
+          "PPN024",
+          "PPN025",
+          "PPN026",
+          "PPN027",
+          "PPN028",
+          "PPN029",
+          "PPD001",
+          "PPD002",
+          "PPD003",
+          "PPD004",
+          "PPD005",
+          "PPD006",
+          "PPD007",
+          "PPD008",
+          "PPD009",
+          "PPD010",
+          "PPD011",
+          "PPD012",
+          "PPD013",
+          "PPD014",
+          "PPD015",
+          "PPD016",
+          "PPD017",
+          "PPD018",
+          "PPD019",
+          "PPD020",
+          "PPD021",
+          "PPD022",
+          "PPD023",
+          "PPD024",
+          "PPT001",
+          "PPT002",
+          "PPT003",
+          "PPT004",
+          "PPT005",
+          "PPT006",
+          "PPT007",
+          "PPT008",
+          "PPT009",
+          "PPT010",
+          "PPT011",
+          "PPT012",
+          "PPW001",
+          "PPW002",
+          "PPW003",
+          "PPW004",
+          "PPW005",
+          "PPW006",
+          "PPW007",
+          "PPW008",
+          "PPW009",
+          "PPL001",
+          "PPL002",
+          "PPL003",
+          "PPL004",
+          "PPL005",
+          "PPL006",
+          "PPL007",
+          "PPL008",
+          "PPL009",
+          "PPL010",
+          "PPL011",
+          "PPL012",
+          "PPG001",
+          "PPG002",
+          "PPG003",
+          "PPG004",
+          "PPG005",
+          "PPG006",
+          "PPG007",
+          "PPG008",
+          "PPG009",
+          "PPG010",
+          "PPG011",
+          "PPG012",
+          "PPG013",
+          "PPG014",
+          "PPG015",
+          "PPG016",
+          "PPG017",
+          "PPG018",
+          "PPG019",
+          "PPF001",
+          "PPF002",
+          "PPF003",
+          "PPF004",
+          "PPF005",
+          "PPF006",
+          "PPF007",
+          "PPF008",
+          "PPF009",
+          "PPF010",
+          "PPF011",
+          "PPF012",
+          "PPF013",
+          "PPF014",
+          "PPF015",
+          "PPF016",
+          "PPF017",
+          "PPF018",
+          "PPF019",
+          "PPF020",
+          "PPF021",
+          "PPF022",
+          "PPF023",
+          "PPF024",
+          "PPF025",
+          "PPF026",
+          "PPF027",
+          "PPF028",
+          "PPF029",
+          "PPF030",
+          "PPF031",
+          "PPF032",
+          "PPF033",
+          "PPF034",
+          "PPF035",
+          "PPF036",
+          "PPF037",
+          "PPF038",
+          "PPF039",
+          "PPF040",
+          "PPF041",
+          "PPF042",
+          "PPF043",
+          "PPF044",
+          "PPF045",
+          "PPF046",
+          "PPF047",
+          "PPF048",
+          "PPF049",
+          "PPF050",
+          "PPF051",
+          "PPF052",
+          "PPF053",
+          "PPF054",
+          "PPF055",
+          "PPF056",
+          "PPF057",
+          "PPF058",
+          "PPF059",
+          "PPF060",
+          "PPF061",
+          "PPF062",
+          "PPF063",
+          "PPF064",
+          "PPF065",
+          "PPF066",
+          "PPF067",
+          "PPF068",
+          "PPB001",
+          "PPB002",
+          "PPB003",
+          "PPB004",
+          "PPB005",
+          "PPR001",
+          "PPR002",
+          "PPR003",
+          "PPR004",
+          "PPR005",
+          "PPS001",
+          "PPS002",
+          "PPS003",
+          "PPS004",
+          "PPS005",
+          "PPS006"
+        ],
+        "seconds": 0.031305664000683464
+      },
+      {
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "sha256": "a45ae35d0cff464f4623d267675be325fd94b8334aaddc13c795ec37812e0623",
+        "source": "source-r4",
+        "status": "FAIL",
+        "selected": [
+          "PPN003",
+          "PPN004",
+          "PPN005",
+          "PPN006",
+          "PPN007",
+          "PPN008",
+          "PPN009",
+          "PPN010",
+          "PPN011",
+          "PPN012",
+          "PPN013",
+          "PPN014",
+          "PPN015",
+          "PPN016",
+          "PPN017",
+          "PPN018",
+          "PPN019",
+          "PPN020",
+          "PPN021",
+          "PPN022",
+          "PPN023",
+          "PPN024",
+          "PPN025",
+          "PPN026",
+          "PPN027",
+          "PPN028",
+          "PPN029",
+          "PPD001",
+          "PPD002",
+          "PPD003",
+          "PPD004",
+          "PPD005",
+          "PPD006",
+          "PPD007",
+          "PPD008",
+          "PPD009",
+          "PPD010",
+          "PPD011",
+          "PPD012",
+          "PPD013",
+          "PPD014",
+          "PPD015",
+          "PPD016",
+          "PPD017",
+          "PPD018",
+          "PPD019",
+          "PPD020",
+          "PPD021",
+          "PPD022",
+          "PPD023",
+          "PPD024",
+          "PPT001",
+          "PPT002",
+          "PPT003",
+          "PPT004",
+          "PPT005",
+          "PPT006",
+          "PPT007",
+          "PPT008",
+          "PPT009",
+          "PPT010",
+          "PPT011",
+          "PPT012",
+          "PPW001",
+          "PPW002",
+          "PPW003",
+          "PPW004",
+          "PPW005",
+          "PPW006",
+          "PPW007",
+          "PPW008",
+          "PPW009",
+          "PPL001",
+          "PPL002",
+          "PPL003",
+          "PPL004",
+          "PPL005",
+          "PPL006",
+          "PPL007",
+          "PPL008",
+          "PPL009",
+          "PPL010",
+          "PPL011",
+          "PPL012",
+          "PPG001",
+          "PPG002",
+          "PPG003",
+          "PPG004",
+          "PPG005",
+          "PPG006",
+          "PPG007",
+          "PPG008",
+          "PPG009",
+          "PPG010",
+          "PPG011",
+          "PPG012",
+          "PPG013",
+          "PPG014",
+          "PPG015",
+          "PPG016",
+          "PPG017",
+          "PPG018",
+          "PPG019",
+          "PPF001",
+          "PPF002",
+          "PPF003",
+          "PPF004",
+          "PPF005",
+          "PPF006",
+          "PPF007",
+          "PPF008",
+          "PPF009",
+          "PPF010",
+          "PPF011",
+          "PPF012",
+          "PPF013",
+          "PPF014",
+          "PPF015",
+          "PPF016",
+          "PPF017",
+          "PPF018",
+          "PPF019",
+          "PPF020",
+          "PPF021",
+          "PPF022",
+          "PPF023",
+          "PPF024",
+          "PPF025",
+          "PPF026",
+          "PPF027",
+          "PPF028",
+          "PPF029",
+          "PPF030",
+          "PPF031",
+          "PPF032",
+          "PPF033",
+          "PPF034",
+          "PPF035",
+          "PPF036",
+          "PPF037",
+          "PPF038",
+          "PPF039",
+          "PPF040",
+          "PPF041",
+          "PPF042",
+          "PPF043",
+          "PPF044",
+          "PPF045",
+          "PPF046",
+          "PPF047",
+          "PPF048",
+          "PPF049",
+          "PPF050",
+          "PPF051",
+          "PPF052",
+          "PPF053",
+          "PPF054",
+          "PPF055",
+          "PPF056",
+          "PPF057",
+          "PPF058",
+          "PPF059",
+          "PPF060",
+          "PPF061",
+          "PPF062",
+          "PPF063",
+          "PPF064",
+          "PPF065",
+          "PPF066",
+          "PPF067",
+          "PPF068",
+          "PPB001",
+          "PPB002",
+          "PPB003",
+          "PPB004",
+          "PPB005",
+          "PPR001",
+          "PPR002",
+          "PPR003",
+          "PPR004",
+          "PPR005",
+          "PPS001",
+          "PPS002",
+          "PPS003",
+          "PPS004",
+          "PPS005",
+          "PPS006"
+        ],
+        "job_pass_cases": [
+          "PPN003",
+          "PPN004",
+          "PPN005",
+          "PPN006",
+          "PPN007",
+          "PPN008",
+          "PPN009",
+          "PPN010",
+          "PPN011",
+          "PPN012",
+          "PPN013",
+          "PPN014",
+          "PPN015",
+          "PPN016",
+          "PPN017",
+          "PPN018",
+          "PPN019",
+          "PPN020",
+          "PPN021",
+          "PPN022",
+          "PPN023",
+          "PPN024",
+          "PPN025",
+          "PPN026",
+          "PPN027",
+          "PPN028",
+          "PPN029",
+          "PPD001",
+          "PPD002",
+          "PPD003",
+          "PPD004",
+          "PPD005",
+          "PPD006",
+          "PPD007",
+          "PPD008",
+          "PPD009",
+          "PPD010",
+          "PPD011",
+          "PPD012",
+          "PPD013",
+          "PPD014",
+          "PPD015",
+          "PPD016",
+          "PPD017",
+          "PPD018",
+          "PPD019",
+          "PPD020",
+          "PPD021",
+          "PPD022",
+          "PPD023",
+          "PPD024",
+          "PPT001",
+          "PPT002",
+          "PPT003",
+          "PPT004",
+          "PPT005",
+          "PPT006",
+          "PPT007",
+          "PPT008",
+          "PPT009",
+          "PPT010",
+          "PPT011",
+          "PPT012"
+        ],
+        "partial_assertions": [
+          "PPW001",
+          "PPW002",
+          "PPW003",
+          "PPW004",
+          "PPW005",
+          "PPW006"
+        ],
+        "not_reached": [
+          "PPW008",
+          "PPW009",
+          "PPL001",
+          "PPL002",
+          "PPL003",
+          "PPL004",
+          "PPL005",
+          "PPL006",
+          "PPL007",
+          "PPL008",
+          "PPL009",
+          "PPL010",
+          "PPL011",
+          "PPL012",
+          "PPG001",
+          "PPG002",
+          "PPG003",
+          "PPG004",
+          "PPG005",
+          "PPG006",
+          "PPG007",
+          "PPG008",
+          "PPG009",
+          "PPG010",
+          "PPG011",
+          "PPG012",
+          "PPG013",
+          "PPG014",
+          "PPG015",
+          "PPG016",
+          "PPG017",
+          "PPG018",
+          "PPG019",
+          "PPF001",
+          "PPF002",
+          "PPF003",
+          "PPF004",
+          "PPF005",
+          "PPF006",
+          "PPF007",
+          "PPF008",
+          "PPF009",
+          "PPF010",
+          "PPF011",
+          "PPF012",
+          "PPF013",
+          "PPF014",
+          "PPF015",
+          "PPF016",
+          "PPF017",
+          "PPF018",
+          "PPF019",
+          "PPF020",
+          "PPF021",
+          "PPF022",
+          "PPF023",
+          "PPF024",
+          "PPF025",
+          "PPF026",
+          "PPF027",
+          "PPF028",
+          "PPF029",
+          "PPF030",
+          "PPF031",
+          "PPF032",
+          "PPF033",
+          "PPF034",
+          "PPF035",
+          "PPF036",
+          "PPF037",
+          "PPF038",
+          "PPF039",
+          "PPF040",
+          "PPF041",
+          "PPF042",
+          "PPF043",
+          "PPF044",
+          "PPF045",
+          "PPF046",
+          "PPF047",
+          "PPF048",
+          "PPF049",
+          "PPF050",
+          "PPF051",
+          "PPF052",
+          "PPF053",
+          "PPF054",
+          "PPF055",
+          "PPF056",
+          "PPF057",
+          "PPF058",
+          "PPF059",
+          "PPF060",
+          "PPF061",
+          "PPF062",
+          "PPF063",
+          "PPF064",
+          "PPF065",
+          "PPF066",
+          "PPF067",
+          "PPF068",
+          "PPB001",
+          "PPB002",
+          "PPB003",
+          "PPB004",
+          "PPB005",
+          "PPR001",
+          "PPR002",
+          "PPR003",
+          "PPR004",
+          "PPR005",
+          "PPS001",
+          "PPS002",
+          "PPS003",
+          "PPS004",
+          "PPS005",
+          "PPS006"
+        ],
+        "seconds": 0.5086913080012891
+      },
+      {
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun/result.json",
+        "sha256": "23e7d8301ebfaf2f33330f3c2a47a4f48c710387f881d6e8dce4b7b37ab384e0",
+        "source": "source-r4",
+        "status": "FAIL",
+        "selected": [
+          "PPW008",
+          "PPW009",
+          "PPL001",
+          "PPL002",
+          "PPL003",
+          "PPL004",
+          "PPL005",
+          "PPL006",
+          "PPL007",
+          "PPL008",
+          "PPL009",
+          "PPL010",
+          "PPL011",
+          "PPL012",
+          "PPG001",
+          "PPG002",
+          "PPG003",
+          "PPG004",
+          "PPG005",
+          "PPG006",
+          "PPG007",
+          "PPG008",
+          "PPG009",
+          "PPG010",
+          "PPG011",
+          "PPG012",
+          "PPG013",
+          "PPG014",
+          "PPG015",
+          "PPG016",
+          "PPG017",
+          "PPG018",
+          "PPG019",
+          "PPF001",
+          "PPF002",
+          "PPF003",
+          "PPF004",
+          "PPF005",
+          "PPF006",
+          "PPF007",
+          "PPF008",
+          "PPF009",
+          "PPF010",
+          "PPF011",
+          "PPF012",
+          "PPF013",
+          "PPF014",
+          "PPF015",
+          "PPF016",
+          "PPF017",
+          "PPF018",
+          "PPF019",
+          "PPF020",
+          "PPF021",
+          "PPF022",
+          "PPF023",
+          "PPF024",
+          "PPF025",
+          "PPF026",
+          "PPF027",
+          "PPF028",
+          "PPF029",
+          "PPF030",
+          "PPF031",
+          "PPF032",
+          "PPF033",
+          "PPF034",
+          "PPF035",
+          "PPF036",
+          "PPF037",
+          "PPF038",
+          "PPF039",
+          "PPF040",
+          "PPF041",
+          "PPF042",
+          "PPF043",
+          "PPF044",
+          "PPF045",
+          "PPF046",
+          "PPF047",
+          "PPF048",
+          "PPF049",
+          "PPF050",
+          "PPF051",
+          "PPF052",
+          "PPF053",
+          "PPF054",
+          "PPF055",
+          "PPF056",
+          "PPF057",
+          "PPF058",
+          "PPF059",
+          "PPF060",
+          "PPF061",
+          "PPF062",
+          "PPF063",
+          "PPF064",
+          "PPF065",
+          "PPF066",
+          "PPF067",
+          "PPF068",
+          "PPB001",
+          "PPB002",
+          "PPB003",
+          "PPB004",
+          "PPB005",
+          "PPR001",
+          "PPR002",
+          "PPR003",
+          "PPR004",
+          "PPR005",
+          "PPS001",
+          "PPS002",
+          "PPS003",
+          "PPS004",
+          "PPS005",
+          "PPS006"
+        ],
+        "job_pass_cases": [
+          "PPW008",
+          "PPW009"
+        ],
+        "partial_assertions": [],
+        "not_reached": [
+          "PPL002",
+          "PPL003",
+          "PPL004",
+          "PPL005",
+          "PPL006",
+          "PPL007",
+          "PPL008",
+          "PPL009",
+          "PPL010",
+          "PPL011",
+          "PPL012",
+          "PPG001",
+          "PPG002",
+          "PPG003",
+          "PPG004",
+          "PPG005",
+          "PPG006",
+          "PPG007",
+          "PPG008",
+          "PPG009",
+          "PPG010",
+          "PPG011",
+          "PPG012",
+          "PPG013",
+          "PPG014",
+          "PPG015",
+          "PPG016",
+          "PPG017",
+          "PPG018",
+          "PPG019",
+          "PPF001",
+          "PPF002",
+          "PPF003",
+          "PPF004",
+          "PPF005",
+          "PPF006",
+          "PPF007",
+          "PPF008",
+          "PPF009",
+          "PPF010",
+          "PPF011",
+          "PPF012",
+          "PPF013",
+          "PPF014",
+          "PPF015",
+          "PPF016",
+          "PPF017",
+          "PPF018",
+          "PPF019",
+          "PPF020",
+          "PPF021",
+          "PPF022",
+          "PPF023",
+          "PPF024",
+          "PPF025",
+          "PPF026",
+          "PPF027",
+          "PPF028",
+          "PPF029",
+          "PPF030",
+          "PPF031",
+          "PPF032",
+          "PPF033",
+          "PPF034",
+          "PPF035",
+          "PPF036",
+          "PPF037",
+          "PPF038",
+          "PPF039",
+          "PPF040",
+          "PPF041",
+          "PPF042",
+          "PPF043",
+          "PPF044",
+          "PPF045",
+          "PPF046",
+          "PPF047",
+          "PPF048",
+          "PPF049",
+          "PPF050",
+          "PPF051",
+          "PPF052",
+          "PPF053",
+          "PPF054",
+          "PPF055",
+          "PPF056",
+          "PPF057",
+          "PPF058",
+          "PPF059",
+          "PPF060",
+          "PPF061",
+          "PPF062",
+          "PPF063",
+          "PPF064",
+          "PPF065",
+          "PPF066",
+          "PPF067",
+          "PPF068",
+          "PPB001",
+          "PPB002",
+          "PPB003",
+          "PPB004",
+          "PPB005",
+          "PPR001",
+          "PPR002",
+          "PPR003",
+          "PPR004",
+          "PPR005",
+          "PPS001",
+          "PPS002",
+          "PPS003",
+          "PPS004",
+          "PPS005",
+          "PPS006"
+        ],
+        "seconds": 0.020287845996790566
+      },
+      {
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "sha256": "98ac8065716eb8531b6480698cb393b7947a6d0c3e01ab24b19555e5e35f9215",
+        "source": "source-r4",
+        "status": "PASS",
+        "selected": [
+          "PPL002",
+          "PPL003",
+          "PPL004",
+          "PPL005",
+          "PPL006",
+          "PPL007",
+          "PPL008",
+          "PPL009",
+          "PPL010",
+          "PPL011",
+          "PPL012",
+          "PPG001",
+          "PPG002",
+          "PPG003",
+          "PPG004",
+          "PPG005",
+          "PPG006",
+          "PPG007",
+          "PPG008",
+          "PPG009",
+          "PPG010",
+          "PPG011",
+          "PPG012",
+          "PPG013",
+          "PPG014",
+          "PPG015",
+          "PPG016",
+          "PPG017",
+          "PPG018",
+          "PPG019",
+          "PPF001",
+          "PPF002",
+          "PPF003",
+          "PPF004",
+          "PPF005",
+          "PPF006",
+          "PPF007",
+          "PPF008",
+          "PPF009",
+          "PPF010",
+          "PPF011",
+          "PPF012",
+          "PPF013",
+          "PPF014",
+          "PPF015",
+          "PPF016",
+          "PPF017",
+          "PPF018",
+          "PPF019",
+          "PPF020",
+          "PPF021",
+          "PPF022",
+          "PPF023",
+          "PPF024",
+          "PPF025",
+          "PPF026",
+          "PPF027",
+          "PPF028",
+          "PPF029",
+          "PPF030",
+          "PPF031",
+          "PPF032",
+          "PPF033",
+          "PPF034",
+          "PPF035",
+          "PPF036",
+          "PPF037",
+          "PPF038",
+          "PPF039",
+          "PPF040",
+          "PPF041",
+          "PPF042",
+          "PPF043",
+          "PPF044",
+          "PPF045",
+          "PPF046",
+          "PPF047",
+          "PPF048",
+          "PPF049",
+          "PPF050",
+          "PPF051",
+          "PPF052",
+          "PPF053",
+          "PPF054",
+          "PPF055",
+          "PPF056",
+          "PPF057",
+          "PPF058",
+          "PPF059",
+          "PPF060",
+          "PPF061",
+          "PPF062",
+          "PPF063",
+          "PPF064",
+          "PPF065",
+          "PPF066",
+          "PPF067",
+          "PPF068",
+          "PPB001",
+          "PPB002",
+          "PPB003",
+          "PPB004",
+          "PPB005",
+          "PPR001",
+          "PPR002",
+          "PPR003",
+          "PPR004",
+          "PPR005",
+          "PPS001",
+          "PPS002",
+          "PPS003",
+          "PPS004",
+          "PPS005",
+          "PPS006"
+        ],
+        "job_pass_cases": [
+          "PPL002",
+          "PPL003",
+          "PPL004",
+          "PPL005",
+          "PPL006",
+          "PPL007",
+          "PPL008",
+          "PPL009",
+          "PPL010",
+          "PPL011",
+          "PPL012",
+          "PPG001",
+          "PPG002",
+          "PPG003",
+          "PPG004",
+          "PPG005",
+          "PPG006",
+          "PPG007",
+          "PPG008",
+          "PPG009",
+          "PPG010",
+          "PPG011",
+          "PPG012",
+          "PPG013",
+          "PPG014",
+          "PPG015",
+          "PPG016",
+          "PPG017",
+          "PPG018",
+          "PPG019",
+          "PPF001",
+          "PPF002",
+          "PPF003",
+          "PPF004",
+          "PPF005",
+          "PPF006",
+          "PPF007",
+          "PPF008",
+          "PPF009",
+          "PPF010",
+          "PPF011",
+          "PPF012",
+          "PPF013",
+          "PPF014",
+          "PPF015",
+          "PPF016",
+          "PPF017",
+          "PPF018",
+          "PPF019",
+          "PPF020",
+          "PPF021",
+          "PPF022",
+          "PPF023",
+          "PPF024",
+          "PPF025",
+          "PPF026",
+          "PPF027",
+          "PPF028",
+          "PPF029",
+          "PPF030",
+          "PPF031",
+          "PPF032",
+          "PPF033",
+          "PPF034",
+          "PPF035",
+          "PPF036",
+          "PPF037",
+          "PPF038",
+          "PPF039",
+          "PPF040",
+          "PPF041",
+          "PPF042",
+          "PPF043",
+          "PPF044",
+          "PPF045",
+          "PPF046",
+          "PPF047",
+          "PPF048",
+          "PPF049",
+          "PPF050",
+          "PPF051",
+          "PPF052",
+          "PPF053",
+          "PPF054",
+          "PPF055",
+          "PPF056",
+          "PPF057",
+          "PPF058",
+          "PPF059",
+          "PPF060",
+          "PPF061",
+          "PPF062",
+          "PPF063",
+          "PPF064",
+          "PPF065",
+          "PPF066",
+          "PPF067",
+          "PPF068",
+          "PPB001",
+          "PPB002",
+          "PPB003",
+          "PPB004",
+          "PPB005",
+          "PPR001",
+          "PPR002",
+          "PPR003",
+          "PPR004",
+          "PPR005",
+          "PPS001",
+          "PPS002",
+          "PPS003",
+          "PPS004",
+          "PPS005",
+          "PPS006"
+        ],
+        "partial_assertions": [],
+        "not_reached": [],
+        "seconds": 0.5563776940034586
+      },
+      {
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r5/result.json",
+        "sha256": "0f29658b82546321f3d6b996593f77d9c068568639ae7335b43680530e5225e7",
+        "source": "source-r5",
+        "status": "PASS",
+        "selected": [
+          "PPW007",
+          "PPL001"
+        ],
+        "job_pass_cases": [
+          "PPW007",
+          "PPL001"
+        ],
+        "partial_assertions": [],
+        "not_reached": [],
+        "seconds": 0.16095630999916466
+      }
+    ],
+    "canonical_case_source": {
+      "WP001": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP002": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP003": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP004": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP005": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP006": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP007": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP008": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP009": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP010": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP011": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP012": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP013": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP014": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP015": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP016": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP017": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP018": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP021": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP022": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP023": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP024": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP026": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP027": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP028": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP031": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP019": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP020": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP025": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP029": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP030": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP032": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP033": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP034": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP035": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP036": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP037": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP038": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP039": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP040": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP041": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "WP042": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "PASS"
+      },
+      "PPN001": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "ASSERTION_COMPLETE_IN_FAILED_JOB"
+      },
+      "PPN002": {
+        "source": "source-r3",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r3/result.json",
+        "status": "ASSERTION_COMPLETE_IN_FAILED_JOB"
+      },
+      "PPN003": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN004": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN005": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN006": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN007": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN008": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN009": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN010": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN011": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN012": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN013": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN014": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN015": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN016": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN017": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN018": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN019": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN020": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN021": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN022": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN023": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN024": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN025": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN026": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN027": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN028": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPN029": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD001": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD002": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD003": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD004": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD005": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD006": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD007": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD008": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD009": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD010": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD011": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD012": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD013": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD014": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD015": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD016": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD017": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD018": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD019": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD020": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD021": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD022": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD023": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPD024": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPT001": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPT002": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPT003": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPT004": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPT005": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPT006": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPT007": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPT008": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPT009": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPT010": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPT011": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPT012": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "PASS"
+      },
+      "PPW001": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "ASSERTION_COMPLETE_IN_FAILED_JOB"
+      },
+      "PPW002": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "ASSERTION_COMPLETE_IN_FAILED_JOB"
+      },
+      "PPW003": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "ASSERTION_COMPLETE_IN_FAILED_JOB"
+      },
+      "PPW004": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "ASSERTION_COMPLETE_IN_FAILED_JOB"
+      },
+      "PPW005": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "ASSERTION_COMPLETE_IN_FAILED_JOB"
+      },
+      "PPW006": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4/result.json",
+        "status": "ASSERTION_COMPLETE_IN_FAILED_JOB"
+      },
+      "PPW008": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun/result.json",
+        "status": "PASS"
+      },
+      "PPW009": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun/result.json",
+        "status": "PASS"
+      },
+      "PPL002": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPL003": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPL004": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPL005": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPL006": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPL007": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPL008": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPL009": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPL010": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPL011": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPL012": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG001": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG002": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG003": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG004": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG005": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG006": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG007": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG008": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG009": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG010": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG011": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG012": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG013": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG014": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG015": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG016": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG017": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG018": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPG019": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF001": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF002": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF003": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF004": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF005": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF006": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF007": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF008": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF009": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF010": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF011": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF012": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF013": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF014": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF015": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF016": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF017": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF018": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF019": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF020": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF021": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF022": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF023": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF024": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF025": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF026": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF027": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF028": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF029": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF030": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF031": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF032": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF033": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF034": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF035": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF036": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF037": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF038": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF039": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF040": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF041": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF042": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF043": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF044": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF045": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF046": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF047": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF048": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF049": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF050": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF051": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF052": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF053": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF054": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF055": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF056": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF057": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF058": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF059": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF060": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF061": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF062": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF063": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF064": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF065": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF066": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF067": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPF068": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPB001": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPB002": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPB003": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPB004": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPB005": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPR001": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPR002": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPR003": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPR004": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPR005": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPS001": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPS002": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPS003": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPS004": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPS005": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPS006": {
+        "source": "source-r4",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r4-unrun2/result.json",
+        "status": "PASS"
+      },
+      "PPW007": {
+        "source": "source-r5",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r5/result.json",
+        "status": "PASS"
+      },
+      "PPL001": {
+        "source": "source-r5",
+        "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-r5/result.json",
+        "status": "PASS"
+      }
+    }
+  },
+  "changed_bootstrap_receiver": {
+    "source": "r3",
+    "selected": [
+      "RS01",
+      "RS02",
+      "RS03",
+      "RS04",
+      "RS05",
+      "RS06"
+    ],
+    "status": "PASS",
+    "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/bootstrap-receiver-r3/result.json"
+  },
+  "native": {
+    "source": "r3",
+    "status": "PASS",
+    "cases": 31,
+    "canonical_inspections": 29,
+    "intentional_rejections": 2,
+    "processes": 64,
+    "seconds": 10.742922976001864,
+    "max_case_seconds": 0.6239859999986948,
+    "database_files": 466,
+    "closed_file_peak": 2,
+    "fd_peak": 5,
+    "closed_mutations": 0,
+    "final_handles_and_fd_zero": true,
+    "source_census": {
+      "outer": 6472,
+      "bootstrap": 18024,
+      "replay": 26936,
+      "stream": 3136,
+      "peak": 33408,
+      "writer": 16,
+      "file": 48,
+      "caller": 262144
+    }
+  },
+  "compiler": {
+    "source": "r3",
+    "status": "PASS",
+    "semantic": [
+      "BC00",
+      "BC01",
+      "BC02",
+      "BC03",
+      "BC04",
+      "BC05",
+      "BC06",
+      "BC07"
+    ],
+    "infrastructure": [
+      "baseline"
+    ],
+    "seconds": 13.808438168991415
+  },
+  "checker": {
+    "source": "r1",
+    "status": "PASS",
+    "methods": 15,
+    "modules": 3,
+    "policy": "logic and test methods unchanged; later runtime script changes only pinned manifest SHA; no repeat"
+  },
+  "static": {
+    "source": "r5",
+    "fmt": "PASS",
+    "clippy": "PASS",
+    "scope": "engine all-target/all-feature Clippy; no test case execution"
+  },
+  "s5": {
+    "status": "NOT_RUN",
+    "core_matrix": 60,
+    "core_aliases": 24,
+    "core_additional": 36,
+    "semantic_matrix": 244,
+    "semantic_aliases": 7,
+    "semantic_additional": 237,
+    "native_PL01": 1,
+    "unique_runtime_after_aliases": 504
+  },
+  "original_failures": [
+    "r1 compile native scaffold E0277/E0502; product cases NOT_RUN",
+    "r2 Clippy unused PageLsn/manual_range_patterns; product cases NOT_RUN",
+    "r3 runtime PPN003 missing predecessor literal chain; scanner42 and PPN001/002 assertions preserved",
+    "r4 runtime PPW007 invalid ObjectId0 fixture decoded as Corrupt before intended identity check; first6 assertions preserved",
+    "r4-unrun runtime PPL001 erroneous subtotal>1GiB assertion; PPW008/009 PASS preserved"
+  ],
+  "not_run": [
+    "all S5 and PL01",
+    "other164 unchanged initial SELECT cases",
+    "DEV0/1/2 and whole-workspace/lower product wrappers",
+    "documentation verifier/pre-push gate",
+    "push"
+  ],
+  "d1": {
+    "status": "ACCEPTED",
+    "reviewer": "/root/recovery_design_review",
+    "scope": "limited closed read-only canonical prefix analysis",
+    "required_changes_remaining": [],
+    "report": "artifacts/dev3-recovery-prefix-20261022-r0/final-review-r5.md",
+    "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/final-review-r5.json",
+    "receipt_sha256": "89b6f66cfd74c40b5fff63611e917f8dc751968cc797729a772403872f084c23"
+  },
+  "model_identity": {
+    "requested_implementation": "gpt-6.1-sol/high",
+    "requested_independent_review": "gpt-6-astra/high",
+    "actual_runtime_identity": "not independently observable"
+  },
+  "raw_receipts": [
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/build-r1/receipt.json",
+      "sha256": "d718e45f24ff4e98d0dcdcbfff6ddae33dc65776cbb0ffd4069a882eea314ddd"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/build-r2/receipt.json",
+      "sha256": "194bc26b7b3f75d4adb1333c45f2b4eba9f1801dc1a5d468d189d6a47c7b30ff"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/build-r3/receipt.json",
+      "sha256": "809bc2669b57d284466ec5ef946e5b88f76962a403e894f06d245ee9ace64846"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/build-r4/receipt.json",
+      "sha256": "1047220141753e18e07fd63482eeeed56486a8483b56608178e44fd6551a533a"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/build-r5/receipt.json",
+      "sha256": "62f7b9d0d20762afb1f8ff7b3abd815e507bf7517fff9be46af57f08bfa6b1bf"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/fmt-r1/receipt.json",
+      "sha256": "34f1eef89d9f2bc3905b80c29fc212ad08763c4f4c5bf92a6140b2b4c62da786"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/fmt-r3/receipt.json",
+      "sha256": "0906236f8e516eb49bb0bea422d3378734c97957cfb11217b9f091f2c2b42b66"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/fmt-r5/receipt.json",
+      "sha256": "1a0c47844a20f62183ccef0897c052b097ee063e46b1ea461fa6e4ccd55c41f7"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/clippy-r2/receipt.json",
+      "sha256": "66ac96a2252b7cbe4d5aa2dac603f8b22c93b228e593e058a27e2657670e978b"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/clippy-r3/receipt.json",
+      "sha256": "7ccd662849bb8271d1ea8230bf9888a8f82f15ecb93a9dc5f3ffa493d7d9c838"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/clippy-r5/receipt.json",
+      "sha256": "c8bc77f578af4bb787728a9aed00a688499083a8cffcf75b8ac05f514f7edd42"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/checker-r1/receipt.json",
+      "sha256": "63589520a3ec476b7226b86b12f971803d6629f9b3702b06b45b4afd34cd86d1"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/bootstrap-receiver-r3/result.json",
+      "sha256": "e686d202469b71527a60b67d555c33252838ca8194ebba4320f422ed1dc10e2c"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/native-r3/result.json",
+      "sha256": "1ad8712eb99bfde52083df27ca45e6ce63aa79ce1ddf46cf19142717927125b3"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/compiler-r3.json",
+      "sha256": "47cad78d568d75b36e8a647f510f34814c13dc9134431b5d84620cadf3f7a735"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/d2-review.json",
+      "sha256": "8e383316cc9290148e951bcf4825e9e283a76976e7845901bafa2987ac03567e"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/preexecution-review-r1.json",
+      "sha256": "ecd52d7cec67dca09ea2311728385487ecdfa275f0b94bda8f4439bed425cd6f"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-selection-r4.json",
+      "sha256": "2502183d5deb605d830583454a531278bc53321b07ad400ffbd7990f231cbc5d"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-selection-r4-unrun.json",
+      "sha256": "08637f67363686dd830a4e34ba64d59b1ed1086bd201380a3aa14de234593ace"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/runtime-selection-r4-unrun2.json",
+      "sha256": "c5898e8697c3436ac6ea027f136e145f5433039ec08437ef2236ee7c377ac4d4"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/final-review-r5.md",
+      "sha256": "74133a3b32e1551f1821d2d150a200a7ed11a1cbb91674ce4ef1f14238b97f78"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/final-review-r5.json",
+      "sha256": "89b6f66cfd74c40b5fff63611e917f8dc751968cc797729a772403872f084c23"
+    },
+    {
+      "path": "artifacts/dev3-recovery-prefix-20261022-r0/concurrent-change-observation.json",
+      "sha256": "fe649450c0d0483bbb20edd05acb3062165cac281d499744fabbbf7c9452a2f3"
+    }
+  ],
+  "concurrent_changes": {
+    "status": "PRESERVED_EXCLUDED_FROM_UNIT_COMMIT",
+    "paths": [
+      ".github/workflows/dev0.yml",
+      "devdoc/policies/documentation-policy.md"
+    ],
+    "observed_root_source_sha256": "3ee8f36cf040ab51628afea8fe9db4fdeaa3a3e815cacc24445cc1b4013a89f0",
+    "verified_source_sha256": "2468c48df6c8821d301c30130e6702c847494d1f646fa1e5f16ecb091c8fcd42",
+    "source_difference_only": ".github/workflows/dev0.yml",
+    "product_tests_repeated": false,
+    "receipt": "artifacts/dev3-recovery-prefix-20261022-r0/concurrent-change-observation.json"
+  }
+}

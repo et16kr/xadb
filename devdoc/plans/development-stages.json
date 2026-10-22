@@ -144,7 +144,9 @@
         "storage_session_contract_ref": "dev3-storage-session.md",
         "doublewrite_install_contract_ref": "dev3-doublewrite-install.md",
         "recovery_select_contract_ref": "dev3-recovery-select.md",
-        "recovery_select_evidence_ref": "dev3-recovery-select-20261022.json"
+        "recovery_select_evidence_ref": "dev3-recovery-select-20261022.json",
+        "recovery_prefix_contract_ref": "dev3-recovery-prefix.md",
+        "recovery_prefix_evidence_ref": "dev3-recovery-prefix-20261022.json"
       }
     },
     {

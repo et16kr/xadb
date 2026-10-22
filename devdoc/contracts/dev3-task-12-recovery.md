@@ -67,6 +67,8 @@ flowchart TD
 
 [첫 3.12.1.a 소유 계약](dev3-recovery-select.md)은 초기 control·header-only WAL을 읽기 전용으로 선택하는 제한 단위를 구체화한다. BOOT_RESERVE·nonempty tag2 prefix·Pending 복구·전체3.12.1–4 인수와 구별하며, 실제 상태는 [구현 기록](../implementation/dev3-implementation.md#recovery-select)을 따른다.
 
+[현행 WAL prefix 분석 계약](dev3-recovery-prefix.md)은 actual reserve/cancel·Status INIT의 owner·descriptor·inventory와 canonical RAM image를 닫힌 owner 안에서 재구성하는 후속 공급이다. [선택 실행과 제한 단위 최종 D1](../evidence/dev3-recovery-prefix-20261022.md)을 수용했다. home 무독해·무변경의 분석을 BOOT_RESERVE·Pending repair·물리 REDO의 완료로 세지 않는다.
+
 1. writer lease를 획득하고 fixed root profile의 exact length/format/checksum·지원 profile·namespace를 검증한다. 이 이후 선택 대상의 expected identity를 전달한다.
 2. FILEMAP/DWB와 명시 current/previous·base continuation을 검산한다. 손상 selector 대신 임의 큰 파일 번호·raw DWB·directory 탐색으로 대안을 만들지 않는다. checkpoint fallback은 3.13의 완전 closure 조건을 따른다.
 3. 생성 때 선택된 recovery profile의 실제 자원과 이미 영속화된 작업 요구를 수용할 수 있는지 확인한다. 신규 foreground admission 축소와 복구 요구량은 별개다.

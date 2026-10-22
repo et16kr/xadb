@@ -55,6 +55,11 @@ pub(in crate::storage) use bootstrap::{
     InitialRecoveryError, inspect_initial_bootstrap, recovery_preparation_bytes,
     recovery_reader_bytes,
 };
+#[allow(unused_imports)] // Closed prefix observations await the next recovery barrier.
+pub(crate) use bootstrap::{
+    RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError, RecoveryPrefixObservation,
+    RecoveryPrefixPhase, RecoveryProducerMode,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {

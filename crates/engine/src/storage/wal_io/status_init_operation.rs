@@ -49,6 +49,40 @@ pub(super) struct InitPlan<'p, 's> {
     pub(super) role: &'p StatusRole<'s>,
 }
 
+/// Canonical byte/geometry context only. This is not a live StatusRole,
+/// fence, pin or installation permit and never authorizes stage/apply.
+pub(super) struct InitExpected<'p> {
+    pub(super) profile: Profile,
+    pub(super) allocator: PageIdentity,
+    pub(super) payload: PageIdentity,
+    pub(super) frame: FrameExpectation,
+    pub(super) batch: Batch,
+    pub(super) before_descriptor: &'p [u8; 1536],
+}
+impl<'p> InitPlan<'p, '_> {
+    fn expected(&self) -> Result<InitExpected<'p>> {
+        require(
+            self.role.namespace() == self.profile.spec().namespace
+                && self.role.object() == self.payload.owner
+                && self.role.generation() == self.payload.owner_generation
+                && self.role.kind() == PageKind::TransactionStatus
+                && self.role.level() == 0,
+            SemanticError::IdentityMismatch,
+        )?;
+        Ok(InitExpected {
+            profile: self.profile,
+            allocator: self.allocator,
+            payload: self.payload,
+            frame: FrameExpectation {
+                stream: self.prefix.stream,
+                previous_lsn: self.prefix.complete_lsn,
+            },
+            batch: self.batch,
+            before_descriptor: self.before_descriptor,
+        })
+    }
+}
+
 /// No Clone/Copy and no raw constructor. Each produced region is borrowed for
 /// the same lifetime, so consuming stage cannot allow an after image to change.
 pub(super) struct PreparedInit<'out, 's> {
@@ -127,16 +161,16 @@ fn profile_ref(profile: &Profile) -> ControlRef {
         digest: profile.digest(),
     }
 }
-fn header(plan: &InitPlan<'_, '_>) -> Result<WalFrameHeader> {
+fn header(plan: &InitExpected<'_>) -> Result<WalFrameHeader> {
     Ok(WalFrameHeader {
-        stream: plan.prefix.stream,
+        stream: plan.frame.stream,
         kind: FrameKind::System,
         lsn: plan
-            .prefix
-            .complete_lsn
+            .frame
+            .previous_lsn
             .checked_add(1)
             .ok_or(SemanticError::OrderMismatch)?,
-        previous_lsn: plan.prefix.complete_lsn,
+        previous_lsn: plan.frame.previous_lsn,
         txn: None,
         previous_txn_lsn: 0,
     })
@@ -150,19 +184,16 @@ fn target(identity: &PageIdentity, kind: PageKind) -> RedoTarget {
         level: 0,
     }
 }
-fn plan_index(plan: &InitPlan<'_, '_>) -> Result<usize> {
+fn plan_index(plan: &InitExpected<'_>) -> Result<usize> {
     use SemanticError::*;
     let namespace = plan.profile.spec().namespace;
     require(
-        plan.role.namespace() == namespace
-            && plan.allocator.database == namespace.database
+        plan.allocator.database == namespace.database
             && plan.payload.database == namespace.database
-            && plan.payload.owner == plan.role.object()
-            && plan.payload.owner_generation == plan.role.generation()
-            && plan.role.kind() == PageKind::TransactionStatus
-            && plan.role.level() == 0
-            && plan.prefix.stream.database == namespace.database
-            && plan.prefix.stream.timeline == namespace.timeline,
+            && plan.payload.owner.get() == 2
+            && plan.payload.owner_generation.get() == 1
+            && plan.frame.stream.database == namespace.database
+            && plan.frame.stream.timeline == namespace.timeline,
         IdentityMismatch,
     )?;
     require(
@@ -180,10 +211,10 @@ fn plan_index(plan: &InitPlan<'_, '_>) -> Result<usize> {
                 == Some(plan.payload.page.page_no),
         IdentityMismatch,
     )?;
-    require(plan.batch.birth == plan.prefix.complete_lsn, OrderMismatch)?;
+    require(plan.batch.birth == plan.frame.previous_lsn, OrderMismatch)?;
     Ok(index)
 }
-fn token(plan: &InitPlan<'_, '_>) -> Result<[u8; 96]> {
+fn token(plan: &InitExpected<'_>) -> Result<[u8; 96]> {
     let mut item = [0; 96];
     item[0] = 1;
     item[1] = 3;
@@ -195,7 +226,7 @@ fn token(plan: &InitPlan<'_, '_>) -> Result<[u8; 96]> {
     put64(&mut item, 72, plan.batch.birth);
     Ok(item)
 }
-fn allocated(plan: &InitPlan<'_, '_>) -> AllocationEntry {
+fn allocated(plan: &InitExpected<'_>) -> AllocationEntry {
     AllocationEntry::Allocated {
         generation: plan.payload.page.incarnation,
         object: plan.payload.owner,
@@ -205,7 +236,7 @@ fn allocated(plan: &InitPlan<'_, '_>) -> AllocationEntry {
 }
 
 /// Ends before any entry array, Status codec or output write exists.
-fn validate_before(plan: &InitPlan<'_, '_>, before: &[u8; PAGE_BYTES]) -> Result<()> {
+fn validate_before(plan: &InitExpected<'_>, before: &[u8; PAGE_BYTES]) -> Result<()> {
     plan_index(plan)?;
     let old = allocation_page::decode_allocation_page(
         before,
@@ -235,11 +266,12 @@ pub(super) fn prepare_init<'out, 's>(
     allocator_after: &'out mut [u8; PAGE_BYTES],
     status_after: &'out mut [u8; PAGE_BYTES],
 ) -> Result<PreparedInit<'out, 's>> {
-    validate_before(plan, before)?;
-    let h = header(plan)?;
+    let expected = plan.expected()?;
+    validate_before(&expected, before)?;
+    let h = header(&expected)?;
     let bytes = &mut output[..FRAME_BYTES];
     bytes.fill(0);
-    encode_allocator(plan, before, h.lsn, bytes, allocator_after)?;
+    encode_allocator(&expected, before, h.lsn, bytes, allocator_after)?;
     encode_finished_descriptor(
         &plan.profile,
         plan.batch,
@@ -248,8 +280,8 @@ pub(super) fn prepare_init<'out, 's>(
     )?;
     // Neither allocation entry array nor DescriptorSpec survives into this helper.
     encode_status_image(&plan.payload, PageLsn(h.lsn), status_after)?;
-    encode_group(plan, h, before, bytes, allocator_after, status_after)?;
-    validate_init(plan, before, bytes, allocator_after, status_after)?;
+    encode_group(&expected, h, before, bytes, allocator_after, status_after)?;
+    validate_expected(&expected, before, bytes, allocator_after, status_after)?;
     Ok(PreparedInit {
         bytes,
         allocator_after,
@@ -260,7 +292,7 @@ pub(super) fn prepare_init<'out, 's>(
     })
 }
 fn encode_allocator(
-    plan: &InitPlan<'_, '_>,
+    plan: &InitExpected<'_>,
     before: &[u8; PAGE_BYTES],
     lsn: u64,
     bytes: &mut [u8],
@@ -403,7 +435,7 @@ fn encode_status_image(
     .map_err(|_| SemanticError::PageMismatch)
 }
 fn encode_group(
-    plan: &InitPlan<'_, '_>,
+    plan: &InitExpected<'_>,
     h: WalFrameHeader,
     before: &[u8; PAGE_BYTES],
     bytes: &mut [u8],
@@ -457,7 +489,7 @@ fn encode_group(
     bytes[DELTA + 16..DELTA + 112].copy_from_slice(&token(plan)?);
     wal_frame::encode_patch_record(
         target(&plan.allocator, PageKind::Allocation),
-        plan.prefix.complete_lsn,
+        plan.frame.previous_lsn,
         10144,
         &allocator_after[CELL],
         &mut bytes[PATCH],
@@ -484,6 +516,17 @@ pub(super) fn validate_init(
     allocator_after: &[u8; PAGE_BYTES],
     status_after: &[u8; PAGE_BYTES],
 ) -> Result<()> {
+    let expected = plan.expected()?;
+    validate_expected(&expected, before, bytes, allocator_after, status_after)
+}
+
+pub(super) fn validate_expected(
+    plan: &InitExpected<'_>,
+    before: &[u8; PAGE_BYTES],
+    bytes: &[u8],
+    allocator_after: &[u8; PAGE_BYTES],
+    status_after: &[u8; PAGE_BYTES],
+) -> Result<()> {
     validate_before(plan, before)?;
     let h = validate_header(plan, bytes)?;
     validate_finished(
@@ -497,14 +540,14 @@ pub(super) fn validate_init(
     validate_status_transition(plan, bytes, status_after, h)?;
     Ok(())
 }
-fn validate_header(plan: &InitPlan<'_, '_>, bytes: &[u8]) -> Result<WalFrameHeader> {
+fn validate_header(plan: &InitExpected<'_>, bytes: &[u8]) -> Result<WalFrameHeader> {
     use SemanticError::*;
     require(bytes.len() == FRAME_BYTES, Corrupt)?;
     let env = wal_frame::decode_semantic_envelope(
         bytes,
         FrameExpectation {
-            stream: plan.prefix.stream,
-            previous_lsn: plan.prefix.complete_lsn,
+            stream: plan.frame.stream,
+            previous_lsn: plan.frame.previous_lsn,
         },
     )
     .map_err(frame_error)?;
@@ -564,7 +607,7 @@ fn validate_header(plan: &InitPlan<'_, '_>, bytes: &[u8]) -> Result<WalFrameHead
     Ok(env.header)
 }
 fn validate_allocator_transition(
-    plan: &InitPlan<'_, '_>,
+    plan: &InitExpected<'_>,
     before: &[u8; PAGE_BYTES],
     bytes: &[u8],
     after: &[u8; PAGE_BYTES],
@@ -641,7 +684,7 @@ fn validate_allocator_transition(
     )
 }
 fn validate_status_transition(
-    plan: &InitPlan<'_, '_>,
+    plan: &InitExpected<'_>,
     bytes: &[u8],
     after: &[u8; PAGE_BYTES],
     h: WalFrameHeader,
@@ -692,6 +735,17 @@ pub(super) fn materialize_init(
     allocator_after: &mut [u8; PAGE_BYTES],
     status_after: &mut [u8; PAGE_BYTES],
 ) -> Result<()> {
+    let expected = plan.expected()?;
+    materialize_analysis(&expected, before, bytes, allocator_after, status_after)
+}
+
+pub(super) fn materialize_analysis(
+    plan: &InitExpected<'_>,
+    before: &[u8; PAGE_BYTES],
+    bytes: &[u8],
+    allocator_after: &mut [u8; PAGE_BYTES],
+    status_after: &mut [u8; PAGE_BYTES],
+) -> Result<()> {
     validate_before(plan, before)?;
     let h = validate_header(plan, bytes)?;
     allocator_after.copy_from_slice(before);
@@ -700,7 +754,7 @@ pub(super) fn materialize_init(
     let digest = content_digest(&allocator_after[..page::DIGEST_OFFSET]);
     allocator_after[page::DIGEST_OFFSET..].copy_from_slice(&digest);
     status_after.copy_from_slice(&bytes[INIT.start + 64..INIT.end]);
-    validate_init(plan, before, bytes, allocator_after, status_after)
+    validate_expected(plan, before, bytes, allocator_after, status_after)
 }
 
 /// Reader's Status checksum/page phase ends before canonical Free decoding.
@@ -824,6 +878,7 @@ pub(super) fn status_codec_bytes() -> usize {
 pub(super) fn plan_bytes() -> usize {
     budget::PLANS.max(
         6 * size_of::<InitPlan<'static, 'static>>()
+            + 2 * size_of::<InitExpected<'static>>()
             + 128
             + 2 * size_of::<PreparedInit<'static, 'static>>(),
     )
