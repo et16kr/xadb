@@ -63,6 +63,19 @@ DEV3처럼 큰 책임을 분류하고 각 책임을 좁은 공급 단위와 소�
 | 4.01.2 공통 경계 동결 | 4.01.1, 해당 실제 DEV3 공급 | F01/F02의 AST/bound/metadata·error/outcome·session/result/token 소유 경계를 소비 leaf별로 동결·독립 검토. 존재하지 않는 API 이름을 callable로 등록하지 않음 |
 | 4.01.3 실행 입력 수합 | 해당 4.08/4.16/4.18의 준비 산출물 | F03 spill bytes·F04 관측/fixture·F05 자원/성능 profile의 담당·완료/잔여를 관리. 아직 쓰지 않는 모든 미래 입력을 lexer의 선행으로 만들지 않음 |
 
+<a id="dev5-supply"></a>
+### DEV5 소비를 위한 SQL 공급 배정
+
+[DEV5 D5-S03–S05](dev5-work-breakdown.md#supply)의 공급을 아래 기존 작업에 배정한다. 추가 SQL 기능이나 server 의존성을 도입하지 않으며 기존 분류 단위의 의미·Q1 인수는 유지한다. 현재는 OPEN_SUPPLY이고 실제 구현자·검토자·signature/receipt는4.01.1/2와5.01.1에서 소비 전에 확정한다.
+
+| 공급 | 기존 작업·소유 | 공급 완료 조건 |
+| --- | --- | --- |
+| D5-S03 continuation | 4.13.1 statement/session 소유, 4.14.2 operation context, 4.14.3 cleanup; D5-S02 engine 대기 수신 | SELECT/DML/fetch/DDL의 실제 대기 지점에서 token·변경·예약·cursor 위치를 보존해 실행 소유 반환/재개. 같은 호출 deadline 유지, 새 fetch context 교체, stack borrow·부분 pin 잔류 금지, thread 이동 가능성·중복 wake/취소/close 검토. 호출 context만 존재하는 상태를 공급 완료로 세지 않음 |
+| D5-S04 분류·권한 callback | 4.03 parser class, 4.10 DDL 조립, 4.11 prepared class, 4.13 거래 제어 | expected_result 첫 효과 전 검사와 자기 ROLLBACK의 신뢰 가능한 분류. DDL precommit 전 COMMIT 권한·후 semantic ddl 권한 및 두 outcome 보존. F01/F02·D5-F01/F02 공동 동결 |
+| D5-S05 outcome·cleanup | 4.12.3 result 종료, 4.13.2/3 commit/rollback, 4.14.3 인계 | engine receipt/certainty·fence 보존, result/statement/txn/continuation 단일 cleanup owner. 실패 undo를 ABORTED로 만들지 않음. 의미 표를 먼저 공급하고 실제 SQL/engine 연결과 실패 사례를 별도 인수 |
+
+동기 embedded facade는 동일 계약을 구동하고 server 타입을 import하지 않는다. 정확한 Rust continuation/Send·effect port 선택은 공급 구현 때 D2 검토한다. API 검증에 실제 server 전체를 선행시키지 않고 좁은 SQL/engine 시험을 공급하며, 실제 B3 연결은 DEV5가 담당한다. 계획 수정만으로 제품 구현·테스트를 시작하지 않는다.
+
 <a id="task-02"></a>
 ## 4. 4.02 — 어휘·이름·문장 경계
 

@@ -4,7 +4,7 @@
 
 [구현·검증 계획](../plans/dev5-implementation-plan.md) · [소스 조사·검토](../evidence/dev5-source-research.md) · [DEV4 SQL](dev4-sql-design.md) · [COMM](comm-design.md) · [단계 완료](../plans/stage-completion.json)
 
-2026-10-22 [16개 분류·44개 하위 개발 작업](../plans/dev5-work-breakdown.md#catalogue)에 이 계약의 책임·공급·인수 경계를 배정했다. [ARIES·Oracle·로컬 DBMS 조사](../evidence/dev5-work-breakdown-research-20261022.md)를 참고한 작업 분류이며, 아래 제품 의미·D5-F01–F05 미동결·B3 NOT_RUN 상태는 유지한다.
+2026-10-22 [16개 분류·64개 하위 개발 작업](../plans/dev5-work-breakdown.md#catalogue)에 이 계약의 책임·공급·인수 경계를 배정했다. [ARIES·Oracle·로컬 DBMS 조사](../evidence/dev5-work-breakdown-research-20261022.md)를 참고한 작업 분류이며, 아래 제품 의미·D5-F01–F05 미동결·B3 NOT_RUN 상태는 유지한다. [002 공급·분량 재검토](../plans/dev5-work-breakdown.md#decision-002)는 하위 공급 owner와 도구/실행 순서를 연결하며 이 소유 계약의 의미·수치·정식 Serving gate를 변경하지 않는다.
 
 이 문서는 `XADB-012/033`, B3의 SC03·KU14·PA08·PF11을 구체화한다. DEV4의 SQL 의미와 COMM의 전송 계약을 서버에서 조립한다. API·wire ID·수치는 개발 설계이며 현재 호출 가능한 서버나 안정 릴리스 호환 약속이 아니다. DEV2 부분 구현과 진행 중인 미커밋 코드를 DEV3/S1·DEV4/Q1·COMM/C1 완료 증거로 사용하지 않는다. 설계 준비는 선행 단계 완료 전 가능하고 실제 통합 착수·완료는 [계획](../plans/dev5-implementation-plan.md#entry)을 따른다.
 

@@ -4,7 +4,7 @@
 
 [서버 상세 설계](../contracts/dev5-server-design.md) · [소스 조사·검토](../evidence/dev5-source-research.md) · [단계 JSON](development-stages.json) · [완료 계약](stage-completion.json)
 
-2026-10-22 [16개 분류·44개 하위 작업](dev5-work-breakdown.md#catalogue)으로 D5-I01–I06을 세분화했다. 직접 선행·산출물·완료 조건·F/T/C/M/P 대응과 우선 공급 순서는 해당 계획을 따른다. [ARIES·Oracle·로컬5개 DBMS 조사](../evidence/dev5-work-breakdown-research-20261022.md)는 분류 근거이며 제품 실행 증거가 아니다. 아래 과거 하위 회귀·V3 문구에도 [변경 코드만 시험하는 사용자 지시](../../AGENTS.md)가 우선한다. DEV3 S5 전수 예외는 DEV5에 적용하지 않으며, B3는 원래 증거를 수신하고 미실행·변경/실패 경로의 의무를 닫아 판정한다.
+2026-10-22 [16개 분류·64개 하위 작업](dev5-work-breakdown.md#catalogue)으로 D5-I01–I06을 세분화했다. 직접 선행·산출물·완료 조건·F/T/C/M/P 대응과 우선 공급 순서는 해당 계획을 따른다. [ARIES·Oracle·로컬5개 DBMS 조사](../evidence/dev5-work-breakdown-research-20261022.md)는 분류 근거이며 제품 실행 증거가 아니다. 아래 과거 하위 회귀·V3 문구에도 [변경 코드만 시험하는 사용자 지시](../../AGENTS.md)가 우선한다. DEV3 S5 전수 예외는 DEV5에 적용하지 않으며, B3는 원래 증거를 수신하고 미실행·변경/실패 경로의 의무를 닫아 판정한다.
 
 이 계획은 XADB-012 서버 조립과 XADB-033 실제 client 인수의 순서·선행·동결 입력을 정한다. 구현될 파일·runner·명령이 존재한다고 주장하지 않으며 빈 package나 fingerprint/clean-export 경로를 추가하지 않는다. DEV6 driver 완성은 B3의 선행 조건이 아니다.
 
@@ -25,6 +25,8 @@ DEV3의 mutable page·WAL·영속 undo·CLR·doublewrite·table SERIALIZABLE 공
 
 [DEV6 수신 요구 D6-W01](../contracts/dev6-client-design.md#protocol)의 authoritative autocommit/state·metadata와 expected_result 효과 전 검사를 D5-F01에 함께 동결한다. DEV5 독립 protocol client가 직접 검사하므로 완성된 DEV6 driver를 B3 선행 조건으로 만들지 않는다.
 
+[D5-S01–S06 공급 배정](dev5-work-breakdown.md#supply)은 이 동결 입력의 실제 owner·공급 작업·소비 leaf를 연결한다. [DEV3](dev3-implementation-plan.md#dev5-supply)·[DEV4](dev4-work-breakdown.md#dev5-supply)·[COMM](comm-implementation-plan.md#dev5-supply)의 역참조는 책임 배정이며 공급 완료 증거가 아니다.
+
 모두 **OPEN_NOT_IMPLEMENTED**다. 설계에서 정한 의미·한도는 유지하고 실제 signature/입력/receipt와 실행 recipe를 아래 gate 전에 D2 검토한다. 코드 없이 그럴듯한 명령이나 byte 기대값을 완료 증거로 만들지 않는다.
 
 | ID | 동결할 내용 | 닫는 시점·필수 산출 |
@@ -40,7 +42,7 @@ frame/UID/권한 callback의 실제 하위 계약이 부족하면 해당 소유�
 <a id="sequence"></a>
 ## 3. 구현 순서·책임 배치
 
-아래 I01–I06은 상위 묶음이다. 실제 착수·검토·인계는 [세부 작업의 직접 선행](dev5-work-breakdown.md#tasks)과 [공급 우선순위](dev5-work-breakdown.md#order)를 따른다. 특히 cleanup primitive·독립 oracle·자원 회계는 I05/I06까지 미루지 않는다.
+아래 I01–I06은 상위 묶음이다. 실제 착수·검토·인계는 [세부 작업의 직접 선행](dev5-work-breakdown.md#tasks)과 [공급 우선순위](dev5-work-breakdown.md#order)를 따른다. 특히 cleanup primitive·독립 oracle·자원 회계는 I05/I06까지 미루지 않는다. [D5-WORK-BREAKDOWN-002](dev5-work-breakdown.md#decision-002)는 공통 outcome5.10.4→일반 거래5.10.3→DDL5.10.2, fetch와 분리한 전송5.11.2, 독립 client/harness5.15.2/3의 조기 공급을 배정한다. 실제 기능별 crash5.15.8/9와 shutdown 재장애5.15.10, 모델·thread·fuzz·수명·PF11 도구/실행은 별도 완료로 기록하며 아래 모든 T/C/M/P 의무와 정식 Serving/B3 gate를 유지한다.
 
 | 순서 | 작업·소유 책임 | 인수 후 다음 입력 |
 | --- | --- | --- |

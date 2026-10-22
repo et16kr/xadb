@@ -21,6 +21,17 @@ leaf `COMM-C0`–`COMM-C4`를 순서대로 통합한 뒤 완료 gate C1을 판�
 
 작업 담당은 `/root`; 구현 착수 때 실제 구현자·독립 검토자·통합 담당을 기록한다. 기본은 순차 통합이다. foundation 계약을 consumer가 독립적으로 복제하지 않고 C0에서 먼저 동결한다. actual API가 설계와 다르면 관련 owner 계약을 수정·검토한 뒤 진행한다. 별도 검토 없는 구현은 `READY_FOR_REVIEW`이며 C1 PASS로 승격하지 않는다.
 
+<a id="dev5-supply"></a>
+### DEV5 peer identity 공급 배정
+
+[DEV5 D5-S01](dev5-work-breakdown.md#supply)은 foundation/platform의 기존 COMM-C0/C2 책임에 배정한다. 현재 ByteStream/Listener의 socket read/write/accept 공급은 peer UID 조회 공급과 다르며, 이 추가 수신 경계는 OPEN_SUPPLY다. 새 SQL/auth policy를 transport에 넣거나 기존 C1의 실행 결과를 소급 변경하지 않는다.
+
+- COMM-C0/foundation 담당: accepted connection 수명과 결합한 typed peer identity·조회 실패/미지원 경계·소유 API를 D5-F02와 함께 동결한다. private fd를 server로 노출하지 않는다.
+- COMM-C2/platform 담당: 실제 accepted Unix socket의 OS credential 조회를 safe adapter로 공급하고 UID 불일치·조회 실패·소켓 종료/재사용의 좁은 native 사례와 dependency/feature·오류 검토 증거를 제공한다.
+- DEV5 5.04.1 담당: 검토된 API·source/시험 범위를 수신하여 principal/DB allowlist와 연결한다. 정책 파일 검증은5.04.4, handshake는5.04.2 소유다. 포트 구현·server adapter·정식 Serving 인수를 따로 기록한다.
+
+실제 구현자·별도 검토자는 공급 착수 때 배정하고 변경한 경로의 필요한 시험만 실행한다. 이 문서 편집은 port 구현·C1/B3 완료나 시험 재개가 아니다.
+
 <a id="acceptance"></a>
 ## 2. KU12 상세 인수 목록
 

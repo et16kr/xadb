@@ -138,6 +138,19 @@ F05는 3.16까지 미루는 작업이 아니다. [opcode 자원 계산](#resourc
 
 3.10.1은 3.05/3.09의 완료를 선행으로 요구하지 않는다. guard/turn 자체의 수명·순서·thread 증거를 먼저 공급하고, 실제 flusher drain·undo·commit과의 의미는 각 소비 경로 및 3.10.2에서 통합 인수한다. 3.14.1도 실제 회수 가능성 판정을 먼저 공급하고 free/reuse 결과는 3.14.2에서 연결한다. 3.15.1의 검사기·독립 기대값 준비는 S0부터 진행하며 backup 완료를 기다리지 않는다. 정상 open에 변경 없는 cold table 전수 검사를 추가하지 않는다.
 
+<a id="dev5-supply"></a>
+#### DEV5 소비를 위한 engine 공급 배정
+
+[DEV5 D5-S02/S05 공급 대장](dev5-work-breakdown.md#supply)은 기존 동시성·DDL·거래 책임을 아래 작업에 연결한다. 서버용 알고리즘을 별도 구현하거나 DEV3/S1의 완료 분모를 새 서버 인수로 바꾸지 않는다. 실제 API·signature·owner·별도 검토·변경 코드 시험은 해당 F02와 D5-F03의 소비 전 동결하며 공급 상태는 OPEN_SUPPLY다.
+
+| 공급 | 기존 작업·소유 | DEV5 수신 경계 |
+| --- | --- | --- |
+| D5-S02 row/key 대기 | 3.10.1.a 잠금 primitive, 3.07.2 key/UNIQUE 대기, 3.10.2.b/c 실제 충돌·victim/취소 | 조건 검사+wait 등록·generation·unlock/cancel/unregister·stale wake의 소유. page/tree latch·부분 pin 없이 대기를 반환하고 holder의 종료가 worker 부족으로 막히지 않도록 SQL이 중단 가능한 경계 공급 |
+| D5-S02 offline build/DDL drain | 3.07.3 build, 3.08.2 native DDL, 3.10.1.c admission/drain | 기존 거래/result drain과 막힌 새 admission의 대기 등록·취소를 같은 소유 규약에 연결. SQL/server는 private lock이나 재실행으로 우회하지 않음 |
+| D5-S05 종료·복구 소유 | 3.09.3 rollback, 3.11.1/2 commit, 3.12.8 recovery 인계 | durable+publish·undo 완료와 UNKNOWN/NotCommittedRecoveryRequired/fence를 실제 receipt·소유로 구분. 정상 해제 전 재사용 금지·중복 cleanup·재장애의 원래 증거 수신 |
+
+잠금 대기·wait-for graph가 이미 있다는 사실만으로 continuation/worker 반환 공급 완료가 아니다. DEV3 공급은 좁은 native 인수로 먼저 확인하고 SQL의 보존 실행 소유는 D5-S03, 실제4-worker holder/DDL 진행은5.08.3이 담당한다. 새 검증은 해당 구현 diff에 한정하며 무변경 완료 시험을 반복하지 않는다. 이번 배정은 제품 개발·시험 재개가 아니다.
+
 <a id="allocation-remaining"></a>
 #### 3.03–3.05: 할당·WAL·dirty/flush 공급
 
