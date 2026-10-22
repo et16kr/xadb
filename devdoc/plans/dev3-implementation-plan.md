@@ -13,6 +13,8 @@
 
 2026-10-22 후속 사용자 지시의 [단계별 테스트 계획](dev3-test-plan.md)이 실행 시점을 구체화한다. 중간 단계에는 변경 기능의 필수 시험만 적용하고, 테스트·fixture·oracle는 구현과 함께 추가한다. **DEV3 최종 S5는 확정 DEV3 inventory 전수 실행**이며 기존 무변경/전수 금지의 한정 예외다. 장시간·대규모·전체 조합은 최종 인수에 배정하며 DEV0/1/2·workspace 전수 wrapper로 확대하지 않는다. 아래 인수 목록은 전체 의무이고 매번 실행할 목록이 아니다.
 
+[항목별 재점검](dev3-test-plan.md#item-review)은16개 작업의 중간 누락 경계와 공동 case를, [실행 목록](dev3-test-plan.md#case-inventory)·[비용 제어](dev3-test-plan.md#cost-control)는 실제 selector/변형 분모·준비 비용을 구체화한다. 같은 실행의 다중 의무는 결과를 연결하며 각 계약의 명시 조합·최종 budget은 유지한다.
+
 선행 REVIEW-002를 반영·독립 검토한 다음, DESIGN-003으로 COW pack 경로를 in-place page·WAL·영속 undo로 대체한다. 이 계획은 이전 DESIGN-001/PARALLEL-001의 구현 작업 분할을 대체한다. 실제 구현·수신 API·실행 증거가 없는 항목은 여전히 미완료다. DEV2 부분 구현 중에도 설계·oracle 준비는 가능하지만 volatile P0/K0 PASS로 영속 선행을 충족했다고 하지 않는다.
 
 | DEV2 공급 | DEV3 이관·변경 경계 |
@@ -293,7 +295,7 @@ DEV3 재개 시 기본 배치는 **총괄·통합 1명 + 작업 담당 2명 + �
 | 동시성 | RC 두 statement 사이 다른 commit 관측, 같은 statement 안정, independent row writer 둘 다 성공; 관측→타 거래 commit/unlock→즉시 X lock에서도 논리 버전 충돌. Serializable 독립 table 성공·same-table false conflict·write-skew/absence/range/catalog 충돌. unique 잠금 경합·deadlock victim full undo |
 | 자원 | foreground가 reserve 소비하는 mutant, CLR worst-case/rollback split page 부족의 사전 거절, quota 경계에서 rollback/flush/checkpoint/aging 진행, 반복 crash에서 scratch/disk 누적 없음 |
 | 전체 검증 | 정상 reopen 후 admission drain한 full row↔index/unique/catalog/allocation/undo 검사와 독립 이력. cold-page corruption 첫 read/audit 거절을 startup 검출로 과장하지 않음 |
-| 하위 회귀 | DEV0/1·DEV2 P0/K0 및 실제 공급 durable leaf. 동일 의미 회귀와 형식별 DEV2/DEV3 차이를 분리 |
+| 하위 공급 수신 | [사용자 지시](../../AGENTS.md)와 [FT10](dev3-test-plan.md#final-suite)에 따라 실제 수정한 공통 공급/adapter·DEV3 연결 사례만 선택. 무변경 DEV0/1/2·P0/K0·durable leaf는 원래 증거 수신이며 전체 wrapper를 재실행하지 않음 |
 
 잠금 wait/unique 오류 뒤 rollback을 완료하지 않았는데 ABORT 성공 응답하는 mutant, CLR 진행점만 저장하는 mutant, user abort가 split의 이전 전체 page를 복사해 다른 거래를 지우는 mutant, undo/status 조기 재사용 mutant를 필수로 포함한다.
 

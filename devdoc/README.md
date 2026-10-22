@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV3 테스트 계획 항목별 재점검](evidence/dev3-test-plan-review-20261022.md):16개 작업의 중간 필수 경계·누락/중복 검출·공동 실행과 준비 비용을 보완했다. [개선 계획](plans/dev3-test-plan.md#item-review)은 S5 DEV3 전수·기존 budget을 유지하며 제품 개발·시험은 재개하지 않는다.
+
 2026-10-22 [DEV3 16개 설계 2차 비교 리뷰](evidence/dev3-task-design-review-20261022-r2.md): ARIES·Oracle·로컬6개 DBMS를 대조하여 Commit 의미 설치 순서·offline build drain·backup 최종 WAL cut을 보완했다. 이전 리뷰와 실행 결과는 보존하며 제품 구현·시험 실행은 없다.
 
 2026-10-22 [DEV6 18개 분류·55개 하위 작업](plans/dev6-work-breakdown.md): Native/C·JDBC·ODBC의 선행 공급·완료 조건·인수 연결과 자원/독립 검증/빌드 준비를 나눴다. [ARIES·Oracle·로컬 6개 DBMS 조사](evidence/dev6-work-breakdown-research-20261022.md)를 근거로 기존 의미·SC04→SC05→SC06 순서를 유지하며 제품 구현·시험은 시작하지 않는다.

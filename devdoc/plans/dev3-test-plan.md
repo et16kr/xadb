@@ -2,6 +2,8 @@
 
 2026-10-22 · **D3-TEST-PLAN-001 D2 ACCEPTED / 독립 검토 완료 / 신규 테스트 코드·제품 실행 없음**
 
+같은 날 [항목별 재점검](../evidence/dev3-test-plan-review-20261022.md)으로 중간 필수 경계·중복 제거·실행 분모를 보완했다. 최초 결정과 그 검토 identity는 보존하며, 후속 **D3-TEST-PLAN-002의 상태·검토 범위**는 [새 결정 기록](#review-decision)을 따른다.
+
 [개발 문서](../README.md) · [구현 단계 S0–S5](dev3-implementation-plan.md#sequence) · [16개 상세 설계](../contracts/dev3-task-designs.md) · [현재 구현·잔여 인수](../implementation/dev3-implementation.md#dev3-work-breakdown) · [사용자 실행 기준](../../AGENTS.md)
 
 **중간 단계는 변경 기능의 필수 테스트만 실행하고, DEV3 최종 인수 S5에서 DEV3 전체 테스트를 수행한다.** “추가 테스트”는 각 기능 구현과 함께 새로 작성할 테스트·fixture·독립 기대값·검증 도구를 뜻한다. 선택적인 추가 시험이라는 뜻이 아니다. 새 테스트를 작성하는 시점과 큰 조합을 실제 실행하는 시점을 구분한다.
@@ -30,6 +32,17 @@
 구현 전 미동결 형식·API·자원 예약은 그대로 선행 의무다. 필수만 실행한다는 이유로 F05 계산, commit/abort 성공 전 영속 장벽, 실제 I/O·실제 thread의 핵심 확인을 생략하지 않는다. 아직 없는 상위 복구/공개 기능은 해당 후속 단계의 미완료 의무로 남기고 하위 구현의 완료 범위를 제한한다.
 
 기존 계약이 특정 모델·property를 해당 effect의 선행 증거로 요구하면 **그 변경 대상의 최소 고정 profile**은 중간 필수에 포함한다. 새/수정 property의 해당 V2 profile은64 seed·최대128 operation이며, 변경한 bounded model의 완료에는 선언한 유한 공간 완주가 필요하다. 변경 parser/codec target의 기존 보존 corpus도 해당 V2 중간 필수이며 그 target의 corpus 전체를 실행한다. 작은 known-bad로 checker를 검증한 것을 모델·property·codec 전체 PASS로 승격하지 않는다. 이를 이유로 무변경 M01–M06 전체나 다른 property/parser target을 반복하지 않으며 30분 fuzz·확대 corpus 등 최종 profile과 구별한다.
+
+<a id="minimum-boundaries"></a>
+### 1.1 필수 사례를 고르는 단위
+
+“작게 실행”은 **서로 다른 결과를 만드는 경계를 작은 fixture로 확인**한다는 뜻이다. 다음 기준으로 해당 변경에 필요한 case만 선정한다.
+
+- 정상·사전 무효과 거절·effect 후 실패/fence·정리/소유 반환은 서로 다른 경계다. fault 하나로 이 네 결과를 대표하지 않는다. checksum 오류와 checksum을 다시 맞춘 의미 오류도 구분한다.
+- 새 limit/분기·상태 인계를 처음 구현할 때는 최소·최대·필요량−1/동일/+1, 취소/Drop/unwind의 적용되는 경계를 닫는다. 최대 입력 한 건·split 한 번·두 sort run의 merge는 중간 필수이고, 수많은 최대 입력·대형 working set·장기 반복은 S5다. 적용되지 않는 경계는 이유를 적는다.
+- 모델, 메모리 port, 실제 Linux I/O, 실제 thread, 새 프로세스 reopen은 증거 종류가 다르다. 동일 불변식이라도 서로를 대체하지 않는다. 상위 공급이 없으면 그 통합 의무의 소비 작업과 완료 시점을 적고 미완료로 인계한다.
+- 하나의 scenario가 여러 NT/DS/RC 의무를 만족하면 **주 실행 owner 하나와 의무별 assertion**을 등록한다. 같은 fixture·cut·schedule·feature·환경·기대값의 실행 결과를 연결하고, 호출자별 실제 연결이나 다른 fault 경계를 같은 시험으로 간주하지 않는다.
+- 테스트 코드·공통 fixture·oracle·generator·빌드 feature도 영향 분석 대상이다. 제품 파일이 같아도 이들이 바뀌어 기대값/경로가 달라진 사례는 새 검증 대상이다. 전체 source hash 변경만으로 무관한 사례를 선정하지 않는다.
 
 <a id="stages"></a>
 ## 2. 단계별 필수 실행 목록
@@ -75,8 +88,8 @@
 | 작업·주 단계 | 중간 필수: 해당 구현/변경 때 실행 | 구현과 함께 추가할 테스트 | S5에서 실행할 전체 범위 |
 | --- | --- | --- | --- |
 | [3.09 undo·rollback](../contracts/dev3-task-09-undo-rollback.md), S2/S3 | head·두 previous edge·incoming의 같은 그룹; statement mark 복원/이전 statement 보존; 현재 tree의 logical undo가 타 거래·완결 SMO 보존; CLR effect+progress·예약; durable AbortEnd 뒤 잠금 해제; 실패 fence | **NT09**: 독립 edge multiset/typed 이력, 새 대상(row/index/catalog)별 undo fixture, split 뒤 rollback·재삽입 예약, ledger가 mark로 되감기지 않는 반복 실패 입력 | 3.09-C01–3.09-C17 및 선언 변형, chunk/release·target 교차·first/middle/last CLR 재장애·저공간 조합 |
-| [3.10 동시성](../contracts/dev3-task-10-concurrency.md), S2 primitive/S3 통합 | 새 guard/rank·모든 pin 준비 또는 반환; q 선택+등록·status11/frontier10; pin 인계 공백 없음; FIFO 준비 중 flusher; RC 문장 안정/다음 문장 새 commit; Serializable 의존 충돌; 즉시 X-lock 뒤 관측 버전 비교·victim 전체 undo | **NT10**: 소유권 compiler probe, sleep에 의존하지 않는 실제 thread barrier, q10 기대값·lock/observe 이력·ticket 진행, deadlock/cancel fixture | C10-01–C10-16 및 선언 변형, 두 isolation×충돌 종류×진입 경로, 실제 thread 장시간 stress |
-| [3.11 commit](../contracts/dev3-task-11-commit.md), S3 | commit 전/첫 byte 시도 후 오류 구분, WAL sync 뒤 Committed→frontier→ACK, no-force/steal, 다중 객체 전부 또는 전무, UNKNOWN/ACK 외부 관측, ACK 뒤 reopen 보존 | **NT11**: engine 밖 ACK/UNKNOWN witness와 독립 원자 이력, sync/status/frontier/reply barrier, terminal owner·credit 원자 인계·오류 fixture | 모든 commit cut·다중 객체/거래·WAL/DWB 상태 조합, 정상/거절 복구 분리. 미동결 terminal 형식은 먼저 동결 |
+| [3.10 동시성](../contracts/dev3-task-10-concurrency.md), S2 primitive/S3 통합 | 새 guard/rank·모든 pin 준비 또는 반환; q 선택+등록·status11/frontier10; pin 인계 공백 없음; FIFO 준비 중 flusher; RC 문장 안정/다음 문장 새 commit·독립 행 writer 성공; Serializable 의존 충돌; 즉시/대기/already-held X-lock 뒤 관측 버전 비교·victim 전체 undo | **NT10**: 소유권 compiler probe, sleep에 의존하지 않는 실제 thread barrier, q10 기대값·lock/observe 이력·ticket 진행, deadlock/cancel fixture | C10-01–C10-16 및 선언 변형, 두 isolation×충돌 종류×진입 경로, 실제 thread 장시간 stress |
+| [3.11 commit](../contracts/dev3-task-11-commit.md), S3 | commit 전/첫 byte 시도 후 오류 구분, WAL sync 뒤 Committed→frontier→ACK, no-force/steal, 다중 객체 전부 또는 전무, UNKNOWN/ACK 외부 관측, 후속 overwrite로 가려지는 ACK 유실 검출, ACK 뒤 reopen 보존 | **NT11**: engine 밖 ACK/UNKNOWN witness와 독립 원자 이력, sync/status/frontier/reply barrier, terminal owner·credit 원자 인계·오류 fixture | 모든 commit cut·다중 객체/거래·WAL/DWB 상태 조합, 정상/거절 복구 분리. 미동결 terminal 형식은 먼저 동결 |
 | [3.12 recovery](../contracts/dev3-task-12-recovery.md), S3 | 각 장벽의 [아래 필수 인수](#recovery-minimum). 새로 연결한 장벽과 직접 앞뒤 인계를 검증하고 무변경 앞 장벽 전체를 재실행하지 않음 | **NT12**: source prefix·ATT/DPT·obligation의 독립 snapshot, 대상별 redo 기대값, 두 슬롯 closure·epoch/WRITER·새 프로세스 fixture, 장벽 도달/재장애 controller | 장벽·namespace·quota·fault 전체와 반복 reopen, BEGIN-WAL 제거/부분 CLR, 고정 peak와 정상 startup 규모 비교 |
 
 ### 3.4 checkpoint·회수·backup·종합
@@ -117,6 +130,32 @@
 | R2-F2 build drain | NT07/08/10: 기존 rollback이 공유12MiB/turn을 요구할 때 build 대기, 자기 거래 drain 방지, 닫힌 외부 admission 아래 catalog commit/실패 cleanup 진행. 3.07-T11 | FT03/05/07, timeout/cancel·동시 drain·staging 전체 |
 | R2-F3 최종 backup cut | NT13/15: drain 뒤 checkpoint가 WAL L0→L1을 전진시켜도 논리 C 불변. manifest/base ledger는 최종 sync된 L1 cut, restore 첫 LSN>L1·새 unflushed ACK/reopen. 3.15-T12 | FT04/06/07, checkpoint/manifest cut·retained owner 조합 |
 
+<a id="item-review"></a>
+### 3.7 16개 항목 재점검: 중간 필수의 빠진 경계와 중복 방지
+
+아래는 기존 소유 계약의 인수를 중간 실행 선택에 구체화한 보완표다. 새 제품 의미나 별도 전수 suite를 추가하지 않는다. **각 행도 해당 경로를 작성·수정할 때만** 적용하며, 동일 보장의 기존 case가 있으면 연결하고 부족한 assertion/fixture만 추가한다. §3.1–3.6과 이 표의 합집합을 §6.1에서 중복 없이 등록한다.
+
+| 항목·계약 근거 | 중간에 놓치지 않을 필수 사례·판정 | 비용·중복 제어와 S5 확대 |
+| --- | --- | --- |
+| 3.01 / R2–R6 | 신뢰 expected를 입력 header로 위조한 사례, checksum 유효 의미 손상·trailing bytes, encoder 거절 시 caller output의 계약상 보존. round-trip만으로 정답 판정 금지 | 공통 envelope는 NT01, 소비자에는 새 kind의 의미·authority 인계만 추가. 변경 target의 보존 corpus는 유지하고 무관한 codec 전수 제외 |
+| 3.02 / §5–6 | 경로 이름만 같고 실제 열린 handle/namespace가 다른 입력·alias/lease 충돌, 실패 뒤 FD/lease 반환, 원래 I/O cause와 common fence 관측 | native 호출 한 번의 trace를 NT04/12의 같은 연결에 재사용. 큰 manifest/FD 전체 조합은 S5; 해당 limit의 작은 경계는 중간 |
+| 3.03 / R1–R6·§6 | §4 잔여 유지. INIT의 wrong claimant·중복 token 소비·generation MAX, growth 선택 전 주소 참조 금지·부분 bytes 소유, cancel 뒤 generation/recLSN/retained WAL 보존 | reserve/cancel 13DB와 WAL4를 다른 wrapper로 반복하지 않음. flush claim/free 경합은 NT05/14와 공동 case, 큰 inventory는 S5 |
+| 3.04 / R1–R7·§5 | Busy/stale prepare·LSN/offset 소진·owner chain 불일치, short/Interrupted 뒤 진행·zero/invalid count 뒤 fence, stage/apply/DPT 사이 unwind. 물리 Idle과 Commit 의미 설치 완료를 구별 | opcode 의미마다 작은 vector, 공통 append/sync fault는 동일 호출 경로일 때 공유. Commit 설치 반례 주 owner는 NT11 |
+| 3.05 / C02–C12·C16 | counter 소진·전체 pin 실패 cleanup, 중복 주소/batch 거절, copy/finalize redirty 경쟁, **한 page의 부분 batch deadline**, hot-page 압력에서 flush 완료와 oldest recLSN 진전을 별도 관측 | 다중 file 실패는 작은 2-file fixture. claim/free는 NT03/14에 같은 receipt 연결. batch1/8/64×profile×명시 fault의 확정 행렬·장시간 pressure는 S5 |
+| 3.06 / T06-02–14 | 유효 checksum의 child/level/범위 손상, 비대칭 entry split·마지막 row 삭제/root 축소, 2047/2048/2049·최대 row와 overflow 누락/순환, **자기 mutation 뒤 cursor 무효화**, locator cache on/off 결과 동일 | 작은 강제 split·소수 chunk로 경계 도달. observation은 NT10, split 뒤 undo는 NT09와 공동 case. 4배 집합은 S5 |
+| 3.07 / T1–T11 | typed tuple 순서·range 포함/제외 경계, full-key 제거/재추가의 옛 snapshot, 두 writer의 commit/abort 뒤 UNIQUE 재검사, 작은 **2-run external merge**·단계별 취소/cleanup과 닫힌 admission 아래 catalog 공개 | codec vector는 NT01 수신, 반복 실패 ledger는 NT09/16과 공동. 작은 spill로 merge 분기를 먼저 닫고 전체 key/index/profile·대형 build는 S5 |
+| 3.08 / R1–R7·§7 | duplicate/UTF-8 byte 이름·nullable PK·parent generation/schema mismatch·열 위치·index 수 경계; 실패 create 후 정의/소유 보존, 단독 index drop과 table+종속 index drop 구별 | build 알고리즘은 NT07, NT08은 catalog 공개/undo·staging 인계만 연결. 기존 REVIEW-009의0/1/8 index drop 필수는 유지 |
+| 3.09 / C01–C17 | 같은 UndoRef를 두 role이 참조하면 count2, creator는 status edge 아님; net0 remove/add의 제거 존재·underflow 검산; Missing/tombstone 구별; 반복 statement 실패 뒤 실제 ledger 누적과 abort 예약 보존 | 작은 몇 회 반복으로 다음 admission 거절까지 도달. 부분 rollback suffix 재undo 방지는 기존 C17과 연결. 긴 chain/모든 CLR cut 조합은 S5 |
+| 3.10 / C10-01–16·DS06 | 즉시/대기/already-held의 **세 X-lock 경로**와 same-bytes UPDATE/DELETE, own-write 재관측·stale token 거절; RC 독립 행 writer 둘 다 성공, Serializable 독립 table 성공과 absence/range/write-skew/catalog 충돌 구별 | 실제 barrier로 각 독립 분기 도달. 중간에30분 stress를 추가하지 않음. q10·pin 인계는 NT09/11/14와 같은 실행을 연결 |
+| 3.11 / T1–T11·§9 | T1 ACK 뒤 T2 overwrite로 최종 값만 같아도 T1 유실을 검출; 확정 ABORT/UNKNOWN 별도 기대값. read-only/empty transaction 경로는 **F02 동결 후** 잠금·등록 해제와 규정된 outcome 검증 | ACK witness/checker는 NT15와 공동, status11/frontier10은 NT10과 공동. 서로 다른 최초 byte/status/frontier/reply cut는 합치지 않음 |
+| 3.12 / R1·R4–R8·§10 | 낮춘 foreground 한도+원래 recovery profile은 기존 ACK/부분 CLR loser 보존. 부족/미지원 profile은 write0 거절 후 지원 설정 재개. 불완전 active tail과 **완전 길이 손상/gap**의 거절 구분; empty DPT 시작점은 F01 후 검증 | §5의8장벽 인계에 배정. 전원 상실 모델·process kill·주입 I/O의 증거 구별. 정상 startup에 full audit를 넣지 않음; 규모 비교는 S5 |
+| 3.13 / C01–C15 | previous metadata는 정상이지만 WAL/undo/FILEMAP closure가 불완전한 fallback 거절; 최신 home을 이전 image로 되감지 않음. unlink 뒤 dirsync 불명/열린 old inode의 charge 보존 | capture 등록 경쟁은 NT04/05/11과 공동. 작은 마지막 chunk 누락/중복도 중간 필수, 큰 inventory와256MiB/1GiB 비교는 S5 |
+| 3.14 / R14-01–17 | count0이어도 외부 소유/queue 작업이 남으면 final Free 금지, 같은 target 두 role의 release cursor 정확히 한 번·반환 chunk 재읽기 금지, generation MAX, 진단 잘림을 전수 완료로 오인 금지 | begin-WAL 없는 abort는 NT09/12/13, old overflow는 NT06/09, claim/free는 NT05와 공동. 작은 quota로 거절→소유 해제→실제 reuse→admission 확인; 장기 churn은 S5 |
+| 3.15 / T1–T12 | 감사 규칙마다 작은 정상/known-bad: index 누락/유령·catalog/allocator 오염·edge multiplicity/queue 누락; checksum 재봉인. restore의 nonempty destination·누락 파일·pageLSN/high-water·profile 거절과 source 보존 | 정상 C·손상 clone·restore→새 ACK→reopen의 fixture 기반 공유. T9/T10/T12는 한 scenario에 각각 assertion 가능. destination sync/cancel cut는 유지, 큰 audit/backup은 S5 |
+| 3.16 / R1–R7·§3–8 | 각 자원의 forward/cleanup/abort 동시 peak와 별도 타입 크기/stack/RSS, 실제 admission 성공 수·거절 수. selector의0건/추가 실행/누락/중복 receipt·잘못된 binary·미도달·timeout을 성공 집계하지 않는 known-bad | 공통 ledger oracle·case 목록·build 재사용. correctness/계측 검사 뒤 PF09. 비용 절감은 중복 실행/fixture 준비에서 하고4배 요구·최종 budget은 유지 |
+
+이 표의 “공동”은 이름이 비슷한 시험을 삭제하는 규칙이 아니다. 같은 실행이 각각의 계약 assertion과 실제 소비 경로를 충족하는지 확인한다. 예를 들어 모델의 claim/free 반례와 실제 thread 경합은 별도 실행이며, 상위 호출자가 새로 연결되면 그 연결 사례가 필요하다.
+
 <a id="allocation-first"></a>
 ## 4. 지금 남아 있는 3.03.1의 필수 테스트
 
@@ -143,10 +182,10 @@ native 13DB는 새로 부풀린 전수 행렬이 아니라 기존 제한 단위�
 
 | 하위 작업 | 중간 필수 사례 | 함께 추가할 입력·관측 |
 | --- | --- | --- |
-| 3.12.1 SELECT/BOOT_RESERVE | 정상 selected closure; profile·자원 부족·손상 시 첫 DB write 전 거절; admission 닫힘 | namespace 후보·write 미시도·bootstrap 예약 ledger |
+| 3.12.1 SELECT/BOOT_RESERVE | 정상 selected closure; 낮춘 신규 admission과 원래 recovery profile 분리; 부족/미지원 설정은 첫 DB write 전 거절 후 지원 설정으로 재개; 손상 profile은 별도 거절; admission 닫힘 | namespace 후보·write 미시도·bootstrap 예약 ledger·이미 admitted된 의무의 보존 |
 | 3.12.2 DWB_REPAIR | 선택 pending의 두 file 복원·모두 sync 뒤 retirement; pending 없는 손상 거절과 완전 INIT+연속 WAL 예외 | 실제 torn image·file별 sync·retirement cut, raw retired image mutant |
 | 3.12.3 ANALYSIS/RESERVE_RESTORE | capture 뒤 prefix에서 winner/loser·잔여 obligation 재구성; stale home 배제; REDO 전 정확히 한 번 인계 | 실제 파일 bytes/page token/소비 CLR를 별도 계산한 ledger |
-| 3.12.4 REDO | 다중 page 중 일부 home만 반영된 그룹의 대상별 skip/apply; incarnation mismatch·corrupt complete WAL 거절; WAL-before-page | 부분 반영 page 집합·전체 그룹 skip mutant·source 보존 hash |
+| 3.12.4 REDO | 다중 page 중 일부 home만 반영된 그룹의 대상별 skip/apply; incarnation mismatch·corrupt complete WAL/gap 거절과 허용 active tail 구분; empty DPT 시작점·WAL-before-page | 부분 반영 page 집합·전체 그룹 skip mutant·source 보존 hash·F01 시작점 기대값 |
 | 3.12.5 REBASE | 두 슬롯/명시 previous·공통 fallback에서 완전 closure 보존; selector 불명 old/new 합집합; 고정 peak·새 WAL 의존 없음 | 슬롯 선택 전후 재진입 fixture·charge/retention 이력 |
 | 3.12.6 LOG_OPEN | epoch/header sync와 WRITER 영속 선택 전 CLR 금지; 선택 직후 재시작에서 같은 새 epoch 발견 | 실제 namespace/sync trace·WRITER 선택 cut |
 | 3.12.7 UNDO/VERIFY | loser의 남은 chain만 undo; CLR 효과+progress 재적용에서 중복 없음; AbortEnd 전 성공 금지 | 부분 CLR·winner ACK·남은 예약의 독립 기대값 |
@@ -186,6 +225,26 @@ native 13DB는 새로 부풀린 전수 행렬이 아니라 기존 제한 단위�
 | 기존 [buffer](../../scripts/check_dev3_buffer_borrows.py)·[WAL](../../scripts/check_dev3_wal_borrows.py)·[storage](../../scripts/check_dev3_storage_borrows.py)·[DWB](../../scripts/check_dev3_doublewrite_borrows.py) compiler runner | 기존 수명 경계에 한정하며 현재 개별 probe selector 없음. 새 변경에 필요한 probe만 고를 수 있도록 해당 구현 때 제공 |
 | 신규 NT 묶음의 미공급 영역 | allocation native/compiler, 운영 dirty/flush, live tree/undo·index/DDL, 일반 commit/recovery/audit 등의 시험은 해당 기능과 함께 추가. 기존 표현/모델 결과로 대신하지 않음 |
 
+<a id="case-inventory"></a>
+### 6.1 의무에서 실제 실행 case까지의 목록
+
+NT16의 inventory는 **기능 구현과 함께 채우는 실행 명세**다. 이 문서가 완성 runner나 확정 case 개수를 제공한 것은 아니다. 기존 시험 목록/receipt 형식을 우선 사용하며 별도 범용 orchestration 도구를 선행으로 만들지 않는다.
+
+| 필수 필드 | 등록할 값 |
+| --- | --- |
+| identity·소유 | 안정된 case/variant ID, 주 NT owner 하나, 연결할 모든 상세 case/요구·DS/RC/KU/PF·FT ID. ID 없는 인수 행은 문서 anchor+요구/행 이름으로 연결 |
+| 적용·시점 | 실제 코드/의미 분기·선행 capability, 중간 필수 또는 S5 확대. 공통 case 참조·미공급 통합 의무·비적용 사유와 계약 근거 |
+| 실제 선택 | package/target/전체 test 이름 또는 지원 selector, 함수 내부 parameter/loop 포함 **실제 실행될 ID 집합과 개수**, build/feature·runner revision |
+| 입력·정답 | fixture/seed/corpus/generator hash, typed 독립 기대값·assertion별 검출 대상, 정상 복구/예상 거절 구분, fault model/cut/schedule와 도달 조건 |
+| 변형·반복 | profile·batch·대상·경계값의 명시 셀, 결정적/비결정적 구분·반복 index, 동치 합침의 근거와 검토. 미확정은 미확정으로 남김 |
+| 비용·결과 | build/fixture/실행/audit/cleanup 예상 비용과 산정 근거, 실제 경과/CPU·disk/RSS/FD 상한, timeout 처리, source/binary/환경/receipt identity |
+
+실행 셀은 `case + variant + seed/cut/schedule + 반복 index + fixture/build/feature/환경 identity`로 구별한다. 같은 source에서 같은 셀을 여러 NT/FT가 요구하면 한 번 실행하고 assertion별 결과를 연결한다. 서로 다른 입력·환경·반복은 별도 셀이다. V2 seed가 V3 목록에 들어 있다는 이유만으로 operation 수·profile이 다른 실행을 같다고 합치지 않는다. compiler 정상 baseline도 같은 probe crate/feature/toolchain이면 함께 준비하되 각 probe의 실제 성공/의도한 거절은 확인한다.
+
+확정 전 양방향 대조를 한다. **상세 요구·인수 행·DS01–06 required_variants·RC-T12–14·KU09/10·PF09 → case**, 그리고 **case → 실제 selector와 독립 assertion**이 모두 있어야 한다. REVIEW-009/010과 §3.7의 보완도 포함한다. 실행 가능한 함수만 발견하여 만든 목록은 미구현 의무를 빠뜨리므로 전체 inventory가 아니다. 계획 단계의 미정 수치는 최종 실행 전에 owner와 독립 검토자가 동결한다.
+
+selector/집계기 구현 때에는 작은 가짜 결과로 `0건·오타·예상 밖 실행·중복/누락 ID·wrong binary·cut 미도달·timeout·중단·손상 receipt`의 거절과 정상 수락을 검증한다. 단순 합계가 아니라 **예상 ID 집합과 관측 ID 집합의 일치**를 판정한다. 의도한 corruption 거절은 그 거절 case의 성공일 수 있지만, 정상 reopen 의무의 실패를 대신할 수 없다. compile-fail probe는 baseline 성공 후 의도한 타입/수명 오류를 확인하며 무관한 syntax/import/toolchain 실패는 성공이 아니다.
+
 <a id="final-suite"></a>
 ## 7. S5 — DEV3 최종 전수 테스트
 
@@ -211,6 +270,26 @@ FT01–FT10은 실행 분모를 나누는 목록이며 기능별 독립 suite를
 최종 수치 profile은 [DP03](../policies/development-policy.md#section-4)의 해당 확장 기준을 유지한다. property는 해당 확장256 seed·최대1024 operation, parser/codec target별 fuzz30분, 영향 동시성 suite의 실제 thread stress30분, 비결정적 필수 fault 셀3회이며 필요한 구체 입력/시간·환경은 실행 전에 동결한다. 모델의 고정 유한 공간 전수는 seed/stress로 대체하지 않는다. 중간 단계에 이 확대 profile 전체를 반복하지 않는다. 소유 계약의 더 구체적인 분모가 있으면 그 분모를 등록하며 실패 후 줄이지 않는다.
 
 최종 실행 중 결함을 고치면 원래 실패를 보존하고 수정 반례와 실제 영향 case를 다시 실행한다. 무관한 완료 job까지 처음부터 반복하지 않는다. 최종 판정은 전수 기준 source와 이후 diff의 영향 검토·선택 재검증을 함께 사용하고, 다른 source 결과를 전부 마지막 binary에서 다시 실행했다고 표현하지 않는다. 영향 범위를 확인할 수 없는 부분은 미해결로 남기고 범위를 먼저 확정한다.
+
+<a id="cost-control"></a>
+### 7.1 조합·준비·실행 시간의 낭비 방지
+
+“전체 변형”은 위 inventory에 동결한 **필수 셀 전체**다. 모든 테스트에 `opcode×profile×batch×격리×fault×seed`를 무조건 곱하지 않는다. 소유 계약의 명시 조합은 그대로 유지하고, 추가 조합은 상호작용하는 상태·자원·실패 경계와 근거를 적어 선택한다. 이미 요구된 셀/유한 모델 공간/보존 corpus를 pairwise나 대표 한 건으로 축소하려면 동등 검출 근거의 별도 D2 검토가 필요하며, 이번 보완은 그런 축소를 승인하지 않는다.
+
+| 비용 발생 지점 | 실행 계획 |
+| --- | --- |
+| 같은 불변식의 다중 분류 | NT/DS/RC/FT는 같은 case를 참조. 모델·native·thread·reopen은 구별하고, 동일 native 시나리오의 다중 assertion은 한 실행으로 집계 |
+| 반복 build·fixture 생성 | 동일 source/toolchain/feature의 binary를 한 번 준비. 동결한 fresh fixture 원본은 불변으로 보관하고 mutation/fault마다 격리한 사본 사용. 앞 case가 변경한 DB를 다음 독립 case의 초기값으로 재사용하지 않음 |
+| 중간 대형 경로 확인 | 작은 실제 split·overflow·spill/merge·quota fixture로 분기와 정답 확인. 시험용 한도 조정은 production 한도 증명을 대신하지 않으며 실제 최대값 사례와 F05를 유지 |
+| 대형4배/audit/backup | 동일 profile의 fixture가 각각의 실제 접근 집합4배 조건을 모두 만족할 때 준비물을 공유. zero padding·sparse apparent size·반복 I/O는 집합 크기에 산입하지 않음. 각 fault 후 필요한 audit는 유지하고 같은 불변 결과의 audit 중복만 제거 |
+| 큰 profile 준비 실패 | 기본8GiB로 allocator16/64MiB buffer의4배를 만족할 수 없으므로64GiB qualification의 형식/회계 동결과 host 실제 공간을 먼저 확인. 부족하면 NOT_RUN/미완료이며 축소 fixture로 PASS하지 않음 |
+| 장애 반복 | 결정적 셀은 정한 입력/schedule을 한 번 완주하되 소유 계약의 명시 반복은 유지. 비결정적 필수 fault 셀은3회·각 fresh fixture. 실패 후 성공할 때까지 자동 재시도하거나 모든 결정적 셀을 관행적으로3회 반복하지 않음 |
+| 긴 fuzz/stress·PF09 | 정확성·harness known-bad를 먼저 확인하고 장시간 profile은 S5에서 실행. CPU/I/O/RSS 간섭을 받는 성능 job과 대형 fixture/audit·부하 job을 겹치지 않음 |
+| 조기 실패·수정 후 재검증 | 실패 case와 자료를 보존하고 그 결과에 의존하는 비싼 job만 보류. 무관한 준비/검토는 진행 가능. 미실행은 NOT_RUN, 탐색 한도/미도달은 INCONCLUSIVE 또는 해당 실패로 남김. 수정 후 실제 영향 셀만 다시 실행 |
+
+실행 전에 job별 `준비 + 셀별 예상 시간×반복 + audit + cleanup`을 합산하고 disk/FD/RSS 동시 peak를 기록한다. 예측 근거가 없으면 미측정으로 표시하고 작은 필수 실행에서 얻은 실제 시간으로 갱신한다. 현재 총 실행 시간이나 절감률을 수치로 주장할 근거는 없다. §7 profile에 해당하는 fuzz target 수를 F, 동시성 suite 수를 T라 하면 **fuzz/stress의 최소 관측 시간 합만30×(F+T)분**이고 build·fixture·property·fault·PF09 시간은 별도다. 이는 병렬 실행 후의 wall time 추정이 아니다. owner 계약의 더 긴 budget은 유지한다.
+
+timeout은 성공을 위한 축소 허가가 아니다. 동결한 한도 도달의 원인·남은 의무를 기록하고, 최종 전체 inventory를 닫기 전까지 DEV3 인수는 미완료다. 소유 계약상 성능 비교가 필요한 변경에는 DP07의 동일 조건 최소10쌍 등 해당 의무를 적용하고, 일반 correctness case에 임의10회 반복을 붙이지 않는다.
 
 <a id="receipts"></a>
 ## 8. 실행 명세와 결과 기록
@@ -241,3 +320,16 @@ Rust 단위 시험은 실제 package/target과 전체 test 경로를 확인한 �
 | 검토 | `/root/dev3_tree_design`이 새 계획 전체와 기준 사본 대비 9개 연결 파일을 읽기 전용 검토하여 PASS. 변경 parser/codec의 보존 corpus 중간 의무를 명료화한 뒤 재확인했고 미해결 필수 수정 없음. compiler 위반5/성공1·실제 runner 범위·16개 작업/복구8장벽·과거 증거 보존 확인. 검토한 본문 SHA-256 `7bd899a4f6a668da82e06ddae15752c6cf937aec5535dfeeb523739d6d79438e`는 이 수용 기록 반영 전 후보의 identity |
 | 실행 경계 | 테스트 추가 구현·제품 시험·compiler/Clippy 미실행. 검토자는 문서 자동 검사도 하지 않음. 후속 사용자 요청에 따른 전체 문서 검증·문제 수정·commit/push는 별도 전달 작업이며 문서 검증 결과는 [보고서](../document-validation.json)와 실제 push gate를 따름 |
 | 재검토 | 신규 opcode/API·fault/자원 경계, 누락된 필수 의무, exact 선택 불가, 잘못된 재사용/집계, 사용자 실행 범위 변경 |
+
+<a id="review-decision"></a>
+## 10. D3-TEST-PLAN-002 — 항목별 누락·중복·비용 보완
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태 | D2 · ACCEPTED. `/root/dev3_test_plan_review` 독립 읽기 검토 PASS·통합 담당 반영 확인. 기존 계약의 실행 선택·추적 명세 보완이며 제품 의미·최종 필수 셀/budget 축소 없음 |
+| 일자·권한·소유 | 2026-10-22. 사용자의 DEV3 테스트 설계·항목별 필수/낭비/누락 점검 및 개선 요청. 작업·계약·통합 `/root` |
+| 선택·대안 | 작은 독립 경계는 중간 필수, 큰 데이터/긴 관측/명시 전체 조합은 S5 유지. 중복은 공통 실행/fixture 준비를 공유하여 제거. 모든 조합의 무조건 곱과 위험 경계를 대표 정상 한 건으로 대체하는 방식은 채택하지 않음 |
+| 적용·대체 | D3-TEST-PLAN-001의 원칙·최종 예외와 REVIEW-009/010을 유지하고 §1.1·3.7·5·6.1·7.1 및 NT10/11을 상세화. 최초 결정/검토 identity·과거 실행 결과는 원래 범위로 보존 |
+| 검토·기준 | [재점검 기록](../evidence/dev3-test-plan-review-20261022.md)의 기준 source·항목별 근거와 독립 검토를 따름. 기존001의 PASS를 이번 보완에 승계하지 않음 |
+| 실행 | 문서만 수정. 테스트/harness 구현·제품 시험·compiler/Clippy·문서 자동 검사·commit/push 없음. 후속 구현/최종 인수 상태 변경 없음 |
+| 재검토 | 새 의미 분기·runner 내부 숨은 전수·필수 셀 누락/중복·oracle/fixture 영향 누락·자원/시간 예상 초과·source 변화로 동일성 확인 불가 |

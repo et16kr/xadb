@@ -4,7 +4,7 @@
 
 <!-- catalogue -->
 
-- [DEV3 — 단계별 필수 테스트와 구현 동반 테스트 추가 계획](dev3-test-plan.md) — 중간 변경 기능의 필수 사례·NT01–16 신규 시험 개발·3.03.1 잔여/복구 장벽별 최소 목록·최종 S5 DEV3 전수
+- [DEV3 — 단계별 필수 테스트와 구현 동반 테스트 추가 계획](dev3-test-plan.md) — 중간 변경 기능의 필수 사례·[16개 항목 보완](dev3-test-plan.md#item-review)·[실행 셀/중복 방지](dev3-test-plan.md#case-inventory)·[시간/준비 비용](dev3-test-plan.md#cost-control)·3.03.1 잔여/복구8장벽·최종 S5 DEV3 전수
 
 - [DEV9 — 제품 인수 구현·검증 계획](dev9-implementation-plan.md) — F01–10·104개 요구 수신·T01–34·R2-V01–04·P01–05·R16 설치/문서·버전 적용성; SC16/17 미실행
 
