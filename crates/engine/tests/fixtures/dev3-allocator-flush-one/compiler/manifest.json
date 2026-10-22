@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "unit": "D3-ALLOCATOR-FLUSH-ONE-001",
+  "probe_relative_path": "crates/engine/src/storage/flush_borrow_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_diagnostics_are_failures": true,
+  "compiler_budget_seconds": 60,
+  "cases": [
+    {
+      "name": "baseline",
+      "reason": "Unmodified actual source baseline, no product runtime.",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none"
+    },
+    {
+      "name": "release",
+      "reason": "Actual triple view, DedicatedFlusher entry and continuation, scoped shared observation, release and resplit type-check.",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "bytes": 1408,
+      "sha256": "c992fc9d11e7bd9dac31b114c32792a9824b3915af00b90816c95907f62d8b18"
+    },
+    {
+      "name": "resplit",
+      "reason": "An active actual flusher prevents another mutable triple split.",
+      "expected_code": "E0499",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 1044,
+      "sha256": "ae0fdecaa44a8d45c0311bb939db9cca020296205fadcefa181db4617ca70a08"
+    },
+    {
+      "name": "bound_move",
+      "reason": "The retained control owner outlives its actual flusher view.",
+      "expected_code": "E0505",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 1010,
+      "sha256": "a903ea89de6ebbd57afc7760972163cf4477c5c29acd55d5132732ad97b1cc4c"
+    },
+    {
+      "name": "raw_requirement",
+      "reason": "A caller location cannot replace the authentic stage receipt.",
+      "expected_code": "E0308",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 752,
+      "sha256": "38964948a360089b807990233a166b28b583756c9b8236ce9f7e12589596434f"
+    },
+    {
+      "name": "requirement_private",
+      "reason": "Only the WAL stage owner may construct an authentic receipt.",
+      "expected_code": "E0451",
+      "primary_line": 10,
+      "primary_spans": "all_on_line",
+      "bytes": 747,
+      "sha256": "aba127fdc80b2dbb33c0b8f63a2f567eb337c77e50de4c4fc223c986f5445d3f"
+    },
+    {
+      "name": "durable_private",
+      "reason": "A prefix observation cannot manufacture the durability proof.",
+      "expected_code": "E0451",
+      "primary_line": 10,
+      "primary_spans": "all_on_line",
+      "bytes": 749,
+      "sha256": "657033888fc2fa2d6a7b94bcd03e950d4f9e4c118e1ab43cf1660c4b080832a9"
+    },
+    {
+      "name": "durable_clone",
+      "reason": "The durability proof has no Clone authority.",
+      "expected_code": "E0599",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 699,
+      "sha256": "5b6d6bf5e090a1a60b5970d4d0daf17ef1b20e144103405ec5e17758927017d3"
+    },
+    {
+      "name": "capture_clone",
+      "reason": "A coherent captured-image seal cannot be cloned.",
+      "expected_code": "E0599",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 709,
+      "sha256": "84cfce19a84fa6e0a7005234bce88aaa5333c3241b3b6b9f7de8f52f81e0754f"
+    },
+    {
+      "name": "capture_private",
+      "reason": "Scalar stamp and receipt cannot manufacture the pool capture seal.",
+      "expected_code": "E0451",
+      "primary_line": 10,
+      "primary_spans": "all_on_line",
+      "bytes": 905,
+      "sha256": "cbdc8327562a6e53bdc59c63548dc5c7b295003ab6a29b039978cfa6142ed883"
+    },
+    {
+      "name": "finalize_private",
+      "reason": "External storage consumers cannot access retirement authority fields.",
+      "expected_code": "E0616",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 722,
+      "sha256": "01fcb7317cf626e447b0502273c2d9d7adfa6c299659c1dec521eae0344e473a"
+    },
+    {
+      "name": "raw_finalize",
+      "reason": "Conditional finalize requires the actual captured seal, not an observed FrameStamp.",
+      "expected_code": "E0308",
+      "primary_line": 10,
+      "primary_spans": "one",
+      "bytes": 816,
+      "sha256": "3261b6665152f1441a9c1666693b19ac8b47802c39cb846f9b03882023fb3621"
+    }
+  ]
+}

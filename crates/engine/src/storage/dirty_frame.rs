@@ -1,11 +1,12 @@
 //! Fixed authoritative dirty frames and bounded pin/content ownership.
-//! No load, replacement, flush, capture, Commit or raw semantic-stage authority.
+//! Bounded capture/finalize consumes stage-issued WAL and retired-batch permits.
+//! No load, replacement, Commit or raw semantic-stage authority.
 #![allow(dead_code)] // The separately reviewed allocator consumer is being connected.
 
 use super::{
     page::{PAGE_BYTES, PageIdentity, PageKind, PageLsn},
     session_fence::SessionFence,
-    wal_io::DirtyInstallPermit,
+    wal_io::{DirtyInstallPermit, WalRequirement},
 };
 use crate::transaction::concurrency::{
     self, ContentAdmission, Owner, PageConcurrency, VersionEditGuard,
@@ -13,9 +14,16 @@ use crate::transaction::concurrency::{
 use std::{
     marker::PhantomData,
     rc::Rc,
-    sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockError},
+    sync::{
+        Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockError,
+        atomic::AtomicU8,
+    },
 };
 use xadb_foundation::error::Effect;
+
+#[path = "dirty_flush.rs"]
+mod flush;
+pub(in crate::storage) use flush::{CapturedPage, FinalizedPage};
 
 pub(crate) const MAX_FRAMES: usize = 64;
 pub(crate) const MAX_TARGETS: usize = 2;
@@ -125,7 +133,9 @@ impl FrameContent<'_> {
                     .rec_lsn
                     .is_some_and(|lsn| lsn.0 != 0 && lsn.0 <= self.page_lsn.0)
         } else {
-            self.modification_counter == 0 && self.rec_lsn.is_none() && self.page_lsn.0 == 0
+            self.rec_lsn.is_none()
+                && ((self.modification_counter == 0 && self.page_lsn.0 == 0)
+                    || (self.modification_counter != 0 && self.page_lsn.0 != 0))
         }
     }
 }
@@ -209,24 +219,37 @@ struct PinAccounting {
     total: u16,
 }
 
+// The receipt and DPT entry are installed/removed together under content→registry.
+// Keeping the authentic receipt here outlives the writer's completed obligation.
+struct DirtyRegistry<'s> {
+    entries: [Option<DirtyEntry>; MAX_FRAMES],
+    requirements: [Option<WalRequirement<'s>>; MAX_FRAMES],
+    claim: Option<flush::Claim>,
+    last_attempt: u64,
+}
+
 /// Fixed directory and leaf registries; the exact core cannot be caller-selected.
 pub(crate) struct SharedPool<'c, 's, 'p, 'd> {
     frames: &'p [DirtyFrame<'d>],
     directory: [Option<Registration>; MAX_FRAMES],
     pins: Mutex<PinAccounting>,
-    dpt: Mutex<[Option<DirtyEntry>; MAX_FRAMES]>,
+    dpt: Mutex<DirtyRegistry<'s>>,
     core: &'c PageConcurrency<'s>,
     fence: &'s SessionFence,
+    binding: &'s AtomicU8,
     stamp_anchor: u8,
     #[cfg(test)]
     fence_pause: Mutex<Option<test_support::FencePause>>,
     #[cfg(test)]
     release_pause: Mutex<Option<test_support::FencePause>>,
+    #[cfg(test)]
+    flush_pause: Mutex<Option<(test_support::FlushPoint, test_support::FencePause)>>,
 }
 impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
     pub(in crate::storage) fn new(
         core: &'c PageConcurrency<'s>,
         fence: &'s SessionFence,
+        binding: &'s AtomicU8,
         frames: &'p [DirtyFrame<'d>],
     ) -> Result<Self> {
         if fence.is_fenced() {
@@ -268,14 +291,22 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 counts: [0; MAX_FRAMES],
                 total: 0,
             }),
-            dpt: Mutex::new([None; MAX_FRAMES]),
+            dpt: Mutex::new(DirtyRegistry {
+                entries: [None; MAX_FRAMES],
+                requirements: [None; MAX_FRAMES],
+                claim: None,
+                last_attempt: 0,
+            }),
             core,
             fence,
+            binding,
             stamp_anchor: 0,
             #[cfg(test)]
             fence_pause: Mutex::new(None),
             #[cfg(test)]
             release_pause: Mutex::new(None),
+            #[cfg(test)]
+            flush_pause: Mutex::new(None),
         })
     }
 
@@ -324,18 +355,28 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         }
         Ok(pins)
     }
-    fn dpt_valid(&self, dpt: &[Option<DirtyEntry>; MAX_FRAMES]) -> bool {
-        dpt.iter().enumerate().all(|(index, entry)| match entry {
-            None => true,
-            Some(entry) => self.directory[index].as_ref().is_some_and(|registration| {
-                entry.identity == registration.request.identity
-                    && entry.generation == registration.generation
-                    && entry.rec_lsn.0 != 0
-                    && entry.modification_counter != 0
-            }),
-        })
+    fn dpt_valid(&self, dpt: &DirtyRegistry<'s>) -> bool {
+        dpt.claim
+            .as_ref()
+            .is_none_or(|claim| claim.valid(self, dpt.last_attempt))
+            && dpt.entries.iter().enumerate().all(|(index, entry)| {
+                match (entry, dpt.requirements[index]) {
+                    (None, None) => true,
+                    (Some(entry), Some(requirement)) => {
+                        self.directory[index].as_ref().is_some_and(|registration| {
+                            entry.identity == registration.request.identity
+                                && entry.generation == registration.generation
+                                && entry.rec_lsn.0 != 0
+                                && entry.modification_counter != 0
+                                && requirement.uses_fence(self.fence)
+                                && requirement.location().lsn >= entry.rec_lsn.0
+                        })
+                    }
+                    _ => false,
+                }
+            })
     }
-    fn entry_dpt(&self) -> Result<MutexGuard<'_, [Option<DirtyEntry>; MAX_FRAMES]>> {
+    fn entry_dpt(&self) -> Result<MutexGuard<'_, DirtyRegistry<'s>>> {
         self.health()?;
         let dpt = self.dpt.lock().map_err(|_| self.fatal(Cause::Poisoned))?;
         self.health()?;
@@ -383,7 +424,10 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             rec_lsn,
             modification_counter: frame.modification_counter,
         });
-        if dpt[index] != expected {
+        if dpt.entries[index] != expected
+            || dpt.requirements[index].map(|value| value.location().lsn)
+                != frame.rec_lsn.map(|_| frame.page_lsn.0)
+        {
             return Err(self.fatal(Cause::Invariant));
         }
         Ok(DirtyObservation {
@@ -705,7 +749,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> WriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
             rec_lsn: expected.rec_lsn,
         })
     }
-    fn check_permit(&self, at: usize, permit: &DirtyInstallPermit<'_, '_, '_>) -> Result<()> {
+    fn check_permit(&self, at: usize, permit: &DirtyInstallPermit<'_, 'c, 's>) -> Result<()> {
         let pins = self.pins.as_ref().expect("live write targets");
         pins.pool.health()?;
         if at >= pins.len {
@@ -713,6 +757,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> WriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
         }
         let registration = pins.pool.registration(pins.indices[at])?;
         if !permit.matches_core(pins.pool.core)
+            || !permit.requirement().uses_fence(pins.pool.fence)
             || permit.identity() != registration.request.identity
             || permit.generation() != registration.generation
             || permit.before_counter().checked_add(1) != Some(permit.after_counter())
@@ -729,7 +774,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> WriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
     pub(in crate::storage) fn install_page(
         &mut self,
         at: usize,
-        permit: &DirtyInstallPermit<'_, '_, '_>,
+        permit: &DirtyInstallPermit<'_, 'c, 's>,
     ) -> Result<()> {
         self.check_permit(at, permit)?;
         let pins = self.pins.as_ref().expect("live write targets");
@@ -751,7 +796,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> WriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
     pub(in crate::storage) fn install_metadata(
         &mut self,
         at: usize,
-        permit: &DirtyInstallPermit<'_, '_, '_>,
+        permit: &DirtyInstallPermit<'_, 'c, 's>,
     ) -> Result<()> {
         self.check_permit(at, permit)?;
         let pins = self.pins.as_ref().expect("live write targets");
@@ -774,7 +819,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> WriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
     pub(in crate::storage) fn install_dpt(
         &self,
         stamp: DptStamp<'_>,
-        permit: &DirtyInstallPermit<'_, '_, '_>,
+        permit: &DirtyInstallPermit<'_, 'c, 's>,
     ) -> Result<()> {
         let pins = self.pins.as_ref().expect("live write targets");
         if !std::ptr::eq(stamp.anchor, &pins.pool.stamp_anchor) {
@@ -803,15 +848,19 @@ impl<'a, 'b, 'c, 's, 'p, 'd> WriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
             rec_lsn,
             modification_counter: stamp.counter,
         });
-        if dpt[stamp.index] != expected {
+        if dpt.entries[stamp.index] != expected
+            || dpt.requirements[stamp.index].map(|value| value.location().lsn)
+                != stamp.rec_lsn.map(|_| permit.prior_lsn().0)
+        {
             return Err(pins.pool.fatal(Cause::Invariant));
         }
-        dpt[stamp.index] = Some(DirtyEntry {
+        dpt.entries[stamp.index] = Some(DirtyEntry {
             identity: actual.identity,
             generation: actual.generation,
             rec_lsn: permit.first_rec_lsn(),
             modification_counter: actual.modification_counter,
         });
+        dpt.requirements[stamp.index] = Some(permit.requirement());
         Ok(())
     }
     fn release(&mut self) -> Result<()> {
@@ -872,13 +921,78 @@ pub(in crate::storage) fn fits() -> bool {
         && size_of::<std::sync::LockResult<MutexGuard<'_, PinAccounting>>>() <= 32
         && size_of::<RwLockReadGuard<'_, FrameContent<'_>>>() <= 32
         && size_of::<RwLockWriteGuard<'_, FrameContent<'_>>>() <= 32
+        && size_of::<WalRequirement<'_>>() <= 128
+        && size_of::<Option<WalRequirement<'_>>>() <= 128
+        && size_of::<DirtyRegistry<'_>>() <= 16384
+        && flush::fits()
+}
+
+/// Increment beyond the previously reserved entries-only DPT. Constructor
+/// accounting uses this actual target-layout delta, including alignment.
+pub(in crate::storage) fn flush_registry_bytes() -> usize {
+    std::mem::size_of::<Mutex<DirtyRegistry<'_>>>()
+        - std::mem::size_of::<Mutex<[Option<DirtyEntry>; MAX_FRAMES]>>()
+        + std::mem::size_of::<&AtomicU8>()
 }
 
 #[cfg(test)]
 pub(crate) mod test_support {
+    pub(in crate::storage) use super::flush::test_support::{
+        FlushSnapshot, actual_requirement, corrupt_flush_claim, flush_diagnose,
+        replace_requirement, seed_last_attempt, stale_capture_generation,
+    };
     use super::*;
     use std::sync::mpsc::{Receiver, SyncSender};
     use std::time::Duration;
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub(crate) enum FlushPoint {
+        Claimed,
+        Copied,
+        Finalized,
+    }
+
+    pub(crate) fn install_flush_pause(
+        pool: &SharedPool<'_, '_, '_, '_>,
+        point: FlushPoint,
+        arrived: SyncSender<()>,
+        resume: Receiver<Resume>,
+    ) {
+        *pool.flush_pause.lock().unwrap() = Some((point, FencePause { arrived, resume }));
+    }
+    fn flush_pause(pool: &SharedPool<'_, '_, '_, '_>, point: FlushPoint) {
+        let pause = {
+            let mut pause = pool
+                .flush_pause
+                .lock()
+                .unwrap_or_else(|error| error.into_inner());
+            if pause.as_ref().is_some_and(|(at, _)| *at == point) {
+                pause.take()
+            } else {
+                None
+            }
+        };
+        if let Some((_, pause)) = pause {
+            pause.arrived.try_send(()).expect("bounded flush arrival");
+            match pause
+                .resume
+                .recv_timeout(Duration::from_secs(5))
+                .expect("bounded flush release")
+            {
+                Resume::Continue => {}
+                Resume::Panic => panic!("requested flush unwind"),
+            }
+        }
+    }
+    pub(super) fn flush_claimed(pool: &SharedPool<'_, '_, '_, '_>) {
+        flush_pause(pool, FlushPoint::Claimed);
+    }
+    pub(super) fn flush_copied(pool: &SharedPool<'_, '_, '_, '_>) {
+        flush_pause(pool, FlushPoint::Copied);
+    }
+    pub(super) fn flush_finalized(pool: &SharedPool<'_, '_, '_, '_>) {
+        flush_pause(pool, FlushPoint::Finalized);
+    }
 
     /// Actual target layouts only; tests own every independent ceiling.
     #[derive(Debug)]
@@ -1023,7 +1137,11 @@ pub(crate) mod test_support {
             .unwrap_or_else(|error| error.into_inner());
         let registration = pool.frames[index].registration.unwrap();
         output.copy_from_slice(content.bytes);
-        let entry = pool.dpt.lock().unwrap_or_else(|error| error.into_inner())[index];
+        let entry = pool
+            .dpt
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .entries[index];
         let pins = pool.pins.lock().unwrap_or_else(|error| error.into_inner());
         Snapshot {
             frame: FrameStamp {
@@ -1051,7 +1169,7 @@ pub(crate) mod test_support {
         index: usize,
         entry: Option<DirtyEntry>,
     ) {
-        pool.dpt.lock().unwrap()[index] = entry;
+        pool.dpt.lock().unwrap().entries[index] = entry;
     }
     pub(crate) fn seed_pins(
         pool: &SharedPool<'_, '_, '_, '_>,

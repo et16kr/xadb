@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-22 [DEV3 allocator 한 페이지 flush](dev3-implementation.md#allocator-flush): 실제 capture·WAL force·DWB/home·whole retirement·조건부 RAM finalize를 연결했다. 필수76의 source별 범위·native3·compiler12·WAL30과 자원 전제를 검증했으며 원 FAIL/관측 불완전을 보존한다. 제한 단위의 독립 검토를 수용했으며 INIT·일반 recovery·전체 DEV3는 미완료다.
+
 2026-10-22 [DEV3 첫 dirty frame·stage 소비자](dev3-implementation.md#dirty-stage): 실제 allocator1의 pin/content·DPT·first recLSN과 guarded reserve/cancel을 연결했다. mandatory53의 source별 범위·compiler18·native3을 검증했고 INIT·flush·일반 recovery와 전체 DEV3는 미완료다.
 
 2026-10-22 [DEV3 적용 admission·version gate](dev3-implementation.md#concurrency-admission): 3.10.1.a.1의 실제34-owner·gate와 신규 runtime7그룹/45사례·compiler12를 연결했다. 최종 단위 판정은 인수 기록을 따르며 dirty/Commit 통합과 전체 DEV3는 미완료다.

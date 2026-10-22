@@ -3,7 +3,10 @@
 //! See devdoc/contracts/dev3-wal-io.md. No existing epoch is reopened for append.
 #![allow(dead_code)] // Awaiting the separately reviewed semantic transaction owner.
 
-use std::sync::{Mutex, MutexGuard};
+use std::{
+    sync::{Condvar, Mutex, MutexGuard},
+    time::Duration,
+};
 
 use super::{
     control::{self, ControlError, Profile, ProfileSpec},
@@ -26,7 +29,6 @@ const PROFILE_NAME: &str = "d3-profile";
 const STAGE_NAME: &str = "d3-writer-stage";
 
 mod bootstrap;
-pub(in crate::storage) use bootstrap::DirtyInstallPermit;
 #[allow(unused_imports)] // Private downstream assembly remains under test-support.
 pub(crate) use bootstrap::{
     AllocationObservation, AllocationSession, AllocationSessionCause, AllocationSessionError,
@@ -36,9 +38,10 @@ pub(crate) use bootstrap::{
 };
 #[allow(unused_imports)] // The scoped dirty owner is being integrated with its consumers.
 pub(crate) use bootstrap::{
-    AllocationWriter, BoundAllocation, DirtyAllocationError, DirtyReader, MutableStorageError,
-    MutableStorageOwner,
+    AllocationWriter, AllocatorFlushError, AllocatorFlusher, BoundAllocation, DirtyAllocationError,
+    DirtyReader, FlushProgress, MutableStorageError, MutableStorageOwner,
 };
+pub(in crate::storage) use bootstrap::{DirtyInstallPermit, FlushFinalizePermit};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {
@@ -282,6 +285,79 @@ pub(crate) struct WalSyncObservation {
     pub(crate) frame: WalFrameLocation,
     pub(crate) prefix: WalPrefix,
 }
+
+/// A stage-issued exact interval. Copies share a fact, never an I/O claim.
+/// The borrowed origin prevents moving or dropping the issuing session.
+#[derive(Clone, Copy)]
+pub(in crate::storage) struct WalRequirement<'s> {
+    origin: &'s SessionFence,
+    exact: WalFrameLocation,
+}
+impl std::fmt::Debug for WalRequirement<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("WalRequirement")
+            .field("exact", &self.exact)
+            .finish_non_exhaustive()
+    }
+}
+impl WalRequirement<'_> {
+    pub(in crate::storage) fn location(self) -> WalFrameLocation {
+        self.exact
+    }
+    pub(in crate::storage) fn uses_fence(self, fence: &SessionFence) -> bool {
+        std::ptr::eq(self.origin, fence)
+    }
+}
+
+/// Confirmed durability for one authentic requirement, not a caller LSN.
+#[derive(Debug)]
+pub(in crate::storage) struct DurableWal<'s> {
+    requirement: WalRequirement<'s>,
+    prefix: WalPrefix,
+}
+impl DurableWal<'_> {
+    pub(in crate::storage) fn confirms(&self, requirement: &WalRequirement<'_>) -> bool {
+        std::ptr::eq(self.requirement.origin, requirement.origin)
+            && self.requirement.exact == requirement.exact
+    }
+    pub(in crate::storage) fn observation(&self) -> WalSyncObservation {
+        WalSyncObservation {
+            frame: self.requirement.exact,
+            prefix: self.prefix,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(in crate::storage) enum EnsureDurable<'s> {
+    AlreadySynced(DurableWal<'s>),
+    SyncedHere(DurableWal<'s>),
+    AwaitWalOwner,
+}
+
+const COMPLETION_RECHECK: Duration = Duration::from_millis(10);
+pub(in crate::storage) const DURABILITY_CALL_BYTES: usize = 4096;
+
+pub(in crate::storage) fn durability_types_fit() -> bool {
+    std::mem::size_of::<WalRequirement<'_>>() <= 128
+        && std::mem::size_of::<Option<WalRequirement<'_>>>() <= 128
+        && std::mem::size_of::<DurableWal<'_>>() <= 256
+        && std::mem::size_of::<EnsureDurable<'_>>() <= 512
+        && std::mem::size_of::<Result<EnsureDurable<'_>>>() <= 512
+        && std::mem::size_of::<Condvar>() <= 64
+        && std::mem::size_of::<WalFrameLocation>() <= 128
+        && std::mem::size_of::<WalPrefix>() <= 128
+        && std::mem::size_of::<WalIoError>() <= 128
+        && std::mem::size_of::<IoFence<'_>>() <= 64
+        && std::mem::size_of::<MutexGuard<'_, AppendState<'_>>>() <= 32
+        && std::mem::size_of::<std::sync::LockResult<MutexGuard<'_, AppendState<'_>>>>() <= 64
+        && std::mem::size_of::<
+            std::sync::LockResult<(
+                MutexGuard<'_, AppendState<'_>>,
+                std::sync::WaitTimeoutResult,
+            )>,
+        >() <= 64
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum SlotState {
     Idle,
@@ -300,6 +376,11 @@ pub(crate) struct GenesisWalSession<'m, W: WriterNamespace> {
     _writer: Mutex<W>,
     file: Mutex<W::File>,
     append: Mutex<AppendState<'m>>,
+    completion: Condvar,
+    #[cfg(test)]
+    durability_waits: std::sync::atomic::AtomicUsize,
+    #[cfg(test)]
+    durability_before_wait: Mutex<Option<durability_test_support::BeforeWait>>,
     fenced: SessionFence,
     profile: Profile,
 }
@@ -494,6 +575,11 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
                 state: SlotState::Idle,
                 prefix,
             }),
+            completion: Condvar::new(),
+            #[cfg(test)]
+            durability_waits: std::sync::atomic::AtomicUsize::new(0),
+            #[cfg(test)]
+            durability_before_wait: Mutex::new(None),
             fenced: SessionFence::new(),
             profile,
         })
@@ -503,6 +589,7 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
     pub(crate) fn is_fenced(&self) -> bool {
         if self.append.is_poisoned() || self.file.is_poisoned() || self._writer.is_poisoned() {
             self.fenced.fence();
+            self.completion.notify_all();
         }
         self.fenced.is_fenced()
     }
@@ -513,6 +600,7 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
         }
         let state = self.append.lock().map_err(|_| {
             self.fenced.fence();
+            self.completion.notify_all();
             attempted(phase, Cause::Poisoned)
         })?;
         if self.is_fenced() {
@@ -616,6 +704,159 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
         Ok(frame)
     }
 
+    fn stage_verified_required<'s>(
+        &'s self,
+        snapshot: WalPrefix,
+        header: wal_frame::WalFrameHeader,
+        bytes: &[u8],
+    ) -> Result<WalRequirement<'s>> {
+        let exact = self.stage_verified(snapshot, header, bytes)?;
+        // No fallible operation or callback follows the actual complete stage.
+        Ok(WalRequirement {
+            origin: &self.fenced,
+            exact,
+        })
+    }
+
+    fn requirement_invariant(&self) -> WalIoError {
+        self.fenced.fence();
+        self.completion.notify_all();
+        attempted(Phase::Observe, Cause::Poisoned)
+    }
+
+    // Must run under the same append guard as a subsequent claim or wait.
+    fn requirement_ready(
+        &self,
+        state: &AppendState<'_>,
+        requirement: &WalRequirement<'_>,
+    ) -> Result<bool> {
+        if !requirement.uses_fence(&self.fenced) {
+            return Err(unchanged(Phase::Observe, Cause::IdentityMismatch));
+        }
+        let frame = requirement.exact;
+        let prefix = state.prefix;
+        let pending_valid = |pending: WalFrameLocation| {
+            pending.stream == prefix.stream
+                && pending.file == prefix.file
+                && pending.previous_lsn == prefix.synced_lsn
+                && pending.lsn > pending.previous_lsn
+                && pending.start == prefix.synced_offset
+                && pending.lsn == prefix.complete_lsn
+                && pending.end == prefix.complete_offset
+                && (192..=MAX_FRAME_BYTES).contains(&pending.length)
+                && interval_end(pending.start, pending.length).ok() == Some(pending.end)
+        };
+        let census = prefix.synced_offset >= CONTROL_BYTES as u64
+            && prefix.synced_offset <= prefix.complete_offset
+            && prefix.synced_lsn <= prefix.complete_lsn
+            && prefix.complete_offset <= WAL_FILE_CAP
+            && match state.state {
+                SlotState::Idle => {
+                    state.slot.is_some()
+                        && prefix.synced_lsn == prefix.complete_lsn
+                        && prefix.synced_offset == prefix.complete_offset
+                }
+                SlotState::Complete(pending) => state.slot.is_some() && pending_valid(pending),
+                SlotState::IoOwned(pending) => state.slot.is_none() && pending_valid(pending),
+            };
+        let authentic_shape = frame.stream == prefix.stream
+            && frame.file == prefix.file
+            && frame.lsn > frame.previous_lsn
+            && frame.start >= CONTROL_BYTES as u64
+            && (192..=MAX_FRAME_BYTES).contains(&frame.length)
+            && interval_end(frame.start, frame.length).ok() == Some(frame.end)
+            && frame.end <= prefix.complete_offset
+            && frame.lsn <= prefix.complete_lsn;
+        let lsn_ready = frame.lsn <= prefix.synced_lsn;
+        let bytes_ready = frame.end <= prefix.synced_offset;
+        if !census || !authentic_shape || lsn_ready != bytes_ready {
+            return Err(self.requirement_invariant());
+        }
+        if !lsn_ready
+            && !matches!(state.state, SlotState::Complete(pending) | SlotState::IoOwned(pending) if pending == frame)
+        {
+            return Err(self.requirement_invariant());
+        }
+        Ok(lsn_ready)
+    }
+
+    /// Inspect and claim one exact requirement without waiting for an I/O owner.
+    pub(in crate::storage) fn ensure_durable<'s>(
+        &self,
+        requirement: &WalRequirement<'s>,
+    ) -> Result<EnsureDurable<'s>> {
+        let _unwind = self.fenced.unwind_guard();
+        let (slot, frame) = {
+            let mut state = self.state(Phase::Observe)?;
+            if self.requirement_ready(&state, requirement)? {
+                return Ok(EnsureDurable::AlreadySynced(DurableWal {
+                    requirement: *requirement,
+                    prefix: state.prefix,
+                }));
+            }
+            match state.state {
+                SlotState::IoOwned(_) => return Ok(EnsureDurable::AwaitWalOwner),
+                SlotState::Complete(frame) => {
+                    let slot = state
+                        .slot
+                        .take()
+                        .ok_or_else(|| self.requirement_invariant())?;
+                    state.state = SlotState::IoOwned(frame);
+                    (slot, frame)
+                }
+                SlotState::Idle => return Err(self.requirement_invariant()),
+            }
+        };
+        let observation = self.sync_claim(slot, frame)?;
+        Ok(EnsureDurable::SyncedHere(DurableWal {
+            requirement: *requirement,
+            prefix: observation.prefix,
+        }))
+    }
+
+    /// Only the dirty writer waits here, after releasing every page/pin guard.
+    fn wait_durable<'s>(&self, requirement: &WalRequirement<'s>) -> Result<DurableWal<'s>> {
+        let _unwind = self.fenced.unwind_guard();
+        match self.ensure_durable(requirement)? {
+            EnsureDurable::AlreadySynced(proof) | EnsureDurable::SyncedHere(proof) => {
+                return Ok(proof);
+            }
+            EnsureDurable::AwaitWalOwner => {}
+        }
+        #[cfg(test)]
+        durability_test_support::before_wait(self);
+        let mut state = self.state(Phase::Observe)?;
+        // A completion between ensure and wait is observed under this guard.
+        // Spurious wakeups repeat the predicate, never write/sync.
+        while !self.requirement_ready(&state, requirement)? {
+            if self.is_fenced() {
+                return Err(attempted(Phase::Observe, Cause::Fenced));
+            }
+            #[cfg(test)]
+            self.durability_waits
+                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            let (next, _) = self
+                .completion
+                .wait_timeout(state, COMPLETION_RECHECK)
+                .map_err(|_| {
+                    self.fenced.fence();
+                    self.completion.notify_all();
+                    attempted(Phase::Observe, Cause::Poisoned)
+                })?;
+            state = next;
+            if self.is_fenced() {
+                return Err(attempted(Phase::Observe, Cause::Fenced));
+            }
+        }
+        if self.is_fenced() {
+            return Err(attempted(Phase::Observe, Cause::Fenced));
+        }
+        Ok(DurableWal {
+            requirement: *requirement,
+            prefix: state.prefix,
+        })
+    }
+
     /// Move the single protected interval to I/O ownership before any write.
     /// No append or namespace mutex is held during file I/O or file-lock waiting.
     pub(crate) fn sync_pending(&self) -> Result<WalSyncObservation> {
@@ -634,10 +875,19 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
             state.state = SlotState::IoOwned(frame);
             (slot, frame)
         };
+        self.sync_claim(slot, frame)
+    }
+
+    fn sync_claim(
+        &self,
+        slot: &'m mut [u8; MAX_FRAME_BYTES],
+        frame: WalFrameLocation,
+    ) -> Result<WalSyncObservation> {
         // If any subsequent path fails, the interval stays protected in IoOwned
         // and the borrowed slot cannot be issued again through this session.
         let mut claim = IoFence {
             fenced: &self.fenced,
+            completion: &self.completion,
             armed: true,
         };
         {
@@ -670,22 +920,31 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
             prefix: state.prefix,
         };
         claim.armed = false;
+        self.completion.notify_all();
         Ok(observation)
     }
 }
 
 struct IoFence<'a> {
     fenced: &'a SessionFence,
+    completion: &'a Condvar,
     armed: bool,
 }
 impl Drop for IoFence<'_> {
     fn drop(&mut self) {
         if self.armed {
             self.fenced.fence();
+            self.completion.notify_all();
         }
     }
 }
 
+#[cfg(test)]
+#[path = "wal_durability_test_support.rs"]
+mod durability_test_support;
+#[cfg(test)]
+#[path = "wal_durability_tests.rs"]
+mod durability_tests;
 #[cfg(test)]
 #[path = "wal_io_test_support.rs"]
 mod test_support;

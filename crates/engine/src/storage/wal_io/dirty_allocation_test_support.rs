@@ -59,7 +59,7 @@ pub(super) fn capture(
         work_high_water,
         terminal_pending,
         installation: installation.map(|value| Installation {
-            location: value.location,
+            location: value.requirement.location(),
             generation: value.generation,
             first_rec_lsn: value.first_rec_lsn.0,
             before_counter: value.before_counter,

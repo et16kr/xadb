@@ -28,11 +28,11 @@ pub(crate) use allocation_reservation::{
 
 #[path = "mutable_storage.rs"]
 mod mutable_storage;
-pub(in crate::storage) use mutable_storage::DirtyInstallPermit;
 pub(crate) use mutable_storage::{
-    AllocationWriter, BoundAllocation, DirtyAllocationError, DirtyReader, MutableStorageError,
-    MutableStorageOwner,
+    AllocationWriter, AllocatorFlushError, AllocatorFlusher, BoundAllocation, DirtyAllocationError,
+    DirtyReader, FlushProgress, MutableStorageError, MutableStorageOwner,
 };
+pub(in crate::storage) use mutable_storage::{DirtyInstallPermit, FlushFinalizePermit};
 
 const WORKSPACE_BYTES: usize = 4 << 20;
 const EMPTY_BYTES: usize = 160;

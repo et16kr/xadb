@@ -1,0 +1,61 @@
+{
+  "schema": "xadb-dev3-allocator-flush-runtime-input-v1",
+  "status": "PREEXECUTION_NOT_RUN",
+  "mandatory_cases": 76,
+  "s5_cases": 972,
+  "group_counts": {
+    "FN": 6,
+    "FA": 13,
+    "FB": 31,
+    "FP": 11,
+    "FU": 6,
+    "FC": 6,
+    "FR": 3
+  },
+  "selectors": {
+    "FN": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_flush::tests::flush_fn_normal",
+    "FA": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_flush::tests::flush_fa_admission",
+    "FB": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_flush::tests::flush_fb_before_fault",
+    "FP": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_flush::tests::flush_fp_partial",
+    "FU": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_flush::tests::flush_fu_unknown",
+    "FC": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_flush::tests::flush_fc_cleanup",
+    "FR": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_flush::tests::flush_fr_resources",
+    "S5": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_flush::tests::flush_s5_batch_one_expanded"
+  },
+  "normal_sha256": "86a598e36b0431f34c119400d28829af3d691b71dacc63add7a759ae5cb857ed",
+  "expanded_sha256": "0e7e0fb1634ac1be0e3f39f96d71a035311eecf9475884ded9768a056b58d205",
+  "oracle_manifest_sha256": "9e68f75570434055172dbb33368278a4cd9fec553229e4cac7939d8683731ed1",
+  "mandatory_budget_seconds": 120,
+  "s5_budget_seconds": 1200,
+  "known_bad": 19,
+  "fa13_variants": [
+    "V01",
+    "V02",
+    "V03",
+    "V04",
+    "V05",
+    "V06"
+  ],
+  "source_identity": "Full frozen source_fingerprint plus exact build receipt; test source identities are inside that frozen source.",
+  "native": "SEPARATE_3_NOT_RUN",
+  "wal": "SEPARATE_30_NOT_RUN",
+  "admission_named_variants": {
+    "FA05": [
+      "stored_selector",
+      "possible_selection"
+    ],
+    "FA09": [
+      "issuance_after_dirsync",
+      "retirement_after_dirsync"
+    ]
+  },
+  "admission_variant_audit": {
+    "mode": "INDEPENDENT_RAW_STDOUT_AUDIT_REQUIRED",
+    "prefix": "ADMISSION_VARIANT",
+    "per_selected_case": 2,
+    "inside_matching_begin_and_case": true,
+    "reject_duplicate_foreign_malformed_or_unselected": true,
+    "authority_path": "artifacts/dev3/resume-20261022/flush-admission-variants-input-addendum-r0.md",
+    "authority_sha256": "22a6e006e2aaeef3f49b8478f6f1b268b20f343886872625ce6741d6ac51d3e4"
+  }
+}

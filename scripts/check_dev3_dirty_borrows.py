@@ -18,7 +18,7 @@ from comm_campaign import capture_source, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
 INPUTS = ROOT / 'crates/engine/tests/fixtures/dev3-dirty-allocation/compiler'
-INPUTS_SHA256 = 'f533f7469568f7250789ea378c437e414983e3ad19f0407d900218d642894de5'
+INPUTS_SHA256 = 'cf3633e970aed4994635d5fa40959387f466422649ad44460bb81fcd57086cd8'
 PROBE = 'crates/engine/src/storage/dirty_borrow_probe.rs'
 ANCHOR = 'crates/engine/src/storage/mod.rs'
 EXPECTATIONS = {

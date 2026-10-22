@@ -35,16 +35,16 @@ const PROTECTED_BYTES: u64 = FIXED_BYTES - control::EXTENT_BYTES;
 
 #[path = "doublewrite_install.rs"]
 mod doublewrite_install;
-pub(in crate::storage) use doublewrite_install::DirtyInstallPermit;
 pub(crate) use doublewrite_install::{
     AllocationObservation, AllocationSession, AllocationSessionCause, AllocationSessionError,
     AllocationSessionPhase, Cause as DoublewriteInstallCause, DoublewriteInstallError,
     DoublewriteStorageSession, Phase as DoublewriteInstallPhase,
 };
 pub(crate) use doublewrite_install::{
-    AllocationWriter, BoundAllocation, DirtyAllocationError, DirtyReader, MutableStorageError,
-    MutableStorageOwner,
+    AllocationWriter, AllocatorFlushError, AllocatorFlusher, BoundAllocation, DirtyAllocationError,
+    DirtyReader, FlushProgress, MutableStorageError, MutableStorageOwner,
 };
+pub(in crate::storage) use doublewrite_install::{DirtyInstallPermit, FlushFinalizePermit};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {

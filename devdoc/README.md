@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV3 allocator 한 페이지 flush](implementation/dev3-implementation.md#allocator-flush): 실제 capture·WAL force·DWB/home·whole retirement·조건부 RAM finalize를 연결했다. 필수76의 source별 범위·native3·compiler12·WAL30과 자원 전제를 검증했으며 원 FAIL/관측 불완전을 보존한다. 제한 단위의 독립 검토를 수용했으며 INIT·일반 recovery·전체 DEV3는 미완료다.
+
 2026-10-22 [DEV3 첫 dirty frame·stage 소비자](implementation/dev3-implementation.md#dirty-stage): 실제 pin/content·DPT·first recLSN과 guarded reserve/cancel을 공급했다. mandatory53의 source별 범위·compiler18·native3 및 실패 원본을 보존했고, INIT·flush·일반 recovery와 전체 DEV3는 미완료다.
 
 2026-10-22 [DEV4 분배 재점검 003](plans/dev4-work-breakdown.md#work-review-003): 18개 책임을 유지하면서 초기 INSERT의 parser·dependency 선행을 좁히고 공통 오류 변환·독립 모델·관측/ACK 담당을 구체화했다. [18개 상대 분량과 첫 종료점](plans/dev4-work-breakdown.md#workload-review), [ARIES·Oracle·로컬5개 DBMS 근거](evidence/dev4-source-research.md#work-review-003-research)를 연결한다. 제품 구현·시험과 Q1 승격은 없다.

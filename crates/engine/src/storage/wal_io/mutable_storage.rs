@@ -18,7 +18,10 @@ use crate::{
 };
 use std::{
     mem::size_of,
-    sync::atomic::{AtomicU8, Ordering},
+    sync::{
+        Mutex,
+        atomic::{AtomicU8, Ordering},
+    },
 };
 use xadb_foundation::{error::Effect, identity::Generation, namespace::WriterNamespace};
 
@@ -27,6 +30,14 @@ mod dirty_allocation;
 pub(in crate::storage) use dirty_allocation::InstallPermit as DirtyInstallPermit;
 pub(crate) use dirty_allocation::{AllocationWriter, DirtyAllocationError};
 use dirty_allocation::{OPERATION_BYTES, WriterControl};
+
+#[path = "allocator_flush.rs"]
+mod allocator_flush;
+#[path = "flush_io.rs"]
+mod flush_io;
+use allocator_flush::FlushControl;
+pub(in crate::storage) use allocator_flush::FlushFinalizePermit;
+pub(crate) use allocator_flush::{AllocatorFlushError, AllocatorFlusher, FlushProgress};
 
 const AVAILABLE: u8 = 0;
 const CLAIMED: u8 = 1;
@@ -62,21 +73,30 @@ fn unchanged(cause: Cause) -> MutableStorageError {
 }
 
 pub(crate) struct MutableStorageOwner<'m, 'w, W: WriterNamespace> {
-    installed: DoublewriteStorageSession<'m, 'w, W>,
+    fresh: super::FreshStorageSession<'m, W>,
+    plan: super::InstallPlan,
+    workspace: Mutex<Option<&'w mut [u8; super::WORKSPACE_BYTES]>>,
     binding: AtomicU8,
 }
 impl<'m, 'w, W: WriterNamespace> DoublewriteStorageSession<'m, 'w, W> {
     /// An infallible move: original health, reader claim and fence are preserved.
     pub(crate) fn into_mutable_storage(self) -> MutableStorageOwner<'m, 'w, W> {
+        let DoublewriteStorageSession {
+            fresh,
+            _workspace,
+            _plan,
+        } = self;
         MutableStorageOwner {
-            installed: self,
+            fresh,
+            plan: _plan,
+            workspace: Mutex::new(Some(_workspace)),
             binding: AtomicU8::new(AVAILABLE),
         }
     }
 }
 impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
     pub(crate) fn session_fence(&self) -> &SessionFence {
-        &self.installed.fresh.wal.fenced
+        &self.fresh.wal.fenced
     }
     fn fatal(&self, cause: Cause) -> MutableStorageError {
         self.session_fence().fence();
@@ -87,7 +107,11 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
     }
     pub(super) fn health(&self) -> Result<()> {
         let wal = self.wal();
-        if wal.append.is_poisoned() || wal.file.is_poisoned() || wal._writer.is_poisoned() {
+        if wal.append.is_poisoned()
+            || wal.file.is_poisoned()
+            || wal._writer.is_poisoned()
+            || self.workspace.is_poisoned()
+        {
             return Err(self.fatal(Cause::Poisoned));
         }
         if self.session_fence().is_fenced() {
@@ -96,10 +120,10 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
         Ok(())
     }
     pub(super) fn profile(&self) -> Profile {
-        self.installed.fresh.plan.profile
+        self.fresh.plan.profile
     }
     pub(super) fn wal(&self) -> &GenesisWalSession<'m, W> {
-        &self.installed.fresh.wal
+        &self.fresh.wal
     }
 
     /// Shape/resource rejection precedes the atomic claim and every readback.
@@ -151,12 +175,27 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
                 level: 0,
             })
             .map_err(|error| self.fatal(Cause::Frame(error)))?;
-        let pool = SharedPool::new(core, self.session_fence(), frames)
+        let workspace = self
+            .workspace
+            .lock()
+            .map_err(|_| self.fatal(Cause::Poisoned))?
+            .take()
+            .ok_or_else(|| self.fatal(Cause::Invariant))?;
+        let pool = SharedPool::new(core, self.session_fence(), &self.binding, frames)
             .map_err(|error| self.fatal(Cause::Frame(error)))?;
         let bound = BoundAllocation {
             storage: self,
             pool,
             writer: WriterControl::new(operation, identity),
+            flush: FlushControl::new(
+                flush_io::FlushIo::new(
+                    self.plan.selected,
+                    workspace,
+                    &self.binding,
+                    self.session_fence(),
+                ),
+                identity,
+            ),
         };
         self.health()?;
         self.binding.store(BOUND, Ordering::Release);
@@ -174,13 +213,13 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
             .wal()
             .prefix()
             .map_err(|error| self.fatal(Cause::Wal(error)))?;
-        if self.installed.fresh.reader_active.load(Ordering::Acquire)
+        if self.fresh.reader_active.load(Ordering::Acquire)
             || prefix.complete_lsn != 0
             || prefix.synced_lsn != 0
             || prefix.complete_offset != 4096
             || prefix.synced_offset != 4096
             || prefix.stream.writer_epoch != 1
-            || self.profile() != self.installed._plan.profile
+            || self.profile() != self.plan.profile
         {
             return Err(self.fatal(Cause::Invariant));
         }
@@ -208,7 +247,7 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
                 .try_into()
                 .expect("fixed read scratch");
             let mut reader = self
-                .installed
+                .fresh
                 .open_reader(root, scratch)
                 .map_err(|error| self.fatal(Cause::PageIo(error)))?;
             reader
@@ -252,6 +291,7 @@ pub(crate) struct BoundAllocation<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace
     storage: &'s MutableStorageOwner<'m, 'w, W>,
     pool: SharedPool<'c, 's, 'p, 'd>,
     writer: WriterControl<'s, 'o>,
+    flush: FlushControl<'c, 's, 'w>,
 }
 impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     BoundAllocation<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>
@@ -271,10 +311,34 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             DirtyReader { pool: &self.pool },
         )
     }
+
+    /// Disjoint views over the same original storage, pool and dedicated workspace.
+    /// A pending flush remains in this Bound when a temporary view is dropped.
+    pub(crate) fn split_with_flush<'b>(
+        &'b mut self,
+    ) -> (
+        AllocationWriter<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        DirtyReader<'b, 'c, 's, 'p, 'd>,
+        AllocatorFlusher<'b, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    ) {
+        (
+            AllocationWriter {
+                control: &mut self.writer,
+                pool: &self.pool,
+                storage: self.storage,
+            },
+            DirtyReader { pool: &self.pool },
+            AllocatorFlusher {
+                control: &mut self.flush,
+                pool: &self.pool,
+                storage: self.storage,
+            },
+        )
+    }
 }
 impl<W: WriterNamespace> Drop for BoundAllocation<'_, '_, '_, '_, '_, '_, '_, W> {
     fn drop(&mut self) {
-        // There is no shutdown/flush protocol yet, including for a clean binding.
+        // Flush completion is not a clean shutdown/owner-release protocol.
         self.storage.session_fence().fence();
         self.storage.binding.store(ABANDONED, Ordering::Release);
         let _ = self.pool.has_pins(); // Census may diagnose orphaned tokens; never reset them.
@@ -322,6 +386,8 @@ fn fits<W: WriterNamespace>() -> bool {
         && file <= 16384
         && dirty_frame::fits()
         && dirty_allocation::typed_fits()
+        && wal::durability_types_fit()
+        && allocator_flush::fits::<W>()
         && size_of::<BoundAllocation<'_, '_, '_, '_, '_, '_, '_, W>>() <= 24560
         && size_of::<Result<BoundAllocation<'_, '_, '_, '_, '_, '_, '_, W>>>() <= 24576
         && budget::COMMON <= 7168
@@ -334,7 +400,14 @@ fn fits<W: WriterNamespace>() -> bool {
             .and_then(|n| n.checked_add(file))
             .and_then(|n| n.checked_add(budget::CONSTRUCTOR))
             .is_some_and(|n| n <= 65536)
-        && owner + control + budget::PLANS + budget::TEMPORARIES + 2048 + 2048 <= 65536
+        && owner
+            + control
+            + budget::PLANS
+            + budget::TEMPORARIES
+            + 2048
+            + 2048
+            + wal::DURABILITY_CALL_BYTES
+            <= 65536
 }
 
 /// Read-only diagnostic for a failed pre-effect resource admission. This does

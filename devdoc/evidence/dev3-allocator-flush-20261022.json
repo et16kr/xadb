@@ -1,0 +1,514 @@
+{
+  "schema_version": 1,
+  "unit": "D3-ALLOCATOR-FLUSH-ONE-001",
+  "work_items": [
+    "limited 3.05.2 batch1",
+    "limited 3.05.3 whole retirement and conditional RAM finalize"
+  ],
+  "status": "ACCEPTED_SCOPED_UNIT",
+  "full_dev3_acceptance": false,
+  "scope": "actual allocator1 copy/WAL force/DWB/home/retirement/conditional RAM finalize; no batch8/64, multi-file, INIT, free/reuse, ordinary recovery or READY",
+  "results": {
+    "wal": {
+      "status": "PASS",
+      "source_sha256": "4060ef9c88718c2d28b79a93e7f7f39cd21949c07a66673fff5e563467ef98ae",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-wal-runtime-r1/result.json",
+        "sha256": "f2d3c7d92279ce36a8b231aaf7af7f54c3139269d05195dc949f1e72c7ac70e3",
+        "bytes": 6951
+      },
+      "selectors": 8,
+      "cases": 30,
+      "binary_sha256": "f9df86abc5bacf1d4ab5caed2ed0838b4a0bebb3929988d8eaf2c199d7c6a9b3",
+      "review": {
+        "path": "artifacts/dev3/resume-20261022/review/flush-wal-execution-read-audit-r1.md",
+        "sha256": "d11f2399a6b0530bbb1d60635c34f7d2c6176692a6c9d09f09b264b3548d49f6",
+        "bytes": 2580
+      }
+    },
+    "compiler": {
+      "status": "PASS",
+      "source_sha256": "71410c2fe3c45ca215d8a79c296243350db504bc7b530fa1c8ac3b19387e5cb3",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-compiler-r0/result.json",
+        "sha256": "ae76b82ea3a23dd73b0c5d8554e85f67353a57705178852a556681bb5b185d23",
+        "bytes": 112650
+      },
+      "count": 12
+    },
+    "changed_old_permit": {
+      "status": "PASS",
+      "source_sha256": "71410c2fe3c45ca215d8a79c296243350db504bc7b530fa1c8ac3b19387e5cb3",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-compiler-r0/changed-permit-result.json",
+        "sha256": "7a2b3f797f123f58069ef66fe8d61d40eec7e89f7fc831e4e35037b113a026d4",
+        "bytes": 25808
+      },
+      "changed_probes": 1,
+      "required_baseline": 1,
+      "unchanged_old_probes_not_run": 16
+    },
+    "compiler_checker": {
+      "status": "PASS",
+      "cases": 4,
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-compiler-r0/selftests.json",
+        "sha256": "9b1899e7a6258f55bec651ac10c54068eab9f261e7dbcfb27b20b6399c3a5384",
+        "bytes": 611
+      }
+    },
+    "new_oracle_and_runtime_checker": {
+      "status": "PASS",
+      "source_sha256": "699becbe620ee5a1c7ff78567a11a11265600b6ead2c86f035bedfcd20fd5568",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-checkers-r0/result.json",
+        "sha256": "ebcae4f048f489e3c54195b992ce5748f5e87fb7e64e72add0abf35c9b806556",
+        "bytes": 1308
+      },
+      "oracle_cases": 6,
+      "harness_cases": 6
+    },
+    "mandatory": {
+      "status": "PASS_MULTI_SOURCE_SELECTED_CASES",
+      "inventory_cases": 76,
+      "source_scopes": [
+        {
+          "source_sha256": "360cc550cb5cedb81add1fd6df4d8db333f02ca138043f69c46d014531a01143",
+          "cases": [
+            "FR01",
+            "FR02"
+          ],
+          "basis": "complete selected resource group",
+          "receipt": {
+            "path": "artifacts/dev3/resume-20261022/flush-resources-r1/result.json",
+            "sha256": "e1444c96e15550f8474beef389b79fba3857c062b1700674e2fe606431797c40",
+            "bytes": 85949
+          }
+        },
+        {
+          "source_sha256": "360cc550cb5cedb81add1fd6df4d8db333f02ca138043f69c46d014531a01143",
+          "cases": [
+            "FN01",
+            "FN02",
+            "FN03",
+            "FN04",
+            "FN05",
+            "FN06",
+            "FA01",
+            "FA02",
+            "FA03",
+            "FA04",
+            "FA05",
+            "FA06",
+            "FA07",
+            "FA08",
+            "FA09",
+            "FA10",
+            "FA11",
+            "FA12",
+            "FA13",
+            "FB01",
+            "FB02",
+            "FB03",
+            "FB04",
+            "FB05",
+            "FB06",
+            "FB07",
+            "FB08",
+            "FB09",
+            "FB10",
+            "FB11",
+            "FB12",
+            "FB13",
+            "FB14",
+            "FB15",
+            "FB16",
+            "FB17",
+            "FB18",
+            "FB19",
+            "FB20",
+            "FB21",
+            "FB22",
+            "FB23",
+            "FB24",
+            "FB25",
+            "FB26",
+            "FB27",
+            "FB28",
+            "FB29",
+            "FB30",
+            "FB31",
+            "FP01",
+            "FP02",
+            "FP03",
+            "FP04",
+            "FP05",
+            "FP06",
+            "FP07",
+            "FP08",
+            "FP09",
+            "FP10",
+            "FP11",
+            "FU01",
+            "FU02",
+            "FU03",
+            "FU04",
+            "FU05",
+            "FU06"
+          ],
+          "basis": "five complete selected groups; original overall receipt remains FAIL at FC04",
+          "receipt": {
+            "path": "artifacts/dev3/resume-20261022/flush-mandatory-r0/result.json",
+            "sha256": "9fac776e14450bc0194036352091a7087288a0d0b4ddfdb5796eafcf32b3612a",
+            "bytes": 96512
+          }
+        },
+        {
+          "source_sha256": "360cc550cb5cedb81add1fd6df4d8db333f02ca138043f69c46d014531a01143",
+          "cases": [
+            "FC01",
+            "FC02",
+            "FC03"
+          ],
+          "basis": "independently audited completed prefix; not a PASS of failed FC group",
+          "review": {
+            "path": "artifacts/dev3/resume-20261022/review/flush-mandatory-partial-read-audit-r3.json",
+            "sha256": "ed6152b8d3e3aeda7822273c8cf3930dd63bd5c3a1c2b80f36f28729be241474",
+            "bytes": 9684
+          }
+        },
+        {
+          "source_sha256": "b817e75fd00f37edd732cd433d4120c063b9506916bdef070fa12771b0ce785d",
+          "cases": [
+            "FC04",
+            "FC05",
+            "FC06",
+            "FR03"
+          ],
+          "basis": "only repaired FC04 and previously unrun cases",
+          "receipt": {
+            "path": "artifacts/dev3/resume-20261022/flush-mandatory-repair-r1/result.json",
+            "sha256": "3b618b604eaf8b2c037bf73d6a3de39e0ef608f271b4b737c13fd85c70f0d04d",
+            "bytes": 87276
+          }
+        }
+      ],
+      "independent_bad_witnesses": 19,
+      "fa05_fa09_additional_named_variants": 4,
+      "fa13_named_variants": 6,
+      "unchanged_completed_cases_repeated": false
+    },
+    "native": {
+      "status": "P1_OFFLINE_ACCEPTED_P2_P3_DRIVER_PASS",
+      "databases": 3,
+      "profiles": [
+        {
+          "profile": 1,
+          "source_sha256": "360cc550cb5cedb81add1fd6df4d8db333f02ca138043f69c46d014531a01143",
+          "status": "ACCEPTED_EXISTING_PRODUCT_BYTES_EVENTS_AND_BOUNDARY_FD",
+          "original_driver_status": "FAIL_PROC_OBSERVATION",
+          "supplemental_sampling": "INCOMPLETE_EACCES_CAUSE_UNCONFIRMED",
+          "review": {
+            "path": "artifacts/dev3/resume-20261022/review/flush-native-p1-offline-read-audit-r0.md",
+            "sha256": "75f6b27ea59e49067010be99916d67befde61c0f5f3e415189005fe19b81bcd1",
+            "bytes": 3277
+          },
+          "machine_audit": {
+            "path": "artifacts/dev3/resume-20261022/review/flush-native-p1-offline-read-audit-r0.json",
+            "sha256": "264c79bc020c91f8b11bd979c45dcaee60530910da99c9cf99b4a50400dd5978",
+            "bytes": 3583
+          },
+          "repeat_product_execution": false
+        },
+        {
+          "profiles": [
+            2,
+            3
+          ],
+          "source_sha256": "b817e75fd00f37edd732cd433d4120c063b9506916bdef070fa12771b0ce785d",
+          "status": "PASS",
+          "receipt": {
+            "path": "artifacts/dev3/resume-20261022/flush-native-r1/result.json",
+            "sha256": "f67af05694e002080c1f0dc264dc23f046d77dcc7b38d7d284d92ce7479fceac",
+            "bytes": 102327
+          }
+        }
+      ],
+      "completed_batches": 6,
+      "logical_dwb_home_effects": 186,
+      "actual_database_bytes_each": 22111648,
+      "actual_database_bytes_total": 66334944,
+      "fixed_owned_charge_bytes_each": 22073344,
+      "actual_replacement_peak_bytes_each": 22115744,
+      "database_fd_limit": 5,
+      "physical_exact_fd_peak": "NOT_CLAIMED_FROM_SAMPLING"
+    },
+    "expanded": {
+      "status": "S5_NOT_RUN",
+      "cases": 972
+    },
+    "resource_ledger": {
+      "status": "PASS_SELECTED_TARGET_LAYOUT_AND_EFFECT_BEFORE_GUARD",
+      "reservation_bytes": 65536,
+      "global_metadata_bytes": 2490368,
+      "physical_stack": "NOT_MEASURED",
+      "first_execution": {
+        "status": "FAIL_FR01_FR02_NOT_RUN",
+        "source_sha256": "dc51cdb3b7001c7ae75103a9fa1105376204727ff277e87c26c81c42969e5cf2",
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/flush-resources-r0/result.json",
+          "sha256": "64cf4183942e50289877251d6725fab3ddece2153c062e1343c8e34891b096f3",
+          "bytes": 85850
+        }
+      },
+      "source_sha256": "360cc550cb5cedb81add1fd6df4d8db333f02ca138043f69c46d014531a01143",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-resources-r1/result.json",
+        "sha256": "e1444c96e15550f8474beef389b79fba3857c062b1700674e2fe606431797c40",
+        "bytes": 85949
+      },
+      "hot_bytes": 63960,
+      "cold_bytes": 48576,
+      "deep_bytes": 24624,
+      "type_observations": 31
+    },
+    "native_checker": {
+      "status": "PASS",
+      "source_sha256": "dc51cdb3b7001c7ae75103a9fa1105376204727ff277e87c26c81c42969e5cf2",
+      "cases": 8,
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-runtime-r2/native-checker-result.json",
+        "sha256": "114675a9730e5c89ea66b569cee75e7a7d0368780f40f39ad9d7bdbad59cb307",
+        "bytes": 678
+      }
+    },
+    "quality": {
+      "fmt": {
+        "status": "PASS",
+        "source_sha256": "b817e75fd00f37edd732cd433d4120c063b9506916bdef070fa12771b0ce785d",
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/flush-runtime-r5/fmt-result.json",
+          "sha256": "4a32132501a2f6e6cf3b5e539ce83a75cad86803821a55440fa23b48d9155161",
+          "bytes": 606
+        }
+      },
+      "clippy": {
+        "status": "PASS",
+        "source_sha256": "b817e75fd00f37edd732cd433d4120c063b9506916bdef070fa12771b0ce785d",
+        "receipt": {
+          "path": "artifacts/dev3/resume-20261022/flush-runtime-r5/clippy-result.json",
+          "sha256": "b3022dc6594a8b2d70047aa409d332df7cca3da35bf4d683e3697447e67eb395",
+          "bytes": 728
+        }
+      }
+    },
+    "native_sampler_checker": {
+      "status": "PASS",
+      "source_sha256": "b817e75fd00f37edd732cd433d4120c063b9506916bdef070fa12771b0ce785d",
+      "cases": 1,
+      "unchanged_old_checker_cases_not_repeated": 8,
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-runtime-r5/native-sampler-checker-result.json",
+        "sha256": "7c354b69d9f99abc2cc100bde860bcc48c4757d2c5ec7da6d30cc6d7a35b2c26",
+        "bytes": 782
+      }
+    }
+  },
+  "preserved_failures": [
+    {
+      "status": "FAIL",
+      "runtime": "NOT_RUN",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-wal-runtime-r0/result.json",
+        "sha256": "2d9f7b5fc12f574058f3f42dd5bfc15030046fbda4f1984c20a58ddf5ceb0124",
+        "bytes": 1341
+      },
+      "reason": "cfg(test) child test_support shadowed parent hook module; no runtime executed"
+    },
+    {
+      "status": "FAIL",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-runtime-r0/build-result.json",
+        "sha256": "d77c291334ad85c8b3df0217c0b1cecee6d3623a5bca0cd36cf711db06d849a9",
+        "bytes": 1068
+      },
+      "reason": "test re-export missing and foreign-core fixture lifetime; product runtime NOT_RUN"
+    },
+    {
+      "status": "FAIL",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-runtime-r1/clippy-result.json",
+        "sha256": "b674dc5b1d05a28ad03d90900e67332b4f0abc65badc035620fc2e14d330403b",
+        "bytes": 385
+      },
+      "reason": "static lint failures; product runtime NOT_RUN"
+    },
+    {
+      "status": "FAIL",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-runtime-r2/fmt-result.json",
+        "sha256": "2d3ca2f61c9593673a75d4abeadf5dd769e91bf988819e80369ab6f485513f5e",
+        "bytes": 638
+      },
+      "reason": "re-export formatting only; product runtime NOT_RUN"
+    },
+    {
+      "status": "FAIL",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-resources-r0/result.json",
+        "sha256": "64cf4183942e50289877251d6725fab3ddece2153c062e1343c8e34891b096f3",
+        "bytes": 85850
+      },
+      "reason": "FR01 actual Profile72 exceeded source premise64; FR01 FAIL and FR02 NOT_RUN, other74 NOT_SELECTED"
+    },
+    {
+      "status": "FAIL",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-mandatory-r0/result.json",
+        "sha256": "9fac776e14450bc0194036352091a7087288a0d0b4ddfdb5796eafcf32b3612a",
+        "bytes": 96512
+      },
+      "reason": "67 cases in five complete groups PASS; FC01–03 completion prefix retained, FC04 fixture tried new owner after fence; FC05/FC06/FR03 NOT_RUN"
+    },
+    {
+      "status": "FAIL",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-native-r0/result.json",
+        "sha256": "f67793dc7cd72933edfb7ce6d0d6dad14f4de29594c9a296464f26f6552c08c3",
+        "bytes": 85407
+      },
+      "reason": "P1 worker complete; original supplemental proc sampler EACCES caused driver FAIL. P2/P3 NOT_RUN; original failure and incomplete sample retained"
+    },
+    {
+      "status": "FAIL",
+      "runtime": "NOT_RUN",
+      "receipt": {
+        "path": "artifacts/dev3/resume-20261022/flush-runtime-r4/build-result.json",
+        "sha256": "da9f128afadbd8794611ece08aece65344cfa545aaf0b82c8df537ceaa3c2fe1",
+        "bytes": 1066
+      },
+      "reason": "FC04 injector closure borrowed non-Sync Receiver; move capture repair only"
+    }
+  ],
+  "pending": [
+    "batch8/64 and multiple files",
+    "actual status owner/INIT/dynamic registration/free/reuse",
+    "eviction/pressure/FIFO",
+    "ordinary recovery/READY",
+    "DEV3 final S5 full inventory"
+  ],
+  "build_receipts": [
+    {
+      "path": "artifacts/dev3/resume-20261022/flush-runtime-r0/build-result.json",
+      "sha256": "d77c291334ad85c8b3df0217c0b1cecee6d3623a5bca0cd36cf711db06d849a9",
+      "bytes": 1068
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/flush-runtime-r1/build-result.json",
+      "sha256": "fae3376f4663270ef9352ff527113114c03d3852c02883fb1ba01b0ea43d1c2c",
+      "bytes": 1204
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/flush-runtime-r2/build-result.json",
+      "sha256": "90f928100b9d1b61eb54e11497cdc1a1cbd789368f9bd059460c0b39b5d0f70b",
+      "bytes": 1204
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/flush-runtime-r3/build-result.json",
+      "sha256": "705f7904e0358237bfc29c91dcf590ff5b4eb4167d14dd2340ae65cb6fbd536c",
+      "bytes": 1204
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/flush-runtime-r4/build-result.json",
+      "sha256": "da9f128afadbd8794611ece08aece65344cfa545aaf0b82c8df537ceaa3c2fe1",
+      "bytes": 1066
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/flush-runtime-r5/build-result.json",
+      "sha256": "d9cb4803a9b23b4133125df1a5f286b97e22d6895d9a0f0a990bdcaa25681b8e",
+      "bytes": 1204
+    }
+  ],
+  "source_value_ledgers": [
+    {
+      "path": "artifacts/dev3/resume-20261022/flush-metadata-source-ledger-r2.md",
+      "sha256": "235c2bf10fec5bee49f41feaab61cc2826fbe9597805c3a7809911aca1758ce8",
+      "bytes": 5271
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/flush-io-source-ledger-r2.md",
+      "sha256": "e135c6f272c1331eebab57f6c3ca4d0c1a80a35db101e3def2e1c20097e5dba0",
+      "bytes": 10097
+    }
+  ],
+  "reviews": [
+    {
+      "path": "artifacts/dev3/resume-20261022/review/flush-one-d2-review-r1.md",
+      "sha256": "1405adb4b0e545bc971207ebf83d4aaedc1741f36b15a624496e602f02161bb0",
+      "bytes": 10695
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/flush-wal-requirement-d2-review-r0.md",
+      "sha256": "360b180cd56192a9d92f71c428288afe98c5fb0074fd79e113341b1d2daed438",
+      "bytes": 4640
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/flush-file-carrier-d2-addendum-r0.md",
+      "sha256": "dd778c4e28e6e3c268b01006d0d31fcde9e51d82041944accb7191158a307c52",
+      "bytes": 2312
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/flush-runtime-source-addendum-r1.md",
+      "sha256": "f94e09c541f8982dc23066cf1bd7939a774c91fef18c8d583c86f1bf21d863ca",
+      "bytes": 4821
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/flush-resource-cap-correction-r2.md",
+      "sha256": "05bc406d60dfee089cdce122a057eb5ac5ab3408bcaef1659ac7c33767a1a8c3",
+      "bytes": 3538
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/flush-admission-input-addendum-r3.md",
+      "sha256": "5071f60801dd6559886874784f6681ac6820f9d5c24d13f3b1faa30b9d433336",
+      "bytes": 2689
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/flush-followup-input-review-r4.md",
+      "sha256": "877af25edc6c42308062107b1e0cdd8c8474df1406c9081f72e96e7b57f69018",
+      "bytes": 3440
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/flush-wal-execution-read-audit-r1.md",
+      "sha256": "d11f2399a6b0530bbb1d60635c34f7d2c6176692a6c9d09f09b264b3548d49f6",
+      "bytes": 2580
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/flush-compiler-execution-read-audit-r1.md",
+      "sha256": "006b83a5e2bf9fd5b6876ad4c4f23b820664e18d2d968c11cbc444bdefcf5a78",
+      "bytes": 3050
+    },
+    {
+      "path": "artifacts/dev3/resume-20261022/review/flush-checker-execution-read-audit-r0.json",
+      "sha256": "f421c5d516f0477698a8ce2c021d4c82978419c9f8976af0d5304c59c7f82f61",
+      "bytes": 985
+    }
+  ],
+  "final_source_sha256": "b817e75fd00f37edd732cd433d4120c063b9506916bdef070fa12771b0ce785d",
+  "final_binary_sha256": "7dafb198d4eced9dc4e598ecd330d1b6ed2c128f8245efc76a23a4506d220fbc",
+  "final_independent_review": {
+    "path": "artifacts/dev3/resume-20261022/review/flush-final-d1-review-r5.md",
+    "sha256": "071193f18b325b2279d9048dcae7c601ea600c346e17f56bc9aa9c0075b461d9",
+    "bytes": 7726
+  },
+  "final_independent_audit": {
+    "path": "artifacts/dev3/resume-20261022/review/flush-final-execution-read-audit-r5.json",
+    "sha256": "c8f924dbbfd6e9658e040be59d993e33c3d97e2e6cec7372e3f06ad6387e5f20",
+    "bytes": 3670
+  },
+  "registration_review": {
+    "path": "artifacts/dev3/resume-20261022/review/flush-registration-read-addendum-r5.md",
+    "sha256": "4e0bd7f18fe99b3636b82bbf908c0208d173ea9813e83d4086c8fda167168f6a",
+    "bytes": 2193,
+    "scope": "read audit before adding this traceability reference"
+  }
+}

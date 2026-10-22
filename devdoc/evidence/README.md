@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-22 [DEV3 allocator 한 페이지 flush](dev3-allocator-flush-20261022.md) · [source별 실행 색인](dev3-allocator-flush-20261022.json): 필수76의 source별 실행·native3의 bytes/FD·WAL30·compiler12·자원 전제를 검증했다. 원 FAIL·관측 불완전과 완료 prefix를 구분하며 제한 단위의 독립 검토를 수용했다. 전체 DEV3는 미완료다.
+
 2026-10-22 [DEV3 첫 dirty frame·stage 소비자](dev3-dirty-stage-20261022.md) · [source별 실행 색인](dev3-dirty-stage-20261022.json): mandatory53의 source별 완료 범위, compiler18·native3·새 oracle/checker와 원본 실패를 보존한다. INIT·flush·일반 복구와 전체 DEV3는 미완료다.
 
 2026-10-22 [DEV3 적용 admission·version gate](dev3-concurrency-admission-20261022.md) · [source별 실행 색인](dev3-concurrency-admission-20261022.json): 신규 runtime7그룹/45사례·compiler12·자원27 layout과 원래 실패를 연결한다. Commit은 test-only 모의 명세, 확대512와 전체 DEV3는 미완료다.

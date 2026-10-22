@@ -155,8 +155,8 @@
       "expected_code": "E0451",
       "primary_line": 10,
       "primary_spans": "all_on_line",
-      "bytes": 742,
-      "sha256": "77f54df91e8f4d31b474d6b4a1ff3c7ddf6df26df60e85cfd4f880db1f96faa5"
+      "bytes": 770,
+      "sha256": "1ebf187cda72751cde944fb2f8608f3e1cb09442ffbfeae8f364d8ec0f8938e7"
     },
     {
       "name": "permit_clone",

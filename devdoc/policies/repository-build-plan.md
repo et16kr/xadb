@@ -330,3 +330,7 @@ DEV3 페이지 예약·취소는 `wal_io/doublewrite_install`의 private child `
 ## DEV3 첫 dirty stage 소비자
 
 [dirty frame·stage 계약](../contracts/dev3-dirty-stage.md)의 실제 경로는 관리 JSON의 `dev3_dirty_stage`에 등록한다. borrowed payload·고정 directory/pin/DPT, mutable storage 조립과 allocator reserve/cancel 소비, 각각의 신규 oracle/runtime/native/compiler 입력을 공급한다. 제품 의존성·crate·source root 변경은 없다. [제한 단위 인수](../evidence/dev3-dirty-stage-20261022.md)를 수용했으며 INIT·flush·일반 복구와 전체 DEV3 완료를 뜻하지 않는다.
+
+## DEV3 allocator 한 페이지 flush
+
+[flush 소유 계약](../contracts/dev3-allocator-flush.md)의 실제 source/fixture/checker는 관리 JSON의 `dev3_allocator_flush_one`에 등록한다. fixed registry에 authentic WAL requirement와 claim을 보유하고 실제 capture→WAL→DWB→home→whole retirement→조건부 RAM finalize를 연결한다. 기존 source root/crate/dependency는 유지한다. [source별 선택 인수](../evidence/dev3-allocator-flush-20261022.md)는 제한 단위로 수용했으며 batch8/64·다중 file·INIT·ordinary recovery·전체 DEV3 완료를 뜻하지 않는다.

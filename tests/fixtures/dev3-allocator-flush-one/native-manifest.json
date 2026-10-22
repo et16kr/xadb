@@ -1,0 +1,40 @@
+{
+  "schema": "xadb-dev3-allocator-flush-native-v1",
+  "status": "PREEXECUTION_NOT_RUN",
+  "profiles": [
+    1,
+    2,
+    3
+  ],
+  "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_flush::native_tests::flush_native_worker",
+  "batches_per_database": 2,
+  "logical_effects_per_database": 62,
+  "case_timeout_seconds": 30,
+  "database_limit_bytes": 25165824,
+  "total_limit_bytes": 75497472,
+  "fixed_owned_budget_bytes": 22073344,
+  "database_fd_limit": 5,
+  "tracked_file_handles_limit": 2,
+  "namespace_handles": 2,
+  "database_subdirectory": "database",
+  "environment": [
+    "XADB_FLUSH_NATIVE_DIR",
+    "XADB_FLUSH_NATIVE_PROFILE"
+  ],
+  "recovery": "NOT_IMPLEMENTED_OR_CLAIMED",
+  "power_loss": "NOT_TESTED",
+  "batch_inventories": [
+    "reserve.after.tsv",
+    "cancel.after.tsv"
+  ],
+  "fixed_owned_charge": "database_bytes - wal_bytes + initial_wal_header_bytes + selector_stage_bytes",
+  "initial_wal_header_bytes": 4096,
+  "selector_stage_bytes": 4096,
+  "caller_directory_dropped_before_setup": true,
+  "fd_baseline": 3,
+  "fd_final": 0,
+  "fd_evidence": [
+    "fd.tsv",
+    "fd-events.tsv"
+  ]
+}

@@ -527,6 +527,7 @@ macro_rules! mechanical_fixture {
     ($identity:expr, |$pool:ident, $core:ident, $requests:ident| $body:block) => {{
         let identity = $identity;
         let fence = SessionFence::new();
+        let binding = std::sync::atomic::AtomicU8::new(2);
         let $core = PageConcurrency::new(&fence).unwrap();
         let mut first = boxed::<PAGE_BYTES>();
         let mut second = boxed::<PAGE_BYTES>();
@@ -536,7 +537,7 @@ macro_rules! mechanical_fixture {
         let $requests = [request(identity), request(second_identity)];
         frame_test::register(&mut frames[0], $requests[0]);
         frame_test::register(&mut frames[1], $requests[1]);
-        let $pool = ok(SharedPool::new(&$core, &fence, &frames));
+        let $pool = ok(SharedPool::new(&$core, &fence, &binding, &frames));
         $body
     }};
 }
@@ -879,7 +880,7 @@ fn assert_partial(
         ),
         (1, 1, before_counter, lsn, cancel)
     );
-    assert_eq!(installation.location, captured.location);
+    assert_eq!(installation.requirement.location(), captured.location);
     assert_eq!(
         (
             captured.location.lsn,
@@ -1626,13 +1627,14 @@ fn dirty_da07_resource_cleanup() {
         fixture!(1, |bound, core, state| {
             let _ = (&core, &state);
             let fence = SessionFence::new();
+            let binding = std::sync::atomic::AtomicU8::new(2);
             let mechanical = PageConcurrency::new(&fence).unwrap();
             let mut page = boxed::<PAGE_BYTES>();
             let mut frames = [DirtyFrame::new(&mut page)];
             frame_test::register(&mut frames[0], request(bound.writer.identity));
             frame_test::seed_generation(&mut frames[0], generation);
             dirty_error(
-                err(SharedPool::new(&mechanical, &fence, &frames)),
+                err(SharedPool::new(&mechanical, &fence, &binding, &frames)),
                 dirty_frame::Cause::Invariant,
                 Effect::CallerMustResolve,
             );

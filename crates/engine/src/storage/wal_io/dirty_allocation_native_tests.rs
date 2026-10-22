@@ -407,7 +407,7 @@ fn dirty_allocation_native_selected() {
         assert_eq!(obligation.phase, InstallPhase::DptInstalled);
         assert_eq!(obligation.identity, writer.control.identity);
         assert_eq!(obligation.generation, 1);
-        assert!(std::ptr::eq(obligation.fence, storage.session_fence()));
+        assert!(obligation.requirement.uses_fence(storage.session_fence()));
         assert_eq!(obligation.cancel, cancel);
         assert_eq!(obligation.first_rec_lsn, PageLsn(1));
         assert_eq!(obligation.before_counter, u64::from(cancel));
@@ -419,7 +419,7 @@ fn dirty_allocation_native_selected() {
         let wal::SlotState::IoOwned(location) = append.state else {
             panic!("missing retained actual I/O ownership");
         };
-        assert_eq!(obligation.location, location);
+        assert_eq!(obligation.requirement.location(), location);
         assert_eq!(location.stream, append.prefix.stream);
         assert_eq!(location.file, append.prefix.file);
         assert_eq!(location.previous_lsn, u64::from(cancel));
@@ -433,12 +433,12 @@ fn dirty_allocation_native_selected() {
             format!(
                 "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n",
                 obligation.generation,
-                obligation.location.previous_lsn,
-                obligation.location.lsn,
-                obligation.location.start,
-                obligation.location.length,
-                obligation.location.end,
-                std::ptr::eq(obligation.fence, storage.session_fence()),
+                obligation.requirement.location().previous_lsn,
+                obligation.requirement.location().lsn,
+                obligation.requirement.location().start,
+                obligation.requirement.location().length,
+                obligation.requirement.location().end,
+                obligation.requirement.uses_fence(storage.session_fence()),
                 obligation.identity == writer.control.identity
             ),
         )

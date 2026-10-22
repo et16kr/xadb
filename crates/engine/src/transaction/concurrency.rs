@@ -334,6 +334,17 @@ impl<'c, 'f> Owner<'c, 'f> {
         Ok(true)
     }
 
+    /// A flusher can copy/finalize existing content, but cannot acquire Apply.
+    /// Consumers check exact core binding first; this preserves foreign-core state.
+    pub(crate) fn require_flusher(&self) -> Result<()> {
+        let state = self.core.entry_state()?;
+        self.check_mode(&state, Mode::Idle)?;
+        if self.index != FLUSHER_SLOT {
+            return Err(unchanged(Cause::InvalidRole));
+        }
+        Ok(())
+    }
+
     fn check_mode(&self, state: &State, mode: Mode) -> Result<()> {
         if state.slots[self.index]
             != (OwnerSlot {

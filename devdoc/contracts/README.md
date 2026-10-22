@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV3 allocator 한 페이지 flush](dev3-allocator-flush.md): sealed capture·WAL force·DWB/home·whole retirement·조건부 RAM finalize의 제한 소유 계약.
+
 - [DEV3 dirty frame·stage 설치](dev3-dirty-stage.md): 3.05.1-A/B + 3.04.1.a 첫 allocator 소비자·pin/content·DPT의 채택 계약.
 
 - [DEV3 적용 admission·version gate](dev3-concurrency-admission.md): 3.10.1.a.1 계약 채택, 실제 guard와 후속 Commit 모의 명세의 범위 구분.

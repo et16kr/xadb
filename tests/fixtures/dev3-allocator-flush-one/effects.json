@@ -1,0 +1,188 @@
+[
+  {
+    "ordinal": 1,
+    "name": "issuance.stage_write",
+    "kind": "write",
+    "bytes": 16384
+  },
+  {
+    "ordinal": 2,
+    "name": "issuance.stage_sync",
+    "kind": "sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 3,
+    "name": "issuance.bank_write",
+    "kind": "write",
+    "bytes": 16384
+  },
+  {
+    "ordinal": 4,
+    "name": "issuance.bank_sync",
+    "kind": "sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 5,
+    "name": "issuance.selector_create",
+    "kind": "create",
+    "bytes": 0
+  },
+  {
+    "ordinal": 6,
+    "name": "issuance.selector_write",
+    "kind": "write",
+    "bytes": 4096
+  },
+  {
+    "ordinal": 7,
+    "name": "issuance.selector_sync",
+    "kind": "sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 8,
+    "name": "issuance.selector_publish",
+    "kind": "publish",
+    "bytes": 0
+  },
+  {
+    "ordinal": 9,
+    "name": "issuance.directory_sync",
+    "kind": "directory_sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 10,
+    "name": "images.slot_write",
+    "kind": "write",
+    "bytes": 16544
+  },
+  {
+    "ordinal": 11,
+    "name": "images.file_sync",
+    "kind": "sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 12,
+    "name": "pending.stage_write",
+    "kind": "write",
+    "bytes": 16384
+  },
+  {
+    "ordinal": 13,
+    "name": "pending.stage_sync",
+    "kind": "sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 14,
+    "name": "pending.bank_write",
+    "kind": "write",
+    "bytes": 16384
+  },
+  {
+    "ordinal": 15,
+    "name": "pending.bank_sync",
+    "kind": "sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 16,
+    "name": "pending.selector_create",
+    "kind": "create",
+    "bytes": 0
+  },
+  {
+    "ordinal": 17,
+    "name": "pending.selector_write",
+    "kind": "write",
+    "bytes": 4096
+  },
+  {
+    "ordinal": 18,
+    "name": "pending.selector_sync",
+    "kind": "sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 19,
+    "name": "pending.selector_publish",
+    "kind": "publish",
+    "bytes": 0
+  },
+  {
+    "ordinal": 20,
+    "name": "pending.directory_sync",
+    "kind": "directory_sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 21,
+    "name": "home.page_write",
+    "kind": "write",
+    "bytes": 16384
+  },
+  {
+    "ordinal": 22,
+    "name": "home.file_sync",
+    "kind": "sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 23,
+    "name": "retirement.stage_write",
+    "kind": "write",
+    "bytes": 16384
+  },
+  {
+    "ordinal": 24,
+    "name": "retirement.stage_sync",
+    "kind": "sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 25,
+    "name": "retirement.bank_write",
+    "kind": "write",
+    "bytes": 16384
+  },
+  {
+    "ordinal": 26,
+    "name": "retirement.bank_sync",
+    "kind": "sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 27,
+    "name": "retirement.selector_create",
+    "kind": "create",
+    "bytes": 0
+  },
+  {
+    "ordinal": 28,
+    "name": "retirement.selector_write",
+    "kind": "write",
+    "bytes": 4096
+  },
+  {
+    "ordinal": 29,
+    "name": "retirement.selector_sync",
+    "kind": "sync",
+    "bytes": 0
+  },
+  {
+    "ordinal": 30,
+    "name": "retirement.selector_publish",
+    "kind": "publish",
+    "bytes": 0
+  },
+  {
+    "ordinal": 31,
+    "name": "retirement.directory_sync",
+    "kind": "directory_sync",
+    "bytes": 0
+  }
+]

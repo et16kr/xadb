@@ -13,8 +13,7 @@ use crate::{
         control::Profile,
         dirty_frame::{DirtyError, FrameStamp, SharedPool, TargetRequest},
         page::{PAGE_BYTES, PageIdentity, PageKind, PageLsn, PageRef},
-        session_fence::SessionFence,
-        wal_io::{WalFrameLocation, WalIoError, WalPrefix},
+        wal_io::{WalFrameLocation, WalIoError, WalPrefix, WalRequirement},
     },
     transaction::concurrency::{Owner, PageConcurrency},
 };
@@ -123,9 +122,8 @@ pub(super) enum InstallPhase {
 /// Not Clone/Copy: only complete stage constructs this live control obligation.
 /// Fenced cleanup retains it, including after all temporary page guards end.
 pub(super) struct InstallObligation<'s> {
-    fence: &'s SessionFence,
+    requirement: WalRequirement<'s>,
     identity: PageIdentity,
-    location: WalFrameLocation,
     generation: u64,
     first_rec_lsn: PageLsn,
     before_counter: u64,
@@ -140,11 +138,17 @@ pub(super) struct InstallObligation<'s> {
 pub(in crate::storage) struct InstallPermit<'a, 'c, 's> {
     core: &'c PageConcurrency<'s>,
     stamp: FrameStamp,
-    location: WalFrameLocation,
+    requirement: WalRequirement<'s>,
     after_counter: u64,
     after: &'a [u8; PAGE_BYTES],
 }
-impl InstallPermit<'_, '_, '_> {
+impl<'s> InstallPermit<'_, '_, 's> {
+    pub(in crate::storage) fn requirement(&self) -> WalRequirement<'s> {
+        self.requirement
+    }
+    pub(in crate::storage) fn location(&self) -> WalFrameLocation {
+        self.requirement.location()
+    }
     pub(in crate::storage) fn matches_core(&self, core: &PageConcurrency<'_>) -> bool {
         std::ptr::eq(self.core, core)
     }
@@ -164,7 +168,7 @@ impl InstallPermit<'_, '_, '_> {
         self.after_counter
     }
     pub(in crate::storage) fn page_lsn(&self) -> PageLsn {
-        PageLsn(self.location.lsn)
+        PageLsn(self.location().lsn)
     }
     pub(in crate::storage) fn prior_lsn(&self) -> PageLsn {
         self.stamp.page_lsn
@@ -561,9 +565,10 @@ impl<'s, 'c, W: WriterNamespace> AllocationWriter<'_, 's, 'c, '_, '_, '_, '_, '_
             let dpt = write
                 .preflight_dpt(0, &stamp)
                 .map_err(|e| frame_error(Phase::Revalidate, e))?;
-            let location = prepared
-                .stage(storage.wal())
+            let requirement = prepared
+                .stage_required(storage.wal())
                 .map_err(|e| error(Phase::Stage, e.effect, Cause::Wal(e)))?;
+            let location = requirement.location();
             // S1: no fallible call or hook between complete slot and retained ownership.
             let first_rec_lsn = stamp.rec_lsn.unwrap_or(PageLsn(location.lsn));
             control.batch = Some(batch);
@@ -572,9 +577,8 @@ impl<'s, 'c, W: WriterNamespace> AllocationWriter<'_, 's, 'c, '_, '_, '_, '_, '_
                 control.work_high_water = batch.owner.id();
             }
             control.installation = Some(InstallObligation {
-                fence: storage.session_fence(),
+                requirement,
                 identity: stamp.identity,
-                location,
                 generation: stamp.generation,
                 first_rec_lsn,
                 before_counter: stamp.modification_counter,
@@ -585,7 +589,7 @@ impl<'s, 'c, W: WriterNamespace> AllocationWriter<'_, 's, 'c, '_, '_, '_, '_, '_
             let permit = InstallPermit {
                 core: self.pool.bound_core(),
                 stamp,
-                location,
+                requirement,
                 after_counter: next_counter,
                 after,
             };
@@ -633,7 +637,13 @@ impl<'s, 'c, W: WriterNamespace> AllocationWriter<'_, 's, 'c, '_, '_, '_, '_, '_
         // No pins, admission or page/version guards survive this boundary.
         #[cfg(test)]
         cut!(control, BeforeSync);
-        storage.wal().sync_pending().map_err(|e| {
+        let requirement = self
+            .control
+            .installation
+            .as_ref()
+            .expect("stage-owned")
+            .requirement;
+        storage.wal().wait_durable(&requirement).map_err(|e| {
             storage.session_fence().fence();
             error(Phase::Sync, Effect::CallerMustResolve, Cause::Wal(e))
         })?;
