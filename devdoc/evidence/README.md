@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-22 [DEV7 작업 분배 검토·보완](dev7-work-breakdown-review-20261022.md) — ARIES·Oracle·로컬8개 DBMS 대조, 36개 분류 유지·115→135개 하위 작업과 공급/인수·위험 우선순위 보완. 제품 실행 증거가 아니다.
+
 2026-10-22 [DEV3 테스트 계획 항목별 재점검](dev3-test-plan-review-20261022.md) —16개 작업의 중간 필수 누락 경계·공동 case·실행 분모·시간/공간 비용 보완. 최종 S5 전수와 기존 budget 유지, 제품·시험 실행 없음.
 
 2026-10-22 [DEV3 16개 상세 설계 2차 비교 리뷰](dev3-task-design-review-20261022-r2.md) — ARIES·Oracle 공식 자료와 로컬6개 DBMS의 실제 revision 대조, Commit 설치 순서·build drain·backup cut의3개 보완. 제품 실행 증거가 아니다.

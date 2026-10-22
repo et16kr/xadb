@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev7-work-breakdown-review-20261022.md": {
+      "path": "evidence/dev7-work-breakdown-review-20261022.md",
+      "role": "evidence",
+      "title": "DEV7 작업 분배 검토 — ARIES·Oracle·로컬 DBMS 대조와 보완"
+    },
     "dev3-test-plan-review-20261022.md": {
       "path": "evidence/dev3-test-plan-review-20261022.md",
       "role": "evidence",

@@ -6,6 +6,8 @@
 
 2026-10-22 [7.01–7.36 세부 분류](dev7-work-breakdown.md)는 각 작업의 하위 배정 단위·직접 선행·산출물·완료/인수 연결을 정리한다. 아래 64개 요구에 세부 작업 번호를 연결했으며 F01–F10 동결·제품 구현/실행 상태는 유지한다. [ARIES·Oracle·로컬8개 소스 조사](../evidence/dev7-work-breakdown-research.md)를 근거로 기존 책임을 분류했다.
 
+후속 [분배 검토·D7-WBS-002](../evidence/dev7-work-breakdown-review-20261022.md#applied)는 36개 분류를 유지하고 하위 작업을115개에서135개로 나눴다. 실제 배정의 [하위 공급·완료 경계](dev7-work-breakdown.md#leaf-handoffs)와 [위험 우선 준비 순서](dev7-work-breakdown.md#supply-map)를 적용한다. 아래 I01–07은 상위 인수 묶음이며 모든 하위 구현의 일괄 직렬 장벽이 아니다.
+
 시험 실행은 [현재 사용자 지시](../../AGENTS.md)가 우선한다. 마지막 관련 검증 이후 실제 코드 diff의 필수 사례만 선택하고 무변경 하위 코드·완료 시험·전체 wrapper를 반복하지 않는다. DEV3 S5의 전수 실행 예외는 DEV7에 적용하지 않는다. 아래 전체 인수 의무는 각 원래 source/case 증거와 남은 변경 경로의 결과를 취합하는 기준이며 일괄 재실행 지시가 아니다.
 
 <a id="entry"></a>
@@ -32,6 +34,8 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 | D7-F08 | DEV5/6 계약 담당 | 확장 capability/profile·message body/type tag·request/result sequence·CALL spool/OUT 공개·REF CURSOR/LOB pin·CLI/C/JDBC/ODBC/embedded SQL/PDO/.NET support matrix·실제 Oracle/JDBC/HDFS/Hive adapter/runtime·DM/TM·TLS 공급·빌드/설치 manifest. 해당 adapter 구현 전 |
 | D7-F09 | 실행/검증 담당 | 각 요구→operation→variant→독립 expected→실제 API/worker→case 대응, bounded model 전체 공간·fault reachability·quota 산식/peak·cleanup, 고정 seed/corpus·원시 receipt·부정 self-test. runner 및 인수 전 |
 | D7-F10 | 성능/통합 담당 | release/environment/fixture/oracle identity·계측 mode·수치 guardrail·순서·원시 bundle·통계와 replay recipe. 첫 측정 전 |
+
+F04의 증분 refresh는 7.18.4에서 지원 질의·변경분 공급 방식·적용 cut·중복/누락 방지·진척/보존·동시 DML/재시작 기대값을 먼저 고정한다. 같은 7.18.4가 선택 방식의 실제 공급 구현과 독립 공급 인수를 맡고, 그 결과를 받아 7.18.5가 적용/통합을 인수한다. D-LOGGING 보류를 유지하며 선택 방식이 그 공급을 요구할 때만 해당 차단을 기록한다. F08은 기능×실제 adapter/runtime별 지원 셀과 설치/연결 준비를 초기부터 작성한다. F09는 각 배정 leaf의 공급 완료와 소비 통합 사례를 구별한다. F10은 P01 등의 row 폭·입력/중간 cardinality·projection·skew·파일 공존 peak와 **정상 완료 셀/한도 거절 셀**을 측정 전에 나눈다. 기존 기능/성능 목표를 한도 거절 사례로 대체하지 않는다.
 
 완료 계약의 `detail_expansion_required=true`는 위 작업이 실제로 끝날 때만 변경한다. 현 계획의 T01–T32는 인수 책임 묶음이며 overload별 전체 leaf 목록이나 실제 시험 수가 아니다. 미결정 byte/ABI를 구현자가 추측해 소비하지 않는다.
 
@@ -121,7 +125,7 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 | R10-01 | 외부 DB 조회·원격 실행 | XADB-041 / SC11 | 7.30 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T24 |
 | R10-02 | 외부 C/C++ routine 호출 | XADB-041 / SC11 | 7.29 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T23 |
 | R10-03 | 이종 DB 변경 전달 | XADB-041 / SC11 | 7.35.1·7.35.3 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T27 |
-| R10-04 | 분산 분석 환경 데이터 교환 | XADB-041 / SC11 | 7.35.2 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T27 |
+| R10-04 | 분산 분석 환경 데이터 교환 | XADB-041 / SC11 | 7.35.2·7.35.4 | [external](../contracts/dev7-sql-extensions-design.md#external) · D7-T27 |
 | R10-05 | 변경 분석·구독 기능 | XADB-041 / SC11 | 7.35.3 (보류) | [필수 예약](../contracts/dev7-sql-extensions-design.md#external) · D-LOGGING 보류, 상세 인수 사례 미작성 |
 
 세부 번호의 산출물·직접 선행·인수는 [36개 분류](dev7-work-breakdown.md#values)에서 찾는다. 7.07 실행 자원·7.14 cache·7.36 검증은 여러 요구에 걸친 공통 작업이며 행마다 전체 번호를 반복하지 않는다. 7.35.3의 보류는 분류 완료로 해제되지 않는다.
@@ -143,7 +147,7 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 | D7-T10 | optimizer/stats/cache | rule별 전제 위반 known-bad, 비교 문맥을 합친 equality 추론·hash/key 공유 mutant 거절, stats stale/skew, 권한 철회/search path/tz/collation/DDL race, metadata 변경 ReprepareRequired·old plan pin·cache full |
 | D7-T11 | FK/CHECK/격리/잠금 | 부모 삭제와 자식 삽입 race, composite NULL·self-reference·cycle/cascade·deferred fix/commit fail, RC/RR/Serializable 허용/금지 history·NOWAIT/cancel/deadlock. 서로 이전 B/A 잠금 뒤 dynamic SQL/trigger로 A/B를 요청하는 역순 반례·기존 잠금 해제 없음·Prepared victim 제외 |
 | D7-T12 | savepoint/확장 거래 | marker 재지정/release·LOB/queue/constraint rollback·read/lock 유지·반복 rollback 후 WAL/CLR 잔류 과금·limit/limit+1·undo 재장애. 호출 frame별 같은 이름 분리·다른 frame/implicit marker 접근 거절·return/unwind 정리와 전체64 상한 |
-| D7-T13 | DDL/view/materialized result | precommit 성공 뒤 DDL 실패의 두 outcome·generation/권한·refresh 실패 old generation 유지·CTAS/default/type 변환·재시작 |
+| D7-T13 | DDL/view/materialized result | precommit 성공 뒤 DDL 실패의 두 outcome·generation/권한·refresh 실패 old generation 유지·CTAS/default/type 변환·재시작. 증분 지원 질의별 변경 누락/중복·rollback·동시 DML·재시작의 결과/진척을 원질의·full refresh와 독립 대조; full 성공만으로 증분 PASS 금지 |
 | D7-T14 | PART/NG SQL | range/list/hash·pruning/no-prune·행 이동·partition lifecycle·local/global index+extended type·DDL와 stale plan, 실제 core 공급 |
 | D7-T15 | PSM/exception/cursor/record/array | IN/OUT/INOUT·overload·dynamic SQL 권한·handled/unhandled 오류·CALL 원자성·합산 recursion/step budget·취소. 호출 전 INSERT/사용자 savepoint 후 CALL 안의 전체 ROLLBACK·외부 marker ROLLBACK TO/RELEASE/이름 재지정이 이전 변경을 침범하지 않음. 직접/동적/중첩/trigger 각각 거래 제어 거절·자기 marker만 허용·종료된 거래를 handler가 부활시키지 않음. DML+첫 result spool 뒤 다음 식 오류/취소/quota 초과에서 CALL rollback·OUT/row 공개0; 반환 REF CURSOR의 spool/handle 수명 |
 | D7-T16 | package/autonomous | session state 격리·generation invalidation·pool reset·parent rollback과 child commit·self-lock deadlock·child UNKNOWN |
@@ -174,7 +178,7 @@ F01–F10은 모두 **OPEN_NOT_IMPLEMENTED**다. 설계의 범위 선택과 실�
 | D7-C01 | DML·cascade·trigger·LOB chunk/descriptor·undo/CLR의 각 영속 경계 | statement prefix만 남는 성공0; ACK 거래 보존·rollback 확정 전 성공 오류 금지 |
 | D7-C02 | sequence 범위 WAL 시도/완료/발급·재시작 | non-cycle 확정 발급 재사용0, gap 허용; sync 불명 상태 재발급 금지 |
 | D7-C03 | queue claim/ack·scheduler lease/result, consumer 외부 효과 전후 | row 효과와 외부 효과 분리, 중복/UNKNOWN 표시·stale worker fencing |
-| D7-C04 | refresh/online job build·delta drain·switch record/sync·공개·old 회수 | complete old 또는 complete new identity, 반쪽 catalog/index0; cleanup 재장애 |
+| D7-C04 | refresh/online job build·delta drain·switch record/sync·공개·old 회수; 선택한 증분 방식의 변경분 적용/진척 영속 경계 | complete old 또는 complete new identity, 반쪽 catalog/index0; cleanup 재장애. 증분은 결과/진척 불일치로 인한 중복·누락0; 실제 경계는 F04/F09 동결 |
 | D7-C05 | RM prepare record 쓰기/sync·응답 직전/유실·cancel/close·checkpoint·reopen | 불완전 prepare는 loser, durable prepare는 in-doubt 보존·잠금/undo/validation fence 복원; prepare 시도 뒤 불명은 close 때문에 abort하지 않음 |
 | D7-C06 | coordinator prepare 요청 전후·YES 일부/전체·decision append/sync·전달/ACK | 손상과 decision 부재 구별; 확정 COMMIT을 ABORT로 바꾸지 않음; 두 RM의 상반 확정0 |
 | D7-C07 | RM commit/abort intent·CLR·visibility·terminal receipt/retirement·heuristic force/forget·확장 ACK/frontier·DDL/backup drain/shutdown | 보존 중 decision 재전달·회수 뒤 NOTA와 UNKNOWN 구별; 정상 회수에 TM 추가 메시지 불필요. heuristic force 응답 유실 뒤 recover 노출·forget 영속 후 부활0, 미완료/heuristic/미ACK 기록의 조기 삭제0·반복 crash 후 예약 복원·예약 resolve lane 진행·backup Busy·Prepared 영속 인계 |
@@ -200,6 +204,8 @@ DP03의 V2 64 seeds×최대128 operations, V3 256×최대1,024를 적용하고 �
 | D7-P03 | multi-session PSM/trigger/cascade·queue·LOB1/8/16 MiB·취소 | latency/throughput·WAL/undo/FD/resident/retained bytes·cleanup drain, 반복100회 종료 후 **모든 논리 owner ledger0**, 유지해야 할 physical 비용은 reclaim 뒤0. RSS는 allocator high-water와 누수 구별 |
 | D7-P04 | two-RM XA·prepare32 한도·decision/recover·외부 adapter batch | prepare/decision/end-to-end 분리, prepared retention/재시작 비용·admission 압력. 보호 quota 위반0; phase timeout은 사전10초 profile, timeout의 UNKNOWN/in-doubt는 성능 실패와 별도 정확성 결과 |
 | D7-P05 | 계측 off/always/detailed·새 세션 replay | always CPU·median latency 악화5% 이하, sample-p99 악화10% 이하, trace loss 명시. detailed 비용은 별도 보고하며 acceptance에 필요한 event loss는0; bundle만으로 exact 의미/오류 재현 |
+
+P01의 table 크기는 중간 spool 크기와 다르다. F10은 각 셀의 row 폭·projection·key/peer 분포와 spill 전환/merge 공존 peak를 산정한다. 1 GiB의 넓은 입력 전체 보관이 필요한 경우 query temp256 MiB로 정상 완료한다고 가정하지 않는다. 현재 한도에서 성공할 명시 workload와 effect/결과 실패를 검증할 한도 초과 workload를 구분하며 둘의 결과를 서로 대체하지 않는다. 7.26의 큰 거래 목표도 forward/old/new/undo/CLR·보존량 산식 없이 WAL256 MiB 안에서 가능하다고 판정하지 않는다. profile 변경이 필요하면 실행 전 별도 D2로 검토한다.
 
 workload cell당 warmup30초·측정60초를 기본으로 최소10쌍 AB/BA 교대한다. p99는 각 run10,000개 이상 완료 operation을 확보하며 부족하면 NOT_ESTIMABLE·인수 미완료로 남기고 사전 profile을 D2로 확장한다. LOB/XA 긴 operation도 짧은 표본의 최대값을 p99로 포장하지 않는다. raw timestamp·count·분포·paired CI 계산법을 고정하고 noise가 크면 더 측정한다. 결과가 유리한 workload만 선택하지 않는다. 기능 때문에 필요한 spill/2PC는 단순 구현보다 빨라야만 채택하는 대상이 아니며, 그 비용과 현재 한도 안의 정상 진행을 별도 보고한다.
 

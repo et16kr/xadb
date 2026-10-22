@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV7 작업 분배 검토·보완](evidence/dev7-work-breakdown-review-20261022.md): ARIES·Oracle·로컬8개 DBMS를 대조해 36개 분류를 유지하고 하위 작업을115개에서135개로 나눴다. [공급·인수 연결](plans/dev7-work-breakdown.md#leaf-handoffs), 저장/XA 위험의 선행 준비·증분 refresh·성능 workload 한도를 보완했다. 제품 개발·시험 재개와 logging 보류 해제는 없다.
+
 2026-10-22 [DEV3 테스트 계획 항목별 재점검](evidence/dev3-test-plan-review-20261022.md):16개 작업의 중간 필수 경계·누락/중복 검출·공동 실행과 준비 비용을 보완했다. [개선 계획](plans/dev3-test-plan.md#item-review)은 S5 DEV3 전수·기존 budget을 유지하며 제품 개발·시험은 재개하지 않는다.
 
 2026-10-22 [DEV3 16개 설계 2차 비교 리뷰](evidence/dev3-task-design-review-20261022-r2.md): ARIES·Oracle·로컬6개 DBMS를 대조하여 Commit 의미 설치 순서·offline build drain·backup 최종 WAL cut을 보완했다. 이전 리뷰와 실행 결과는 보존하며 제품 구현·시험 실행은 없다.
