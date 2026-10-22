@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-22 [DEV3 개발 모델·독립 검토 운영](plans/dev3-implementation-plan.md#model-roles): GPT-6.1 Sol을 주 개발 모델로 사용하고 핵심 복구·동시성 설계는 가능하면 Astra가 별도 검토한다. 첫 평가 단위와 판단 기준을 명시하며 기존 D1/D2 검토·변경 코드 시험·S5 전수 인수는 유지한다. 모델 비교 실행·제품 개발 재개·앱 설정 변경은 없다.
+
 2026-10-22 [DEV3 진행 방향·설계 점검과 반영 추적](evidence/dev3-direction-review-20261022.md#adoption-followup): 기본 저장 구조를 유지하고 제한 복구→일반 buffer/live undo→첫 행 거래 순으로 연결한다. [후속 결정](plans/dev3-implementation-plan.md#direction-review-adoption)·소유 계약·공급도·시험 배정에 완료 조건과64GiB/계측 준비를 반영했다. 제품 구현·새 시험 실행은 없다.
 
 2026-10-22 [DEV3 작은 단위 종료·인계](implementation/dev3-implementation.md#paused-after-status-home-flush): Status home flush까지 구현·선택 인수·commit을 완료했다. 복구 진입은 사전 열람만 진행했으며 새 코드·확정 설계·시험은 없다. 사용자 요청에 따라 기존 작업을 정리하고 새 하위 작업은 시작하지 않는다. 전체 DEV3·최종 S5는 미완료다.
