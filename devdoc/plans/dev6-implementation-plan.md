@@ -6,6 +6,8 @@
 
 2026-10-22 [18개 분류·55개 하위 작업](dev6-work-breakdown.md#catalogue)으로 I01–I05의 공급·완료 경계와 우선순위를 전개했다. [ARIES·Oracle·로컬 6개 DBMS 조사](../evidence/dev6-work-breakdown-research-20261022.md)를 연결하며 F01–F07 동결·실제 구현·인수 상태는 변경하지 않는다. 기존 전수·하위 회귀 문구의 실행 선택은 [현재 사용자 제한](dev6-work-breakdown.md#entry-exit)이 우선하며 DEV3 S5의 전수 예외를 DEV6에 확대하지 않는다.
 
+후속 [D6-WORK-BREAKDOWN-002](dev6-work-breakdown.md#decision-002)는 기존 55개 묶음의 큰 항목을 추가 완료 단위로 나누고 ODBC 직접 선행·[공통/구현 책임](dev6-work-breakdown.md#ownership)·[작은 실제 연결 우선순위](dev6-work-breakdown.md#priority)를 구체화한다. [재검토 근거](../evidence/dev6-work-breakdown-review-20261022.md)와 아래 [실행 선택·예산](#execution-budget)을 함께 적용하며 기존 제품 의미·필수 인수 기준은 유지한다.
+
 <a id="entry"></a>
 ## 1. 설계·구현·인수 진입
 
@@ -195,6 +197,29 @@ V2는 관련 property suite당64 seeds×최대128 ops, V3는256×최대1024 ops�
 기본 각 cell은 warmup30초+측정60초, baseline/candidate20 paired runs, 교대 순서를 사전 고정한다. JVM은 추가 warmup 수렴 조건/GC 로그를 F07에서 정하며 수렴 실패를 조용히 제외하지 않는다. 모든 성공 workload는 독립 정답을 통과해야 한다. 상시/off sample-p99 ratio≤1.10·successful throughput ratio≥0.95, 상세/off p99≤1.30·throughput≥0.80을 초기 계측 비용 guardrail로 둔다. candidate 개선은 주 지표 및 DP07 회귀 한도를 실행 전에 별도로 고정한다. ratio·paired95% interval·원시 latency·실패/누락 run을 보고하고 불확실하면 인수 미완료다. 낮은 sample count에서 p99 신뢰를 주장하지 않는다.
 
 driver 소유 quota·control reserve·FD/handle 상한 위반0, close 완료 뒤 live resource0, lost mandatory history0을 요구한다. Java RSS/GC heap과 native allocator 보유 공간을 logical live bytes와 구별한다. parameter 원문 trace 없이 copy/encoding·queue/송수신·server wait를 구분하고 새 세션에서 manifest+recipe+literal oracle+raw sample로 replay한다. 기존 K0/PF11 PASS나 FAIL을 DEV6 측정으로 승계하지 않는다.
+
+<a id="execution-budget"></a>
+### 실행 선택·분모·기계 시간 예산
+
+6.18.1/F07은 실제 cell inventory와 실행 예산을 측정 전에 준비한다. T/C/M/P의 요구군 수는 실행 횟수가 아니다. 각 구현 담당은 정상·오류·정리의 필수 사례와 새 확대 사례의 fixture/oracle/harness를 해당 기능 구현과 함께 작성하고 각각 선택 가능하게 둔다. 실행 카드는 다음 내용을 갖는다.
+
+| 항목 | 기록할 내용 |
+| --- | --- |
+| 적용 분모 | driver/API signature·type/변환·상태·fault cut·runtime/ABI·계측 mode·baseline/candidate 조합, 각 cell의 독립 기대값·주 담당·연결 T/C/M/P/R2 |
+| 선택 이유 | 마지막 관련 검증 source와 실제 diff, 이번에 새로 구현·변경한 경로 또는 아직 채우지 못한 새 구현의 필수 의무. 이전 결과/source·범위와 연결하고 무변경 완료 사례는 반복하지 않음 |
+| 구현 중 필수 | local 경계·오류·정리·실제 I/O/thread/ABI 등 해당 변경의 필수 사례. 특정 단계라는 이유로 필요한 시험을 미루지 않음 |
+| 확대 검증 | 구현과 함께 준비한 장시간 fuzz/thread/압력·대규모 fixture·fault 조합·P01–04. 해당 driver의 정확성/도구/환경 공급 뒤 미실행 의무를 선택. 마지막 집계에서 전체 wrapper 재실행 금지 |
+| 시간·자원 | cell 수·반복 수·warmup/측정/fixture/복구 시간·JVM 추가 warmup, CPU/메모리/디스크·독점 측정 host와 예상 점유 시간. 아직 모르는 비용은 미산정으로 표시 |
+| 실행 묶음 | driver/profile/cut별 독립 bundle·entrypoint·순서·seed·source/binary/environment identity. 중단·FAIL·미도달·불확실성 보존; 다른 bundle 성공으로 대체 불가 |
+| 증거 재사용 | 완료한 공통 도구 시험과 각 driver의 실제 증거를 구별. 필요한 비교·재현 의무의 기존 결과를 연결하고 새 fingerprint·SC 완료라는 이유로 다시 실행하지 않음 |
+
+기본 성능 cell 하나를 **driver 하나·계측 mode 하나·workload 설정 하나**에 대한 baseline/candidate 비교로 잡으면 `20쌍 × 2실행 × (warmup30초 + 측정60초) = 3,600초`, 즉 **1시간**이다. fixture 구성·reopen·추가 JVM warmup·분석/재현 비용은 별도다. 서로 다른 workload 설정을 같은 cell이라고 합치거나 통계의 반복 수와 driver 수를 섞지 않는다.
+
+예산 계산 예로 P01을 연결3종×direct/prepare2종=6cell, P02를 fetch3종×크기2종=6cell로 모두 전개하고 각각 driver3종·계측mode3종의 baseline/candidate 비교를 수행하면 `(6+6)×3×3×1시간 = 108시간`이다. 이는 **조합 전개를 가정한 예시**이며 확정 inventory·실행 결과·최소 전체 기간이 아니다. P03/P04·복구·추가 warmup·재현은 포함하지 않는다. F07에서는 실제 비교 쌍과 재사용 가능한 기존 증거를 명시하여 중복 계산·중복 실행을 방지한다.
+
+예산이 크면 독립 bundle의 실행 일정과 준비 작업을 나누고 측정 host의 경쟁 부하를 통제한다. 이번 보완으로 기존 20 paired runs·DP03 profile·필수 cut/model/성능 guardrail을 축소하지 않는다. 수치나 필수 조합을 바꿔야 하면 실행 전 기존 D2 절차와 동등한 검출 근거를 적용하며 실패 뒤 임의 축소하지 않는다. DEV3 최종 S5 예외를 DEV6 최종 전수 실행의 근거로 사용하지 않는다.
+
+SC04·05·06은 각 driver의 필요한 bundle 증거를 받으며 전체 세 driver 완료까지 설치·fault·측정을 일괄 미루지 않는다. 재검증은 최종 실행 이후에도 관련 diff·실패 사례와 미충족 의무로 선택하고 원래 결과를 보존한다.
 
 <a id="work-record"></a>
 ## 7. 이번 설계 작업과 남은 인수
