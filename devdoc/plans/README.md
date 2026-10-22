@@ -13,6 +13,7 @@
 - [DEV7 — 36개 세부 작업 분류](dev7-work-breakdown.md) — 7.01–7.36·하위 배정 단위·선행 공급·완료/인수와 64개 요구 연결; 기존 의미·미실행 상태 유지
 - [DEV7 — 확장 기능 구현·검증 계획](dev7-implementation-plan.md) — F01–10·64개 요구·T01–32·DESIGN-002 비교/CALL/XA 반례·fault/성능; 구현·제품 인수 미실행
 
+- [DEV6 — 18개 세부 작업 분류와 공급·인수 계획](dev6-work-breakdown.md) — 55개 하위 작업의 선행·산출물·완료 조건·인수 연결, 우선 공급·SC04→SC05→SC06; 제품 실행 NOT_RUN
 - [DEV6 — 클라이언트 구현·검증 계획](dev6-implementation-plan.md) — DEV6 설계·REVIEW-002 상태/취소/결과/버퍼 보완·인수 의무; CLIENT1 미실행
 
 - [DEV5 — 서버 구현·검증 계획](dev5-implementation-plan.md) — D5-F01–05·T01–14·worker 대기/만료·철회 후 정리 반례·crash cut·PF11 및 DEV6 이관

@@ -110,7 +110,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev6-client-design.md",
-        "dev6-implementation-plan.md"
+        "dev6-implementation-plan.md",
+        "dev6-work-breakdown.md"
       ],
       "required_details": [
         "D6-F01..F07: actual wire/API/ABI/runtime/error and execution profiles frozen before implementation or acceptance",
@@ -129,7 +130,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev6-client-design.md",
-        "dev6-implementation-plan.md"
+        "dev6-implementation-plan.md",
+        "dev6-work-breakdown.md"
       ],
       "required_details": [
         "D6-F01..F07: actual wire/API/ABI/runtime/error and execution profiles frozen before implementation or acceptance",
@@ -148,7 +150,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev6-client-design.md",
-        "dev6-implementation-plan.md"
+        "dev6-implementation-plan.md",
+        "dev6-work-breakdown.md"
       ],
       "required_details": [
         "D6-F01..F07: actual wire/API/ABI/runtime/error and execution profiles frozen before implementation or acceptance",
@@ -378,7 +381,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev6-client-design.md",
-        "dev6-implementation-plan.md"
+        "dev6-implementation-plan.md",
+        "dev6-work-breakdown.md"
       ]
     },
     {
@@ -395,7 +399,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev6-client-design.md",
-        "dev6-implementation-plan.md"
+        "dev6-implementation-plan.md",
+        "dev6-work-breakdown.md"
       ]
     },
     {
@@ -412,7 +417,8 @@
       "execution_status": "NOT_RUN",
       "design_refs": [
         "dev6-client-design.md",
-        "dev6-implementation-plan.md"
+        "dev6-implementation-plan.md",
+        "dev6-work-breakdown.md"
       ]
     },
     {
@@ -1147,7 +1153,8 @@
       "official_distribution_status": "NOT_RUN",
       "design_refs": [
         "dev6-client-design.md",
-        "dev6-implementation-plan.md"
+        "dev6-implementation-plan.md",
+        "dev6-work-breakdown.md"
       ],
       "design_decision_ref": "dev6-client-design.md#decision"
     },

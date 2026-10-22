@@ -1,0 +1,280 @@
+# DEV6 — 18개 세부 작업 분류와 공급·인수 계획
+
+2026-10-22 · **분류·하위 작업 계획 / D6-WORK-BREAKDOWN-001 D2 ACCEPTED·독립 검토 완료 / 제품 구현·시험·CLIENT1 NOT_RUN**
+
+[DEV6 구현 계획](dev6-implementation-plan.md) · [클라이언트 의미 정본](../contracts/dev6-client-design.md) · [이번 ARIES·Oracle·로컬 소스 조사](../evidence/dev6-work-breakdown-research-20261022.md) · [완료 계약](stage-completion.json)
+
+DEV3의 [공급·완료 경계와 작업 크기](dev3-implementation-plan.md#remaining-work)를 적용해 DEV6의 기존 D6-I01–I05를 6.01–6.18로 나눈다. 번호는 실행 순서나 동일한 작업량이 아니다. 각 분류의 하위 ID는 배정·검토 단위이며 실제 API symbol·파일·runner 이름이 아니다. 제품 의미는 DEV6-DESIGN-001·REVIEW-002와 DEV4/5·COMM 정본을 따른다. F01–F07의 미동결 항목을 이 분류만으로 확정하지 않는다.
+
+현재 모든 하위 작업은 **계획만 작성한 상태**다. 기존 DEV3 구현이나 과거 DEV6 정적 검토를 신규 client 구현·시험 결과로 승계하지 않는다. 새로운 제품 경로·package·dependency는 실제 구현과 함께 등록한다.
+
+<a id="catalogue"></a>
+## 1. 분류·기존 작업·인수 연결
+
+아래 F/T/C/M/P는 [DEV6 구현 계획](dev6-implementation-plan.md)의 D6-F/T/C/M/P ID이며 R2-V는 REVIEW-002 vector다. SC04·SC05·SC06은 각각 XADB-034·035·036의 실제 단계 인수다.
+
+| ID·분류 | 기존 묶음·의미 정본 | 핵심 공급 | 인수 연결 |
+| --- | --- | --- | --- |
+| [6.01 공통 계약·지원표](#work-01) | I01–I04, [scope/protocol](../contracts/dev6-client-design.md#protocol) | wire/API/error·ABI 동결 목록과 server 공급 대조 | F01–F04, T01/05/12/13/14 |
+| [6.02 wire codec·협상](#work-02) | I01, [protocol](../contracts/dev6-client-design.md#protocol) | bounded Rust codec·독립 corpus 일치 | F01, T01, R2-V01 |
+| [6.03 접속·세션 수명](#work-03) | I01/I02, [state](../contracts/dev6-client-design.md#state) | 검증된 연결·실패 정리·Broken/Fenced 처리 | T02/04/08, C01 |
+| [6.04 호출 진행·취소·deadline](#work-04) | I01, [state](../contracts/dev6-client-design.md#state) | public operation guard·wire ID·terminal/Ack 장벽 | T03/04, C01/02/08, M01/02, R2-V01/02 |
+| [6.05 오류·outcome·진단](#work-05) | I02–I04, [errors](../contracts/dev6-client-design.md#errors) | lossless typed outcome와 driver별 진단 | T11/12, C03/05/06, R2-V02/03 |
+| [6.06 값·인코딩·바인딩](#work-06) | I02, [values](../contracts/dev6-client-design.md#values) | owned value·원자 BindAll·독립 변환 vector | T06/07, C02 |
+| [6.07 prepare·metadata·재실행](#work-07) | I02, [values](../contracts/dev6-client-design.md#values) | immutable descriptor·expected-result·stale 거절 | T05/07/09, C02 |
+| [6.08 fetch·결과 수명](#work-08) | I02, [native/transactions](../contracts/dev6-client-design.md#transactions) | owned batch·EOF/prefix 구분·cached row 무효화 | T08/09, C07, R2-V04/05 |
+| [6.09 거래·모드 전환·DDL](#work-09) | I02–I04, [transactions](../contracts/dev6-client-design.md#transactions) | native/raw와 JDBC/ODBC 조립별 상태 전이 | T05/10/11, C03/05/06/08, M03, R2-V03/04 |
+| [6.10 Native 공개 API·C ABI](#work-10) | I02, [native](../contracts/dev6-client-design.md#native) | Rust facade·generation registry·좁은 FFI | F03, T06–12/15, M02, SC04 |
+| [6.11 Java wire·접속 기반](#work-11) | I03, [jdbc](../contracts/dev6-client-design.md#jdbc) | 순수 Java codec·Selector·URL/service/DataSource | F01/02/05, T01–04/13, M01/02 |
+| [6.12 JDBC API·결과·진단](#work-12) | I03, [jdbc](../contracts/dev6-client-design.md#jdbc) | 실제 JDK21 method별 지원과 상태/거래 조립 | T05–13, C02/06/07, M03, R2-V02–05, SC05 |
+| [6.13 ODBC handle·descriptor·탐지](#work-13) | I04, [odbc](../contracts/dev6-client-design.md#odbc) | ENV/DBC/STMT 수명·attrs/함수표·진단 | F03/04/05, T02/10/12/15, M02, SC06 |
+| [6.14 ODBC 변환·binding·부분 buffer](#work-14) | I04, [odbc](../contracts/dev6-client-design.md#odbc) | Execute시 복사·bound fetch·SQLGetData | T06–09/14/15, C02/07, R2-V06, SC06 |
+| [6.15 자원 회계·계측](#work-15) | I01–I05 공통, [resources](../contracts/dev6-client-design.md#resources) | 효과 전 quota·cleanup reserve·상관 가능한 측정 | F03/04/07, T02/07/08/12/18, P01–04 |
+| [6.16 독립 oracle·모델·복구](#work-16) | I01/I05, [faults](dev6-implementation-plan.md#faults) | literal 기대값·known-bad·외부 ACK/reopen | F06, T01–16, C01–08, M01–03 |
+| [6.17 빌드·설치·산출물 identity](#work-17) | I02–I05, [resources](../contracts/dev6-client-design.md#resources) | 고정 toolchain·ABI probe·clean export·설치 | F05, T15/17, SC04–06 |
+| [6.18 성능·증거 종합·최종 인수](#work-18) | I05, [performance](dev6-implementation-plan.md#performance) | P01–04 비교/replay·SC별 잔여 의무·CLIENT1 | F07, T18, SC04→SC05→SC06, CLIENT1 |
+
+6.01·6.05·6.09는 공통 **의미**의 소유 분류다. 그 계약을 소비하는 순수 Java 구현은 6.11/12에 있고 Rust 구현 완료를 선행으로 요구하지 않는다. 6.13/14는 native core API를 소비하지만 C facade를 경유하도록 강제하지 않는다. 6.15/16/17/18의 준비 산출물은 처음부터 필요한 작업에 공급하며 최종 분류 번호 때문에 뒤로 미루지 않는다.
+
+<a id="entry-exit"></a>
+## 2. 공통 착수·완료 기록
+
+| 항목 | 실제 작업에 기록할 내용 |
+| --- | --- |
+| 소유 | 하위 작업 ID, 작업/계약/통합 담당과 독립 검토자, 기준 commit·dirty digest, 좁은 owned paths·공유 수정 순서 |
+| 선행 수신 | 해당 **하위 산출물**의 symbol·revision·증거 범위, 실제 COMM/foundation 공급, 필요한 DEV5 D6-W01 공급. 상위 분류 전체 완료를 임의의 선행으로 추가하지 않음 |
+| 구현 전 동결 | 소비하는 F01 bytes·F02 상태/오류·F03/04 ABI/수명·F05 환경·F06 fault·F07 측정 항목만 명확히 식별. 일부 동결을 전체 F-ID 완료로 표시하지 않음 |
+| 구현과 함께 추가 | 정상·경계·오류·해제의 test/fixture/oracle/harness와 필요한 real I/O/thread/C/Java/DM/fault 입력. production codec을 정답 계산에 사용하지 않음 |
+| 효과 전 자원 | 해당 경로의 실제 allocation/변환/retained bytes·FD/handle peak, quota 예약·반환, 진단/취소 reserve. 계산과 실패 입력은 allocation 또는 송신 전 준비 |
+| 검증 선택 | 마지막 관련 검증 source와 실제 diff를 대조하여 새 코드·변경 경로의 필요한 사례만 선택. 변경 없는 하위 코드·완료 사례·전체 wrapper를 반복하지 않음 |
+| 공급 완료 | 산출물·관련 검증 결과·독립 검토와 남은 통합 의무를 함께 기록. fixture peer의 성공은 실제 SC 인수가 아니며 NOT_RUN/FAIL/중단 원본을 보존 |
+
+**시험 실행 범위는 [루트 사용자 지시](../../AGENTS.md)가 우선한다.** DEV3 최종 S5의 전수 예외를 DEV6으로 확대하지 않는다. 아래 case 연결과 기존 T01–T18·V3·하위 회귀 문구는 인수 의무의 위치이며 무변경 코드 재실행 명령이 아니다. 새 구현에 필요한 모델·실제 복구·확대 사례는 각각 구현·선택하고, 최종 인수는 원래 source/범위가 명확한 기존 결과와 변경 영향 및 미실행 의무를 대조한다. 누락을 PASS로 바꾸거나 새 fingerprint만으로 재실행하지 않는다. 계획 작성으로 제품 개발·시험을 시작하지 않으며 문서 자동 검사는 push gate에서만 실행한다.
+
+<a id="work-01"></a>
+## 3. 6.01 공통 계약·지원표
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.01.1 wire 공급 대조 | DEV4/5·COMM 정본 → D5-F01/D6-F01 공동 field/enum/profile·expected-result·metadata/outcome 목록. 미공급 body와 DEV5 담당을 명시하고 독립 bytes 작성이 가능한 범위를 동결 |
+| 6.01.2 API·오류·상태 목록 | 채택된 DEV6 계약 → native operation/JDK21 overload/ODBC function·attr별 Supported/Conditional/Unsupported/LocalNoOp, lower error·SQLSTATE/code·상태/부수 효과·case 연결. unknown 항목을 빈 성공으로 채우지 않음 |
+| 6.01.3 ABI·빌드 경계 목록 | 6.01.2·저장소 RB04/06 → F03 Rust/C signature·FFI/OS 조립/unsafe 경계, F04 DM/header·descriptor/length 단위·변환 목록. 실제 구현 전 D2 동결·독립 검토; 이번 분류는 ABI 확정 아님 |
+
+T01/05/12/13/14의 입력 분모를 준비하며 F02의 전체 method inventory 미작성 상태를 유지한다. API/형식 변경이 필요하면 해당 owner를 먼저 수정한다.
+
+<a id="work-02"></a>
+## 4. 6.02 wire codec·협상
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.02.1 header·body codec | 6.01.1·6.15.1·6.16.1의 관련 입력 → Rust encode/decode. 길이/overflow·UTF-8·enum·fragment·metadata count를 allocation 전 검사하고 literal 정상/손상 bytes 일치(T01) |
+| 6.02.2 협상·호환 거절 | 6.02.1 → Hello/Welcome version/capability/profile 검산. 불일치·잘림·필수 옵션 오류에서 session/SQL handle 공개0, 자동 downgrade0(T01/02) |
+| 6.02.3 송수신 admission 연결 | 6.02.1·6.04.1의 ID 계약·실제 transport 공급 → partial I/O와 FIRST enqueue 수락을 구분. local encode/quota 실패·Backpressured 재개 뒤 ID gap/중복 소비0(R2-V01/C01) |
+
+Rust/Java/독립 decoder의 공통 corpus를 공급한다. Java 구현은 6.11이 별도로 검증하며 하나의 decoder 성공을 다른 구현의 PASS로 복사하지 않는다.
+
+<a id="work-03"></a>
+## 5. 6.03 접속·세션 수명
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.03.1 endpoint·접속 | 6.02.1/2·실제 transport/platform 조립·6.05.1 → socket/principal/database 검증, connect/handshake timeout·인증 실패 정리. 완결 Welcome 이후에만 연결 공개(T02) |
+| 6.03.2 연결 상태·해제 | 6.03.1·6.04.1·6.15.1 → Ready/진행/Broken/Fenced/closed의 owner와 명시 close/local abort/Drop 분리. Drop의 숨은 commit·blocking·신규 allocation0(T02/08) |
+| 6.03.3 종료 통합 | 6.03.2·6.04.2/3·6.08.3·6.09.1의 해당 공급 → active 호출/거래·server 종료·권한 철회/만료 시 handle과 자원 정리. 연결 폐기를 rollback 성공으로 보고하지 않음(T02/04/08) |
+
+후속 C/JDBC/ODBC는 각 API의 close/disconnect 차이를 유지한다. native 세션 하나의 검증으로 전체 driver 종료 의미를 인수하지 않는다.
+
+<a id="work-04"></a>
+## 6. 6.04 호출 진행·취소·deadline
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.04.1 상태 primitive | F01/F02·6.05.1·6.15.1 → public operation generation/guard·wire request ID reserved/accepted·control ticket. I/O 전에 수명/짧은 lock 순서를 검토하고 M01/02의 관련 전이와 연결 |
+| 6.04.2 요청 진행·취소 장벽 | 6.04.1·6.02.3·6.03.1 → 송수신 owner·wake/control slot·중복 cancel 합침·terminal/Ack 두 순서. 늦은 Cancel(N)이 Fetch(N+1)에 영향0(T03/C01/08) |
+| 6.04.3 복합 호출·시간 예산 | 6.04.2·6.07/08/09의 해당 API 조립 공급 → BindAll→Execute와 Close→COMMIT→SET 전체 guard/cancel latch·남은 deadline 유지. 요청 없는 구간의 cancel도 다음 송신을 차단하고 이전 완료 효과 보존(T04/C02/06, R2-V02) |
+
+6.04.1은 prepare·거래 구현을 기다리지 않는 기반이다. 6.04.3은 각 소비 API가 생길 때 따로 통합한다. client timeout/CancelAck가 서버 cleanup 완료라는 해석은 금지한다.
+
+<a id="work-05"></a>
+## 7. 6.05 오류·outcome·진단
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.05.1 공통 outcome 표현 | 6.01.2·6.15.1 → code/state/effect/certainty/retry/engine cause·DDL 두 outcome·모드 조립 단계별 결과와 고정 진단 여유. 정상·오류 literal 기대값(T12) |
+| 6.05.2 우선순위·연결 상태 | 6.05.1·6.04.2·6.09의 해당 생산 경로 → 완결 COMMITTED 보존, 유실 Unknown·확정 NotCommitted/Fenced 분리. timeout/40001로 Unknown을 낮추는 mutant 거절(T11/12, C03/05/06) |
+| 6.05.3 driver 진단 facade | 6.05.1/2·6.10/12/13의 해당 API → C typed getter·JDBC exception/accessor/chain·ODBC snapshot/vendor fields. 반복 조회는 불변, quota 중에도 결과 보존(T12/15) |
+
+표현을 먼저 공급하고 각 생산자·adapter의 실제 mapping을 그 구현과 함께 닫는다. 진단 문자열 파싱으로 성공·retry 가능성을 정하지 않는다.
+
+<a id="work-06"></a>
+## 8. 6.06 값·인코딩·바인딩
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.06.1 값·변환 | F02·6.05.1·6.15.1 → Bool/Int64/Utf8/Binary·typed NULL·byte length와 strict 인코딩. min/max/overflow·surrogate·NUL·빈 binary/빈 text 차이를 literal로 확인(T06) |
+| 6.06.2 owned binding | 6.06.1·F03 소유권 → 전체 검사·quota 예약·복사 후 원자 교체, 실패시 기존 vector 보존. 개수0/256/257·Unbound·rebind 실패·caller 변경을 검증(T07) |
+| 6.06.3 BindAll 실행 연결 | 6.06.2·6.02.1/3·6.04.1/2 → BindAll terminal 뒤에만 Execute. local 변환/BindAll 실패 뒤 이전 binding 실행0, SQL 문자열 치환0(T07/C02). 6.07.2와 결합할 때 6.04.3의 해당 복합 호출도 인수 |
+
+JDBC setter/getter 복사는 6.12, ODBC descriptor 등록 뒤 Execute마다 읽기는 6.14에서 구현한다. 공통 타입 의미가 메모리를 읽는 시점까지 같다는 뜻은 아니다.
+
+<a id="work-07"></a>
+## 9. 6.07 prepare·metadata·재실행
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.07.1 prepare·describe | 6.02.1/3·6.03.1/2·6.04.1/2·6.05.1·F02 → statement class·parameter/result immutable metadata·hints 처리. 타입 미결정·ordinal·duplicate label의 독립 기대값(T07/09) |
+| 6.07.2 실행 종류·binding 연결 | 6.07.1·6.06.3·6.04.1/2 → Any/Rows/Update 기대 종류를 wire에 전달하고 6.04.3의 해당 복합 호출을 함께 통합. 실제 DEV5가 DML/DDL precommit 전 mismatch를 거절함을 확인(T05/C02) |
+| 6.07.3 재실행·stale·해제 | 6.07.1/2·6.08.3 → DROP/recreate/index 변경·권한 철회 후 첫 효과0, 자동 reprepare0, 원래 descriptor 보존·명시 해제(T08/09) |
+
+SQL 분류기를 client에 복제하지 않는다. 6.07.2의 server 효과0 인수는 실제 D6-W01 공급 이후이며 local 검사만으로 대신하지 않는다.
+
+<a id="work-08"></a>
+## 10. 6.08 fetch·결과 수명
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.08.1 결과 표현·소유권 | F02/F03·6.05.1·6.06.1·6.15.1 → owned row/metadata·quota lease와 result 상태. network/page buffer 주소가 반환 값에 남지 않고 caller 보유 bytes를 회계(T06/08) |
+| 6.08.2 bounded fetch·완료 판정 | 6.08.1·6.07.2·6.04.2 → one batch·EOF/partial/prefix 실패 구분, fetch별 새 deadline. 일부 행 수신을 전체 query 성공으로 보고하지 않음(T08/C07) |
+| 6.08.3 무효화·재사용 | 6.08.1/2·거래 종료 전이 계약 → close/reexecute/rollback/연결 폐기와 local cached row/offset 정리. 정상 implicit EOF 마지막 batch 보존과 no-op/진입 거절의 row 보존을 구별(R2-V04) |
+
+6.08.3의 상태 primitive는 6.09가 소비하고 실제 거래 종료와 함께 통합 검증한다. JDBC None/Rows/Update 소진은 6.12.2, ODBC row 소비/partial copy는 6.14가 소유한다.
+
+<a id="work-09"></a>
+## 11. 6.09 거래·모드 전환·DDL
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.09.1 native/raw 거래 | F02·6.04.2·6.05.1·6.07.2·6.08.3 → BEGIN/COMMIT/ROLLBACK/SET과 authoritative state. native Active+SET 거절·commit/rollback cursor 정리·hidden commit0(T05/10) |
+| 6.09.2 adapter 모드 조립 | 6.09.1·6.04.1/2 → Close terminal 뒤 Idle/Active 재판정, 필요시 COMMIT→SET·각 단계 결과와 6.04.3의 해당 복합 호출 통합. JDBC와 ODBC의 ON/OFF·no-op·거절 차이를 각 adapter에서 검증(T10/C06/M03, R2-V03/04) |
+| 6.09.3 실패·DDL 통합 | native/raw는 6.09.1, adapter 조립은 추가로 해당 6.09.2 공급·실제 B3/Q1/S1·6.16.3 → S1 성공/S2 실패 후 commit·전체 abort/fence·DDL prior/ddl 두 outcome·ACK 유실. 현재 build reopen에서 독립 이력과 대조(T11/C03/05/08). Native 인수에 JDBC/ODBC 완료를 요구하지 않음 |
+
+6.09.2는 의미와 상태 전이의 공통 분류이고 실제 JDBC/ODBC 코드는 6.12.3/6.13.3에 배정한다. 클라이언트에서 WAL/undo/recovery를 새로 구현하지 않는다.
+
+<a id="work-10"></a>
+## 12. 6.10 Native 공개 API·C ABI
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.10.1 Rust facade | F03·6.02–09의 제공된 관련 leaf → connect/prepare/bind/execute/fetch/거래/cancel/diagnostics를 좁은 API로 조립. 실제 B3 연동 전후의 검증 범위를 구별(T01–12) |
+| 6.10.2 registry·수명 | F03·6.04.1·6.15.1 → kind+generation+parent 검산, stale/wrong parent/overflow 폐기·free/cancel 경쟁. facade 전체를 기다리지 않고 수명 primitive를 먼저 검증(T15/M02) |
+| 6.10.3 C header·FFI·실제 C 호출 | 6.10.1/2·6.17.1 → ABI version·size/align/offset/symbol·pointer/length·panic/fence·전용 free. 유효 외부 포인터 전제의 실제 C harness와 적용 가능한 sanitizer/Miri 증거(T15/17) |
+
+SC04는 Native/C의 필수 사례, 관련 6.15–18 증거와 실제 DEV5 공급 뒤 인수한다. C ABI package의 unsafe 예외를 native core 전체로 확대하지 않는다.
+
+<a id="work-11"></a>
+## 13. 6.11 Java wire·접속 기반
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.11.1 순수 Java codec | F01/F02·6.16.1·6.17.1·Java 자원 계산 → 동일 wire corpus에 대한 독립 Java encode/decode. Rust/JNI 의존 없이 length/encoding/fragment 경계를 검증(T01) |
+| 6.11.2 Selector·operation owner | 6.11.1·6.04의 동결 상태 계약 → SocketChannel/Selector·wakeup·operation guard·cancel latch·wire ID·deadline. 실제 Java thread와 partial I/O로 동일 반례 확인(T02–04/M01/02, R2-V01/02) |
+| 6.11.3 URL·driver 등록·DataSource | 6.11.1/2·F02/F05 → jdbc:xadb:unix와 properties 검증·service loader·DriverManager·pool 없는 DataSource. unknown/duplicate·다른 vendor URL·실패 정리(T02/13/17) |
+
+구현은 Rust/C 완료와 독립적으로 진행 가능하지만 실제 server 공급 없이 SC05를 인수할 수 없다. socket/취소 방식을 Oracle 구현과 동일하다고 주장하지 않는다.
+
+<a id="work-12"></a>
+## 14. 6.12 JDBC API·결과·진단
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.12.1 statement·binding·metadata | F02 method inventory·6.11·6.06/07 의미 → Statement/PreparedStatement setter 복사·immutable descriptor. inherited SQL overload·미지원 옵션은 명시 오류(T05–09/13) |
+| 6.12.2 ResultSet·결과 소진 | 6.12.1·6.08 의미 → next/getter/wasNull·label 첫 ordinal·closed/EOF·None/Rows/Update·getMoreResults. false/null/-1 일치와 cached row 무효화·마지막 batch 예외(T06/08/09/13, R2-V04/05) |
+| 6.12.3 거래·예외·abort | 6.12.1/2·6.09/05 의미 → API 조립·SQLException subclass/vendor outcome/chain·close·abort Executor 실패. 지원 signature별 실제 Java 호출·reflection 대조(T10–13/C06, R2-V02/03) |
+
+SC05는 해당 Java 구현의 전체 지원표·복구/자원/설치 증거와 실제 SC04 뒤 인수한다. Java API 준비나 실제 통합의 착수를 SC04 완료까지 모두 지연하지 않는다.
+
+<a id="work-13"></a>
+## 15. 6.13 ODBC handle·descriptor·탐지
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.13.1 ABI·handle·접속 | F03/F04·6.17.1의 ODBC 입력 → unixODBC LP64 probe·ENV/DBC/STMT registry·부모/자식·DSN/connection grammar. 실제 A/W 접속은 추가로 native core 해당 API를 수신. stale/active child/free/cancel 경합(T02/15/M02) |
+| 6.13.2 descriptor·지원 탐지·진단 | 6.13.1·F02/F04·6.05 의미 → implicit descriptor·attrs·GetInfo/GetFunctions/GetTypeInfo와 실제 지원표 일치, diagnostic snapshot/record/vendor fields. 미지원 가짜 성공0(T12/14/15) |
+| 6.13.3 실행·거래·정리 | 6.13.1/2·6.14 공급·6.09 의미 → Prepare/Execute/MoreResults·SQLEndTran·SQLDisconnect·SQLFreeStmt 옵션별 수명. Active Disconnect 거절·ON EndTran no-op·CLOSE/UNBIND/RESET_PARAMS 구별(T08/10/11) |
+
+ODBC는 native core의 동결 API를 소비한다. C facade 완성을 별도 구현 선행으로 추가하지 않는다. 실제 driver manager 호출과 native ABI 검증을 분리 기록한다.
+
+<a id="work-14"></a>
+## 16. 6.14 ODBC 변환·binding·부분 buffer
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.14.1 input descriptor·Execute 복사 | F04·6.13.1/2·6.06 의미 → BindParameter 등록·Execute마다 caller 값 읽기/복사·NULL/length·A/W 단위. pointer 값1→2 재실행과 변환 실패 뒤 Execute0(T06/07/C02) |
+| 6.14.2 bound fetch | 6.14.1·native result API → BindCol/Fetch·NULL indicator·truncation·전체 길이·guard bytes. row 소비와 기존 binding의 cursor close 후 보존(T08/14/15) |
+| 6.14.3 SQLGetData·부분 copy | 6.14.2·F04 → unbound ordinal 순서·offset·남은 변환 bytes·UTF 경계·terminator. 가변형 길이0 probe와 고정형 복사, NULL/빈 값/NO_DATA·HY090/HY009를 구별(T14/C07, R2-V06) |
+
+입력/출력 type 조합별 지원·거절을 빠짐없이 F04에 연결한다. SC06은 실제 DM 환경의 자체 증거와 SC05 뒤 인수하며 다른 driver 성공을 승계하지 않는다.
+
+<a id="work-15"></a>
+## 17. 6.15 자원 회계·계측
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.15.1 회계·reserve 기반 | DEV6 resources와 대상 driver의 관련 F02/F03/F04; Rust는 기존 foundation quota → driver별 reservation/lease·진단/control reserve·실패 원자성 입력. codec/registry/binding보다 먼저 필요한 부분을 공급하며 다른 driver의 미동결 ABI 때문에 전체를 막지 않음 |
+| 6.15.2 경로별 peak·실패 회수 | 각 leaf 구현과 함께 → 변환 전후·binding 교체·frame/result·retained batch/handle의 동시 bytes/FD 계산과 관련 실패 사례. 한도 초과 효과 전 거절·종료 뒤 live resource0(T02/07/08/12/15) |
+| 6.15.3 계측·상관·압력 | 해당 driver 진행 경로·F07 → API/encode/copy/TX/RX/decode/반환·request ID 상관, trace loss·UNKNOWN·slow consumer/cancel 압력 관측(T18/P01–04) |
+
+6.15.1/2는 마지막 성능 단계까지 미룰 수 없다. Java 전체 heap/RSS·caller buffer와 driver owned bytes를 구별하며 측정 없이 한도 준수·성능 개선을 주장하지 않는다.
+
+<a id="work-16"></a>
+## 18. 6.16 독립 oracle·모델·복구
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.16.1 corpus·독립 기대값 | 채택 의미의 준비는 즉시 가능, bytes는 F01/F02 동결 후 → literal wire/type/row/error·protocol peer·known-bad. production codec/parser와 기대값 계산 분리·잘못된 driver 거절 |
+| 6.16.2 유한 모델 | F02 상태/action inventory → M01 ID/terminal/Ack, M02 handle/operation generation, M03 mode/close/cached rows. 기존 bound·필수 R2 witness를 보존하고 미도달/초과를 미완료로 보고 |
+| 6.16.3 외부 ACK·fault runner | F06·DEV5 실제 hook/관측 계약 → client decode/application 관측/controller receipt 분리, C01–08 reachability·partial I/O·kill/reopen/recrash·잘못된 binary/history self-test |
+| 6.16.4 driver별 실제 복구 | 해당 driver leaf·실제 B3/Q1/S1/C1·6.16.3 → ACK된 commit 보존, Unknown과 abort/CLR 중 재장애·DDL/API 조립 부분 성공을 독립 DB 이력과 대조(T16/C01–08) |
+
+6.16.1/2/3의 준비를 모든 driver 완료까지 미루지 않는다. 실제 복구는 SC04·SC05·SC06별로 소비하며 ARIES를 참고했다는 사실이나 fixture ACK를 disk 내구성 증거로 사용하지 않는다.
+
+<a id="work-17"></a>
+## 19. 6.17 빌드·설치·산출물 identity
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.17.1 환경·빌드 입력 동결 | F05 및 대상별 경계(native/C는 F03, ODBC는 F03/F04, Java는 F01/F02) → Rust/C compiler·JDK21 vendor/patch·Maven/plugin lock·unixODBC/header/config·OS/libc/profile 중 해당 입력. ABI probe/recipe 준비를 각 adapter 구현 전에 공급하며 Java가 C/ODBC 동결을 기다리지 않음 |
+| 6.17.2 package·export 등록 | 실제 source/package 추가와 함께 → native/C header/library·JAR/service descriptor·ODBC library의 source fingerprint·clean export·dependency/feature 입력. 빈 경로 선등록0 |
+| 6.17.3 별도 prefix 설치 | 해당 driver 산출물·6.17.1/2 → 깨끗한 export의 build/load·C/JDK/DM 호출·symbol/notice/checksum·예제. 누락 입력/stale binary/잘못된 DM을 거절(T15/17) |
+
+설치 recipe 성공과 SC의 SQL/복구 성공을 구별한다. 각 driver의 설치 검증을 전체 세 driver 완성까지 일괄 지연하지 않는다.
+
+<a id="work-18"></a>
+## 20. 6.18 성능·증거 종합·최종 인수
+
+| 하위 작업 | 선행 → 산출물·완료 조건 |
+| --- | --- |
+| 6.18.1 profile·inventory 준비 | 기존 F07/P01–04·F02 지원표 → workload/seed/order·warmup/GC·통계·guardrail·실제 명령·미실행 분모. 성능 측정 전에 동결하고 새 확대 사례는 해당 기능 구현과 함께 작성 |
+| 6.18.2 실제 비교·replay | 대상 driver correctness·6.15.2/3·6.17·F07 → P01–04의 독립 정답·raw latency/throughput/copy/retained bytes·계측 비용·재현. 경쟁 build/stress 없이 실행, FAIL/누락을 제외해 비율 개선 금지 |
+| 6.18.3 SC별 인수·CLIENT1 종합 | 각 driver 필수 leaf와 6.16.4/17/18.2의 적용 증거 → SC04→SC05→SC06 순서. T01–18·C01–08·M01–03·P01–04·R2-V01–06을 지원표와 대조하고 미실행/미해결 의무가 있으면 CLIENT1 미완료 |
+
+6.18.3은 기존 시험을 무조건 다시 실행하는 wrapper가 아니다. [실행 범위](#entry-exit)에 따라 원래 결과/source·변경 영향·필요한 새 검증을 연결한다. 완료 항목 수/18·하위 항목 수를 진행률로 환산하지 않고 제공 capability·검증 범위·막힌 소비자·잔여 의무를 보고한다.
+
+<a id="sequence"></a>
+## 21. 우선 공급과 합류 순서
+
+| 묶음 | 먼저 공급할 범위 | 후속 작업·합류 |
+| --- | --- | --- |
+| A 공통 입력 | 6.01의 관련 계약·6.16.1/2 기대값/모델 준비·6.15.1 회계·6.17.1 환경·6.18.1 profile 준비 | 모든 leaf의 필요한 부분에 공급. 전체 F01–07 동결을 모든 준비 작업의 공통 장벽으로 만들지 않음 |
+| B Native 기반 | 6.05.1·6.02.1/2·6.04.1·6.03.1·6.10.2, 이어 6.02.3/6.04.2 | 값/prepare/fetch/거래 연결에 필요한 좁은 API 공급 |
+| C Native 실행 | 6.06·6.07·6.08·6.09와 6.04.3·6.05.2·6.03.3를 소비 경로별 통합, 6.10.1/3 | 실제 DEV5 공급·Native/C의 관련 6.15–18 증거 뒤 SC04. JDBC/ODBC 전체 완료 불필요 |
+| D adapter 구현 | 공통 계약 뒤 6.11→6.12, F03/F04 뒤 6.13/14의 독립 local 모듈 | Java는 Rust 완료 불필요. ODBC 실제 연결은 native core 공급 필요. 실제 Java/DM 통합 준비가 끝나는 대로 검사하되 SC05는 SC04 뒤, SC06은 SC05 뒤 인수 |
+| E 증거 종합 | driver별 6.15.2/3·6.16.3/4·6.17.2/3·6.18.2/3 | source/variant가 명확한 증거와 잔여 의무 대조. 모든 필수 증거가 충족되어야 CLIENT1 |
+
+위 묶음은 고정 직렬 단계가 아니다. 6.08.1/3 상태 primitive를 먼저 공급한 뒤 6.09와 통합하고, 6.04.1/2가 있으면 복합 API별 6.04.3을 닫는 방식으로 순환 선행을 피한다. 6.13.3은 6.14 공급을 소비하지만 6.14는 6.13.1/2까지만 선행으로 삼는다.
+
+[기존 PAR01–06](dev6-implementation-plan.md#parallel)의 조건부 병렬 가능성은 유지한다. 이 분류가 미래 agent 배정이나 이번 병렬 제품 개발의 승인을 뜻하지 않는다. 실제 착수 때 좁은 파일 소유를 정하고 wire 정본·공유 manifest/lock·export·문서 JSON은 통합 담당이 순차 반영한다. 독립 검토는 DP01에 따라 구현자와 다른 실행이 맡는다.
+
+<a id="decision"></a>
+## 22. D6-WORK-BREAKDOWN-001
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-22; 기존 계약의 공급·인수 배정 상세화 |
+| 권한·담당 | 사용자의 DEV3 같은 세부 분류·ARIES/Oracle/로컬 DBMS 참고·한 번 commit 요청. 작업/계약/통합 `/root` |
+| 기준 | HEAD `def35fb1e274040eb55d78fa68948ba1610166c1`, 착수 worktree clean |
+| 선택·대안 | 기존 I01–05를 유지하면서 18개 책임과 하위 산출물로 전개. driver별 큰 묶음만 유지하면 취소/거래/자원/복구 누락을 추적하기 어렵고, 함수/파일별 분할은 하나의 상태 전이를 흩뜨리므로 제외 |
+| 의미·상태 | API/형식/수치·task DAG·SC 순서·제품 범위는 기존 정본 유지. F01–F07·detail_expansion_required·CLIENT1 상태 미승격. 현재 사용자 시험 제한을 DEV6 계획 읽기에 명시 |
+| 조사 | [실제 읽은 원문·revision/hash·분류 적용](../evidence/dev6-work-breakdown-research-20261022.md); 타 DBMS 코드/이력·의존성 도입 없음 |
+| 검토·검증 | `/root/dev6_breakdown_review`가 새 분류/조사 전체와 연결 문서의 DEV6 변경분·정본·인용 자료를 읽기 전용 독립 검토: 필수 수정 지적 P1/P2 없음·정적 D2 채택 가능. 18/55개 분류·공급 순환 없음·인수 연결·driver별 선행·로컬6개 revision/hash 일치를 확인했고 `/root`가 반영 확인. [검토 범위](../evidence/dev6-work-breakdown-research-20261022.md#review). 제품 변경·시험·문서 자동 검사·push 없음 |
+| 재검토 | owner/API 변경, 순환 선행, case 미배정, 자원/독립 기대값 준비 지연, 지원표·환경 확대 |

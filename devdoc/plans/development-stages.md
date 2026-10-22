@@ -27,7 +27,7 @@ COMM은 [독립 통신 상세 설계](../contracts/comm-design.md)와 [C1/KU12 �
 
 DEV5의 local Unix 인증·권한·세션·XSQ1·prepared·취소·종료와 외부 ACK는 [서버 설계](../contracts/dev5-server-design.md), SC03/KU14/PA08/PF11과 실제 Q1/C1 수신은 [구현·검증 계획](dev5-implementation-plan.md)을 따른다. 설계 채택과 leaf API/byte fixture 동결·제품 B3 실행은 별개이며 B3는 NOT_RUN이다.
 
-DEV6의 native/C facade→JDBC→ODBC 범위는 [클라이언트 설계](../contracts/dev6-client-design.md), 실제 B3 선행·SC04–06·D6-F01–F07·부분 buffer/취소/UNKNOWN·성능 인수는 [구현 계획](dev6-implementation-plan.md)을 따른다. 공통 계약 동결 후 독립 모듈의 [병렬 개발](dev6-implementation-plan.md#parallel)은 가능하며 SC04→SC05→SC06은 실제 인수 순서다. D2 설계 채택과 leaf 동결·구현·CLIENT1 완료는 별개이며 실행은 NOT_RUN이다.
+DEV6의 [18개 분류·55개 하위 작업](dev6-work-breakdown.md#catalogue)은 선행 공급·완료 조건·인수 연결을 구체화한다. native/C facade→JDBC→ODBC 범위는 [클라이언트 설계](../contracts/dev6-client-design.md), 실제 B3 선행·SC04–06·D6-F01–F07·부분 buffer/취소/UNKNOWN·성능 인수는 [구현 계획](dev6-implementation-plan.md)을 따른다. 공통 계약 동결 후 독립 모듈의 [병렬 개발](dev6-implementation-plan.md#parallel)은 가능하며 SC04→SC05→SC06은 실제 인수 순서다. D2 설계 채택과 leaf 동결·구현·CLIENT1 완료는 별개이며 실행은 NOT_RUN이다.
 
 DEV7의 확장 타입·관계 실행·PSM·LOB/spatial·외부 routine/DB link/XA는 [상세 설계](../contracts/dev7-sql-extensions-design.md)와 [구현·검증 계획](dev7-implementation-plan.md)을 따른다. 9개 요구군의 64개 필수 요구를 [36개 세부 작업](dev7-work-breakdown.md)에 연결했으며 F01–F10의 세부 동결과 실제 제품 실행은 미완료다. SC07–SC11·SQL_EXT1은 NOT_RUN이고 PART/NG·server/client·외부 peer의 선행 증거를 해당 leaf에서 요구한다.
 

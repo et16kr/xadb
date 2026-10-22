@@ -4,6 +4,8 @@
 
 [상세 설계](../contracts/dev6-client-design.md) · [조사·검토](../evidence/dev6-source-research.md) · [단계](development-stages.json) · [완료 계약](stage-completion.json) · [DEV5 공급](dev5-implementation-plan.md)
 
+2026-10-22 [18개 분류·55개 하위 작업](dev6-work-breakdown.md#catalogue)으로 I01–I05의 공급·완료 경계와 우선순위를 전개했다. [ARIES·Oracle·로컬 6개 DBMS 조사](../evidence/dev6-work-breakdown-research-20261022.md)를 연결하며 F01–F07 동결·실제 구현·인수 상태는 변경하지 않는다. 기존 전수·하위 회귀 문구의 실행 선택은 [현재 사용자 제한](dev6-work-breakdown.md#entry-exit)이 우선하며 DEV3 S5의 전수 예외를 DEV6에 확대하지 않는다.
+
 <a id="entry"></a>
 ## 1. 설계·구현·인수 진입
 
@@ -46,6 +48,8 @@ XADB-034→035→036은 **실제 단계 인수 순서**다. [병렬 개발 표](
 | D6-I04 | ODBC registry/descriptor·C 변환/partial buffer/diagnostic/DM 설치 | F04/F05·T06–T15/T17; 실제 DM client로 SC06 |
 | D6-I05 | 세 driver ACK fault/reopen·quota/stress·계측/비교/replay·하위 회귀 | F06/F07·T16–T18, 독립 검토 뒤 CLIENT1 |
 
+세부 배정은 [6.01–6.18](dev6-work-breakdown.md#catalogue)을 따른다. I01은 주로 6.01–04, I02는 6.05–10, I03은 6.11/12, I04는 6.13/14, I05는 6.15–18에 연결된다. 공통 의미·자원·독립 oracle·빌드 준비는 해당 소비 leaf에 먼저 공급한다. [우선 공급과 합류](dev6-work-breakdown.md#sequence)는 전체 분류 완료가 아닌 좁은 하위 산출물을 선행으로 사용한다.
+
 기존 계획 package를 사용하고 실제 코드가 생길 때만 경로·dependency·빌드 입력을 등록한다. native core·Java·ODBC는 각 소유 상태를 분리하지만 공통 wire·오류 의미를 따로 발명하지 않는다. protocol oracle가 production codec을 import하지 않는 의존 검사를 추가한다.
 
 <a id="parallel"></a>
@@ -87,7 +91,7 @@ flowchart TD
     OI --> C6["SC06 ODBC 인수"]
     C4 --> C5["SC05 JDBC 인수"]
     C5 --> C6["SC06 ODBC 인수"]
-    C6 --> E["전체 회귀·자원·F07 성능·독립 검토 → CLIENT1"]
+    C6 --> E["필수 증거 종합·자원·F07 성능·독립 검토 → CLIENT1"]
 ```
 
 각 driver의 준비가 끝나는 대로 실제 통합 검사를 수행하되 단계 인수 증거는 위 순서로 모은다. SC04는 Native/C와 공통 공급을 받으면 시작할 수 있으며 JDBC/ODBC의 구현 완료를 기다리지 않는다.

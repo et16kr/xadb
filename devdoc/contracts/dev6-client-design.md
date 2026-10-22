@@ -4,6 +4,8 @@
 
 [구현·검증 계획](../plans/dev6-implementation-plan.md) · [Oracle·ARIES·로컬 소스 조사](../evidence/dev6-source-research.md) · [DEV4 SQL](dev4-sql-design.md) · [DEV5 서버](dev5-server-design.md) · [COMM](comm-design.md) · [완료 계약](../plans/stage-completion.json)
 
+2026-10-22 [18개 세부 분류·하위 작업](../plans/dev6-work-breakdown.md#catalogue)은 이 문서의 의미를 유지하며 공급·완료·인수 배정을 구체화한다. [이번 조사](../evidence/dev6-work-breakdown-research-20261022.md)는 기존 설계 검토와 별도이며 미동결 leaf·실행 상태를 승격하지 않는다.
+
 이 문서는 XADB-034/035/036·SC04/05/06의 개발 기준선이다. API 이름은 설계이며 현재 배포되는 driver가 아니다. DEV5 B3와 DEV3/4·COMM의 실제 증거를 받기 전에는 실제 서버 통합이나 CLIENT1 완료를 주장하지 않는다. Oracle 19c·공개 DBMS는 비교 입력이며 SQL dialect·wire·ABI 호환 제품을 만드는 계약이 아니다.
 
 <a id="scope"></a>

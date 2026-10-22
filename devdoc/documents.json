@@ -1522,6 +1522,16 @@
       "path": "evidence/dev7-work-breakdown-research.md",
       "role": "evidence",
       "title": "DEV7 세부 분류 — ARIES·Oracle·로컬 DBMS 조사"
+    },
+    "dev6-work-breakdown.md": {
+      "path": "plans/dev6-work-breakdown.md",
+      "role": "plans",
+      "title": "DEV6 — 18개 세부 작업 분류와 공급·인수 계획"
+    },
+    "dev6-work-breakdown-research-20261022.md": {
+      "path": "evidence/dev6-work-breakdown-research-20261022.md",
+      "role": "evidence",
+      "title": "DEV6 세부 분류 — ARIES·Oracle·로컬 DBMS 조사"
     }
   }
 }
