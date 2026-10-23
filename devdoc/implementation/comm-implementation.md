@@ -200,3 +200,5 @@ peer 분류의 선택 시험을 위해 private helper만 먼저 추출하고 원
 제품 코드·실행기·oracle 수정 없이 보존 source의 cell38/39(TCP IPv6·1연결·1MiB·ECHO/BULK)를 원10쌍씩40mode 실행해 **BATCH_PASS**를 확인했다. 14:21:23 KST 완료 확인이며 source/worker가 같은 기존37과 중복 없이3조합60mode다. throughput·ECHO p99·64MiB quota 한도를 통과했으나 다른 source의 원74나 전체 C1로 확대하지 않는다. [원자료·수치·후속 검토](../evidence/comm-performance-batch-20261023.md#standalone-continuation)를 따르며 DEV3의 동시 수정은 포함하지 않았다.
 
 후속 깊이8 모델 한 시험은14:29 KST에 실행했으나 `[Enqueue(0), Enqueue(0), Cancel, Enqueue(0)]`에서 실제 `Cancelled`와 모델 `Backpressured` 기대값이 달라 즉시 FAIL이었다. 제품·모델 수정/재실행 없이 [원 실패·source별 증거](../evidence/comm-performance-batch-20261023.md#model-continuation)를 보존한다. 모델·전체 C1은 미완료다.
+
+그 뒤 모델 oracle만 현행 terminal 오류 계약에 맞춰 고치고, Open full의 capacity witness를 구별했다. [새 관련3 method의 source별 결과·원 FAIL·감시3/변경1과 D2 독립 수용](../evidence/comm-performance-batch-20261023.md#model-oracle-fix)을 보존한다. 제품 코드는 변경하지 않았고 기존 key/BFS·깊이8·6시간/상태/전이 예산도 유지했다. 14:42:53 KST에 같은 검증 source/binary의 깊이8 한 시험을 자원 감시 아래 시작했으며 현재 RUNNING이다. 완료한 기존 시험은 반복하지 않는다.

@@ -93,3 +93,27 @@ python3 -B scripts/check_comm_performance_batch.py \
 원본 root는 `artifacts/comm/performance-batch-bpz4yqzw/source/artifacts/comm/model-l9w9_i1i/`이며 manifest·보존 source·build 출력·test-binary·execution.log·validation.json을 유지한다. 실제 source SHA-256은 `b28bc3963ae88df1c949b109d5d6c46c0d670c15bc6d9564b725846dc5aad892`, binary는 `b37688ea6820b150e47260479bfb6bc679b4f877ef3daa762d111575e5660c93`, 실행 log는 `c94ce5fe8510dab265ff2ff5984869ffe63ab4f612b07e76b4ccace833ef05f7`다. 외부 사본은 위 선택 디렉터리의 `model-result.json`이다. frozen runner의 `origin.revision/tracked_diff`는 바깥 live 저장소 메타데이터이므로 실제 실행 source의 검증 주장은 snapshot fingerprint·generator·binary hash에만 귀속한다. 전체 C1은 INCOMPLETE다.
 
 별도 검토자 `/root/comm_acceptance_review`는 source·generator·contract·binary·build·log와 외부 사본 및 실패 반례를 대조했다. 모델의 full-ticket 검사가 취소/terminal 검사보다 앞서는 반면 현행 sender와 수용된 오류 계약은 취소/terminal을 우선하므로 모델 oracle의 우선순위 불일치라는 근거가 충분하다고 판단했다. 이 분석으로 원 FAIL을 바꾸지 않으며 모델 수정·관련 반례 검증은 별도 D2 작업이다. 검토자는 시험 재실행·편집을 하지 않았다.
+
+<a id="model-oracle-fix"></a>
+## 모델 oracle 수정과 관련 반례 선택 검증
+
+사용자가 다시 미완료 시험의 진행을 요청해 `crates/transport/tests/exploration/mod.rs`의 독립 oracle만 수정했다. 제품 sender·AXF1·연결/slot/payload·event inventory·BFS/key·깊이8·360M states/5B transitions/6시간 예산은 유지한다. 작업·계약·통합 담당은 `/root`, 별도 검토자는 `/root/comm_acceptance_review`다.
+
+| D2 결정 | 내용 |
+| --- | --- |
+| 문제·선택 | 원4-event 반례에서 모델이 full-ticket을 먼저 검사했다. 현행 오류 계약에 맞게 cancel→기존 terminal 원인→non-Open Closed→Open full Backpressured 순서로 정정 |
+| witness | `full_queue_rejected`는 취소되지 않은 Open의 full queue에서만 인정. 취소·종료를 capacity rejection 증거로 세지 않음 |
+| 대안·근거 | 제품을 오래된 모델에 맞춰 되돌리는 대신 수용된 terminal 오류 계약을 독립 상태 값으로 표현. production transition을 oracle에 import하지 않고 literal 오류 기대값과 실제 SUT를 각각 검산 |
+| 새 관련 회귀 | 두 연결×세 payload에서 Open full·Draining·취소·완결 ticket 보유 Closed·Send/Frame/Drain/Idle timeout과 이후 cancel을 확인. 원 `[Enqueue(0), Enqueue(0), Cancel, Enqueue(0)]`도 그대로 포함. 거절 무효과·witness 유무와 SUT replay의 quota/ticket/기존 terminal 원인 보존 확인 |
+| 실행 범위 | 새3 method만 실행한 첫 job은2 PASS·Idle fixture1 FAIL. 다른 연결의 더 이른 idle deadline도 먼저 진행하도록 fixture를 고친 그1 method만 PASS. 검토에서 원 반례 literal 추가를 요구해 변경한 cancel method1개만 다시 PASS. 완료한 나머지 method·기존 smoke/key·하위 회귀는 반복하지 않음 |
+| 원 증거 | `artifacts/comm/model-oracle-fix-20261023-3lwgi943/`의 selection·regression-result/log·build·source, 후속 `fixture-fix-eyes1rd4/`와 `counterexample-fix-6f6b_46q/`에 각 FAIL/PASS/source/binary를 구별 |
+| 정적 확인 | 첫 fixture 수정 source의 scoped model Clippy와 최종 파일 rustfmt 확인 PASS. 그 뒤 cancel method에 원 literal 반례만 추가했으며 최종 build·변경 method PASS를 별도 보존 |
+| 안전 감시 | artifact의 `guarded_model.py`가 직접 Popen한 test binary를100ms마다 관측하고1초마다 RSS/가용 메모리를 기록. 가용8GiB 이하·runner21,660초·22:15 KST hard stop이면 kill/reap하고 INCOMPLETE로 보존. 사용자23시 전 검토·기록 여유를 확보 |
+| 감시 신규 검증 | 정상 종료·실제 timeout kill/reap·강제 memory 조건 kill/reap의3개 신규 control 사례 PASS. 독립 검토에서 Popen 직후 running 기록 실패의 정리 공백을 지적해 lifetime contextmanager로 보완하고 실제 child에 해당 실패를 주입한1개만 추가 PASS. 원 guard3 source/hash와 결과는 별도 보존하고 반복하지 않음. 제품 모델의 공간 완주 증거와 구분 |
+| 상태·재검토 | D2 최종 검토 수용, 잔여 차단 지적 없음. 원 FAIL은 유지하고 깊이8 실행 결과는 별도 판정. 오류 우선순위·witness·PID/정리·원자료 누락·예산 변경 시 재검토 |
+
+최종 관련 회귀 binary의 source는 `e77352d99360bda79253b951d335b221d2dbc3a65e005e1269ea4a7ffdc9305b`, binary는 `11c9e21101c27340c9657efc26c82073e53c9e7e73edf08eb258c7b6f38ec02e`, oracle 파일은 `61fdeaf26692242d80af7afaaae4597aabad37dabeb7ca0b5117661ff7326075`다. 이 source/binary를 깊이8 한 시험에 사용하며 기존 성능 source와 혼합하지 않는다. 모델과 성능 측정은 동시 실행하지 않는다.
+
+별도 검토자는 최종 oracle/source/binary와3→변경1→변경1의 실제 회귀 결과, guard의 원3·변경1 사례/source를 읽기 전용으로 대조하여 수용했다. `/root`가 계약·통합 담당으로 반영했다. 14:42:53 KST에 같은 최종 binary의 깊이8 한 시험을 시작했으며 원본은 같은 artifact 아래 `exhaustive-sat1r5ra/`다. 이 실행의 전체 공간 완주/실패/외부 중단 판정은 최종 receipt가 생길 때까지 RUNNING이다.
+
+후속으로 `check_comm.py`의 test-support 필수 inventory에 새 Rust method3개를 등록했다. `test_check_comm.py`의 신규 method1개만 선택 실행해 등록 전 FAIL과 등록 후 PASS를 `inventory-{red,green}.{json,log}`·각 원 source에 보존했다. 각 이름 누락/ignored 거절·완전 집합 수락과 default inventory 제외를 검사하며 제품·모델 시험 실행으로 세지 않는다. 별도 검토자가 실제 method 이름·source/log hash·검사 경계를 대조해 D2 수용했다. 이 inventory 후속 편집은 이미 실행 중인 모델의 동결 source에 포함되지 않으므로 전수 결과를 새 inventory source의 실행으로 소급하지 않는다.

@@ -491,14 +491,14 @@ impl Model {
         }
         match event.operation {
             Operation::Enqueue(code) => {
-                seen.send = Some(if peer.tickets.iter().all(Option::is_some) {
-                    Err(ErrorKind::Backpressured)
-                } else if peer.cancelled {
+                seen.send = Some(if peer.cancelled {
                     Err(ErrorKind::Cancelled)
                 } else if peer.phase == 2 {
                     Err(peer.reason.unwrap().error())
                 } else if peer.phase != 0 {
                     Err(ErrorKind::Closed)
+                } else if peer.tickets.iter().all(Option::is_some) {
+                    Err(ErrorKind::Backpressured)
                 } else {
                     let index = peer.tickets.iter().position(Option::is_none).unwrap();
                     let sequence = peer.next_sequence;
@@ -655,7 +655,11 @@ impl Model {
                     names.push("partial_tx_cancel");
                 }
             }
-            Operation::Enqueue(_) if peer.tickets.iter().all(Option::is_some) => {
+            Operation::Enqueue(_)
+                if peer.phase == 0
+                    && !peer.cancelled
+                    && peer.tickets.iter().all(Option::is_some) =>
+            {
                 names.push("full_queue_rejected")
             }
             _ => (),
@@ -928,3 +932,128 @@ pub const REQUIRED_WITNESSES: [&str; 7] = [
     "both_connections_progress",
     "two_frame_order",
 ];
+
+#[cfg(test)]
+mod oracle_regression {
+    use super::*;
+
+    fn full(code: u8) -> Vec<Operation> {
+        vec![Operation::Enqueue(code), Operation::Enqueue((code + 1) % 3)]
+    }
+
+    fn flushed(code: u8) -> Vec<Operation> {
+        let mut operations = full(code);
+        for payload in [code, (code + 1) % 3] {
+            operations.extend(std::iter::repeat_n(
+                Operation::WriteBoundary,
+                if payload == 0 { 2 } else { 3 },
+            ));
+        }
+        operations
+    }
+
+    fn rejected(
+        connection: u8,
+        code: u8,
+        operations: Vec<Operation>,
+        expected: ErrorKind,
+        capacity_witness: bool,
+    ) {
+        let mut trace = operations
+            .into_iter()
+            .map(|operation| Event {
+                connection,
+                operation,
+            })
+            .collect::<Vec<_>>();
+        let mut model = Model::default();
+        for &event in &trace {
+            model.step(event);
+        }
+        let before = model.clone();
+        let final_event = Event {
+            connection,
+            operation: Operation::Enqueue(code),
+        };
+        assert_eq!(model.step(final_event).send, Some(Err(expected)));
+        assert_eq!(
+            model
+                .witness(&before, final_event)
+                .contains(&"full_queue_rejected"),
+            capacity_witness,
+        );
+        assert_eq!(model, before, "rejected enqueue must have no effect");
+        trace.push(final_event);
+        Sut::replay(&trace);
+    }
+
+    #[test]
+    fn open_full_ticket_rejection_retains_capacity_witness() {
+        for connection in 0..2 {
+            for code in 0..3 {
+                rejected(connection, code, full(code), ErrorKind::Backpressured, true);
+            }
+        }
+    }
+
+    #[test]
+    fn cancelled_and_draining_full_tickets_preserve_gate_errors() {
+        // Preserve the exact four-event counterexample from the failed campaign.
+        rejected(
+            0,
+            0,
+            vec![
+                Operation::Enqueue(0),
+                Operation::Enqueue(0),
+                Operation::Cancel,
+            ],
+            ErrorKind::Cancelled,
+            false,
+        );
+        for connection in 0..2 {
+            for code in 0..3 {
+                for (operation, expected) in [
+                    (Operation::Cancel, ErrorKind::Cancelled),
+                    (Operation::Drain, ErrorKind::Closed),
+                ] {
+                    let mut operations = full(code);
+                    operations.push(operation);
+                    rejected(connection, code, operations, expected, false);
+                }
+                let mut operations = flushed(code);
+                operations.push(Operation::Drain);
+                rejected(connection, code, operations, ErrorKind::Closed, false);
+            }
+        }
+    }
+
+    #[test]
+    fn terminal_full_tickets_keep_causes_and_later_cancel_precedence() {
+        for connection in 0..2 {
+            for code in 0..3 {
+                let mut send = full(code);
+                send.push(Operation::Deadline);
+                let mut frame = vec![Operation::ReadByte];
+                frame.extend(full(code));
+                frame.push(Operation::Deadline);
+                let mut drain = full(code);
+                drain.extend([Operation::Drain, Operation::Deadline]);
+                let mut idle = flushed(code);
+                // The untouched connection reaches its idle deadline first.
+                // A second global advance reaches the written connection's.
+                idle.extend([Operation::Deadline, Operation::Deadline]);
+                for (operations, expected) in [
+                    (send, ErrorKind::SendTimedOut),
+                    (frame, ErrorKind::FrameTimedOut),
+                    (drain, ErrorKind::DrainTimedOut),
+                    (idle, ErrorKind::IdleTimedOut),
+                ] {
+                    rejected(connection, code, operations.clone(), expected, false);
+                    let mut cancelled = operations;
+                    cancelled.push(Operation::Cancel);
+                    rejected(connection, code, cancelled, ErrorKind::Cancelled, false);
+                }
+            }
+        }
+    }
+}

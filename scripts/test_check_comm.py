@@ -30,6 +30,25 @@ class CommCheckerTests(unittest.TestCase):
         foundation = '\n'.join(f'test {name} ... ok' for name in sorted(FOUNDATION_REQUIRED_TESTS))
         check_inventory(foundation, FOUNDATION_REQUIRED_TESTS)
 
+    def test_model_terminal_precedence_regressions_are_required(self):
+        names = {
+            'exploration::oracle_regression::open_full_ticket_rejection_retains_capacity_witness',
+            'exploration::oracle_regression::cancelled_and_draining_full_tickets_preserve_gate_errors',
+            'exploration::oracle_regression::terminal_full_tickets_keep_causes_and_later_cancel_precedence',
+        }
+        self.assertTrue(names <= INSTRUMENTED_REQUIRED_TESTS)
+        self.assertTrue(names.isdisjoint(REQUIRED_TESTS))
+        rows = [f'test {name} ... ok' for name in sorted(INSTRUMENTED_REQUIRED_TESTS)]
+        check_inventory('\n'.join(rows), INSTRUMENTED_REQUIRED_TESTS)
+        for name in names:
+            with self.assertRaises(ValueError):
+                check_inventory('\n'.join(row for row in rows if row != f'test {name} ... ok'),
+                                INSTRUMENTED_REQUIRED_TESTS)
+            with self.assertRaises(ValueError):
+                check_inventory('\n'.join(rows).replace(f'test {name} ... ok',
+                                                       f'test {name} ... ignored'),
+                                INSTRUMENTED_REQUIRED_TESTS)
+
     def test_wrong_binary_identity_missing_ready_and_peer_history_fail(self):
         valid = {'event':'ready','source_sha256':'abc','pid':42,'profile':'debug'}
         check_ready(valid, 'abc', 42)

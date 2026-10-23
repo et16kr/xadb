@@ -81,6 +81,9 @@ INSTRUMENTED_REQUIRED_TESTS = REQUIRED_TESTS | {
     'connection_reservation_failure_precedes_native_creation_and_is_domain_local',
     'independent_model_depth_two_smoke_checks_every_enabled_transition',
     'canonical_time_and_terminal_keys_preserve_enabled_events_and_successors',
+    'exploration::oracle_regression::open_full_ticket_rejection_retains_capacity_witness',
+    'exploration::oracle_regression::cancelled_and_draining_full_tickets_preserve_gate_errors',
+    'exploration::oracle_regression::terminal_full_tickets_keep_causes_and_later_cancel_precedence',
     'preparation_failures_preserve_terminal_errors_and_return_every_charge',
 }
 FOUNDATION_REQUIRED_TESTS = {
