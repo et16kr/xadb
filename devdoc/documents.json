@@ -13,6 +13,16 @@
       "role": "evidence",
       "title": "DEV3 구현 코드 리뷰·후속 수정 — open-code-review-delegate"
     },
+    "comm-performance-batch-20261023.md": {
+      "path": "evidence/comm-performance-batch-20261023.md",
+      "role": "evidence",
+      "title": "COMM 성능 시험의 시간 제한·조합별 분할"
+    },
+    "comm-acceptance-resume-20261023.md": {
+      "path": "evidence/comm-acceptance-resume-20261023.md",
+      "role": "evidence",
+      "title": "COMM 미완료 인수 재개·수신 도달 뒤 프로세스 종료"
+    },
     "dev3-recovery-effects-20261023.md": {
       "path": "evidence/dev3-recovery-effects-20261023.md",
       "role": "evidence",

@@ -2,7 +2,11 @@
 
 2026-10-23 [DEV3 진행 현황 후속 리뷰](evidence/dev3-progress-review-20261023.md): 최신 reload 구현·시험 도구와 snapshot 수정, 단계별 공급·미완료 인수를 대조했다. 요약 표·단계 JSON·색인의 진행 설명을 최신 제한 구현과 맞췄으며 제품 변경·시험 재실행·완료 승격은 없다.
 
+2026-10-23 [COMM 시간 제한·조합별 성능 인수](evidence/comm-performance-batch-20261023.md): 사용자 범위 정정에 따라 별도 미완료 시험은 코드 수정 없이 진행하고 완료 시험은 반복하지 않는다. cell37의20mode와38/39의40mode가 각각 BATCH_PASS이며 같은 보존 source의3조합60mode다. 후속은14:21 완료를 확인했고 원 profile/2,700분모·과거 결과·C1 미완료와8시간 skip/23시 마감을 유지한다. 이후14:29 모델 한 시험은 취소 후 sender 오류 기대값 불일치로 즉시 FAIL이며 원 실패를 보존한다.
+
 2026-10-23 [DEV3 구현 코드 리뷰·후속 수정](evidence/dev3-code-review-20261023.md): `open-code-review-delegate`로 제품 코어51파일에서 확인한 high 결함 D3-OCR-001을 수정했다. 영속화 후 snapshot 실패의 오류 효과·fence를 보완했으며 신규 관련5건 PASS·별도 D1 수용이다. 최초 정적 리뷰와 수정 전 FAIL을 보존하고 전체 DEV3/S5 미완료를 유지한다.
+
+2026-10-23 [COMM 미완료 인수 재개](evidence/comm-acceptance-resume-20261023.md): 기존30분 fuzz/stress·11 mutant의 원 완료 증거를 재실행 없이 대조하고 실제 RX-prefix 확인 뒤 process-kill 신규36셀과 source별 변경 checker/reader를 선택 검증했다. D1/D2 독립 검토 수용이며 모델·전체 native fault·성능과 C1은 미완료다.
 
 2026-10-23 [DEV3 고정 등록 코어·세대 pin](implementation/dev3-implementation.md#registration-core): 기존 dirty pool의 단일 lookup·Copy 요청·세대 token 검산을 연결했다. [선택 증거](evidence/dev3-registration-core-20261023.md)는 r6 신규11·관련10·native1·compiler2+control1과 source별 정적 회계를 구별한다. 제한 단위 독립 D1 수용, 일반 pool·DEV3/S5 미완료다.
 

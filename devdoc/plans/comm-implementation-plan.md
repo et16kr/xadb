@@ -4,6 +4,19 @@
 
 [COMM 소유 계약](../contracts/comm-design.md) · [단계 완료 계약](stage-completion.json) · [KU12](../contracts/kernel-test-matrix.json) · [개발 운영 방침](../policies/development-policy.md)
 
+2026-10-23 [미완료 인수 재개·source별 잔여 대장](../evidence/comm-acceptance-resume-20261023.md): 기존30분3개·11 mutant 완료 증거를 원 source에 유지하고, RX-prefix/process-kill 신규36셀과 변경 checker/reader만 선택 검증했다. 전체 C1은 INCOMPLETE다. 아래 전체·하위 회귀·장시간 인수 요구에도 [변경 코드 시험 우선 지시](../../AGENTS.md)를 적용하며, DEV3 S5 전수 예외를 COMM으로 확대하지 않는다. 새 좁은 진입점은 `python3 -B scripts/check_comm_rx_kill.py`이며 `--cell`로 변경/실패 셀만 선택할 수 있다. 기존 전체 leaf의 자동 실행 목록을 늘리지 않는다.
+
+<a id="time-bounded-batches"></a>
+### 2026-10-23 시간 제한과 분할 실행
+
+사용자의 후속 지시에 따라 단일8시간 이상 실행은 일단 건너뛰며, 분할할 수 있는 시험은 결과를 보존해 진행한다. **2026-10-23 23:00 KST 전에 실행·종료 정리·기록을 마칠 수 있는 범위만** 선택한다. 이 제한은 완료 기준·필수 분모를 줄이지 않으며 SKIP/중단을 PASS로 판정하지 않는다. 무변경 코드·완료 시험 반복 금지도 유지한다.
+
+후속 사용자는 "당신은 테스트만 하잖아요 개발중이 아닌데"라고 현재 작업의 적용 범위를 정정했다. **현재는 개발 중 하위 회귀 재실행이 아닌 별도 미완료 COMM 인수 시험 작업이므로, 코드 수정 없이도 미실행 조합을 진행한다.** 위 무변경 코드 제한을 이 독립 시험의 미실행 사례까지 확대해 중단했던 해석은 이 작업에서 대체한다. 완료한 시험 반복 금지·8시간 이상 단일 실행 skip·23시 마감·source별 증거·원 profile/품질 기준은 유지한다. 이 구분은 다른 DEV 개발의 회귀 범위를 확대하지 않는다. [후속 실행 기록](../evidence/comm-performance-batch-20261023.md#standalone-continuation)은 해석 정정·미실행 선택·원 보류 기록을 구분한다.
+
+새 `scripts/check_comm_performance_batch.py`는 원 profile의0-based `--cell-index`와 timezone-aware `--deadline`을 필수로 받는다. 조합마다 원10쌍·Always/Detailed 순서·5초 준비+30초 측정·guardrail을 유지하며 전체135조합/2,700 mode 분모는 변경하지 않는다. default batch wall budget은3,600초이고8시간 이상 budget은 거절한다. build600초·mode120초+정리10초·최종 기록120초를 포함해 시작 가능 여부를 보수적으로 판단하고, 부족하면 build 전에 `SKIPPED_TIME_BUDGET`으로 남긴다. mode의 one-shot alarm은 기존 실행기의 worker kill/reap·임시 경로 정리에 연결한다. OS 정지까지 포함한 realtime 보장은 아니다.
+
+한 조합의20 mode는 nominal700초·보수3,320초다. 선택 결과는 `BATCH_PASS` 또는 FAIL이며 C1 전체는 INCOMPLETE다. 같은 source로 후속 조합을 진행하려면 보존 export 안의 이 runner를 실행해 live DEV3 변경을 섞지 않는다. 각 mode의 불변 receipt와 source/binary hash를 보존하고 source가 다른 원74 mode를 새 결과와 합쳐 현재 전체 PASS로 표시하지 않는다. [구현·실행 증거](../evidence/comm-performance-batch-20261023.md)를 따른다.
+
 <a id="sequence"></a>
 ## 1. 구현 순서와 공급 계약
 
