@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-23 [DEV3 최초 Begin 준비](dev3-implementation.md#begin-preparation): Free 슬롯의 빈 Active 전이를 위한 WAL·페이지 producer/observer/materializer를 추가했다. 새 runtime12·static1·fmt/Clippy PASS와 원 fmt FAIL을 보존하며 최종 독립 D1을 순수 준비 단위로 수용했다. 실제 발급·stage/apply·일반 pool·DEV3/S5는 미완료다.
+
 2026-10-23 [DEV3 현재 membership Status load](dev3-implementation.md#status-load): dirty allocator의 권한을 보존하며 실제 A/B home을 두 번째 frame에 재적재한다. source별 runtime24·native1·compiler3+baseline·자원/체커와 원 FAIL을 보존하며 최종 독립 D1을 이번 제한 load 단위로 수용했다. 일반 pool·live Status 변경·DEV3/S5는 미완료다.
 
 2026-10-23 [DEV3 반복 Status 이력 복구](dev3-implementation.md#operational-recovery): 첫 extent의 주소별 canonical census·Pending 수리·REDO와 fresh producer/reentry를 연결했다. source별 신규65·관련3·native4/14worker·compiler3+control1의 선택 결과와 원 FAIL을 보존한다. OCR delegate 최종 독립 D1을 제한 복구 단위로 수용했으며 P3·일반 pool·DEV3/S5는 미완료다.

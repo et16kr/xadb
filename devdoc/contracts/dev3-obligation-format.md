@@ -773,3 +773,118 @@ lower15오류는timeline0/epoch0/lsn0/lsn=prev/prev>lsn/txn없음/txnDB다름/tx
 
 
 §15의 동일 source 제품 실행·독립 검토·통합 증거는 [구현 기록](../implementation/dev3-implementation.md#rollback-producer-results)을 따른다. 실제 tag2 append·dirty frame·전체 DEV3 인수는 별도다.
+
+<a id="begin-preparation"></a>
+## 16. D3-BEGIN-001 — 최초 빈 거래의 Begin 준비
+
+2026-10-23 · **D2 ACCEPTED / 순수 준비 구현·선택 검증 완료 / 제한 단위 최종 D1 수용**. 기준 `742aaea`, 작성·통합
+`/root`, 독립 검토 `/root/pool_design_review`. 사용자 DEV3 개발 재개와 DP01 위임을 따른다.
+3.09.1-A의 실제 live identity/status와 첫 행 거래를 향한 선행이다. 일반 page owner·durable
+발급·Begin stage/apply·rollback/terminal·현재-build 복구까지가 후속 통합 목표이며,
+아래 순수 준비 결과로 그 목표를 완료 처리하지 않는다.
+
+### 설치 의미와 후속 owner의 필수 입력
+
+- 영속 TxnId→location의 정본은 현재 allocator가 Allocated로 승인한 Status home의 occupied
+  cell 집합으로 둔다. 별도 RAM map을 정본으로 만들거나 local에서 주소를 계산하지 않는다.
+  후속 owner는 selected namespace와 RAM allocator/WAL membership을 고정하고 home을
+  bounded streaming으로 순회해 전체 TxnId 유일성·exact location/generation을 검산한다.
+  resident dirty home은 같은 authoritative pool에서 읽고 disk의 옛 bytes로 대체하지 않는다.
+  source latch 해제 전 transient protection과 I/O 뒤 재검산, scan/pin/FD/F05가 실제 소비의
+  필수 조건이다. 이 준비 함수는 전역 census나 pin 권한을 발급하지 않는다.
+- 새 TxnId는 현재 writer epoch와 현재 issued local high-water의 checked `+1`이다. 준비
+  함수는 candidate를 관측할 뿐 ID를 발급하지 않는다. 후속 live owner는 단독 발급 경계에서
+  RAM issued high-water를 먼저 전진시키고 반환한 ID를 실패 뒤에도 재발급하지 않는다.
+  채택된 WAL high-water와 RAM issued high-water를 혼동하지 않는다. live owner는
+  같은 epoch의 채택 Begin 및 checkpoint high-water를 복원하고 terminal 뒤에도 되감지 않는다.
+  복구 후 epoch 변경 전 Begin을 허용하지 않으며 새 epoch local은 별도 원장으로 시작한다.
+  채택되지 않은 이전 epoch candidate도 새 durable epoch의 identity와 달라 재발급되지 않는다.
+  old-epoch occupied home은 유효한 directory 항목이고 새 Begin의 actor로 재발급하지 않는다.
+- 모든 기존 Free(g) 활성화는 checked `g+1`을 사용한다. 따라서 현 INIT의 Free1은 Occupied2가
+  된다. 최초 slot 예외를 Free bytes에서 추정하지 않는다. page incarnation·frame generation과
+  별개다. 실제 free/reuse 자격은 horizon/edge/queue/pin/claim retirement owner가 증명한다.
+- 이번 Begin은 undo head 없음·incoming0·mutation sequence0의 빈 Active 거래를 만든다.
+  Status와 directory는 동일 home 한 개의 설치로 원자 변경되므로 별도 directory redo는 없다.
+  단일 home native576·Patch288, edge/count/inventory delta0의 완결 그룹이다. 기존 소유된
+  Allocated Status page의 Free slot을 쓰며 PageToken/UndoSlot/StatusSlot 예약을 임의 생성하지
+  않는다. 이 경우에는 별도 reserve group/선행 영속 효과 없이 첫 Begin group 안에서 Free
+  slot의 일시 claim을 직접 점유한다. 실제 owner는 claim의 origin·세대·빈 slot 검산부터 Begin
+  stage/apply까지 직렬화하고 다른 Begin/free/reuse를 배제해야 한다. §6.5의 기존 영속
+  StatusSlot Item을 consume하는 경로와 구별하며, 그 Item이 존재하면 이 분기로 우회하지
+  못한다. 준비 함수의 expected는 신뢰한 caller 입력에 대한 관측 계약이고 실제 admission
+  token 또는 frame binding이 아니다.
+- 빈 거래의 초기 예약은 full RollbackStart3040 + empty AbortEnd3040의 WAL/protected6080이다.
+  Begin 자체3040을 더해 첫 effect 전9120을 확보한다. after descriptor는 consumed_wal3040,
+  consumed_control0, Terminal row2와 Status row3 각각 steps1/wal3040/protected3040,
+  peak=(frames2,memory114688,locks0,registry2,files5,doublewrite1)이며 다른 row는0이다.
+  inventory items/growth0, digest=SHA256(empty), change_lsn=Begin LSN; minimum_wal_lsn=birth;
+  previous0/groups1/last_mutation0이다. 이는 미래 행 변경의 abort 비용이 아니다. Forward는
+  해당 opcode 전체 최악 비용을 추가 admission한 뒤만 가능하다. empty AbortEnd는 undo/head/
+  incoming/pending retained/queue/retirement 의무 모두0 조건에서 동일3040-byte 한-home
+  전이로 후속 구현한다. terminal 뒤 home은 기존 system Status-page 소유 아래 directory에
+  유지하며 자동 Free/reuse나 추가 cleanup을 약속하지 않는다. §7.5의 credit/owner 인계를
+  생략할 수 있는 일반 예외가 아니며, 인계할 의무가 하나라도 있으면 이 empty 계획을 거절한다.
+  실제 잠금 반환·ATT 제거·예약 반환은 그 durable terminal과 공통 owner 검산 뒤다.
+  terminal/rollback·해당 F05의 실제 채택 전에는 이6080을 충분한 live admission 증거로
+  사용하지 않고 성공 Abort나 재사용도 제공하지 않는다.
+
+### wire·API·검산
+
+기존 XSG1/descriptor/home224/Patch 형식을 그대로 쓴다. frame3040, group2848과 section
+범위는 §15와 같고 operation=1, outer kind=Begin, actor=current epoch, previous_txn_lsn0,
+group previous0/before-descriptor SHA0이다. OperationCore는 tag1/length256 외 전부0이다.
+선택 before home은 Free(g)/incoming0, after는 같은 slot의 Active(actor,g+1)/headNone/incoming0.
+선택 slot은 실제 존재하는0..70, page_no는 extent metadata가 아니며 actual before pageLSN은
+nonzero이고 global predecessor 이하이다. new LSN은 global predecessor보다 크다. global
+predecessor와 page prior LSN의 equality를 요구하지 않는다.
+
+`semantic_group::begin`의 `BeginExpected`는 FrameExpectation, Profile, actor TxnRef,
+location StatusSlotRef, PageIdentity, previous_local을 받는다. actor namespace/current epoch,
+local high-water+1, location/page/generation과 슬롯 한도를 먼저 검산한다. source의 full page
+및 모든 cell을 검산하고 actor TxnId가 다른 cell에 이미 있으면 거절한다. after descriptor는
+위 고정 초기 예약과 chain에서 계산하며 frame 자체의 값을 trusted expected로 사용하지 않는다.
+
+`observe_begin`은 frame와 before/after 전체 page를 읽고 header/모든 section/descriptor/native/
+redo/actual page binding 및 허용 byte 변화(선택 home·pageLSN·checksum만)를 검사한다.
+`materialize_begin`은 caller after-page에 patch하고 observer를 통과한 immutable observation만
+반환한다. `produce_begin`은 caller3040-byte frame과16KiB page 출력에 같은 결과를 준비한다.
+오류 때 입력은 불변, 출력은 폐기해야 하며 I/O/heap/lock/실제 stage·발급·apply permit는 없다.
+잘못된 expected/new LSN은 InvalidInput, 유효 expected와 다른 identity는 IdentityMismatch,
+LSN/predecessor는 OrderMismatch, Free가 아닌 선택 slot은 UnsupportedOperation,
+slot 세대/MAX는 OrderMismatch, canonical bytes/고정 budget 불일치는 Corrupt다.
+길이·version·opcode는 기존 envelope 의미를 따르며 unknown op는 UnsupportedOperation이다.
+
+### F03/F05와 실행 선택
+
+raw offsets·독립 SHA로 before/after/frame literal을 작성해 생산 결과 전체 bytes를 대조한다.
+중간 필수는 정상 producer/observer/materializer3, slot0/70·다른 home 보존, g+1/MAX·현재 epoch/
+local+1/MAX, page prior≠global predecessor, malformed envelope/group/descriptor/native/redo,
+before/after 손상·duplicate actor·비선택 변화, 모든 frame proper prefix·trailing byte,
+출력 실패/입력 불변과 정확 초기 ledger다. 원 실패는 별도 source로 보존한다.
+최종 S5에는 profile1/2/3×slot0..70×generation1/19/MAX−1의639조합을 작성하고 중간에는
+실행하지 않는다. 이 순수 준비 API에는 native I/O·새 borrow compiler proof가 해당하지 않는다.
+실제 stage/apply를 붙일 때 native/reopen/fault/compiler 검증을 추가하며 미실행을 PASS로
+표시하지 않는다. 기존 RollbackStart·하위 wrapper·무변경 시험은 반복하지 않는다.
+
+caller before/after page 및 frame은 입력/출력 loan이며 숨은 page-sized local copy는 없다.
+component64KiB 안에 expected/observation/descriptor/home/page view/redo/header/error carrier의
+중첩 수량과 encoder/hash scratch를 source-value 식으로 합산한다. 코드 구현 뒤 실제 타입
+크기와 선택 layout 시험을 독립 검토한 후 runtime을 실행한다. retained engine 전체/RSS/OOM
+인증이 아니다. 각 필수 runtime30초, 전체 필수120초, S5 전체120초, fixture1MiB·보존8MiB
+한도이며 범위를 사후 축소하지 않는다. 문서 검사는 push 전용이다.
+
+
+보존 한도의 범위를 명시한다. fixture1MiB는 한 번에 활성인 raw page/frame/descriptor 시험
+데이터이며, 결과보존8MiB는 이 단위의 retained case vectors·선택 실행 로그/receipt·review
+기록에 적용한다. immutable source export·ELF·compiler/cache는 도구 보존물로 별도 경로와
+실제 bytes를 기록하며8MiB 충족 주장에 포함하지 않는다. 원 D2 문구의 범위 명시 누락을 보완한
+것으로, 원문·원 결과는 보존하고639개 동시복제 금지와 순차 생성·재사용 기준은 바꾸지 않는다.
+
+대안인 Free predicate만 완화하거나 임의 Active fixture를 live 입력으로 주입하는 방식은
+directory·발급·예약의 선행을 공급하지 못하므로 제외한다. 일반 pool 전체를 먼저 만드는
+방식과 비교해 Begin의 실제 native 집합/초기 budget을 먼저 고정하면 소비 pool의 whole pin
+집합을 구체화할 수 있다. tree는 별도 system-group 소비자로 이어질 수 있다. 재검토 조건은
+directory lookup 비용/scan 안정성, 실제 empty terminal 비용 초과, 최초 reserve/slot 발급의
+충돌, 추가 native 효과·pending claim이 필요한 경우다.
+
+[선택 실행 증거](../evidence/dev3-status-begin-20261023.md)는 frozen D2·source별 원 FAIL과 runtime12/static1을 구별한다. 실제 owner·복구·S5 인수는 후속이다.

@@ -1,4 +1,4 @@
-//! Full-state observations and unpublished frame/page production for RollbackStart.
+//! Full-state observations and unpublished frame/page production for transactions.
 //! Contract: `devdoc/contracts/dev3-obligation-format.md`, sections 13–15.
 //! No append, live page mutation, source pin, reservation restoration or apply permit.
 #![allow(dead_code)] // Awaiting the separately reviewed runtime consumer.
@@ -30,6 +30,9 @@ const DESCRIPTOR: std::ops::Range<usize> = 192..1728;
 const OPERATION: std::ops::Range<usize> = 1728..1984;
 const NATIVE: std::ops::Range<usize> = 1984..2560;
 const REDO: std::ops::Range<usize> = 2560..2848;
+
+#[path = "semantic_begin.rs"]
+pub(crate) mod begin;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum SemanticError {

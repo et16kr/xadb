@@ -477,3 +477,23 @@ S5 확대43은 profile2/3 load2·32round1·2profile×10call×2error/panic40의 i
 최종 S5에는 중간 inventory도 포함하며 이 작성 상태는 NOT_RUN이다. 최초14call 초안은
 handle-bound open의 metadata를 이중 계산했다. 존재하지 않는4 runtime FAIL과16 S5 NEVER_RUN의
 철회 사유/원본을 보존하고 성공으로 바꾸지 않는다. 수정된 실제10tuple을 별도 oracle로 확인한다.
+
+
+<a id="begin-preparation-followup"></a>
+## 최초 빈 거래 Begin 준비의 선택 inventory
+
+[소유 계약](../contracts/dev3-obligation-format.md#begin-preparation)과
+[정확 manifest](../../crates/engine/tests/fixtures/dev3-status-begin/manifest.json)를 따른다.
+새 producer/observer/materializer의 필수12개는 독립 raw literal 전체 일치, 슬롯/세대/현재 epoch와
+local 경계, page prior와 global predecessor 구별, 정확 초기 예약량, 각 section 손상,
+비선택 home 보존, 모든 frame proper prefix/trailing, 입력 불변을 검산한다.
+layout1은 caller loan을 별도로 표시한 component 상계를 확인한다.
+[선택 결과](../evidence/dev3-status-begin-20261023.md)의 r1에서만 실행했으며 기존 RollbackStart와
+하위 wrapper·무변경 시험은 반복하지 않았다. 순수 준비에는 native I/O/borrow probe가 해당하지 않는다.
+
+S5에는 필수12와 static1에 더해 profile3×slot71×generation3의639조합을 작성했다.
+`begin_s5_profiles_slots_and_generations`는 ignored/NOT_RUN이며 raw vector를 순차 생성·재사용한다.
+각 필수30초·전체120초, S5 전체120초와 fixture1MiB·시험 결과보존8MiB의 사전 한도를 유지한다.
+source export·ELF·compiler/cache의 별도 보존은 소유 계약의 범위 명시를 따른다.
+실제 발급·directory census·stage/apply·rollback/terminal·현재-build 복구에는 별도 native/fault/compiler
+inventory와 F05가 필요하며 이 순수 시험을 그 실행 증거로 승격하지 않는다.

@@ -358,3 +358,12 @@ DEV3 페이지 예약·취소는 `wal_io/doublewrite_install`의 private child `
 `status_load`·선택 unit/native/compiler/독립 checker·fixture를 관리 JSON `dev3_status_load`에
 등록한다. 기존 owner·2frame·caller scratch를 사용하며 crate/dependency/source root를 바꾸지 않는다.
 실행·독립 리뷰 상태는 [증거](../evidence/dev3-status-load-20261023.md)를 따른다.
+
+
+### 최초 Begin 순수 준비 배치
+
+[소유 계약](../contracts/dev3-obligation-format.md#begin-preparation)의 private
+`semantic_group::begin`은 `semantic_begin.rs`·`semantic_begin_tests.rs`와 독립 literal4/manifest를
+사용한다. 실제 경로는 관리 JSON `dev3_status_begin`에 등록했다. source root·package/dependency/
+feature·공개 WAL API는 바꾸지 않는다. [증거](../evidence/dev3-status-begin-20261023.md)는 순수
+준비의 선택 결과이며 실제 append·live ID 발급·일반 pool·현재-build 복구 공급은 후속이다.

@@ -4427,5 +4427,25 @@
     ],
     "source_roots_changed": false,
     "full_stage_acceptance": false
+  },
+  "dev3_status_begin": {
+    "status": "local_selected_validation_D1_accepted_pure_begin",
+    "contract_ref": "dev3-obligation-format.md#begin-preparation",
+    "scope": "Pure empty Begin producer/observer/materializer; live issuance, stage/apply, general pool, rollback/terminal and recovery incomplete",
+    "implemented_paths": [
+      "crates/engine/src/storage/semantic_begin.rs",
+      "crates/engine/src/storage/semantic_begin_tests.rs",
+      "crates/engine/tests/fixtures/dev3-status-begin/after.descriptor",
+      "crates/engine/tests/fixtures/dev3-status-begin/after.page",
+      "crates/engine/tests/fixtures/dev3-status-begin/before.page",
+      "crates/engine/tests/fixtures/dev3-status-begin/begin.wal",
+      "crates/engine/tests/fixtures/dev3-status-begin/manifest.json"
+    ],
+    "evidence_refs": [
+      "dev3-status-begin-20261023.md",
+      "dev3-status-begin-20261023.json"
+    ],
+    "source_roots_changed": false,
+    "full_stage_acceptance": false
   }
 }

@@ -754,7 +754,7 @@ P1 인수 당시 P2/P3는 미공급이었다. 후속 [P2 live owner](#operationa
 | 3.06 트리·행 | mutable tree CRUD·split·root 변경·overflow·stable cursor·locator | 표현·부분 모델 존재. 실제 변경 경로 미완료 |
 | 3.07 인덱스 | point/range scan·presence·PK/UNIQUE·build/취소 | 표현·의미 계약 존재. 실제 인덱스와 statement-final unique 미완료 |
 | 3.08 카탈로그·DDL | table/index 정의·이름·객체 수명·create/drop | 표현 존재. native 원자 DDL과 catalog 변경 미완료 |
-| 3.09 undo·rollback | persistent undo/status·statement rollback·전체 rollback·CLR | 표현·RollbackStart 생산 존재. live undo/CLR 진행 미완료 |
+| 3.09 undo·rollback | persistent undo/status·statement rollback·전체 rollback·CLR | 표현·RollbackStart 생산과 [최초 Begin 순수 준비](#begin-preparation) 공급. 실제 발급·live Begin/undo/CLR 진행 미완료 |
 | 3.10 동시성·가시성 | snapshot 등록·잠금·관측 행 검증·두 격리 수준 | [3.10.1.a.1 실제 admission/version gate](#concurrency-admission) 제한 검증. page/tree rank·거래 잠금·snapshot/pin/FIFO와 reader/writer/ager 실제 통합 미완료 |
 | 3.11 commit·공개 | 여러 객체 원자 commit·durable ACK/UNKNOWN·frontier | 실제 disk 거래 인수 미완료 |
 | 3.12 재시작 복구 | preflight/bootstrap·DWB repair·analysis/예약 복원·redo·REBASE·epoch/WRITER·undo/verify·STABILIZE/READY | [초기 입력 SELECT](#recovery-select)·[prefix 분석](#recovery-prefix)의 제한 인수와 [현재 genesis 실제 닫힌 복구](#recovery-effects)와 [반복 Status 복구](#operational-recovery)의 선택 검증. [장벽별 8개 작업](../plans/dev3-implementation-plan.md#recovery-remaining)의 일반 BOOT/F05·REBASE/새 epoch·undo/READY·전체 반복 장애 인수 미완료 |
@@ -810,3 +810,20 @@ pressure·REBASE/READY·전체 DEV3/S5는 미완료다. 문서 검사는 push �
 OCR delegate 독립 리뷰를 구별한다. 최종 독립 D1은 이번 제한 load 단위로 수용했으며 일반 pool·pressure·live Status 변경·
 전체 DEV3/S5 완료가 아니다. load는 파일을 쓰지 않으므로 앞선 반복 이력 복구의 원 결과를
 보존하고 변경 없는 복구 시험은 반복하지 않았다.
+
+
+<a id="begin-preparation"></a>
+### 최초 빈 거래 Begin의 순수 준비
+
+[obligation §16](../contracts/dev3-obligation-format.md#begin-preparation)의
+`semantic_group::begin`은 현재 epoch/local+1, 실제 Free(g)→Active(g+1), home/page identity와
+page prior≤global predecessor를 검산한다. caller의3040-byte frame·16KiB after page에 단일
+home native/Patch와 최초 descriptor를 생성하며 immutable observation을 반환한다.
+이 결과는 실제 발급·slot claim·reservation·stage/apply 권한이 아니다.
+
+[선택 증거](../evidence/dev3-status-begin-20261023.md)는 r0 reserved keyword fmt FAIL,
+r1 compile/runtime12/static1/fmt/Clippy PASS, frozen D2와 독립 runtime gate를 보존한다.
+component31,040과 caller loans35,808은 별도이며 실제 live owner/RSS/F05 완료가 아니다.
+최종 독립 D1을 순수 준비 단위로 수용했다. S5 profile3×slot71×generation3의639조합은 작성·NOT_RUN이다.
+일반 authoritative pool, directory census/ID 발급, 실제 Begin→rollback/terminal와 복구,
+tree/행 거래 및 전체 DEV3/S5는 남아 있다.
