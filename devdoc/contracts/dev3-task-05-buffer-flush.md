@@ -606,3 +606,104 @@ DB fault/reopen은 해당하지 않으며 실제 thread와 compiler 결과는 �
 N64=10640이며 기존 보수적2352에 같은 N증가8928을 더해도11280≤16384다.
 두 식은 같은 call carrier를 겹쳐 세므로 서로 합산하지 않는다. 성공 held의 retained 상계5440은
 동시 진행/실패/전환 callchain을 별도 과금한다는 전제이며 whole live owner/RSS 증명이 아니다.
+
+<a id="resident-status-pool"></a>
+## D3-RESIDENT-STATUS-001 — 여러 Status의 실제 상주 수명
+
+2026-10-23 · **D2 ACCEPTED / 제한 구현·선택 검증 / 제한 단위 최종 D1 수용**. 기준 `00a3548`, 작성·통합 `/root`,
+독립 검토 `/root/pool_design_review`. 원 SharedPool의 여러 publication을 실제 INIT·WAL·dirty·
+flush·퇴출·selected home load에 연결한다. 필수는3frame에서 allocator+Status3주소의
+4주소 이력이다. 첫 extent는 Status page1..63이므로 N64는 allocator+63 Status의 완전 상주·
+퇴출/재적재 경계이며 N64+1 주소 이력은 다음 extent 공급 후의 잔여다. loaded Status의 live Begin/undo 변경·큰 profile backing·자동 victim/
+pressure scheduler·일반 pool 전체·DEV3/S5 완료는 별도이며 이 단위로 대체하지 않는다.
+
+### F01/F02 — 단일 권한과 슬롯
+
+- 기존 `bind_status_bootstrap([DirtyFrame;2])`는 정확 두 frame·closed 최초 의미를 유지한다.
+  원 본체를 private slice binder로 공유하고 새 `bind_resident_status`는 caller의2..64개 fresh
+  contiguous frame을 받는다. 원 namespace/WAL/core/fence·CLAIMED→BOUND 원자 binding을
+  사용한다. frame0은 첫 extent allocator,1..N-1은 Status residency다. capacity 거절은 claim/I/O
+  전에 끝낸다. 다른 binder/selected reader가 같은 storage의 별도 authority를 얻지 못한다.
+- 새 `ResidentStatusBinding`만 반환하며 원 closed bound는 private 보유한다. consuming
+  `activate`는 기존 flush workspace take와 원 flush owner를 사용한다. Before 오류에는 같은
+  builder를 반환해 retry를 허용하고 Fatal/Drop/unwind는 원 fence/자원 소유를 보존한다.
+  활성 `ResidentStatus`는 old bound/독립 reader로 역전환하지 않는다. 별도 directory/pins/DPT,
+  heap이나 page copy를 만들지 않는다.
+- fresh bind에서 general backing을 받는 이 구조를 선택한다. 기존 live 두-frame owner에 두 번째
+  frame slice를 이어 붙이는 FrameSet 대안은 모든 lookup의 새 container와 lifetime·retained
+  layout를 늘리므로 제외한다. type/role별 별도 pool 복제와 MAX_FRAMES만 상향하는 대안도 제외한다.
+- Resident mode의 selected slot은 INIT 목적지다. 주소 lookup·reader·load·flush의 권한을
+  selected에 한정하지 않는다. 모든 published slot은 정확 address/request와 checked generation을
+  가진다. 비선택 슬롯도 같은 주소의 다른 incarnation을 포함한 duplicate를 허용하지 않는다.
+  frame0의 provenance는 고정하고 payload frame의 bootstrap registration은 모두 None이다.
+- `prepare_slot(index)`는1..N-1을 검산하고 global pins0/init claim0/flush claim0·flush Ready를
+  확인한다. 원 control.installation/base.installation/terminal_pending/base.batch가 모두 비어야
+  하며 잊힌 ReservedStatus의 durable 예약도 거절한다. load_into에도 같은 preflight를 적용한다.
+  dirty allocator/다른 dirty Status는 보존한다. 대상은 Empty 또는 Clean이어야 하며
+  dirty/poison/손상/세대소진을 먼저 거절한다. 성공 시 대상 generation을 checked 증가하고
+  publication·content metadata를 Empty로 만들며 INIT destination으로 선택한다. 원 bytes는
+  caller loan에 남지만 authority가 아니다. 이미 선택된 준비 슬롯의 반복 prepare는 무효과 거절한다.
+- InitAuthority→InitClaimRecord→retained key→DPT/pin/whole install→publication→completion/
+  release에 실제 payload slot index를 함께 결합한다. guard position0/1과 실제 frame index를
+  구별한다. 같은 generation의 다른 slot key/permit은 거절한다. 모든 preflight 뒤 원 descriptor·
+  allocator image·payload image·DPT·publication 순서와 fence-before-unlock을 유지한다.
+
+### 주소별 읽기·flush·load
+
+- reader는 allocator와 요청 Status 전부를 하나의 exact target set으로 확보하고 canonical address
+  순으로 읽는다. 요청 수+allocator와 const N이 정확히 일치해야 한다. 각 Status의 실제 allocator
+  membership, role/kind/level/incarnation과 typed image/pageLSN을 원 observer로 검산한다.
+  반환된 bytes는 canonical 순서이며 request/stamp를 함께 제공한다. raw mutation 권한은 없다.
+- 큰 배열을 만들기 전에 작은 `try_admit(&mut Owner)`가 단일 resident-read admission을 잡는다.
+  consuming admission의 `read_set<const N>`만 requests/guards를 만든다. 성공 guard가 해제될
+  때까지 gate/owner borrow를 유지한다. content→admission→pins 정리를 모두 마친 뒤 gate를
+  해제하며 unwind는 공통 fence를 먼저 세운다. Err Result도 원 mutable Owner lifetime에 묶어
+  retained Result가 살아 있는 동안 재admit을 막고 compiler negative로 확인한다.
+  admission 실패/poison/foreign owner·shape·missing·
+  duplicate·Busy/semantic 실패마다 pin/잠금을 반환한다. mutex 안 I/O/페이지 allocation은 없다.
+- 주소별 Status flush는 exact resident request를 확인하고 원 role authority/capture/WAL force/
+  DWB→home/whole retirement/conditional finalize를 그대로 소비한다. 다른 selected slot이나
+  다른 dirty home을 대신 쓰지 않는다. flush control은 하나이며 미완료 batch 중 새 batch는 거절한다.
+- `load_into(index, PageRef)`는 지정한 clean/empty slot만 교체한다. 현재 allocator+descriptor의
+  membership을 읽고 원 selected namespace를 통해 scratch에 완전 page를 읽은 뒤 설치한다.
+  모든 resident address에 대한 중복을 I/O 전에 거절한다. snapshot/permit은 core/binding,
+  실제 index·이전 stamp/generation과 allocator bytes/WAL requirement에 묶는다.
+  정상 unchanged read 실패는 원 bytes/등록/세대/selected destination을 보존한다. source drift·
+  손상·poison·unwind는 원 cause와 fence다. 성공 load는 INIT destination을 임의로 바꾸지 않는다.
+
+### F05와 구현 동반 인수
+
+원 caller operation114688·flush4MiB·page16KiB/frame·고정64-slot registry를 유지한다.
+frame 개수는 caller payload charge에 정확 반영하고 new binder/activation/claim/index/permit/
+reader의 source-value·타입 layout을 새로 산정한다. 기존 두-frame dirty196608·Status+flush262144와
+component65536를 상향하지 않는다. 새 resident entry는 별도 census로 이 한도 안임을 검산한다.
+wide read의 단일 working chain, owner34의 작은 admission/거절 carrier와 종료 인계 중 큰 Result,
+실제 동시에 held guard·writer/flusher·기존 bound를 분리한다. 성공 pin68만으로 실패/진행 중
+큰 배열 비용을 숨기지 않는다. gate를 얻기 전 generic 큰 반환형을 만드는 API도 금지한다.
+한도가 맞지 않으면 실행 전에 구조/선택을 독립 재검토하며 runtime 통과로 F05를 대체하지 않는다.
+
+새 필수는 shape/claim/activation Before retry·등록 alias, 실제3frame의 A/B 동시 dirty·서로 다른
+slot INIT와 주소별 flush/read set, allocator dirty와 다른 dirty page 보존,4주소/3frame 퇴출/재적재,
+뒤집힌 주소 순서와 이미 상주한 주소의 load 거절, index/generation/claim 위조·counter exhaustion,
+partial guard 정리/실제 reader-writer-flusher 배제, 잊힌 예약 뒤 prepare/load 거절,
+새 slot install의 각 unwind 경계를 포함한다.
+새 native는 실제 위 producer의 전체 WAL/페이지/descriptor·DWB 선택과 FD/Drop을 독립 literal로
+대조하고 같은 build의 별도 process recovery/reentry까지 연결한다. 새 selector/fixture와 oracle/
+compiler lifetime·known-bad checker를 함께 작성하며 정확 ID/분모는 runtime 전에 별도 동결한다.
+
+기존 소비자는 실제 바뀐 binder/INIT/reader/load/flush/index 인수에 해당하는 최소 selector만
+선택하고 무변경 하부 I/O·복구 wrapper를 반복하지 않는다. 각 runtime30초·합240초, native
+이력30초·합120초·DB24MiB씩/보존96MiB, compiler180초·checker30초를 상한으로 둔다.
+활성 input8MiB·case/review32MiB, source/ELF/compiler/cache 별도 보존 경로/bytes를 기록한다.
+S5에는 profile2/3·N4/8/64·전체 victim/late guard 조합을 별도 ignored selector로 작성한다.
+필수 inventory·품질 기준을 시간 한도에 맞춰 줄이지 않으며 FAIL/중단/NOT_RUN을 그대로 보존한다.
+
+
+독립 D2 원 제안과 실행 전 gate·최종 선택 결과는
+[증거](../evidence/dev3-resident-status-20261023.md)를 따른다. 실제 r5 census는 activation63296,
+read phase180488/producer phase196200/load110992/whole261736이며 기존 dirty/whole 한도 여유408이다.
+producer phase는 실제 plans4096·temp16384와 writer/active read를 제외한 retained Result32개를 포함하고,
+read/light phase는 Owner34개의 carrier를 보수적으로 센다. 원 r2의 producer 임시값 누락 식은 최종 F05가 아니다.
+[최종 manifest](../../crates/engine/tests/fixtures/dev3-resident-status/manifest.json)의 신규31·관련4·static2·
+compiler9(제어1 포함)·checker8·native history1과 S5 six/146victim/8200late를 구별한다.
+S5 확대는 작성·NOT_RUN이며 전체 DEV3/S5를 완료로 승격하지 않는다.

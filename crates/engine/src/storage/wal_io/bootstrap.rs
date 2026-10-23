@@ -50,8 +50,10 @@ pub(crate) use doublewrite_install::{
 pub(crate) use doublewrite_install::{
     BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, InitAttemptError,
     InitializedStatusObservation, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
-    OperationalStatusReader, OperationalStatusWriter, ReservedStatus, StatusBootstrapWriter,
-    StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard, StatusReader,
+    OperationalStatusReader, OperationalStatusWriter, ReadStatusSet, ReservedStatus,
+    ResidentReadAdmission, ResidentStatus, ResidentStatusBinding, ResidentStatusReader,
+    StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard,
+    StatusReader,
 };
 pub(crate) use doublewrite_install::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,

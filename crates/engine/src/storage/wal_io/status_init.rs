@@ -49,7 +49,8 @@ mod status_flush;
 pub(in crate::storage) use status_flush::StatusFlushAuthority;
 pub(crate) use status_flush::{
     BoundStatusWithFlush, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
-    OperationalStatusReader, OperationalStatusWriter, StatusFlushError, StatusFlusher,
+    OperationalStatusReader, OperationalStatusWriter, ReadStatusSet, ResidentReadAdmission,
+    ResidentStatus, ResidentStatusBinding, ResidentStatusReader, StatusFlushError, StatusFlusher,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -146,8 +147,12 @@ pub(in crate::storage) struct InitAuthority<'c, 's> {
     payload: TargetRequest,
     ordinal: u16,
     generations: [u64; 2],
+    payload_index: usize,
 }
 impl<'c, 's> InitAuthority<'c, 's> {
+    pub(in crate::storage) fn payload_index(&self) -> usize {
+        self.payload_index
+    }
     pub(in crate::storage) fn core(&self) -> &'c PageConcurrency<'s> {
         self.core
     }
@@ -246,7 +251,28 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
         frames: &'p mut [DirtyFrame<'d>; 2],
         operation: &'o mut [u8; OPERATION_BYTES],
     ) -> super::Result<BoundStatusBootstrap<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
+        self.bind_status_frames(core, frames, operation, false)
+    }
+    pub(crate) fn bind_resident_status<'s, 'c, 'p, 'd: 'p, 'o>(
+        &'s self,
+        core: &'c PageConcurrency<'s>,
+        frames: &'p mut [DirtyFrame<'d>],
+        operation: &'o mut [u8; OPERATION_BYTES],
+    ) -> super::Result<ResidentStatusBinding<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
+        self.bind_status_frames(core, frames, operation, true)
+            .map(ResidentStatusBinding::new)
+    }
+    fn bind_status_frames<'s, 'c, 'p, 'd: 'p, 'o>(
+        &'s self,
+        core: &'c PageConcurrency<'s>,
+        frames: &'p mut [DirtyFrame<'d>],
+        operation: &'o mut [u8; OPERATION_BYTES],
+        resident: bool,
+    ) -> super::Result<BoundStatusBootstrap<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         self.health()?;
+        if !(2..=64).contains(&frames.len()) || (!resident && frames.len() != 2) {
+            return Err(unchanged(StorageCause::Capacity));
+        }
         if self.fresh.plan.kind != super::super::super::BootstrapPlanKind::StatusBootstrap {
             return Err(unchanged(StorageCause::UnsupportedPlan));
         }
@@ -254,7 +280,7 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
         if !core.uses_fence(self.session_fence()) || !role.uses_fence(self.session_fence()) {
             return Err(unchanged(StorageCause::BindingMismatch));
         }
-        if !fits::<W>() {
+        if !fits::<W>() || (resident && !status_flush::resident::fits::<W>()) {
             return Err(unchanged(StorageCause::Capacity));
         }
         for frame in frames.iter_mut() {
@@ -288,14 +314,24 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
         frames[0]
             .register(allocator_request(identity))
             .map_err(|e| self.fatal(StorageCause::Frame(e)))?;
-        let pool =
-            SharedPool::new_with_closed_init(core, self.session_fence(), &self.binding, frames)
-                .map_err(|e| self.fatal(StorageCause::Frame(e)))?;
+        let pool = SharedPool::new_status_slots(
+            core,
+            self.session_fence(),
+            &self.binding,
+            frames,
+            resident,
+        )
+        .map_err(|e| self.fatal(StorageCause::Frame(e)))?;
+        let mut base = WriterControl::new_status(base, identity);
+        if resident {
+            base.population =
+                super::super::allocation_reservation::operation::AllocationPopulation::Status;
+        }
         let bound = BoundStatusBootstrap {
             storage: self,
             pool,
             control: StatusControl {
-                base: WriterControl::new_status(base, identity),
+                base,
                 status_after,
                 role,
                 installation: None,
@@ -526,6 +562,10 @@ impl<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             fence: self.storage.session_fence(),
             batch,
             ordinal,
+            payload_index: self
+                .pool
+                .init_payload_index()
+                .map_err(|e| frame_error(Phase::Prepare, e))?,
             generations: self
                 .pool
                 .init_generations()
@@ -833,7 +873,7 @@ impl<'b, 'c, 's, 'p, 'd> StatusReader<'b, 'c, 's, 'p, 'd> {
                 .try_read()
                 .map_err(|e| frame_error(Phase::Observe, e))?
         };
-        let checked = self.validate(&read);
+        let checked = self.validate_pair(&read, 1);
         if let Err(e) = checked {
             return merge_cleanup(
                 Err(e),
@@ -846,17 +886,23 @@ impl<'b, 'c, 's, 'p, 'd> StatusReader<'b, 'c, 's, 'p, 'd> {
             _role: self.role,
         })
     }
-    fn validate(&self, read: &ReadTargets<'_, '_, '_, '_, '_, '_>) -> Result<()> {
+    fn validate_pair<const N: usize>(
+        &self,
+        read: &ReadTargets<'_, '_, '_, '_, '_, '_, N>,
+        position: usize,
+    ) -> Result<()> {
         let allocator_identity = read
             .target_request(0)
             .map_err(|e| frame_error(Phase::Observe, e))?
             .identity;
         let payload_identity = read
-            .target_request(1)
+            .target_request(position)
             .map_err(|e| frame_error(Phase::Observe, e))?
             .identity;
         let allocator = read.bytes(0).map_err(|e| frame_error(Phase::Observe, e))?;
-        let status = read.bytes(1).map_err(|e| frame_error(Phase::Observe, e))?;
+        let status = read
+            .bytes(position)
+            .map_err(|e| frame_error(Phase::Observe, e))?;
         let observed = if self.pool.operational_status() {
             operation::observe_operational_initialized(
                 *self.profile,
@@ -889,7 +935,7 @@ impl<'b, 'c, 's, 'p, 'd> StatusReader<'b, 'c, 's, 'p, 'd> {
             .observe(0)
             .map_err(|e| frame_error(Phase::Observe, e))?;
         let status = read
-            .observe(1)
+            .observe(position)
             .map_err(|e| frame_error(Phase::Observe, e))?;
         if allocator.frame.page_lsn != observed.0
             || status.frame.page_lsn != observed.1

@@ -1,0 +1,88 @@
+{
+  "schema": "xadb-resident-status-compiler-v1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "compiler_budget_seconds": 180,
+  "probe_relative_path": "crates/engine/src/storage/resident_status_borrow_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+  "cases": [
+    {
+      "name": "baseline",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_path": null,
+      "reason": "new resident binding/admission lifetime contract"
+    },
+    {
+      "name": "release",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_path": null,
+      "reason": "new resident binding/admission lifetime contract",
+      "bytes": 381,
+      "sha256": "4a466b20445aad5d4e58d864160ee13455ca09705aaf52ca5def6afae01d7e6d"
+    },
+    {
+      "name": "activation_retry",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_path": null,
+      "reason": "new resident binding/admission lifetime contract",
+      "bytes": 386,
+      "sha256": "b6121f662b02a0d8df361d0a3b99c7a9201840ba03b3fbab55942ef017d76b33"
+    },
+    {
+      "name": "failed_result_reborrow",
+      "expected_code": "E0499",
+      "primary_line": 6,
+      "primary_path": "crates/engine/src/storage/resident_status_borrow_probe.rs",
+      "reason": "new resident binding/admission lifetime contract",
+      "bytes": 381,
+      "sha256": "42d0a01391675fd3029cc1a7ab4944f78ea15c8f77365232c0e123bebe633f22"
+    },
+    {
+      "name": "guard_reborrow",
+      "expected_code": "E0499",
+      "primary_line": 6,
+      "primary_path": "crates/engine/src/storage/resident_status_borrow_probe.rs",
+      "reason": "new resident binding/admission lifetime contract",
+      "bytes": 423,
+      "sha256": "3e7000bebebffcc513eb067324556c8c8b0a6249717acc521e902c3a96e8dc15"
+    },
+    {
+      "name": "guard_sync",
+      "expected_code": "E0277",
+      "primary_line": 5,
+      "primary_path": "crates/engine/src/storage/resident_status_borrow_probe.rs",
+      "reason": "new resident binding/admission lifetime contract",
+      "bytes": 266,
+      "sha256": "def39123436255fb80a3281d079b4068371edef47220f38f576bd0d3372bfacb"
+    },
+    {
+      "name": "consumed_binding",
+      "expected_code": "E0382",
+      "primary_line": 6,
+      "primary_path": "crates/engine/src/storage/resident_status_borrow_probe.rs",
+      "reason": "new resident binding/admission lifetime contract",
+      "bytes": 360,
+      "sha256": "ac6f109601ececcdaef345d3c445fad00fa232314c15a0bc210643ed4d07d041"
+    },
+    {
+      "name": "split_prepare",
+      "expected_code": "E0499",
+      "primary_line": 6,
+      "primary_path": "crates/engine/src/storage/resident_status_borrow_probe.rs",
+      "reason": "new resident binding/admission lifetime contract",
+      "bytes": 354,
+      "sha256": "4df9369d6c4ef0496cfcb23f538f60832fe8a34cff2b1083bb8ec7db4e75faa8"
+    },
+    {
+      "name": "frames_alias",
+      "expected_code": "E0499",
+      "primary_line": 7,
+      "primary_path": "crates/engine/src/storage/resident_status_borrow_probe.rs",
+      "reason": "new resident binding/admission lifetime contract",
+      "bytes": 555,
+      "sha256": "af78491dee81ca6b6c7247d5f6ed5e193ce0add26770afb8b1774e55b6ab46fb"
+    }
+  ]
+}

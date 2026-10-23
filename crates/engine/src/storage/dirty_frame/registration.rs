@@ -11,6 +11,7 @@ enum Mode {
     Fixed,
     AllocatorReloadable,
     OperationalStatus,
+    ResidentStatus,
 }
 
 struct Slot {
@@ -90,16 +91,42 @@ impl RegistrationDirectory {
         self.closed_index
     }
     pub(super) fn operational_status(&self) -> bool {
-        self.mode == Mode::OperationalStatus
+        matches!(self.mode, Mode::OperationalStatus | Mode::ResidentStatus)
+    }
+    pub(super) fn resident_status(&self) -> bool {
+        self.mode == Mode::ResidentStatus
     }
     pub(super) fn init_generations(&self, frames: &[DirtyFrame<'_>]) -> Option<[u64; 2]> {
-        if self.closed_index != Some(1) || !self.valid(frames) {
+        let index = self.closed_index?;
+        if !self.valid(frames) {
             return None;
         }
         Some([
             self.resolve(frames, 0)?.generation,
-            self.entries[1].generation,
+            self.entries[index].generation,
         ])
+    }
+    pub(super) fn open_resident_status(&mut self) {
+        self.mode = Mode::ResidentStatus;
+        self.close_status_slot();
+    }
+    pub(super) fn next_resident_generation(&self, index: usize) -> Option<u64> {
+        self.resident_status().then_some(())?;
+        self.entries.get(index)?.generation.checked_add(1)
+    }
+    pub(super) fn prepare_resident_slot(&mut self, index: usize, generation: u64) {
+        self.entries[index].request.take();
+        self.entries[index].generation = generation;
+        self.closed_index = Some(index);
+    }
+    pub(super) fn replace_resident_status(&mut self, index: usize, registration: Registration) {
+        self.entries[index].replace(registration);
+    }
+    pub(super) fn address_present(&self, request: TargetRequest) -> bool {
+        self.entries
+            .iter()
+            .filter_map(Slot::registration)
+            .any(|entry| entry.request.same_address(&request))
     }
     pub(super) fn enable_status_operation(&mut self, frames: &[DirtyFrame<'_>]) -> bool {
         if self.mode != Mode::Fixed || self.closed_index != Some(1) || !self.valid(frames) {
@@ -116,6 +143,11 @@ impl RegistrationDirectory {
     pub(super) fn seed_status_generation(&mut self, generation: u64) {
         assert!(self.operational_status() && generation != 0);
         self.entries[1].generation = generation;
+    }
+    #[cfg(test)]
+    pub(super) fn seed_resident_generation(&mut self, index: usize, generation: u64) {
+        assert!(self.resident_status() && index > 0 && generation != 0);
+        self.entries[index].generation = generation;
     }
     pub(super) fn prepare_next_status(&mut self, generation: u64) {
         // Exclusive caller already checked the next generation and all claims.
@@ -140,7 +172,7 @@ impl RegistrationDirectory {
     pub(super) fn resolve(&self, frames: &[DirtyFrame<'_>], index: usize) -> Option<Registration> {
         let frame = frames.get(index)?;
         let original = self.entries.get(index)?.registration();
-        if self.closed_index == Some(index) {
+        if self.closed_index == Some(index) || (self.resident_status() && index != 0) {
             if frame.registration.is_some() {
                 return None;
             }
@@ -149,7 +181,9 @@ impl RegistrationDirectory {
             original.filter(|value| {
                 value.generation != 0
                     && match self.mode {
-                        Mode::Fixed | Mode::OperationalStatus => frame.registration == Some(*value),
+                        Mode::Fixed | Mode::OperationalStatus | Mode::ResidentStatus => {
+                            frame.registration == Some(*value)
+                        }
                         Mode::AllocatorReloadable => self.resident & (1u64 << index) != 0,
                     }
             })
@@ -266,6 +300,56 @@ impl RegistrationDirectory {
     /// Fixed-adapter provenance, including its generation-one restriction.
     /// This is not a future movable-directory or page reuse invariant.
     pub(super) fn valid(&self, frames: &[DirtyFrame<'_>]) -> bool {
+        if self.resident_status() {
+            let Some(selected) = self.closed_index else {
+                return false;
+            };
+            if !(2..=MAX_FRAMES).contains(&frames.len())
+                || !(1..frames.len()).contains(&selected)
+                || self.entries[selected].generation == 0
+                || self.resident != 0
+            {
+                return false;
+            }
+            let Some(allocator) = self.entries[0].registration() else {
+                return false;
+            };
+            if allocator.generation != 1
+                || frames[0].registration != Some(allocator)
+                || allocator.request.kind != PageKind::Allocation
+                || allocator.request.level != 0
+                || allocator.request.identity.page.page_no != 0
+            {
+                return false;
+            }
+            return self.entries.iter().enumerate().all(|(index, slot)| {
+                if index >= frames.len() {
+                    return slot.generation == 0 && slot.registration().is_none();
+                }
+                if index == 0 {
+                    return true;
+                }
+                if frames[index].registration.is_some() {
+                    return false;
+                }
+                let Some(entry) = slot.registration() else {
+                    return true;
+                };
+                entry.generation != 0
+                    && entry.request.kind == PageKind::TransactionStatus
+                    && entry.request.level == 0
+                    && entry.request.identity.database == allocator.request.identity.database
+                    && entry.request.identity.page.file == allocator.request.identity.page.file
+                    && (1..64).contains(&entry.request.identity.page.page_no)
+                    && entry.request.identity.page.incarnation.get() >= 2
+                    && entry.request.identity.owner.get() == 2
+                    && entry.request.identity.owner_generation.get() == 1
+                    && !self.entries[..index]
+                        .iter()
+                        .filter_map(Slot::registration)
+                        .any(|prior| prior.request.same_address(&entry.request))
+            });
+        }
         if self.mode == Mode::AllocatorReloadable {
             let Some(initial) = frames.first().and_then(|frame| frame.registration) else {
                 return false;

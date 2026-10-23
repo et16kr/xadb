@@ -750,7 +750,7 @@ P1 인수 당시 P2/P3는 미공급이었다. 후속 [P2 live owner](#operationa
 | 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기와 [불변 Status bootstrap 역할](#status-bootstrap)의 제한 구현 검증. 일반 reopen은 미완료 |
 | 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | [예약·취소](#allocation-reservation-accepted)와 [한 Status INIT](#status-init)의 제한 연결. [Status home flush](#status-home-flush)의 제한 선택 인수. 일반 INIT·확장·free/reuse 미완료 |
 | 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | [dirty stage](#dirty-stage)·[authentic WAL requirement/flush force](#allocator-flush)·[Status INIT 두 image](#status-init), genesis·RollbackStart·예약/취소 연결. 일반 opcode/CLR/commit 연결 미완료 |
-| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)·[폐쇄 두-frame INIT/reader](#status-init)·[Status home flush](#status-home-flush)의 제한 선택 인수. [등록 코어·세대 pin](#registration-core)과 [같은 allocator 주소의 clean reload](#allocator-residency)와 [실제 퇴출·다른 frame 재적재](#allocator-eviction)까지 공급. [P1 슬롯 등록](#operational-registration)·[P2 반복 immutable Status INIT](#operational-status)·[현재-build 복구](#operational-recovery)까지 제한 공급. [P3 현재 membership Status load](#status-load)의 구현·선택 검증·제한 단위 최종 독립 D1 수용. [정확1..64 전체 대상 pin](#bounded-target-set)의 선행 primitive를 추가했다. 일반 page load/eviction·N+1 pressure·live Status 변경·batch8/64·다중 file 미완료 |
+| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)·[폐쇄 두-frame INIT/reader](#status-init)·[Status home flush](#status-home-flush)의 제한 선택 인수. [등록 코어·세대 pin](#registration-core)과 [같은 allocator 주소의 clean reload](#allocator-residency)와 [실제 퇴출·다른 frame 재적재](#allocator-eviction)까지 공급. [P1 슬롯 등록](#operational-registration)·[P2 반복 immutable Status INIT](#operational-status)·[현재-build 복구](#operational-recovery)까지 제한 공급. [P3 현재 membership Status load](#status-load)의 구현·선택 검증·제한 단위 최종 독립 D1 수용. [정확1..64 전체 대상 pin](#bounded-target-set)과 [여러 Status 상주 수명](#resident-status-pool)의3frame/4주소 이력·현재-build 복구를 추가했다. 일반 page load/eviction·N+1 pressure·live Status 변경·batch8/64·다중 file 미완료 |
 | 3.06 트리·행 | mutable tree CRUD·split·root 변경·overflow·stable cursor·locator | 표현·부분 모델 존재. 실제 변경 경로 미완료 |
 | 3.07 인덱스 | point/range scan·presence·PK/UNIQUE·build/취소 | 표현·의미 계약 존재. 실제 인덱스와 statement-final unique 미완료 |
 | 3.08 카탈로그·DDL | table/index 정의·이름·객체 수명·create/drop | 표현 존재. native 원자 DDL과 catalog 변경 미완료 |
@@ -841,3 +841,18 @@ compiler7과 원 compile FAIL을 보존하며 최종 독립 D1을 제한 단위�
 load·실제 N+1 dirty/flush/evict/reload·256/1024/4096 backing·live Begin/undo/terminal·복구는
 후속이다. bootstrap 시험 페이지는 실제 일반 I/O/load 인수가 아니다. S5 확대576은 작성·NOT_RUN이며
 전체 DEV3/S5를 완료로 승격하지 않는다.
+
+
+<a id="resident-status-pool"></a>
+## 여러 immutable Status의 실제 상주 수명
+
+[D3-RESIDENT-STATUS-001](../contracts/dev3-task-05-buffer-flush.md#resident-status-pool)은 원
+SharedPool/권한에서 caller2..64 fresh frame을 받아 slot별 INIT·주소별 exact read/flush·clean 퇴출과
+지정 슬롯 home load를 연결한다. allocator0은 고정이며 선택 슬롯은 INIT 목적지다. 필수3frame/4주소의
+실제 A/B/C 이력 뒤 별도 process recovery/reentry가 같은 build에서 통과했다.
+
+[선택 증거](../evidence/dev3-resident-status-20261023.md)는 신규31·직접4·static2·compiler9·checker8·
+native1의 원 source별 결과·compile/runtime/Clippy FAIL과 수정 해당 사례를 구별한다. 최종 독립 D1을
+제한 단위로 수용했다. F05 whole261736≤262144(여유408)이며 원 범위를 넓히는 RSS 주장은 없다.
+S5 profile2/3×N4/8/64,146victim/8200late 조합은 작성·NOT_RUN이다. loaded live Begin/undo·자동 victim/
+pressure·다음 extent·큰 backing·일반 READY·tree/행 거래·전체 DEV3/S5는 미완료다.

@@ -1,5 +1,6 @@
 //! Selected immutable Status home loading through the original operational owner.
 use super::super::super::{dirty_allocation, operation};
+use super::super::BoundStatusWithFlush;
 use super::{OperationalStatus, ready};
 use crate::storage::{
     dirty_frame::{self, FrameStamp, StatusLoadSnapshot, TargetRequest},
@@ -43,12 +44,16 @@ pub(crate) struct StatusLoadObservation {
 /// selected disk read. Its accessors do not mint or change installation rights.
 pub(in crate::storage) struct StatusLoadPermit<'a, 'c, 's> {
     snapshot: &'a StatusLoadSnapshot<'c, 's>,
+    index: usize,
     allocator: &'a [u8; PAGE_BYTES],
     bytes: &'a [u8; PAGE_BYTES],
     request: TargetRequest,
     lsn: PageLsn,
 }
 impl<'a, 'c, 's> StatusLoadPermit<'a, 'c, 's> {
+    pub(in crate::storage) fn index(&self) -> usize {
+        self.index
+    }
     pub(in crate::storage) fn snapshot(&self) -> &'a StatusLoadSnapshot<'c, 's> {
         self.snapshot
     }
@@ -79,8 +84,14 @@ fn frame(source: dirty_frame::DirtyError) -> StatusLoadError {
 }
 
 impl<W: WriterNamespace> OperationalStatus<'_, '_, '_, '_, '_, '_, '_, W> {
+    pub(crate) fn load_status(&mut self, page: PageRef) -> Result<StatusLoadObservation> {
+        self.inner.load_status_at(1, page)
+    }
+}
+
+impl<W: WriterNamespace> BoundStatusWithFlush<'_, '_, '_, '_, '_, '_, '_, W> {
     fn load_fatal(&self, cause: Cause) -> StatusLoadError {
-        self.inner.inner.storage.session_fence().fence();
+        self.inner.storage.session_fence().fence();
         StatusLoadError {
             cause,
             effect: Effect::CallerMustResolve,
@@ -89,7 +100,7 @@ impl<W: WriterNamespace> OperationalStatus<'_, '_, '_, '_, '_, '_, '_, W> {
     fn load_read_error(&self, source: PageIoError) -> StatusLoadError {
         let retryable = matches!(&source, PageIoError::Read(error) if error.effect() == Effect::Unchanged && error.certainty() == Certainty::Known)
             || matches!(&source, PageIoError::Namespace(error) if error.kind == NamespaceErrorKind::Io && error.effect == Effect::Unchanged);
-        if retryable && !self.inner.inner.storage.session_fence().is_fenced() {
+        if retryable && !self.inner.storage.session_fence().is_fenced() {
             unchanged(Cause::PageIo(source))
         } else {
             self.load_fatal(Cause::PageIo(source))
@@ -101,8 +112,12 @@ impl<W: WriterNamespace> OperationalStatus<'_, '_, '_, '_, '_, '_, '_, W> {
     /// explicit retry. Corruption, source drift or unwind fences this owner.
     /// No namespace/content lock spans file read/checksum, and no DB write or
     /// sync is performed. The returned stamps are diagnostics, not capabilities.
-    pub(crate) fn load_status(&mut self, page: PageRef) -> Result<StatusLoadObservation> {
-        let original = self.inner.inner.storage;
+    pub(in super::super::super) fn load_status_at(
+        &mut self,
+        index: usize,
+        page: PageRef,
+    ) -> Result<StatusLoadObservation> {
+        let original = self.inner.storage;
         let _unwind = original.session_fence().unwind_guard();
         original
             .health()
@@ -110,18 +125,17 @@ impl<W: WriterNamespace> OperationalStatus<'_, '_, '_, '_, '_, '_, '_, W> {
         if !fits::<W>() {
             return Err(unchanged(Cause::Capacity));
         }
-        let control = &self.inner.inner.control;
+        let control = &self.inner.control;
         if control.installation.is_some()
             || control.base.installation.is_some()
             || control.base.terminal_pending
             || control.base.batch.is_some()
-            || !ready(&self.inner.flush)
+            || !ready(&self.flush)
         {
             return Err(unchanged(Cause::Busy));
         }
         if !control.role.uses_fence(original.session_fence())
             || !self
-                .inner
                 .inner
                 .pool
                 .uses_storage_origin(&original.binding, original.session_fence())
@@ -130,10 +144,10 @@ impl<W: WriterNamespace> OperationalStatus<'_, '_, '_, '_, '_, '_, '_, W> {
         }
         let snapshot = self
             .inner
-            .inner
             .pool
-            .prepare_status_load(
-                (&mut self.inner.inner.control.base.operation[65536..81920])
+            .prepare_status_load_at(
+                index,
+                (&mut self.inner.control.base.operation[65536..81920])
                     .try_into()
                     .expect("allocator scratch"),
             )
@@ -143,12 +157,11 @@ impl<W: WriterNamespace> OperationalStatus<'_, '_, '_, '_, '_, '_, '_, W> {
             .prefix()
             .map_err(|e| self.load_fatal(Cause::Wal(e)))?;
         self.inner
-            .inner
             .control
             .base
             .observation(original.profile(), prefix, &snapshot.allocator(), false)
             .map_err(|e| self.load_fatal(Cause::Allocation(e)))?;
-        let control = &self.inner.inner.control;
+        let control = &self.inner.control;
         let request = TargetRequest {
             identity: crate::storage::page::PageIdentity {
                 database: control.role.namespace().database,
@@ -170,15 +183,17 @@ impl<W: WriterNamespace> OperationalStatus<'_, '_, '_, '_, '_, '_, '_, W> {
             super::AllocationPopulation::Status,
         )
         .map_err(|_| unchanged(Cause::Membership))?;
-        if snapshot
-            .payload()
-            .is_some_and(|old| old.identity == request.identity)
+        if self
+            .inner
+            .pool
+            .resident_address_present(request)
+            .map_err(frame)?
         {
             return Err(unchanged(Cause::AlreadyResident));
         }
         let descriptor = control.base.descriptor;
         {
-            let control = &mut self.inner.inner.control;
+            let control = &mut self.inner.control;
             let (root, rest) = control.base.operation[..32768].split_at_mut(PAGE_BYTES);
             let read = (|| -> std::result::Result<(), PageIoError> {
                 let mut reader = original.fresh.open_reader(
@@ -196,7 +211,7 @@ impl<W: WriterNamespace> OperationalStatus<'_, '_, '_, '_, '_, '_, '_, W> {
             })();
             read.map_err(|e| self.load_read_error(e))?;
         }
-        let lsn = operation::status_lsn(self.inner.inner.control.status_after, &request.identity)
+        let lsn = operation::status_lsn(self.inner.control.status_after, &request.identity)
             .map_err(|e| self.load_fatal(Cause::Semantic(e)))?;
         if lsn.0 == 0 || lsn.0 > prefix.synced_lsn {
             return Err(self.load_fatal(Cause::Invariant));
@@ -208,25 +223,24 @@ impl<W: WriterNamespace> OperationalStatus<'_, '_, '_, '_, '_, '_, '_, W> {
             .wal()
             .prefix()
             .map_err(|e| self.load_fatal(Cause::Wal(e)))?;
-        if current != prefix || self.inner.inner.control.base.descriptor != descriptor {
+        if current != prefix || self.inner.control.base.descriptor != descriptor {
             return Err(self.load_fatal(Cause::Invariant));
         }
         self.inner
-            .inner
             .control
             .base
             .observation(original.profile(), current, &snapshot.allocator(), false)
             .map_err(|e| self.load_fatal(Cause::Allocation(e)))?;
-        let control = &self.inner.inner.control;
+        let control = &self.inner.control;
         let permit = StatusLoadPermit {
             snapshot: &snapshot,
+            index,
             allocator: control.base.before(),
             bytes: control.status_after,
             request,
             lsn,
         };
         let after = self
-            .inner
             .inner
             .pool
             .install_status_load(permit)
@@ -242,7 +256,7 @@ impl<W: WriterNamespace> OperationalStatus<'_, '_, '_, '_, '_, '_, '_, W> {
 /// The original bound remains live. Reader moves/open errors, four file values,
 /// descriptor copy, snapshot/result carriers and the largest sequential codec/
 /// observation/registry helper are all charged. Page buffers are existing loans.
-pub(super) fn call_bytes<W: WriterNamespace>() -> usize {
+pub(in super::super) fn call_bytes<W: WriterNamespace>() -> usize {
     size_of::<crate::storage::wal_io::MutableStorageOwner<'_, '_, W>>()
         + size_of::<OperationalStatus<'_, '_, '_, '_, '_, '_, '_, W>>()
         + 2 * size_of::<PageFileReader<'_, W>>()
@@ -255,7 +269,7 @@ pub(super) fn call_bytes<W: WriterNamespace>() -> usize {
         + 16384
         + dirty_frame::CALL_BYTES
 }
-pub(super) fn metadata_bytes<W: WriterNamespace>() -> (usize, usize) {
+pub(in super::super) fn metadata_bytes<W: WriterNamespace>() -> (usize, usize) {
     // Conservative composition with the existing retained baseline. The bound
     // is also in call_bytes, so its retained fields are intentionally overcharged.
     let retained = 60672
@@ -265,7 +279,7 @@ pub(super) fn metadata_bytes<W: WriterNamespace>() -> (usize, usize) {
     let dirty = retained + call_bytes::<W>();
     (dirty, dirty + 65536)
 }
-pub(super) fn fits<W: WriterNamespace>() -> bool {
+pub(in super::super) fn fits<W: WriterNamespace>() -> bool {
     let (dirty, whole) = metadata_bytes::<W>();
     dirty <= 196608
         && whole <= 262144

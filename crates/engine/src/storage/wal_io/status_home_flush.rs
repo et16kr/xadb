@@ -13,7 +13,7 @@ use super::{
 use crate::{
     storage::{
         dirty_frame::{self, CapturedPage, SharedPool, TargetRequest},
-        page::{PAGE_BYTES, PageIdentity, PageKind, PageLsn},
+        page::{PAGE_BYTES, PageIdentity, PageKind, PageLsn, PageRef},
         session_fence::SessionFence,
         wal_io::{self as wal, EnsureDurable, StatusRole},
     },
@@ -35,8 +35,14 @@ mod tests;
 
 #[path = "operational_status.rs"]
 mod operational;
+#[path = "resident_status.rs"]
+pub(super) mod resident;
 pub(crate) use operational::{
     IntoOperationalStatusError, OperationalStatus, OperationalStatusReader, OperationalStatusWriter,
+};
+pub(crate) use resident::{
+    ReadStatusSet, ResidentReadAdmission, ResidentStatus, ResidentStatusBinding,
+    ResidentStatusReader,
 };
 
 #[cfg(test)]
@@ -337,11 +343,24 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
             .map_err(|e| self.frame_error(e))
     }
     fn status_authority(&self) -> Result<StatusFlushAuthority<'c, 's>> {
-        let request = self
-            .pool
-            .initialized_request()
-            .map_err(|e| self.frame_error(e))?
-            .ok_or_else(|| self.error(Cause::NotInitialized, Effect::Unchanged))?;
+        self.status_authority_at(None)
+    }
+    fn status_authority_at(&self, page: Option<PageRef>) -> Result<StatusFlushAuthority<'c, 's>> {
+        let request = match page {
+            None => self.pool.initialized_request(),
+            Some(page) => self.pool.resident_request(TargetRequest {
+                identity: PageIdentity {
+                    database: self.role.namespace().database,
+                    page,
+                    owner: self.role.object(),
+                    owner_generation: self.role.generation(),
+                },
+                kind: self.role.kind(),
+                level: self.role.level(),
+            }),
+        }
+        .map_err(|e| self.frame_error(e))?
+        .ok_or_else(|| self.error(Cause::NotInitialized, Effect::Unchanged))?;
         let allocator = self
             .pool
             .target_request(0)
@@ -381,12 +400,24 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
         &mut self,
         owner: &mut Owner<'c, 's>,
     ) -> Result<FlushProgress> {
-        self.try_flush(owner, false)
+        self.try_flush(owner, false, None)
     }
     pub(crate) fn try_flush_status(&mut self, owner: &mut Owner<'c, 's>) -> Result<FlushProgress> {
-        self.try_flush(owner, true)
+        self.try_flush(owner, true, None)
     }
-    fn try_flush(&mut self, owner: &mut Owner<'c, 's>, status: bool) -> Result<FlushProgress> {
+    pub(crate) fn try_flush_page(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        page: PageRef,
+    ) -> Result<FlushProgress> {
+        self.try_flush(owner, true, Some(page))
+    }
+    fn try_flush(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        status: bool,
+        page: Option<PageRef>,
+    ) -> Result<FlushProgress> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
         self.enter(owner)?;
@@ -402,7 +433,10 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
         // Publication lookup precedes headroom/DPT/content. C5 may hold both
         // DPT and content while this lookup returns NotInitialized immediately.
         let authority = if status {
-            Some(self.status_authority()?)
+            Some(match page {
+                None => self.status_authority()?,
+                Some(page) => self.status_authority_at(Some(page))?,
+            })
         } else {
             None
         };

@@ -1837,6 +1837,16 @@
       "path": "evidence/dev3-target-set-20261023.json",
       "role": "evidence",
       "title": "DEV3 전체 대상 source·receipt 색인"
+    },
+    "dev3-resident-status-20261023.md": {
+      "path": "evidence/dev3-resident-status-20261023.md",
+      "role": "evidence",
+      "title": "DEV3 여러 Status의 실제 상주 수명 선택 검증"
+    },
+    "dev3-resident-status-20261023.json": {
+      "path": "evidence/dev3-resident-status-20261023.json",
+      "role": "evidence",
+      "title": "DEV3 resident Status source·receipt 색인"
     }
   }
 }

@@ -15,7 +15,7 @@ use std::mem::size_of;
 use xadb_foundation::{error::Effect, namespace::WriterNamespace};
 
 #[path = "status_load.rs"]
-mod load;
+pub(in super::super) mod load;
 pub(in crate::storage) use load::StatusLoadPermit;
 
 #[cfg(test)]
@@ -32,7 +32,7 @@ pub(crate) struct OperationalStatus<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespa
     inner: BoundStatusWithFlush<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>,
 }
 
-fn ready(control: &StatusFlushControl<'_, '_, '_>) -> bool {
+pub(in super::super) fn ready(control: &StatusFlushControl<'_, '_, '_>) -> bool {
     control.phase == Phase::Ready
         && control.capture.is_none()
         && control.retired.is_none()

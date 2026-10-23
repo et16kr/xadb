@@ -516,3 +516,23 @@ N64×stale64×release/read/write192의576조합을 포함한다. 관련4·기존
 중복 집계하지 않는다. 확대는 ignored/NOT_RUN이며 일반 load/pressure 증거가 아니다.
 각 runtime30초·합180초, compiler120초·checker30초·S5 합180초,
 활성 fixture2MiB·case/review16MiB와 별도 source/ELF/compiler/cache 보존을 유지한다.
+
+
+<a id="resident-status-followup"></a>
+## 여러 Status 상주 수명의 선택 inventory
+
+[소유 계약](../contracts/dev3-task-05-buffer-flush.md#resident-status-pool),
+[최종 manifest](../../crates/engine/tests/fixtures/dev3-resident-status/manifest.json)와
+[source별 결과](../evidence/dev3-resident-status-20261023.md)를 따른다. 신규31은 실제 INIT/flush/
+퇴출/load, index/claim/permit·generation·forgotten reservation/pin·activation retry·read shape/
+alias/Busy/poison/semantic·unwind·실제 thread 정리를 확인한다. 공통 binder/INIT/reader/flush/indexed
+loader의 직접 소비자4만 관련 선택하며 완료된 하위 wrapper는 반복하지 않는다.
+
+static2는 mock/native actual Writer의 자원 census, compiler9는 baseline1+positive2+negative6,
+checker8은 borrow provenance/진단2+native protocol/full-image/dirty-home3+실패 retention/build-log2+
+최종 정리 시간1이다. native1은 새3frame/4주소 producer→별도 recovery→reentry의3PID다.
+최종 S5에는 신규31·static2·compiler semantic8·checker8·native1과 별도6 ignored selector를 포함한다.
+확대는 profile2/3×N4/8/64, 모든 victim146·victim×late-content8200개이며 NOT_RUN이다.
+관련4는 원 inventory와 중복 집계하지 않는다. N64+1은 첫 extent 범위 밖의 잔여다.
+각 runtime30초/합240초·native history30초/합120초·DB24MiB/보존96MiB·compiler180초·checker30초,
+활성 input8MiB/case-review32MiB와 별도 source/ELF/cache 보존을 유지한다.

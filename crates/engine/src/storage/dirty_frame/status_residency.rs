@@ -10,6 +10,7 @@ pub(in crate::storage) struct StatusLoadSnapshot<'c, 's> {
     requirement: Option<WalFrameLocation>,
     payload: Option<FrameStamp>,
     generation: u64,
+    index: usize,
 }
 impl StatusLoadSnapshot<'_, '_> {
     pub(in crate::storage) fn allocator(&self) -> FrameStamp {
@@ -22,7 +23,9 @@ impl StatusLoadSnapshot<'_, '_> {
 impl<'c, 's> SharedPool<'c, 's, '_, '_> {
     fn status_load_quiescent(&self) -> Result<()> {
         self.health()?;
-        if !self.directory.operational_status() || self.frames.len() != 2 {
+        if !self.directory.operational_status()
+            || (!self.directory.resident_status() && self.frames.len() != 2)
+        {
             return Err(self.fatal(Cause::Invariant));
         }
         {
@@ -38,12 +41,17 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         }
         Ok(())
     }
-    fn status_payload(&self, content: &FrameContent<'_>) -> Result<Option<FrameStamp>> {
-        let stamp = if self.directory.published().is_some() {
-            Some(self.pair(1, content)?.frame)
+    fn status_payload(
+        &self,
+        index: usize,
+        content: &FrameContent<'_>,
+    ) -> Result<Option<FrameStamp>> {
+        let stamp = if self.resolve_registration(index).is_some() {
+            Some(self.pair(index, content)?.frame)
         } else {
             let dpt = self.entry_dpt()?;
-            if !content.fresh() || dpt.entries[1].is_some() || dpt.requirements[1].is_some() {
+            if !content.fresh() || dpt.entries[index].is_some() || dpt.requirements[index].is_some()
+            {
                 return Err(self.fatal(Cause::Invariant));
             }
             None
@@ -53,16 +61,99 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         }
         Ok(stamp)
     }
+    fn status_generation(&self, index: usize) -> Option<u64> {
+        if index == 0 || index >= self.frames.len() {
+            return None;
+        }
+        if self.directory.resident_status() {
+            self.directory.next_resident_generation(index)
+        } else if index == 1 {
+            self.directory.next_status_generation()
+        } else {
+            None
+        }
+    }
+    pub(in crate::storage) fn resident_address_present(
+        &self,
+        request: TargetRequest,
+    ) -> Result<bool> {
+        self.health()?;
+        if !self.registrations_valid() {
+            return Err(self.fatal(Cause::Invariant));
+        }
+        Ok(self.directory.address_present(request))
+    }
+    pub(in crate::storage) fn resident_request(
+        &self,
+        request: TargetRequest,
+    ) -> Result<Option<TargetRequest>> {
+        self.health()?;
+        if !self.registrations_valid() {
+            return Err(self.fatal(Cause::Invariant));
+        }
+        Ok(self
+            .directory
+            .lookup(self.frames, request)
+            .map(|(_, entry)| entry.request))
+    }
+    /// Exclusive, clean-only eviction. Other dirty pages keep their DPT entries.
+    pub(in crate::storage) fn prepare_resident_slot(
+        &mut self,
+        index: usize,
+    ) -> Result<Option<FrameStamp>> {
+        self.status_load_quiescent()?;
+        if !self.directory.resident_status() || index == 0 || index >= self.frames.len() {
+            return Err(unchanged(Cause::Shape));
+        }
+        let generation = self
+            .status_generation(index)
+            .ok_or_else(|| unchanged(Cause::CounterExhausted))?;
+        // Validate allocator metadata too, even though no new page image is read.
+        {
+            let allocator = self.frames[0]
+                .content
+                .try_read()
+                .map_err(|e| self.load_lock_error(e))?;
+            self.pair(0, &allocator)?;
+        }
+        let mut content = self.frames[index]
+            .content
+            .try_write()
+            .map_err(|e| self.load_lock_error(e))?;
+        let before = self.status_payload(index, &content)?;
+        if before.is_none() && self.directory.closed_index() == Some(index) {
+            return Err(unchanged(Cause::MissingTarget));
+        }
+        self.health()?;
+        self.directory.prepare_resident_slot(index, generation);
+        content.page_lsn = PageLsn(0);
+        content.modification_counter = 0;
+        content.rec_lsn = None;
+        content.dirty = false;
+        Ok(before)
+    }
     /// Copies the actual current allocator before any semantic observation. No
     /// lock, pin, generation or payload mutation survives this preparation.
     pub(in crate::storage) fn prepare_status_load(
         &mut self,
         before: &mut [u8; PAGE_BYTES],
     ) -> Result<StatusLoadSnapshot<'c, 's>> {
+        self.prepare_status_load_at(1, before)
+    }
+    pub(in crate::storage) fn prepare_status_load_at(
+        &mut self,
+        index: usize,
+        before: &mut [u8; PAGE_BYTES],
+    ) -> Result<StatusLoadSnapshot<'c, 's>> {
         self.status_load_quiescent()?;
+        if index == 0
+            || index >= self.frames.len()
+            || (!self.directory.resident_status() && index != 1)
+        {
+            return Err(unchanged(Cause::Shape));
+        }
         let generation = self
-            .directory
-            .next_status_generation()
+            .status_generation(index)
             .ok_or_else(|| unchanged(Cause::CounterExhausted))?;
         let allocator = {
             let content = self.frames[0]
@@ -74,11 +165,11 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             pair
         };
         let payload = {
-            let content = self.frames[1]
+            let content = self.frames[index]
                 .content
                 .try_read()
                 .map_err(|e| self.load_lock_error(e))?;
-            self.status_payload(&content)?
+            self.status_payload(index, &content)?
         };
         let requirement = self.entry_dpt()?.requirements[0].map(WalRequirement::location);
         self.health()?;
@@ -89,6 +180,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             requirement,
             payload,
             generation,
+            index,
         })
     }
     fn load_lock_error<T>(&self, error: TryLockError<T>) -> DirtyError {
@@ -105,9 +197,10 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
     ) -> Result<FrameStamp> {
         self.status_load_quiescent()?;
         let snapshot = permit.snapshot();
-        if !std::ptr::eq(self.core, snapshot.core)
+        if permit.index() != snapshot.index
+            || !std::ptr::eq(self.core, snapshot.core)
             || !std::ptr::eq(self.binding, snapshot.binding)
-            || self.directory.next_status_generation() != Some(snapshot.generation)
+            || self.status_generation(snapshot.index) != Some(snapshot.generation)
         {
             return Err(self.fatal(Cause::Invariant));
         }
@@ -124,11 +217,11 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
                 return Err(self.fatal(Cause::Invariant));
             }
         }
-        let mut content = self.frames[1]
+        let mut content = self.frames[snapshot.index]
             .content
             .try_write()
             .map_err(|e| self.load_lock_error(e))?;
-        if self.status_payload(&content)? != snapshot.payload {
+        if self.status_payload(snapshot.index, &content)? != snapshot.payload {
             return Err(self.fatal(Cause::Invariant));
         }
         self.health()?;
@@ -145,10 +238,16 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         content.modification_counter = 1;
         content.rec_lsn = None;
         content.dirty = false;
-        self.directory.replace_status(Registration {
+        let registration = Registration {
             request,
             generation: stamp.generation,
-        });
+        };
+        if self.directory.resident_status() {
+            self.directory
+                .replace_resident_status(snapshot.index, registration);
+        } else {
+            self.directory.replace_status(registration);
+        }
         Ok(stamp)
     }
 }
@@ -156,6 +255,41 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
 #[cfg(test)]
 pub(in crate::storage) mod test_support {
     use super::*;
+    pub(in crate::storage) fn seed_generation(
+        pool: &mut SharedPool<'_, '_, '_, '_>,
+        index: usize,
+        generation: u64,
+    ) {
+        pool.directory.seed_resident_generation(index, generation);
+    }
+    pub(in crate::storage) fn edit_content(
+        pool: &SharedPool<'_, '_, '_, '_>,
+        index: usize,
+        edit: impl FnOnce(&mut [u8; PAGE_BYTES]),
+    ) {
+        edit(pool.frames[index].content.write().unwrap().bytes);
+    }
+    pub(in crate::storage) fn hold_write(
+        pool: &SharedPool<'_, '_, '_, '_>,
+        index: usize,
+        f: impl FnOnce(),
+    ) {
+        let _held = pool.frames[index].content.write().unwrap();
+        f();
+    }
+    pub(in crate::storage) fn slot(
+        pool: &SharedPool<'_, '_, '_, '_>,
+        index: usize,
+    ) -> Option<(TargetRequest, u64)> {
+        pool.resolve_registration(index)
+            .map(|r| (r.request, r.generation))
+    }
+    pub(in crate::storage) fn corrupt_index(
+        snapshot: &mut StatusLoadSnapshot<'_, '_>,
+        index: usize,
+    ) {
+        snapshot.index = index;
+    }
     pub(in crate::storage) fn generation(pool: &SharedPool<'_, '_, '_, '_>) -> u64 {
         pool.directory.init_generations(pool.frames).unwrap()[1]
     }

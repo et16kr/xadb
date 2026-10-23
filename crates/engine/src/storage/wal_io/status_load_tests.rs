@@ -317,6 +317,7 @@ fn status_load_stale_and_foreign_permit() {
             let bytes = boxed::<PAGE_BYTES>(0);
             let permit = StatusLoadPermit {
                 snapshot: &snapshot,
+                index: 1,
                 allocator: &before,
                 bytes: &bytes,
                 request,
@@ -698,4 +699,98 @@ fn status_load_selected_read_schedule() {
         assert_eq!(actual, expected);
         assert!(!storage.session_fence().is_fenced());
     });
+}
+
+#[test]
+fn status_load_resident_snapshot_index_cannot_retarget_equal_empty_generation() {
+    let mut slot = port::slot();
+    let mut workspace = boxed::<{ 4 << 20 }>(0);
+    let (namespace, state) = port::fresh();
+    let fresh =
+        FreshStorageSession::create_status(namespace, 1, &mut slot, &mut [[0; PAGE_BYTES]; 3])
+            .unwrap();
+    let storage = fresh
+        .install_doublewrite(&mut workspace)
+        .unwrap()
+        .into_mutable_storage();
+    let core =
+        crate::transaction::concurrency::PageConcurrency::new(storage.session_fence()).unwrap();
+    let mut pages: Vec<_> = (0..4).map(|_| boxed::<PAGE_BYTES>(0x73)).collect();
+    let mut frames: Vec<_> = pages.iter_mut().map(|p| DirtyFrame::new(p)).collect();
+    let mut operation = boxed::<OPERATION_BYTES>(0);
+    let original = storage
+        .bind_status_frames(&core, &mut frames, &mut operation, true)
+        .unwrap();
+    let mut bound = match original.into_with_flush() {
+        Ok(v) => v,
+        Err(_) => panic!("flush bind"),
+    };
+    let mut owner = core.try_owner(OwnerRole::Maintenance).unwrap();
+    let mut dedicated = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+    let a = {
+        let (mut writer, _, mut flush) = bound.split_with_flush();
+        let a = initialized(writer.reserve_one(&mut owner).unwrap());
+        flush.try_flush_page(&mut dedicated, a.page).unwrap();
+        a
+    };
+    bound.inner.pool.prepare_resident_slot(1).unwrap();
+    let mut before = boxed::<PAGE_BYTES>(0);
+    let mut snapshot = bound
+        .inner
+        .pool
+        .prepare_status_load_at(2, &mut before)
+        .unwrap();
+    let mut old2 = boxed::<PAGE_BYTES>(0);
+    let old2_meta = frame_init::snapshot(&bound.inner.pool, 2, &mut old2);
+    let mut old3 = boxed::<PAGE_BYTES>(0);
+    let old3_meta = frame_init::snapshot(&bound.inner.pool, 3, &mut old3);
+    probe::corrupt_index(&mut snapshot, 3);
+    let bytes: [u8; PAGE_BYTES] = std::fs::read(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../tests/fixtures/dev3-resident-status/p1-n1/status-1.after"
+    ))
+    .unwrap()
+    .try_into()
+    .unwrap();
+    let permit = StatusLoadPermit {
+        snapshot: &snapshot,
+        index: 2,
+        allocator: &before,
+        bytes: &bytes,
+        request: TargetRequest {
+            identity: a.status.identity,
+            kind: crate::storage::page::PageKind::TransactionStatus,
+            level: 0,
+        },
+        lsn: PageLsn(2),
+    };
+    let events = state.lock().unwrap().events.len();
+    assert_eq!(
+        bound
+            .inner
+            .pool
+            .install_status_load(permit)
+            .unwrap_err()
+            .effect,
+        Effect::CallerMustResolve
+    );
+    let mut after = boxed::<PAGE_BYTES>(0);
+    assert_eq!(
+        frame_init::snapshot(&bound.inner.pool, 2, &mut after),
+        old2_meta
+    );
+    assert_eq!(after, old2);
+    assert_eq!(
+        frame_init::snapshot(&bound.inner.pool, 3, &mut after),
+        old3_meta
+    );
+    assert_eq!(after, old3);
+    assert_eq!(state.lock().unwrap().events.len(), events);
+    assert!(storage.session_fence().is_fenced());
+    drop(bound);
+    drop(owner);
+    drop(dedicated);
+    drop(storage);
+    let state = state.lock().unwrap();
+    assert_eq!((state.handles, state.writers), (0, 0));
 }

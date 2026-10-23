@@ -1,0 +1,179 @@
+{
+  "schema": "xadb-resident-status-literals-v1",
+  "status": "INPUTS_ONLY_NOT_EXECUTION_EVIDENCE",
+  "history": "successive INIT pages1..3, no cancellation; work/page n has INIT LSN 2*n",
+  "provenance": [
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-d3-profile.bin",
+      "bytes": 4096,
+      "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-d3-profile.bin",
+      "bytes": 4096,
+      "sha256": "e45db9f3b6d87837bc2d626f641034c7b647b711fe8c761990731eb5db16052f"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-d3-profile.bin",
+      "bytes": 4096,
+      "sha256": "e86fdb05e8a470f64fa351b9626cd667b45824d40ef0bbe376f9c1bfcc4765d0"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-allocation.bin",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-allocation.bin",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-allocation.bin",
+      "bytes": 16384,
+      "sha256": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7"
+    }
+  ],
+  "generators": {
+    "dev3_operational_recovery_literals.py": "e92299b71950def9d881cab66f9408ad88dda1bd244fc02fdb69ea67b97ce3a9",
+    "dev3_operational_status_literals.py": "3277ee9e1662a1178b5aa264d3ca42ceee4471d9daa184acbed761209e3898bd",
+    "dev3_status_init_literals.py": "aa11d72231c0703ef1981ca9f44598a2c24928224186befa591f7717ac9c578b"
+  },
+  "files": [
+    {
+      "path": "p1-n1/wal.frames-only",
+      "bytes": 59200,
+      "sha256": "d097adf5e8e571ef187e4ee991044dfcec5a0005d2ab22cbd413563952b59e0b"
+    },
+    {
+      "path": "p1-n1/allocator.after",
+      "bytes": 16384,
+      "sha256": "17d7a60c2ec1b702a5d38531ed0c10d4dd3dec3b3d947de37bc980158ca3d37b"
+    },
+    {
+      "path": "p1-n1/terminal.descriptor",
+      "bytes": 1536,
+      "sha256": "4cbd1f6b773dfdcde339c2ad2424e0dd749f47b15dc017c3e54e0d382c83bd6e"
+    },
+    {
+      "path": "p1-n1/status-1.after",
+      "bytes": 16384,
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "p1-n2/wal.frames-only",
+      "bytes": 118400,
+      "sha256": "11d58e7cada315c5ecd90648d2f2b30cd798296dfc6af10ab2805f95c7498a6b"
+    },
+    {
+      "path": "p1-n2/allocator.after",
+      "bytes": 16384,
+      "sha256": "149a466da61daf03c13785f65d72efccdbaafd5b01fc7c8c9f715593549b0bf5"
+    },
+    {
+      "path": "p1-n2/terminal.descriptor",
+      "bytes": 1536,
+      "sha256": "e7b989ff581fc3e6c02c5e1d7327868d5bbca0809118c50dcf3414f70bd879ca"
+    },
+    {
+      "path": "p1-n2/status-1.after",
+      "bytes": 16384,
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "p1-n2/status-2.after",
+      "bytes": 16384,
+      "sha256": "6c02f8db52f55703b02d371b5ded0749398e11397fb4ee8295014a9dd284efc5"
+    },
+    {
+      "path": "p1-n3/wal.frames-only",
+      "bytes": 177600,
+      "sha256": "cc5a34f20fa89ec7dfe199ec80a5c44fe6950f7c7df87700ab85df3188c72e6d"
+    },
+    {
+      "path": "p1-n3/allocator.after",
+      "bytes": 16384,
+      "sha256": "d52b03f39c196db3e962796dd97309593ea511a649ea57c34b336f50d1b26638"
+    },
+    {
+      "path": "p1-n3/terminal.descriptor",
+      "bytes": 1536,
+      "sha256": "cc4a45aafbe803922045622dc6b779ca335e0ed46d4ac80f9f2c20c0d8ce14a5"
+    },
+    {
+      "path": "p1-n3/status-1.after",
+      "bytes": 16384,
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "p1-n3/status-2.after",
+      "bytes": 16384,
+      "sha256": "6c02f8db52f55703b02d371b5ded0749398e11397fb4ee8295014a9dd284efc5"
+    },
+    {
+      "path": "p1-n3/status-3.after",
+      "bytes": 16384,
+      "sha256": "4c6f8f79718276173dfee48f30a74726bb4741b1cf14278e0e1be425af8ee32b"
+    },
+    {
+      "path": "p2-n3/wal.frames-only",
+      "bytes": 177600,
+      "sha256": "0ce87d780a9895aea0388fbccc38e54c1ef46e9ca54bbb66340a21019266404d"
+    },
+    {
+      "path": "p2-n3/allocator.after",
+      "bytes": 16384,
+      "sha256": "d52b03f39c196db3e962796dd97309593ea511a649ea57c34b336f50d1b26638"
+    },
+    {
+      "path": "p2-n3/terminal.descriptor",
+      "bytes": 1536,
+      "sha256": "47fbd3bdccbe77028018a66ba2018da6755f69f843f3e0300b491b1a2f28f1e2"
+    },
+    {
+      "path": "p2-n3/status-1.after",
+      "bytes": 16384,
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "p2-n3/status-2.after",
+      "bytes": 16384,
+      "sha256": "6c02f8db52f55703b02d371b5ded0749398e11397fb4ee8295014a9dd284efc5"
+    },
+    {
+      "path": "p2-n3/status-3.after",
+      "bytes": 16384,
+      "sha256": "4c6f8f79718276173dfee48f30a74726bb4741b1cf14278e0e1be425af8ee32b"
+    },
+    {
+      "path": "p3-n3/wal.frames-only",
+      "bytes": 177600,
+      "sha256": "9cda79d56580fe68793e016f63839067ed3772479325b2b748d8d1506f187433"
+    },
+    {
+      "path": "p3-n3/allocator.after",
+      "bytes": 16384,
+      "sha256": "d52b03f39c196db3e962796dd97309593ea511a649ea57c34b336f50d1b26638"
+    },
+    {
+      "path": "p3-n3/terminal.descriptor",
+      "bytes": 1536,
+      "sha256": "a634bafddb1def51711181c14c58be41375e165c64e5da7dbe8718fd0a3e355b"
+    },
+    {
+      "path": "p3-n3/status-1.after",
+      "bytes": 16384,
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "p3-n3/status-2.after",
+      "bytes": 16384,
+      "sha256": "6c02f8db52f55703b02d371b5ded0749398e11397fb4ee8295014a9dd284efc5"
+    },
+    {
+      "path": "p3-n3/status-3.after",
+      "bytes": 16384,
+      "sha256": "4c6f8f79718276173dfee48f30a74726bb4741b1cf14278e0e1be425af8ee32b"
+    }
+  ]
+}

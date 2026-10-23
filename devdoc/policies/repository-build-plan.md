@@ -376,3 +376,13 @@ compiler manifest/6개 probe와 Python runner/checker의 실제 경로를 관리
 등록한다. package/dependency/source root·feature는 바꾸지 않는다.
 [source별 증거](../evidence/dev3-target-set-20261023.md)는 단일 pool primitive의 선택 결과이며
 일반 resident backing/load/eviction·실거래·전체 DEV3 인수가 아니다.
+
+
+## DEV3 resident Status 수명 배치
+
+[소유 계약](../contracts/dev3-task-05-buffer-flush.md#resident-status-pool)의 `resident_status.rs`는
+원 closed binding/SharedPool/INIT/flush/load 코어의 제한 소비자다. 실제 Rust·native worker·borrow/
+checker runner·literal/compiler fixtures는 관리 JSON `dev3_resident_status`에 등록했다. package/
+dependency/source root·feature·영속 wire 형식은 바꾸지 않는다.
+[선택 증거](../evidence/dev3-resident-status-20261023.md)는 여러 immutable Status 수명의 제한 결과이며
+일반 pressure/live 거래·전체 DEV3 인수가 아니다.

@@ -1,0 +1,231 @@
+{
+  "schema": "xadb-resident-status-inventory-v1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "unit": "D3-RESIDENT-STATUS-001",
+  "static": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_resource_gate",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::native::resident::resident_native_resource_gate"
+  ],
+  "mandatory": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_two_dirty_pages_use_distinct_slots_and_lsns",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_four_addresses_three_frames_reload_nonselected",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_prepare_refusals_preserve_all_frames",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_forgotten_reservation_blocks_prepare_and_load",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_read_shape_alias_missing_and_admission_cleanup",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_duplicate_load_is_rejected_before_io",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_load_failure_first_preserves_destination",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_load_failure_last_preserves_destination",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_forged_index_is_not_same_generation_authority",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_wide_read_unwind_releases_pins_before_gate",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_actual_thread_reader_and_flush_finalize",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_binding_shape_claim_and_activation_retry",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_binding_rejects_nonfresh_payload_before_io",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_generation_exhaustion_preserves_other_dirty_pages",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_late_busy_read_returns_every_pin_and_gate",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_forged_local_index_cannot_install_or_release_wrong_slot",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_admission_preserves_poison_and_fenced_causes",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_foreign_owner_does_not_acquire_admission",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_stage",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_dpt_owned",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_dpt_checked",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_allocator",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_payload",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_metadata",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_registry",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_cut_publication",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "new resident storage lifecycle/admission/index case"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_resident_snapshot_index_cannot_retarget_equal_empty_generation",
+      "changed_path": "crates/engine/src/storage/wal_io/status_load_tests.rs",
+      "relation": "new destination-index seal rejects equal-generation empty retarget"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_forgotten_other_slot_pin_blocks_eviction_and_load",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "forgotten non-victim pin prevents both global residency mutations"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_staged_key_rejects_other_slot",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "actual WAL stage sealed key rejects wrong physical slot before images/descriptor"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_completion_rejects_other_slot",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "actual installed/durable INIT rejects wrong completion slot and retains claim"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_late_semantic_failure_releases_whole_read",
+      "changed_path": "crates/engine/src/storage/wal_io/resident_status_tests.rs",
+      "relation": "second canonical Status has checksum-valid typed but forbidden Free generation; semantic failure releases whole read after first valid pair"
+    }
+  ],
+  "related": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::tests::status_init_cf01_binding_preserves_closed_bytes",
+      "relation": "common slice binder preserves closed two-frame contract"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::tests::operational_status_repeated_init_preserves_literal_history",
+      "relation": "INIT physical-index propagation, pair validation and exact flush authority retain old slot1 behavior"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_dirty_allocator_ab_and_empty",
+      "relation": "common indexed loader keeps legacy slot1 replacement with dirty allocator"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_stale_and_foreign_permit",
+      "relation": "changed sealed destination permit constructor and origin preflight"
+    }
+  ],
+  "native": {
+    "history": "allocator plus A/B/C over three frames; separate producer/recovery/reentry",
+    "worker_count": 3,
+    "runner": "scripts/dev3_resident_status_native.py"
+  },
+  "compiler": "compiler/manifest.json",
+  "checker_new": {
+    "test_check_dev3_resident_status_borrows": 2,
+    "test_dev3_resident_status_native": 6
+  },
+  "s5": {
+    "status": "NOT_RUN",
+    "selectors": [
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_s5_p2_n4",
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_s5_p2_n8",
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_s5_p2_n64",
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_s5_p3_n4",
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_s5_p3_n8",
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_s5_p3_n64"
+    ],
+    "profiles": [
+      2,
+      3
+    ],
+    "frames": [
+      4,
+      8,
+      64
+    ],
+    "victim_cases": 146,
+    "victim_by_late_lock_cases": 8200,
+    "input_generation": "scripts/dev3_operational_recovery_literals.py --profile P --pages N-1 --cancellations 0 --root ROOT --output NEW_DIRECTORY",
+    "input_env": "XADB_RESIDENT_S5_INPUT",
+    "next_extent_N64_plus_one": "OUT_OF_SCOPE_PENDING_NEXT_EXTENT"
+  },
+  "limits": {
+    "case_seconds": 30,
+    "runtime_total_seconds": 240,
+    "native_history_seconds": 30,
+    "native_total_seconds": 120,
+    "native_db_bytes": 25165824,
+    "native_retained_db_bytes": 100663296,
+    "compiler_seconds": 180,
+    "checker_seconds": 30,
+    "active_input_bytes": 8388608,
+    "case_review_bytes": 33554432
+  }
+}

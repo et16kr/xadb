@@ -935,7 +935,7 @@
         "implementation_ref": "dev3-implementation.md",
         "page_contract_ref": "dev3-page-format.md",
         "partial_model_ref": "dev3-snapshot-model.md",
-        "scope": "Storage expressions and finite models; initial extent/FILEMAP and DWB installation; selected reads and physical WAL; scoped allocator reserve/cancel with dirty stage and one-page flush; closed two-frame Status INIT/home flush; initial recovery selection, current-prefix analysis and closed genesis Pending repair/reservation handoff/page REDO; fixed registration/generation pins and allocator eviction/reload, per-slot registration, repeated immutable Status INIT and first-extent current-build recovery. P3 membership-based immutable Status home load and actual A/B replacement in two resident frames have selected validation; independent final D1 accepted this limited unit. Pure empty Begin preparation has selected validation; live issuance/stage/apply is not supplied. Exact 1..64 whole target reservation/read/write is supplied through the original SharedPool, with final independent D1 accepted for this limited primitive. General buffer replacement/pressure, tree/row/index/catalog transactions, live undo/CLR/commit, general recovery/READY, checkpoint/reclamation/backup and full DEV3 acceptance remain incomplete. Each receipt retains its original source and selected execution scope.",
+        "scope": "Storage expressions and finite models; initial extent/FILEMAP and DWB installation; selected reads and physical WAL; scoped allocator reserve/cancel with dirty stage and one-page flush; closed two-frame Status INIT/home flush; initial recovery selection, current-prefix analysis and closed genesis Pending repair/reservation handoff/page REDO; fixed registration/generation pins and allocator eviction/reload, per-slot registration, repeated immutable Status INIT and first-extent current-build recovery. P3 membership-based immutable Status home load and actual A/B replacement in two resident frames have selected validation; independent final D1 accepted this limited unit. Pure empty Begin preparation has selected validation; live issuance/stage/apply is not supplied. Exact 1..64 whole target reservation/read/write is supplied through the original SharedPool, with final independent D1 accepted for this limited primitive. General buffer replacement/pressure, tree/row/index/catalog transactions, live undo/CLR/commit, general recovery/READY, checkpoint/reclamation/backup and full DEV3 acceptance remain incomplete. Each receipt retains its original source and selected execution scope. Multiple immutable Status slots now share original registration/INIT/flush/load authority; selected three-frame/four-address lifecycle and separate same-build recovery/reentry have source-specific results, with final independent D1 accepted for this limited unit. S5 expansion remains NOT_RUN.",
         "status": "LOCAL_VERIFIED_LIMITED_SCOPE",
         "evidence_ref": "dev3-doublewrite-install-scoped-xadb-20261021-r2.json",
         "page_io_contract_ref": "dev3-page-io.md",
@@ -971,7 +971,9 @@
         "begin_preparation_contract_ref": "dev3-obligation-format.md#begin-preparation",
         "begin_preparation_evidence_ref": "dev3-status-begin-20261023.json",
         "target_set_contract_ref": "dev3-task-05-buffer-flush.md#bounded-target-set",
-        "target_set_evidence_ref": "dev3-target-set-20261023.json"
+        "target_set_evidence_ref": "dev3-target-set-20261023.json",
+        "resident_status_contract_ref": "dev3-task-05-buffer-flush.md#resident-status-pool",
+        "resident_status_evidence_ref": "dev3-resident-status-20261023.json"
       }
     },
     {

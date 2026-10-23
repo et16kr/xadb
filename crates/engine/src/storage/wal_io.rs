@@ -45,8 +45,10 @@ pub(crate) use bootstrap::{
 pub(crate) use bootstrap::{
     BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, InitAttemptError,
     InitializedStatusObservation, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
-    OperationalStatusReader, OperationalStatusWriter, ReservedStatus, StatusBootstrapWriter,
-    StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard, StatusReader,
+    OperationalStatusReader, OperationalStatusWriter, ReadStatusSet, ReservedStatus,
+    ResidentReadAdmission, ResidentStatus, ResidentStatusBinding, ResidentStatusReader,
+    StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard,
+    StatusReader,
 };
 #[allow(unused_imports)] // Closed prefix observations await the next recovery barrier.
 pub(crate) use bootstrap::{

@@ -706,3 +706,6 @@ fn worker_closed_recovery_native() {
 
 #[path = "operational_native_tests.rs"]
 mod operational;
+
+#[path = "resident_native_tests.rs"]
+mod resident;
