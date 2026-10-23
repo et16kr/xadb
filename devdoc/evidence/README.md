@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-23 [DEV3 반복 Status INIT owner](dev3-operational-status-20261023.md): 원 flush bound의 consuming 전환·clean Status 퇴출·반복 INIT을 공급했다. source별 static6·신규 runtime14·관련1·native1과 원 compile FAIL을 보존하며 OCR delegate 독립 D1을 live owner 한정 수용했다. 반복 sequence 복구·P3·DEV3/S5는 미완료다.
+
 2026-10-23 [DEV3 일반 page 등록 코어 P1](dev3-operational-registration-20261023.md) · [source 색인](dev3-operational-registration-20261023.json): 기존 directory를 슬롯별 publication으로 전환. static5·runtime20·Linux2 PASS, OCR delegate 기반 독립 D1 수용·P2/P3 미공급.
 
 - [DEV3 allocator 실제 퇴출·재적재](dev3-allocator-eviction-20261023.md) · [source별 실행 색인](dev3-allocator-eviction-20261023.json): 신규18·관련7·static5·native1·compiler3+control1과 원 FAIL·수정 기록. 일반 pool/DEV3/S5 미완료.

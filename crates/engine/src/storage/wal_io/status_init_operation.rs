@@ -4,14 +4,14 @@
 
 use super::super::allocation_reservation::{
     budget,
-    operation::{self, Batch, OperationBudget, SemanticError},
+    operation::{
+        self, AllocationPopulation, Batch, OperationBudget, SemanticError, TerminalOutcome,
+    },
 };
 use crate::storage::{
     allocation_page::{self, AllocationEntry, ReservationOwner, SystemWorkKind},
     control::{ControlKind, ControlRef, Profile},
-    obligation::{
-        self, DescriptorSpec, InventoryClaim, OwnerChain, OwnerState, SystemProgress, WorkPhase,
-    },
+    obligation::{self},
     page::{self, PAGE_BYTES, PageHeader, PageIdentity, PageKind, PageLsn},
     session_fence::SessionFence,
     status_home::{STATUS_HOME_BYTES, StatusHome, StatusHomePage},
@@ -236,7 +236,11 @@ fn allocated(plan: &InitExpected<'_>) -> AllocationEntry {
 }
 
 /// Ends before any entry array, Status codec or output write exists.
-fn validate_before(plan: &InitExpected<'_>, before: &[u8; PAGE_BYTES]) -> Result<()> {
+fn validate_before(
+    plan: &InitExpected<'_>,
+    before: &[u8; PAGE_BYTES],
+    population: AllocationPopulation,
+) -> Result<()> {
     plan_index(plan)?;
     let old = allocation_page::decode_allocation_page(
         before,
@@ -244,13 +248,15 @@ fn validate_before(plan: &InitExpected<'_>, before: &[u8; PAGE_BYTES]) -> Result
         plan.profile.spec().namespace,
     )
     .map_err(|_| SemanticError::PageMismatch)?;
-    operation::validate_live_with_budget(
+    operation::validate_live_in_population(
         &old,
         plan.profile,
         Some(plan.batch),
         plan.before_descriptor,
         plan.batch.owner.id(),
         OperationBudget::StatusInit114688,
+        population,
+        TerminalOutcome::Cancelled,
     )?;
     old.lookup_reserved(
         plan.payload.page,
@@ -266,8 +272,26 @@ pub(super) fn prepare_init<'out, 's>(
     allocator_after: &'out mut [u8; PAGE_BYTES],
     status_after: &'out mut [u8; PAGE_BYTES],
 ) -> Result<PreparedInit<'out, 's>> {
+    prepare_init_in_population(
+        plan,
+        before,
+        output,
+        allocator_after,
+        status_after,
+        AllocationPopulation::Empty,
+    )
+}
+
+pub(super) fn prepare_init_in_population<'out, 's>(
+    plan: &InitPlan<'_, 's>,
+    before: &[u8; PAGE_BYTES],
+    output: &'out mut [u8; 65536],
+    allocator_after: &'out mut [u8; PAGE_BYTES],
+    status_after: &'out mut [u8; PAGE_BYTES],
+    population: AllocationPopulation,
+) -> Result<PreparedInit<'out, 's>> {
     let expected = plan.expected()?;
-    validate_before(&expected, before)?;
+    validate_before(&expected, before, population)?;
     let h = header(&expected)?;
     let bytes = &mut output[..FRAME_BYTES];
     bytes.fill(0);
@@ -281,7 +305,14 @@ pub(super) fn prepare_init<'out, 's>(
     // Neither allocation entry array nor DescriptorSpec survives into this helper.
     encode_status_image(&plan.payload, PageLsn(h.lsn), status_after)?;
     encode_group(&expected, h, before, bytes, allocator_after, status_after)?;
-    validate_expected(&expected, before, bytes, allocator_after, status_after)?;
+    validate_expected_in_population(
+        &expected,
+        before,
+        bytes,
+        allocator_after,
+        status_after,
+        population,
+    )?;
     Ok(PreparedInit {
         bytes,
         allocator_after,
@@ -334,42 +365,13 @@ fn encode_allocator(
     )
     .map_err(|_| SemanticError::PageMismatch)
 }
-fn finished_descriptor(profile: &Profile, batch: Batch, lsn: PageLsn) -> DescriptorSpec {
-    DescriptorSpec {
-        owner: OwnerState::System(SystemProgress {
-            reference: batch.owner,
-            phase: WorkPhase::Finished,
-            sequence: 1,
-            cursor: 1,
-            limit: 1,
-        }),
-        chain: OwnerChain {
-            apply: lsn.0,
-            previous: batch.birth,
-            birth: batch.birth,
-            groups: 2,
-        },
-        profile: profile_ref(profile),
-        inventory: InventoryClaim {
-            change_lsn: lsn.0,
-            items: 0,
-            digest: content_digest(&[]),
-            growth_extents: 0,
-        },
-        consumed_wal: 59200,
-        consumed_control: 0,
-        remaining: Default::default(),
-        minimum_wal_lsn: 0,
-        last_mutation_sequence: 0,
-    }
-}
 fn encode_finished_descriptor(
     profile: &Profile,
     batch: Batch,
     lsn: PageLsn,
     output: &mut [u8],
 ) -> Result<()> {
-    let desc = finished_descriptor(profile, batch, lsn);
+    let desc = operation::finished_status_descriptor(profile, batch, lsn);
     obligation::encode_descriptor(&desc, output).map_err(|_| SemanticError::Corrupt)
 }
 pub(super) fn validate_finished(
@@ -394,7 +396,7 @@ pub(super) fn validate_finished(
             SemanticError::Corrupt
         }
     })?;
-    let expected = finished_descriptor(&profile, batch, lsn);
+    let expected = operation::finished_status_descriptor(&profile, batch, lsn);
     require(
         current.owner == expected.owner,
         SemanticError::StateMismatch,
@@ -527,7 +529,24 @@ pub(super) fn validate_expected(
     allocator_after: &[u8; PAGE_BYTES],
     status_after: &[u8; PAGE_BYTES],
 ) -> Result<()> {
-    validate_before(plan, before)?;
+    validate_expected_in_population(
+        plan,
+        before,
+        bytes,
+        allocator_after,
+        status_after,
+        AllocationPopulation::Empty,
+    )
+}
+fn validate_expected_in_population(
+    plan: &InitExpected<'_>,
+    before: &[u8; PAGE_BYTES],
+    bytes: &[u8],
+    allocator_after: &[u8; PAGE_BYTES],
+    status_after: &[u8; PAGE_BYTES],
+    population: AllocationPopulation,
+) -> Result<()> {
+    validate_before(plan, before, population)?;
     let h = validate_header(plan, bytes)?;
     validate_finished(
         plan.profile,
@@ -746,7 +765,7 @@ pub(super) fn materialize_analysis(
     allocator_after: &mut [u8; PAGE_BYTES],
     status_after: &mut [u8; PAGE_BYTES],
 ) -> Result<()> {
-    validate_before(plan, before)?;
+    validate_before(plan, before, AllocationPopulation::Empty)?;
     let h = validate_header(plan, bytes)?;
     allocator_after.copy_from_slice(before);
     allocator_after[CELL].copy_from_slice(&bytes[NEW_CELL]);
@@ -794,6 +813,7 @@ fn membership_lsn(
     payload: &PageIdentity,
     role: &StatusRole<'_>,
     bytes: &[u8; PAGE_BYTES],
+    population: AllocationPopulation,
 ) -> Result<PageLsn> {
     use SemanticError::*;
     require(
@@ -807,6 +827,10 @@ fn membership_lsn(
     )?;
     let page = allocation_page::decode_allocation_page(bytes, *allocator, profile.spec().namespace)
         .map_err(|_| PageMismatch)?;
+    require(
+        payload.page.file == allocator.page.file && (1..64).contains(&payload.page.page_no),
+        IdentityMismatch,
+    )?;
     let mut members = 0;
     for index in 1..64 {
         match page.entry(index).map_err(|_| PageMismatch)? {
@@ -824,15 +848,21 @@ fn membership_lsn(
                         && kind == PageKind::TransactionStatus,
                     IdentityMismatch,
                 )?;
-                require(
-                    payload.page.file == allocator.page.file
-                        && allocator.page.page_no.checked_add(index as u64)
-                            == Some(payload.page.page_no)
-                        && generation == payload.page.incarnation,
-                    IdentityMismatch,
-                )?;
-                members += 1;
+                require(generation.get() >= 2, IdentityMismatch)?;
+                if allocator.page.page_no.checked_add(index as u64) == Some(payload.page.page_no) {
+                    require(generation == payload.page.incarnation, IdentityMismatch)?;
+                    members += 1;
+                } else {
+                    require(population == AllocationPopulation::Status, IdentityMismatch)?;
+                }
             }
+            AllocationEntry::Reserved {
+                claimant: ReservationOwner::System(work),
+                ..
+            } if population == AllocationPopulation::Status
+                && work.namespace() == profile.spec().namespace
+                && work.kind() == SystemWorkKind::AllocationMaintenance
+                && work.generation().get() == 1 => {}
             _ => return Err(StateMismatch),
         }
     }
@@ -848,13 +878,44 @@ pub(super) fn observe_initialized(
     allocator_bytes: &[u8; PAGE_BYTES],
     status_bytes: &[u8; PAGE_BYTES],
 ) -> Result<PageLsn> {
-    let allocator_lsn = membership_lsn(&profile, &allocator, &payload, role, allocator_bytes)?;
+    let allocator_lsn = membership_lsn(
+        &profile,
+        &allocator,
+        &payload,
+        role,
+        allocator_bytes,
+        AllocationPopulation::Empty,
+    )?;
     let status_lsn = status_lsn(status_bytes, &payload)?;
     require(
         allocator_lsn == status_lsn && status_lsn.0 != 0,
         SemanticError::OrderMismatch,
     )?;
     Ok(status_lsn)
+}
+
+pub(super) fn observe_operational_initialized(
+    profile: Profile,
+    allocator: PageIdentity,
+    payload: PageIdentity,
+    role: &StatusRole<'_>,
+    allocator_bytes: &[u8; PAGE_BYTES],
+    status_bytes: &[u8; PAGE_BYTES],
+) -> Result<(PageLsn, PageLsn)> {
+    let allocator_lsn = membership_lsn(
+        &profile,
+        &allocator,
+        &payload,
+        role,
+        allocator_bytes,
+        AllocationPopulation::Status,
+    )?;
+    let status_lsn = status_lsn(status_bytes, &payload)?;
+    require(
+        allocator_lsn.0 != 0 && status_lsn.0 != 0,
+        SemanticError::OrderMismatch,
+    )?;
+    Ok((allocator_lsn, status_lsn))
 }
 
 /// Typed source-value census. Every contributing helper has a bounded phase;

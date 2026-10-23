@@ -416,3 +416,29 @@ source별 결과는 [선택 증거](../evidence/dev3-allocator-eviction-20261023
 `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_residency::eviction::tests::eviction_s5_three_slot_history`
 를 추가한다. ignored32round/64reload는 작성·NOT_RUN이며 중간 선택에 포함하지 않는다.
 다른 주소·N+1·Status 반복 변경·pressure의 일반 pool 시험 의무는 그대로 남는다.
+
+<a id="operational-status-followup"></a>
+## P2 live owner의 변경 범위 검증
+
+[P2 계약](../contracts/dev3-task-05-buffer-flush.md#operational-status-p2)의 consuming owner,
+반복 INIT·generation claim·trusted population 변경에 대해 새 literal·actual owner·Linux·
+compiler fixture를 함께 공급한다. [선택 증거](../evidence/dev3-operational-status-20261023.md)는
+source별 완료 결과와 compile 실패를 보존한다. r2 static6/runtime2를 r4/r5의 별도 경계 추가나
+전체 source 지문 변경만으로 반복하지 않는다. closed CF15-01/02는 달라진 population·INIT
+권한의 직접 소비자라 좁혀 선택한다. 전체 wrapper·하위 회귀·S5는 실행하지 않는다.
+
+반복 sequence current-build recovery는 미실행이 아니라 지원 자체가 아직 미구현이다.
+fresh producer→새 process 성공 복구·partial-prefix/fault cut를 후속 구현과 함께 검증해야
+P2/P3 durable integration을 완료할 수 있다. old closed recovery PASS를 대신 쓰지 않는다.
+순수 reader LSN 의미 시험은 실제 P3 A reload로 세지 않는다. 긴 전체 조합·pressure는 S5
+배정을 유지하며 이번 선택 실행을 DEV3 전수 인수로 승격하지 않는다.
+
+최종 S5 확정 inventory에는 이번 신규14개 runtime selector와
+`storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::operational::worker_operational_status_native`,
+compiler manifest의semantic5, 새 checker4를 포함한다. runtime14의 정확 이름은
+[해당 Rust 입력](../../crates/engine/src/storage/wal_io/operational_status_tests.rs)의
+`operational_status_resource_gate`를 제외한14개 `#[test]`이며 정적 gate1은 별도로 포함한다.
+source별 선택 원문은 [receipt 색인](../evidence/dev3-operational-status-20261023.json)의
+r2/r4/r5/r7 selection에 연결한다. 기존 closed CF15-01/02는 원 inventory와 중복 집계하지 않는다.
+첫 extent 전체 주소·여러 profile·long history 확대 사례는 미완료 P2/P3 durable integration
+구현과 함께 별도 selector로 추가하며, 지금 작성·실행 완료한 사례라고 표시하지 않는다.

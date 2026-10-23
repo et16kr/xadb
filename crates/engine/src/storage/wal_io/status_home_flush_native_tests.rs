@@ -573,3 +573,6 @@ fn worker_status_home_flush_native() {
         31 * batches
     );
 }
+
+#[path = "operational_status_native_tests.rs"]
+mod operational;

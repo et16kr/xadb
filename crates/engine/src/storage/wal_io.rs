@@ -44,7 +44,8 @@ pub(crate) use bootstrap::{
 #[allow(unused_imports)]
 pub(crate) use bootstrap::{
     BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, InitAttemptError,
-    InitializedStatusObservation, IntoFlushError, ReservedStatus, StatusBootstrapWriter,
+    InitializedStatusObservation, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
+    OperationalStatusReader, OperationalStatusWriter, ReservedStatus, StatusBootstrapWriter,
     StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard, StatusReader,
 };
 #[allow(unused_imports)] // Closed prefix observations await the next recovery barrier.

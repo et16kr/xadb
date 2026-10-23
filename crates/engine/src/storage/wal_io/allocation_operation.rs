@@ -85,6 +85,23 @@ impl OperationBudget {
     }
 }
 
+/// Trusted owner scope, never inferred from a descriptor or its budget.
+/// Status means the immutable plan2 role (object2, generation1, Status pages).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in super::super) enum AllocationPopulation {
+    Empty,
+    Status,
+}
+
+/// With no active batch, identifies the terminal descriptor retained by the
+/// live owner. A successful reserve resets it to Cancelled; active-batch
+/// validation uses the exact Reserved descriptor independently of this tag.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in super::super) enum TerminalOutcome {
+    Cancelled,
+    InitializedStatus,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(in super::super) struct Batch {
     pub(in super::super) owner: SystemWorkRef,
@@ -342,7 +359,25 @@ pub(in super::super) fn validate_live_with_budget(
     high_water: u64,
     budget: OperationBudget,
 ) -> Result<()> {
+    validate_live_in_population(
+        page,
+        profile,
+        batch,
+        raw,
+        high_water,
+        budget,
+        AllocationPopulation::Empty,
+        TerminalOutcome::Cancelled,
+    )
+}
+
+pub(in super::super) fn validate_population(
+    page: &AllocationPage<'_>,
+    batch: Option<Batch>,
+    population: AllocationPopulation,
+) -> Result<usize> {
     let mut observed_mask = 0;
+    let mut allocated = 0;
     for i in 1..64 {
         match page.entry(i).map_err(|_| SemanticError::PageMismatch)? {
             AllocationEntry::Free(_) => (),
@@ -351,6 +386,19 @@ pub(in super::super) fn validate_live_with_budget(
             {
                 observed_mask |= 1u64 << i
             }
+            AllocationEntry::Allocated {
+                generation,
+                object,
+                object_generation,
+                kind,
+            } if population == AllocationPopulation::Status
+                && generation.get() >= 2
+                && object.get() == 2
+                && object_generation.get() == 1
+                && kind == PageKind::TransactionStatus =>
+            {
+                allocated += 1;
+            }
             _ => return Err(SemanticError::PageMismatch),
         }
     }
@@ -358,15 +406,47 @@ pub(in super::super) fn validate_live_with_budget(
         observed_mask == batch.map_or(0, |b| b.mask),
         SemanticError::InventoryMismatch,
     )?;
+    Ok(allocated)
+}
+
+#[allow(
+    clippy::too_many_arguments,
+    reason = "trusted scope and outcome remain independent of serialized budget"
+)]
+pub(in super::super) fn validate_live_in_population(
+    page: &AllocationPage<'_>,
+    profile: Profile,
+    batch: Option<Batch>,
+    raw: &[u8],
+    high_water: u64,
+    budget: OperationBudget,
+    population: AllocationPopulation,
+    terminal: TerminalOutcome,
+) -> Result<()> {
+    require(
+        population != AllocationPopulation::Status || budget == OperationBudget::StatusInit114688,
+        SemanticError::StateMismatch,
+    )?;
+    let allocated = validate_population(page, batch, population)?;
     if let Some(batch) = batch {
         validate_reserved(page, &profile, &batch, raw, high_water, budget)
     } else if high_water == 0 {
         require(
-            zero(raw) && page.header().lsn == PageLsn(0),
+            zero(raw)
+                && page.header().lsn == PageLsn(0)
+                && allocated == 0
+                && terminal == TerminalOutcome::Cancelled,
             SemanticError::StateMismatch,
         )
     } else {
-        validate_finished(page, &profile, raw, high_water, budget)
+        require(
+            terminal != TerminalOutcome::InitializedStatus
+                || (population == AllocationPopulation::Status
+                    && allocated != 0
+                    && budget == OperationBudget::StatusInit114688),
+            SemanticError::StateMismatch,
+        )?;
+        validate_finished(page, &profile, raw, high_water, budget, terminal)
     }
 }
 
@@ -414,6 +494,7 @@ fn validate_finished(
     raw: &[u8],
     high_water: u64,
     budget: OperationBudget,
+    terminal: TerminalOutcome,
 ) -> Result<()> {
     let owner = SystemWorkRef::new(
         profile.spec().namespace,
@@ -444,18 +525,40 @@ fn validate_finished(
             .checked_sub(1)
             .ok_or(SemanticError::OrderMismatch)?,
     };
-    require(
-        current
-            == descriptor(
-                *profile,
-                batch,
-                page.header().lsn.0,
-                true,
-                content_digest(&[]),
-                budget,
-            ),
-        SemanticError::StateMismatch,
-    )
+    let expected = match terminal {
+        TerminalOutcome::Cancelled => descriptor(
+            *profile,
+            batch,
+            page.header().lsn.0,
+            true,
+            content_digest(&[]),
+            budget,
+        ),
+        TerminalOutcome::InitializedStatus => {
+            require(progress.limit == 1, SemanticError::StateMismatch)?;
+            finished_status_descriptor(profile, batch, page.header().lsn)
+        }
+    };
+    require(current == expected, SemanticError::StateMismatch)
+}
+
+/// Canonical terminal for reserve-one + Status INIT. Shared by the producer and
+/// later live-owner validation; it has no storage, stage or recovery authority.
+pub(in super::super) fn finished_status_descriptor(
+    profile: &Profile,
+    batch: Batch,
+    lsn: PageLsn,
+) -> DescriptorSpec {
+    let mut result = descriptor(
+        *profile,
+        batch,
+        lsn.0,
+        true,
+        content_digest(&[]),
+        OperationBudget::StatusInit114688,
+    );
+    result.consumed_wal = frame_length(1) as u64 + 38000;
+    result
 }
 
 /// The bytes and header are borrowed only after full transition validation.
@@ -501,11 +604,40 @@ pub(in super::super) fn prepare_with_budget<'a>(
     after: &mut [u8; PAGE_BYTES],
     budget: OperationBudget,
 ) -> Result<PreparedAllocation<'a>> {
+    prepare_in_population(
+        plan,
+        before,
+        output,
+        after,
+        budget,
+        AllocationPopulation::Empty,
+    )
+}
+
+pub(in super::super) fn prepare_in_population<'a>(
+    plan: Plan<'_>,
+    before: &[u8; PAGE_BYTES],
+    output: &'a mut [u8],
+    after: &mut [u8; PAGE_BYTES],
+    budget: OperationBudget,
+    population: AllocationPopulation,
+) -> Result<PreparedAllocation<'a>> {
     // End the producer's array/descriptor stack frame before full validation.
     // Only this wrapper can turn the independently checked bytes into authority.
+    require(
+        population != AllocationPopulation::Status || budget == OperationBudget::StatusInit114688,
+        SemanticError::StateMismatch,
+    )?;
     let h = encode_prepared(plan, before, output, after, budget)?;
     let raw = &output[..frame_length(plan.batch.count())];
-    validate_with_budget(plan, before, raw, after, budget)?;
+    validate_analysis_in_population(
+        AnalysisExpected::from(plan),
+        before,
+        raw,
+        after,
+        budget,
+        population,
+    )?;
     Ok(PreparedAllocation {
         bytes: raw,
         prefix: plan.prefix,
@@ -696,8 +828,28 @@ pub(in super::super) fn validate_analysis_with_budget(
     after: &[u8; PAGE_BYTES],
     budget: OperationBudget,
 ) -> Result<()> {
+    validate_analysis_in_population(
+        plan,
+        before,
+        bytes,
+        after,
+        budget,
+        AllocationPopulation::Empty,
+    )
+}
+
+fn validate_analysis_in_population(
+    plan: AnalysisExpected<'_>,
+    before: &[u8; PAGE_BYTES],
+    bytes: &[u8],
+    after: &[u8; PAGE_BYTES],
+    budget: OperationBudget,
+    population: AllocationPopulation,
+) -> Result<()> {
     require(
-        budget.accepts_count(plan.batch.count()),
+        budget.accepts_count(plan.batch.count())
+            && (population != AllocationPopulation::Status
+                || budget == OperationBudget::StatusInit114688),
         SemanticError::StateMismatch,
     )?;
     // Preserve error precedence while retiring header/descriptor decoder locals
@@ -710,7 +862,16 @@ pub(in super::super) fn validate_analysis_with_budget(
     )
     .map_err(descriptor_error)?;
     validate_descriptor(&plan, bytes, header, &descriptor)?;
-    validate_transition(&plan, before, bytes, after, header, &descriptor, budget)
+    validate_transition(
+        &plan,
+        before,
+        bytes,
+        after,
+        header,
+        &descriptor,
+        budget,
+        population,
+    )
 }
 
 fn validate_header(plan: &AnalysisExpected<'_>, bytes: &[u8]) -> Result<WalFrameHeader> {
@@ -821,6 +982,10 @@ fn validate_descriptor(
     Ok(())
 }
 
+#[allow(
+    clippy::too_many_arguments,
+    reason = "trusted population is separate from WAL semantic context"
+)]
 fn validate_transition(
     plan: &AnalysisExpected<'_>,
     before: &[u8; PAGE_BYTES],
@@ -829,6 +994,7 @@ fn validate_transition(
     h: WalFrameHeader,
     desc: &DescriptorSpec,
     budget: OperationBudget,
+    population: AllocationPopulation,
 ) -> Result<()> {
     use SemanticError::*;
     let n = plan.batch.count();
@@ -874,14 +1040,17 @@ fn validate_transition(
         bytes[OLD_CELL] == before[CELL] && bytes[NEW_CELL] == after[CELL],
         PageMismatch,
     )?;
+    validate_population(&old, plan.cancel.then_some(plan.batch), population)?;
     if plan.cancel {
-        validate_live_with_budget(
+        validate_live_in_population(
             &old,
             plan.profile,
             Some(plan.batch),
             plan.before_descriptor.ok_or(StateMismatch)?,
             plan.batch.owner.id(),
             budget,
+            population,
+            TerminalOutcome::Cancelled,
         )?;
     } else {
         require(

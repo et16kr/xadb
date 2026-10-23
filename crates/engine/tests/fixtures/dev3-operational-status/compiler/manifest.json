@@ -1,0 +1,56 @@
+{
+  "schema": "xadb-dev3-operational-status-compiler-v1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "probe_relative_path": "crates/engine/src/operational_status_borrow_probe.rs",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_diagnostics_are_failures": true,
+  "compiler_budget_seconds": 30,
+  "cases": [
+    {
+      "name": "baseline",
+      "expected_code": null,
+      "primary_line": null,
+      "reason": "Unmodified source control, compile only."
+    },
+    {
+      "name": "release",
+      "expected_code": null,
+      "primary_line": null,
+      "reason": "Released split permits retirement/resplit; consuming Before returns exact bound; final owner Drop returns original scratch.",
+      "bytes": 1780,
+      "sha256": "ae2f33142084116092ad59c87ac4e52a375283c34e0abaf92fd7c4199fc1d6ec"
+    },
+    {
+      "name": "live_split",
+      "expected_code": "E0499",
+      "primary_line": 8,
+      "reason": "Any live writer/reader/flusher view prevents exclusive retirement.",
+      "bytes": 407,
+      "sha256": "604ca5435e1d2e782b4b15ce265d242adba96d5b413ee4297ad66a1bc28ea93c"
+    },
+    {
+      "name": "consumed_owner",
+      "expected_code": "E0382",
+      "primary_line": 8,
+      "reason": "The old bound is moved into the operational result, including failure ownership.",
+      "bytes": 424,
+      "sha256": "fdabd5637ab3936f11f3ac8f7a1b5ffad5ff88ba549418fbaec739d910be5320"
+    },
+    {
+      "name": "live_reservation",
+      "expected_code": "E0499",
+      "primary_line": 11,
+      "reason": "The exact linear reservation keeps its operational owner exclusively borrowed.",
+      "bytes": 559,
+      "sha256": "5d205f4162b93c6b445cdaee47e49ca009e7a5575a2ef08ca6f54adee2d600c0"
+    },
+    {
+      "name": "workspace",
+      "expected_code": "E0499",
+      "primary_line": 12,
+      "reason": "Consuming conversion retains the original scratch loan.",
+      "bytes": 967,
+      "sha256": "1e45bdb48bb315073ffd648281fe29b3ae3814be2b66af82b7e3017055cfe339"
+    }
+  ]
+}

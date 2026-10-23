@@ -4344,5 +4344,26 @@
     ],
     "source_roots_changed": false,
     "full_stage_acceptance": false
+  },
+  "dev3_operational_status": {
+    "status": "live_owner_local_verified_D1_accepted_recovery_incomplete",
+    "contract_ref": "dev3-task-05-buffer-flush.md#operational-status-p2",
+    "scope": "consuming bound and repeated first-extent Status INIT; current-build repeated-sequence recovery and P3 load incomplete",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/operational_status.rs",
+      "crates/engine/src/storage/wal_io/operational_status_tests.rs",
+      "crates/engine/src/storage/wal_io/operational_status_native_tests.rs",
+      "scripts/dev3_operational_status_literals.py",
+      "scripts/check_dev3_operational_status_borrows.py",
+      "scripts/test_check_dev3_operational_status_borrows.py",
+      "tests/fixtures/dev3-operational-status/manifest.json",
+      "crates/engine/tests/fixtures/dev3-operational-status/compiler/manifest.json"
+    ],
+    "evidence_refs": [
+      "dev3-operational-status-20261023.md",
+      "dev3-operational-status-20261023.json"
+    ],
+    "source_roots_changed": false,
+    "full_stage_acceptance": false
   }
 }

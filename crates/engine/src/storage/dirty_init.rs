@@ -15,6 +15,7 @@ struct InitClaimRecord {
     work: SystemWorkRef,
     birth: PageLsn,
     ordinal: u16,
+    generations: [u64; 2],
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -31,14 +32,16 @@ impl InitClaimRecord {
             work: authority.work(),
             birth: authority.birth(),
             ordinal: authority.ordinal(),
+            generations: authority.generations(),
         }
     }
 
     fn valid(&self, pool: &SharedPool<'_, '_, '_, '_>) -> bool {
         pool.directory.closed_index() == Some(1)
             && pool.frames.len() == 2
+            && pool.directory.init_generations(pool.frames) == Some(self.generations)
             && pool.resolve_registration(0).is_some_and(|registered| {
-                registered.request == self.allocator && registered.generation == 1
+                registered.request == self.allocator && registered.generation == self.generations[0]
             })
             && self.allocator.kind == PageKind::Allocation
             && self.allocator.level == 0
@@ -49,7 +52,11 @@ impl InitClaimRecord {
             && self.payload.level == 0
             && self.payload.identity.database == self.allocator.identity.database
             && self.payload.identity.page.file == self.allocator.identity.page.file
-            && self.payload.identity.page.page_no == 1
+            && (if pool.directory.operational_status() {
+                (1..64).contains(&self.payload.identity.page.page_no)
+            } else {
+                self.payload.identity.page.page_no == 1
+            })
             && self.payload.identity.page.incarnation.get() >= 2
             && self.payload.identity.owner.get() == 2
             && self.payload.identity.owner_generation.get() == 1
@@ -60,7 +67,7 @@ impl InitClaimRecord {
             && self.ordinal == 0
             && self.allocator.rank() < self.payload.rank()
             && pool.directory.published().is_none_or(|published| {
-                published.request == self.payload && published.generation == 1
+                published.request == self.payload && published.generation == self.generations[1]
             })
     }
 }
@@ -99,6 +106,71 @@ impl Drop for InitClaimKey<'_, '_> {
 }
 
 impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
+    pub(in crate::storage) fn operational_status(&self) -> bool {
+        self.directory.operational_status()
+    }
+    pub(in crate::storage) fn init_generations(&self) -> Result<[u64; 2]> {
+        self.health()?;
+        self.directory
+            .init_generations(self.frames)
+            .ok_or_else(|| self.fatal(Cause::Invariant))
+    }
+    pub(in crate::storage) fn enable_status_operation(&mut self) -> Result<()> {
+        self.health()?;
+        if self.frames.len() != 2 || self.directory.closed_index() != Some(1) {
+            return Err(unchanged(Cause::Shape));
+        }
+        self.reload_quiescent()?;
+        for index in 0..2 {
+            let content = self.frames[index]
+                .content
+                .try_read()
+                .map_err(|error| match error {
+                    TryLockError::WouldBlock => unchanged(Cause::Busy),
+                    TryLockError::Poisoned(_) => self.fatal(Cause::Poisoned),
+                })?;
+            if index == 0 || self.directory.published().is_some() {
+                self.pair(index, &content)?;
+            } else if !content.fresh() {
+                return Err(self.fatal(Cause::Invariant));
+            }
+        }
+        if !self.directory.enable_status_operation(self.frames) {
+            return Err(unchanged(Cause::Shape));
+        }
+        Ok(())
+    }
+    /// Retire a clean resident Status before the next reservation. Bytes remain
+    /// caller storage, but no lookup can authorize them after publication clears.
+    pub(in crate::storage) fn prepare_next_status(&mut self) -> Result<FrameStamp> {
+        self.health()?;
+        self.reload_quiescent()?;
+        if self.initialized_request()?.is_none() {
+            return Err(unchanged(Cause::MissingTarget));
+        }
+        let generation = self
+            .directory
+            .next_status_generation()
+            .ok_or_else(|| unchanged(Cause::CounterExhausted))?;
+        let mut content = self.frames[1]
+            .content
+            .try_write()
+            .map_err(|error| match error {
+                TryLockError::WouldBlock => unchanged(Cause::Busy),
+                TryLockError::Poisoned(_) => self.fatal(Cause::Poisoned),
+            })?;
+        let before = self.pair(1, &content)?;
+        if content.dirty || before.entry.is_some() || before.frame.rec_lsn.is_some() {
+            return Err(unchanged(Cause::Busy));
+        }
+        self.health()?;
+        self.directory.prepare_next_status(generation);
+        content.page_lsn = PageLsn(0);
+        content.modification_counter = 0;
+        content.rec_lsn = None;
+        content.dirty = false;
+        Ok(before.frame)
+    }
     pub(in crate::storage) fn new_with_closed_init(
         core: &'c PageConcurrency<'s>,
         fence: &'s SessionFence,
@@ -387,6 +459,16 @@ impl<'a, 'b, 'c, 's, 'p, 'd> InitWriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
     fn check_before(&self, expected: Option<&FrameStamp>) -> Result<FrameStamp> {
         let pool = self.pool();
         pool.health()?;
+        let pins = self.pins.as_ref().expect("owned initializer pins");
+        if !pins.identity.valid(pool)
+            || !pins
+                .key
+                .as_ref()
+                .is_some_and(|key| key.matches_pool(pool) && key.identity == pins.identity)
+            || pins.retained
+        {
+            return Err(pool.fatal(Cause::Invariant));
+        }
         if pool.initialized_request()?.is_some() {
             return Err(pool.fatal(Cause::Invariant));
         }
@@ -483,7 +565,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> InitWriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
             || !pool.dpt_valid(registry)
             || pool.directory.published().is_some()
             || before.identity != pins.identity.allocator.identity
-            || before.generation != 1
+            || before.generation != pins.identity.generations[0]
             || lsn.0 <= before.page_lsn.0
             || lsn.0 <= pins.identity.birth.0
         {
@@ -530,7 +612,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> InitWriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
             rec_lsn,
             Registration {
                 request: pins.identity.payload,
-                generation: 1,
+                generation: pins.identity.generations[1],
             },
         ))
     }
@@ -660,13 +742,13 @@ impl PreparedInitSet<'_, '_, '_, '_, '_, '_, '_> {
             let registry = self.registry.prechecked_mut();
             registry.entries[0] = Some(DirtyEntry {
                 identity: allocator_identity,
-                generation: 1,
+                generation: self.permit.allocator_before().generation,
                 rec_lsn: self.rec_lsn,
                 modification_counter: self.counter,
             });
             registry.entries[1] = Some(DirtyEntry {
                 identity: self.registration.request.identity,
-                generation: 1,
+                generation: self.registration.generation,
                 rec_lsn: lsn,
                 modification_counter: 1,
             });
@@ -973,6 +1055,21 @@ pub(in crate::storage) mod test_support {
             published: pool.directory.published().map(|entry| entry.request),
         }
     }
+    pub(in crate::storage) fn seed_status_generation(
+        pool: &mut SharedPool<'_, '_, '_, '_>,
+        generation: u64,
+    ) {
+        pool.directory.seed_status_generation(generation);
+    }
+    pub(in crate::storage) fn corrupt_local_init_generation(
+        write: &mut InitWriteTargets<'_, '_, '_, '_, '_, '_>,
+    ) {
+        let pins = write.pins.as_mut().unwrap();
+        pins.identity.generations[1] = pins.identity.generations[1].wrapping_add(1);
+    }
+    pub(in crate::storage) fn corrupt_init_key_generation(key: &mut InitClaimKey<'_, '_>) {
+        key.identity.generations[1] = key.identity.generations[1].wrapping_add(1);
+    }
     pub(in crate::storage) fn corrupt_init_claim(pool: &SharedPool<'_, '_, '_, '_>, variant: u8) {
         let mut pins = pool.pins.lock().unwrap();
         let slot = pins
@@ -983,6 +1080,7 @@ pub(in crate::storage) mod test_support {
             1 => slot.identity.birth = PageLsn(0),
             2 => slot.identity.ordinal = 1,
             3 => slot.initializer_pins_held = !slot.initializer_pins_held,
+            4 => slot.identity.generations[1] = slot.identity.generations[1].wrapping_add(1),
             _ => panic!("unknown initializer corruption"),
         }
     }

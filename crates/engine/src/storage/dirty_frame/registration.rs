@@ -10,6 +10,7 @@ use std::sync::OnceLock;
 enum Mode {
     Fixed,
     AllocatorReloadable,
+    OperationalStatus,
 }
 
 struct Slot {
@@ -88,6 +89,39 @@ impl RegistrationDirectory {
     pub(super) fn closed_index(&self) -> Option<usize> {
         self.closed_index
     }
+    pub(super) fn operational_status(&self) -> bool {
+        self.mode == Mode::OperationalStatus
+    }
+    pub(super) fn init_generations(&self, frames: &[DirtyFrame<'_>]) -> Option<[u64; 2]> {
+        if self.closed_index != Some(1) || !self.valid(frames) {
+            return None;
+        }
+        Some([
+            self.resolve(frames, 0)?.generation,
+            self.entries[1].generation,
+        ])
+    }
+    pub(super) fn enable_status_operation(&mut self, frames: &[DirtyFrame<'_>]) -> bool {
+        if self.mode != Mode::Fixed || self.closed_index != Some(1) || !self.valid(frames) {
+            return false;
+        }
+        self.mode = Mode::OperationalStatus;
+        true
+    }
+    pub(super) fn next_status_generation(&self) -> Option<u64> {
+        self.operational_status().then_some(())?;
+        self.entries[1].generation.checked_add(1)
+    }
+    #[cfg(test)]
+    pub(super) fn seed_status_generation(&mut self, generation: u64) {
+        assert!(self.operational_status() && generation != 0);
+        self.entries[1].generation = generation;
+    }
+    pub(super) fn prepare_next_status(&mut self, generation: u64) {
+        // Exclusive caller already checked the next generation and all claims.
+        self.entries[1].request.take();
+        self.entries[1].generation = generation;
+    }
     pub(super) fn published(&self) -> Option<Registration> {
         self.closed_index
             .and_then(|index| self.entries[index].registration())
@@ -111,7 +145,7 @@ impl RegistrationDirectory {
             original.filter(|value| {
                 value.generation != 0
                     && match self.mode {
-                        Mode::Fixed => frame.registration == Some(*value),
+                        Mode::Fixed | Mode::OperationalStatus => frame.registration == Some(*value),
                         Mode::AllocatorReloadable => self.resident & (1u64 << index) != 0,
                     }
             })
@@ -258,7 +292,8 @@ impl RegistrationDirectory {
         if let Some(index) = self.closed_index {
             if index != 1
                 || frames.len() != 2
-                || self.entries[index].generation != 1
+                || self.entries[index].generation == 0
+                || (!self.operational_status() && self.entries[index].generation != 1)
                 || frames[index].registration.is_some()
             {
                 return false;
@@ -267,12 +302,16 @@ impl RegistrationDirectory {
                 let Some(allocator) = self.resolve(frames, 0) else {
                     return false;
                 };
-                if published.generation != 1
+                if (!self.operational_status() && published.generation != 1)
                     || published.request.kind != PageKind::TransactionStatus
                     || published.request.level != 0
                     || published.request.identity.database != allocator.request.identity.database
                     || published.request.identity.page.file != allocator.request.identity.page.file
-                    || published.request.identity.page.page_no != 1
+                    || if self.operational_status() {
+                        !(1..64).contains(&published.request.identity.page.page_no)
+                    } else {
+                        published.request.identity.page.page_no != 1
+                    }
                     || published.request.identity.page.incarnation.get() < 2
                     || published.request.identity.owner.get() != 2
                     || published.request.identity.owner_generation.get() != 1

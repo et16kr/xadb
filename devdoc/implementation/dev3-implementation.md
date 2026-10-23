@@ -766,3 +766,15 @@ P2 consuming owner·반복 INIT, P3 현재 membership load와 실제3주소/2fra
 기존 재개 우선 단위 [3.03.1 예약·취소](../plans/dev3-implementation-plan.md#allocation-remaining)는 위 인수 기록을 따른다. 3.10.1.a.1의 공통 admission/version gate는 위 기록을 따르며 dirty frame·typed stage/apply 첫 소비자는 위 기록을 따른다. allocator1 한 페이지 flush와 Status owner의 영속 binding·예약 payload INIT에 이어 [Status home flush와 두 target의 순차 flush](#status-home-flush)까지 제한 인수를 마쳤다. 후속 복구 진입의 [초기 SELECT](#recovery-select)와 [prefix 분석](#recovery-prefix)에 이어 [현재 genesis 실제 닫힌 복구](#recovery-effects)를 선택 검증했다. 일반 BOOT/F05·REBASE/새 epoch·undo/READY는 남아 있다. [원본 부분 검토](../evidence/dev3-allocation-reservation-partial-review-xadb-20261021.json)의 remaining은 역사적 상태로 보존하고 이후 단위별 인수 기록을 함께 읽으며, 완료된 무변경 runtime 사례는 반복하지 않는다. 각 새 쓰기 경로의 자원 계산·복구 의미·fault 입력은 그 경로 전에 정한다. free/reuse는 회수 가능성 판정을, 실제 행 변경은 undo/status 기반을 먼저 수신하되 서로 전체 분류 완료를 요구하지 않는다. 복구 전용 REBASE는 정상 fuzzy checkpoint와 별도이며 선행으로 공급한다. 계획 작성 당시의 미실행 상태와 이후 위 단위별 구현·실행 기록을 구분한다.
 
 예약·취소의 [native와 compiler 병렬 작업](../plans/dev3-implementation-plan.md#parallel-execution-plan)은 해당 인수 기록에 실제 담당·source·결과를 연결했다. 64KiB 분석·공통 수정·stage 검증은 총괄이 조정하고 독립 검토자를 별도로 둔다. 실제 담당/경로·기준 source·자원 profile을 고정하기 전에는 작업 배정이나 동시 실행 완료로 기록하지 않는다.
+
+<a id="operational-status"></a>
+## 반복 Status INIT의 consuming owner
+
+2026-10-23 [P2 소유 계약](../contracts/dev3-task-05-buffer-flush.md#operational-status-p2)에 따라
+원 flush bound를 소비하는 operational owner와 clean Status 퇴출·세대 준비를 공급했다.
+A INIT→flush→퇴출→B cancel→재예약 INIT의 실제 owner 및 Linux home/WAL 비교를
+[선택 증거](../evidence/dev3-operational-status-20261023.md)에 보존한다. static6·신규 runtime14,
+관련 closed selector1·native1을 source별로 구별하며 compiler semantic5+control1·checker4도 PASS이며 OCR delegate 독립 D1을 live owner 한정 수용했다.
+원 compile 실패를 보존하고 완료 시험은 반복하지 않는다. 현재 반복 sequence의 성공 복구는
+미구현이므로 P2/P3 durable integration 완료가 아니다. fresh current-build reopen/cut,
+P3 membership load·3주소/2frame, 반복 live Status·batch8/64·pressure·DEV3/S5는 남아 있다.

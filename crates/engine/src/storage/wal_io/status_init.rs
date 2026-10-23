@@ -5,7 +5,7 @@
 
 use super::super::allocation_reservation::{
     AllocationObservation, budget,
-    operation::{Batch, SemanticError},
+    operation::{Batch, SemanticError, TerminalOutcome},
 };
 use super::{
     ABANDONED, AVAILABLE, BOUND, BindingClaim, CLAIMED, Cause as StorageCause, MutableStorageError,
@@ -48,7 +48,8 @@ mod tests;
 mod status_flush;
 pub(in crate::storage) use status_flush::StatusFlushAuthority;
 pub(crate) use status_flush::{
-    BoundStatusWithFlush, IntoFlushError, StatusFlushError, StatusFlusher,
+    BoundStatusWithFlush, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
+    OperationalStatusReader, OperationalStatusWriter, StatusFlushError, StatusFlusher,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -144,6 +145,7 @@ pub(in crate::storage) struct InitAuthority<'c, 's> {
     allocator: TargetRequest,
     payload: TargetRequest,
     ordinal: u16,
+    generations: [u64; 2],
 }
 impl<'c, 's> InitAuthority<'c, 's> {
     pub(in crate::storage) fn core(&self) -> &'c PageConcurrency<'s> {
@@ -163,6 +165,9 @@ impl<'c, 's> InitAuthority<'c, 's> {
     }
     pub(in crate::storage) fn ordinal(&self) -> u16 {
         self.ordinal
+    }
+    pub(in crate::storage) fn generations(&self) -> [u64; 2] {
+        self.generations
     }
     pub(in crate::storage) fn allocator(&self) -> TargetRequest {
         self.allocator
@@ -521,6 +526,10 @@ impl<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             fence: self.storage.session_fence(),
             batch,
             ordinal,
+            generations: self
+                .pool
+                .init_generations()
+                .map_err(|e| frame_error(Phase::Prepare, e))?,
             allocator: allocator_request(self.base.identity),
             payload: TargetRequest {
                 identity: PageIdentity {
@@ -640,15 +649,22 @@ impl<'s, 'c, W: WriterNamespace> StatusBootstrapWriter<'_, 's, 'c, '_, '_, '_, '
                     before_descriptor: &self.base.descriptor,
                     role: self.role,
                 };
-                operation::prepare_init(&plan, before, frame, allocator_after, self.status_after)
-                    .map_err(|e| {
-                        storage.session_fence().fence();
-                        error(
-                            Phase::Prepare,
-                            Effect::CallerMustResolve,
-                            Cause::Semantic(e),
-                        )
-                    })?
+                operation::prepare_init_in_population(
+                    &plan,
+                    before,
+                    frame,
+                    allocator_after,
+                    self.status_after,
+                    self.base.population,
+                )
+                .map_err(|e| {
+                    storage.session_fence().fence();
+                    error(
+                        Phase::Prepare,
+                        Effect::CallerMustResolve,
+                        Cause::Semantic(e),
+                    )
+                })?
             };
             let after_descriptor = prepared.descriptor_bytes();
             let allocator_after = prepared.allocator_after();
@@ -769,6 +785,7 @@ impl<'s, 'c, W: WriterNamespace> StatusBootstrapWriter<'_, 's, 'c, '_, '_, '_, '
                 frame_error(Phase::Release, e)
             })?;
         *self.installation = None;
+        self.base.terminal = TerminalOutcome::InitializedStatus;
         self.base.batch = None;
         self.base.terminal_pending = false;
         Ok(InitializedStatusObservation {
@@ -840,14 +857,26 @@ impl<'b, 'c, 's, 'p, 'd> StatusReader<'b, 'c, 's, 'p, 'd> {
             .identity;
         let allocator = read.bytes(0).map_err(|e| frame_error(Phase::Observe, e))?;
         let status = read.bytes(1).map_err(|e| frame_error(Phase::Observe, e))?;
-        let lsn = operation::observe_initialized(
-            *self.profile,
-            allocator_identity,
-            payload_identity,
-            self.role,
-            allocator,
-            status,
-        )
+        let observed = if self.pool.operational_status() {
+            operation::observe_operational_initialized(
+                *self.profile,
+                allocator_identity,
+                payload_identity,
+                self.role,
+                allocator,
+                status,
+            )
+        } else {
+            operation::observe_initialized(
+                *self.profile,
+                allocator_identity,
+                payload_identity,
+                self.role,
+                allocator,
+                status,
+            )
+            .map(|lsn| (lsn, lsn))
+        }
         .map_err(|e| {
             self.fence.fence();
             error(
@@ -862,8 +891,8 @@ impl<'b, 'c, 's, 'p, 'd> StatusReader<'b, 'c, 's, 'p, 'd> {
         let status = read
             .observe(1)
             .map_err(|e| frame_error(Phase::Observe, e))?;
-        if allocator.frame.page_lsn != lsn
-            || status.frame.page_lsn != lsn
+        if allocator.frame.page_lsn != observed.0
+            || status.frame.page_lsn != observed.1
             || allocator.frame.identity != allocator_identity
             || status.frame.identity != payload_identity
         {

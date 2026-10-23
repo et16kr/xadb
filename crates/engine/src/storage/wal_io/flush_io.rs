@@ -640,7 +640,7 @@ fn validate_capture<W: WriterNamespace>(
         }
         PolicyRef::Status(authority)
             if request.kind != PageKind::TransactionStatus
-                || request.identity.page.page_no != 1
+                || !(1..64).contains(&request.identity.page.page_no)
                 || !authority.matching(capture) =>
         {
             Err(Cause::IdentityMismatch)
@@ -903,7 +903,7 @@ fn validate_mapping<W: WriterNamespace>(
             if !authority.matching(capture)
                 || request.kind != PageKind::TransactionStatus
                 || request.level != 0
-                || request.identity.page.page_no != 1
+                || !(1..64).contains(&request.identity.page.page_no)
                 || allocator.page.page_no != 0
                 || request.identity.database != allocator.database
                 || request.identity.page.file != allocator.page.file

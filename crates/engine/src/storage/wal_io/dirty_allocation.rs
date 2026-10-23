@@ -4,7 +4,9 @@
 
 use super::super::allocation_reservation::{
     AllocationObservation,
-    operation::{self, Batch, OperationBudget, SemanticError},
+    operation::{
+        self, AllocationPopulation, Batch, OperationBudget, SemanticError, TerminalOutcome,
+    },
 };
 use super::{MutableStorageError, MutableStorageOwner};
 use crate::{
@@ -217,6 +219,8 @@ pub(super) struct WriterControl<'s, 'o> {
     pub(super) terminal_pending: bool,
     pub(super) installation: Option<InstallObligation<'s>>,
     budget: OperationBudget,
+    pub(super) population: AllocationPopulation,
+    pub(super) terminal: TerminalOutcome,
     #[cfg(test)]
     hook: Option<std::sync::Arc<test_support::Hook>>,
 }
@@ -253,6 +257,8 @@ impl<'s, 'o> WriterControl<'s, 'o> {
             terminal_pending: false,
             installation: None,
             budget: OperationBudget::Dirty98304,
+            population: AllocationPopulation::Empty,
+            terminal: TerminalOutcome::Cancelled,
             #[cfg(test)]
             hook: None,
         }
@@ -273,6 +279,8 @@ impl<'s, 'o> WriterControl<'s, 'o> {
             terminal_pending: false,
             installation: None,
             budget: OperationBudget::StatusInit114688,
+            population: AllocationPopulation::Empty,
+            terminal: TerminalOutcome::Cancelled,
             #[cfg(test)]
             hook: None,
         }
@@ -315,13 +323,15 @@ impl<'s, 'o> WriterControl<'s, 'o> {
             return Err(Cause::Invariant);
         }
         let batch = if release_terminal { None } else { self.batch };
-        operation::validate_live_with_budget(
+        operation::validate_live_in_population(
             &page,
             profile,
             batch,
             &self.descriptor,
             self.work_high_water,
             self.budget,
+            self.population,
+            self.terminal,
         )
         .map_err(Cause::Semantic)?;
         let retained = prefix
@@ -610,16 +620,22 @@ impl<'s, 'c, W: WriterNamespace> AllocationWriter<'_, 's, 'c, '_, '_, '_, '_, '_
         let (before, after) = rest.split_at_mut(PAGE_BYTES);
         let before: &[u8; PAGE_BYTES] = (&*before).try_into().expect("fixed before image");
         let after: &mut [u8; PAGE_BYTES] = after.try_into().expect("fixed after image");
-        let prepared =
-            operation::prepare_with_budget(plan, before, frame_work, after, control.budget)
-                .map_err(|e| {
-                    storage.session_fence().fence();
-                    error(
-                        Phase::Prepare,
-                        Effect::CallerMustResolve,
-                        Cause::Semantic(e),
-                    )
-                })?;
+        let prepared = operation::prepare_in_population(
+            plan,
+            before,
+            frame_work,
+            after,
+            control.budget,
+            control.population,
+        )
+        .map_err(|e| {
+            storage.session_fence().fence();
+            error(
+                Phase::Prepare,
+                Effect::CallerMustResolve,
+                Cause::Semantic(e),
+            )
+        })?;
         let after_descriptor = prepared.descriptor_bytes();
         let mut write = self
             .pool
@@ -676,6 +692,7 @@ impl<'s, 'c, W: WriterNamespace> AllocationWriter<'_, 's, 'c, '_, '_, '_, '_, '_
                 .install_metadata(0, &permit)
                 .map_err(|e| frame_error(Phase::Apply, e))?;
             control.descriptor.copy_from_slice(after_descriptor);
+            control.terminal = TerminalOutcome::Cancelled;
             control.installation.as_mut().expect("stage-owned").phase =
                 InstallPhase::DescriptorInstalled;
             #[cfg(test)]

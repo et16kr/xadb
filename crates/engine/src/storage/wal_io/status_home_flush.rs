@@ -33,6 +33,12 @@ use xadb_foundation::{error::Effect, namespace::WriterNamespace};
 #[path = "status_home_flush_tests.rs"]
 mod tests;
 
+#[path = "operational_status.rs"]
+mod operational;
+pub(crate) use operational::{
+    IntoOperationalStatusError, OperationalStatus, OperationalStatusReader, OperationalStatusWriter,
+};
+
 #[cfg(test)]
 pub(super) fn before_init_force(binding: &AtomicU8) {
     tests::before_init_force(binding);
@@ -353,7 +359,11 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
             || allocator.kind != PageKind::Allocation
             || allocator.level != 0
             || allocator.identity.page.page_no != 0
-            || request.identity.page.page_no != 1
+            || if self.pool.operational_status() {
+                !(1..64).contains(&request.identity.page.page_no)
+            } else {
+                request.identity.page.page_no != 1
+            }
             || request.identity.page.file != allocator.identity.page.file
             || request.identity.database != allocator.identity.database
         {

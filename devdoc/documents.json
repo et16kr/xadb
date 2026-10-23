@@ -1787,6 +1787,16 @@
       "path": "evidence/dev3-operational-registration-20261023.json",
       "role": "evidence",
       "title": "DEV3 일반 page 등록 코어 P1 source·receipt 색인"
+    },
+    "dev3-operational-status-20261023.md": {
+      "path": "evidence/dev3-operational-status-20261023.md",
+      "role": "evidence",
+      "title": "DEV3 반복 Status INIT consuming owner 선택 검증"
+    },
+    "dev3-operational-status-20261023.json": {
+      "path": "evidence/dev3-operational-status-20261023.json",
+      "role": "evidence",
+      "title": "DEV3 반복 Status INIT source별 실행 색인"
     }
   }
 }

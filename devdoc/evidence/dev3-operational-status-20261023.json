@@ -1,0 +1,573 @@
+{
+  "unit": "D3-OPERATIONAL-PAGES-001-P2-LIVE-OWNER",
+  "date": "2026-10-23",
+  "base_commit": "3f7b6f5138cb83b32599f2cfa1853b552d2234ee",
+  "status": "LOCAL_VERIFIED_D1_ACCEPTED_LIVE_OWNER_ONLY_DURABLE_INTEGRATION_INCOMPLETE",
+  "artifact_root": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023",
+  "source_results": [
+    {
+      "revision": "r0",
+      "source_sha256": "9510eaab91ef8678930ddbf9218ab0b3d2802868c8ed0140c73c8c08aea8f9dd",
+      "base_commit": "3f7b6f5138cb83b32599f2cfa1853b552d2234ee",
+      "purpose": "P2 initial compile only; no runtime executed",
+      "compile": "PASS"
+    },
+    {
+      "revision": "r1",
+      "source_sha256": "7e65024cbb285fe6ad1e62f411cb0057e3466cadab273e68c3e4a3af44075238",
+      "base_commit": "3f7b6f5138cb83b32599f2cfa1853b552d2234ee",
+      "purpose": "P2 test harness compile; runtime pending resource gate",
+      "compile": "FAIL"
+    },
+    {
+      "revision": "r2",
+      "source_sha256": "120cd4f5d1586cf5b95a088ae1e7f9ccd72d928c8bee0d07ace737004b90b14b",
+      "base_commit": "3f7b6f5138cb83b32599f2cfa1853b552d2234ee",
+      "purpose": "P2 compile; runtime pending resource gate",
+      "compile": "PASS"
+    },
+    {
+      "revision": "r3",
+      "source_sha256": "e86309842bd2f6dcdd250ca14645683ab1d0db10047a569a74c728a0c9d7237c",
+      "base_commit": "3f7b6f5138cb83b32599f2cfa1853b552d2234ee",
+      "purpose": "P2 compile; runtime pending resource gate",
+      "compile": "FAIL"
+    },
+    {
+      "revision": "r4",
+      "source_sha256": "cb7c64c8c200c596d01e50c5d9ab44d4ff93cf28d990600ffd35395e634f6948",
+      "base_commit": "3f7b6f5138cb83b32599f2cfa1853b552d2234ee",
+      "purpose": "P2 compile; runtime pending resource gate",
+      "compile": "PASS"
+    },
+    {
+      "revision": "r5",
+      "source_sha256": "486dbc0da6f05fa30bef1fbbadfd480b10a3422c28982796a162bf7ee10fae58",
+      "base_commit": "3f7b6f5138cb83b32599f2cfa1853b552d2234ee",
+      "purpose": "P2 compile; runtime pending resource gate",
+      "compile": "PASS"
+    },
+    {
+      "revision": "r6",
+      "source_sha256": "4894c02819faf68a5beba67c5e1b3f20455906457d36d4ad6a244abca5d20804",
+      "base_commit": "3f7b6f5138cb83b32599f2cfa1853b552d2234ee",
+      "purpose": "P2 compile; runtime pending resource gate",
+      "compile": "PASS"
+    },
+    {
+      "revision": "r7",
+      "source_sha256": "e6ad54e7d28d6aba65baa5d7b3562b5aeb2c5e79a6cf5eaf303edfd8f80b8850",
+      "base_commit": "3f7b6f5138cb83b32599f2cfa1853b552d2234ee",
+      "purpose": "P2 compile; runtime pending resource gate",
+      "compile": "PASS"
+    }
+  ],
+  "counts": {
+    "static_r2": 6,
+    "new_runtime_r2": 2,
+    "new_runtime_r4": 9,
+    "native_r4": 1,
+    "new_runtime_r5": 2,
+    "directly_affected_closed_runtime_r5": 1,
+    "closed_case_markers": [
+      "CF15-01",
+      "CF15-02"
+    ],
+    "compiler_semantic": 5,
+    "compiler_control": 1,
+    "checker_selftests": 4,
+    "new_runtime_r7": 1,
+    "total_new_runtime": 14
+  },
+  "compiler": {
+    "status": "PASS",
+    "source_sha256": "dfb5fca02afddd01d198805b2b51ea38fb09be96bb0ab3516bacf39a293e49b2",
+    "elapsed_seconds": 10.606525486000464
+  },
+  "static_tools": {
+    "r5_clippy": "FAIL: unused unit expression and explicit drop of no-Drop test views",
+    "r6_clippy": "PASS",
+    "r6_engine_fmt": "PASS",
+    "r7_clippy": "PASS",
+    "r7_engine_fmt": "PASS"
+  },
+  "original_failures": [
+    "r1 E0502/E0505 test retained Result borrow",
+    "r3 E0425 misplaced producer guard and E0505 native test owner lifetime",
+    "r5 Clippy unused_unit/drop_non_drop"
+  ],
+  "remaining_required": [
+    "repeated sequence current-build recovery implementation and fresh producer/reopen/partial-prefix/fault-cut verification",
+    "P3 membership-based load and three addresses/two frames integration",
+    "live Status mutation",
+    "general pool, batch8/64, pressure, recovery/READY, DEV3 S5"
+  ],
+  "not_run": [
+    "unchanged lower wrappers",
+    "repeat of r2/r4 completed runtime and static",
+    "document verifier: push only"
+  ],
+  "full_dev3_complete": false,
+  "p2_durable_integration_complete": false,
+  "independent_review": {
+    "reviewer": "/root/pool_design_review",
+    "D2": "ACCEPTED_LIVE_OWNER",
+    "F05": "r2 static source results, r4/r5 delta accepted; not current-source reruns",
+    "final_D1": "ACCEPTED_P2_LIVE_OWNER_ONLY",
+    "ocr_skill": "/home/et16/.agents/skills/open-code-review-delegate/SKILL.md",
+    "coverage": {
+      "total_files": 112,
+      "reviewable_files": 23,
+      "reviewed_files": 23,
+      "skipped_files": 0,
+      "coverage_rate": 1.0,
+      "excluded_files": 89,
+      "manual_reviewed_excluded_files": 85,
+      "out_of_scope_excluded_files": 4,
+      "identity": "(path,status)",
+      "detail": "coverage-final.json plus documentation-only coverage-final-addendum.json"
+    },
+    "unresolved_findings": 0,
+    "final_metadata_sync_only": true,
+    "reviewed_staged_paths": 108
+  },
+  "receipts": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/checker-tests-source/crates/engine/tests/fixtures/dev3-operational-status/compiler/manifest.json",
+      "sha256": "220029259709dff07a107c1d503e8b2ea5d580c130a59ef9fc7555436af33893"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/checker-tests-source/receipt.json",
+      "sha256": "2ad776ca5d58bbdfe7031dcb7c3463a260a99d08cabdf82e59e4384b57e79ba2"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/compiler-checker-tests.log",
+      "sha256": "be8e8ebf0d655813b41aeac2ab8d3fb8fd35aa09a1a3c1d99676b1b8b7869bdd"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/compiler-results.json",
+      "sha256": "657aa4f1ca07248eb0293635a5a36096f906ea6247cca1d89ef93a3a4e83f1ff"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/operational-status-borrows-81vjhhup/baseline-logs/compiler.jsonl",
+      "sha256": "a32e62f3323fceb0e88b886b1cfde8115f6c9b139112b55c5cb92805585976e1"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/operational-status-borrows-81vjhhup/baseline-logs/compiler.stderr",
+      "sha256": "ba3a9990e3beee0d9c06a18c721f047a27228b7bcfb7d83ef35575de4fe271e5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/operational-status-borrows-81vjhhup/result.json",
+      "sha256": "657aa4f1ca07248eb0293635a5a36096f906ea6247cca1d89ef93a3a4e83f1ff"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r0/build.jsonl",
+      "sha256": "082128b48b71d549a4a5b56654dd10d8218fd46fafdea9f6270540b1a03699d1"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r0/build.stderr",
+      "sha256": "a8793cf9e1b238119b9c22d15306809bdbaf901290a1351e081a5563d2e74039"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r0/source.json",
+      "sha256": "158a1156fad636751d0e0fe0b8939d7094544b1e9eb27d0a6a24320dc92d8d39"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r1/build.jsonl",
+      "sha256": "6595db8cf62d399c8f068175a0b993a1f812f8665de42f6e10d4d1a970cfa808"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r1/build.stderr",
+      "sha256": "ff433fb59e3bf0673af9833b1e5c1e3922224d369bd53dd1a3ec3ae4c079fe09"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r1/source.json",
+      "sha256": "75b12daab0fcd7666f8600197f57abfe30e6047d7e0cd3fe9bd5e221a2125e1a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/binary.json",
+      "sha256": "c4d0e9cf9af1284641cf944f2ddc7aced8c399114da41dba89921d74cff068d2"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/build.jsonl",
+      "sha256": "d0431ea46196a04b9bd0b9b3eb327a8b56f8b78939f7662801c7113df22f86ee"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/build.stderr",
+      "sha256": "40a1c9f0db57150d8632481c8ddcd88105079dd79ec2137901c0d666d13b1741"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/dirty_shared_resource_after_closed_init.log",
+      "sha256": "4973171465d605b65450722d16f9162be34a8bb4bbc4f408268d76d89719fd3e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/operational_status_dirty_conversion_returns_exact_owner.log",
+      "sha256": "5df500489b9c5c4b54e7d2fa5f9e13b2da5468243cac3c2c706d0032c542c024"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/operational_status_repeated_init_preserves_literal_history.log",
+      "sha256": "8ee362703a38dfb4369a0b4a6a258f05198580b16656ff1c9ded9522cfe2592a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/operational_status_resource_gate.log",
+      "sha256": "4203fea5a24cdc235a935166786a3618ad8cfc8596a5605456fff19ea1e4209f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/registration_layout_receipt.log",
+      "sha256": "bc87ed5fec77c0d912782b681ef92724cf4186909052ee381fb76a9ac09c2ccf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/reload_layout_gate.log",
+      "sha256": "a69fff2e5ab105ce1c78f63fc2f78fa7c0dac714a14c15bac6be9117dcb81deb"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/runtime-results.json",
+      "sha256": "3a223adff7be92eaede9230208fee4af9c69554af5093204a73951a3a824beac"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/runtime-selection.json",
+      "sha256": "4873fe7b5417a32faff3cdf864dcf302a540909a449af1f4f543a12c21d5a86c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/source.json",
+      "sha256": "b6425f6565888926bcf5715d1186825181ff57145846c091a528f2785b816486"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/static-results.json",
+      "sha256": "adbe4811bed36531339f95332d90b1bd34525f411d7209b76d19d964f24a1319"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/static-selection.json",
+      "sha256": "d3df4c7bfdc58dbd14478a6df622982fe646a6319787249528e4a7671f018882"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/status_flush_rf.log",
+      "sha256": "fb2d371527701a8558e54649915499fe26f389fedff59e04880c534830747480"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r2/status_init_cf17_actual_resource_and_capacity_bounds.log",
+      "sha256": "14c71386014822a090d48650ac8a958308c8ae22912a6faf8971cb42a0e9596c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r3/build.jsonl",
+      "sha256": "43315d1a119d6157c1cd97e9a2432c29764f3fb90bd415293e9f9e48ba753438"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r3/build.stderr",
+      "sha256": "4aa87886846e42eec8663487afd6145bf4bc160ac7de6e3512636b67cd3f527b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r3/source.json",
+      "sha256": "ec7f1c7a934ab710d1b5a7833d5a7bc77099bf57e8b4f80fce6a5d46d8032413"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/binary.json",
+      "sha256": "26a8df960428106f7de4a0a91458f497138b243d8936e327a02a96b0f0b203bf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/boundary-results.json",
+      "sha256": "f5706ca496d736754e297448153be1bc0fefba892f913338118b4da01793a25a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/boundary-selection.json",
+      "sha256": "14a6c8731ace9b0170a17871a1925efb7cc6998172279847a4812d74f6beb53b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/build.jsonl",
+      "sha256": "d0efb342cdd714c81024ebf7c9cfa8f92e938ee3f0bd19d592e192999685c4dd"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/build.stderr",
+      "sha256": "0ef3bd5258f0dc440c5bb31cd139ef16e041be1a3787a8c659b4d9ac5b601385"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/native/after.tsv",
+      "sha256": "5e187e20a604df1b2c90684564247b96c0d3fd709e989b60c4309ce1fb79cc9f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/native/before.tsv",
+      "sha256": "b03da46200bf265904c92423684e888ae1c737c29dc736485aa0363d2b93e8b8"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/native/fd.tsv",
+      "sha256": "18aab5979c0c20f1eada539fb73f73fedc607bac713c851706b4da5dcc99e486"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/native/io.tsv",
+      "sha256": "5993dc11253143ab350e4090e8dddcb3bae694edddf3080c91bcac676615bbae"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/native/summary.txt",
+      "sha256": "ca6b14d28e293198e9c9b989b25892758d0c6b5e3ac295fc11281bb1960dec64"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/operational_status_forgotten_init_claim_prevents_retirement.log",
+      "sha256": "ad35b072bb2642ef43310e5fca33e1018cbe76289b066af180f1fdd4e6c1c1f0"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/operational_status_forgotten_pin_prevents_retirement.log",
+      "sha256": "cc6686383bf4748aef08689becc2fc7f513d5c7deac9ae39c6b97b0ff2aa6a94"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/operational_status_population_and_terminal_are_trusted_inputs.log",
+      "sha256": "643e644795cf90cd6c20e1d5e139be14af0c2ef19447197df38a5a19e581cad5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/operational_status_preflight_rejects_stale_local_generation_before_stage.log",
+      "sha256": "50d8ca9c92122e32223346729ce90b6a59bf5c3a032e01ba0257d842ec4a709d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/operational_status_reader_accepts_independent_page_lsns.log",
+      "sha256": "c5f2fe59d942e70c6e291ab176c9d75a6a7417cc93ca459d54945e65d5ccd5cb"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/operational_status_retired_flush_must_finalize_before_eviction.log",
+      "sha256": "6382975368e63a6e94cefaae8ef0d0c0fc3e725d8d01f3b2f723e9f33bf5d664"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/operational_status_retirement_dirty_empty_and_exhausted_are_unchanged.log",
+      "sha256": "36fd3f48dcb8bef3bce8437d6fc1117092a36830c51bfe867bb8d6afdaa83f31"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/operational_status_stale_claim_release_preserves_pin_counts.log",
+      "sha256": "16641a92c634fe8b418447006122f0e07a0aed26916b00fc0f9e853da9820f1e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/operational_status_stale_init_admission_is_unchanged.log",
+      "sha256": "ff667f031a2c858a0393066dc5e41eaac073810d29f5a7815bdafa8b91399ea7"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/source.json",
+      "sha256": "afee4b0cd3247d8e09abbcfadb396850df3084f7608f6e3967cc8e2bc4d33ff8"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r4/worker_operational_status_native.log",
+      "sha256": "cd7f680bb2e3bd987bcdcb72a1e3dd002c6e3946873086ecfa5558171299b7f1"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r5/binary.json",
+      "sha256": "b3d450b091859584b207e7af3433742e331c48f292c4600131fe61a2c2461e5e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r5/build.jsonl",
+      "sha256": "1973f66d78e8c19111bb42889f716007ffddb0a86c63b1913ee2b791ff4601e3"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r5/build.stderr",
+      "sha256": "4527b5b07feea42cb4ca71d2feb305771fab0c7b556ae9fd97fba239b33684ce"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r5/clippy.log",
+      "sha256": "ba4f1d41e9ae48960c753552d75ab1b59a007df5b6539ae4f2b5bbed3533d707"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r5/operational_status_stale_completion_cannot_clear_next_claim.log",
+      "sha256": "71493a3501714354ebae7abf8cd0ed91d51c979cc81adc44d9fd34121ba31046"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r5/operational_status_stale_install_key_cannot_publish_next_generation.log",
+      "sha256": "1aa1fefc6262d93e6d0c690fb84f492c38471a706abec44d394dedd14b56d13e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r5/runtime-results.json",
+      "sha256": "364b8f091cd8667ea8d14cc1e691f3257e812a51b803917de9df5b9d4e9d19c9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r5/runtime-selection.json",
+      "sha256": "4a1f48a6664cf300d329287799d462216ef62a8ab614b015807670d78af98487"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r5/source.json",
+      "sha256": "e3fcb46385a80c92fbf08b747173ff175f5986f486197329e75fd59644682565"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r5/status_init_cf15_initialized_and_reused_binding_rejected.log",
+      "sha256": "d132ceeeaf268221a35664ec47388efa85040895b76923eab9fccba81cfd434d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r6/binary.json",
+      "sha256": "eb3f81c143b6ee1270ceb58fa1fea5f860e1aeecb07a3c39d811cde1533d0c04"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r6/build.jsonl",
+      "sha256": "d0b679ebe320b55814707fab50a424360e7da09075eeb6b8ba3856a8ac9b6a4d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r6/build.stderr",
+      "sha256": "2d287668332bcb62b5b49e78585ff63825f9b33054502d14c36f40c87a0656da"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r6/clippy.log",
+      "sha256": "1e4d9abd5fd6cca0330b110f406fe4fc3254a50b77dd30ded1e5377d980d40c7"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r6/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r6/source.json",
+      "sha256": "3d232f78753441b1261f6d02db32ec0be05fd3b1853b699f7f89764bbbb82201"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r7/binary.json",
+      "sha256": "13e057ad7d62ce0ed59d18b52f114fab3f02ff3466c932a009458c6cdf75e740"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r7/build.jsonl",
+      "sha256": "2d19124abc3b04cbeb3ba7cb48d33dd873f44c3ec5bf1c1be0f6e6578340fbe7"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r7/build.stderr",
+      "sha256": "17f1c8b9832bdd03611676fcd846fad5ed33b75de40c9a60256ac049af566c61"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r7/source.json",
+      "sha256": "88e0dea4c3db80c7154455e3ef72c48e80fd3113dce5ef0169805c0c689f9ef6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/compiler-positive-addendum-r5.json",
+      "sha256": "dc4ef528cfb2349e30f5a18d1ff8ff10bcb8f06dfccd86c8c2f7c2ae42491c52"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-commands.json",
+      "sha256": "8053eeb3e4fd7c8389f80ab1a353e39c33460a94bd00e9ac5c1f2015be47f8d8"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-preview.json",
+      "sha256": "5cd4e0c1e0d18cae8e78c31d4ff5c6eea99536d3556650111c1b3e4c279cce69"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-preview.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-preview.stdout",
+      "sha256": "5cd4e0c1e0d18cae8e78c31d4ff5c6eea99536d3556650111c1b3e4c279cce69"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-rules.json",
+      "sha256": "7ed62f22ce40148e0d6d032aea5a5b2c3a540605ca1d78e4765068b15ef216fb"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-rules.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-rules.stdout",
+      "sha256": "7ed62f22ce40148e0d6d032aea5a5b2c3a540605ca1d78e4765068b15ef216fb"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/pre-runtime-r2.json",
+      "sha256": "b1b4359e58004402d68933ff7db5140d52f6d72ec8f88ccdcc157a4155417f9b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/pre-runtime-r2.md",
+      "sha256": "e04021c6e02e107feeeed3a2a2134cb5cbf602cbf64104e8b8e0e01a3ef09aa5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/pre-runtime-r4.json",
+      "sha256": "62328afbeaf2c46e726a892146f9cfb58d07a4a73c6a8c261e732b0097833413"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/pre-runtime-r4.md",
+      "sha256": "073325682120d5a031cb67775321f51ab1b5a6939c532c7df9258f05021bb6bd"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/pre-runtime-r5.json",
+      "sha256": "c3fbcd35fcfd5bcbf18139ae96dbef8212ae2b73add6ca3d9775bebc61a57bf0"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/pre-runtime-r5.md",
+      "sha256": "cea495f329c33c37e67c6c15b98fb8a6767f0db771b9f2bfd0558e03476f811d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r7/clippy.log",
+      "sha256": "80a23016fde82c2f13ee21f7ea6f7146be19811018de909508d0d94cfa4903c9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r7/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r7/producer-negative.log",
+      "sha256": "4cb1fb4ad054fe6c14fd2156486ad62189253ccebb41bf89392725d1a38e2380"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r7/runtime-results.json",
+      "sha256": "4b69a53351dec7133d31b79487b7d715a92841034fc131547fcadd60e6858308"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r7/runtime-selection.json",
+      "sha256": "2c78e89b802b24a48b8eab18bd26e2feedc2554a7fbdee43ebb381d2df472dbf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/r7/static-tools.json",
+      "sha256": "f3c900e258a1567cc717724bf4f49b5189bf84e41504635fbee78b4a51a627ae"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-commands-final.json",
+      "sha256": "b409d9a6f5f42d9ee877d36d5f7e2c47048b0045cc901cee6bcfae32ec9cd1cb"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-preview-final.json",
+      "sha256": "776491475313cc0bc6c20cb3663944509c385dc7a25cf48a798e6fecffca9a4e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-preview-final.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-preview-final.stdout",
+      "sha256": "776491475313cc0bc6c20cb3663944509c385dc7a25cf48a798e6fecffca9a4e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-rules-final.json",
+      "sha256": "cfc31f65f1cbc50e6df1c3f9e365cd64b3fb1abebe816bd842a12fb99c2132f5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-rules-final.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/ocr-rules-final.stdout",
+      "sha256": "cfc31f65f1cbc50e6df1c3f9e365cd64b3fb1abebe816bd842a12fb99c2132f5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/coverage-final-addendum.json",
+      "sha256": "6408ae2176670a1dd9b0316a5897e4b4a399513d3d49e03b6a42356aaebde21d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/coverage-final.json",
+      "sha256": "de3a06ce80cd61c0ac456015a65c3d10a1451bbca029438f4dd7c22b5d399789"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/final-d1.json",
+      "sha256": "b9bf71f37b4a0e263d41f33f5e13af4504bbe26d0cd50dc8acdd14efdee58815"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/final-d1.md",
+      "sha256": "e84ea3aad55365542fdba3eea64132967f6e0e9477b9c3d729a052434abf02a6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/source-evidence-audit-addendum.json",
+      "sha256": "8d8fa58986220e2695ba7827a4eee24440e70d8503bd40b47e6a99f3e38afa7b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/source-evidence-audit.json",
+      "sha256": "9dafea8767861ba7de6867f0af140349ae584d36839c21c17dead2a15cb34560"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-status-20261023/review/staged-source-match.json",
+      "sha256": "dd661ab6a96a4b3f0c0a5f47649c666b26f5a5e0603d592cbea753f1e00284dc"
+    }
+  ],
+  "literal_profiles": {
+    "product_execution": [
+      1
+    ],
+    "inputs_only": [
+      2,
+      3
+    ]
+  }
+}

@@ -28,7 +28,7 @@ impl ReloadSnapshot<'_, '_> {
     }
 }
 impl<'c, 's> SharedPool<'c, 's, '_, '_> {
-    fn reload_quiescent(&self) -> Result<()> {
+    pub(super) fn reload_quiescent(&self) -> Result<()> {
         {
             let pins = self.entry_pins()?;
             if pins.total != 0 || pins.init_claim.is_some() {

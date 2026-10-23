@@ -380,3 +380,61 @@ Status INIT 공개/reader/flush와 해당 자원 layout으로 한정한다. exac
 [P1 실행 증거](../evidence/dev3-operational-registration-20261023.md)는 원 compile FAIL과
 현재 source의 static5·runtime20·Linux2를 구별한다. P1에는 public borrow/API 변경이 없어
 기존 compiler fixture를 재실행하지 않았다. P2/P3에서 새 consuming API의 compiler 검증을 공급한다.
+
+
+<a id="operational-status-p2"></a>
+### P2 — consuming Status owner와 반복 INIT
+
+2026-10-23 · **D2·live owner 최종 독립 D1 수용 / 반복 sequence 복구 미완료**. 작성·통합 `/root`, 독립 검토
+`/root/pool_design_review`. P1 commit `3f7b6f5` 뒤 다음 단위를 공급한다. 기존 wire의
+reserve/cancel/INIT 의미와 budget은 유지하며 fresh fixture를 사용한다.
+
+- `BoundStatusWithFlush::into_operational`은 원 bound·WAL·descriptor·flush workspace와
+  Drop을 통째로 보존한다. failed pre-effect conversion은 exact owner를 돌려주며 fatal은
+  fence한다. `OperationalStatus`만 반복 슬롯 준비를 제공하고 기존 closed owner로 역변환하지
+  않는다. conversion 중 I/O·새 heap·새 page scratch·directory 복제는 없다.
+- P2의 물리 슬롯은 allocator0·payload1이다. 독점 `prepare_next_status`는 pin0·INIT claim0·
+  flush claim0·해당 clean content/빈 DPT/requirement와 flush Ready를 검산하고 실제 published
+  Status를 퇴출한다. 다음 generation을 checked 증가해 미공개 슬롯을 준비한다. MAX는 무효과
+  거절하며 descriptor·work high-water·WAL·영속 Allocated membership은 변경하지 않는다.
+  이 명시적 성공 뒤 reserve가 실패해도 이미 퇴출된 A가 상주한다고 보고하지 않는다.
+  이미 미공개 준비된 슬롯에는 MissingTarget/Unchanged를 반환하고 세대를 다시 소비하지 않는다.
+  cancel 또는 before-effect 거절 뒤 재예약은 같은 준비 세대를 그대로 사용한다.
+- 준비는 split/reservation 전에 끝낸다. 기존 linear reservation이 writer와 Owner를 빌리는 동안
+  독점 퇴출을 시도하지 않는다. caller에 A의 물리 byte가 남아 있어도 lookup 권한은 사라진다.
+  새 generation의 metadata baseline은 fresh0이며 B INIT 뒤 counter1이다. 이전 generation의
+  live counter를 되감거나 dirty effect를 지워서 슬롯을 재사용하지 않는다.
+- INIT retained claim은 두 실제 slot generation과 원 full request·work/birth·origin을 고정한다.
+  preflight·install·DPT·publication·release·finish에서 이 정체성을 검산한다. A의 stale claim이나
+  request가 B의 publication·pin 감소·완료를 승인하지 못한다. 기존 closed mode의 page1/gen1은
+  유지하며 operational mode만 후속 주소/세대를 허용한다.
+- allocator live 검산은 trusted population과 terminal outcome을 구별한다. 기존 allocator-only
+  population은 Allocated를 계속 거절한다. operational Status population은 immutable role의
+  object2/generation1/kindStatus에 속하는 모든 Allocated survivor를 census하고, 현재 batch의
+  Reserved만 허용한다. Cancelled와 Initialized terminal descriptor를 각각 canonical하게 검산한다.
+  serialized budget/consumed-WAL 값으로 owner mode를 고르거나 descriptor를0으로 지우지 않는다.
+- 실제 새 reserve는 free entry를 순서대로 선택하며 work high-water는 증가한다. 원 reserve/cancel
+  및 INIT producer와 검증 경로를 함께 확장해 survivor bytes를 보존한다. descriptor canonical
+  생성은 한 원문을 사용하며 새 형식이나 임의 해석을 추가하지 않는다.
+- operational reader는 현재 authoritative allocator의 정확한 Allocated membership과 각각의
+  allocator/Status page LSN을 검산한다. 두 page의 LSN equality를 요구하지 않는다. P2 writer는
+  아직 모든 WAL operation에 allocator가 참여하므로 global predecessor=allocator prior-LSN의
+  기존 범위를 유지한다. live Status 단독 변경을 붙일 때 이 등식을 별도로 제거해야 한다.
+
+실행 전 F05는 실제 증가한 claim/control과 모든 호출·반환 carrier를 포함해 다시 계산한다.
+기존 dirty196608·flush65536·component65536·Status 합계262144를 유지한다. resource gate가
+독립 수용되기 전 제품 runtime/native/compiler worker를 실행하지 않는다.
+
+필수 신규 검증은 exact conversion/Drop/borrow, INIT A→flush→퇴출→reserve B→cancel→
+reserve B→INIT의 실제 owner 이력, A membership 보존·work/LSN/세대 단조성, dirty/pin/claim/
+flush-pending·generation MAX 거절, stale claim이 새 publication/cleanup을 승인하지 못함,
+잘못된 survivor role·terminal descriptor 거절이다. native fresh DB의 A/B home 및 literal WAL
+oracle와 관련 새 compiler 사례를 공급한다. current-build recovery의 반복 sequence 지원 범위는
+별도 명시하며 기존 닫힌 recovery의 PASS를 새 sequence 증거로 전용하지 않는다. 새 sequence를
+성공 복구할 현재-build 경로와 fresh producer→새 process reopen·partial-prefix/fault cut가
+공급되기 전 P2/P3 durable integration을 완료로 승격하지 않는다. P3 load와
+일반 recovery/READY, 반복 live Status·batch8/64·pressure·최종 DEV3/S5는 계속 필수 잔여다.
+
+[P2 live owner 실행 증거](../evidence/dev3-operational-status-20261023.md)는 원 source별
+compile FAIL과 static/runtime/native의 실제 범위를 보존한다. live owner commit과
+반복 sequence의 durable integration 완료는 구별한다.

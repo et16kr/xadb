@@ -45,7 +45,8 @@ pub(crate) use recovery_prefix::{
 };
 pub(crate) use status_init::{
     BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, InitAttemptError,
-    InitializedStatusObservation, IntoFlushError, ReservedStatus, StatusBootstrapWriter,
+    InitializedStatusObservation, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
+    OperationalStatusReader, OperationalStatusWriter, ReservedStatus, StatusBootstrapWriter,
     StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard, StatusReader,
 };
 pub(in crate::storage) use status_init::{
