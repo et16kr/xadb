@@ -6,6 +6,8 @@
 
 2026-10-19 [코드 리뷰·수정 기록](../evidence/comm-code-review-20261019.md): driver 취소를 기존 sender·각 I/O 검사에 전달하고, accept의 peer 중단 오류를 listener별 backoff로 격리했다. 관련 COMM 시험·독립 검토는 PASS이며 리뷰 당시 혼합 사본은 별도 DEV2 시험의 lint 실패로 하위 통합 gate가 FAIL이었다. 두 수정만 분리한 commit 대상 사본의 transport 시험은 기본/전체 feature 각각 35개 PASS다. 전체 C1 상태는 유지한다.
 
+2026-10-23 [COMM 리뷰 재검증과 오류 격리 수정](#review-fixes-20261023): peer 주소 거절과 terminal sender의 자원 부족 오류 분류를 수정했다. 변경 범위의 Rust11·inventory2·native1, 관련 Clippy·포맷은 PASS이며 최종 독립 검토는 아래 상태를 따른다. 전체 C1 인수 상태는 유지한다.
+
 ## COMM-TEST-002 진행 계약
 
 2026-10-19 COMM 코드리뷰 수정 commit `91cefa6`을 확인한 뒤 사용자의 명시적 재개 요청에 따라 인수 작업을 재개했다. 해당 commit의 driver 취소 전달·accept 오류 격리를 유지한다. 진단 ring의 enqueue 기록은 gate 해제 뒤 실행되므로 flush 기록보다 늦을 수 있다. ring을 FIFO 승인 순서나 fault 도달의 독립 oracle로 사용하지 않는다. allocation 실패 주입은 실제 allocator 호출 직전의 합성 실패이며 OS OOM을 검증했다는 의미가 아니다.
@@ -107,3 +109,56 @@ C1 완료에는 여전히 다음이 필요하다.
 마지막 drain 수정 전의 [r1 27-test PASS](../evidence/comm-isolated-xadb-20261018-r1.json)도 원래 source identity로 보존한다. 앞서 현재 변경들을 함께 담은 [혼합 사본 r1](../evidence/comm-mixed-xadb-20261018-r1.json)은 COMM focused 검사에는 통과했으나 DEV0의 format 검사에서 하위 회귀가 실패해 전체 FAIL이다. 그 실패를 삭제하거나 새 사본의 PASS로 덮지 않았다. 독립 검토자는 r1·혼합 보고서 원본 일치, 로그·binary hash와 source identity, 최종 소유 파일 일치를 별도로 확인했다. 최종 r2와 DEV0/DEV1/DEV2 하위 보고서의 원본·hash, 28개씩의 feature별 시험·12개 native 사례·회귀 PASS 및 scoped 상태 표기도 다시 확인하여 수정 필수 사항 없음으로 판정했다.
 
 전체 C1의 성능 프로파일만 순차 실행 기준 90개 workload 사례 × 10쌍 × 2개 계측 설정(Always/Detailed) × 35초 = 63,000초(17시간 30분)다. 여기에 fuzz 두 target·thread stress 각 30분, 남은 구현·fault/model 인수 시간이 추가된다. focused runner의 짧은 echo timing은 이 인수를 대체하지 않는다. 문서 자동 검사는 DOC-002에 따라 push 때 수행하며 이 작업의 편집 중에는 실행하지 않는다.
+
+
+<a id="review-fixes-20261023"></a>
+## 2026-10-23 COMM 리뷰 재검증·오류 격리 수정
+
+**D1 제품 수정 / D2 inventory 추가 / 선택 검증 PASS · 최종 독립 검토 ACCEPTED · C1 INCOMPLETE.** 사용자가 open-code-review-delegate 스킬 리뷰의 판단을 재점검한 뒤 수정·commit하도록 요청했다. 작업·계약·통합 담당은 `/root`, 별도 검토자는 `/root/comm_fix_review`다. 이전의 2026-10-18·19 실행과 원래 source identity는 바꾸지 않는다.
+
+### 범위와 판단
+
+- 기준 commit은 `d31cfb9bcd97e64554e0d97aa47fe3a3cbe70160`이다. 착수 때 engine residency의 미commit 변경을 확인했고, 이후 controller·DEV0 계약·문서 색인 변경도 확인했다. 이 작업은 해당 변경을 수정하거나 commit에 포함하지 않는다.
+- 소유 경로는 `crates/platform/src/network.rs`, `crates/transport/src/sender.rs`, 새 `crates/transport/tests/sender_rejection.rs`, `scripts/check_comm.py`의 추가 inventory 항목과 이 구현 기록이다. 새 package·dependency·wire bytes·quota·deadline·공개 API signature 변경은 없다.
+- `LocalListener`가 거절한 non-loopback peer는 해당 accepted socket의 문제다. 기존 `InvalidInput`은 driver의 치명 오류로 전파되어 정상 연결까지 닫았다. 실제 host의 non-loopback source에 bind한 로컬 client로 이 경로를 재현했다. 원격 서비스 공격으로 범위를 확대하지 않는다.
+- terminal ticket도 회수 전까지 TX slot을 유지한다는 [소유 계약](../contracts/comm-design.md#ports) 때문에, full slot 뒤의 Closed/Cancelled/원래 I/O 오류가 nonterminal `Backpressured`로 바뀌었다. [오류 의미](../contracts/comm-design.md#outcome)에 따라 종료 사유·재시도 판단 오류로 확정했다. 두 항목 모두 별도 검토자가 계약·실제 경로에서 독립 재점검했다.
+
+### 선택과 대안
+
+peer 주소 검사는 작은 private helper로 옮기고 **그 peer 거절만** `ConnectionAborted`로 반환한다. 기존 listener별 20 ms retry가 적용되어 정상 연결을 보존한다. 일반 `InvalidInput`, listener 자체 고장·권한 오류까지 transient로 넓히는 대안은 제외했다.
+
+송신 slot/byte/allocator 준비 실패 시 기존 admission mutex에서 cancellation → fatal → open 순으로 확인한다. 계속 Open이면 `Backpressured`를 반환·계수하고, terminal이면 원래 오류를 보존한다. 정상 enqueue의 마지막 재검사와 선형화점은 유지한다. 새 preflight lock을 모든 정상 송신에 추가하는 대신 실패 경로에만 재검사를 추가했다. lock 보유 중 allocation·checksum·socket 효과는 없다. 새 token·queue·상태 복제도 없다.
+
+`check_comm.py`에는 새 기본6·test-support1 시험 이름만 추가한다. 이는 D2 inventory 보완이며 checker 알고리즘·기존 필수 항목·인수 예산을 완화하지 않는다. 새 이름7개를 실제 Rust 시험 정의와 정적으로 대조하고, 기존 두 부정 시험으로 inventory 누락/ignored 거절과 기본·계측 필수 집합 처리를 확인했다. 재검토 조건은 peer 거절의 전역 전파 재발, 종료 사유 은폐, 준비 실패의 lock 순환·자원 누수, inventory 누락이다.
+
+### 실행 범위와 원 FAIL
+
+로컬 사본은 `artifacts/comm/fix-20261023-bor7fvcx/source`다. 기준 commit의 Git archive에 이번 소유 파일만 적용하여 engine의 동시 변경을 분리했다. `baseline.json`, `red-results.json`, `red-open-control-corrected.json`, `green-results.json`, `validation-identity.json`과 개별 로그를 그 상위에 보존했다. 수정 전 세 소유 파일은 `red-owned/`에 원래 hash와 일치하도록 별도 보존했다. 이 로컬 산출물은 Git 배포 대상이 아니다.
+
+peer 분류의 선택 시험을 위해 private helper만 먼저 추출하고 원래 `InvalidInput` 동작을 유지한 사본을 수정 전 기준으로 사용했다. 그 source identity에서 peer 분류1·terminal sender5·준비 실패1의 **7개 제품 반례가 FAIL**이었다. 실제 native peer 거절도 worker의 `Io(Some(InvalidInput))`와 기존 정상 연결 종료로 FAIL했다. 최초 정상 대조 시험은 manual clock을 기존 20 ms readiness retry로 전진시키지 않아 Pending을 성공으로 기대한 fixture 오류로 FAIL했다. 그 시험만 바로잡아 제품 수정 전 PASS를 확인했고 원 FAIL은 보존했다. 당시 native worker binary의 별도 hash는 미수집이며 사후 값으로 채우지 않는다.
+
+제품 수정 뒤 마지막 실제 diff와 아래 사례의 관계를 확인하여 선택 실행했다. 이미 완료한 무변경 하위 코드·전체 leaf/workspace wrapper·30분 부하·전체 C1 인수는 실행하지 않았다.
+
+| 선택 실행 | 실제 결과와 변경 관계 |
+| --- | --- |
+| platform `--lib network::tests::` | 신규2 PASS: 변경한 peer 분류의 IPv4/IPv6/IPv4-mapped 거절과 IPv4/IPv6 loopback 허용 |
+| transport `--test sender_rejection` default | 신규6 PASS: full slot의 Closed·local cancel·driver cancel 전 step·drain·원 I/O cause와 Open backpressure/회수 후 재승인. terminal 계수 불증가·ticket 결과·최종 자원 반환 포함 |
+| test-support `preparation_failures_preserve_terminal_errors_and_return_every_charge` | 신규1 PASS: SendSlot/LocalBytes/GlobalBytes/Allocation × Closed/Cancelled/Io의12조합, 준비 실패 뒤 원인·자원 반환 |
+| test-support `every_send_preparation_failure_returns_all_charges_without_admission` | 관련 기존1 PASS: 변경한 준비 실패 분기의 Open 거절과 다음 정상 admission, encode/admission 인접 오류 |
+| `concurrent_producers_and_cancellation_return_every_ticket_and_charge` | 관련 기존1 PASS: 변경한 sender gate 경로의 실제8 producer ×64 rounds, cancel/Drop 경합·ticket/charge 반환 |
+| Python inventory 선택2 | 추가한 default/test-support 이름의 필수 포함·누락/ignored 거절·두 inventory 구분 PASS. 다른 checker 시험은 미실행 |
+| `native_probe.py`와 default transport worker | native1 PASS: source-bound non-loopback peer의 실제 거절 전후 기존 정상 연결 echo 각1개, 최종 frames=2/flushed=2/failed=0와 payload/connection=0 |
+| 관련 정적 검사 | `cargo clippy -p xadb-platform -p xadb-transport --all-targets --all-features --locked --offline -- -D warnings`, 변경 Rust3파일의 `rustfmt --edition 2024 --check` PASS. Clippy는 시험을 실행하지 않음 |
+
+따라서 수정 후 **Rust11개 method + Python2개 method + native1개 시나리오 PASS**다. default6을 test-support에서 반복하지 않았으며, 기존 시험 전부를 이번 결과로 보고하지 않는다. 실행 명령은 `green-results.json`에 개별 argv로 보존했다. 관련 manifests·lock/toolchain·foundation/platform/transport/worker·변경 inventory의55파일이 사본과 현재 원문에서 같은 것을 확인했다. 다른 engine/controller 변경이나 저장소 전체의 검증 결과로 승계하지 않는다.
+
+| 최종 검증 파일 | SHA-256 |
+| --- | --- |
+| `crates/platform/src/network.rs` | `22fb01ca8574440bc661127bcfda1f6c0ba19b438cabf10afa371b6ff0111e51` |
+| `crates/transport/src/sender.rs` | `c6f1a14422655274bdd41b3af64d17f8ac96af8dc66d965e905811cec4721823` |
+| `crates/transport/tests/sender_rejection.rs` | `567948e52d46e4e0a85bc73b9c999921535a2ddb7290dc50ca89fa2f6afd8474` |
+| `scripts/check_comm.py` | `98f575b40bdf537a4dc06886c1f5f6564c3b9b245a285b90b8adfbeb6958f20d` |
+
+### 독립 검토와 통합
+
+별도 검토자 `/root/comm_fix_review`는 최초 지적의 타당성과 최소 수정 방향, 최종 patch·새 시험·원 FAIL·선택 PASS·source 일치와 문서의 D1/D2 범위를 읽기 전용으로 확인하여 **수용 가능, 차단 지적 없음**으로 판정했다. OCR 대상4/4와 unsupported_ext로 제외된 구현 문서1/1을 추가 검토했고 소유 범위의 생략은 없다. 제품3파일·inventory·로그16개·원 source3개·worker hash와 관련55파일 일치를 직접 대조했다. 검토자는 시험을 재실행하거나 파일을 수정하지 않았다. inventory 시험은 합성 로그 검사이고 새 Rust 이름의 존재는 정적 대조라는 문구 보완도 확인했다. `/root`가 계약·통합 담당으로 D1 제품 수정과 D2 inventory 추가를 수용했다. 문서 자동 검사는 [push gate](../policies/documentation-policy.md#push-gate)에 남기며 이 편집/commit 작업에서는 실행하지 않는다. 전체 C1 인수와 DEV 단계 상태는 바꾸지 않는다.

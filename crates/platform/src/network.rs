@@ -34,6 +34,16 @@ fn poisoned() -> io::Error {
 fn closed() -> io::Error {
     io::Error::new(io::ErrorKind::NotConnected, "socket closed")
 }
+fn check_tcp_peer(peer: SocketAddr) -> io::Result<()> {
+    if !peer.ip().is_loopback() {
+        // Reject this accepted socket without terminating the listener/driver.
+        return Err(io::Error::new(
+            io::ErrorKind::ConnectionAborted,
+            "peer is not loopback",
+        ));
+    }
+    Ok(())
+}
 
 /// Newly created private directory capability. Existing directories are rejected.
 /// Only listeners made through this capability may bind Unix endpoints here.
@@ -411,9 +421,7 @@ impl Listener for LocalListener {
         let socket = match self.handle.socket()? {
             Socket::TcpListener(l) => {
                 let (s, a) = l.accept()?;
-                if !a.ip().is_loopback() {
-                    return Err(invalid("peer is not loopback"));
-                }
+                check_tcp_peer(a)?;
                 s.set_nonblocking(true)?;
                 Socket::Tcp(s)
             }
@@ -511,5 +519,32 @@ impl ReadinessWait for LocalNetwork {
             count += 1;
         }
         Ok(count)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tcp_peer_rejection_is_connection_local() {
+        for peer in [
+            "192.0.2.1:1234",
+            "[2001:db8::1]:1234",
+            "[::ffff:192.0.2.1]:1234",
+        ] {
+            assert_eq!(
+                check_tcp_peer(peer.parse().unwrap()).unwrap_err().kind(),
+                io::ErrorKind::ConnectionAborted,
+                "rejected peer must use the listener's connection-local retry path: {peer}"
+            );
+        }
+    }
+
+    #[test]
+    fn tcp_loopback_peer_validation_accepts_both_families() {
+        for peer in ["127.0.0.1:1234", "127.42.0.1:1234", "[::1]:1234"] {
+            check_tcp_peer(peer.parse().unwrap()).unwrap();
+        }
     }
 }

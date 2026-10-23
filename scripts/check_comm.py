@@ -68,6 +68,12 @@ REQUIRED_TESTS = {
     'preserved_codec_corpus_and_mutation_generator_match_independent_oracle',
     'production_four_slot_events_v3_256_seeds_1024_operations_and_corpus',
     'producer_lease_cancel_drain_and_drop_thread_races',
+    'closed_sender_with_uncollected_tickets_reports_closed',
+    'cancelled_sender_with_full_slots_reports_cancelled_before_progress',
+    'driver_cancelled_sender_with_full_slots_reports_cancelled_before_step',
+    'draining_sender_with_full_slots_reports_closed_and_preserves_accepted_tx',
+    'failed_sender_with_terminal_tickets_preserves_io_cause',
+    'open_sender_with_full_slots_remains_backpressured_and_recovers',
 }
 INSTRUMENTED_REQUIRED_TESTS = REQUIRED_TESTS | {
     'every_send_preparation_failure_returns_all_charges_without_admission',
@@ -75,6 +81,7 @@ INSTRUMENTED_REQUIRED_TESTS = REQUIRED_TESTS | {
     'connection_reservation_failure_precedes_native_creation_and_is_domain_local',
     'independent_model_depth_two_smoke_checks_every_enabled_transition',
     'canonical_time_and_terminal_keys_preserve_enabled_events_and_successors',
+    'preparation_failures_preserve_terminal_errors_and_return_every_charge',
 }
 FOUNDATION_REQUIRED_TESTS = {
     'quota_peak_retains_released_reservations_and_excludes_rejections',

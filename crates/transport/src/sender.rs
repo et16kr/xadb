@@ -79,6 +79,16 @@ impl Shared {
         }
         Ok(())
     }
+    fn check_admission(&self, admission: &Admission) -> Result<()> {
+        self.check_cancellation(admission)?;
+        if let Some(error) = admission.fatal {
+            return Err(error);
+        }
+        if !admission.open {
+            return Err(ErrorKind::Closed.into());
+        }
+        Ok(())
+    }
     pub(crate) fn finish(&self, index: usize, outcome: SendOutcome) {
         let mut admission = self
             .admission
@@ -101,12 +111,28 @@ impl Shared {
 #[derive(Clone)]
 pub struct ConnectionSender(pub(crate) Arc<Shared>);
 impl ConnectionSender {
+    fn backpressure_error(&self) -> Error {
+        // A retained terminal ticket can keep the slots full after close. Check
+        // the gate at preparation failure so permanent errors stay terminal;
+        // successful preparation still checks the gate at its enqueue point.
+        let admission = match self.0.admission.lock() {
+            Ok(admission) => admission,
+            Err(_) => return ErrorKind::Poisoned.into(),
+        };
+        if let Err(error) = self.0.check_admission(&admission) {
+            return error;
+        }
+        increment(&self.0.family.diagnostics.backpressured);
+        ErrorKind::Backpressured.into()
+    }
     /// Reserve, encode outside the gate, then atomically admit a FIFO frame.
     /// The input may be changed/dropped immediately after return.
     ///
     /// # Errors
     /// Backpressured is nonblocking rejection with no send effect. Closed/cancelled
-    /// or invalid input also admits nothing. A short mutex wait is possible.
+    /// or invalid input also admits nothing. Preparation capacity failures report
+    /// observed cancellation/terminal admission before Backpressured. A short
+    /// mutex wait is possible.
     pub fn try_send(&self, payload: &[u8]) -> Result<SendTicket> {
         if payload.len() > MAX_FRAME_PAYLOAD {
             return Err(ErrorKind::InvalidFrame.into());
@@ -118,18 +144,16 @@ impl ConnectionSender {
             .failure
             .take(crate::test_support::FailurePoint::SendSlot)
         {
-            increment(&self.0.family.diagnostics.backpressured);
-            return Err(ErrorKind::Backpressured.into());
+            return Err(self.backpressure_error());
         }
-        let slot_charge = self.0.family.tx_slots.reserve(1).map_err(|_| {
-            increment(&self.0.family.diagnostics.backpressured);
-            ErrorKind::Backpressured
-        })?;
+        let slot_charge = self
+            .0
+            .family
+            .tx_slots
+            .reserve(1)
+            .map_err(|_| self.backpressure_error())?;
         let mut buffer = Buffer::allocate(&self.0.family, false, payload.len() + FRAME_OVERHEAD)
-            .map_err(|_| {
-                increment(&self.0.family.diagnostics.backpressured);
-                ErrorKind::Backpressured
-            })?;
+            .map_err(|_| self.backpressure_error())?;
         #[cfg(feature = "test-support")]
         if self
             .0
@@ -152,13 +176,7 @@ impl ConnectionSender {
         {
             return Err(ErrorKind::Closed.into());
         }
-        self.0.check_cancellation(&admission)?;
-        if let Some(error) = admission.fatal {
-            return Err(error);
-        }
-        if !admission.open {
-            return Err(ErrorKind::Closed.into());
-        }
+        self.0.check_admission(&admission)?;
         let expires = match self
             .0
             .clock
