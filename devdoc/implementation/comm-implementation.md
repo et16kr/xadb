@@ -201,4 +201,6 @@ peer 분류의 선택 시험을 위해 private helper만 먼저 추출하고 원
 
 후속 깊이8 모델 한 시험은14:29 KST에 실행했으나 `[Enqueue(0), Enqueue(0), Cancel, Enqueue(0)]`에서 실제 `Cancelled`와 모델 `Backpressured` 기대값이 달라 즉시 FAIL이었다. 제품·모델 수정/재실행 없이 [원 실패·source별 증거](../evidence/comm-performance-batch-20261023.md#model-continuation)를 보존한다. 모델·전체 C1은 미완료다.
 
-그 뒤 모델 oracle만 현행 terminal 오류 계약에 맞춰 고치고, Open full의 capacity witness를 구별했다. [새 관련3 method의 source별 결과·원 FAIL·감시3/변경1과 D2 독립 수용](../evidence/comm-performance-batch-20261023.md#model-oracle-fix)을 보존한다. 제품 코드는 변경하지 않았고 기존 key/BFS·깊이8·6시간/상태/전이 예산도 유지했다. 14:42:53 KST에 같은 검증 source/binary의 깊이8 한 시험을 자원 감시 아래 시작했으며 현재 RUNNING이다. 완료한 기존 시험은 반복하지 않는다.
+그 뒤 모델 oracle만 현행 terminal 오류 계약에 맞춰 고치고, Open full의 capacity witness를 구별했다. [새 관련3 method의 source별 결과·원 FAIL·감시3/변경1과 D2 독립 수용](../evidence/comm-performance-batch-20261023.md#model-oracle-fix)을 보존한다. 제품 코드는 변경하지 않았고 기존 key/BFS·깊이8·6시간/상태/전이 예산도 유지했다. 14:42:53 KST에 같은 검증 source/binary로 시작한 실행은18:45 재개 시 PID/최종 receipt가 없어 INCOMPLETE_INTERRUPTED다. 마지막 완결 depth7과 원 로그를 보존하며 종료 원인은 미확정이다. 완료한 기존 시험은 반복하지 않는다.
+
+후속으로 모델의 exact key 저장소만 BTreeSet으로 바꾸고 신규 dedup1·필수 inventory checker1의 선택 검증과 D2 수용을 [별도 기록](../evidence/comm-performance-batch-20261023.md#model-cache-fix)했다. 새 source의 깊이8은6시간 예산이23시 전 마감에 들어가지 않아 SKIPPED_TIME_BUDGET이며 전체 모델/C1은 미완료다. 대신 [미실행 성능48/49/58/59의80mode](../evidence/comm-performance-batch-20261023.md#evening-continuation)를22:30 실행 deadline 아래 진행한다.

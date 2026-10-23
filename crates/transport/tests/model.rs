@@ -3,7 +3,7 @@ mod exploration;
 mod support;
 use exploration::{Event, Model, REQUIRED_WITNESSES, Sut};
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     time::{Duration, Instant},
 };
 
@@ -18,7 +18,9 @@ fn explore(depth: usize, require_witnesses: bool) {
     let mut witnesses = BTreeMap::new();
     for level in 0..depth {
         let mut next = Vec::new();
-        let mut seen = HashSet::new();
+        // Exact ordered keys avoid overlapping giant tables during rehashing.
+        // Only membership is observed; parent/event traversal order is unchanged.
+        let mut seen = BTreeSet::new();
         for trace in layer {
             let mut model = Model::default();
             for &event in &trace {
@@ -141,4 +143,42 @@ fn canonical_time_and_terminal_keys_preserve_enabled_events_and_successors() {
 #[ignore = "V3 exhaustive campaign; run with --release --ignored --nocapture"]
 fn two_connections_two_slots_depth_eight_exhaustive_model() {
     explore(8, true);
+}
+
+#[test]
+fn ordered_layer_dedup_preserves_exact_hash_reference() {
+    let mut layer = vec![(Vec::<Event>::new(), Model::default())];
+    for expected_count in [20, 266, 3162, 35310] {
+        let mut reference = HashSet::new();
+        let mut ordered = BTreeSet::new();
+        let mut next = Vec::new();
+        let mut ordered_next = Vec::new();
+        for (trace, model) in layer {
+            for event in model.enabled() {
+                let mut after = model.clone();
+                after.step(event);
+                let mut child = trace.clone();
+                child.push(event);
+                let key = after.packed_key();
+                let first = reference.insert(key);
+                assert_eq!(
+                    ordered.insert(key),
+                    first,
+                    "dedup changed the first representative or skipped a key"
+                );
+                if first {
+                    next.push((child.clone(), after.clone()));
+                    ordered_next.push((child, after));
+                }
+            }
+        }
+        assert_eq!(ordered.len(), expected_count);
+        assert_eq!(ordered.len(), reference.len());
+        assert_eq!(next.len(), expected_count);
+        assert_eq!(ordered_next.len(), next.len());
+        for (actual, expected) in ordered_next.iter().zip(&next) {
+            assert_eq!(actual, expected, "dedup changed representative trace order");
+        }
+        layer = next;
+    }
 }

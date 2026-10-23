@@ -84,6 +84,7 @@ INSTRUMENTED_REQUIRED_TESTS = REQUIRED_TESTS | {
     'exploration::oracle_regression::open_full_ticket_rejection_retains_capacity_witness',
     'exploration::oracle_regression::cancelled_and_draining_full_tickets_preserve_gate_errors',
     'exploration::oracle_regression::terminal_full_tickets_keep_causes_and_later_cancel_precedence',
+    'ordered_layer_dedup_preserves_exact_hash_reference',
     'preparation_failures_preserve_terminal_errors_and_return_every_charge',
 }
 FOUNDATION_REQUIRED_TESTS = {

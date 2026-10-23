@@ -49,6 +49,19 @@ class CommCheckerTests(unittest.TestCase):
                                                        f'test {name} ... ignored'),
                                 INSTRUMENTED_REQUIRED_TESTS)
 
+    def test_ordered_model_dedup_regression_is_required(self):
+        name = 'ordered_layer_dedup_preserves_exact_hash_reference'
+        self.assertIn(name, INSTRUMENTED_REQUIRED_TESTS)
+        self.assertNotIn(name, REQUIRED_TESTS)
+        rows = [f'test {item} ... ok' for item in sorted(INSTRUMENTED_REQUIRED_TESTS)]
+        check_inventory('\n'.join(rows), INSTRUMENTED_REQUIRED_TESTS)
+        with self.assertRaises(ValueError):
+            check_inventory('\n'.join(row for row in rows if row != f'test {name} ... ok'),
+                            INSTRUMENTED_REQUIRED_TESTS)
+        with self.assertRaises(ValueError):
+            check_inventory('\n'.join(rows).replace(f'test {name} ... ok',
+                                                   f'test {name} ... ignored'),
+                            INSTRUMENTED_REQUIRED_TESTS)
     def test_wrong_binary_identity_missing_ready_and_peer_history_fail(self):
         valid = {'event':'ready','source_sha256':'abc','pid':42,'profile':'debug'}
         check_ready(valid, 'abc', 42)

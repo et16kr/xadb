@@ -114,6 +114,24 @@ python3 -B scripts/check_comm_performance_batch.py \
 
 최종 관련 회귀 binary의 source는 `e77352d99360bda79253b951d335b221d2dbc3a65e005e1269ea4a7ffdc9305b`, binary는 `11c9e21101c27340c9657efc26c82073e53c9e7e73edf08eb258c7b6f38ec02e`, oracle 파일은 `61fdeaf26692242d80af7afaaae4597aabad37dabeb7ca0b5117661ff7326075`다. 이 source/binary를 깊이8 한 시험에 사용하며 기존 성능 source와 혼합하지 않는다. 모델과 성능 측정은 동시 실행하지 않는다.
 
-별도 검토자는 최종 oracle/source/binary와3→변경1→변경1의 실제 회귀 결과, guard의 원3·변경1 사례/source를 읽기 전용으로 대조하여 수용했다. `/root`가 계약·통합 담당으로 반영했다. 14:42:53 KST에 같은 최종 binary의 깊이8 한 시험을 시작했으며 원본은 같은 artifact 아래 `exhaustive-sat1r5ra/`다. 이 실행의 전체 공간 완주/실패/외부 중단 판정은 최종 receipt가 생길 때까지 RUNNING이다.
+별도 검토자는 최종 oracle/source/binary와3→변경1→변경1의 실제 회귀 결과, guard의 원3·변경1 사례/source를 읽기 전용으로 대조하여 수용했다. `/root`가 계약·통합 담당으로 반영했다. 14:42:53 KST에 같은 최종 binary의 깊이8 한 시험을 시작했으며 원본은 같은 artifact 아래 `exhaustive-sat1r5ra/`다. 당시 RUNNING이었으나18:45 재개 시점에는 최종 validation과 PID142876/감시 프로세스가 없었다. 최종 완결 layer7은36,480,163 states/106,165,909 transitions이고 마지막 자원 관측은 경과1,273.53초·RSS7,970,772KiB·available45,706,932KiB다. 원 로그를 보존하고 `interruption-audit.json`에 **INCOMPLETE_INTERRUPTED**로 기록했다. 종료 원인은 미확정이며 OOM·8GiB guard 발동·담당자의 예방 중단 어느 것으로도 단정하지 않는다.
 
 후속으로 `check_comm.py`의 test-support 필수 inventory에 새 Rust method3개를 등록했다. `test_check_comm.py`의 신규 method1개만 선택 실행해 등록 전 FAIL과 등록 후 PASS를 `inventory-{red,green}.{json,log}`·각 원 source에 보존했다. 각 이름 누락/ignored 거절·완전 집합 수락과 default inventory 제외를 검사하며 제품·모델 시험 실행으로 세지 않는다. 별도 검토자가 실제 method 이름·source/log hash·검사 경계를 대조해 D2 수용했다. 이 inventory 후속 편집은 이미 실행 중인 모델의 동결 source에 포함되지 않으므로 전수 결과를 새 inventory source의 실행으로 소급하지 않는다.
+
+<a id="model-cache-fix"></a>
+## 모델 상태 저장 구조의 선택 수정·시간 부족 skip
+
+마지막 level에서 큰 HashSet의 재할당 중 구/신 table이 겹칠 자원 위험을 줄이기 위해 `model.rs`의 `seen`만 표준 `BTreeSet<[u8;80]>`로 바꿨다. `seen`은 insert의 중복 여부와 len만 사용하며 순회하지 않는다. 따라서 정확한 key의 동등성·부모/event 순서·첫 대표 trace·BFS·키 버전·깊이8·상태/전이/6시간 예산은 유지한다. 대안은 원 대형 table과 안전 중단에만 의존하는 것이었다. 노드의 빈 공간/포인터와 비교 비용 때문에 새 구조의 실제 대규모 메모리 사용량이나6시간 내 완주는 아직 보장하지 않는다. 제품 코드는 수정하지 않았다.
+
+새 `ordered_layer_dedup_preserves_exact_hash_reference` 한 method가 깊이1–4의 모든 생성 key에서 HashSet/BTreeSet의 insert 결과와 개수, 첫 대표 trace/상태의 순서 및 고정 layer 수20/266/3,162/35,310을 비교해 PASS했다. 기존 smoke/key/terminal 회귀를 반복하지 않았다. 이 이름을 test-support 필수 inventory에 추가하고 별도 신규 Python method1개로 누락/ignored 거절을 RED1 FAIL→GREEN1 PASS로 확인했다. 다른 checker method는 반복하지 않았다. 관련 model Clippy와 rustfmt 확인도 PASS다.
+
+원 증거는 같은 artifact의 `cache-fix-fm0u0zek/`에 있다. source는 `45fbfcb6c19069f76121c09a4b4d11a7a9a3ac95f88205c4c8aed18f14d8db54`, binary는 `0321d85586832ce5ee6cd1033c9873d409ecef446c95f3e3835887d4c9e0eb44`, model 파일은 `119f7cf82719632f51aaa6a232f1fb275715f3e9e7d04a878951fe6c18f1f1e8`다. 별도 검토자 `/root/comm_acceptance_review`가 diff·원 source/binary/build/log·신규 선택 결과를 읽기 전용으로 대조해 **D2 수용, 차단 지적 없음**으로 판정했고 `/root`가 반영했다. 검토자는 시험·편집을 하지 않았다.
+
+새 source의 깊이8 재개 계획은18:45 KST의 실제 남은 시간에서6시간+정리/검토가23시 전에 들어가지 않으므로 **SKIPPED_TIME_BUDGET**이다. 필수 범위·시간 예산을 줄여 PASS로 바꾸지 않는다. 앞선 HashSet 실행에 대한 예방 중단 계획은 실제 수행하지 않았으며 그 실행의 미확정 종료 원인을 이 계획으로 대체하지 않는다. 전체 모델과 C1은 INCOMPLETE다.
+
+<a id="evening-continuation"></a>
+## 저녁 시간의 미실행 성능 조합
+
+18:45 재개 시각과 모델 프로세스 부재를 확인한 뒤 기검토 후보의 첫4셀48/49/58/59를 선택했다. TCP IPv6·1MiB payload의16/128연결 ECHO/BULK이며 완료37–39·다른 source의 원74와 중복되지 않는다. 보존 source `b28bc3963ae88df1c949b109d5d6c46c0d670c15bc6d9564b725846dc5aad892`의 원 batch runner로 원10쌍80mode·warmup5초/측정30초·guardrail·2,700 분모를 유지한다. 모델과 성능은 동시 실행하지 않았다.
+
+선택·원 모델 중단 관측은 `artifacts/comm/evening-20261023-de7y58__/selection.json`과 위 `interruption-audit.json`에 보존한다. 성능 단독 nominal2,800초·보수11,120초, batch budget21,600초(<8시간), 실행 deadline22:30 KST로23시 전 검토/기록30분을 남긴다. 실제 원본 root는 `artifacts/comm/performance-batch-bpz4yqzw/source/artifacts/comm/performance-batch-9utevpx5/`이며 외부 report는 `artifacts/comm/evening-20261023-de7y58__/batch-01-result.json`이다. 별도 검토자가 선택·비중복·시간·원 분모를 수용했다. 최종 batch receipt 전에는 RUNNING이며 선택 PASS나 전체 C1 완료로 계산하지 않는다.
