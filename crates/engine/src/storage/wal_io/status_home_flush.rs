@@ -630,3 +630,6 @@ fn fits<W: WriterNamespace>() -> bool {
 }
 
 pub(in crate::storage) use operational::StatusLoadPermit;
+
+pub(in crate::storage) use resident::EmptyTransactionInstall;
+pub(crate) use resident::EmptyTransactionObservation;

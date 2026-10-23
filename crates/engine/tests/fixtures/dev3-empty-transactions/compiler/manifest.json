@@ -74,6 +74,24 @@
       "reason": "The converted API has no system writer/read/flush split.",
       "bytes": 395,
       "sha256": "00fbb5e9463575aba0c1ee2130ef254401ff0720f31edc07dd32e15a93e744d2"
+    },
+    {
+      "name": "live_sequence",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_path": null,
+      "reason": "Value observations do not retain a writer loan; the actual serialized lifecycle compiles.",
+      "bytes": 543,
+      "sha256": "6984f2e9aa86a3b74544d8de97b39933da7ddb9656f0c19aaae7f827f5e4cd46"
+    },
+    {
+      "name": "sealed_install",
+      "expected_code": "E0451",
+      "primary_line": 5,
+      "primary_path": "crates/engine/src/storage/empty_transactions_borrow_probe.rs",
+      "reason": "A storage sibling cannot fabricate the raw after-image installation proof.",
+      "bytes": 411,
+      "sha256": "26ff6b639db30d72ae702162381f99ea19c2e5fce9f6bf5842c48fda199e43c0"
     }
   ]
 }

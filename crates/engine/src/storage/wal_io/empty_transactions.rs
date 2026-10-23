@@ -1,6 +1,6 @@
 //! Consuming handoff from Status provisioning to the empty-transaction owner.
 //! This first boundary freezes system allocation and retains caller-owned space.
-//! Issuance, live semantic installation and recovery are not exposed yet.
+//! Live empty transitions retain the same pool; recovery remains a separate owner.
 
 use super::{ResidentStatus, ready};
 use crate::{
@@ -31,6 +31,14 @@ pub(crate) enum Cause {
     Frame(dirty_frame::DirtyError),
     Wal(WalIoError),
     Allocation(super::super::super::dirty_allocation::Cause),
+    Page(crate::storage::page::PageError),
+    PageIo(crate::storage::page_io::PageIoError),
+    Semantic(crate::storage::semantic_group::SemanticError),
+    Membership,
+    MissingTransaction,
+    WrongState,
+    NotResident,
+    Exhausted,
 }
 #[derive(Debug)]
 pub(crate) struct EmptyTransactionError {
@@ -59,6 +67,7 @@ pub(crate) struct EmptyTransactions<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNam
     frozen_system_lsn: PageLsn,
     issued_local: u64,
     adopted_local: u64,
+    pending: Option<crate::storage::wal_io::WalRequirement<'s>>,
 }
 
 /// Diagnostics only: neither the bank nor the system descriptor is exported.
@@ -135,6 +144,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> ResidentStatus<'s, 'c, 'p, 
                     frozen_system_lsn,
                     issued_local: 0,
                     adopted_local: 0,
+                    pending: None,
                 })
             }
             Err(error) if error.effect == Effect::Unchanged => {
@@ -312,3 +322,8 @@ fn handoff_fits<W: WriterNamespace>() -> bool {
 #[cfg(test)]
 #[path = "empty_transactions_tests.rs"]
 mod tests;
+
+#[path = "empty_transactions_live.rs"]
+mod live;
+pub(in crate::storage) use live::EmptyTransactionInstall;
+pub(crate) use live::EmptyTransactionObservation;

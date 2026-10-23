@@ -1084,3 +1084,6 @@ fn fits<W: WriterNamespace>() -> bool {
 }
 
 pub(in crate::storage) use status_flush::StatusLoadPermit;
+
+pub(in crate::storage) use status_flush::EmptyTransactionInstall;
+pub(crate) use status_flush::EmptyTransactionObservation;

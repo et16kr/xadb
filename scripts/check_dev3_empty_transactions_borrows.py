@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile exact empty transaction handoff ownership probes; never execute test binaries."""
+"""Compile exact empty transaction ownership and sealed installation probes; never execute test binaries."""
 import argparse
 import difflib
 import hashlib
@@ -22,8 +22,8 @@ INPUTS = ROOT / 'crates/engine/tests/fixtures/dev3-empty-transactions/compiler'
 PROBE = 'crates/engine/src/storage/empty_transactions_borrow_probe.rs'
 ANCHOR = 'crates/engine/src/storage/mod.rs'
 BUDGET_SECONDS = 180
-EXPECTATIONS = {'baseline': None, 'bank_release': None, 'before_retry': None, 'result_bank_alias': 'E0499', 'owner_bank_alias': 'E0499', 'consumed_status': 'E0382', 'retained_wide_result': 'E0505', 'no_system_split': 'E0599'}
-PRIMARY_LINES = {'result_bank_alias': 7, 'owner_bank_alias': 7, 'consumed_status': 7, 'retained_wide_result': 8, 'no_system_split': 6}
+EXPECTATIONS = {'baseline': None, 'bank_release': None, 'before_retry': None, 'result_bank_alias': 'E0499', 'owner_bank_alias': 'E0499', 'consumed_status': 'E0382', 'retained_wide_result': 'E0505', 'no_system_split': 'E0599', 'live_sequence': None, 'sealed_install': 'E0451'}
+PRIMARY_LINES = {'result_bank_alias': 7, 'owner_bank_alias': 7, 'consumed_status': 7, 'retained_wide_result': 8, 'no_system_split': 6, 'sealed_install': 5}
 
 def inputs(directory=INPUTS):
     manifest = json.loads((directory / 'manifest.json').read_text())
@@ -65,6 +65,23 @@ def select(rows, names):
 
 
 def verify(output, returncode, row):
+    if row['name'] == 'sealed_install':
+        # Rust reports one E0451 with one primary span for each private field.
+        messages = [json.loads(line) for line in output.splitlines() if line.startswith('{')]
+        finishes = [m for m in messages if m.get('reason') == 'build-finished']
+        errors = [m['message'] for m in messages if m.get('reason') == 'compiler-message'
+                  and m.get('message', {}).get('level') == 'error']
+        if (returncode == 0 or len(finishes) != 1 or finishes[0].get('success') is not False
+                or len(errors) != 1 or (errors[0].get('code') or {}).get('code') != 'E0451'):
+            raise ValueError('sealed construction requires one actual E0451 and failed completion')
+        primary = [s for s in errors[0].get('spans', []) if s.get('is_primary') is True]
+        actual = [(s.get('file_name'), s.get('line_start'), s.get('line_end'),
+                   s.get('column_start'), s.get('column_end')) for s in primary]
+        expected = [(PROBE, 5, 5, start, end) for start, end in
+                    [(43, 47), (48, 53), (54, 65), (66, 71)]]
+        if actual != expected:
+            raise ValueError('sealed construction primary spans differ from all four private fields')
+        return [{'code': 'E0451', 'primary_spans': primary}]
     return check_diagnostics(output, returncode, row['expected_code'], row['primary_line'],
                              probe_path=row['primary_path'] or PROBE)
 
@@ -103,7 +120,7 @@ def main():
     session = Path(tempfile.mkdtemp(prefix='empty-transactions-compiler-', dir=args.artifact_parent)).resolve()
     report = {'status': 'RUNNING', 'cases': [], 'artifact_directory': str(session),
               'budget_seconds': BUDGET_SECONDS, 'compiler_elapsed_seconds': 0,
-              'scope': 'consuming handoff lifetime compile only; no product runtime'}
+              'scope': 'selected ownership and installation authority compile only; no product runtime'}
     code = 0
     try:
         bindings = checker_bindings()

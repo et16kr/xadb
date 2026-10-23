@@ -987,3 +987,6 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
 }
 
 pub(in crate::storage) use doublewrite_install::StatusLoadPermit;
+
+pub(in crate::storage) use doublewrite_install::EmptyTransactionInstall;
+pub(crate) use doublewrite_install::EmptyTransactionObservation;

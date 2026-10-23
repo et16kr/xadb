@@ -379,3 +379,6 @@ pub(in super::super) fn fits<W: WriterNamespace>() -> bool {
 #[cfg(test)]
 #[path = "resident_status_tests.rs"]
 mod tests;
+
+pub(in crate::storage) use empty_transactions::EmptyTransactionInstall;
+pub(crate) use empty_transactions::EmptyTransactionObservation;

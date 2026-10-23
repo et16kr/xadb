@@ -87,7 +87,7 @@ fn empty_handoff_resource_gate() {
     assert!(
         size_of::<EmptyTransactions<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
             - size_of::<ResidentStatus<'_, '_, '_, '_, '_, '_, '_, W>>()
-            <= 64
+            <= 64 + size_of::<Option<crate::storage::wal_io::WalRequirement<'_>>>()
     );
 }
 

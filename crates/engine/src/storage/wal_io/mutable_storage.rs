@@ -538,3 +538,6 @@ fn dirty_layout_diagnostic() {
 }
 
 pub(in crate::storage) use status_init::StatusLoadPermit;
+
+pub(in crate::storage) use status_init::EmptyTransactionInstall;
+pub(crate) use status_init::EmptyTransactionObservation;

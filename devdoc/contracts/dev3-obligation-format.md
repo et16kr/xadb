@@ -1002,3 +1002,59 @@ actual owner 성공·Before retry·foreign owner·forgotten 자원·poison/fence
 bank/old owner/retained wide Result 수명이다. S5는 profile3×resident capacity4(2/3/8/64)의
 실제 인계12조합을 authored ignored로 두고 지금 실행하지 않는다. 원 source별 PASS/FAIL과
 독립 D2/D1은 [통합 증거](../evidence/dev3-empty-transaction-20261023.md)에 이어 기록한다.
+
+<a id="empty-transaction-live"></a>
+## 19. D3-EMPTY-TXN-002 — 실제 빈 거래의 WAL·RAM 설치
+
+2026-10-24 · **D2·제한 설치 D1 수용 / 선택 검증 완료 / 같은 통합의 소비자 미도달**. 담당 `/root`,
+독립 검토 `/root/pool_design_review`. §18의 인계 뒤 같은 owner에 `begin(page)`,
+`rollback_start(actor)`, `abort_end(actor)`를 연결한다. §18의 당시 미공급 설명은 원 인계
+증거이며, 이 절의 추가 공급과 구별한다. live load/flush·새 process 복구·READY는 남아 있다.
+
+- 모든 호출은 원 owner의 exclusive mutable borrow와 same-core Idle Owner를 요구한다.
+  selected Status는 실제 resident여야 한다. 원 system descriptor와 frozen system LSN은
+  유지하고 allocator의 기존 strict-global observer를 완화하지 않는다. 별도 frozen observer는
+  원 system chain과 현재 synced prefix를 함께 검산한다.
+- 원32slot bank의 각1664바이트에 descriptor1536, location40, actor48, phase와 zero 여유를
+  둔다. 추가 retained 상태는 동일 WAL receipt의 `Option` 하나이며 typed32 원장을 복제하지
+  않는다. Stable row는 canonical 빈 Active/Aborting만 허용하고 Terminal은 pending finish
+  내부에서만 허용한다. 원 owner로의 반환·split·동적 INIT는 제공하지 않는다.
+- 매 호출의 allocator-approved directory census는 resident home을 우선하고 비상주 member만
+  reader로 읽는다. I/O 전에 pin/latch를 해제하고 원 scratch를 사용한다. 정확 one-cell envelope,
+  namespace/epoch/local/세대2, empty head/incoming, TxnId 중복, bank↔home의 양방향 일치와
+  pageLSN==descriptor.apply를 확인한다. 최대63 TxnId의 고정 local 배열만 둔다. Free는 원
+  generation1/LSN≤frozen system, Aborted는 stable bank에 없어야 한다. 마지막 allocator stamp와
+  prefix를 재검산한다. 비상주 selected는 effect 전 거절한다.
+- health/binding 뒤 Begin candidate issued+1을 먼저 소모하고 이후 admission 실패에도 되감지
+  않는다. actual complete stage 직후 adopted를 갱신한다. caller의 actor는 lookup key이며
+  location/descriptor 권한은 bank 검산에서 얻는다. 완료한 Aborted home은 Free로 재사용하지
+  않고 bank만 반환하므로 이후 다른 Free home의33번째 거래를 허용한다.
+- 기존 remaining WAL 합R·step 합S에 Begin은9120/3을 더해 WAL cap·LSN·선택 page counter3의
+  여유를 사전 예약한다. Rollback/Abort는 이미 R/S에 포함되어 이중 승인하지 않는다. protected
+  상한1GiB에 현재+미래 WAL과 보수적64page image를 함께 계산한다. issued/bank 소진은 새
+  Begin만 막으며 기존 거래의 종료를 막지 않는다.
+- pure producer가 원 frame/page scratch를 만든 뒤 stamp/DPT preflight→actual complete
+  stage→receipt/phase/adopted 보유→page→metadata/descriptor→DPT→checked release→같은
+  requirement durable 확인 순서로 실행한다. raw constructor가 닫힌 private proof만 기존
+  DirtyInstallPermit로 전환할 수 있다. stage 뒤 오류/unwind는 fence와 pending/bank를 유지한다.
+- finish는 passed/retained receipt의 location·fence, exact complete/synced end, phase, 실제
+  staged frame의 descriptor bytes와 expected state, frame identity/generation/counter+1/
+  first recLSN, actual home·allocator·최종 prefix를 확인한다. 모두 성공한 뒤에만 pending을
+  지우고 Abort bank를0으로 돌린다. bank/page가 서로 같은 잘못된 terminal도 허용하지 않는다.
+
+대안인 system descriptor의 transaction 덮어쓰기, wide result와 별도 typed 원장 동시 보유,
+기존 INIT 전용 loader/flush 우회는 원장·자원·authority 경계를 깨므로 선택하지 않았다. F05는
+bank 포함 retained115,264, live call48,728/65,536, metadata163,992/196,608, 기존 flush 여유
+포함229,528/262,144바이트다. pending Option96 추가의 handoff conversion은64,968이다.
+reader의 max(TEMPORARIES, CONSTRUCTOR), 고정 census와 codec·install의 phase별 최대를
+계산한다. RollbackStart의 중첩 source 값은 더 큰 EmptyAbort component41,640 안에 포함된다.
+물리 stack/RSS 또는 미래 live flush/recovery의 F05 증명으로 확대하지 않는다.
+
+필수 inventory는 [live manifest](../../crates/engine/tests/fixtures/dev3-empty-transactions/live-manifest.json),
+진단은 [compiler manifest](../../crates/engine/tests/fixtures/dev3-empty-transactions/compiler/manifest.json)를
+따른다. raw fixture는 제품 encoder/output을 사용하지 않은 독립 작성·통합 담당의 별도 검토를
+거친다. `sealed_install`은 단일 E0451과 정확4개 private-field primary span을 확인하고 일반
+수명 checker 의미는 유지한다. runtime30초/case·120초전체, compiler180초, case 증거8MiB와
+별도 source/ELF/cache 보존을 적용한다. S5 profile3×depth4의12조합은 authored NOT_RUN이다.
+독립 검토·source별 원 FAIL과 선택 결과는 [실행 증거](../evidence/dev3-empty-transaction-20261023.md)에
+기록한다. live load/flush, nonempty/Commit, 새 epoch/복구, 자원식·authority·oracle 변경 시 재검토한다.

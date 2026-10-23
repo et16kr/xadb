@@ -103,16 +103,10 @@ fn before<'a>(
     Ok((page, range))
 }
 
-fn initial_descriptor(
-    expected: BeginExpected,
-    profile: ControlRef,
-    lsn: u64,
-) -> Result<DescriptorSpec> {
-    let status = TransactionStatus::new(expected.actor, TransactionState::Active, None)?;
-    let mut remaining = [RemainingBudget::default(); 5];
-    // A preparation plan for empty rollback/terminal only. The live consumer
-    // must validate their actual F05 and prove that no handoff work is pending.
-    let step = RemainingBudget {
+/// One retained completion step of the exact empty lifecycle. Shared with the
+/// terminal observer and the actual admission ledger; no resources are issued.
+pub(crate) fn empty_step_budget() -> RemainingBudget {
+    RemainingBudget {
         steps: 1,
         wal: FRAME_BYTES as u64,
         protected: FRAME_BYTES as u64,
@@ -125,7 +119,19 @@ fn initial_descriptor(
             doublewrite: 1,
         },
         ..RemainingBudget::default()
-    };
+    }
+}
+
+fn initial_descriptor(
+    expected: BeginExpected,
+    profile: ControlRef,
+    lsn: u64,
+) -> Result<DescriptorSpec> {
+    let status = TransactionStatus::new(expected.actor, TransactionState::Active, None)?;
+    let mut remaining = [RemainingBudget::default(); 5];
+    // A preparation plan for empty rollback/terminal only. The live consumer
+    // must validate their actual F05 and prove that no handoff work is pending.
+    let step = empty_step_budget();
     remaining[2] = step;
     remaining[3] = step;
     Ok(DescriptorSpec {
@@ -421,7 +427,7 @@ fn build(
 
 /// Conservative simultaneous source-value census. Includes the nested observer,
 /// descriptor validation/encoding and SHA helpers, never a hidden page copy.
-pub(super) const fn component_bytes() -> usize {
+pub(crate) const fn component_bytes() -> usize {
     4 * size_of::<BeginExpected>()
         + 4 * size_of::<BeginObservation>()
         + 4 * size_of::<DescriptorSpec>()

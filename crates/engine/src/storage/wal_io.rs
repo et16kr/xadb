@@ -982,3 +982,8 @@ mod test_support;
 mod tests;
 
 pub(in crate::storage) use bootstrap::StatusLoadPermit;
+
+#[allow(unused_imports)] // Sealed authority is also named by sibling compiler probes.
+pub(in crate::storage) use bootstrap::EmptyTransactionInstall;
+#[allow(unused_imports)] // The live consumer is connected in the next integration step.
+pub(crate) use bootstrap::EmptyTransactionObservation;

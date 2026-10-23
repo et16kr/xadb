@@ -166,6 +166,21 @@ pub(in crate::storage) struct InstallPermit<'a, 'c, 's> {
     after_counter: u64,
     after: &'a [u8; PAGE_BYTES],
 }
+impl<'a, 'c, 's> InstallPermit<'a, 'c, 's> {
+    /// This proof has no raw constructor: only the serialized empty-transaction
+    /// producer creates it after complete stage and retained ownership.
+    pub(in crate::storage) fn from_empty_transaction(
+        proof: super::super::EmptyTransactionInstall<'a, 'c, 's>,
+    ) -> Self {
+        Self {
+            core: proof.core(),
+            stamp: proof.stamp(),
+            requirement: proof.requirement(),
+            after_counter: proof.stamp().modification_counter + 1,
+            after: proof.after(),
+        }
+    }
+}
 impl<'s> InstallPermit<'_, '_, 's> {
     pub(in crate::storage) fn requirement(&self) -> WalRequirement<'s> {
         self.requirement
@@ -307,6 +322,43 @@ impl<'s, 'o> WriterControl<'s, 'o> {
         stamp: &FrameStamp,
         release_terminal: bool,
     ) -> std::result::Result<AllocationObservation, Cause> {
+        self.observation_at(
+            profile,
+            prefix,
+            stamp,
+            release_terminal,
+            prefix.complete_lsn,
+        )
+    }
+
+    /// The consuming transaction owner freezes the original system chain. This
+    /// entry never relaxes the old allocation writer's global-tip equality.
+    pub(super) fn frozen_observation(
+        &self,
+        profile: Profile,
+        prefix: WalPrefix,
+        stamp: &FrameStamp,
+        system_lsn: PageLsn,
+    ) -> std::result::Result<AllocationObservation, Cause> {
+        if self.batch.is_some()
+            || self.installation.is_some()
+            || self.terminal_pending
+            || system_lsn.0 == 0
+            || system_lsn.0 > prefix.synced_lsn
+        {
+            return Err(Cause::Invariant);
+        }
+        self.observation_at(profile, prefix, stamp, false, system_lsn.0)
+    }
+
+    fn observation_at(
+        &self,
+        profile: Profile,
+        prefix: WalPrefix,
+        stamp: &FrameStamp,
+        release_terminal: bool,
+        system_lsn: u64,
+    ) -> std::result::Result<AllocationObservation, Cause> {
         let page = allocation_page::decode_allocation_page(
             self.before(),
             self.identity,
@@ -318,7 +370,7 @@ impl<'s, 'o> WriterControl<'s, 'o> {
             || prefix.complete_lsn != prefix.synced_lsn
             || prefix.complete_offset != prefix.synced_offset
             || page.header().lsn != stamp.page_lsn
-            || stamp.page_lsn.0 != prefix.complete_lsn
+            || stamp.page_lsn.0 != system_lsn
         {
             return Err(Cause::Invariant);
         }

@@ -9,8 +9,7 @@ use super::{
 use crate::storage::{
     allocation_page::ReservationOwner,
     obligation::{
-        DescriptorSpec, OwnerState, RemainingBudget, ResourcePeak, decode_descriptor,
-        encode_descriptor,
+        DescriptorSpec, OwnerState, RemainingBudget, decode_descriptor, encode_descriptor,
     },
     page::{DIGEST_OFFSET, PAGE_BYTES},
     status_home::{STATUS_HOME_BYTES, StatusHome, StatusHomePage, decode_status_home_page},
@@ -77,20 +76,7 @@ fn empty_before(expected: EmptyAbortExpected, bytes: &[u8]) -> Result<Descriptor
         return Err(SemanticError::OrderMismatch);
     }
     let mut remaining = [RemainingBudget::default(); 5];
-    remaining[2] = RemainingBudget {
-        steps: 1,
-        wal: FRAME_BYTES as u64,
-        protected: FRAME_BYTES as u64,
-        peak: ResourcePeak {
-            frames: 2,
-            memory: 114688,
-            locks: 0,
-            registry: 2,
-            files: 5,
-            doublewrite: 1,
-        },
-        ..RemainingBudget::default()
-    };
+    remaining[2] = super::begin::empty_step_budget();
     if before.remaining != remaining
         || before.consumed_wal != 2 * FRAME_BYTES as u64
         || before.consumed_control != 0
@@ -360,7 +346,7 @@ fn build_frame(
 
 /// Source-value bound, including nested typed observations and encoder/hash
 /// scratch. Caller frame/page loans are separate; this is not a stack/RSS bound.
-pub(super) const fn component_bytes() -> usize {
+pub(crate) const fn component_bytes() -> usize {
     5 * size_of::<EmptyAbortExpected>()
         + 5 * size_of::<EmptyAbortObservation>()
         + 7 * size_of::<DescriptorSpec>()

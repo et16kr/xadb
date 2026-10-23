@@ -673,3 +673,6 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
 }
 
 pub(in crate::storage) use mutable_storage::StatusLoadPermit;
+
+pub(in crate::storage) use mutable_storage::EmptyTransactionInstall;
+pub(crate) use mutable_storage::EmptyTransactionObservation;

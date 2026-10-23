@@ -7,8 +7,8 @@ commit과 OCR delegate 독립 검토를 사용한다. 첫 단계는 [빈 AbortEn
 ## 완료 경계와 현재 작업
 
 실제 resident owner의 Begin→RollbackStart→AbortEnd, Status flush/load와 새 process의 동일-build
-닫힌 복구·재진입을 이번 통합 종료점으로 고정했다. 현재 순수 bytes 준비의 선택 시험을 마쳤으며 이 결과로
-live 거래 완료·예약 반환·일반 READY를 주장하지 않는다. 구현 담당은 `/root`, 독립 계약/fixture/
+닫힌 복구·재진입을 이번 통합 종료점으로 고정했다. 순수 bytes 준비·owner 인계에 이어 아래 실제
+WAL/RAM 설치를 선택 검증했으며 live flush/load·현재-build 복구·일반 READY는 남아 있다. 구현 담당은 `/root`, 독립 계약/fixture/
 최종 검토는 `/root/pool_design_review`다. 공유 page/WAL/transaction 수정은 통합 담당만 한다.
 
 독립 사전 검토는 전역 WAL tip과 allocator pageLSN 분리, typed live Status, 새 transaction
@@ -92,3 +92,59 @@ handoff의 memory-port fixture는 기존 Status bootstrap을 사용하며4MiB ca
 파일·쓰기 이력·snapshot 메모리는 제품 F05와 별도이고 전체 RSS는 측정하지 않았다. 별도 page/WAL
 literal 파일은 없다. runtime30초/case·120초전체, compiler180초와 case 증거8MiB 한도 및 별도
 source/ELF/cache 보존을 적용했다. 이 인계 성공은 native/current-build 거래 복구의 증거가 아니다.
+
+<a id="live-installation"></a>
+## 실제 빈 거래 WAL·RAM 설치
+
+2026-10-24 · handoff commit `7909f9e` 이후 [§19](../contracts/dev3-obligation-format.md#empty-transaction-live)의
+실제 Begin→RollbackStart→빈 AbortEnd를 원 owner/pool/WAL에 연결했다.32slot 원장·issued와
+adopted 분리·directory census·WAL/LSN/counter 사전 예약·stage 뒤 fence/pending 보존과
+durable terminal 최종 검산 뒤 bank 반환을 구현했다. system descriptor는 보존하며 selected
+Status는 resident만 지원한다. live flush/load·새 process closed recovery/reentry와 소비자 도달은
+미완료다. memory-port I/O의 PASS를 Linux fsync/reopen 또는 전체 DEV3/S5 인수로 세지 않는다.
+
+독립 D2에서 terminal pending과 stable census 분리, 양방향 bank↔home, canonical empty budget,
+exact staged descriptor와 실제 stamp/receipt 최종 결합, reader constructor 자원식을 보완했다.
+effect 전 l5 static은 live48,728/65,536, bank 포함 retained115,264, metadata163,992/196,608,
+flush 여유 포함229,528/262,144바이트를 확인했다. pending96 추가의 handoff conversion64,968은
+l1의 변경 소비자 static에서 별도로 확인했다. 이 수치는 source-value이며 물리 stack/RSS나
+향후 live flush/recovery F05는 아니다. l6은 자원식/타입이 같아 static을 반복하지 않았다.
+
+| source | 변경·선택 | 원 결과 |
+| --- | --- | --- |
+| l0 `ff74c3bb…` | 새 live 모듈 export/상수 경로 | compile FAIL3진단, runtime 미실행 |
+| l1 `8c7573e6…` | 경로 수정, live/변경 handoff static | build·static2 PASS; 효과 runtime 미실행 |
+| l2 `3c6dcbfb…` | 새 시험 helper alias·snapshot·foreign core 수명 | compile FAIL, runtime 미실행 |
+| l3 `6a96d8de…` | 남은 test helper 이름 | compile FAIL, runtime 미실행 |
+| l4 `725c1fe2…` | 수정·독립 fixture 채택·finish/자원식 보강 | build PASS; runtime 미실행 |
+| l5 `9a3c72ac…` | retained pending fence 보강 | build·변경 live static1·fmt·초기checker1 PASS |
+| l5 | 신규 compiler2+baseline | baseline/live_sequence PASS; 실제 E0451의4primary를 단일span으로 가정해 sealed_install 검사 FAIL |
+| l5 | engine Clippy | 신규 export unused/finish 인수수/macro unused mut FAIL |
+| l6 `81c131f9…` | narrow lint annotation, adopted 갱신을 STAGED test cut 앞으로 이동, exact4span checker | 신규20+직접 관련2 PASS,5.371초; fmt/Clippy·변경checker1 PASS |
+| l6 | 실패 compiler만 exact 재검증 | sealed_install+새baseline PASS; 원 live_sequence PASS는 반복하지 않음 |
+| l7 `94246835…` | seen-mask 도달 marker·고아 원장과 final receipt/stamp 직접 반례2 추가 | 신규2 PASS,0.429초; 기존20+2·static/compiler/checker 반복 없음; fmt/Clippy PASS |
+
+runtime은22개 신규 함수와2개 직접 관련 함수가 각 원 source에서 통과했다. 여러 fault variant를
+포함하는 함수를 단일case로 세며 S5의12조합은 NOT_RUN이다. raw offset/SHA 독립 fixture12개
+160,800바이트로 실제 INIT2→Begin3→Rollback4→Abort5의 전체 WAL·page·descriptor를 대조했다.
+독립 작성자는 제품 encoder/import/output을 사용하지 않았고 통합 담당은 generator와 원 input
+hash/offset을 별도로 검토했다. fixture manifest의 상대 생성 경로는 원 `live-literals/` artifact의
+identity이며 repository의 복사된 fixture 옆에 생성 스크립트가 있다는 뜻은 아니다.
+
+첫 effect gate는 `review/live-effect-gate-l6.json`으로 수용했다. stage의 adopted 갱신과 panic
+hook 순서 문제는 실행 전 독립 리뷰에서 발견·수정하여 l5를 실행하지 않았다. 부정 compiler의
+원 FAIL과 초기 검사기 PASS를 보존하고, case-specific exact4span·path/line/column/count/code/
+completion/extra-error 부정 검산을 D2로 확인했다. 최종 독립 D1은 제한 WAL/RAM 설치 단위로
+수용했다. staged42경로와 OCR44항목(관련42 검토·무관2 제외)을 회계했고 제품/시험/fixture/tool33개는
+l7와 일치한다. 문서9개는 최신 source별 상태와 대조했다. 원판정은 `review/live-final-d1.json`,
+증거 감사는 `review/live-final-receipt-audit.json`이다.1GiB 보호량은 WAL cap에 따른 정적 상계
+273,727,488바이트로만 확인했으며 독립 실패분기 runtime PASS는 주장하지 않는다.
+
+source·binary·정확 command·원 로그 hash·case·시간은 [색인](dev3-empty-transaction-20261023.json)의
+`live_installation`과 `artifact_files`를 따른다. timing 로그는 append-only로 이어 기록한다.
+memory-port의 최대34page,4MiB workspace·1MiB WAL·114,688 operation·53,248 bank와 파일/쓰기
+이력은 시험 메모리이며 전체 RSS는 미측정이다. source/ELF/cache는 case8MiB와 별도 집계한다.
+같은 통합의 완료는0/3이며 native 복구가 연결되기 전 helper/commit 수를 효율 향상으로 세지 않는다.
+
+최종 D1 뒤 보존 snapshot은 case 3,504,604바이트/8MiB, 별도 source·ELF·cache 5,937,815,646바이트다.
+후속 metadata 영수증은 별도로 추가하며 원 snapshot을 덮어쓰지 않는다.

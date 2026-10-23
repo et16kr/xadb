@@ -1,0 +1,200 @@
+{
+  "status": "RAW_INPUTS_AUTHORED_PRODUCT_NOT_RUN",
+  "method": "Frozen independent raw generator + explicit documented offsets + Python hashlib; no product import/encoder/output",
+  "generator": {
+    "path": "generate.py",
+    "sha256": "f329f4d863aca3ea069f8568a3aa14343e481ad21b2b636635fa80dcada9ea4a"
+  },
+  "raw_generator": {
+    "source": "scripts/dev3_empty_abort_literals.py",
+    "snapshot": "raw-generator-source.py",
+    "sha256": "cc6926518a05d12d5596a9b0a30ae9d265ecdf825ffef026ba1f5b8fa16bde6b"
+  },
+  "init_generator": {
+    "source": "scripts/dev3_status_init_literals.py",
+    "snapshot": "init-generator-source.py",
+    "sha256": "aa11d72231c0703ef1981ca9f44598a2c24928224186befa591f7717ac9c578b"
+  },
+  "inputs": [
+    {
+      "source": "tests/fixtures/dev3-status-init/p1-cancel0-init/work1-status.after",
+      "path": "inputs/status-init.page",
+      "bytes": 16384,
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "source": "tests/fixtures/dev3-status-init/p1-cancel0-init/work1-reserve.wal",
+      "path": "inputs/reserve.wal",
+      "bytes": 21200,
+      "sha256": "caf1a406d6522e7627753ad6ec24f3f57bbde869a87f1beeae2192655f29e30c"
+    },
+    {
+      "source": "tests/fixtures/dev3-status-init/p1-cancel0-init/work1-init.wal",
+      "path": "inputs/init.wal",
+      "bytes": 38000,
+      "sha256": "cd6d0d45770bafb3f5eb2e5feab3c0c064200f06c19c8b0660efef5ae9f42e09"
+    },
+    {
+      "source": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-d3-profile.bin",
+      "path": "inputs/profile.bin",
+      "bytes": 4096,
+      "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+    },
+    {
+      "source": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-d3-bootstrap.bin",
+      "path": "inputs/bootstrap.bin",
+      "bytes": 4096,
+      "sha256": "432ec3fc6b77eda76c8ae7ec0a64ffc00dde9656bbab1cbd4f52661b3b3be053"
+    },
+    {
+      "source": "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-d3-wal-00000001.bin",
+      "path": "inputs/wal-header.bin",
+      "bytes": 4096,
+      "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "literal/begin.before.page",
+      "bytes": 16384,
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "literal/begin.after.page",
+      "bytes": 16384,
+      "sha256": "00390cce79eda8d61042663cf5b73bbb474fe8cb5df190ddb8ff43784559a8dc"
+    },
+    {
+      "path": "literal/begin.descriptor",
+      "bytes": 1536,
+      "sha256": "911f5a63318a251e0a203148230329aa505cb08b04d2d14f3f7804ff730c4543"
+    },
+    {
+      "path": "literal/begin.wal",
+      "bytes": 3040,
+      "sha256": "78f9507b8c18378444647bb56d8e12e576291e39fc20ba5817af75aa7cf64d54"
+    },
+    {
+      "path": "literal/rollback.after.page",
+      "bytes": 16384,
+      "sha256": "c89df8522e2a7b9d4a23b87657acd1dafd117f38fbd0b2d8f11574ce17e1cc4c"
+    },
+    {
+      "path": "literal/rollback.descriptor",
+      "bytes": 1536,
+      "sha256": "6fdfebaf090246e4d5218f6c753afe7caee9bdd710eb63aeedd2632105b5a1ca"
+    },
+    {
+      "path": "literal/rollback.wal",
+      "bytes": 3040,
+      "sha256": "c37db5d4cd27838e55a94687cea478359e6f917b65ba745601ae734edfcc9cc0"
+    },
+    {
+      "path": "literal/abort.after.page",
+      "bytes": 16384,
+      "sha256": "3d55c487d643ced9077b3f7c62048176168d072775c3dcbdacfd75cd69be998b"
+    },
+    {
+      "path": "literal/abort.descriptor",
+      "bytes": 1536,
+      "sha256": "bb06c8b69bc496f75fa37c147482d19e227dc04e6e2abb6dcde4081d173c7b6b"
+    },
+    {
+      "path": "literal/abort.wal",
+      "bytes": 3040,
+      "sha256": "a315c970f75c84e539c316ec7bbedcfbd094bd977683223a7463afb3ac4cb28e"
+    },
+    {
+      "path": "literal/transaction.frames-only",
+      "bytes": 9120,
+      "sha256": "8aedb47b2d8cac7c4c982846af37475af69126c96226097547ebecab4a2832fc"
+    },
+    {
+      "path": "literal/wal-through-abort.bin",
+      "bytes": 72416,
+      "sha256": "ba7ab7e0457d7386e72a9b41a4050302fd758f53e3fbf2c0a9cab7f8f9774f6b"
+    }
+  ],
+  "namespace": {
+    "database_hex": "0102030405060708090a0b0c0d0e0f10",
+    "timeline": 1,
+    "writer_epoch": 1
+  },
+  "actor": {
+    "local": 1,
+    "generation": 2
+  },
+  "profile": 1,
+  "profile_ref_hex": "0100000000000000010000000000000000100000000000000000000000000000c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4",
+  "page_identity": {
+    "file": 4294967297,
+    "page_no": 1,
+    "incarnation": 2,
+    "owner": 2,
+    "owner_generation": 1
+  },
+  "slot": 0,
+  "cell_offset": 16128,
+  "cell_bytes": 224,
+  "page_lsn": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "global_previous": [
+    2,
+    3,
+    4
+  ],
+  "owner_previous": [
+    0,
+    3,
+    4
+  ],
+  "consumed_wal": [
+    3040,
+    6080,
+    9120
+  ],
+  "remaining_wal": [
+    6080,
+    3040,
+    0
+  ],
+  "positions": [
+    {
+      "lsn": 1,
+      "start": 4096,
+      "end": 25296,
+      "bytes": 21200
+    },
+    {
+      "lsn": 2,
+      "start": 25296,
+      "end": 63296,
+      "bytes": 38000
+    },
+    {
+      "lsn": 3,
+      "start": 63296,
+      "end": 66336,
+      "bytes": 3040
+    },
+    {
+      "lsn": 4,
+      "start": 66336,
+      "end": 69376,
+      "bytes": 3040
+    },
+    {
+      "lsn": 5,
+      "start": 69376,
+      "end": 72416,
+      "bytes": 3040
+    }
+  ],
+  "raw_output_bytes": 160800,
+  "checks": "Exact initial Free home, source hashes, all page/frame seals, raw descriptor/native/redo chain and contiguous global prefix checked during generation.",
+  "warning": "Fixture generation is not product execution, recovery acceptance, durable-epoch adoption or READY."
+}

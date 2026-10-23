@@ -1,6 +1,6 @@
 # XADB 개발 문서
 
-2026-10-23 [DEV3 빈 거래 통합 작업](evidence/dev3-empty-transaction-20261023.md): AI 효율 계획의 입력 묶음·독립 fixture 준비·시간 기록을 적용한다. 빈 AbortEnd 준비와 원 Status owner의 consuming 인계를 검증했으며 실제 거래·새 process 복구와 소비자 도달은 진행 중이다.
+2026-10-23 [DEV3 빈 거래 통합 작업](evidence/dev3-empty-transaction-20261023.md): AI 효율 계획의 입력 묶음·독립 fixture 준비·시간 기록을 적용한다. 빈 AbortEnd 준비·원 Status owner 인계와 실제 Begin/RollbackStart/AbortEnd의 WAL·RAM 설치를 선택 검증했다. live flush/load·새 process 복구와 소비자 도달은 진행 중이다.
 
 2026-10-23 [DEV3 여러 Status의 실제 상주 수명](evidence/dev3-resident-status-20261023.md): 기존 SharedPool에서3frame/4주소 INIT·read·flush·퇴출·load와 별도 현재-build 복구/재진입을 연결했다. 신규31·직접 관련4·static2·compiler9·checker8·native1의 source별 결과와 원 FAIL을 보존한다. 최종 독립 D1을 제한 단위로 수용했으며 일반 pool·live 거래·전체 DEV3/S5는 미완료다.
 

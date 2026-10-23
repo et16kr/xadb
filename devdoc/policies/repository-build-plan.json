@@ -4532,9 +4532,9 @@
     "full_stage_acceptance": false
   },
   "dev3_empty_transaction": {
-    "status": "preparation_D1_accepted_handoff_D1_D2_accepted_integration_incomplete",
+    "status": "live_installation_D1_D2_accepted_integration_incomplete",
     "contract_ref": "dev3-obligation-format.md#empty-abort-preparation",
-    "scope": "Pure empty AbortEnd preparation and consuming ResidentStatus handoff; live issuer/install/recovery consumer remains incomplete",
+    "scope": "Pure empty AbortEnd, consuming handoff and resident empty transaction WAL/RAM installation; live flush/load and new-process recovery remain",
     "implemented_paths": [
       "crates/engine/src/storage/semantic_group.rs",
       "crates/engine/src/storage/semantic_empty_abort.rs",
@@ -4584,7 +4584,25 @@
       "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/owner_bank_alias.rs",
       "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/result_bank_alias.rs",
       "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/retained_wide_result.rs",
-      "crates/engine/tests/fixtures/dev3-empty-transactions/manifest.json"
+      "crates/engine/tests/fixtures/dev3-empty-transactions/manifest.json",
+      "crates/engine/src/storage/wal_io/empty_transactions_live.rs",
+      "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/live_sequence.rs",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/sealed_install.rs",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live-manifest.json",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/abort.after.page",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/abort.descriptor",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/abort.wal",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/begin.after.page",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/begin.before.page",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/begin.descriptor",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/begin.wal",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/manifest.json",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/rollback.after.page",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/rollback.descriptor",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/rollback.wal",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/transaction.frames-only",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/live/wal-through-abort.bin"
     ],
     "evidence_refs": [
       "dev3-empty-transaction-20261023.md",
@@ -4592,6 +4610,7 @@
     ],
     "source_roots_changed": false,
     "full_stage_acceptance": false,
-    "handoff_contract_ref": "dev3-obligation-format.md#empty-transaction-handoff"
+    "handoff_contract_ref": "dev3-obligation-format.md#empty-transaction-handoff",
+    "live_contract_ref": "dev3-obligation-format.md#empty-transaction-live"
   }
 }

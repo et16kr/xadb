@@ -560,3 +560,15 @@ bank/원owner/retained wide Result의 독점 수명을 검산한다. 기존 완�
 시험은 다시 실행하지 않는다. S5의 profile3×capacity4 인계12조합은 authored ignored/NOT_RUN이다.
 이 인계는 실제 거래·복구 시험을 대체하지 않는다. 앞 단위와 같은30초/case·120초/runtime 및
 180초/compiler·8MiB case 증거 한도를 적용하고 source/ELF/cache를 별도 보존한다.
+
+실제 live 설치는 [§19](../contracts/dev3-obligation-format.md#empty-transaction-live)와
+[live manifest](../../crates/engine/tests/fixtures/dev3-empty-transactions/live-manifest.json)의
+신규22·static1, 공유 exact budget 추출의 직접 소비자2를 선택한다. 독립 전체 WAL/page bytes,
+2/32/33거래·발급 gap/소진, aggregate admission, bank↔home·중복·resident/disk census,
+stage별 오류/unwind·실제 WAL write/sync·short write, durable 뒤 잘못된 terminal/receipt/stamp를
+검산한다. pending 필드 추가의 handoff static1은 변경된 layout의 직접 소비자로 한 번 실행한다.
+새 compiler는 sequential live 호출과 private install 생성 거절2개+baseline이며 기존7개는
+반복하지 않는다. sealed E0451의 정확4span checker1과 부정 입력을 선택한다. source별 결과는
+[기존 증거](../evidence/dev3-empty-transaction-20261023.md#live-installation)에 이어 보존한다.
+S5 profile3×depth(1/2/8/32)12조합은 authored ignored/NOT_RUN으로 추가한다. live flush/load와
+native 현재-build recovery/reentry inventory는 후속 구현과 함께 작성하며 이 결과로 대체하지 않는다.

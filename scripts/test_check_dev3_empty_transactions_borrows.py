@@ -37,6 +37,40 @@ class EmptyHandoffCompiler(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'executed checker differs'):
                     check.verify_checker_bindings(bindings, target)
 
+    def test_live_seal_inventory_and_diagnostic(self):
+        rows = check.select(check.inputs(), ['live_sequence', 'sealed_install'])
+        self.assertEqual([r['name'] for r in rows], ['baseline', 'live_sequence', 'sealed_install'])
+        row = rows[-1]
+        def messages(code='E0451', line=5):
+            return [
+                {'reason': 'compiler-message', 'message': {'level': 'error', 'code': {'code': code},
+                 'spans': [{'is_primary': True, 'file_name': check.PROBE,
+                            'line_start': line, 'line_end': line,
+                            'column_start': start, 'column_end': end}
+                           for start, end in [(43, 47), (48, 53), (54, 65), (66, 71)]],
+                 'rendered': 'private seal'}},
+                {'reason': 'build-finished', 'success': False}]
+        def output(items):
+            return '\n'.join(json.dumps(item) for item in items)
+        self.assertEqual(len(check.verify(output(messages()), 101, row)[0]['primary_spans']), 4)
+        negatives = [messages('E0603'), messages(line=6), [], messages() + [messages()[0]],
+                     messages() + [messages()[1]], messages()[:-1]]
+        for field, value in [('file_name', 'foreign.rs'), ('column_start', 42),
+                             ('column_end', 48), ('line_end', 6), ('is_primary', False)]:
+            bad = messages()
+            bad[0]['message']['spans'][0][field] = value
+            negatives.append(bad)
+        for count in [0, 1, 3, 5]:
+            bad = messages()
+            bad[0]['message']['spans'] = (bad[0]['message']['spans'] * 2)[:count]
+            negatives.append(bad)
+        bad = messages()
+        bad[-1]['success'] = True
+        negatives.append(bad)
+        for data, code in [(items, 101) for items in negatives] + [(messages(), 0)]:
+            with self.assertRaises(ValueError):
+                check.verify(output(data), code, row)
+
     def test_foreign_error_success_or_location_is_not_lifetime_evidence(self):
         row = next(r for r in check.inputs() if r['name'] == 'result_bank_alias')
         def output(code, path, line, success=False):
