@@ -258,10 +258,57 @@ python3 -B scripts/check_comm_performance_batch.py \
 | `scripts/test_check_comm_performance_batch.py` | `e2e03ae93f2b5603119047377ae0ca961b144d6d36f63b86cccfe410e558cb75` |
 | `selected-unit.log` | `d99909ea210393cebbaaa488b69fd0dccba7a0ec75ee710347bbfcb5aa9e2f40` |
 
-**새 profile의 실제 native 성능 실행은 NOT_RUN, 전체 C1은 INCOMPLETE**다. 완료한 native 사례·미변경 codec/model/DEV3/workspace 시험은 반복하지 않았다. 23시 마감 때문에 오늘 추가 native 시험은 시작하지 않는다. 문서 자동 검사는 pre-push gate에 남긴다. D2 최종 수용 상태는 아래 후속 검토 기록을 따른다.
+**22:47 채택·단위검증 시점의 새 profile native는 NOT_RUN, 전체 C1은 INCOMPLETE**였다. 완료한 native 사례·미변경 codec/model/DEV3/workspace 시험은 반복하지 않았다. 그 시점에는23시 마감 때문에 추가 native를 시작하지 않았고, 이후 아래 한 시간 연장 요청에 따라 실제 native를 실행했다. 문서 자동 검사는 pre-push gate에 남긴다. D2 최종 수용 상태는 아래 후속 검토 기록을 따른다.
 
 ### 신규5+5 최종 D2 검토
 
 `/root/comm_acceptance_review`가 raw14개 로그·5개 입력 파일의 working/보존본 SHA·증거표·규칙과 구현을 읽기로 대조해 **ACCEPTED**로 판정했다. 최초 검토에서 발견한 full runner의 실패 mode 완료 수 과대계산은 `completed=len(records)`, `attempted=run_index`로 고쳤고 신규11번째 실패 control로 검증했다. 검토자는 새 native 또는 완료 시험을 실행하지 않았다. 수용 기록은 같은 artifact의 `final-document-review.json`이다.
 
-선택 범위의 한계도 보존한다. 최초12개 검증 뒤 profile 신원·p99·metadata·실패 회계 변경과 무관한 기존 `test_ten_pair_noise_summary_has_reproducible_confidence_intervals` 1개가 최종14개에 불필요하게 다시 포함됐다. 이는 최소 diff 선택 오류이며14개 모두가 마지막 diff에 필수였다고 주장하지 않는다. 기존 PASS를 지우거나 다시 실행하지 않고 중복 사실을 기록했다. 새 profile native NOT_RUN·과거360 불소급·C1 INCOMPLETE는 유지한다.
+선택 범위의 한계도 보존한다. 최초12개 검증 뒤 profile 신원·p99·metadata·실패 회계 변경과 무관한 기존 `test_ten_pair_noise_summary_has_reproducible_confidence_intervals` 1개가 최종14개에 불필요하게 다시 포함됐다. 이는 최소 diff 선택 오류이며14개 모두가 마지막 diff에 필수였다고 주장하지 않는다. 기존 PASS를 지우거나 다시 실행하지 않고 중복 사실을 기록했다. 채택 시점의 native NOT_RUN 기록과 과거360 불소급·C1 INCOMPLETE를 유지한다.
+
+<a id="extra-hour-20261023"></a>
+## 2026-10-23 사용자 요청에 따른 한 시간 추가 시험
+
+사용자가22:52 KST 무렵 “한시간 정도 테스트를 더 해 주세요”라고 요청했다. 이번 추가 시험은 앞선23시 제한을 연장해 실행 deadline23:50 KST·정리/검토/기록 목표23:52–23:55 KST로 진행한다. 원23시 전 종료·시간상skip과 원10쌍360 mode는 당시 증거로 유지한다. 기본5쌍·조건부 추가5쌍,8시간 이상 단일 실행skip과 완료 시험 반복 금지도 유지한다.
+
+작업·통합 담당은 `/root`, 별도 검토는 `/root/comm_acceptance_review`다. 실제 artifact root는 `artifacts/comm/extra-hour-20261023-wssowquk/`이며 실행 전 `selection.json`에 사용자 요청·시각·선택·예산·source recipe·overlay hash를 보존했다. 제품은 원 `b28bc3963ae88df1c949b109d5d6c46c0d670c15bc6d9564b725846dc5aad892` 사본을 사용하고 수용한5+5 도구/관련 fixture·profile 문서와 이번 시간 지시만 얹었다. live DEV3 dirty 변경을 포함하지 않으며 새로운 전체 source identity로 별도 기록한다. source가 다른 원360/74와 mode 수를 합쳐 현재 profile 전수 PASS로 표시하지 않는다.
+
+첫 선택은 원cell119, TCP IPv6·128연결·1MiB payload·slow ECHO다. 완료한 원18조합이나 원74 mode와 겹치지 않는다. nominal 기본350초·추가 시 최대700초이며, 추가가 필요할 수 있으므로 원 최대mode 보수식3,320초를 예약했다. 실행 전 계획 가용3,346.11초로 시작 가능했고 새5+5 통계/64MiB/역압·취소·정리 oracle를 사용한다. 이번의 native 결과·실제 추가 여부·독립 검토는 후속 기록으로 확정한다.
+
+첫cell119는23:01 무렵 원배치 exit0·**BATCH_PASS/5쌍10mode**를 확인했다. TP 판정 상한0.3816203%, p99 판정 상한3.5194523%로 각10%/15% 한도 이하고 편차 추가 조건도 없어 추가5쌍을 실행하지 않았다. 새 source는 `365bed5ee76568babc2e0abaa881832248cb9d05ad8df1b009828059cf48eeed`, worker는 `79d05381b380a9ef732fca66ebd112b5b2dcf0d358f83bf3aec312dc1b2820df`다.
+
+후속은 artifact 전용 `continue_native.py`로 같은 source/worker를 재사용한다. 후보128→129→40→41→120→124→90→91을 실행 전에 `continuation-configuration.json`에 고정했다. 첫 배치의 max 예약 정책과 달리 셀 시작600초는 nominal 입장 기준일 뿐 완료 보장이 아니다. 매mode에는 원120초 제한과120+10+120초 남은 시간 검사를 유지한다. 추가/부분 실행에서 시간 부족·외부 중단은 실패/미완료 receipt와 attempted/completed, 원 failing receipt 경로를 보존하고 완료셀만 BATCH_PASS로 기록한다. 제품/Rust/기존 runner를 수정하지 않는다.
+
+새 외부 helper의 controls4개를23:00:07 KST에0.139초 PASS로 확인했다. 안정5쌍·추가 필요 후 TimeoutError/KeyboardInterrupt/추가 전 시간부족·입장 시간부족 attempted0·잘못된 신원/완료셀 선택 거절을 검사한다. 원 run_case의 kill/reap·Unix cleanup control과 완료 unit/native 사례는 반복하지 않았다. 원4개 로그·helper/control hash는 `continuation-controls.json`과 `continuation-controls.log`에 보존한다. 후속 native는 독립 구현 검토 수용과 첫119의 reap/cleanup 확인 뒤에만 시작한다.
+
+독립 검토자는 시간 단위 helper와4개 controls·hash·후보 비중복·600초 nominal/원mode 제한 구분을 읽기로 수용했다(`continuation-review.json`). 후속 첫 시작은 import 검증 wrapper가 `-B`를 빠뜨려 frozen source에 새 Python bytecode1개를 생성한 탓에 **preflight identity mismatch/실제mode0**으로 차단됐다. 외부/실제 보존 source 전체 비교에서 그 새 캐시1개만 차이를 확인했고, `source-cache-quarantine/`에 hash와 함께 보존해 원365bed 지문으로 완전히 복원했다. 원 소스 코드·worker·완료raw는 바꾸지 않았다. `continuation-preflight-incident.json`·`continuation-preflight-rejected.log`를 보존하며 후속은 `-B`/bytecode 금지 환경으로 실행한다. 원 거절을 PASS나 측정 완료로 바꾸지 않는다.
+
+첫119는 독립 원자료 검토를 수용했다(`batch-01-review.json`). 새 source/worker·128 established/활성3 중 healthy2·취소대상127/helper0·prefix8/burst8/frame_limit·제한된4 failed ticket·10개 gzip/sample 회계·5초/30초·exit0/cleanup0와10PID 부재를 대조했다. latency 표본3,656개·peak9,437,562bytes·최대 취소2.112216ms이며 판정 구간은 raw5쌍에서 독립 재계산해 일치했다. 개별 PASS이며 전체 C1로 승격하지 않는다.
+
+후속 첫cell128(Unix·16연결·64KiB·slow ECHO)의 pair1 ALWAYS는 `peer 0 made no I/O progress for five seconds`로 **원 mode FAIL/worker exit-9**, helper attempted1/completed0·INCOMPLETE_INTERRUPTED로 종료했다. 원FAIL SHA는 `b74016c209c3d6bc3b6b861aaa082b8f4e3e85418e3ac24d0519923c8f85d47a`이며 `continuation/cell-128/cases/pair-01/cell-128/always/validation.json`에 보존했다. 원run_case의 kill 뒤 communicate/reap과 `/tmp/xcp-zurkznuq/private`·부모 경로 소멸을 확인했다. 실패receipt에는 PID·실제 prefix/프레임·cleanup ledger가 없으므로 해당 수치나 원인을 확정하지 않는다. 검사 최소값·timeout을 낮추거나 실패128을 재실행하지 않았다.
+
+독립 검토자가 실패 보존과 다음 고정순서 suffix 진행을 수용했다. 후보129→40→41→120→124→90→91을 `continuation-after-128-configuration.json`·새 `continuation-after-128/` output으로 진행하며 원128실패를 누적 결과에서 유지한다. 유리한 셀을 골라 재배열하지 않고 원 순서의 다음 독립 조합으로 이어간다. 전체 선택 결과는 실패/미완료 포함이며 완료셀만 개별 PASS로 기록한다.
+
+### 한 시간 연장 최종 결과
+
+실제 native는 **23:41:02 KST에 종료**했다. 마지막 원후보91은23:43:13 KST에 남은 약406초가 nominal 입장600초보다 짧아 `continuation-after-90/`에서 **SKIPPED_TIME_BUDGET/attempted0/completed0**으로 기록했다. 새로 고른 순서의9조합 전부를 PASS로 표시하지 않는다.
+
+| 원cell·범위 | 실제 결과 | 인수 상태 |
+| --- | --- | --- |
+|119 TCP IPv6·128연결·1MiB·slow ECHO|5쌍10mode|BATCH_PASS·독립 수용|
+|128 Unix·16연결·64KiB·slow ECHO|첫ALWAYS I/O5초 정체, attempted1/completed0|원mode FAIL/exit-9·INCOMPLETE_INTERRUPTED|
+|129 Unix·16연결·1MiB·slow ECHO|5쌍10mode|BATCH_PASS·독립 수용|
+|40 TCP IPv6·16연결·빈frame ECHO|5쌍10mode|BATCH_PASS·독립 수용|
+|41 TCP IPv6·16연결·빈frame BULK|5쌍10mode|BATCH_PASS·독립 수용|
+|120 Unix·1연결·빈frame·slow ECHO|5쌍10mode, healthy peer 없음|BATCH_PASS·TP/p99 N/A·독립 수용|
+|124 Unix·1연결·1MiB·slow ECHO|5쌍10mode, healthy peer 없음|BATCH_PASS·TP/p99 N/A·독립 수용|
+|90 TCP IPv4·1연결·빈frame·slow ECHO|5mode PASS 뒤 pair3 DETAILED에서 역압 도달 witness 미충족, attempted6/completed5|조합 FAIL·5쌍 미완료; 부분5mode를 조합 PASS로 세지 않음|
+|91 TCP IPv4·1연결·64bytes·slow ECHO|입장 시간 부족, attempted0|SKIPPED_TIME_BUDGET·미인수|
+
+**완결 인수는6조합60mode**, 별도의cell90 부분 성공 raw5mode를 포함한 성공receipt는65개다. 실패2mode를 포함한 시도는67개다. 통과6조합은 모두 정확히5쌍이며 편차 추가 조건이 없어 추가5쌍을 실행하지 않았다. 실패128/90은 기준·timeout을 완화하거나 재실행해 지우지 않았다. 원360/74는 기존 source/profile의 증거로 보존하며 이65개에 합산하지 않는다. 전체 C1은 INCOMPLETE다.
+
+cell90의 원오류는 `slow peer did not reach native TX queue/socket backpressure`이며 worker는exit0이지만 필수 압력 관측을 만족하지 못해 mode FAIL이다. 현재 실패receipt는 어느 pressure 계수가 부족했는지·PID·cleanup ledger를 보존하지 않아 원인을 확정하거나 ledger0을 주장하지 않는다. 앞선2쌍과pair3 ALWAYS의 원5개 PASS receipt도 보존한다. 다음 원순서91은 시간상 미실행이므로 실패를 선택적으로 버리거나 유리한 결과로 교체한 것이 아니다.
+
+`final-campaign-summary.json`은 위9조합과65개 성공raw의 고유 `(cell,pair,mode)`·경로·SHA·gzip SHA를 수합하고, 부분cell90의5개에는 `cell_accepted=false`를 표시한다. canonical65 SHA는 `438e22876c458b5674f9d7f523342e1cd1c536b80360da4c4cb68b434ba1691e`다. 기록기 `close_campaign.py`는 제품/단위시험을 실행하지 않고 보존receipt·source/binary·gzip hash와 종료/정리를 대조했다. latency표본 합계243,939개·관측최대payload9,437,562bytes·최대취소2.140693ms다. 이는 로컬 선택 workload 결과이며 SLA가 아니다.
+
+알려진 성공65worker PID는 모두 부재이고 성공receipt의exit0/cleanup0을 확인했다. Unix 성공경로와 실패128 임시부모도 제거됐다. `process-cleanup-audit.json`의 같은 retained binary에 대한 읽기 가능한 `/proc` exe 일치도0이며 타process 권한거절은 별도 수치로 남겼다. 실패2개 PID와 ledger는 미보존이므로 전체host 무프로세스나 실패ledger0으로 일반화하지 않는다. 원 source365bed/worker79d053 지문은 종료 때도 유지된다. 실패/부분/skip·preflight 실행0 거절을 포함한 최종 독립 대조와 문서 수용은 같은 artifact root의 `final-document-review.json` 결과를 따른다.

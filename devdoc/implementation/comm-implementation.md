@@ -209,4 +209,16 @@ peer 분류의 선택 시험을 위해 private helper만 먼저 추출하고 원
 
 사용자 후속 지시에 따라 [앞으로의 C-V18 반복](../plans/comm-implementation-plan.md#adaptive-repetitions)을 기본5쌍·편차/경계 시 추가5쌍으로 바꿨다. 신규 profile ID는 `comm-five-plus-five-v1`이다. 원135조합·5초 준비/30초 측정·TP10%/p99 15%/64MiB 한도와 원18조합360 mode의10쌍 결과는 보존한다. 새 기본1,350/조건부 최대2,550 mode에 과거 결과를 합산하거나 소급 PASS 처리하지 않는다.
 
-full/batch 실행기는 첫5쌍 결정을 동결하고 추가가 필요하면 전체10쌍으로 판정한다. 명백한 실패와 quota/실행 실패를 추가 측정으로 지우지 않는다. 변경 checker·새 controls의 선택14개가22:47:40 KST PASS이며 [source별 기록·D2 검토](../evidence/comm-performance-batch-20261023.md#adaptive-repetitions)를 따른다. 새 profile의 native 성능은 **NOT_RUN**, 전체 C1은 INCOMPLETE다. 당일23시 마감을 유지해 새 native 실행을 시작하지 않았다.
+full/batch 실행기는 첫5쌍 결정을 동결하고 추가가 필요하면 전체10쌍으로 판정한다. 명백한 실패와 quota/실행 실패를 추가 측정으로 지우지 않는다. 변경 checker·새 controls의 선택14개가22:47:40 KST PASS이며 [source별 기록·D2 검토](../evidence/comm-performance-batch-20261023.md#adaptive-repetitions)를 따른다. 22:47 채택·단위검증 당시 native 성능은 **NOT_RUN**이었고 당시23시 마감에 따라 새 native 실행을 시작하지 않았다. 이후 아래 한 시간 연장에서 실제 native를 실행했으며 원 채택 시점의 기록을 소급 바꾸지 않는다. 전체 C1은 INCOMPLETE다.
+
+
+## 2026-10-23 한 시간 추가 시험 연장
+
+사용자의22:52 KST 무렵 후속 요청으로 이번 실행에 한해23시 마감을 연장했다. [연장 계획](../plans/comm-implementation-plan.md#extra-hour-20261023)에 따라 실행23:50·종료 검토/기록23:52–23:55 KST를 목표로 하며 새5+5·8시간 이상skip·완료 시험 비반복을 유지한다. 제품/Rust·기존 runner 변경 없이 원b28 제품 사본에 수용한 새profile도구를 얹은 source `365bed5ee76568babc2e0abaa881832248cb9d05ad8df1b009828059cf48eeed`를 사용한다. 이전 source의360/74mode는 소급 재분류·현재 source 합산하지 않는다.
+
+첫cell119(TCP IPv6·128연결·1MiB·slow ECHO)는5쌍10mode **BATCH_PASS**이며 원자료·통계·정리의 독립 수용을 마쳤다. 첫5쌍에서 편차 추가 조건이 없어10쌍으로 늘리지 않았다. 외부 시간 단위 continuation은 기존 source/worker를 공유하며 원 mode timeout/정리·새5+5 판정을 유지한다. 새 helper의 controls4개 PASS와 D2 수용을 기록했다. import 검증 중 생성된 bytecode1개로 preflight에서실행0 거절된 원로그·캐시도 보존했고 원source지문 복원을 확인했다.
+
+후속cell128(Unix·16연결·64KiB·slow ECHO)의 첫ALWAYS는5초 I/O 정체로 원mode FAIL/exit-9·helper INCOMPLETE_INTERRUPTED(attempt1/completed0)다. Unix 임시경로 제거와 실패 원자료를 보존하며 원인은 미확정이다. 실패를 지우거나 검사 기준/timeout을 완화하지 않고, 사전에 고정한 후보의 다음 suffix를 새output에서 진행한다. [후속 실제 결과](../evidence/comm-performance-batch-20261023.md#extra-hour-20261023)를 따르며 C1은 INCOMPLETE다.
+
+
+추가 native는23:41:02 KST 종료했다. 최종은 **6조합60mode 완결 BATCH_PASS**, cell90의 부분5mode를 더한 성공raw65개·실패2mode·총67시도다. cell90은 pair3 DETAILED에서 필수 역압 witness 미충족으로 FAIL이며 원128의 I/O 정체와 함께 미인수로 유지한다. 마지막91은23:43:13 남은약406초<nominal입장600초로 SKIPPED_TIME_BUDGET/attempted0다.6개 통과조합은 모두 편차 추가 조건이 없어5쌍만 실행했다. source별 원자료·65개 canonical hash·정리·독립 검토는 [한 시간 최종 결과](../evidence/comm-performance-batch-20261023.md#extra-hour-20261023)를 따른다. 제품/Rust/기존runner·기준/timeout 변경과 완료사례 재실행은 없고 C1은 INCOMPLETE다.

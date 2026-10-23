@@ -17,6 +17,13 @@
 
 일반 조합의 기본10 mode는 nominal350초이며 조건부 최대20 mode는700초다. 추가가 필요할 수 있으므로 시작 예산은 최대20 mode·보수3,320초를 예약한다. healthy peer 없는 slow1 조합은 추가 없이10 mode·보수2,020초다. 선택 결과는 `BATCH_PASS` 또는 FAIL이며 C1 전체는 INCOMPLETE다. 같은 source로 후속 조합을 진행하려면 보존 export 안의 이 runner를 실행해 live DEV3 변경을 섞지 않는다. 각 mode의 불변 receipt와 source/binary hash를 보존하고 source가 다른 원74 mode를 새 결과와 합쳐 현재 전체 PASS로 표시하지 않는다. [구현·실행 증거](../evidence/comm-performance-batch-20261023.md)를 따른다.
 
+<a id="extra-hour-20261023"></a>
+### 2026-10-23 후속 한 시간 시험 연장
+
+사용자가22:52 KST 무렵 “한시간 정도 테스트를 더 해 주세요”라고 요청해 이번 추가 실행에 한해 앞선23시 마감을 연장했다. 실행 deadline은 **23:50 KST**, 종료 검토·기록 목표는23:52–23:55 KST다. 신규5+5 반복·8시간 이상 단일 실행 skip·완료 사례 반복 금지·source별 원자료·실패/중단 보존은 유지한다. 원 보류와23시 전 종료 기록을 덮지 않는다. 이번 실제 선택·결과는 [추가 한 시간 증거](../evidence/comm-performance-batch-20261023.md#extra-hour-20261023)에 따로 기록한다.
+
+이번 연장의 별도 시간 단위 continuation은 첫 배치가 종료·정리된 뒤 같은 보존 source/worker를 재사용한다. 후보 순서를 실행 전에 고정하고, 셀 시작에 nominal 첫5쌍350초+mode120초+정리10초+최종120초=600초가 남아야 한다. **이는 셀 전체 완료의 보수 보장이 아니며** 기존 batch의 최대 예약3,320초와 다르다. 매 mode 전에는 기존120+10+120초 reserve와120초 alarm을 적용한다. 첫5쌍 추가 결정을 불변 저장하고, 추가가 필요하거나 일부 mode만 완료된 채 시간이 끝나면 INCOMPLETE/FAIL로 남긴다. 실행 도구·신규 controls의 독립 수용 뒤 진행하며 품질·5/10쌍·기존 정리 oracle를 줄이지 않는다.
+
 <a id="adaptive-repetitions"></a>
 ### 2026-10-23 신규 COMM 성능 반복 계약
 
