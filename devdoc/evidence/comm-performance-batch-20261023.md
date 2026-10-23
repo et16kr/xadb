@@ -1,6 +1,6 @@
 # COMM 성능 시험의 시간 제한·조합별 분할
 
-2026-10-23 · **D2 분할 실행기·적용 범위 정정 수용 / 선택3조합60mode BATCH_PASS / C1 INCOMPLETE**
+2026-10-23 · **D2 시험 도구 수용 / 같은 source7조합140mode BATCH_PASS / 후속3조합60mode RUNNING / 모델·C1 INCOMPLETE**
 
 [시간 제한 정본](../plans/comm-implementation-plan.md#time-bounded-batches) · [원 C-V18](../plans/comm-implementation-plan.md#performance) · [이전 잔여 대장](comm-acceptance-resume-20261023.md)
 
@@ -134,4 +134,18 @@ python3 -B scripts/check_comm_performance_batch.py \
 
 18:45 재개 시각과 모델 프로세스 부재를 확인한 뒤 기검토 후보의 첫4셀48/49/58/59를 선택했다. TCP IPv6·1MiB payload의16/128연결 ECHO/BULK이며 완료37–39·다른 source의 원74와 중복되지 않는다. 보존 source `b28bc3963ae88df1c949b109d5d6c46c0d670c15bc6d9564b725846dc5aad892`의 원 batch runner로 원10쌍80mode·warmup5초/측정30초·guardrail·2,700 분모를 유지한다. 모델과 성능은 동시 실행하지 않았다.
 
-선택·원 모델 중단 관측은 `artifacts/comm/evening-20261023-de7y58__/selection.json`과 위 `interruption-audit.json`에 보존한다. 성능 단독 nominal2,800초·보수11,120초, batch budget21,600초(<8시간), 실행 deadline22:30 KST로23시 전 검토/기록30분을 남긴다. 실제 원본 root는 `artifacts/comm/performance-batch-bpz4yqzw/source/artifacts/comm/performance-batch-9utevpx5/`이며 외부 report는 `artifacts/comm/evening-20261023-de7y58__/batch-01-result.json`이다. 별도 검토자가 선택·비중복·시간·원 분모를 수용했다. 최종 batch receipt 전에는 RUNNING이며 선택 PASS나 전체 C1 완료로 계산하지 않는다.
+선택·원 모델 중단 관측은 `artifacts/comm/evening-20261023-de7y58__/selection.json`과 위 `interruption-audit.json`에 보존한다. 성능 단독 nominal2,800초·보수11,120초, batch budget21,600초(<8시간), 실행 deadline22:30 KST로23시 전 검토/기록30분을 남긴다. 실제 원본 root는 `artifacts/comm/performance-batch-bpz4yqzw/source/artifacts/comm/performance-batch-9utevpx5/`이며 외부 report는 `artifacts/comm/evening-20261023-de7y58__/batch-01-result.json`이다. 별도 검토자가 선택·비중복·시간·원 분모를 수용했다. 19:37:46 KST clock에서 최종 **BATCH_PASS·attempted80/completed80**를 확인했으며 전체 C1은 INCOMPLETE다.
+
+
+| cell·연결/활성 peer | workload | completed throughput 하락 평균·95% 구간 | p99 상승 평균·95% 구간 |
+| --- | --- | --- | --- |
+| 48·16/11 | ECHO | +0.3954% [-0.3529%, +1.0927%] | -0.1828% [-1.3520%, +0.9988%] |
+| 49·16/16 | BULK | +0.0724% [-0.1624%, +0.2818%] | 미적용 |
+| 58·128/11 | ECHO | +0.2306% [-0.9668%, +1.4491%] | +0.3866% [-1.1313%, +1.9218%] |
+| 59·128/55 | BULK | -0.0736% [-0.3050%, +0.1329%] | 미적용 |
+
+원 실행기의 in-flight 제한 아래 ECHO 활성 peer11, BULK 활성16/55를 유지한 관측이다. 처리량10%·ECHO p99 15% 한도와64MiB payload quota를 통과했다. 동시 global payload 관측 최대는12,583,416bytes이며 개별 queue peak 합과 구별한다. 관측 cancel 최대 약2.121ms·exit0·cleanup의connection_count/payload_bytes=0을 확인했다. 음수 하락률을 일반 성능 개선으로 해석하지 않는다.
+
+원 aggregate와 외부 사본의 SHA-256은 `8438bc10582a441fba8f7476207718c91a6f2b402bbb6bf4ca5a1797bef3d921`다. 별도 검토자가 앞선40개의 review manifest 불변을 확인하고 새 pair06–10의40개 원자료와 전체10쌍 평균·10,000회 bootstrap95% 구간을 독립 재계산해 일치를 확인했다. source/binary/byte/frame·latency sample·취소/정리·분모를 수용하며 차단 지적은 없다. 실제 review 목록과140개 고유(cell,pair,mode)의 수합은 같은 외부 디렉터리의 `batch-01-{partial-review,completion-audit}.json`에 보존한다. 같은 source/worker의7조합140mode이며 다른 source의 원74는 합산하지 않는다.
+
+후속은 원 미실행68/69/78(Unix·1MiB·1연결ECHO/BULK·16연결ECHO)3조합60mode다. UTC10:38:04(KST19:38:04)에 계획했고 nominal2,100초·보수8,520초가22:30 실행 마감에 들어가는 것을 확인해 원10쌍·측정·통계·source/worker를 유지한다. 원본은 `artifacts/comm/performance-batch-bpz4yqzw/source/artifacts/comm/performance-batch-ws2l1z6h/`, 선택/외부 report는 위 외부 디렉터리의 `batch-02-{selection,result}.json`이다. 모델·이전 성능 프로세스가 종료한 뒤 실행했으며 현재 RUNNING이다.
