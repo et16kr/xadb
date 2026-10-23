@@ -234,3 +234,34 @@ python3 -B scripts/check_comm_performance_batch.py \
 다른 잔여 full-cell도 현재 검증된 실행기의 같은 최소3,320초가 필요해 오늘은 미선택/미실행으로 남긴다. 실제 skip receipt는119에만 해당하며 잔여 inventory를 새 PASS나 실행된 SKIP으로 바꾸지 않는다. 새source의6시간 모델은 시간상skip, 기존 모델은원FAIL/미완료중단, 전체native fault는기존부분/실패·harness공급잔여를 유지한다. **전체COMM/C1과 전체성능인수는 INCOMPLETE**다.
 
 360개worker의 exit0·connection_count/payload_bytes cleanup0 receipt와 기록된360 PID의 /proc 부재를 대조했다. 조회가능한 /proc executable에서는9개소유binary 경로 일치0이며 권한상 조회할 수 없는 다른process까지 완전 조회한 결과로 확대하지 않는다. Unix listener 주소120개도 모두 filesystem에 남아 있지 않다. 실제 정리대조는 같은 외부 디렉터리 `process-cleanup-audit.json`에 보존한다. 별도 검토자가 다음119의 실행없는skip과 원분모/미완료 상태 보존까지 수용했다.
+
+<a id="adaptive-repetitions"></a>
+## 2026-10-23 신규 성능 반복5+5 채택
+
+사용자의 “앞으로는 줄이고 나서 편차가 있을 때에만5회 더” 지시에 따라 [신규 반복 계약](../plans/comm-implementation-plan.md#adaptive-repetitions) `comm-five-plus-five-v1`을 적용했다. 작업·통합 `/root`, 독립 D2 검토 `/root/comm_acceptance_review`. 기존18조합360 mode·원10쌍/2,700 profile·원 source/FAIL/중단/skip은 그대로 보존한다. 선택한 기존 첫5쌍의 읽기 분석은 탐색 자료이며 새 인수 결과로 재분류하지 않았다.
+
+실행 전 기본5쌍/조건부 추가5쌍·폭(TP5%p, ECHO p99 7.5%p)·한도 경계·명백실패 우선·5/10 look·설명용95%/판정용 명목97.5% 구간을 동결했다. paired 효과5개/10개가 재표본 단위다. bootstrap의 작은 표본 근사와 두-look 명목 조정은 고정10쌍과 동등한 정밀도·검출력 또는 엄밀한 유한표본 보장을 뜻하지 않는다. 기본1,350 mode, 추가가능120조합을 반영한 최대2,550 mode이고, 과거2,700분모의 결과를 새 분모에 합쳐 완료율을 높이지 않는다. 코드·mode receipt의 profile ID가 다르면 거절한다.
+
+실제 변경은 Python 성능 full/batch runner와 새 관련 controls, 사용자 지시·계획·상태 기록이다. full/batch는 같은5+5 결정 함수를 사용한다. 첫5쌍에서 편차가 있으면 추가5쌍 전체를 요구하고, 추가 중 실행/시간 오류는 외부 FAIL 및 첫 단계의 INCOMPLETE 결정으로 남긴다. 이는 확정된 성능 비용 FAIL과 별개인 미인수 실행 오류이며 PASS로 복귀하지 않는다. batch는 최대 추가 예산을 시작 전에 예약한다. full runner의 실패 회계도 attempted와 완료 receipt 수를 구분했다.
+
+보존 artifact root는 `artifacts/comm/adaptive-repetitions-20261023-1v_ccano/`다. `source/scripts/`는 이번 checker 검증용 사본이며 제품 전체 source 검증을 주장하지 않는다. `receipt.json`에 선택 명령·입력 파일 hash·UTC 시작/종료·로그 hash를 기록했다. **22:47:40 KST, 신규10 method와 변경 관련 기존4 method, 합계14개 PASS(0.889초)**다. 새 source에 profile 혼합 거절·p99 비유한값 거절·full 실행 실패 회계를 반영한 뒤 이 선택 검증을 수행했다. 이전 구현 중간의12개 PASS는 최종14개에 별도 합산하지 않는다.
+
+- 안정5쌍 종료, 불필요한10쌍 거절, 폭 기준의 정확한 경계/초과, 설명용95% 상한과 판정용 조정 상한의 불일치, p99만 편차인 ECHO를 확인했다.
+- 첫5쌍 보존 후10쌍 판정, 추가 후 guardrail 실패, 명백한 실패·quota 실패의 추가보다 높은 우선순위, 6–9쌍·누락·중복·오류 상태·profile/source 혼합을 거절했다.
+- inventory에서 유도한15개 no-healthy N/A와 BULK의 TP 판정을 확인했다. mock batch는 안정 셀10 mode+편차 셀20 mode만 선택했고, mock full/batch의 추가 중단은 PASS로 되돌아가지 않았다. full의11번째 시도 실패는 attempted11/completed10이다.
+
+| 최종 checker 입력/증거 | SHA-256 |
+| --- | --- |
+| `scripts/check_comm_performance.py` | `3d2cc5fe4c7136e307cb67b8f49dc6dba66dd3bd687ffda45b28b1d777759c7f` |
+| `scripts/check_comm_performance_batch.py` | `5da1392ef6fae73cb9c2de89c96813bf3b8d7de0a3a097ac9322f3934eb982b3` |
+| `scripts/test_comm_adaptive_repetitions.py` | `5712fb6daf182c6fb864382d986a2d6189412d68867f17863afdd9e5051ca7d8` |
+| `scripts/test_check_comm_performance_batch.py` | `e2e03ae93f2b5603119047377ae0ca961b144d6d36f63b86cccfe410e558cb75` |
+| `selected-unit.log` | `d99909ea210393cebbaaa488b69fd0dccba7a0ec75ee710347bbfcb5aa9e2f40` |
+
+**새 profile의 실제 native 성능 실행은 NOT_RUN, 전체 C1은 INCOMPLETE**다. 완료한 native 사례·미변경 codec/model/DEV3/workspace 시험은 반복하지 않았다. 23시 마감 때문에 오늘 추가 native 시험은 시작하지 않는다. 문서 자동 검사는 pre-push gate에 남긴다. D2 최종 수용 상태는 아래 후속 검토 기록을 따른다.
+
+### 신규5+5 최종 D2 검토
+
+`/root/comm_acceptance_review`가 raw14개 로그·5개 입력 파일의 working/보존본 SHA·증거표·규칙과 구현을 읽기로 대조해 **ACCEPTED**로 판정했다. 최초 검토에서 발견한 full runner의 실패 mode 완료 수 과대계산은 `completed=len(records)`, `attempted=run_index`로 고쳤고 신규11번째 실패 control로 검증했다. 검토자는 새 native 또는 완료 시험을 실행하지 않았다. 수용 기록은 같은 artifact의 `final-document-review.json`이다.
+
+선택 범위의 한계도 보존한다. 최초12개 검증 뒤 profile 신원·p99·metadata·실패 회계 변경과 무관한 기존 `test_ten_pair_noise_summary_has_reproducible_confidence_intervals` 1개가 최종14개에 불필요하게 다시 포함됐다. 이는 최소 diff 선택 오류이며14개 모두가 마지막 diff에 필수였다고 주장하지 않는다. 기존 PASS를 지우거나 다시 실행하지 않고 중복 사실을 기록했다. 새 profile native NOT_RUN·과거360 불소급·C1 INCOMPLETE는 유지한다.

@@ -170,6 +170,13 @@
   },
   "performance": {
     "minimum_paired_runs": 10,
+    "comm_repetition_exception": {
+      "policy_id": "comm-five-plus-five-v1",
+      "base_pairs": 5,
+      "additional_pairs_on_variation": 5,
+      "maximum_pairs": 10,
+      "owner": "../plans/comm-implementation-plan.md#adaptive-repetitions"
+    },
     "thresholds_fixed_before_measurement": true,
     "universal_speedup_threshold": null
   },

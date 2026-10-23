@@ -204,3 +204,9 @@ peer 분류의 선택 시험을 위해 private helper만 먼저 추출하고 원
 그 뒤 모델 oracle만 현행 terminal 오류 계약에 맞춰 고치고, Open full의 capacity witness를 구별했다. [새 관련3 method의 source별 결과·원 FAIL·감시3/변경1과 D2 독립 수용](../evidence/comm-performance-batch-20261023.md#model-oracle-fix)을 보존한다. 제품 코드는 변경하지 않았고 기존 key/BFS·깊이8·6시간/상태/전이 예산도 유지했다. 14:42:53 KST에 같은 검증 source/binary로 시작한 실행은18:45 재개 시 PID/최종 receipt가 없어 INCOMPLETE_INTERRUPTED다. 마지막 완결 depth7과 원 로그를 보존하며 종료 원인은 미확정이다. 완료한 기존 시험은 반복하지 않는다.
 
 후속으로 모델의 exact key 저장소만 BTreeSet으로 바꾸고 신규 dedup1·필수 inventory checker1의 선택 검증과 D2 수용을 [별도 기록](../evidence/comm-performance-batch-20261023.md#model-cache-fix)했다. 새 source의 깊이8은6시간 예산이23시 전 마감에 들어가지 않아 SKIPPED_TIME_BUDGET이며 전체 모델/C1은 미완료다. 대신 [미실행 성능 조합의 분할 시험](../evidence/comm-performance-batch-20261023.md#evening-continuation)에서 같은 보존 source18조합360mode BATCH_PASS와 원자료·통계·누적목록의 독립 수용을 확인했다. 원 profile·10쌍·측정·2,700분모·활성peer/in-flight 한도와 slow1의 처리량/p99 미적용을 유지하며 다른source 원74를 합산하지 않는다. 21:55:52 KST 마지막 실행을 마쳤으며 다음119는 원20mode의 보수3,320초가22:45까지가용2,908.24초를초과해 SKIPPED_TIME_BUDGET·attempted0/completed0이다. [당일 종료·잔여 범위](../evidence/comm-performance-batch-20261023.md#day-close)에 정리/skip/누적목록을 기록한다. 원보수식·8시간 제한과23시 전 실행/정리/검토/기록 hard마감은 유지한다.
+
+## 2026-10-23 신규 COMM 성능 반복5+5
+
+사용자 후속 지시에 따라 [앞으로의 C-V18 반복](../plans/comm-implementation-plan.md#adaptive-repetitions)을 기본5쌍·편차/경계 시 추가5쌍으로 바꿨다. 신규 profile ID는 `comm-five-plus-five-v1`이다. 원135조합·5초 준비/30초 측정·TP10%/p99 15%/64MiB 한도와 원18조합360 mode의10쌍 결과는 보존한다. 새 기본1,350/조건부 최대2,550 mode에 과거 결과를 합산하거나 소급 PASS 처리하지 않는다.
+
+full/batch 실행기는 첫5쌍 결정을 동결하고 추가가 필요하면 전체10쌍으로 판정한다. 명백한 실패와 quota/실행 실패를 추가 측정으로 지우지 않는다. 변경 checker·새 controls의 선택14개가22:47:40 KST PASS이며 [source별 기록·D2 검토](../evidence/comm-performance-batch-20261023.md#adaptive-repetitions)를 따른다. 새 profile의 native 성능은 **NOT_RUN**, 전체 C1은 INCOMPLETE다. 당일23시 마감을 유지해 새 native 실행을 시작하지 않았다.

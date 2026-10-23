@@ -20,7 +20,7 @@
 
 2026-10-23 [DEV3 진행 현황 후속 리뷰](evidence/dev3-progress-review-20261023.md): 최신 reload 구현·시험 도구와 snapshot 수정, 단계별 공급·미완료 인수를 대조했다. 요약 표·단계 JSON·색인의 진행 설명을 최신 제한 구현과 맞췄으며 제품 변경·시험 재실행·완료 승격은 없다.
 
-2026-10-23 [COMM 시간 제한·조합별 성능 인수](evidence/comm-performance-batch-20261023.md): 별도 미완료 시험의 원 profile·10쌍·측정·2,700분모를 유지하며 같은 보존 source18조합360mode의 BATCH_PASS와 원자료·통계·누적목록의 독립 수용을 확인했다. 21:55:52 KST 선택 실행 종료 뒤 다음119는원보수3,320초>가용2,908.24초로 SKIPPED_TIME_BUDGET·실행0을 보존한다. slow1의 처리량/p99 미적용과 quota·역압·취소/정리 의무를 구분하며 원보수식/품질기준과23시 hard마감은 유지한다. 모델 원 FAIL·oracle/exact dedup 선택 수정·중단과 새6시간 모델의 시간상 skip을 보존한다. 다른 source의 원74를 합산하지 않고 완료 시험 재실행 금지·8시간 skip/23시 마감·C1 INCOMPLETE를 유지한다.
+2026-10-23 [COMM 시간 제한·조합별 성능 인수](evidence/comm-performance-batch-20261023.md): 별도 미완료 시험의 원 profile·10쌍·측정·2,700분모를 유지하며 같은 보존 source18조합360mode의 BATCH_PASS와 원자료·통계·누적목록의 독립 수용을 확인했다. 21:55:52 KST 선택 실행 종료 뒤 다음119는원보수3,320초>가용2,908.24초로 SKIPPED_TIME_BUDGET·실행0을 보존한다. slow1의 처리량/p99 미적용과 quota·역압·취소/정리 의무를 구분하며 원보수식/품질기준과23시 hard마감은 유지한다. 모델 원 FAIL·oracle/exact dedup 선택 수정·중단과 새6시간 모델의 시간상 skip을 보존한다. 다른 source의 원74를 합산하지 않고 완료 시험 재실행 금지·8시간 skip/23시 마감·C1 INCOMPLETE를 유지한다. 후속 사용자 지시로 [신규 성능5+5 계약](plans/comm-implementation-plan.md#adaptive-repetitions)을 적용했다. 기본5쌍·편차 시 추가5쌍이며 선택 checker14개 PASS, 새 profile native NOT_RUN이다. 과거10쌍 결과는 소급 재분류하지 않는다.
 
 2026-10-23 [DEV3 구현 코드 리뷰·후속 수정](evidence/dev3-code-review-20261023.md): `open-code-review-delegate`로 제품 코어51파일에서 확인한 high 결함 D3-OCR-001을 수정했다. 영속화 후 snapshot 실패의 오류 효과·fence를 보완했으며 신규 관련5건 PASS·별도 D1 수용이다. 최초 정적 리뷰와 수정 전 FAIL을 보존하고 전체 DEV3/S5 미완료를 유지한다.
 

@@ -31,6 +31,16 @@ FAMILIES = ("tcp4", "tcp6", "unix")
 WORKLOADS = ("ECHO", "BULK")
 INSTRUMENTATION = ("ALWAYS", "DETAILED")
 PAIRS = 10
+BASE_PAIRS = 5
+REPETITION_POLICY = "comm-five-plus-five-v1"
+REPETITION_RULE = {
+    "policy_id": REPETITION_POLICY, "decision_pairs": [5, 10],
+    "descriptive_interval": 0.95, "decision_interval": 0.975,
+    "decision_quantiles": [0.0125, 0.9875],
+    "variation_width_fraction_of_guardrail": 0.5,
+    "bootstrap_resamples": 10_000, "two_look_adjustment": "Bonferroni",
+    "finite_sample_coverage_guaranteed": False,
+}
 WARMUP_SECONDS = 5
 MEASURE_SECONDS = 30
 LATENCY_LIMIT_RISE = 0.15
@@ -102,15 +112,19 @@ def percentile(samples: list[int | float], fraction: float) -> int | float | Non
     return ordered[index]
 
 
-def bootstrap_mean_interval(values: list[float], seed: int, resamples: int = 10_000) -> dict[str, float] | None:
-    if len(values) < PAIRS:
-        return None
+def bootstrap_mean_samples(values: list[float], seed: int, resamples: int = 10_000) -> list[float]:
     generator = random.Random(seed)
     count = len(values)
-    means = [
+    return [
         sum(values[generator.randrange(count)] for _ in range(count)) / count
         for _ in range(resamples)
     ]
+
+
+def bootstrap_mean_interval(values: list[float], seed: int, resamples: int = 10_000) -> dict[str, float] | None:
+    if len(values) < BASE_PAIRS:
+        return None
+    means = bootstrap_mean_samples(values, seed, resamples)
     return {
         "lower_95": float(percentile(means, 0.025)),
         "upper_95": float(percentile(means, 0.975)),
@@ -1085,7 +1099,7 @@ def summarize_pair_noise(
         byte_ci = None if not byte_values else bootstrap_mean_interval(byte_values, seed ^ 0x5A5A5A5A)
         p99_ci = None if not p99_rises else bootstrap_mean_interval(p99_rises, seed ^ 0x13579BDF)
         all_quota = all(bool(pair["quota_guardrail_pass"]) for pair in pairs)
-        if expected_pairs >= PAIRS and (throughput_ci is None or (key[3] == "ECHO" and p99_ci is None)):
+        if expected_pairs >= BASE_PAIRS and (throughput_ci is None or (key[3] == "ECHO" and p99_ci is None)):
             raise ValueError(f"missing paired confidence interval for {key}")
         summaries.append({
             "family": key[0],
@@ -1115,6 +1129,102 @@ def summarize_pair_noise(
             "confidence_interval_method": "10,000 deterministic paired bootstrap resamples of the mean; nearest-rank 95% interval",
         })
     return summaries
+
+
+def adaptive_max_mode_runs(cells: list[dict[str, object]]) -> int:
+    eligible = sum(not (cell["slow_peer"] and cell["connections"] == 1) for cell in cells)
+    return len(cells) * BASE_PAIRS * 2 + eligible * (PAIRS - BASE_PAIRS) * 2
+
+
+def repetition_noise(comparisons: list[dict[str, object]], count: int) -> dict[str, object]:
+    """Freeze the five-pair decision; use adjusted bounds at both possible looks."""
+    summary = summarize_pair_noise(comparisons, count)[0]
+    summary.update(repetition_policy=REPETITION_POLICY, additional_pairs_required=False,
+                   extension_reasons=[], decision_intervals={})
+    if not summary["guardrails_applicable"] or not summary["quota_guardrail_pass"]:
+        return summary
+    key = tuple(summary[name] for name in ("family", "connections", "payload_bytes", "workload", "slow_peer"))
+    seed = int(hashlib.sha256(json.dumps(key, separators=(",", ":")).encode()).hexdigest()[:16], 16)
+    throughput = [max(float(p["detailed_frame_throughput_drop_fraction"]),
+                      0.0 if p["detailed_byte_throughput_drop_fraction"] is None
+                      else float(p["detailed_byte_throughput_drop_fraction"])) for p in comparisons]
+    metrics = [("throughput", throughput, THROUGHPUT_LIMIT_DROP,
+                summary["completed_throughput_drop_95_ci"], seed)]
+    if summary["paired_p99_rise_mean"] is not None:
+        metrics.append(("p99", [float(p["detailed_p99_rise_fraction"]) for p in comparisons],
+                        LATENCY_LIMIT_RISE, summary["p99_rise_95_ci"], seed ^ 0x13579BDF))
+    reasons = []
+    clear_failure = False
+    for name, values, limit, descriptive, metric_seed in metrics:
+        means = bootstrap_mean_samples(values, metric_seed)
+        interval = {"lower": float(percentile(means, 0.0125)),
+                    "upper": float(percentile(means, 0.9875)),
+                    "nominal_confidence": 0.975, "two_look_adjustment": "Bonferroni"}
+        summary["decision_intervals"][name] = interval
+        summary["throughput_guardrail_pass" if name == "throughput" else "p99_guardrail_pass"] = interval["upper"] <= limit
+        clear_failure |= interval["lower"] > limit
+        if descriptive["upper_95"] - descriptive["lower_95"] > limit / 2:
+            reasons.append(name + "_wide_interval")
+        if interval["lower"] <= limit < interval["upper"]:
+            reasons.append(name + "_threshold_uncertain")
+    summary["extension_reasons"] = reasons
+    summary["additional_pairs_required"] = count == BASE_PAIRS and not clear_failure and bool(reasons)
+    summary["confidence_interval_method"] += "; decision uses97.5% bounds at5/10 pairs; empirical coverage not guaranteed"
+    return summary
+
+
+def summarize_adaptive_profile(records: list[dict[str, object]], cells: list[dict[str, object]]) -> dict[str, object]:
+    """Require exactly five pairs, or ten only when the frozen first five request it."""
+    names = ("family", "connections", "payload_bytes", "workload", "slow_peer")
+    if not cells:
+        raise ValueError("adaptive profile needs at least one cell")
+    keys = [tuple(cell[name] for name in names) for cell in cells]
+    if len(set(keys)) != len(keys):
+        raise ValueError("duplicate adaptive profile cell")
+    grouped = {key: [] for key in keys}
+    for record in records:
+        key = tuple(record["cell"][name] for name in names)
+        if key not in grouped or record.get("status") != "PASS":
+            raise ValueError("wrong cell or failed adaptive receipt")
+        if record.get("repetition_policy") != REPETITION_POLICY:
+            raise ValueError("wrong adaptive repetition policy identity")
+        if type(record.get("pair")) is not int:
+            raise ValueError("adaptive pair identity must be an integer")
+        if record["cell"]["workload"] == "ECHO" and not (
+            record["cell"]["slow_peer"] and record["cell"]["connections"] == 1
+        ):
+            latency = record["peer"].get("latency_p99_ns")
+            if isinstance(latency, bool) or not isinstance(latency, (int, float)) or not math.isfinite(latency) or latency <= 0:
+                raise ValueError("adaptive echo latency must be finite and positive")
+        grouped[key].append(record)
+    comparisons, noise, decisions = [], [], []
+    failed = pending = False
+    for index, (cell, key) in enumerate(zip(cells, keys, strict=True)):
+        rows = grouped[key]
+        if len(rows) not in (BASE_PAIRS * 2, PAIRS * 2):
+            raise ValueError("adaptive cell requires five or ten complete pairs")
+        count = len(rows) // 2
+        first_rows = [row for row in rows if type(row.get("pair")) is int and row["pair"] <= BASE_PAIRS]
+        first = repetition_noise(summarize_pairs(first_rows, 1, BASE_PAIRS, [cell]), BASE_PAIRS)
+        required = PAIRS if first["additional_pairs_required"] else BASE_PAIRS
+        if count > required:
+            raise ValueError("additional pairs were not selected by the first five")
+        current_comparisons = summarize_pairs(rows, 1, count, [cell])
+        current = dict(first) if count == BASE_PAIRS else repetition_noise(current_comparisons, count)
+        complete = count == required
+        passed = all(current[name] for name in ("throughput_guardrail_pass", "p99_guardrail_pass", "quota_guardrail_pass"))
+        failed |= complete and not passed
+        pending |= not complete
+        current.update(required_pairs=required, completed_pairs=count, cell_complete=complete)
+        comparisons.extend(current_comparisons)
+        noise.append(current)
+        decisions.append({"cell_index": index, "required_pairs": required, "completed_pairs": count,
+                          "additional_pairs_required": not complete,
+                          "extension_reasons": first["extension_reasons"], "first_five_summary": first})
+    return {"status": "FAIL" if failed else "INCOMPLETE_VARIATION" if pending else "PASS",
+            "comparisons": comparisons, "paired_noise_summary": noise,
+            "repetition_decisions": decisions, "repetition_policy": REPETITION_POLICY,
+            "required_mode_runs": sum(row["required_pairs"] * 2 for row in decisions)}
 
 
 def main() -> int:
@@ -1159,7 +1269,7 @@ def main() -> int:
         pair_count = 1
     else:
         cells = matrix() + slow_peer_matrix()
-        pair_count = PAIRS
+        pair_count = BASE_PAIRS
     manifest = {
         "schema_version": 1,
         "scope": "COMM C-V18 native workload and Always/Detailed paired profile; local only",
@@ -1178,6 +1288,9 @@ def main() -> int:
             "workloads": WORKLOADS,
             "slow_peer_cells": (1 if args.smoke_slow else 0) if smoke_only else len(slow_peer_matrix()),
             "pairs": pair_count,
+            "maximum_pairs": pair_count if smoke_only else PAIRS,
+            "repetition_policy": "smoke-only" if smoke_only else REPETITION_POLICY,
+            "repetition_rule": None if smoke_only else REPETITION_RULE,
             "warmup_seconds": WARMUP_SECONDS,
             "measure_seconds": MEASURE_SECONDS,
             "instrumentation_order": "alternates Always/Detailed order by pair",
@@ -1185,34 +1298,52 @@ def main() -> int:
         "worker": {"path": str(binary.relative_to(run_root)), "sha256": binary_hash, "build_command": command, "build_log_sha256": hashlib.sha256(build_log.read_bytes()).hexdigest()},
         "case_count": len(cells) * pair_count,
         "mode_run_count": len(cells) * pair_count * 2,
+        "maximum_mode_run_count": len(cells) * pair_count * 2 if smoke_only else adaptive_max_mode_runs(cells),
         "smoke_only": smoke_only,
     }
     write_report(run_root / "manifest.json", manifest)
     records: list[dict[str, object]] = []
     run_index = 0
     try:
-        for pair in range(1, pair_count + 1):
+        extension_indices = []
+        expected_mode_runs = len(cells) * pair_count * 2
+        for pair in range(1, (pair_count if smoke_only else PAIRS) + 1):
+            if not smoke_only and pair == BASE_PAIRS + 1:
+                decision = summarize_adaptive_profile(records, cells)
+                write_report(run_root / "repetition-decision.json", decision)
+                extension_indices = [row["cell_index"] for row in decision["repetition_decisions"]
+                                     if row["additional_pairs_required"]]
+                if decision["status"] == "FAIL" or not extension_indices:
+                    break
+                expected_mode_runs += len(extension_indices) * BASE_PAIRS * 2
             order = INSTRUMENTATION if pair % 2 else tuple(reversed(INSTRUMENTATION))
             for cell_index, cell in enumerate(cells):
+                if pair > BASE_PAIRS and cell_index not in extension_indices:
+                    continue
                 for instrumentation in order:
                     run_index += 1
                     directory = run_root / "cases" / f"pair-{pair:02}" / f"cell-{cell_index:03}" / instrumentation.lower()
                     record = run_case(binary, directory, cell, instrumentation, source_hash)
                     record["pair"] = pair
+                    if not smoke_only:
+                        record["repetition_policy"] = REPETITION_POLICY
                     record["run_index"] = run_index
                     write_report(directory / "validation.json", record)
                     records.append(record)
                     progress = {
                         "status": "RUNNING",
                         "completed_mode_runs": run_index,
-                        "expected_mode_runs": len(cells) * pair_count * 2,
+                        "expected_mode_runs": expected_mode_runs,
                         "last_run": str((directory / "validation.json").relative_to(run_root)),
                         "completed_status": record["status"],
                     }
                     (run_root / "progress.json.tmp").write_text(json.dumps(progress, indent=2) + "\n")
                     os.replace(run_root / "progress.json.tmp", run_root / "progress.json")
-        comparisons = summarize_pairs(records, len(cells), pair_count, cells)
-        pair_noise = summarize_pair_noise(comparisons, pair_count)
+        adaptive = None if smoke_only else summarize_adaptive_profile(records, cells)
+        comparisons = (summarize_pairs(records, len(cells), pair_count, cells)
+                       if smoke_only else adaptive["comparisons"])
+        pair_noise = (summarize_pair_noise(comparisons, pair_count)
+                      if smoke_only else adaptive["paired_noise_summary"])
         guardrail_rows = pair_noise if not smoke_only else comparisons
         report = {
             "schema_version": 1,
@@ -1231,6 +1362,12 @@ def main() -> int:
             "smoke_only": smoke_only,
             "official_distribution": False,
         }
+        if adaptive is not None:
+            report.update(status=adaptive["status"], repetition_policy=REPETITION_POLICY,
+                          repetition_decisions=adaptive["repetition_decisions"],
+                          base_mode_run_count=len(cells) * BASE_PAIRS * 2,
+                          maximum_mode_run_count=adaptive_max_mode_runs(cells),
+                          required_mode_run_count=adaptive["required_mode_runs"])
         write_report(run_root / "validation.json", report)
         if args.report:
             write_report(args.report, report)
@@ -1243,8 +1380,9 @@ def main() -> int:
             "status": "FAIL",
             "source_sha256": source_hash,
             "error": str(error),
-            "completed_mode_runs": run_index,
-            "expected_mode_runs": len(cells) * pair_count * 2,
+            "completed_mode_runs": len(records),
+            "attempted_mode_runs": run_index,
+            "expected_mode_runs": expected_mode_runs,
             "artifacts": str(run_root.relative_to(ROOT)),
             "smoke_only": smoke_only,
         }

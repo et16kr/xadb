@@ -13,9 +13,22 @@
 
 후속 사용자는 "당신은 테스트만 하잖아요 개발중이 아닌데"라고 현재 작업의 적용 범위를 정정했다. **현재는 개발 중 하위 회귀 재실행이 아닌 별도 미완료 COMM 인수 시험 작업이므로, 코드 수정 없이도 미실행 조합을 진행한다.** 위 무변경 코드 제한을 이 독립 시험의 미실행 사례까지 확대해 중단했던 해석은 이 작업에서 대체한다. 완료한 시험 반복 금지·8시간 이상 단일 실행 skip·23시 마감·source별 증거·원 profile/품질 기준은 유지한다. 이 구분은 다른 DEV 개발의 회귀 범위를 확대하지 않는다. [후속 실행 기록](../evidence/comm-performance-batch-20261023.md#standalone-continuation)은 해석 정정·미실행 선택·원 보류 기록을 구분한다.
 
-새 `scripts/check_comm_performance_batch.py`는 원 profile의0-based `--cell-index`와 timezone-aware `--deadline`을 필수로 받는다. 조합마다 원10쌍·Always/Detailed 순서·5초 준비+30초 측정·guardrail을 유지하며 전체135조합/2,700 mode 분모는 변경하지 않는다. default batch wall budget은3,600초이고8시간 이상 budget은 거절한다. build600초·mode120초+정리10초·최종 기록120초를 포함해 시작 가능 여부를 보수적으로 판단하고, 부족하면 build 전에 `SKIPPED_TIME_BUDGET`으로 남긴다. mode의 one-shot alarm은 기존 실행기의 worker kill/reap·임시 경로 정리에 연결한다. OS 정지까지 포함한 realtime 보장은 아니다.
+새 `scripts/check_comm_performance_batch.py`는 원 profile의0-based `--cell-index`와 timezone-aware `--deadline`을 필수로 받는다. 신규 실행은 아래 적응 반복 계약에 따라 기본5쌍·조건부 추가5쌍을 선택한다. Always/Detailed 순서·5초 준비+30초 측정·guardrail과 전체135조합은 유지하며, 원10쌍/2,700 mode 결과는 당시 profile로 보존한다. default batch wall budget은3,600초이고8시간 이상 budget은 거절한다. build600초·mode120초+정리10초·최종 기록120초를 포함해 시작 가능 여부를 보수적으로 판단하고, 부족하면 build 전에 `SKIPPED_TIME_BUDGET`으로 남긴다. mode의 one-shot alarm은 기존 실행기의 worker kill/reap·임시 경로 정리에 연결한다. OS 정지까지 포함한 realtime 보장은 아니다.
 
-한 조합의20 mode는 nominal700초·보수3,320초다. 선택 결과는 `BATCH_PASS` 또는 FAIL이며 C1 전체는 INCOMPLETE다. 같은 source로 후속 조합을 진행하려면 보존 export 안의 이 runner를 실행해 live DEV3 변경을 섞지 않는다. 각 mode의 불변 receipt와 source/binary hash를 보존하고 source가 다른 원74 mode를 새 결과와 합쳐 현재 전체 PASS로 표시하지 않는다. [구현·실행 증거](../evidence/comm-performance-batch-20261023.md)를 따른다.
+일반 조합의 기본10 mode는 nominal350초이며 조건부 최대20 mode는700초다. 추가가 필요할 수 있으므로 시작 예산은 최대20 mode·보수3,320초를 예약한다. healthy peer 없는 slow1 조합은 추가 없이10 mode·보수2,020초다. 선택 결과는 `BATCH_PASS` 또는 FAIL이며 C1 전체는 INCOMPLETE다. 같은 source로 후속 조합을 진행하려면 보존 export 안의 이 runner를 실행해 live DEV3 변경을 섞지 않는다. 각 mode의 불변 receipt와 source/binary hash를 보존하고 source가 다른 원74 mode를 새 결과와 합쳐 현재 전체 PASS로 표시하지 않는다. [구현·실행 증거](../evidence/comm-performance-batch-20261023.md)를 따른다.
+
+<a id="adaptive-repetitions"></a>
+### 2026-10-23 신규 COMM 성능 반복 계약
+
+사용자의 “앞으로는 줄이고 나서 편차가 있을 때에만5회 더” 지시에 따라 `comm-five-plus-five-v1`을 신규 COMM C-V18 실행에 적용한다. 1쌍은 Always/Detailed 각1회다. 기본5쌍에서만 첫 판정을 하고 추가가 선택되면 pair6–10을 한 번 실행한다. 6–9쌍 중간 판정·불리한 pair 교체·추가 재시도는 하지 않는다. 기존10쌍 결과를 새5쌍 결과로 소급 분류하지 않는다.
+
+- quota·정확성·실행 실패 또는 판정 구간 하한의 한도 초과는 terminal FAIL이다. 추가 측정으로 실패를 지우지 않는다.
+- 첫5쌍의 설명용95% bootstrap 구간 폭이 처리량0.05(5%p), ECHO p99 0.075(7.5%p)를 **초과**하거나, 판정 구간이 `lower ≤ limit < upper`이면5쌍을 추가한다. 명백한 실패가 이 조건보다 우선한다.
+- 두 판정 시점의 구간은 paired 효과5개/10개를 단위로 동일 seed·10,000회 재표본한 percentile bootstrap의 `[q1.25, q98.75]`(양측 명목97.5%)다. 기존 단일 상한의 명목2.5%를 look마다1.25%씩 배분한 Bonferroni 조정이며, 설명용95% 구간은 따로 기록한다. 작은 표본의 근사이므로 엄밀한 유한표본 오류율이나 고정10쌍과 같은 검출력·정밀도는 보장하지 않는다.
+- 추가 조건이 없고 적용 지표의 판정 상한이 모두 원 한도(TP하락10%, p99상승15%) 이하면 PASS5다. 추가 후 처음5쌍을 포함한 전체10쌍의 판정 상한이 한도 이하면 PASS10, 아니면 FAIL이다. 추가가 필요하지만 중단되면 미완료이며 첫5쌍 PASS로 복귀하지 않는다.
+- healthy peer 없는 `slow_peer && connections==1`은 처리량/p99 N/A를 inventory에서 파생하며15조합이다. quota·역압·취소·정리 의무를 유지한5쌍으로 끝낸다. BULK는 p99만 N/A이며 TP 편차 판정은 유지한다.
+
+전체135조합의 기본 실행은1,350 mode이고 실제 요구량은 `1,350 + 10×추가 선택 조합 수`다. 추가 대상은 최대120조합이므로 이 규칙의 가능한 최대는2,550 mode다(모든 조합에10쌍을 가정한 공통 상한은2,700). source·binary·profile ID·실행 전 반복 규칙·첫5쌍 결정·추가 사유·두 구간·실제 요구량을 보존한다. 시간 계획은 선택 조합의 조건부 최대를 예약한다. 당일23시 마감과8시간 이상 단일 실행 skip은 유지한다. 신규 규칙의 checker 검증과 native 미실행은 [증거](../evidence/comm-performance-batch-20261023.md#adaptive-repetitions)에 구분한다.
 
 <a id="sequence"></a>
 ## 1. 구현 순서와 공급 계약
@@ -113,7 +126,7 @@ fault 위치의 정확한 call number와 native buffer 설정은 구현된 port/
 
 PE01–10의 [성능 개발 계약](../contracts/ai-performance-engineering.md)을 적용한다. 0/64/4,096/65,536/1,048,576-byte payload × 1/16/128 connections, TCP IPv4/IPv6·Unix별 echo 및 단방향 bulk를 측정한다. peer는 bounded 소비만 하며 application queue 무제한 복사를 허용하지 않는다. slow-peer는 peer 1개 읽기 정지와 나머지 정상 조건으로 분리한다. 각 run은 warmup 5초+측정 30초이며 Offered/Admitted/Completed/Dropped를 별도 기록한다.
 
-release default/Always와 Detailed 계측을 동일 조건에서 순서를 번갈아 최소 10쌍 비교한다. 초기 overhead guardrail은 Always 대비 Detailed completed throughput 하락 10% 이하, p99 local round-trip 상승 15% 이하, peak payload quota 동일 상한이다. 원자료·분포·환경 잡음과 신뢰구간을 함께 보고하고 경계가 불확실하면 미인수로 남긴다. 이 수치는 첫 비용 인수 기준이며 DB TPS/SLA를 약속하지 않는다. checksum 비용을 없애는 등의 최적화는 같은 의미·무결성·quota를 유지하는 대안으로 DP07 리뷰한다.
+release default/Always와 Detailed 계측을 동일 조건에서 순서를 번갈아 [적응 반복 계약](#adaptive-repetitions)의 기본5쌍·조건부 추가5쌍으로 비교한다. 초기 overhead guardrail은 Always 대비 Detailed completed throughput 하락 10% 이하, p99 local round-trip 상승 15% 이하, peak payload quota 동일 상한이다. 원자료·분포·환경 잡음과 신뢰구간을 함께 보고하고 경계가 불확실하면 미인수로 남긴다. 이 수치는 첫 비용 인수 기준이며 DB TPS/SLA를 약속하지 않는다. checksum 비용을 없애는 등의 최적화는 같은 의미·무결성·quota를 유지하는 대안으로 DP07 리뷰한다.
 
 idle 연결에서 TX 없이 writable wait 반복이 발생하지 않고, WouldBlock 직후 같은 연결의 무제한 재시도가 없음을 deterministic syscall ledger로 확인한다. CPU/RSS는 그 외 runtime/kernel 비용까지 포함하므로 payload ledger와 분리한다. poll/AXF1이 병목이면 먼저 bytes/hash/copy/wait/queue 비용을 계측한 뒤 reactor 변경이나 새 frame format의 필요성을 판단한다.
 

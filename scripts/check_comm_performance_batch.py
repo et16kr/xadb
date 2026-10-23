@@ -13,8 +13,8 @@ import tempfile
 import time
 
 from check_comm_performance import (
-    INSTRUMENTATION, MEASURE_SECONDS, PAIRS, WARMUP_SECONDS,
-    matrix, run_case, slow_peer_matrix, summarize_pair_noise, summarize_pairs,
+    BASE_PAIRS, INSTRUMENTATION, MEASURE_SECONDS, PAIRS, REPETITION_POLICY, REPETITION_RULE, WARMUP_SECONDS,
+    adaptive_max_mode_runs, matrix, run_case, slow_peer_matrix, summarize_adaptive_profile,
 )
 from check_dev0 import check_report_paths, digest, source_fingerprint
 from comm_campaign import capture_source, write_json
@@ -39,15 +39,21 @@ def plan_batch(selected, deadline, batch_seconds, now):
         raise ValueError('deadline has already passed')
     if type(batch_seconds) is not int or not 0 < batch_seconds < EIGHT_HOURS:
         raise ValueError('batch budget must be positive and less than eight hours')
-    modes = len(selected) * PAIRS * 2
-    conservative = BUILD_SECONDS + modes * (MODE_SECONDS + CLEANUP_SECONDS) + FINALIZE_SECONDS
+    modes = len(selected) * BASE_PAIRS * 2
+    maximum_modes = adaptive_max_mode_runs([CATALOGUE[i] for i in selected])
+    conservative = BUILD_SECONDS + maximum_modes * (MODE_SECONDS + CLEANUP_SECONDS) + FINALIZE_SECONDS
     available = min(batch_seconds, (deadline - now).total_seconds())
     return {
         'selected_cell_indices': list(selected), 'selected_mode_runs': modes,
-        'full_profile_cells': len(CATALOGUE), 'full_profile_mode_runs': len(CATALOGUE) * PAIRS * 2,
+        'selected_max_mode_runs': maximum_modes, 'repetition_policy': REPETITION_POLICY,
+        'repetition_rule': REPETITION_RULE,
+        'base_pairs': BASE_PAIRS, 'maximum_pairs': PAIRS,
+        'full_profile_cells': len(CATALOGUE), 'full_profile_mode_runs': len(CATALOGUE) * BASE_PAIRS * 2,
+        'full_profile_max_mode_runs': adaptive_max_mode_runs(CATALOGUE),
         'deadline': deadline.isoformat(), 'planned_at': now.isoformat(),
         'batch_seconds': batch_seconds, 'available_seconds': available,
         'nominal_measurement_seconds': modes * (WARMUP_SECONDS + MEASURE_SECONDS),
+        'maximum_measurement_seconds': maximum_modes * (WARMUP_SECONDS + MEASURE_SECONDS),
         'conservative_seconds': conservative, 'mode_seconds': MODE_SECONDS,
         'build_seconds': BUILD_SECONDS, 'cleanup_seconds': CLEANUP_SECONDS,
         'finalize_reserve_seconds': FINALIZE_SECONDS,
@@ -86,7 +92,7 @@ def mode_timeout(seconds):
 
 
 def batch_summary(records, selected, source_hash, binary_hash):
-    """Require all ten original pairs; partial coverage can never become C1 PASS."""
+    """Require five pairs plus the frozen conditional extension; C1 remains separate."""
     for record in records:
         index = record.get('cell_index')
         if (type(index) is not int or index not in selected or record.get('cell') != CATALOGUE[index]
@@ -94,14 +100,14 @@ def batch_summary(records, selected, source_hash, binary_hash):
                 or record.get('binary_sha256') != binary_hash
                 or type(record.get('pair')) is not int):
             raise ValueError('batch receipt has wrong cell/source/binary/pair identity')
-    comparisons = summarize_pairs(records, len(selected), PAIRS, [CATALOGUE[i] for i in selected])
-    noise = summarize_pair_noise(comparisons, PAIRS)
-    passed = all(row['throughput_guardrail_pass'] and row['p99_guardrail_pass']
-                 and row['quota_guardrail_pass'] for row in noise)
-    return {'status': 'BATCH_PASS' if passed else 'FAIL', 'c1_status': 'INCOMPLETE',
-            'full_profile_mode_runs': len(CATALOGUE) * PAIRS * 2,
-            'selected_cell_indices': list(selected), 'completed_mode_runs': len(records),
-            'comparisons': comparisons, 'paired_noise_summary': noise}
+    summary = summarize_adaptive_profile(records, [CATALOGUE[i] for i in selected])
+    for row in summary['repetition_decisions']:
+        row['cell_index'] = selected[row['cell_index']]
+    summary.update(status='BATCH_PASS' if summary['status'] == 'PASS' else summary['status'],
+                   c1_status='INCOMPLETE', full_profile_mode_runs=len(CATALOGUE) * BASE_PAIRS * 2,
+                   full_profile_max_mode_runs=adaptive_max_mode_runs(CATALOGUE),
+                   selected_cell_indices=list(selected), completed_mode_runs=len(records))
+    return summary
 
 
 def main():
@@ -159,9 +165,20 @@ def main():
                             'build_log_sha256': digest(session / 'build.log')}
         write_json(session / 'manifest.json', report)
         print(f'C-V18 batch source: {source}', flush=True)
+        extension_cells = []
         for pair in range(1, PAIRS + 1):
+            if pair == BASE_PAIRS + 1:
+                decision = batch_summary(records, plan['selected_cell_indices'],
+                                         report['source_sha256'], report['worker']['sha256'])
+                write_json(session / 'repetition-decision.json', decision)
+                report['first_stage_decision'] = decision
+                extension_cells = [row['cell_index'] for row in decision['repetition_decisions']
+                                   if row['additional_pairs_required']]
+                if decision['status'] == 'FAIL' or not extension_cells:
+                    break
+                report['expected_mode_runs'] = plan['selected_mode_runs'] + len(extension_cells) * BASE_PAIRS * 2
             order = INSTRUMENTATION if pair % 2 else tuple(reversed(INSTRUMENTATION))
-            for index in plan['selected_cell_indices']:
+            for index in (plan['selected_cell_indices'] if pair <= BASE_PAIRS else extension_cells):
                 for instrumentation in order:
                     require_time(deadline, monotonic_end, MODE_SECONDS + CLEANUP_SECONDS)
                     report['attempted_mode_runs'] += 1
@@ -169,14 +186,15 @@ def main():
                     with mode_timeout(MODE_SECONDS):
                         record = run_case(binary, directory, CATALOGUE[index], instrumentation,
                                           report['source_sha256'])
-                    record.update(pair=pair, cell_index=index, binary_sha256=report['worker']['sha256'])
+                    record.update(pair=pair, cell_index=index, binary_sha256=report['worker']['sha256'],
+                                  repetition_policy=REPETITION_POLICY)
                     write_json(directory / 'validation.json', record)
                     records.append(record)
                     report['completed_mode_runs'] = len(records)
                     report['record_paths'].append(str((directory / 'validation.json').relative_to(session)))
                     write_json(session / 'progress.json', report, replace=True)
                     print(f'cell={index} pair={pair} {instrumentation}: PASS '
-                          f'({len(records)}/{plan["selected_mode_runs"]})', flush=True)
+                          f'({len(records)}/{report.get("expected_mode_runs", plan["selected_mode_runs"])})', flush=True)
         if (source_fingerprint(source) != report['source_sha256']
                 or digest(binary) != report['worker']['sha256']):
             raise ValueError('retained source or binary changed during batch')
