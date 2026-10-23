@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-23 [DEV3 진행 현황 후속 리뷰](../evidence/dev3-progress-review-20261023.md): [allocator 동일 주소 reload](dev3-implementation.md#allocator-residency)와 [영속화 후 snapshot 오류 수정](../evidence/dev3-code-review-20261023.md#fix-followup)까지 요약·단계 JSON·색인에 연결했다. 기존 source별 선택 검증을 보존하며 새 제품 실행·일반 pool·DEV3/S5 완료를 주장하지 않는다.
+
 2026-10-23 [DEV3 고정 등록 코어·세대 pin](dev3-implementation.md#registration-core): 단일 등록 lookup·Copy 요청·pin 세대 검산의 [선택 증거](../evidence/dev3-registration-core-20261023.md)를 보존했다. 신규11·관련10·native1·compiler2+control1 및 source별 자원 회계·독립 D1 수용. 일반 pool·DEV3/S5는 미완료다.
 
 2026-10-23 [DEV3 현재 genesis의 실제 닫힌 복구](dev3-implementation.md#recovery-effects): 고정 두 슬롯 provisioning·source 안정화·historical Pending 수리·예약 한 번 인계·page별 REDO를 연결했다. [source별 검증](../evidence/dev3-recovery-effects-20261023.md)은 필수393의 완결 job386·실패 job 내 완료 단언7과 native31/95worker·compiler9+control1·checker30/변경1을 구별한다. 제한 단위 최종 독립 D1을 수용했으며 일반 복구/READY·전체 DEV3/S5는 미완료다.

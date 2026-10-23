@@ -132,7 +132,7 @@
         "implementation_ref": "dev3-implementation.md",
         "page_contract_ref": "dev3-page-format.md",
         "partial_model_ref": "dev3-snapshot-model.md",
-        "scope": "Fixed storage expressions, descriptor/profile-bound inventory, full-state RollbackStart observation and caller-owned frame/status-page production, selector/metadata ports, selected-page reads, bounded clean buffer pins/clock and fresh genesis physical WAL append/sync, initial extent/FILEMAP installation and borrowed reader/WAL shared fence, initial XDI1/Empty DWB installation plus M02-P01; dirty buffer, page writes, tag2 append, historical intent nonreuse, reservation restoration, live semantic application, ordinary reopen/recovery and full disk-path acceptance remain incomplete",
+        "scope": "Storage expressions and finite models; initial extent/FILEMAP and DWB installation; selected reads and physical WAL; scoped allocator reserve/cancel with dirty stage and one-page flush; closed two-frame Status INIT/home flush; initial recovery selection, current-prefix analysis and closed genesis Pending repair/reservation handoff/page REDO; fixed registration/generation pins and same-address clean allocator reload. General buffer replacement/pressure, tree/row/index/catalog transactions, live undo/CLR/commit, general recovery/READY, checkpoint/reclamation/backup and full DEV3 acceptance remain incomplete. Each receipt retains its original source and selected execution scope.",
         "status": "LOCAL_VERIFIED_LIMITED_SCOPE",
         "evidence_ref": "dev3-doublewrite-install-scoped-xadb-20261021-r2.json",
         "page_io_contract_ref": "dev3-page-io.md",
@@ -146,7 +146,23 @@
         "recovery_select_contract_ref": "dev3-recovery-select.md",
         "recovery_select_evidence_ref": "dev3-recovery-select-20261022.json",
         "recovery_prefix_contract_ref": "dev3-recovery-prefix.md",
-        "recovery_prefix_evidence_ref": "dev3-recovery-prefix-20261022.json"
+        "recovery_prefix_evidence_ref": "dev3-recovery-prefix-20261022.json",
+        "dirty_stage_contract_ref": "dev3-dirty-stage.md",
+        "dirty_stage_evidence_ref": "dev3-dirty-stage-20261022.json",
+        "allocator_flush_contract_ref": "dev3-allocator-flush.md",
+        "allocator_flush_evidence_ref": "dev3-allocator-flush-20261022.json",
+        "status_init_contract_ref": "dev3-status-init.md",
+        "status_init_evidence_ref": "dev3-status-init-20261022.json",
+        "status_home_flush_contract_ref": "dev3-status-home-flush.md",
+        "status_home_flush_evidence_ref": "dev3-status-home-flush-20261022.json",
+        "recovery_effects_contract_ref": "dev3-recovery-effects.md",
+        "recovery_effects_evidence_ref": "dev3-recovery-effects-20261023.json",
+        "registration_contract_ref": "dev3-task-05-buffer-flush.md#registration-core",
+        "registration_evidence_ref": "dev3-registration-core-20261023.json",
+        "allocator_residency_contract_ref": "dev3-allocator-residency.md",
+        "allocator_residency_evidence_ref": "dev3-allocator-residency-20261023.json",
+        "snapshot_fix_evidence_ref": "dev3-code-review-20261023.md#fix-followup",
+        "progress_review_ref": "dev3-progress-review-20261023.md"
       }
     },
     {

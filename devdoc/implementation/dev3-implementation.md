@@ -1,8 +1,10 @@
 # DEV3 구현·검증 현황
 
-2026-10-20 · **page/key/reference 표현·M01–M06 유한 모델 로컬 검증 완료 / DEV3·S1 인수 미완료**
+2026-10-23 · **표현·유한 모델, 제한 allocator/Status 쓰기·flush·닫힌 복구, 등록 코어·동일 주소 reload의 선택 검증 / 일반 저장 경로·DEV3·제품 S1·최종 S5 미완료**
 
 [설계](../contracts/disk-storage-design.md) · [구현 계획](../plans/dev3-implementation-plan.md) · [단계 완료 정본](../plans/stage-completion.json)
+
+2026-10-23 [진행 현황 후속 리뷰](../evidence/dev3-progress-review-20261023.md): 최신 allocator reload 구현·시험 도구와 기존 snapshot 수정, 단계별 공급·잔여 인수를 대조했다. 요약 표·단계 JSON·색인의 오래된 진행 설명을 수정했다. 새 제품 결함은 검토 범위에서 확정하지 않았으며 제품 코드 변경·시험 재실행은 없다.
 
 2026-10-23 [D3-OCR-001 후속 수정](../evidence/dev3-code-review-20261023.md#fix-followup): reserve/cancel의 WAL 영속화 후 최종 snapshot 실패를 원인 보존·`CallerMustResolve`·공통 fence로 처리하고 설치 의무를 유지한다. 신규 실제 경합/정상/Status wrapper5건 PASS, 변경 파일 fmt·관련 engine Clippy PASS, 별도 D1 검토 수용. 최초 반례 FAIL과 기존 결과는 보존하며 [추가5 inventory](../plans/dev3-test-plan.md#post-durable-snapshot-inventory)를 최종 S5에 연결했다. 전체 DEV3/S5는 미완료다.
 
@@ -713,7 +715,7 @@ native typed source census는 outer9008+max(prefix33408, inventory3320, work3116
 
 각 작업의 개발 상세 명세와 처리·상태 설계도는 [16개 작업별 문서](../contracts/dev3-task-designs.md)에 있다. 이 설계 작성은 아래 실제 구현·검증 상태를 변경하지 않는다.
 
-2026-10-22 보완: 기존 16개 분류의 ID를 유지하며 현재 구현 범위를 아래에 정리한다. 실행 순서·하위 작업의 선행/산출물/완료 조건은 [잔여 작업 계획](../plans/dev3-implementation-plan.md#remaining-work)이 소유한다. [작업 크기·우선순위·병렬 운영](../plans/dev3-implementation-plan.md#work-organization)에 따라 실제 배정은 검증 가능한 하위 작업으로 하고 분류 수를 진행률로 환산하지 않는다. 번호는 실행 순서가 아니며 기존 DEV3 기능 범위·S1 인수 조건·다른 단계의 선행을 변경하지 않는다. 표현/모델 검증을 실제 제품 기능 완료로 계산하지 않는다.
+2026-10-23 갱신: 기존 16개 분류의 ID를 유지하며 현재 구현 범위를 아래에 정리한다. 실행 순서·하위 작업의 선행/산출물/완료 조건은 [잔여 작업 계획](../plans/dev3-implementation-plan.md#remaining-work)이 소유한다. [작업 크기·우선순위·병렬 운영](../plans/dev3-implementation-plan.md#work-organization)에 따라 실제 배정은 검증 가능한 하위 작업으로 하고 분류 수를 진행률로 환산하지 않는다. 번호는 실행 순서가 아니며 기존 DEV3 기능 범위·S1 인수 조건·다른 단계의 선행을 변경하지 않는다. 표현/모델 검증을 실제 제품 기능 완료로 계산하지 않는다.
 
 | 분류 | 하부 작업 | 현재 상태와 남은 경계 |
 | --- | --- | --- |
@@ -721,7 +723,7 @@ native typed source census는 outer9008+max(prefix33408, inventory3320, work3116
 | 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기와 [불변 Status bootstrap 역할](#status-bootstrap)의 제한 구현 검증. 일반 reopen은 미완료 |
 | 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | [예약·취소](#allocation-reservation-accepted)와 [한 Status INIT](#status-init)의 제한 연결. [Status home flush](#status-home-flush)의 제한 선택 인수. 일반 INIT·확장·free/reuse 미완료 |
 | 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | [dirty stage](#dirty-stage)·[authentic WAL requirement/flush force](#allocator-flush)·[Status INIT 두 image](#status-init), genesis·RollbackStart·예약/취소 연결. 일반 opcode/CLR/commit 연결 미완료 |
-| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)와 [폐쇄 두-frame INIT/reader](#status-init) 제한 검증. [Status home flush](#status-home-flush)의 제한 선택 인수. 일반 pool·batch8/64·다중 file·압력하 진행 미완료 |
+| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)·[폐쇄 두-frame INIT/reader](#status-init)·[Status home flush](#status-home-flush)의 제한 선택 인수. [등록 코어·세대 pin](#registration-core)과 [같은 allocator 주소의 clean reload](#allocator-residency)까지 공급. 일반 Empty/load/eviction·다른 주소 교체·N+1 pressure·반복 Status 변경·batch8/64·다중 file 미완료 |
 | 3.06 트리·행 | mutable tree CRUD·split·root 변경·overflow·stable cursor·locator | 표현·부분 모델 존재. 실제 변경 경로 미완료 |
 | 3.07 인덱스 | point/range scan·presence·PK/UNIQUE·build/취소 | 표현·의미 계약 존재. 실제 인덱스와 statement-final unique 미완료 |
 | 3.08 카탈로그·DDL | table/index 정의·이름·객체 수명·create/drop | 표현 존재. native 원자 DDL과 catalog 변경 미완료 |

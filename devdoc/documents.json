@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-progress-review-20261023.md": {
+      "path": "evidence/dev3-progress-review-20261023.md",
+      "role": "evidence",
+      "title": "DEV3 진행 현황 후속 리뷰·상태 기록 보완"
+    },
     "dev3-code-review-20261023.md": {
       "path": "evidence/dev3-code-review-20261023.md",
       "role": "evidence",
