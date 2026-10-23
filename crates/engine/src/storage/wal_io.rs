@@ -56,10 +56,16 @@ pub(crate) use bootstrap::{
 pub(in crate::storage) use bootstrap::{
     CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
 };
-pub(in crate::storage) use bootstrap::{DirtyInstallPermit, FlushFinalizePermit};
+pub(in crate::storage) use bootstrap::{
+    DirtyInstallPermit, FlushFinalizePermit, ReloadInstallPermit,
+};
 pub(in crate::storage) use bootstrap::{
     InitialRecoveryError, inspect_initial_bootstrap, recovery_preparation_bytes,
     recovery_reader_bytes,
+};
+#[allow(unused_imports)] // The consuming allocator reload is assembled by scoped consumers.
+pub(crate) use bootstrap::{
+    IntoOperationalError, OperationalAllocation, ReloadError, ReloadObservation,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

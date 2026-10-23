@@ -132,6 +132,25 @@ pub(super) struct InstallObligation<'s> {
     phase: InstallPhase,
 }
 
+/// Test-only isolated retained obligation. It requires the authentic receipt
+/// of a completed stage; production callers cannot manufacture this state.
+#[cfg(test)]
+pub(super) fn test_retained_installation<'s>(
+    requirement: WalRequirement<'s>,
+    stamp: FrameStamp,
+) -> InstallObligation<'s> {
+    InstallObligation {
+        requirement,
+        identity: stamp.identity,
+        generation: stamp.generation,
+        first_rec_lsn: PageLsn(requirement.location().lsn),
+        before_counter: stamp.modification_counter - 1,
+        after_counter: stamp.modification_counter,
+        cancel: false,
+        phase: InstallPhase::DptInstalled,
+    }
+}
+
 /// A sealed image from the validated producer and its actual complete stage.
 /// Only this module constructs it. It borrows caller workspace immutably, never
 /// lives inside WriterControl, and cannot replace the retained obligation.
@@ -270,7 +289,7 @@ impl<'s, 'o> WriterControl<'s, 'o> {
             .expect("fixed before image")
     }
 
-    fn observation(
+    pub(super) fn observation(
         &self,
         profile: Profile,
         prefix: WalPrefix,

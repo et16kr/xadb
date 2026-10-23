@@ -46,7 +46,12 @@ pub(crate) use mutable_storage::{
 pub(in crate::storage) use mutable_storage::{
     CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
 };
-pub(in crate::storage) use mutable_storage::{DirtyInstallPermit, FlushFinalizePermit};
+pub(in crate::storage) use mutable_storage::{
+    DirtyInstallPermit, FlushFinalizePermit, ReloadInstallPermit,
+};
+pub(crate) use mutable_storage::{
+    IntoOperationalError, OperationalAllocation, ReloadError, ReloadObservation,
+};
 
 const WORKSPACE_BYTES: usize = 4 << 20;
 const EMPTY_BYTES: usize = 160;

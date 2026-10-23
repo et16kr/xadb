@@ -374,3 +374,9 @@ Rust 단위 시험은 실제 package/target과 전체 test 경로를 확인한 �
 | 검토·기준 | [재점검 기록](../evidence/dev3-test-plan-review-20261022.md)의 기준 source·항목별 근거와 독립 검토를 따름. 기존001의 PASS를 이번 보완에 승계하지 않음 |
 | 실행 | 문서만 수정. 테스트/harness 구현·제품 시험·compiler/Clippy·문서 자동 검사·commit/push 없음. 후속 구현/최종 인수 상태 변경 없음 |
 | 재검토 | 새 의미 분기·runner 내부 숨은 전수·필수 셀 누락/중복·oracle/fixture 영향 누락·자원/시간 예상 초과·source 변화로 동일성 확인 불가 |
+
+
+<a id="allocator-residency-inventory"></a>
+## 11. allocator 동일 주소 reload의 구현 동반 inventory
+
+2026-10-23 [소유 계약](../contracts/dev3-allocator-residency.md)의 중간 선택은 신규 runtime19·Fixed mode 직접 소비2·static4와 native1/compiler3/checker10이다. 정확 selector와 원 FAIL/NOT_RUN·마지막 성공 source는 [실행 색인](../evidence/dev3-allocator-residency-20261023.json)이 보존한다. 최종 S5에 ignored `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_residency::tests::reload_s5_mixed_count_epoch_history`를 추가한다(count1..8×4회,32round/64reload). 확대는 작성·NOT_RUN이며 이번 선택으로 최종 DEV3 전수를 대신하지 않는다. 무변경 하위 wrapper는 중간에 반복하지 않는다.

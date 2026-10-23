@@ -1,0 +1,32 @@
+{
+  "schema": "xadb-dev3-allocator-residency-compiler-v1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "probe_relative_path": "crates/engine/src/allocator_residency_borrow_probe.rs",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_diagnostics_are_failures": true,
+  "compiler_budget_seconds": 30,
+  "cases": [
+    {
+      "name": "baseline",
+      "expected_code": null,
+      "primary_line": null,
+      "reason": "The actual unmodified source export compiles before any injected residency program."
+    },
+    {
+      "name": "release",
+      "expected_code": null,
+      "primary_line": null,
+      "bytes": 452,
+      "sha256": "49ad1f7f6a013023a131cd9a8096b167593c840263208c2077a991f599ed5785",
+      "reason": "Release all split views, reload the actual wrapper, and acquire a new split."
+    },
+    {
+      "name": "live_split",
+      "expected_code": "E0499",
+      "primary_line": 8,
+      "bytes": 412,
+      "sha256": "008ee0114bab2564be6e572c730c1610aa1ba48114c2248d459faad01b0057db",
+      "reason": "A live actual writer/reader/flusher split prevents mutable reload until its last use."
+    }
+  ]
+}

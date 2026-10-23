@@ -1,11 +1,19 @@
 //! One bounded lookup for bootstrap registrations and the closed INIT publication.
-//! Copy snapshots carry identity across pin/content/flush boundaries. This fixed
-//! directory supplies no replacement, load, reuse or generation-advance authority.
+//! Copy snapshots carry identity across pin/content/flush boundaries. The
+//! consuming allocator mode renews the same address after sealed home reload;
+//! general replacement, load and page reuse authority remain separate.
 
 use super::{DirtyFrame, MAX_FRAMES, PageKind, Registration, TargetRequest};
 use std::sync::OnceLock;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Mode {
+    Fixed,
+    AllocatorReloadable,
+}
+
 pub(super) struct RegistrationDirectory {
+    mode: Mode,
     entries: [Option<Registration>; MAX_FRAMES],
     closed_index: Option<usize>,
     pub(super) publication: OnceLock<Registration>,
@@ -27,6 +35,7 @@ impl RegistrationDirectory {
             }
         }
         Some(Self {
+            mode: Mode::Fixed,
             entries,
             closed_index: None,
             publication: OnceLock::new(),
@@ -57,7 +66,15 @@ impl RegistrationDirectory {
             }
             self.published().filter(|value| value.generation != 0)
         } else {
-            original.filter(|value| value.generation != 0 && frame.registration == Some(*value))
+            original.filter(|value| {
+                value.generation != 0
+                    && match self.mode {
+                        Mode::Fixed => frame.registration == Some(*value),
+                        Mode::AllocatorReloadable => frame
+                            .registration
+                            .is_some_and(|initial| initial.request == value.request),
+                    }
+            })
         }
     }
 
@@ -73,9 +90,61 @@ impl RegistrationDirectory {
         })
     }
 
+    pub(super) fn enable_allocator_reload(&mut self, frames: &[DirtyFrame<'_>]) -> bool {
+        if self.mode != Mode::Fixed
+            || !self.valid(frames)
+            || self.closed_index.is_some()
+            || self.published().is_some()
+            || self.entries[1..].iter().any(Option::is_some)
+            || !self.entries[0].is_some_and(|entry| {
+                entry.request.kind == PageKind::Allocation
+                    && entry.request.level == 0
+                    && entry.request.identity.page.page_no == 0
+            })
+        {
+            return false;
+        }
+        self.mode = Mode::AllocatorReloadable;
+        true
+    }
+    #[cfg(test)]
+    pub(super) fn test_seed_reload_generation(&mut self, generation: u64) {
+        assert!(self.mode == Mode::AllocatorReloadable);
+        self.entries[0].as_mut().unwrap().generation = generation;
+    }
+    pub(super) fn can_renew_allocator(&self, previous: Registration) -> bool {
+        self.mode == Mode::AllocatorReloadable
+            && self.entries[0] == Some(previous)
+            && previous.generation != 0
+            && previous.generation != u64::MAX
+    }
+    pub(super) fn renew_allocator(&mut self, previous: Registration) -> Option<u64> {
+        if !self.can_renew_allocator(previous) {
+            return None;
+        }
+        let generation = previous.generation.checked_add(1)?;
+        self.entries[0] = Some(Registration {
+            generation,
+            ..previous
+        });
+        Some(generation)
+    }
+
     /// Fixed-adapter provenance, including its generation-one restriction.
     /// This is not a future movable-directory or page reuse invariant.
     pub(super) fn valid(&self, frames: &[DirtyFrame<'_>]) -> bool {
+        if self.mode == Mode::AllocatorReloadable
+            && (self.closed_index.is_some()
+                || self.published().is_some()
+                || self.entries[1..].iter().any(Option::is_some)
+                || !self.entries[0].is_some_and(|entry| {
+                    entry.request.kind == PageKind::Allocation
+                        && entry.request.level == 0
+                        && entry.request.identity.page.page_no == 0
+                }))
+        {
+            return false;
+        }
         if self.closed_index.is_none() && self.published().is_some() {
             return false;
         }
@@ -111,7 +180,8 @@ impl RegistrationDirectory {
             }
             match (entry, frames.get(index)) {
                 (Some(entry), Some(_)) => {
-                    entry.generation == 1 && self.resolve(frames, index) == Some(*entry)
+                    (entry.generation == 1 || self.mode == Mode::AllocatorReloadable)
+                        && self.resolve(frames, index) == Some(*entry)
                 }
                 (None, Some(frame)) => frame.registration.is_none(),
                 (None, None) => true,

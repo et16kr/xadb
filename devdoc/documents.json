@@ -1732,6 +1732,21 @@
       "path": "evidence/dev3-registration-core-20261023.json",
       "role": "evidence",
       "title": "DEV3 등록 코어 source별 실행 색인"
+    },
+    "dev3-allocator-residency.md": {
+      "path": "contracts/dev3-allocator-residency.md",
+      "role": "contracts",
+      "title": "DEV3 allocator 동일 주소의 resident 세대 reload"
+    },
+    "dev3-allocator-residency-20261023.md": {
+      "path": "evidence/dev3-allocator-residency-20261023.md",
+      "role": "evidence",
+      "title": "DEV3 allocator 동일 주소 reload 선택 검증"
+    },
+    "dev3-allocator-residency-20261023.json": {
+      "path": "evidence/dev3-allocator-residency-20261023.json",
+      "role": "evidence",
+      "title": "DEV3 allocator resident 세대 source별 실행 색인"
     }
   }
 }

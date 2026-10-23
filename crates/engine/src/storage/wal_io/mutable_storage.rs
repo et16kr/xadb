@@ -61,6 +61,12 @@ use allocator_flush::FlushControl;
 pub(in crate::storage) use allocator_flush::FlushFinalizePermit;
 pub(crate) use allocator_flush::{AllocatorFlushError, AllocatorFlusher, FlushProgress};
 
+mod allocator_residency;
+pub(in crate::storage) use allocator_residency::ReloadInstallPermit;
+pub(crate) use allocator_residency::{
+    IntoOperationalError, OperationalAllocation, ReloadError, ReloadObservation,
+};
+
 const AVAILABLE: u8 = 0;
 const CLAIMED: u8 = 1;
 const BOUND: u8 = 2;

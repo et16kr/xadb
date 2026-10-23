@@ -22,6 +22,10 @@ use std::{
 use xadb_foundation::error::Effect;
 
 mod registration;
+mod residency;
+pub(in crate::storage) use residency::ReloadSnapshot;
+#[cfg(test)]
+pub(in crate::storage) use residency::test_support as residency_test_support;
 #[cfg(test)]
 mod registration_tests;
 use registration::RegistrationDirectory;
@@ -246,7 +250,7 @@ struct DirtyRegistry<'s> {
     last_attempt: u64,
 }
 
-/// Fixed directory and leaf registries; the exact core cannot be caller-selected.
+/// Bounded directory and leaf registries; the exact core cannot be caller-selected.
 pub(crate) struct SharedPool<'c, 's, 'p, 'd> {
     frames: &'p [DirtyFrame<'d>],
     directory: RegistrationDirectory,
@@ -1020,7 +1024,7 @@ pub(in crate::storage) fn flush_registry_bytes() -> usize {
 pub(crate) mod test_support {
     pub(in crate::storage) use super::flush::test_support::{
         FlushSnapshot, actual_requirement, corrupt_flush_claim, flush_diagnose,
-        replace_requirement, seed_last_attempt, stale_capture_generation,
+        replace_requirement, seed_last_attempt, seed_uncaptured_claim, stale_capture_generation,
     };
     use super::*;
     use std::sync::mpsc::{Receiver, SyncSender};

@@ -695,6 +695,15 @@ native typed source census는 outer9008+max(prefix33408, inventory3320, work3116
 
 이 공급은 일반 directory 전환의 선행 refactor다. 동적 load/eviction/reload·실제 frame 수를 넘는 집합·반복 Status 변경은 다음 구현이며 3.05/DEV3/S5 완료를 주장하지 않는다. source 무변경 시험과 하위 wrapper는 반복하지 않았다.
 
+<a id="allocator-residency"></a>
+## allocator 동일 주소의 resident 세대 reload — 제한 선택 검증
+
+2026-10-23 기준 `d31cfb9`에서 [D3-ALLOCATOR-RESIDENCY-001](../contracts/dev3-allocator-residency.md)을 구현했다. consuming wrapper가 원 Bound·descriptor·active 예약·WAL/flush와 Drop을 유지하고 exclusive reload가 실제 selected home을 검산해 generation을 갱신한다. 같은 주소 clean image만 허용하며 old permit·poison·불명 lower 오류·source 불일치는 fence한다. 원 frame/registration/descriptor 보존과 scratch의 부분 변경을 구별한다.
+
+[실행 증거](../evidence/dev3-allocator-residency-20261023.md)·[source별 색인](../evidence/dev3-allocator-residency-20261023.json): 새 runtime19·Fixed 직접2·static4, native1/compiler3/checker10의 고유 선택을 검증했다. r9/r10 같은 source의 다른 ELF와 r11/r12 테스트만 수정한 source를 구별하고 원 FAIL/NOT_RUN을 보존했다. unrelated concurrent 작업은 보존 export 밖의 별도 변경으로 남겼다. conversion61952≤65536, outer2400≤4096, Status+flush259144≤262144와 native File3/FD5/final0을 확인했다. 최종 독립 D1을 수용했다.
+
+32round/64reload S5 확대는 작성·NOT_RUN이다. Empty/다른 주소 교체·N+1 pressure·Status 반복 변경·일반 pool/거래/recovery/READY·전체 DEV3/S5는 미완료다. 이 단위에서 문서 verifier·push를 실행하지 않았다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 

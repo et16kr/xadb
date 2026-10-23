@@ -60,7 +60,12 @@ pub(crate) use doublewrite_install::{
 pub(in crate::storage) use doublewrite_install::{
     CompletedInitAuthority, InitAuthority, InitControlCommit, InitInstallPermit,
 };
-pub(in crate::storage) use doublewrite_install::{DirtyInstallPermit, FlushFinalizePermit};
+pub(in crate::storage) use doublewrite_install::{
+    DirtyInstallPermit, FlushFinalizePermit, ReloadInstallPermit,
+};
+pub(crate) use doublewrite_install::{
+    IntoOperationalError, OperationalAllocation, ReloadError, ReloadObservation,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {

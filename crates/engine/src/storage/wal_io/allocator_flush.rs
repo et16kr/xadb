@@ -92,6 +92,13 @@ pub(super) struct FlushControl<'c, 's, 'w> {
     phase: Phase,
 }
 impl<'c, 's, 'w> FlushControl<'c, 's, 'w> {
+    pub(super) fn ready_for_reload(&self) -> bool {
+        let io = self.io.snapshot();
+        self.phase == Phase::Ready
+            && self.capture.is_none()
+            && self.retired.is_none()
+            && io.state == flush_io::State::Ready
+    }
     pub(super) fn new(io: FlushIo<'s, 'w>, identity: PageIdentity) -> Self {
         Self {
             io,

@@ -488,6 +488,20 @@ pub(super) mod test_support {
     pub(crate) fn seed_last_attempt(pool: &SharedPool<'_, '_, '_, '_>, attempt: u64) {
         pool.dpt.lock().unwrap().last_attempt = attempt;
     }
+    /// Isolated orphan of the genuine pre-capture claim shape, with no pin or
+    /// dirty entry. This is a test-only quiescence witness, never I/O authority.
+    pub(crate) fn seed_uncaptured_claim(pool: &SharedPool<'_, '_, '_, '_>) {
+        let registration = pool.resolve_registration(0).unwrap();
+        let mut registry = pool.dpt.lock().unwrap();
+        assert!(registry.claim.is_none());
+        registry.last_attempt = registry.last_attempt.checked_add(1).unwrap();
+        registry.claim = Some(Claim {
+            attempt: registry.last_attempt,
+            index: 0,
+            registration,
+            captured: None,
+        });
+    }
     pub(in crate::storage) fn actual_requirement<'s>(
         pool: &SharedPool<'_, 's, '_, '_>,
         index: usize,

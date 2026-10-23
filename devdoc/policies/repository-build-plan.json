@@ -4260,5 +4260,43 @@
     "source_roots_changed": false,
     "full_stage_acceptance": false,
     "verified_source_fingerprint": "0ab017577c3545b8fa25d01874057ad5f4721a979edbedd4a7bd81822df5d984"
+  },
+  "dev3_allocator_residency": {
+    "status": "accepted_scoped_unit",
+    "contract_ref": "dev3-allocator-residency.md",
+    "scope": "consuming allocator-only same-address clean epoch reload; no eviction/different-address/Status lifecycle",
+    "implemented_paths": [
+      "crates/engine/src/storage/dirty_flush.rs",
+      "crates/engine/src/storage/dirty_frame.rs",
+      "crates/engine/src/storage/dirty_frame/registration.rs",
+      "crates/engine/src/storage/dirty_frame/residency.rs",
+      "crates/engine/src/storage/wal_io.rs",
+      "crates/engine/src/storage/wal_io/allocator_flush.rs",
+      "crates/engine/src/storage/wal_io/allocator_residency.rs",
+      "crates/engine/src/storage/wal_io/allocator_residency_tests.rs",
+      "crates/engine/src/storage/wal_io/allocator_residency_native_tests.rs",
+      "crates/engine/src/storage/wal_io/bootstrap.rs",
+      "crates/engine/src/storage/wal_io/dirty_allocation.rs",
+      "crates/engine/src/storage/wal_io/doublewrite_install.rs",
+      "crates/engine/src/storage/wal_io/mutable_storage.rs",
+      "scripts/check_dev3_allocator_residency_borrows.py",
+      "scripts/dev3_allocator_residency_native.py",
+      "scripts/test_dev3_allocator_residency_acceptance.py",
+      "crates/engine/tests/fixtures/dev3-allocator-residency/compiler/manifest.json",
+      "crates/engine/tests/fixtures/dev3-allocator-residency/compiler/release.rs",
+      "crates/engine/tests/fixtures/dev3-allocator-residency/compiler/live_split.rs"
+    ],
+    "evidence_refs": [
+      "dev3-allocator-residency-20261023.md",
+      "dev3-allocator-residency-20261023.json"
+    ],
+    "source_roots_changed": false,
+    "full_stage_acceptance": false,
+    "verified_source_phases": {
+      "r9": "6471b880686ab374ec86e29ce5c4e9fa5770c9d2c3514b6884f75a01d3306f40",
+      "r10": "6471b880686ab374ec86e29ce5c4e9fa5770c9d2c3514b6884f75a01d3306f40",
+      "r11": "3b0985674860935fefea73798f85051fbdedb2ce198087b28d052d7b79d341ab",
+      "r12": "f53b5e0ec5ef6ed501fd036e4913a3ff57eafea1aa012f0019d38efd382d6e1e"
+    }
   }
 }

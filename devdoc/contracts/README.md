@@ -129,3 +129,5 @@ DEV3의 COW pack 경로는 [in-place·WAL·영속 undo 결정](../contracts/disk
 - [DEV3 최초 doublewrite 설치](dev3-doublewrite-install.md) — pristine 세션 consume·XDI1·Empty 선택·고정 장애 입력; 최초 설치 구현·제한 검증과 변경 코드만 시험하는 사용자 지시
 
 - [DEV3 실제 페이지 예약·취소](dev3-allocation-reservation.md) — SystemBegin/End와 authoritative dirty metadata·보호 자원 회계의 D2 채택; 메모리 포트 부분 검증 후 사용자 요청 중단
+
+- [DEV3 allocator 동일 주소의 resident 세대 reload](dev3-allocator-residency.md) — consuming owner·actual read·세대 갱신의 제한 계약

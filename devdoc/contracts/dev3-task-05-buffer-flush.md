@@ -310,3 +310,9 @@ Status hash 호출 중 caller의 expected identity2개와 pin token16bytes를 �
 독립 검토는 full snapshot 상주 비용, caller identity 수명 누락, invalid fixed publication을 Copy 요청으로 반환하는 경로, 독립 read entry 반례를 지적했고 r6에 반영했다. source와 exact selector를 동결하고 자원 gate를 확인한 뒤 제품 실행했으며 최종 제품 D1 PASS를 수용했다. 기존 하위 wrapper·무변경 모델·완료 시험을 반복하지 않았다. 문서 검사는 push 전용이다.
 
 후속 consuming 전환은 초기 provenance를 일반 mutable 등록으로 오인하지 않도록 정리해야 한다. 동적 교체를 추가할 때 slot generation의 checked 증가·소진 거절·pin0/dirty0/claim0와 등록 전환 원자성을 별도 동결한다. 현재 두 generation이 모두1인 역순 시험은 미래의 서로 다른 세대 정렬을 검증하지 않는다. 실제 load→dirty→flush→evict→reload, live Status 반복 변경, N+1 작업 집합과 일반 pool·DEV3/S5 인수는 남아 있다. 이번 refactor의 검증을 그 capability의 공급으로 승격하지 않는다.
+
+
+<a id="allocator-residency-followup"></a>
+## 동일 주소 allocator reload의 제한 후속 공급
+
+2026-10-23 [D3-ALLOCATOR-RESIDENCY-001](dev3-allocator-residency.md)은 등록 코어의 실제 첫 세대 갱신 소비자다. 원 Bound를 소비·보존하며 같은 allocator clean image의 actual home read와 세대 증가만 제공한다. Fixed/Status 일회 공개의 generation1은 유지한다. 새 세대 안에서 counter0/1 baseline을 설치하며 기존 세대 counter를 되감지 않는다. 일반 Empty/load/evict·다른 주소·N+1·Status 변경은 후속이며 위 전체 상태도 완료로 승격하지 않는다. [source별 검증](../evidence/dev3-allocator-residency-20261023.md)을 따른다.
