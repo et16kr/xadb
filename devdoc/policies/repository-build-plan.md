@@ -350,3 +350,11 @@ DEV3 페이지 예약·취소는 `wal_io/doublewrite_install`의 private child `
 ## DEV3 반복 Status 이력 복구
 
 [F09 소유 계약](../contracts/dev3-recovery-effects.md#operational-status-recovery)의 기존 Prefix/effect 확장과 새 runtime/native/S5 fixture·독립 oracle 경로를 관리 JSON `dev3_operational_recovery`에 등록한다. caller 고정 arena 안에서 첫 extent64주소의 census·물리 scratch를 사용하고 crate/dependency/source root는 유지한다. [선택 증거](../evidence/dev3-operational-recovery-20261023.md)와 최종 독립 검토 상태를 따르며 전체 DEV3/S5 완료가 아니다.
+
+
+## DEV3 Status home load P3 경로
+
+[P3 소유 계약](../contracts/dev3-task-05-buffer-flush.md#operational-status-p3)의 `status_residency`와
+`status_load`·선택 unit/native/compiler/독립 checker·fixture를 관리 JSON `dev3_status_load`에
+등록한다. 기존 owner·2frame·caller scratch를 사용하며 crate/dependency/source root를 바꾸지 않는다.
+실행·독립 리뷰 상태는 [증거](../evidence/dev3-status-load-20261023.md)를 따른다.

@@ -533,3 +533,5 @@ fn dirty_layout_diagnostic() {
     );
     println!("DIRTY_LAYOUT_DIAGNOSTIC complete");
 }
+
+pub(in crate::storage) use status_init::StatusLoadPermit;

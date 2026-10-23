@@ -833,7 +833,7 @@ fn validate_free_home(bytes: &[u8]) -> Result<()> {
         SemanticError::PageMismatch,
     )
 }
-fn membership_lsn(
+pub(super) fn membership_lsn(
     profile: &Profile,
     allocator: &PageIdentity,
     payload: &PageIdentity,

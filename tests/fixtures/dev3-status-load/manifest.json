@@ -1,0 +1,161 @@
+{
+  "schema": "xadb-status-load-negatives-v1",
+  "status": "AUTHORED_NOT_RUN",
+  "derivation": "Independent byte offsets and hashlib SHA256 from work1-status.after; no product codec",
+  "cases": [
+    {
+      "path": "typed.page",
+      "sha256": "0f99885c255db1c7f1c48b6e6d8ceaf49d4d930425388264f12d3a3d3b065b2f",
+      "bytes": 16384,
+      "reason": "typed"
+    },
+    {
+      "path": "zero_lsn.page",
+      "sha256": "cf27001c896de00faa544242c42d81573f3358064e84547bedcc5328bdfa07df",
+      "bytes": 16384,
+      "reason": "zero_lsn"
+    },
+    {
+      "path": "future_lsn.page",
+      "sha256": "654f103a946ed7123037ecb8d97e4b20a459c3c33eab1b1420c24e47e0ee1e1a",
+      "bytes": 16384,
+      "reason": "future_lsn"
+    }
+  ],
+  "runtime_selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_dirty_allocator_ab_and_empty",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_bad_membership_and_resident_no_io",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_corrupt_allocator_and_requirement",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_generation_exhaustion_and_dirty_payload",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_home_corruption_and_unwind",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_stale_and_foreign_permit",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_typed_and_lsn_corruption",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_leaked_pin_and_flush_pending",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_selection_corruption",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_fence_during_read_keeps_first_cause",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_then_prepare_and_next_init",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_active_reservation_and_leaked_init_claim",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_global_flush_claim_is_busy",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_selected_read_schedule",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_read_error_00",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_read_error_01",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_read_error_02",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_read_error_03",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_read_error_04",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_read_error_05",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_read_error_06",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_read_error_07",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_read_error_08",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_read_error_09"
+  ],
+  "static_selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_resource_gate",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::status_load::status_load_native_resource_gate",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::resources::status_load_padded_owner_gate"
+  ],
+  "native_selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::status_load::worker_status_load_native",
+  "compiler_cases": [
+    "load_release",
+    "load_split",
+    "load_permit"
+  ],
+  "compiler_control": "baseline",
+  "s5_selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_profile2",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_profile3",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_rounds",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_00_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_00_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_01_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_01_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_02_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_02_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_03_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_03_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_04_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_04_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_05_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_05_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_06_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_06_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_07_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_07_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_08_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_08_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_09_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p2_09_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_00_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_00_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_01_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_01_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_02_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_02_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_03_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_03_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_04_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_04_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_05_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_05_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_06_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_06_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_07_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_07_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_08_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_08_panic",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_09_error",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_s5_p3_09_panic"
+  ],
+  "s5_cases": 43,
+  "mandatory_cases": 24,
+  "runtime_seconds": {
+    "per_case": 30,
+    "total": 180
+  },
+  "native_seconds": 30,
+  "native_database_limit": 25165824,
+  "compiler_seconds": 30,
+  "checker_seconds": 30,
+  "read_fault_inventory": [
+    {
+      "at": 0,
+      "action": "BeforeError"
+    },
+    {
+      "at": 1,
+      "action": "BeforeError"
+    },
+    {
+      "at": 2,
+      "action": "BeforeError"
+    },
+    {
+      "at": 3,
+      "action": "BeforeError"
+    },
+    {
+      "at": 4,
+      "action": "BeforeError"
+    },
+    {
+      "at": 5,
+      "action": "BeforeError"
+    },
+    {
+      "at": 6,
+      "action": "BeforeError"
+    },
+    {
+      "at": 7,
+      "action": "BeforeError"
+    },
+    {
+      "at": 8,
+      "action": "BeforeError"
+    },
+    {
+      "at": 9,
+      "action": "BeforeError"
+    }
+  ],
+  "inventory_correction": "Original r5 14-call table double-counted metadata in four handle-bound open calls; actual reader has10calls. Original4 FAIL/16S5 NOT_RUN preserved separately, not PASS. Added exact10-call source-derived schedule oracle."
+}

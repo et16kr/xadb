@@ -732,7 +732,7 @@ generation·교체는 독점 단계로 제한하고 shared INIT publication은 �
 Fixed provenance·allocator tombstone·pin token 의미를 보존하며 별도 전역 publication을 제거했다.
 [선택 증거](../evidence/dev3-operational-registration-20261023.md)는 static5·runtime20·Linux2와
 원 r0 compile FAIL을 구분한다. D2·실행 전 F05와 OCR delegate 기반 최종 D1은 P1 범위로 독립 수용됐다.
-P1 인수 당시 P2/P3는 미공급이었다. 후속 [P2 live owner](#operational-status)와 [반복 복구](#operational-recovery)를 구별하며, P3 현재 membership load와 실제3주소/2frame 교체는 미공급이다.
+P1 인수 당시 P2/P3는 미공급이었다. 후속 [P2 live owner](#operational-status)와 [반복 복구](#operational-recovery)를 구별하며, 후속 [P3 현재 membership load](#status-load)의 실제3주소/2frame 교체와 검증 상태를 구별한다.
 일반 pool·전체 DEV3/S5를 완료로 승격하지 않는다.
 
 <a id="dev3-work-breakdown"></a>
@@ -750,7 +750,7 @@ P1 인수 당시 P2/P3는 미공급이었다. 후속 [P2 live owner](#operationa
 | 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기와 [불변 Status bootstrap 역할](#status-bootstrap)의 제한 구현 검증. 일반 reopen은 미완료 |
 | 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | [예약·취소](#allocation-reservation-accepted)와 [한 Status INIT](#status-init)의 제한 연결. [Status home flush](#status-home-flush)의 제한 선택 인수. 일반 INIT·확장·free/reuse 미완료 |
 | 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | [dirty stage](#dirty-stage)·[authentic WAL requirement/flush force](#allocator-flush)·[Status INIT 두 image](#status-init), genesis·RollbackStart·예약/취소 연결. 일반 opcode/CLR/commit 연결 미완료 |
-| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)·[폐쇄 두-frame INIT/reader](#status-init)·[Status home flush](#status-home-flush)의 제한 선택 인수. [등록 코어·세대 pin](#registration-core)과 [같은 allocator 주소의 clean reload](#allocator-residency)와 [실제 퇴출·다른 frame 재적재](#allocator-eviction)까지 공급. [P1 슬롯 등록](#operational-registration)·[P2 반복 immutable Status INIT](#operational-status)·[현재-build 복구](#operational-recovery)까지 제한 공급. 일반 page load/eviction·다른 주소 reload·N+1 pressure·live Status 변경·batch8/64·다중 file 미완료 |
+| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)·[폐쇄 두-frame INIT/reader](#status-init)·[Status home flush](#status-home-flush)의 제한 선택 인수. [등록 코어·세대 pin](#registration-core)과 [같은 allocator 주소의 clean reload](#allocator-residency)와 [실제 퇴출·다른 frame 재적재](#allocator-eviction)까지 공급. [P1 슬롯 등록](#operational-registration)·[P2 반복 immutable Status INIT](#operational-status)·[현재-build 복구](#operational-recovery)까지 제한 공급. [P3 현재 membership Status load](#status-load)의 구현·선택 검증·제한 단위 최종 독립 D1 수용. 일반 page load/eviction·N+1 pressure·live Status 변경·batch8/64·다중 file 미완료 |
 | 3.06 트리·행 | mutable tree CRUD·split·root 변경·overflow·stable cursor·locator | 표현·부분 모델 존재. 실제 변경 경로 미완료 |
 | 3.07 인덱스 | point/range scan·presence·PK/UNIQUE·build/취소 | 표현·의미 계약 존재. 실제 인덱스와 statement-final unique 미완료 |
 | 3.08 카탈로그·DDL | table/index 정의·이름·객체 수명·create/drop | 표현 존재. native 원자 DDL과 catalog 변경 미완료 |
@@ -777,7 +777,7 @@ A INIT→flush→퇴출→B cancel→재예약 INIT의 실제 owner 및 Linux ho
 관련 closed selector1·native1을 source별로 구별하며 compiler semantic5+control1·checker4도 PASS이며 OCR delegate 독립 D1을 live owner 한정 수용했다.
 원 compile 실패를 보존하고 완료 시험은 반복하지 않는다. 이 live owner 인수 당시 반복 sequence
 복구는 미구현이었다. 후속 [현재-build 반복 복구](#operational-recovery)에서 별도 새 증거를
-공급한다. P3 membership load·3주소/2frame, 반복 live Status 변경·batch8/64·pressure·DEV3/S5는 남아 있다.
+공급한다. 인수 당시 남았던 P3 membership load·3주소/2frame은 [별도 후속](#status-load)으로 연결한다. 반복 live Status 변경·batch8/64·pressure·DEV3/S5는 남아 있다.
 
 <a id="operational-recovery"></a>
 ## 반복 immutable Status 이력의 현재-build 복구
@@ -796,5 +796,17 @@ INIT WAL·B home 부분 쓰기·retirement 장애 뒤 새 process 복구와 재�
 entry FD5/final0이다. OS stack/RSS나 전체 opcode F05 인증으로 일반화하지 않는다.
 
 P2 반복 immutable Status의 현재-build 복구 통합을 공급했으며 새 S5 확대2379개는 작성·
-NOT_RUN이다. P3 membership 기반 A reload·3주소/2frame, live Status 변경, 일반 pool/
+NOT_RUN이다. P3 membership 기반 A reload·3주소/2frame은 [후속](#status-load)으로 구별한다. live Status 변경, 일반 pool/
 pressure·REBASE/READY·전체 DEV3/S5는 미완료다. 문서 검사는 push 전용으로 실행하지 않는다.
+
+<a id="status-load"></a>
+## P3 — 현재 membership Status home load
+
+[P3 계약](../contracts/dev3-task-05-buffer-flush.md#operational-status-p3)에 따라 기존 두-frame owner에
+`load_status(PageRef)`를 연결했다. dirty allocator의 현재 membership과 descriptor/WAL prefix를
+검산하고 selected home을 기존 scratch에 읽은 뒤 clean payload의 generation/publication을
+교체한다. 실제3주소/2frame A/B 읽기와 후속 prepare/INIT가 대상이다.
+[선택 증거](../evidence/dev3-status-load-20261023.md)는 source별 실행/원 FAIL/미실행과
+OCR delegate 독립 리뷰를 구별한다. 최종 독립 D1은 이번 제한 load 단위로 수용했으며 일반 pool·pressure·live Status 변경·
+전체 DEV3/S5 완료가 아니다. load는 파일을 쓰지 않으므로 앞선 반복 이력 복구의 원 결과를
+보존하고 변경 없는 복구 시험은 반복하지 않았다.

@@ -982,3 +982,5 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
         self.wal.is_fenced()
     }
 }
+
+pub(in crate::storage) use doublewrite_install::StatusLoadPermit;

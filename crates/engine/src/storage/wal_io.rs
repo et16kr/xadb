@@ -977,3 +977,5 @@ mod test_support;
 #[cfg(test)]
 #[path = "wal_io_tests.rs"]
 mod tests;
+
+pub(in crate::storage) use bootstrap::StatusLoadPermit;

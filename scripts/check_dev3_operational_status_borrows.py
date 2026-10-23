@@ -18,10 +18,10 @@ from comm_campaign import capture_source, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
 INPUTS = ROOT / 'crates/engine/tests/fixtures/dev3-operational-status/compiler'
-INPUTS_SHA256 = '5726c711dd700abada1bc05ba5d3c80e0512214e8dcc0d754556a713602e7c9b'
+INPUTS_SHA256 = 'd66764cc2a522b426b1653ec4ac29e1d584baaf74ddc2ec075d6d161560bee3f'
 PROBE = 'crates/engine/src/operational_status_borrow_probe.rs'
 LIB = 'crates/engine/src/lib.rs'
-EXPECTATIONS = {'baseline': (None, None), 'release': (None, None), 'live_split': ('E0499', 8), 'consumed_owner': ('E0382', 8), 'live_reservation': ('E0499', 11), 'workspace': ('E0499', 12)}
+EXPECTATIONS = {'baseline': (None, None), 'release': (None, None), 'live_split': ('E0499', 8), 'consumed_owner': ('E0382', 8), 'live_reservation': ('E0499', 11), 'workspace': ('E0499', 12), 'load_release': (None, None), 'load_split': ('E0499', 8), 'load_permit': ('E0603', 2)}
 CASE_NAMES = tuple(EXPECTATIONS)
 COMPILER_BUDGET_SECONDS = 30
 
@@ -99,7 +99,7 @@ def main():
     args.artifact_parent.mkdir(parents=True, exist_ok=True)
     session = Path(tempfile.mkdtemp(prefix='operational-status-borrows-',
                                     dir=args.artifact_parent)).resolve()
-    report = {'scope': 'D3-OPERATIONAL-STATUS-P2 baseline1/positive1/negative4 compiler probes',
+    report = {'scope': 'D3-OPERATIONAL-STATUS P2/P3 baseline1/positive2/negative6 compiler inventory',
               'status': 'RUNNING', 'artifact_directory': str(session), 'cases': [],
               'inventory': list(CASE_NAMES), 'requested': args.case,
               'compiler_budget_seconds': COMPILER_BUDGET_SECONDS,

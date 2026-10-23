@@ -10,8 +10,8 @@ from check_dev0 import digest
 class CompilerInputs(unittest.TestCase):
     def test_frozen_inventory(self):
         cases = check.inputs()
-        self.assertEqual(len(cases), 6)
-        self.assertEqual(sum(row['expected_code'] is not None for row in cases), 4)
+        self.assertEqual(len(cases), 9)
+        self.assertEqual(sum(row['expected_code'] is not None for row in cases), 6)
 
     def test_narrow_selection_preserves_omissions(self):
         rows = check.select_cases(check.inputs(), ['workspace'])

@@ -12,22 +12,22 @@ const INPUT: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tests/fixtures/dev3-operational-status"
 );
-const HOME: &str = "d3-data-0000000100000001";
+pub(super) const HOME: &str = "d3-data-0000000100000001";
 
-fn boxed<const N: usize>(byte: u8) -> Box<[u8; N]> {
+pub(super) fn boxed<const N: usize>(byte: u8) -> Box<[u8; N]> {
     vec![byte; N].into_boxed_slice().try_into().unwrap()
 }
-fn literal(name: &str) -> Vec<u8> {
+pub(super) fn literal(name: &str) -> Vec<u8> {
     std::fs::read(format!("{INPUT}/p1/{name}")).unwrap()
 }
-fn converted<B, E>(result: std::result::Result<B, IntoOperationalStatusError<E>>) -> B {
+pub(super) fn converted<B, E>(result: std::result::Result<B, IntoOperationalStatusError<E>>) -> B {
     match result {
         Ok(bound) => bound,
         Err(IntoOperationalStatusError::Before { error, .. })
         | Err(IntoOperationalStatusError::Fatal(error)) => panic!("conversion {error:?}"),
     }
 }
-fn initialized<W: WriterNamespace>(
+pub(super) fn initialized<W: WriterNamespace>(
     reserved: ReservedStatus<'_, '_, '_, '_, '_, '_, '_, '_, '_, W>,
 ) -> InitializedStatusObservation {
     match reserved.initialize() {
@@ -37,11 +37,14 @@ fn initialized<W: WriterNamespace>(
     }
 }
 macro_rules! fixture {
-    (|$original:ident, $core:ident, $state:ident, $storage:ident| $body:block) => {{
+    (|$original:ident, $core:ident, $state:ident, $storage:ident| $body:block) => {
+        fixture!(1, |$original, $core, $state, $storage| $body);
+    };
+    ($profile:expr, |$original:ident, $core:ident, $state:ident, $storage:ident| $body:block) => {{
         let mut slot = port::slot();
         let mut flush_workspace = boxed::<{ 4 << 20 }>(0);
         let (namespace, $state) = port::fresh();
-        let fresh = FreshStorageSession::create_status(namespace, 1, &mut slot, &mut [[0; PAGE_BYTES]; 3]).unwrap();
+        let fresh = FreshStorageSession::create_status(namespace, $profile, &mut slot, &mut [[0; PAGE_BYTES]; 3]).unwrap();
         let installed = fresh.install_doublewrite(&mut flush_workspace).unwrap();
         let $storage = installed.into_mutable_storage();
         let $core = PageConcurrency::new($storage.session_fence()).unwrap();
@@ -52,7 +55,7 @@ macro_rules! fixture {
         let bound = $storage.bind_status_bootstrap(&$core, &mut frames, &mut operation).unwrap();
         let $original = match bound.into_with_flush() {
             Ok(bound) => bound,
-            Err(super::super::IntoFlushError::Before { error, .. }) | Err(super::super::IntoFlushError::Fatal(error)) => panic!("flush conversion {error:?}"),
+            Err(crate::storage::wal_io::IntoFlushError::Before { error, .. }) | Err(crate::storage::wal_io::IntoFlushError::Fatal(error)) => panic!("flush conversion {error:?}"),
         };
         $body
         assert!($storage.session_fence().is_fenced());
@@ -61,6 +64,8 @@ macro_rules! fixture {
         assert_eq!((state.handles, state.writers), (0, 0));
     }};
 }
+
+pub(super) use fixture;
 
 #[test]
 fn operational_status_resource_gate() {

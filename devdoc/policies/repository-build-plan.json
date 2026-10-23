@@ -4327,7 +4327,7 @@
   "dev3_operational_registration": {
     "status": "local_verified_D1_accepted_P1_only",
     "contract_ref": "dev3-task-05-buffer-flush.md#operational-registration",
-    "scope": "P1 per-slot OnceLock publication in the existing SharedPool; P2/P3 general integration incomplete",
+    "scope": "P1 per-slot OnceLock publication in existing SharedPool; subsequent consumers tracked separately under operational Status, recovery and Status load; general pool integration incomplete",
     "implemented_paths": [
       "crates/engine/src/storage/dirty_frame.rs",
       "crates/engine/src/storage/dirty_frame/registration.rs",
@@ -4348,7 +4348,7 @@
   "dev3_operational_status": {
     "status": "live_owner_local_verified_D1_accepted_recovery_incomplete",
     "contract_ref": "dev3-task-05-buffer-flush.md#operational-status-p2",
-    "scope": "consuming bound and repeated first-extent Status INIT; current-build repeated-sequence recovery and P3 load incomplete",
+    "scope": "Consuming bound and repeated first-extent immutable Status INIT; subsequent current-build recovery and P3 load tracked separately; live Status/general pool incomplete",
     "implemented_paths": [
       "crates/engine/src/storage/wal_io/operational_status.rs",
       "crates/engine/src/storage/wal_io/operational_status_tests.rs",
@@ -4370,7 +4370,7 @@
   "dev3_operational_recovery": {
     "status": "local_verified_D1_accepted_S5_not_run",
     "contract_ref": "dev3-recovery-effects.md#operational-status-recovery",
-    "scope": "Repeated immutable Status INIT/cancel recovery in first extent; readonly Prefix remains closed; P3 membership load/general pool/READY incomplete",
+    "scope": "Repeated immutable Status INIT/cancel recovery in first extent; readonly Prefix remains closed; subsequent P3 membership load tracked separately; general pool/READY incomplete",
     "implemented_paths": [
       "crates/engine/src/storage/wal_io/allocation_operation.rs",
       "crates/engine/src/storage/wal_io/status_init_operation.rs",
@@ -4400,6 +4400,30 @@
     "evidence_refs": [
       "dev3-operational-recovery-20261023.md",
       "dev3-operational-recovery-20261023.json"
+    ],
+    "source_roots_changed": false,
+    "full_stage_acceptance": false,
+    "followup_ref": "dev3-status-load-20261023.md"
+  },
+  "dev3_status_load": {
+    "status": "local_selected_validation_D1_accepted_limited_status_load",
+    "contract_ref": "dev3-task-05-buffer-flush.md#operational-status-p3",
+    "scope": "Immutable Status selected home load and A/B replacement through original two-frame owner; general pool/live Status/READY incomplete",
+    "implemented_paths": [
+      "crates/engine/src/storage/dirty_frame/status_residency.rs",
+      "crates/engine/src/storage/wal_io/status_load.rs",
+      "crates/engine/src/storage/wal_io/status_load_tests.rs",
+      "crates/engine/src/storage/wal_io/status_load_native_tests.rs",
+      "scripts/dev3_status_load_native.py",
+      "scripts/test_dev3_status_load_native.py",
+      "tests/fixtures/dev3-status-load/manifest.json",
+      "crates/engine/tests/fixtures/dev3-operational-status/compiler/load_permit.rs",
+      "crates/engine/tests/fixtures/dev3-operational-status/compiler/load_release.rs",
+      "crates/engine/tests/fixtures/dev3-operational-status/compiler/load_split.rs"
+    ],
+    "evidence_refs": [
+      "dev3-status-load-20261023.md",
+      "dev3-status-load-20261023.json"
     ],
     "source_roots_changed": false,
     "full_stage_acceptance": false

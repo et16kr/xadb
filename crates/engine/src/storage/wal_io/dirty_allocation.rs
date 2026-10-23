@@ -294,7 +294,7 @@ impl<'s, 'o> WriterControl<'s, 'o> {
         }
     }
 
-    fn before(&self) -> &[u8; PAGE_BYTES] {
+    pub(super) fn before(&self) -> &[u8; PAGE_BYTES] {
         self.operation[FRAME_WORK_BYTES..BEFORE_END]
             .try_into()
             .expect("fixed before image")

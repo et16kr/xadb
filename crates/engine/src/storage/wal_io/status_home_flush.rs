@@ -593,3 +593,5 @@ fn fits<W: WriterNamespace>() -> bool {
             .and_then(|n| n.checked_add(wal::DURABILITY_CALL_BYTES + 8192 + 8192))
             .is_some_and(|n| n <= 65536)
 }
+
+pub(in crate::storage) use operational::StatusLoadPermit;

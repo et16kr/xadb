@@ -24,9 +24,13 @@ use xadb_foundation::error::Effect;
 
 mod registration;
 mod residency;
+mod status_residency;
 #[cfg(test)]
 pub(in crate::storage) use residency::test_support as residency_test_support;
 pub(in crate::storage) use residency::{AllocatorLoadClaim, ReloadSnapshot};
+pub(in crate::storage) use status_residency::StatusLoadSnapshot;
+#[cfg(test)]
+pub(in crate::storage) use status_residency::test_support as status_load_test_support;
 #[cfg(test)]
 mod registration_tests;
 use registration::RegistrationDirectory;

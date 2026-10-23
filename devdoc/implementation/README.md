@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-23 [DEV3 현재 membership Status load](dev3-implementation.md#status-load): dirty allocator의 권한을 보존하며 실제 A/B home을 두 번째 frame에 재적재한다. source별 runtime24·native1·compiler3+baseline·자원/체커와 원 FAIL을 보존하며 최종 독립 D1을 이번 제한 load 단위로 수용했다. 일반 pool·live Status 변경·DEV3/S5는 미완료다.
+
 2026-10-23 [DEV3 반복 Status 이력 복구](dev3-implementation.md#operational-recovery): 첫 extent의 주소별 canonical census·Pending 수리·REDO와 fresh producer/reentry를 연결했다. source별 신규65·관련3·native4/14worker·compiler3+control1의 선택 결과와 원 FAIL을 보존한다. OCR delegate 최종 독립 D1을 제한 복구 단위로 수용했으며 P3·일반 pool·DEV3/S5는 미완료다.
 
 2026-10-23 [DEV3 진행 현황 후속 리뷰](../evidence/dev3-progress-review-20261023.md): [allocator 동일 주소 reload](dev3-implementation.md#allocator-residency)와 [영속화 후 snapshot 오류 수정](../evidence/dev3-code-review-20261023.md#fix-followup)까지 요약·단계 JSON·색인에 연결했다. 기존 source별 선택 검증을 보존하며 새 제품 실행·일반 pool·DEV3/S5 완료를 주장하지 않는다.

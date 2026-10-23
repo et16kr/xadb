@@ -122,6 +122,10 @@ impl RegistrationDirectory {
         self.entries[1].request.take();
         self.entries[1].generation = generation;
     }
+    pub(super) fn replace_status(&mut self, registration: Registration) {
+        // The exclusive Status loader checked mode, next generation and origin.
+        self.entries[1].replace(registration);
+    }
     pub(super) fn published(&self) -> Option<Registration> {
         self.closed_index
             .and_then(|index| self.entries[index].registration())

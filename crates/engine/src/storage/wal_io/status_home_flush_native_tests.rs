@@ -25,6 +25,7 @@ use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLe
 #[derive(Default)]
 struct Trace {
     enabled: bool,
+    load_reads: bool,
     events: Vec<String>,
     handles: usize,
     peak: usize,
@@ -84,9 +85,20 @@ fn event(
 impl FileIo for File {
     fn read_at(&mut self, bytes: &mut [u8], offset: u64) -> io::Result<usize> {
         let result = self.inner.as_mut().unwrap().read_at(bytes, offset);
-        let mut trace = self.trace.lock().unwrap();
-        if trace.enabled {
-            sample_fd(&mut trace, "read");
+        if self.trace.lock().unwrap().load_reads {
+            event(
+                &self.trace,
+                "read",
+                &self.name,
+                offset,
+                bytes.len(),
+                result.as_ref().copied().unwrap_or(0),
+            );
+        } else {
+            let mut trace = self.trace.lock().unwrap();
+            if trace.enabled {
+                sample_fd(&mut trace, "read");
+            }
         }
         result
     }
@@ -576,3 +588,6 @@ fn worker_status_home_flush_native() {
 
 #[path = "operational_status_native_tests.rs"]
 mod operational;
+
+#[path = "status_load_native_tests.rs"]
+mod status_load;

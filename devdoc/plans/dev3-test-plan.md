@@ -462,3 +462,18 @@ ES003·ES005·PPL004만 선택했다. source별57+8 PASS를 합산하며 같은 
 | `s5_home_fault_matrix` | 3profile×home subset별 dirty target 합12×31call×Before/After =2232 | NOT_RUN |
 
 확대 fault vector는 source protocol의 BOOT/source39개 뒤 dirty target마다31개로 사전 작성한다. 실제 성공 trace에서 역산하지 않으며 fault 위치의 exact event tuple·누적 effect·held failed owner·source/clean home 보존을 검산한다. 기존 하부 BOOT39 fault를 이 확대 분모로 다시 세지 않는다. 각 ignored selector는 명시 선택하며 준비 fixture는 총256MiB, 확대 보존물1GiB, 실행 합1320초 한도를 유지한다. 이 S5 준비는 실행 PASS가 아니며 일반 recovery/READY·P3·전체 DEV3는 미완료다.
+
+<a id="status-load-followup"></a>
+## P3 실제 Status home load의 선택 inventory
+
+[소유 계약](../contracts/dev3-task-05-buffer-flush.md#operational-status-p3)·[실행 증거](../evidence/dev3-status-load-20261023.md)·
+[정확 manifest](../../tests/fixtures/dev3-status-load/manifest.json)를 따른다. 중간 runtime24는
+실제 A/B/empty/다음 INIT, dirty allocator 보존, 잘못된 membership/손상/누출 claim/fence와
+source에서 작성한10개 I/O 오류 지점을 포함한다. native1은 fresh Linux A→B→A, exact selected
+read·전체 파일 독립 oracle·FD/Drop을 확인한다. compiler3+별도 baseline, resource static3,
+새 native checker5와 변경 compiler inventory checker1을 구별한다. 기존 완료 시험은 반복하지 않는다.
+
+S5 확대43은 profile2/3 load2·32round1·2profile×10call×2error/panic40의 ignored selector다.
+최종 S5에는 중간 inventory도 포함하며 이 작성 상태는 NOT_RUN이다. 최초14call 초안은
+handle-bound open의 metadata를 이중 계산했다. 존재하지 않는4 runtime FAIL과16 S5 NEVER_RUN의
+철회 사유/원본을 보존하고 성공으로 바꾸지 않는다. 수정된 실제10tuple을 별도 oracle로 확인한다.

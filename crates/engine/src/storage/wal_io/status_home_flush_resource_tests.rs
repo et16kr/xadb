@@ -312,3 +312,12 @@ pub(super) fn run_rf() {
     }
     complete("RF", count);
 }
+
+#[test]
+fn status_load_padded_owner_gate() {
+    let (bytes, metadata, fits) =
+        super::super::operational::load_layout::<PaddedWriter<20000, 0>>();
+    println!("padded_owner_load={bytes} metadata={metadata:?} admitted={fits}");
+    assert!(bytes > 65536);
+    assert!(!fits);
+}

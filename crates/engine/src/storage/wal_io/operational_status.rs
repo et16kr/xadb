@@ -14,6 +14,10 @@ use crate::transaction::concurrency::Owner;
 use std::mem::size_of;
 use xadb_foundation::{error::Effect, namespace::WriterNamespace};
 
+#[path = "status_load.rs"]
+mod load;
+pub(in crate::storage) use load::StatusLoadPermit;
+
 #[cfg(test)]
 #[path = "operational_status_tests.rs"]
 mod tests;
@@ -212,4 +216,13 @@ impl<'b, 'c, 's, 'p, 'd> OperationalStatusReader<'b, 'c, 's, 'p, 'd> {
     ) -> std::result::Result<StatusReadGuard<'a, 'b, 'c, 's, 'p, 'd>, StatusInitError> {
         self.inner.read(owner)
     }
+}
+
+#[cfg(test)]
+pub(super) fn load_layout<W: WriterNamespace>() -> (usize, (usize, usize), bool) {
+    (
+        load::call_bytes::<W>(),
+        load::metadata_bytes::<W>(),
+        load::fits::<W>(),
+    )
 }

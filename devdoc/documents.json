@@ -1807,6 +1807,16 @@
       "path": "evidence/dev3-operational-recovery-20261023.json",
       "role": "evidence",
       "title": "DEV3 반복 Status 복구 source·receipt 색인"
+    },
+    "dev3-status-load-20261023.md": {
+      "path": "evidence/dev3-status-load-20261023.md",
+      "role": "evidence",
+      "title": "DEV3 현재 membership Status home load 선택 검증"
+    },
+    "dev3-status-load-20261023.json": {
+      "path": "evidence/dev3-status-load-20261023.json",
+      "role": "evidence",
+      "title": "DEV3 Status load source·receipt 색인"
     }
   }
 }

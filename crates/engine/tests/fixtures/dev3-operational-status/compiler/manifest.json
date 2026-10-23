@@ -51,6 +51,30 @@
       "reason": "Consuming conversion retains the original scratch loan.",
       "bytes": 967,
       "sha256": "1e45bdb48bb315073ffd648281fe29b3ae3814be2b66af82b7e3017055cfe339"
+    },
+    {
+      "name": "load_release",
+      "expected_code": null,
+      "primary_line": null,
+      "reason": "Released views allow actual selected load and subsequent resplit.",
+      "bytes": 497,
+      "sha256": "32e7cb8bbbc0a0abff14e524bfc1d77f309d9d8e1397adf9d1862ae6569df410"
+    },
+    {
+      "name": "load_split",
+      "expected_code": "E0499",
+      "primary_line": 8,
+      "reason": "Live reader/writer/flusher views prevent exclusive load.",
+      "bytes": 435,
+      "sha256": "0a0d50a0190f850b5ed1118d41331e0d348cf41af5972f2a1883368cb69c899b"
+    },
+    {
+      "name": "load_permit",
+      "expected_code": "E0603",
+      "primary_line": 2,
+      "reason": "Code outside storage cannot name or mint the private Status load permit; field-level minting is not claimed by this probe.",
+      "bytes": 139,
+      "sha256": "18f3e4617ff0baf0be910b81067d0173c728fb364cfe6479f2200c2b4e4ab351"
     }
   ]
 }

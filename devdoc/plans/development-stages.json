@@ -132,7 +132,7 @@
         "implementation_ref": "dev3-implementation.md",
         "page_contract_ref": "dev3-page-format.md",
         "partial_model_ref": "dev3-snapshot-model.md",
-        "scope": "Storage expressions and finite models; initial extent/FILEMAP and DWB installation; selected reads and physical WAL; scoped allocator reserve/cancel with dirty stage and one-page flush; closed two-frame Status INIT/home flush; initial recovery selection, current-prefix analysis and closed genesis Pending repair/reservation handoff/page REDO; fixed registration/generation pins and allocator eviction/reload, per-slot registration, repeated immutable Status INIT and first-extent current-build recovery. P3 membership-based Status reload remains incomplete. General buffer replacement/pressure, tree/row/index/catalog transactions, live undo/CLR/commit, general recovery/READY, checkpoint/reclamation/backup and full DEV3 acceptance remain incomplete. Each receipt retains its original source and selected execution scope.",
+        "scope": "Storage expressions and finite models; initial extent/FILEMAP and DWB installation; selected reads and physical WAL; scoped allocator reserve/cancel with dirty stage and one-page flush; closed two-frame Status INIT/home flush; initial recovery selection, current-prefix analysis and closed genesis Pending repair/reservation handoff/page REDO; fixed registration/generation pins and allocator eviction/reload, per-slot registration, repeated immutable Status INIT and first-extent current-build recovery. P3 membership-based immutable Status home load and actual A/B replacement in two resident frames have selected validation; independent final D1 accepted this limited unit. General buffer replacement/pressure, tree/row/index/catalog transactions, live undo/CLR/commit, general recovery/READY, checkpoint/reclamation/backup and full DEV3 acceptance remain incomplete. Each receipt retains its original source and selected execution scope.",
         "status": "LOCAL_VERIFIED_LIMITED_SCOPE",
         "evidence_ref": "dev3-doublewrite-install-scoped-xadb-20261021-r2.json",
         "page_io_contract_ref": "dev3-page-io.md",
@@ -162,7 +162,9 @@
         "allocator_residency_contract_ref": "dev3-allocator-residency.md",
         "allocator_residency_evidence_ref": "dev3-allocator-residency-20261023.json",
         "snapshot_fix_evidence_ref": "dev3-code-review-20261023.md#fix-followup",
-        "progress_review_ref": "dev3-progress-review-20261023.md"
+        "progress_review_ref": "dev3-progress-review-20261023.md",
+        "status_load_contract_ref": "dev3-task-05-buffer-flush.md#operational-status-p3",
+        "status_load_evidence_ref": "dev3-status-load-20261023.json"
       }
     },
     {

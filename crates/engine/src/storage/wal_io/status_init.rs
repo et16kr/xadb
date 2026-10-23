@@ -1034,3 +1034,5 @@ fn fits<W: WriterNamespace>() -> bool {
         && sum_fits(&[owner, control, READ_CALL])
         && sum_fits(&[owner, control, 4096, dirty_frame::CALL_BYTES])
 }
+
+pub(in crate::storage) use status_flush::StatusLoadPermit;

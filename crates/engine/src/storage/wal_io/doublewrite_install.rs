@@ -668,3 +668,5 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
         }
     }
 }
+
+pub(in crate::storage) use mutable_storage::StatusLoadPermit;

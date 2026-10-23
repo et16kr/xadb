@@ -320,7 +320,7 @@ Status hash 호출 중 caller의 expected identity2개와 pin token16bytes를 �
 <a id="operational-registration"></a>
 ## D3-OPERATIONAL-PAGES-001 — 일반 page 수명 공급 순서
 
-2026-10-23 · **P1 D2·실행 전 자원 gate·최종 독립 D1 수용 / P1 선택 검증 / P2·P3 미공급**.
+2026-10-23 · **P1 D2·실행 전 자원 gate·최종 독립 D1 수용 / P1 선택 검증 / 당시 P2·P3 미공급, 후속은 아래 별도 기록**.
 담당·통합 `/root`, 독립 검토 `/root/pool_design_review`. 기준 `22e7724`의 실제 allocator
 퇴출·재적재 뒤 일반 pool을 공급한다. P1 등록 코어, P2 consuming owner·반복 INIT,
 P3 실제 allocator membership read와 교체를 순차 구현한다. 일반 통합의 필수 최소 이력은
@@ -442,4 +442,78 @@ compile FAIL과 static/runtime/native의 실제 범위를 보존한다. live own
 P2 live owner 인수 뒤 [반복 이력 복구 F09](dev3-recovery-effects.md#operational-status-recovery)에서
 현재-build 지원과 fresh producer→별도 process 복구·partial-prefix/fault cut를 공급했다.
 [후속 실행·검토 상태](../evidence/dev3-operational-recovery-20261023.md)는 원 live owner 증거와
-구별한다. P3 실제 membership load/3주소·2frame·live Status 변경 및 전체 DEV3/S5는 남아 있다.
+구별한다. 당시 남았던 P3 membership load/3주소·2frame은 아래 후속으로 연결한다. live Status 변경 및 전체 DEV3/S5는 남아 있다.
+
+<a id="operational-status-p3"></a>
+### P3 — 현재 membership의 Status home load·2frame 교체
+
+2026-10-23 · **D2 설계·선택 검증·제한 단위 최종 독립 D1 수용**. 기준 `1962fd9`, 작성·통합 `/root`, 독립 검토
+`/root/pool_design_review`. P2의 반복 immutable Status와 현재-build 복구를 소비한다.
+기존 사내 wire·fresh fixture·첫 extent·Status 역할을 유지한다. 이 단위는 실제 allocator0과
+payload1의 두 resident frame에서 INIT한 A/B 주소를 교체하며, 일반 N-frame pool·live Status
+수정·READY를 공급했다고 하지 않는다.
+
+- **API·권한:** 기존 `OperationalStatus`에 `load_status(PageRef)`를 추가한다. caller PageRef는
+  요청일 뿐이다. 원 owner의 role/fence·현재 authoritative allocator frame·retained descriptor/
+  terminal/high-water/WAL prefix를 검산한 뒤 Allocated Status의 정확한 incarnation/owner/kind만
+  load 대상으로 삼는다. disk allocator, 과거 registration, 진단 LSN만으로 권한을 만들지 않는다.
+  반환은 old optional stamp/new stamp의 진단이며 raw loaded bytes/claim/permit 생성자는 없다.
+- **배제:** 독점 owner 대여가 split/writer/reader/flush와 동시 호출을 막는다. 누출된 pin/INIT claim,
+  target1 dirty/DPT/WAL requirement, pending flush/capture/retirement, 진행 중 reservation/install은
+  Busy로 I/O 전에 거절한다. allocator0의 정상 dirty/DPT는 허용하며 exact 현재 bytes/stamp를
+  검산·보존한다. 매 호출·재시도마다 실제 allocator를 operation65536..81920에 복사한 뒤
+  WriterControl::observation을 호출한다. allocator 모순은 Fatal, caller의 Free/Reserved/다른file/
+  잘못된 incarnation 요청은 Unchanged로 구별한다. allocator의 이전 home이나 flush로 권한을 대체하지 않는다.
+- **사전 읽기 후 교체:** caller에 이미 대여된 `status_after`에 target home을 읽는다. 현재 resident
+  payload와 등록은 읽기 동안 보존한다. content/pin/DPT lock은 I/O 동안, namespace lock은
+  file read/checksum 동안 보유하지 않는다. 기존 open/metadata의 짧은 namespace lock은 유지한다.
+  full read·typed immutable Status·identity/incarnation·synced WAL 상한 검산 뒤만 새 generation을
+  발급하여 payload copy/clean metadata와 유일 publication을 함께 교체한다. 같은 현재 주소 요청은
+  AlreadyResident/Unchanged로 I/O 없이 거절한다. 빈 payload에도 같은 current membership 검산과
+  현재 준비 세대+1을 적용하며 MAX는 I/O 전에 거절한다.
+  사전 읽기 실패에는 generation/권한을 발급하지 않으므로 기존 세대는 그대로다. 발급한 세대를
+  되감는 retry는 없다. 기존 allocator eviction guard의 실패 load 세대 소비 규칙은 바꾸지 않는다.
+- **page 검산:** `PageFileReader`의 원 immutable FILEMAP/profile 선택과 실제 offset read를 쓴다.
+  existing typed immutable Free Status body/header 검산을 재사용한다. allocator/page LSN은 각각의
+  값이며 equality를 요구하지 않는다. Status LSN은 nonzero이며 owner의 authentic synced prefix를
+  넘지 않아야 한다. 이 live reader는 recovery의 canonical WAL census·home repair가 아니며
+  INIT LSN을 WAL에서 재구성하거나 checksum-valid 악의적 재작성의 부재를 증명한다고 하지 않는다.
+- **설치:** pool의 origin-bound private snapshot에는 allocator stamp, 이전 payload registration/stamp,
+  현재 slot generation을 보존한다. 실제 I/O 뒤 같은 allocator/descriptor/WAL prefix와 quiescence,
+  old registration/content를 재검산한다. allocator bytes/stamp/DPT/requirement와 descriptor/prefix의
+  전후 불변을 확인한다. origin과 snapshot을 보유한 sealed permit만 설치가 가능하다.
+  모든 fallible 검산과 checked generation 증가 검산이 copy/publication 전에 끝난다. 새 metadata는
+  pageLSN=검증한 homeLSN, modification counter1, clean/recLSN None, DPT/requirement None이다.
+  기존 stale pin·flush/INIT completion은 새 generation을 승인하지 못한다. 다음 prepare/reserve/INIT와
+  기존 reader/flush는 교체된 publication을 그대로 소비한다.
+- **오류:** Known/Unchanged read I/O·IO-kind namespace Unchanged 오류이고 session이 계속 healthy일 때만
+  원 resident bytes/registration/DPT와
+  persistent ledger를 보존하고 명시 retry를 허용한다(scratch는 invalid). 읽기 중 fence가 켜지면
+  원 PageIo cause와 CallerMustResolve를 반환한다. request/membership 거절은
+  무효과다. authoritative allocator/descriptor 모순, typed home/selection/identity/LSN 손상, poison,
+  I/O 후 source/snapshot drift·unwind는 원 session을 fence하고 first typed cause를 보존한다.
+  실패를 NotInitialized·torn repair·자동 retry로 바꾸지 않는다. load는 DB/WAL write/sync를 하지 않는다.
+- **대안:** 먼저 eviction guard를 발급하면 read 실패 때 강제 비상주 상태와 추가 cleanup 의무가 생긴다.
+  기존 caller scratch가 있어 사전 읽기 후 교체를 선택한다. 별도 cache/directory·전체 WAL 재생·추가
+  heap/page loan은 도입하지 않는다. 이후 live Status 수정/일반 replacement 때 범위와 WAL prior를 재검토한다.
+- **F05:** 원 operation114688 안의 root/scratch0..32768, authoritative allocator before65536..81920,
+  별도 기존 status_after16384를 순차 사용한다. allocator descriptor는 control의 원본에 남는다.
+  bound/control/SharedPool layout은 늘리지 않는다. 추가 snapshot/permit/observation/result 동시량을
+  source census에 넣고 load component≤65536 및 기존 dirty196608·Status+flush262144를 첫 runtime
+  전에 독립 검산한다. selected reader의 두 file과 기존 lease/source를 포함한 entry FD5를 유지한다.
+- **구현 동반 인수:** 실제 A/B INIT·flush 뒤 A→B→A 교체와 reader bytes, dirty allocator의 보존,
+  빈 슬롯 load·same-address refusal, free/reserved/잘못된 incarnation/다른file 요청의 I/O 전 거절,
+  dirty/pin/claim/flush 미완료/MAX 거절, ordinary read failure/retry와 full bytes/세대 보존,
+  selection/typed body/futureLSN 손상 fence·stale/foreign-origin snapshot/permit·unwind를 새 selector로 작성한다.
+  정상 dirty allocator 허용과 stale/corrupt requirement 거절을 분리하고 다음 prepare 전 allocator flush를 명시한다.
+  fresh native actual load offset·원 전체 파일/WAL/descriptor·FD/Drop, 새 API compiler lifetime과
+  독립 oracle/checker를 공급한다. 정확 ID/분모·사전 source freeze·자원/실행 gate는 구현 뒤 확정한다.
+  각 runtime job30초/합180초, native 이력30초/합60초·DB24MiB씩/보존48MiB, compiler60초·checker30초다.
+  profile2/3·32round A/B 교체·확대 read/fault 조합은 별도 S5 selector로 준비하고 중간에 실행하지 않는다.
+  기존 완료 producer/recovery/하위 wrapper는 반복하지 않고 실제 변경의 직접 소비자만 선택한다.
+
+
+P3 실제 source별 검증과 원 실패/호출 inventory 정정은 [선택 증거](../evidence/dev3-status-load-20261023.md)를 따른다.
+현재 owner를 포함한 component49056/native49176≤65536, retained60672+P+C를 더한
+load metadata110920/111040≤196608, flush65536 포함176456/176576≤262144다.
+새 bound/control/page loan은 추가하지 않았다. 최종 S5 실제 확대43은 작성·NOT_RUN이다.
