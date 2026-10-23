@@ -48,9 +48,11 @@ mod tests;
 mod status_flush;
 pub(in crate::storage) use status_flush::StatusFlushAuthority;
 pub(crate) use status_flush::{
-    BoundStatusWithFlush, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
-    OperationalStatusReader, OperationalStatusWriter, ReadStatusSet, ResidentReadAdmission,
-    ResidentStatus, ResidentStatusBinding, ResidentStatusReader, StatusFlushError, StatusFlusher,
+    BoundStatusWithFlush, EMPTY_TRANSACTION_BANK_BYTES, EmptyTransactionSnapshot,
+    EmptyTransactions, IntoEmptyTransactionsError, IntoFlushError, IntoOperationalStatusError,
+    OperationalStatus, OperationalStatusReader, OperationalStatusWriter, ReadStatusSet,
+    ResidentReadAdmission, ResidentStatus, ResidentStatusBinding, ResidentStatusReader,
+    StatusFlushError, StatusFlusher,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

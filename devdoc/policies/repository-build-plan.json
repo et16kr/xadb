@@ -4532,9 +4532,9 @@
     "full_stage_acceptance": false
   },
   "dev3_empty_transaction": {
-    "status": "D1_accepted_pure_empty_abort_preparation_integration_incomplete",
+    "status": "preparation_D1_accepted_handoff_D1_D2_accepted_integration_incomplete",
     "contract_ref": "dev3-obligation-format.md#empty-abort-preparation",
-    "scope": "Empty AbortEnd preparation; integrated live transaction owner/recovery consumer not yet reached",
+    "scope": "Pure empty AbortEnd preparation and consuming ResidentStatus handoff; live issuer/install/recovery consumer remains incomplete",
     "implemented_paths": [
       "crates/engine/src/storage/semantic_group.rs",
       "crates/engine/src/storage/semantic_empty_abort.rs",
@@ -4571,13 +4571,27 @@
       "crates/engine/tests/fixtures/dev3-empty-abort/p3-slot70-free18446744073709551614/begin.wal",
       "crates/engine/tests/fixtures/dev3-empty-abort/p3-slot70-free18446744073709551614/rollback.wal",
       "crates/engine/tests/fixtures/dev3-empty-abort/rollback.wal",
-      "crates/engine/tests/fixtures/dev3-empty-abort/vectors.json"
+      "crates/engine/tests/fixtures/dev3-empty-abort/vectors.json",
+      "crates/engine/src/storage/wal_io/empty_transactions.rs",
+      "crates/engine/src/storage/wal_io/empty_transactions_tests.rs",
+      "scripts/check_dev3_empty_transactions_borrows.py",
+      "scripts/test_check_dev3_empty_transactions_borrows.py",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/bank_release.rs",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/before_retry.rs",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/consumed_status.rs",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/manifest.json",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/no_system_split.rs",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/owner_bank_alias.rs",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/result_bank_alias.rs",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/compiler/retained_wide_result.rs",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/manifest.json"
     ],
     "evidence_refs": [
       "dev3-empty-transaction-20261023.md",
       "dev3-empty-transaction-20261023.json"
     ],
     "source_roots_changed": false,
-    "full_stage_acceptance": false
+    "full_stage_acceptance": false,
+    "handoff_contract_ref": "dev3-obligation-format.md#empty-transaction-handoff"
   }
 }

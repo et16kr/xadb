@@ -578,6 +578,20 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         }
         Ok(pins.total != 0)
     }
+
+    /// Inspect retained leaf obligations before an exclusive owner handoff.
+    /// The caller must exclude new pool users for the entire transition; this
+    /// observation itself is not an admission or pin capability. Dirty entries
+    /// and their WAL requirements may remain, but no pin/INIT/flush claim may.
+    pub(in crate::storage) fn handoff_quiescent(&self) -> Result<bool> {
+        {
+            let pins = self.entry_pins()?;
+            if pins.total != 0 || pins.init_claim.is_some() {
+                return Ok(false);
+            }
+        }
+        Ok(self.entry_dpt()?.claim.is_none())
+    }
 }
 
 struct PinSet<'b, 'c, 's, 'p, 'd, const N: usize = MAX_TARGETS> {

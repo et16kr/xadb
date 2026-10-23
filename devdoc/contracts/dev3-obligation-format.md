@@ -961,3 +961,44 @@ carrier를 합산하여65536 이하를 검산한다. 실제 retained whole-engin
 대신하지 않는다. 각 준비 case30초/전체120초, 활성 fixture1MiB, case·receipt·review 보존8MiB;
 source export·ELF·cache는 별도 기록한다. S5 profile3×slot71×Free generation(1/19/MAX−1)3의639조합(actor는2/20/MAX)은 authored
 selector로 남기고 중간에는 실행하지 않는다. 기존 §16의639조합을 재실행하는 것이 아니다.
+
+<a id="empty-transaction-handoff"></a>
+## 18. 빈 거래 owner의 consuming 인계
+
+2026-10-23 · **제한 인계 D2 수용 / live 거래 통합 미완료**. §17과 같은 통합 작업의 소유·자원
+경계다. `ResidentStatus::into_empty_transactions`가 원 owner 전체를 `EmptyTransactions` 안으로
+옮기며 성공 뒤 원 split·INIT·load·반환 API를 노출하지 않는다. 필요한 Status page는 전환 전에
+provision한다. 동적 INIT와 거래의 교차 실행은 후속 미공급이며 다른 예산으로 같은 WAL/protected
+bytes를 승인하는 우회 API를 두지 않는다. 아직 새 거래 발급·stage·종료·복구는 제공하지 않는다.
+
+- 진입은 fresh session의 원 ResidentStatus뿐이다. 그 API는 system INIT/read/flush/load만
+  제공하며 TxnId 발급 권한이 없고, recovery에서 이 타입으로 진입하거나 이 타입으로 되돌리는
+  경로도 없다. issued/adopted local0은 이 단방향 수명에서 정하며 Free home만 보고 추정하지
+  않는다. 향후 거래가 소비할 directory census·번호 소모와 채택 원장은 별도 실제 구현이 필요하다.
+- caller의 고정 byte bank `32×1664=53,248`바이트를 독점 차용한다. 각 slot은 descriptor1536과
+  private bookkeeping 여유128이며 영속 형식이 아니다. bank 전체는 retained metadata에
+  한 번 포함하고 Result/Before에 복사하지 않는다. 현재 slot 사용·예약 반환 기능은 없다.
+- same-core Idle `Owner`는 role과 무관하게 읽기 검산에 사용 가능하다. health·origin·role,
+  forgotten read gate·pins·INIT claim·DPT flush claim, 원 allocator/INIT installation·batch·terminal,
+  flush Ready를 먼저 확인한다. validated allocator를 실제 pin으로 복사해 기존 system descriptor와
+  synced global prefix를 exact 검산하고 Allocated Status가 하나 이상임을 확인한다.
+- checked release와 health/prefix 재검산이 끝난 다음에만 bank를0으로 초기화하고 owner를 옮긴다.
+  healthy `Before`는 원 owner를 반환하며 page·descriptor·WAL·bank는 보존한다. private scratch는
+  바뀔 수 있다. cleanup 실패·poison·known fence는 Fatal이며 재사용 가능한 owner를 반환하지
+  않는다. retained Result의 성공 branch도 bank loan을 유지하므로 먼저 Result를 소비해야 한다.
+- frozen system LSN과 원 system descriptor를 유지한다. 이 인계는 allocator LSN과 향후 global
+  tip의 차이를 처리한 live load/flush 권한이 아니다. 그 소비와 주소별 replay는 후속 D2 대상이다.
+
+handoff source-value 계산은 old input+outer Result와 `max(checking 전체 chain, success carrier,
+Before carrier)`를 합한다. pin·allocator/descriptor/hash helper는 성공/Before 구성 전에 반환한다.
+고정 local 여유2,048바이트를 포함한 conversion64,856/65,536, bank 포함 retained115,168,
+handoff metadata180,024/196,608과 기존 flush call 여유65,536을 더한245,560/262,144바이트를
+확인했다. 이는 **전환만의 계산**이며 미래32거래·codec·실제 stage/install·flush 동시 보유의 F05나
+물리 stack/RSS를 증명하지 않는다. 마지막 항목은 live effects 전에 별도 검토·검산한다.
+
+필수 검증은 [handoff manifest](../../crates/engine/tests/fixtures/dev3-empty-transactions/manifest.json)의
+actual owner 성공·Before retry·foreign owner·forgotten 자원·poison/fence·cleanup 경계와
+[compiler manifest](../../crates/engine/tests/fixtures/dev3-empty-transactions/compiler/manifest.json)의
+bank/old owner/retained wide Result 수명이다. S5는 profile3×resident capacity4(2/3/8/64)의
+실제 인계12조합을 authored ignored로 두고 지금 실행하지 않는다. 원 source별 PASS/FAIL과
+독립 D2/D1은 [통합 증거](../evidence/dev3-empty-transaction-20261023.md)에 이어 기록한다.

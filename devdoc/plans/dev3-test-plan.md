@@ -551,3 +551,12 @@ Begin→RollbackStart→AbortEnd bytes 연결을 검산한다. 관련2는 S5 원
 slot71×Free generation3(1/19/MAX−1)인639조합은 ignored/NOT_RUN으로 배정한다. 실제 owner/
 예약/설치·native·복구·통합 F05 inventory는 아직 미동결이며 이 준비 결과로 대신하지 않는다.
 각 case30초/전체120초, 활성 fixture1MiB·case/review8MiB와 별도 source/ELF/cache 보존을 적용한다.
+
+같은 통합의 [owner 인계 계약](../contracts/dev3-obligation-format.md#empty-transaction-handoff)은
+[별도 manifest](../../crates/engine/tests/fixtures/dev3-empty-transactions/manifest.json)의 필수13과
+static1, compiler baseline1+새probe7, 새checker2를 선택한다. 성공·Before retry·foreign binding,
+forgotten reservation/read gate/pin/actual capture·zero-pin flush claim, poison·기존/cleanup fence와
+bank/원owner/retained wide Result의 독점 수명을 검산한다. 기존 완료된 순수 AbortEnd·Rollback
+시험은 다시 실행하지 않는다. S5의 profile3×capacity4 인계12조합은 authored ignored/NOT_RUN이다.
+이 인계는 실제 거래·복구 시험을 대체하지 않는다. 앞 단위와 같은30초/case·120초/runtime 및
+180초/compiler·8MiB case 증거 한도를 적용하고 source/ELF/cache를 별도 보존한다.

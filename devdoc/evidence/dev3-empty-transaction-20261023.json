@@ -176,6 +176,181 @@
       "path": "artifacts/dev3/empty-transaction-20261023/review/empty-abort/final-metadata.md",
       "bytes": 1276,
       "sha256": "77612d822781295b0543e55eaa02d8db1c4b5f76217ec94cd89a22d976db3ffe"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/build-handoff.py",
+      "bytes": 3063,
+      "sha256": "2a90495b3042fbc2b3bd7fa176b2facdba3dc43ae5f6d321013a58858a3d80f1"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/run-handoff.py",
+      "bytes": 2467,
+      "sha256": "b9229625113c04ed4edb56d68d4a624431861f02fb30c44fe36b1707d8f34eca"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/check-handoff.py",
+      "bytes": 1530,
+      "sha256": "829b1a1d5cc54ceee4d7f0a21f1b283f1f4de644b614ebb59f457845c1ed52cc"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/h0/build.json",
+      "bytes": 387,
+      "sha256": "9813cbd95cd82451313c7b41c6bda8aeae5479d08c3b62d5456be3cdbb2e25e4"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/h1/build.json",
+      "bytes": 386,
+      "sha256": "1293ca134a25bd5f8edfb5552fbd33ef60c8d2f58a5459e6c0c896272e9be2f9"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/h2/build.json",
+      "bytes": 471,
+      "sha256": "e0b2cde36b5b644f7d7b1a37643fafbdb60b28ad85139ec414598a71aa46cb1a"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/h3/build.json",
+      "bytes": 471,
+      "sha256": "93b0ac9464050f228c01794876195f431ffc5949422af52c81438efd0cfc86b9"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/h2/static/result.json",
+      "bytes": 1359,
+      "sha256": "f0a66ff000b949dc03e5bcde1046a2f468ad465732ff53f216c1b1fb7e931636"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/h3/runtime/result.json",
+      "bytes": 14817,
+      "sha256": "c0657122e737c1aadfa06ae3e4f9f1c30e216db83e4874686272c86f2d158bd8"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/h3/checker.json",
+      "bytes": 934,
+      "sha256": "aff0388161f48ccf3a9b105ab9f05f77ce7dfb0dd268ad48f25b59bc39951622"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/h3/fmt.json",
+      "bytes": 676,
+      "sha256": "2c381cd228ab0c2571e1fc2fd54a443b2aa75a723456de484df5e8815ff8ac34"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/h3/clippy.json",
+      "bytes": 798,
+      "sha256": "6340a4706a031b57ac18a57ab47000f04ab123a080fd962395b111989daf81d0"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/h4/source.json",
+      "bytes": 228,
+      "sha256": "a7d3877e03531d8203444dcb5bd9861d46d02990f4d8da401a07696c3ff7dbef"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/h4/fmt.json",
+      "bytes": 676,
+      "sha256": "007a0976d63451c7b5431be3675824f900adf266e038f86d7e94c5c8d7cba66e"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/h4/clippy.json",
+      "bytes": 797,
+      "sha256": "eca2e84bd4f5700cd3da047e362fd7eb71e4650c6f22303ee7c34d8b1474e0ce"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/compiler/empty-transactions-compiler-08wqgw0e/result.json",
+      "bytes": 22267,
+      "sha256": "f885bf42ee9ab0f40fe4176640ebf44c559d8f6c2e5cd37b9213756461c764eb"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/actual-owner-design-notes.md",
+      "bytes": 12572,
+      "sha256": "3f66033f20acb1ea698100fdeb268395fae8596b28fd540db395edff97ab7a6d"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/actual-owner-design-notes.json",
+      "bytes": 5650,
+      "sha256": "8fbdb57edd3c0c9f69a401ae162ba088faea2774b2363b1a0d0448353fdadfc9"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-d2.json",
+      "bytes": 9614,
+      "sha256": "a2eb3807776b75143490e7f25b94318f2c541eff538a42aa3521c047f9a63d7e"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-d2.md",
+      "bytes": 3234,
+      "sha256": "c4fee4d3abe0e18568f73ad3994ddc155edd53abf72d01808dd1295cfbfd3aaf"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-d2-coverage.json",
+      "bytes": 10039,
+      "sha256": "8b2c921e200be60b0d3f28a480d0378b3784b3a592449391d342af42502c769d"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-d2-source-binding.json",
+      "bytes": 2067,
+      "sha256": "4ce37e6279861c36f81629e0625a17b5aef9e98225d49ed4e824a59b9e38c92a"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-final-d1.json",
+      "bytes": 9987,
+      "sha256": "3b106edbbfaca87a602e9eff403fff71732af1cd62836520c77fb1cc4f8f6478"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-final-d1.md",
+      "bytes": 3721,
+      "sha256": "2f20d76c67e4dc7403b196ed25cb11862e1b6498664e1f6335f28e7473a29d6c"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-final-coverage.json",
+      "bytes": 13124,
+      "sha256": "830710a70479e659b5fd37efc4b417e59189bc7c0c853230b439081226561ae2"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-final-staged-audit.json",
+      "bytes": 10309,
+      "sha256": "1d841c64aab02370f25892aa774add7cf329f863afbdc296cda96db25994896d"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-final-receipt-audit.json",
+      "bytes": 32967,
+      "sha256": "434e27a8b6a9f3b0f33cff66a9cb8c91b4c5db7edb2ca5ac9b13069284b21c07"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-final-audit-attempt0.json",
+      "bytes": 729,
+      "sha256": "a77233023d1f9d965fae3d22bfc3a8413cdbae9677a7ba0d45e0142af4367629"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-final-receipt-audit.py",
+      "bytes": 11800,
+      "sha256": "624895a0b723de90a5bf9ff2b8206c5ba6fb7f1fa058c0d11612b5c2c4028784"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-final-receipt-audit-r1.py",
+      "bytes": 11838,
+      "sha256": "7a6b1cc59ecc884fd95bd2c9ca0579b2b597c88530464a2af744e8bc660b61f8"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-final-ocr-preview.json",
+      "bytes": 6675,
+      "sha256": "bbdc88f66cc5a13d0a4406ed01ca73c96ab13f7903b4fe4c06890c724b1bbddc"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-final-ocr-rules.json",
+      "bytes": 15168,
+      "sha256": "c54068c88ed7ecdf3bf355a595b486865007bb1f869dd72ea9869129c7241c82"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/handoff-final-retention.json",
+      "bytes": 401,
+      "sha256": "b019a224f02bc9b9ac44312c1f1a54856b9ed6a6eb10915cec6280344f250dc7"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-metadata-addendum.json",
+      "bytes": 5114,
+      "sha256": "5b0c4b7bbab3e97c0906a4e3a4fb554f21d7a6c2fcae0e183e1221069bd196af"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-metadata-addendum.md",
+      "bytes": 1462,
+      "sha256": "cdf98440a88b370c688f8a5ab4b1d0707e5fe7d9aabe8b319546ebd990deb1c9"
     }
   ],
   "timing_log": "artifacts/dev3/empty-transaction-20261023/timing.jsonl",
@@ -186,5 +361,126 @@
     "case_bytes_at_final_D1": 752992,
     "case_limit_bytes": 8388608,
     "tool_bytes": 1004713374
+  },
+  "owner_handoff": {
+    "status": "D1_D2_ACCEPTED_LIMITED_HANDOFF_ONLY",
+    "contract_ref": "dev3-obligation-format.md#empty-transaction-handoff",
+    "consumer_reached": false,
+    "builds": [
+      {
+        "attempt": "h0",
+        "status": "FAIL",
+        "source_sha256": "2b656d969525e057eba8506982ce1127cb69fa31ab10b97b2a29c2eded5734db",
+        "elapsed_seconds": 6.5364297080013785,
+        "exit_code": 101
+      },
+      {
+        "attempt": "h1",
+        "status": "FAIL",
+        "source_sha256": "006cbe8ad9ea7cacac34cdadaf81cd8af6e9ca7dca0c5ca02b103be7142a35ba",
+        "elapsed_seconds": 6.326802529998531,
+        "exit_code": 101
+      },
+      {
+        "attempt": "h2",
+        "status": "PASS",
+        "source_sha256": "394c5f83c685c9df5330703db86130837fa1375b8a482be7eca7a02c4c70f7c9",
+        "elapsed_seconds": 13.95360711599642,
+        "exit_code": 0
+      },
+      {
+        "attempt": "h3",
+        "status": "PASS",
+        "source_sha256": "0eb44930358f23a4776399baa2553dfe6c6656e6bb71889ccf7e4808d484120c",
+        "elapsed_seconds": 11.40442181799881,
+        "exit_code": 0
+      }
+    ],
+    "runtime": {
+      "source_sha256": "0eb44930358f23a4776399baa2553dfe6c6656e6bb71889ccf7e4808d484120c",
+      "binary_sha256": "cacd1afd2df81cd85efedcd0e2f3e173e711593b14da987c0ffecb145e1a6920",
+      "new_cases": 13,
+      "status": "PASS",
+      "elapsed_seconds": 1.1824734160036314,
+      "unchanged_cases_rerun": 0
+    },
+    "static": {
+      "source_sha256": "394c5f83c685c9df5330703db86130837fa1375b8a482be7eca7a02c4c70f7c9",
+      "count": 1,
+      "status": "PASS",
+      "conversion_bytes": 64856,
+      "retained_including_bank_bytes": 115168,
+      "metadata_bytes": 180024,
+      "with_flush_allowance_bytes": 245560,
+      "future_live_owner_F05": "NOT_SUPPLIED"
+    },
+    "compiler": {
+      "source_sha256": "0eb44930358f23a4776399baa2553dfe6c6656e6bb71889ccf7e4808d484120c",
+      "positive_cases": 2,
+      "negative_cases": 5,
+      "baseline": 1,
+      "status": "PASS",
+      "elapsed_seconds": 46.53822978200333
+    },
+    "checker": {
+      "source_sha256": "0eb44930358f23a4776399baa2553dfe6c6656e6bb71889ccf7e4808d484120c",
+      "cases": 2,
+      "status": "PASS"
+    },
+    "lint": {
+      "h3_fmt": "PASS",
+      "h3_clippy": "FAIL_TEST_FORGET_NON_DROP",
+      "h4_source_sha256": "5e7c3e2ad4883067c2678ceb1a5e1a6866e39b9ab2879c65fd9db958a7a8dc1c",
+      "h4_change": "test-specific allow annotation with reason only; no runtime repeated",
+      "h4_fmt": "PASS",
+      "h4_clippy": "PASS"
+    },
+    "not_run": [
+      "S5_12_profile_capacity_combinations",
+      "live_identity_issuance",
+      "actual_begin_rollback_abort_installation",
+      "live_status_flush_load",
+      "new_process_recovery_reentry",
+      "full_live_owner_F05"
+    ],
+    "limits": {
+      "runtime_case_seconds": 30,
+      "runtime_total_seconds": 120,
+      "compiler_total_seconds": 180,
+      "case_artifact_bytes": 8388608,
+      "bootstrap_caller_workspace_bytes": 4194304,
+      "wal_caller_slot_bytes": 1048576,
+      "operation_caller_bytes": 114688,
+      "resident_pages_bytes": 49152,
+      "bank_bytes": 53248,
+      "pure_preparation_literal_limit_applies": false,
+      "fixture_note": "No external page/WAL literals in handoff tests; existing in-memory port, write history and file snapshots are test-harness memory, separate from product F05. Full fixture RSS was not measured."
+    },
+    "review_status": "D1_ACCEPTED_LIMITED_HANDOFF_UNIT",
+    "review": {
+      "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-final-d1.json",
+      "sha256": "3b106edbbfaca87a602e9eff403fff71732af1cd62836520c77fb1cc4f8f6478",
+      "reviewed_tree": "0312ea1fef2242e6f988869a0c4ed2c090cf0128",
+      "staged_paths": 30,
+      "ocr_total": 36,
+      "reviewed": 30,
+      "skipped_unrelated": 6,
+      "all_entries_accounted": true,
+      "open_blocking_findings": 0,
+      "metadata_addendum": {
+        "path": "artifacts/dev3/empty-transaction-20261023/review/handoff-metadata-addendum.json",
+        "bytes": 5114,
+        "sha256": "5b0c4b7bbab3e97c0906a4e3a4fb554f21d7a6c2fcae0e183e1221069bd196af"
+      }
+    },
+    "retention": {
+      "at": "2026-10-23T14:34:20.196278+00:00",
+      "case_bytes": 1525780,
+      "case_limit_bytes": 8388608,
+      "tool_source_binary_cache_bytes": 3436429857,
+      "classification": "source/target/baseline directories and test-binary are tool storage; all other files case evidence",
+      "status": "PASS",
+      "note": "Snapshot before this census receipt and later docs-only addendum; earlier snapshots preserved."
+    }
   }
 }

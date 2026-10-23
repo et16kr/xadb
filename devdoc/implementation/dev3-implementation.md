@@ -866,3 +866,9 @@ pressure·다음 extent·큰 backing·일반 READY·tree/행 거래·전체 DEV3
 순수 준비와 공통 native/page binding을 작성했으며 [§17](../contracts/dev3-obligation-format.md#empty-abort-preparation)의
 D2와 component41640바이트의 실행 gate를 수용하고 신규13·직접 관련2·static1 및 fmt/Clippy를 첫 실행에서 통과했다. 최종 독립 D1은 순수 준비 범위로 수용했으며 현재 실제 TxnId 발급·예약/설치 owner·live Status·통합 F05·해당 복구는 미공급이다.
 소비자 미도달 상태로 두고 순수 helper의 선택 결과를 실제 거래 완료로 세지 않는다.
+
+동일 통합의 [소유권 인계](../contracts/dev3-obligation-format.md#empty-transaction-handoff)를 추가했다.
+원 ResidentStatus를 소비해 system branch를 감추고,32slot용 caller bank53,248바이트를 보존한다.
+실제 allocator pin/descriptor 검산과 forgotten claim/cleanup 장벽을 구현했으며 live 발급·stage·
+Abort·live load/flush·recovery는 여전히 미공급이다. 전환만의 자원식과 source별 선택 결과는
+[같은 증거](../evidence/dev3-empty-transaction-20261023.md#owner-handoff)에 보존한다.

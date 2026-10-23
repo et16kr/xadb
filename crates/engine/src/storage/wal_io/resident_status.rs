@@ -23,6 +23,13 @@ use crate::{
 use std::sync::{Mutex, MutexGuard, TryLockError};
 use xadb_foundation::{error::Effect, namespace::WriterNamespace};
 
+#[path = "empty_transactions.rs"]
+mod empty_transactions;
+pub(crate) use empty_transactions::{
+    EMPTY_TRANSACTION_BANK_BYTES, EmptyTransactionSnapshot, EmptyTransactions,
+    IntoEmptyTransactionsError,
+};
+
 pub(crate) struct ResidentStatusBinding<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
     inner: BoundStatusBootstrap<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>,
 }

@@ -1,0 +1,79 @@
+{
+  "schema": "xadb-empty-transactions-compiler-v1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "compiler_budget_seconds": 180,
+  "probe_relative_path": "crates/engine/src/storage/empty_transactions_borrow_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+  "cases": [
+    {
+      "name": "baseline",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_path": null,
+      "reason": "Compile only; never run the unchanged test inventory."
+    },
+    {
+      "name": "bank_release",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_path": null,
+      "reason": "Consuming/dropping the whole Result releases the bank loan.",
+      "bytes": 519,
+      "sha256": "275bf2f89657b3926f8ef327d08a6a169a697f17b77525020ee72be38d1446bc"
+    },
+    {
+      "name": "before_retry",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_path": null,
+      "reason": "Before returns the original owner for a later explicit retry.",
+      "bytes": 617,
+      "sha256": "802aef4d674290e69b3bdc9f148fd0e7cae1d83257003fe7ec10147e9a6af5c4"
+    },
+    {
+      "name": "result_bank_alias",
+      "expected_code": "E0499",
+      "primary_line": 7,
+      "primary_path": "crates/engine/src/storage/empty_transactions_borrow_probe.rs",
+      "reason": "Even a retained Result prevents mutation of its possible bank loan.",
+      "bytes": 542,
+      "sha256": "b5409b82381d315808e54130897689c478f4dd1849fc188799564122b7030a54"
+    },
+    {
+      "name": "owner_bank_alias",
+      "expected_code": "E0499",
+      "primary_line": 7,
+      "primary_path": "crates/engine/src/storage/empty_transactions_borrow_probe.rs",
+      "reason": "A successful converted owner exclusively retains its bank.",
+      "bytes": 579,
+      "sha256": "d5b5b8e3d6bfd2fbec780bc949921e38f72baa82e42c8e5b9832b87bd626f0a2"
+    },
+    {
+      "name": "consumed_status",
+      "expected_code": "E0382",
+      "primary_line": 7,
+      "primary_path": "crates/engine/src/storage/empty_transactions_borrow_probe.rs",
+      "reason": "The consumed Status provisioning API cannot be reopened.",
+      "bytes": 579,
+      "sha256": "640bf7a7b3b3380db9488217c0564bdd678786116b08a888e2f7bc22eff34085"
+    },
+    {
+      "name": "retained_wide_result",
+      "expected_code": "E0505",
+      "primary_line": 8,
+      "primary_path": "crates/engine/src/storage/empty_transactions_borrow_probe.rs",
+      "reason": "A retained wide Result prevents the handoff, including a shape-error Result.",
+      "bytes": 686,
+      "sha256": "886f29816a5a85132fc8f290304d4b5522774823f89f04a05c67e30e56f3e6cb"
+    },
+    {
+      "name": "no_system_split",
+      "expected_code": "E0599",
+      "primary_line": 6,
+      "primary_path": "crates/engine/src/storage/empty_transactions_borrow_probe.rs",
+      "reason": "The converted API has no system writer/read/flush split.",
+      "bytes": 395,
+      "sha256": "00fbb5e9463575aba0c1ee2130ef254401ff0720f31edc07dd32e15a93e744d2"
+    }
+  ]
+}

@@ -34,8 +34,9 @@ pub(crate) use mutable_storage::{
 };
 #[allow(unused_imports)]
 pub(crate) use mutable_storage::{
-    BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, InitAttemptError,
-    InitializedStatusObservation, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
+    BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, EMPTY_TRANSACTION_BANK_BYTES,
+    EmptyTransactionSnapshot, EmptyTransactions, InitAttemptError, InitializedStatusObservation,
+    IntoEmptyTransactionsError, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
     OperationalStatusReader, OperationalStatusWriter, ReadStatusSet, ReservedStatus,
     ResidentReadAdmission, ResidentStatus, ResidentStatusBinding, ResidentStatusReader,
     StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard,

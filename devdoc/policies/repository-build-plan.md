@@ -395,3 +395,5 @@ dependency/source root·feature·영속 wire 형식은 바꾸지 않는다.
 관리 JSON `dev3_empty_transaction`에 등록한다. 공통 native/page 검산은 `semantic_group`에서
 RollbackStart와 공유한다. package·dependency·source root·feature는 바꾸지 않는다.
 [작업 증거](../evidence/dev3-empty-transaction-20261023.md)의 실제 owner/복구 통합은 진행 중이다.
+같은 통합의 `wal_io/empty_transactions.rs`·시험·선택 manifest·compiler fixture/runner를 추가한다.
+원 ResidentStatus의 consuming 인계와 caller bank를 보존하며 새 crate/source root나 live 발급 API는 없다.

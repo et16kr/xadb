@@ -41,8 +41,9 @@ pub(crate) use operational::{
     IntoOperationalStatusError, OperationalStatus, OperationalStatusReader, OperationalStatusWriter,
 };
 pub(crate) use resident::{
-    ReadStatusSet, ResidentReadAdmission, ResidentStatus, ResidentStatusBinding,
-    ResidentStatusReader,
+    EMPTY_TRANSACTION_BANK_BYTES, EmptyTransactionSnapshot, EmptyTransactions,
+    IntoEmptyTransactionsError, ReadStatusSet, ResidentReadAdmission, ResidentStatus,
+    ResidentStatusBinding, ResidentStatusReader,
 };
 
 #[cfg(test)]
