@@ -941,7 +941,7 @@ fn fits<W: WriterNamespace>() -> bool {
         + control_delta
         + 90112
         + (5 * pool_delta + 2048).max(3 * pool_delta + 8 * control_delta + 2048);
-    pool_delta <= 512
+    pool_delta <= dirty_frame::INIT_POOL_DELTA_LIMIT
         && dirty_allocation::base_delta() <= 64
         && control_delta <= 1536
         && hot <= 196608

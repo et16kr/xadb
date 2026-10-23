@@ -4323,5 +4323,26 @@
     ],
     "source_roots_changed": false,
     "full_stage_acceptance": false
+  },
+  "dev3_operational_registration": {
+    "status": "local_verified_D1_accepted_P1_only",
+    "contract_ref": "dev3-task-05-buffer-flush.md#operational-registration",
+    "scope": "P1 per-slot OnceLock publication in the existing SharedPool; P2/P3 general integration incomplete",
+    "implemented_paths": [
+      "crates/engine/src/storage/dirty_frame.rs",
+      "crates/engine/src/storage/dirty_frame/registration.rs",
+      "crates/engine/src/storage/dirty_frame/registration_tests.rs",
+      "crates/engine/src/storage/dirty_init.rs",
+      "crates/engine/src/storage/wal_io/dirty_allocation_tests.rs",
+      "crates/engine/src/storage/wal_io/status_init.rs",
+      "crates/engine/src/storage/wal_io/status_init_tests.rs",
+      "crates/engine/src/storage/wal_io/status_init_protocol_tests.rs"
+    ],
+    "evidence_refs": [
+      "dev3-operational-registration-20261023.md",
+      "dev3-operational-registration-20261023.json"
+    ],
+    "source_roots_changed": false,
+    "full_stage_acceptance": false
   }
 }

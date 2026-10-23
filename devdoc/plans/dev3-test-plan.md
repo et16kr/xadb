@@ -387,6 +387,22 @@ Rust 단위 시험은 실제 package/target과 전체 test 경로를 확인한 �
 2026-10-23 D3-OCR-001 수정에 동반한 [신규5 case와 정확 selector](../evidence/dev3-code-review-20261023.md#fix-inventory)는 NT03 소유, NT04/05·FT03/05/09 연결이다. reserve/cancel 각각의 flusher content lock 경합2·잠금 해제 뒤 정상2·Status 예약 wrapper1을 profile1/count1·실제 thread ACK로 고정한다. 5건 모두 중간 필수이며 최종 S5에 포함한다. 기존 dirty53·Status flush43의 분모와 과거 결과는 유지한다. 수정 전 반례 FAIL과 수정 후5 PASS는 [후속 실행 기록](../evidence/dev3-code-review-20261023.md#fix-followup)에 보존하며, 관련 diff가 없는 중간 단계에서는 반복하지 않는다. 이 추가가 native crash 복구나 전체 DEV3/S5 완료를 뜻하지 않는다.
 
 
+<a id="operational-registration-followup"></a>
+### 일반 page 등록 코어 P1 후속 inventory
+
+2026-10-23 [D3-OPERATIONAL-PAGES-001 P1](../contracts/dev3-task-05-buffer-flush.md#operational-registration)은
+기존 directory의 슬롯별 publication과 세대 준비를 직접 검증한다. 신규 selector는
+`storage::dirty_frame::registration::tests::slot_wrong_generation_does_not_publish`,
+`slot_concurrent_publication_has_one_exact_winner`, `slot_exclusive_replacement_keeps_cells_independent`다
+(뒤 두 이름도 같은 module 경로). 최종 S5 확정 inventory에 이3개를 포함한다.
+
+중간에는 source별 exact selection의 static5·runtime20·Linux2만 실행했다. 기존 CF06-08은
+공유 경로에서 이제 불가능한 generation0 주입 대신 잘못된 kind를 주입하며, generation
+거절은 새 selector가 publication 전 무효과를 검사한다. 기존 Status CF12의 공개 전 C1–C5와
+공개 후 reader를 변경 소비자로 선택했다. [원 증거](../evidence/dev3-operational-registration-20261023.md)를
+보존하며 하위 wrapper·무변경 시험·S5는 반복하지 않는다. P2/P3의 consuming API·반복 INIT·
+실제3주소/2frame 및 반복 live Status inventory는 해당 구현과 함께 추가해야 한다.
+
 <a id="allocator-eviction-followup"></a>
 ## allocator 실제 비상주 구간의 중간·S5 배정
 

@@ -316,3 +316,67 @@ Status hash 호출 중 caller의 expected identity2개와 pin token16bytes를 �
 ## 동일 주소 allocator reload의 제한 후속 공급
 
 2026-10-23 [D3-ALLOCATOR-RESIDENCY-001](dev3-allocator-residency.md)은 등록 코어의 실제 첫 세대 갱신 소비자다. 원 Bound를 소비·보존하며 같은 allocator clean image의 actual home read와 세대 증가만 제공한다. Fixed/Status 일회 공개의 generation1은 유지한다. 새 세대 안에서 counter0/1 baseline을 설치하며 기존 세대 counter를 되감지 않는다. 일반 Empty/load/evict·다른 주소·N+1·Status 변경은 후속이며 위 전체 상태도 완료로 승격하지 않는다. [source별 검증](../evidence/dev3-allocator-residency-20261023.md)을 따른다.
+
+<a id="operational-registration"></a>
+## D3-OPERATIONAL-PAGES-001 — 일반 page 수명 공급 순서
+
+2026-10-23 · **P1 D2·실행 전 자원 gate·최종 독립 D1 수용 / P1 선택 검증 / P2·P3 미공급**.
+담당·통합 `/root`, 독립 검토 `/root/pool_design_review`. 기준 `22e7724`의 실제 allocator
+퇴출·재적재 뒤 일반 pool을 공급한다. P1 등록 코어, P2 consuming owner·반복 INIT,
+P3 실제 allocator membership read와 교체를 순차 구현한다. 일반 통합의 필수 최소 이력은
+allocator와 실제 INIT한 Status A/B의3주소를2frame에서 사용하는 것이다. 모든 요청 pin은
+적재 뒤 한 번에 확보하며 일부 pin을 붙잡고 victim을 기다리지 않는다. P1만으로 이 통합이나
+반복 live Status 변경·일반 pool 완료를 선언하지 않는다.
+
+### P1 — 슬롯별 publication과 checked generation
+
+기존 SharedPool의 유일한 RegistrationDirectory를 직접 바꾼다. 각 슬롯은
+`generation: u64`와 `OnceLock<TargetRequest>`를 가진다. bootstrap provenance와
+Fixed/allocator mode의 의미는 보존하며 closed Status의 publication도 해당 슬롯을 사용한다.
+복제 directory·heap·새 mutex·I/O는 추가하지 않는다. directory mutex 대안은 짧은 lookup/
+반납에도 새 Busy/poison 분기를 만들고 C5의 lock-free 미공개 관측을 복잡하게 하므로
+채택하지 않았다.
+
+generation 증가·슬롯 clear/replace는 원 pin/DPT/initializer/flush-claim 배제 검사를 통과한
+pool 독점 대여 안에서만 수행한다. shared INIT는 원 claim이 미리 확보한 빈 슬롯과 준비된
+generation에만 publication한다. Fixed 조회는 원 frame.registration과 정확히 비교한다.
+slot request의 Copy는 authority가 아니며 pin은 slot/generation을 계속 검산한다.
+publication에 다른 generation을 주면 cell을 채우지 않고 거절한다. load 실패가 소비한 세대와
+eviction epoch는 되감지 않으며 원 same-address alias 거절·Drop fence는 유지한다.
+
+P2/P3에서는 consuming owner가 원 WAL·descriptor·flush 대여와 Drop을 보존하고 원 closed
+owner를 우회 사용하지 못하게 한다. current authoritative allocator의 Allocated entry로
+membership을 검산한다. dirty allocator가 있으면 disk의 이전 allocator를 근거로 load 권한을
+만들지 않는다. codec/header·diagnostic LSN·과거 OnceLock 값만으로 새 권한을 만들지 않는다.
+allocator와 payload의 LSN은 독립적이며 일반적으로 equality나 크기 순서를 요구하지 않는다.
+cancel/INIT terminal descriptor·high-water와 global WAL predecessor/page redo prior-LSN도
+구별해야 한다. 이 후속 API와 F05는 실제 구현 전에 추가 동결하며 P1로 공급했다고 하지 않는다.
+
+### P1 자원·선택 검증
+
+64개 슬롯의 publication metadata가 늘어난다. 실행 전 실제 type 크기로 directory·SharedPool·
+Bound 변환의 caller/result 동시 생존량을 다시 계산한다. 기존 SharedPool delta512는 이번
+표현 변경 전 tranche 한도이며 새 한도는 source/type 식의 실측 검산과 독립 검토 뒤 동결한다.
+dirty196608·flush65536·component65536·Status 합계262144·기존 caller page scratch 한도는
+유지한다. 새 배열 복사·page scratch를 추가하지 않는다. metadata 증가는 resident 예약에
+한 번만 포함하며 constructor/move와 nested carrier도 별도로 확인한다.
+
+r1 `ac56a8e5…`의 실제 ledger에서 Slot80 = 기존 Option<Registration>72+8이다.
+directory5160은 이전4728보다432bytes 크며 전역 publication80bytes를 제거했다.
+새 pool delta 한도는 기존512+64slot×8=1024, 실제808이다. allocator Bound20392·Result20464의
+변환63296≤65536, shared hot165928/cold157680≤196608, Status hot194056/cold159232와
+flush65536 합계259592≤262144다. Status flush metadata hot64064/cold48680와 adapter 최대
+49856≤65536을 확인했다. 별도 `/root/pool_design_review`가 source/type 식·동시 생존량·
+실제 layout5개를 대조한 뒤 runtime gate를 수용했다. 이는 OS stack/RSS·일반 pool 인수가 아니다.
+
+새 필수 시험은 closed-slot의 잘못된 generation 무효과 거절·실제 동시 단일 publication,
+슬롯별 빈 publication/세대 tombstone과 실패 load 세대 소비·checked MAX 경계를 확인한다.
+기존 선택은 변경된 directory를 직접 소비하는 registration/pin·allocator eviction/reload·
+Status INIT 공개/reader/flush와 해당 자원 layout으로 한정한다. exact selector와 source를
+실행 전에 보존하고 static gate 통과 뒤 runtime을 실행한다. 각 runtime30초·native30초를
+상한으로 하며 전체 wrapper·무변경 하위 시험·완료 source 재실행을 하지 않는다.
+최종 S5에는 기존 확대 inventory를 유지한다. 문서 검사는 push 전용이다.
+
+[P1 실행 증거](../evidence/dev3-operational-registration-20261023.md)는 원 compile FAIL과
+현재 source의 static5·runtime20·Linux2를 구별한다. P1에는 public borrow/API 변경이 없어
+기존 compiler fixture를 재실행하지 않았다. P2/P3에서 새 consuming API의 compiler 검증을 공급한다.

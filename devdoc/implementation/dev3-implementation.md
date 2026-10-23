@@ -723,6 +723,18 @@ fixture10개를 검토한 최종 독립 D1을 수용했으며 남은 차단 지�
 S5 확대32round는 작성·NOT_RUN이다. 실제 다른 주소·N+1 집합·Status 반복 변경·일반
 pool/pressure·recovery/READY·전체 DEV3/S5는 미완료이며 문서 검사는 push 전용이다.
 
+<a id="operational-registration"></a>
+## 일반 page 등록 코어 P1 — 슬롯별 publication
+
+2026-10-23 [D3-OPERATIONAL-PAGES-001 P1](../contracts/dev3-task-05-buffer-flush.md#operational-registration)은
+기존 SharedPool directory의 각 슬롯에 prepared generation과 OnceLock request를 둔다.
+generation·교체는 독점 단계로 제한하고 shared INIT publication은 세대를 바꾸지 못한다.
+Fixed provenance·allocator tombstone·pin token 의미를 보존하며 별도 전역 publication을 제거했다.
+[선택 증거](../evidence/dev3-operational-registration-20261023.md)는 static5·runtime20·Linux2와
+원 r0 compile FAIL을 구분한다. D2·실행 전 F05와 OCR delegate 기반 최종 D1은 P1 범위로 독립 수용됐다.
+P2 consuming owner·반복 INIT, P3 현재 membership load와 실제3주소/2frame 교체는 미공급이며
+일반 pool·전체 DEV3/S5를 완료로 승격하지 않는다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 

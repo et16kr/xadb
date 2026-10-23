@@ -426,7 +426,13 @@ fn status_init_cf06_stale_and_closed_corruption() {
                             .writer
                             .authority(reserved.batch, reserved.page, 0)
                             .unwrap();
-                        assert!(frame_init::seed_publication(pool, authority.payload, 0));
+                        // Generation now belongs to the exclusively prepared
+                        // slot; a shared publisher cannot inject generation0.
+                        // Inject a wrong-kind request into the claimed cell to
+                        // retain this post-reservation corruption boundary.
+                        let mut wrong = authority.payload;
+                        wrong.kind = PageKind::RowLeaf;
+                        assert!(frame_init::seed_publication(pool, wrong, 1));
                     }
                     _ => unreachable!(),
                 }

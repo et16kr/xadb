@@ -730,7 +730,7 @@ pub(super) fn pool_delta_bytes() -> usize {
 }
 pub(super) fn fits() -> bool {
     use std::mem::size_of;
-    pool_delta_bytes() <= 512
+    pool_delta_bytes() <= INIT_POOL_DELTA_LIMIT
         && size_of::<InitClaimRecord>() <= 256
         && size_of::<Option<InitClaimSlot>>() <= 256
         && size_of::<InitPinSet<'_, '_, '_, '_, '_>>() <= 512
@@ -895,13 +895,10 @@ pub(in crate::storage) mod test_support {
         request: TargetRequest,
         generation: u64,
     ) -> bool {
-        pool.directory
-            .publication
-            .set(Registration {
-                request,
-                generation,
-            })
-            .is_ok()
+        pool.directory.publish(Registration {
+            request,
+            generation,
+        })
     }
     pub(in crate::storage) fn dpt_busy(pool: &SharedPool<'_, '_, '_, '_>) -> bool {
         matches!(pool.dpt.try_lock(), Err(TryLockError::WouldBlock))

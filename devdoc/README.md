@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-23 [DEV3 일반 page 등록 코어 P1](evidence/dev3-operational-registration-20261023.md): 슬롯별 generation/publication으로 기존 SharedPool을 정리했다. static5·runtime20·Linux2의 source별 증거와 원 compile FAIL을 보존한다. OCR delegate 기반 독립 D1 수용, P2/P3·일반 pool·DEV3/S5 미완료.
+
 2026-10-23 [DEV3 allocator 실제 퇴출·재적재](evidence/dev3-allocator-eviction-20261023.md): 비상주 guard와 다른 frame의 actual home load를 연결했다. 신규 runtime18·관련7·static5·native1·compiler3+control1의 source별 PASS를 보존한다. OCR delegate를 활용한 최종 독립 D1 수용이며 일반 pool·전체 DEV3/S5는 미완료다.
 
 2026-10-23 [DEV3 진행 현황 후속 리뷰](evidence/dev3-progress-review-20261023.md): 최신 reload 구현·시험 도구와 snapshot 수정, 단계별 공급·미완료 인수를 대조했다. 요약 표·단계 JSON·색인의 진행 설명을 최신 제한 구현과 맞췄으며 제품 변경·시험 재실행·완료 승격은 없다.

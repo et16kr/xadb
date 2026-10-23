@@ -1,7 +1,7 @@
-//! One bounded lookup for bootstrap registrations and the closed INIT publication.
-//! Copy snapshots carry identity across pin/content/flush boundaries. The
-//! consuming allocator mode renews or evicts/reloads the same address, retaining
-//! slot-generation tombstones. General page loading/reuse remain separate.
+//! One bounded directory with a publication cell per caller frame.
+//! Only exclusive pool mutation may issue generations or replace a cell. Shared
+//! INIT publishes into its preclaimed generation without adding a lookup lock.
+//! General multi-address loading and repeated INIT remain separate consumers.
 
 use super::{DirtyFrame, MAX_FRAMES, PageKind, Registration, TargetRequest};
 use std::sync::OnceLock;
@@ -12,20 +12,53 @@ enum Mode {
     AllocatorReloadable,
 }
 
+struct Slot {
+    generation: u64,
+    request: OnceLock<TargetRequest>,
+}
+impl Slot {
+    const fn empty() -> Self {
+        Self {
+            generation: 0,
+            request: OnceLock::new(),
+        }
+    }
+
+    fn registration(&self) -> Option<Registration> {
+        self.request.get().copied().map(|request| Registration {
+            request,
+            generation: self.generation,
+        })
+    }
+
+    // A failed generation check cannot initialize the publication cell. OnceLock
+    // provides shared single publication, not address or initializer authority.
+    fn publish(&self, registration: Registration) -> bool {
+        self.generation != 0
+            && self.generation == registration.generation
+            && *self.request.get_or_init(|| registration.request) == registration.request
+    }
+
+    fn replace(&mut self, registration: Registration) {
+        self.request.take();
+        self.generation = registration.generation;
+        // Exclusive access makes this assignment infallible.
+        let _ = self.request.set(registration.request);
+    }
+}
+
 pub(super) struct RegistrationDirectory {
     mode: Mode,
-    entries: [Option<Registration>; MAX_FRAMES],
+    entries: [Slot; MAX_FRAMES],
     closed_index: Option<usize>,
-    pub(super) publication: OnceLock<Registration>,
     resident: u64,
     pub(super) eviction_epoch: u64,
 }
 impl RegistrationDirectory {
     pub(super) fn from_bootstrap(frames: &[DirtyFrame<'_>]) -> Option<Self> {
-        let mut entries = [None; MAX_FRAMES];
+        let mut entries = [const { Slot::empty() }; MAX_FRAMES];
         for (index, frame) in frames.iter().enumerate() {
             let entry = entries.get_mut(index)?;
-            *entry = frame.registration;
             if let Some(registration) = frame.registration
                 && (registration.generation != 1
                     || frames[..index]
@@ -35,12 +68,14 @@ impl RegistrationDirectory {
             {
                 return None;
             }
+            if let Some(registration) = frame.registration {
+                entry.replace(registration);
+            }
         }
         Some(Self {
             mode: Mode::Fixed,
             entries,
             closed_index: None,
-            publication: OnceLock::new(),
             resident: 0,
             eviction_epoch: 0,
         })
@@ -48,27 +83,30 @@ impl RegistrationDirectory {
 
     pub(super) fn close_status_slot(&mut self) {
         self.closed_index = Some(1);
+        self.entries[1].generation = 1;
     }
     pub(super) fn closed_index(&self) -> Option<usize> {
         self.closed_index
     }
     pub(super) fn published(&self) -> Option<Registration> {
-        self.publication.get().copied()
+        self.closed_index
+            .and_then(|index| self.entries[index].registration())
     }
     // The exclusive INIT writer prechecks None before stage. Equality also
     // protects the final publication from silently accepting another value.
     pub(super) fn publish(&self, registration: Registration) -> bool {
-        *self.publication.get_or_init(|| registration) == registration
+        self.closed_index
+            .is_some_and(|index| self.entries[index].publish(registration))
     }
 
     pub(super) fn resolve(&self, frames: &[DirtyFrame<'_>], index: usize) -> Option<Registration> {
         let frame = frames.get(index)?;
-        let original = *self.entries.get(index)?;
+        let original = self.entries.get(index)?.registration();
         if self.closed_index == Some(index) {
-            if original.is_some() || frame.registration.is_some() {
+            if frame.registration.is_some() {
                 return None;
             }
-            self.published().filter(|value| value.generation != 0)
+            original.filter(|value| value.generation != 0)
         } else {
             original.filter(|value| {
                 value.generation != 0
@@ -97,8 +135,10 @@ impl RegistrationDirectory {
             || !self.valid(frames)
             || self.closed_index.is_some()
             || self.published().is_some()
-            || self.entries[1..].iter().any(Option::is_some)
-            || !self.entries[0].is_some_and(|entry| {
+            || self.entries[1..]
+                .iter()
+                .any(|slot| slot.registration().is_some())
+            || !self.entries[0].registration().is_some_and(|entry| {
                 entry.request.kind == PageKind::Allocation
                     && entry.request.level == 0
                     && entry.request.identity.page.page_no == 0
@@ -118,12 +158,12 @@ impl RegistrationDirectory {
     pub(super) fn test_seed_reload_generation(&mut self, generation: u64) {
         assert!(self.mode == Mode::AllocatorReloadable);
         let index = self.allocator_index().unwrap_or(0);
-        self.entries[index].as_mut().unwrap().generation = generation;
+        self.entries[index].generation = generation;
     }
     pub(super) fn can_renew_allocator(&self, index: usize, previous: Registration) -> bool {
         self.mode == Mode::AllocatorReloadable
             && self.allocator_index() == Some(index)
-            && self.entries.get(index) == Some(&Some(previous))
+            && self.entries.get(index).and_then(Slot::registration) == Some(previous)
             && previous.generation != 0
             && previous.generation != u64::MAX
     }
@@ -132,15 +172,14 @@ impl RegistrationDirectory {
             return None;
         }
         let generation = previous.generation.checked_add(1)?;
-        self.entries[index] = Some(Registration {
-            generation,
-            ..previous
-        });
+        self.entries[index].generation = generation;
         Some(generation)
     }
 
     pub(super) fn evict_allocator(&mut self, index: usize, previous: Registration) -> Option<u64> {
-        if self.allocator_index() != Some(index) || self.entries[index] != Some(previous) {
+        if self.allocator_index() != Some(index)
+            || self.entries[index].registration() != Some(previous)
+        {
             return None;
         }
         let epoch = self.eviction_epoch.checked_add(1)?;
@@ -161,12 +200,12 @@ impl RegistrationDirectory {
             return None;
         }
         let entry = self.entries.get_mut(index)?;
-        let generation = entry.map_or(Some(1), |prior| prior.generation.checked_add(1))?;
+        let generation = entry.generation.checked_add(1)?;
         let registration = Registration {
             request,
             generation,
         };
-        *entry = Some(registration);
+        entry.replace(registration);
         Some(registration)
     }
 
@@ -179,7 +218,7 @@ impl RegistrationDirectory {
         self.mode == Mode::AllocatorReloadable
             && self.resident == 0
             && self.eviction_epoch == epoch
-            && self.entries.get(index) == Some(&Some(registration))
+            && self.entries.get(index).and_then(Slot::registration) == Some(registration)
     }
     pub(super) fn publish_load(&mut self, index: usize) {
         // Caller validates the exact claim and all content before copying.
@@ -202,18 +241,16 @@ impl RegistrationDirectory {
                 && frames[1..].iter().all(|frame| frame.registration.is_none())
                 && self.resident.count_ones() <= 1
                 && (self.resident == 0 || self.resident.trailing_zeros() < frames.len() as u32)
-                && self
-                    .entries
-                    .iter()
-                    .enumerate()
-                    .all(|(index, entry)| match entry {
+                && self.entries.iter().enumerate().all(|(index, slot)| {
+                    match slot.registration() {
                         Some(entry) => {
                             index < frames.len()
                                 && entry.generation != 0
                                 && entry.request == initial.request
                         }
-                        None => self.resident & (1u64 << index) == 0,
-                    });
+                        None => slot.generation == 0 && self.resident & (1u64 << index) == 0,
+                    }
+                });
         }
         if self.closed_index.is_none() && self.published().is_some() {
             return false;
@@ -221,7 +258,7 @@ impl RegistrationDirectory {
         if let Some(index) = self.closed_index {
             if index != 1
                 || frames.len() != 2
-                || self.entries[index].is_some()
+                || self.entries[index].generation != 1
                 || frames[index].registration.is_some()
             {
                 return false;
@@ -244,19 +281,126 @@ impl RegistrationDirectory {
                 }
             }
         }
-        self.entries.iter().enumerate().all(|(index, entry)| {
+        self.entries.iter().enumerate().all(|(index, slot)| {
             if self.closed_index == Some(index) {
-                return entry.is_none();
+                return true;
             }
-            match (entry, frames.get(index)) {
+            match (slot.registration(), frames.get(index)) {
                 (Some(entry), Some(_)) => {
                     (entry.generation == 1 || self.mode == Mode::AllocatorReloadable)
-                        && self.resolve(frames, index) == Some(*entry)
+                        && self.resolve(frames, index) == Some(entry)
                 }
-                (None, Some(frame)) => frame.registration.is_none(),
-                (None, None) => true,
+                (None, Some(frame)) => slot.generation == 0 && frame.registration.is_none(),
+                (None, None) => slot.generation == 0,
                 (Some(_), None) => false,
             }
         })
+    }
+}
+
+pub(super) fn fits() -> bool {
+    use std::mem::size_of;
+    size_of::<Slot>() <= size_of::<Option<Registration>>() + 8
+        && size_of::<RegistrationDirectory>() <= MAX_FRAMES * size_of::<Slot>() + 48
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::storage::page_io::test_support::expected;
+
+    fn request(page_no: u64) -> TargetRequest {
+        let mut identity = expected();
+        identity.page.page_no = page_no;
+        TargetRequest {
+            identity,
+            kind: PageKind::RowLeaf,
+            level: 0,
+        }
+    }
+
+    #[test]
+    fn slot_wrong_generation_does_not_publish() {
+        let mut slot = Slot::empty();
+        let target = request(1);
+        for generation in [0, 1, u64::MAX] {
+            assert!(!slot.publish(Registration {
+                request: target,
+                generation
+            }));
+            assert!(slot.registration().is_none());
+        }
+        slot.generation = 7;
+        assert!(!slot.publish(Registration {
+            request: target,
+            generation: 6
+        }));
+        assert!(slot.registration().is_none());
+        let current = Registration {
+            request: target,
+            generation: 7,
+        };
+        assert!(slot.publish(current));
+        assert!(!slot.publish(Registration {
+            request: request(2),
+            ..current
+        }));
+        assert_eq!(slot.registration(), Some(current));
+    }
+
+    #[test]
+    fn slot_concurrent_publication_has_one_exact_winner() {
+        let mut slot = Slot::empty();
+        slot.generation = 9;
+        let barrier = std::sync::Barrier::new(3);
+        let winners = std::thread::scope(|scope| {
+            let shared = &slot;
+            let barrier = &barrier;
+            let first = scope.spawn(move || {
+                barrier.wait();
+                shared.publish(Registration {
+                    request: request(1),
+                    generation: 9,
+                })
+            });
+            let second = scope.spawn(move || {
+                barrier.wait();
+                shared.publish(Registration {
+                    request: request(2),
+                    generation: 9,
+                })
+            });
+            barrier.wait();
+            (first.join().unwrap(), second.join().unwrap())
+        });
+        assert_ne!(winners.0, winners.1);
+        let winner = slot.registration().unwrap();
+        assert_eq!(winner.request, request(if winners.0 { 1 } else { 2 }));
+        assert!(slot.publish(winner));
+        assert!(!slot.publish(Registration {
+            generation: 10,
+            ..winner
+        }));
+    }
+
+    #[test]
+    fn slot_exclusive_replacement_keeps_cells_independent() {
+        let mut slots = [const { Slot::empty() }; 2];
+        let old = Registration {
+            request: request(1),
+            generation: 3,
+        };
+        slots[0].replace(old);
+        assert_eq!(slots[0].registration(), Some(old));
+        assert_eq!(slots[1].generation, 0);
+        assert!(slots[1].registration().is_none());
+        let next = Registration {
+            request: request(2),
+            generation: 4,
+        };
+        slots[0].replace(next);
+        assert_eq!(slots[0].registration(), Some(next));
+        assert!(!slots[0].publish(old));
+        assert!(slots[1].registration().is_none());
     }
 }

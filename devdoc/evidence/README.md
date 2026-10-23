@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-23 [DEV3 일반 page 등록 코어 P1](dev3-operational-registration-20261023.md) · [source 색인](dev3-operational-registration-20261023.json): 기존 directory를 슬롯별 publication으로 전환. static5·runtime20·Linux2 PASS, OCR delegate 기반 독립 D1 수용·P2/P3 미공급.
+
 - [DEV3 allocator 실제 퇴출·재적재](dev3-allocator-eviction-20261023.md) · [source별 실행 색인](dev3-allocator-eviction-20261023.json): 신규18·관련7·static5·native1·compiler3+control1과 원 FAIL·수정 기록. 일반 pool/DEV3/S5 미완료.
 
 2026-10-23 [DEV3 진행 현황 후속 리뷰](dev3-progress-review-20261023.md): allocator reload commit의 OCR 대상19파일과 snapshot 수정4파일을 정적 검토했다. 진행 설명·단계 JSON·색인의 누락을 수정하고 새 제품 결함0건·제품 시험 NOT_RUN 및 검토 한계를 기록한다.

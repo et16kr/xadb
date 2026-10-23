@@ -530,7 +530,7 @@ fn status_init_cf17_actual_resource_and_capacity_bounds() {
         let control = size_of::<StatusControl<'_, '_, '_>>();
         let control_delta = control.saturating_sub(dirty_allocation::baseline_control_bytes());
         for (name, actual, limit) in [
-            ("pool_delta", pool_delta, 512),
+            ("pool_delta", pool_delta, dirty_frame::INIT_POOL_DELTA_LIMIT),
             ("base_delta", dirty_allocation::base_delta(), 64),
             ("control_delta", control_delta, 1536),
             ("plans", operation::plan_bytes(), 4096),
@@ -594,7 +594,21 @@ fn status_init_cf17_actual_resource_and_capacity_bounds() {
             assert!(actual <= limit, "{name}: {actual}>{limit}");
         }
         let limits = [
-            512, 256, 256, 512, 128, 256, 256, 640, 640, 640, 640, 1024, 1024, 64, 512,
+            dirty_frame::INIT_POOL_DELTA_LIMIT,
+            256,
+            256,
+            512,
+            128,
+            256,
+            256,
+            640,
+            640,
+            640,
+            640,
+            1024,
+            1024,
+            64,
+            512,
         ];
         for ((name, size), limit) in frame_init::init_layout().into_iter().zip(limits) {
             println!("XADB_STATUS_INIT_NATIVE_LAYOUT {name} {size} {limit}");

@@ -39,6 +39,9 @@ mod init;
 pub(in crate::storage) use init::{InitClaimKey, InitWriteTargets};
 
 pub(crate) const MAX_FRAMES: usize = 64;
+/// Prior closed-INIT metadata allowance plus at most eight bytes per slot for
+/// shared publication. Component and whole-operation limits remain unchanged.
+pub(in crate::storage) const INIT_POOL_DELTA_LIMIT: usize = 512 + MAX_FRAMES * 8;
 /// Source-value scratch for Copy registration snapshots and checked target views.
 pub(in crate::storage) const CALL_BYTES: usize = 3072;
 pub(crate) const MAX_TARGETS: usize = 2;
@@ -1000,6 +1003,7 @@ pub(in crate::storage) fn fits() -> bool {
         && size_of::<WalRequirement<'_>>() <= 128
         && size_of::<Option<WalRequirement<'_>>>() <= 128
         && size_of::<DirtyRegistry<'_>>() <= 16384
+        && registration::fits()
         && flush::fits()
         && init::fits()
 }

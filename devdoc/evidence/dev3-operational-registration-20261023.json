@@ -1,0 +1,282 @@
+{
+  "unit": "D3-OPERATIONAL-PAGES-001-P1",
+  "date": "2026-10-23",
+  "base_commit": "22e77248fe991fac1c7498434651990d1e1458dc",
+  "status": "LOCAL_VERIFIED_D1_ACCEPTED_P1_ONLY",
+  "source_sha256": "ac56a8e533f3d0db8c2d42b484780392317d0d013188000939dd30532c6fc87e",
+  "artifact_root": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023",
+  "counts": {
+    "static": 5,
+    "new_runtime": 3,
+    "modified_existing_runtime": 2,
+    "affected_existing_runtime": 15,
+    "native": 2
+  },
+  "original_failures": [
+    "r0 compile failure: test hook referenced removed global publication field"
+  ],
+  "not_run": [
+    "P2/P3 integration",
+    "S5",
+    "unchanged lower wrappers",
+    "compiler fixtures: public borrow/API unchanged",
+    "document verifier: push only"
+  ],
+  "full_dev3_complete": false,
+  "receipts": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r0/source.json",
+      "sha256": "eb6004ba69e4926efe0e2ad7a29c286e6e50f0c7fe83b206b45efff1f64a38de"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r0/build.jsonl",
+      "sha256": "6ffba3fa36cbcaf7ad66730048bd4a7cceaa223f012c3f65cf28d7f6b851b0de"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r0/build.stderr",
+      "sha256": "b48e9333e77260fbb6ce4de7d5f5b5867e373ecc8a9539e6a16d5885101537b1"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/source.json",
+      "sha256": "ef3bb7c92015404729db35f7d3bca4cf908e825a23d632f481fad0fd3308deab"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/build.jsonl",
+      "sha256": "8fc70d9d5875065c645ff77a52afd3e1d32fd5b59696b847ac61143f1d93267a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/build.stderr",
+      "sha256": "ffae7fd6db6b5f1bea59324b4de464d1f860d6dbc6a23c0cdcbb50bf72d36fcd"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/static-selection.json",
+      "sha256": "421c33e2075af14edba89f48cbe4eb0709c4eb0ce8d1c0301f02f47f418dd76d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/static-results.json",
+      "sha256": "0c04d824626a2147a491a973d48bd8a7f209171a6a821105b8d61c1248397fdf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-selection-draft-not-run.json",
+      "sha256": "b23c876d9078b69f16c22ba02f25ef00154122579b47311bdf8a3d0649c38ef8"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-selection.json",
+      "sha256": "b4c5f2c1f563d5ae44a7aae85a49e82a26c119ab05a792ff1bffdff489dbe7fe"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-results.json",
+      "sha256": "dbd1f351c0fd9dd22dc82a93d565f7c624f46d7296fcd9d02898bc435f04242c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/clippy.log",
+      "sha256": "bdc16763a16f9e27165f6e836f7a342533f062f44124eb6df91c74fc64044b07"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/registration_layout_receipt.log",
+      "sha256": "0f50ac887ef5d075c74824848062ddf48d372afdf9b7915f263ac271ff9144e3"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/reload_layout_gate.log",
+      "sha256": "628a42d3ccb0670eae94496051d08b17cb033f7451283ac9a14eed180a6bc181"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/dirty_shared_resource_after_closed_init.log",
+      "sha256": "14a171739923b198fc1acd99137de3f9482e308bd5ce4d9916ce4cfd0ccb8630"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/status_init_cf17_actual_resource_and_capacity_bounds.log",
+      "sha256": "8fa0480327d553bb84ec18454fb1478b82c8c3e1c43328dc161be248fc4c45cc"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/status_flush_rf.log",
+      "sha256": "c37fdc2e13212fb8ca1096ed8a8f8fa94034e5a742381b099dbf7ee15adcab44"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-01-slot_wrong_generation_does_not_publish.log",
+      "sha256": "3cc5bee90d81a85928d6714f23abe22402508dd6c5b7543dd5ea525b4fd3080a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-02-slot_concurrent_publication_has_one_exact_winner.log",
+      "sha256": "a120288eb57e62b4cfc36cf950f825ed79b1d230dbd3cbba5c5cad60552e09be"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-03-slot_exclusive_replacement_keeps_cells_independent.log",
+      "sha256": "49963bd0bcb016defdd49d488697ef368be4bcede47647e783dfb2fdf04442ad"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-04-registration_reverse_rank_tokens_and_copy_requests.log",
+      "sha256": "efc00c9b8c886f819a5fa4689e473e6412efe54313cc47c52e26721c363088dc"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-05-registration_pin_set_rejection_is_atomic.log",
+      "sha256": "a0927bbc3bfb2444c6324c282dce0236983bcd17175fe4a7bf0d6f429371e929"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-06-registration_stale_second_release_preserves_every_count.log",
+      "sha256": "5f9f8ae4b05c99fa11f5fafc3d44d497d36c48b511137b953414191dc3779ebf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-07-registration_directory_rejects_address_aliases_and_bootstrap_generation.log",
+      "sha256": "7cb04320a3f8d7a8899fc795785e739486a728ffd99a2dc7c922b99d04f0fb9a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-08-registration_closed_publication_is_single_and_checked.log",
+      "sha256": "72fe45dad803e4f7c6ce1b56a62a38a4a08ed4ec9bba26e6c1c74bd514ce5401"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-09-registration_copy_request_rejects_invalid_fixed_publication.log",
+      "sha256": "a86719b1dea3c3bc217d1e23331d9e5fff9e1f322bd19dc7dc62b2fe6f54ff0e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-10-eviction_moves_authority_and_writer_flush_follow_identity.log",
+      "sha256": "c20f6bf38ecd5cba171fc78d348899b4bca1e6123582751bc2a48e9525f9d3e3"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-11-eviction_read_failures_burn_generation_preserve_prior_and_retry.log",
+      "sha256": "26e572c69b60059cab2750ef7e13befaf1cd58b5214285ae3f2981bd53a6dbaa"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-12-eviction_stale_load_claim_cannot_publish.log",
+      "sha256": "adb46b71639d0b2fbde28ce3828ef2f307e9e7fab0e454136c75ddeb376dbf3d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-13-eviction_last_slot_bit_and_reload_are_valid.log",
+      "sha256": "51460dec789879dc56e0c667fed228ed670c78c78bb6c5e9fe3e5b7bd27b5371"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-14-eviction_zero_lsn_and_source_max_can_load_fresh_slot.log",
+      "sha256": "10b84ff1d1952be01795263e2ac3c160441fbf6aadc8516ccdfe0415725c3802"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-15-reload_preserves_active_reservation_and_resumes_cancel.log",
+      "sha256": "83a11775e53f08d08e68be2aaf25ebb32a453524070a95b57a4b5a5db97baba6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-16-reload_generation_exhaustion_precedes_source_reads.log",
+      "sha256": "2a917f5d653a4a1522dd935bb56542ac2cee219f103363547fb92fdb16a7558b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-17-status_init_cf06_stale_and_closed_corruption.log",
+      "sha256": "12913b3182ca540ea260222e232bf61e8ef2fa0108420e6d34c55e5ce5fe1e3b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-18-status_init_cf12_publication_and_concurrent_reader.log",
+      "sha256": "a51c55ff243115bbca61d7b2ef02a8fff80dfb081b5753538d2a9be409262344"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-19-status_init_cf17_padded_readback_admission.log",
+      "sha256": "7743c8a6fdd4e8b81d7fe7d87ba7c79735571661e73913e1112a36f85f53b112"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-20-status_flush_rf.log",
+      "sha256": "00180467da293c2caff7a58a5d738a245cbe3e34a1b2e15937ea0d0372ff015f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-21-worker_allocator_eviction_native.log",
+      "sha256": "9339fe26c8cd0fb3ab59c94efe9bb78488d26c93bfd3d001a04cebdaad6a600c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/runtime-22-worker_status_home_flush_native.log",
+      "sha256": "8312696af2f7f6400d5db0f9d2f89105ee828a405e3c14b23c71c474e2cb6f56"
+    }
+  ],
+  "static_tools": {
+    "engine_all_targets_all_features_clippy": "PASS",
+    "workspace_fmt": "PASS"
+  },
+  "intervening_unrelated_commit": "453ac1d",
+  "binary": {
+    "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/r1/engine-tests",
+    "sha256": "76ef9141b5d64f699d54c7cc1170914311b29759bc66431295c70da782265bae"
+  },
+  "independent_review": {
+    "decision": "ACCEPTED_P1_ONLY",
+    "reviewer": "/root/pool_design_review",
+    "skill": "/home/et16/.agents/skills/open-code-review-delegate/SKILL.md",
+    "coverage_summary": {
+      "preview_total_files": 21,
+      "preview_excluded_files": 10,
+      "total_files": 11,
+      "reviewed_files": 11,
+      "skipped_files": 0,
+      "coverage_rate": 100.0,
+      "supplementally_reviewed_markdown_files": 6,
+      "explicitly_out_of_scope_files": 4
+    },
+    "unresolved_findings": 0,
+    "reviewed_product_test_files_match_source": 8,
+    "verified_execution_receipts": 40,
+    "final_metadata_sync_only": true,
+    "artifacts": [
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/final-d1.json",
+        "sha256": "2a120205b07c0fee3f7d8fc63f1da53c9830a472a36ddd7c01719d765e3a61c9"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/final-d1.md",
+        "sha256": "3dee9aa7e74642f84f0018cf083fd30af3b818e91d802af646d53e3a52e19ad5"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/ocr-preview.stdout",
+        "sha256": "bc3b70d0849924574eacab57fad165841665683c82cf04c80bb0e46153c982b6"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/ocr-preview.stderr",
+        "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/ocr-preview.json",
+        "sha256": "bc3b70d0849924574eacab57fad165841665683c82cf04c80bb0e46153c982b6"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/ocr-preview-final.stdout",
+        "sha256": "d7517b8a64a9ce41ab8fb01fadf70435fdeb2140c8b2cc349069a7de099fc59d"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/ocr-preview-final.stderr",
+        "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/ocr-preview-final-v2.stdout",
+        "sha256": "67e6b9ac9bd841954924a2005c59b99564826110011ca37b8a62910c08688e4f"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/ocr-preview-final-v2.stderr",
+        "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/ocr-preview-final-v2.json",
+        "sha256": "67e6b9ac9bd841954924a2005c59b99564826110011ca37b8a62910c08688e4f"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/ocr-rules.stdout",
+        "sha256": "0de0dfe2390b9ec366cb5a377df4b6e84a2ab2da71b31ec83065fb41c3d75b73"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/ocr-rules.stderr",
+        "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/ocr-rules.json",
+        "sha256": "a4ece3d8e99e930d5dc74fb2d3c0d2732eacecb4e499c4827f8759e7cc254c8b"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/commands.json",
+        "sha256": "f1dcd265b308b8e9c23ab63e63913ede1b5f4a6d3c877b943aecbe89c8f74dc9"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/commands-final.json",
+        "sha256": "e49f9e712f7f3235f2863ca7ea4a27b102605908fe13c191a9989bbb137d4e38"
+      },
+      {
+        "path": "/home/et16/work/xadb/artifacts/dev3/operational-registration-20261023/review/source-evidence-audit.json",
+        "sha256": "200f0ec478dd86049305be7381be2c6ab1ad53a3f8692e34690f6826acaf87cd"
+      }
+    ]
+  }
+}

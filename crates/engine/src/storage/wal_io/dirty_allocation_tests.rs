@@ -1680,7 +1680,7 @@ fn type_ceilings() {
     let cold =
         retained + 90112 + (5 * pool_delta + 2048).max(3 * pool_delta + 8 * control_delta + 2048);
     assert_eq!((active, cold), super::super::shared_dirty_peaks());
-    assert!(pool_delta <= 512 && control_delta <= 64);
+    assert!(pool_delta <= dirty_frame::INIT_POOL_DELTA_LIMIT && control_delta <= 64);
     assert!(active <= 196608 && cold <= 196608);
     println!(
         "DIRTY_DEEP_SOURCE owner={owner} control={control} plans={} temporaries={} generic=3072 moved=2048 total={deep} limit=65536",

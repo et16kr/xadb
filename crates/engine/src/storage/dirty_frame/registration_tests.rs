@@ -64,7 +64,9 @@ fn registration_layout_receipt() {
     println!(
         "REGISTRATION_LAYOUT registration={registration} directory={directory} prior_directory={prior_directory} pin={pin} read={read} write={write} read_result={read_result} generic={scratch} ceiling={CALL_BYTES}"
     );
-    assert!(directory <= prior_directory + 32);
+    // Per-slot OnceLock adds at most eight bytes per entry; the former global
+    // publication cell is removed. Keep independent whole-operation ceilings.
+    assert!(directory <= prior_directory + MAX_FRAMES * 8);
     assert!(registration <= 112 && scratch <= CALL_BYTES);
     assert!(
         2 * read_result + read + pin + registration + size_of::<DirtyObservation>() + 64
@@ -275,9 +277,10 @@ fn registration_copy_request_rejects_invalid_fixed_publication() {
     status.identity.owner = ObjectId::new(2).unwrap();
     status.identity.owner_generation = Generation::new(1).unwrap();
     status.identity.page.incarnation = Generation::new(2).unwrap();
+    status.identity.owner = ObjectId::new(3).unwrap();
     assert!(pool.directory.publish(Registration {
         request: status,
-        generation: 2
+        generation: 1
     }));
     invariant(pool.target_request(1));
     assert!(fence.is_fenced());
