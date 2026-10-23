@@ -450,7 +450,7 @@ fn fits<W: WriterNamespace>() -> bool {
             + control
             + budget::PLANS
             + budget::TEMPORARIES
-            + 2048
+            + dirty_frame::CALL_BYTES
             + 2048
             + wal::DURABILITY_CALL_BYTES
             <= 65536
@@ -463,7 +463,7 @@ pub(super) fn shared_dirty_peaks() -> (usize, usize) {
     let control = dirty_allocation::base_delta();
     let retained = 60672 + pool + control;
     (
-        retained + 34 * 2048,
+        retained + 34 * dirty_frame::CALL_BYTES,
         retained + 90112 + (5 * pool + 2048).max(3 * pool + 8 * control + 2048),
     )
 }
@@ -513,7 +513,7 @@ fn dirty_layout_diagnostic() {
         ),
         (
             "writer_aggregate",
-            owner + control + budget::PLANS + budget::TEMPORARIES + 2048 + 2048,
+            owner + control + budget::PLANS + budget::TEMPORARIES + dirty_frame::CALL_BYTES + 2048,
         ),
     ] {
         println!("DIRTY_LAYOUT_SCALAR {name} {value}");

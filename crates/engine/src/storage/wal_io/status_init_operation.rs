@@ -921,7 +921,10 @@ pub(super) fn reader_bytes() -> usize {
         + 128
         + 128
         + 128;
-    checksum.max(membership).max(free_cell)
+    // The caller retains both expected identities across decode and the two
+    // checked slot-generation tokens in its read view. They are additional to
+    // the callee inputs and nested decoder copies counted above.
+    checksum.max(membership).max(free_cell) + 2 * size_of::<PageIdentity>() + 2 * size_of::<u64>()
 }
 pub(super) fn fits() -> bool {
     size_of::<InitPlan<'static, 'static>>() <= 512
@@ -945,7 +948,7 @@ pub(super) fn fits() -> bool {
             + 4 * size_of::<crate::api::Namespace>()
             + 3 * size_of::<crate::storage::control::ProfileSpec>()
             <= 512
-        && reader_bytes() <= 3584
+        && reader_bytes() <= 3648
 }
 
 #[cfg(test)]

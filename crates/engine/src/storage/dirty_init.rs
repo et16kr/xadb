@@ -35,7 +35,7 @@ impl InitClaimRecord {
     }
 
     fn valid(&self, pool: &SharedPool<'_, '_, '_, '_>) -> bool {
-        pool.closed_index == Some(1)
+        pool.directory.closed_index() == Some(1)
             && pool.frames.len() == 2
             && pool.resolve_registration(0).is_some_and(|registered| {
                 registered.request == self.allocator && registered.generation == 1
@@ -59,7 +59,7 @@ impl InitClaimRecord {
             && self.birth.0 != 0
             && self.ordinal == 0
             && self.allocator.rank() < self.payload.rank()
-            && pool.publication.get().is_none_or(|published| {
+            && pool.directory.published().is_none_or(|published| {
                 published.request == self.payload && published.generation == 1
             })
     }
@@ -150,51 +150,8 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             }
         }
         let mut pool = Self::new(core, fence, binding, frames)?;
-        pool.closed_index = Some(1);
+        pool.directory.close_status_slot();
         Ok(pool)
-    }
-
-    pub(super) fn registrations_valid(&self) -> bool {
-        if self.closed_index.is_none() && self.publication.get().is_some() {
-            return false;
-        }
-        if let Some(index) = self.closed_index {
-            if index != 1
-                || self.frames.len() != 2
-                || self.directory[index].is_some()
-                || self.frames[index].registration.is_some()
-            {
-                return false;
-            }
-            if let Some(published) = self.publication.get() {
-                let Some(allocator) = self.resolve_registration(0) else {
-                    return false;
-                };
-                if published.generation != 1
-                    || published.request.kind != PageKind::TransactionStatus
-                    || published.request.level != 0
-                    || published.request.identity.database != allocator.request.identity.database
-                    || published.request.identity.page.file != allocator.request.identity.page.file
-                    || published.request.identity.page.page_no != 1
-                    || published.request.identity.page.incarnation.get() < 2
-                    || published.request.identity.owner.get() != 2
-                    || published.request.identity.owner_generation.get() != 1
-                {
-                    return false;
-                }
-            }
-        }
-        self.directory.iter().enumerate().all(|(index, entry)| {
-            if self.closed_index == Some(index) {
-                return entry.is_none();
-            }
-            match (entry, self.frames.get(index)) {
-                (Some(_), Some(_)) => self.resolve_registration(index).is_some(),
-                (None, Some(frame)) => frame.registration.is_none(),
-                (None, None) => true,
-                (Some(_), None) => false,
-            }
-        })
     }
 
     pub(super) fn init_pins_valid(&self, pins: &PinAccounting) -> bool {
@@ -210,7 +167,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
     /// Unpublished lookup must remain lock-free even while C5 holds DPT/content.
     pub(in crate::storage) fn initialized_request(&self) -> Result<Option<TargetRequest>> {
         self.health()?;
-        if self.closed_index != Some(1) || !self.registrations_valid() {
+        if self.directory.closed_index() != Some(1) || !self.registrations_valid() {
             return Err(self.fatal(Cause::Invariant));
         }
         Ok(self
@@ -524,7 +481,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> InitWriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
             || key.identity != pins.identity
             || !requirement.uses_fence(pool.fence)
             || !pool.dpt_valid(registry)
-            || pool.publication.get().is_some()
+            || pool.directory.published().is_some()
             || before.identity != pins.identity.allocator.identity
             || before.generation != 1
             || lsn.0 <= before.page_lsn.0
@@ -720,7 +677,10 @@ impl PreparedInitSet<'_, '_, '_, '_, '_, '_, '_> {
         #[cfg(test)]
         test_support::hit(pool, test_support::InitPoint::RegistryInstalled);
         // Sole initializer, unpublished prechecked; fixed closure cannot fail.
-        pool.publication.get_or_init(|| self.registration);
+        if !pool.directory.publish(self.registration) {
+            pool.fatal(Cause::Invariant);
+            return;
+        }
         self.control.mark_published();
         #[cfg(test)]
         test_support::hit(pool, test_support::InitPoint::Published);
@@ -890,7 +850,7 @@ pub(in crate::storage) mod test_support {
         };
         let pins = pool.pins.lock().unwrap_or_else(|error| error.into_inner());
         InitSnapshot {
-            published: pool.publication.get().map(|value| value.request),
+            published: pool.directory.published().map(|value| value.request),
             claim_payload: pins.init_claim.map(|slot| slot.identity.payload),
             claim_birth: pins.init_claim.map(|slot| slot.identity.birth),
             initializer_pins_held: pins
@@ -935,7 +895,8 @@ pub(in crate::storage) mod test_support {
         request: TargetRequest,
         generation: u64,
     ) -> bool {
-        pool.publication
+        pool.directory
+            .publication
             .set(Registration {
                 request,
                 generation,
@@ -1012,7 +973,7 @@ pub(in crate::storage) mod test_support {
             initializer_pins_held: pins
                 .init_claim
                 .is_some_and(|slot| slot.initializer_pins_held),
-            published: pool.publication.get().map(|entry| entry.request),
+            published: pool.directory.published().map(|entry| entry.request),
         }
     }
     pub(in crate::storage) fn corrupt_init_claim(pool: &SharedPool<'_, '_, '_, '_>, variant: u8) {

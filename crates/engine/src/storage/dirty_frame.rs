@@ -15,11 +15,16 @@ use std::{
     marker::PhantomData,
     rc::Rc,
     sync::{
-        Mutex, MutexGuard, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockError,
+        Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockError,
         atomic::AtomicU8,
     },
 };
 use xadb_foundation::error::Effect;
+
+mod registration;
+#[cfg(test)]
+mod registration_tests;
+use registration::RegistrationDirectory;
 
 #[path = "dirty_flush.rs"]
 mod flush;
@@ -29,6 +34,8 @@ mod init;
 pub(in crate::storage) use init::{InitClaimKey, InitWriteTargets};
 
 pub(crate) const MAX_FRAMES: usize = 64;
+/// Source-value scratch for Copy registration snapshots and checked target views.
+pub(in crate::storage) const CALL_BYTES: usize = 3072;
 pub(crate) const MAX_TARGETS: usize = 2;
 const MAX_FRAME_PINS: u16 = 34;
 const MAX_PINS: u16 = 68;
@@ -242,9 +249,7 @@ struct DirtyRegistry<'s> {
 /// Fixed directory and leaf registries; the exact core cannot be caller-selected.
 pub(crate) struct SharedPool<'c, 's, 'p, 'd> {
     frames: &'p [DirtyFrame<'d>],
-    directory: [Option<Registration>; MAX_FRAMES],
-    closed_index: Option<usize>,
-    publication: OnceLock<Registration>,
+    directory: RegistrationDirectory,
     pins: Mutex<PinAccounting>,
     dpt: Mutex<DirtyRegistry<'s>>,
     core: &'c PageConcurrency<'s>,
@@ -279,31 +284,16 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         if frames.is_empty() || frames.len() > MAX_FRAMES {
             return Err(unchanged(Cause::Shape));
         }
-        let mut directory = [None; MAX_FRAMES];
-        for (index, frame) in frames.iter().enumerate() {
-            if let Some(registration) = frame.registration {
-                if registration.generation != 1
-                    || directory[..index]
-                        .iter()
-                        .flatten()
-                        .any(|prior: &Registration| {
-                            prior.request.same_address(&registration.request)
-                        })
-                {
-                    fence.fence();
-                    return Err(DirtyError {
-                        cause: Cause::Invariant,
-                        effect: Effect::CallerMustResolve,
-                    });
-                }
-                directory[index] = Some(registration);
+        let directory = RegistrationDirectory::from_bootstrap(frames).ok_or_else(|| {
+            fence.fence();
+            DirtyError {
+                cause: Cause::Invariant,
+                effect: Effect::CallerMustResolve,
             }
-        }
+        })?;
         Ok(Self {
             frames,
             directory,
-            closed_index: None,
-            publication: OnceLock::new(),
             pins: Mutex::new(PinAccounting {
                 counts: [0; MAX_FRAMES],
                 total: 0,
@@ -369,10 +359,9 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         let mut sum = 0u16;
         for (index, count) in pins.counts.iter().enumerate() {
             let initialized = self.resolve_registration(index).is_some();
-            let initializer_pin = pins
-                .init_claim
-                .as_ref()
-                .is_some_and(|slot| slot.initializer_pins_held && self.closed_index == Some(index));
+            let initializer_pin = pins.init_claim.as_ref().is_some_and(|slot| {
+                slot.initializer_pins_held && self.directory.closed_index() == Some(index)
+            });
             if *count > MAX_FRAME_PINS || (!initialized && *count != u16::from(initializer_pin)) {
                 return false;
             }
@@ -424,28 +413,24 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         }
         Ok(dpt)
     }
-    /// Non-locking, validated resolution of the two immutable registration sources.
-    fn resolve_registration(&self, index: usize) -> Option<&Registration> {
-        let frame = self.frames.get(index)?;
-        let original = self.directory.get(index)?.as_ref();
-        if self.closed_index == Some(index) {
-            if original.is_some() || frame.registration.is_some() {
-                return None;
-            }
-            self.publication.get().filter(|value| value.generation == 1)
-        } else {
-            original
-                .filter(|value| value.generation == 1 && frame.registration.as_ref() == Some(value))
-        }
+    /// Copy snapshot only; callers need a checked pin for content authority.
+    fn resolve_registration(&self, index: usize) -> Option<Registration> {
+        self.directory.resolve(self.frames, index)
     }
-    fn registration(&self, index: usize) -> Result<&Registration> {
+    fn registrations_valid(&self) -> bool {
+        self.directory.valid(self.frames)
+    }
+    fn registration(&self, index: usize) -> Result<Registration> {
         self.resolve_registration(index)
             .ok_or_else(|| self.fatal(Cause::Invariant))
     }
-    /// Immutable published lookup; this grants no pin or content authority.
-    pub(in crate::storage) fn target_request(&self, index: usize) -> Result<&TargetRequest> {
+    /// A copied request grants no pin, content or mutation authority.
+    pub(in crate::storage) fn target_request(&self, index: usize) -> Result<TargetRequest> {
         self.health()?;
-        Ok(&self.registration(index)?.request)
+        if !self.registrations_valid() {
+            return Err(self.fatal(Cause::Invariant));
+        }
+        Ok(self.registration(index)?.request)
     }
     fn stamp(&self, index: usize, content: &FrameContent<'_>) -> Result<FrameStamp> {
         let registration = self.registration(index)?;
@@ -501,20 +486,21 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             return Err(unchanged(Cause::DuplicateTarget));
         }
         let mut indices = [0; MAX_TARGETS];
-        for (at, request) in requests.iter().enumerate() {
-            indices[at] = (0..self.frames.len())
-                .position(|index| {
-                    self.resolve_registration(index)
-                        .is_some_and(|entry| entry.request == *request)
-                })
-                .ok_or_else(|| unchanged(Cause::MissingTarget))?;
-            self.registration(indices[at])?;
-        }
-        if requests.len() == 2 && requests[0].rank() > requests[1].rank() {
-            indices.swap(0, 1);
-        }
+        let mut generations = [0; MAX_TARGETS];
         {
             let mut pins = self.entry_pins()?;
+            for (at, request) in requests.iter().enumerate() {
+                let (index, registration) = self
+                    .directory
+                    .lookup(self.frames, *request)
+                    .ok_or_else(|| unchanged(Cause::MissingTarget))?;
+                indices[at] = index;
+                generations[at] = registration.generation;
+            }
+            if requests.len() == 2 && requests[0].rank() > requests[1].rank() {
+                indices.swap(0, 1);
+                generations.swap(0, 1);
+            }
             if pins.total + requests.len() as u16 > MAX_PINS
                 || indices[..requests.len()]
                     .iter()
@@ -532,6 +518,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             pins: Some(PinSet {
                 pool: self,
                 indices,
+                generations,
                 len: requests.len(),
                 active: true,
                 _thread: PhantomData,
@@ -551,11 +538,26 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
 struct PinSet<'b, 'c, 's, 'p, 'd> {
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
     indices: [usize; MAX_TARGETS],
+    generations: [u64; MAX_TARGETS],
     len: usize,
     active: bool,
     _thread: PhantomData<Rc<()>>,
 }
 impl PinSet<'_, '_, '_, '_, '_> {
+    fn registration(&self, at: usize) -> Result<Registration> {
+        if at >= self.len {
+            return Err(unchanged(Cause::Shape));
+        }
+        if !self.pool.registrations_valid() {
+            return Err(self.pool.fatal(Cause::Invariant));
+        }
+        let expected = self.generations[at];
+        let actual = self.pool.registration(self.indices[at])?;
+        if expected == 0 || actual.generation != expected {
+            return Err(self.pool.fatal(Cause::Invariant));
+        }
+        Ok(actual)
+    }
     fn release(&mut self) -> Result<()> {
         if !self.active {
             return Ok(());
@@ -570,8 +572,8 @@ impl PinSet<'_, '_, '_, '_, '_> {
             if !self.pool.pins_valid(&pins) || !(1..=MAX_TARGETS).contains(&self.len) {
                 return Err(self.pool.fatal(Cause::Invariant));
             }
-            for index in &self.indices[..self.len] {
-                self.pool.registration(*index)?;
+            for (at, index) in self.indices[..self.len].iter().enumerate() {
+                self.registration(at)?;
                 if pins.counts[*index] == 0 {
                     return Err(self.pool.fatal(Cause::Invariant));
                 }
@@ -629,10 +631,17 @@ impl<'a, 'b, 'c, 's, 'p, 'd> PinnedTargets<'a, 'b, 'c, 's, 'p, 'd> {
                     return result.reject(failure);
                 }
             }
-            if let Err(error) = pool.health().and_then(|()| {
-                pool.pair(index, result.guards[at].as_ref().expect("acquired guard"))
-                    .map(|_| ())
-            }) {
+            if let Err(error) = result
+                .pins
+                .as_ref()
+                .expect("owned pins")
+                .registration(at)
+                .and_then(|_| pool.health())
+                .and_then(|()| {
+                    pool.pair(index, result.guards[at].as_ref().expect("acquired guard"))
+                        .map(|_| ())
+                })
+            {
                 return result.reject(error);
             }
         }
@@ -665,10 +674,17 @@ impl<'a, 'b, 'c, 's, 'p, 'd> PinnedTargets<'a, 'b, 'c, 's, 'p, 'd> {
                     return result.reject(failure);
                 }
             }
-            if let Err(error) = pool.health().and_then(|()| {
-                pool.pair(index, result.guards[at].as_ref().expect("acquired guard"))
-                    .map(|_| ())
-            }) {
+            if let Err(error) = result
+                .pins
+                .as_ref()
+                .expect("owned pins")
+                .registration(at)
+                .and_then(|_| pool.health())
+                .and_then(|()| {
+                    pool.pair(index, result.guards[at].as_ref().expect("acquired guard"))
+                        .map(|_| ())
+                })
+            {
                 return result.reject(error);
             }
         }
@@ -689,12 +705,13 @@ impl ReadTargets<'_, '_, '_, '_, '_, '_> {
     fn len(&self) -> usize {
         self.pins.as_ref().map_or(0, |pins| pins.len)
     }
-    pub(in crate::storage) fn target_request(&self, at: usize) -> Result<&TargetRequest> {
+    pub(in crate::storage) fn target_request(&self, at: usize) -> Result<TargetRequest> {
         let pins = self.pins.as_ref().expect("live read targets");
         if at >= pins.len {
             return Err(unchanged(Cause::Shape));
         }
-        pins.pool.target_request(pins.indices[at])
+        pins.pool.health()?;
+        Ok(pins.registration(at)?.request)
     }
     pub(crate) fn observe(&self, at: usize) -> Result<DirtyObservation> {
         let pins = self.pins.as_ref().expect("live read targets");
@@ -704,6 +721,7 @@ impl ReadTargets<'_, '_, '_, '_, '_, '_> {
             .get(at)
             .and_then(Option::as_ref)
             .ok_or_else(|| unchanged(Cause::Shape))?;
+        pins.registration(at)?;
         pins.pool.pair(pins.indices[at], guard)
     }
     pub(crate) fn bytes(&self, at: usize) -> Result<&[u8; PAGE_BYTES]> {
@@ -781,6 +799,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> WriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
             .get(at)
             .and_then(Option::as_ref)
             .ok_or_else(|| unchanged(Cause::Shape))?;
+        pins.registration(at)?;
         let actual = pins.pool.pair(pins.indices[at], guard)?.frame;
         if actual != *expected {
             return Err(unchanged(Cause::Stale));
@@ -807,7 +826,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> WriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
         if at >= pins.len {
             return Err(pins.pool.fatal(Cause::Invariant));
         }
-        let registration = pins.pool.registration(pins.indices[at])?;
+        let registration = pins.registration(at)?;
         if !permit.matches_core(pins.pool.core)
             || !permit.requirement().uses_fence(pins.pool.fence)
             || permit.identity() != registration.request.identity
@@ -966,7 +985,7 @@ pub(in crate::storage) fn fits() -> bool {
         && size_of::<Result<DirtyObservation>>() <= 192
         && size_of::<Result<FrameStamp>>() <= 112
         && size_of::<Option<DirtyEntry>>() <= 96
-        && size_of::<Result<&Registration>>() <= 32
+        && size_of::<Result<Registration>>() <= 128
         && size_of::<DirtyError>() <= 32
         && size_of::<Result<()>>() <= 32
         && size_of::<MutexGuard<'_, PinAccounting>>() <= 32
@@ -1097,7 +1116,7 @@ pub(crate) mod test_support {
             observation_result: size_of::<Result<DirtyObservation>>(),
             error: size_of::<DirtyError>(),
             unit_result: size_of::<Result<()>>(),
-            registration_result: size_of::<Result<&Registration>>(),
+            registration_result: size_of::<Result<Registration>>(),
             pin_guard: size_of::<MutexGuard<'_, PinAccounting>>(),
             pin_lock_result: size_of::<std::sync::LockResult<MutexGuard<'_, PinAccounting>>>(),
             read_guard: size_of::<RwLockReadGuard<'_, FrameContent<'_>>>(),
@@ -1197,7 +1216,7 @@ pub(crate) mod test_support {
             .content
             .read()
             .unwrap_or_else(|error| error.into_inner());
-        let registration = *pool.resolve_registration(index).unwrap();
+        let registration = pool.resolve_registration(index).unwrap();
         output.copy_from_slice(content.bytes);
         let entry = pool
             .dpt

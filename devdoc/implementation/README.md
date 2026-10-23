@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-23 [DEV3 고정 등록 코어·세대 pin](dev3-implementation.md#registration-core): 단일 등록 lookup·Copy 요청·pin 세대 검산의 [선택 증거](../evidence/dev3-registration-core-20261023.md)를 보존했다. 신규11·관련10·native1·compiler2+control1 및 source별 자원 회계·독립 D1 수용. 일반 pool·DEV3/S5는 미완료다.
+
 2026-10-23 [DEV3 현재 genesis의 실제 닫힌 복구](dev3-implementation.md#recovery-effects): 고정 두 슬롯 provisioning·source 안정화·historical Pending 수리·예약 한 번 인계·page별 REDO를 연결했다. [source별 검증](../evidence/dev3-recovery-effects-20261023.md)은 필수393의 완결 job386·실패 job 내 완료 단언7과 native31/95worker·compiler9+control1·checker30/변경1을 구별한다. 제한 단위 최종 독립 D1을 수용했으며 일반 복구/READY·전체 DEV3/S5는 미완료다.
 
 2026-10-22 [DEV3 현행 WAL prefix 분석](dev3-implementation.md#recovery-prefix): 실제 reserve/cancel·Status INIT의 canonical RAM 상태와 잔여 의무를 닫힌 owner에 재구성했다. [source별 검증](../evidence/dev3-recovery-prefix-20261022.md)은 새 unit231의 완료 단언(완결 job223·실패 job 내8), native31·compiler8+control1·checker15·변경 수신6을 구별한다. 제한 단위의 최종 독립 D1을 수용했으며 실제 Pending 수리·물리 REDO·전체 DEV3/S5는 남아 있다.

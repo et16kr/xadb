@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-23 [DEV3 고정 등록 코어·세대 pin](dev3-registration-core-20261023.md) · [source별 색인](dev3-registration-core-20261023.json): r6 신규11·관련10·native1/두batch·compiler2+control1과 r5/r6 정적 회계를 구별한다. 제한 단위 D2·제품 D1 수용이며 일반 pool·DEV3/S5는 미완료다.
+
 2026-10-23 [DEV3 현재 genesis의 실제 닫힌 복구 인수](dev3-recovery-effects-20261023.md) · [source별 실행 색인](dev3-recovery-effects-20261023.json): 필수393의 완결 job386·실패 job 내 완료 단언7과 native31/95worker·compiler9+control1·checker30/변경1 및 원 FAIL을 보존한다. 제한 단위 최종 D1 수용·일반 recovery/READY·전체 DEV3/S5 미완료다.
 
 2026-10-22 [DEV3 현행 WAL prefix 분석 인수](dev3-recovery-prefix-20261022.md) · [source별 색인](dev3-recovery-prefix-20261022.json): 새 unit231의 완결 job223·실패 job 내 완료 단언8을 구별하고 native31·compiler8+control1·checker15·변경 수신6 및 원 FAIL을 보존한다. 제한 단위 D1 수용·전체 DEV3/S5 미완료다.

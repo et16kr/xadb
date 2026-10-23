@@ -316,7 +316,7 @@ fn associated_capture() {
             let mut o = ok(core.try_owner(OwnerRole::DedicatedFlusher));
             let authority = ok(flusher.status_authority());
             let request = if index == 1 {
-                *ok(flusher.pool.target_request(0))
+                ok(flusher.pool.target_request(0))
             } else {
                 *authority.request()
             };

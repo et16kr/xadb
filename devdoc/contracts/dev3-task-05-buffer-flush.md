@@ -282,3 +282,31 @@ F05는 4/16/64MiB 각각에서 `charged + outstanding_reserved <= capacity`를 �
 이 수치/API·제어 절차는 문서 작성자가 임의로 채택하지 않는다. 기존 owner 계약과 조정하고 D2 독립 검토를 거쳐 leaf에 동결한다. source 관측으로 미동결 의미를 역으로 확정하지 않는다.
 
 완료는 3.05.1의 dirty 등록·수명, 3.05.2의 batch I/O, 3.05.3의 retirement·교체·진행을 각각 실제 변경 source와 독립 인수에 대응시켜 판정한다. 3.05.2의 home sync 성공을 retirement 완료로 표시하지 않으며, 3.05.3 완료도 repair/recrash·checkpoint·다중 객체 commit·전체 DEV3/S1 인수를 대신하지 않는다. 문서군의 D2 상태와 독립 검토 기록은 [공통 결정](dev3-task-designs.md#decision)이 소유한다.
+
+<a id="registration-core"></a>
+## 9. D3-REGISTRATION-001 — 고정 등록 코어와 세대 pin
+
+2026-10-23 · **D2 수용 / 기존 fixed pool의 선행 구현 / 일반 lifecycle 미공급**.
+기준 HEAD `4c1fa5b`, 시작 worktree clean. 계약·제품·통합은 `/root`, 작성자 외 설계·실행 gate·최종 D1 검토는 `/root/pool_design_review`(요청 모델 `gpt-6-astra`, high)다. [실행 증거](../evidence/dev3-registration-core-20261023.md)는 새 runtime11과 관련 소비10, source별 정적 회계·native/compiler를 구별한다.
+
+`dirty_frame/registration.rs`의 `RegistrationDirectory`가 기존64개 fixed entry·closed index·Status `OnceLock` publication의 유일한 lookup을 소유한다. `DirtyFrame.registration`은 초기 binder의 불변 provenance로 검산하며 별도 runtime 검색 경로가 아니다. 조회와 `target_request`는 Copy 값을 반환한다. fixed bootstrap·Status 공개의 generation1 제한과 caller alias의 `MissingTarget/Unchanged` 의미를 유지한다.
+
+pin은 pool borrow와 `(slot index, registration generation)`을 보유한다. 같은 slot/generation의 full request는 현재 owner 수명 내 불변이므로 이 쌍은 충돌 없는 정체성 token이다. exact full request lookup·token 기록·두 pin 증가는 기존 pin mutex 안에서 처리한다. 역순 입력의 index와 generation은 함께 정렬한다. read/write 획득·관측·요청 반환·permit 검산·retirement 뒤 finalize 획득은 token의 범위·nonzero generation·현재 등록 equality와 fixed directory 구조를 확인한다. release는 **모든 token 검산 뒤에만** count를 감소한다. stale 내부 token은 `Invariant/CallerMustResolve`와 공통 fence이며 기존 pin 소유를 성공 반환으로 지우지 않는다.
+
+새 mutex·형식·저장 owner·실제 I/O 순서·프레임/target 한도는 추가하지 않는다. content/DPT/pin의 기존 lock 순서를 유지하고 lookup 중 I/O·allocation·content latch 획득을 하지 않는다. INIT는 단독 writer의 미공개 precheck를 유지하며 공개 시 기존 값과의 equality도 확인한다. 예상과 다른 값이면 fence하고 성공 publication을 기록하지 않는다.
+
+### F05와 실행 전 변경
+
+full Registration 두 개를 pin에 상주시키는 대안은 Status 동시 reader 비용을 늘리므로 채택하지 않았다. compact token은 두-target PinSet당16bytes(세대2×8)만 추가한다. 실제 Directory4704bytes는 이전 entry/closed/publication 소계4704와 같고, PinSet56≤64·ReadTargets104≤256·WriteTargets128≤256이다. finalize의 기존192/256 ceiling도 유지한다.
+
+이 절은 [dirty stage 자원 계약](dev3-dirty-stage.md#registration-core-followup)의 reference lookup·일반 nested3072와 [Status INIT 자원 계약](dev3-status-init.md#registration-core-followup)의 J3648·해당 generic 항을 대체한다. 최초 수치·원 실행 결과는 원 source의 기록으로 보존한다.
+
+Copy `Result<Registration>`의 ceiling은32→128이다. 기존 carrier 회계2048의 registration6개를6×128로 대체하고 token/이동 여유64를 추가한2688을 **일반 nested 예약3072** 안에 둔다. 해당 예약은 원래 source-value 호출 chain의 몫이며 helper마다 중복 합산하지 않는다. allocator shared hot165472/cold154944≤196608, 구체 mock deep24824≤65536이다. move2048·constructor·hash 예약은 별도 기존 몫으로 유지한다.
+
+Status hash 호출 중 caller의 expected identity2개와 pin token16bytes를 기존 callee 입력/decoder 복사와 별도로 포함한다. J는3608이며 READ_CALL을3584→3648로 실행 전에 동결했다. dirty hot193600/cold157408≤196608, 전용 flush65536과 합계259136≤262144다. 단순 layout 출력에서 빠졌던 caller identity 회계는 r6에서 보완했으며 r5의3496은 당시 누락식의 원 관측으로만 보존한다. OS stack/RSS·일반 OOM·전체 engine F05를 인증하지 않는다.
+
+### 검토·선택·후속
+
+독립 검토는 full snapshot 상주 비용, caller identity 수명 누락, invalid fixed publication을 Copy 요청으로 반환하는 경로, 독립 read entry 반례를 지적했고 r6에 반영했다. source와 exact selector를 동결하고 자원 gate를 확인한 뒤 제품 실행했으며 최종 제품 D1 PASS를 수용했다. 기존 하위 wrapper·무변경 모델·완료 시험을 반복하지 않았다. 문서 검사는 push 전용이다.
+
+후속 consuming 전환은 초기 provenance를 일반 mutable 등록으로 오인하지 않도록 정리해야 한다. 동적 교체를 추가할 때 slot generation의 checked 증가·소진 거절·pin0/dirty0/claim0와 등록 전환 원자성을 별도 동결한다. 현재 두 generation이 모두1인 역순 시험은 미래의 서로 다른 세대 정렬을 검증하지 않는다. 실제 load→dirty→flush→evict→reload, live Status 반복 변경, N+1 작업 집합과 일반 pool·DEV3/S5 인수는 남아 있다. 이번 refactor의 검증을 그 capability의 공급으로 승격하지 않는다.

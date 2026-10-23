@@ -46,6 +46,9 @@ private trusted `StatusInit114688` budget만 terminal WAL38000/frame2/protected7
 
 ## 자원과 거절
 
+<a id="registration-core-followup"></a>
+2026-10-23 후속 [D3-REGISTRATION-001](dev3-task-05-buffer-flush.md#registration-core)이 이 절의 reader J3584를3648로 대체한다. caller expected identity2개와 세대 token16을 포함한 실제 reader 식은3608이다. prepare/stage/read-wait deep의 generic2048 항은3072로 대체하며 cold constructor/move2048은 유지한다. dirty hot193600/cold157408≤196608, flush 합계259136≤262144다. 아래 최초 표와 원 evidence는 당시 source의 기록이며 현 수치 대신 사용하지 않는다.
+
 logical source-value 한도이며 ABI stack/RSS 또는 adapter 내부 heap 측정이 아니다. 실제 generic owner/file/reader padding과 typed return carrier를 effect 전 검사한다. retained pool delta P≤512, WriterControl delta B≤64, Status control delta C≤1536, initializer 전용 I8192, 각 reader J3584를 구별한다. 동시 caller는 총34이며 initializer I를 reader마다 곱하지 않는다.
 
 | 항목 | 한도·식 |

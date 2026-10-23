@@ -411,7 +411,7 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
             .map_err(|e| self.frame_error(e))?;
         let request = match &authority {
             Some(authority) => *authority.request(),
-            None => *self
+            None => self
                 .pool
                 .target_request(0)
                 .map_err(|e| self.frame_error(e))?,

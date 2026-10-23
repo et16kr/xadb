@@ -4241,5 +4241,24 @@
     "final_source_fingerprint": "b02136125e51902c166d453835466c0150fbaeabb18e255ecbf0b4e9053d216a",
     "all_tests_on_final_source": false,
     "independent_D1": "ACCEPTED; source-specific original results retained"
+  },
+  "dev3_registration_core": {
+    "status": "accepted_scoped_unit",
+    "contract_ref": "dev3-task-05-buffer-flush.md#registration-core",
+    "scope": "fixed registration lookup and compact generation pins; no dynamic lifecycle",
+    "implemented_paths": [
+      "crates/engine/src/storage/dirty_frame/registration.rs",
+      "crates/engine/src/storage/dirty_frame/registration_tests.rs",
+      "crates/engine/src/storage/dirty_frame.rs",
+      "crates/engine/src/storage/dirty_init.rs",
+      "crates/engine/src/storage/dirty_flush.rs"
+    ],
+    "evidence_refs": [
+      "dev3-registration-core-20261023.md",
+      "dev3-registration-core-20261023.json"
+    ],
+    "source_roots_changed": false,
+    "full_stage_acceptance": false,
+    "verified_source_fingerprint": "0ab017577c3545b8fa25d01874057ad5f4721a979edbedd4a7bd81822df5d984"
   }
 }

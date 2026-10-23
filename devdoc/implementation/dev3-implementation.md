@@ -686,6 +686,15 @@ native typed source census는 outer9008+max(prefix33408, inventory3320, work3116
 
 사용자 요청에 따라 이 단위의 최종 독립 검토·local commit 뒤 멈추며 다음 leaf는 시작하지 않는다. 기존 readonly Prefix 공개 제한과 원 증거를 보존한다. 일반 fixed BOOT/F05·REBASE body/continuation/reclaim·새 epoch/CLR/undo/READY·전체 task12/DEV3/S5는 미완료다. 문서 verifier는 push 전용으로 이번 편집·commit에서는 실행하지 않는다.
 
+<a id="registration-core"></a>
+## 고정 등록 코어·세대 pin — 일반 pool의 선행 공급
+
+2026-10-23 기준 `4c1fa5b`에서 [D3-REGISTRATION-001](../contracts/dev3-task-05-buffer-flush.md#registration-core)을 구현했다. 기존 SharedPool가 등록 코어를 바로 소비하며 bootstrap provenance·Status 일회 공개의 고정 제한을 유지한다. pin은 slot/generation을 보유하고 read/write·관측·flush finalize·반납에서 검산한다. 전체 token이 유효하기 전에는 count를 하나도 감소하지 않는다. target 요청은 Copy이며 독립 immutable reader와 병행하는 새 권한을 만들지 않는다.
+
+[실행 증거](../evidence/dev3-registration-core-20261023.md)·[색인](../evidence/dev3-registration-core-20261023.json): r6 source 신규 runtime11·관련 소비10, Linux DB1/두batch·compiler semantic2+control1 PASS. r5 dirty static과 r6 Status static의 원 source를 구별하고 r3 source 미보존 layout 관측·원 compile FAIL도 남겼다. generic3072·Status reader3608/예약3648·dirty193600과 flush 합계259136≤262144를 검토했다. 최종 engine Clippy/fmt와 독립 제품 D1을 수용했다. 문서 verifier는 push 전용이며 이번에는 실행하지 않았다.
+
+이 공급은 일반 directory 전환의 선행 refactor다. 동적 load/eviction/reload·실제 frame 수를 넘는 집합·반복 Status 변경은 다음 구현이며 3.05/DEV3/S5 완료를 주장하지 않는다. source 무변경 시험과 하위 wrapper는 반복하지 않았다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 

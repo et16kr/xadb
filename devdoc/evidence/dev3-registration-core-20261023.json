@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-23",
+  "unit": "D3-REGISTRATION-001",
+  "status": "ACCEPT_SCOPED_UNIT",
+  "base_commit": "4c1fa5b4515527dac9d9900eb899e28b58b08fd6",
+  "contract_ref": "dev3-task-05-buffer-flush.md#registration-core",
+  "full_stage_acceptance": false,
+  "source_sha256": "0ab017577c3545b8fa25d01874057ad5f4721a979edbedd4a7bd81822df5d984",
+  "binary_sha256": "e4bcc9ad2f4c859fc169d07154e7e0b8f4ce567c48cb636088754d52c24c4635",
+  "artifact_root": "artifacts/dev3/registration-core-20261023",
+  "source_export": "artifacts/dev3/registration-core-20261023/source-r6",
+  "inventory": {
+    "unit": "D3-REGISTRATION-001",
+    "source_sha256": "0ab017577c3545b8fa25d01874057ad5f4721a979edbedd4a7bd81822df5d984",
+    "binary_sha256": "e4bcc9ad2f4c859fc169d07154e7e0b8f4ce567c48cb636088754d52c24c4635",
+    "new_runtime_exact": [
+      "storage::dirty_frame::registration_tests::registration_closed_publication_is_single_and_checked",
+      "storage::dirty_frame::registration_tests::registration_copy_request_rejects_invalid_fixed_publication",
+      "storage::dirty_frame::registration_tests::registration_directory_rejects_address_aliases_and_bootstrap_generation",
+      "storage::dirty_frame::registration_tests::registration_pin_set_rejection_is_atomic",
+      "storage::dirty_frame::registration_tests::registration_reverse_rank_tokens_and_copy_requests",
+      "storage::dirty_frame::registration_tests::registration_stale_finalize_acquisition_fences",
+      "storage::dirty_frame::registration_tests::registration_stale_read_acquisition_fences",
+      "storage::dirty_frame::registration_tests::registration_stale_read_observation_and_request_fence",
+      "storage::dirty_frame::registration_tests::registration_stale_second_release_preserves_every_count",
+      "storage::dirty_frame::registration_tests::registration_stale_write_acquisition_fences",
+      "storage::dirty_frame::registration_tests::registration_stale_write_stamp_fences"
+    ],
+    "new_runtime_variants": {
+      "registration_stale_read_observation_and_request_fence": 3
+    },
+    "prior_layout_source": "r3",
+    "changed_static": {
+      "CF17-01": "caller identity2 and token16; reader3608/call3648/hot193600"
+    },
+    "changed_consumers": {
+      "init": [
+        "CF07-01",
+        "CF12-01"
+      ],
+      "allocator": [
+        "FN04",
+        "FN05",
+        "FR01",
+        "FR02"
+      ],
+      "status": [
+        "BR02",
+        "BR03",
+        "BR05",
+        "BA09"
+      ]
+    },
+    "native_profiles": [
+      1
+    ],
+    "compiler": [
+      "baseline",
+      "release",
+      "storage_borrow"
+    ],
+    "runtime_timeout_per_case_seconds": 30,
+    "native_existing_bound_seconds": 60,
+    "reason": "changed registration/pin/read/write/flush/Copy consumer and F05 paths only; original unchanged wrappers/models not selected"
+  },
+  "results": {
+    "new_runtime": 11,
+    "related_runtime": 10,
+    "r6_runtime_total": 21,
+    "static_source_bound_cases": [
+      {
+        "case": "dirty_shared_resource_after_closed_init",
+        "source": "r5",
+        "status": "PASS"
+      },
+      {
+        "case": "CF17-01",
+        "source": "r6",
+        "status": "PASS"
+      }
+    ],
+    "exploratory_layout": {
+      "source": "r3",
+      "status": "LOCAL_OBSERVATION_SOURCE_HASH_NOT_PRESERVED",
+      "counted_as_source_bound_pass": false
+    },
+    "native_databases": 1,
+    "native_workers": 1,
+    "native_batches": 2,
+    "native_logical_flush_effects": 62,
+    "compiler_semantic": 2,
+    "compiler_infrastructure": 1,
+    "clippy": "PASS",
+    "fmt": "PASS",
+    "diff_check": "PASS"
+  },
+  "f05": {
+    "directory": 4704,
+    "previous_directory": 4704,
+    "pin_set": 56,
+    "read_targets": 104,
+    "write_targets": 128,
+    "copy_registration_result": 72,
+    "generic_reservation": 3072,
+    "generic_conservative_source": 2688,
+    "allocator_hot": 165472,
+    "allocator_cold": 154944,
+    "status_reader": 3608,
+    "status_reader_reservation": 3648,
+    "status_hot": 193600,
+    "status_cold": 157408,
+    "dirty_budget": 196608,
+    "dirty_plus_flush": 259136,
+    "aggregate_budget": 262144
+  },
+  "review": {
+    "reviewer": "/root/pool_design_review",
+    "requested_model": "gpt-6-astra",
+    "requested_reasoning": "high",
+    "design": "ACCEPTED",
+    "runtime_gate": "ACCEPTED_R6",
+    "product_d1": "PASS",
+    "document_review": "PASS"
+  },
+  "artifacts": {
+    "build-receipt-r5.json": {
+      "path": "artifacts/dev3/registration-core-20261023/build-receipt-r5.json",
+      "sha256": "431947ac2828c738b7089c38196f91dfcea22e71d214c03dffcbe64cd4c23201"
+    },
+    "build-receipt-r6.json": {
+      "path": "artifacts/dev3/registration-core-20261023/build-receipt-r6.json",
+      "sha256": "1e820ef03791c664661cf609a4919400b03fb69a0db4daf4089710ec7b15b9d9"
+    },
+    "inventory-r6.json": {
+      "path": "artifacts/dev3/registration-core-20261023/inventory-r6.json",
+      "sha256": "9c9f446d5e31dc93be19c7b29beb7508ed9e963c6c033919695d6084906328d8"
+    },
+    "units-r6.json": {
+      "path": "artifacts/dev3/registration-core-20261023/units-r6.json",
+      "sha256": "bfb8b6cb71097242b58ca45348e286bfb0dd3fc20f776ef9f7eceb12ea5a20d3"
+    },
+    "layout-r3.log": {
+      "path": "artifacts/dev3/registration-core-20261023/layout-r3.log",
+      "sha256": "05d5652bf3e6ccb0a7ba4546c012bd9c9e9bca2be034ab9b26ebc0c86fe253a8"
+    },
+    "layout-dirty-r5.log": {
+      "path": "artifacts/dev3/registration-core-20261023/layout-dirty-r5.log",
+      "sha256": "2a7029e244e4c6e2399feeb0786466d0a09fc2e6702dd0995841fb955a80caf3"
+    },
+    "layout-status-r5.log": {
+      "path": "artifacts/dev3/registration-core-20261023/layout-status-r5.log",
+      "sha256": "0ce5717f721249c39af87082c69b13f68927433817b084a1f8885245e3122210"
+    },
+    "layout-status-r6.log": {
+      "path": "artifacts/dev3/registration-core-20261023/layout-status-r6.log",
+      "sha256": "7aac012095bdbec4ccc200d7398252940422fa08de304363ea77bc48a68ec732"
+    },
+    "init-r6/result.json": {
+      "path": "artifacts/dev3/registration-core-20261023/init-r6/result.json",
+      "sha256": "e8850120a312aa3c8e8e7034d5b7f3e5b7b8d1551461f52f11a90cdfc88ea603"
+    },
+    "allocator-r6/result.json": {
+      "path": "artifacts/dev3/registration-core-20261023/allocator-r6/result.json",
+      "sha256": "e9c3345c8ff36c3f0b13f269e10bd4f0783c9e679e1cf23d0805f8cebf240fd3"
+    },
+    "status-r6/result.json": {
+      "path": "artifacts/dev3/registration-core-20261023/status-r6/result.json",
+      "sha256": "4be82516cdb674400b00db0fefb7e548bfc2443a0040dd785da891976a16be46"
+    },
+    "native-r6/result.json": {
+      "path": "artifacts/dev3/registration-core-20261023/native-r6/result.json",
+      "sha256": "075c81fe54a61296c3e2ac694bba4a88d09f86a0fc727ea46ab0ad80a02523f0"
+    },
+    "compiler-r6.json": {
+      "path": "artifacts/dev3/registration-core-20261023/compiler-r6.json",
+      "sha256": "fbc4967d279caf2bb16f9e81c942c045fab91465faff125224ace65883bf1c14"
+    },
+    "compile-r0.log": {
+      "path": "artifacts/dev3/registration-core-20261023/compile-r0.log",
+      "sha256": "c0cc35341bbde92de816adb111f1c126f3d6c14e7f63d8a9505f808b2bcdd7d9"
+    },
+    "build-r2.log": {
+      "path": "artifacts/dev3/registration-core-20261023/build-r2.log",
+      "sha256": "98c6240d6cf43a39123be6fa8bdf8492ec7f5f556be559e831636d76bbafd3ea"
+    },
+    "clippy-r6.log": {
+      "path": "artifacts/dev3/registration-core-20261023/clippy-r6.log",
+      "sha256": "6c6f51fd785c18349486b801cbd664a6fe065122990dae90a2c9d134c0d74ecd"
+    },
+    "final-independent-review.json": {
+      "path": "artifacts/dev3/registration-core-20261023/final-independent-review.json",
+      "sha256": "814fa81c350fa84133d4f41cdfae71b72904bce79d70b2c4d2bcc15e1fd591ad"
+    }
+  },
+  "not_run": [
+    "dynamic load/eviction/reload",
+    "general mutable pool",
+    "live Status mutation",
+    "DEV3 S5",
+    "push document gate"
+  ]
+}

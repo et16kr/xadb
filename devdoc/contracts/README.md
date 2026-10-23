@@ -1,5 +1,7 @@
 # 기능 계약
 
+2026-10-23 [DEV3 고정 등록 코어·세대 pin](dev3-task-05-buffer-flush.md#registration-core): 기존 SharedPool의 단일 lookup·Copy 요청·compact 세대 token과 실행 전 자원 변경을 D2 검토했다. 제한 단위 구현·선택 검증이며 일반 mutable pool은 미공급이다.
+
 - [DEV3 현재 genesis의 실제 닫힌 복구](dev3-recovery-effects.md): 실물 bootstrap·선택 Pending 수리·한 번 예약 인계·page별 REDO의 제한 구현설계 D2를 수용했다. 제품 구현 중이며 시험은 NOT_RUN이다.
 
 - [DEV3 현행 WAL prefix의 닫힌 분석](dev3-recovery-prefix.md): actual reserve/cancel·Status INIT의 canonical owner·inventory·RAM image 분석과 초기 SELECT/물리 복구의 경계. 선택 검증과 제한 단위 최종 D1을 수용했다.

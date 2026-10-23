@@ -536,7 +536,7 @@ fn status_init_cf17_actual_resource_and_capacity_bounds() {
             ("plans", operation::plan_bytes(), 4096),
             ("temporaries", operation::temporary_bytes(), 16384),
             ("status_codec", operation::status_codec_bytes(), 8192),
-            ("reader", operation::reader_bytes(), 3584),
+            ("reader", operation::reader_bytes(), 3648),
             ("obligation", size_of::<InitObligation<'_, '_>>(), 768),
             ("permit", size_of::<InitInstallPermit<'_, '_, '_>>(), 768),
             ("upper_caller", init_caller_bytes::<W>(), 768),

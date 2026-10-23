@@ -55,6 +55,9 @@ InstallPermit의 exact core/identity/generation/old·new counter/pageLSN 검산�
 
 ## 자원과 첫 효과 전 검사
 
+<a id="registration-core-followup"></a>
+2026-10-23 후속 [D3-REGISTRATION-001](dev3-task-05-buffer-flush.md#registration-core)이 이 절의 reference registration lookup을 Copy lookup·slot/generation pin으로, 일반 nested2048을3072로 대체한다. registration carrier6×128과 token 여유64의 보수 소계2688, shared hot165472/cold154944≤196608을 적용한다. deep의 generic 항만3072이며 move2048·constructor2048·hash와 전체64KiB/192KiB 한도는 유지한다. 아래 최초 수치와 원 evidence는 당시 source의 기록이며 현재 generic 예약으로 사용하지 않는다.
+
 기존 Exclusive81920 resource context와 신규 Dirty98304 context를 private trusted enum으로 구별한다. reserve/cancel producer와 validator 모두 지정 context의 exact budget을 확인하고 serialized bytes에서 context를 추정하지 않는다. 기존 context bytes는 유지한다. 새 literal oracle는 Dirty98304 descriptor·hash·WAL을 독립 계산한다. 새 workspace는 frame65536+before16384+after16384=98304다.
 
 metadata 상한은 기존2162688+guard65536+dirty196608=2424832≤8388608이며 남은5963776을 미구현 구조의 검증 완료로 세지 않는다. dirty retained60672+34×2048=130304, retained60672+cold constructor90112=150784로 모두192KiB 안이다. 일반 nested temporary2048은 helper마다 반복 가산하는 값이 아니라 가장 큰 전체 호출 chain의 동시 보유 source-value 상한이다.

@@ -38,7 +38,7 @@ pub(super) const OPERATION_BYTES: usize = 114688;
 const FRAME_BYTES: usize = 65536;
 const BEFORE_END: usize = FRAME_BYTES + PAGE_BYTES;
 const INIT_EXCLUSIVE: usize = 8192;
-const READ_CALL: usize = 3584;
+const READ_CALL: usize = 3648;
 
 #[cfg(test)]
 #[path = "status_init_tests.rs"]
@@ -805,7 +805,7 @@ impl<'b, 'c, 's, 'p, 'd> StatusReader<'b, 'c, 's, 'p, 'd> {
                 .initialized_request()
                 .map_err(|e| frame_error(Phase::Observe, e))?
                 .ok_or_else(|| error(Phase::Observe, Effect::Unchanged, Cause::NotInitialized))?;
-            let allocator = *self
+            let allocator = self
                 .pool
                 .target_request(0)
                 .map_err(|e| frame_error(Phase::Observe, e))?;
@@ -830,18 +830,20 @@ impl<'b, 'c, 's, 'p, 'd> StatusReader<'b, 'c, 's, 'p, 'd> {
         })
     }
     fn validate(&self, read: &ReadTargets<'_, '_, '_, '_, '_, '_>) -> Result<()> {
-        let allocator_request = read
+        let allocator_identity = read
             .target_request(0)
-            .map_err(|e| frame_error(Phase::Observe, e))?;
-        let payload_request = read
+            .map_err(|e| frame_error(Phase::Observe, e))?
+            .identity;
+        let payload_identity = read
             .target_request(1)
-            .map_err(|e| frame_error(Phase::Observe, e))?;
+            .map_err(|e| frame_error(Phase::Observe, e))?
+            .identity;
         let allocator = read.bytes(0).map_err(|e| frame_error(Phase::Observe, e))?;
         let status = read.bytes(1).map_err(|e| frame_error(Phase::Observe, e))?;
         let lsn = operation::observe_initialized(
             *self.profile,
-            allocator_request.identity,
-            payload_request.identity,
+            allocator_identity,
+            payload_identity,
             self.role,
             allocator,
             status,
@@ -862,8 +864,8 @@ impl<'b, 'c, 's, 'p, 'd> StatusReader<'b, 'c, 's, 'p, 'd> {
             .map_err(|e| frame_error(Phase::Observe, e))?;
         if allocator.frame.page_lsn != lsn
             || status.frame.page_lsn != lsn
-            || allocator.frame.identity != allocator_request.identity
-            || status.frame.identity != payload_request.identity
+            || allocator.frame.identity != allocator_identity
+            || status.frame.identity != payload_identity
         {
             self.fence.fence();
             return Err(error(
@@ -978,8 +980,22 @@ fn fits<W: WriterNamespace>() -> bool {
         && plans <= 4096
         && temporaries <= 16384
         && sum_fits(&[owner, reader, file, budget::CONSTRUCTOR, 32])
-        && sum_fits(&[owner, control, plans, temporaries, INIT_EXCLUSIVE, 2048])
-        && sum_fits(&[owner, control, plans, INIT_EXCLUSIVE, 4096, 2048])
+        && sum_fits(&[
+            owner,
+            control,
+            plans,
+            temporaries,
+            INIT_EXCLUSIVE,
+            dirty_frame::CALL_BYTES,
+        ])
+        && sum_fits(&[
+            owner,
+            control,
+            plans,
+            INIT_EXCLUSIVE,
+            4096,
+            dirty_frame::CALL_BYTES,
+        ])
         && sum_fits(&[
             owner,
             control,
@@ -987,5 +1003,5 @@ fn fits<W: WriterNamespace>() -> bool {
             READ_CALL.max(budget::TEMPORARIES),
         ])
         && sum_fits(&[owner, control, READ_CALL])
-        && sum_fits(&[owner, control, 4096, 2048])
+        && sum_fits(&[owner, control, 4096, dirty_frame::CALL_BYTES])
 }

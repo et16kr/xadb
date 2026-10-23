@@ -15,8 +15,8 @@ impl Claim {
     pub(super) fn valid(&self, pool: &SharedPool<'_, '_, '_, '_>, last_attempt: u64) -> bool {
         self.attempt != 0
             && self.attempt == last_attempt
-            && pool.resolve_registration(self.index) == Some(&self.registration)
-            && self.registration.generation == 1
+            && pool.resolve_registration(self.index) == Some(self.registration)
+            && self.registration.generation != 0
             && self.captured.is_none_or(|stamp| {
                 stamp.identity == self.registration.request.identity
                     && stamp.generation == self.registration.generation
@@ -116,7 +116,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                     .is_some_and(|entry| entry.request == request)
             })
             .ok_or_else(|| unchanged(Cause::MissingTarget))?;
-        let registration = *self.registration(index)?;
+        let registration = self.registration(index)?;
         let attempt = {
             let mut registry = self.entry_dpt()?;
             if registry.claim.is_some() {
@@ -387,7 +387,12 @@ impl<'a, 'b, 'c, 's, 'p, 'd> FinalizeContent<'a, 'b, 'c, 's, 'p, 'd> {
                 return result.reject(failure);
             }
         }
-        if let Err(error) = pool.pair(index, result.guard.as_ref().expect("held finalize content"))
+        if let Err(error) = result
+            .pins
+            .as_ref()
+            .expect("owned finalize pins")
+            .registration(0)
+            .and_then(|_| pool.pair(index, result.guard.as_ref().expect("held finalize content")))
         {
             return result.reject(error);
         }
@@ -441,6 +446,14 @@ pub(super) fn fits() -> bool {
 pub(super) mod test_support {
     use super::*;
     use crate::storage::wal_io::WalFrameLocation;
+
+    pub(in crate::storage) fn acquire_finalize(
+        pinned: PinnedTargets<'_, '_, '_, '_, '_, '_>,
+    ) -> Result<()> {
+        FinalizeContent::acquire(pinned)
+            .map(|mut content| content.release())
+            .and_then(|result| result)
+    }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub(crate) struct ClaimSnapshot {
