@@ -321,3 +321,41 @@ COMM 반영 commit과 당시 DEV3/DEV4 문서 commit 대상의 source SHA-256은
 - [DEV3 페이지 예약·취소 부분 실행 및 중단](dev3-allocation-reservation-partial-xadb-20261021.json) — r2/r3/r4 source·ELF·로그와 원본 FAIL 보존; native/compiler·변경 stage 관련시험은 미완료
 
 - [DEV3 페이지 예약·취소 부분 commit 독립 검토](dev3-allocation-reservation-partial-review-xadb-20261021.json) — 메모리 포트 구현의 부분 commit 수용; 앞선 실행 기록의 pending review를 해소하며 전체 단위 인수·native/compiler 검증은 미완료
+
+<a id="dev0-owned-child-20261023"></a>
+
+## DEV0 직접 소유한 worker 회수 — 2026-10-23
+
+**D1 국소 수정·선택 검증 완료.** 사용자 요청으로 DEV0/DEV1 리뷰 지적의 타당성을 다시 확인한 뒤 `OwnedChild::finish`를 보완했다. [현재 동작](../implementation/dev0-implementation.md)과 [DEV0 계약](../contracts/dev0-contract.json)에 반영하며, 기존 DEV0/DEV1 전체 실행 증거는 원래 source와 범위로 보존한다.
+
+`process_group(0)`는 새 session을 만들지 않는다. 따라서 worker가 같은 session의 다른 그룹으로 이동하고 원래 그룹에 다른 프로세스가 남으면, 원래 그룹의 `killpg`가 성공해도 worker는 생존한다. 기존 성공 분기는 직접 소유한 `Child`를 종료하지 않은 채 `wait`했으므로 무기한 대기할 수 있었다. 수정은 group 신호 성공·ESRCH 모두에서 unreaped `Child`에 종료를 요청한 뒤 기다린다. 다른 group 오류 보고와 reap 전 신호 순서는 유지한다. 이는 직접 소유한 Child 회수의 보완이며, 다른 session으로 이탈한 descendants를 봉쇄하는 보안 sandbox의 구현은 아니다.
+
+새 회귀는 시험 부모가 두 `Child`를 직접 소유한다. 첫 worker의 그룹에 둘째 프로세스를 가입시킨 뒤 stdin handshake로 worker만 부모 그룹으로 이동시키고 `getpgid`로 양쪽 소속을 확인한다. 직접 자식인지 후손인지와 관계없이 이 분기의 kernel 그룹 구성은 같다. worker는 5초 뒤 정상 종료 marker를 남기므로 원래 결함에서도 무한 대기하지 않는다. 직접 finish는 종료 signal, Drop은 marker 부재와 reap을 검사하며 둘째 Child도 명시 회수한다. PID 재사용과 경합하는 별도 신호 watchdog은 사용하지 않는다.
+
+### 실행 범위와 결과
+
+`d31cfb9bcd97e64554e0d97aa47fe3a3cbe70160`의 `git archive` 사본에서 `crates/testing/controller/src/process.rs`만 덮어썼다. RED는 새 시험만, GREEN은 그 위에 실제 수정만 반영했다. 동시에 진행 중인 다른 작업의 미커밋 변경은 이 사본에 포함하지 않았다. 아래 모든 Cargo 실행은 export 밖의 별도 `CARGO_TARGET_DIR`를 사용했다.
+
+| 구분 | 선택 명령 | 실제 결과 |
+| --- | --- | --- |
+| RED | `cargo test -p xadbtest --lib --locked process::tests::retained_group_ -- --test-threads=1 --nocapture` | exit101, 신규2개 모두 첫 fixture에서 FAIL. finish의 signal은 `None`, Drop은 정상 종료 marker 잔존 |
+| GREEN | `cargo test -p xadbtest --lib --locked process::tests:: -- --test-threads=1 --nocapture` | exit0, 변경된 finish를 호출하는8개 PASS. 신규 finish·Drop2개는 각각 새 fixture3회. parent 집계의 subprocess helper1개 ignored는 PASS 수에 포함하지 않으며 신규 시험에서 별도 프로세스로6회 호출 |
+| 서식 | `rustfmt --edition 2024 --check crates/testing/controller/src/process.rs` | exit0 |
+| 정적 검사 | `cargo clippy -p xadbtest --lib --tests --locked -- -D warnings` | exit0. test target을 정적으로 검사하며 시험 사례를 추가 실행하지 않음 |
+
+DEV0/DEV1 wrapper·전체 workspace·DEV2/DEV3/COMM 시험은 실행하지 않았다. GREEN8개는 모두 실제 수정한 finish를 호출하며, source 전체 지문이 바뀌었다는 이유로 다른 시험을 선택하지 않았다. 문서 자동 검사는 push gate의 시점에 남긴다. 이 국소 결과는 단계 전체의 새 PASS나 제품 qualification이 아니다.
+
+| 보존 identity | SHA-256 |
+| --- | --- |
+| RED export source, 실행 전=후 | `c70c1f4cd9bff2c262d4903f5f085299721ffab01425bc13d896aeae92539422` |
+| RED process.rs | `ad523a7bd9102b9d4d2505b3056d955120ff9b41463b8d9aab2083c836323bd7` |
+| RED 원 로그 | `7f1436ea111e84eacda8ffdaa823dc9775482844a341204387a0f5e848fdb0e0` |
+| GREEN export source, 실행 전=후 | `1f579dab7c8f98eaa6a8c428a13f34ed0b41f0369fcbd983dd3ceebbe1405b08` |
+| GREEN process.rs | `50768d07b3747492ce095106b1b06a2551d60f240740f88255d89e93ca8e9715` |
+| GREEN 원 로그 | `ac903570201a6e79a52ea4ce9a2e3ba64b967e6769a4f80f58fcb9678983124f` |
+| 서식 로그 | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| Clippy 로그 | `cb6fc2b7d78493b16d8452f6757e14ae1b6b8b33d48808c0b2fd1781783d1d3d` |
+
+로컬 원본은 `artifacts/dev0-cleanup-20261023-6uo9dxng/`의 `red.json`·`red.log`·`red-process.rs`·`green.json`·`green.log`·`static.json`·`format.log`·`clippy.log`와 `source/`에 보존했다. 해당 export의 지문을 진행 중인 전체 작업 트리의 지문으로 재표기하지 않는다.
+
+별도 검토자 `/root/dev0_cleanup_review`는 최종4파일 diff·원 반례·RED/GREEN 원 로그와 source/log hash, 문서의 범위·수치·기존 문서 ID 유지까지 읽기 전용으로 확인해 D1 수용했다. 필수 수정 지적은 없으며 구현자의 자기 검토나 시험 재실행을 독립 검토로 기록하지 않는다.

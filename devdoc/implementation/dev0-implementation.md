@@ -7,6 +7,8 @@
 
 [개발 단계](../plans/development-stages.md) · [실행 결과 JSON](../evidence/README.md) · [기계 판독 계약](../contracts/dev0-contract.json)
 
+2026-10-23 [직접 소유한 worker 회수 보완](../evidence/README.md#dev0-owned-child-20261023): 원래 그룹에 다른 프로세스가 남아 있어도 이동한 worker를 직접 종료한다. 새 반례2개 RED와 수정 후 관련 process unit8개 PASS를 구별하며, DEV0/DEV1 전체 재인수는 수행하지 않았다.
+
 <a id="section-1"></a>
 
 ## 1. 구현 범위와 현재 상태
@@ -17,7 +19,7 @@ DEV0의 유한한 범위는 Rust workspace, 독립 XADBTest controller/worker, �
 | 작업 | 구현 | 검증 |
 |---|---|---|
 | XADB-002 | Rust 1.95.0·edition 2024·lockfile, safe Rust, source/build identity | 고정 dependency 빌드, 경고 없는 clippy, 기존 target·Git이 없는 소스 복사본 빌드 |
-| XADB-003 | schema, controller, 독립 기대값 oracle, fixture worker, verdict, receipt, cleanup | 14개 controller 통합·6개 process unit 시험, 기본 worker smoke 7개 assertion, 소스 없는 빈 디렉터리 실행 |
+| XADB-003 | schema, controller, 독립 기대값 oracle, fixture worker, verdict, receipt, cleanup | 기존14개 controller 통합·smoke7개 assertion·소스 없는 실행 증거; process unit은 신규2개를 포함한8개 선택 후속 검증 |
 
 현재 로컬 환경은 Ubuntu 26.04.1 LTS, x86_64 Linux다. CI workflow는 Ubuntu 24.04 runner에서 동일 entry point를 실행하도록 추가했지만 원격 CI는 아직 실행하지 않았다. 호스트/runner 이미지 전체의 digest pin, 지원 filesystem qualification, 보호 corpus와 release 승격은 후속 의무다. Rust toolchain과 dependency checksum은 고정되어 있다.
 
@@ -77,7 +79,7 @@ case/binary 기대 지문을 실행 전에 확인한다. worker는 private 디�
 
 관측한 typed mismatch는 후속 timeout·프로토콜 오류·cleanup 실패로 지우지 않는다. 전체 실행이 정상 종료했더라도 cleanup 실패는 성공 판정을 막는다. 올바른 값 뒤 nonzero worker exit는 product PASS와 execution ERROR를 각각 남기며 최종 ERROR다. 미완료·잘못된 관측을 성공으로 승격하지 않는다. case/worker 파일의 읽기·복사 실패는 잘못된 case와 구분하여 execution ERROR/exit 3이다. verdict를 저장할 수 없는 harness 오류도 exit 3이며 완료 증거가 아니다.
 
-controller는 새 임시 work directory, 실제 `Child` handle, 새 process group만 소유한다. worker 환경은 비우고 stdin은 크기가 제한된 request 파일로 전달한다. stdout/stderr를 nonblocking으로 수집하고 output budget·deadline을 검사한다. worker 종료는 Linux `waitid(WNOWAIT)`로 관측하며 leader를 reap하기 **전에** 소유 group에 종료 신호를 보낸다. leader PID의 재사용 이후 신호를 보내지 않는다. leader 종료 후에도 stdout/stderr 양쪽 EOF까지 수집하며 deadline이 지나면 TIMEOUT이다. 원래 group이 사라졌으면 직접 소유한 Child도 종료한 후 기다린다. 마지막에는 `wait`와 work directory 삭제를 수행한다. 이름 검색으로 다른 프로세스를 종료하지 않는다.
+controller는 새 임시 work directory, 실제 `Child` handle, 새 process group만 소유한다. worker 환경은 비우고 stdin은 크기가 제한된 request 파일로 전달한다. stdout/stderr를 nonblocking으로 수집하고 output budget·deadline을 검사한다. worker 종료는 Linux `waitid(WNOWAIT)`로 관측하며 leader를 reap하기 **전에** 소유 group에 종료 신호를 보낸다. leader PID의 재사용 이후 신호를 보내지 않는다. leader 종료 후에도 stdout/stderr 양쪽 EOF까지 수집하며 deadline이 지나면 TIMEOUT이다. 원래 group의 신호가 성공했거나 group이 사라졌어도 직접 소유한 Child를 별도로 종료한 후 기다린다. group에 다른 프로세스가 남아 있는 동안 worker만 이동할 수 있기 때문이다. 마지막에는 `wait`와 work directory 삭제를 수행한다. 이름 검색으로 다른 프로세스를 종료하지 않는다.
 
 worker는 독립 프로세스지만 **동일 OS 사용자에 대한 보안 sandbox는 아니다**. 적대적인 worker의 임의 host 접근·다른 session으로 이탈한 descendants를 봉쇄하지 않는다. 현재 고정된 fixture는 다른 프로세스를 생성하지 않는다. worker가 스스로 출력한 정리 성공을 믿지 않고 controller의 실제 handle/삭제 결과로 판단한다. timeout은 협력적인 OS에서의 실행 상한이며 uninterruptible kernel I/O에 대한 강제 종료 시간 보장은 아니다.
 

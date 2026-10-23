@@ -211,10 +211,9 @@ impl OwnedChild {
         }
         // Always signal before wait/reap, including a normally exited leader.
         match killpg(self.group, Signal::SIGKILL) {
-            Ok(()) => (),
-            Err(Errno::ESRCH) => {
-                // A worker may have left its original group. The Child still owns
-                // the unreaped leader; do not block in wait on a live process.
+            Ok(()) | Err(Errno::ESRCH) => {
+                // Group success only covers its current members. A moved leader
+                // is still ours, and its unreaped PID cannot have been recycled.
                 let _ = self.child.kill();
             }
             Err(e) => {
@@ -264,7 +263,113 @@ fn drain(stream: &mut UnixStream, bytes: &mut Vec<u8>, limit: usize) -> io::Resu
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Write;
+    use std::{io::Write, os::unix::process::ExitStatusExt};
+
+    // Both processes are direct children of the test, so no orphan reaper is needed.
+    struct FixtureChild(Child);
+
+    impl Drop for FixtureChild {
+        fn drop(&mut self) {
+            let _ = self.0.kill();
+            let _ = self.0.wait();
+        }
+    }
+
+    #[test]
+    #[ignore = "subprocess fixture, invoked with a private directory and stdin handshake"]
+    fn moved_worker_fixture() {
+        use nix::unistd::{getpgid, getppid, setpgid};
+
+        io::stdin().read_exact(&mut [0]).unwrap();
+        let parent_group = getpgid(Some(getppid())).unwrap();
+        setpgid(Pid::from_raw(0), parent_group).unwrap();
+        std::fs::write("worker.moved", b"").unwrap();
+        // Bound the original bug's wait without a watchdog signalling a reused PID.
+        thread::sleep(Duration::from_secs(5));
+        std::fs::write("worker.returned", b"").unwrap();
+    }
+
+    fn moved_worker_with_retained_group(directory: &Path) -> (OwnedChild, FixtureChild) {
+        let child = Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "process::tests::moved_worker_fixture",
+                "--ignored",
+            ])
+            .current_dir(directory)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .process_group(0)
+            .spawn()
+            .unwrap();
+        let mut worker = OwnedChild {
+            group: Pid::from_raw(child.id() as i32),
+            child,
+            reaped: false,
+        };
+        let keeper = FixtureChild(
+            Command::new("/bin/sleep")
+                .arg("30")
+                .process_group(worker.group.as_raw())
+                .spawn()
+                .unwrap(),
+        );
+        worker.child.stdin.take().unwrap().write_all(&[1]).unwrap();
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while !directory.join("worker.moved").exists() {
+            assert!(Instant::now() < deadline, "worker did not move groups");
+            thread::sleep(Duration::from_millis(2));
+        }
+        assert_ne!(
+            nix::unistd::getpgid(Some(Pid::from_raw(worker.id() as i32))).unwrap(),
+            worker.group
+        );
+        assert_eq!(
+            nix::unistd::getpgid(Some(Pid::from_raw(keeper.0.id() as i32))).unwrap(),
+            worker.group
+        );
+        (worker, keeper)
+    }
+
+    #[test]
+    fn retained_group_does_not_hide_a_moved_worker_from_finish() {
+        for _ in 0..3 {
+            let work = tempfile::tempdir().unwrap();
+            let (mut worker, mut keeper) = moved_worker_with_retained_group(work.path());
+            let pid = Pid::from_raw(worker.id() as i32);
+            let status = worker.finish().unwrap();
+            assert_eq!(
+                keeper.0.wait().unwrap().signal(),
+                Some(Signal::SIGKILL as i32)
+            );
+            assert_eq!(status.signal(), Some(Signal::SIGKILL as i32));
+            assert!(!work.path().join("worker.returned").exists());
+            assert_eq!(
+                waitid(Id::Pid(pid), WaitPidFlag::WEXITED | WaitPidFlag::WNOHANG),
+                Err(Errno::ECHILD)
+            );
+        }
+    }
+
+    #[test]
+    fn retained_group_does_not_hide_a_moved_worker_from_drop() {
+        for _ in 0..3 {
+            let work = tempfile::tempdir().unwrap();
+            let (worker, mut keeper) = moved_worker_with_retained_group(work.path());
+            let pid = Pid::from_raw(worker.id() as i32);
+            drop(worker);
+            assert_eq!(
+                keeper.0.wait().unwrap().signal(),
+                Some(Signal::SIGKILL as i32)
+            );
+            assert!(!work.path().join("worker.returned").exists());
+            assert_eq!(
+                waitid(Id::Pid(pid), WaitPidFlag::WEXITED | WaitPidFlag::WNOHANG),
+                Err(Errno::ECHILD)
+            );
+        }
+    }
 
     #[test]
     fn drop_terminates_and_reaps_the_owned_child_without_an_original_group() {

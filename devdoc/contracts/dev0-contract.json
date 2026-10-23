@@ -83,9 +83,9 @@
   "current_evidence_scope": "DEV0 regression on the current workspace; foundation has separate DEV1 evidence",
   "acceptance_counts": {
     "controller_integration": 14,
-    "process_unit": 6,
+    "process_unit": 8,
     "python_evidence": 10
   },
-  "worker_completion": "leader exit and stdout/stderr EOF before deadline; missing original group still terminates owned Child",
+  "worker_completion": "leader exit and stdout/stderr EOF before deadline; group signal success or missing original group both terminate owned Child before wait",
   "report_export": "new distinct destination only; preflight rejects occupied paths and exclusive create prevents overwrite races; export errors fail CLI, retained check evidence remains"
 }
