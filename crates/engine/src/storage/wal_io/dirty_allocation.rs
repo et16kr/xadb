@@ -29,6 +29,9 @@ const PROTECTED_LIMIT: u64 = 1 << 30;
 mod test_support;
 
 #[cfg(test)]
+pub(super) use test_support::BeforeSyncPause;
+
+#[cfg(test)]
 #[path = "dirty_allocation_native_tests.rs"]
 mod native_tests;
 
@@ -714,7 +717,11 @@ impl<'s, 'c, W: WriterNamespace> AllocationWriter<'_, 's, 'c, '_, '_, '_, '_, '_
             error(Phase::Sync, Effect::CallerMustResolve, Cause::Wal(e))
         })?;
         self.health(Phase::Sync)?;
-        let final_stamp = self.snapshot(owner)?;
+        // The change is already durable. Even a transient snapshot conflict
+        // must fence the retained obligation, never report the call unchanged.
+        let final_stamp = self
+            .snapshot(owner)
+            .map_err(|e| self.fatal(e.phase, e.cause))?;
         let prefix = storage
             .wal()
             .prefix()

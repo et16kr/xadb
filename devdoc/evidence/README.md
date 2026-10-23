@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-10-23 [DEV3 구현 코드 리뷰·후속 수정](dev3-code-review-20261023.md): `open-code-review-delegate`의 코어51파일 정적 리뷰에서 확인한 D3-OCR-001을 수정했다. 영속화 후 snapshot 경합의 오류 효과·fence 보완, 신규 관련5건 PASS·별도 D1 수용이며 최초 정적 리뷰와 수정 전 FAIL을 보존한다. 전체 DEV3/S5는 미완료다.
+
 
 2026-10-23 [DEV3 allocator 동일 주소 reload](dev3-allocator-residency-20261023.md) · [source별 색인](dev3-allocator-residency-20261023.json): 신규19·Fixed mode 직접2·static4와 native1/compiler3/checker10의 source별 검증·원 FAIL·미실행 보존. 제한 단위의 최종 D1 수용, 일반 pool·전체 DEV3/S5 미완료.
 

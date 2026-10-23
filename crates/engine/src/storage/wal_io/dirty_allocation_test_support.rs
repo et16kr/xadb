@@ -138,3 +138,23 @@ pub(super) fn hit(hook: &Option<Arc<Hook>>, point: Point, capture: Capture) {
         .expect("dirty cut controller did not resume in 5s");
     assert_eq!(resume, Resume::Continue, "requested dirty cut unwind");
 }
+
+/// Share the existing real-writer cut with the Status reservation consumer.
+pub(in super::super) struct BeforeSyncPause(Controller);
+impl BeforeSyncPause {
+    pub(in super::super) fn install(control: &mut super::WriterControl<'_, '_>) -> Self {
+        let (hook, controller) = Hook::at(Point::BeforeSync);
+        control.hook = Some(hook);
+        Self(controller)
+    }
+    pub(in super::super) fn arrived(&self) {
+        let capture = self.0.arrived();
+        assert_eq!(
+            capture.installation.unwrap().phase,
+            InstallPhase::DptInstalled
+        );
+    }
+    pub(in super::super) fn resume(&self) {
+        self.0.resume(Resume::Continue);
+    }
+}

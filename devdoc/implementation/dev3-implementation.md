@@ -4,6 +4,8 @@
 
 [설계](../contracts/disk-storage-design.md) · [구현 계획](../plans/dev3-implementation-plan.md) · [단계 완료 정본](../plans/stage-completion.json)
 
+2026-10-23 [D3-OCR-001 후속 수정](../evidence/dev3-code-review-20261023.md#fix-followup): reserve/cancel의 WAL 영속화 후 최종 snapshot 실패를 원인 보존·`CallerMustResolve`·공통 fence로 처리하고 설치 의무를 유지한다. 신규 실제 경합/정상/Status wrapper5건 PASS, 변경 파일 fmt·관련 engine Clippy PASS, 별도 D1 검토 수용. 최초 반례 FAIL과 기존 결과는 보존하며 [추가5 inventory](../plans/dev3-test-plan.md#post-durable-snapshot-inventory)를 최종 S5에 연결했다. 전체 DEV3/S5는 미완료다.
+
 <a id="wave-1"></a>
 ## 첫 작업의 범위와 소유
 

@@ -380,3 +380,8 @@ Rust 단위 시험은 실제 package/target과 전체 test 경로를 확인한 �
 ## 11. allocator 동일 주소 reload의 구현 동반 inventory
 
 2026-10-23 [소유 계약](../contracts/dev3-allocator-residency.md)의 중간 선택은 신규 runtime19·Fixed mode 직접 소비2·static4와 native1/compiler3/checker10이다. 정확 selector와 원 FAIL/NOT_RUN·마지막 성공 source는 [실행 색인](../evidence/dev3-allocator-residency-20261023.json)이 보존한다. 최종 S5에 ignored `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_residency::tests::reload_s5_mixed_count_epoch_history`를 추가한다(count1..8×4회,32round/64reload). 확대는 작성·NOT_RUN이며 이번 선택으로 최종 DEV3 전수를 대신하지 않는다. 무변경 하위 wrapper는 중간에 반복하지 않는다.
+
+<a id="post-durable-snapshot-inventory"></a>
+## 12. 영속화 이후 snapshot 경합 수정의 inventory
+
+2026-10-23 D3-OCR-001 수정에 동반한 [신규5 case와 정확 selector](../evidence/dev3-code-review-20261023.md#fix-inventory)는 NT03 소유, NT04/05·FT03/05/09 연결이다. reserve/cancel 각각의 flusher content lock 경합2·잠금 해제 뒤 정상2·Status 예약 wrapper1을 profile1/count1·실제 thread ACK로 고정한다. 5건 모두 중간 필수이며 최종 S5에 포함한다. 기존 dirty53·Status flush43의 분모와 과거 결과는 유지한다. 수정 전 반례 FAIL과 수정 후5 PASS는 [후속 실행 기록](../evidence/dev3-code-review-20261023.md#fix-followup)에 보존하며, 관련 diff가 없는 중간 단계에서는 반복하지 않는다. 이 추가가 native crash 복구나 전체 DEV3/S5 완료를 뜻하지 않는다.

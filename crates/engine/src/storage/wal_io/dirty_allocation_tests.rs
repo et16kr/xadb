@@ -183,6 +183,127 @@ fn assert_installed(
     );
 }
 
+fn post_durable_snapshot(cancel: bool, contended: bool) {
+    fixture!(1, |bound, core, state| {
+        let (mut writer, _, mut flusher) = bound.split_with_flush();
+        if cancel {
+            let mut owner = ok(core.try_owner(OwnerRole::Foreground));
+            ok(writer.reserve_pages(&mut owner, 1));
+        }
+        let mut retry_owner = ok(core.try_owner(OwnerRole::Foreground));
+        let pause = BeforeSyncPause::install(writer.control);
+        let (arrived, ack) = mpsc::sync_channel(1);
+        let (resume, release) = mpsc::sync_channel(1);
+        frame_test::install_flush_pause(
+            writer.pool,
+            frame_test::FlushPoint::Finalized,
+            arrived,
+            release,
+        );
+        let storage = writer.storage;
+        let (result, flushed, fenced_at_return) = std::thread::scope(|scope| {
+            let worker = scope.spawn(|| {
+                let mut owner = ok(core.try_owner(OwnerRole::Foreground));
+                if cancel {
+                    writer.cancel_reserved(&mut owner)
+                } else {
+                    writer.reserve_pages(&mut owner, 1)
+                }
+            });
+            pause.arrived();
+            let flush = scope.spawn(|| {
+                let mut owner = ok(core.try_owner(OwnerRole::DedicatedFlusher));
+                flusher.try_flush_one(&mut owner)
+            });
+            ack.recv_timeout(STEP).unwrap();
+            if contended {
+                pause.resume();
+                let result = worker.join().unwrap();
+                let fenced = storage.session_fence().is_fenced();
+                resume.send(frame_test::Resume::Continue).unwrap();
+                (result, flush.join().unwrap(), fenced)
+            } else {
+                resume.send(frame_test::Resume::Continue).unwrap();
+                let flushed = flush.join().unwrap();
+                pause.resume();
+                let result = worker.join().unwrap();
+                (result, flushed, storage.session_fence().is_fenced())
+            }
+        });
+        let lsn = if cancel { 2 } else { 1 };
+        let prefix = raw_prefix(storage);
+        assert_eq!((prefix.complete_lsn, prefix.synced_lsn), (lsn, lsn));
+        let (bytes, snapshot) = diagnose(writer.pool);
+        let kind = if cancel { "cancel" } else { "reserve" };
+        assert_eq!(&bytes[..], literal(1, 1, &format!("{kind}.page")));
+        assert_eq!(
+            &writer.control.descriptor[..],
+            literal(1, 1, &format!("{kind}.descriptor"))
+        );
+        assert_eq!(snapshot.frame.page_lsn, PageLsn(lsn));
+        assert!(!snapshot.dirty);
+        assert_idle(writer.pool);
+        if contended {
+            let failure = err(result);
+            assert_eq!(
+                (failure.phase, failure.effect),
+                (Phase::Snapshot, Effect::CallerMustResolve)
+            );
+            match failure.cause {
+                Cause::Frame(inner) => {
+                    dirty_error(inner, dirty_frame::Cause::Busy, Effect::Unchanged);
+                }
+                other => panic!("unexpected {other:?}"),
+            }
+            assert!(fenced_at_return);
+            assert_eq!(err(flushed).effect, Effect::CallerMustResolve);
+            let installation = writer.control.installation.as_ref().unwrap();
+            assert_eq!(installation.phase, InstallPhase::DptInstalled);
+            assert_eq!(installation.requirement.location().lsn, lsn);
+            assert_eq!(installation.cancel, cancel);
+            assert!(writer.control.batch.is_some());
+            assert_eq!(writer.control.terminal_pending, cancel);
+            reset(&state);
+            let before = files(&state);
+            assert_eq!(
+                err(writer.observe(&mut retry_owner)).effect,
+                Effect::CallerMustResolve
+            );
+            assert_eq!(files(&state), before);
+            assert!(state.lock().unwrap().events.is_empty());
+            assert_eq!(state.lock().unwrap().reads, 0);
+        } else {
+            let observed = ok(result);
+            assert_eq!(observed.page_lsn, PageLsn(lsn));
+            assert!(matches!(
+                ok(flushed),
+                super::super::allocator_flush::FlushProgress::Complete(_)
+            ));
+            assert!(!fenced_at_return);
+            assert!(writer.control.installation.is_none());
+            assert_eq!(writer.control.batch.is_none(), cancel);
+            assert!(!writer.control.terminal_pending);
+        }
+    });
+}
+
+#[test]
+fn post_durable_snapshot_reserve_busy() {
+    post_durable_snapshot(false, true);
+}
+#[test]
+fn post_durable_snapshot_cancel_busy() {
+    post_durable_snapshot(true, true);
+}
+#[test]
+fn post_durable_snapshot_reserve_released() {
+    post_durable_snapshot(false, false);
+}
+#[test]
+fn post_durable_snapshot_cancel_released() {
+    post_durable_snapshot(true, false);
+}
+
 #[test]
 fn dirty_da01_binding_authority() {
     case("DA01", 1);

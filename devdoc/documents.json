@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-code-review-20261023.md": {
+      "path": "evidence/dev3-code-review-20261023.md",
+      "role": "evidence",
+      "title": "DEV3 구현 코드 리뷰·후속 수정 — open-code-review-delegate"
+    },
     "dev3-recovery-effects-20261023.md": {
       "path": "evidence/dev3-recovery-effects-20261023.md",
       "role": "evidence",

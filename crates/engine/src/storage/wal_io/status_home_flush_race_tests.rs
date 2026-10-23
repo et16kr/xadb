@@ -1,6 +1,83 @@
 //! Actual writer/flusher/reader ACK schedules for two registered targets.
 use super::super::super::StatusInitError;
 use super::*;
+
+#[test]
+fn post_durable_snapshot_status_reserve_busy() {
+    use super::super::super::super::dirty_allocation;
+    use super::super::super::{Cause as InitCause, Phase as InitPhase};
+    use crate::storage::dirty_frame;
+
+    fixture!(1, |bound, core, state| {
+        let (mut writer, _, mut flusher) = bound.split_with_flush();
+        let mut retry_owner = ok(core.try_owner(OwnerRole::Foreground));
+        let pause = dirty_allocation::BeforeSyncPause::install(writer.base);
+        let (arrived, ack) = mpsc::sync_channel(1);
+        let (resume, release) = mpsc::sync_channel(1);
+        frame_test::install_flush_pause(
+            writer.pool,
+            frame_test::FlushPoint::Finalized,
+            arrived,
+            release,
+        );
+        let storage = writer.storage;
+        let (failure, flushed, fenced_at_return) = std::thread::scope(|scope| {
+            let worker = scope.spawn(|| {
+                let mut owner = ok(core.try_owner(OwnerRole::Foreground));
+                err(writer.reserve_one(&mut owner))
+            });
+            pause.arrived();
+            let flush = scope.spawn(|| {
+                let mut owner = ok(core.try_owner(OwnerRole::DedicatedFlusher));
+                flusher.try_flush_allocator(&mut owner)
+            });
+            ack.recv_timeout(STEP).unwrap();
+            pause.resume();
+            let failure = worker.join().unwrap();
+            let fenced = storage.session_fence().is_fenced();
+            resume.send(frame_test::Resume::Continue).unwrap();
+            (failure, flush.join().unwrap(), fenced)
+        });
+        assert_eq!(
+            (failure.phase, failure.effect),
+            (InitPhase::Reserve, Effect::CallerMustResolve)
+        );
+        match failure.cause {
+            InitCause::Allocation(inner) => {
+                assert_eq!(
+                    (inner.phase, inner.effect),
+                    (dirty_allocation::Phase::Snapshot, Effect::CallerMustResolve)
+                );
+                match inner.cause {
+                    dirty_allocation::Cause::Frame(frame) => {
+                        assert_eq!(
+                            (frame.cause, frame.effect),
+                            (dirty_frame::Cause::Busy, Effect::Unchanged)
+                        );
+                    }
+                    other => panic!("unexpected {other:?}"),
+                }
+            }
+            other => panic!("unexpected {other:?}"),
+        }
+        assert!(fenced_at_return);
+        assert_eq!(err(flushed).effect, Effect::CallerMustResolve);
+        let prefix = storage.wal().append.lock().unwrap().prefix;
+        assert_eq!((prefix.complete_lsn, prefix.synced_lsn), (1, 1));
+        assert!(writer.base.installation.is_some());
+        assert!(writer.base.batch.is_some());
+        assert!(!writer.base.terminal_pending);
+        reset(&state);
+        let before = inventory(&state);
+        assert_eq!(
+            err(writer.reserve_one(&mut retry_owner)).effect,
+            Effect::CallerMustResolve
+        );
+        assert_eq!(inventory(&state), before);
+        no_io(&state);
+    });
+}
+
 fn io_pause(state: &State, at: usize, after: bool) -> (mpsc::Receiver<()>, mpsc::SyncSender<()>) {
     let (arrived, ack) = mpsc::sync_channel(1);
     let (resume, release) = mpsc::sync_channel(1);

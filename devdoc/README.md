@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-23 [DEV3 구현 코드 리뷰·후속 수정](evidence/dev3-code-review-20261023.md): `open-code-review-delegate`로 제품 코어51파일에서 확인한 high 결함 D3-OCR-001을 수정했다. 영속화 후 snapshot 실패의 오류 효과·fence를 보완했으며 신규 관련5건 PASS·별도 D1 수용이다. 최초 정적 리뷰와 수정 전 FAIL을 보존하고 전체 DEV3/S5 미완료를 유지한다.
+
 2026-10-23 [DEV3 고정 등록 코어·세대 pin](implementation/dev3-implementation.md#registration-core): 기존 dirty pool의 단일 lookup·Copy 요청·세대 token 검산을 연결했다. [선택 증거](evidence/dev3-registration-core-20261023.md)는 r6 신규11·관련10·native1·compiler2+control1과 source별 정적 회계를 구별한다. 제한 단위 독립 D1 수용, 일반 pool·DEV3/S5 미완료다.
 
 2026-10-23 [DEV3 현재 genesis의 실제 닫힌 복구](implementation/dev3-implementation.md#recovery-effects): 고정 두 슬롯 provisioning·source 안정화·historical Pending 수리·예약 한 번 인계·page별 REDO를 연결했다. [source별 검증](evidence/dev3-recovery-effects-20261023.md)은 필수393의 완결 job386·실패 job 내 완료 단언7과 native31/95worker·compiler9+control1·checker30/변경1을 구별한다. 제한 단위 최종 독립 D1을 수용했으며 일반 복구/READY·전체 DEV3/S5는 미완료다.
