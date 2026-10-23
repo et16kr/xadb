@@ -1,5 +1,7 @@
 # 개발 계획
 
+2026-10-23 [DEV3 AI 개발 효율 개선 계획](dev3-ai-throughput-improvement.md): 에이전트의 작업 입력·소스 조사·독립 검토·시험 준비·모델 배정을 개선하고, 세 통합 작업의 실제 인수 시간을 측정하는 실험을 제안한다. 실험은 미실행이며 기존 품질 기준과 S5 전수 인수는 유지한다.
+
 2026-10-22 [DEV3 개발 모델·검토 운영](dev3-implementation-plan.md#model-roles): GPT-6.1 Sol 주 개발, 작성자 외 독립 검토, 가능하면 Astra의 핵심 복구·동시성 설계 검토. 첫 평가 단위3.12.1.a와 후속 실제 복구 연결로 적합성을 확인한다.
 
 2026-10-22 [DEV3 방향 리뷰 후속 결정](dev3-implementation-plan.md#direction-review-adoption)과 [현재 우선순위](dev3-implementation-plan.md#work-priority): 제한 복구·일반 page 수명·첫 행 거래의 완료 조건,64GiB/계측 선행 준비와 [DIR01–05 시험 배정](dev3-test-plan.md#direction-integration).

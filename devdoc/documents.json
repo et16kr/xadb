@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-ai-throughput-improvement.md": {
+      "path": "plans/dev3-ai-throughput-improvement.md",
+      "role": "plans",
+      "title": "DEV3 AI 개발 효율 개선 계획"
+    },
     "dev3-progress-review-20261023.md": {
       "path": "evidence/dev3-progress-review-20261023.md",
       "role": "evidence",

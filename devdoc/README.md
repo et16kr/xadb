@@ -2,6 +2,8 @@
 
 2026-10-23 [DEV3 여러 Status의 실제 상주 수명](evidence/dev3-resident-status-20261023.md): 기존 SharedPool에서3frame/4주소 INIT·read·flush·퇴출·load와 별도 현재-build 복구/재진입을 연결했다. 신규31·직접 관련4·static2·compiler9·checker8·native1의 source별 결과와 원 FAIL을 보존한다. 최종 독립 D1을 제한 단위로 수용했으며 일반 pool·live 거래·전체 DEV3/S5는 미완료다.
 
+2026-10-23 [DEV3 AI 개발 효율 개선 계획](plans/dev3-ai-throughput-improvement.md): AI가 검증된 기능을 더 빨리 전달하도록 작업 입력·역할 분담·시험 자동화를 개선하고 세 통합 단위에서 효과를 측정하는 실험을 제안한다. 실험 미실행, DEV3/S5 미완료다.
+
 2026-10-23 [DEV3 전체 대상 pin 집합](evidence/dev3-target-set-20261023.md): 기존 단일 SharedPool에서 정확1..64개 대상을 함께 확보하도록 확장했다. 신규15·직접 관련4·static2·compiler7·검사기3/변경1의 source별 PASS와 원 compile FAIL을 보존한다. 최종 독립 D1을 제한 단위로 수용했으며 일반 pool·live 거래·DEV3/S5는 미완료다.
 
 2026-10-23 [DEV3 최초 Begin 준비](evidence/dev3-status-begin-20261023.md): Free 슬롯의 빈 Active 전이를 위한 WAL·페이지 producer/observer/materializer를 추가했다. 새 runtime12·static1·fmt/Clippy PASS와 원 fmt FAIL을 보존하며 최종 독립 D1을 순수 준비 단위로 수용했다. 실제 발급·stage/apply·일반 pool·DEV3/S5는 미완료다.
