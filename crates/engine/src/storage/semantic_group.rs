@@ -1,5 +1,5 @@
 //! Full-state observations and unpublished frame/page production for transactions.
-//! Contract: `devdoc/contracts/dev3-obligation-format.md`, sections 13–15.
+//! Contract: `devdoc/contracts/dev3-obligation-format.md`, sections 13–17.
 //! No append, live page mutation, source pin, reservation restoration or apply permit.
 #![allow(dead_code)] // Awaiting the separately reviewed runtime consumer.
 
@@ -33,6 +33,9 @@ const REDO: std::ops::Range<usize> = 2560..2848;
 
 #[path = "semantic_begin.rs"]
 pub(crate) mod begin;
+
+#[path = "semantic_empty_abort.rs"]
+pub(crate) mod empty_abort;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum SemanticError {
@@ -302,7 +305,7 @@ fn rollback_envelope(frame: &[u8], expected: FrameExpectation) -> Result<FrameEn
     Ok(envelope)
 }
 
-fn rollback_redo<'a>(
+fn status_redo<'a>(
     header: WalFrameHeader,
     group: &'a [u8],
     expected: RollbackStartExpected,
@@ -523,7 +526,7 @@ pub(crate) fn materialize_rollback_start(
 ) -> Result<RollbackStartObservation> {
     validate_expected(expected)?;
     let envelope = rollback_envelope(frame, expected.frame)?;
-    let redo = rollback_redo(envelope.header, envelope.payload, expected)?;
+    let redo = status_redo(envelope.header, envelope.payload, expected)?;
     let old = decode_status_home_page(
         before_page,
         expected.page,
@@ -584,6 +587,37 @@ pub(crate) fn observe_rollback_start(
     validate_group_header(group, header, expected.actor, &before, before_descriptor)?;
     let after = decode_descriptor(&group[DESCRIPTOR], owner, profile)?;
     validate_transition(&before, &after, old_status, header, &group[OPERATION])?;
+    let OwnerState::Transaction(new_status) = after.owner else {
+        return Err(SemanticError::Corrupt);
+    };
+    observe_status_patch(
+        header,
+        group,
+        expected,
+        before_page,
+        after_page,
+        old_status,
+        new_status,
+    )?;
+    validate_budget(&before, &after)?;
+    Ok(RollbackStartObservation {
+        header,
+        after,
+        location: expected.location,
+    })
+}
+
+/// Common page/native/redo binding for one Status home. Owner state and budget
+/// transitions remain opcode-specific; this returns no live installation right.
+fn observe_status_patch(
+    header: WalFrameHeader,
+    group: &[u8],
+    expected: RollbackStartExpected,
+    before_page: &[u8],
+    after_page: &[u8],
+    old_status: TransactionStatus,
+    new_status: TransactionStatus,
+) -> Result<(StatusHome, StatusHome)> {
     let native = &group[NATIVE];
     let slot = expected.location.slot();
     if native[0] != 5
@@ -603,16 +637,12 @@ pub(crate) fn observe_rollback_start(
     let old_home = StatusHome::decode(&native[128..352])?;
     let new_home = StatusHome::decode(&native[352..576])?;
     if old_home.core() != TransactionStatusCell::Occupied(old_status)
-        || new_home.core()
-            != match after.owner {
-                OwnerState::Transaction(status) => TransactionStatusCell::Occupied(status),
-                _ => return Err(SemanticError::Corrupt),
-            }
+        || new_home.core() != TransactionStatusCell::Occupied(new_status)
         || old_home.incoming() != new_home.incoming()
     {
         return Err(SemanticError::Corrupt);
     }
-    let redo = rollback_redo(header, group, expected)?;
+    let redo = status_redo(header, group, expected)?;
     let namespace = expected.profile.spec().namespace;
     let old_page = decode_status_home_page(before_page, expected.page, namespace)?;
     let new_page = decode_status_home_page(after_page, expected.page, namespace)?;
@@ -646,12 +676,7 @@ pub(crate) fn observe_rollback_start(
     {
         return Err(SemanticError::Corrupt);
     }
-    validate_budget(&before, &after)?;
-    Ok(RollbackStartObservation {
-        header,
-        after,
-        location: expected.location,
-    })
+    Ok((old_home, new_home))
 }
 
 #[cfg(test)]

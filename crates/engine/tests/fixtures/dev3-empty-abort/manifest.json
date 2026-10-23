@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "scope": "pure empty AbortEnd preparation; real owner/recovery integration NOT_RUN",
+  "base_product_commit": "4037cb63cac5a270f72d8c6942f6da1748c1310d",
+  "static": [
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_component_layout",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    }
+  ],
+  "mandatory": [
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_observer_matches_literal",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    },
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_producer_matches_literal",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    },
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_materializer_matches_literal",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    },
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_connects_begin_and_rollback_bytes",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    },
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_before_state_and_obligations_rejected",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    },
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_exact_budget_and_chain_rejected",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    },
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_page_and_global_lsn_bounds",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    },
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_envelope_group_native_redo_rejected",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    },
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_full_pages_identity_and_unchanged_inputs",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    },
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_all_proper_prefixes_and_trailing_byte_rejected",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    },
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_failed_output_is_not_success",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    },
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_profile_slot_and_generation_boundaries",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    },
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_independent_boundary_literals",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path"
+    }
+  ],
+  "related": [
+    {
+      "selector": "storage::semantic_group::tests::rollback_start_redo_and_native_match_exact_cell",
+      "source": "crates/engine/src/storage/semantic_group_tests.rs",
+      "relation": "direct consumer of extracted Status native/redo/full page binding"
+    },
+    {
+      "selector": "storage::semantic_group::tests::rollback_start_preserves_other_page_bytes",
+      "source": "crates/engine/src/storage/semantic_group_tests.rs",
+      "relation": "direct consumer of extracted Status native/redo/full page binding"
+    }
+  ],
+  "s5": [
+    {
+      "selector": "storage::semantic_group::empty_abort::tests::empty_abort_s5_all_profile_slot_generations",
+      "source": "crates/engine/src/storage/semantic_empty_abort_tests.rs",
+      "relation": "new empty AbortEnd contract path",
+      "status": "AUTHORED_NOT_RUN",
+      "combinations": 639
+    }
+  ],
+  "fixtures": [
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/abort.wal",
+      "bytes": 3040,
+      "sha256": "7ea6762ef1bbd337ee776fb1023a20af3f7274040fa8ee3ed939cbec7a4a6e11"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/after.descriptor",
+      "bytes": 1536,
+      "sha256": "ca43f4b0a6d849e6fa6c7766848d976a199707a6f4602639d270362662f7c989"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/after.page",
+      "bytes": 16384,
+      "sha256": "bca186ec1b088f547e48722ce630c6d48128d928726a9391a10ae3b65710a6e0"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/before.descriptor",
+      "bytes": 1536,
+      "sha256": "44a7c46a81b7e29491d24c5d5fc41cd47260cdd73d8381fccf521e1b87224ae5"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/before.page",
+      "bytes": 16384,
+      "sha256": "56fb25f2804505d44e665e39a68e20d220cba9f73d9e5c4d0baf9bac02b0f428"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/begin.after.page",
+      "bytes": 16384,
+      "sha256": "e3b8c437fc3987045fcab0366f25dc0fbc4ff3bab4cac5c92b10b61ff92169ad"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/begin.before.page",
+      "bytes": 16384,
+      "sha256": "d29af3ff84a47cd5b71523c3bbb67ae55c59033ba26d1ad2aef9ea86bda97a8d"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/begin.descriptor",
+      "bytes": 1536,
+      "sha256": "55e5c9cff1bbcce526ec98f306bb4d023186185e6bea98dcfe53e0e6882b544a"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/begin.wal",
+      "bytes": 3040,
+      "sha256": "0e04edc056e8099290a6207a1dba9c68d4591f109ca0c01091db3d773d824ebd"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p2-slot0-free1/abort.wal",
+      "bytes": 3040,
+      "sha256": "5c8d85866b2de1444a8c11ef40025b3d86500951105400877311f7bf476e3c15"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p2-slot0-free1/after.descriptor",
+      "bytes": 1536,
+      "sha256": "88df486cdfa767fda1fca8827361df6978768ade60187f1b8e0c112c65429e3b"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p2-slot0-free1/after.page",
+      "bytes": 16384,
+      "sha256": "ce1e7bccb295b25e8c8635788cc5a908a32c25d62989f03141b3b945fd9a3b2c"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p2-slot0-free1/before.descriptor",
+      "bytes": 1536,
+      "sha256": "4974f756795df3909e7b4a67be95c59b92eeda973b653b509c30d576c1837cbc"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p2-slot0-free1/before.page",
+      "bytes": 16384,
+      "sha256": "ebe0c06604b0924d12bf846a2e193172ce30e6b6b48b18dd5141bb4058d502b6"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p2-slot0-free1/begin.after.page",
+      "bytes": 16384,
+      "sha256": "db86d6619a1c1f37e0f3e11a6ec116b522e815902f09a5ce9121fec18e8ff8cd"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p2-slot0-free1/begin.before.page",
+      "bytes": 16384,
+      "sha256": "684e9bbafd5fd270d9d10011ae24b8d736fa161f5d7d9fc87261dd7ac771a981"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p2-slot0-free1/begin.descriptor",
+      "bytes": 1536,
+      "sha256": "ed1cb444d457dc3f074737dddbb31915bb28902f66788d3d98e858fe4fa30985"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p2-slot0-free1/begin.wal",
+      "bytes": 3040,
+      "sha256": "2f13655cb787dc1f020bd59a990afa5bb2a182a305bc240d1b926edc5c04b348"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p2-slot0-free1/rollback.wal",
+      "bytes": 3040,
+      "sha256": "e40d9b5e83ddf9c59751bfcf72955f77f33d7f9ff81150573259c2a71db4cad7"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p3-slot70-free18446744073709551614/abort.wal",
+      "bytes": 3040,
+      "sha256": "c85572bc2a2d4872bfff39f59ae557d188ee1756be05178b85098caa3a09fc65"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p3-slot70-free18446744073709551614/after.descriptor",
+      "bytes": 1536,
+      "sha256": "28b3e5d358bb8cd35bdd7b14a1822898a12addfbbd7cf3e814701775c4df69e5"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p3-slot70-free18446744073709551614/after.page",
+      "bytes": 16384,
+      "sha256": "2507586b1b87ab585fd77517d04d4503e6049773700c615ddf4df4c73c2165ae"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p3-slot70-free18446744073709551614/before.descriptor",
+      "bytes": 1536,
+      "sha256": "786b57d52784b2d6a3fd539f74405653f743c5a32cbfa0689e110840f7c4c92e"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p3-slot70-free18446744073709551614/before.page",
+      "bytes": 16384,
+      "sha256": "24ddbdc414e1d551cf682d5f92bf74541cb61fe4b03528b759461429cf4cd63c"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p3-slot70-free18446744073709551614/begin.after.page",
+      "bytes": 16384,
+      "sha256": "6e78f7efaf2fe315a1ae5251051e2fab32d69fec79651bb56b82786f82275af5"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p3-slot70-free18446744073709551614/begin.before.page",
+      "bytes": 16384,
+      "sha256": "4ba25def2d6762039af468fd3998c2b9c5d291b1427c0c756ab66fd3c6b6538b"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p3-slot70-free18446744073709551614/begin.descriptor",
+      "bytes": 1536,
+      "sha256": "dbbe761dc8c017d18bf64a751427c1d6a67d4d66ffc1169bb4f267893a43c4b5"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p3-slot70-free18446744073709551614/begin.wal",
+      "bytes": 3040,
+      "sha256": "f0d0537b3786b1fb8c27ee6332d8a963fc3970b7589476af282c9d86647679b3"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/p3-slot70-free18446744073709551614/rollback.wal",
+      "bytes": 3040,
+      "sha256": "fb66ef7cac9cf64d7686fda9d047469f5de3181651312269a9b3b210c5c50a53"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/rollback.wal",
+      "bytes": 3040,
+      "sha256": "ca299d9bfb1ba777e2d0cee6aba943297ce40f053fd2ccc3ee7bf59fc3c0d6b7"
+    },
+    {
+      "path": "crates/engine/tests/fixtures/dev3-empty-abort/vectors.json",
+      "bytes": 9366,
+      "sha256": "3701e9711beb473e86566bccc8ed06adbf2a70fff7fa0504f2260c1f0be77249"
+    },
+    {
+      "path": "scripts/dev3_empty_abort_literals.py",
+      "bytes": 13030,
+      "sha256": "cc6926518a05d12d5596a9b0a30ae9d265ecdf825ffef026ba1f5b8fa16bde6b"
+    }
+  ],
+  "limits": {
+    "case_seconds": 30,
+    "total_seconds": 120,
+    "active_fixture_bytes": 1048576,
+    "case_retention_bytes": 8388608
+  },
+  "unchanged_suites": "NOT_RUN"
+}

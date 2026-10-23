@@ -386,3 +386,12 @@ checker runner·literal/compiler fixtures는 관리 JSON `dev3_resident_status`�
 dependency/source root·feature·영속 wire 형식은 바꾸지 않는다.
 [선택 증거](../evidence/dev3-resident-status-20261023.md)는 여러 immutable Status 수명의 제한 결과이며
 일반 pressure/live 거래·전체 DEV3 인수가 아니다.
+
+
+## DEV3 빈 거래 통합 준비 배치
+
+[§17](../contracts/dev3-obligation-format.md#empty-abort-preparation)의 순수 AbortEnd 준비는
+`semantic_empty_abort.rs`와 시험, 독립 `dev3_empty_abort_literals.py` 및 실제 fixture 경로를
+관리 JSON `dev3_empty_transaction`에 등록한다. 공통 native/page 검산은 `semantic_group`에서
+RollbackStart와 공유한다. package·dependency·source root·feature는 바꾸지 않는다.
+[작업 증거](../evidence/dev3-empty-transaction-20261023.md)의 실제 owner/복구 통합은 진행 중이다.

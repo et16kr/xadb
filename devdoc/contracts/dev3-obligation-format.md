@@ -888,3 +888,76 @@ directory lookup 비용/scan 안정성, 실제 empty terminal 비용 초과, 최
 충돌, 추가 native 효과·pending claim이 필요한 경우다.
 
 [선택 실행 증거](../evidence/dev3-status-begin-20261023.md)는 frozen D2·source별 원 FAIL과 runtime12/static1을 구별한다. 실제 owner·복구·S5 인수는 후속이다.
+
+
+<a id="empty-abort-preparation"></a>
+## 17. D3-EMPTY-TXN-001 — 빈 거래 통합의 AbortEnd 준비 경계
+
+2026-10-23 · **D2 ACCEPTED / 순수 준비 선택 검증 완료 / 제한 D1 수용**. 기준 `4037cb6`, 통합 `/root`, 독립
+검토 `/root/pool_design_review`. [AI 개발 효율 계획](../plans/dev3-ai-throughput-improvement.md)을
+사용자 지시로 이번 작업에 적용한다. 작업의 종료점은 실제 Begin→RollbackStart→AbortEnd와
+새 process의 동일-build 닫힌 복구다. 이 절은 그 연결에 필요한 순수 terminal 준비 경계이며,
+별도 helper 완료를 통합·거래·READY 완료로 세지 않는다.
+
+### 순수 빈 AbortEnd의 exact 전이
+
+§16 Begin과 full RollbackStart를 순서대로 채택한 빈 거래만 받는다. trusted expected는
+FrameExpectation·Profile·TxnRef·StatusSlotRef·PageIdentity이며 parent의 identity 검산을
+공유한다. recovery용 old-epoch actor를 거절하지 않지만 이것이 새 WAL append 권한은 아니다.
+
+- before descriptor: Aborting(Transaction, next=None), head=None; chain groups2,
+  previous=birth, birth>0, apply>birth 및 apply≤global predecessor. inventory items/growth0,
+  SHA256(empty), change=birth; minimum=birth, last mutation0, consumedWal6080/control0.
+  remaining은 Terminal row2만 §16의 steps1/wal3040/protected3040/동일 peak이고 나머지0.
+- actual before page: before descriptor.apply≤pageLSN≤global predecessor, 선택 home이 descriptor와 같은
+  actor/generation/Aborting이며 incoming0. 모든 다른 cell도 typed decode하고 그대로 보존한다.
+- after descriptor/home: 같은 actor의 Aborted/headNone/incoming0. apply=newLSN,
+  previous=old apply, groups3, consumedWal9120, 모든 remaining0; 다른 필드는 보존한다.
+  home을 Free로 바꾸거나 TxnId·slot generation을 반환하지 않는다.
+- frame3040/group2848, §15의 section 범위와 native576/Patch288를 재사용한다. opcode7,
+  outer AbortEnd, group/outer previous-owner=before apply, before descriptor SHA 일치.
+  OperationCore는 tag7/length256 이외 전부0; edge/count/inventory delta0. native는 같은
+  한 home의 full before/after와 hash, redo는 실제 old pageLSN·slot offset·after224를 묶는다.
+  선택 home·pageLSN·checksum 이외 page bytes 변화는 거절한다. newLSN>global predecessor.
+
+`semantic_group::empty_abort`의 observer/materializer/producer는 실제 입력을 검산한 immutable
+observation만 반환한다. immutable input은 오류에도 보존하고 변경했을 수 있는 caller 출력은
+폐기한다. I/O·heap·lock·identity 발급·live 예약 반환·ATT 제거·apply permit는 제공하지 않는다.
+잘못된 expected/newLSN은 InvalidInput, identity 불일치는 IdentityMismatch, chain/LSN은
+OrderMismatch, 비어 있지 않거나 다른 rollback 상태는 UnsupportedOperation, exact empty
+budget/consumed 불일치는 BudgetMismatch, malformed wire/after/native/page 결합은 Corrupt다.
+기존 envelope의 길이/version/opcode 오류 의미는 유지한다. 여러 결함의 최우선 오류를 계약하지
+않으며 각 독립 반례는 한 의미 경계를 고정한다.
+
+### 통합 전에 닫을 owner와 복구 조건
+
+실제 owner는 pure observation과 별도로 pending install·queue·retirement·lock·transient
+의무가 없음을 검산해야 한다. durable terminal과 Status 설치 완료 전 예약 반환/성공 Abort를
+하지 않는다. 원 system allocation descriptor를 transaction descriptor로 덮어쓰지 않는다.
+issued local은 효과 전 소모하고 실패 후 되감지 않는다. replay는 동일 epoch의 채택 Begin
+local이 strict 증가하는지 검산하되 미채택 candidate의 gap은 허용한다.
+
+전역 WAL tip과 allocator pageLSN을 분리해 각각 exact chain으로 검산한다. live Status typed
+read/load/flush, resident 우선 directory census, 최대32 retained transaction의 F05와 type
+수명, 주소별 canonical before·최종 pageLSN·historical Pending 및 ledger 한 번 채택을 실제
+통합 D2에서 닫는다. 기존 wide Result와 transaction codec/ledger의 동시 보유는 허용하지 않는
+consuming phase를 검토한다. 현재 단계의 제안이며 수치/borrow proof 전 effect 실행은 없다.
+새 epoch/REBASE 전 closed recovery는 Active/Aborting의 남은 의무를 보존하고 관측만 한다.
+자동 loser 종료·같은 epoch 새 Begin·READY를 제공한 것으로 표시하지 않는다.
+
+### 필수 준비 검증과 남는 인수
+
+독립 raw offset/SHA literal의 observer·materializer·producer 및 실제 Begin→RollbackStart→
+AbortEnd bytes 연결을 검산한다. slot0/70·generation 경계·profile1/2/3, old epoch, page prior와
+전역 predecessor 차이, nonempty head/incoming/inventory·statement rollback, budget 부족/초과,
+chain/descriptor/native/redo mismatch, 비선택 cell 변화, 모든 frame proper prefix/trailing byte,
+실패 뒤 input 불변을 선택한다. 정확 selector 목록·fixture hash·source/binary 관계를 실행 전에
+한 manifest에 고정한다. 실제 opcode 소비 이전의 준비 검증이며 native/reopen/fault 인수는
+통합 단계에서 추가한다. 무변경 하위 시험·전체 wrapper는 실행하지 않는다.
+
+caller frame3040+before/after 각16384는 loan이며 숨은 page-sized local copy는 없다.
+component source-value census는 encoder/hash scratch와 중첩 descriptor/home/page view/error
+carrier를 합산하여65536 이하를 검산한다. 실제 retained whole-engine F05는 별도이며 이 수치로
+대신하지 않는다. 각 준비 case30초/전체120초, 활성 fixture1MiB, case·receipt·review 보존8MiB;
+source export·ELF·cache는 별도 기록한다. S5 profile3×slot71×Free generation(1/19/MAX−1)3의639조합(actor는2/20/MAX)은 authored
+selector로 남기고 중간에는 실행하지 않는다. 기존 §16의639조합을 재실행하는 것이 아니다.

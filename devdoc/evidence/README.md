@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+[DEV3 빈 거래 통합 작업](dev3-empty-transaction-20261023.md) · [source별 색인](dev3-empty-transaction-20261023.json): 순수 AbortEnd 준비와 실제 owner/recovery 인수를 분리하며 AI 작업 방식의 단계별 관측을 보존한다. 통합 진행·소비자 미도달.
+
 [DEV3 resident Status source·receipt 색인](dev3-resident-status-20261023.json)은 정확 선택·원 실패·미실행 상태를 보존한다.
 
 2026-10-23 [DEV3 여러 Status의 실제 상주 수명](dev3-resident-status-20261023.md): 기존 SharedPool에서3frame/4주소 INIT·read·flush·퇴출·load와 별도 현재-build 복구/재진입을 연결했다. 신규31·직접 관련4·static2·compiler9·checker8·native1의 source별 결과와 원 FAIL을 보존한다. 최종 독립 D1을 제한 단위로 수용했으며 일반 pool·live 거래·전체 DEV3/S5는 미완료다.

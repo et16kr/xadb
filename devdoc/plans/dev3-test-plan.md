@@ -536,3 +536,18 @@ checker8은 borrow provenance/진단2+native protocol/full-image/dirty-home3+실
 관련4는 원 inventory와 중복 집계하지 않는다. N64+1은 첫 extent 범위 밖의 잔여다.
 각 runtime30초/합240초·native history30초/합120초·DB24MiB/보존96MiB·compiler180초·checker30초,
 활성 input8MiB/case-review32MiB와 별도 source/ELF/cache 보존을 유지한다.
+
+
+<a id="empty-transaction-followup"></a>
+## 빈 거래 통합의 준비 inventory
+
+[§17](../contracts/dev3-obligation-format.md#empty-abort-preparation),
+[정확 manifest](../../crates/engine/tests/fixtures/dev3-empty-abort/manifest.json),
+[source별 증거](../evidence/dev3-empty-transaction-20261023.md)를 따른다. 새 순수 AbortEnd 필수13과
+static1, 공통 native/page binding을 바꾼 직접 RollbackStart 소비자2만 선택한다. exact 빈 예약,
+상태·chain·실제 pageLSN 하한, 전체 native/redo/page 결합, 모든 proper prefix와 입력 보존,
+Begin→RollbackStart→AbortEnd bytes 연결을 검산한다. 관련2는 S5 원 inventory와 중복 집계하지
+않는다. 새13/static1은 S5에 포함하고 `empty_abort_s5_all_profile_slot_generations`의 profile3×
+slot71×Free generation3(1/19/MAX−1)인639조합은 ignored/NOT_RUN으로 배정한다. 실제 owner/
+예약/설치·native·복구·통합 F05 inventory는 아직 미동결이며 이 준비 결과로 대신하지 않는다.
+각 case30초/전체120초, 활성 fixture1MiB·case/review8MiB와 별도 source/ELF/cache 보존을 적용한다.

@@ -856,3 +856,13 @@ native1의 원 source별 결과·compile/runtime/Clippy FAIL과 수정 해당 �
 제한 단위로 수용했다. F05 whole261736≤262144(여유408)이며 원 범위를 넓히는 RSS 주장은 없다.
 S5 profile2/3×N4/8/64,146victim/8200late 조합은 작성·NOT_RUN이다. loaded live Begin/undo·자동 victim/
 pressure·다음 extent·큰 backing·일반 READY·tree/행 거래·전체 DEV3/S5는 미완료다.
+
+
+<a id="empty-transaction"></a>
+## 빈 거래의 실제 owner 연결 작업
+
+[작업·선택 증거](../evidence/dev3-empty-transaction-20261023.md)의 목표는 기존 resident Status에서
+실제 Begin→RollbackStart→빈 AbortEnd 및 새 process의 닫힌 복구다. `semantic_group::empty_abort`
+순수 준비와 공통 native/page binding을 작성했으며 [§17](../contracts/dev3-obligation-format.md#empty-abort-preparation)의
+D2와 component41640바이트의 실행 gate를 수용하고 신규13·직접 관련2·static1 및 fmt/Clippy를 첫 실행에서 통과했다. 최종 독립 D1은 순수 준비 범위로 수용했으며 현재 실제 TxnId 발급·예약/설치 owner·live Status·통합 F05·해당 복구는 미공급이다.
+소비자 미도달 상태로 두고 순수 helper의 선택 결과를 실제 거래 완료로 세지 않는다.
