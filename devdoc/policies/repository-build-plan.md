@@ -367,3 +367,12 @@ DEV3 페이지 예약·취소는 `wal_io/doublewrite_install`의 private child `
 사용한다. 실제 경로는 관리 JSON `dev3_status_begin`에 등록했다. source root·package/dependency/
 feature·공개 WAL API는 바꾸지 않는다. [증거](../evidence/dev3-status-begin-20261023.md)는 순수
 준비의 선택 결과이며 실제 append·live ID 발급·일반 pool·현재-build 복구 공급은 후속이다.
+
+## DEV3 전체 대상 pin 집합 배치
+
+[소유 계약](../contracts/dev3-task-05-buffer-flush.md#bounded-target-set)은 기존 `dirty_frame`
+내 pin/guard를 const generic으로 확장하고 기존 기본2 경로를 그대로 사용한다. 새 Rust 시험,
+compiler manifest/6개 probe와 Python runner/checker의 실제 경로를 관리 JSON `dev3_target_set`에
+등록한다. package/dependency/source root·feature는 바꾸지 않는다.
+[source별 증거](../evidence/dev3-target-set-20261023.md)는 단일 pool primitive의 선택 결과이며
+일반 resident backing/load/eviction·실거래·전체 DEV3 인수가 아니다.

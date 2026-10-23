@@ -1,0 +1,52 @@
+{
+  "unit": "D3-TARGET-SET-001",
+  "status": "AUTHORED_NOT_RUN",
+  "mandatory": [
+    "storage::dirty_frame::target_set_tests::target_set_orders_three_and_reads_every_page",
+    "storage::dirty_frame::target_set_tests::target_set_maximum_capacity_reads_and_writes",
+    "storage::dirty_frame::target_set_tests::target_set_aliases_rejected_atomically",
+    "storage::dirty_frame::target_set_tests::target_set_missing_last_rejected_atomically",
+    "storage::dirty_frame::target_set_tests::target_set_pin_limits_preserve_prior_owners",
+    "storage::dirty_frame::target_set_tests::target_set_busy_read_releases_all_partial_guards",
+    "storage::dirty_frame::target_set_tests::target_set_busy_write_releases_all_partial_guards",
+    "storage::dirty_frame::target_set_tests::target_set_poisoned_last_releases_every_count",
+    "storage::dirty_frame::target_set_tests::target_set_stale_last_release_preserves_every_count",
+    "storage::dirty_frame::target_set_tests::target_set_duplicate_last_release_preserves_every_count",
+    "storage::dirty_frame::target_set_tests::target_set_late_stale_read_and_write_fence",
+    "storage::dirty_frame::target_set_tests::target_set_unwind_fences_before_unlock",
+    "storage::dirty_frame::target_set_tests::target_set_thread_readers_exclude_writer_and_resume",
+    "storage::dirty_frame::target_set_tests::target_set_stamp_and_read_bounds",
+    "storage::dirty_frame::target_set_tests::target_set_default_wrapper_shape_and_order"
+  ],
+  "static": [
+    "storage::dirty_frame::target_set_tests::target_set_layout",
+    "storage::dirty_frame::registration_tests::registration_layout_receipt"
+  ],
+  "related": [
+    "storage::dirty_frame::registration_tests::registration_reverse_rank_tokens_and_copy_requests",
+    "storage::dirty_frame::registration_tests::registration_pin_set_rejection_is_atomic",
+    "storage::dirty_frame::registration_tests::registration_stale_second_release_preserves_every_count",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_da02_allocator_consumer"
+  ],
+  "s5": {
+    "normal_combinations": 256,
+    "late_busy_combinations": 128,
+    "stale_combinations": 192,
+    "total": 576,
+    "status": "NOT_RUN",
+    "selector": "storage::dirty_frame::target_set_tests::target_set_s5_expanded"
+  },
+  "limits": {
+    "case_seconds": 30,
+    "mandatory_seconds": 180,
+    "compiler_seconds": 120,
+    "s5_seconds": 180,
+    "fixture_bytes": 2097152,
+    "case_evidence_bytes": 16777216
+  },
+  "checker_tests": [
+    "scripts.test_check_dev3_target_set_borrows.TargetSetCompiler.test_invalid_selection_and_program_tampering",
+    "scripts.test_check_dev3_target_set_borrows.TargetSetCompiler.test_wrong_capacity_error_or_instantiation_is_not_pass",
+    "scripts.test_check_dev3_target_set_borrows.TargetSetCompiler.test_missing_or_weakened_assertion_is_rejected"
+  ]
+}

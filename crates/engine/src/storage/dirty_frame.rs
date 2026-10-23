@@ -33,6 +33,8 @@ pub(in crate::storage) use status_residency::StatusLoadSnapshot;
 pub(in crate::storage) use status_residency::test_support as status_load_test_support;
 #[cfg(test)]
 mod registration_tests;
+#[cfg(test)]
+mod target_set_tests;
 use registration::RegistrationDirectory;
 
 #[path = "dirty_flush.rs"]
@@ -478,11 +480,31 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         })
     }
 
+    /// Existing one/two-target consumers retain the same carrier layout.
     pub(crate) fn reserve_targets<'a, 'b>(
         &'b self,
         owner: &'a mut Owner<'c, 's>,
         requests: &[TargetRequest],
     ) -> Result<PinnedTargets<'a, 'b, 'c, 's, 'p, 'd>> {
+        self.reserve_target_capacity::<MAX_TARGETS>(owner, requests)
+    }
+
+    /// Reserve the exact whole set before any content acquisition. N is a
+    /// storage capacity, never permission to exceed the original pin quota.
+    pub(crate) fn reserve_target_set<'a, 'b, const N: usize>(
+        &'b self,
+        owner: &'a mut Owner<'c, 's>,
+        requests: &[TargetRequest; N],
+    ) -> Result<PinnedTargets<'a, 'b, 'c, 's, 'p, 'd, N>> {
+        self.reserve_target_capacity::<N>(owner, requests)
+    }
+
+    fn reserve_target_capacity<'a, 'b, const N: usize>(
+        &'b self,
+        owner: &'a mut Owner<'c, 's>,
+        requests: &[TargetRequest],
+    ) -> Result<PinnedTargets<'a, 'b, 'c, 's, 'p, 'd, N>> {
+        const { assert!(N >= 1 && N <= MAX_FRAMES) }; // target-set capacity assertion
         self.health()?;
         // Health precedes identity; a different core's mode is not ours to check.
         if !owner.check_binding(self.core).map_err(DirtyError::from)? {
@@ -491,14 +513,19 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         if !self.registrations_valid() {
             return Err(self.fatal(Cause::Invariant));
         }
-        if requests.is_empty() || requests.len() > MAX_TARGETS {
+        if requests.is_empty() || requests.len() > N {
             return Err(unchanged(Cause::Shape));
         }
-        if requests.len() == 2 && requests[0].same_address(&requests[1]) {
-            return Err(unchanged(Cause::DuplicateTarget));
+        for (at, request) in requests.iter().enumerate() {
+            if requests[..at]
+                .iter()
+                .any(|prior| prior.same_address(request))
+            {
+                return Err(unchanged(Cause::DuplicateTarget));
+            }
         }
-        let mut indices = [0; MAX_TARGETS];
-        let mut generations = [0; MAX_TARGETS];
+        let mut indices = [0; N];
+        let mut generations = [0; N];
         {
             let mut pins = self.entry_pins()?;
             for (at, request) in requests.iter().enumerate() {
@@ -506,12 +533,18 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                     .directory
                     .lookup(self.frames, *request)
                     .ok_or_else(|| unchanged(Cause::MissingTarget))?;
-                indices[at] = index;
-                generations[at] = registration.generation;
-            }
-            if requests.len() == 2 && requests[0].rank() > requests[1].rank() {
-                indices.swap(0, 1);
-                generations.swap(0, 1);
+                // Bounded insertion sort needs only the token arrays. The
+                // directory cannot change while this shared pool is borrowed.
+                let mut position = at;
+                while position != 0
+                    && self.registration(indices[position - 1])?.request.rank() > request.rank()
+                {
+                    indices[position] = indices[position - 1];
+                    generations[position] = generations[position - 1];
+                    position -= 1;
+                }
+                indices[position] = index;
+                generations[position] = registration.generation;
             }
             if pins.total + requests.len() as u16 > MAX_PINS
                 || indices[..requests.len()]
@@ -547,15 +580,15 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
     }
 }
 
-struct PinSet<'b, 'c, 's, 'p, 'd> {
+struct PinSet<'b, 'c, 's, 'p, 'd, const N: usize = MAX_TARGETS> {
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
-    indices: [usize; MAX_TARGETS],
-    generations: [u64; MAX_TARGETS],
+    indices: [usize; N],
+    generations: [u64; N],
     len: usize,
     active: bool,
     _thread: PhantomData<Rc<()>>,
 }
-impl PinSet<'_, '_, '_, '_, '_> {
+impl<const N: usize> PinSet<'_, '_, '_, '_, '_, N> {
     fn registration(&self, at: usize) -> Result<Registration> {
         if at >= self.len {
             return Err(unchanged(Cause::Shape));
@@ -581,7 +614,7 @@ impl PinSet<'_, '_, '_, '_, '_> {
             Err(error) => (error.into_inner(), Some(self.pool.fatal(Cause::Poisoned))),
         };
         let result = (|| {
-            if !self.pool.pins_valid(&pins) || !(1..=MAX_TARGETS).contains(&self.len) {
+            if !self.pool.pins_valid(&pins) || !(1..=N).contains(&self.len) {
                 return Err(self.pool.fatal(Cause::Invariant));
             }
             for (at, index) in self.indices[..self.len].iter().enumerate() {
@@ -590,8 +623,10 @@ impl PinSet<'_, '_, '_, '_, '_> {
                     return Err(self.pool.fatal(Cause::Invariant));
                 }
             }
-            if self.len == 2 && self.indices[0] == self.indices[1] {
-                return Err(self.pool.fatal(Cause::Invariant));
+            for at in 0..self.len {
+                if self.indices[..at].contains(&self.indices[at]) {
+                    return Err(self.pool.fatal(Cause::Invariant));
+                }
             }
             let total = pins
                 .total
@@ -606,18 +641,18 @@ impl PinSet<'_, '_, '_, '_, '_> {
         combine(poison.map_or(Ok(()), Err), result)
     }
 }
-impl Drop for PinSet<'_, '_, '_, '_, '_> {
+impl<const N: usize> Drop for PinSet<'_, '_, '_, '_, '_, N> {
     fn drop(&mut self) {
         let _ = self.release();
     }
 }
 
-pub(crate) struct PinnedTargets<'a, 'b, 'c, 's, 'p, 'd> {
+pub(crate) struct PinnedTargets<'a, 'b, 'c, 's, 'p, 'd, const N: usize = MAX_TARGETS> {
     owner: Option<&'a mut Owner<'c, 's>>,
-    pins: Option<PinSet<'b, 'c, 's, 'p, 'd>>,
+    pins: Option<PinSet<'b, 'c, 's, 'p, 'd, N>>,
 }
-impl<'a, 'b, 'c, 's, 'p, 'd> PinnedTargets<'a, 'b, 'c, 's, 'p, 'd> {
-    pub(crate) fn try_read(mut self) -> Result<ReadTargets<'a, 'b, 'c, 's, 'p, 'd>> {
+impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> PinnedTargets<'a, 'b, 'c, 's, 'p, 'd, N> {
+    pub(crate) fn try_read(mut self) -> Result<ReadTargets<'a, 'b, 'c, 's, 'p, 'd, N>> {
         let mut pins = self.pins.take().expect("owned pin set");
         let owner = self.owner.take().expect("owned idle owner");
         let admission = match owner.try_content() {
@@ -627,7 +662,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> PinnedTargets<'a, 'b, 'c, 's, 'p, 'd> {
             }
         };
         let mut result = ReadTargets {
-            guards: [None, None],
+            guards: [const { None }; N],
             admission: Some(admission),
             pins: Some(pins),
         };
@@ -660,7 +695,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> PinnedTargets<'a, 'b, 'c, 's, 'p, 'd> {
         Ok(result)
     }
 
-    pub(crate) fn try_write(mut self) -> Result<WriteTargets<'a, 'b, 'c, 's, 'p, 'd>> {
+    pub(crate) fn try_write(mut self) -> Result<WriteTargets<'a, 'b, 'c, 's, 'p, 'd, N>> {
         let mut pins = self.pins.take().expect("owned pin set");
         let owner = self.owner.take().expect("owned idle owner");
         let version = match owner.try_apply().and_then(|apply| apply.try_version()) {
@@ -670,7 +705,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd> PinnedTargets<'a, 'b, 'c, 's, 'p, 'd> {
             }
         };
         let mut result = WriteTargets {
-            guards: [None, None],
+            guards: [const { None }; N],
             version: Some(version),
             pins: Some(pins),
         };
@@ -708,12 +743,12 @@ impl<'a, 'b, 'c, 's, 'p, 'd> PinnedTargets<'a, 'b, 'c, 's, 'p, 'd> {
     }
 }
 
-pub(crate) struct ReadTargets<'a, 'b, 'c, 's, 'p, 'd> {
-    guards: [Option<RwLockReadGuard<'b, FrameContent<'d>>>; MAX_TARGETS],
+pub(crate) struct ReadTargets<'a, 'b, 'c, 's, 'p, 'd, const N: usize = MAX_TARGETS> {
+    guards: [Option<RwLockReadGuard<'b, FrameContent<'d>>>; N],
     admission: Option<ContentAdmission<'a, 'c, 's>>,
-    pins: Option<PinSet<'b, 'c, 's, 'p, 'd>>,
+    pins: Option<PinSet<'b, 'c, 's, 'p, 'd, N>>,
 }
-impl ReadTargets<'_, '_, '_, '_, '_, '_> {
+impl<const N: usize> ReadTargets<'_, '_, '_, '_, '_, '_, N> {
     fn len(&self) -> usize {
         self.pins.as_ref().map_or(0, |pins| pins.len)
     }
@@ -779,7 +814,7 @@ impl ReadTargets<'_, '_, '_, '_, '_, '_> {
         self.release()
     }
 }
-impl Drop for ReadTargets<'_, '_, '_, '_, '_, '_> {
+impl<const N: usize> Drop for ReadTargets<'_, '_, '_, '_, '_, '_, N> {
     fn drop(&mut self) {
         let _ = self.release();
     }
@@ -794,12 +829,12 @@ pub(crate) struct DptStamp<'b> {
     rec_lsn: Option<PageLsn>,
 }
 
-pub(crate) struct WriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
-    guards: [Option<RwLockWriteGuard<'b, FrameContent<'d>>>; MAX_TARGETS],
+pub(crate) struct WriteTargets<'a, 'b, 'c, 's, 'p, 'd, const N: usize = MAX_TARGETS> {
+    guards: [Option<RwLockWriteGuard<'b, FrameContent<'d>>>; N],
     version: Option<VersionEditGuard<'a, 'c, 's>>,
-    pins: Option<PinSet<'b, 'c, 's, 'p, 'd>>,
+    pins: Option<PinSet<'b, 'c, 's, 'p, 'd, N>>,
 }
-impl<'a, 'b, 'c, 's, 'p, 'd> WriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
+impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> WriteTargets<'a, 'b, 'c, 's, 'p, 'd, N> {
     fn len(&self) -> usize {
         self.pins.as_ref().map_or(0, |pins| pins.len)
     }
@@ -976,11 +1011,40 @@ impl<'a, 'b, 'c, 's, 'p, 'd> WriteTargets<'a, 'b, 'c, 's, 'p, 'd> {
         self.release()
     }
 }
-impl Drop for WriteTargets<'_, '_, '_, '_, '_, '_> {
+impl<const N: usize> Drop for WriteTargets<'_, '_, '_, '_, '_, '_, N> {
     fn drop(&mut self) {
         let _ = self.release();
     }
 }
+
+/// Source-value bound for one target reservation/acquisition/cleanup chain.
+/// Retained groups and concurrently in-flight calls require separate admission.
+pub(in crate::storage) const fn target_set_call_bytes<const N: usize>() -> usize {
+    use std::mem::size_of;
+    let read = size_of::<ReadTargets<'_, '_, '_, '_, '_, '_, N>>();
+    let write = size_of::<WriteTargets<'_, '_, '_, '_, '_, '_, N>>();
+    let largest = if read > write { read } else { write };
+    let read_result = size_of::<Result<ReadTargets<'_, '_, '_, '_, '_, '_, N>>>();
+    let write_result = size_of::<Result<WriteTargets<'_, '_, '_, '_, '_, '_, N>>>();
+    let result = if read_result > write_result {
+        read_result
+    } else {
+        write_result
+    };
+    2 * result
+        + largest
+        + size_of::<PinSet<'_, '_, '_, '_, '_, N>>()
+        + size_of::<PinnedTargets<'_, '_, '_, '_, '_, '_, N>>()
+        + size_of::<Result<PinnedTargets<'_, '_, '_, '_, '_, '_, N>>>()
+        + 6 * size_of::<Result<Registration>>()
+        + 2 * size_of::<DirtyObservation>()
+        + 4 * size_of::<Result<()>>()
+        + 2 * size_of::<MutexGuard<'_, PinAccounting>>()
+        + 32 * 8
+        + 64
+}
+const _: () = assert!(target_set_call_bytes::<2>() <= CALL_BYTES);
+const _: () = assert!(target_set_call_bytes::<64>() <= 16384);
 
 pub(in crate::storage) fn fits() -> bool {
     use std::mem::size_of;

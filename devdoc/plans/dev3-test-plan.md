@@ -497,3 +497,22 @@ S5에는 필수12와 static1에 더해 profile3×slot71×generation3의639조합
 source export·ELF·compiler/cache의 별도 보존은 소유 계약의 범위 명시를 따른다.
 실제 발급·directory census·stage/apply·rollback/terminal·현재-build 복구에는 별도 native/fault/compiler
 inventory와 F05가 필요하며 이 순수 시험을 그 실행 증거로 승격하지 않는다.
+
+<a id="bounded-target-set-followup"></a>
+## 전체 대상 pin 집합의 선택 inventory
+
+[소유 계약](../contracts/dev3-task-05-buffer-flush.md#bounded-target-set)과
+[정확 manifest](../../crates/engine/tests/fixtures/dev3-target-set/manifest.json)를 따른다.
+새 필수15는 N3/N64 정상, 전체 duplicate/missing/quota, late Busy/poison/stale,
+원자 release·unwind fence-before-unlock·실제 reader/writer thread·stamp/인덱스와 기존 wrapper를
+확인한다. static2와 직접 소비자4만 추가 선택하며 무변경 하위 wrapper는 실행하지 않는다.
+새 compiler는 baseline1+positive1+borrow negative3+capacity negative2를 분리한다.
+새 checker3는 입력/실행기 provenance·정확 단일 진단/instantiation·const assertion 위조를 검산한다.
+원 실패와 수정 후 해당 사례만의 재검증은 [source별 결과](../evidence/dev3-target-set-20261023.md)를 따른다.
+
+최종 S5에는 중간 새15·새 static1·compiler semantic6·checker3와
+`target_set_s5_expanded`의 N1..64×4순서256, N64×late64×read/write128,
+N64×stale64×release/read/write192의576조합을 포함한다. 관련4·기존 layout1은 원 inventory와
+중복 집계하지 않는다. 확대는 ignored/NOT_RUN이며 일반 load/pressure 증거가 아니다.
+각 runtime30초·합180초, compiler120초·checker30초·S5 합180초,
+활성 fixture2MiB·case/review16MiB와 별도 source/ELF/compiler/cache 보존을 유지한다.

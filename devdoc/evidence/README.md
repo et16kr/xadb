@@ -1,5 +1,9 @@
 # XADB 조사·실행 증거
 
+[DEV3 전체 대상 source·receipt 색인](dev3-target-set-20261023.json)은 정확 선택·원 실패·미실행 상태를 보존한다.
+
+2026-10-23 [DEV3 전체 대상 pin 집합](dev3-target-set-20261023.md): 기존 단일 SharedPool에서 정확1..64개 대상을 함께 확보하도록 확장했다. 신규15·직접 관련4·static2·compiler7·검사기3/변경1의 source별 PASS와 원 compile FAIL을 보존한다. 최종 독립 D1을 제한 단위로 수용했으며 일반 pool·live 거래·DEV3/S5는 미완료다.
+
 [DEV3 Begin source·receipt 색인](dev3-status-begin-20261023.json)은 frozen source와 정확 선택·원 실패·미실행 상태를 보존한다.
 
 2026-10-23 [DEV3 최초 Begin 준비](dev3-status-begin-20261023.md): Free 슬롯의 빈 Active 전이를 위한 WAL·페이지 producer/observer/materializer를 추가했다. 새 runtime12·static1·fmt/Clippy PASS와 원 fmt FAIL을 보존하며 최종 독립 D1을 순수 준비 단위로 수용했다. 실제 발급·stage/apply·일반 pool·DEV3/S5는 미완료다.

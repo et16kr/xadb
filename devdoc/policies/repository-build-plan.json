@@ -4447,5 +4447,30 @@
     ],
     "source_roots_changed": false,
     "full_stage_acceptance": false
+  },
+  "dev3_target_set": {
+    "status": "local_selected_validation_D1_accepted_limited_target_set",
+    "contract_ref": "dev3-task-05-buffer-flush.md#bounded-target-set",
+    "scope": "Exact 1..64 whole target reservation/read/write through original SharedPool; general resident lifecycle, live transaction and recovery incomplete",
+    "implemented_paths": [
+      "crates/engine/src/storage/dirty_frame.rs",
+      "crates/engine/src/storage/dirty_frame/target_set_tests.rs",
+      "scripts/check_dev3_target_set_borrows.py",
+      "scripts/test_check_dev3_target_set_borrows.py",
+      "crates/engine/tests/fixtures/dev3-target-set/compiler/capacity_0.rs",
+      "crates/engine/tests/fixtures/dev3-target-set/compiler/capacity_65.rs",
+      "crates/engine/tests/fixtures/dev3-target-set/compiler/manifest.json",
+      "crates/engine/tests/fixtures/dev3-target-set/compiler/owner_reborrow.rs",
+      "crates/engine/tests/fixtures/dev3-target-set/compiler/pins_reuse.rs",
+      "crates/engine/tests/fixtures/dev3-target-set/compiler/read_sync.rs",
+      "crates/engine/tests/fixtures/dev3-target-set/compiler/release.rs",
+      "crates/engine/tests/fixtures/dev3-target-set/manifest.json"
+    ],
+    "evidence_refs": [
+      "dev3-target-set-20261023.md",
+      "dev3-target-set-20261023.json"
+    ],
+    "source_roots_changed": false,
+    "full_stage_acceptance": false
   }
 }

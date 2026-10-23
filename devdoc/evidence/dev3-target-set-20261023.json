@@ -1,0 +1,1426 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-23",
+  "unit": "D3-TARGET-SET-001",
+  "status": "LOCAL_SELECTED_VERIFICATION_D1_ACCEPTED_LIMITED_TARGET_SET",
+  "scope": "Exact 1..64 whole target reservation/read/write through original SharedPool; no general residency/load/eviction, live Begin/undo/terminal/recovery or full DEV3 acceptance",
+  "base_dev3_commit": "8ed6eedafdcc732c7b90d60f3a607a7c48c730b5",
+  "execution_head": "5d320fd326da3052c39cc9200f6cf7e5055b7ef9",
+  "source_revisions": [
+    {
+      "revision": "r0",
+      "source_sha256": "6087470c9cbdfe243b427c4123a47e622799ec4e279064401a0e4adc60e9df47",
+      "base_commit": "5d320fd326da3052c39cc9200f6cf7e5055b7ef9",
+      "purpose": "Target-set compile; runtime pending resource gate",
+      "compile": "FAIL_E0277_THREAD_RECEIVER_CAPTURE",
+      "product_runtime": "NOT_RUN"
+    },
+    {
+      "revision": "r1",
+      "source_sha256": "aadb52ef68364808418203591f857d3fd695e1280f50fea7e1062632f4f2150f",
+      "base_commit": "5d320fd326da3052c39cc9200f6cf7e5055b7ef9",
+      "purpose": "Target-set compile; runtime pending resource gate",
+      "compile": "PASS",
+      "binary_sha256": "dba580a348eaf20a8326583487cc85af9e245d5d4e6d29bc8d742b77fdf3da52",
+      "mandatory_pass": 15,
+      "direct_related_pass": 4,
+      "static_pass": 2,
+      "fmt": "PASS",
+      "engine_all_target_all_feature_clippy": "PASS"
+    },
+    {
+      "revision": "r2",
+      "source_sha256": "5fa194a252b4acd2c3f0ff6df1be5981aca2306acdedd9b46cca6a42c970288f",
+      "base_commit": "5d320fd326da3052c39cc9200f6cf7e5055b7ef9",
+      "changed_since_r1": [
+        "scripts/check_dev3_target_set_borrows.py",
+        "scripts/test_check_dev3_target_set_borrows.py"
+      ],
+      "product_source_same_as_r1": true,
+      "no_product_recompile_or_static_rerun": true,
+      "checker_selected_pass": 3,
+      "product_runtime": "NOT_REPEATED_UNCHANGED_PRODUCT"
+    },
+    {
+      "revision": "r3",
+      "source_sha256": "b95c1a8da67207ea9d79a941091fb5143d8441861674e6bf2a3fca25c4164e3f",
+      "base_commit": "5d320fd326da3052c39cc9200f6cf7e5055b7ef9",
+      "changed_since_r2": [
+        "scripts/check_dev3_target_set_borrows.py",
+        "scripts/test_check_dev3_target_set_borrows.py"
+      ],
+      "product_source_same_as_r1": true,
+      "no_product_recompile_or_static_rerun": true,
+      "checker_selected_pass": 1,
+      "product_runtime": "NOT_REPEATED_UNCHANGED_PRODUCT"
+    }
+  ],
+  "selection": {
+    "manifest": "crates/engine/tests/fixtures/dev3-target-set/manifest.json",
+    "runtime": {
+      "source_sha256": "aadb52ef68364808418203591f857d3fd695e1280f50fea7e1062632f4f2150f",
+      "binary_sha256": "dba580a348eaf20a8326583487cc85af9e245d5d4e6d29bc8d742b77fdf3da52",
+      "scope": "new 15 and directly affected 4; static results preserved separately; no S5",
+      "rows": [
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_orders_three_and_reads_every_page",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_orders_three_and_reads_every_page",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.0033869830003823154,
+          "log": "runtime-1.log",
+          "log_sha256": "8b90c9fb256e9f0829e2b5a38477a29c9a41bc363b134a26a38567131f5ba35a"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_maximum_capacity_reads_and_writes",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_maximum_capacity_reads_and_writes",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.007345480000367388,
+          "log": "runtime-2.log",
+          "log_sha256": "59c1582a7a66493e47feebcbbd4e826302465620b8eafac8e95596822c0847ae"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_aliases_rejected_atomically",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_aliases_rejected_atomically",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.003284818994870875,
+          "log": "runtime-3.log",
+          "log_sha256": "9a2daba8c7c99c3a075718755978e4b04fd454b9be93f1affc6d301e0183f92e"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_missing_last_rejected_atomically",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_missing_last_rejected_atomically",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.0033351950041833334,
+          "log": "runtime-4.log",
+          "log_sha256": "5f4ff0bf852c96dffcd0c72f6c42ea8f8a6fa7c842b4bd12bc9732fc5772ca44"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_pin_limits_preserve_prior_owners",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_pin_limits_preserve_prior_owners",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.003228802997909952,
+          "log": "runtime-5.log",
+          "log_sha256": "0aac3928818948cb64d4810306282906cebc9441d2c8077ae60edd17c161e231"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_busy_read_releases_all_partial_guards",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_busy_read_releases_all_partial_guards",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.001164178000180982,
+          "log": "runtime-6.log",
+          "log_sha256": "5efd22c6428c37ff220633e83ebd32ee5cec7c437182772f0ea71d8a264ea78c"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_busy_write_releases_all_partial_guards",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_busy_write_releases_all_partial_guards",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.001162283995654434,
+          "log": "runtime-7.log",
+          "log_sha256": "31c68c1d5bf49c0af317c3fa7dd4d6f236be60060deffca9c142c625371c3474"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_poisoned_last_releases_every_count",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_poisoned_last_releases_every_count",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.001160410996817518,
+          "log": "runtime-8.log",
+          "log_sha256": "6b027eb7ba8b825381cc366cfae4d787f85dee82d6dd2ca2643c12e8707c9202"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_stale_last_release_preserves_every_count",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_stale_last_release_preserves_every_count",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.0011783040026784874,
+          "log": "runtime-9.log",
+          "log_sha256": "1d144f36c6110e0bb898973725a95674f3a4d13cbc8a42b34297dc5273719b27"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_duplicate_last_release_preserves_every_count",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_duplicate_last_release_preserves_every_count",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.0012788050007657148,
+          "log": "runtime-10.log",
+          "log_sha256": "c89c87d7b9fc1742833356b0a8c031af986c9e88d0e6bc67c9360c7d6af02d7e"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_late_stale_read_and_write_fence",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_late_stale_read_and_write_fence",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.0011744579969672486,
+          "log": "runtime-11.log",
+          "log_sha256": "b107ae7bff6f594ccf6a3b684e30a8857d9e3b854a585b829211b63236378709"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_unwind_fences_before_unlock",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_unwind_fences_before_unlock",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.003225858003133908,
+          "log": "runtime-12.log",
+          "log_sha256": "711cd13de5db151207cdad146936315ddc3c48ee4aa63c9b865537f592fa9a95"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_thread_readers_exclude_writer_and_resume",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_thread_readers_exclude_writer_and_resume",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.0011373669985914603,
+          "log": "runtime-13.log",
+          "log_sha256": "ff1aca92307d3cc828a9a883799b0c107d8f84f0f4ed7777c435421471382a94"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_stamp_and_read_bounds",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_stamp_and_read_bounds",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.0011855580014525913,
+          "log": "runtime-14.log",
+          "log_sha256": "cf4ccbfa3008f3a6367b0af04ef921379eb91bfe6ad26aa7033dd9aea4b7e75e"
+        },
+        {
+          "group": "mandatory",
+          "selector": "storage::dirty_frame::target_set_tests::target_set_default_wrapper_shape_and_order",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_default_wrapper_shape_and_order",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.0011775329985539429,
+          "log": "runtime-15.log",
+          "log_sha256": "cc2123c534906a454fdd0d239a2553cdc32c60ebc5a207620b7072b884f3283c"
+        },
+        {
+          "group": "related",
+          "selector": "storage::dirty_frame::registration_tests::registration_reverse_rank_tokens_and_copy_requests",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::registration_tests::registration_reverse_rank_tokens_and_copy_requests",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.0011703800046234392,
+          "log": "runtime-16.log",
+          "log_sha256": "d541dfa2192511f2fb37621d2331b40a46997e79cb14b2da0e357dc8179c4cad"
+        },
+        {
+          "group": "related",
+          "selector": "storage::dirty_frame::registration_tests::registration_pin_set_rejection_is_atomic",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::registration_tests::registration_pin_set_rejection_is_atomic",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.0011634370021056384,
+          "log": "runtime-17.log",
+          "log_sha256": "fd9def7314933a1c9197dc8fd4048614d1b42f5ae487abc1a28530a770b4db17"
+        },
+        {
+          "group": "related",
+          "selector": "storage::dirty_frame::registration_tests::registration_stale_second_release_preserves_every_count",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::registration_tests::registration_stale_second_release_preserves_every_count",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.001163225999334827,
+          "log": "runtime-18.log",
+          "log_sha256": "6313819c5991a7c5bd8c9d2b4aeafb911ac0bdc31ae311254a277b72c3da673c"
+        },
+        {
+          "group": "related",
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_da02_allocator_consumer",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::dirty_allocation::tests::dirty_da02_allocator_consumer",
+            "--nocapture"
+          ],
+          "status": "PASS",
+          "exit_code": 0,
+          "elapsed_seconds": 0.965132742006972,
+          "log": "runtime-19.log",
+          "log_sha256": "eb93ec946210ac2e8fd8359448051ec7dcd4ed710cebff81ac8eb6e8d341e497"
+        }
+      ],
+      "status": "PASS",
+      "elapsed_seconds": 1.1424811440010672
+    },
+    "static": {
+      "source_sha256": "aadb52ef68364808418203591f857d3fd695e1280f50fea7e1062632f4f2150f",
+      "binary_sha256": "dba580a348eaf20a8326583487cc85af9e245d5d4e6d29bc8d742b77fdf3da52",
+      "rows": [
+        {
+          "selector": "storage::dirty_frame::target_set_tests::target_set_layout",
+          "status": "PASS",
+          "exit_code": 0,
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::target_set_tests::target_set_layout",
+            "--nocapture"
+          ],
+          "elapsed_seconds": 0.0011244920024182647,
+          "log": "static-1.log",
+          "log_sha256": "6359c773f9c750c32b2c332ab4a60d5417273ef3dcb1031cfcda0b14963c9304"
+        },
+        {
+          "selector": "storage::dirty_frame::registration_tests::registration_layout_receipt",
+          "status": "PASS",
+          "exit_code": 0,
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/target-set-20261023/r1/engine-tests",
+            "--exact",
+            "storage::dirty_frame::registration_tests::registration_layout_receipt",
+            "--nocapture"
+          ],
+          "elapsed_seconds": 0.001416562998201698,
+          "log": "static-2.log",
+          "log_sha256": "a421ca3361b4a016094f4bc671636fe36a45e9f079f43fd30285cf5c47b87266"
+        }
+      ]
+    },
+    "compiler": {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/result.json",
+      "sha256": "087642e80aaffac8a367777f98b209eeeb8535e46d5dc51561e465b99114dc2c",
+      "status": "PASS",
+      "source_sha256": "b95c1a8da67207ea9d79a941091fb5143d8441861674e6bf2a3fca25c4164e3f",
+      "semantic_cases": 6,
+      "baseline": 1,
+      "compiler_elapsed_seconds": 55.60027096499107,
+      "cases": [
+        {
+          "name": "baseline",
+          "status": "PASS",
+          "source_sha256": "b95c1a8da67207ea9d79a941091fb5143d8441861674e6bf2a3fca25c4164e3f",
+          "returncode": 0,
+          "diagnostics": []
+        },
+        {
+          "name": "release",
+          "status": "PASS",
+          "source_sha256": "abd3f5eea1960073e73ff1a63c94d3944166d88f466e0c75c85aba03dc4ddea3",
+          "returncode": 0,
+          "diagnostics": []
+        },
+        {
+          "name": "owner_reborrow",
+          "status": "PASS",
+          "source_sha256": "16b2811860af93fb32df08a7d66e7c4313f1b3d56ec5ff7835fa0e2d30ac296d",
+          "returncode": 101,
+          "diagnostics": [
+            {
+              "code": "E0499",
+              "primary_span": {
+                "byte_end": 360,
+                "byte_start": 355,
+                "column_end": 22,
+                "column_start": 17,
+                "expansion": null,
+                "file_name": "crates/engine/src/storage/target_set_borrow_probe.rs",
+                "is_primary": true,
+                "label": "second mutable borrow occurs here",
+                "line_end": 6,
+                "line_start": 6,
+                "suggested_replacement": null,
+                "suggestion_applicability": null,
+                "text": [
+                  {
+                    "highlight_end": 22,
+                    "highlight_start": 17,
+                    "text": "    let other = owner.try_content(); // expected diagnostic"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "pins_reuse",
+          "status": "PASS",
+          "source_sha256": "828c1c80b22d16d059f916421188e9bee575cec9fc1bf60d1f3d1e78ce617e26",
+          "returncode": 101,
+          "diagnostics": [
+            {
+              "code": "E0382",
+              "primary_span": {
+                "byte_end": 368,
+                "byte_start": 364,
+                "column_end": 9,
+                "column_start": 5,
+                "expansion": null,
+                "file_name": "crates/engine/src/storage/target_set_borrow_probe.rs",
+                "is_primary": true,
+                "label": "value used here after move",
+                "line_end": 7,
+                "line_start": 7,
+                "suggested_replacement": null,
+                "suggestion_applicability": null,
+                "text": [
+                  {
+                    "highlight_end": 9,
+                    "highlight_start": 5,
+                    "text": "    pins.release_checked().unwrap(); // expected diagnostic"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "read_sync",
+          "status": "PASS",
+          "source_sha256": "990de0016c063d9e02fbfca4384a2476399c9e8b3a30482d1ced079ce57e5054",
+          "returncode": 101,
+          "diagnostics": [
+            {
+              "code": "E0277",
+              "primary_span": {
+                "byte_end": 258,
+                "byte_start": 253,
+                "column_end": 23,
+                "column_start": 18,
+                "expansion": null,
+                "file_name": "crates/engine/src/storage/target_set_borrow_probe.rs",
+                "is_primary": true,
+                "label": "`std::rc::Rc<()>` cannot be shared between threads safely",
+                "line_end": 6,
+                "line_start": 6,
+                "suggested_replacement": null,
+                "suggestion_applicability": null,
+                "text": [
+                  {
+                    "highlight_end": 23,
+                    "highlight_start": 18,
+                    "text": "    require_sync(&read); // expected diagnostic"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "capacity_0",
+          "status": "PASS",
+          "source_sha256": "de60bc3dec3cf710ff5d5d98284d8b47dc47faeb48a10ca39a7350bb22d2aaf6",
+          "returncode": 101,
+          "diagnostics": [
+            {
+              "code": "E0080",
+              "primary_span": {
+                "byte_end": 17442,
+                "byte_start": 17408,
+                "column_end": 51,
+                "column_start": 17,
+                "expansion": {
+                  "def_site_span": {
+                    "byte_end": 63325,
+                    "byte_start": 63306,
+                    "column_end": 24,
+                    "column_start": 5,
+                    "expansion": null,
+                    "file_name": "/home/et16/.rustup/toolchains/1.95.0-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/macros/mod.rs",
+                    "is_primary": false,
+                    "label": null,
+                    "line_end": 1691,
+                    "line_start": 1691,
+                    "suggested_replacement": null,
+                    "suggestion_applicability": null,
+                    "text": [
+                      {
+                        "highlight_end": 24,
+                        "highlight_start": 5,
+                        "text": "    macro_rules! assert {"
+                      }
+                    ]
+                  },
+                  "macro_decl_name": "assert!",
+                  "span": {
+                    "byte_end": 17442,
+                    "byte_start": 17408,
+                    "column_end": 51,
+                    "column_start": 17,
+                    "expansion": null,
+                    "file_name": "crates/engine/src/storage/dirty_frame.rs",
+                    "is_primary": false,
+                    "label": null,
+                    "line_end": 507,
+                    "line_start": 507,
+                    "suggested_replacement": null,
+                    "suggestion_applicability": null,
+                    "text": [
+                      {
+                        "highlight_end": 51,
+                        "highlight_start": 17,
+                        "text": "        const { assert!(N >= 1 && N <= MAX_FRAMES) }; // target-set capacity assertion"
+                      }
+                    ]
+                  }
+                },
+                "file_name": "crates/engine/src/storage/dirty_frame.rs",
+                "is_primary": true,
+                "label": "evaluation of `storage::dirty_frame::SharedPool::<'_, '_, '_, '_>::reserve_target_capacity::<0>::{constant#0}` failed here",
+                "line_end": 507,
+                "line_start": 507,
+                "suggested_replacement": null,
+                "suggestion_applicability": null,
+                "text": [
+                  {
+                    "highlight_end": 51,
+                    "highlight_start": 17,
+                    "text": "        const { assert!(N >= 1 && N <= MAX_FRAMES) }; // target-set capacity assertion"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "capacity_65",
+          "status": "PASS",
+          "source_sha256": "6e2ff12fd8524aedccbbd8d84dbf6bdd85f2f96ee78343e86be2d93368174486",
+          "returncode": 101,
+          "diagnostics": [
+            {
+              "code": "E0080",
+              "primary_span": {
+                "byte_end": 17442,
+                "byte_start": 17408,
+                "column_end": 51,
+                "column_start": 17,
+                "expansion": {
+                  "def_site_span": {
+                    "byte_end": 63325,
+                    "byte_start": 63306,
+                    "column_end": 24,
+                    "column_start": 5,
+                    "expansion": null,
+                    "file_name": "/home/et16/.rustup/toolchains/1.95.0-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/macros/mod.rs",
+                    "is_primary": false,
+                    "label": null,
+                    "line_end": 1691,
+                    "line_start": 1691,
+                    "suggested_replacement": null,
+                    "suggestion_applicability": null,
+                    "text": [
+                      {
+                        "highlight_end": 24,
+                        "highlight_start": 5,
+                        "text": "    macro_rules! assert {"
+                      }
+                    ]
+                  },
+                  "macro_decl_name": "assert!",
+                  "span": {
+                    "byte_end": 17442,
+                    "byte_start": 17408,
+                    "column_end": 51,
+                    "column_start": 17,
+                    "expansion": null,
+                    "file_name": "crates/engine/src/storage/dirty_frame.rs",
+                    "is_primary": false,
+                    "label": null,
+                    "line_end": 507,
+                    "line_start": 507,
+                    "suggested_replacement": null,
+                    "suggestion_applicability": null,
+                    "text": [
+                      {
+                        "highlight_end": 51,
+                        "highlight_start": 17,
+                        "text": "        const { assert!(N >= 1 && N <= MAX_FRAMES) }; // target-set capacity assertion"
+                      }
+                    ]
+                  }
+                },
+                "file_name": "crates/engine/src/storage/dirty_frame.rs",
+                "is_primary": true,
+                "label": "evaluation of `storage::dirty_frame::SharedPool::<'_, '_, '_, '_>::reserve_target_capacity::<65>::{constant#0}` failed here",
+                "line_end": 507,
+                "line_start": 507,
+                "suggested_replacement": null,
+                "suggestion_applicability": null,
+                "text": [
+                  {
+                    "highlight_end": 51,
+                    "highlight_start": 17,
+                    "text": "        const { assert!(N >= 1 && N <= MAX_FRAMES) }; // target-set capacity assertion"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "checker_r2": {
+      "status": "PASS",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "-v",
+        "test_check_dev3_target_set_borrows.TargetSetCompiler.test_invalid_selection_and_program_tampering",
+        "test_check_dev3_target_set_borrows.TargetSetCompiler.test_wrong_capacity_error_or_instantiation_is_not_pass",
+        "test_check_dev3_target_set_borrows.TargetSetCompiler.test_missing_or_weakened_assertion_is_rejected"
+      ],
+      "source_sha256": "5fa194a252b4acd2c3f0ff6df1be5981aca2306acdedd9b46cca6a42c970288f",
+      "elapsed_seconds": 0.06397025400656275,
+      "exit_code": 0,
+      "log_sha256": "039e42cb89ee9b9f9e250d1a8c234830d53bdef1115b3c5739af0f8e930ef7df"
+    },
+    "changed_checker_r3": {
+      "status": "PASS",
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "-v",
+        "test_check_dev3_target_set_borrows.TargetSetCompiler.test_wrong_capacity_error_or_instantiation_is_not_pass"
+      ],
+      "source_sha256": "b95c1a8da67207ea9d79a941091fb5143d8441861674e6bf2a3fca25c4164e3f",
+      "elapsed_seconds": 0.0639450279995799,
+      "exit_code": 0,
+      "log_sha256": "469da04917d67909eaedadab73fe3486f39226f3351ee43e38c5eed592765a61"
+    },
+    "s5": {
+      "combinations": 576,
+      "status": "AUTHORED_NOT_RUN"
+    },
+    "native": "NOT_APPLICABLE_NO_NEW_IO_EFFECT",
+    "unchanged_lower_tests": "NOT_RUN",
+    "document_verifier": "NOT_RUN_PUSH_ONLY"
+  },
+  "resource": {
+    "call_source_value_bytes": {
+      "N2": 1712,
+      "N3": 1856,
+      "N8": 2576,
+      "N64": 10640
+    },
+    "prior_default_census": 2352,
+    "conservative_N64_with_prior_base": 11280,
+    "exact_call_limit": 16384,
+    "default_call_limit": 3072,
+    "default_layout_bytes": {
+      "pin": 56,
+      "read": 104,
+      "write": 128,
+      "pool": 17208
+    },
+    "retained_capacity_sum": 102,
+    "retained_metadata_bytes": 5440,
+    "scope": "Successful held only; each maximum concurrent reserve/acquisition/failure/cleanup chain charged separately; caller request/page loans separate",
+    "whole_live_owner_or_rss_proof": false,
+    "tool_retention": [
+      {
+        "path": "artifacts/dev3/target-set-20261023/r0/source",
+        "bytes": 95345174,
+        "kind": "source_export"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/r1/source",
+        "bytes": 95345179,
+        "kind": "source_export"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/r2/source",
+        "bytes": 95348923,
+        "kind": "source_export"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/r3/source",
+        "bytes": 95348985,
+        "kind": "source_export"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/r1/engine-tests",
+        "bytes": 108537008,
+        "kind": "binary"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/target",
+        "bytes": 776555760,
+        "kind": "compiler_cache"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/target",
+        "bytes": 1131548174,
+        "kind": "compiler_cache"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/baseline",
+        "bytes": 95348985,
+        "kind": "source_export"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/release/source",
+        "bytes": 95349532,
+        "kind": "source_export"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/owner_reborrow/source",
+        "bytes": 95349458,
+        "kind": "source_export"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/pins_reuse/source",
+        "bytes": 95349466,
+        "kind": "source_export"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/read_sync/source",
+        "bytes": 95349314,
+        "kind": "source_export"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/capacity_0/source",
+        "bytes": 95349910,
+        "kind": "source_export"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/capacity_65/source",
+        "bytes": 95349911,
+        "kind": "source_export"
+      },
+      {
+        "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/baseline-logs/xadb_engine-b03a18e6ddea4f21",
+        "bytes": 108538640,
+        "kind": "binary"
+      }
+    ],
+    "case_review_and_diagnostics_snapshot_bytes": 852631,
+    "case_review_limit_bytes": 16777216,
+    "compiler_diagnostics_included_conservatively": true,
+    "fixture_limit_bytes": 2097152
+  },
+  "review": {
+    "method": "open-code-review-delegate",
+    "reviewer": "/root/pool_design_review",
+    "design_d2": "D2_ACCEPTED_BOUNDED_TARGET_SET",
+    "runtime_gate": "UNIT_RUNTIME_GATE_ACCEPTED_COMPILER_GATE_PENDING_FIXES",
+    "compiler_gate": "COMPILER_GATE_ACCEPTED",
+    "final_d1": "D1_ACCEPTED_LIMITED_BOUNDED_TARGET_SET",
+    "resolved_findings": [
+      "TARGET-RUNNER-001 captured fixture/executed checker provenance",
+      "TARGET-RUNNER-002 exact single error production instantiation"
+    ],
+    "final_coverage": {
+      "staged_files": 24,
+      "source_fixture_files": 12,
+      "documentation_files": 12,
+      "ocr_entries": 25,
+      "reviewed": 24,
+      "skipped_unrelated": 1,
+      "reviewable_reviewed": 8,
+      "excluded_manually_reviewed": 16,
+      "unstaged_shared_dev2_hunks_excluded": 3
+    },
+    "final_metadata_addendum_path": "artifacts/dev3/target-set-20261023/review/final-metadata.json"
+  },
+  "full_dev3_acceptance": "NOT_RUN",
+  "assets": [
+    {
+      "path": "artifacts/dev3/target-set-20261023/build_revision.py",
+      "bytes": 1805,
+      "sha256": "cc5223cb6dafb4b59f6cffb606ad0244d268feae8f4137a08f98140076d01ff2"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/baseline-logs/compiler.jsonl",
+      "bytes": 21895,
+      "sha256": "7c9f0380d068f28b5eb66ed00d3c01b30be6a70fa0f29573ff3328c4f4386374"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/baseline-logs/compiler.stderr",
+      "bytes": 991,
+      "sha256": "0f60088a830ac307a2b88e9901800180305d57b7410739c10c4d764419a75e13"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/capacity_0-logs/compiler.jsonl",
+      "bytes": 28328,
+      "sha256": "c6b5f819867c5ecc599a9c1fa9bbb957afd4629819b0b8a4791c8745f5c89434"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/capacity_0-logs/compiler.stderr",
+      "bytes": 234,
+      "sha256": "b519a532ba519928896a02c32ba59560ae9ca51db920d3415efe489ea0ba2a65"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/capacity_0-logs/probe.patch",
+      "bytes": 1201,
+      "sha256": "95a00a3abe8a98130ba0b67c0a9614de2ae3d06ec6ecbe0ac3815736fa5eeace"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/capacity_65-logs/compiler.jsonl",
+      "bytes": 28350,
+      "sha256": "8075e6d41d4f4599256f543d5127cf65f966b3a821e6116db87852e06256eee7"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/capacity_65-logs/compiler.stderr",
+      "bytes": 235,
+      "sha256": "fcdec1f5b0fa741a77f98dfec4d39e09fbf8cea43f86cd678b227a3477b3011c"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/capacity_65-logs/probe.patch",
+      "bytes": 1202,
+      "sha256": "2c3c49de91998e7e32966138f0f6e73c229bf28533de5af6c4638ddab0cc63fa"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/owner_reborrow-logs/compiler.jsonl",
+      "bytes": 33123,
+      "sha256": "a05244500bd070c9cf2bfd45d809f54b373e7a97a6b1f8af06557027eff9abcf"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/owner_reborrow-logs/compiler.stderr",
+      "bytes": 257,
+      "sha256": "8098e60249a573da205fbf1fd5a4bbb94a3bac3b6c5f7757289360770c3147c5"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/owner_reborrow-logs/probe.patch",
+      "bytes": 740,
+      "sha256": "7fb9f3a516344dc93a8aceabc47adee571350163ac5b209c445d03964851b40b"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/pins_reuse-logs/compiler.jsonl",
+      "bytes": 36817,
+      "sha256": "3d7735bc54e166a2c6c4dc226c5c7d5b372a824c9411c9e37d77b67e991b3260"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/pins_reuse-logs/compiler.stderr",
+      "bytes": 253,
+      "sha256": "15538d975bb3f16773b22fb7d1af7dcf2e1e576effb3421a98a75610ad259bbd"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/pins_reuse-logs/probe.patch",
+      "bytes": 749,
+      "sha256": "d141aeb0f58f60eb45227832c709de6255bcfc4792578e4fcc08cd7e3afaca14"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/read_sync-logs/compiler.jsonl",
+      "bytes": 41867,
+      "sha256": "c3abc30591e93091b299229bbcdf0fe6c805e30c9563956e10b3df86786b70e3"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/read_sync-logs/compiler.stderr",
+      "bytes": 253,
+      "sha256": "c258858b34c44d66d9320994ff8cad787c3c02f0e075c4d5e269ce8c080d84ae"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/read_sync-logs/probe.patch",
+      "bytes": 595,
+      "sha256": "beb94f5ce9ae16097c4a8f67f0da6b6d6e0631098539fb90c2a0251ed2f8e362"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/release-logs/compiler.jsonl",
+      "bytes": 29557,
+      "sha256": "0be2966f2fd4a575aad4983dc5a3371f308bda705cb41ad35b783f02fe49e30d"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/release-logs/compiler.stderr",
+      "bytes": 913,
+      "sha256": "d228a20a1d121df954ebeb023be7df9946b310a515cca38d25b5b89cde177a8b"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/release-logs/probe.patch",
+      "bytes": 815,
+      "sha256": "ab59689855d71ae76077d9f75001b2d00d23f9604437615d0a6132b643f3ede6"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/compiler/target-set-compiler-5pxn9pku/result.json",
+      "bytes": 23472,
+      "sha256": "087642e80aaffac8a367777f98b209eeeb8535e46d5dc51561e465b99114dc2c"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/draft-compiler/capacity_0.rs",
+      "bytes": 882,
+      "sha256": "f71b3efe40c65c2c1c1ea8b4a34c429d208c67ac726fbc1d0cdbcb69d329beb9"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/draft-compiler/capacity_65.rs",
+      "bytes": 883,
+      "sha256": "0634286973aceba78a9db654b46d2f645047ed13ca2f0a3662a4d5e47b12f28e"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/draft-compiler/owner_reborrow.rs",
+      "bytes": 430,
+      "sha256": "47aac7b156e6a71de1a34069a27598beb80eee8574fc91076ac983f81cd25d20"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/draft-compiler/pins_reuse.rs",
+      "bytes": 438,
+      "sha256": "e18e4e873876133748ec8cd3bb72644496a5e9ffe7f449c4cd07f997ba4242df"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/draft-compiler/read_sync.rs",
+      "bytes": 286,
+      "sha256": "159ca8678ba9bf7d214993a30655fb461e64d4287fc9ac24dce1875049d01433"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/draft-compiler/release.rs",
+      "bytes": 504,
+      "sha256": "35abad0596a764580c1b1e7e99321cd2e7791946f53b56ee9bb59765a9821c64"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/draft-inventory.json",
+      "bytes": 2434,
+      "sha256": "fe15da89b6b1e412c865833cea947556d01ebbd1e3497cb4c8232e865c6013cd"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r0/build.jsonl",
+      "bytes": 28314,
+      "sha256": "251257f2b9849364d59b31c1cceb606c2bf34d6e7394851a394b33755c39b5c7"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r0/build.stderr",
+      "bytes": 880,
+      "sha256": "23136bc461d57d0af0e1790782158522310b83743561d8fd98fcf29b9a69f9ff"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r0/source.json",
+      "bytes": 217,
+      "sha256": "830c4cae28d8e240ff476835fee26c2c8a7ceca1c945a1127fdc2ed6362be131"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/binary.json",
+      "bytes": 465,
+      "sha256": "b46e2bf5fd56591303743a5e1851f224618357a96b1d4206ced8c6c140be3c7f"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/build.jsonl",
+      "bytes": 19869,
+      "sha256": "e152f96dfbe0cea7c349eb3008cb2305bd5232470295a924362848817acaf389"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/build.stderr",
+      "bytes": 188,
+      "sha256": "2a0796ad8fe826c6acf31b5070541a2d9cb45972ad34ed7e4039d2b459094bde"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/clippy.log",
+      "bytes": 785,
+      "sha256": "a1bc317f35a58e60fc7e0e11f0f0267f575d8bf914a811b85267a63ce59d7cfe"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/fmt.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-1.log",
+      "bytes": 211,
+      "sha256": "8b90c9fb256e9f0829e2b5a38477a29c9a41bc363b134a26a38567131f5ba35a"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-10.log",
+      "bytes": 222,
+      "sha256": "c89c87d7b9fc1742833356b0a8c031af986c9e88d0e6bc67c9360c7d6af02d7e"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-11.log",
+      "bytes": 209,
+      "sha256": "b107ae7bff6f594ccf6a3b684e30a8857d9e3b854a585b829211b63236378709"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-12.log",
+      "bytes": 544,
+      "sha256": "711cd13de5db151207cdad146936315ddc3c48ee4aa63c9b865537f592fa9a95"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-13.log",
+      "bytes": 218,
+      "sha256": "ff1aca92307d3cc828a9a883799b0c107d8f84f0f4ed7777c435421471382a94"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-14.log",
+      "bytes": 199,
+      "sha256": "cf4ccbfa3008f3a6367b0af04ef921379eb91bfe6ad26aa7033dd9aea4b7e75e"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-15.log",
+      "bytes": 209,
+      "sha256": "cc2123c534906a454fdd0d239a2553cdc32c60ebc5a207620b7072b884f3283c"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-16.log",
+      "bytes": 219,
+      "sha256": "d541dfa2192511f2fb37621d2331b40a46997e79cb14b2da0e357dc8179c4cad"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-17.log",
+      "bytes": 209,
+      "sha256": "fd9def7314933a1c9197dc8fd4048614d1b42f5ae487abc1a28530a770b4db17"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-18.log",
+      "bytes": 224,
+      "sha256": "6313819c5991a7c5bd8c9d2b4aeafb911ac0bdc31ae311254a277b72c3da673c"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-19.log",
+      "bytes": 307,
+      "sha256": "eb93ec946210ac2e8fd8359448051ec7dcd4ed710cebff81ac8eb6e8d341e497"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-2.log",
+      "bytes": 211,
+      "sha256": "59c1582a7a66493e47feebcbbd4e826302465620b8eafac8e95596822c0847ae"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-3.log",
+      "bytes": 205,
+      "sha256": "9a2daba8c7c99c3a075718755978e4b04fd454b9be93f1affc6d301e0183f92e"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-4.log",
+      "bytes": 210,
+      "sha256": "5f4ff0bf852c96dffcd0c72f6c42ea8f8a6fa7c842b4bd12bc9732fc5772ca44"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-5.log",
+      "bytes": 210,
+      "sha256": "0aac3928818948cb64d4810306282906cebc9441d2c8077ae60edd17c161e231"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-6.log",
+      "bytes": 215,
+      "sha256": "5efd22c6428c37ff220633e83ebd32ee5cec7c437182772f0ea71d8a264ea78c"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-7.log",
+      "bytes": 216,
+      "sha256": "31c68c1d5bf49c0af317c3fa7dd4d6f236be60060deffca9c142c625371c3474"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-8.log",
+      "bytes": 672,
+      "sha256": "6b027eb7ba8b825381cc366cfae4d787f85dee82d6dd2ca2643c12e8707c9202"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime-9.log",
+      "bytes": 218,
+      "sha256": "1d144f36c6110e0bb898973725a95674f3a4d13cbc8a42b34297dc5273719b27"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/runtime.json",
+      "bytes": 11967,
+      "sha256": "9696ecd485b9bed5cfa20f9a0ff323822af6a995b4757557b1aa58417d608886"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/source.json",
+      "bytes": 217,
+      "sha256": "65db08f85d6060bd117a3c6fd21fa2c9decd56dd9dd7a334b90a0b88c6e4536c"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/static-1.log",
+      "bytes": 297,
+      "sha256": "6359c773f9c750c32b2c332ab4a60d5417273ef3dcb1031cfcda0b14963c9304"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/static-2.log",
+      "bytes": 336,
+      "sha256": "a421ca3361b4a016094f4bc671636fe36a45e9f079f43fd30285cf5c47b87266"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/static-tools.json",
+      "bytes": 440,
+      "sha256": "27fb1b1e3273e1d489f24744bf6fcf65e03b1b5b03376fc38803f4bc503479e4"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r1/static.json",
+      "bytes": 1262,
+      "sha256": "5ef08cbb5d0f51f987b2ae5d4120c77a73af9f7d430ee41a457fee2de57e2b11"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r2/checker.json",
+      "bytes": 661,
+      "sha256": "7c45d1d44b7b7b9f6942286d5ac17430bcd6cd23b835610733ab2794cf0acc89"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r2/checker.log",
+      "bytes": 578,
+      "sha256": "039e42cb89ee9b9f9e250d1a8c234830d53bdef1115b3c5739af0f8e930ef7df"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r2/source.json",
+      "bytes": 365,
+      "sha256": "4a8699899f2f42b0965c14cb230dcc8787bfd71d1b6d856a46267fa42523c241"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r3/checker.json",
+      "bytes": 448,
+      "sha256": "67262447e619816ec8d5723c1f860f84ae3e8a13bae5ff669dcfa92112da8ec6"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r3/checker.log",
+      "bytes": 269,
+      "sha256": "469da04917d67909eaedadab73fe3486f39226f3351ee43e38c5eed592765a61"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/r3/source.json",
+      "bytes": 365,
+      "sha256": "354516d4ae2c3024381231451dd5e8953e36902fa31d346f408f57788eb1241c"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/compiler-design-d2/capacity_0.rs",
+      "bytes": 882,
+      "sha256": "f71b3efe40c65c2c1c1ea8b4a34c429d208c67ac726fbc1d0cdbcb69d329beb9"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/compiler-design-d2/capacity_65.rs",
+      "bytes": 883,
+      "sha256": "0634286973aceba78a9db654b46d2f645047ed13ca2f0a3662a4d5e47b12f28e"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/compiler-design-d2/owner_reborrow.rs",
+      "bytes": 430,
+      "sha256": "47aac7b156e6a71de1a34069a27598beb80eee8574fc91076ac983f81cd25d20"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/compiler-design-d2/pins_reuse.rs",
+      "bytes": 438,
+      "sha256": "e18e4e873876133748ec8cd3bb72644496a5e9ffe7f449c4cd07f997ba4242df"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/compiler-design-d2/read_sync.rs",
+      "bytes": 286,
+      "sha256": "159ca8678ba9bf7d214993a30655fb461e64d4287fc9ac24dce1875049d01433"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/compiler-design-d2/release.rs",
+      "bytes": 504,
+      "sha256": "35abad0596a764580c1b1e7e99321cd2e7791946f53b56ee9bb59765a9821c64"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/compiler-gate-r2.json",
+      "bytes": 2029,
+      "sha256": "e207db08ae38753d724caa4365c8fe6fcc40ee9aeb1eefc4f1652cbccac11009"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/compiler-gate-r2.md",
+      "bytes": 1174,
+      "sha256": "ab871cd77d332c212a9abed3108cb7b381ff475e07b4689adc57fc374cadfa80"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/compiler-gate-r3.json",
+      "bytes": 5930,
+      "sha256": "b86b26cf61f1e2e7efac5b617eb90bb837e4a7194c1c936a253fc290ab34da2f"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/compiler-gate-r3.md",
+      "bytes": 1347,
+      "sha256": "5bc3994d48395946b3ea7fab36f36040d6086778eb703b73884b6c77a900c1f8"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/contract-design-d2.md",
+      "bytes": 70490,
+      "sha256": "0b2c5e14b681d18cb725a134a69070a91bb6c3b92ef006fc4cbe1b391c7dfe09"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/coverage-compiler-r2.json",
+      "bytes": 7253,
+      "sha256": "ef1e34c71ac94685d6c26f7aa42a352fd6eb0e38eed58a5ed547725f7e360bae"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/coverage-compiler-r3.json",
+      "bytes": 8987,
+      "sha256": "0d16d06655b43c1f077f46d82adafb1f35a498cbdfd121336a45947dc6eb5f1f"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/coverage-design-d2.json",
+      "bytes": 2933,
+      "sha256": "20ea0386bc187de7e973b23f991dbf52caaba2cabed3acd1bd1e769fcff0978f"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/coverage-pre-runtime-r1.json",
+      "bytes": 8839,
+      "sha256": "d82ab321a51a0660a0c00f046607bff0fd9dfa02d49b3edbed1a9b64f07c3420"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/design-d2.json",
+      "bytes": 11791,
+      "sha256": "0d4f50e3b120870f431a10fe65560ce76f47d3bc16698be3ced010da29e69370"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/design-d2.md",
+      "bytes": 2519,
+      "sha256": "0c529b3f75414603f8f0ba942f7f076d5bb9c86909d0487494b4f08a7c16abae"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/design-proposed.md",
+      "bytes": 70095,
+      "sha256": "dc6ba4fbfe21b0bc28803a129a165c9acf31bd0f9711e446765b0cca739b8fee"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/design-resource-clarified.md",
+      "bytes": 70490,
+      "sha256": "0b2c5e14b681d18cb725a134a69070a91bb6c3b92ef006fc4cbe1b391c7dfe09"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/initial-assessment.json",
+      "bytes": 12714,
+      "sha256": "c7f9088f28118ef78508cd8988ad40d223a4753ee06706d7ba9b63b064287268"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/initial-assessment.md",
+      "bytes": 3318,
+      "sha256": "02cc911e238ae258c98f8d79e92a2a9ec377c43326b3fbceb9796471b115b4ae"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/inventory-design-d2.json",
+      "bytes": 2434,
+      "sha256": "fe15da89b6b1e412c865833cea947556d01ebbd1e3497cb4c8232e865c6013cd"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-commands-design-d2.json",
+      "bytes": 822,
+      "sha256": "836eb63cde8ba26ebfc4534b61943fc72ca7372de3417f644db298df2d522af0"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-commands-initial.json",
+      "bytes": 799,
+      "sha256": "874414b4eff9c7a5fddb44296a2540563de1e4a236911376a9ed9c6afb8275c7"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-preview-compiler-r2.json",
+      "bytes": 3351,
+      "sha256": "203bd6548be771dbb5362d034be4bd9485a55a8ae97e487d1f60235afbb64342"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-preview-compiler-r3.json",
+      "bytes": 4366,
+      "sha256": "8104d4f3ebe9422d8e48f31566912ea1284feb557de84dc22956636f3d2629ca"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-preview-design-d2.json",
+      "bytes": 1279,
+      "sha256": "b7d363a8a4dfbdc61b8ae59f24f73400cad5e5d7925cfe79010a527e9567092b"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-preview-initial.json",
+      "bytes": 939,
+      "sha256": "9f1389cae2912bf046628f5353521a4f6399cb264feacca918926589e790370f"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-preview-pre-runtime-r1.json",
+      "bytes": 3351,
+      "sha256": "7733b8c36d563a7e0f8e5665736177ae163671af4a8f354cb8672fa0442389f6"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-rules-compiler-r2.json",
+      "bytes": 7728,
+      "sha256": "8085031bcc6e2f832d75d738ca30d40ffb0838f6f6676773152119ad114e3159"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-rules-compiler-r3.json",
+      "bytes": 7728,
+      "sha256": "8085031bcc6e2f832d75d738ca30d40ffb0838f6f6676773152119ad114e3159"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-rules-context.json",
+      "bytes": 6822,
+      "sha256": "5be2ed17d63f5a7ac77d81b3b998b5c2f26d8405e94bf2d33ad332115375c0df"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-rules-design-d2.json",
+      "bytes": 988,
+      "sha256": "447bc990d91be71027c85e53e978b6168c6ed472f3b76c0cecb7b3ea9a74f7f1"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-rules-emerging-code.json",
+      "bytes": 6535,
+      "sha256": "af7c0eea950fc11131199a7c93b983898c749e1065679ad9b9f41ebc9ad0b310"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-rules-pre-runtime-r1.json",
+      "bytes": 14544,
+      "sha256": "1a3c9d7169235915956db3d3e7b2531ca37b17c8c205085eed3ba0f687e75f9e"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/pre-runtime-r1.json",
+      "bytes": 10214,
+      "sha256": "bfb050db41bcd9cceb0624dbe1b6c33576656faf47c3dadac8da09ecf51dd17b"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/pre-runtime-r1.md",
+      "bytes": 3145,
+      "sha256": "5812fdbfdb524cf44478d5c37fca93fc57596a6df3827bcf71fe53d71517522c"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/unrelated-before/devdoc-README.md",
+      "bytes": 36481,
+      "sha256": "eb7295a3ee7495306fc2e56718e4d19285e78c6e3cace5b1e56182bb548773b6"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/unrelated-before/documents.json",
+      "bytes": 74109,
+      "sha256": "eb027a721d80b740012d051ecf73a807e4d4050e708672b251076a8b505f6f3c"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/unrelated-before/evidence-README.md",
+      "bytes": 51304,
+      "sha256": "3ab237e46d435016efb8f8767d6e2beeff73a66743d751d2e4f365e6d40dc78e"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/tool-retention.json",
+      "bytes": 2580,
+      "sha256": "494c3a3417be93751ede5131fc94847184a0c840b42a22765297d3ecbab01962"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/coverage-final.json",
+      "bytes": 13810,
+      "sha256": "c8e4b8348c7dbfdce345add92f27a102bfa9dad58525c3a332420b5788b06f98"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/execution-audit-final.json",
+      "bytes": 21124,
+      "sha256": "8296d392d9ed8f2f4d7b4688c23340c32b8717369fc29a525ff2ec4c9743b0d9"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/final-d1.json",
+      "bytes": 10012,
+      "sha256": "9c5346e9f485a775bb1c9aeff4a2b1b95123b3c5a8cc7e1d078c8b52e8b7e617"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/final-d1.md",
+      "bytes": 3596,
+      "sha256": "bf32538b7e0524fba82243b9683af1b0726a3971fa36eeee08a936c8a0cc0e30"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-preview-final.json",
+      "bytes": 4701,
+      "sha256": "d96aab6cc34c0f465de5399a12e1ea900760b0a03ecc0f570bb79fd425869e4c"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/ocr-rules-final.json",
+      "bytes": 14701,
+      "sha256": "5cd23f16bb721c255e2d5cea352de71ea14fad7534385a56d61de5cf212aa769"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/staged-final.patch",
+      "bytes": 149590,
+      "sha256": "3b740d80f07ac6015ae45e0690eb10f3eda32b15878384362176e7d1bb5ca30c"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/staged-source-binding-final.json",
+      "bytes": 6157,
+      "sha256": "adae508787c4c31104a556ea1e45357e35ebb9005af7c53b5f6d56f0847656aa"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/final-metadata.json",
+      "bytes": 4108,
+      "sha256": "f3bbe25d79a76169f377b1a82b935557c7ad309d13cb5f7ec091dc65e23ab1b7"
+    },
+    {
+      "path": "artifacts/dev3/target-set-20261023/review/final-metadata.md",
+      "bytes": 1506,
+      "sha256": "f1bd86ceca381b65b35265d47d80aff60d694ee5904fc1f95a51c820c2eb3fee"
+    }
+  ]
+}

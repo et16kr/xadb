@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-23 [DEV3 전체 대상 pin 집합](evidence/dev3-target-set-20261023.md): 기존 단일 SharedPool에서 정확1..64개 대상을 함께 확보하도록 확장했다. 신규15·직접 관련4·static2·compiler7·검사기3/변경1의 source별 PASS와 원 compile FAIL을 보존한다. 최종 독립 D1을 제한 단위로 수용했으며 일반 pool·live 거래·DEV3/S5는 미완료다.
+
 2026-10-23 [DEV3 최초 Begin 준비](evidence/dev3-status-begin-20261023.md): Free 슬롯의 빈 Active 전이를 위한 WAL·페이지 producer/observer/materializer를 추가했다. 새 runtime12·static1·fmt/Clippy PASS와 원 fmt FAIL을 보존하며 최종 독립 D1을 순수 준비 단위로 수용했다. 실제 발급·stage/apply·일반 pool·DEV3/S5는 미완료다.
 
 2026-10-23 [DEV3 현재 membership Status load](evidence/dev3-status-load-20261023.md): dirty allocator의 권한을 보존하며 실제 A/B home을 두 번째 frame에 재적재한다. source별 runtime24·native1·compiler3+baseline·자원/체커와 원 FAIL을 보존하며 최종 독립 D1을 이번 제한 load 단위로 수용했다. 일반 pool·live Status 변경·DEV3/S5는 미완료다.

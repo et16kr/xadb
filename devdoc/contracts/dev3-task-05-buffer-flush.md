@@ -517,3 +517,92 @@ P3 실제 source별 검증과 원 실패/호출 inventory 정정은 [선택 증�
 현재 owner를 포함한 component49056/native49176≤65536, retained60672+P+C를 더한
 load metadata110920/111040≤196608, flush65536 포함176456/176576≤262144다.
 새 bound/control/page loan은 추가하지 않았다. 최종 S5 실제 확대43은 작성·NOT_RUN이다.
+
+
+<a id="bounded-target-set"></a>
+## D3-TARGET-SET-001 — 단일 pool의 bounded 전체 대상 확보
+
+2026-10-23 · **D2 ACCEPTED / 제한 구현 선택 검증·최종 D1 수용**. 기준 `8ed6eed`, 작성·통합
+`/root`, 독립 검토 `/root/pool_design_review`. 실제 일반 pool·live Begin/undo·tree의 whole pin
+집합을 공급하는 선행이다. 기존 SharedPool의 directory/pins/DPT와 원 storage/core/fence를
+직접 사용하며 별도 pool 또는 시험 전용 제품 경로를 만들지 않는다. 일반 page registration/
+load/INIT/eviction·pressure·실거래/복구 완료는 이 단위의 결과가 아니다.
+
+### API와 전이
+
+- 기존 `reserve_targets(&mut Owner, &[TargetRequest])`의1..2 요청과 기본 타입 크기는 유지하고
+  같은 private generic 구현의 N=2에 위임한다. 빈 slice와3개 이상은 Shape/Unchanged다.
+- 새 `reserve_target_set<const N>(&mut Owner, &[TargetRequest; N])`는 정확N개를 요구한다.
+  N은1..64이며 생성 entry의 const assertion으로0/65 이상의 monomorphization을 거절한다.
+  N64 저장소를 만들고 요청 한 개만 pin하는 경로를 노출하지 않는다. `PinSet`/`PinnedTargets`/
+  `ReadTargets`/`WriteTargets`의 const N 기본값은2이고 guard/token 배열만 N에 비례한다.
+- 순서는 공통 health→owner binding→directory 검산→shape→전체 same-address duplicate→
+  pins 검산과 exact request lookup→canonical rank 정렬→전체 quota 확인→한 번의 pin 증가다.
+  같은 database/file/page_no의 다른 incarnation/kind도 duplicate다. 원 selected namespace의
+  file/page/incarnation 순서를 모든 요청에 적용하며 일부 pin을 잡고 load/victim을 기다리지 않는다.
+  모든 count 변경은 원 pin mutex 아래이고 이전 단계 실패는 모든 count/bytes 불변이다.
+- per-frame34·총68 pin과 owner34 한도는 그대로다. N에 곱해 한도를 늘리지 않는다. 전체 집합을
+  받을 수 없으면 Capacity/Unchanged다. N64 성공 뒤 다른 네 pin까지만 받을 수 있고 이후는 거절한다.
+- read/write는 전체 pin 뒤 기존 content admission 또는 apply→version을 확보한다. 순위별
+  try-lock 중 Busy/poison/stale가 생기면 이미 얻은 모든 latch를 역순 해제하고 admission과
+  전체 pin을 정리한다. unwind는 latch 해제 전에 공통 fence를 세운다. fatal이 후속 Fenced에
+  덮이지 않는 원 오류 결합을 유지한다. I/O·heap·wait는 추가하지 않는다.
+- release는 len/capacity·모든 slot/generation·모든 count·전체 token 유일성과 총량을 먼저
+  검산한다. 마지막 token이 잘못돼도 앞 count를 먼저 줄이지 않는다. 위조/stale 내부 token은
+  Invariant/CallerMustResolve와 fence이며 원 count를 보존한다. 건강한 release는 정확히 한 번
+  모든 count를 감소한다. read bytes는 불변이고 write의 dirty 설치 권한은 원 sealed permit만
+  받는다. const N은 caller bytes에 대한 mutation/stage 허가가 아니다.
+
+### 자원·대안
+
+기본2의 SharedPool·bound·guard/return 크기를 유지한다. MAX_TARGETS를64로 올리는 대안은
+기존 모든 caller의 guard/result를 확대하므로 제외한다. caller-owned metadata backing은
+일반 mutable load/등록을 붙일 다음 구조 변경이며 이 whole-set primitive의 선행일 필요는 없다.
+기존 API를 우회하는 별도 wide pool이나 구현 복제도 제외한다.
+
+N별 source-value 식은 PinSet/PinnedTargets/ReadTargets/WriteTargets/Result와 nested lookup/
+sort/guard/error carrier를 포함한다. 기존 default2 CALL_BYTES3072를 보존하고, 새 exactN의
+동시 호출 component는16KiB 이내로 동결한다. max64 layout과 source census를 독립 검토한 뒤
+runtime을 실행한다. caller 요청 배열·resident pages는 별도 loan이며 숨은 page copy는 없다.
+원34 owner·총68 pin과 default2의1개 padding을 포함하면 retained token/guard capacity 합은
+102 이하이다. 이는 성공해 유지 중인 token/guard만의 상계다. 아직 pin을 얻지 못한 병렬 reserve
+배열/실패 Result, Pinned→Read/Write 전환의 move/return carrier와 cleanup 중첩은 포함하지 않는다.
+16KiB는 한 호출 chain의 source-value 상계이며 실제 wide consumer는 최대 in-flight 수×call
+상계와 retained metadata를 별도로 admission에 합산해야 한다. 이 식과 타입 크기로 retained
+target metadata 상계도 별도 기록한다.
+현재 engine의 dirty/flush/operation 한도를 올리거나 이 수치를 실제 wide owner F05/RSS/
+OOM 충분성으로 승격하지 않는다. 실제 소비자는 전체 operation과 새 backing을 한 번씩 과금한다.
+
+### 사전 선택 inventory
+
+새 필수15 selector를 작성한다:3개 정상 순위/읽기, 최대64 read/write, 전체 alias 거절,
+마지막 missing 거절, per-frame/total 경계와 선행 owner 보존, 늦은 Busy read와write 각각,
+마지막 poison cleanup, 마지막 stale release, 마지막 duplicate release, 늦은 stale read/write,
+unwind의 fence-before-unlock, 실제 thread reader/writer 배제·재개, stamp/인덱스 경계,
+기존 slice wrapper의 shape/순위다. 입력은 생산 lookup/정렬에서 역산하지 않은 request 순서와
+고정 expected index/count/bytes이며 테스트 전용 bootstrap은 실제 일반 I/O/load 인수로 세지 않는다.
+
+static은 새 N2/3/8/64 및 retained metadata census1과 기존 관련 registration layout1이다.
+직접 변경 경로의 기존 reverse-rank·atomic-rejection·stale-last-release3개와 기존 allocator
+consumer1개만 관련 재검증한다. 변경 없는 INIT/flush/recovery·하위 wrapper는 반복하지 않는다.
+compiler는 원본 baseline와 N3 정상 release, owner 재대여/consumed pins/Sync 거절3개,
+N0/N65 capacity 거절2개를 작성한다. capacity probe는 실제 test entry를 codegen하는
+`cargo test --lib --no-run`으로 const 평가를 확인하고, 정상 baseline 실패나 다른 진단을
+기대한 거절로 세지 않는다. 실제 코드의 불변식/정확 진단 위치를 source와 함께 보존한다.
+새 compiler runner의 선택/입력 위조·잘못된 진단/instantiation·누락/완화된 constassert를
+거절하는 checker3개도 구현과 함께 선택한다. compiler 자체의 기존 helper 시험은 반복하지 않는다.
+
+S5 확대는 N1..64 각각4개 순서의256정상 조합, N64의64 late-content 위치×read/write128,
+N64의64 stale 위치×release/read/write192의576조합을 작성·NOT_RUN으로 둔다.
+중간 필수도 최종 S5에 포함한다. 각 runtime30초·중간 전체180초·compiler120초·S5 전체180초,
+활성 fixture2MiB·case/review 결과보존16MiB이며 source/ELF/compiler/cache는 별도 도구 보존물로
+실제 경로/bytes를 기록한다. 코드 변경마다 실제 diff에 해당하는 실패/새 사례만 다시 선택한다.
+원 FAIL·중단은 보존하고 미실행을 PASS로 바꾸지 않는다. 새 I/O/영속 효과가 없으므로 native
+DB fault/reopen은 해당하지 않으며 실제 thread와 compiler 결과는 그 증거와 구분한다.
+
+
+독립 D2·실행 전 자원 검토와 source별 실행·원 실패·후속 D1은
+[선택 증거](../evidence/dev3-target-set-20261023.md)를 따른다. 실제 call 식은 N2=1712,
+N64=10640이며 기존 보수적2352에 같은 N증가8928을 더해도11280≤16384다.
+두 식은 같은 call carrier를 겹쳐 세므로 서로 합산하지 않는다. 성공 held의 retained 상계5440은
+동시 진행/실패/전환 callchain을 별도 과금한다는 전제이며 whole live owner/RSS 증명이 아니다.

@@ -1,0 +1,71 @@
+{
+  "schema": "xadb-target-set-compiler-v1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "compiler_budget_seconds": 120,
+  "cases": [
+    {
+      "name": "baseline",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_path": null,
+      "reason": "Actual unmodified test codegen must succeed first"
+    },
+    {
+      "name": "release",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_path": null,
+      "reason": "Exact N=3 owned target lifetime",
+      "bytes": 504,
+      "sha256": "35abad0596a764580c1b1e7e99321cd2e7791946f53b56ee9bb59765a9821c64"
+    },
+    {
+      "name": "owner_reborrow",
+      "expected_code": "E0499",
+      "primary_line": 6,
+      "primary_path": "crates/engine/src/storage/target_set_borrow_probe.rs",
+      "reason": "Exact N=3 owned target lifetime",
+      "bytes": 430,
+      "sha256": "47aac7b156e6a71de1a34069a27598beb80eee8574fc91076ac983f81cd25d20"
+    },
+    {
+      "name": "pins_reuse",
+      "expected_code": "E0382",
+      "primary_line": 7,
+      "primary_path": "crates/engine/src/storage/target_set_borrow_probe.rs",
+      "reason": "Exact N=3 owned target lifetime",
+      "bytes": 438,
+      "sha256": "e18e4e873876133748ec8cd3bb72644496a5e9ffe7f449c4cd07f997ba4242df"
+    },
+    {
+      "name": "read_sync",
+      "expected_code": "E0277",
+      "primary_line": 6,
+      "primary_path": "crates/engine/src/storage/target_set_borrow_probe.rs",
+      "reason": "Exact N=3 owned target lifetime",
+      "bytes": 286,
+      "sha256": "159ca8678ba9bf7d214993a30655fb461e64d4287fc9ac24dce1875049d01433"
+    },
+    {
+      "name": "capacity_0",
+      "expected_code": "E0080",
+      "primary_line": null,
+      "primary_path": "crates/engine/src/storage/dirty_frame.rs",
+      "reason": "Concrete exact-capacity API bound",
+      "bytes": 882,
+      "sha256": "f71b3efe40c65c2c1c1ea8b4a34c429d208c67ac726fbc1d0cdbcb69d329beb9"
+    },
+    {
+      "name": "capacity_65",
+      "expected_code": "E0080",
+      "primary_line": null,
+      "primary_path": "crates/engine/src/storage/dirty_frame.rs",
+      "reason": "Concrete exact-capacity API bound",
+      "bytes": 883,
+      "sha256": "0634286973aceba78a9db654b46d2f645047ed13ca2f0a3662a4d5e47b12f28e"
+    }
+  ],
+  "assertion_marker": "// target-set capacity assertion",
+  "probe_relative_path": "crates/engine/src/storage/target_set_borrow_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/mod.rs"
+}
