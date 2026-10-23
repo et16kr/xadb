@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-23 [DEV3 allocator 실제 퇴출·재적재](evidence/dev3-allocator-eviction-20261023.md): 비상주 guard와 다른 frame의 actual home load를 연결했다. 신규 runtime18·관련7·static5·native1·compiler3+control1의 source별 PASS를 보존한다. OCR delegate를 활용한 최종 독립 D1 수용이며 일반 pool·전체 DEV3/S5는 미완료다.
+
 2026-10-23 [DEV3 진행 현황 후속 리뷰](evidence/dev3-progress-review-20261023.md): 최신 reload 구현·시험 도구와 snapshot 수정, 단계별 공급·미완료 인수를 대조했다. 요약 표·단계 JSON·색인의 진행 설명을 최신 제한 구현과 맞췄으며 제품 변경·시험 재실행·완료 승격은 없다.
 
 2026-10-23 [COMM 시간 제한·조합별 성능 인수](evidence/comm-performance-batch-20261023.md): 사용자 범위 정정에 따라 별도 미완료 시험은 코드 수정 없이 진행하고 완료 시험은 반복하지 않는다. cell37의20mode와38/39의40mode가 각각 BATCH_PASS이며 같은 보존 source의3조합60mode다. 후속은14:21 완료를 확인했고 원 profile/2,700분모·과거 결과·C1 미완료와8시간 skip/23시 마감을 유지한다. 이후14:29 모델 한 시험은 취소 후 sender 오류 기대값 불일치로 즉시 FAIL이며 원 실패를 보존한다.

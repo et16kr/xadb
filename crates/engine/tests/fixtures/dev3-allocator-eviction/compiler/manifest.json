@@ -1,0 +1,26 @@
+{
+  "schema": "xadb-dev3-allocator-eviction-compiler-v1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "probe_relative_path": "crates/engine/src/allocator_eviction_borrow_probe.rs",
+  "compiler_budget_seconds": 30,
+  "cases": [
+    {
+      "name": "release",
+      "sha256": "f210bc72d7d96518c8caef2e3c47ca841db46a65d398cb4a3511398bf2ab0042",
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "live_guard",
+      "sha256": "0fa9ef675650cf12920d1d8d07cf83224b3013c734e7a3a7526c9957d9a1a4f5",
+      "expected_code": "E0499",
+      "primary_line": 8
+    },
+    {
+      "name": "live_split",
+      "sha256": "95f8ae3489665ba0c82aea1821878be03eb5c328aee67590ff6f7db3ef1be850",
+      "expected_code": "E0499",
+      "primary_line": 8
+    }
+  ]
+}

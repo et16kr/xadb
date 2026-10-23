@@ -64,7 +64,7 @@ fn registration_layout_receipt() {
     println!(
         "REGISTRATION_LAYOUT registration={registration} directory={directory} prior_directory={prior_directory} pin={pin} read={read} write={write} read_result={read_result} generic={scratch} ceiling={CALL_BYTES}"
     );
-    assert!(directory <= prior_directory + 16);
+    assert!(directory <= prior_directory + 32);
     assert!(registration <= 112 && scratch <= CALL_BYTES);
     assert!(
         2 * read_result + read + pin + registration + size_of::<DirtyObservation>() + 64

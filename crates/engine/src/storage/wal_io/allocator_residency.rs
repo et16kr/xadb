@@ -1,6 +1,7 @@
 //! Consuming allocator-only resident epoch reload. The exclusive phase retains
 //! the original owner, reservation descriptor, WAL and Drop fence throughout.
-//! No Empty/eviction, other address, Status or ordinary recovery capability.
+//! An exclusive eviction guard also reloads the allocator into an empty frame.
+//! Other addresses, Status and ordinary recovery remain separate capabilities.
 use super::{
     AllocationWriter, AllocatorFlusher, BoundAllocation, DirtyReader, MutableStorageError,
     allocator_flush, dirty_allocation,
@@ -16,6 +17,9 @@ use xadb_foundation::{
     error::{Certainty, Effect},
     namespace::{NamespaceErrorKind, WriterNamespace},
 };
+
+#[path = "allocator_eviction.rs"]
+mod eviction;
 
 #[derive(Debug)]
 pub(crate) enum Cause {
@@ -282,6 +286,7 @@ fn fits<W: WriterNamespace>() -> bool {
         && super::super::allocation_reservation::budget::TEMPORARIES <= 16384
         && dirty_frame::fits()
         && allocator_flush::fits::<W>()
+        && eviction::fits::<W>()
 }
 
 #[cfg(all(test, target_os = "linux"))]

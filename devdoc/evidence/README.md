@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV3 allocator 실제 퇴출·재적재](dev3-allocator-eviction-20261023.md) · [source별 실행 색인](dev3-allocator-eviction-20261023.json): 신규18·관련7·static5·native1·compiler3+control1과 원 FAIL·수정 기록. 일반 pool/DEV3/S5 미완료.
+
 2026-10-23 [DEV3 진행 현황 후속 리뷰](dev3-progress-review-20261023.md): allocator reload commit의 OCR 대상19파일과 snapshot 수정4파일을 정적 검토했다. 진행 설명·단계 JSON·색인의 누락을 수정하고 새 제품 결함0건·제품 시험 NOT_RUN 및 검토 한계를 기록한다.
 
 2026-10-23 [DEV3 구현 코드 리뷰·후속 수정](dev3-code-review-20261023.md): `open-code-review-delegate`의 코어51파일 정적 리뷰에서 확인한 D3-OCR-001을 수정했다. 영속화 후 snapshot 경합의 오류 효과·fence 보완, 신규 관련5건 PASS·별도 D1 수용이며 최초 정적 리뷰와 수정 전 FAIL을 보존한다. 전체 DEV3/S5는 미완료다.

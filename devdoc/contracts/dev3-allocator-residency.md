@@ -46,3 +46,71 @@ native는 fresh Linux DB1/두 batch/두 reload, worker30초·DB24MiB·고정 소
 Linux 한 이력의 independent literal full RAM/home/WAL/descriptor·namespace mutation0·inode/길이/hash·6 reads/reload·FD를 검산한다. compiler는 실제 baseline·release positive·live split E0499/line8 negative, checker는 새 known-bad10개다. native wrapper의 제한 중복은 기존 flush wrapper를 오염시키지 않고 read trace와 두 reload를 격리하려는 선택이다. native 사례가 더 늘거나 공통 포트 계약이 바뀌면 공통화 비용을 재검토한다.
 
 최종 S5 확대는 ignored `reload_s5_mixed_count_epoch_history`: count1..8을 네 번 순환하는32round,64reload와 active/cancel/high-water/LSN/세대 검산이다. 이번 중간 실행 대상이 아니다. 최종 DEV3 inventory에서 이 selector와 중간 사례를 합쳐 실행하며 무변경 하위 전체 wrapper로 확대하지 않는다.
+
+<a id="eviction-lifecycle"></a>
+## D3-ALLOCATOR-EVICTION-001 — 실제 비상주 구간과 재적재
+
+2026-10-23 · **D2 조건 반영·제한 구현·선택 검증·최종 독립 D1 수용**.
+계약·구현·통합 담당은 `/root`, 독립 검토는 `/root/pool_design_review`다.
+사용자의 DEV3 개발 재개와 기존 D2 위임 안에서 동일 주소 reload의 후속을 정한다.
+[source별 선택 증거](../evidence/dev3-allocator-eviction-20261023.md)는 신규 runtime18·관련7·
+static5·native1·compiler3+control1과 원 FAIL을 보존한다. 일반 pool·전체 DEV3/S5는 미완료다.
+
+단순한 원자적 슬롯 이동은 비상주 상태를 통과하지 못하므로 선택하지 않는다.
+기존 `OperationalAllocation`을 독점 대여하는 `EvictedAllocator` guard를 반환한다.
+`evict_allocator`는 원 Bound·descriptor·active reservation·WAL/flush 소유를 그대로
+남기고 clean/pin0/DPT0/claim0·writer/flush quiescence·실제 complete==synced prefix와
+원 descriptor를 검산한 뒤 등록을 제거한다. 이후 해당 주소 lookup은 MissingTarget이다.
+Guard가 원 owner의 `&mut` borrow를 보유하여 writer/reader/flusher split과 겹치지 않는다.
+완료 전 guard 폐기는 sync나 재적재를 하지 않고 원 session을 fence한다.
+
+`load_allocator(slot)`은 guard의 독점 구간에서 실제 caller frame 수 안의 Empty slot을
+고르고 checked 세대를 발급한다. 원 directory의 entry는 비상주 세대 tombstone으로
+남기며 별도 active bitset으로 Resident와 구분한다. 기존 Fixed/closed Status provenance는
+유지한다. 같은 슬롯과 다른 슬롯 모두 재적재할 수 있고 slot별 세대는 되감거나 wrap하지
+않는다. 하나의 loading token이 destination과 발급 세대를 보유하며 load 도중 일반 pin은
+독점 borrow 때문에 불가능하다. 실패한 load의 세대도 소비하며 destination은 Empty다.
+
+실제 selected namespace/profile/FILEMAP/handle·allocator identity를 읽고, 보존한 clean
+before image의 전체16384 bytes와 exact durable prefix·원 descriptor를 재검산한 뒤에만
+publication한다. 모든 fallible 확인과 target content latch 획득을 copy 전에 끝낸다.
+완료 시 target content/counter/recLSN을 설치하고 유일한 active 등록을 공개한다.
+그 후 guard를 놓으면 기존 writer와 flusher가 identity lookup으로 새 슬롯을 사용한다.
+종전 `reload_allocator`도 현재 resident 슬롯을 찾아 동작한다.
+
+일반 lower Unchanged/Known read 오류는 원 cause/effect를 보존하고 Empty와 receipt를
+유지하여 같은 guard에서 명시 재시도한다. scratch 부분 변경은 허용하지만 before image는
+다음 재시도까지 불변이다. namespace/source/bytes 불일치·불명 효과·poison·unwind·stale
+load token은 fence한다. 오류 후 원 descriptor·active reservation을 성공 정리하지 않는다.
+
+### 실행 전 자원·시험 동결
+
+새 heap/map/파일·DB write는 없다. 원 operation98304의 root0..16384, read scratch
+16384..32768, 불변 prior32768..49152, loaded65536..81920을 사용한다. directory active
+bitset 증가≤16bytes, SharedPool delta≤512, 기존 dirty196608/flush65536·component65536을
+유지한다. 새 guard≤512, load token≤256, source-level outer 임시 합계≤4096이며 기존
+reload의 nested reader/file/codec 회계에 포함한다. source/target content guard는 I/O에
+겹치지 않는다. 실제 target layout을 먼저 검증하고 한도 초과 때 제품 실행하지 않는다.
+
+중간 필수는 새 선택 시험으로 정상 evict→MissingTarget→다른 슬롯 load→reserve/cancel/
+flush→원 슬롯 load, 최초 LSN0, target bounds·세대 MAX의 I/O0 거절, 실패 read 재시도의
+before 불변·세대 소비, dirty/pin/DPT/claim의 evict 거절, source 손상·stale token·poison,
+미완료 guard Drop/unwind fence, 슬롯별 세대와 원 descriptor 보존을 확인한다. 변경된
+기존 reload 경로는 관련 기존 정상·오류·세대 시험만 선택하며 Fixed/Status resolve 변경의
+직접 소비와 자원 layout도 선택한다. Linux 새 이력은 두 프레임에서 reserve/flush,
+evict/load, cancel/flush, evict/load를 literal home/WAL과 대조한다. 새 compiler probe는
+live eviction guard와 split의 E0499, 완료 guard 해제 후 성공을 검증한다.
+각 unit30초, Linux history30초/DB24MiB, compiler 전체30초를 상한으로 한다.
+
+S5용 ignored 확대는 세 슬롯을 순환하는32round의 reserve/cancel/flush/evict/load 이력으로
+작성한다. 중간에는 실행하지 않는다. 별도 주소의 교체·일반 load 권한·N+1 집합·반복
+Status·pressure/clock·일반 recovery/READY·전체 DEV3/S5는 여전히 필수 미완료다.
+이 제한 구현의 결과로 일반 pool 완료를 선언하지 않는다.
+
+독립 검토의 추가 조건을 반영한다: source generation MAX는 eviction 자체를 금지하지
+않으며 destination 발급에서만 checked 증가한다. guard는 성공 시 완료 표시하고 두 번째
+load를 I/O0 거절한다. 범위/MAX의 preclaim 거절은 세대를 소비하지 않는다. guard를
+`mem::forget`하여 borrow를 유실해도 split의 MissingTarget 실패는 무효과이고 원 binding을
+재등록할 수 없다. stale eviction receipt를 막는 별도 checked eviction epoch를 directory에
+보유한다(원 source slot 세대와 별개). 이 epoch 소진은 eviction 전 거절한다. prior 복사는
+evict 때 한 번만 하며 load 재시도의 읽기 scratch로부터 다시 덮어쓰지 않는다.

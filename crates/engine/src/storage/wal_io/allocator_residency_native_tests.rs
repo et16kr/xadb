@@ -590,3 +590,92 @@ fn worker_allocator_residency_native() {
         t.peak,
     );
 }
+
+#[test]
+#[ignore = "selected DEV3 allocator eviction native history, fresh output directory required"]
+fn worker_allocator_eviction_native() {
+    let output = PathBuf::from(
+        std::env::var_os("XADB_ALLOCATOR_EVICTION_NATIVE_DIR").expect("native output"),
+    );
+    assert!(output.is_absolute());
+    let db = output.join("database");
+    fs::create_dir(&db).unwrap();
+    let directory = LinuxDirectory::open_existing(&db).unwrap();
+    let trace = Arc::new(Mutex::new(Trace {
+        root: db.clone(),
+        ..Trace::default()
+    }));
+    let port = Writer {
+        inner: directory.acquire_writer().unwrap(),
+        trace: Arc::clone(&trace),
+    };
+    drop(directory);
+    let mut slot = boxed::<1048576>();
+    let mut workspace = boxed::<4194304>();
+    let mut pages = [boxed::<PAGE_BYTES>(), boxed::<PAGE_BYTES>()];
+    let mut operation = boxed::<98304>();
+    let mut actual = boxed::<PAGE_BYTES>();
+    let fresh =
+        wal::FreshStorageSession::create(port, 1, &mut slot, &mut [[0; PAGE_BYTES]; 3]).unwrap();
+    let storage = fresh
+        .install_doublewrite(&mut workspace)
+        .unwrap()
+        .into_mutable_storage();
+    let core = PageConcurrency::new(storage.session_fence()).unwrap();
+    let mut frames: Vec<_> = pages.iter_mut().map(|page| DirtyFrame::new(page)).collect();
+    let bound = storage
+        .bind_allocator(&core, &mut frames, &mut operation)
+        .unwrap();
+    let mut bound = match bound.into_operational() {
+        Ok(v) => v,
+        Err(_) => panic!("admission"),
+    };
+    let mut expected_wal = fs::read(db.join(wal::WAL_NAME)).unwrap();
+    let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
+    let mut flusher_owner = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+    for (batch, part, source_slot, target_slot) in [(1, "reserve", 0, 1), (2, "cancel", 1, 0)] {
+        {
+            let (mut writer, _, mut flusher) = bound.split_with_flush();
+            if batch == 1 {
+                writer.reserve_pages(&mut owner, 1)
+            } else {
+                writer.cancel_reserved(&mut owner)
+            }
+            .unwrap();
+            assert!(matches!(
+                flusher.try_flush_one(&mut flusher_owner).unwrap(),
+                FlushProgress::Complete(_)
+            ));
+            let observed = frame_test::diagnose(writer.pool, source_slot, &mut actual);
+            assert_eq!(observed.frame.page_lsn, PageLsn(batch));
+            assert_eq!(&actual[..], literal(&format!("p1-n1-{part}-home.after")));
+        }
+        expected_wal.extend(fs::read(format!("{DIRTY}/p1-n1-{part}.frame")).unwrap());
+        assert_eq!(fs::read(db.join(wal::WAL_NAME)).unwrap(), expected_wal);
+        validate_disk(&db, &format!("p1-n1-{part}"), batch);
+        let before_files = inventory(&db);
+        let descriptor = bound.inner.writer.descriptor;
+        start_trace(&trace);
+        let mut guard = bound.evict_allocator().unwrap();
+        let result = guard.load_allocator(target_slot).unwrap();
+        assert_eq!(
+            result.after.generation,
+            if target_slot == 0 { 2 } else { 1 }
+        );
+        drop(guard);
+        finish_trace(&trace, &output, part);
+        assert_eq!(inventory(&db), before_files);
+        assert_eq!(bound.inner.writer.descriptor, descriptor);
+        assert!(trace.lock().unwrap().events.is_empty());
+        assert_eq!(trace.lock().unwrap().reads.len(), 6);
+        let snap = frame_test::diagnose(&bound.inner.pool, target_slot, &mut actual);
+        assert_eq!(snap.frame, result.after);
+        assert_eq!(&actual[..], literal(&format!("p1-n1-{part}-home.after")));
+        fs::write(output.join(format!("{part}.page")), &actual[..]).unwrap();
+        save_inventory(&output.join(format!("{part}.tsv")), &before_files);
+    }
+    assert!(!bound.inner.storage.session_fence().is_fenced());
+    println!(
+        "EVICTION_NATIVE two_frames=2 evictions=2 actual_loads=2 reads=12 batches=2 target_generations=1,2 literal_home_and_wal=PASS"
+    );
+}

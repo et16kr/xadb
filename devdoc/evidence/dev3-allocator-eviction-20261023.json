@@ -1,0 +1,200 @@
+{
+  "unit": "D3-ALLOCATOR-EVICTION-001",
+  "date": "2026-10-23",
+  "status": "LOCAL_VERIFIED_INDEPENDENT_D1_ACCEPTED",
+  "base_commit": "81848570858116d8b39408e077f2ac42727d8c79",
+  "contract_ref": "dev3-allocator-residency.md#eviction-lifecycle",
+  "artifact_root": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023",
+  "source_phases": {
+    "r0": {
+      "status": "COMPILE_FAIL",
+      "error": "test helper invariant lifetime; no product tests executed",
+      "static_findings": [
+        "EVICT-001: initial writer observation used uninitialized or stale loaded scratch",
+        "EVICT-002: load claim lacked exact core/binding origin"
+      ]
+    },
+    "r1": {
+      "source_sha256": "43a374cea8130659e7d81bb40485601796c21f7acb3e3887ceb2451cb88723f3",
+      "new_runtime": 16,
+      "affected_existing_runtime": 7,
+      "static": 5,
+      "native_histories": 1,
+      "native_loads": 2,
+      "native_reads": 12
+    },
+    "r2": {
+      "source_sha256": "1df975cbbb462a1647cd4813058c04901d2638a1eda6ea625798d8c7ebea8858",
+      "new_runtime": 2,
+      "product_changed_since_r1": false,
+      "engine_clippy": "PASS",
+      "fmt": "FAIL: reexport ordering only; fixed after run"
+    }
+  },
+  "compiler": {
+    "source_sha256": "4ba02e3f782c987475b024d8abe41fd3477e4fe4e79c05fd442772aea21cc3e3",
+    "positive": 1,
+    "negative_E0499": 2,
+    "unmodified_control": 1,
+    "status": "PASS"
+  },
+  "not_run": [
+    "eviction_s5_three_slot_history",
+    "unchanged lower regressions",
+    "workspace tests",
+    "document verifier (push only)"
+  ],
+  "full_dev3_complete": false,
+  "all_tests_on_final_source": false,
+  "receipts": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r0/source.json",
+      "sha256": "19df5ba4dadb6cddb4fe6a142e63132ff941a41fcaa21345146fcf5e2088acae"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r0/build.jsonl",
+      "sha256": "f290e993a5424f27f360883d4d140bf990c6343ac4ff64d0a03cff8484eefff5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r0/build.stderr",
+      "sha256": "3663d475693d09bfabd5edd409717f3b1e27eed365e1b3ef447e424f83b47af6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r1/source.json",
+      "sha256": "f0f75732a3bf5414b085ebead373e3d51d23397bba86031a05f421d4e085d46a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r1/build.jsonl",
+      "sha256": "cdae4ba1ba9c85a1736a1618f650a952e6538f95229339684bce1e212d172f6f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r1/binary.json",
+      "sha256": "bcc9a9ab97bb924f39278b55dc574da5736db11470a6dd4de83cd2e66287da12"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r1/static-selection.json",
+      "sha256": "2e51f1d4f7158c4dfecc2b31794e8d3f3411937f208482144266a45ec2f08453"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r1/static-results.json",
+      "sha256": "97fb5cdafd4c483e10a91761e4e3376ac01eb997e84a1308579eeaf726728b4c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r1/runtime-selection.json",
+      "sha256": "002809d6c84211a7b62125c2e1f5fe280b3d427c75b438dda0fec63ec400fceb"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r1/runtime-results.json",
+      "sha256": "a03f186527a6c8876caaa13a00a9d9877902753de8a8b9ff9ba937316d6d68d5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r1/native/result.json",
+      "sha256": "6a1fa5ddbdfeac14dc311f9774eefa1bb268c84536829c65a3237ab5b01f92c7"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r1/native/worker.log",
+      "sha256": "7db1325aa1bb115378627fc722973e0e20bdaf0f2a15dcdb002c3fb2c9473726"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r2/source.json",
+      "sha256": "4b37fe169c2b169ce53532ebd275c4a601c237fc6a5a95c846691bf6b1516d24"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r2/build.jsonl",
+      "sha256": "0e5b6e07c374d8e93f81fa536adc28994f7e48e07005be42203524062ee25ba9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r2/selection.json",
+      "sha256": "3d9543e917ec1c8b5e321592a94f4625c5c1a8c5ff955ca2575aa8f6e2d6d09a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r2/runtime-results.json",
+      "sha256": "0cd91fa772c4e6a999dc952411e3cf4cebeb60a7dd2e6e2b3072ff5a5698dc8a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r2/clippy.log",
+      "sha256": "5f46abd30463577267928ee970c020b8c0d0b630c883edb0cb541966ce467fc0"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r2/fmt.log",
+      "sha256": "0c9303ed43d65a94ab13b1b8dbc5740fabbe9b23030bc3937b60f6801719d737"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/compiler/result.json",
+      "sha256": "452aaf4d387b49db6da3d7829e2d25ca4ef011d386c96c88a7d276a1605175b2"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/run_compiler.py",
+      "sha256": "6ec2eb10740226f2d13881f6474d6d5d83094d8d776d3e71762f26a5c49f9d03"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/final-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/final-source.json",
+      "sha256": "50a665ddcd1d4b016fe700197c1619abf61df836ddc353013331f3fbfb4ac259"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/final-reviewed-source.json",
+      "sha256": "7ce0e3c5c9c3b11d5a9eaa7afea8ce1922650c86107257dcd80c46df1c3009e9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/r2-to-final-product.patch",
+      "sha256": "ede72fe383a9249c7a80f7a73171102e1309a09a323ee237a51939ad5876ae74"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/review/final-d1.json",
+      "sha256": "a53f717b9f01683d3650b1297698bdce90230c3c705e1f5b485dee24768cb7cf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/review/final-d1.md",
+      "sha256": "8a544ee1761e85f18bfe6cb7cfb33936e62237b1eba71c3e4df52224f99c94b5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/review/ocr-preview-final.json",
+      "sha256": "afa5250e0297264293105e9aa45efbac6418b2f0c3b4966a01cb323afaca5362"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/review/ocr-rules-final.json",
+      "sha256": "31db97cc22cc3b263b1331adeab6894ecf5755c62672bf76d2e74b3e7accc56d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/review/commands-final.json",
+      "sha256": "6f2f1d31f38718d3b911ada6e66fadf86193bb11da6a97d1d4dd28320bb29ead"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/review/source-audit.json",
+      "sha256": "33be4e8ccae095395f8aba1513f57a9eeeed423aec0d13461051a28776c3d83b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/review/compiler-integrity.json",
+      "sha256": "c3e62b993c1811d3090efa8fea827721e1e7ac5243fe95efba52c9207b0bbbe0"
+    }
+  ],
+  "intervening_unrelated_commit": "6fcbc47",
+  "final_format": "PASS; format-only reexport ordering and Rustdoc updates after r2; no runtime rerun",
+  "independent_review": {
+    "decision": "ACCEPTED_LIMITED_UNIT",
+    "reviewer": "/root/pool_design_review",
+    "skill": "/home/et16/.agents/skills/open-code-review-delegate/SKILL.md",
+    "source_sha256": "e5a1deb82c3dac600636049dfa15b386b55acdd243eac48c0c6126aec39759cd",
+    "coverage": {
+      "preview_total_files": 23,
+      "preview_excluded_files": 12,
+      "total_files": 11,
+      "reviewed_files": 11,
+      "skipped_files": 0,
+      "coverage_rate": 100.0,
+      "supplementally_reviewed_excluded_files": 10,
+      "explicitly_out_of_scope_files": 2
+    },
+    "resolved_findings": [
+      "EVICT-001",
+      "EVICT-002"
+    ],
+    "remaining_findings": [],
+    "report_path": "/home/et16/work/xadb/artifacts/dev3/allocator-eviction-20261023/review/final-d1.json",
+    "post_review_changes": "D1 status and receipt documentation only; no product/test changes"
+  }
+}

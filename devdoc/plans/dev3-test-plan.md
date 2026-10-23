@@ -385,3 +385,18 @@ Rust 단위 시험은 실제 package/target과 전체 test 경로를 확인한 �
 ## 12. 영속화 이후 snapshot 경합 수정의 inventory
 
 2026-10-23 D3-OCR-001 수정에 동반한 [신규5 case와 정확 selector](../evidence/dev3-code-review-20261023.md#fix-inventory)는 NT03 소유, NT04/05·FT03/05/09 연결이다. reserve/cancel 각각의 flusher content lock 경합2·잠금 해제 뒤 정상2·Status 예약 wrapper1을 profile1/count1·실제 thread ACK로 고정한다. 5건 모두 중간 필수이며 최종 S5에 포함한다. 기존 dirty53·Status flush43의 분모와 과거 결과는 유지한다. 수정 전 반례 FAIL과 수정 후5 PASS는 [후속 실행 기록](../evidence/dev3-code-review-20261023.md#fix-followup)에 보존하며, 관련 diff가 없는 중간 단계에서는 반복하지 않는다. 이 추가가 native crash 복구나 전체 DEV3/S5 완료를 뜻하지 않는다.
+
+
+<a id="allocator-eviction-followup"></a>
+## allocator 실제 비상주 구간의 중간·S5 배정
+
+2026-10-23 [소유 계약](../contracts/dev3-allocator-residency.md#eviction-lifecycle)의 새
+`eviction::tests`에서 중간 필수18건과 layout1건을 exact 선택한다. 실제 Linux 이력1건과
+새 compiler3+baseline1을 동반한다. 변경된 종전 reload/Fixed 경로7건·추가 자원4건의
+source별 결과는 [선택 증거](../evidence/dev3-allocator-eviction-20261023.md)를 따른다.
+완료한 동일 코드 시험·하위 wrapper를 재실행하지 않는다.
+
+최종 S5에는 기존 확정 inventory와 함께
+`storage::wal_io::bootstrap::doublewrite_install::mutable_storage::allocator_residency::eviction::tests::eviction_s5_three_slot_history`
+를 추가한다. ignored32round/64reload는 작성·NOT_RUN이며 중간 선택에 포함하지 않는다.
+다른 주소·N+1·Status 반복 변경·pressure의 일반 pool 시험 의무는 그대로 남는다.

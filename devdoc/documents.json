@@ -1767,6 +1767,16 @@
       "path": "evidence/dev3-allocator-residency-20261023.json",
       "role": "evidence",
       "title": "DEV3 allocator resident 세대 source별 실행 색인"
+    },
+    "dev3-allocator-eviction-20261023.md": {
+      "path": "evidence/dev3-allocator-eviction-20261023.md",
+      "role": "evidence",
+      "title": "DEV3 allocator 실제 퇴출·재적재 선택 검증"
+    },
+    "dev3-allocator-eviction-20261023.json": {
+      "path": "evidence/dev3-allocator-eviction-20261023.json",
+      "role": "evidence",
+      "title": "DEV3 allocator 퇴출·재적재 source별 실행 색인"
     }
   }
 }

@@ -708,6 +708,21 @@ native typed source census는 outer9008+max(prefix33408, inventory3320, work3116
 
 32round/64reload S5 확대는 작성·NOT_RUN이다. Empty/다른 주소 교체·N+1 pressure·Status 반복 변경·일반 pool/거래/recovery/READY·전체 DEV3/S5는 미완료다. 이 단위에서 문서 verifier·push를 실행하지 않았다.
 
+<a id="allocator-eviction"></a>
+## allocator 실제 비상주 구간·다른 frame 재적재
+
+2026-10-23 [D3-ALLOCATOR-EVICTION-001](../contracts/dev3-allocator-residency.md#eviction-lifecycle)은
+`evict_allocator`→실제 MissingTarget→`load_allocator(slot)`를 연결한다. 독점 guard가 원
+Bound·예약·descriptor/WAL/flush를 보존하고, 실패한 읽기는 불변 prior와 세대 tombstone을
+남겨 명시 재시도한다. 재적재 후 기존 writer/flush와 reload가 현재 슬롯을 따라간다.
+[선택 증거](../evidence/dev3-allocator-eviction-20261023.md)는 신규 runtime18·관련7·static5,
+Linux 한 이력/두 load와 compiler3+control1을 source별로 구분한다. 원 compile/static FAIL과
+독립 리뷰 EVICT-001/002의 수정을 보존한다. OCR delegate의 reviewable11개와 별도 문서·
+fixture10개를 검토한 최종 독립 D1을 수용했으며 남은 차단 지적은 없다.
+
+S5 확대32round는 작성·NOT_RUN이다. 실제 다른 주소·N+1 집합·Status 반복 변경·일반
+pool/pressure·recovery/READY·전체 DEV3/S5는 미완료이며 문서 검사는 push 전용이다.
+
 <a id="dev3-work-breakdown"></a>
 ## DEV3 하부 작업 분류와 현재 상태
 
@@ -723,7 +738,7 @@ native typed source census는 outer9008+max(prefix33408, inventory3320, work3116
 | 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기와 [불변 Status bootstrap 역할](#status-bootstrap)의 제한 구현 검증. 일반 reopen은 미완료 |
 | 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | [예약·취소](#allocation-reservation-accepted)와 [한 Status INIT](#status-init)의 제한 연결. [Status home flush](#status-home-flush)의 제한 선택 인수. 일반 INIT·확장·free/reuse 미완료 |
 | 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | [dirty stage](#dirty-stage)·[authentic WAL requirement/flush force](#allocator-flush)·[Status INIT 두 image](#status-init), genesis·RollbackStart·예약/취소 연결. 일반 opcode/CLR/commit 연결 미완료 |
-| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)·[폐쇄 두-frame INIT/reader](#status-init)·[Status home flush](#status-home-flush)의 제한 선택 인수. [등록 코어·세대 pin](#registration-core)과 [같은 allocator 주소의 clean reload](#allocator-residency)까지 공급. 일반 Empty/load/eviction·다른 주소 교체·N+1 pressure·반복 Status 변경·batch8/64·다중 file 미완료 |
+| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)·[폐쇄 두-frame INIT/reader](#status-init)·[Status home flush](#status-home-flush)의 제한 선택 인수. [등록 코어·세대 pin](#registration-core)과 [같은 allocator 주소의 clean reload](#allocator-residency)와 [실제 퇴출·다른 frame 재적재](#allocator-eviction)까지 공급. 일반 page load/eviction·다른 주소 교체·N+1 pressure·반복 Status 변경·batch8/64·다중 file 미완료 |
 | 3.06 트리·행 | mutable tree CRUD·split·root 변경·overflow·stable cursor·locator | 표현·부분 모델 존재. 실제 변경 경로 미완료 |
 | 3.07 인덱스 | point/range scan·presence·PK/UNIQUE·build/취소 | 표현·의미 계약 존재. 실제 인덱스와 statement-final unique 미완료 |
 | 3.08 카탈로그·DDL | table/index 정의·이름·객체 수명·create/drop | 표현 존재. native 원자 DDL과 catalog 변경 미완료 |

@@ -1,6 +1,7 @@
-//! Fixed authoritative dirty frames and bounded pin/content ownership.
+//! Authoritative dirty frames and bounded pin/content ownership.
 //! Bounded capture/finalize consumes stage-issued WAL and retired-batch permits.
-//! No load, replacement, Commit or raw semantic-stage authority.
+//! Allocator residency consumes sealed selected-home permits; general page load,
+//! replacement, Commit and raw semantic-stage authority remain separate.
 #![allow(dead_code)] // The separately reviewed allocator consumer is being connected.
 
 use super::{
@@ -23,9 +24,9 @@ use xadb_foundation::error::Effect;
 
 mod registration;
 mod residency;
-pub(in crate::storage) use residency::ReloadSnapshot;
 #[cfg(test)]
 pub(in crate::storage) use residency::test_support as residency_test_support;
+pub(in crate::storage) use residency::{AllocatorLoadClaim, ReloadSnapshot};
 #[cfg(test)]
 mod registration_tests;
 use registration::RegistrationDirectory;
