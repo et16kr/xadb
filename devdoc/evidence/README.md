@@ -26,7 +26,7 @@
 
 2026-10-23 [DEV3 구현 코드 리뷰·후속 수정](dev3-code-review-20261023.md): `open-code-review-delegate`의 코어51파일 정적 리뷰에서 확인한 D3-OCR-001을 수정했다. 영속화 후 snapshot 경합의 오류 효과·fence 보완, 신규 관련5건 PASS·별도 D1 수용이며 최초 정적 리뷰와 수정 전 FAIL을 보존한다. 전체 DEV3/S5는 미완료다.
 
-2026-10-23 [COMM 시간 제한·조합별 성능 인수](comm-performance-batch-20261023.md): 첫 cell37/20mode와 사용자 범위 정정 뒤 미완료38/39의40mode를 구분한다. 같은 보존 source의3조합60mode가 각각 BATCH_PASS이며 후속은14:21 완료 확인. 원 profile/2,700분모·다른 source 원74·신규checker의 원 FAIL을 보존하고 C1 INCOMPLETE를 유지한다. 후속 모델 원 FAIL·oracle 수정/D2·미완료 중단을 보존한다. 상태 저장 구조의 선택 검증과 별도로 새6시간 모델은 마감상 skip하고, 저녁4조합80mode BATCH_PASS·같은 source7조합140mode와 독립 통계 대조를 보존하며 후속Unix3조합60mode도 BATCH_PASS·독립 수용해 같은 source10조합200mode이며 다음Unix2조합40mode를22:30 실행 deadline으로 진행한다.
+2026-10-23 [COMM 시간 제한·조합별 성능 인수](comm-performance-batch-20261023.md): 별도 미완료 시험의 원 profile·10쌍·측정·2,700분모를 유지하며 같은 보존 source18조합360mode의 BATCH_PASS와 원자료·통계·누적목록의 독립 수용을 확인했다. 21:55:52 KST 선택 실행 종료 뒤 다음119는원보수3,320초>가용2,908.24초로 SKIPPED_TIME_BUDGET·실행0을 보존한다. slow1의 처리량/p99 미적용과 quota·역압·취소/정리 의무를 구분하며 원보수식/품질기준과23시 hard마감은 유지한다. 모델 원 FAIL·oracle/exact dedup 선택 수정·중단과 새6시간 모델의 시간상 skip을 보존한다. 다른 source의 원74를 합산하지 않고 완료 시험 재실행 금지·8시간 skip/23시 마감·C1 INCOMPLETE를 유지한다.
 
 2026-10-23 [COMM 미완료 인수 재개·RX-prefix/process-kill](comm-acceptance-resume-20261023.md): 원 source의30분3개·11 mutant 완료 증거를 보존하고 신규36셀·checker6→4→1·reader 변경 후 native1을 구분한다. 선택 D1/D2 수용, 모델·전체 fault·성능 및 C1 INCOMPLETE.
 

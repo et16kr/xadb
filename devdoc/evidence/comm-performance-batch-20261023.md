@@ -1,6 +1,6 @@
 # COMM 성능 시험의 시간 제한·조합별 분할
 
-2026-10-23 · **D2 시험 도구 수용 / 같은 source10조합200mode BATCH_PASS / 후속2조합40mode RUNNING / 모델·C1 INCOMPLETE**
+2026-10-23 · **D2 시험 도구 수용 / 같은 source18조합360mode BATCH_PASS / 독립 원자료·통계·누적목록 수용 / 다음119 시간상SKIP / 모델·C1 INCOMPLETE**
 
 [시간 제한 정본](../plans/comm-implementation-plan.md#time-bounded-batches) · [원 C-V18](../plans/comm-implementation-plan.md#performance) · [이전 잔여 대장](comm-acceptance-resume-20261023.md)
 
@@ -161,4 +161,76 @@ python3 -B scripts/check_comm_performance_batch.py \
 
 원/외부 aggregate SHA-256 `718149a88648bb4c8beaee42efa2be1c79855b9cef2bfe8a2045e2a978560cba`를 확인했다. 별도 검토자는 앞30개의 manifest `e14943e27ad30096f96825a0618ed5a01ad5d56888af65c175a92f34af77b6ad` 불변과 추가30개의 manifest `232d4414c5c3f9daed05a0d39ffb03117fc6ff83d615153e84580a8eb2a9271e`·원자료를 대조했다. 전체10쌍의3개 처리량 평균/95% 구간과2개ECHO p99 평균/95% 구간을10,000 bootstrap으로 독립 재계산해 일치했으며 차단 지적은 없다. 목록·수합은 같은 외부 디렉터리 `batch-02-{partial-review,completion-audit}.json`에 보존한다. 같은 source/worker의10조합200개 고유 mode이며 다른 source의 원74는 합산하지 않는다.
 
-다음 미실행79/88은Unix·1MiB·16연결BULK/128연결ECHO의2조합40mode다.20:14:08 KST 계획에서 보수5,920초가22:30까지가용8,151.9초 안에 들어가며 원10쌍·warmup5초/측정30초·guardrail을 유지한다. 이전 배치 종료 뒤 시작했고 현재 RUNNING이다. 원본은 `artifacts/comm/performance-batch-bpz4yqzw/source/artifacts/comm/performance-batch-zabbon_7/`, 선택/외부 report는 `artifacts/comm/evening-20261023-de7y58__/batch-03-{selection,result}.json`이다. 별도 검토자가 완료10셀·역사 결과와 비중복·시간·분모·동일source/binary 계획을 수용했다.
+다음 미실행79/88은Unix·1MiB·16연결BULK/128연결ECHO의2조합40mode다.20:14:08 KST 계획에서 보수5,920초가22:30까지가용8,151.9초 안에 들어가며 원10쌍·warmup5초/측정30초·guardrail을 유지한다. 이전 배치 종료 뒤 시작했고20:39:40 KST clock에서 최종 BATCH_PASS·attempted40/completed40을 확인했다. 원본은 `artifacts/comm/performance-batch-bpz4yqzw/source/artifacts/comm/performance-batch-zabbon_7/`, 선택/외부 report는 `artifacts/comm/evening-20261023-de7y58__/batch-03-{selection,result}.json`이다. 별도 검토자가 완료10셀·역사 결과와 비중복·시간·분모·동일source/binary 계획을 수용했다.
+
+
+| cell·연결/활성 peer | workload | completed throughput 하락 평균·95% 구간 | p99 상승 평균·95% 구간 |
+| --- | --- | --- | --- |
+| 79·16/16 | BULK | +0.1460% [-0.4493%, +0.7414%] | 미적용 |
+| 88·128/11 | ECHO | -0.0270% [-0.2829%, +0.2286%] | -0.5606% [-2.7956%, +1.6500%] |
+
+동시 global payload 최대16,777,888bytes·관측 cancel 최대약2.144ms·40개worker exit0/cleanup0이며 원 비용 한도를 통과했다. 원/외부 aggregate SHA-256은 `30b28ccc850126fb90ae8fb8bb6b80cf5a3f29bb6ac606431c2a99e45699688b`다. 별도 검토자가 앞20개 manifest `1830a11bbebb2194d96483514899bd5467c97bcc6a39cc1ec3ee3545a16fe5ab` 불변과 추가20개 `d2b24277b76d19151c84acb4624645389422a95a445487f3c818ae78465b92db`·원자료를 수용하고 전체10쌍의2개처리량·1개ECHO p99 평균/95% 구간을10,000 bootstrap으로 독립 재계산해 일치했다. 같은 외부 디렉터리 `batch-03-{partial-review,completion-audit}.json`에 목록과 같은 source12조합240개 고유 mode의 수합을 보존한다. 원74·C1 미완료는 유지한다.
+
+다음 미실행89/94는Unix·128연결BULK와IPv4·1연결slow ECHO의1MiB2조합40mode다.20:40:11 KST 계획에서 보수5,920초≤22:30까지가용6,588.4초이며 이전 배치 종료 뒤 원source/binary·10쌍·측정/기준을 유지해 실행한다. 21:05:36 KST clock에서 최종 BATCH_PASS·attempted40/completed40을 확인했으며 원본은 `artifacts/comm/performance-batch-bpz4yqzw/source/artifacts/comm/performance-batch-x4e_1qwa/`, 선택/외부 report는 같은 외부 디렉터리 `batch-04-{selection,result}.json`이다. 별도 검토자가 원index·비중복·시간·source/binary를 수용했다. slow1은 측정연결1·실제연결2·활성1·취소helper1로 건강한 측정peer가 없어 처리량/p99 비용 판정은 원계약대로 미적용이다. quota·역압·취소/정리 의무는 유지한다.
+
+
+| cell·측정/실제연결/활성 peer | workload | completed throughput 하락 평균·95% 구간 | p99 상승 평균·95% 구간 |
+| --- | --- | --- | --- |
+| 89·128/128/55 | BULK | +0.0480% [-0.1461%, +0.2539%] | 미적용 |
+| 94·1/2/1 | slow ECHO | 미적용·건강한 측정peer 없음 | 미적용·건강한 측정peer 없음 |
+
+동시 global payload 최대57,673,990bytes·관측 cancel 최대약2.193ms·40개worker exit0/cleanup connection_count/payload_bytes=0을 확인했다. slow94의 최소pressure prefix8·burst한도8·실제제시8/frame_limit·partial0과 native backlog/ticket cap/wouldblock/queue pressure를 확인했다. slow owner의 취소 시 실패 ticket4는 원허용범위이며 helper 실패0과 구별한다. 자원정리0을 모든 ticket의 성공 flush로 해석하지 않는다.
+
+원/외부 aggregate SHA-256은 `9951223da6f5b41da580cb7ea8f25fda60513b6bcf4fd420012f89968d50a5be`다. 앞20개 manifest `b50c94acd40a993d7bd3fb6b98c0d6b51e285606bdd25b3149a9f2814d692b1e` 불변과 추가20개 `5a665c7d4a4ff98ff4c97175fccb99c73c01e85daebafa90f9b5b883255c6ae7`·원자료를 독립 검토했다. 89의10쌍 평균/10,000 bootstrap95% 구간을 재계산해 일치했고94의 처리량/p99 평균/CI=null·미적용을 유지했다. 같은 외부 디렉터리 `batch-04-{partial-review,completion-audit}.json`에 목록·수용과 같은 source14조합280개의 수합을 보존한다. C1은 미완료다.
+
+후속 배치부터 실행 deadline을22:45 KST·최종 검토/기록 여유15분으로 선택했다. 사용자의23시 전 실행·정리·검토·기록 마감은 유지하며 앞선22:30/30분은 자체 계획 여유였다. 원자료와 문서를 실행 중 분할 검토한 실제 진행을 근거로 별도 검토자가 이 조정을 수용했다. 기존 manifest를 고치지 않고 실제 종료 시각에서 원보수식·10쌍·측정/기준·8시간 제한을 매번 다시 적용한다. 수용 기록은 `artifacts/comm/evening-20261023-de7y58__/late-deadline-review.json`이다.
+
+다음 미실행99/104는IPv4·16/128연결slow ECHO·1MiB의2조합40mode다.21:05:47 KST 선택의 가용5,952.93초·실제manifest21:05:51의 가용5,948.50초가 각각보수5,920초를 충족했다(실제여유28.50초). 완료14셀과 비중복·동일source/binary이며21:31:01 KST clock에서 최종 BATCH_PASS·attempted40/completed40을 확인했다. 각셀활성3=slow1+healthy2, helper0·취소target15/127의 원부하라 처리량/p99 비용 판정이 적용된다. 원본은 `artifacts/comm/performance-batch-bpz4yqzw/source/artifacts/comm/performance-batch-cooa179_/`, 선택/외부 report/계획독립수용은 같은 외부 디렉터리 `batch-05-{selection,result,plan-review}.json`이다.
+
+
+| cell·측정/실제연결/활성 peer | workload | completed throughput 하락 평균·95% 구간 | p99 상승 평균·95% 구간 |
+| --- | --- | --- | --- |
+| 99·16/16/3 | slow ECHO | +0.1086% [-0.0555%, +0.2451%] | -0.7597% [-3.1719%, +0.8800%] |
+| 104·128/128/3 | slow ECHO | -0.2210% [-0.4138%, -0.0551%] | +0.2755% [-2.3649%, +2.6760%] |
+
+각 셀의 원활성3=slow1+healthy2를 유지한 관측이며 원throughput10%·ECHO p99 15%·64MiB quota한도를 통과했다. 동시 global payload최대9,437,562bytes·관측cancel최대약2.146ms·40개worker exit0/cleanup0이다. slow-owner의 허용실패ticket≤4와 나머지connection/helper0·실패/잔여0을 구별했다. 원source의 latency선택은 송신시작 기준, throughput bucket은 완료시각 기준이므로 서로 다른 창의 count를 같다고 주장하지 않는다.
+
+원/외부 aggregate SHA-256은 `a449ee527305dedcb2d84e3a35b1e35be88914bbd3166670c7ac327bfc35353a`다. 앞20개 manifest `ed8a7ab66efa9cb18d2f0b6407a5d3c0610df005e665502dca7e7eb86ec67ce1` 불변과 추가20개 `f7726f3dd35d0e2b731c33ea4842c04788d931c5a88b6cfc3728251ca4b1f75b`·raw 회계/압력/latency/취소·정리를 독립 수용했다. 2개throughput·2개p99의10쌍 평균/10,000 bootstrap95% 구간도 독립 재계산해 일치했다. 같은 외부 디렉터리 `batch-05-{partial-review,completion-audit}.json`에 목록과 같은source16조합320개 고유 mode를 보존한다. 다른source 원74·모델/C1 미완료는 유지한다.
+
+후속 미실행109는IPv6·1연결slow ECHO·1MiB의1조합20mode다.21:31:38 KST 계획의 가용4,401.17초와 실제manifest의4,401.10초가보수3,320초를 충족해 이전배치 종료 뒤 시작했다. 완료16셀과 비중복·원source/binary·10쌍/측정/기준을 유지했고21:43:24 KST clock에서 최종 BATCH_PASS·attempted20/completed20을 확인했다. 측정1/실제2/활성1/helper1·취소target1, 처리량/p99 N/A와 quota/역압·prefix8/한도8/취소·정리 의무를 원범위로 유지한다. 독립 검토자가 계획을 수용했다. 원본은 `artifacts/comm/performance-batch-bpz4yqzw/source/artifacts/comm/performance-batch-6ejnmd7z/`, 선택/외부 report는 같은 외부 디렉터리 `batch-06-{selection,result}.json`이다.
+
+
+109의 전체10쌍은 건강한 측정peer가 없어 처리량/p99 평균/CI=null·N/A이며 quota·역압/pressure 의무를 원대로 유지했다. 동시global payload최대6,291,708bytes·관측cancel최대약2.460ms·20개worker exit0/cleanup0이다. 원/외부 aggregate SHA-256은 `94c3b6d3c4df676b2aab56409a3326f0d562e2cd4cd1a8bad68b6fe383e71ff2`다. 앞10개 manifest `ad19eec81cff138e21a9447de4b9aea0a4dc84b8a070290b89b9e0e3769b9d38` 불변과 추가10개 `1a8df30d45bd53a9094f0f362faf03e004a490a02daf721b4313cb25621930fd`·원자료와10pair 비교/summary를 독립 수용했다. 같은 외부 디렉터리 `batch-06-{partial-review,completion-audit}.json`에 목록과 같은source17조합340개 고유mode를 보존한다. C1은 미완료다.
+
+후속 미실행114는IPv6·16연결slow ECHO·1MiB의1조합20mode다.21:43:56 KST 선택의 가용3,663.82초·실제manifest의3,663.76초가보수3,320초를 충족해 이전배치 종료 뒤 원source/binary·10쌍/측정/기준으로 시작했다. 완료17셀과 비중복이며21:55:52 KST clock에서 최종 BATCH_PASS·attempted20/completed20을 확인했다. 실제16연결/활성3=slow1+healthy2/helper0·취소target15여서 처리량/p99 비용이 적용된다. 독립 검토자가 원부하·시간·신원을 수용했다. 원본은 `artifacts/comm/performance-batch-bpz4yqzw/source/artifacts/comm/performance-batch-xxtamt52/`, 선택/외부 report는 같은 외부 디렉터리 `batch-07-{selection,result}.json`이다.
+
+
+| cell·측정/실제연결/활성 peer | workload | completed throughput 하락 평균·95% 구간 | p99 상승 평균·95% 구간 |
+| --- | --- | --- | --- |
+| 114·16/16/3 | slow ECHO | +0.1898% [-0.1944%, +0.5452%] | +0.9315% [-1.1550%, +3.1528%] |
+
+동시global payload최대9,437,562bytes·관측cancel최대약2.117ms·20개worker exit0/cleanup0이며 원 비용 한도를 통과했다. 원/외부 aggregate SHA-256은 `f5a2401536326ffd7c7ca5d785d46c726aec98b709505d3346276e9f2822c5dd`다. 앞10개 manifest `3c78dc4e53cf4cd09a853ec129d501c3dbd54962cd4680705bdf45af9e45dd2a`와 추가10개 `4dd5d1fd436d00eecc7c74719bf336c8d2ff7025c90638ebe9052da82558eb5a`·raw 회계/pressure/latency/취소·정리와10쌍 통계를 독립 수용했다. 1개throughput·1개p99의 평균/10,000 bootstrap95% 구간을 별도 재계산해 정확히 일치했다. 같은 외부 디렉터리 `batch-07-{partial-review,completion-audit}.json`에 목록과 수합을 보존한다.
+
+<a id="day-close"></a>
+
+## 당일 선택 실행 종료와 잔여 범위
+
+21:55:52 KST clock에서 오늘 선택한 성능 실행의 마지막 종료를 확인했다. 같은 보존 source `b28bc3963ae88df1c949b109d5d6c46c0d670c15bc6d9564b725846dc5aad892`·worker `50b47c564913120769a045de3aa5722c367e245a79756491dd6575de504f6530`의18조합360개 고유(cell,pair,instrumentation) receipt다. 각조합의 원10쌍·warmup5초/측정30초·계측교대·부하/in-flight와 판정/N/A 기준을 유지한다. 원성능분모2,700과 다른source 원74를 합산하지 않는 원칙은 유지한다.
+
+| 저녁 batch | cell | mode | 완료 clock 관측 KST | 실행 결과 |
+| --- | --- | --- | --- | --- |
+| 01 | 48/49/58/59 | 80 | 19:37:46 | BATCH_PASS |
+| 02 | 68/69/78 | 60 | 20:13:46 | BATCH_PASS |
+| 03 | 79/88 | 40 | 20:39:40 | BATCH_PASS |
+| 04 | 89/94 | 40 | 21:05:36 | BATCH_PASS |
+| 05 | 99/104 | 40 | 21:31:01 | BATCH_PASS |
+| 06 | 109 | 20 | 21:43:24 | BATCH_PASS |
+| 07 | 114 | 20 | 21:55:52 | BATCH_PASS |
+
+저녁300mode와 앞선37의20·38/39의40을 합해9개aggregate·360mode이며 중복은 없다. 전체목록과 source/binary·receipt/latency hash는 `artifacts/comm/evening-20261023-de7y58__/final-campaign-summary.json`에 보존한다. 이 목록의 canonical SHA-256은 `2a7be834e4cf78074eef00c9f0d925155a6491707f1e9c5927874398d3178df5`다. 별도 검토자가 마지막10쌍 통계와9개aggregate·360개raw receipt/gzip·보존source/generator/build/binary 및 누적목록의 고유집합/해시를 대조해 수용했다. 기존1–6배치의 수용 결과도 보존한다.
+
+다음 미실행119(IPv6·128연결slow ECHO·1MiB)의 원20mode를21:56:31 KST에 원CLI로 preflight했다. 한셀의 원보수식은 build600+20×(mode120+cleanup10)+finalize120=3,320초(55분20초)이며22:45 실행마감까지 가용2,908.24278초를 초과했다. 최종 검토/기록15분을 더하면23시 hard마감에도 들어가지 않아 **SKIPPED_TIME_BUDGET·attempted0/completed0**다. source capture/build/worker 실행 전 skip했으며 필수10쌍/측정/판정은 줄이지 않았다. 원본은 `artifacts/comm/performance-batch-bpz4yqzw/source/artifacts/comm/performance-batch-1a72z57x/validation.json`, 외부사본은 같은 외부 디렉터리 `next-batch-time-budget-result.json`, SHA-256 `1e929b34e8b3c025de5f4bd54cf358cce15923e08c927566a1cce522b8d457b3`다.
+
+다른 잔여 full-cell도 현재 검증된 실행기의 같은 최소3,320초가 필요해 오늘은 미선택/미실행으로 남긴다. 실제 skip receipt는119에만 해당하며 잔여 inventory를 새 PASS나 실행된 SKIP으로 바꾸지 않는다. 새source의6시간 모델은 시간상skip, 기존 모델은원FAIL/미완료중단, 전체native fault는기존부분/실패·harness공급잔여를 유지한다. **전체COMM/C1과 전체성능인수는 INCOMPLETE**다.
+
+360개worker의 exit0·connection_count/payload_bytes cleanup0 receipt와 기록된360 PID의 /proc 부재를 대조했다. 조회가능한 /proc executable에서는9개소유binary 경로 일치0이며 권한상 조회할 수 없는 다른process까지 완전 조회한 결과로 확대하지 않는다. Unix listener 주소120개도 모두 filesystem에 남아 있지 않다. 실제 정리대조는 같은 외부 디렉터리 `process-cleanup-audit.json`에 보존한다. 별도 검토자가 다음119의 실행없는skip과 원분모/미완료 상태 보존까지 수용했다.
