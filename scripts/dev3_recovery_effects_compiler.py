@@ -19,10 +19,10 @@ from comm_campaign import capture_source, write_json
 ROOT = Path(__file__).resolve().parent.parent
 INPUT_RELATIVE = 'crates/engine/tests/fixtures/recovery_effects/compiler'
 INPUTS = ROOT / INPUT_RELATIVE
-INPUTS_SHA256 = '45c997165fe6c85c66e759eecf9b8c9e7b235f79074ed968911247aa7678da6d'
+INPUTS_SHA256 = '2aaa85ce3f7e3a5c825ae34e8b338bb9dc3f9b6ebf46d99274c8ddeba9459831'
 PROBE = 'crates/engine/src/storage/recovery_effects_borrow_probe.rs'
 ANCHOR = 'crates/engine/src/storage/mod.rs'
-EXPECTATIONS = {'baseline': (None, None, 'none', None), 'positive': (None, None, 'none', 'EC00'), 'maintenance_reborrow': ('E0499', 6, 'one', 'EC01'), 'flush_reborrow': ('E0499', 6, 'one', 'EC02'), 'failed_owner_reborrow': ('E0499', 7, 'one', 'EC03'), 'owner_move': ('E0382', 7, 'one', 'EC04'), 'observation_borrow': ('E0505', 6, 'one', 'EC05'), 'private_fields': ('E0616', 5, 'one', 'EC06'), 'raw_writer_missing': ('E0599', 5, 'one', 'EC07'), 'borrowed_image_immutable': ('E0594', 6, 'one', 'EC08')}
+EXPECTATIONS = {'baseline': (None, None, 'none', None), 'positive': (None, None, 'none', 'EC00'), 'maintenance_reborrow': ('E0499', 6, 'one', 'EC01'), 'flush_reborrow': ('E0499', 6, 'one', 'EC02'), 'failed_owner_reborrow': ('E0499', 7, 'one', 'EC03'), 'owner_move': ('E0382', 7, 'one', 'EC04'), 'observation_borrow': ('E0505', 6, 'one', 'EC05'), 'private_fields': ('E0616', 5, 'one', 'EC06'), 'raw_writer_missing': ('E0599', 5, 'one', 'EC07'), 'borrowed_image_immutable': ('E0594', 6, 'one', 'EC08'), 'status_images_positive': (None, None, 'none', 'EC09'), 'status_image_borrow': ('E0505', 7, 'one', 'EC10'), 'status_image_immutable': ('E0594', 7, 'one', 'EC11')}
 CASE_NAMES = tuple(EXPECTATIONS)
 COMPILER_BUDGET_SECONDS = 60
 
@@ -42,7 +42,7 @@ def inputs(directory=INPUTS, expected_sha256=INPUTS_SHA256):
             or manifest['requires_actual_unmodified_baseline'] is not True
             or manifest['unrelated_error_diagnostics_are_failures'] is not True
             or manifest['compiler_budget_seconds'] != COMPILER_BUDGET_SECONDS
-            or manifest['semantic_case_count'] != 9
+            or manifest['semantic_case_count'] != 12
             or manifest['infrastructure_control_count'] != 1
             or manifest['negative_returncode'] != 101):
         raise ValueError('frozen compiler contract changed')
@@ -137,10 +137,10 @@ def main():
     args.artifact_parent.mkdir(parents=True, exist_ok=True)
     session = Path(tempfile.mkdtemp(prefix='recovery-effects-borrows-',
                                     dir=args.artifact_parent)).resolve()
-    report = {'scope': 'D3-RECOVERY-EFFECTS-001 compiler semantic9 plus control1',
+    report = {'scope': 'D3-RECOVERY-EFFECTS-001 compiler semantic12 plus control1',
               'status': 'RUNNING', 'artifact_directory': str(session), 'cases': [],
               'inventory': list(CASE_NAMES), 'requested': args.case,
-              'semantic_inventory': [f'EC{i:02}' for i in range(9)],
+              'semantic_inventory': [f'EC{i:02}' for i in range(12)],
               'infrastructure_inventory': ['baseline'],
               'compiler_budget_seconds': COMPILER_BUDGET_SECONDS,
               'compiler_elapsed_seconds': 0.0,

@@ -6,7 +6,7 @@
   "requires_actual_unmodified_baseline": true,
   "unrelated_error_diagnostics_are_failures": true,
   "compiler_budget_seconds": 60,
-  "semantic_case_count": 9,
+  "semantic_case_count": 12,
   "infrastructure_control_count": 1,
   "negative_returncode": 101,
   "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
@@ -129,6 +129,42 @@
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
       "bytes": 271,
       "sha256": "573fd0e89331952c55e203f3f1f75275e24b33ff583cb43d9654be9dc09e81c7"
+    },
+    {
+      "name": "status_images_positive",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "semantic_id": "EC09",
+      "reason": "read several physical Status images then release owner and both arenas",
+      "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 409,
+      "sha256": "753d0f24eae60ad0f1f7cdd9ce08ff6186ec31873a1bde37c4bb7298ff2b0ec9"
+    },
+    {
+      "name": "status_image_borrow",
+      "expected_code": "E0505",
+      "primary_line": 7,
+      "primary_spans": "one",
+      "semantic_id": "EC10",
+      "reason": "page2 borrow keeps physical inspection owner alive",
+      "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 391,
+      "sha256": "8175874e15cfddfccac015b8ab68ac702b8475e31a732f326807616d2f0f4855"
+    },
+    {
+      "name": "status_image_immutable",
+      "expected_code": "E0594",
+      "primary_line": 7,
+      "primary_spans": "one",
+      "semantic_id": "EC11",
+      "reason": "page2 inspection returns immutable bytes only",
+      "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 363,
+      "sha256": "0a6468920e16a6b3e326c998a1ff13db0e1a69ee299d7f50876cc9b7fdafb16e"
     }
   ]
 }

@@ -438,3 +438,8 @@ oracle와 관련 새 compiler 사례를 공급한다. current-build recovery의 
 [P2 live owner 실행 증거](../evidence/dev3-operational-status-20261023.md)는 원 source별
 compile FAIL과 static/runtime/native의 실제 범위를 보존한다. live owner commit과
 반복 sequence의 durable integration 완료는 구별한다.
+
+P2 live owner 인수 뒤 [반복 이력 복구 F09](dev3-recovery-effects.md#operational-status-recovery)에서
+현재-build 지원과 fresh producer→별도 process 복구·partial-prefix/fault cut를 공급했다.
+[후속 실행·검토 상태](../evidence/dev3-operational-recovery-20261023.md)는 원 live owner 증거와
+구별한다. P3 실제 membership load/3주소·2frame·live Status 변경 및 전체 DEV3/S5는 남아 있다.

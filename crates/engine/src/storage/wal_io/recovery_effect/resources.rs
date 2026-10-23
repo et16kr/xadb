@@ -96,6 +96,8 @@ pub(super) fn source_census<W: WriterNamespace>() -> SourceCensus {
         )
         + size_of::<port_io::SourceReads<'_, W::File>>()
         + size_of::<std::io::Result<usize>>()
+        + 4 * size_of::<RecoveryTarget>()
+        + 4 * size_of::<Result<RecoveryTarget>>()
         + size_of::<ContentHasher>()
         + size_of::<FrameExpectation>()
         + size_of::<SemanticFrameScan<'static>>()
@@ -213,13 +215,7 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
         }
         let mut last_batch = self.observation.batch;
         // All possible home batches are reserved before any provisioning write.
-        let targets = if f.status_initialized {
-            2
-        } else if f.complete_lsn > 0 {
-            1
-        } else {
-            0
-        };
+        let targets = f.replay_targets();
         if targets > 0 {
             let last = self
                 .observation
@@ -260,10 +256,9 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
             epoch_credit: 0,
             restored_once: false,
         };
-        self.final_hashes[0] = content_digest(self.prefix.allocator_image());
-        if let Some(image) = self.prefix.status_image() {
-            self.final_hashes[1] = content_digest(image);
-        }
+        self.final_allocator_hash = content_digest(self.prefix.allocator_image());
+        self.maintenance_tail[SAVED_TARGETS..SAVED_TARGETS + TARGET_TABLE_BYTES]
+            .copy_from_slice(self.prefix.target_table());
         self.final_descriptor_hash = self.prefix.descriptor_bytes().map(|b| content_digest(b));
         Ok(())
     }

@@ -16,7 +16,7 @@ class ClosedRecoveryEffectsCompilerHarnessTests(unittest.TestCase):
 
     def test_frozen_manifest_and_program_identity(self):
         cases = runner.inputs()
-        self.assertEqual(len(cases), 10)
+        self.assertEqual(len(cases), 13)
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             for path in runner.INPUTS.iterdir(): (base/path.name).write_bytes(path.read_bytes())
@@ -25,6 +25,11 @@ class ClosedRecoveryEffectsCompilerHarnessTests(unittest.TestCase):
             script=Path(runner.__file__).resolve();relative=script.relative_to(runner.ROOT)
             (base/relative).parent.mkdir(parents=True);(base/relative).write_text('stale checker')
             with self.assertRaises(ValueError):runner.checker_source_identity(base,[script])
+
+    def test_new_status_image_selection_omits_old_semantic_probes(self):
+        cases=runner.inputs()
+        names=['status_images_positive','status_image_borrow','status_image_immutable']
+        self.assertEqual([r['name'] for r in runner.select_cases(cases,names)],['baseline',*names])
 
     def test_exact_negative_completion_path_line_and_code(self):
         frozen = next(row for row in runner.inputs() if row['name'] == 'owner_move')

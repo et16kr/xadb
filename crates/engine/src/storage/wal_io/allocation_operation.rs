@@ -1155,6 +1155,25 @@ pub(in super::super) fn materialize_analysis(
     after: &mut [u8; PAGE_BYTES],
     budget: OperationBudget,
 ) -> Result<()> {
+    materialize_analysis_in_population(
+        expected,
+        before,
+        bytes,
+        after,
+        budget,
+        AllocationPopulation::Empty,
+    )
+}
+
+/// Canonical recovery scope is supplied by its owner, never serialized input.
+pub(in super::super) fn materialize_analysis_in_population(
+    expected: AnalysisExpected<'_>,
+    before: &[u8; PAGE_BYTES],
+    bytes: &[u8],
+    after: &mut [u8; PAGE_BYTES],
+    budget: OperationBudget,
+    population: AllocationPopulation,
+) -> Result<()> {
     let header = validate_header(&expected, bytes)?;
     let old = allocation_page::decode_allocation_page(
         before,
@@ -1172,5 +1191,5 @@ pub(in super::super) fn materialize_analysis(
         after,
     )
     .map_err(|_| SemanticError::PageMismatch)?;
-    validate_analysis_with_budget(expected, before, bytes, after, budget)
+    validate_analysis_in_population(expected, before, bytes, after, budget, population)
 }

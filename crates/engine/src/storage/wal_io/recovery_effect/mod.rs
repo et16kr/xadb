@@ -17,7 +17,8 @@ pub(crate) use types::*;
 pub(crate) const MAINTENANCE_BYTES: usize = 12_582_912;
 pub(crate) const FLUSH_BYTES: usize = 4_194_304;
 const HOME_A: usize = 0;
-const HOME_S: usize = PAGE_BYTES;
+const PHYSICAL_BYTES: usize = TARGET_COUNT * PAGE_BYTES;
+const SAVED_TARGETS: usize = PHYSICAL_BYTES;
 const SLOT: usize = 65_536;
 const CONTROL: usize = 98_304;
 const SELECTOR_BYTES_AT: usize = 114_688;
@@ -67,11 +68,16 @@ pub(crate) struct ClosedRecovery<'a, 'd, W: WriterNamespace> {
     allowance: LocalAllowance,
     fence: SessionFence,
     source_seal: Option<SourceSeal>,
-    final_hashes: [[u8; 32]; 2],
+    final_allocator_hash: [u8; 32],
     final_descriptor_hash: Option<[u8; 32]>,
     slots: Option<SlotsProvisioned>,
     restored: Option<RestoredSeal>,
     reservation: Option<RecoveryReservation>,
+}
+struct RecoveryTarget {
+    identity: PageIdentity,
+    lsn: u64,
+    digest: [u8; 32],
 }
 struct SlotsProvisioned {
     stamps: [FileMetadata; 2],
@@ -217,7 +223,7 @@ impl<'a, 'd, W: WriterNamespace> ClosedRecovery<'a, 'd, W> {
             },
             fence: SessionFence::new(),
             source_seal: None,
-            final_hashes: [[0; 32]; 2],
+            final_allocator_hash: [0; 32],
             final_descriptor_hash: None,
             slots: None,
             restored: None,
@@ -278,12 +284,23 @@ impl<W: WriterNamespace> RecoveryInspection<'_, '_, W> {
             .try_into()
             .expect("physical allocator")
     }
+    /// The last initialized Status, preserving the first-INIT observation API.
     pub(crate) fn status_image(&self) -> Option<&[u8; PAGE_BYTES]> {
-        self.owner.prefix.observation.status_initialized.then(|| {
-            self.owner.maintenance_tail[HOME_S..HOME_S + PAGE_BYTES]
+        self.status_image_at(self.owner.prefix.observation.last_status_page as u64)
+    }
+    /// Borrow an immutable recovered target; uninitialized addresses are absent.
+    pub(crate) fn status_image_at(&self, page_no: u64) -> Option<&[u8; PAGE_BYTES]> {
+        if !(1..TARGET_COUNT as u64).contains(&page_no)
+            || self.owner.prefix.observation.status_mask & (1u64 << page_no) == 0
+        {
+            return None;
+        }
+        let at = page_no as usize * PAGE_BYTES;
+        Some(
+            self.owner.maintenance_tail[at..at + PAGE_BYTES]
                 .try_into()
-                .expect("physical Status")
-        })
+                .expect("physical Status"),
+        )
     }
     pub(crate) fn descriptor_bytes(&self) -> Option<&[u8; 1536]> {
         self.owner.prefix.descriptor_bytes()

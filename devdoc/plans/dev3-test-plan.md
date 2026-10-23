@@ -427,9 +427,9 @@ source별 완료 결과와 compile 실패를 보존한다. r2 static6/runtime2�
 전체 source 지문 변경만으로 반복하지 않는다. closed CF15-01/02는 달라진 population·INIT
 권한의 직접 소비자라 좁혀 선택한다. 전체 wrapper·하위 회귀·S5는 실행하지 않는다.
 
-반복 sequence current-build recovery는 미실행이 아니라 지원 자체가 아직 미구현이다.
-fresh producer→새 process 성공 복구·partial-prefix/fault cut를 후속 구현과 함께 검증해야
-P2/P3 durable integration을 완료할 수 있다. old closed recovery PASS를 대신 쓰지 않는다.
+live owner 인수 당시 반복 sequence current-build recovery는 미구현이었다. 후속
+[반복 이력 복구](#operational-recovery-followup)가 새 producer→별도 process 복구·partial-prefix/fault cut를
+공급했다. 원 live owner/closed recovery PASS를 새 실행 증거로 대신 쓰지 않는다. P3 load 통합은 남아 있다.
 순수 reader LSN 의미 시험은 실제 P3 A reload로 세지 않는다. 긴 전체 조합·pressure는 S5
 배정을 유지하며 이번 선택 실행을 DEV3 전수 인수로 승격하지 않는다.
 
@@ -440,5 +440,25 @@ compiler manifest의semantic5, 새 checker4를 포함한다. runtime14의 정확
 `operational_status_resource_gate`를 제외한14개 `#[test]`이며 정적 gate1은 별도로 포함한다.
 source별 선택 원문은 [receipt 색인](../evidence/dev3-operational-status-20261023.json)의
 r2/r4/r5/r7 selection에 연결한다. 기존 closed CF15-01/02는 원 inventory와 중복 집계하지 않는다.
-첫 extent 전체 주소·여러 profile·long history 확대 사례는 미완료 P2/P3 durable integration
-구현과 함께 별도 selector로 추가하며, 지금 작성·실행 완료한 사례라고 표시하지 않는다.
+첫 extent 전체 주소·여러 profile·long history 확대는 아래 복구 후속 inventory에서 작성 상태와
+실행 결과를 구별한다. P3 실제 load/교체·반복 변경 확대는 해당 구현과 함께 추가한다.
+
+<a id="operational-recovery-followup"></a>
+## 반복 Status 복구의 변경 범위와 S5 inventory
+
+[F09](../contracts/dev3-recovery-effects.md#operational-status-recovery)의 immutable Status survivor·
+주소별 census·REDO·topup 변경에 대해 신규65개 boundary/11selector와 직접 소비자
+ES003·ES005·PPL004만 선택했다. source별57+8 PASS를 합산하며 같은 source의 완료 시험을
+다시 실행하지 않는다. native4개 이력/14worker, 새 compiler EC09–11+baseline 및 checker의
+원 실패/수정을 [증거](../evidence/dev3-operational-recovery-20261023.md)에 보존한다.
+
+정확 selector·case ID·시간/공간 한도는 [구현 동반 inventory](../../tests/fixtures/dev3-operational-recovery/manifest.json)가 소유한다. 최종 S5에는 mandatory65·native4·compiler3·새 checker11·변경 compiler checker2·static2와 다음 확대2379개를 포함한다. 기존 소비자3개는 원 inventory와 중복 집계하지 않는다.
+
+| 확대 selector | 실제 작성 범위 | 상태 |
+| --- | --- | --- |
+| `s5_profiles` | profile2/3 각각63개 INIT·62개 cancel; profile1의 같은 전체 extent는 mandatory 경계에 포함 | NOT_RUN |
+| `s5_long_history` | profile1,2pages,4096cancel,work4098/LSN8196 | NOT_RUN |
+| `s5_home_pending_matrix` | 3profile×8home subset×6historical Pending =144 | NOT_RUN |
+| `s5_home_fault_matrix` | 3profile×home subset별 dirty target 합12×31call×Before/After =2232 | NOT_RUN |
+
+확대 fault vector는 source protocol의 BOOT/source39개 뒤 dirty target마다31개로 사전 작성한다. 실제 성공 trace에서 역산하지 않으며 fault 위치의 exact event tuple·누적 effect·held failed owner·source/clean home 보존을 검산한다. 기존 하부 BOOT39 fault를 이 확대 분모로 다시 세지 않는다. 각 ignored selector는 명시 선택하며 준비 fixture는 총256MiB, 확대 보존물1GiB, 실행 합1320초 한도를 유지한다. 이 S5 준비는 실행 PASS가 아니며 일반 recovery/READY·P3·전체 DEV3는 미완료다.

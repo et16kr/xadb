@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "unit": "D3-OPERATIONAL-RECOVERY-001",
+  "status": "AUTHORED_INVENTORY_NOT_EXECUTION_EVIDENCE",
+  "contract_ref": "dev3-recovery-effects.md#operational-status-recovery",
+  "case_env": "XADB_RECOVERY_EFFECTS_CASES",
+  "mandatory_count": 65,
+  "mandatory": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_mixed_targets",
+      "ids": [
+        "ORM001",
+        "ORM002",
+        "ORM003",
+        "ORM004",
+        "ORM005",
+        "ORM006",
+        "ORM007",
+        "ORM008",
+        "ORM009"
+      ],
+      "count": 9
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_complete_and_partial_prefixes",
+      "ids": [
+        "ORP001",
+        "ORP002",
+        "ORP003",
+        "ORP004",
+        "ORP005",
+        "ORP006",
+        "ORP007",
+        "ORP008",
+        "ORP009",
+        "ORP010",
+        "ORP011",
+        "ORP012",
+        "ORP013",
+        "ORP014",
+        "ORP015",
+        "ORP016",
+        "ORP017",
+        "ORP018",
+        "ORP019",
+        "ORP020"
+      ],
+      "count": 20
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_historical_pending",
+      "ids": [
+        "ORD001",
+        "ORD002",
+        "ORD003",
+        "ORD004",
+        "ORD005",
+        "ORD006"
+      ],
+      "count": 6
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_rejects_intact_conflicts",
+      "ids": [
+        "ORH001",
+        "ORH002",
+        "ORH003",
+        "ORH004",
+        "ORH005",
+        "ORH006",
+        "ORH007"
+      ],
+      "count": 7
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_rejects_complete_wal_corruption",
+      "ids": [
+        "ORW001",
+        "ORW002",
+        "ORW003",
+        "ORW004",
+        "ORW005",
+        "ORW006",
+        "ORW007",
+        "ORW008"
+      ],
+      "count": 8
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_readonly_scope_remains_closed",
+      "ids": [],
+      "count": 1
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_page63_and_full_extent_reservation",
+      "ids": [],
+      "count": 1
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_target_count_generation_overflow",
+      "ids": [],
+      "count": 1
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_second_pass_rejects_census_drift",
+      "ids": [],
+      "count": 1
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_retained_terminal_is_revalidated",
+      "ids": [
+        "ORV001",
+        "ORV002",
+        "ORV003"
+      ],
+      "count": 3
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_codec_valid_semantic_rejections",
+      "ids": [
+        "ORS001",
+        "ORS002",
+        "ORS003",
+        "ORS004",
+        "ORS005",
+        "ORS006",
+        "ORS007",
+        "ORS008"
+      ],
+      "count": 8
+    }
+  ],
+  "static_selectors": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_resource_gate",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::native::operational::operational_native_resource_gate"
+  ],
+  "directly_affected_old_ids": [
+    "ES003",
+    "ES005",
+    "PPL004"
+  ],
+  "native": {
+    "cases": [
+      "plain",
+      "tail",
+      "partial_b",
+      "retirement_b"
+    ],
+    "histories": 4,
+    "workers": 14,
+    "budget_seconds_per_history": 30,
+    "budget_seconds_total": 120,
+    "database_bytes_per_history": 25165824,
+    "database_bytes_total": 100663296
+  },
+  "compiler": {
+    "new_semantic_ids": [
+      "EC09",
+      "EC10",
+      "EC11"
+    ],
+    "control": "baseline",
+    "budget_seconds": 60
+  },
+  "s5": {
+    "status": "AUTHORED_NOT_RUN",
+    "case_count_expanded": 2379,
+    "cases": [
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_s5_profiles",
+        "count": 2,
+        "input_profiles": [
+          2,
+          3
+        ],
+        "pages": 63,
+        "cancellations_per_next_page": 1,
+        "budget_seconds": 120
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_s5_long_history",
+        "count": 1,
+        "profile": 1,
+        "pages": 2,
+        "cancellations_per_next_page": 4096,
+        "work_high_water": 4098,
+        "lsn": 8196,
+        "budget_seconds": 120
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::operational_recovery_s5_home_pending_matrix",
+        "prefix": "ORS5",
+        "count": 144,
+        "dimensions": "3 profiles x 8 home subsets x 6 selected Pending histories",
+        "budget_seconds": 180
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::operational::expanded::operational_recovery_s5_home_fault_matrix",
+        "prefix": "ORF",
+        "count": 2232,
+        "dimensions": "3 profiles x sum(3-popcount(mask), mask0..7) x 31 mutation calls x 2 Before/After",
+        "budget_seconds": 900
+      }
+    ],
+    "budget_seconds_total": 1320,
+    "prepared_input_bytes_max": 268435456,
+    "retained_artifacts_bytes_max": 1073741824,
+    "preparation": "scripts/dev3_operational_recovery_literals.py with profile2/3 pages63 cancellations1 and profile1 pages2 cancellations4096; set XADB_OPERATIONAL_RECOVERY_INPUT; explicit --ignored selection only"
+  },
+  "fixture_manifests": [
+    "p1-extent/manifest.json",
+    "../dev3-operational-status/manifest.json"
+  ],
+  "runtime_budget_seconds": {
+    "per_job": 30,
+    "aggregate": 180
+  },
+  "scope_note": "Original fixture generator hash is provenance, not overwritten after later preflight-cap guard. S5 includes all mandatory cases at final DEV3 acceptance; no S5 case executed here."
+}

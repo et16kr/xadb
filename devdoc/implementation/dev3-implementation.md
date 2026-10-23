@@ -732,7 +732,7 @@ generation·교체는 독점 단계로 제한하고 shared INIT publication은 �
 Fixed provenance·allocator tombstone·pin token 의미를 보존하며 별도 전역 publication을 제거했다.
 [선택 증거](../evidence/dev3-operational-registration-20261023.md)는 static5·runtime20·Linux2와
 원 r0 compile FAIL을 구분한다. D2·실행 전 F05와 OCR delegate 기반 최종 D1은 P1 범위로 독립 수용됐다.
-P2 consuming owner·반복 INIT, P3 현재 membership load와 실제3주소/2frame 교체는 미공급이며
+P1 인수 당시 P2/P3는 미공급이었다. 후속 [P2 live owner](#operational-status)와 [반복 복구](#operational-recovery)를 구별하며, P3 현재 membership load와 실제3주소/2frame 교체는 미공급이다.
 일반 pool·전체 DEV3/S5를 완료로 승격하지 않는다.
 
 <a id="dev3-work-breakdown"></a>
@@ -750,14 +750,14 @@ P2 consuming owner·반복 INIT, P3 현재 membership load와 실제3주소/2fra
 | 3.02 파일·읽기 기반 | namespace·FILEMAP·extent 최초 설치·selector·selected reader | 최초 설치·읽기와 [불변 Status bootstrap 역할](#status-bootstrap)의 제한 구현 검증. 일반 reopen은 미완료 |
 | 3.03 공간 할당 | 예약·취소 잔여 인수, INIT 소비, extent 확장, eligible free/reuse | [예약·취소](#allocation-reservation-accepted)와 [한 Status INIT](#status-init)의 제한 연결. [Status home flush](#status-home-flush)의 제한 선택 인수. 일반 INIT·확장·free/reuse 미완료 |
 | 3.04 WAL 변경 경로 | semantic producer·stage/apply·append/sync·owner chain | [dirty stage](#dirty-stage)·[authentic WAL requirement/flush force](#allocator-flush)·[Status INIT 두 image](#status-init), genesis·RollbackStart·예약/취소 연결. 일반 opcode/CLR/commit 연결 미완료 |
-| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)·[폐쇄 두-frame INIT/reader](#status-init)·[Status home flush](#status-home-flush)의 제한 선택 인수. [등록 코어·세대 pin](#registration-core)과 [같은 allocator 주소의 clean reload](#allocator-residency)와 [실제 퇴출·다른 frame 재적재](#allocator-eviction)까지 공급. 일반 page load/eviction·다른 주소 교체·N+1 pressure·반복 Status 변경·batch8/64·다중 file 미완료 |
+| 3.05 dirty buffer·flush | dirty/pin/recLSN 등록, WAL→DWB→home flush, retirement/eviction·압력하 진행 | [allocator 한 페이지 flush](#allocator-flush)·[폐쇄 두-frame INIT/reader](#status-init)·[Status home flush](#status-home-flush)의 제한 선택 인수. [등록 코어·세대 pin](#registration-core)과 [같은 allocator 주소의 clean reload](#allocator-residency)와 [실제 퇴출·다른 frame 재적재](#allocator-eviction)까지 공급. [P1 슬롯 등록](#operational-registration)·[P2 반복 immutable Status INIT](#operational-status)·[현재-build 복구](#operational-recovery)까지 제한 공급. 일반 page load/eviction·다른 주소 reload·N+1 pressure·live Status 변경·batch8/64·다중 file 미완료 |
 | 3.06 트리·행 | mutable tree CRUD·split·root 변경·overflow·stable cursor·locator | 표현·부분 모델 존재. 실제 변경 경로 미완료 |
 | 3.07 인덱스 | point/range scan·presence·PK/UNIQUE·build/취소 | 표현·의미 계약 존재. 실제 인덱스와 statement-final unique 미완료 |
 | 3.08 카탈로그·DDL | table/index 정의·이름·객체 수명·create/drop | 표현 존재. native 원자 DDL과 catalog 변경 미완료 |
 | 3.09 undo·rollback | persistent undo/status·statement rollback·전체 rollback·CLR | 표현·RollbackStart 생산 존재. live undo/CLR 진행 미완료 |
 | 3.10 동시성·가시성 | snapshot 등록·잠금·관측 행 검증·두 격리 수준 | [3.10.1.a.1 실제 admission/version gate](#concurrency-admission) 제한 검증. page/tree rank·거래 잠금·snapshot/pin/FIFO와 reader/writer/ager 실제 통합 미완료 |
 | 3.11 commit·공개 | 여러 객체 원자 commit·durable ACK/UNKNOWN·frontier | 실제 disk 거래 인수 미완료 |
-| 3.12 재시작 복구 | preflight/bootstrap·DWB repair·analysis/예약 복원·redo·REBASE·epoch/WRITER·undo/verify·STABILIZE/READY | [초기 입력 SELECT](#recovery-select)·[prefix 분석](#recovery-prefix)의 제한 인수와 [현재 genesis 실제 닫힌 복구](#recovery-effects)의 선택 검증. [장벽별 8개 작업](../plans/dev3-implementation-plan.md#recovery-remaining)의 일반 BOOT/F05·REBASE/새 epoch·undo/READY·전체 반복 장애 인수 미완료 |
+| 3.12 재시작 복구 | preflight/bootstrap·DWB repair·analysis/예약 복원·redo·REBASE·epoch/WRITER·undo/verify·STABILIZE/READY | [초기 입력 SELECT](#recovery-select)·[prefix 분석](#recovery-prefix)의 제한 인수와 [현재 genesis 실제 닫힌 복구](#recovery-effects)와 [반복 Status 복구](#operational-recovery)의 선택 검증. [장벽별 8개 작업](../plans/dev3-implementation-plan.md#recovery-remaining)의 일반 BOOT/F05·REBASE/새 epoch·undo/READY·전체 반복 장애 인수 미완료 |
 | 3.13 checkpoint | fuzzy ATT/DPT capture·WAL floor·fallback | 표현/계약 존재. 실제 checkpoint 인계 미완료 |
 | 3.14 공간 회수 | undo/status/delete aging·horizon·generation 재사용 | 유한 모델 존재. 실제 회수·압력하 진행 미완료 |
 | 3.15 백업·무결성 | S3/fault 인수용 full audit·독립 이력, 이후 offline exact-cut backup/restore | 실제 DEV3 경로 미완료. audit 공급은 backup 완료를 기다리지 않음 |
@@ -775,6 +775,26 @@ P2 consuming owner·반복 INIT, P3 현재 membership load와 실제3주소/2fra
 A INIT→flush→퇴출→B cancel→재예약 INIT의 실제 owner 및 Linux home/WAL 비교를
 [선택 증거](../evidence/dev3-operational-status-20261023.md)에 보존한다. static6·신규 runtime14,
 관련 closed selector1·native1을 source별로 구별하며 compiler semantic5+control1·checker4도 PASS이며 OCR delegate 독립 D1을 live owner 한정 수용했다.
-원 compile 실패를 보존하고 완료 시험은 반복하지 않는다. 현재 반복 sequence의 성공 복구는
-미구현이므로 P2/P3 durable integration 완료가 아니다. fresh current-build reopen/cut,
-P3 membership load·3주소/2frame, 반복 live Status·batch8/64·pressure·DEV3/S5는 남아 있다.
+원 compile 실패를 보존하고 완료 시험은 반복하지 않는다. 이 live owner 인수 당시 반복 sequence
+복구는 미구현이었다. 후속 [현재-build 반복 복구](#operational-recovery)에서 별도 새 증거를
+공급한다. P3 membership load·3주소/2frame, 반복 live Status 변경·batch8/64·pressure·DEV3/S5는 남아 있다.
+
+<a id="operational-recovery"></a>
+## 반복 immutable Status 이력의 현재-build 복구
+
+2026-10-23 [F09](../contracts/dev3-recovery-effects.md#operational-status-recovery)는 기존 effect owner에
+첫 extent Status1..63의 canonical census·주소별 Pending/REDO·예약 topup을 연결한다.
+readonly Prefix의 첫 INIT 제한은 유지한다. 두 pass는 같은 trusted terminal/population
+validator를 사용하고 각 Status의 고유 INIT LSN·identity·full image digest를 검산한다.
+기존 maintenance12MiB+flush4MiB loan 안에서64page와 고정 census를 사용한다.
+
+[선택 증거](../evidence/dev3-operational-recovery-20261023.md)의 신규65(원 r1의57+새 r5의8),
+관련3·fresh Linux4이력/14worker·compiler3+control1 PASS는 각각 보존 source의 결과다.
+원 compile/checker/Clippy FAIL을 보존하고 OCR delegate 최종 독립 D1을 이 제한 복구 단위로 수용했다. native는 정상·부분
+INIT WAL·B home 부분 쓰기·retirement 장애 뒤 새 process 복구와 재진입의 전체 bytes를
+독립 literal로 대조했다. 정적 source/type 회계는 memory51304/native51512≤65536이며
+entry FD5/final0이다. OS stack/RSS나 전체 opcode F05 인증으로 일반화하지 않는다.
+
+P2 반복 immutable Status의 현재-build 복구 통합을 공급했으며 새 S5 확대2379개는 작성·
+NOT_RUN이다. P3 membership 기반 A reload·3주소/2frame, live Status 변경, 일반 pool/
+pressure·REBASE/READY·전체 DEV3/S5는 미완료다. 문서 검사는 push 전용으로 실행하지 않는다.

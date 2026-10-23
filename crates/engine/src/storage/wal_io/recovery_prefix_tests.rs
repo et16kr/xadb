@@ -863,6 +863,7 @@ fn mode_and_accounting_are_preserved() {
             let mut status = boxed();
             let mut next_status = boxed();
             let mut descriptor = boxed::<1536>();
+            let mut targets = boxed::<TARGET_TABLE_BYTES>();
             let e = adopt_frame(
                 &mut owner.observation,
                 identity,
@@ -872,6 +873,7 @@ fn mode_and_accounting_are_preserved() {
                     status: &mut status,
                     next_status: &mut next_status,
                     descriptor: &mut descriptor[..],
+                    targets: &mut targets[..],
                 },
                 header,
                 &raw,

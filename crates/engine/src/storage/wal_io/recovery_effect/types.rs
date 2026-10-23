@@ -106,10 +106,10 @@ pub(crate) struct RecoveryEffects {
     pub(crate) source_sync_attempted: bool,
     pub(crate) source_synced: bool,
     pub(crate) source_directory_synced: bool,
-    pub(crate) home_write_attempted: u8,
-    pub(crate) home_written: u8,
-    pub(crate) home_sync_attempted: u8,
-    pub(crate) home_synced: u8,
+    pub(crate) home_write_attempted: u64,
+    pub(crate) home_written: u64,
+    pub(crate) home_sync_attempted: u64,
+    pub(crate) home_synced: u64,
     pub(crate) dwb_publish_attempted: u64,
     pub(crate) dwb_publish_completed: u64,
 }
@@ -162,19 +162,36 @@ impl Default for LedgerObservation {
         }
     }
 }
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub(crate) struct PhysicalObservation {
-    pub(crate) observed_mask: u8,
-    pub(crate) initial_lsn: [Option<u64>; 2],
-    pub(crate) final_lsn: [Option<u64>; 2],
-    pub(crate) applied: [u64; 2],
-    pub(crate) skipped: [u64; 2],
-    pub(crate) dirty_mask: u8,
-    pub(crate) flushed_mask: u8,
+    pub(crate) observed_mask: u64,
+    pub(crate) initial_lsn: [Option<u64>; TARGET_COUNT],
+    pub(crate) final_lsn: [Option<u64>; TARGET_COUNT],
+    pub(crate) applied: [u64; TARGET_COUNT],
+    pub(crate) skipped: [u64; TARGET_COUNT],
+    pub(crate) dirty_mask: u64,
+    pub(crate) flushed_mask: u64,
     pub(crate) pending_repaired: bool,
     pub(crate) pending_home_skipped: bool,
     pub(crate) pending_retired: bool,
     pub(crate) canonical_passes: u8,
+}
+impl Default for PhysicalObservation {
+    fn default() -> Self {
+        Self {
+            observed_mask: 0,
+            initial_lsn: [None; TARGET_COUNT],
+            final_lsn: [None; TARGET_COUNT],
+            applied: [0; TARGET_COUNT],
+            skipped: [0; TARGET_COUNT],
+            dirty_mask: 0,
+            flushed_mask: 0,
+            pending_repaired: false,
+            pending_home_skipped: false,
+            pending_retired: false,
+            canonical_passes: 0,
+        }
+    }
 }
 pub(crate) struct RecoveryObservation {
     pub(crate) phase: RecoveryPhase,

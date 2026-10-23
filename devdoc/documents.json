@@ -1797,6 +1797,16 @@
       "path": "evidence/dev3-operational-status-20261023.json",
       "role": "evidence",
       "title": "DEV3 반복 Status INIT source별 실행 색인"
+    },
+    "dev3-operational-recovery-20261023.md": {
+      "path": "evidence/dev3-operational-recovery-20261023.md",
+      "role": "evidence",
+      "title": "DEV3 반복 Status 이력의 현재-build 복구 선택 검증"
+    },
+    "dev3-operational-recovery-20261023.json": {
+      "path": "evidence/dev3-operational-recovery-20261023.json",
+      "role": "evidence",
+      "title": "DEV3 반복 Status 복구 source·receipt 색인"
     }
   }
 }

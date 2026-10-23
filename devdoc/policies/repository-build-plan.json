@@ -4364,6 +4364,44 @@
       "dev3-operational-status-20261023.json"
     ],
     "source_roots_changed": false,
+    "full_stage_acceptance": false,
+    "followup_ref": "dev3-operational-recovery-20261023.md"
+  },
+  "dev3_operational_recovery": {
+    "status": "local_verified_D1_accepted_S5_not_run",
+    "contract_ref": "dev3-recovery-effects.md#operational-status-recovery",
+    "scope": "Repeated immutable Status INIT/cancel recovery in first extent; readonly Prefix remains closed; P3 membership load/general pool/READY incomplete",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/allocation_operation.rs",
+      "crates/engine/src/storage/wal_io/status_init_operation.rs",
+      "crates/engine/src/storage/wal_io/recovery_prefix.rs",
+      "crates/engine/src/storage/wal_io/recovery_prefix_tests.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/mod.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/types.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/resources.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/physical.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/tests.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/native_tests.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/operational_tests.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/operational_native_tests.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/operational_s5_tests.rs",
+      "scripts/dev3_operational_recovery_literals.py",
+      "scripts/dev3_operational_recovery_native.py",
+      "scripts/test_dev3_operational_recovery.py",
+      "scripts/dev3_recovery_effects_compiler.py",
+      "scripts/test_dev3_recovery_effects_compiler.py",
+      "tests/fixtures/dev3-operational-recovery/manifest.json",
+      "tests/fixtures/dev3-operational-recovery/p1-extent/manifest.json",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/manifest.json",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/status_images_positive.rs",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/status_image_borrow.rs",
+      "crates/engine/tests/fixtures/recovery_effects/compiler/status_image_immutable.rs"
+    ],
+    "evidence_refs": [
+      "dev3-operational-recovery-20261023.md",
+      "dev3-operational-recovery-20261023.json"
+    ],
+    "source_roots_changed": false,
     "full_stage_acceptance": false
   }
 }

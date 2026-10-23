@@ -9,7 +9,10 @@ use super::super::super::{self as bootstrap, BootstrapError, Cause as BootstrapC
 use super::{
     super::allocation_reservation::{
         budget,
-        operation::{self, AnalysisExpected, Batch, OperationBudget, SemanticError},
+        operation::{
+            self, AllocationPopulation, AnalysisExpected, Batch, OperationBudget, SemanticError,
+            TerminalOutcome,
+        },
     },
     status_init_operation as init,
 };
@@ -50,6 +53,16 @@ const STATUS: usize = 98304;
 const AFTER_STATUS: usize = 114688;
 const BOOT: usize = 131072;
 const DESCRIPTOR: usize = 180224;
+const TARGETS: usize = DESCRIPTOR + 1536;
+const TARGET_BYTES: usize = 48;
+const TARGET_COUNT: usize = 64;
+const TARGET_TABLE_BYTES: usize = TARGET_COUNT * TARGET_BYTES;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum RecoveryScope {
+    ReadOnly,
+    Effects,
+}
 const MAX_SUPPORTED_FRAME: usize = 38000;
 const BLOCKED: [&str; 6] = [
     "CURRENT",
@@ -190,7 +203,10 @@ pub(crate) struct RecoveryPrefixObservation {
     owned: u64,
     protected: u64,
     terminal_hold: u64,
-    status_initialized: bool,
+    scope: RecoveryScope,
+    terminal: TerminalOutcome,
+    status_mask: u64,
+    last_status_page: usize,
     pending_matched: bool,
     stage_bytes: u64,
     replay_topup: u64,
@@ -295,6 +311,16 @@ impl RecoveryPrefixObservation {
     pub(crate) fn replay_page_topup_bytes(&self) -> u64 {
         self.replay_topup
     }
+    pub(crate) fn status_page_mask(&self) -> u64 {
+        self.status_mask
+    }
+    fn replay_targets(&self) -> u64 {
+        if self.complete_lsn == 0 {
+            0
+        } else {
+            1 + u64::from(self.status_mask.count_ones())
+        }
+    }
     pub(crate) fn source_stabilized(&self) -> bool {
         false
     }
@@ -381,7 +407,13 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
         workspace: &'a mut [u8; WORKSPACE_BYTES],
     ) -> Result<Self> {
         let mut acquired = false;
-        Self::acquire_internal(directory, expected, workspace, false, &mut acquired)
+        Self::acquire_internal(
+            directory,
+            expected,
+            workspace,
+            RecoveryScope::ReadOnly,
+            &mut acquired,
+        )
     }
     fn acquire_for_effect<D: DirectoryPort<Writer = W>>(
         directory: &D,
@@ -389,13 +421,19 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
         workspace: &'a mut [u8; WORKSPACE_BYTES],
         acquired: &mut bool,
     ) -> Result<Self> {
-        Self::acquire_internal(directory, expected, workspace, true, acquired)
+        Self::acquire_internal(
+            directory,
+            expected,
+            workspace,
+            RecoveryScope::Effects,
+            acquired,
+        )
     }
     fn acquire_internal<D: DirectoryPort<Writer = W>>(
         directory: &D,
         expected: Option<Namespace>,
         workspace: &'a mut [u8; WORKSPACE_BYTES],
-        reserved_only: bool,
+        scope: RecoveryScope,
         acquired: &mut bool,
     ) -> Result<Self> {
         if !fits::<W>() {
@@ -420,7 +458,8 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
                 .metadata(&name(path))
                 .map_err(|e| error(Phase::Preflight, Cause::Namespace(e)))?
                 .is_some()
-                && !(reserved_only && matches!(path, "d3-rebase-0" | "d3-rebase-1"))
+                && !(scope == RecoveryScope::Effects
+                    && matches!(path, "d3-rebase-0" | "d3-rebase-1"))
             {
                 return Err(error(Phase::Preflight, Cause::UnsupportedClosure));
             }
@@ -584,7 +623,10 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
             owned: 0,
             protected: 0,
             terminal_hold: 0,
-            status_initialized: false,
+            scope,
+            terminal: TerminalOutcome::Cancelled,
+            status_mask: 0,
+            last_status_page: 0,
             pending_matched: pending.is_none(),
             stage_bytes,
             replay_topup: 0,
@@ -620,11 +662,14 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
             .expect("fixed allocator image")
     }
     pub(crate) fn status_image(&self) -> Option<&[u8; PAGE_BYTES]> {
-        self.observation.status_initialized.then(|| {
+        (self.observation.status_mask != 0).then(|| {
             self.workspace[STATUS..STATUS + PAGE_BYTES]
                 .try_into()
                 .expect("fixed Status image")
         })
+    }
+    fn target_table(&self) -> &[u8] {
+        &self.workspace[TARGETS..TARGETS + TARGET_TABLE_BYTES]
     }
     pub(crate) fn descriptor_bytes(&self) -> Option<&[u8; 1536]> {
         (self.observation.complete_lsn != 0).then(|| {
@@ -678,7 +723,7 @@ fn account(observation: &mut RecoveryPrefixObservation) -> Result<()> {
         ));
     }
     let replay_pages = if observation.complete_lsn > 0 {
-        1u64.checked_add(u64::from(observation.status_initialized))
+        1u64.checked_add(u64::from(observation.status_mask.count_ones()))
             .ok_or_else(arithmetic)?
     } else {
         0
@@ -738,7 +783,11 @@ fn analyze_with<F: xadb_foundation::io::FileIo>(
     let (status, rest) = rest.split_at_mut(PAGE_BYTES);
     let (next_status, rest) = rest.split_at_mut(PAGE_BYTES);
     let (_, rest) = rest.split_at_mut(3 * PAGE_BYTES);
-    let descriptor = &mut rest[..1536];
+    let (descriptor, rest) = rest.split_at_mut(1536);
+    let targets = &mut rest[..TARGET_TABLE_BYTES];
+    // Neither pass inherits a prior caller/analysis descriptor or census.
+    descriptor.fill(0);
+    targets.fill(0);
     let before: &mut [u8; PAGE_BYTES] = before.try_into().expect("fixed canonical allocator");
     let after: &mut [u8; PAGE_BYTES] = after.try_into().expect("fixed prospective allocator");
     let status: &mut [u8; PAGE_BYTES] = status.try_into().expect("fixed canonical Status");
@@ -821,6 +870,7 @@ fn analyze_with<F: xadb_foundation::io::FileIo>(
                 status: &mut *status,
                 next_status: &mut *next_status,
                 descriptor: &mut *descriptor,
+                targets: &mut *targets,
             },
             header,
             &frame[..length],
@@ -832,7 +882,7 @@ fn analyze_with<F: xadb_foundation::io::FileIo>(
             header,
             &frame[..length],
             before,
-            observation.status_initialized.then_some(&*status),
+            (length == init::FRAME_BYTES).then_some(&*status),
         ) {
             return Ok(());
         }
@@ -878,6 +928,7 @@ struct CanonicalImages<'a> {
     status: &'a mut [u8; PAGE_BYTES],
     next_status: &'a mut [u8; PAGE_BYTES],
     descriptor: &'a mut [u8],
+    targets: &'a mut [u8],
 }
 fn adopt_frame(
     observation: &mut RecoveryPrefixObservation,
@@ -892,9 +943,10 @@ fn adopt_frame(
         status,
         next_status,
         descriptor,
+        targets,
     } = images;
     use SemanticError::*;
-    if observation.status_initialized {
+    if observation.status_mask != 0 && observation.scope == RecoveryScope::ReadOnly {
         return Err(semantic(StateMismatch));
     }
     if bytes.len() - 192 < 8 || &bytes[160..164] != b"XSG1" || get16(bytes, 164) != 1 {
@@ -916,6 +968,14 @@ fn adopt_frame(
     {
         return Err(semantic(OrderMismatch));
     }
+    // This call ends before decoding the incoming descriptor. It checks the
+    // retained Finished/Prepared state, including prior INIT, in its own pool.
+    let population = if observation.scope == RecoveryScope::Effects && observation.plan == 2 {
+        validate_operational_before(observation, allocator, before, descriptor)?;
+        AllocationPopulation::Status
+    } else {
+        AllocationPopulation::Empty
+    };
     let begin = opcode == 8;
     let batch = if begin {
         if observation.active.is_some() {
@@ -1028,7 +1088,18 @@ fn adopt_frame(
             batch,
             before_descriptor: (&*descriptor).try_into().expect("fixed descriptor"),
         };
-        init::materialize_analysis(&plan, before, bytes, after, next_status).map_err(semantic)?;
+        if observation.status_mask & (1u64 << index) != 0 {
+            return Err(semantic(StateMismatch));
+        }
+        init::materialize_analysis_in_population(
+            &plan,
+            before,
+            bytes,
+            after,
+            next_status,
+            population,
+        )
+        .map_err(semantic)?;
         match_pending(
             observation,
             header.lsn,
@@ -1044,7 +1115,13 @@ fn adopt_frame(
             next_status,
         )?;
         status.copy_from_slice(next_status);
-        observation.status_initialized = true;
+        let target = &mut targets[index * TARGET_BYTES..(index + 1) * TARGET_BYTES];
+        target[..8].copy_from_slice(&header.lsn.to_le_bytes());
+        target[8..16].copy_from_slice(&generation.get().to_le_bytes());
+        target[16..].copy_from_slice(&content_digest(next_status));
+        observation.status_mask |= 1u64 << index;
+        observation.last_status_page = index;
+        observation.terminal = TerminalOutcome::InitializedStatus;
     } else {
         let expected = AnalysisExpected {
             profile: observation.profile,
@@ -1054,8 +1131,15 @@ fn adopt_frame(
             cancel: !begin,
             before_descriptor: (!begin).then_some(&*descriptor),
         };
-        operation::materialize_analysis(expected, before, bytes, after, mode.budget())
-            .map_err(semantic)?;
+        operation::materialize_analysis_in_population(
+            expected,
+            before,
+            bytes,
+            after,
+            mode.budget(),
+            population,
+        )
+        .map_err(semantic)?;
         match_pending(
             observation,
             header.lsn,
@@ -1063,6 +1147,9 @@ fn adopt_frame(
             PageKind::Allocation,
             after,
         )?;
+    }
+    if begin || bytes.len() != init::FRAME_BYTES {
+        observation.terminal = TerminalOutcome::Cancelled;
     }
     // Commit the RAM analysis once, only after every byte/transition check.
     before.copy_from_slice(after);
@@ -1080,6 +1167,27 @@ fn adopt_frame(
     }
     Ok(())
 }
+fn validate_operational_before(
+    observation: &RecoveryPrefixObservation,
+    allocator: PageIdentity,
+    before: &[u8; PAGE_BYTES],
+    descriptor: &[u8],
+) -> Result<()> {
+    let page = allocation_page::decode_allocation_page(before, allocator, observation.namespace())
+        .map_err(|_| semantic(SemanticError::PageMismatch))?;
+    operation::validate_live_in_population(
+        &page,
+        observation.profile,
+        observation.active,
+        descriptor,
+        observation.high_water,
+        OperationBudget::StatusInit114688,
+        AllocationPopulation::Status,
+        observation.terminal,
+    )
+    .map_err(semantic)
+}
+
 fn match_pending(
     observation: &mut RecoveryPrefixObservation,
     lsn: u64,

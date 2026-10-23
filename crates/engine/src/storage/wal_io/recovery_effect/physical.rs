@@ -56,6 +56,43 @@ fn observe(o: &mut PhysicalObservation, index: usize, lsn: Option<u64>) {
     o.final_lsn[index] = lsn;
 }
 impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
+    fn canonical_target(&self, index: usize) -> Result<RecoveryTarget> {
+        let p = RecoveryPhase::Redo;
+        let allocator = identity_of(
+            self.prefix.allocator_image(),
+            self.prefix.observation.namespace().database,
+        )?;
+        if index == 0 {
+            return Ok(RecoveryTarget {
+                identity: allocator,
+                lsn: self.prefix.observation.complete_lsn,
+                digest: self.final_allocator_hash,
+            });
+        }
+        if index >= TARGET_COUNT || self.prefix.observation.status_mask & (1u64 << index) == 0 {
+            return Err(fail(p, RecoveryCause::Invariant));
+        }
+        let at = SAVED_TARGETS + index * TARGET_BYTES;
+        let raw = &self.maintenance_tail[at..at + TARGET_BYTES];
+        let incarnation = Generation::new(u64::from_le_bytes(
+            raw[8..16].try_into().expect("census generation"),
+        ))
+        .map_err(|_| fail(p, RecoveryCause::Invariant))?;
+        Ok(RecoveryTarget {
+            identity: PageIdentity {
+                page: PageRef {
+                    page_no: index as u64,
+                    incarnation,
+                    ..allocator.page
+                },
+                owner: ObjectId::new(2).expect("Status object"),
+                owner_generation: Generation::new(1).expect("Status generation"),
+                ..allocator
+            },
+            lsn: u64::from_le_bytes(raw[..8].try_into().expect("census LSN")),
+            digest: raw[16..].try_into().expect("census digest"),
+        })
+    }
     fn read_home(
         &mut self,
         index: usize,
@@ -171,11 +208,12 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
             owner: pending.owner,
             owner_generation: pending.owner_generation,
         };
-        let index = if pending.kind == PageKind::Allocation {
-            0
-        } else {
-            1
-        };
+        let index =
+            usize::try_from(pending.page.page_no).map_err(|_| fail(p, RecoveryCause::Invariant))?;
+        let target = self.canonical_target(index)?;
+        if target.identity != identity || pending.lsn.0 > target.lsn {
+            return Err(fail(p, RecoveryCause::Invariant));
+        }
         let lsn = self.read_home(index, identity, pending.kind, p)?;
         let image = &self.flush[..PAGE_BYTES];
         let home = &mut self.maintenance_tail[index * PAGE_BYTES..(index + 1) * PAGE_BYTES];
@@ -209,14 +247,6 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
         let f = &self.prefix.observation;
         let database = f.namespace().database;
         let allocator = identity_of(self.prefix.allocator_image(), database)?;
-        let status = if f.status_initialized {
-            Some(identity_of(
-                self.prefix.status_image().expect("validated INIT"),
-                database,
-            )?)
-        } else {
-            None
-        };
         let adopted = f.complete_lsn;
         let a = self.read_home(0, allocator, PageKind::Allocation, p)?;
         if a.is_none() {
@@ -225,9 +255,13 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
         if a.is_some_and(|v| v > adopted) {
             return Err(fail(p, RecoveryCause::PriorMismatch));
         }
-        if let Some(identity) = status {
-            let s = self.read_home(1, identity, PageKind::TransactionStatus, p)?;
-            if s.is_some_and(|v| v > adopted) {
+        for index in 1..TARGET_COUNT {
+            if self.prefix.observation.status_mask & (1u64 << index) == 0 {
+                continue;
+            }
+            let target = self.canonical_target(index)?;
+            let lsn = self.read_home(index, target.identity, PageKind::TransactionStatus, p)?;
+            if lsn.is_some_and(|v| v > target.lsn) {
                 return Err(fail(p, RecoveryCause::PriorMismatch));
             }
         }
@@ -253,7 +287,10 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
             owned: 0,
             protected: 0,
             terminal_hold: 0,
-            status_initialized: false,
+            scope: f.scope,
+            terminal: TerminalOutcome::Cancelled,
+            status_mask: 0,
+            last_status_page: 0,
             pending_matched: true,
             stage_bytes: f.stage_bytes,
             replay_topup: 0,
@@ -286,7 +323,7 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
         self.prefix
             .workspace
             .copy_within(BOOT..BOOT + PAGE_BYTES, ALLOC);
-        let physical = &mut self.maintenance_tail[..2 * PAGE_BYTES];
+        let physical = &mut self.maintenance_tail[..PHYSICAL_BYTES];
         let progress = &mut self.observation.physical;
         let mut first = None;
         let mut source = port_io::SourceReads {
@@ -330,19 +367,27 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
                         progress.dirty_mask |= 1;
                     }
                     if let Some(after) = status_after {
-                        if progress.final_lsn[1].is_some_and(|v| v >= header.lsn) {
-                            progress.skipped[1] += 1;
+                        let init_record =
+                            wal_frame::decode_redo_record(header, &frame[21520..37968])
+                                .map_err(|e| fail(p, RecoveryCause::Wal(e)))?;
+                        let identity = identity_of(after, database)?;
+                        let index = usize::try_from(identity.page.page_no)
+                            .map_err(|_| fail(p, RecoveryCause::Invariant))?;
+                        if !(1..TARGET_COUNT).contains(&index) {
+                            return Err(fail(p, RecoveryCause::Invariant));
+                        }
+                        if progress.final_lsn[index].is_some_and(|v| v >= header.lsn) {
+                            progress.skipped[index] += 1;
                         } else {
-                            let init_record =
-                                wal_frame::decode_redo_record(header, &frame[21520..37968])
-                                    .map_err(|e| fail(p, RecoveryCause::Wal(e)))?;
-                            if progress.final_lsn[1].is_some_and(|v| v != init_record.prior_lsn) {
+                            if progress.final_lsn[index].is_some_and(|v| v != init_record.prior_lsn)
+                            {
                                 return Err(fail(p, RecoveryCause::PriorMismatch));
                             }
-                            physical[PAGE_BYTES..2 * PAGE_BYTES].copy_from_slice(after);
-                            progress.final_lsn[1] = Some(header.lsn);
-                            progress.applied[1] += 1;
-                            progress.dirty_mask |= 2;
+                            physical[index * PAGE_BYTES..(index + 1) * PAGE_BYTES]
+                                .copy_from_slice(after);
+                            progress.final_lsn[index] = Some(header.lsn);
+                            progress.applied[index] += 1;
+                            progress.dirty_mask |= 1u64 << index;
                         }
                     }
                     Ok(())
@@ -366,15 +411,32 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
             || replay.remaining != self.prefix.observation.remaining
             || replay.terminal_hold != self.prefix.observation.terminal_hold
             || replay.mode != self.prefix.observation.mode
-            || content_digest(self.prefix.allocator_image()) != self.final_hashes[0]
-            || self
-                .prefix
-                .status_image()
-                .is_some_and(|b| content_digest(b) != self.final_hashes[1])
+            || replay.active != self.prefix.observation.active
+            || replay.inventory_items != self.prefix.observation.inventory_items
+            || replay.inventory_digest != self.prefix.observation.inventory_digest
+            || replay.terminal != self.prefix.observation.terminal
+            || replay.status_mask != self.prefix.observation.status_mask
+            || replay.last_status_page != self.prefix.observation.last_status_page
+            || content_digest(self.prefix.allocator_image()) != self.final_allocator_hash
+            || self.prefix.target_table()
+                != &self.maintenance_tail[SAVED_TARGETS..SAVED_TARGETS + TARGET_TABLE_BYTES]
             || self.prefix.descriptor_bytes().map(|b| content_digest(b))
                 != self.final_descriptor_hash
         {
             return Err(fail(p, RecoveryCause::Invariant));
+        }
+        for index in 0..TARGET_COUNT {
+            if index != 0 && self.prefix.observation.status_mask & (1u64 << index) == 0 {
+                continue;
+            }
+            let target = self.canonical_target(index)?;
+            if self.observation.physical.final_lsn[index] != Some(target.lsn)
+                || content_digest(
+                    &self.maintenance_tail[index * PAGE_BYTES..(index + 1) * PAGE_BYTES],
+                ) != target.digest
+            {
+                return Err(fail(p, RecoveryCause::Invariant));
+            }
         }
         // No new token is adopted: replay is a temporary canonical cursor only.
         Ok(())
@@ -385,7 +447,7 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
             return Err(fail(p, RecoveryCause::Invariant));
         }
         self.source_snapshot(p)?;
-        for index in 0..2 {
+        for index in 0..TARGET_COUNT {
             if self.observation.physical.dirty_mask & (1 << index) == 0 {
                 continue;
             }
@@ -393,7 +455,7 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
                 [index * PAGE_BYTES..(index + 1) * PAGE_BYTES]
                 .try_into()
                 .expect("physical page");
-            let identity = identity_of(image, self.prefix.observation.namespace().database)?;
+            let identity = self.canonical_target(index)?.identity;
             let kind = if index == 0 {
                 PageKind::Allocation
             } else {
@@ -428,16 +490,12 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
     }
     pub(super) fn verify(&mut self) -> Result<()> {
         let p = RecoveryPhase::Verify;
-        for index in 0..2 {
-            if index == 1 && !self.prefix.observation.status_initialized {
+        for index in 0..TARGET_COUNT {
+            if index != 0 && self.prefix.observation.status_mask & (1u64 << index) == 0 {
                 continue;
             }
-            let expected = if index == 0 {
-                self.prefix.allocator_image()
-            } else {
-                self.prefix.status_image().expect("INIT")
-            };
-            let identity = identity_of(expected, self.prefix.observation.namespace().database)?;
+            let target = self.canonical_target(index)?;
+            let identity = target.identity;
             let kind = if index == 0 {
                 PageKind::Allocation
             } else {
@@ -445,7 +503,7 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
             };
             let lsn = self.read_home(index, identity, kind, p)?;
             let bytes = &self.maintenance_tail[index * PAGE_BYTES..(index + 1) * PAGE_BYTES];
-            if lsn.is_none() || content_digest(bytes) != self.final_hashes[index] {
+            if lsn != Some(target.lsn) || content_digest(bytes) != target.digest {
                 return Err(fail(p, RecoveryCause::Invariant));
             }
         }

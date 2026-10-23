@@ -765,7 +765,26 @@ pub(super) fn materialize_analysis(
     allocator_after: &mut [u8; PAGE_BYTES],
     status_after: &mut [u8; PAGE_BYTES],
 ) -> Result<()> {
-    validate_before(plan, before, AllocationPopulation::Empty)?;
+    materialize_analysis_in_population(
+        plan,
+        before,
+        bytes,
+        allocator_after,
+        status_after,
+        AllocationPopulation::Empty,
+    )
+}
+
+/// Discardable canonical analysis; population comes from the recovery owner.
+pub(super) fn materialize_analysis_in_population(
+    plan: &InitExpected<'_>,
+    before: &[u8; PAGE_BYTES],
+    bytes: &[u8],
+    allocator_after: &mut [u8; PAGE_BYTES],
+    status_after: &mut [u8; PAGE_BYTES],
+    population: AllocationPopulation,
+) -> Result<()> {
+    validate_before(plan, before, population)?;
     let h = validate_header(plan, bytes)?;
     allocator_after.copy_from_slice(before);
     allocator_after[CELL].copy_from_slice(&bytes[NEW_CELL]);
@@ -773,7 +792,14 @@ pub(super) fn materialize_analysis(
     let digest = content_digest(&allocator_after[..page::DIGEST_OFFSET]);
     allocator_after[page::DIGEST_OFFSET..].copy_from_slice(&digest);
     status_after.copy_from_slice(&bytes[INIT.start + 64..INIT.end]);
-    validate_expected(plan, before, bytes, allocator_after, status_after)
+    validate_expected_in_population(
+        plan,
+        before,
+        bytes,
+        allocator_after,
+        status_after,
+        population,
+    )
 }
 
 /// Reader's Status checksum/page phase ends before canonical Free decoding.

@@ -233,7 +233,7 @@ fn success(
     allocator: &[u8],
     descriptor: Option<&[u8]>,
     status: Option<&[u8]>,
-    dirty: u8,
+    dirty: u64,
 ) {
     let mut m = boxed();
     let mut f = boxed();
@@ -1189,3 +1189,6 @@ fn new_caller_short_interrupt_invalid_and_unwind() {
         }
     });
 }
+
+#[path = "operational_tests.rs"]
+mod operational;

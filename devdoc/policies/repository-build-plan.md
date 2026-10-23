@@ -346,3 +346,7 @@ DEV3 페이지 예약·취소는 `wal_io/doublewrite_install`의 private child `
 ## DEV3 Status home flush
 
 [Status home flush 계약](../contracts/dev3-status-home-flush.md)의 실제 제품·시험7개, shared bridge 변경, 독립 literal/compiler/runtime/native fixture와 checker를 관리 JSON의 `dev3_status_home_flush`에 등록한다. 새 crate/source root/dependency 없이 기존 bound를 소비하고 published Status와 allocator를 순차 whole batch1로 flush한다. [source별 선택 인수](../evidence/dev3-status-home-flush-20261022.md)의 필수43·compiler6·native3 실행과 원 FAIL을 보존하며 제한 단위의 최종 독립 D1을 수용했다. 일반 recovery/reopen/READY와 전체 DEV3/S5는 미완료다.
+
+## DEV3 반복 Status 이력 복구
+
+[F09 소유 계약](../contracts/dev3-recovery-effects.md#operational-status-recovery)의 기존 Prefix/effect 확장과 새 runtime/native/S5 fixture·독립 oracle 경로를 관리 JSON `dev3_operational_recovery`에 등록한다. caller 고정 arena 안에서 첫 extent64주소의 census·물리 scratch를 사용하고 crate/dependency/source root는 유지한다. [선택 증거](../evidence/dev3-operational-recovery-20261023.md)와 최종 독립 검토 상태를 따르며 전체 DEV3/S5 완료가 아니다.

@@ -37,6 +37,8 @@ struct Trace {
     cut_hits: usize,
     fault: String,
     tail_cut: bool,
+    operational_home_offset: Option<u64>,
+    operational_b_synced: bool,
     pause: Option<(mpsc::SyncSender<()>, mpsc::Receiver<()>)>,
 }
 impl Trace {
@@ -119,7 +121,11 @@ impl Writer {
         t.event(op, name, 0, 0, "OK");
         let fault = (t.cut > 0 && t.cut_count == t.cut)
             || (t.recovering && t.fault == "retirement_publish_after" && op == "publish")
-            || (t.recovering && t.fault == "boot_dir_after" && op == "dirsync");
+            || (t.recovering && t.fault == "boot_dir_after" && op == "dirsync")
+            || (t.recovering
+                && t.fault == "operational_b_retirement_after"
+                && t.operational_b_synced
+                && op == "publish");
         if fault {
             t.cut_hits += 1;
             t.fault.clear();
@@ -156,6 +162,9 @@ impl FileIo for File {
         let (partial, pause) = {
             let mut t = self.trace.lock().unwrap();
             t.mutation(&self.name);
+            if self.name == "d3-data-0000000100000001" {
+                t.operational_home_offset = Some(offset);
+            }
             if t.recovering {
                 assert_ne!(self.name, "d3-wal-00000001");
             }
@@ -171,9 +180,10 @@ impl FileIo for File {
                 t.fault.clear();
                 32768
             } else if t.recovering
-                && ((t.fault == "repair_partial" || t.fault == "redo_second_partial")
-                    && self.name == "d3-data-0000000100000001"
+                && self.name == "d3-data-0000000100000001"
+                && (((t.fault == "repair_partial" || t.fault == "redo_second_partial")
                     && offset == 16384)
+                    || (t.fault == "operational_b_partial" && offset == 32768))
             {
                 t.fault.clear();
                 8192
@@ -220,6 +230,9 @@ impl FileIo for File {
         self.inner.as_mut().unwrap().sync_all()?;
         let mut t = self.trace.lock().unwrap();
         t.event("sync", &self.name, 0, 0, "OK");
+        if self.name == "d3-data-0000000100000001" && t.operational_home_offset == Some(32768) {
+            t.operational_b_synced = true;
+        }
         if (t.cut > 0 && t.cut_count == t.cut)
             || (t.recovering && t.fault == "boot_sync_after" && self.name == "d3-rebase-1")
         {
@@ -530,10 +543,13 @@ fn dump(out: &Path, p: &super::super::RecoveryPrefixObservation, o: &super::Reco
             "inventory_backing_bytes",
             b.inventory_backing_bytes.to_string(),
         ),
-        ("physical_initial_lsn", format!("{:?}", ph.initial_lsn)),
-        ("physical_final_lsn", format!("{:?}", ph.final_lsn)),
-        ("applied", format!("{:?}", ph.applied)),
-        ("skipped", format!("{:?}", ph.skipped)),
+        (
+            "physical_initial_lsn",
+            format!("{:?}", &ph.initial_lsn[..2]),
+        ),
+        ("physical_final_lsn", format!("{:?}", &ph.final_lsn[..2])),
+        ("applied", format!("{:?}", &ph.applied[..2])),
+        ("skipped", format!("{:?}", &ph.skipped[..2])),
         ("dirty_mask", ph.dirty_mask.to_string()),
         ("flushed_mask", ph.flushed_mask.to_string()),
         ("pending_repaired", ph.pending_repaired.to_string()),
@@ -687,3 +703,6 @@ fn worker_closed_recovery_native() {
     );
     println!("RECOVERY_EFFECTS_NATIVE_COMPLETE count=1");
 }
+
+#[path = "operational_native_tests.rs"]
+mod operational;

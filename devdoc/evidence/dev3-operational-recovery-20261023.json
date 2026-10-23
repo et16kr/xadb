@@ -1,0 +1,1521 @@
+{
+  "unit": "D3-OPERATIONAL-RECOVERY-001",
+  "date": "2026-10-23",
+  "base_commit": "1699dd781f8ba75a8dcb4215ce364a427ea35c2d",
+  "status": "LOCAL_VERIFIED_D1_ACCEPTED_LIMITED_OPERATIONAL_RECOVERY",
+  "artifact_root": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023",
+  "source_results": [
+    {
+      "revision": "r0",
+      "source_sha256": "29481eb132db9d043f820cdd04247cd0583021d5e6418b755ede0e1a2ee94c9f",
+      "base_commit": "1699dd781f8ba75a8dcb4215ce364a427ea35c2d",
+      "purpose": "Repeated recovery compile; runtime pending resource gate",
+      "compile": "FAIL"
+    },
+    {
+      "revision": "r1",
+      "source_sha256": "9f94c9861379980595e5074ffff6eb0e67835c795b3a841f72e474ef095a6734",
+      "base_commit": "1699dd781f8ba75a8dcb4215ce364a427ea35c2d",
+      "purpose": "Repeated recovery compile; runtime pending resource gate",
+      "compile": "PASS",
+      "binary_sha256": "4085e8f9f0b754f9c5a6e069c7af397a8a227edd35c8b77381edca9412c2e0e6"
+    },
+    {
+      "revision": "r2",
+      "source_sha256": "6f95015ed32897454a683ade9ee977d3926e3ee5f39b610ad49c8ac926351575",
+      "base_commit": "1699dd781f8ba75a8dcb4215ce364a427ea35c2d",
+      "purpose": "Repeated recovery compile; runtime pending resource gate",
+      "compile": "PASS",
+      "binary_sha256": "459bbea38b5033113986fce54fedf1c9b982de083711169b4dd828670ad046be"
+    },
+    {
+      "revision": "r3",
+      "source_sha256": "e238f7c179cc3e560a7471a903c6494c2559ac9701fd4f887161a8908676ed79",
+      "base_commit": "1699dd781f8ba75a8dcb4215ce364a427ea35c2d",
+      "purpose": "Repeated recovery compile; runtime pending resource gate",
+      "compile": "PASS",
+      "binary_sha256": "ca38ae0bff4b606e663d6f936489a83f1ee7da3e97d2e18cdc0fe3672d87a7bf"
+    },
+    {
+      "revision": "r4",
+      "source_sha256": "e8a80979a98f00e4981086fbaa7db3788fb476bf203622ea5b29f4c29bee5119",
+      "base_commit": "1699dd781f8ba75a8dcb4215ce364a427ea35c2d",
+      "purpose": "Repeated recovery compile; runtime pending resource gate",
+      "compile": "PASS",
+      "binary_sha256": "ab1240e48bf944954776eb89421f23cfe9bb1415b23cc97f83e3729c22e4adb4",
+      "static_tools": [
+        {
+          "name": "fmt",
+          "command": [
+            "cargo",
+            "fmt",
+            "-p",
+            "xadb-engine",
+            "--check"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.5653577619996213
+        },
+        {
+          "name": "clippy",
+          "command": [
+            "cargo",
+            "clippy",
+            "-p",
+            "xadb-engine",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "exit_code": 101,
+          "elapsed_seconds": 9.391670774999511
+        }
+      ]
+    },
+    {
+      "revision": "r5",
+      "source_sha256": "87c0c7965cb28b81cca98b8506b4b3cbc43cefd4b2530453314d92d411ac82d2",
+      "base_commit": "1699dd781f8ba75a8dcb4215ce364a427ea35c2d",
+      "purpose": "Repeated recovery compile; runtime pending resource gate",
+      "compile": "PASS",
+      "binary_sha256": "bab2aba4cdfcf5268f4bc0943ac26e3eface7d0828423b98397eeecaf9f59027",
+      "static_tools": [
+        {
+          "name": "fmt",
+          "command": [
+            "cargo",
+            "fmt",
+            "--all",
+            "--check"
+          ],
+          "exit_code": 0,
+          "status": "PASS",
+          "seconds": 0.764730230999703
+        },
+        {
+          "name": "clippy",
+          "command": [
+            "cargo",
+            "clippy",
+            "--workspace",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "exit_code": 0,
+          "status": "PASS",
+          "seconds": 9.668477890001668
+        }
+      ]
+    },
+    {
+      "revision": "r6",
+      "source_sha256": "e0146aabde1fbc2b51394acbada1f40f06e5fdca906488c9e65ca568a75f22c9",
+      "base_commit": "1699dd781f8ba75a8dcb4215ce364a427ea35c2d",
+      "purpose": "Repeated recovery compile; runtime pending resource gate",
+      "compile": "PASS",
+      "binary_sha256": "5e73fe38863437677b308e05c6f74c2041cecda595134b8b8179139b66cd513a",
+      "static_tools": [
+        {
+          "name": "fmt",
+          "command": [
+            "cargo",
+            "fmt",
+            "--all",
+            "--check"
+          ],
+          "exit_code": 0,
+          "status": "PASS",
+          "seconds": 0.7552425719986786
+        },
+        {
+          "name": "clippy",
+          "command": [
+            "cargo",
+            "clippy",
+            "--workspace",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "exit_code": 0,
+          "status": "PASS",
+          "seconds": 8.40625192600055
+        }
+      ]
+    },
+    {
+      "revision": "r7",
+      "source_sha256": "d41ff6dc9f9bd3b27e6770d9503382ad9578657da1f7133b2646135a03effa74",
+      "base_commit": "1699dd781f8ba75a8dcb4215ce364a427ea35c2d",
+      "purpose": "Repeated recovery compile; runtime pending resource gate",
+      "compile": "PASS",
+      "binary_sha256": "1a10a484c1368b76cb2092bdac2584cad89d41d726176e1b030a2d06d4df7976",
+      "static_tools": [
+        {
+          "name": "fmt",
+          "command": [
+            "cargo",
+            "fmt",
+            "--all",
+            "--check"
+          ],
+          "exit_code": 0,
+          "status": "PASS",
+          "seconds": 0.7557485460019961
+        },
+        {
+          "name": "clippy",
+          "command": [
+            "cargo",
+            "clippy",
+            "--workspace",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "exit_code": 0,
+          "status": "PASS",
+          "seconds": 8.20683327200095
+        }
+      ]
+    }
+  ],
+  "counts": {
+    "static_memory_r1": 1,
+    "static_native_r3": 1,
+    "new_runtime_r1": 57,
+    "new_runtime_r5": 8,
+    "total_new_runtime": 65,
+    "directly_affected_runtime_r5": 3,
+    "native_histories_r5": 4,
+    "native_workers_r5": 14,
+    "compiler_semantic": 3,
+    "compiler_control": 1,
+    "new_checker_completed_in_failed_r3_job": 7,
+    "changed_new_checker_r4": 4,
+    "distinct_new_checker": 11,
+    "changed_compiler_checker_r3": 2,
+    "s5_expanded_authored_not_run": 2379
+  },
+  "compiler": {
+    "status": "PASS",
+    "source_sha256": "8aee6bc72cf989466dd94355bed6e883715e14ceb6932c11442d1c57af9806ca",
+    "selected": [
+      "baseline",
+      "status_images_positive",
+      "status_image_borrow",
+      "status_image_immutable"
+    ],
+    "elapsed_seconds": 7.472614809004881,
+    "source_identity_note": "r5 + generated Python bytecode cache only; actual compiler baseline preserved with8aee fingerprint; original r5 restored after cache saved separately"
+  },
+  "native": {
+    "status": "PASS",
+    "source_sha256": "87c0c7965cb28b81cca98b8506b4b3cbc43cefd4b2530453314d92d411ac82d2",
+    "elapsed_seconds": 7.143364419000136,
+    "signal_or_power_loss_test": false,
+    "fd_peak": 5,
+    "fd_final": 0
+  },
+  "core_identity": [
+    {
+      "path": "crates/engine/src/storage/wal_io/allocation_operation.rs",
+      "r1_sha256": "057ce3c527eb61809f675c2082e6db61c2d243efb0a36581de30521dc78b3961",
+      "current_sha256": "057ce3c527eb61809f675c2082e6db61c2d243efb0a36581de30521dc78b3961",
+      "unchanged_since_r1": true
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/status_init_operation.rs",
+      "r1_sha256": "7fc0d3235804727d827463413c4a83663c96ea06cc6a4ef49e8684f7af8fb20c",
+      "current_sha256": "7fc0d3235804727d827463413c4a83663c96ea06cc6a4ef49e8684f7af8fb20c",
+      "unchanged_since_r1": true
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/recovery_prefix.rs",
+      "r1_sha256": "f67d7605493a8b4716c55f9d209963fbd3891c2c76b693e37daf633896ebea5f",
+      "current_sha256": "f67d7605493a8b4716c55f9d209963fbd3891c2c76b693e37daf633896ebea5f",
+      "unchanged_since_r1": true
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/mod.rs",
+      "r1_sha256": "3ca872f0efd55c1ccf299ff3575e0a081fc29e16c005cce5f71394ce713f280f",
+      "current_sha256": "3ca872f0efd55c1ccf299ff3575e0a081fc29e16c005cce5f71394ce713f280f",
+      "unchanged_since_r1": true
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/types.rs",
+      "r1_sha256": "3861bd7e51eb5afb7ff0973e6ab7287bf68ef6c30bfd23bd0df0303b280add2b",
+      "current_sha256": "3861bd7e51eb5afb7ff0973e6ab7287bf68ef6c30bfd23bd0df0303b280add2b",
+      "unchanged_since_r1": true
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/resources.rs",
+      "r1_sha256": "66bd6aedc4b362c6ed6ac3b13ce7ee7c7897d3bf732a1e5d859dc6fc9fcd68d0",
+      "current_sha256": "66bd6aedc4b362c6ed6ac3b13ce7ee7c7897d3bf732a1e5d859dc6fc9fcd68d0",
+      "unchanged_since_r1": true
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/recovery_effect/physical.rs",
+      "r1_sha256": "706ba5d64badf62c8982b065a8392d1746d7edf8a2692ba1e446313bb74c581a",
+      "current_sha256": "706ba5d64badf62c8982b065a8392d1746d7edf8a2692ba1e446313bb74c581a",
+      "unchanged_since_r1": true
+    }
+  ],
+  "original_failures": [
+    "r0 compile missing CanonicalImages targets field in existing test fixture",
+    "r3 new checker job: 7 PASS /1 ERROR due to old oracle page1 restriction; r4 failed1+new3 PASS",
+    "r4 Clippy FAIL5: two unused mut, two assertions_on_constants, identical test fault branches"
+  ],
+  "source_deviations": [
+    "source-deviations/r5-python-cache.json",
+    "review/design-d2-source-addendum.json"
+  ],
+  "remaining_required": [
+    "P3 membership-based Status reload and three addresses/two frames",
+    "live Status mutation and general page pool/pressure",
+    "batch8/64 and multi-file integration",
+    "general REBASE/epoch/undo/READY",
+    "DEV3 final S5 all inventory including expanded2379"
+  ],
+  "not_run": [
+    "unchanged lower wrappers",
+    "repeat of completed unchanged runtime/static/checker",
+    "S5 expanded2379",
+    "document verifier: push only"
+  ],
+  "full_dev3_complete": false,
+  "p2_repeated_status_current_build_recovery_supplied": true,
+  "p3_complete": false,
+  "independent_review": {
+    "reviewer": "/root/pool_design_review",
+    "ocr_skill": "/home/et16/.agents/skills/open-code-review-delegate/SKILL.md",
+    "D2": "ACCEPTED_DESIGN_ONLY",
+    "runtime_gate": "r1/r4/r5 selected scopes accepted",
+    "final_D1": "D1_ACCEPTED_LIMITED_OPERATIONAL_RECOVERY",
+    "unresolved_findings": 0,
+    "staged_paths": 103,
+    "coverage": {
+      "total_files": 107,
+      "reviewable_files": 22,
+      "reviewed_files": 22,
+      "skipped_files": 0,
+      "coverage_rate": 1.0,
+      "excluded_files": 85,
+      "excluded_manually_reviewed": 81,
+      "excluded_skipped": 4,
+      "identity": "(path,status)",
+      "receipts": [
+        "review/final-d1.json",
+        "review/final-d1-addendum.json"
+      ]
+    },
+    "final_metadata_sync_only": true
+  },
+  "receipts": [
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/compiler-r5.json",
+      "sha256": "e00d2bb2919585754411452158449ed9abcf019fcab9eb4b333892ba2692ba0f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failed-files.json",
+      "sha256": "a6bf9f6e821a1e37b04602bb5e924bd6679d06af232466f5ab9434b1332ee509"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/DWB.snapshot",
+      "sha256": "115f0be63753fb2cb259a92805b8041dba937fe26412a559775e0135d55d2b0d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/d3-data-0000000100000001.snapshot",
+      "sha256": "71142b26651ac7577800492ab179e78cd6e19f0ebcf62777862894bed2f931f6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/d3-dwb-0.snapshot",
+      "sha256": "0a414147f54a1bfe8e437d06b22051c3a2677955302d4f0b35569227c84ae619"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/d3-dwb-1.snapshot",
+      "sha256": "6d7d670e24701e289445bc4306d059ec9a273ab979d20db1c68fc066b23f6214"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/d3-dwb-images.snapshot",
+      "sha256": "67667535942e825b7273d94e2b08eb63024755059327d941116ae2e8e7f9e888"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/effects.txt",
+      "sha256": "a061b5df7e0b15500cc3d6767abb6fd72ad91b00075fcf8c82c528f4d8d96c51"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/error.tsv",
+      "sha256": "f2fbe0dc6ff2c48577be752764d3bd25e8cec675aa4e90c528da30b4cffac9fa"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/error.txt",
+      "sha256": "cbbb31e79fe185310f14e98886f7d20a9536f117d812b147078c7080e1c8e146"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/events.tsv",
+      "sha256": "966f7369c628ece2a19fd0d2fd819f96d3b9d51ff2c1948ab51b1dca916c1823"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/fd.tsv",
+      "sha256": "3b8dd156b3db470add152925ee5c648d6cf16f09eaff50a1661cc5490cf2b196"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/observation.tsv",
+      "sha256": "1c4a5e9286b8fc7c5aa6f34241e8025f6daf0ef5aa44783de8e62d704bf51b8e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/resources.tsv",
+      "sha256": "b6e6749a21eee748fdb40d228449764585f850e2200c07250096bac3efce55b9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/source-census.tsv",
+      "sha256": "fc11a5dc3dc4b276ad501e10d3060f25ff2a7eb71984e43a923f3337c4986921"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/failure/stdout.log",
+      "sha256": "24c0959275524c51c641116b59bf1cc422c7c617365fb88e335339f475bbba74"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/producer/events.tsv",
+      "sha256": "fa748e2a73e49b690602b28409f1acdfe1906fd80bf70040c1549d57d106c996"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/producer/fd.tsv",
+      "sha256": "ffc417d3a847bacf733acbc93b7711a1685437cd79d09bfe282f21b6fdcb371d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/producer/resources.tsv",
+      "sha256": "ea44f1b99ff306d9937e788b3be6aaeaeeb7f9ffb3d646d2a011ba5853c6ffcf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/producer/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/producer/stdout.log",
+      "sha256": "e5b0afdb3378a5cd9b11c7a2eeacd0a8861f5ee8bf2fe89b3892bb0a963661c6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/producer-files.json",
+      "sha256": "50895f382bc96d40760dcf6a70c81fa9fc51ff7bbf457a8e2d39d4e4c479ac42"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/all-targets.txt",
+      "sha256": "fa371eacbf576f8fece6077098d7e1710c2b1025a699b68369841bfa95c3a498"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/allocator.bin",
+      "sha256": "8b2b4223cfc3f5d2e70003fe6fe695aff601aff145a0b02a4423f863cc5616a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/descriptor.bin",
+      "sha256": "cc4a45aafbe803922045622dc6b779ca335e0ed46d4ac80f9f2c20c0d8ce14a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/effects.txt",
+      "sha256": "b1f5e3eee278f6a7e4faed99230e2e26ab45862da829459901d96baf1aa205c1"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/events.tsv",
+      "sha256": "d9f984d83cb12fae223941d819d4dfe3317b7abfb0752bff0ce2a28372ea3f7f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/fd.tsv",
+      "sha256": "e9166a670bea6cb12423ff72aff65a78d7f6b3a51cedcc11f22125c050948d87"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/observation.tsv",
+      "sha256": "d1e184b2826a678ea2c90a78511bdbc83cd089644a46af025a1c9a7e55158e2a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/resources.tsv",
+      "sha256": "f7981ab3558d88f4b4dc1d355f4a3eb6bcf3ddc479794bf1e01ffb1429c04a86"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/source-census.tsv",
+      "sha256": "fc11a5dc3dc4b276ad501e10d3060f25ff2a7eb71984e43a923f3337c4986921"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/status-1.bin",
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/status-2.bin",
+      "sha256": "b2b0636fdf547fd860bc3887787a97cb7fc81c69cc20c03fd059f88c115ccd33"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/recovery/stdout.log",
+      "sha256": "df733ef6bc1220bc0a358b3fac8fcedb6d9d61f44bb6b1b3dfacd6598e13ff28"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/all-targets.txt",
+      "sha256": "be3ef6f3174001cf820404a0edb28fac38b24c696df0553f94ae6c18e9f5d54e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/allocator.bin",
+      "sha256": "8b2b4223cfc3f5d2e70003fe6fe695aff601aff145a0b02a4423f863cc5616a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/descriptor.bin",
+      "sha256": "cc4a45aafbe803922045622dc6b779ca335e0ed46d4ac80f9f2c20c0d8ce14a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/effects.txt",
+      "sha256": "1545cd86e5e0b9a0851bbfd08e048395c04b00930499d86a9684554e26f1b980"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/events.tsv",
+      "sha256": "962fb0562188bd18714dee416009bfef0f6cf11d0a1819ea072e5c5bf9b11ddf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/fd.tsv",
+      "sha256": "6592febdd020a46e31fc213d8714cef64d91d339ac2ea77b0acffa7fd51f257d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/observation.tsv",
+      "sha256": "a9bfcdac96788caf7d976db488a19984506a4a6b97ae1215ef4204b00cb966ef"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/resources.tsv",
+      "sha256": "f7981ab3558d88f4b4dc1d355f4a3eb6bcf3ddc479794bf1e01ffb1429c04a86"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/source-census.tsv",
+      "sha256": "fc11a5dc3dc4b276ad501e10d3060f25ff2a7eb71984e43a923f3337c4986921"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/status-1.bin",
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/status-2.bin",
+      "sha256": "b2b0636fdf547fd860bc3887787a97cb7fc81c69cc20c03fd059f88c115ccd33"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/partial_b/reentry/stdout.log",
+      "sha256": "d9789d88c36029a8668d596f552fd48011cd101ba1e4999b60ac898875f71966"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/producer/events.tsv",
+      "sha256": "8809a5142ccd5252a9ffb853fc935648baec7652442066b5f95d2f31d127c0c4"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/producer/fd.tsv",
+      "sha256": "ffc417d3a847bacf733acbc93b7711a1685437cd79d09bfe282f21b6fdcb371d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/producer/resources.tsv",
+      "sha256": "ea44f1b99ff306d9937e788b3be6aaeaeeb7f9ffb3d646d2a011ba5853c6ffcf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/producer/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/producer/stdout.log",
+      "sha256": "d4a3216bdeb4b568c24fa683d707a275e36ccd792a331a5fdca63e7046498ed9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/producer-files.json",
+      "sha256": "d298767103499eff1a2a0a91df47f83beabde8098d5bc1f5b94e5b7080b24d3c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/all-targets.txt",
+      "sha256": "dfcab72e4ebdfd13b7085a6a392d3be6b2aca0527e6eecd7fc38cd8db0acaa75"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/allocator.bin",
+      "sha256": "8b2b4223cfc3f5d2e70003fe6fe695aff601aff145a0b02a4423f863cc5616a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/descriptor.bin",
+      "sha256": "cc4a45aafbe803922045622dc6b779ca335e0ed46d4ac80f9f2c20c0d8ce14a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/effects.txt",
+      "sha256": "13b5099980384c86b276c26e64d289421915503ca6b912acc5616e0aca76c3d1"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/events.tsv",
+      "sha256": "4f6077d675af16d003720be3e529ed583df9dd4e5fb621acccf8762d0b20720c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/fd.tsv",
+      "sha256": "a4483e5e4580fc7d2ca43669682a194ccc5807660fd72e53bb79db4b4f6370db"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/observation.tsv",
+      "sha256": "42a4d917a0473ad156987fa2667174939b2b4dbdf1670d264354cceb52da6b0e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/resources.tsv",
+      "sha256": "f7981ab3558d88f4b4dc1d355f4a3eb6bcf3ddc479794bf1e01ffb1429c04a86"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/source-census.tsv",
+      "sha256": "fc11a5dc3dc4b276ad501e10d3060f25ff2a7eb71984e43a923f3337c4986921"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/status-1.bin",
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/status-2.bin",
+      "sha256": "b2b0636fdf547fd860bc3887787a97cb7fc81c69cc20c03fd059f88c115ccd33"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/recovery/stdout.log",
+      "sha256": "eec423a59fdf425d737a0fda60d64b7abb2750d8302eba10222d0b08ac5cc6d7"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/all-targets.txt",
+      "sha256": "be3ef6f3174001cf820404a0edb28fac38b24c696df0553f94ae6c18e9f5d54e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/allocator.bin",
+      "sha256": "8b2b4223cfc3f5d2e70003fe6fe695aff601aff145a0b02a4423f863cc5616a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/descriptor.bin",
+      "sha256": "cc4a45aafbe803922045622dc6b779ca335e0ed46d4ac80f9f2c20c0d8ce14a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/effects.txt",
+      "sha256": "1545cd86e5e0b9a0851bbfd08e048395c04b00930499d86a9684554e26f1b980"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/events.tsv",
+      "sha256": "ca582750ea48b0f87944253281f77379534c92ba6af9a81e194d1722650a84b7"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/fd.tsv",
+      "sha256": "6592febdd020a46e31fc213d8714cef64d91d339ac2ea77b0acffa7fd51f257d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/observation.tsv",
+      "sha256": "64ade63d4ba06847653983890dce156326e12e91535fbfd10d95859c00960031"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/resources.tsv",
+      "sha256": "f7981ab3558d88f4b4dc1d355f4a3eb6bcf3ddc479794bf1e01ffb1429c04a86"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/source-census.tsv",
+      "sha256": "fc11a5dc3dc4b276ad501e10d3060f25ff2a7eb71984e43a923f3337c4986921"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/status-1.bin",
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/status-2.bin",
+      "sha256": "b2b0636fdf547fd860bc3887787a97cb7fc81c69cc20c03fd059f88c115ccd33"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/plain/reentry/stdout.log",
+      "sha256": "e1b44747bf3351ba9d8a0c5bf3209abecca662610615b6b9065f36ad8280adee"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/result.json",
+      "sha256": "a1ebb1c92045924f11667b4c66143297251b2da6c86af0ab53c185d9b0e4f7f2"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failed-files.json",
+      "sha256": "9a251e50b84cc37a44e9602abf66ac02b7d481d421e6ac1681a71f464d00cbb8"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/DWB.snapshot",
+      "sha256": "b292fd19f463680079929a2e2d50ff99aa268583b340d187712f44c175a001f0"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/d3-data-0000000100000001.snapshot",
+      "sha256": "77de9e25b69f245f2059b25515eb9f354767c4b5f6b2bab07c5a53e301c5d69e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/d3-dwb-0.snapshot",
+      "sha256": "16f3eb59a9d0dbdf5dca76c9f17dec6de5eec6a5c5a86e23a42e46ddc91c624a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/d3-dwb-1.snapshot",
+      "sha256": "6d7d670e24701e289445bc4306d059ec9a273ab979d20db1c68fc066b23f6214"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/d3-dwb-images.snapshot",
+      "sha256": "67667535942e825b7273d94e2b08eb63024755059327d941116ae2e8e7f9e888"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/effects.txt",
+      "sha256": "c1727ce35d124865c0a8b6d851553c3dc459ca77425bbdabb1b7e8bb7dfc082c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/error.tsv",
+      "sha256": "4f1dc6fc272d2b024c560f4b065449f0672bf8c279d2a45f5c94bfc0977f7800"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/error.txt",
+      "sha256": "b3f17255756254ddb29faaba463d344d8f5aaec011b57c80705ffd5fea1c0df8"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/events.tsv",
+      "sha256": "5d37c34cd635f37d78b5c2a0aaa46cd067787a93362e975017d371eb005e90ac"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/fd.tsv",
+      "sha256": "ee8979c0debc0e6a8911ed39cb1be91d40526d01d5db85ba18379fb94bdea5de"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/observation.tsv",
+      "sha256": "3c0dff00c561992b8ce1a9f0f164ac28b8745aa2ba632f70e08f1508b3607f3a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/resources.tsv",
+      "sha256": "b6e6749a21eee748fdb40d228449764585f850e2200c07250096bac3efce55b9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/source-census.tsv",
+      "sha256": "fc11a5dc3dc4b276ad501e10d3060f25ff2a7eb71984e43a923f3337c4986921"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/failure/stdout.log",
+      "sha256": "942f656a55e9e9194d03d82e8172d9615bd0adcd7105532d6b260b1b78f8391f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/producer/events.tsv",
+      "sha256": "73fa3f02f8c2db61c4680f8f7c409154cd4df35b01d1feff8cc7260a79467dfc"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/producer/fd.tsv",
+      "sha256": "ffc417d3a847bacf733acbc93b7711a1685437cd79d09bfe282f21b6fdcb371d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/producer/resources.tsv",
+      "sha256": "ea44f1b99ff306d9937e788b3be6aaeaeeb7f9ffb3d646d2a011ba5853c6ffcf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/producer/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/producer/stdout.log",
+      "sha256": "5d99152872f75be485701e3296bd1b3d5bfd87c53ca4dfc04b3c02b6c7502f30"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/producer-files.json",
+      "sha256": "8912c7193a9685d524a345dd237e2c3d51a5fedc8683c87020cd2f3295e6e1c9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/all-targets.txt",
+      "sha256": "be3ef6f3174001cf820404a0edb28fac38b24c696df0553f94ae6c18e9f5d54e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/allocator.bin",
+      "sha256": "8b2b4223cfc3f5d2e70003fe6fe695aff601aff145a0b02a4423f863cc5616a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/descriptor.bin",
+      "sha256": "cc4a45aafbe803922045622dc6b779ca335e0ed46d4ac80f9f2c20c0d8ce14a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/effects.txt",
+      "sha256": "1545cd86e5e0b9a0851bbfd08e048395c04b00930499d86a9684554e26f1b980"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/events.tsv",
+      "sha256": "8d0f6dbc285128f82c33f29da23117fd58583041c4c6f782339303698aaa5af9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/fd.tsv",
+      "sha256": "6592febdd020a46e31fc213d8714cef64d91d339ac2ea77b0acffa7fd51f257d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/observation.tsv",
+      "sha256": "cd98f01eef2049a4af06cfc186ad121425e3421b82fcf57ef3d9b0f016893632"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/resources.tsv",
+      "sha256": "f7981ab3558d88f4b4dc1d355f4a3eb6bcf3ddc479794bf1e01ffb1429c04a86"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/source-census.tsv",
+      "sha256": "fc11a5dc3dc4b276ad501e10d3060f25ff2a7eb71984e43a923f3337c4986921"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/status-1.bin",
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/status-2.bin",
+      "sha256": "b2b0636fdf547fd860bc3887787a97cb7fc81c69cc20c03fd059f88c115ccd33"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/recovery/stdout.log",
+      "sha256": "280c0b0181573410d4d654a05f503d9c24fc62f85510551a952c6dc3422b560d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/all-targets.txt",
+      "sha256": "be3ef6f3174001cf820404a0edb28fac38b24c696df0553f94ae6c18e9f5d54e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/allocator.bin",
+      "sha256": "8b2b4223cfc3f5d2e70003fe6fe695aff601aff145a0b02a4423f863cc5616a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/descriptor.bin",
+      "sha256": "cc4a45aafbe803922045622dc6b779ca335e0ed46d4ac80f9f2c20c0d8ce14a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/effects.txt",
+      "sha256": "1545cd86e5e0b9a0851bbfd08e048395c04b00930499d86a9684554e26f1b980"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/events.tsv",
+      "sha256": "8d0f6dbc285128f82c33f29da23117fd58583041c4c6f782339303698aaa5af9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/fd.tsv",
+      "sha256": "6592febdd020a46e31fc213d8714cef64d91d339ac2ea77b0acffa7fd51f257d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/observation.tsv",
+      "sha256": "cd98f01eef2049a4af06cfc186ad121425e3421b82fcf57ef3d9b0f016893632"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/resources.tsv",
+      "sha256": "f7981ab3558d88f4b4dc1d355f4a3eb6bcf3ddc479794bf1e01ffb1429c04a86"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/source-census.tsv",
+      "sha256": "fc11a5dc3dc4b276ad501e10d3060f25ff2a7eb71984e43a923f3337c4986921"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/status-1.bin",
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/status-2.bin",
+      "sha256": "b2b0636fdf547fd860bc3887787a97cb7fc81c69cc20c03fd059f88c115ccd33"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/retirement_b/reentry/stdout.log",
+      "sha256": "3e6f3a7061d791439f565c9c5ece76eca79701b8bf36cfc98d45c502c6b0c744"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/producer/events.tsv",
+      "sha256": "f34859f519a40d28b855204798bd887b4f537b9023e15ebed5922918f8273af5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/producer/fd.tsv",
+      "sha256": "1dd14354711247d9687b957af781012e1b0e4bae10b2599acfa4774b591547be"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/producer/resources.tsv",
+      "sha256": "633d5a26bba4f37605b37522aaff473fd6a59dab1bb2aa647d28d67081057bc2"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/producer/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/producer/stdout.log",
+      "sha256": "84eb6ab573cb63c7ed6129f5fb193c82e05b74a9a76a0ecdc332cdaed717dc09"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/producer-files.json",
+      "sha256": "d2de687980b6df84d461af022d287b2771c6004b04a5d6369fda20e86eae3efb"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/producer-tail-error.txt",
+      "sha256": "804cc2757a98f9698252a552110db443a8ca0f54708c946b5d2ab8f7a83816c9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/recovery/all-targets.txt",
+      "sha256": "5973dbbefee88aa991db1976094e263e83d633db9c63bad780e817b318e1d00f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/recovery/allocator.bin",
+      "sha256": "6cd87eef986e5fcdb3f2856f91f8d6a5b1864006e68b5da44e15107d004ebbd6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/recovery/descriptor.bin",
+      "sha256": "499ef6ae1d6b45651b321ab733970d2601b49a6a7adb55a56e65e67a7e3c0107"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/recovery/effects.txt",
+      "sha256": "1272090218a72721d0aca9768cea553a437880a36db2231f23b561646a62f830"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/recovery/events.tsv",
+      "sha256": "e0c12458069157eafe584ad09b4990239a7fb4092073f98f32ad01f2cace14c5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/recovery/fd.tsv",
+      "sha256": "a6fc05ddab3faee43617ca8de8cfd2261969e64a74f75f060e00e182057c8b94"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/recovery/observation.tsv",
+      "sha256": "d36ebacc6474c78332c0fed0e9786b0914c8f03ff862eafc090c52373864ca17"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/recovery/resources.tsv",
+      "sha256": "f7981ab3558d88f4b4dc1d355f4a3eb6bcf3ddc479794bf1e01ffb1429c04a86"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/recovery/source-census.tsv",
+      "sha256": "fc11a5dc3dc4b276ad501e10d3060f25ff2a7eb71984e43a923f3337c4986921"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/recovery/status-1.bin",
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/recovery/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/recovery/stdout.log",
+      "sha256": "1ecb61facd4e4756c397a9dc92082b4e31097d4805722195e2e293d8f27b2af1"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/reentry/all-targets.txt",
+      "sha256": "b423fad0b50a1757fa16610c3a6c8c8ac7eafc2310ed24368fd7f2377af88edc"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/reentry/allocator.bin",
+      "sha256": "6cd87eef986e5fcdb3f2856f91f8d6a5b1864006e68b5da44e15107d004ebbd6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/reentry/descriptor.bin",
+      "sha256": "499ef6ae1d6b45651b321ab733970d2601b49a6a7adb55a56e65e67a7e3c0107"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/reentry/effects.txt",
+      "sha256": "0522666f8be0ddbfb5cc11b0d778ee5c1f0965bbceb188b28d6ddf5b0d91ee4e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/reentry/events.tsv",
+      "sha256": "9790c85615d62c5ca977355bd26e5a2e15cbe6fa14e590f822adc27696c76324"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/reentry/fd.tsv",
+      "sha256": "10ed6cd52b02b7c4690c2d6b0dc8bec6ec0b48b052c73a193e1ac19a1903d200"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/reentry/observation.tsv",
+      "sha256": "5b41ea230585f67ac66fe174700c590e0c67e54a847c7213c528e5165cda2653"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/reentry/resources.tsv",
+      "sha256": "f7981ab3558d88f4b4dc1d355f4a3eb6bcf3ddc479794bf1e01ffb1429c04a86"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/reentry/source-census.tsv",
+      "sha256": "fc11a5dc3dc4b276ad501e10d3060f25ff2a7eb71984e43a923f3337c4986921"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/reentry/status-1.bin",
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/reentry/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/native-r5/tail/reentry/stdout.log",
+      "sha256": "7aaf06b2b796d390cc140c2aad5f85d475dd6ad6ded6d4d377e805fd53c35be3"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r0/build.jsonl",
+      "sha256": "3f1bc358608f6479ffd374c723753533eae8438c50a005e03db110f520d3b63e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r0/build.stderr",
+      "sha256": "1358f02eec0cd1ebdf869c6514ad2ee6dbcf405917e51c3618d1475f99e81b1d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r0/source.json",
+      "sha256": "7d83a82767dd3a6b0a574fabac9f0e4943f3064ff6252b9a4313c83221029acb"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/binary.json",
+      "sha256": "c0d072499762767ecf05f8842f52c36020533b2563cef802c6d24a0e47da245b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/build.jsonl",
+      "sha256": "ceb2eda1970425afd8f1ef5906ebc72d18384ea582daa972172eca0e96a700b9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/build.stderr",
+      "sha256": "7c4c808f193df6445d3a10fc1377a82170a3b8a6fd8d9588ffae6b8408fb564b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/operational_recovery_complete_and_partial_prefixes.log",
+      "sha256": "921d95e8d01d5ae42234042d4d738be8154cbf11a02ec02212ccf564fa80168a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/operational_recovery_historical_pending.log",
+      "sha256": "8729bb3f477f8369a2ab427604109f223f1b681b7c88ed67d92a4b243c85b885"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/operational_recovery_mixed_targets.log",
+      "sha256": "7e166658e50140d40d1410e5d46612b21e0aa193eda27b93c2d0e3b5aa140d96"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/operational_recovery_page63_and_full_extent_reservation.log",
+      "sha256": "83c28fef6a2993f0e5248330201874c455ffbbfae9801dad14484459a6c01e56"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/operational_recovery_readonly_scope_remains_closed.log",
+      "sha256": "8aac0a1eb984f0ba3e2fc9e9dd0e7592a439a23b58654df8babe51434ef8bdc5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/operational_recovery_rejects_complete_wal_corruption.log",
+      "sha256": "e8ecb9b19a534290e378ccc868ad6d76f6730c7a31de9676328fd12b5247126f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/operational_recovery_rejects_intact_conflicts.log",
+      "sha256": "be330f67cff99d4e29b116d7678796dc94e6f71e8d396411afc87f0ac1bca8c8"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/operational_recovery_retained_terminal_is_revalidated.log",
+      "sha256": "5a5ed3371c92f74a3b942750febf5853ca869402091f6e2b3ddb24f4fee0c1a0"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/operational_recovery_second_pass_rejects_census_drift.log",
+      "sha256": "3b0315ba6ae6b655d4a76e52a49b5fe69a940dcdeadcf2594f98dd551e8240f6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/operational_recovery_target_count_generation_overflow.log",
+      "sha256": "12d2d5ffd74f2d91b18a69c94f0c827d4bd81458062219919847e906ee4c7c3a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/runtime-results.json",
+      "sha256": "348d6f4b40fe9c2bd74459f327908807842d511d64e938c57595255fd5e48e97"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/runtime-selection.json",
+      "sha256": "81ec035a89a0fecad3cd3295261e375c9d32aaa586e88b7224ece5c719e65587"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/source.json",
+      "sha256": "6e8dcdfbac4ba721752acbf3f2d22cd2d7ff5caa2c1ab6bdee1160d978b7f04e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/static-census.json",
+      "sha256": "228203886b0f688c0b4eef804679d7fc995a303d10778288fe9750d5eea8b2bd"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r1/static-census.log",
+      "sha256": "ecd874f2a49e4d0e6557e9e5f55d56c492a753be0ed3a2dc1a0b600f7b24151a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r2/binary.json",
+      "sha256": "491ea6d6c140892ae61e405f61e42de376ec80de278e28dae1a6458a7429450a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r2/build.jsonl",
+      "sha256": "b05d981eb1963466606a15e326ddfaa19b61d65d776fc324d6824f57dbb8fb55"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r2/build.stderr",
+      "sha256": "337439f629ef8b50d26d521fb1b310134999d0f84ddb5612b3520549c24526e6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r2/source.json",
+      "sha256": "e6d030b320a7f64c1c6ac23c1aa6de7a87b08b4c322736c24bd8f128b5a8b236"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r3/binary.json",
+      "sha256": "50fdc4a58e79d98219f4e1e5e2e022b39c341140adf2332bc7646f0343ebedea"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r3/build.jsonl",
+      "sha256": "6548a7c376eb9960c406ae045902f1ed2d83c54e6eec07aa6601ee2cba5b4010"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r3/build.stderr",
+      "sha256": "b0166cce61184424564d9b4b8dc207b1fa8f757010fdb7e51a21a12092966c03"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r3/changed-compiler-checker.log",
+      "sha256": "3319316300ceed8ba1c7a4ad67966c1577779faca5485316c925a4f9aa1bfd0c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r3/native-census.log",
+      "sha256": "85c98620c5776f8f3c348446e6489b7682e8d3441e6adff3256a8244a322a63d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r3/new-checker.log",
+      "sha256": "b3717478163ee67c6c5ad12fc453e00a95d1e2d5890393929d23175e9ebfa9d7"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r3/source.json",
+      "sha256": "12f226fdc4929c621cabb2b007dbb2e8f70383d156c094875a45466ff3b0b838"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r3/static-checker-results.json",
+      "sha256": "8a21d684063bb58b5d1ed3289fd81383c9dcf1d35b0467a20f8cef4529508dc6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r4/binary.json",
+      "sha256": "eed48c33e0407f5a756969af13b2f6b1bc6232b3d401daedc9ef86f4794e9d15"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r4/build.jsonl",
+      "sha256": "22bcf48caf062b402e62cceb26cccff42c7100f897c592dc744e18e88e35d88d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r4/build.stderr",
+      "sha256": "9c0d03eb80422557d390a8ac64b0ca13e56da17024c7e83d52fa077b0a08ce20"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r4/changed-checker.json",
+      "sha256": "0c673286fd0b6be395a68b43ee51624f10da4d728c716175836d35a271b562d9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r4/changed-checker.log",
+      "sha256": "eb95a485a323c2ca2e7a6a1288c866f45242bbf765d0e1a85ca65e8c5237a4e0"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r4/clippy.log",
+      "sha256": "d9432a3274e2a961f1dd5be25b38a53b93f6c290be69901103ecc752a93b38e4"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r4/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r4/source.json",
+      "sha256": "fb86d0e14c2dd4e0fb144a5dd375e27c71028451bc1146bbee3ce39e32e4fce4"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r4/static-tools.json",
+      "sha256": "2f3e4cd3b787e14791862c13e807f108bbbea6a8e5ebcf4cad43418a1ecedfd9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/ES003.log",
+      "sha256": "64351a65a1efc38dbf27ad0ceee0cb08822f05b1a8f5b6f27af3a36f9c31af92"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/PPL004.log",
+      "sha256": "24d5439cbf04853bd55ff3b977c687f310c9e20614ce3e1b7911f9fb1e7888ce"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/binary.json",
+      "sha256": "6e6c931f1d5f7d89794a292d52cf0129bb260e9c4682a138e37ae8214ea0f65e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/build.jsonl",
+      "sha256": "85a84352c13c586b6574893f09f86a41c9d3dfcb91c78d64556cf17d8fad54c7"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/build.stderr",
+      "sha256": "18b7f9191d2d43ae18d303b4c3d1d6a5839cd5f6a778c0a228f935e5e2931f66"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/clippy.log",
+      "sha256": "19004662fe97190cec783d074703144aa1a1c2289112f03d58cdd282e0a07b15"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/operational_recovery_codec_valid_semantic_rejections.log",
+      "sha256": "2e634751373990fcbcef02b220debc4a82a5b8c53eb70007c5def5dc48c4b625"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/related-results.json",
+      "sha256": "89278b4e9a08e052d41270e814dc00dae355dccefb36276b383c505340fba74a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/related-selection.json",
+      "sha256": "11437a6c9842eb3076257b0363fba2218a2559386f3314ad7a5ba4fc64afa5c8"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/runtime-results.json",
+      "sha256": "f6a7f3a6e9172561562a74e12d9b3ba516a31bfc35e152565f16f304810e7b39"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/runtime-selection.json",
+      "sha256": "95b13233b95681961cefc173b44c44307c03f76aff25321759a36126e796b223"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/source.json",
+      "sha256": "4b175d3797d929e37fad77238dcf96df9551a584ad1a0bb636f0e5d53c6691e6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r5/static-tools.json",
+      "sha256": "7371108f6aba01d8154836be04b257f5232ded96899e7b2af66a89e262ccdc4e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r6/binary.json",
+      "sha256": "da62811544186c9e6e08d0fdd0b7475ab07872d6bc816eb172d2044640a86a7e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r6/build.jsonl",
+      "sha256": "b5a06af12660bf110979b4977a592f6e14486e6ae75e2c150dc9c186b23959e6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r6/build.stderr",
+      "sha256": "1abccd92629a40568c121df372d692b721afd63e25faed1e1f29cea36bd594da"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r6/clippy.log",
+      "sha256": "dd36ddf467c064a4b222f31a81aceb207e822703e75b7b4e64e0db5efa311160"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r6/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r6/source.json",
+      "sha256": "c954f4f0e2ea7fa90eca9c5091d99125d21c5ee7a121b243e7007df1cbbee743"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r6/static-tools.json",
+      "sha256": "8700dbf95c7ec36706817397ac381ee30ecff1f901969a14f06db3313388386a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r7/binary.json",
+      "sha256": "19d9dcb47f7ef8127c5a47f3e83d5344365bf8c5fbe685691b1fbf0f46bb200e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r7/build.jsonl",
+      "sha256": "ca8f53e48981e9951ace331e516eb15421b843ddf1199faf98580c9eb255cc1e"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r7/build.stderr",
+      "sha256": "1556a6da42e294d441fbf97a5ccd75cbaa80b4cc1412713934c7253be7876d1f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r7/clippy.log",
+      "sha256": "8d5f3734cf5832cc6526353bc7570c14eaf4a3e3c19471525a327fafc4434a3f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r7/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r7/source.json",
+      "sha256": "be98c02e2d2ebff0f92af5b0ee8bc0330411d6bfe2d2274c251f4e073fd6ac8a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/r7/static-tools.json",
+      "sha256": "27b8d5ad4c2297c8a7e710e1d18a1844f0c767b41464a62b0ea358b5dfd4054b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/recovery-effects-borrows-mvtbsqts/baseline-logs/compiler.jsonl",
+      "sha256": "37c46b0dc7e94c27f470f114af663ff9dab2b4c3448a6a0e57cca24e6ad5b5fe"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/recovery-effects-borrows-mvtbsqts/baseline-logs/compiler.stderr",
+      "sha256": "27daa9878e2b90de8a989ac3be78576f0cc43674d1f8f54f5b1d1523d51f06e9"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/recovery-effects-borrows-mvtbsqts/result.json",
+      "sha256": "e00d2bb2919585754411452158449ed9abcf019fcab9eb4b333892ba2692ba0f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/recovery-effects-borrows-mvtbsqts/status_image_borrow/compiler.jsonl",
+      "sha256": "23d26c63ccb84b150384936cfdbdcf9d823ada5b50bb3c471fa5f9c32d399feb"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/recovery-effects-borrows-mvtbsqts/status_image_borrow/compiler.stderr",
+      "sha256": "2d6698b85f0bcfd1efdc8df779ab11d25bf35c22aa3ab536f2909855a62b6855"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/recovery-effects-borrows-mvtbsqts/status_image_immutable/compiler.jsonl",
+      "sha256": "9428c7154aa1e02628f83b78fb452fc35ae082168e2828765cc217df5a68f272"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/recovery-effects-borrows-mvtbsqts/status_image_immutable/compiler.stderr",
+      "sha256": "61f1400f3126883964e3961a26c524c3b8534f2f20722af0d353c1e34ad97fb7"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/recovery-effects-borrows-mvtbsqts/status_images_positive/compiler.jsonl",
+      "sha256": "deaaf26d308d7dec9aba995f94ecb587c066f406bc045cd3bfdb583c07aab9a5"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/recovery-effects-borrows-mvtbsqts/status_images_positive/compiler.stderr",
+      "sha256": "0c5c4b43a775cbb48d07bf9981d4dba8b1d5df0e5f7ab76e5a06e76664a88a84"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/contract-reviewed-d2.md",
+      "sha256": "b93e46c28806fa4300e3e48f079eae3c813ad05d929d08cbc87ce16b05d87eba"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/design-d2-source-addendum.json",
+      "sha256": "6117e713620bca8ecf657381805292efb3aeb28f8520d671b02c9f8e884d5687"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/design-d2.json",
+      "sha256": "230e35a64b7b199069dab0dd5c66a69818f9551452087b6d80143608fa72c102"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/design-d2.md",
+      "sha256": "d707b2abc931e40f7c6452311721a18777a38ed0bbbea22b2ee13423110ae4ca"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/final-d1-addendum.json",
+      "sha256": "f63b732f1ebc2da379c6e84278e0964f2957a92973f9d934be50bd0f4e582edb"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/final-d1-addendum.md",
+      "sha256": "dadb55a93839ac90e5336200ae82ca715a41f08c297554968cb472c10e3172fe"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/final-d1.json",
+      "sha256": "1acbcf80be4f9b4eaebd14ba6ec919f5e77d34b166c3e6f44930359281c59bbe"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/final-d1.md",
+      "sha256": "a61995ca076ad6c397b90d971020fd3509ff33f2bba661477ba496e17843a08a"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/final-input-audit.json",
+      "sha256": "df4fb9123256414c6c60d3e299c2d7db5167d4afcf70c21358934c691c24b51c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-commands-d2.json",
+      "sha256": "aed276327ccb9eb0e69d5c3e69cc9268dfb23bfe972ef1208b8640d1851efce6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-commands-final-addendum.json",
+      "sha256": "3026c70db3939c7462b812c1135b57fc4a5facdc710917f88d621c49518909ab"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-commands-final.json",
+      "sha256": "3026c70db3939c7462b812c1135b57fc4a5facdc710917f88d621c49518909ab"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-commands-pre-final.json",
+      "sha256": "39d8114adbbc030879c62881210bab2dc86967780717a7292c02590ed7694bf7"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-commands-r1.json",
+      "sha256": "e9d297777f8f105d8fc500889a8a4378021b16cb7098d904418924413d0a478c"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-commands-r4.json",
+      "sha256": "239f44366b8eda7daac86244232c3ca52fd10f2073e309171f68a40b223f3393"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-d2.json",
+      "sha256": "97f1131fe8c84b1482ff82b0a915e0a44853d04c113a064092ed760e9ab5c2ce"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-d2.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-d2.stdout",
+      "sha256": "97f1131fe8c84b1482ff82b0a915e0a44853d04c113a064092ed760e9ab5c2ce"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-final-addendum.json",
+      "sha256": "486c7058101645f7efe7005aea36de7ec8bbe60e15af4b6303bf2a7f96e140a4"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-final.json",
+      "sha256": "954a5f8ebcbb661c3f085bce2b2993c21f8b77e10847685a2c12f14988434db8"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-final.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-pre-final.json",
+      "sha256": "0b67d7bb9e0649905923549e635c7225f7ded2ad49bbcbb626ff083ea8484634"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-pre-final.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-r1.json",
+      "sha256": "10e0171f1d909dd939e488117bfbd36d1fa8d2ea999fd55e4289a4b3508e1242"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-r1.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-r1.stdout",
+      "sha256": "10e0171f1d909dd939e488117bfbd36d1fa8d2ea999fd55e4289a4b3508e1242"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-r4.json",
+      "sha256": "798db9a474bcf289a90ca300ac5d4cf4acf06b743f409d3aa0d11c01807519b3"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-r4.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-preview-r4.stdout",
+      "sha256": "798db9a474bcf289a90ca300ac5d4cf4acf06b743f409d3aa0d11c01807519b3"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-d2.json",
+      "sha256": "3f8dc4f18f95dcd55fac42ea9d0e368f597574c788dd0f6ea08db6d1fef555d8"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-d2.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-d2.stdout",
+      "sha256": "3f8dc4f18f95dcd55fac42ea9d0e368f597574c788dd0f6ea08db6d1fef555d8"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-final-addendum.json",
+      "sha256": "9d22d5ce4b3220a42747be54bd9e756197a19ff18a8be7dfd983e37476c96faf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-final.json",
+      "sha256": "9d22d5ce4b3220a42747be54bd9e756197a19ff18a8be7dfd983e37476c96faf"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-final.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-pre-final.json",
+      "sha256": "be42ee60643e56181047ddf8789c60043988128d2c0c92ae01795c36355fd5eb"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-pre-final.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-r1.json",
+      "sha256": "24955b144ae8d847bc7679a63b0da028a832fa1cdde5b8556285076f4d2fc8dd"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-r1.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-r1.stdout",
+      "sha256": "ca772038fb1c79c50ca2c729cc0b0576200123db614ecab99358a7392edb9f29"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-r4.json",
+      "sha256": "15c59b90dfece71ee51271ee230de7d76c2a2858e2c312ab6a0debb2f078b063"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-r4.stderr",
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/ocr-rules-r4.stdout",
+      "sha256": "9377d328665729a30dd744924598d43e3607898137ebc348ef84b7382b240988"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/pre-final-source-review.json",
+      "sha256": "545a3b55cabd7fa5d73fcb26dc148d6823ad62a49e8be76ba7dbf6a2d69f15a4"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/pre-final-source-review.md",
+      "sha256": "7e8ba6cfd2b5a311c81cfcd0c61ff07042c5f88855edaee7c0537aff1623cbf6"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/pre-runtime-r1.json",
+      "sha256": "44d5118bbe58c4581899b7cb77a84a81926b03bddfac9ec3d0ce9d8ad4c5e0d1"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/pre-runtime-r1.md",
+      "sha256": "21c018fd5ff15578d4b8e8a4e14c7e282f8e650b1a689e2815d551a76e66aa5b"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/pre-runtime-r4.json",
+      "sha256": "57b5454ab15b120596ae1c8f15fc7e6fd43a509526401d27b631e9c58960a7bc"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/pre-runtime-r4.md",
+      "sha256": "8007597d599f502d0594cd1b49de4e8cdb819f0d91baf7251b8197bf096b5d56"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/pre-runtime-r5-delta.json",
+      "sha256": "8732230ffc04a4eafdcb3940e5feaedb140b32d6fb404f28e346b9d50df0ad49"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/pre-runtime-r5-delta.md",
+      "sha256": "033e115e4b2ffc0dd7373df9e6f150dbe6552d52712891a39b3b76943d9ef568"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/r1-input-audit.json",
+      "sha256": "cd5f34ae4ff434b5cf2ffb9c55c0ee373177c50e45f50ee19cefe3b5f81c95ee"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/r4-input-audit.json",
+      "sha256": "ac936072d6fc01f2006e58e19f497574906f61a0569af6b6f7b8a21fa965232d"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/review/r5-execution-audit.json",
+      "sha256": "6f58fd167dfe85ca94f07d705a41d46ee7539424f001e1ccd2fca71430aea298"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/source-deviations/dev3_recovery_effects.cpython-314.pyc",
+      "sha256": "104678e26eeb72256ac8b23b22d81355642246717dbdc6d2f464e69d5d4dac54"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/source-deviations/r5-python-cache.json",
+      "sha256": "90b2870a09a568bdcd0aef539507dec897cde9b7a1779b25319be2e96edc018f"
+    },
+    {
+      "path": "/home/et16/work/xadb/artifacts/dev3/operational-recovery-20261023/staged-source-identity.json",
+      "sha256": "40a8f53b259bc3b631b7f0902fb7f614d4f39f77efb99cf4b643f05f1b29d084"
+    }
+  ]
+}
