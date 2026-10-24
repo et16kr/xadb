@@ -2,7 +2,7 @@
 
 2026-10-18 · **XADB 적용 / DEV2 부분 구현 / 영속 엔진 미구현**
 
-검증 기반 → 공통 의미·effect → SQL 없는 영속 커널 → 디스크 저장·인덱스 → SQL → 서버 → 클라이언트를 따른다. 이관으로 기존 구현의 완료 범위를 늘리지 않는다. [단계 JSON](development-stages.json) · [완료 계약](stage-completion.json)
+검증 기반 → 공통 의미·effect → SQL 없는 영속 커널 → 디스크 저장·인덱스 → SQL → 서버 → 클라이언트의 실제 통합·인수 순서를 따른다. [D4-PREP-001](../contracts/dev4-independent-frontend.md#scope)의 저장 비의존 SQL 앞단·독립 검증 도구는 leaf 계약 동결 뒤 DEV3와 병행 개발할 수 있다. 실제 저장 통합·Q1 선행은 유지하며 이관으로 기존 구현의 완료 범위를 늘리지 않는다. [단계 JSON](development-stages.json) · [완료 계약](stage-completion.json)
 
 <a id="section-1"></a>
 ## 1. 순서의 이유

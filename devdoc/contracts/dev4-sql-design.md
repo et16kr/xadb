@@ -4,9 +4,9 @@
 
 [구현·검증 계획](../plans/dev4-implementation-plan.md) · [실제 소스 조사](../evidence/dev4-source-research.md) · [단계 범위](../plans/development-stages.json) · [완료 계약](../plans/stage-completion.json) · [DEV3 저장 계약](disk-storage-design.md) · [커널 구현 계약](implementation-contracts.md)
 
-이 문서는 XADB의 비파티션 DISK table에 대한 SQL 의미와 embedded 실행 경계를 정한다. API 이름은 구현 예정이며 호출 가능한 제품을 뜻하지 않는다. DEV2 부분 구현과 DEV3 설계 채택을 영속 엔진 완료로 해석하지 않는다. 설계 준비는 지금 가능하지만 production 구현은 DEV3 최소 선행 증거와 해당 leaf의 계약·oracle·profile 동결 뒤 시작한다.
+이 문서는 XADB의 비파티션 DISK table에 대한 SQL 의미와 embedded 실행 경계를 정한다. API 이름은 구현 예정이며 호출 가능한 제품을 뜻하지 않는다. DEV2 부분 구현과 DEV3 설계 채택을 영속 엔진 완료로 해석하지 않는다. [D4-PREP-001 독립 앞단](dev4-independent-frontend.md#scope)의 lexer/parser·값 처리와 독립 검증 도구는 해당 leaf 계약·oracle·profile 동결 뒤 DEV3와 병행 개발할 수 있다. 실제 엔진을 소비하는 구현·Q1은 DEV3 최소 선행 증거를 요구한다. 이번 계약·계획 작성은 제품 개발·시험 재개가 아니다.
 
-공급 대상은 [DEV3-DESIGN-003](disk-storage-design.md#decision)의 mutable page·WAL·영속 undo와 statement token·table 단위 Serializable 검증이다. 이 보완 작업 중 해당 새 안과 별도 독립 검토 뒤 ACCEPTED 전환을 관측했다. 실제 공급 증거는 DEV4 production 착수 전에 확인한다. DEV2 전용 COW·전역 q·단일 거래 WAL frame을 DEV3 disk 경로의 계약으로 사용하지 않는다.
+공급 대상은 [DEV3-DESIGN-003](disk-storage-design.md#decision)의 mutable page·WAL·영속 undo와 statement token·table 단위 Serializable 검증이다. 이 보완 작업 중 해당 새 안과 별도 독립 검토 뒤 ACCEPTED 전환을 관측했다. 실제 공급 증거는 DEV4의 engine 소비 구현 착수 전에 확인한다. DEV2 전용 COW·전역 q·단일 거래 WAL frame을 DEV3 disk 경로의 계약으로 사용하지 않는다.
 
 <a id="scope"></a>
 ## 1. 범위·원문·선택

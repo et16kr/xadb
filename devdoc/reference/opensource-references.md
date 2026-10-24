@@ -65,3 +65,9 @@ WiredTiger·toyDB는 위 10개 로컬 checkout에 포함되지 않은 추가 비
 ## 연구 기록과 적용
 
 각 연구 기록에는 실제 URL·버전/commit, 읽은 부분, 질문, 채택/기각 이유, XADB 소유 계약과 필요한 시험을 남긴다. 여러 DBMS의 동작이 다르면 XADB의 선택과 경계를 명시한다. 아직 조사하지 않은 기능을 기존 코드의 근거로 소급 기재하지 않는다.
+
+## 사용자 제공 Oracle 매뉴얼 — 2026-10-24
+
+`/home/et16/work/OracleManual`은 [OracleManual 저장소](https://github.com/elpisk/OracleManual)의 로컬 clone이다. 2026-10-24 확인 HEAD는 `269894a0eaf96cb3eae9db23b8e83b4575df7117`, origin은 `https://github.com/elpisk/OracleManual.git`, 작업 트리는 clean이었다. 위10개 DBMS 소스 checkout과 별개의 매뉴얼/교육 자료이며 README는 공식 자료와 개인 자료가 함께 있음을 명시한다.
+
+SQL 의미 연구에는 `SQL/19c_sql_ch03_new.md`(조건·정렬), `SQL/19c_sql_ch10_new.md`(DML·거래), `SQL/19c_sql_ch11_new.md`(DDL·이름)를 진입점으로 사용한다. 예제와 요약을 Oracle 공식 reference의 전제·버전과 대조하며 충돌하면 해당 공식 원문을 확인한다. [DEV4 실제 열람·차이 해결](../evidence/dev4-preparation-research-20261024.md#oracle)은 이름128 bytes·비교 우선순위와 XADB 지원 범위의 차이를 기록한다. 전체 자료 검증·Oracle 실행·매뉴얼 복제를 뜻하지 않는다. 이후 조사에서는 실제 revision을 다시 기록한다.

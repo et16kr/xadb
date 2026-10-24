@@ -4,7 +4,7 @@
   "status": "COMPLETION_RULES_DEFINED_FUTURE_ACCEPTANCE_INPUTS_PENDING",
   "scope": "Finite stage closure rules; planned tests are NOT_RUN and no product pass is granted by this document.",
   "policy": {
-    "entry_rule": "Complete stage minimum prerequisites and exact leaf task prerequisites; freeze that leaf contract/oracle/profile before production implementation. Contract preparation and XADB-046 inventory work may proceed earlier.",
+    "entry_rule": "Complete stage minimum prerequisites and exact leaf task prerequisites; freeze that leaf contract/oracle/profile before production implementation. Contract preparation and XADB-046 inventory work may proceed earlier. Narrow D4-PREP-001 exception: storage-independent DEV4 frontend and independent reference/model leaves may be implemented after their own leaf freeze before DEV3 completion; engine-consuming implementation and Q1 still require actual DEV3 minimum supply. Planning does not start implementation or tests.",
     "closure_rule": "Frozen nonempty required inventory, all required task/variant cases VERIFIED_PASS on identified candidate, affected lower-level regressions PASS, resources/cleanup/evidence complete, zero unresolved required decisions or blockers. Missing entrypoint/evidence is NOT_RUN, not PASS.",
     "local_evidence_rule": "DEV0/DEV1 LOCAL_VERIFIED permits scoped local dependent development; does not satisfy protected CI, official distribution, all PA/KU cases or release promotion.",
     "internal_distribution_rule": "A declared internal capability needs its complete current-build closure record plus pinned execution environment and protected evidence review/promotion; no previous internal compatibility. These promotion obligations are currently NOT_RUN.",
@@ -1052,12 +1052,13 @@
         "D4-F02/F04: actual opaque observation signatures and no-wait conflict barriers; R2/T11 low-quota partial-CLR restart and reserve-restore supply evidence remain NOT_RUN",
         "D4-F02/F04/F05: logical rollback versus retained WAL/CLR/undo/page/SMO/lock ownership and fresh operation context per fetch; actual API, schedules and resource measurements pending",
         "D4-F02/F03/F05: freeze concurrent memory/disk/FD boundary schedules, old/new binding allocation witnesses and spill cleanup reservations",
-        "D4-WORK-BREAKDOWN-002: F02 lifecycle transition ownership is integrated by 4.13 from 4.12/4.13/4.14 contracts; F04 assigns independent bounded lifecycle model/explorer and known-bad completion to 4.16.1/3, with R1/R2/R3/R4 and checkpoint/restore separately allocated in 4.17. Each case records its primary execution-unit owner, consumers, required variants, changed-code scope and original receipt; allocation is not execution evidence"
+        "D4-WORK-BREAKDOWN-002: F02 lifecycle transition ownership is integrated by 4.13 from 4.12/4.13/4.14 contracts; F04 assigns independent bounded lifecycle model/explorer and known-bad completion to 4.16.1/3, with R1/R2/R3/R4 and checkpoint/restore separately allocated in 4.17. Each case records its primary execution-unit owner, consumers, required variants, changed-code scope and original receipt; allocation is not execution evidence",
+        "D4-PREP-001: scoped F01/F04 Rust representation, whitespace/newline/error precedence, allocation and cancel profile, literal fixture hashes and per-case commands remain leaf freezes; F02 lifecycle model actions and finite bounds remain pending. Scope/semantic boundaries are fixed by the contract, not a claim of all F01-F05 execution inputs frozen."
       ],
       "deferred_obligations": [
         "server/client·확장 SQL은 후속 의무",
         "SQL READ COMMITTED exposure/default requires actual DEV3-DESIGN-003 native statement snapshots and row/key conflict verification; conservative full abort after an observed-version change is not identical to Oracle",
-        "DEV3-DESIGN-003 acceptance and actual WAL/undo/CLR/doublewrite/checkpoint/retention/recrash evidence precede DEV4 production handoff; this design edit does not execute the storage implementation"
+        "DEV3-DESIGN-003 acceptance and actual WAL/undo/CLR/doublewrite/checkpoint/retention/recrash evidence precede DEV4 engine-consuming implementation and integration handoff; D4-PREP-001 independent frontend/reference work is the only narrow exception; this design edit does not execute the storage implementation"
       ],
       "run_entrypoint": null,
       "evidence_refs": [],
@@ -1067,8 +1068,17 @@
         "dev4-sql-design.md",
         "dev4-implementation-plan.md",
         "dev4-work-breakdown.md",
-        "dev4-sql-design.md#extensibility-review"
-      ]
+        "dev4-sql-design.md#extensibility-review",
+        "dev4-independent-frontend.md",
+        "dev4-preparation-plan.md"
+      ],
+      "independent_preparation": {
+        "contract_ref": "dev4-independent-frontend.md",
+        "plan_ref": "dev4-preparation-plan.md",
+        "design_status": "ACCEPTED",
+        "execution_status": "NOT_RUN",
+        "q1_evidence": false
+      }
     },
     {
       "id": "DEV5",

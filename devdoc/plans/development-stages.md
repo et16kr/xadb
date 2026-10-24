@@ -38,6 +38,8 @@ DEV9의 기준선/후보 identity·세부 요구/조합·독립 판정·설치/�
 <a id="section-2"></a>
 ## 2. 최소 SQL 범위
 
+[D4-PREP-001 독립 앞단 계약](../contracts/dev4-independent-frontend.md)과 [병행 준비 계획](dev4-preparation-plan.md)에 따라 lexer/parser·값 처리·필요한 자원/진단 부분 및 독립 oracle/model은 해당 leaf 입력 동결 뒤 DEV3와 병행 개발할 수 있다. 이 예외는 DEV4의 실제 engine 소비·Q1 인수 선행을 바꾸지 않는다. 계획 채택은 제품 구현·시험 재개가 아니며 현재 DEV4/Q1은 NOT_RUN이다.
+
 DEV4는 비파티션 디스크 table의 CREATE/DROP TABLE/INDEX, INSERT/UPDATE/DELETE, 단일 table SELECT·predicate·ORDER BY·limit, BEGIN/COMMIT/ROLLBACK과 typed prepare/bind/execute/fetch/close를 제공할 계획이다. 최소 타입은 signed 64-bit integer·BOOLEAN·UTF-8 text·binary와 NULL이다. 문법·타입·parameter·수명·오류는 [DEV4 상세 설계](../contracts/dev4-sql-design.md), 구현 순서·SC02/KU13/PF10은 [구현·검증 계획](dev4-implementation-plan.md)을 따른다. [SQL 초안](../reference/sql-language-draft.md)은 이전 제안이며, 실제 leaf API·profile 동결과 DEV3 실행 선행 요건은 남아 있다.
 
 [Oracle 리뷰 보완](../contracts/dev4-sql-design.md#oracle-review)은 대문자 미인용 이름, SQL 빈 text 입력의 typed NULL, 전체 NULL만 중복 허용하는 문장 최종 UNIQUE, 이전 거래와 DDL의 별도 commit 결과·RecoveryRequired를 구체화한다. native 값 표현·독립 DDL API를 유지하며 DEV3-DESIGN-003의 statement token·table 단위 SERIALIZABLE·WAL/영속 undo 공급을 전제로 한다. 실제 공급 검증과 SQL READ COMMITTED 노출은 [후속 계약 의무](dev4-implementation-plan.md#oracle-followup)이며 Oracle 전체 호환·제품 실행 완료를 뜻하지 않는다.

@@ -52,7 +52,7 @@ DEV3처럼 큰 책임을 분류하고 각 책임을 좁은 공급 단위와 소�
 | 제한 공급 | 실제 구현한 경로와 선택 시험 결과, source/binary/fixture identity, 미연결 소비자·미실행 변형. parser PASS를 SQL 실행 PASS로 표시하지 않음 |
 | 통합 완료 | 새로 연결·수정한 경로의 원자성·오류·수명·자원 인수와 별도 검토, 남은 의무·실패 원본. 다른 분류 전체 완료를 암묵적으로 승격하지 않음 |
 
-설계·literal 기대값 준비는 DEV3와 독립적으로 할 수 있다. production 착수는 [기존 DEV4 진입 조건](dev4-implementation-plan.md#entry)의 실제 DEV3 최소 공급 증거와 해당 leaf 동결 뒤다. 공급 API가 부족하면 engine owner에게 최소 계약 보완을 요청하고 SQL의 private page/WAL 접근·UNIQUE 재구현·분할 commit으로 우회하지 않는다. 분류마다 새 crate를 만들지 않으며 실제 파일·빌드 등록은 구현과 함께 한다.
+설계·literal 기대값 준비는 DEV3와 독립적으로 할 수 있다. [D4-PREP-001](../contracts/dev4-independent-frontend.md#scope)의 4.02/4.03/4.04와 필요한 공통 앞단 부분·독립 검증 도구는 해당 leaf 동결 뒤 DEV3와 병행 구현할 수 있다. [준비 계획](dev4-preparation-plan.md)의 허용 범위 밖 engine 소비 구현은 [DEV4 진입 조건](dev4-implementation-plan.md#entry)의 실제 DEV3 최소 공급 증거를 요구한다. 공급 API가 부족하면 engine owner에게 최소 계약 보완을 요청하고 SQL의 private page/WAL 접근·UNIQUE 재구현·분할 commit으로 우회하지 않는다. 분류마다 새 crate를 만들지 않으며 실제 파일·빌드 등록은 구현과 함께 한다.
 
 <a id="task-01"></a>
 ## 3. 4.01 — 저장 공급 수신·입력 동결
@@ -62,7 +62,7 @@ DEV3처럼 큰 책임을 분류하고 각 책임을 좁은 공급 단위와 소�
 | 하위 ID·산출물 | 직접 선행 | 완료 조건 |
 | --- | --- | --- |
 | 4.01.1 공급·차이 목록 | 현행 SQL/DEV3 owner 계약·실제 구현 기록 | catalog/DDL, scan/point/range·owned row, token/observation·undo, commit/fencing, temp 효과 port 각각의 API·source·실행 범위와 미충족을 구분. 표현·유한 모델을 실제 disk 증거로 오인하지 않음 |
-| 4.01.2 공통 경계 동결 | 4.01.1, 해당 실제 DEV3 공급 | F01/F02의 AST/bound/metadata·error/outcome·session/result/token 소유 경계를 소비 leaf별로 동결·독립 검토. 존재하지 않는 API 이름을 callable로 등록하지 않음 |
+| 4.01.2 공통 경계 동결 | 독립 앞단은 D4-PREP-001과 실제 foundation 공급; engine 소비는4.01.1·해당 실제 DEV3 공급 | F01/F02의 AST/bound/metadata·error/outcome·session/result/token 소유 경계를 소비 leaf별로 동결·독립 검토. 전체 session/engine 경계를 lexer의 선행으로 두지 않고 존재하지 않는 API 이름을 callable로 등록하지 않음 |
 | 4.01.3 실행 입력 수합 | 해당 4.08/4.16/4.18의 준비 산출물 | F03 spill bytes·F04 관측/fixture·F05 자원/성능 profile의 담당·완료/잔여를 관리. 아직 쓰지 않는 모든 미래 입력을 lexer의 선행으로 만들지 않음 |
 
 <a id="dev5-supply"></a>
@@ -397,7 +397,7 @@ ARIES는 partial/total rollback·WAL·redo-only CLR·반복 장애를 구분할 
 <a id="sequence"></a>
 ## 21. 공급 순서와 작업 크기
 
-아래 묶음은 기존 D4-0–7의 책임 안에서 좁은 공급과 인수를 배정하는 우선순위다. D4-0–7을 전부 완료한 뒤 다음 번호를 시작하는 장벽으로 해석하지 않는다. DEV3 production 진입 조건·Q1 전체 범위는 유지한다. 문서·독립 기대값 준비만 앞당길 수 있으며 실제 공급 미완료를 이 순서표로 면제하지 않는다.
+아래 묶음은 기존 D4-0–7의 책임 안에서 좁은 공급과 인수를 배정하는 우선순위다. D4-0–7을 전부 완료한 뒤 다음 번호를 시작하는 장벽으로 해석하지 않는다. [D4-PREP-001의 독립 모듈](dev4-preparation-plan.md#sequence)은 DEV3와 병행 구현할 수 있다. engine 소비의 DEV3 진입 조건·Q1 전체 범위는 유지하며 실제 공급 미완료를 이 순서표로 면제하지 않는다.
 
 | 묶음 | 먼저 준비·공급할 단위 | 뒤에서 닫을 소비·인수 |
 | --- | --- | --- |

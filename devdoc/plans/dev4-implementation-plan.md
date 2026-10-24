@@ -11,9 +11,9 @@
 <a id="entry"></a>
 ## 1. 착수와 완료를 구분한다
 
-DEV4의 기존 task는 XADB-011, gate는 Q1이며 DEV3에 의존한다. DEV2 P0/K0 volatile 실행이나 이관 사실, DEV3 설계 검토를 DEV4 production 착수 증거로 사용하지 않는다. 설계·독립 기대값 준비는 먼저 가능하다. 현재 SQL crate·CLI·실행 harness는 없고 run entrypoint/evidence는 null/빈 목록을 유지한다.
+DEV4의 기존 task는 XADB-011, gate는 Q1이며 실제 엔진 통합·인수는 DEV3에 의존한다. [D4-PREP-001](../contracts/dev4-independent-frontend.md#scope)의 독립 lexer/parser·값 처리와 검증 도구는 해당 leaf 입력 동결 뒤 먼저 개발할 수 있다. [병행 준비 계획](dev4-preparation-plan.md)은 허용 ID·공통 자원 부분·FE01–16과 DEV3 수신을 구분한다. DEV2 P0/K0 volatile 실행이나 이관 사실, DEV3 설계 검토를 실제 엔진 공급 증거로 사용하지 않는다. 현재 SQL crate·CLI·실행 harness는 없고 run entrypoint/evidence는 null/빈 목록을 유지한다. 이번 계획 확정만으로 개발·시험을 시작하지 않는다.
 
-선행 인수에는 DEV3-DESIGN-003의 실제 disk row/catalog/index·bounded scan/point/range, statement token·영속 undo mark와 read-your-writes, 부분 NULL·문장 최종 상태 unique·key lock/overflow, WAL-before-page·commit WAL sync·UNKNOWN/RecoveryRequired fencing·reopen, fuzzy checkpoint/일관 backup/restore·retention과 해당 최소 완료 증거가 필요하다. 새 DEV3 결정의 별도 독립 검토·채택은 확인했으며 실제 공급 증거를 확인한 뒤 production을 시작한다. 기존 stage DAG와 XADB-011의 task 의존을 변경하지 않는다. COMM/PART/NG·고급 SQL을 추가 선행으로 만들지 않는다.
+엔진 소비 구현의 선행 인수에는 DEV3-DESIGN-003의 실제 disk row/catalog/index·bounded scan/point/range, statement token·영속 undo mark와 read-your-writes, 부분 NULL·문장 최종 상태 unique·key lock/overflow, WAL-before-page·commit WAL sync·UNKNOWN/RecoveryRequired fencing·reopen, fuzzy checkpoint/일관 backup/restore·retention과 해당 최소 완료 증거가 필요하다. 새 DEV3 결정의 별도 독립 검토·채택은 확인했으며 실제 공급 증거를 확인한 뒤 해당 구현을 시작한다. 기존 stage DAG와 XADB-011의 통합 의존을 유지한다. COMM/PART/NG·고급 SQL을 추가 선행으로 만들지 않는다.
 
 | 공급 경계 | SQL이 받을 계약·실제 인수 |
 | --- | --- |
@@ -34,7 +34,7 @@ DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01�
 
 | 기존 ID | 책임·산출물 | 선행·완료 범위 |
 | --- | --- | --- |
-| D4-0 | 공급 경계 대조·F01–F05, 독립 literal/vector inventory, oracle 부정 사례 | 설계 준비 가능. 모든 공통 API와 byte/오류 입력 동결 뒤 관련 production 착수 |
+| D4-0 | 공급 경계 대조·F01–F05, 독립 literal/vector inventory, oracle 부정 사례 | 소비 leaf의 공통 API와 byte/오류 입력 동결 뒤 관련 구현 착수. D4-PREP-001 앞단은 독립 진행, engine 소비는 실제 DEV3 선행 수신 |
 | D4-1 | lexer/parser와 bounded AST·span·CLI 문장 경계 | F01. 정상·경계·잘린 입력·unsupported·fuzz. parser 단독 PASS는 Q1 아님 |
 | D4-2 | binder·catalog dependency·타입/NULL·metadata·DDL lowering | D4-1 및 실제 DEV3 catalog/DDL. 대문자 이름·SQL 빈 text·identity/schema race·PK 강화·원자 DDL |
 | D4-3 | INSERT 입력·원자 statement, RowScan/filter/project/limit, UPDATE/DELETE 대상 확정 | 해당 D4-2·D4-5 기반과 실제 native statement. INSERT는 SELECT cursor에 의존하지 않음. 작은 commit/reopen·문장 실패를 D4-6 관측과 함께 먼저 인수 |
@@ -43,7 +43,7 @@ DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01�
 | D4-6 | embedded CLI·XADBTest SQL adapter·native/SQL history 연결·PF10 | 해당 기능과 F04/05. 최소 adapter·fault/ACK 관측·계측은 첫 경로에 공급, R1–R4·restore·P10-A–E를 각각 배정. CLI 전체 완성을 기본 복구/비용 비교의 선행으로 두지 않음 |
 | D4-7 | Q1 전체 inventory 수합·별도 검토·현재 build closure | 모든 필수 variant·SC02·KU13·PF10·영향 lower regression PASS. official distribution은 별도 |
 
-독립 lexer/vector 준비는 저장 구현과 겹칠 수 있으나 production 선행 gate를 생략하지 않는다. D4-2와 D4-5의 공통 BoundStatement/handle/error 계약을 먼저 고정하고, D4-3/4의 executor 조립은 한 소유자가 통합한다. 별도 구현 agent를 실제 배정하려면 파일 소유·공유 변경·기준 revision을 그때 기록한다. 현재 병렬 성능 향상을 주장하지 않는다.
+독립 lexer/parser/값·검증 도구는 [병행 준비 계획](dev4-preparation-plan.md#sequence)의 좁은 범위에서 구현할 수 있다. 실제 engine 소비의 선행은 유지한다. D4-2와 D4-5의 공통 BoundStatement/handle/error 계약은 해당 통합 전에 고정하며 아직 사용하지 않는 전체 handle/session API를 lexer의 선행으로 만들지 않는다. D4-3/4의 executor 조립은 한 소유자가 통합한다. 별도 구현 agent를 실제 배정하려면 파일 소유·공유 변경·기준 revision을 그때 기록한다. 현재 병렬 성능 향상을 주장하지 않는다.
 
 <a id="freeze"></a>
 ## 3. leaf 구현 전 남은 동결 항목
@@ -56,7 +56,7 @@ DEV3-REVIEW-004의 모델·실제 disk 인수를 구분해 수신한다. D3-M01�
 | D4-F04 | Q1 필수 사례와 native/literal independence·rollback/recrash | SQL worker adapter/protocol version·DDL 두 outcome/ACK·NotCommittedRecoveryRequired를 포함한 row/error/event schema, D4-V17–28·DEV3 WAL/undo/CLR·bootstrap/예약 복원과 fault 교차 inventory, mutation·negative verdict·seed/schedule·실행 명령 |
 | D4-F05 | PF10 workload군·기본 V2/V3·계측 책임 | 실제 host/CPU/FS·fixture cardinality/distribution/hash·release binary/feature, warmup/sample·RSS/I/O·계측 비용·회귀 threshold·paired 순서와 재현 recipe |
 
-담당은 해당 leaf 구현자와 SQL/engine 계약 담당, 통합 담당이며 실제 이름을 착수 기록에 배정한다. 빈 담당·null entrypoint를 동결 완료로 바꾸지 않는다. 각 동결은 DP01 별도 검토를 받고 구현 후보를 실행하기 전에 hash를 기록한다. 실패를 없애기 위해 사후 예산/variant를 줄이지 않는다.
+담당은 해당 leaf 구현자와 SQL/engine 계약 담당, 통합 담당이며 실제 이름을 착수 기록에 배정한다. 빈 담당·null entrypoint를 동결 완료로 바꾸지 않는다. 각 동결은 DP01 별도 검토를 받고 구현 후보를 실행하기 전에 hash를 기록한다. 실패를 없애기 위해 사후 예산/variant를 줄이지 않는다. D4-PREP-001의 [확정/잔여 표](dev4-preparation-plan.md#freeze)는 F01/F04 앞단과 필요한 자원 부분을 분리하며 이 표 전체의 동결 완료를 뜻하지 않는다.
 
 002의 배정에 따라 F02에는 [수명 통합 상태/action 표](dev4-work-breakdown.md#lifecycle-model)와 유한 모델 입력을, F03에는 [DEV3 sorter 재사용·분리 판단](dev4-work-breakdown.md#sort-reuse)을 포함한다. F04는 각 case의 주 담당 실행 ID·소비자·최소/확대 변형·관련 diff·원래 receipt를 연결하며 상태 탐색기/known-bad·R1–R4·restore를 각각 선택 가능하게 동결한다. F05는 P10-A–E별 fixture/수치 예산/명령을 동결한다. 준비 산출물과 동결 완료 후의 구현 소비를 구분하여 F03/F05 자신을 준비 작업의 완료 선행으로 두지 않는다.
 

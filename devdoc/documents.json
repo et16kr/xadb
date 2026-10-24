@@ -1902,6 +1902,21 @@
       "path": "evidence/dev3-mixed-system-init-20261024.json",
       "role": "evidence",
       "title": "DEV3 혼합 INIT source별 선택 증거"
+    },
+    "dev4-independent-frontend.md": {
+      "path": "contracts/dev4-independent-frontend.md",
+      "role": "contracts",
+      "title": "DEV4 — DEV3와 독립적인 SQL 앞단 계약"
+    },
+    "dev4-preparation-plan.md": {
+      "path": "plans/dev4-preparation-plan.md",
+      "role": "plans",
+      "title": "DEV4 — DEV3 병행 준비·독립 모듈 개발 계획"
+    },
+    "dev4-preparation-research-20261024.md": {
+      "path": "evidence/dev4-preparation-research-20261024.md",
+      "role": "evidence",
+      "title": "DEV4 독립 앞단 — Oracle·로컬 DBMS 조사와 계약 검토"
     }
   }
 }

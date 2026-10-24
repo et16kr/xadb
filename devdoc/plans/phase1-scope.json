@@ -46,7 +46,7 @@
     "disk_commit": "durable COW data/index/locator pages before common commit WAL; atomic complete view publish",
     "isolation_first": "SERIALIZABLE via coarse epoch validation",
     "offline_ddl_first": "database-wide close-admission then drain then shadow generation switch",
-    "disk_timing": "DEV3 required before DEV4 SQL; advanced disk optimization may follow measured need",
+    "disk_timing": "DEV3 required before DEV4 engine-consuming SQL implementation/integration; dev4-independent-frontend.md permits narrowly scoped independent frontend/reference development after leaf freeze; advanced disk optimization may follow measured need",
     "development_order": "test -> foundation -> SQL-free durable kernel -> DISK storage baseline -> embedded SQL -> server -> clients; COMM/PART/NG are explicit branches",
     "recovery_logging_contract": "recovery-logging-contract.json",
     "checkpoint": "exact committed immutable generation selected by durable manifest/CURRENT; no fixed two-full-image requirement"

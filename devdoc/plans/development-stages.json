@@ -213,8 +213,17 @@
         "dev4-implementation-plan.md",
         "dev4-work-breakdown.md",
         "dev4-sql-design.md#architecture-review",
-        "dev4-sql-design.md#conflict-reserve-review"
-      ]
+        "dev4-sql-design.md#conflict-reserve-review",
+        "dev4-independent-frontend.md",
+        "dev4-preparation-plan.md"
+      ],
+      "independent_preparation": {
+        "decision_ref": "dev4-independent-frontend.md#decision",
+        "plan_ref": "dev4-preparation-plan.md",
+        "design_status": "ACCEPTED",
+        "execution_status": "NOT_RUN",
+        "engine_integration_requires_dev3": true
+      }
     },
     {
       "id": "DEV5",
@@ -826,7 +835,7 @@
     "product_test_status": "NOT_RUN"
   },
   "completion_contract_reference": "stage-completion.json",
-  "stage_dependency_semantics": "Stage edges are minimum entry prerequisites; exact task dependencies also apply. A feature may start after its predecessors; whole-stage closure requires every required task, variant and affected integration in stage-completion.json.",
+  "stage_dependency_semantics": "Stage edges are minimum entry prerequisites; exact task dependencies also apply. A feature may start after its predecessors; whole-stage closure requires every required task, variant and affected integration in stage-completion.json. D4-PREP-001 permits only the storage-independent DEV4 frontend and independent reference/model leaves before DEV3 completion after their own contract/oracle/profile freeze; DEV4 engine integration and Q1 keep the DEV3 prerequisites.",
   "documentation_drafts": {
     "manual_ref": "user-manual-draft.json",
     "sql_ref": "sql-language-draft.json",

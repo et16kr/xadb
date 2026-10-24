@@ -1,5 +1,7 @@
 # DEV4 소스·Oracle/ARIES 조사 기록
 
+2026-10-24 [독립 앞단 후속 조사](dev4-preparation-research-20261024.md): Oracle19c 공식 reference·로컬 OracleManual·4개 DBMS의 선택 소스 경계와 D4-PREP-001을 연결한다. 아래 기존 조사·검토 identity는 유지한다.
+
 2026-10-18 · **실제 checkout·선택 코드 열람 / 외부 코드 도입·DBMS 실행·XADB Q1 검증 아님**
 
 [로컬 소스 catalog](../reference/opensource-references.md) · [SQL 설계](../contracts/dev4-sql-design.md) · [구현·검증 계획](../plans/dev4-implementation-plan.md)
