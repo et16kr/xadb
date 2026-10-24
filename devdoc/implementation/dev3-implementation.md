@@ -1035,3 +1035,8 @@ G5의 원 pool bind/load와 G6 live queue·atomic Begin·flush/replay, G7 Catalo
 [계약](../contracts/dev3-recovery-control-base.md)에 따라 XRB1의 전체 census와 XRC1/XWE2/XWS2 표현, borrowed ownership·allocation·Catalog 검산을 구현했다. [원 source/ELF 증거](../evidence/dev3-recovery-control-base-20261024.md)는 신규 필수272(static3·semantic269) PASS·완료 반복0이며 원 fmt/Clippy 실패를 보존한다. 최종 독립 D1을 순수 codec 범위로 제한 수용했다. 순수 호출 상계 base63,204/control21,620bytes는 caller를 포함하며 실제 owner F05·stack/RSS 결과가 아니다.
 
 최종 source의 수정은 import 배치·lint annotation·동등 size 식뿐이며 원 실행272를 새 source 실행으로 표시하지 않는다. S5 추가23,886은 NOT_RUN이다. 별도 live 자원 실패2와 stale cache HOLD는 보존하며 이 단위 완료에 합치지 않는다. actual CURRENT 선택/공개·REBASE/LOG_OPEN·loser 정리·VERIFY/STABILIZE·같은 pool live/3PID, Catalog CREATE/CLR·첫 행 ACK는 미완료다. AI 완료 소비자1/3·DEV3 미완료를 유지한다.
+
+<a id="retention-live"></a>
+## DEV3 plan4 빈 거래 live·prefix — 2026-10-25
+
+[계약](../contracts/dev3-retention-live.md)의 원 owner/pool에 fresh reserve/INIT·AgingStart·Begin·RollbackStart·AbortEnd·Finish, late RAM을 보존하는 flush와 최신 home 재적재를 연결했다. tag3 prefix는 관측용이다. [원 결과](../evidence/dev3-retention-live-20261025.md)는 live static2/memory30·prefix43, 합75 PASS·완료 반복0이며 원FAIL과 source별 경계를 보존한다. 최종 독립 D1 제한 수용이다. S5 추가269와 복구 owner·native3PID·Catalog CREATE/CLR·첫 행 ACK는 미완료이며 AI 완료 소비자1/3을 유지한다.

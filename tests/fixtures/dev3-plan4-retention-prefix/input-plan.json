@@ -1,0 +1,1997 @@
+{
+  "schema": "XADB_RETENTION_PREFIX_INPUT_V1",
+  "status": "SOURCE_ONLY_NOT_COMPILED_NOT_RUN",
+  "source_files": {
+    "crates/engine/src/storage/wal_retention_prefix_tests.rs": "c68e08bd6474ae25c342d85143186e93c86b5480d6acbee321a337c6fcc70a90",
+    "crates/engine/src/storage/wal_frame.rs": "6b67900df1bc1b7cdd4251c80d00c33dbd9ac5d8a7359f55529c3827099e7a28"
+  },
+  "scope": "New tag3 prefix entry points only; no old test invocation, no I/O or authority. Primitive hash only; literal wire authoring uses explicit offsets.",
+  "cases": {
+    "P4-RP001": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_observes_only_envelope",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP002": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_observes_only_envelope",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP003": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_observes_only_envelope",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP004": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_observes_only_envelope",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP005": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_observes_only_envelope",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP006": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_incomplete_boundaries",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP007": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_incomplete_boundaries",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP008": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_incomplete_boundaries",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP009": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_incomplete_boundaries",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP010": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_incomplete_boundaries",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP011": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_incomplete_boundaries",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP012": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_incomplete_boundaries",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP013": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_incomplete_boundaries",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP014": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP015": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP016": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP017": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP018": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP021": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP022": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP023": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP024": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP026": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP027": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP028": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP031": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP019": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP020": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP025": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP029": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP030": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_visible_rejections",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP032": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_complete_checksum_and_order",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP033": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_complete_checksum_and_order",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP034": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_complete_checksum_and_order",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP035": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_complete_checksum_and_order",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP036": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_preserves_input_and_borrow",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP037": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_preserves_input_and_borrow",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP038": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_header_length_bounds",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP039": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_header_length_bounds",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP040": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_header_length_bounds",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP041": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_header_length_bounds",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP042": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_header_length_bounds",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RP043": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_rejects_other_tags",
+      "phase": "mandatory",
+      "category": "semantic",
+      "expectation": "independent literal and explicit error/length/borrow assertions in named source function"
+    },
+    "P4-RPS000": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": "P4-RP001",
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS001": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": "P4-RP006",
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS002": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS003": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS004": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS005": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": "P4-RP007",
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS006": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS007": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS008": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS009": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS010": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS011": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS012": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS013": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS014": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS015": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS016": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS017": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS018": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS019": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS020": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS021": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS022": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS023": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS024": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS025": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS026": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS027": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS028": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS029": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS030": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS031": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS032": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS033": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS034": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS035": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS036": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS037": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS038": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS039": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS040": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS041": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS042": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS043": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS044": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS045": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS046": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS047": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS048": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS049": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS050": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS051": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS052": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS053": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS054": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS055": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS056": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS057": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS058": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS059": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS060": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS061": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS062": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS063": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS064": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS065": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS066": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS067": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS068": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS069": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS070": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS071": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS072": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS073": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS074": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS075": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS076": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS077": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS078": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS079": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS080": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS081": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS082": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS083": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS084": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS085": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS086": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS087": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS088": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS089": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS090": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS091": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS092": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS093": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS094": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS095": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS096": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS097": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS098": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS099": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS100": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS101": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS102": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS103": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS104": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS105": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS106": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS107": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS108": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS109": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS110": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS111": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS112": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS113": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS114": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS115": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS116": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS117": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS118": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS119": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS120": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS121": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS122": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS123": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS124": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS125": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS126": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS127": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS128": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS129": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS130": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS131": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS132": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS133": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS134": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS135": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS136": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS137": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS138": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS139": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS140": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS141": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS142": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS143": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS144": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS145": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS146": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS147": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS148": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS149": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS150": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS151": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS152": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS153": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS154": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS155": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS156": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS157": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS158": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS159": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": "P4-RP008",
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS160": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": "P4-RP009",
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS161": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS162": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS163": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS164": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS165": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS166": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS167": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS168": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS169": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS170": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS171": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS172": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS173": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS174": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS175": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS176": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS177": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS178": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS179": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS180": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS181": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS182": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS183": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS184": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS185": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS186": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS187": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS188": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS189": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS190": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS191": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS192": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS193": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS194": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS195": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS196": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS197": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS198": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS199": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS200": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS201": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS202": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS203": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS204": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS205": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS206": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS207": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS208": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS209": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS210": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS211": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": "P4-RP010",
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS212": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS213": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS214": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS215": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS216": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS217": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS218": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS219": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS220": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS221": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS222": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS223": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS224": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS225": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS226": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS227": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS228": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS229": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS230": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS231": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS232": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS233": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS234": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS235": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS236": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS237": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS238": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS239": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS240": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS241": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS242": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": null,
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    },
+    "P4-RPS243": {
+      "selector": "storage::wal_frame::retention_prefix_tests::retention_prefix_s5_every_eof",
+      "phase": "s5",
+      "category": "semantic",
+      "alias_of": "P4-RP011",
+      "expectation": "End only at0, otherwise Incomplete at selected active unrequired EOF"
+    }
+  },
+  "counts": {
+    "mandatory": 43,
+    "s5_additional": 237,
+    "s5_aliases": 7
+  },
+  "runtime_budget_proposal": {
+    "worker_seconds": 20,
+    "audit_seconds": 10,
+    "wall_seconds": 30,
+    "per_function_seconds": 5,
+    "per_case_seconds": 5,
+    "output_bytes": 1048576
+  },
+  "source_value_bound": "Same small bounded header/checksum entry as existing fixed mode; borrowed input only. No additional runtime owner, frame/page array or namespace calls.",
+  "independent_review": {
+    "reviewer": "/root/mixed_history_implementation",
+    "decision": "SOURCE_D2_ACCEPTED_AFTER_ALIAS_CORRECTION",
+    "correction": "RPS161 active unrequired EOF is not an alias of RP012 forbidden incomplete; original input preserved",
+    "runtime": 0
+  }
+}

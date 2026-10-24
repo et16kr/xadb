@@ -167,6 +167,18 @@ pub(in crate::storage) struct InstallPermit<'a, 'c, 's> {
     after: &'a [u8; PAGE_BYTES],
 }
 impl<'a, 'c, 's> InstallPermit<'a, 'c, 's> {
+    /// The live retention producer supplies the actual complete-stage proof;
+    /// the common installer retains its existing representation and checks.
+    pub(in crate::storage) fn from_retention(proof: super::RetentionInstall<'a, 'c, 's>) -> Self {
+        Self {
+            core: proof.core(),
+            stamp: proof.stamp(),
+            requirement: proof.requirement(),
+            after_counter: proof.stamp().modification_counter + 1,
+            after: proof.after(),
+        }
+    }
+
     /// This proof has no raw constructor: only the serialized empty-transaction
     /// producer creates it after complete stage and retained ownership.
     pub(in crate::storage) fn from_empty_transaction(

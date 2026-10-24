@@ -42,7 +42,9 @@ impl InitClaimRecord {
         pool.directory.closed_index() == Some(self.payload_index)
             && self.payload_index > 0
             && self.payload_index < pool.frames.len()
-            && (pool.frames.len() == 2 || pool.directory.resident_payloads())
+            && (pool.frames.len() == 2
+                || pool.directory.resident_payloads()
+                || pool.directory.retention_payloads())
             && pool.directory.init_generations(pool.frames) == Some(self.generations)
             && pool.resolve_registration(0).is_some_and(|registered| {
                 registered.request == self.allocator && registered.generation == self.generations[0]
@@ -52,11 +54,18 @@ impl InitClaimRecord {
             && self.allocator.identity.page.page_no == 0
             && self.allocator.identity.owner.get() == 1
             && self.allocator.identity.owner_generation.get() == 1
-            && pool.directory.accepts_payload(self.payload)
+            && (if pool.directory.retention_payloads() {
+                pool.directory.accepts_retention_payload(self.payload)
+                    && self.payload.kind == PageKind::TransactionStatus
+            } else {
+                pool.directory.accepts_payload(self.payload)
+            })
             && self.payload.level == 0
             && self.payload.identity.database == self.allocator.identity.database
             && self.payload.identity.page.file == self.allocator.identity.page.file
-            && (if pool.directory.operational_payloads() {
+            && (if pool.directory.retention_payloads() {
+                (9..64).contains(&self.payload.identity.page.page_no)
+            } else if pool.directory.operational_payloads() {
                 (1..64).contains(&self.payload.identity.page.page_no)
             } else {
                 self.payload.identity.page.page_no == 1

@@ -37,6 +37,18 @@ pub(in crate::storage) mod native;
 #[path = "plan4_pages_tests.rs"]
 pub(in crate::storage) mod tests;
 
+#[path = "plan4_retention.rs"]
+mod retention;
+#[allow(
+    unused_imports,
+    reason = "internal live owner export awaits recovered integration"
+)]
+pub(crate) use retention::Plan4Retention;
+pub(in crate::storage) use retention::{
+    RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
+    RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
+};
+
 const OPERATION_BYTES: usize = 7 * PAGE_BYTES;
 const FLUSH_BYTES: usize = 4_194_304;
 
@@ -176,7 +188,7 @@ pub(crate) struct Plan4Pages<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
     pool: SharedPool<'c, 's, 'p, 'd>,
     operation: &'o mut [u8; OPERATION_BYTES],
     // Kept once for a future consuming activation; this unit cannot flush.
-    _flush_workspace: &'w mut [u8; FLUSH_BYTES],
+    _flush_workspace: Option<&'w mut [u8; FLUSH_BYTES]>,
 }
 
 fn pristine<W: WriterNamespace>(
@@ -284,7 +296,7 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
             storage: self,
             pool,
             operation,
-            _flush_workspace: workspace,
+            _flush_workspace: Some(workspace),
         };
         self.health()
             .map_err(|error| storage_error(Plan4PagePhase::Bind, error))?;

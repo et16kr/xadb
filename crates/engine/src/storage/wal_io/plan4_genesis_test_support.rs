@@ -119,6 +119,8 @@ pub(in crate::storage) struct State {
     pub(in crate::storage) lock_creates: usize,
     pub(in crate::storage) acquisition_error: Option<NamespaceError>,
     pub(in crate::storage) acquisition_error_after_lock: bool,
+    /// Opt-in only for new live tests; old genesis fixtures retain their restriction.
+    pub(in crate::storage) live_writes: bool,
     next_inode: u64,
     continuation: Option<(String, u64)>,
 }
@@ -187,6 +189,7 @@ impl Directory {
             lock_creates: 0,
             acquisition_error: None,
             acquisition_error_after_lock: false,
+            live_writes: false,
             next_inode,
             continuation: None,
         })))
@@ -492,12 +495,21 @@ impl WriterNamespace for Writer {
         name: &FileName,
         mode: OpenMode,
     ) -> NamespaceResult<(File, FileMetadata)> {
-        // Fresh genesis retains its installed WAL for append. Every selected
-        // data/control handle remains read-only in this scoped adapter.
+        // The original genesis mode keeps data/control opens read-only.
+        // Live tests opt in to the exact DWB/home write inventory.
         assert!(
             mode == OpenMode::ReadOnly
                 || (mode == OpenMode::ReadWrite
-                    && name.as_str() == crate::storage::wal_io::WAL_NAME)
+                    && (name.as_str() == crate::storage::wal_io::WAL_NAME
+                        || (self.0.lock().unwrap().live_writes
+                            && matches!(
+                                name.as_str(),
+                                "d3-data-0000000100000001"
+                                    | "d3-dwb-images"
+                                    | "d3-dwb-stage"
+                                    | "d3-dwb-0"
+                                    | "d3-dwb-1"
+                            ))))
         );
         let (i, a) = begin(&self.0, "open", name.as_str(), 0, 0);
         before(a).map_err(|_| ns_error(Effect::Unchanged))?;

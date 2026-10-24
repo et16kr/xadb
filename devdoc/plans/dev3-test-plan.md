@@ -850,3 +850,8 @@ G6_CONTEXT/BEGIN/PASS/FAIL/SKIP과 source/ELF/input identity를 사용한다. st
 [소유 계약](../contracts/dev3-recovery-control-base.md)·[실행 증거](../evidence/dev3-recovery-control-base-20261024.md)를 따른다. base 신규 필수128(semantic126/static2)과 control 신규 필수144(semantic143/static1)를 서로 다른 XB/G6RC ID·exact selector로 선택했다. 272개 원 PASS는 source/ELF별로 보존한다. S5 추가는 base256/control23,630, 총23,886이며 S5에는 필수272도 포함한다. 중간 완료 사례·무변경 하위·workspace wrapper를 반복하지 않는다.
 
 실행 입력 `artifacts/dev3/plan4-g6-recovery-20261024/execution-input-r1.json`은 static30초(worker20/감사10), semantic180초(worker150/감사30), 함수별5/30초와 출력1/8MiB를 고정했다. 완료된 static 다음에는 caller를 포함한 source phase admission을 별도로 확인했다. 실제 live/recovery/native 효과는 별도 source·F05·입력·시험을 요구하며 순수272의 PASS를 전용하지 않는다. 실패·중단·미실행을 PASS로 바꾸지 않는다.
+
+<a id="retention-live"></a>
+## Plan4 빈 거래의 실제 live·prefix 필수 선택
+
+[계약](../contracts/dev3-retention-live.md)·[증거](../evidence/dev3-retention-live-20261025.md)의 필수75는 live static2/memory30과 prefix43이다. live 확대32와 prefix EOF 확대237, 합269는 S5 고유 추가이며 최종 전수에는 필수75도 포함한다. exact ID·함수별 선택으로 완료 반복0을 유지하고 실패한 사례와 미실행 사례만 successor에서 실행했다. semantic210초(worker180/감사30), 함수·사례30초, 출력8MiB이며 원 source/ELF/input/marker를 보존한다. 복구 owner·native 수명은 별도 입력/자원/실행을 요구한다. 최종 S5·하위 wrapper를 지금 실행하지 않는다.

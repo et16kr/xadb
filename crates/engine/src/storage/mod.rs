@@ -10,6 +10,8 @@ pub(crate) mod overflow;
 mod ownership;
 pub(crate) mod page;
 pub(crate) mod page_io;
+mod plan4_recovery_base;
+mod plan4_recovery_control;
 pub(crate) mod read_buffer;
 pub(crate) mod recovery_select;
 pub(crate) mod retention_genesis;
@@ -27,6 +29,3 @@ pub(crate) mod undo_ref;
 pub(crate) mod volatile;
 pub(crate) mod wal_frame;
 pub(crate) mod wal_io;
-
-mod plan4_recovery_base;
-mod plan4_recovery_control;

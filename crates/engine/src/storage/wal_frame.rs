@@ -833,6 +833,47 @@ pub(super) fn scan_semantic_prefix(
     })
 }
 
+/// Inspect a tag-3 header using the same bounded identity/order validation.
+/// The returned length is not permission to adopt an unverified frame.
+pub(super) fn retention_frame_length(
+    header: &[u8],
+    expected: FrameExpectation,
+) -> Result<usize, WalError> {
+    validate_header_prefix(header, expected, PayloadMode::Retention)?;
+    if header.len() < FRAME_HEADER_BYTES {
+        return Err(WalError::Truncated);
+    }
+    Ok(read_u32(header, 12) as usize)
+}
+
+/// Observe a tag-3 prefix. Only an externally established active-unrequired
+/// EOF may be incomplete, after every visible header field has been checked.
+pub(super) fn scan_retention_prefix(
+    input: &[u8],
+    expected: FrameExpectation,
+    policy: TailPolicy,
+) -> Result<SemanticFrameScan<'_>, WalError> {
+    if !valid_stream(expected.stream) {
+        return Err(WalError::InvalidInput);
+    }
+    if input.is_empty() {
+        return Ok(SemanticFrameScan::End);
+    }
+    validate_header_prefix(input, expected, PayloadMode::Retention)?;
+    if input.len() < FRAME_HEADER_BYTES || input.len() < read_u32(input, 12) as usize {
+        return if policy == TailPolicy::ActiveUnrequiredEof {
+            Ok(SemanticFrameScan::Incomplete)
+        } else {
+            Err(WalError::Truncated)
+        };
+    }
+    let consumed = read_u32(input, 12) as usize;
+    Ok(SemanticFrameScan::Complete {
+        envelope: complete_envelope(&input[..consumed], expected)?,
+        consumed,
+    })
+}
+
 fn complete_envelope(
     bytes: &[u8],
     expected: FrameExpectation,
@@ -886,3 +927,7 @@ mod tests;
 #[cfg(test)]
 #[path = "wal_semantic_prefix_tests.rs"]
 mod semantic_prefix_tests;
+
+#[cfg(test)]
+#[path = "wal_retention_prefix_tests.rs"]
+mod retention_prefix_tests;

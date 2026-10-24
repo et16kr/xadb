@@ -1,0 +1,1412 @@
+{
+  "schema": "XADB_PLAN4_RETENTION_LIVE_INPUT_V1",
+  "status": "SEMANTIC_SOURCE_READY_REQUIRES_D2_AND_FROZEN_EXECUTION_GATE; no new execution claimed",
+  "source": {
+    "path": "crates/engine/src/storage/wal_io/plan4_retention_tests.rs",
+    "sha256": "793db6d2f89b329a82ec6010d5f2575e6bac689c9a330357c51bbd422dec7dad"
+  },
+  "source_authoring_only": true,
+  "raw_generation": false,
+  "markers": {
+    "prefix": "P4_LIVE",
+    "context": "P4_LIVE_CONTEXT\\t<ID>\\t<SOURCE_SHA256>\\t<ELF_SHA256>\\t<INPUT_SHA256>",
+    "kinds": [
+      "CONTEXT",
+      "BEGIN",
+      "PASS",
+      "FAIL",
+      "SKIP"
+    ]
+  },
+  "environment": {
+    "include": "XADB_PLAN4_LIVE_INCLUDE",
+    "exclude": "XADB_PLAN4_LIVE_EXCLUDE",
+    "source": "XADB_PLAN4_LIVE_SOURCE_SHA256",
+    "elf": "XADB_PLAN4_LIVE_ELF_SHA256",
+    "input": "XADB_PLAN4_LIVE_INPUT_SHA256"
+  },
+  "selection": {
+    "exact_ids": true,
+    "unknown_rejected": true,
+    "duplicate_rejected": true,
+    "empty_rejected": true,
+    "completed_ids_must_be_excluded_by_runner": true,
+    "old_test_function_calls": 0
+  },
+  "counts": {
+    "mandatory_static": 2,
+    "mandatory_semantic": 30,
+    "mandatory_total": 32,
+    "mandatory_unique_selectors": 8,
+    "s5_additional": 32,
+    "s5_unique_ignored_selectors": 3,
+    "total": 64,
+    "future_recovery_not_connected": true
+  },
+  "cases": {
+    "P4-LIVE-ST01": {
+      "phase": "mandatory",
+      "category": "static",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::retention_source_memory",
+      "operation": "actual source_census, pure existing scalar layout helpers, no port/owner construction",
+      "adapter": "memory port::Writer/File",
+      "expected": "print all observed values before assertions; new source caps and known common carrier baseline equality; unknown historical sizes remain UNKNOWN"
+    },
+    "P4-LIVE-ST02": {
+      "phase": "mandatory",
+      "category": "static",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::retention_source_native",
+      "operation": "actual source_census, pure existing scalar layout helpers, no port/owner construction",
+      "adapter": "existing G5 native::Writer/File",
+      "expected": "print all observed values before assertions; new source caps and known common carrier baseline equality; unknown historical sizes remain UNKNOWN"
+    },
+    "P4-LIVE-A01": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_activation",
+      "operation": "consume genuine Plan4Pages into Plan4Retention",
+      "expected": "same owner/pool identity; 64 canonical Job cells; counters0; pending/durable None; no mutations",
+      "recipe": "profile1/4frames; no fabricated Fresh or Status",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-A02": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_activation",
+      "operation": "activate with foreign PageConcurrency owner",
+      "expected": "Before/Unchanged Plan4(Frame BindingMismatch); I/O0; original G5 bound retained",
+      "recipe": "foreign core shares exact fence but differs core address; Idle",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-A03": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_activation",
+      "operation": "activate with non-Idle original owner",
+      "expected": "Fatal/CallerMustResolve; original fence set; I/O0",
+      "recipe": "actual try_apply guard deliberately forgotten before call",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-A04": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_activation",
+      "operation": "drop genuine activated owner",
+      "expected": "original session fenced by drop; no extra I/O",
+      "recipe": "same actual successful conversion; distinct terminal Drop operation",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-L01": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_lifecycle",
+      "operation": "real reserve/INIT/AgingStart/Begin/RollbackStart/AbortEnd/Finish",
+      "expected": "7 exact independent frames and all changed pages; actual allocation and Aging descriptor rows exact; actual stable Tx Begin/Rollback descriptor rows exact; terminal Tx Abort descriptor exact in staged operation frame, with actual ATT bank cleared on successful AbortEnd; LSN7/end254544; issued/adopted1; same pool/owner split",
+      "recipe": "Status physical9/incarnation2, slot0/generation2; Job ordinal0/generation2; frame lengths21200,38000,19672,56712,3040,56712,55112",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state",
+      "control_row_recipe": {
+        "Aging": [
+          "aging-start.descriptor",
+          "aging-begin.descriptor",
+          "aging-begin.descriptor",
+          "aging-abort.descriptor",
+          "aging-finish.descriptor"
+        ],
+        "Tx_stable": {
+          "Begin": "tx-begin.descriptor",
+          "Rollback": "tx-rollback.descriptor"
+        },
+        "AbortEnd": "ATT bank allzero after return; actual retained operation frame[416:1952] == tx-abort.descriptor",
+        "Final": "ATT remains allzero; final Aging row already checked"
+      }
+    },
+    "P4-LIVE-L02": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_lifecycle",
+      "operation": "two genuine reserve/cancel cycles",
+      "expected": "4 exact independent21200-byte frames; page9 incarnation2 then3; home zero; LSN4",
+      "recipe": "work1 birth1 thenwork2 birth3; generation retained by cancel, incremented on next reserve",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-L03": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_lifecycle",
+      "operation": "4frame dirty pressure to Catalog then latest retention reload",
+      "expected": "actual returned outsiders flushed; Root/Job/Status exact L7/L7/L7 afterimages reload; no fake clean",
+      "recipe": "7frame lifecycle is setup; bounded8 prepare attempts; dedicated flusher",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-L04": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_lifecycle",
+      "operation": "actual 3-pin empty Catalog lookup after live pressure",
+      "expected": "NotFound; canonical Anchor7/Leaf8 unchanged; second MAX ObjectId lookup adds I/O0",
+      "recipe": "7frame lifecycle is setup; actual consumer lookup once at6 and once atMAX",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-R01": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_reader_boundaries",
+      "operation": "read valid Status with wrong full owner_generation",
+      "expected": "Census/Frame MissingTarget/Unchanged; no I/O, pins, RAM change",
+      "recipe": "same address/incarnation; owner_generation1->2",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-R02": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_reader_boundaries",
+      "operation": "read using foreign owner",
+      "expected": "Census/Frame BindingMismatch/Unchanged; no I/O, pins, RAM change",
+      "recipe": "foreign actual PageConcurrency with same session fence",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-R03": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_reader_boundaries",
+      "operation": "read using non-Idle original owner",
+      "expected": "CallerMustResolve; original fence; no I/O or RAM replacement",
+      "recipe": "actual try_apply forgotten before read",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-R04": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_reader_boundaries",
+      "operation": "generic read of actual prepared CatalogAnchor",
+      "expected": "Membership/Unchanged after actual read-set checked cleanup; no I/O or RAM change",
+      "recipe": "valid Catalog target and membership; only dedicated Catalog consumer may inspect",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-W01": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_writer_boundaries",
+      "operation": "AbortEnd for absent TxnRef",
+      "expected": "MissingTransaction/Unchanged; issued/adopted0/0; snapshots and mutations unchanged",
+      "recipe": "INIT+Aging setup; supplied actor local99/statusgen2",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-W02": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_writer_boundaries",
+      "operation": "invalid Begin then valid Begin",
+      "expected": "Membership/Unchanged burns issued1 but adopted0; next actual Begin local2/adopted2; pre-stage rejection changes no pages",
+      "recipe": "Status owner2->3; actual valid same Status then succeeds",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-W03": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_writer_boundaries",
+      "operation": "drop linear ReservedRetentionStatus",
+      "expected": "session fence; no Status home bytes and no held pins",
+      "recipe": "actual reserve staged+durable; no fabricated claim",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-W04": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_writer_boundaries",
+      "operation": "reserve WAL write before-error",
+      "expected": "Durable/CallerMustResolve; pending retained, original fence, fault1, pins0, Status homezero",
+      "recipe": "clear events then key(write,WAL,4096,1):BeforeError",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-W05": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_writer_boundaries",
+      "operation": "INIT WAL partial error",
+      "expected": "Durable/Fatal; pending retained/fence/fault1/pins0/homezero",
+      "recipe": "after real durable reserve clear; key(write,WAL,25296,1):PrefixError writes8192 then Err",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-W06": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_writer_boundaries",
+      "operation": "INIT WAL sync error",
+      "expected": "Durable/Fatal; pending retained/fence/fault1/pins0/homezero",
+      "recipe": "after real durable reserve clear; key(sync,WAL,0,1):BeforeError",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-F01": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_flush_boundaries",
+      "operation": "captured Root L3 vs actual RAM-staged L4 not yet written",
+      "expected": "fixed durableP3 flush succeeds; captured3/latest4/cleanedfalse/recLSN3 then actual writer completes4",
+      "recipe": "Copied pause + original before_wait pause; WAL remains82968 while runtime.complete4; bounded channels5s",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-F02": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_flush_boundaries",
+      "operation": "captured Status L2 with later durable Root L3",
+      "expected": "P2 succeeds, captured2/cleanedtrue; home zero accepted only exact canonical INIT; runtime remains3",
+      "recipe": "actual INIT thenAging; dedicated Status flush",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-F03": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_flush_boundaries",
+      "operation": "retired flush with busy RAM finalization",
+      "expected": "RetiredPendingFinalize retains claim; latercontinue cleans without any extra I/O",
+      "recipe": "Copied pause, actual content read-lock held in bounded helper thread; release thencontinue",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-F04": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_flush_boundaries",
+      "operation": "first DWB publication write error",
+      "expected": "Flush/CallerMustResolve; claim+dirty+image preserved; home unchanged; fault1",
+      "recipe": "key(write,d3-dwb-stage,0,1):BeforeError",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-F05": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_flush_boundaries",
+      "operation": "home write error after DWB phase",
+      "expected": "Flush/CallerMustResolve; claim+dirty+image preserved; home unchanged; fault1",
+      "recipe": "key(write,d3-data-0000000100000001,16384,1):BeforeError",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-F06": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_flush_boundaries",
+      "operation": "prefix mutation between replay and final hash",
+      "expected": "Source/Invariant/CallerMustResolve; hash mismatch; hook1; mutations0; claim+dirty+image/home preserved",
+      "recipe": "key(read,WAL,0,3) replaces exact whole file with offset4224 xor1, no reseal; initial header/hash/replay accepted",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-D01": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_latest_load",
+      "operation": "latest canonical Leaf load with short read",
+      "expected": "cleanLSN0/counter0/recNone; slot generation increase; exact page; fault1/noDBwrite",
+      "recipe": "key(read,DATA,131072,1):Short7; targetLeaf8/index1",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-D02": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_latest_load",
+      "operation": "opened identity mismatch during selected read",
+      "expected": "Load/PageIo/CallerMustResolve; fault1; snapshot unchanged",
+      "recipe": "key(open,DATA,0,1):OpenedIdentity; named map unchanged",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-D03": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_latest_load",
+      "operation": "second selected home read drift",
+      "expected": "Load/Invariant/CallerMustResolve; hook1; snapshot unchanged",
+      "recipe": "key(read,DATA,131072,2) replaces fullfile with byte131152 xor1; no reseal",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-D04": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_latest_load",
+      "operation": "selected home read partial EOF",
+      "expected": "Load/PageIo/CallerMustResolve; fault1; snapshot unchanged",
+      "recipe": "key(read,DATA,131072,1):PrefixEof returns17 then0 at131089",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-D05": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_latest_load",
+      "operation": "load existing resident Root into another slot",
+      "expected": "Load/Membership/Unchanged; snapshot unchanged; noDBwrite",
+      "recipe": "valid Root target is already resident after activation",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-D06": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::retention_live_latest_load",
+      "operation": "residency request wrong role/kind",
+      "expected": "Load/Frame Shape/Unchanged; cursor remains1; snapshot unchanged",
+      "recipe": "valid Leaf target kind changed toRowLeaf; full identity preserved",
+      "setup": "actual fresh profile1 producer->DWB install->mutable owner->G5 bind->same-owner activation; existing lower test functions never called",
+      "cleanup": "all checked pins released; actual owner dropped; directory writers/files both0; fatal obligation remains until original owner drop; no reset of fenced state"
+    },
+    "P4-LIVE-SD01": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_short_reads",
+      "operation": "load latest canonical nonresident page with actual short-read retry",
+      "recipe": {
+        "profile": 1,
+        "page": 8,
+        "slot": 1,
+        "fault": [
+          "read",
+          "DATA",
+          131072,
+          1,
+          "Short",
+          1
+        ]
+      },
+      "expected": "success cleanLSN0/counter0/recNone; full independent page exact; fault1; noDBwrite"
+    },
+    "P4-LIVE-SD02": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_short_reads",
+      "operation": "load latest canonical nonresident page with actual short-read retry",
+      "recipe": {
+        "profile": 1,
+        "page": 3,
+        "slot": 1,
+        "fault": [
+          "read",
+          "DATA",
+          49152,
+          1,
+          "Short",
+          1
+        ]
+      },
+      "expected": "success cleanLSN0/counter0/recNone; full independent page exact; fault1; noDBwrite"
+    },
+    "P4-LIVE-SD03": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_short_reads",
+      "operation": "load latest canonical nonresident page with actual short-read retry",
+      "recipe": {
+        "profile": 1,
+        "page": 8,
+        "slot": 1,
+        "fault": [
+          "read",
+          "DATA",
+          131072,
+          1,
+          "Short",
+          127
+        ]
+      },
+      "expected": "success cleanLSN0/counter0/recNone; full independent page exact; fault1; noDBwrite"
+    },
+    "P4-LIVE-SD04": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_short_reads",
+      "operation": "load latest canonical nonresident page with actual short-read retry",
+      "recipe": {
+        "profile": 1,
+        "page": 3,
+        "slot": 1,
+        "fault": [
+          "read",
+          "DATA",
+          49152,
+          1,
+          "Short",
+          127
+        ]
+      },
+      "expected": "success cleanLSN0/counter0/recNone; full independent page exact; fault1; noDBwrite"
+    },
+    "P4-LIVE-SD05": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_short_reads",
+      "operation": "load latest canonical nonresident page with actual short-read retry",
+      "recipe": {
+        "profile": 1,
+        "page": 8,
+        "slot": 1,
+        "fault": [
+          "read",
+          "DATA",
+          131072,
+          1,
+          "Short",
+          128
+        ]
+      },
+      "expected": "success cleanLSN0/counter0/recNone; full independent page exact; fault1; noDBwrite"
+    },
+    "P4-LIVE-SD06": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_short_reads",
+      "operation": "load latest canonical nonresident page with actual short-read retry",
+      "recipe": {
+        "profile": 1,
+        "page": 3,
+        "slot": 1,
+        "fault": [
+          "read",
+          "DATA",
+          49152,
+          1,
+          "Short",
+          128
+        ]
+      },
+      "expected": "success cleanLSN0/counter0/recNone; full independent page exact; fault1; noDBwrite"
+    },
+    "P4-LIVE-SD07": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_short_reads",
+      "operation": "load latest canonical nonresident page with actual short-read retry",
+      "recipe": {
+        "profile": 1,
+        "page": 8,
+        "slot": 1,
+        "fault": [
+          "read",
+          "DATA",
+          131072,
+          1,
+          "Short",
+          4095
+        ]
+      },
+      "expected": "success cleanLSN0/counter0/recNone; full independent page exact; fault1; noDBwrite"
+    },
+    "P4-LIVE-SD08": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_short_reads",
+      "operation": "load latest canonical nonresident page with actual short-read retry",
+      "recipe": {
+        "profile": 1,
+        "page": 3,
+        "slot": 1,
+        "fault": [
+          "read",
+          "DATA",
+          49152,
+          1,
+          "Short",
+          4095
+        ]
+      },
+      "expected": "success cleanLSN0/counter0/recNone; full independent page exact; fault1; noDBwrite"
+    },
+    "P4-LIVE-SD09": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_short_reads",
+      "operation": "load latest canonical nonresident page with actual short-read retry",
+      "recipe": {
+        "profile": 1,
+        "page": 8,
+        "slot": 1,
+        "fault": [
+          "read",
+          "DATA",
+          131072,
+          1,
+          "Short",
+          4096
+        ]
+      },
+      "expected": "success cleanLSN0/counter0/recNone; full independent page exact; fault1; noDBwrite"
+    },
+    "P4-LIVE-SD10": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_short_reads",
+      "operation": "load latest canonical nonresident page with actual short-read retry",
+      "recipe": {
+        "profile": 1,
+        "page": 3,
+        "slot": 1,
+        "fault": [
+          "read",
+          "DATA",
+          49152,
+          1,
+          "Short",
+          4096
+        ]
+      },
+      "expected": "success cleanLSN0/counter0/recNone; full independent page exact; fault1; noDBwrite"
+    },
+    "P4-LIVE-SD11": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_short_reads",
+      "operation": "load latest canonical nonresident page with actual short-read retry",
+      "recipe": {
+        "profile": 1,
+        "page": 8,
+        "slot": 1,
+        "fault": [
+          "read",
+          "DATA",
+          131072,
+          1,
+          "Short",
+          16383
+        ]
+      },
+      "expected": "success cleanLSN0/counter0/recNone; full independent page exact; fault1; noDBwrite"
+    },
+    "P4-LIVE-SD12": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_short_reads",
+      "operation": "load latest canonical nonresident page with actual short-read retry",
+      "recipe": {
+        "profile": 1,
+        "page": 3,
+        "slot": 1,
+        "fault": [
+          "read",
+          "DATA",
+          49152,
+          1,
+          "Short",
+          16383
+        ]
+      },
+      "expected": "success cleanLSN0/counter0/recNone; full independent page exact; fault1; noDBwrite"
+    },
+    "P4-LIVE-SF01": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_prefix_mutations",
+      "operation": "captured RootL3 rejects corrupt fixed durable source",
+      "recipe": {
+        "setup": "realreserve+INIT+Aging",
+        "key": [
+          "read",
+          "WAL",
+          0,
+          1
+        ],
+        "mutation": {
+          "offset": 0,
+          "xor": 1,
+          "reseal": false
+        }
+      },
+      "expected": {
+        "phase": "Source",
+        "cause": "Invariant",
+        "effect": "CallerMustResolve",
+        "hook_hits": 1,
+        "mutations": 0,
+        "retained": "claim+dirty+image+home, pins0"
+      }
+    },
+    "P4-LIVE-SF02": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_prefix_mutations",
+      "operation": "captured RootL3 rejects corrupt fixed durable source",
+      "recipe": {
+        "setup": "realreserve+INIT+Aging",
+        "key": [
+          "read",
+          "WAL",
+          0,
+          3
+        ],
+        "mutation": {
+          "offset": 0,
+          "xor": 1,
+          "reseal": false
+        }
+      },
+      "expected": {
+        "phase": "Source",
+        "cause": "Invariant",
+        "effect": "CallerMustResolve",
+        "hook_hits": 1,
+        "mutations": 0,
+        "retained": "claim+dirty+image+home, pins0"
+      }
+    },
+    "P4-LIVE-SF03": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_prefix_mutations",
+      "operation": "captured RootL3 rejects corrupt fixed durable source",
+      "recipe": {
+        "setup": "realreserve+INIT+Aging",
+        "key": [
+          "read",
+          "WAL",
+          0,
+          1
+        ],
+        "mutation": {
+          "offset": 159,
+          "xor": 1,
+          "reseal": false
+        }
+      },
+      "expected": {
+        "phase": "Source",
+        "cause": "Invariant",
+        "effect": "CallerMustResolve",
+        "hook_hits": 1,
+        "mutations": 0,
+        "retained": "claim+dirty+image+home, pins0"
+      }
+    },
+    "P4-LIVE-SF04": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_prefix_mutations",
+      "operation": "captured RootL3 rejects corrupt fixed durable source",
+      "recipe": {
+        "setup": "realreserve+INIT+Aging",
+        "key": [
+          "read",
+          "WAL",
+          0,
+          3
+        ],
+        "mutation": {
+          "offset": 159,
+          "xor": 1,
+          "reseal": false
+        }
+      },
+      "expected": {
+        "phase": "Source",
+        "cause": "Invariant",
+        "effect": "CallerMustResolve",
+        "hook_hits": 1,
+        "mutations": 0,
+        "retained": "claim+dirty+image+home, pins0"
+      }
+    },
+    "P4-LIVE-SF05": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_prefix_mutations",
+      "operation": "captured RootL3 rejects corrupt fixed durable source",
+      "recipe": {
+        "setup": "realreserve+INIT+Aging",
+        "key": [
+          "read",
+          "WAL",
+          0,
+          1
+        ],
+        "mutation": {
+          "offset": 160,
+          "xor": 1,
+          "reseal": false
+        }
+      },
+      "expected": {
+        "phase": "Source",
+        "cause": "Invariant",
+        "effect": "CallerMustResolve",
+        "hook_hits": 1,
+        "mutations": 0,
+        "retained": "claim+dirty+image+home, pins0"
+      }
+    },
+    "P4-LIVE-SF06": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_prefix_mutations",
+      "operation": "captured RootL3 rejects corrupt fixed durable source",
+      "recipe": {
+        "setup": "realreserve+INIT+Aging",
+        "key": [
+          "read",
+          "WAL",
+          0,
+          3
+        ],
+        "mutation": {
+          "offset": 160,
+          "xor": 1,
+          "reseal": false
+        }
+      },
+      "expected": {
+        "phase": "Source",
+        "cause": "Invariant",
+        "effect": "CallerMustResolve",
+        "hook_hits": 1,
+        "mutations": 0,
+        "retained": "claim+dirty+image+home, pins0"
+      }
+    },
+    "P4-LIVE-SF07": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_prefix_mutations",
+      "operation": "captured RootL3 rejects corrupt fixed durable source",
+      "recipe": {
+        "setup": "realreserve+INIT+Aging",
+        "key": [
+          "read",
+          "WAL",
+          0,
+          1
+        ],
+        "mutation": {
+          "offset": 65535,
+          "xor": 1,
+          "reseal": false
+        }
+      },
+      "expected": {
+        "phase": "Source",
+        "cause": "Semantic",
+        "effect": "CallerMustResolve",
+        "hook_hits": 1,
+        "mutations": 0,
+        "retained": "claim+dirty+image+home, pins0"
+      }
+    },
+    "P4-LIVE-SF08": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_prefix_mutations",
+      "operation": "captured RootL3 rejects corrupt fixed durable source",
+      "recipe": {
+        "setup": "realreserve+INIT+Aging",
+        "key": [
+          "read",
+          "WAL",
+          0,
+          3
+        ],
+        "mutation": {
+          "offset": 65535,
+          "xor": 1,
+          "reseal": false
+        }
+      },
+      "expected": {
+        "phase": "Source",
+        "cause": "Invariant",
+        "effect": "CallerMustResolve",
+        "hook_hits": 1,
+        "mutations": 0,
+        "retained": "claim+dirty+image+home, pins0"
+      }
+    },
+    "P4-LIVE-SW01": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_partial_writes",
+      "operation": "real INIT durable WAL short-write retry",
+      "recipe": {
+        "profile": 1,
+        "key": [
+          "write",
+          "WAL",
+          25296,
+          1
+        ],
+        "action": [
+          "Short",
+          1
+        ]
+      },
+      "expected": "success; full independent frame and Status image exact; fault1; pendingNone; ownerIdle/unfenced"
+    },
+    "P4-LIVE-SW02": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_partial_writes",
+      "operation": "real Begin durable WAL short-write retry",
+      "recipe": {
+        "profile": 1,
+        "key": [
+          "write",
+          "WAL",
+          82968,
+          1
+        ],
+        "action": [
+          "Short",
+          1
+        ]
+      },
+      "expected": "success; full independent frame and Status image exact; fault1; pendingNone; ownerIdle/unfenced"
+    },
+    "P4-LIVE-SW03": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_partial_writes",
+      "operation": "real INIT durable WAL short-write retry",
+      "recipe": {
+        "profile": 1,
+        "key": [
+          "write",
+          "WAL",
+          25296,
+          1
+        ],
+        "action": [
+          "Short",
+          159
+        ]
+      },
+      "expected": "success; full independent frame and Status image exact; fault1; pendingNone; ownerIdle/unfenced"
+    },
+    "P4-LIVE-SW04": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_partial_writes",
+      "operation": "real Begin durable WAL short-write retry",
+      "recipe": {
+        "profile": 1,
+        "key": [
+          "write",
+          "WAL",
+          82968,
+          1
+        ],
+        "action": [
+          "Short",
+          159
+        ]
+      },
+      "expected": "success; full independent frame and Status image exact; fault1; pendingNone; ownerIdle/unfenced"
+    },
+    "P4-LIVE-SW05": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_partial_writes",
+      "operation": "real INIT durable WAL short-write retry",
+      "recipe": {
+        "profile": 1,
+        "key": [
+          "write",
+          "WAL",
+          25296,
+          1
+        ],
+        "action": [
+          "Short",
+          160
+        ]
+      },
+      "expected": "success; full independent frame and Status image exact; fault1; pendingNone; ownerIdle/unfenced"
+    },
+    "P4-LIVE-SW06": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_partial_writes",
+      "operation": "real Begin durable WAL short-write retry",
+      "recipe": {
+        "profile": 1,
+        "key": [
+          "write",
+          "WAL",
+          82968,
+          1
+        ],
+        "action": [
+          "Short",
+          160
+        ]
+      },
+      "expected": "success; full independent frame and Status image exact; fault1; pendingNone; ownerIdle/unfenced"
+    },
+    "P4-LIVE-SW07": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_partial_writes",
+      "operation": "real INIT durable WAL short-write retry",
+      "recipe": {
+        "profile": 1,
+        "key": [
+          "write",
+          "WAL",
+          25296,
+          1
+        ],
+        "action": [
+          "Short",
+          3040
+        ]
+      },
+      "expected": "success; full independent frame and Status image exact; fault1; pendingNone; ownerIdle/unfenced"
+    },
+    "P4-LIVE-SW08": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_partial_writes",
+      "operation": "real Begin durable WAL short-write retry",
+      "recipe": {
+        "profile": 1,
+        "key": [
+          "write",
+          "WAL",
+          82968,
+          1
+        ],
+        "action": [
+          "Short",
+          3040
+        ]
+      },
+      "expected": "success; full independent frame and Status image exact; fault1; pendingNone; ownerIdle/unfenced"
+    },
+    "P4-LIVE-SW09": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_partial_writes",
+      "operation": "real INIT durable WAL short-write retry",
+      "recipe": {
+        "profile": 1,
+        "key": [
+          "write",
+          "WAL",
+          25296,
+          1
+        ],
+        "action": [
+          "Short",
+          16383
+        ]
+      },
+      "expected": "success; full independent frame and Status image exact; fault1; pendingNone; ownerIdle/unfenced"
+    },
+    "P4-LIVE-SW10": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_partial_writes",
+      "operation": "real Begin durable WAL short-write retry",
+      "recipe": {
+        "profile": 1,
+        "key": [
+          "write",
+          "WAL",
+          82968,
+          1
+        ],
+        "action": [
+          "Short",
+          16383
+        ]
+      },
+      "expected": "success; full independent frame and Status image exact; fault1; pendingNone; ownerIdle/unfenced"
+    },
+    "P4-LIVE-SW11": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_partial_writes",
+      "operation": "real INIT durable WAL short-write retry",
+      "recipe": {
+        "profile": 1,
+        "key": [
+          "write",
+          "WAL",
+          25296,
+          1
+        ],
+        "action": [
+          "Short",
+          21200
+        ]
+      },
+      "expected": "success; full independent frame and Status image exact; fault1; pendingNone; ownerIdle/unfenced"
+    },
+    "P4-LIVE-SW12": {
+      "phase": "s5",
+      "category": "memory",
+      "ignored": true,
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::tests::lifecycle::s5::retention_s5_partial_writes",
+      "operation": "real Begin durable WAL short-write retry",
+      "recipe": {
+        "profile": 1,
+        "key": [
+          "write",
+          "WAL",
+          82968,
+          1
+        ],
+        "action": [
+          "Short",
+          21200
+        ]
+      },
+      "expected": "success; full independent frame and Status image exact; fault1; pendingNone; ownerIdle/unfenced"
+    }
+  },
+  "static_limits": {
+    "core_peak": 65536,
+    "metadata": 196608,
+    "whole": 262144,
+    "owner": 32768,
+    "file": 16384,
+    "io_effects": 0
+  },
+  "caller_loans": {
+    "control": 196608,
+    "writer_replay": 1572864,
+    "operation": 114688,
+    "dwb": 4194304,
+    "dwb_replay_subrange": 1572864,
+    "pool_payloads": 65536
+  },
+  "execution_budget": {
+    "status": "PROPOSAL_REQUIRES_ROOT_INPUT_GATE",
+    "static_process_seconds": 10,
+    "static_audit_seconds": 5,
+    "static_total_seconds": 15,
+    "static_output_bytes": 1048576,
+    "memory_process_seconds": 180,
+    "memory_audit_seconds": 30,
+    "memory_total_seconds": 210,
+    "memory_function_seconds": 30,
+    "memory_output_bytes": 8388608,
+    "memory_retained_evidence_bytes": 33554432,
+    "test_host_backing_conservative_bytes": 67108864,
+    "test_host_backing_meaning": "source bound proposal for one sequential memory fixture including all setup caller loans, 22069248-byte named-file model, raw550160, bounded WAL/one-file mutation copies and event vectors; distinct from product64KiB census. Runner must enforce measured process/output budget.",
+    "s5_execution": "not authorized at intermediate stage; separate ignored selectors, final S5 exact input gate",
+    "runtime_receipts": "source/ELF/input immutable; per-selector exact include; prior completed IDs excluded; partial PASS retained, unfinished/uncertain result audited before resume"
+  },
+  "historical_baselines": [
+    {
+      "path": "artifacts/dev3/plan4-clean-owner-20261024/tests-r2/static-r0/01.stdout",
+      "sha256": "99c1b43c9aa451a4ae4083280a32d8e7508683f486fafc95e9576154d44c8a5c",
+      "meaning": "original G5 source-specific receipt; not repeated by this input"
+    },
+    {
+      "path": "artifacts/dev3/plan4-clean-owner-20261024/tests-r2/static-r0/02.stdout",
+      "sha256": "b0e1706268443f2e95dda14f4da36a2fb968ef7e8552663c78af06dd2736a990",
+      "meaning": "original G5 source-specific receipt; not repeated by this input"
+    }
+  ],
+  "revision": "fresh-live-semantic-r1",
+  "previous_input": {
+    "path": "artifacts/dev3/plan4-g6-empty-retention-20261024/live-input-static-checkpoint-r0.json",
+    "sha256": "bb2e2dae7223a90fbd44343d70dfc790963a42d0d9bf9c1469fae42e5ebd2f4e",
+    "meaning": "original static-only input retained byte-for-byte; original static receipts retain their own input identity"
+  },
+  "source_files": {
+    "crates/engine/src/storage/wal_io/plan4_retention_tests.rs": {
+      "sha256": "793db6d2f89b329a82ec6010d5f2575e6bac689c9a330357c51bbd422dec7dad",
+      "bytes": 6751
+    },
+    "crates/engine/src/storage/wal_io/plan4_retention_lifecycle_tests.rs": {
+      "sha256": "592e5cdc3ac5a8b0d8afe1803bef98b1f97668ca8c6359e3980ee64ec11762ee",
+      "bytes": 49251
+    },
+    "crates/engine/src/storage/wal_io/plan4_retention_literal_tests.rs": {
+      "sha256": "5d6803a928a6c94a8aff58433b7b9c8bb3a071e0b8ff068a0597ed300624d65c",
+      "bytes": 8264
+    },
+    "crates/engine/src/storage/wal_io/plan4_retention_s5_tests.rs": {
+      "sha256": "e9f52b8b74b1254bc9d23b97af6314b9f149d77cb4afa98963dfb45af7dcb151",
+      "bytes": 9010
+    }
+  },
+  "product_baseline": {
+    "directory": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r2/source",
+    "source_sha256": "b4aaa795698c9d9d436b8bf93b9c7691e58c86847581c6925a170f38f4bd56ce",
+    "policy": "overlay only new test children, parent test child link and this input/provenance; exclude later working recovery/prefix43 product changes",
+    "static_pass_receipt": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r2/static-r0/result.json",
+    "static_pass_receipt_sha256": "58f86fe3c57a49cfaec3afb421d9777e293e7d4424bccd788e31f46b562c18a0",
+    "do_not_repeat_static": true
+  },
+  "raw_inputs": {
+    "index_path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw-index.tsv",
+    "index_sha256": "ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8",
+    "files": 34,
+    "bytes": 550160,
+    "largest_file": 56712,
+    "generation": false,
+    "per_file_verification": "each size/SHA in immutable original index; paths bounded and relative; total/count verified before operation",
+    "full_lifecycle": [
+      "reserve 21200 at4096",
+      "INIT 38000 at25296",
+      "AgingStart 19672 at63296",
+      "Begin 56712 at82968",
+      "RollbackStart 3040 at139680",
+      "AbortEnd 56712 at142720",
+      "FinishEmptyTerminal 55112 at199432"
+    ],
+    "final_wal_bytes": 254544,
+    "population_oracle": {
+      "source_recipe": "scripts/dev3_status_init_literals.py",
+      "source_recipe_sha256": "aa11d72231c0703ef1981ca9f44598a2c24928224186befa591f7717ac9c578b",
+      "independent_builder": "crates/engine/src/storage/wal_io/plan4_retention_literal_tests.rs",
+      "recipe": "explicit zero-filled LE wire fields; page9 generation increments; profile1 digest; SHA seals; complete allocator/native/token/redo/descriptor/frame bytes. No product codecs. Old script is read-only provenance, never imported/executed.",
+      "new_disk_raw_files": 0
+    },
+    "dependencies": [
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/abort.wal",
+        "bytes": 56712,
+        "sha256": "19263ac31f2f77860af938359b72d63042f6308f0885963875962e9918cf8028"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/aging-abort.descriptor",
+        "bytes": 1536,
+        "sha256": "c15cf0f5360bd4d3ed062554111dbf7c88ed9a740054264d8021e883e2f3219c"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/aging-begin.descriptor",
+        "bytes": 1536,
+        "sha256": "40fcb88105ac6f9300a70fe8bd79a1b45da2e1b12b5735bff0c7528315936b5a"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/aging-finish.descriptor",
+        "bytes": 1536,
+        "sha256": "05a73e8aebfd7a807d5f2455be1a386f9c1d230de20b7a4254021cc6b4e197d9"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/aging-start.descriptor",
+        "bytes": 1536,
+        "sha256": "bc802d0839214b0bbbac4d3d52f9017e64c56ef2291a9be8bb030938abb2f11f"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/aging-start.wal",
+        "bytes": 19672,
+        "sha256": "aec4bb0b39714379943228d922c28bac3e032c4280a6bc970cf10a76fead1f9f"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/begin.wal",
+        "bytes": 56712,
+        "sha256": "47f67e5b6177151a47649b70690a9c0e9ceb3cffc12a04f3840dbf1bf6975ddd"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/finish.wal",
+        "bytes": 55112,
+        "sha256": "06fcd737da47f038671b593c3d09b26c881b98ac4c12164a238796deb11a8b1d"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/jobs-abort.page",
+        "bytes": 16384,
+        "sha256": "1b0430ac46d0d56d4c0b56271f641638fdc23a8c9214afe4e0d377758bf63d7f"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/jobs-begin.page",
+        "bytes": 16384,
+        "sha256": "a333371d4694e0965fd01e114b4f9f431389aa71f97267708ebc8f0573c72efc"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/jobs-finish.page",
+        "bytes": 16384,
+        "sha256": "bbbb336fd2ee264e5ced1f19770c849d6bca5e7c7273c5c25d250e500c165fdd"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/rollback.wal",
+        "bytes": 3040,
+        "sha256": "d127a46b187f8a904da8ae9c7699abbc42dc61d0c4b9edc60d70d76189a540d9"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/root-abort.page",
+        "bytes": 16384,
+        "sha256": "549e6f00a5924a1eef5da0bc9f2c3352f0980e53cf367e3c48f900c4cd26eaf2"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/root-begin.page",
+        "bytes": 16384,
+        "sha256": "f8e56dc3028948749a393094a66946e8da5ade69110ed3e2c4aa53368b63e0df"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/root-finish.page",
+        "bytes": 16384,
+        "sha256": "0004e6b2dbfd214a576c79bed517ef9b45290272f8d4c065c91e82282191e4ab"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/root-start.page",
+        "bytes": 16384,
+        "sha256": "bcb505330a10e9739e8e14d9144c439e8bdd656118782ffc91271a958a3999b4"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/status-abort.page",
+        "bytes": 16384,
+        "sha256": "67151d7d4c9ed04b4ea4c9c813884a35635cb0ca4d7e5e0e9b1a9fd5845ccf62"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/status-begin.page",
+        "bytes": 16384,
+        "sha256": "1f259a3e1f1a4bd144e743e06941ad4d18503bcfe402129d1ca7261f5332ce25"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/status-finish.page",
+        "bytes": 16384,
+        "sha256": "99aba4a66f7878d522b2eff9e1003544a04bbe34cd8fc5eee4eefa5ac3b2ba41"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/status-free.page",
+        "bytes": 16384,
+        "sha256": "adba494d6cfce831d5af1d9bb61e661166b85defccfca20c4bf43b8340ad69bc"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/status-rollback.page",
+        "bytes": 16384,
+        "sha256": "f01ea439ec739eef56c6cd4c70f15c3c84f1a272b10a45f2195fb6192459e3e2"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/tx-abort.descriptor",
+        "bytes": 1536,
+        "sha256": "beb1d9e5f5e29543a3751f4505a0863474a5532937f03710acbf17eae03d8bc8"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/tx-begin.descriptor",
+        "bytes": 1536,
+        "sha256": "9cbf3885a69d8b6a89db4105d544e8a47289847c87589cf72b5cb4fd9ade794b"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/tx-rollback.descriptor",
+        "bytes": 1536,
+        "sha256": "133012133ab91ccdc9b244721f5f2d0cd1cd3180013217dc3a5f8d5294dfe705"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/references/P00.bin",
+        "bytes": 16384,
+        "sha256": "077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/references/P01.bin",
+        "bytes": 16384,
+        "sha256": "eba8bb02bacd91999b00f9891322b8cfebfb222004aa7b0f9332142834858f9c"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/references/P02.bin",
+        "bytes": 16384,
+        "sha256": "49dafbbf9fdd3e8c8d93e073170114602d50a86e5f82697f4de7ba5232f4f0b3"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/references/P03.bin",
+        "bytes": 16384,
+        "sha256": "2d7b85d1b4fcb607482de1186e2faeafb6f15667d9d1c1b1d520aebf50345046"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/references/P04.bin",
+        "bytes": 16384,
+        "sha256": "0d3592d3f9b3399368722c03b864696f85ff1d157f7b4a3d509f3d1bb2660deb"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/references/P05.bin",
+        "bytes": 16384,
+        "sha256": "950df8eb976fea1bb99cc4842816f27bd83c7e373268e07ceedde35006c0a182"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/references/P06.bin",
+        "bytes": 16384,
+        "sha256": "9f53a1983f5b03e2b22454e9fc6f44a516530fd3ba17bd919147394228f746d5"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/references/P07.bin",
+        "bytes": 16384,
+        "sha256": "c666b6d1954d2b19faa83d5bdb381f4edd337af835a47713e31d1efa52bcee90"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/references/P08.bin",
+        "bytes": 16384,
+        "sha256": "646d2c91744594c80afc26e4919dffece69dd996e436a1390191a164c5a68567"
+      },
+      {
+        "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/references/REF-P1-d3-profile.bin",
+        "bytes": 4096,
+        "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+      }
+    ]
+  },
+  "setup_reuse_policy": "Prior completed tests are not called. Repeated lower I/O within a new case is the genuine setup needed for the distinct new live operation, not a repeated lower acceptance claim. L01 is the mandatory seven-frame actual lifecycle oracle; other cases may reuse the source helper as setup and assert their own boundary.",
+  "future_not_counted": [
+    "recovered XWE2/base authority/livehandoff",
+    "actual producer/recover/reenter3PID",
+    "old actor seed/LOCATION/System row remapping",
+    "prefix43 separate unit",
+    "multi-profile2/3 and wide multi-transaction scalability until independent wire/input supplied"
+  ],
+  "required_test_link": {
+    "file": "crates/engine/src/storage/wal_io/plan4_retention_tests.rs",
+    "append": "\n#[path = \"plan4_retention_lifecycle_tests.rs\"]\nmod lifecycle;\n",
+    "authority": "root applies link in frozen overlay; original completed static function bodies unchanged"
+  },
+  "provenance": {
+    "path": "tests/fixtures/dev3-plan4-retention-live/provenance.md",
+    "sha256": "97b520cd0e4aa1ceb74f142c84b853b0c1737cc9f002188d2d8b1d6df3ec8949"
+  },
+  "previous_semantic_input": {
+    "directory": "artifacts/dev3/plan4-g6-recovery-20261024/fresh30-source-r0",
+    "input_sha256": "02965ba73a15c740d9b4f8c09d50c4ebb2d492d841c3e0fd25f6cc2bf5576345",
+    "change": "Direct actual control-row comparisons at each step; terminal AbortEnd row lifetime distinguished from cleared ATT. No product/static/ID/raw change."
+  }
+}

@@ -494,3 +494,7 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 ## DEV4 P5 원시 번호·target 선택
 
 [소유 계약](../contracts/dev4-lifecycle-raw-selection.md)의 세 순수 API와 독립 입력·시험을 기존 reference lifecycle 경계에 추가한다. 실제 작성한 source와 고정 fixture만 관리 JSON의 `dev4_lifecycle_raw_selection`에 등록한다. package·dependency·export/fingerprint roots는 유지한다. full input 조립·모델·BFS는 후속이다. [선택 증거](../evidence/dev4-lifecycle-raw-selection-20261025.md)는 source별 실제 실행과 미완료 범위를 구분한다.
+
+## DEV3 plan4 빈 거래 live·prefix — 2026-10-25
+
+[소유 계약](../contracts/dev3-retention-live.md)의 실제 구현39개 경로를 [관리 JSON](repository-build-plan.json)의 `dev3_retention_live`에 등록한다. engine storage 내부 child와 fixture만 추가하고 package·dependency·export/fingerprint roots는 유지한다. 새 recovery owner 작업은 별도 미완료다. [원 결과](../evidence/dev3-retention-live-20261025.md)는75개 source별 PASS와 S5 추가269 NOT_RUN을 구별한다.

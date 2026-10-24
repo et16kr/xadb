@@ -2122,6 +2122,21 @@
       "path": "evidence/dev4-lifecycle-raw-selection-20261025.md",
       "role": "evidence",
       "title": "DEV4 P5 원시 번호·selector의 선택 검증"
+    },
+    "dev3-retention-live.md": {
+      "path": "contracts/dev3-retention-live.md",
+      "role": "contracts",
+      "title": "DEV3 plan4 빈 거래의 실제 live 소비"
+    },
+    "dev3-retention-live-20261025.md": {
+      "path": "evidence/dev3-retention-live-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 plan4 빈 거래 live·prefix 선택 검증"
+    },
+    "dev3-retention-live-20261025.json": {
+      "path": "evidence/dev3-retention-live-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 plan4 live·prefix source별 실행 색인"
     }
   }
 }

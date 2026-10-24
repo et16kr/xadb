@@ -2,7 +2,7 @@
 //! The exclusive bound control retains this state through RAM finalization.
 
 use super::super::allocation_reservation::operation::SemanticError;
-use super::{MutableStorageOwner, StatusFlushAuthority};
+use super::{MutableStorageOwner, RetentionFlushAuthority, StatusFlushAuthority};
 use crate::storage::{
     allocation_page::{self, AllocationError},
     control::{
@@ -122,6 +122,7 @@ enum TargetClass {
     Status,
     MixedStatus,
     MixedUndo,
+    Retention,
 }
 
 /// This private selector borrows an actual upper authority. A page kind alone
@@ -130,11 +131,13 @@ enum TargetClass {
 enum PolicyRef<'a, 'c, 's> {
     Allocator,
     Status(&'a StatusFlushAuthority<'c, 's>),
+    Retention(&'a RetentionFlushAuthority<'c, 's>),
 }
 impl PolicyRef<'_, '_, '_> {
     fn class(self) -> TargetClass {
         match self {
             Self::Allocator => TargetClass::Allocator,
+            Self::Retention(_) => TargetClass::Retention,
             Self::Status(authority) => {
                 if authority.mixed() {
                     if authority.request().kind == PageKind::Undo {
@@ -329,6 +332,32 @@ impl<'s, 'w> FlushIo<'s, 'w> {
         self.prepare_with_policy(storage, capture, PolicyRef::Allocator)
     }
 
+    /// Temporary disjoint loans; no tail is retained alongside the whole DWB
+    /// workspace. The semantic authority must finish before prepare/execute.
+    pub(super) fn retention_source_workspace(&mut self) -> Result<(&[u8; PAGE_BYTES], &mut [u8])> {
+        if let Some(error) = &self.failure {
+            return Err(error.clone());
+        }
+        if self.fence.is_fenced() {
+            return Err(self.error(Cause::Fenced, Effect::CallerMustResolve));
+        }
+        if self.observation.state != State::Ready {
+            return Err(self.error(Cause::Busy, Effect::Unchanged));
+        }
+        let (used, tail) = self.workspace.split_at_mut(WORKSPACE_USED);
+        let image: &[u8; PAGE_BYTES] = (&used[..PAGE_BYTES]).try_into().expect("fixed DWB image");
+        Ok((image, tail))
+    }
+
+    pub(super) fn prepare_retention<W: WriterNamespace>(
+        &mut self,
+        storage: &MutableStorageOwner<'_, '_, W>,
+        capture: &CapturedPage<'_, '_>,
+        authority: &RetentionFlushAuthority<'_, '_>,
+    ) -> Result<()> {
+        self.prepare_with_policy(storage, capture, PolicyRef::Retention(authority))
+    }
+
     pub(super) fn prepare_status<W: WriterNamespace>(
         &mut self,
         storage: &MutableStorageOwner<'_, '_, W>,
@@ -467,6 +496,16 @@ impl<'s, 'w> FlushIo<'s, 'w> {
         self.execute_with_policy(storage, capture, PolicyRef::Status(authority), durable)
     }
 
+    pub(super) fn execute_retention<W: WriterNamespace>(
+        &mut self,
+        storage: &'s MutableStorageOwner<'_, '_, W>,
+        capture: &CapturedPage<'_, 's>,
+        authority: &RetentionFlushAuthority<'_, 's>,
+        durable: &DurableWal<'s>,
+    ) -> Result<RetiredBatch<'s>> {
+        self.execute_with_policy(storage, capture, PolicyRef::Retention(authority), durable)
+    }
+
     fn execute_with_policy<W: WriterNamespace>(
         &mut self,
         storage: &'s MutableStorageOwner<'_, '_, W>,
@@ -601,6 +640,13 @@ impl<'s, 'w> FlushIo<'s, 'w> {
                         retired.kind == PageKind::TransactionStatus
                     }
                     TargetClass::MixedUndo => retired.kind == PageKind::Undo,
+                    TargetClass::Retention => matches!(
+                        retired.kind,
+                        PageKind::Allocation
+                            | PageKind::RetentionRoot
+                            | PageKind::RetentionJobs
+                            | PageKind::TransactionStatus
+                    ),
                 }
                 && prepared.selections[2] == retired.selected
                 && prepared.batch == retired.batch
@@ -660,6 +706,9 @@ fn validate_capture<W: WriterNamespace>(
         {
             Err(Cause::IdentityMismatch)
         }
+        PolicyRef::Retention(authority) if !authority.matching(capture) => {
+            Err(Cause::IdentityMismatch)
+        }
         _ => Ok(()),
     }
 }
@@ -681,6 +730,13 @@ fn validate_image<W: WriterNamespace>(
             page.header().lsn
         }
         PolicyRef::Status(authority) => authority
+            .image_lsn(
+                (&workspace[..PAGE_BYTES])
+                    .try_into()
+                    .expect("fixed capture interval"),
+            )
+            .map_err(Cause::Status)?,
+        PolicyRef::Retention(authority) => authority
             .image_lsn(
                 (&workspace[..PAGE_BYTES])
                     .try_into()
@@ -931,6 +987,24 @@ fn validate_mapping<W: WriterNamespace>(
                 return Err(Cause::IdentityMismatch);
             }
         }
+        PolicyRef::Retention(authority) => {
+            let request = authority.request();
+            let allocator = authority.allocator();
+            if !authority.matching(capture)
+                || request.level != 0
+                || request.identity.page.page_no >= 64
+                || allocator.page.page_no != 0
+                || request.identity.database != allocator.database
+                || request.identity.page.file != allocator.page.file
+                || entry.file != request.identity.page.file
+                || entry
+                    .metadata_identity(storage.profile().spec().namespace, 0)
+                    .map_err(Cause::Control)?
+                    != *allocator
+            {
+                return Err(Cause::IdentityMismatch);
+            }
+        }
     }
     Ok(())
 }
@@ -970,6 +1044,26 @@ fn read_home<W: WriterNamespace>(
                 // authority admits only whole images reconstructed from that
                 // selected page's original complete WAL history.
                 if lsn.0 > capture.stamp().page_lsn.0 || !authority.accepts_home(home, image) {
+                    return Err(Cause::ContentMismatch);
+                }
+            }
+        }
+        PolicyRef::Retention(authority) => {
+            // Zero home needs explicit INIT provenance too. A low pageLSN alone
+            // cannot authenticate a pre-base image after old WAL reclamation.
+            if !authority.accepts_home(
+                home.try_into().expect("fixed home interval"),
+                image.try_into().expect("fixed capture interval"),
+            ) {
+                return Err(Cause::ContentMismatch);
+            }
+            if home.iter().any(|byte| *byte != 0) {
+                let lsn = authority
+                    .envelope_lsn(home.try_into().expect("fixed home interval"))
+                    .map_err(Cause::Status)?;
+                if lsn.0 > capture.stamp().page_lsn.0
+                    || (lsn == capture.stamp().page_lsn && home != image)
+                {
                     return Err(Cause::ContentMismatch);
                 }
             }
@@ -1378,6 +1472,36 @@ fn execute_outer_bytes() -> usize {
         + size_of::<PolicyRef<'_, '_, '_>>()
 }
 
+/// New retention policy uses the same DWB executor and backing. The borrowed
+/// authority and temporary tail loans do not enlarge the retained executor.
+pub(super) fn retention_source_bytes<W: WriterNamespace>() -> usize {
+    let common = io_phase_layout()
+        .iter()
+        .map(|(_, actual, _)| *actual)
+        .max()
+        .unwrap_or(0);
+    let policy_codec = 3 * size_of::<crate::storage::page::PageView<'_>>()
+        + 3 * size_of::<
+            std::result::Result<
+                crate::storage::page::PageView<'_>,
+                crate::storage::page::PageError,
+            >,
+        >()
+        + 4 * size_of::<xadb_foundation::codec::ContentHasher>()
+        + 3 * size_of::<std::result::Result<PageLsn, SemanticError>>()
+        + 4 * 32
+        + 512;
+    common
+        + policy_codec
+        + size_of::<RetentionFlushAuthority<'_, '_>>()
+        + 2 * size_of::<W::File>()
+        + 2 * size_of::<Inner<(W::File, FileIdentity)>>()
+        + size_of::<MutexGuard<'_, W>>()
+        + size_of::<PolicyRef<'_, '_, '_>>()
+        + size_of::<(&[u8; PAGE_BYTES], &mut [u8])>()
+        + size_of::<Result<(&[u8; PAGE_BYTES], &mut [u8])>>()
+}
+
 fn io_phase_layout() -> [(&'static str, usize, usize); 10] {
     let scaffold = io_scaffolding_bytes();
     [
@@ -1533,9 +1657,10 @@ pub(super) mod test_support {
             0 => {
                 prepared.class = match prepared.class {
                     TargetClass::Allocator => TargetClass::Status,
-                    TargetClass::Status | TargetClass::MixedStatus | TargetClass::MixedUndo => {
-                        TargetClass::Allocator
-                    }
+                    TargetClass::Status
+                    | TargetClass::MixedStatus
+                    | TargetClass::MixedUndo
+                    | TargetClass::Retention => TargetClass::Allocator,
                 };
             }
             1 => {

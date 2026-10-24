@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV3 plan4 빈 거래 live](dev3-retention-live.md) — 원 owner/pool의 fresh 수명·flush·재적재와 관측용 tag3 prefix; 복구 owner 별도
+
 - [DEV4 P5 원시 action 번호·target 선택](dev4-lifecycle-raw-selection.md) — D4-LM-RAW-001 D2·제한 D1 수용; raw1533 번호·exact selector의 국소 계약. 전체 input/model은 후속.
 
 - [DEV3 복구 이미지·제어 레코드](dev3-recovery-control-base.md) — XRB1·XRC1/XWE2/XWS2와 닫힌 census/공통 bridge; 실제 복구 권한·live F05 별도

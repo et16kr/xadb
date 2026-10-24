@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-25 [DEV3 plan4 빈 거래 live·prefix](evidence/dev3-retention-live-20261025.md): 신규 필수75개 source별 PASS·완료 반복0, 원 실패 보존, 최종 독립 D1을 제한 수용했다. fresh 수명·flush·재적재를 연결했으며 복구 owner·native 수명·DEV3/S5는 미완료다.
+
 2026-10-25 [DEV4 P5 원시 번호·selector](evidence/dev4-lifecycle-raw-selection-20261025.md): raw1533과 exact target 선택을 구현하고 신규1951입력·3484호출을 선택 검증했다. compile·Clippy·fmt PASS, 정적 집계 원 실패를 보존하며 최종 독립 D1을 제한 수용했다. full input·모델·FE14는 미완료다.
 
 2026-10-24 [DEV3 복구 이미지·제어 레코드](evidence/dev3-recovery-control-base-20261024.md): 신규 필수272개를 source별 선택 검증했다. 원 fmt·Clippy 실패와 별도 live HOLD/FAIL을 보존하며 최종 독립 D1을 순수 codec 범위로 제한 수용했다. 실제 live·새 epoch 복구·DEV3/S5는 미완료다.

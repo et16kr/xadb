@@ -566,3 +566,10 @@ pub(crate) use status_init::EmptyTransactionObservation;
 #[cfg(test)]
 #[path = "runtime_core_tests.rs"]
 mod runtime_core_tests;
+
+pub(in crate::storage) use plan4_pages::{
+    RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
+    RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
+};
+
+pub(in crate::storage) use status_init::InitInstallPhase;

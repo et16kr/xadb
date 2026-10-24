@@ -873,142 +873,159 @@ pub(in super::super) fn prepare_in_population<'a>(
     })
 }
 
-fn encode_prepared(
-    plan: Plan<'_>,
-    before: &[u8; PAGE_BYTES],
-    output: &mut [u8],
-    after: &mut [u8; PAGE_BYTES],
-    budget: OperationBudget,
-) -> Result<WalFrameHeader> {
-    let h = header(plan)?;
-    let n = plan.batch.count();
-    require(
-        budget.accepts_count(n)
-            && plan.batch.mask & 1 == 0
-            && plan.cancel == plan.before_descriptor.is_some(),
-        SemanticError::StateMismatch,
-    )?;
-    let length = frame_length(n);
-    require(output.len() >= length, SemanticError::Corrupt)?;
-    let page = allocation_page::decode_allocation_page(
-        before,
-        plan.identity,
-        plan.profile.spec().namespace,
-    )
-    .map_err(|_| SemanticError::PageMismatch)?;
-    require(
-        page.header().lsn.0 == plan.prefix.complete_lsn,
-        SemanticError::OrderMismatch,
-    )?;
-    let raw = &mut output[..length];
-    raw.fill(0);
-    let g = 160;
-    raw[g..g + 4].copy_from_slice(b"XSG1");
-    put16(raw, g + 4, 1);
-    put16(raw, g + 6, if plan.cancel { 10 } else { 8 });
-    put16(raw, g + 8, 192);
-    put32(raw, g + 12, (length - 192) as u32);
-    put64(raw, g + 16, h.lsn);
-    put64(raw, g + 24, if plan.cancel { plan.batch.birth } else { 0 });
-    raw[g + 32] = 2;
-    plan.batch
-        .owner
-        .encode(&mut raw[g + 40..g + 88])
-        .map_err(|_| SemanticError::IdentityMismatch)?;
-    if let Some(before) = plan.before_descriptor {
-        raw[g + 88..g + 120].copy_from_slice(&content_digest(before));
-    }
-    put32(raw, g + 120, 1536);
-    put16(raw, g + 124, 1);
-    put16(raw, g + 130, n as u16);
-    put16(raw, g + 132, 1);
-    put32(raw, g + 136, 12544);
-    put32(raw, g + 148, 208 * n as u32);
-    put32(raw, g + 152, 6272);
-    put16(raw, 1888, if plan.cancel { 10 } else { 8 });
-    put32(raw, 1892, 256);
-    put64(raw, 2056, if plan.cancel { n as u64 } else { 0 });
-    raw[2144] = 6;
-    raw[2145] = 3;
-    put16(raw, 2152, 10144);
-    put16(raw, 2154, 10144);
-    put32(raw, 2156, 6208);
-    put32(raw, 2160, 6208);
-    put32(raw, 2164, 12544);
-    raw[OLD_CELL].copy_from_slice(&before[CELL]);
-    {
-        let mut entries = [AllocationEntry::Free(Generation::new(1).expect("nonzero")); 64];
-        for (i, entry) in entries.iter_mut().enumerate() {
-            *entry = page.entry(i).map_err(|_| SemanticError::PageMismatch)?;
-            if plan.batch.mask & (1u64 << i) != 0 {
-                *entry = changed_entry(*entry, plan.batch, plan.cancel)?;
-            }
-        }
-        allocation_page::encode_allocation_cell(
-            page.header(),
-            plan.profile.spec().namespace,
-            &entries,
-            &mut raw[NEW_CELL],
-        )
-        .map_err(|_| SemanticError::PageMismatch)?;
-    }
-    let old_digest = content_digest(&raw[OLD_CELL]);
-    let new_digest = content_digest(&raw[NEW_CELL]);
-    raw[2168..2200].copy_from_slice(&old_digest);
-    raw[2200..2232].copy_from_slice(&new_digest);
-    allocation_page::encode_allocation_page(
-        PageHeader {
-            lsn: PageLsn(h.lsn),
-            ..page.header()
-        },
-        plan.profile.spec().namespace,
-        &raw[NEW_CELL],
-        after,
-    )
-    .map_err(|_| SemanticError::PageMismatch)?;
-    let mut digest = ContentHasher::new();
-    let mut index = 0;
-    for i in 1..64 {
-        if plan.batch.mask & (1u64 << i) == 0 {
-            continue;
-        }
-        let it = item_for(&page, plan.batch, i, plan.cancel)?;
-        digest.update(&it);
-        let d = DELTAS + 208 * index;
-        raw[d] = if plan.cancel { 3 } else { 1 };
-        raw[d + 1] = if plan.cancel { 1 } else { 2 };
-        let start = d + if plan.cancel { 16 } else { 112 };
-        raw[start..start + 96].copy_from_slice(&it);
-        index += 1;
-    }
-    let spec = descriptor(
-        plan.profile,
-        plan.batch,
-        h.lsn,
-        plan.cancel,
-        digest.digest(),
-        budget,
-    );
-    obligation::encode_descriptor(&spec, &mut raw[352..1888]).map_err(descriptor_error)?;
-    let redo = DELTAS + 208 * n;
-    let (source, target) = raw.split_at_mut(redo);
-    wal_frame::encode_patch_record(
-        RedoTarget {
-            page: plan.identity.page,
-            owner: plan.identity.owner,
-            owner_generation: plan.identity.owner_generation,
-            kind: PageKind::Allocation,
-            level: 0,
-        },
-        page.header().lsn.0,
-        10144,
-        &source[NEW_CELL],
-        &mut target[..6272],
-    )
-    .map_err(frame_error)?;
-    wal_frame::finish_semantic_envelope(h, 1, raw).map_err(frame_error)?;
-    Ok(h)
+// Fixed legacy/plan4 source expansions preserve the old call graph. Only
+// plan4 reserve may follow unrelated groups without modifying the allocator.
+macro_rules! allocation_before_lsn {
+    (legacy, $actual:expr, $previous:expr) => {
+        $actual == $previous
+    };
+    (retention, $actual:expr, $previous:expr) => {
+        $actual <= $previous
+    };
 }
+macro_rules! allocation_encoder {
+    ($name:ident, $policy:ident) => {
+        fn $name(
+            plan: Plan<'_>,
+            before: &[u8; PAGE_BYTES],
+            output: &mut [u8],
+            after: &mut [u8; PAGE_BYTES],
+            budget: OperationBudget,
+        ) -> Result<WalFrameHeader> {
+            let h = header(plan)?;
+            let n = plan.batch.count();
+            require(
+                budget.accepts_count(n)
+                    && plan.batch.mask & 1 == 0
+                    && plan.cancel == plan.before_descriptor.is_some(),
+                SemanticError::StateMismatch,
+            )?;
+            let length = frame_length(n);
+            require(output.len() >= length, SemanticError::Corrupt)?;
+            let page = allocation_page::decode_allocation_page(
+                before,
+                plan.identity,
+                plan.profile.spec().namespace,
+            )
+            .map_err(|_| SemanticError::PageMismatch)?;
+            require(
+                allocation_before_lsn!($policy, page.header().lsn.0, plan.prefix.complete_lsn),
+                SemanticError::OrderMismatch,
+            )?;
+            let raw = &mut output[..length];
+            raw.fill(0);
+            let g = 160;
+            raw[g..g + 4].copy_from_slice(b"XSG1");
+            put16(raw, g + 4, 1);
+            put16(raw, g + 6, if plan.cancel { 10 } else { 8 });
+            put16(raw, g + 8, 192);
+            put32(raw, g + 12, (length - 192) as u32);
+            put64(raw, g + 16, h.lsn);
+            put64(raw, g + 24, if plan.cancel { plan.batch.birth } else { 0 });
+            raw[g + 32] = 2;
+            plan.batch
+                .owner
+                .encode(&mut raw[g + 40..g + 88])
+                .map_err(|_| SemanticError::IdentityMismatch)?;
+            if let Some(before) = plan.before_descriptor {
+                raw[g + 88..g + 120].copy_from_slice(&content_digest(before));
+            }
+            put32(raw, g + 120, 1536);
+            put16(raw, g + 124, 1);
+            put16(raw, g + 130, n as u16);
+            put16(raw, g + 132, 1);
+            put32(raw, g + 136, 12544);
+            put32(raw, g + 148, 208 * n as u32);
+            put32(raw, g + 152, 6272);
+            put16(raw, 1888, if plan.cancel { 10 } else { 8 });
+            put32(raw, 1892, 256);
+            put64(raw, 2056, if plan.cancel { n as u64 } else { 0 });
+            raw[2144] = 6;
+            raw[2145] = 3;
+            put16(raw, 2152, 10144);
+            put16(raw, 2154, 10144);
+            put32(raw, 2156, 6208);
+            put32(raw, 2160, 6208);
+            put32(raw, 2164, 12544);
+            raw[OLD_CELL].copy_from_slice(&before[CELL]);
+            {
+                let mut entries = [AllocationEntry::Free(Generation::new(1).expect("nonzero")); 64];
+                for (i, entry) in entries.iter_mut().enumerate() {
+                    *entry = page.entry(i).map_err(|_| SemanticError::PageMismatch)?;
+                    if plan.batch.mask & (1u64 << i) != 0 {
+                        *entry = changed_entry(*entry, plan.batch, plan.cancel)?;
+                    }
+                }
+                allocation_page::encode_allocation_cell(
+                    page.header(),
+                    plan.profile.spec().namespace,
+                    &entries,
+                    &mut raw[NEW_CELL],
+                )
+                .map_err(|_| SemanticError::PageMismatch)?;
+            }
+            let old_digest = content_digest(&raw[OLD_CELL]);
+            let new_digest = content_digest(&raw[NEW_CELL]);
+            raw[2168..2200].copy_from_slice(&old_digest);
+            raw[2200..2232].copy_from_slice(&new_digest);
+            allocation_page::encode_allocation_page(
+                PageHeader {
+                    lsn: PageLsn(h.lsn),
+                    ..page.header()
+                },
+                plan.profile.spec().namespace,
+                &raw[NEW_CELL],
+                after,
+            )
+            .map_err(|_| SemanticError::PageMismatch)?;
+            let mut digest = ContentHasher::new();
+            let mut index = 0;
+            for i in 1..64 {
+                if plan.batch.mask & (1u64 << i) == 0 {
+                    continue;
+                }
+                let it = item_for(&page, plan.batch, i, plan.cancel)?;
+                digest.update(&it);
+                let d = DELTAS + 208 * index;
+                raw[d] = if plan.cancel { 3 } else { 1 };
+                raw[d + 1] = if plan.cancel { 1 } else { 2 };
+                let start = d + if plan.cancel { 16 } else { 112 };
+                raw[start..start + 96].copy_from_slice(&it);
+                index += 1;
+            }
+            let spec = descriptor(
+                plan.profile,
+                plan.batch,
+                h.lsn,
+                plan.cancel,
+                digest.digest(),
+                budget,
+            );
+            obligation::encode_descriptor(&spec, &mut raw[352..1888]).map_err(descriptor_error)?;
+            let redo = DELTAS + 208 * n;
+            let (source, target) = raw.split_at_mut(redo);
+            wal_frame::encode_patch_record(
+                RedoTarget {
+                    page: plan.identity.page,
+                    owner: plan.identity.owner,
+                    owner_generation: plan.identity.owner_generation,
+                    kind: PageKind::Allocation,
+                    level: 0,
+                },
+                page.header().lsn.0,
+                10144,
+                &source[NEW_CELL],
+                &mut target[..6272],
+            )
+            .map_err(frame_error)?;
+            wal_frame::finish_semantic_envelope(h, 1, raw).map_err(frame_error)?;
+            Ok(h)
+        }
+    };
+}
+allocation_encoder!(encode_prepared, legacy);
+allocation_encoder!(encode_retention_prepared, retention);
+
 fn changed_entry(old: AllocationEntry, batch: Batch, cancel: bool) -> Result<AllocationEntry> {
     match old {
         AllocationEntry::Free(g) if !cancel => Ok(AllocationEntry::Reserved {
@@ -1208,11 +1225,45 @@ fn validate_descriptor(
     Ok(())
 }
 
+macro_rules! allocation_population_check {
+    (legacy, $old:ident, $plan:ident, $budget:ident, $population:ident, $h:ident, $state_error:ident) => {
+        validate_population(&$old, $plan.cancel.then_some($plan.batch), $population)?;
+        if $plan.cancel {
+            validate_live_in_population(
+                &$old,
+                $plan.profile,
+                Some($plan.batch),
+                $plan.before_descriptor.ok_or($state_error)?,
+                $plan.batch.owner.id(),
+                $budget,
+                $population,
+                TerminalOutcome::Cancelled,
+            )?;
+        } else {
+            require(
+                $plan.before_descriptor.is_none() && $plan.batch.birth == $h.lsn,
+                $state_error,
+            )?;
+        }
+    };
+    (retention, $old:ident, $plan:ident, $budget:ident, $population:ident, $h:ident, $state_error:ident) => {
+        // The closed caller already checked the entire plan4 population and
+        // actual current descriptor before entering this common transition.
+        if !$plan.cancel {
+            require(
+                $plan.before_descriptor.is_none() && $plan.batch.birth == $h.lsn,
+                SemanticError::StateMismatch,
+            )?;
+        }
+    };
+}
+macro_rules! allocation_transition {
+    ($name:ident, $policy:ident, $population:ident, ($($population_args:tt)*)) => {
 #[allow(
     clippy::too_many_arguments,
     reason = "trusted population is separate from WAL semantic context"
 )]
-fn validate_transition(
+fn $name(
     plan: &AnalysisExpected<'_>,
     before: &[u8; PAGE_BYTES],
     bytes: &[u8],
@@ -1220,7 +1271,7 @@ fn validate_transition(
     h: WalFrameHeader,
     desc: &DescriptorSpec,
     budget: OperationBudget,
-    population: AllocationPopulation,
+    $($population_args)*
 ) -> Result<()> {
     use SemanticError::*;
     let n = plan.batch.count();
@@ -1259,31 +1310,14 @@ fn validate_transition(
     )
     .map_err(|_| PageMismatch)?;
     require(
-        old.header().lsn.0 == plan.frame.previous_lsn && new.header().lsn.0 == h.lsn,
+        allocation_before_lsn!($policy, old.header().lsn.0, plan.frame.previous_lsn) && new.header().lsn.0 == h.lsn,
         OrderMismatch,
     )?;
     require(
         bytes[OLD_CELL] == before[CELL] && bytes[NEW_CELL] == after[CELL],
         PageMismatch,
     )?;
-    validate_population(&old, plan.cancel.then_some(plan.batch), population)?;
-    if plan.cancel {
-        validate_live_in_population(
-            &old,
-            plan.profile,
-            Some(plan.batch),
-            plan.before_descriptor.ok_or(StateMismatch)?,
-            plan.batch.owner.id(),
-            budget,
-            population,
-            TerminalOutcome::Cancelled,
-        )?;
-    } else {
-        require(
-            plan.before_descriptor.is_none() && plan.batch.birth == h.lsn,
-            StateMismatch,
-        )?;
-    }
+    allocation_population_check!($policy, old, plan, budget, $population, h, StateMismatch);
     let mut selected = 0;
     for i in 0..64 {
         let entry = old.entry(i).map_err(|_| PageMismatch)?;
@@ -1372,6 +1406,11 @@ fn validate_transition(
     Ok(())
 }
 
+    };
+}
+allocation_transition!(validate_transition, legacy, population, (population: AllocationPopulation,));
+allocation_transition!(validate_retention_transition, retention, population, ());
+
 /// Discardable RAM analysis output, never a live apply/stage permit. Physical
 /// mixed home pages must not be supplied as this canonical before image.
 pub(in super::super) fn materialize_analysis(
@@ -1419,3 +1458,6 @@ pub(in super::super) fn materialize_analysis_in_population(
     .map_err(|_| SemanticError::PageMismatch)?;
     validate_analysis_in_population(expected, before, bytes, after, budget, population)
 }
+
+#[path = "plan4_allocation_operation.rs"]
+pub(crate) mod retention;

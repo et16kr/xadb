@@ -17,7 +17,7 @@ use super::{
 use crate::api::Namespace;
 use xadb_foundation::{
     io::read_exact_at,
-    namespace::{FileName, NamespaceError, OpenMode, WriterNamespace},
+    namespace::{FileMetadata, FileName, NamespaceError, OpenMode, WriterNamespace},
 };
 
 /// A failed read never changes database bytes; partially filled output is invalid.
@@ -80,6 +80,49 @@ enum NamespaceAccess<'a, W: WriterNamespace> {
     Shared(ReaderLease<'a, W>),
 }
 impl<'a, W: WriterNamespace> NamespaceAccess<'a, W> {
+    fn named(&self, name: &FileName) -> Result<FileMetadata> {
+        self.live()?;
+        match self {
+            Self::Exclusive(writer) => writer.metadata(name)?.ok_or(PageIoError::IdentityMismatch),
+            Self::Shared(lease) => {
+                let writer = lease.writer.lock().map_err(|_| {
+                    lease.fence.fence();
+                    PageIoError::Poisoned
+                })?;
+                if lease.fence.is_fenced() {
+                    return Err(PageIoError::Fenced);
+                }
+                writer.metadata(name)?.ok_or(PageIoError::IdentityMismatch)
+            }
+        }
+    }
+
+    fn open_bound(&mut self, name: &FileName, length: u64) -> Result<(W::File, FileMetadata)> {
+        self.live()?;
+        let (file, opened) = match self {
+            Self::Exclusive(writer) => {
+                writer.open_existing_with_metadata(name, OpenMode::ReadOnly)?
+            }
+            Self::Shared(lease) => {
+                let mut writer = lease.writer.lock().map_err(|_| {
+                    lease.fence.fence();
+                    PageIoError::Poisoned
+                })?;
+                if lease.fence.is_fenced() {
+                    return Err(PageIoError::Fenced);
+                }
+                writer.open_existing_with_metadata(name, OpenMode::ReadOnly)?
+            }
+        };
+        if opened.length != length {
+            return Err(PageIoError::LengthMismatch);
+        }
+        if self.named(name)? != opened {
+            return Err(PageIoError::IdentityMismatch);
+        }
+        Ok((file, opened))
+    }
+
     fn fence(&self) -> Option<&'a SessionFence> {
         match self {
             Self::Exclusive(_) => None,
@@ -137,6 +180,30 @@ pub(crate) struct PageFileReader<'a, W: WriterNamespace> {
     profile: Profile,
     selected: SelectedControl,
     scratch: &'a mut [u8; PAGE_BYTES],
+}
+
+/// New raw-home reader closure; caller root/scratch/output pages are loans.
+/// Includes the retained container, second data file, named/opened metadata,
+/// mapping/codec carriers and return temporaries without optimizer assumptions.
+pub(in crate::storage) fn retention_home_source_bytes<W: WriterNamespace>() -> usize {
+    use std::mem::size_of;
+    size_of::<PageFileReader<'_, W>>()
+        + 2 * size_of::<Result<PageFileReader<'_, W>>>()
+        + 2 * size_of::<W::File>()
+        + 2 * size_of::<Result<(W::File, FileMetadata)>>()
+        + 4 * size_of::<FileMetadata>()
+        + 3 * size_of::<Result<FileMetadata>>()
+        + 3 * size_of::<PageIdentity>()
+        + 2 * size_of::<FileMapEntry>()
+        + 2 * size_of::<Result<FileMapEntry>>()
+        + 2 * size_of::<control::FileMapRoot<'_>>()
+        + 2 * size_of::<control::FileMapChunk<'_>>()
+        + 2 * size_of::<control::FileMapCursor<'_>>()
+        + 4 * size_of::<FileName>()
+        + 4 * size_of::<Result<()>>()
+        + 2 * size_of::<std::sync::MutexGuard<'_, W>>()
+        + 4 * size_of::<xadb_foundation::codec::ContentHasher>()
+        + 4096 // Original open/profile/mapping nested scalar and codec carriers.
 }
 
 impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
@@ -328,6 +395,50 @@ impl<'a, W: WriterNamespace> PageFileReader<'a, W> {
         }
         self.writer.live()?;
         Ok(view)
+    }
+
+    /// Physical home observation for the closed live history consumer. Zero
+    /// and old images are deliberately not interpreted here. Only the upper
+    /// replay proof may authorize using these bytes for a DWB write or load.
+    pub(in crate::storage) fn read_retention_home(
+        &mut self,
+        expected: PageIdentity,
+        kind: PageKind,
+        level: u8,
+        allocator: PageIdentity,
+        output: &mut [u8; PAGE_BYTES],
+    ) -> Result<()> {
+        let _unwind = self.writer.fence().map(SessionFence::unwind_guard);
+        self.writer.live()?;
+        validate_page_request(self.profile, expected, kind, level)?;
+        let entry = self.mapping(expected.page.file)?;
+        if allocator.page.page_no != 0
+            || expected.database != allocator.database
+            || expected.page.file != allocator.page.file
+            || entry.metadata_identity(self.profile.spec().namespace, 0)? != allocator
+        {
+            return Err(PageIoError::IdentityMismatch);
+        }
+        let offset = expected
+            .page
+            .page_no
+            .checked_mul(PAGE_BYTES as u64)
+            .filter(|offset| {
+                offset
+                    .checked_add(PAGE_BYTES as u64)
+                    .is_some_and(|end| end <= entry.mapped_bytes)
+            })
+            .ok_or(PageIoError::OutOfBounds)?;
+        let name = control::data_file_name(entry.file);
+        let (mut file, opened) = self.writer.open_bound(&name, entry.mapped_bytes)?;
+        read_exact_at(&mut file, output, offset)?;
+        // The same opened handle supplies all bytes. The named observation
+        // detects replacement; this does not invent a FileIo metadata method.
+        if self.writer.named(&name)? != opened {
+            return Err(PageIoError::IdentityMismatch);
+        }
+        self.writer.live()?;
+        Ok(())
     }
 }
 

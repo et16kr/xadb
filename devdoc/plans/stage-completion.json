@@ -1055,6 +1055,21 @@
           "live_owner": false,
           "full_stage_acceptance": false,
           "ai_experiment_completed_consumers": 1
+        },
+        "retention_live": {
+          "status": "ACCEPTED_LIMITED_D1",
+          "contract_ref": "dev3-retention-live.md",
+          "evidence_ref": "dev3-retention-live-20261025.json",
+          "mandatory_unique_pass": 75,
+          "static": 2,
+          "semantic_live": 30,
+          "prefix": 43,
+          "native_runtime": 0,
+          "s5_additional": 269,
+          "fresh_live_owner": true,
+          "recovered_owner": false,
+          "full_stage_acceptance": false,
+          "ai_experiment_completed_consumers": 1
         }
       }
     },

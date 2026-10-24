@@ -59,7 +59,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         }
         Ok(())
     }
-    fn status_payload(
+    pub(super) fn status_payload(
         &self,
         index: usize,
         content: &FrameContent<'_>,
@@ -201,7 +201,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             index,
         })
     }
-    fn load_lock_error<T>(&self, error: TryLockError<T>) -> DirtyError {
+    pub(super) fn load_lock_error<T>(&self, error: TryLockError<T>) -> DirtyError {
         match error {
             TryLockError::WouldBlock => unchanged(Cause::Busy),
             TryLockError::Poisoned(_) => self.fatal(Cause::Poisoned),

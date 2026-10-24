@@ -14,6 +14,7 @@ enum Mode {
     ResidentStatus,
     ResidentMixed,
     Plan4Genesis,
+    Plan4Retention,
 }
 
 struct Slot {
@@ -58,6 +59,69 @@ pub(super) struct RegistrationDirectory {
     resident: u64,
     pub(super) eviction_epoch: u64,
 }
+// The old expansion keeps its exact closed-slot predicate. Only live retention
+// admits the original single closed initializer slot.
+macro_rules! plan4_closed_invalid {
+    (genesis, $directory:ident, $frames:ident) => {
+        $directory.closed_index.is_some()
+    };
+    (retention, $directory:ident, $frames:ident) => {
+        $directory.closed_index.is_some_and(|index| {
+            index == 0 || index >= $frames.len() || $directory.entries[index].generation == 0
+        })
+    };
+}
+// Two fixed modes share registration geometry; accepted payloads and INIT differ.
+macro_rules! plan4_directory_validator {
+    ($method:ident, $accept:ident, $mode:ident) => {
+        fn $method(&self, frames: &[DirtyFrame<'_>]) -> bool {
+            if !(4..=MAX_FRAMES).contains(&frames.len())
+                || plan4_closed_invalid!($mode, self, frames)
+                || self.resident != 0
+                || self.eviction_epoch != 0
+            {
+                return false;
+            }
+            let Some(allocator) = self.entries[0].registration() else {
+                return false;
+            };
+            if allocator.generation != 1
+                || frames[0].registration != Some(allocator)
+                || allocator.request.kind != PageKind::Allocation
+                || allocator.request.level != 0
+                || allocator.request.identity.page.page_no != 0
+                || allocator.request.identity.page.incarnation.get() != 1
+                || allocator.request.identity.owner.get() != 1
+                || allocator.request.identity.owner_generation.get() != 1
+            {
+                return false;
+            }
+            self.entries.iter().enumerate().all(|(index, slot)| {
+                if index >= frames.len() {
+                    return slot.generation == 0 && slot.registration().is_none();
+                }
+                if index == 0 {
+                    return true;
+                }
+                if frames[index].registration.is_some() {
+                    return false;
+                }
+                let Some(entry) = slot.registration() else {
+                    return true;
+                };
+                entry.generation != 0
+                    && self.$accept(entry.request)
+                    && entry.request.identity.database == allocator.request.identity.database
+                    && entry.request.identity.page.file == allocator.request.identity.page.file
+                    && !self.entries[..index]
+                        .iter()
+                        .filter_map(Slot::registration)
+                        .any(|prior| prior.request.same_address(&entry.request))
+            })
+        }
+    };
+}
+
 impl RegistrationDirectory {
     pub(super) fn from_bootstrap(frames: &[DirtyFrame<'_>]) -> Option<Self> {
         let mut entries = [const { Slot::empty() }; MAX_FRAMES];
@@ -125,6 +189,62 @@ impl RegistrationDirectory {
                 8 => request.kind == PageKind::CatalogLeaf && request.identity.owner.get() == 5,
                 _ => false,
             }
+    }
+    pub(super) fn retention_payloads(&self) -> bool {
+        self.mode == Mode::Plan4Retention
+    }
+    pub(super) fn accepts_retention_payload(&self, request: TargetRequest) -> bool {
+        self.retention_payloads()
+            && request.level == 0
+            && request.identity.owner_generation.get() == 1
+            && match request.identity.page.page_no {
+                1 => {
+                    request.identity.page.incarnation.get() == 1
+                        && request.kind == PageKind::RetentionRoot
+                        && request.identity.owner.get() == 4
+                }
+                2..=6 => {
+                    request.identity.page.incarnation.get() == 1
+                        && request.kind == PageKind::RetentionJobs
+                        && request.identity.owner.get() == 4
+                }
+                7 => {
+                    request.identity.page.incarnation.get() == 1
+                        && request.kind == PageKind::TreeAnchor
+                        && request.identity.owner.get() == 5
+                }
+                8 => {
+                    request.identity.page.incarnation.get() == 1
+                        && request.kind == PageKind::CatalogLeaf
+                        && request.identity.owner.get() == 5
+                }
+                9..=63 => {
+                    request.identity.page.incarnation.get() >= 2
+                        && request.kind == PageKind::TransactionStatus
+                        && request.identity.owner.get() == 2
+                }
+                _ => false,
+            }
+    }
+    pub(super) fn activate_retention(&mut self, frames: &[DirtyFrame<'_>]) -> bool {
+        if !self.plan4_payloads() || !self.valid_plan4(frames) {
+            return false;
+        }
+        self.mode = Mode::Plan4Retention;
+        true
+    }
+    pub(super) fn next_retention_generation(&self, index: usize) -> Option<u64> {
+        self.retention_payloads().then_some(())?;
+        (index != 0).then_some(())?;
+        self.entries.get(index)?.generation.checked_add(1)
+    }
+    pub(super) fn replace_retention(&mut self, index: usize, registration: Registration) {
+        self.entries[index].replace(registration);
+    }
+    pub(super) fn prepare_retention_slot(&mut self, index: usize, generation: u64) {
+        self.entries[index].request.take();
+        self.entries[index].generation = generation;
+        self.closed_index = Some(index);
     }
     pub(super) fn open_plan4(&mut self, frames: &[DirtyFrame<'_>]) -> bool {
         if self.mode != Mode::Fixed
@@ -237,7 +357,8 @@ impl RegistrationDirectory {
         let frame = frames.get(index)?;
         let original = self.entries.get(index)?.registration();
         if self.closed_index == Some(index)
-            || ((self.resident_payloads() || self.plan4_payloads()) && index != 0)
+            || ((self.resident_payloads() || self.plan4_payloads() || self.retention_payloads())
+                && index != 0)
         {
             if frame.registration.is_some() {
                 return None;
@@ -251,7 +372,8 @@ impl RegistrationDirectory {
                         | Mode::OperationalStatus
                         | Mode::ResidentStatus
                         | Mode::ResidentMixed
-                        | Mode::Plan4Genesis => frame.registration == Some(*value),
+                        | Mode::Plan4Genesis
+                        | Mode::Plan4Retention => frame.registration == Some(*value),
                         Mode::AllocatorReloadable => self.resident & (1u64 << index) != 0,
                     }
             })
@@ -370,6 +492,9 @@ impl RegistrationDirectory {
     pub(super) fn valid(&self, frames: &[DirtyFrame<'_>]) -> bool {
         if self.plan4_payloads() {
             return self.valid_plan4(frames);
+        }
+        if self.retention_payloads() {
+            return self.valid_retention(frames);
         }
         if self.resident_payloads() {
             let Some(selected) = self.closed_index else {
@@ -492,51 +617,8 @@ impl RegistrationDirectory {
         })
     }
 
-    fn valid_plan4(&self, frames: &[DirtyFrame<'_>]) -> bool {
-        if !(4..=MAX_FRAMES).contains(&frames.len())
-            || self.closed_index.is_some()
-            || self.resident != 0
-            || self.eviction_epoch != 0
-        {
-            return false;
-        }
-        let Some(allocator) = self.entries[0].registration() else {
-            return false;
-        };
-        if allocator.generation != 1
-            || frames[0].registration != Some(allocator)
-            || allocator.request.kind != PageKind::Allocation
-            || allocator.request.level != 0
-            || allocator.request.identity.page.page_no != 0
-            || allocator.request.identity.page.incarnation.get() != 1
-            || allocator.request.identity.owner.get() != 1
-            || allocator.request.identity.owner_generation.get() != 1
-        {
-            return false;
-        }
-        self.entries.iter().enumerate().all(|(index, slot)| {
-            if index >= frames.len() {
-                return slot.generation == 0 && slot.registration().is_none();
-            }
-            if index == 0 {
-                return true;
-            }
-            if frames[index].registration.is_some() {
-                return false;
-            }
-            let Some(entry) = slot.registration() else {
-                return true;
-            };
-            entry.generation != 0
-                && self.accepts_plan4_payload(entry.request)
-                && entry.request.identity.database == allocator.request.identity.database
-                && entry.request.identity.page.file == allocator.request.identity.page.file
-                && !self.entries[..index]
-                    .iter()
-                    .filter_map(Slot::registration)
-                    .any(|prior| prior.request.same_address(&entry.request))
-        })
-    }
+    plan4_directory_validator!(valid_plan4, accepts_plan4_payload, genesis);
+    plan4_directory_validator!(valid_retention, accepts_retention_payload, retention);
 }
 
 pub(super) fn fits() -> bool {

@@ -1047,3 +1047,12 @@ pub(in crate::storage) use bootstrap::{
     encode_plan4_catalog_genesis, plan4_base_allocation_source_bytes,
     plan4_catalog_genesis_source_bytes, validate_plan4_base_allocation,
 };
+
+#[allow(
+    unused_imports,
+    reason = "sealed sibling authority names are kept for internal consumers"
+)]
+pub(in crate::storage) use bootstrap::{
+    RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
+    RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
+};

@@ -42,6 +42,8 @@ const HOME: std::ops::Range<usize> = 16128..16352;
 pub(super) mod fixed;
 #[path = "mixed_system_init.rs"]
 pub(super) mod mixed;
+#[path = "plan4_status_init_operation.rs"]
+pub(crate) mod retention;
 
 /// The legacy wrappers can construct only Status. Mixed scope is selected by
 /// the separate plan3 role-bearing wrapper, never by a stored native tag.

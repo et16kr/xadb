@@ -127,7 +127,7 @@ pub(crate) enum InitAttemptError<R> {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum InitInstallPhase {
+pub(in crate::storage) enum InitInstallPhase {
     StageOwned,
     DescriptorInstalled,
     RegistryInstalled,
@@ -159,6 +159,20 @@ pub(in crate::storage) struct InitAuthority<'c, 's> {
     payload_index: usize,
 }
 impl<'c, 's> InitAuthority<'c, 's> {
+    pub(in crate::storage) fn from_retention(proof: super::RetentionInitAuthority<'c, 's>) -> Self {
+        Self {
+            core: proof.core(),
+            binding: proof.binding(),
+            fence: proof.fence(),
+            batch: proof.batch(),
+            allocator: proof.allocator(),
+            payload: proof.payload(),
+            ordinal: proof.ordinal(),
+            generations: proof.generations(),
+            payload_index: proof.payload_index(),
+        }
+    }
+
     pub(in crate::storage) fn payload_index(&self) -> usize {
         self.payload_index
     }
@@ -200,6 +214,18 @@ pub(in crate::storage) struct InitInstallPermit<'i, 'c, 's> {
     status_after: &'i [u8; PAGE_BYTES],
 }
 impl<'i, 'c, 's> InitInstallPermit<'i, 'c, 's> {
+    pub(in crate::storage) fn from_retention(
+        proof: super::RetentionInitInstall<'i, 'c, 's>,
+    ) -> Self {
+        Self {
+            key: proof.claim(),
+            allocator_before: proof.allocator_before(),
+            requirement: proof.requirement(),
+            allocator_after: proof.allocator_after(),
+            status_after: proof.status_after(),
+        }
+    }
+
     pub(in crate::storage) fn claim(&self) -> &InitClaimKey<'c, 's> {
         self.key
     }
@@ -224,7 +250,16 @@ pub(in crate::storage) struct InitControlCommit<'i> {
     after_descriptor: &'i [u8; 1536],
     phase: &'i mut InitInstallPhase,
 }
-impl InitControlCommit<'_> {
+impl<'i> InitControlCommit<'i> {
+    pub(in crate::storage) fn from_retention(proof: super::RetentionInitCommit<'i>) -> Self {
+        let (descriptor, after_descriptor, phase) = proof.into_parts();
+        Self {
+            descriptor,
+            after_descriptor,
+            phase,
+        }
+    }
+
     pub(in crate::storage) fn install_descriptor(&mut self) {
         self.descriptor.copy_from_slice(self.after_descriptor);
         *self.phase = InitInstallPhase::DescriptorInstalled;
@@ -240,7 +275,13 @@ impl InitControlCommit<'_> {
 pub(in crate::storage) struct CompletedInitAuthority<'c, 's> {
     authority: InitAuthority<'c, 's>,
 }
-impl CompletedInitAuthority<'_, '_> {
+impl<'c, 's> CompletedInitAuthority<'c, 's> {
+    pub(in crate::storage) fn from_retention(proof: super::RetentionInitCompleted<'c, 's>) -> Self {
+        Self {
+            authority: proof.into_authority(),
+        }
+    }
+
     pub(in crate::storage) fn matches(&self, key: &InitClaimKey<'_, '_>) -> bool {
         key.matches_authority(&self.authority)
     }

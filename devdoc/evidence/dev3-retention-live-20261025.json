@@ -1,0 +1,449 @@
+{
+  "schema_version": 1,
+  "unit": "DEV3_PLAN4_FRESH_RETENTION_LIVE_PREFIX",
+  "status": "ACCEPTED_LIMITED_D1",
+  "contract_ref": "dev3-retention-live.md",
+  "test_plan_ref": "dev3-test-plan.md#retention-live",
+  "source_comparison_base_commit": "7aecb9a8b18e203da6236e9989e88b8269d9ec26",
+  "integration_parent_commit": "1dd7bed1fc03bead2158fba439a06673dff29158",
+  "scope": "Fresh original MutableStorageOwner/SharedPool N=0 lifecycle, flush/load and observational tag3 prefix. Recovered owner and native lifecycle not accepted.",
+  "owned_source_files": {
+    "crates/engine/src/storage/dirty_frame.rs": "61214565738882d42f70474479312c5d223c62300ffe54914e30ad12ee5f48b8",
+    "crates/engine/src/storage/dirty_frame/plan4_residency.rs": "8feed17af2983d1dc5cfd1fd1436640221d7d0b4d86757c1b676d68c1600eb12",
+    "crates/engine/src/storage/dirty_frame/registration.rs": "475662894bb5126e028f0a42abdde8a0b1232e3b7e9d790f0639074438913bd5",
+    "crates/engine/src/storage/dirty_frame/retention_residency.rs": "9b3841e483234690ac825ef7495dfec802c60c361a197ef256a61eaec17eb01b",
+    "crates/engine/src/storage/dirty_frame/status_residency.rs": "39ac3253827903979eb8894599a72539c57a4a933126877de9dbe1b67b36031a",
+    "crates/engine/src/storage/dirty_init.rs": "7c8b016f2e0384a0cc23bf235c69aa2e07d69d695ca25f06951797d87d5dfe93",
+    "crates/engine/src/storage/mod.rs": "18eb469495617507281bf8ed5fe3a49f00abc959d15acceffbc6d513b58ec7c8",
+    "crates/engine/src/storage/page_io.rs": "387ad00b3813dc1013bf1d572e1e72dd51a58234ee1e50ed9229e1e5bea44474",
+    "crates/engine/src/storage/wal_io.rs": "f6cb6e2c4a3e276d228b3c90ecc3bea9067da34a10a24436a2d53ecd9a79bf7b",
+    "crates/engine/src/storage/wal_io/allocation_operation.rs": "97b314188adebffc7102c31e424a8d0eacfa6613b56bfa527ce5e16419a5ab20",
+    "crates/engine/src/storage/wal_io/bootstrap.rs": "ac76f60c3541b4c062cb4851a5fe81eb3099e63257e34984661cc0a68a5701d5",
+    "crates/engine/src/storage/wal_io/dirty_allocation.rs": "798cdd1f1c1055adad4c4d0788ba8b6d9a889e15e843ad1cfe2e96f38a5ee8f6",
+    "crates/engine/src/storage/wal_io/doublewrite_install.rs": "9fb3cfe3bec0b30a96d374a0754be4bccd437a36ff766b81f0d4e48a76de2c1c",
+    "crates/engine/src/storage/wal_io/flush_io.rs": "b1511dcbdef0f6b4cbac63004ddcd1b60714c4a7d2576945ad638d3f9f1b8ab9",
+    "crates/engine/src/storage/wal_io/mutable_storage.rs": "2dbf1f975f4d7d1a8c1e3ef4b5cfe490053d919d6c1db755a3d4227d518b1c45",
+    "crates/engine/src/storage/wal_io/plan4_allocation_operation.rs": "97b607872fa2329358dabe27e943e12cefedb7ff4bdf334ae5774879c62a4c51",
+    "crates/engine/src/storage/wal_io/plan4_pages.rs": "84c576414f2a2ef7d1126605dddb570696b34543a321e2bf7a349094a3fac2a5",
+    "crates/engine/src/storage/wal_io/plan4_retention.rs": "d63f3ef94b55c2729212643f638e44f007ba3862d46810ad4de4de947ca41d32",
+    "crates/engine/src/storage/wal_io/plan4_retention_control.rs": "f79c1675948bde52eb6d3be92242100637d2a4ac7c409a45295f2635abe32623",
+    "crates/engine/src/storage/wal_io/plan4_retention_flush.rs": "8fbbb36bd60902c12962f9bcbcdc605be9e4248115e3745803895820ed051025",
+    "crates/engine/src/storage/wal_io/plan4_retention_history.rs": "e99955ec43c85ecd9e421a8dcc997944a6b51c4c55e2325406e637dba07bd96b",
+    "crates/engine/src/storage/wal_io/plan4_retention_live.rs": "5e296575df9d1cea1281f54fcc0ff710351dcad4335405389c484967da8b0d71",
+    "crates/engine/src/storage/wal_io/plan4_retention_load.rs": "47983e68c415bc81e1e6a9393d647f3a7eaf701fa2920c93e5e931a02cdf5ae6",
+    "crates/engine/src/storage/wal_io/plan4_retention_population.rs": "7df3bd90d899aa0a063360531c33d3af21e847ab9162e3f3a34d32b009238602",
+    "crates/engine/src/storage/wal_io/plan4_retention_read.rs": "91e0656c1674d1482b70ad9484d524aa720f37a22336da484afa8a9ae72232ea",
+    "crates/engine/src/storage/wal_io/plan4_retention_resources.rs": "717126c608516eca7dacf163069ee09ee4709ff2630c3589658b35a0e4935d1b",
+    "crates/engine/src/storage/wal_io/plan4_retention_tests.rs": "d3dc0ea75e7a8ec03e5079ed318666dce98968bfbfa6e32536a6b21e08c7b59b",
+    "crates/engine/src/storage/wal_io/plan4_status_init_operation.rs": "2a78d4e1eae1a99d1b89f2dfeefc18c6b983913a02c147e2786b3dc73cacb3ac",
+    "crates/engine/src/storage/wal_io/status_init.rs": "45c5001c3d8348c2db5caa55fbee5e16188483db5301d2fc5b79381ddbb178b3",
+    "crates/engine/src/storage/wal_io/status_init_operation.rs": "57d4791246598ab801bbbc5b8d09fb51db00d8a69d844ba037b64936a4af997f",
+    "tests/fixtures/dev3-plan4-retention-live/input-plan.json": "c8ecbeb1a74f37d8f3f9cb5528e97853a181b90fb286c8c6374616f88316e407",
+    "tests/fixtures/dev3-plan4-retention-live/provenance.md": "97b520cd0e4aa1ceb74f142c84b853b0c1737cc9f002188d2d8b1d6df3ec8949",
+    "crates/engine/src/storage/wal_io/plan4_retention_lifecycle_tests.rs": "9617dec383ca72483de671f727cd823e4a7df63c9e07a240866cfc2b7563048a",
+    "crates/engine/src/storage/wal_io/plan4_retention_literal_tests.rs": "5d6803a928a6c94a8aff58433b7b9c8bb3a071e0b8ff068a0597ed300624d65c",
+    "crates/engine/src/storage/wal_io/plan4_retention_s5_tests.rs": "e9f52b8b74b1254bc9d23b97af6314b9f149d77cb4afa98963dfb45af7dcb151",
+    "crates/engine/src/storage/wal_io/plan4_genesis_test_support.rs": "00ab155f0b2819e584fe583d5ead17a193f6997060fa6e9453d9b5fe2db6ecdf",
+    "crates/engine/src/storage/wal_frame.rs": "6b67900df1bc1b7cdd4251c80d00c33dbd9ac5d8a7359f55529c3827099e7a28",
+    "crates/engine/src/storage/wal_retention_prefix_tests.rs": "c68e08bd6474ae25c342d85143186e93c86b5480d6acbee321a337c6fcc70a90",
+    "tests/fixtures/dev3-plan4-retention-prefix/input-plan.json": "9bd52d555af6a82bddb5ef8dd3d695a54b3337eda558dcc92d5e4cf341b58eb0"
+  },
+  "mandatory_results": {
+    "path": "artifacts/dev3/plan4-g6-recovery-20261024/fresh-mandatory-results-r0.json",
+    "sha256": "fc30198f5e8182713cf87c3cecc935a1afa39d46b709763ca28c7eb357468ba8",
+    "unique_pass": 75,
+    "live_static": 2,
+    "live_semantic": 30,
+    "prefix": 43,
+    "completed_case_repetitions": 0
+  },
+  "source_bound_bytes": {
+    "original_static_source": "b4aaa795698c9d9d436b8bf93b9c7691e58c86847581c6925a170f38f4bd56ce",
+    "memory": {
+      "peak": 63520,
+      "metadata": 123424,
+      "whole": 188960
+    },
+    "native": {
+      "peak": 63656,
+      "metadata": 123560,
+      "whole": 189096
+    },
+    "meaning": "Actual generic source-value census; not stack/RSS or recovered runtime; derived source changes independently reviewed without rerunning completed static2."
+  },
+  "receipts": [
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r2/static-r0/result.json",
+      "sha256": "58f86fe3c57a49cfaec3afb421d9777e293e7d4424bccd788e31f46b562c18a0",
+      "identity": [
+        "b4aaa795698c9d9d436b8bf93b9c7691e58c86847581c6925a170f38f4bd56ce",
+        "29985bbcfceaf596174750cf8254e7289e3c900926ae7ff2bbe1155625174d7c",
+        "74dc93ffb3e1f31a7130519ca6068fab729bb028a40ad3a988fbf7a6f40c1190"
+      ],
+      "cases": {
+        "P4-LIVE-ST01": "PASS",
+        "P4-LIVE-ST02": "PASS"
+      },
+      "status": "PASS"
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r4/semantic-r0/result.json",
+      "sha256": "b91b5889836c34174db1fabae1df335c4d29d7ea9eb1c053cf68bfef141dad77",
+      "identity": [
+        "55d6b8a95939c5edf86f34b36e1e5b7cfb417fea90b7df5ce2b016cb4eca3db3",
+        "149212323cffb25a93137334a65ea4a6d022ba01e86aba1b1e41a200902a7820",
+        "fa20d7f3a18b608262cde28c31c9ed5ca7989678cf9be28b57e6c0482ea25c35"
+      ],
+      "cases": {
+        "P4-LIVE-A01": "PASS",
+        "P4-LIVE-A02": "PASS",
+        "P4-LIVE-A03": "PASS",
+        "P4-LIVE-A04": "PASS",
+        "P4-LIVE-D01": "NOT_RUN",
+        "P4-LIVE-D02": "NOT_RUN",
+        "P4-LIVE-D03": "NOT_RUN",
+        "P4-LIVE-D04": "NOT_RUN",
+        "P4-LIVE-D05": "NOT_RUN",
+        "P4-LIVE-D06": "NOT_RUN",
+        "P4-LIVE-F01": "FAIL",
+        "P4-LIVE-F02": "NOT_RUN",
+        "P4-LIVE-F03": "NOT_RUN",
+        "P4-LIVE-F04": "NOT_RUN",
+        "P4-LIVE-F05": "NOT_RUN",
+        "P4-LIVE-F06": "NOT_RUN",
+        "P4-LIVE-L01": "NOT_RUN",
+        "P4-LIVE-L02": "NOT_RUN",
+        "P4-LIVE-L03": "NOT_RUN",
+        "P4-LIVE-L04": "NOT_RUN",
+        "P4-LIVE-R01": "NOT_RUN",
+        "P4-LIVE-R02": "NOT_RUN",
+        "P4-LIVE-R03": "NOT_RUN",
+        "P4-LIVE-R04": "NOT_RUN",
+        "P4-LIVE-W01": "NOT_RUN",
+        "P4-LIVE-W02": "NOT_RUN",
+        "P4-LIVE-W03": "NOT_RUN",
+        "P4-LIVE-W04": "NOT_RUN",
+        "P4-LIVE-W05": "NOT_RUN",
+        "P4-LIVE-W06": "NOT_RUN"
+      },
+      "status": "PARTIAL_OR_FAIL"
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r5/semantic-r0/result.json",
+      "sha256": "c514cf98ca89de61b386243795ba34dc74036e904e8adf7e1a18988231df9a65",
+      "identity": [
+        "9dfeb09519ad22c3add1632107071a6d3405c28d0a08747df291eb195599d0d5",
+        "838dfa3b01ea4984bca36dc3ac5398c10200e8a512645c2090e4ec5dcf5fbb65",
+        "511b5455d030cb986bf825d6b887fbbce3e2af4592b13480cb54255cde707cf6"
+      ],
+      "cases": {
+        "P4-LIVE-D01": "NOT_RUN",
+        "P4-LIVE-D02": "NOT_RUN",
+        "P4-LIVE-D03": "NOT_RUN",
+        "P4-LIVE-D04": "NOT_RUN",
+        "P4-LIVE-D05": "NOT_RUN",
+        "P4-LIVE-D06": "NOT_RUN",
+        "P4-LIVE-F01": "FAIL",
+        "P4-LIVE-F02": "NOT_RUN",
+        "P4-LIVE-F03": "NOT_RUN",
+        "P4-LIVE-F04": "NOT_RUN",
+        "P4-LIVE-F05": "NOT_RUN",
+        "P4-LIVE-F06": "NOT_RUN",
+        "P4-LIVE-L01": "NOT_RUN",
+        "P4-LIVE-L02": "NOT_RUN",
+        "P4-LIVE-L03": "NOT_RUN",
+        "P4-LIVE-L04": "NOT_RUN",
+        "P4-LIVE-R01": "NOT_RUN",
+        "P4-LIVE-R02": "NOT_RUN",
+        "P4-LIVE-R03": "NOT_RUN",
+        "P4-LIVE-R04": "NOT_RUN",
+        "P4-LIVE-W01": "NOT_RUN",
+        "P4-LIVE-W02": "NOT_RUN",
+        "P4-LIVE-W03": "NOT_RUN",
+        "P4-LIVE-W04": "NOT_RUN",
+        "P4-LIVE-W05": "NOT_RUN",
+        "P4-LIVE-W06": "NOT_RUN"
+      },
+      "status": "PARTIAL_OR_FAIL"
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r6/semantic-r0/result.json",
+      "sha256": "abd86ba2d44f107075fcb2f0a2b8f9c50659135763c78ad11676fde4eb755e10",
+      "identity": [
+        "282eaa1b95faa839b05389f8622fc9b8215304a3cec1d54537de1fba4ef7923f",
+        "a5f573b608713abe52af6e00aff26e3d482e65cc62d69b29df805af25ec5074e",
+        "325d24f1e2f40c13d01c71d7a8ebcbeed34e84032677f790e7f9118e61ad0b11"
+      ],
+      "cases": {
+        "P4-LIVE-D01": "NOT_RUN",
+        "P4-LIVE-D02": "NOT_RUN",
+        "P4-LIVE-D03": "NOT_RUN",
+        "P4-LIVE-D04": "NOT_RUN",
+        "P4-LIVE-D05": "NOT_RUN",
+        "P4-LIVE-D06": "NOT_RUN",
+        "P4-LIVE-F01": "FAIL",
+        "P4-LIVE-F02": "NOT_RUN",
+        "P4-LIVE-F03": "NOT_RUN",
+        "P4-LIVE-F04": "NOT_RUN",
+        "P4-LIVE-F05": "NOT_RUN",
+        "P4-LIVE-F06": "NOT_RUN",
+        "P4-LIVE-L01": "NOT_RUN",
+        "P4-LIVE-L02": "NOT_RUN",
+        "P4-LIVE-L03": "NOT_RUN",
+        "P4-LIVE-L04": "NOT_RUN",
+        "P4-LIVE-R01": "NOT_RUN",
+        "P4-LIVE-R02": "NOT_RUN",
+        "P4-LIVE-R03": "NOT_RUN",
+        "P4-LIVE-R04": "NOT_RUN",
+        "P4-LIVE-W01": "NOT_RUN",
+        "P4-LIVE-W02": "NOT_RUN",
+        "P4-LIVE-W03": "NOT_RUN",
+        "P4-LIVE-W04": "NOT_RUN",
+        "P4-LIVE-W05": "NOT_RUN",
+        "P4-LIVE-W06": "NOT_RUN"
+      },
+      "status": "PARTIAL_OR_FAIL"
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r7/semantic-r0/result.json",
+      "sha256": "50b613c82889499a5994931075be47a576d674dbba9b543bca6aef547eb973e7",
+      "identity": [
+        "5c7f629762e09d721837a783ff0ce8c73a6cc1fa3f8dee7d35e9265a616162aa",
+        "c664ac402f9b3a8e940ca989fa106d4a6382248b68bf06c6acc6abb94b6d37a4",
+        "01bb19ad844632b6f307a5eb27de4a247317305617f595e3a1118274eca10454"
+      ],
+      "cases": {
+        "P4-LIVE-D01": "NOT_RUN",
+        "P4-LIVE-D02": "NOT_RUN",
+        "P4-LIVE-D03": "NOT_RUN",
+        "P4-LIVE-D04": "NOT_RUN",
+        "P4-LIVE-D05": "NOT_RUN",
+        "P4-LIVE-D06": "NOT_RUN",
+        "P4-LIVE-F01": "FAIL",
+        "P4-LIVE-F02": "NOT_RUN",
+        "P4-LIVE-F03": "NOT_RUN",
+        "P4-LIVE-F04": "NOT_RUN",
+        "P4-LIVE-F05": "NOT_RUN",
+        "P4-LIVE-F06": "NOT_RUN",
+        "P4-LIVE-L01": "NOT_RUN",
+        "P4-LIVE-L02": "NOT_RUN",
+        "P4-LIVE-L03": "NOT_RUN",
+        "P4-LIVE-L04": "NOT_RUN",
+        "P4-LIVE-R01": "NOT_RUN",
+        "P4-LIVE-R02": "NOT_RUN",
+        "P4-LIVE-R03": "NOT_RUN",
+        "P4-LIVE-R04": "NOT_RUN",
+        "P4-LIVE-W01": "NOT_RUN",
+        "P4-LIVE-W02": "NOT_RUN",
+        "P4-LIVE-W03": "NOT_RUN",
+        "P4-LIVE-W04": "NOT_RUN",
+        "P4-LIVE-W05": "NOT_RUN",
+        "P4-LIVE-W06": "NOT_RUN"
+      },
+      "status": "PARTIAL_OR_FAIL"
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r8/semantic-r0/result.json",
+      "sha256": "a381f56c58eb023ec6dc73d342af07f903147101f58513b4049940aeffccaf57",
+      "identity": [
+        "dd350bb5ad425d441dbc851f9c388e61f7621aa7af7d0aadf249cb4ece6bd159",
+        "0a8717526cc26ac1cf5327d9b0b337064031ff357eb6d3c1dcf89b7733233a6e",
+        "73c2e1f5417442a1e8b5bc9f15839ef0ab6e21f21c19a9dc68c0ca4852881d87"
+      ],
+      "cases": {
+        "P4-LIVE-D01": "PASS",
+        "P4-LIVE-D02": "PASS",
+        "P4-LIVE-D03": "PASS",
+        "P4-LIVE-D04": "PASS",
+        "P4-LIVE-D05": "PASS",
+        "P4-LIVE-D06": "PASS",
+        "P4-LIVE-F01": "PASS",
+        "P4-LIVE-F02": "PASS",
+        "P4-LIVE-F03": "PASS",
+        "P4-LIVE-F04": "PASS",
+        "P4-LIVE-F05": "PASS",
+        "P4-LIVE-F06": "PASS",
+        "P4-LIVE-L01": "FAIL",
+        "P4-LIVE-L02": "NOT_RUN",
+        "P4-LIVE-L03": "NOT_RUN",
+        "P4-LIVE-L04": "NOT_RUN",
+        "P4-LIVE-R01": "NOT_RUN",
+        "P4-LIVE-R02": "NOT_RUN",
+        "P4-LIVE-R03": "NOT_RUN",
+        "P4-LIVE-R04": "NOT_RUN",
+        "P4-LIVE-W01": "NOT_RUN",
+        "P4-LIVE-W02": "NOT_RUN",
+        "P4-LIVE-W03": "NOT_RUN",
+        "P4-LIVE-W04": "NOT_RUN",
+        "P4-LIVE-W05": "NOT_RUN",
+        "P4-LIVE-W06": "NOT_RUN"
+      },
+      "status": "PARTIAL_OR_FAIL"
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r9/semantic-r0/result.json",
+      "sha256": "e64ad9bc2f81f6b56d281dc26a5791abebb29cef21ba22d6eae20d446f07e837",
+      "identity": [
+        "6c64a4019f93952d0a4391b213a7b6970dab2b861c4de18d87ebb57d3efbc32f",
+        "ff2c09e76d4e08f6135c27912ab6c5f1cd41a14de5e3c71ca2eb3c59336294f4",
+        "f22db34b6ee8a42e4e2b6673541b7ff223b76d6125ab7c8fde9acf6bdd4f9202"
+      ],
+      "cases": {
+        "P4-LIVE-L01": "PASS",
+        "P4-LIVE-L02": "PASS",
+        "P4-LIVE-L03": "PASS",
+        "P4-LIVE-L04": "PASS",
+        "P4-LIVE-R01": "PASS",
+        "P4-LIVE-R02": "PASS",
+        "P4-LIVE-R03": "FAIL",
+        "P4-LIVE-R04": "NOT_RUN",
+        "P4-LIVE-W01": "NOT_RUN",
+        "P4-LIVE-W02": "NOT_RUN",
+        "P4-LIVE-W03": "NOT_RUN",
+        "P4-LIVE-W04": "NOT_RUN",
+        "P4-LIVE-W05": "NOT_RUN",
+        "P4-LIVE-W06": "NOT_RUN"
+      },
+      "status": "PARTIAL_OR_FAIL"
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r10/semantic-r0/result.json",
+      "sha256": "c2dacca0955dafc6792040f2a54af1c51cc9cf05df851bfb37823336993c7c48",
+      "identity": [
+        "1604d737b279919d05e71a80f51cc8496ecbc61243dff60d6c1252023e6a4172",
+        "94f76e3b5afe5ad997e3e3d5bfea449c8a0465a64b372badd9fc2724b1a63525",
+        "ce20eac5c99c92a578073576feaa38afd40d8679a26b5acd5b148500a2c2c8a8"
+      ],
+      "cases": {
+        "P4-LIVE-R03": "PASS",
+        "P4-LIVE-R04": "PASS",
+        "P4-LIVE-W01": "PASS",
+        "P4-LIVE-W02": "PASS",
+        "P4-LIVE-W03": "PASS",
+        "P4-LIVE-W04": "PASS",
+        "P4-LIVE-W05": "PASS",
+        "P4-LIVE-W06": "PASS"
+      },
+      "status": "PASS"
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/prefix-tests-r0/mandatory-r0/result.json",
+      "sha256": "f870a9525b1c605ff96f6105db948422fe04f82c5fc3cd653119f87460cfd554",
+      "identity": [
+        "851aa4702293502134a741fe8f9dfb6c5db1fd69559c5b603fbeb73dcaf52b69",
+        "e8698bbd06c2d5f548f1867f93c8424395cd3b3f33871c75d589811d320ac734",
+        "f27c2e4041d15315143c45780accb7f92c388770d8a9c6ad979e151916c33d74"
+      ],
+      "cases": {
+        "P4-RP001": "PASS",
+        "P4-RP002": "PASS",
+        "P4-RP003": "PASS",
+        "P4-RP004": "PASS",
+        "P4-RP005": "PASS",
+        "P4-RP006": "PASS",
+        "P4-RP007": "PASS",
+        "P4-RP008": "PASS",
+        "P4-RP009": "PASS",
+        "P4-RP010": "PASS",
+        "P4-RP011": "PASS",
+        "P4-RP012": "PASS",
+        "P4-RP013": "PASS",
+        "P4-RP014": "PASS",
+        "P4-RP015": "PASS",
+        "P4-RP016": "PASS",
+        "P4-RP017": "PASS",
+        "P4-RP018": "PASS",
+        "P4-RP019": "PASS",
+        "P4-RP020": "PASS",
+        "P4-RP021": "PASS",
+        "P4-RP022": "PASS",
+        "P4-RP023": "PASS",
+        "P4-RP024": "PASS",
+        "P4-RP025": "PASS",
+        "P4-RP026": "PASS",
+        "P4-RP027": "PASS",
+        "P4-RP028": "PASS",
+        "P4-RP029": "PASS",
+        "P4-RP030": "PASS",
+        "P4-RP031": "PASS",
+        "P4-RP032": "PASS",
+        "P4-RP033": "PASS",
+        "P4-RP034": "PASS",
+        "P4-RP035": "PASS",
+        "P4-RP036": "PASS",
+        "P4-RP037": "PASS",
+        "P4-RP038": "PASS",
+        "P4-RP039": "PASS",
+        "P4-RP040": "PASS",
+        "P4-RP041": "PASS",
+        "P4-RP042": "PASS",
+        "P4-RP043": "PASS"
+      },
+      "status": "PASS"
+    }
+  ],
+  "quality": [
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r10/clippy-receipt-r0.json",
+      "sha256": "34fc713d9c1d4ac6f09d22b9b6f13e4241ad0fc887fc1c774bdd832c88d8fb99"
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r10/fmt-receipt-r0.json",
+      "sha256": "79cd1e7265e4e642096fd26d321f97871777160a0f5e6a17e7f76f85e52f71f7"
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/prefix-tests-r0/clippy-receipt-r0.json",
+      "sha256": "d44c61e208d4386e1564d1cfa9050c8e224ba2b6561717e846d6d72e7fd877a4"
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/prefix-tests-r0/fmt-receipt-r0.json",
+      "sha256": "1a9a6e331ae6bf55e5ef16e2e254e96197231497a70c9f3662d370ed0b1d24db"
+    }
+  ],
+  "original_failures": {
+    "semantic": [
+      {
+        "case": "P4-LIVE-F01",
+        "receipt": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r4/semantic-r0/result.json"
+      },
+      {
+        "case": "P4-LIVE-F01",
+        "receipt": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r5/semantic-r0/result.json"
+      },
+      {
+        "case": "P4-LIVE-F01",
+        "receipt": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r6/semantic-r0/result.json"
+      },
+      {
+        "case": "P4-LIVE-F01",
+        "receipt": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r7/semantic-r0/result.json"
+      },
+      {
+        "case": "P4-LIVE-L01",
+        "receipt": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r8/semantic-r0/result.json"
+      },
+      {
+        "case": "P4-LIVE-R03",
+        "receipt": "artifacts/dev3/plan4-g6-recovery-20261024/live-tests-r9/semantic-r0/result.json"
+      }
+    ],
+    "other": "live-tests-r0 cached fresh=true HOLD, r1 static2 cap FAIL, r3 compile FAIL, r5 Clippy FAIL retained unchanged"
+  },
+  "s5_additional_not_run": 269,
+  "native_lifecycle": 0,
+  "full_dev3_acceptance": false,
+  "recovered_owner_acceptance": false,
+  "ai_completed_consumers": 1,
+  "independent_source_review": {
+    "path": "artifacts/dev3/plan4-g6-recovery-20261024/review/fresh-d1-source-r0/source-review-r0.md",
+    "sha256": "c1c44f46c84809b8df35778e4bbf193a2a1a2fa9a9bc6c076602a526f80f6ca5"
+  },
+  "independent_final_review": {
+    "status": "ACCEPTED_LIMITED_D1_FRESH_LIVE_PREFIX",
+    "path": "artifacts/dev3/plan4-g6-recovery-20261024/review/fresh-final-d1-r0/final-d1.md",
+    "sha256": "da80736110ebf2cf7587b0932758c7db279f5db593037db85858a8e71eebdc17",
+    "machine_record": "artifacts/dev3/plan4-g6-recovery-20261024/review/fresh-final-d1-r0/final-d1.json",
+    "machine_sha256": "fbb918a1242f5eb0a0f317520be43e1b47ca949ffbab9f3b2e43b285093d9a20"
+  },
+  "test_selection": "Only failed or newly implemented/unrun exact cases selected; no lower/workspace/S5 execution."
+}

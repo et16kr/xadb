@@ -1,5 +1,7 @@
 # 현재 구현
 
+- [DEV3 plan4 빈 거래 live·prefix](dev3-implementation.md#retention-live) — 필수75 source별 PASS; fresh 수명·flush·재적재 연결, 복구/DEV3/S5 미완료
+
 - [DEV3 복구 이미지·제어 레코드](dev3-implementation.md#recovery-control-base) — 필수272 source별 PASS·원 실패 보존; 실제 복구 owner와 DEV3/S5 미완료
 
 - [DEV3 빈 거래·정리 큐 순수 의미 처리](dev3-implementation.md#empty-retention-semantics) — 필수140 source별 PASS·최종 독립 D1 제한 수용; 원 실패·실제 연결 잔여 범위 구분

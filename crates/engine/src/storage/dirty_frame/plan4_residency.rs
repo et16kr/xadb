@@ -113,7 +113,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         }
     }
 
-    fn plan4_quiescent(&self) -> Result<()> {
+    pub(super) fn plan4_quiescent(&self) -> Result<()> {
         self.plan4_admission()?;
         let mut busy = false;
         for index in 0..self.frames.len() {

@@ -1210,3 +1210,8 @@ pub(in crate::storage) use doublewrite_install::{
 pub(in crate::storage) use plan4_genesis::{
     encode_plan4_catalog_genesis, plan4_catalog_genesis_source_bytes,
 };
+
+pub(in crate::storage) use doublewrite_install::{
+    RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
+    RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
+};
