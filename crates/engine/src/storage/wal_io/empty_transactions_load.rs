@@ -111,13 +111,14 @@ impl<'s, 'c, W: WriterNamespace> EmptyTransactions<'_, 's, 'c, '_, '_, '_, '_, '
             kind: PageKind::TransactionStatus,
             level: 0,
         };
-        operation::membership_lsn(
+        operation::fixed::membership(
             &storage.profile(),
             &snapshot.allocator().identity,
             &request.identity,
             &bound.control.role,
             bound.control.base.before(),
             AllocationPopulation::Status,
+            operation::mixed::Kind::Status,
         )
         .map_err(|_| unchanged(Cause::Membership))?;
         if bound

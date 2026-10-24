@@ -51,6 +51,18 @@ pub(in crate::storage) struct StatusLoadPermit<'a, 'c, 's> {
     lsn: PageLsn,
 }
 impl<'a, 'c, 's> StatusLoadPermit<'a, 'c, 's> {
+    pub(in super::super) fn from_mixed(
+        value: super::super::mixed::MixedLoadInstall<'a, 'c, 's>,
+    ) -> Self {
+        Self {
+            snapshot: value.snapshot(),
+            index: value.index(),
+            allocator: value.allocator(),
+            bytes: value.bytes(),
+            request: value.request(),
+            lsn: value.lsn(),
+        }
+    }
     pub(in super::super) fn from_live(
         value: super::super::resident::EmptyLoadInstall<'a, 'c, 's>,
     ) -> Self {
@@ -134,6 +146,9 @@ impl<W: WriterNamespace> BoundStatusWithFlush<'_, '_, '_, '_, '_, '_, '_, W> {
         original
             .health()
             .map_err(|e| self.load_fatal(Cause::Storage(e)))?;
+        if self.inner.control.role.mixed() {
+            return Err(unchanged(Cause::Membership));
+        }
         if !fits::<W>() {
             return Err(unchanged(Cause::Capacity));
         }
@@ -186,13 +201,14 @@ impl<W: WriterNamespace> BoundStatusWithFlush<'_, '_, '_, '_, '_, '_, '_, W> {
         };
         // Full allocator/descriptor validation above makes the remaining failure
         // a caller membership mismatch, never a masked allocator corruption.
-        operation::membership_lsn(
+        operation::fixed::membership(
             &original.profile(),
             &snapshot.allocator().identity,
             &request.identity,
             &control.role,
             control.base.before(),
             super::AllocationPopulation::Status,
+            operation::mixed::Kind::Status,
         )
         .map_err(|_| unchanged(Cause::Membership))?;
         if self

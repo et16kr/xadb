@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV3 혼합 Status·Free Undo owner](dev3-mixed-system-owner-20261024.md) · [source 색인](dev3-mixed-system-owner-20261024.json): 원 pool·canonical mixed 복구의 선택 결과, 원 FAIL과 native 이어가기·잔여 인수.
+
 - [DEV4 streaming 문장 경계·원문 소유](dev4-splitter-20261024.md): 입력 동결·공유 quota·[선택 실행 색인](dev4-splitter-20261024.json).
 
 - [DEV4 독립 앞단 개발·선택 검증](dev4-frontend-20261024.md): lexer/이름 입력 동결·병렬 구현·[source별 실행 색인](dev4-frontend-20261024.json)과 잔여 의무.

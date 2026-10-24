@@ -79,6 +79,7 @@ pub(crate) struct ClosedRecovery<'a, 'd, W: WriterNamespace> {
 }
 struct RecoveryTarget {
     identity: PageIdentity,
+    kind: PageKind,
     lsn: u64,
     digest: [u8; 32],
 }
@@ -135,121 +136,134 @@ fn filename(path: &str) -> FileName {
     FileName::new(path).expect("fixed recovery name")
 }
 
-impl<'a, 'd, W: WriterNamespace> ClosedRecovery<'a, 'd, W> {
-    // The error intentionally carries fixed observations without a late heap
-    // allocation. Its full value and result moves are in resources::source_census.
-    #[allow(clippy::result_large_err)]
-    pub(crate) fn acquire<D: DirectoryPort<Writer = W>>(
-        directory: &'d D,
-        expected: Option<Namespace>,
-        maintenance: &'a mut [u8; MAINTENANCE_BYTES],
-        flush: &'a mut [u8; FLUSH_BYTES],
-    ) -> std::result::Result<Self, RecoveryAcquireError> {
-        let census = resources::source_census::<W>();
-        if !resources::fits::<W>(&census) {
-            return Err(RecoveryAcquireError {
-                error: RecoveryError {
-                    phase: RecoveryPhase::Preflight,
-                    cause: RecoveryCause::Capacity,
-                    effect: Effect::Unchanged,
-                    lease_effect: LeaseEffect::NotAcquired,
-                },
-                effects: RecoveryEffects::default(),
-            });
-        }
-        if expected.is_some_and(|n| n.timeline == 0) {
-            return Err(RecoveryAcquireError {
-                error: RecoveryError {
-                    phase: RecoveryPhase::Preflight,
-                    cause: RecoveryCause::Control(ControlError::InvalidInput),
-                    effect: Effect::Unchanged,
-                    lease_effect: LeaseEffect::NotAcquired,
-                },
-                effects: RecoveryEffects::default(),
-            });
-        }
-        let (work, rest) = maintenance.split_at_mut(WORKSPACE_BYTES);
-        let (transaction_arena, tail) = rest.split_at_mut(transactions::ARENA_BYTES);
-        let transaction_arena = transaction_arena
-            .try_into()
-            .expect("canonical transaction arena");
-        let work: &mut [u8; WORKSPACE_BYTES] = work.try_into().expect("fixed prefix split");
-        let mut acquired = false;
-        let prefix = RecoveryPrefix::acquire_for_effect(
-            directory,
-            expected,
-            work,
-            transaction_arena,
-            &mut acquired,
-        )
-        .map_err(|cause| {
-            let effect = if acquired {
-                Effect::CallerMustResolve
-            } else {
-                cause.effect
-            };
-            let lease_effect = if acquired || effect == Effect::CallerMustResolve {
-                LeaseEffect::MayHaveChanged
-            } else {
-                LeaseEffect::NotAcquired
-            };
-            let phase = if cause.phase == super::Phase::Lease {
-                RecoveryPhase::Lease
-            } else {
-                RecoveryPhase::Prefix
-            };
-            RecoveryAcquireError {
-                error: RecoveryError {
-                    phase,
-                    cause: RecoveryCause::Prefix(cause),
-                    effect,
-                    lease_effect,
-                },
-                effects: RecoveryEffects::default(),
+// Two explicit entries expand the identical body with a closed internal scope.
+// No runtime wrapper or additional wide owner/result return layer is introduced.
+macro_rules! acquire_entry {
+    ($method:ident, $scope:expr) => {
+        impl<'a, 'd, W: WriterNamespace> ClosedRecovery<'a, 'd, W> {
+            // The error intentionally carries fixed observations without a late heap
+            // allocation. Its full value and result moves are in resources::source_census.
+            #[allow(clippy::result_large_err)]
+            pub(crate) fn $method<D: DirectoryPort<Writer = W>>(
+                directory: &'d D,
+                expected: Option<Namespace>,
+                maintenance: &'a mut [u8; MAINTENANCE_BYTES],
+                flush: &'a mut [u8; FLUSH_BYTES],
+            ) -> std::result::Result<Self, RecoveryAcquireError> {
+                let census = resources::source_census::<W>();
+                if !resources::fits::<W>(&census) {
+                    return Err(RecoveryAcquireError {
+                        error: RecoveryError {
+                            phase: RecoveryPhase::Preflight,
+                            cause: RecoveryCause::Capacity,
+                            effect: Effect::Unchanged,
+                            lease_effect: LeaseEffect::NotAcquired,
+                        },
+                        effects: RecoveryEffects::default(),
+                    });
+                }
+                if expected.is_some_and(|n| n.timeline == 0) {
+                    return Err(RecoveryAcquireError {
+                        error: RecoveryError {
+                            phase: RecoveryPhase::Preflight,
+                            cause: RecoveryCause::Control(ControlError::InvalidInput),
+                            effect: Effect::Unchanged,
+                            lease_effect: LeaseEffect::NotAcquired,
+                        },
+                        effects: RecoveryEffects::default(),
+                    });
+                }
+                let (work, rest) = maintenance.split_at_mut(WORKSPACE_BYTES);
+                let (transaction_arena, tail) = rest.split_at_mut(transactions::ARENA_BYTES);
+                let transaction_arena = transaction_arena
+                    .try_into()
+                    .expect("canonical transaction arena");
+                let work: &mut [u8; WORKSPACE_BYTES] = work.try_into().expect("fixed prefix split");
+                let mut acquired = false;
+                let prefix = RecoveryPrefix::acquire_for_effect(
+                    directory,
+                    expected,
+                    work,
+                    transaction_arena,
+                    &mut acquired,
+                    $scope,
+                )
+                .map_err(|cause| {
+                    let effect = if acquired {
+                        Effect::CallerMustResolve
+                    } else {
+                        cause.effect
+                    };
+                    let lease_effect = if acquired || effect == Effect::CallerMustResolve {
+                        LeaseEffect::MayHaveChanged
+                    } else {
+                        LeaseEffect::NotAcquired
+                    };
+                    let phase = if cause.phase == super::Phase::Lease {
+                        RecoveryPhase::Lease
+                    } else {
+                        RecoveryPhase::Prefix
+                    };
+                    RecoveryAcquireError {
+                        error: RecoveryError {
+                            phase,
+                            cause: RecoveryCause::Prefix(cause),
+                            effect,
+                            lease_effect,
+                        },
+                        effects: RecoveryEffects::default(),
+                    }
+                })?;
+                let known = prefix.observation.doublewrite;
+                let batch = prefix.observation.dwb_header.batch_id;
+                let state = prefix.observation.dwb_header.state;
+                let mut owner = Self {
+                    prefix,
+                    directory,
+                    maintenance_tail: tail,
+                    flush,
+                    observation: RecoveryObservation {
+                        phase: RecoveryPhase::Inventory,
+                        lease_effect: LeaseEffect::MayHaveChanged,
+                        source_stabilized: false,
+                        known,
+                        possible: [Some(known), None],
+                        batch,
+                        state,
+                        boot: BootObservation::default(),
+                        ledger: LedgerObservation::default(),
+                        physical: PhysicalObservation::default(),
+                        effects: RecoveryEffects::default(),
+                        fd_peak: 5,
+                        source_census: census,
+                    },
+                    allowance: LocalAllowance {
+                        busy: false,
+                        peak: 5,
+                    },
+                    fence: SessionFence::new(),
+                    source_seal: None,
+                    final_allocator_hash: [0; 32],
+                    final_descriptor_hash: None,
+                    final_transaction_hash: [0; 32],
+                    slots: None,
+                    restored: None,
+                    reservation: None,
+                };
+                if let Err(error) = owner.acquire_preflight() {
+                    let effects = std::mem::take(&mut owner.observation.effects);
+                    return Err(RecoveryAcquireError { error, effects });
+                }
+                Ok(owner)
             }
-        })?;
-        let known = prefix.observation.doublewrite;
-        let batch = prefix.observation.dwb_header.batch_id;
-        let state = prefix.observation.dwb_header.state;
-        let mut owner = Self {
-            prefix,
-            directory,
-            maintenance_tail: tail,
-            flush,
-            observation: RecoveryObservation {
-                phase: RecoveryPhase::Inventory,
-                lease_effect: LeaseEffect::MayHaveChanged,
-                source_stabilized: false,
-                known,
-                possible: [Some(known), None],
-                batch,
-                state,
-                boot: BootObservation::default(),
-                ledger: LedgerObservation::default(),
-                physical: PhysicalObservation::default(),
-                effects: RecoveryEffects::default(),
-                fd_peak: 5,
-                source_census: census,
-            },
-            allowance: LocalAllowance {
-                busy: false,
-                peak: 5,
-            },
-            fence: SessionFence::new(),
-            source_seal: None,
-            final_allocator_hash: [0; 32],
-            final_descriptor_hash: None,
-            final_transaction_hash: [0; 32],
-            slots: None,
-            restored: None,
-            reservation: None,
-        };
-        if let Err(error) = owner.acquire_preflight() {
-            let effects = std::mem::take(&mut owner.observation.effects);
-            return Err(RecoveryAcquireError { error, effects });
         }
-        Ok(owner)
-    }
+    };
+}
+
+acquire_entry!(acquire, RecoveryScope::Effects);
+acquire_entry!(acquire_mixed, RecoveryScope::MixedEffects);
+
+impl<'a, 'd, W: WriterNamespace> ClosedRecovery<'a, 'd, W> {
     // Failure retains W, the source File and both complete arena loans. Boxing
     // on an I/O failure would add an unreserved allocation and weaken this owner.
     #[allow(clippy::result_large_err)]
@@ -319,6 +333,22 @@ impl<W: WriterNamespace> RecoveryInspection<'_, '_, W> {
                 .expect("physical Status"),
         )
     }
+    /// An immutable recovered initial Free Undo root. This observation grants
+    /// neither a root role nor live Undo/chunk/transaction authority.
+    pub(crate) fn undo_image_at(&self, page_no: u64) -> Option<&[u8; PAGE_BYTES]> {
+        if !(1..TARGET_COUNT as u64).contains(&page_no)
+            || self.owner.prefix.observation.scope != RecoveryScope::MixedEffects
+            || self.owner.prefix.observation.undo_mask & (1u64 << page_no) == 0
+        {
+            return None;
+        }
+        let at = page_no as usize * PAGE_BYTES;
+        Some(
+            self.owner.maintenance_tail[at..at + PAGE_BYTES]
+                .try_into()
+                .expect("physical initial Undo"),
+        )
+    }
     pub(crate) fn transaction_descriptor_at(&self, index: usize) -> Option<&[u8; 1536]> {
         self.owner
             .prefix
@@ -347,6 +377,6 @@ impl<W: WriterNamespace> RecoveryFailure<'_, '_, W> {
 
 #[cfg(all(test, target_os = "linux"))]
 #[path = "native_tests.rs"]
-mod native;
+pub(in crate::storage::wal_io) mod native;
 #[cfg(test)]
 mod tests;

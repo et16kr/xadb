@@ -5,7 +5,7 @@
 
 use super::super::allocation_reservation::{
     AllocationObservation, budget,
-    operation::{Batch, SemanticError, TerminalOutcome},
+    operation::{Batch, SemanticError},
 };
 use super::{
     ABANDONED, AVAILABLE, BOUND, BindingClaim, CLAIMED, Cause as StorageCause, MutableStorageError,
@@ -24,7 +24,7 @@ use crate::{
         page::{PAGE_BYTES, PageIdentity, PageKind, PageLsn, PageRef},
         page_io::PageFileReader,
         session_fence::SessionFence,
-        wal_io::{StatusRole, WalIoError, WalPrefix, WalRequirement},
+        wal_io::{WalIoError, WalPrefix, WalRequirement, bootstrap::FixedSystemRole},
     },
     transaction::concurrency::{Owner, PageConcurrency},
 };
@@ -53,6 +53,13 @@ pub(crate) use status_flush::{
     OperationalStatus, OperationalStatusReader, OperationalStatusWriter, ReadStatusSet,
     ResidentReadAdmission, ResidentStatus, ResidentStatusBinding, ResidentStatusReader,
     StatusFlushError, StatusFlusher,
+};
+
+pub(crate) use status_flush::mixed::{
+    InitializedSystemObservation, MixedSystem, MixedSystemBinding, MixedSystemFlusher,
+    MixedSystemReadGuard, MixedSystemReader, MixedSystemWriter, ReservedSystemPage,
+    SystemLoadError, SystemLoadObservation, SystemPage, SystemPageKind, SystemResidencyCursor,
+    SystemResidencyStep, SystemSlotStep,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -134,7 +141,7 @@ struct InitObligation<'c, 's> {
 struct StatusControl<'c, 's, 'o> {
     base: WriterControl<'s, 'o>,
     status_after: &'o mut [u8; PAGE_BYTES],
-    role: StatusRole<'s>,
+    role: FixedSystemRole<'s>,
     installation: Option<InitObligation<'c, 's>>,
 }
 
@@ -278,11 +285,40 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
         if self.fresh.plan.kind != super::super::super::BootstrapPlanKind::StatusBootstrap {
             return Err(unchanged(StorageCause::UnsupportedPlan));
         }
-        let role = self.status_role()?;
+        let role = FixedSystemRole::from_status(self.status_role()?)
+            .ok_or_else(|| unchanged(StorageCause::UnsupportedPlan))?;
+        self.bind_fixed_frames(core, frames, operation, resident, role)
+    }
+    pub(crate) fn bind_mixed_system<'s, 'c, 'p, 'd: 'p, 'o>(
+        &'s self,
+        core: &'c PageConcurrency<'s>,
+        frames: &'p mut [DirtyFrame<'d>],
+        operation: &'o mut [u8; OPERATION_BYTES],
+    ) -> super::Result<status_flush::mixed::MixedSystemBinding<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
+        self.health()?;
+        if !(2..=64).contains(&frames.len()) {
+            return Err(unchanged(StorageCause::Capacity));
+        }
+        let role = FixedSystemRole::from_undo(self.undo_role()?)
+            .ok_or_else(|| unchanged(StorageCause::UnsupportedPlan))?;
+        self.bind_fixed_frames(core, frames, operation, true, role)
+            .map(status_flush::mixed::MixedSystemBinding::new)
+    }
+    fn bind_fixed_frames<'s, 'c, 'p, 'd: 'p, 'o>(
+        &'s self,
+        core: &'c PageConcurrency<'s>,
+        frames: &'p mut [DirtyFrame<'d>],
+        operation: &'o mut [u8; OPERATION_BYTES],
+        resident: bool,
+        role: FixedSystemRole<'s>,
+    ) -> super::Result<BoundStatusBootstrap<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         if !core.uses_fence(self.session_fence()) || !role.uses_fence(self.session_fence()) {
             return Err(unchanged(StorageCause::BindingMismatch));
         }
-        if !fits::<W>() || (resident && !status_flush::resident::fits::<W>()) {
+        if !fits::<W>()
+            || (role.mixed() && !status_flush::mixed::fits::<W>())
+            || (resident && !role.mixed() && !status_flush::resident::fits::<W>())
+        {
             return Err(unchanged(StorageCause::Capacity));
         }
         for frame in frames.iter_mut() {
@@ -316,16 +352,24 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
         frames[0]
             .register(allocator_request(identity))
             .map_err(|e| self.fatal(StorageCause::Frame(e)))?;
-        let pool = SharedPool::new_status_slots(
-            core,
-            self.session_fence(),
-            &self.binding,
-            frames,
-            resident,
-        )
+        let pool = if role.mixed() {
+            SharedPool::new_mixed_slots(core, self.session_fence(), &self.binding, frames)
+        } else {
+            SharedPool::new_status_slots(
+                core,
+                self.session_fence(),
+                &self.binding,
+                frames,
+                resident,
+            )
+        }
         .map_err(|e| self.fatal(StorageCause::Frame(e)))?;
-        let mut base = WriterControl::new_status(base, identity);
-        if resident {
+        let mut base = if role.mixed() {
+            WriterControl::new_mixed(base, identity)
+        } else {
+            WriterControl::new_status(base, identity)
+        };
+        if resident && !role.mixed() {
             base.population =
                 super::super::allocation_reservation::operation::AllocationPopulation::Status;
         }
@@ -356,6 +400,15 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     BoundStatusBootstrap<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
     pub(crate) fn split<'b>(
+        &'b mut self,
+    ) -> (
+        StatusBootstrapWriter<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        StatusReader<'b, 'c, 's, 'p, 'd>,
+    ) {
+        assert!(!self.control.role.mixed(), "Status facade is plan2 only");
+        self.split_fixed()
+    }
+    fn split_fixed<'b>(
         &'b mut self,
     ) -> (
         StatusBootstrapWriter<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
@@ -396,7 +449,7 @@ impl<W: WriterNamespace> Drop for BoundStatusBootstrap<'_, '_, '_, '_, '_, '_, '
 pub(crate) struct StatusBootstrapWriter<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
     base: &'b mut WriterControl<'s, 'o>,
     status_after: &'b mut &'o mut [u8; PAGE_BYTES],
-    role: &'b StatusRole<'s>,
+    role: &'b FixedSystemRole<'s>,
     installation: &'b mut Option<InitObligation<'c, 's>>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
     storage: &'s MutableStorageOwner<'m, 'w, W>,
@@ -408,6 +461,7 @@ pub(crate) struct ReservedStatus<'r, 'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNa
     batch: Batch,
     page: PageRef,
     ordinal: u16,
+    kind: operation::mixed::Kind,
     active: bool,
 }
 impl<W: WriterNamespace> Drop for ReservedStatus<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
@@ -468,8 +522,26 @@ impl<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         &'r mut self,
         owner: &'r mut Owner<'c, 's>,
     ) -> Result<ReservedStatus<'r, 'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
+        self.health(Phase::Reserve)?;
+        if self.role.mixed() {
+            return Err(error(
+                Phase::Reserve,
+                Effect::Unchanged,
+                Cause::UnsupportedPlan,
+            ));
+        }
+        self.reserve_fixed(owner, operation::mixed::Kind::Status)
+    }
+    fn reserve_fixed<'r>(
+        &'r mut self,
+        owner: &'r mut Owner<'c, 's>,
+        kind: operation::mixed::Kind,
+    ) -> Result<ReservedStatus<'r, 'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         let _unwind = self.storage.session_fence().unwind_guard();
         self.uninitialized(Phase::Reserve)?;
+        // Reject an invalid requested class before the durable reservation.
+        operation::fixed::request(self.role, self.base.identity.page, kind)
+            .map_err(|e| error(Phase::Reserve, Effect::Unchanged, Cause::Semantic(e)))?;
         self.allocator()
             .reserve_pages(owner, 1)
             .map_err(|e| error(Phase::Reserve, e.effect, Cause::Allocation(e)))?;
@@ -487,6 +559,7 @@ impl<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             batch,
             page,
             ordinal: 0,
+            kind,
             active: true,
         })
     }
@@ -530,6 +603,7 @@ impl<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         batch: Batch,
         page: PageRef,
         ordinal: u16,
+        kind: operation::mixed::Kind,
     ) -> Result<InitAuthority<'c, 's>> {
         self.uninitialized(Phase::Prepare)?;
         if self.base.batch != Some(batch)
@@ -573,16 +647,8 @@ impl<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 .init_generations()
                 .map_err(|e| frame_error(Phase::Prepare, e))?,
             allocator: allocator_request(self.base.identity),
-            payload: TargetRequest {
-                identity: PageIdentity {
-                    page,
-                    owner: self.role.object(),
-                    owner_generation: self.role.generation(),
-                    ..self.base.identity
-                },
-                kind: self.role.kind(),
-                level: self.role.level(),
-            },
+            payload: operation::fixed::request(self.role, page, kind)
+                .map_err(|e| error(Phase::Prepare, Effect::Unchanged, Cause::Semantic(e)))?,
         })
     }
 }
@@ -596,11 +662,27 @@ impl<W: WriterNamespace> ReservedStatus<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
         reason = "before-effect failure owns the exact reservation; its inline size is admission-bounded without heap allocation"
     )]
     pub(crate) fn cancel(
+        self,
+    ) -> std::result::Result<AllocationObservation, InitAttemptError<Self>> {
+        if self.writer.role.mixed() {
+            return Err(self.attempt_error(error(
+                Phase::Prepare,
+                Effect::Unchanged,
+                Cause::UnsupportedPlan,
+            )));
+        }
+        self.cancel_fixed()
+    }
+    #[allow(
+        clippy::result_large_err,
+        reason = "unchanged failure retains the original linear reservation"
+    )]
+    fn cancel_fixed(
         mut self,
     ) -> std::result::Result<AllocationObservation, InitAttemptError<Self>> {
         let result = self
             .writer
-            .authority(self.batch, self.page, self.ordinal)
+            .authority(self.batch, self.page, self.ordinal, self.kind)
             .and_then(|_| {
                 self.writer
                     .allocator()
@@ -620,11 +702,27 @@ impl<W: WriterNamespace> ReservedStatus<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
         reason = "before-effect failure owns the exact reservation; its inline size is admission-bounded without heap allocation"
     )]
     pub(crate) fn initialize(
+        self,
+    ) -> std::result::Result<InitializedStatusObservation, InitAttemptError<Self>> {
+        if self.writer.role.mixed() {
+            return Err(self.attempt_error(error(
+                Phase::Prepare,
+                Effect::Unchanged,
+                Cause::UnsupportedPlan,
+            )));
+        }
+        self.initialize_fixed()
+    }
+    #[allow(
+        clippy::result_large_err,
+        reason = "unchanged failure retains the original linear reservation"
+    )]
+    fn initialize_fixed(
         mut self,
     ) -> std::result::Result<InitializedStatusObservation, InitAttemptError<Self>> {
-        let result = self
-            .writer
-            .initialize(self.owner, self.batch, self.page, self.ordinal);
+        let result =
+            self.writer
+                .initialize(self.owner, self.batch, self.page, self.ordinal, self.kind);
         match result {
             Ok(observed) => {
                 self.active = false;
@@ -656,10 +754,11 @@ impl<'s, 'c, W: WriterNamespace> StatusBootstrapWriter<'_, 's, 'c, '_, '_, '_, '
         batch: Batch,
         page: PageRef,
         ordinal: u16,
+        kind: operation::mixed::Kind,
     ) -> Result<InitializedStatusObservation> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
-        let authority = self.authority(batch, page, ordinal)?;
+        let authority = self.authority(batch, page, ordinal, kind)?;
         let prefix = storage
             .wal()
             .prefix()
@@ -682,7 +781,7 @@ impl<'s, 'c, W: WriterNamespace> StatusBootstrapWriter<'_, 's, 'c, '_, '_, '_, '
                 .copy_allocator_snapshot(before)
                 .map_err(|e| frame_error(Phase::Prepare, e))?;
             let prepared = {
-                let plan = operation::InitPlan {
+                let plan = operation::fixed::Plan {
                     profile: storage.profile(),
                     allocator: self.base.identity,
                     payload: authority.payload.identity,
@@ -690,23 +789,18 @@ impl<'s, 'c, W: WriterNamespace> StatusBootstrapWriter<'_, 's, 'c, '_, '_, '_, '
                     batch,
                     before_descriptor: &self.base.descriptor,
                     role: self.role,
+                    kind,
+                    population: self.base.population,
                 };
-                operation::prepare_init_in_population(
-                    &plan,
-                    before,
-                    frame,
-                    allocator_after,
-                    self.status_after,
-                    self.base.population,
-                )
-                .map_err(|e| {
-                    storage.session_fence().fence();
-                    error(
-                        Phase::Prepare,
-                        Effect::CallerMustResolve,
-                        Cause::Semantic(e),
-                    )
-                })?
+                operation::fixed::prepare(&plan, before, frame, allocator_after, self.status_after)
+                    .map_err(|e| {
+                        storage.session_fence().fence();
+                        error(
+                            Phase::Prepare,
+                            Effect::CallerMustResolve,
+                            Cause::Semantic(e),
+                        )
+                    })?
             };
             let after_descriptor = prepared.descriptor_bytes();
             let allocator_after = prepared.allocator_after();
@@ -784,7 +878,7 @@ impl<'s, 'c, W: WriterNamespace> StatusBootstrapWriter<'_, 's, 'c, '_, '_, '_, '
                 profile: &storage.fresh.plan.profile,
                 fence: storage.session_fence(),
             };
-            let read = reader.read(owner)?;
+            let read = reader.read_fixed(owner, None)?;
             let observed = read.stamps();
             merge_cleanup(observed, read.release_checked())?
         };
@@ -808,11 +902,14 @@ impl<'s, 'c, W: WriterNamespace> StatusBootstrapWriter<'_, 's, 'c, '_, '_, '_, '
             return Err(self.fatal(Phase::Observe, Cause::Invariant));
         }
         // Descriptor decoder temporaries do not overlap the reader's codecs.
-        operation::validate_finished(
+        let terminal = operation::fixed::finished(
             storage.profile(),
             batch,
             &self.base.descriptor,
             PageLsn(location.lsn),
+            self.role,
+            kind,
+            self.base.population,
         )
         .map_err(|e| self.fatal(Phase::Observe, Cause::Semantic(e)))?;
         let completed = CompletedInitAuthority { authority };
@@ -827,7 +924,7 @@ impl<'s, 'c, W: WriterNamespace> StatusBootstrapWriter<'_, 's, 'c, '_, '_, '_, '
                 frame_error(Phase::Release, e)
             })?;
         *self.installation = None;
-        self.base.terminal = TerminalOutcome::InitializedStatus;
+        self.base.terminal = terminal;
         self.base.batch = None;
         self.base.terminal_pending = false;
         Ok(InitializedStatusObservation {
@@ -844,37 +941,72 @@ impl<'s, 'c, W: WriterNamespace> StatusBootstrapWriter<'_, 's, 'c, '_, '_, '_, '
 /// Unpublished checks never lock the DPT or content, including the C5 interval.
 pub(crate) struct StatusReader<'b, 'c, 's, 'p, 'd> {
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
-    role: &'b StatusRole<'s>,
+    role: &'b FixedSystemRole<'s>,
     profile: &'s Profile,
     fence: &'s SessionFence,
 }
 pub(crate) struct StatusReadGuard<'a, 'b, 'c, 's, 'p, 'd> {
     targets: ReadTargets<'a, 'b, 'c, 's, 'p, 'd>,
-    _role: &'b StatusRole<'s>,
+    _role: &'b FixedSystemRole<'s>,
 }
 impl<'b, 'c, 's, 'p, 'd> StatusReader<'b, 'c, 's, 'p, 'd> {
     pub(crate) fn read<'a>(
         &self,
         owner: &'a mut Owner<'c, 's>,
     ) -> Result<StatusReadGuard<'a, 'b, 'c, 's, 'p, 'd>> {
-        let read = {
-            // Admission-only Copy requests end before any codec/hash runs.
-            let payload = self
-                .pool
-                .initialized_request()
-                .map_err(|e| frame_error(Phase::Observe, e))?
-                .ok_or_else(|| error(Phase::Observe, Effect::Unchanged, Cause::NotInitialized))?;
-            let allocator = self
-                .pool
-                .target_request(0)
-                .map_err(|e| frame_error(Phase::Observe, e))?;
-            let requests = [allocator, payload];
-            self.pool
-                .reserve_targets(owner, &requests)
-                .map_err(|e| frame_error(Phase::Observe, e))?
-                .try_read()
-                .map_err(|e| frame_error(Phase::Observe, e))?
-        };
+        if self.fence.is_fenced() {
+            return Err(frame_error(
+                Phase::Observe,
+                DirtyError {
+                    effect: Effect::CallerMustResolve,
+                    cause: dirty_frame::Cause::Fenced,
+                },
+            ));
+        }
+        if self.role.mixed() {
+            return Err(error(
+                Phase::Observe,
+                Effect::Unchanged,
+                Cause::UnsupportedPlan,
+            ));
+        }
+        self.read_fixed(owner, None)
+    }
+    fn read_fixed<'a>(
+        &self,
+        owner: &'a mut Owner<'c, 's>,
+        selected: Option<TargetRequest>,
+    ) -> Result<StatusReadGuard<'a, 'b, 'c, 's, 'p, 'd>> {
+        let read = self.reserve_fixed_read(owner, selected)?;
+        self.finish_fixed_read(read)
+    }
+    fn reserve_fixed_read<'a>(
+        &self,
+        owner: &'a mut Owner<'c, 's>,
+        selected: Option<TargetRequest>,
+    ) -> Result<ReadTargets<'a, 'b, 'c, 's, 'p, 'd>> {
+        // This helper and every admission request end before any codec.
+        let payload = match selected {
+            Some(request) => self.pool.resident_request(request),
+            None => self.pool.initialized_request(),
+        }
+        .map_err(|e| frame_error(Phase::Observe, e))?
+        .ok_or_else(|| error(Phase::Observe, Effect::Unchanged, Cause::NotInitialized))?;
+        let allocator = self
+            .pool
+            .target_request(0)
+            .map_err(|e| frame_error(Phase::Observe, e))?;
+        let requests = [allocator, payload];
+        self.pool
+            .reserve_targets(owner, &requests)
+            .map_err(|e| frame_error(Phase::Observe, e))?
+            .try_read()
+            .map_err(|e| frame_error(Phase::Observe, e))
+    }
+    fn finish_fixed_read<'a>(
+        &self,
+        read: ReadTargets<'a, 'b, 'c, 's, 'p, 'd>,
+    ) -> Result<StatusReadGuard<'a, 'b, 'c, 's, 'p, 'd>> {
         let checked = self.validate_pair(&read, 1);
         if let Err(e) = checked {
             return merge_cleanup(
@@ -897,34 +1029,22 @@ impl<'b, 'c, 's, 'p, 'd> StatusReader<'b, 'c, 's, 'p, 'd> {
             .target_request(0)
             .map_err(|e| frame_error(Phase::Observe, e))?
             .identity;
-        let payload_identity = read
+        let payload_request = read
             .target_request(position)
-            .map_err(|e| frame_error(Phase::Observe, e))?
-            .identity;
+            .map_err(|e| frame_error(Phase::Observe, e))?;
         let allocator = read.bytes(0).map_err(|e| frame_error(Phase::Observe, e))?;
         let status = read
             .bytes(position)
             .map_err(|e| frame_error(Phase::Observe, e))?;
-        let observed = if self.pool.operational_status() {
-            operation::observe_operational_initialized(
-                *self.profile,
-                allocator_identity,
-                payload_identity,
-                self.role,
-                allocator,
-                status,
-            )
-        } else {
-            operation::observe_initialized(
-                *self.profile,
-                allocator_identity,
-                payload_identity,
-                self.role,
-                allocator,
-                status,
-            )
-            .map(|lsn| (lsn, lsn))
-        }
+        let observed = operation::fixed::observe(
+            self.profile,
+            &allocator_identity,
+            &payload_request,
+            self.role,
+            allocator,
+            status,
+            self.pool.operational_payloads(),
+        )
         .map_err(|e| {
             self.fence.fence();
             error(
@@ -942,7 +1062,7 @@ impl<'b, 'c, 's, 'p, 'd> StatusReader<'b, 'c, 's, 'p, 'd> {
         if allocator.frame.page_lsn != observed.0
             || status.frame.page_lsn != observed.1
             || allocator.frame.identity != allocator_identity
-            || status.frame.identity != payload_identity
+            || status.frame.identity != payload_request.identity
         {
             self.fence.fence();
             return Err(error(

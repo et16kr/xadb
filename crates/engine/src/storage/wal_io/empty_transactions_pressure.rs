@@ -113,13 +113,14 @@ impl<'s, 'c, W: WriterNamespace> EmptyTransactions<'_, 's, 'c, '_, '_, '_, '_, '
             kind: PageKind::TransactionStatus,
             level: 0,
         };
-        operation::membership_lsn(
+        operation::fixed::membership(
             &storage.profile(),
             &allocator.identity,
             &request.identity,
             &bound.control.role,
             bound.control.base.before(),
             AllocationPopulation::Status,
+            operation::mixed::Kind::Status,
         )
         .map_err(|_| unchanged(Cause::Membership))?;
         bound.pool.status_candidate(request, start).map_err(frame)
@@ -156,4 +157,34 @@ fn fits<W: WriterNamespace>() -> bool {
         && super::super::retained_bytes::<W>() + call_bytes::<W>() <= 196608
         && super::super::retained_bytes::<W>() + call_bytes::<W>() + 65536 <= 262144
         && super::load::fits::<W>()
+}
+
+#[cfg(test)]
+#[test]
+fn mixed_class_delta_preserves_old_empty_transaction_bounds() {
+    type Memory = crate::storage::wal_io::bootstrap::test_support::Writer;
+    type Native = crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::native_test_support::Writer;
+    for (kind, conversion, load, pressure, retained, valid) in [
+        (
+            "memory",
+            super::super::conversion_bytes::<Memory>(),
+            super::load::call_bytes::<Memory>(),
+            call_bytes::<Memory>(),
+            super::super::retained_bytes::<Memory>(),
+            fits::<Memory>() && super::super::handoff_fits::<Memory>(),
+        ),
+        (
+            "native",
+            super::super::conversion_bytes::<Native>(),
+            super::load::call_bytes::<Native>(),
+            call_bytes::<Native>(),
+            super::super::retained_bytes::<Native>(),
+            fits::<Native>() && super::super::handoff_fits::<Native>(),
+        ),
+    ] {
+        println!(
+            "MIXED_CLASS_OLD_BOUND kind={kind} conversion={conversion} load={load} pressure={pressure} retained={retained} valid={valid}"
+        );
+        assert!(valid);
+    }
 }

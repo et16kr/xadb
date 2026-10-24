@@ -21,10 +21,28 @@ impl StatusLoadSnapshot<'_, '_> {
     }
 }
 impl<'c, 's> SharedPool<'c, 's, '_, '_> {
+    /// A short exclusive snapshot for mixed selection, without requiring a
+    /// clean candidate or consuming any publication generation.
+    pub(in crate::storage) fn mixed_allocator_snapshot(
+        &mut self,
+        before: &mut [u8; PAGE_BYTES],
+    ) -> Result<FrameStamp> {
+        self.status_load_quiescent()?;
+        if !self.directory.resident_mixed() {
+            return Err(unchanged(Cause::Shape));
+        }
+        let content = self.frames[0]
+            .content
+            .try_read()
+            .map_err(|source| self.load_lock_error(source))?;
+        let observed = self.pair(0, &content)?;
+        before.copy_from_slice(content.bytes);
+        Ok(observed.frame)
+    }
     fn status_load_quiescent(&self) -> Result<()> {
         self.health()?;
-        if !self.directory.operational_status()
-            || (!self.directory.resident_status() && self.frames.len() != 2)
+        if !self.directory.operational_payloads()
+            || (!self.directory.resident_payloads() && self.frames.len() != 2)
         {
             return Err(self.fatal(Cause::Invariant));
         }
@@ -65,7 +83,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         if index == 0 || index >= self.frames.len() {
             return None;
         }
-        if self.directory.resident_status() {
+        if self.directory.resident_payloads() {
             self.directory.next_resident_generation(index)
         } else if index == 1 {
             self.directory.next_status_generation()
@@ -102,7 +120,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         index: usize,
     ) -> Result<Option<FrameStamp>> {
         self.status_load_quiescent()?;
-        if !self.directory.resident_status() || index == 0 || index >= self.frames.len() {
+        if !self.directory.resident_payloads() || index == 0 || index >= self.frames.len() {
             return Err(unchanged(Cause::Shape));
         }
         let generation = self
@@ -148,7 +166,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         self.status_load_quiescent()?;
         if index == 0
             || index >= self.frames.len()
-            || (!self.directory.resident_status() && index != 1)
+            || (!self.directory.resident_payloads() && index != 1)
         {
             return Err(unchanged(Cause::Shape));
         }
@@ -226,6 +244,15 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         }
         self.health()?;
         let request = permit.request();
+        if !self.directory.accepts_payload(request)
+            || request.identity.database != snapshot.allocator.frame.identity.database
+            || request.identity.page.file != snapshot.allocator.frame.identity.page.file
+            || !(1..64).contains(&request.identity.page.page_no)
+            || request.identity.page.incarnation.get() < 2
+            || self.directory.address_present(request)
+        {
+            return Err(self.fatal(Cause::Invariant));
+        }
         let stamp = FrameStamp {
             identity: request.identity,
             generation: snapshot.generation,
@@ -242,7 +269,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             request,
             generation: stamp.generation,
         };
-        if self.directory.resident_status() {
+        if self.directory.resident_payloads() {
             self.directory
                 .replace_resident_status(snapshot.index, registration);
         } else {

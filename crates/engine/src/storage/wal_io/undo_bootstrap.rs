@@ -22,6 +22,49 @@ use xadb_foundation::{
 pub(crate) struct UndoRole<'s> {
     status: StatusRole<'s>,
 }
+
+/// Retained origin of the closed mutable system-page core. Both constructors
+/// consume a genuine bootstrap role and preserve its two original references.
+/// There is no raw constructor, reverse conversion or inner StatusRole loan.
+pub(in super::super) struct FixedSystemRole<'s> {
+    status: StatusRole<'s>,
+}
+impl<'s> FixedSystemRole<'s> {
+    pub(in super::super) fn from_status(status: StatusRole<'s>) -> Option<Self> {
+        (status.plan.kind == BootstrapPlanKind::StatusBootstrap).then_some(Self { status })
+    }
+    pub(in super::super) fn from_undo(undo: UndoRole<'s>) -> Option<Self> {
+        (undo.status.plan.kind == BootstrapPlanKind::UndoBootstrap).then_some(Self {
+            status: undo.status,
+        })
+    }
+    pub(in super::super) fn mixed(&self) -> bool {
+        self.status.plan.kind == BootstrapPlanKind::UndoBootstrap
+    }
+    pub(in super::super) fn namespace(&self) -> Namespace {
+        self.status.namespace()
+    }
+    pub(in super::super) fn uses_fence(&self, fence: &SessionFence) -> bool {
+        self.status.uses_fence(fence)
+    }
+    pub(in super::super) fn fence(&self) -> &'s SessionFence {
+        self.status.fence
+    }
+    // Legacy Status identity observations are not role conversions. The mixed
+    // actor selects its exact payload through the separate closed Kind input.
+    pub(in super::super) fn object(&self) -> ObjectId {
+        self.status.object()
+    }
+    pub(in super::super) fn generation(&self) -> Generation {
+        self.status.generation()
+    }
+    pub(in super::super) fn kind(&self) -> PageKind {
+        self.status.kind()
+    }
+    pub(in super::super) fn level(&self) -> u8 {
+        self.status.level()
+    }
+}
 impl<'s> UndoRole<'s> {
     pub(crate) fn namespace(&self) -> Namespace {
         self.status.namespace()

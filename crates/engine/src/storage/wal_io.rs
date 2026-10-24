@@ -45,11 +45,14 @@ pub(crate) use bootstrap::{
 pub(crate) use bootstrap::{
     BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, EMPTY_TRANSACTION_BANK_BYTES,
     EmptyTransactionSnapshot, EmptyTransactions, InitAttemptError, InitializedStatusObservation,
-    IntoEmptyTransactionsError, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
+    InitializedSystemObservation, IntoEmptyTransactionsError, IntoFlushError,
+    IntoOperationalStatusError, MixedSystem, MixedSystemBinding, MixedSystemFlusher,
+    MixedSystemReadGuard, MixedSystemReader, MixedSystemWriter, OperationalStatus,
     OperationalStatusReader, OperationalStatusWriter, ReadStatusSet, ReservedStatus,
-    ResidentReadAdmission, ResidentStatus, ResidentStatusBinding, ResidentStatusReader,
-    StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard,
-    StatusReader,
+    ReservedSystemPage, ResidentReadAdmission, ResidentStatus, ResidentStatusBinding,
+    ResidentStatusReader, StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError,
+    StatusReadGuard, StatusReader, SystemLoadError, SystemLoadObservation, SystemPage,
+    SystemPageKind, SystemResidencyCursor, SystemResidencyStep, SystemSlotStep,
 };
 #[allow(unused_imports)] // Closed prefix observations await the next recovery barrier.
 pub(crate) use bootstrap::{

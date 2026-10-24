@@ -50,11 +50,14 @@ pub(crate) use doublewrite_install::{
 pub(crate) use doublewrite_install::{
     BeforeEffectError, BoundStatusBootstrap, BoundStatusWithFlush, EMPTY_TRANSACTION_BANK_BYTES,
     EmptyTransactionSnapshot, EmptyTransactions, InitAttemptError, InitializedStatusObservation,
-    IntoEmptyTransactionsError, IntoFlushError, IntoOperationalStatusError, OperationalStatus,
+    InitializedSystemObservation, IntoEmptyTransactionsError, IntoFlushError,
+    IntoOperationalStatusError, MixedSystem, MixedSystemBinding, MixedSystemFlusher,
+    MixedSystemReadGuard, MixedSystemReader, MixedSystemWriter, OperationalStatus,
     OperationalStatusReader, OperationalStatusWriter, ReadStatusSet, ReservedStatus,
-    ResidentReadAdmission, ResidentStatus, ResidentStatusBinding, ResidentStatusReader,
-    StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError, StatusReadGuard,
-    StatusReader,
+    ReservedSystemPage, ResidentReadAdmission, ResidentStatus, ResidentStatusBinding,
+    ResidentStatusReader, StatusBootstrapWriter, StatusFlushError, StatusFlusher, StatusInitError,
+    StatusReadGuard, StatusReader, SystemLoadError, SystemLoadObservation, SystemPage,
+    SystemPageKind, SystemResidencyCursor, SystemResidencyStep, SystemSlotStep,
 };
 pub(crate) use doublewrite_install::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
@@ -671,6 +674,7 @@ fn readback<W: WriterNamespace>(
 
 #[path = "undo_bootstrap.rs"]
 mod undo_bootstrap;
+pub(super) use undo_bootstrap::FixedSystemRole;
 pub(crate) use undo_bootstrap::UndoRole;
 
 /// An immutable system-object role issued only by a completed plan2/3 bootstrap.

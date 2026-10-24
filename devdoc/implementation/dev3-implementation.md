@@ -954,3 +954,17 @@ checker6 PASS를 보존하며 실행 범위 일탈을 기록한 최종 독립 D1
 중복 실행 범위 일탈과 Python cache로 인한 별도 compiler source를 분리해 기록했다.
 S5 확대 총342,960(필수 MI04 입력141 alias 포함, 고유 추가342,819)은 ignored/NOT_RUN이다. 실제 mixed mutable owner·pool/flush/load·현재-build 복구,
 live undo·소비자2/3·전체 DEV3/S5는 미완료다.
+
+<a id="mixed-system-owner"></a>
+### 원 pool의 혼합 Status·Free Undo와 닫힌 복구
+
+2026-10-24 [소유 계약](../contracts/dev3-mixed-system-owner.md)의 별도 plan3 bound에서 원 allocator와
+Status A·Free Undo B/C를 INIT하고, N+1 pressure→WAL 선행 flush→retire→typed exact load→동일 owner
+계속을 연결했다. 고정 class와 canonical system-only history를 사용하며 acquire_mixed로 실제 복구한다.
+[선택 증거](../evidence/dev3-mixed-system-owner-20261024.md)의 메모리144·static3와 compiler9+baseline1은
+source별 PASS다. 실제 producer는 PASS이고 첫 recovery의 terminal hold 시험 기대값 오류는 원 FAIL로
+보존한다. 완료 producer를 반복하지 않는 D2 보완에 따라 원 snapshot에서 수정 recovery·reentry만
+이어가 recovery/reentry2를 통과했다. 새 두 process의 source/ELF와 전체 파일 oracle를 확인했다.
+최종 독립 D1은 현재 제품 이어가기의 제한 종료점을 수용했다. 원 동일 ELF 세 phase PASS는 미충족이며
+일반 pool/live undo와 방법론 소비자2/3으로 승격하지 않는다. AI 완료 소비자1/3을 유지한다.
+S5 profile 확대2와 일반 page·live undo·첫 행 거래·일반 recovery/READY·전체 DEV3/S5는 미완료다.

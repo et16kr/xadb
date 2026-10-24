@@ -610,7 +610,12 @@ fn status_load_active_reservation_and_leaked_init_claim() {
             if claim {
                 let authority = reservation
                     .writer
-                    .authority(reservation.batch, reservation.page, reservation.ordinal)
+                    .authority(
+                        reservation.batch,
+                        reservation.page,
+                        reservation.ordinal,
+                        reservation.kind,
+                    )
                     .unwrap();
                 let pins = reservation
                     .writer

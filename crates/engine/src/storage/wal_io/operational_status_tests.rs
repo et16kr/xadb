@@ -396,7 +396,12 @@ fn operational_status_forgotten_init_claim_prevents_retirement() {
         let reservation = writer.reserve_one(&mut owner).unwrap();
         let authority = reservation
             .writer
-            .authority(reservation.batch, reservation.page, reservation.ordinal)
+            .authority(
+                reservation.batch,
+                reservation.page,
+                reservation.ordinal,
+                reservation.kind,
+            )
             .unwrap();
         let pins = reservation
             .writer
@@ -489,7 +494,12 @@ fn operational_status_stale_init_admission_is_unchanged() {
         let reservation = writer.reserve_one(&mut owner).unwrap();
         let mut authority = reservation
             .writer
-            .authority(reservation.batch, reservation.page, reservation.ordinal)
+            .authority(
+                reservation.batch,
+                reservation.page,
+                reservation.ordinal,
+                reservation.kind,
+            )
             .unwrap();
         assert_eq!(authority.generations, [1, 2]);
         authority.generations[1] = 1;
@@ -523,7 +533,12 @@ fn operational_status_stale_claim_release_preserves_pin_counts() {
         let reservation = writer.reserve_one(&mut owner).unwrap();
         let authority = reservation
             .writer
-            .authority(reservation.batch, reservation.page, reservation.ordinal)
+            .authority(
+                reservation.batch,
+                reservation.page,
+                reservation.ordinal,
+                reservation.kind,
+            )
             .unwrap();
         let targets = reservation
             .writer
@@ -555,7 +570,12 @@ fn operational_status_preflight_rejects_stale_local_generation_before_stage() {
         let reservation = writer.reserve_one(&mut owner).unwrap();
         let authority = reservation
             .writer
-            .authority(reservation.batch, reservation.page, reservation.ordinal)
+            .authority(
+                reservation.batch,
+                reservation.page,
+                reservation.ordinal,
+                reservation.kind,
+            )
             .unwrap();
         let mut write = reservation
             .writer
@@ -711,7 +731,7 @@ fn operational_status_reader_accepts_independent_page_lsns() {
                 storage.profile(),
                 bound.inner.inner.control.base.identity,
                 first.status.identity,
-                &bound.inner.inner.control.role,
+                &storage.status_role().unwrap(),
                 &allocator,
                 &status
             )
@@ -724,7 +744,7 @@ fn operational_status_reader_accepts_independent_page_lsns() {
                 storage.profile(),
                 bound.inner.inner.control.base.identity,
                 first.status.identity,
-                &bound.inner.inner.control.role,
+                &storage.status_role().unwrap(),
                 &allocator,
                 &status
             )
@@ -756,7 +776,12 @@ fn stale_staged_generation(completion: bool) {
         let reservation = writer.reserve_one(&mut owner).unwrap();
         let mut authority = reservation
             .writer
-            .authority(reservation.batch, reservation.page, reservation.ordinal)
+            .authority(
+                reservation.batch,
+                reservation.page,
+                reservation.ordinal,
+                reservation.kind,
+            )
             .unwrap();
         assert_eq!(authority.generations, [1, 2]);
         let before = snapshot(reservation.writer.pool);
@@ -780,7 +805,7 @@ fn stale_staged_generation(completion: bool) {
             prefix: storage.wal().prefix().unwrap(),
             batch: reservation.batch,
             before_descriptor: &descriptor_before,
-            role: reservation.writer.role,
+            role: &storage.status_role().unwrap(),
         };
         let prepared = operation::prepare_init_in_population(
             &plan,

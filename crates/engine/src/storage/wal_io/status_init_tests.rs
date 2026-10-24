@@ -330,6 +330,7 @@ fn status_init_cf15_initialized_and_reused_binding_rejected() {
                         ..writer.base.identity.page
                     },
                     0,
+                    operation::mixed::Kind::Status,
                 ));
                 assert_eq!(rejected.effect, Effect::Unchanged);
                 assert!(matches!(rejected.cause, Cause::AlreadyInitialized));

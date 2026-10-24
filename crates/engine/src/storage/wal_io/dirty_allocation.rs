@@ -301,6 +301,17 @@ impl<'s, 'o> WriterControl<'s, 'o> {
         }
     }
 
+    /// Only the plan3 mixed binding supplies this trusted population/budget.
+    pub(super) fn new_mixed(
+        operation: &'o mut [u8; OPERATION_BYTES],
+        identity: PageIdentity,
+    ) -> Self {
+        let mut value = Self::new_status(operation, identity);
+        value.budget = OperationBudget::MixedInit114688;
+        value.population = AllocationPopulation::MixedSystem;
+        value
+    }
+
     fn request(&self) -> TargetRequest {
         TargetRequest {
             identity: self.identity,

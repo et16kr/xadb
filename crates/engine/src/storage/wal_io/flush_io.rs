@@ -120,6 +120,8 @@ type Inner<T> = std::result::Result<T, Cause>;
 enum TargetClass {
     Allocator,
     Status,
+    MixedStatus,
+    MixedUndo,
 }
 
 /// This private selector borrows an actual upper authority. A page kind alone
@@ -133,7 +135,17 @@ impl PolicyRef<'_, '_, '_> {
     fn class(self) -> TargetClass {
         match self {
             Self::Allocator => TargetClass::Allocator,
-            Self::Status(_) => TargetClass::Status,
+            Self::Status(authority) => {
+                if authority.mixed() {
+                    if authority.request().kind == PageKind::Undo {
+                        TargetClass::MixedUndo
+                    } else {
+                        TargetClass::MixedStatus
+                    }
+                } else {
+                    TargetClass::Status
+                }
+            }
         }
     }
 }
@@ -585,7 +597,10 @@ impl<'s, 'w> FlushIo<'s, 'w> {
                 && prepared.level == retired.level
                 && match prepared.class {
                     TargetClass::Allocator => retired.kind == PageKind::Allocation,
-                    TargetClass::Status => retired.kind == PageKind::TransactionStatus,
+                    TargetClass::Status | TargetClass::MixedStatus => {
+                        retired.kind == PageKind::TransactionStatus
+                    }
+                    TargetClass::MixedUndo => retired.kind == PageKind::Undo,
                 }
                 && prepared.selections[2] == retired.selected
                 && prepared.batch == retired.batch
@@ -639,7 +654,7 @@ fn validate_capture<W: WriterNamespace>(
             Err(Cause::IdentityMismatch)
         }
         PolicyRef::Status(authority)
-            if request.kind != PageKind::TransactionStatus
+            if !authority.accepts_kind(request.kind)
                 || !(1..64).contains(&request.identity.page.page_no)
                 || !authority.matching(capture) =>
         {
@@ -901,7 +916,7 @@ fn validate_mapping<W: WriterNamespace>(
             let request = authority.request();
             let allocator = authority.allocator();
             if !authority.matching(capture)
-                || request.kind != PageKind::TransactionStatus
+                || !authority.accepts_kind(request.kind)
                 || request.level != 0
                 || !(1..64).contains(&request.identity.page.page_no)
                 || allocator.page.page_no != 0
@@ -1518,7 +1533,9 @@ pub(super) mod test_support {
             0 => {
                 prepared.class = match prepared.class {
                     TargetClass::Allocator => TargetClass::Status,
-                    TargetClass::Status => TargetClass::Allocator,
+                    TargetClass::Status | TargetClass::MixedStatus | TargetClass::MixedUndo => {
+                        TargetClass::Allocator
+                    }
                 };
             }
             1 => {

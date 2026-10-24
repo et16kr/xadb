@@ -91,6 +91,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .inner
             .pool
             .uses_storage_origin(&storage.binding, storage.session_fence())
+            || role.mixed()
             || !role.uses_fence(storage.session_fence())
             || role.namespace() != storage.profile().spec().namespace
             || role.object().get() != 2

@@ -69,7 +69,7 @@ fn authority_case(profile: u32, variant: usize, id: &str) {
         if variant <= 3 {
             let mut authority = reservation
                 .writer
-                .authority(reservation.batch, reservation.page, 0)
+                .authority(reservation.batch, reservation.page, 0, reservation.kind)
                 .unwrap();
             match variant {
                 1 => authority.binding = &foreign_binding,
@@ -174,7 +174,7 @@ fn status_init_cf04_whole_two_pin_capacity() {
             let pool = reserved.writer.pool;
             let authority = reserved
                 .writer
-                .authority(reserved.batch, reserved.page, 0)
+                .authority(reserved.batch, reserved.page, 0, reserved.kind)
                 .unwrap();
             // The first target can be full while the closed payload has no pins.
             frame_test::seed_pins(pool, 0, 34, 34);
@@ -334,7 +334,7 @@ fn status_init_cf06_stale_and_closed_corruption() {
             if variant <= 2 {
                 let authority = reserved
                     .writer
-                    .authority(reserved.batch, reserved.page, 0)
+                    .authority(reserved.batch, reserved.page, 0, reserved.kind)
                     .unwrap();
                 let write = pool
                     .claim_init_targets(reserved.owner, &authority)
@@ -424,7 +424,7 @@ fn status_init_cf06_stale_and_closed_corruption() {
                     8 => {
                         let authority = reserved
                             .writer
-                            .authority(reserved.batch, reserved.page, 0)
+                            .authority(reserved.batch, reserved.page, 0, reserved.kind)
                             .unwrap();
                         // Generation now belongs to the exclusively prepared
                         // slot; a shared publisher cannot inject generation0.

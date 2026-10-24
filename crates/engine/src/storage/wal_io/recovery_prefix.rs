@@ -64,8 +64,10 @@ const TARGET_TABLE_BYTES: usize = TARGET_COUNT * TARGET_BYTES;
 enum RecoveryScope {
     ReadOnly,
     Effects,
+    MixedEffects,
 }
 const MAX_SUPPORTED_FRAME: usize = 38000;
+const MAX_MIXED_FRAME: usize = 38208;
 const BLOCKED: [&str; 6] = [
     "CURRENT",
     "d3-current-stage",
@@ -151,6 +153,7 @@ pub(crate) enum ProducerMode {
     Exclusive,
     Dirty,
     Status,
+    Mixed,
 }
 impl ProducerMode {
     pub(crate) fn memory(self) -> u64 {
@@ -161,6 +164,7 @@ impl ProducerMode {
             Self::Exclusive => OperationBudget::Exclusive81920,
             Self::Dirty => OperationBudget::Dirty98304,
             Self::Status => OperationBudget::StatusInit114688,
+            Self::Mixed => OperationBudget::MixedInit114688,
         }
     }
 }
@@ -211,6 +215,7 @@ pub(crate) struct RecoveryPrefixObservation {
     scope: RecoveryScope,
     terminal: TerminalOutcome,
     status_mask: u64,
+    undo_mask: u64,
     last_status_page: usize,
     pending_matched: bool,
     stage_bytes: u64,
@@ -328,11 +333,17 @@ impl RecoveryPrefixObservation {
     pub(crate) fn status_page_mask(&self) -> u64 {
         self.status_mask
     }
+    pub(crate) fn undo_page_mask(&self) -> u64 {
+        self.undo_mask
+    }
+    fn payload_mask(&self) -> u64 {
+        self.status_mask | self.undo_mask
+    }
     fn replay_targets(&self) -> u64 {
         if self.complete_lsn == 0 {
             0
         } else {
-            1 + u64::from(self.status_mask.count_ones())
+            1 + u64::from(self.payload_mask().count_ones())
         }
     }
     pub(crate) fn source_stabilized(&self) -> bool {
@@ -396,7 +407,20 @@ pub(crate) fn source_census<W: WriterNamespace>() -> SourceCensus {
         + 2 * size_of::<DescriptorSpec>()
         + size_of::<RemainingBudget>()
         + 2 * size_of::<CanonicalImages<'static>>();
-    let replay = replay.max(transactions::component_bytes());
+    // The mixed observer replaces the Status Expected/codec within the same
+    // phase, rather than nesting another materializer or retaining new pages.
+    let mixed_replay = budget::TEMPORARIES
+        + budget::PLANS
+        + init::mixed::codec_bytes()
+        + 2 * size_of::<init::mixed::Expected<'static>>()
+        + 2 * size_of::<DescriptorSpec>()
+        + size_of::<RemainingBudget>()
+        + 2 * size_of::<CanonicalImages<'static>>();
+    let replay = replay
+        .max(mixed_replay)
+        .max(transactions::component_bytes())
+        + 2 * size_of::<Option<init::mixed::Kind>>()
+        + 2 * size_of::<Result<Option<init::mixed::Kind>>>();
     // Oversized hashing never nests a descriptor/entry/bootstrap decoder.
     // Hash chunk bytes live in caller workspace; pinned SHA state/block/output
     // storage and digest/scalar/error return carriers are source-owned here.
@@ -438,12 +462,16 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
         workspace: &'a mut [u8; WORKSPACE_BYTES],
         transaction_arena: &'a mut [u8; transactions::ARENA_BYTES],
         acquired: &mut bool,
+        scope: RecoveryScope,
     ) -> Result<Self> {
+        if !matches!(scope, RecoveryScope::Effects | RecoveryScope::MixedEffects) {
+            return Err(error(Phase::Preflight, Cause::UnsupportedClosure));
+        }
         Self::acquire_internal(
             directory,
             expected,
             workspace,
-            RecoveryScope::Effects,
+            scope,
             Some(transaction_arena),
             acquired,
         )
@@ -478,7 +506,7 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
                 .metadata(&name(path))
                 .map_err(|e| error(Phase::Preflight, Cause::Namespace(e)))?
                 .is_some()
-                && !(scope == RecoveryScope::Effects
+                && !(matches!(scope, RecoveryScope::Effects | RecoveryScope::MixedEffects)
                     && matches!(path, "d3-rebase-0" | "d3-rebase-1"))
             {
                 return Err(error(Phase::Preflight, Cause::UnsupportedClosure));
@@ -532,16 +560,20 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
                 &mut scratch[0][..4096],
                 Phase::Bootstrap,
             )?;
-            let plan =
-                bootstrap::prepare_recovery_bootstrap(profile, selected, scratch).map_err(|e| {
-                    let cause = match &e.cause {
-                        BootstrapCause::UnsupportedPlan => Cause::UnsupportedBootstrapPlan,
-                        BootstrapCause::Control(c) => Cause::Control(*c),
-                        BootstrapCause::IdentityMismatch => Cause::IdentityMismatch,
-                        _ => Cause::Bootstrap(e),
-                    };
-                    error(Phase::Bootstrap, cause)
-                })?;
+            let plan = if scope == RecoveryScope::MixedEffects {
+                prepare_mixed_bootstrap(profile, selected, scratch)
+            } else {
+                bootstrap::prepare_recovery_bootstrap(profile, selected, scratch)
+            }
+            .map_err(|e| {
+                let cause = match &e.cause {
+                    BootstrapCause::UnsupportedPlan => Cause::UnsupportedBootstrapPlan,
+                    BootstrapCause::Control(c) => Cause::Control(*c),
+                    BootstrapCause::IdentityMismatch => Cause::IdentityMismatch,
+                    _ => Cause::Bootstrap(e),
+                };
+                error(Phase::Bootstrap, cause)
+            })?;
             let allocator = plan
                 .allocation_identity()
                 .map_err(|e| error(Phase::Bootstrap, Cause::Control(e)))?;
@@ -648,6 +680,7 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
             scope,
             terminal: TerminalOutcome::Cancelled,
             status_mask: 0,
+            undo_mask: 0,
             last_status_page: 0,
             pending_matched: pending.is_none(),
             stage_bytes,
@@ -692,11 +725,12 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
             .expect("fixed allocator image")
     }
     pub(crate) fn status_image(&self) -> Option<&[u8; PAGE_BYTES]> {
-        (self.observation.status_mask != 0).then(|| {
-            self.workspace[STATUS..STATUS + PAGE_BYTES]
-                .try_into()
-                .expect("fixed Status image")
-        })
+        (self.observation.status_mask != 0 && self.observation.scope != RecoveryScope::MixedEffects)
+            .then(|| {
+                self.workspace[STATUS..STATUS + PAGE_BYTES]
+                    .try_into()
+                    .expect("fixed Status image")
+            })
     }
     fn target_table(&self) -> &[u8] {
         &self.workspace[TARGETS..TARGETS + TARGET_TABLE_BYTES]
@@ -708,6 +742,43 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
                 .expect("fixed descriptor")
         })
     }
+}
+
+/// The explicit mixed effect entry authenticates the complete plan3 bootstrap
+/// against the selected profile/FILEMAP before a mixed replay scope is retained.
+/// Old read-only and effect entries continue using the plan1/2-only selector.
+fn prepare_mixed_bootstrap(
+    profile: Profile,
+    selected: SelectedControl,
+    scratch: &mut [[u8; PAGE_BYTES]; 3],
+) -> std::result::Result<bootstrap::BootstrapPlan, BootstrapError> {
+    let bytes = &scratch[0][..wal::CONTROL_BYTES];
+    wal::check_control(bytes, profile, b"XBS1").map_err(bootstrap::control_error)?;
+    if wal::u64_at(bytes, 280) != 3 {
+        return Err(bootstrap::failed(
+            bootstrap::Phase::Prepare,
+            BootstrapCause::UnsupportedPlan,
+        ));
+    }
+    let actual_digest = content_digest(bytes);
+    let plan = bootstrap::BootstrapPlan::prepare_for_kind(
+        profile,
+        scratch,
+        bootstrap::BootstrapPlanKind::UndoBootstrap,
+    )?;
+    if selected != plan.selected {
+        return Err(bootstrap::failed(
+            bootstrap::Phase::Prepare,
+            BootstrapCause::IdentityMismatch,
+        ));
+    }
+    let expected = plan
+        .encode_descriptor(&mut scratch[2])
+        .map_err(bootstrap::control_error)?;
+    if actual_digest != content_digest(expected) {
+        return Err(bootstrap::control_error(ControlError::Corrupt));
+    }
+    Ok(plan)
 }
 
 fn validate_dwb_tuple(
@@ -753,7 +824,7 @@ fn account(observation: &mut RecoveryPrefixObservation) -> Result<()> {
         ));
     }
     let replay_pages = if observation.complete_lsn > 0 {
-        1u64.checked_add(u64::from(observation.status_mask.count_ones()))
+        1u64.checked_add(u64::from(observation.payload_mask().count_ones()))
             .ok_or_else(arithmetic)?
     } else {
         0
@@ -869,7 +940,12 @@ fn analyze_with<F: xadb_foundation::io::FileIo>(
             });
             break;
         }
-        if length > MAX_SUPPORTED_FRAME {
+        let maximum = if observation.scope == RecoveryScope::MixedEffects {
+            MAX_MIXED_FRAME
+        } else {
+            MAX_SUPPORTED_FRAME
+        };
+        if length > maximum {
             validate_oversized(source, frame, offset, length)?;
             return Err(error(Phase::Scan, Cause::UnsupportedClosure));
         }
@@ -896,7 +972,11 @@ fn analyze_with<F: xadb_foundation::io::FileIo>(
             targets: &mut *targets,
         };
         let transactional = header.kind != FrameKind::System;
+        let payload_kind;
         if transactional {
+            if observation.scope == RecoveryScope::MixedEffects {
+                return Err(semantic(SemanticError::UnsupportedOperation));
+            }
             let arena = transaction_arena
                 .as_deref_mut()
                 .ok_or_else(|| semantic(SemanticError::UnsupportedOperation))?;
@@ -908,13 +988,15 @@ fn analyze_with<F: xadb_foundation::io::FileIo>(
                 header,
                 &frame[..length],
             )?;
+            payload_kind = None;
         } else {
             if observation.transactions.high_water != 0 {
                 return Err(semantic(SemanticError::UnsupportedOperation));
             }
-            adopt_frame(observation, allocator, images, header, &frame[..length])?;
+            payload_kind = adopt_frame(observation, allocator, images, header, &frame[..length])?;
             observation.allocator_lsn = header.lsn;
             if length == init::FRAME_BYTES
+                && observation.scope != RecoveryScope::MixedEffects
                 && let Some(arena) = transaction_arena.as_deref_mut()
             {
                 let index = observation.last_status_page;
@@ -932,7 +1014,10 @@ fn analyze_with<F: xadb_foundation::io::FileIo>(
         } else {
             CanonicalChange::System {
                 allocator: before,
-                status: (length == init::FRAME_BYTES).then_some(&*status),
+                payload: payload_kind.map(|kind| CanonicalPayload {
+                    image: status,
+                    kind,
+                }),
             }
         };
         let keep_scanning = visit(header, &frame[..length], change);
@@ -952,6 +1037,9 @@ fn analyze_with<F: xadb_foundation::io::FileIo>(
                 .ok_or_else(|| semantic(SemanticError::StateMismatch))?,
             targets,
         )?;
+    }
+    if observation.scope == RecoveryScope::MixedEffects {
+        validate_mixed_census(observation, allocator, before, descriptor, targets)?;
     }
     Ok(())
 }
@@ -991,12 +1079,19 @@ fn profile_ref(profile: Profile) -> ControlRef {
 enum CanonicalChange<'a> {
     System {
         allocator: &'a [u8; PAGE_BYTES],
-        status: Option<&'a [u8; PAGE_BYTES]>,
+        payload: Option<CanonicalPayload<'a>>,
     },
     Transaction {
         before: &'a [u8; PAGE_BYTES],
         after: &'a [u8; PAGE_BYTES],
     },
+}
+/// Issued only after the corresponding class-specific canonical materializer
+/// accepted the complete native group. The physical callback consumes this
+/// trusted class with its canonical image; frame length is not its authority.
+struct CanonicalPayload<'a> {
+    image: &'a [u8; PAGE_BYTES],
+    kind: init::mixed::Kind,
 }
 struct CanonicalImages<'a> {
     before: &'a mut [u8; PAGE_BYTES],
@@ -1012,7 +1107,7 @@ fn adopt_frame(
     images: CanonicalImages<'_>,
     header: WalFrameHeader,
     bytes: &[u8],
-) -> Result<()> {
+) -> Result<Option<init::mixed::Kind>> {
     let CanonicalImages {
         before,
         after,
@@ -1025,15 +1120,15 @@ fn adopt_frame(
     if observation.status_mask != 0 && observation.scope == RecoveryScope::ReadOnly {
         return Err(semantic(StateMismatch));
     }
-    if bytes.len() - 192 < 8 || &bytes[160..164] != b"XSG1" || get16(bytes, 164) != 1 {
+    if header.kind != FrameKind::System || bytes.len() < 2144 {
+        return Err(semantic(Corrupt));
+    }
+    if &bytes[160..164] != b"XSG1" || get16(bytes, 164) != 1 {
         return Err(semantic(Corrupt));
     }
     let opcode = get16(bytes, 166);
     if !matches!(opcode, 8 | 10) {
         return Err(semantic(UnsupportedOperation));
-    }
-    if header.kind != FrameKind::System || bytes.len() < 2144 {
-        return Err(semantic(Corrupt));
     }
     if header.previous_lsn != observation.complete_lsn
         || header.lsn
@@ -1046,7 +1141,13 @@ fn adopt_frame(
     }
     // This call ends before decoding the incoming descriptor. It checks the
     // retained Finished/Prepared state, including prior INIT, in its own pool.
-    let population = if observation.scope == RecoveryScope::Effects && observation.plan == 2 {
+    let population = if observation.scope == RecoveryScope::MixedEffects {
+        if observation.plan != 3 {
+            return Err(semantic(IdentityMismatch));
+        }
+        validate_mixed_before(observation, allocator, before, descriptor)?;
+        AllocationPopulation::MixedSystem
+    } else if observation.scope == RecoveryScope::Effects && observation.plan == 2 {
         validate_operational_before(observation, allocator, before, descriptor)?;
         AllocationPopulation::Status
     } else {
@@ -1058,7 +1159,7 @@ fn adopt_frame(
             return Err(semantic(StateMismatch));
         }
         let count = get16(bytes, 290) as usize;
-        if !(1..=63).contains(&count) || (observation.plan == 2 && count != 1) {
+        if !(1..=63).contains(&count) || (matches!(observation.plan, 2 | 3) && count != 1) {
             return Err(semantic(StateMismatch));
         }
         let owner = SystemWorkRef::new(
@@ -1112,6 +1213,8 @@ fn adopt_frame(
     })?;
     let mode = if let Some(mode) = observation.mode {
         mode
+    } else if observation.scope == RecoveryScope::MixedEffects && observation.plan == 3 {
+        ProducerMode::Mixed
     } else if observation.plan == 2 {
         ProducerMode::Status
     } else {
@@ -1125,8 +1228,30 @@ fn adopt_frame(
         stream: header.stream,
         previous_lsn: observation.complete_lsn,
     };
-    if !begin && bytes.len() == init::FRAME_BYTES {
-        if observation.plan != 2 || mode != ProducerMode::Status || batch.count() != 1 {
+    let payload_kind = if begin {
+        None
+    } else {
+        match bytes.len() {
+            init::FRAME_BYTES => Some(init::mixed::Kind::Status),
+            MAX_MIXED_FRAME if observation.scope == RecoveryScope::MixedEffects => {
+                Some(init::mixed::Kind::UndoRoot)
+            }
+            _ => None,
+        }
+    };
+    if let Some(kind) = payload_kind {
+        if batch.count() != 1
+            || !matches!(
+                (observation.scope, observation.plan, mode, kind),
+                (RecoveryScope::MixedEffects, 3, ProducerMode::Mixed, _)
+                    | (
+                        RecoveryScope::ReadOnly | RecoveryScope::Effects,
+                        2,
+                        ProducerMode::Status,
+                        init::mixed::Kind::Status
+                    )
+            )
+        {
             return Err(semantic(UnsupportedOperation));
         }
         let index = batch.mask.trailing_zeros() as usize;
@@ -1153,29 +1278,47 @@ fn adopt_frame(
                 incarnation: generation,
                 ..allocator.page
             },
-            owner: ObjectId::new(2).expect("fixed Status object"),
+            owner: ObjectId::new(if kind == init::mixed::Kind::UndoRoot {
+                3
+            } else {
+                2
+            })
+            .expect("fixed system object"),
             owner_generation: Generation::new(1).expect("fixed Status generation"),
         };
-        let plan = init::InitExpected {
-            profile: observation.profile,
-            allocator,
-            payload,
-            frame: expected,
-            batch,
-            before_descriptor: (&*descriptor).try_into().expect("fixed descriptor"),
-        };
-        if observation.status_mask & (1u64 << index) != 0 {
+        if observation.payload_mask() & (1u64 << index) != 0 {
             return Err(semantic(StateMismatch));
         }
-        init::materialize_analysis_in_population(
-            &plan,
-            before,
-            bytes,
-            after,
-            next_status,
-            population,
-        )
-        .map_err(semantic)?;
+        if population == AllocationPopulation::MixedSystem {
+            let plan = init::mixed::Expected::new(
+                observation.profile,
+                allocator,
+                payload,
+                expected,
+                batch,
+                (&*descriptor).try_into().expect("fixed descriptor"),
+                kind,
+            );
+            init::mixed::materialize(&plan, before, bytes, after, next_status).map_err(semantic)?;
+        } else {
+            let plan = init::InitExpected {
+                profile: observation.profile,
+                allocator,
+                payload,
+                frame: expected,
+                batch,
+                before_descriptor: (&*descriptor).try_into().expect("fixed descriptor"),
+            };
+            init::materialize_analysis_in_population(
+                &plan,
+                before,
+                bytes,
+                after,
+                next_status,
+                population,
+            )
+            .map_err(semantic)?;
+        }
         match_pending(
             observation,
             header.lsn,
@@ -1187,7 +1330,11 @@ fn adopt_frame(
             observation,
             header.lsn,
             payload,
-            PageKind::TransactionStatus,
+            if kind == init::mixed::Kind::UndoRoot {
+                PageKind::Undo
+            } else {
+                PageKind::TransactionStatus
+            },
             next_status,
         )?;
         status.copy_from_slice(next_status);
@@ -1195,9 +1342,17 @@ fn adopt_frame(
         target[..8].copy_from_slice(&header.lsn.to_le_bytes());
         target[8..16].copy_from_slice(&generation.get().to_le_bytes());
         target[16..].copy_from_slice(&content_digest(next_status));
-        observation.status_mask |= 1u64 << index;
-        observation.last_status_page = index;
-        observation.terminal = TerminalOutcome::InitializedStatus;
+        if kind == init::mixed::Kind::UndoRoot {
+            observation.undo_mask |= 1u64 << index;
+        } else {
+            observation.status_mask |= 1u64 << index;
+            observation.last_status_page = index;
+        }
+        observation.terminal = if population == AllocationPopulation::MixedSystem {
+            kind.terminal()
+        } else {
+            TerminalOutcome::InitializedStatus
+        };
     } else {
         let expected = AnalysisExpected {
             profile: observation.profile,
@@ -1224,7 +1379,7 @@ fn adopt_frame(
             after,
         )?;
     }
-    if begin || bytes.len() != init::FRAME_BYTES {
+    if payload_kind.is_none() {
         observation.terminal = TerminalOutcome::Cancelled;
     }
     // Commit the RAM analysis once, only after every byte/transition check.
@@ -1241,7 +1396,7 @@ fn adopt_frame(
         observation.active = None;
         observation.terminal_hold |= batch.mask;
     }
-    Ok(())
+    Ok(payload_kind)
 }
 fn validate_operational_before(
     observation: &RecoveryPrefixObservation,
@@ -1262,6 +1417,100 @@ fn validate_operational_before(
         observation.terminal,
     )
     .map_err(semantic)
+}
+
+fn validate_mixed_before(
+    observation: &RecoveryPrefixObservation,
+    allocator: PageIdentity,
+    before: &[u8; PAGE_BYTES],
+    descriptor: &[u8],
+) -> Result<()> {
+    let page = allocation_page::decode_allocation_page(before, allocator, observation.namespace())
+        .map_err(|_| semantic(SemanticError::PageMismatch))?;
+    operation::validate_live_in_population(
+        &page,
+        observation.profile,
+        observation.active,
+        descriptor,
+        observation.high_water,
+        OperationBudget::MixedInit114688,
+        AllocationPopulation::MixedSystem,
+        observation.terminal,
+    )
+    .map_err(semantic)
+}
+
+/// The sealed class mask is backed by the complete final canonical allocator,
+/// not a payload tag or a caller-supplied target list. Unused target rows remain
+/// all zero; both analysis and physical replay run this same complete census.
+fn validate_mixed_census(
+    observation: &RecoveryPrefixObservation,
+    allocator: PageIdentity,
+    before: &[u8; PAGE_BYTES],
+    descriptor: &[u8],
+    targets: &[u8],
+) -> Result<()> {
+    use SemanticError::*;
+    if observation.scope != RecoveryScope::MixedEffects
+        || observation.plan != 3
+        || observation.transactions.high_water != 0
+        || observation.transactions.active != 0
+        || observation.status_mask & observation.undo_mask != 0
+        || observation.payload_mask() & 1 != 0
+        || targets.len() != TARGET_TABLE_BYTES
+        || targets[..TARGET_BYTES].iter().any(|byte| *byte != 0)
+        || observation.mode != (observation.complete_lsn != 0).then_some(ProducerMode::Mixed)
+    {
+        return Err(semantic(StateMismatch));
+    }
+    validate_mixed_before(observation, allocator, before, descriptor)?;
+    let page = allocation_page::decode_allocation_page(before, allocator, observation.namespace())
+        .map_err(|_| semantic(PageMismatch))?;
+    let mut status_mask = 0;
+    let mut undo_mask = 0;
+    for index in 1..TARGET_COUNT {
+        let raw = &targets[index * TARGET_BYTES..(index + 1) * TARGET_BYTES];
+        match page.entry(index).map_err(|_| semantic(PageMismatch))? {
+            AllocationEntry::Allocated {
+                generation,
+                object,
+                object_generation,
+                kind,
+            } => {
+                if object_generation.get() != 1 || generation.get() < 2 {
+                    return Err(semantic(IdentityMismatch));
+                }
+                match (object.get(), kind) {
+                    (2, PageKind::TransactionStatus) => status_mask |= 1u64 << index,
+                    (3, PageKind::Undo) => undo_mask |= 1u64 << index,
+                    _ => return Err(semantic(IdentityMismatch)),
+                }
+                let lsn = u64::from_le_bytes(raw[..8].try_into().expect("target LSN"));
+                if lsn == 0
+                    || lsn > observation.complete_lsn
+                    || u64::from_le_bytes(raw[8..16].try_into().expect("target generation"))
+                        != generation.get()
+                {
+                    return Err(semantic(OrderMismatch));
+                }
+            }
+            AllocationEntry::Free(_) | AllocationEntry::Reserved { .. } => {
+                if raw.iter().any(|byte| *byte != 0) {
+                    return Err(semantic(StateMismatch));
+                }
+            }
+        }
+    }
+    if status_mask != observation.status_mask
+        || undo_mask != observation.undo_mask
+        || (status_mask == 0 && observation.last_status_page != 0)
+        || (status_mask != 0
+            && (observation.last_status_page >= TARGET_COUNT
+                || status_mask & (1u64 << observation.last_status_page) == 0))
+    {
+        return Err(semantic(StateMismatch));
+    }
+    Ok(())
 }
 
 fn match_pending(
@@ -1430,6 +1679,8 @@ mod tests;
 
 #[path = "recovery_effect/mod.rs"]
 mod effect;
+#[cfg(all(test, target_os = "linux"))]
+pub(in crate::storage::wal_io) use effect::native as native_test_support;
 pub(crate) use effect::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
     RecoveryInspection, RecoveryPhase,

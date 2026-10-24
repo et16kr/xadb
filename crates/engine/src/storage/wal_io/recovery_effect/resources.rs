@@ -56,7 +56,9 @@ pub(super) fn source_census<W: WriterNamespace>() -> SourceCensus {
             FileMetadata,
             Option<FileMetadata>,
         )>();
-    // A: Prefix is acquired before ClosedRecovery is constructed. Preserve
+    // A: acquire/acquire_mixed are compile-time expansions of the same body;
+    // the closed scope adds no wrapper call or wide return carrier. Prefix is
+    // acquired before ClosedRecovery is constructed. Preserve
     // its complete nested census, one conservative wide return slot, arguments,
     // preflight census and error conversion. No second physical owner exists.
     let entry_outer = result
@@ -94,16 +96,24 @@ pub(super) fn source_census<W: WriterNamespace>() -> SourceCensus {
         + size_of::<super::super::CanonicalImages<'static>>()
         + 2 * size_of::<super::super::CanonicalChange<'static>>()
         + 2 * size_of::<allocation_page::AllocationPage<'static>>()
-        + 2 * size_of::<crate::storage::status_home::StatusHome>()
-        + 2 * size_of::<crate::storage::transaction_record::TransactionStatusCell>()
+        + (2 * size_of::<crate::storage::status_home::StatusHome>()
+            + 2 * size_of::<crate::storage::transaction_record::TransactionStatusCell>()
+            + size_of::<
+                std::result::Result<crate::storage::status_home::StatusHome, page::PageError>,
+            >())
+        .max(
+            4 * size_of::<Generation>()
+                + 4 * size_of::<
+                    std::result::Result<Generation, crate::storage::undo_record::UndoError>,
+                >()
+                + 4 * size_of::<crate::storage::undo_record::UndoError>(),
+        )
         + size_of::<
             std::result::Result<
                 allocation_page::AllocationPage<'static>,
                 allocation_page::AllocationError,
             >,
         >()
-        + size_of::<std::result::Result<crate::storage::status_home::StatusHome, page::PageError>>(
-        )
         + size_of::<port_io::SourceReads<'_, W::File>>()
         + size_of::<std::io::Result<usize>>()
         + 4 * size_of::<RecoveryTarget>()
@@ -115,7 +125,7 @@ pub(super) fn source_census<W: WriterNamespace>() -> SourceCensus {
         + size_of::<(
             &'static [u8],
             &'static [u8; PAGE_BYTES],
-            Option<&'static [u8; PAGE_BYTES]>,
+            Option<CanonicalPayload<'static>>,
             usize,
             u64,
             u64,

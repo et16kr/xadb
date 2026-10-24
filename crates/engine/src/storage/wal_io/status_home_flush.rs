@@ -15,7 +15,7 @@ use crate::{
         dirty_frame::{self, CapturedPage, SharedPool, TargetRequest},
         page::{PAGE_BYTES, PageIdentity, PageKind, PageLsn, PageRef},
         session_fence::SessionFence,
-        wal_io::{self as wal, EnsureDurable, StatusRole},
+        wal_io::{self as wal, EnsureDurable, bootstrap::FixedSystemRole},
     },
     transaction::concurrency::{Owner, PageConcurrency},
 };
@@ -33,6 +33,8 @@ use xadb_foundation::{error::Effect, namespace::WriterNamespace};
 #[path = "status_home_flush_tests.rs"]
 mod tests;
 
+#[path = "mixed_system_owner.rs"]
+pub(super) mod mixed;
 #[path = "operational_status.rs"]
 mod operational;
 #[path = "resident_status.rs"]
@@ -60,6 +62,7 @@ pub(super) enum Cause {
     BindingMismatch,
     Invariant,
     Storage(MutableStorageError),
+    Allocation(super::super::dirty_allocation::Cause),
     Frame(dirty_frame::DirtyError),
     Wal(wal::WalIoError),
     Io(flush_io::FlushIoError),
@@ -106,6 +109,13 @@ impl<'c, 's, 'w> StatusFlushControl<'c, 's, 'w> {
 /// Constructed solely from this owner's immutable role and actual publication.
 /// Every reference points outside the movable bound/control. No raw caller
 /// identity, image, LSN or diagnostic registration constructs this capability.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PayloadClass {
+    Status,
+    MixedStatus,
+    MixedUndo,
+}
+
 pub(in crate::storage) struct StatusFlushAuthority<'c, 's> {
     core: &'c PageConcurrency<'s>,
     binding: &'s AtomicU8,
@@ -113,14 +123,51 @@ pub(in crate::storage) struct StatusFlushAuthority<'c, 's> {
     request: TargetRequest,
     allocator: PageIdentity,
     history: Option<resident::History>,
+    class: PayloadClass,
+}
+#[allow(dead_code)] // Source-value baseline only; never constructed.
+struct BeforeClassAuthority<'c, 's> {
+    core: &'c PageConcurrency<'s>,
+    binding: &'s AtomicU8,
+    fence: &'s SessionFence,
+    request: TargetRequest,
+    allocator: PageIdentity,
+    history: Option<resident::History>,
+}
+#[allow(dead_code)] // Original enclosing control, only for source-value layout.
+struct BeforeClassControl<'c, 's, 'w> {
+    io: FlushIo<'s, 'w>,
+    capture: Option<CapturedPage<'c, 's>>,
+    retired: Option<RetiredBatch<'s>>,
+    authority: Option<BeforeClassAuthority<'c, 's>>,
+    phase: Phase,
+}
+fn class_retained_bytes() -> usize {
+    size_of::<Option<StatusFlushAuthority<'_, '_>>>()
+        .saturating_sub(size_of::<Option<BeforeClassAuthority<'_, '_>>>())
+        .max(
+            size_of::<StatusFlushControl<'_, '_, '_>>()
+                .saturating_sub(size_of::<BeforeClassControl<'_, '_, '_>>()),
+        )
 }
 impl StatusFlushAuthority<'_, '_> {
     pub(in crate::storage) fn matching(&self, capture: &CapturedPage<'_, '_>) -> bool {
         capture.uses_core(self.core)
             && std::ptr::eq(self.binding, capture.binding())
             && capture.requirement().uses_fence(self.fence)
+            && self.accepts_kind(capture.request().kind)
             && capture.request() == self.request
             && capture.stamp().identity == self.request.identity
+    }
+    pub(in crate::storage) fn mixed(&self) -> bool {
+        self.class != PayloadClass::Status
+    }
+    pub(in crate::storage) fn accepts_kind(&self, kind: PageKind) -> bool {
+        kind == if self.class == PayloadClass::MixedUndo {
+            PageKind::Undo
+        } else {
+            PageKind::TransactionStatus
+        }
     }
     pub(in crate::storage) fn request(&self) -> &TargetRequest {
         &self.request
@@ -132,6 +179,13 @@ impl StatusFlushAuthority<'_, '_> {
         &self,
         bytes: &[u8; PAGE_BYTES],
     ) -> std::result::Result<PageLsn, SemanticError> {
+        if self.class == PayloadClass::MixedUndo {
+            return crate::storage::undo_record::initial_undo_page_lsn(
+                bytes,
+                self.request.identity,
+            )
+            .map_err(|_| SemanticError::PageMismatch);
+        }
         match &self.history {
             None => operation::status_lsn(bytes, &self.request.identity),
             Some(history)
@@ -152,7 +206,12 @@ impl StatusFlushAuthority<'_, '_> {
         &self,
         bytes: &[u8; PAGE_BYTES],
     ) -> std::result::Result<PageLsn, SemanticError> {
-        operation::status_envelope(bytes, &self.request.identity)
+        if self.class == PayloadClass::MixedUndo {
+            crate::storage::undo_record::initial_undo_page_lsn(bytes, self.request.identity)
+                .map_err(|_| SemanticError::PageMismatch)
+        } else {
+            operation::status_envelope(bytes, &self.request.identity)
+        }
     }
 }
 
@@ -208,6 +267,19 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         BoundStatusWithFlush<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         IntoFlushError<Self>,
     > {
+        self.into_fixed_with_flush(false)
+    }
+    #[allow(
+        clippy::result_large_err,
+        reason = "retain the exact inline owner on unchanged refusal"
+    )]
+    fn into_fixed_with_flush(
+        self,
+        mixed: bool,
+    ) -> std::result::Result<
+        BoundStatusWithFlush<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        IntoFlushError<Self>,
+    > {
         let () = AdapterLayout::<W>::CHECK;
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
@@ -229,6 +301,12 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 storage,
                 Cause::BindingMismatch,
             )));
+        }
+        if self.control.role.mixed() != mixed {
+            return Err(IntoFlushError::Before {
+                error: error(Cause::BindingMismatch, Effect::Unchanged),
+                bound: self,
+            });
         }
         if !fits::<W>() {
             return Err(IntoFlushError::Before {
@@ -286,6 +364,19 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         StatusReader<'b, 'c, 's, 'p, 'd>,
         StatusFlusher<'b, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) {
+        assert!(
+            !self.inner.control.role.mixed(),
+            "Status facade is plan2 only"
+        );
+        self.split_fixed_with_flush()
+    }
+    fn split_fixed_with_flush<'b>(
+        &'b mut self,
+    ) -> (
+        StatusBootstrapWriter<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        StatusReader<'b, 'c, 's, 'p, 'd>,
+        StatusFlusher<'b, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    ) {
         let StatusControl {
             base,
             status_after,
@@ -321,7 +412,7 @@ pub(crate) struct StatusFlusher<'b, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> 
     control: &'b mut StatusFlushControl<'c, 's, 'w>,
     pool: &'b SharedPool<'c, 's, 'p, 'd>,
     storage: &'s MutableStorageOwner<'m, 'w, W>,
-    role: &'b StatusRole<'s>,
+    role: &'b FixedSystemRole<'s>,
 }
 impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W> {
     pub(crate) fn snapshot(&self) -> FlushSnapshot {
@@ -359,21 +450,22 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
             .map_err(|e| self.frame_error(e))
     }
     fn status_authority(&self) -> Result<StatusFlushAuthority<'c, 's>> {
-        self.status_authority_at(None)
+        self.status_authority_fixed(None, operation::mixed::Kind::Status)
     }
     fn status_authority_at(&self, page: Option<PageRef>) -> Result<StatusFlushAuthority<'c, 's>> {
+        self.status_authority_fixed(page, operation::mixed::Kind::Status)
+    }
+    fn status_authority_fixed(
+        &self,
+        page: Option<PageRef>,
+        kind: operation::mixed::Kind,
+    ) -> Result<StatusFlushAuthority<'c, 's>> {
         let request = match page {
             None => self.pool.initialized_request(),
-            Some(page) => self.pool.resident_request(TargetRequest {
-                identity: PageIdentity {
-                    database: self.role.namespace().database,
-                    page,
-                    owner: self.role.object(),
-                    owner_generation: self.role.generation(),
-                },
-                kind: self.role.kind(),
-                level: self.role.level(),
-            }),
+            Some(page) => self.pool.resident_request(
+                operation::fixed::request(self.role, page, kind)
+                    .map_err(|_| self.error(Cause::BindingMismatch, Effect::Unchanged))?,
+            ),
         }
         .map_err(|e| self.frame_error(e))?
         .ok_or_else(|| self.error(Cause::NotInitialized, Effect::Unchanged))?;
@@ -386,15 +478,12 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
                 .pool
                 .uses_storage_origin(&self.storage.binding, self.storage.session_fence())
             || self.role.namespace() != self.storage.profile().spec().namespace
-            || request.identity.database != self.role.namespace().database
-            || request.identity.owner != self.role.object()
-            || request.identity.owner_generation != self.role.generation()
-            || request.kind != self.role.kind()
-            || request.level != self.role.level()
+            || operation::fixed::request(self.role, request.identity.page, kind).ok()
+                != Some(request)
             || allocator.kind != PageKind::Allocation
             || allocator.level != 0
             || allocator.identity.page.page_no != 0
-            || if self.pool.operational_status() {
+            || if self.pool.operational_payloads() {
                 !(1..64).contains(&request.identity.page.page_no)
             } else {
                 request.identity.page.page_no != 1
@@ -411,6 +500,15 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
             request,
             allocator: allocator.identity,
             history: None,
+            class: if self.role.mixed() {
+                if kind == operation::mixed::Kind::UndoRoot {
+                    PayloadClass::MixedUndo
+                } else {
+                    PayloadClass::MixedStatus
+                }
+            } else {
+                PayloadClass::Status
+            },
         })
     }
     pub(crate) fn try_flush_allocator(
@@ -444,9 +542,26 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
         page: Option<PageRef>,
         history: Option<resident::History>,
     ) -> Result<FlushProgress> {
+        self.enter(owner)?;
+        if self.role.mixed() {
+            return Err(self.error(Cause::BindingMismatch, Effect::Unchanged));
+        }
+        self.try_flush_fixed(owner, status, page, history, operation::mixed::Kind::Status)
+    }
+    fn try_flush_fixed(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        status: bool,
+        page: Option<PageRef>,
+        history: Option<resident::History>,
+        kind: operation::mixed::Kind,
+    ) -> Result<FlushProgress> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
         self.enter(owner)?;
+        if self.role.mixed() && history.is_some() {
+            return Err(self.fatal(Cause::Invariant));
+        }
         if self.control.phase != Phase::Ready {
             return Err(self.error(Cause::Busy, Effect::Unchanged));
         }
@@ -459,10 +574,7 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
         // Publication lookup precedes headroom/DPT/content. C5 may hold both
         // DPT and content while this lookup returns NotInitialized immediately.
         let mut authority = if status {
-            Some(match page {
-                None => self.status_authority()?,
-                Some(page) => self.status_authority_at(Some(page))?,
-            })
+            Some(self.status_authority_fixed(page, kind)?)
         } else {
             None
         };
@@ -668,5 +780,5 @@ pub(crate) use resident::EmptyTransactionObservation;
 // The original 60,672-byte retained baseline predates the optional history.
 // Charge its complete value, including the Option discriminant and padding.
 fn history_retained_bytes() -> usize {
-    size_of::<Option<resident::History>>()
+    size_of::<Option<resident::History>>() + class_retained_bytes()
 }

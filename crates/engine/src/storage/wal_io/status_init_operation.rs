@@ -38,6 +38,8 @@ const PATCH: std::ops::Range<usize> = 15248..21520;
 const INIT: std::ops::Range<usize> = 21520..37968;
 const HOME: std::ops::Range<usize> = 16128..16352;
 
+#[path = "fixed_system_operation.rs"]
+pub(super) mod fixed;
 #[path = "mixed_system_init.rs"]
 pub(super) mod mixed;
 
@@ -1037,6 +1039,32 @@ pub(super) fn membership_lsn(
             && payload.owner_generation == role.generation(),
         IdentityMismatch,
     )?;
+    membership_scoped(
+        profile,
+        allocator,
+        payload,
+        bytes,
+        population,
+        InitScope::Status,
+    )
+}
+
+fn membership_scoped(
+    profile: &Profile,
+    allocator: &PageIdentity,
+    payload: &PageIdentity,
+    bytes: &[u8; PAGE_BYTES],
+    population: AllocationPopulation,
+    scope: InitScope,
+) -> Result<PageLsn> {
+    use SemanticError::*;
+    require(scope.accepts_population(population), IdentityMismatch)?;
+    require(
+        payload.database == profile.spec().namespace.database
+            && payload.owner.get() == scope.owner()
+            && payload.owner_generation.get() == 1,
+        IdentityMismatch,
+    )?;
     let page = allocation_page::decode_allocation_page(bytes, *allocator, profile.spec().namespace)
         .map_err(|_| PageMismatch)?;
     require(
@@ -1055,23 +1083,30 @@ pub(super) fn membership_lsn(
             } => {
                 // Census every Allocated entry; wrong kind/generation is not filtered away.
                 require(
-                    object == role.object()
-                        && object_generation == role.generation()
-                        && kind == PageKind::TransactionStatus,
+                    object_generation.get() == 1
+                        && ((object.get() == 2 && kind == PageKind::TransactionStatus)
+                            || (population == AllocationPopulation::MixedSystem
+                                && object.get() == 3
+                                && kind == PageKind::Undo)),
                     IdentityMismatch,
                 )?;
                 require(generation.get() >= 2, IdentityMismatch)?;
                 if allocator.page.page_no.checked_add(index as u64) == Some(payload.page.page_no) {
-                    require(generation == payload.page.incarnation, IdentityMismatch)?;
+                    require(
+                        generation == payload.page.incarnation
+                            && object == payload.owner
+                            && kind == scope.kind(),
+                        IdentityMismatch,
+                    )?;
                     members += 1;
                 } else {
-                    require(population == AllocationPopulation::Status, IdentityMismatch)?;
+                    require(population != AllocationPopulation::Empty, IdentityMismatch)?;
                 }
             }
             AllocationEntry::Reserved {
                 claimant: ReservationOwner::System(work),
                 ..
-            } if population == AllocationPopulation::Status
+            } if population != AllocationPopulation::Empty
                 && work.namespace() == profile.spec().namespace
                 && work.kind() == SystemWorkKind::AllocationMaintenance
                 && work.generation().get() == 1 => {}
@@ -1158,6 +1193,7 @@ pub(super) fn plan_bytes() -> usize {
                 + 2 * size_of::<PreparedInit<'static, 'static>>(),
         )
         .max(mixed::plan_bytes())
+        .max(fixed::plan_bytes())
 }
 pub(super) fn temporary_bytes() -> usize {
     budget::TEMPORARIES
@@ -1165,8 +1201,8 @@ pub(super) fn temporary_bytes() -> usize {
         .max(mixed::codec_bytes())
 }
 /// The reader has no descriptor/entry array or Status encoder. During page
-/// checksum, its caller's Profile and both identity inputs remain live, and
-/// allocation/page decoders may retain two further copied identities. One
+/// checksum, the observer borrows Profile and both expected identities; the
+/// allocation/page decoders retain two copied identities. One
 /// PageView is moved through a helper rather than copied. The 512 carrier pool
 /// includes twelve slice/reference slots, eight outer thin references, four
 /// Namespace values and three ProfileSpec values; it is a whole-chain allowance,
@@ -1174,7 +1210,7 @@ pub(super) fn temporary_bytes() -> usize {
 pub(super) fn reader_bytes() -> usize {
     let checksum = budget::HASH
         + size_of::<Profile>()
-        + 4 * size_of::<PageIdentity>()
+        + 2 * size_of::<PageIdentity>()
         + size_of::<page::PageView<'static>>()
         + 2 * size_of::<PageHeader>()
         + 64
@@ -1185,7 +1221,6 @@ pub(super) fn reader_bytes() -> usize {
     let membership = size_of::<Profile>()
         + 2 * size_of::<allocation_page::AllocationPage<'static>>()
         + 8 * size_of::<AllocationEntry>()
-        + 2 * size_of::<PageIdentity>()
         + 512
         + 128
         + 128
@@ -1194,7 +1229,6 @@ pub(super) fn reader_bytes() -> usize {
         + 4 * size_of::<StatusHome>()
         + 4 * size_of::<TransactionStatusCell>()
         + 2 * size_of::<PageHeader>()
-        + 2 * size_of::<PageIdentity>()
         + 512
         + 128
         + 128
@@ -1202,7 +1236,17 @@ pub(super) fn reader_bytes() -> usize {
     // The caller retains both expected identities across decode and the two
     // checked slot-generation tokens in its read view. They are additional to
     // the callee inputs and nested decoder copies counted above.
-    checksum.max(membership).max(free_cell) + 2 * size_of::<PageIdentity>() + 2 * size_of::<u64>()
+    // Free Undo borrows its432-byte cell; its initial page decoder uses the
+    // same two expected identity copies/checksum pool, then checks Generation
+    // with scalar/error values bounded by the retained128 pools above.
+    checksum
+        .max(membership)
+        .max(free_cell)
+        .max(fixed::request_bytes())
+        + size_of::<PageIdentity>()
+        + size_of::<crate::storage::dirty_frame::TargetRequest>()
+        + 2 * size_of::<u64>()
+        + fixed::reader_layer_bytes()
 }
 pub(super) fn fits() -> bool {
     size_of::<InitPlan<'static, 'static>>() <= 512

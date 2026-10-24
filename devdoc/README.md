@@ -2,6 +2,8 @@
 
 2026-10-24 [DEV4 streaming 문장 경계·원문 예약](evidence/dev4-splitter-20261024.md): chunk/EOF·UTF-8 경계와 shared quota 원문 소유를 구현했다. 새25함수·1,226schedule·관측변조16·제품mutant4의 선택 증거와 원 Clippy compile FAIL을 보존한다. parser/값·모델·실제 engine 통합·Q1은 미완료다.
 
+2026-10-24 [DEV3 혼합 Status·Free Undo owner](evidence/dev3-mixed-system-owner-20261024.md): 원 pool의 INIT·pressure·flush·load와 닫힌 mixed 복구를 연결했다. 메모리 필수144·static3·compiler9+baseline PASS를 보존한다. 실제 producer PASS와 원 복구 시험 기대값 FAIL을 보존하고 제품 소스가 같은 r7의 복구·재진입을 통과했다. 최종 독립 D1은 제한 범위로 수용했으며 원 동일 ELF 3단계 요건·일반 pool/live undo·DEV3/S5는 미완료다. AI 완료 소비자1/3을 유지한다.
+
 2026-10-24 [DEV4 독립 lexer·이름](implementation/dev4-implementation.md): source를 빌리는 앞단·고정 이름·호출 제어와 독립 literal 판정기를 구현했다. [source별 선택 증거](evidence/dev4-frontend-20261024.md)에 원 compile FAIL·이름 제어 반례·수정 및 mutant 거절을 보존하며 최종 독립 D1을 제한 수용했다. splitter/parser/값·실제 engine 통합·Q1은 미완료다.
 
 2026-10-24 [DEV4 독립 앞단 계약](contracts/dev4-independent-frontend.md)·[DEV3 병행 준비 계획](plans/dev4-preparation-plan.md): Oracle19c 공식/로컬 매뉴얼과4개 DBMS를 대조해 lexer/parser·값 처리·독립 검증의 선행 범위와 FE01–16을 구체화했다. [후속 리뷰 교정](evidence/dev4-preparation-research-20261024.md#review-followup)으로 순수 진단과 호출 전체의 거래/정리 효과를 분리하고 Oracle 끝 공백 차이·연결 시험 의무를 보강했다. D4-PREP-001/002 독립 D2 채택, 실제 engine 통합·Q1의 DEV3 선행과 제품·시험 NOT_RUN을 유지한다.

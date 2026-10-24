@@ -447,7 +447,12 @@ fn resident_status_forged_index_is_not_same_generation_authority() {
         let reserved = writer.reserve_one(&mut owner).unwrap();
         let mut authority = reserved
             .writer
-            .authority(reserved.batch, reserved.page, reserved.ordinal)
+            .authority(
+                reserved.batch,
+                reserved.page,
+                reserved.ordinal,
+                reserved.kind,
+            )
             .unwrap();
         assert_eq!((authority.payload_index, authority.generations[1]), (2, 1));
         authority.payload_index = 1;
@@ -704,7 +709,12 @@ fn resident_status_forged_local_index_cannot_install_or_release_wrong_slot() {
         let reserved = writer.reserve_one(&mut owner).unwrap();
         let authority = reserved
             .writer
-            .authority(reserved.batch, reserved.page, reserved.ordinal)
+            .authority(
+                reserved.batch,
+                reserved.page,
+                reserved.ordinal,
+                reserved.kind,
+            )
             .unwrap();
         let pool = reserved.writer.pool;
         let mut write = pool
@@ -892,7 +902,12 @@ fn staged_index_mismatch(completion: bool) {
         let reserved = writer.reserve_one(&mut owner).unwrap();
         let mut authority = reserved
             .writer
-            .authority(reserved.batch, reserved.page, reserved.ordinal)
+            .authority(
+                reserved.batch,
+                reserved.page,
+                reserved.ordinal,
+                reserved.kind,
+            )
             .unwrap();
         let before = snapshot(reserved.writer.pool);
         let descriptor_before = reserved.writer.base.descriptor;
@@ -915,7 +930,7 @@ fn staged_index_mismatch(completion: bool) {
             prefix: storage.wal().prefix().unwrap(),
             batch: reserved.batch,
             before_descriptor: &descriptor_before,
-            role: reserved.writer.role,
+            role: &storage.status_role().unwrap(),
         };
         let prepared = operation::prepare_init_in_population(
             &plan,

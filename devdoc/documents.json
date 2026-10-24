@@ -1942,6 +1942,21 @@
       "path": "evidence/dev4-splitter-20261024.json",
       "role": "evidence",
       "title": "DEV4 splitter source별 선택 실행 색인"
+    },
+    "dev3-mixed-system-owner.md": {
+      "path": "contracts/dev3-mixed-system-owner.md",
+      "role": "contracts",
+      "title": "DEV3 혼합 Status·Free Undo owner 계약"
+    },
+    "dev3-mixed-system-owner-20261024.md": {
+      "path": "evidence/dev3-mixed-system-owner-20261024.md",
+      "role": "evidence",
+      "title": "DEV3 혼합 owner·현재-build 복구 선택 증거"
+    },
+    "dev3-mixed-system-owner-20261024.json": {
+      "path": "evidence/dev3-mixed-system-owner-20261024.json",
+      "role": "evidence",
+      "title": "DEV3 혼합 owner source별 선택 증거 색인"
     }
   }
 }

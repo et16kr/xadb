@@ -28,7 +28,39 @@ impl SharedPool<'_, '_, '_, '_> {
         start: usize,
     ) -> Result<StatusCandidate> {
         self.health()?;
-        if !self.directory.resident_status() || start == 0 || self.frames.len() < 2 {
+        if !self.directory.resident_status() {
+            return Err(unchanged(Cause::Shape));
+        }
+        self.payload_candidate(Some(request), start)
+    }
+    pub(in crate::storage) fn mixed_candidate(
+        &mut self,
+        request: TargetRequest,
+        start: usize,
+    ) -> Result<StatusCandidate> {
+        self.health()?;
+        if !self.directory.resident_mixed() || !self.directory.accepts_payload(request) {
+            return Err(unchanged(Cause::Shape));
+        }
+        self.payload_candidate(Some(request), start)
+    }
+    pub(in crate::storage) fn mixed_init_candidate(
+        &mut self,
+        start: usize,
+    ) -> Result<StatusCandidate> {
+        self.health()?;
+        if !self.directory.resident_mixed() {
+            return Err(unchanged(Cause::Shape));
+        }
+        self.payload_candidate(None, start)
+    }
+    fn payload_candidate(
+        &mut self,
+        request: Option<TargetRequest>,
+        start: usize,
+    ) -> Result<StatusCandidate> {
+        self.health()?;
+        if !self.directory.resident_payloads() || start == 0 || self.frames.len() < 2 {
             return Err(unchanged(Cause::Shape));
         }
         if !self.handoff_quiescent()? {
@@ -52,7 +84,9 @@ impl SharedPool<'_, '_, '_, '_> {
             };
             let frame = if let Some(registration) = self.resolve_registration(index) {
                 let frame = self.pair(index, &content)?.frame;
-                if registration.request.same_address(&request) {
+                if let Some(request) = request
+                    && registration.request.same_address(&request)
+                {
                     if registration.request != request {
                         return Err(unchanged(Cause::Stale));
                     }

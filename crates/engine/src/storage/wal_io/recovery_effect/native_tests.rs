@@ -24,14 +24,14 @@ use xadb_foundation::{
 use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
 
 #[derive(Default)]
-struct Trace {
-    root: PathBuf,
-    recovering: bool,
-    handles: usize,
-    peak: usize,
-    fd_peak: usize,
-    events: Vec<String>,
-    fd_rows: Vec<String>,
+pub(in crate::storage::wal_io) struct Trace {
+    pub(in crate::storage::wal_io) root: PathBuf,
+    pub(in crate::storage::wal_io) recovering: bool,
+    pub(in crate::storage::wal_io) handles: usize,
+    pub(in crate::storage::wal_io) peak: usize,
+    pub(in crate::storage::wal_io) fd_peak: usize,
+    pub(in crate::storage::wal_io) events: Vec<String>,
+    pub(in crate::storage::wal_io) fd_rows: Vec<String>,
     cut: usize,
     cut_count: usize,
     cut_hits: usize,
@@ -43,7 +43,7 @@ struct Trace {
     pause: Option<(mpsc::SyncSender<()>, mpsc::Receiver<()>)>,
 }
 impl Trace {
-    fn sample(&mut self, tag: &str) {
+    pub(in crate::storage::wal_io) fn sample(&mut self, tag: &str) {
         let n = db_fds(&self.root);
         self.fd_peak = self.fd_peak.max(n);
         self.fd_rows.push(format!("{tag}\t{n}"));
@@ -74,22 +74,22 @@ impl Trace {
         self.sample(op);
     }
 }
-fn db_fds(root: &Path) -> usize {
+pub(in crate::storage::wal_io) fn db_fds(root: &Path) -> usize {
     fs::read_dir("/proc/self/fd")
         .unwrap()
         .filter_map(|e| fs::read_link(e.ok()?.path()).ok())
         .filter(|p| p.starts_with(root))
         .count()
 }
-struct Directory {
-    inner: LinuxDirectory,
-    trace: Arc<Mutex<Trace>>,
+pub(in crate::storage::wal_io) struct Directory {
+    pub(in crate::storage::wal_io) inner: LinuxDirectory,
+    pub(in crate::storage::wal_io) trace: Arc<Mutex<Trace>>,
 }
-struct Writer {
+pub(in crate::storage::wal_io) struct Writer {
     inner: LinuxWriterLease,
     trace: Arc<Mutex<Trace>>,
 }
-struct File {
+pub(in crate::storage::wal_io) struct File {
     inner: Option<LinuxNamespaceFile>,
     name: String,
     trace: Arc<Mutex<Trace>>,
@@ -519,7 +519,11 @@ fn produce(
     }
 }
 
-fn dump(out: &Path, p: &super::super::RecoveryPrefixObservation, o: &super::RecoveryObservation) {
+pub(in crate::storage::wal_io) fn dump(
+    out: &Path,
+    p: &super::super::RecoveryPrefixObservation,
+    o: &super::RecoveryObservation,
+) {
     let l = &o.ledger;
     let ph = &o.physical;
     let b = &o.boot;

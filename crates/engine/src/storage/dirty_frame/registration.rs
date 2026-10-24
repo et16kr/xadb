@@ -12,6 +12,7 @@ enum Mode {
     AllocatorReloadable,
     OperationalStatus,
     ResidentStatus,
+    ResidentMixed,
 }
 
 struct Slot {
@@ -96,6 +97,27 @@ impl RegistrationDirectory {
     pub(super) fn resident_status(&self) -> bool {
         self.mode == Mode::ResidentStatus
     }
+    pub(super) fn resident_mixed(&self) -> bool {
+        self.mode == Mode::ResidentMixed
+    }
+    pub(super) fn resident_payloads(&self) -> bool {
+        matches!(self.mode, Mode::ResidentStatus | Mode::ResidentMixed)
+    }
+    pub(super) fn operational_payloads(&self) -> bool {
+        self.operational_status() || self.resident_mixed()
+    }
+    pub(super) fn accepts_payload(&self, request: TargetRequest) -> bool {
+        request.level == 0
+            && request.identity.owner_generation.get() == 1
+            && ((request.kind == PageKind::TransactionStatus && request.identity.owner.get() == 2)
+                || (self.resident_mixed()
+                    && request.kind == PageKind::Undo
+                    && request.identity.owner.get() == 3))
+    }
+    pub(super) fn open_resident_mixed(&mut self) {
+        self.mode = Mode::ResidentMixed;
+        self.close_status_slot();
+    }
     pub(super) fn init_generations(&self, frames: &[DirtyFrame<'_>]) -> Option<[u64; 2]> {
         let index = self.closed_index?;
         if !self.valid(frames) {
@@ -111,7 +133,7 @@ impl RegistrationDirectory {
         self.close_status_slot();
     }
     pub(super) fn next_resident_generation(&self, index: usize) -> Option<u64> {
-        self.resident_status().then_some(())?;
+        self.resident_payloads().then_some(())?;
         self.entries.get(index)?.generation.checked_add(1)
     }
     pub(super) fn prepare_resident_slot(&mut self, index: usize, generation: u64) {
@@ -146,7 +168,7 @@ impl RegistrationDirectory {
     }
     #[cfg(test)]
     pub(super) fn seed_resident_generation(&mut self, index: usize, generation: u64) {
-        assert!(self.resident_status() && index > 0 && generation != 0);
+        assert!(self.resident_payloads() && index > 0 && generation != 0);
         self.entries[index].generation = generation;
     }
     pub(super) fn prepare_next_status(&mut self, generation: u64) {
@@ -172,7 +194,7 @@ impl RegistrationDirectory {
     pub(super) fn resolve(&self, frames: &[DirtyFrame<'_>], index: usize) -> Option<Registration> {
         let frame = frames.get(index)?;
         let original = self.entries.get(index)?.registration();
-        if self.closed_index == Some(index) || (self.resident_status() && index != 0) {
+        if self.closed_index == Some(index) || (self.resident_payloads() && index != 0) {
             if frame.registration.is_some() {
                 return None;
             }
@@ -181,9 +203,10 @@ impl RegistrationDirectory {
             original.filter(|value| {
                 value.generation != 0
                     && match self.mode {
-                        Mode::Fixed | Mode::OperationalStatus | Mode::ResidentStatus => {
-                            frame.registration == Some(*value)
-                        }
+                        Mode::Fixed
+                        | Mode::OperationalStatus
+                        | Mode::ResidentStatus
+                        | Mode::ResidentMixed => frame.registration == Some(*value),
                         Mode::AllocatorReloadable => self.resident & (1u64 << index) != 0,
                     }
             })
@@ -300,7 +323,7 @@ impl RegistrationDirectory {
     /// Fixed-adapter provenance, including its generation-one restriction.
     /// This is not a future movable-directory or page reuse invariant.
     pub(super) fn valid(&self, frames: &[DirtyFrame<'_>]) -> bool {
-        if self.resident_status() {
+        if self.resident_payloads() {
             let Some(selected) = self.closed_index else {
                 return false;
             };
@@ -336,14 +359,11 @@ impl RegistrationDirectory {
                     return true;
                 };
                 entry.generation != 0
-                    && entry.request.kind == PageKind::TransactionStatus
-                    && entry.request.level == 0
+                    && self.accepts_payload(entry.request)
                     && entry.request.identity.database == allocator.request.identity.database
                     && entry.request.identity.page.file == allocator.request.identity.page.file
                     && (1..64).contains(&entry.request.identity.page.page_no)
                     && entry.request.identity.page.incarnation.get() >= 2
-                    && entry.request.identity.owner.get() == 2
-                    && entry.request.identity.owner_generation.get() == 1
                     && !self.entries[..index]
                         .iter()
                         .filter_map(Slot::registration)

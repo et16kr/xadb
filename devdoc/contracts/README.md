@@ -137,3 +137,5 @@ DEV3의 COW pack 경로는 [in-place·WAL·영속 undo 결정](../contracts/disk
 - [DEV3 실제 페이지 예약·취소](dev3-allocation-reservation.md) — SystemBegin/End와 authoritative dirty metadata·보호 자원 회계의 D2 채택; 메모리 포트 부분 검증 후 사용자 요청 중단
 
 - [DEV3 allocator 동일 주소의 resident 세대 reload](dev3-allocator-residency.md) — consuming owner·actual read·세대 갱신의 제한 계약
+
+- [DEV3 혼합 Status·Free Undo owner](dev3-mixed-system-owner.md) — 원 pool의 INIT·pressure·flush·load와 별도 process의 닫힌 mixed 복구 계약

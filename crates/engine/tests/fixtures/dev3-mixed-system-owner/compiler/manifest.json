@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "unit": "D3-MIXED-SYSTEM-OWNER-001",
+  "status": "INPUT_ONLY_NOT_RUN",
+  "probe_relative_path": "crates/engine/src/storage/wal_io/mixed_system_owner_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/wal_io/mutable_storage.rs",
+  "injection": "mod mixed_system_owner_probe;",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_error_diagnostics_are_failures": true,
+  "compiler_budget_seconds": 90,
+  "semantic_case_count": 9,
+  "infrastructure_control_count": 1,
+  "negative_returncode": 101,
+  "cases": [
+    {
+      "name": "baseline",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "semantic_id": null,
+      "reason": "actual unmodified source compiler control"
+    },
+    {
+      "name": "positive",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "semantic_id": "MOC00",
+      "reason": "Actual mixed actor surface typechecks without running database effects",
+      "bytes": 729,
+      "sha256": "fd2a55bc242bb84068c3d27a969e05356095ce3171c8548884c1d42f9b2cb236"
+    },
+    {
+      "name": "core_escape",
+      "expected_code": "E0616",
+      "primary_line": 5,
+      "primary_spans": "one",
+      "semantic_id": "MOC01",
+      "reason": "Mixed owner cannot expose original Status bound",
+      "bytes": 253,
+      "sha256": "2ef688bad8bf713df8bb4cdb6dc30c17d50e1b3882b51f13d953dcac33dc38aa"
+    },
+    {
+      "name": "role_fabrication",
+      "expected_code": "E0451",
+      "primary_line": 4,
+      "primary_spans": "one",
+      "semantic_id": "MOC02",
+      "reason": "Fixed origin cannot be fabricated from its private raw field",
+      "bytes": 205,
+      "sha256": "fdcec99eedfa180ff48ecc21e8da30ff2d63d32aecff3034cb260bcff98b2b9e"
+    },
+    {
+      "name": "prepared_fabrication",
+      "expected_code": "E0451",
+      "primary_line": 4,
+      "primary_spans": "one",
+      "semantic_id": "MOC03",
+      "reason": "Fixed prepared cannot expose or recreate inner old prepared",
+      "bytes": 209,
+      "sha256": "3ea5ada329fc4fe6e7a474cf9cb7618c98abae116897e39465f3a17e42239972"
+    },
+    {
+      "name": "prepared_confusion",
+      "expected_code": "E0308",
+      "primary_line": 5,
+      "primary_spans": "one",
+      "semantic_id": "MOC04",
+      "reason": "Fixed prepared cannot implicitly become old prepared",
+      "bytes": 216,
+      "sha256": "2f63d2d378d5ae4e9f88d44faf3951c265d99c9ecdd334fb471d0fd910931f52"
+    },
+    {
+      "name": "old_actor",
+      "expected_code": "E0308",
+      "primary_line": 6,
+      "primary_spans": "one",
+      "semantic_id": "MOC05",
+      "reason": "Mixed actor cannot implicitly become old Status writer",
+      "bytes": 361,
+      "sha256": "5e6483bc1725df0f1393bb0bd90bea9dd203d658ccc1644f158cba387f921d0b"
+    },
+    {
+      "name": "output_reborrow",
+      "expected_code": "E0499",
+      "primary_line": 6,
+      "primary_spans": "one",
+      "semantic_id": "MOC06",
+      "reason": "Prepared payload loan prevents mutable output reborrow",
+      "bytes": 410,
+      "sha256": "3ff10c4f12aed3d7471d90032aca3b6581d5f7c81bee842fdbb9d900cda911e9"
+    },
+    {
+      "name": "guard_owner_reuse",
+      "expected_code": "E0499",
+      "primary_line": 9,
+      "primary_spans": "one",
+      "semantic_id": "MOC07",
+      "reason": "Typed read guard retains exact owner borrow",
+      "bytes": 533,
+      "sha256": "e6da08ab6dc02cecd6a8ef7a93a9b8d959d8596d8e32d0bc6594d08644356c34"
+    },
+    {
+      "name": "reservation_owner_reuse",
+      "expected_code": "E0499",
+      "primary_line": 9,
+      "primary_spans": "one",
+      "semantic_id": "MOC08",
+      "reason": "Linear mixed reservation retains owner until completion",
+      "bytes": 525,
+      "sha256": "f209e6b6919a8dbf86cde453fa98b928179130d87acdb11c2db1f9bc5f463b3f"
+    }
+  ]
+}

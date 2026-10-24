@@ -672,3 +672,31 @@ before-effect 거절을 검산한다. seed는 실제 설치나 mixed live owner 
 하위 회귀 wrapper는 반복하지 않는다. `mixed_init_s5_expanded_resealed_bytes`의342,960은
 확대 총실행case이며 필수 MI04의141 alias를 포함한다(고유 추가342,819). 이 변형은 ignored/NOT_RUN이며 최종 DEV3 S5에 배정한다. 후속 실제 동일 pool mixed
 INIT/dirty/pressure/flush/load·별도 process recovery/reentry를 완료해야 소비자2/3을 판단한다.
+
+<a id="mixed-system-owner-followup"></a>
+## 혼합 Status·Free Undo owner 소비자 — 2026-10-24
+
+[소유 계약](../contracts/dev3-mixed-system-owner.md)과
+[선택 inventory](../../crates/engine/tests/fixtures/dev3-mixed-system-owner/runtime-manifest.json)를 따른다.
+owner memory75 + mixed recovery63 + 검토 후 load EOF/semantic6 =144를 중간 필수로 선택한다.
+source-value3, compiler semantic9+baseline1, compiler checker6, native3phase와 새 runner checker는
+별도 분모다. 진단 출력뿐인 MO-LAYOUT-001은 인수 case로 세지 않고 NOT_RUN을 유지한다.
+source-value MR01은 inventory 안의 static1이고 나머지 static2는 명시된 추가 함수다.
+
+실제 N+1 pressure·typed read·flush/retained view·exact INIT load·partial WAL/unwind·fence·Pending/
+home·canonical history 거절을 포함한다. native는 동일 source/ELF의 producer→새PID recover→새PID
+reentry를 수행하고 전체 파일·inode·page bytes·65536 topup·reentry home 쓰기0을 검산한다.
+실패 job 안에서 이미 PASS한 ID도 다음 선택에서 제외하며 원 stdout/stderr·FAIL을 보존한다.
+
+첫 native의 producer PASS 뒤 recovery 시험 기대값 실패로 원 동일 ELF 세 단계 요건은 미충족이다.
+[이어가기 D2 보완](../contracts/dev3-mixed-system-owner.md#native-continuation)에 따라
+검증된 원 producer snapshot을 새 inode로 복사하고, 제품·빌드 설정 동일성을 확인한 후속 source/ELF에서
+실패 recovery와 미실행 reentry만 수행할 수 있다. 원 producer의 identity·PASS와 recovery FAIL을
+보존하며 완료 producer를 재실행하지 않는다. 후속 두 phase의 source/ELF는 서로 같아야 하고,
+원 동일 ELF 세 phase PASS와 기능적인 current-product 복구 증거를 구별한다.
+
+S5 추가 `mixed_owner_s5_profile2_three_frame_lifecycle`와 profile3 대응 함수는 고유2case다.
+중간에는 ignored/NOT_RUN이며 최종 DEV3 전수 inventory에 필수144/native3/static3과 함께 포함한다.
+기존 혼합 INIT의342,819 변형과 이 새 실제 owner2case를 서로 대체하지 않는다. 일반 page·live undo·
+첫 행 거래·일반 복구의 후속 inventory도 여전히 필요하다. 실제 source별 결과는
+[선택 증거](../evidence/dev3-mixed-system-owner-20261024.md)에 기록한다.

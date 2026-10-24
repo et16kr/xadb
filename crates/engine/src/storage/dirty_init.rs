@@ -42,7 +42,7 @@ impl InitClaimRecord {
         pool.directory.closed_index() == Some(self.payload_index)
             && self.payload_index > 0
             && self.payload_index < pool.frames.len()
-            && (pool.frames.len() == 2 || pool.directory.resident_status())
+            && (pool.frames.len() == 2 || pool.directory.resident_payloads())
             && pool.directory.init_generations(pool.frames) == Some(self.generations)
             && pool.resolve_registration(0).is_some_and(|registered| {
                 registered.request == self.allocator && registered.generation == self.generations[0]
@@ -52,17 +52,16 @@ impl InitClaimRecord {
             && self.allocator.identity.page.page_no == 0
             && self.allocator.identity.owner.get() == 1
             && self.allocator.identity.owner_generation.get() == 1
-            && self.payload.kind == PageKind::TransactionStatus
+            && pool.directory.accepts_payload(self.payload)
             && self.payload.level == 0
             && self.payload.identity.database == self.allocator.identity.database
             && self.payload.identity.page.file == self.allocator.identity.page.file
-            && (if pool.directory.operational_status() {
+            && (if pool.directory.operational_payloads() {
                 (1..64).contains(&self.payload.identity.page.page_no)
             } else {
                 self.payload.identity.page.page_no == 1
             })
             && self.payload.identity.page.incarnation.get() >= 2
-            && self.payload.identity.owner.get() == 2
             && self.payload.identity.owner_generation.get() == 1
             && self.work.namespace().database == self.allocator.identity.database
             && self.work.kind() == SystemWorkKind::AllocationMaintenance
@@ -118,6 +117,12 @@ impl Drop for InitClaimKey<'_, '_> {
 impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
     pub(in crate::storage) fn operational_status(&self) -> bool {
         self.directory.operational_status()
+    }
+    pub(in crate::storage) fn operational_payloads(&self) -> bool {
+        self.directory.operational_payloads()
+    }
+    pub(in crate::storage) fn mixed_payloads(&self) -> bool {
+        self.directory.resident_mixed()
     }
     pub(in crate::storage) fn init_payload_index(&self) -> Result<usize> {
         self.health()?;
@@ -205,6 +210,24 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         frames: &'p [DirtyFrame<'d>],
         resident: bool,
     ) -> Result<Self> {
+        Self::new_system_slots(core, fence, binding, frames, resident, false)
+    }
+    pub(in crate::storage) fn new_mixed_slots(
+        core: &'c PageConcurrency<'s>,
+        fence: &'s SessionFence,
+        binding: &'s AtomicU8,
+        frames: &'p [DirtyFrame<'d>],
+    ) -> Result<Self> {
+        Self::new_system_slots(core, fence, binding, frames, true, true)
+    }
+    fn new_system_slots(
+        core: &'c PageConcurrency<'s>,
+        fence: &'s SessionFence,
+        binding: &'s AtomicU8,
+        frames: &'p [DirtyFrame<'d>],
+        resident: bool,
+        mixed: bool,
+    ) -> Result<Self> {
         if !(2..=MAX_FRAMES).contains(&frames.len()) || (!resident && frames.len() != 2) {
             return Err(unchanged(Cause::Shape));
         }
@@ -253,7 +276,9 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             }
         }
         let mut pool = Self::new(core, fence, binding, frames)?;
-        if resident {
+        if mixed {
+            pool.directory.open_resident_mixed();
+        } else if resident {
             pool.directory.open_resident_status();
         } else {
             pool.directory.close_status_slot();

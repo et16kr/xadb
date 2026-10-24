@@ -441,7 +441,8 @@ fn repeated_initialization() {
         no_io(&state);
         variant("BA10", "reserve");
         // Test-only stale private authority request, not a callable second INIT.
-        let error = err(writer.authority(stale.0, stale.1, stale.2));
+        let error =
+            err(writer.authority(stale.0, stale.1, stale.2, operation::mixed::Kind::Status));
         assert!(matches!(
             error.cause,
             super::super::super::Cause::AlreadyInitialized
