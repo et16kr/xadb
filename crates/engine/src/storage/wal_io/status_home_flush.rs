@@ -112,6 +112,7 @@ pub(in crate::storage) struct StatusFlushAuthority<'c, 's> {
     fence: &'s SessionFence,
     request: TargetRequest,
     allocator: PageIdentity,
+    history: Option<resident::History>,
 }
 impl StatusFlushAuthority<'_, '_> {
     pub(in crate::storage) fn matching(&self, capture: &CapturedPage<'_, '_>) -> bool {
@@ -131,7 +132,21 @@ impl StatusFlushAuthority<'_, '_> {
         &self,
         bytes: &[u8; PAGE_BYTES],
     ) -> std::result::Result<PageLsn, SemanticError> {
-        operation::status_lsn(bytes, &self.request.identity)
+        match &self.history {
+            None => operation::status_lsn(bytes, &self.request.identity),
+            Some(history)
+                if *history.current() == xadb_foundation::codec::content_digest(bytes) =>
+            {
+                operation::status_envelope(bytes, &self.request.identity)
+            }
+            Some(_) => Err(SemanticError::PageMismatch),
+        }
+    }
+    pub(in crate::storage) fn accepts_home(&self, home: &[u8], image: &[u8]) -> bool {
+        match &self.history {
+            Some(history) => history.contains(home),
+            None => home == image,
+        }
     }
     pub(in crate::storage) fn envelope_lsn(
         &self,
@@ -395,29 +410,39 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
             fence: self.storage.session_fence(),
             request,
             allocator: allocator.identity,
+            history: None,
         })
     }
     pub(crate) fn try_flush_allocator(
         &mut self,
         owner: &mut Owner<'c, 's>,
     ) -> Result<FlushProgress> {
-        self.try_flush(owner, false, None)
+        self.try_flush(owner, false, None, None)
     }
     pub(crate) fn try_flush_status(&mut self, owner: &mut Owner<'c, 's>) -> Result<FlushProgress> {
-        self.try_flush(owner, true, None)
+        self.try_flush(owner, true, None, None)
     }
     pub(crate) fn try_flush_page(
         &mut self,
         owner: &mut Owner<'c, 's>,
         page: PageRef,
     ) -> Result<FlushProgress> {
-        self.try_flush(owner, true, Some(page))
+        self.try_flush(owner, true, Some(page), None)
+    }
+    fn try_flush_history(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        page: PageRef,
+        history: resident::History,
+    ) -> Result<FlushProgress> {
+        self.try_flush(owner, true, Some(page), Some(history))
     }
     fn try_flush(
         &mut self,
         owner: &mut Owner<'c, 's>,
         status: bool,
         page: Option<PageRef>,
+        history: Option<resident::History>,
     ) -> Result<FlushProgress> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
@@ -433,7 +458,7 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
         }
         // Publication lookup precedes headroom/DPT/content. C5 may hold both
         // DPT and content while this lookup returns NotInitialized immediately.
-        let authority = if status {
+        let mut authority = if status {
             Some(match page {
                 None => self.status_authority()?,
                 Some(page) => self.status_authority_at(Some(page))?,
@@ -441,6 +466,12 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
         } else {
             None
         };
+        if let Some(history) = history {
+            authority
+                .as_mut()
+                .ok_or_else(|| self.fatal(Cause::Invariant))?
+                .history = Some(history);
+        }
         if !fits::<W>() {
             return Err(self.error(Cause::Capacity, Effect::Unchanged));
         }
@@ -606,8 +637,8 @@ fn metadata_peaks() -> (usize, usize) {
 fn fits<W: WriterNamespace>() -> bool {
     let (hot, cold) = metadata_peaks();
     size_of::<StatusFlushControl<'_, '_, '_>>() <= 4096
-        && size_of::<StatusFlushAuthority<'_, '_>>() <= 256
-        && size_of::<Option<StatusFlushAuthority<'_, '_>>>() <= 256
+        && size_of::<StatusFlushAuthority<'_, '_>>() <= 384
+        && size_of::<Option<StatusFlushAuthority<'_, '_>>>() <= 384
         && size_of::<Result<StatusFlushAuthority<'_, '_>>>() <= 1024
         && size_of::<std::result::Result<Option<TargetRequest>, dirty_frame::DirtyError>>() <= 256
         && size_of::<StatusFlushError>() <= 768
@@ -633,3 +664,9 @@ pub(in crate::storage) use operational::StatusLoadPermit;
 
 pub(in crate::storage) use resident::EmptyTransactionInstall;
 pub(crate) use resident::EmptyTransactionObservation;
+
+// The original 60,672-byte retained baseline predates the optional history.
+// Charge its complete value, including the Option discriminant and padding.
+fn history_retained_bytes() -> usize {
+    size_of::<Option<resident::History>>()
+}

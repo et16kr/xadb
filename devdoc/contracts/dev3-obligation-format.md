@@ -1058,3 +1058,51 @@ reader의 max(TEMPORARIES, CONSTRUCTOR), 고정 census와 codec·install의 phas
 별도 source/ELF/cache 보존을 적용한다. S5 profile3×depth4의12조합은 authored NOT_RUN이다.
 독립 검토·source별 원 FAIL과 선택 결과는 [실행 증거](../evidence/dev3-empty-transaction-20261023.md)에
 기록한다. live load/flush, nonempty/Commit, 새 epoch/복구, 자원식·authority·oracle 변경 시 재검토한다.
+
+<a id="empty-transaction-flush"></a>
+## 20. D3-EMPTY-TXN-003 — 실제 WAL 이력에 결합한 live Status flush
+
+2026-10-24 · **첫 effect D2·제한 D1 수용 / 같은 통합 계속**. 담당 `/root`, 독립 검토
+`/root/dev3_independent_review`. §19의 동일 owner에 resident `flush_status`와 원 retained
+flush의 `continue_status_flush`를 연결한다. 새 pool·WAL·allocation 권한은 만들지 않는다.
+
+- 전체 bank↔home census와 selected RAM snapshot을 검산한 뒤 모든 pin/content latch를
+  해제한다. 원 WAL handle을 try-lock하고 exact complete/synced prefix를 읽는다. 다른
+  writer가 같은 owner를 사용할 수 없으며 해제 후 health/prefix를 다시 확인한다.
+- bootstrap의 기존 canonical generator로 genesis allocator를 만든 뒤 frozen system LSN까지
+  기존 allocation/INIT full semantic validator로 reserve/cancel/INIT를 재생한다. frozen의
+  allocator 전체 digest가 현재 원 allocator와 같아야 한다. 선택 INIT를 별도 loan에 보존한다.
+- 이후 선택 주소의 Begin→full RollbackStart→empty AbortEnd를 기존 full materializer로
+  순서대로 검산한다. exact before-page·before-descriptor와 실제 global predecessor를 쓰고
+  최종 page digest 및 nonterminal descriptor1536을 현재 RAM·bank와 비교한다. 처음 INIT부터
+  최대4개 whole-page digest만 private History로 보유한다. 선택 외 거래의 envelope/redo 구조는
+  읽되 의미를 채택하지 않는다. **fresh live owner 전용이며 일반 recovery analyzer가 아니다.**
+- 원 `StatusFlushAuthority`의 private optional History는 current capture의 전체 digest를
+  검산하고, nonzero old home은 History의 exact image만 허용한다. checksum-valid lower LSN,
+  다른 actor, equal-LSN divergent, future image만으로 통과할 수 없다. 원 INIT authority의
+  None branch는 기존 exact equality를 유지한다. zero home과 WAL-before-DWB/home·whole
+  retirement·조건부 finalize·실패 fence는 기존 flush owner의 경로를 그대로 사용한다.
+- read-only scan의 알려진 Unchanged I/O 실패는 재시도 가능하다. 완료 prefix 안의 EOF와
+  adapter의 invalid read count는 source 불변식 실패로 fence한다. 의미 불일치·poison·unwind·
+  source drift는 fence한다. flush 진행 중에는 원 capture/history/retirement를 보유하고 새
+  거래 변경·별도 flush를 허용하지 않는다. data sync를 거래 Commit ACK로 해석하지 않는다.
+
+frame38000+descriptor1536+selected INIT16384는 원64KiB frame loan 안에서 겹치지 않는다.
+원 before/after2page와 별도 Status output loan을 사용하며 새 page-sized local은 없다. census,
+bootstrap, system replay, transaction materialize는 순차 phase로 계상한다. optional History의
+retained144바이트를 EmptyTransactions·ResidentStatus·load의 원60672 baseline에 더한다.
+실제 source-value static은 call53384/65536, retained115408, conversion65400/65536,
+whole234328/262144이며 물리 stack/RSS 측정은 아니다. Authority cap은 이번 typed history
+추가에 한해256→384이며 공통 component65536·metadata196608·whole262144 한도는 유지한다.
+
+첫 실행 선택은 신규 resource gate와 독립 literal 이력·4상태 flush다. 이어 interleaved actor/
+issued gap, checksum-valid 잘못된 old home4종, selected INIT/거래 semantic 변조14종,
+read retry/lock/poison, complete-prefix truncate/checksum/LSN5종을 정확 함수로 선택한다.
+각case30초·선택 batch120초, case 증거8MiB·source/ELF/cache 별도 보존을 적용한다.
+신규 self-consistent 비역사 bank·short/Interrupted/invalid count·6ordinal×before/after12·
+retired finalize continuation도 포함한다. raw authority compiler2·checker1·실제 Linux3상태
+flush는 제한 D1 인수 범위다. native DB fixture는 원15개 파일22,137,568바이트로 별도 보존하고
+8MiB는 case/review 영수증 한도다. S5 profile3×상태4의12조합은 authored/NOT_RUN이다.
+load/latest-only와 새 process closed recovery는 같은 통합의 후속이며 DEV3/S5 완료가 아니다.
+대안인 oldLSN 순서만 확인하는 덮어쓰기와 별도 recovery owner 도입은 각각 historical 권한과
+F05 경계를 만족하지 못해 선택하지 않았다. source별 결과는 [원 통합 증거](../evidence/dev3-empty-transaction-20261023.md)에 이어 기록한다.

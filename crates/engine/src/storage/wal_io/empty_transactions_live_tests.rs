@@ -799,3 +799,488 @@ fn empty_live_preexisting_poison_or_fence_prevents_candidate_issuance() {
         });
     }
 }
+
+#[test]
+fn empty_history_exact_lifecycle_and_historical_images() {
+    fixture!(1, 1, |live, core, state, storage, pages, owner| {
+        let (_, free) = live.historical_images(&mut owner, pages[0]).unwrap();
+        assert!(free.contains(&literal("begin.before.page")));
+        assert!(!free.contains(&literal("begin.after.page")));
+        let actor = live.begin(&mut owner, pages[0]).unwrap().actor;
+        let (_, active) = live.historical_images(&mut owner, pages[0]).unwrap();
+        assert!(active.contains(&literal("begin.after.page")));
+        assert!(!active.contains(&literal("rollback.after.page")));
+        live.rollback_start(&mut owner, actor).unwrap();
+        let (_, aborting) = live.historical_images(&mut owner, pages[0]).unwrap();
+        assert!(aborting.contains(&literal("rollback.after.page")));
+        live.abort_end(&mut owner, actor).unwrap();
+        let events = state.lock().unwrap().events.len();
+        let (_, ended) = live.historical_images(&mut owner, pages[0]).unwrap();
+        for name in [
+            "begin.before.page",
+            "begin.after.page",
+            "rollback.after.page",
+            "abort.after.page",
+        ] {
+            assert!(ended.contains(&literal(name)), "{name}");
+        }
+        assert_eq!(
+            *ended.current(),
+            content_digest(&literal("abort.after.page"))
+        );
+        assert_eq!(state.lock().unwrap().events.len(), events);
+        assert!(!storage.session_fence().is_fenced());
+    });
+}
+
+#[test]
+fn empty_history_resource_gate() {
+    type W = port::Writer;
+    println!(
+        "history={} retained={} conversion={} whole={}",
+        history_call_bytes::<W>(),
+        super::super::retained_bytes::<W>(),
+        super::super::conversion_bytes::<W>(),
+        super::super::retained_bytes::<W>() + history_call_bytes::<W>() + 65536
+    );
+    assert!(history_fits::<W>());
+    assert!(history_fits::<xadb_platform::namespace::LinuxWriterLease>());
+}
+
+#[test]
+fn empty_history_flushes_each_actual_state_and_preserves_ledger() {
+    fixture!(1, 1, |live, core, state, storage, pages, owner| {
+        let mut flusher_owner = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+        let mut actor = None;
+        for step in 0..4 {
+            match step {
+                0 => (),
+                1 => actor = Some(live.begin(&mut owner, pages[0]).unwrap().actor),
+                2 => {
+                    live.rollback_start(&mut owner, actor.unwrap()).unwrap();
+                }
+                3 => {
+                    live.abort_end(&mut owner, actor.unwrap()).unwrap();
+                }
+                _ => unreachable!(),
+            }
+            let bank = live.bank.to_vec();
+            let expected = page_bytes(&live, 1);
+            assert!(matches!(
+                live.flush_status(&mut flusher_owner, pages[0]).unwrap(),
+                wal::FlushProgress::Complete(_)
+            ));
+            assert_eq!(live.bank.as_slice(), bank);
+            assert_eq!(image_stamp(&live, 1).rec_lsn, None);
+            let guard = state.lock().unwrap();
+            let data = &guard.files["d3-data-0000000100000001"].bytes;
+            assert_eq!(&data[PAGE_BYTES..2 * PAGE_BYTES], expected.as_slice());
+        }
+        assert!(matches!(
+            live.flush_status(&mut flusher_owner, pages[0]).unwrap(),
+            wal::FlushProgress::NoDirty
+        ));
+        assert!(!storage.session_fence().is_fenced());
+    });
+}
+
+fn history_reseal_page(bytes: &mut [u8]) {
+    let end = PAGE_BYTES - 32;
+    let digest = content_digest(&bytes[..end]);
+    bytes[end..].copy_from_slice(&digest);
+}
+
+#[test]
+fn empty_history_interleaved_actors_gap_and_late_selected_init() {
+    fixture!(3, 1, |live, core, state, storage, pages, owner| {
+        let mut dedicated = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+        let a = live.begin(&mut owner, pages[0]).unwrap();
+        assert!(live.begin(&mut owner, pages[0]).is_err()); // burns local2
+        let b = live.begin(&mut owner, pages[2]).unwrap();
+        assert_eq!(b.actor.id().local, 3);
+        live.rollback_start(&mut owner, a.actor).unwrap();
+        live.rollback_start(&mut owner, b.actor).unwrap();
+        live.abort_end(&mut owner, b.actor).unwrap();
+        live.abort_end(&mut owner, a.actor).unwrap();
+        for page in [pages[0], pages[2], pages[1]] {
+            assert!(matches!(
+                live.flush_status(&mut dedicated, page).unwrap(),
+                wal::FlushProgress::Complete(_)
+            ));
+        }
+        assert!(live.bank.iter().all(|b| *b == 0));
+        assert!(!storage.session_fence().is_fenced());
+        let _ = &state;
+    });
+}
+
+#[test]
+fn empty_history_rejects_checksum_valid_nonhistorical_home() {
+    for variant in 0..4 {
+        fixture!(1, 1, |live, core, state, storage, pages, owner| {
+            let mut dedicated = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+            let actor = live.begin(&mut owner, pages[0]).unwrap().actor;
+            live.rollback_start(&mut owner, actor).unwrap();
+            live.abort_end(&mut owner, actor).unwrap();
+            let mut old = literal("begin.after.page");
+            match variant {
+                0 => old[64..72].copy_from_slice(&2u64.to_le_bytes()), // real page state at wrong prior LSN
+                1 => old[64..72].copy_from_slice(&5u64.to_le_bytes()), // equal-LSN different state
+                2 => old[64..72].copy_from_slice(&6u64.to_le_bytes()), // future
+                3 => old[16128 + 32 + 40..16128 + 32 + 48].copy_from_slice(&99u64.to_le_bytes()), // other local id
+                _ => unreachable!(),
+            }
+            history_reseal_page(&mut old);
+            let name = "d3-data-0000000100000001";
+            state.lock().unwrap().files.get_mut(name).unwrap().bytes[PAGE_BYTES..2 * PAGE_BYTES]
+                .copy_from_slice(&old);
+            let error = live.flush_status(&mut dedicated, pages[0]).unwrap_err();
+            assert_eq!(error.effect, Effect::CallerMustResolve, "variant{variant}");
+            assert!(storage.session_fence().is_fenced());
+            assert_eq!(
+                &state.lock().unwrap().files[name].bytes[PAGE_BYTES..2 * PAGE_BYTES],
+                old
+            );
+        });
+    }
+}
+
+#[test]
+fn empty_history_selected_init_and_transaction_semantic_damage_rejects() {
+    // selected INIT magic/version/opcode/count/native/descriptor/target and
+    // Begin/Rollback/Abort op/native/prior/budget damage, with valid envelope SHA.
+    let cases = [
+        (1, 160),
+        (1, 164),
+        (1, 166),
+        (1, 20),
+        (1, 14816),
+        (1, 352 + 128),
+        (1, 21520 + 8),
+        (2, 1888),
+        (2, 2272),
+        (2, 2720 + 48),
+        (3, 352 + 128),
+        (3, 1888),
+        (4, 2272),
+        (4, 2720 + 48),
+    ];
+    for (frame_index, byte) in cases {
+        fixture!(1, 1, |live, core, state, storage, pages, owner| {
+            let actor = live.begin(&mut owner, pages[0]).unwrap().actor;
+            live.rollback_start(&mut owner, actor).unwrap();
+            live.abort_end(&mut owner, actor).unwrap();
+            let mut guard = state.lock().unwrap();
+            let bytes = &mut guard.files.get_mut(wal::WAL_NAME).unwrap().bytes;
+            let mut at = 4096;
+            for _ in 0..frame_index {
+                at += u32::from_le_bytes(bytes[at + 12..at + 16].try_into().unwrap()) as usize;
+            }
+            let len = u32::from_le_bytes(bytes[at + 12..at + 16].try_into().unwrap()) as usize;
+            bytes[at + byte] ^= 1;
+            port::seal_frame(&mut bytes[at..at + len]);
+            let writes = guard.events.len();
+            drop(guard);
+            let error = match live.historical_images(&mut owner, pages[0]) {
+                Err(e) => e,
+                Ok(_) => panic!("accepted {frame_index}/{byte}"),
+            };
+            assert_eq!(error.effect, Effect::CallerMustResolve);
+            assert!(storage.session_fence().is_fenced());
+            assert!(storage.wal().file.try_lock().is_ok());
+            assert_eq!(state.lock().unwrap().events.len(), writes);
+        });
+    }
+}
+
+#[test]
+fn empty_history_wal_read_retry_busy_and_poison() {
+    fixture!(1, 1, |live, core, state, storage, pages, owner| {
+        let actor = live.begin(&mut owner, pages[0]).unwrap().actor;
+        state.lock().unwrap().read_plan = Some(port::Plan {
+            at: 0,
+            action: port::Action::BeforeError,
+        });
+        let error = match live.historical_images(&mut owner, pages[0]) {
+            Err(e) => e,
+            Ok(_) => panic!("read error"),
+        };
+        assert_eq!(error.effect, Effect::Unchanged);
+        assert!(!storage.session_fence().is_fenced());
+        state.lock().unwrap().read_plan = None;
+        let held = storage.wal().file.lock().unwrap();
+        assert!(matches!(
+            live.historical_images(&mut owner, pages[0]),
+            Err(EmptyTransactionError {
+                cause: Cause::Busy,
+                effect: Effect::Unchanged
+            })
+        ));
+        drop(held);
+        live.historical_images(&mut owner, pages[0]).unwrap();
+        live.rollback_start(&mut owner, actor).unwrap();
+        let _ = catch_unwind(AssertUnwindSafe(|| {
+            let _held = storage.wal().file.lock().unwrap();
+            panic!("poison WAL read lock");
+        }));
+        assert!(matches!(
+            live.historical_images(&mut owner, pages[0]),
+            Err(EmptyTransactionError {
+                effect: Effect::CallerMustResolve,
+                ..
+            })
+        ));
+        assert!(storage.session_fence().is_fenced());
+    });
+}
+
+#[test]
+fn empty_history_complete_prefix_truncation_and_checksum_damage_rejects() {
+    for variant in 0..5 {
+        fixture!(1, 1, |live, core, state, storage, pages, owner| {
+            live.begin(&mut owner, pages[0]).unwrap();
+            let mut guard = state.lock().unwrap();
+            let entry = guard.files.get_mut(wal::WAL_NAME).unwrap();
+            let bytes = &mut entry.bytes;
+            match variant {
+                0 => {
+                    bytes.truncate(4096 + 159);
+                }
+                1 => {
+                    bytes.truncate(bytes.len() - 1);
+                }
+                2 => {
+                    bytes[4096 + 128] ^= 1;
+                }
+                3 => {
+                    bytes[4096 + 170] ^= 1;
+                }
+                4 => {
+                    let len = u32::from_le_bytes(bytes[4108..4112].try_into().unwrap()) as usize;
+                    bytes[4096 + 56..4096 + 64].copy_from_slice(&9u64.to_le_bytes());
+                    port::seal_frame(&mut bytes[4096..4096 + len]);
+                }
+                _ => unreachable!(),
+            }
+            entry.length = bytes.len() as u64;
+            let writes = guard.events.len();
+            drop(guard);
+            let result = live.historical_images(&mut owner, pages[0]);
+            let error = match result {
+                Err(error) => error,
+                Ok(_) => panic!("accepted variant{variant}"),
+            };
+            assert_eq!(error.effect, Effect::CallerMustResolve);
+            assert!(storage.session_fence().is_fenced());
+            let reads = state.lock().unwrap().reads;
+            assert!(live.begin(&mut owner, pages[0]).is_err());
+            let guard = state.lock().unwrap();
+            assert_eq!((guard.events.len(), guard.reads), (writes, reads));
+            println!("HISTORY_PREFIX_VARIANT_PASS {variant}");
+            let _ = &core;
+        });
+    }
+}
+
+#[test]
+fn empty_history_rejects_self_consistent_but_nonhistorical_bank() {
+    fixture!(2, 1, |live, core, state, storage, pages, owner| {
+        let a = live.begin(&mut owner, pages[0]).unwrap().actor; // LSN5
+        live.begin(&mut owner, pages[1]).unwrap(); // LSN6
+        live.rollback_start(&mut owner, a).unwrap(); // LSN7
+        let prefix = storage.wal().prefix().unwrap();
+        let (_, _, mut d, _) =
+            descriptor(row(live.bank, 0), storage.profile(), prefix, false).unwrap();
+        d.chain.birth = 6;
+        d.chain.previous = 6;
+        d.minimum_wal_lsn = 6;
+        d.inventory.change_lsn = 6;
+        crate::storage::obligation::encode_descriptor(&d, &mut row_mut(live.bank, 0)[..1536])
+            .unwrap();
+        let ledger = ledger(live.bank, storage.profile(), prefix, live.adopted_local).unwrap();
+        assert!(
+            live.census(&mut owner, prefix, pages[0], ledger.occupied)
+                .is_ok()
+        );
+        let writes = state.lock().unwrap().events.len();
+        assert!(matches!(
+            live.historical_images(&mut owner, pages[0]),
+            Err(EmptyTransactionError {
+                effect: Effect::CallerMustResolve,
+                ..
+            })
+        ));
+        assert!(storage.session_fence().is_fenced());
+        assert_eq!(state.lock().unwrap().events.len(), writes);
+        let _ = &core;
+    });
+}
+
+#[test]
+fn empty_history_invalid_read_count_fences_and_short_reads_complete() {
+    for action in [
+        port::Action::InvalidCount,
+        port::Action::Short(1),
+        port::Action::Interrupted,
+    ] {
+        fixture!(1, 1, |live, core, state, storage, pages, owner| {
+            state.lock().unwrap().read_plan = Some(port::Plan { at: 0, action });
+            let result = live.historical_images(&mut owner, pages[0]);
+            if action == port::Action::InvalidCount {
+                assert!(matches!(
+                    result,
+                    Err(EmptyTransactionError {
+                        effect: Effect::CallerMustResolve,
+                        ..
+                    })
+                ));
+                assert!(storage.session_fence().is_fenced());
+            } else {
+                assert!(result.is_ok());
+                assert!(!storage.session_fence().is_fenced());
+            }
+            let guard = state.lock().unwrap();
+            assert_eq!(guard.hit, 1);
+            assert!(guard.events.is_empty());
+            let _ = &core;
+        });
+    }
+}
+
+#[test]
+fn empty_history_flush_faults_retain_original_authority() {
+    // Six selected mutation ordinals of the existing 31-effect DWB protocol;
+    // both before/after errors run with a new live occupied Status authority.
+    for cut in [1, 7, 15, 21, 27, 31] {
+        for action in [port::Action::BeforeError, port::Action::AfterError] {
+            fixture!(1, 1, |live, core, state, storage, pages, owner| {
+                live.begin(&mut owner, pages[0]).unwrap();
+                let bank = live.bank.to_vec();
+                let stamp = image_stamp(&live, 1);
+                let mut dedicated = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+                {
+                    let mut guard = state.lock().unwrap();
+                    guard.events.clear();
+                    guard.plan = Some(port::Plan {
+                        at: cut - 1,
+                        action,
+                    });
+                }
+                let error = live.flush_status(&mut dedicated, pages[0]).unwrap_err();
+                assert_eq!(error.effect, Effect::CallerMustResolve);
+                assert!(storage.session_fence().is_fenced());
+                assert_eq!(live.bank.as_slice(), bank);
+                assert_eq!(image_stamp(&live, 1), stamp);
+                let writes = state.lock().unwrap().events.len();
+                assert_eq!(writes, cut);
+                assert_eq!(state.lock().unwrap().hit, 1);
+                assert!(live.continue_status_flush(&mut dedicated).is_err());
+                assert!(live.begin(&mut owner, pages[0]).is_err());
+                assert_eq!(state.lock().unwrap().events.len(), writes);
+                println!("HISTORY_FLUSH_FAULT_PASS {cut} {action:?}");
+            });
+        }
+    }
+}
+
+#[test]
+#[ignore = "DEV3 S5 expanded live history profiles and selected states"]
+fn empty_history_s5_profiles_and_selected_states() {
+    for profile in 1..=3 {
+        for selected_state in 0..4 {
+            fixture!(3, profile, |live, core, state, storage, pages, owner| {
+                let actor =
+                    (selected_state > 0).then(|| live.begin(&mut owner, pages[2]).unwrap().actor);
+                if selected_state > 1 {
+                    live.rollback_start(&mut owner, actor.unwrap()).unwrap();
+                }
+                if selected_state > 2 {
+                    live.abort_end(&mut owner, actor.unwrap()).unwrap();
+                }
+                let mut dedicated = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+                let before = page_bytes(&live, 3);
+                assert!(matches!(
+                    live.flush_status(&mut dedicated, pages[2]).unwrap(),
+                    wal::FlushProgress::Complete(_)
+                ));
+                assert_eq!(image_stamp(&live, 3).rec_lsn, None);
+                assert_eq!(
+                    &state.lock().unwrap().files["d3-data-0000000100000001"].bytes
+                        [3 * PAGE_BYTES..4 * PAGE_BYTES],
+                    before.as_slice()
+                );
+                assert!(!storage.session_fence().is_fenced());
+                println!("HISTORY_S5_PASS {profile} {selected_state}");
+            });
+        }
+    }
+}
+
+#[test]
+fn empty_history_retired_authority_continues_without_rewriting() {
+    fixture!(1, 1, |live, core, state, storage, pages, owner| {
+        let actor = live.begin(&mut owner, pages[0]).unwrap().actor;
+        let bank = live.bank.to_vec();
+        let (selection, history) = live.historical_images(&mut owner, pages[0]).unwrap();
+        let (arrived, ack) = std::sync::mpsc::sync_channel(1);
+        let (resume, release) = std::sync::mpsc::sync_channel(1);
+        {
+            let mut guard = state.lock().unwrap();
+            guard.events.clear();
+            guard.pause = Some(port::Pause {
+                at: 30,
+                after: true,
+                entered: arrived,
+                release,
+                unwind: false,
+            });
+        }
+        {
+            let (_, reader, mut flush) = live.inner.inner.split_with_flush();
+            let mut read_owner = core.try_owner(OwnerRole::Foreground).unwrap();
+            let held = std::thread::scope(|scope| {
+                let worker = scope.spawn(|| {
+                    let mut dedicated = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+                    flush
+                        .try_flush_history(&mut dedicated, pages[0], history)
+                        .unwrap()
+                });
+                ack.recv_timeout(std::time::Duration::from_secs(5)).unwrap();
+                // The old provisioning StatusReader validates INIT/Free. Hold
+                // the actual pool read guard for this live occupied target.
+                let held = reader
+                    .pool
+                    .reserve_target_set(&mut read_owner, &[selection.request])
+                    .unwrap()
+                    .try_read()
+                    .unwrap();
+                resume.send(()).unwrap();
+                assert_eq!(
+                    worker.join().unwrap(),
+                    wal::FlushProgress::RetiredPendingFinalize
+                );
+                held
+            });
+            held.release_checked().unwrap();
+        }
+        let writes = state.lock().unwrap().events.len();
+        assert_eq!(writes, 31);
+        let mut dedicated = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+        for error in [
+            live.begin(&mut owner, pages[0]).unwrap_err(),
+            live.rollback_start(&mut owner, actor).unwrap_err(),
+            live.flush_status(&mut dedicated, pages[0]).unwrap_err(),
+        ] {
+            assert!(matches!(error.cause, Cause::Busy));
+            assert_eq!(error.effect, Effect::Unchanged);
+        }
+        assert_eq!(live.bank.as_slice(), bank);
+        assert!(matches!(
+            live.continue_status_flush(&mut dedicated).unwrap(),
+            wal::FlushProgress::Complete(_)
+        ));
+        assert_eq!(state.lock().unwrap().events.len(), writes);
+        assert_eq!(image_stamp(&live, 1).rec_lsn, None);
+        assert!(!storage.session_fence().is_fenced());
+    });
+}

@@ -572,3 +572,15 @@ stage별 오류/unwind·실제 WAL write/sync·short write, durable 뒤 잘못�
 [기존 증거](../evidence/dev3-empty-transaction-20261023.md#live-installation)에 이어 보존한다.
 S5 profile3×depth(1/2/8/32)12조합은 authored ignored/NOT_RUN으로 추가한다. live flush/load와
 native 현재-build recovery/reentry inventory는 후속 구현과 함께 작성하며 이 결과로 대체하지 않는다.
+
+[§20 live history/flush](../contracts/dev3-obligation-format.md#empty-transaction-flush)는
+[history manifest](../../crates/engine/tests/fixtures/dev3-empty-transactions/history-manifest.json)의
+신규11개 함수와 Linux native1, 변경된 resource static3을 선택한다. exact4이미지·interleaved
+거래·checksum-valid 가짜 home4·semantic14·prefix5·원장 역사 불일치·read count/short/
+Interrupted·6개 DWB ordinal의 before/after12·retired finalize 재개를 검산한다. private History
+compiler2는 [선택 runner](../../scripts/check_dev3_empty_history_borrows.py)로 실행하며
+정확 E0451의2개 span과 실제 completion을 검증하는 신규 checker1을 포함한다. 이미 완료한
+변경 없는 lower 시험은 실행하지 않는다. S5에는 위 inventory와 authored ignored
+`empty_history_s5_profiles_and_selected_states`의 profile3×상태4인12조합을 추가한다.
+source별 원 FAIL·수정에 따른 재선택은 [기존 증거](../evidence/dev3-empty-transaction-20261023.md#live-history-flush)를
+따르며 live load·closed recovery 결과로 확대하지 않는다.

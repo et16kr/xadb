@@ -591,3 +591,6 @@ mod operational;
 
 #[path = "status_load_native_tests.rs"]
 mod status_load;
+
+#[path = "empty_history_native_tests.rs"]
+mod empty_history;

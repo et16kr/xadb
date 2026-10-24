@@ -981,3 +981,159 @@ fn fits<W: WriterNamespace>() -> bool {
 #[cfg(test)]
 #[path = "empty_transactions_live_tests.rs"]
 mod tests;
+
+#[path = "empty_transactions_history.rs"]
+mod history;
+pub(in super::super::super) use history::History;
+
+impl<'s, 'c, W: WriterNamespace> EmptyTransactions<'_, 's, 'c, '_, '_, '_, '_, '_, W> {
+    fn historical_images(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        page: PageRef,
+    ) -> Result<(Selection, history::History)> {
+        let storage = self.inner.inner.inner.storage;
+        let _unwind = storage.session_fence().unwind_guard();
+        self.health()?;
+        if !owner
+            .check_binding(self.inner.inner.inner.pool.bound_core())
+            .map_err(|e| frame(e.into()))?
+        {
+            return Err(unchanged(Cause::BindingMismatch));
+        }
+        let prefix = storage
+            .wal()
+            .prefix()
+            .map_err(|e| fatal(storage, Cause::Wal(e)))?;
+        let ledger = ledger(self.bank, storage.profile(), prefix, self.adopted_local)
+            .ok_or_else(|| fatal(storage, Cause::Invariant))?;
+        let selection = self.census(owner, prefix, page, ledger.occupied)?;
+        let digest = content_digest(&self.inner.inner.inner.control.base.operation[81920..98304]);
+        let allocator_request = self
+            .inner
+            .inner
+            .inner
+            .pool
+            .target_request(0)
+            .map_err(frame)?;
+        let allocator_digest =
+            content_digest(&self.inner.inner.inner.control.base.operation[65536..81920]);
+        let descriptor = (0..32).find_map(|i| {
+            let r = row(self.bank, i);
+            (r[PHASE] == STABLE
+                && StatusSlotRef::decode(&r[LOCATION])
+                    .ok()
+                    .is_some_and(|location| location.page() == page))
+            .then_some(&r[..1536])
+        });
+        let result = {
+            // All pool pins and content latches were released by census. The
+            // original WAL handle remains protected from concurrent write here.
+            let mut source = match storage.wal().file.try_lock() {
+                Ok(file) => file,
+                Err(std::sync::TryLockError::WouldBlock) => return Err(unchanged(Cause::Busy)),
+                Err(std::sync::TryLockError::Poisoned(_)) => {
+                    return Err(fatal(storage, Cause::Invariant));
+                }
+            };
+            history::reconstruct(
+                &mut *source,
+                self.inner.inner.inner.control.base.operation,
+                self.inner.inner.inner.control.status_after,
+                storage.profile(),
+                allocator_request.identity,
+                allocator_digest,
+                descriptor,
+                prefix,
+                self.frozen_system_lsn,
+                selection.request,
+                digest,
+            )
+        };
+        let history = result.map_err(|e| {
+            // EOF inside the retained complete prefix proves source drift.
+            // A count-contract violation has no OS category and cannot certify
+            // a retryable read either. Ordinary unchanged I/O remains retryable.
+            if matches!(&e.cause, Cause::HistoryIo(io) if io.effect() == Effect::Unchanged
+                && io.certainty() == Certainty::Known
+                && io.io_kind.is_some_and(|kind| kind != std::io::ErrorKind::UnexpectedEof))
+                && !storage.session_fence().is_fenced()
+            {
+                e
+            } else {
+                fatal(storage, e.cause)
+            }
+        })?;
+        storage
+            .health()
+            .map_err(|e| fatal(storage, Cause::Storage(e)))?;
+        if storage
+            .wal()
+            .prefix()
+            .map_err(|e| fatal(storage, Cause::Wal(e)))?
+            != prefix
+        {
+            return Err(fatal(storage, Cause::Invariant));
+        }
+        Ok((selection, history))
+    }
+}
+
+impl<'s, 'c, W: WriterNamespace> EmptyTransactions<'_, 's, 'c, '_, '_, '_, '_, '_, W> {
+    /// Flush a resident live Status through the original DWB/retirement owner.
+    /// Historical home bytes must match this page's actual complete WAL history.
+    pub(crate) fn flush_status(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        page: PageRef,
+    ) -> Result<crate::storage::wal_io::FlushProgress> {
+        let storage = self.inner.inner.inner.storage;
+        let _unwind = storage.session_fence().unwind_guard();
+        if !history_fits::<W>() {
+            return Err(unchanged(Cause::Capacity));
+        }
+        let (_, history) = self.historical_images(owner, page)?;
+        let (_, _, mut flusher) = self.inner.inner.split_with_flush();
+        flusher
+            .try_flush_history(owner, page, history)
+            .map_err(|e| EmptyTransactionError {
+                effect: e.effect,
+                cause: Cause::Flush(e),
+            })
+    }
+    pub(crate) fn continue_status_flush(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+    ) -> Result<crate::storage::wal_io::FlushProgress> {
+        let (_, _, mut flusher) = self.inner.inner.split_with_flush();
+        flusher
+            .continue_flush(owner)
+            .map_err(|e| EmptyTransactionError {
+                effect: e.effect,
+                cause: Cause::Flush(e),
+            })
+    }
+}
+fn history_call_bytes<W: WriterNamespace>() -> usize {
+    // Census returns before history scan. Pages/descriptor use the existing
+    // loan. The selected semantic materializer is the largest nested phase.
+    let scan = begin::component_bytes().max(empty_abort::component_bytes())
+        + 4 * size_of::<history::History>()
+        + 4 * size_of::<Selection>()
+        + 4 * size_of::<WalPrefix>()
+        + 4 * size_of::<FrameExpectation>()
+        + 4 * size_of::<RollbackStartExpected>()
+        + 4 * size_of::<W::File>()
+        + 8192;
+    let system = super::super::super::super::operation::plan_bytes()
+        + super::super::super::super::operation::temporary_bytes()
+        + 8192;
+    let bootstrap = crate::storage::wal_io::bootstrap::recovery_preparation_bytes::<W>() + 2048;
+    call_bytes::<W>().max(scan).max(system).max(bootstrap)
+}
+fn history_fits<W: WriterNamespace>() -> bool {
+    history_call_bytes::<W>() <= 65536
+        && super::retained_bytes::<W>() + history_call_bytes::<W>() <= 196608
+        && super::retained_bytes::<W>() + history_call_bytes::<W>() + 65536 <= 262144
+        && super::handoff_fits::<W>()
+}

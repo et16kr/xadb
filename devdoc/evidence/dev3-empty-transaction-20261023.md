@@ -148,3 +148,55 @@ memory-port의 최대34page,4MiB workspace·1MiB WAL·114,688 operation·53,248 
 
 최종 D1 뒤 보존 snapshot은 case 3,504,604바이트/8MiB, 별도 source·ELF·cache 5,937,815,646바이트다.
 후속 metadata 영수증은 별도로 추가하며 원 snapshot을 덮어쓰지 않는다.
+
+<a id="live-history-flush"></a>
+## 실제 WAL 이력과 live Status flush
+
+2026-10-24 · base `72c4b52` 이후 [§20](../contracts/dev3-obligation-format.md#empty-transaction-flush)의
+원 WAL 이력 검산과 기존 DWB/home flush 연결을 추가했다. canonical provisioning 재생과
+선택 거래 full materializer로 만든 INIT/Active/Aborting/Aborted의 exact page digest만
+private History로 보유한다. 현재 RAM·nonterminal bank와 끝까지 비교하고 역사에 없는
+checksum-valid home은 거절한다. fresh live owner 한정이며 일반 recovery 채택은 아니다.
+
+독립 리뷰에서 oldLSN 비교만으로 허용하지 않을 것, INIT full semantic 재생, 현재 bank의
+exact descriptor 비교, retained History144바이트와 nested replay 자원식, 완료 prefix의 EOF
+fence를 보완했다. 첫 effect D2는 p5에서 수용했다. EOF·invalid adapter count는 세션을
+차단하며 알려진 일시적 read 오류는 Unchanged 재시도를 유지한다. 최종 독립 D1은
+이력/flush/continuation 한정 수용했다. staged25경로, OCR 대상14/14와 제외 자료11개를
+검토했고 blocking finding은0이다. 원판정은 `review/history-flush-d1-final.md`에 보존한다.
+
+| source | 실제 선택과 원 결과 |
+| --- | --- |
+| p0 `f65e7448…` | 새 이력 helper build PASS; effect 미실행 |
+| p1/p2/p3 | test OwnerRole·private import·ancestor 경로 compile FAIL; 원 로그 보존 |
+| p4 `bf6db3b7…` | build·초기 static PASS; retained144 누락 발견으로 현재 F05 증거로 쓰지 않음 |
+| p5 `c52e0a15…` | 수정 static1·새 runtime6 PASS; prefix fixture의 bytes/length 불일치로 exit−6, 완료 variant0/5 |
+| p6 `0d48769d…` | EOF fence·fixture 수정·semantic 무효과 검산, 직접 관련3+신규3 PASS; 변경 layout static2 PASS |
+| p6 | continuation은 INIT-only reader 사용으로 FAIL·대기 worker timeout; native는 copied fixture 경로 오류로 FAIL |
+| p7 `47ec8cf9…` | 위 시험 observer/path만 수정; 실패 continuation1·native1만 PASS, 정상 함수 반복 없음 |
+| compiler export | sequential flush API·private History2span E0451의 신규2 PASS, 진단 checker1 PASS; fmt PASS·Clippy 인수 수 lint FAIL |
+| p8 | immutable witness와 loan을 분리 유지하는 이유를 좁은 lint annotation으로 명시; fmt·engine Clippy PASS, runtime/compiler 반복 없음 |
+
+신규 memory 함수11개와 Linux 함수1개가 각 원 source에서 완료됐다. semantic14·prefix5·
+home4·I/O6ordinal×before/after12 등 변형 수는 함수 수와 별도로 구분한다. p5의6개 중
+수정된 semantic 검산과 EOF 분류의 직접 소비자 retry2개만 p6에서 재선택했다. 이전 source의
+PASS/FAIL은 대체하지 않았다. private proof compiler는 실제 실패 completion과 단일 E0451의
+정확2개 field span을 확인하고 다른 오류·파일·행·열·개수·성공 completion을 거절한다.
+
+Linux worker는 actual Active→Aborting→Aborted3회 flush의31effect·전체 home page·
+WAL prefix/bytes 불변을 확인했다. 기존 독립 raw literal과 전체5frame WAL을 비교했고,
+child 종료 뒤 별도 parent가3개 관측 page와 닫힌 WAL/최종 disk page를 다시 비교했다.
+최대 wrapped handle2·DB fd4, 종료 후 각각0이다. **이는 closed recovery/reentry 시험이 아니다.**
+원 native 실패는 첫 flush 후 fixture read가 실패했으며 수용된 native 사례로 세지 않는다.
+
+source-value는 call53,384/65,536, retained115,408, conversion65,400/65,536,
+whole234,328/262,144바이트다. 변경된 ResidentStatus와 기존 load layout static은 p6에서
+직접 확인했다. 물리 stack/RSS는 미측정이다. runtime30초/case·120초batch, compiler180초와
+case/review8MiB를 적용했다. native DB는 각각15파일이며 성공22,137,568·실패22,131,488바이트를 시험 객체로 별도 보존한다.
+source·ELF·cache 및 원 실패 DB도 삭제하거나 PASS로 소급 재분류하지 않는다.
+
+정확 command/source/binary/log hash와 시간·보존량은 [색인](dev3-empty-transaction-20261023.json)의
+`live_history_flush`와 `artifact_files`에 있다. design→검증 시각을 append-only timing에 남겼고
+상세 탐색/구현/대기 시간을 사후 추정하지 않았다. 같은 통합의 다음 소비자는 live load와 새
+process 현재-build 복구·재진입이다. S5 profile3×상태4의12조합은 authored NOT_RUN이며
+소비자 도달0/3·효율 개선 비교·DEV3/S5 미완료를 유지한다.

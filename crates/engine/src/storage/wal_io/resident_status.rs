@@ -341,6 +341,7 @@ fn wide_call_bytes() -> usize {
 fn metadata_peaks<W: WriterNamespace>() -> (usize, usize, usize) {
     use std::mem::size_of;
     let retained = 60672
+        + super::history_retained_bytes()
         + crate::storage::dirty_frame::init_pool_delta_bytes()
         + size_of::<super::super::StatusControl<'_, '_, '_>>()
             .saturating_sub(super::super::dirty_allocation::baseline_control_bytes())
@@ -382,3 +383,5 @@ mod tests;
 
 pub(in crate::storage) use empty_transactions::EmptyTransactionInstall;
 pub(crate) use empty_transactions::EmptyTransactionObservation;
+
+pub(super) use empty_transactions::History;

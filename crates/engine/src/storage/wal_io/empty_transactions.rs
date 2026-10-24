@@ -38,6 +38,8 @@ pub(crate) enum Cause {
     MissingTransaction,
     WrongState,
     NotResident,
+    HistoryIo(xadb_foundation::Error),
+    Flush(super::super::StatusFlushError),
     Exhausted,
 }
 #[derive(Debug)]
@@ -304,6 +306,7 @@ fn retained_bytes<W: WriterNamespace>() -> usize {
     // Same original retained controls/pool census as ResidentStatus. Replacing
     // its API removes wide read carriers; no transaction operation runs yet.
     60672
+        + super::super::history_retained_bytes()
         + dirty_frame::init_pool_delta_bytes()
         + size_of::<super::super::super::StatusControl<'_, '_, '_>>()
             .saturating_sub(super::super::super::dirty_allocation::baseline_control_bytes())
@@ -327,3 +330,5 @@ mod tests;
 mod live;
 pub(in crate::storage) use live::EmptyTransactionInstall;
 pub(crate) use live::EmptyTransactionObservation;
+
+pub(in super::super) use live::History;

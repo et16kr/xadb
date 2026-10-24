@@ -877,5 +877,13 @@ D2와 component41640바이트의 실행 gate를 수용하고 신규13·직접 �
 census·사전 예약·pending 실패 fence·durable terminal 뒤 반환을 검산한다. 신규22·직접 관련2,
 변경된 자원식과 compiler2·checker1 및 fmt/Clippy의 source별 결과와 원 FAIL은
 [증거](../evidence/dev3-empty-transaction-20261023.md#live-installation)에 보존한다.
-최종 독립 D1은 WAL/RAM 설치 단위로 수용했으며 selected resident만 지원한다. live Status flush/load, 새 process의
-현재-build 복구·재진입은 미공급이고 같은 통합의 소비자 도달0/3·DEV3/S5 미완료를 유지한다.
+최종 독립 D1은 WAL/RAM 설치 단위로 수용했으며 selected resident만 지원한다. 이 시점에는 live Status flush/load, 새 process의
+현재-build 복구·재진입이 미공급이었으며 같은 통합의 소비자 도달0/3·DEV3/S5 미완료를 유지한다.
+
+2026-10-24 [§20 이력 기반 live flush](../contracts/dev3-obligation-format.md#empty-transaction-flush)를
+연결했다. 원 WAL의 전체 provisioning과 선택 거래 전이로 만든 exact historical image만 기존
+DWB/home 경로가 허용한다. complete prefix EOF·semantic 불일치는 fence하고 알려진 일시적
+읽기 실패는 재시도 가능하다. 신규 runtime11·native1, 변경 layout static3·compiler2·checker1의
+source별 결과와 원 실패는 [같은 증거](../evidence/dev3-empty-transaction-20261023.md#live-history-flush)에
+보존한다. native3상태 page와 WAL 전체 bytes를 독립 literal과 대조했다. 최종 독립 D1은 이력/flush/continuation 한정 수용했으며
+live load·새 process 복구·소비자 도달·DEV3/S5는 여전히 미완료다.

@@ -273,6 +273,7 @@ pub(in super::super) fn metadata_bytes<W: WriterNamespace>() -> (usize, usize) {
     // Conservative composition with the existing retained baseline. The bound
     // is also in call_bytes, so its retained fields are intentionally overcharged.
     let retained = 60672
+        + super::super::history_retained_bytes()
         + dirty_frame::init_pool_delta_bytes()
         + size_of::<super::super::super::StatusControl<'_, '_, '_>>()
             .saturating_sub(dirty_allocation::baseline_control_bytes());

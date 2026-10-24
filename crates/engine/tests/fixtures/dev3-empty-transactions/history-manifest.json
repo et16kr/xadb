@@ -1,0 +1,40 @@
+{
+  "schema": "xadb-empty-history-tests-v1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "contract": "devdoc/contracts/dev3-obligation-format.md#empty-transaction-flush",
+  "static": [
+    "empty_history_resource_gate"
+  ],
+  "mandatory": [
+    "empty_history_exact_lifecycle_and_historical_images",
+    "empty_history_flushes_each_actual_state_and_preserves_ledger",
+    "empty_history_interleaved_actors_gap_and_late_selected_init",
+    "empty_history_rejects_checksum_valid_nonhistorical_home",
+    "empty_history_selected_init_and_transaction_semantic_damage_rejects",
+    "empty_history_wal_read_retry_busy_and_poison",
+    "empty_history_complete_prefix_truncation_and_checksum_damage_rejects",
+    "empty_history_rejects_self_consistent_but_nonhistorical_bank",
+    "empty_history_invalid_read_count_fences_and_short_reads_complete",
+    "empty_history_flush_faults_retain_original_authority",
+    "empty_history_retired_authority_continues_without_rewriting"
+  ],
+  "selector_prefix": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::",
+  "budgets": {
+    "case_seconds": 30,
+    "batch_seconds": 120,
+    "case_evidence_bytes": 8388608
+  },
+  "remaining": [
+    "load and closed recovery",
+    "S5 expanded combinations execution"
+  ],
+  "native": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::empty_history::worker_empty_history_native"
+  ],
+  "compiler": "history-compiler/manifest.json",
+  "S5": {
+    "selector": "empty_history_s5_profiles_and_selected_states",
+    "variants": 12,
+    "status": "AUTHORED_NOT_EXECUTED"
+  }
+}

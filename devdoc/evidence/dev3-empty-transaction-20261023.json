@@ -1351,6 +1351,801 @@
       "path": "artifacts/dev3/empty-transaction-20261023/review/live-metadata-addendum.md",
       "bytes": 1454,
       "sha256": "3d3c33fb5b40c40a54e8a7432bcc7c41cb9b59548011e446167f518e69d30300"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/build.py",
+      "bytes": 1465,
+      "sha256": "f736eb57f2363e153fb75fb6a812ce5a1be23b33fa9d0e604a556b61995d9e3b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/timing.jsonl",
+      "bytes": 524,
+      "sha256": "351288a79ffff9d378e15594b46821edb41ea4c2785c5e6e56d785298644439b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/task-input.md",
+      "bytes": 1251,
+      "sha256": "f1ebb7faabafa1639faed9c2cda1820a1fe2542b11ccfba1d86867e500b37ddb"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/run-selected.py",
+      "bytes": 1577,
+      "sha256": "da2a5e3343874b99dc243ae91640cd9208bb7b1e9440f11dd9d98dde07884793"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p4/build.stderr",
+      "bytes": 195,
+      "sha256": "c122db79a62dbb08e6b9172fb8d4f0a4d0e2cdd2dc3dc5ea7932015e649d5489"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p4/resource.stdout",
+      "bytes": 350,
+      "sha256": "5bb3e1f9e5cbf5cd6f427b4eabdbeccec81204742e3ae36bcddec6dc8da37f37"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p4/resource.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p4/build.jsonl",
+      "bytes": 20240,
+      "sha256": "0d1b74de393cd19601dcf5dadaab9001aa807a3e8339184e0c79db5f773d7dd3"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p4/build-receipt.json",
+      "bytes": 441,
+      "sha256": "5ff54783fc04107572672d72edd1eda6d79a1a9c72aaff80c1fbefb019b83ac5"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p4/resource-receipt.json",
+      "bytes": 637,
+      "sha256": "1813567872c6aadfd3ae976a2f6c1b967fbb83e2aced5b12422a254287124694"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p2/build.stderr",
+      "bytes": 195,
+      "sha256": "3b09dd7fb9583e9e462dd0fe650d9c632414883cbe5ee1ff8bc8926d7464aa6b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p2/build.jsonl",
+      "bytes": 24795,
+      "sha256": "9b4c88a247db667ae9c10460eafd6f12b74aa6ae3657e378ec7fc080c6cce94b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p2/build-receipt.json",
+      "bytes": 269,
+      "sha256": "b71fb2e6eb2382bb99521c4ea0641a1c82e487981aab6b088737e3d623a87ec6"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p1/build.stderr",
+      "bytes": 195,
+      "sha256": "4be0b4957b67218ebfade145ddb5754ade79919d5c30ea80db9b762020280c4f"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p1/build.jsonl",
+      "bytes": 23019,
+      "sha256": "828ec0b2405fd6da1c97fd9e3546809112e6c0923d5a02df82cf9941486ac45b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p1/build-receipt.json",
+      "bytes": 269,
+      "sha256": "f43438e7c12a9f54cece20aa62b5c683348aef414bcf605109dfffd590ef02c9"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/review/history-flush-first-execution-gate.md",
+      "bytes": 1636,
+      "sha256": "1e8683572bf4b7376d34209775f8dc525df250af8d839d3ab34f0d00c8472bd8"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/review/history-flush-negative-r3.md",
+      "bytes": 3310,
+      "sha256": "300fd5609fc45209565739f903cb827f4de9a8d9d59b07e843a08ec03e32082f"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/review/history-d2-r1.md",
+      "bytes": 6479,
+      "sha256": "a2d4b7cbe701c282094559642960b47d0f2c893db8254094b5bed088ee0a65c6"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/review/history-flush-d2-r2.md",
+      "bytes": 4524,
+      "sha256": "80c61a80996d1788c4e20250207360c648dcc5564184aa5542150e391696e2bb"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/review/history-flush-d1-source-r4.md",
+      "bytes": 2907,
+      "sha256": "1e92f30c3ec05b9035e2178f3b45704088dc38c7e44f235ca74a5ad5d24a175e"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/review/prereview.md",
+      "bytes": 8248,
+      "sha256": "d4c2a0dbb8f98dadc036f418a892a507fe26046a7c79e2773f8be5c79af6cea4"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/empty_history_retired_authority_continues_without_rewriting.json",
+      "bytes": 794,
+      "sha256": "2d834e6a0a4d5fbb77360a910a2b6e091f5affcd2ec0f674d847c720172acfa4"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/build.stderr",
+      "bytes": 195,
+      "sha256": "d30a50a389a888d382124a6b8f4bcb37edba6de02870c61ed545762f274ead14"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/empty_history_retired_authority_continues_without_rewriting.stdout",
+      "bytes": 322,
+      "sha256": "414dee4a6fcace7cd11330b508c11cac082c254d9a20fac271b307b460d9767a"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/empty_history_retired_authority_continues_without_rewriting.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/build.jsonl",
+      "bytes": 20240,
+      "sha256": "29eed3502c6ce3b96a7949279cd010df5144478a144e89e3650f5d4be428de1d"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/build-receipt.json",
+      "bytes": 441,
+      "sha256": "b104d1570da8e470e5f2b4190f568de3934cfc40dd764f79cf93b92a802e747b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/worker.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/parent-oracle.json",
+      "bytes": 701,
+      "sha256": "e85de10bb7f1fae3aea98573840d02625889eb45d2149e51e6c7115a268d1257"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/io.tsv",
+      "bytes": 4440,
+      "sha256": "b9317e10ecb2f543475229b25b482699620eff4c89a051b3a18a8137aa2010b4"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/fd.tsv",
+      "bytes": 1907,
+      "sha256": "8379a723e8cb97a2e229ae079235f5947c4cbf4346b2e65e844597140d90bf73"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/receipt.json",
+      "bytes": 847,
+      "sha256": "a58b9b69e687da50741c76bcb9754c532d941cebf9035d5e167363b31d39e795"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/worker.stdout",
+      "bytes": 277,
+      "sha256": "dd2ab0c4cf4c1ede79332c4e34d81ba22ccde727aa14f47ce537849066a99c4e"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/begin.after.page",
+      "bytes": 16384,
+      "sha256": "00390cce79eda8d61042663cf5b73bbb474fe8cb5df190ddb8ff43784559a8dc"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/rollback.after.page",
+      "bytes": 16384,
+      "sha256": "c89df8522e2a7b9d4a23b87657acd1dafd117f38fbd0b2d8f11574ce17e1cc4c"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/abort.after.page",
+      "bytes": 16384,
+      "sha256": "3d55c487d643ced9077b3f7c62048176168d072775c3dcbdacfd75cd69be998b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/summary.txt",
+      "bytes": 152,
+      "sha256": "15f8afc2cb0084d59b8b77b50a869a3fc098b6090f06972f2fb23a88008a277e"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/d3-profile",
+      "bytes": 4096,
+      "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/d3-bootstrap",
+      "bytes": 4096,
+      "sha256": "c44b414270ed3898d5cf71424c835caffaa86151f00a78dfc26b40d7c188253c"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/d3-filemap-1",
+      "bytes": 2113536,
+      "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/WRITER",
+      "bytes": 4096,
+      "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/d3-dwb-1",
+      "bytes": 16384,
+      "sha256": "01cb7e0bd1ec9394f3236c1e449dcd863370d5cdb2f839e507eff2008dd6b0b1"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/d3-data-0000000100000001",
+      "bytes": 1048576,
+      "sha256": "08f0deea4bd778d8a8f7478992ff485b4a1455dde8a98003b1d00bcb660ad6fc"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/d3-dwb-stage",
+      "bytes": 16384,
+      "sha256": "01cb7e0bd1ec9394f3236c1e449dcd863370d5cdb2f839e507eff2008dd6b0b1"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/LOCK",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/DWB",
+      "bytes": 4096,
+      "sha256": "cb13873265c1e5047f6c7cdb339b751b84f05a9ad4ff234cd6d874a3bfc2820d"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/FILEMAP",
+      "bytes": 4096,
+      "sha256": "092301de885e2485c51c6d2a4a8a42fae1c1b87eced274a0af8eaca844c72280"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/d3-dwb-reserved",
+      "bytes": 8192,
+      "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/d3-filemap-0",
+      "bytes": 2113536,
+      "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/d3-wal-00000001",
+      "bytes": 72416,
+      "sha256": "ba7ab7e0457d7386e72a9b41a4050302fd758f53e3fbf2c0a9cab7f8f9774f6b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/d3-dwb-images",
+      "bytes": 16711680,
+      "sha256": "6a50eb2bf7f9ce4705a3ea4357934861aeb4010c6c4ccc2dde62da7d2a16493e"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p7/native/database/d3-dwb-0",
+      "bytes": 16384,
+      "sha256": "1ab48c93e2702b69ebcb8a596077b9b9ac299d10a76907304c019573df581e72"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_retired_authority_continues_without_rewriting.json",
+      "bytes": 794,
+      "sha256": "7434a3b239d78b20d511674803c718e66e2716b9bb16103d693d6f22cdc63b5a"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_complete_prefix_truncation_and_checksum_damage_rejects.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_selected_init_and_transaction_semantic_damage_rejects.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/resident_status_resource_gate.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/build.stderr",
+      "bytes": 195,
+      "sha256": "e8aae8d7ce75c5fac76457ab4b9bc6a4791148b128dddabdd3672b0a82b70ead"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_flush_faults_retain_original_authority.json",
+      "bytes": 785,
+      "sha256": "2198ae06450d3311805410217b6b5eeb74648261bfcc38a4f46e106da7535684"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_wal_read_retry_busy_and_poison.stdout",
+      "bytes": 307,
+      "sha256": "a034126ff2b9c9188cb51bf79ec7a53836008f61c77379c36929fee4fb08ac51"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_wal_read_retry_busy_and_poison.stderr",
+      "bytes": 385,
+      "sha256": "cd320dd43231589a3e4155572bd1fb567e1484ea78eb21be40fd4da95bc6d7fd"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_wal_read_retry_busy_and_poison.json",
+      "bytes": 779,
+      "sha256": "cb9b692244be6c9d1ee631d546cb0f08a11bca2a4362cf386c749a81692d2713"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_selected_init_and_transaction_semantic_damage_rejects.json",
+      "bytes": 801,
+      "sha256": "985d37594da1f6df2c027391d7f8e257d16aa8e16f2db3604ebc5a3735427e75"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_invalid_read_count_fences_and_short_reads_complete.json",
+      "bytes": 799,
+      "sha256": "c96de800ad779f9d024d8cc821271b089d83041936a0a531d57417d8047b0499"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/status_load_resource_gate.stdout",
+      "bytes": 377,
+      "sha256": "e28e76de916addc7e6adad8731595c13b6e180e6c6c774efa87166a2ff9dc24c"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_invalid_read_count_fences_and_short_reads_complete.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_invalid_read_count_fences_and_short_reads_complete.stdout",
+      "bytes": 327,
+      "sha256": "c510dd317b8c1bc0fb06bc6669a1ed8e2aece484a935433aad2ba8a494c02180"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_retired_authority_continues_without_rewriting.stdout",
+      "bytes": 552,
+      "sha256": "636e2e7ef8b6a4836cd401c3d218ca1ba7dac13d2a7acbedba095e4d1bcf5327"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_selected_init_and_transaction_semantic_damage_rejects.stdout",
+      "bytes": 330,
+      "sha256": "6a5acb01ed209d6f55bff74e24197de97b29a50fec95feb7cc499354ab808e13"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_retired_authority_continues_without_rewriting.stderr",
+      "bytes": 677,
+      "sha256": "1190e778098a3c6a8e1b2b153c21ef202256f40fef607e620323ad2b1228a183"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_complete_prefix_truncation_and_checksum_damage_rejects.stdout",
+      "bytes": 481,
+      "sha256": "142d78886b43a4133a33579ef138a3ff1e8270339f59a9a1920412dbc2befca6"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/resident_status_resource_gate.stdout",
+      "bytes": 648,
+      "sha256": "547a31913c439a52743102d84d8a39bc4b17773ee3c2b583b813cf8f55108e0b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/build.jsonl",
+      "bytes": 20240,
+      "sha256": "42c18a764d59edc7352b3bb2c21b91d1934142bbd17cd9fb01d66fd358d966f9"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/resident_status_resource_gate.json",
+      "bytes": 694,
+      "sha256": "d788bf3789c26c0eecaf5e02408d5c094adb3b19ee2330b897feac39550adda1"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/status_load_resource_gate.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_complete_prefix_truncation_and_checksum_damage_rejects.json",
+      "bytes": 802,
+      "sha256": "7ef3440880588cf5bfe35eaa2b7df44fb9d78b07fed6640b251c6a0e6ef13870"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_rejects_self_consistent_but_nonhistorical_bank.stdout",
+      "bytes": 323,
+      "sha256": "c2998089bb8e40382374a645fad37c2e034ca0773f0634d38bdd4121d72f73d2"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_flush_faults_retain_original_authority.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_rejects_self_consistent_but_nonhistorical_bank.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_flush_faults_retain_original_authority.stdout",
+      "bytes": 785,
+      "sha256": "8cfd25b6141d2dd2f57743ad3919be7cdd120da037a0f125c22614027cdbeba6"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/build-receipt.json",
+      "bytes": 441,
+      "sha256": "4ef1dcfbfb84fa0ed6a9feb227a8199d301714459abb2855549a3fdad2f6406e"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_rejects_self_consistent_but_nonhistorical_bank.json",
+      "bytes": 795,
+      "sha256": "09f8cd572030e1a858f0fb961d131986dc6ada0c1d64a5862e1e4985284e916d"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/status_load_resource_gate.json",
+      "bytes": 699,
+      "sha256": "964192587e3a93c740e9156c6a72c654ab487ad93fec9d1a6a929011661e35be"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/worker.stderr",
+      "bytes": 441,
+      "sha256": "949f2d0330adb8287c791b4e12f7a1afde3605dd7d2c9968afb74d4befb55895"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/receipt.json",
+      "bytes": 722,
+      "sha256": "044b6989588b8cd7ae94874310760e0e8d6579b1f55a35cf453e06ed691d3249"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/worker.stdout",
+      "bytes": 462,
+      "sha256": "e641be3a39a6f155f10b856b5342ef7ad0a69e16a9f9b437a8ef5930cdf001c2"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/d3-profile",
+      "bytes": 4096,
+      "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/d3-bootstrap",
+      "bytes": 4096,
+      "sha256": "c44b414270ed3898d5cf71424c835caffaa86151f00a78dfc26b40d7c188253c"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/d3-filemap-1",
+      "bytes": 2113536,
+      "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/WRITER",
+      "bytes": 4096,
+      "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/d3-dwb-1",
+      "bytes": 16384,
+      "sha256": "0283b8882ae488e5a4d2efb23079a5cfe929f23c1ff666b91d620daecb700839"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/d3-data-0000000100000001",
+      "bytes": 1048576,
+      "sha256": "ec887ac159a2713465866be5c9bb77e336a7a9ab91cd8d3a9f36fe37f0ee60ab"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/d3-dwb-stage",
+      "bytes": 16384,
+      "sha256": "0283b8882ae488e5a4d2efb23079a5cfe929f23c1ff666b91d620daecb700839"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/LOCK",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/DWB",
+      "bytes": 4096,
+      "sha256": "193c7d84a7073a2a3f0e2734038a4ad63f68edd8002cb768c2aa3cef079dfa67"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/FILEMAP",
+      "bytes": 4096,
+      "sha256": "092301de885e2485c51c6d2a4a8a42fae1c1b87eced274a0af8eaca844c72280"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/d3-dwb-reserved",
+      "bytes": 8192,
+      "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/d3-filemap-0",
+      "bytes": 2113536,
+      "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/d3-wal-00000001",
+      "bytes": 66336,
+      "sha256": "2fe10ca338dcb23cc15a5e2d475112f36100acfdab57f432f89098a4ce3c262c"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/d3-dwb-images",
+      "bytes": 16711680,
+      "sha256": "c7bce0f7e576fbfa0e60a353cd00b5842ac42b554e3f9b60f15b24496324a6b9"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p6/native/database/d3-dwb-0",
+      "bytes": 16384,
+      "sha256": "f7c67a06c4548dc35921be8530627fef9a5e90c6f082a6006cca4136ae42a4ce"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p3/build.stderr",
+      "bytes": 195,
+      "sha256": "2a239330a940df2a29034e8d9eb27db27ae5533439c7bdae75fec9343929ff4d"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p3/build.jsonl",
+      "bytes": 23075,
+      "sha256": "98983fcd7b414917bfb1c4939f020effc85b27b231ca855db6dc0412ef987d24"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p3/build-receipt.json",
+      "bytes": 354,
+      "sha256": "dae5428dd5c2b2bf0eb115860d885e77468dbbb044e80161c043a10fb1f43a57"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_resource_gate.json",
+      "bytes": 763,
+      "sha256": "7cfab7bb01446fb337353ed3256d6a3e5113b80bf3af0754a60e6eba4113dbd2"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_exact_lifecycle_and_historical_images.json",
+      "bytes": 786,
+      "sha256": "0ee8fa954cf1749fd2664baa10f74c3a4302ac4ca9886499a43ba7b1097b6532"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_complete_prefix_truncation_and_checksum_damage_rejects.stderr",
+      "bytes": 29339,
+      "sha256": "3ea3045a3d1fb524298bb641e97d873b395736a34978228c582c236752a5d8fd"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_rejects_checksum_valid_nonhistorical_home.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_selected_init_and_transaction_semantic_damage_rejects.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/build.stderr",
+      "bytes": 195,
+      "sha256": "96441d05db2f75a7c1837bee77b45bb0788e60d551b5b11c859c72951230e7a6"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_wal_read_retry_busy_and_poison.stdout",
+      "bytes": 307,
+      "sha256": "6de22a24e5c07010b524eedd13fe7ad33e69347bd6e1752c9528b0f54002c81a"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_wal_read_retry_busy_and_poison.stderr",
+      "bytes": 385,
+      "sha256": "9a3188568acf6ff778201e0d7e4546efacffb0ee60106d57408f6a095a942758"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_flushes_each_actual_state_and_preserves_ledger.stdout",
+      "bytes": 323,
+      "sha256": "a7b15bdf3f8504758c50b1099416ffe22d95d6b96fc59eb336b09becdff799f0"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_exact_lifecycle_and_historical_images.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_wal_read_retry_busy_and_poison.json",
+      "bytes": 779,
+      "sha256": "afe753cbfa4c5fe32c354fe3f3cbe4445b0780bbbaf967999d21c31f3d3afb82"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_selected_init_and_transaction_semantic_damage_rejects.json",
+      "bytes": 801,
+      "sha256": "9ed2befbb1dd6cb092fa4ee34d4910b7922b24a0cf835562c92c34c97987ea1e"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_flushes_each_actual_state_and_preserves_ledger.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_selected_init_and_transaction_semantic_damage_rejects.stdout",
+      "bytes": 330,
+      "sha256": "7b7a27b8f9d43f45c8d3577832f4df3c2811a0238c9b350ab48fd72fcc46e22f"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_rejects_checksum_valid_nonhistorical_home.stdout",
+      "bytes": 318,
+      "sha256": "1495e191af2d130846fcec0984715fad1c36fe78b232cfe37849c7338783b569"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_complete_prefix_truncation_and_checksum_damage_rejects.stdout",
+      "bytes": 16,
+      "sha256": "daf071121a9ffe32bbce44190e37a068c96d08bff63fd7b660dd95b77d786dca"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/build.jsonl",
+      "bytes": 20240,
+      "sha256": "792028a2fe813aaf2e475c71318492b5526cd48df70353a37573b0ab02e3d723"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_interleaved_actors_gap_and_late_selected_init.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_resource_gate.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_flushes_each_actual_state_and_preserves_ledger.json",
+      "bytes": 795,
+      "sha256": "47e40a38a3736a05b4bdc93d38847f553688711429fc4fb471d948c207ca3f3e"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_complete_prefix_truncation_and_checksum_damage_rejects.json",
+      "bytes": 803,
+      "sha256": "09dcf90c0757ab0bc2de1f1c7ab8cf19742f8049dd14cd580e7a5de5b6f1165a"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_exact_lifecycle_and_historical_images.stdout",
+      "bytes": 314,
+      "sha256": "b33479d54b0c403584275ecd9298a0b02efff33b4d43ade35cea0acac55a113f"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_resource_gate.stdout",
+      "bytes": 350,
+      "sha256": "9a875069bb42b63c1f6215a4c376f7448701ad0dfbb8e7ce1e8884620721871a"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_rejects_checksum_valid_nonhistorical_home.json",
+      "bytes": 789,
+      "sha256": "93c3e16fd2234d1b866ee7361594ad0e936ed5e72e7dc41adc07d3d0ec12aef1"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_interleaved_actors_gap_and_late_selected_init.stdout",
+      "bytes": 322,
+      "sha256": "9a0889f2b28a60447d9ae31938a51a57233dbda0e0139f889302d8fdeaf8ef82"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_interleaved_actors_gap_and_late_selected_init.json",
+      "bytes": 794,
+      "sha256": "628bb73b86fd35b14b2defe37d3795b772f3d2dd3c9871363e33d49c765927a9"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p5/build-receipt.json",
+      "bytes": 441,
+      "sha256": "a4a7b3f934178cee1c54a4dabda593b9fd50e4cea49c16d7c185724a4a6ca5f2"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/clippy.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/checker.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/checker.stderr",
+      "bytes": 98,
+      "sha256": "fb184ea57734512b1f088f9181209901b9cd46df3eb7eaa2500ea9e48dde20b5"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/clippy.json",
+      "bytes": 507,
+      "sha256": "9cbe23c495b34eb0f95a29dc31c8340b26b6552203663c38d133435b0b556a2b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/clippy.stderr",
+      "bytes": 1503,
+      "sha256": "2c706145221e6767505960c8324be24262f75e93550b758d5d82d4e9fa316a2f"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/fmt.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/fmt.json",
+      "bytes": 388,
+      "sha256": "575702912adf1b997200b00ad892fd31256121e8241db57c940fcda8ff28349a"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/checker.json",
+      "bytes": 410,
+      "sha256": "ab6f2793b3def788a5aaf04ba06b85c41bf88544e926507a23baca79b96eaa07"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/fmt.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/sealed_history/stdout.jsonl",
+      "bytes": 13126,
+      "sha256": "11e1d72a49bf683ea73077f7f355c94a1587480acf8628e4c1174c729d461758"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/sealed_history/receipt.json",
+      "bytes": 586,
+      "sha256": "e557d43f0ac87fd6ddb45e013a0a27e54647543db8af520a85c6bf9745cd0928"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/sealed_history/verified.json",
+      "bytes": 577,
+      "sha256": "dd0cc9cc0d502cb242f8d65ea3a0cec38830651c2f8c48a76fe4558308f89bea"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/sealed_history/stderr",
+      "bytes": 234,
+      "sha256": "7104ebc9274b539a0853c656de3b59331b6ea0d75b2bc3531275e0ca0dcba7d9"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/flush_sequence/stdout.jsonl",
+      "bytes": 10326,
+      "sha256": "74d1eaca6d118fee06cdfdfbf7acabc7f7bb7eb35bba4bd0cae435bab4a2365e"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/flush_sequence/receipt.json",
+      "bytes": 585,
+      "sha256": "27ecdce4e90dc173c817fac3e81c1890647038908eaa8cebcb1f6d3ae2359f4e"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/flush_sequence/verified.json",
+      "bytes": 576,
+      "sha256": "0f77d565ef6595663395a2895c151d34cd8c1a80147dad8825ebdee6ced5e372"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/flush_sequence/stderr",
+      "bytes": 690,
+      "sha256": "10c5c758641ef9d5cbf17f6074d9879b4fb9f8b98d04a2cfa3737e0895a2bbce"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p0/build.stderr",
+      "bytes": 901,
+      "sha256": "ce1e1d5beee377593a48aa962fb0d487767730a6c4fb7d5e6e2ace1aa368aa7d"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p0/build.jsonl",
+      "bytes": 20261,
+      "sha256": "59f0399f06d372016fc8533ce3dc3d94a7c6dd7c4e329f1e0b435e559047bb4f"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p0/build-receipt.json",
+      "bytes": 267,
+      "sha256": "ee31a76f0cf2c8c81c8427d6290553c8e5b30791c39253a2b70eab1124dec309"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p8/clippy.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p8/clippy.json",
+      "bytes": 504,
+      "sha256": "3a5751b3d40082356a1c0f76f01ed55b757f72bd1120699174c3ee914444c946"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p8/clippy.stderr",
+      "bytes": 194,
+      "sha256": "cc9814bafdc4ae5ec4e4ffb08d7fad54b87e7190991cddb75f8a124593ec66e3"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p8/fmt.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p8/fmt.json",
+      "bytes": 389,
+      "sha256": "600869f4f22ba4d7ba337457bff298837c3bafe44f23a307fc65cfd1624fae01"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/p8/fmt.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/next-step.md",
+      "bytes": 3035,
+      "sha256": "bed9a6682f7839ca82c319762263b0f580d8c2669e76e51eed9647620117f99b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-20261024/review/history-flush-d1-final.md",
+      "bytes": 4792,
+      "sha256": "768efdda9660fc901ab2aa97862d3f7e7ff71990e4231f2658fc61e30d8b2d7d"
     }
   ],
   "timing_log": "artifacts/dev3/empty-transaction-20261023/timing.jsonl",
@@ -1770,6 +2565,721 @@
       "maximum_bytes": 273727488,
       "limit_bytes": 1073741824,
       "independent_failure_runtime": "NOT_CLAIMED"
+    }
+  },
+  "live_history_flush": {
+    "status": "LIMITED_D1_D2_ACCEPTED_INTEGRATION_INCOMPLETE",
+    "base_commit": "72c4b52",
+    "contract_ref": "dev3-obligation-format.md#empty-transaction-flush",
+    "runtime_unique_new_functions": 11,
+    "native_unique_new_functions": 1,
+    "static_changed_layout_functions": 3,
+    "compiler_new_probes": 2,
+    "checker_new_tests": 1,
+    "source_value": {
+      "call_bytes": 53384,
+      "retained_bytes": 115408,
+      "conversion_bytes": 65400,
+      "whole_bytes": 234328,
+      "limits": [
+        65536,
+        196608,
+        262144
+      ]
+    },
+    "receipts": [
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p4/build-receipt.json",
+        "source_sha256": "bf6db3b75349e7f5c67e245d0b5345d8aed79e6d76dc957e7664c6d867717f84",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 13.204815886000006,
+        "time": "2026-10-24T02:51:20.651421+00:00",
+        "binary_sha256": "8597a7a2b5687bc4135372f6d99df11a6172d3a3de766233fd49eaa388d9a856"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p4/resource-receipt.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p4/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_resource_gate",
+          "--nocapture"
+        ],
+        "exit": 0,
+        "elapsed": 0.0013723130000471429,
+        "stdout_sha256": "5bb3e1f9e5cbf5cd6f427b4eabdbeccec81204742e3ae36bcddec6dc8da37f37",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "scope": "new history resource census and directly changed authority layouts; no product effects"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p2/build-receipt.json",
+        "source_sha256": "5acfa7fe812e93638cef1e2916a154577dc4329116c72465651204aaaa1ec4e4",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 101
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p1/build-receipt.json",
+        "source_sha256": "a71563e05a7c598bb6e79a8bfa849732d4c75a9bbae23ffe456d29e0d5ab2683",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 101
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p7/build-receipt.json",
+        "source_sha256": "47ec8cf9588d597e317bdce07f1623d6cf0d7c55b3dcc3701334084f118532ff",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 13.596957250999822,
+        "time": "2026-10-24T03:05:47.657531+00:00",
+        "binary_sha256": "e1f2813566fc8da6b826f70e35f3a760ea3a66b93519edcbae03234efcef30fe"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p7/empty_history_retired_authority_continues_without_rewriting.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p7/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_retired_authority_continues_without_rewriting",
+          "--nocapture"
+        ],
+        "source_sha256": "47ec8cf9588d597e317bdce07f1623d6cf0d7c55b3dcc3701334084f118532ff",
+        "binary_sha256": "e1f2813566fc8da6b826f70e35f3a760ea3a66b93519edcbae03234efcef30fe",
+        "exit": 0,
+        "elapsed_seconds": 0.13798867399987103,
+        "time": "2026-10-24T03:06:12.817613+00:00",
+        "stdout_sha256": "414dee4a6fcace7cd11330b508c11cac082c254d9a20fac271b307b460d9767a",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p7/native/receipt.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p7/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::empty_history::worker_empty_history_native",
+          "--ignored",
+          "--nocapture"
+        ],
+        "env": {
+          "XADB_EMPTY_HISTORY_NATIVE_DIR": "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p7/native"
+        },
+        "exit": 0,
+        "elapsed_seconds": 0.5615467949999129,
+        "source_sha256": "47ec8cf9588d597e317bdce07f1623d6cf0d7c55b3dcc3701334084f118532ff",
+        "binary_sha256": "e1f2813566fc8da6b826f70e35f3a760ea3a66b93519edcbae03234efcef30fe",
+        "stdout_sha256": "dd2ab0c4cf4c1ede79332c4e34d81ba22ccde727aa14f47ce537849066a99c4e",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p6/build-receipt.json",
+        "source_sha256": "0d48769d7b3ab8b2057671bf5b289f685ee9622f067d670f39d20253705c249e",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 13.714826716000061,
+        "time": "2026-10-24T03:03:42.654637+00:00",
+        "binary_sha256": "7ea6b0d7a1a9d20616044beaa94da6922c477cf4821f6b2dc7214b9a3bd2dea5"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_complete_prefix_truncation_and_checksum_damage_rejects.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p6/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_complete_prefix_truncation_and_checksum_damage_rejects",
+          "--nocapture"
+        ],
+        "source_sha256": "0d48769d7b3ab8b2057671bf5b289f685ee9622f067d670f39d20253705c249e",
+        "binary_sha256": "7ea6b0d7a1a9d20616044beaa94da6922c477cf4821f6b2dc7214b9a3bd2dea5",
+        "exit": 0,
+        "elapsed_seconds": 0.5941238090001661,
+        "time": "2026-10-24T03:03:50.134742+00:00",
+        "stdout_sha256": "142d78886b43a4133a33579ef138a3ff1e8270339f59a9a1920412dbc2befca6",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_flush_faults_retain_original_authority.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p6/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_flush_faults_retain_original_authority",
+          "--nocapture"
+        ],
+        "source_sha256": "0d48769d7b3ab8b2057671bf5b289f685ee9622f067d670f39d20253705c249e",
+        "binary_sha256": "7ea6b0d7a1a9d20616044beaa94da6922c477cf4821f6b2dc7214b9a3bd2dea5",
+        "exit": 0,
+        "elapsed_seconds": 1.495716739000045,
+        "time": "2026-10-24T03:03:54.603704+00:00",
+        "stdout_sha256": "8cfd25b6141d2dd2f57743ad3919be7cdd120da037a0f125c22614027cdbeba6",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_invalid_read_count_fences_and_short_reads_complete.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p6/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_invalid_read_count_fences_and_short_reads_complete",
+          "--nocapture"
+        ],
+        "source_sha256": "0d48769d7b3ab8b2057671bf5b289f685ee9622f067d670f39d20253705c249e",
+        "binary_sha256": "7ea6b0d7a1a9d20616044beaa94da6922c477cf4821f6b2dc7214b9a3bd2dea5",
+        "exit": 0,
+        "elapsed_seconds": 0.32396445699987453,
+        "time": "2026-10-24T03:03:53.106510+00:00",
+        "stdout_sha256": "c510dd317b8c1bc0fb06bc6669a1ed8e2aece484a935433aad2ba8a494c02180",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_rejects_self_consistent_but_nonhistorical_bank.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p6/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_rejects_self_consistent_but_nonhistorical_bank",
+          "--nocapture"
+        ],
+        "source_sha256": "0d48769d7b3ab8b2057671bf5b289f685ee9622f067d670f39d20253705c249e",
+        "binary_sha256": "7ea6b0d7a1a9d20616044beaa94da6922c477cf4821f6b2dc7214b9a3bd2dea5",
+        "exit": 0,
+        "elapsed_seconds": 0.20332850699992377,
+        "time": "2026-10-24T03:03:52.781244+00:00",
+        "stdout_sha256": "c2998089bb8e40382374a645fad37c2e034ca0773f0634d38bdd4121d72f73d2",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_retired_authority_continues_without_rewriting.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p6/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_retired_authority_continues_without_rewriting",
+          "--nocapture"
+        ],
+        "source_sha256": "0d48769d7b3ab8b2057671bf5b289f685ee9622f067d670f39d20253705c249e",
+        "binary_sha256": "7ea6b0d7a1a9d20616044beaa94da6922c477cf4821f6b2dc7214b9a3bd2dea5",
+        "exit": 101,
+        "elapsed_seconds": 5.134714314999883,
+        "time": "2026-10-24T03:03:59.740087+00:00",
+        "stdout_sha256": "636e2e7ef8b6a4836cd401c3d218ca1ba7dac13d2a7acbedba095e4d1bcf5327",
+        "stderr_sha256": "1190e778098a3c6a8e1b2b153c21ef202256f40fef607e620323ad2b1228a183"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_selected_init_and_transaction_semantic_damage_rejects.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p6/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_selected_init_and_transaction_semantic_damage_rejects",
+          "--nocapture"
+        ],
+        "source_sha256": "0d48769d7b3ab8b2057671bf5b289f685ee9622f067d670f39d20253705c249e",
+        "binary_sha256": "7ea6b0d7a1a9d20616044beaa94da6922c477cf4821f6b2dc7214b9a3bd2dea5",
+        "exit": 0,
+        "elapsed_seconds": 2.2546043159998135,
+        "time": "2026-10-24T03:03:52.576165+00:00",
+        "stdout_sha256": "6a5acb01ed209d6f55bff74e24197de97b29a50fec95feb7cc499354ab808e13",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p6/empty_history_wal_read_retry_busy_and_poison.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p6/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_wal_read_retry_busy_and_poison",
+          "--nocapture"
+        ],
+        "source_sha256": "0d48769d7b3ab8b2057671bf5b289f685ee9622f067d670f39d20253705c249e",
+        "binary_sha256": "7ea6b0d7a1a9d20616044beaa94da6922c477cf4821f6b2dc7214b9a3bd2dea5",
+        "exit": 0,
+        "elapsed_seconds": 0.18340423599988753,
+        "time": "2026-10-24T03:03:50.320055+00:00",
+        "stdout_sha256": "a034126ff2b9c9188cb51bf79ec7a53836008f61c77379c36929fee4fb08ac51",
+        "stderr_sha256": "cd320dd43231589a3e4155572bd1fb567e1484ea78eb21be40fd4da95bc6d7fd"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p6/resident_status_resource_gate.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p6/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::tests::resident_status_resource_gate",
+          "--nocapture"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 0.0011273000000073807,
+        "source_sha256": "0d48769d7b3ab8b2057671bf5b289f685ee9622f067d670f39d20253705c249e",
+        "binary_sha256": "7ea6b0d7a1a9d20616044beaa94da6922c477cf4821f6b2dc7214b9a3bd2dea5",
+        "stdout_sha256": "547a31913c439a52743102d84d8a39bc4b17773ee3c2b583b813cf8f55108e0b",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p6/status_load_resource_gate.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p6/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::operational::load::tests::status_load_resource_gate",
+          "--nocapture"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 0.0008319319999827712,
+        "source_sha256": "0d48769d7b3ab8b2057671bf5b289f685ee9622f067d670f39d20253705c249e",
+        "binary_sha256": "7ea6b0d7a1a9d20616044beaa94da6922c477cf4821f6b2dc7214b9a3bd2dea5",
+        "stdout_sha256": "e28e76de916addc7e6adad8731595c13b6e180e6c6c774efa87166a2ff9dc24c",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p6/native/receipt.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p6/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::empty_history::worker_empty_history_native",
+          "--ignored",
+          "--nocapture"
+        ],
+        "exit": 101,
+        "elapsed_seconds": 0.28552083600015976,
+        "source_sha256": "0d48769d7b3ab8b2057671bf5b289f685ee9622f067d670f39d20253705c249e",
+        "binary_sha256": "7ea6b0d7a1a9d20616044beaa94da6922c477cf4821f6b2dc7214b9a3bd2dea5",
+        "stdout_sha256": "e641be3a39a6f155f10b856b5342ef7ad0a69e16a9f9b437a8ef5930cdf001c2",
+        "stderr_sha256": "949f2d0330adb8287c791b4e12f7a1afde3605dd7d2c9968afb74d4befb55895"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p3/build-receipt.json",
+        "source_sha256": "dd397ee8111a3091bd429f08b5b9c9e28bbad074d5e4a903ed978b16ed41a5cd",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 101,
+        "elapsed_seconds": 7.13461925799993,
+        "time": "2026-10-24T02:50:51.193875+00:00"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p5/build-receipt.json",
+        "source_sha256": "c52e0a15a35217c8f6999a8b209ac2ecb23bb37d91d47b192054cf5623aefc6e",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 13.104877922000014,
+        "time": "2026-10-24T02:54:01.016949+00:00",
+        "binary_sha256": "05fe8b334764fd859c9db251814b2ab3c1017d4c2b5ffd32553ff5c3877a9a16"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_complete_prefix_truncation_and_checksum_damage_rejects.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p5/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_complete_prefix_truncation_and_checksum_damage_rejects",
+          "--nocapture"
+        ],
+        "source_sha256": "c52e0a15a35217c8f6999a8b209ac2ecb23bb37d91d47b192054cf5623aefc6e",
+        "binary_sha256": "05fe8b334764fd859c9db251814b2ab3c1017d4c2b5ffd32553ff5c3877a9a16",
+        "exit": -6,
+        "elapsed_seconds": 1.2462836740000967,
+        "time": "2026-10-24T02:56:14.030426+00:00",
+        "stdout_sha256": "daf071121a9ffe32bbce44190e37a068c96d08bff63fd7b660dd95b77d786dca",
+        "stderr_sha256": "3ea3045a3d1fb524298bb641e97d873b395736a34978228c582c236752a5d8fd"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_exact_lifecycle_and_historical_images.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p5/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_exact_lifecycle_and_historical_images",
+          "--nocapture"
+        ],
+        "source_sha256": "c52e0a15a35217c8f6999a8b209ac2ecb23bb37d91d47b192054cf5623aefc6e",
+        "binary_sha256": "05fe8b334764fd859c9db251814b2ab3c1017d4c2b5ffd32553ff5c3877a9a16",
+        "exit": 0,
+        "elapsed_seconds": 0.25072242999999617,
+        "time": "2026-10-24T02:56:04.141211+00:00",
+        "stdout_sha256": "b33479d54b0c403584275ecd9298a0b02efff33b4d43ade35cea0acac55a113f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_flushes_each_actual_state_and_preserves_ledger.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p5/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_flushes_each_actual_state_and_preserves_ledger",
+          "--nocapture"
+        ],
+        "source_sha256": "c52e0a15a35217c8f6999a8b209ac2ecb23bb37d91d47b192054cf5623aefc6e",
+        "binary_sha256": "05fe8b334764fd859c9db251814b2ab3c1017d4c2b5ffd32553ff5c3877a9a16",
+        "exit": 0,
+        "elapsed_seconds": 0.28417975799993656,
+        "time": "2026-10-24T02:56:04.427084+00:00",
+        "stdout_sha256": "a7b15bdf3f8504758c50b1099416ffe22d95d6b96fc59eb336b09becdff799f0",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_interleaved_actors_gap_and_late_selected_init.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p5/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_interleaved_actors_gap_and_late_selected_init",
+          "--nocapture"
+        ],
+        "source_sha256": "c52e0a15a35217c8f6999a8b209ac2ecb23bb37d91d47b192054cf5623aefc6e",
+        "binary_sha256": "05fe8b334764fd859c9db251814b2ab3c1017d4c2b5ffd32553ff5c3877a9a16",
+        "exit": 0,
+        "elapsed_seconds": 0.36343871099984426,
+        "time": "2026-10-24T02:56:09.745402+00:00",
+        "stdout_sha256": "9a0889f2b28a60447d9ae31938a51a57233dbda0e0139f889302d8fdeaf8ef82",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_rejects_checksum_valid_nonhistorical_home.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p5/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_rejects_checksum_valid_nonhistorical_home",
+          "--nocapture"
+        ],
+        "source_sha256": "c52e0a15a35217c8f6999a8b209ac2ecb23bb37d91d47b192054cf5623aefc6e",
+        "binary_sha256": "05fe8b334764fd859c9db251814b2ab3c1017d4c2b5ffd32553ff5c3877a9a16",
+        "exit": 0,
+        "elapsed_seconds": 0.6734359109998422,
+        "time": "2026-10-24T02:56:10.421001+00:00",
+        "stdout_sha256": "1495e191af2d130846fcec0984715fad1c36fe78b232cfe37849c7338783b569",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_resource_gate.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p5/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_resource_gate",
+          "--nocapture"
+        ],
+        "source_sha256": "c52e0a15a35217c8f6999a8b209ac2ecb23bb37d91d47b192054cf5623aefc6e",
+        "binary_sha256": "05fe8b334764fd859c9db251814b2ab3c1017d4c2b5ffd32553ff5c3877a9a16",
+        "exit": 0,
+        "elapsed_seconds": 0.002403677000074822,
+        "time": "2026-10-24T02:54:35.713275+00:00",
+        "stdout_sha256": "9a875069bb42b63c1f6215a4c376f7448701ad0dfbb8e7ce1e8884620721871a",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_selected_init_and_transaction_semantic_damage_rejects.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p5/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_selected_init_and_transaction_semantic_damage_rejects",
+          "--nocapture"
+        ],
+        "source_sha256": "c52e0a15a35217c8f6999a8b209ac2ecb23bb37d91d47b192054cf5623aefc6e",
+        "binary_sha256": "05fe8b334764fd859c9db251814b2ab3c1017d4c2b5ffd32553ff5c3877a9a16",
+        "exit": 0,
+        "elapsed_seconds": 2.1792327509999723,
+        "time": "2026-10-24T02:56:12.602391+00:00",
+        "stdout_sha256": "7b7a27b8f9d43f45c8d3577832f4df3c2811a0238c9b350ab48fd72fcc46e22f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p5/empty_history_wal_read_retry_busy_and_poison.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-20261024/p5/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_wal_read_retry_busy_and_poison",
+          "--nocapture"
+        ],
+        "source_sha256": "c52e0a15a35217c8f6999a8b209ac2ecb23bb37d91d47b192054cf5623aefc6e",
+        "binary_sha256": "05fe8b334764fd859c9db251814b2ab3c1017d4c2b5ffd32553ff5c3877a9a16",
+        "exit": 0,
+        "elapsed_seconds": 0.17797729099993376,
+        "time": "2026-10-24T02:56:12.782464+00:00",
+        "stdout_sha256": "6de22a24e5c07010b524eedd13fe7ad33e69347bd6e1752c9528b0f54002c81a",
+        "stderr_sha256": "9a3188568acf6ff778201e0d7e4546efacffb0ee60106d57408f6a095a942758"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/checker.json",
+        "command": [
+          "python3",
+          "scripts/test_check_dev3_empty_history_borrows.py"
+        ],
+        "source_sha256": "186e0f0e440dcff89c0a0c26f70588ce76741e0dc19cc42b882431329be08fb0",
+        "exit": 0,
+        "elapsed_seconds": 0.041318509999882735,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "fb184ea57734512b1f088f9181209901b9cd46df3eb7eaa2500ea9e48dde20b5"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/clippy.json",
+        "command": [
+          "cargo",
+          "clippy",
+          "-p",
+          "xadb-engine",
+          "--all-targets",
+          "--all-features",
+          "--locked",
+          "--offline",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "source_sha256": "186e0f0e440dcff89c0a0c26f70588ce76741e0dc19cc42b882431329be08fb0",
+        "exit": 101,
+        "elapsed_seconds": 11.580949768999972,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "2c706145221e6767505960c8324be24262f75e93550b758d5d82d4e9fa316a2f"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/fmt.json",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--check"
+        ],
+        "source_sha256": "186e0f0e440dcff89c0a0c26f70588ce76741e0dc19cc42b882431329be08fb0",
+        "exit": 0,
+        "elapsed_seconds": 0.831048095999904,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/sealed_history/receipt.json",
+        "source_sha256": "186e0f0e440dcff89c0a0c26f70588ce76741e0dc19cc42b882431329be08fb0",
+        "program_sha256": "eacc65215175901b0009bfa1d1f327284dff58912e3bff7fa7cb423d9461e12f",
+        "command": [
+          "cargo",
+          "check",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 101,
+        "elapsed_seconds": 2.029993717999787,
+        "stdout_sha256": "11e1d72a49bf683ea73077f7f355c94a1587480acf8628e4c1174c729d461758",
+        "stderr_sha256": "7104ebc9274b539a0853c656de3b59331b6ea0d75b2bc3531275e0ca0dcba7d9",
+        "verdict": "NOT_EVALUATED"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/sealed_history/verified.json",
+        "source_sha256": "186e0f0e440dcff89c0a0c26f70588ce76741e0dc19cc42b882431329be08fb0",
+        "program_sha256": "eacc65215175901b0009bfa1d1f327284dff58912e3bff7fa7cb423d9461e12f",
+        "command": [
+          "cargo",
+          "check",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 101,
+        "elapsed_seconds": 2.029993717999787,
+        "stdout_sha256": "11e1d72a49bf683ea73077f7f355c94a1587480acf8628e4c1174c729d461758",
+        "stderr_sha256": "7104ebc9274b539a0853c656de3b59331b6ea0d75b2bc3531275e0ca0dcba7d9",
+        "verdict": "PASS"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/flush_sequence/receipt.json",
+        "source_sha256": "186e0f0e440dcff89c0a0c26f70588ce76741e0dc19cc42b882431329be08fb0",
+        "program_sha256": "5c071b04ba5f19dca00993a30cb45641431912690e62b02d1b3d5bb39c2fbf8f",
+        "command": [
+          "cargo",
+          "check",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 2.6577184109999052,
+        "stdout_sha256": "74d1eaca6d118fee06cdfdfbf7acabc7f7bb7eb35bba4bd0cae435bab4a2365e",
+        "stderr_sha256": "10c5c758641ef9d5cbf17f6074d9879b4fb9f8b98d04a2cfa3737e0895a2bbce",
+        "verdict": "NOT_EVALUATED"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/empty-history-compiler-8dedo0dz/flush_sequence/verified.json",
+        "source_sha256": "186e0f0e440dcff89c0a0c26f70588ce76741e0dc19cc42b882431329be08fb0",
+        "program_sha256": "5c071b04ba5f19dca00993a30cb45641431912690e62b02d1b3d5bb39c2fbf8f",
+        "command": [
+          "cargo",
+          "check",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 2.6577184109999052,
+        "stdout_sha256": "74d1eaca6d118fee06cdfdfbf7acabc7f7bb7eb35bba4bd0cae435bab4a2365e",
+        "stderr_sha256": "10c5c758641ef9d5cbf17f6074d9879b4fb9f8b98d04a2cfa3737e0895a2bbce",
+        "verdict": "PASS"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p0/build-receipt.json",
+        "source_sha256": "f65e7448f2bb0598f23fab8b29215835147c853d069e8df6a8e53abf0358c23c",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p8/clippy.json",
+        "command": [
+          "cargo",
+          "clippy",
+          "-p",
+          "xadb-engine",
+          "--all-targets",
+          "--all-features",
+          "--locked",
+          "--offline",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "source_sha256": "2089d14f98e03e98533a225b9473928da25314122dfce9301751d1d93794b6c9",
+        "exit": 0,
+        "elapsed_seconds": 10.05315218099986,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "cc9814bafdc4ae5ec4e4ffb08d7fad54b87e7190991cddb75f8a124593ec66e3"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-20261024/p8/fmt.json",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--check"
+        ],
+        "source_sha256": "2089d14f98e03e98533a225b9473928da25314122dfce9301751d1d93794b6c9",
+        "exit": 0,
+        "elapsed_seconds": 0.8367877840000801,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "native": [
+      {
+        "source": "p6",
+        "receipt": "artifacts/dev3/empty-transaction-20261024/p6/native/receipt.json",
+        "db_bytes": 22131488,
+        "db_files": 15
+      },
+      {
+        "source": "p7",
+        "receipt": "artifacts/dev3/empty-transaction-20261024/p7/native/receipt.json",
+        "db_bytes": 22137568,
+        "db_files": 15
+      }
+    ],
+    "preserved_failures": {
+      "p1": "compile wrong OwnerRole",
+      "p2": "compile private import",
+      "p3": "compile ancestor path",
+      "p5_prefix": "fixture length mismatch, exit -6, completed variants0/5; product not evaluated",
+      "p6_continuation": "fixture uses INIT-only reader on occupied page; exit101 then waiting worker timeout",
+      "p6_native": "fixture copied-input path wrong; one actual flush before assertion error, no completed accepted case",
+      "compiler_baseline_clippy": "too_many_arguments; p8 narrow reasoned lint allowance only"
+    },
+    "not_run": [
+      "live load",
+      "current-build closed recovery/reentry",
+      "empty_history_s5_profiles_and_selected_states 12 variants",
+      "DEV3 final S5"
+    ],
+    "original_results_preserved": true,
+    "unchanged_lower_tests_rerun": false,
+    "consumer_reached": false,
+    "integration_units_completed": 0,
+    "retention_snapshot": {
+      "case_receipt_bytes": 351571,
+      "native_fixture_bytes": 44269056,
+      "source_elf_cache_bytes": 3016386006
+    },
+    "review": {
+      "path": "artifacts/dev3/empty-transaction-20261024/review/history-flush-d1-final.md",
+      "status": "ACCEPTED_WITH_LIMITED_SCOPE",
+      "staged_paths": 25,
+      "ocr_reviewed": 14,
+      "excluded_materials_reviewed": 11,
+      "blocking_findings": 0,
+      "reviewed_staged_diff_sha256": "a7fe2f9abf78dd8eeca8c636731178a8d57fcf01ce50df40e128a5f67f3f6123",
+      "post_review_change": "metadata status and final review references only"
+    },
+    "final_review_retention_snapshot": {
+      "case_receipt_bytes": 359398,
+      "native_fixture_bytes": 44269056,
+      "source_elf_cache_bytes": 3016386006
     }
   }
 }

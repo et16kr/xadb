@@ -399,4 +399,8 @@ RollbackStart와 공유한다. package·dependency·source root·feature는 바�
 원 ResidentStatus의 consuming 인계와 caller bank를 보존한다. 같은 owner의 실제 Begin/RollbackStart/
 AbortEnd는 `wal_io/empty_transactions_live.rs`·시험·live fixture/manifest와 compiler2개를 추가해
 연결한다. sealed install proof의 명시적 re-export와 frozen allocator observer를 사용하며 새
-crate/source root/dependency는 없다. live flush/load·native recovery 통합은 남아 있다.
+crate/source root/dependency는 없다.
+[§20](../contracts/dev3-obligation-format.md#empty-transaction-flush)의 실제 WAL 이력 검산은
+`empty_transactions_history.rs`에서 기존 semantic materializer를 조합하고 원 Status flush
+authority에 private digest 이력을 보유한다. Linux worker·선택 manifest·compiler2개 및 전용
+runner/checker를 관리 JSON에 추가한다. live load·native recovery 통합은 남아 있다.

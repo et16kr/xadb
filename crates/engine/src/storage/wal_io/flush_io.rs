@@ -951,10 +951,10 @@ fn read_home<W: WriterNamespace>(
                 let lsn = authority
                     .envelope_lsn(home.try_into().expect("fixed home interval"))
                     .map_err(Cause::Status)?;
-                // The immutable first Status incarnation has one actual image.
-                // Equality to the validated copy proves canonical Free state;
-                // no occupied-cell decoder or speculative repair is admitted.
-                if lsn != capture.stamp().page_lsn || home != image {
+                // INIT authority permits only its exact image. A live empty
+                // authority admits only whole images reconstructed from that
+                // selected page's original complete WAL history.
+                if lsn.0 > capture.stamp().page_lsn.0 || !authority.accepts_home(home, image) {
                     return Err(Cause::ContentMismatch);
                 }
             }
