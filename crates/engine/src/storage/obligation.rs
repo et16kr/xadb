@@ -3,7 +3,7 @@
 #![allow(dead_code)] // Awaiting inventory closure and semantic WAL consumers.
 
 use super::{
-    allocation_page::{ReservationOwner, SystemWorkRef},
+    allocation_page::{ReservationOwner, SystemWorkKind, SystemWorkRef},
     control::{ControlKind, ControlRef, EXTENT_BYTES},
     transaction_record::{TransactionState, TransactionStatus, TransactionStatusCell, TxnRef},
 };
@@ -258,7 +258,18 @@ fn zero(input: &[u8]) -> bool {
     input.iter().all(|byte| *byte == 0)
 }
 
-pub(crate) fn encode_descriptor(spec: &DescriptorSpec, output: &mut [u8]) -> Result<()> {
+// The two fixed entries expand the same body without another runtime call layer.
+macro_rules! descriptor_encoder {
+    ($visibility:vis, $name:ident, ($($work:ident)?)) => {
+        $visibility fn $name(
+            spec: &DescriptorSpec,
+            $($work: &[u8; 96],)?
+            output: &mut [u8],
+        ) -> Result<()> {
+            $(
+                validate_aging_work(spec.owner, $work)
+                    .map_err(|_| ObligationError::InvalidInput)?;
+            )?
     if output.len() != OBLIGATION_BYTES {
         return Err(ObligationError::InvalidInput);
     }
@@ -291,6 +302,7 @@ pub(crate) fn encode_descriptor(spec: &DescriptorSpec, output: &mut [u8]) -> Res
             put(&mut bytes, 368, progress.cursor);
             put(&mut bytes, 376, progress.limit);
             bytes[448..480].copy_from_slice(&content_digest(&[]));
+            $(bytes[384..480].copy_from_slice($work);)?
         }
     }
     put(&mut bytes, 72, spec.chain.apply);
@@ -326,12 +338,39 @@ pub(crate) fn encode_descriptor(spec: &DescriptorSpec, output: &mut [u8]) -> Res
     Ok(())
 }
 
+    };
+}
+descriptor_encoder!(pub(crate), encode_descriptor, ());
+descriptor_encoder!(pub(super), encode_aging_descriptor, (work));
+
+// Fixed local policies expand checks in place. The old entry gains neither
+// local values nor a forwarding call, preserving its tight source-value bound.
+macro_rules! descriptor_work_prefix {
+    (empty, $input:ident) => {
+        if !zero(&$input[384..448]) {
+            return Err(ObligationError::UnsupportedWorkBody);
+        }
+        if $input[448..480] != content_digest(&[]) {
+            return Err(ObligationError::Corrupt);
+        }
+    };
+    (aging, $input:ident) => {};
+}
+macro_rules! descriptor_work_owner {
+    (empty, $owner:ident, $input:ident) => {};
+    (aging, $owner:ident, $input:ident) => {
+        validate_aging_work($owner, &$input[384..480])?;
+    };
+}
+
 /// Successful decoding proves local representation only, not inventory or replay.
-pub(crate) fn decode_descriptor(
-    input: &[u8],
-    expected_owner: ReservationOwner,
-    expected_profile: ControlRef,
-) -> Result<DescriptorSpec> {
+macro_rules! descriptor_decoder {
+    ($visibility:vis, $name:ident, $policy:ident) => {
+        $visibility fn $name(
+            input: &[u8],
+            expected_owner: ReservationOwner,
+            expected_profile: ControlRef,
+        ) -> Result<DescriptorSpec> {
     valid_profile(expected_profile)?;
     if input.len() != OBLIGATION_BYTES
         || &input[..4] != b"XOD1"
@@ -375,12 +414,7 @@ pub(crate) fn decode_descriptor(
             {
                 return Err(ObligationError::Corrupt);
             }
-            if !zero(&input[384..448]) {
-                return Err(ObligationError::UnsupportedWorkBody);
-            }
-            if input[448..480] != content_digest(&[]) {
-                return Err(ObligationError::Corrupt);
-            }
+            descriptor_work_prefix!($policy, input);
             let phase = match input[353] {
                 1 => WorkPhase::Prepared,
                 2 => WorkPhase::Running,
@@ -401,6 +435,7 @@ pub(crate) fn decode_descriptor(
     if input[6] != owner.tag() {
         return Err(ObligationError::Corrupt);
     }
+    descriptor_work_owner!($policy, owner, input);
     let mut remaining = [RemainingBudget::default(); 5];
     for (index, row) in remaining.iter_mut().enumerate() {
         let base = 640 + 128 * index;
@@ -450,6 +485,45 @@ pub(crate) fn decode_descriptor(
         return Err(ObligationError::IdentityMismatch);
     }
     Ok(spec)
+}
+
+    };
+}
+descriptor_decoder!(pub(crate), decode_descriptor, empty);
+descriptor_decoder!(pub(super), decode_aging_descriptor, aging);
+
+// Kind7 is local to the explicit Aging work body. Generic ControlRef decoding
+// and control-file selection intentionally remain unchanged.
+fn validate_aging_work(owner: OwnerState, work: &[u8]) -> Result<()> {
+    let OwnerState::System(progress) = owner else {
+        return Err(ObligationError::UnsupportedWorkBody);
+    };
+    if progress.reference.kind() != SystemWorkKind::Aging
+        || progress.phase != WorkPhase::Running
+        || progress.limit != 64
+        || progress.cursor >= 64
+        || work.len() != 96
+        || work[0] != 7
+        || !zero(&work[1..8])
+        || get(work, 8) != progress.sequence
+        || work[16..20] != 16384u32.to_le_bytes()
+        || !zero(&work[20..32])
+    {
+        return Err(ObligationError::UnsupportedWorkBody);
+    }
+    Ok(())
+}
+
+/// Shared budget representation only; callers still validate owner accounting.
+pub(super) fn encode_budget_rows(rows: &[RemainingBudget; 5], output: &mut [u8; 640]) {
+    output.fill(0);
+    for (index, row) in rows.iter().enumerate() {
+        let base = index * 128;
+        output[base] = index as u8 + 1;
+        for (field, value) in row.values().iter().enumerate() {
+            put(output, base + 8 + field * 8, *value);
+        }
+    }
 }
 
 #[cfg(test)]

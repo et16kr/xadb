@@ -2072,6 +2072,21 @@
       "path": "evidence/dev4-lifecycle-inputs-20261024.md",
       "role": "evidence",
       "title": "DEV4 P5 수명 모델의 독립 입력 준비"
+    },
+    "dev3-empty-retention-semantics.md": {
+      "path": "contracts/dev3-empty-retention-semantics.md",
+      "role": "contracts",
+      "title": "DEV3 빈 거래·정리 큐 순수 의미 처리 계약"
+    },
+    "dev3-empty-retention-semantics-20261024.md": {
+      "path": "evidence/dev3-empty-retention-semantics-20261024.md",
+      "role": "evidence",
+      "title": "DEV3 빈 거래·정리 큐 순수 의미 처리 선택 검증"
+    },
+    "dev3-empty-retention-semantics-20261024.json": {
+      "path": "evidence/dev3-empty-retention-semantics-20261024.json",
+      "role": "evidence",
+      "title": "DEV3 빈 거래·정리 의미 source별 실행 색인"
     }
   }
 }

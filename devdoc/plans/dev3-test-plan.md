@@ -823,3 +823,22 @@ S5 memory 전체600s/32MiB, 추가 native 두 chain 합60s와 P1 포함 whole-hi
 | RC-M05 | `runtime_core_reader_claim_handoff` | 실제 open/drop 뒤 선언된 busy flag fault의 이동·정리 |
 
 먼저 source/ELF/input을 고정하고 static2의 실제 값과 source phase를 수용한 뒤 memory5를 실행한다. 전체 runner 진입부터 사전 source/hash/prior audit·process·최종 receipt 저장까지 static 누적10초/개별5초/1MiB, memory 누적180초/개별30초/4MiB다. 최종 기록에는100ms 보수 여유를 계상하고 저장 뒤 실제 경과가 그 charge 안인지 검산한다. 원 실패/부분 결과를 보존하며 같은 완료 ID는 중간 단계에서 제외한다. Caller memory port의 설치는 새 이동 검증의 입력 준비이며 이전 설치 시험의 새 PASS가 아니다.
+
+<a id="empty-retention-semantics"></a>
+## 빈 거래·정리 큐 순수 의미 처리의 선택 검증
+
+[소유 계약](../contracts/dev3-empty-retention-semantics.md)과 [source별 증거](../evidence/dev3-empty-retention-semantics-20261024.md)를 따른다. 정확615개 ID·selector·offset recipe는 [동결 입력](../../tests/fixtures/dev3-plan4-empty-retention/input-plan.json), source별 실제 결과는 [기계 색인](../evidence/dev3-empty-retention-semantics-20261024.json)에 있다. 필수140은 정적1+의미139(10selector), S5 고유 추가475는8selector다. 최종 S5에는 필수140도 포함한다.
+
+| 필수 가족 | 수 | 검산 |
+| --- | ---: | --- |
+| Q/R/J/C | 12/14/18/8 | Root/Job 정규 vector·오류·64cell census |
+| A | 12 | Aging descriptor·원 generic body 경계 |
+| P/O | 4/4 | 생산/관측 각각 독립 raw와 byte 일치 |
+| N | 27 | generation·before chain·입력/출력·budget 의미 거절 |
+| E | 32 | tag3 envelope·길이·checksum·기존 tag2/legacy 경계 |
+| V | 8 | L0 거절·호출 자원/참조 보존 |
+| ST | 1 | 실제 타입과 순수 source64KiB·caller loan 분리 |
+
+G6_CONTEXT/BEGIN/PASS/FAIL/SKIP과 source/ELF/input identity를 사용한다. static G6-ST01을 먼저 검산하고 독립 수용 뒤 semantic을 선택한다. static은 worker10초+감사5초/전체15초/1MiB, semantic은 worker120초+감사30초/전체150초/개별15초/4MiB다. 첫 audit·source/hash·prior·마지막 기록을 모두 포함하고100ms 최종 기록 charge를 검산한다. 원 explicit FAIL과 미실행을 구분하며 완료 ID는 후속 선택에서 제외한다. 새 checker12는 별도 분모다.
+
+중간 실행은 P1/ordinal0의 raw24+reference10만 사용했다. S5에는 profile/ordinal 확대·reserved field·truncation 조합475를 선택한다. 이번 필수140은 source별로 충족했고 원 N07/N08 실패를 보존한 뒤 두 시험의 도달성 수정만 별도 검증했다. 원 ST01을 새 source/ELF의 재실행 PASS로 표시하지 않는다. 실제 live/flush/base/epoch/recovery 및 최종 전체 G6 inventory는 별도이며 이 순수 단위로 완료하지 않는다.

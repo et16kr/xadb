@@ -484,6 +484,29 @@ pub(super) fn finish_semantic_envelope(
     Ok(())
 }
 
+/// Finish the separate tag-3 handoff envelope without granting group authority.
+/// The semantic owner validates the complete two-owner body and target count.
+/// Like the tag-2 entry, errors preserve output and success preserves payload.
+pub(super) fn finish_retention_envelope(
+    header: WalFrameHeader,
+    record_count: u16,
+    output: &mut [u8],
+) -> Result<(), WalError> {
+    validate_header(header)?;
+    let length = output.len();
+    if length < FRAME_OVERHEAD_BYTES {
+        return Err(WalError::NoSpace);
+    }
+    if length > MAX_FRAME_BYTES {
+        return Err(WalError::TooLarge);
+    }
+    let bytes = encoded_header(header, length, 3, record_count)?;
+    output[..FRAME_HEADER_BYTES].copy_from_slice(&bytes);
+    let digest = content_digest(&output[..length - 32]);
+    output[length - 32..].copy_from_slice(&digest);
+    Ok(())
+}
+
 /// No output byte changes on failure; bytes beyond the returned prefix survive.
 pub(crate) fn encode_frame<'a>(
     header: WalFrameHeader,
@@ -534,6 +557,7 @@ fn visible_equals(
 enum PayloadMode {
     Legacy,
     Semantic,
+    Retention,
 }
 
 fn validate_header_prefix(
@@ -583,6 +607,7 @@ fn validate_header_prefix(
         && match mode {
             PayloadMode::Legacy => bytes[7] > 1,
             PayloadMode::Semantic => bytes[7] != 2,
+            PayloadMode::Retention => bytes[7] != 3,
         }
     {
         return Err(WalError::UnsupportedFormat);
@@ -829,6 +854,22 @@ pub(super) fn decode_semantic_envelope(
     expected: FrameExpectation,
 ) -> Result<FrameEnvelope<'_>, WalError> {
     validate_header_prefix(input, expected, PayloadMode::Semantic)?;
+    if input.len() < FRAME_HEADER_BYTES || input.len() < read_u32(input, 12) as usize {
+        return Err(WalError::Truncated);
+    }
+    if input.len() != read_u32(input, 12) as usize {
+        return Err(WalError::Corrupt);
+    }
+    complete_envelope(input, expected)
+}
+
+/// Exact tag-3 envelope; tag-2 and legacy entry points still reject this tag.
+/// Identity, order, complete length and both digests precede semantic decoding.
+pub(super) fn decode_retention_envelope(
+    input: &[u8],
+    expected: FrameExpectation,
+) -> Result<FrameEnvelope<'_>, WalError> {
+    validate_header_prefix(input, expected, PayloadMode::Retention)?;
     if input.len() < FRAME_HEADER_BYTES || input.len() < read_u32(input, 12) as usize {
         return Err(WalError::Truncated);
     }

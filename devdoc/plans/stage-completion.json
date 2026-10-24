@@ -1029,6 +1029,19 @@
           "recovered_constructor": false,
           "full_stage_acceptance": false,
           "ai_experiment_completed_consumers": 1
+        },
+        "empty_retention_semantics": {
+          "status": "ACCEPTED_LIMITED_D1",
+          "contract_ref": "dev3-empty-retention-semantics.md",
+          "evidence_ref": "dev3-empty-retention-semantics-20261024.json",
+          "mandatory_unique_pass": 140,
+          "static": 1,
+          "semantic": 139,
+          "native_runtime": 0,
+          "s5_additional": 475,
+          "live_owner": false,
+          "full_stage_acceptance": false,
+          "ai_experiment_completed_consumers": 1
         }
       }
     },

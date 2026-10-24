@@ -1,5 +1,7 @@
 # 현재 구현
 
+- [DEV3 빈 거래·정리 큐 순수 의미 처리](dev3-implementation.md#empty-retention-semantics) — 필수140 source별 PASS·최종 독립 D1 제한 수용; 원 실패·실제 연결 잔여 범위 구분
+
 2026-10-24 [DEV3 원 WAL runtime/core 추출](dev3-implementation.md#private-runtime-core): private core와 원 소유권 이동·전달을 새7개 사례로 확인했다. 최종 독립 D1 제한 수용, recovered constructor·G6/DEV3/S5는 미완료다.
 
 2026-10-24 [DEV4 P6 공급/API 수합](../evidence/dev4-supply-handoff-20261024.md): DEV3 clean owner의 제한 진전과 공개 disk 거래·live 큐·Catalog CREATE/CLR·첫 행 ACK의 미제공을 대조했다. 제품·시험 실행0, 실제 engine 연결·P5 모델·Q1은 미완료다.

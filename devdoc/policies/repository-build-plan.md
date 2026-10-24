@@ -480,3 +480,7 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 ### 원 WAL runtime/core 추출
 
 [저장 소유 계약](../contracts/dev3-storage-session.md#private-runtime-core)의 내부 추출과 기존 시험의 필드 접근 적응은 engine 안에 유지한다. 실제 신규 파일은 `wal_io/runtime_core_tests.rs`이며 [관리 JSON](repository-build-plan.json)의 `dev3_runtime_core`에38개 변경/신규 경로를 등록한다. [선택 증거](../evidence/dev3-runtime-core-20261024.md)는 신규7개 PASS와 원 실패를 구별한다. 진행 중인 G6 wire/live/recovery 소스는 이 단위에 포함하지 않으며 최종 독립 D1을 이 추출 범위에서 수용했다.
+
+## DEV3 빈 거래·정리 의미의 파일 경계
+
+[소유 계약](../contracts/dev3-empty-retention-semantics.md)의 `retention_page.rs`, `retention_obligation.rs`, `semantic_retention.rs`와 각 시험 파일을 engine storage 안에 둔다. 기존 `obligation.rs`의 고정 macro와 `wal_frame.rs`의 별도 tag3 진입점을 공유하고 새 package/의존성은 추가하지 않는다. 실제 새 fixture와 원 vector를 포함한48경로는 [관리 JSON](repository-build-plan.json)의 `dev3_empty_retention_semantics`에 등록한다. [실행 증거](../evidence/dev3-empty-retention-semantics-20261024.md)는 필수140의 source별 PASS와 원 실패를 구분한다. 별도 control/base/live 초안은 이 범위에서 제외하며 최종 독립 D1을 이 순수 단위에서 수용했다.

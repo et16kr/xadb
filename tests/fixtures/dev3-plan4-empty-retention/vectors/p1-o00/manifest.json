@@ -1,0 +1,257 @@
+{
+  "actor": {
+    "epoch": 1,
+    "generation": 2,
+    "local": 1
+  },
+  "after_begin_future": 114864,
+  "approval_sha256": "3b77dfb0cc7fbf35df95ac1abc4f5708098f71156c4a658f0b9700920789dd8c",
+  "begin_admission": 171576,
+  "exclusions": [
+    "No reserve/INIT WAL constructed",
+    "No current/base/recovery authority",
+    "No product execution",
+    "No F05 claim from semantic input approval"
+  ],
+  "files": {
+    "raw/abort.wal": {
+      "bytes": 56712,
+      "sha256": "19263ac31f2f77860af938359b72d63042f6308f0885963875962e9918cf8028"
+    },
+    "raw/aging-abort.descriptor": {
+      "bytes": 1536,
+      "sha256": "c15cf0f5360bd4d3ed062554111dbf7c88ed9a740054264d8021e883e2f3219c"
+    },
+    "raw/aging-begin.descriptor": {
+      "bytes": 1536,
+      "sha256": "40fcb88105ac6f9300a70fe8bd79a1b45da2e1b12b5735bff0c7528315936b5a"
+    },
+    "raw/aging-finish.descriptor": {
+      "bytes": 1536,
+      "sha256": "05a73e8aebfd7a807d5f2455be1a386f9c1d230de20b7a4254021cc6b4e197d9"
+    },
+    "raw/aging-start.descriptor": {
+      "bytes": 1536,
+      "sha256": "bc802d0839214b0bbbac4d3d52f9017e64c56ef2291a9be8bb030938abb2f11f"
+    },
+    "raw/aging-start.wal": {
+      "bytes": 19672,
+      "sha256": "aec4bb0b39714379943228d922c28bac3e032c4280a6bc970cf10a76fead1f9f"
+    },
+    "raw/begin.wal": {
+      "bytes": 56712,
+      "sha256": "47f67e5b6177151a47649b70690a9c0e9ceb3cffc12a04f3840dbf1bf6975ddd"
+    },
+    "raw/finish.wal": {
+      "bytes": 55112,
+      "sha256": "06fcd737da47f038671b593c3d09b26c881b98ac4c12164a238796deb11a8b1d"
+    },
+    "raw/jobs-abort.page": {
+      "bytes": 16384,
+      "sha256": "1b0430ac46d0d56d4c0b56271f641638fdc23a8c9214afe4e0d377758bf63d7f"
+    },
+    "raw/jobs-begin.page": {
+      "bytes": 16384,
+      "sha256": "a333371d4694e0965fd01e114b4f9f431389aa71f97267708ebc8f0573c72efc"
+    },
+    "raw/jobs-finish.page": {
+      "bytes": 16384,
+      "sha256": "bbbb336fd2ee264e5ced1f19770c849d6bca5e7c7273c5c25d250e500c165fdd"
+    },
+    "raw/rollback.wal": {
+      "bytes": 3040,
+      "sha256": "d127a46b187f8a904da8ae9c7699abbc42dc61d0c4b9edc60d70d76189a540d9"
+    },
+    "raw/root-abort.page": {
+      "bytes": 16384,
+      "sha256": "549e6f00a5924a1eef5da0bc9f2c3352f0980e53cf367e3c48f900c4cd26eaf2"
+    },
+    "raw/root-begin.page": {
+      "bytes": 16384,
+      "sha256": "f8e56dc3028948749a393094a66946e8da5ade69110ed3e2c4aa53368b63e0df"
+    },
+    "raw/root-finish.page": {
+      "bytes": 16384,
+      "sha256": "0004e6b2dbfd214a576c79bed517ef9b45290272f8d4c065c91e82282191e4ab"
+    },
+    "raw/root-start.page": {
+      "bytes": 16384,
+      "sha256": "bcb505330a10e9739e8e14d9144c439e8bdd656118782ffc91271a958a3999b4"
+    },
+    "raw/status-abort.page": {
+      "bytes": 16384,
+      "sha256": "67151d7d4c9ed04b4ea4c9c813884a35635cb0ca4d7e5e0e9b1a9fd5845ccf62"
+    },
+    "raw/status-begin.page": {
+      "bytes": 16384,
+      "sha256": "1f259a3e1f1a4bd144e743e06941ad4d18503bcfe402129d1ca7261f5332ce25"
+    },
+    "raw/status-finish.page": {
+      "bytes": 16384,
+      "sha256": "99aba4a66f7878d522b2eff9e1003544a04bbe34cd8fc5eee4eefa5ac3b2ba41"
+    },
+    "raw/status-free.page": {
+      "bytes": 16384,
+      "sha256": "adba494d6cfce831d5af1d9bb61e661166b85defccfca20c4bf43b8340ad69bc"
+    },
+    "raw/status-rollback.page": {
+      "bytes": 16384,
+      "sha256": "f01ea439ec739eef56c6cd4c70f15c3c84f1a272b10a45f2195fb6192459e3e2"
+    },
+    "raw/tx-abort.descriptor": {
+      "bytes": 1536,
+      "sha256": "beb1d9e5f5e29543a3751f4505a0863474a5532937f03710acbf17eae03d8bc8"
+    },
+    "raw/tx-begin.descriptor": {
+      "bytes": 1536,
+      "sha256": "9cbf3885a69d8b6a89db4105d544e8a47289847c87589cf72b5cb4fd9ade794b"
+    },
+    "raw/tx-rollback.descriptor": {
+      "bytes": 1536,
+      "sha256": "133012133ab91ccdc9b244721f5f2d0cd1cd3180013217dc3a5f8d5294dfe705"
+    },
+    "references/P00.bin": {
+      "bytes": 16384,
+      "sha256": "077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd"
+    },
+    "references/P01.bin": {
+      "bytes": 16384,
+      "sha256": "eba8bb02bacd91999b00f9891322b8cfebfb222004aa7b0f9332142834858f9c"
+    },
+    "references/P02.bin": {
+      "bytes": 16384,
+      "sha256": "49dafbbf9fdd3e8c8d93e073170114602d50a86e5f82697f4de7ba5232f4f0b3"
+    },
+    "references/P03.bin": {
+      "bytes": 16384,
+      "sha256": "2d7b85d1b4fcb607482de1186e2faeafb6f15667d9d1c1b1d520aebf50345046"
+    },
+    "references/P04.bin": {
+      "bytes": 16384,
+      "sha256": "0d3592d3f9b3399368722c03b864696f85ff1d157f7b4a3d509f3d1bb2660deb"
+    },
+    "references/P05.bin": {
+      "bytes": 16384,
+      "sha256": "950df8eb976fea1bb99cc4842816f27bd83c7e373268e07ceedde35006c0a182"
+    },
+    "references/P06.bin": {
+      "bytes": 16384,
+      "sha256": "9f53a1983f5b03e2b22454e9fc6f44a516530fd3ba17bd919147394228f746d5"
+    },
+    "references/P07.bin": {
+      "bytes": 16384,
+      "sha256": "c666b6d1954d2b19faa83d5bdb381f4edd337af835a47713e31d1efa52bcee90"
+    },
+    "references/P08.bin": {
+      "bytes": 16384,
+      "sha256": "646d2c91744594c80afc26e4919dffece69dd996e436a1390191a164c5a68567"
+    },
+    "references/REF-P1-d3-profile.bin": {
+      "bytes": 4096,
+      "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+    }
+  },
+  "frame_prices": {
+    "abort": 56712,
+    "aging-start": 19672,
+    "begin": 56712,
+    "finish": 55112,
+    "rollback": 3040
+  },
+  "generator_sha256": "3ff068ecb233b78ba4ce0f906239039f9dc57f108f051fd851a00d204179aaa9",
+  "lifecycle_bytes": 191248,
+  "namespace": {
+    "database": "0102030405060708090a0b0c0d0e0f10",
+    "timeline": 1
+  },
+  "ordinal": 0,
+  "profile": 1,
+  "raw_bytes": 398608,
+  "raw_files": 24,
+  "raw_index_sha256": "ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8",
+  "reference_bytes": 151552,
+  "reference_files": 10,
+  "reference_provenance": [
+    {
+      "bytes": 16384,
+      "id": "P00",
+      "path": "tests/fixtures/dev3-plan4-genesis/raw/P00.bin",
+      "sha256": "077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd"
+    },
+    {
+      "bytes": 16384,
+      "id": "P01",
+      "path": "tests/fixtures/dev3-plan4-genesis/raw/P01.bin",
+      "sha256": "eba8bb02bacd91999b00f9891322b8cfebfb222004aa7b0f9332142834858f9c"
+    },
+    {
+      "bytes": 16384,
+      "id": "P02",
+      "path": "tests/fixtures/dev3-plan4-genesis/raw/P02.bin",
+      "sha256": "49dafbbf9fdd3e8c8d93e073170114602d50a86e5f82697f4de7ba5232f4f0b3"
+    },
+    {
+      "bytes": 16384,
+      "id": "P03",
+      "path": "tests/fixtures/dev3-plan4-genesis/raw/P03.bin",
+      "sha256": "2d7b85d1b4fcb607482de1186e2faeafb6f15667d9d1c1b1d520aebf50345046"
+    },
+    {
+      "bytes": 16384,
+      "id": "P04",
+      "path": "tests/fixtures/dev3-plan4-genesis/raw/P04.bin",
+      "sha256": "0d3592d3f9b3399368722c03b864696f85ff1d157f7b4a3d509f3d1bb2660deb"
+    },
+    {
+      "bytes": 16384,
+      "id": "P05",
+      "path": "tests/fixtures/dev3-plan4-genesis/raw/P05.bin",
+      "sha256": "950df8eb976fea1bb99cc4842816f27bd83c7e373268e07ceedde35006c0a182"
+    },
+    {
+      "bytes": 16384,
+      "id": "P06",
+      "path": "tests/fixtures/dev3-plan4-genesis/raw/P06.bin",
+      "sha256": "9f53a1983f5b03e2b22454e9fc6f44a516530fd3ba17bd919147394228f746d5"
+    },
+    {
+      "bytes": 16384,
+      "id": "P07",
+      "path": "tests/fixtures/dev3-plan4-genesis/raw/P07.bin",
+      "sha256": "c666b6d1954d2b19faa83d5bdb381f4edd337af835a47713e31d1efa52bcee90"
+    },
+    {
+      "bytes": 16384,
+      "id": "P08",
+      "path": "tests/fixtures/dev3-plan4-genesis/raw/P08.bin",
+      "sha256": "646d2c91744594c80afc26e4919dffece69dd996e436a1390191a164c5a68567"
+    },
+    {
+      "bytes": 4096,
+      "id": "REF-P1-d3-profile",
+      "path": "tests/fixtures/dev3-plan4-genesis/references/REF-P1-d3-profile.bin",
+      "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+    }
+  ],
+  "resource_peak": [
+    4,
+    114688,
+    0,
+    4,
+    5,
+    1
+  ],
+  "resource_peak_evidence_sha256": "f338e2a81256ad9fa75aae0640e332d0f154f2cfb576704b3bb645e7afa6a47c",
+  "resource_peak_status": "APPROVED_SEMANTIC_INPUT",
+  "same_debt_aging_job": 55112,
+  "schema": "XADB_G6_LITERAL_INPUT_V1",
+  "separate_allocation_bytes": 59200,
+  "status": "GENERATED_INPUT_NOT_PRODUCT_EVIDENCE",
+  "status_location": {
+    "free_generation": 1,
+    "incarnation": 2,
+    "page": 9,
+    "slot": 0
+  },
+  "wire_sha256": "0561d2c1fc40daeacf65d530b245932a8daf4b213e9476ca1df72a48023e3ae2"
+}
