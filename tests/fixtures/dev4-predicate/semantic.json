@@ -1,0 +1,1902 @@
+{
+  "schema": "xadb.dev4.predicate.semantic.v1",
+  "contract": "D4-FE-PREDICATE-001",
+  "status": "PRE_FREEZE_D2_REVIEW_NOT_EXECUTED",
+  "scope": "predicate raw AST/parser only; typed compilation, scalar decoding, truth evaluation, catalog and engine excluded",
+  "authoritative_data": [
+    "crates/testing/reference/src/frontend/predicate.rs",
+    "crates/testing/reference/src/frontend/predicate/literals.rs",
+    "crates/testing/reference/src/frontend/predicate/recipes.rs"
+  ],
+  "independence": "Hand-authored full arrays and fixed grammar fragments chosen before printing. Recipe prints a declarative expected tree and relocates known spans/links; it never parses completed SQL or imports production logic. Shared existing parser structs are observation-only.",
+  "observation": [
+    "all retained source bytes",
+    "entire preorder array, including unreachable entries",
+    "all node kind payloads",
+    "node span",
+    "Name normalized bytes/quoted/raw span",
+    "Integer sign/digits span",
+    "Parameter ordinal",
+    "first_child",
+    "next_sibling",
+    "marker_count",
+    "exact error code/module/span",
+    "complete"
+  ],
+  "shape_case_ids": [
+    "shape-hand-precedence",
+    "shape-hand-group",
+    "shape-compare-eq",
+    "shape-compare-ne",
+    "shape-compare-lt",
+    "shape-compare-le",
+    "shape-compare-gt",
+    "shape-compare-ge",
+    "shape-is-null",
+    "shape-is-not-null",
+    "shape-and-or",
+    "shape-or-and",
+    "shape-not-leading",
+    "shape-not-middle",
+    "shape-not-trailing",
+    "shape-not-double",
+    "shape-not-triple",
+    "shape-group-left-or",
+    "shape-group-right-and",
+    "shape-not-group-and",
+    "shape-group-singleton",
+    "shape-group-double",
+    "shape-group-not",
+    "shape-not-group-not",
+    "shape-flat-and-four",
+    "shape-flat-or-four",
+    "shape-two-and-blocks",
+    "shape-duplicates-and",
+    "shape-duplicates-or",
+    "shape-sibling-groups",
+    "shape-not-is-not-null",
+    "shape-mixed-keyword-case",
+    "shape-trivia-crlf",
+    "shape-operator-trivia",
+    "shape-not-comment"
+  ],
+  "raw_value_case_ids": [
+    "raw-pair-0-0",
+    "raw-pair-0-1",
+    "raw-pair-0-2",
+    "raw-pair-0-3",
+    "raw-pair-0-4",
+    "raw-pair-0-5",
+    "raw-pair-0-6",
+    "raw-pair-0-7",
+    "raw-pair-0-8",
+    "raw-pair-1-0",
+    "raw-pair-1-1",
+    "raw-pair-1-2",
+    "raw-pair-1-3",
+    "raw-pair-1-4",
+    "raw-pair-1-5",
+    "raw-pair-1-6",
+    "raw-pair-1-7",
+    "raw-pair-1-8",
+    "raw-pair-2-0",
+    "raw-pair-2-1",
+    "raw-pair-2-2",
+    "raw-pair-2-3",
+    "raw-pair-2-4",
+    "raw-pair-2-5",
+    "raw-pair-2-6",
+    "raw-pair-2-7",
+    "raw-pair-2-8",
+    "raw-pair-3-0",
+    "raw-pair-3-1",
+    "raw-pair-3-2",
+    "raw-pair-3-3",
+    "raw-pair-3-4",
+    "raw-pair-3-5",
+    "raw-pair-3-6",
+    "raw-pair-3-7",
+    "raw-pair-3-8",
+    "raw-pair-4-0",
+    "raw-pair-4-1",
+    "raw-pair-4-2",
+    "raw-pair-4-3",
+    "raw-pair-4-4",
+    "raw-pair-4-5",
+    "raw-pair-4-6",
+    "raw-pair-4-7",
+    "raw-pair-4-8",
+    "raw-pair-5-0",
+    "raw-pair-5-1",
+    "raw-pair-5-2",
+    "raw-pair-5-3",
+    "raw-pair-5-4",
+    "raw-pair-5-5",
+    "raw-pair-5-6",
+    "raw-pair-5-7",
+    "raw-pair-5-8",
+    "raw-pair-6-0",
+    "raw-pair-6-1",
+    "raw-pair-6-2",
+    "raw-pair-6-3",
+    "raw-pair-6-4",
+    "raw-pair-6-5",
+    "raw-pair-6-6",
+    "raw-pair-6-7",
+    "raw-pair-6-8",
+    "raw-pair-7-0",
+    "raw-pair-7-1",
+    "raw-pair-7-2",
+    "raw-pair-7-3",
+    "raw-pair-7-4",
+    "raw-pair-7-5",
+    "raw-pair-7-6",
+    "raw-pair-7-7",
+    "raw-pair-7-8",
+    "raw-pair-8-0",
+    "raw-pair-8-1",
+    "raw-pair-8-2",
+    "raw-pair-8-3",
+    "raw-pair-8-4",
+    "raw-pair-8-5",
+    "raw-pair-8-6",
+    "raw-pair-8-7",
+    "raw-pair-8-8",
+    "raw-name-left-lower",
+    "raw-name-right-lower",
+    "raw-name-left-mixed",
+    "raw-name-right-mixed",
+    "raw-name-left-underscore",
+    "raw-name-right-underscore",
+    "raw-name-left-quoted-lower",
+    "raw-name-right-quoted-lower",
+    "raw-name-left-quoted-upper",
+    "raw-name-right-quoted-upper",
+    "raw-name-left-quoted-quote",
+    "raw-name-right-quoted-quote",
+    "raw-name-left-quoted-utf8",
+    "raw-name-right-quoted-utf8",
+    "raw-name-left-quoted-marker",
+    "raw-name-right-quoted-marker",
+    "raw-name-left-quoted-keyword",
+    "raw-name-right-quoted-keyword",
+    "raw-name-left-in",
+    "raw-name-right-in",
+    "raw-name-left-between",
+    "raw-name-right-between",
+    "raw-name-left-like",
+    "raw-name-right-like",
+    "raw-name-left-exists",
+    "raw-name-right-exists",
+    "raw-name-left-default",
+    "raw-name-right-default",
+    "raw-name-left-returning",
+    "raw-name-right-returning",
+    "raw-name-left-n",
+    "raw-name-right-n",
+    "raw-name-left-q",
+    "raw-name-right-q",
+    "raw-name-left-public",
+    "raw-name-right-public",
+    "raw-name-left-function-word",
+    "raw-name-right-function-word",
+    "raw-preserve-integer-positive-overflow",
+    "raw-preserve-integer-negative-overflow",
+    "raw-preserve-integer-leading-zero",
+    "raw-preserve-binary-odd",
+    "raw-preserve-binary-invalid",
+    "raw-preserve-binary-doubled-quote",
+    "raw-preserve-text-doubled-quote",
+    "raw-preserve-text-nul",
+    "raw-preserve-text-backslash",
+    "raw-preserve-text-utf8",
+    "raw-preserve-text-spaces",
+    "raw-preserve-text-markers",
+    "raw-name-name",
+    "raw-marker-is-null",
+    "raw-like-is-null",
+    "raw-marker-order",
+    "raw-false-prefix-bad-scalar",
+    "raw-true-prefix-unknown-name"
+  ],
+  "raw_pair_order": [
+    "Integer None",
+    "Integer Plus",
+    "Integer Minus",
+    "Text empty",
+    "Binary empty",
+    "Bool true",
+    "Bool false",
+    "Null",
+    "Parameter"
+  ],
+  "error_literals": [
+    {
+      "id": "error-empty",
+      "source_hex": "",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "error-trivia",
+      "source_hex": "202f2a782a2f20",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          7,
+          7
+        ]
+      }
+    },
+    {
+      "id": "error-semicolon",
+      "source_hex": "3b",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "error-double-leading-semicolon",
+      "source_hex": "3b3b",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "error-bare-name",
+      "source_hex": "61",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "error-bare-true",
+      "source_hex": "54525545",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-bare-false",
+      "source_hex": "46414c5345",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-bare-null",
+      "source_hex": "4e554c4c",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-bare-marker",
+      "source_hex": "3f",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "error-bare-text",
+      "source_hex": "277827",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-missing-lhs",
+      "source_hex": "3d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "error-missing-rhs",
+      "source_hex": "613d",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-double-equal",
+      "source_hex": "613d3d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-missing-ne-rhs",
+      "source_hex": "613c3e",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-chained-comparison",
+      "source_hex": "613d623d63",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-split-ne",
+      "source_hex": "613c203e31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-split-le",
+      "source_hex": "613c203d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-leading-and",
+      "source_hex": "414e4420613d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          0,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-leading-or",
+      "source_hex": "4f5220613d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          0,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-trailing-and",
+      "source_hex": "613d3120414e44",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          7,
+          7
+        ]
+      }
+    },
+    {
+      "id": "error-trailing-or",
+      "source_hex": "613d31204f52",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          6,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-double-and",
+      "source_hex": "613d3120414e4420414e4420623d32",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          8,
+          11
+        ]
+      }
+    },
+    {
+      "id": "error-double-or",
+      "source_hex": "613d31204f52204f5220623d32",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          7,
+          9
+        ]
+      }
+    },
+    {
+      "id": "error-and-or-gap",
+      "source_hex": "613d3120414e44204f5220623d32",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          8,
+          10
+        ]
+      }
+    },
+    {
+      "id": "error-bare-not",
+      "source_hex": "4e4f54",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-not-and",
+      "source_hex": "4e4f5420414e4420613d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          7
+        ]
+      }
+    },
+    {
+      "id": "error-post-not",
+      "source_hex": "613d31204e4f5420623d32",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          7
+        ]
+      }
+    },
+    {
+      "id": "error-is-eof",
+      "source_hex": "61204953",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-is-not-eof",
+      "source_hex": "61204953204e4f54",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "error-is-true",
+      "source_hex": "612049532054525545",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          5,
+          9
+        ]
+      }
+    },
+    {
+      "id": "error-is-false",
+      "source_hex": "612049532046414c5345",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          5,
+          10
+        ]
+      }
+    },
+    {
+      "id": "error-is-not-true",
+      "source_hex": "61204953204e4f542054525545",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          9,
+          13
+        ]
+      }
+    },
+    {
+      "id": "error-is-not-false",
+      "source_hex": "61204953204e4f542046414c5345",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          9,
+          14
+        ]
+      }
+    },
+    {
+      "id": "error-is-distinct",
+      "source_hex": "612049532044495354494e43542046524f4d2062",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          5,
+          13
+        ]
+      }
+    },
+    {
+      "id": "error-is-not-distinct",
+      "source_hex": "61204953204e4f542044495354494e43542046524f4d2062",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          9,
+          17
+        ]
+      }
+    },
+    {
+      "id": "error-not-null-without-is",
+      "source_hex": "61204e4f54204e554c4c",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-is-extra-null",
+      "source_hex": "61204953204e554c4c204e554c4c",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          10,
+          14
+        ]
+      }
+    },
+    {
+      "id": "error-is-double-not",
+      "source_hex": "61204953204e4f54204e4f54204e554c4c",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          9,
+          12
+        ]
+      }
+    },
+    {
+      "id": "error-is-name",
+      "source_hex": "612049532062",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-is-marker",
+      "source_hex": "61204953203f",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-group-empty",
+      "source_hex": "2829",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-group-open",
+      "source_hex": "28",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "error-group-missing-close",
+      "source_hex": "28613d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-group-extra-close",
+      "source_hex": "613d3129",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-group-value",
+      "source_hex": "2861293d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-group-value",
+      "source_hex": "613d283129",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-group-empty",
+      "source_hex": "613d2829",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-group-double-missing-close",
+      "source_hex": "2828613d3129",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          6,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-extra-comparison",
+      "source_hex": "613d3120623d32",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-extra-semicolon",
+      "source_hex": "613d313b3b",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-extra-statement",
+      "source_hex": "613d313b20623d32",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-post-semicolon-returning",
+      "source_hex": "613d313b2052455455524e494e47",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          5,
+          14
+        ]
+      }
+    },
+    {
+      "id": "error-post-comparison-returning",
+      "source_hex": "613d312052455455524e494e47",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          13
+        ]
+      }
+    },
+    {
+      "id": "error-post-comparison-default",
+      "source_hex": "613d312044454641554c54",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          11
+        ]
+      }
+    },
+    {
+      "id": "error-where-entry",
+      "source_hex": "574845524520613d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          0,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-select-entry",
+      "source_hex": "53454c4543542061",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          0,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-lex-ne",
+      "source_hex": "61213d31",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Lex",
+        "span": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-lex-slash",
+      "source_hex": "612f313d32",
+      "expected": {
+        "code": "Syntax",
+        "module": "Lex",
+        "span": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-lex-percent",
+      "source_hex": "6125313d32",
+      "expected": {
+        "code": "Syntax",
+        "module": "Lex",
+        "span": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-lex-bang",
+      "source_hex": "612131",
+      "expected": {
+        "code": "Syntax",
+        "module": "Lex",
+        "span": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-lex-nul",
+      "source_hex": "613d00",
+      "expected": {
+        "code": "Syntax",
+        "module": "Lex",
+        "span": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-lex-unclosed-text",
+      "source_hex": "613d2778",
+      "expected": {
+        "code": "Syntax",
+        "module": "Lex",
+        "span": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-lex-unclosed-name",
+      "source_hex": "22613d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Lex",
+        "span": [
+          0,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-lex-unclosed-comment",
+      "source_hex": "613d312f2a78",
+      "expected": {
+        "code": "Syntax",
+        "module": "Lex",
+        "span": [
+          3,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-lex-invalid-utf8",
+      "source_hex": "613dff",
+      "expected": {
+        "code": "Syntax",
+        "module": "Lex",
+        "span": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-lex-truncated-utf8",
+      "source_hex": "613de282",
+      "expected": {
+        "code": "Syntax",
+        "module": "Lex",
+        "span": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-utf8-before-parse",
+      "source_hex": "3d31ff",
+      "expected": {
+        "code": "Syntax",
+        "module": "Lex",
+        "span": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-name-empty",
+      "source_hex": "22223d31",
+      "expected": {
+        "code": "Name",
+        "module": "Name",
+        "span": [
+          0,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-name-nul",
+      "source_hex": "226100223d31",
+      "expected": {
+        "code": "Name",
+        "module": "Name",
+        "span": [
+          0,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-name-del",
+      "source_hex": "22617f223d31",
+      "expected": {
+        "code": "Name",
+        "module": "Name",
+        "span": [
+          0,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-leading-dot-number",
+      "source_hex": "2e353d31",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-plus-dot-number",
+      "source_hex": "613d2b2e35",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-minus-space-dot-number",
+      "source_hex": "613d2d202e35",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-lhs-decimal",
+      "source_hex": "312e303d61",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-exponent",
+      "source_hex": "613d31652b32",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-exponent-digits",
+      "source_hex": "613d31453130",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          3,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-exponent-word",
+      "source_hex": "613d3165666f6f",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          3,
+          7
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-spaced-exponent",
+      "source_hex": "613d31206532",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-plus-marker",
+      "source_hex": "613d2b3f",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-minus-null",
+      "source_hex": "613d2d4e554c4c",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          3,
+          7
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-double-sign",
+      "source_hex": "613d2d202d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-sign-comment",
+      "source_hex": "613d2d2d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-lhs-qualified",
+      "source_hex": "742e613d31",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-lhs-public-qualified",
+      "source_hex": "5055424c49432e613d31",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          6,
+          7
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-qualified",
+      "source_hex": "613d742e62",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-scalar-dot",
+      "source_hex": "613d31202e2030",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-leading-dot-name",
+      "source_hex": "2e613d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "error-lhs-function",
+      "source_hex": "6162732861293d31",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-lhs-quoted-function",
+      "source_hex": "22616273222861293d31",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-lhs-space-function",
+      "source_hex": "66202831293d32",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-function",
+      "source_hex": "613d66283129",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-exists-function",
+      "source_hex": "455849535453283129",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          6,
+          7
+        ]
+      }
+    },
+    {
+      "id": "error-lhs-add",
+      "source_hex": "612b313d32",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-add",
+      "source_hex": "613d312b32",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-lhs-multiply",
+      "source_hex": "612a323d34",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-subtract",
+      "source_hex": "613d2d312d32",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-lhs-select-group",
+      "source_hex": "2853454c45435420612046524f4d2074293d31",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          1,
+          7
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-select-group",
+      "source_hex": "613d2853454c45435420612046524f4d207429",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          3,
+          9
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-select",
+      "source_hex": "613d53454c454354",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          2,
+          8
+        ]
+      }
+    },
+    {
+      "id": "error-operator-in",
+      "source_hex": "6120494e283129",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-operator-between",
+      "source_hex": "61204245545745454e203120414e442032",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          2,
+          9
+        ]
+      }
+    },
+    {
+      "id": "error-operator-like",
+      "source_hex": "61204c494b4520277827",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-operator-not-in",
+      "source_hex": "61204e4f5420494e283129",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-operator-not-between",
+      "source_hex": "61204e4f54204245545745454e203120414e442032",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-operator-not-like",
+      "source_hex": "61204e4f54204c494b4520277827",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-operator-not-unknown",
+      "source_hex": "61204e4f5420776174",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-operator-quoted-in",
+      "source_hex": "612022494e2220283129",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-operator-not-quoted-in",
+      "source_hex": "61204e4f542022494e2220283129",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-prefix-n",
+      "source_hex": "4e2778273d31",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "error-prefix-lower-n",
+      "source_hex": "6e2778273d31",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "error-prefix-q",
+      "source_hex": "613d51277827",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-prefix-lower-q",
+      "source_hex": "613d71277827",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-prefix-spaced",
+      "source_hex": "4e202778273d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-prefix-comment",
+      "source_hex": "512f2a782a2f2778273d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          6,
+          9
+        ]
+      }
+    },
+    {
+      "id": "error-prefix-quoted",
+      "source_hex": "224e222778273d31",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          3,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-lookahead-not-lex",
+      "source_hex": "61204e4f542021",
+      "expected": {
+        "code": "Syntax",
+        "module": "Lex",
+        "span": [
+          6,
+          7
+        ]
+      }
+    },
+    {
+      "id": "error-lookahead-rhs-group-lex",
+      "source_hex": "613d2821",
+      "expected": {
+        "code": "Syntax",
+        "module": "Lex",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-function-does-not-peek",
+      "source_hex": "662821",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-group-eof",
+      "source_hex": "613d28",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "error-scalar-integer-call",
+      "source_hex": "312832293d33",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "error-scalar-text-call",
+      "source_hex": "2778272832293d33",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-scalar-null-dot",
+      "source_hex": "4e554c4c2e613d31",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-scalar-marker-multiply",
+      "source_hex": "613d3f2a32",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "error-scalar-binary-subtract",
+      "source_hex": "613d5827272d31",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-scalar-bool-add",
+      "source_hex": "545255452b313d31",
+      "expected": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "id": "error-null-test-extra-dot",
+      "source_hex": "61204953204e554c4c2e78",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          9,
+          10
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-extra-in",
+      "source_hex": "613d3120494e283129",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          6
+        ]
+      }
+    },
+    {
+      "id": "error-rhs-extra-not-in",
+      "source_hex": "613d31204e4f5420494e283129",
+      "expected": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          4,
+          7
+        ]
+      }
+    }
+  ],
+  "boundary_case_ids": [
+    "depth-not-63",
+    "depth-not-64",
+    "depth-not-65",
+    "depth-group-63",
+    "depth-group-64",
+    "depth-group-65",
+    "depth-mixed-63",
+    "depth-mixed-64",
+    "depth-mixed-65",
+    "depth-sibling-and-restores",
+    "depth-sibling-or-restores",
+    "nodes-and-8191",
+    "nodes-and-8192",
+    "nodes-and-8193",
+    "nodes-or-8191",
+    "nodes-or-8192",
+    "nodes-or-8193",
+    "markers-255",
+    "markers-256",
+    "markers-257",
+    "source-1048575",
+    "source-1048576",
+    "source-1048577",
+    "name-unquoted-127",
+    "name-quoted-127",
+    "name-unquoted-128",
+    "name-quoted-128",
+    "name-unquoted-129",
+    "name-quoted-129"
+  ],
+  "boundary_recipes": {
+    "node_formula": "1+Or+And+Not+Group+3*Compare+2*IsNull; nested Group child is Or, no extra Predicate",
+    "depth": "active NOT+Group depth starts0;63/64 accepted,65th introducing token is Parse/Limit zero-width; pure/mixed and sibling restoration",
+    "and_nodes": "2729 comparisons, final atom prefixed with NOT1/2/3 =>8191/8192/8193; source21831/21835/21839; fail21838",
+    "or_nodes": "2047 comparisons, final atom prefixed with NOT1/2/3 =>8191/8192/8193; source14329/14333/14337; fail14336",
+    "markers": "255/256/257 copies of ? IS NULL joined by AND; nodes3+2n,bytes14n-5;257th marker starts3584",
+    "source": "0=0 followed by closed comment padded to1048575/1048576/1048577bytes; last fails Lex/Limit[1048576,1048577)",
+    "names": "new predicate entry consumes unquoted and quoted normalized ASCII names127/128/129bytes;129 returns original Name/Name whole raw token",
+    "token_limit": "No token65536 parser boundary execution claim; raw grammar reaches AST8192 first, completed lexer evidence is inherited without repetition"
+  },
+  "generated_recipe": {
+    "required": {
+      "seeds_inclusive": [
+        0,
+        63
+      ],
+      "parse_calls": 64,
+      "fragments_per_call": 128,
+      "total_fragments": 8192
+    },
+    "state_update": "wrapping_u64(state*6364136223846793005+1442695040888963407); choice=(state>>32)%8",
+    "shape": "OR blocks of four AND terms; index%7==0 adds NOT, index%11==0 adds Group; singleton wrappers preserved",
+    "value_choices": "fixed five lhs and five rhs fragments in recipes.rs; only chosen Parameter fragment increments ordinal, quoted/comment ? bytes do not",
+    "bounds": {
+      "max_fragments_per_call": 128,
+      "max_nodes_per_call": 473,
+      "max_depth": 2,
+      "max_markers_per_call": 52
+    },
+    "exact_check": "all node entries and source bytes compared, not merely count or invariants",
+    "expanded": {
+      "seeds_inclusive": [
+        0,
+        255
+      ],
+      "fragments_per_seed": 1024,
+      "parts_per_seed": 8,
+      "fragments_per_part": 128,
+      "generator_seed": "seed+256*part, part0..7",
+      "parse_calls": 2048,
+      "total_fragments": 262144,
+      "preservation": "All1024 operations per seed retained. Splitting expanded calls does not weaken separate product depth/node/marker/source limits. Required seeds remain included in part0."
+    },
+    "fuzz": {
+      "duration_seconds": 1800,
+      "first_generator_seed": 2048,
+      "fragments_per_call": 128,
+      "scope": "bounded grammar-valid generation; arbitrary malformed-byte fuzz is not covered; fixed malformed corpus stays mandatory",
+      "repeat_policy": "new monotonically increasing generator seeds; no time-filling repeats"
+    }
+  },
+  "known_bad_ids": [
+    "or-to-and",
+    "and-to-or",
+    "not-skips-null-test",
+    "comparison-operator",
+    "null-test-negated",
+    "unreachable-extra-node",
+    "missing-array-node",
+    "missing-sibling",
+    "sibling-cycle",
+    "singleton-wrapper-skipped",
+    "array-order",
+    "normalized-name",
+    "quoted-name-flag",
+    "name-own-span",
+    "integer-sign",
+    "integer-digits",
+    "source-byte",
+    "incomplete-success",
+    "group-parentheses-span",
+    "root-includes-semicolon",
+    "lost-trailing-trivia",
+    "marker-zero",
+    "marker-duplicate",
+    "marker-order-swapped",
+    "marker-count",
+    "empty-text-to-null",
+    "binary-to-text",
+    "boolean-payload",
+    "utf8-character-span",
+    "error-module",
+    "error-code",
+    "error-full-to-zero-span",
+    "partial-tree-on-failure",
+    "lost-error",
+    "incomplete-error",
+    "eof-span"
+  ],
+  "known_bad_acceptance_control_ids": [
+    "shape-hand-precedence",
+    "shape-hand-group",
+    "known-control-markers",
+    "known-control-text-binary",
+    "known-control-bool",
+    "known-control-utf8",
+    "known-control-lex-error",
+    "known-control-eof-error"
+  ],
+  "counts": {
+    "shapes": 35,
+    "raw_values": 137,
+    "errors": 128,
+    "boundaries": 29,
+    "generated_calls": 64,
+    "generated_fragments": 8192,
+    "semantic_parse_calls": 393,
+    "known_bad": 36,
+    "deduplicated_acceptance_controls": 8
+  },
+  "not_claimed": [
+    "typed expression validation",
+    "3VL/comparison/WHERE results",
+    "row or parameter schema validation",
+    "catalog/binder/engine integration",
+    "transaction cleanup",
+    "existing scalar rerun",
+    "arbitrary malformed-byte fuzz",
+    "expanded execution"
+  ]
+}

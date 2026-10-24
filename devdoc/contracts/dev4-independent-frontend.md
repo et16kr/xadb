@@ -344,3 +344,52 @@ D2는 foundation 변경/가짜 engine 대신 SQL-local readonly type+quota owner
 2026-10-24 `/root/frontend_review`가 manifest `b3e91f5de8983f09a07702dd0d7f01b77e642d98fce66d84009100451cae1b66`의 실제 파일·계약을 독립 D2로 수용했다. semantic7함수8,929call(고정/유한737·생성8,192), known-bad20/정상통제8, 자원16함수와 제품 mutant11범주를 제품 작성 전에 동결한다. 별도 확대2profile은 NOT_RUN이다. 검토 중 copy 관측 위치·목적 타입 검산 경계·최대 제어 간격·retained quota 경계·partial peak와 최종 제어를 보완했으며 제품/시험 FAIL을 소급 생성하지 않는다. 원 검토 사본·hash와 수용 후 동결은 artifacts/dev4-scalar-20261024에 보존한다.
 
 [source별 scalar 실행 증거](../evidence/dev4-scalar-20261024.md)에 신규23함수·8,929semantic·known-bad20/통제8과 필수11범주/12제품 변조 거절을 보존한다. 정상 runtime은 한 번이며 확대2profile·predicate/실제 binding·Q1은 미완료다.
+
+<a id="predicate-parser-leaf"></a>
+## 14. D4-FE-PREDICATE-001 — 공통 predicate AST/parser
+
+**D2 ACCEPTED / 2026-10-24 구현 전 입력 동결**. 4.03.1.2의 전체 조건식 구문을 독립 leaf로 공급한다. P3의 typed compile/eval·3값 논리(4.04.3), 실제 catalog binding·P4 문장 연결·Q1은 계속 미완료다. 기존 scalar나 SQL 의미를 바꾸지 않는다.
+
+### 진입·AST·수명
+
+`Parser::parse_predicate(&mut self, source: &[u8], control: &CallControl<'_>) -> Result<ParsedStatement, Diagnostic>`는 WHERE 없는 predicate 하나와 선택적인 마지막 세미콜론·trivia를 받는다. 기존 `parse`의 INSERT/거래 구문 허용 범위는 유지한다. 반환 source/flat arena는 기존 session/DB quota를 사용하며 caller 입력·Parser보다 오래 살아도 예약을 유지한다. 공개 raw 성공은 타입·존재·값 변환·행 선택 성공이 아니다.
+
+`ComparisonOp::{Eq,NotEq,Lt,Le,Gt,Ge}`와 `NodeKind::{Predicate,Or,And,Not,Group,Compare(ComparisonOp),IsNull{negated:bool}}`를 추가한다. Predicate→Or 하나, Or→And 하나 이상, And→not-term 하나 이상, Not→not-term 하나, Group→Or 하나, Compare→Name/Scalar 두 개, IsNull→Name/Scalar 하나다. singleton Or/And도 항상 저장하고 Group 안에 Predicate를 추가하지 않는다. 전체 arena는 유일 root0에서 도달 가능한 preorder이며 기존 Name/Scalar 원문 표현을 재사용한다.
+
+Predicate/Or/And span은 첫 자식 시작..마지막 자식 끝, Not은 NOT 시작..자식 끝, Group은 양쪽 괄호 포함, Compare는 lhs..rhs, IsNull은 lhs..마지막 NULL이다. 세미콜론·바깥 trivia는 AST span에서 제외하고 source에 보존한다. 부모의 최초 span은 첫 token 전체이며 자식 완료 뒤 확정한다. atom은 먼저 private Compare(Eq) placeholder를 등록하고 lhs를 읽은 뒤 실제 Compare/IsNull kind를 확정한다. 실패 tree는 반환하지 않는다. private `AstBuilder::set_kind`는 할당·재배치 없이 기존 node만 교체한다. 기존 `scalar`는 성공 span을 반환하도록 바꾸되 변환/진단/marker 순서는 유지한다.
+
+P4 WHERE는 같은 ParseInput·source·arena·marker counter와 private predicate 메서드를 사용한다. fragment 진입점에만 Predicate root·optional semicolon·EOF 검사가 있다. 내부 predicate는 AND/OR가 아닌 다음 token을 lookahead에 남기며 각 문장/Group caller가 자신의 종료 문법을 검사한다. 실제 P4 연결은 아직 구현 증거가 아니다.
+
+### 검사 순서·문법·오류
+
+호출 순서는 injection 소비→Parse 진입 제어→Lexer 전체 UTF8/source 한도 검사→source copy→fragment 첫 peek다. 첫 token이 EOF이면 root/Or/And 할당 전에 Syntax EOF다. 따라서 빈 source+quota0은 Syntax·allocation0, trivia source의 예약 실패는 Limit다. 첫 peek의 Lex 오류를 먼저 전파하고, nonEOF token이면 Predicate→Or→And를 먼저 등록한다. 잘못된 첫 AND/세미콜론도 wrapper/atom 예약·node 한도가 구문 오류보다 먼저 실패할 수 있다. 내부 Or/And는 EOF/닫는 괄호도 먼저 wrapper를 등록한다.
+
+우선순위는 비교/IS NULL→NOT→AND→OR다. AND/OR 형제 목록은 반복문으로 처리한다. NOT/Group만 공통 active depth를 소비하며 초기0,64허용,65번째 NOT/'(' token 확인 직후 재귀·해당 node 등록 전에 Parse/Limit zero-width 시작 위치로 거절한다. IS NOT NULL의 NOT는 깊이를 소비하지 않으며 sibling에서 부모 depth로 복귀한다. guarded recursive descent는 bounded frame만 보유하고 256KiB stack에서 최대 정상/실패를 검증한다. AST 폐기는 flat하고 재귀하지 않는다.
+
+bare TRUE/NULL/이름/marker, `(a)=1`, `a=(1)`, 비교 chain은 Syntax다. 이름끼리·literal끼리·NULL/marker 상대, 타입이 다른 값·overflow 정수·raw 비hex Binary는 구문이 맞으면 raw AST로 보존한다. 전체 타입 검사는 후속 leaf가 담당한다.
+
+| 구문 문맥 | 진단 |
+| --- | --- |
+| Name/Scalar operand 뒤 `.`, `(`, 이항 `+`, `-`, `*` | 해당 punctuation Unsupported. 공백 유무와 원래 operand 타입 무관. 값 시작 unary sign은 기존 정수 구문 |
+| lhs 뒤 IN/BETWEEN/LIKE, 또는 NOT IN/NOT BETWEEN/NOT LIKE | 해당 word, 또는 NOT token의 Unsupported. NOT 뒤 다른 token은 NOT의 Syntax |
+| IS/[NOT] 뒤 TRUE/FALSE/DISTINCT | 해당 token Unsupported. 나머지 NULL이 아닌 token은 Syntax |
+| 값/Group 시작 SELECT | SELECT Unsupported |
+| rhs 값 위치 '(' 뒤 SELECT | 한 token peek 뒤 SELECT Unsupported; 다른 token이면 원 '(' Syntax. peek의 Lex 오류는 우선 전파 |
+| 인접 N/Q prefix text | prefix token Unsupported. 일반 n/q 열 이름은 허용 |
+| IN/BETWEEN/LIKE/EXISTS/DEFAULT/RETURNING의 값 이름 위치 | 일반 Name. quoted 여부에 맞는 기존 정규화 |
+| 위 operand suffix에 해당하지 않는 완결 비교 뒤 token, 또는 null-test terminator 뒤 token·두 번째 semicolon | Syntax. INSERT 전용 RETURNING 분류를 확대하지 않음 |
+| `!=`·원 lexer/name 오류 | 원 module/code/span 그대로 |
+
+함수 형태는 operand 뒤 '('에서 내부를 읽지 않고 거절한다. `EXISTS=1`은 이름 비교지만 `EXISTS(...)`는 '(' Unsupported다. IS NULL의 마지막 NULL은 operand가 아닌 terminator라 그 뒤 extra token은 Syntax다. NOT 복합 연산자 구분 또는 RHS '('의 한 token peek에서 발생한 lexical 오류를 숨기지 않는다. 이 명시표 밖의 모든 SQL 확장을 Unsupported로 인식한다고 주장하지 않는다. 구문 진단은 token 전체 span, EOF는 `[len,len)`, depth/node/marker Limit는 도입 token 시작의 zero-width다.
+
+### 자원·독립 검증·잔여
+
+원문1MiB·token65,536·AST8,192·marker256·nesting64 및 session8MiB/DB64MiB를 유지한다. 모든 wrapper와 IsNull도 node/capacity에 포함하며 별도 token/list backing은 없다. source/arena 선예약·actual capacity 보정·old/new peak·실패/Drop 반환은 기존 budget을 소비한다. ParseInput의 새 반복·중첩 진입/닫기와 최종 반환에 호출 제어를 검사한다. 원 helper의 bounded byte 검사와 node 이동 검사를 보존하며 AST span의 단조 증가를 가정하지 않는다. 완료 호출의 control을 보관하지 않는다.
+
+독립 expected tree를 먼저 선택하고 literal/recipe로 SQL을 출력한다. 제품 tokenizer/parser/type/normalizer를 정답 계산에 사용하지 않는다. 전체 node 배열·payload·source·marker·code/module/span·complete를 비교하고, 임의 node 삭제/추가·연결·연산자·원문·typed 입력 경계 오류를 known-bad로 거절한다. 새 source별 제품 mutant는 우선순위·깊이·marker·EOF·node상한·반환 제어를 실제 detector로 검증한다.
+
+필수 semantic profile은 고정 AST/원문/오류/경계와64seed×128fragment다. 64개의 composite parse와8,192fragment의 분모를 구분한다. 별도 확대0..255seed×1,024fragment·30분 grammar-valid 생성은 선택 가능하게 작성하고 NOT_RUN을 보존한다. 30분 profile을 임의 malformed-byte fuzz로 부르지 않는다. 자원9함수는 caller/output 수명·quota경계/partial peak·모든 신규 entry allocation site·미도달 주입 소비·취소/deadline·thread별 공유quota·256KiB stack/최대AST·실패후 재사용을 다룬다. 실제 입력/hash·원 실패와 최종 source별 검증은 채택 뒤 증거에 연결한다.
+
+PostgreSQL/SQLite 실제 revision·선택 파일 hash/열람 범위를 보존한다. nary boolean·전체 의미 검산과 평가 분리는 참고하되 broader grammar·implicit coercion·NULL comparison rewrite는 도입하지 않는다. 별도 D2 reviewer가 계약/API/fixture/resource를 확인하기 전 제품 구현을 시작하지 않는다. 구현 뒤 D1에서 코드·원 source/결과와 잔여를 확인한다. 기존 P2/scalar runtime과 DEV3 제품을 다시 실행하지 않으며 새로운 함수/소비 경로만 선택한다. 문서 자동 검사는 push gate에서만 실행한다.
+
+독립 검토자 `/root/frontend_review`가 계약·API·정확 literal/recipe·semantic adapter와 자원9함수 입력을 확인했고 `/root`가 채택했다. 원 검토 사본·이전 지적·최종 해시는 `artifacts/dev4-predicate-20261024/{d2-acceptance,freeze}.json`과 `frozen-inputs/`에 보존한다. 채택 시 제품 predicate parser·컴파일·시험은 미실행이었다.

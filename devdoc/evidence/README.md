@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV4 predicate AST/parser](dev4-predicate-20261024.md): D2 입력 동결·원 stack/Clippy FAIL·선택 수정과 [source별 실행 색인](dev4-predicate-20261024.json).
+
 - [DEV4 scalar 입력·typed 값 소유](dev4-scalar-20261024.md): 독립 D2·필수23함수·11범주/12제품 변조와 [source별 선택 증거](dev4-scalar-20261024.json).
 
 - [DEV3 Catalog typed Undo before](dev3-catalog-before-20261024.md) · [source 색인](dev3-catalog-before-20261024.json): 필수123 선택 결과·원 실패·S5 미실행과 제한 선행 범위.

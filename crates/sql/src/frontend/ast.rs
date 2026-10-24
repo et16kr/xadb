@@ -44,7 +44,24 @@ pub enum ScalarSyntax {
     },
 }
 
-/// Node roles for INSERT and direct transaction-control syntax.
+/// The six supported comparison operators, without type or value validation.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ComparisonOp {
+    /// Equality, written `=`.
+    Eq,
+    /// Inequality, written `<>`.
+    NotEq,
+    /// Strictly less than, written `<`.
+    Lt,
+    /// Less than or equal, written `<=`.
+    Le,
+    /// Strictly greater than, written `>`.
+    Gt,
+    /// Greater than or equal, written `>=`.
+    Ge,
+}
+
+/// Node roles for raw statements and predicate syntax.
 #[derive(Debug)]
 pub enum NodeKind {
     /// INSERT root with Target, Columns and Rows children.
@@ -65,6 +82,23 @@ pub enum NodeKind {
     Rows,
     /// Nonempty parenthesized scalar list.
     Tuple,
+    /// Standalone predicate root with one Or child.
+    Predicate,
+    /// Nonempty ordered list of And children, including singleton lists.
+    Or,
+    /// Nonempty ordered list of predicate terms, including singleton lists.
+    And,
+    /// Predicate negation with one term child.
+    Not,
+    /// Parenthesized predicate with one Or child; span includes parentheses.
+    Group,
+    /// Comparison with exactly two Name or Scalar children.
+    Compare(ComparisonOp),
+    /// Null test with one Name or Scalar child; its NULL is not another child.
+    IsNull {
+        /// True for IS NOT NULL, false for IS NULL.
+        negated: bool,
+    },
     /// Fixed-space normalized name with original diagnostic metadata.
     Name(Name),
     /// Raw literal or marker; its source bytes are retained by the statement.
@@ -234,6 +268,10 @@ impl<'budget> AstBuilder<'budget> {
 
     pub(crate) fn set_span(&mut self, index: usize, span: Span) {
         self.nodes.values[index].span = span;
+    }
+
+    pub(crate) fn set_kind(&mut self, index: usize, kind: NodeKind) {
+        self.nodes.values[index].kind = kind;
     }
 
     pub(crate) fn finish(self, markers: u16) -> ParsedStatement {

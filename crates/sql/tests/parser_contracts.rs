@@ -56,6 +56,13 @@ fn statement_observation(statement: &ParsedStatement) -> ParseObservation {
                     span: [name.span().start, name.span().end],
                 }),
                 NodeKind::Scalar(scalar) => KindObservation::Scalar(scalar_observation(scalar)),
+                NodeKind::Predicate
+                | NodeKind::Or
+                | NodeKind::And
+                | NodeKind::Not
+                | NodeKind::Group
+                | NodeKind::Compare(_)
+                | NodeKind::IsNull { .. } => panic!("predicate node in an INSERT/transaction tree"),
             },
             span: [value.span().start, value.span().end],
             first_child: value.first_child(),

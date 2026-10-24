@@ -1987,6 +1987,16 @@
       "path": "evidence/dev4-scalar-20261024.json",
       "role": "evidence",
       "title": "DEV4 scalar source별 선택 실행 색인"
+    },
+    "dev4-predicate-20261024.md": {
+      "path": "evidence/dev4-predicate-20261024.md",
+      "role": "evidence",
+      "title": "DEV4 predicate AST/parser 선택 검증"
+    },
+    "dev4-predicate-20261024.json": {
+      "path": "evidence/dev4-predicate-20261024.json",
+      "role": "evidence",
+      "title": "DEV4 predicate source별 실행 색인"
     }
   }
 }

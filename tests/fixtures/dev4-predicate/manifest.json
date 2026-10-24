@@ -1,0 +1,111 @@
+{
+  "schema": "xadb.dev4.predicate.manifest.v1",
+  "status": "FROZEN_D2_ACCEPTED_BEFORE_PRODUCT_IMPLEMENTATION",
+  "base_head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+  "implementation_status": "Product predicate parser absent when independent inputs were authored; no compile/tests executed by fixture owner",
+  "execution_owner": "root only",
+  "files": {
+    "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+    "crates/testing/reference/src/frontend/predicate/literals.rs": "676fef4c08943bfa0365398c53b35f0ca1b92147b8736ab90b55726e1ef8ed01",
+    "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+    "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5"
+  },
+  "required_functions": [
+    {
+      "name": "literal_predicate_precedence_and_shapes",
+      "fixture": "literal_shapes",
+      "cases": 35
+    },
+    {
+      "name": "predicate_raw_value_and_marker_syntax",
+      "fixture": "raw_value_cases",
+      "cases": 137
+    },
+    {
+      "name": "predicate_syntax_and_unsupported_diagnostics",
+      "fixture": "error_cases",
+      "cases": 128
+    },
+    {
+      "name": "predicate_depth_node_and_marker_boundaries",
+      "fixture": "boundary_cases",
+      "cases": 29
+    },
+    {
+      "name": "generated_predicate_fragments",
+      "fixture": "generated_case",
+      "cases": 64,
+      "fragments_per_case": 128,
+      "total_fragments": 8192
+    },
+    {
+      "name": "known_bad_predicate_observations_are_rejected",
+      "fixture": "known_bad_observations",
+      "known_bad": 36,
+      "exact_acceptance_controls": 8
+    }
+  ],
+  "required_semantic_cases": 393,
+  "required_known_bad": 36,
+  "required_acceptance_controls": 8,
+  "separately_selected_ignored_functions": [
+    {
+      "name": "extended_generated_predicate_fragments",
+      "seeds_inclusive": [
+        0,
+        255
+      ],
+      "fragments_per_seed": 1024,
+      "parts_per_seed": 8,
+      "fragments_per_call": 128,
+      "total_fragments": 262144,
+      "calls": 2048,
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "extended_predicate_generated_30_minutes",
+      "duration_seconds": 1800,
+      "first_generator_seed": 2048,
+      "fragments_per_call": 128,
+      "scope": "grammar-valid bounded generation, not arbitrary malformed-byte fuzz",
+      "status": "NOT_RUN"
+    }
+  ],
+  "control_fixture": {
+    "path": "tests/fixtures/dev4-predicate/control.json",
+    "owner": "root",
+    "sha256": "bab03845a0cf010e744a0b229e4c33ea377610a47e9e4be430d4c4e188fae167"
+  },
+  "resource_adapter": {
+    "path": "crates/sql/tests/predicate_resources.rs",
+    "owner": "root",
+    "sha256": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb"
+  },
+  "freeze_rule": "Independent exact inputs/arrays/errors/recipes/schema plus root control must receive D2 acceptance and hash preservation before product implementation. Expected changes after freeze require preserved originals and renewed independent review.",
+  "scope_note": "New parse_predicate entry only. Existing lexer/name/splitter/P2/scalar completed functions are not rerun. Long-stack/quotas/allocation/control are separate root-owned functions.",
+  "semantic_adapter": {
+    "path": "crates/sql/tests/predicate_contracts.rs",
+    "owner": "frontend_oracle",
+    "sha256": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+    "status": "WRITTEN_NOT_COMPILED_NOT_EXECUTED",
+    "required_functions": 6,
+    "ignored_functions": 2
+  },
+  "prior_review_manifest": {
+    "path": "artifacts/dev4-predicate-20261024/prefreeze/manifest-08ba8f6d46f934885cd1b1fdec589cef4ba630ca1beae779f3045da9f64a05d1.json",
+    "sha256": "08ba8f6d46f934885cd1b1fdec589cef4ba630ca1beae779f3045da9f64a05d1",
+    "change": "Added semantic adapter hash only; immutable fixture expectations and required denominators unchanged."
+  },
+  "d2_acceptance": {
+    "reviewer": "/root/frontend_review",
+    "record": "artifacts/dev4-predicate-20261024/d2-acceptance.json",
+    "at": "2026-10-24T18:37:39.165132+09:00",
+    "reviewed_manifest_sha256": "3e90e4decef131524462b8833fa133f1338523f259f007782bb21b9b4215f185"
+  },
+  "post_freeze_static_only_amendment": {
+    "record": "artifacts/dev4-predicate-20261024/reference-alias-amendment.json",
+    "original_reference_sha256": "ae8db2e7fb301282b878d91b5c8d408c6a8d5b8eea98087b71c9d09d2123a509",
+    "expected_semantics_unchanged": true,
+    "reason": "Clippy local tuple type alias only; frozen original and r1/r2 evidence preserved"
+  }
+}

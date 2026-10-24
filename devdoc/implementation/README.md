@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-24 [DEV4 predicate AST/parser](dev4-implementation.md#predicate-parser): 원 stack 실패를 수정하고 source별 필수15함수·제품 mutant6의 선택 증거를 보존했다. typed compile/eval·실제 SQL 실행·Q1은 미완료다.
+
 2026-10-24 [DEV4 scalar 입력·typed 값 소유](dev4-implementation.md#scalar): checked 값 변환·SQL/native empty 경계·목적 타입 fixture와 retained quota를 선택 검증했다. 최종 독립 D1 제한 수용이며 predicate·실제 SQL 실행·Q1은 미완료다.
 
 2026-10-24 [DEV3 Catalog typed Undo before](dev3-implementation.md#catalog-before): historical Table/Index 정의와 Missing/Value 복원 경계를 구현했다. 필수123 PASS·최종 독립 D1 제한 수용이며 실제 catalog/row/queue·전체 DEV3/S5는 미완료다.

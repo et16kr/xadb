@@ -1,0 +1,2008 @@
+{
+  "schema": 1,
+  "contract": "D4-FE-PREDICATE-001",
+  "status": "LOCAL_SELECTED_VERIFICATION_AND_LIMITED_D1_ACCEPTED",
+  "scope": "4.03.1.2 predicate AST/parser only; typed compile/eval,3VL,P4,P5,P6,engine integration/Q1 remain incomplete",
+  "recorded_at": "2026-10-24T18:52:21.041688+09:00",
+  "baseline": {
+    "at": "2026-10-24T18:12:56.647494+09:00",
+    "head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+    "status": " M crates/engine/src/storage/mod.rs\n M crates/engine/src/storage/page.rs\n M crates/engine/src/storage/recovery_select.rs\n M crates/engine/src/storage/wal_io.rs\n M crates/engine/src/storage/wal_io/bootstrap.rs\n?? crates/engine/src/storage/plan4_recovery_select.rs\n?? crates/engine/src/storage/retention_genesis.rs\n",
+    "dirty_patch_sha256": "34de5613b12b181de1141fcccb62a93066be388112832d69b85919755ae2cb3d",
+    "previous_goal_turn": "progress: scalar ae176b6 committed after selected tests and independent D1",
+    "scope": "P3 full predicate syntax leaf 4.03.1.2; typed compile/evaluation 4.04.3 stays next required leaf; P4/P5/P6 still required",
+    "owners": {
+      "root": "resource adapter,common exports,docs,evidence,selected execution,commit",
+      "frontend_research": "local DBMS research,parser proposal and postfreeze product",
+      "frontend_oracle": "independent parser oracle/semantic adapter and later typed inventory",
+      "frontend_review": "read-only independent D2/D1"
+    },
+    "DEV3_changes": "excluded and preserved",
+    "execution": "NOT_RUN"
+  },
+  "head_at_evidence": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+  "ownership": {
+    "at": "2026-10-24T18:39:54.751464+09:00",
+    "contract": "D4-FE-PREDICATE-001",
+    "owner": "/root",
+    "implementation_owner": "/root/frontend_research",
+    "oracle_owner": "/root/frontend_oracle",
+    "reviewer": "/root/frontend_review",
+    "exclusive_product_paths": [
+      "crates/sql/src/frontend/ast.rs",
+      "crates/sql/src/frontend/parser.rs",
+      "crates/sql/src/frontend/parser/predicate.rs"
+    ],
+    "root_integration_paths": [
+      "crates/sql/src/frontend/mod.rs",
+      "crates/testing/reference/src/frontend.rs",
+      "crates/sql/tests/parser_contracts.rs"
+    ],
+    "shared_document_policy": "Read latest and apply DEV4-only changes; do not stage DEV3 entries in shared index",
+    "overlap_review": "DEV3 dirty engine/storage, DEV3 contracts/scripts/fixtures and unrelated shared document entries are excluded from DEV4 export/stage. No engine dependency.",
+    "merge_order": [
+      "accepted D2 contract and exact frozen oracle/resources",
+      "product parser and AST",
+      "root module/export/observation adapter integration",
+      "immutable source export and selected new predicate runtime/static checks",
+      "six category product mutant detectors",
+      "independent D1 and source-specific evidence",
+      "DEV4-only commit"
+    ],
+    "runtime_selection_pending_final_product_diff": true,
+    "runtime_completed_unchanged_excluded": [
+      "lexer/name",
+      "splitter",
+      "P2 INSERT/transaction parser",
+      "scalar",
+      "DEV0/1/2/3 regressions"
+    ],
+    "scope_remaining": [
+      "P3 typed compile/eval/3VL",
+      "P4 remaining grammar",
+      "P5 abstract lifetime model",
+      "P6 supply/receipt/API gap handoff",
+      "actual engine integration/Q1"
+    ],
+    "status_at_planning": " M crates/engine/src/storage/allocation_page_tests.rs\n M crates/engine/src/storage/doublewrite_control_tests.rs\n M crates/engine/src/storage/mod.rs\n M crates/engine/src/storage/page.rs\n M crates/engine/src/storage/page_tests.rs\n M crates/engine/src/storage/recovery_select.rs\n M crates/engine/src/storage/wal_frame_tests.rs\n M crates/engine/src/storage/wal_io.rs\n M crates/engine/src/storage/wal_io/bootstrap.rs\n M crates/engine/src/storage/wal_io/doublewrite_install.rs\n M crates/sql/src/frontend/ast.rs\n M crates/sql/src/frontend/mod.rs\n M crates/sql/src/frontend/parser.rs\n M crates/sql/tests/parser_contracts.rs\n M crates/testing/reference/src/frontend.rs\n M devdoc/contracts/README.md\n M devdoc/contracts/dev3-page-format.md\n M devdoc/contracts/dev4-independent-frontend.md\n M devdoc/documents.json\n M scripts/dev3_page_vectors.py\n?? crates/engine/src/storage/plan4_genesis_native_tests.rs\n?? crates/engine/src/storage/plan4_recovery_select.rs\n?? crates/engine/src/storage/plan4_recovery_select_tests.rs\n?? crates/engine/src/storage/retention_genesis.rs\n?? crates/engine/src/storage/retention_genesis_tests.rs\n?? crates/engine/src/storage/wal_io/plan4_genesis.rs\n?? crates/engine/src/storage/wal_io/plan4_genesis_test_support.rs\n?? crates/engine/src/storage/wal_io/plan4_genesis_tests.rs\n?? crates/sql/src/frontend/parser/\n?? crates/sql/tests/predicate_contracts.rs\n?? crates/sql/tests/predicate_resources.rs\n?? crates/testing/reference/src/frontend/predicate.rs\n?? crates/testing/reference/src/frontend/predicate/\n?? devdoc/contracts/dev3-plan4-genesis.md\n?? scripts/dev3_plan4_genesis_cases.py\n?? scripts/dev3_plan4_genesis_native.py\n?? scripts/test_dev3_plan4_genesis_cases.py\n?? tests/fixtures/dev3-plan4-genesis/\n?? tests/fixtures/dev4-predicate/\n"
+  },
+  "d2": {
+    "status": "D2_ACCEPTED",
+    "at": "2026-10-24T18:37:39.165132+09:00",
+    "reviewer": "/root/frontend_review",
+    "adopter": "/root",
+    "reviewed_hashes": {
+      "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5",
+      "tests/fixtures/dev4-predicate/manifest.json": "3e90e4decef131524462b8833fa133f1338523f259f007782bb21b9b4215f185",
+      "artifacts/dev4-predicate-20261024/contract-draft.md": "4e70cdcd98497a3dc89da596a0263716e2b5508e8c9956ad76c71b1bc8009236"
+    },
+    "scope": "D4-FE-PREDICATE-001 / 4.03.1.2 predicate AST/parser only",
+    "remaining": "typed compile/eval, 3VL, P4, engine integration, Q1",
+    "review_result": "All mandatory preimplementation corrections accepted; exact literals/arrays/errors/boundaries, semantic393 calls/8192 fragments/known-bad36/controls8, resource9 functions accepted. No additional blocking. D1 and actual product mutant rejection remain required.",
+    "product_implementation_present": false,
+    "compile_runtime_executed": false
+  },
+  "freeze": {
+    "at": "2026-10-24T18:37:39.165132+09:00",
+    "review": "d2-acceptance.json",
+    "frozen_files": {
+      "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+      "crates/testing/reference/src/frontend/predicate/literals.rs": "ae8db2e7fb301282b878d91b5c8d408c6a8d5b8eea98087b71c9d09d2123a509",
+      "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+      "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5",
+      "tests/fixtures/dev4-predicate/control.json": "bab03845a0cf010e744a0b229e4c33ea377610a47e9e4be430d4c4e188fae167",
+      "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+      "crates/sql/tests/predicate_contracts.rs": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+      "artifacts/dev4-predicate-20261024/contract-draft.md": "4e70cdcd98497a3dc89da596a0263716e2b5508e8c9956ad76c71b1bc8009236",
+      "artifacts/dev4-predicate-20261024/parser-proposal.md": "d1dfd129294ac3c95de0896b53f6e95f50cdc62acf6050f7ad83651c0d3b3dc9",
+      "artifacts/dev4-predicate-20261024/research.json": "ac1e61a8e9c1445ab3448b9190fbabcc2b19b397b6d7ec712a5e1d5c9c947f59",
+      "artifacts/dev4-predicate-20261024/resource-plan.json": "20afc704385cd54aaa1c062b1df73261c069c5b2be7ae87650b27ff6b3d2f4f1",
+      "tests/fixtures/dev4-predicate/manifest.json": "3e90e4decef131524462b8833fa133f1338523f259f007782bb21b9b4215f185"
+    },
+    "adopted_manifest_sha256": "44490358d7c484d2afaeaa59347fd9ab4aa3f53e565a2dfc85911dc1d14b7f23",
+    "product_parser_absent": true,
+    "compile_runtime_executed": false
+  },
+  "research": {
+    "status": "RESEARCH_READ_ONLY_D2_PROPOSAL_NOT_EXECUTED",
+    "recorded_at": "2026-10-24T18:21:38.107939+09:00",
+    "xadb_revision": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+    "xadb_status_porcelain": "M crates/engine/src/storage/mod.rs\n M crates/engine/src/storage/page.rs\n M crates/engine/src/storage/recovery_select.rs\n M crates/engine/src/storage/wal_io.rs\n M crates/engine/src/storage/wal_io/bootstrap.rs\n M devdoc/contracts/README.md\n M devdoc/contracts/dev3-page-format.md\n M devdoc/documents.json\n M scripts/dev3_page_vectors.py\n?? crates/engine/src/storage/plan4_recovery_select.rs\n?? crates/engine/src/storage/retention_genesis.rs\n?? crates/engine/src/storage/wal_io/plan4_genesis.rs\n?? crates/sql/tests/predicate_resources.rs\n?? crates/testing/reference/src/frontend/predicate.rs\n?? devdoc/contracts/dev3-plan4-genesis.md",
+    "scope": "P3 common predicate AST/parser (4.03.1.2); typed compile/eval (4.04.3) follows separately; no catalog/engine integration",
+    "question": "Preserve SQL precedence, source/marker ownership and bounded parser/AST construction without recursive boolean chains; separate complete static typing from short-circuit evaluation.",
+    "sources": [
+      {
+        "root": "/home/et16/work/postgres",
+        "revision": "45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851",
+        "origin": "https://github.com/postgres/postgres.git",
+        "status_porcelain": "",
+        "files": [
+          {
+            "path": "/home/et16/work/postgres/src/backend/parser/gram.y",
+            "sha256": "9915bd2d6050b83c97850e08156c18ebf99e5578bb9520ce05b985817d01fccb",
+            "read_line_ranges": [
+              [
+                835,
+                855
+              ],
+              [
+                15360,
+                15389
+              ],
+              [
+                19578,
+                19630
+              ]
+            ],
+            "observations": [
+              {
+                "lines": [
+                  847,
+                  849
+                ],
+                "finding": "Explicit OR, AND, NOT precedence in ascending binding order.",
+                "adopt": "Use the XADB EBNF precedence as separate parser layers.",
+                "reject": "No broader PostgreSQL operators or grammar copied."
+              },
+              {
+                "lines": [
+                  19586,
+                  19622
+                ],
+                "finding": "makeAndExpr/makeOrExpr append same-operator children into a BoolExpr argument list.",
+                "adopt": "Store n-ary Or/And and parse repeated siblings with loops; source order retained.",
+                "reject": "No lappend linked-list implementation or recursive owned AST copied."
+              }
+            ]
+          },
+          {
+            "path": "/home/et16/work/postgres/src/backend/parser/parse_expr.c",
+            "sha256": "27ebc4ac2997222e6773e1a014a9554c528690c29a95f3187f73070694f81323",
+            "read_line_ranges": [
+              [
+                923,
+                1000
+              ],
+              [
+                1410,
+                1452
+              ]
+            ],
+            "observations": [
+              {
+                "lines": [
+                  929,
+                  952
+                ],
+                "finding": "Optional Transform_null_equals rewrites equality with NULL into a NullTest.",
+                "adopt": null,
+                "reject": "XADB ordinary NULL comparison stays UNKNOWN; never rewrite x=NULL into IS NULL."
+              },
+              {
+                "lines": [
+                  989,
+                  996
+                ],
+                "finding": "Ordinary operator transformation transforms both operands before make_op.",
+                "adopt": "Later typed compiler inspects both original operand types before payload conversion/evaluation.",
+                "reject": "Actual catalog operator resolution is not introduced into raw predicate parser."
+              },
+              {
+                "lines": [
+                  1436,
+                  1446
+                ],
+                "finding": "transformBoolExpr visits and coerces every argument before constructing the semantic BoolExpr.",
+                "adopt": "Full static name/type/marker validation precedes runtime short-circuiting.",
+                "reject": "No early false/true branch suppresses static errors."
+              }
+            ]
+          },
+          {
+            "path": "/home/et16/work/postgres/src/backend/parser/parse_coerce.c",
+            "sha256": "6fe6f3874aff4ea2faaccb812269d5822be3e2212c8e89478d218eab4a305398",
+            "read_line_ranges": [
+              [
+                1153,
+                1200
+              ]
+            ],
+            "observations": [
+              {
+                "lines": [
+                  1163,
+                  1197
+                ],
+                "finding": "coerce_to_boolean can request an implicit assignment cast and rejects invalid set-returning expressions.",
+                "adopt": "Keep typing as an explicit phase separate from grammar and evaluation.",
+                "reject": "XADB does not adopt implicit boolean coercion or bare boolean-value predicate grammar."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "root": "/home/et16/work/sqlite",
+        "revision": "43a48f77585a88940c727f33682151418f544059",
+        "origin": "https://github.com/sqlite/sqlite.git",
+        "status_porcelain": "",
+        "files": [
+          {
+            "path": "/home/et16/work/sqlite/src/parse.y",
+            "sha256": "ba52f3a1a8c7500d35fe71b46730ae13f3e5dc3701ae23d854ffbfefae7a449a",
+            "read_line_ranges": [
+              [
+                303,
+                322
+              ],
+              [
+                1264,
+                1298
+              ],
+              [
+                1308,
+                1352
+              ],
+              [
+                1360,
+                1437
+              ]
+            ],
+            "observations": [
+              {
+                "lines": [
+                  309,
+                  315
+                ],
+                "finding": "Precedence places OR below AND below NOT, with comparison/future operators at stronger precedence.",
+                "adopt": "Cross-check XADB OR/AND/NOT priority.",
+                "reject": "LIKE, IN, BETWEEN, scalar parentheses and broad expression grammar remain outside this leaf."
+              },
+              {
+                "lines": [
+                  1388,
+                  1436
+                ],
+                "finding": "IS NULL construction can replace known non-NULL constant expressions with truth constants.",
+                "adopt": null,
+                "reject": "Raw XADB parser preserves complete syntax and scalar source; no constant folding before validation."
+              }
+            ]
+          },
+          {
+            "path": "/home/et16/work/sqlite/src/expr.c",
+            "sha256": "53fb61c70a0da625baa86e3f07c62b59d4de1ef3f072fa554ca7c38be720537a",
+            "read_line_ranges": [
+              [
+                800,
+                822
+              ],
+              [
+                4980,
+                5052
+              ],
+              [
+                6230,
+                6307
+              ]
+            ],
+            "observations": [
+              {
+                "lines": [
+                  805,
+                  819
+                ],
+                "finding": "sqlite3ExprCheckHeight enforces actual expression-tree height.",
+                "adopt": "Validate an explicit bounded parse depth before recursion.",
+                "reject": "XADB depth counts active NOT/Group only; long flat AND/OR lists instead consume node/token/source limits."
+              },
+              {
+                "lines": [
+                  4984,
+                  5045
+                ],
+                "finding": "exprCodeTargetAndOr emits branches and may skip one runtime operand.",
+                "adopt": "Short-circuit is an execution concern after complete type validation.",
+                "reject": "Do not copy VM register or expression reordering design into XADB raw parser."
+              },
+              {
+                "lines": [
+                  6240,
+                  6292
+                ],
+                "finding": "sqlite3ExprIfTrue represents AND/OR/NOT with branches and explicit NULL jump handling.",
+                "adopt": "Later evaluation must retain explicit T/F/U and NULL comparison semantics.",
+                "reject": "Do not introduce recursive binary-owned trees or conflate NULL with false."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "xadb_inputs": [
+      {
+        "path": "devdoc/README.md",
+        "sha256": "8317056efad2fd211437566d932a9f311381d9c30449a57d2e45fc1fd25b9bf6"
+      },
+      {
+        "path": "devdoc/policies/coding-convention.md",
+        "sha256": "ed9d576cc7246457f3dfc279d65f6f1107cf4aa5b2390527d7a8579a4e1232ee"
+      },
+      {
+        "path": "devdoc/policies/development-policy.md",
+        "sha256": "8dd6627f621685f1882b5e7112ab1b03f0e64190bf3e50ebb827c68bea9b1b86"
+      },
+      {
+        "path": "devdoc/policies/documentation-policy.md",
+        "sha256": "26a663a404887bc2d1bbe74bf84dc12e4c7efe8218977dd8705e2cfc3a0a146b"
+      },
+      {
+        "path": "devdoc/reference/opensource-references.md",
+        "sha256": "c7329b07b117e17cd7ce56f1ccd379afb9e01208173550e5b8faca3da829af4b"
+      },
+      {
+        "path": "devdoc/contracts/dev4-independent-frontend.md",
+        "sha256": "18c6aa7bb82c7e4e02ef202ad0bbf8fa74c86eca97d3298a8015df0199eaa466"
+      },
+      {
+        "path": "devdoc/contracts/dev4-sql-design.md",
+        "sha256": "a7b2c9db54633b4460281693c83531d3f06aeba3b13db7a2fc01370bb1811952"
+      },
+      {
+        "path": "crates/sql/src/frontend/ast.rs",
+        "sha256": "17a6f5c11c50d396bfc86e1cc73eec16ab8ab72d0f61dc729c9990b3dd48ff65"
+      },
+      {
+        "path": "crates/sql/src/frontend/parser.rs",
+        "sha256": "25e6bb8e4e1c4bb695624058b4b710626ee3e010eb29013ce6c0556dba7b0f19"
+      },
+      {
+        "path": "crates/sql/src/frontend/scalar.rs",
+        "sha256": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64"
+      },
+      {
+        "path": "crates/sql/src/frontend/parse_budget.rs",
+        "sha256": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6"
+      },
+      {
+        "path": "crates/sql/src/frontend/lexer.rs",
+        "sha256": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310"
+      }
+    ],
+    "proposal": {
+      "path": "artifacts/dev4-predicate-20261024/parser-proposal.md",
+      "sha256": "d1dfd129294ac3c95de0896b53f6e95f50cdc62acf6050f7ad83651c0d3b3dc9"
+    },
+    "adoption_boundaries": [
+      "New independent parse_predicate wrapper shares ParseInput/AstBuilder/markers with future P4 WHERE; no synthetic source prefix or test-only AST bypass.",
+      "Always store Predicate→Or→And wrappers, parent-before-child; Group contains Or; n-ary boolean siblings are iterative.",
+      "Guard NOT/Group active depth64 before recursive descent; native stack256KiB new acceptance covers deepest success/failure and8192 flat nodes.",
+      "Private Compare(Eq) placeholder precedes existing name/scalar children; private set_kind finalizes operator. Existing scalar algorithm remains unchanged, returns its already-computed Span.",
+      "All retained and old/new coexist capacity remains charged to caller shared session8MiB/DB64MiB; same source1MiB/node8192/marker256 contracts.",
+      "Contextual future words stay names; unsupported forms recognized only at explicitly proposed feature positions."
+    ],
+    "execution": {
+      "product_edits": false,
+      "fixture_edits": false,
+      "tests": "NOT_RUN",
+      "compile": "NOT_RUN",
+      "commit": "NOT_RUN",
+      "database_runs": "NOT_RUN",
+      "dbms_source_edits": false
+    },
+    "artifact_writes_only": [
+      "artifacts/dev4-predicate-20261024/parser-proposal.md",
+      "artifacts/dev4-predicate-20261024/research.json"
+    ],
+    "limitations": "Source inspection informs an independent XADB design; it does not establish identical DBMS behavior or execute any parser. D2 adoption and product execution remain separate."
+  },
+  "normal_r1_classification": {
+    "at": "2026-10-24T18:44:24.350848+09:00",
+    "receipt": "normal-r1.json",
+    "log": "normal-r1.log",
+    "source": "source-r1.json",
+    "result": "FAIL_NATIVE_STACK_OVERFLOW_SIGABRT",
+    "completed_semantic_functions": [
+      "literal_predicate_precedence_and_shapes",
+      "predicate_raw_value_and_marker_syntax",
+      "predicate_syntax_and_unsupported_diagnostics",
+      "predicate_depth_node_and_marker_boundaries",
+      "generated_predicate_fragments",
+      "known_bad_predicate_observations_are_rejected"
+    ],
+    "semantic_calls": 393,
+    "generated_fragments": 8192,
+    "known_bad": 36,
+    "acceptance_controls": 8,
+    "completed_resource_functions": [
+      "predicate_actual_capacity",
+      "predicate_entry_and_final_controls",
+      "predicate_nested_failures_and_reuse",
+      "predicate_owned_lifetimes",
+      "predicate_quota_boundaries",
+      "predicate_shared_database"
+    ],
+    "not_completed": [
+      "predicate_allocation_failures",
+      "predicate_interior_controls",
+      "predicate_bounded_stack_and_drop"
+    ],
+    "note": "resource process abort prevents completion evidence for the latter three; no PASS inferred from work before abort. Original source, log, executable and failed receipt retained. Fix must preserve depth64 and256KiB native stack."
+  },
+  "stack_review": {
+    "at": "2026-10-24T18:50:52.039205+09:00",
+    "reviewer": "/root/frontend_review",
+    "method": "read-only saved ELF objdump prologue; no runtime repetition",
+    "original_analysis_path": "stack-r1-analysis.md",
+    "original_analysis_sha256": "95aa03c2df480ef5b159cb2805f0f2418aae31bf5ed4648ffb9f5336a8ca42a0",
+    "correction": "Original analysis added1272+1272+2040 incorrectly as4552; exact sum4584,64levels293376 without return addresses. Original file retained; this correction is authoritative for summary arithmetic.",
+    "r1": {
+      "frame_bytes": [
+        1272,
+        1272,
+        2040
+      ],
+      "group_frame_sum": 4584,
+      "group_with_return_addresses": 4608,
+      "depth64_bytes": 294912
+    },
+    "r2": {
+      "frame_bytes": [
+        904,
+        904,
+        648
+      ],
+      "group_frame_sum": 2456,
+      "group_with_return_addresses": 2480,
+      "depth64_bytes": 158720,
+      "saved_binaries": {
+        "binaries/424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa/predicate_resources-6814f906ba36fcf7": "424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      }
+    },
+    "limit_bytes": 262144,
+    "claim_boundary": "Counts only these recursive frames, not whole stack; actual stack-r2 runtime validates complete256KiB call path."
+  },
+  "reference_static_amendment": {
+    "at": "2026-10-24T18:49:08.062087+09:00",
+    "reason": "Clippy type_complexity in independent error literal tuple type; replace only annotation with a local lifetime-parametric alias",
+    "failed_receipt": "clippy-r2.json",
+    "path": "crates/testing/reference/src/frontend/predicate/literals.rs",
+    "before_sha256": "ae8db2e7fb301282b878d91b5c8d408c6a8d5b8eea98087b71c9d09d2123a509",
+    "after_sha256": "676fef4c08943bfa0365398c53b35f0ca1b92147b8736ab90b55726e1ef8ed01",
+    "mechanical_inverse_equals_original": true,
+    "expected_literals_arrays_errors_unchanged": true,
+    "runtime_reexecution": "none; product unchanged fromr2; static-only fix"
+  },
+  "normal_evidence_summary": {
+    "r1": "semantic6/resources6 completed; resource process stack overflow SIGABRT;3 functions not completed",
+    "r2": "only previously not-completed stack/allocation/interior3 exactfunctions PASS; default build/fmt PASS; Clippy originalFAIL",
+    "r3": "reference tuple alias+manifest provenance only; normalruntime0; Clippy/fmt PASS",
+    "distinct_required_functions_completed": 15,
+    "semantic_parse_calls": 393,
+    "generated_fragments": 8192,
+    "known_bad": 36,
+    "exact_controls": 8,
+    "no_same_source_full_pass_claim": true
+  },
+  "sources": {
+    "mutant-depth.json": {
+      "base_head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+      "created_at": "2026-10-24T18:50:14.353754+09:00",
+      "overlay_sha256": {
+        "crates/sql/Cargo.toml": "864605a552be0933c6df62fa11ac1a5827a24be65fd763564a6df274bceee03c",
+        "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+        "crates/sql/src/frontend/control.rs": "8e45b2d3f7f94cffe625ba15e2c4a4d11ff1ac9de0d0d176513091c87a92f5d1",
+        "crates/sql/src/frontend/diagnostic.rs": "3282984ec6ddc445e583bc9e59e16eadad6b19d912354cb5f3bb3590fb39a5c5",
+        "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310",
+        "crates/sql/src/frontend/mod.rs": "8171a55ea4b439356247a88c4d569236426c5869b8ce919f2a2c56497b454d51",
+        "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+        "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+        "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+        "crates/sql/src/frontend/parser/predicate.rs": "c656f923cb64066b9a07f978128ee7ed5dd572f9cb9fab9c50476da4f5295e48",
+        "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+        "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e",
+        "crates/sql/src/frontend/source.rs": "60fc27e4902e5aca8e5e3a22e066ffb810ef8fcc789297d60e192cef469e3ca8",
+        "crates/sql/src/frontend/splitter.rs": "5a65abbc7ffe0e45eed69ec96d2397023c3a0e97df6faddb63dab338e543e71d",
+        "crates/sql/src/frontend/splitter/utf8.rs": "28d12ffc18b20428c3e3dbfb63127a5e488bb684ddbad3b7d79659e5ca34e4d0",
+        "crates/sql/src/lib.rs": "334af6ebb1c095483acba2ee9207511d7dff2444922f7985ee97bc561f8bef9a",
+        "crates/sql/tests/frontend_control.rs": "cefd09b613f5f0396ab50b934c864aeb12fd87f7d62f09d836cc4265526c1890",
+        "crates/sql/tests/frontend_oracle.rs": "89ba8af9643a336725ecade46bbe5d8835b9a60849ddb85bc7f8ca0b5871d63a",
+        "crates/sql/tests/lexer_contracts.rs": "292d4aa9a2fb423ddd70b3f922150feaa04cfaee79b0e40055168e63534997e5",
+        "crates/sql/tests/name_contracts.rs": "4ffec5021b96d19b116f7fb65cf67d8074354349b6c4d5215005be5814365f92",
+        "crates/sql/tests/parser_contracts.rs": "2784c99d3caf010ac0df7df50b6f94b7cd6b2e16d76b4fc31f605bd29d616d2d",
+        "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591",
+        "crates/sql/tests/predicate_contracts.rs": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+        "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+        "crates/sql/tests/scalar_contracts.rs": "f4db15da8b64e4f435432c7e32e4dd77cf5c6f4f32d24912d87b3f12452d1b80",
+        "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+        "crates/sql/tests/splitter_contracts.rs": "40527482e010f8b518228980e8860ebf17da35504b90b494a1bc90d62c09e533",
+        "crates/sql/tests/splitter_resources.rs": "efff301dc2eff3bf82f397fb6e67f3052ac7a4fad5afe97846f96493b15f23e6",
+        "crates/sql/tests/support/frontend.rs": "340019b3ed7703f1a4bbadb196a0f76f5fcff783395941d7a3754dc6920d2f69",
+        "crates/sql/tests/support/mod.rs": "84fde31a7b8517ad7208dc26f81d03b9d05a481479417237a54f67fd6c827344",
+        "crates/testing/reference/src/frontend.rs": "ac51ad32eaf2763ea1cb29474b6e1e3a7ef2c03851de4ca1b48d0cf6e4295baf",
+        "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+        "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+        "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+        "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+        "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+        "crates/testing/reference/src/frontend/predicate/literals.rs": "676fef4c08943bfa0365398c53b35f0ca1b92147b8736ab90b55726e1ef8ed01",
+        "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+        "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+        "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+        "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+        "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+        "tests/fixtures/dev4-predicate/control.json": "bab03845a0cf010e744a0b229e4c33ea377610a47e9e4be430d4c4e188fae167",
+        "tests/fixtures/dev4-predicate/manifest.json": "68f534f8da7f501c3d033501cc23a3c7d6907e66bc334108944bfd21a5021e57",
+        "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5"
+      },
+      "source_sha256": "b48b2159a2f6cf92386ea87dec6bd18e15fc5c7807f15f351c6a1440e2bb6785",
+      "selection": {
+        "scope": "Only new source mutant and exact frozen detector; no unchanged normal runtime repeat",
+        "test": "predicate_depth_node_and_marker_boundaries"
+      },
+      "source": "mutant-depth",
+      "export_script_sha256": "4aa5a9800700d84339ae6a2602f67020a4929688dd0ce50a71310de82d4b3db2",
+      "DEV3_dirty_included": false,
+      "mutation": {
+        "base_source": "source-r3",
+        "source": "mutant-depth",
+        "category": "depth65 accepted",
+        "test_target": "predicate_contracts",
+        "detector": "predicate_depth_node_and_marker_boundaries",
+        "edits": [
+          {
+            "path": "crates/sql/src/frontend/parser/predicate.rs",
+            "old": "if depth == MAX_PREDICATE_DEPTH {",
+            "new": "if depth > MAX_PREDICATE_DEPTH {",
+            "expected_occurrences": 1
+          }
+        ],
+        "expected_failure_witness": "depth NOT or Group65 expected Limit but AST observed",
+        "classification": "PENDING_ACTUAL_EXECUTION_AND_MANUAL_WITNESS_REVIEW"
+      },
+      "snapshot_storage": "hardlinked immutable base; each edited file atomically replaced with new inode; base hashes rechecked",
+      "mutator_sha256": "ba510c83086cffb0f11f83a3b7b5d1c9324f89c815824a7299834216bdbee7a9"
+    },
+    "mutant-eof.json": {
+      "base_head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+      "created_at": "2026-10-24T18:50:25.911761+09:00",
+      "overlay_sha256": {
+        "crates/sql/Cargo.toml": "864605a552be0933c6df62fa11ac1a5827a24be65fd763564a6df274bceee03c",
+        "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+        "crates/sql/src/frontend/control.rs": "8e45b2d3f7f94cffe625ba15e2c4a4d11ff1ac9de0d0d176513091c87a92f5d1",
+        "crates/sql/src/frontend/diagnostic.rs": "3282984ec6ddc445e583bc9e59e16eadad6b19d912354cb5f3bb3590fb39a5c5",
+        "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310",
+        "crates/sql/src/frontend/mod.rs": "8171a55ea4b439356247a88c4d569236426c5869b8ce919f2a2c56497b454d51",
+        "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+        "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+        "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+        "crates/sql/src/frontend/parser/predicate.rs": "9b92553285a96aac53b7814f2741b106f55e2965c1745c2656073a9438d1e501",
+        "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+        "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e",
+        "crates/sql/src/frontend/source.rs": "60fc27e4902e5aca8e5e3a22e066ffb810ef8fcc789297d60e192cef469e3ca8",
+        "crates/sql/src/frontend/splitter.rs": "5a65abbc7ffe0e45eed69ec96d2397023c3a0e97df6faddb63dab338e543e71d",
+        "crates/sql/src/frontend/splitter/utf8.rs": "28d12ffc18b20428c3e3dbfb63127a5e488bb684ddbad3b7d79659e5ca34e4d0",
+        "crates/sql/src/lib.rs": "334af6ebb1c095483acba2ee9207511d7dff2444922f7985ee97bc561f8bef9a",
+        "crates/sql/tests/frontend_control.rs": "cefd09b613f5f0396ab50b934c864aeb12fd87f7d62f09d836cc4265526c1890",
+        "crates/sql/tests/frontend_oracle.rs": "89ba8af9643a336725ecade46bbe5d8835b9a60849ddb85bc7f8ca0b5871d63a",
+        "crates/sql/tests/lexer_contracts.rs": "292d4aa9a2fb423ddd70b3f922150feaa04cfaee79b0e40055168e63534997e5",
+        "crates/sql/tests/name_contracts.rs": "4ffec5021b96d19b116f7fb65cf67d8074354349b6c4d5215005be5814365f92",
+        "crates/sql/tests/parser_contracts.rs": "2784c99d3caf010ac0df7df50b6f94b7cd6b2e16d76b4fc31f605bd29d616d2d",
+        "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591",
+        "crates/sql/tests/predicate_contracts.rs": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+        "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+        "crates/sql/tests/scalar_contracts.rs": "f4db15da8b64e4f435432c7e32e4dd77cf5c6f4f32d24912d87b3f12452d1b80",
+        "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+        "crates/sql/tests/splitter_contracts.rs": "40527482e010f8b518228980e8860ebf17da35504b90b494a1bc90d62c09e533",
+        "crates/sql/tests/splitter_resources.rs": "efff301dc2eff3bf82f397fb6e67f3052ac7a4fad5afe97846f96493b15f23e6",
+        "crates/sql/tests/support/frontend.rs": "340019b3ed7703f1a4bbadb196a0f76f5fcff783395941d7a3754dc6920d2f69",
+        "crates/sql/tests/support/mod.rs": "84fde31a7b8517ad7208dc26f81d03b9d05a481479417237a54f67fd6c827344",
+        "crates/testing/reference/src/frontend.rs": "ac51ad32eaf2763ea1cb29474b6e1e3a7ef2c03851de4ca1b48d0cf6e4295baf",
+        "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+        "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+        "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+        "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+        "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+        "crates/testing/reference/src/frontend/predicate/literals.rs": "676fef4c08943bfa0365398c53b35f0ca1b92147b8736ab90b55726e1ef8ed01",
+        "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+        "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+        "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+        "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+        "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+        "tests/fixtures/dev4-predicate/control.json": "bab03845a0cf010e744a0b229e4c33ea377610a47e9e4be430d4c4e188fae167",
+        "tests/fixtures/dev4-predicate/manifest.json": "68f534f8da7f501c3d033501cc23a3c7d6907e66bc334108944bfd21a5021e57",
+        "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5"
+      },
+      "source_sha256": "d7ac486d973e60d33f43a2f15f6919ec1473c94e3a18b70bf7ab7ec96c1d8fca",
+      "selection": {
+        "scope": "Only new source mutant and exact frozen detector; no unchanged normal runtime repeat",
+        "test": "predicate_syntax_and_unsupported_diagnostics"
+      },
+      "source": "mutant-eof",
+      "export_script_sha256": "4aa5a9800700d84339ae6a2602f67020a4929688dd0ce50a71310de82d4b3db2",
+      "DEV3_dirty_included": false,
+      "mutation": {
+        "base_source": "source-r3",
+        "source": "mutant-eof",
+        "category": "fragment trailing input accepted",
+        "test_target": "predicate_contracts",
+        "detector": "predicate_syntax_and_unsupported_diagnostics",
+        "edits": [
+          {
+            "path": "crates/sql/src/frontend/parser/predicate.rs",
+            "old": "        self.expect(TokenKind::Eof)?;\n",
+            "new": "",
+            "expected_occurrences": 1
+          }
+        ],
+        "expected_failure_witness": "chained comparison or trailing input accepted instead of Syntax",
+        "classification": "PENDING_ACTUAL_EXECUTION_AND_MANUAL_WITNESS_REVIEW"
+      },
+      "snapshot_storage": "hardlinked immutable base; each edited file atomically replaced with new inode; base hashes rechecked",
+      "mutator_sha256": "ba510c83086cffb0f11f83a3b7b5d1c9324f89c815824a7299834216bdbee7a9"
+    },
+    "mutant-final.json": {
+      "base_head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+      "created_at": "2026-10-24T18:50:33.833905+09:00",
+      "overlay_sha256": {
+        "crates/sql/Cargo.toml": "864605a552be0933c6df62fa11ac1a5827a24be65fd763564a6df274bceee03c",
+        "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+        "crates/sql/src/frontend/control.rs": "8e45b2d3f7f94cffe625ba15e2c4a4d11ff1ac9de0d0d176513091c87a92f5d1",
+        "crates/sql/src/frontend/diagnostic.rs": "3282984ec6ddc445e583bc9e59e16eadad6b19d912354cb5f3bb3590fb39a5c5",
+        "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310",
+        "crates/sql/src/frontend/mod.rs": "8171a55ea4b439356247a88c4d569236426c5869b8ce919f2a2c56497b454d51",
+        "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+        "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+        "crates/sql/src/frontend/parser.rs": "a623bbb6e6cd989eba4667af9aad563c3494bd60d31fa407a48c3e507a10b37d",
+        "crates/sql/src/frontend/parser/predicate.rs": "ceb978f4fdf57b6e25cc6727846b9c62a79e532814c4d5ded01b056fb84d9ac8",
+        "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+        "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e",
+        "crates/sql/src/frontend/source.rs": "60fc27e4902e5aca8e5e3a22e066ffb810ef8fcc789297d60e192cef469e3ca8",
+        "crates/sql/src/frontend/splitter.rs": "5a65abbc7ffe0e45eed69ec96d2397023c3a0e97df6faddb63dab338e543e71d",
+        "crates/sql/src/frontend/splitter/utf8.rs": "28d12ffc18b20428c3e3dbfb63127a5e488bb684ddbad3b7d79659e5ca34e4d0",
+        "crates/sql/src/lib.rs": "334af6ebb1c095483acba2ee9207511d7dff2444922f7985ee97bc561f8bef9a",
+        "crates/sql/tests/frontend_control.rs": "cefd09b613f5f0396ab50b934c864aeb12fd87f7d62f09d836cc4265526c1890",
+        "crates/sql/tests/frontend_oracle.rs": "89ba8af9643a336725ecade46bbe5d8835b9a60849ddb85bc7f8ca0b5871d63a",
+        "crates/sql/tests/lexer_contracts.rs": "292d4aa9a2fb423ddd70b3f922150feaa04cfaee79b0e40055168e63534997e5",
+        "crates/sql/tests/name_contracts.rs": "4ffec5021b96d19b116f7fb65cf67d8074354349b6c4d5215005be5814365f92",
+        "crates/sql/tests/parser_contracts.rs": "2784c99d3caf010ac0df7df50b6f94b7cd6b2e16d76b4fc31f605bd29d616d2d",
+        "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591",
+        "crates/sql/tests/predicate_contracts.rs": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+        "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+        "crates/sql/tests/scalar_contracts.rs": "f4db15da8b64e4f435432c7e32e4dd77cf5c6f4f32d24912d87b3f12452d1b80",
+        "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+        "crates/sql/tests/splitter_contracts.rs": "40527482e010f8b518228980e8860ebf17da35504b90b494a1bc90d62c09e533",
+        "crates/sql/tests/splitter_resources.rs": "efff301dc2eff3bf82f397fb6e67f3052ac7a4fad5afe97846f96493b15f23e6",
+        "crates/sql/tests/support/frontend.rs": "340019b3ed7703f1a4bbadb196a0f76f5fcff783395941d7a3754dc6920d2f69",
+        "crates/sql/tests/support/mod.rs": "84fde31a7b8517ad7208dc26f81d03b9d05a481479417237a54f67fd6c827344",
+        "crates/testing/reference/src/frontend.rs": "ac51ad32eaf2763ea1cb29474b6e1e3a7ef2c03851de4ca1b48d0cf6e4295baf",
+        "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+        "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+        "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+        "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+        "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+        "crates/testing/reference/src/frontend/predicate/literals.rs": "676fef4c08943bfa0365398c53b35f0ca1b92147b8736ab90b55726e1ef8ed01",
+        "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+        "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+        "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+        "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+        "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+        "tests/fixtures/dev4-predicate/control.json": "bab03845a0cf010e744a0b229e4c33ea377610a47e9e4be430d4c4e188fae167",
+        "tests/fixtures/dev4-predicate/manifest.json": "68f534f8da7f501c3d033501cc23a3c7d6907e66bc334108944bfd21a5021e57",
+        "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5"
+      },
+      "source_sha256": "9e8ec5fe8b4e4bb913b999325f5bf50e3b9fec59502d25bd758b0a20837d677c",
+      "selection": {
+        "scope": "Only new source mutant and exact frozen detector; no unchanged normal runtime repeat",
+        "test": "predicate_entry_and_final_controls"
+      },
+      "source": "mutant-final",
+      "export_script_sha256": "4aa5a9800700d84339ae6a2602f67020a4929688dd0ce50a71310de82d4b3db2",
+      "DEV3_dirty_included": false,
+      "mutation": {
+        "base_source": "source-r3",
+        "source": "mutant-final",
+        "category": "final publication control removed",
+        "test_target": "predicate_resources",
+        "detector": "predicate_entry_and_final_controls",
+        "edits": [
+          {
+            "path": "crates/sql/src/frontend/parser.rs",
+            "old": "        input.predicate_fragment(&mut builder)?;\n        check(control, source.len())?;",
+            "new": "        input.predicate_fragment(&mut builder)?;",
+            "expected_occurrences": 1
+          }
+        ],
+        "expected_failure_witness": "final predicate publication checkpoint count0 instead of1",
+        "classification": "PENDING_ACTUAL_EXECUTION_AND_MANUAL_WITNESS_REVIEW"
+      },
+      "snapshot_storage": "hardlinked immutable base; each edited file atomically replaced with new inode; base hashes rechecked",
+      "mutator_sha256": "ba510c83086cffb0f11f83a3b7b5d1c9324f89c815824a7299834216bdbee7a9"
+    },
+    "mutant-marker.json": {
+      "base_head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+      "created_at": "2026-10-24T18:50:21.985792+09:00",
+      "overlay_sha256": {
+        "crates/sql/Cargo.toml": "864605a552be0933c6df62fa11ac1a5827a24be65fd763564a6df274bceee03c",
+        "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+        "crates/sql/src/frontend/control.rs": "8e45b2d3f7f94cffe625ba15e2c4a4d11ff1ac9de0d0d176513091c87a92f5d1",
+        "crates/sql/src/frontend/diagnostic.rs": "3282984ec6ddc445e583bc9e59e16eadad6b19d912354cb5f3bb3590fb39a5c5",
+        "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310",
+        "crates/sql/src/frontend/mod.rs": "8171a55ea4b439356247a88c4d569236426c5869b8ce919f2a2c56497b454d51",
+        "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+        "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+        "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+        "crates/sql/src/frontend/parser/predicate.rs": "593d5b32fa06f81f59d8c5293f789f5210b71a380822bebf2a32d9619af18bdf",
+        "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+        "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e",
+        "crates/sql/src/frontend/source.rs": "60fc27e4902e5aca8e5e3a22e066ffb810ef8fcc789297d60e192cef469e3ca8",
+        "crates/sql/src/frontend/splitter.rs": "5a65abbc7ffe0e45eed69ec96d2397023c3a0e97df6faddb63dab338e543e71d",
+        "crates/sql/src/frontend/splitter/utf8.rs": "28d12ffc18b20428c3e3dbfb63127a5e488bb684ddbad3b7d79659e5ca34e4d0",
+        "crates/sql/src/lib.rs": "334af6ebb1c095483acba2ee9207511d7dff2444922f7985ee97bc561f8bef9a",
+        "crates/sql/tests/frontend_control.rs": "cefd09b613f5f0396ab50b934c864aeb12fd87f7d62f09d836cc4265526c1890",
+        "crates/sql/tests/frontend_oracle.rs": "89ba8af9643a336725ecade46bbe5d8835b9a60849ddb85bc7f8ca0b5871d63a",
+        "crates/sql/tests/lexer_contracts.rs": "292d4aa9a2fb423ddd70b3f922150feaa04cfaee79b0e40055168e63534997e5",
+        "crates/sql/tests/name_contracts.rs": "4ffec5021b96d19b116f7fb65cf67d8074354349b6c4d5215005be5814365f92",
+        "crates/sql/tests/parser_contracts.rs": "2784c99d3caf010ac0df7df50b6f94b7cd6b2e16d76b4fc31f605bd29d616d2d",
+        "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591",
+        "crates/sql/tests/predicate_contracts.rs": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+        "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+        "crates/sql/tests/scalar_contracts.rs": "f4db15da8b64e4f435432c7e32e4dd77cf5c6f4f32d24912d87b3f12452d1b80",
+        "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+        "crates/sql/tests/splitter_contracts.rs": "40527482e010f8b518228980e8860ebf17da35504b90b494a1bc90d62c09e533",
+        "crates/sql/tests/splitter_resources.rs": "efff301dc2eff3bf82f397fb6e67f3052ac7a4fad5afe97846f96493b15f23e6",
+        "crates/sql/tests/support/frontend.rs": "340019b3ed7703f1a4bbadb196a0f76f5fcff783395941d7a3754dc6920d2f69",
+        "crates/sql/tests/support/mod.rs": "84fde31a7b8517ad7208dc26f81d03b9d05a481479417237a54f67fd6c827344",
+        "crates/testing/reference/src/frontend.rs": "ac51ad32eaf2763ea1cb29474b6e1e3a7ef2c03851de4ca1b48d0cf6e4295baf",
+        "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+        "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+        "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+        "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+        "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+        "crates/testing/reference/src/frontend/predicate/literals.rs": "676fef4c08943bfa0365398c53b35f0ca1b92147b8736ab90b55726e1ef8ed01",
+        "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+        "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+        "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+        "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+        "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+        "tests/fixtures/dev4-predicate/control.json": "bab03845a0cf010e744a0b229e4c33ea377610a47e9e4be430d4c4e188fae167",
+        "tests/fixtures/dev4-predicate/manifest.json": "68f534f8da7f501c3d033501cc23a3c7d6907e66bc334108944bfd21a5021e57",
+        "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5"
+      },
+      "source_sha256": "0b41a95118709aeec081356d9daff81a0362845d9f188156b759b98a845bd13a",
+      "selection": {
+        "scope": "Only new source mutant and exact frozen detector; no unchanged normal runtime repeat",
+        "test": "predicate_raw_value_and_marker_syntax"
+      },
+      "source": "mutant-marker",
+      "export_script_sha256": "4aa5a9800700d84339ae6a2602f67020a4929688dd0ce50a71310de82d4b3db2",
+      "DEV3_dirty_included": false,
+      "mutation": {
+        "base_source": "source-r3",
+        "source": "mutant-marker",
+        "category": "group marker resets",
+        "test_target": "predicate_contracts",
+        "detector": "predicate_raw_value_and_marker_syntax",
+        "edits": [
+          {
+            "path": "crates/sql/src/frontend/parser/predicate.rs",
+            "old": "            self.predicate(builder, nested.node, nested.depth)?;",
+            "new": "            self.marker_count = 0;\n            self.predicate(builder, nested.node, nested.depth)?;",
+            "expected_occurrences": 1
+          }
+        ],
+        "expected_failure_witness": "raw-marker-order marker ordinal/count mismatch",
+        "classification": "PENDING_ACTUAL_EXECUTION_AND_MANUAL_WITNESS_REVIEW"
+      },
+      "snapshot_storage": "hardlinked immutable base; each edited file atomically replaced with new inode; base hashes rechecked",
+      "mutator_sha256": "ba510c83086cffb0f11f83a3b7b5d1c9324f89c815824a7299834216bdbee7a9"
+    },
+    "mutant-node.json": {
+      "base_head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+      "created_at": "2026-10-24T18:50:29.812980+09:00",
+      "overlay_sha256": {
+        "crates/sql/Cargo.toml": "864605a552be0933c6df62fa11ac1a5827a24be65fd763564a6df274bceee03c",
+        "crates/sql/src/frontend/ast.rs": "9ae597876a5d6b749c7c4a2698ac8333015772abf25016dad6065633064ec078",
+        "crates/sql/src/frontend/control.rs": "8e45b2d3f7f94cffe625ba15e2c4a4d11ff1ac9de0d0d176513091c87a92f5d1",
+        "crates/sql/src/frontend/diagnostic.rs": "3282984ec6ddc445e583bc9e59e16eadad6b19d912354cb5f3bb3590fb39a5c5",
+        "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310",
+        "crates/sql/src/frontend/mod.rs": "8171a55ea4b439356247a88c4d569236426c5869b8ce919f2a2c56497b454d51",
+        "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+        "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+        "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+        "crates/sql/src/frontend/parser/predicate.rs": "ceb978f4fdf57b6e25cc6727846b9c62a79e532814c4d5ded01b056fb84d9ac8",
+        "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+        "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e",
+        "crates/sql/src/frontend/source.rs": "60fc27e4902e5aca8e5e3a22e066ffb810ef8fcc789297d60e192cef469e3ca8",
+        "crates/sql/src/frontend/splitter.rs": "5a65abbc7ffe0e45eed69ec96d2397023c3a0e97df6faddb63dab338e543e71d",
+        "crates/sql/src/frontend/splitter/utf8.rs": "28d12ffc18b20428c3e3dbfb63127a5e488bb684ddbad3b7d79659e5ca34e4d0",
+        "crates/sql/src/lib.rs": "334af6ebb1c095483acba2ee9207511d7dff2444922f7985ee97bc561f8bef9a",
+        "crates/sql/tests/frontend_control.rs": "cefd09b613f5f0396ab50b934c864aeb12fd87f7d62f09d836cc4265526c1890",
+        "crates/sql/tests/frontend_oracle.rs": "89ba8af9643a336725ecade46bbe5d8835b9a60849ddb85bc7f8ca0b5871d63a",
+        "crates/sql/tests/lexer_contracts.rs": "292d4aa9a2fb423ddd70b3f922150feaa04cfaee79b0e40055168e63534997e5",
+        "crates/sql/tests/name_contracts.rs": "4ffec5021b96d19b116f7fb65cf67d8074354349b6c4d5215005be5814365f92",
+        "crates/sql/tests/parser_contracts.rs": "2784c99d3caf010ac0df7df50b6f94b7cd6b2e16d76b4fc31f605bd29d616d2d",
+        "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591",
+        "crates/sql/tests/predicate_contracts.rs": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+        "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+        "crates/sql/tests/scalar_contracts.rs": "f4db15da8b64e4f435432c7e32e4dd77cf5c6f4f32d24912d87b3f12452d1b80",
+        "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+        "crates/sql/tests/splitter_contracts.rs": "40527482e010f8b518228980e8860ebf17da35504b90b494a1bc90d62c09e533",
+        "crates/sql/tests/splitter_resources.rs": "efff301dc2eff3bf82f397fb6e67f3052ac7a4fad5afe97846f96493b15f23e6",
+        "crates/sql/tests/support/frontend.rs": "340019b3ed7703f1a4bbadb196a0f76f5fcff783395941d7a3754dc6920d2f69",
+        "crates/sql/tests/support/mod.rs": "84fde31a7b8517ad7208dc26f81d03b9d05a481479417237a54f67fd6c827344",
+        "crates/testing/reference/src/frontend.rs": "ac51ad32eaf2763ea1cb29474b6e1e3a7ef2c03851de4ca1b48d0cf6e4295baf",
+        "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+        "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+        "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+        "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+        "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+        "crates/testing/reference/src/frontend/predicate/literals.rs": "676fef4c08943bfa0365398c53b35f0ca1b92147b8736ab90b55726e1ef8ed01",
+        "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+        "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+        "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+        "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+        "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+        "tests/fixtures/dev4-predicate/control.json": "bab03845a0cf010e744a0b229e4c33ea377610a47e9e4be430d4c4e188fae167",
+        "tests/fixtures/dev4-predicate/manifest.json": "68f534f8da7f501c3d033501cc23a3c7d6907e66bc334108944bfd21a5021e57",
+        "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5"
+      },
+      "source_sha256": "df72931b26054c17d3cd69e78127312abd2e871ecc79431cd2539af24b6dc897",
+      "selection": {
+        "scope": "Only new source mutant and exact frozen detector; no unchanged normal runtime repeat",
+        "test": "predicate_depth_node_and_marker_boundaries"
+      },
+      "source": "mutant-node",
+      "export_script_sha256": "4aa5a9800700d84339ae6a2602f67020a4929688dd0ce50a71310de82d4b3db2",
+      "DEV3_dirty_included": false,
+      "mutation": {
+        "base_source": "source-r3",
+        "source": "mutant-node",
+        "category": "node8193 accepted",
+        "test_target": "predicate_contracts",
+        "detector": "predicate_depth_node_and_marker_boundaries",
+        "edits": [
+          {
+            "path": "crates/sql/src/frontend/ast.rs",
+            "old": "const MAX_AST_NODES: usize = 8192;",
+            "new": "const MAX_AST_NODES: usize = 8193;",
+            "expected_occurrences": 1
+          }
+        ],
+        "expected_failure_witness": "nodes8193 accepted instead of Limit",
+        "classification": "PENDING_ACTUAL_EXECUTION_AND_MANUAL_WITNESS_REVIEW"
+      },
+      "snapshot_storage": "hardlinked immutable base; each edited file atomically replaced with new inode; base hashes rechecked",
+      "mutator_sha256": "ba510c83086cffb0f11f83a3b7b5d1c9324f89c815824a7299834216bdbee7a9"
+    },
+    "mutant-precedence.json": {
+      "base_head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+      "created_at": "2026-10-24T18:50:18.162393+09:00",
+      "overlay_sha256": {
+        "crates/sql/Cargo.toml": "864605a552be0933c6df62fa11ac1a5827a24be65fd763564a6df274bceee03c",
+        "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+        "crates/sql/src/frontend/control.rs": "8e45b2d3f7f94cffe625ba15e2c4a4d11ff1ac9de0d0d176513091c87a92f5d1",
+        "crates/sql/src/frontend/diagnostic.rs": "3282984ec6ddc445e583bc9e59e16eadad6b19d912354cb5f3bb3590fb39a5c5",
+        "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310",
+        "crates/sql/src/frontend/mod.rs": "8171a55ea4b439356247a88c4d569236426c5869b8ce919f2a2c56497b454d51",
+        "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+        "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+        "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+        "crates/sql/src/frontend/parser/predicate.rs": "afec63207f5f9df5758bb91350cfadb7964be8224af4e8b847d51ef1149c5037",
+        "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+        "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e",
+        "crates/sql/src/frontend/source.rs": "60fc27e4902e5aca8e5e3a22e066ffb810ef8fcc789297d60e192cef469e3ca8",
+        "crates/sql/src/frontend/splitter.rs": "5a65abbc7ffe0e45eed69ec96d2397023c3a0e97df6faddb63dab338e543e71d",
+        "crates/sql/src/frontend/splitter/utf8.rs": "28d12ffc18b20428c3e3dbfb63127a5e488bb684ddbad3b7d79659e5ca34e4d0",
+        "crates/sql/src/lib.rs": "334af6ebb1c095483acba2ee9207511d7dff2444922f7985ee97bc561f8bef9a",
+        "crates/sql/tests/frontend_control.rs": "cefd09b613f5f0396ab50b934c864aeb12fd87f7d62f09d836cc4265526c1890",
+        "crates/sql/tests/frontend_oracle.rs": "89ba8af9643a336725ecade46bbe5d8835b9a60849ddb85bc7f8ca0b5871d63a",
+        "crates/sql/tests/lexer_contracts.rs": "292d4aa9a2fb423ddd70b3f922150feaa04cfaee79b0e40055168e63534997e5",
+        "crates/sql/tests/name_contracts.rs": "4ffec5021b96d19b116f7fb65cf67d8074354349b6c4d5215005be5814365f92",
+        "crates/sql/tests/parser_contracts.rs": "2784c99d3caf010ac0df7df50b6f94b7cd6b2e16d76b4fc31f605bd29d616d2d",
+        "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591",
+        "crates/sql/tests/predicate_contracts.rs": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+        "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+        "crates/sql/tests/scalar_contracts.rs": "f4db15da8b64e4f435432c7e32e4dd77cf5c6f4f32d24912d87b3f12452d1b80",
+        "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+        "crates/sql/tests/splitter_contracts.rs": "40527482e010f8b518228980e8860ebf17da35504b90b494a1bc90d62c09e533",
+        "crates/sql/tests/splitter_resources.rs": "efff301dc2eff3bf82f397fb6e67f3052ac7a4fad5afe97846f96493b15f23e6",
+        "crates/sql/tests/support/frontend.rs": "340019b3ed7703f1a4bbadb196a0f76f5fcff783395941d7a3754dc6920d2f69",
+        "crates/sql/tests/support/mod.rs": "84fde31a7b8517ad7208dc26f81d03b9d05a481479417237a54f67fd6c827344",
+        "crates/testing/reference/src/frontend.rs": "ac51ad32eaf2763ea1cb29474b6e1e3a7ef2c03851de4ca1b48d0cf6e4295baf",
+        "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+        "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+        "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+        "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+        "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+        "crates/testing/reference/src/frontend/predicate/literals.rs": "676fef4c08943bfa0365398c53b35f0ca1b92147b8736ab90b55726e1ef8ed01",
+        "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+        "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+        "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+        "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+        "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+        "tests/fixtures/dev4-predicate/control.json": "bab03845a0cf010e744a0b229e4c33ea377610a47e9e4be430d4c4e188fae167",
+        "tests/fixtures/dev4-predicate/manifest.json": "68f534f8da7f501c3d033501cc23a3c7d6907e66bc334108944bfd21a5021e57",
+        "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5"
+      },
+      "source_sha256": "965e3b86ee867f44d82ebd57485dd5560346c3cdfb30c6bbcae2b05c427c7134",
+      "selection": {
+        "scope": "Only new source mutant and exact frozen detector; no unchanged normal runtime repeat",
+        "test": "literal_predicate_precedence_and_shapes"
+      },
+      "source": "mutant-precedence",
+      "export_script_sha256": "4aa5a9800700d84339ae6a2602f67020a4929688dd0ce50a71310de82d4b3db2",
+      "DEV3_dirty_included": false,
+      "mutation": {
+        "base_source": "source-r3",
+        "source": "mutant-precedence",
+        "category": "AND OR precedence swapped",
+        "test_target": "predicate_contracts",
+        "detector": "literal_predicate_precedence_and_shapes",
+        "edits": [
+          {
+            "path": "crates/sql/src/frontend/parser/predicate.rs",
+            "old": "while self.peek()?.kind == TokenKind::Keyword(Keyword::Or) {\n            let operator = self.take()?;\n            check(self.control, operator.span.end)?;\n            last = self.predicate_and(builder, node, depth)?;",
+            "new": "while self.peek()?.kind == TokenKind::Keyword(Keyword::And) {\n            let operator = self.take()?;\n            check(self.control, operator.span.end)?;\n            last = self.predicate_and(builder, node, depth)?;",
+            "expected_occurrences": 1
+          },
+          {
+            "path": "crates/sql/src/frontend/parser/predicate.rs",
+            "old": "while self.peek()?.kind == TokenKind::Keyword(Keyword::And) {\n            let operator = self.take()?;\n            check(self.control, operator.span.end)?;\n            last = self.predicate_term(builder, node, depth)?;",
+            "new": "while self.peek()?.kind == TokenKind::Keyword(Keyword::Or) {\n            let operator = self.take()?;\n            check(self.control, operator.span.end)?;\n            last = self.predicate_term(builder, node, depth)?;",
+            "expected_occurrences": 1
+          }
+        ],
+        "expected_failure_witness": "shape-hand-precedence actual complete AST differs",
+        "classification": "PENDING_ACTUAL_EXECUTION_AND_MANUAL_WITNESS_REVIEW"
+      },
+      "snapshot_storage": "hardlinked immutable base; each edited file atomically replaced with new inode; base hashes rechecked",
+      "mutator_sha256": "ba510c83086cffb0f11f83a3b7b5d1c9324f89c815824a7299834216bdbee7a9"
+    },
+    "source-r1.json": {
+      "base_head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+      "created_at": "2026-10-24T18:42:38.690827+09:00",
+      "overlay_sha256": {
+        "crates/sql/Cargo.toml": "864605a552be0933c6df62fa11ac1a5827a24be65fd763564a6df274bceee03c",
+        "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+        "crates/sql/src/frontend/control.rs": "8e45b2d3f7f94cffe625ba15e2c4a4d11ff1ac9de0d0d176513091c87a92f5d1",
+        "crates/sql/src/frontend/diagnostic.rs": "3282984ec6ddc445e583bc9e59e16eadad6b19d912354cb5f3bb3590fb39a5c5",
+        "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310",
+        "crates/sql/src/frontend/mod.rs": "8171a55ea4b439356247a88c4d569236426c5869b8ce919f2a2c56497b454d51",
+        "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+        "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+        "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+        "crates/sql/src/frontend/parser/predicate.rs": "8c3763528ed7e3f634be4e4e338d5e717c3133ccd8b11595bccf1c49ddc005a5",
+        "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+        "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e",
+        "crates/sql/src/frontend/source.rs": "60fc27e4902e5aca8e5e3a22e066ffb810ef8fcc789297d60e192cef469e3ca8",
+        "crates/sql/src/frontend/splitter.rs": "5a65abbc7ffe0e45eed69ec96d2397023c3a0e97df6faddb63dab338e543e71d",
+        "crates/sql/src/frontend/splitter/utf8.rs": "28d12ffc18b20428c3e3dbfb63127a5e488bb684ddbad3b7d79659e5ca34e4d0",
+        "crates/sql/src/lib.rs": "334af6ebb1c095483acba2ee9207511d7dff2444922f7985ee97bc561f8bef9a",
+        "crates/sql/tests/frontend_control.rs": "cefd09b613f5f0396ab50b934c864aeb12fd87f7d62f09d836cc4265526c1890",
+        "crates/sql/tests/frontend_oracle.rs": "89ba8af9643a336725ecade46bbe5d8835b9a60849ddb85bc7f8ca0b5871d63a",
+        "crates/sql/tests/lexer_contracts.rs": "292d4aa9a2fb423ddd70b3f922150feaa04cfaee79b0e40055168e63534997e5",
+        "crates/sql/tests/name_contracts.rs": "4ffec5021b96d19b116f7fb65cf67d8074354349b6c4d5215005be5814365f92",
+        "crates/sql/tests/parser_contracts.rs": "2784c99d3caf010ac0df7df50b6f94b7cd6b2e16d76b4fc31f605bd29d616d2d",
+        "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591",
+        "crates/sql/tests/predicate_contracts.rs": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+        "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+        "crates/sql/tests/scalar_contracts.rs": "f4db15da8b64e4f435432c7e32e4dd77cf5c6f4f32d24912d87b3f12452d1b80",
+        "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+        "crates/sql/tests/splitter_contracts.rs": "40527482e010f8b518228980e8860ebf17da35504b90b494a1bc90d62c09e533",
+        "crates/sql/tests/splitter_resources.rs": "efff301dc2eff3bf82f397fb6e67f3052ac7a4fad5afe97846f96493b15f23e6",
+        "crates/sql/tests/support/frontend.rs": "340019b3ed7703f1a4bbadb196a0f76f5fcff783395941d7a3754dc6920d2f69",
+        "crates/sql/tests/support/mod.rs": "84fde31a7b8517ad7208dc26f81d03b9d05a481479417237a54f67fd6c827344",
+        "crates/testing/reference/src/frontend.rs": "ac51ad32eaf2763ea1cb29474b6e1e3a7ef2c03851de4ca1b48d0cf6e4295baf",
+        "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+        "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+        "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+        "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+        "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+        "crates/testing/reference/src/frontend/predicate/literals.rs": "ae8db2e7fb301282b878d91b5c8d408c6a8d5b8eea98087b71c9d09d2123a509",
+        "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+        "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+        "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+        "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+        "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+        "tests/fixtures/dev4-predicate/control.json": "bab03845a0cf010e744a0b229e4c33ea377610a47e9e4be430d4c4e188fae167",
+        "tests/fixtures/dev4-predicate/manifest.json": "44490358d7c484d2afaeaa59347fd9ab4aa3f53e565a2dfc85911dc1d14b7f23",
+        "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5"
+      },
+      "source_sha256": "75b50919c08baf05e265e1f591b3a515286b88bc9669a65725153b8ed77a10d4",
+      "selection": {
+        "at": "2026-10-24T18:42:38.537058+09:00",
+        "last_product_validation": "scalar ae176b6 prior source preserved; new predicate has not run",
+        "head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+        "changed_paths_sha256": {
+          "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+          "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+          "crates/sql/src/frontend/parser/predicate.rs": "8c3763528ed7e3f634be4e4e338d5e717c3133ccd8b11595bccf1c49ddc005a5",
+          "crates/sql/src/frontend/mod.rs": "8171a55ea4b439356247a88c4d569236426c5869b8ce919f2a2c56497b454d51",
+          "crates/sql/tests/parser_contracts.rs": "2784c99d3caf010ac0df7df50b6f94b7cd6b2e16d76b4fc31f605bd29d616d2d",
+          "crates/sql/tests/predicate_contracts.rs": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+          "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+          "crates/testing/reference/src/frontend.rs": "ac51ad32eaf2763ea1cb29474b6e1e3a7ef2c03851de4ca1b48d0cf6e4295baf",
+          "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+          "crates/testing/reference/src/frontend/predicate/literals.rs": "ae8db2e7fb301282b878d91b5c8d408c6a8d5b8eea98087b71c9d09d2123a509",
+          "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa"
+        },
+        "diff_to_cases": {
+          "new_predicate_API_AST_and_parser": [
+            "semantic6 functions covering393 parse calls/8192 generated fragments and36 known-bad/8 acceptance controls",
+            "resource9 functions covering new entry lifetime/quota/allocations/controls/native threads/256KiB stack/reuse"
+          ],
+          "scalar_return_Span_only": "new predicate operand consumer covered by new semantic/resource; old INSERT/scalar runtime not rerun",
+          "existing_parser_observation_enum_arm": "compile-only all targets; old test runtime excluded",
+          "reference_inverse_printer_checker": "six semantic functions including known-bad36 controls8; no production-derived expectations"
+        },
+        "commands": {
+          "runtime": [
+            "cargo",
+            "test",
+            "-p",
+            "xadb-sql",
+            "--features",
+            "test-support",
+            "--locked",
+            "--test",
+            "predicate_contracts",
+            "--test",
+            "predicate_resources",
+            "--",
+            "--nocapture"
+          ],
+          "default_build": [
+            "cargo",
+            "check",
+            "-p",
+            "xadb-sql",
+            "--locked"
+          ],
+          "format": [
+            "cargo",
+            "fmt",
+            "--all",
+            "--check"
+          ],
+          "lint": [
+            "cargo",
+            "clippy",
+            "-p",
+            "xadb-sql",
+            "-p",
+            "xadbtest-reference",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--",
+            "-D",
+            "warnings"
+          ]
+        },
+        "excluded": "No old lexer/name/splitter/P2/scalar/DEV3 runtime, no workspace wrappers, no docs verifier, no expanded ignored profiles",
+        "harness_corrections": "D1 pre-execution review: reject mutation outside frozen overlay; runtime failure remains pending manual witness review"
+      },
+      "source": "source-r1",
+      "export_script_sha256": "4aa5a9800700d84339ae6a2602f67020a4929688dd0ce50a71310de82d4b3db2",
+      "DEV3_dirty_included": false
+    },
+    "source-r2.json": {
+      "base_head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+      "created_at": "2026-10-24T18:47:41.812488+09:00",
+      "overlay_sha256": {
+        "crates/sql/Cargo.toml": "864605a552be0933c6df62fa11ac1a5827a24be65fd763564a6df274bceee03c",
+        "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+        "crates/sql/src/frontend/control.rs": "8e45b2d3f7f94cffe625ba15e2c4a4d11ff1ac9de0d0d176513091c87a92f5d1",
+        "crates/sql/src/frontend/diagnostic.rs": "3282984ec6ddc445e583bc9e59e16eadad6b19d912354cb5f3bb3590fb39a5c5",
+        "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310",
+        "crates/sql/src/frontend/mod.rs": "8171a55ea4b439356247a88c4d569236426c5869b8ce919f2a2c56497b454d51",
+        "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+        "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+        "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+        "crates/sql/src/frontend/parser/predicate.rs": "ceb978f4fdf57b6e25cc6727846b9c62a79e532814c4d5ded01b056fb84d9ac8",
+        "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+        "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e",
+        "crates/sql/src/frontend/source.rs": "60fc27e4902e5aca8e5e3a22e066ffb810ef8fcc789297d60e192cef469e3ca8",
+        "crates/sql/src/frontend/splitter.rs": "5a65abbc7ffe0e45eed69ec96d2397023c3a0e97df6faddb63dab338e543e71d",
+        "crates/sql/src/frontend/splitter/utf8.rs": "28d12ffc18b20428c3e3dbfb63127a5e488bb684ddbad3b7d79659e5ca34e4d0",
+        "crates/sql/src/lib.rs": "334af6ebb1c095483acba2ee9207511d7dff2444922f7985ee97bc561f8bef9a",
+        "crates/sql/tests/frontend_control.rs": "cefd09b613f5f0396ab50b934c864aeb12fd87f7d62f09d836cc4265526c1890",
+        "crates/sql/tests/frontend_oracle.rs": "89ba8af9643a336725ecade46bbe5d8835b9a60849ddb85bc7f8ca0b5871d63a",
+        "crates/sql/tests/lexer_contracts.rs": "292d4aa9a2fb423ddd70b3f922150feaa04cfaee79b0e40055168e63534997e5",
+        "crates/sql/tests/name_contracts.rs": "4ffec5021b96d19b116f7fb65cf67d8074354349b6c4d5215005be5814365f92",
+        "crates/sql/tests/parser_contracts.rs": "2784c99d3caf010ac0df7df50b6f94b7cd6b2e16d76b4fc31f605bd29d616d2d",
+        "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591",
+        "crates/sql/tests/predicate_contracts.rs": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+        "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+        "crates/sql/tests/scalar_contracts.rs": "f4db15da8b64e4f435432c7e32e4dd77cf5c6f4f32d24912d87b3f12452d1b80",
+        "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+        "crates/sql/tests/splitter_contracts.rs": "40527482e010f8b518228980e8860ebf17da35504b90b494a1bc90d62c09e533",
+        "crates/sql/tests/splitter_resources.rs": "efff301dc2eff3bf82f397fb6e67f3052ac7a4fad5afe97846f96493b15f23e6",
+        "crates/sql/tests/support/frontend.rs": "340019b3ed7703f1a4bbadb196a0f76f5fcff783395941d7a3754dc6920d2f69",
+        "crates/sql/tests/support/mod.rs": "84fde31a7b8517ad7208dc26f81d03b9d05a481479417237a54f67fd6c827344",
+        "crates/testing/reference/src/frontend.rs": "ac51ad32eaf2763ea1cb29474b6e1e3a7ef2c03851de4ca1b48d0cf6e4295baf",
+        "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+        "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+        "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+        "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+        "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+        "crates/testing/reference/src/frontend/predicate/literals.rs": "ae8db2e7fb301282b878d91b5c8d408c6a8d5b8eea98087b71c9d09d2123a509",
+        "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+        "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+        "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+        "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+        "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+        "tests/fixtures/dev4-predicate/control.json": "bab03845a0cf010e744a0b229e4c33ea377610a47e9e4be430d4c4e188fae167",
+        "tests/fixtures/dev4-predicate/manifest.json": "44490358d7c484d2afaeaa59347fd9ab4aa3f53e565a2dfc85911dc1d14b7f23",
+        "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5"
+      },
+      "source_sha256": "e31487696a4db6bc6b44bb596fd8f1812180cf6e6d6ceeb6eb371b0c5d6245d1",
+      "selection": {
+        "at": "2026-10-24T18:47:41.654503+09:00",
+        "previous": "normal-r1.json",
+        "source_diff": {
+          "crates/sql/src/frontend/parser/predicate.rs": {
+            "r1": "8c3763528ed7e3f634be4e4e338d5e717c3133ccd8b11595bccf1c49ddc005a5",
+            "r2": "ceb978f4fdf57b6e25cc6727846b9c62a79e532814c4d5ded01b056fb84d9ac8"
+          }
+        },
+        "reason": "r1 native256KiB stack overflow; large enum/setup temporary lifetimes moved into nonrecursive helpers without grammar/allocation/control order changes",
+        "selected_exact_functions": [
+          "predicate_bounded_stack_and_drop",
+          "predicate_allocation_failures",
+          "predicate_interior_controls"
+        ],
+        "diff_to_cases": {
+          "predicate_bounded_stack_and_drop": "failed small-stack nesting63/64/65, mixed/sibling restore, flat8192/drop path; directly tests reduced recursive-frame code",
+          "predicate_allocation_failures": "not completed under r1 abort; helper add ordering/allocation positions/cleanup/reuse and injection consumption",
+          "predicate_interior_controls": "not completed under r1 abort; wrapper/term setup and finish checks including depth entry/unwind, AND/OR loops"
+        },
+        "retained_prior_source_evidence": "semantic6/resource6 completed onr1 are preserved and not repeated; no unrelated old runtime",
+        "other_checks": "default SQL compile + SQL/reference all-targets/all-features Clippy + export fmt; no document verifier"
+      },
+      "source": "source-r2",
+      "export_script_sha256": "4aa5a9800700d84339ae6a2602f67020a4929688dd0ce50a71310de82d4b3db2",
+      "DEV3_dirty_included": false
+    },
+    "source-r3.json": {
+      "base_head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+      "created_at": "2026-10-24T18:49:08.220017+09:00",
+      "overlay_sha256": {
+        "crates/sql/Cargo.toml": "864605a552be0933c6df62fa11ac1a5827a24be65fd763564a6df274bceee03c",
+        "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+        "crates/sql/src/frontend/control.rs": "8e45b2d3f7f94cffe625ba15e2c4a4d11ff1ac9de0d0d176513091c87a92f5d1",
+        "crates/sql/src/frontend/diagnostic.rs": "3282984ec6ddc445e583bc9e59e16eadad6b19d912354cb5f3bb3590fb39a5c5",
+        "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310",
+        "crates/sql/src/frontend/mod.rs": "8171a55ea4b439356247a88c4d569236426c5869b8ce919f2a2c56497b454d51",
+        "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+        "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+        "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+        "crates/sql/src/frontend/parser/predicate.rs": "ceb978f4fdf57b6e25cc6727846b9c62a79e532814c4d5ded01b056fb84d9ac8",
+        "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+        "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e",
+        "crates/sql/src/frontend/source.rs": "60fc27e4902e5aca8e5e3a22e066ffb810ef8fcc789297d60e192cef469e3ca8",
+        "crates/sql/src/frontend/splitter.rs": "5a65abbc7ffe0e45eed69ec96d2397023c3a0e97df6faddb63dab338e543e71d",
+        "crates/sql/src/frontend/splitter/utf8.rs": "28d12ffc18b20428c3e3dbfb63127a5e488bb684ddbad3b7d79659e5ca34e4d0",
+        "crates/sql/src/lib.rs": "334af6ebb1c095483acba2ee9207511d7dff2444922f7985ee97bc561f8bef9a",
+        "crates/sql/tests/frontend_control.rs": "cefd09b613f5f0396ab50b934c864aeb12fd87f7d62f09d836cc4265526c1890",
+        "crates/sql/tests/frontend_oracle.rs": "89ba8af9643a336725ecade46bbe5d8835b9a60849ddb85bc7f8ca0b5871d63a",
+        "crates/sql/tests/lexer_contracts.rs": "292d4aa9a2fb423ddd70b3f922150feaa04cfaee79b0e40055168e63534997e5",
+        "crates/sql/tests/name_contracts.rs": "4ffec5021b96d19b116f7fb65cf67d8074354349b6c4d5215005be5814365f92",
+        "crates/sql/tests/parser_contracts.rs": "2784c99d3caf010ac0df7df50b6f94b7cd6b2e16d76b4fc31f605bd29d616d2d",
+        "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591",
+        "crates/sql/tests/predicate_contracts.rs": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+        "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+        "crates/sql/tests/scalar_contracts.rs": "f4db15da8b64e4f435432c7e32e4dd77cf5c6f4f32d24912d87b3f12452d1b80",
+        "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+        "crates/sql/tests/splitter_contracts.rs": "40527482e010f8b518228980e8860ebf17da35504b90b494a1bc90d62c09e533",
+        "crates/sql/tests/splitter_resources.rs": "efff301dc2eff3bf82f397fb6e67f3052ac7a4fad5afe97846f96493b15f23e6",
+        "crates/sql/tests/support/frontend.rs": "340019b3ed7703f1a4bbadb196a0f76f5fcff783395941d7a3754dc6920d2f69",
+        "crates/sql/tests/support/mod.rs": "84fde31a7b8517ad7208dc26f81d03b9d05a481479417237a54f67fd6c827344",
+        "crates/testing/reference/src/frontend.rs": "ac51ad32eaf2763ea1cb29474b6e1e3a7ef2c03851de4ca1b48d0cf6e4295baf",
+        "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+        "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+        "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+        "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+        "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+        "crates/testing/reference/src/frontend/predicate/literals.rs": "676fef4c08943bfa0365398c53b35f0ca1b92147b8736ab90b55726e1ef8ed01",
+        "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+        "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+        "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+        "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+        "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+        "tests/fixtures/dev4-predicate/control.json": "bab03845a0cf010e744a0b229e4c33ea377610a47e9e4be430d4c4e188fae167",
+        "tests/fixtures/dev4-predicate/manifest.json": "68f534f8da7f501c3d033501cc23a3c7d6907e66bc334108944bfd21a5021e57",
+        "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5"
+      },
+      "source_sha256": "39fe27ce262076ddd5b311318582a62d2d1d235dbb271e67aa4789169bc9c5f7",
+      "selection": {
+        "at": "2026-10-24T18:49:08.062087+09:00",
+        "diff": {
+          "at": "2026-10-24T18:49:08.062087+09:00",
+          "reason": "Clippy type_complexity in independent error literal tuple type; replace only annotation with a local lifetime-parametric alias",
+          "failed_receipt": "clippy-r2.json",
+          "path": "crates/testing/reference/src/frontend/predicate/literals.rs",
+          "before_sha256": "ae8db2e7fb301282b878d91b5c8d408c6a8d5b8eea98087b71c9d09d2123a509",
+          "after_sha256": "676fef4c08943bfa0365398c53b35f0ca1b92147b8736ab90b55726e1ef8ed01",
+          "mechanical_inverse_equals_original": true,
+          "expected_literals_arrays_errors_unchanged": true,
+          "runtime_reexecution": "none; product unchanged fromr2; static-only fix"
+        },
+        "selected": "SQL/reference all-targets/all-features Clippy and fmt; normal runtime0 because only type annotation alias + manifest provenance metadata changed",
+        "preserved_results": "r1 semantic6/resource6; r2 stack/allocation/interior3 and product default build",
+        "mutants": "six separately altered product sources will use exact original detectors, separately classified"
+      },
+      "source": "source-r3",
+      "export_script_sha256": "4aa5a9800700d84339ae6a2602f67020a4929688dd0ce50a71310de82d4b3db2",
+      "DEV3_dirty_included": false
+    }
+  },
+  "receipts": {
+    "allocation-r2.json": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "predicate_resources",
+        "predicate_allocation_failures",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r2",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r2.json",
+      "source_sha256": "e31487696a4db6bc6b44bb596fd8f1812180cf6e6d6ceeb6eb371b0c5d6245d1",
+      "exit_code": 0,
+      "seconds": 0.10760825200122781,
+      "finished_at": "2026-10-24T18:47:51.136296+09:00",
+      "log_sha256": "1f2f06c203293a15637565c6cec0213e310857a71bab89d6e9552786f1ca0a93",
+      "binaries": {
+        "binaries/424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa/predicate_resources-6814f906ba36fcf7": "424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "clippy-r2.json": {
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-sql",
+        "-p",
+        "xadbtest-reference",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r2",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r2.json",
+      "source_sha256": "e31487696a4db6bc6b44bb596fd8f1812180cf6e6d6ceeb6eb371b0c5d6245d1",
+      "exit_code": 101,
+      "seconds": 2.697895035998954,
+      "finished_at": "2026-10-24T18:47:54.657261+09:00",
+      "log_sha256": "25cf0f4a3f59bdb18af7fe003e5eca8fe9fafae17c4e607ef4810921bb5e5480",
+      "binaries": {
+        "binaries/424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa/predicate_resources-6814f906ba36fcf7": "424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "clippy-r3.json": {
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-sql",
+        "-p",
+        "xadbtest-reference",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r3",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r3.json",
+      "source_sha256": "39fe27ce262076ddd5b311318582a62d2d1d235dbb271e67aa4789169bc9c5f7",
+      "exit_code": 0,
+      "seconds": 3.738197745002253,
+      "finished_at": "2026-10-24T18:49:11.976667+09:00",
+      "log_sha256": "f056bd7e8670ee361aaa2c79c677de85b7acdadeb14311232b905aa0dd7c1984",
+      "binaries": {
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "default-r2.json": {
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-sql",
+        "--locked"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r2",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r2.json",
+      "source_sha256": "e31487696a4db6bc6b44bb596fd8f1812180cf6e6d6ceeb6eb371b0c5d6245d1",
+      "exit_code": 0,
+      "seconds": 0.7096910949985613,
+      "finished_at": "2026-10-24T18:47:51.938182+09:00",
+      "log_sha256": "50140f4fe24e602f631d14ced39a9b6b5f6285dc64af2498d2c2f06da7190f78",
+      "binaries": {
+        "binaries/424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa/predicate_resources-6814f906ba36fcf7": "424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "format-r2.json": {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r2",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r2.json",
+      "source_sha256": "e31487696a4db6bc6b44bb596fd8f1812180cf6e6d6ceeb6eb371b0c5d6245d1",
+      "exit_code": 0,
+      "seconds": 0.9766533980000531,
+      "finished_at": "2026-10-24T18:48:04.059272+09:00",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "binaries": {
+        "binaries/424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa/predicate_resources-6814f906ba36fcf7": "424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "format-r3.json": {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r3",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r3.json",
+      "source_sha256": "39fe27ce262076ddd5b311318582a62d2d1d235dbb271e67aa4789169bc9c5f7",
+      "exit_code": 0,
+      "seconds": 0.9675098449988582,
+      "finished_at": "2026-10-24T18:50:14.297832+09:00",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "binaries": {
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "interior-r2.json": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "predicate_resources",
+        "predicate_interior_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r2",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r2.json",
+      "source_sha256": "e31487696a4db6bc6b44bb596fd8f1812180cf6e6d6ceeb6eb371b0c5d6245d1",
+      "exit_code": 0,
+      "seconds": 0.05329023499871255,
+      "finished_at": "2026-10-24T18:47:51.206822+09:00",
+      "log_sha256": "3989c0b3457ade8c7c63f258bb344fca885646de0f480459b749209eed1d1f04",
+      "binaries": {
+        "binaries/424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa/predicate_resources-6814f906ba36fcf7": "424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "mutant-depth-detector.json": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "predicate_contracts",
+        "predicate_depth_node_and_marker_boundaries",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/mutant-depth",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-depth.json",
+      "source_sha256": "b48b2159a2f6cf92386ea87dec6bd18e15fc5c7807f15f351c6a1440e2bb6785",
+      "exit_code": 101,
+      "seconds": 3.739457620002213,
+      "finished_at": "2026-10-24T18:50:18.112203+09:00",
+      "log_sha256": "7454a7a6ccce59d61c87896dfb22ade1bffc97477ebcd3ccc131e4e605379fc1",
+      "binaries": {
+        "binaries/97f74275522d6f68c48c8cbc80715eb2283cc4ae3d3bb360d606163b4fe958a0/predicate_contracts-8e37df6c2e92fe8d": "97f74275522d6f68c48c8cbc80715eb2283cc4ae3d3bb360d606163b4fe958a0",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "mutant-eof-detector.json": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "predicate_contracts",
+        "predicate_syntax_and_unsupported_diagnostics",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/mutant-eof",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-eof.json",
+      "source_sha256": "d7ac486d973e60d33f43a2f15f6919ec1473c94e3a18b70bf7ab7ec96c1d8fca",
+      "exit_code": 101,
+      "seconds": 3.8298953590019664,
+      "finished_at": "2026-10-24T18:50:29.761277+09:00",
+      "log_sha256": "39fb3fa59c4e86af441d28c67b87fa18b7534afcd81713f9ad4ba60d5b591b6e",
+      "binaries": {
+        "binaries/0f6e35cadc8ca14d01e824f9657154f9bdacad1f65ad611c68c5dd79088ab2a8/predicate_contracts-8e37df6c2e92fe8d": "0f6e35cadc8ca14d01e824f9657154f9bdacad1f65ad611c68c5dd79088ab2a8",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "mutant-final-detector.json": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "predicate_resources",
+        "predicate_entry_and_final_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/mutant-final",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-final.json",
+      "source_sha256": "9e8ec5fe8b4e4bb913b999325f5bf50e3b9fec59502d25bd758b0a20837d677c",
+      "exit_code": 101,
+      "seconds": 3.861586735001765,
+      "finished_at": "2026-10-24T18:50:37.716990+09:00",
+      "log_sha256": "63486ef93934546a23a85a7ca5223e342549d3adecec0e2ed5a92356591eab5b",
+      "binaries": {
+        "binaries/a1ab53ecf69ddfea4bc40c3e42065585266b8267d8d805dff4457946eacd9073/predicate_resources-6814f906ba36fcf7": "a1ab53ecf69ddfea4bc40c3e42065585266b8267d8d805dff4457946eacd9073",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "mutant-marker-detector.json": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "predicate_contracts",
+        "predicate_raw_value_and_marker_syntax",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/mutant-marker",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-marker.json",
+      "source_sha256": "0b41a95118709aeec081356d9daff81a0362845d9f188156b759b98a845bd13a",
+      "exit_code": 101,
+      "seconds": 3.855798805001541,
+      "finished_at": "2026-10-24T18:50:25.861249+09:00",
+      "log_sha256": "fe79b6b32e15544a5a94d18b9a715f591331d48deabaf5abf627f11999fe8b4f",
+      "binaries": {
+        "binaries/070dd4b000ffd9c538e1c164c8dd9aa9210682c261ac9e763fcc1f17fc9217f7/predicate_contracts-8e37df6c2e92fe8d": "070dd4b000ffd9c538e1c164c8dd9aa9210682c261ac9e763fcc1f17fc9217f7",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "mutant-node-detector.json": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "predicate_contracts",
+        "predicate_depth_node_and_marker_boundaries",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/mutant-node",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-node.json",
+      "source_sha256": "df72931b26054c17d3cd69e78127312abd2e871ecc79431cd2539af24b6dc897",
+      "exit_code": 101,
+      "seconds": 3.941060950000974,
+      "finished_at": "2026-10-24T18:50:33.773486+09:00",
+      "log_sha256": "b16a2c7bf3157200f0bb511d334cb6d54e3586f862837e5bef387bd3627a1205",
+      "binaries": {
+        "binaries/0926608204ac9bd15459ad0a9243dd12f9bdf8ca7c763fd690259e154590a595/predicate_contracts-8e37df6c2e92fe8d": "0926608204ac9bd15459ad0a9243dd12f9bdf8ca7c763fd690259e154590a595",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "mutant-precedence-detector.json": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "predicate_contracts",
+        "literal_predicate_precedence_and_shapes",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/mutant-precedence",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-precedence.json",
+      "source_sha256": "965e3b86ee867f44d82ebd57485dd5560346c3cdfb30c6bbcae2b05c427c7134",
+      "exit_code": 101,
+      "seconds": 3.7600868180015823,
+      "finished_at": "2026-10-24T18:50:21.943773+09:00",
+      "log_sha256": "0d1105bdf908d3025302d306bc1f92cd94274c98555b25a03b8110639b70737b",
+      "binaries": {
+        "binaries/f23944f731153ee82a3a1ea0857607b1867917b25fbe40d9470f1da82e34ea91/predicate_contracts-8e37df6c2e92fe8d": "f23944f731153ee82a3a1ea0857607b1867917b25fbe40d9470f1da82e34ea91",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "normal-r1.json": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "predicate_contracts",
+        "--test",
+        "predicate_resources",
+        "--",
+        "--nocapture"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r1",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r1.json",
+      "source_sha256": "75b50919c08baf05e265e1f591b3a515286b88bc9669a65725153b8ed77a10d4",
+      "exit_code": 101,
+      "seconds": 4.879657102999772,
+      "finished_at": "2026-10-24T18:42:50.728530+09:00",
+      "log_sha256": "a3d8bdd6904d664399f84e6476825fb98354cf58964fafb1f06b17dba5386ee0",
+      "binaries": {
+        "binaries/dbf159a127a2cf10af802b03bff64ff20bb7fa7c5f4dbc3039e77c1c2558e0e3/predicate_resources-6814f906ba36fcf7": "dbf159a127a2cf10af802b03bff64ff20bb7fa7c5f4dbc3039e77c1c2558e0e3",
+        "binaries/dd6865d18797c11f87f0e2fffde9ff33334ea901d409787a8ae7c75f09109f9e/predicate_contracts-8e37df6c2e92fe8d": "dd6865d18797c11f87f0e2fffde9ff33334ea901d409787a8ae7c75f09109f9e",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    },
+    "stack-r2.json": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "predicate_resources",
+        "predicate_bounded_stack_and_drop",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "outer_timeout_seconds": 180,
+      "timeout_exit_codes": [
+        124,
+        137
+      ],
+      "target_directory": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r2",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r2.json",
+      "source_sha256": "e31487696a4db6bc6b44bb596fd8f1812180cf6e6d6ceeb6eb371b0c5d6245d1",
+      "exit_code": 0,
+      "seconds": 3.8556072210012644,
+      "finished_at": "2026-10-24T18:47:45.686031+09:00",
+      "log_sha256": "e310d96060f98942ee4a6064d02bbe481aaa0c8e48cd28321dc11a55e834c7d4",
+      "binaries": {
+        "binaries/424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa/predicate_resources-6814f906ba36fcf7": "424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920"
+    }
+  },
+  "mutant_verdicts": [
+    {
+      "source": "mutant-depth",
+      "receipt": "mutant-depth-detector.json",
+      "log_sha256": "7454a7a6ccce59d61c87896dfb22ade1bffc97477ebcd3ccc131e4e605379fc1",
+      "status": "INTENDED_PRODUCT_DEFECT_DETECTED",
+      "reviewer": "/root",
+      "witness": "Depth65 produced71nodes instead of Limit at256",
+      "matching_log_line": "case=depth-not-65 nodes=71/0 first-node=0 actual=Some(Node { kind: Predicate, span: [0, 263], first_child: Some(1), next_sibling: None }) expected=None source-bytes=263/0 first-source-byte=0 markers=0/0 error=None/Some(ErrorObservation { code: \"Limit\", module: \"Parse\", span: [256, 256] }) complete=true/true"
+    },
+    {
+      "source": "mutant-precedence",
+      "receipt": "mutant-precedence-detector.json",
+      "log_sha256": "0d1105bdf908d3025302d306bc1f92cd94274c98555b25a03b8110639b70737b",
+      "status": "INTENDED_PRODUCT_DEFECT_DETECTED",
+      "reviewer": "/root",
+      "witness": "And span/next sibling changed from0..3/sibling6 to0..10/sibling9",
+      "matching_log_line": "case=shape-hand-precedence nodes=13/13 first-node=2 actual=Some(Node { kind: And, span: [0, 10], first_child: Some(3), next_sibling: Some(9) }) expected=Some(Node { kind: And, span: [0, 3], first_child: Some(3), next_sibling: Some(6) }) source-bytes=28/28 first-source-byte=28 markers=0/0 error=None/None complete=true/true"
+    },
+    {
+      "source": "mutant-marker",
+      "receipt": "mutant-marker-detector.json",
+      "log_sha256": "fe79b6b32e15544a5a94d18b9a715f591331d48deabaf5abf627f11999fe8b4f",
+      "status": "INTENDED_PRODUCT_DEFECT_DETECTED",
+      "reviewer": "/root",
+      "witness": "Inside group marker ordinal1 instead of3 and total2 instead of4",
+      "matching_log_line": "case=raw-marker-order nodes=16/16 first-node=12 actual=Some(Node { kind: Scalar(Parameter { ordinal: 1 }), span: [17, 18], first_child: None, next_sibling: None }) expected=Some(Node { kind: Scalar(Parameter { ordinal: 3 }), span: [17, 18], first_child: None, next_sibling: None }) source-bytes=42/42 first-source-byte=42 markers=2/4 error=None/None complete=true/true"
+    },
+    {
+      "source": "mutant-eof",
+      "receipt": "mutant-eof-detector.json",
+      "log_sha256": "39fb3fa59c4e86af441d28c67b87fa18b7534afcd81713f9ad4ba60d5b591b6e",
+      "status": "INTENDED_PRODUCT_DEFECT_DETECTED",
+      "reviewer": "/root",
+      "witness": "a=b=c accepted6nodes instead of Syntax at3..4",
+      "matching_log_line": "case=error-chained-comparison nodes=6/0 first-node=0 actual=Some(Node { kind: Predicate, span: [0, 3], first_child: Some(1), next_sibling: None }) expected=None source-bytes=5/0 first-source-byte=0 markers=0/0 error=None/Some(ErrorObservation { code: \"Syntax\", module: \"Parse\", span: [3, 4] }) complete=true/true"
+    },
+    {
+      "source": "mutant-node",
+      "receipt": "mutant-node-detector.json",
+      "log_sha256": "b16a2c7bf3157200f0bb511d334cb6d54e3586f862837e5bef387bd3627a1205",
+      "status": "INTENDED_PRODUCT_DEFECT_DETECTED",
+      "reviewer": "/root",
+      "witness": "8193nodes accepted instead of Limit at21838",
+      "matching_log_line": "case=nodes-and-8193 nodes=8193/0 first-node=0 actual=Some(Node { kind: Predicate, span: [0, 21839], first_child: Some(1), next_sibling: None }) expected=None source-bytes=21839/0 first-source-byte=0 markers=0/0 error=None/Some(ErrorObservation { code: \"Limit\", module: \"Parse\", span: [21838, 21838] }) complete=true/true"
+    },
+    {
+      "source": "mutant-final",
+      "receipt": "mutant-final-detector.json",
+      "log_sha256": "63486ef93934546a23a85a7ca5223e342549d3adecec0e2ed5a92356591eab5b",
+      "status": "INTENDED_PRODUCT_DEFECT_DETECTED",
+      "reviewer": "/root",
+      "witness": "Final publication checkpoint0 instead of1",
+      "matching_log_line": "assertion `left == right` failed: final predicate publication checkpoint"
+    }
+  ],
+  "harness_hashes": {
+    "export.py": "4aa5a9800700d84339ae6a2602f67020a4929688dd0ce50a71310de82d4b3db2",
+    "run.py": "e4eaff5a07ee112c41253fc2b97a2e2d0dffbd96c8b3d894268c9d2bd3516920",
+    "make_mutant.py": "ba510c83086cffb0f11f83a3b7b5d1c9324f89c815824a7299834216bdbee7a9",
+    "run_mutants.py": "ecd493130aef3253a405f71371435fe23c62842e767731f15f01d3f1947206df"
+  },
+  "extended_profiles": "2ignored NOT_RUN;256seeds×1024fragments and30min grammar-valid generation",
+  "document_verifier": "NOT_RUN pre-push-only",
+  "push": "NOT_RUN",
+  "final_review": {
+    "status": "ACCEPTED_LIMITED_D1",
+    "at": "2026-10-24T18:56:42.571532+09:00",
+    "reviewer": "/root/frontend_review",
+    "adopter": "/root",
+    "scope": "4.03.1.2 predicate AST/parser only",
+    "blocking_findings": [],
+    "observations": [
+      "Original r1 stack overflow and r2 Clippy failure preserved;15required functions completed by originalr1/r2 source;normalr3 runtime0",
+      "Six separately compiled mutants rejected at their intended assertions",
+      "9sources/405overlay hashes/39177baseline blobs/15receipts/10savedbinaries validated;current45overlay equalr3",
+      "Contract/implementation/plan/registration scope and remaining work agree"
+    ],
+    "reviewed_files_sha256": {
+      "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+      "crates/sql/src/frontend/mod.rs": "8171a55ea4b439356247a88c4d569236426c5869b8ce919f2a2c56497b454d51",
+      "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+      "crates/sql/src/frontend/parser/predicate.rs": "ceb978f4fdf57b6e25cc6727846b9c62a79e532814c4d5ded01b056fb84d9ac8",
+      "crates/sql/tests/parser_contracts.rs": "2784c99d3caf010ac0df7df50b6f94b7cd6b2e16d76b4fc31f605bd29d616d2d",
+      "crates/sql/tests/predicate_contracts.rs": "ca649fce91e8682793d621b2d48aaa5d50bb9f57c260a3d03b38ea50057e4999",
+      "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+      "crates/testing/reference/src/frontend.rs": "ac51ad32eaf2763ea1cb29474b6e1e3a7ef2c03851de4ca1b48d0cf6e4295baf",
+      "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+      "crates/testing/reference/src/frontend/predicate/literals.rs": "676fef4c08943bfa0365398c53b35f0ca1b92147b8736ab90b55726e1ef8ed01",
+      "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+      "tests/fixtures/dev4-predicate/control.json": "bab03845a0cf010e744a0b229e4c33ea377610a47e9e4be430d4c4e188fae167",
+      "tests/fixtures/dev4-predicate/manifest.json": "68f534f8da7f501c3d033501cc23a3c7d6907e66bc334108944bfd21a5021e57",
+      "tests/fixtures/dev4-predicate/semantic.json": "3275d70563e7fdf544f32d0415963dec8b0a52418187075748b43c1571d10fa5",
+      "devdoc/README.md": "d8645107e2de6b541fb131b87a992832790a22853d3d4577c3926b92e6f5a0c6",
+      "devdoc/contracts/README.md": "b4a417b882feda5effbd331e9073b5f93ca3ed873c53ca878d00e674bd1a763a",
+      "devdoc/contracts/dev4-independent-frontend.md": "a45ca46f7f65521e9203864acdadaebfd12946b77c71e82e2af528e8525dfa26",
+      "devdoc/documents.json": "2efdb89071d53d8ac0c63b155d3a14be867b2cf3199a9ceec3fa6289dde5e367",
+      "devdoc/evidence/README.md": "42ffab0e80acdcc07cb0cec9f8f26a72bb298f3ba27646c66e2c9dfd962cfb64",
+      "devdoc/evidence/dev4-predicate-20261024.md": "06c6f488b5d9c20d9d6b837344b15e12325ac40af4bf8e2610ced86321f53e29",
+      "devdoc/evidence/dev4-predicate-20261024.json": "b7bbe2f55e8e538e80fb7fae4daa927761dce471d7b421c884bb33fbf2fd8744",
+      "devdoc/implementation/README.md": "9c9c51d8be1dd7cbc8916ddf38b9c1631ebf44f1921af2793cf7bf0369d7c4f5",
+      "devdoc/implementation/dev4-implementation.md": "75566f8c673b1f8e8b939c62f70d4eb5ff54da91ae8596a17e56e41b41b5e614",
+      "devdoc/plans/dev4-preparation-plan.md": "f48fb95ef138681d18beea1592ea16d46a8893d3e49c3e7bda29ba58fc57b81f",
+      "devdoc/plans/dev4-work-breakdown.md": "f1ba5ad725888bd92986adc942ddcd3c9a5875c6b4903ab5d1fca37ceb5a020e",
+      "devdoc/policies/repository-build-plan.md": "daffacaea0f730325042855473136a6d2f76364c609f6a23ccc67c29c37ddcfa",
+      "devdoc/policies/repository-build-plan.json": "c6aecdb8fd8b44eedcf4eeda4f4c2dd2bb24439ecac1213fcdc370e8e56303f1"
+    },
+    "remaining": [
+      "2expanded profiles NOT_RUN",
+      "typed compile/eval and3VL",
+      "P4remaining grammar",
+      "P5lifetime model",
+      "P6supply handoff",
+      "engine integration andQ1"
+    ],
+    "review_execution": "read-only; no tests/document verifier/file edits"
+  },
+  "final_source_audit": {
+    "at": "2026-10-24T18:54:34.191360+09:00",
+    "worktree_overlay_matches_source_r3": true,
+    "source_r3_sha256": "39fe27ce262076ddd5b311318582a62d2d1d235dbb271e67aa4789169bc9c5f7",
+    "overlay_count": 45,
+    "receipts_and_saved_binary_hashes_match": true,
+    "receipts": [
+      {
+        "receipt": "allocation-r2.json",
+        "exit_code": 0,
+        "running_binaries": [
+          {
+            "running": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r2/debug/deps/predicate_resources-6814f906ba36fcf7",
+            "saved": "binaries/424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa/predicate_resources-6814f906ba36fcf7",
+            "sha256": "424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa"
+          }
+        ]
+      },
+      {
+        "receipt": "clippy-r2.json",
+        "exit_code": 101,
+        "running_binaries": []
+      },
+      {
+        "receipt": "clippy-r3.json",
+        "exit_code": 0,
+        "running_binaries": []
+      },
+      {
+        "receipt": "default-r2.json",
+        "exit_code": 0,
+        "running_binaries": []
+      },
+      {
+        "receipt": "format-r2.json",
+        "exit_code": 0,
+        "running_binaries": []
+      },
+      {
+        "receipt": "format-r3.json",
+        "exit_code": 0,
+        "running_binaries": []
+      },
+      {
+        "receipt": "interior-r2.json",
+        "exit_code": 0,
+        "running_binaries": [
+          {
+            "running": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r2/debug/deps/predicate_resources-6814f906ba36fcf7",
+            "saved": "binaries/424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa/predicate_resources-6814f906ba36fcf7",
+            "sha256": "424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa"
+          }
+        ]
+      },
+      {
+        "receipt": "mutant-depth-detector.json",
+        "exit_code": 101,
+        "running_binaries": [
+          {
+            "running": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/mutant-depth/debug/deps/predicate_contracts-8e37df6c2e92fe8d",
+            "saved": "binaries/97f74275522d6f68c48c8cbc80715eb2283cc4ae3d3bb360d606163b4fe958a0/predicate_contracts-8e37df6c2e92fe8d",
+            "sha256": "97f74275522d6f68c48c8cbc80715eb2283cc4ae3d3bb360d606163b4fe958a0"
+          }
+        ]
+      },
+      {
+        "receipt": "mutant-eof-detector.json",
+        "exit_code": 101,
+        "running_binaries": [
+          {
+            "running": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/mutant-eof/debug/deps/predicate_contracts-8e37df6c2e92fe8d",
+            "saved": "binaries/0f6e35cadc8ca14d01e824f9657154f9bdacad1f65ad611c68c5dd79088ab2a8/predicate_contracts-8e37df6c2e92fe8d",
+            "sha256": "0f6e35cadc8ca14d01e824f9657154f9bdacad1f65ad611c68c5dd79088ab2a8"
+          }
+        ]
+      },
+      {
+        "receipt": "mutant-final-detector.json",
+        "exit_code": 101,
+        "running_binaries": [
+          {
+            "running": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/mutant-final/debug/deps/predicate_resources-6814f906ba36fcf7",
+            "saved": "binaries/a1ab53ecf69ddfea4bc40c3e42065585266b8267d8d805dff4457946eacd9073/predicate_resources-6814f906ba36fcf7",
+            "sha256": "a1ab53ecf69ddfea4bc40c3e42065585266b8267d8d805dff4457946eacd9073"
+          }
+        ]
+      },
+      {
+        "receipt": "mutant-marker-detector.json",
+        "exit_code": 101,
+        "running_binaries": [
+          {
+            "running": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/mutant-marker/debug/deps/predicate_contracts-8e37df6c2e92fe8d",
+            "saved": "binaries/070dd4b000ffd9c538e1c164c8dd9aa9210682c261ac9e763fcc1f17fc9217f7/predicate_contracts-8e37df6c2e92fe8d",
+            "sha256": "070dd4b000ffd9c538e1c164c8dd9aa9210682c261ac9e763fcc1f17fc9217f7"
+          }
+        ]
+      },
+      {
+        "receipt": "mutant-node-detector.json",
+        "exit_code": 101,
+        "running_binaries": [
+          {
+            "running": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/mutant-node/debug/deps/predicate_contracts-8e37df6c2e92fe8d",
+            "saved": "binaries/0926608204ac9bd15459ad0a9243dd12f9bdf8ca7c763fd690259e154590a595/predicate_contracts-8e37df6c2e92fe8d",
+            "sha256": "0926608204ac9bd15459ad0a9243dd12f9bdf8ca7c763fd690259e154590a595"
+          }
+        ]
+      },
+      {
+        "receipt": "mutant-precedence-detector.json",
+        "exit_code": 101,
+        "running_binaries": [
+          {
+            "running": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/mutant-precedence/debug/deps/predicate_contracts-8e37df6c2e92fe8d",
+            "saved": "binaries/f23944f731153ee82a3a1ea0857607b1867917b25fbe40d9470f1da82e34ea91/predicate_contracts-8e37df6c2e92fe8d",
+            "sha256": "f23944f731153ee82a3a1ea0857607b1867917b25fbe40d9470f1da82e34ea91"
+          }
+        ]
+      },
+      {
+        "receipt": "normal-r1.json",
+        "exit_code": 101,
+        "running_binaries": [
+          {
+            "running": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r1/debug/deps/predicate_contracts-8e37df6c2e92fe8d",
+            "saved": "binaries/dd6865d18797c11f87f0e2fffde9ff33334ea901d409787a8ae7c75f09109f9e/predicate_contracts-8e37df6c2e92fe8d",
+            "sha256": "dd6865d18797c11f87f0e2fffde9ff33334ea901d409787a8ae7c75f09109f9e"
+          },
+          {
+            "running": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r1/debug/deps/predicate_resources-6814f906ba36fcf7",
+            "saved": "binaries/dbf159a127a2cf10af802b03bff64ff20bb7fa7c5f4dbc3039e77c1c2558e0e3/predicate_resources-6814f906ba36fcf7",
+            "sha256": "dbf159a127a2cf10af802b03bff64ff20bb7fa7c5f4dbc3039e77c1c2558e0e3"
+          }
+        ]
+      },
+      {
+        "receipt": "stack-r2.json",
+        "exit_code": 0,
+        "running_binaries": [
+          {
+            "running": "/tmp/xadb-dev4-predicate-20261024-01a16ca9/source-r2/debug/deps/predicate_resources-6814f906ba36fcf7",
+            "saved": "binaries/424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa/predicate_resources-6814f906ba36fcf7",
+            "sha256": "424a6a60d5a83c939d12d80638d13b52b3a6d1874eb99d85a12455425eebdffa"
+          }
+        ]
+      }
+    ],
+    "head": "ae176b6b0cc15b74ee9620c49b970bcca33d68bd",
+    "sql_dependency_commit_diff": ""
+  }
+}

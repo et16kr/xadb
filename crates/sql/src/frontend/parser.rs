@@ -1,4 +1,4 @@
-//! Owned, bounded INSERT and transaction syntax without value or DB effects.
+//! Owned, bounded statement and predicate syntax without value or DB effects.
 //!
 //! Literal payloads remain raw source spans. The later scalar input owner must
 //! validate integer ranges, binary hex, decoded lengths, and typed empty text.
@@ -10,6 +10,8 @@ use super::{
     parse_budget::ParseBudget,
 };
 use xadb_foundation::runtime::Quota;
+
+mod predicate;
 
 const MAX_MARKERS: u16 = 256;
 
@@ -55,6 +57,35 @@ impl Parser {
             marker_count: 0,
         };
         input.statement(&mut builder)?;
+        check(control, source.len())?;
+        Ok(builder.finish(input.marker_count))
+    }
+
+    /// Parse one predicate fragment without a WHERE keyword or catalog access.
+    /// A final semicolon and trailing trivia are optional. The returned raw AST
+    /// preserves names and scalar syntax without validating types or values.
+    ///
+    /// # Errors
+    /// Returns lexical/name diagnostics unchanged, or a Parse diagnostic for
+    /// syntax, unsupported forms, limits, quota exhaustion, or call controls.
+    /// Failed calls release their partial output and leave this parser reusable.
+    pub fn parse_predicate(
+        &mut self,
+        source: &[u8],
+        control: &CallControl<'_>,
+    ) -> Result<ParsedStatement, Diagnostic> {
+        self.budget.begin_call();
+        check(control, 0)?;
+        let lexer = Lexer::new(source, control)?;
+        let mut builder = AstBuilder::new(source, &mut self.budget, control)?;
+        let mut input = ParseInput {
+            source,
+            control,
+            lexer,
+            lookahead: None,
+            marker_count: 0,
+        };
+        input.predicate_fragment(&mut builder)?;
         check(control, source.len())?;
         Ok(builder.finish(input.marker_count))
     }
@@ -232,7 +263,7 @@ impl ParseInput<'_, '_> {
         Ok(token.span)
     }
 
-    fn scalar(&mut self, builder: &mut AstBuilder<'_>, tuple: usize) -> Result<(), Diagnostic> {
+    fn scalar(&mut self, builder: &mut AstBuilder<'_>, tuple: usize) -> Result<Span, Diagnostic> {
         let first = self.take()?;
         let (kind, span) = match first.kind {
             TokenKind::Digits => self.integer(first, first, Sign::None)?,
@@ -272,7 +303,7 @@ impl ParseInput<'_, '_> {
             _ => return Err(self.expected_scalar(first)),
         };
         builder.add(NodeKind::Scalar(kind), span, Some(tuple), self.control)?;
-        Ok(())
+        Ok(span)
     }
 
     fn integer(

@@ -1,0 +1,71 @@
+{
+  "status": "D2_REVIEW_INPUT_NOT_EXECUTED",
+  "created_at": "2026-10-24T18:15:27.504798+09:00",
+  "API": "Parser::parse_predicate(source,control)->ParsedStatement; same quota and per-call injection state as parse",
+  "constants": {
+    "session_bytes": 8388608,
+    "database_bytes": 67108864,
+    "source_bytes": 1048576,
+    "ast_nodes": 8192,
+    "nesting": 64,
+    "markers": 256,
+    "stack_bytes": 262144
+  },
+  "source_recipe": {
+    "and_chain": "0=0, then n-1 repetitions of AND with one surrounding space",
+    "source_length": "8*n-5",
+    "node_count": "3+3*n",
+    "not_prefix": "NOT repeated k with trailing space, +4k source and+k nodes"
+  },
+  "required": [
+    {
+      "test": "predicate_owned_lifetimes",
+      "cases": "caller overwrite/drop, same Parser two retained predicates, parser drop, parsed node spans/names/marker/source identity, shared scalar reader consuming raw node, drop all =>zero; no transaction claim"
+    },
+    {
+      "test": "predicate_quota_boundaries",
+      "cases": "new entry at one atom n=1: source3 +16*sizeof(AstNode); both session/DB total-1,total,total+1; n=5 source35, growth16+32 peak48nodes, total-1/equal/+1, Limit at new node16 left operand position32; preserve held earlier output"
+    },
+    {
+      "test": "predicate_actual_capacity",
+      "cases": "padding1 source+1, initial arena17nodes, actual retained charge, excess session/DB quota exact-1/equal/+1; padding persists, set0 reverts; allocation/request overflow releases old/new leases"
+    },
+    {
+      "test": "predicate_allocation_failures",
+      "cases": "n=300 has903nodes and8 total backing sites(source+16/32/64/128/256/512/1024), inject1..8 individually, retained previous predicate unchanged, each parser reusable, unreached nextcall injection cleared; no unchanged P2 test repeat; exact Limit source positions[0,0,32,74,160,330,672,1354]; unmet site9 then400terms reaches9 without failure"
+    },
+    {
+      "test": "predicate_entry_and_final_controls",
+      "cases": "cancel before equal deadline; current control borrowed only; malformed input with entrycancel; new parse_predicate final check at source.len with trailing trivia distinguished from sourcecopy by full source+16node-capacity quota witness; successful reuse; root emptyEOF withquota0 Syntax/noalloc, trivia quota0 sourceLimit, semicolon bad-first-token initialarena quota/injection Limit beforeSyntax, adequate quota Syntax exactspan"
+    },
+    {
+      "test": "predicate_interior_controls",
+      "cases": "cancel/timeout in new AND/OR loops after sourcecopy at interior1024..1280, NOT64 descent at raw128,Group64 descent at raw32 and closing-unwind at raw100; error cleans new AST reservations and Parser reuse succeeds; sourcecopy completion marks parse phase; existing lexer byte quantum and AstBuilder add/move checks are consumed unchanged; no monotonic source trace claim across arena moves"
+    },
+    {
+      "test": "predicate_shared_database",
+      "cases": "two separate native callers retain new predicate outputs under one DB ledger; enough for both construction peaks succeeds; pre-retained first output makes second fail at exact shared boundary; final zero; does not rerun lower quota tests"
+    },
+    {
+      "test": "predicate_bounded_stack_and_drop",
+      "cases": "256KiB thread stack: pure NOT63/64/65, Group63/64/65,mixed32NOT+32Group and+one, sibling groups each64 reset, flat AND2729+NOT2 exact8192 succeeds, NOT3 rejects; both success/error Drop; fixed Parser/AstNode remain original documented bounds"
+    },
+    {
+      "test": "predicate_nested_failures_and_reuse",
+      "cases": "syntax after partly built groups, Name failure, lexer unsupported token, invalidUTF8; previous output retained and new reservations zero; same Parser then successful predicate"
+    }
+  ],
+  "negative_product_recipes": [
+    "depth guard removed =>65 accepted",
+    "AND/OR precedence altered =>literal precedence AST mismatch",
+    "group incorrectly resets marker ordinal =>full marker AST rejects",
+    "fragment EOF check removed =>second fragment accepted",
+    "node cap bypassed =>8193 accepted",
+    "final parse_predicate control removed =>return-with-pending-cancel rejected"
+  ],
+  "provenance": "new parser entry and new syntax consumers only; existing budget/lexer/name/scalar tests retain original source receipts; compile-only enum arms do not trigger oldruntime",
+  "document_verifier": "NOT_RUN pre-push-only",
+  "expanded": "oracle separately selectable generation256seeds(0..255)x1024fragments and30minute grammar-valid generation; no arbitrary malformed-byte fuzz claim; NOT_RUN at this leaf unless explicitly selected",
+  "adapter_path": "crates/sql/tests/predicate_resources.rs",
+  "adapter_sha256": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb"
+}

@@ -5,6 +5,7 @@
 
 pub mod literals;
 pub mod parser;
+pub mod predicate;
 pub mod scalar;
 pub mod splitter;
 

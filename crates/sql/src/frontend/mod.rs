@@ -1,5 +1,5 @@
 //! Bounded SQL input, names, streaming boundaries and owned raw syntax. See
-//! D4-FE-LEX-001, D4-FE-SPLIT-001 and D4-FE-PARSE-001 in
+//! D4-FE-LEX-001, D4-FE-SPLIT-001, D4-FE-PARSE-001 and D4-FE-PREDICATE-001 in
 //! `devdoc/contracts/dev4-independent-frontend.md` for limits and diagnostics.
 
 mod ast;
@@ -13,7 +13,7 @@ mod scalar;
 mod source;
 mod splitter;
 
-pub use ast::{AstNode, NodeKind, ParsedStatement, ScalarSyntax, Sign};
+pub use ast::{AstNode, ComparisonOp, NodeKind, ParsedStatement, ScalarSyntax, Sign};
 pub use control::CallControl;
 pub use diagnostic::{Code, Diagnostic, Module, Span};
 pub use lexer::{Keyword, Lexer, Token, TokenKind};
