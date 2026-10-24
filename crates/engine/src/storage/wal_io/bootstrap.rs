@@ -35,6 +35,22 @@ const FIXED_BYTES: u64 =
 const MAX_OWNED_BYTES: u64 = FIXED_BYTES - super::CONTROL_BYTES as u64 + super::WAL_FILE_CAP;
 const PROTECTED_BYTES: u64 = FIXED_BYTES - control::EXTENT_BYTES;
 
+#[path = "plan4_genesis.rs"]
+mod plan4_genesis;
+#[cfg(test)]
+pub(in crate::storage) use doublewrite_install::{Plan4TestMutableCause, Plan4TestSemanticError};
+#[cfg(test)]
+pub(in crate::storage) use plan4_genesis::tests::mutate_page as plan4_test_mutate_page;
+#[cfg(test)]
+pub(in crate::storage) use plan4_genesis::tests::owner_boundary as plan4_test_owner_boundary;
+#[cfg(test)]
+pub(in crate::storage) use plan4_genesis::tests::support as plan4_test_support;
+pub(in crate::storage) use plan4_genesis::{
+    Plan4GenesisCause, Plan4GenesisError, Plan4GenesisPhase, Plan4GenesisSeed,
+    fits as plan4_genesis_capacity, inspect_bootstrap as inspect_plan4_bootstrap,
+    source_census as plan4_genesis_source_census,
+};
+
 #[path = "doublewrite_install.rs"]
 mod doublewrite_install;
 pub(crate) use doublewrite_install::{
@@ -161,6 +177,7 @@ enum BootstrapPlanKind {
     AllocatorOnly,
     StatusBootstrap,
     UndoBootstrap,
+    RetentionCatalogBootstrap,
 }
 impl BootstrapPlanKind {
     const fn version(self) -> u64 {
@@ -168,6 +185,7 @@ impl BootstrapPlanKind {
             Self::AllocatorOnly => 1,
             Self::StatusBootstrap => 2,
             Self::UndoBootstrap => 3,
+            Self::RetentionCatalogBootstrap => 4,
         }
     }
 
@@ -176,6 +194,7 @@ impl BootstrapPlanKind {
             Self::AllocatorOnly => 1,
             Self::StatusBootstrap => 2,
             Self::UndoBootstrap => 3,
+            Self::RetentionCatalogBootstrap => 5,
         }
     }
 }
@@ -300,6 +319,23 @@ impl BootstrapPlan {
                 object_generation: entry.allocator_generation,
                 kind: PageKind::Allocation,
             };
+            if kind == BootstrapPlanKind::RetentionCatalogBootstrap {
+                for (index, entry) in entries.iter_mut().enumerate().take(9).skip(1) {
+                    let (object, kind) = match index {
+                        1 => (4, PageKind::RetentionRoot),
+                        2..=6 => (4, PageKind::RetentionJobs),
+                        7 => (5, PageKind::TreeAnchor),
+                        8 => (5, PageKind::CatalogLeaf),
+                        _ => unreachable!("bounded genesis allocation census"),
+                    };
+                    *entry = AllocationEntry::Allocated {
+                        generation: Generation::new(1).expect("fixed genesis generation"),
+                        object: ObjectId::new(object).expect("fixed genesis object"),
+                        object_generation: Generation::new(1).expect("fixed genesis generation"),
+                        kind,
+                    };
+                }
+            }
             let header = PageHeader {
                 identity,
                 kind: PageKind::Allocation,
@@ -540,19 +576,7 @@ fn install<W: WriterNamespace>(
     scratch: &mut [[u8; PAGE_BYTES]; 3],
 ) -> Result<()> {
     let [page, controls, final_controls] = scratch;
-    write_control(
-        writer,
-        &names.descriptor,
-        &final_controls[..super::CONTROL_BYTES],
-        [
-            Phase::DescriptorCreate,
-            Phase::DescriptorWrite,
-            Phase::DescriptorSync,
-        ],
-    )?;
-    writer
-        .sync_directory()
-        .map_err(|e| failed(Phase::DescriptorDirectory, Cause::Namespace(e)))?;
+    install_descriptor(writer, names, final_controls)?;
     {
         let mut file = writer
             .create_new(&names.data)
@@ -565,6 +589,37 @@ fn install<W: WriterNamespace>(
         }
         sync(&mut file).map_err(|e| failed(Phase::DataSync, Cause::Io(e)))?;
     }
+    install_filemap(writer, names, page, controls, final_controls)
+}
+
+fn install_descriptor<W: WriterNamespace>(
+    writer: &mut W,
+    names: &InstallNames,
+    final_controls: &[u8; PAGE_BYTES],
+) -> Result<()> {
+    write_control(
+        writer,
+        &names.descriptor,
+        &final_controls[..super::CONTROL_BYTES],
+        [
+            Phase::DescriptorCreate,
+            Phase::DescriptorWrite,
+            Phase::DescriptorSync,
+        ],
+    )?;
+    writer
+        .sync_directory()
+        .map_err(|e| failed(Phase::DescriptorDirectory, Cause::Namespace(e)))
+}
+
+fn install_filemap<W: WriterNamespace>(
+    writer: &mut W,
+    names: &InstallNames,
+    page: &mut [u8; PAGE_BYTES],
+    controls: &[u8; PAGE_BYTES],
+    final_controls: &[u8; PAGE_BYTES],
+) -> Result<()> {
+    page.fill(0);
     for (bank, phases) in [
         [Phase::Bank0Create, Phase::Bank0Write, Phase::Bank0Sync],
         [Phase::Bank1Create, Phase::Bank1Write, Phase::Bank1Sync],
@@ -836,6 +891,96 @@ fn source_budget_fits<W: WriterNamespace>() -> bool {
 }
 
 impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
+    /// Install the closed plan4 queue and empty Catalog in this fresh namespace.
+    /// The short maintenance loan ends before the original WAL owner is returned.
+    pub(crate) fn create_retention_catalog(
+        writer: W,
+        profile_id: u32,
+        slot: &'m mut [u8; MAX_FRAME_BYTES],
+        maintenance: &mut [u8; 12_582_912],
+    ) -> std::result::Result<Self, Plan4GenesisError> {
+        let preflight = if !(1..=3).contains(&profile_id) {
+            Some(Plan4GenesisCause::InvalidInput)
+        } else if !source_budget_fits::<W>() || !plan4_genesis::fits::<W>() {
+            Some(Plan4GenesisCause::Capacity)
+        } else {
+            None
+        };
+        if let Some(cause) = preflight {
+            return Err(Plan4GenesisError {
+                phase: Plan4GenesisPhase::Preflight,
+                effect: Effect::Unchanged,
+                cause,
+            });
+        }
+        let (images, work) =
+            maintenance[..plan4_genesis::LOAN_BYTES].split_at_mut(plan4_genesis::IMAGE_BYTES);
+        let (images, _) = images.as_chunks_mut::<PAGE_BYTES>();
+        let images: &mut [[u8; PAGE_BYTES]; 9] = images.try_into().expect("fixed nine-page loan");
+        let (work, _) = work.as_chunks_mut::<PAGE_BYTES>();
+        let scratch: &mut [[u8; PAGE_BYTES]; 3] = work.try_into().expect("fixed three-page loan");
+        let mut wal = GenesisWalSession::create(writer, profile_id, slot, &mut scratch[0])
+            .map_err(|cause| Plan4GenesisError {
+                phase: Plan4GenesisPhase::Genesis,
+                effect: cause.effect,
+                cause: Plan4GenesisCause::Wal(cause),
+            })?;
+        let prepared_result = {
+            let _unwind = wal.fenced.unwind_guard();
+            (|| {
+                let prepared =
+                    plan4_genesis::prepare(wal.profile, images, scratch).map_err(|cause| {
+                        Plan4GenesisError {
+                            phase: Plan4GenesisPhase::Prepare,
+                            effect: Effect::CallerMustResolve,
+                            cause,
+                        }
+                    })?;
+                {
+                    let writer = wal._writer.get_mut().map_err(|_| Plan4GenesisError {
+                        phase: Plan4GenesisPhase::Prepare,
+                        effect: Effect::CallerMustResolve,
+                        cause: Plan4GenesisCause::Poisoned,
+                    })?;
+                    plan4_genesis::install_prepared(writer, &prepared, scratch)?;
+                    plan4_genesis::readback_prepared(writer, &prepared, scratch)?;
+                }
+                let unhealthy = if wal.append.is_poisoned()
+                    || wal.file.is_poisoned()
+                    || wal._writer.is_poisoned()
+                {
+                    Some(Plan4GenesisCause::Poisoned)
+                } else if wal.fenced.is_fenced() {
+                    Some(Plan4GenesisCause::Fenced)
+                } else {
+                    None
+                };
+                if let Some(cause) = unhealthy {
+                    return Err(Plan4GenesisError {
+                        phase: Plan4GenesisPhase::Readback,
+                        effect: Effect::CallerMustResolve,
+                        cause,
+                    });
+                }
+                Ok(prepared.into_plan())
+            })()
+        };
+        let plan = match prepared_result {
+            Ok(plan) => plan,
+            Err(mut error) => {
+                wal.fenced.fence();
+                wal.completion.notify_all();
+                error.effect = Effect::CallerMustResolve;
+                return Err(error);
+            }
+        };
+        Ok(Self {
+            wal,
+            plan,
+            reader_active: AtomicBool::new(false),
+        })
+    }
+
     pub(crate) fn create(
         writer: W,
         profile_id: u32,
@@ -876,6 +1021,13 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
         scratch: &mut [[u8; PAGE_BYTES]; 3],
         kind: BootstrapPlanKind,
     ) -> Result<Self> {
+        if kind == BootstrapPlanKind::RetentionCatalogBootstrap {
+            return Err(BootstrapError {
+                phase: Phase::Preflight,
+                effect: Effect::Unchanged,
+                cause: Cause::UnsupportedPlan,
+            });
+        }
         if !(1..=3).contains(&profile_id) || !source_budget_fits::<W>() {
             return Err(BootstrapError {
                 phase: Phase::Preflight,
@@ -893,6 +1045,9 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
             BootstrapPlanKind::AllocatorOnly => BootstrapPlan::prepare(wal.profile, scratch)?,
             BootstrapPlanKind::StatusBootstrap | BootstrapPlanKind::UndoBootstrap => {
                 BootstrapPlan::prepare_for_kind(wal.profile, scratch, kind)?
+            }
+            BootstrapPlanKind::RetentionCatalogBootstrap => {
+                return Err(failed(Phase::Prepare, Cause::UnsupportedPlan));
             }
         };
         {

@@ -87,6 +87,8 @@ pub(crate) enum PageKind {
     TransactionStatus = 9,
     Allocation = 10,
     TreeAnchor = 11,
+    RetentionRoot = 12,
+    RetentionJobs = 13,
 }
 
 impl PageKind {
@@ -103,6 +105,8 @@ impl PageKind {
             9 => Ok(Self::TransactionStatus),
             10 => Ok(Self::Allocation),
             11 => Ok(Self::TreeAnchor),
+            12 => Ok(Self::RetentionRoot),
+            13 => Ok(Self::RetentionJobs),
             _ => Err(PageError::Corrupt),
         }
     }

@@ -29,6 +29,10 @@ const PROFILE_NAME: &str = "d3-profile";
 const STAGE_NAME: &str = "d3-writer-stage";
 
 mod bootstrap;
+#[cfg(test)]
+pub(in crate::storage) use bootstrap::plan4_test_mutate_page;
+#[cfg(test)]
+pub(in crate::storage) use bootstrap::plan4_test_support;
 #[allow(unused_imports)] // Private downstream assembly remains under test-support.
 pub(crate) use bootstrap::{
     AllocationObservation, AllocationSession, AllocationSessionCause, AllocationSessionError,
@@ -73,6 +77,15 @@ pub(in crate::storage) use bootstrap::{
 #[allow(unused_imports)] // The consuming allocator reload is assembled by scoped consumers.
 pub(crate) use bootstrap::{
     IntoOperationalError, OperationalAllocation, ReloadError, ReloadObservation,
+};
+#[allow(unused_imports)]
+pub(in crate::storage) use bootstrap::{
+    Plan4GenesisCause, Plan4GenesisError, Plan4GenesisPhase, Plan4GenesisSeed,
+    inspect_plan4_bootstrap, plan4_genesis_capacity, plan4_genesis_source_census,
+};
+#[cfg(test)]
+pub(in crate::storage) use bootstrap::{
+    Plan4TestMutableCause, Plan4TestSemanticError, plan4_test_owner_boundary,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

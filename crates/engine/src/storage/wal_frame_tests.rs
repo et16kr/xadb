@@ -457,6 +457,64 @@ fn wal_init_records_bind_complete_page_images() {
 }
 
 #[test]
+fn plan4_changed_kind_inputs() {
+    use crate::storage::retention_genesis::tests as q;
+    let mut h = q::Harness::new(q::ids("K", 22, 27));
+    for (index, kind) in [12u8, 13].into_iter().enumerate() {
+        for mismatch in [false, true] {
+            let id = 22 + index * 2 + usize::from(mismatch);
+            h.case(&format!("P4-K{id:02}"), || {
+                let mut image = q::raw(if kind == 12 { "P01" } else { "P02" });
+                q::put64(&mut image, 64, 21);
+                if mismatch {
+                    image[6] = if kind == 12 { 13 } else { 12 };
+                }
+                q::resign(&mut image);
+                let mut bytes = vec![0; 64 + PAGE_BYTES];
+                bytes[0] = 2;
+                bytes[1] = kind;
+                bytes[4..8].copy_from_slice(&((64 + PAGE_BYTES) as u32).to_le_bytes());
+                bytes[8..32].copy_from_slice(&image[24..48]);
+                bytes[32..48].copy_from_slice(&image[48..64]);
+                bytes[58..60].copy_from_slice(&(PAGE_BYTES as u16).to_le_bytes());
+                bytes[64..].copy_from_slice(&image);
+                let result = decode_redo_record(base(), &bytes);
+                if mismatch {
+                    assert!(matches!(result, Err(WalError::Corrupt)));
+                } else {
+                    let decoded = result.unwrap();
+                    assert_eq!(decoded.kind, RedoKind::Init);
+                    assert_eq!(decoded.target.kind as u8, kind);
+                    assert_eq!(decoded.data, image);
+                    assert_eq!((decoded.prior_lsn, decoded.offset), (0, 0));
+                }
+            });
+        }
+    }
+    for (id, kind) in [(26, 12u8), (27, 13)] {
+        h.case(&format!("P4-K{id:02}"), || {
+            let page = q::raw(if kind == 12 { "P01" } else { "P02" });
+            let mut bytes = [0; 65];
+            bytes[0] = 1;
+            bytes[1] = kind;
+            bytes[4..8].copy_from_slice(&65u32.to_le_bytes());
+            bytes[8..32].copy_from_slice(&page[24..48]);
+            bytes[32..48].copy_from_slice(&page[48..64]);
+            q::put64(&mut bytes, 48, 20);
+            bytes[56..58].copy_from_slice(&128u16.to_le_bytes());
+            bytes[58..60].copy_from_slice(&1u16.to_le_bytes());
+            bytes[64] = 0xa5;
+            let decoded = decode_redo_record(base(), &bytes).unwrap();
+            assert_eq!(decoded.kind, RedoKind::Patch);
+            assert_eq!(decoded.target.kind as u8, kind);
+            assert_eq!((decoded.prior_lsn, decoded.offset), (20, 128));
+            assert_eq!(decoded.data, [0xa5]);
+        });
+    }
+    h.finish();
+}
+
+#[test]
 fn wal_redo_groups_are_canonical_and_borrowed() {
     let a = patch(target(1), 20, 72, &[1, 2]);
     let b = init(target(2), 21);

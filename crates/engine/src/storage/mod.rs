@@ -12,6 +12,7 @@ pub(crate) mod page;
 pub(crate) mod page_io;
 pub(crate) mod read_buffer;
 pub(crate) mod recovery_select;
+pub(crate) mod retention_genesis;
 pub(crate) mod row_record;
 mod semantic_group;
 pub(crate) mod session_fence;

@@ -139,3 +139,5 @@ DEV3의 COW pack 경로는 [in-place·WAL·영속 undo 결정](../contracts/disk
 - [DEV3 allocator 동일 주소의 resident 세대 reload](dev3-allocator-residency.md) — consuming owner·actual read·세대 갱신의 제한 계약
 
 - [DEV3 혼합 Status·Free Undo owner](dev3-mixed-system-owner.md) — 원 pool의 INIT·pressure·flush·load와 별도 process의 닫힌 mixed 복구 계약
+
+- [DEV3 plan4 정리 큐·빈 Catalog의 최초 설치](dev3-plan4-genesis.md) —9page genesis와 원 DWB·별도 process의 읽기 선택; D2 수용·필수304/실제3PID PASS·최종 D1 제한 수용

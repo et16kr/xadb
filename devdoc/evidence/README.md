@@ -1,5 +1,8 @@
 # XADB 조사·실행 증거
 
+- [DEV3 plan4 정리 큐·빈 Catalog 최초 설치](dev3-plan4-genesis-20261024.md) · [source 색인](dev3-plan4-genesis-20261024.json): 필수304·compiler9·checker15, 원 실패·source별 결과와 S5 미실행. 최종 D1 제한 수용.
+
+
 - [DEV4 predicate AST/parser](dev4-predicate-20261024.md): D2 입력 동결·원 stack/Clippy FAIL·선택 수정과 [source별 실행 색인](dev4-predicate-20261024.json).
 
 - [DEV4 scalar 입력·typed 값 소유](dev4-scalar-20261024.md): 독립 D2·필수23함수·11범주/12제품 변조와 [source별 선택 증거](dev4-scalar-20261024.json).

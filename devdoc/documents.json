@@ -1988,6 +1988,11 @@
       "role": "evidence",
       "title": "DEV4 scalar source별 선택 실행 색인"
     },
+    "dev3-plan4-genesis.md": {
+      "path": "contracts/dev3-plan4-genesis.md",
+      "role": "contracts",
+      "title": "DEV3 plan4 정리 큐·빈 Catalog의 최초 설치"
+    },
     "dev4-predicate-20261024.md": {
       "path": "evidence/dev4-predicate-20261024.md",
       "role": "evidence",
@@ -1997,6 +2002,16 @@
       "path": "evidence/dev4-predicate-20261024.json",
       "role": "evidence",
       "title": "DEV4 predicate source별 실행 색인"
+    },
+    "dev3-plan4-genesis-20261024.md": {
+      "path": "evidence/dev3-plan4-genesis-20261024.md",
+      "role": "evidence",
+      "title": "DEV3 plan4 최초 설치·genesis 선택 검증"
+    },
+    "dev3-plan4-genesis-20261024.json": {
+      "path": "evidence/dev3-plan4-genesis-20261024.json",
+      "role": "evidence",
+      "title": "DEV3 plan4 최초 설치 source별 실행 색인"
     }
   }
 }

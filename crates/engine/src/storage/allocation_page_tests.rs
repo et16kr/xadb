@@ -430,6 +430,12 @@ fn allocation_state_matrix_is_exact() {
             for tag in 0..4 {
                 for target in [false, true] {
                     for generation in [0u64, 1, u64::MAX] {
+                        // Only these two inputs changed with PageKind12. Their
+                        // historical384-case receipt remains unchanged; K03/04
+                        // own the new operation, without repeating the other382.
+                        if (state, kind, tag, target) == (2, 12, 0, true) && generation != 0 {
+                            continue;
+                        }
                         let mut raw = vec![0; 96];
                         raw[0] = state;
                         raw[1] = kind;
@@ -465,7 +471,7 @@ fn allocation_state_matrix_is_exact() {
             }
         }
     }
-    assert_eq!((count, valid, count - valid), (384, 10, 374));
+    assert_eq!((count, valid, count - valid), (382, 10, 372));
     for kind in DATA_KINDS.into_iter().chain([PageKind::Allocation]) {
         let entry = AllocationEntry::Allocated {
             generation: generation_value(1),
@@ -519,6 +525,10 @@ fn allocation_rejects_checksummed_semantic_damage() {
     }
     for (index, mutations) in [(1, 6), (2, 10), (3, 11), (4, 10)] {
         for mutation in 0..mutations {
+            // Historical entry4/mutation2 moved to new K09 (kind12 accepted).
+            if (index, mutation) == (4, 2) {
+                continue;
+            }
             let mut cell = original.clone();
             let entry = &mut cell[64 + index * 96..64 + (index + 1) * 96];
             match (index, mutation) {
@@ -597,7 +607,75 @@ fn allocation_rejects_checksummed_semantic_damage() {
         assert!(decode_allocation_page(&bytes, header().identity, namespace()).is_err());
         count += 1;
     }
-    assert_eq!(count, 60);
+    assert_eq!(count, 59);
+}
+
+#[test]
+fn plan4_changed_kind_inputs() {
+    use crate::storage::retention_genesis::tests as q;
+    let mut h = q::Harness::new(q::ids("K", 3, 10));
+    for (kind_index, kind) in [12u8, 13, 14].into_iter().enumerate() {
+        for (generation_index, generation) in [1u64, u64::MAX].into_iter().enumerate() {
+            h.case(
+                &format!("P4-K{:02}", 3 + kind_index * 2 + generation_index),
+                || {
+                    let mut raw = [0; 96];
+                    raw[0] = 2;
+                    raw[1] = kind;
+                    q::put64(&mut raw, 8, generation);
+                    q::put64(&mut raw, 16, 31);
+                    q::put64(&mut raw, 24, 32);
+                    let result = AllocationEntry::decode(&raw, namespace());
+                    if kind == 14 {
+                        assert_eq!(result, Err(AllocationError::Corrupt));
+                    } else {
+                        let entry = result.unwrap();
+                        assert_eq!(
+                            entry,
+                            AllocationEntry::Allocated {
+                                generation: generation_value(generation),
+                                object: object(31),
+                                object_generation: generation_value(32),
+                                kind: if kind == 12 {
+                                    PageKind::RetentionRoot
+                                } else {
+                                    PageKind::RetentionJobs
+                                }
+                            }
+                        );
+                        let mut output = [0xa7; 96];
+                        entry.encode(namespace(), &mut output).unwrap();
+                        assert_eq!(output, raw);
+                    }
+                },
+            );
+        }
+    }
+    for (id, kind) in [(9, 12), (10, 14)] {
+        h.case(&format!("P4-K{id:02}"), || {
+            let mut cell = wire_cell(&entries(1));
+            cell[64 + 4 * 96 + 1] = kind;
+            let mut bytes = golden_page(&cell, &"00".repeat(32));
+            q::resign(&mut bytes);
+            let result = decode_allocation_page(&bytes, header().identity, namespace());
+            if kind == 14 {
+                assert!(matches!(result, Err(AllocationError::Corrupt)));
+            } else {
+                let decoded = result.unwrap();
+                assert!(matches!(
+                    decoded.entry(4).unwrap(),
+                    AllocationEntry::Allocated {
+                        kind: PageKind::RetentionRoot,
+                        ..
+                    }
+                ));
+                let mut output = vec![0; PAGE_BYTES];
+                encode_allocation_page(header(), namespace(), &cell, &mut output).unwrap();
+                assert!(output == bytes, "full allocation roundtrip bytes");
+            }
+        });
+    }
+    h.finish();
 }
 
 fn data_identity(

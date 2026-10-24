@@ -3,6 +3,16 @@
 //! Owner contract: devdoc/contracts/dev3-recovery-select.md.
 #![allow(dead_code)] // This first closed barrier has no normal-open consumer yet.
 
+#[path = "plan4_recovery_select.rs"]
+mod plan4;
+#[cfg(all(test, target_os = "linux"))]
+pub(in crate::storage) use plan4::native as plan4_native_support;
+#[allow(unused_imports)]
+pub(crate) use plan4::{
+    Plan4GenesisObservation, Plan4GenesisSelection, Plan4LeaseEffect, Plan4SelectCause,
+    Plan4SelectError, Plan4SelectPhase, source_census as plan4_selection_source_census,
+};
+
 use super::{
     control::{self, ControlError, ControlKind, Profile, SelectedControl, SelectorRole},
     doublewrite_control::ControlState,

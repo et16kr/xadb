@@ -1,0 +1,96 @@
+{
+  "unit": "D3-PLAN4-GENESIS-001",
+  "scope": "compiler-only; no product runtime",
+  "probe_relative_path": "crates/engine/src/storage/wal_io/plan4_compiler_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/wal_io/bootstrap.rs",
+  "declaration": "\n#[path = \"plan4_compiler_probe.rs\"]\nmod plan4_compiler_probe;\n",
+  "compiler_budget_seconds": 180,
+  "probe_budget_seconds": 30,
+  "diagnostic_budget_bytes": 8388608,
+  "cases": [
+    {
+      "id": "CP01",
+      "path": "CP01.rs",
+      "sha256": "399a92c5fd78bfd3f76587919a783f0b210fab983a0a084f23717d7db1347952",
+      "bytes": 1078,
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "one"
+    },
+    {
+      "id": "CP02",
+      "path": "CP02.rs",
+      "sha256": "a708f42bb100c6da5ef15f6dc2e7513779abc1a737be00997182214c9abf1288",
+      "bytes": 727,
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "one"
+    },
+    {
+      "id": "CP03",
+      "path": "CP03.rs",
+      "sha256": "20ba9be18ca7fa0a40b4a3ca3255a610ca541aa38b809a003ecd338a06f4b2a9",
+      "bytes": 517,
+      "expected_code": "E0616",
+      "primary_line": 12,
+      "primary_spans": "one"
+    },
+    {
+      "id": "CP04",
+      "path": "CP04.rs",
+      "sha256": "71d5cd91439fd0784676162930171007277d39e38148b7ff864993540fbee4a3",
+      "bytes": 548,
+      "expected_code": "E0451",
+      "primary_line": 12,
+      "primary_spans": "one"
+    },
+    {
+      "id": "CP05",
+      "path": "CP05.rs",
+      "sha256": "843616a834ba889cd944ffa20c733872cc821f70355d643bb9070fafe3fc1f13",
+      "bytes": 584,
+      "expected_code": "E0308",
+      "primary_line": 13,
+      "primary_spans": "one"
+    },
+    {
+      "id": "CP06",
+      "path": "CP06.rs",
+      "sha256": "f8028ad280e556ac015a0fe48df0d989af44d9274f8e28bf384e5971c4f921db",
+      "bytes": 663,
+      "expected_code": "E0451",
+      "primary_line": 13,
+      "primary_spans": "one"
+    },
+    {
+      "id": "CP07",
+      "path": "CP07.rs",
+      "sha256": "040b7b0b3ea31a942b67cac2c1aad233bd10c2c4d6cb7db95039ba0af4ddf2d6",
+      "bytes": 664,
+      "expected_code": "E0515",
+      "primary_line": 13,
+      "primary_spans": "one"
+    },
+    {
+      "id": "CP08",
+      "path": "CP08.rs",
+      "sha256": "ed36f5ef15fa4915bf61b150e9824316f64b3051fff2e3d64c9c7ea78a8a33f9",
+      "bytes": 606,
+      "expected_code": "E0505",
+      "primary_line": 13,
+      "primary_spans": "one"
+    },
+    {
+      "id": "CP09",
+      "path": "CP09.rs",
+      "sha256": "19b3007458549c1bdae3a6f8a609bc7d9f213bc0ffee893165012672249a5a60",
+      "bytes": 539,
+      "expected_code": "E0277",
+      "primary_line": 13,
+      "primary_spans": "one"
+    }
+  ],
+  "revision": 2,
+  "supersedes_manifest_sha256": "faddb98857017f0a21166af781bc2597e8db3aa2a8e80058c4f1c9d36654fe55",
+  "revision_reason": "CP07 adds the associated Writer lifetime bound to isolate E0515; original E0309 plus E0515 rejection and six prior PASS remain preserved."
+}

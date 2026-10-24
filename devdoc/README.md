@@ -1,5 +1,8 @@
 # XADB 개발 문서
 
+2026-10-24 [DEV3 plan4 정리 큐·빈 Catalog 최초 설치](evidence/dev3-plan4-genesis-20261024.md): 원 FreshStorageSession·DWB의9page 설치와 private genesis-only 선택을 연결했다. 필수304·compiler9·checker15 및 같은 ELF의 실제3PID 인수를 보존하며 원 실패·보완을 구별한다. 최종 독립 D1을 제한 수용했고 live 큐·Catalog CREATE/CLR·전체 DEV3/S5는 미완료다.
+
+
 2026-10-24 [DEV4 predicate AST/parser](evidence/dev4-predicate-20261024.md): 조건식 우선순위·flat AST·깊이/자원/제어를 구현했다. 원 stack overflow와 Clippy FAIL을 보존하고 source별 필수15함수·6제품 변조 거절을 확인했다. 최종 독립 D1 제한 수용이며 typed compile/eval·3값 논리·나머지 문법·모델·실제 engine 통합·Q1은 미완료다.
 
 2026-10-24 [DEV4 scalar 입력·typed 값 소유](evidence/dev4-scalar-20261024.md): 원래 타입·SQL/native empty 경계·bounded decode와 shared quota를 구현했다. 신규23함수·8,929semantic·필수11범주/12제품 변조 거절과 source별 증거를 보존한다. 최종 독립 D1 제한 수용이며 predicate·나머지 문법·모델·실제 engine 통합·Q1은 미완료다.

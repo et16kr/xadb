@@ -72,7 +72,7 @@ fn valid_checksum_does_not_hide_invalid_structure_or_zero_identities() {
     let mutations: &[(usize, &[u8])] = &[
         (0, b"NOPE"),
         (6, &[0]),
-        (6, &[12]),
+        // Historical unknown12 input moved to plan4_changed_kind_inputs K01.
         (7, &[1]),
         (8, &[0; 16]),
         (24, &[0; 4]),
@@ -109,6 +109,89 @@ fn valid_checksum_does_not_hide_invalid_structure_or_zero_identities() {
         decode(&unknown_version),
         Err(PageError::UnsupportedFormat)
     ));
+}
+
+#[test]
+fn plan4_changed_kind_inputs() {
+    use crate::storage::retention_genesis::tests as q;
+    let mut cases = q::ids("K", 1, 2);
+    cases.extend(q::ids("K", 14, 21));
+    let mut h = q::Harness::new(cases);
+    for (id, kind, expected) in [
+        (1, 12, PageError::KindMismatch),
+        (2, 14, PageError::Corrupt),
+    ] {
+        h.case(&format!("P4-K{id:02}"), || {
+            let mut input = *CELLS;
+            input[6] = kind;
+            resign(&mut input);
+            assert!(matches!(decode(&input), Err(error) if error == expected));
+        });
+    }
+    for (index, kind) in [12u8, 13].into_iter().enumerate() {
+        for (position, level) in [0u8, 1, 15, 16].into_iter().enumerate() {
+            h.case(&format!("P4-K{:02}", 14 + index * 4 + position), || {
+                let input = q::raw(if kind == 12 { "P01" } else { "P02" });
+                let expected = crate::storage::retention_genesis::expected_header(
+                    q::namespace(),
+                    if kind == 12 {
+                        crate::storage::retention_genesis::RetentionGenesisPage::Root
+                    } else {
+                        crate::storage::retention_genesis::RetentionGenesisPage::Jobs { index: 0 }
+                    },
+                )
+                .unwrap();
+                let mut bytes = input;
+                bytes[7] = level;
+                resign(&mut bytes);
+                let result = decode_page(&bytes, expected.identity, expected.kind);
+                if level == 0 {
+                    assert_eq!(result.unwrap().header(), expected);
+                } else {
+                    assert!(matches!(result, Err(PageError::Corrupt)));
+                }
+            });
+        }
+    }
+    h.finish();
+}
+
+#[test]
+#[ignore = "DEV3 final S5 expansion"]
+fn plan4_s5_kind_levels() {
+    use crate::storage::retention_genesis::tests as q;
+    let cases = [12u8, 13]
+        .into_iter()
+        .flat_map(|kind| {
+            (1..=255u16)
+                .filter(|level| ![1, 15, 16].contains(level))
+                .map(move |level| format!("P4-SK{kind}-{level:03}"))
+        })
+        .collect();
+    let mut h = q::Harness::new(cases);
+    for kind in [12u8, 13] {
+        for level in (1..=255u16).filter(|level| ![1, 15, 16].contains(level)) {
+            h.case(&format!("P4-SK{kind}-{level:03}"), || {
+                let mut bytes = q::raw(if kind == 12 { "P01" } else { "P02" });
+                let expected = crate::storage::retention_genesis::expected_header(
+                    q::namespace(),
+                    if kind == 12 {
+                        crate::storage::retention_genesis::RetentionGenesisPage::Root
+                    } else {
+                        crate::storage::retention_genesis::RetentionGenesisPage::Jobs { index: 0 }
+                    },
+                )
+                .unwrap();
+                bytes[7] = level as u8;
+                resign(&mut bytes);
+                assert!(matches!(
+                    decode_page(&bytes, expected.identity, expected.kind),
+                    Err(PageError::Corrupt)
+                ));
+            });
+        }
+    }
+    h.finish();
 }
 
 #[test]

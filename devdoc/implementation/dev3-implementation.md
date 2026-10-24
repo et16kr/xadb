@@ -979,3 +979,28 @@ anchor 수명 권한이 아니다. [선택 증거](../evidence/dev3-catalog-befo
 static1·semantic122 PASS, 원 r0 Clippy FAIL와 수집기 부분 판정/원자료 재판독을 보존했다.
 최종 독립 D1을 제한 수용했으며 S5 추가9,534는 작성·NOT_RUN이다. 실제 Catalog create/CLR·queue·
 terminal·첫 행 ACK/recovery·전체 DEV3/S5는 미완료이고 AI 완료 소비자1/3을 유지한다.
+
+<a id="plan4-genesis"></a>
+### plan4 정리 큐·빈 Catalog의 실제 최초 설치와 선택
+
+2026-10-24 [소유 계약](../contracts/dev3-plan4-genesis.md)의 원 FreshStorageSession에 queue object4와
+Catalog object5를 설치하는 plan4를 연결했다. allocator는 Allocated9/Free55, high-water5이며
+root1·jobs2–6의 Free64와 anchor7→empty leaf8을 실제 설치/readback한다. 원 DWB 설치를 이어 사용하고,
+별도 `Plan4GenesisSelection`이 WAL4096/LSN0·initial DWB·canonical closure를 검산한다.
+selector는 writer exclusion과 borrowed observation만 제공하며 live 쓰기·repair·READY로 전환하지 않는다.
+
+[선택 증거](../evidence/dev3-plan4-genesis-20261024.md)에 따라 최종 독립 D1을 이 제한 단위에 수용했다.
+[필수 inventory](../plans/dev3-test-plan.md#plan4-genesis-followup)는19selector/304case
+(static2+memory299+native3)다. tests-r2 static2 PASS, compiler9는 r0 완료6+r1 완료3이며 원 CP07 FAIL을
+보존한다. tests-r4 memory135 PASS·K30 FAIL1·NOT_RUN163 뒤 K30 수정 source
+`570fbe8a93ece3eb9069936b01a3fb16f478081bac09fb605c3fb25bbc2e18e4`를 tests-r5로 동결했다.
+r5에서 실패1+미실행163만 선택해164 PASS를 확인하여 memory 고유299를 완료했다. native의
+동일 r5 source/ELF strict3PID 인수도 PASS이며 최종 D1은 제한 수용이다. 원 PASS·FAIL·미실행을 새 source의 일괄 PASS로 승계하지 않는다.
+
+producer prepared loan은9images+3scratch=196,608bytes다. 실제 memory/native adapter 타입으로
+검산한 native source peak24,852와 selection32,532는 local65,536 안이며 공용 타입 크기는 유지됐다.
+이는 source-value/lifetime 회계이고 실제 machine stack·RSS나 전체 engine F05 측정이 아니다.
+안정15파일22,069,248bytes의 whole-file oracle와 서로 다른3PID·읽기 전용 mutation/entropy0·inode 보존을 실제 native receipt로 확인했다.
+S5 추가1,417(memory1,411+native6)은 작성·NOT_RUN이며 전체 inventory는1,721이다.
+G5의 원 pool bind/load와 G6 live queue·atomic Begin·flush/replay, G7 Catalog CREATE/CLR·첫 행 ACK,
+일반 recovery/READY·전체 DEV3/S5와 AI 소비자2/3은 미완료이고 완료 소비자1/3을 유지한다.

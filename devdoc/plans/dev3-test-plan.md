@@ -734,3 +734,53 @@ reserved/flag 확대24의 **9534case**다. ignored/NOT_RUN으로 작성하며 �
 등록한다. 이 단위 전체9657case는 실제 catalog create/CLR·queue·첫 행 ACK/recovery를 대신하지 않는다.
 pure private borrowed view이므로 신규 compiler/native campaign을 만들지 않으며 실제 source D1에서
 field/lifetime을 확인한다. 첫 actual consumer의 compiler·현재-build 복구·F05 의무는 유지한다.
+
+<a id="plan4-genesis-followup"></a>
+## plan4 정리 큐·빈 Catalog 최초 설치 — 2026-10-24
+
+[소유 계약](../contracts/dev3-plan4-genesis.md)과 [고정 ID inventory](../../tests/fixtures/dev3-plan4-genesis/manifest.json)를 따른다.
+필수는19개 고유 selector의304case(static2+memory299+native3)이고, S5 고유 추가는1,417case
+(memory1,411+native6)다. 합계1,721을 유지한다. 기존 kind12 입력의 의미가 바뀐 page/allocation/
+DWB/WAL·selected-read/buffer-trace subcase만 K01–31로 분리하고 무변경 기존 함수 전체를 반복하지 않는다.
+
+필수는 canonical3profile 설치, queue/allocator/Catalog typed 반례, actual constructor의 page별
+write/readback, genesis-only selector의 control/data/identity·old owner 경계, prepared control seal,
+실제 memory/native 타입의 source census를 검산한다. compact 독립 raw15+기존 reference27의
+274,720bytes를 재생성하지 않으며 [G recipe](../../tests/fixtures/dev3-plan4-genesis/recipes-g.json)와
+[Q/S/native recipe](../../tests/fixtures/dev3-plan4-genesis/recipes-qs-native.json)의 exact operation·오류·effect로 연결한다.
+product encoder/replay를 기대값 계산기로 사용하지 않는다.
+
+검증은 source freeze/build→ST01/ST02→독립 F05→필수 memory→native 순서다.
+[선택 증거](../evidence/dev3-plan4-genesis-20261024.md)는 최종 독립 D1을 제한 수용했다.
+tests-r2의 static2는 PASS, compiler9는 r0 완료6+r1 완료3으로 보존하고 원 CP07 FAIL을 지우지 않는다.
+tests-r4 memory는135 PASS·K30 FAIL1·NOT_RUN163이다. K30 수정의 tests-r5 source
+`570fbe8a93ece3eb9069936b01a3fb16f478081bac09fb605c3fb25bbc2e18e4`를 동결했으며,
+r5에서 실패1+미실행163을 선택하여164 PASS를 확인했고 memory 고유299를 완료했다. 같은 r5의 native3도 PASS이며 최종 D1을 제한 수용했다. 완료 ID는 실패 함수 내부의 PASS도 포함해 다음 중간 선택에서 제외한다.
+
+native 필수는 profile1의 실제 PRODUCE→SELECT→REENTRY 세 PID와 같은 frozen source/ELF다.
+각 phase에서 안정15파일·22,069,248bytes를 전부 독립 stream과 비교하고 inode/entropy/effect를 기록한다.
+SELECT/REENTRY는 repair가 아닌 genesis-only read-only 선택이다. immutable producer snapshot과
+working DB만 보존하고 read-only phase마다 raw snapshot을 복제하지 않는다. 같은 r5 ELF의 strict3PID 인수를 완료했다.
+필수 memory 누적180s/16MiB, native chain 전체30s·phase10s·history128MiB·logs8MiB 한도는
+audit/copy/fsync/최종 receipt와 continuation을 포함한다. source/ELF 보존은 별도 준비 예산으로 기록한다.
+
+S5는 아래7개 고유 selector를 사용한다. memory6함수는 ignored이며 native는 필수와 같은 worker에서
+profile2/3의 explicit ID만 선택한다. 이는 추가 사례의 분모이며, 사용자 예외가 적용되는 최종 S5에서는
+필수304도 확정 DEV3 전체 inventory의 일부로 별도 전수 선택한다. 현재 중간 실행의 완료 ID 제외와
+최종 S5의 전수 의무를 혼동하지 않으며 원 source별 결과를 보존한다.
+
+| 추가 family | exact 범위 | case |
+| --- | --- | ---: |
+| SP profile closure | profile2/3 × N01–48/B01–32의 실제 full selector operation |160|
+| SJ job field | ordinal64 × field9에서 필수 N34–37의4 alias 제외 |572|
+| SR root reserved | cell offset384–511에서 필수511 제외 |127|
+| SK kind/level | kind12/13 × level1–255에서 필수1/15/16 제외 |504|
+| SC crash prefix | PAGE0–8/DATA_SYNC/FILEMAP_PUBLISH/DWB_PUBLISH의12 event × before/after |24|
+| SE entropy | profile1–3 × default1..16과 다른 독립 seed8 |24|
+| native profile 확대 | profile2/3 × PRODUCE/SELECT/REENTRY |6|
+| **S5 고유 추가** | **memory1,411 + native6** |**1,417**|
+
+SC의 durable-prefix model은 실제 syscall 내구성 증명이 아니며 native3process와 분리한다.
+S5 memory 전체600s/32MiB, 추가 native 두 chain 합60s와 P1 포함 whole-history192MiB는 최종 S5에서만
+사용한다. 현재 추가1,417은 NOT_RUN이다. live 큐·atomic Begin·Catalog CREATE/CLR·일반 pool의 dirty
+수명·일반 recovery/READY·첫 행 ACK와 AI 소비자2/3·전체 DEV3/S5 완료를 이 단위로 대체하지 않는다.

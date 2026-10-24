@@ -14,7 +14,7 @@ page 크기는 정확히 16,384 bytes다. header는 128 bytes, 마지막 32 byte
 | --- | --- | --- |
 | 0 | 4 | magic `XDP1` |
 | 4 | 2 | format 1; 다른 version은 UnsupportedFormat |
-| 6 | 1 | kind: row leaf1/internal2, index leaf3/internal4, catalog leaf5/internal6, overflow7, undo8, transaction status9, allocation10, tree anchor11 |
+| 6 | 1 | kind: row leaf1/internal2, index leaf3/internal4, catalog leaf5/internal6, overflow7, undo8, transaction status9, allocation10, tree anchor11, retention root12/jobs13 |
 | 7 | 1 | internal level1–15; 나머지0. 최대 tree 높이16 |
 | 8 | 16 | 기존 `DatabaseId` bytes; 전부0 거절 |
 | 24 | 8 | FileId: high32 writer epoch·low32 counter, 각각 nonzero. 발급/영속 예약·counter 소진과 wrap 거절은 이후 issuer 책임 |

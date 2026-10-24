@@ -242,6 +242,10 @@ fn doublewrite_checksummed_semantic_damage() {
     let original = wire_control(header(&entries), &entries);
     let mut cases = 0;
     for case in 0..32 {
+        // Historical unknown12 case16 is now generic metadata success (K11).
+        if case == 16 {
+            continue;
+        }
         let mut b = original.clone();
         match case {
             0 => b[0] ^= 1,
@@ -285,7 +289,39 @@ fn doublewrite_checksummed_semantic_damage() {
         reject_wire(&b);
         cases += 1;
     }
-    assert_eq!(cases, 32);
+    assert_eq!(cases, 31);
+}
+
+#[test]
+fn plan4_changed_kind_inputs() {
+    use crate::storage::retention_genesis::tests as q;
+    let mut h = q::Harness::new(q::ids("K", 11, 13));
+    for id in 11..=13 {
+        h.case(&format!("P4-K{id:02}"), || {
+            let entries = mixed();
+            let original = header(&entries);
+            let mut bytes = wire_control(original, &entries);
+            bytes[130] = if id == 13 { 14 } else { 12 };
+            rehash(&mut bytes);
+            let result = decode_control(&bytes, exp(original));
+            if id == 13 {
+                assert!(matches!(result, Err(DoublewriteError::Corrupt)));
+            } else {
+                let view = result.unwrap();
+                assert_eq!(view.entry(0).unwrap().kind, PageKind::RetentionRoot);
+                if id == 12 {
+                    let mut image_slot = golden_slot(0);
+                    image_slot[88] = 12;
+                    rehash(&mut image_slot);
+                    assert_eq!(
+                        decode_slot(&view, 0, &image_slot),
+                        Err(DoublewriteError::ImageMismatch)
+                    );
+                }
+            }
+        });
+    }
+    h.finish();
 }
 
 #[test]

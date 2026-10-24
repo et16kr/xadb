@@ -2,6 +2,9 @@
 """Build/check independent DEV3 page-envelope v1 vectors using only stdlib.
 
 Source contract: devdoc/contracts/dev3-page-format.md, F01/F02, 2026-10-20.
+This frozen historical corpus covers kinds 1..11. Plan4 kinds 12/13 and their
+changed boundary cases belong to tests/fixtures/dev3-plan4-genesis; this script
+does not claim to validate the complete current page-kind inventory.
 This file was written from that contract without reading the production codec.
 It checks envelope bytes only: cells have no key, row, undo or tree meaning.
 

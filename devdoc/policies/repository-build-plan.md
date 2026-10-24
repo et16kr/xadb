@@ -435,3 +435,17 @@ parser/predicate.rs, reference predicate literal/recipe, predicate_contracts/pre
 실제 dev4-predicate fixture를 추가한다. package·dependency·source/export root는 바뀌지 않는다.
 [선택 증거](../evidence/dev4-predicate-20261024.md)에 원 실패/수정·source별 결과와 typed predicate·
 P4 연결·실제 engine/Q1 미완료를 구분한다.
+
+
+<a id="plan4-genesis-layout"></a>
+### DEV3 plan4 최초 설치 배치 — 2026-10-24
+
+[소유 계약](../contracts/dev3-plan4-genesis.md)의 canonical queue/빈 Catalog codec은
+`storage/retention_genesis.rs`, 설치는 기존 `wal_io/bootstrap.rs`와 새
+`wal_io/plan4_genesis.rs`, 닫힌 선택은 `storage/plan4_recovery_select.rs`에 둔다.
+원 FreshStorageSession·maintenance·DWB를 사용하며 새 crate나 별도 저장 엔진은 추가하지 않는다.
+독립 raw·recipe·compiler 입력은 `tests/fixtures/dev3-plan4-genesis`, 정확 ID 수집기와
+실제 Linux 3PID 조립은 `scripts/dev3_plan4_genesis_*`가 소유한다. 실제 구현 경로는
+[관리 JSON](repository-build-plan.json)의 `dev3_plan4_genesis`에 등록하고
+[source별 실행 증거](../evidence/dev3-plan4-genesis-20261024.md)를 구별한다.
+이 배치 자체는 live 큐·Catalog CREATE/CLR·일반 복구 또는 DEV3/S5 완료가 아니다.
