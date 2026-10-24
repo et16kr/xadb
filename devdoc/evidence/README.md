@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV4 P5 전체 입력 조립 준비](dev4-lifecycle-assembly-inputs-20261025.md) — 독립 후보1658개 정적 한정 검토; 미검토 rich304·전체 D2·제품·시험 NOT_RUN.
+
 - [DEV3 plan4 빈 거래 live·prefix](dev3-retention-live-20261025.md) · [source별 색인](dev3-retention-live-20261025.json) — 신규75 PASS·완료 반복0·원 실패 보존; 최종 독립 D1 제한 수용
 
 - [DEV4 P5 원시 번호·selector](dev4-lifecycle-raw-selection-20261025.md) — 신규1951입력·3484호출/compile/Clippy/fmt PASS; 정적 집계 원 실패 보존·최종 독립 D1 제한 수용.

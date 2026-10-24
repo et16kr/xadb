@@ -1,0 +1,3628 @@
+{
+  "status": "INDEPENDENT_LITERAL_CANDIDATE_NOT_D2_FROZEN_NOT_RUN",
+  "authorship": "hand-authored fixed-initial tables and copied original logical literals; no product/model/codec output",
+  "logical_input_schema": "same input logical fields as original vectors; nonempty bind value {tag:u8,byte_length:u16,bytes:[u8]} with exact payload length",
+  "cases": [
+    {
+      "id": "asm/original/sel.execute",
+      "pre_state": "original:sel.prepared",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                4,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "2e7e2e60d81d3e5ec5feb4d5797dfc7f9b15a09d2f64c606f15d1dfd3257b997"
+    },
+    {
+      "id": "asm/original/sel.eof",
+      "pre_state": "original:sel.open",
+      "raw_index": 753,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Fetch",
+        "api_tag": 3,
+        "actor": 0,
+        "outcome_tag": 1,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Fetch",
+          "work_class": 1,
+          "cleanup": 1,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                4,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "cc89f92025f0d5dc849a2988a4d91139d1cf07407c8c7fca90805c27a9a813fc"
+    },
+    {
+      "id": "asm/original/sel.reexecute",
+      "pre_state": "original:sel.eof",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          4,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            3,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            2,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                6,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                7,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                8,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                2,
+                3
+              ]
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "5329673f708a7217f8bbe21be22da73475d7ea0485cb485ba31514e21391ed9e"
+    },
+    {
+      "id": "asm/original/sel.stale",
+      "pre_state": "original:sel.reexecuted",
+      "raw_index": 752,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Fetch",
+        "api_tag": 3,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          5,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            4,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Fetch",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": null,
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      },
+      "original_pair_sha256": "a1ee1df98d785fab16daf919e978cbc932f0b8b5d835dfc401b606897066bbd3"
+    },
+    {
+      "id": "asm/original/sel.current_rows",
+      "pre_state": "original:sel.reexecuted",
+      "raw_index": 762,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 1
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Fetch",
+        "api_tag": 3,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          2,
+          3
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          5,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            4,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Fetch",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            2,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      },
+      "original_pair_sha256": "9dcaccb26d44bf53c2cab83409b041fc1ed22cbea084c0e5fd71cb421ec9ecb5"
+    },
+    {
+      "id": "asm/original/sel.signal_completed",
+      "pre_state": "original:sel.open",
+      "raw_index": 1358,
+      "raw_action": {
+        "api": "SignalContext",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 1
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "SignalContext",
+        "api_tag": 14,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      },
+      "original_pair_sha256": "d9485a46070b357625539bd462160e3b48d8d906c6419eff57d8f5fb55dfe1c7"
+    },
+    {
+      "id": "asm/original/sel.rows",
+      "pre_state": "original:sel.open",
+      "raw_index": 752,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Fetch",
+        "api_tag": 3,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Fetch",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      },
+      "original_pair_sha256": "cfbcf84db69c4d9e848b634e1eb944265e7bb52e95bc647b5c62f779ea5ab6e5"
+    },
+    {
+      "id": "asm/original/sel.park",
+      "pre_state": "original:sel.open",
+      "raw_index": 1421,
+      "raw_action": {
+        "api": "ParkFetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "ParkFetch",
+        "api_tag": 15,
+        "actor": 0,
+        "outcome_tag": 1,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "FutureAtEntry",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      },
+      "original_pair_sha256": "b2b51afb0af4f140adcd12becfe154563d18cef05e1d27e590c171d3ad7b6358"
+    },
+    {
+      "id": "asm/original/sel.signal_parked",
+      "pre_state": "original:sel.parked",
+      "raw_index": 1361,
+      "raw_action": {
+        "api": "SignalContext",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 2
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "SignalContext",
+        "api_tag": 14,
+        "actor": 0,
+        "outcome_tag": 1,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      },
+      "original_pair_sha256": "2783c5f75d2ce86911003c3c3019a2d4a2d891d5a54af23c760e34e4b34ced54"
+    },
+    {
+      "id": "asm/original/sel.resume",
+      "pre_state": "original:sel.signalled",
+      "raw_index": 1484,
+      "raw_action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "ResumeFetch",
+        "api_tag": 16,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "FutureAtEntry",
+        "supplied_cancel": false,
+        "deadline_reached": true,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Resume",
+          "work_class": 0,
+          "cleanup": 1,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                4,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "d9ce544503ee62cc4995ebae028f076c664d000faac74a118f536075a5def522"
+    },
+    {
+      "id": "asm/original/sel.cancel",
+      "pre_state": "original:sel.open",
+      "raw_index": 757,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 5
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Fetch",
+        "api_tag": 3,
+        "actor": 0,
+        "outcome_tag": 5,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Fetch",
+          "work_class": 5,
+          "cleanup": 1,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                4,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "460fed384efc7ddcc64201d64911da5a292712c77476315af4b47335eef9c547"
+    },
+    {
+      "id": "asm/original/sel.entry_cancel",
+      "pre_state": "original:sel.open",
+      "raw_index": 755,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 3
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Fetch",
+        "api_tag": 3,
+        "actor": 0,
+        "outcome_tag": 3,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": true,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      },
+      "original_pair_sha256": "d7fbd4759832d6cc7b854ae0d0a9aa70c3d117ed9b26c60f6260f21745cda5c3"
+    },
+    {
+      "id": "asm/original/sel.buffer",
+      "pre_state": "original:sel.open",
+      "raw_index": 754,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 2
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Fetch",
+        "api_tag": 3,
+        "actor": 0,
+        "outcome_tag": 2,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Fetch",
+          "work_class": 2,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      },
+      "original_pair_sha256": "525c869916aad431fceed83292f33949820293faa8fe87412afef36ef1ff4a2e"
+    },
+    {
+      "id": "asm/original/sel.close",
+      "pre_state": "original:sel.open",
+      "raw_index": 1072,
+      "raw_action": {
+        "api": "CloseResult",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "CloseResult",
+        "api_tag": 4,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "LocalCleanup",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 1,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                4,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "b366d04e5dc0d9383a12b2d85d7f20ae73ae7a45e7ba8a9048a6ce68ef76313d"
+    },
+    {
+      "id": "asm/original/rw.prepare",
+      "pre_state": "original:rw.begun",
+      "raw_index": 6,
+      "raw_action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Dml",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Prepare",
+        "api_tag": 0,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 0,
+        "prepare_shape": 1,
+        "parameter_count": 0,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      },
+      "original_pair_sha256": "8b8a9f5d991a66d7eccca1c8665307275bdbe68eb02ff35ef6829b8d4fd7d8cd"
+    },
+    {
+      "id": "asm/original/rw.execute",
+      "pre_state": "original:rw.prepared",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      },
+      "original_pair_sha256": "3280e1b207993eb94d3b89f9f9c6c84162e6e72467739e39c85593965152b707"
+    },
+    {
+      "id": "asm/original/rw.prepare_select",
+      "pre_state": "original:rw.written",
+      "raw_index": 12,
+      "raw_action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 1,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Prepare",
+        "api_tag": 0,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 1,
+        "prepare_shape": 0,
+        "parameter_count": 0,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          4,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      },
+      "original_pair_sha256": "be59f8d85167cdfa91af19441112ad7014e9b483e719eb3111e0426de7c954a3"
+    },
+    {
+      "id": "asm/original/rw.execute_select",
+      "pre_state": "original:rw.select_prepared",
+      "raw_index": 411,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 1
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          1,
+          1,
+          1,
+          2,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          5,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                8,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                9,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                10,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "2d20b77a09784a9ac804189a6e06243e630001c0443a2722dc3a005a5ab0225d"
+    },
+    {
+      "id": "asm/original/rw.close",
+      "pre_state": "original:rw.select_open",
+      "raw_index": 1072,
+      "raw_action": {
+        "api": "CloseResult",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "CloseResult",
+        "api_tag": 4,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          4,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          6,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            3,
+            0
+          ],
+          "kind": "LocalCleanup",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 1,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                8,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                9,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                10,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "c39a674bf0293c237f289f5da2a82bfc0bde56f66e02ce293a4b334664c7e125"
+    },
+    {
+      "id": "asm/original/rw.rollback_complete",
+      "pre_state": "original:rw.written",
+      "raw_index": 1302,
+      "raw_action": {
+        "api": "Rollback",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Rollback",
+        "api_tag": 9,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          4,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "RollbackCleanup",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 1,
+          "commit_class": 0,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "resource_kind": "Undo",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                2,
+                0
+              ],
+              "resource_kind": "Locks",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "AbortReserve",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "after_holder": null
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "d481b84713259b58c30c20ffbd17ee3809712a27b306fde0501fc5d5f10c9c2d"
+    },
+    {
+      "id": "asm/original/rw.rollback_incomplete",
+      "pre_state": "original:rw.written",
+      "raw_index": 1303,
+      "raw_action": {
+        "api": "Rollback",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Rollback",
+        "api_tag": 9,
+        "actor": 0,
+        "outcome_tag": 1,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          4,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "RollbackCleanup",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 2,
+          "commit_class": 1,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [
+            {
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "known_decision": "NotCommittedRecoveryRequired",
+              "after_ownership_summary": "AllHeld",
+              "associated_owner_count": 4
+            }
+          ],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "resource_kind": "Undo",
+              "after_disposition": "Held",
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "before_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                2,
+                0
+              ],
+              "resource_kind": "Locks",
+              "after_disposition": "Held",
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "before_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "AbortReserve",
+              "after_disposition": "Held",
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "before_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                6,
+                0
+              ],
+              "resource_kind": "Recovery",
+              "after_disposition": "Held",
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "before_holder": null,
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "e64927fb98132ab4ca142d753e2afeb749f9b091c651553276485f088aadd53e"
+    },
+    {
+      "id": "asm/original/off.prepare",
+      "pre_state": "original:off.set",
+      "raw_index": 6,
+      "raw_action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Dml",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Prepare",
+        "api_tag": 0,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 0,
+        "prepare_shape": 1,
+        "parameter_count": 0,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      },
+      "original_pair_sha256": "e533fc6851d9899d13e5b95bc7740627d7198ba6626de9ab872529482176e5ea"
+    },
+    {
+      "id": "asm/original/off.execute",
+      "pre_state": "original:off.prepared",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "Undo",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                4,
+                0
+              ],
+              "resource_kind": "Locks",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "resource_kind": "AbortReserve",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "57995da2b38babff1247772f699f0242123452929bbc922cfff4bcc61d3b7142"
+    },
+    {
+      "id": "asm/original/off.prepare_select",
+      "pre_state": "original:off.written",
+      "raw_index": 12,
+      "raw_action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 1,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Prepare",
+        "api_tag": 0,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 1,
+        "prepare_shape": 0,
+        "parameter_count": 0,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          4,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      },
+      "original_pair_sha256": "0aedf0074af553b07aa65548181d9c883848698d08b0f6f6e66f427e3e2faade"
+    },
+    {
+      "id": "asm/original/off.execute_select",
+      "pre_state": "original:off.select_prepared",
+      "raw_index": 411,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 1
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          1,
+          1,
+          1,
+          2,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          5,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                8,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                9,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                10,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "bada3ae1031b5fe28a10dc1cd2ded0cf118a9e3f8bd53465a79b93c94719904c"
+    },
+    {
+      "id": "asm/original/off.close",
+      "pre_state": "original:off.select_open",
+      "raw_index": 1072,
+      "raw_action": {
+        "api": "CloseResult",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "CloseResult",
+        "api_tag": 4,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          4,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          6,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            3,
+            0
+          ],
+          "kind": "LocalCleanup",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 1,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                8,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                9,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                10,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Released",
+              "obligation": null,
+              "before_holder": [
+                4,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "after_holder": null
+            }
+          ]
+        }
+      },
+      "original_pair_sha256": "3fc65707ab90ab49da0008f9d192072664eaa54f62a1fb90fd07e556cf1aebc8"
+    },
+    {
+      "id": "asm/original/input-malformed-child-u9",
+      "pre_state": "original:sel.reexecuted",
+      "raw_index": 902,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "FrozenUnissued",
+          "index": 9
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Fetch",
+        "api_tag": 3,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          254,
+          0,
+          0,
+          1,
+          1,
+          255,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          5,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            4,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Fetch",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": null,
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      },
+      "original_pair_sha256": "a30b80a9c377f8553e21a402aa7ecd6735d9a3ed698e6e9bdd5fe1e51e6236ec"
+    }
+  ],
+  "overlap_links": [
+    {
+      "original_pair": "sel.prepare",
+      "case": "asm/initial/0000",
+      "pair_sha256": "7ee306dd0362478dd3c998325c365e8b39008dd576ce9899ed8b467cb042ec48"
+    },
+    {
+      "original_pair": "rw.begin",
+      "case": "asm/initial/1264",
+      "pair_sha256": "7939acd8de6fdab870bc22942e654a6b1521262231686fac80910552f7e1a4da"
+    },
+    {
+      "original_pair": "off.set",
+      "case": "asm/initial/1273",
+      "pair_sha256": "55bbf1724ff195322187d25d9431b494f97e7bcd985df763ffcfda033fa8e72f"
+    }
+  ],
+  "all_51_occurrences": [
+    {
+      "id": "LM-M1/01",
+      "trace_id": "LM-M1",
+      "position1": 1,
+      "original_edge": "sel.prepare",
+      "unique_pair_id": "sel.prepare",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/sel.prepare",
+      "raw_index": 0,
+      "pre_input_pair_sha256": "7ee306dd0362478dd3c998325c365e8b39008dd576ce9899ed8b467cb042ec48"
+    },
+    {
+      "id": "LM-M1/02",
+      "trace_id": "LM-M1",
+      "position1": 2,
+      "original_edge": "sel.execute",
+      "unique_pair_id": "sel.execute",
+      "pre_state_ref": "states/sel.prepared",
+      "input_ref": "inputs/sel.execute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "2e7e2e60d81d3e5ec5feb4d5797dfc7f9b15a09d2f64c606f15d1dfd3257b997"
+    },
+    {
+      "id": "LM-M1/03",
+      "trace_id": "LM-M1",
+      "position1": 3,
+      "original_edge": "sel.eof",
+      "unique_pair_id": "sel.eof",
+      "pre_state_ref": "states/sel.open",
+      "input_ref": "inputs/sel.eof",
+      "raw_index": 753,
+      "pre_input_pair_sha256": "cc89f92025f0d5dc849a2988a4d91139d1cf07407c8c7fca90805c27a9a813fc"
+    },
+    {
+      "id": "LM-M1/04",
+      "trace_id": "LM-M1",
+      "position1": 4,
+      "original_edge": "sel.reexecute",
+      "unique_pair_id": "sel.reexecute",
+      "pre_state_ref": "states/sel.eof",
+      "input_ref": "inputs/sel.reexecute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "5329673f708a7217f8bbe21be22da73475d7ea0485cb485ba31514e21391ed9e"
+    },
+    {
+      "id": "LM-M1/05",
+      "trace_id": "LM-M1",
+      "position1": 5,
+      "original_edge": "sel.stale",
+      "unique_pair_id": "sel.stale",
+      "pre_state_ref": "states/sel.reexecuted",
+      "input_ref": "inputs/sel.stale_rows",
+      "raw_index": 752,
+      "pre_input_pair_sha256": "a1ee1df98d785fab16daf919e978cbc932f0b8b5d835dfc401b606897066bbd3"
+    },
+    {
+      "id": "LM-M2/01",
+      "trace_id": "LM-M2",
+      "position1": 1,
+      "original_edge": "sel.prepare",
+      "unique_pair_id": "sel.prepare",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/sel.prepare",
+      "raw_index": 0,
+      "pre_input_pair_sha256": "7ee306dd0362478dd3c998325c365e8b39008dd576ce9899ed8b467cb042ec48"
+    },
+    {
+      "id": "LM-M2/02",
+      "trace_id": "LM-M2",
+      "position1": 2,
+      "original_edge": "sel.execute",
+      "unique_pair_id": "sel.execute",
+      "pre_state_ref": "states/sel.prepared",
+      "input_ref": "inputs/sel.execute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "2e7e2e60d81d3e5ec5feb4d5797dfc7f9b15a09d2f64c606f15d1dfd3257b997"
+    },
+    {
+      "id": "LM-M2/03",
+      "trace_id": "LM-M2",
+      "position1": 3,
+      "original_edge": "sel.signal_completed",
+      "unique_pair_id": "sel.signal_completed",
+      "pre_state_ref": "states/sel.open",
+      "input_ref": "inputs/sel.signal_completed",
+      "raw_index": 1358,
+      "pre_input_pair_sha256": "d9485a46070b357625539bd462160e3b48d8d906c6419eff57d8f5fb55dfe1c7"
+    },
+    {
+      "id": "LM-M2/04",
+      "trace_id": "LM-M2",
+      "position1": 4,
+      "original_edge": "sel.rows",
+      "unique_pair_id": "sel.rows",
+      "pre_state_ref": "states/sel.open",
+      "input_ref": "inputs/sel.rows",
+      "raw_index": 752,
+      "pre_input_pair_sha256": "cfbcf84db69c4d9e848b634e1eb944265e7bb52e95bc647b5c62f779ea5ab6e5"
+    },
+    {
+      "id": "LM-M3/01",
+      "trace_id": "LM-M3",
+      "position1": 1,
+      "original_edge": "rw.begin",
+      "unique_pair_id": "rw.begin",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/rw.begin",
+      "raw_index": 1264,
+      "pre_input_pair_sha256": "7939acd8de6fdab870bc22942e654a6b1521262231686fac80910552f7e1a4da"
+    },
+    {
+      "id": "LM-M3/02",
+      "trace_id": "LM-M3",
+      "position1": 2,
+      "original_edge": "rw.prepare",
+      "unique_pair_id": "rw.prepare",
+      "pre_state_ref": "states/rw.begun",
+      "input_ref": "inputs/rw.prepare",
+      "raw_index": 6,
+      "pre_input_pair_sha256": "8b8a9f5d991a66d7eccca1c8665307275bdbe68eb02ff35ef6829b8d4fd7d8cd"
+    },
+    {
+      "id": "LM-M3/03",
+      "trace_id": "LM-M3",
+      "position1": 3,
+      "original_edge": "rw.execute",
+      "unique_pair_id": "rw.execute",
+      "pre_state_ref": "states/rw.prepared",
+      "input_ref": "inputs/rw.execute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "3280e1b207993eb94d3b89f9f9c6c84162e6e72467739e39c85593965152b707"
+    },
+    {
+      "id": "LM-M3/04",
+      "trace_id": "LM-M3",
+      "position1": 4,
+      "original_edge": "rw.prepare_select",
+      "unique_pair_id": "rw.prepare_select",
+      "pre_state_ref": "states/rw.written",
+      "input_ref": "inputs/rw.prepare_select",
+      "raw_index": 12,
+      "pre_input_pair_sha256": "be59f8d85167cdfa91af19441112ad7014e9b483e719eb3111e0426de7c954a3"
+    },
+    {
+      "id": "LM-M3/05",
+      "trace_id": "LM-M3",
+      "position1": 5,
+      "original_edge": "rw.execute_select",
+      "unique_pair_id": "rw.execute_select",
+      "pre_state_ref": "states/rw.select_prepared",
+      "input_ref": "inputs/rw.execute_select",
+      "raw_index": 411,
+      "pre_input_pair_sha256": "2d20b77a09784a9ac804189a6e06243e630001c0443a2722dc3a005a5ab0225d"
+    },
+    {
+      "id": "LM-M3/06",
+      "trace_id": "LM-M3",
+      "position1": 6,
+      "original_edge": "rw.close",
+      "unique_pair_id": "rw.close",
+      "pre_state_ref": "states/rw.select_open",
+      "input_ref": "inputs/rw.close",
+      "raw_index": 1072,
+      "pre_input_pair_sha256": "c39a674bf0293c237f289f5da2a82bfc0bde56f66e02ce293a4b334664c7e125"
+    },
+    {
+      "id": "LM-M4/01",
+      "trace_id": "LM-M4",
+      "position1": 1,
+      "original_edge": "rw.begin",
+      "unique_pair_id": "rw.begin",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/rw.begin",
+      "raw_index": 1264,
+      "pre_input_pair_sha256": "7939acd8de6fdab870bc22942e654a6b1521262231686fac80910552f7e1a4da"
+    },
+    {
+      "id": "LM-M4/02",
+      "trace_id": "LM-M4",
+      "position1": 2,
+      "original_edge": "rw.prepare",
+      "unique_pair_id": "rw.prepare",
+      "pre_state_ref": "states/rw.begun",
+      "input_ref": "inputs/rw.prepare",
+      "raw_index": 6,
+      "pre_input_pair_sha256": "8b8a9f5d991a66d7eccca1c8665307275bdbe68eb02ff35ef6829b8d4fd7d8cd"
+    },
+    {
+      "id": "LM-M4/03",
+      "trace_id": "LM-M4",
+      "position1": 3,
+      "original_edge": "rw.execute",
+      "unique_pair_id": "rw.execute",
+      "pre_state_ref": "states/rw.prepared",
+      "input_ref": "inputs/rw.execute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "3280e1b207993eb94d3b89f9f9c6c84162e6e72467739e39c85593965152b707"
+    },
+    {
+      "id": "LM-M4/04",
+      "trace_id": "LM-M4",
+      "position1": 4,
+      "original_edge": "rw.rollback_incomplete",
+      "unique_pair_id": "rw.rollback_incomplete",
+      "pre_state_ref": "states/rw.written",
+      "input_ref": "inputs/rw.rollback_incomplete",
+      "raw_index": 1303,
+      "pre_input_pair_sha256": "e64927fb98132ab4ca142d753e2afeb749f9b091c651553276485f088aadd53e"
+    },
+    {
+      "id": "LM-M5/01",
+      "trace_id": "LM-M5",
+      "position1": 1,
+      "original_edge": "sel.prepare",
+      "unique_pair_id": "sel.prepare",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/sel.prepare",
+      "raw_index": 0,
+      "pre_input_pair_sha256": "7ee306dd0362478dd3c998325c365e8b39008dd576ce9899ed8b467cb042ec48"
+    },
+    {
+      "id": "LM-M5/02",
+      "trace_id": "LM-M5",
+      "position1": 2,
+      "original_edge": "sel.execute",
+      "unique_pair_id": "sel.execute",
+      "pre_state_ref": "states/sel.prepared",
+      "input_ref": "inputs/sel.execute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "2e7e2e60d81d3e5ec5feb4d5797dfc7f9b15a09d2f64c606f15d1dfd3257b997"
+    },
+    {
+      "id": "LM-M5/03",
+      "trace_id": "LM-M5",
+      "position1": 3,
+      "original_edge": "sel.cancel",
+      "unique_pair_id": "sel.cancel",
+      "pre_state_ref": "states/sel.open",
+      "input_ref": "inputs/sel.terminal_cancel",
+      "raw_index": 757,
+      "pre_input_pair_sha256": "460fed384efc7ddcc64201d64911da5a292712c77476315af4b47335eef9c547"
+    },
+    {
+      "id": "LM-C1/01",
+      "trace_id": "LM-C1",
+      "position1": 1,
+      "original_edge": "sel.prepare",
+      "unique_pair_id": "sel.prepare",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/sel.prepare",
+      "raw_index": 0,
+      "pre_input_pair_sha256": "7ee306dd0362478dd3c998325c365e8b39008dd576ce9899ed8b467cb042ec48"
+    },
+    {
+      "id": "LM-C1/02",
+      "trace_id": "LM-C1",
+      "position1": 2,
+      "original_edge": "sel.execute",
+      "unique_pair_id": "sel.execute",
+      "pre_state_ref": "states/sel.prepared",
+      "input_ref": "inputs/sel.execute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "2e7e2e60d81d3e5ec5feb4d5797dfc7f9b15a09d2f64c606f15d1dfd3257b997"
+    },
+    {
+      "id": "LM-C1/03",
+      "trace_id": "LM-C1",
+      "position1": 3,
+      "original_edge": "sel.eof",
+      "unique_pair_id": "sel.eof",
+      "pre_state_ref": "states/sel.open",
+      "input_ref": "inputs/sel.eof",
+      "raw_index": 753,
+      "pre_input_pair_sha256": "cc89f92025f0d5dc849a2988a4d91139d1cf07407c8c7fca90805c27a9a813fc"
+    },
+    {
+      "id": "LM-C1/04",
+      "trace_id": "LM-C1",
+      "position1": 4,
+      "original_edge": "sel.reexecute",
+      "unique_pair_id": "sel.reexecute",
+      "pre_state_ref": "states/sel.eof",
+      "input_ref": "inputs/sel.reexecute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "5329673f708a7217f8bbe21be22da73475d7ea0485cb485ba31514e21391ed9e"
+    },
+    {
+      "id": "LM-C1/05",
+      "trace_id": "LM-C1",
+      "position1": 5,
+      "original_edge": "sel.current_rows",
+      "unique_pair_id": "sel.current_rows",
+      "pre_state_ref": "states/sel.reexecuted",
+      "input_ref": "inputs/sel.current_rows",
+      "raw_index": 762,
+      "pre_input_pair_sha256": "9dcaccb26d44bf53c2cab83409b041fc1ed22cbea084c0e5fd71cb421ec9ecb5"
+    },
+    {
+      "id": "LM-C2/01",
+      "trace_id": "LM-C2",
+      "position1": 1,
+      "original_edge": "sel.prepare",
+      "unique_pair_id": "sel.prepare",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/sel.prepare",
+      "raw_index": 0,
+      "pre_input_pair_sha256": "7ee306dd0362478dd3c998325c365e8b39008dd576ce9899ed8b467cb042ec48"
+    },
+    {
+      "id": "LM-C2/02",
+      "trace_id": "LM-C2",
+      "position1": 2,
+      "original_edge": "sel.execute",
+      "unique_pair_id": "sel.execute",
+      "pre_state_ref": "states/sel.prepared",
+      "input_ref": "inputs/sel.execute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "2e7e2e60d81d3e5ec5feb4d5797dfc7f9b15a09d2f64c606f15d1dfd3257b997"
+    },
+    {
+      "id": "LM-C2/03",
+      "trace_id": "LM-C2",
+      "position1": 3,
+      "original_edge": "sel.park",
+      "unique_pair_id": "sel.park",
+      "pre_state_ref": "states/sel.open",
+      "input_ref": "inputs/sel.park",
+      "raw_index": 1421,
+      "pre_input_pair_sha256": "b2b51afb0af4f140adcd12becfe154563d18cef05e1d27e590c171d3ad7b6358"
+    },
+    {
+      "id": "LM-C2/04",
+      "trace_id": "LM-C2",
+      "position1": 4,
+      "original_edge": "sel.signal_parked",
+      "unique_pair_id": "sel.signal_parked",
+      "pre_state_ref": "states/sel.parked",
+      "input_ref": "inputs/sel.signal_parked",
+      "raw_index": 1361,
+      "pre_input_pair_sha256": "2783c5f75d2ce86911003c3c3019a2d4a2d891d5a54af23c760e34e4b34ced54"
+    },
+    {
+      "id": "LM-C2/05",
+      "trace_id": "LM-C2",
+      "position1": 5,
+      "original_edge": "sel.resume",
+      "unique_pair_id": "sel.resume",
+      "pre_state_ref": "states/sel.signalled",
+      "input_ref": "inputs/sel.resume_timeout",
+      "raw_index": 1484,
+      "pre_input_pair_sha256": "d9ce544503ee62cc4995ebae028f076c664d000faac74a118f536075a5def522"
+    },
+    {
+      "id": "LM-C3-OFF/01",
+      "trace_id": "LM-C3-OFF",
+      "position1": 1,
+      "original_edge": "off.set",
+      "unique_pair_id": "off.set",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/off.set",
+      "raw_index": 1273,
+      "pre_input_pair_sha256": "55bbf1724ff195322187d25d9431b494f97e7bcd985df763ffcfda033fa8e72f"
+    },
+    {
+      "id": "LM-C3-OFF/02",
+      "trace_id": "LM-C3-OFF",
+      "position1": 2,
+      "original_edge": "off.prepare",
+      "unique_pair_id": "off.prepare",
+      "pre_state_ref": "states/off.set",
+      "input_ref": "inputs/rw.prepare",
+      "raw_index": 6,
+      "pre_input_pair_sha256": "e533fc6851d9899d13e5b95bc7740627d7198ba6626de9ab872529482176e5ea"
+    },
+    {
+      "id": "LM-C3-OFF/03",
+      "trace_id": "LM-C3-OFF",
+      "position1": 3,
+      "original_edge": "off.execute",
+      "unique_pair_id": "off.execute",
+      "pre_state_ref": "states/off.prepared",
+      "input_ref": "inputs/off.execute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "57995da2b38babff1247772f699f0242123452929bbc922cfff4bcc61d3b7142"
+    },
+    {
+      "id": "LM-C3-OFF/04",
+      "trace_id": "LM-C3-OFF",
+      "position1": 4,
+      "original_edge": "off.prepare_select",
+      "unique_pair_id": "off.prepare_select",
+      "pre_state_ref": "states/off.written",
+      "input_ref": "inputs/rw.prepare_select",
+      "raw_index": 12,
+      "pre_input_pair_sha256": "0aedf0074af553b07aa65548181d9c883848698d08b0f6f6e66f427e3e2faade"
+    },
+    {
+      "id": "LM-C3-OFF/05",
+      "trace_id": "LM-C3-OFF",
+      "position1": 5,
+      "original_edge": "off.execute_select",
+      "unique_pair_id": "off.execute_select",
+      "pre_state_ref": "states/off.select_prepared",
+      "input_ref": "inputs/rw.execute_select",
+      "raw_index": 411,
+      "pre_input_pair_sha256": "bada3ae1031b5fe28a10dc1cd2ded0cf118a9e3f8bd53465a79b93c94719904c"
+    },
+    {
+      "id": "LM-C3-OFF/06",
+      "trace_id": "LM-C3-OFF",
+      "position1": 6,
+      "original_edge": "off.close",
+      "unique_pair_id": "off.close",
+      "pre_state_ref": "states/off.select_open",
+      "input_ref": "inputs/rw.close",
+      "raw_index": 1072,
+      "pre_input_pair_sha256": "3fc65707ab90ab49da0008f9d192072664eaa54f62a1fb90fd07e556cf1aebc8"
+    },
+    {
+      "id": "LM-C3-IMPLICIT/01",
+      "trace_id": "LM-C3-IMPLICIT",
+      "position1": 1,
+      "original_edge": "sel.prepare",
+      "unique_pair_id": "sel.prepare",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/sel.prepare",
+      "raw_index": 0,
+      "pre_input_pair_sha256": "7ee306dd0362478dd3c998325c365e8b39008dd576ce9899ed8b467cb042ec48"
+    },
+    {
+      "id": "LM-C3-IMPLICIT/02",
+      "trace_id": "LM-C3-IMPLICIT",
+      "position1": 2,
+      "original_edge": "sel.execute",
+      "unique_pair_id": "sel.execute",
+      "pre_state_ref": "states/sel.prepared",
+      "input_ref": "inputs/sel.execute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "2e7e2e60d81d3e5ec5feb4d5797dfc7f9b15a09d2f64c606f15d1dfd3257b997"
+    },
+    {
+      "id": "LM-C3-IMPLICIT/03",
+      "trace_id": "LM-C3-IMPLICIT",
+      "position1": 3,
+      "original_edge": "sel.close",
+      "unique_pair_id": "sel.close",
+      "pre_state_ref": "states/sel.open",
+      "input_ref": "inputs/sel.close",
+      "raw_index": 1072,
+      "pre_input_pair_sha256": "b366d04e5dc0d9383a12b2d85d7f20ae73ae7a45e7ba8a9048a6ce68ef76313d"
+    },
+    {
+      "id": "LM-C4/01",
+      "trace_id": "LM-C4",
+      "position1": 1,
+      "original_edge": "rw.begin",
+      "unique_pair_id": "rw.begin",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/rw.begin",
+      "raw_index": 1264,
+      "pre_input_pair_sha256": "7939acd8de6fdab870bc22942e654a6b1521262231686fac80910552f7e1a4da"
+    },
+    {
+      "id": "LM-C4/02",
+      "trace_id": "LM-C4",
+      "position1": 2,
+      "original_edge": "rw.prepare",
+      "unique_pair_id": "rw.prepare",
+      "pre_state_ref": "states/rw.begun",
+      "input_ref": "inputs/rw.prepare",
+      "raw_index": 6,
+      "pre_input_pair_sha256": "8b8a9f5d991a66d7eccca1c8665307275bdbe68eb02ff35ef6829b8d4fd7d8cd"
+    },
+    {
+      "id": "LM-C4/03",
+      "trace_id": "LM-C4",
+      "position1": 3,
+      "original_edge": "rw.execute",
+      "unique_pair_id": "rw.execute",
+      "pre_state_ref": "states/rw.prepared",
+      "input_ref": "inputs/rw.execute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "3280e1b207993eb94d3b89f9f9c6c84162e6e72467739e39c85593965152b707"
+    },
+    {
+      "id": "LM-C4/04",
+      "trace_id": "LM-C4",
+      "position1": 4,
+      "original_edge": "rw.rollback_complete",
+      "unique_pair_id": "rw.rollback_complete",
+      "pre_state_ref": "states/rw.written",
+      "input_ref": "inputs/rw.rollback_complete",
+      "raw_index": 1302,
+      "pre_input_pair_sha256": "d481b84713259b58c30c20ffbd17ee3809712a27b306fde0501fc5d5f10c9c2d"
+    },
+    {
+      "id": "LM-C5-ENTRY/01",
+      "trace_id": "LM-C5-ENTRY",
+      "position1": 1,
+      "original_edge": "sel.prepare",
+      "unique_pair_id": "sel.prepare",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/sel.prepare",
+      "raw_index": 0,
+      "pre_input_pair_sha256": "7ee306dd0362478dd3c998325c365e8b39008dd576ce9899ed8b467cb042ec48"
+    },
+    {
+      "id": "LM-C5-ENTRY/02",
+      "trace_id": "LM-C5-ENTRY",
+      "position1": 2,
+      "original_edge": "sel.execute",
+      "unique_pair_id": "sel.execute",
+      "pre_state_ref": "states/sel.prepared",
+      "input_ref": "inputs/sel.execute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "2e7e2e60d81d3e5ec5feb4d5797dfc7f9b15a09d2f64c606f15d1dfd3257b997"
+    },
+    {
+      "id": "LM-C5-ENTRY/03",
+      "trace_id": "LM-C5-ENTRY",
+      "position1": 3,
+      "original_edge": "sel.entry_cancel",
+      "unique_pair_id": "sel.entry_cancel",
+      "pre_state_ref": "states/sel.open",
+      "input_ref": "inputs/sel.entry_cancel",
+      "raw_index": 755,
+      "pre_input_pair_sha256": "d7fbd4759832d6cc7b854ae0d0a9aa70c3d117ed9b26c60f6260f21745cda5c3"
+    },
+    {
+      "id": "LM-C5-BUFFER/01",
+      "trace_id": "LM-C5-BUFFER",
+      "position1": 1,
+      "original_edge": "sel.prepare",
+      "unique_pair_id": "sel.prepare",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/sel.prepare",
+      "raw_index": 0,
+      "pre_input_pair_sha256": "7ee306dd0362478dd3c998325c365e8b39008dd576ce9899ed8b467cb042ec48"
+    },
+    {
+      "id": "LM-C5-BUFFER/02",
+      "trace_id": "LM-C5-BUFFER",
+      "position1": 2,
+      "original_edge": "sel.execute",
+      "unique_pair_id": "sel.execute",
+      "pre_state_ref": "states/sel.prepared",
+      "input_ref": "inputs/sel.execute",
+      "raw_index": 400,
+      "pre_input_pair_sha256": "2e7e2e60d81d3e5ec5feb4d5797dfc7f9b15a09d2f64c606f15d1dfd3257b997"
+    },
+    {
+      "id": "LM-C5-BUFFER/03",
+      "trace_id": "LM-C5-BUFFER",
+      "position1": 3,
+      "original_edge": "sel.buffer",
+      "unique_pair_id": "sel.buffer",
+      "pre_state_ref": "states/sel.open",
+      "input_ref": "inputs/sel.buffer",
+      "raw_index": 754,
+      "pre_input_pair_sha256": "525c869916aad431fceed83292f33949820293faa8fe87412afef36ef1ff4a2e"
+    }
+  ],
+  "original_vectors": [
+    {
+      "vector_id": "input-select-prepare",
+      "pre_state_ref": "states/initial",
+      "input_ref": "inputs/sel.prepare",
+      "literal_put": {},
+      "raw_index": 0,
+      "reuses_unique_pair": "sel.prepare",
+      "pre_state_logical_sha256": "2fef15428edde50c08e0be38d427b55246acde213d1e877cbae6f38743ddf543",
+      "original_input_logical_sha256": "3061d1d77775bf322270706b9945376de28559a3810b58fb33cc0092c2760d41",
+      "pre_input_pair_sha256": "7ee306dd0362478dd3c998325c365e8b39008dd576ce9899ed8b467cb042ec48",
+      "existing_byte_length": 32,
+      "existing_byte_sha256": "9d7d13caa5599ce94d9bc7159aa73377cbb951ec9f7f418fa3f449335b64c671",
+      "binary_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-select-prepare.bin",
+      "logical_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-select-prepare.logical.json",
+      "byte_expectation_preserved": true
+    },
+    {
+      "vector_id": "input-select-execute",
+      "pre_state_ref": "states/sel.prepared",
+      "input_ref": "inputs/sel.execute",
+      "literal_put": {},
+      "raw_index": 400,
+      "reuses_unique_pair": "sel.execute",
+      "pre_state_logical_sha256": "38b020e5508aaa6c88dc909c29857be8fa8f7efeb77363b170cef281b32fffd2",
+      "original_input_logical_sha256": "107acf8eaf426c3d736ac6ffe56fbd2244d6e075fc221c15ee68e1dac38182ae",
+      "pre_input_pair_sha256": "2e7e2e60d81d3e5ec5feb4d5797dfc7f9b15a09d2f64c606f15d1dfd3257b997",
+      "existing_byte_length": 214,
+      "existing_byte_sha256": "5ac9cec9788f3ad80177e0e184afa3f18edf64fd9a8118ffb32c3e75a287cf69",
+      "binary_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-select-execute.bin",
+      "logical_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-select-execute.logical.json",
+      "byte_expectation_preserved": true
+    },
+    {
+      "vector_id": "input-atomic-terminal-cancel",
+      "pre_state_ref": "states/sel.open",
+      "input_ref": "inputs/sel.terminal_cancel",
+      "literal_put": {},
+      "raw_index": 757,
+      "reuses_unique_pair": "sel.cancel",
+      "pre_state_logical_sha256": "b2749e2d352c655d932937fb4083d91213a8fadf887d155061b4315824cc69af",
+      "original_input_logical_sha256": "8292faccd40d5eaa99b69e9a6632b0addc1499ee5f65981f1824e4d584840212",
+      "pre_input_pair_sha256": "460fed384efc7ddcc64201d64911da5a292712c77476315af4b47335eef9c547",
+      "existing_byte_length": 214,
+      "existing_byte_sha256": "ba45f74dfca6860f4610f67c1f3ebb7b8f7032a33d24eb8988bf6443cbd5c813",
+      "binary_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-atomic-terminal-cancel.bin",
+      "logical_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-atomic-terminal-cancel.logical.json",
+      "byte_expectation_preserved": true
+    },
+    {
+      "vector_id": "input-resume-pending-deadline",
+      "pre_state_ref": "states/sel.signalled",
+      "input_ref": "inputs/sel.resume_timeout",
+      "literal_put": {},
+      "raw_index": 1484,
+      "reuses_unique_pair": "sel.resume",
+      "pre_state_logical_sha256": "c16cf73c94d440a128dd4c010422cd81feed1735ffc0dad4eee0f1b30523eba7",
+      "original_input_logical_sha256": "e11ed835c18e5e726ec99b41d2c62dee6d4724927788cbbf1268fc8bd52d8bc0",
+      "pre_input_pair_sha256": "d9ce544503ee62cc4995ebae028f076c664d000faac74a118f536075a5def522",
+      "existing_byte_length": 198,
+      "existing_byte_sha256": "2fd073c6ef031195007bee13b66fb77660791073a57d430aecbe908bca7e512c",
+      "binary_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-resume-pending-deadline.bin",
+      "logical_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-resume-pending-deadline.logical.json",
+      "byte_expectation_preserved": true
+    },
+    {
+      "vector_id": "input-rollback-incomplete",
+      "pre_state_ref": "states/rw.written",
+      "input_ref": "inputs/rw.rollback_incomplete",
+      "literal_put": {},
+      "raw_index": 1303,
+      "reuses_unique_pair": "rw.rollback_incomplete",
+      "pre_state_logical_sha256": "b4fb710e44fb7710e55aedbc040ddb64e67a80fcdbba54f9902922b9d9430ec5",
+      "original_input_logical_sha256": "5af94198a4ea8212001905eff4697fa65a680e081f057ff35ca2bfcaa22f175b",
+      "pre_input_pair_sha256": "e64927fb98132ab4ca142d753e2afeb749f9b091c651553276485f088aadd53e",
+      "existing_byte_length": 371,
+      "existing_byte_sha256": "7fa9f4973bd7410981493042487f2f338f38eaa3befbd9cf4b606d33a03ea10c",
+      "binary_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-rollback-incomplete.bin",
+      "logical_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-rollback-incomplete.logical.json",
+      "byte_expectation_preserved": true
+    },
+    {
+      "vector_id": "input-stale-result",
+      "pre_state_ref": "states/sel.reexecuted",
+      "input_ref": "inputs/sel.stale_rows",
+      "literal_put": {},
+      "raw_index": 752,
+      "reuses_unique_pair": "sel.stale",
+      "pre_state_logical_sha256": "8538aae9999efc09fa1803462d29e6e477ee7577e95f16b04554c947f5aa1186",
+      "original_input_logical_sha256": "639721cfe42abfdbcb241d3b0a761ae11e4eae936c765a69ea9b8ca8d81b72ab",
+      "pre_input_pair_sha256": "a1ee1df98d785fab16daf919e978cbc932f0b8b5d835dfc401b606897066bbd3",
+      "existing_byte_length": 81,
+      "existing_byte_sha256": "29904dcdc12fcae493bdb2cf2afb633c5dd8d74b2a7341214a3e4bc4af348fda",
+      "binary_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-stale-result.bin",
+      "logical_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-stale-result.logical.json",
+      "byte_expectation_preserved": true
+    },
+    {
+      "vector_id": "input-malformed-child-u9",
+      "pre_state_ref": "states/sel.reexecuted",
+      "input_ref": "inputs/sel.stale_rows",
+      "literal_put": {
+        "/target": [
+          254,
+          0,
+          0,
+          1,
+          1,
+          255,
+          1
+        ]
+      },
+      "raw_index": 902,
+      "reuses_unique_pair": null,
+      "pre_state_logical_sha256": "8538aae9999efc09fa1803462d29e6e477ee7577e95f16b04554c947f5aa1186",
+      "original_input_logical_sha256": "104af3e88581768b26704c7afb81b31291270fc21279fd00651246c1853a1ba5",
+      "pre_input_pair_sha256": "a30b80a9c377f8553e21a402aa7ecd6735d9a3ed698e6e9bdd5fe1e51e6236ec",
+      "existing_byte_length": 81,
+      "existing_byte_sha256": "147f3735f7915f27427ca9da0bbc1293ceba9d2f1871e3389e3f667906a20923",
+      "binary_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-malformed-child-u9.bin",
+      "logical_path": "tests/fixtures/dev4-lifecycle-model/vectors/input-malformed-child-u9.logical.json",
+      "byte_expectation_preserved": true
+    }
+  ]
+}

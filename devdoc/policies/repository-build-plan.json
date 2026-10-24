@@ -5843,5 +5843,27 @@
     ],
     "scope": "Fresh original owner/pool N=0 lifecycle and observational tag3 prefix only; recovered/native/S5 incomplete.",
     "test_scope": "75 source-bound PASS, completed repetitions0, S5additional269 NOT_RUN."
+  },
+  "dev4_lifecycle_assembly_inputs": {
+    "status": "STATIC_INPUTS_REVIEWED_FULL_D2_PENDING",
+    "evidence_ref": "dev4-lifecycle-assembly-inputs-20261025.md",
+    "scope": "Reviewed candidate input preparation only; no assembler, test harness or runtime execution. Unreviewed rich304 remain outside tracked subset.",
+    "implemented_paths": [
+      "tests/fixtures/dev4-lifecycle-assembly/boundaries/cases.json",
+      "tests/fixtures/dev4-lifecycle-assembly/manifest.json",
+      "tests/fixtures/dev4-lifecycle-assembly/normal/initial.json",
+      "tests/fixtures/dev4-lifecycle-assembly/normal/original-links.json",
+      "tests/fixtures/dev4-lifecycle-assembly/normal/rich-bind.json",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/author-errors.py",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/author-normal.py",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/boundary-source-manifest.json",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/normal-source-manifest.json",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/review-boundaries.json",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/review-design.json",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/review-normal.json",
+      "tests/fixtures/dev4-lifecycle-assembly/README.md"
+    ],
+    "reviewed_call_candidates": 1658,
+    "runtime_tests": 0
   }
 }

@@ -268,3 +268,11 @@ reader29상태, state4의 원 prefix/후속3 분리와 input7 양방향, codec10
 selector를 별도 작은 단위로 구현했다. 순수 세 API만 대상으로 하며 full input/Env1 조립이나
 handle 인증·모델 전이는 포함하지 않는다. [선택 기록](../evidence/dev4-lifecycle-raw-selection-20261025.md)에
 독립1951입력·실제3484호출과 compile/Clippy/fmt PASS, 원 후보·정적 집계 실패 보존을 남겼다. 최종 독립 D1을 세 API 범위로 제한 수용했다.
+
+<a id="lifecycle-assembly-inputs"></a>
+## P5 전체 입력 조립의 준비
+
+[설계·독립 입력 준비](../evidence/dev4-lifecycle-assembly-inputs-20261025.md)에서 정상1582와
+오류·상한76을 정적 한정 검토하고 원 source/hash를 보존했다. 추가 rich304개는 미검토로 남긴다.
+사용자의 정리·commit 요청에 따라 준비 단위를 보존하며 전체 D2·`assemble_input`·시험 harness는
+미완료다. 이 단위의 제품 변경·compile/runtime/test는0이며 이전 완료 시험을 반복하지 않았다.

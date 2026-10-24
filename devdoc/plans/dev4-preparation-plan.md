@@ -92,6 +92,11 @@ DEV3의 `crates/engine`과 저장 계약은 이번 독립 구현의 수정 범�
 <a id="acceptance"></a>
 ## 6. 종료와 다음 연결
 
+2026-10-25 [전체 수명 입력 준비](../evidence/dev4-lifecycle-assembly-inputs-20261025.md)는
+사용자의 정리·commit 요청에 따라 설계와 독립 후보1658개의 정적 검토 범위에서 묶는다.
+미검토 rich304·추가 경계·known-bad·최종 D2와 조립기 구현은 다음 단위다. 제품·시험 실행 없이
+준비 자료를 보존하며 P5 완료나 구현 GO로 승격하지 않는다.
+
 독립 leaf 종료에는 코드·필수 선택 시험·부정 판정·자원/오류 증거와 별도 D1 검토가 필요하다. 원 source/범위를 보존하고 부모 분류의 미구현·미실행 부분을 남긴다. 본 계획 채택만으로 어떤 leaf도 완료하지 않는다.
 
 DEV3 수신 후 4.01.1이 실제 catalog/DDL·row/index·token/undo·commit/recovery·temp 공급을 대조한다. 기존 DEV4 최소 선행을 충족한 뒤 binding → 첫 INSERT statement → commit/reopen → 작은 SELECT/fetch → 실패/rollback 순으로 연결하며 [기존 공급 순서](dev4-work-breakdown.md#sequence)를 따른다. 실제 adapter의 phase·cleanup·outcome 책임과 [진단 인계 사례](#diagnostic-handoff-tests)를 해당 owner에 연결한다. 이때 변경된 연결 경로의 시험을 수행하고 앞단 기존 PASS를 새 실행으로 재계산하지 않는다.

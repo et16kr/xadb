@@ -1,0 +1,106 @@
+{
+  "id": "D4-LM-ASSEMBLY-INPUT-PREPARATION-001",
+  "status": "STATIC_REVIEWED_SUBSET_FULL_D2_NOT_RUN",
+  "baseline_revision": "1dd7bed1fc03bead2158fba439a06673dff29158",
+  "counts": {
+    "initial": 1533,
+    "original_nonoverlap": 27,
+    "original_overlap_links_no_calls": 3,
+    "bind": 22,
+    "boundary_success": 34,
+    "boundary_errors": 42,
+    "reviewed_unique_call_candidates": 1658,
+    "unreviewed_rich_candidates_not_in_this_directory": 304,
+    "product_calls": 0,
+    "runtime_tests": 0
+  },
+  "files": [
+    {
+      "path": "normal/initial.json",
+      "source": "artifacts/dev4-lifecycle-model-20261024/assembler-independent-inputs-v1/initial.json",
+      "sha256": "19e598b6f05580e043ae45fa75abfb66ed177674fade8ca04fdc61f7988dd126",
+      "bytes": 1955914,
+      "copy": "BYTE_IDENTICAL"
+    },
+    {
+      "path": "normal/original-links.json",
+      "source": "artifacts/dev4-lifecycle-model-20261024/assembler-independent-inputs-v1/original-links.json",
+      "sha256": "0fb2dabb3789eaf2554bf6c0e95a29f5bb69b8357a0d7255742c57fc468d38ea",
+      "bytes": 91972,
+      "copy": "BYTE_IDENTICAL"
+    },
+    {
+      "path": "normal/rich-bind.json",
+      "source": "artifacts/dev4-lifecycle-model-20261024/assembler-independent-inputs-v1/rich.json",
+      "sha256": "ac3d034baa50cea0d77883cd8a550e8bbc15018d3b30936bd8390ef9d34555da",
+      "bytes": 26077,
+      "copy": "BYTE_IDENTICAL"
+    },
+    {
+      "path": "boundaries/cases.json",
+      "source": "artifacts/dev4-lifecycle-model-20261024/assembler-error-inputs-v1/cases.json",
+      "sha256": "b3e17c5957ee204cef8f986d810d9141f37a3d4220a04c30268af283a49782b5",
+      "bytes": 154929,
+      "copy": "BYTE_IDENTICAL"
+    },
+    {
+      "path": "provenance/normal-source-manifest.json",
+      "source": "artifacts/dev4-lifecycle-model-20261024/assembler-independent-inputs-v1/manifest.json",
+      "sha256": "e7182959be28454e1b1921323b1bcbfb375dff5d8f2f2549c74c90bfab73e5c2",
+      "bytes": 2949,
+      "copy": "BYTE_IDENTICAL"
+    },
+    {
+      "path": "provenance/boundary-source-manifest.json",
+      "source": "artifacts/dev4-lifecycle-model-20261024/assembler-error-inputs-v1/manifest.json",
+      "sha256": "4aae406a746f9cbf87c4aea5e4f1d78bb42accf2f354a4b840a0b1910fbfd578",
+      "bytes": 2202,
+      "copy": "BYTE_IDENTICAL"
+    },
+    {
+      "path": "provenance/author-normal.py",
+      "source": "artifacts/dev4-lifecycle-model-20261024/assembler-independent-inputs-v1/author-normal.py",
+      "sha256": "465bf57ea675584f15c325290f5f1ce747ca4042261ebde3a9fae82110b66943",
+      "bytes": 14186,
+      "copy": "BYTE_IDENTICAL"
+    },
+    {
+      "path": "provenance/author-errors.py",
+      "source": "artifacts/dev4-lifecycle-model-20261024/assembler-error-inputs-v1/author-errors.py",
+      "sha256": "1925b7e75b61baafe1f4ad18d3a5bc90fe868789338df3f73127fa3add28036f",
+      "bytes": 20251,
+      "copy": "BYTE_IDENTICAL"
+    },
+    {
+      "path": "provenance/review-normal.json",
+      "source": "artifacts/dev4-lifecycle-model-20261024/review-assembler-normal-inputs-v1.json",
+      "sha256": "f31294500a9cfa8914b3e53e42ca9f302e91eb7d7247573f2d52447833605e3f",
+      "bytes": 4668,
+      "copy": "BYTE_IDENTICAL"
+    },
+    {
+      "path": "provenance/review-boundaries.json",
+      "source": "artifacts/dev4-lifecycle-model-20261024/review-assembler-boundaries-v1.json",
+      "sha256": "7e8a9c91ca3a5ad275d10821111786302dbedee25983c36a8c749f55155521aa",
+      "bytes": 4467,
+      "copy": "BYTE_IDENTICAL"
+    },
+    {
+      "path": "provenance/review-design.json",
+      "source": "artifacts/dev4-lifecycle-model-20261024/review-assembler-design-v2.json",
+      "sha256": "bfe819dfad825a4cd62693dd134b568564c2b8a652679d16e73b451ea7e29b9c",
+      "bytes": 5855,
+      "copy": "BYTE_IDENTICAL"
+    }
+  ],
+  "provenance": "Authoring Python sources are immutable receipts of original artifact-directory preparation. They retain original layout assumptions, are not standalone entrypoints here, and must not be replayed as product tests.",
+  "remaining": [
+    "full rich input static review",
+    "receipt and additional local/namespace boundary coverage",
+    "known-bad observation inventory and test harness",
+    "final assembled inventory/hash and independent D2",
+    "assemble_input implementation and selected validation",
+    "model/checker/51-action replay/alias/BFS/checkpoint/FE14"
+  ],
+  "no_adoption": "This preserves statically reviewed candidate values only. It does not authorize product implementation or claim test PASS."
+}

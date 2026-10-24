@@ -2137,6 +2137,11 @@
       "path": "evidence/dev3-retention-live-20261025.json",
       "role": "evidence",
       "title": "DEV3 plan4 live·prefix source별 실행 색인"
+    },
+    "dev4-lifecycle-assembly-inputs-20261025.md": {
+      "path": "evidence/dev4-lifecycle-assembly-inputs-20261025.md",
+      "role": "evidence",
+      "title": "DEV4 P5 전체 입력 조립의 설계·독립 입력 준비"
     }
   }
 }

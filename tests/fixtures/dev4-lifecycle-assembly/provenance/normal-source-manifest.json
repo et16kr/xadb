@@ -1,0 +1,71 @@
+{
+  "status": "INDEPENDENT_LITERAL_CANDIDATE_NOT_D2_FROZEN_NOT_RUN",
+  "authorship": "hand-authored fixed-initial tables and copied original logical literals; no product/model/codec output",
+  "logical_input_schema": "same input logical fields as original vectors; nonempty bind value {tag:u8,byte_length:u16,bytes:[u8]} with exact payload length",
+  "id": "D4-LM-ASSEMBLER-NORMAL-CANDIDATE-001",
+  "baseline_revision": "1dd7bed1fc03bead2158fba439a06673dff29158",
+  "counts": {
+    "initial": 1533,
+    "original_nonoverlap": 27,
+    "original_overlap_links": 3,
+    "rich_bind": 22,
+    "unique_proposed_calls_materialized": 1582,
+    "product_calls": 0,
+    "new_error_literals": 0
+  },
+  "files": [
+    {
+      "path": "initial.json",
+      "sha256": "19e598b6f05580e043ae45fa75abfb66ed177674fade8ca04fdc61f7988dd126",
+      "bytes": 1955914
+    },
+    {
+      "path": "original-links.json",
+      "sha256": "0fb2dabb3789eaf2554bf6c0e95a29f5bb69b8357a0d7255742c57fc468d38ea",
+      "bytes": 91972
+    },
+    {
+      "path": "rich.json",
+      "sha256": "ac3d034baa50cea0d77883cd8a550e8bbc15018d3b30936bd8390ef9d34555da",
+      "bytes": 26077
+    },
+    {
+      "path": "author-normal.py",
+      "sha256": "465bf57ea675584f15c325290f5f1ce747ca4042261ebde3a9fae82110b66943",
+      "bytes": 14186
+    }
+  ],
+  "source_pins": [
+    {
+      "path": "tests/fixtures/dev4-lifecycle-raw-selection/raw-descriptors.json",
+      "sha256": "001f1b66bd43b86fae4188c2c0e2b6ec6c360c43fe5e619f27a7b976bc60bedf"
+    },
+    {
+      "path": "tests/fixtures/dev4-lifecycle-raw-selection/selectors.json",
+      "sha256": "89a4daaa657489c9706906a0cfde3aa2e0d046f3c5d3852060baefcf0f897da0"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-oracle-proposal-v1.json",
+      "sha256": "7daf017e5e802799aa8ff64f023b9d971c78256d0b500c85f2be5b83a083674d"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-owner-scope-v2.md",
+      "sha256": "f7a1dfcfc7bf2f1711c2f31c4dbd8472f5b800f1d89b8de9d0d4458094f91b38"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/review-assembler-design-v1.md",
+      "sha256": "8796c9416e1dd089215cbebf59424770319577f72c4e55c09253aefd7b7abc12"
+    },
+    {
+      "path": "tests/fixtures/dev4-lifecycle-model/literals.json",
+      "sha256": "ec4a7940a457882c155eb84e2d9e5602eaf880563bab4f6f04d0b643bcec42d2"
+    }
+  ],
+  "pending": [
+    "Further rich-state A2-A5 normal inputs from inventory; use a new version/append-only file with correction history.",
+    "Conditional read-set and compound-error table; error/cap/poison literals remain unwritten.",
+    "Independent review of all new literal tables and actual input schema before final D2.",
+    "Future observation mutation inventory and exact field-comparison harness; no automatic product mutant loop."
+  ],
+  "execution": "Static authoring only; no product or old test calls; no full model replay or BFS claim."
+}

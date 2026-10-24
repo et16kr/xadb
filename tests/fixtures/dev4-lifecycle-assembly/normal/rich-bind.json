@@ -1,0 +1,1273 @@
+{
+  "status": "INDEPENDENT_LITERAL_CANDIDATE_NOT_D2_FROZEN_NOT_RUN",
+  "authorship": "hand-authored fixed-initial tables and copied original logical literals; no product/model/codec output",
+  "logical_input_schema": "same input logical fields as original vectors; nonempty bind value {tag:u8,byte_length:u16,bytes:[u8]} with exact payload length",
+  "prestates": [
+    {
+      "id": "rich:n1-bound",
+      "base": "original:sel.prepared",
+      "put": {
+        "/issued_statements/1/parameter_count": 1,
+        "/issued_statements/1/metadata": "SelectN1Utf8NotNullMax1",
+        "/bindings/1/value": "A61"
+      },
+      "classification": "exact assembler read-set variation; not a full model reachability claim"
+    }
+  ],
+  "cases": [
+    {
+      "id": "asm/bind-n0/0048",
+      "pre_state": "original:sel.prepared",
+      "raw_index": 48,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n0/0049",
+      "pre_state": "original:sel.prepared",
+      "raw_index": 49,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 1,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n0/0050",
+      "pre_state": "original:sel.prepared",
+      "raw_index": 50,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 2
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 2,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n0/0051",
+      "pre_state": "original:sel.prepared",
+      "raw_index": 51,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 3
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 3,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 1,
+            "byte_length": 8,
+            "bytes": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n0/0052",
+      "pre_state": "original:sel.prepared",
+      "raw_index": 52,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 4
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 4,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 2,
+            "byte_length": 0,
+            "bytes": []
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n0/0053",
+      "pre_state": "original:sel.prepared",
+      "raw_index": 53,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 5
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 5,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 0,
+            "byte_length": 2,
+            "bytes": [
+              97,
+              97
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n0/0054",
+      "pre_state": "original:sel.prepared",
+      "raw_index": 54,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 6
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 6,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 0,
+            "byte_length": 1,
+            "bytes": [
+              255
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n0/0055",
+      "pre_state": "original:sel.prepared",
+      "raw_index": 55,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 7
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 7,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 0,
+            "byte_length": 1,
+            "bytes": [
+              97
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n0/0056",
+      "pre_state": "original:sel.prepared",
+      "raw_index": 56,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 8
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 8,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": true,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n0/0057",
+      "pre_state": "original:sel.prepared",
+      "raw_index": 57,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 9
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 9,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "ReachedAtEntry",
+        "supplied_cancel": false,
+        "deadline_reached": true,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n0/0058",
+      "pre_state": "original:sel.prepared",
+      "raw_index": 58,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 10
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 10,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 0,
+            "byte_length": 1,
+            "bytes": [
+              97
+            ]
+          },
+          {
+            "tag": 0,
+            "byte_length": 1,
+            "bytes": [
+              98
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n1/0048",
+      "pre_state": "rich:n1-bound",
+      "raw_index": 48,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 0,
+            "byte_length": 1,
+            "bytes": [
+              97
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n1/0049",
+      "pre_state": "rich:n1-bound",
+      "raw_index": 49,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 1,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 0,
+            "byte_length": 1,
+            "bytes": [
+              98
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n1/0050",
+      "pre_state": "rich:n1-bound",
+      "raw_index": 50,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 2
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 2,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n1/0051",
+      "pre_state": "rich:n1-bound",
+      "raw_index": 51,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 3
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 3,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 1,
+            "byte_length": 8,
+            "bytes": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n1/0052",
+      "pre_state": "rich:n1-bound",
+      "raw_index": 52,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 4
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 4,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 2,
+            "byte_length": 0,
+            "bytes": []
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n1/0053",
+      "pre_state": "rich:n1-bound",
+      "raw_index": 53,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 5
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 5,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 0,
+            "byte_length": 2,
+            "bytes": [
+              97,
+              97
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n1/0054",
+      "pre_state": "rich:n1-bound",
+      "raw_index": 54,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 6
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 6,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 0,
+            "byte_length": 1,
+            "bytes": [
+              255
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n1/0055",
+      "pre_state": "rich:n1-bound",
+      "raw_index": 55,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 7
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 7,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 0,
+            "byte_length": 1,
+            "bytes": [
+              97
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n1/0056",
+      "pre_state": "rich:n1-bound",
+      "raw_index": 56,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 8
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 8,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": true,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 0,
+            "byte_length": 1,
+            "bytes": [
+              97
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n1/0057",
+      "pre_state": "rich:n1-bound",
+      "raw_index": 57,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 9
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 9,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "ReachedAtEntry",
+        "supplied_cancel": false,
+        "deadline_reached": true,
+        "bind_values": [
+          {
+            "tag": 0,
+            "byte_length": 1,
+            "bytes": [
+              97
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/bind-n1/0058",
+      "pre_state": "rich:n1-bound",
+      "raw_index": 58,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 10
+      },
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 10,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 0,
+            "byte_length": 1,
+            "bytes": [
+              97
+            ]
+          },
+          {
+            "tag": 0,
+            "byte_length": 1,
+            "bytes": [
+              98
+            ]
+          }
+        ],
+        "environment": null
+      }
+    }
+  ]
+}

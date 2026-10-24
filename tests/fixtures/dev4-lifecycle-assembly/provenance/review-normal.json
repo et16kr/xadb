@@ -1,0 +1,126 @@
+{
+  "id": "D4-LM-ASSEMBLER-NORMAL-REVIEW-001",
+  "reviewer": "/root/frontend_review",
+  "reviewed_at_kst": "2026-10-25T00:57:05.602611+09:00",
+  "status": "NORMAL_CANDIDATE_STATIC_MATCH_NOT_FINAL_D2",
+  "baseline": "1dd7bed1fc03bead2158fba439a06673dff29158",
+  "blocking_findings": [],
+  "counts": {
+    "initial": 1533,
+    "initial_env_some": 677,
+    "initial_env_none": 856,
+    "original_pairs_reexpanded": 29,
+    "initial_original_overlap_links": 3,
+    "original_nonoverlap": 26,
+    "additional_u9": 1,
+    "rich_bind": 22,
+    "materialized_proposed_calls": 1582,
+    "bind_values_compared": 374,
+    "trace_occurrence_links": 51,
+    "saved_input_vectors": 7
+  },
+  "inputs": [
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-independent-inputs-v1/manifest.json",
+      "sha256": "e7182959be28454e1b1921323b1bcbfb375dff5d8f2f2549c74c90bfab73e5c2",
+      "bytes": 2949
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-independent-inputs-v1/initial.json",
+      "sha256": "19e598b6f05580e043ae45fa75abfb66ed177674fade8ca04fdc61f7988dd126",
+      "bytes": 1955914
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-independent-inputs-v1/original-links.json",
+      "sha256": "0fb2dabb3789eaf2554bf6c0e95a29f5bb69b8357a0d7255742c57fc468d38ea",
+      "bytes": 91972
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-independent-inputs-v1/rich.json",
+      "sha256": "ac3d034baa50cea0d77883cd8a550e8bbc15018d3b30936bd8390ef9d34555da",
+      "bytes": 26077
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-independent-inputs-v1/author-normal.py",
+      "sha256": "465bf57ea675584f15c325290f5f1ce747ca4042261ebde3a9fae82110b66943",
+      "bytes": 14186
+    },
+    {
+      "path": "tests/fixtures/dev4-lifecycle-raw-selection/raw-descriptors.json",
+      "sha256": "001f1b66bd43b86fae4188c2c0e2b6ec6c360c43fe5e619f27a7b976bc60bedf",
+      "bytes": 543067
+    },
+    {
+      "path": "tests/fixtures/dev4-lifecycle-raw-selection/selectors.json",
+      "sha256": "89a4daaa657489c9706906a0cfde3aa2e0d046f3c5d3852060baefcf0f897da0",
+      "bytes": 316307
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-oracle-proposal-v1.json",
+      "sha256": "7daf017e5e802799aa8ff64f023b9d971c78256d0b500c85f2be5b83a083674d",
+      "bytes": 142160
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-owner-scope-v2.md",
+      "sha256": "f7a1dfcfc7bf2f1711c2f31c4dbd8472f5b800f1d89b8de9d0d4458094f91b38",
+      "bytes": 10996
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/review-assembler-design-v1.md",
+      "sha256": "8796c9416e1dd089215cbebf59424770319577f72c4e55c09253aefd7b7abc12",
+      "bytes": 6959
+    },
+    {
+      "path": "tests/fixtures/dev4-lifecycle-model/literals.json",
+      "sha256": "ec4a7940a457882c155eb84e2d9e5602eaf880563bab4f6f04d0b643bcec42d2",
+      "bytes": 72625
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-proposal-v1.md",
+      "sha256": "9b3c63e1546be3c0a49bdc6f09eeb0fc333a933b7ff1f16588504529509f359d",
+      "bytes": 37741
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/input-layout-v1.md",
+      "sha256": "314cd3725dc1d2e18027e80163238e4872d2ac7ce638a6371b983b6d46eb945c",
+      "bytes": 8564
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/wire-proposal-v2.md",
+      "sha256": "2adfb63a2c006c91003e5613962226ffdf7a6c9311578eb044fe77cdbf770937",
+      "bytes": 31606
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/identity-transition-v1.md",
+      "sha256": "1ed868b456e158687fc20e14554e8a59581175aa7e9f58f53760bbba1f1373bb",
+      "bytes": 8918
+    }
+  ],
+  "not_reviewed": [
+    "rich-normal-2 and later rich/error/cap literals",
+    "final inventory/harness/product"
+  ],
+  "execution": {
+    "product_calls": 0,
+    "tests": 0,
+    "compile": 0,
+    "codec": 0,
+    "model": 0,
+    "authoring_script_calls": 0,
+    "doc_verifier": 0
+  },
+  "static_audit_incidents": [
+    "Inline audit authoring SyntaxError before execution; corrected without product calls",
+    "Inline audit used raw_index instead of fixture index and stopped; corrected static audit completed"
+  ],
+  "limits": [
+    "No full D2/product GO",
+    "No model trace replay or reachability proof",
+    "No completion of FE14/BFS/engine/Q1"
+  ],
+  "review_markdown": {
+    "path": "artifacts/dev4-lifecycle-model-20261024/review-assembler-normal-inputs-v1.md",
+    "sha256": "5257eefd5ea436fa0d884644a07ee0ce0258010328c80f6337b73d7acf32ccc3",
+    "bytes": 3605
+  }
+}

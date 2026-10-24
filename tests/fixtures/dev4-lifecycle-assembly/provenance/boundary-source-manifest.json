@@ -1,0 +1,58 @@
+{
+  "status": "INDEPENDENT_READSET_LITERAL_CANDIDATE_NOT_D2_FROZEN_NOT_RUN",
+  "baseline_revision": "1dd7bed1fc03bead2158fba439a06673dff29158",
+  "counts": {
+    "cases": 76,
+    "prestates": 71,
+    "success_expected": 34,
+    "error_expected": 42,
+    "product_calls": 0
+  },
+  "files": [
+    {
+      "path": "cases.json",
+      "sha256": "b3e17c5957ee204cef8f986d810d9141f37a3d4220a04c30268af283a49782b5",
+      "bytes": 154929
+    },
+    {
+      "path": "author-errors.py",
+      "sha256": "1925b7e75b61baafe1f4ad18d3a5bc90fe868789338df3f73127fa3add28036f",
+      "bytes": 20251
+    }
+  ],
+  "source_pins": [
+    {
+      "path": "tests/fixtures/dev4-lifecycle-model/literals.json",
+      "sha256": "ec4a7940a457882c155eb84e2d9e5602eaf880563bab4f6f04d0b643bcec42d2"
+    },
+    {
+      "path": "tests/fixtures/dev4-lifecycle-raw-selection/raw-descriptors.json",
+      "sha256": "001f1b66bd43b86fae4188c2c0e2b6ec6c360c43fe5e619f27a7b976bc60bedf"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-independent-inputs-v1/initial.json",
+      "sha256": "19e598b6f05580e043ae45fa75abfb66ed177674fade8ca04fdc61f7988dd126"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-independent-inputs-v1/original-links.json",
+      "sha256": "0fb2dabb3789eaf2554bf6c0e95a29f5bb69b8357a0d7255742c57fc468d38ea"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-owner-scope-v2.md",
+      "sha256": "f7a1dfcfc7bf2f1711c2f31c4dbd8472f5b800f1d89b8de9d0d4458094f91b38"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-readset-v2.md",
+      "sha256": "c4de0d2ed8fbdb821a7c5074e30bed991c39c2d0fd05b879b359c69978de561f"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-readset-v3.md",
+      "sha256": "ec0e289941ad1cc9faed333fe9bfe7df246e886e0aa2034c35e1d7db71aed8a4"
+    }
+  ],
+  "pending": [
+    "independent full static review and final D2",
+    "additional required relation/receipt/namespace witnesses after coverage review"
+  ],
+  "excluded_old_proposals": "123 old invalid-action/helper cases and12 mere selector wrappers remain NOT_RUN; only new crossing witnesses retained"
+}

@@ -1,0 +1,6530 @@
+{
+  "status": "INDEPENDENT_READSET_LITERAL_CANDIDATE_NOT_D2_FROZEN_NOT_RUN",
+  "authorship": "root explicit read-set deltas and literal expected fields, no product/model/codec output",
+  "prestates": [
+    {
+      "id": "boundary:missing-all-callers",
+      "base": "original:initial",
+      "put": {
+        "/actors": {}
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:context-poison",
+      "base": "original:initial",
+      "put": {
+        "/next_nonce/Context": 0
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:selector-before-context-cap",
+      "base": "original:sel.prepared",
+      "put": {
+        "/issued_statements/1/issue_ordinal": 0,
+        "/contexts/6": {
+          "id": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            6,
+            0
+          ],
+          "issue_ordinal": 6,
+          "status": "Completed"
+        },
+        "/next_nonce/Context": 7,
+        "/prepared_slots/0:0/statement": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          6,
+          1
+        ]
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:result-selector-before-context-cap",
+      "base": "original:initial",
+      "put": {
+        "/prepared_slots": {},
+        "/contexts/6": {
+          "id": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            6,
+            0
+          ],
+          "issue_ordinal": 6,
+          "status": "Completed"
+        },
+        "/next_nonce/Context": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:missing-a0",
+      "base": "original:initial",
+      "put": {
+        "/actors": {
+          "1": {
+            "actor": 1,
+            "shell": "Open",
+            "autocommit": "On",
+            "session": [
+              2,
+              1,
+              255,
+              1,
+              2,
+              2,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "transaction": null,
+            "parked_context": null,
+            "active_public_result": null
+          }
+        }
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:duplicate-a0",
+      "base": "original:initial",
+      "put": {
+        "/actors": {
+          "0": {
+            "actor": 0,
+            "shell": "Open",
+            "autocommit": "On",
+            "session": [
+              2,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "transaction": null,
+            "parked_context": null,
+            "active_public_result": null
+          },
+          "1": {
+            "actor": 0,
+            "shell": "Open",
+            "autocommit": "On",
+            "session": [
+              2,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "transaction": null,
+            "parked_context": null,
+            "active_public_result": null
+          }
+        }
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:invalid-attached-engine",
+      "base": "original:initial",
+      "put": {
+        "/actors/0/engine": [
+          1,
+          255,
+          255,
+          8,
+          0,
+          8,
+          0
+        ]
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:p-backlink-and-context-cap",
+      "base": "original:sel.prepared",
+      "put": {
+        "/prepared_slots/0:0/statement": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          6,
+          1
+        ],
+        "/contexts/6": {
+          "id": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            6,
+            0
+          ],
+          "issue_ordinal": 6,
+          "status": "Completed"
+        },
+        "/next_nonce/Context": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:descriptor-missing-and-context-cap",
+      "base": "original:sel.open",
+      "put": {
+        "/private_descriptors": {},
+        "/contexts/6": {
+          "id": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            6,
+            0
+          ],
+          "issue_ordinal": 6,
+          "status": "Completed"
+        },
+        "/next_nonce/Context": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:owner-holder-missing-and-context-cap",
+      "base": "original:sel.open",
+      "put": {
+        "/owners/3/current_holder": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          6,
+          1
+        ],
+        "/contexts/6": {
+          "id": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            6,
+            0
+          ],
+          "issue_ordinal": 6,
+          "status": "Completed"
+        },
+        "/next_nonce/Context": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:o-backlink-and-context-cap",
+      "base": "original:rw.recovery_pending",
+      "put": {
+        "/transactions/1/obligation": [
+          10,
+          0,
+          255,
+          1,
+          1,
+          6,
+          0
+        ],
+        "/contexts/6": {
+          "id": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            6,
+            0
+          ],
+          "issue_ordinal": 6,
+          "status": "Completed"
+        },
+        "/next_nonce/Context": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:context-cap-and-bad-fact-counter",
+      "base": "original:initial",
+      "put": {
+        "/contexts/6": {
+          "id": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            6,
+            0
+          ],
+          "issue_ordinal": 6,
+          "status": "Completed"
+        },
+        "/next_nonce/Context": 7,
+        "/next_nonce/Fact": 2
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:bad-p-link-unused-by-entry-fixed-bind",
+      "base": "original:sel.prepared",
+      "put": {
+        "/prepared_slots/0:0/statement": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          6,
+          1
+        ],
+        "/actors/0/transaction": [
+          6,
+          0,
+          255,
+          1,
+          1,
+          6,
+          0
+        ]
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:fresh-ignores-parked-payload",
+      "base": "original:sel.parked",
+      "put": {
+        "/contexts/3": {
+          "id": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            3,
+            0
+          ],
+          "issue_ordinal": 3,
+          "api": "ParkFetch",
+          "status": "ParkedFetch",
+          "original_deadline": "FutureAtEntry",
+          "cancel_supplied_or_signalled": false,
+          "deadline_reached": false,
+          "cancel_observed_at_completion": false,
+          "deadline_observed_at_completion": false,
+          "completion_phase": "NotCompleted",
+          "statement": [
+            3,
+            0,
+            0,
+            1,
+            1,
+            6,
+            1
+          ],
+          "result": [
+            4,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            6,
+            0
+          ]
+        }
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:rows-ignore-owner-payload",
+      "base": "original:sel.open",
+      "put": {
+        "/owners/3/current_holder": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          6,
+          1
+        ]
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:pending-dangling",
+      "base": "original:sel.parked",
+      "put": {
+        "/actors/0/parked_context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          6,
+          0
+        ]
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:pending-duplicate",
+      "base": "original:sel.parked",
+      "put": {
+        "/contexts/4": {
+          "id": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            3,
+            0
+          ],
+          "issue_ordinal": 3,
+          "api": "ParkFetch",
+          "status": "ParkedFetch",
+          "original_deadline": "FutureAtEntry",
+          "cancel_supplied_or_signalled": false,
+          "deadline_reached": false,
+          "cancel_observed_at_completion": false,
+          "deadline_observed_at_completion": false,
+          "completion_phase": "NotCompleted",
+          "statement": [
+            3,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          "result": [
+            4,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ]
+        }
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:pending-foreign-scope",
+      "base": "original:sel.parked",
+      "put": {
+        "/contexts/3/id": [
+          5,
+          1,
+          255,
+          1,
+          2,
+          3,
+          0
+        ]
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:pending-completed",
+      "base": "original:sel.parked",
+      "put": {
+        "/contexts/3": {
+          "id": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            3,
+            0
+          ],
+          "issue_ordinal": 3,
+          "status": "Completed"
+        }
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:pending-t-backlink",
+      "base": "original:sel.parked",
+      "put": {
+        "/transactions/1/parked_context": null
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:pending-private-descriptor",
+      "base": "original:sel.parked",
+      "put": {
+        "/private_descriptors": {}
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:wrong-kind-opaque-payload",
+      "base": "original:sel.parked",
+      "put": {
+        "/contexts/3": {
+          "id": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            3,
+            0
+          ],
+          "issue_ordinal": 3,
+          "api": "BeginCommit",
+          "status": "ParkedCommit",
+          "original_deadline": "FutureAtEntry",
+          "cancel_supplied_or_signalled": false,
+          "deadline_reached": false,
+          "cancel_observed_at_completion": false,
+          "deadline_observed_at_completion": false,
+          "completion_phase": "NotCompleted",
+          "statement": [
+            3,
+            0,
+            0,
+            1,
+            1,
+            6,
+            1
+          ],
+          "result": [
+            4,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            6,
+            0
+          ]
+        }
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:engine-below-cap",
+      "base": "original:initial",
+      "put": {
+        "/engines/5": {
+          "id": [
+            1,
+            255,
+            255,
+            5,
+            0,
+            5,
+            0
+          ],
+          "admission": "Admitting",
+          "first_cause": "None",
+          "known_decision": "NotApplicable",
+          "cause_transaction": null,
+          "first_fence_context": null,
+          "successor_engine": null,
+          "recovery_fact": null
+        },
+        "/next_nonce/Engine": 6
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:engine-at-cap",
+      "base": "original:initial",
+      "put": {
+        "/engines/6": {
+          "id": [
+            1,
+            255,
+            255,
+            6,
+            0,
+            6,
+            0
+          ],
+          "admission": "Admitting",
+          "first_cause": "None",
+          "known_decision": "NotApplicable",
+          "cause_transaction": null,
+          "first_fence_context": null,
+          "successor_engine": null,
+          "recovery_fact": null
+        },
+        "/next_nonce/Engine": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:engine-bad-next",
+      "base": "original:initial",
+      "put": {
+        "/engines/6": {
+          "id": [
+            1,
+            255,
+            255,
+            6,
+            0,
+            6,
+            0
+          ],
+          "admission": "Admitting",
+          "first_cause": "None",
+          "known_decision": "NotApplicable",
+          "cause_transaction": null,
+          "first_fence_context": null,
+          "successor_engine": null,
+          "recovery_fact": null
+        },
+        "/next_nonce/Engine": 6
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:engine-above-cap",
+      "base": "original:initial",
+      "put": {
+        "/engines/7": {
+          "id": [
+            1,
+            255,
+            255,
+            7,
+            0,
+            7,
+            0
+          ],
+          "admission": "Admitting",
+          "first_cause": "None",
+          "known_decision": "NotApplicable",
+          "cause_transaction": null,
+          "first_fence_context": null,
+          "successor_engine": null,
+          "recovery_fact": null
+        },
+        "/next_nonce/Engine": 8
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:engine-unused-exhausted",
+      "base": "original:initial",
+      "put": {
+        "/engines/7": {
+          "id": [
+            1,
+            255,
+            255,
+            7,
+            0,
+            7,
+            0
+          ],
+          "admission": "Admitting",
+          "first_cause": "None",
+          "known_decision": "NotApplicable",
+          "cause_transaction": null,
+          "first_fence_context": null,
+          "successor_engine": null,
+          "recovery_fact": null
+        },
+        "/next_nonce/Engine": 8
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:result-below-cap",
+      "base": "original:sel.prepared",
+      "put": {
+        "/issued_results": {
+          "4": {
+            "id": [
+              4,
+              0,
+              1,
+              1,
+              1,
+              4,
+              1
+            ],
+            "issue_ordinal": 4,
+            "statement": [
+              3,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "retirement": "None",
+            "public_generation_live": false,
+            "creation_context": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              2,
+              0
+            ],
+            "retirement_context": null
+          }
+        },
+        "/next_nonce/Result": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:result-at-cap",
+      "base": "original:sel.prepared",
+      "put": {
+        "/issued_results": {
+          "5": {
+            "id": [
+              4,
+              0,
+              1,
+              1,
+              1,
+              5,
+              1
+            ],
+            "issue_ordinal": 5,
+            "statement": [
+              3,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "retirement": "None",
+            "public_generation_live": false,
+            "creation_context": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              2,
+              0
+            ],
+            "retirement_context": null
+          }
+        },
+        "/next_nonce/Result": 6
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:result-bad-next",
+      "base": "original:sel.prepared",
+      "put": {
+        "/issued_results": {
+          "5": {
+            "id": [
+              4,
+              0,
+              1,
+              1,
+              1,
+              5,
+              1
+            ],
+            "issue_ordinal": 5,
+            "statement": [
+              3,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "retirement": "None",
+            "public_generation_live": false,
+            "creation_context": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              2,
+              0
+            ],
+            "retirement_context": null
+          }
+        },
+        "/next_nonce/Result": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:result-above-cap",
+      "base": "original:sel.prepared",
+      "put": {
+        "/issued_results": {
+          "6": {
+            "id": [
+              4,
+              0,
+              1,
+              1,
+              1,
+              6,
+              1
+            ],
+            "issue_ordinal": 6,
+            "statement": [
+              3,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "retirement": "None",
+            "public_generation_live": false,
+            "creation_context": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              2,
+              0
+            ],
+            "retirement_context": null
+          }
+        },
+        "/next_nonce/Result": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:result-unused-exhausted",
+      "base": "original:sel.prepared",
+      "put": {
+        "/issued_results": {
+          "6": {
+            "id": [
+              4,
+              0,
+              1,
+              1,
+              1,
+              6,
+              1
+            ],
+            "issue_ordinal": 6,
+            "statement": [
+              3,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "retirement": "None",
+            "public_generation_live": false,
+            "creation_context": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              2,
+              0
+            ],
+            "retirement_context": null
+          }
+        },
+        "/next_nonce/Result": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:context-below-cap",
+      "base": "original:initial",
+      "put": {
+        "/contexts": {
+          "4": {
+            "id": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              4,
+              0
+            ],
+            "issue_ordinal": 4,
+            "status": "Completed"
+          }
+        },
+        "/next_nonce/Context": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:context-at-cap",
+      "base": "original:initial",
+      "put": {
+        "/contexts": {
+          "5": {
+            "id": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              5,
+              0
+            ],
+            "issue_ordinal": 5,
+            "status": "Completed"
+          }
+        },
+        "/next_nonce/Context": 6
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:context-bad-next",
+      "base": "original:initial",
+      "put": {
+        "/contexts": {
+          "5": {
+            "id": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              5,
+              0
+            ],
+            "issue_ordinal": 5,
+            "status": "Completed"
+          }
+        },
+        "/next_nonce/Context": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:context-above-cap",
+      "base": "original:initial",
+      "put": {
+        "/contexts": {
+          "6": {
+            "id": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              6,
+              0
+            ],
+            "issue_ordinal": 6,
+            "status": "Completed"
+          }
+        },
+        "/next_nonce/Context": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:context-unused-exhausted",
+      "base": "original:initial",
+      "put": {
+        "/contexts": {
+          "6": {
+            "id": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              6,
+              0
+            ],
+            "issue_ordinal": 6,
+            "status": "Completed"
+          }
+        },
+        "/next_nonce/Context": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:transaction-below-cap",
+      "base": "original:sel.prepared",
+      "put": {
+        "/transactions": {
+          "4": {
+            "id": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              4,
+              0
+            ],
+            "origin": "ImplicitReadOnly",
+            "access": "ReadOnly",
+            "life": "Ended",
+            "prior_successful_write": false,
+            "progress": "None",
+            "decision": "NotApplicable",
+            "client_knowledge": "NoDecisionObserved",
+            "delivery": "NotApplicable",
+            "birth_session": [
+              2,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "receipt": null,
+            "parked_context": null,
+            "obligation": null,
+            "completion_fact": null
+          }
+        },
+        "/next_nonce/Transaction": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:transaction-at-cap",
+      "base": "original:sel.prepared",
+      "put": {
+        "/transactions": {
+          "5": {
+            "id": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              5,
+              0
+            ],
+            "origin": "ImplicitReadOnly",
+            "access": "ReadOnly",
+            "life": "Ended",
+            "prior_successful_write": false,
+            "progress": "None",
+            "decision": "NotApplicable",
+            "client_knowledge": "NoDecisionObserved",
+            "delivery": "NotApplicable",
+            "birth_session": [
+              2,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "receipt": null,
+            "parked_context": null,
+            "obligation": null,
+            "completion_fact": null
+          }
+        },
+        "/next_nonce/Transaction": 6
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:transaction-bad-next",
+      "base": "original:sel.prepared",
+      "put": {
+        "/transactions": {
+          "5": {
+            "id": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              5,
+              0
+            ],
+            "origin": "ImplicitReadOnly",
+            "access": "ReadOnly",
+            "life": "Ended",
+            "prior_successful_write": false,
+            "progress": "None",
+            "decision": "NotApplicable",
+            "client_knowledge": "NoDecisionObserved",
+            "delivery": "NotApplicable",
+            "birth_session": [
+              2,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "receipt": null,
+            "parked_context": null,
+            "obligation": null,
+            "completion_fact": null
+          }
+        },
+        "/next_nonce/Transaction": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:transaction-above-cap",
+      "base": "original:sel.prepared",
+      "put": {
+        "/transactions": {
+          "6": {
+            "id": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              6,
+              0
+            ],
+            "origin": "ImplicitReadOnly",
+            "access": "ReadOnly",
+            "life": "Ended",
+            "prior_successful_write": false,
+            "progress": "None",
+            "decision": "NotApplicable",
+            "client_knowledge": "NoDecisionObserved",
+            "delivery": "NotApplicable",
+            "birth_session": [
+              2,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "receipt": null,
+            "parked_context": null,
+            "obligation": null,
+            "completion_fact": null
+          }
+        },
+        "/next_nonce/Transaction": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:transaction-unused-exhausted",
+      "base": "original:sel.prepared",
+      "put": {
+        "/transactions": {
+          "6": {
+            "id": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              6,
+              0
+            ],
+            "origin": "ImplicitReadOnly",
+            "access": "ReadOnly",
+            "life": "Ended",
+            "prior_successful_write": false,
+            "progress": "None",
+            "decision": "NotApplicable",
+            "client_knowledge": "NoDecisionObserved",
+            "delivery": "NotApplicable",
+            "birth_session": [
+              2,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "receipt": null,
+            "parked_context": null,
+            "obligation": null,
+            "completion_fact": null
+          }
+        },
+        "/next_nonce/Transaction": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:receipt-below-cap",
+      "base": "original:initial",
+      "put": {
+        "/receipts": {
+          "4": {
+            "id": [
+              8,
+              0,
+              255,
+              1,
+              1,
+              4,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "kind": "NoWriteCompletion",
+            "delivery": "NotApplicable",
+            "anchor": null,
+            "source_fact": null,
+            "delivery_context": null
+          }
+        },
+        "/next_nonce/Receipt": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:receipt-at-cap",
+      "base": "original:initial",
+      "put": {
+        "/receipts": {
+          "5": {
+            "id": [
+              8,
+              0,
+              255,
+              1,
+              1,
+              5,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "kind": "NoWriteCompletion",
+            "delivery": "NotApplicable",
+            "anchor": null,
+            "source_fact": null,
+            "delivery_context": null
+          }
+        },
+        "/next_nonce/Receipt": 6
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:receipt-bad-next",
+      "base": "original:initial",
+      "put": {
+        "/receipts": {
+          "5": {
+            "id": [
+              8,
+              0,
+              255,
+              1,
+              1,
+              5,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "kind": "NoWriteCompletion",
+            "delivery": "NotApplicable",
+            "anchor": null,
+            "source_fact": null,
+            "delivery_context": null
+          }
+        },
+        "/next_nonce/Receipt": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:receipt-above-cap",
+      "base": "original:initial",
+      "put": {
+        "/receipts": {
+          "6": {
+            "id": [
+              8,
+              0,
+              255,
+              1,
+              1,
+              6,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "kind": "NoWriteCompletion",
+            "delivery": "NotApplicable",
+            "anchor": null,
+            "source_fact": null,
+            "delivery_context": null
+          }
+        },
+        "/next_nonce/Receipt": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:receipt-unused-exhausted",
+      "base": "original:initial",
+      "put": {
+        "/receipts": {
+          "6": {
+            "id": [
+              8,
+              0,
+              255,
+              1,
+              1,
+              6,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "kind": "NoWriteCompletion",
+            "delivery": "NotApplicable",
+            "anchor": null,
+            "source_fact": null,
+            "delivery_context": null
+          }
+        },
+        "/next_nonce/Receipt": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:obligation-below-cap",
+      "base": "original:rw.written",
+      "put": {
+        "/obligations": {
+          "4": {
+            "id": [
+              10,
+              1,
+              255,
+              2,
+              3,
+              4,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              2,
+              0,
+              2,
+              0
+            ],
+            "transaction": [
+              6,
+              1,
+              255,
+              2,
+              3,
+              5,
+              0
+            ],
+            "origin_session": [
+              2,
+              1,
+              255,
+              2,
+              3,
+              3,
+              0
+            ],
+            "creation_reason": "KnownNotCommittedUndoPending",
+            "latest_reason": "KnownNotCommittedUndoPending",
+            "reason_mask": 1,
+            "disposition": "AllHeld",
+            "known_decision": "NotCommittedRecoveryRequired",
+            "settlement": "Outstanding",
+            "first_fact": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              2,
+              0
+            ],
+            "latest_fact": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              2,
+              0
+            ],
+            "recovery_fact": null
+          }
+        },
+        "/next_nonce/Obligation": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:obligation-at-cap",
+      "base": "original:rw.written",
+      "put": {
+        "/obligations": {
+          "5": {
+            "id": [
+              10,
+              1,
+              255,
+              2,
+              3,
+              5,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              2,
+              0,
+              2,
+              0
+            ],
+            "transaction": [
+              6,
+              1,
+              255,
+              2,
+              3,
+              5,
+              0
+            ],
+            "origin_session": [
+              2,
+              1,
+              255,
+              2,
+              3,
+              3,
+              0
+            ],
+            "creation_reason": "KnownNotCommittedUndoPending",
+            "latest_reason": "KnownNotCommittedUndoPending",
+            "reason_mask": 1,
+            "disposition": "AllHeld",
+            "known_decision": "NotCommittedRecoveryRequired",
+            "settlement": "Outstanding",
+            "first_fact": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              2,
+              0
+            ],
+            "latest_fact": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              2,
+              0
+            ],
+            "recovery_fact": null
+          }
+        },
+        "/next_nonce/Obligation": 6
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:obligation-bad-next",
+      "base": "original:rw.written",
+      "put": {
+        "/obligations": {
+          "5": {
+            "id": [
+              10,
+              1,
+              255,
+              2,
+              3,
+              5,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              2,
+              0,
+              2,
+              0
+            ],
+            "transaction": [
+              6,
+              1,
+              255,
+              2,
+              3,
+              5,
+              0
+            ],
+            "origin_session": [
+              2,
+              1,
+              255,
+              2,
+              3,
+              3,
+              0
+            ],
+            "creation_reason": "KnownNotCommittedUndoPending",
+            "latest_reason": "KnownNotCommittedUndoPending",
+            "reason_mask": 1,
+            "disposition": "AllHeld",
+            "known_decision": "NotCommittedRecoveryRequired",
+            "settlement": "Outstanding",
+            "first_fact": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              2,
+              0
+            ],
+            "latest_fact": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              2,
+              0
+            ],
+            "recovery_fact": null
+          }
+        },
+        "/next_nonce/Obligation": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:obligation-above-cap",
+      "base": "original:rw.written",
+      "put": {
+        "/obligations": {
+          "6": {
+            "id": [
+              10,
+              1,
+              255,
+              2,
+              3,
+              6,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              2,
+              0,
+              2,
+              0
+            ],
+            "transaction": [
+              6,
+              1,
+              255,
+              2,
+              3,
+              5,
+              0
+            ],
+            "origin_session": [
+              2,
+              1,
+              255,
+              2,
+              3,
+              3,
+              0
+            ],
+            "creation_reason": "KnownNotCommittedUndoPending",
+            "latest_reason": "KnownNotCommittedUndoPending",
+            "reason_mask": 1,
+            "disposition": "AllHeld",
+            "known_decision": "NotCommittedRecoveryRequired",
+            "settlement": "Outstanding",
+            "first_fact": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              2,
+              0
+            ],
+            "latest_fact": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              2,
+              0
+            ],
+            "recovery_fact": null
+          }
+        },
+        "/next_nonce/Obligation": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:obligation-unused-exhausted",
+      "base": "original:rw.written",
+      "put": {
+        "/obligations": {
+          "6": {
+            "id": [
+              10,
+              1,
+              255,
+              2,
+              3,
+              6,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              2,
+              0,
+              2,
+              0
+            ],
+            "transaction": [
+              6,
+              1,
+              255,
+              2,
+              3,
+              5,
+              0
+            ],
+            "origin_session": [
+              2,
+              1,
+              255,
+              2,
+              3,
+              3,
+              0
+            ],
+            "creation_reason": "KnownNotCommittedUndoPending",
+            "latest_reason": "KnownNotCommittedUndoPending",
+            "reason_mask": 1,
+            "disposition": "AllHeld",
+            "known_decision": "NotCommittedRecoveryRequired",
+            "settlement": "Outstanding",
+            "first_fact": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              2,
+              0
+            ],
+            "latest_fact": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              2,
+              0
+            ],
+            "recovery_fact": null
+          }
+        },
+        "/next_nonce/Obligation": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:fact-below-cap",
+      "base": "original:initial",
+      "put": {
+        "/facts": {
+          "4": {
+            "id": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              4,
+              0
+            ],
+            "kind": "Execution",
+            "api": "Execute",
+            "outcome_class": 0,
+            "cleanup": "NotConsumed",
+            "decision": "NotApplicable",
+            "delivery": "NotApplicable",
+            "next_work": "NotConsumed",
+            "consumed_parts": 1,
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "obligation_count": 0,
+            "owner_count": 3,
+            "context": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              2,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "receipt": null,
+            "fresh_engine": null,
+            "anchor": null
+          }
+        },
+        "/next_nonce/Fact": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:fact-at-cap",
+      "base": "original:initial",
+      "put": {
+        "/facts": {
+          "5": {
+            "id": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              5,
+              0
+            ],
+            "kind": "Execution",
+            "api": "Execute",
+            "outcome_class": 0,
+            "cleanup": "NotConsumed",
+            "decision": "NotApplicable",
+            "delivery": "NotApplicable",
+            "next_work": "NotConsumed",
+            "consumed_parts": 1,
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "obligation_count": 0,
+            "owner_count": 3,
+            "context": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              2,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "receipt": null,
+            "fresh_engine": null,
+            "anchor": null
+          }
+        },
+        "/next_nonce/Fact": 6
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:fact-bad-next",
+      "base": "original:initial",
+      "put": {
+        "/facts": {
+          "5": {
+            "id": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              5,
+              0
+            ],
+            "kind": "Execution",
+            "api": "Execute",
+            "outcome_class": 0,
+            "cleanup": "NotConsumed",
+            "decision": "NotApplicable",
+            "delivery": "NotApplicable",
+            "next_work": "NotConsumed",
+            "consumed_parts": 1,
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "obligation_count": 0,
+            "owner_count": 3,
+            "context": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              2,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "receipt": null,
+            "fresh_engine": null,
+            "anchor": null
+          }
+        },
+        "/next_nonce/Fact": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:fact-above-cap",
+      "base": "original:initial",
+      "put": {
+        "/facts": {
+          "6": {
+            "id": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              6,
+              0
+            ],
+            "kind": "Execution",
+            "api": "Execute",
+            "outcome_class": 0,
+            "cleanup": "NotConsumed",
+            "decision": "NotApplicable",
+            "delivery": "NotApplicable",
+            "next_work": "NotConsumed",
+            "consumed_parts": 1,
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "obligation_count": 0,
+            "owner_count": 3,
+            "context": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              2,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "receipt": null,
+            "fresh_engine": null,
+            "anchor": null
+          }
+        },
+        "/next_nonce/Fact": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:fact-unused-exhausted",
+      "base": "original:initial",
+      "put": {
+        "/facts": {
+          "6": {
+            "id": [
+              11,
+              255,
+              255,
+              1,
+              0,
+              6,
+              0
+            ],
+            "kind": "Execution",
+            "api": "Execute",
+            "outcome_class": 0,
+            "cleanup": "NotConsumed",
+            "decision": "NotApplicable",
+            "delivery": "NotApplicable",
+            "next_work": "NotConsumed",
+            "consumed_parts": 1,
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "obligation_count": 0,
+            "owner_count": 3,
+            "context": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              2,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "receipt": null,
+            "fresh_engine": null,
+            "anchor": null
+          }
+        },
+        "/next_nonce/Fact": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:anchor-below-cap",
+      "base": "original:initial",
+      "put": {
+        "/receipts": {
+          "1": {
+            "id": [
+              8,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "kind": "DurableWrite",
+            "delivery": "NotApplicable",
+            "anchor": [
+              12,
+              255,
+              255,
+              1,
+              0,
+              4,
+              0
+            ],
+            "source_fact": null,
+            "delivery_context": null
+          }
+        },
+        "/next_nonce/Receipt": 2,
+        "/next_nonce/Anchor": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:anchor-at-cap",
+      "base": "original:initial",
+      "put": {
+        "/receipts": {
+          "1": {
+            "id": [
+              8,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "kind": "DurableWrite",
+            "delivery": "NotApplicable",
+            "anchor": [
+              12,
+              255,
+              255,
+              1,
+              0,
+              5,
+              0
+            ],
+            "source_fact": null,
+            "delivery_context": null
+          }
+        },
+        "/next_nonce/Receipt": 2,
+        "/next_nonce/Anchor": 6
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:anchor-bad-next",
+      "base": "original:initial",
+      "put": {
+        "/receipts": {
+          "1": {
+            "id": [
+              8,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "kind": "DurableWrite",
+            "delivery": "NotApplicable",
+            "anchor": [
+              12,
+              255,
+              255,
+              1,
+              0,
+              5,
+              0
+            ],
+            "source_fact": null,
+            "delivery_context": null
+          }
+        },
+        "/next_nonce/Receipt": 2,
+        "/next_nonce/Anchor": 5
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:anchor-above-cap",
+      "base": "original:initial",
+      "put": {
+        "/receipts": {
+          "1": {
+            "id": [
+              8,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "kind": "DurableWrite",
+            "delivery": "NotApplicable",
+            "anchor": [
+              12,
+              255,
+              255,
+              1,
+              0,
+              6,
+              0
+            ],
+            "source_fact": null,
+            "delivery_context": null
+          }
+        },
+        "/next_nonce/Receipt": 2,
+        "/next_nonce/Anchor": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:anchor-unused-exhausted",
+      "base": "original:initial",
+      "put": {
+        "/receipts": {
+          "1": {
+            "id": [
+              8,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "transaction": [
+              6,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "engine": [
+              1,
+              255,
+              255,
+              1,
+              0,
+              1,
+              0
+            ],
+            "kind": "DurableWrite",
+            "delivery": "NotApplicable",
+            "anchor": [
+              12,
+              255,
+              255,
+              1,
+              0,
+              6,
+              0
+            ],
+            "source_fact": null,
+            "delivery_context": null
+          }
+        },
+        "/next_nonce/Receipt": 2,
+        "/next_nonce/Anchor": 7
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:resource6-below-cap",
+      "base": "original:sel.prepared",
+      "put": {
+        "/actors/0/autocommit": "Off",
+        "/owners/47": {
+          "id": [
+            9,
+            0,
+            255,
+            1,
+            1,
+            47,
+            0
+          ],
+          "resource_kind": "Plan",
+          "disposition": "Released",
+          "transfer_count": 0,
+          "original_holder": [
+            3,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          "current_holder": null,
+          "previous_holder": null,
+          "birth_context": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "last_fact": null
+        },
+        "/next_nonce/Resource": 48
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:resource6-at-cap",
+      "base": "original:sel.prepared",
+      "put": {
+        "/actors/0/autocommit": "Off",
+        "/owners/48": {
+          "id": [
+            9,
+            0,
+            255,
+            1,
+            1,
+            48,
+            0
+          ],
+          "resource_kind": "Plan",
+          "disposition": "Released",
+          "transfer_count": 0,
+          "original_holder": [
+            3,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          "current_holder": null,
+          "previous_holder": null,
+          "birth_context": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "last_fact": null
+        },
+        "/next_nonce/Resource": 49
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:resource6-above-cap",
+      "base": "original:sel.prepared",
+      "put": {
+        "/actors/0/autocommit": "Off",
+        "/owners/49": {
+          "id": [
+            9,
+            0,
+            255,
+            1,
+            1,
+            49,
+            0
+          ],
+          "resource_kind": "Plan",
+          "disposition": "Released",
+          "transfer_count": 0,
+          "original_holder": [
+            3,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          "current_holder": null,
+          "previous_holder": null,
+          "birth_context": [
+            5,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "last_fact": null
+        },
+        "/next_nonce/Resource": 50
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:generation-11-live-true",
+      "base": "original:sel.eof",
+      "put": {
+        "/prepared_slots/0:0/next_result_generation": 11,
+        "/issued_results/1/public_generation_live": true,
+        "/private_descriptors/1/public_generation_live": true
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:generation-12-live-true",
+      "base": "original:sel.eof",
+      "put": {
+        "/prepared_slots/0:0/next_result_generation": 12,
+        "/issued_results/1/public_generation_live": true,
+        "/private_descriptors/1/public_generation_live": true
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:generation-12-live-false",
+      "base": "original:sel.eof",
+      "put": {
+        "/prepared_slots/0:0/next_result_generation": 12,
+        "/issued_results/1/public_generation_live": false,
+        "/private_descriptors/1/public_generation_live": false
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:generation-13-live-false",
+      "base": "original:sel.eof",
+      "put": {
+        "/prepared_slots/0:0/next_result_generation": 13,
+        "/issued_results/1/public_generation_live": false,
+        "/private_descriptors/1/public_generation_live": false
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:generation-structure-before-cap",
+      "base": "original:sel.eof",
+      "put": {
+        "/prepared_slots/0:0/next_result_generation": 14
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    },
+    {
+      "id": "boundary:generation-link-before-cap",
+      "base": "original:sel.eof",
+      "put": {
+        "/prepared_slots/0:0/next_result_generation": 12,
+        "/issued_results/1/public_generation_live": false,
+        "/private_descriptors/1/public_generation_live": true
+      },
+      "classification": "Exact conditional read-set workspace only; no global invariant or model reachability claim."
+    }
+  ],
+  "cases": [
+    {
+      "id": "asm/boundary/s0-before-missing-caller",
+      "pre_state": "boundary:missing-all-callers",
+      "raw_index": null,
+      "raw_action": {
+        "api": "Prepare",
+        "actor": 2,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "InvalidAction before any missing caller lookup; Err out invalid and State unchanged.",
+      "expected_error": {
+        "kind": "InvalidAction",
+        "inner": "InvalidFields"
+      }
+    },
+    {
+      "id": "asm/boundary/s0-before-used-context-poison",
+      "pre_state": "boundary:context-poison",
+      "raw_index": null,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Invalid unused field before a newly used Context namespace guard.",
+      "expected_error": {
+        "kind": "InvalidAction",
+        "inner": "InvalidFields"
+      }
+    },
+    {
+      "id": "asm/boundary/selector-before-relation-and-cap",
+      "pre_state": "boundary:selector-before-context-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "S1 selected namespace error precedes S3 link and S4 cap.",
+      "expected_error": {
+        "kind": "Selector",
+        "inner": "InvalidIssuedRecord"
+      }
+    },
+    {
+      "id": "asm/boundary/u6-selector-before-context-cap",
+      "pre_state": "boundary:result-selector-before-context-cap",
+      "raw_index": 872,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "FrozenUnissued",
+          "index": 6
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Result U6 requires slot before fresh-context cap.",
+      "expected_error": {
+        "kind": "Selector",
+        "inner": "MissingSlot"
+      }
+    },
+    {
+      "id": "asm/boundary/nonselector-missing-caller",
+      "pre_state": "boundary:missing-a0",
+      "raw_index": 1354,
+      "raw_action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "InspectSession needs one actor row despite no context or environment.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/nonselector-duplicate-caller",
+      "pre_state": "boundary:duplicate-a0",
+      "raw_index": 1264,
+      "raw_action": {
+        "api": "Begin",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Fresh Begin requires caller uniqueness.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/nonselector-caller-scope",
+      "pre_state": "boundary:invalid-attached-engine",
+      "raw_index": 1318,
+      "raw_action": {
+        "api": "ReopenSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Reopen prefix validates attached scalar range without transition logic.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/p-backlink-before-context-cap",
+      "pre_state": "boundary:p-backlink-and-context-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Authenticated current P has missing slot backlink before cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/descriptor-before-context-cap",
+      "pre_state": "boundary:descriptor-missing-and-context-cap",
+      "raw_index": 752,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Required current R descriptor missing before Context cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/selected-owner-before-context-cap",
+      "pre_state": "boundary:owner-holder-missing-and-context-cap",
+      "raw_index": 1072,
+      "raw_action": {
+        "api": "CloseResult",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Selected C owner has dangling before holder before cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/selected-o-before-context-cap",
+      "pre_state": "boundary:o-backlink-and-context-cap",
+      "raw_index": 1310,
+      "raw_action": {
+        "api": "CloseSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Fenced CloseSession handoff must preflight exact O before cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/later-used-structure-before-earlier-cap",
+      "pre_state": "boundary:context-cap-and-bad-fact-counter",
+      "raw_index": 752,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Context cap cannot hide later Fact max-next inconsistency.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/entry-execute-skips-auth-and-t",
+      "pre_state": "boundary:bad-p-link-unused-by-entry-fixed-bind",
+      "raw_index": 401,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "purpose": "Entry Execute ends before P authentication or T lookup.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 1,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": true,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/fixed-bind-skips-auth-and-t",
+      "pre_state": "boundary:bad-p-link-unused-by-entry-fixed-bind",
+      "raw_index": 51,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 3
+      },
+      "purpose": "Fixed Type payload needs selector but not P metadata or T.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "BindAll",
+        "api_tag": 1,
+        "actor": 0,
+        "outcome_tag": 3,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [
+          {
+            "tag": 1,
+            "byte_length": 8,
+            "bytes": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        ],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/bind-success-reads-p-link",
+      "pre_state": "boundary:bad-p-link-unused-by-entry-fixed-bind",
+      "raw_index": 48,
+      "raw_action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Success Bind PN contrasts with fixed Bind poison control.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/inspect-p-skips-auth",
+      "pre_state": "boundary:bad-p-link-unused-by-entry-fixed-bind",
+      "raw_index": 1322,
+      "raw_action": {
+        "api": "InspectStatement",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Inspect copies exact selector bytes without current-auth lookup.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "InspectStatement",
+        "api_tag": 12,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/fresh-context-does-not-read-payload",
+      "pre_state": "boundary:fresh-ignores-parked-payload",
+      "raw_index": 0,
+      "raw_action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Fresh Context guard reads identities/ordinals only.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Prepare",
+        "api_tag": 0,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 0,
+        "prepare_shape": 0,
+        "parameter_count": 0,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          4,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/matching-context-reads-private-links",
+      "pre_state": "boundary:fresh-ignores-parked-payload",
+      "raw_index": 1484,
+      "raw_action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Matching PF private links cannot silently become absent.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/fetch-rows-skips-owner-lookup",
+      "pre_state": "boundary:rows-ignore-owner-payload",
+      "raw_index": 752,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Rows has owner0 and does not inspect unrelated release payload.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Fetch",
+        "api_tag": 3,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Fetch",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/fetch-eof-reads-selected-owner",
+      "pre_state": "boundary:rows-ignore-owner-payload",
+      "raw_index": 753,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "purpose": "EOF selects cursor owners unlike Rows.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/pending-dangling",
+      "pre_state": "boundary:pending-dangling",
+      "raw_index": 1484,
+      "raw_action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New continuation relation guard: dangling",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/pending-duplicate",
+      "pre_state": "boundary:pending-duplicate",
+      "raw_index": 1484,
+      "raw_action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New continuation relation guard: duplicate",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/pending-foreign-scope",
+      "pre_state": "boundary:pending-foreign-scope",
+      "raw_index": 1484,
+      "raw_action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New continuation relation guard: foreign-scope",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/pending-completed",
+      "pre_state": "boundary:pending-completed",
+      "raw_index": 1484,
+      "raw_action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New continuation relation guard: completed",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/pending-t-backlink",
+      "pre_state": "boundary:pending-t-backlink",
+      "raw_index": 1484,
+      "raw_action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New continuation relation guard: t-backlink",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/pending-private-descriptor",
+      "pre_state": "boundary:pending-private-descriptor",
+      "raw_index": 1484,
+      "raw_action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New continuation relation guard: private-descriptor",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/wrong-kind-does-not-copy-or-read-payload",
+      "pre_state": "boundary:wrong-kind-opaque-payload",
+      "raw_index": 1484,
+      "raw_action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Valid pending kind mismatch ignores its malformed target/T payload and control.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "ResumeFetch",
+        "api_tag": 16,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Resume",
+          "work_class": 0,
+          "cleanup": 1,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": null,
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/engine-below-cap",
+      "pre_state": "boundary:engine-below-cap",
+      "raw_index": 1528,
+      "raw_action": {
+        "api": "RecoveryConfirmedFreshEngine",
+        "actor": 255,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Engine candidate 6, cap 7; retained max is 5.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "RecoveryConfirmedFreshEngine",
+        "api_tag": 20,
+        "actor": 255,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "RecoveryConfirmed",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 4,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": null,
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": [
+            1,
+            255,
+            255,
+            6,
+            0,
+            6,
+            0
+          ],
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/engine-at-cap",
+      "pre_state": "boundary:engine-at-cap",
+      "raw_index": 1528,
+      "raw_action": {
+        "api": "RecoveryConfirmedFreshEngine",
+        "actor": 255,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Engine candidate 7, cap 7; retained max is 6.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "RecoveryConfirmedFreshEngine",
+        "api_tag": 20,
+        "actor": 255,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "RecoveryConfirmed",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 4,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": null,
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": [
+            1,
+            255,
+            255,
+            7,
+            0,
+            7,
+            0
+          ],
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/engine-bad-next",
+      "pre_state": "boundary:engine-bad-next",
+      "raw_index": 1528,
+      "raw_action": {
+        "api": "RecoveryConfirmedFreshEngine",
+        "actor": 255,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Used Engine new-namespace max-next structure before prospective cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/engine-above-cap",
+      "pre_state": "boundary:engine-above-cap",
+      "raw_index": 1528,
+      "raw_action": {
+        "api": "RecoveryConfirmedFreshEngine",
+        "actor": 255,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Engine candidate 8, cap 7; retained max is 7.",
+      "expected_error": {
+        "kind": "ProfileLimit"
+      }
+    },
+    {
+      "id": "asm/boundary/engine-unused-exhausted",
+      "pre_state": "boundary:engine-unused-exhausted",
+      "raw_index": 1354,
+      "raw_action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "InspectSession does not use Engine; max=7, stored next=8 is valid and exhausted.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "InspectSession",
+        "api_tag": 13,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/result-below-cap",
+      "pre_state": "boundary:result-below-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Result candidate 5, cap 6; retained max is 4.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                5,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                4,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                5,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                5,
+                1
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/result-at-cap",
+      "pre_state": "boundary:result-at-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Result candidate 6, cap 6; retained max is 5.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                6,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                4,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                6,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                6,
+                1
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/result-bad-next",
+      "pre_state": "boundary:result-bad-next",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Used Result new-namespace max-next structure before prospective cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/result-above-cap",
+      "pre_state": "boundary:result-above-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Result candidate 7, cap 6; retained max is 6.",
+      "expected_error": {
+        "kind": "ProfileLimit"
+      }
+    },
+    {
+      "id": "asm/boundary/result-unused-exhausted",
+      "pre_state": "boundary:result-unused-exhausted",
+      "raw_index": 1354,
+      "raw_action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "InspectSession does not use Result; max=6, stored next=7 is valid and exhausted.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "InspectSession",
+        "api_tag": 13,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/context-below-cap",
+      "pre_state": "boundary:context-below-cap",
+      "raw_index": 0,
+      "raw_action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Context candidate 5, cap 6; retained max is 4.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Prepare",
+        "api_tag": 0,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 0,
+        "prepare_shape": 0,
+        "parameter_count": 0,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          5,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/context-at-cap",
+      "pre_state": "boundary:context-at-cap",
+      "raw_index": 0,
+      "raw_action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Context candidate 6, cap 6; retained max is 5.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Prepare",
+        "api_tag": 0,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 0,
+        "prepare_shape": 0,
+        "parameter_count": 0,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          6,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/context-bad-next",
+      "pre_state": "boundary:context-bad-next",
+      "raw_index": 0,
+      "raw_action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Used Context new-namespace max-next structure before prospective cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/context-above-cap",
+      "pre_state": "boundary:context-above-cap",
+      "raw_index": 0,
+      "raw_action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Context candidate 7, cap 6; retained max is 6.",
+      "expected_error": {
+        "kind": "ProfileLimit"
+      }
+    },
+    {
+      "id": "asm/boundary/context-unused-exhausted",
+      "pre_state": "boundary:context-unused-exhausted",
+      "raw_index": 1354,
+      "raw_action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "InspectSession does not use Context; max=6, stored next=7 is valid and exhausted.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "InspectSession",
+        "api_tag": 13,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/transaction-below-cap",
+      "pre_state": "boundary:transaction-below-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Transaction candidate 5, cap 6; retained max is 4.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            5,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                4,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/transaction-at-cap",
+      "pre_state": "boundary:transaction-at-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Transaction candidate 6, cap 6; retained max is 5.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            6,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                4,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/transaction-bad-next",
+      "pre_state": "boundary:transaction-bad-next",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Used Transaction new-namespace max-next structure before prospective cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/transaction-above-cap",
+      "pre_state": "boundary:transaction-above-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Transaction candidate 7, cap 6; retained max is 6.",
+      "expected_error": {
+        "kind": "ProfileLimit"
+      }
+    },
+    {
+      "id": "asm/boundary/transaction-unused-exhausted",
+      "pre_state": "boundary:transaction-unused-exhausted",
+      "raw_index": 1354,
+      "raw_action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "InspectSession does not use Transaction; max=6, stored next=7 is valid and exhausted.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "InspectSession",
+        "api_tag": 13,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/receipt-below-cap",
+      "pre_state": "boundary:receipt-below-cap",
+      "raw_index": 1282,
+      "raw_action": {
+        "api": "CommitAtomic",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Receipt candidate 5, cap 6; retained max is 4.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "CommitAtomic",
+        "api_tag": 8,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          1,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "CommitAtomic",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 255,
+          "commit_class": 5,
+          "reserved0": 0,
+          "transaction": null,
+          "receipt": [
+            8,
+            0,
+            255,
+            1,
+            1,
+            5,
+            0
+          ],
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/receipt-at-cap",
+      "pre_state": "boundary:receipt-at-cap",
+      "raw_index": 1282,
+      "raw_action": {
+        "api": "CommitAtomic",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Receipt candidate 6, cap 6; retained max is 5.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "CommitAtomic",
+        "api_tag": 8,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          1,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "CommitAtomic",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 255,
+          "commit_class": 5,
+          "reserved0": 0,
+          "transaction": null,
+          "receipt": [
+            8,
+            0,
+            255,
+            1,
+            1,
+            6,
+            0
+          ],
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/receipt-bad-next",
+      "pre_state": "boundary:receipt-bad-next",
+      "raw_index": 1282,
+      "raw_action": {
+        "api": "CommitAtomic",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Used Receipt new-namespace max-next structure before prospective cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/receipt-above-cap",
+      "pre_state": "boundary:receipt-above-cap",
+      "raw_index": 1282,
+      "raw_action": {
+        "api": "CommitAtomic",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Receipt candidate 7, cap 6; retained max is 6.",
+      "expected_error": {
+        "kind": "ProfileLimit"
+      }
+    },
+    {
+      "id": "asm/boundary/receipt-unused-exhausted",
+      "pre_state": "boundary:receipt-unused-exhausted",
+      "raw_index": 1354,
+      "raw_action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "InspectSession does not use Receipt; max=6, stored next=7 is valid and exhausted.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "InspectSession",
+        "api_tag": 13,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/obligation-below-cap",
+      "pre_state": "boundary:obligation-below-cap",
+      "raw_index": 1303,
+      "raw_action": {
+        "api": "Rollback",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "purpose": "New Obligation candidate 5, cap 6; retained max is 4.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Rollback",
+        "api_tag": 9,
+        "actor": 0,
+        "outcome_tag": 1,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          4,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "RollbackCleanup",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 2,
+          "commit_class": 1,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [
+            {
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "known_decision": "NotCommittedRecoveryRequired",
+              "after_ownership_summary": "AllHeld",
+              "associated_owner_count": 4
+            }
+          ],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "resource_kind": "Undo",
+              "after_disposition": "Held",
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "before_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                2,
+                0
+              ],
+              "resource_kind": "Locks",
+              "after_disposition": "Held",
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "before_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "AbortReserve",
+              "after_disposition": "Held",
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "before_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                6,
+                0
+              ],
+              "resource_kind": "Recovery",
+              "after_disposition": "Held",
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                5,
+                0
+              ],
+              "before_holder": null,
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/obligation-at-cap",
+      "pre_state": "boundary:obligation-at-cap",
+      "raw_index": 1303,
+      "raw_action": {
+        "api": "Rollback",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "purpose": "New Obligation candidate 6, cap 6; retained max is 5.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Rollback",
+        "api_tag": 9,
+        "actor": 0,
+        "outcome_tag": 1,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          4,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            2,
+            0
+          ],
+          "kind": "RollbackCleanup",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 2,
+          "commit_class": 1,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [
+            {
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                6,
+                0
+              ],
+              "known_decision": "NotCommittedRecoveryRequired",
+              "after_ownership_summary": "AllHeld",
+              "associated_owner_count": 4
+            }
+          ],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "resource_kind": "Undo",
+              "after_disposition": "Held",
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                6,
+                0
+              ],
+              "before_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                2,
+                0
+              ],
+              "resource_kind": "Locks",
+              "after_disposition": "Held",
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                6,
+                0
+              ],
+              "before_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                3,
+                0
+              ],
+              "resource_kind": "AbortReserve",
+              "after_disposition": "Held",
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                6,
+                0
+              ],
+              "before_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ],
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                6,
+                0
+              ],
+              "resource_kind": "Recovery",
+              "after_disposition": "Held",
+              "obligation": [
+                10,
+                0,
+                255,
+                1,
+                1,
+                6,
+                0
+              ],
+              "before_holder": null,
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/obligation-bad-next",
+      "pre_state": "boundary:obligation-bad-next",
+      "raw_index": 1303,
+      "raw_action": {
+        "api": "Rollback",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "purpose": "Used Obligation new-namespace max-next structure before prospective cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/obligation-above-cap",
+      "pre_state": "boundary:obligation-above-cap",
+      "raw_index": 1303,
+      "raw_action": {
+        "api": "Rollback",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "purpose": "New Obligation candidate 7, cap 6; retained max is 6.",
+      "expected_error": {
+        "kind": "ProfileLimit"
+      }
+    },
+    {
+      "id": "asm/boundary/obligation-unused-exhausted",
+      "pre_state": "boundary:obligation-unused-exhausted",
+      "raw_index": 1354,
+      "raw_action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "InspectSession does not use Obligation; max=6, stored next=7 is valid and exhausted.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "InspectSession",
+        "api_tag": 13,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/fact-below-cap",
+      "pre_state": "boundary:fact-below-cap",
+      "raw_index": 752,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Fact candidate 5, cap 6; retained max is 4.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Fetch",
+        "api_tag": 3,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          1,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            5,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Fetch",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": null,
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/fact-at-cap",
+      "pre_state": "boundary:fact-at-cap",
+      "raw_index": 752,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Fact candidate 6, cap 6; retained max is 5.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Fetch",
+        "api_tag": 3,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          1,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            6,
+            0
+          ],
+          "kind": "FetchWorkOrCleanup",
+          "work_kind": "Fetch",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": null,
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/fact-bad-next",
+      "pre_state": "boundary:fact-bad-next",
+      "raw_index": 752,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Used Fact new-namespace max-next structure before prospective cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/fact-above-cap",
+      "pre_state": "boundary:fact-above-cap",
+      "raw_index": 752,
+      "raw_action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "New Fact candidate 7, cap 6; retained max is 6.",
+      "expected_error": {
+        "kind": "ProfileLimit"
+      }
+    },
+    {
+      "id": "asm/boundary/fact-unused-exhausted",
+      "pre_state": "boundary:fact-unused-exhausted",
+      "raw_index": 1354,
+      "raw_action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "InspectSession does not use Fact; max=6, stored next=7 is valid and exhausted.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "InspectSession",
+        "api_tag": 13,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/anchor-below-cap",
+      "pre_state": "boundary:anchor-below-cap",
+      "raw_index": 1289,
+      "raw_action": {
+        "api": "CommitAtomic",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 7
+      },
+      "purpose": "New Anchor candidate 5, cap 6; retained max is 4.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "CommitAtomic",
+        "api_tag": 8,
+        "actor": 0,
+        "outcome_tag": 7,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          1,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "CommitAtomic",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 255,
+          "commit_class": 8,
+          "reserved0": 0,
+          "transaction": null,
+          "receipt": [
+            8,
+            0,
+            255,
+            1,
+            1,
+            2,
+            0
+          ],
+          "anchor": [
+            12,
+            255,
+            255,
+            1,
+            0,
+            5,
+            0
+          ],
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/anchor-at-cap",
+      "pre_state": "boundary:anchor-at-cap",
+      "raw_index": 1289,
+      "raw_action": {
+        "api": "CommitAtomic",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 7
+      },
+      "purpose": "New Anchor candidate 6, cap 6; retained max is 5.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "CommitAtomic",
+        "api_tag": 8,
+        "actor": 0,
+        "outcome_tag": 7,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          1,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "CommitAtomic",
+          "work_kind": "None",
+          "work_class": 255,
+          "cleanup": 255,
+          "commit_class": 8,
+          "reserved0": 0,
+          "transaction": null,
+          "receipt": [
+            8,
+            0,
+            255,
+            1,
+            1,
+            2,
+            0
+          ],
+          "anchor": [
+            12,
+            255,
+            255,
+            1,
+            0,
+            6,
+            0
+          ],
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": []
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/anchor-bad-next",
+      "pre_state": "boundary:anchor-bad-next",
+      "raw_index": 1289,
+      "raw_action": {
+        "api": "CommitAtomic",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 7
+      },
+      "purpose": "Used Anchor new-namespace max-next structure before prospective cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/anchor-above-cap",
+      "pre_state": "boundary:anchor-above-cap",
+      "raw_index": 1289,
+      "raw_action": {
+        "api": "CommitAtomic",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 7
+      },
+      "purpose": "New Anchor candidate 7, cap 6; retained max is 6.",
+      "expected_error": {
+        "kind": "ProfileLimit"
+      }
+    },
+    {
+      "id": "asm/boundary/anchor-unused-exhausted",
+      "pre_state": "boundary:anchor-unused-exhausted",
+      "raw_index": 1354,
+      "raw_action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "InspectSession does not use Anchor; max=6, stored next=7 is valid and exhausted.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "InspectSession",
+        "api_tag": 13,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": null,
+        "context": null,
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": null
+      }
+    },
+    {
+      "id": "asm/boundary/resource6-below-cap",
+      "pre_state": "boundary:resource6-below-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Used Resource block is checked at final nonce, RW3 then cursor3.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                48,
+                0
+              ],
+              "resource_kind": "Undo",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                49,
+                0
+              ],
+              "resource_kind": "Locks",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                50,
+                0
+              ],
+              "resource_kind": "AbortReserve",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                51,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                52,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                53,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/resource6-at-cap",
+      "pre_state": "boundary:resource6-at-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Used Resource block is checked at final nonce, RW3 then cursor3.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          2,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            1,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            1,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                49,
+                0
+              ],
+              "resource_kind": "Undo",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                50,
+                0
+              ],
+              "resource_kind": "Locks",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                51,
+                0
+              ],
+              "resource_kind": "AbortReserve",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                6,
+                0,
+                255,
+                1,
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                52,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                53,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                54,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/resource6-above-cap",
+      "pre_state": "boundary:resource6-above-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Used Resource block is checked at final nonce, RW3 then cursor3.",
+      "expected_error": {
+        "kind": "ProfileLimit"
+      }
+    },
+    {
+      "id": "asm/boundary/generation-11-live-true",
+      "pre_state": "boundary:generation-11-live-true",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "S3 old result linkage then stored generation + retirement offset cap; no counter mutation.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          4,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            3,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            2,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                6,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                2,
+                12
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                7,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                2,
+                12
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                8,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                2,
+                12
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/generation-12-live-true",
+      "pre_state": "boundary:generation-12-live-true",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "S3 old result linkage then stored generation + retirement offset cap; no counter mutation.",
+      "expected_error": {
+        "kind": "ProfileLimit"
+      }
+    },
+    {
+      "id": "asm/boundary/generation-12-live-false",
+      "pre_state": "boundary:generation-12-live-false",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "S3 old result linkage then stored generation + retirement offset cap; no counter mutation.",
+      "expected_input": {
+        "schema_version": 1,
+        "api": "Execute",
+        "api_tag": 2,
+        "actor": 0,
+        "outcome_tag": 0,
+        "prepare_slot": 255,
+        "prepare_shape": 255,
+        "parameter_count": 255,
+        "set_autocommit": 255,
+        "target": [
+          3,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "context": [
+          5,
+          0,
+          255,
+          1,
+          1,
+          4,
+          0
+        ],
+        "original_deadline": "Absent",
+        "supplied_cancel": false,
+        "deadline_reached": false,
+        "bind_values": [],
+        "environment": {
+          "envelope_schema": 1,
+          "fact": [
+            11,
+            255,
+            255,
+            1,
+            0,
+            3,
+            0
+          ],
+          "kind": "Execution",
+          "work_kind": "Execute",
+          "work_class": 0,
+          "cleanup": 255,
+          "commit_class": 255,
+          "reserved0": 0,
+          "transaction": [
+            6,
+            0,
+            255,
+            1,
+            1,
+            2,
+            0
+          ],
+          "receipt": null,
+          "anchor": null,
+          "fresh_engine": null,
+          "obligations": [],
+          "owners": [
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                6,
+                0
+              ],
+              "resource_kind": "Snapshot",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                2,
+                12
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                7,
+                0
+              ],
+              "resource_kind": "Scratch",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                2,
+                12
+              ]
+            },
+            {
+              "resource": [
+                9,
+                0,
+                255,
+                1,
+                1,
+                8,
+                0
+              ],
+              "resource_kind": "Temp",
+              "after_disposition": "Held",
+              "obligation": null,
+              "before_holder": null,
+              "after_holder": [
+                4,
+                0,
+                0,
+                1,
+                1,
+                2,
+                12
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "asm/boundary/generation-13-live-false",
+      "pre_state": "boundary:generation-13-live-false",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "S3 old result linkage then stored generation + retirement offset cap; no counter mutation.",
+      "expected_error": {
+        "kind": "ProfileLimit"
+      }
+    },
+    {
+      "id": "asm/boundary/generation-stored-invalid",
+      "pre_state": "boundary:generation-structure-before-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Stored generation outside1..13 is structure error, not ProfileLimit.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    },
+    {
+      "id": "asm/boundary/generation-link-before-cap",
+      "pre_state": "boundary:generation-link-before-cap",
+      "raw_index": 400,
+      "raw_action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "purpose": "Old result/descriptor public-live disagreement precedes candidate cap.",
+      "expected_error": {
+        "kind": "InvalidState"
+      }
+    }
+  ],
+  "not_claimed": [
+    "full-state validity",
+    "model reachability",
+    "Capacity attainability",
+    "runtime PASS"
+  ]
+}

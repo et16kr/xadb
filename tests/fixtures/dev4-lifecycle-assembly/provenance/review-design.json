@@ -1,0 +1,153 @@
+{
+  "id": "D4-LM-ASSEMBLER-DESIGN-REVIEW-002",
+  "reviewer": "/root/frontend_review",
+  "reviewed_at_kst": "2026-10-25T00:57:05.602611+09:00",
+  "status": "DESIGN_SUITABLE_FOR_NORMAL_ERROR_CAP_LITERAL_AUTHORING_NOT_FINAL_D2",
+  "baseline": "1dd7bed1fc03bead2158fba439a06673dff29158",
+  "precedence": [
+    "owner-scope-v2",
+    "readset-v2 plus readset-v3 limited CommitFact erratum",
+    "original proposal where not amended",
+    "adopted owner/wire/input/identity contracts"
+  ],
+  "blocking_design_findings": [],
+  "resolved": [
+    "S0-S5 and all-used structural guards before caps",
+    "conditional read-set and pending wrong-kind vs Completed",
+    "Receipt.anchor definitions",
+    "final-birth row union and no re-sort after recovery negative",
+    "retirement generation offset restored in v2",
+    "existing implicit Execute Published RW-only closure",
+    "PC4 NoWrite RW release restored by v3"
+  ],
+  "test_scope_assessment": {
+    "old_invalid_fields_123_rewrap": "NOT_ACCEPTED_FOR_REPLAY; preserve old proposal NOT_RUN; replace with minimal new S0 compound witnesses",
+    "selector_error_rewraps": "Only new kind dispatch/compound priority crossings, not full old lower suite"
+  },
+  "inputs": [
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/review-assembler-design-v1.md",
+      "sha256": "8796c9416e1dd089215cbebf59424770319577f72c4e55c09253aefd7b7abc12",
+      "bytes": 6959
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/review-assembler-design-v1.json",
+      "sha256": "5ae35c07e76a8051da0966368af5b7da4bb1d7b9ce2ea621a99cff3aa5c47c1c",
+      "bytes": 9170
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-owner-scope-v2.md",
+      "sha256": "f7a1dfcfc7bf2f1711c2f31c4dbd8472f5b800f1d89b8de9d0d4458094f91b38",
+      "bytes": 10996
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-proposal-v1.md",
+      "sha256": "9b3c63e1546be3c0a49bdc6f09eeb0fc333a933b7ff1f16588504529509f359d",
+      "bytes": 37741
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-proposal-v1.json",
+      "sha256": "bcf6ed49e7d4dd69b93927a406071ecda51d2cc5253276dbb1ec123d5a1a533f",
+      "bytes": 90125
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-readset-v1.md",
+      "sha256": "a62efa14f032453f0b25f347280f83758b21ecd8a76a8488e7246d4d4560ddf8",
+      "bytes": 31443
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-readset-v1.json",
+      "sha256": "62b99de00a3a5157539fc59e6e2ba24cd641b91e80e3400252c9c69073ea4eb7",
+      "bytes": 53632
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-readset-v2.md",
+      "sha256": "c4de0d2ed8fbdb821a7c5074e30bed991c39c2d0fd05b879b359c69978de561f",
+      "bytes": 36528
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-readset-v2.json",
+      "sha256": "985486e03ed45064a103d34fa6048a8312f74c79e138fe080ff9bfce1b80342f",
+      "bytes": 62840
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-readset-v3.md",
+      "sha256": "ec0e289941ad1cc9faed333fe9bfe7df246e886e0aa2034c35e1d7db71aed8a4",
+      "bytes": 2158
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/assembler-readset-v3.json",
+      "sha256": "c0c243483564b164a39732c3fe6e2bd5d1e9f452d922a0945507ee97e805818c",
+      "bytes": 4294
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/wire-proposal-v1.md",
+      "sha256": "622122a14a31e654dfe0337f2d0935faba60d2d84b19a7bb86eda65f060bddd5",
+      "bytes": 42170
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/wire-proposal-v2.md",
+      "sha256": "2adfb63a2c006c91003e5613962226ffdf7a6c9311578eb044fe77cdbf770937",
+      "bytes": 31606
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/input-layout-v1.md",
+      "sha256": "314cd3725dc1d2e18027e80163238e4872d2ac7ce638a6371b983b6d46eb945c",
+      "bytes": 8564
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/identity-transition-v1.md",
+      "sha256": "1ed868b456e158687fc20e14554e8a59581175aa7e9f58f53760bbba1f1373bb",
+      "bytes": 8918
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/owner-decisions-v5.md",
+      "sha256": "6a5f368d9e261b0b6535b3580aa52cdd1868b97b12fa0b927407afdab386f934",
+      "bytes": 12964
+    },
+    {
+      "path": "crates/testing/reference/src/lifecycle/schema.rs",
+      "sha256": "92b94059b656a617f3a72bed727b06a313f13ec30558db0e3a6744402a1a6d7e",
+      "bytes": 32988
+    },
+    {
+      "path": "crates/testing/reference/src/lifecycle/input_schema.rs",
+      "sha256": "2cc755abce6c3be5156946b32467d76d946660a7e773bd4cd8f77f31c387b633",
+      "bytes": 5672
+    },
+    {
+      "path": "crates/testing/reference/src/lifecycle/raw_action.rs",
+      "sha256": "38ad8395556625e16d99f217559d519dcf4399a4b145959ca83830fd12fd898a",
+      "bytes": 10136
+    },
+    {
+      "path": "crates/testing/reference/src/lifecycle/target_selector.rs",
+      "sha256": "328eec1df26bcd5df3d6d71c661737f202d64592639a4da4ad40b8e07dae9b50",
+      "bytes": 10623
+    }
+  ],
+  "final_d2_pending": [
+    "materialized rich/error/cap/poison expected inputs",
+    "exact inventory and duplicate links",
+    "observation comparison/mutation and selection harness",
+    "final manifest/freeze"
+  ],
+  "execution": {
+    "product_edits": 0,
+    "fixture_edits": 0,
+    "tests": 0,
+    "compile": 0,
+    "runtime": 0,
+    "doc_verifier": 0,
+    "commit": 0
+  },
+  "scope_limits": [
+    "No product GO",
+    "No full model/BFS/FE14/engine/Q1 completion"
+  ],
+  "review_markdown": {
+    "path": "artifacts/dev4-lifecycle-model-20261024/review-assembler-design-v2.md",
+    "sha256": "a26138004920a423477c476f60ab55585055f1c8f71edeb253aa6757a86619ec",
+    "bytes": 4738
+  }
+}
