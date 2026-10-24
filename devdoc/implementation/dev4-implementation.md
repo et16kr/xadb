@@ -1,6 +1,6 @@
 # DEV4 독립 앞단 구현
 
-2026-10-24 · **lexer·이름·splitter·P2 parser 제한 구현 / 실제 SQL 실행·DEV4·Q1 미완료**
+2026-10-24 · **lexer·이름·splitter·P2 parser·P3 scalar 제한 구현 / 실제 SQL 실행·DEV4·Q1 미완료**
 
 [독립 앞단 계약](../contracts/dev4-independent-frontend.md#lexer-leaf) · [병행 계획](../plans/dev4-preparation-plan.md) · [source별 증거](../evidence/dev4-frontend-20261024.md)
 
@@ -83,10 +83,10 @@ cargo test -p xadb-sql --lib frontend::splitter::tests::absolute_offset_overflow
 
 P0/P1의 lexer·이름·streaming 경계와 원문 예약, 아래 P2 공통 parser·INSERT/거래 구문을
 제한 구현했다. 단일 API 문장 수·AST/marker 번호·source/arena 수명과 독립 literal의 선택
-증거를 수합했다. 다음은 P3 scalar/typed predicate이며 재귀 depth 경계는 이 후속 소비자에
+증거를 수합했다. 아래 P3 scalar 입력을 추가했고 다음은 predicate AST·전체 타입 분석·3값 계산이며 재귀 depth 경계는 이 후속 소비자에
 남는다. P4 나머지 구문, P5 추상 수명 모델, P6 공급 수합과 실제 binding의 FE11/12도 미완료다.
 
-값 변환·catalog binding·실행 CLI·session·실제 engine adapter와 Q1 entrypoint는 제공하지
+조건식·catalog binding·실행 CLI·session·실제 engine adapter와 Q1 entrypoint는 제공하지
 않는다. engine 연결은 DEV3 catalog/row/index/statement/undo/commit/recovery/temp의 실제 선행
 증거 뒤다. 앞단 단위 결과를 실제 SQL·복구·내구성·전체 DEV4/Q1 완료로 확대하지 않는다.
 
@@ -110,4 +110,29 @@ splitter 시험은 반복하지 않았다. parser_contracts의 필수6함수, pa
 `frontend::parse_budget::tests::typed_capacity_arithmetic_rejects_overflow`가 이번 선택이다.
 확대2profile은 NOT_RUN이다. 이후 실행도 실제 diff에 대응하는 함수만 고른다.
 
-P3 값/predicate·P4 나머지 문법·P5 수명 모델·P6 실제 DEV3 수합과 engine 통합·Q1은 남아 있다.
+P3 predicate·P4 나머지 문법·P5 수명 모델·P6 실제 DEV3 수합과 engine 통합·Q1은 남아 있다.
+
+<a id="scalar"></a>
+## Scalar 디코딩과 typed 값 소유
+
+`ScalarReader`는 실제 ParsedStatement의 scalar를 선택해 checked Int64·Text/Binary·Bool을
+변환하고 raw NULL/marker를 미정으로 보존한다. `copy_sql`은 원래 타입→SQL empty Utf8의
+같은 타입 NULL 정규화→nullable/byte 길이 순으로 명시 ScalarSpec을 검산하며 `copy_native`는
+non-NULL 빈 text를 유지한다. foundation의 Value/compare를 변경하거나 실제 binder를 제공하지 않는다.
+
+OwnedScalar는 non-Clone·readonly이며 String/Vec 실제 capacity를 기존 session/DB ledger에 유지한다.
+정확 길이 검산 뒤 단일 backing을 예약하고 초과 capacity를 게시 전에 보정한다. 검산·decode·copy에
+최대256byte 호출 제어를 적용하고 모든 실패/Drop에서 backing을 먼저 폐기한다. copy의 test-support
+observer는 local byte 진행, 반환 진단은 caller span을 그대로 사용한다. 전역 저장 표현의 유효성을
+목적 열 검산 완료로 쓰지 않으며 실제 후속 binder/predicate가 raw 원래 타입을 decode 전에 확인해야 한다.
+
+[source별 선택 증거](../evidence/dev4-scalar-20261024.md)에 신규23함수·semantic8,929call,
+known-bad20/정상통제8·자원16함수, 필수11범주/12제품 변조 거절과 기본 build/fmt/Clippy PASS를
+보존한다. 기존 완료 시험은 반복하지 않았고 확대2profile은 NOT_RUN이다. 최종 독립 D1을 이 scalar leaf에 수용했다.
+
+```bash
+cargo test -p xadb-sql --features test-support --locked --test scalar_contracts <function> -- --exact
+cargo test -p xadb-sql --features test-support --locked --test scalar_resources <function> -- --exact
+```
+
+이 진입점은 실제 diff에 대응하는 함수 선택용이다. P3 predicate·3값/전체 타입 분석과 실제 SQL 실행·Q1은 미완료다.

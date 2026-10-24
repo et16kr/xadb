@@ -20,6 +20,12 @@ pub enum Code {
     Name,
     /// Declared capacity, shared quota, allocation, or offset range exhausted.
     Limit,
+    /// Original scalar types differ; implicit coercion is not supported.
+    Type,
+    /// Integer value, decoded bytes, or explicit scalar metadata exceed their range.
+    Range,
+    /// A correctly typed NULL is not permitted by explicit scalar metadata.
+    NotNull,
     /// The current call's cancellation was observed.
     Cancelled,
     /// The current call's monotonic deadline was reached.
@@ -37,6 +43,8 @@ pub enum Module {
     Split,
     /// Raw grammar, owned AST, and parser backing allocation.
     Parse,
+    /// Scalar decoding, typed input validation, and retained value allocation.
+    Value,
 }
 
 /// Small failure result that does not allocate or manufacture transaction effects.

@@ -92,7 +92,7 @@
 | xadbtest-engine-worker | crates/testing/engine-worker | IMPLEMENTED | DEV2 | xadb-engine, xadb-foundation, xadb-platform, xadbtest-protocol |
 | xadb-transport | crates/transport | IMPLEMENTED | COMM | xadb-foundation |
 | xadbtest-transport-worker | crates/testing/transport-worker | IMPLEMENTED | COMM | xadb-foundation, xadb-platform, xadb-transport |
-| xadb-sql | crates/sql | IMPLEMENTED (독립 lexer/name만) | DEV4 | xadb-foundation |
+| xadb-sql | crates/sql | IMPLEMENTED (독립 앞단·scalar) | DEV4 | xadb-foundation |
 | xadb-cli | crates/cli | PLANNED | DEV4 | xadb-foundation, xadb-sql, xadb-platform |
 | xadb-server | crates/server | PLANNED | DEV5 | xadb-foundation, xadb-engine, xadb-sql, xadb-transport, xadb-platform |
 | xadb-client | crates/client | PLANNED | DEV6 | xadb-foundation, xadb-transport |
@@ -427,3 +427,5 @@ selector와 EmptyTransactions의 단계별 load/flush 관측을 추가한다. �
 [streaming 경계·원문 예약](../contracts/dev4-independent-frontend.md#splitter-leaf)은 같은 frontend의 source/splitter/UTF-8 carry를 추가한다. reference의 독립 splitter literal·새 splitter/resource 시험·dev4-splitter fixture를 기존 source roots에 등록했다. 반환 source와 기존 session/DB quota의 수명을 함께 관리하며 새 package/dependency는 없다. [선택 증거](../evidence/dev4-splitter-20261024.md)의 source별 결과를 유지한다.
 
 [P2 owned AST·parser](../contracts/dev4-independent-frontend.md#parser-leaf)은 같은 frontend에 ast/parse_budget/parser를 추가한다. 독립 reference parser literal/recipe와 parser_contracts/parser_resources·dev4-parser fixture는 기존 source roots 안에 있다. 원문·typed arena가 기존 session/DB quota를 함께 소비하며 새 package/dependency는 없다. [선택 증거](../evidence/dev4-parser-20261024.md)에 원 source별 결과와 후속 미구현 범위를 남긴다.
+
+[P3 scalar 입력](../contracts/dev4-independent-frontend.md#scalar-leaf)은 기존 frontend의 scalar.rs/scalar/budget.rs와 reference scalar literal/recipe, scalar_contracts/scalar_resources·dev4-scalar fixture를 추가한다. String/Vec 출력의 타입·NULL·quota 소유를 SQL에서 보존하고 foundation 의미·package/dependency·source root는 바꾸지 않는다. [선택 증거](../evidence/dev4-scalar-20261024.md)에 실제 범위와 predicate·binding·engine 미완료를 구분한다.

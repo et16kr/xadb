@@ -1,6 +1,6 @@
 # DEV4 — DEV3와 독립적인 SQL 앞단 계약
 
-2026-10-24 · **D4-PREP-001/002·D4-FE-LEX-001/SPLIT-001 ACCEPTED / lexer·이름·splitter 제한 구현 / 모델·Q1 NOT_RUN**
+2026-10-24 · **D4-PREP-001/002·D4-FE-LEX-001/SPLIT-001/PARSE-001/SCALAR-001 ACCEPTED / 독립 앞단·scalar 제한 구현 / 모델·Q1 NOT_RUN**
 
 [SQL 의미 정본](dev4-sql-design.md) · [개발 계획](../plans/dev4-preparation-plan.md) · [Oracle·로컬 소스 조사와 검토](../evidence/dev4-preparation-research-20261024.md)
 
@@ -285,3 +285,62 @@ literal AST는 전체 node 배열·순서·kind·Name·span·first_child/next_si
 2026-10-24 독립 D2는 최종 검토 manifest `6aae5d3a42595e78ad334699cf3ed3de3f85dafddbcb41fce5041cd9dafd8dc3`와 연결된 전체 literal/recipe/control을 읽기 검토하고 수용했다. 필수 semantic258(구조24·raw scalar26·오류122·경계22·64seed×128), known-bad23/정상통제4, 자원22함수+private1, 제품 mutant5종이다. 검토 중 오류 문맥·초기 span·주입 수명, root 자원 fixture의 prefix byte 산식과 이동 중 예약 witness를 교정했으며 제품·시험 실행 전 원본을 보존했다. 30분 별도 확대는 valid grammar 생성 fuzz이고 임의 malformed-byte fuzz의 실행 증거로 쓰지 않는다. 필수 고정 malformed122는 별도다. 값 검산/새 AST variant·동결 오류 우선순위/실제 quota 반례가 바뀌면 이 결정을 재검토한다. §12 이전의 원 leaf 증거는 소급 변경하지 않는다.
 
 구현 중 긴 exponent 후보 Identifier의 재검사 loop를 식별하여 [보충 자원 입력](../../tests/fixtures/dev4-parser/control-supplement.json)의 취소/deadline1함수와 검사 제거 mutant1종을 실행 전에 추가했다. 이 보충은 helper 코드 작성 **후**, 첫 compile/시험 **전**에 독립 D2 검토를 받았다. 원 구현 전 동결258semantic/22자원/5mutant를 소급 수정하지 않으며 합계 자원23함수·제품mutant6종으로 선택한다. 원 helper 초안과 두 동결 시점·hash는 실행 증거에 따로 보존한다.
+
+<a id="scalar-leaf"></a>
+## 13. D4-FE-SCALAR-001 — SQL scalar 입력·소유 경계
+
+2026-10-24 · **D2 ACCEPTED / scalar 제한 구현·선택 검증 / 최종 D1 제한 수용**. P3의 scalar 입력을 먼저 구현하고 predicate AST·전체 타입 분석·3값 계산은 다음 leaf에 연결한다. 실제 binder/DDL/session·engine은 여전히 미구현이며 이 제한을 P3 전체 완료로 바꾸지 않는다. 담당/통합은 `/root`, 제품은 `/root/frontend_research`, 독립 literal은 `/root/frontend_oracle`, 독립 D2/D1은 `/root/frontend_review`다. 기준 commit은 `15e47f4df6bb2445bcc0d9fe3c5d06c9be9ffddc`이고 별도 DEV3 dirty를 수정·시험에 포함하지 않는다.
+
+### 값 표현과 공개 입출력
+
+현재 foundation에는 borrowed ValueRef가 없다. `Value::Null`은 타입이 없고 `Value::compare`는 NULL을 타입 비교보다 먼저 처리하며 owned String/Vec는 quota owner가 아니다. 이를 수정하거나 SQL의 정답 계산으로 사용하지 않는다. 이번 타입·소유는 SQL frontend 안에 두고 정상 dependency는 foundation 하나를 유지한다.
+
+| 공개 항목 | 계약 |
+| --- | --- |
+| `ScalarType::{Int64,Bool,Utf8,Binary}` | 원래 논리 타입, Copy/Eq |
+| `ScalarRef<'a>::{Null(ScalarType),Int64(i64),Bool(bool),Utf8(&str),Binary(&[u8])}` | Copy/Eq인 borrowed 입력/읽기 view. 직접 구성할 수 있으며 구성 자체는 검산·예약 성공이 아니다. caller 입력 allocation은 caller 소유이며 이 helper가 소급 회계하지 않음 |
+| `DeclaredType::{Int64,Bool,Utf8(usize),Binary(usize)}`·`ScalarSpec { declared_type, nullable }` | 공개 명시 타입 fixture/후속 소비자 metadata. 가변 선언 길이는1..65,536, 고정 타입에는 길이가 없음. catalog 조회·DDL precommit을 대신하지 않음 |
+| `OwnedScalar`·`as_ref()` | private 값/lease와 readonly borrowed view. Clone·값 반출·mutator가 없으며 값 backing은 lease보다 먼저 폐기. Int64/Bool/typed NULL은 heap 없음 |
+| `DecodedScalar::{Value(OwnedScalar),Null,Parameter(u16)}` | raw 미정 NULL과1부터의 unresolved marker를 보존. SQL empty text는 Value(Null(Utf8)). 공개 variant는 caller도 구성하므로 AST provenance나 marker 유효성 capability가 아님 |
+| `ScalarReader::new(&Quota,&Quota)` | 기존 session/DB ledger handle만 공유하며 새 quota를 만들지 않음 |
+| `decode(&mut self,&ParsedStatement,node:usize,&CallControl)->Result<DecodedScalar,Diagnostic>` | 실제 immutable AST의 scalar node만 선택. statement/source borrow는 호출 동안만 유지하고 반환 값은 독립 수명. 원 source/AST lease는 별도 유지 |
+| `copy_sql(&mut self,ScalarRef,ScalarSpec,Span,&CallControl)->Result<OwnedScalar,Diagnostic>` | 원래 타입 검사 후 SQL empty Utf8만 typed NULL로 정규화하여 목적 nullability/길이 검산·복사 |
+| `copy_native` 같은 인자/반환 | 같은 검산·복사를 하되 native non-NULL empty Utf8를 정규화하지 않음 |
+
+`OwnedScalar`는 **전역 scalar 저장 표현의 유효성**만 보장한다. `copy_*`와 `decode`가 같은 저장 타입을 반환해도 어떤 목적 열/parameter의 검산을 끝냈다는 capability는 아니다. 후속 실제 binder/predicate는 raw ScalarSyntax의 원래 타입(Text는 빈 값·초과 길이여도 Utf8, Integer는 Int64)과 전체 목적 metadata를 **raw decode 이전**에 검사해야 한다. 예를 들어 초과 길이 Text→Int64의 실제 대입 오류는 Type다. 문맥 없는 `decode` 자체가 그 Text에 Range를 반환하는 것은 별도 호출 의미다. 이런 실제 binder 연결은 아직 제공하지 않으며 decoder 성공을 전체 문장 검산으로 해석하지 않는다.
+
+`copy_*`는 raw 미정 NULL/marker를 받지 않는다. 후속 typed 소비자가 전체 정적 타입 검사 뒤 유효 목적 타입을 사용해 미정 NULL을 typed NULL로 만들고 marker는 실제 binding으로 해소한다. 개별 값 검산을 bind_all·행 전체 원자성 인수로 확대하지 않는다.
+
+### 검사 순서와 진단
+
+Code에 `Type`, `Range`, `NotNull`, Module에 `Value`를 추가한다. 순수 진단이며 거래 상태/effect를 만들지 않는다. 이전 exhaustive 관측 adapter의 새 enum arm은 compile 연결이며 기존 runtime 사례를 반복할 근거가 아니다.
+
+모든 호출은 관측 없는 injection bookkeeping 초기화 뒤 진입 제어를 검사한다. `decode`는 유효 index이면 해당 node의 시작, 범위 밖 index이면 source EOF에서 진입한다. 범위 밖은 Value/Syntax `[len,len)`, non-scalar는 그 node 전체 span의 Value/Syntax다. 그 외 값 구문/범위 진단은 scalar 전체 span, 자원 Limit는 scalar 시작의 zero-width다. 호출 제어 진단은 실제 raw byte 처리 위치의 zero-width다.
+
+`copy_*`의 순서는 진입 제어→metadata 유효 범위→원래 타입→SQL만 empty 정규화→nullable→전역/목적 byte 길이→예약/복사→반환 전 제어다. 잘못된 metadata는 Range다. typed NULL·empty Utf8도 원래 타입이 다르면 Type가 우선한다. 같은 타입 NULL이고 nullable=false면 NotNull, 가변 payload가65,536 또는 목적 길이를 초과하면 Range다. coercion·절단·padding은 없다. native empty Utf8는 NOT NULL에도 실제 값이며 empty Binary·공백·U+0000도 보존한다.
+
+`copy_*`에서 반환하는 모든 진단 span은 caller의 `at`를 수정하지 않는다. 원문이 없는 native/parameter에도 쓸 수 있으므로 clamp·offset 산식·reversed span 교정을 하지 않는다. 반면 test-support `CallControl` observer는 Module::Value와 **입력/복사 내부의 local byte progress `[p,p)`**를 받는다(진입0, 각 chunk 완료, 완료 입력 길이). 제어 오류를 반환할 때만 caller at로 매핑한다. 이 관측 위치는 SQL source 위치라는 주장이 아니며 내부 loop checkpoint를 오류 표시 위치와 분리한다.
+
+정수는 checked 누적으로 MIN/MAX를 보존하며 첫 overflow digit에서 Range다. 음수 최솟값을 양수 i64로 먼저 만들지 않는다. 긴 leading zeros와 negative zero는 정상이다. Binary는 raw payload의 ASCII hex를 왼쪽부터 pair로 검산한다. pair 내 첫 비hex가 Syntax이고 유효 마지막 단독 nibble도 Syntax다. **두 nibble 모두 유효한65,537번째 byte가 성립할 때** Range가 된다. 따라서 그 pair의 비hex는 Syntax, 정상65,537byte 뒤의 비hex는 앞선 Range다. `X'0''0'`은 Syntax, `X''`는 빈 Binary다. Text는 quote doubling만 decode하고 Unicode/backslash/공백/NUL을 보존하며 decoded65,537byte에서 Range, 길이0이면 Utf8 typed NULL이다.
+
+### 예약·제어·수명
+
+Text/Binary는 검산·정확 decoded 길이 계산 후 단일 backing allocation으로 두 번째 decode를 수행한다. source 전체/최종 payload 전체의 숨은 UTF-8 재검사나 `parse::<i64>()`에 긴 loop를 위임하지 않는다. Text는 최대4byte UTF-8 scalar 또는 경계가 확인된≤256byte 조각을 검산하여 예약된 String에 넣는다. 모든 긴 정수·검산·decode/copy loop는 진입/종료와 최대256 raw/copied bytes마다 호출 제어를 검사한다. 최대4byte step은252byte 기준으로 검사해 초과를 피한다. cancel이 deadline보다 우선하며 관측한 checkpoint에서만 pending 값 오류보다 먼저 반환할 수 있다. 반환 값/reader에 완료 호출의 제어를 저장하지 않는다.
+
+decoded/copied 길이를 정확히 요청하며 zero length·고정 값·NULL·marker에는 backing 예약/할당이 없다. session→DB base 선예약, fallible allocation, 실제 capacity 초과분 session→DB 게시 전 보정을 String/Vec 모두에 적용한다. checked byte 산식/usize→u64, old retained output+new+source/AST 합산을 유지한다. 추가 growth/realloc이나 무상 clone을 하지 않는다. allocation은 lease보다 먼저 폐기하고 부분 실패는 이번 예약만 회수한다. global allocator 내부 RSS/OOM 복구 보장은 아니다.
+
+parser/splitter의 이미 검증한 budget을 범용화하지 않는다. scalar는 String/Vec backing·Value 진단·별도 호출 수명의 실제 소비자이며 작은 예약 절차 중복을 이번 범위에서 허용한다. 공유 불변식 변경 또는 추가 실제 소비자가 생기면 공통화 대안을 재검토한다. 고정 크기는 ScalarReader≤128, OwnedScalar≤256, DecodedScalar≤272, ScalarRef≤32bytes이며 입력 유래 재귀/Drop이 없다.
+
+비기본 test-support의 `fail_allocation_at(usize)`, `set_allocation_padding(bytes)`, `allocation_count()`, OwnedScalar의 `capacity_bytes()`를 제공한다. 실패 ordinal은 다음 decode/copy 호출 한 번만 소비하고0은 끄기, 도달하지 못해도 이월하지 않는다. allocation count는 양쪽 base 예약 성공 뒤 실제 backing site에서 증가하며 주입 실패를 포함한다. padding은 명시0 전까지 유지하되 zero-length/fixed에는 적용하지 않는다. padding overflow는 base 예약 뒤 count1의 Limit이며 lease를 모두 반환한다.
+
+### 검증·결정 기록
+
+독립 literal의 실제 ID/수/hash와 root의 자원 adapter를 제품 작성 전에 동결한다. 최소64seed×128scalar fragment와 별도 확대256×1024/30분 grammar-valid scalar 입력 생성 profile을 구분한다. malformed raw Binary·범위 오류는 고정 corpus로 검사하며 유효 생성 fuzz를 임의 malformed-byte fuzz로 부르지 않는다. wrong type/typed NULL/정규화/marker/error/span/incomplete 관측을 known-bad로 거절하고 정상 통제를 함께 둔다.
+
+자원 선택은 allocation site별 실패, session/DB base·actual capacity 경계±1, 뒤 예약 실패 정리, retained 원 source/AST/값, caller 폐기, long loop 양 pass의 중간 취소/deadline, 호출 재사용/주입 수명, 두 native caller 합산,256KiB stack의 최대 payload Drop과 checkpoint 최대 간격이다. 제품 mutant는 각 실제 long loop 검사 제거, actual capacity 미회계, 실패 lease 누수, typed NULL mismatch 수용, native empty 정규화를 해당 detector로 거절한다. 기존 완료 lexer/name/splitter/parser runtime은 반복하지 않는다.
+
+D2는 foundation 변경/가짜 engine 대신 SQL-local readonly type+quota owner를 선택한다. 원래 타입·NULL 소유를 foundation에 합치는 대안은 현재 하위 의미를 바꾸므로 기각하고, AST source와 ScalarSyntax를 caller가 별개로 제공하는 대안은 forged 조합을 늘리므로 기각한다. PostgreSQL·SQLite의 checked 정수/입력 분리와 MariaDB의 empty 값 경계를 실제 revision으로 조사하되, MariaDB mode의 empty blob→NULL 및 넓은 숫자/coercion 문법은 도입하지 않는다. 실제 연구·독립 검토와 source별 실행 증거는 이 leaf 종료 기록에 수합한다. 의미/오류 순서·borrow/소유·quota·전체 타입 검사 경계가 바뀌면 D2를 다시 검토한다.
+
+2026-10-24 `/root/frontend_review`가 manifest `b3e91f5de8983f09a07702dd0d7f01b77e642d98fce66d84009100451cae1b66`의 실제 파일·계약을 독립 D2로 수용했다. semantic7함수8,929call(고정/유한737·생성8,192), known-bad20/정상통제8, 자원16함수와 제품 mutant11범주를 제품 작성 전에 동결한다. 별도 확대2profile은 NOT_RUN이다. 검토 중 copy 관측 위치·목적 타입 검산 경계·최대 제어 간격·retained quota 경계·partial peak와 최종 제어를 보완했으며 제품/시험 FAIL을 소급 생성하지 않는다. 원 검토 사본·hash와 수용 후 동결은 artifacts/dev4-scalar-20261024에 보존한다.
+
+[source별 scalar 실행 증거](../evidence/dev4-scalar-20261024.md)에 신규23함수·8,929semantic·known-bad20/통제8과 필수11범주/12제품 변조 거절을 보존한다. 정상 runtime은 한 번이며 확대2profile·predicate/실제 binding·Q1은 미완료다.

@@ -1,0 +1,1259 @@
+{
+  "schema": 1,
+  "contract": "D4-FE-SCALAR-001",
+  "status": "LOCAL_SELECTED_VERIFICATION_AND_LIMITED_D1_ACCEPTED",
+  "scope": "P3 scalar input only; predicate/binder/engine/fullDEV4 remain incomplete",
+  "recorded_at": "2026-10-24T17:59:57.153191+09:00",
+  "baseline": {
+    "head": "15e47f4df6bb2445bcc0d9fe3c5d06c9be9ffddc",
+    "time": "2026-10-24T17:35:13.714396+09:00",
+    "status": " M crates/engine/src/storage/catalog_record.rs\n M crates/engine/src/storage/undo_record.rs\n M crates/engine/src/storage/undo_record_tests.rs\n M devdoc/contracts/dev3-catalog-format.md\n M devdoc/contracts/dev3-undo-format.md\n M devdoc/plans/dev3-test-plan.md\n M devdoc/policies/repository-build-plan.json\n?? crates/engine/src/storage/catalog_before.rs\n?? crates/engine/src/storage/catalog_before_tests.rs\n?? tests/fixtures/dev3-catalog-before/\n",
+    "dirty_patch_sha256": "038e9c84a6e7c8dcd5262f968aa24307b0b5f6de407df5924fa5082aa3bb2bd5",
+    "prior_turn": "progress: P2 authoritative commit15e47f4 and accepted limited D1",
+    "scope": "P3 scalar input first; predicate/P4/P5/P6 remain within goal; no DEV3 edits"
+  },
+  "head_at_evidence": "39fe1cb0546166ea664ac4dd192c552105282126",
+  "freeze": {
+    "at": "2026-10-24T17:48:52.211259+09:00",
+    "status": "D2_ACCEPTED_INPUT_FROZEN_BEFORE_PRODUCT",
+    "contract": "D4-FE-SCALAR-001",
+    "base_head": "15e47f4df6bb2445bcc0d9fe3c5d06c9be9ffddc",
+    "head_at_freeze": "15e47f4df6bb2445bcc0d9fe3c5d06c9be9ffddc",
+    "reviewer": "/root/frontend_review",
+    "reviewed_manifest_sha256": "b3e91f5de8983f09a07702dd0d7f01b77e642d98fce66d84009100451cae1b66",
+    "files": {
+      "devdoc/contracts/dev4-independent-frontend.md": "a72d39cbde48bff7738ebc89b4f8df289e448f7718d028f4dce2693df375e5a2",
+      "tests/fixtures/dev4-scalar/manifest.json": "73dadd0fd5bf474b8a62561bb09931c2aa978ee74fe7123cde120954086cb99a",
+      "tests/fixtures/dev4-scalar/semantic.json": "9e0a373c65a5c1c83129d9f033c9b30a489ac6c3c7eaad251207beee13984304",
+      "tests/fixtures/dev4-scalar/control.json": "baccd503984ed3a040097e80c9d17b90b904f0d95dcfec749f9e7f48060aa0c9",
+      "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+      "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+      "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+      "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+      "crates/sql/tests/scalar_contracts.rs": "f4db15da8b64e4f435432c7e32e4dd77cf5c6f4f32d24912d87b3f12452d1b80"
+    },
+    "product_present": {
+      "crates/sql/src/frontend/scalar.rs": false,
+      "crates/sql/src/frontend/scalar/budget.rs": false
+    },
+    "tests_executed": false,
+    "scope": "scalar leaf only; predicate/P4/P5/P6/full goal remain active",
+    "required_semantic_calls": 8929,
+    "required_runtime_functions": 23,
+    "known_bad": 20,
+    "acceptance_controls": 8,
+    "mutant_categories": 11,
+    "ignored_not_run": 2
+  },
+  "research": {
+    "schema_version": 1,
+    "task": "DEV4 P3 scalar/value read-only research",
+    "recorded_at_utc": "2026-10-24T08:35:50.537209+00:00",
+    "researcher": "/root/frontend_research",
+    "xadb_head": "15e47f4df6bb2445bcc0d9fe3c5d06c9be9ffddc",
+    "scope": {
+      "only_written_path": "artifacts/dev4-scalar-20261024/research.json",
+      "product_changes": false,
+      "fixture_changes": false,
+      "tests_executed": false,
+      "commit": false,
+      "native_dbms_executed": false
+    },
+    "xadb_inputs": [
+      {
+        "path": "crates/foundation/src/value.rs",
+        "read_line_ranges_inclusive": [
+          [
+            1,
+            71
+          ]
+        ],
+        "sha256": "f70fd414065e650f6cbf5fbe1ca5450160db9495d8c255b37a0b4b8c339ff0ce",
+        "worktree_porcelain": ""
+      },
+      {
+        "path": "crates/sql/src/frontend/ast.rs",
+        "read_line_ranges_inclusive": [
+          [
+            1,
+            145
+          ]
+        ],
+        "sha256": "17a6f5c11c50d396bfc86e1cc73eec16ab8ab72d0f61dc729c9990b3dd48ff65",
+        "worktree_porcelain": ""
+      },
+      {
+        "path": "devdoc/contracts/dev4-independent-frontend.md",
+        "read_line_ranges_inclusive": [
+          [
+            70,
+            111
+          ]
+        ],
+        "sha256": "e62ef592a48e0b0c68393074b9b746a53d61cbd438e081e64f256315bb7753cc",
+        "worktree_porcelain": ""
+      },
+      {
+        "path": "devdoc/contracts/dev4-sql-design.md",
+        "read_line_ranges_inclusive": [
+          [
+            70,
+            110
+          ]
+        ],
+        "sha256": "a7b2c9db54633b4460281693c83531d3f06aeba3b13db7a2fc01370bb1811952",
+        "worktree_porcelain": ""
+      }
+    ],
+    "local_source_references": [
+      {
+        "project": "postgres",
+        "checkout": "/home/et16/work/postgres",
+        "actual_head": "45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851",
+        "origin": "https://github.com/postgres/postgres.git",
+        "worktree_porcelain": "",
+        "files": [
+          {
+            "path": "src/backend/utils/adt/int8.c",
+            "read_line_ranges_inclusive": [
+              [
+                45,
+                58
+              ]
+            ],
+            "adopt": [
+              "Separate the SQL type input entry point from checked integer conversion."
+            ],
+            "reject_or_boundary": [
+              "Do not import PostgreSQL context/ereport allocation or DB types into the pure SQL frontend."
+            ],
+            "sha256": "52c1af1356f4f09f88ecc1fd47bbdc582d882ae34c9b485736598f55ec73e983"
+          },
+          {
+            "path": "src/backend/utils/adt/numutils.c",
+            "read_line_ranges_inclusive": [
+              [
+                625,
+                748
+              ],
+              [
+                845,
+                881
+              ]
+            ],
+            "adopt": [
+              "Explicitly handle the asymmetric signed range: negative magnitude 2^63 is valid while positive magnitude 2^63 is not.",
+              "Keep format and numeric-range failures distinct."
+            ],
+            "reject_or_boundary": [
+              "Do not inherit hexadecimal/octal/binary prefixes, underscores or general whitespace acceptance; the XADB AST already separates sign and decimal digits.",
+              "Do not copy the C converter; derive bounded Rust checked arithmetic with cancellation checkpoints."
+            ],
+            "sha256": "305012e70ee3aba3cfd2debc74e370e31a9b608cd9115d24df8cc00d2cb515e2"
+          },
+          {
+            "path": "src/backend/utils/adt/varchar.c",
+            "read_line_ranges_inclusive": [
+              [
+                444,
+                498
+              ]
+            ],
+            "adopt": [
+              "Length is explicit, rather than requiring NUL termination."
+            ],
+            "reject_or_boundary": [
+              "PostgreSQL typmod counts characters and permits truncating trailing spaces. XADB limits UTF8 bytes and preserves all trailing spaces without clipping."
+            ],
+            "sha256": "784bb7b873f075f86a0fe482ce5f21e695b142151c89b05de7aaf529fc126e3a"
+          },
+          {
+            "path": "src/backend/utils/adt/varlena.c",
+            "read_line_ranges_inclusive": [
+              [
+                190,
+                220
+              ]
+            ],
+            "adopt": [
+              "Length-delimited copying represents a zero-length text payload separately from SQL NULL."
+            ],
+            "reject_or_boundary": [
+              "This PostgreSQL text representation is not the XADB SQL empty-text rule: XADB normalizes only SQL input empty Utf8, preserving its type; native empty text remains a value."
+            ],
+            "sha256": "5be38077fcf94f99fee9aea1a35db8caae9b97cc59b94c5f7b1ef4bfcb851562"
+          }
+        ]
+      },
+      {
+        "project": "sqlite",
+        "checkout": "/home/et16/work/sqlite",
+        "actual_head": "43a48f77585a88940c727f33682151418f544059",
+        "origin": "https://github.com/sqlite/sqlite.git",
+        "worktree_porcelain": "",
+        "files": [
+          {
+            "path": "src/util.c",
+            "read_line_ranges_inclusive": [
+              [
+                1140,
+                1265
+              ],
+              [
+                1852,
+                1891
+              ]
+            ],
+            "adopt": [
+              "Use explicit input byte bounds and distinguish the exact signed 2^63 boundary; leading zeros must not produce a false overflow.",
+              "Hex decode requires validated ASCII hex and exactly two nibbles per byte."
+            ],
+            "reject_or_boundary": [
+              "Do not adopt wrapped accumulation, saturated result outputs or special success/error integers; XADB returns typed Range without a partial scalar.",
+              "Do not call a hex helper whose validation exists only as assertions. XADB must validate the P2 raw Binary payload before decode."
+            ],
+            "sha256": "c797e900272ba6cb0e75ba84f3ebc7e5ca1c473520d44f23cc50808851efdd8f"
+          },
+          {
+            "path": "src/vdbemem.c",
+            "read_line_ranges_inclusive": [
+              [
+                1260,
+                1376
+              ]
+            ],
+            "adopt": [
+              "Retain explicit byte length, separate null from zero-length text/blob, and check length before payload allocation."
+            ],
+            "reject_or_boundary": [
+              "The implementation may replace the destination with NULL on overlength at lines 1319-1328; XADB failure must preserve previously returned/retained outputs.",
+              "NUL-terminated strlen input and encoding/BOM conversion are not the XADB UTF8 byte-slice contract."
+            ],
+            "sha256": "a7c7fac59abe1f7415711a6ecdd763eb0a3aeb9aee585babacdaa94a9589cf14"
+          },
+          {
+            "path": "src/vdbe.c",
+            "read_line_ranges_inclusive": [
+              [
+                398,
+                466
+              ]
+            ],
+            "adopt": [],
+            "reject_or_boundary": [
+              "Numeric/text affinity converts strings and numbers. XADB must check original SQL type and reject implicit conversion, including empty Utf8 into Int64."
+            ],
+            "sha256": "0db58f144da7de9508a8285a5fee9a458d5ff499286a77b784f2c7c38c457d6d"
+          },
+          {
+            "path": "src/tokenize.c",
+            "read_line_ranges_inclusive": [
+              [
+                546,
+                575
+              ],
+              [
+                598,
+                626
+              ]
+            ],
+            "adopt": [
+              "Even-hex validation is a necessary condition before blob decode."
+            ],
+            "reject_or_boundary": [
+              "SQLite validates blob hex in tokenization. XADB P2 intentionally retains unchecked Binary tokens, so P3 must perform this check itself.",
+              "The inspected parser entry clears connection interruption state; XADB uses per-call borrowed controls and must not clear a caller cancellation token."
+            ],
+            "sha256": "fc0679949c68463f8a82a3f4f78cc17d720bd94a356ee6652b2bb1f6c6bacd22"
+          }
+        ]
+      },
+      {
+        "project": "mariadb",
+        "checkout": "/home/et16/work/mariadb",
+        "actual_head": "327437ade1d6dc6e4e57a6f1723b4abe4ac6c4b4",
+        "origin": "https://github.com/MariaDB/server.git",
+        "worktree_porcelain": "",
+        "files": [
+          {
+            "path": "strings/my_strtoll10.c",
+            "read_line_ranges_inclusive": [
+              [
+                18,
+                257
+              ]
+            ],
+            "adopt": [
+              "Treat negative 2^63 explicitly and allow arbitrary leading zeros under the source bound.",
+              "Numeric end position and overflow are separate observations."
+            ],
+            "reject_or_boundary": [
+              "The helper accepts unsigned positive range, prefix consumption and saturated error outputs. XADB requires all decimal digits and signed i64 bounds without saturation.",
+              "The null-terminated path uses a 65535-byte guard; XADB AST digits can be longer within the 1 MiB source limit and need bounded processing rather than this foreign cap."
+            ],
+            "sha256": "963784d550c59bd7a3658380e98ee5c22c82cc795ce9a6d48bd02a34d08c5dbf"
+          },
+          {
+            "path": "sql/sql_class.cc",
+            "read_line_ranges_inclusive": [
+              [
+                2880,
+                2950
+              ]
+            ],
+            "adopt": [
+              "Empty-text conversion belongs to the SQL input boundary, not the underlying storage value representation."
+            ],
+            "reject_or_boundary": [
+              "MariaDB mode-driven conversion creates Item_null while literal construction may also convert charsets. XADB has fixed UTF8 semantics and must retain Utf8 type before nullability checks."
+            ],
+            "sha256": "ee6c5715d0f8500588a119c7d2853cfb8db0466f6e190501ed14a9b2a593c11c"
+          },
+          {
+            "path": "sql/sql_prepare.cc",
+            "read_line_ranges_inclusive": [
+              [
+                792,
+                830
+              ],
+              [
+                845,
+                866
+              ]
+            ],
+            "adopt": [
+              "Literal and parameter input paths must apply the intended empty-input rule consistently."
+            ],
+            "reject_or_boundary": [
+              "Both string and blob setup take MODE_EMPTY_STRING_IS_NULL. XADB empty Binary is always a real zero-byte Binary value; do not copy the broader mode rule.",
+              "Do not depend on mutable THD modes or query logging during pure scalar conversion."
+            ],
+            "sha256": "1c83c960cac5f4e6be24132045e1d9afd9eed4fd374b464c9245d70a7c670fbd"
+          },
+          {
+            "path": "sql/field.cc",
+            "read_line_ranges_inclusive": [
+              [
+                7430,
+                7532
+              ]
+            ],
+            "adopt": [],
+            "reject_or_boundary": [
+              "Field conversion can report warning/note after truncation and treat lost trailing spaces specially. XADB validates before publication, does not truncate, and preserves trailing spaces."
+            ],
+            "sha256": "4b8a409ce9ab0efc197b831df1b9eaa215492cb8a78d7d22277cfbb38b5603ad"
+          },
+          {
+            "path": "sql/sql_yacc.yy",
+            "read_line_ranges_inclusive": [
+              [
+                13710,
+                13748
+              ]
+            ],
+            "adopt": [
+              "The sequence grammar demonstrates special handling of signed minimum rather than negating an unrepresentable positive i64."
+            ],
+            "reject_or_boundary": [
+              "This is sequence metadata grammar, not an XADB scalar implementation recipe or proof of identical SQL semantics."
+            ],
+            "sha256": "8ea54e11c92fd9b10cd3658f930079b8c6a4da62561508052f2412861585bfe0"
+          }
+        ]
+      }
+    ],
+    "foundation_findings": [
+      {
+        "lines": [
+          9,
+          22
+        ],
+        "finding": "Value::Null has no logical type; Utf8(String)/Bytes(Vec) own uncharged cloneable payloads. SQL needs a separate typed, quota-backed owner and must not alter foundation semantics."
+      },
+      {
+        "lines": [
+          24,
+          40
+        ],
+        "finding": "validate uses byte length and maps values over 65536 to LimitExceeded; it does not enforce target column length/nullability or SQL empty-input normalization."
+      },
+      {
+        "lines": [
+          42,
+          60
+        ],
+        "finding": "compare validates sizes, then returns UNKNOWN if either is Null before comparing variant discriminants. SQL predicate preparation still needs complete typed validation, especially for typed NULL; index total ordering is separate."
+      }
+    ],
+    "independent_design_concerns": [
+      "Keep untyped literal NULL, typed SQL/bind NULL, empty Utf8 SQL input and non-NULL native empty Utf8 distinct. Check original type before SQL-only empty-text normalization, then nullability/byte length.",
+      "Prefer literal conversion selected through (&ParsedStatement,node index) rather than independently supplied source/ScalarSyntax/span. A public raw-parts API would need full consistency checks. Define rejection of non-scalar nodes, out-of-bounds indices and unbound Parameter explicitly.",
+      "Checked negative accumulation (multiply by ten and subtract each digit, then checked negation only for nonnegative syntax) is an independently derived Rust option that represents i64::MIN directly. Long zero prefixes remain valid and require checkpoints.",
+      "Do not apply scalar i64 conversion to DDL type_length; those raw signed digits stay deferred until the DDL semantic owner after precommit.",
+      "Validate/count Text and Binary before allocation, then allocate exact decoded size under shared ledgers and decode with bounded checkpoints. Charge observed actual capacity; keep prior scalar/AST owners alive and charged.",
+      "Text removes doubled ASCII quote escapes only; backslash, spaces, U+0000 and other valid UTF8 bytes remain. Binary requires raw even ASCII hex; do not text-unescape doubled quotes into a supposedly valid binary.",
+      "Whole str.parse::<i64>(), String::from_utf8(full_vec) and unbounded decode/compare loops cannot expose the frozen 256-byte cancellation checkpoints. Use bounded processing, or retain verified UTF8 as charged bytes and avoid an uncontrolled whole-payload conversion.",
+      "Freeze Value module plus Type/Range/NotNull diagnostic variants, scalar/target length mappings, malformed/odd-hex precedence, malformed metadata behavior and spans before implementation.",
+      "Keep scalar outputs non-Clone, private owned payload/leases and readonly views; no detached foundation::Value or uncharged clone route in the product conversion API.",
+      "Scalar checks do not prove atomic bind_all, complete AST value checking or full predicate typing. Those callers must consume every required validation result and preserve old binding on any failure."
+    ],
+    "suggested_independent_cases": [
+      "Signed min/max and both adjacent failures; +0/-0; very long leading zeros; cancellation/deadline during zero scan; sign/trivia/digits origin spans.",
+      "Utf8 empty -> typed NULL; Utf8 empty to Int64 -> Type before nullability; typed NULL of wrong type -> Type; native empty remains non-NULL; empty Binary remains a value.",
+      "Text escape pairs, ordinary backslash, trailing spaces, U+0000, multibyte byte counts and decoded 65535/65536/65537 boundaries; quote-heavy raw length differs from decoded length.",
+      "Binary empty, mixed-case hex, odd nibble count, first invalid ASCII/non-ASCII character, doubled quote, embedded whitespace, decoded size boundary and competing malformed/overlength errors.",
+      "Shared session/database quota residual -1/exact/+1; actual allocation padding/excess reservation failure; cancellation in count/decode/copy; retained scalar/source/AST and prior output preservation.",
+      "Known-bad conversion/type-erasure/empty-Binary-to-null/trim/wrap/truncate/missing-checkpoint/lease-release mutants; no rerun of unchanged lexer/parser/foundation cases."
+    ],
+    "evidence_limit": "Source inspection and independently derived proposals only; no external DBMS behavior was executed and no implementation or acceptance result is claimed.",
+    "api_draft_review": {
+      "path": "artifacts/dev4-scalar-20261024/api-draft.md",
+      "sha256": "82231a85be6bce927b222cd6099a9f7a00f7d6cc962f01df8342698de301182a",
+      "read_scope": "Full draft, public API through required fixtures",
+      "assessment": "Implementation feasible; no additional public API required. Product implementation remains deferred until D2 and fixture freeze.",
+      "bounded_string_construction": "For AST Text, validate each source UTF8 scalar with std::str::from_utf8 over its 1..4 bytes, then push_str into the exactly reserved String; handle doubled ASCII quotes separately. Check after at most 252 accumulated raw bytes so a 4-byte step still gives an interval at most 255. No final full-payload UTF8 conversion is required.",
+      "borrowed_string_copy": "Input &str already guarantees UTF8. End each copy chunk at <=256 bytes, retreating at most three bytes to a character boundary, then push_str into preallocated output.",
+      "error_precedence_suggestions": [
+        "Binary: after 65536 valid decoded bytes, one valid dangling nibble is Syntax, a next pair containing a nonhex nibble is Syntax, and only a fully valid 65537th pair establishes Range. Freeze independent boundary examples.",
+        "Copy APIs must preserve caller at for all controls and diagnostics, including nonzero, reversed or very large offsets; do not add offsets or clamp as though a SQL source existed."
+      ],
+      "control_detector_suggestion": "copy_sql/copy_native use unchanged caller spans, so internal cancellation witnesses need checkpoint counts and charged-capacity observations rather than increasing source offset. Literal count versus charged decode can be distinguished by shared ledger usage."
+    }
+  },
+  "reviewed_corrections": [
+    {
+      "finding": "copy diagnostic span cannot itself witness internal copy progress",
+      "resolution": "test observer uses local byte progress; returned errors preserve caller span"
+    },
+    {
+      "finding": "decoded storage is not a destination-validation capability; decoding first may hide Type behind Range",
+      "resolution": "raw context-free decode clearly separated; future binder/predicate raw type precheck mandated before decode; actual integration NOT_RUN"
+    },
+    {
+      "finding": "interior cancellation alone does not verify256-byte maximum gap",
+      "resolution": "successful pass-local monotonic trace and delta<=256 across validation/decode/copy inclendpoint"
+    },
+    {
+      "finding": "retained ownership paths/boundaries incomplete",
+      "resolution": "all four entry paths,callerString/Vecoverwrite/drop,old3+new4096 residual -1/exact/+1"
+    },
+    {
+      "finding": "quota excess/padding/final control/injection edge witnesses incomplete",
+      "resolution": "partial session/database peaks,persistentpadding/reset,copyNativeentry andfixed-final cancellation/deadline"
+    }
+  ],
+  "source_r1_unused": {
+    "manifest": "source-r1.json",
+    "source_sha256": "cbebd41ab74717ddecf3b6203e56177922d9c0009ce8059ee08a4c1e47b83a5a",
+    "status": "NOT_RUN",
+    "reason": "Before execution found fourth old support adapter requiring mechanical enum arms. Source-r2 contains correction; no compile failure invented."
+  },
+  "verified_source": {
+    "base_head": "15e47f4df6bb2445bcc0d9fe3c5d06c9be9ffddc",
+    "created_at": "2026-10-24T17:56:25.279808+09:00",
+    "overlay_sha256": {
+      "crates/sql/Cargo.toml": "864605a552be0933c6df62fa11ac1a5827a24be65fd763564a6df274bceee03c",
+      "crates/sql/src/frontend/ast.rs": "17a6f5c11c50d396bfc86e1cc73eec16ab8ab72d0f61dc729c9990b3dd48ff65",
+      "crates/sql/src/frontend/control.rs": "8e45b2d3f7f94cffe625ba15e2c4a4d11ff1ac9de0d0d176513091c87a92f5d1",
+      "crates/sql/src/frontend/diagnostic.rs": "3282984ec6ddc445e583bc9e59e16eadad6b19d912354cb5f3bb3590fb39a5c5",
+      "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310",
+      "crates/sql/src/frontend/mod.rs": "0c8f3dee41345f0d6ac4e97622dfa2835144813ffc9de1541937b78d5df83689",
+      "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+      "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+      "crates/sql/src/frontend/parser.rs": "25e6bb8e4e1c4bb695624058b4b710626ee3e010eb29013ce6c0556dba7b0f19",
+      "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+      "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e",
+      "crates/sql/src/frontend/source.rs": "60fc27e4902e5aca8e5e3a22e066ffb810ef8fcc789297d60e192cef469e3ca8",
+      "crates/sql/src/frontend/splitter.rs": "5a65abbc7ffe0e45eed69ec96d2397023c3a0e97df6faddb63dab338e543e71d",
+      "crates/sql/src/frontend/splitter/utf8.rs": "28d12ffc18b20428c3e3dbfb63127a5e488bb684ddbad3b7d79659e5ca34e4d0",
+      "crates/sql/src/lib.rs": "334af6ebb1c095483acba2ee9207511d7dff2444922f7985ee97bc561f8bef9a",
+      "crates/sql/tests/frontend_control.rs": "cefd09b613f5f0396ab50b934c864aeb12fd87f7d62f09d836cc4265526c1890",
+      "crates/sql/tests/frontend_oracle.rs": "89ba8af9643a336725ecade46bbe5d8835b9a60849ddb85bc7f8ca0b5871d63a",
+      "crates/sql/tests/lexer_contracts.rs": "292d4aa9a2fb423ddd70b3f922150feaa04cfaee79b0e40055168e63534997e5",
+      "crates/sql/tests/name_contracts.rs": "4ffec5021b96d19b116f7fb65cf67d8074354349b6c4d5215005be5814365f92",
+      "crates/sql/tests/parser_contracts.rs": "8d288c35fc23d96b909fa75ac72421ead43042f4830bd5dd9c4fbd1c4e653fa3",
+      "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591",
+      "crates/sql/tests/scalar_contracts.rs": "f4db15da8b64e4f435432c7e32e4dd77cf5c6f4f32d24912d87b3f12452d1b80",
+      "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+      "crates/sql/tests/splitter_contracts.rs": "40527482e010f8b518228980e8860ebf17da35504b90b494a1bc90d62c09e533",
+      "crates/sql/tests/splitter_resources.rs": "efff301dc2eff3bf82f397fb6e67f3052ac7a4fad5afe97846f96493b15f23e6",
+      "crates/sql/tests/support/frontend.rs": "340019b3ed7703f1a4bbadb196a0f76f5fcff783395941d7a3754dc6920d2f69",
+      "crates/sql/tests/support/mod.rs": "84fde31a7b8517ad7208dc26f81d03b9d05a481479417237a54f67fd6c827344",
+      "crates/testing/reference/src/frontend.rs": "fe452c82fd6dce5c245b28b759139d19dfd102a82f33c4406d57794080c4e0ac",
+      "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+      "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+      "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+      "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+      "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+      "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+      "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+      "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+      "tests/fixtures/dev4-scalar/control.json": "baccd503984ed3a040097e80c9d17b90b904f0d95dcfec749f9e7f48060aa0c9",
+      "tests/fixtures/dev4-scalar/manifest.json": "73dadd0fd5bf474b8a62561bb09931c2aa978ee74fe7123cde120954086cb99a",
+      "tests/fixtures/dev4-scalar/semantic.json": "9e0a373c65a5c1c83129d9f033c9b30a489ac6c3c7eaad251207beee13984304"
+    },
+    "source_sha256": "1c2b00624da319e48bd120862cd020ed04368b61124f6a3aa90ee2f3feab60cc",
+    "selection": {
+      "at": "2026-10-24T17:49:47.453635+09:00",
+      "baseline": "15e47f4df6bb2445bcc0d9fe3c5d06c9be9ffddc",
+      "scope": "new scalar product/reference/adapters only, no DEV3 dirty overlay",
+      "changed_to_tests": [
+        {
+          "paths": [
+            "crates/sql/src/frontend/scalar.rs",
+            "crates/sql/src/frontend/scalar/budget.rs"
+          ],
+          "tests": [
+            "scalar_contracts required7",
+            "scalar_resources16"
+          ],
+          "basis": "new checked decoding/typed copy/resource ownership all frozen before product"
+        },
+        {
+          "paths": [
+            "crates/testing/reference/src/frontend/scalar.rs",
+            "crates/testing/reference/src/frontend/scalar"
+          ],
+          "tests": [
+            "scalar_contracts::known_bad_scalar_observations_are_rejected",
+            "scalar_contracts literal/generated comparisons"
+          ],
+          "basis": "new independent outcome oracle and fixed tables"
+        },
+        {
+          "paths": [
+            "crates/sql/src/frontend/diagnostic.rs",
+            "crates/sql/src/frontend/mod.rs",
+            "crates/testing/reference/src/frontend.rs",
+            "crates/sql/src/frontend/control.rs",
+            "crates/sql/tests/name_contracts.rs",
+            "crates/sql/tests/parser_contracts.rs",
+            "crates/sql/tests/splitter_contracts.rs",
+            "crates/sql/tests/support/frontend.rs"
+          ],
+          "tests": [
+            "default cargo check",
+            "SQL/reference alltargets allfeatures Clippy"
+          ],
+          "basis": "enum/export arms and doc-only observer clarification; oldruntime unchanged, no rerun"
+        }
+      ],
+      "runtime_commands": [
+        [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-sql",
+          "--features",
+          "test-support",
+          "--locked",
+          "--test",
+          "scalar_contracts",
+          "--test",
+          "scalar_resources",
+          "--",
+          "--nocapture"
+        ]
+      ],
+      "static_commands": [
+        [
+          "cargo",
+          "check",
+          "-p",
+          "xadb-sql",
+          "--locked"
+        ],
+        [
+          "cargo",
+          "clippy",
+          "-p",
+          "xadb-sql",
+          "-p",
+          "xadbtest-reference",
+          "--all-targets",
+          "--all-features",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        [
+          "cargo",
+          "fmt",
+          "--all",
+          "--check"
+        ]
+      ],
+      "ignored_not_run": [
+        "extended_generated_scalar_input_operations",
+        "extended_scalar_generated_30_minutes"
+      ],
+      "existing_tests_repeated": false,
+      "document_verifier": "NOT_RUN pre-push-only; no push requested",
+      "mutation_policy": "each mutant own immutable source/target, execute only its exact detector; retain everyFAIL, do not repeat unchanged normal runtime",
+      "build_storage": {
+        "reason": "Filesystem has2.9GiB free; /tmp is30GiB tmpfs. Preserve existing DEV3/other artifacts.",
+        "targets": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/<source>, unique eachsource",
+        "CARGO_INCREMENTAL": "0",
+        "preservation": "Every executable build/test binary copied bySHA256 under artifact/binaries; source and logs remain disk-backed; temporary target is cache only",
+        "mutant_sources": "hardlink immutable normal source, atomic replace each edited file, verify baseoriginalhashes"
+      },
+      "preexecution_correction": "source-r1 snapshot not executed: static search found fourth old support adapter exhaustive enum match; added mechanical arms before first compile/test. Runtime product unchanged."
+    },
+    "source": "source-r2",
+    "export_script_sha256": "b6228687e83218738ef033198ca1d595c9c379490fec767494f69296ddbfe079",
+    "DEV3_dirty_included": false
+  },
+  "receipts": [
+    {
+      "artifact": "r2-default-check.json",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-sql",
+        "--locked"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/source-r2",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r2.json",
+      "source_sha256": "1c2b00624da319e48bd120862cd020ed04368b61124f6a3aa90ee2f3feab60cc",
+      "exit_code": 0,
+      "seconds": 0.7729514010025014,
+      "finished_at": "2026-10-24T17:56:30.811885+09:00",
+      "log_sha256": "c27d74e52195e866b4c64c3048c299d624a406d8d69fe422dbf016aae755d6b7",
+      "binaries": {},
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "r2-fmt.json",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/source-r2",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r2.json",
+      "source_sha256": "1c2b00624da319e48bd120862cd020ed04368b61124f6a3aa90ee2f3feab60cc",
+      "exit_code": 0,
+      "seconds": 0.9455573980012559,
+      "finished_at": "2026-10-24T17:56:30.984494+09:00",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "binaries": {},
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "r2-runtime.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_contracts",
+        "--test",
+        "scalar_resources",
+        "--",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/source-r2",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r2.json",
+      "source_sha256": "1c2b00624da319e48bd120862cd020ed04368b61124f6a3aa90ee2f3feab60cc",
+      "exit_code": 0,
+      "seconds": 3.7731549520030967,
+      "finished_at": "2026-10-24T17:56:39.282293+09:00",
+      "log_sha256": "e2d5caefbe918c509093df2369b1224002cfa6cf72935e87c2005d094ca732ef",
+      "binaries": {
+        "binaries/1d9763d0b9064c94a8f15291a8af1c5309cae052913732e696fab1baf6391ed0/scalar_resources-62a7585f853704b9": "1d9763d0b9064c94a8f15291a8af1c5309cae052913732e696fab1baf6391ed0",
+        "binaries/dcbfe8b66a45656b20bd56d913e8e9690298251c36eec115fbbd8e8933fa18e6/scalar_contracts-b49f9333b0d8d026": "dcbfe8b66a45656b20bd56d913e8e9690298251c36eec115fbbd8e8933fa18e6",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "r2-clippy.json",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-sql",
+        "-p",
+        "xadbtest-reference",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/source-r2",
+      "CARGO_INCREMENTAL": "0",
+      "source": "source-r2.json",
+      "source_sha256": "1c2b00624da319e48bd120862cd020ed04368b61124f6a3aa90ee2f3feab60cc",
+      "exit_code": 0,
+      "seconds": 2.973908243999176,
+      "finished_at": "2026-10-24T17:58:06.890565+09:00",
+      "log_sha256": "c98e040bbfee1eb8bd44445a88aeb6c405c393deead97de9245f1ba730b6f936",
+      "binaries": {
+        "binaries/1d9763d0b9064c94a8f15291a8af1c5309cae052913732e696fab1baf6391ed0/scalar_resources-62a7585f853704b9": "1d9763d0b9064c94a8f15291a8af1c5309cae052913732e696fab1baf6391ed0",
+        "binaries/dcbfe8b66a45656b20bd56d913e8e9690298251c36eec115fbbd8e8933fa18e6/scalar_contracts-b49f9333b0d8d026": "dcbfe8b66a45656b20bd56d913e8e9690298251c36eec115fbbd8e8933fa18e6",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "mutant-integer-detector.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_resources",
+        "integer_loop_checks_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/mutant-integer",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-integer.json",
+      "source_sha256": "30589bd3d5884609fd18bd913dc5809242ab7d85f6a6e05c25d5fd398d784212",
+      "exit_code": 101,
+      "seconds": 3.7553159479975875,
+      "finished_at": "2026-10-24T17:58:08.881890+09:00",
+      "log_sha256": "f1e8117ca7656b44410fbe08ef2f0d1b4b23df7e574597e41db9781cb3649fcb",
+      "binaries": {
+        "binaries/53a3ec4bf93b7a2261d8acfa676d89d6d2111a2dbef3bf1d914dd99202e1a250/scalar_resources-62a7585f853704b9": "53a3ec4bf93b7a2261d8acfa676d89d6d2111a2dbef3bf1d914dd99202e1a250",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "mutant-text-count-detector.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_resources",
+        "text_validation_and_decode_check_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/mutant-text-count",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-text-count.json",
+      "source_sha256": "57bb60014184f4aed87270309373b8ab71474f89f3429031d63594adc1d9088e",
+      "exit_code": 101,
+      "seconds": 3.677192399998603,
+      "finished_at": "2026-10-24T17:58:12.618788+09:00",
+      "log_sha256": "f15b81eccada644eda8ca17d30e98be228e8773c7b226fcc9fe7fc43ce8be1dc",
+      "binaries": {
+        "binaries/dc387086c76c634344a2ad59a17605ee73ff89463f2434b15fff2187ae8c7b4b/scalar_resources-62a7585f853704b9": "dc387086c76c634344a2ad59a17605ee73ff89463f2434b15fff2187ae8c7b4b",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "mutant-text-decode-detector.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_resources",
+        "text_validation_and_decode_check_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/mutant-text-decode",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-text-decode.json",
+      "source_sha256": "9397ffbb6fd35f4058bc4ade8f8a27cba9d167069588f60298e59e5d19e91228",
+      "exit_code": 101,
+      "seconds": 3.651793870001711,
+      "finished_at": "2026-10-24T17:58:16.329927+09:00",
+      "log_sha256": "9cef4f6a85dc1233d06590a34f8394cf91392897bf4a5f5a9cb09e6bfa87f0bb",
+      "binaries": {
+        "binaries/b4b901a0fba6f12a79e2a4d833ccdc89e463d3924de0bb1c882991393fd1ef19/scalar_resources-62a7585f853704b9": "b4b901a0fba6f12a79e2a4d833ccdc89e463d3924de0bb1c882991393fd1ef19",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "mutant-binary-count-detector.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_resources",
+        "binary_validation_and_decode_check_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/mutant-binary-count",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-binary-count.json",
+      "source_sha256": "129dc99beb536ca4f86a46d99405db5d40eac339cd977ac9577923e8d8d9f6f4",
+      "exit_code": 101,
+      "seconds": 3.6928850270014664,
+      "finished_at": "2026-10-24T17:58:20.085955+09:00",
+      "log_sha256": "50cf7f1729ae22c7b374d2fc085012987d4b72cf32b97839eef6f71f84a065fe",
+      "binaries": {
+        "binaries/3ecfbd209586318092f0f7f54aa18ded7b5bb8f8708568b5605d9838ed63584c/scalar_resources-62a7585f853704b9": "3ecfbd209586318092f0f7f54aa18ded7b5bb8f8708568b5605d9838ed63584c",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "mutant-binary-decode-detector.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_resources",
+        "binary_validation_and_decode_check_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/mutant-binary-decode",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-binary-decode.json",
+      "source_sha256": "dac3907073bcee033443258dd6f418851ca706fa10a75cee8a56b86260d5fb1c",
+      "exit_code": 101,
+      "seconds": 3.671370908999961,
+      "finished_at": "2026-10-24T17:58:23.814845+09:00",
+      "log_sha256": "57c8f05332a4521aa486cf6be815c7a9f9200dcd5e80663c12171139228963be",
+      "binaries": {
+        "binaries/89539b0ee5756f84dc3c65dbe81ace526fc5cc58994a40ca21e71ae63008eff7/scalar_resources-62a7585f853704b9": "89539b0ee5756f84dc3c65dbe81ace526fc5cc58994a40ca21e71ae63008eff7",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "mutant-borrowed-text-detector.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_resources",
+        "borrowed_copy_checks_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/mutant-borrowed-text",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-borrowed-text.json",
+      "source_sha256": "b96d1beeeb625dd6a3ba1fd132c5e044656b820d90fec1f702b0277d109943f5",
+      "exit_code": 101,
+      "seconds": 3.6835017490011523,
+      "finished_at": "2026-10-24T17:58:27.557105+09:00",
+      "log_sha256": "ba0d6cfb07a81a4b8fd4fea16f878e72d08c3a4902f09e3089535818ccb41b6f",
+      "binaries": {
+        "binaries/90cc3fbee8fb4d1e713e4bd414cf48d120193cd9be527b6a59c4ca0eebdc9d02/scalar_resources-62a7585f853704b9": "90cc3fbee8fb4d1e713e4bd414cf48d120193cd9be527b6a59c4ca0eebdc9d02",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "mutant-borrowed-binary-detector.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_resources",
+        "borrowed_copy_checks_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/mutant-borrowed-binary",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-borrowed-binary.json",
+      "source_sha256": "ddc3c98012e277d5efc3f417c40e6c828bbaf37277fe1b06bfa981f4e34916c8",
+      "exit_code": 101,
+      "seconds": 3.696206891003385,
+      "finished_at": "2026-10-24T17:58:31.314460+09:00",
+      "log_sha256": "1fd105df8b895eb60db2bbf1ad8617de03a2e9368b18a7dbcab1bc146b998e9b",
+      "binaries": {
+        "binaries/2849c1320344046c7639c4da49fb846cead28e81c3279e5d926fdcb47597f313/scalar_resources-62a7585f853704b9": "2849c1320344046c7639c4da49fb846cead28e81c3279e5d926fdcb47597f313",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "mutant-capacity-detector.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_resources",
+        "actual_capacity_and_excess_failure",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/mutant-capacity",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-capacity.json",
+      "source_sha256": "ea4e0a063ea20317319052cbe512ddfec8cdeb3018398e4b356a91031273b6af",
+      "exit_code": 101,
+      "seconds": 3.7255512429983355,
+      "finished_at": "2026-10-24T17:58:35.099561+09:00",
+      "log_sha256": "4309e97398cb49486d45e86f253bfed370252f8ece21b519f42cc58b6d051273",
+      "binaries": {
+        "binaries/be59f6a3f73b11cbb3dd96256a5e823fa20d305fcad587b54b43c19cf4b04457/scalar_resources-62a7585f853704b9": "be59f6a3f73b11cbb3dd96256a5e823fa20d305fcad587b54b43c19cf4b04457",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "mutant-lease-detector.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_resources",
+        "all_allocation_failures_and_reuse",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/mutant-lease",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-lease.json",
+      "source_sha256": "1e6577991905ead5afaae5828a37a5c3bbe3e5b1e4410672d13e0c0071900442",
+      "exit_code": 101,
+      "seconds": 3.7268955549989187,
+      "finished_at": "2026-10-24T17:58:38.886816+09:00",
+      "log_sha256": "39e3d655d39aad4655a1ea81200fd03826a54148227a1ec6407991a83abf5aaa",
+      "binaries": {
+        "binaries/9fe7009dbda7bb8394b9c9b4462cc409746b9276dd0c7e0bdeaaaae0d8b78021/scalar_resources-62a7585f853704b9": "9fe7009dbda7bb8394b9c9b4462cc409746b9276dd0c7e0bdeaaaae0d8b78021",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "mutant-typed-null-detector.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_contracts",
+        "typed_input_type_null_origin_matrix",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/mutant-typed-null",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-typed-null.json",
+      "source_sha256": "c53f717c9e14a15e4d2c967d5d687b5bf9e172be3ba160acab5bea29eecdb988",
+      "exit_code": 101,
+      "seconds": 3.7532110970023496,
+      "finished_at": "2026-10-24T17:58:42.699665+09:00",
+      "log_sha256": "8f8f6d9ed9b8b21747f89db55942735c5a581160d5cf98baae7dbdfda77b0f83",
+      "binaries": {
+        "binaries/6e30689bb592d5408644205c45a9ebf2fb2f76dba9b6995668760eab0b631ca6/scalar_contracts-b49f9333b0d8d026": "6e30689bb592d5408644205c45a9ebf2fb2f76dba9b6995668760eab0b631ca6",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "mutant-native-empty-detector.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_contracts",
+        "typed_input_type_null_origin_matrix",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/mutant-native-empty",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-native-empty.json",
+      "source_sha256": "8cf33a2790a4fb92686ecd203ff5e98179132c28576120e3d1a70132ffca5e94",
+      "exit_code": 101,
+      "seconds": 3.805535946001328,
+      "finished_at": "2026-10-24T17:58:46.570498+09:00",
+      "log_sha256": "d1c53c39d46107fc40fc876cba5da9c6b436361ca17d5aa4ab1498d0c3113a19",
+      "binaries": {
+        "binaries/04f54d1c757cdc9bd2feca5aa5beb7330553c10e3002fa2825dce35e36b87733/scalar_contracts-b49f9333b0d8d026": "04f54d1c757cdc9bd2feca5aa5beb7330553c10e3002fa2825dce35e36b87733",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    },
+    {
+      "artifact": "mutant-final-detector.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "scalar_resources",
+        "final_control_prevents_scalar_publication",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "target_directory": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/mutant-final",
+      "CARGO_INCREMENTAL": "0",
+      "source": "mutant-final.json",
+      "source_sha256": "5184543de52ec16102dc7d09919ccc073fd36032b1c7eaf00e31f7a0ff9566ab",
+      "exit_code": 101,
+      "seconds": 3.710504835999018,
+      "finished_at": "2026-10-24T17:58:50.344583+09:00",
+      "log_sha256": "56a1201c3939c8bad111fdb2fdd29e036170b6b2dd4c2be3a21b70b32ed98f8b",
+      "binaries": {
+        "binaries/3434ecf0f4c7709d28ec920375fec21be24112aa8c7eec197c1b067b8aecc888/scalar_resources-62a7585f853704b9": "3434ecf0f4c7709d28ec920375fec21be24112aa8c7eec197c1b067b8aecc888",
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "6a9439eb433c0d946a2a9ce6abf18d6d55379352e4c6e8e7313dc3a1937f2245"
+    }
+  ],
+  "summary": {
+    "required_functions_passed": 23,
+    "semantic_calls": 8929,
+    "fixed_or_finite_cases": 737,
+    "generated_calls": 8192,
+    "known_bad_rejected": 20,
+    "acceptance_controls": 8,
+    "resource_functions_passed": 16,
+    "normal_runtime_executions": 1,
+    "normal_failures": 0,
+    "mutant_categories": 11,
+    "mutant_variants_and_runs": 12,
+    "separately_ignored_not_run": 2,
+    "current_overlay_matches_r2": true
+  },
+  "mutants": [
+    {
+      "source": "mutant-integer",
+      "source_sha256": "30589bd3d5884609fd18bd913dc5809242ab7d85f6a6e05c25d5fd398d784212",
+      "category": "integer_control_removed",
+      "detector": "integer_loop_checks_controls",
+      "test_target": "scalar_resources",
+      "verdict": "ACTUAL_COMPILED_DETECTOR_REJECTED",
+      "witness": "panicked at crates/sql/tests/scalar_resources.rs:467:14:\nrequired interior pass checkpoint was not reached"
+    },
+    {
+      "source": "mutant-text-count",
+      "source_sha256": "57bb60014184f4aed87270309373b8ab71474f89f3429031d63594adc1d9088e",
+      "category": "text_count_control_removed",
+      "detector": "text_validation_and_decode_check_controls",
+      "test_target": "scalar_resources",
+      "verdict": "ACTUAL_COMPILED_DETECTOR_REJECTED",
+      "witness": "panicked at crates/sql/tests/scalar_resources.rs:467:14:\nrequired interior pass checkpoint was not reached"
+    },
+    {
+      "source": "mutant-text-decode",
+      "source_sha256": "9397ffbb6fd35f4058bc4ade8f8a27cba9d167069588f60298e59e5d19e91228",
+      "category": "text_decode_control_removed",
+      "detector": "text_validation_and_decode_check_controls",
+      "test_target": "scalar_resources",
+      "verdict": "ACTUAL_COMPILED_DETECTOR_REJECTED",
+      "witness": "panicked at crates/sql/tests/scalar_resources.rs:467:14:\nrequired interior pass checkpoint was not reached"
+    },
+    {
+      "source": "mutant-binary-count",
+      "source_sha256": "129dc99beb536ca4f86a46d99405db5d40eac339cd977ac9577923e8d8d9f6f4",
+      "category": "binary_count_control_removed",
+      "detector": "binary_validation_and_decode_check_controls",
+      "test_target": "scalar_resources",
+      "verdict": "ACTUAL_COMPILED_DETECTOR_REJECTED",
+      "witness": "panicked at crates/sql/tests/scalar_resources.rs:467:14:\nrequired interior pass checkpoint was not reached"
+    },
+    {
+      "source": "mutant-binary-decode",
+      "source_sha256": "dac3907073bcee033443258dd6f418851ca706fa10a75cee8a56b86260d5fb1c",
+      "category": "binary_decode_control_removed",
+      "detector": "binary_validation_and_decode_check_controls",
+      "test_target": "scalar_resources",
+      "verdict": "ACTUAL_COMPILED_DETECTOR_REJECTED",
+      "witness": "panicked at crates/sql/tests/scalar_resources.rs:467:14:\nrequired interior pass checkpoint was not reached"
+    },
+    {
+      "source": "mutant-borrowed-text",
+      "source_sha256": "b96d1beeeb625dd6a3ba1fd132c5e044656b820d90fec1f702b0277d109943f5",
+      "category": "borrowed_copy_control_removed",
+      "detector": "borrowed_copy_checks_controls",
+      "test_target": "scalar_resources",
+      "verdict": "ACTUAL_COMPILED_DETECTOR_REJECTED",
+      "witness": "panicked at crates/sql/tests/scalar_resources.rs:547:17:\nrequired interior copy checks were not reached"
+    },
+    {
+      "source": "mutant-borrowed-binary",
+      "source_sha256": "ddc3c98012e277d5efc3f417c40e6c828bbaf37277fe1b06bfa981f4e34916c8",
+      "category": "borrowed_copy_control_removed",
+      "detector": "borrowed_copy_checks_controls",
+      "test_target": "scalar_resources",
+      "verdict": "ACTUAL_COMPILED_DETECTOR_REJECTED",
+      "witness": "panicked at crates/sql/tests/scalar_resources.rs:547:17:\nrequired interior copy checks were not reached"
+    },
+    {
+      "source": "mutant-capacity",
+      "source_sha256": "ea4e0a063ea20317319052cbe512ddfec8cdeb3018398e4b356a91031273b6af",
+      "category": "capacity_excess_not_charged",
+      "detector": "actual_capacity_and_excess_failure",
+      "test_target": "scalar_resources",
+      "verdict": "ACTUAL_COMPILED_DETECTOR_REJECTED",
+      "witness": "panicked at crates/sql/tests/scalar_resources.rs:226:32:\ncalled `Result::unwrap_err()` on an `Ok` value: OwnedScalar { kind: Utf8, is_null: false, payload_bytes: 4096 }"
+    },
+    {
+      "source": "mutant-lease",
+      "source_sha256": "1e6577991905ead5afaae5828a37a5c3bbe3e5b1e4410672d13e0c0071900442",
+      "category": "failed_output_lease_leaked",
+      "detector": "all_allocation_failures_and_reuse",
+      "test_target": "scalar_resources",
+      "verdict": "ACTUAL_COMPILED_DETECTOR_REJECTED",
+      "witness": "panicked at crates/sql/tests/scalar_resources.rs:84:5:\nassertion `left == right` failed\n  left: 4099\n right: 3"
+    },
+    {
+      "source": "mutant-typed-null",
+      "source_sha256": "c53f717c9e14a15e4d2c967d5d687b5bf9e172be3ba160acab5bea29eecdb988",
+      "category": "typed_null_wrong_type_accepted",
+      "detector": "typed_input_type_null_origin_matrix",
+      "test_target": "scalar_contracts",
+      "verdict": "ACTUAL_COMPILED_DETECTOR_REJECTED",
+      "witness": "panicked at crates/sql/tests/scalar_contracts.rs:171:5:\ncase=matrix-Sql-null-int-Bool-false observed=Error(ErrorObservation { code: \"NotNull\", module: \"Value\", span: [31, 37] }) expected=Error(ErrorObservation { code: \"Type\", module: \"Value\", span: [31, 37] }) complete=true/true"
+    },
+    {
+      "source": "mutant-native-empty",
+      "source_sha256": "8cf33a2790a4fb92686ecd203ff5e98179132c28576120e3d1a70132ffca5e94",
+      "category": "native_empty_normalized",
+      "detector": "typed_input_type_null_origin_matrix",
+      "test_target": "scalar_contracts",
+      "verdict": "ACTUAL_COMPILED_DETECTOR_REJECTED",
+      "witness": "panicked at crates/sql/tests/scalar_contracts.rs:171:5:\ncase=matrix-Native-empty-text-Utf8-false observed=Error(ErrorObservation { code: \"NotNull\", module: \"Value\", span: [31, 37] }) expected=Utf8 bytes=0 prefix=[] suffix=[] complete=true/true"
+    },
+    {
+      "source": "mutant-final",
+      "source_sha256": "5184543de52ec16102dc7d09919ccc073fd36032b1c7eaf00e31f7a0ff9566ab",
+      "category": "final_fixed_scalar_control_removed",
+      "detector": "final_control_prevents_scalar_publication",
+      "test_target": "scalar_resources",
+      "verdict": "ACTUAL_COMPILED_DETECTOR_REJECTED",
+      "witness": "panicked at crates/sql/tests/scalar_resources.rs:808:13:\nassertion failed: witnessed.get()"
+    }
+  ],
+  "storage": {
+    "reason": "Filesystem has2.9GiB free; /tmp is30GiB tmpfs. Preserve existing DEV3/other artifacts.",
+    "targets": "/tmp/xadb-dev4-scalar-20261024-01a16ca9/<source>, unique eachsource",
+    "CARGO_INCREMENTAL": "0",
+    "preservation": "Every executable build/test binary copied bySHA256 under artifact/binaries; source and logs remain disk-backed; temporary target is cache only",
+    "mutant_sources": "hardlink immutable normal source, atomic replace each edited file, verify baseoriginalhashes"
+  },
+  "runtime_product_sha256": {
+    "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+    "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e"
+  },
+  "final_d1": {
+    "at": "2026-10-24T18:04:51.624051+09:00",
+    "reviewer": "/root/frontend_review",
+    "status": "ACCEPTED_LIMITED_D1",
+    "contract": "D4-FE-SCALAR-001",
+    "verified_source": "1c2b00624da319e48bd120862cd020ed04368b61124f6a3aa90ee2f3feab60cc",
+    "mandatory_remaining_issues": [],
+    "reviewed_evidence": {
+      "current_overlay_files": 39,
+      "source_manifests": 14,
+      "overlay_hash_checks": 546,
+      "base_non_overlay_files": 4271,
+      "receipts": 16,
+      "unique_build_targets": 13,
+      "saved_binaries": 15,
+      "manifest_entry_hashes": 7,
+      "mismatches": 0
+    },
+    "runtime": "7semantic+16resource PASS; ignored2 NOT_RUN; normalruntime1;4static/runtime receipts +12actualmutantdetector rejections",
+    "scope_exclusions": [
+      "predicate/full type analysis/3VL",
+      "P4 remaining grammar",
+      "P5 lifetime model",
+      "P6 supply handoff",
+      "actual binding/engine/Q1",
+      "expanded2profiles"
+    ],
+    "reviewer_executed_tests": false,
+    "reviewer_ran_document_verifier": false
+  },
+  "existing_runtime_tests_repeated": false,
+  "document_verifier": "NOT_RUN pre-push gate only; no push requested",
+  "remaining": [
+    "P3 predicate AST/full type analysis/3VL",
+    "P4 remaining grammar",
+    "P5 abstract lifetime model (proposal only)",
+    "P6 supply handoff",
+    "actual binding/engine/Q1"
+  ]
+}

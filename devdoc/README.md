@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-24 [DEV4 scalar 입력·typed 값 소유](evidence/dev4-scalar-20261024.md): 원래 타입·SQL/native empty 경계·bounded decode와 shared quota를 구현했다. 신규23함수·8,929semantic·필수11범주/12제품 변조 거절과 source별 증거를 보존한다. 최종 독립 D1 제한 수용이며 predicate·나머지 문법·모델·실제 engine 통합·Q1은 미완료다.
+
 2026-10-24 [DEV3 Catalog typed Undo before](evidence/dev3-catalog-before-20261024.md): XCB1과 typed accessor를 구현하고 필수123을 선택 검증했다. 원 Clippy FAIL·수집기 부분 판정을 보존하며 최종 독립 D1 제한 수용, 실제 Catalog/첫 행·전체 DEV3/S5는 미완료다.
 
 2026-10-24 [DEV4 owned AST·INSERT/거래 구문](evidence/dev4-parser-20261024.md): 원문·flat AST의 shared quota 소유와 단일 문장/PUBLIC/marker를 구현했다. 신규30함수·semantic258·known-bad23과 source별 제품 mutant 거절·원 Clippy compile FAIL을 보존한다. 값/predicate·나머지 문법·수명 모델·실제 engine 통합·Q1은 미완료다.

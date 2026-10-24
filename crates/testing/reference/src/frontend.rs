@@ -5,6 +5,7 @@
 
 pub mod literals;
 pub mod parser;
+pub mod scalar;
 pub mod splitter;
 
 use literals::{DiagnosticObservation, LexCase, LexObservation, NameCase, NameObservation};

@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV4 scalar 입력·typed 값 소유](dev4-scalar-20261024.md): 독립 D2·필수23함수·11범주/12제품 변조와 [source별 선택 증거](dev4-scalar-20261024.json).
+
 - [DEV3 Catalog typed Undo before](dev3-catalog-before-20261024.md) · [source 색인](dev3-catalog-before-20261024.json): 필수123 선택 결과·원 실패·S5 미실행과 제한 선행 범위.
 
 - [DEV4 owned AST·INSERT/거래 구문](dev4-parser-20261024.md): 독립 D2 동결·typed arena/shared quota·[source별 선택 실행](dev4-parser-20261024.json).

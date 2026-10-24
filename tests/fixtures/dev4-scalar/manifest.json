@@ -1,0 +1,87 @@
+{
+  "schema": "xadb.dev4.scalar.manifest.v1",
+  "contract": "D4-FE-SCALAR-001",
+  "status": "D2_ACCEPTED_FROZEN_BEFORE_PRODUCT",
+  "product_status": "No scalar product/adapter existed when authored; compile/tests NOT_RUN by oracle owner",
+  "files": {
+    "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+    "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+    "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+    "tests/fixtures/dev4-scalar/semantic.json": "9e0a373c65a5c1c83129d9f033c9b30a489ac6c3c7eaad251207beee13984304",
+    "tests/fixtures/dev4-scalar/control.json": "baccd503984ed3a040097e80c9d17b90b904f0d95dcfec749f9e7f48060aa0c9",
+    "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+    "crates/sql/tests/scalar_contracts.rs": "f4db15da8b64e4f435432c7e32e4dd77cf5c6f4f32d24912d87b3f12452d1b80"
+  },
+  "required_functions": [
+    {
+      "name": "literal_scalar_decode",
+      "calls": 401,
+      "fixture": "decode_literals"
+    },
+    {
+      "name": "scalar_node_consumer_boundaries",
+      "calls": 10,
+      "fixture": "wrong_node_literals"
+    },
+    {
+      "name": "decoded_scalar_byte_and_range_boundaries",
+      "calls": 36,
+      "fixture": "decode_boundaries"
+    },
+    {
+      "name": "typed_input_type_null_origin_matrix",
+      "calls": 192,
+      "fixture": "copy_matrix"
+    },
+    {
+      "name": "typed_input_metadata_and_byte_boundaries",
+      "calls": 98,
+      "fixture": "copy_boundaries"
+    },
+    {
+      "name": "generated_scalar_input_operations",
+      "calls": 8192,
+      "fixture": "64seeds*128 generated_cases"
+    },
+    {
+      "name": "known_bad_scalar_observations_are_rejected",
+      "known_bad": 20,
+      "exact_acceptance_controls": 8,
+      "fixture": "known_bad_observations"
+    }
+  ],
+  "required_semantic_calls": 8929,
+  "required_finite_or_literal_calls": 737,
+  "required_generated_calls": 8192,
+  "required_known_bad": 20,
+  "required_acceptance_controls": 8,
+  "separately_selected_ignored_functions": [
+    {
+      "name": "extended_generated_scalar_input_operations",
+      "seeds": [
+        0,
+        255
+      ],
+      "operations_per_seed": 1024,
+      "calls": 262144
+    },
+    {
+      "name": "extended_scalar_generated_30_minutes",
+      "duration_seconds": 1800,
+      "first_seed": 256,
+      "operations_per_seed": 128,
+      "scope": "generated grammar-valid scalar input; no arbitrary malformed bytes"
+    }
+  ],
+  "control_fixture": {
+    "path": "tests/fixtures/dev4-scalar/control.json",
+    "owner": "root",
+    "hash_status": "D2_ACCEPTED",
+    "sha256": "baccd503984ed3a040097e80c9d17b90b904f0d95dcfec749f9e7f48060aa0c9"
+  },
+  "freeze_rule": "Independent D2 accepts exact fixtures, count/recipes and final root control before product implementation. Preserve original hashes before any expectation change.",
+  "resource_note": "All copy inputs are borrowed caller-owned allocations. New retained output is charged. Parser/source used for decode remain independently charged. Root owns exact quota/control/allocation cases; semantic oracle has no ledger implementation.",
+  "required_resource_functions": 16,
+  "reviewed_manifest_sha256": "b3e91f5de8983f09a07702dd0d7f01b77e642d98fce66d84009100451cae1b66",
+  "reviewer": "/root/frontend_review"
+}

@@ -1,0 +1,291 @@
+{
+  "schema": "xadb.dev4.scalar.semantic.v1",
+  "contract": "D4-FE-SCALAR-001",
+  "status": "PRE_FREEZE_D2_REVIEW",
+  "authoritative_data": [
+    "crates/testing/reference/src/frontend/scalar.rs",
+    "crates/testing/reference/src/frontend/scalar/literals.rs",
+    "crates/testing/reference/src/frontend/scalar/recipes.rs"
+  ],
+  "independence": "Expected values are literal constants or chosen first. Spelling helpers only encode those values into quoted/hex/decimal SQL; they never decode to obtain an expected result. The copy type/null outcomes are explicit finite tables, independent of production functions.",
+  "observation": [
+    "logical_type",
+    "complete payload variant and bytes/value",
+    "raw UntypedNull versus typed NULL",
+    "unresolved Parameter ordinal",
+    "diagnostic code/module/span",
+    "complete"
+  ],
+  "call_schema": {
+    "Decode": [
+      "exact source bytes",
+      "fixed preorder node index"
+    ],
+    "Copy": [
+      "origin Sql/Native",
+      "literal typed input",
+      "explicit logical target type/max bytes/nullable",
+      "caller at preserved unchanged"
+    ]
+  },
+  "decode_literal_inventory": {
+    "integer_success": 15,
+    "integer_range": 7,
+    "text_named_nonempty": 14,
+    "text_empty": 1,
+    "text_ascii_values": "128 cases, each byte0..127; quote spelling doubled, all decoded values length1",
+    "binary_named_success": 6,
+    "binary_all_bytes": "2 cases, upper/lower hex encoding of the exact256byte sequence0..255",
+    "binary_named_syntax": 10,
+    "binary_invalid_ascii": "(128-22 allowed hex ASCII characters)*2 nibble positions=212 cases; single quote is doubled in raw spelling but remains invalid hex",
+    "bool": 2,
+    "untyped_null": 1,
+    "parameter": "3 cases: ordinal1, ordinal256 at node262, ordinal1 after text containing a question mark",
+    "total": 401
+  },
+  "wrong_node_inventory": {
+    "source": "INSERT INTO t(a) VALUES (0);",
+    "nodes_and_spans": [
+      [
+        0,
+        [
+          0,
+          27
+        ]
+      ],
+      [
+        1,
+        [
+          12,
+          13
+        ]
+      ],
+      [
+        2,
+        [
+          12,
+          13
+        ]
+      ],
+      [
+        3,
+        [
+          13,
+          16
+        ]
+      ],
+      [
+        4,
+        [
+          14,
+          15
+        ]
+      ],
+      [
+        5,
+        [
+          17,
+          27
+        ]
+      ],
+      [
+        6,
+        [
+          24,
+          27
+        ]
+      ],
+      [
+        8,
+        [
+          28,
+          28
+        ]
+      ],
+      [
+        "usize::MAX",
+        [
+          28,
+          28
+        ]
+      ]
+    ],
+    "transaction_root": {
+      "source": " BEGIN; ",
+      "node": 0,
+      "span": [
+        1,
+        6
+      ]
+    },
+    "code": "Syntax",
+    "module": "Value",
+    "total": 10
+  },
+  "decode_boundary_inventory": {
+    "long_zero": "4 digit lengths255,256,257,65537 * optional minus2 =8",
+    "long_leading_zero_minmax": 2,
+    "long_overflow": 1,
+    "text_byte_limits": "lengths65535/65536/65537 * widths1/2/3/4 =12",
+    "escaped_quote_limits": 3,
+    "binary_limits": 3,
+    "binary_error_precedence": 7,
+    "total": 36
+  },
+  "decode_error_coordinates": "Canonical wrapper prefix INSERT INTO t(a) VALUES ( is25bytes; scalar node7. Every semantic value error uses full scalar [25,25+raw.len). Wrongnode/index uses explicit table above.",
+  "binary_precedence": [
+    [
+      "invalid-before-range",
+      "GG then65537 valid pairs",
+      "Syntax"
+    ],
+    [
+      "high-invalid-at-range",
+      "65536 valid pairs then G0",
+      "Syntax"
+    ],
+    [
+      "low-invalid-at-range",
+      "65536 valid pairs then 0G",
+      "Syntax"
+    ],
+    [
+      "range-before-invalid",
+      "65537 valid pairs then GG",
+      "Range"
+    ],
+    [
+      "valid-odd-after-limit",
+      "65536 valid pairs then0",
+      "Syntax"
+    ],
+    [
+      "range-before-odd",
+      "65537 valid pairs then0",
+      "Range"
+    ],
+    [
+      "invalid-odd-after-limit",
+      "65536 valid pairs then G",
+      "Syntax"
+    ]
+  ],
+  "copy_matrix": {
+    "input_ids": [
+      "int",
+      "bool",
+      "text",
+      "binary",
+      "null-int",
+      "null-bool",
+      "null-text",
+      "null-binary",
+      "empty-text",
+      "empty-binary",
+      "space-text",
+      "nul-text"
+    ],
+    "targets": [
+      "Int64",
+      "Bool",
+      "Utf8(65536)",
+      "Binary(65536)"
+    ],
+    "nullable": [
+      false,
+      true
+    ],
+    "origins": [
+      "Sql",
+      "Native"
+    ],
+    "at": [
+      31,
+      37
+    ],
+    "expected_table": "Explicit sql/native Cell tables in recipes.rs; original type mismatch Type, correct typed NULL NotNull unless nullable, SQL empty Utf8 same-type normalized to typed NULL only. Native empty Utf8 always non-NULL.",
+    "total": 192
+  },
+  "copy_boundary_inventory": {
+    "global_byte_bounds": 12,
+    "small_target_bounds": 24,
+    "metadata": 20,
+    "multibyte_byte_bounds": 18,
+    "type_before_oversized_payload": 4,
+    "exact_text_preservation": 16,
+    "all_native_binary_bytes": 2,
+    "unaltered_reversed_or_max_caller_span": 2,
+    "total": 98
+  },
+  "metadata_precedence": "For each origin and variable target type: maximum0/65537/usize::MAX =>Range; maximum1/65536 with input Null(Int64)=>Type even nonnullable. Metadata check precedes original type; type precedes nullability/length.",
+  "copy_error_coordinates": "Most boundary cases at[41,47]; matrix[31,37]; explicit reversed[99,3] and [usize::MAX-1,usize::MAX] preserved exactly. Control observer localprogress is root control fixture, not semantic diagnostic coordinate.",
+  "generated_recipe": {
+    "function": "generated_cases(seed,operations)",
+    "required_seeds": [
+      0,
+      63
+    ],
+    "operations_per_seed": 128,
+    "required_calls": 8192,
+    "state": "u64 wrapping LCG; initial seed; per operation multiply6364136223846793005 add1442695040888963407; branch=(state>>32)%8",
+    "branches": [
+      "known Int64 (state&65535)-32768 -> decimal spelling",
+      "known ASCII bytes [a,state&127,quote,space] -> doubled quote spelling",
+      "known bytes [state&255,(state>>8)&255,0,255] -> upper/lower hex spelling",
+      "SQL '' -> typed Utf8 NULL",
+      "NULL -> UntypedNull",
+      "? -> Parameter1",
+      "9223372036854775808 -> Range",
+      "copy_native empty Utf8 NOT NULL max1 at[5,2] -> non-NULL empty"
+    ],
+    "expanded_seeds": [
+      0,
+      255
+    ],
+    "expanded_operations_per_seed": 1024,
+    "fuzz_profile": "Separately selected ignored30-minute generated grammar-valid scalar profile, sequential seeds starting256, each128 operations. It includes fixed semantic Range cases but does not claim arbitrary malformed bytes, malformed AST generation or exhaustive exploration."
+  },
+  "known_bad_ids": [
+    "incomplete-success",
+    "typed-null-erased",
+    "typed-null-retyped",
+    "sql-empty-not-normalized",
+    "native-empty-normalized",
+    "empty-binary-normalized",
+    "nul-truncated",
+    "space-trimmed",
+    "text-binary-coercion",
+    "inconsistent-payload-tag",
+    "minimum-wrapped",
+    "minimum-rejected",
+    "parameter-zero-based",
+    "parameter-fabricated-value",
+    "raw-null-premature-type",
+    "malformed-hex-success",
+    "wrong-error-code",
+    "wrong-error-module",
+    "wrong-error-span",
+    "incomplete-error"
+  ],
+  "known_bad_count": 20,
+  "acceptance_control_ids": [
+    "control-text",
+    "control-sql-empty",
+    "control-empty-binary",
+    "control-native-empty",
+    "control-minimum",
+    "control-parameter",
+    "control-raw-null",
+    "control-hex-error"
+  ],
+  "scope_not_run": [
+    "predicate AST/full type validation/three-valued logic",
+    "binder checks original ScalarSyntax type before context-free decode",
+    "whole bind_all replacement atomicity",
+    "catalog/DDL precommit",
+    "native disk fetch/index/filter/update preservation",
+    "engine execution",
+    "Q1"
+  ],
+  "prior_leaf_policy": "Existing lexer/name/splitter/parser tests and literals remain unchanged and are not rerun. The new scalar consumer parses only its own fixed sources and checks new decode/copy behavior."
+}

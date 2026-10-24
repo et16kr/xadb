@@ -1,0 +1,147 @@
+{
+  "status": "D2_DRAFT_BEFORE_PRODUCT",
+  "functions": [
+    {
+      "id": "retained_outputs_charge_actual_backing",
+      "scope": "decode text/binary and SQL/native copies; mutable caller overwritten/dropped; parser shares same ledgers and old source/AST+decoded ownership overlap; retained outputs survive reader/statement; final zero"
+    },
+    {
+      "id": "base_reservation_boundaries",
+      "scope": "four allocation entry paths text decode,binary decode,SQL Utf8 copy,native Binary copy, session/DB each residual4095/4096/4097; both base reservations before allocation count; rollback front reservation"
+    },
+    {
+      "id": "actual_capacity_and_excess_failure",
+      "scope": "same four paths, padding17 ->4113actualbytes; session/DB limits4112/4113/4114; base4096 reserved then extras; failurealloccount1; success actual4113; finalzero; partial peak session-extra failure4096/4096,DB-extra failure4113/4096,success4113/4113; second call padding retained thenexplicit0 reset"
+    },
+    {
+      "id": "all_allocation_failures_and_reuse",
+      "scope": "four entry paths failordinal1; retain earlier 3byte output, unchanged; limitdiag; allocation1; failurecleanup; next call succeeds; unmetordinal2 consumed; ordinal0 disables"
+    },
+    {
+      "id": "zero_payload_and_fixed_values_allocate_nothing",
+      "scope": "decode int,bool,null,marker,emptytext,emptybinary; SQL emptyUtf8 and typedNULL; native emptyUtf8/Binary; quotas0/paddingusizeMAX/failordinal1; no allocation and injection consumed; next nonempty independent success"
+    },
+    {
+      "id": "padding_overflow_returns_all_leases",
+      "scope": "all four paths paddingusizeMAX with small actualpayload; LIMIT before allocation, count1 after bases; final0; freshclear succeeds"
+    },
+    {
+      "id": "entry_control_and_reader_reuse",
+      "scope": "cancel beats deadline; deadline equality; entry consumes injectednextfailure; fresh call separate controls succeeds; no source mutation; bothcopy_sql/native entries included"
+    },
+    {
+      "id": "integer_loop_checks_controls",
+      "scope": "4096 leadingzeros +1, signs none/plus/minus; phaseusage0, p in scalarstart+1024..+2048; cancellation and deadline; source input same parser fixture; first bounded witness; error actual zero-width checkpoint; final zero"
+    },
+    {
+      "id": "text_validation_and_decode_check_controls",
+      "scope": "4096decoded ASCII and multibyte escapedtext; phaseusage0 for count and exactdecodedlength for copy; p in scalarstart+1024..+2048; bothcancel/deadline; all intervals<=256; no final whole-payload UTF8 pass"
+    },
+    {
+      "id": "binary_validation_and_decode_check_controls",
+      "scope": "4096decoded repeated00fF pairs, raw8192hex; phases usage0/4096 and p in scalarstart+1024..+2048; bothcancel/deadline; maximum checkpoint raw gap256"
+    },
+    {
+      "id": "borrowed_copy_checks_controls",
+      "scope": "SQL/native Utf8/Binary four copies4096bytes; returned diagnosticspan7..9; observerlocalp1024..2048 with output4096charged proves interiorcopy; bothcancel/deadline; no forcedsleep"
+    },
+    {
+      "id": "two_callers_share_database_quota",
+      "scope": "two actual threads ownsession8192/commonDB8192, eachcopy4096 success, returnedvalue holds sharedquota; DB8191 exactlyone succeeds; single start barrier; no final barriers/deadlock; collectjoins beforeassert/drop"
+    },
+    {
+      "id": "bounded_fixed_state_and_drop",
+      "scope": "ScalarReader<=128 OwnedScalar<=256 DecodedScalar<=272 ScalarRef<=32; 65536decodedtext+binary on256KiB stack, retention and nonrecursive drop; source prepared outside stack; no other existing parser assertion/rerun"
+    },
+    {
+      "id": "checkpoint_distances_are_bounded",
+      "scope": "successful decode of4096leadingzero integer,4096ASCIItext,multibyteescapedtext,8192rawbinary; per outputuncharged/chargedphase originalposition monotonic maxgap256 inclend; SQL/native Utf8/Binary copied localprogress maxgap256 including entry/end; exactfinalprogress required"
+    },
+    {
+      "id": "retained_output_reservation_boundaries",
+      "scope": "old3 retained +new4096, four input paths session/DB limits4098/4099/4100, failure oldunchanged and final0"
+    },
+    {
+      "id": "final_control_prevents_scalar_publication",
+      "scope": "bool/null/marker/int/emptytext/emptybinary and charged text/binary scalar.end before success, cancel/deadline, failure releases all"
+    }
+  ],
+  "mutants": [
+    {
+      "id": "integer_control_removed",
+      "detector": "integer_loop_checks_controls"
+    },
+    {
+      "id": "text_count_control_removed",
+      "detector": "text_validation_and_decode_check_controls"
+    },
+    {
+      "id": "text_decode_control_removed",
+      "detector": "text_validation_and_decode_check_controls"
+    },
+    {
+      "id": "binary_count_control_removed",
+      "detector": "binary_validation_and_decode_check_controls"
+    },
+    {
+      "id": "binary_decode_control_removed",
+      "detector": "binary_validation_and_decode_check_controls"
+    },
+    {
+      "id": "borrowed_copy_control_removed",
+      "detector": "borrowed_copy_checks_controls"
+    },
+    {
+      "id": "capacity_excess_not_charged",
+      "detector": "actual_capacity_and_excess_failure"
+    },
+    {
+      "id": "failed_output_lease_leaked",
+      "detector": "all_allocation_failures_and_reuse"
+    },
+    {
+      "id": "typed_null_wrong_type_accepted",
+      "detector": "typed_input_type_null_origin_matrix"
+    },
+    {
+      "id": "native_empty_normalized",
+      "detector": "typed_input_type_null_origin_matrix"
+    },
+    {
+      "id": "final_fixed_scalar_control_removed",
+      "detector": "final_control_prevents_scalar_publication"
+    }
+  ],
+  "notes": [
+    "Mutant count final follows actual distinct long loops; same shared helper used count/decode mutated with phase guard to prove both phases.",
+    "No product or tests executed. Exact adapter hashes must be reviewed/frozen before implementation."
+  ],
+  "function_count": 16,
+  "actual_adapter_functions": [
+    "retained_outputs_charge_actual_backing",
+    "base_reservation_boundaries",
+    "actual_capacity_and_excess_failure",
+    "all_allocation_failures_and_reuse",
+    "zero_payload_and_fixed_values_allocate_nothing",
+    "padding_overflow_returns_all_leases",
+    "entry_control_and_reader_reuse",
+    "integer_loop_checks_controls",
+    "text_validation_and_decode_check_controls",
+    "binary_validation_and_decode_check_controls",
+    "borrowed_copy_checks_controls",
+    "two_callers_share_database_quota",
+    "bounded_fixed_state_and_drop",
+    "checkpoint_distances_are_bounded",
+    "retained_output_reservation_boundaries",
+    "final_control_prevents_scalar_publication"
+  ],
+  "schema": "xadb.dev4.scalar.control.v1",
+  "contract": "D4-FE-SCALAR-001",
+  "owner": "/root, independent review /root/frontend_review",
+  "adapter": "crates/sql/tests/scalar_resources.rs",
+  "adapter_sha256": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+  "product_written": false,
+  "tests_executed": false,
+  "diagnostic_coordinates": "decode original source; copy returned caller at unchanged but observer localbytes",
+  "maximum_checkpoint_gap_bytes": 256
+}

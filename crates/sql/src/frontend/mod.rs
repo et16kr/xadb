@@ -9,6 +9,7 @@ mod lexer;
 mod name;
 mod parse_budget;
 mod parser;
+mod scalar;
 mod source;
 mod splitter;
 
@@ -18,5 +19,8 @@ pub use diagnostic::{Code, Diagnostic, Module, Span};
 pub use lexer::{Keyword, Lexer, Token, TokenKind};
 pub use name::{Name, normalize_name};
 pub use parser::Parser;
+pub use scalar::{
+    DeclaredType, DecodedScalar, OwnedScalar, ScalarReader, ScalarRef, ScalarSpec, ScalarType,
+};
 pub use source::StatementSource;
 pub use splitter::{SplitOutcome, SplitStep, Splitter};
