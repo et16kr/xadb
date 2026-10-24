@@ -960,7 +960,7 @@ fn g5_bind_boundaries() {
                 if case == 7 { frames[1].register(expected_request(1)).unwrap(); }
                 let mut reader_root = boxed::<PAGE_BYTES>(0);
                 let mut reader_scratch = boxed::<PAGE_BYTES>(0);
-                if case == 9 { std::mem::forget(storage.fresh.open_reader(&mut reader_root, &mut reader_scratch).unwrap()); }
+                if case == 9 { std::mem::forget(storage.core.open_reader(&mut reader_root, &mut reader_scratch).unwrap()); }
                 if case == 12 { storage.session_fence().fence(); }
                 if case == 13 {
                     assert!(catch_unwind(AssertUnwindSafe(|| {

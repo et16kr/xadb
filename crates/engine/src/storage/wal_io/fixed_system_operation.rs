@@ -78,7 +78,7 @@ impl<'out, 's> FixedPrepared<'out, 's> {
     }
     pub(in super::super) fn stage_required<W: WriterNamespace>(
         self,
-        session: &'s GenesisWalSession<'_, W>,
+        session: &'s WalRuntime<'_, W>,
     ) -> std::result::Result<WalRequirement<'s>, wal::WalIoError> {
         self.inner.stage_required(session)
     }

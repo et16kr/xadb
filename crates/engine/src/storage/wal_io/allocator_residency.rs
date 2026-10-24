@@ -107,7 +107,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         if let Err(error) = original.health() {
             return Err(IntoOperationalError::Fatal(storage(error)));
         }
-        let reject = if original.fresh.plan.kind != BootstrapPlanKind::AllocatorOnly {
+        let reject = if original.core.plan.kind != BootstrapPlanKind::AllocatorOnly {
             Some(unchanged(Cause::Shape))
         } else if !fits::<W>() {
             Some(unchanged(Cause::Capacity))
@@ -219,7 +219,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 .expect("fixed load page");
             prior.copy_from_slice(after);
             {
-                let mut reader = original.fresh.open_reader(
+                let mut reader = original.core.open_reader(
                     root.try_into().expect("fixed root"),
                     scratch.try_into().expect("fixed scratch"),
                 )?;

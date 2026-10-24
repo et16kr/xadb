@@ -1016,6 +1016,19 @@
           "contract_ref": "dev3-plan4-clean-owner.md",
           "evidence_ref": "dev3-plan4-clean-owner-20261024.json",
           "scope": "Original Mutable CAS and SharedPool clean genesis consumption, Catalog3-pin and retention4/4/3-pin. Mandatory78 source-specific PASS (memory75/static2/native1); original abort/failures/compiler finalization HOLD preserved. Final independent D1 accepted for this limited clean endpoint. Additional S5128, dirty/flush/recovered owner, CREATE/CLR, first row and full DEV3/S5 remain incomplete. AI consumer remains1/3."
+        },
+        "private_runtime_core": {
+          "status": "ACCEPTED_LIMITED_D1",
+          "contract_ref": "dev3-storage-session.md#private-runtime-core",
+          "evidence_ref": "dev3-runtime-core-20261024.json",
+          "mandatory_unique_pass": 7,
+          "static": 2,
+          "memory": 5,
+          "native_runtime": 0,
+          "s5_additional": 0,
+          "recovered_constructor": false,
+          "full_stage_acceptance": false,
+          "ai_experiment_completed_consumers": 1
         }
       }
     },

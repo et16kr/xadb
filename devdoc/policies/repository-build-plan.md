@@ -475,3 +475,8 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 `remaining_parser_contracts`/`remaining_parser_resources`와 실제 fixture를 기존 source root에
 등록했다. package·dependency·source/clean export root는 변경하지 않았다. 실제 source 지문은 실행 증거에 별도로 기록했다.
 [source별 증거](../evidence/dev4-remaining-parser-20261024.md)의 정상 선택 검증·21제품 변조 거절과 최종 독립 D1의 제한 수용을 기록하며 typed 문장 binding·P5/P6·engine·Q1은 이 배치의 완료 범위가 아니다.
+
+<a id="runtime-core-layout"></a>
+### 원 WAL runtime/core 추출
+
+[저장 소유 계약](../contracts/dev3-storage-session.md#private-runtime-core)의 내부 추출과 기존 시험의 필드 접근 적응은 engine 안에 유지한다. 실제 신규 파일은 `wal_io/runtime_core_tests.rs`이며 [관리 JSON](repository-build-plan.json)의 `dev3_runtime_core`에38개 변경/신규 경로를 등록한다. [선택 증거](../evidence/dev3-runtime-core-20261024.md)는 신규7개 PASS와 원 실패를 구별한다. 진행 중인 G6 wire/live/recovery 소스는 이 단위에 포함하지 않으며 최종 독립 D1을 이 추출 범위에서 수용했다.

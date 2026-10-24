@@ -91,7 +91,7 @@ impl<W: WriterNamespace> Plan4Pages<'_, '_, '_, '_, '_, '_, '_, W> {
             .pool
             .prepare_plan4_load_at(index, allocator)
             .map_err(|error| frame(p, error))?;
-        genesis::verify_owned_allocator(&storage.fresh.plan, allocator)
+        genesis::verify_owned_allocator(&storage.core.plan, allocator)
             .map_err(|error| source_error(storage, p, error))?;
         if self
             .pool
@@ -166,7 +166,7 @@ impl<W: WriterNamespace> Plan4Pages<'_, '_, '_, '_, '_, '_, '_, W> {
             self.pool
                 .plan4_allocator_snapshot(&mut *allocator)
                 .map_err(|error| frame(p, error))?;
-            genesis::verify_owned_allocator(&storage.fresh.plan, allocator)
+            genesis::verify_owned_allocator(&storage.core.plan, allocator)
                 .map_err(|error| source_error(storage, p, error))?;
         }
         let candidate = self
@@ -242,13 +242,13 @@ fn read_twice<W: WriterNamespace>(
     let p = Plan4PagePhase::Load;
     let index = usize::try_from(request.identity.page.page_no)
         .map_err(|_| unchanged(p, Plan4PageCause::Membership))?;
-    genesis::read_owned_payload(&storage.fresh.plan, writer, request, work, first)
+    genesis::read_owned_payload(&storage.core.plan, writer, request, work, first)
         .map_err(|error| source_error(storage, p, error))?;
-    genesis::verify_owned_payload(&storage.fresh.plan, index, first, canonical)
+    genesis::verify_owned_payload(&storage.core.plan, index, first, canonical)
         .map_err(|error| source_error(storage, p, error))?;
-    genesis::read_owned_payload(&storage.fresh.plan, writer, request, work, reread)
+    genesis::read_owned_payload(&storage.core.plan, writer, request, work, reread)
         .map_err(|error| source_error(storage, p, error))?;
-    genesis::verify_owned_payload(&storage.fresh.plan, index, reread, canonical)
+    genesis::verify_owned_payload(&storage.core.plan, index, reread, canonical)
         .map_err(|error| source_error(storage, p, error))?;
     if first != reread {
         return Err(fatal(storage, p, Plan4PageCause::Invariant));

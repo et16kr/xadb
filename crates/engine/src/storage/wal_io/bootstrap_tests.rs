@@ -256,7 +256,7 @@ fn bootstrap_literals_and_geometry() {
             image_hashes(&observed(&state)),
             image_hashes(&images(profile))
         );
-        assert_eq!(session.plan.allocation_identity().unwrap(), identity());
+        assert_eq!(session.core.plan.allocation_identity().unwrap(), identity());
     }
 }
 
@@ -958,6 +958,7 @@ fn bootstrap_readback_binds_installed_objects() {
             ));
             assert!(
                 !session
+                    .core
                     .reader_active
                     .load(std::sync::atomic::Ordering::Acquire)
             );
@@ -1026,7 +1027,7 @@ fn bootstrap_reader_and_wal_make_progress() {
         });
         receive(&reached);
         // The actual data FileIo is paused, after the namespace mutex was released.
-        assert!(session.wal._writer.try_lock().is_ok());
+        assert!(session.core.wal._writer.try_lock().is_ok());
         let (done, completed) = channel();
         let session = &session;
         let write = scope.spawn(move || {
@@ -1046,8 +1047,8 @@ fn bootstrap_reader_and_wal_make_progress() {
     std::thread::scope(|scope| {
         let write = scope.spawn(|| session.sync_pending().unwrap());
         receive(&reached);
-        assert!(session.wal.append.try_lock().is_ok());
-        assert!(session.wal._writer.try_lock().is_ok());
+        assert!(session.core.wal.append.try_lock().is_ok());
+        assert!(session.core.wal._writer.try_lock().is_ok());
         let (done, completed) = channel();
         let reader = &mut reader;
         let output = &mut output;
@@ -1145,7 +1146,7 @@ fn bootstrap_wal_requires_selected_mapping() {
             assert!(matches!(e.cause, WalCause::MappingMismatch));
             assert_eq!(session.prefix().unwrap(), before);
             assert_eq!(state.lock().unwrap().events.len(), calls);
-            let state = session.wal.append.lock().unwrap();
+            let state = session.core.wal.append.lock().unwrap();
             assert_eq!(state.state, SlotState::Idle);
             assert!(state.slot.as_ref().unwrap().iter().all(|&b| b == 0));
         }
@@ -1181,7 +1182,7 @@ fn bootstrap_wal_requires_selected_mapping() {
     std::thread::scope(|scope| {
         let session = &session;
         let pending = scope.spawn(move || {
-            session.wal.stage_inner(
+            session.core.wal.stage_inner(
                 &wrong,
                 Some((FileId::new(0x100000001).unwrap(), 64)),
                 || {
@@ -1270,7 +1271,7 @@ fn bootstrap_buffer_preserves_shared_concurrency() {
             })
         });
         receive(&reached);
-        session.wal.fenced.fence();
+        session.core.wal.fenced.fence();
         release.send(()).unwrap();
         assert!(matches!(hit.join().unwrap(), Err(BufferError::Fenced)));
     });
@@ -1316,7 +1317,7 @@ fn bootstrap_shared_fence_cleans_claims() {
         let mut output = [0xa5; 16384];
         let mut reader = session.open_reader(&mut root, &mut scratch).unwrap();
         let reads = state.lock().unwrap().reads;
-        session.wal.fenced.fence();
+        session.core.wal.fenced.fence();
         assert!(matches!(
             reader.read_page(identity(), PageKind::Allocation, 0, &mut output),
             Err(PageIoError::Fenced)
@@ -1326,6 +1327,7 @@ fn bootstrap_shared_fence_cleans_claims() {
         drop(reader);
         assert!(
             !session
+                .core
                 .reader_active
                 .load(std::sync::atomic::Ordering::Acquire)
         );
@@ -1433,6 +1435,7 @@ fn bootstrap_shared_fence_cleans_claims() {
         drop(buffer);
         assert!(
             !session
+                .core
                 .reader_active
                 .load(std::sync::atomic::Ordering::Acquire)
         );
@@ -1518,7 +1521,7 @@ fn bootstrap_shared_fence_cleans_claims() {
         });
         assert!(buffer.test_is_locally_fenced());
         assert_wal_fenced(&session, &state);
-        let append = session.wal.append.lock().unwrap();
+        let append = session.core.wal.append.lock().unwrap();
         assert_eq!(append.state, SlotState::IoOwned(frame));
         assert!(append.slot.is_none());
         assert_eq!(
@@ -1538,19 +1541,20 @@ fn bootstrap_shared_fence_cleans_claims() {
             Some(session.try_stage(&raw_frame(0, 1, &[])).unwrap())
         };
         if mode < 2 {
-            session.wal.fenced.fence();
+            session.core.wal.fenced.fence();
         } else if mode == 2 {
-            let file = session.wal.file.lock().unwrap();
+            let file = session.core.wal.file.lock().unwrap();
             std::thread::scope(|scope| {
                 let writing = scope.spawn(|| session.sync_pending());
                 await_condition(|| {
                     session
+                        .core
                         .wal
                         .append
                         .try_lock()
                         .is_ok_and(|a| matches!(a.state, SlotState::IoOwned(_)))
                 });
-                session.wal.fenced.fence();
+                session.core.wal.fenced.fence();
                 drop(file);
                 let e = writing.join().unwrap().unwrap_err();
                 assert_eq!(e.phase, WalPhase::Write);
@@ -1562,7 +1566,7 @@ fn bootstrap_shared_fence_cleans_claims() {
             std::thread::scope(|scope| {
                 let writing = scope.spawn(|| session.sync_pending());
                 receive(&reached);
-                session.wal.fenced.fence();
+                session.core.wal.fenced.fence();
                 release.send(()).unwrap();
                 let e = writing.join().unwrap().unwrap_err();
                 assert_eq!(e.phase, WalPhase::Publish);
@@ -1574,7 +1578,7 @@ fn bootstrap_shared_fence_cleans_claims() {
             state.lock().unwrap().events.len(),
             if mode == 3 { 352 } else { 350 }
         );
-        let append = session.wal.append.lock().unwrap();
+        let append = session.core.wal.append.lock().unwrap();
         assert_eq!(append.prefix.synced_offset, 4096);
         assert_eq!(append.prefix.complete_offset, frame.map_or(4096, |f| f.end));
         assert_eq!(append.slot.is_some(), mode < 2);
@@ -1598,7 +1602,7 @@ fn bootstrap_shared_fence_cleans_claims() {
         let mut load = [0; 16384];
         let reader = session.open_reader(&mut root, &mut scratch).unwrap();
         if fenced {
-            session.wal.fenced.fence();
+            session.core.wal.fenced.fence();
         }
         let error = ReadBuffer::new(reader, &mut [], &mut load).err().unwrap();
         assert!(if fenced {
@@ -1609,6 +1613,7 @@ fn bootstrap_shared_fence_cleans_claims() {
         assert_eq!(session.is_fenced(), fenced);
         assert!(
             !session
+                .core
                 .reader_active
                 .load(std::sync::atomic::Ordering::Acquire)
         );
@@ -1635,7 +1640,7 @@ fn bootstrap_shared_fence_cleans_claims() {
     let mut scratch = [0; 16384];
     let mut load = [0; 16384];
     let reader = session.open_reader(&mut root, &mut scratch).unwrap();
-    session.wal.fenced.fence();
+    session.core.wal.fenced.fence();
     assert!(matches!(
         ReadBuffer::new(reader, &mut frames, &mut load),
         Err(BufferError::Poisoned)
@@ -1698,7 +1703,7 @@ fn bootstrap_workspace_and_handles_are_bounded() {
         assert_eq!(
             (
                 state.lock().unwrap().handles,
-                session.plan.profile.spec().id
+                session.core.plan.profile.spec().id
             ),
             (1, profile)
         );

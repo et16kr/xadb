@@ -408,7 +408,7 @@ fn run(profile: u32, operation: &str, cut: &str) {
         .unwrap();
         assert!(owner.is_fenced());
         assert!(owner.installed.is_fenced());
-        assert!(owner.installed.fresh.wal.fenced.is_fenced());
+        assert!(owner.installed.fresh.core.wal.fenced.is_fenced());
         for error in [
             owner.observe().unwrap_err(),
             owner.reserved_page(0).unwrap_err(),
@@ -431,7 +431,7 @@ fn run(profile: u32, operation: &str, cut: &str) {
         assert_eq!(owner.state.terminal_pending, cancel);
         assert_eq!(owner.state.batch.unwrap().count(), 8);
         assert_eq!(owner.state.rec_lsn, Some(PageLsn(1)));
-        let append = owner.installed.fresh.wal.append.lock().unwrap();
+        let append = owner.installed.fresh.core.wal.append.lock().unwrap();
         assert_eq!(append.prefix.complete_lsn, prior.page_lsn.0 + 1);
         assert_eq!(append.prefix.synced_lsn, prior.page_lsn.0);
         assert!(matches!(append.state, wal::SlotState::IoOwned(_)));

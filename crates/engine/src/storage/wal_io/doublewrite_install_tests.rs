@@ -324,7 +324,7 @@ fn doublewrite_install_literal_profiles() {
         ));
         drop(reader);
         drop(owner.open_reader(&mut root, &mut scratch).unwrap());
-        owner.fresh.wal.fenced.fence();
+        owner.fresh.core.wal.fenced.fence();
         let reads = state.lock().unwrap().reads;
         assert!(owner.is_fenced());
         assert!(matches!(
@@ -353,14 +353,33 @@ fn doublewrite_install_pristine_preflight() {
                 }
             }
             2 => {
-                fresh.wal.append.get_mut().unwrap().slot.take();
+                fresh.core.wal.append.get_mut().unwrap().slot.take();
             }
-            3 => fresh.wal.append.get_mut().unwrap().prefix.complete_lsn = 1,
-            4 => fresh.wal.append.get_mut().unwrap().prefix.synced_lsn = 1,
-            5 => fresh.wal.append.get_mut().unwrap().prefix.complete_offset = 4097,
-            6 => fresh.wal.append.get_mut().unwrap().prefix.synced_offset = 4097,
+            3 => fresh.core.wal.append.get_mut().unwrap().prefix.complete_lsn = 1,
+            4 => fresh.core.wal.append.get_mut().unwrap().prefix.synced_lsn = 1,
+            5 => {
+                fresh
+                    .core
+                    .wal
+                    .append
+                    .get_mut()
+                    .unwrap()
+                    .prefix
+                    .complete_offset = 4097
+            }
+            6 => {
+                fresh
+                    .core
+                    .wal
+                    .append
+                    .get_mut()
+                    .unwrap()
+                    .prefix
+                    .synced_offset = 4097
+            }
             7 => {
                 fresh
+                    .core
                     .wal
                     .append
                     .get_mut()
@@ -369,11 +388,11 @@ fn doublewrite_install_pristine_preflight() {
                     .stream
                     .writer_epoch = 2
             }
-            8 => fresh.wal.fenced.fence(),
+            8 => fresh.core.wal.fenced.fence(),
             9 => {
                 assert!(
                     catch_unwind(AssertUnwindSafe(|| {
-                        let _lock = fresh.wal.append.lock().unwrap();
+                        let _lock = fresh.core.wal.append.lock().unwrap();
                         panic!("poison append");
                     }))
                     .is_err()
@@ -382,7 +401,7 @@ fn doublewrite_install_pristine_preflight() {
             10 => {
                 assert!(
                     catch_unwind(AssertUnwindSafe(|| {
-                        let _lock = fresh.wal.file.lock().unwrap();
+                        let _lock = fresh.core.wal.file.lock().unwrap();
                         panic!("poison file");
                     }))
                     .is_err()
@@ -391,7 +410,7 @@ fn doublewrite_install_pristine_preflight() {
             11 => {
                 assert!(
                     catch_unwind(AssertUnwindSafe(|| {
-                        let _lock = fresh.wal._writer.lock().unwrap();
+                        let _lock = fresh.core.wal._writer.lock().unwrap();
                         panic!("poison writer");
                     }))
                     .is_err()
@@ -894,7 +913,7 @@ fn doublewrite_install_descriptor_and_workspace() {
         let mut work = workspace();
         let (fresh, state) = new_session(profile, &mut slot);
         let frozen = literal(profile, "d3-dwb-stage");
-        let plan = InstallPlan::prepare(&fresh.plan, &mut work).unwrap();
+        let plan = InstallPlan::prepare(&fresh.core.plan, &mut work).unwrap();
         assert_eq!(&work[..16384], frozen);
         assert_eq!(plan.descriptor_digest, content_digest(&frozen));
         for length in [0, 16383] {

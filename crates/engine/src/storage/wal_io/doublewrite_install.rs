@@ -622,7 +622,7 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
     ) -> Result<DoublewriteStorageSession<'m, 'w, W>> {
         let mut effects = Effects::default();
         let result = {
-            let wal = &mut self.wal;
+            let wal = &mut self.core.wal;
             let _unwind = wal.fenced.unwind_guard();
             (|| {
                 let reject = |cause| effects.error(Phase::StatePreflight, cause);
@@ -633,13 +633,13 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
                 }
                 super::super::genesis_profile(wal.profile)
                     .map_err(|_| reject(Cause::InvalidState))?;
-                if wal.profile != self.plan.profile {
+                if wal.profile != self.core.plan.profile {
                     return Err(reject(Cause::InvalidState));
                 }
                 if wal.fenced.is_fenced() {
                     return Err(reject(Cause::Fenced));
                 }
-                if self.reader_active.load(Ordering::Acquire) {
+                if self.core.reader_active.load(Ordering::Acquire) {
                     return Err(reject(Cause::Busy));
                 }
                 // get_mut checks poison but acquires no lock and performs no I/O.
@@ -660,7 +660,7 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
                     return Err(reject(Cause::InvalidState));
                 }
                 let names = Names::new().map_err(|cause| effects.error(Phase::Prepare, cause))?;
-                let plan = InstallPlan::prepare(&self.plan, workspace)
+                let plan = InstallPlan::prepare(&self.core.plan, workspace)
                     .map_err(|cause| effects.error(Phase::Prepare, cause))?;
                 names
                     .preflight(writer)
@@ -678,7 +678,7 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
                 _plan: plan,
             }),
             Err(error) => {
-                self.wal.fenced.fence();
+                self.core.wal.fenced.fence();
                 Err(error)
             }
         }

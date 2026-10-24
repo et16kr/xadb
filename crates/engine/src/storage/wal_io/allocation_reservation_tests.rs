@@ -150,10 +150,7 @@ pub(super) enum Hook {
     CorruptAfterSync,
     Capture(CaptureSlot),
 }
-pub(super) fn stage_cut<W: WriterNamespace>(
-    hook: Option<&Hook>,
-    _: &wal::GenesisWalSession<'_, W>,
-) {
+pub(super) fn stage_cut<W: WriterNamespace>(hook: Option<&Hook>, _: &wal::WalRuntime<'_, W>) {
     assert!(
         !matches!(hook, Some(Hook::Panic(Point::Stage))),
         "allocation AfterStage unwind"
@@ -162,7 +159,7 @@ pub(super) fn stage_cut<W: WriterNamespace>(
 pub(super) fn cut<W: WriterNamespace>(
     state: &mut AllocationState<'_, '_>,
     point: Point,
-    wal: &wal::GenesisWalSession<'_, W>,
+    wal: &wal::WalRuntime<'_, W>,
 ) {
     let Some(hook) = state.hook.clone() else {
         return;
@@ -349,7 +346,7 @@ fn allocation_ar02_exact_independent_sequences() {
             let page = allocation_page::decode_allocation_page(
                 owner.state.frame,
                 owner.state.identity,
-                owner.installed.fresh.plan.profile.spec().namespace,
+                owner.installed.fresh.core.plan.profile.spec().namespace,
             )
             .unwrap();
             for i in 1..64 {
@@ -382,7 +379,7 @@ fn finished_boundary(owner: &mut AllocationSession<'_, '_, '_, '_, Writer>, lsn:
     put64(owner.state.frame, 64, lsn);
     seal_page(owner.state.frame);
     owner.state.work_high_water = high;
-    let mut a = owner.installed.fresh.wal.append.lock().unwrap();
+    let mut a = owner.installed.fresh.core.wal.append.lock().unwrap();
     a.prefix.complete_lsn = lsn;
     a.prefix.synced_lsn = lsn;
 }
@@ -474,7 +471,7 @@ fn allocation_ar03_preflight_boundaries_preserve_authority() {
         with_owner(1, |o, s| {
             let offset = (wal::WAL_FILE_CAP as i64 - 42400 - extra) as u64;
             {
-                let mut a = o.installed.fresh.wal.append.lock().unwrap();
+                let mut a = o.installed.fresh.core.wal.append.lock().unwrap();
                 a.prefix.complete_offset = offset;
                 a.prefix.synced_offset = offset;
             }
@@ -495,7 +492,7 @@ fn allocation_ar04_frozen_semantic_negatives() {
         o.reserve_pages(1).unwrap();
         o.cancel_reserved().unwrap();
         let prefix = o.observe().unwrap().wal;
-        let profile = o.installed.fresh.plan.profile;
+        let profile = o.installed.fresh.core.plan.profile;
         let batch = Batch {
             owner: SystemWorkRef::new(
                 profile.spec().namespace,
@@ -692,7 +689,7 @@ fn allocation_ar05_stage_cuts_and_fencing() {
                     };
                     if matches!(hook, Hook::Poison) {
                         // The existing WAL state() observes poison through is_fenced().
-                        assert!(o.installed.fresh.wal.append.is_poisoned());
+                        assert!(o.installed.fresh.core.wal.append.is_poisoned());
                         assert!(matches!(lower.cause, wal::Cause::Fenced));
                     } else {
                         assert!(matches!(lower.cause, wal::Cause::Poisoned));
@@ -726,7 +723,7 @@ fn allocation_ar05_stage_cuts_and_fencing() {
                 );
                 assert_fenced(o);
                 assert_eq!(files(s), old_files);
-                let prefix = o.installed.fresh.wal.append.lock().unwrap().prefix;
+                let prefix = o.installed.fresh.core.wal.append.lock().unwrap().prefix;
                 assert_eq!(prefix.complete_lsn, before.page_lsn.0 + 1);
                 assert_eq!(prefix.synced_lsn, before.page_lsn.0);
                 assert_eq!(o.state.batch.unwrap().count(), 8);
@@ -902,6 +899,7 @@ fn allocation_ar06_write_sync_faults() {
                         let a = o
                             .installed
                             .fresh
+                            .core
                             .wal
                             .append
                             .lock()
@@ -982,16 +980,17 @@ fn allocation_ar08_constructor_rejections() {
         let installed = fresh.install_doublewrite(&mut flush).unwrap();
         reset(&s);
         match variant {
-            0 => installed.fresh.wal.fenced.fence(),
+            0 => installed.fresh.core.wal.fenced.fence(),
             1 => {
                 let _ = catch_unwind(AssertUnwindSafe(|| {
-                    let _lock = installed.fresh.wal.append.lock().unwrap();
+                    let _lock = installed.fresh.core.wal.append.lock().unwrap();
                     panic!("constructor poison");
                 }));
             }
             2 => {
                 installed
                     .fresh
+                    .core
                     .wal
                     .append
                     .lock()
@@ -999,7 +998,11 @@ fn allocation_ar08_constructor_rejections() {
                     .prefix
                     .complete_lsn = 1
             }
-            3 => installed.fresh.reader_active.store(true, Ordering::Release),
+            3 => installed
+                .fresh
+                .core
+                .reader_active
+                .store(true, Ordering::Release),
             4..=7 => {
                 let mut state = s.lock().unwrap();
                 let name = state

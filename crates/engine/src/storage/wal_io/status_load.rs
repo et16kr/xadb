@@ -224,7 +224,7 @@ impl<W: WriterNamespace> BoundStatusWithFlush<'_, '_, '_, '_, '_, '_, '_, W> {
             let control = &mut self.inner.control;
             let (root, rest) = control.base.operation[..32768].split_at_mut(PAGE_BYTES);
             let read = (|| -> std::result::Result<(), PageIoError> {
-                let mut reader = original.fresh.open_reader(
+                let mut reader = original.core.open_reader(
                     root.try_into().expect("root scratch"),
                     rest.try_into().expect("read scratch"),
                 )?;

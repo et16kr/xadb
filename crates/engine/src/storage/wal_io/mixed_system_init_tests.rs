@@ -32,13 +32,13 @@ fn mark_mixed(id: &str, p: u32, work: u64) {
 fn input(
     p: u32,
     work: u64,
-    f: impl FnOnce(&mixed::Plan<'_, '_>, &wal::GenesisWalSession<'_, port::Writer>),
+    f: impl FnOnce(&mixed::Plan<'_, '_>, &wal::WalRuntime<'_, port::Writer>),
 ) {
     let mut slot = boxed::<{ wal::MAX_FRAME_BYTES }>(0);
     let (mut fresh, state) = undo_seed(&mut slot);
-    fresh.plan = undo_plan(p, &mut [[0; PAGE_BYTES]; 3]);
+    fresh.core.plan = undo_plan(p, &mut [[0; PAGE_BYTES]; 3]);
     let before_files = images(&state);
-    let allocator = fresh.plan.allocation_identity().unwrap();
+    let allocator = fresh.core.plan.allocation_identity().unwrap();
     let role = fresh.undo_role().unwrap();
     let kind = if work == 1 {
         mixed::Kind::Status
@@ -46,7 +46,7 @@ fn input(
         mixed::Kind::UndoRoot
     };
     let descriptor = fixed::<1536>(p, "sequence", work, "reserve.descriptor");
-    let mut prefix = fresh.wal.prefix().unwrap();
+    let mut prefix = fresh.core.wal.prefix().unwrap();
     prefix.complete_lsn = 2 * work - 1;
     prefix.synced_lsn = prefix.complete_lsn;
     prefix.complete_offset = 4096
@@ -58,7 +58,7 @@ fn input(
         };
     prefix.synced_offset = prefix.complete_offset;
     let plan = mixed::Plan {
-        profile: fresh.plan.profile,
+        profile: fresh.core.plan.profile,
         allocator,
         payload: PageIdentity {
             database: allocator.database,
@@ -73,7 +73,7 @@ fn input(
         prefix,
         batch: alloc::Batch {
             owner: SystemWorkRef::new(
-                fresh.plan.profile.spec().namespace,
+                fresh.core.plan.profile.spec().namespace,
                 SystemWorkKind::AllocationMaintenance,
                 work,
                 Generation::new(1).unwrap(),
@@ -86,7 +86,7 @@ fn input(
         role: &role,
         kind,
     };
-    f(&plan, &fresh.wal);
+    f(&plan, &fresh.core.wal);
     assert_eq!(
         images(&state),
         before_files,
@@ -453,7 +453,7 @@ fn mixed_init_mi03_legacy_bytes_and_rejection() {
             init::validate_expected(&expected, &before, &bytes, &allocator, &payload).unwrap();
             let mut old_slot = boxed::<{ wal::MAX_FRAME_BYTES }>(0);
             let (mut old_session, _) = seed(&mut old_slot, true);
-            old_session.plan = prepared(p, true, &mut [[0; PAGE_BYTES]; 3]);
+            old_session.core.plan = prepared(p, true, &mut [[0; PAGE_BYTES]; 3]);
             let old_role = old_session.status_role().unwrap();
             let legacy = init::InitPlan {
                 profile: plan.profile,
@@ -822,15 +822,15 @@ fn mixed_init_mi07_before_effect_stage_guards() {
             let (other, state) = undo_seed(&mut other_slot);
             let original = images(&state);
             let prepared = mixed::prepare(plan, &before, &mut output, &mut a, &mut b).unwrap();
-            let error = prepared.stage_required(&other.wal).err().unwrap();
+            let error = prepared.stage_required(&other.core.wal).err().unwrap();
             assert_eq!(error.effect, Effect::Unchanged);
             assert!(matches!(error.cause, wal::Cause::IdentityMismatch));
             assert_eq!(images(&state), original);
             assert!(state.lock().unwrap().events.is_empty());
             mark_mixed("MI07-fence", 1, work);
-            other.wal.fenced.fence();
+            other.core.wal.fenced.fence();
             let prepared = mixed::prepare(plan, &before, &mut output, &mut a, &mut b).unwrap();
-            let error = prepared.stage_required(&other.wal).err().unwrap();
+            let error = prepared.stage_required(&other.core.wal).err().unwrap();
             // A pre-existing fenced session reports its cumulative unresolved
             // effect, even though this rejected call writes nothing itself.
             assert_eq!(error.effect, Effect::CallerMustResolve);

@@ -31,9 +31,9 @@ fn page_fixture(budget: OperationBudget, part: &str) -> Box<[u8; PAGE_BYTES]> {
 fn allocation_resource_profiles_exact_context() {
     with_owner(1, |owner, state| {
         let before_files = files(state);
-        let original_prefix = owner.installed.fresh.wal.prefix().unwrap();
+        let original_prefix = owner.installed.fresh.core.wal.prefix().unwrap();
         let original_observation = owner.observe().unwrap();
-        let profile = owner.installed.fresh.plan.profile;
+        let profile = owner.installed.fresh.core.plan.profile;
         let identity = owner.state.identity;
         let mut before = boxed::<PAGE_BYTES>();
         before.copy_from_slice(owner.state.frame);
@@ -282,7 +282,10 @@ fn allocation_resource_profiles_exact_context() {
             );
         }
         assert_eq!(case_count, 10);
-        assert_eq!(owner.installed.fresh.wal.prefix().unwrap(), original_prefix);
+        assert_eq!(
+            owner.installed.fresh.core.wal.prefix().unwrap(),
+            original_prefix
+        );
         assert_eq!(owner.observe().unwrap(), original_observation);
         assert_eq!(&owner.state.frame[..], &before[..]);
         assert_eq!(files(state), before_files);

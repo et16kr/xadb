@@ -96,7 +96,7 @@ impl<W: WriterNamespace> EvictedAllocator<'_, '_, '_, '_, '_, '_, '_, '_, W> {
                 .try_into()
                 .expect("fixed load page");
             {
-                let mut reader = original.fresh.open_reader(
+                let mut reader = original.core.open_reader(
                     root.try_into().expect("fixed root"),
                     scratch.try_into().expect("fixed scratch"),
                 )?;

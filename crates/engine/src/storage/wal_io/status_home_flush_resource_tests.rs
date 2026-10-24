@@ -83,17 +83,17 @@ fn padded<'m, 'w, const O: usize, const F: usize>(
     storage: MutableStorageOwner<'m, 'w, port::Writer>,
 ) -> MutableStorageOwner<'m, 'w, PaddedWriter<O, F>> {
     let MutableStorageOwner {
-        fresh,
+        core,
         plan,
         workspace,
         binding,
     } = storage;
-    let crate::storage::wal_io::bootstrap::FreshStorageSession {
+    let crate::storage::wal_io::bootstrap::InstalledStorageCore {
         wal: prior,
         plan: bootstrap,
         reader_active,
-    } = fresh;
-    let wal::GenesisWalSession {
+    } = core;
+    let wal::WalRuntime {
         _writer,
         file,
         append,
@@ -103,7 +103,7 @@ fn padded<'m, 'w, const O: usize, const F: usize>(
         fenced,
         profile,
     } = prior;
-    let wal = wal::GenesisWalSession {
+    let wal = wal::WalRuntime {
         _writer: Mutex::new(PaddedWriter {
             inner: _writer.into_inner().unwrap(),
             padding: [0; O],
@@ -120,7 +120,7 @@ fn padded<'m, 'w, const O: usize, const F: usize>(
         profile,
     };
     MutableStorageOwner {
-        fresh: crate::storage::wal_io::bootstrap::FreshStorageSession {
+        core: crate::storage::wal_io::bootstrap::InstalledStorageCore {
             wal,
             plan: bootstrap,
             reader_active,

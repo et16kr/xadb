@@ -424,6 +424,12 @@ struct AppendState<'m> {
 /// Owns a fresh genesis namespace and its selected file for this session only.
 /// The slot remains borrowed even when an uncertain I/O claim cannot be returned.
 pub(crate) struct GenesisWalSession<'m, W: WriterNamespace> {
+    runtime: WalRuntime<'m, W>,
+}
+
+// Original resources, moved once from the fresh constructor. This private core
+// has no constructor accepting observed prefixes or replacement fences.
+struct WalRuntime<'m, W: WriterNamespace> {
     _writer: Mutex<W>,
     file: Mutex<W::File>,
     append: Mutex<AppendState<'m>>,
@@ -619,23 +625,50 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
             synced_offset: CONTROL_BYTES as u64,
         };
         Ok(Self {
-            _writer: Mutex::new(writer),
-            file: Mutex::new(file),
-            append: Mutex::new(AppendState {
-                slot: Some(slot),
-                state: SlotState::Idle,
-                prefix,
-            }),
-            completion: Condvar::new(),
-            #[cfg(test)]
-            durability_waits: std::sync::atomic::AtomicUsize::new(0),
-            #[cfg(test)]
-            durability_before_wait: Mutex::new(None),
-            fenced: SessionFence::new(),
-            profile,
+            runtime: WalRuntime {
+                _writer: Mutex::new(writer),
+                file: Mutex::new(file),
+                append: Mutex::new(AppendState {
+                    slot: Some(slot),
+                    state: SlotState::Idle,
+                    prefix,
+                }),
+                completion: Condvar::new(),
+                #[cfg(test)]
+                durability_waits: std::sync::atomic::AtomicUsize::new(0),
+                #[cfg(test)]
+                durability_before_wait: Mutex::new(None),
+                fenced: SessionFence::new(),
+                profile,
+            },
         })
     }
 
+    pub(crate) fn is_fenced(&self) -> bool {
+        self.runtime.is_fenced()
+    }
+
+    pub(crate) fn prefix(&self) -> Result<WalPrefix> {
+        self.runtime.prefix()
+    }
+
+    pub(crate) fn try_stage(&self, bytes: &[u8]) -> Result<WalFrameLocation> {
+        self.runtime.try_stage(bytes)
+    }
+
+    pub(crate) fn sync_pending(&self) -> Result<WalSyncObservation> {
+        self.runtime.sync_pending()
+    }
+
+    pub(in crate::storage) fn ensure_durable<'s>(
+        &self,
+        requirement: &WalRequirement<'s>,
+    ) -> Result<EnsureDurable<'s>> {
+        self.runtime.ensure_durable(requirement)
+    }
+}
+
+impl<'m, W: WriterNamespace> WalRuntime<'m, W> {
     /// Poison is observable without acquiring a possibly held mutex.
     pub(crate) fn is_fenced(&self) -> bool {
         if self.append.is_poisoned() || self.file.is_poisoned() || self._writer.is_poisoned() {

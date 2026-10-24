@@ -395,7 +395,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             StatusReader {
                 pool: &self.inner.pool,
                 role,
-                profile: &self.inner.storage.fresh.plan.profile,
+                profile: &self.inner.storage.core.plan.profile,
                 fence: self.inner.storage.session_fence(),
             },
             StatusFlusher {

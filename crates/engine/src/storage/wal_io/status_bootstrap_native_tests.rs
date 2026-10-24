@@ -158,7 +158,7 @@ fn status_bootstrap_native_p1() {
         assert_eq!(role.kind(), PageKind::TransactionStatus);
         assert_eq!(role.level(), 0);
         assert_eq!(role.issued_object_high_water(), 2);
-        assert!(role.uses_fence(&fresh.wal.fenced));
+        assert!(role.uses_fence(&fresh.core.wal.fenced));
         assert_eq!(role.namespace().timeline, 1);
         hex(&role.namespace().database.bytes())
     };

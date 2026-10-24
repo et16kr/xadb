@@ -3,9 +3,9 @@
 //! or recovery authority. The live owner must supply its actual reservation.
 
 use super::{
-    AllocationPopulation, Batch, FrameExpectation, GenesisWalSession, InitExpected, InitScope,
-    PAGE_BYTES, PageIdentity, PageKind, PreparedInit, Profile, Result, ScopedExpected,
-    SemanticError, WalPrefix, WalRequirement, materialize_scoped, prepare_scoped, require,
+    AllocationPopulation, Batch, FrameExpectation, InitExpected, InitScope, PAGE_BYTES,
+    PageIdentity, PageKind, PreparedInit, Profile, Result, ScopedExpected, SemanticError,
+    WalPrefix, WalRequirement, WalRuntime, materialize_scoped, prepare_scoped, require,
     validate_expected_in_population,
 };
 use crate::storage::wal_io::{UndoRole, WalIoError};
@@ -102,7 +102,7 @@ impl<'out, 's> Prepared<'out, 's> {
     }
     pub(in super::super) fn stage_required<W: WriterNamespace>(
         self,
-        session: &'s GenesisWalSession<'_, W>,
+        session: &'s WalRuntime<'_, W>,
     ) -> std::result::Result<WalRequirement<'s>, WalIoError> {
         self.inner.stage_required(session)
     }

@@ -21,7 +21,7 @@ use crate::storage::{
         self, FrameEnvelope, FrameExpectation, FrameKind, RedoKind, RedoRecordView, RedoTarget,
         WalError, WalFrameHeader,
     },
-    wal_io::{self as wal, GenesisWalSession, StatusRole, WalPrefix, WalRequirement},
+    wal_io::{self as wal, StatusRole, WalPrefix, WalRequirement, WalRuntime},
 };
 use std::mem::size_of;
 use xadb_foundation::{codec::content_digest, identity::Generation, namespace::WriterNamespace};
@@ -219,7 +219,7 @@ impl<'out, 's> PreparedInit<'out, 's> {
     }
     pub(super) fn stage_required<W: WriterNamespace>(
         self,
-        session: &'s GenesisWalSession<'_, W>,
+        session: &'s WalRuntime<'_, W>,
     ) -> std::result::Result<WalRequirement<'s>, wal::WalIoError> {
         session.prefix()?; // Health precedes an otherwise unchanged origin mismatch.
         if !std::ptr::eq(self.fence, &session.fenced) {

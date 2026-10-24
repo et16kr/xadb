@@ -58,11 +58,11 @@ fn validate_set<const N: usize, W: WriterNamespace>(
         }
         let bytes = read.bytes(at).map_err(|error| frame(phase, error))?;
         let checked = if request.kind == PageKind::Allocation {
-            genesis::verify_owned_allocator(&storage.fresh.plan, bytes)
+            genesis::verify_owned_allocator(&storage.core.plan, bytes)
         } else {
             let index = usize::try_from(request.identity.page.page_no)
                 .map_err(|_| fatal(storage, phase, Plan4PageCause::Invariant))?;
-            genesis::verify_owned_payload(&storage.fresh.plan, index, bytes, canonical)
+            genesis::verify_owned_payload(&storage.core.plan, index, bytes, canonical)
         };
         checked.map_err(|cause| fatal(storage, phase, Plan4PageCause::Genesis(cause)))?;
     }

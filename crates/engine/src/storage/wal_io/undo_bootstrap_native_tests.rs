@@ -36,7 +36,7 @@ fn undo_bootstrap_native_p1() {
             ),
             (3, 1, PageKind::Undo, 0, 3)
         );
-        assert!(role.uses_fence(&fresh.wal.fenced));
+        assert!(role.uses_fence(&fresh.core.wal.fenced));
         assert_eq!(role.namespace().timeline, 1);
         let status = fresh.status_role().unwrap();
         assert_eq!(

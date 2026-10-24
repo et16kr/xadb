@@ -282,7 +282,7 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
         if !(2..=64).contains(&frames.len()) || (!resident && frames.len() != 2) {
             return Err(unchanged(StorageCause::Capacity));
         }
-        if self.fresh.plan.kind != super::super::super::BootstrapPlanKind::StatusBootstrap {
+        if self.core.plan.kind != super::super::super::BootstrapPlanKind::StatusBootstrap {
             return Err(unchanged(StorageCause::UnsupportedPlan));
         }
         let role = FixedSystemRole::from_status(self.status_role()?)
@@ -432,7 +432,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             StatusReader {
                 pool: &self.pool,
                 role,
-                profile: &self.storage.fresh.plan.profile,
+                profile: &self.storage.core.plan.profile,
                 fence: self.storage.session_fence(),
             },
         )
@@ -875,7 +875,7 @@ impl<'s, 'c, W: WriterNamespace> StatusBootstrapWriter<'_, 's, 'c, '_, '_, '_, '
             let reader = StatusReader {
                 pool: self.pool,
                 role: self.role,
-                profile: &storage.fresh.plan.profile,
+                profile: &storage.core.plan.profile,
                 fence: storage.session_fence(),
             };
             let read = reader.read_fixed(owner, None)?;

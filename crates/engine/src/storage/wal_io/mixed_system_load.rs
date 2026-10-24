@@ -123,7 +123,7 @@ impl<W: WriterNamespace> MixedSystem<'_, '_, '_, '_, '_, '_, '_, W> {
         let control = &mut self.inner.inner.control;
         let (root, rest) = control.base.operation[..32768].split_at_mut(PAGE_BYTES);
         let read = (|| -> std::result::Result<(), PageIoError> {
-            let mut reader = storage.fresh.open_reader(
+            let mut reader = storage.core.open_reader(
                 root.try_into().expect("root loan"),
                 rest.try_into().expect("read loan"),
             )?;

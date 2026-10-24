@@ -30,7 +30,7 @@ fn undo_seed<'m>(
     slot: &'m mut [u8; wal::MAX_FRAME_BYTES],
 ) -> (boot::FreshStorageSession<'m, port::Writer>, State) {
     let (mut fresh, state) = seed(slot, false);
-    fresh.plan = undo_plan(1, &mut [[0; PAGE_BYTES]; 3]);
+    fresh.core.plan = undo_plan(1, &mut [[0; PAGE_BYTES]; 3]);
     (fresh, state)
 }
 fn undo_installed<'m, 'w>(
@@ -38,7 +38,7 @@ fn undo_installed<'m, 'w>(
     workspace: &'w mut [u8; super::super::super::WORKSPACE_BYTES],
 ) -> (DoublewriteStorageSession<'m, 'w, port::Writer>, State) {
     let (fresh, state) = undo_seed(slot);
-    let plan = super::super::super::InstallPlan::prepare(&fresh.plan, workspace).unwrap();
+    let plan = super::super::super::InstallPlan::prepare(&fresh.core.plan, workspace).unwrap();
     (
         DoublewriteStorageSession {
             fresh,
@@ -164,21 +164,21 @@ fn undo_bootstrap_ub03_role_health() {
             _ => undo_seed(&mut slot),
         };
         if case >= 4 {
-            fresh.wal.fenced.fence();
+            fresh.core.wal.fenced.fence();
         }
         if case == 5 {
-            poison(&fresh.wal._writer);
+            poison(&fresh.core.wal._writer);
         }
         match case {
             1 => {
-                undo_exact(fresh.undo_role().unwrap(), &fresh.wal.fenced);
+                undo_exact(fresh.undo_role().unwrap(), &fresh.core.wal.fenced);
                 let status = fresh.status_role().unwrap();
                 assert_eq!(status.object().get(), 2);
                 assert_eq!(status.generation().get(), 1);
                 assert_eq!(status.kind(), PageKind::TransactionStatus);
                 assert_eq!(status.issued_object_high_water(), 3);
                 assert_eq!(status.namespace(), port::namespace());
-                assert!(status.uses_fence(&fresh.wal.fenced));
+                assert!(status.uses_fence(&fresh.core.wal.fenced));
             }
             2 | 3 => {
                 let err = fresh.undo_role().err().unwrap();

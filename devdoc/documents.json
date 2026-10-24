@@ -2057,6 +2057,16 @@
       "path": "evidence/dev4-supply-handoff-20261024.json",
       "role": "evidence",
       "title": "DEV4 P6 source별 공급 관측·독립 사실 검토 색인"
+    },
+    "dev3-runtime-core-20261024.md": {
+      "path": "evidence/dev3-runtime-core-20261024.md",
+      "role": "evidence",
+      "title": "DEV3 원 WAL runtime/core 추출 선택 검증"
+    },
+    "dev3-runtime-core-20261024.json": {
+      "path": "evidence/dev3-runtime-core-20261024.json",
+      "role": "evidence",
+      "title": "DEV3 runtime/core source별 실행 색인"
     }
   }
 }

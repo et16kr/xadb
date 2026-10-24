@@ -79,9 +79,11 @@ fn seed<'m>(
     let wal = wal::GenesisWalSession::create(writer, 1, slot, &mut scratch[0]).unwrap();
     let plan = prepared(1, status, &mut scratch);
     let fresh = boot::FreshStorageSession {
-        wal,
-        plan,
-        reader_active: std::sync::atomic::AtomicBool::new(false),
+        core: boot::InstalledStorageCore {
+            wal: wal.runtime,
+            plan,
+            reader_active: std::sync::atomic::AtomicBool::new(false),
+        },
     };
     reset(&state);
     (fresh, state)
@@ -92,7 +94,7 @@ fn installed_seed<'m, 'w>(
     status: bool,
 ) -> (DoublewriteStorageSession<'m, 'w, port::Writer>, State) {
     let (fresh, state) = seed(slot, status);
-    let plan = super::super::InstallPlan::prepare(&fresh.plan, workspace).unwrap();
+    let plan = super::super::InstallPlan::prepare(&fresh.core.plan, workspace).unwrap();
     (
         DoublewriteStorageSession {
             fresh,
@@ -519,10 +521,10 @@ fn status_bootstrap_sb03_role_health() {
         let mut slot = port::slot();
         let (fresh, state) = seed(&mut slot, status);
         if poisoned {
-            poison(&fresh.wal._writer);
+            poison(&fresh.core.wal._writer);
         }
         if fenced {
-            fresh.wal.fenced.fence();
+            fresh.core.wal.fenced.fence();
         }
         match index {
             1 => {
@@ -543,7 +545,7 @@ fn status_bootstrap_sb03_role_health() {
                 }
                 assert!(!fresh.is_fenced());
             }
-            2 => role_exact(fresh.status_role().unwrap(), &fresh.wal.fenced),
+            2 => role_exact(fresh.status_role().unwrap(), &fresh.core.wal.fenced),
             _ => {
                 let error = fresh.status_role().err().unwrap();
                 assert_eq!(
@@ -800,7 +802,7 @@ fn status_bootstrap_sb05_legacy_adapters() {
         let before = images(&state);
         let workspace_before = installed._workspace.as_slice().to_vec();
         if poisoned {
-            poison(&installed.fresh.wal._writer);
+            poison(&installed.fresh.core.wal._writer);
         }
         let mut frame = [0x3c; PAGE_BYTES];
         let mut operation = boxed::<81920>(0x5a);

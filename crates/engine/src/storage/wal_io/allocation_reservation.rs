@@ -121,7 +121,7 @@ fn health<W: WriterNamespace>(
     installed: &DoublewriteStorageSession<'_, '_, W>,
     phase: Phase,
 ) -> Result<()> {
-    let wal = &installed.fresh.wal;
+    let wal = &installed.fresh.core.wal;
     // Preserve poison rather than letting is_fenced collapse its original cause.
     let cause = if wal.append.is_poisoned() || wal.file.is_poisoned() || wal._writer.is_poisoned() {
         Some(Cause::Poisoned)
@@ -141,7 +141,7 @@ fn fatal<W: WriterNamespace>(
     phase: Phase,
     cause: Cause,
 ) -> AllocationSessionError {
-    installed.fresh.wal.fenced.fence();
+    installed.fresh.core.wal.fenced.fence();
     error(phase, Effect::CallerMustResolve, cause)
 }
 
@@ -154,30 +154,36 @@ impl<'m, 'w, W: WriterNamespace> DoublewriteStorageSession<'m, 'w, W> {
         operation: &'o mut [u8; OPERATION_BYTES],
     ) -> Result<AllocationSession<'m, 'w, 'p, 'o, W>> {
         let identity = {
-            let _unwind = self.fresh.wal.fenced.unwind_guard();
+            let _unwind = self.fresh.core.wal.fenced.unwind_guard();
             (|| {
                 let fail = |cause| fatal(&self, Phase::Constructor, cause);
                 if !budget::fits::<W>() {
                     return Err(fail(Cause::Capacity));
                 }
                 health(&self, Phase::Constructor)?;
-                if self.fresh.plan.kind != super::super::BootstrapPlanKind::AllocatorOnly {
+                if self.fresh.core.plan.kind != super::super::BootstrapPlanKind::AllocatorOnly {
                     return Err(fail(Cause::UnsupportedPlan));
                 }
-                let prefix = self.fresh.wal.prefix().map_err(|e| fail(Cause::Wal(e)))?;
-                if self.fresh.reader_active.load(Ordering::Acquire)
+                let prefix = self
+                    .fresh
+                    .core
+                    .wal
+                    .prefix()
+                    .map_err(|e| fail(Cause::Wal(e)))?;
+                if self.fresh.core.reader_active.load(Ordering::Acquire)
                     || prefix.complete_lsn != 0
                     || prefix.synced_lsn != 0
                     || prefix.complete_offset != 4096
                     || prefix.synced_offset != 4096
                     || prefix.stream.writer_epoch != 1
-                    || self.fresh.plan.profile != self._plan.profile
+                    || self.fresh.core.plan.profile != self._plan.profile
                 {
                     return Err(fail(Cause::Invariant));
                 }
                 {
                     let append = self
                         .fresh
+                        .core
                         .wal
                         .state(wal::Phase::Observe)
                         .map_err(|e| fail(Cause::Wal(e)))?;
@@ -185,7 +191,7 @@ impl<'m, 'w, W: WriterNamespace> DoublewriteStorageSession<'m, 'w, W> {
                         return Err(fail(Cause::Invariant));
                     }
                 }
-                let profile = self.fresh.plan.profile;
+                let profile = self.fresh.core.plan.profile;
                 let identity = super::super::fixed_entry()
                     .map_err(|e| fail(Cause::Control(e)))?
                     .metadata_identity(profile.spec().namespace, 0)
@@ -250,11 +256,12 @@ impl<W: WriterNamespace> AllocationSession<'_, '_, '_, '_, W> {
         let wal = self
             .installed
             .fresh
+            .core
             .wal
             .prefix()
             .map_err(|e| error(Phase::Observe, e.effect, Cause::Wal(e)))?;
         self.state
-            .observe(self.installed.fresh.plan.profile, wal)
+            .observe(self.installed.fresh.core.plan.profile, wal)
             .map_err(|cause| fatal(&self.installed, Phase::Observe, cause))
     }
     pub(crate) fn reserved_page(&self, ordinal: usize) -> Result<Option<PageRef>> {
@@ -271,7 +278,7 @@ impl<W: WriterNamespace> AllocationSession<'_, '_, '_, '_, W> {
         let page = allocation_page::decode_allocation_page(
             self.state.frame,
             self.state.identity,
-            self.installed.fresh.plan.profile.spec().namespace,
+            self.installed.fresh.core.plan.profile.spec().namespace,
         )
         .map_err(|e| fatal(&self.installed, Phase::Observe, Cause::Allocation(e)))?;
         let AllocationEntry::Reserved { generation, .. } = page
@@ -387,7 +394,7 @@ impl AllocationState<'_, '_> {
         installed: &DoublewriteStorageSession<'_, '_, W>,
         count: Option<usize>,
     ) -> Result<(wal::WalPrefix, Batch)> {
-        let wal = &installed.fresh.wal;
+        let wal = &installed.fresh.core.wal;
         health(installed, Phase::Preflight)?;
         if count.is_some_and(|n| !(1..=63).contains(&n)) {
             return Err(reject(Cause::InvalidInput));
@@ -401,12 +408,12 @@ impl AllocationState<'_, '_> {
         let prefix = wal
             .prefix()
             .map_err(|e| error(Phase::Preflight, e.effect, Cause::Wal(e)))?;
-        self.observe(installed.fresh.plan.profile, prefix)
+        self.observe(installed.fresh.core.plan.profile, prefix)
             .map_err(|e| fatal(installed, Phase::Preflight, e))?;
         let page = allocation_page::decode_allocation_page(
             self.frame,
             self.identity,
-            installed.fresh.plan.profile.spec().namespace,
+            installed.fresh.core.plan.profile.spec().namespace,
         )
         .map_err(|e| fatal(installed, Phase::Preflight, Cause::Allocation(e)))?;
         let batch = if let Some(n) = count {
@@ -429,7 +436,7 @@ impl AllocationState<'_, '_> {
                 .checked_add(1)
                 .ok_or_else(|| reject(Cause::CounterExhausted))?;
             let owner = SystemWorkRef::new(
-                installed.fresh.plan.profile.spec().namespace,
+                installed.fresh.core.plan.profile.spec().namespace,
                 SystemWorkKind::AllocationMaintenance,
                 id,
                 Generation::new(1).expect("nonzero"),
@@ -474,13 +481,13 @@ impl AllocationState<'_, '_> {
         installed: &DoublewriteStorageSession<'_, '_, W>,
         count: Option<usize>,
     ) -> Result<AllocationObservation> {
-        let wal = &installed.fresh.wal;
+        let wal = &installed.fresh.core.wal;
         let _unwind = wal.fenced.unwind_guard();
         let (prefix, batch) = self.plan_change(installed, count)?;
         #[cfg(test)]
         tests::cut(self, tests::Point::Snapshot, wal);
         let plan = operation::Plan {
-            profile: installed.fresh.plan.profile,
+            profile: installed.fresh.core.plan.profile,
             identity: self.identity,
             prefix,
             batch,
@@ -523,7 +530,7 @@ impl AllocationState<'_, '_> {
             .prefix()
             .map_err(|e| fatal(installed, Phase::Sync, Cause::Wal(e)))?;
         let observation = self
-            .observation(installed.fresh.plan.profile, prefix, count.is_none())
+            .observation(installed.fresh.core.plan.profile, prefix, count.is_none())
             .map_err(|e| fatal(installed, Phase::Observe, e))?;
         if count.is_none() {
             self.batch = None;

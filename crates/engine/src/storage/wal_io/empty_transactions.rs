@@ -82,6 +82,24 @@ pub(crate) struct EmptyTransactionSnapshot {
     pub(crate) retained_bank_bytes: usize,
 }
 impl<W: WriterNamespace> EmptyTransactions<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// Type-only extraction check; creates no owner or admission authority.
+    #[cfg(test)]
+    pub(in crate::storage) fn runtime_core_layout()
+    -> (usize, usize, bool, usize, usize, usize, usize) {
+        type Old<'a, W> = ResidentStatus<'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+        type New<'a, W> = EmptyTransactions<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+        type Error<'a, W> = IntoEmptyTransactionsError<Old<'a, W>>;
+        (
+            conversion_bytes::<W>(),
+            retained_bytes::<W>(),
+            handoff_fits::<W>(),
+            size_of::<Old<'_, W>>(),
+            size_of::<New<'_, W>>(),
+            size_of::<Error<'_, W>>(),
+            size_of::<std::result::Result<New<'_, W>, Error<'_, W>>>(),
+        )
+    }
+
     pub(crate) fn snapshot(&self) -> Result<EmptyTransactionSnapshot> {
         self.inner
             .inner

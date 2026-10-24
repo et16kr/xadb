@@ -1,7 +1,7 @@
 //! One-shot conversion and binding of installed storage to actual dirty frames.
 //! Initial readback occurs only for the atomic claim winner, before views exist.
 
-use super::super::super::{self as wal, GenesisWalSession};
+use super::super::super::{self as wal, WalRuntime};
 use super::{DoublewriteStorageSession, allocation_reservation::budget};
 use crate::{
     storage::{
@@ -123,7 +123,7 @@ fn unchanged(cause: Cause) -> MutableStorageError {
 }
 
 pub(crate) struct MutableStorageOwner<'m, 'w, W: WriterNamespace> {
-    fresh: super::FreshStorageSession<'m, W>,
+    core: super::super::InstalledStorageCore<'m, W>,
     plan: super::InstallPlan,
     workspace: Mutex<Option<&'w mut [u8; super::WORKSPACE_BYTES]>>,
     binding: AtomicU8,
@@ -137,7 +137,7 @@ impl<'m, 'w, W: WriterNamespace> DoublewriteStorageSession<'m, 'w, W> {
             _plan,
         } = self;
         MutableStorageOwner {
-            fresh,
+            core: fresh.core,
             plan: _plan,
             workspace: Mutex::new(Some(_workspace)),
             binding: AtomicU8::new(AVAILABLE),
@@ -146,7 +146,7 @@ impl<'m, 'w, W: WriterNamespace> DoublewriteStorageSession<'m, 'w, W> {
 }
 impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
     pub(crate) fn session_fence(&self) -> &SessionFence {
-        &self.fresh.wal.fenced
+        &self.core.wal.fenced
     }
     fn fatal(&self, cause: Cause) -> MutableStorageError {
         self.session_fence().fence();
@@ -170,17 +170,17 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
         Ok(())
     }
     pub(super) fn profile(&self) -> Profile {
-        self.fresh.plan.profile
+        self.core.plan.profile
     }
-    pub(super) fn wal(&self) -> &GenesisWalSession<'m, W> {
-        &self.fresh.wal
+    pub(super) fn wal(&self) -> &WalRuntime<'m, W> {
+        &self.core.wal
     }
 
     /// Borrow the original immutable bootstrap role without consuming binding.
     /// Mutable workspace health stays typed; the fresh error is preserved whole.
     pub(crate) fn status_role(&self) -> Result<super::super::StatusRole<'_>> {
         self.health()?;
-        self.fresh
+        self.core
             .status_role()
             .map_err(|error| MutableStorageError {
                 effect: error.effect,
@@ -191,7 +191,7 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
     /// Borrow plan3's Undo role only after the full mutable owner is healthy.
     pub(crate) fn undo_role(&self) -> Result<crate::storage::wal_io::UndoRole<'_>> {
         self.health()?;
-        self.fresh.undo_role().map_err(|error| MutableStorageError {
+        self.core.undo_role().map_err(|error| MutableStorageError {
             effect: error.effect,
             cause: Cause::Bootstrap(error),
         })
@@ -206,7 +206,7 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
         operation: &'o mut [u8; OPERATION_BYTES],
     ) -> Result<BoundAllocation<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         self.health()?;
-        if self.fresh.plan.kind != super::super::BootstrapPlanKind::AllocatorOnly {
+        if self.core.plan.kind != super::super::BootstrapPlanKind::AllocatorOnly {
             return Err(unchanged(Cause::UnsupportedPlan));
         }
         if !core.uses_fence(self.session_fence()) {
@@ -287,7 +287,7 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
             .wal()
             .prefix()
             .map_err(|error| self.fatal(Cause::Wal(error)))?;
-        if self.fresh.reader_active.load(Ordering::Acquire)
+        if self.core.reader_active.load(Ordering::Acquire)
             || prefix.complete_lsn != 0
             || prefix.synced_lsn != 0
             || prefix.complete_offset != 4096
@@ -321,7 +321,7 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
                 .try_into()
                 .expect("fixed read scratch");
             let mut reader = self
-                .fresh
+                .core
                 .open_reader(root, scratch)
                 .map_err(|error| self.fatal(Cause::PageIo(error)))?;
             reader
@@ -562,3 +562,7 @@ pub(in crate::storage) use status_init::StatusLoadPermit;
 
 pub(in crate::storage) use status_init::EmptyTransactionInstall;
 pub(crate) use status_init::EmptyTransactionObservation;
+
+#[cfg(test)]
+#[path = "runtime_core_tests.rs"]
+mod runtime_core_tests;

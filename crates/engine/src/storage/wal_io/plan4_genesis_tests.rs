@@ -59,8 +59,8 @@ fn produce(
         &mut maintenance,
     )
     .map_err(AttemptError::Bootstrap)?;
-    assert_eq!(owner.plan.kind.issued_object_high_water(), 5);
-    assert_eq!(owner.plan.kind.version(), 4);
+    assert_eq!(owner.core.plan.kind.issued_object_high_water(), 5);
+    assert_eq!(owner.core.plan.kind.version(), 4);
     let database = directory.0.lock().unwrap().entropy;
     let expected = q::files_for(id, database);
     assert_eq!(&maintenance[..IMAGE_BYTES], &expected[DATA][..IMAGE_BYTES]);

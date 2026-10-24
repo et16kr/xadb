@@ -37,6 +37,7 @@ fn reject(
     let before = inventory(state);
     let events = state.lock().unwrap().events.len();
     let slot = session
+        .runtime
         .append
         .lock()
         .unwrap()
@@ -56,6 +57,7 @@ fn reject(
     assert_eq!(state.lock().unwrap().events.len(), events);
     assert_eq!(
         session
+            .runtime
             .append
             .lock()
             .unwrap()
@@ -80,7 +82,11 @@ fn assert_fenced(session: &GenesisWalSession<'_, Writer>, state: &Arc<Mutex<Stat
     }
     assert_eq!(calls, state.lock().unwrap().events.len());
     assert_eq!(before, inventory(state));
-    let guard = session.append.lock().unwrap_or_else(|e| e.into_inner());
+    let guard = session
+        .runtime
+        .append
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     assert_eq!(guard.prefix.synced_offset, synced);
 }
 
@@ -535,7 +541,14 @@ fn wal_slot_writes_exact_logical_and_physical_prefixes() {
         assert_eq!(location.stream, before.stream);
         frame.fill(0xdd); // A successful stage does not borrow the prepared input.
         assert_eq!(
-            session.append.lock().unwrap().slot.as_ref().unwrap()[..original.len()],
+            session
+                .runtime
+                .append
+                .lock()
+                .unwrap()
+                .slot
+                .as_ref()
+                .unwrap()[..original.len()],
             original
         );
         let complete = session.prefix().unwrap();
@@ -666,7 +679,7 @@ fn wal_slot_rejects_boundaries_before_effect() {
         // Typed synthetic Idle state: not an assertion about a recovered prior chain.
         let start = WAL_FILE_CAP - gap;
         {
-            let mut a = session.append.lock().unwrap();
+            let mut a = session.runtime.append.lock().unwrap();
             a.prefix.complete_offset = start;
             a.prefix.synced_offset = start;
             a.prefix.complete_lsn = 11;
@@ -796,7 +809,11 @@ fn wal_io_faults_fence_without_replay() {
             );
         }
         assert_fenced(&session, &state, 4096);
-        let a = session.append.lock().unwrap_or_else(|e| e.into_inner());
+        let a = session
+            .runtime
+            .append
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         assert_eq!(a.state, SlotState::IoOwned(location));
         assert!(a.slot.is_none());
         assert_eq!(a.prefix.complete_offset, 4288);
@@ -816,10 +833,10 @@ fn wal_io_faults_fence_without_replay() {
         assert!(
             catch_unwind(AssertUnwindSafe(|| {
                 if file {
-                    let _g = session.file.lock().unwrap();
+                    let _g = session.runtime.file.lock().unwrap();
                     panic!("file poison");
                 } else {
-                    let _g = session.append.lock().unwrap();
+                    let _g = session.runtime.append.lock().unwrap();
                     panic!("gate poison");
                 }
             }))
@@ -846,7 +863,7 @@ fn wal_io_faults_fence_without_replay() {
         reached.recv_timeout(Duration::from_secs(5)).unwrap();
         assert!(
             catch_unwind(AssertUnwindSafe(|| {
-                let _g = session.append.lock().unwrap();
+                let _g = session.runtime.append.lock().unwrap();
                 panic!("publication poison");
             }))
             .is_err()
@@ -857,7 +874,7 @@ fn wal_io_faults_fence_without_replay() {
     });
     assert_fenced(&session, &state, 4096);
     assert_eq!(bytes(&state, WAL_NAME).len(), 4288);
-    let a = session.append.lock().err().unwrap().into_inner();
+    let a = session.runtime.append.lock().err().unwrap().into_inner();
     assert!(matches!(a.state, SlotState::IoOwned(_)));
     assert!(a.slot.is_none());
 }
@@ -903,7 +920,7 @@ fn wal_io_releases_gate_and_protects_slot() {
                 (prefix.complete_offset, prefix.synced_offset),
                 (location.end, 4096)
             );
-            let a = session.append.lock().unwrap();
+            let a = session.runtime.append.lock().unwrap();
             assert_eq!(a.state, SlotState::IoOwned(location));
             assert!(a.slot.is_none());
             drop(a);
@@ -935,7 +952,7 @@ fn wal_io_releases_gate_and_protects_slot() {
             let session_ref = &session;
             let a_ref = &a;
             let worker = scope.spawn(move || {
-                session_ref.stage_inner(a_ref, None, || {
+                session_ref.runtime.stage_inner(a_ref, None, || {
                     entered.send(()).unwrap();
                     resume.recv_timeout(Duration::from_secs(5)).unwrap();
                 })
@@ -967,7 +984,14 @@ fn wal_io_releases_gate_and_protects_slot() {
             assert_eq!(inventory(&state), files);
             assert_eq!(state.lock().unwrap().events.len(), calls);
             assert_eq!(
-                &session.append.lock().unwrap().slot.as_ref().unwrap()[..b.len()],
+                &session
+                    .runtime
+                    .append
+                    .lock()
+                    .unwrap()
+                    .slot
+                    .as_ref()
+                    .unwrap()[..b.len()],
                 b.as_slice()
             );
         });
@@ -1056,7 +1080,14 @@ fn wal_generated_prefixes_match_independent_bytes() {
             assert_eq!(content_digest(&actual), content_digest(&expected));
             if let Some(frame) = &pending {
                 assert_eq!(
-                    session.append.lock().unwrap().slot.as_ref().unwrap()[..frame.len()],
+                    session
+                        .runtime
+                        .append
+                        .lock()
+                        .unwrap()
+                        .slot
+                        .as_ref()
+                        .unwrap()[..frame.len()],
                     **frame
                 );
             }
@@ -1090,6 +1121,7 @@ fn wal_workspace_and_handles_remain_bounded() {
     let (session, state) = session(&mut memory);
     assert_eq!(
         session
+            .runtime
             .append
             .lock()
             .unwrap()

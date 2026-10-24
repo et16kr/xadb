@@ -4,7 +4,8 @@
 use std::sync::atomic::AtomicBool;
 
 use super::{
-    GenesisWalSession, MAX_FRAME_BYTES, WalFrameLocation, WalIoError, WalPrefix, WalSyncObservation,
+    GenesisWalSession, MAX_FRAME_BYTES, WalFrameLocation, WalIoError, WalPrefix, WalRuntime,
+    WalSyncObservation,
 };
 use crate::api::Namespace;
 use crate::storage::{
@@ -779,7 +780,13 @@ impl StatusRole<'_> {
 /// Immutable namespace capability plus one physical WAL slot. Returned readers
 /// borrow this owner and all caller scratch; there is no raw writer escape hatch.
 pub(crate) struct FreshStorageSession<'m, W: WriterNamespace> {
-    wal: GenesisWalSession<'m, W>,
+    core: InstalledStorageCore<'m, W>,
+}
+
+// Shared installed resources. Fresh-only constructors and capability wrappers
+// remain separate; no observation-to-owner or Core-to-Fresh conversion exists.
+pub(super) struct InstalledStorageCore<'m, W: WriterNamespace> {
+    wal: WalRuntime<'m, W>,
     plan: BootstrapPlan,
     reader_active: AtomicBool,
 }
@@ -930,7 +937,8 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
                 phase: Plan4GenesisPhase::Genesis,
                 effect: cause.effect,
                 cause: Plan4GenesisCause::Wal(cause),
-            })?;
+            })?
+            .runtime;
         let prepared_result = {
             let _unwind = wal.fenced.unwind_guard();
             (|| {
@@ -981,9 +989,11 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
             }
         };
         Ok(Self {
-            wal,
-            plan,
-            reader_active: AtomicBool::new(false),
+            core: InstalledStorageCore {
+                wal,
+                plan,
+                reader_active: AtomicBool::new(false),
+            },
         })
     }
 
@@ -1046,7 +1056,8 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
                 phase: Phase::Genesis,
                 effect: error.effect,
                 cause: Cause::Wal(error),
-            })?;
+            })?
+            .runtime;
         let plan = match kind {
             BootstrapPlanKind::AllocatorOnly => BootstrapPlan::prepare(wal.profile, scratch)?,
             BootstrapPlanKind::StatusBootstrap | BootstrapPlanKind::UndoBootstrap => {
@@ -1073,15 +1084,50 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
             readback(writer, &plan, scratch)?;
         }
         Ok(Self {
-            wal,
-            plan,
-            reader_active: AtomicBool::new(false),
+            core: InstalledStorageCore {
+                wal,
+                plan,
+                reader_active: AtomicBool::new(false),
+            },
         })
     }
 
+    pub(crate) fn status_role(&self) -> Result<StatusRole<'_>> {
+        self.core.status_role()
+    }
+
+    pub(crate) fn open_reader<'a>(
+        &'a self,
+        root: &'a mut [u8; PAGE_BYTES],
+        scratch: &'a mut [u8; PAGE_BYTES],
+    ) -> std::result::Result<PageFileReader<'a, W>, PageIoError> {
+        self.core.open_reader(root, scratch)
+    }
+
+    pub(crate) fn try_stage(
+        &self,
+        bytes: &[u8],
+    ) -> std::result::Result<WalFrameLocation, WalIoError> {
+        self.core.try_stage(bytes)
+    }
+
+    pub(crate) fn sync_pending(&self) -> std::result::Result<WalSyncObservation, WalIoError> {
+        self.core.wal.sync_pending()
+    }
+
+    pub(crate) fn prefix(&self) -> std::result::Result<WalPrefix, WalIoError> {
+        self.core.wal.prefix()
+    }
+
+    pub(crate) fn is_fenced(&self) -> bool {
+        self.core.wal.is_fenced()
+    }
+}
+
+impl<W: WriterNamespace> InstalledStorageCore<'_, W> {
     /// Borrow the completed plan2/3's Status role. No I/O or payload authority.
     /// Poison/fence precedes plan rejection and never clears the shared fence.
-    pub(crate) fn status_role(&self) -> Result<StatusRole<'_>> {
+    fn status_role(&self) -> Result<StatusRole<'_>> {
         let cause = if self.wal.append.is_poisoned()
             || self.wal.file.is_poisoned()
             || self.wal._writer.is_poisoned()
@@ -1116,7 +1162,7 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
         })
     }
 
-    pub(crate) fn open_reader<'a>(
+    fn open_reader<'a>(
         &'a self,
         root: &'a mut [u8; PAGE_BYTES],
         scratch: &'a mut [u8; PAGE_BYTES],
@@ -1136,10 +1182,7 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
         )
     }
 
-    pub(crate) fn try_stage(
-        &self,
-        bytes: &[u8],
-    ) -> std::result::Result<WalFrameLocation, WalIoError> {
+    fn try_stage(&self, bytes: &[u8]) -> std::result::Result<WalFrameLocation, WalIoError> {
         let file = fixed_entry()
             .map_err(|e| super::unchanged(super::Phase::Stage, super::Cause::Control(e)))?
             .file;
@@ -1153,18 +1196,6 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
             self.wal
                 .stage_inner(bytes, Some((file, EXTENT_PAGES as u64)))
         }
-    }
-
-    pub(crate) fn sync_pending(&self) -> std::result::Result<WalSyncObservation, WalIoError> {
-        self.wal.sync_pending()
-    }
-
-    pub(crate) fn prefix(&self) -> std::result::Result<WalPrefix, WalIoError> {
-        self.wal.prefix()
-    }
-
-    pub(crate) fn is_fenced(&self) -> bool {
-        self.wal.is_fenced()
     }
 }
 

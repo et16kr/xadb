@@ -1,0 +1,628 @@
+{
+  "schema_version": 1,
+  "unit": "D3-RUNTIME-CORE-001",
+  "base_commit": "bc93de1bc119739e99521c452b5a2e1be1775638",
+  "status": "ACCEPTED_LIMITED_D1",
+  "contract_ref": "dev3-storage-session.md#private-runtime-core",
+  "test_plan_ref": "dev3-test-plan.md#private-runtime-core",
+  "scope": "Private original runtime/core extraction, explicit Genesis/Fresh forwarding and original DWB-to-Mutable consuming move. No recovered constructor or new wire/effect.",
+  "source_sha256": "28c59908571723d3d90e78b9837f3483480123151bbf8d75398f0711106cd9df",
+  "binary_sha256": "7926acbd727812c73b0f7dacc2dee6282ab3016a18eaa1082aff7ed96ce547c0",
+  "binary_bytes": 43824128,
+  "execution_input_sha256": "2913544daf59d6d6eac2d98cc5a93a533e7e07f2e9a5a6a791cade28d2562124",
+  "owned_source_files": {
+    "crates/engine/src/storage/wal_durability_test_support.rs": "2d77e2333ad7b6a1d272b6909993c76e42b3b304ef12ec97c85a0e1d6c2237b6",
+    "crates/engine/src/storage/wal_io.rs": "4b04864b2bfaa5751b57cfcec1718846a6c29a0643ab433c36ffafa26af2c204",
+    "crates/engine/src/storage/wal_io/allocation_budget_profile_tests.rs": "fd6c140f4c8ff34470caf144b29f0d21ace70a56d96571999d0b3aff7a089dfd",
+    "crates/engine/src/storage/wal_io/allocation_native_tests.rs": "aecca29dd984f8096329646321b4a391729f8c2b2086dca6e4ae98960e236489",
+    "crates/engine/src/storage/wal_io/allocation_operation.rs": "a0b7d9c21d9d1de06af1b5957e638683aa1504106128982af7c326adea963e84",
+    "crates/engine/src/storage/wal_io/allocation_reservation.rs": "87a77c7f9055c628d350352ef4d3949734a08810776978f0491796eb7f5ea3d2",
+    "crates/engine/src/storage/wal_io/allocation_reservation_tests.rs": "18db3359ecc2d8fa98f08bca1a174cfa99211aab1f2f8bf25ad238eb2968ee09",
+    "crates/engine/src/storage/wal_io/allocator_eviction.rs": "e2cf81c31e3401e6a5f57fa78b169c92d72b9acd81971098cffb52400d88ca1c",
+    "crates/engine/src/storage/wal_io/allocator_residency.rs": "736bc482cac8bd023abbe7d0e2a6611f3fbc0e25cb737504bde98a7686e19bcf",
+    "crates/engine/src/storage/wal_io/bootstrap.rs": "dcd38803e820523aa53853d4c3e20db1bc451994ca1b835b0dc8cc22f56543a0",
+    "crates/engine/src/storage/wal_io/bootstrap_tests.rs": "a3718185f310df9035ae6511fec3b8ef119370c2b197057132b8a62c4cfe61b9",
+    "crates/engine/src/storage/wal_io/doublewrite_install.rs": "edd103ca873980a1301c4a9c03ef2f787aaab15f9b0d4c42a4c28c461cae972f",
+    "crates/engine/src/storage/wal_io/doublewrite_install_tests.rs": "7910b28a5c1283f333326d8750f345a18e3c69f8f36af5be0e3a5ca44661892c",
+    "crates/engine/src/storage/wal_io/empty_transactions.rs": "1dd997a5fe9f2648d91ebe9ab20e2cd5b44fc815a9aa2eb87aaa8fdcd923038f",
+    "crates/engine/src/storage/wal_io/empty_transactions_live.rs": "0a2ccb6a8d5ab2762cdccf045fabeee001a9dff30ff899e633466a9c57febd3d",
+    "crates/engine/src/storage/wal_io/fixed_system_operation.rs": "4cc443e403c3b84bde1b4c88aafb2448e5ee4f6ef5e9ddcff33a7dd816a7f665",
+    "crates/engine/src/storage/wal_io/mixed_system_init.rs": "836bf3ab5088f1fac7bb8c199f27e8d3dfe8633de43eda1af699b383ff937a53",
+    "crates/engine/src/storage/wal_io/mixed_system_init_tests.rs": "7a671418e65a585e846ca681e630e589a387b1632fc9dce62b49deb972957e00",
+    "crates/engine/src/storage/wal_io/mixed_system_load.rs": "9b8367fde6f82f56f55c6d0a66c0cf3d467c63c76c50d659b0ef181d28599e2b",
+    "crates/engine/src/storage/wal_io/mutable_storage.rs": "fc2bc2dc6e75599286adafd5f73796fae92dc8f9b9bd8e6ee652fcacdd066b4e",
+    "crates/engine/src/storage/wal_io/plan4_genesis_tests.rs": "6b8022c77d74bd7bd5da0b4190a376c648abdb11adc8e545fcda1e8e83d13fe7",
+    "crates/engine/src/storage/wal_io/plan4_pages.rs": "c3689424f00334e0b07d39dd6c69d8aa9f2b411300d2d341e2ed0a0ff1e980da",
+    "crates/engine/src/storage/wal_io/plan4_pages_load.rs": "b9e9500e2e89144b86330a5da3d853521f160ac7eb2ad46fc3a1e4419fcbe4c4",
+    "crates/engine/src/storage/wal_io/plan4_pages_read.rs": "22072fbe79b271472605bd4294460e026e4bccc2dfd534c9fd8e6e12047395ef",
+    "crates/engine/src/storage/wal_io/plan4_pages_tests.rs": "8694d1e8591c4f5ff892821a787259f9c2c9f001a12469c6d80660f00f0c912c",
+    "crates/engine/src/storage/wal_io/runtime_core_tests.rs": "333d5451ba98038c862de3df852291cb61072a416a4f59590bd10c437c193036",
+    "crates/engine/src/storage/wal_io/status_bootstrap_native_tests.rs": "f1a688867e8e45c9763387597df367628a732caf25baf90afd1eabf31745111c",
+    "crates/engine/src/storage/wal_io/status_bootstrap_tests.rs": "7b1ef9eaaba09017335935f0381f85f3af6b95068fe241558ac46f0bd6d614b5",
+    "crates/engine/src/storage/wal_io/status_home_flush.rs": "32042229d509bf0ac5b51b155c1835a4aee1c33ef105ea3a2f2251b119b814c9",
+    "crates/engine/src/storage/wal_io/status_home_flush_resource_tests.rs": "668515bfd39d19c725484d5762b35e659deba101af9ac8a936b1e854e43e920a",
+    "crates/engine/src/storage/wal_io/status_init.rs": "c7ad114c0358542de8876fad3b9d034996e6dfaf6ee451575b551eba01f5d301",
+    "crates/engine/src/storage/wal_io/status_init_operation.rs": "edf059c3fdc63cdacce058aafda49a8e7fbfc17503dc7c397c5a71e3faabe678",
+    "crates/engine/src/storage/wal_io/status_init_resource_tests.rs": "d7adda74b48d0db105e21cd321828f6a29b542d7064a5deeabb771f0c173afb0",
+    "crates/engine/src/storage/wal_io/status_load.rs": "83e444d43688a8e301a754948017aee02a607b24f9bb88e0442a6ccd13aec08d",
+    "crates/engine/src/storage/wal_io/undo_bootstrap.rs": "a5e7c1d85c743e399cdeaaf0d01c7d38335dbb92f62128c8cbcc70004a97f196",
+    "crates/engine/src/storage/wal_io/undo_bootstrap_native_tests.rs": "c996c1f35c11ab9666b6d5cacc7744356b7d9937c5ce6102c5be555588c37f17",
+    "crates/engine/src/storage/wal_io/undo_bootstrap_tests.rs": "ee94a4d8b7c5adab39ec146e18f882fb8a2d599fc5b07aae4e8895f610fdceca",
+    "crates/engine/src/storage/wal_io_tests.rs": "4e2789ed8d8754a5b57b73d1184d388209592ccc6872a576b9a88abeda429bd5"
+  },
+  "inventory": {
+    "mandatory": 7,
+    "static": 2,
+    "memory": 5,
+    "native_runtime": 0,
+    "s5_additional": 0,
+    "final_s5_includes_mandatory": true
+  },
+  "cases": {
+    "RC-ST01": {
+      "phase": "mandatory",
+      "category": "static",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::runtime_core_tests::runtime_core_source_memory",
+      "source": "crates/engine/src/storage/wal_io/runtime_core_tests.rs"
+    },
+    "RC-ST02": {
+      "phase": "mandatory",
+      "category": "static",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::runtime_core_tests::runtime_core_source_native",
+      "source": "crates/engine/src/storage/wal_io/runtime_core_tests.rs"
+    },
+    "RC-M01": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::runtime_core_tests::runtime_core_healthy_handoff",
+      "source": "crates/engine/src/storage/wal_io/runtime_core_tests.rs"
+    },
+    "RC-M02": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::runtime_core_tests::runtime_core_genesis_forwarding",
+      "source": "crates/engine/src/storage/wal_io/runtime_core_tests.rs"
+    },
+    "RC-M03": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::runtime_core_tests::runtime_core_fenced_handoff",
+      "source": "crates/engine/src/storage/wal_io/runtime_core_tests.rs"
+    },
+    "RC-M04": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::runtime_core_tests::runtime_core_poisoned_handoff",
+      "source": "crates/engine/src/storage/wal_io/runtime_core_tests.rs"
+    },
+    "RC-M05": {
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::runtime_core_tests::runtime_core_reader_claim_handoff",
+      "source": "crates/engine/src/storage/wal_io/runtime_core_tests.rs"
+    }
+  },
+  "results": {
+    "static": {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/static-r0/result.json",
+      "bytes": 3957,
+      "sha256": "c57b9a937d6303e1aa98a599440d04bed0ad019c93970abaac3c3fb18084d62a"
+    },
+    "memory": {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/result.json",
+      "bytes": 8692,
+      "sha256": "5683a4aa91cc068218dd9fc8d2ba9277d0a81e114da4d9082e705f1eff2650df"
+    }
+  },
+  "unique_mandatory_pass": 7,
+  "prior_failures": [
+    "product-r0 lib check E0609 two multiline field paths",
+    "tests-r0 no-run compile E0599 scoped-thread alias stage_inner access"
+  ],
+  "prior_builds_without_runtime": [
+    "product-r0",
+    "product-r1",
+    "tests-r0",
+    "tests-r1"
+  ],
+  "full_stage_acceptance": false,
+  "consumer_completion": false,
+  "ai_experiment_completed_consumers": 1,
+  "independent_final_review": {
+    "path": "artifacts/dev3/plan4-runtime-core-20261024/review/final-d1.json",
+    "bytes": 3029,
+    "sha256": "3191985f906ad61aae80eda0b457afa39dcde3b2945970ffc18d8c1aec766ee0"
+  },
+  "artifacts": [
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/account-preparation.py",
+      "bytes": 2028,
+      "sha256": "1d2c04ba50a266f080755a46b9661068205bb0a6570b1ebc7edd358565a2335e"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/build-source.py",
+      "bytes": 3244,
+      "sha256": "ae596132a6754b1464127afcf69e61d9989bac3478c90a381ed781a1c1334b20"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/cache-eviction-intent.json",
+      "bytes": 601,
+      "sha256": "73564b6be6f75a6852345a4f62a6ed4da7f3a8f435dfd36eec728f461bb9672d"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/cache-eviction-receipt.json",
+      "bytes": 668,
+      "sha256": "685de39b3d1f9505cadaae5a5ae75197f9452024edef6447123968a78ff382d2"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/check-source.py",
+      "bytes": 2058,
+      "sha256": "fee43323a216ee2565e0c89253c6d1fbc4605fe10a89e1a477402578c19b7136"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/execution-input-v1.json",
+      "bytes": 3687,
+      "sha256": "8825bd54eab84117ba731a020404c2bca3767a83ddf86c28bf0aa6bab5084e44"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/execution-input.json",
+      "bytes": 4190,
+      "sha256": "2913544daf59d6d6eac2d98cc5a93a533e7e07f2e9a5a6a791cade28d2562124"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/freeze-selected-source.py",
+      "bytes": 2153,
+      "sha256": "574461e257185e9f78fefdda811fea42d2b3505ab4fce5456a2cc7d4b45a31f6"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/freeze-source.py",
+      "bytes": 2118,
+      "sha256": "78e603b4d5a6322de53f961cbb10080bb86a9391af337ecf03f2e8781f005a60"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/g5-preservation-after-lib-check.json",
+      "bytes": 247,
+      "sha256": "fa272a4dbffb3019dfd68ba92c2d944a84a2e2825e60fb314d49005c03c44806"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/old-cache-eviction-intent.json",
+      "bytes": 3216,
+      "sha256": "718a263884a5535f8787f6b92b193b91abbc9a2610d7d07674732a7ed9200243"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/old-cache-eviction-receipt.json",
+      "bytes": 3361,
+      "sha256": "fdb84a28acc9d605430f40a77106b5b1dfe897495da9dc1ea78e4d46de448c4e"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/preparation-before-static.json",
+      "bytes": 1297,
+      "sha256": "f278f8d74ec26a932298cc7fd766e9dc08f23205980bd41b4bf8ff7f63f25bf5"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/preparation-input-v2.json",
+      "bytes": 3489,
+      "sha256": "a4bd63a9fc549c5f62d5e180ebcade49db78c4c3e61c6602e18895bf570079c8"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/preparation-input.json",
+      "bytes": 3383,
+      "sha256": "30c69d3a64cc7497baa2e9311f853c1be7e6c23b151104c8cfe473ba6abc35b7"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/preservation-after-r2.json",
+      "bytes": 541,
+      "sha256": "0ca9888de4be1259886294ace537551c836b5d3374344fff9b362066893da62f"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/product-r0/check-receipt.json",
+      "bytes": 634,
+      "sha256": "e77239949c3e436aba050e34386feeb6aff21c5cced357f3f4dde8dda3a3735e"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/product-r0/check.stderr",
+      "bytes": 338,
+      "sha256": "e96981c25de8dae896aa4bbed1ab32b0fbd01fd4a6af98bab3ec5dd7c0ddee11"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/product-r0/check.stdout",
+      "bytes": 14681,
+      "sha256": "9e9f19ccdfed6c37f535dff961ab02cf2294d42fc5fc578b2193a4f533c7cf49"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/product-r0/freeze.json",
+      "bytes": 11749,
+      "sha256": "2cdc0f9b0fdb132da9760c27ae5e227a57adb840fc242240d1b5b730412cf5ea"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/product-r1/check-receipt.json",
+      "bytes": 631,
+      "sha256": "bca2cf758914a4f16ada017ab25c92b151097ca0fea7252a916699140f752c8b"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/product-r1/check.stderr",
+      "bytes": 190,
+      "sha256": "c04ba676e372f853f790ea38bae436b94b93d6f1771379c9508a48a315cfc927"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/product-r1/check.stdout",
+      "bytes": 9671,
+      "sha256": "56068a1a9b528f73766e34a928790890c65f2aae4e0b65cf2e86a8dfdd06cf85"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/product-r1/freeze.json",
+      "bytes": 11749,
+      "sha256": "da27f2362bcccf729bae8b3fadb5221ab5cb2591cc92a6bd6c4d454958a9b56f"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/cache-preparation-audit.json",
+      "bytes": 1426,
+      "sha256": "754e2c1f4e6a4ce03953aebb0cb927a935e4be90f8b479648bca6f41baf769fc"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/cache-preparation-d2.md",
+      "bytes": 3343,
+      "sha256": "741033dbe9b8a159b7a8eb023e0c965fb2fbecccf76d45a544728910ef46eb97"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/g5-protected-inventory.jsonl.gz",
+      "bytes": 2629754,
+      "sha256": "85e770cf3257515b34a2d0541d90bf539653f438081dbe79a8638a993b072d54"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/memory-r2-gate.json",
+      "bytes": 3975,
+      "sha256": "6fb25f8988a8a2fb201d80140f2444ffddc050943595c751022bf4dc3148c0fc"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/memory-r2-gate.md",
+      "bytes": 2901,
+      "sha256": "c8ce7d0639dce019bf32cf63f20eb1dc5d9a2bffb325264f7cce46779660b74d"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/old-incremental-cache-audit.json",
+      "bytes": 9989,
+      "sha256": "72e604cd68b7b9128737cbfbe31ec5dcad484babdf19ad3877c0025a93f62b30"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/old-incremental-cache-d2.md",
+      "bytes": 3005,
+      "sha256": "b45bb6ea79351bf7edbc6aa2da429b2c4cb86c9037b1cac003fda9a8e196c268"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/operational-recovery-protected-inventory.jsonl.gz",
+      "bytes": 1696333,
+      "sha256": "4c9131b9662b8aa04b60b97000ad2219ca4f652bbfff86006c335bc7ff3a4bef"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/static-r2-gate.json",
+      "bytes": 2971,
+      "sha256": "7e2ab1451fd7599d8e57c2772e02f2d30ce01c17797e558afc5ec8448cac4bd3"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/static-r2-gate.md",
+      "bytes": 4139,
+      "sha256": "da5bf2daa4faddb5ffc798fbf2078072dc6baf50253bc60f8073255261dc20dc"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/test-input-d2.md",
+      "bytes": 3285,
+      "sha256": "7af19cd056d5cd55ccfaa9ada5f58296bce3e61abd2b4ae10971aef39c5660c5"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/test-input-source-snapshot.json",
+      "bytes": 936,
+      "sha256": "e1b4a2f6bc10a4826350933125dfd39d7df747535773099e32562308e2b86b37"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/run-selected-v1.py",
+      "bytes": 6176,
+      "sha256": "ac2165b04a996d8949613a60a2198709f468c4406b0f0fb0f357f76d835c8524"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/run-selected.py",
+      "bytes": 7617,
+      "sha256": "e1a133e28c40258176f9fd6f6c3685002de4858d375425df5675deafce1f13ce"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/selected-input-source-r0.json",
+      "bytes": 4565,
+      "sha256": "d1ed088053267d5d17645afd2ea8c95732fa727833f48d5a0c86e0aee1732794"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/selected-source-input-r1.json",
+      "bytes": 5003,
+      "sha256": "4b6842fd557262c8eae1436ff7b83f77d0c8d99b1ac43875b3d345f2b93963cb"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/static-admission.json",
+      "bytes": 909,
+      "sha256": "732b6046ba4d5a48d66e0cbbfe12adaabb575ea241e743d637b5711a4a00d5ee"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/test-input-draft.md",
+      "bytes": 12058,
+      "sha256": "bf773d4983766d949dfedf0f7ecf49c9785c179b1e56f123e7b477780786ec00"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/test-mechanical-adaptation.json",
+      "bytes": 3607,
+      "sha256": "1048222cf702178ce79a5c5e91aa861fee5df59f145de464e99a90a4179b61a9"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r0/build-receipt.json",
+      "bytes": 5831,
+      "sha256": "c63f74d0833f360ef279466cbe00f81762d8726dee89ce2469e9f182e97dbf88"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r0/build.log",
+      "bytes": 23670,
+      "sha256": "add4b666a13989aaeaf4e681fc25e392b4ecdb5452e72320c19f3a276eb2df18"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r0/build.stderr",
+      "bytes": 202,
+      "sha256": "adee4f76a8d025bd1a24f434c931138ba74fd392a97653d9c9334c859d939783"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r0/freeze.json",
+      "bytes": 12418,
+      "sha256": "71b49e12bb81b0f30162f2d95427cc777d5b09bedfe3ca2db7e88a736d313cc5"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r1/build-receipt.json",
+      "bytes": 5945,
+      "sha256": "94e42cf9c19f4d0be7eccc97f8e10808f55dafa814ad76d1268a297b7cc6809e"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r1/build.log",
+      "bytes": 20317,
+      "sha256": "a748e076e7aea1f3c075c3ad9fbc843d4702086490e8cc013a8dcc19c25f3b7f"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r1/build.stderr",
+      "bytes": 190,
+      "sha256": "970fe85e41bfed107c87575fd2fa5eca0e37eea2fae4fc4a0c8a756c1b38650a"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r1/clippy-receipt.json",
+      "bytes": 382,
+      "sha256": "deed109232cf920775d5dbc9b661d8aeb8294f50a50e5bbcfde9b06419c503b1"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r1/clippy.stderr",
+      "bytes": 189,
+      "sha256": "32b69ab9812de53b7426de287fa042d367657bc931030d016af1d832ff979305"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r1/clippy.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r1/fmt-receipt.json",
+      "bytes": 2679,
+      "sha256": "c894cd4c9e2bf95d707ad2e28e45fa6e3890ee9463306f94cbfb51407cc3ee4c"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r1/fmt.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r1/fmt.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r1/freeze.json",
+      "bytes": 12418,
+      "sha256": "db8638feb68e909f9b29a42010d15aefd7ec78ea5160495b82a58257a4ddce7f"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/build-receipt.json",
+      "bytes": 5945,
+      "sha256": "f34de5939ec1ca4adbee73d897a7e5a7f416a52878c650fc3ac721743ab70600"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/build.log",
+      "bytes": 20317,
+      "sha256": "62fa694b4164375bce68699527cfcdf8a8a0f78c1e8ea1959a07c0c6b24558fc"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/build.stderr",
+      "bytes": 190,
+      "sha256": "83926bd6588f4aa4c0e1bb7d0b4e57ab2122e66d592969476894bd756217bbf3"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/clippy-receipt.json",
+      "bytes": 525,
+      "sha256": "2d5f650496737896477849fd3a70c340c41183b9d614340de782cf2dcd0352c7"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/clippy.stderr",
+      "bytes": 189,
+      "sha256": "72cd611d0a083ba9abbfd65fc607beb899a0126a78fa2eb64edb741bef908ed2"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/clippy.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/fmt-receipt.json",
+      "bytes": 532,
+      "sha256": "69930e4b13e5093d033d8e1e0add09da28c60ca677307efea0de84af7d5f7435"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/fmt.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/fmt.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/freeze.json",
+      "bytes": 12418,
+      "sha256": "8e44bcfeb5d407d04851e6d296c68f76d6d31070cc86c4e0da4fa04dda59f19b"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/01.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/01.stdout",
+      "bytes": 485,
+      "sha256": "fba26469a8f9e2bd7a8b938ef95c2ae7ba2ef9af213a5dbd09a62aed90d9780d"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/02.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/02.stdout",
+      "bytes": 488,
+      "sha256": "c99d98077051bccc915edec8570e638ce069930a39c044d6e5037e95709e1784"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/03.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/03.stdout",
+      "bytes": 484,
+      "sha256": "63dc7cc377c81779466c84bef52a7b5ef70d1eafd96a7db993a50243fbe155b7"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/04.stderr",
+      "bytes": 324,
+      "sha256": "663d5e17b6ccb97c552b08268b0deb98f0c60e5894932152cff0c4e40bb26c69"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/04.stdout",
+      "bytes": 486,
+      "sha256": "d7c9b17bfc7a1dc639c77a3bdd90c3557f9ff206b8e202619e32bf7030321c73"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/05.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/05.stdout",
+      "bytes": 490,
+      "sha256": "a560dc00af0e149a17c1d0aa081cb671f9bd7150d3a74791bf4729194cfa607e"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/result.json",
+      "bytes": 8692,
+      "sha256": "5683a4aa91cc068218dd9fc8d2ba9277d0a81e114da4d9082e705f1eff2650df"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/static-r0/01.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/static-r0/01.stdout",
+      "bytes": 1024,
+      "sha256": "45312345a511cb46b6f3698f13278545d2d88d680934be57a4418dc9b1b53c68"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/static-r0/02.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/static-r0/02.stdout",
+      "bytes": 1027,
+      "sha256": "222900b8f5a75b55d2e2b5459e913703c48927940a2136ef1f0dda29291c2e76"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/tests-r2/static-r0/result.json",
+      "bytes": 3957,
+      "sha256": "c57b9a937d6303e1aa98a599440d04bed0ad019c93970abaac3c3fb18084d62a"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/verify-preserved.py",
+      "bytes": 1551,
+      "sha256": "66fb6193c7afaeda47ba631462da4affb6e0bdc84037b4ba7861f88ee36884f6"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/preparation-before-final-d1.json",
+      "bytes": 1297,
+      "sha256": "27ab989f51763c893bd827b31dc37cf8e11a942fabb64bb7e70ccf75b8f9466d"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/final-source-accounting.json",
+      "bytes": 5413,
+      "sha256": "33c9f3365b7ef75a0ea842651f37ff0d0c92ec9f3a9bf05f2817bec96667674b"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/owned-commit-paths.json",
+      "bytes": 2801,
+      "sha256": "e016afd5b5ec9068de00c5bb4470a7ee9989e841e663cbda5fd2e04ed394affd"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/preservation-after-enospc.json",
+      "bytes": 305,
+      "sha256": "f5268c0ed65c37e956ea2e6c31688579f6aab5222188ce4ee176c192df297315"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/final-d1.json",
+      "bytes": 3029,
+      "sha256": "3191985f906ad61aae80eda0b457afa39dcde3b2945970ffc18d8c1aec766ee0"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/final-d1.md",
+      "bytes": 7942,
+      "sha256": "535d6dcc661560976a9eacece26261dc9b98d6ac2e8a8f3e061e863713f2f455"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/final-file-accounting.json",
+      "bytes": 34643,
+      "sha256": "edcdd8875239d13b323dfb5f2b93367e28119c5ee5a6b2eca5a98f018b881805"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/final-raw-audit.json",
+      "bytes": 2161,
+      "sha256": "688eae269b9172a68adfb8785d55e98942d1b6f11dcdded90701d668411759e8"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/ocr-enospc-recovery.json",
+      "bytes": 700,
+      "sha256": "0ddddbf3f29b77cf2b68727b2c647b55020252bcd52bddb30580f8e93d693a91"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/ocr-final-preview-enospc.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/ocr-final-preview.json",
+      "bytes": 9985,
+      "sha256": "30718a2484e8185e4c89dfdc58b3a5d53d9c14c9aa7804e7bf82605273f4e521"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/ocr-final-rules.json",
+      "bytes": 10691,
+      "sha256": "9f5b32a221d271dd9b639eba8208449646d1852c07ead73c6003727316069125"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/review/generic-reader-source-proof.md",
+      "bytes": 5275,
+      "sha256": "8b988277aac102c7147a8f49a503a7d1f9ea17bf575461eeb120805dd79e5708"
+    },
+    {
+      "path": "artifacts/dev3/plan4-runtime-core-20261024/preparation-after-final-d1.json",
+      "bytes": 1298,
+      "sha256": "e0e17fd731346de01011f89ec76235a7b0fdc395d978e5ea23e128a7fa437979"
+    }
+  ]
+}

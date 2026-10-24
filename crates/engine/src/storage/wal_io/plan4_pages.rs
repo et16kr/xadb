@@ -195,15 +195,15 @@ fn pristine<W: WriterNamespace>(
             Plan4PageCause::Genesis(genesis::Plan4GenesisCause::Wal(error)),
         )
     })?;
-    if storage.fresh.plan.kind != BootstrapPlanKind::RetentionCatalogBootstrap
-        || storage.fresh.reader_active.load(Ordering::Acquire)
+    if storage.core.plan.kind != BootstrapPlanKind::RetentionCatalogBootstrap
+        || storage.core.reader_active.load(Ordering::Acquire)
         || prefix.complete_lsn != 0
         || prefix.synced_lsn != 0
         || prefix.complete_offset != 4096
         || prefix.synced_offset != 4096
         || prefix.stream.writer_epoch != 1
         || storage.profile() != storage.plan.profile
-        || storage.fresh.plan.selected != storage.plan.filemap
+        || storage.core.plan.selected != storage.plan.filemap
     {
         return Err(fatal(storage, phase, Plan4PageCause::Invariant));
     }
@@ -229,7 +229,7 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
     ) -> Result<Plan4Pages<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         let p = Plan4PagePhase::Preflight;
         self.health().map_err(|error| storage_error(p, error))?;
-        if self.fresh.plan.kind != BootstrapPlanKind::RetentionCatalogBootstrap {
+        if self.core.plan.kind != BootstrapPlanKind::RetentionCatalogBootstrap {
             return Err(unchanged(p, Plan4PageCause::UnsupportedPlan));
         }
         if !core.uses_fence(self.session_fence()) {
@@ -301,7 +301,7 @@ fn read_bound_genesis<W: WriterNamespace>(
 ) -> Result<PageIdentity> {
     let p = Plan4PagePhase::Bind;
     let prefix = pristine(storage, p)?;
-    let identity = storage.fresh.plan.allocation_identity().map_err(|error| {
+    let identity = storage.core.plan.allocation_identity().map_err(|error| {
         fatal(
             storage,
             p,
@@ -324,7 +324,7 @@ fn read_bound_genesis<W: WriterNamespace>(
                 return Err(fatal(storage, p, Plan4PageCause::Poisoned));
             }
         };
-        genesis::verify_owned_genesis(&storage.fresh.plan, &mut *writer, scratch, output)
+        genesis::verify_owned_genesis(&storage.core.plan, &mut *writer, scratch, output)
             .map_err(|cause| fatal(storage, p, Plan4PageCause::Genesis(cause)))?;
     }
     if pristine(storage, p)? != prefix {
@@ -362,7 +362,7 @@ impl<W: WriterNamespace> Plan4Pages<'_, '_, '_, '_, '_, '_, '_, W> {
             Plan4Page::CatalogAnchor => 7,
             Plan4Page::CatalogLeaf => 8,
         };
-        let header = genesis::owned_header(&self.storage.fresh.plan, index).map_err(|cause| {
+        let header = genesis::owned_header(&self.storage.core.plan, index).map_err(|cause| {
             fatal(
                 self.storage,
                 Plan4PagePhase::Preflight,
@@ -386,7 +386,7 @@ impl<W: WriterNamespace> Plan4Pages<'_, '_, '_, '_, '_, '_, '_, W> {
         let Ok(index) = usize::try_from(request.identity.page.page_no) else {
             return Err(unchanged(phase, Plan4PageCause::Membership));
         };
-        let header = genesis::owned_header(&self.storage.fresh.plan, index)
+        let header = genesis::owned_header(&self.storage.core.plan, index)
             .map_err(|_| unchanged(phase, Plan4PageCause::Membership))?;
         if request
             != (TargetRequest {
@@ -402,7 +402,7 @@ impl<W: WriterNamespace> Plan4Pages<'_, '_, '_, '_, '_, '_, '_, W> {
     fn allocator_request(&self, phase: Plan4PagePhase) -> Result<TargetRequest> {
         let identity = self
             .storage
-            .fresh
+            .core
             .plan
             .allocation_identity()
             .map_err(|error| {

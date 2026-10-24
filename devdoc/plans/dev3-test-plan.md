@@ -804,3 +804,22 @@ SC의 durable-prefix model은 실제 syscall 내구성 증명이 아니며 nativ
 S5 memory 전체600s/32MiB, 추가 native 두 chain 합60s와 P1 포함 whole-history192MiB는 최종 S5에서만
 사용한다. 현재 추가1,417은 NOT_RUN이다. live 큐·atomic Begin·Catalog CREATE/CLR·일반 pool의 dirty
 수명·일반 recovery/READY·첫 행 ACK와 AI 소비자2/3·전체 DEV3/S5 완료를 이 단위로 대체하지 않는다.
+
+<a id="private-runtime-core"></a>
+## 원 WAL runtime/core 추출의 선택 검증
+
+[소유 계약](../contracts/dev3-storage-session.md#private-runtime-core)과 [source별 증거](../evidence/dev3-runtime-core-20261024.md)를 따른다. 새 필수7개는 static2·memory5이며 S5 고유 추가는0이다. 최종 S5에서는 이7개도 DEV3 전체 inventory에 포함한다. 기존 WAL/Status/Undo/mixed/G5 완료 함수는 필드 접근 적응 때문에 반복하지 않는다.
+
+공통 exact selector prefix는 `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::runtime_core_tests::`이며 다음 함수 하나와 ID 하나만 선택한다. 기존 P4 marker/identity harness를 사용한다.
+
+| ID | 함수 | 검산 |
+| --- | --- | --- |
+| RC-ST01 | `runtime_core_source_memory` | 실제 memory W/File·wrapper/inner·Result·전달 phase·Empty/G5 source 상한 |
+| RC-ST02 | `runtime_core_source_native` | 실제 native 타입의 같은 정적 검산; native I/O 없음 |
+| RC-M01 | `runtime_core_healthy_handoff` | 실제 Fresh→DWB→Mutable 이동, 원 자원·reader·allocator bytes |
+| RC-M02 | `runtime_core_genesis_forwarding` | public Genesis stage/sync와 원 slot/prefix/독립 frame bytes |
+| RC-M03 | `runtime_core_fenced_handoff` | 원 fence와 자원 보존 |
+| RC-M04 | `runtime_core_poisoned_handoff` | 실제 append mutex poison 보존, typed error/effect |
+| RC-M05 | `runtime_core_reader_claim_handoff` | 실제 open/drop 뒤 선언된 busy flag fault의 이동·정리 |
+
+먼저 source/ELF/input을 고정하고 static2의 실제 값과 source phase를 수용한 뒤 memory5를 실행한다. 전체 runner 진입부터 사전 source/hash/prior audit·process·최종 receipt 저장까지 static 누적10초/개별5초/1MiB, memory 누적180초/개별30초/4MiB다. 최종 기록에는100ms 보수 여유를 계상하고 저장 뒤 실제 경과가 그 charge 안인지 검산한다. 원 실패/부분 결과를 보존하며 같은 완료 ID는 중간 단계에서 제외한다. Caller memory port의 설치는 새 이동 검증의 입력 준비이며 이전 설치 시험의 새 PASS가 아니다.

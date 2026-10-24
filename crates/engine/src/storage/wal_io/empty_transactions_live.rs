@@ -330,7 +330,7 @@ impl<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let control = &mut bound.control;
         let (root, scratch) = control.base.operation[..32768].split_at_mut(PAGE_BYTES);
         let read = (|| -> std::result::Result<(), PageIoError> {
-            let mut reader = storage.fresh.open_reader(
+            let mut reader = storage.core.open_reader(
                 root.try_into().expect("root scratch"),
                 scratch.try_into().expect("read scratch"),
             )?;

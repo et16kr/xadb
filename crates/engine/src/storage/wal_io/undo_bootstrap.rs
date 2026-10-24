@@ -2,8 +2,8 @@
 //! This does not authorize root/chunk INIT, membership or transaction mutation.
 
 use super::{
-    BootstrapError, BootstrapPlanKind, Cause, FreshStorageSession, MutableStorageError, Phase,
-    Result, StatusRole,
+    BootstrapError, BootstrapPlanKind, Cause, FreshStorageSession, InstalledStorageCore,
+    MutableStorageError, Phase, Result, StatusRole,
 };
 use crate::{
     api::Namespace,
@@ -114,6 +114,12 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
 
     /// Original poison/fence checks precede the exact plan3 requirement.
     pub(crate) fn undo_role(&self) -> Result<UndoRole<'_>> {
+        self.core.undo_role()
+    }
+}
+
+impl<W: WriterNamespace> InstalledStorageCore<'_, W> {
+    pub(super) fn undo_role(&self) -> Result<UndoRole<'_>> {
         let status = self.status_role()?;
         if self.plan.kind != BootstrapPlanKind::UndoBootstrap {
             return Err(BootstrapError {

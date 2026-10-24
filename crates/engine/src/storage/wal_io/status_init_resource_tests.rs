@@ -68,17 +68,17 @@ fn padded<'m, 'w, const O: usize, P>(
     padding: P,
 ) -> MutableStorageOwner<'m, 'w, TrapWriter<O, P>> {
     let MutableStorageOwner {
-        fresh,
+        core,
         plan,
         workspace,
         binding,
     } = storage;
-    let crate::storage::wal_io::bootstrap::FreshStorageSession {
+    let crate::storage::wal_io::bootstrap::InstalledStorageCore {
         wal: prior,
         plan: bootstrap,
         reader_active,
-    } = fresh;
-    let wal::GenesisWalSession {
+    } = core;
+    let wal::WalRuntime {
         _writer,
         file,
         append,
@@ -88,7 +88,7 @@ fn padded<'m, 'w, const O: usize, P>(
         fenced,
         profile,
     } = prior;
-    let wal = wal::GenesisWalSession {
+    let wal = wal::WalRuntime {
         _writer: Mutex::new(TrapWriter {
             _inner: _writer.into_inner().unwrap(),
             _padding: [0; O],
@@ -106,7 +106,7 @@ fn padded<'m, 'w, const O: usize, P>(
         profile,
     };
     MutableStorageOwner {
-        fresh: crate::storage::wal_io::bootstrap::FreshStorageSession {
+        core: crate::storage::wal_io::bootstrap::InstalledStorageCore {
             wal,
             plan: bootstrap,
             reader_active,

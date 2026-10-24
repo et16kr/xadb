@@ -1017,3 +1017,8 @@ producer prepared loan은9images+3scratch=196,608bytes다. 실제 memory/native 
 S5 추가1,417(memory1,411+native6)은 작성·NOT_RUN이며 전체 inventory는1,721이다.
 G5의 원 pool bind/load와 G6 live queue·atomic Begin·flush/replay, G7 Catalog CREATE/CLR·첫 행 ACK,
 일반 recovery/READY·전체 DEV3/S5와 AI 소비자2/3은 미완료이고 완료 소비자1/3을 유지한다.
+
+<a id="private-runtime-core"></a>
+### 원 WAL runtime/core의 내부 추출
+
+2026-10-24 [원 저장 소유 계약](../contracts/dev3-storage-session.md#private-runtime-core)에 따라 기존 필드를 private WalRuntime/InstalledStorageCore에 옮기고 Genesis/Fresh 전달·DWB→Mutable 소비를 연결했다. 원 writer/File/slot/fence/reader claim·Fresh provenance·wire·상한을 유지한다. [새7개 선택 증거](../evidence/dev3-runtime-core-20261024.md)의 static2·memory5는 같은 r2 source/ELF에서 PASS이며 원 compile 두 차례 실패와 실행0인 이전 build를 보존한다. 최종 독립 D1을 이 추출 범위에서 수용했다. 기존 완료 시험은 재실행하지 않았고 native는 타입 관측만 수행했다. 실제 recovered constructor·G6 live/복구·Catalog CREATE/CLR·첫 행 ACK·DEV3/S5는 미완료, AI 소비자는1/3이다.

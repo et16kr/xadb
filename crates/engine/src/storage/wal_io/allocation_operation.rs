@@ -668,14 +668,14 @@ impl<'a> PreparedAllocation<'a> {
 
     pub(in super::super) fn stage<W: WriterNamespace>(
         self,
-        wal: &wal::GenesisWalSession<'_, W>,
+        wal: &wal::WalRuntime<'_, W>,
     ) -> std::result::Result<wal::WalFrameLocation, wal::WalIoError> {
         wal.stage_verified(self.prefix, self.header, self.bytes)
     }
 
     pub(in super::super) fn stage_required<'s, W: WriterNamespace>(
         self,
-        wal: &'s wal::GenesisWalSession<'_, W>,
+        wal: &'s wal::WalRuntime<'_, W>,
     ) -> std::result::Result<wal::WalRequirement<'s>, wal::WalIoError> {
         wal.stage_verified_required(self.prefix, self.header, self.bytes)
     }

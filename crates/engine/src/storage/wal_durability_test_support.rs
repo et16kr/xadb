@@ -8,13 +8,13 @@ use std::{
 pub(super) const STEP: Duration = Duration::from_secs(5);
 pub(super) fn session(
     memory: &mut [u8; MAX_FRAME_BYTES],
-) -> (GenesisWalSession<'_, Writer>, Arc<Mutex<State>>) {
+) -> (WalRuntime<'_, Writer>, Arc<Mutex<State>>) {
     let (writer, state) = fresh();
     let session = GenesisWalSession::create(writer, 1, memory, &mut [0; 16384]).unwrap();
-    (session, state)
+    (session.runtime, state)
 }
 pub(super) fn issue<'s>(
-    session: &'s GenesisWalSession<'_, Writer>,
+    session: &'s WalRuntime<'_, Writer>,
     previous: u64,
     lsn: u64,
 ) -> (WalRequirement<'s>, Vec<u8>) {
@@ -53,14 +53,14 @@ pub(super) fn pause_at(
     });
     (arrival, resume)
 }
-pub(super) fn waited(session: &GenesisWalSession<'_, Writer>, minimum: usize) {
+pub(super) fn waited(session: &WalRuntime<'_, Writer>, minimum: usize) {
     let deadline = Instant::now() + STEP;
     while session.durability_waits.load(Ordering::SeqCst) < minimum {
         assert!(Instant::now() < deadline, "durability wait not reached");
         std::thread::sleep(Duration::from_millis(1));
     }
 }
-pub(super) fn retained(session: &GenesisWalSession<'_, Writer>, expected: WalFrameLocation) {
+pub(super) fn retained(session: &WalRuntime<'_, Writer>, expected: WalFrameLocation) {
     let state = session
         .append
         .lock()
@@ -83,14 +83,14 @@ pub(super) struct BeforeWait {
     release: mpsc::Receiver<()>,
 }
 pub(super) fn pause_before_wait<W: WriterNamespace>(
-    session: &GenesisWalSession<'_, W>,
+    session: &WalRuntime<'_, W>,
 ) -> (mpsc::Receiver<()>, mpsc::SyncSender<()>) {
     let (arrived, arrival) = mpsc::sync_channel(1);
     let (resume, release) = mpsc::sync_channel(1);
     *session.durability_before_wait.lock().unwrap() = Some(BeforeWait { arrived, release });
     (arrival, resume)
 }
-pub(super) fn before_wait<W: WriterNamespace>(session: &GenesisWalSession<'_, W>) {
+pub(super) fn before_wait<W: WriterNamespace>(session: &WalRuntime<'_, W>) {
     let pause = session.durability_before_wait.lock().unwrap().take();
     if let Some(pause) = pause {
         pause.arrived.try_send(()).unwrap();
