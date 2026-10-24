@@ -38,6 +38,7 @@ fn error_observation(error: Diagnostic) -> ErrorObservation {
             Module::Lex => "Lex",
             Module::Name => "Name",
             Module::Split => "Split",
+            Module::Parse => "Parse",
         },
         start: error.span.start,
         end: error.span.end,

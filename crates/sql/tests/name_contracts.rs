@@ -54,6 +54,7 @@ fn literal_name_vectors() {
                     Module::Lex => "Lex",
                     Module::Name => "Name",
                     Module::Split => "Split",
+                    Module::Parse => "Parse",
                 },
                 start: error.span.start,
                 end: error.span.end,

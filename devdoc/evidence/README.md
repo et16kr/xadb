@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV4 owned AST·INSERT/거래 구문](dev4-parser-20261024.md): 독립 D2 동결·typed arena/shared quota·[source별 선택 실행](dev4-parser-20261024.json).
+
 - [DEV3 혼합 Status·Free Undo owner](dev3-mixed-system-owner-20261024.md) · [source 색인](dev3-mixed-system-owner-20261024.json): 원 pool·canonical mixed 복구의 선택 결과, 원 FAIL과 native 이어가기·잔여 인수.
 
 - [DEV4 streaming 문장 경계·원문 소유](dev4-splitter-20261024.md): 입력 동결·공유 quota·[선택 실행 색인](dev4-splitter-20261024.json).

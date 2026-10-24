@@ -1957,6 +1957,16 @@
       "path": "evidence/dev3-mixed-system-owner-20261024.json",
       "role": "evidence",
       "title": "DEV3 혼합 owner source별 선택 증거 색인"
+    },
+    "dev4-parser-20261024.md": {
+      "path": "evidence/dev4-parser-20261024.md",
+      "role": "evidence",
+      "title": "DEV4 owned AST·INSERT/거래 구문"
+    },
+    "dev4-parser-20261024.json": {
+      "path": "evidence/dev4-parser-20261024.json",
+      "role": "evidence",
+      "title": "DEV4 parser source별 선택 실행 색인"
     }
   }
 }

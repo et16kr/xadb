@@ -1,0 +1,948 @@
+{
+  "schema": 1,
+  "contract": "D4-FE-PARSE-001",
+  "scope": "P2 owned raw AST, INSERT and direct transaction grammar; no scalar/binding/engine success claim",
+  "status": "LOCAL_SELECTED_VERIFICATION_AND_LIMITED_D1_ACCEPTED",
+  "generated_at": "2026-10-24T17:25:46.381940+09:00",
+  "baseline": {
+    "head": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+    "artifact": "artifacts/dev4-parser-20261024/baseline.json"
+  },
+  "freeze": {
+    "contract": "D4-FE-PARSE-001",
+    "status": "D2_ACCEPTED_INPUT_FROZEN_BEFORE_PRODUCT",
+    "at": "2026-10-24T17:13:19.146168+09:00",
+    "base_head": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+    "head_at_freeze": "e486195c3e72f14383ff14806d4e28f306ed28ea",
+    "reviewer": "/root/frontend_review",
+    "implementation_owner": "/root and /root/frontend_research",
+    "oracle_owner": "/root/frontend_oracle",
+    "resource_fixture_author": "/root, independently reviewed",
+    "sha256": {
+      "devdoc/contracts/dev4-independent-frontend.md": "180c834c33df452e069393baf9f6904ae3c6f6e88fd1e135198134a98a77cc53",
+      "tests/fixtures/dev4-parser/manifest.json": "5e91379056fb03ac4ebd869a42c57918a3ab2d6460e7226c93e98ba2451d155e",
+      "tests/fixtures/dev4-parser/control.json": "d9da1e40612c28942fce411e2de04a5737780103ad9c4a1b9cd4ea1311a733a2",
+      "tests/fixtures/dev4-parser/semantic.json": "f238d572fd5029bdba1f4886350ce37f70222eb8a0a736ff969c551c10533433",
+      "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+      "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+      "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+      "crates/sql/tests/parser_resources.rs": "646dbe7e43a96cac76199622de92ce4198ee411648165bb47e1bc27ff17fedaa"
+    },
+    "product_files_present": {
+      "crates/sql/src/frontend/ast.rs": false,
+      "crates/sql/src/frontend/parse_budget.rs": false,
+      "crates/sql/src/frontend/parser.rs": false
+    },
+    "tests_executed": false,
+    "previous_goal_turn": "no progress: read-only plan restatement; this turn advanced contract/fixture independent D2 and frozen inputs",
+    "review_notes": [
+      "Offset/prefix arithmetic corrected before product/test execution.",
+      "Move witness asserts old backing leases survive through interior checkpoint.",
+      "Native test collects outcomes before assertions, avoiding failure-induced barrier hang."
+    ]
+  },
+  "supplement_freeze": {
+    "at": "2026-10-24T17:19:29.849412+09:00",
+    "status": "D2_ACCEPTED_BEFORE_FIRST_COMPILE_OR_TEST",
+    "reviewer": "/root/frontend_review",
+    "code_already_existed": true,
+    "sha256": {
+      "tests/fixtures/dev4-parser/control-supplement.json": "3137fee71597fe2f5fc5c32fdad79eead8d2597e3839ff1145d0ff1d38e8e3b2",
+      "devdoc/contracts/dev4-independent-frontend.md": "e62ef592a48e0b0c68393074b9b746a53d61cbd438e081e64f256315bb7753cc",
+      "crates/sql/src/frontend/parser.rs": "25e6bb8e4e1c4bb695624058b4b710626ee3e010eb29013ce6c0556dba7b0f19",
+      "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591"
+    },
+    "base_freeze": "freeze.json",
+    "selected_resources": 23,
+    "product_mutants": 6
+  },
+  "research": {
+    "schema_version": 1,
+    "task": "D4-FE-PARSE-001 read-only implementation preparation",
+    "recorded_at_utc": "2026-10-24T08:01:27.779464+00:00",
+    "researcher": "/root/frontend_research",
+    "xadb_head": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+    "scope": {
+      "allowed_write": "artifacts/dev4-parser-20261024/research.json",
+      "product_changes": false,
+      "fixture_changes": false,
+      "test_execution": false,
+      "commit": false,
+      "implementation_status": "WAITING_FOR_INDEPENDENT_D2_AND_FIXTURE_FREEZE_GO"
+    },
+    "contract_snapshot": {
+      "path": "devdoc/contracts/dev4-independent-frontend.md",
+      "sha256": "ac5371d7b2fab4b82e43b4d7eca1032eaf30a78e63a9de880408e2acc83122a7",
+      "section_read": "12. D4-FE-PARSE-001 draft, plus sections 3/4/6 and SQL EBNF in preceding research"
+    },
+    "local_source_references": [
+      {
+        "project": "postgres",
+        "checkout": "/home/et16/work/postgres",
+        "actual_head": "45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851",
+        "origin": "https://github.com/postgres/postgres.git",
+        "worktree_porcelain": "",
+        "files": [
+          {
+            "path": "src/backend/parser/gram.y",
+            "read_line_ranges_inclusive": [
+              [
+                25,
+                37
+              ],
+              [
+                12502,
+                12512
+              ],
+              [
+                12532,
+                12577
+              ],
+              [
+                13853,
+                13869
+              ]
+            ],
+            "observations_and_xadb_application": [
+              "Lines 25-35 require grammar to avoid database access and mutable SET state. Keep the XADB parser pure and leave catalog/transaction effects to later owners.",
+              "Lines 12532-12565 include SELECT, optional columns and DEFAULT VALUES. XADB P2 instead requires an explicit column list and VALUES tuples; these broader forms are not adopted.",
+              "Lines 12572-12576 and 13853-13866 construct column/row lists. XADB uses iterative parsing and O(1) index-linked append, without PostgreSQL List ownership."
+            ],
+            "sha256": "9915bd2d6050b83c97850e08156c18ebf99e5578bb9520ce05b985817d01fccb"
+          },
+          {
+            "path": "src/include/nodes/parsenodes.h",
+            "read_line_ranges_inclusive": [
+              [
+                383,
+                393
+              ],
+              [
+                2112,
+                2158
+              ]
+            ],
+            "observations_and_xadb_application": [
+              "A_Const retains constant/null/location identity. XADB P2 retains raw ScalarSyntax and source spans, with i64/hex/decoded-length checks assigned to P3.",
+              "RawStmt documents source statement location and byte length independently of later analyzed Query. XADB retains the complete owned source plus a syntax-only root span.",
+              "InsertStmt models VALUES through SelectStmt and supports returning/conflict/with. XADB keeps a direct Insert/Target/Columns/Rows/Tuple tree for its bounded grammar."
+            ],
+            "sha256": "11f4d37f6432eaccfa09e29270065da950641c3e5b81d25547b90f6c933c9e7e"
+          }
+        ]
+      },
+      {
+        "project": "sqlite",
+        "checkout": "/home/et16/work/sqlite",
+        "actual_head": "43a48f77585a88940c727f33682151418f544059",
+        "origin": "https://github.com/sqlite/sqlite.git",
+        "worktree_porcelain": "",
+        "files": [
+          {
+            "path": "src/parse.y",
+            "read_line_ranges_inclusive": [
+              [
+                177,
+                192
+              ],
+              [
+                1086,
+                1096
+              ],
+              [
+                1196,
+                1217
+              ]
+            ],
+            "observations_and_xadb_application": [
+              "Transaction grammar calls sqlite3BeginTransaction/sqlite3EndTransaction and INSERT grammar calls sqlite3Insert. Do not copy this parser/compiler coupling into the pure XADB AST producer.",
+              "Integer production retains a raw token when it does not use the int32 representation; variable production assigns a marker number. XADB P2 always preserves signed decimal syntax and uses 1-based occurrence marker ordinals."
+            ],
+            "sha256": "ba52f3a1a8c7500d35fe71b46730ae13f3e5dc3701ae23d854ffbfefae7a449a"
+          },
+          {
+            "path": "src/expr.c",
+            "read_line_ranges_inclusive": [
+              [
+                949,
+                980
+              ],
+              [
+                2047,
+                2102
+              ]
+            ],
+            "observations_and_xadb_application": [
+              "ExprAlloc allocates extra bytes and copies each token. XADB instead owns one source backing and retains byte spans, avoiding per-scalar token allocations.",
+              "ExprList starts with four entries, doubles on growth, and cleans the list/incoming expression after allocation failure. XADB applies its own checked quota admission, fallible capacity growth, full old/new peak charge and flat cleanup."
+            ],
+            "sha256": "53fb61c70a0da625baa86e3f07c62b59d4de1ef3f072fa554ca7c38be720537a"
+          }
+        ]
+      },
+      {
+        "project": "cubrid",
+        "checkout": "/home/et16/work/cubrid",
+        "actual_head": "a1c3506c375c8dd207dbf33feaf6f82fa4ec7dc5",
+        "origin": "https://github.com/CUBRID/cubrid.git",
+        "worktree_porcelain": "",
+        "files": [
+          {
+            "path": "src/parser/csql_grammar.y",
+            "read_line_ranges_inclusive": [
+              [
+                6714,
+                6725
+              ],
+              [
+                6949,
+                6957
+              ],
+              [
+                7027,
+                7088
+              ],
+              [
+                10986,
+                11024
+              ]
+            ],
+            "observations_and_xadb_application": [
+              "INSERT creates PT_INSERT and transaction grammar creates commit/rollback nodes. XADB transaction nodes likewise classify syntax without applying transaction state.",
+              "Lines 7030-7033 explicitly identify repeated tail walking as quadratic for multi-row VALUES and use prepend/reverse. XADB instead keeps each parent tail ID and appends children in source order in O(1).",
+              "Lines 7052-7072 allow empty/default tuples and use a compatibility mode. XADB requires at least one scalar per tuple and has no parser dependence on compatibility state."
+            ],
+            "sha256": "29ae75dd8cb2efbecf484ab118cf4812ca25bf4ae59d8fc73a438e71766608f2"
+          },
+          {
+            "path": "src/parser/parse_tree_cl.c",
+            "read_line_ranges_inclusive": [
+              [
+                2460,
+                2476
+              ],
+              [
+                3607,
+                3625
+              ]
+            ],
+            "observations_and_xadb_application": [
+              "parser_new_node stores g_query_string/g_query_string_len. XADB does not retain a borrowed/global caller pointer: ParsedStatement owns quota-backed source bytes.",
+              "parser_append_node walks tail->next. XADB avoids that input-size-dependent repeated traversal with first/last child and next sibling indices."
+            ],
+            "sha256": "33f9d59527b6e9eb11e49e0d81b0f4a7cbcf1495c39e69c806674fae9d4c2a19"
+          }
+        ]
+      }
+    ],
+    "selected_xadb_design": [
+      "One quota-backed flat Vec<AstNode>; first/last child and next sibling indices; O(1) append, source-order preorder layout, no recursive ownership or Drop.",
+      "Parser holds only ParseBudget and can be reused. Per-call begin_call consumes pending failure injection before the entry control check, then Lexer::new, owned source copy, iterative parser/arena build and final control check.",
+      "AstBuilder new(input,budget,control), add(kind,span,parent,control), set_span(id,span), finish(marker_count) are sufficient; parser needs no AST read-back or extra public API.",
+      "P2 preserves raw sign/digits/Text/Binary/Bool/Null/Parameter syntax. P3 validates i64, even hex, decoded length and empty Utf8 typed NULL. DDL raw lengths remain separate.",
+      "All wrapper/name/scalar nodes count toward 8192. Source/AST actual capacity and old/new growth coexistence charge the caller-provided shared session/database ledgers.",
+      "Existing splitter SourceBuffer diagnostics are Module::Split; parser uses separate private quota backing with Module::Parse and does not change already verified splitter code."
+    ],
+    "independent_fixture_recommendations": [
+      "Observe every node, sibling/child link, normalized name, source/raw span, parameter ordinal and marker count; reject orphan, cycle, duplicate link and partial successful parse mutants.",
+      "One unqualified target, one column and one tuple have seven non-scalar nodes; 8184/8185/8186 scalar repetitions yield node 8191/8192/8193 while arity validation remains deferred.",
+      "Cover all grammar truncation sites, trailing/second statement, contextual unsupported forms, raw numeric adjacency, PUBLIC variants, marker 255/256/257, allocation ordinals, actual-capacity extra charge, cancellation during source copy/arena move, retained output and parser reuse.",
+      "Do not repeat unchanged lexer/name/splitter tests; depth 63/64/65 and typed value semantics remain assigned to later P3 code."
+    ]
+  },
+  "required_results": {
+    "runtime_functions": 30,
+    "semantic_cases": 258,
+    "known_bad_observations": 23,
+    "known_good_controls": 4,
+    "resource_functions": 23,
+    "private_arithmetic_functions": 1,
+    "product_mutants_rejected": 7,
+    "required_mutant_categories": 6,
+    "extra_source_lease_only_control": 1,
+    "ignored_not_run": 2,
+    "unchanged_runtime_repetitions": 0
+  },
+  "sources": [
+    {
+      "name": "source-r1",
+      "manifest_path": "artifacts/dev4-parser-20261024/source-r1.json",
+      "source_sha256": "d38237683bfec42891b0d0a8a4b6faf10bc27a2dafe4de0ef032fa93a75d6ec1",
+      "base_head": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+      "selection": {
+        "at": "2026-10-24T17:18:17.948727+09:00",
+        "last_validated_product_base": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+        "new_code": [
+          "crates/sql/src/frontend/ast.rs",
+          "crates/sql/src/frontend/parse_budget.rs",
+          "crates/sql/src/frontend/parser.rs",
+          "crates/testing/reference/src/frontend/parser.rs",
+          "crates/testing/reference/src/frontend/parser/literals.rs",
+          "crates/testing/reference/src/frontend/parser/recipes.rs"
+        ],
+        "connections": [
+          "frontend/mod.rs: AST/Parser exports",
+          "frontend/diagnostic.rs: Module::Parse",
+          "reference/frontend.rs: independent parser module",
+          "old observation adapters: one new Module arm; compile only"
+        ],
+        "selected": [
+          {
+            "target": "xadb-sql --lib frontend::parse_budget::tests::typed_capacity_arithmetic_rejects_overflow --exact",
+            "new_functions": 1,
+            "reason": "new typed backing checked arithmetic"
+          },
+          {
+            "target": "xadb-sql --test parser_contracts",
+            "new_functions": 6,
+            "cases": 258,
+            "known_bad": 23,
+            "acceptance_controls": 4,
+            "reason": "new parser/AST/independent strict literal checker integration",
+            "ignored_not_run": 2
+          },
+          {
+            "target": "xadb-sql --test parser_resources --features test-support",
+            "new_functions": 23,
+            "reason": "new source/typed arena allocations, all11 failure sites, original22 control cases plus supplemental exponent checkpoint"
+          }
+        ],
+        "static_checks": [
+          "cargo check -p xadb-sql --locked (default product build)",
+          "cargo clippy -p xadb-sql -p xadbtest-reference --all-targets --all-features --locked -- -D warnings",
+          "cargo fmt --all --check (snapshot; no runtime tests)"
+        ],
+        "not_selected": [
+          "unchanged lexer/name/splitter unit/integration tests",
+          "foundation/platform/engine/workspace/lower regression wrappers",
+          "expanded256x1024 and30min valid-grammar fuzz",
+          "P3/P4/model/engine/Q1"
+        ],
+        "source_export": "base immutable commit plus only SQL/referencefrontend/DEV4parserfixtures overlay; DEV3 parallel changes excluded",
+        "execution_state": "NOT_RUN"
+      },
+      "overlay_sha256": {
+        "crates/sql/Cargo.toml": "864605a552be0933c6df62fa11ac1a5827a24be65fd763564a6df274bceee03c",
+        "crates/sql/src/frontend/ast.rs": "17a6f5c11c50d396bfc86e1cc73eec16ab8ab72d0f61dc729c9990b3dd48ff65",
+        "crates/sql/src/frontend/control.rs": "f9bb1a72c31f3a5133be3b4cc25ed64197e37590bb9e5df965b8d726c102aad4",
+        "crates/sql/src/frontend/diagnostic.rs": "a30a72458cac7b6ba72e4eddc2ca5676f8160818b7fad8a39dfa6b737dba2376",
+        "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310",
+        "crates/sql/src/frontend/mod.rs": "a9cf7d7b74273c8cde9fc04c0e57eb6070fba9970096faf2f4a381bdbb3f6ee6",
+        "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+        "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+        "crates/sql/src/frontend/parser.rs": "25e6bb8e4e1c4bb695624058b4b710626ee3e010eb29013ce6c0556dba7b0f19",
+        "crates/sql/src/frontend/source.rs": "60fc27e4902e5aca8e5e3a22e066ffb810ef8fcc789297d60e192cef469e3ca8",
+        "crates/sql/src/frontend/splitter.rs": "5a65abbc7ffe0e45eed69ec96d2397023c3a0e97df6faddb63dab338e543e71d",
+        "crates/sql/src/frontend/splitter/utf8.rs": "28d12ffc18b20428c3e3dbfb63127a5e488bb684ddbad3b7d79659e5ca34e4d0",
+        "crates/sql/src/lib.rs": "334af6ebb1c095483acba2ee9207511d7dff2444922f7985ee97bc561f8bef9a",
+        "crates/sql/tests/frontend_control.rs": "cefd09b613f5f0396ab50b934c864aeb12fd87f7d62f09d836cc4265526c1890",
+        "crates/sql/tests/frontend_oracle.rs": "89ba8af9643a336725ecade46bbe5d8835b9a60849ddb85bc7f8ca0b5871d63a",
+        "crates/sql/tests/lexer_contracts.rs": "292d4aa9a2fb423ddd70b3f922150feaa04cfaee79b0e40055168e63534997e5",
+        "crates/sql/tests/name_contracts.rs": "3a6c6a28e0fc6f906c01a75659049c4a4fd229b345a0327b9952d8846f19994b",
+        "crates/sql/tests/parser_contracts.rs": "63712eda8fc16330d131e16c6c0e59c704555a2597c9e8e21e88e817cf46a5c3",
+        "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591",
+        "crates/sql/tests/splitter_contracts.rs": "233ee81501c50bd5bbe351fa6d2f815f5614db306fa8674249023ace68a2c200",
+        "crates/sql/tests/splitter_resources.rs": "efff301dc2eff3bf82f397fb6e67f3052ac7a4fad5afe97846f96493b15f23e6",
+        "crates/sql/tests/support/frontend.rs": "ad210456ab76bbd7fafea468047732a9af66e8ed22eb673abf60d32e8c124791",
+        "crates/sql/tests/support/mod.rs": "84fde31a7b8517ad7208dc26f81d03b9d05a481479417237a54f67fd6c827344",
+        "crates/testing/reference/src/frontend.rs": "bf02eea80cc91bdc1b75c764b283854beda48ce295abe1a46c33d2fee4abbedd",
+        "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+        "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+        "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+        "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+        "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+        "tests/fixtures/dev4-parser/control-supplement.json": "3137fee71597fe2f5fc5c32fdad79eead8d2597e3839ff1145d0ff1d38e8e3b2",
+        "tests/fixtures/dev4-parser/control.json": "d9da1e40612c28942fce411e2de04a5737780103ad9c4a1b9cd4ea1311a733a2",
+        "tests/fixtures/dev4-parser/manifest.json": "5e91379056fb03ac4ebd869a42c57918a3ab2d6460e7226c93e98ba2451d155e",
+        "tests/fixtures/dev4-parser/semantic.json": "f238d572fd5029bdba1f4886350ce37f70222eb8a0a736ff969c551c10533433"
+      },
+      "unchanged_overlay_from": null
+    },
+    {
+      "name": "source-r2",
+      "manifest_path": "artifacts/dev4-parser-20261024/source-r2.json",
+      "source_sha256": "5b1e4cf26724c226733f60287071160f33f39f200da19336ac9f2e4b9bd3b4bd",
+      "base_head": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+      "selection": {
+        "at": "2026-10-24T17:21:41.960975+09:00",
+        "previous_source": "source-r1.json",
+        "diff": [
+          {
+            "path": "crates/sql/tests/name_contracts.rs",
+            "change": "add only new Module::Parse to exhaustive test observation match",
+            "reason": "r1 all-targets Clippy compile E0004"
+          }
+        ],
+        "runtime_code_changes": false,
+        "runtime_tests_selected": [],
+        "static_checks": [
+          "cargo clippy -p xadb-sql -p xadbtest-reference --all-targets --all-features --locked -- -D warnings",
+          "cargo fmt --all --check"
+        ],
+        "preserved_results": "r1 normal30 functions PASS and original Clippy compile FAIL; no runtime repetition"
+      },
+      "overlay_sha256": {
+        "crates/sql/tests/name_contracts.rs": "bbc8a445d0d6c6ea108c8dc2610f76ea407a8a8df16a2abff6a0f027422b0ef4"
+      },
+      "unchanged_overlay_from": "source-r1"
+    },
+    {
+      "name": "mutant-source-copy",
+      "manifest_path": "artifacts/dev4-parser-20261024/mutant-source-copy.json",
+      "source_sha256": "675d796cd05f901a65a9f5d6d52b8edce3fcfa9e613c46b459db58bad4700f25",
+      "base_head": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+      "selection": {
+        "new_changed_source": "product mutant only; normal source already passed",
+        "target": "parser_resources",
+        "function": "source_copy_checkpoint_cleans_all",
+        "expected": "compiled test failure at intended detector; compile failure is INVALID, never rejection",
+        "previous_source_runtime_reruns": 0
+      },
+      "overlay_sha256": {
+        "crates/sql/src/frontend/ast.rs": "f3d869c0a4c0b07273e0202330d563b3240bac82feb89c8fe113b62849b6f64d"
+      },
+      "unchanged_overlay_from": "source-r1"
+    },
+    {
+      "name": "mutant-arena-copy",
+      "manifest_path": "artifacts/dev4-parser-20261024/mutant-arena-copy.json",
+      "source_sha256": "df4350802e992fae302cac947aebbdaa3bfe50028cbf10ba9d276d7d4601fb31",
+      "base_head": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+      "selection": {
+        "new_changed_source": "product mutant only; normal source already passed",
+        "target": "parser_resources",
+        "function": "arena_move_checkpoint_cleans_old_new",
+        "expected": "compiled test failure at intended detector; compile failure is INVALID, never rejection",
+        "previous_source_runtime_reruns": 0
+      },
+      "overlay_sha256": {
+        "crates/sql/src/frontend/ast.rs": "3e066a12c9a8aea9d5d8ac1924df23d3f18d649135e86b843afc2bda470db4f6"
+      },
+      "unchanged_overlay_from": "source-r1"
+    },
+    {
+      "name": "mutant-early-lease",
+      "manifest_path": "artifacts/dev4-parser-20261024/mutant-early-lease.json",
+      "source_sha256": "20ae6a1fa1484734c44b6a5bbda3064d6aee84ffc69e55c8439455400e979580",
+      "base_head": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+      "selection": {
+        "new_changed_source": "product mutant only; normal source already passed",
+        "target": "parser_resources",
+        "function": "growth_reservation_boundaries",
+        "expected": "compiled test failure at intended detector; compile failure is INVALID, never rejection",
+        "previous_source_runtime_reruns": 0
+      },
+      "overlay_sha256": {
+        "crates/sql/src/frontend/ast.rs": "e81612a8648b15fdbeb974ff683004a93f231f8b9ac4d86634cbcfd7c09feb64",
+        "crates/sql/src/frontend/parse_budget.rs": "2d09dddc35e78a510df8a07534e108b2078dcb602e5ace81d202be22c7c528b9"
+      },
+      "unchanged_overlay_from": "source-r1"
+    },
+    {
+      "name": "mutant-failure-leak",
+      "manifest_path": "artifacts/dev4-parser-20261024/mutant-failure-leak.json",
+      "source_sha256": "bae7c733f09bd1596b1f6f2e3c527e392d05eadbc3d139176bf25a0ace44d0c4",
+      "base_head": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+      "selection": {
+        "new_changed_source": "product mutant only; normal source already passed",
+        "target": "parser_resources",
+        "function": "allocation_failure_at_every_backing",
+        "expected": "compiled test failure at intended detector; compile failure is INVALID, never rejection",
+        "previous_source_runtime_reruns": 0
+      },
+      "overlay_sha256": {
+        "crates/sql/src/frontend/parse_budget.rs": "53dff51009120727fc9a8d4e39bef0d32d5c9b33c249cf8c6fb656d3658c8939"
+      },
+      "unchanged_overlay_from": "source-r1"
+    },
+    {
+      "name": "mutant-capacity",
+      "manifest_path": "artifacts/dev4-parser-20261024/mutant-capacity.json",
+      "source_sha256": "0636ee9bb3172feeac9f8b0714ff32e8b11cbd2ca31b1251ab4e021cc9e5c1df",
+      "base_head": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+      "selection": {
+        "new_changed_source": "product mutant only; normal source already passed",
+        "target": "parser_resources",
+        "function": "actual_capacity_and_growth_padding",
+        "expected": "compiled test failure at intended detector; compile failure is INVALID, never rejection",
+        "previous_source_runtime_reruns": 0
+      },
+      "overlay_sha256": {
+        "crates/sql/src/frontend/parse_budget.rs": "e1c3ee61d156546b244c5560d8ec00572ceb2ce271b084e5da41619d697f8edf"
+      },
+      "unchanged_overlay_from": "source-r1"
+    },
+    {
+      "name": "mutant-exponent",
+      "manifest_path": "artifacts/dev4-parser-20261024/mutant-exponent.json",
+      "source_sha256": "2d254e5deadb85787b70493641b77ab306adbbd84353d8c6f64058cc85945063",
+      "base_head": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+      "selection": {
+        "new_changed_source": "product mutant only; normal source already passed",
+        "target": "parser_resources",
+        "function": "exponent_classification_control_is_bounded",
+        "expected": "compiled test failure at intended detector; compile failure is INVALID, never rejection",
+        "previous_source_runtime_reruns": 0
+      },
+      "overlay_sha256": {
+        "crates/sql/src/frontend/parser.rs": "7c56bf57eed23ca59331e4bba710d736f8144198c7397c5157af3e93b8dd46d1"
+      },
+      "unchanged_overlay_from": "source-r1"
+    },
+    {
+      "name": "mutant-ast-leak",
+      "manifest_path": "artifacts/dev4-parser-20261024/mutant-ast-leak.json",
+      "source_sha256": "1e3a11d924c19df4c965f2176ea190195ddc0ff3497ab98eabe52e29f5c3219c",
+      "base_head": "e1984038d18ecdd1cfe3cb42eba26c8ae2a9e757",
+      "selection": {
+        "function": "allocation_failure_at_every_backing",
+        "target": "parser_resources",
+        "expected": "ordinal1/2 normal cleanup; ordinal3 at new32 allocation failure leaks already-existing old16 AstNode backing and leases; compiled detector must fail with3584 bytes retained",
+        "reason": "D1 found earlier failure-leak mutant at ordinal1 only proves new source lease leak, not frozen failed call AST owner cleanup. Preserve original as extra source lease detector, add corrected AST mutant only.",
+        "normal_runtime_repetitions": 0
+      },
+      "overlay_sha256": {
+        "crates/sql/src/frontend/ast.rs": "e0bfd900f4885b0ea16b17e032241b89c5e23d9624841c17826693397cb25dbb"
+      },
+      "unchanged_overlay_from": "source-r1"
+    }
+  ],
+  "runs": [
+    {
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-sql",
+        "--locked"
+      ],
+      "source": "source-r1.json",
+      "source_sha256": "d38237683bfec42891b0d0a8a4b6faf10bc27a2dafe4de0ef032fa93a75d6ec1",
+      "exit_code": 0,
+      "seconds": 0.8147661010007141,
+      "finished_at": "2026-10-24T17:19:57.822885+09:00",
+      "log_sha256": "ffcc085ad1941691fa7b5a0950253efced6c5d18efbfb52dd700d4aab8cfeca4",
+      "binaries": {},
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/r1-default.json",
+      "classification": "PASS"
+    },
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "source": "source-r1.json",
+      "source_sha256": "d38237683bfec42891b0d0a8a4b6faf10bc27a2dafe4de0ef032fa93a75d6ec1",
+      "exit_code": 0,
+      "seconds": 0.931185622997873,
+      "finished_at": "2026-10-24T17:19:57.939241+09:00",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "binaries": {},
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/r1-fmt.json",
+      "classification": "PASS"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "parser_contracts",
+        "--test",
+        "parser_resources",
+        "--",
+        "--nocapture"
+      ],
+      "source": "source-r1.json",
+      "source_sha256": "d38237683bfec42891b0d0a8a4b6faf10bc27a2dafe4de0ef032fa93a75d6ec1",
+      "exit_code": 0,
+      "seconds": 4.220409697001742,
+      "finished_at": "2026-10-24T17:20:18.552995+09:00",
+      "log_sha256": "c0b076ce9309601765dc22f2fb829fef8e3af65b789d1c6046c757663f2f582b",
+      "binaries": {
+        "isolated-targets/source-r1/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/source-r1/debug/deps/xadb_sql-aecc1be51a0ac331": "daa0eaf450ad90d25861ee8fb3e87939a0a6f98e38a359b45571e950cdce30fa",
+        "isolated-targets/source-r1/debug/deps/parser_resources-59877a6489ea65db": "1d2f3e370bc20cdeb5e190e67dd0328cc5e19dcf5ff8162f02118601f9a47280",
+        "isolated-targets/source-r1/debug/deps/parser_contracts-d17d364e2ace8566": "377e809af11164bbcc9edd21af63e0b7293fc78bfd56584b891c8562421688f0"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/r1-runtime.json",
+      "classification": "PASS"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--lib",
+        "frontend::parse_budget::tests::typed_capacity_arithmetic_rejects_overflow",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "source-r1.json",
+      "source_sha256": "d38237683bfec42891b0d0a8a4b6faf10bc27a2dafe4de0ef032fa93a75d6ec1",
+      "exit_code": 0,
+      "seconds": 3.8325814939998963,
+      "finished_at": "2026-10-24T17:20:18.165161+09:00",
+      "log_sha256": "0591866f5a3bf7215b4f8e2cad8600a3fe65c6bbdfdbf3e114d16b73b96a9275",
+      "binaries": {
+        "isolated-targets/source-r1/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/source-r1/debug/deps/xadb_sql-aecc1be51a0ac331": "daa0eaf450ad90d25861ee8fb3e87939a0a6f98e38a359b45571e950cdce30fa"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/r1-arithmetic.json",
+      "classification": "PASS"
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-sql",
+        "-p",
+        "xadbtest-reference",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "source": "source-r1.json",
+      "source_sha256": "d38237683bfec42891b0d0a8a4b6faf10bc27a2dafe4de0ef032fa93a75d6ec1",
+      "exit_code": 101,
+      "seconds": 2.8931885979982326,
+      "finished_at": "2026-10-24T17:20:53.129016+09:00",
+      "log_sha256": "7e6ceb4f770a3cbd08fbe6b7039c0eb26c58ea99237f4e2b39e97524d6bb17fb",
+      "binaries": {
+        "isolated-targets/source-r1/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/source-r1/debug/deps/xadb_sql-aecc1be51a0ac331": "daa0eaf450ad90d25861ee8fb3e87939a0a6f98e38a359b45571e950cdce30fa",
+        "isolated-targets/source-r1/debug/deps/parser_resources-59877a6489ea65db": "1d2f3e370bc20cdeb5e190e67dd0328cc5e19dcf5ff8162f02118601f9a47280",
+        "isolated-targets/source-r1/debug/deps/parser_contracts-d17d364e2ace8566": "377e809af11164bbcc9edd21af63e0b7293fc78bfd56584b891c8562421688f0"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/r1-clippy.json",
+      "classification": "COMPILE_FAIL_PRESERVED"
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-sql",
+        "-p",
+        "xadbtest-reference",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "source": "source-r2.json",
+      "source_sha256": "5b1e4cf26724c226733f60287071160f33f39f200da19336ac9f2e4b9bd3b4bd",
+      "exit_code": 0,
+      "seconds": 4.46045689300081,
+      "finished_at": "2026-10-24T17:22:03.818621+09:00",
+      "log_sha256": "82f892407fd6cdb8074182e3a76352179090e996c3f1a76d5e1360081aaff6e5",
+      "binaries": {
+        "isolated-targets/source-r2/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/r2-clippy.json",
+      "classification": "PASS"
+    },
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "source": "source-r2.json",
+      "source_sha256": "5b1e4cf26724c226733f60287071160f33f39f200da19336ac9f2e4b9bd3b4bd",
+      "exit_code": 0,
+      "seconds": 0.8987611880002078,
+      "finished_at": "2026-10-24T17:22:09.734986+09:00",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "binaries": {
+        "isolated-targets/source-r2/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/r2-fmt.json",
+      "classification": "PASS"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "parser_resources",
+        "source_copy_checkpoint_cleans_all",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "mutant-source-copy.json",
+      "source_sha256": "675d796cd05f901a65a9f5d6d52b8edce3fcfa9e613c46b459db58bad4700f25",
+      "exit_code": 101,
+      "seconds": 4.440610322999419,
+      "finished_at": "2026-10-24T17:21:46.592002+09:00",
+      "log_sha256": "9236b99d0a18ea8675a67ca1031f8adb865537dbb3b1ca2cac2ac71ab5f5cc7c",
+      "binaries": {
+        "isolated-targets/mutant-source-copy/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/mutant-source-copy/debug/deps/parser_resources-59877a6489ea65db": "6252c14187cdd57b64dffa669855bfa82f2d822d17d2adb297d02c7914a3db84"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/mutant-source-copy-run.json",
+      "classification": "EXPECTED_REJECTION"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "parser_resources",
+        "arena_move_checkpoint_cleans_old_new",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "mutant-arena-copy.json",
+      "source_sha256": "df4350802e992fae302cac947aebbdaa3bfe50028cbf10ba9d276d7d4601fb31",
+      "exit_code": 101,
+      "seconds": 4.479800090000936,
+      "finished_at": "2026-10-24T17:21:46.631927+09:00",
+      "log_sha256": "7df1d59673c42260fde1b5341e5792c79007f7ab0af7d50ef6b3a99e5bc7b84d",
+      "binaries": {
+        "isolated-targets/mutant-arena-copy/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/mutant-arena-copy/debug/deps/parser_resources-59877a6489ea65db": "1bccdfc7ec02650ef8b69aec7930266c691a504aba033e2c8ea7a06deb681325"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/mutant-arena-copy-run.json",
+      "classification": "EXPECTED_REJECTION"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "parser_resources",
+        "growth_reservation_boundaries",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "mutant-early-lease.json",
+      "source_sha256": "20ae6a1fa1484734c44b6a5bbda3064d6aee84ffc69e55c8439455400e979580",
+      "exit_code": 101,
+      "seconds": 4.460995973997342,
+      "finished_at": "2026-10-24T17:21:46.613130+09:00",
+      "log_sha256": "aeb3f4d71f9a2485a5b11ab7b3a1ed083c73cc0c4b6c186246ecb7a30869ab8c",
+      "binaries": {
+        "isolated-targets/mutant-early-lease/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/mutant-early-lease/debug/deps/parser_resources-59877a6489ea65db": "92369387aa23d63ba47a95ce284b22d01182d1cea1412506372ef0d28a835c29"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/mutant-early-lease-run.json",
+      "classification": "EXPECTED_REJECTION"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "parser_resources",
+        "allocation_failure_at_every_backing",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "mutant-failure-leak.json",
+      "source_sha256": "bae7c733f09bd1596b1f6f2e3c527e392d05eadbc3d139176bf25a0ace44d0c4",
+      "exit_code": 101,
+      "seconds": 4.596709043998999,
+      "finished_at": "2026-10-24T17:22:03.954073+09:00",
+      "log_sha256": "3a09903485a8e486eb47f21547f96cb708146c7f6a0b4df6a6461f772e7e6b33",
+      "binaries": {
+        "isolated-targets/mutant-failure-leak/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/mutant-failure-leak/debug/deps/parser_resources-59877a6489ea65db": "855f0295f24d3996e528cf83388b03a8aa582f6847940acab8f3ba59d32adc65"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/mutant-failure-leak-run.json",
+      "classification": "EXPECTED_REJECTION"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "parser_resources",
+        "actual_capacity_and_growth_padding",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "mutant-capacity.json",
+      "source_sha256": "0636ee9bb3172feeac9f8b0714ff32e8b11cbd2ca31b1251ab4e021cc9e5c1df",
+      "exit_code": 101,
+      "seconds": 4.72101758899953,
+      "finished_at": "2026-10-24T17:22:04.078470+09:00",
+      "log_sha256": "939f12f371eab7f27ea0fb35241e70e5733514e5b1779a8591c6cfd364f0cc42",
+      "binaries": {
+        "isolated-targets/mutant-capacity/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/mutant-capacity/debug/deps/parser_resources-59877a6489ea65db": "62ccfa8676486ae7664e80c29ac9cadb2bd11106b81be94186f9a4a808d5d128"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/mutant-capacity-run.json",
+      "classification": "EXPECTED_REJECTION"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "parser_resources",
+        "exponent_classification_control_is_bounded",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "mutant-exponent.json",
+      "source_sha256": "2d254e5deadb85787b70493641b77ab306adbbd84353d8c6f64058cc85945063",
+      "exit_code": 101,
+      "seconds": 4.624153369997657,
+      "finished_at": "2026-10-24T17:22:03.981541+09:00",
+      "log_sha256": "24a71f6f76674be4da4e83a380ffe82332ae612109c70442680c0e483db0aaf6",
+      "binaries": {
+        "isolated-targets/mutant-exponent/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/mutant-exponent/debug/deps/parser_resources-59877a6489ea65db": "f2c90c81ed3b63efdd77efcad821f8f5dec7077eed8fab921fbe92f67c00ffdb"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/mutant-exponent-run.json",
+      "classification": "EXPECTED_REJECTION"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "parser_resources",
+        "allocation_failure_at_every_backing",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "mutant-ast-leak.json",
+      "source_sha256": "1e3a11d924c19df4c965f2176ea190195ddc0ff3497ab98eabe52e29f5c3219c",
+      "exit_code": 101,
+      "seconds": 3.8891402920016844,
+      "finished_at": "2026-10-24T17:24:36.727436+09:00",
+      "log_sha256": "9270a50de2f3a4d7db0de29256998013d129f94c0a68636d84a46a0209e7e120",
+      "binaries": {
+        "isolated-targets/mutant-ast-leak/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/mutant-ast-leak/debug/deps/parser_resources-59877a6489ea65db": "6d3564904161eb7c95d56ca7e3b9473e9e4a5e9acae919e1a2424a8d761f8f2c"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-parser-20261024/mutant-ast-leak-run.json",
+      "classification": "EXPECTED_REJECTION"
+    }
+  ],
+  "observed": {
+    "node_size_bytes": 224,
+    "parser_size_bytes": 64,
+    "parsed_statement_size_bytes": 184,
+    "growth6_source_bytes": 46,
+    "growth16plus32_peak_bytes": 10798,
+    "padded10_source_actual_bytes": 63,
+    "padded_arena_old_nodes": 17,
+    "padded_arena_new_nodes": 35,
+    "padded_peak_bytes": 11711,
+    "max_nodes": 8192,
+    "allocation_sites": 11,
+    "final_usage_after_drops": 0
+  },
+  "remaining": [
+    "P3 scalar/predicate",
+    "P4 remaining grammar",
+    "P5 abstract lifetime model",
+    "P6 DEV3 supply/API handoff",
+    "expanded256x1024 and30min valid grammar fuzz NOT_RUN",
+    "actual engine SQL integration/Q1/PF10 NOT_RUN"
+  ],
+  "pre_push_verifier_executed": false,
+  "push_executed": false,
+  "mutant_coverage_note": "Original failure-leak caught only source lease16394 at ordinal1. D1 required actual partial AST backing cleanup. Added separate mutant-ast-leak: original ordinal1/2 clean, ordinal3 leaks existing16*224=3584 arena bytes. Required6 categories met across corrected detector runs;7 variants including extra source lease control, no normal runtime rerun.",
+  "final_review": {
+    "at": "2026-10-24T17:27:57.394677+09:00",
+    "reviewer": "/root/frontend_review",
+    "verdict": "ACCEPTED_LIMITED_D1",
+    "contract": "D4-FE-PARSE-001",
+    "source": "source-r2",
+    "source_sha256": "5b1e4cf26724c226733f60287071160f33f39f200da19336ac9f2e4b9bd3b4bd",
+    "scope": "P2 owned raw AST, INSERT/transaction syntax and new resources; no P3/P4/model/engine/Q1 completion",
+    "checked": {
+      "overlay_files": 33,
+      "source_manifests": 9,
+      "run_receipts": 14,
+      "runtime_functions": 30,
+      "required_mutant_categories": 6,
+      "actual_mutant_runs": 7
+    },
+    "findings_resolved": [
+      "Actual AST leak mutant added without replaying normal tests; original source lease-only run preserved.",
+      "allocation count text clarified as source1 plus AST10 =11",
+      "implementation next-work and work-breakdown current state corrected"
+    ],
+    "remaining_required_findings": 0,
+    "runtime_or_document_checks_by_reviewer": false
+  }
+}

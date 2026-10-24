@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-24 [DEV4 owned AST·INSERT/거래 구문](evidence/dev4-parser-20261024.md): 원문·flat AST의 shared quota 소유와 단일 문장/PUBLIC/marker를 구현했다. 신규30함수·semantic258·known-bad23과 source별 제품 mutant 거절·원 Clippy compile FAIL을 보존한다. 값/predicate·나머지 문법·수명 모델·실제 engine 통합·Q1은 미완료다.
+
 2026-10-24 [DEV4 streaming 문장 경계·원문 예약](evidence/dev4-splitter-20261024.md): chunk/EOF·UTF-8 경계와 shared quota 원문 소유를 구현했다. 새25함수·1,226schedule·관측변조16·제품mutant4의 선택 증거와 원 Clippy compile FAIL을 보존한다. parser/값·모델·실제 engine 통합·Q1은 미완료다.
 
 2026-10-24 [DEV3 혼합 Status·Free Undo owner](evidence/dev3-mixed-system-owner-20261024.md): 원 pool의 INIT·pressure·flush·load와 닫힌 mixed 복구를 연결했다. 메모리 필수144·static3·compiler9+baseline PASS를 보존한다. 실제 producer PASS와 원 복구 시험 기대값 FAIL을 보존하고 제품 소스가 같은 r7의 복구·재진입을 통과했다. 최종 독립 D1은 제한 범위로 수용했으며 원 동일 ELF 3단계 요건·일반 pool/live undo·DEV3/S5는 미완료다. AI 완료 소비자1/3을 유지한다.

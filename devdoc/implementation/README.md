@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-24 [DEV4 P2 parser·owned AST](dev4-implementation.md#parser): INSERT·거래 구문, 단일 문장·marker/node 한도와 원문/typed arena 예약을 구현·선택 검증했다. 값/predicate·나머지 문법·모델·실제 SQL 실행·Q1은 미완료다.
+
 2026-10-24 [DEV4 splitter·원문 예약](dev4-implementation.md#splitter): streaming chunk/EOF·반환 source 수명·session/DB 공유 quota를 구현하고 새 경로를 선택 검증했다. parser/값·모델·실제 SQL 실행·Q1은 미완료다.
 
 2026-10-24 [DEV4 독립 앞단](dev4-implementation.md): borrowed lexer·고정 이름·호출 제어와 독립 literal 판정기를 구현했다. source별 선택 시험·리뷰 교정은 증거에 보존하며 splitter/parser/값·실제 SQL 실행·Q1은 미완료다.

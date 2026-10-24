@@ -1,0 +1,76 @@
+{
+  "schema": "xadb.dev4.parser.manifest.v1",
+  "contract": "D4-FE-PARSE-001",
+  "status": "FROZEN_D2_ACCEPTED",
+  "implementation_status": "NOT_RUN; production parser/AST absent when authored",
+  "execution_owner": "root; fixture author did not run tests",
+  "files": {
+    "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+    "crates/testing/reference/src/frontend/parser/literals.rs": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+    "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+    "tests/fixtures/dev4-parser/semantic.json": "f238d572fd5029bdba1f4886350ce37f70222eb8a0a736ff969c551c10533433"
+  },
+  "required_functions": [
+    {
+      "name": "literal_statement_shapes",
+      "cases": 24,
+      "fixture": "structural_literals"
+    },
+    {
+      "name": "literal_raw_scalars",
+      "cases": 26,
+      "fixture": "scalar_literals"
+    },
+    {
+      "name": "literal_rejections",
+      "cases": 122,
+      "fixture": "error_literals"
+    },
+    {
+      "name": "parser_boundary_cases",
+      "cases": 22,
+      "fixture": "boundary_cases"
+    },
+    {
+      "name": "generated_scalar_fragments",
+      "cases": 64,
+      "scalar_fragments_per_case": 128,
+      "fixture": "generated_case"
+    },
+    {
+      "name": "known_bad_parser_observations_are_rejected",
+      "known_bad": 23,
+      "exact_acceptance_controls": 4,
+      "fixture": "known_bad_observations"
+    }
+  ],
+  "required_semantic_cases": 258,
+  "required_known_bad": 23,
+  "required_acceptance_controls": 4,
+  "separately_selected_ignored_functions": [
+    {
+      "name": "extended_generated_scalar_fragments",
+      "seeds": [
+        0,
+        255
+      ],
+      "scalar_fragments_per_case": 1024
+    },
+    {
+      "name": "extended_parser_fuzz_30_minutes",
+      "duration_seconds": 1800,
+      "first_seed": 256,
+      "recipe": "semantic.json generated_recipe.fuzz",
+      "scope": "valid grammar generated fuzz; arbitrary malformed-byte fuzz not covered; fixed malformed122 remains mandatory"
+    }
+  ],
+  "control_fixture": {
+    "path": "tests/fixtures/dev4-parser/control.json",
+    "owner": "root",
+    "sha256": "d9da1e40612c28942fce411e2de04a5737780103ad9c4a1b9cd4ea1311a733a2"
+  },
+  "freeze_rule": "All listed literal/recipe/schema files and root control fixture must receive independent D2 acceptance before product implementation. Preserve these hashes and any original rejected input before expectation changes.",
+  "limits_note": "Node8191/8192/8193 recipes preserve arity. Marker255/256/257 and source1MiB±1 use separate low-node shapes. Name cases only test parser diagnostic forwarding. No claimed lexer token65536 or P3 predicate-depth execution.",
+  "reviewer": "/root/frontend_review",
+  "reviewed_manifest_sha256": "6aae5d3a42595e78ad334699cf3ed3de3f85dafddbcb41fce5041cd9dafd8dc3"
+}

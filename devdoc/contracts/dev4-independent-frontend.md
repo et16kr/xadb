@@ -222,3 +222,66 @@ byte scan과 성장 copy는 최대256 bytes마다 제어를 검사한다. scan�
 자원 입력은 초기256·성장768(256+512)·retained source+다음 source의 잔여−1/동일/+1, session 성공 뒤 DB 실패, 실제 capacity 초과분 양쪽 실패, allocation 주입 실패, scan/copy 중 취소·deadline, 새 호출 제어, 두 splitter의 동일 DB 공유·실제 thread 합산, 모든 종료 후 baseline 회복을 포함한다. known-bad 관측은 quote 내 분할·chunk를EOF로 해석·CR/comment/UTF-8 carry·절대좌표·consumed/terminated·누락/중복 출력·불완전 관측을 거절한다. 자원 해제/검사 제거의 제품 mutant도 별도 source로 거절한다.
 
 무변경 lexer/name의 기존 시험은 재실행하지 않는다. Module::Split 추가의 단순 관측 adapter 연결은 compile로 확인하며 새 splitter/자원 경로를 선택한다. 단일 SQL API의 다중 문장 거절·parser/AST/값·session runtime·Q1은 이 leaf의 완료로 대체하지 않는다. 전체 파일을 모아 반환하는 대안은 caller backpressure와 유지량 상한을 약화하고, 기존 lexer를 매 chunk 재시작하는 대안은 미완결/EOF 및 반복 복사 문제를 만들므로 채택하지 않는다.
+
+<a id="parser-leaf"></a>
+## 12. D4-FE-PARSE-001 — 공통 owned AST와 INSERT·거래 구문
+
+2026-10-24 · **D4-FE-PARSE-001 D2 ACCEPTED / 채택 시 제품·시험 NOT_RUN**. P2와 해당 P0/P5 소비 부분이다. root가 AST/budget·자원 시험·통합, frontend_research가 parser, frontend_oracle이 독립 literal/판정·adapter, frontend_review가 D2/D1을 맡는다. P3 값 검산·P4 나머지 구문·실제 engine 연결은 별도이며 아래 임시 미공급 분류를 XADB의 영구 지원 범위로 해석하지 않는다.
+
+### 소유 API와 AST
+
+`Parser::new(session: &Quota, database: &Quota) -> Self`, `parse(&mut self, source: &[u8], control: &CallControl) -> Result<ParsedStatement, Diagnostic>`를 제공한다. Parser는 같은 quota handle만 보관하며 호출마다 새 control을 받는다. parse는 caller bytes를 예약한 source에 복사하고 AST를 소유한다. 성공·오류 뒤 같은 Parser를 재사용할 수 있다. 실패는 이번 호출의 source/AST만 폐기하며 이미 반환한 ParsedStatement를 변경하지 않는다. StatementSource를 소비하는 API·engine/catalog·session runtime은 없다. caller는 splitter/source와 parser에 기존 같은 session/DB ledger를 주입하며 두 source가 동시에 살아 있으면 둘 다 차감한다.
+
+ParsedStatement는 `source() -> &[u8]`, `nodes() -> &[AstNode]`, `marker_count() -> u16`를 읽기로 제공하고 Clone·가변 AST·예약 없는 buffer 추출은 제공하지 않는다. nodes[0]은 root이며 성공 때 최소1개다. public AstNode는 private field와 `kind() -> &NodeKind`, `span() -> Span`, `first_child() -> Option<usize>`, `next_sibling() -> Option<usize>`만 제공한다. index는 해당 nodes slice의 지역 위치이며 engine identity/handle이 아니다. 생성·연결은 private builder만 수행하고 index는 범위 안, 연결은 비순환·중복 없음·root에서 모든 node 도달이다. 별도 edge Vec 없이 각 node가 first/last child와 next sibling을 보관해 O(1) append한다. 폐기와 순회는 재귀 소유를 사용하지 않는다.
+
+이번 NodeKind는 `Insert`, `Begin`, `Commit`, `Rollback`, `SetAutocommit(bool)`, `Target`, `Columns`, `Rows`, `Tuple`, `Name(Name)`, `Scalar(ScalarSyntax)`다. ScalarSyntax는 `Integer { sign: Sign, digits: Span }`, `Text`, `Binary`, `Bool(bool)`, `Null`, `Parameter { ordinal: u16 }`이며 Sign은 None/Plus/Minus다. 이름은 기존 고정 Name을 소유한다. 모든 span은 owned source 안의 local UTF-8 byte 좌표다. raw scalar byte는 node.span으로 접근하며 Integer의 digits만 별도 span으로 보존한다. 부호와 digits 사이 whitespace/comment는 허용하고 전체 scalar span에는 포함한다.
+
+preorder node 순서는 root Insert → Target → 이름(비인용/인용 prefix가 있으면 prefix도 먼저 보존) → Columns → 열 이름들 → Rows → 각 Tuple과 그 scalar들이다. root의 자식은 Target/Columns/Rows, Target의 자식은1개 이름 또는 prefix/실제 이름2개, Columns의 자식은 Name, Rows는 Tuple, Tuple은 Scalar다. 거래 제어는 root1개뿐이다. root.span은 첫 token 시작부터 마지막 구문 token 끝까지이며 optional `;`와 뒤 trivia를 제외한다. source()는 모든 원문을 보존한다. Target은 첫 이름부터 마지막 이름 끝, Columns/Tuple은 양쪽 괄호 포함, Rows는 VALUES부터 마지막 tuple 끝, Name/Scalar는 해당 raw token 또는 부호부터 digits 끝이다.
+
+### 구문·값의 분리와 오류 표
+
+P2는 INSERT INTO target `(columns)` VALUES tuple 목록과 BEGIN/COMMIT/ROLLBACK/SET AUTOCOMMIT ON/OFF만 구문 분석한다. 각각의 목록은 최소1개, 반복은 loop다. 추가 `;`·두 번째 문장·leading `;`·빈/trivia 입력은 Syntax이고 마지막 `;` 하나 뒤 trivia만 허용한다. INSERT의 열 중복·tuple별 arity/대상 열 수·존재/타입·engine mutation 한도는 후속 binding/execution 소유이며 P2의 새로운 구문 거절 조건으로 만들지 않는다. 이름 위치에는 Identifier/QuotedIdentifier만 허용하고 잘못된 token kind는 Parse/Syntax, 이름 내용 오류는 기존 Name 진단을 그대로 전파한다.
+
+**ParsedStatement 성공은 scalar 값 검산 성공이 아니다.** P3의 SQL scalar 입력이 raw sign/digits를 Int64로 checked 변환하여 overflow를 Range로, binary의 짝수 hex, Text/Binary 각각의 decoded 길이≤65,536과 SQL empty text의 Utf8 typed NULL을 검산/변환한다. 따라서 P2는 Int64 초과 digits·홀수/비hex raw Binary·긴 raw payload를 소유할 수 있다. `''`는 Text이며 untyped Null로 조기 변환하지 않는다. §4의 scalar Range 요구는 P3 값 입력에 적용되고 DDL type_length의 raw 보존은 별도다. 정상 실행/BoundStatement 생성은 이 후속 검산을 반드시 소비해야 한다. 이름·scalar 외 node나 사용자 위조 AST를 값 검사 완료 증표로 쓰지 않는다.
+
+| 문맥·입력 | 이번 진단과 span |
+| --- | --- |
+| BEGIN/COMMIT/ROLLBACK/SET/INSERT 외 첫 token | SELECT/UPDATE/DELETE/CREATE/DROP은 P4 미공급으로 Parse/Unsupported; 비인용 PREPARE/EXECUTE도 Unsupported. 다른 token은 Syntax. span은 그 token |
+| 이름/PUBLIC | prefix 정규 bytes가 PUBLIC이면 제거하지 않고 Target 안에 보존. 다른 prefix는 prefix Name raw span의 Parse/Unsupported. unqualified public는 일반 이름. PUBLIC 뒤 dot 다음 이름 누락은 현재 token의 Syntax |
+| scalar의 DEFAULT·SELECT | 비인용 DEFAULT 또는 Keyword SELECT는 그 token의 Parse/Unsupported. DEFAULT/RETURNING 등의 일반 이름 위치는 정상 이름 |
+| INSERT target/열 목록 뒤 확장 | target 다음 및 닫힌 열 목록 다음 SELECT 또는 비인용 DEFAULT는 그 token의 Unsupported. AS는 target 다음에서만 Unsupported. 다른 예상 밖 token은 Syntax |
+| 완결 INSERT 뒤 RETURNING | 닫힌 tuple 목록 뒤·optional `;` 전의 비인용 RETURNING만 해당 token Unsupported. 거래 구문 뒤, 아직 닫히지 않은 tuple 안, `;` 뒤 RETURNING은 Syntax |
+| scalar의 `.5` | Dot 바로 다음 raw byte가 ASCII digit이면 Dot token span Unsupported, 그렇지 않은 Dot는 Syntax |
+| scalar digits 다음 인접 `.` 또는 exponent identifier | trivia 없이 인접한 Dot는 그 Dot span Unsupported. 인접 Identifier가 e/E 하나 또는 e/E 뒤 ASCII digits만이면 그 Identifier span Unsupported(1e/1e+의 시작도 포함). 1efoo 등 다른 suffix는 Syntax |
+| digits와 공백으로 분리한 Dot/exponent | 숫자 확장으로 합치지 않고 다음 delimiter 검사의 현재 token Syntax |
+| 부호 다음 digits 외 token | Dot 바로 뒤 raw byte가 ASCII digit인 `.5`는 부호/trivia 여부와 무관하게 Dot span Unsupported(`+.5`, `- .5` 포함). 그 외 현재 token Syntax. `+?`, `-NULL`, `- -1`은 실패, `--1`은 line comment여서 현재 EOF에서 Syntax |
+| N/q 바로 뒤 text quote | 비인용 N/n/Q/q Identifier 뒤 raw quote가 인접하면 그 Identifier span Unsupported. 그 외 scalar Identifier는 위 DEFAULT 이외 Syntax |
+| 기타 잘린/예상 밖 구조 | 현재 token의 Parse/Syntax, EOF는 `[source.len,source.len)` |
+
+같은 일반 단어를 전역 reserved로 추가하지 않는다. parser가 지원하지 않는 다른 확장을 모두 자동으로 Unsupported로 분류한다고 주장하지 않는다. lexer의 `!=`·미등록 punctuation 및 malformed UTF-8/quote/comment 진단은 원 모듈·span을 그대로 전파한다. 정상 scalar를 마친 뒤 delimiter 아닌 token은 인접 numeric extension 외에는 Syntax다. RETURNING 예외는 닫힌 INSERT tuple 목록 뒤에만 적용한다.
+
+### 한도·자원·제어
+
+진입 Parse 제어 → 기존 Lexer::new의 Lex 제어/1 MiB/전체 UTF-8 → source 예약·복사 → token scan/parse·AST 예약 → 반환 전 Parse 제어 순이다. 관측/할당 없는 호출 bookkeeping은 진입 제어 전에 수행하여 취소/UTF-8 실패 호출도 다음 호출용 주입 설정을 소비한다. 첫 source 예약 실패 span은 leading trivia와 무관하게 `[0,0)`다. 뒤 lexical 오류가 있어도 source 예약 실패가 먼저 나올 수 있다. 각 token scanner·name 진단은 그대로 보존하고 새 parser 자원/AST/marker·구문 오류는 Module::Parse다. 모든 Parse 제어 진단은 실제 처리 source offset p의 `[p,p)`이며 source copy는 복사 완료 byte 위치, arena 이동은 방금 옮긴 node.span.end를 사용하므로 좌표가 뒤로 갈 수 있다. source 외 단순 node 상한·marker 상한·quota/할당 실패는 해당 token/node 시작의 zero-width Limit다. 미완성 node의 초기 span은 도입 token 전체다(Insert/거래 keyword, Target의 첫 이름, Columns/Tuple의 여는 괄호, Rows의 VALUES). Target은 마지막 이름, Columns/Tuple은 닫는 괄호, Rows는 마지막 닫는 tuple, root는 마지막 구문 token을 소비한 직후 최종 span으로 갱신한다. root/Rows가 아직 끝나지 않은 성장에서는 초기 span을 유지한다. 257번째 marker를 AST에 넣기 전에 거절하며 ordinal은 원문 marker 출현 순서1..256이다.
+
+statement/clause/Target/Name/Rows/Tuple/Scalar를 각각1node로 센다. INSERT의 수는 `4 + target_names + columns + tuples + total_scalars`, 거래 제어는1이다. 8,192개를 허용하고 다음 추가를 거절한다. marker/source/node 한도는 독립이다. P2의 정상 문법은 이 node 상한 아래에서 token65,536에 도달하지 않으므로 lexer의 원 token 증거를 수신하고 P2로 다시 실행하지 않는다. 입력 유래 재귀가 없어 유효 중첩은 단일 괄호 목록뿐이며 depth63/64/65 인수는 P3 predicate에 남긴다. 중첩 scalar 괄호를 추가 지원하거나 잘못된 Syntax를 Limit로 바꾸지 않는다.
+
+원문은 known length만큼 한 번 요청하고 AST는16node부터 실제 capacity의2배(checked, 논리 최대8,192)를 요청한다. 실제 AstNode size≤256bytes를 검산한다. 모든 element count×size, capacity 초과분×size 및 usize→u64 산식은 checked다. 원문과 typed AST Vec 모두 §11의 요청량 session→DB 선예약, fallible allocation, 실제 초과 capacity session→DB 게시 전 보정을 적용한다. 이 결정은 §6의 Vec 원문 한정 보정을 **이번 typed AST backing에도** 확장한다. allocator 내부 transient RSS 전체 선예약/OOM 복구를 주장하지 않는다.
+
+arena 성장에서 old/new 실제 backing을 함께 charge하고 node를 순서대로 move하며 한 node 이하(≤256bytes)마다 제어를 검사한다. source 복사는256bytes마다 검사한다. 모든 새 backing은 bytes/nodes Vec를 첫 field, lease를 후속 field로 보관하여 부분 실패에도 allocation을 먼저 폐기한다. old arena는 move 동안 allocation/lease를 유지하고 성공 후 폐기한다. 이름/AST에는 heap-owning child·recursive Drop이 없다. cleanup에 새 예약·DB I/O가 없다. 고정 Parser≤128bytes, ParsedStatement≤384bytes, AstNode≤256bytes를 검사한다.
+
+비기본 test-support는 `Parser::fail_allocation_at(ordinal: usize)`로 **다음 parse 호출**의 source/arena backing allocation 순번1부터 실패를 주입한다(호출이 끝나면 설정 소멸). `set_allocation_padding(elements: usize)`는 요청 element 수를 checked 추가하여 실제 초과 회계 경로를 강제한다. `allocation_count()`는 직전/진행 호출에서 도달한 backing allocation 지점 수, ParsedStatement의 `source_capacity_bytes()`·`arena_capacity_bytes()`는 실제 allocation 관측이다. 기본 제품에는 없다. source 길이0은 capacity0을 유지하고 backing allocation·reservation·순번 소비가 없으며 padding도 적용하지 않는다. 순번은 양쪽 base 예약이 성공한 뒤 실제 fallible allocation 지점에 도달할 때 증가한다(주입 실패도 포함). base quota 선실패는 count를 증가시키지 않는다. ordinal0은 주입 끄기, 도달하지 못한 순번도 다음 호출로 이월하지 않는다. padding은 명시적으로0을 설정하기 전까지 호출 간 유지한다. 별도 parser-private budget은 u8/실제 AstNode 두 소비자만 지원하며 splitter의 이미 검증한 owner를 변경하지 않는다.
+
+### 독립 입력과 선택 검증
+
+literal AST는 전체 node 배열·순서·kind·Name·span·first_child/next_sibling·marker count를 정확히 대조한다. 생산 parser/normalizer로 기대값을 생성하지 않는다. 반복 fixture는 literal subtree의 index/span 이동만 허용한다. root만 따라가 orphan을 놓치는 판정·cycle/중복 연결·raw Text→Null·marker0/순서 누락·incomplete 성공을 known-bad로 거절한다. 최소64seed×128개 scalar fragment의 고정 생성과 별도 확대256×1024/30분 fuzz를 제공한다.
+
+이번 선택에는 각 grammar 위치 잘림·정상/미지원·PUBLIC·source/node/marker/name 경계, 실패 후 재사용·retained AST와 새 parse의 session/DB 잔여−1/동일/+1, source/arena 각 allocation 실패·실제 초과분 회계 실패·old/new copy 취소/deadline·최대 flat AST Drop·동일 DB를 공유하는 caller 합산을 포함한다. 정확 입력/기대값·함수/수·hash는 제품 구현 전에 동결한다. 제품 검사 제거·lease 조기 해제/누수·capacity 회계 누락 mutant를 해당 새 경로 detector로 거절한다. 기존 lexer/name/splitter 완료 시험은 변경 없이 반복하지 않는다. parser 성공을 P3/P4·binding·실행·전체 FE11/12·Q1 완료로 승격하지 않는다.
+
+### D2 결정·동결 기록
+
+작업/계약/통합 담당은 `/root`, 독립 검토자는 `/root/frontend_review`다. 공개 tree/개별 heap node 대신 flat arena를 선택해 전체 node 수·quota·반복 Drop을 한 owner에서 검산한다. caller 원문 borrow 또는 StatementSource 소비 대신 예약한 원문 복사를 선택해 반환 AST의 수명을 독립시키고 현재 Quota에 없는 ledger identity API를 가정하지 않는다. 반복 목록은 tail ID로 O(1) 연결하며 각 append마다 처음부터 tail을 찾는 방식은 채택하지 않는다. 로컬 PostgreSQL의 raw parse/DB 분석 분리, SQLite의 token 소유, CUBRID의 tuple tail 복잡도 경고를 참고했다. 구체 source/revision은 이 leaf 실행 증거에 수합한다.
+
+2026-10-24 독립 D2는 최종 검토 manifest `6aae5d3a42595e78ad334699cf3ed3de3f85dafddbcb41fce5041cd9dafd8dc3`와 연결된 전체 literal/recipe/control을 읽기 검토하고 수용했다. 필수 semantic258(구조24·raw scalar26·오류122·경계22·64seed×128), known-bad23/정상통제4, 자원22함수+private1, 제품 mutant5종이다. 검토 중 오류 문맥·초기 span·주입 수명, root 자원 fixture의 prefix byte 산식과 이동 중 예약 witness를 교정했으며 제품·시험 실행 전 원본을 보존했다. 30분 별도 확대는 valid grammar 생성 fuzz이고 임의 malformed-byte fuzz의 실행 증거로 쓰지 않는다. 필수 고정 malformed122는 별도다. 값 검산/새 AST variant·동결 오류 우선순위/실제 quota 반례가 바뀌면 이 결정을 재검토한다. §12 이전의 원 leaf 증거는 소급 변경하지 않는다.
+
+구현 중 긴 exponent 후보 Identifier의 재검사 loop를 식별하여 [보충 자원 입력](../../tests/fixtures/dev4-parser/control-supplement.json)의 취소/deadline1함수와 검사 제거 mutant1종을 실행 전에 추가했다. 이 보충은 helper 코드 작성 **후**, 첫 compile/시험 **전**에 독립 D2 검토를 받았다. 원 구현 전 동결258semantic/22자원/5mutant를 소급 수정하지 않으며 합계 자원23함수·제품mutant6종으로 선택한다. 원 helper 초안과 두 동결 시점·hash는 실행 증거에 따로 보존한다.

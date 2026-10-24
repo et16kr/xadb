@@ -1,0 +1,172 @@
+{
+  "schema": 1,
+  "contract": "D4-FE-PARSE-001",
+  "fixture_owner": "/root",
+  "independent_reviewer": "/root/frontend_review",
+  "execution_state": "NOT_RUN",
+  "test_target": "parser_resources",
+  "input_recipe": {
+    "insert(n)": "ASCII INSERT INTO t(a) VALUES plus n copies of (0), joined by comma; no spaces added",
+    "length": "23+4*n-1 = 22+4*n",
+    "node_count": "6+2*n",
+    "S": "size_of::<AstNode>(), at most256; actual capacity measured, normal allocator expected exact requests; unexpected actual capacity must be reported, never undercharged",
+    "growth_failure_point": "old logical capacity even k>=16; incoming Tuple starts at2*k+11"
+  },
+  "tests": [
+    {
+      "function": "source_and_ast_lifetimes",
+      "input": "BEGIN; with leading/trailing spaces, two retained ParsedStatement results from the same Parser, then drop Parser before outputs; caller input Vec is overwritten and dropped after parse, before inspecting result",
+      "expected": "source exact input; root excludes trivia/semicolon; usage equals each actual source capacity plus actual arena capacity; dropping Parser does not release results; individual drops release only own charge; final0"
+    },
+    {
+      "function": "source_reservation_boundaries",
+      "input": "input BEGIN length5; independent session/DB limits4/5/6, other adequate",
+      "expected": "4 source Limit Parse[0,0), allocation_count0;5/6 source succeeds then initial arena fails Limit[0,0), count1; all usage0. Session-constrained peaks: limit4 session0/DB0, limit5/6 session5/DB5. DB-constrained peaks: limit4 session5/DB0; limit5/6 session(5+16*S)/DB5."
+    },
+    {
+      "function": "initial_arena_reservation_boundaries",
+      "input": "input BEGIN length5; session then DB limit5+16*S +[-1,0,1], S=size_of AstNode",
+      "expected": "minus1 Limit[0,0), allocation_count1; equal/+1 success actual arena16 nodes and source5 bytes, count2; returned charge5+16*S; drop0"
+    },
+    {
+      "function": "growth_reservation_boundaries",
+      "input": "input insert(6) length46; session then DB limit46+(16+32)*S +[-1,0,1]",
+      "expected": "minus1 Limit Parse[43,43) at sixth Tuple, count2; equal/+1 success count3 and retained46+32*S; observer witnesses old16+new32 capacity simultaneously; drop0; set growth_started when old+new is first observed, then require interior p25 witness after growth_started and assert both ledgers still equal old+new there even if a lease was released early"
+    },
+    {
+      "function": "retained_ast_survives_next_failure",
+      "input": "retain BEGIN then parse COMMIT; each constrained ledger has remaining6+16*S +[-1,0,1] after first source5+arena16*S",
+      "expected": "minus1 second initial arena Limit[0,0), first bytes/root unchanged and charged; equal/+1 both success; independent output Drop restores0"
+    },
+    {
+      "function": "source_extra_capacity_failures",
+      "input": "input BEGIN; padding1; constrained session or DB limit5, other adequate",
+      "expected": "base source reservations5 succeed; actual allocation>=6; extra reservation fails Limit[0,0), count1; session/DB both0; session peak6 only when DB extra fails"
+    },
+    {
+      "function": "arena_extra_capacity_failures",
+      "input": "input BEGIN padding1; source actual6; constrained session or DB limit6+16*S",
+      "expected": "source and arena base succeeds; arena actual>=17*S; extra fails Limit[0,0), count2; final0; source excess accounted separately"
+    },
+    {
+      "function": "actual_capacity_and_growth_padding",
+      "input": "insert(10) with padding1 then parse BEGIN on same parser; finally padding0 and parse BEGIN",
+      "expected": "source actual>=len+1; initial arena17 elements, next request34 then actual>=35; observed old17+new35 peak; live charge exact observed capacities; padding persists next call until reset; final0"
+    },
+    {
+      "function": "allocation_failure_at_every_backing",
+      "input": "fresh Parser each k1..11; input insert(4093) has8192nodes; injectfail k; retry sameParser BEGIN after failure",
+      "expected": "k1 source0; k2 initialarena0; k>=3 grow old16*2^(k-3), errorpoint2*old+11; count==k; final0 then BEGIN succeeds (setting consumed); no source/arena publication on failure"
+    },
+    {
+      "function": "unused_injection_does_not_escape_call",
+      "input": "fail_at0, out-of-range99; separate call cancelled at entry withfail_at1, separate invalidUTF8 withfail_at1; next fresh-control BEGIN",
+      "expected": "0 disables;99 first BEGIN succeeds then next succeeds; cancelled/invalidUTF8 calls count0 and consume pending setting, next BEGIN success"
+    },
+    {
+      "function": "empty_input_has_no_backing",
+      "input": "empty bytes withpadding99/fail_at1; then whitespace input length1, padding0; then BEGIN",
+      "expected": "empty Syntax Parse[0,0),count0,peak0; whitespace Syntax[1,1), sourcecount1 then release0; first unusedinjection consumed; BEGINsuccess"
+    },
+    {
+      "function": "source_copy_checkpoint_cleans_all",
+      "input": "BEGIN plus spaces to2048bytes; cancel/deadline observer only ModuleParse,DBused2048,p==256",
+      "expected": "interior copy checkpoint reached at256; Cancelled/Timeout Parse[256,256), no arena allocated,count1,used0; deleting sourcecopyloop checks causes expected-error assertion to fail"
+    },
+    {
+      "function": "arena_move_checkpoint_cleans_old_new",
+      "input": "insert(6), observer only ModuleParse,DBused==len+(16+32)*S,p==25 (first Scalar end)",
+      "expected": "old/new coexist; interior move of node7 reached; cancel/deadline Parse[25,25),count3; allused0; deleting arena move loop checks cannot be masked by pre/post checks at43"
+    },
+    {
+      "function": "entry_and_return_control",
+      "input": "cancelled+expired entry on malformedbytes; separate BEGIN observer arms only when source+16*S live and Parse p==5",
+      "expected": "entry Cancelled Parse[0,0),count0; return Cancelled/Timeout Parse[5,5),count2 and cleanup0; cancellation wins simultaneous"
+    },
+    {
+      "function": "nested_lex_and_name_failures_release_ast",
+      "input": "ASCII INSERT INTO t(a) VALUES(1),(!=) -> Lex Unsupported[28,30); INSERT INTO t(a,\"bad followed by actual byte00 then \") VALUES(1) -> Name Name[16,22). Quoted name raw hex22 62 61 64 00 22. Separate Lex/Name control observer only after full source26 and arena allocation, DBused>26.",
+      "expected": "original code/module/span preserved; controls preserve Lex/Name module; allocation_count>=2; all source/AST charges released; fresh BEGIN succeeds"
+    },
+    {
+      "function": "calls_borrow_only_current_control",
+      "input": "parse BEGIN with token1, cancel token1, parse COMMIT with token2, cancel token2; fresh ROLLBACK",
+      "expected": "all three outputs readable and charged; cancellation of older calls has no retained effect; drop0"
+    },
+    {
+      "function": "splitter_and_parser_charge_same_ledgers",
+      "input": "Splitter produces BEGIN; retained StatementSource capacityC; Parser on as_bytes with same ledgers; drop in both orders",
+      "expected": "while both live usageC+actualparsedsource+arena; each owner survives otherDrop; all0; no ownership ledger substitution"
+    },
+    {
+      "function": "shared_database_callers",
+      "input": "own sessions with sharedDB; first BEGIN retained; second BEGIN; DB limit2*(5+16*S)+[-1,0,1]",
+      "expected": "minus1 second fails and first unchanged; equal/+1 two admitted; summed sessionusage==DBusage; final0"
+    },
+    {
+      "function": "native_threads_share_database",
+      "input": "two threads with own sessions sharedDB capacity2*5+16*S; startbarrier, both parse BEGIN; each returns its result/session ledger; collect all joins while retaining results, then inspect/drop. No post-parse barrier can strand a peer if parse/assert fails.",
+      "expected": "exactly one completeAST admitted, other Limit; source transient reservation cannot make both fail since DB holds2sources+1arena; valid winner and usage within bound; joinsDB0"
+    },
+    {
+      "function": "maximum_flat_ast_drop",
+      "input": "insert(4093):8192nodes; scoped worker thread stack256KiB; parse and drop; parent observes ledgers",
+      "expected": "successful max tree allnodes; bounded iterative Drop does not overflow stack; final0"
+    },
+    {
+      "function": "parser_stack_footprints",
+      "input": "size_of Parser/ParsedStatement/AstNode under test-support",
+      "expected": "<=128/384/256 respectively"
+    },
+    {
+      "function": "padding_overflow_cleans_reservations",
+      "input": "input BEGIN; set padding usize::MAX; then resetpadding0 and parse BEGIN",
+      "expected": "checked source count overflow Limit Parse[0,0),count1,allused0; next call succeeds; typed multiply overflow covered by private unit"
+    }
+  ],
+  "private_unit": [
+    {
+      "function": "typed_capacity_arithmetic_rejects_overflow",
+      "input": "checked byte-count helper AstNode countusizeMAX; allocation padding typed element count arithmetic atusizeMAX",
+      "expected": "Limit Parse zero-width suppliedpoint; no allocation attempted; no panic"
+    }
+  ],
+  "product_mutants": [
+    {
+      "mutation": "omit source copy loop control",
+      "detector": "source_copy_checkpoint_cleans_all"
+    },
+    {
+      "mutation": "omit arena move loop control",
+      "detector": "arena_move_checkpoint_cleans_old_new"
+    },
+    {
+      "mutation": "after post-allocation check but before first node move, return only old arena leases while retaining old Vec backing",
+      "detector": "growth_reservation_boundaries"
+    },
+    {
+      "mutation": "forget failed call AST backing/leases",
+      "detector": "allocation_failure_at_every_backing"
+    },
+    {
+      "mutation": "omit actual capacity excess reservations",
+      "detector": "actual_capacity_and_growth_padding"
+    }
+  ],
+  "out_of_scope": [
+    "unchanged lexer/name/splitter reruns",
+    "P3 scalar value validation",
+    "P4 grammar",
+    "engine/session/outcome",
+    "global allocator OOM recovery",
+    "Q1"
+  ],
+  "notes": [
+    "This root-authored resource fixture is reviewed independently before product implementation; do not label its authorship independent of the AST implementer.",
+    "Allocation implementation control branches must be paired with exact quota witnesses; source/module/point observation is not a replacement for expected outcome."
+  ],
+  "pre_freeze_corrections": [
+    "Independent reviewer found source offset recipe one byte too short: prefix is23, first scalar[24,25), sixth Tuple43, insert6 length46. Corrected before product or test execution.",
+    "Growth early-release detector now requires an interior move witness after the first old+new observation, rather than peak alone."
+  ]
+}

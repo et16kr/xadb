@@ -27,6 +27,7 @@ pub fn diagnostic_observation(value: Diagnostic) -> DiagnosticObservation {
             Module::Lex => "Lex",
             Module::Name => "Name",
             Module::Split => "Split",
+            Module::Parse => "Parse",
         },
         start: value.span.start,
         end: value.span.end,

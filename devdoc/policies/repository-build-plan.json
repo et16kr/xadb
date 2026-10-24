@@ -5151,17 +5151,21 @@
     "oracle_paths": [
       "crates/testing/reference/src/frontend.rs",
       "crates/testing/reference/src/frontend/literals.rs",
-      "crates/testing/reference/src/frontend/splitter.rs"
+      "crates/testing/reference/src/frontend/splitter.rs",
+      "crates/testing/reference/src/frontend/parser.rs",
+      "crates/testing/reference/src/frontend/parser"
     ],
     "test_paths": [
       "crates/sql/tests",
       "tests/fixtures/dev4-lexer",
-      "tests/fixtures/dev4-splitter"
+      "tests/fixtures/dev4-splitter",
+      "tests/fixtures/dev4-parser"
     ],
     "source_roots_changed": false,
     "gate": "Q1 NOT_RUN",
-    "scope": "D4-FE-LEX-001 borrowed lexer/name and D4-FE-SPLIT-001 streaming boundary/owned source/shared quota; parser and engine integration remain incomplete",
-    "splitter_evidence_ref": "dev4-splitter-20261024.md"
+    "scope": "D4-FE-LEX-001 lexer/name, D4-FE-SPLIT-001 streaming source, D4-FE-PARSE-001 owned raw AST/INSERT/transaction grammar; scalar/predicate/remaining grammar/model and engine integration incomplete",
+    "splitter_evidence_ref": "dev4-splitter-20261024.md",
+    "parser_evidence_ref": "dev4-parser-20261024.md"
   },
   "dev3_mixed_system_owner": {
     "status": "accepted_limited_d1_current_product_continuation",

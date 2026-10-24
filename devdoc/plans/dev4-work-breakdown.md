@@ -1,10 +1,10 @@
 # DEV4 — 세부 작업 분류와 공급·인수 계획
 
-2026-10-22 · **18개 분류·기존 55개 작업 ID 유지 / D4-WORK-BREAKDOWN-001–003 ACCEPTED / 제품·Q1 NOT_RUN**
+2026-10-22 · **18개 분류·기존 55개 작업 ID 유지 / D4-WORK-BREAKDOWN-001–003 ACCEPTED / 독립 앞단 제한 구현·Q1 미완료**
 
 [SQL 의미 정본](../contracts/dev4-sql-design.md) · [기존 구현·검증 계획](dev4-implementation-plan.md) · [이번 ARIES·Oracle·로컬 소스 조사](../evidence/dev4-source-research.md#work-breakdown-20261022) · [단계 완료 정본](stage-completion.json) · [DEV3 분해 방식](dev3-implementation-plan.md#remaining-work)
 
-이 문서는 기존 DEV4의 D4-0–7을 실제 배정 가능한 하위 작업으로 나눈다. 모든 작업은 기존 XADB-011 내부이며 DEV3 → DEV4, Q1, SC02·KU13·PF10과 채택된 SQL 의미를 유지한다. 번호는 실행 순서·진행률·새 gate가 아니다. **현재 4.01–4.18의 제품 구현·실행은 모두 NOT_RUN이며, 분류 완료는 leaf 입력 동결이나 DEV4 착수·완료를 뜻하지 않는다.**
+이 문서는 기존 DEV4의 D4-0–7을 실제 배정 가능한 하위 작업으로 나눈다. 모든 작업은 기존 XADB-011 내부이며 DEV3 → DEV4, Q1, SC02·KU13·PF10과 채택된 SQL 의미를 유지한다. 번호는 실행 순서·진행률·새 gate가 아니다. **분류 채택 당시 4.01–4.18의 제품 구현·실행은 모두 NOT_RUN이었다.** 이후 [DEV3 병행 준비 계획](dev4-preparation-plan.md)에 따라 독립 lexer·이름·splitter·P2 INSERT/거래 parser를 제한 구현했다. 실제 범위와 원 source별 증거는 [현재 구현](../implementation/dev4-implementation.md)을 따른다. 분류 완료나 앞단 일부의 성공은 전체 DEV4·Q1 완료를 뜻하지 않는다.
 
 DEV3처럼 큰 책임을 분류하고 각 책임을 좁은 공급 단위와 소비 경로의 통합 인수로 나눈다. 의미·API의 소유자는 기존 SQL/engine 계약이고, 이 문서는 작업 범위·직접 선행·산출물·인수 연결을 소유한다. 실제 Rust signature·spill bytes·runner·수치 profile은 D4-F01–F05에서 아직 동결해야 한다. 이번 요청으로 제품 구현·시험 실행을 재개하지 않는다.
 

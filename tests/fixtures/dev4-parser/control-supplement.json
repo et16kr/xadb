@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "contract": "D4-FE-PARSE-001",
+  "status": "D2_ACCEPTED_BEFORE_EXECUTION",
+  "base_fixture": "control.json:22 unchanged functions",
+  "function": "exponent_classification_control_is_bounded",
+  "input": "ASCII INSERT INTO t(a) VALUES(1e followed by4096 ASCII7 bytes then ); no added spaces",
+  "observer": "ModuleParse and DBused==input.len+16*size_ofAstNode and p>=700; arm cancel or deadline9",
+  "expected": "Cancelled/Timeout Parse[p,p),700<=p<=956; observer reached with owned source+initial arena; allused0; sameParser fresh BEGINsuccess; no numeric Unsupported result may hide cancelled loop",
+  "product_mutant": {
+    "mutation": "remove only exponent classification loop check, retain entry/lexer/sourcecopy/arena checks",
+    "detector": "exponent_classification_control_is_bounded"
+  },
+  "timing": {
+    "observed_at": "2026-10-24T17:17:14.521520+09:00",
+    "parser_draft_sha256": "25e6bb8e4e1c4bb695624058b4b710626ee3e010eb29013ce6c0556dba7b0f19",
+    "code_existed_before_this_supplement": true,
+    "executed_before_supplement": false,
+    "reason": "Implementation-time static inspection identified a separate long Identifier reclassification loop after the base preimplementation input freeze. Preserve chronology; supplement is a pre-execution independent D2 detector, not a retroactive before-code fixture."
+  },
+  "author": "/root",
+  "reviewer": "/root/frontend_review",
+  "review": "frontend_review confirmed input length4123, identifier[25,4122), interior p794 in700..956, and witness separation from lexer/source/arena checkpoints"
+}

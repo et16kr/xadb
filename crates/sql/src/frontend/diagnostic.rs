@@ -12,7 +12,7 @@ pub struct Span {
 /// Failure cause owned by the input boundary.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Code {
-    /// Invalid encoding or lexical structure.
+    /// Invalid encoding, lexical structure, or raw grammar.
     Syntax,
     /// Recognized syntax outside the selected SQL grammar.
     Unsupported,
@@ -35,6 +35,8 @@ pub enum Module {
     Name,
     /// Streaming boundary recognition and owned source allocation.
     Split,
+    /// Raw grammar, owned AST, and parser backing allocation.
+    Parse,
 }
 
 /// Small failure result that does not allocate or manufacture transaction effects.
