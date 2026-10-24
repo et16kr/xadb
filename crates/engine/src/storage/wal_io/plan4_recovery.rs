@@ -44,7 +44,8 @@ mod selection;
 #[cfg(test)]
 #[path = "plan4_recovery_tests.rs"]
 mod tests;
-pub(in crate::storage) use resources::{RecoverySourceCensus, source_census};
+#[cfg(test)]
+pub(in crate::storage) use resources::source_census;
 
 pub(crate) const MAINTENANCE_BYTES: usize = 12_582_912;
 const BASE_BYTES: usize = 1_048_576;
@@ -412,6 +413,10 @@ struct RecoveryState<'a, 'm, 'w, W: WriterNamespace> {
     selected_epoch: Option<SelectedNewEpoch>,
 }
 
+#[allow(
+    clippy::large_enum_variant,
+    reason = "failure retains the exact acquired writer and caller loans without allocation"
+)]
 pub(crate) enum Plan4RecoveryAcquireFailure<'a, 'm, 'w, W: WriterNamespace> {
     Before {
         error: Plan4RecoveryError,
@@ -448,6 +453,10 @@ impl<W: WriterNamespace> std::fmt::Debug for Plan4RecoveryAcquireFailure<'_, '_,
 }
 
 impl<'a, 'm, 'w, W: WriterNamespace> Plan4Recovery<'a, 'm, 'w, W> {
+    #[allow(
+        clippy::result_large_err,
+        reason = "failure returns the original loans and acquired owner without allocation"
+    )]
     pub(crate) fn acquire<D: DirectoryPort<Writer = W>>(
         directory: &D,
         expected: Option<Namespace>,
@@ -534,6 +543,10 @@ impl<'a, 'm, 'w, W: WriterNamespace> Plan4Recovery<'a, 'm, 'w, W> {
     /// Returns the selected original runtime, still closed to foreground work.
     /// The recovered binding must complete durable CancelReservedFirst and old
     /// loser cleanup before its separate live continuation can be returned.
+    #[allow(
+        clippy::result_large_err,
+        reason = "failure retains the exact inline recovery owner and its writer lease"
+    )]
     pub(crate) fn recover(
         mut self,
     ) -> std::result::Result<Plan4RecoveryRuntime<'a, 'm, 'w, W>, Plan4RecoveryFailure<'a, 'm, 'w, W>>
@@ -1150,6 +1163,10 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
     /// Consumes the closed facade only after real cleanup/physical readback and
     /// control stabilization. Same owner, pool, generation, loans and fence move.
+    #[allow(
+        clippy::result_large_err,
+        reason = "not-ready handoff returns the same inline owner without allocation"
+    )]
     pub(crate) fn into_live(
         self,
     ) -> std::result::Result<

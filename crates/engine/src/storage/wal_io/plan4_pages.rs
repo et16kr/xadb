@@ -46,18 +46,17 @@ mod retention;
 )]
 pub(crate) use retention::Plan4Retention;
 pub(in crate::storage) use retention::{
-    EmptyRetentionControlLoan, RetentionCause, RetentionError, RetentionFlushAuthority,
-    RetentionFlushPhase, RetentionFlushStep, RetentionFrameObservation, RetentionInitAuthority,
-    RetentionInitCommit, RetentionInitCompleted, RetentionInitInstall, RetentionInstall,
-    RetentionLoadPermit, RetentionObservation, RetentionRecoveryStep, RetentionReplayCursor,
-    observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_image,
+    EmptyRetentionControlLoan, RetentionCause, RetentionFlushAuthority, RetentionFlushStep,
+    RetentionFrameObservation, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
+    RetentionInitInstall, RetentionInstall, RetentionLoadPermit, RetentionRecoveryStep,
+    RetentionReplayCursor, observe_recovery_frame, retention_replay_bank, retention_replay_image,
     seed_recovery_replay,
 };
 
 #[cfg(test)]
 pub(in crate::storage) use retention::{
-    IntoRetentionError, RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES, RetentionReservationError,
-    RetentionResidencyStep,
+    IntoRetentionError, RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES, RetentionFlushPhase,
+    RetentionReservationError, RetentionResidencyStep,
 };
 
 pub(in crate::storage) use retention::source_census as retention_recovery_source_census;

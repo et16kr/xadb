@@ -4,6 +4,10 @@
 use super::*;
 use std::{collections::BTreeMap, path::PathBuf};
 
+#[allow(
+    clippy::duplicate_mod,
+    reason = "literal recipe binds to this module's distinct recovery Oracle type"
+)]
 #[path = "plan4_retention_literal_tests.rs"]
 mod population;
 

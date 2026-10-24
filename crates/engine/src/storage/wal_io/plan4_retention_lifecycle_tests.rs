@@ -20,6 +20,10 @@ use xadb_foundation::{
     namespace::DirectoryPort,
 };
 
+#[allow(
+    clippy::duplicate_mod,
+    reason = "literal recipe binds to this module's distinct lifecycle Oracle type"
+)]
 #[path = "plan4_retention_literal_tests.rs"]
 mod literals;
 

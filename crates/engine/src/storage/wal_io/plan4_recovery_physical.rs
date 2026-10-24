@@ -3,8 +3,7 @@
 use super::*;
 use crate::storage::{
     control::{ControlKind, ControlRef, SelectorRole},
-    dirty_frame::TargetRequest,
-    page::{PageIdentity, PageLsn},
+    page::PageLsn,
 };
 
 const CANDIDATE: usize = PAGE_BYTES;

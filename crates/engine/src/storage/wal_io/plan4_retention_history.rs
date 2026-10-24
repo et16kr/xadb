@@ -301,10 +301,10 @@ fn metadata<W: WriterNamespace>(
         }
     })?;
     let name = source.name();
-    if let HistorySource::Base { epoch, .. } = source {
-        if epoch.identity() != identity {
-            return Err(invalid(storage));
-        }
+    if let HistorySource::Base { epoch, .. } = source
+        && epoch.identity() != identity
+    {
+        return Err(invalid(storage));
     }
     let m = writer
         .metadata(&name)

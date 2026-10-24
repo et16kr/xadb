@@ -833,17 +833,17 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                 // Dirty eviction is forbidden, so every surviving DPT entry is
                 // among these exact canonical resident requests, including0.
                 for index in 0..64 {
-                    if let Some(target) = self.recovery_flush_target_unchecked(index)? {
-                        if let Some(rec_lsn) = self.recovery_resident_rec_lsn(owner, target)? {
-                            if matches!(index, 7 | 8) {
-                                return Err(fatal(
-                                    self.inner.storage,
-                                    RetentionPhase::Census,
-                                    RetentionCause::Invariant,
-                                ));
-                            }
-                            return Ok(RetentionRecoveryStep::FlushRequired { target, rec_lsn });
+                    if let Some(target) = self.recovery_flush_target_unchecked(index)?
+                        && let Some(rec_lsn) = self.recovery_resident_rec_lsn(owner, target)?
+                    {
+                        if matches!(index, 7 | 8) {
+                            return Err(fatal(
+                                self.inner.storage,
+                                RetentionPhase::Census,
+                                RetentionCause::Invariant,
+                            ));
                         }
+                        return Ok(RetentionRecoveryStep::FlushRequired { target, rec_lsn });
                     }
                 }
                 self.recovery_verify(owner)?;
@@ -953,10 +953,10 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             ));
         }
         for index in 0..64 {
-            if let Some(target) = self.recovery_flush_target_unchecked(index)? {
-                if self.recovery_resident_rec_lsn(owner, target)?.is_some() {
-                    return Err(unchanged(RetentionPhase::Census, RetentionCause::Busy));
-                }
+            if let Some(target) = self.recovery_flush_target_unchecked(index)?
+                && self.recovery_resident_rec_lsn(owner, target)?.is_some()
+            {
+                return Err(unchanged(RetentionPhase::Census, RetentionCause::Busy));
             }
         }
         if !self

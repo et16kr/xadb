@@ -8,7 +8,7 @@ use crate::storage::{
     allocation_page::{self, AllocationEntry},
     dirty_frame::TargetRequest,
     obligation::{self, DescriptorSpec, OwnerState, RemainingBudget, WorkPhase},
-    page::{self, PageIdentity, PageKind, PageLsn, PageRef},
+    page::{self, PageIdentity, PageKind, PageRef},
     retention_obligation,
     wal_frame::{self, FrameExpectation, SemanticFrameScan, TailPolicy},
 };
@@ -121,6 +121,10 @@ pub(super) fn prefix_hash<F: FileIo>(
 /// Check a canonical image against the captured physical home. A match may
 /// occur at an earlier adopted group than the final group; later images cannot
 /// erase that historical proof. Snapshot repair has a separate bit.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "canonical/home loans and independent match/repair masks remain explicit"
+)]
 fn observe_home(
     profile: Profile,
     index: usize,

@@ -18,10 +18,20 @@ sealed prefix의 digest 불일치는 `ContentMismatch`, offset/LSN 불일치는 
 
 ## artifacts 정리와 증거 보존
 
-정리 기록은 [정리 디렉터리](../../artifacts/cleanup-20261025/)의 `cargo-cache-cleanup.json`, `build-products-cleanup.json`, `build-products-removed.jsonl`, `evidence-archive.json`에 둔다. Cargo 캐시와 재생성 가능한 ELF·컴파일 산출물을 삭제하며, 실행 파일의 경로·크기·SHA를 기록한다. 사용이 끝난 시험 DB·소스 사본·결과·실패 로그는 `used-evidence.tar.zst`로 압축하고 원본과 내용 비교가 성공한 뒤 풀린 사본을 제거한다. 보관 위치는 원 source/결과의 역사적 정체성을 바꾸지 않는다.
+정리 기록은 로컬 `artifacts/cleanup-20261025/`의 `cargo-cache-cleanup.json`, `build-products-cleanup.json`, `build-products-removed.jsonl`, `evidence-archive.json`에 둔다. Cargo 캐시와 재생성 가능한 ELF·컴파일 산출물을 삭제하며, 실행 파일의 경로·크기·SHA를 기록한다. 사용이 끝난 시험 DB·소스 사본·결과·실패 로그는 `used-evidence.tar.zst`로 압축하고 원본과 내용 비교가 성공한 뒤 풀린 사본을 제거한다. 보관 위치는 원 source/결과의 역사적 정체성을 바꾸지 않는다.
 
 기존 문서의 “보존 ELF/원 경로”는 당시 실행 시점 기록이다. 이번 정리 이후 삭제한 ELF는 현존하지 않고, 압축 대상으로 옮긴 증거는 archive 안의 원 경로에서 찾아야 한다. 해당 파일을 복원하지 않고 기존 경로가 현재 검증 가능하다고 주장하지 않는다. 새 실행·PASS로 재분류하지도 않는다. 진행 중이던 DEV3 두 단위와 현재 DEV4 수명 자료는 원 경로를 유지하고 별도 COMM 정리 기록도 보존한다.
 
 범위 정정 전 루트 `target` 캐시 8.08GiB를 이미 삭제했으며 사용자에게 알렸다. 그 이후 삭제·압축은 `artifacts` 안으로 제한했다. 제품 소스·fixture 원본·Git 이력과 다른 작업의 미커밋 변경은 공간 정리 대상으로 삼지 않았다. 정리 중 신규 제품 시험·빌드0, push0이며 문서 검사는 pre-push 단계에 남긴다.
 
 압축 원본 내용 비교 PASS 후236개 과거 자료 root의 풀린 사본을 제거했다. 압축 파일 2.57GiB, 정리 후 전체 artifacts 6.57GiB다. 실제 삭제·관측 공간 값과 archive SHA는 위 JSON 색인에 기록한다.
+
+## 문서 검사·push 요청의 정적 검사 보완
+
+이후 사용자가 문서 검사와 push를 요청했다. 첫 전송 후보 `27ae7fe0b209a510b90815e37a18c75bf1868dab`의 pre-push는 fmt를 통과했지만, 위 중간 저장 코드의 미사용 import·중복 literal 모듈·큰 오류 소유자·인자 수·중첩 조건문에 대한 Clippy 경고로 전송을 차단했다. 원 출력은 `artifacts/push-20261025/push-qt6Jos.log`에 보존한다. 이 시도는 문서 검사에 도달하지 않았다.
+
+push에 필요한 보완은8개 Rust 파일의 import와 시험 전용 re-export 정리, 동일한 단락 평가·오류 반환을 유지하는 조건문3곳의 let-chain 서식, 개별 항목에 이유를 명시한 lint 허용이다. 큰 오류는 원 writer lease·caller loan·inline owner를 그대로 반환하는 계약 때문에 boxing하지 않았다. literal 파일은 서로 다른 부모의 `Oracle` 타입에 결합하므로 각 모듈 선언에만 중복 허용을 명시했다. `observe_home`의 별도 image/home 대여와 match/repair mask도 기존 인자로 유지했다. 포괄적인 workspace lint 완화는 없다.
+
+검증 선택은 이 diff의 정적 성격에 한정한다. 기능·알고리즘·평가 순서·할당·시험 기대값은 변경하지 않아 제품 시험을 추가 실행하지 않으며, 전송할 commit의 fmt·전체 target/feature Clippy·문서 검사는 기존 pre-push 훅에서 수행한다. 이후 실제 gate 출력은 `artifacts/push-20261025/`에 commit별로 남긴다. 이번 정적 검사와 push를 복구 개발 재개나 기능 인수로 해석하지 않는다. 원 static2 FAIL·F05 HOLD와 최신 runtime NOT_RUN, DEV3/S5 미완료는 유지한다.
+
+별도 검토자 `/root/push_lint_review`는 `27ae7fe` 위 Rust8파일 diff(SHA-256 `817bcc6288c79e8e4049feb01c2ecf78e45dc73beac4f99a31db906877a76e8c`)를 읽기 전용으로 확인해 차단 지적 없이 제한 D1을 수용했다. 조건값의 Copy·동일 평가/반환 순서, 실제 자원 검사를 남기는 re-export 정리, 항목별 lint 이유와 oracle 계산·assertion 불변을 확인했다. 새 기능 시험이나 완료 시험 반복은 요구하지 않았으며 `/root`가 이 제한 보완을 반영했다. 최종 정적 gate 통과 여부는 실제 push 출력으로 별도 확인한다.
