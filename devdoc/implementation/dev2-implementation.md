@@ -659,3 +659,8 @@ ELF에는 symbol table·DWARF가 없어 줄 번호를 직접 조회하지 않았
 이 대응은 기존 두 stack에 귀속된 겹침15,661,457ns와4,000,554,830ns의 **코드 위치**를 구분한다. 새로운 시간 측정은 아니다. `io_schedule` 경과 시간의 장치 service time 해석, 각 I/O의 worker TID 소유, 과거 실패 pair 원인 또는 kernel 결함은 여전히 확정하지 않는다. 앞선 추적 영향·환경 확인 FAIL과 PF04 네 비용 한도 FAIL도 유지한다. barrier·sync·mount 설정 변경이나 추가 인수 반복을 이 정적 분석으로 정당화하지 않는다.
 
 `/root/dev2_closure_review`는 압축 frame 경계를 독립적으로 찾아 동일 ELF byte를 재구성하고, 함수 시작에서 다시 디코드해 보존본과 일치함을 확인했다. 두 호출의 실제 상대 주소와 대상, 인자·buffer 수명 흐름, artifact20개와 source/추적 입력2개의 연결을 확인했으며 차단 지적은0개다. `/root`는 정적 코드 대응에 한정하여 반영했다. 다음 비교 실행에는 사용할 host·경로, 다른 writer와 journal을 공유하는지, CPU·스토리지 동시 작업을 통제할 수 있는 시간대가 필요하다.
+
+<a id="dev2-pf04-analysis-20261025"></a>
+## DEV2 PF04 원인 분석과 해결 후보
+
+**2026-10-25 · 기존 증거 재분석 / 해결 후보 PROPOSED / 제품 변경·새 시험0.** [분석 기록](../evidence/dev2-pf04-analysis-20261025.md)과 [source·자료 색인](../evidence/dev2-pf04-analysis-20261025.json)은 보존 K0 80개·영속60개 실행 자료의 시간 재계산과 독립 검토를 연결한다. K0의 계측 추가 비용과 실행별 p50/경과 시간의 두 대역, 영속 Off/Off tail 변동과 별도의 미해결 CPU 실패를 구분했다. 원인 관측 보완과 K0 소유권 비용 절감을 우선 후보로 제안하며, WAL 공간 준비/data sync는 추가 근거와 복구 설계가 필요한 후순위다. 원 실패 원인의 확정·수정 효과·현재 source의 검증으로 확대하지 않는다. 기존 한도·실패와 PF12/PF13의 한정 완료를 보존하며 PF04·DEV2/B2/D0는 미완료다.

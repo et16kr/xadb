@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "classification": "D2_READ_ONLY_CAUSE_ANALYSIS",
+  "owner": "/root",
+  "request": "Analyze remaining DEV2 PF04 causes and explore remedies",
+  "analysis_status": "COMPLETE_WITH_UNRESOLVED_CAUSAL_ATTRIBUTION",
+  "remedy_status": "PROPOSED_NOT_IMPLEMENTED",
+  "historical_source_sha256": "e3bccf1a865b75deafa9eeac551f17591df406da1c41ccbdf9ec909c9c8e0f1a",
+  "current_head": "af63f4022453e77ae7e17fb86fc6e432e470d2c3",
+  "current_worktree_qualification": "NOT_CLAIMED",
+  "product_changes": 0,
+  "new_product_runs": 0,
+  "new_capture_runs": 0,
+  "host_setting_changes": 0,
+  "reused_evidence_scope": {
+    "k0_runs": 80,
+    "durable_runs_including_off_off_control": 60,
+    "journal_analysis_rows": 512,
+    "scope": "Read and reaggregate retained artifacts, not reexecution or new PASS; owner and reviewer K0 sets overlap and are not additive"
+  },
+  "retained_artifacts": {
+    "independent-retained-reanalysis": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-analysis-20261025/independent-retained-reanalysis.json",
+      "bytes": 54755,
+      "sha256": "4d2edfab440b1024371b66ae59e72e8c5e0992f9bfb429cb9bece5f31b7d69a2"
+    },
+    "owner-k0-reanalysis": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-analysis-20261025/owner-k0-reanalysis.json",
+      "bytes": 48229,
+      "sha256": "c2f2f93b1bae123ba82564f6102353b9ceff888f41392ccd01bad038bf7fd948"
+    },
+    "source-comparison": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-analysis-20261025/source-comparison.json",
+      "bytes": 5215,
+      "sha256": "442848e18357965f13c8739c0cc7d3356ea74014e3ea3d93e9ac07137b078919"
+    }
+  },
+  "source_comparison_summary": {
+    "identical_files": 9,
+    "different_files": 1,
+    "different_file": "crates/platform/src/namespace.rs",
+    "difference": "FILEMAP/DWB reserved names and open_existing_with_metadata added; LinuxFile sync_all forwarding unchanged. Full source/build equality not asserted."
+  },
+  "prior_evidence_refs": [
+    "dev2-performance-followup-xadb-20261020-r1.json",
+    "dev2-fsync-diagnostic-xadb-20261020-r1.json",
+    "dev2-pf04-hypothesis-review-xadb-20261020-r1.json",
+    "dev2-journal-diagnostic-xadb-20261020-r1.json",
+    "dev2-journal-binary-mapping-xadb-20261020-r1.json"
+  ],
+  "research": {
+    "postgres_commit": "45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851",
+    "postgres_worktree": "clean",
+    "postgres_file": {
+      "path": "/home/et16/work/postgres/src/backend/access/transam/xlog.c",
+      "bytes": 353358,
+      "sha256": "0d39e5891c67fc19dd2fef8635e3bc87a31a052f0c42ed2b54eb3fe6157806ce"
+    },
+    "linux_retained_source_commit": "740b32353f43e9b00d0350d6fa7b29a6667deabd",
+    "official_urls": [
+      "https://man7.org/linux/man-pages/man2/fsync.2.html",
+      "https://docs.kernel.org/admin-guide/ext4.html",
+      "https://www.postgresql.org/docs/18/wal-configuration.html"
+    ]
+  },
+  "independent_review": {
+    "reviewer": "/root/pf04_evidence_review",
+    "status": "PASS_LIMITED_READ_ONLY_ANALYSIS",
+    "scope": "Retained output byte hashes and timing recomputation, original correctness receipt scope, attribution limits and proposed priorities; no new correctness or durability execution",
+    "blocking_findings": 0,
+    "owner_adoption": "/root; accepted only for read-only analysis and proposals; original PF04 FAIL retained",
+    "report": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-analysis-20261025/independent-final-review.json",
+      "bytes": 5637,
+      "sha256": "a8e3b4130d8bd53c638ef3e70ca94d2c46471be828cbb6e9f85f2e7765d11947"
+    },
+    "receipt_projection": {
+      "path": "/home/et16/work/xadb/devdoc/evidence/dev2-pf04-analysis-20261025.json",
+      "excluded_keys": [
+        "independent_review"
+      ],
+      "encoding": "UTF-8 canonical JSON ensure_ascii=False sort_keys=True separators=(comma,colon) no newline",
+      "bytes": 2722,
+      "sha256": "7d331c157cca077f28231359c1a5ccf52627689e74d36fa1fcf81a8668a1db8c",
+      "reason": "Allows owner adoption/status metadata to be added without circular review digest."
+    }
+  },
+  "PF04": "INSTRUMENTATION_ACCEPTANCE_FAIL",
+  "DEV2_B2_D0": "INCOMPLETE",
+  "thresholds_changed": false,
+  "original_failures_preserved": true,
+  "document_ref": "dev2-pf04-analysis-20261025.md"
+}
