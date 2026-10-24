@@ -584,3 +584,12 @@ compiler2는 [선택 runner](../../scripts/check_dev3_empty_history_borrows.py)�
 `empty_history_s5_profiles_and_selected_states`의 profile3×상태4인12조합을 추가한다.
 source별 원 FAIL·수정에 따른 재선택은 [기존 증거](../evidence/dev3-empty-transaction-20261023.md#live-history-flush)를
 따르며 live load·closed recovery 결과로 확대하지 않는다.
+
+[§21 live load](../contracts/dev3-obligation-format.md#empty-transaction-load)는
+[load manifest](../../crates/engine/tests/fixtures/dev3-empty-transactions/load-manifest.json)의
+신규 runtime9·static1·native1과 실제 census 추출의 직접 소비자1을 선택한다. Active/Aborting/
+Aborted 교체와 원 actor 계속 진행, admission, 알려진 read 오류 retry, EOF/invalid count/손상,
+과거 Free, 최종 read drift/unwind, forgotten pin/poison/flush claim을 검산한다. 새 compiler2만
+`--case load_sequence --case sealed_load`로 선택하고 공통 verify 변경의 checker2를 실행한다.
+S5에는 `empty_load_s5_profiles_states_and_replacement`의12조합을 추가하되 중간 실행하지 않는다.
+원 source별 실패·완료 선택은 [증거](../evidence/dev3-empty-transaction-20261023.md#live-load)를 따른다.

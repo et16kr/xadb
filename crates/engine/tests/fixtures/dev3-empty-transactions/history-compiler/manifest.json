@@ -4,7 +4,35 @@
   "probe": "crates/engine/src/storage/wal_io/empty_history_borrow_probe.rs",
   "budget_seconds": 180,
   "cases": [
-    {"name": "flush_sequence", "expected_code": null},
-    {"name": "sealed_history", "expected_code": "E0451", "primary_line": 4, "private_fields": ["digests", "count"]}
+    {
+      "name": "flush_sequence",
+      "expected_code": null
+    },
+    {
+      "name": "sealed_history",
+      "expected_code": "E0451",
+      "primary_line": 4,
+      "private_fields": [
+        "digests",
+        "count"
+      ]
+    },
+    {
+      "name": "load_sequence",
+      "expected_code": null
+    },
+    {
+      "name": "sealed_load",
+      "expected_code": "E0451",
+      "primary_line": 5,
+      "private_fields": [
+        "snapshot",
+        "index",
+        "allocator",
+        "bytes",
+        "request",
+        "lsn"
+      ]
+    }
   ]
 }

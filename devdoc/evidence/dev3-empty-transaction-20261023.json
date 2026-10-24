@@ -2146,6 +2146,601 @@
       "path": "artifacts/dev3/empty-transaction-20261024/review/history-flush-d1-final.md",
       "bytes": 4792,
       "sha256": "768efdda9660fc901ab2aa97862d3f7e7ff71990e4231f2658fc61e30d8b2d7d"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/build.py",
+      "bytes": 1465,
+      "sha256": "f736eb57f2363e153fb75fb6a812ce5a1be23b33fa9d0e604a556b61995d9e3b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/empty-history-compiler-3jjd9jk0/load_sequence/receipt.json",
+      "bytes": 585,
+      "sha256": "5eb0a4a2ea57c25eb7662896b9e76a89cb7543d40ee3b0bc36faa1615492c314"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/empty-history-compiler-3jjd9jk0/load_sequence/stderr",
+      "bytes": 698,
+      "sha256": "8111ba65b6157d16c89173710cbd2f2d77d9367a8898920ce4074f26ad7eba38"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/empty-history-compiler-3jjd9jk0/load_sequence/stdout.jsonl",
+      "bytes": 10420,
+      "sha256": "b66f16e4f0304aa18d647e027c645b8745806e8f51bbd1df0010988e1753e722"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/empty-history-compiler-3jjd9jk0/load_sequence/verified.json",
+      "bytes": 576,
+      "sha256": "64adf8043e8f00ffc0cc6c6d173771eb211b9f2edbfbae5fdb57a01eb0f35e53"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/empty-history-compiler-3jjd9jk0/sealed_load/receipt.json",
+      "bytes": 587,
+      "sha256": "577b7a0b663e95ed31fe155d8ee425d5ca266705f14dd71c8ba1cc51e16ad467"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/empty-history-compiler-3jjd9jk0/sealed_load/stderr",
+      "bytes": 236,
+      "sha256": "cba37a7dfaf106ca2c9ee36efd8864501880607e1ea76d11a98b6b3f35bfa331"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/empty-history-compiler-3jjd9jk0/sealed_load/stdout.jsonl",
+      "bytes": 15680,
+      "sha256": "a6a9c20f5a50b5594b7605f41521576fa228ccc0db1520c3cd04b699c4a15fd8"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/empty-history-compiler-3jjd9jk0/sealed_load/verified.json",
+      "bytes": 578,
+      "sha256": "2d826158318a0e3809554bcb7b2fbaf24ab28b7a2851fd48864c80eb203e91b5"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q0/build-receipt.json",
+      "bytes": 354,
+      "sha256": "1d11a7c6abd9c9827c57a0a9ba6e6865b61127c0dd5e058470d6afebee27af05"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q0/build.jsonl",
+      "bytes": 25963,
+      "sha256": "08d4b74cb52ac54651e58a715849ff7edbc134de8f7b404aaea2b7209492a4fd"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q0/build.stderr",
+      "bytes": 916,
+      "sha256": "f2d17be9b8aecb4ceed5aabcec4ed183c0de607e26e31b5ba23e792a7f6e8218"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q1/build-receipt.json",
+      "bytes": 355,
+      "sha256": "9f654dff5531521160976a96c0875ca55af118098f1513890efb55892b51e5fc"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q1/build.jsonl",
+      "bytes": 36975,
+      "sha256": "f404971fd129b1b7cb7c60d00079f03d4e858c74d1d2d07c6ce40de290bd7454"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q1/build.stderr",
+      "bytes": 201,
+      "sha256": "31ec667739f2359928640b8b7282f9b992330d3f94c918a0b76f2548cb472a72"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q2/build-receipt.json",
+      "bytes": 441,
+      "sha256": "b2b990456251c91eae04e773001ea8e918cbcdf1b63c15d797261b0834a6fe46"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q2/build.jsonl",
+      "bytes": 20505,
+      "sha256": "301b89c80921dc63d181c2fd63afc03fb7b67446ee8acacd9f55d287c4782e4f"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q2/build.stderr",
+      "bytes": 200,
+      "sha256": "6001b8af1e10d4976d11c878d615f0b386ce568f690a7fa363ba137e22836671"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q2/empty_load_occupied_round_trip_continues_original_actor.json",
+      "bytes": 806,
+      "sha256": "3ee96c1a4a89aaa69ced8b78318a9bc7e53c69315ef9d2a3482b0056178403e1"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q2/empty_load_occupied_round_trip_continues_original_actor.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q2/empty_load_occupied_round_trip_continues_original_actor.stdout",
+      "bytes": 330,
+      "sha256": "56cd100c689bcb11b278c75c5f0d17f4ae13cc15568b781a34bb541a137f92d9"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q2/empty_load_resource_gate.json",
+      "bytes": 778,
+      "sha256": "6e7b2472c9555bbcd77262dc46586ba92a3f19c0da0f386d50d4ffa43f424255"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q2/empty_load_resource_gate.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q2/empty_load_resource_gate.stdout",
+      "bytes": 377,
+      "sha256": "07b4ef33dfd7ca50257b516540ec402f3463e48e32aee8479714b53fe25d94f1"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q3/build-receipt.json",
+      "bytes": 355,
+      "sha256": "0c630494cb96665e1d84a921322fc46aab491508c1bb443bc94327b3a2be77e4"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q3/build.jsonl",
+      "bytes": 45016,
+      "sha256": "fe5986c7ca4ad9c60276c07f201c77b64f2ea434876edc11b9e8c934e91063e6"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q3/build.stderr",
+      "bytes": 220,
+      "sha256": "358d523938d3a54583af0e7aa3fcac498d6c778610d66db3c003cb8df0a1c271"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/build-receipt.json",
+      "bytes": 441,
+      "sha256": "ca296ae4b6af7d24b70a4a9136b4729029dec6beb0e0da5a41cb829ad1ef005d"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/build.jsonl",
+      "bytes": 20505,
+      "sha256": "4f15df492cdb763d4bb59249d4cd6e03383fc1909fb6385d9fb2926b6ed732cc"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/build.stderr",
+      "bytes": 200,
+      "sha256": "89a1a891fdf8871cab7111370a288af428cb103dad6e9c463d75c2bf444cf0de"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_admission_preserves_dirty_and_clean_destinations.json",
+      "bytes": 810,
+      "sha256": "5226e6e8e6b547bdbb3a4c0496d26f5424d97d3a52cf38126b1019818a9d19c6"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_admission_preserves_dirty_and_clean_destinations.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_admission_preserves_dirty_and_clean_destinations.stdout",
+      "bytes": 334,
+      "sha256": "515bec96a07f297417a2f69f62f7c496bd2884941756bce41891f82b7d4b8bd4"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_final_read_drift_rejects_after_complete_history.json",
+      "bytes": 810,
+      "sha256": "a727344859df65cf68376b9f32d4476206c719ad8f2b271b1142ceb977054c44"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_final_read_drift_rejects_after_complete_history.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_final_read_drift_rejects_after_complete_history.stdout",
+      "bytes": 333,
+      "sha256": "8b58b92ad23af5816a995364383862f1ae3748c5ad6ef1104f9a316e9752d4bf"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_forgotten_pin_and_poison_prevent_io.json",
+      "bytes": 799,
+      "sha256": "b0d7fdcd59b696c34566339ef3cb741484fcb5a4d776dc8f63b429ecd0484bac"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_forgotten_pin_and_poison_prevent_io.stderr",
+      "bytes": 454,
+      "sha256": "9be50eda4ed7c6e4bc6857b3365752282bab3cdcf75a39a4f08b1bcaec99a034"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_forgotten_pin_and_poison_prevent_io.stdout",
+      "bytes": 550,
+      "sha256": "638e92644eb75cf435502e965045da3221cb1e818d5d2f12b57aa1bb9e426a5e"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_read_errors_preserve_destination_and_retry.json",
+      "bytes": 804,
+      "sha256": "7278f79e1bb725d4882520f6d611d1189ff3350e602627451b2ae27434d0c503"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_read_errors_preserve_destination_and_retry.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_read_errors_preserve_destination_and_retry.stdout",
+      "bytes": 474,
+      "sha256": "d46157406cdfa91e9797a057029c673e3463a613ee859252991a08a9b024c9ef"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_read_unwind_fences_without_installation.json",
+      "bytes": 801,
+      "sha256": "2a88311b2afd3c082a5f377a0ae9311b4ad234db61b592001e069d889cd4e297"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_read_unwind_fences_without_installation.stderr",
+      "bytes": 399,
+      "sha256": "a072f8f7201bb0b183e10171caf74b58bf7bcb7a123d0c5afc3362f3662983b6"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_read_unwind_fences_without_installation.stdout",
+      "bytes": 325,
+      "sha256": "beba9bcdcbb91bd20b7b1f8ef905549fca42151a94d4409865c187d39b5e30e4"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_rejects_historical_free_after_terminal_eviction.json",
+      "bytes": 811,
+      "sha256": "6df824c9f5674cfb3d0aa97ba8b2cfc2bad85a7ac78a1be18d452faa7ffddc19"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_rejects_historical_free_after_terminal_eviction.stderr",
+      "bytes": 506,
+      "sha256": "b0ea550f37236be1e2f8bc0f9c79ea5c36d15fa07910a48ceed91eb5518f112b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_rejects_historical_free_after_terminal_eviction.stdout",
+      "bytes": 574,
+      "sha256": "414dcab689ee4944b3dcda5dce7a9077d26b8c10c333775653660758086b02d4"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_required_eof_invalid_count_and_corrupt_home_fence.json",
+      "bytes": 811,
+      "sha256": "75e0f25826ba06ac0c3239cad92f7ffab6552b57c92e68d9a5f869968ca097ff"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_required_eof_invalid_count_and_corrupt_home_fence.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_required_eof_invalid_count_and_corrupt_home_fence.stdout",
+      "bytes": 580,
+      "sha256": "724375a6cdc342df274407f74f8395e0544af2b38afa043d41681ae3a8dfce72"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/fd.tsv",
+      "bytes": 5195,
+      "sha256": "f332c0bad9dd7b30912a9c191c9c410ff23322e8d5fcc960b924f0f801a90080"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/parent-oracle.json",
+      "bytes": 528,
+      "sha256": "1a56b1adcfb531800f3d3e56d7148fe817b647b9bf30da2384adb5b3fa941efa"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/receipt.json",
+      "bytes": 847,
+      "sha256": "63f1e97e2b996c6a62a22a477564e89182a2dfde58e264afcc2f1b5a2c8fb505"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/step0-input.page",
+      "bytes": 16384,
+      "sha256": "797b536284af36ff7d1ce1dd3bc70f77a1ffb93a97fb1c79b30b1a97cee153c2"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/step0-io.tsv",
+      "bytes": 4295,
+      "sha256": "261ace47214e3b22c0736fd32181f01cf69576abac900f6a4b44862b7d081bc2"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/step0-load.tsv",
+      "bytes": 2198,
+      "sha256": "40e4bb45bfec80452f0d9cf45f693fb636d74b45b5ba34af53394aae70b14ac8"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/step0-loaded.page",
+      "bytes": 16384,
+      "sha256": "797b536284af36ff7d1ce1dd3bc70f77a1ffb93a97fb1c79b30b1a97cee153c2"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/step1-input.page",
+      "bytes": 16384,
+      "sha256": "a9222f6d64de1d258e4b3d5d78445b7545cc19c672e5f436b17c9632716ceb66"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/step1-io.tsv",
+      "bytes": 4517,
+      "sha256": "8755153b5cc50fd63815bef80139ad1b75a9c74a4cf3c8ba211c400cf00639bd"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/step1-load.tsv",
+      "bytes": 2346,
+      "sha256": "efa60d8dd27f5d656c08bdfa5691d52c0de203d23b67ed8f927e039b654c5eef"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/step1-loaded.page",
+      "bytes": 16384,
+      "sha256": "a9222f6d64de1d258e4b3d5d78445b7545cc19c672e5f436b17c9632716ceb66"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/step2-input.page",
+      "bytes": 16384,
+      "sha256": "f31a52f035650ef93eb9c9f9ca85a2b19250bc2cd2b2da7538dfea5ad9463271"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/step2-io.tsv",
+      "bytes": 4739,
+      "sha256": "89c6fce7856fe7d12475c33f771584dd4e0861c974d173b0deabc15d84ed93c0"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/step2-load.tsv",
+      "bytes": 2494,
+      "sha256": "917124f23bce2202a76013322397a060c21d8446ba458b0b52175d87b4fca05c"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/step2-loaded.page",
+      "bytes": 16384,
+      "sha256": "f31a52f035650ef93eb9c9f9ca85a2b19250bc2cd2b2da7538dfea5ad9463271"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/summary.txt",
+      "bytes": 127,
+      "sha256": "57bd979e1934280e38c56989ce9689a4e072d78a737d5b8f4624fe428b75e029"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/worker.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/worker.stdout",
+      "bytes": 312,
+      "sha256": "52fc047f134238fc0b3dbb8335fbc312f72398c5fbedb7cd3af1f4eca32737e2"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/related-census.json",
+      "bytes": 753,
+      "sha256": "c5c59b4aed22dd7ec326e85eb575379e9d7aa042ea68503e1a7bb21e09661766"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/related-census.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q4/related-census.stdout",
+      "bytes": 322,
+      "sha256": "d04a1a74a2debd9cbe3b5ad6350de461b96d55525b3a3afaf6f01c2eb983ad99"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/build-receipt.json",
+      "bytes": 441,
+      "sha256": "da158de765fbaccd176820faf8feb0477494f04390e60dd5c4f8fc1f09351b4b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/build.jsonl",
+      "bytes": 20505,
+      "sha256": "ee93aadf66d0b0ff692721f1ab21e8a06137eddf94ddbfda38cd60667819ce04"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/build.stderr",
+      "bytes": 200,
+      "sha256": "4d73a9e1de4a07d82c2ac799532fec2a587d5d1b97fde269b727eb4886190a6c"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/checker.json",
+      "bytes": 574,
+      "sha256": "d681d93c8559fd1e276d8f368dae4d5452c5798c95dff19853bd2ed16897bebd"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/checker.stderr",
+      "bytes": 356,
+      "sha256": "cba8e9e2c64c0c9e9b126172bfa53f04f3e12aee443ac74caed6fc3f9800a7ba"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/checker.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/empty_load_forgotten_pin_and_poison_prevent_io.json",
+      "bytes": 798,
+      "sha256": "96259c457af24b7b5203e746f74d2b3e14289471d0087ae950babe3ce598a1ec"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/empty_load_forgotten_pin_and_poison_prevent_io.stderr",
+      "bytes": 373,
+      "sha256": "bd254e4c271c84890155aaa538e8e070b3d5976e5f21e657ebd998dd1eafe3dc"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/empty_load_forgotten_pin_and_poison_prevent_io.stdout",
+      "bytes": 321,
+      "sha256": "28d3a0dfc232191fe51e68f4d4f052781f169fdc715ae55972d69829baf2238a"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/empty_load_rejects_historical_free_after_terminal_eviction.json",
+      "bytes": 809,
+      "sha256": "67026f511393123de721ad3e5c47afb6d403b9884d92751c13479af67d8d2fa2"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/empty_load_rejects_historical_free_after_terminal_eviction.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/empty_load_rejects_historical_free_after_terminal_eviction.stdout",
+      "bytes": 333,
+      "sha256": "1d8bec1b7008bc0e9f31e463a2f8cd0d95a2a917d23e81d8471424f3b0abe26d"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/empty_load_retained_flush_claim_prevents_io.json",
+      "bytes": 797,
+      "sha256": "619adcf77d5ff25fb151ea595bc732e70c09dd834ad18dd809f39b76fdfe98aa"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/empty_load_retained_flush_claim_prevents_io.stderr",
+      "bytes": 500,
+      "sha256": "0aa84169455c47a5fb81cc68aa3c85d8a7b5d41726b92c2c49ca731d9f80c954"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q5/empty_load_retained_flush_claim_prevents_io.stdout",
+      "bytes": 544,
+      "sha256": "0704748d205b509fe5e81662de920dfdf0cc9a2f72a50d501399fd305d893e95"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q6/build-receipt.json",
+      "bytes": 441,
+      "sha256": "9ea3683522db11c8827a859838a17f0c776812a1ca8afff644750e3e6145b7a6"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q6/build.jsonl",
+      "bytes": 20505,
+      "sha256": "c013e4f8003652281cabb8c34e5a14f459e770fe61d4390503ab8a028b21d775"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q6/build.stderr",
+      "bytes": 200,
+      "sha256": "9d368d5c3de9d48ce339bab6fe54dbf318cb091c3959ddd0c3b9dcf818eb1836"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q6/clippy.json",
+      "bytes": 506,
+      "sha256": "f38282579f1586678c03533da4db2b9ecafc0b43e6a1e042771208b1b989a188"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q6/clippy.stderr",
+      "bytes": 1631,
+      "sha256": "27bdec2b23fdac8de412c4da31f7dddce905c511925d9751c1f1fe2df32b11b1"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q6/clippy.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q6/empty_load_retained_flush_claim_prevents_io.json",
+      "bytes": 795,
+      "sha256": "aed15397e569a53b51c32d0ae79fd5734e8b119184b023bd12e75beda69d3d70"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q6/empty_load_retained_flush_claim_prevents_io.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q6/empty_load_retained_flush_claim_prevents_io.stdout",
+      "bytes": 318,
+      "sha256": "f85d80ea0467bd6b01f1ecba23ce3b9ef4d223a357a25f45d7d89f3da919d048"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q6/fmt.json",
+      "bytes": 389,
+      "sha256": "1f62e26e649898fdfc2f699c39f99249e81fe115cf4b6c324b58a86cb1f05f38"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q6/fmt.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q6/fmt.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q7/clippy.json",
+      "bytes": 505,
+      "sha256": "a75c3ac6fbc99c70e5810b183fd23c578df838444bdf02a33e9ec62cbae4dd8f"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q7/clippy.stderr",
+      "bytes": 199,
+      "sha256": "dbd7d60aeacc1f3dce9d9921d60206a87d8797be4e407c09e9375d686add96ce"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q7/clippy.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q7/fmt.json",
+      "bytes": 389,
+      "sha256": "9cec6438f6c3e13e0ce000a0493525b73a041f0beb926b464e2dcb9c32aec153"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q7/fmt.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q7/fmt.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/q7/source-receipt.json",
+      "bytes": 171,
+      "sha256": "46683b69e3d3463fc807e4e8e83d2f0cd07890b814e9915533e2c71e8868df1d"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/record-evidence.py",
+      "bytes": 3196,
+      "sha256": "8c85dfb614a7186d6a30e7e9df42e017fff8afdf0f129f7eec03348d723e962b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/retention-snapshot.json",
+      "bytes": 340,
+      "sha256": "2bb72b9d4548832dcf936ceb8dc472fafc1c40bd526c3ec903958ea0a1cd711a"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/review/load-claim-followup-r3.md",
+      "bytes": 2692,
+      "sha256": "74c19ee5755ec6a4a5937d823a93910b46cab220231b6b97e79dd3e2cdf466d6"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/review/load-d2-prereview.md",
+      "bytes": 5819,
+      "sha256": "f7ff43b62678ae2e1d2872d08b706658cbd017785b6213e736e02d6f944c17c6"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/review/load-first-effect-gate-q2.md",
+      "bytes": 2657,
+      "sha256": "e552abcd9ce5b2d15634c72902c023885ebaf353c24d3d7b2622b51c0a6c1781"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/review/load-negative-native-source-r2.md",
+      "bytes": 3507,
+      "sha256": "834afb040ef4c619f245e829b8fdcb848a3196974f180f9ee7ac96c556d70d53"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/run-selected.py",
+      "bytes": 1589,
+      "sha256": "37c6027721d9023075e487b317c84cdeef5ee03c8f58c6930b959d7e1be032ae"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/static-check.py",
+      "bytes": 1389,
+      "sha256": "f0ede254f07560ac6bed9a1075d809ec66db16e2295653d2e1cd22fbe4be5c70"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/task-input.md",
+      "bytes": 3035,
+      "sha256": "bed9a6682f7839ca82c319762263b0f580d8c2669e76e51eed9647620117f99b"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/timing.jsonl",
+      "bytes": 480,
+      "sha256": "80102f5826ef84f33efa7433a4e2fadc50d525c42f337727e150d0063631f5ee"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/update-docs.py",
+      "bytes": 4832,
+      "sha256": "76937fd89f59e6e7dc48492cc2b088680f7a21966310b0dfa2bf8fc60fd38860"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/review/load-d1-final.md",
+      "bytes": 5288,
+      "sha256": "611d6fcf801d7883567329380ba1993137204c2783b362b76a3313b3bef159fd"
+    },
+    {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/review/staged-final.diff",
+      "bytes": 215855,
+      "sha256": "16fbd83378204b76b76fcc9dfff2ee79eb59e92950d897d7a615f1897c150bf5"
     }
   ],
   "timing_log": "artifacts/dev3/empty-transaction-20261023/timing.jsonl",
@@ -3280,6 +3875,633 @@
       "case_receipt_bytes": 359398,
       "native_fixture_bytes": 44269056,
       "source_elf_cache_bytes": 3016386006
+    }
+  },
+  "live_load": {
+    "status": "LIMITED_D1_D2_ACCEPTED_INTEGRATION_INCOMPLETE",
+    "base_commit": "a7af5ab",
+    "contract_ref": "dev3-obligation-format.md#empty-transaction-load",
+    "runtime_unique_new_functions": 9,
+    "direct_changed_census_functions": 1,
+    "native_unique_new_functions": 1,
+    "static_new_functions": 1,
+    "compiler_new_probes": 2,
+    "checker_changed_tests": 2,
+    "source_value": {
+      "memory_call_bytes": 64776,
+      "native_trace_call_bytes": 64840,
+      "retained_bytes": 115408,
+      "metadata_bytes": 180184,
+      "whole_bytes": 245720,
+      "conversion_bytes": 65400,
+      "limits": [
+        65536,
+        196608,
+        262144
+      ]
+    },
+    "receipts": [
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/empty-history-compiler-3jjd9jk0/load_sequence/receipt.json",
+        "source_sha256": "cd3be769463074e2511652f3e11f56c826db4e0b19837d0ac00ed9f2bf9db489",
+        "program_sha256": "fd19ef6492e515b5512c2e9686dbe41c6954378fd4fcad416d1169e6f63d7ccc",
+        "command": [
+          "cargo",
+          "check",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 2.5246391549999316,
+        "stdout_sha256": "b66f16e4f0304aa18d647e027c645b8745806e8f51bbd1df0010988e1753e722",
+        "stderr_sha256": "8111ba65b6157d16c89173710cbd2f2d77d9367a8898920ce4074f26ad7eba38",
+        "verdict": "NOT_EVALUATED"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/empty-history-compiler-3jjd9jk0/load_sequence/verified.json",
+        "source_sha256": "cd3be769463074e2511652f3e11f56c826db4e0b19837d0ac00ed9f2bf9db489",
+        "program_sha256": "fd19ef6492e515b5512c2e9686dbe41c6954378fd4fcad416d1169e6f63d7ccc",
+        "command": [
+          "cargo",
+          "check",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 2.5246391549999316,
+        "stdout_sha256": "b66f16e4f0304aa18d647e027c645b8745806e8f51bbd1df0010988e1753e722",
+        "stderr_sha256": "8111ba65b6157d16c89173710cbd2f2d77d9367a8898920ce4074f26ad7eba38",
+        "verdict": "PASS"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/empty-history-compiler-3jjd9jk0/sealed_load/receipt.json",
+        "source_sha256": "cd3be769463074e2511652f3e11f56c826db4e0b19837d0ac00ed9f2bf9db489",
+        "program_sha256": "0accd145395be07aaa20bb00afc8c05e91a90749249ca0f659f1df587ca67c7f",
+        "command": [
+          "cargo",
+          "check",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 101,
+        "elapsed_seconds": 1.9135081429999445,
+        "stdout_sha256": "a6a9c20f5a50b5594b7605f41521576fa228ccc0db1520c3cd04b699c4a15fd8",
+        "stderr_sha256": "cba37a7dfaf106ca2c9ee36efd8864501880607e1ea76d11a98b6b3f35bfa331",
+        "verdict": "NOT_EVALUATED"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/empty-history-compiler-3jjd9jk0/sealed_load/verified.json",
+        "source_sha256": "cd3be769463074e2511652f3e11f56c826db4e0b19837d0ac00ed9f2bf9db489",
+        "program_sha256": "0accd145395be07aaa20bb00afc8c05e91a90749249ca0f659f1df587ca67c7f",
+        "command": [
+          "cargo",
+          "check",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 101,
+        "elapsed_seconds": 1.9135081429999445,
+        "stdout_sha256": "a6a9c20f5a50b5594b7605f41521576fa228ccc0db1520c3cd04b699c4a15fd8",
+        "stderr_sha256": "cba37a7dfaf106ca2c9ee36efd8864501880607e1ea76d11a98b6b3f35bfa331",
+        "verdict": "PASS"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q0/build-receipt.json",
+        "source_sha256": "07dbaf221bf503c81695f5b6dea4c595a4415b8c308a040146831badc912b59b",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 101,
+        "elapsed_seconds": 8.44333735300006,
+        "time": "2026-10-24T03:17:01.095194+00:00"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q1/build-receipt.json",
+        "source_sha256": "d36eba90515222afb838baae242bdeabe864078f343519c0ea650ecbbfc00a3f",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 101,
+        "elapsed_seconds": 6.778394906000358,
+        "time": "2026-10-24T03:18:16.262034+00:00"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q2/build-receipt.json",
+        "source_sha256": "87eaac0ca53d0ae18cf3c3e108387818648a557cf5ad628f2d6db340ff11025a",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 12.884548406999784,
+        "time": "2026-10-24T03:18:56.048097+00:00",
+        "binary_sha256": "c9304efcb34f58153fccc7316f04f253ed49f872a21cdb29de43f5b3803fa6a0"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q2/empty_load_occupied_round_trip_continues_original_actor.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q2/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_occupied_round_trip_continues_original_actor",
+          "--nocapture"
+        ],
+        "source_sha256": "87eaac0ca53d0ae18cf3c3e108387818648a557cf5ad628f2d6db340ff11025a",
+        "binary_sha256": "c9304efcb34f58153fccc7316f04f253ed49f872a21cdb29de43f5b3803fa6a0",
+        "exit": 0,
+        "elapsed_seconds": 0.5587104979999822,
+        "time": "2026-10-24T03:21:06.558111+00:00",
+        "stdout_sha256": "56cd100c689bcb11b278c75c5f0d17f4ae13cc15568b781a34bb541a137f92d9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q2/empty_load_resource_gate.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q2/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_resource_gate",
+          "--nocapture"
+        ],
+        "source_sha256": "87eaac0ca53d0ae18cf3c3e108387818648a557cf5ad628f2d6db340ff11025a",
+        "binary_sha256": "c9304efcb34f58153fccc7316f04f253ed49f872a21cdb29de43f5b3803fa6a0",
+        "exit": 0,
+        "elapsed_seconds": 0.0017406279998795071,
+        "time": "2026-10-24T03:19:34.406786+00:00",
+        "stdout_sha256": "07b4ef33dfd7ca50257b516540ec402f3463e48e32aee8479714b53fe25d94f1",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q3/build-receipt.json",
+        "source_sha256": "864a68636dd001cfc571308fb1725686cc777a06170cc3149a0a99e2c440a539",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 101,
+        "elapsed_seconds": 7.237978787999964,
+        "time": "2026-10-24T03:23:12.124658+00:00"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q4/build-receipt.json",
+        "source_sha256": "af89331961d3655af3ddbefaf749c0810f51a3afff5b7131bff5b97feaa73a7a",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 13.759711060999962,
+        "time": "2026-10-24T03:24:40.107538+00:00",
+        "binary_sha256": "3906a5c6e2d92c38c23f646d6794a8992445a8d57fd943363e81909e8974b703"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_admission_preserves_dirty_and_clean_destinations.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q4/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_admission_preserves_dirty_and_clean_destinations",
+          "--nocapture"
+        ],
+        "source_sha256": "af89331961d3655af3ddbefaf749c0810f51a3afff5b7131bff5b97feaa73a7a",
+        "binary_sha256": "3906a5c6e2d92c38c23f646d6794a8992445a8d57fd943363e81909e8974b703",
+        "exit": 0,
+        "elapsed_seconds": 0.1399961679999251,
+        "time": "2026-10-24T03:25:38.088546+00:00",
+        "stdout_sha256": "515bec96a07f297417a2f69f62f7c496bd2884941756bce41891f82b7d4b8bd4",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_final_read_drift_rejects_after_complete_history.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q4/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_final_read_drift_rejects_after_complete_history",
+          "--nocapture"
+        ],
+        "source_sha256": "af89331961d3655af3ddbefaf749c0810f51a3afff5b7131bff5b97feaa73a7a",
+        "binary_sha256": "3906a5c6e2d92c38c23f646d6794a8992445a8d57fd943363e81909e8974b703",
+        "exit": 0,
+        "elapsed_seconds": 0.30288254100014456,
+        "time": "2026-10-24T03:26:35.346346+00:00",
+        "stdout_sha256": "8b58b92ad23af5816a995364383862f1ae3748c5ad6ef1104f9a316e9752d4bf",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_forgotten_pin_and_poison_prevent_io.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q4/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_forgotten_pin_and_poison_prevent_io",
+          "--nocapture"
+        ],
+        "source_sha256": "af89331961d3655af3ddbefaf749c0810f51a3afff5b7131bff5b97feaa73a7a",
+        "binary_sha256": "3906a5c6e2d92c38c23f646d6794a8992445a8d57fd943363e81909e8974b703",
+        "exit": 101,
+        "elapsed_seconds": 0.1093355339999107,
+        "time": "2026-10-24T03:26:35.457774+00:00",
+        "stdout_sha256": "638e92644eb75cf435502e965045da3221cb1e818d5d2f12b57aa1bb9e426a5e",
+        "stderr_sha256": "9be50eda4ed7c6e4bc6857b3365752282bab3cdcf75a39a4f08b1bcaec99a034"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_read_errors_preserve_destination_and_retry.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q4/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_read_errors_preserve_destination_and_retry",
+          "--nocapture"
+        ],
+        "source_sha256": "af89331961d3655af3ddbefaf749c0810f51a3afff5b7131bff5b97feaa73a7a",
+        "binary_sha256": "3906a5c6e2d92c38c23f646d6794a8992445a8d57fd943363e81909e8974b703",
+        "exit": 0,
+        "elapsed_seconds": 0.8371367720001217,
+        "time": "2026-10-24T03:25:38.927474+00:00",
+        "stdout_sha256": "d46157406cdfa91e9797a057029c673e3463a613ee859252991a08a9b024c9ef",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_read_unwind_fences_without_installation.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q4/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_read_unwind_fences_without_installation",
+          "--nocapture"
+        ],
+        "source_sha256": "af89331961d3655af3ddbefaf749c0810f51a3afff5b7131bff5b97feaa73a7a",
+        "binary_sha256": "3906a5c6e2d92c38c23f646d6794a8992445a8d57fd943363e81909e8974b703",
+        "exit": 0,
+        "elapsed_seconds": 0.2941547279997394,
+        "time": "2026-10-24T03:29:26.379702+00:00",
+        "stdout_sha256": "beba9bcdcbb91bd20b7b1f8ef905549fca42151a94d4409865c187d39b5e30e4",
+        "stderr_sha256": "a072f8f7201bb0b183e10171caf74b58bf7bcb7a123d0c5afc3362f3662983b6"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_rejects_historical_free_after_terminal_eviction.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q4/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_rejects_historical_free_after_terminal_eviction",
+          "--nocapture"
+        ],
+        "source_sha256": "af89331961d3655af3ddbefaf749c0810f51a3afff5b7131bff5b97feaa73a7a",
+        "binary_sha256": "3906a5c6e2d92c38c23f646d6794a8992445a8d57fd943363e81909e8974b703",
+        "exit": 101,
+        "elapsed_seconds": 0.3236763740001152,
+        "time": "2026-10-24T03:25:40.278773+00:00",
+        "stdout_sha256": "414dcab689ee4944b3dcda5dce7a9077d26b8c10c333775653660758086b02d4",
+        "stderr_sha256": "b0ea550f37236be1e2f8bc0f9c79ea5c36d15fa07910a48ceed91eb5518f112b"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q4/empty_load_required_eof_invalid_count_and_corrupt_home_fence.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q4/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_required_eof_invalid_count_and_corrupt_home_fence",
+          "--nocapture"
+        ],
+        "source_sha256": "af89331961d3655af3ddbefaf749c0810f51a3afff5b7131bff5b97feaa73a7a",
+        "binary_sha256": "3906a5c6e2d92c38c23f646d6794a8992445a8d57fd943363e81909e8974b703",
+        "exit": 0,
+        "elapsed_seconds": 1.0244745590002822,
+        "time": "2026-10-24T03:25:39.953598+00:00",
+        "stdout_sha256": "724375a6cdc342df274407f74f8395e0544af2b38afa043d41681ae3a8dfce72",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/parent-oracle.json",
+        "status": "PASS",
+        "source_sha256": "af89331961d3655af3ddbefaf749c0810f51a3afff5b7131bff5b97feaa73a7a",
+        "binary_sha256": "3906a5c6e2d92c38c23f646d6794a8992445a8d57fd943363e81909e8974b703",
+        "checks": {
+          "step0": "797b536284af36ff7d1ce1dd3bc70f77a1ffb93a97fb1c79b30b1a97cee153c2",
+          "step1": "a9222f6d64de1d258e4b3d5d78445b7545cc19c672e5f436b17c9632716ceb66",
+          "step2": "f31a52f035650ef93eb9c9f9ca85a2b19250bc2cd2b2da7538dfea5ad9463271"
+        },
+        "closed_disk_final_status": "PASS",
+        "closed_recovery": "NOT_RUN"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q4/native/receipt.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q4/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::empty_load::worker_empty_load_native",
+          "--ignored",
+          "--nocapture"
+        ],
+        "env": {
+          "XADB_EMPTY_LOAD_NATIVE_DIR": "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q4/native"
+        },
+        "source_sha256": "af89331961d3655af3ddbefaf749c0810f51a3afff5b7131bff5b97feaa73a7a",
+        "binary_sha256": "3906a5c6e2d92c38c23f646d6794a8992445a8d57fd943363e81909e8974b703",
+        "exit": 0,
+        "elapsed_seconds": 2.822074327000337,
+        "stdout_sha256": "52fc047f134238fc0b3dbb8335fbc312f72398c5fbedb7cd3af1f4eca32737e2",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q4/related-census.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q4/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_history_interleaved_actors_gap_and_late_selected_init",
+          "--nocapture"
+        ],
+        "source_sha256": "af89331961d3655af3ddbefaf749c0810f51a3afff5b7131bff5b97feaa73a7a",
+        "binary_sha256": "3906a5c6e2d92c38c23f646d6794a8992445a8d57fd943363e81909e8974b703",
+        "exit": 0,
+        "elapsed_seconds": 0.37139585900013117,
+        "stdout_sha256": "d04a1a74a2debd9cbe3b5ad6350de461b96d55525b3a3afaf6f01c2eb983ad99",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q5/build-receipt.json",
+        "source_sha256": "cacbfc782dfc9074b3ad0e725c59e5f963c4a44256d394611ffc35998208c972",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 12.966077051999946,
+        "time": "2026-10-24T03:29:52.205432+00:00",
+        "binary_sha256": "c75e0a131b29da0961f2051981197d58ae1c62e1ae10f0e76db4bec2598f570c"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q5/checker.json",
+        "source_sha256": "cacbfc782dfc9074b3ad0e725c59e5f963c4a44256d394611ffc35998208c972",
+        "command": [
+          "python3",
+          "-m",
+          "unittest",
+          "test_check_dev3_empty_history_borrows.Diagnostics.test_load_exact_six_fields",
+          "test_check_dev3_empty_history_borrows.Diagnostics.test_exact_private_fields_and_reject_drift",
+          "-v"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 0.043381676000080915,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "cba8e9e2c64c0c9e9b126172bfa53f04f3e12aee443ac74caed6fc3f9800a7ba"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q5/empty_load_forgotten_pin_and_poison_prevent_io.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q5/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_forgotten_pin_and_poison_prevent_io",
+          "--nocapture"
+        ],
+        "source_sha256": "cacbfc782dfc9074b3ad0e725c59e5f963c4a44256d394611ffc35998208c972",
+        "binary_sha256": "c75e0a131b29da0961f2051981197d58ae1c62e1ae10f0e76db4bec2598f570c",
+        "exit": 0,
+        "elapsed_seconds": 0.22021458000017446,
+        "time": "2026-10-24T03:30:24.995404+00:00",
+        "stdout_sha256": "28d3a0dfc232191fe51e68f4d4f052781f169fdc715ae55972d69829baf2238a",
+        "stderr_sha256": "bd254e4c271c84890155aaa538e8e070b3d5976e5f21e657ebd998dd1eafe3dc"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q5/empty_load_rejects_historical_free_after_terminal_eviction.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q5/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_rejects_historical_free_after_terminal_eviction",
+          "--nocapture"
+        ],
+        "source_sha256": "cacbfc782dfc9074b3ad0e725c59e5f963c4a44256d394611ffc35998208c972",
+        "binary_sha256": "c75e0a131b29da0961f2051981197d58ae1c62e1ae10f0e76db4bec2598f570c",
+        "exit": 0,
+        "elapsed_seconds": 0.3145749939999405,
+        "time": "2026-10-24T03:30:24.773448+00:00",
+        "stdout_sha256": "1d8bec1b7008bc0e9f31e463a2f8cd0d95a2a917d23e81d8471424f3b0abe26d",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q5/empty_load_retained_flush_claim_prevents_io.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q5/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_retained_flush_claim_prevents_io",
+          "--nocapture"
+        ],
+        "source_sha256": "cacbfc782dfc9074b3ad0e725c59e5f963c4a44256d394611ffc35998208c972",
+        "binary_sha256": "c75e0a131b29da0961f2051981197d58ae1c62e1ae10f0e76db4bec2598f570c",
+        "exit": 101,
+        "elapsed_seconds": 0.11544534700033182,
+        "time": "2026-10-24T03:30:25.112838+00:00",
+        "stdout_sha256": "0704748d205b509fe5e81662de920dfdf0cc9a2f72a50d501399fd305d893e95",
+        "stderr_sha256": "0aa84169455c47a5fb81cc68aa3c85d8a7b5d41726b92c2c49ca731d9f80c954"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q6/build-receipt.json",
+        "source_sha256": "5e62ecf58c3258a625166d0569218f2432b11dd192e8370b6f715d6eb32c3225",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 12.933431010999811,
+        "time": "2026-10-24T03:31:34.385563+00:00",
+        "binary_sha256": "6fd7f7da2abbbecdcdeed3b37a1ccab7cf65bffb87b594af5a3c929e113e6471"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q6/clippy.json",
+        "source_sha256": "5e62ecf58c3258a625166d0569218f2432b11dd192e8370b6f715d6eb32c3225",
+        "command": [
+          "cargo",
+          "clippy",
+          "-p",
+          "xadb-engine",
+          "--all-targets",
+          "--all-features",
+          "--locked",
+          "--offline",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit": 101,
+        "elapsed_seconds": 11.01795440099977,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "27bdec2b23fdac8de412c4da31f7dddce905c511925d9751c1f1fe2df32b11b1"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q6/empty_load_retained_flush_claim_prevents_io.json",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/empty-transaction-load-20261024/q6/engine-tests",
+          "--exact",
+          "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::empty_load_retained_flush_claim_prevents_io",
+          "--nocapture"
+        ],
+        "source_sha256": "5e62ecf58c3258a625166d0569218f2432b11dd192e8370b6f715d6eb32c3225",
+        "binary_sha256": "6fd7f7da2abbbecdcdeed3b37a1ccab7cf65bffb87b594af5a3c929e113e6471",
+        "exit": 0,
+        "elapsed_seconds": 0.11710803599999053,
+        "time": "2026-10-24T03:32:21.851044+00:00",
+        "stdout_sha256": "f85d80ea0467bd6b01f1ecba23ce3b9ef4d223a357a25f45d7d89f3da919d048",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q6/fmt.json",
+        "source_sha256": "5e62ecf58c3258a625166d0569218f2432b11dd192e8370b6f715d6eb32c3225",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--check"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 0.8118742749998091,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q7/clippy.json",
+        "source_sha256": "d09c5b4a95e1ca12eb6d629b9d0185c35de417dc575600206b5ec503426335e2",
+        "command": [
+          "cargo",
+          "clippy",
+          "-p",
+          "xadb-engine",
+          "--all-targets",
+          "--all-features",
+          "--locked",
+          "--offline",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 10.140126041999793,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "dbd7d60aeacc1f3dce9d9921d60206a87d8797be4e407c09e9375d686add96ce"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q7/fmt.json",
+        "source_sha256": "d09c5b4a95e1ca12eb6d629b9d0185c35de417dc575600206b5ec503426335e2",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--check"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 0.8469565160003185,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "artifacts/dev3/empty-transaction-load-20261024/q7/source-receipt.json",
+        "source_sha256": "d09c5b4a95e1ca12eb6d629b9d0185c35de417dc575600206b5ec503426335e2",
+        "scope": "comment and narrow lint annotation only; no runtime/compiler rerun"
+      }
+    ],
+    "preserved_failures": [
+      "q0 enum error mapping compile",
+      "q1 wrong setup flush API compile",
+      "q3 diagnostic type and foreign core lifetime compile",
+      "q4 stale Free post-fence healthy getter",
+      "q4 pin owner prematurely dropped",
+      "q5 retained claim expected Frame(Busy) instead of common Busy",
+      "q6 deliberate non-Drop forget Clippy lint"
+    ],
+    "not_run": [
+      "S5 12 profile/state combinations",
+      "new-process current-build empty transaction recovery/reentry"
+    ],
+    "original_results_preserved": true,
+    "unchanged_lower_tests_rerun": false,
+    "consumer_reached": false,
+    "integration_units_completed": 0,
+    "retention_snapshot": {
+      "time": "2026-10-24T03:34:09.771594+00:00",
+      "classes": {
+        "case": {
+          "files": 116,
+          "bytes": 404711
+        },
+        "source_binary_cache": {
+          "files": 42286,
+          "bytes": 2909164106
+        },
+        "native_database": {
+          "files": 15,
+          "bytes": 22255968
+        }
+      },
+      "case_limit": 8388608,
+      "rss_measured": false
+    },
+    "review": {
+      "path": "artifacts/dev3/empty-transaction-load-20261024/review/load-d1-final.md",
+      "sha256": "611d6fcf801d7883567329380ba1993137204c2783b362b76a3313b3bef159fd",
+      "staged_diff_sha256": "16fbd83378204b76b76fcc9dfff2ee79eb59e92950d897d7a615f1897c150bf5",
+      "paths": 24,
+      "ocr_reviewed": 13,
+      "ocr_excluded_accounted": 11,
+      "blocking_findings": 0
     }
   }
 }

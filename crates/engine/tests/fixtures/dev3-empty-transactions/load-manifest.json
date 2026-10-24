@@ -1,0 +1,42 @@
+{
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "contract": "devdoc/contracts/dev3-obligation-format.md#empty-transaction-load",
+  "selector_prefix": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::load_tests::",
+  "static": [
+    "empty_load_resource_gate"
+  ],
+  "budgets": {
+    "case_seconds": 30,
+    "batch_seconds": 120,
+    "case_receipt_bytes": 8388608
+  },
+  "remaining_inventory": [
+    "current-build closed recovery/reentry"
+  ],
+  "mandatory": [
+    "empty_load_occupied_round_trip_continues_original_actor",
+    "empty_load_admission_preserves_dirty_and_clean_destinations",
+    "empty_load_read_errors_preserve_destination_and_retry",
+    "empty_load_required_eof_invalid_count_and_corrupt_home_fence",
+    "empty_load_rejects_historical_free_after_terminal_eviction",
+    "empty_load_final_read_drift_rejects_after_complete_history",
+    "empty_load_forgotten_pin_and_poison_prevent_io",
+    "empty_load_retained_flush_claim_prevents_io",
+    "empty_load_read_unwind_fences_without_installation"
+  ],
+  "related_changed_census": [
+    "empty_history_interleaved_actors_gap_and_late_selected_init"
+  ],
+  "compiler_selection": [
+    "load_sequence",
+    "sealed_load"
+  ],
+  "native": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::empty_load::worker_empty_load_native"
+  ],
+  "S5": {
+    "selector": "empty_load_s5_profiles_states_and_replacement",
+    "variants": 12,
+    "status": "AUTHORED_NOT_EXECUTED"
+  }
+}

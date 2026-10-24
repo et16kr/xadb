@@ -200,3 +200,53 @@ source·ELF·cache 및 원 실패 DB도 삭제하거나 PASS로 소급 재분류
 상세 탐색/구현/대기 시간을 사후 추정하지 않았다. 같은 통합의 다음 소비자는 live load와 새
 process 현재-build 복구·재진입이다. S5 profile3×상태4의12조합은 authored NOT_RUN이며
 소비자 도달0/3·효율 개선 비교·DEV3/S5 미완료를 유지한다.
+
+<a id="live-load"></a>
+## 최신 live Status의 실제 재적재
+
+2026-10-24 · base `a7af5ab` 이후 [§21](../contracts/dev3-obligation-format.md#empty-transaction-load)의
+clean frame 재적재를 같은 owner에 연결했다. 최초 destination snapshot을 마지막 설치까지
+유지하고, 전체 directory와 원 WAL full history가 확인한 최신 exact page만 private proof로
+기존 leaf installer에 전달한다. 마지막 disk read·allocator digest/stamp·prefix 재검산을 거친다.
+기존 provisioning-only load 의미는 유지하며 새 pool·retained field·page-sized local은 없다.
+
+독립 D2는 최초 snapshot 수명, latest-only 권한, sealed6필드, required-home EOF 분류와
+source-value 합산을 검토했다. q2의 첫 effect gate를 수용했고, 후속 리뷰에서 retained DPT
+claim의 새 load 소비자 시험을 추가했다. 최종 독립 D1은 live load 한정 수용했다. staged24경로·OCR13/13과 제외11개를
+검토하고 제품 blocker0을 확인했다. 원판정은 `review/load-d1-final.md`에 보존한다.
+
+| source | 실제 선택과 원 결과 |
+| --- | --- |
+| q0 `07dbaf22…` | enum 오류 변환 compile FAIL; runtime 미실행 |
+| q1 `d36eba90…` | fixture의 잘못된 flush API compile FAIL; runtime 미실행 |
+| q2 `87eaac0c…` | build·새 resource1·occupied3상태 재적재와 같은 actor 계속 진행1 PASS |
+| q3 `864a6863…` | diagnostic type·foreign core 수명 compile FAIL; runtime 미실행 |
+| q4 `af893319…` | admission/retry/EOF·count·corrupt/final drift/unwind 신규5 PASS; 변경 census 직접1 PASS |
+| q4 | stale Free의 마지막 fenced healthy getter와 pin holder의 조기 Drop 때문에 시험2 FAIL; 제품 rejection 앞선 단언은 성공 |
+| q4 | Linux native1과 별도 parent whole-page oracle PASS; 새 process recovery는 미실행 |
+| compiler export | 새 load_sequence/sealed_load2만 PASS; 기존 flush/history probes 반복 없음 |
+| q5 `cacbfc78…` | 실패2의 observer/owner 수명 수정만 재검증 PASS; 새 retained claim은 API의 Busy 대신 Frame(Busy)를 기대해 FAIL; 변경 verify checker2 PASS |
+| q6 `5e62ecf5…` | claim 기대 cause만 정정해 신규1 PASS; fmt PASS, 의도적 non-Drop token forget의 Clippy lint FAIL |
+| q7 | 그 한 문장에 이유와 narrow lint annotation 추가; fmt/engine Clippy PASS; runtime/compiler 반복 없음 |
+
+신규 runtime9개는 각 source에서 완료했다. 알려진 read 실패는 최초/최종 read의4변형,
+EOF/count는6변형+checksum 손상, pin/poison은2변형으로 함수 수와 구별한다. final drift는
+선택 page3회 읽기 중 마지막에 변경을 주며 WAL12회 읽기가 앞서 도달했음을 단언한다.
+terminal 후 예전 Free home을 되돌리는 반례는 broad directory 통과 뒤 full history 거절을
+검산한다. claim은 원 allocator의 actual capture token을 잃은 채 clean 목적지에 load를 요청하며
+공통 진입의 Busy/Unchanged·무I/O·frame/bank/prefix 보존을 확인한다. 원 FAIL은 삭제하지 않는다.
+
+Linux native는 Active/Aborting/Aborted 각각 cold page와 occupied page를 교체하는6load를
+실행했다. 각 직전 실제 home 전체와 loaded 전체가 같고 DB inventory가 바뀌지 않았으며
+별도 parent가3개 input/loaded page와 닫힌 최종 disk page를 대조했다. wrapped handle 최대3·
+DB fd 최대5, 종료 후 각각0이다. 이는 새 process recovery/reentry 증거가 아니다.
+compiler 부정 사례는 실제 실패 completion·단일 E0451·정확6필드 primary span을 확인한다.
+checker2는 변경된 verify의 기존2span 및 새6span/부정 입력 소비자로만 선택했다.
+
+source-value는 memory call64,776/65,536·native Trace Writer call64,840/65,536,
+retained115,408·metadata180,184/196,608·whole245,720/262,144·conversion65,400이다.
+물리 stack/RSS는 미측정이다. runtime30초/case·batch120초·compiler180초·case/review8MiB를
+유지하고 실제 native DB15파일 및 source/ELF/cache는 별도 보존한다. source별 command·binary·
+원 로그 hash·시간과 보존량은 [색인](dev3-empty-transaction-20261023.json)의 `live_load`에 있다.
+S5 profile3×state4의12조합은 authored ignored/NOT_RUN이다. 다음 소비자는 새 process의
+현재-build 빈 거래 복구·재진입이며 통합 소비자 도달0/3·효율 비교·전체 DEV3/S5는 미완료다.

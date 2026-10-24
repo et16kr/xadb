@@ -887,3 +887,11 @@ DWB/home 경로가 허용한다. complete prefix EOF·semantic 불일치는 fenc
 source별 결과와 원 실패는 [같은 증거](../evidence/dev3-empty-transaction-20261023.md#live-history-flush)에
 보존한다. native3상태 page와 WAL 전체 bytes를 독립 literal과 대조했다. 최종 독립 D1은 이력/flush/continuation 한정 수용했으며
 live load·새 process 복구·소비자 도달·DEV3/S5는 여전히 미완료다.
+
+2026-10-24 [§21 live load](../contracts/dev3-obligation-format.md#empty-transaction-load)를 연결했다.
+원 clean frame snapshot을 유지하며 full WAL history의 최신 전체 image만 재적재하고, 마지막
+read·allocator/prefix 검산 후 기존 leaf installer로 교체한다. 신규 runtime9·native1·static1과
+직접 변경 census1·새 compiler2·변경 checker2의 source별 결과·원 실패를
+[같은 증거](../evidence/dev3-empty-transaction-20261023.md#live-load)에 보존한다. Linux에서
+Active/Aborting/Aborted의 실제6load와 원 actor 계속 진행을 확인했다. 제한 D1을 수용했으며
+새 process 현재-build 거래 복구·소비자 도달0/3·DEV3/S5는 미완료다.

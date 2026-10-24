@@ -384,4 +384,4 @@ mod tests;
 pub(in crate::storage) use empty_transactions::EmptyTransactionInstall;
 pub(crate) use empty_transactions::EmptyTransactionObservation;
 
-pub(super) use empty_transactions::History;
+pub(super) use empty_transactions::{EmptyLoadInstall, History};

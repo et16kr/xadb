@@ -1106,3 +1106,33 @@ flush는 제한 D1 인수 범위다. native DB fixture는 원15개 파일22,137,
 load/latest-only와 새 process closed recovery는 같은 통합의 후속이며 DEV3/S5 완료가 아니다.
 대안인 oldLSN 순서만 확인하는 덮어쓰기와 별도 recovery owner 도입은 각각 historical 권한과
 F05 경계를 만족하지 못해 선택하지 않았다. source별 결과는 [원 통합 증거](../evidence/dev3-empty-transaction-20261023.md)에 이어 기록한다.
+
+<a id="empty-transaction-load"></a>
+## 21. D3-EMPTY-TXN-004 — 최신 live Status의 clean frame 재적재
+
+2026-10-24 · **첫 effect D2·제한 D1 수용**. §20의 원 owner에
+`load_into(owner,index,page)`를 추가한다. 새 pool이나 retained field 없이 clean 목적지만
+교체하며 bank·WAL·다른 DPT entry를 유지한다. 처음 `prepare_status_load_at`의 snapshot을
+최종 설치까지 보유하고 중간에 새 snapshot으로 바꾸지 않는다.
+
+전체 bank/home census, 실제 선택 disk page와 원 WAL의 full history 검산 후 같은 disk page를
+다시 읽는다. `History.current`의 exact 전체 digest여야 하며 과거 image를 허용하는 contains는
+load에 쓰지 않는다. replay가 덮은 allocator loan을 다시 채워 처음 전체 digest·stamp와 비교하고
+health/prefix를 확인한다. 최종 bytes는 별도 기존 Status output loan에 남긴다. private
+`EmptyLoadInstall`만 기존 `StatusLoadPermit`로 인계할 수 있고 원 leaf replacement를 재사용한다.
+준비·read·검산 실패는 destination bytes/registration/generation과 bank를 바꾸지 않는다.
+required home의 EOF·invalid read count·semantic/source drift는 fence하며 알려진 일시적 read
+오류는 Unchanged retry다. 기존 provisioning-only loader의 의미를 넓히지 않는다.
+
+처음 snapshot이 census/history/read 전체에 걸쳐 살아 있으므로 history의 source-value call에
+snapshot·sealed permit·result carriers와 여유를 추가 계상해 effect 전에 확인한다. component
+65,536·metadata196,608·whole262,144와 handoff conversion65,536 한도를 유지한다. 물리 stack/RSS
+주장은 하지 않는다. [첫 선택 manifest](../../crates/engine/tests/fixtures/dev3-empty-transactions/load-manifest.json)의
+static과 clean occupied A→B→A 재적재 후 같은 actor의 rollback/abort를 첫 gate로 선택한다.
+후속 필수9함수·직접 변경 census1·native1·compiler2와 S5 확대12조합을 구현과 함께 동결했다.
+source-value call64,776·retained115,408·metadata180,184·whole245,720바이트이며 native
+Trace Writer의 실제 generic call64,840도 effect 전에 확인한다. 최초/최종 home read의 retry·EOF·
+invalid count·최종 drift·unwind, old Free 재등장, dirty/duplicate/foreign/index admission,
+forgotten pin·DPT poison·retained allocator flush claim을 검산한다. load의 공통 진입은 retained
+claim을 Cause::Busy/Unchanged로 거절한다. compiler는 두 새 사례만 선택하고 private6필드의
+정확 E0451 primary span을 확인한다. S5는 작성한 채 미실행으로 남긴다.

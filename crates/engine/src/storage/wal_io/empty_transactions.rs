@@ -38,6 +38,7 @@ pub(crate) enum Cause {
     MissingTransaction,
     WrongState,
     NotResident,
+    AlreadyResident,
     HistoryIo(xadb_foundation::Error),
     Flush(super::super::StatusFlushError),
     Exhausted,
@@ -331,4 +332,4 @@ mod live;
 pub(in crate::storage) use live::EmptyTransactionInstall;
 pub(crate) use live::EmptyTransactionObservation;
 
-pub(in super::super) use live::History;
+pub(in super::super) use live::{EmptyLoadInstall, History};

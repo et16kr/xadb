@@ -4532,9 +4532,9 @@
     "full_stage_acceptance": false
   },
   "dev3_empty_transaction": {
-    "status": "live_history_flush_D1_D2_accepted_integration_incomplete",
+    "status": "live_load_D1_D2_accepted_integration_incomplete",
     "contract_ref": "dev3-obligation-format.md#empty-abort-preparation",
-    "scope": "Pure empty AbortEnd, consuming handoff, resident empty transaction WAL/RAM and exact historical home flush; live load and new-process recovery remain",
+    "scope": "Pure empty AbortEnd, consuming handoff, resident empty transaction WAL/RAM, exact historical home flush and latest live Status load; new-process recovery remains",
     "implemented_paths": [
       "crates/engine/src/storage/semantic_group.rs",
       "crates/engine/src/storage/semantic_empty_abort.rs",
@@ -4610,7 +4610,13 @@
       "crates/engine/tests/fixtures/dev3-empty-transactions/history-manifest.json",
       "crates/engine/tests/fixtures/dev3-empty-transactions/history-compiler/manifest.json",
       "crates/engine/tests/fixtures/dev3-empty-transactions/history-compiler/flush_sequence.rs",
-      "crates/engine/tests/fixtures/dev3-empty-transactions/history-compiler/sealed_history.rs"
+      "crates/engine/tests/fixtures/dev3-empty-transactions/history-compiler/sealed_history.rs",
+      "crates/engine/src/storage/wal_io/empty_transactions_load.rs",
+      "crates/engine/src/storage/wal_io/empty_transactions_load_tests.rs",
+      "crates/engine/src/storage/wal_io/empty_load_native_tests.rs",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/load-manifest.json",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/history-compiler/load_sequence.rs",
+      "crates/engine/tests/fixtures/dev3-empty-transactions/history-compiler/sealed_load.rs"
     ],
     "evidence_refs": [
       "dev3-empty-transaction-20261023.md",
@@ -4620,6 +4626,7 @@
     "full_stage_acceptance": false,
     "handoff_contract_ref": "dev3-obligation-format.md#empty-transaction-handoff",
     "live_contract_ref": "dev3-obligation-format.md#empty-transaction-live",
-    "history_contract_ref": "dev3-obligation-format.md#empty-transaction-flush"
+    "history_contract_ref": "dev3-obligation-format.md#empty-transaction-flush",
+    "load_contract_ref": "dev3-obligation-format.md#empty-transaction-load"
   }
 }

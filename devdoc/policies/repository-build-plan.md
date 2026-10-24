@@ -404,3 +404,8 @@ crate/source root/dependency는 없다.
 `empty_transactions_history.rs`에서 기존 semantic materializer를 조합하고 원 Status flush
 authority에 private digest 이력을 보유한다. Linux worker·선택 manifest·compiler2개 및 전용
 runner/checker를 관리 JSON에 추가한다. live load·native recovery 통합은 남아 있다.
+
+[§21](../contracts/dev3-obligation-format.md#empty-transaction-load)의 최신 Status 재적재는
+`empty_transactions_load.rs`·memory/native 시험·load manifest·새 compiler2개를 추가한다.
+private sealed proof를 기존 load permit로 소비하며 기존 caller loan/SharedPool을 재사용한다.
+실제 경로만 같은 관리 JSON에 등록하고 package·dependency·source root는 유지한다.

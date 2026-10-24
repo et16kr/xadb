@@ -74,7 +74,7 @@ macro_rules! fixture {
             $pages.push(page);
         }
         $(let mut $provision = bound; $setup let bound = $provision;)?
-        let mut bank = boxed::<{ super::super::super::EMPTY_TRANSACTION_BANK_BYTES }>(0);
+        let mut bank = boxed::<{ crate::storage::wal_io::EMPTY_TRANSACTION_BANK_BYTES }>(0);
         #[allow(unused_mut)] // Admission-only cases observe the same fixture without a live mutation.
         let mut $live = match bound.into_empty_transactions(&mut $owner, &mut bank) {
             Ok(v) => v,
@@ -1284,3 +1284,6 @@ fn empty_history_retired_authority_continues_without_rewriting() {
         assert!(!storage.session_fence().is_fenced());
     });
 }
+
+#[path = "empty_transactions_load_tests.rs"]
+mod load_tests;

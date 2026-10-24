@@ -344,7 +344,9 @@ impl<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 .map(|_| ())
         })();
         read.map_err(|source| {
-            let retryable = matches!(&source, PageIoError::Read(e) if e.effect() == Effect::Unchanged && e.certainty() == Certainty::Known)
+            let retryable = matches!(&source, PageIoError::Read(e) if e.effect() == Effect::Unchanged
+                && e.certainty() == Certainty::Known
+                && e.io_kind.is_some_and(|kind| kind != std::io::ErrorKind::UnexpectedEof))
                 || matches!(&source, PageIoError::Namespace(e) if e.kind == NamespaceErrorKind::Io && e.effect == Effect::Unchanged);
             if retryable && !storage.session_fence().is_fenced() { unchanged(Cause::PageIo(source)) }
             else { fatal(storage, Cause::PageIo(source)) }
@@ -358,6 +360,16 @@ impl<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         selected: PageRef,
         occupied: u32,
     ) -> Result<Selection> {
+        self.check_directory(owner, prefix, Some(selected), occupied)?
+            .ok_or_else(|| unchanged(Cause::Membership))
+    }
+    fn check_directory(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        prefix: WalPrefix,
+        selected: Option<PageRef>,
+        occupied: u32,
+    ) -> Result<Option<Selection>> {
         let storage = self.inner.inner.inner.storage;
         let allocator_stamp = self.allocator_snapshot(owner, prefix)?;
         let mut ids = [None; 63];
@@ -477,7 +489,7 @@ impl<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 }
                 home
             };
-            if request.identity.page == selected {
+            if Some(request.identity.page) == selected {
                 if let Some(stamp) = stamp {
                     let control = &mut self.inner.inner.inner.control;
                     control.base.operation[81920..98304].copy_from_slice(control.status_after);
@@ -505,7 +517,7 @@ impl<'b, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         {
             return Err(fatal(storage, Cause::Invariant));
         }
-        selection.ok_or_else(|| unchanged(Cause::Membership))
+        Ok(selection)
     }
     /// A healthy candidate consumes local+1 even if a later admission fails.
     /// Unchanged describes WAL/page/reservation effects, not that issued counter.
@@ -1009,6 +1021,16 @@ impl<'s, 'c, W: WriterNamespace> EmptyTransactions<'_, 's, 'c, '_, '_, '_, '_, '
             .ok_or_else(|| fatal(storage, Cause::Invariant))?;
         let selection = self.census(owner, prefix, page, ledger.occupied)?;
         let digest = content_digest(&self.inner.inner.inner.control.base.operation[81920..98304]);
+        let history = self.scan_history(prefix, selection.request, digest)?;
+        Ok((selection, history))
+    }
+    fn scan_history(
+        &mut self,
+        prefix: WalPrefix,
+        request: TargetRequest,
+        digest: [u8; 32],
+    ) -> Result<history::History> {
+        let storage = self.inner.inner.inner.storage;
         let allocator_request = self
             .inner
             .inner
@@ -1023,7 +1045,7 @@ impl<'s, 'c, W: WriterNamespace> EmptyTransactions<'_, 's, 'c, '_, '_, '_, '_, '
             (r[PHASE] == STABLE
                 && StatusSlotRef::decode(&r[LOCATION])
                     .ok()
-                    .is_some_and(|location| location.page() == page))
+                    .is_some_and(|location| location.page() == request.identity.page))
             .then_some(&r[..1536])
         });
         let result = {
@@ -1046,7 +1068,7 @@ impl<'s, 'c, W: WriterNamespace> EmptyTransactions<'_, 's, 'c, '_, '_, '_, '_, '
                 descriptor,
                 prefix,
                 self.frozen_system_lsn,
-                selection.request,
+                request,
                 digest,
             )
         };
@@ -1075,7 +1097,7 @@ impl<'s, 'c, W: WriterNamespace> EmptyTransactions<'_, 's, 'c, '_, '_, '_, '_, '
         {
             return Err(fatal(storage, Cause::Invariant));
         }
-        Ok((selection, history))
+        Ok(history)
     }
 }
 
@@ -1137,3 +1159,7 @@ fn history_fits<W: WriterNamespace>() -> bool {
         && super::retained_bytes::<W>() + history_call_bytes::<W>() + 65536 <= 262144
         && super::handoff_fits::<W>()
 }
+
+#[path = "empty_transactions_load.rs"]
+mod load;
+pub(in super::super::super) use load::EmptyLoadInstall;
