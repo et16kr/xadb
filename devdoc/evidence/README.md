@@ -4,7 +4,7 @@
 
 2026-10-24 [DEV3 Undo bootstrap 역할](dev3-undo-bootstrap-20261024.md) · [source별 색인](dev3-undo-bootstrap-20261024.json): 신규33assertion·source별 원 실패를 보존한다. native1·compiler4+baseline·checker7 PASS, 최종 독립 D1 제한 수용, S5 추가78과 mixed 소비자 미완료.
 
-2026-10-24 [DEV3 Status 상주 후보 선택](dev3-status-pressure-20261024.md): 신규11함수33scenario·static3·checker7을 선택 검증했다. native 원 oracle FAIL과 저장 결과의 수정 검산·같은 ELF의 새 재진입을 구분하며 실제3PID 인계를 확인했다. 최종 독립 D1을 제한 수용했고 S5 438은 작성·NOT_RUN이다.
+2026-10-24 [DEV3 Status 상주 후보 선택](dev3-status-pressure-20261024.md) · [source별 색인](dev3-status-pressure-20261024.json): 신규11함수33scenario·static3·checker7을 선택 검증했다. native 원 oracle FAIL과 저장 결과의 수정 검산·같은 ELF의 새 재진입을 구분하며 실제3PID 인계를 확인했다. 최종 독립 D1을 제한 수용했고 S5 438은 작성·NOT_RUN이다.
 
 [DEV3 빈 거래 통합 작업](dev3-empty-transaction-20261023.md) · [source별 색인](dev3-empty-transaction-20261023.json): 순수 AbortEnd 준비·원 Status owner 인계·실제 빈 거래 WAL/RAM·이력 기반 flush·최신 live load·새 PID 복구/재진입의 source별 결과와 원 FAIL을 보존한다. 제한 D1 수용·소비자1/3 도달, 효율 비교·전체 DEV3/S5 미완료.
 
