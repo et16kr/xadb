@@ -1,6 +1,6 @@
 # DEV4 독립 앞단 구현
 
-2026-10-24 · **lexer·이름·splitter·P2 parser·P3 scalar·predicate 구문·typed 평가 제한 구현 / 실제 SQL 실행·DEV4·Q1 미완료**
+2026-10-24 · **lexer·이름·splitter·P2/P4 raw 문장·P3 scalar·predicate 구문·typed 평가 제한 구현 / P4 최종 독립 D1 제한 수용 / 실제 SQL 실행·DEV4·Q1 미완료**
 
 [독립 앞단 계약](../contracts/dev4-independent-frontend.md#lexer-leaf) · [병행 계획](../plans/dev4-preparation-plan.md) · [source별 증거](../evidence/dev4-frontend-20261024.md)
 
@@ -83,7 +83,7 @@ cargo test -p xadb-sql --lib frontend::splitter::tests::absolute_offset_overflow
 
 P0/P1의 lexer·이름·streaming 경계와 원문 예약, 아래 P2 공통 parser·INSERT/거래 구문을
 제한 구현했다. 단일 API 문장 수·AST/marker 번호·source/arena 수명과 독립 literal의 선택
-증거를 수합했다. 아래 P3 scalar 입력과 predicate AST/parser를 추가했다. 재귀 depth64·256KiB stack은 새 조건식 경로에서 검증했으며 아래 typed predicate에서 전체 타입 분석·3값 계산을 추가했다. P4 나머지 구문, P5 추상 수명 모델, P6 공급 수합과 실제 binding의 FE11/12도 미완료다.
+증거를 수합했다. 아래 P3 scalar 입력과 predicate AST/parser를 추가했다. 재귀 depth64·256KiB stack은 새 조건식 경로에서 검증했으며 아래 typed predicate에서 전체 타입 분석·3값 계산을 추가했다. 아래 P4에서 나머지 raw 구문을 추가했다. P5 추상 수명 모델, P6 공급 수합과 실제 binding의 FE11/12는 미완료다.
 
 실제 catalog binding·실행 CLI·session·engine adapter와 Q1 entrypoint는 제공하지
 않는다. engine 연결은 DEV3 catalog/row/index/statement/undo/commit/recovery/temp의 실제 선행
@@ -109,7 +109,7 @@ splitter 시험은 반복하지 않았다. parser_contracts의 필수6함수, pa
 `frontend::parse_budget::tests::typed_capacity_arithmetic_rejects_overflow`가 이번 선택이다.
 확대2profile은 NOT_RUN이다. 이후 실행도 실제 diff에 대응하는 함수만 고른다.
 
-P3 조건식 구문과 typed compile/eval은 아래 후속 절을 따른다. P4 나머지 문법·P5 수명 모델·P6 실제 DEV3 수합과 engine 통합·Q1은 남아 있다.
+P3 조건식 구문·typed compile/eval과 P4 나머지 raw 문법은 아래 후속 절을 따른다. P5 수명 모델·P6 실제 DEV3 수합과 engine 통합·Q1은 남아 있다.
 
 <a id="scalar"></a>
 ## Scalar 디코딩과 typed 값 소유
@@ -189,3 +189,44 @@ cargo test -p xadb-sql --features test-support --locked --test typed_predicate_r
 실제 diff에 대응하는 새/수정 사례만 선택한다. 실패 그룹의 완료 prefix를 제외할 때는 기록된
 `XADB_TYPED_FROM_CASE` exact ID와 원 source의 순차 단언 증거를 사용한다. 미지정은 해당 그룹 전체이며
 이 진입점 자체가 완료 시험 반복을 허용하지 않는다.
+
+
+<a id="remaining-parser"></a>
+## SELECT·DML·DDL raw 문장
+
+`Parser::parse`는 기존 INSERT/거래 구문에 SELECT, UPDATE, DELETE, CREATE TABLE,
+CREATE [UNIQUE] INDEX, DROP TABLE/INDEX를 추가한다. 새 `parser/statement.rs`와
+`parser/ddl.rs`가 기존 ParseInput의 source·flat arena·marker를 사용한다. WHERE의 자식은
+기존 Or이며 별도 Predicate root/source 복사를 만들지 않는다. SET→WHERE와 WHERE→LIMIT의
+marker ordinal은 문장 전체에서 이어진다. 원문과 모든 span은 기존 owned AST에 보존한다.
+
+projection/ORDER 목록32개, AST8,192node, marker256개, NOT/Group64중첩과 기존 source/token
+상한을 적용한다. DDL 목록은 반복문이고, 새 statement helper는 predicate nesting을 소비하지
+않는다. 생략한 ORDER 방향/NULL 위치와 column nullability는 명시한 상태와 구별한다.
+LIMIT는 unsigned digits 또는 marker만 읽고 범위 초과 숫자도 raw로 보존한다. DDL type_length는
+부호·digits·전체 span을 보존하며 값 변환을 하지 않는다. 열/제약/index 개수의 semantic 한도,
+중복·참조·PK NULL 및 길이 검산은 DDL precommit 이후의 owner 책임이다.
+
+새 AST도 기존 session8MiB/DB64MiB quota와 actual capacity를 사용한다. DataType leaf는
+전체 타입 형식을 확인한 뒤 추가하되 BIGINT/BOOLEAN은 keyword에서 형식이 끝난다.
+item 시작·comma 끝·마지막 구문 token 끝에서 제어를 확인하고, contextual IF/CHECK 등의
+추가 peek에서 생긴 Lex 진단을 보존한다. 오류·취소는 해당 호출의 partial 출력과 예약을 정리한다.
+
+[source별 증거](../evidence/dev4-remaining-parser-20261024.md)의 정상 source
+`95a9745a6a4aa32be4ba422bd48c67918a8e8c07d13a185adb19922c08f3c50c`에서 semantic8함수와
+자원13함수·Clippy를 선택 검증했다. semantic은 고정659+경계129+생성8,192의 총8,980parse이며,
+known-bad50/정상통제12는 제품 호출0으로 별도 판정했다. 확대256×1,024와30분 profile2개는
+**NOT_RUN**이다. M01–M20과 교정한 M21의 의도한 단언 실패를 확인했고 M21 원 recipe의
+compile FAIL·원 fmt FAIL과 서식 교정을 보존했다.21변조 범주와 최종 독립 D1을 제한 수용했다.
+
+```bash
+cargo test -p xadb-sql --features test-support --locked --test remaining_parser_contracts <function> -- --exact
+cargo test -p xadb-sql --features test-support --locked --test remaining_parser_resources <function> -- --exact
+```
+
+실제 diff에 대응하는 사례만 선택한다. semantic exact ID는 `XADB_REMAINING_CASE`, 중단된
+함수의 완료 prefix 제외는 `XADB_REMAINING_FROM_CASE`를 사용하며 둘은 함께 지정하지 않는다.
+자원 세 함수의 witness 선택은 `XADB_REMAINING_RESOURCE_CASE`이며 그 외 semantic selector와
+동시에 쓰지 않는다. 미지정은 기존 전체 함수 범위이고 완료 시험 반복을 허용하지 않는다.
+이 구현은 raw 구문 공급이다. typed 문장 binding·P5 수명 모델·P6 전체 공급 수합·실제 catalog/
+prepare/bind/engine·DDL precommit/SQL 실행과 DEV4/Q1은 미완료다.

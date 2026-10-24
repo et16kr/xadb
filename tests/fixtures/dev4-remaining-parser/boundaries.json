@@ -1,0 +1,2687 @@
+{
+  "schema": "xadb.dev4.remaining-parser.boundaries.v1",
+  "status": "D2_INPUT_PREPARATION_NOT_RUN",
+  "authority": "Exact input/AST recipes in frozen remaining_parser/recipes.rs; this independently printed inventory supplies source hashes, expected success/error and full-array node counts. No Rust or product invocation.",
+  "count": 129,
+  "success": 77,
+  "errors": 52,
+  "cases": [
+    {
+      "id": "boundary/list/false/31",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list",
+        "order": false,
+        "count": 31
+      },
+      "source_bytes": 75,
+      "source_sha256": "a620e15cc5fe7c19c9800495bc0298713d024f59346fa1918245402e775ce545",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 66,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/list/false/32",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list",
+        "order": false,
+        "count": 32
+      },
+      "source_bytes": 77,
+      "source_sha256": "ca1041dde827f9b9d9ede204e9e088ce0f3bbebac4a68ff10b049bc554e33856",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 68,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/list/false/33",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list",
+        "order": false,
+        "count": 33
+      },
+      "source_bytes": 79,
+      "source_sha256": "3c7719cac8553855c71198b415eda2b54b06c037bdb79cba6b751fdd512c39b8",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            71,
+            71
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/false/true",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": false,
+        "count_before": 32,
+        "item_hex": "54525545"
+      },
+      "source_bytes": 75,
+      "source_sha256": "b8b6174468a4c701ba425595328682507ffab776f43cfbae44da24ee52c7d952",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Unsupported",
+          "module": "Parse",
+          "span": [
+            71,
+            75
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/false/digits",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": false,
+        "count_before": 32,
+        "item_hex": "31"
+      },
+      "source_bytes": 72,
+      "source_sha256": "7165e96817b8a9a9137943c212bdeda9a8e10ae38dc4303c721d7cb47d36b004",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Unsupported",
+          "module": "Parse",
+          "span": [
+            71,
+            72
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/false/paren",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": false,
+        "count_before": 32,
+        "item_hex": "28"
+      },
+      "source_bytes": 72,
+      "source_sha256": "1838db53bc73b93e1aa13fd5173951071828caadafc89ebc423ce8bada04d3d6",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Unsupported",
+          "module": "Parse",
+          "span": [
+            71,
+            72
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/false/star",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": false,
+        "count_before": 32,
+        "item_hex": "2a"
+      },
+      "source_bytes": 72,
+      "source_sha256": "1e47e0cdc246eeb031c52f3a961ec13de25e122bf0b76c4ad712e5135c82f48d",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Unsupported",
+          "module": "Parse",
+          "span": [
+            71,
+            72
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/false/keyword",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": false,
+        "count_before": 32,
+        "item_hex": "46524f4d"
+      },
+      "source_bytes": 75,
+      "source_sha256": "fa4c3058f302b95bf7bd6e92cb5d19e5fc12f4381707f6db260f04bbfe1b7d80",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Syntax",
+          "module": "Parse",
+          "span": [
+            71,
+            75
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/false/eof",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": false,
+        "count_before": 32,
+        "item_hex": ""
+      },
+      "source_bytes": 71,
+      "source_sha256": "b740798ac2e783795b4dd3bffc31c5a55862c2b11e02d6217d144896a8a60446",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Syntax",
+          "module": "Parse",
+          "span": [
+            71,
+            71
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/false/long-name",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": false,
+        "count_before": 32,
+        "item_hex": "616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161"
+      },
+      "source_bytes": 200,
+      "source_sha256": "42ae882d7bbfc167c770cfb034999d42584186ca3e6c48a4c44f5e658e89cd21",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            71,
+            71
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/false/empty-name",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": false,
+        "count_before": 32,
+        "item_hex": "2222"
+      },
+      "source_bytes": 73,
+      "source_sha256": "344a141e10deda3375f385473efdbeb858f589c6d0b830704f87876f8cfd6653",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            71,
+            71
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/false/lex",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": false,
+        "count_before": 32,
+        "item_hex": "21"
+      },
+      "source_bytes": 72,
+      "source_sha256": "30c64d83b55af69b65b859b8876ff8570714e02542e9062b52e17ecddb39ddcc",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Syntax",
+          "module": "Lex",
+          "span": [
+            71,
+            72
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list/true/31",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list",
+        "order": true,
+        "count": 31
+      },
+      "source_bytes": 86,
+      "source_sha256": "be5673925f4b4381042295852cdacfd0a3362ae9588a194ad1d71c8726ea5a5d",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 68,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/list/true/32",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list",
+        "order": true,
+        "count": 32
+      },
+      "source_bytes": 88,
+      "source_sha256": "2415a0703157acc8d22b1df7b0db483689e436cf3bd73ae962fb8069d273df02",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 70,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/list/true/33",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list",
+        "order": true,
+        "count": 33
+      },
+      "source_bytes": 90,
+      "source_sha256": "d67bc961a381716a533d1efbbb336b6535e2a2388b9f4326e40160bcabde1161",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            88,
+            88
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/true/true",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": true,
+        "count_before": 32,
+        "item_hex": "54525545"
+      },
+      "source_bytes": 93,
+      "source_sha256": "408ba2c9cf458bb21bfa3568b59ddcda811312b39083c8cd8ecdd05ec3a0df40",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Unsupported",
+          "module": "Parse",
+          "span": [
+            89,
+            93
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/true/digits",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": true,
+        "count_before": 32,
+        "item_hex": "31"
+      },
+      "source_bytes": 90,
+      "source_sha256": "603ad2cf3ae1124aad491c2dff639004be79d1b7df343af6ad6c55759425ea9c",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Unsupported",
+          "module": "Parse",
+          "span": [
+            89,
+            90
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/true/paren",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": true,
+        "count_before": 32,
+        "item_hex": "28"
+      },
+      "source_bytes": 90,
+      "source_sha256": "b39390daf6d9b0bac5c5ae5a314e16b60c73901158472dd940913b14a51a77e9",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Unsupported",
+          "module": "Parse",
+          "span": [
+            89,
+            90
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/true/star",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": true,
+        "count_before": 32,
+        "item_hex": "2a"
+      },
+      "source_bytes": 90,
+      "source_sha256": "a957307cfdd09e651b7d2fff34e5a28e0c0ca61095a6bed097480ab1d3cf8e4d",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Unsupported",
+          "module": "Parse",
+          "span": [
+            89,
+            90
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/true/keyword",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": true,
+        "count_before": 32,
+        "item_hex": "46524f4d"
+      },
+      "source_bytes": 93,
+      "source_sha256": "3d1a0756cd78149df4a1521c24a1830bdd0b25e8ef492f87cf85f4d8d3e2fe9d",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Syntax",
+          "module": "Parse",
+          "span": [
+            89,
+            93
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/true/eof",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": true,
+        "count_before": 32,
+        "item_hex": ""
+      },
+      "source_bytes": 89,
+      "source_sha256": "eb386a42148378c1c7256cd2e5ab3a6873f0a3437da1654e7bce559af9affd7e",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Syntax",
+          "module": "Parse",
+          "span": [
+            89,
+            89
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/true/long-name",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": true,
+        "count_before": 32,
+        "item_hex": "616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161"
+      },
+      "source_bytes": 218,
+      "source_sha256": "5831f0bc22077f01e0e9e2b2b3ea6291dbd19eb2e2514040045f3989521d0410",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            89,
+            89
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/true/empty-name",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": true,
+        "count_before": 32,
+        "item_hex": "2222"
+      },
+      "source_bytes": 91,
+      "source_sha256": "9221c60de885b9bf2cd7c680fdbdcaa755034cd24ebf5d92a84154f10c197531",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            89,
+            89
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/list-kind/true/lex",
+      "family": "boundary",
+      "recipe": {
+        "kind": "list_item_kind",
+        "order": true,
+        "count_before": 32,
+        "item_hex": "21"
+      },
+      "source_bytes": 90,
+      "source_sha256": "57ba440afdb1f6e8661e0b93339aee7ba777cacd0c981f79b8ad9916e94178b7",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Syntax",
+          "module": "Lex",
+          "span": [
+            89,
+            90
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/projection/ascii/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/options/0/0",
+        "name_ordinal": 0,
+        "origin": "ascii",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 141,
+      "source_sha256": "4a48eed34582e017b331fb806a5e4198edcc74f5273ae8f22edd926129d8ce0b",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 6,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/projection/utf8/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/options/0/0",
+        "name_ordinal": 0,
+        "origin": "utf8",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 143,
+      "source_sha256": "8f89141a88c3b53e274f21639738833014e962b15fc059a5844e80dc78f32cbc",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 6,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/projection/ascii/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/options/0/0",
+        "name_ordinal": 0,
+        "origin": "ascii",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 142,
+      "source_sha256": "ecd34a6b893a01f42ba7bff3bf4fad868a96c699b21087b3915bbb5e522c0dc0",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 6,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/projection/utf8/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/options/0/0",
+        "name_ordinal": 0,
+        "origin": "utf8",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 144,
+      "source_sha256": "40edd1cf326e1f5d228415bb65a7eb722b8095ab18ed0d9537626d6a13a25def",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 6,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/projection/ascii/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/options/0/0",
+        "name_ordinal": 0,
+        "origin": "ascii",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 143,
+      "source_sha256": "d08c8e3132f01a32dbf0cbb875bb07a1adfa0d5d986ff46ec85e1bc52e99860e",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            7,
+            136
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/projection/utf8/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/options/0/0",
+        "name_ordinal": 0,
+        "origin": "utf8",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 145,
+      "source_sha256": "fb83146fd4d0d8bc21ebeb5445aadbbd34faa8d6b3d6c6c483be2b460f72f55f",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            7,
+            138
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/alias/ascii/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/order/None/None",
+        "name_ordinal": 1,
+        "origin": "ascii",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 157,
+      "source_sha256": "a4226113270c1a3fb4aa55cbbc1908d53dd860d25fcf82bd9dd40e1a7cb8e0c1",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 10,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/alias/utf8/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/order/None/None",
+        "name_ordinal": 1,
+        "origin": "utf8",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 159,
+      "source_sha256": "a94b1f8eb0902cd06b709e4f5e3e5fd694d8f99a1b331e1cd2fd834f783db135",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 10,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/alias/ascii/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/order/None/None",
+        "name_ordinal": 1,
+        "origin": "ascii",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 158,
+      "source_sha256": "2c508342aeb35480f18476d0ddc8deb7d0b8e7293227d12c10bce603424efe4e",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 10,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/alias/utf8/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/order/None/None",
+        "name_ordinal": 1,
+        "origin": "utf8",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 160,
+      "source_sha256": "6efffb3e6a3bdb18dfbcb62861faabff9cbd324e176581608ac3400941774de7",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 10,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/alias/ascii/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/order/None/None",
+        "name_ordinal": 1,
+        "origin": "ascii",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 159,
+      "source_sha256": "a8cdf616861652964ef46957ecdab04b2d13aaf12b9a188d4a9c0eb3f8ff3a87",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            12,
+            141
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/alias/utf8/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/order/None/None",
+        "name_ordinal": 1,
+        "origin": "utf8",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 161,
+      "source_sha256": "3aa3f512bf56de108ab28cf958ca8978634240febff56932220042fc6f960720",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            12,
+            143
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/order/ascii/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/order/None/None",
+        "name_ordinal": 3,
+        "origin": "ascii",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 157,
+      "source_sha256": "2b441fa7db43b52470900ef71de1d594c9d15ff244bc6a13a698d4551c38a818",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 10,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/order/utf8/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/order/None/None",
+        "name_ordinal": 3,
+        "origin": "utf8",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 159,
+      "source_sha256": "15ce2ebefc29e9e5b4b8b8f10529195f5ec9c69ff3841865deda20f11bed8abd",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 10,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/order/ascii/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/order/None/None",
+        "name_ordinal": 3,
+        "origin": "ascii",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 158,
+      "source_sha256": "075d7a33804225225ccdc4407e1dcf74669e9ca1a2f57f159a984ee205748ced",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 10,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/order/utf8/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/order/None/None",
+        "name_ordinal": 3,
+        "origin": "utf8",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 160,
+      "source_sha256": "880adc4dbdb98ac9ad741e97388fd773007f8c6c47c0632e310d06e5e1a3ec15",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 10,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/order/ascii/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/order/None/None",
+        "name_ordinal": 3,
+        "origin": "ascii",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 159,
+      "source_sha256": "0aa0ae4abea97c318f3c7cbe5b0c87600653e36ec01df38d08ec67e63cee083e",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            30,
+            159
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/order/utf8/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "select/order/None/None",
+        "name_ordinal": 3,
+        "origin": "utf8",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 161,
+      "source_sha256": "4b19de112c07c8d6ab23dd386c8a92227649a56c4e3f817ed9608104068a383d",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            30,
+            161
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/assignment/ascii/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "update/minimum",
+        "name_ordinal": 1,
+        "origin": "ascii",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 142,
+      "source_sha256": "95cbf7eed481fe982ce58fa28744f861faca4af3de07eed4df2199faeea8da80",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 7,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/assignment/utf8/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "update/minimum",
+        "name_ordinal": 1,
+        "origin": "utf8",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 144,
+      "source_sha256": "4c07cadd3237d0682404f1b0b8d7a021c47c4bb996de4edf3fd1188f18ea1a74",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 7,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/assignment/ascii/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "update/minimum",
+        "name_ordinal": 1,
+        "origin": "ascii",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 143,
+      "source_sha256": "8a45abe3cff96b4e8fc18d7b37534d24aa3cce94a237547c5be106b9756c8d2a",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 7,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/assignment/utf8/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "update/minimum",
+        "name_ordinal": 1,
+        "origin": "utf8",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 145,
+      "source_sha256": "06d31149ddd1c7532644e761d29cf9855c894edad133a7e6ca91ff0af8d2ff23",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 7,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/assignment/ascii/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "update/minimum",
+        "name_ordinal": 1,
+        "origin": "ascii",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 144,
+      "source_sha256": "a2b677c4d9c627792c851d5ee15ddefb8663f0b2b465d1b925ea124b897f5d6e",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            13,
+            142
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/assignment/utf8/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "update/minimum",
+        "name_ordinal": 1,
+        "origin": "utf8",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 146,
+      "source_sha256": "e85009021328f7b842283ad47da424fb6857df1a4f499085931b66e7589ad06e",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            13,
+            144
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/delete-target/ascii/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "delete/minimum",
+        "name_ordinal": 0,
+        "origin": "ascii",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 139,
+      "source_sha256": "520e6a9b96a523721e6e83e181f73f099c19aa90a351d6f87db753337dc9554e",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 3,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/delete-target/utf8/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "delete/minimum",
+        "name_ordinal": 0,
+        "origin": "utf8",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 141,
+      "source_sha256": "c68de57accdde2a8ace0b5cd794a3a6b8241b73c6ab804a505f075892f4f61b0",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 3,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/delete-target/ascii/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "delete/minimum",
+        "name_ordinal": 0,
+        "origin": "ascii",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 140,
+      "source_sha256": "deab55eb94015e34d4788130f8692986cb4edd9e4801dcbff56869d826308462",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 3,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/delete-target/utf8/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "delete/minimum",
+        "name_ordinal": 0,
+        "origin": "utf8",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 142,
+      "source_sha256": "95cd8909facfa83d32c5c633d46792a93e6dfeaeeb12e93c1989705d99baed20",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 3,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/delete-target/ascii/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "delete/minimum",
+        "name_ordinal": 0,
+        "origin": "ascii",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 141,
+      "source_sha256": "62210018bbcef867a95f686e46f3808f778a034eb35e9189173878fbee586e0c",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            12,
+            141
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/delete-target/utf8/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "delete/minimum",
+        "name_ordinal": 0,
+        "origin": "utf8",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 143,
+      "source_sha256": "f9a8a5bc9bb9c44cc37b82ff55dad953a8c109789c2a849b992ca33a868aab62",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            12,
+            143
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/definition/ascii/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "ddl/type-null/Int64/Implicit",
+        "name_ordinal": 1,
+        "origin": "ascii",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 163,
+      "source_sha256": "7f318b2e0926ddf192490ba381349f186e88417fd163cc7ff2ec01c84952fe85",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/definition/utf8/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "ddl/type-null/Int64/Implicit",
+        "name_ordinal": 1,
+        "origin": "utf8",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 165,
+      "source_sha256": "1825d40ca358ecf2b1fc605aabb04490a2b068f239a314cbf290f40ee95b3974",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/definition/ascii/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "ddl/type-null/Int64/Implicit",
+        "name_ordinal": 1,
+        "origin": "ascii",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 164,
+      "source_sha256": "0ea9a8f86bf0b342764109ad479876cc29a9776fd4a5a1181f226a0b38a71e53",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/definition/utf8/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "ddl/type-null/Int64/Implicit",
+        "name_ordinal": 1,
+        "origin": "utf8",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 166,
+      "source_sha256": "b25e1ec39a0e220af99d1ab3b809170d46732bc119e9c0eb98d95c96f46dd23a",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/definition/ascii/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "ddl/type-null/Int64/Implicit",
+        "name_ordinal": 1,
+        "origin": "ascii",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 165,
+      "source_sha256": "c199a6b34a07beccd62b5c93b74202b70ed02be4b818ae80e85c9fc8272c3830",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            15,
+            144
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/definition/utf8/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "ddl/type-null/Int64/Implicit",
+        "name_ordinal": 1,
+        "origin": "utf8",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 167,
+      "source_sha256": "bc9ce9c79713cd8158d3430c5da50098f448621552655b8ce39d6d88448e2451",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            15,
+            146
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/index-target/ascii/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "index/targets/False/False/False",
+        "name_ordinal": 0,
+        "origin": "ascii",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 150,
+      "source_sha256": "ed4db1963abefbd0e6a22959d2435ef3aceac3b6780cac07dbaa4be11e9187d6",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/index-target/utf8/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "index/targets/False/False/False",
+        "name_ordinal": 0,
+        "origin": "utf8",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 152,
+      "source_sha256": "814407c899d9119bc41d85d7337902029b9f8273bd96ec88499408b228366b6c",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/index-target/ascii/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "index/targets/False/False/False",
+        "name_ordinal": 0,
+        "origin": "ascii",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 151,
+      "source_sha256": "4ec0f915f111113a46a7c2bd2de50ff232ada55bca7f6d8fdbfcf8a073bf5aa3",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/index-target/utf8/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "index/targets/False/False/False",
+        "name_ordinal": 0,
+        "origin": "utf8",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 153,
+      "source_sha256": "5e62693b035d5a932c2f4d3cc8ba25a7305e700fe804c9e64084efd18d0cd803",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/index-target/ascii/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "index/targets/False/False/False",
+        "name_ordinal": 0,
+        "origin": "ascii",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 152,
+      "source_sha256": "41c4ac0b4c5d5c67b7eea60cb9cd5e9441f1aa40602894815f7ad467c382122c",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            13,
+            142
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/index-target/utf8/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "index/targets/False/False/False",
+        "name_ordinal": 0,
+        "origin": "utf8",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 154,
+      "source_sha256": "81a889edd718157fda09c1ddd4abf3666fb34e5ea71c13d02ead0a9027a415aa",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            13,
+            144
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/drop-target/ascii/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "drop/True/False",
+        "name_ordinal": 0,
+        "origin": "ascii",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 138,
+      "source_sha256": "d96949c90dd3e2daaf2ed793f1caae7f450deb4ae87555c3090cbce43ec37c2d",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 3,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/drop-target/utf8/127",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "drop/True/False",
+        "name_ordinal": 0,
+        "origin": "utf8",
+        "normalized_bytes": 127
+      },
+      "source_bytes": 140,
+      "source_sha256": "aefead9eb01309326d78f222b190855693f1b207c5e4a5b8093a47f646a3c336",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 3,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/drop-target/ascii/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "drop/True/False",
+        "name_ordinal": 0,
+        "origin": "ascii",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 139,
+      "source_sha256": "5349d7b625ef5d7e9a05e3dba29bf1031b8ee0287d1d5933e9a6461ddc9a100f",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 3,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/drop-target/utf8/128",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "drop/True/False",
+        "name_ordinal": 0,
+        "origin": "utf8",
+        "normalized_bytes": 128
+      },
+      "source_bytes": 141,
+      "source_sha256": "c9626e616ebbc8f2d4881cc755617b051fcfe18aaf616a6a740e1f362eabec71",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 3,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/name/drop-target/ascii/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "drop/True/False",
+        "name_ordinal": 0,
+        "origin": "ascii",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 140,
+      "source_sha256": "49ef582b49bfd02917a71c8b54f6ed4733b7063adac58a6a9569d448f9f27037",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            11,
+            140
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/name/drop-target/utf8/129",
+      "family": "boundary",
+      "recipe": {
+        "kind": "replace_literal_name",
+        "control": "drop/True/False",
+        "name_ordinal": 0,
+        "origin": "utf8",
+        "normalized_bytes": 129
+      },
+      "source_bytes": 142,
+      "source_sha256": "33d27bc343752438df37534bfae968fdc75105adcf240a867f07a6ea09e85f46",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Name",
+          "module": "Name",
+          "span": [
+            11,
+            142
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/source/1048575",
+      "family": "boundary",
+      "recipe": {
+        "kind": "right_pad_spaces",
+        "control": "drop/False/False",
+        "length": 1048575
+      },
+      "source_bytes": 1048575,
+      "source_sha256": "165f6344372d98daaa2e7f6d6e785e62614b84a63f1ef1033116df1824aea3f7",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 3,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/source/1048576",
+      "family": "boundary",
+      "recipe": {
+        "kind": "right_pad_spaces",
+        "control": "drop/False/False",
+        "length": 1048576
+      },
+      "source_bytes": 1048576,
+      "source_sha256": "2f071492bf12dcc40f5240c864b8f14fb14d2c05d122787fa6d132f3424994b0",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 3,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/source/1048577",
+      "family": "boundary",
+      "recipe": {
+        "kind": "right_pad_spaces",
+        "control": "drop/False/False",
+        "length": 1048577
+      },
+      "source_bytes": 1048577,
+      "source_sha256": "91278e070000d68d1898f5a1e7891acca543941a62be5ee7a957466be930830f",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Lex",
+          "span": [
+            1048576,
+            1048577
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/depth/0/0/63",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 0,
+        "mode": 0,
+        "depth": 63
+      },
+      "source_bytes": 277,
+      "source_sha256": "435eea734389942febf69b4b230cc56d06993524202874c721f43eed32a6c384",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 74,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/0/0/64",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 0,
+        "mode": 0,
+        "depth": 64
+      },
+      "source_bytes": 281,
+      "source_sha256": "d217e857d8096f4ebecb6b51be31db8035e7eb08fb15cdee9abcf642c5cdb371",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 75,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/0/0/65",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 0,
+        "mode": 0,
+        "depth": 65
+      },
+      "source_bytes": 285,
+      "source_sha256": "ce0df2a261af36269864a0081bfec010982c52fefe8e26044afcf87b2516708d",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            278,
+            278
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/depth/0/1/63",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 0,
+        "mode": 1,
+        "depth": 63
+      },
+      "source_bytes": 151,
+      "source_sha256": "c6340d66df8c7013520eda2159680529871ef0492847b8712becb66a3d86e465",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 200,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/0/1/64",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 0,
+        "mode": 1,
+        "depth": 64
+      },
+      "source_bytes": 153,
+      "source_sha256": "d115ea423734b97d5337071c57b12eec43afa859f1505f4c39b8d27b3e0e59c6",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 203,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/0/1/65",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 0,
+        "mode": 1,
+        "depth": 65
+      },
+      "source_bytes": 155,
+      "source_sha256": "907040dd470bee6c164d6f924dbec26314c766b313fb54ca2ebcd9d63f9a6f39",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            86,
+            86
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/depth/0/2/63",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 0,
+        "mode": 2,
+        "depth": 63
+      },
+      "source_bytes": 215,
+      "source_sha256": "a12dfd08aa48840b6ba4cde85be3005b59f5c4a653aa31bf60f1cf790b721568",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 136,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/0/2/64",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 0,
+        "mode": 2,
+        "depth": 64
+      },
+      "source_bytes": 217,
+      "source_sha256": "3af44693c819c445e6d0525ea7a29793f3a53bb692704e45f10a18b8e500e5b0",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 139,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/0/2/65",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 0,
+        "mode": 2,
+        "depth": 65
+      },
+      "source_bytes": 221,
+      "source_sha256": "e181435b9237ef6eaf433202ae8d2eb6bac3f239e5ac407531a46e239ba176df",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            182,
+            182
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/depth-sibling/0",
+      "family": "boundary",
+      "recipe": {
+        "kind": "sibling_depth_restore",
+        "statement": 0,
+        "not_depth": 64,
+        "group_depth": 64
+      },
+      "source_bytes": 417,
+      "source_sha256": "784eeda3857defabccc034fc107df89e614bcdc068ab196f78bbcb5a36d3d136",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 270,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/1/0/63",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 1,
+        "mode": 0,
+        "depth": 63
+      },
+      "source_bytes": 278,
+      "source_sha256": "9f62e54f7058989915570303a2e4b651eee1fbe4787916828a60190477b7e7f6",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 76,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/1/0/64",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 1,
+        "mode": 0,
+        "depth": 64
+      },
+      "source_bytes": 282,
+      "source_sha256": "734385908a8158b93ccfe4f70ceb2369232944de2d9a0e50ba0b9ac27b8af9f6",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 77,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/1/0/65",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 1,
+        "mode": 0,
+        "depth": 65
+      },
+      "source_bytes": 286,
+      "source_sha256": "38a69e1a535ac2ecfadcbfaa2033c0cc7d2a99b3975efbf5e9a5fb497b4e13c0",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            279,
+            279
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/depth/1/1/63",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 1,
+        "mode": 1,
+        "depth": 63
+      },
+      "source_bytes": 152,
+      "source_sha256": "14e5c53c18a3855c6caa1be6dd6889150f988cff49920947aac590074093688d",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 202,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/1/1/64",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 1,
+        "mode": 1,
+        "depth": 64
+      },
+      "source_bytes": 154,
+      "source_sha256": "214daf39c976165c25c0dab9bc8fe3e577c95fdf124007f62c1565c9f1ace513",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 205,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/1/1/65",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 1,
+        "mode": 1,
+        "depth": 65
+      },
+      "source_bytes": 156,
+      "source_sha256": "6efb2e7e8ff377f1a3a658e33e67c03873681fd76cf4b92e1b14b158a7940680",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            87,
+            87
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/depth/1/2/63",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 1,
+        "mode": 2,
+        "depth": 63
+      },
+      "source_bytes": 216,
+      "source_sha256": "ad8f5821d581fd36a6dc14bebd7057d8287260c2b51c690dbf4abe8ba0cb8de3",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 138,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/1/2/64",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 1,
+        "mode": 2,
+        "depth": 64
+      },
+      "source_bytes": 218,
+      "source_sha256": "aeb191741d29fae783d140a2b3da04be274429163cfe58c72ae6181f2445d9d2",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 141,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/1/2/65",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 1,
+        "mode": 2,
+        "depth": 65
+      },
+      "source_bytes": 222,
+      "source_sha256": "7121f9e4db880beacd98c8eea62e4823d090a26bfb503e5195906025bbaa4f2d",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            183,
+            183
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/depth-sibling/1",
+      "family": "boundary",
+      "recipe": {
+        "kind": "sibling_depth_restore",
+        "statement": 1,
+        "not_depth": 64,
+        "group_depth": 64
+      },
+      "source_bytes": 418,
+      "source_sha256": "91deb865b245ca10a858371a495e1722901725952947d1528395e9aa63e715da",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 272,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/2/0/63",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 2,
+        "mode": 0,
+        "depth": 63
+      },
+      "source_bytes": 275,
+      "source_sha256": "798794d78ecec74ac809ea73f542fd1d130e6490dea4112d76a4ba8ae2021a4a",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 72,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/2/0/64",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 2,
+        "mode": 0,
+        "depth": 64
+      },
+      "source_bytes": 279,
+      "source_sha256": "6e3e53632392ebf503af2084d53f1c6fc7c3be544086f0fc5463f61d2da2339b",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 73,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/2/0/65",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 2,
+        "mode": 0,
+        "depth": 65
+      },
+      "source_bytes": 283,
+      "source_sha256": "84855233ca0fb5b18f90af4375ad1d308aadb08991b95079735df0321f4c5a65",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            276,
+            276
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/depth/2/1/63",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 2,
+        "mode": 1,
+        "depth": 63
+      },
+      "source_bytes": 149,
+      "source_sha256": "55be55e6bc36c3e42d6c9ea46cb37874903c8a651b3631ee23228c751450e4d8",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 198,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/2/1/64",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 2,
+        "mode": 1,
+        "depth": 64
+      },
+      "source_bytes": 151,
+      "source_sha256": "45080d0c74bdb830b07c1caa836766b91b5b27a6589483ce769b9455b245a6b5",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 201,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/2/1/65",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 2,
+        "mode": 1,
+        "depth": 65
+      },
+      "source_bytes": 153,
+      "source_sha256": "71d1ad9266e232b5c37457c738f85290aab49d4809378011e8a1ae7835e0dbf0",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            84,
+            84
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/depth/2/2/63",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 2,
+        "mode": 2,
+        "depth": 63
+      },
+      "source_bytes": 213,
+      "source_sha256": "f23ddb110c160624df91f6212efc74fe0e75803a7bffaf218ed13a5432a697a3",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 134,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/2/2/64",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 2,
+        "mode": 2,
+        "depth": 64
+      },
+      "source_bytes": 215,
+      "source_sha256": "7ab5e91da12ee0712598d2cd4a20e72800b05d0d2cbf938edc3a00ffa6735bb8",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 137,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/depth/2/2/65",
+      "family": "boundary",
+      "recipe": {
+        "kind": "nested_where",
+        "statement": 2,
+        "mode": 2,
+        "depth": 65
+      },
+      "source_bytes": 219,
+      "source_sha256": "23d0cb7d905ae73f2fd02c20f6da3fdd5fc6b047bdd80e01a7afda9775d60045",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            180,
+            180
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/depth-sibling/2",
+      "family": "boundary",
+      "recipe": {
+        "kind": "sibling_depth_restore",
+        "statement": 2,
+        "not_depth": 64,
+        "group_depth": 64
+      },
+      "source_bytes": 415,
+      "source_sha256": "ca434fae5413ae9ab338e8e6bf48d4ea7ba2abf7299810c7bff215569fea621d",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 268,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/markers/0/255",
+      "family": "boundary",
+      "recipe": {
+        "kind": "clause_shared_markers",
+        "statement": 0,
+        "count": 255
+      },
+      "source_bytes": 2057,
+      "source_sha256": "95fead0a4d24e034ede45010dc7cce16ce57d84d90ac47a9b368ed702cf35938",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 772,
+        "marker_count": 255,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/markers/0/256",
+      "family": "boundary",
+      "recipe": {
+        "kind": "clause_shared_markers",
+        "statement": 0,
+        "count": 256
+      },
+      "source_bytes": 2065,
+      "source_sha256": "7ff6f9680bcb27858d755f8d4a76c3aa6009f5b0b8d2ac55c599e71292421c1d",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 775,
+        "marker_count": 256,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/markers/0/257",
+      "family": "boundary",
+      "recipe": {
+        "kind": "clause_shared_markers",
+        "statement": 0,
+        "count": 257
+      },
+      "source_bytes": 2073,
+      "source_sha256": "c0adf54456f027ff33a0cbbf9b8d2bf507dbb53dcdcf16d02e40504ff0732d90",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            2072,
+            2072
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/markers/1/255",
+      "family": "boundary",
+      "recipe": {
+        "kind": "clause_shared_markers",
+        "statement": 1,
+        "count": 255
+      },
+      "source_bytes": 2050,
+      "source_sha256": "7405870fc081d66d2a1c67a6e2ffc78f7a394903fa1ac2c9b16222c4bd76cf03",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 772,
+        "marker_count": 255,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/markers/1/256",
+      "family": "boundary",
+      "recipe": {
+        "kind": "clause_shared_markers",
+        "statement": 1,
+        "count": 256
+      },
+      "source_bytes": 2058,
+      "source_sha256": "286694dcb51d981331251d7f365edb78b91a3287a43484a403f2bcf89275a92f",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 775,
+        "marker_count": 256,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/markers/1/257",
+      "family": "boundary",
+      "recipe": {
+        "kind": "clause_shared_markers",
+        "statement": 1,
+        "count": 257
+      },
+      "source_bytes": 2066,
+      "source_sha256": "391f95526ef5493fa96e0d3cefc8851629b1d98d0a91a64c339775d86e27edb1",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            2065,
+            2065
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/markers/2/255",
+      "family": "boundary",
+      "recipe": {
+        "kind": "clause_shared_markers",
+        "statement": 2,
+        "count": 255
+      },
+      "source_bytes": 2055,
+      "source_sha256": "279aaec3012fa317852bf26d6470fd0d5f791bd234fc8304baaf923522c5f561",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 771,
+        "marker_count": 255,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/markers/2/256",
+      "family": "boundary",
+      "recipe": {
+        "kind": "clause_shared_markers",
+        "statement": 2,
+        "count": 256
+      },
+      "source_bytes": 2063,
+      "source_sha256": "9d45277d961ccb0eb946670536a345a2d9a3950cec5c25ae1145880173ef6507",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 774,
+        "marker_count": 256,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/markers/2/257",
+      "family": "boundary",
+      "recipe": {
+        "kind": "clause_shared_markers",
+        "statement": 2,
+        "count": 257
+      },
+      "source_bytes": 2071,
+      "source_sha256": "9d9c983b8fd08d9a6be0f689a46604f482feef65d19a3eff04363aba46068a4d",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            2070,
+            2070
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/nodes/delete/8191",
+      "family": "boundary",
+      "recipe": {
+        "kind": "delete_flat_and",
+        "comparisons": 2728,
+        "prefix_not": 1
+      },
+      "source_bytes": 21843,
+      "source_sha256": "87b3370a33a36d2c130f6b2d884ed24fdfb0c8fb90882836c30ead242dc7a821",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8191,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/nodes/delete/8192",
+      "family": "boundary",
+      "recipe": {
+        "kind": "delete_flat_and",
+        "comparisons": 2728,
+        "prefix_not": 2
+      },
+      "source_bytes": 21847,
+      "source_sha256": "bc34e6599c0f2e18152665a88455502eab1e92f3a4b24afd9ab3da480686c631",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8192,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/nodes/delete/8193",
+      "family": "boundary",
+      "recipe": {
+        "kind": "delete_flat_and",
+        "comparisons": 2728,
+        "prefix_not": 3
+      },
+      "source_bytes": 21851,
+      "source_sha256": "6b63aec156dc37c3fec5d19095af33ad6a1a3a385374a90b6f8a57d225e002f4",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            21850,
+            21850
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/nodes/update/8191",
+      "family": "boundary",
+      "recipe": {
+        "kind": "update_flat_assignments",
+        "assignments": 2729,
+        "qualified": false,
+        "is_null_where": false
+      },
+      "source_bytes": 10928,
+      "source_sha256": "f104532adede5ebc4fe2222ecb0a03f45317f5db7fa07b6ddae9e490e1d2fb88",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8191,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/nodes/create-table/8191",
+      "family": "boundary",
+      "recipe": {
+        "kind": "table_flat_columns",
+        "columns": 2727,
+        "primary_key_names": 3
+      },
+      "source_bytes": 24591,
+      "source_sha256": "7898682d1591377e486c0b11ade41aa462f2403e8f30882e8637235a0faf14b1",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8191,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/nodes/update/8192",
+      "family": "boundary",
+      "recipe": {
+        "kind": "update_flat_assignments",
+        "assignments": 2729,
+        "qualified": true,
+        "is_null_where": false
+      },
+      "source_bytes": 10935,
+      "source_sha256": "2b30c71a067ceaa827ad08ac07b3ba30be6e2385b827643eae64024d5371687b",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8192,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/nodes/create-table/8192",
+      "family": "boundary",
+      "recipe": {
+        "kind": "table_flat_columns",
+        "columns": 2727,
+        "primary_key_names": 4
+      },
+      "source_bytes": 24593,
+      "source_sha256": "5a7511487499f0777679e509ce47197622fb664cbef1e6368530a3c1c9d9303c",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 8192,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/nodes/update/8193",
+      "family": "boundary",
+      "recipe": {
+        "kind": "update_flat_assignments",
+        "assignments": 2728,
+        "qualified": false,
+        "is_null_where": true
+      },
+      "source_bytes": 10940,
+      "source_sha256": "cd56449b18e34b7c47bc49cb8787ea0730aac3981f7352483243b4f97d1eee21",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            10931,
+            10931
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/nodes/create-table/8193",
+      "family": "boundary",
+      "recipe": {
+        "kind": "table_flat_columns",
+        "columns": 2727,
+        "primary_key_names": 5
+      },
+      "source_bytes": 24595,
+      "source_sha256": "26a43cdff888f075839525c73b1a6ff57d10662362ed89a9f62e54221f8b75b0",
+      "expected": {
+        "outcome": "error",
+        "error": {
+          "code": "Limit",
+          "module": "Parse",
+          "span": [
+            24583,
+            24583
+          ]
+        }
+      }
+    },
+    {
+      "id": "boundary/raw-payload/false/65535",
+      "family": "boundary",
+      "recipe": {
+        "kind": "unvalidated_raw_payload",
+        "binary": false,
+        "hypothetical_decoded_bytes": 65535
+      },
+      "source_bytes": 65552,
+      "source_sha256": "e72274ae4436e7618ee78c1e5a8beaa567e628f715833c14e85e35a9db1b2f38",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 7,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/raw-payload/false/65536",
+      "family": "boundary",
+      "recipe": {
+        "kind": "unvalidated_raw_payload",
+        "binary": false,
+        "hypothetical_decoded_bytes": 65536
+      },
+      "source_bytes": 65553,
+      "source_sha256": "cc0eb18d55aa289b5348221be75208f54e6e4c2434f3a9b9f927e9dfb76b03d4",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 7,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/raw-payload/false/65537",
+      "family": "boundary",
+      "recipe": {
+        "kind": "unvalidated_raw_payload",
+        "binary": false,
+        "hypothetical_decoded_bytes": 65537
+      },
+      "source_bytes": 65554,
+      "source_sha256": "e851fb9a3868c91c8ffac04f4ff3c848edb3a7ddc8c7f4bb5de747faf31d4e84",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 7,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/raw-payload/true/65535",
+      "family": "boundary",
+      "recipe": {
+        "kind": "unvalidated_raw_payload",
+        "binary": true,
+        "hypothetical_decoded_bytes": 65535
+      },
+      "source_bytes": 131088,
+      "source_sha256": "fc4d45ebd3a9c70cfaacdfce0ae0a9bd8bdd81142b9198bf01446d1b4e3a3001",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 7,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/raw-payload/true/65536",
+      "family": "boundary",
+      "recipe": {
+        "kind": "unvalidated_raw_payload",
+        "binary": true,
+        "hypothetical_decoded_bytes": 65536
+      },
+      "source_bytes": 131090,
+      "source_sha256": "b1eeee1111dfaca2ee1baf6ddf0a2dd253309a02f71f217bc80c0c120b98eba7",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 7,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    },
+    {
+      "id": "boundary/raw-payload/true/65537",
+      "family": "boundary",
+      "recipe": {
+        "kind": "unvalidated_raw_payload",
+        "binary": true,
+        "hypothetical_decoded_bytes": 65537
+      },
+      "source_bytes": 131092,
+      "source_sha256": "5402f2881a0ef5f769aa5b043805dddd84a159381b660452c1104d9c3a2d1bed",
+      "expected": {
+        "outcome": "complete_ast",
+        "error": null,
+        "nodes": 7,
+        "marker_count": 0,
+        "full_array": "remaining_parser/recipes.rs::boundary_cases; no reachable-node-only projection"
+      }
+    }
+  ]
+}

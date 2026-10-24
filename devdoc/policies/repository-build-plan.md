@@ -92,7 +92,7 @@
 | xadbtest-engine-worker | crates/testing/engine-worker | IMPLEMENTED | DEV2 | xadb-engine, xadb-foundation, xadb-platform, xadbtest-protocol |
 | xadb-transport | crates/transport | IMPLEMENTED | COMM | xadb-foundation |
 | xadbtest-transport-worker | crates/testing/transport-worker | IMPLEMENTED | COMM | xadb-foundation, xadb-platform, xadb-transport |
-| xadb-sql | crates/sql | IMPLEMENTED (독립 앞단·scalar·typed predicate) | DEV4 | xadb-foundation |
+| xadb-sql | crates/sql | IMPLEMENTED (raw 문장·scalar·typed predicate) | DEV4 | xadb-foundation |
 | xadb-cli | crates/cli | PLANNED | DEV4 | xadb-foundation, xadb-sql, xadb-platform |
 | xadb-server | crates/server | PLANNED | DEV5 | xadb-foundation, xadb-engine, xadb-sql, xadb-transport, xadb-platform |
 | xadb-client | crates/client | PLANNED | DEV6 | xadb-foundation, xadb-transport |
@@ -467,3 +467,11 @@ dirty/flush·복구 owner와 Catalog CREATE/CLR의 구현·인수를 이 배치�
 SQL 책임이며 새 crate/dependency·foundation 변경·source/export root 변경은 없다.
 [source별 증거](../evidence/dev4-typed-predicate-20261024.md)에 원 실패/교정·선택 범위와 남은 실제
 engine 연결을 구분한다.
+
+
+[P4 나머지 raw 문장 parser](../contracts/dev4-independent-frontend.md#remaining-parser)는 기존
+ast/parser에 syntax variant와 dispatch를 추가하고 `parser/statement.rs`, `parser/ddl.rs`로
+SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`·literal/recipe,
+`remaining_parser_contracts`/`remaining_parser_resources`와 실제 fixture를 기존 source root에
+등록했다. package·dependency·source/clean export root는 변경하지 않았다. 실제 source 지문은 실행 증거에 별도로 기록했다.
+[source별 증거](../evidence/dev4-remaining-parser-20261024.md)의 정상 선택 검증·21제품 변조 거절과 최종 독립 D1의 제한 수용을 기록하며 typed 문장 binding·P5/P6·engine·Q1은 이 배치의 완료 범위가 아니다.

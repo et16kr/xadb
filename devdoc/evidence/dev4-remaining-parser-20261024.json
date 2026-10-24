@@ -1,0 +1,2443 @@
+{
+  "schema": 1,
+  "contract": "D4-FE-REMAINING-001",
+  "status": "LOCAL_SELECTED_VERIFICATION_AND_LIMITED_D1_ACCEPTED",
+  "scope": "P4 raw SELECT UPDATE DELETE CREATE DROP parser; no binder Catalog engine integration or Q1",
+  "recorded_at": "2026-10-24T21:02:24.732682+09:00",
+  "artifact_root": "artifacts/dev4-remaining-parser-20261024",
+  "head_at_evidence": "bc93de1bc119739e99521c452b5a2e1be1775638",
+  "artifacts": {
+    "baseline.json": {
+      "sha256": "949bf79e2d5ca82d3febe251fea0b3fe8c6ca863f975114204184b17a9735dc2",
+      "data": {
+        "head": "57db415c0f4a1087fa01fac13e92f6552cef927a",
+        "status": "P4_INPUT_PREPARATION",
+        "base_selected_at": "2026-10-24T20:05:30.289289+09:00",
+        "excludes": "Uncommitted DEV3 changes; new baseline includes committed P3 result"
+      }
+    },
+    "d2-review.json": {
+      "sha256": "12592a4db4dc8139b2fc61a8290735e8e754a966b07e096b6cb9633dd6006c8a",
+      "data": {
+        "schema": "xadb.dev4.remaining-parser.independent-d2-review.v1",
+        "reviewer": "/root/frontend_review",
+        "reviewed_at": "2026-10-24T20:43:54.943446+09:00",
+        "status": "D2_ACCEPTED_INPUT_AND_DESIGN_ONLY_NOT_EXECUTION",
+        "contract": "D4-FE-REMAINING-001",
+        "base_head": "57db415c0f4a1087fa01fac13e92f6552cef927a",
+        "scope": "SELECT/UPDATE/DELETE/CREATE TABLE/CREATE [UNIQUE] INDEX/DROP TABLE/DROP INDEX raw parser, new AST payloads and shared consumers. No typed statement binding, catalog, DDL precommit, engine or SQL execution acceptance.",
+        "blocking_findings": [],
+        "reviewed_sha256": {
+          "artifacts/dev4-remaining-parser-20261024/author_fixtures.py": "081a59c633bc6cbec82a485d6f7a159151df1883461475d9de31f5f7411b02c4",
+          "artifacts/dev4-remaining-parser-20261024/author_manifest.py": "5734563109d366345a1eacf0e9919340c25d84e81ef99b49f7b1bed653b6ca36",
+          "artifacts/dev4-remaining-parser-20261024/baseline.json": "949bf79e2d5ca82d3febe251fea0b3fe8c6ca863f975114204184b17a9735dc2",
+          "artifacts/dev4-remaining-parser-20261024/design-proposal.md": "90cbdec56d2120a23be557ab54250738e08b956f47fb14c70339c5f7f49bd58c",
+          "artifacts/dev4-remaining-parser-20261024/export.py": "8587a3bb27f6ad38abfb521853072a0287673387517b6f1d6bd5a3e4d3df4f6b",
+          "artifacts/dev4-remaining-parser-20261024/make_mutant.py": "fc80835bb17de00c7f6462d3db6e164e6dc1cc1776aa9462281945d85b085fd4",
+          "artifacts/dev4-remaining-parser-20261024/mutation-contract.json": "f0d3ff3ff1e307183a87094c86dc7a259dea3f74897800ccba53e7ee82d72803",
+          "artifacts/dev4-remaining-parser-20261024/prefreeze-review-fixes.json": "e0627de763057e90a26d1c39e21deab7f27968584eab4e3465c7785674b0fe16",
+          "artifacts/dev4-remaining-parser-20261024/research.json": "c671376e59c29cd0a07564674bc9c37ed86bc3a164c72b04b1d0ad592e76c4a1",
+          "artifacts/dev4-remaining-parser-20261024/resource-inventory.json": "37c4cb79f34765a5a27a0b909716b9ec03d294fb2c0160deb5fc801776c80c56",
+          "artifacts/dev4-remaining-parser-20261024/resource-plan.md": "65e6ecfd81712d51c79b272068dac8299743ab4343892b3f0c2d2d4bd11bfb37",
+          "artifacts/dev4-remaining-parser-20261024/review-notes.md": "5a742cf81b99832ab7915fdf06ab3f0b2702e43ff01de79b501f65d49b6c8d0d",
+          "artifacts/dev4-remaining-parser-20261024/run.py": "545cdb083e825db1336895c0f2e20e9dd2db3c734757c1857733ae597d6c3867",
+          "artifacts/dev4-remaining-parser-20261024/run_mutants.py": "1797ca6d81e8d24fb87bbe0f60e09a758e556668d2c6e3ef39fa08827af565cd",
+          "artifacts/dev4-remaining-parser-20261024/storage-plan.json": "e0a7ebf677007c2474ae1e25f38f34dc7d82e18096ddbe1e4dc909688395ca8e",
+          "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+          "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+          "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+          "crates/sql/src/frontend/parser/predicate.rs": "ceb978f4fdf57b6e25cc6727846b9c62a79e532814c4d5ded01b056fb84d9ac8",
+          "crates/sql/tests/remaining_parser_contracts.rs": "5fe8417605e4de1457d2815801f7e5117722f940a4e4dd7b7b72688f8b5f9a7d",
+          "crates/sql/tests/remaining_parser_resources.rs": "8995528a90da4aadf91483a1dff1559335acf67131aeed550a6ddf3b374867d0",
+          "crates/testing/reference/src/frontend/remaining_parser.rs": "355132f962912521bdf646c21e7053f447081f44e0876c519bf1195da96c6294",
+          "crates/testing/reference/src/frontend/remaining_parser/literals.rs": "d5cf7d8214915f1abaa5e7e4fdb714d32e2fdbf2542406f2b33781019e308dd0",
+          "crates/testing/reference/src/frontend/remaining_parser/recipes.rs": "dc3b9f75f3f5ee1794cb57cc45e6a23836f02dc171f3ae76954e959903bd7bc1",
+          "devdoc/contracts/dev4-independent-frontend.md": "c92fe502e4b72975648fb645e44c9ab94784077b406e46c9d00be8eda5c8c8db",
+          "devdoc/contracts/dev4-sql-design.md": "a7b2c9db54633b4460281693c83531d3f06aeba3b13db7a2fc01370bb1811952",
+          "tests/fixtures/dev4-remaining-parser/boundaries.json": "d25e85d20293699c7919c291de17249cdb0c56d21e888b2b6dcd47c6ace6984f",
+          "tests/fixtures/dev4-remaining-parser/control.json": "3a59b6d9a21a1a29082ef6a4d2dd07e28e432317f73e4ba7e20d4e9f3e1486ee",
+          "tests/fixtures/dev4-remaining-parser/manifest.json": "4f9205ed7beca4c0f35ab358c7a3aac0e872aec3b53c5dce3982622e2f76109c",
+          "tests/fixtures/dev4-remaining-parser/semantic.json": "8d1ddbfc483e4ae3640da8ff9a4707a95da2de8473ff9d31364e6c64871200ee"
+        },
+        "static_input_audit": {
+          "linked_files_checked": 13,
+          "hash_mismatches": 0,
+          "fixed_cases": 659,
+          "fixed_success": 159,
+          "fixed_error": 500,
+          "fixed_unique_source_bytes": 658,
+          "explicit_aliases": [
+            [
+              "update/minimum",
+              "raw/update/zero"
+            ]
+          ],
+          "boundary_cases": 129,
+          "boundary_success": 77,
+          "boundary_error": 52,
+          "global_unique_fixed_boundary_ids": 788,
+          "literal_ast_entries_inspected": 1737,
+          "literal_name_payloads_inspected": 509,
+          "literal_span_link_preorder_marker_payload_issues": 0,
+          "generated_templates": 36,
+          "generated_planned": 8192,
+          "required_semantic_parse_calls_planned": 8980,
+          "known_bad_planned": 50,
+          "deduplicated_controls_planned": 12,
+          "known_bad_product_calls": 0,
+          "semantic_functions_planned": 8,
+          "resource_functions_planned": 13,
+          "required_functions_planned": 21,
+          "product_mutation_categories_planned": 21,
+          "method": "Read-only source/contract review and static JSON bytes, spans, links, marker, name payload and SHA inspection. No authoring script, product/reference function, compile or test invocation."
+        },
+        "accepted_decisions": [
+          "Preserve Parser/ParsedStatement ownership and full flat preorder arena; WHERE directly owns Or and shares source/arena/marker counter.",
+          "Raw DDL lengths and LIMIT overflow are unconverted; absent syntax options remain distinct; DDL semantic counts/duplicates belong after precommit.",
+          "Bounded contextual lookahead preserves ordinary names; item kind before count and lexical peek precedence are explicit; variable DataType admission follows full syntax while fixed DataType admission follows its keyword.",
+          "Projection/order32, NOT/Group64, AST8192, marker256, source1MiB, existing quotas/token ceiling, no fixed wrapper depth cost.",
+          "Item.start/comma.end/last syntactic token.end controls and Parse phase witnesses separate from Lex/Name/source copy; new stack and large flat Drop inputs are defined.",
+          "Actual capacity correction, old/new peaks, every allocation failure, retained owners and cleanup are covered by new P4 entry inputs. Shared DB means retained-owner accounting across native threads, not concurrent allocation-race evidence.",
+          "Full source/every arena entry/kind/payload/span/link/marker/error/complete equality; generated trivia only relocates authored expectations.",
+          "Exact semantic case and continuation are exclusive; invalid/non-Unicode selection fails before product calls; resource witness selection preserves full normal inputs/assertions.",
+          "Immutable baseline/DEV4 overlay, full inventory/hash checks, atomic hardlink replacement, source-bound mutations, source-specific targets, process-first receipts and lossless ELF preservation are specified. Failure detection requires intended-assertion review."
+        ],
+        "prefreeze_corrections_verified": [
+          "Original syntax/structure/18 UPDATE bare target alias corrected Syntax to Unsupported before product; preserved originals and66 added INDEX versus constraint key inputs.",
+          "Selector changes preserve previous candidate in prefreeze-selection-01; independent input/expected/counts unchanged.",
+          "M03 metadata now matches actual update/markers-across-where:5marker/18node. M09 matches boundary/nodes/create-table/8192:2727columns+PK4,5+3*2727+6=8192. Control and mutation exact selectors agree."
+        ],
+        "execution": {
+          "product": "NOT_WRITTEN_AT_REVIEW",
+          "compile": "NOT_RUN",
+          "runtime": "NOT_RUN",
+          "mutants": "NOT_RUN",
+          "document_verifier": "NOT_RUN",
+          "expanded256x1024": "NOT_RUN_IGNORED",
+          "expanded30minutes": "NOT_RUN_IGNORED",
+          "token65536_first_failure": "N/A_FOR_NORMAL_P4_GRAMMAR_NOT_PASS; earlier node/grammar limits dominate; original lexer receipt remains source-specific",
+          "reviewer_product_edits": 0,
+          "reviewer_test_compile_verifier_commands": 0
+        },
+        "remaining_d1_obligations": [
+          "Freeze reviewed inputs before implementation; retain reviewed contract/manifest alongside later adoption-only metadata changes.",
+          "Execute only new/modified P4 paths; preserve source-specific failures, interruptions and completed prefixes; no old lower runtime repetition.",
+          "Bind each mutation to actual source/hash and directly affected exact case/witness. A first-witness exception requires its first actual product scenario to exercise the edited path. Compile errors, timeouts and unrelated assertions are not detection.",
+          "Verify actual AstNode layout/quota and256KiB stack on statement plus64-depth paths; older predicate frame evidence is not new execution evidence.",
+          "Inspect product helpers for bounded work/lookahead, cleanup and source/marker reuse. Planned detectors are not correct-product proof.",
+          "Synchronize canonical SQL explanation for unsigned LIMIT, input-column ORDER BY and deferred DDL semantics without changing adopted choices; preserve reviewed contract hash.",
+          "Keep DEV3 out of exports/commits; do not promote raw parser acceptance to binder/catalog/engine GO."
+        ]
+      }
+    },
+    "d2-adoption.json": {
+      "sha256": "3ac9cac492e1ae56ed3c0509e1d44110d2db4a205655563f39971d8c4975e0e2",
+      "data": {
+        "status": "D2_ADOPTED_BEFORE_PRODUCT",
+        "adopted_at": "2026-10-24T20:44:31.222477+09:00",
+        "owner": "/root",
+        "review": "d2-review.json",
+        "review_sha256": "12592a4db4dc8139b2fc61a8290735e8e754a966b07e096b6cb9633dd6006c8a",
+        "frozen_inputs": {
+          "artifacts/dev4-remaining-parser-20261024/author_fixtures.py": "081a59c633bc6cbec82a485d6f7a159151df1883461475d9de31f5f7411b02c4",
+          "artifacts/dev4-remaining-parser-20261024/author_manifest.py": "5734563109d366345a1eacf0e9919340c25d84e81ef99b49f7b1bed653b6ca36",
+          "artifacts/dev4-remaining-parser-20261024/baseline.json": "949bf79e2d5ca82d3febe251fea0b3fe8c6ca863f975114204184b17a9735dc2",
+          "artifacts/dev4-remaining-parser-20261024/design-proposal.md": "90cbdec56d2120a23be557ab54250738e08b956f47fb14c70339c5f7f49bd58c",
+          "artifacts/dev4-remaining-parser-20261024/export.py": "8587a3bb27f6ad38abfb521853072a0287673387517b6f1d6bd5a3e4d3df4f6b",
+          "artifacts/dev4-remaining-parser-20261024/make_mutant.py": "fc80835bb17de00c7f6462d3db6e164e6dc1cc1776aa9462281945d85b085fd4",
+          "artifacts/dev4-remaining-parser-20261024/mutation-contract.json": "f0d3ff3ff1e307183a87094c86dc7a259dea3f74897800ccba53e7ee82d72803",
+          "artifacts/dev4-remaining-parser-20261024/prefreeze-review-fixes.json": "e0627de763057e90a26d1c39e21deab7f27968584eab4e3465c7785674b0fe16",
+          "artifacts/dev4-remaining-parser-20261024/research.json": "c671376e59c29cd0a07564674bc9c37ed86bc3a164c72b04b1d0ad592e76c4a1",
+          "artifacts/dev4-remaining-parser-20261024/resource-inventory.json": "37c4cb79f34765a5a27a0b909716b9ec03d294fb2c0160deb5fc801776c80c56",
+          "artifacts/dev4-remaining-parser-20261024/resource-plan.md": "65e6ecfd81712d51c79b272068dac8299743ab4343892b3f0c2d2d4bd11bfb37",
+          "artifacts/dev4-remaining-parser-20261024/review-notes.md": "5a742cf81b99832ab7915fdf06ab3f0b2702e43ff01de79b501f65d49b6c8d0d",
+          "artifacts/dev4-remaining-parser-20261024/run.py": "545cdb083e825db1336895c0f2e20e9dd2db3c734757c1857733ae597d6c3867",
+          "artifacts/dev4-remaining-parser-20261024/run_mutants.py": "1797ca6d81e8d24fb87bbe0f60e09a758e556668d2c6e3ef39fa08827af565cd",
+          "artifacts/dev4-remaining-parser-20261024/storage-plan.json": "e0a7ebf677007c2474ae1e25f38f34dc7d82e18096ddbe1e4dc909688395ca8e",
+          "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+          "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+          "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+          "crates/sql/src/frontend/parser/predicate.rs": "ceb978f4fdf57b6e25cc6727846b9c62a79e532814c4d5ded01b056fb84d9ac8",
+          "crates/sql/tests/remaining_parser_contracts.rs": "5fe8417605e4de1457d2815801f7e5117722f940a4e4dd7b7b72688f8b5f9a7d",
+          "crates/sql/tests/remaining_parser_resources.rs": "8995528a90da4aadf91483a1dff1559335acf67131aeed550a6ddf3b374867d0",
+          "crates/testing/reference/src/frontend/remaining_parser.rs": "355132f962912521bdf646c21e7053f447081f44e0876c519bf1195da96c6294",
+          "crates/testing/reference/src/frontend/remaining_parser/literals.rs": "d5cf7d8214915f1abaa5e7e4fdb714d32e2fdbf2542406f2b33781019e308dd0",
+          "crates/testing/reference/src/frontend/remaining_parser/recipes.rs": "dc3b9f75f3f5ee1794cb57cc45e6a23836f02dc171f3ae76954e959903bd7bc1",
+          "devdoc/contracts/dev4-independent-frontend.md": "c92fe502e4b72975648fb645e44c9ab94784077b406e46c9d00be8eda5c8c8db",
+          "devdoc/contracts/dev4-sql-design.md": "a7b2c9db54633b4460281693c83531d3f06aeba3b13db7a2fc01370bb1811952",
+          "tests/fixtures/dev4-remaining-parser/boundaries.json": "d25e85d20293699c7919c291de17249cdb0c56d21e888b2b6dcd47c6ace6984f",
+          "tests/fixtures/dev4-remaining-parser/control.json": "3a59b6d9a21a1a29082ef6a4d2dd07e28e432317f73e4ba7e20d4e9f3e1486ee",
+          "tests/fixtures/dev4-remaining-parser/manifest.json": "4f9205ed7beca4c0f35ab358c7a3aac0e872aec3b53c5dce3982622e2f76109c",
+          "tests/fixtures/dev4-remaining-parser/semantic.json": "8d1ddbfc483e4ae3640da8ff9a4707a95da2de8473ff9d31364e6c64871200ee"
+        },
+        "adoption_only_documents": {
+          "devdoc/contracts/dev4-independent-frontend.md": "39f807b0aa5b2b7a4ceb100ed3a55fe68241a8f1c140db05a0e22d7660a9e532",
+          "devdoc/contracts/dev4-sql-design.md": "f9c5b0b349ddf496b53da661cff9051bb368df740808f653ddf92aaa4d4e12f1"
+        },
+        "products": "NOT_WRITTEN",
+        "compile_runtime": "NOT_RUN"
+      }
+    },
+    "selection-r1.json": {
+      "sha256": "f346e2bc65336421e7d46a6caf097b4f096b8609464dab25917cf6933e984cc8",
+      "data": {
+        "status": "FROZEN_BEFORE_FIRST_PRODUCT_COMPILE_OR_RUNTIME",
+        "created_at": "2026-10-24T20:50:22.012553+09:00",
+        "required_precondition": "Final independent D2 acceptance and owner adoption; actual product diff/source identity recorded before execution",
+        "planned_product_paths": [
+          "crates/sql/src/frontend/ast.rs",
+          "crates/sql/src/frontend/mod.rs",
+          "crates/sql/src/frontend/parser.rs",
+          "crates/sql/src/frontend/parser/statement.rs",
+          "crates/sql/src/frontend/parser/ddl.rs"
+        ],
+        "semantic_target": "remaining_parser_contracts",
+        "semantic_functions": [
+          {
+            "name": "remaining_statement_shapes",
+            "family": "structural",
+            "cases": 70
+          },
+          {
+            "name": "remaining_raw_payloads",
+            "family": "raw",
+            "cases": 45
+          },
+          {
+            "name": "remaining_contextual_names",
+            "family": "contextual",
+            "cases": 95
+          },
+          {
+            "name": "remaining_diagnostics",
+            "family": "diagnostic",
+            "cases": 444
+          },
+          {
+            "name": "remaining_boundaries",
+            "family": "boundary",
+            "cases": 129
+          },
+          {
+            "name": "remaining_changed_dispatch",
+            "family": "dispatch",
+            "cases": 5
+          },
+          {
+            "name": "remaining_generated_statements",
+            "family": "generated",
+            "cases": 8192
+          },
+          {
+            "name": "remaining_known_bad_observations",
+            "observations": 50,
+            "controls": 12,
+            "product_calls": 0
+          }
+        ],
+        "resource_target": "remaining_parser_resources",
+        "resource_functions": [
+          "remaining_owned_lifetimes",
+          "remaining_quota_boundaries",
+          "remaining_actual_capacity",
+          "remaining_allocation_failures",
+          "remaining_admission_order",
+          "remaining_entry_final_controls",
+          "remaining_classification_controls",
+          "remaining_list_completion_controls",
+          "remaining_interior_and_move_controls",
+          "remaining_where_unwind_controls",
+          "remaining_ddl_numeric_controls",
+          "remaining_bounded_stack_and_drop",
+          "remaining_shared_database"
+        ],
+        "mapping": {
+          "ast_new_payloads_and_statement_dispatch": "full raw tree observations for all new roots; focused five changed P2 dispatch cases",
+          "statement_projection_order_assignment_where_limit": "structural/raw/contextual/diagnostic/boundary/generated observations and new resource callers",
+          "ddl_raw_types_constraints_keys_storage": "same semantic families plus late admission/raw numeric controls, bounded flat DDL arena",
+          "owned_raw_tree_consumers": "13resource functions only; existing allocation/lexer/predicate/typed suites not selected"
+        },
+        "compile_only": "existing parser_contracts enum exhaustiveness linkage; no old runtime tests",
+        "not_selected": [
+          "old parser/predicate/scalar/typed suites",
+          "workspace test wrappers",
+          "document verifier",
+          "ignored expansion256x1024",
+          "ignored30minute grammar profile"
+        ],
+        "results": "NOT_RUN",
+        "product_sha256": {
+          "crates/sql/src/frontend/ast.rs": "4290f429d9d948c1f9615fce36f6a47a943cef291fb759938c28c3c0dff3a9fb",
+          "crates/sql/src/frontend/mod.rs": "398c00d20d71761ea30bbbba22a06e17d54a0ddb792ab7e3daf9ded740243dca",
+          "crates/sql/src/frontend/parser.rs": "18312187d67d80761b8d136cea610665a3437eb11d8673ddf77314447463fd28",
+          "crates/sql/src/frontend/parser/statement.rs": "e3d2c6ad0e3b7977dfff74c9bf3b5a3119e36e63baa36ca07483dff24d3a5dd0",
+          "crates/sql/src/frontend/parser/ddl.rs": "0c95cc256991b61b2b3e0730c6415831a2459841853cc76bd9b18e8c30e16246"
+        },
+        "adapter_mechanical_compile_only": "crates/sql/tests/parser_contracts.rs: reject newly added variants in old INSERT observation; no old runtime selected",
+        "d2_adoption_sha256": "3ac9cac492e1ae56ed3c0509e1d44110d2db4a205655563f39971d8c4975e0e2",
+        "source_delta": "new P4 products plus new semantic/resource/reference inputs; existing parent target returns Span without P2 behavior changes; focused five routing expectations changed",
+        "unrelated_worktree": " M crates/engine/src/storage/dirty_frame.rs\n M crates/engine/src/storage/dirty_frame/registration.rs\n M crates/engine/src/storage/dirty_frame/status_residency.rs\n M crates/engine/src/storage/wal_io.rs\n M crates/engine/src/storage/wal_io/bootstrap.rs\n M crates/engine/src/storage/wal_io/doublewrite_install.rs\n M crates/engine/src/storage/wal_io/mutable_storage.rs\n M crates/engine/src/storage/wal_io/plan4_genesis.rs\n M crates/sql/src/frontend/ast.rs\n M crates/sql/src/frontend/mod.rs\n M crates/sql/src/frontend/parser.rs\n M crates/sql/tests/parser_contracts.rs\n M crates/testing/reference/src/frontend.rs\n M crates/testing/reference/src/frontend/parser/literals.rs\n M devdoc/README.md\n M devdoc/contracts/README.md\n M devdoc/contracts/dev4-independent-frontend.md\n M devdoc/contracts/dev4-sql-design.md\n M devdoc/documents.json\n M devdoc/evidence/README.md\n M devdoc/implementation/dev3-implementation.md\n M devdoc/plans/dev3-test-plan.md\n M devdoc/plans/development-stages.json\n M devdoc/plans/stage-completion.json\n M devdoc/policies/repository-build-plan.json\n M devdoc/policies/repository-build-plan.md\n?? crates/engine/src/storage/dirty_frame/plan4_residency.rs\n?? crates/engine/src/storage/wal_io/plan4_pages.rs\n?? crates/engine/src/storage/wal_io/plan4_pages_load.rs\n?? crates/engine/src/storage/wal_io/plan4_pages_native_tests.rs\n?? crates/engine/src/storage/wal_io/plan4_pages_read.rs\n?? crates/engine/src/storage/wal_io/plan4_pages_resources.rs\n?? crates/engine/src/storage/wal_io/plan4_pages_tests.rs\n?? crates/sql/src/frontend/parser/ddl.rs\n?? crates/sql/src/frontend/parser/statement.rs\n?? crates/sql/tests/remaining_parser_contracts.rs\n?? crates/sql/tests/remaining_parser_resources.rs\n?? crates/testing/reference/src/frontend/remaining_parser.rs\n?? crates/testing/reference/src/frontend/remaining_parser/\n?? devdoc/contracts/dev3-plan4-clean-owner.md\n?? devdoc/evidence/dev3-plan4-clean-owner-20261024.json\n?? devdoc/evidence/dev3-plan4-clean-owner-20261024.md\n?? scripts/dev3_plan4_clean_cases.py\n?? scripts/dev3_plan4_clean_compiler.py\n?? scripts/dev3_plan4_clean_native.py\n?? scripts/test_dev3_plan4_clean_compiler.py\n?? scripts/test_dev3_plan4_clean_harness.py\n?? tests/fixtures/dev3-plan4-clean-owner/\n?? tests/fixtures/dev4-remaining-parser/\n"
+      }
+    },
+    "research.json": {
+      "sha256": "c671376e59c29cd0a07564674bc9c37ed86bc3a164c72b04b1d0ad592e76c4a1",
+      "data": {
+        "status": "READ_ONLY_RESEARCH_D2_PROPOSAL_NOT_ADOPTED",
+        "created_at": "2026-10-24T19:47:48.832924+09:00",
+        "scope": "Complete remaining P4 raw SELECT/UPDATE/DELETE/CREATE-DROP TABLE-INDEX parser design only",
+        "local_head_observed": "b3098c1ffe0d555c0021ceb9a4ee5ce958dd7634",
+        "local_input_sha256": {
+          "artifacts/dev4-remaining-parser-20261024/preparation-notes.md": "2a4d06c4344011cf132a02e0a5abe18023ad645ac4be160c5e3ee71343a716ff",
+          "devdoc/contracts/dev4-sql-design.md": "a7b2c9db54633b4460281693c83531d3f06aeba3b13db7a2fc01370bb1811952",
+          "devdoc/contracts/dev4-independent-frontend.md": "02c495580110b918ac88c1f06ecd412285e4c98b7b5728634f829fb43ae2f689",
+          "devdoc/plans/dev4-preparation-plan.md": "f48fb95ef138681d18beea1592ea16d46a8893d3e49c3e7bda29ba58fc57b81f",
+          "devdoc/reference/opensource-references.md": "c7329b07b117e17cd7ce56f1ccd379afb9e01208173550e5b8faca3da829af4b",
+          "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+          "crates/sql/src/frontend/parser/predicate.rs": "ceb978f4fdf57b6e25cc6727846b9c62a79e532814c4d5ded01b056fb84d9ac8",
+          "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+          "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310"
+        },
+        "protected_unrelated_engine_status": "M crates/engine/src/storage/dirty_frame.rs\n M crates/engine/src/storage/dirty_frame/registration.rs\n M crates/engine/src/storage/dirty_frame/status_residency.rs\n M crates/engine/src/storage/wal_io.rs\n M crates/engine/src/storage/wal_io/bootstrap.rs\n M crates/engine/src/storage/wal_io/doublewrite_install.rs\n M crates/engine/src/storage/wal_io/mutable_storage.rs\n M crates/engine/src/storage/wal_io/plan4_genesis.rs\n?? crates/engine/src/storage/dirty_frame/plan4_residency.rs\n?? crates/engine/src/storage/wal_io/plan4_pages.rs\n?? crates/engine/src/storage/wal_io/plan4_pages_load.rs\n?? crates/engine/src/storage/wal_io/plan4_pages_native_tests.rs\n?? crates/engine/src/storage/wal_io/plan4_pages_read.rs\n?? crates/engine/src/storage/wal_io/plan4_pages_resources.rs\n?? crates/engine/src/storage/wal_io/plan4_pages_tests.rs",
+        "repositories": [
+          {
+            "checkout": "/home/et16/work/postgres",
+            "origin": "https://github.com/postgres/postgres.git",
+            "revision": "45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851",
+            "dirty": false,
+            "status_porcelain": "",
+            "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "files": [
+              {
+                "path": "src/backend/parser/gram.y",
+                "sha256": "9915bd2d6050b83c97850e08156c18ebf99e5578bb9520ce05b985817d01fccb",
+                "line_count": 20166,
+                "read_ranges": [
+                  {
+                    "first": 3703,
+                    "last": 3727,
+                    "sha256": "4483a90424a87817001ec4f7541c8868c1389dfff22a2af3a296b35851f79509"
+                  },
+                  {
+                    "first": 3905,
+                    "last": 3926,
+                    "sha256": "4c97fc94eb12c2a0addb4fea3f73312467acb7514adff3569a8948b48029e54d"
+                  },
+                  {
+                    "first": 4281,
+                    "last": 4345,
+                    "sha256": "411cb9953e235747a6e5b943004c688befb88d34142cc591a674e1bb44068e64"
+                  },
+                  {
+                    "first": 7029,
+                    "last": 7062,
+                    "sha256": "daabadbc3b962f8f6c469f60269a62a0992fd4760306d38293f7d51b6734642b"
+                  },
+                  {
+                    "first": 8340,
+                    "last": 8378,
+                    "sha256": "d13806bc98351941f3893610bc4a93909ec19bd0c9c2f698a0f56fce863e8895"
+                  },
+                  {
+                    "first": 12703,
+                    "last": 12832,
+                    "sha256": "4545ed11eb5f08bc463b861920d80325832c3950ee876435f62e92ca0a8b32f2"
+                  },
+                  {
+                    "first": 13211,
+                    "last": 13258,
+                    "sha256": "68f310b84c19670bdb6a2b7e1ad62cab4bf44040991955b966a1d5b2830fdd67"
+                  },
+                  {
+                    "first": 13507,
+                    "last": 13625,
+                    "sha256": "9f1cc48a9ba8e40d1a16c9db56d845ad9c61832135f6ceeb04f6e69d6f230351"
+                  }
+                ],
+                "adopt": [
+                  "Represent statement target, projection/assignment/order/constraint roles explicitly; preserve source location and syntax options.",
+                  "Use ordered repeated lists while keeping WHERE syntax separate from SELECT/DML clauses."
+                ],
+                "reject": [
+                  "Do not adopt general expressions in SET/projection/LIMIT/order terms, arbitrary aliases, WITH, RETURNING, UPDATE FROM/DELETE USING, OFFSET/FETCH, DISTINCT or broader DDL grammar.",
+                  "Do not copy PostgreSQL memory contexts or raw list representation into the quota-accounted flat Rust arena."
+                ]
+              },
+              {
+                "path": "src/backend/parser/parse_utilcmd.c",
+                "sha256": "699b123730e2a4a6e2533a49ec50f8edc1f948a4234613bf55e30e5e24dc3164",
+                "line_count": 4890,
+                "read_ranges": [
+                  {
+                    "first": 153,
+                    "last": 190,
+                    "sha256": "a29b58c7dcd498bde7f85609383fe1461eb9865d53a019b2b29ec5099e1d48e7"
+                  },
+                  {
+                    "first": 271,
+                    "last": 300,
+                    "sha256": "0d5a4d14bff66ddc9c9a02b127ba5a58e677e34180c64f54b96301b3dcfdf63b"
+                  },
+                  {
+                    "first": 592,
+                    "last": 626,
+                    "sha256": "969c85f8d79cfac59f6c06006a3db35451b8d897948c23d07bf8052223b2f42e"
+                  }
+                ],
+                "adopt": [
+                  "Keep raw column/constraint syntax separate from catalog/name/type/constraint transformation."
+                ],
+                "reject": [
+                  "Do not reproduce namespace locks, utility-command expansion or serial rewrites in the pure parser.",
+                  "PostgreSQL transformation timing does not establish XADB DDL precommit outcome semantics."
+                ]
+              }
+            ]
+          },
+          {
+            "checkout": "/home/et16/work/sqlite",
+            "origin": "https://github.com/sqlite/sqlite.git",
+            "revision": "43a48f77585a88940c727f33682151418f544059",
+            "dirty": false,
+            "status_porcelain": "",
+            "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "files": [
+              {
+                "path": "src/parse.y",
+                "sha256": "ba52f3a1a8c7500d35fe71b46730ae13f3e5dc3701ae23d854ffbfefae7a449a",
+                "line_count": 2173,
+                "read_ranges": [
+                  {
+                    "first": 347,
+                    "last": 360,
+                    "sha256": "bc1139f048d36effd204c38aade73b5e7c88484c7be52bc0a8641292a9d7cbc4"
+                  },
+                  {
+                    "first": 651,
+                    "last": 666,
+                    "sha256": "5fe6d83d32a6bb145ec3ab5e657b30b970f9a1333c2ef8e7c0f5ea4cb77c3c0c"
+                  },
+                  {
+                    "first": 710,
+                    "last": 739,
+                    "sha256": "972b65b8c95753716b5d80f04ac8fbcc192cfd25eaccf8a179582b0c9e7b5a70"
+                  },
+                  {
+                    "first": 932,
+                    "last": 1047,
+                    "sha256": "ae5c2572709f8322d1f062f2e7ce32c5a140ba08333e2480456eeb92b4dcc289"
+                  },
+                  {
+                    "first": 1628,
+                    "last": 1643,
+                    "sha256": "cb59e9aaca86cebf19f175b8485edb8c4520959f9782f80bba540caac869afed"
+                  },
+                  {
+                    "first": 1736,
+                    "last": 1748,
+                    "sha256": "626ec059b33b286fba8e01334efafa738c04fe5e6318a65a0aa4a33c6e99f145"
+                  }
+                ],
+                "adopt": [
+                  "Preserve the raw type text/sign interval and explicit versus omitted sort/null placement.",
+                  "Keep LIMIT a distinct clause and projection aliases as their own observed names."
+                ],
+                "reject": [
+                  "SQLite signed type syntax admits FLOAT and two numeric arguments; XADB type_length remains signed decimal digits only.",
+                  "Reject implicit AS-less aliases, general expression projections/order/LIMIT, LIMIT OFFSET/comma forms and UPDATE/DELETE LIMIT in XADB.",
+                  "Do not call schema/VDBE mutation actions from parser reductions."
+                ]
+              },
+              {
+                "path": "src/build.c",
+                "sha256": "5380ee4b98a32fb520ab376ce89a701ebbd1864c5787ab98c0dcca6667f1ea38",
+                "line_count": 5892,
+                "read_ranges": [
+                  {
+                    "first": 1550,
+                    "last": 1573,
+                    "sha256": "8f6038cef774d2a8dbd4a8e8d73d484659cfd550510564107f8dc5646076f848"
+                  },
+                  {
+                    "first": 1597,
+                    "last": 1618,
+                    "sha256": "441bf7e9f7350664bfa9449155363fc58c4534e34f720f50323fa1e79f5c4e8c"
+                  }
+                ],
+                "adopt": [
+                  "Treat column limits/duplicate-name checks as separately identifiable semantic checks that need an explicit owner."
+                ],
+                "reject": [
+                  "Do not import sqlite3AddColumn early schema/limit/duplicate validation into XADB raw DDL parsing; XADB defers those semantic results until after DDL precommit."
+                ]
+              }
+            ]
+          }
+        ],
+        "decisions": {
+          "ddl": "Preserve raw signed type length; defer column/index count, duplicates, existence, PK nullability, encoded key/range checks until the future post-precommit semantic owner. Grammar cardinality/order and source/token/node/quota stay in parser.",
+          "limit": "Unsigned decimal token or marker only; raw magnitude preserved; plus/minus Syntax; Int64 bound deferred.",
+          "order_alias": "Raw simple Name accepted; parser cannot know alias versus an identically spelled input column; future binder looks up input columns only.",
+          "where": "Reuse existing ParseInput::predicate with existing source, arena and statement-wide marker ordinal, without synthetic Predicate root.",
+          "contextual_words": "Owner-directed proposal: preserve DISTINCT/ALL/IF/CHECK/FOREIGN/CONSTRAINT in valid Name roles; recognize only explicit bounded token shapes (SELECT modifier+body, CREATE IF NOT EXISTS, DROP IF EXISTS, CHECK+LP, FOREIGN+KEY, CONSTRAINT+Name), propagating speculative-peek lexical errors first. No keyword additions, token buffer, source copy, marker reset or AST ownership change."
+        },
+        "actions": {
+          "product_files_modified": false,
+          "fixtures_modified": false,
+          "shared_docs_modified": false,
+          "compile_executed": false,
+          "runtime_tests_executed": false,
+          "commits_created": false,
+          "network_or_checkout_updates": false
+        },
+        "artifact": "artifacts/dev4-remaining-parser-20261024/design-proposal.md",
+        "artifact_sha256": "90cbdec56d2120a23be557ab54250738e08b956f47fb14c70339c5f7f49bd58c",
+        "updated_at": "2026-10-24T19:50:36.637717+09:00"
+      }
+    },
+    "resource-inventory.json": {
+      "sha256": "37c4cb79f34765a5a27a0b909716b9ec03d294fb2c0160deb5fc801776c80c56",
+      "data": {
+        "status": "D2_PROPOSED_NOT_RUN",
+        "created_at": "2026-10-24T20:14:28.091422+09:00",
+        "target": "remaining_parser_resources",
+        "required_functions": [
+          "remaining_owned_lifetimes",
+          "remaining_quota_boundaries",
+          "remaining_actual_capacity",
+          "remaining_allocation_failures",
+          "remaining_admission_order",
+          "remaining_entry_final_controls",
+          "remaining_classification_controls",
+          "remaining_list_completion_controls",
+          "remaining_interior_and_move_controls",
+          "remaining_where_unwind_controls",
+          "remaining_ddl_numeric_controls",
+          "remaining_bounded_stack_and_drop",
+          "remaining_shared_database"
+        ],
+        "required_function_count": 13,
+        "product_compile_runtime": "NOT_RUN",
+        "test_support_only": true,
+        "profile": "new P4 statement resource routes only",
+        "source_and_expected_generators": "Literal bytes and independent tree/source arithmetic; no product tokenizer/parser/type/normalizer called to derive expectations",
+        "formulas": {
+          "S": "size_of::<AstNode>() actual layout",
+          "update_A": "13+4*A-1 source bytes; 4+3*A nodes; A>=1",
+          "table_C": "unqualified 5+3*C nodes; PUBLIC qualified 6+3*C nodes; C>=1",
+          "update5": "source32; nodes19; normal retained32+32S; normal peak32+48S; growth point29",
+          "update5_padding1": "source33; arenas17 then35; retained33+35S; peak33+52S; growth point29",
+          "max_allocation_input": "UPDATE2700; 8104nodes; 11sites",
+          "allocation_failure_offsets": [
+            0,
+            0,
+            29,
+            49,
+            93,
+            177,
+            349,
+            689,
+            1373,
+            2737,
+            5469
+          ]
+        },
+        "late_datatype_witness": {
+          "source": "CREATE TABLE PUBLIC.t(a BIGINT,b BIGINT,c BIGINT,d VARCHAR(?)) STORAGE DISK",
+          "quota": "source.len+16*S (session or database)",
+          "expected_error": {
+            "code": "Syntax",
+            "module": "Parse",
+            "span": [
+              59,
+              60
+            ]
+          },
+          "allocation_count": 2,
+          "contrast_source": "CREATE TABLE PUBLIC.t(a BIGINT,b BIGINT,c BIGINT,d BIGINT(1)) STORAGE DISK",
+          "contrast_error": {
+            "code": "Limit",
+            "module": "Parse",
+            "span": [
+              51,
+              51
+            ]
+          }
+        },
+        "changed_p2_cases": [
+          {
+            "id": "first-select",
+            "source": " /*prefix*/ SELECT ",
+            "source_hex": "202f2a7072656669782a2f2053454c45435420",
+            "old_error": {
+              "code": "Unsupported",
+              "module": "Parse",
+              "span": [
+                12,
+                18
+              ]
+            },
+            "new_error": {
+              "code": "Syntax",
+              "module": "Parse",
+              "span": [
+                19,
+                19
+              ]
+            },
+            "focused_selection_required": true
+          },
+          {
+            "id": "first-update",
+            "source": " /*prefix*/ UPDATE ",
+            "source_hex": "202f2a7072656669782a2f2055504441544520",
+            "old_error": {
+              "code": "Unsupported",
+              "module": "Parse",
+              "span": [
+                12,
+                18
+              ]
+            },
+            "new_error": {
+              "code": "Syntax",
+              "module": "Parse",
+              "span": [
+                19,
+                19
+              ]
+            },
+            "focused_selection_required": true
+          },
+          {
+            "id": "first-delete",
+            "source": " /*prefix*/ DELETE ",
+            "source_hex": "202f2a7072656669782a2f2044454c45544520",
+            "old_error": {
+              "code": "Unsupported",
+              "module": "Parse",
+              "span": [
+                12,
+                18
+              ]
+            },
+            "new_error": {
+              "code": "Syntax",
+              "module": "Parse",
+              "span": [
+                19,
+                19
+              ]
+            },
+            "focused_selection_required": true
+          },
+          {
+            "id": "first-create",
+            "source": " /*prefix*/ CREATE ",
+            "source_hex": "202f2a7072656669782a2f2043524541544520",
+            "old_error": {
+              "code": "Unsupported",
+              "module": "Parse",
+              "span": [
+                12,
+                18
+              ]
+            },
+            "new_error": {
+              "code": "Syntax",
+              "module": "Parse",
+              "span": [
+                19,
+                19
+              ]
+            },
+            "focused_selection_required": true
+          },
+          {
+            "id": "first-drop",
+            "source": " /*prefix*/ DROP ",
+            "source_hex": "202f2a7072656669782a2f2044524f5020",
+            "old_error": {
+              "code": "Unsupported",
+              "module": "Parse",
+              "span": [
+                12,
+                16
+              ]
+            },
+            "new_error": {
+              "code": "Syntax",
+              "module": "Parse",
+              "span": [
+                17,
+                17
+              ]
+            },
+            "focused_selection_required": true
+          }
+        ],
+        "existing_tests_not_selected": [
+          "parser_contracts::literal_rejections (contains unchanged cases)",
+          "old parser/predicate/scalar/typed runtime suites"
+        ],
+        "protected_files": "No DEV3/shared/product files modified; only new resource target and artifact drafts",
+        "files_sha256": {
+          "crates/sql/tests/remaining_parser_resources.rs": "8995528a90da4aadf91483a1dff1559335acf67131aeed550a6ddf3b374867d0",
+          "artifacts/dev4-remaining-parser-20261024/resource-plan.md": "65e6ecfd81712d51c79b272068dac8299743ab4343892b3f0c2d2d4bd11bfb37"
+        },
+        "witness_selection": {
+          "environment": "XADB_REMAINING_RESOURCE_CASE",
+          "unset_behavior": "Original full inputs, expectations, loop repetitions and ordering unchanged",
+          "invalid_behavior": "Panic before any product call on unknown ID, empty/non-Unicode value, or presence of XADB_REMAINING_CASE/XADB_REMAINING_FROM_CASE",
+          "applies_only_to": [
+            "remaining_admission_order",
+            "remaining_list_completion_controls",
+            "remaining_ddl_numeric_controls"
+          ],
+          "functions": {
+            "remaining_admission_order": [
+              {
+                "id": "admission/roots",
+                "product_calls": 6
+              },
+              {
+                "id": "admission/where",
+                "product_calls": 3
+              },
+              {
+                "id": "admission/variable-datatype",
+                "product_calls": 2
+              },
+              {
+                "id": "admission/unit-datatype",
+                "product_calls": 2
+              }
+            ],
+            "remaining_list_completion_controls": [
+              {
+                "id": "completion/projection-comma",
+                "product_calls": 2
+              },
+              {
+                "id": "completion/projection-item",
+                "product_calls": 2
+              },
+              {
+                "id": "completion/assignment-comma",
+                "product_calls": 2
+              },
+              {
+                "id": "completion/assignment-item",
+                "product_calls": 2
+              },
+              {
+                "id": "completion/order-term",
+                "product_calls": 2
+              },
+              {
+                "id": "completion/limit",
+                "product_calls": 2
+              },
+              {
+                "id": "completion/datatype",
+                "product_calls": 2
+              },
+              {
+                "id": "completion/definition-comma",
+                "product_calls": 2
+              },
+              {
+                "id": "completion/index-key-comma",
+                "product_calls": 2
+              },
+              {
+                "id": "completion/drop-table",
+                "product_calls": 2
+              },
+              {
+                "id": "completion/drop-index",
+                "product_calls": 2
+              }
+            ],
+            "remaining_ddl_numeric_controls": [
+              {
+                "id": "numeric/raw-length",
+                "product_calls": 1
+              },
+              {
+                "id": "numeric/exponent",
+                "product_calls": 2
+              }
+            ]
+          },
+          "preserved_before_selection": "artifacts/dev4-remaining-parser-20261024/prefreeze-selection-01/resource-backup-manifest.json"
+        }
+      }
+    },
+    "mutant-results.json": {
+      "sha256": "5402e556da95d84604829dec86ff581d103544aba314f2211ac292a35ffde152",
+      "data": {
+        "status": "21_CATEGORIES_REJECTED_WITH_ORIGINAL_M21_COMPILE_FAILURE_PRESERVED",
+        "recorded_at": "2026-10-24T21:01:02.988903+09:00",
+        "reviewer": "/root",
+        "mutants": [
+          {
+            "id": "M01",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m01.json",
+            "source_sha256": "44eb1951224d12b1c77c87e47dfc4dce11fd15c3d7c1ce33736cac2768d5a94c",
+            "recipe": "mutant-m01-recipe.json",
+            "recipe_sha256": "19e9b8e91c4c8c68865b14cb755b64f673eb530cc1e90cd7f2f9828e2fc624b2",
+            "receipt": "mutant-m01-detector.json",
+            "receipt_sha256": "354944246398ca43a24f82aa459474e642f8b90555a57708747b95370acfc8c4",
+            "detector": "remaining_statement_shapes",
+            "selectors": {
+              "XADB_REMAINING_CASE": "index/targets/True/False/False"
+            },
+            "review": "CreateIndex unique false instead of expected true; full tree observation mismatch"
+          },
+          {
+            "id": "M02",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m02.json",
+            "source_sha256": "ce0e289f6d97cc73e2ab3d5af4c00b60f65929713f3c1cafac2cbbaea4443e21",
+            "recipe": "mutant-m02-recipe.json",
+            "recipe_sha256": "36ed9e449041ae99e04d033a0c72cdc995211d9387e1f109750aecc08ee371bd",
+            "receipt": "mutant-m02-detector.json",
+            "receipt_sha256": "6cc3c5d37504eca907201598bf831b2ad5b1f0c890ed7bed74ed570998fd2d3e",
+            "detector": "remaining_statement_shapes",
+            "selectors": {
+              "XADB_REMAINING_CASE": "select/options/0/1"
+            },
+            "review": "Extra Predicate wrapper between Where and Or; 13 nodes instead of12"
+          },
+          {
+            "id": "M03",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m03.json",
+            "source_sha256": "0c736b99e9e38992e7e5722720439ba1e02b3a41a546c2c90211e106983389a5",
+            "recipe": "mutant-m03-recipe.json",
+            "recipe_sha256": "fa315f7b964d4d7857e90fcbc66221ea945e43ecfa347740664b832462d24995",
+            "receipt": "mutant-m03-detector.json",
+            "receipt_sha256": "5b697948e3d509ebdb1745044d47a5ed6a86b097b511e707d21949337c91224f",
+            "detector": "remaining_statement_shapes",
+            "selectors": {
+              "XADB_REMAINING_CASE": "update/markers-across-where"
+            },
+            "review": "WHERE marker reset produces ordinal1 instead of3 and3 markers instead of5"
+          },
+          {
+            "id": "M04",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m04.json",
+            "source_sha256": "a86c76d5bcfe335db13f7859f2b7a8be97d378d5d45134e6b7f00f146c2e4511",
+            "recipe": "mutant-m04-recipe.json",
+            "recipe_sha256": "d1ffffadb06273907bb7a58ef6b120944fed41180a211ec3ed535066534813e7",
+            "receipt": "mutant-m04-detector.json",
+            "receipt_sha256": "2de2516e93a6afe13bd638cd7b4a46cce77f30153726de31db72999f7cb81e94",
+            "detector": "remaining_boundaries",
+            "selectors": {
+              "XADB_REMAINING_CASE": "boundary/list/false/33"
+            },
+            "review": "Projection33 succeeds with70nodes instead of Limit at71"
+          },
+          {
+            "id": "M05",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m05.json",
+            "source_sha256": "1e07d38a6fb30ee4a2664cd85f34c50fef7abe446a77c5993d2c268858c0c270",
+            "recipe": "mutant-m05-recipe.json",
+            "recipe_sha256": "98686fecb1d33a4dc053c78ec77f971e93a25ce364fdb12bac19da20ec26117a",
+            "receipt": "mutant-m05-detector.json",
+            "receipt_sha256": "c464cc69ba5b44f5301fc4b04357636f3ff43cec926eaed97a358bd6fa623506",
+            "detector": "remaining_boundaries",
+            "selectors": {
+              "XADB_REMAINING_CASE": "boundary/list/true/33"
+            },
+            "review": "Order33 succeeds with72nodes instead of Limit at89"
+          },
+          {
+            "id": "M06",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m06.json",
+            "source_sha256": "2ae804ddbb0ae4bca546c13b213d5d6e7a3038ed90dffade702416e99fa71ab3",
+            "recipe": "mutant-m06-recipe.json",
+            "recipe_sha256": "0a8c2e6406888af46ae1d407f3d8aec0ad87d2deac691aeb466874572c27954c",
+            "receipt": "mutant-m06-detector.json",
+            "receipt_sha256": "e407e16ca626df643102174edaac98a34765f1f30e17a79ec31cf14ad43d850d",
+            "detector": "remaining_diagnostics",
+            "selectors": {
+              "XADB_REMAINING_CASE": "syntax/limit-sign/2b31"
+            },
+            "review": "Signed LIMIT succeeds with8nodes instead of Syntax at22..23"
+          },
+          {
+            "id": "M07",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m07.json",
+            "source_sha256": "1912d1c895f1e2405d9f1fe26fddba80d676994930541de7c934c3b0aa63fd3e",
+            "recipe": "mutant-m07-recipe.json",
+            "recipe_sha256": "e4a43e91d7626b1f73766b37442fa4a242654b189aeb1fab936dbd1b211840d1",
+            "receipt": "mutant-m07-detector.json",
+            "receipt_sha256": "a5455c85a866960adc7a75b49fcb74a1a25628e6f68139d610d731a56e1c4840",
+            "detector": "remaining_raw_payloads",
+            "selectors": {
+              "XADB_REMAINING_CASE": "raw/limit/9223372036854775808"
+            },
+            "review": "Raw overflowing LIMIT becomes Range22..41 instead of successful7node AST"
+          },
+          {
+            "id": "M08",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m08.json",
+            "source_sha256": "423392036509755d58aa7c1a6b2b8d10b4bc88ebc598f94291ac6378cb066cfc",
+            "recipe": "mutant-m08-recipe.json",
+            "recipe_sha256": "8857918f04e3071333943f8b29a51b358a054eb68bf71c2b686e4092a97cdf2b",
+            "receipt": "mutant-m08-detector.json",
+            "receipt_sha256": "47ebf7ab5ee5ba87e137fcd8f81192d28383e470d2131bbc66dbc069dd481060",
+            "detector": "remaining_ddl_numeric_controls",
+            "selectors": {
+              "XADB_REMAINING_RESOURCE_CASE": "numeric/raw-length"
+            },
+            "review": "Raw negative4096digit type length becomes Range25..4122 before semantic owner"
+          },
+          {
+            "id": "M09",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m09.json",
+            "source_sha256": "8bcf2edc0e7fb53dd5270497d79b7f9a57673d52f975cd0237d40a8c64e721a5",
+            "recipe": "mutant-m09-recipe.json",
+            "recipe_sha256": "1c966a61e2101d0efd311222ffb33712711c7fa63bf6884287dcc7bc76534367",
+            "receipt": "mutant-m09-detector.json",
+            "receipt_sha256": "bfe3d3e2ce69688f793bf7644312b98d03ef02493997edadb5ea6668d67c8402",
+            "detector": "remaining_boundaries",
+            "selectors": {
+              "XADB_REMAINING_CASE": "boundary/nodes/create-table/8192"
+            },
+            "review": "Early semantic32column validation yields Limit303 rather than8192node AST"
+          },
+          {
+            "id": "M10",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m10.json",
+            "source_sha256": "81569f010f42cbe70e65b6bc10f32a4c380e910030839927b9c713d0e2b2028c",
+            "recipe": "mutant-m10-recipe.json",
+            "recipe_sha256": "56d2d73dfdd0433227e84c1454032b540fcdd78a254d22567b925752efa54c5a",
+            "receipt": "mutant-m10-detector.json",
+            "receipt_sha256": "051410b2ba40b1a57f5a12467ec45cffe216d65ad8749353c099efda28e37b4a",
+            "detector": "remaining_diagnostics",
+            "selectors": {
+              "XADB_REMAINING_CASE": "syntax/structure/32"
+            },
+            "review": "Column after constraint succeeds with14nodes rather than Syntax39..40"
+          },
+          {
+            "id": "M11",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m11.json",
+            "source_sha256": "fb40aafb24f7a6f3543d7e6acbeae0a546fb97185890899250790b7c32913e38",
+            "recipe": "mutant-m11-recipe.json",
+            "recipe_sha256": "6d7e6ba358fa746fa25fc7cd8f26a9b20545ddc767f825c89ee74d3f2859b8f0",
+            "receipt": "mutant-m11-detector.json",
+            "receipt_sha256": "83a8405758f9e376fa557bb9f86274d04b000bf905ee6e6c93a95282d0bc750d",
+            "detector": "remaining_diagnostics",
+            "selectors": {
+              "XADB_REMAINING_CASE": "syntax/truncated/28"
+            },
+            "review": "Missing STORAGE succeeds with7nodes rather than Syntax EOF24"
+          },
+          {
+            "id": "M12",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m12.json",
+            "source_sha256": "1b0e7702a9ba7db3b42c2912ea7b73f759c39150f42f2c9c9034a61405fe545f",
+            "recipe": "mutant-m12-recipe.json",
+            "recipe_sha256": "013722257d2022892907f67bc978f03a655e2ef2aba08bac8b4a4d6166bf56da",
+            "receipt": "mutant-m12-detector.json",
+            "receipt_sha256": "7874b70d1fd5e504fa3367f40e66b0a660c9bf5ab66f68f905a37ed3a76b5d8a",
+            "detector": "remaining_contextual_names",
+            "selectors": {
+              "XADB_REMAINING_CASE": "context/name/distinct"
+            },
+            "review": "Contextual distinct name becomes Unsupported7..15 rather than6node AST"
+          },
+          {
+            "id": "M13",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m13.json",
+            "source_sha256": "5dab56b32d81ad69068f83b6544829f2c8fd032a19c0ec2d49946b8b66e470a4",
+            "recipe": "mutant-m13-recipe.json",
+            "recipe_sha256": "ce2e60789c59f579977c616c06111a524ac64a4c532d45fa58051e30cda26640",
+            "receipt": "mutant-m13-detector.json",
+            "receipt_sha256": "26e5086f2c62cb87c11d1ea4298fbc168e790ad497bd38d9b8be78b71cfba9e5",
+            "detector": "remaining_diagnostics",
+            "selectors": {
+              "XADB_REMAINING_CASE": "syntax/single-statement/53454c45435420612046524f4d2074/3b3b"
+            },
+            "review": "Extra semicolon accepted rather than Syntax16..17"
+          },
+          {
+            "id": "M14",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m14.json",
+            "source_sha256": "9e4c909f42b62b74fb93a78579ad8bdb2e13f14896d8329e11d4c9cac6f2bdcc",
+            "recipe": "mutant-m14-recipe.json",
+            "recipe_sha256": "4e07c10e52d8b1b6d568559f25c06f367b1f74ff2687d1e00bf80213ce488452",
+            "receipt": "mutant-m14-detector.json",
+            "receipt_sha256": "3d00ea3a420ec130782c56c557bb41cd720388a5ec90c4c61a4b365a209643a4",
+            "detector": "remaining_admission_order",
+            "selectors": {
+              "XADB_REMAINING_RESOURCE_CASE": "admission/variable-datatype"
+            },
+            "review": "Variable DataType early admission yields Limit51 instead of Syntax59..60"
+          },
+          {
+            "id": "M15",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m15.json",
+            "source_sha256": "5458a72d09a6468e51380b2cfb13666e9f674d204697e943ff771b83f12dd1de",
+            "recipe": "mutant-m15-recipe.json",
+            "recipe_sha256": "0dce3098bbfbadb39bb297058feeb753845acf491b6541ea503c762713548576",
+            "receipt": "mutant-m15-detector.json",
+            "receipt_sha256": "ccf5c0eedd64593fb9a12c181af9a91b331185396bf14abe2bed95a0af032d82",
+            "detector": "remaining_admission_order",
+            "selectors": {
+              "XADB_REMAINING_RESOURCE_CASE": "admission/unit-datatype"
+            },
+            "review": "Fixed DataType delayed admission yields Syntax57..58 instead of Limit51"
+          },
+          {
+            "id": "M16",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m16.json",
+            "source_sha256": "8ebd57b11de29f1436263cb28995f36201dcd9c5afe69aee2466d7cd7de5f831",
+            "recipe": "mutant-m16-recipe.json",
+            "recipe_sha256": "0210650e72bcfe12d8543c2ccaff7b85a475065446bc386c27f70f77d4aa8530",
+            "receipt": "mutant-m16-detector.json",
+            "receipt_sha256": "6d2f9bd688bae808092849d3da047ae3cde0fd24480e2f74a5616b464ed00d40",
+            "detector": "remaining_admission_order",
+            "selectors": {
+              "XADB_REMAINING_RESOURCE_CASE": "admission/roots"
+            },
+            "review": "CREATE root delayed admission yields Lex Syntax7..8 instead of Parse Limit0"
+          },
+          {
+            "id": "M17",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m17.json",
+            "source_sha256": "d32bf05a77bf7e15c4034018a0c6cd7bb683d710d39e1fe93a280635b6806894",
+            "recipe": "mutant-m17-recipe.json",
+            "recipe_sha256": "b19f26236f739be93d601bd97dc11adc05fe8730a53a02a3e1c02dd5b97d7602",
+            "receipt": "mutant-m17-detector.json",
+            "receipt_sha256": "8d5390c8fdac0c50e2f154645a936b7d3148c9b0ed5e48d7dff3bdaf5e2645c0",
+            "detector": "remaining_classification_controls",
+            "selectors": {},
+            "review": "Missing projection item-start Parse checkpoint74 at first33rd-name witness"
+          },
+          {
+            "id": "M18",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m18.json",
+            "source_sha256": "14786f0c159abc415e3f67bc6a652a94e9aa162603ee3f00ec2e72b30a92dbf4",
+            "recipe": "mutant-m18-recipe.json",
+            "recipe_sha256": "6a50c6dcff0513d1e742e195a083923c16e7fa0f3b39eba560f91553f8e969bd",
+            "receipt": "mutant-m18-detector.json",
+            "receipt_sha256": "b0a737c949068ff24c20c876cf02fb17464592a8ac7961140caf6b239090caa2",
+            "detector": "remaining_list_completion_controls",
+            "selectors": {
+              "XADB_REMAINING_RESOURCE_CASE": "completion/projection-comma"
+            },
+            "review": "Missing projection comma-end Parse checkpoint9"
+          },
+          {
+            "id": "M19",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m19.json",
+            "source_sha256": "c9203a395235fb2c804d2526dacf61744138671f25467420302bed04e029ddbd",
+            "recipe": "mutant-m19-recipe.json",
+            "recipe_sha256": "b3b4e3f2ee7f68fbc60afe8c6228fb35cd22e297b711c6fa12eab21bf5c3bb4c",
+            "receipt": "mutant-m19-detector.json",
+            "receipt_sha256": "8209a00b211d2fb382628e6d8c8d6e3b0f077fc206365931893d12c6493f4f72",
+            "detector": "remaining_list_completion_controls",
+            "selectors": {
+              "XADB_REMAINING_RESOURCE_CASE": "completion/projection-item"
+            },
+            "review": "Missing projection completion Parse checkpoint8"
+          },
+          {
+            "id": "M20",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m20.json",
+            "source_sha256": "c96dea30167faf563297b9b4d948e59a3135a1c04a8e4df388ede708449b880a",
+            "recipe": "mutant-m20-recipe.json",
+            "recipe_sha256": "d2b8758966f8011b768b77a8bbace724aafba7eadeb83f6e1ae7e46a544f44d3",
+            "receipt": "mutant-m20-detector.json",
+            "receipt_sha256": "6bad6d66bc19ff055fbd12fcbb67ab8a1e0aecf8bc93ec4c31a75e5587f6ffa4",
+            "detector": "remaining_boundaries",
+            "selectors": {
+              "XADB_REMAINING_CASE": "boundary/depth/0/1/64"
+            },
+            "review": "WHERE wrapper consumes depth budget: Limit85 instead of203node depth64 AST"
+          },
+          {
+            "id": "M21",
+            "status": "REJECTED_BY_INTENDED_RUNTIME_ASSERTION",
+            "source": "mutant-m21-r2.json",
+            "source_sha256": "68e3608498c1f35a75f6fdc75fef0b1f292fa43b0482492e2605f515c72f2eef",
+            "recipe": "mutant-m21-r2-recipe.json",
+            "recipe_sha256": "e6c81d057167793ada4313d195b37b86b4f6752f2a13a9cd7edd94fbe9c1da18",
+            "receipt": "mutant-m21-r2-detector.json",
+            "receipt_sha256": "4996c0f413b1a1310ddf9ef526f14849d39de20dc1411521e350bf2eca9c10c4",
+            "detector": "remaining_ddl_numeric_controls",
+            "selectors": {
+              "XADB_REMAINING_RESOURCE_CASE": "numeric/exponent"
+            },
+            "review": "Bypass exponent scan removes bounded DDL numeric-extension checkpoint (line866 expect)"
+          }
+        ],
+        "original_failed_attempt": {
+          "source": "mutant-m21.json",
+          "recipe": "mutant-m21-recipe.json",
+          "receipt": "mutant-m21-detector.json",
+          "classification": "COMPILE_FAIL_E0763_RUNTIME0_NOT_REJECTION",
+          "correction": "mutant-m21-r2-recipe.json",
+          "scope": "Only missing closing quote in b E literal; same semantic mutation and exact selector"
+        },
+        "normal_runtime_repeats": 0
+      }
+    },
+    "evidence-integrity.json": {
+      "sha256": "1eaaac4349df11408b5eb16fc31d58c66519f51cf7f7281e65234799d499f46f",
+      "data": {
+        "status": "PASS_READ_ONLY_EVIDENCE_INTEGRITY_AUDIT_NOT_PRODUCT_REEXECUTION",
+        "at": "2026-10-24T21:01:06.841533+09:00",
+        "sources": [
+          {
+            "source": "source-r1",
+            "manifest_sha256": "0d56520a812d7e1b5ae7fec7cf13eee1864c80b5f6391603e0a0fb31edae1ba5",
+            "files": 4498,
+            "source_sha256": "95a9745a6a4aa32be4ba422bd48c67918a8e8c07d13a185adb19922c08f3c50c"
+          },
+          {
+            "source": "mutant-m01",
+            "manifest_sha256": "a081ec57373f368eab8c0c7a553b6d0cd82972cc9429c2158a411c1b4fcd2cce",
+            "files": 4498,
+            "source_sha256": "44eb1951224d12b1c77c87e47dfc4dce11fd15c3d7c1ce33736cac2768d5a94c"
+          },
+          {
+            "source": "mutant-m02",
+            "manifest_sha256": "88f4a341c9882a313ce137e99dbbeb0e1c73d046ab0a0aec57b238bc05e7d28f",
+            "files": 4498,
+            "source_sha256": "ce0e289f6d97cc73e2ab3d5af4c00b60f65929713f3c1cafac2cbbaea4443e21"
+          },
+          {
+            "source": "mutant-m03",
+            "manifest_sha256": "40954aa1e4bd067069e3f65ca80914c1563ef040ee50d53c33c5def7052f655e",
+            "files": 4498,
+            "source_sha256": "0c736b99e9e38992e7e5722720439ba1e02b3a41a546c2c90211e106983389a5"
+          },
+          {
+            "source": "mutant-m04",
+            "manifest_sha256": "b7b27ff9bbb13b32faf9e7fb358e1033f5573267b12a7ac7f50f6c096736e665",
+            "files": 4498,
+            "source_sha256": "a86c76d5bcfe335db13f7859f2b7a8be97d378d5d45134e6b7f00f146c2e4511"
+          },
+          {
+            "source": "mutant-m05",
+            "manifest_sha256": "e38ca6fc70c8906ddad8650157e2b861c50316f9b41cdef68aba4a751868124b",
+            "files": 4498,
+            "source_sha256": "1e07d38a6fb30ee4a2664cd85f34c50fef7abe446a77c5993d2c268858c0c270"
+          },
+          {
+            "source": "mutant-m06",
+            "manifest_sha256": "e6018d2c5884caecd5f193fa7b8bfe3dd39ec7e20cd8cd65df8e61cf69f72f6d",
+            "files": 4498,
+            "source_sha256": "2ae804ddbb0ae4bca546c13b213d5d6e7a3038ed90dffade702416e99fa71ab3"
+          },
+          {
+            "source": "mutant-m07",
+            "manifest_sha256": "3261dde07205caa452606dd98e29eb8cf38ec3a3fdfe12d88e4497d15dbf6eb5",
+            "files": 4498,
+            "source_sha256": "1912d1c895f1e2405d9f1fe26fddba80d676994930541de7c934c3b0aa63fd3e"
+          },
+          {
+            "source": "mutant-m08",
+            "manifest_sha256": "f6093c72fbb5f21703695e465b18be5f1313e24a778365cd2218374b9070cc3e",
+            "files": 4498,
+            "source_sha256": "423392036509755d58aa7c1a6b2b8d10b4bc88ebc598f94291ac6378cb066cfc"
+          },
+          {
+            "source": "mutant-m09",
+            "manifest_sha256": "2a94602c6dfd8b298f7b712eaacc4ecc8a8f10c4501b3ce22dd00731359c491e",
+            "files": 4498,
+            "source_sha256": "8bcf2edc0e7fb53dd5270497d79b7f9a57673d52f975cd0237d40a8c64e721a5"
+          },
+          {
+            "source": "mutant-m10",
+            "manifest_sha256": "767a32bcfb87b04347b633f5f29658f584a1e80e4306d418570907f63c7a5b9a",
+            "files": 4498,
+            "source_sha256": "81569f010f42cbe70e65b6bc10f32a4c380e910030839927b9c713d0e2b2028c"
+          },
+          {
+            "source": "mutant-m11",
+            "manifest_sha256": "b3f38622571d98b04ffd0e4333f992a822de791af09e9014b45366a1e2ebf5fb",
+            "files": 4498,
+            "source_sha256": "fb40aafb24f7a6f3543d7e6acbeae0a546fb97185890899250790b7c32913e38"
+          },
+          {
+            "source": "mutant-m12",
+            "manifest_sha256": "5e85be5506952e397c9dd075c1bbb1b4bcd70a71c0005423007e73fda1724fb0",
+            "files": 4498,
+            "source_sha256": "1b0e7702a9ba7db3b42c2912ea7b73f759c39150f42f2c9c9034a61405fe545f"
+          },
+          {
+            "source": "mutant-m13",
+            "manifest_sha256": "83302dd95294f24b5bd4cea5dad120c46a8254900b35fa0aa28457f0d58c9a34",
+            "files": 4498,
+            "source_sha256": "5dab56b32d81ad69068f83b6544829f2c8fd032a19c0ec2d49946b8b66e470a4"
+          },
+          {
+            "source": "mutant-m14",
+            "manifest_sha256": "589b232db207efcabd84dad9150747dffcdc60d5faf8d189542f841e36de8492",
+            "files": 4498,
+            "source_sha256": "9e4c909f42b62b74fb93a78579ad8bdb2e13f14896d8329e11d4c9cac6f2bdcc"
+          },
+          {
+            "source": "mutant-m15",
+            "manifest_sha256": "9a185b74c46cb50cb407dde12af98c8e3c4b5de835c91df0777c081fc93d847c",
+            "files": 4498,
+            "source_sha256": "5458a72d09a6468e51380b2cfb13666e9f674d204697e943ff771b83f12dd1de"
+          },
+          {
+            "source": "mutant-m16",
+            "manifest_sha256": "6b8a558c3621b81333be2610ec82869234706c59ba237ed8264d6524a059c470",
+            "files": 4498,
+            "source_sha256": "8ebd57b11de29f1436263cb28995f36201dcd9c5afe69aee2466d7cd7de5f831"
+          },
+          {
+            "source": "mutant-m17",
+            "manifest_sha256": "f888df49e805c350cfa02716e5d7975f44f84b9bddc7b9bd1c49d8d20ef942fc",
+            "files": 4498,
+            "source_sha256": "d32bf05a77bf7e15c4034018a0c6cd7bb683d710d39e1fe93a280635b6806894"
+          },
+          {
+            "source": "mutant-m18",
+            "manifest_sha256": "192f11022fcdc795ef63019b7f82d57f8e270a6b214c76f1694b34496c518628",
+            "files": 4498,
+            "source_sha256": "14786f0c159abc415e3f67bc6a652a94e9aa162603ee3f00ec2e72b30a92dbf4"
+          },
+          {
+            "source": "mutant-m19",
+            "manifest_sha256": "3dde08c1f4def37c9ae174af4334164a4370967428c80757cdfb19a280f6d4e2",
+            "files": 4498,
+            "source_sha256": "c9203a395235fb2c804d2526dacf61744138671f25467420302bed04e029ddbd"
+          },
+          {
+            "source": "mutant-m20",
+            "manifest_sha256": "7fe29b37c932891e3e590f94339a1a86e77a5d5e0169c1b656956d1c40046dac",
+            "files": 4498,
+            "source_sha256": "c96dea30167faf563297b9b4d948e59a3135a1c04a8e4df388ede708449b880a"
+          },
+          {
+            "source": "mutant-m21",
+            "manifest_sha256": "883c8952225880d67586868c25a9676f91de7f86b0d1438c0e8e2ef8dff3a516",
+            "files": 4498,
+            "source_sha256": "32df01ad38a86ae03503509c0f2bf6904dabe99a8b935ce89c75ccd7eaad6255"
+          },
+          {
+            "source": "mutant-m21-r2",
+            "manifest_sha256": "d0de9affc4f1cb07cfbf0d624d2c298f82ac333b5ecb24c3d8119d597839eeee",
+            "files": 4498,
+            "source_sha256": "68e3608498c1f35a75f6fdc75fef0b1f292fa43b0482492e2605f515c72f2eef"
+          }
+        ],
+        "total_file_entries": 103454,
+        "receipts": [
+          {
+            "receipt": "r1-clippy.json",
+            "sha256": "f670f4a4afaa50ec5f59740bd3553557584048bd1fc06ea0642a8b17273b94a6",
+            "source_sha256": "95a9745a6a4aa32be4ba422bd48c67918a8e8c07d13a185adb19922c08f3c50c",
+            "exit_code": 0
+          },
+          {
+            "receipt": "r1-semantic.json",
+            "sha256": "7bba896c8305adf859b3ecba2d68ae32625d6b0806ec794ee1dcc1947e5cf566",
+            "source_sha256": "95a9745a6a4aa32be4ba422bd48c67918a8e8c07d13a185adb19922c08f3c50c",
+            "exit_code": 0
+          },
+          {
+            "receipt": "r1-resource.json",
+            "sha256": "a00b07006f2482347f49a7ccd4be816e7686d86869cda53b733822e0d783f4e8",
+            "source_sha256": "95a9745a6a4aa32be4ba422bd48c67918a8e8c07d13a185adb19922c08f3c50c",
+            "exit_code": 0
+          },
+          {
+            "receipt": "r1-fmt.json",
+            "sha256": "832d473aadd43655c4cf52efbd20c495340e9ae6b69c30aaf3f71a155497a86b",
+            "source_sha256": "95a9745a6a4aa32be4ba422bd48c67918a8e8c07d13a185adb19922c08f3c50c",
+            "exit_code": 1
+          },
+          {
+            "receipt": "mutant-m01-detector.json",
+            "sha256": "354944246398ca43a24f82aa459474e642f8b90555a57708747b95370acfc8c4",
+            "source_sha256": "44eb1951224d12b1c77c87e47dfc4dce11fd15c3d7c1ce33736cac2768d5a94c",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m02-detector.json",
+            "sha256": "6cc3c5d37504eca907201598bf831b2ad5b1f0c890ed7bed74ed570998fd2d3e",
+            "source_sha256": "ce0e289f6d97cc73e2ab3d5af4c00b60f65929713f3c1cafac2cbbaea4443e21",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m03-detector.json",
+            "sha256": "5b697948e3d509ebdb1745044d47a5ed6a86b097b511e707d21949337c91224f",
+            "source_sha256": "0c736b99e9e38992e7e5722720439ba1e02b3a41a546c2c90211e106983389a5",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m04-detector.json",
+            "sha256": "2de2516e93a6afe13bd638cd7b4a46cce77f30153726de31db72999f7cb81e94",
+            "source_sha256": "a86c76d5bcfe335db13f7859f2b7a8be97d378d5d45134e6b7f00f146c2e4511",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m05-detector.json",
+            "sha256": "c464cc69ba5b44f5301fc4b04357636f3ff43cec926eaed97a358bd6fa623506",
+            "source_sha256": "1e07d38a6fb30ee4a2664cd85f34c50fef7abe446a77c5993d2c268858c0c270",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m06-detector.json",
+            "sha256": "e407e16ca626df643102174edaac98a34765f1f30e17a79ec31cf14ad43d850d",
+            "source_sha256": "2ae804ddbb0ae4bca546c13b213d5d6e7a3038ed90dffade702416e99fa71ab3",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m07-detector.json",
+            "sha256": "a5455c85a866960adc7a75b49fcb74a1a25628e6f68139d610d731a56e1c4840",
+            "source_sha256": "1912d1c895f1e2405d9f1fe26fddba80d676994930541de7c934c3b0aa63fd3e",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m08-detector.json",
+            "sha256": "47ebf7ab5ee5ba87e137fcd8f81192d28383e470d2131bbc66dbc069dd481060",
+            "source_sha256": "423392036509755d58aa7c1a6b2b8d10b4bc88ebc598f94291ac6378cb066cfc",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m09-detector.json",
+            "sha256": "bfe3d3e2ce69688f793bf7644312b98d03ef02493997edadb5ea6668d67c8402",
+            "source_sha256": "8bcf2edc0e7fb53dd5270497d79b7f9a57673d52f975cd0237d40a8c64e721a5",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m10-detector.json",
+            "sha256": "051410b2ba40b1a57f5a12467ec45cffe216d65ad8749353c099efda28e37b4a",
+            "source_sha256": "81569f010f42cbe70e65b6bc10f32a4c380e910030839927b9c713d0e2b2028c",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m11-detector.json",
+            "sha256": "83a8405758f9e376fa557bb9f86274d04b000bf905ee6e6c93a95282d0bc750d",
+            "source_sha256": "fb40aafb24f7a6f3543d7e6acbeae0a546fb97185890899250790b7c32913e38",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m12-detector.json",
+            "sha256": "7874b70d1fd5e504fa3367f40e66b0a660c9bf5ab66f68f905a37ed3a76b5d8a",
+            "source_sha256": "1b0e7702a9ba7db3b42c2912ea7b73f759c39150f42f2c9c9034a61405fe545f",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m13-detector.json",
+            "sha256": "26e5086f2c62cb87c11d1ea4298fbc168e790ad497bd38d9b8be78b71cfba9e5",
+            "source_sha256": "5dab56b32d81ad69068f83b6544829f2c8fd032a19c0ec2d49946b8b66e470a4",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m14-detector.json",
+            "sha256": "3d00ea3a420ec130782c56c557bb41cd720388a5ec90c4c61a4b365a209643a4",
+            "source_sha256": "9e4c909f42b62b74fb93a78579ad8bdb2e13f14896d8329e11d4c9cac6f2bdcc",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m15-detector.json",
+            "sha256": "ccf5c0eedd64593fb9a12c181af9a91b331185396bf14abe2bed95a0af032d82",
+            "source_sha256": "5458a72d09a6468e51380b2cfb13666e9f674d204697e943ff771b83f12dd1de",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m16-detector.json",
+            "sha256": "6d2f9bd688bae808092849d3da047ae3cde0fd24480e2f74a5616b464ed00d40",
+            "source_sha256": "8ebd57b11de29f1436263cb28995f36201dcd9c5afe69aee2466d7cd7de5f831",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m17-detector.json",
+            "sha256": "8d5390c8fdac0c50e2f154645a936b7d3148c9b0ed5e48d7dff3bdaf5e2645c0",
+            "source_sha256": "d32bf05a77bf7e15c4034018a0c6cd7bb683d710d39e1fe93a280635b6806894",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m18-detector.json",
+            "sha256": "b0a737c949068ff24c20c876cf02fb17464592a8ac7961140caf6b239090caa2",
+            "source_sha256": "14786f0c159abc415e3f67bc6a652a94e9aa162603ee3f00ec2e72b30a92dbf4",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m19-detector.json",
+            "sha256": "8209a00b211d2fb382628e6d8c8d6e3b0f077fc206365931893d12c6493f4f72",
+            "source_sha256": "c9203a395235fb2c804d2526dacf61744138671f25467420302bed04e029ddbd",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m20-detector.json",
+            "sha256": "6bad6d66bc19ff055fbd12fcbb67ab8a1e0aecf8bc93ec4c31a75e5587f6ffa4",
+            "source_sha256": "c96dea30167faf563297b9b4d948e59a3135a1c04a8e4df388ede708449b880a",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m21-detector.json",
+            "sha256": "97f9d40e558b479ab4c0069f4efb880eecc19b5158514a980c30e29524750353",
+            "source_sha256": "32df01ad38a86ae03503509c0f2bf6904dabe99a8b935ce89c75ccd7eaad6255",
+            "exit_code": 101
+          },
+          {
+            "receipt": "mutant-m21-r2-detector.json",
+            "sha256": "4996c0f413b1a1310ddf9ef526f14849d39de20dc1411521e350bf2eca9c10c4",
+            "source_sha256": "68e3608498c1f35a75f6fdc75fef0b1f292fa43b0482492e2605f515c72f2eef",
+            "exit_code": 101
+          }
+        ],
+        "preserved_binaries": {
+          "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+            "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+            "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+            "elf_bytes": 8626112,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/e875e005238d542d6c4d7ed74f1d109977b1389e33e6dcd8d6a1504bd624f7a3/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "e875e005238d542d6c4d7ed74f1d109977b1389e33e6dcd8d6a1504bd624f7a3",
+            "artifact_sha256": "2c8b2a8a377ee4eba34465f0ad67a11071468ff1a1fc482ea28e4b30d74f467a",
+            "elf_bytes": 24712480,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/4fc46c903dba60a674b9f2dc2be0bcb748deb42fcb55a93c5f10884e1180f237/remaining_parser_resources-ad7c12dd94356d9a.gz": {
+            "elf_sha256": "4fc46c903dba60a674b9f2dc2be0bcb748deb42fcb55a93c5f10884e1180f237",
+            "artifact_sha256": "6777d32f1e00c63744e42e5f89757cfbbed0973fc86e9d710de3fb40abd58bb7",
+            "elf_bytes": 9413256,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/d784014b4061b256d84e0b840d15ec9eda6761ca0fef2a86affd775705c4fd81/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "d784014b4061b256d84e0b840d15ec9eda6761ca0fef2a86affd775705c4fd81",
+            "artifact_sha256": "676d74032700f608a0f88f9b08e734f30297df56203204cf8a864ac6235b317b",
+            "elf_bytes": 24712488,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/e5314d60ab84a0cc79f58408e7dbcf9a53f53e94e2de40b5a54fe3a5e2e77620/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "e5314d60ab84a0cc79f58408e7dbcf9a53f53e94e2de40b5a54fe3a5e2e77620",
+            "artifact_sha256": "dbcf9879cfdd3308ba2202a11aebed351795547ade0c352d2737cea82be03b56",
+            "elf_bytes": 24712920,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/e7445d4a9f538d4e4c41f57a7b116229dd7e6e119a547b31d1dda044f2d8807f/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "e7445d4a9f538d4e4c41f57a7b116229dd7e6e119a547b31d1dda044f2d8807f",
+            "artifact_sha256": "e0ffaaa80e79094833e333894489df3ac7721d19a1d67b3bea2695cf5f796b15",
+            "elf_bytes": 24712488,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/f97dea10606d5a123c6b14ccae63106400178c86ed25d616943fb62316b81344/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "f97dea10606d5a123c6b14ccae63106400178c86ed25d616943fb62316b81344",
+            "artifact_sha256": "2f73e620d9d7e232c7644b674f6883473a3771ede5007c481f232d609afff8d2",
+            "elf_bytes": 24712480,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/7515340e1ab175a5a8a6bd95e58957c79d24bb52e6072dec90ff7018e9bc6e50/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "7515340e1ab175a5a8a6bd95e58957c79d24bb52e6072dec90ff7018e9bc6e50",
+            "artifact_sha256": "4f1b044a0a72aae6166aa66c8b4025728ba96cccd5ad6be0f640a40e19dc8727",
+            "elf_bytes": 24712480,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/3a022c0ebdc5d65b19167f58260d1699d857a2b1dfd9a070492755e067b43849/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "3a022c0ebdc5d65b19167f58260d1699d857a2b1dfd9a070492755e067b43849",
+            "artifact_sha256": "ff8249b055f32e4817f8a14039b1db94a2700bd711d1bcf7833a6d2d2d76a6a2",
+            "elf_bytes": 24712504,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/80d507bd0da4181af4a6cd3996623e62585e07b9bb457d534b99217ca5034ba5/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "80d507bd0da4181af4a6cd3996623e62585e07b9bb457d534b99217ca5034ba5",
+            "artifact_sha256": "4199828b8589b7f14b944d91db1ea876cfa493037192f518ab51653e4b02caa2",
+            "elf_bytes": 24730512,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/e98f1391115c8352a4a646f6cd506da5b50ab1d6e0aa31f28460de37e1d20834/remaining_parser_resources-ad7c12dd94356d9a.gz": {
+            "elf_sha256": "e98f1391115c8352a4a646f6cd506da5b50ab1d6e0aa31f28460de37e1d20834",
+            "artifact_sha256": "b0195e516975ba6c46001933e30a3c5e5bd2c3b7bdfc5ca2fab0620edf273f61",
+            "elf_bytes": 9413704,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/6829993cfcb20fd225dbdc94c645ef348853a2683e9a25119551e00e463710e3/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "6829993cfcb20fd225dbdc94c645ef348853a2683e9a25119551e00e463710e3",
+            "artifact_sha256": "ebe47f51ef5620e5f63ae91fc41722b5ad25e3632039a56ec22f8bff26dcd4d0",
+            "elf_bytes": 24712800,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/d8d6bb365ee7b7f8e076f45eadc57fb54dd8ec1499f16b922da066c6c3025135/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "d8d6bb365ee7b7f8e076f45eadc57fb54dd8ec1499f16b922da066c6c3025135",
+            "artifact_sha256": "f593a75c0156cce6249c83091e9a757190f08cd1aafd978db67d4924d2041b8e",
+            "elf_bytes": 24712312,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/f4e22dceb5524c6a0d7661ebf390d0b8cc5c61b341fba1f91fd0912276428364/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "f4e22dceb5524c6a0d7661ebf390d0b8cc5c61b341fba1f91fd0912276428364",
+            "artifact_sha256": "f254498b743f9170aa910a9d2f54b9c3ef072a1603eedfc16f7010f6278ddce2",
+            "elf_bytes": 24713032,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/2ab45354cb49cc2ec91a26310d182dd0d836d9da26bb04e271b9a9d384eb9182/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "2ab45354cb49cc2ec91a26310d182dd0d836d9da26bb04e271b9a9d384eb9182",
+            "artifact_sha256": "d459cd0c29a6b6dea2b133eb065c7b62cbcea9eca183a10aded6d40183f30ee7",
+            "elf_bytes": 24712568,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/10562ff8a80ddd5818f7d946b12051c3d579bbdd1737dc0d73a37c8487b1a814/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "10562ff8a80ddd5818f7d946b12051c3d579bbdd1737dc0d73a37c8487b1a814",
+            "artifact_sha256": "43bd6f073f8c12a2620cc2a90c64326731c921d0a97273d67f3bb60f7eae743c",
+            "elf_bytes": 24712752,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/b985f339b01f656fd4e7ba20177164616c9695874de7207dcb7eaa4797a792d8/remaining_parser_resources-ad7c12dd94356d9a.gz": {
+            "elf_sha256": "b985f339b01f656fd4e7ba20177164616c9695874de7207dcb7eaa4797a792d8",
+            "artifact_sha256": "61484f8d719270c6faa3aaa5c7928a2cee2e7ee9d93e7012be6ae2686543d80a",
+            "elf_bytes": 9414288,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/156094565bf00ff5c551cc12a7202eb8d0f6b32a2c3a5e5d28abb9b6395d677d/remaining_parser_resources-ad7c12dd94356d9a.gz": {
+            "elf_sha256": "156094565bf00ff5c551cc12a7202eb8d0f6b32a2c3a5e5d28abb9b6395d677d",
+            "artifact_sha256": "d1852207644f12dbde4546cfe8a10687533e89059aa179c3a0d8835b2c06e6b2",
+            "elf_bytes": 9414000,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/c1accfe44e5d7d2fde4b0c57963e5be4e61debf1ac973fb3d0216dff3601ccc6/remaining_parser_resources-ad7c12dd94356d9a.gz": {
+            "elf_sha256": "c1accfe44e5d7d2fde4b0c57963e5be4e61debf1ac973fb3d0216dff3601ccc6",
+            "artifact_sha256": "d2399718be95d467fc052291d2b5d20862d4eb2d1559a6b6753590a2394a56c9",
+            "elf_bytes": 9413224,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/9fdab096a15489b9944027e619104746d2d85dd816c2ce1ccea8c6c9b59ba8c8/remaining_parser_resources-ad7c12dd94356d9a.gz": {
+            "elf_sha256": "9fdab096a15489b9944027e619104746d2d85dd816c2ce1ccea8c6c9b59ba8c8",
+            "artifact_sha256": "a17e9d88007d50a01b6ad84619c54210c5a3a94d787a9002522af523d69be9dc",
+            "elf_bytes": 9412928,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/18ef8230626fea1f92ca35577cbc4958a088d03ebab5492c93958a0eb8ec34b7/remaining_parser_resources-ad7c12dd94356d9a.gz": {
+            "elf_sha256": "18ef8230626fea1f92ca35577cbc4958a088d03ebab5492c93958a0eb8ec34b7",
+            "artifact_sha256": "08acd166279eb072c2dc380d8393bb14548d378470206aebdaa6a404270e6def",
+            "elf_bytes": 9412904,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/9df37687d6b2b6a9ee97678f1f524b1070da4a480d1aed5d26cf782405f5423d/remaining_parser_resources-ad7c12dd94356d9a.gz": {
+            "elf_sha256": "9df37687d6b2b6a9ee97678f1f524b1070da4a480d1aed5d26cf782405f5423d",
+            "artifact_sha256": "0f4a373a3f25482db7c166033ad332cbcf0e554481bc7baddb0944709573bd51",
+            "elf_bytes": 9412936,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/4849f9a1f304b893d002893d673f7addfbd7ae7633e0b544ae7070815be8c80e/remaining_parser_contracts-394b3b2555900074.gz": {
+            "elf_sha256": "4849f9a1f304b893d002893d673f7addfbd7ae7633e0b544ae7070815be8c80e",
+            "artifact_sha256": "9e78a50586b54928cf7c38f5269b1a64137587ff82d616bf5ba211016d697063",
+            "elf_bytes": 24712480,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          },
+          "binaries/2c2b7c73971a1560bcfca9286797c485bb91ad4bea3907ab124e293d4c6dd4d6/remaining_parser_resources-ad7c12dd94356d9a.gz": {
+            "elf_sha256": "2c2b7c73971a1560bcfca9286797c485bb91ad4bea3907ab124e293d4c6dd4d6",
+            "artifact_sha256": "d84ffd551730c24259566ec725bc4e82446f29dee9cc27b3a875de17419bfce9",
+            "elf_bytes": 9413024,
+            "compression": "gzip lossless; mtime=0; filename empty"
+          }
+        },
+        "current_code_and_fixture_sha256": {
+          "crates/sql/Cargo.toml": "864605a552be0933c6df62fa11ac1a5827a24be65fd763564a6df274bceee03c",
+          "crates/sql/src/frontend/ast.rs": "4290f429d9d948c1f9615fce36f6a47a943cef291fb759938c28c3c0dff3a9fb",
+          "crates/sql/src/frontend/control.rs": "b0ea05f234d79b072aabd4e49f491498900c0a0a4c930b21e537fa29b2b66369",
+          "crates/sql/src/frontend/diagnostic.rs": "48393fc6e91ff7107edae02b3eebd2a1a1bac712f19151e91d80ef1bbed5d905",
+          "crates/sql/src/frontend/lexer.rs": "a08c78008888e8b090b73a6fdb1c9f292c9ea6463deb5ecd01304f1028def310",
+          "crates/sql/src/frontend/mod.rs": "398c00d20d71761ea30bbbba22a06e17d54a0ddb792ab7e3daf9ded740243dca",
+          "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+          "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+          "crates/sql/src/frontend/parser.rs": "18312187d67d80761b8d136cea610665a3437eb11d8673ddf77314447463fd28",
+          "crates/sql/src/frontend/parser/ddl.rs": "0c95cc256991b61b2b3e0730c6415831a2459841853cc76bd9b18e8c30e16246",
+          "crates/sql/src/frontend/parser/predicate.rs": "ceb978f4fdf57b6e25cc6727846b9c62a79e532814c4d5ded01b056fb84d9ac8",
+          "crates/sql/src/frontend/parser/statement.rs": "e3d2c6ad0e3b7977dfff74c9bf3b5a3119e36e63baa36ca07483dff24d3a5dd0",
+          "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+          "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e",
+          "crates/sql/src/frontend/source.rs": "60fc27e4902e5aca8e5e3a22e066ffb810ef8fcc789297d60e192cef469e3ca8",
+          "crates/sql/src/frontend/splitter.rs": "5a65abbc7ffe0e45eed69ec96d2397023c3a0e97df6faddb63dab338e543e71d",
+          "crates/sql/src/frontend/splitter/utf8.rs": "28d12ffc18b20428c3e3dbfb63127a5e488bb684ddbad3b7d79659e5ca34e4d0",
+          "crates/sql/src/frontend/typed_predicate.rs": "d134c8d27e74ad75bf192a5e3ea314e1ec50ab6378d87e3a7acf0bda0869be68",
+          "crates/sql/src/frontend/typed_predicate/budget.rs": "a3fed2289f9a8031c266878c0ff4e80dfe1dcfc09069dfa5f3db82159b1e3ba1",
+          "crates/sql/src/frontend/typed_predicate/compile.rs": "ce7c0868e53dfc5e8e5ef0d971e873bd596ef44a3361b157ab40bcb5161e7606",
+          "crates/sql/src/frontend/typed_predicate/eval.rs": "89ed45c6d895537774ec921a40664f4cb63d062175550f9a87026da08ab0f467",
+          "crates/sql/src/lib.rs": "334af6ebb1c095483acba2ee9207511d7dff2444922f7985ee97bc561f8bef9a",
+          "crates/sql/tests/frontend_control.rs": "cefd09b613f5f0396ab50b934c864aeb12fd87f7d62f09d836cc4265526c1890",
+          "crates/sql/tests/frontend_oracle.rs": "89ba8af9643a336725ecade46bbe5d8835b9a60849ddb85bc7f8ca0b5871d63a",
+          "crates/sql/tests/lexer_contracts.rs": "292d4aa9a2fb423ddd70b3f922150feaa04cfaee79b0e40055168e63534997e5",
+          "crates/sql/tests/name_contracts.rs": "39cabd169d7b8ba0adc90c5b99c80a1923c79896881432723d398f60a6f9aa72",
+          "crates/sql/tests/parser_contracts.rs": "b353bcad0df6181387b9484af8cbf48b24808e9dc825b21f16c152d5d8e77153",
+          "crates/sql/tests/parser_resources.rs": "18b1d2cddeafc48ee147c9c918570ee143e2c58cfb7f594673e634c1876bc591",
+          "crates/sql/tests/predicate_contracts.rs": "d8a02964030083d345c3d15f51eacdd4cab06aecac5bf893023a8a940defdc08",
+          "crates/sql/tests/predicate_resources.rs": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb",
+          "crates/sql/tests/remaining_parser_contracts.rs": "5fe8417605e4de1457d2815801f7e5117722f940a4e4dd7b7b72688f8b5f9a7d",
+          "crates/sql/tests/remaining_parser_resources.rs": "8995528a90da4aadf91483a1dff1559335acf67131aeed550a6ddf3b374867d0",
+          "crates/sql/tests/scalar_contracts.rs": "d453469c23ec5e600ecd47c7b9ab022871b9bfddc1085002ee287eb146198fbd",
+          "crates/sql/tests/scalar_resources.rs": "46afa79b5761e6f7804b31072294d1964a2c864dcd22172df102ff088fa969c4",
+          "crates/sql/tests/splitter_contracts.rs": "6335a77b66c174845045c9e540c51cb40eca103f3451f283e6633ff195f596b3",
+          "crates/sql/tests/splitter_resources.rs": "efff301dc2eff3bf82f397fb6e67f3052ac7a4fad5afe97846f96493b15f23e6",
+          "crates/sql/tests/support/frontend.rs": "d0f1db60e9117eeacb879483343c1a434ab38aba2066126feeaf84809a8160bd",
+          "crates/sql/tests/support/mod.rs": "84fde31a7b8517ad7208dc26f81d03b9d05a481479417237a54f67fd6c827344",
+          "crates/sql/tests/typed_predicate_contracts.rs": "41b3f51c6674fe265429f9c95c0b159cbeb692891d1ac61474bd4ead6b51c30a",
+          "crates/sql/tests/typed_predicate_resources.rs": "1c3b7ac1ebb5b9b9b7f9f1cadcf38169b4925758597ad460dfc146cbca27a119",
+          "crates/testing/reference/src/frontend.rs": "0fe58bfe98d72e30e9df015c3cd92e18ea99d0d2811f42bd5ed1beb87994f882",
+          "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+          "crates/testing/reference/src/frontend/parser.rs": "e2ccbb03d1ad240d247bab5f2854130d7eeb695c343be08c4cecf7a9d3dd48da",
+          "crates/testing/reference/src/frontend/parser/literals.rs": "4e5af8dbd24dda2f3fd93c67d8dce86d08b88e2d4169277d0c577eda6d0d3636",
+          "crates/testing/reference/src/frontend/parser/recipes.rs": "e1937ff639f6ef5ac0e46dc1cd50a31e85088a1fa7303c1a9539f803818d4cdd",
+          "crates/testing/reference/src/frontend/predicate.rs": "758a3dc161d465ee17baffc54bbc98c5eab4dbc8ecf1d6cfd926d48b9b30b694",
+          "crates/testing/reference/src/frontend/predicate/literals.rs": "676fef4c08943bfa0365398c53b35f0ca1b92147b8736ab90b55726e1ef8ed01",
+          "crates/testing/reference/src/frontend/predicate/recipes.rs": "d58b6a3d75ad1bf48a7163cab127e7a1d168da07f2a8f6b3918fb5d17f6657aa",
+          "crates/testing/reference/src/frontend/remaining_parser.rs": "355132f962912521bdf646c21e7053f447081f44e0876c519bf1195da96c6294",
+          "crates/testing/reference/src/frontend/remaining_parser/literals.rs": "d5cf7d8214915f1abaa5e7e4fdb714d32e2fdbf2542406f2b33781019e308dd0",
+          "crates/testing/reference/src/frontend/remaining_parser/recipes.rs": "dc3b9f75f3f5ee1794cb57cc45e6a23836f02dc171f3ae76954e959903bd7bc1",
+          "crates/testing/reference/src/frontend/scalar.rs": "c724745b4ea6bab6fb7b2c283604d54ec688cf780c8a82fe2ff5595a06b43316",
+          "crates/testing/reference/src/frontend/scalar/literals.rs": "b80bf0db5d275a603de8a57769b5ab065c8a3c18f0ea6fa3b2e287ef223f619e",
+          "crates/testing/reference/src/frontend/scalar/recipes.rs": "118ffb0b5d7208b88e4ea660c32e4f8daf278b870ec05d7eca6e4e3da921920f",
+          "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+          "crates/testing/reference/src/frontend/typed_predicate.rs": "5f9a730b720added608a37cddc99fc62c4ce9a1e0247b09078877276ccd3f479",
+          "crates/testing/reference/src/frontend/typed_predicate/literals.rs": "b794caad99ce7c0d06cdf4e8267451e691f72d2cb0d35edaa2cd756df3930422",
+          "crates/testing/reference/src/frontend/typed_predicate/recipes.rs": "899aeaf782f2fd86ed5666a8c5b59a9dbafb3d6fcacd7b4510ef7a098e3cb8c1",
+          "tests/fixtures/dev4-remaining-parser/boundaries.json": "d25e85d20293699c7919c291de17249cdb0c56d21e888b2b6dcd47c6ace6984f",
+          "tests/fixtures/dev4-remaining-parser/control.json": "3a59b6d9a21a1a29082ef6a4d2dd07e28e432317f73e4ba7e20d4e9f3e1486ee",
+          "tests/fixtures/dev4-remaining-parser/manifest.json": "4f9205ed7beca4c0f35ab358c7a3aac0e872aec3b53c5dce3982622e2f76109c",
+          "tests/fixtures/dev4-remaining-parser/semantic.json": "8d1ddbfc483e4ae3640da8ff9a4707a95da2de8473ff9d31364e6c64871200ee"
+        },
+        "format_only_exception": {
+          "status": "PASS",
+          "at": "2026-10-24T20:59:52.057750+09:00",
+          "command": [
+            "rustfmt",
+            "--edition",
+            "2024",
+            "--check",
+            "artifacts/dev4-remaining-parser-20261024/format-only/crates/testing/reference/src/frontend/parser/literals.rs"
+          ],
+          "exit_code": 0,
+          "original_fmt_failure": "r1-fmt.json",
+          "source_file": "crates/testing/reference/src/frontend/parser/literals.rs",
+          "original_sha256": "0db0da9eb26732fa56b8a0f8c6efb843993951614f8cfb31d03242643a08511e",
+          "formatted_sha256": "4e5af8dbd24dda2f3fd93c67d8dce86d08b88e2d4169277d0c577eda6d0d3636",
+          "saved_file": "format-only/crates/testing/reference/src/frontend/parser/literals.rs",
+          "correction": "Only collapse at(...) argument line wrapping and remove optional trailing comma; input strings/expectations unchanged",
+          "exact_single_replacement_verified": true,
+          "runtime": "NOT_RERUN_FORMAT_ONLY",
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "audit_note": "Initial audit removed whitespace only and correctly failed because rustfmt also removes the trailing argument comma. Replaced with exact single replacement equality; no runtime or format checker executed by that failed audit."
+        },
+        "d2_frozen_files": 30,
+        "normal": {
+          "semantic_functions": 8,
+          "resource_functions": 13,
+          "fixed_cases": 788,
+          "fixed_literal_cases": 659,
+          "fixed_literal_distinct_source_bytes": 658,
+          "boundary_cases": 129,
+          "generated_parse_calls": 8192,
+          "actual_semantic_parse_calls": 8980,
+          "known_bad": 50,
+          "known_bad_controls": 12,
+          "known_bad_product_calls": 0,
+          "expanded_functions": 2,
+          "expanded_status": "NOT_RUN"
+        },
+        "mutant_categories_rejected": 21,
+        "original_mutant_compile_failures": 1,
+        "normal_runtime_repeats": 0,
+        "document_verifier": "NOT_RUN_PRE_PUSH_ONLY",
+        "head_at_audit": "bc93de1bc119739e99521c452b5a2e1be1775638",
+        "script_sha256": "30b36619f359238a283276de275a30ac4f38f9b7d4d0af06bbcc205fb9e53716"
+      }
+    },
+    "layout-stack-review.json": {
+      "sha256": "72cc5f31f87a5e2f46f9cec3594dfac5df10c00ba4b923c91276a5a25c64145b",
+      "data": {
+        "source": "source-r1.json",
+        "elf": "/tmp/xadb-dev4-remaining-parser-20261024-01a16ca9/source-r1/debug/deps/remaining_parser_resources-ad7c12dd94356d9a",
+        "elf_sha256": "4fc46c903dba60a674b9f2dc2be0bcb748deb42fcb55a93c5f10884e1180f237",
+        "method": "readelf DWARF structure sizes and objdump demangled prologues; no product execution",
+        "layout_bytes": {
+          "AstNode": [
+            224
+          ],
+          "ParsedStatement": [
+            184
+          ],
+          "Parser": [
+            64
+          ]
+        },
+        "prologues": {
+          "00000000000ae350 <xadb_sql::frontend::parser::ParseInput::statement>:": [
+            "00000000000ae350 <xadb_sql::frontend::parser::ParseInput::statement>:",
+            "   ae350:\t48 81 ec 38 0a 00 00 \tsub    $0xa38,%rsp",
+            "   ae357:\t48 89 54 24 28       \tmov    %rdx,0x28(%rsp)",
+            "   ae35c:\t48 89 74 24 30       \tmov    %rsi,0x30(%rsp)",
+            "   ae361:\t48 89 7c 24 38       \tmov    %rdi,0x38(%rsp)",
+            "   ae366:\t48 89 7c 24 40       \tmov    %rdi,0x40(%rsp)",
+            "   ae36b:\t48 89 b4 24 20 07 00 \tmov    %rsi,0x720(%rsp)",
+            "   ae372:\t00 ",
+            "   ae373:\t48 89 94 24 28 07 00 \tmov    %rdx,0x728(%rsp)",
+            "   ae37a:\t00 ",
+            "   ae37b:\t48 8d 7c 24 68       \tlea    0x68(%rsp),%rdi",
+            "   ae380:\te8 cb c0 ff ff       \tcall   aa450 <xadb_sql::frontend::parser::ParseInput::take>",
+            "   ae385:\t48 8d 7c 24 48       \tlea    0x48(%rsp),%rdi",
+            "   ae38a:\t48 8d 74 24 68       \tlea    0x68(%rsp),%rsi",
+            "   ae38f:\tff 15 5b ad 08 00    \tcall   *0x8ad5b(%rip)        # 1390f0 <_DYNAMIC+0xb18>"
+          ],
+          "00000000000b6be0 <xadb_sql::frontend::parser::predicate::<impl xadb_sql::frontend::parser::ParseInput>::predicate_and>:": [
+            "00000000000b6be0 <xadb_sql::frontend::parser::predicate::<impl xadb_sql::frontend::parser::ParseInput>::predicate_and>:",
+            "   b6be0:\t48 81 ec 88 03 00 00 \tsub    $0x388,%rsp",
+            "   b6be7:\t48 89 54 24 28       \tmov    %rdx,0x28(%rsp)",
+            "   b6bec:\t48 89 74 24 30       \tmov    %rsi,0x30(%rsp)",
+            "   b6bf1:\t48 89 7c 24 38       \tmov    %rdi,0x38(%rsp)",
+            "   b6bf6:\t44 88 c0             \tmov    %r8b,%al",
+            "   b6bf9:\t88 44 24 47          \tmov    %al,0x47(%rsp)",
+            "   b6bfd:\t48 89 7c 24 48       \tmov    %rdi,0x48(%rsp)",
+            "   b6c02:\t48 89 b4 24 a0 02 00 \tmov    %rsi,0x2a0(%rsp)",
+            "   b6c09:\t00 ",
+            "   b6c0a:\t48 89 94 24 a8 02 00 \tmov    %rdx,0x2a8(%rsp)",
+            "   b6c11:\t00 ",
+            "   b6c12:\t48 89 8c 24 b0 02 00 \tmov    %rcx,0x2b0(%rsp)",
+            "   b6c19:\t00 ",
+            "   b6c1a:\t88 84 24 be 02 00 00 \tmov    %al,0x2be(%rsp)"
+          ],
+          "00000000000b80b0 <xadb_sql::frontend::parser::predicate::<impl xadb_sql::frontend::parser::ParseInput>::predicate_term>:": [
+            "00000000000b80b0 <xadb_sql::frontend::parser::predicate::<impl xadb_sql::frontend::parser::ParseInput>::predicate_term>:",
+            "   b80b0:\t48 81 ec 88 02 00 00 \tsub    $0x288,%rsp",
+            "   b80b7:\t48 89 4c 24 18       \tmov    %rcx,0x18(%rsp)",
+            "   b80bc:\t48 89 54 24 20       \tmov    %rdx,0x20(%rsp)",
+            "   b80c1:\t48 89 74 24 28       \tmov    %rsi,0x28(%rsp)",
+            "   b80c6:\t48 89 7c 24 30       \tmov    %rdi,0x30(%rsp)",
+            "   b80cb:\t44 88 c0             \tmov    %r8b,%al",
+            "   b80ce:\t48 89 7c 24 38       \tmov    %rdi,0x38(%rsp)",
+            "   b80d3:\t48 89 b4 24 e8 01 00 \tmov    %rsi,0x1e8(%rsp)",
+            "   b80da:\t00 ",
+            "   b80db:\t48 89 94 24 f0 01 00 \tmov    %rdx,0x1f0(%rsp)",
+            "   b80e2:\t00 ",
+            "   b80e3:\t48 89 8c 24 f8 01 00 \tmov    %rcx,0x1f8(%rsp)",
+            "   b80ea:\t00 ",
+            "   b80eb:\t88 84 24 07 02 00 00 \tmov    %al,0x207(%rsp)"
+          ],
+          "00000000000b99f0 <xadb_sql::frontend::parser::predicate::<impl xadb_sql::frontend::parser::ParseInput>::predicate>:": [
+            "00000000000b99f0 <xadb_sql::frontend::parser::predicate::<impl xadb_sql::frontend::parser::ParseInput>::predicate>:",
+            "   b99f0:\t48 81 ec 88 03 00 00 \tsub    $0x388,%rsp",
+            "   b99f7:\t48 89 54 24 28       \tmov    %rdx,0x28(%rsp)",
+            "   b99fc:\t48 89 74 24 30       \tmov    %rsi,0x30(%rsp)",
+            "   b9a01:\t48 89 7c 24 38       \tmov    %rdi,0x38(%rsp)",
+            "   b9a06:\t44 88 c0             \tmov    %r8b,%al",
+            "   b9a09:\t88 44 24 47          \tmov    %al,0x47(%rsp)",
+            "   b9a0d:\t48 89 7c 24 48       \tmov    %rdi,0x48(%rsp)",
+            "   b9a12:\t48 89 b4 24 a0 02 00 \tmov    %rsi,0x2a0(%rsp)",
+            "   b9a19:\t00 ",
+            "   b9a1a:\t48 89 94 24 a8 02 00 \tmov    %rdx,0x2a8(%rsp)",
+            "   b9a21:\t00 ",
+            "   b9a22:\t48 89 8c 24 b0 02 00 \tmov    %rcx,0x2b0(%rsp)",
+            "   b9a29:\t00 ",
+            "   b9a2a:\t88 84 24 be 02 00 00 \tmov    %al,0x2be(%rsp)"
+          ],
+          "00000000000bece0 <xadb_sql::frontend::parser::statement::<impl xadb_sql::frontend::parser::ParseInput>::where_clause>:": [
+            "00000000000bece0 <xadb_sql::frontend::parser::statement::<impl xadb_sql::frontend::parser::ParseInput>::where_clause>:",
+            "   bece0:\t48 81 ec 58 02 00 00 \tsub    $0x258,%rsp",
+            "   bece7:\t48 89 4c 24 18       \tmov    %rcx,0x18(%rsp)",
+            "   becec:\t48 89 54 24 20       \tmov    %rdx,0x20(%rsp)",
+            "   becf1:\t48 89 74 24 28       \tmov    %rsi,0x28(%rsp)",
+            "   becf6:\t48 89 7c 24 30       \tmov    %rdi,0x30(%rsp)",
+            "   becfb:\t48 89 7c 24 38       \tmov    %rdi,0x38(%rsp)",
+            "   bed00:\t48 89 b4 24 e0 01 00 \tmov    %rsi,0x1e0(%rsp)",
+            "   bed07:\t00 ",
+            "   bed08:\t48 89 94 24 e8 01 00 \tmov    %rdx,0x1e8(%rsp)",
+            "   bed0f:\t00 ",
+            "   bed10:\t48 89 8c 24 f0 01 00 \tmov    %rcx,0x1f0(%rsp)",
+            "   bed17:\t00 ",
+            "   bed18:\t48 8d 7c 24 60       \tlea    0x60(%rsp),%rdi",
+            "   bed1d:\tba 17 00 00 00       \tmov    $0x17,%edx"
+          ],
+          "00000000000bf020 <xadb_sql::frontend::parser::statement::<impl xadb_sql::frontend::parser::ParseInput>::delete_statement>:": [
+            "00000000000bf020 <xadb_sql::frontend::parser::statement::<impl xadb_sql::frontend::parser::ParseInput>::delete_statement>:",
+            "   bf020:\t48 81 ec a8 04 00 00 \tsub    $0x4a8,%rsp",
+            "   bf027:\t48 89 4c 24 18       \tmov    %rcx,0x18(%rsp)",
+            "   bf02c:\t48 89 d0             \tmov    %rdx,%rax",
+            "   bf02f:\t48 8b 54 24 18       \tmov    0x18(%rsp),%rdx",
+            "   bf034:\t48 89 44 24 20       \tmov    %rax,0x20(%rsp)",
+            "   bf039:\t48 89 f0             \tmov    %rsi,%rax",
+            "   bf03c:\t48 8b 74 24 20       \tmov    0x20(%rsp),%rsi",
+            "   bf041:\t48 89 44 24 28       \tmov    %rax,0x28(%rsp)",
+            "   bf046:\t48 89 7c 24 30       \tmov    %rdi,0x30(%rsp)",
+            "   bf04b:\t48 89 7c 24 38       \tmov    %rdi,0x38(%rsp)",
+            "   bf050:\t48 89 84 24 98 03 00 \tmov    %rax,0x398(%rsp)",
+            "   bf057:\t00 ",
+            "   bf058:\t48 89 b4 24 a0 03 00 \tmov    %rsi,0x3a0(%rsp)",
+            "   bf05f:\t00 "
+          ],
+          "00000000000bf810 <xadb_sql::frontend::parser::statement::<impl xadb_sql::frontend::parser::ParseInput>::select_statement>:": [
+            "00000000000bf810 <xadb_sql::frontend::parser::statement::<impl xadb_sql::frontend::parser::ParseInput>::select_statement>:",
+            "   bf810:\t48 81 ec a8 09 00 00 \tsub    $0x9a8,%rsp",
+            "   bf817:\t48 89 4c 24 20       \tmov    %rcx,0x20(%rsp)",
+            "   bf81c:\t48 89 d0             \tmov    %rdx,%rax",
+            "   bf81f:\t48 8b 54 24 20       \tmov    0x20(%rsp),%rdx",
+            "   bf824:\t48 89 44 24 28       \tmov    %rax,0x28(%rsp)",
+            "   bf829:\t48 89 f0             \tmov    %rsi,%rax",
+            "   bf82c:\t48 8b 74 24 28       \tmov    0x28(%rsp),%rsi",
+            "   bf831:\t48 89 44 24 30       \tmov    %rax,0x30(%rsp)",
+            "   bf836:\t48 89 7c 24 38       \tmov    %rdi,0x38(%rsp)",
+            "   bf83b:\t48 89 7c 24 40       \tmov    %rdi,0x40(%rsp)",
+            "   bf840:\t48 89 84 24 90 07 00 \tmov    %rax,0x790(%rsp)",
+            "   bf847:\t00 ",
+            "   bf848:\t48 89 b4 24 98 07 00 \tmov    %rsi,0x798(%rsp)",
+            "   bf84f:\t00 "
+          ],
+          "00000000000c0d60 <xadb_sql::frontend::parser::statement::<impl xadb_sql::frontend::parser::ParseInput>::update_statement>:": [
+            "00000000000c0d60 <xadb_sql::frontend::parser::statement::<impl xadb_sql::frontend::parser::ParseInput>::update_statement>:",
+            "   c0d60:\t48 81 ec 98 04 00 00 \tsub    $0x498,%rsp",
+            "   c0d67:\t48 89 4c 24 20       \tmov    %rcx,0x20(%rsp)",
+            "   c0d6c:\t48 89 d0             \tmov    %rdx,%rax",
+            "   c0d6f:\t48 8b 54 24 20       \tmov    0x20(%rsp),%rdx",
+            "   c0d74:\t48 89 44 24 28       \tmov    %rax,0x28(%rsp)",
+            "   c0d79:\t48 89 f0             \tmov    %rsi,%rax",
+            "   c0d7c:\t48 8b 74 24 28       \tmov    0x28(%rsp),%rsi",
+            "   c0d81:\t48 89 44 24 30       \tmov    %rax,0x30(%rsp)",
+            "   c0d86:\t48 89 7c 24 38       \tmov    %rdi,0x38(%rsp)",
+            "   c0d8b:\t48 89 7c 24 40       \tmov    %rdi,0x40(%rsp)",
+            "   c0d90:\t48 89 84 24 78 03 00 \tmov    %rax,0x378(%rsp)",
+            "   c0d97:\t00 ",
+            "   c0d98:\t48 89 b4 24 80 03 00 \tmov    %rsi,0x380(%rsp)",
+            "   c0d9f:\t00 "
+          ]
+        },
+        "runtime_witness": "r1-resource.json::remaining_bounded_stack_and_drop, actual256KiB native thread including SELECT/UPDATE/DELETE64Group,65rejection,largeflatAST/drop",
+        "scope": "Layout and exact current binary; old predicate stack evidence not reused as new runtime"
+      }
+    },
+    "format-only.json": {
+      "sha256": "f629cda2dd044c9201e246fe0e50b8dfc6dd387e5695c8ca38df02f2583f0dbd",
+      "data": {
+        "status": "PASS",
+        "at": "2026-10-24T20:59:52.057750+09:00",
+        "command": [
+          "rustfmt",
+          "--edition",
+          "2024",
+          "--check",
+          "artifacts/dev4-remaining-parser-20261024/format-only/crates/testing/reference/src/frontend/parser/literals.rs"
+        ],
+        "exit_code": 0,
+        "original_fmt_failure": "r1-fmt.json",
+        "source_file": "crates/testing/reference/src/frontend/parser/literals.rs",
+        "original_sha256": "0db0da9eb26732fa56b8a0f8c6efb843993951614f8cfb31d03242643a08511e",
+        "formatted_sha256": "4e5af8dbd24dda2f3fd93c67d8dce86d08b88e2d4169277d0c577eda6d0d3636",
+        "saved_file": "format-only/crates/testing/reference/src/frontend/parser/literals.rs",
+        "correction": "Only collapse at(...) argument line wrapping and remove optional trailing comma; input strings/expectations unchanged",
+        "exact_single_replacement_verified": true,
+        "runtime": "NOT_RERUN_FORMAT_ONLY",
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "audit_note": "Initial audit removed whitespace only and correctly failed because rustfmt also removes the trailing argument comma. Replaced with exact single replacement equality; no runtime or format checker executed by that failed audit."
+      }
+    }
+  },
+  "final_review": {
+    "status": "D1_ACCEPTED_LIMITED_RAW_PARSER_SOURCE_SPECIFIC",
+    "reviewer": "/root/frontend_review",
+    "reviewed_at": "2026-10-24T21:08:39.421541+09:00",
+    "markdown": "d1-review.md",
+    "markdown_sha256": "63add146a33239ab4dde46b266751e2af5861681fc6333803093b0242e419744",
+    "json": "d1-review.json",
+    "json_sha256": "fbb953ad1bcd428e1c3b953fe61da149ee95918e1d5be5c03de75fec2584e49e",
+    "data": {
+      "schema": "xadb.dev4.remaining-parser.independent-d1-review.v1",
+      "reviewer": "/root/frontend_review",
+      "reviewed_at": "2026-10-24T21:08:39.421541+09:00",
+      "status": "D1_ACCEPTED_LIMITED_RAW_PARSER_SOURCE_SPECIFIC",
+      "contract": "D4-FE-REMAINING-001",
+      "blocking_findings": [],
+      "scope": "P4 SELECT/UPDATE/DELETE/CREATE TABLE/CREATE [UNIQUE] INDEX/DROP TABLE/DROP INDEX raw parser와 AST 및 새 소비 경로. 바인더·catalog·DDL precommit·SQL 실행·engine 연결·내구성·DEV4/Q1 최종 수용은 제외.",
+      "base_head": "57db415c0f4a1087fa01fac13e92f6552cef927a",
+      "head_observed_during_review": "bc93de1bc119739e99521c452b5a2e1be1775638",
+      "normal_source": {
+        "manifest": "source-r1.json",
+        "source_sha256": "95a9745a6a4aa32be4ba422bd48c67918a8e8c07d13a185adb19922c08f3c50c",
+        "files": 4498,
+        "dev4_overlay": 62,
+        "product_sha256": {
+          "crates/sql/src/frontend/ast.rs": "4290f429d9d948c1f9615fce36f6a47a943cef291fb759938c28c3c0dff3a9fb",
+          "crates/sql/src/frontend/mod.rs": "398c00d20d71761ea30bbbba22a06e17d54a0ddb792ab7e3daf9ded740243dca",
+          "crates/sql/src/frontend/parser.rs": "18312187d67d80761b8d136cea610665a3437eb11d8673ddf77314447463fd28",
+          "crates/sql/src/frontend/parser/statement.rs": "e3d2c6ad0e3b7977dfff74c9bf3b5a3119e36e63baa36ca07483dff24d3a5dd0",
+          "crates/sql/src/frontend/parser/ddl.rs": "0c95cc256991b61b2b3e0730c6415831a2459841853cc76bd9b18e8c30e16246"
+        }
+      },
+      "verdict_basis": [
+        "§16와 D2 동결 입력, 실제 제품 5파일, 기존 공통 owner/빌더/조건식 소비 경로를 읽기 대조했다. 새 경로의 오류 순서, raw payload, preorder 링크와 marker 공유, bounded contextual lookahead, 제어 좌표에서 차단 문제를 찾지 못했다.",
+        "normal source-r1의 실제 Clippy 및 semantic/resource 로그·receipt·원 ELF와 lossless gzip 보존본을 대조했다. 새 필수 21함수 완료 및 source별 21개 변조 범주의 지정 단언 실패가 확인된다.",
+        "현재 제품은 정상 실행 source-r1과 byte가 같다. 현재 코드/fixture 62 overlay 중 유일한 차이는 기존 reference parser literals의 정확한 서식 전용 치환이다. 이 예외를 현재 전체 HEAD 실행 증거로 확장하지 않는다.",
+        "DEV3 변경은 export에 포함되지 않았으며 baseline..관측 HEAD의 SQL/foundation/reference/protocol/Cargo/toolchain 변경이 없음을 읽기 확인했다. 현재 engine WalRuntime dirty는 검토 범위 밖이다."
+      ],
+      "normal_results": {
+        "clippy": {
+          "result": "PASS",
+          "command": "cargo clippy -p xadb-sql --all-targets --all-features --locked -- -D warnings",
+          "runtime": 0
+        },
+        "semantic": {
+          "passed_functions": 8,
+          "ignored_expanded_functions": 2,
+          "literal_cases": 659,
+          "literal_unique_source_bytes": 658,
+          "explicit_alias": [
+            "update/minimum",
+            "raw/update/zero"
+          ],
+          "boundary_cases": 129,
+          "fixed_boundary_unique_ids": 788,
+          "generated_parse_calls": 8192,
+          "total_semantic_product_parse_calls": 8980,
+          "resource_calls_in_semantic_denominator": false,
+          "known_bad_observations": 50,
+          "normal_controls": 12,
+          "known_bad_product_calls": 0
+        },
+        "resources": {
+          "passed_functions": 13,
+          "allocation_sites": 11,
+          "native_stack_bytes": 262144,
+          "max_ast_nodes": 8192,
+          "where_depth_accepted": 64,
+          "where_depth_rejected": 65,
+          "shared_database_claim": "두 native thread의 보유 출력 quota 합산; 동시 allocation 경합 증거 아님"
+        },
+        "original_fmt": {
+          "result": "FAIL_PRESERVED",
+          "reason": "기존 reference parser literals의 새 at(...) 호출 줄바꿈"
+        },
+        "format_only": {
+          "result": "EXACT_SINGLE_REPLACEMENT_VERIFIED_FILE_ONLY_RUSTFMT_PASS",
+          "changes": "인수 줄바꿈과 선택 trailing comma만 변경",
+          "runtime_repeated": 0,
+          "initial_whitespace_audit_failure": "trailing comma 차이로 실패한 원 감사도 보존; 제품 시험 실패로 분류하지 않음"
+        },
+        "normal_required_functions_completed": 21,
+        "normal_runtime_repeats": 0
+      },
+      "mutation_results": {
+        "categories_rejected_by_intended_runtime_assertion": 21,
+        "mutant_source_attempts": 22,
+        "original_compile_failures": 1,
+        "original_m21": "E0763 unterminated byte constant, exit101, runtime0, binary0. 검출로 세지 않음.",
+        "corrected_m21": "원 mutant source에 E byte literal의 닫는 따옴표 1개만 추가. 동일 numeric/exponent selector가 내부 Parse checkpoint 소실을 실제 단언 실패로 검출.",
+        "selection": "semantic exact case 또는 resource exact witness. M17만 명시한 함수 첫 witness에서 실패하며 앞선 제품 case가 없음.",
+        "direct_assertions": {
+          "M01": "CreateIndex unique false/true payload",
+          "M02": "WHERE 아래 여분 Predicate: 13/12 nodes",
+          "M03": "UPDATE/WHERE marker ordinal1/3 및 count3/5",
+          "M04": "projection33 accepted / Limit71",
+          "M05": "ORDER33 accepted / Limit89",
+          "M06": "LIMIT +1 accepted / Syntax22..23",
+          "M07": "큰 LIMIT digits Range22..41 / raw success",
+          "M08": "raw negative DDL length Range25..4122 / raw success",
+          "M09": "DDL 열32 조기 한도 Limit303 / 8192-node success",
+          "M10": "constraint 뒤 column accepted / Syntax39..40",
+          "M11": "STORAGE 누락 accepted / Syntax24..24",
+          "M12": "일반 이름 DISTINCT Unsupported / accepted",
+          "M13": "추가 semicolon accepted / Syntax16..17",
+          "M14": "variable DataType 조기 admission Limit51 / Syntax59..60",
+          "M15": "fixed DataType 지연 admission Syntax57..58 / Limit51",
+          "M16": "root admission 지연 Lex Syntax7..8 / Parse Limit0",
+          "M17": "33번째 projection Name의 Parse checkpoint74 누락",
+          "M18": "projection comma.end Parse checkpoint9 누락",
+          "M19": "projection item completion Parse checkpoint8 누락",
+          "M20": "WHERE의 depth 추가 소비: depth64 Limit85 / 203-node success",
+          "M21": "DDL exponent 분류 내부 bounded Parse control witness 누락"
+        }
+      },
+      "independent_read_only_audit": {
+        "status": "READ_ONLY_AUDIT_COMPLETE",
+        "sources": 23,
+        "file_entries": 103454,
+        "hashed_inodes": 4762,
+        "receipts": 26,
+        "gzip_archives": 24,
+        "uncompressed_elf_bytes": 439340672,
+        "runtime_running_links": 23,
+        "live_overlay": 62,
+        "format_exceptions": [
+          "crates/testing/reference/src/frontend/parser/literals.rs"
+        ],
+        "frozen_d2_files": 30,
+        "errors": [],
+        "runtime_links": [
+          [
+            "r1-semantic.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "e875e005238d542d6c4d7ed74f1d109977b1389e33e6dcd8d6a1504bd624f7a3"
+          ],
+          [
+            "r1-resource.json",
+            "remaining_parser_resources-ad7c12dd94356d9a",
+            "4fc46c903dba60a674b9f2dc2be0bcb748deb42fcb55a93c5f10884e1180f237"
+          ],
+          [
+            "mutant-m01-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "d784014b4061b256d84e0b840d15ec9eda6761ca0fef2a86affd775705c4fd81"
+          ],
+          [
+            "mutant-m02-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "e5314d60ab84a0cc79f58408e7dbcf9a53f53e94e2de40b5a54fe3a5e2e77620"
+          ],
+          [
+            "mutant-m03-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "e7445d4a9f538d4e4c41f57a7b116229dd7e6e119a547b31d1dda044f2d8807f"
+          ],
+          [
+            "mutant-m04-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "f97dea10606d5a123c6b14ccae63106400178c86ed25d616943fb62316b81344"
+          ],
+          [
+            "mutant-m05-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "7515340e1ab175a5a8a6bd95e58957c79d24bb52e6072dec90ff7018e9bc6e50"
+          ],
+          [
+            "mutant-m06-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "3a022c0ebdc5d65b19167f58260d1699d857a2b1dfd9a070492755e067b43849"
+          ],
+          [
+            "mutant-m07-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "80d507bd0da4181af4a6cd3996623e62585e07b9bb457d534b99217ca5034ba5"
+          ],
+          [
+            "mutant-m08-detector.json",
+            "remaining_parser_resources-ad7c12dd94356d9a",
+            "e98f1391115c8352a4a646f6cd506da5b50ab1d6e0aa31f28460de37e1d20834"
+          ],
+          [
+            "mutant-m09-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "6829993cfcb20fd225dbdc94c645ef348853a2683e9a25119551e00e463710e3"
+          ],
+          [
+            "mutant-m10-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "d8d6bb365ee7b7f8e076f45eadc57fb54dd8ec1499f16b922da066c6c3025135"
+          ],
+          [
+            "mutant-m11-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "f4e22dceb5524c6a0d7661ebf390d0b8cc5c61b341fba1f91fd0912276428364"
+          ],
+          [
+            "mutant-m12-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "2ab45354cb49cc2ec91a26310d182dd0d836d9da26bb04e271b9a9d384eb9182"
+          ],
+          [
+            "mutant-m13-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "10562ff8a80ddd5818f7d946b12051c3d579bbdd1737dc0d73a37c8487b1a814"
+          ],
+          [
+            "mutant-m14-detector.json",
+            "remaining_parser_resources-ad7c12dd94356d9a",
+            "b985f339b01f656fd4e7ba20177164616c9695874de7207dcb7eaa4797a792d8"
+          ],
+          [
+            "mutant-m15-detector.json",
+            "remaining_parser_resources-ad7c12dd94356d9a",
+            "156094565bf00ff5c551cc12a7202eb8d0f6b32a2c3a5e5d28abb9b6395d677d"
+          ],
+          [
+            "mutant-m16-detector.json",
+            "remaining_parser_resources-ad7c12dd94356d9a",
+            "c1accfe44e5d7d2fde4b0c57963e5be4e61debf1ac973fb3d0216dff3601ccc6"
+          ],
+          [
+            "mutant-m17-detector.json",
+            "remaining_parser_resources-ad7c12dd94356d9a",
+            "9fdab096a15489b9944027e619104746d2d85dd816c2ce1ccea8c6c9b59ba8c8"
+          ],
+          [
+            "mutant-m18-detector.json",
+            "remaining_parser_resources-ad7c12dd94356d9a",
+            "18ef8230626fea1f92ca35577cbc4958a088d03ebab5492c93958a0eb8ec34b7"
+          ],
+          [
+            "mutant-m19-detector.json",
+            "remaining_parser_resources-ad7c12dd94356d9a",
+            "9df37687d6b2b6a9ee97678f1f524b1070da4a480d1aed5d26cf782405f5423d"
+          ],
+          [
+            "mutant-m20-detector.json",
+            "remaining_parser_contracts-394b3b2555900074",
+            "4849f9a1f304b893d002893d673f7addfbd7ae7633e0b544ae7070815be8c80e"
+          ],
+          [
+            "mutant-m21-r2-detector.json",
+            "remaining_parser_resources-ad7c12dd94356d9a",
+            "2c2b7c73971a1560bcfca9286797c485bb91ad4bea3907ab124e293d4c6dd4d6"
+          ]
+        ]
+      },
+      "independent_recipe_audit": {
+        "status": "READ_ONLY_RECIPE_AND_EVIDENCE_AUDIT",
+        "recipe_count": 22,
+        "quote_only_repair": true,
+        "evidence_refs": 10,
+        "errors": [],
+        "recipes": [
+          {
+            "recipe": "mutant-m01-recipe.json",
+            "source": "mutant-m01",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/ddl.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "index/targets/True/False/False"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m02-recipe.json",
+            "source": "mutant-m02",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/statement.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "select/options/0/1"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m03-recipe.json",
+            "source": "mutant-m03",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/statement.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "update/markers-across-where"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m04-recipe.json",
+            "source": "mutant-m04",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/statement.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "boundary/list/false/33"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m05-recipe.json",
+            "source": "mutant-m05",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/statement.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "boundary/list/true/33"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m06-recipe.json",
+            "source": "mutant-m06",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/statement.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "syntax/limit-sign/2b31"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m07-recipe.json",
+            "source": "mutant-m07",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/statement.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "raw/limit/9223372036854775808"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m08-recipe.json",
+            "source": "mutant-m08",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/ddl.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_RESOURCE_CASE": "numeric/raw-length"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m09-recipe.json",
+            "source": "mutant-m09",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/ddl.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "boundary/nodes/create-table/8192"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m10-recipe.json",
+            "source": "mutant-m10",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/ddl.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "syntax/structure/32"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m11-recipe.json",
+            "source": "mutant-m11",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/ddl.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "syntax/truncated/28"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m12-recipe.json",
+            "source": "mutant-m12",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/statement.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "context/name/distinct"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m13-recipe.json",
+            "source": "mutant-m13",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "syntax/single-statement/53454c45435420612046524f4d2074/3b3b"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m14-recipe.json",
+            "source": "mutant-m14",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/ddl.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_RESOURCE_CASE": "admission/variable-datatype"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m15-recipe.json",
+            "source": "mutant-m15",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/ddl.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_RESOURCE_CASE": "admission/unit-datatype"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m16-recipe.json",
+            "source": "mutant-m16",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/ddl.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_RESOURCE_CASE": "admission/roots"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m17-recipe.json",
+            "source": "mutant-m17",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/statement.rs"
+            ],
+            "selector": {},
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m18-recipe.json",
+            "source": "mutant-m18",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/statement.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_RESOURCE_CASE": "completion/projection-comma"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m19-recipe.json",
+            "source": "mutant-m19",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/statement.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_RESOURCE_CASE": "completion/projection-item"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m20-recipe.json",
+            "source": "mutant-m20",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/statement.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_CASE": "boundary/depth/0/1/64"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m21-r2-recipe.json",
+            "source": "mutant-m21-r2",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/ddl.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_RESOURCE_CASE": "numeric/exponent"
+            },
+            "receipt_exit": 101
+          },
+          {
+            "recipe": "mutant-m21-recipe.json",
+            "source": "mutant-m21",
+            "changed_paths": [
+              "crates/sql/src/frontend/parser/ddl.rs"
+            ],
+            "selector": {
+              "XADB_REMAINING_RESOURCE_CASE": "numeric/exponent"
+            },
+            "receipt_exit": 101
+          }
+        ]
+      },
+      "layout_stack": {
+        "ast_node_bytes": 224,
+        "parsed_statement_bytes": 184,
+        "parser_bytes": 64,
+        "resource_elf_sha256": "4fc46c903dba60a674b9f2dc2be0bcb748deb42fcb55a93c5f10884e1180f237",
+        "reported_recursive_frame_plus_return_64_layers_bytes": 158720,
+        "interpretation": "보존 ELF의 해당 세 재귀 함수 계산으로만 인정. 전 call graph 정적 상한 증명과 구별하며 256KiB native 실행을 별도 증거로 사용."
+      },
+      "documents": {
+        "reviewed": "README/catalog/build 등록, 준비 계획·구현·정본 SQL 및 증거의 범위/분모 대조",
+        "historical_evidence": "원 source 결과와 FAIL/NOT_RUN 유지",
+        "pending_status": "검토 시점의 D1 PENDING·최종 변조 대기 문구는 채택 뒤 owner가 이 기록으로 갱신할 메타데이터. 의미/제품 변경 요구 없음.",
+        "fingerprints": "source/export root 유지와 실제 source fingerprint를 구별",
+        "resource_author": "/root/frontend_research",
+        "scope_remaining": [
+          "문장 typed binding 및 실제 catalog 소비",
+          "DDL precommit 이후 의미 검산과 engine 연결",
+          "P5 수명 모델",
+          "P6 최신 공급 수합과 실제 연결",
+          "DEV4/Q1 최종 인수"
+        ],
+        "not_run": [
+          "ignored 256x1024 확대",
+          "ignored 30분 valid grammar",
+          "무변경 하위 runtime·전체 workspace wrapper",
+          "문서 verifier·push gate"
+        ],
+        "token65536": "정상 P4 grammar에서 AST/구조 한도가 먼저 도달하므로 token65536 first-failure N/A. 이 leaf의 token 경계 PASS나 기존 lexer의 새 실행으로 세지 않음."
+      },
+      "reviewer_actions": {
+        "product_edits": 0,
+        "test_edits": 0,
+        "compile_commands": 0,
+        "runtime_commands": 0,
+        "document_verifier_commands": 0,
+        "commits": 0,
+        "only_writes": [
+          "d1-review.md",
+          "d1-review.json"
+        ]
+      },
+      "reviewed_sha256": {
+        "artifacts/dev4-remaining-parser-20261024/source-r1.json": "0d56520a812d7e1b5ae7fec7cf13eee1864c80b5f6391603e0a0fb31edae1ba5",
+        "artifacts/dev4-remaining-parser-20261024/selection-r1.json": "f346e2bc65336421e7d46a6caf097b4f096b8609464dab25917cf6933e984cc8",
+        "artifacts/dev4-remaining-parser-20261024/d2-review.json": "12592a4db4dc8139b2fc61a8290735e8e754a966b07e096b6cb9633dd6006c8a",
+        "artifacts/dev4-remaining-parser-20261024/d2-adoption.json": "3ac9cac492e1ae56ed3c0509e1d44110d2db4a205655563f39971d8c4975e0e2",
+        "artifacts/dev4-remaining-parser-20261024/mutant-results.json": "5402e556da95d84604829dec86ff581d103544aba314f2211ac292a35ffde152",
+        "artifacts/dev4-remaining-parser-20261024/evidence-integrity.json": "1eaaac4349df11408b5eb16fc31d58c66519f51cf7f7281e65234799d499f46f",
+        "artifacts/dev4-remaining-parser-20261024/layout-stack-review.json": "72cc5f31f87a5e2f46f9cec3594dfac5df10c00ba4b923c91276a5a25c64145b",
+        "artifacts/dev4-remaining-parser-20261024/format-only.json": "f629cda2dd044c9201e246fe0e50b8dfc6dd387e5695c8ca38df02f2583f0dbd",
+        "artifacts/dev4-remaining-parser-20261024/r1-clippy.json": "f670f4a4afaa50ec5f59740bd3553557584048bd1fc06ea0642a8b17273b94a6",
+        "artifacts/dev4-remaining-parser-20261024/r1-semantic.json": "7bba896c8305adf859b3ecba2d68ae32625d6b0806ec794ee1dcc1947e5cf566",
+        "artifacts/dev4-remaining-parser-20261024/r1-resource.json": "a00b07006f2482347f49a7ccd4be816e7686d86869cda53b733822e0d783f4e8",
+        "artifacts/dev4-remaining-parser-20261024/r1-fmt.json": "832d473aadd43655c4cf52efbd20c495340e9ae6b69c30aaf3f71a155497a86b",
+        "artifacts/dev4-remaining-parser-20261024/mutation-contract.json": "f0d3ff3ff1e307183a87094c86dc7a259dea3f74897800ccba53e7ee82d72803",
+        "artifacts/dev4-remaining-parser-20261024/run.py": "545cdb083e825db1336895c0f2e20e9dd2db3c734757c1857733ae597d6c3867",
+        "artifacts/dev4-remaining-parser-20261024/run_mutants.py": "1797ca6d81e8d24fb87bbe0f60e09a758e556668d2c6e3ef39fa08827af565cd",
+        "artifacts/dev4-remaining-parser-20261024/make_mutant.py": "fc80835bb17de00c7f6462d3db6e164e6dc1cc1776aa9462281945d85b085fd4",
+        "artifacts/dev4-remaining-parser-20261024/export.py": "8587a3bb27f6ad38abfb521853072a0287673387517b6f1d6bd5a3e4d3df4f6b",
+        "devdoc/README.md": "1b43bfbb2970ef7010f344e645ff8f471f7ecc3209bb92565d40b3edc5839f27",
+        "devdoc/contracts/README.md": "8fbe48a2982f04ab691b200314d6d3856342ed8eb2583078c7b53d4f613f3f92",
+        "devdoc/contracts/dev4-independent-frontend.md": "4c14e7c97fcd2f2e46b116c43e4388a31b0b1936e025c3c6201695665112cda6",
+        "devdoc/contracts/dev4-sql-design.md": "f9c5b0b349ddf496b53da661cff9051bb368df740808f653ddf92aaa4d4e12f1",
+        "devdoc/evidence/README.md": "1570e007ef4b1cf7b10a4d2d8884e5678bf296407fc7f25b7a5c297fe915c339",
+        "devdoc/evidence/dev4-remaining-parser-20261024.md": "5e64b0dcd4550757c6876f3ef81c6e78744b35fb5a3ba10dcfafe4fcf1295e6b",
+        "devdoc/evidence/dev4-remaining-parser-20261024.json": "2cdff686ee7682a6e5a030b4cb6febd77a8a02728589a0d92eae591fc95b6102",
+        "devdoc/implementation/README.md": "88494f19759f8d6207881851bba5750171ac0900fa3121d837043e20ff1050a5",
+        "devdoc/implementation/dev4-implementation.md": "f2a909537ee8bc9d051f1139e3192e56e115b24ff46fd06c555ebb3b3bb4b2bb",
+        "devdoc/plans/dev4-preparation-plan.md": "491e0b04a82e37475cecfa9c3ccfa8e8dc655c0556f0c019fd1ce45c7fb8c72e",
+        "devdoc/policies/repository-build-plan.md": "a5fec499a521fb78c25887d05262a2b265d1fc23557655586035bdfd42eff446",
+        "devdoc/policies/repository-build-plan.json": "d56c469a65ed9072c3d58b59eb0f65962c4a2496f9255bf12185c0286c133d2b",
+        "devdoc/documents.json": "3addbc1c3fe88895b6d1455a9dc5789781742ea02f76863d58d39f2a01656d61",
+        "crates/sql/src/frontend/ast.rs": "4290f429d9d948c1f9615fce36f6a47a943cef291fb759938c28c3c0dff3a9fb",
+        "crates/sql/src/frontend/mod.rs": "398c00d20d71761ea30bbbba22a06e17d54a0ddb792ab7e3daf9ded740243dca",
+        "crates/sql/src/frontend/parser.rs": "18312187d67d80761b8d136cea610665a3437eb11d8673ddf77314447463fd28",
+        "crates/sql/src/frontend/parser/statement.rs": "e3d2c6ad0e3b7977dfff74c9bf3b5a3119e36e63baa36ca07483dff24d3a5dd0",
+        "crates/sql/src/frontend/parser/ddl.rs": "0c95cc256991b61b2b3e0730c6415831a2459841853cc76bd9b18e8c30e16246",
+        "tests/fixtures/dev4-remaining-parser/manifest.json": "4f9205ed7beca4c0f35ab358c7a3aac0e872aec3b53c5dce3982622e2f76109c",
+        "tests/fixtures/dev4-remaining-parser/semantic.json": "8d1ddbfc483e4ae3640da8ff9a4707a95da2de8473ff9d31364e6c64871200ee",
+        "tests/fixtures/dev4-remaining-parser/boundaries.json": "d25e85d20293699c7919c291de17249cdb0c56d21e888b2b6dcd47c6ace6984f",
+        "tests/fixtures/dev4-remaining-parser/control.json": "3a59b6d9a21a1a29082ef6a4d2dd07e28e432317f73e4ba7e20d4e9f3e1486ee"
+      }
+    }
+  },
+  "remaining": [
+    "P5 lifecycle model",
+    "P6 latest supply/API reconciliation",
+    "actual engine integration",
+    "Q1 acceptance"
+  ],
+  "document_verifier": "NOT_RUN_PRE_PUSH_ONLY",
+  "push": "NOT_REQUESTED_NOT_RUN",
+  "adopted_at": "2026-10-24T21:11:31.398866+09:00"
+}

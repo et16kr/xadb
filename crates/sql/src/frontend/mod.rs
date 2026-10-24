@@ -14,7 +14,10 @@ mod source;
 mod splitter;
 mod typed_predicate;
 
-pub use ast::{AstNode, ComparisonOp, NodeKind, ParsedStatement, ScalarSyntax, Sign};
+pub use ast::{
+    AstNode, ComparisonOp, NodeKind, NullPlacement, NullabilitySyntax, ParsedStatement,
+    ScalarSyntax, Sign, SortDirection, TypeLengthSyntax, TypeSyntax,
+};
 pub use control::CallControl;
 pub use diagnostic::{Code, Diagnostic, Module, Span};
 pub use lexer::{Keyword, Lexer, Token, TokenKind};

@@ -2037,6 +2037,16 @@
       "path": "evidence/dev3-plan4-clean-owner-20261024.json",
       "role": "evidence",
       "title": "DEV3 plan4 clean owner source별 실행 색인"
+    },
+    "dev4-remaining-parser-20261024.md": {
+      "path": "evidence/dev4-remaining-parser-20261024.md",
+      "role": "evidence",
+      "title": "DEV4 나머지 raw 문장 parser 선택 검증"
+    },
+    "dev4-remaining-parser-20261024.json": {
+      "path": "evidence/dev4-remaining-parser-20261024.json",
+      "role": "evidence",
+      "title": "DEV4 나머지 raw 문장 parser source별 실행 색인"
     }
   }
 }

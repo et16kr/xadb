@@ -1,0 +1,571 @@
+{
+  "schema": "xadb.dev4.remaining-parser.control.v1",
+  "status": "D2_REVIEW_INPUT_NOT_EXECUTED",
+  "created_at": "2026-10-24T20:30:28.031108+09:00",
+  "base_head": "57db415c0f4a1087fa01fac13e92f6552cef927a",
+  "API": "Parser::parse(source,control) -> ParsedStatement; new raw statement routes share source/arena/marker ownership",
+  "constants": {
+    "session_bytes": 8388608,
+    "database_bytes": 67108864,
+    "source_bytes": 1048576,
+    "ast_nodes": 8192,
+    "nesting": 64,
+    "markers": 256,
+    "projection_items": 32,
+    "order_terms": 32,
+    "stack_bytes": 262144
+  },
+  "semantic_profile": {
+    "structural": 70,
+    "raw": 45,
+    "contextual": 95,
+    "diagnostic": 444,
+    "dispatch": 5,
+    "materialized_fixed": 659,
+    "materialized_unique_sources": 658,
+    "boundary": 129,
+    "all_fixed": 788,
+    "generated_seeds": 64,
+    "generated_statements_per_seed": 128,
+    "generated_parse_calls": 8192,
+    "required_parse_calls": 8980,
+    "known_bad_observations": 50,
+    "known_bad_distinct_controls": 12,
+    "known_bad_product_calls": 0
+  },
+  "resource_target": "remaining_parser_resources",
+  "required": [
+    {
+      "function": "remaining_owned_lifetimes",
+      "cases": "CREATE TABLE public.t의 raw 음수 길이·NULL/NOT NULL·PK/UNIQUE·StorageDisk18node, caller source 변경/폐기 후 source와 payload 유지. UPDATE SET2개→WHERE2marker의 총3marker/19node, Where→Or 직접 연결/Predicate 합성 없음. parser·첫 결과 Drop 뒤 두 번째 결과/charge 유지",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "remaining_quota_boundaries",
+      "cases": "SELECT/UPDATE/DELETE/CREATE TABLE/CREATE INDEX/CREATE UNIQUE INDEX/DROP TABLE/DROP INDEX8route, session/DB 각각 source+16S의−1/동일/+1. old SELECT15+16S를 보유한 채 UPDATE5의 source32+old16S+new32S peak 경계. 실패 위치29와 local/global partial peak/old 불변",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "remaining_actual_capacity",
+      "cases": "UPDATE5 padding1: source33, 첫 arena17, 다음 요청34+padding1=실제35, peak33+52S 및 retained33+35S. 각 session/DB−1/동일/+1·초과분 예약 실패. source/첫arena 초과 예약 실패와 persistent padding/usize overflow·reset",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "remaining_allocation_failures",
+      "cases": "UPDATE2700=8104node의 source+arena16..8192 총11site 전부 실패. 고정 위치[0,0,29,49,93,177,349,689,1373,2737,5469]. 모든8route source/첫arena 실패. 미도달site4→다음11site호출 소비,300열 DDL 뒤 Syntax partial 반환, old SELECT 유지",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "remaining_admission_order",
+      "cases": "CREATE/DROP/SELECT 뒤 @의 lexical 오류보다 root quota admission이 먼저. WHERE EOF의 And17번째 node 성장 Limit가 Syntax보다 먼저. qualified4열 VARCHAR(?)는 DataType17번째 node의 성장보다 ? Syntax가 먼저, 반면 완결 BIGINT17번째 node admission은 뒤 잘못된 '('보다 먼저",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "remaining_entry_final_controls",
+      "cases": "cancellation+expired deadline에서 Cancelled 우선, entry 실패의 one-call allocation injection 소비.8route의 마지막 semicolon/trivia 뒤 final source.len Parse check를 sourcecopy와 구분해 취소/timeout, 같은 Parser 다음 새 호출 정상",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "remaining_classification_controls",
+      "cases": "SELECT33번째 Name의 pending Limit,33번째 숫자의 pending Unsupported, TableDefinition CHECK '('의 pending Unsupported보다 새 item start Parse check의 cancel/timeout이 먼저. comma 뒤 spaces로 comma.end와 item.start를 분리",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "remaining_list_completion_controls",
+      "cases": "projection/assignment/definition/index key comma.end와 projection item·assignment rhs·ORDER NULLS LAST·LIMIT·VARCHAR type·DROP root의 마지막 실제 token.end를 관측. trailing whitespace/lookahead 좌표와 분리하고 해당 point에서 cancel/timeout",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "remaining_interior_and_move_controls",
+      "cases": "UPDATE300/CREATE TABLE300의 sourcecopy 후 Parse interior512..768. UPDATE5 old16/new32가 peak32+48S로 공존하는 동안 완료된 첫 Assignment end16 move checkpoint에서 취소/timeout, partial owner0/재사용",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "remaining_where_unwind_controls",
+      "cases": "SELECT/UPDATE/DELETE에64 Group을 연결하고 prefix+100 닫기 unwind offset에서 취소/timeout. sourcecopy·Lex와 분리, 같은 원 source 좌표 사용",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "remaining_ddl_numeric_controls",
+      "cases": "음수4096digits VARCHAR를 raw 보존하며 Value callback0. 인접1e+4096digits의 Parse exponent classification에서p700..956 cancel/timeout; Lex scan/sourcecopy가 detector를 대신하지 않음",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "remaining_bounded_stack_and_drop",
+      "cases": "정확256KiB native thread에서 UPDATE2729=8191node, CREATE TABLE2729=8192node parse/flatDrop; qualified target의8193번째 StorageDisk에서Limit. SELECT/UPDATE/DELETE64 Group성공·65번째 openerLimit, size상한 유지. 입력 byte 생성은 thread 밖",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "remaining_shared_database",
+      "cases": "실제 두 native thread와 각 session이 공유 DB 사용. 첫 SELECT를 thread 종료 뒤 보유하고 두 번째 UPDATE5 peak의−1/동일/+1, 첫 출력유효·DB합산·partial0·마지막Drop0",
+      "status": "NOT_RUN"
+    }
+  ],
+  "formulas": {
+    "S": "size_of::<AstNode>() actual layout",
+    "update_A": "13+4*A-1 source bytes; 4+3*A nodes; A>=1",
+    "table_C": "unqualified 5+3*C nodes; PUBLIC qualified 6+3*C nodes; C>=1",
+    "update5": "source32; nodes19; normal retained32+32S; normal peak32+48S; growth point29",
+    "update5_padding1": "source33; arenas17 then35; retained33+35S; peak33+52S; growth point29",
+    "max_allocation_input": "UPDATE2700; 8104nodes; 11sites",
+    "allocation_failure_offsets": [
+      0,
+      0,
+      29,
+      49,
+      93,
+      177,
+      349,
+      689,
+      1373,
+      2737,
+      5469
+    ]
+  },
+  "late_datatype_witness": {
+    "source": "CREATE TABLE PUBLIC.t(a BIGINT,b BIGINT,c BIGINT,d VARCHAR(?)) STORAGE DISK",
+    "quota": "source.len+16*S (session or database)",
+    "expected_error": {
+      "code": "Syntax",
+      "module": "Parse",
+      "span": [
+        59,
+        60
+      ]
+    },
+    "allocation_count": 2,
+    "contrast_source": "CREATE TABLE PUBLIC.t(a BIGINT,b BIGINT,c BIGINT,d BIGINT(1)) STORAGE DISK",
+    "contrast_error": {
+      "code": "Limit",
+      "module": "Parse",
+      "span": [
+        51,
+        51
+      ]
+    }
+  },
+  "changed_p2_cases": [
+    {
+      "id": "first-select",
+      "source": " /*prefix*/ SELECT ",
+      "source_hex": "202f2a7072656669782a2f2053454c45435420",
+      "old_error": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          12,
+          18
+        ]
+      },
+      "new_error": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          19,
+          19
+        ]
+      },
+      "focused_selection_required": true
+    },
+    {
+      "id": "first-update",
+      "source": " /*prefix*/ UPDATE ",
+      "source_hex": "202f2a7072656669782a2f2055504441544520",
+      "old_error": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          12,
+          18
+        ]
+      },
+      "new_error": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          19,
+          19
+        ]
+      },
+      "focused_selection_required": true
+    },
+    {
+      "id": "first-delete",
+      "source": " /*prefix*/ DELETE ",
+      "source_hex": "202f2a7072656669782a2f2044454c45544520",
+      "old_error": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          12,
+          18
+        ]
+      },
+      "new_error": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          19,
+          19
+        ]
+      },
+      "focused_selection_required": true
+    },
+    {
+      "id": "first-create",
+      "source": " /*prefix*/ CREATE ",
+      "source_hex": "202f2a7072656669782a2f2043524541544520",
+      "old_error": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          12,
+          18
+        ]
+      },
+      "new_error": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          19,
+          19
+        ]
+      },
+      "focused_selection_required": true
+    },
+    {
+      "id": "first-drop",
+      "source": " /*prefix*/ DROP ",
+      "source_hex": "202f2a7072656669782a2f2044524f5020",
+      "old_error": {
+        "code": "Unsupported",
+        "module": "Parse",
+        "span": [
+          12,
+          16
+        ]
+      },
+      "new_error": {
+        "code": "Syntax",
+        "module": "Parse",
+        "span": [
+          17,
+          17
+        ]
+      },
+      "focused_selection_required": true
+    }
+  ],
+  "negative_product_recipes": [
+    {
+      "id": "M01",
+      "change": "Wrong new root, wildcard, unique flag, or sort/nullability payload",
+      "detector": "remaining_statement_shapes",
+      "test_target": "remaining_parser_contracts",
+      "witness": "Fixed complete AST for all seven statement roots including CREATE UNIQUE INDEX and all optional syntax metadata.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists"
+    },
+    {
+      "id": "M02",
+      "change": "Insert a synthetic Predicate child beneath WHERE or omit its Or wrapper",
+      "detector": "remaining_statement_shapes",
+      "test_target": "remaining_parser_contracts",
+      "witness": "Embedded Where must point directly to the existing Or subtree; full preorder links/node count expose an added or missing wrapper.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists"
+    },
+    {
+      "id": "M03",
+      "change": "Reset marker ordinal before WHERE or LIMIT",
+      "detector": "remaining_statement_shapes",
+      "test_target": "remaining_parser_contracts",
+      "witness": "Exact update/markers-across-where: UPDATE t SET a=?,b=? WHERE ?=? AND ? IS NOT NULL; 5markers numbered1..5,18nodes,Where->Or with no Predicate root.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists",
+      "selection": "Exact structural case update/markers-across-where; no unrelated DDL lifetime prefix.",
+      "selectors": {
+        "XADB_REMAINING_CASE": "update/markers-across-where"
+      }
+    },
+    {
+      "id": "M04",
+      "change": "Omit or shift projection32 limit",
+      "detector": "remaining_boundaries",
+      "test_target": "remaining_parser_contracts",
+      "witness": "Independent31/32/33 projection list inputs, including Name/unsupported-expression/wrong-keyword classification of attempted33rd item.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists"
+    },
+    {
+      "id": "M05",
+      "change": "Omit or shift ORDER BY32 limit",
+      "detector": "remaining_boundaries",
+      "test_target": "remaining_parser_contracts",
+      "witness": "Independent31/32/33 order terms and exact offending33rd name point.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists"
+    },
+    {
+      "id": "M06",
+      "change": "Accept a leading sign or arbitrary scalar as LIMIT grammar",
+      "detector": "remaining_diagnostics",
+      "test_target": "remaining_parser_contracts",
+      "witness": "LIMIT +1/-1 and TRUE/NULL/text remain Syntax at the first forbidden token; arithmetic suffix is separately Unsupported.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists"
+    },
+    {
+      "id": "M07",
+      "change": "Convert or range-check raw LIMIT integer while parsing",
+      "detector": "remaining_raw_payloads",
+      "test_target": "remaining_parser_contracts",
+      "witness": "Digits beyond Int64::MAX remain raw Scalar(Integer{None,digits}) with original bytes.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists"
+    },
+    {
+      "id": "M08",
+      "change": "Convert or range-check DDL type_length before raw syntax publication",
+      "detector": "remaining_ddl_numeric_controls",
+      "test_target": "remaining_parser_resources",
+      "witness": "VARCHAR(- plus4096zero digits) parses, preserves Sign::Minus/digits span, and observes zero Value callbacks.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists",
+      "selectors": {
+        "XADB_REMAINING_RESOURCE_CASE": "numeric/raw-length"
+      }
+    },
+    {
+      "id": "M09",
+      "change": "Apply table32/duplicate-name semantic checks inside raw DDL parser",
+      "detector": "remaining_boundaries",
+      "test_target": "remaining_parser_contracts",
+      "witness": "Exact boundary/nodes/create-table/8192: 2727 repeated a BIGINT column definitions plus PRIMARY KEY(a,a,a,a); 5+3*2727+(2+4)=8192nodes. Raw semantic counts/duplicate checks belong after precommit.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists",
+      "selection": "Exact boundary/nodes/create-table/8192; no unrelated UPDATE stack prefix.",
+      "selectors": {
+        "XADB_REMAINING_CASE": "boundary/nodes/create-table/8192"
+      }
+    },
+    {
+      "id": "M10",
+      "change": "Allow column definitions after PK/UNIQUE or a second/misordered PK",
+      "detector": "remaining_diagnostics",
+      "test_target": "remaining_parser_contracts",
+      "witness": "Fixed PK/UNIQUE grammar-order rejection positions and complete valid tree contrasts.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists"
+    },
+    {
+      "id": "M11",
+      "change": "Make STORAGE DISK optional or accept another storage kind",
+      "detector": "remaining_diagnostics",
+      "test_target": "remaining_parser_contracts",
+      "witness": "Missing STORAGE/DISK Syntax and explicit unsupported storage identifier, with valid StorageDisk leaf.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists"
+    },
+    {
+      "id": "M12",
+      "change": "Reject DISTINCT/ALL/IF/CHECK/FOREIGN/CONSTRAINT solely from first word",
+      "detector": "remaining_contextual_names",
+      "test_target": "remaining_parser_contracts",
+      "witness": "Normal Name uses SELECT distinct FROM t, CREATE TABLE if(...), and check/foreign/constraint BIGINT coexist with exact bounded extension shapes.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists"
+    },
+    {
+      "id": "M13",
+      "change": "Skip full EOF or allow a second statement after a new root",
+      "detector": "remaining_diagnostics",
+      "test_target": "remaining_parser_contracts",
+      "witness": "Optional single final semicolon/trivia contrast with extra token, second statement and repeated semicolon.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists"
+    },
+    {
+      "id": "M14",
+      "change": "Register a variable DataType placeholder before validating its raw length syntax",
+      "detector": "remaining_admission_order",
+      "test_target": "remaining_parser_resources",
+      "witness": "Qualified four-column VARCHAR(?) witness holds16nodes with quota source+16S: ? Syntax must precede17th DataType growth; allocation_count2.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists",
+      "selectors": {
+        "XADB_REMAINING_RESOURCE_CASE": "admission/variable-datatype"
+      }
+    },
+    {
+      "id": "M15",
+      "change": "Delay complete BIGINT DataType admission until after malformed suffix checking",
+      "detector": "remaining_admission_order",
+      "test_target": "remaining_parser_resources",
+      "witness": "Qualified fourth BIGINT(1) with quota source+16S must fail17th node admission at BIGINT.start before the suffix Syntax.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists",
+      "selectors": {
+        "XADB_REMAINING_RESOURCE_CASE": "admission/unit-datatype"
+      }
+    },
+    {
+      "id": "M16",
+      "change": "Delay new CREATE/DROP/SELECT root allocation until after later syntax scan",
+      "detector": "remaining_admission_order",
+      "test_target": "remaining_parser_resources",
+      "witness": "CREATE @ / DROP @ / SELECT @ with source+16S-1 must give Parse Limit at0 before Lex @ error.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists",
+      "selectors": {
+        "XADB_REMAINING_RESOURCE_CASE": "admission/roots"
+      }
+    },
+    {
+      "id": "M17",
+      "change": "Omit new item-start control before kind/context/count classification",
+      "detector": "remaining_classification_controls",
+      "test_target": "remaining_parser_resources",
+      "witness": "33rd Name/33rd numeric and CHECK( have pending errors, no next builder.add. Three spaces separate comma.end from item.start; cancellation/timeout must win at item.start.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists"
+    },
+    {
+      "id": "M18",
+      "change": "Omit new P4 comma.end control checks",
+      "detector": "remaining_list_completion_controls",
+      "test_target": "remaining_parser_resources",
+      "witness": "Projection/assignment/definition/P4 index-key comma followed by whitespace: exact comma.end differs from previous item.end and next node.start; Module Parse only.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists",
+      "selectors": {
+        "XADB_REMAINING_RESOURCE_CASE": "completion/projection-comma"
+      }
+    },
+    {
+      "id": "M19",
+      "change": "Omit new clause/item/root completion checks or use lexer/lookahead cursor",
+      "detector": "remaining_list_completion_controls",
+      "test_target": "remaining_parser_resources",
+      "witness": "Gap-separated projection name, assignment RHS, ORDER LAST, LIMIT digit, VARCHAR close and DROP root end points; Name module and sourcecopy excluded by Module/quota phase.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists",
+      "selectors": {
+        "XADB_REMAINING_RESOURCE_CASE": "completion/projection-item"
+      }
+    },
+    {
+      "id": "M20",
+      "change": "Consume a nesting level for fixed statement/WHERE wrapper",
+      "detector": "remaining_boundaries",
+      "test_target": "remaining_parser_contracts",
+      "witness": "Embedded SELECT/UPDATE/DELETE WHERE64groups must remain valid;65th opener is exact Limit point. Statement helper depth is not input nesting.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists"
+    },
+    {
+      "id": "M21",
+      "change": "Bypass bounded Parse numeric-extension inspection in the new DDL path",
+      "detector": "remaining_ddl_numeric_controls",
+      "test_target": "remaining_parser_resources",
+      "witness": "VARCHAR(1e plus4096digits) selects Parse p700..956 only after source+arena ownership; removing/bypassing the new call yields pending Unsupported instead of cancel/timeout.",
+      "scope": "new or actually modified P4 product route only; exact edit bound after product hash exists",
+      "selectors": {
+        "XADB_REMAINING_RESOURCE_CASE": "numeric/exponent"
+      }
+    }
+  ],
+  "negative_recipe_binding": "Bind to actual adopted P4 implementation hashes after D2/input freeze; no product edits now.",
+  "excluded_unchanged_owners": [
+    "Do not mutate unchanged ParseBudget purely to repeat old lower resource validation.",
+    "Do not globally modify old P2 columns() controls; new P4 key-columns helper owns new comma/suffix behavior.",
+    "Do not mutate unchanged predicate recursion itself merely to rerun previous depth/control tests. New WHERE wrapper entry/depth/marker connection remains in scope."
+  ],
+  "selection": {
+    "required_runner_seconds": 180,
+    "ambient_continuation_selector": "Clear XADB_REMAINING_FROM_CASE, XADB_REMAINING_CASE, XADB_REMAINING_RESOURCE_CASE; full command explicitly unsets all3. Exact and continuation semantic selectors conflict; resource witnesses reject semantic selectors.",
+    "continuation": "only an explicitly recorded failed suffix on changed source, preserving completed prefix and all prior evidence",
+    "expanded": "NOT_RUN; separate256x1024 and30minute profiles require explicit selection and adequate independent process budget",
+    "mutation": "Exact semantic case or resource witness only; a documented first-witness detector fails before unrelated product cases."
+  },
+  "native_shared_scope": "two native threads; first returned owner retained while second parses; no simultaneous allocation claim",
+  "existing_tests_not_selected": [
+    "parser_contracts::literal_rejections (contains unchanged cases)",
+    "old parser/predicate/scalar/typed runtime suites"
+  ],
+  "input_source_sha256": {
+    "artifacts/dev4-remaining-parser-20261024/resource-inventory.json": "37c4cb79f34765a5a27a0b909716b9ec03d294fb2c0160deb5fc801776c80c56",
+    "artifacts/dev4-remaining-parser-20261024/mutation-contract.json": "f0d3ff3ff1e307183a87094c86dc7a259dea3f74897800ccba53e7ee82d72803",
+    "artifacts/dev4-remaining-parser-20261024/resource-plan.md": "65e6ecfd81712d51c79b272068dac8299743ab4343892b3f0c2d2d4bd11bfb37",
+    "crates/sql/tests/remaining_parser_resources.rs": "8995528a90da4aadf91483a1dff1559335acf67131aeed550a6ddf3b374867d0"
+  },
+  "product_compile_runtime": "NOT_RUN",
+  "negative_selection_policy": "Each semantic mutant selects one exact frozen case. Resource mutants select an exact frozen witness; a first-witness detector may omit a selector only when the first reached product scenario exercises the edited route and fails before unrelated scenarios. All ambient selectors cleared. Required normal profile remains complete.",
+  "resource_witness_selection": {
+    "environment": "XADB_REMAINING_RESOURCE_CASE",
+    "unset_behavior": "Original full inputs, expectations, loop repetitions and ordering unchanged",
+    "invalid_behavior": "Panic before any product call on unknown ID, empty/non-Unicode value, or presence of XADB_REMAINING_CASE/XADB_REMAINING_FROM_CASE",
+    "applies_only_to": [
+      "remaining_admission_order",
+      "remaining_list_completion_controls",
+      "remaining_ddl_numeric_controls"
+    ],
+    "functions": {
+      "remaining_admission_order": [
+        {
+          "id": "admission/roots",
+          "product_calls": 6
+        },
+        {
+          "id": "admission/where",
+          "product_calls": 3
+        },
+        {
+          "id": "admission/variable-datatype",
+          "product_calls": 2
+        },
+        {
+          "id": "admission/unit-datatype",
+          "product_calls": 2
+        }
+      ],
+      "remaining_list_completion_controls": [
+        {
+          "id": "completion/projection-comma",
+          "product_calls": 2
+        },
+        {
+          "id": "completion/projection-item",
+          "product_calls": 2
+        },
+        {
+          "id": "completion/assignment-comma",
+          "product_calls": 2
+        },
+        {
+          "id": "completion/assignment-item",
+          "product_calls": 2
+        },
+        {
+          "id": "completion/order-term",
+          "product_calls": 2
+        },
+        {
+          "id": "completion/limit",
+          "product_calls": 2
+        },
+        {
+          "id": "completion/datatype",
+          "product_calls": 2
+        },
+        {
+          "id": "completion/definition-comma",
+          "product_calls": 2
+        },
+        {
+          "id": "completion/index-key-comma",
+          "product_calls": 2
+        },
+        {
+          "id": "completion/drop-table",
+          "product_calls": 2
+        },
+        {
+          "id": "completion/drop-index",
+          "product_calls": 2
+        }
+      ],
+      "remaining_ddl_numeric_controls": [
+        {
+          "id": "numeric/raw-length",
+          "product_calls": 1
+        },
+        {
+          "id": "numeric/exponent",
+          "product_calls": 2
+        }
+      ]
+    },
+    "preserved_before_selection": "artifacts/dev4-remaining-parser-20261024/prefreeze-selection-01/resource-backup-manifest.json"
+  }
+}

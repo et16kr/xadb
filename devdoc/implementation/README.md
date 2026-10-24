@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-24 [DEV4 나머지 raw 문장 parser](dev4-implementation.md#remaining-parser): SELECT/DML/DDL 구문 전체를 기존 source·arena·WHERE·marker에 연결하고 새 semantic8·자원13함수를 선택 검증했다. 원 실패와21제품 변조 거절을 보존하고 최종 독립 D1을 제한 수용했으며 typed 문장 binding·P5/P6·engine·Q1은 미완료다.
+
 2026-10-24 [DEV4 typed predicate](dev4-implementation.md#typed-predicate): 전체 Name/Type/marker 검산과 borrowed eager3VL을 구현하고 source별 필수 선택·18제품 변조 거절을 보존했다. 최종 독립 D1을 제한 수용했으며 실제 SQL 실행·Q1은 미완료다.
 
 2026-10-24 [DEV4 predicate AST/parser](dev4-implementation.md#predicate-parser): 원 stack 실패를 수정하고 source별 필수15함수·제품 mutant6의 선택 증거를 보존했다. typed compile/eval·실제 SQL 실행·Q1은 미완료다.
@@ -110,7 +112,7 @@
 | COMM 핵심 | frame·Linux local socket·quota·deadline·취소/종료·focused runner 구현, C1 인수 미완료 | [COMM](comm-implementation.md) |
 | 영속 transaction/WAL/recovery | 구현·정적 통합 완료, 최종 인수 대기 | [DEV2 K1–K5](dev2-implementation.md) |
 | DEV3 저장 표현·선택 page 읽기·상태 모델 | 고정 표현·bounded 읽기 leaf 검증, 실제 쓰기·복구·S1 인수 미완료 | [DEV3](dev3-implementation.md) |
-| SQL 앞단 | [lexer/name 제한 구현](dev4-implementation.md) | DEV4 독립 선행; 실제 SQL/Q1 미완료 |
+| SQL 앞단 | [raw 문장·typed predicate 제한 구현](dev4-implementation.md) | DEV4 독립 선행; P4 제한 D1 수용·실제 SQL/Q1 미완료 |
 | server/client·replication | 미구현 | DEV5 이후 |
 
 [기계 판독 상태](implementation-status.json) · [새 실행 증거](../evidence/README.md) · [이관 기록](../history/project-migration.md)

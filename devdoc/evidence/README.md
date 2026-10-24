@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV4 나머지 raw 문장 parser](dev4-remaining-parser-20261024.md) · [source별 실행 색인](dev4-remaining-parser-20261024.json): 정상 semantic8·자원13 선택 검증, 원 M21 compile·fmt FAIL 보존과21제품 변조 거절·최종 독립 D1 제한 수용.
+
 - [DEV3 plan4 초기 page의 원 공유 버퍼 소비](dev3-plan4-clean-owner-20261024.md) · [source 색인](dev3-plan4-clean-owner-20261024.json): 필수78의 source별 결과·원 실패·HOLD와 최종 D1 제한 수용.
 
 - [DEV4 typed predicate](dev4-typed-predicate-20261024.md): 전체 타입·3값 평가, 원 fixture/compile FAIL·좁은 재검증과 [source별 실행 색인](dev4-typed-predicate-20261024.json).

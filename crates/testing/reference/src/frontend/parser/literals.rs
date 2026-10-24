@@ -216,11 +216,11 @@ fn at(
 pub fn error_literals() -> Vec<ParseCase> {
     let mut cases = Vec::new();
     for (id, token, code) in [
-        ("first-select", "SELECT", "Unsupported"),
-        ("first-update", "UPDATE", "Unsupported"),
-        ("first-delete", "DELETE", "Unsupported"),
-        ("first-create", "CREATE", "Unsupported"),
-        ("first-drop", "DROP", "Unsupported"),
+        ("first-select", "SELECT", "Syntax"),
+        ("first-update", "UPDATE", "Syntax"),
+        ("first-delete", "DELETE", "Syntax"),
+        ("first-create", "CREATE", "Syntax"),
+        ("first-drop", "DROP", "Syntax"),
         ("first-prepare", "prepare", "Unsupported"),
         ("first-execute", "execute", "Unsupported"),
         ("first-unknown", "vacuum", "Syntax"),
@@ -230,14 +230,15 @@ pub fn error_literals() -> Vec<ParseCase> {
         ("first-marker", "?", "Syntax"),
         ("first-semicolon", ";", "Syntax"),
     ] {
-        cases.push(at(
+        let mut case = at(id, b" /*prefix*/ ", token.as_bytes(), b" ", code, "Parse");
+        if matches!(
             id,
-            b" /*prefix*/ ",
-            token.as_bytes(),
-            b" ",
-            code,
-            "Parse",
-        ));
+            "first-select" | "first-update" | "first-delete" | "first-create" | "first-drop"
+        ) {
+            // P4 now recognizes these roots and diagnoses their missing tail.
+            case.expected.error.as_mut().expect("error literal").span = [case.source.len(); 2];
+        }
+        cases.push(case);
     }
     for (id, source) in [
         ("empty", b"".as_slice()),

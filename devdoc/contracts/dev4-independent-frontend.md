@@ -582,3 +582,245 @@ Truth 연산은 독립 oracle의21cell literal table과 대조한다. product는
 별도 검토자 `/root/frontend_review`가 API·전체 literal/관측·자원12함수·18제품 변조 범주와 보존 하네스를 확인했고 `/root`가 D2를 채택했다. 원 검토 사본·정확 hash는 `artifacts/dev4-typed-predicate-20261024/{freeze,d2-acceptance}.json`과 `frozen-inputs/`에 보존한다. 채택 시 제품 작성·컴파일·시험은 미실행이었다. 새로운 native 소비자의 borrowed value 공유, 단락/constant-folding, 확대문법의 marker공유, 실제 schema/binding/수명 통합, 한도/오류순서 변경이 재검토 조건이다.
 
 실제 typed 구현·원 compile/fixture FAIL·13건 교정과 완료 prefix를 반복하지 않은 검증은 [source별 증거](../evidence/dev4-typed-predicate-20261024.md)에 기록한다. D2 동결 당시 미실행 상태와 원 입력 identity는 소급 변경하지 않는다. 실제 engine 수신·전체 DEV4/Q1은 미완료다.
+
+
+<a id="remaining-parser"></a>
+## 16. D4-FE-REMAINING-001 — SELECT·DML·DDL 나머지 raw 구문
+
+2026-10-24 · **D2 ACCEPTED / raw 구문 제한 구현·선택 검증·21제품 변조 거절 / 최종 독립 D1 제한 수용**. 독립 D2 검토와 담당 확인으로 이 절의 raw parser 입력·계약을 채택했다. 검토 원문·입력은 `artifacts/dev4-remaining-parser-20261024/d2-frozen-inputs/`에, 검토 기록은 `artifacts/dev4-remaining-parser-20261024/d2-review.md/.json`에 보존한다. 채택과 [source별 실행 증거](../evidence/dev4-remaining-parser-20261024.md)를 구별한다. P4의 전체 남은 raw statement 범위와 해당 P0/P5 판정 부분이다. 계약·통합 담당은 `/root`, 독립 literal은 `/root/frontend_oracle`, 자원 입력은 `/root/frontend_research`, 독립 D2/D1은 `/root/frontend_review`다.
+
+| 결정 항목 | 범위·근거 |
+| --- | --- |
+| 위임·분류 | 사용자의 DEV3 병행 DEV4 선행 개발·병렬 agent·단위 commit 위임, DP01 D2 |
+| 선택 | 기존 ParseInput·flat arena·source·전역 marker에 문장별 작은 helper 추가; raw 타입 길이·생략 option 유지 |
+| 비교 대안 | 새 parser/source 복사·WHERE 합성 Predicate·typed schema 조기 생성은 소유/회계 중복이나 DDL precommit 의미 변경 때문에 기각. 별도 token buffer·일반 parser framework도 현재 유한 문법에 불필요 |
+| 범위 | SELECT/UPDATE/DELETE/CREATE TABLE/CREATE [UNIQUE] INDEX/DROP TABLE/DROP INDEX |
+| 연구 | 로컬 PostgreSQL `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851`, SQLite `43a48f77585a88940c727f33682151418f544059`; 실제 열람 파일·범위·hash·채택/기각은 `artifacts/dev4-remaining-parser-20261024/research.json` 보존 |
+| 재검토 | 새 문법/semantic 조기 검산, AST·quota·오류 순서·한도 변경, 실제 catalog/typed binder/engine 연결 |
+
+### 1. API와 구현 경계
+
+기존 `Parser::new`, `Parser::parse`, `Parser::parse_predicate` 및 `ParsedStatement::{source,nodes,marker_count}`를 유지한다. 새 parser 객체·source 복사 경로·공개 중간 builder는 만들지 않는다. `parse` dispatch에 SELECT/UPDATE/DELETE/CREATE TABLE/CREATE [UNIQUE] INDEX/DROP TABLE/DROP INDEX를 추가한다. 기존 INSERT/거래 및 predicate fragment API 의미는 유지한다.
+
+AstNode의 private 필드와 `kind() -> &NodeKind`, `span()`, `first_child()`, `next_sibling()` 읽기 API를 그대로 쓴다. 아래 새 enum은 `NodeKind`를 통해 관측하고 가변 tree accessor·Clone·buffer 반출은 추가하지 않는다. 공개 syntax enum의 값 생성 자체는 immutable ParsedStatement를 위조하는 수단이 아니다.
+
+구현 배치는 `parser/statement.rs`(SELECT/UPDATE/DELETE/공통 WHERE), `parser/ddl.rs`(DDL) 정도로 나누고 부모 `ParseInput`의 source/lexer/lookahead/marker와 기존 name/scalar/target helper를 빌린다. 별도 문법 프레임워크나 token Vec는 불필요하다. 기존 `scalar`와 predicate 알고리즘은 재작성하지 않는다. `target()`은 완료 Span을 반환하도록 기계적인 반환형 변경이 필요하다. 기존 INSERT caller는 반환값을 무시한다. 새 list helper는 상황별 count·Unsupported 처리가 달라 무조건 범용화하지 않는다.
+
+### 2. 공개 syntax payload와 flat AST
+
+현재 NodeKind/ScalarSyntax/Sign/ComparisonOp는 보존하고 다음 variant를 추가하는 안이다.
+
+```rust
+// NodeKind additions (existing variants are not removed)
+Select,
+Update,
+Delete,
+CreateTable,
+DropTable,
+CreateIndex { unique: bool },
+DropIndex,
+Projection,
+ProjectionItem,
+Wildcard,
+Assignments,
+Assignment,
+Where,
+OrderBy,
+OrderTerm {
+    direction: Option<SortDirection>,
+    nulls: Option<NullPlacement>,
+},
+Limit,
+TableDefinition,
+ColumnDefinition { nullability: NullabilitySyntax },
+DataType(TypeSyntax),
+PrimaryKey,
+UniqueConstraint,
+StorageDisk,
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SortDirection { Asc, Desc }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NullPlacement { First, Last }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NullabilitySyntax { Implicit, Null, NotNull }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TypeSyntax {
+    Int64,
+    Bool,
+    Utf8(TypeLengthSyntax),
+    Binary(TypeLengthSyntax),
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct TypeLengthSyntax {
+    pub sign: Sign,
+    pub digits: Span,
+    pub span: Span,
+}
+```
+
+`TypeLengthSyntax`는 raw 형식이며 usize/i64 길이 값이 아니다. `span`은 부호부터 마지막 digit까지(중간 trivia 포함), `digits`는 digit token만이다. DataType node.span은 BIGINT/BOOLEAN token 또는 VARCHAR/VARBINARY keyword부터 닫는 `)`까지다. ScalarSyntax와 별도 payload여서 ScalarReader가 DDL 길이를 실수로 decode하지 못한다. 새 payload에는 heap 소유가 없으며 Name이 기존 최대 variant인 layout 안에 들어가는지 실제 size를 확인한다.
+
+ORDER BY의 생략 상태를 `None`으로 보존한다. 후속 binder/planner가 방향 생략을 ASC로, NULL 위치 생략을 ASC LAST/DESC FIRST로 확정한다. raw parser가 생략과 명시 ASC/NULLS LAST를 지우지 않는다. ColumnDefinition도 생략/NULL/NOT NULL을 구별하여 PK 의미 검산의 입력을 보존한다.
+
+| Root | 자식 순서와 하위 구조 |
+| --- | --- |
+| Select | Projection, Target(table), 선택 Where, 선택 OrderBy, 선택 Limit |
+| Projection | Wildcard 한 개 **또는** ProjectionItem 1..32개 |
+| ProjectionItem | Name(input column), 선택 Name(output alias); 두 번째 이름은 명시 AS가 있을 때만 |
+| Where | 기존 Or 한 개. Predicate 합성 root를 넣지 않음 |
+| OrderBy | OrderTerm 1..32개; 각 OrderTerm은 Name 한 개와 방향/NULL 위치 payload |
+| Limit | Scalar(Integer의 Sign::None 또는 Parameter) 한 개 |
+| Update | Target(table), Assignments, 선택 Where |
+| Assignments | Assignment 1개 이상; 각 Assignment는 Name(target column), Scalar(rhs) |
+| Delete | Target(table), 선택 Where |
+| CreateTable | Target(table), TableDefinition, StorageDisk |
+| TableDefinition | ColumnDefinition 1개 이상, 선택 PrimaryKey 한 개, UniqueConstraint 0개 이상, 이 순서 그대로 |
+| ColumnDefinition | Name(column), DataType; nullability는 payload |
+| PrimaryKey / UniqueConstraint | 기존 Columns 한 개; Columns는 Name 1개 이상 |
+| CreateIndex | Target(index), Target(table), 기존 Columns; unique는 root payload |
+| DropTable / DropIndex | Target 한 개 |
+
+Target의 prefix/실제 이름 1개 또는 2개 표현은 그대로다. CreateIndex의 첫 Target은 index, 두 번째는 table이라는 root child 순서가 역할을 정한다. 동일 이름 child를 별도 저장하거나 별도 edge Vec를 두지 않는다. 새 루트/모든 clause/item/Name/Scalar/DataType/StorageDisk도 각각 한 node로 계산한다. 부모를 먼저 등록하고 자식을 append한 뒤 private set_kind/set_span으로 payload와 최종 span을 확정한다.
+
+독립 경계 recipe용 node 산식은 다음과 같다. `t`는 Target 이름 수(1/2), `q`는 기존 predicate Or부터 시작하는 전체 subtree node 수, `W`는 WHERE가 있으면 `1+q`/없으면0이다. 선택 WHERE에 Predicate root를 더하지 않는다.
+
+| 구문 | node 수 |
+| --- | --- |
+| SELECT | `3+t+projection_nodes+W+order_nodes+limit_nodes`; star의 projection_nodes=1, 이름 projection은 `2P+A`(P item 수, A alias 수), ORDER가 있으면 `1+2O`, LIMIT가 있으면2 |
+| UPDATE | `3+t+3A+W`(A assignment 수) |
+| DELETE | `2+t+W` |
+| CREATE TABLE | `4+t+3C+Σ(2+K)`(C column 수, PK/UNIQUE 각각 key 수 K); raw length/nullability는 payload이므로 추가 node 없음 |
+| CREATE INDEX | `4+index_target_names+table_target_names+K` |
+| DROP TABLE/INDEX | `2+t` |
+
+span 규칙은 다음과 같다.
+
+- 모든 root: 첫 statement keyword부터 마지막 구문 token까지, 마지막 `;`·trailing trivia 제외. source()는 caller bytes 전부 보존한다.
+- Projection: 첫 item/`*` 시작부터 마지막 item/alias 끝. ProjectionItem: input Name부터 alias Name 끝(AS 포함 범위). Wildcard: `*` 한 token.
+- Assignments/Where/OrderBy/Limit: SET/WHERE/ORDER/LIMIT부터 clause 마지막 token 끝. Assignment: 이름부터 rhs scalar 끝. OrderTerm: 이름부터 명시 방향/NULL 위치가 있으면 그 마지막 token 끝.
+- TableDefinition과 Columns: 양쪽 괄호 포함. ColumnDefinition: 이름부터 type 또는 nullability 마지막 token 끝. PK/UNIQUE: 도입 keyword부터 해당 Columns의 닫는 괄호 끝. StorageDisk: STORAGE부터 DISK 끝.
+- 미완성 node의 초기 span은 도입 token 전체이고, 아직 완료되지 않은 root/list의 span을 부분적으로 늘리지 않는다. projection/item wrapper는 첫 token, TableDefinition/Columns는 여는 괄호, root는 첫 CREATE 등이다.
+
+### 3. 문법·semantic 경계에서 확정할 선택
+
+#### DDL
+
+EBNF 순서를 엄격히 지킨다. 열 정의가 한 개 이상 있어야 하고, PK는 모든 열 뒤에 최대 한 번, UNIQUE는 그 뒤에만 나온다. 첫 PK/UNIQUE 이후 다시 column_def, UNIQUE 뒤 PK, 두 번째 PK는 문법 밖이므로 해당 도입 token의 Parse/Syntax다. 이 제한은 semantic PK uniqueness 검사와 별개인 현재 EBNF의 순서/개수 제한이다.
+
+열의 `[NOT NULL | NULL]`은 한 번만 허용한다. 생략이면 Implicit이며 parser가 PK 열을 NotNull로 바꾸지 않는다. BIGINT/BOOLEAN에는 길이 괄호가 없다. VARCHAR/VARBINARY에는 정확히 하나의 signed decimal 길이가 필요하다. `+ /*comment*/ 0001`, `-0`, `-1`, `0`, `65537`, i64보다 긴 digits를 모두 원문으로 보존한다. 숫자를 변환하거나 길이 1..65536을 검사하지 않는다. signed digits 직후 인접 dot/exponent는 기존 integer 형식 판정과 동일한 Unsupported로 분류하되 ScalarSyntax/ScalarReader 변환을 호출하지 않는다. `?`, NULL, Text, 빈 괄호, 이중 부호는 Parse/Syntax다.
+
+**DDL의 table 32열, 합산 8 index/constraint, index 1..4열, 이름 중복, 없는 제약 열, PK+명시 NULL, encoded key 길이는 precommit 뒤 semantic owner에 남긴다.** 따라서 33 column_def·9 UNIQUE·5 key name도 문법이 맞고 source/token/node/quota 내면 raw AST 성공이다. 목록 최소1개 및 위 EBNF 순서는 parser가 검사하지만, 정의의 의미를 parser Limit/Name으로 미리 거절하지 않는다. D2에서 이 구분을 정본에 명시해야 하며, §7의 table32를 projection32와 같은 parser 한도로 자동 적용하면 DDL precommit 의미가 달라진다.
+
+CREATE TABLE의 STORAGE DISK는 필수다. STORAGE 다음 알려진 다른 identifier 저장 방식은 Parse/Unsupported(그 identifier), token 누락/잘못된 token은 Parse/Syntax다. 이 성공은 실제 DISK table 생성이나 거래 precommit을 수행했다는 뜻이 아니다.
+
+#### LIMIT
+
+현재 불완전하게 정의된 `nonnegative_integer`를 **부호 없는 decimal digit token 하나**로 고정하는 안이다. `LIMIT 0`, `LIMIT 0001`, `LIMIT ?`는 허용한다. `LIMIT +1`, `LIMIT -1`은 sign token에서 Parse/Syntax다. `LIMIT 9223372036854775808`도 raw integer로 성공시키고 후속 binder가 Int64 상한 Range를 검사한다. marker의 Int64/non-NULL 조건도 후속 타입/binding 의미다. Bool/Text/Binary/NULL/name는 scalar 전체를 허용하지 않으므로 Parse/Syntax다.
+
+인접 `1.5`/`1e2`는 dot/exponent token Unsupported, `LIMIT .5`는 dot Unsupported다. LIMIT 뒤 OFFSET, FETCH, comma 방식은 각각 OFFSET/FETCH/comma token에서 Unsupported다. `LIMIT 1 + 2` 등 scalar suffix 산술은 operator Unsupported다. `LIMIT 1 WHERE ...`와 두 번째 LIMIT는 현재 clause 순서/중복 위반으로 Syntax다. 부호 허용 선택을 바꾸려면 구현 전에 EBNF 설명·동결 입력을 함께 바꿔야 한다.
+
+#### SELECT와 ORDER BY
+
+projection은 단독 `*` 또는 이름/명시 AS alias 목록이다. 중복 입력 열과 중복 출력 alias는 문법 성공이다. `SELECT a AS x, a AS x ...`를 parser에서 거절하지 않는다. `*,a`, `a,*`는 지원 밖 wildcard 혼합으로 `,`/`*` 위치 Unsupported로 고정한다. 일반 expression/function/qualified column/table alias는 아래 위치 표에서 거절한다.
+
+ORDER BY는 input column Name만 raw로 보존한다. 숫자 ordinal은 즉시 Unsupported다. **`SELECT a AS x FROM t ORDER BY x`에서 x가 입력 열인지 출력 alias인지는 catalog 없이 판정할 수 없다.** parser는 Name으로 성공시키며, 후속 binder가 입력 table 열만 조회하고 alias 치환을 하지 않는다. 실제 입력 열 x가 있다면 그것을 의미하고, 없다면 Name 오류다. raw parse 성공을 ORDER BY 출력 alias 지원으로 기록하지 않는다.
+
+clause는 FROM 필수, WHERE→ORDER BY→LIMIT 순서다. ASC/DESC는 선택 하나, 그 다음 NULLS FIRST/LAST 선택 하나다. 중복 방향/NULLS, NULLS 뒤 방향은 Syntax다. name인 FIRST/LAST가 reserved token이므로 인용 없이 이름으로 허용하지 않는 기존 규칙은 유지한다.
+
+### 4. WHERE·marker·중첩과 목록
+
+WHERE token을 소비해 Where node를 기존 root 아래 등록한 뒤 `self.predicate(builder, where_id, 0)`을 호출한다. 같은 ParseInput source·lookahead·marker_count와 같은 AstBuilder를 그대로 쓴다. predicate_fragment, Parser::parse_predicate, 새 builder/source clone을 호출하지 않는다. 기존 predicate가 완결된 뒤 clause 시작 token을 lookahead에 남기고 상위 SELECT/UPDATE/DELETE가 소비한다. Where.span은 WHERE부터 predicate 끝이다. Where child는 Or이고 Predicate wrapper가 아니므로 기존 public PredicateCompiler는 문장 root를 여전히 Syntax로 거절한다. P4 typed statement binder 재사용은 후속 작업이다.
+
+UPDATE SET scalar들과 WHERE, SELECT WHERE와 LIMIT marker는 source 순서의 단일 1..256 ordinal이다. 이름·DDL type_length·projection·ORDER BY에는 marker가 금지된다. quote/comment 안의 `?`는 lexer에서 token이 아니므로 세지 않는다. LIMIT marker도 기존 scalar의 marker 분기를 소비하여 번호/257번째 오류를 복제하지 않는다. LIMIT 숫자는 digits-only 진입 검사를 거친 뒤 기존 integer 형식 helper를 사용한다.
+
+depth는 입력에 따른 NOT/Group만 공동 1..64다. statement/helper 호출 층은 고정 제어 흐름이어서 nesting을 하나 더 소비하지 않는다. TableDefinition/Columns/타입 길이의 괄호는 비재귀의 고정 단계이며 predicate depth와 동시에 열려 있지 않다. 따라서 SELECT WHERE 안의64개 Group은 허용하고65번째 opener/NOT에서 Parse/Limit point(token.start)다. 기존의 작은 재귀 frame helper 분리를 보존한다. 반복 projection/order/assignment/definition/key/UNIQUE는 모두 loop이며 recursive Drop은 없다.
+
+projection과 ORDER BY는 각각32개 item 한도를 둔다. 항목 위치에서 expression 시작(Digits/Text/Binary/TRUE/FALSE/NULL/Marker/Plus/Minus/LeftParen)은 개수와 무관하게 Unsupported이고, projection의 mixed Star도 Unsupported다. 나머지 잘못된 kind/reserved keyword/EOF는 Syntax다. 정상 Name kind만 개수 검사를 거치며 제33번째 **Name 정규화·item node 등록 전** Parse/Limit point(name.start)를 반환한다. 따라서33번째 TRUE/1/LeftParen은 Unsupported, FROM/EOF는 Syntax, 긴 정상-kind 이름은 count Limit가 Name 내용 오류보다 먼저다. lexer 오류는 peek에서 먼저 전달한다. wildcard는 Projection 한 항으로 보되 mixed list는 위 별도 Unsupported다.
+
+UPDATE assignment 목록은 새32 상한을 만들지 않는다. 같은 열 반복과 존재/타입은 후속 binder 문제이며 원문/token/AST/marker/quota가 반복 크기를 제한한다. DDL 및 기존 INSERT의 목록도 별도32/4/8 parser 한도를 추가하지 않는다.
+
+### 5. Unsupported와 Syntax 위치 제안
+
+새 전역 reserved keyword는 추가하지 않는다. 아래 word match는 해당 **구문 위치**에서만 ASCII 비인용 Identifier에 적용하며, quoted 이름과 정상 이름 위치의 다른 후속 단어를 일괄 금지하지 않는다. lexer가 이미 판정하는 `!=`, 미등록 punctuation, invalid UTF-8/quote/comment는 기존 Lex module/span을 그대로 전달한다.
+
+| 위치/형태 | 제안 오류 |
+| --- | --- |
+| statement 첫 WITH/ALTER/SAVEPOINT/EXPLAIN 및 기존 PREPARE/EXECUTE | Parse/Unsupported 해당 첫 token. 그 밖에 알 수 없는 첫 단어는 Syntax |
+| SELECT 직후 DISTINCT/ALL + 실제 modifier body 시작 | 아래 bounded 모양 검사로 확인할 때만 Unsupported 첫 DISTINCT/ALL. `SELECT distinct FROM t` 및 `SELECT all AS x FROM t`는 정상 Name |
+| projection/order item의 number/text/binary/TRUE/FALSE/NULL/?/sign/LeftParen | Unsupported 해당 expression 시작 token; 괄호 내부를 추가 peek하지 않음 |
+| 이름을 읽은 뒤 dot/LeftParen/+/-/Star | Unsupported 해당 suffix; qualified reference/function/arithmetic. 이름 정규화/등록이 먼저이고 suffix peek의 Lex 오류는 그대로 |
+| projection Name 뒤 AS 없는 두 번째 Name | Unsupported 두 번째 이름(token 전체); AS 다음 이름 누락/keyword는 Syntax |
+| FROM/UPDATE/DELETE target 뒤 AS 또는 bare Name alias | Unsupported AS/별칭 token; 합법 다음 clause보다 앞서 임의 alias를 흡수하지 않음 |
+| SELECT table 뒤 comma/JOIN/INNER/LEFT/RIGHT/FULL/CROSS/NATURAL | Unsupported 해당 도입 token; 정상 이름 위치의 JOIN 등은 이름으로 허용 |
+| SELECT 끝/WHERE 끝 GROUP/HAVING/WINDOW/UNION/INTERSECT/EXCEPT/FETCH/OFFSET/FOR | Unsupported 해당 token; SELECT clause 중복/역순 WHERE/ORDER/LIMIT는 Syntax |
+| UPDATE SET rhs Identifier/QuotedIdentifier | Unsupported 해당 token(열 참조/함수 등 scalar가 아닌 expression). DEFAULT/N/Q prefix도 여기서 Unsupported |
+| UPDATE rhs LeftParen | 한 token lookahead로 SELECT이면 Unsupported SELECT, 그 밖에는 Syntax 여는 괄호; lookahead Lex 오류는 우선 |
+| UPDATE rhs scalar 뒤 dot/LeftParen/+/-/Star | Unsupported suffix. 다른 예상 밖 token은 Syntax이며 값 overflow/hex는 raw 보존 |
+| 완결 UPDATE/DELETE 뒤 RETURNING, UPDATE 뒤 FROM, DELETE 뒤 USING, UPDATE/DELETE 뒤 ORDER/LIMIT | Unsupported 해당 token |
+| CREATE 뒤 TEMP/TEMPORARY/VIEW/SCHEMA/TRIGGER/SEQUENCE의 명시 확장 | Unsupported 해당 token. CREATE UNIQUE 뒤 INDEX가 아닌 TABLE/EOF는 Syntax |
+| CREATE TABLE/INDEX의 IF NOT EXISTS / DROP TABLE/INDEX의 IF EXISTS | 실제 연속 token 모양을 확인했을 때만 Unsupported IF. `CREATE TABLE if(...)`, `DROP TABLE if`, `CREATE INDEX if ON ...`는 정상 Name |
+| CREATE TABLE type 위치의 비지원 Identifier/QuotedIdentifier 또는 알려진 type keyword 외 이름 | Unsupported type token. `VARCHAR` 뒤 길이 괄호 누락 등 지원 타입의 malformed 구조는 Syntax |
+| column type 뒤 DEFAULT/PRIMARY/UNIQUE/CHECK/REFERENCES/CONSTRAINT/COLLATE/GENERATED | Unsupported token. inline PK/UNIQUE도 현재 table-level grammar 밖 |
+| table item의 CHECK '(' / FOREIGN KEY / CONSTRAINT Name | 실제 모양일 때 Unsupported 첫 도입 token. `CHECK BIGINT`, `FOREIGN BIGINT`, `CONSTRAINT BIGINT`는 첫/후속 column 위치 모두 정상 Name |
+| CREATE INDEX key 뒤 ASC/DESC/NULLS, expression suffix, 종료 뒤 WHERE/INCLUDE/USING | Unsupported 해당 token; key 최소1개와 malformed comma는 Syntax |
+| DROP 대상 뒤 CASCADE/RESTRICT/comma | Unsupported 해당 token |
+| STORAGE 다음 MEMORY/기타 저장 방식 이름 | Unsupported 그 이름; STORAGE/DISK 누락은 Syntax |
+| EOF·잘못된 reserved token·중복 clause·두 번째 문장·추가 semicolon | Parse/Syntax 해당 token, EOF는 [len,len) |
+
+contextual feature는 다음의 한정된 모양만 인식한다. 첫 단어만 보고 정상 이름을 빼앗지 않는다. 알려진 후속 문법 전부를 자동 인식한다고 주장하지 않는다.
+
+| 문맥 | 읽는 token과 판정 |
+| --- | --- |
+| SELECT 첫 projection의 비인용 DISTINCT/ALL | 첫 token을 작은 지역 Token으로 보관하고 다음 token을 peek. 다음이 Name/Star 또는 scalar expression 시작(Digits/Text/Binary/TRUE/FALSE/NULL/Marker/Plus/Minus/LeftParen)이면 modifier body가 시작하므로 첫 단어 Unsupported. FROM/AS/comma이면 첫 단어를 정상 Name으로 계속 parse. EOF/semicolon/다른 keyword는 정상 Name 뒤 필수 FROM/구문 검사에서 Syntax. quoted 첫 이름은 특수 검사하지 않음 |
+| CREATE TABLE/INDEX의 target 첫 IF | 기존 target이 IF 이름을 보존한 뒤 lookahead가 NOT이면 그것을 소비하고 다음 EXISTS를 peek. EXISTS일 때 IF Unsupported, 아닌 경우 NOT Syntax. 다음이 NOT이 아니면 IF는 정상 target이며 일반 필수 delimiter 검사를 계속함. IF EXISTS는 이 CREATE 모양에 포함하지 않음 |
+| DROP TABLE/INDEX의 target 첫 IF | 다음 token이 비인용 EXISTS이면 IF Unsupported. 아니면 IF를 정상 target으로 유지. qualified target PUBLIC.IF는 이 문두 feature 모양이 아님 |
+| TableDefinition item의 비인용 CHECK/FOREIGN/CONSTRAINT | 해당 첫 token을 보관하고 다음 하나를 peek. 각각 LeftParen/KEY/Name token이면 첫 단어 Unsupported. 다음이 BIGINT/BOOLEAN/VARCHAR/VARBINARY이면 정상 column Name으로 계속. 기타는 정상 column의 type/order 진단. quoted 이름에는 특수 검사 없음 |
+
+CREATE IF NOT EXISTS는 최대 첫 IF+NOT의 두 Token만 지역에 보관하고 세 번째 token을 기존 one-token lookahead로 얻는다. 다른 검사는 첫 Token 하나와 기존 lookahead뿐이다. 별도 token buffer·lexer rewind·source 복사·marker 배정은 없다. 성공할 수 있는 정상 Name 경로에서는 이미 보관한 token을 item/name builder에 넘기며, 실패가 확정되는 NOT 분기에서만 추가 소비한다. 어떤 speculative peek에서든 lexical 오류가 발생하면 기존 predicate 방식처럼 그 Lex 진단이 pending Unsupported/Syntax보다 먼저다.
+
+contextual shape 검사는 해당 wrapper가 등록된 뒤 item 등록/Name 정규화 전에 수행하는 안이다. 단, IF는 기존 Target helper가 원 이름을 이미 보존한 뒤 검사하여 Target의 prefix/name 순서를 바꾸지 않는다. 이후 column-list phase가 이미 PK/UNIQUE라면 정상 Name 모양은 EBNF 열 순서 위반 Syntax; 실제 CHECK/FOREIGN/CONSTRAINT feature 모양은 위 Unsupported로 먼저 분류한다. 이 순서도 신규 자원/오류 fixture에서 고정한다.
+
+WHERE 내부 Unsupported/Syntax 표는 §14를 그대로 적용한다. `a=(SELECT...)`의 SELECT 진단과 `a=(1)`의 '(' Syntax, raw DEFAULT/IN/BETWEEN/LIKE가 정상 Name인 위치, operand 뒤 suffix 범위를 변경하지 않는다. 문장의 `RETURNING` 판정은 WHERE가 먼저 완결된 뒤 상위 문장 경계에서만 한다.
+
+### 6. 자원·제어·오류 우선순위
+
+진입은 `begin_call → Parse entry check → Lexer::new(전체 source 길이/UTF-8) → source 복사 → statement 첫 token → AST`로 유지한다. source 길이0은 allocation0이며 source quota 실패는 token 문법보다 앞설 수 있다. source/arena는 기존 ParseBudget을 그대로 사용하고 새 list backing은 없다. 8MiB session/64MiB DB caller ledger를 공유하고 old AST·split source·compiled plan이 살아 있으면 계속 차감한다. 실제 capacity, old/new 성장 peak, fail ordinal, padding, 실패/Drop 반환의 기존 계약을 바꾸지 않는다.
+
+새 statement root는 첫 keyword를 얻은 직후 등록한다. CREATE는 CREATE root를 provisional CreateTable로 등록한 뒤 TABLE/INDEX/UNIQUE를 판정해 private set_kind로 확정한다. 따라서 두 번째 token Syntax/Lex 오류보다 root backing admission이 앞설 수 있다. DROP도 같은 방식이다. SELECT의 Projection wrapper는 첫 item peek 뒤 먼저 등록한다. Name 기반 item/Target는 `peek_name` kind 검사를 먼저, item node 등록, Name 정규화·등록 순서다. SET/WHERE/ORDER/LIMIT/TableDefinition/PK/UNIQUE/StorageDisk는 각 도입 token을 얻은 직후 wrapper를 등록하고 이후 필수 keyword/delimiter를 검사한다. 내부 WHERE Or/And의 EOF/닫는 괄호 wrapper 등록 우선순위는 기존 predicate 계약을 그대로 사용한다.
+
+새 item 반복은 peek의 Lex 진단을 먼저 전달한 뒤 Parse point(first.start)를 검사하고, bounded contextual 모양의 추가 peek, Unsupported/kind/count 판정, builder admission, Name 정규화 순서다. comma를 소비한 직후에는 point(comma.end)를 검사한다. wrapper 등록은 AstBuilder의 도입 token.start check를 사용한다. clause/item/root 완료는 마지막으로 소비한 구문 token.end point에서 검사한 뒤 span/payload를 확정한다. lexer cursor나 후행 lookahead.start를 완료 좌표로 사용하지 않는다. 목록/clause의 끝을 결정하는 필수 peek는 완료 check보다 먼저여서 그 Lex 오류가 우선한다. 기존 predicate 내부 checkpoint는 바꾸지 않는다. 추가 같은 위치 check의 정확 호출 횟수는 공개 계약이 아니며 시험 witness는 처리 단계·offset·선택 occurrence를 명시한다. AST append/move는 기존 한 node≤256byte 제어, source copy/lex/Name/exponent scan은 기존≤256byte 제어를 사용한다. 길이가 긴 raw DDL digits를 값 변환 목적으로 재순회하지 않는다. unsupported exponent 재검사가 필요하면 기존 bounded helper를 사용한다. set_span/set_kind는 작은 상수 작업이며 완료 직전 check 뒤 수행한다. 최종 EOF까지 검사하고 최종 Parse point(source.len) 뒤에만 ParsedStatement를 게시한다. 진단에는 거래 effect/outcome을 만들지 않는다.
+
+신규 AST node 추가로 AstNode의 크기·max8192 회계가 바뀌는지 정적 size assert와 실제 layout으로 확인한다. Parser≤128B, ParsedStatement≤384B, AstNode≤256B 및256KiB thread stack을 유지한다. 새 파일에서 큰 NodeKind 임시값을 predicate 재귀 frame 안으로 옮기지 않는다. 문장 wrapper+최대64 predicate 중첩의 실제 debug stack을 신규 연결 경로에서 선택 검증한다.
+
+### 7. 독립 동결 입력 제안과 종료 범위
+
+oracle는 제품 parser/normalizer/type helper를 사용하지 않고 위 tree의 literal node 순서·payload·span·links·raw source·marker를 작성한다. 각 새 production의 최소형/모든 optional 조합과 token 경계 잘림, 모든 신규 Unsupported 위치, contextual name 충돌, 한 문장/EOF를 포함한다. 아래는 실제 fixture 작성 전 필요한 선택 목록이며 실행/건수를 만들어 넣지 않는다.
+
+- SELECT: star,1/31/32/33 projection,중복/AS alias,namespace,WHERE 조합,ORDER1/31/32/33 및 방향×NULL 위치,raw LIMIT/marker/overflow/금지 sign,clause 순서.
+- UPDATE/DELETE: 최소형,여러 assignments,raw scalar 전 종류,SET→WHERE marker 연속성,nullable/overflow/rawhex 미검산,alias/RETURNING/USING/FROM/제한 밖 ORDER/LIMIT.
+- DDL: supported type4종·nullability3종,PK 선택+UNIQUE 반복의 exact 순서,negative/zero/huge raw type length,STORAGE 필수,qualified table/index,unique index/drop,33열/9제약/5key/중복/PK 명시NULL의 raw 성공으로 semantic 경계 확인.
+- 글로벌 경계: 가능한 구조의 AST8191/8192/8193,WHERE depth63/64/65,문장 전체 marker255/256/257,source/name경계의 새 entry 연결. token65536에 정상 AST한도가 먼저 닿는 구조는 불가능 이유와 기존 lexer 증거를 수신한다.
+- 자원: source/각 arena 성장 allocation failure,old/new peak·actual padding·공유 DB,source/완성 AST 수명,token/긴 raw type digits/목록/closing unwind/final checkpoint cancel/deadline,실패 뒤 parser재사용,최대 flat AST와64 depth의256KiB stack/Drop.
+- 변조 detector: 새 routing,WHERE root/marker reset,projection/order limit,raw DDL length 조기변환,clause/PK순서,mandatory STORAGE,readonly tree links,EOF/final control·capacity cleanup 누락.
+
+기존 P2의 SELECT/UPDATE/DELETE/CREATE/DROP Unsupported literal 중 routing이 실제 바뀐 case만 새로운 기대값으로 별도 선택하고 원 source/원 PASS를 보존한다. 원 함수가 관련 없는 기존 case까지 함께 실행하면 새 focused adapter로 바뀐 case만 선택한다. 공통 enum exhaustive adapter는 compile 연결만 필요할 수 있으며 기존 typed/scalar/predicate 전체 runtime을 반복하지 않는다. 실제 diff→case 선택과 hash를 구현 전 동결하고 D1은 실행된 범위·FAIL/중단을 그대로 검토한다.
+
+이 단위의 종료는 **나머지 모든 raw statement parser**이며 typed statement binder/실제 catalog/prepare/bind/engine/DDL precommit/SQL 실행 완료가 아니다. 부분 SELECT만 구현하고 P4 전체 parser 종료라고 표시하지 않는다.
+
+
+### 보충 오류·선택 규칙
+
+- `BIGINT(1)`·`BOOLEAN(1)`은 지원 type의 잘못된 구조로 여는 `(`에 Syntax다. type_length의 `.5`·`+.5`는 Dot 다음 raw byte가 ASCII digit이면 Dot Unsupported이며, 그 외 leading Dot는 Syntax다. digits가 먼저 있으면 기존 인접 dot/exponent 규칙을 적용한다.
+- projection의 input Name뿐 아니라 AS alias 뒤의 Dot/LeftParen/Plus/Minus/Star도 해당 suffix Unsupported다.
+- 완결 P4 Target의 `PUBLIC.t.c`는 두 번째 Dot Unsupported다. 이 검사는 신규 P4 caller가 소유하며 공통 target의 기존 P2 진단을 일괄 변경하지 않는다.
+- 필수 생성 입력은64seed×128개 개별 statement(8,192parse)이며7문장형/unique option·raw payload의 독립 template를 조합한다. 확대256seed×1,024와30분 valid-grammar profile은 별도 선택 가능하게 작성한다. 고정 malformed corpus와 valid-grammar 생성의 범위를 구별한다.
+- 독립 판정은 source·전체 arena·모든 kind/payload·span·links·marker count·error·complete의 정확 비교다. 제품 helper로 expected를 생성하거나 원 실패를 candidate 관측으로 자동 교체하지 않는다. exact fixed/known-bad inventory·자원 함수·변조 witness와 hash는 D2 최종 수용 때 동결한다.
+
+- raw DataType leaf는 타입 형식을 끝까지 읽은 뒤 `Parse point(last_type_token.end)`를 검사하고 정확히 한 번 append한다. VARCHAR/VARBINARY의 잘못된 길이·닫는 괄호 진단은 그 DataType leaf admission보다 먼저다. BIGINT/BOOLEAN은 keyword에서 형식이 끝나므로 뒤 column nullability/suffix peek 전에 leaf를 append한다. 네 번째 DataType가17번째 node인 `CREATE TABLE PUBLIC.t(a BIGINT,b BIGINT,c BIGINT,d VARCHAR(?)) STORAGE DISK`에서는 `?` Syntax가16→32 성장 예약보다 먼저다.
+- UPDATE의 **첫** rhs Name은 Unsupported지만 Plus/Minus 다음에는 기존 scalar의 required-Digits 규칙을 유지한다. `+name/+DEFAULT/+SELECT/+?/-NULL`은 해당 required token Syntax다. 부호 뒤 `.5`는 Dot 다음 raw digit이 있을 때만 Unsupported다. LIMIT의 첫 Plus/Minus는 후속 numeric 모양을 추가 peek하지 않고 sign Syntax다. raw DDL type_length의 처음/부호 뒤에는 Digits만 허용하며 name/Text/Binary/NULL/marker/두 번째 sign은 그 token Syntax, `.5`는 앞 규칙의 Dot Unsupported다.
+- contextual 첫 token을 소비해 보관하는 경로는 그 token을 직접 Name으로 정규화·등록한다. 정상 Name 경로에서 이미 peek한 다음 token을 이름으로 대신 소비하거나 첫 token을 두 번 등록하지 않는다.
+
+- ORDER BY의 Star는 Unsupported다. projection은 첫 단독 Star만 허용한다. AS 뒤 alias와 UPDATE assignment lhs는 required Name 위치이므로 non-Name kind는 Syntax이며, projection/order 첫 expression 또는 UPDATE rhs의 Unsupported 분류를 이 위치까지 확대하지 않는다.
+
+- 명시 CREATE INDEX key의 첫 위치/쉼표 뒤에서 Digits/Text/Binary/TRUE/FALSE/NULL/Marker/Plus/Minus/LeftParen/Star는 expression index의 시작이므로 해당 token Unsupported다. 비어 있는 RightParen/EOF와 그 밖의 reserved kind는 Syntax다. PK/UNIQUE의 Columns는 required Name이므로 non-Name kind는 Syntax를 유지한다. STORAGE 뒤 Identifier/QuotedIdentifier의 DISK 외 표기는 Unsupported이며 DISK keyword만 성공한다.

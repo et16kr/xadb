@@ -19,6 +19,59 @@ pub enum Sign {
     Minus,
 }
 
+/// Explicit ORDER BY direction; omission is retained separately as None.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SortDirection {
+    /// Ascending order.
+    Asc,
+    /// Descending order.
+    Desc,
+}
+
+/// Explicit placement of NULL values, without resolving direction defaults.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NullPlacement {
+    /// NULL values before non-NULL values.
+    First,
+    /// NULL values after non-NULL values.
+    Last,
+}
+
+/// The written column declaration, before primary-key and schema validation.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NullabilitySyntax {
+    /// No nullability clause was written.
+    Implicit,
+    /// An explicit NULL clause.
+    Null,
+    /// An explicit NOT NULL clause.
+    NotNull,
+}
+
+/// Unconverted signed decimal type length; no numeric range is certified.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct TypeLengthSyntax {
+    /// The written sign, if any.
+    pub sign: Sign,
+    /// Decimal digits alone in the owning statement's source.
+    pub digits: Span,
+    /// Sign through final digit, including intervening trivia.
+    pub span: Span,
+}
+
+/// Raw supported type syntax; definition validation belongs after DDL precommit.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TypeSyntax {
+    /// BIGINT without a length clause.
+    Int64,
+    /// BOOLEAN without a length clause.
+    Bool,
+    /// VARCHAR with an unconverted length.
+    Utf8(TypeLengthSyntax),
+    /// VARBINARY with an unconverted length.
+    Binary(TypeLengthSyntax),
+}
+
 /// Unconverted literal or marker syntax. A successful parse is not value validation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ScalarSyntax {
@@ -64,6 +117,61 @@ pub enum ComparisonOp {
 /// Node roles for raw statements and predicate syntax.
 #[derive(Debug)]
 pub enum NodeKind {
+    /// SELECT with Projection, Target and optional Where, OrderBy, Limit.
+    Select,
+    /// UPDATE with Target, Assignments and optional Where.
+    Update,
+    /// DELETE with Target and optional Where.
+    Delete,
+    /// CREATE TABLE with Target, TableDefinition and mandatory StorageDisk.
+    CreateTable,
+    /// DROP TABLE syntax with one Target.
+    DropTable,
+    /// CREATE INDEX with index Target, table Target and Columns.
+    CreateIndex {
+        /// Whether UNIQUE was explicitly written.
+        unique: bool,
+    },
+    /// DROP INDEX syntax with one Target.
+    DropIndex,
+    /// Either one Wildcard or one to32 ProjectionItem children.
+    Projection,
+    /// Input column Name and optional explicit AS alias Name.
+    ProjectionItem,
+    /// A sole projection star.
+    Wildcard,
+    /// SET clause containing one or more Assignment children.
+    Assignments,
+    /// Target column Name followed by one raw Scalar.
+    Assignment,
+    /// WHERE clause with a direct Or child, without a Predicate root.
+    Where,
+    /// ORDER BY clause containing one to32 OrderTerm children.
+    OrderBy,
+    /// Input column Name with separately preserved optional modifiers.
+    OrderTerm {
+        /// Explicit direction, if present.
+        direction: Option<SortDirection>,
+        /// Explicit NULL placement, if present.
+        nulls: Option<NullPlacement>,
+    },
+    /// LIMIT clause with an unsigned raw Integer or Parameter child.
+    Limit,
+    /// Parenthesized column definitions, optional PK, then UNIQUE constraints.
+    TableDefinition,
+    /// Column Name and DataType, without schema or primary-key validation.
+    ColumnDefinition {
+        /// Exact written nullability option.
+        nullability: NullabilitySyntax,
+    },
+    /// Complete raw type syntax, admitted only after its format is read.
+    DataType(TypeSyntax),
+    /// Table-level PRIMARY KEY with a Columns child.
+    PrimaryKey,
+    /// Table-level UNIQUE with a Columns child.
+    UniqueConstraint,
+    /// Mandatory STORAGE DISK syntax, without a storage side effect.
+    StorageDisk,
     /// INSERT root with Target, Columns and Rows children.
     Insert,
     /// BEGIN transaction-control root; no transaction is actually started here.
@@ -76,7 +184,7 @@ pub enum NodeKind {
     SetAutocommit(bool),
     /// One name or a PUBLIC prefix followed by a name.
     Target,
-    /// Explicit nonempty INSERT column list.
+    /// Explicit nonempty INSERT or DDL key column list.
     Columns,
     /// VALUES clause with nonempty tuple children.
     Rows,

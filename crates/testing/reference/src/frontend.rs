@@ -6,6 +6,8 @@
 pub mod literals;
 pub mod parser;
 pub mod predicate;
+/// Independent raw SELECT/DML/DDL trees, diagnostics and bounded input recipes.
+pub mod remaining_parser;
 pub mod scalar;
 pub mod splitter;
 /// Independent complete typed predicate observations and generated inputs.

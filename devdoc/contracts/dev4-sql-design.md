@@ -62,10 +62,13 @@ null_test := value IS [NOT] NULL
 value := name | scalar
 scalar := literal | '?'
 limit_value := nonnegative_integer | '?'
+nonnegative_integer := decimal_digits
 transaction_control := BEGIN | COMMIT | ROLLBACK | SET AUTOCOMMIT (ON | OFF)
 table_name := [public '.'] name
 index_name := [public '.'] name
 ```
+
+[나머지 raw parser 계약](dev4-independent-frontend.md#remaining-parser)은 LIMIT 정수를 부호 없는 decimal digit token으로 고정한다. `+1`/`-1`은 Syntax이며 큰 unsigned digits는 raw 보존 뒤 binder에서 Int64 범위를 검사한다. ORDER BY의 raw Name은 입력 table 열만 조회할 후속 binder의 입력이다. 출력 alias와 같은 철자여도 parser가 catalog 없이 거절하거나 alias로 치환하지 않는다. DDL의 열32개·index/constraint8개·key4개·중복 이름·PK와 명시 NULL 같은 정의 의미는 precommit 뒤 검산하며 raw parser가 선행 거절하지 않는다. 이 구체화는 실제 DDL/engine 실행을 의미하지 않는다.
 
 `public` prefix도 일반 identifier 정규화 규칙을 적용한다. 단일 고정 namespace의 정규 이름은 `PUBLIC`이며 `public`, `PUBLIC`, `"PUBLIC"`를 같은 prefix로 받는다. `"public"`과 다른 schema는 Unsupported다. engine에는 prefix를 제거한 정규 이름 bytes를 전달한다. Oracle의 사용자별 schema를 구현한 것은 아니다. table/index 이름 namespace는 분리하고 index 이름은 DB 전체에서 유일하다. 열 참조는 입력 table의 단순 이름만 받는다. table alias·qualified column·출력 alias/ordinal을 ORDER BY에서 참조하는 문법은 미지원이다. projection의 중복 열/출력 이름은 허용하며 metadata ordinal로 구별한다.
 

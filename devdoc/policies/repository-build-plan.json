@@ -306,7 +306,7 @@
       "normal_workspace_dependencies": [
         "xadb-foundation"
       ],
-      "role": "Independent lexer/name/splitter/raw statement and predicate parser/scalar input/typed predicate compile and evaluate; binder/plan/executor and engine integration remain unimplemented",
+      "role": "Independent lexer/name/splitter, complete raw statement and predicate grammar, owned scalar input, typed predicate compile/evaluate; typed statement binder/plan/executor and engine integration remain unimplemented",
       "test_workspace_dependencies": [
         "xadbtest-reference"
       ],
@@ -5169,7 +5169,9 @@
       "crates/testing/reference/src/frontend/predicate.rs",
       "crates/testing/reference/src/frontend/predicate",
       "crates/testing/reference/src/frontend/typed_predicate.rs",
-      "crates/testing/reference/src/frontend/typed_predicate"
+      "crates/testing/reference/src/frontend/typed_predicate",
+      "crates/testing/reference/src/frontend/remaining_parser.rs",
+      "crates/testing/reference/src/frontend/remaining_parser"
     ],
     "test_paths": [
       "crates/sql/tests",
@@ -5178,16 +5180,18 @@
       "tests/fixtures/dev4-parser",
       "tests/fixtures/dev4-scalar",
       "tests/fixtures/dev4-predicate",
-      "tests/fixtures/dev4-typed-predicate"
+      "tests/fixtures/dev4-typed-predicate",
+      "tests/fixtures/dev4-remaining-parser"
     ],
     "source_roots_changed": false,
     "gate": "Q1 NOT_RUN",
-    "scope": "D4-FE-LEX/SPLIT/PARSE/SCALAR/PREDICATE/TYPED-001 independent frontend, raw grammar, owned typed scalar and full typed predicate compile/eval; remaining grammar/model and actual engine integration incomplete",
+    "scope": "D4-FE-LEX/SPLIT/PARSE/SCALAR/PREDICATE/TYPED/REMAINING-001 independent frontend, complete raw statement grammar, owned typed scalar and typed predicate compile/eval; remaining parser21mutants rejected and limited finalD1 accepted; typed statement binding/P5/P6/actual engine/Q1 incomplete",
     "splitter_evidence_ref": "dev4-splitter-20261024.md",
     "parser_evidence_ref": "dev4-parser-20261024.md",
     "scalar_evidence_ref": "dev4-scalar-20261024.md",
     "predicate_evidence_ref": "dev4-predicate-20261024.md",
-    "typed_predicate_evidence_ref": "dev4-typed-predicate-20261024.md"
+    "typed_predicate_evidence_ref": "dev4-typed-predicate-20261024.md",
+    "remaining_parser_evidence_ref": "dev4-remaining-parser-20261024.md"
   },
   "dev3_mixed_system_owner": {
     "status": "accepted_limited_d1_current_product_continuation",

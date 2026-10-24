@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-24 [DEV4 나머지 raw 문장 parser](evidence/dev4-remaining-parser-20261024.md): SELECT/UPDATE/DELETE·CREATE/DROP TABLE/INDEX를 기존 flat AST·원문·marker에 연결했다. 보존 source의 semantic8함수(8,980parse·known-bad50/통제12)와 자원13함수·Clippy를 선택 검증했다. 원 M21 compile·fmt FAIL을 보존하고21제품 변조 거절·최종 독립 D1을 제한 수용했다. P5/P6·typed 문장 binding·실제 engine·Q1은 미완료다.
+
 2026-10-24 [DEV3 plan4 초기 page의 원 공유 버퍼 소비](evidence/dev3-plan4-clean-owner-20261024.md): 원 CAS와 한 SharedPool의 clean load·Catalog3pin·정리 큐4/4/3pin을 구현했다. 필수78의 source별 결과와 원 실패·HOLD를 보존하며 최종 독립 D1을 제한 수용했다. dirty/flush·복구 owner·CREATE/CLR·DEV3/S5는 미완료다.
 
 2026-10-24 [DEV4 typed predicate](evidence/dev4-typed-predicate-20261024.md): 명시 타입의 전체 검산·3값 평가와 독립 소유/자원을 구현했다. 원 compile·fixture FAIL, 완료 prefix 재실행 없는 source별 선택 증거와18제품 변조 거절을 보존한다. 최종 독립 D1을 제한 수용했으며 P4·수명 모델·실제 engine 통합·Q1은 미완료다.

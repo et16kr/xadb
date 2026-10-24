@@ -11,7 +11,9 @@ use super::{
 };
 use xadb_foundation::runtime::Quota;
 
+mod ddl;
 mod predicate;
+mod statement;
 
 const MAX_MARKERS: u16 = 256;
 
@@ -30,7 +32,7 @@ impl Parser {
         }
     }
 
-    /// Parse exactly one INSERT or transaction statement into an owned flat AST.
+    /// Parse exactly one supported statement into an owned flat AST.
     /// A final semicolon and trailing trivia are optional. Successful parsing
     /// preserves raw scalar syntax and does not certify values or execute SQL.
     ///
@@ -145,15 +147,33 @@ impl ParseInput<'_, '_> {
                 self.autocommit(builder, first)?;
                 false
             }
-            TokenKind::Keyword(
-                Keyword::Select
-                | Keyword::Update
-                | Keyword::Delete
-                | Keyword::Create
-                | Keyword::Drop,
-            ) => return Err(unsupported(first)),
+            TokenKind::Keyword(Keyword::Select) => {
+                self.select_statement(builder, first)?;
+                false
+            }
+            TokenKind::Keyword(Keyword::Update) => {
+                self.update_statement(builder, first)?;
+                false
+            }
+            TokenKind::Keyword(Keyword::Delete) => {
+                self.delete_statement(builder, first)?;
+                false
+            }
+            TokenKind::Keyword(Keyword::Create) => {
+                self.create_statement(builder, first)?;
+                false
+            }
+            TokenKind::Keyword(Keyword::Drop) => {
+                self.drop_statement(builder, first)?;
+                false
+            }
             TokenKind::Identifier
-                if self.word(first, b"PREPARE") || self.word(first, b"EXECUTE") =>
+                if self.word(first, b"PREPARE")
+                    || self.word(first, b"EXECUTE")
+                    || self.word(first, b"WITH")
+                    || self.word(first, b"ALTER")
+                    || self.word(first, b"SAVEPOINT")
+                    || self.word(first, b"EXPLAIN") =>
             {
                 return Err(unsupported(first));
             }
@@ -210,7 +230,7 @@ impl ParseInput<'_, '_> {
         Ok(())
     }
 
-    fn target(&mut self, builder: &mut AstBuilder<'_>, root: usize) -> Result<(), Diagnostic> {
+    fn target(&mut self, builder: &mut AstBuilder<'_>, root: usize) -> Result<Span, Diagnostic> {
         let first = self.peek_name()?;
         let target = builder.add(NodeKind::Target, first.span, Some(root), self.control)?;
         let name = normalize_name(self.source, self.take()?, self.control)?;
@@ -225,8 +245,9 @@ impl ParseInput<'_, '_> {
         } else {
             first.span
         };
-        builder.set_span(target, joined(first.span, last));
-        Ok(())
+        let span = joined(first.span, last);
+        builder.set_span(target, span);
+        Ok(span)
     }
 
     fn columns(&mut self, builder: &mut AstBuilder<'_>, root: usize) -> Result<(), Diagnostic> {

@@ -1,0 +1,356 @@
+{
+  "schema": "xadb.dev4.remaining-parser.manifest.v1",
+  "status": "D2_FINAL_CANDIDATE_NOT_RUN",
+  "contract": "devdoc/contracts/dev4-independent-frontend.md#remaining-parser",
+  "contract_sha256": "c92fe502e4b72975648fb645e44c9ab94784077b406e46c9d00be8eda5c8c8db",
+  "scope": "Raw SELECT/UPDATE/DELETE/CREATE TABLE/CREATE [UNIQUE] INDEX/DROP TABLE/DROP INDEX parser and new shared consumers only; no binding/catalog/evaluation/engine claims.",
+  "counts": {
+    "fixed_case_ids": 659,
+    "fixed_unique_source_bytes": 658,
+    "fixed_source_aliases": 1,
+    "fixed_success": 159,
+    "fixed_error": 500,
+    "boundary_case_ids": 129,
+    "boundary_success": 77,
+    "boundary_error": 52,
+    "fixed_plus_boundary_case_calls": 788,
+    "generated_parse_calls": 8192,
+    "generated_fragments": 8192,
+    "required_semantic_parse_calls": 8980,
+    "known_bad_observations": 50,
+    "deduplicated_known_bad_controls": 12,
+    "known_bad_product_calls": 0,
+    "required_semantic_functions": 8,
+    "ignored_semantic_functions": 2
+  },
+  "fixed_families": {
+    "fixed_cases": 659,
+    "structural": 70,
+    "raw": 45,
+    "contextual": 95,
+    "diagnostic": 444,
+    "dispatch": 5
+  },
+  "identity_rules": {
+    "fixed_and_boundary_unique": true,
+    "fixed_and_boundary_intersection": [],
+    "fixed_source_aliases": [
+      [
+        "update/minimum",
+        "raw/update/zero"
+      ]
+    ],
+    "alias_policy": "Retain case/call denominator; do not label 659 unique sources or silently remove a family control.",
+    "generated_id": "generated/{seed}/{operation}; seed0..63, operation0..127; namespace disjoint from fixed and boundary IDs",
+    "generated_inputs_unique": "Seed and operation are printed in leading comment, retaining each distinct exact source."
+  },
+  "required_functions": [
+    {
+      "name": "remaining_statement_shapes",
+      "family": "structural",
+      "cases": 70
+    },
+    {
+      "name": "remaining_raw_payloads",
+      "family": "raw",
+      "cases": 45
+    },
+    {
+      "name": "remaining_contextual_names",
+      "family": "contextual",
+      "cases": 95
+    },
+    {
+      "name": "remaining_diagnostics",
+      "family": "diagnostic",
+      "cases": 444
+    },
+    {
+      "name": "remaining_boundaries",
+      "family": "boundary",
+      "cases": 129
+    },
+    {
+      "name": "remaining_changed_dispatch",
+      "family": "dispatch",
+      "cases": 5
+    },
+    {
+      "name": "remaining_generated_statements",
+      "family": "generated",
+      "cases": 8192
+    },
+    {
+      "name": "remaining_known_bad_observations",
+      "observations": 50,
+      "controls": 12,
+      "product_calls": 0
+    }
+  ],
+  "boundaries": {
+    "authority": "boundaries.json plus full source/tree printers in reference remaining_parser/recipes.rs",
+    "source_limit": [
+      1048575,
+      1048576,
+      1048577
+    ],
+    "normalized_name_bytes": [
+      127,
+      128,
+      129
+    ],
+    "name_contexts": [
+      "projection",
+      "alias",
+      "order",
+      "assignment",
+      "delete-target",
+      "definition",
+      "index-target",
+      "drop-target"
+    ],
+    "name_origins": [
+      "ascii",
+      "quoted_utf8"
+    ],
+    "projection_and_order_items": [
+      31,
+      32,
+      33
+    ],
+    "depth": [
+      63,
+      64,
+      65
+    ],
+    "depth_families": [
+      "NOT",
+      "Group",
+      "mixed",
+      "sibling restoration"
+    ],
+    "depth_statement_roots": [
+      "Select",
+      "Update",
+      "Delete"
+    ],
+    "markers": [
+      255,
+      256,
+      257
+    ],
+    "marker_statement_roots": [
+      "Select WHERE then LIMIT",
+      "Update SET then WHERE",
+      "Delete WHERE"
+    ],
+    "nodes": [
+      8191,
+      8192,
+      8193
+    ],
+    "node_statement_roots": [
+      "Delete",
+      "Update",
+      "CreateTable"
+    ],
+    "raw_payload_hypothetical_decoded_bytes": [
+      65535,
+      65536,
+      65537
+    ],
+    "raw_payload_interpretation": "All accepted raw text/binary syntax; scalar decoded byte limits belong to later validation, not parser.",
+    "token_limit": {
+      "status": "N/A_FOR_REACHABLE_NORMAL_P4_GRAMMAR_NOT_PASS",
+      "limit": 65536,
+      "derivation": "Worst table column name VARCHAR(sign digits) NOT NULL plus comma: 9 tokens / 3 nodes. ORDER name DESC NULLS LAST plus comma: 5 tokens / 2 nodes, additionally <=32 terms. Other lists and predicates have lower ratio. Conservative common bound 4*N+32 <=32800 for N<=8192; earlier node/grammar/depth/name limits prevent token limit being first in normal P4 input.",
+      "received_evidence": "Existing immutable lexer/token-limit receipt remains evidence for its original source; no completed lower tests repeated."
+    }
+  },
+  "generated": {
+    "required": {
+      "seeds": [
+        0,
+        63
+      ],
+      "operations_per_seed": 128,
+      "individual_parse_calls": 8192
+    },
+    "templates": [
+      "select/options/0/0",
+      "select/options/0/1",
+      "select/options/0/2",
+      "select/options/0/3",
+      "select/options/0/4",
+      "select/options/0/5",
+      "select/options/0/6",
+      "select/options/0/7",
+      "select/options/1/0",
+      "select/options/1/1",
+      "select/options/1/2",
+      "select/options/1/3",
+      "select/options/1/4",
+      "select/options/1/5",
+      "select/options/1/6",
+      "select/options/1/7",
+      "update/minimum",
+      "update/markers-across-where",
+      "delete/minimum",
+      "delete/where",
+      "where/precedence",
+      "ddl/constraints/False/False",
+      "ddl/constraints/False/True",
+      "ddl/constraints/True/False",
+      "ddl/constraints/True/True",
+      "index/targets/False/False/False",
+      "index/targets/True/False/False",
+      "drop/False/False",
+      "drop/True/False",
+      "raw/update/text-empty",
+      "raw/update/binary-invalid",
+      "raw/update/overflow",
+      "raw/update/plus",
+      "raw/type-length/Utf8/plus-trivia",
+      "raw/type-length/Binary/negative",
+      "raw/limit/9223372036854775808"
+    ],
+    "template_count": 36,
+    "selection": "seed_index=seed%1000000; template=(seed_index*17+operation)%36; chosen_node=(seed_index*31+operation*7)%template.nodes.len; cut=chosen_node.span.start",
+    "insertions": [
+      "at0: /*seed={seed};operation={operation};?*/ plus space",
+      "at cut: even operation /*gap?;*/ plus space; odd operation --gap?; newline",
+      "at original EOF: space /*tail?;*/ newline"
+    ],
+    "relocation": "stable-sort insertions by original position; each range start shifts by insertions at p<=start, end by p<end; apply every node/Name span and Integer/TypeLength digits+span; all node kinds/payloads/links/markers retained.",
+    "full_comparison": "Every arena entry, complete source, all payloads/spans/links/marker count/error/complete flag; never production-parsed expectations.",
+    "expanded": [
+      {
+        "function": "remaining_extended_generated_statements",
+        "seeds": [
+          0,
+          255
+        ],
+        "operations_per_seed": 1024,
+        "individual_parse_calls": 262144,
+        "includes_required_seeds": true,
+        "ignored": true
+      },
+      {
+        "function": "remaining_extended_grammar_30_minutes",
+        "seconds": 1800,
+        "first_seed": 256,
+        "operations_per_seed": 128,
+        "valid_grammar_only": true,
+        "arbitrary_malformed_bytes": false,
+        "ignored": true
+      }
+    ]
+  },
+  "known_bad": {
+    "ids": [
+      "route-select",
+      "route-update",
+      "route-delete",
+      "route-create-table",
+      "index-unique-flag",
+      "route-drop-table",
+      "route-drop-index",
+      "trimmed-source",
+      "extra-source",
+      "root-span-includes-leading-trivia",
+      "root-span-includes-semicolon",
+      "missing-last-arena-entry",
+      "extra-unreachable-arena-entry",
+      "wrong-preorder",
+      "missing-first-child",
+      "missing-clause-sibling",
+      "alias-not-input-as-first-child",
+      "wrong-marker-total",
+      "limit-resets-marker-ordinal",
+      "where-resets-marker-after-set",
+      "where-adds-predicate-root",
+      "implicit-direction-defaulted",
+      "implicit-nulls-defaulted",
+      "explicit-direction-reversed",
+      "explicit-nulls-reversed",
+      "wrong-normalized-name",
+      "lost-name-quoted-flag",
+      "name-payload-span-differs",
+      "implicit-nullability-defaulted",
+      "explicit-nullability-erased",
+      "primary-key-becomes-unique",
+      "storage-disk-erased",
+      "table-span-loses-opening-parenthesis",
+      "type-length-plus-erased",
+      "type-length-digits-trimmed",
+      "type-length-span-loses-sign-trivia",
+      "varchar-becomes-varbinary",
+      "type-length-minus-erased",
+      "negative-type-length-source-normalized",
+      "bigint-becomes-boolean",
+      "index-table-target-swapped",
+      "unsupported-becomes-syntax",
+      "name-module-becomes-parse",
+      "error-span-trimmed",
+      "error-leaks-partial-arena",
+      "error-leaks-source",
+      "error-leaks-markers",
+      "incomplete-observation",
+      "missing-diagnostic",
+      "spurious-diagnostic"
+    ],
+    "control_ids": [
+      "select/quoted-public-trivia",
+      "select/options/0/7",
+      "update/markers-across-where",
+      "delete/where",
+      "ddl/constraints/True/True",
+      "index/targets/True/True/True",
+      "drop/False/False",
+      "drop/True/False",
+      "raw/type-length/Utf8/plus-trivia",
+      "raw/type-length/Binary/negative",
+      "syntax/structure/18",
+      "diagnostic/name/53454c45435420/2222"
+    ],
+    "observation_only": true,
+    "normal_controls_checked_once_per_identity": true,
+    "product_mutant_execution": "Separate root-owned mutation-contract/resource evidence; none run by fixture author."
+  },
+  "changed_p2_dispatch": {
+    "path": "crates/testing/reference/src/frontend/parser/literals.rs",
+    "original_copy": "artifacts/dev4-remaining-parser-20261024/original-inputs/crates/testing/reference/src/frontend/parser/literals.rs",
+    "original_sha256": "fef15c133dd6c94f422fcd36c14da534aded780a6ad6483e32f4413cc0ced857",
+    "new_sha256": "0db0da9eb26732fa56b8a0f8c6efb843993951614f8cfb31d03242643a08511e",
+    "ids": [
+      "first-select",
+      "first-update",
+      "first-delete",
+      "first-create",
+      "first-drop"
+    ],
+    "old": "Unsupported Parse keyword span",
+    "new": "Syntax Parse exact EOF; lengths19/19/19/19/17",
+    "preserved": "Original122 input IDs/order/bytes/count, other117 expected observations. No old literal_rejections invocation. New focused5 selected by root only."
+  },
+  "prefreeze_history": "artifacts/dev4-remaining-parser-20261024/prefreeze-review-fixes.json",
+  "resource_owner": "/root and /root/frontend_research; control.json/resource adapter linked by actual hashes only",
+  "execution": "No product/reference compilation, test execution, runtime, mutation execution, or commit by fixture author. Python authoring, static byte/JSON inspection, SHA and rustfmt only.",
+  "files": {
+    "crates/testing/reference/src/frontend/remaining_parser.rs": "355132f962912521bdf646c21e7053f447081f44e0876c519bf1195da96c6294",
+    "crates/testing/reference/src/frontend/remaining_parser/literals.rs": "d5cf7d8214915f1abaa5e7e4fdb714d32e2fdbf2542406f2b33781019e308dd0",
+    "crates/testing/reference/src/frontend/remaining_parser/recipes.rs": "dc3b9f75f3f5ee1794cb57cc45e6a23836f02dc171f3ae76954e959903bd7bc1",
+    "tests/fixtures/dev4-remaining-parser/semantic.json": "8d1ddbfc483e4ae3640da8ff9a4707a95da2de8473ff9d31364e6c64871200ee",
+    "tests/fixtures/dev4-remaining-parser/boundaries.json": "d25e85d20293699c7919c291de17249cdb0c56d21e888b2b6dcd47c6ace6984f",
+    "crates/sql/tests/remaining_parser_contracts.rs": "5fe8417605e4de1457d2815801f7e5117722f940a4e4dd7b7b72688f8b5f9a7d",
+    "artifacts/dev4-remaining-parser-20261024/author_fixtures.py": "081a59c633bc6cbec82a485d6f7a159151df1883461475d9de31f5f7411b02c4",
+    "artifacts/dev4-remaining-parser-20261024/author_manifest.py": "5734563109d366345a1eacf0e9919340c25d84e81ef99b49f7b1bed653b6ca36",
+    "artifacts/dev4-remaining-parser-20261024/prefreeze-review-fixes.json": "e0627de763057e90a26d1c39e21deab7f27968584eab4e3465c7785674b0fe16",
+    "tests/fixtures/dev4-remaining-parser/control.json": "3a59b6d9a21a1a29082ef6a4d2dd07e28e432317f73e4ba7e20d4e9f3e1486ee",
+    "crates/sql/tests/remaining_parser_resources.rs": "8995528a90da4aadf91483a1dff1559335acf67131aeed550a6ddf3b374867d0",
+    "artifacts/dev4-remaining-parser-20261024/resource-inventory.json": "37c4cb79f34765a5a27a0b909716b9ec03d294fb2c0160deb5fc801776c80c56",
+    "artifacts/dev4-remaining-parser-20261024/mutation-contract.json": "f0d3ff3ff1e307183a87094c86dc7a259dea3f74897800ccba53e7ee82d72803"
+  },
+  "prefreeze_selection_history": "artifacts/dev4-remaining-parser-20261024/prefreeze-selection-01",
+  "selection": "Complete required profile unchanged. Exact mutation witnesses and explicit failed-suffix continuations are separately recorded; no unknown/conflicting selector may silently reduce product calls."
+}
