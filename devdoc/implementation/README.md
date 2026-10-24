@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-24 [DEV3 빈 거래의 닫힌 복구](dev3-implementation.md#empty-transaction-recovery): 실제 producer→flush/load→새 PID 복구/재진입 소비자를 연결하고 제한 독립 D1/D2를 수용했다. source별 memory104variant·native6history21PID와 원 실패를 보존한다. AI 운영 실험 소비자1/3 도달이며 효과 비교·일반 pool/live undo·전체 DEV3/S5는 미완료다.
+
 2026-10-23 [DEV3 전체 대상 pin 집합](dev3-implementation.md#bounded-target-set): 기존 단일 SharedPool에서 정확1..64개 대상을 함께 확보하도록 확장했다. 신규15·직접 관련4·static2·compiler7·검사기3/변경1의 source별 PASS와 원 compile FAIL을 보존한다. 최종 독립 D1을 제한 단위로 수용했으며 일반 pool·live 거래·DEV3/S5는 미완료다.
 
 2026-10-23 [DEV3 최초 Begin 준비](dev3-implementation.md#begin-preparation): Free 슬롯의 빈 Active 전이를 위한 WAL·페이지 producer/observer/materializer를 추가했다. 새 runtime12·static1·fmt/Clippy PASS와 원 fmt FAIL을 보존하며 최종 독립 D1을 순수 준비 단위로 수용했다. 실제 발급·stage/apply·일반 pool·DEV3/S5는 미완료다.

@@ -34,6 +34,8 @@ pub(crate) struct SourceCensus {
     pub(crate) outer: usize,
     pub(crate) prefix_nested: usize,
     pub(crate) inventory: usize,
+    pub(crate) entry_phase: usize,
+    pub(crate) return_phase: usize,
     pub(crate) work_nested: usize,
     pub(crate) peak: usize,
 }
@@ -70,6 +72,7 @@ pub(crate) struct ClosedRecovery<'a, 'd, W: WriterNamespace> {
     source_seal: Option<SourceSeal>,
     final_allocator_hash: [u8; 32],
     final_descriptor_hash: Option<[u8; 32]>,
+    final_transaction_hash: [u8; 32],
     slots: Option<SlotsProvisioned>,
     restored: Option<RestoredSeal>,
     reservation: Option<RecoveryReservation>,
@@ -95,6 +98,7 @@ struct RecoveryReservation {
 struct RestoredSeal {
     lsn: u64,
     descriptor: Option<[u8; 32]>,
+    transactions: [u8; 32],
     remaining: RemainingBudget,
     topup: u64,
 }
@@ -164,11 +168,21 @@ impl<'a, 'd, W: WriterNamespace> ClosedRecovery<'a, 'd, W> {
                 effects: RecoveryEffects::default(),
             });
         }
-        let (work, tail) = maintenance.split_at_mut(WORKSPACE_BYTES);
+        let (work, rest) = maintenance.split_at_mut(WORKSPACE_BYTES);
+        let (transaction_arena, tail) = rest.split_at_mut(transactions::ARENA_BYTES);
+        let transaction_arena = transaction_arena
+            .try_into()
+            .expect("canonical transaction arena");
         let work: &mut [u8; WORKSPACE_BYTES] = work.try_into().expect("fixed prefix split");
         let mut acquired = false;
-        let prefix = RecoveryPrefix::acquire_for_effect(directory, expected, work, &mut acquired)
-            .map_err(|cause| {
+        let prefix = RecoveryPrefix::acquire_for_effect(
+            directory,
+            expected,
+            work,
+            transaction_arena,
+            &mut acquired,
+        )
+        .map_err(|cause| {
             let effect = if acquired {
                 Effect::CallerMustResolve
             } else {
@@ -225,6 +239,7 @@ impl<'a, 'd, W: WriterNamespace> ClosedRecovery<'a, 'd, W> {
             source_seal: None,
             final_allocator_hash: [0; 32],
             final_descriptor_hash: None,
+            final_transaction_hash: [0; 32],
             slots: None,
             restored: None,
             reservation: None,
@@ -241,16 +256,7 @@ impl<'a, 'd, W: WriterNamespace> ClosedRecovery<'a, 'd, W> {
     pub(crate) fn recover(
         mut self,
     ) -> std::result::Result<RecoveryInspection<'a, 'd, W>, RecoveryFailure<'a, 'd, W>> {
-        let result = (|| {
-            self.provision()?;
-            self.stabilize_source()?;
-            self.repair_pending()?;
-            self.restore_once()?;
-            self.redo()?;
-            self.flush_dirty()?;
-            self.verify()?;
-            Ok(())
-        })();
+        let result = self.run_recovery();
         match result {
             Ok(()) => Ok(RecoveryInspection { owner: self }),
             Err(error) => {
@@ -258,6 +264,17 @@ impl<'a, 'd, W: WriterNamespace> ClosedRecovery<'a, 'd, W> {
                 Err(RecoveryFailure { owner: self, error })
             }
         }
+    }
+    // Borrowed work ends before a wide success/failure owner is constructed.
+    // This boundary is part of the source-value census, not a stack ABI claim.
+    fn run_recovery(&mut self) -> Result<()> {
+        self.provision()?;
+        self.stabilize_source()?;
+        self.repair_pending()?;
+        self.restore_once()?;
+        self.redo()?;
+        self.flush_dirty()?;
+        self.verify()
     }
     pub(crate) fn observation(&self) -> &RecoveryObservation {
         &self.observation
@@ -301,6 +318,13 @@ impl<W: WriterNamespace> RecoveryInspection<'_, '_, W> {
                 .try_into()
                 .expect("physical Status"),
         )
+    }
+    pub(crate) fn transaction_descriptor_at(&self, index: usize) -> Option<&[u8; 1536]> {
+        self.owner
+            .prefix
+            .transaction_arena
+            .as_deref()
+            .and_then(|arena| transactions::descriptor_at(arena, index))
     }
     pub(crate) fn descriptor_bytes(&self) -> Option<&[u8; 1536]> {
         self.owner.prefix.descriptor_bytes()

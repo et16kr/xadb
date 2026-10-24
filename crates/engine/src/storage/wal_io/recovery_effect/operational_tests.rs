@@ -90,6 +90,14 @@ fn operational_recovery_resource_gate() {
         "operational recovery census outer={} prefix={} work={} inventory={} peak={}",
         c.outer, c.prefix_nested, c.work_nested, c.inventory, c.peak
     );
+    println!(
+        "lifetime phases: borrowed_outer={} entry={} work={} return={} peak={}",
+        c.outer,
+        c.entry_phase,
+        c.outer + c.work_nested.max(c.inventory),
+        c.return_phase,
+        c.peak
+    );
     assert!(resources::fits::<port::Writer>(&c));
     assert_eq!(TARGETS, 181760);
     const { assert!(TARGETS + TARGET_TABLE_BYTES <= WORKSPACE_BYTES) };

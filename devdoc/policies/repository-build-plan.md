@@ -409,3 +409,9 @@ runner/checker를 관리 JSON에 추가한다. live load·native recovery 통합
 `empty_transactions_load.rs`·memory/native 시험·load manifest·새 compiler2개를 추가한다.
 private sealed proof를 기존 load permit로 소비하며 기존 caller loan/SharedPool을 재사용한다.
 실제 경로만 같은 관리 JSON에 등록하고 package·dependency·source root는 유지한다.
+
+
+[빈 거래 closed recovery F10](../contracts/dev3-recovery-effects.md#empty-transaction-recovery)은 기존 Prefix/ClosedRecovery에
+`recovery_empty_transactions.rs`의 canonical bank와 typed callback을 연결한다. 신규 memory/native test,
+raw literal/native oracle·compiler fixture 실제 경로를 JSON에 등록했다. source roots와 clean export 규칙은
+유지하며 [source별 증거](../evidence/dev3-empty-transaction-20261023.md#closed-recovery)에 한정한다.

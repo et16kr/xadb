@@ -37,7 +37,7 @@ class ClosedRecoveryNativeCheckerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             path=Path(temp);file=path/'source-census.tsv'
             with self.assertRaises(ValueError):r.check_census(path)
-            good='outer\t100\nprefix_nested\t200\ninventory\t300\nwork_nested\t400\npeak\t500\nwriter\t32\nfile\t32\nmaintenance\t12582912\nflush\t4194304\n'
+            good='outer\t100\nprefix_nested\t200\ninventory\t300\nwork_nested\t400\nentry_phase\t450\nreturn_phase\t480\npeak\t500\nwriter\t32\nfile\t32\nmaintenance\t12582912\nflush\t4194304\n'
             file.write_text(good);r.check_census(path)
             for bad in (good.replace('inventory\t300\n',''),good.replace('peak\t500','peak\t499'),good.replace('outer\t100','outer\t65536').replace('peak\t500','peak\t65936'),good.replace('maintenance\t12582912','maintenance\t262144')):
                 file.write_text(bad)

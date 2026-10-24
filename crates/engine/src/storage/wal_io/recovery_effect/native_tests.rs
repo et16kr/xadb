@@ -39,6 +39,7 @@ struct Trace {
     tail_cut: bool,
     operational_home_offset: Option<u64>,
     operational_b_synced: bool,
+    empty_status_synced: bool,
     pause: Option<(mpsc::SyncSender<()>, mpsc::Receiver<()>)>,
 }
 impl Trace {
@@ -125,6 +126,10 @@ impl Writer {
             || (t.recovering
                 && t.fault == "operational_b_retirement_after"
                 && t.operational_b_synced
+                && op == "publish")
+            || (t.recovering
+                && t.fault == "empty_status_retirement_after"
+                && t.empty_status_synced
                 && op == "publish");
         if fault {
             t.cut_hits += 1;
@@ -168,6 +173,9 @@ impl FileIo for File {
             if t.recovering {
                 assert_ne!(self.name, "d3-wal-00000001");
             }
+            // Keep slot-image and home fault predicates as separate authored
+            // cut points even though both deliberately write 8192 bytes.
+            #[allow(clippy::if_same_then_else)]
             let partial = if t.tail_cut && self.name == "d3-wal-00000001" && input.len() == 38000 {
                 t.tail_cut = false;
                 19000
@@ -179,6 +187,16 @@ impl FileIo for File {
             {
                 t.fault.clear();
                 32768
+            } else if t.recovering
+                && t.fault == "empty_status_slot_partial"
+                && self.name == "d3-dwb-images"
+                && offset == 0
+                && input.len() == 16544
+                && &input[..4] == b"XDS1"
+                && input[48..56] == 1u64.to_le_bytes()
+            {
+                t.fault.clear();
+                8192
             } else if t.recovering
                 && self.name == "d3-data-0000000100000001"
                 && (((t.fault == "repair_partial" || t.fault == "redo_second_partial")
@@ -232,6 +250,9 @@ impl FileIo for File {
         t.event("sync", &self.name, 0, 0, "OK");
         if self.name == "d3-data-0000000100000001" && t.operational_home_offset == Some(32768) {
             t.operational_b_synced = true;
+        }
+        if self.name == "d3-data-0000000100000001" && t.operational_home_offset == Some(16384) {
+            t.empty_status_synced = true;
         }
         if (t.cut > 0 && t.cut_count == t.cut)
             || (t.recovering && t.fault == "boot_sync_after" && self.name == "d3-rebase-1")
@@ -569,7 +590,7 @@ fn dump(out: &Path, p: &super::super::RecoveryPrefixObservation, o: &super::Reco
     .unwrap();
     fs::write(out.join("effects.txt"), format!("{:#?}\n", o.effects)).unwrap();
     let c = &o.source_census;
-    fs::write(out.join("source-census.tsv"),format!("outer\t{}\nprefix_nested\t{}\ninventory\t{}\nwork_nested\t{}\npeak\t{}\nwriter\t{}\nfile\t{}\nmaintenance\t12582912\nflush\t4194304\n",c.outer,c.prefix_nested,c.inventory,c.work_nested,c.peak,std::mem::size_of::<Writer>(),std::mem::size_of::<File>())).unwrap();
+    fs::write(out.join("source-census.tsv"),format!("outer\t{}\nprefix_nested\t{}\ninventory\t{}\nwork_nested\t{}\nentry_phase\t{}\nreturn_phase\t{}\npeak\t{}\nwriter\t{}\nfile\t{}\nmaintenance\t12582912\nflush\t4194304\n",c.outer,c.prefix_nested,c.inventory,c.work_nested,c.entry_phase,c.return_phase,c.peak,std::mem::size_of::<Writer>(),std::mem::size_of::<File>())).unwrap();
 }
 fn dump_error(out: &Path, e: &super::RecoveryError, effects: &super::RecoveryEffects) {
     fs::write(out.join("error.txt"), format!("{e:#?}\n")).unwrap();
@@ -709,3 +730,6 @@ mod operational;
 
 #[path = "resident_native_tests.rs"]
 mod resident;
+
+#[path = "empty_native_tests.rs"]
+mod empty;

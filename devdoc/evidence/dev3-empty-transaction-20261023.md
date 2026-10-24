@@ -250,3 +250,70 @@ retained115,408·metadata180,184/196,608·whole245,720/262,144·conversion65,400
 원 로그 hash·시간과 보존량은 [색인](dev3-empty-transaction-20261023.json)의 `live_load`에 있다.
 S5 profile3×state4의12조합은 authored ignored/NOT_RUN이다. 다음 소비자는 새 process의
 현재-build 빈 거래 복구·재진입이며 통합 소비자 도달0/3·효율 비교·전체 DEV3/S5는 미완료다.
+
+<a id="closed-recovery"></a>
+## 빈 거래의 현재-build 닫힌 복구
+
+2026-10-24 · base `996d0e0` 이후 [F10](../contracts/dev3-recovery-effects.md#empty-transaction-recovery)의
+실제 소비자를 연결했다. 기존 Prefix/ClosedRecovery가 첫 extent의 Begin·RollbackStart·빈 AbortEnd를
+모두 canonical materialize하고,32개 retained owner의 descriptor·남은 의무·issuer를 복원한다.
+원 system descriptor와 allocator LSN은 별도로 보존한다. consumable은 합산하고 직렬 공유 resource peak는
+max로 복원하며 각 Status의 전체 image·LSN·incarnation과 bank를 두 pass에서 검산한다.
+기존 `status_image()`의 마지막 INIT 주소 의미를 유지하고 borrowed transaction descriptor 관측을 추가했다.
+
+독립 D2·first-effect/선택 실행 gate를 source마다 수용했다. 최초 layout70,120/70,328 초과를
+수명 phase별 source-value 계산과 `run_recovery`의 실제 return 순서 분리로 고쳤다. 검토에서 마지막 INIT
+관측 변경, heterogeneous obligation 합산 검산 사례, higher healthy Pending 거절 기대, incarnation no-op fixture와
+유효 Commit/정확 phase·read 도달 단언을 보완했다. 최종 독립 D1에서 manifest checker 기대13→16을
+수정하고 해당1함수만 검증했다. OCR delegate의 최초155경로 전수 회계와 후속 수정 확인으로 제한 단위를 수용했다.
+
+| source | 실제 선택과 원 결과 |
+| --- | --- |
+| r0 `b7b360d6…` | build PASS, memory/native static2 FAIL(65,536 초과); effect 미실행 |
+| r1 `fffde50a…` | 실제 수명 phase 분리 뒤 실패 static2만 PASS; effect 미실행 |
+| r2 `37e6d2c…` | Active/Aborting/Aborted3와 각각 same-port clean reentry PASS |
+| r3 `50bee09d…` | raw124파일·새 시험 build PASS; 제품시험 미실행 |
+| r4 `996a9f2a…` | 마지막 INIT 관측 보완; interleaved2/capacity3/mixed12 PASS |
+| r5 `fddbf114…` | negative build PASS; 사전 oracle 검토 HOLD로 runtime 미실행 |
+| r6 `e296f312…` | 새 negative7함수73variant PASS; ERP001/002 완료 뒤 ERP003의 fixture encoder ImageMismatch FAIL |
+| r6 | Linux5history17PID 및 독립 full-file oracle PASS, 신규 checker3·변경 census checker1 PASS |
+| r7 `79fc02dc…` | ERP003의 유효 Active@RollbackLSN 입력으로 변경해 해당1만 PASS; 새 required-read8·직접 System mixed9/readonly1 PASS |
+| r7 | descriptor compiler EC12–14와 unmodified control1, 신규 selection checker1, fmt/Clippy PASS |
+| r8 `04611f0e…` | 추가 DWB slot-image partial1history4PID·신규 checker1 PASS; fmt PASS, native fault의 동일 return 블록 Clippy FAIL |
+| r9 `86a25851…` | 서로 다른 독립 fault cut을 보존하는 narrow lint 설명 추가; runtime/compiler 반복 없이 fmt/Clippy PASS |
+| r10 `f8294944…` | D1에서 찾은 manifest checker 기대13→16 수정; import 경로 누락 원 FAIL 보존 후 정확1함수 PASS |
+
+memory 신규13함수의104variant는 완결 job102와 r6 실패 job 안의 완료2로 구별한다.
+원 FAIL을 PASS로 소급 변경하지 않는다. issuer gap/interleave의 Active6080+Aborting3040 합계9120,
+32 owner의 WAL194560·P+M1243136, terminal 뒤 page63/local34 신규 발급을 literal 전체 bytes와 대조했다.
+부정 입력은 outer seal을 유지한 complete semantic 변조, retired/issuer/system 순서, intact home 충돌,
+historical Pending, incomplete suffix15, bank 양방향9, restore/second-pass seal5를 포함한다.
+required read8은 실제 source 길이가 충분한 Begin body의 `(read,WAL,63456,2880)`에서 EOF/invalid count/
+I/O/partial EOF를 첫 분석·REDO 각각 주입한다. true physical tail15와 별개이며 원 source는 보존한다.
+
+native의 첫5history는 Active/Aborting/Aborted와 Status home8192 partial, retirement publish 결과 불명이다.
+추가1history는 Aborted image의 XDS1 slot16544 중8192만 실제 쓰고 실패한다. selected Empty generation5/
+batch2·Status home 미쓰기를 보존하고 새 PID에서 batch3→generation10으로 복구한다. 총6history21worker는
+동일 source 단일 실행으로 합치지 않는다(r6 17worker, r8 4worker). 각 history에서 producer→복구→재진입 PID가
+서로 다르고, raw 전체 파일 oracle·WAL/inode 보존·borrowed page/descriptor·FD 종료0을 검산했다.
+원 실패 파일 hash와 slot/control/home snapshot은 재진입 전에 보존했다. 이 native는 실제 process 재진입이며
+OS 전원 차단이나 일반 READY/새 epoch/자동 loser 종료를 검증한 것은 아니다.
+
+source-value peak는 memory64,368/native64,480, 각각 entry59,200/59,296·return18,256/18,392다.
+원 maintenance12MiB+flush4MiB 안에 canonical arena1,101,824를 분리했고 별도 page heap/File은 없다.
+FD5·WAL256MiB·owned8GiB/protected1GiB, 보수 owned/protected component292,808,704를 유지한다.
+stack/RSS는 미측정이다. native 각30초/DB24MiB·최초5선택150초/120MiB·추가1선택30초/24MiB를
+구별하며 전체 authored inventory 한도180초/144MiB·snapshot/log16MiB를 기록했다. 실제 보존량과
+source/ELF/cache 별도 귀속은 [JSON 색인](dev3-empty-transaction-20261023.json)의 `closed_recovery`에 있다.
+
+최종 S5의 profile3×Free/Active/Aborting/Aborted×home4인48조합은 ignored로 작성했고 미실행이다.
+새 compiler3는 immutable bank 관측의 owner 수명·불변성과 release를 검산했으며 기존 EC00–11을 반복하지 않았다.
+checker는 신규5·직접 수신 변경2를 선택 검증했다. r10 실행 중 생성된 pyc2개는 별도 cache로 이동 보존했고,
+원 capture의 pyc11개는 그대로 두어 원 source 지문을 복원했다. drift와 복원 지문·목록을 기록했으며 시험을 반복하지 않았다.
+이번 변경의 직접 수신 System callback/readonly만 선택하고 하위 wrapper·문서 verifier는 실행하지 않았다.
+단계별 세부 대기/편집 시간을 사후 추정하지 않으며 실제 build/선택 영수증과 timing을 보존한다.
+일반 pool/live undo·첫 행 Commit ACK·index/catalog·일반 recovery/READY·checkpoint/회수/backup과 DEV3/S5는 미완료다.
+
+이 범위에서 실제 빈 거래 producer→이력 기반 flush/load→새 PID 복구/재진입 소비자에 도달했다.
+AI 운영 실험의 첫 통합 단위는1/3이며, 앞선 준비·handoff·live·flush/load 기록의 당시0/3은 보존한다.
+효율 비교는 NOT_RUN이고 제한 소비자 수를 전체 DEV3 진행률이나 속도 향상으로 해석하지 않는다.

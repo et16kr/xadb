@@ -895,3 +895,15 @@ read·allocator/prefix 검산 후 기존 leaf installer로 교체한다. 신규 
 [같은 증거](../evidence/dev3-empty-transaction-20261023.md#live-load)에 보존한다. Linux에서
 Active/Aborting/Aborted의 실제6load와 원 actor 계속 진행을 확인했다. 제한 D1을 수용했으며
 새 process 현재-build 거래 복구·소비자 도달0/3·DEV3/S5는 미완료다.
+
+
+<a id="empty-transaction-recovery"></a>
+### 빈 거래의 닫힌 현재-build 복구
+
+2026-10-24 [F10](../contracts/dev3-recovery-effects.md#empty-transaction-recovery)은 기존 ClosedRecovery에서
+모든 빈 거래 frame의 canonical page/descriptor를 재구성하고 최대32 nonterminal owner의 의무를 복원한다.
+allocator LSN·각 Status LSN·전역 issuer를 분리하고, 원 system descriptor와 양방향 bank census를 두 pass에서 검산한다.
+독립 raw literal·Linux producer 파일과 재진입의 [선택 증거](../evidence/dev3-empty-transaction-20261023.md#closed-recovery)를
+보존하고 제한 단위의 최종 독립 D1을 수용했다. 빈 거래의 실제 producer→flush/load→새 PID 복구/재진입으로
+AI 운영 실험 소비자1/3에 도달했으며 효과 비교는 NOT_RUN이다. 일반 pool/live undo·Commit ACK·행/index/catalog·
+일반 recovery/READY 및 전체 DEV3/S5는 미완료다.

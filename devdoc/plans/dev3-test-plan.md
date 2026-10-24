@@ -593,3 +593,19 @@ Aborted 교체와 원 actor 계속 진행, admission, 알려진 read 오류 retr
 `--case load_sequence --case sealed_load`로 선택하고 공통 verify 변경의 checker2를 실행한다.
 S5에는 `empty_load_s5_profiles_states_and_replacement`의12조합을 추가하되 중간 실행하지 않는다.
 원 source별 실패·완료 선택은 [증거](../evidence/dev3-empty-transaction-20261023.md#live-load)를 따른다.
+
+
+[빈 거래 closed recovery F10](../contracts/dev3-recovery-effects.md#empty-transaction-recovery)은
+[recovery manifest](../../crates/engine/tests/fixtures/dev3-empty-transactions/recovery-manifest.json)의 새13함수104variant를 선택한다.
+Active/Aborting/Aborted3, interleaved2, capacity3, mixed12, semantic24, ordering5, historical Pending6,
+intact conflicts9, tail15, Pending exact3, bank census9, seal drift5, required body read8이다.
+직접 수정된 System typed callback의 mixed9와 public readonly scope1, 변경 census2만 기존 수신 사례로 선택한다.
+완료된 unchanged lower/전체 wrapper는 실행하지 않는다. 실패한 job의 완료 case는 원 source에서 보존하고
+수정된 ERP003만 다시 선택한다.
+
+Linux actual producer→새PID recovery→재진입은 native6history21worker로 동결했다. 첫5history17worker와
+추가 slot partial1history4worker는 서로 다른 source 영수증이며 완료5를 반복하지 않는다. native worker는
+`dev3_empty_recovery_native.py --select`의 정확 history만 선택하고 독립 전체 파일 oracle와 inode/FD를 검산한다.
+compiler EC12–14와 baseline만 선택하며 EC00–11은 반복하지 않는다. 새 native checker4·compiler selection checker1 및
+변경 census checker1·frozen manifest checker1을 구별한다. ignored `empty_recovery_s5_profiles_states_and_homes`의48조합은 최종 S5에 전수 배정한다.
+원 source별 결과와 실패·자원 한도는 [통합 증거](../evidence/dev3-empty-transaction-20261023.md#closed-recovery)를 따른다.

@@ -16,7 +16,7 @@ class ClosedRecoveryEffectsCompilerHarnessTests(unittest.TestCase):
 
     def test_frozen_manifest_and_program_identity(self):
         cases = runner.inputs()
-        self.assertEqual(len(cases), 13)
+        self.assertEqual(len(cases), 16)
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             for path in runner.INPUTS.iterdir(): (base/path.name).write_bytes(path.read_bytes())
@@ -29,6 +29,11 @@ class ClosedRecoveryEffectsCompilerHarnessTests(unittest.TestCase):
     def test_new_status_image_selection_omits_old_semantic_probes(self):
         cases=runner.inputs()
         names=['status_images_positive','status_image_borrow','status_image_immutable']
+        self.assertEqual([r['name'] for r in runner.select_cases(cases,names)],['baseline',*names])
+
+    def test_transaction_descriptor_selection_omits_completed_semantics(self):
+        cases=runner.inputs()
+        names=['transaction_descriptors_positive','transaction_descriptor_borrow','transaction_descriptor_immutable']
         self.assertEqual([r['name'] for r in runner.select_cases(cases,names)],['baseline',*names])
 
     def test_exact_negative_completion_path_line_and_code(self):

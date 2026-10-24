@@ -45,6 +45,8 @@ use xadb_foundation::{
     },
 };
 
+#[path = "recovery_empty_transactions.rs"]
+mod transactions;
 pub(crate) const WORKSPACE_BYTES: usize = 262144;
 const FRAME: usize = 65536;
 const ALLOC: usize = 65536;
@@ -115,6 +117,7 @@ pub(crate) enum Cause {
     Doublewrite(dwb::DoublewriteError),
     Wal(WalError),
     Semantic(SemanticError),
+    Transaction(crate::storage::semantic_group::SemanticError),
 }
 #[derive(Debug)]
 pub(crate) struct RecoveryPrefixError {
@@ -192,6 +195,8 @@ pub(crate) struct RecoveryPrefixObservation {
     source: FileMetadata,
     complete_offset: u64,
     complete_lsn: u64,
+    allocator_lsn: u64,
+    transactions: transactions::Transactions,
     tail: Option<TailObservation>,
     mode: Option<ProducerMode>,
     active: Option<Batch>,
@@ -250,6 +255,15 @@ impl RecoveryPrefixObservation {
     }
     pub(crate) fn complete_lsn(&self) -> u64 {
         self.complete_lsn
+    }
+    pub(crate) fn allocator_lsn(&self) -> u64 {
+        self.allocator_lsn
+    }
+    pub(crate) fn transaction_high_water(&self) -> u64 {
+        self.transactions.high_water
+    }
+    pub(crate) fn active_transactions(&self) -> u32 {
+        self.transactions.active
     }
     pub(crate) fn tail(&self) -> Option<&TailObservation> {
         self.tail.as_ref()
@@ -330,6 +344,7 @@ pub(crate) struct RecoveryPrefix<'a, W: WriterNamespace> {
     source: W::File,
     writer: W,
     workspace: &'a mut [u8; WORKSPACE_BYTES],
+    transaction_arena: Option<&'a mut [u8; transactions::ARENA_BYTES]>,
     observation: RecoveryPrefixObservation,
 }
 
@@ -381,6 +396,7 @@ pub(crate) fn source_census<W: WriterNamespace>() -> SourceCensus {
         + 2 * size_of::<DescriptorSpec>()
         + size_of::<RemainingBudget>()
         + 2 * size_of::<CanonicalImages<'static>>();
+    let replay = replay.max(transactions::component_bytes());
     // Oversized hashing never nests a descriptor/entry/bootstrap decoder.
     // Hash chunk bytes live in caller workspace; pinned SHA state/block/output
     // storage and digest/scalar/error return carriers are source-owned here.
@@ -412,6 +428,7 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
             expected,
             workspace,
             RecoveryScope::ReadOnly,
+            None,
             &mut acquired,
         )
     }
@@ -419,6 +436,7 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
         directory: &D,
         expected: Option<Namespace>,
         workspace: &'a mut [u8; WORKSPACE_BYTES],
+        transaction_arena: &'a mut [u8; transactions::ARENA_BYTES],
         acquired: &mut bool,
     ) -> Result<Self> {
         Self::acquire_internal(
@@ -426,6 +444,7 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
             expected,
             workspace,
             RecoveryScope::Effects,
+            Some(transaction_arena),
             acquired,
         )
     }
@@ -434,6 +453,7 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
         expected: Option<Namespace>,
         workspace: &'a mut [u8; WORKSPACE_BYTES],
         scope: RecoveryScope,
+        mut transaction_arena: Option<&'a mut [u8; transactions::ARENA_BYTES]>,
         acquired: &mut bool,
     ) -> Result<Self> {
         if !fits::<W>() {
@@ -612,6 +632,8 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
             source: metadata,
             complete_offset: 4096,
             complete_lsn: 0,
+            allocator_lsn: 0,
+            transactions: transactions::Transactions::default(),
             tail: None,
             mode: None,
             active: None,
@@ -631,7 +653,14 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
             stage_bytes,
             replay_topup: 0,
         };
-        analyze(&mut source, workspace, &mut observation, allocator)?;
+        analyze_with(
+            &mut source,
+            workspace,
+            transaction_arena.as_deref_mut(),
+            &mut observation,
+            allocator,
+            |_, _, _| true,
+        )?;
         if !observation.pending_matched || header.max_lsn.0 > observation.complete_lsn {
             return Err(error(Phase::Ledger, Cause::RequiredPrefixMissing));
         }
@@ -650,6 +679,7 @@ impl<'a, W: WriterNamespace> RecoveryPrefix<'a, W> {
             source,
             writer,
             workspace,
+            transaction_arena,
             observation,
         })
     }
@@ -761,21 +791,14 @@ fn account(observation: &mut RecoveryPrefixObservation) -> Result<()> {
     }
     Ok(())
 }
-fn analyze<F: xadb_foundation::io::FileIo>(
-    source: &mut F,
-    workspace: &mut [u8; WORKSPACE_BYTES],
-    observation: &mut RecoveryPrefixObservation,
-    allocator: PageIdentity,
-) -> Result<()> {
-    analyze_with(source, workspace, observation, allocator, |_, _, _, _| true)
-}
 // Pure canonical continuation hook. Physical pages never enter adopt_frame.
 fn analyze_with<F: xadb_foundation::io::FileIo>(
     source: &mut F,
     workspace: &mut [u8; WORKSPACE_BYTES],
+    mut transaction_arena: Option<&mut [u8; transactions::ARENA_BYTES]>,
     observation: &mut RecoveryPrefixObservation,
     allocator: PageIdentity,
-    mut visit: impl FnMut(WalFrameHeader, &[u8], &[u8; PAGE_BYTES], Option<&[u8; PAGE_BYTES]>) -> bool,
+    mut visit: impl FnMut(WalFrameHeader, &[u8], CanonicalChange<'_>) -> bool,
 ) -> Result<()> {
     let (frame, rest) = workspace.split_at_mut(FRAME);
     let (before, rest) = rest.split_at_mut(PAGE_BYTES);
@@ -788,6 +811,9 @@ fn analyze_with<F: xadb_foundation::io::FileIo>(
     // Neither pass inherits a prior caller/analysis descriptor or census.
     descriptor.fill(0);
     targets.fill(0);
+    if let Some(arena) = transaction_arena.as_deref_mut() {
+        arena.fill(0);
+    }
     let before: &mut [u8; PAGE_BYTES] = before.try_into().expect("fixed canonical allocator");
     let after: &mut [u8; PAGE_BYTES] = after.try_into().expect("fixed prospective allocator");
     let status: &mut [u8; PAGE_BYTES] = status.try_into().expect("fixed canonical Status");
@@ -861,31 +887,71 @@ fn analyze_with<F: xadb_foundation::io::FileIo>(
             }
             _ => return Err(error(Phase::Scan, Cause::Wal(WalError::Corrupt))),
         };
-        adopt_frame(
-            observation,
-            allocator,
-            CanonicalImages {
-                before: &mut *before,
-                after: &mut *after,
-                status: &mut *status,
-                next_status: &mut *next_status,
-                descriptor: &mut *descriptor,
-                targets: &mut *targets,
-            },
-            header,
-            &frame[..length],
-        )?;
+        let images = CanonicalImages {
+            before: &mut *before,
+            after: &mut *after,
+            status: &mut *status,
+            next_status: &mut *next_status,
+            descriptor: &mut *descriptor,
+            targets: &mut *targets,
+        };
+        let transactional = header.kind != FrameKind::System;
+        if transactional {
+            let arena = transaction_arena
+                .as_deref_mut()
+                .ok_or_else(|| semantic(SemanticError::UnsupportedOperation))?;
+            transactions::adopt(
+                observation,
+                allocator,
+                images,
+                arena,
+                header,
+                &frame[..length],
+            )?;
+        } else {
+            if observation.transactions.high_water != 0 {
+                return Err(semantic(SemanticError::UnsupportedOperation));
+            }
+            adopt_frame(observation, allocator, images, header, &frame[..length])?;
+            observation.allocator_lsn = header.lsn;
+            if length == init::FRAME_BYTES
+                && let Some(arena) = transaction_arena.as_deref_mut()
+            {
+                let index = observation.last_status_page;
+                arena[index * PAGE_BYTES..(index + 1) * PAGE_BYTES].copy_from_slice(status);
+            }
+        }
         observation.complete_offset = offset.checked_add(length as u64).ok_or_else(arithmetic)?;
         observation.complete_lsn = header.lsn;
         account(observation)?;
-        if !visit(
-            header,
-            &frame[..length],
-            before,
-            (length == init::FRAME_BYTES).then_some(&*status),
-        ) {
+        let change = if transactional {
+            CanonicalChange::Transaction {
+                before: status,
+                after: next_status,
+            }
+        } else {
+            CanonicalChange::System {
+                allocator: before,
+                status: (length == init::FRAME_BYTES).then_some(&*status),
+            }
+        };
+        let keep_scanning = visit(header, &frame[..length], change);
+        if transactional {
+            status.copy_from_slice(next_status);
+        }
+        if !keep_scanning {
             return Ok(());
         }
+    }
+    if observation.transactions.high_water != 0 {
+        transactions::census(
+            observation,
+            allocator,
+            transaction_arena
+                .as_deref()
+                .ok_or_else(|| semantic(SemanticError::StateMismatch))?,
+            targets,
+        )?;
     }
     Ok(())
 }
@@ -921,6 +987,16 @@ fn profile_ref(profile: Profile) -> ControlRef {
         encoded_len: 4096,
         digest: profile.digest(),
     }
+}
+enum CanonicalChange<'a> {
+    System {
+        allocator: &'a [u8; PAGE_BYTES],
+        status: Option<&'a [u8; PAGE_BYTES]>,
+    },
+    Transaction {
+        before: &'a [u8; PAGE_BYTES],
+        after: &'a [u8; PAGE_BYTES],
+    },
 }
 struct CanonicalImages<'a> {
     before: &'a mut [u8; PAGE_BYTES],

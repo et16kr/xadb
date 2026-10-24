@@ -27,7 +27,15 @@ fn image_lsn(
         .map_err(|e| fail(p, RecoveryCause::Allocation(e)))?;
     }
     if kind == PageKind::TransactionStatus {
-        init::status_lsn(bytes, &identity).map_err(|e| fail(p, RecoveryCause::Semantic(e)))?;
+        transactions::empty_home(
+            bytes,
+            identity,
+            Namespace {
+                database: identity.database,
+                timeline: 1,
+            },
+        )
+        .map_err(|e| fail(p, RecoveryCause::Prefix(e)))?;
     }
     Ok(Some(view.header().lsn.0))
 }
@@ -65,7 +73,7 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
         if index == 0 {
             return Ok(RecoveryTarget {
                 identity: allocator,
-                lsn: self.prefix.observation.complete_lsn,
+                lsn: self.prefix.observation.allocator_lsn,
                 digest: self.final_allocator_hash,
             });
         }
@@ -252,7 +260,7 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
         if a.is_none() {
             return Err(fail(p, RecoveryCause::PriorMismatch));
         }
-        if a.is_some_and(|v| v > adopted) {
+        if a.is_some_and(|v| v > self.prefix.observation.allocator_lsn) {
             return Err(fail(p, RecoveryCause::PriorMismatch));
         }
         for index in 1..TARGET_COUNT {
@@ -276,6 +284,8 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
             source: f.source,
             complete_offset: 4096,
             complete_lsn: 0,
+            allocator_lsn: 0,
+            transactions: transactions::Transactions::default(),
             tail: None,
             mode: None,
             active: None,
@@ -333,13 +343,42 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
         let scan = super::super::analyze_with(
             &mut source,
             self.prefix.workspace,
+            self.prefix.transaction_arena.as_deref_mut(),
             &mut replay,
             allocator,
-            |header, frame, after, status_after| {
+            |header, frame, change| {
                 if first.is_some() {
                     return false;
                 }
                 let apply = (|| {
+                    let (after, status_after) = match change {
+                        CanonicalChange::System { allocator, status } => (allocator, status),
+                        CanonicalChange::Transaction { before, after } => {
+                            let redo = wal_frame::decode_redo_record(header, &frame[2720..3008])
+                                .map_err(|e| fail(p, RecoveryCause::Wal(e)))?;
+                            let index = usize::try_from(redo.target.page.page_no)
+                                .map_err(|_| fail(p, RecoveryCause::Invariant))?;
+                            if !(1..TARGET_COUNT).contains(&index) {
+                                return Err(fail(p, RecoveryCause::Invariant));
+                            }
+                            let current = progress.final_lsn[index]
+                                .ok_or_else(|| fail(p, RecoveryCause::PriorMismatch))?;
+                            if current >= header.lsn {
+                                progress.skipped[index] += 1;
+                            } else {
+                                let image =
+                                    &mut physical[index * PAGE_BYTES..(index + 1) * PAGE_BYTES];
+                                if current != redo.prior_lsn || image != before {
+                                    return Err(fail(p, RecoveryCause::PriorMismatch));
+                                }
+                                image.copy_from_slice(after);
+                                progress.final_lsn[index] = Some(header.lsn);
+                                progress.applied[index] += 1;
+                                progress.dirty_mask |= 1u64 << index;
+                            }
+                            return Ok(());
+                        }
+                    };
                     let raw = if frame.len() == init::FRAME_BYTES {
                         &frame[15248..21520]
                     } else {
@@ -407,6 +446,14 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
         self.observation.physical.canonical_passes = 1;
         if replay.complete_offset != self.prefix.observation.complete_offset
             || replay.complete_lsn != adopted
+            || replay.allocator_lsn != self.prefix.observation.allocator_lsn
+            || replay.transactions != self.prefix.observation.transactions
+            || transactions::bank_digest(
+                self.prefix
+                    .transaction_arena
+                    .as_deref()
+                    .ok_or_else(|| fail(p, RecoveryCause::Invariant))?,
+            ) != self.final_transaction_hash
             || replay.high_water != self.prefix.observation.high_water
             || replay.remaining != self.prefix.observation.remaining
             || replay.terminal_hold != self.prefix.observation.terminal_hold
@@ -524,6 +571,13 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
             .ok_or_else(|| fail(p, RecoveryCause::Invariant))?;
         if restored.lsn != self.prefix.observation.complete_lsn
             || restored.descriptor != self.final_descriptor_hash
+            || restored.transactions != self.final_transaction_hash
+            || transactions::bank_digest(
+                self.prefix
+                    .transaction_arena
+                    .as_deref()
+                    .ok_or_else(|| fail(p, RecoveryCause::Invariant))?,
+            ) != restored.transactions
             || restored.remaining != self.prefix.observation.remaining
             || restored.topup != self.observation.ledger.replay_topup
             || reservation.remaining.is_some()

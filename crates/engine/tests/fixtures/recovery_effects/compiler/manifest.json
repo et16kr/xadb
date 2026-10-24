@@ -6,7 +6,7 @@
   "requires_actual_unmodified_baseline": true,
   "unrelated_error_diagnostics_are_failures": true,
   "compiler_budget_seconds": 60,
-  "semantic_case_count": 12,
+  "semantic_case_count": 15,
   "infrastructure_control_count": 1,
   "negative_returncode": 101,
   "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
@@ -165,6 +165,42 @@
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
       "bytes": 363,
       "sha256": "0a6468920e16a6b3e326c998a1ff13db0e1a69ee299d7f50876cc9b7fdafb16e"
+    },
+    {
+      "name": "transaction_descriptors_positive",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "semantic_id": "EC12",
+      "reason": "borrow both transaction bank descriptors and release owner/arenas",
+      "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 444,
+      "sha256": "fdc34b97135cbb51b0abc0a56e8aafd09aa36e073ce78fbc95021af978c53a80"
+    },
+    {
+      "name": "transaction_descriptor_borrow",
+      "expected_code": "E0505",
+      "primary_line": 7,
+      "primary_spans": "one",
+      "semantic_id": "EC13",
+      "reason": "transaction descriptor keeps inspection owner alive",
+      "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 401,
+      "sha256": "6c3740c523eb8f172b2c062f7ec11631cf7ed0f4160d9b29e4e5cb976ec8a400"
+    },
+    {
+      "name": "transaction_descriptor_immutable",
+      "expected_code": "E0594",
+      "primary_line": 7,
+      "primary_spans": "one",
+      "semantic_id": "EC14",
+      "reason": "bank descriptor observation is immutable",
+      "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
+      "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+      "bytes": 373,
+      "sha256": "81ea82892ed18acb65e102c7ed3d03c41dd485404b68ffcbfccd4572547dc8d0"
     }
   ]
 }

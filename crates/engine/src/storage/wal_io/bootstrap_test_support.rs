@@ -148,6 +148,7 @@ pub(super) struct State {
     pub read_effect_counts: Vec<usize>,
     pub open_modes: Vec<OpenMode>,
     pub read_plan: Option<Plan>,
+    pub named_read_plan: Option<(&'static str, u64, usize, Action)>,
     pub configured_read_hits: usize,
     pub continuation_read_hits: usize,
     read_continuation: Option<usize>,
@@ -178,6 +179,7 @@ impl State {
             read_effect_counts: Vec::new(),
             open_modes: Vec::new(),
             read_plan: None,
+            named_read_plan: None,
             configured_read_hits: 0,
             continuation_read_hits: 0,
             read_continuation: None,
@@ -326,7 +328,17 @@ fn read_begin(
                 i += 1;
             }
         }
-        let action = s.read_plan.filter(|p| p.at == at).map(|p| p.action);
+        let named = if s
+            .named_read_plan
+            .is_some_and(|p| (p.0, p.1, p.2) == (name, offset, length))
+        {
+            s.named_read_plan.take().map(|p| p.3)
+        } else {
+            None
+        };
+        let ordinal = s.read_plan.filter(|p| p.at == at).map(|p| p.action);
+        assert!(ordinal.is_none() || named.is_none(), "ambiguous read fault");
+        let action = ordinal.or(named);
         if action.is_some() {
             s.hit += 1;
             if s.read_continuation == Some(at) {

@@ -19,22 +19,20 @@ const REQUIRED: [&str; 15] = [
 ];
 pub(super) fn source_census<W: WriterNamespace>() -> SourceCensus {
     let prior = super::super::source_census::<W>();
-    // Result/owner moves do not coexist as cloned owners. Count two maximum
-    // return carriers conservatively, plus one local File and open results.
+    // Three explicit lifetime phases correspond to acquire, borrowed work and
+    // consuming return. Wide return moves remain charged in the return phase.
     let owner = size_of::<ClosedRecovery<'_, '_, W>>().max(size_of::<RecoveryFailure<'_, '_, W>>());
     let result = size_of::<std::result::Result<ClosedRecovery<'_, '_, W>, RecoveryAcquireError>>()
         .max(size_of::<
             std::result::Result<RecoveryInspection<'_, '_, W>, RecoveryFailure<'_, '_, W>>,
         >());
-    // Outer: owner + consuming acquire/recover return carriers. Open wrappers
+    // Shared IO values: open wrappers
     // retain one local File, its NamespaceResult, and close/action results;
     // four File slots bound those moves without claiming four live descriptors.
     // Eight lower/outer error moves and metadata/name carriers bound the nested
     // conversion and publication paths. Scalars are the concrete fields used by
     // with_file/select_control/provision, not an untyped byte allowance.
-    let outer = owner
-        + 2 * result
-        + 4 * size_of::<W::File>()
+    let io = 4 * size_of::<W::File>()
         + 8 * size_of::<RecoveryError>()
         + 8 * size_of::<FileMetadata>()
         + 8 * size_of::<FileName>()
@@ -58,6 +56,20 @@ pub(super) fn source_census<W: WriterNamespace>() -> SourceCensus {
             FileMetadata,
             Option<FileMetadata>,
         )>();
+    // A: Prefix is acquired before ClosedRecovery is constructed. Preserve
+    // its complete nested census, one conservative wide return slot, arguments,
+    // preflight census and error conversion. No second physical owner exists.
+    let entry_outer = result
+        + 4 * size_of::<RecoveryAcquireError>()
+        + 4 * size_of::<(&W, Option<Namespace>, &mut [u8], bool)>()
+        + size_of::<SourceCensus>();
+    // B: run_recovery/acquire_preflight borrow the one original owner. Even
+    // though only Result<()> returns from these helpers, charge one wide slot
+    // conservatively; no Inspection/Failure value is constructed during work.
+    let outer = owner + result + io + 2 * size_of::<Result<()>>();
+    // C: only after borrowed work ends, consuming success/failure moves may
+    // occupy two wide return carriers. Deep codecs are absent in this phase.
+    let return_phase = owner + 2 * result + io;
     // list_owned holds exactly its returned capacity (checked <=18) plus the
     // returned Vec move and iterator/index/name references. The enumeration
     // stream has closed before this result; no local File overlaps enumeration.
@@ -66,10 +78,7 @@ pub(super) fn source_census<W: WriterNamespace>() -> SourceCensus {
         + 2 * size_of::<DirectoryEntry>()
         + 2 * size_of::<std::slice::Iter<'static, DirectoryEntry>>()
         + size_of::<(usize, &'static DirectoryEntry, &'static str, u64)>();
-    // acquire_internal retains the new arenas/return owner carriers while the
-    // old Prefix acquire path runs. prior.peak already includes its own owner,
-    // bootstrap preparation Result nesting, reader, codec and stream branches.
-    // Adding outer double-counts that embedded Prefix conservatively.
+    // Prefix includes its own owner, bootstrap/reader/codec and stream depth.
     let prefix_nested = prior.peak;
     // PREINSPECT materialize/reader lifetimes retire before inventory. The
     // second pass instead holds one fresh canonical observation, callback error,
@@ -83,6 +92,7 @@ pub(super) fn source_census<W: WriterNamespace>() -> SourceCensus {
         + size_of::<super::super::RecoveryPrefixObservation>()
         + size_of::<Option<RecoveryError>>()
         + size_of::<super::super::CanonicalImages<'static>>()
+        + 2 * size_of::<super::super::CanonicalChange<'static>>()
         + 2 * size_of::<allocation_page::AllocationPage<'static>>()
         + 2 * size_of::<crate::storage::status_home::StatusHome>()
         + 2 * size_of::<crate::storage::transaction_record::TransactionStatusCell>()
@@ -110,11 +120,16 @@ pub(super) fn source_census<W: WriterNamespace>() -> SourceCensus {
             u64,
             u64,
         )>();
-    let peak = (outer + inventory.max(work_nested)).max(prefix_nested + outer);
+    let entry_phase = entry_outer + prefix_nested;
+    let peak = (outer + inventory.max(work_nested))
+        .max(entry_phase)
+        .max(return_phase);
     SourceCensus {
         outer,
         prefix_nested,
         inventory,
+        entry_phase,
+        return_phase,
         work_nested,
         peak,
     }
@@ -260,6 +275,12 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
         self.maintenance_tail[SAVED_TARGETS..SAVED_TARGETS + TARGET_TABLE_BYTES]
             .copy_from_slice(self.prefix.target_table());
         self.final_descriptor_hash = self.prefix.descriptor_bytes().map(|b| content_digest(b));
+        self.final_transaction_hash = transactions::bank_digest(
+            self.prefix
+                .transaction_arena
+                .as_deref()
+                .ok_or_else(|| fail(p, RecoveryCause::Invariant))?,
+        );
         Ok(())
     }
     pub(super) fn restore_once(&mut self) -> Result<()> {
@@ -279,6 +300,13 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
             || source.lsn != f.complete_lsn
             || self.final_descriptor_hash
                 != self.prefix.descriptor_bytes().map(|b| content_digest(b))
+            || self.final_transaction_hash
+                != transactions::bank_digest(
+                    self.prefix
+                        .transaction_arena
+                        .as_deref()
+                        .ok_or_else(|| fail(p, RecoveryCause::Invariant))?,
+                )
         {
             return Err(fail(p, RecoveryCause::IdentityMismatch));
         }
@@ -293,6 +321,7 @@ impl<W: WriterNamespace> ClosedRecovery<'_, '_, W> {
         self.restored = Some(RestoredSeal {
             lsn: f.complete_lsn,
             descriptor: self.final_descriptor_hash,
+            transactions: self.final_transaction_hash,
             remaining,
             topup: guard.topup,
         });

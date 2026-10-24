@@ -1192,3 +1192,6 @@ fn new_caller_short_interrupt_invalid_and_unwind() {
 
 #[path = "operational_tests.rs"]
 mod operational;
+
+#[path = "empty_transaction_tests.rs"]
+mod empty;

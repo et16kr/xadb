@@ -119,9 +119,9 @@ def observation(folder):
 def check_census(folder):
     require((folder/'source-census.tsv').is_file(),'FAIL_SOURCE_CENSUS_MISSING')
     rows=[line.split('\t') for line in (folder/'source-census.tsv').read_text().splitlines()]
-    require(len(rows)==len({r[0] for r in rows})==9,'FAIL_SOURCE_CENSUS');c={k:int(v) for k,v in rows}
-    require(set(c)=={'outer','prefix_nested','inventory','work_nested','peak','writer','file','maintenance','flush'},'FAIL_SOURCE_CENSUS')
-    require(0<c['peak']<=65536 and c['peak']==c['outer']+max(c['prefix_nested'],c['inventory'],c['work_nested']) and 0<c['writer']<=16384 and 0<c['file']<=16384 and c['maintenance']==12582912 and c['flush']==4194304,'FAIL_SOURCE_CAPACITY')
+    require(len(rows)==len({r[0] for r in rows})==11,'FAIL_SOURCE_CENSUS');c={k:int(v) for k,v in rows}
+    require(set(c)=={'outer','prefix_nested','inventory','work_nested','entry_phase','return_phase','peak','writer','file','maintenance','flush'},'FAIL_SOURCE_CENSUS')
+    require(0<c['peak']<=65536 and c['peak']==max(c['entry_phase'],c['return_phase'],c['outer']+max(c['inventory'],c['work_nested'])) and c['entry_phase']>=c['prefix_nested'] and 0<c['writer']<=16384 and 0<c['file']<=16384 and c['maintenance']==12582912 and c['flush']==4194304,'FAIL_SOURCE_CAPACITY')
     return c
 
 

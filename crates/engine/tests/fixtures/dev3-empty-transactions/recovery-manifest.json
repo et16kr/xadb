@@ -1,0 +1,130 @@
+{
+  "status": "IMPLEMENTED_SELECTIVE_VALIDATION_FINAL_REVIEW_PENDING",
+  "contract": "devdoc/contracts/dev3-recovery-effects.md#empty-transaction-recovery",
+  "first_effect": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::tests::empty::empty_recovery_three_literal_states_preserve_obligations",
+  "variants": 3,
+  "expected": "Existing independently authored live raw WAL/page/descriptor fixtures; allocator/system descriptor from original Status INIT literals. depth1/2/3 remaining6080/3040/0 and peak max; global3/4/5 vs allocator2; each has same-port clean reentry; NOT new-process evidence",
+  "budgets": {
+    "case_seconds": 30,
+    "batch_seconds": 120,
+    "receipt_bytes": 8388608
+  },
+  "remaining_inventory": [
+    "interleaved/gap/32slot/terminal33",
+    "semantic and bidirectional census corruptions",
+    "mixed/torn/historical Pending",
+    "two-pass source mismatch and incomplete suffix",
+    "native producer/recover/reentry and fault cuts",
+    "S5 expanded authored selectors"
+  ],
+  "next_selected": [
+    "empty_recovery_interleaved_gap_and_distinct_page_tips",
+    "empty_recovery_32_owner_limit_and_terminal_releases_for_page63",
+    "empty_recovery_mixed_homes_and_torn_status"
+  ],
+  "next_variants": [
+    2,
+    3,
+    12
+  ],
+  "negative_selected": [
+    {
+      "selector": "empty_recovery_rejects_complete_semantic_corruption",
+      "variants": 24
+    },
+    {
+      "selector": "empty_recovery_rejects_reordered_retired_and_post_transaction_system",
+      "variants": 5
+    },
+    {
+      "selector": "empty_recovery_historical_pending_and_later_home",
+      "variants": 6
+    },
+    {
+      "selector": "empty_recovery_rejects_intact_home_conflicts",
+      "variants": 9
+    },
+    {
+      "selector": "empty_recovery_incomplete_suffix_retains_last_complete_owner",
+      "variants": 15
+    },
+    {
+      "selector": "empty_recovery_pending_requires_exact_complete_transaction",
+      "variants": 3
+    },
+    {
+      "selector": "empty_recovery_bidirectional_bank_census_rejects_drift",
+      "variants": 9
+    },
+    {
+      "selector": "empty_recovery_second_pass_seal_rejects_drift",
+      "variants": 5
+    }
+  ],
+  "native": {
+    "selector": "worker_empty_recovery_native",
+    "histories": [
+      "active",
+      "aborting",
+      "aborted",
+      "active_partial",
+      "aborting_retirement",
+      "aborted_slot_partial"
+    ],
+    "workers": 21,
+    "history_seconds": 30,
+    "batch_seconds": 180,
+    "database_bytes": 25165824,
+    "retained_database_bytes": 150994944,
+    "receipt_bytes": 16777216,
+    "source_and_elf": "separate",
+    "increment": "Prior five histories remain source-r6 receipts; only new slot-image partial history selected afterward"
+  },
+  "s5": {
+    "selector": "empty_recovery_s5_profiles_states_and_homes",
+    "variants": 48,
+    "status": "AUTHORED_NOT_RUN"
+  },
+  "required_read_faults": {
+    "selector": "empty_recovery_required_transaction_body_read_failures",
+    "variants": 8,
+    "tuple": [
+      "read",
+      "d3-wal-00000001",
+      63456,
+      2880
+    ],
+    "passes": [
+      "acquire",
+      "redo"
+    ],
+    "actions": [
+      "BeforeError",
+      "Zero",
+      "InvalidCount",
+      "PrefixEof"
+    ]
+  },
+  "compiler_selected": [
+    "transaction_descriptors_positive",
+    "transaction_descriptor_borrow",
+    "transaction_descriptor_immutable"
+  ],
+  "native_previous": {
+    "selector": "worker_empty_recovery_native",
+    "histories": [
+      "active",
+      "aborting",
+      "aborted",
+      "active_partial",
+      "aborting_retirement"
+    ],
+    "workers": 17,
+    "history_seconds": 30,
+    "batch_seconds": 150,
+    "database_bytes": 25165824,
+    "retained_database_bytes": 125829120,
+    "receipt_bytes": 16777216,
+    "source_and_elf": "separate"
+  }
+}

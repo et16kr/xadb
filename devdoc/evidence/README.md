@@ -1,6 +1,6 @@
 # XADB 조사·실행 증거
 
-[DEV3 빈 거래 통합 작업](dev3-empty-transaction-20261023.md) · [source별 색인](dev3-empty-transaction-20261023.json): 순수 AbortEnd 준비·원 Status owner 인계·실제 빈 거래 WAL/RAM·이력 기반 flush·최신 live load 설치와 미공급 거래 recovery를 분리하며 AI 작업 방식의 단계별 관측을 보존한다. 통합 진행·소비자 미도달.
+[DEV3 빈 거래 통합 작업](dev3-empty-transaction-20261023.md) · [source별 색인](dev3-empty-transaction-20261023.json): 순수 AbortEnd 준비·원 Status owner 인계·실제 빈 거래 WAL/RAM·이력 기반 flush·최신 live load·새 PID 복구/재진입의 source별 결과와 원 FAIL을 보존한다. 제한 D1 수용·소비자1/3 도달, 효율 비교·전체 DEV3/S5 미완료.
 
 [DEV3 resident Status source·receipt 색인](dev3-resident-status-20261023.json)은 정확 선택·원 실패·미실행 상태를 보존한다.
 

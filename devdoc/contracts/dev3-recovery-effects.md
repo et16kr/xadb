@@ -126,3 +126,67 @@ receipt 전 검사는 optional이 아니다. 두 reserved slots의 기존 전체
 - **S5 확대:** profile1/2/3×첫 extent63개 INIT와 cancel 혼합, 전체 관련 home/fault 조합, 긴 반복 이력은 별도 ignored selector/fixture parameter로 구현과 함께 준비하고 중간 필수 실행에 섞지 않는다. 길이·반복 수를 줄여 PASS로 표시하지 않는다. 정확 inventory·실행 시간/공간 한도와 원 실패/source 결과는 후속 증거에 고정한다.
 
 2026-10-23 `/root/pool_design_review`의 F09 독립 D2를 수용했다. 구현 착수만 허용하며 실제 source census·정확 inventory·시간/공간의 첫 실행 gate와 최종 D1은 별도다. 검토 원본은 `artifacts/dev3/operational-recovery-20261023/review/design-d2.md`와 JSON에 보존한다.
+
+<a id="empty-transaction-recovery"></a>
+## F10 빈 거래의 현재-build closed recovery — 제한 단위 독립 D1/D2 수용
+
+기준 `996d0e0`의 fresh live Begin/RollbackStart/빈 AbortEnd 파일을 기존 `ClosedRecovery`가
+새 PID에서 복원하고 다시 진입하는 소비자다. public readonly Prefix grammar/262144 workspace,
+wire format, source 보존, 실패 owner·READY/새 epoch/자동 loser 종료 미공급을 유지한다.
+
+private Effects 경로만 maintenance12MiB에서 Prefix262144, canonical Status64page와32×1664
+거래 bank인1,101,824바이트, 기존 physical tail을 겹치지 않게 분할한다. 첫 pass와 REDO pass는
+caller canonical 공간·bank·issuer/census를 각각 초기화한다. 추가 heap/File/page-sized local은
+없다. 원 system descriptor는 보존하고 bank는 원 TxnRef/location과 nonterminal 의무를 가진다.
+
+plan2/epoch1·slot0·generation2·첫 extent·한 주소당 Begin1회, 최대32 retained Active/Aborting을
+지원한다. Begin local은 전역 strict 증가이며 미채택 gap은 허용한다. 첫 Begin 전에 기존 system
+owner inactive/Finished와 allocator를 검산한 뒤 system mutation을 동결한다. 모든 거래 frame의
+full semantic/native before·exact canonical page와 descriptor·빈 상태·budget·LSN chain을
+검산한다. terminal은 after image를 채택한 뒤 bank에서 제거한다. 재Begin/nonempty/Commit/다른
+slot 및 거래 뒤 system frame은 지원하지 않는다.
+
+allocator pageLSN과 전역 adopted tip을 분리하고 각 Status target의 최신 LSN/incarnation/digest를
+갱신한다. Pending은 검산한 당시 전체 image로만 수리한다. mixed physical home는 canonical
+before가 아니며 페이지별 skip/apply, Patch prior/범위 밖 바이트, 마지막 전체 digest를 검산한다.
+zero/torn Status는 원 INIT부터의 complete chain으로만 재구성한다. allocator torn 거절은 유지한다.
+
+원 system과 모든 nonterminal 거래의 consumable은 합산하고 직렬 공유 progress peak는 max다.
+source/replay topup은 보존하며 같은-prefix reservation으로 한 번만 인계한다. 두 pass의 원장
+hash/issuer/count/aggregate/allocatorLSN/target census를 모두 비교하고 physical skip/apply에서
+예약을 다시 차감하지 않는다. borrowed descriptor/count/high-water 관측만 공급한다.
+
+component65536·maintenance12MiB+flush4MiB·FD5·WAL256MiB·owned8GiB/protected1GiB를 유지한다.
+새 observation/return carrier와 순차 system/transaction codec의 source-value census 및 구체
+selector/독립 oracle·fault schedule은 첫 effect 전에 별도 검토한다. 필수는3거래 상태·interleaved
+issuer/32slot/terminal 후33번째·mixed/torn/old Pending·의미 변조·tail/EOF·actual DWB fault와
+fresh producer→다른 PID recovery→재진입이다. S5 확대는 작성·미실행으로 구별한다.
+
+F10의 r0 source static은 기존 additive carrier 회계에서 memory70,120/native70,328로
+65,536을 초과해 FAIL이며 효과를 실행하지 않았다. `run_recovery(&mut self)->Result<()>`의
+borrow 작업이 끝난 뒤만 wide Inspection/Failure를 구성하도록 분리했다. source-value는
+(A) Prefix 실행 중 미구성 outer owner 대신 Prefix 전체+caller args/error+보수 return1,
+(B) 원 owner+small Result+보수 wide slot1+IO/error/name/metadata+codec/callback,
+(C) 완료 뒤 owner+wide return2+IO/error carrier의 **max**다. 공통 carrier를 삭제하지 않으며
+물리 stack/ABI/RSS 주장은 아니다. r1은 memory entry59,200/work64,368/return18,256,
+native59,296/64,480/18,392로 각각 peak64,368/64,480을 선택 static에서 확인했다.
+첫 effect의 독립 gate·native 실행은 별도다. source와 실패 원본은 같은 빈 거래 통합에 이어 기록한다.
+
+거래 branch의63 Status+32 Active component 상한은 P+M=32×6080+64×16384=1,243,136이며
+F09의1,086,576을 그대로 쓰지 않는다. 기존 F07 식의 R 상한268,431,360과 W 상한194,560을
+각각 넣은 owned/protected 보수 component 상한은292,808,704다. R과 W 최대의 동시 실현을
+주장하지 않으며 complete_offset+W≤WAL cap 및 실제 profile/1GiB 검산은 계속 적용한다.
+
+
+F10의 실제 selector·variant·S5 배정은 [복구 manifest](../../crates/engine/tests/fixtures/dev3-empty-transactions/recovery-manifest.json)에 고정한다.
+새 memory13함수104variant, 직접 수정된 System callback/readonly2함수10variant와 변경 source census2를
+구별한다. descriptor 관측의 compiler3와 unmodified control1도 별도다. `status_image()`는 기존
+마지막 INIT 주소의 현재 물리 image 의미를 유지하며, 거래별 최신 주소는 `status_image_at()`로 본다.
+
+native는 첫5history17PID의30초/history·150초/선택·24MiB/DB·120MiB보존 결과를 그대로 둔다.
+원 입력의 DWB image stage 경계를 닫기 위해 별도 `aborted_slot_partial`1history4PID를 추가했다.
+추가는 XDS1 slot offset0/16544 중8192 실제 쓰기 뒤 오류, selected Empty generation5/batch2,
+Status home 미쓰기와 새 PID에서 batch3 복구/재진입을 검산한다. 전체 authored inventory는6history21PID,
+180초·144MiB로 기록하지만 이미 완료한5history를 새 source에서 반복하지 않는다. receipt/snapshot16MiB와
+source/ELF/cache의 별도 귀속을 유지한다. S5는 profile3×Free/Active/Aborting/Aborted×home4의48조합을
+ignored selector로 작성만 한다. 결과와 원 FAIL은 [같은 통합 증거](../evidence/dev3-empty-transaction-20261023.md#closed-recovery)에 이어 보존한다.

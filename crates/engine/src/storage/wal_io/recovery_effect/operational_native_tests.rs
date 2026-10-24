@@ -95,6 +95,14 @@ fn operational_native_resource_gate() {
         std::mem::size_of::<Writer>(),
         std::mem::size_of::<File>()
     );
+    println!(
+        "lifetime phases: borrowed_outer={} entry={} work={} return={} peak={}",
+        c.outer,
+        c.entry_phase,
+        c.outer + c.work_nested.max(c.inventory),
+        c.return_phase,
+        c.peak
+    );
     assert!(super::super::resources::fits::<Writer>(&c));
 }
 #[test]
