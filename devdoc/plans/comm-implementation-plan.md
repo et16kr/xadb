@@ -153,3 +153,10 @@ DEV5는 C1 bytes/limits/version과 아래 의무를 인수한다.
 - 실제 SQL→WAL→publish→reply 및 reply 유실 뒤 같은 build recovery. transport local flush를 durable ACK로 바꾸지 않음.
 
 최초 계획 작성은 설계 작업이었다. 후속 핵심 구현과 focused runner는 [구현 기록](../implementation/comm-implementation.md)에 연결하며 C1 전체 인수는 INCOMPLETE다. 문서 자동 검사는 DOC-002에 따라 push 직전 훅에서 수행하고 편집 중 실행하지 않는다.
+
+<a id="slow-pressure-fix"></a>
+## 2026-10-24 COMM-FIX-003 slow-peer 관측 보완
+
+사용자의 실패 수정 요청에 따라 [원인·D2 선택·source별 증거](../evidence/comm-failure-fix-20261024.md)를 적용한다. slow prefix 미완료 때 readiness에 없는 nonblocking write를20ms 간격으로 최대1회 확인하며 최소prefix·5초 무진행 제한을 유지한다. C-V18의 TX 압력은 RX/TX 합계WouldBlock의 양수 여부 대신 Open·실제pending4·RX backlog가 유지되고 native written bytes가 연속0.5초 이상 증가하지 않은 관측으로 검산한다. 기존 backlog/queue/포화 계수와 quota·취소·정리·5+5·측정 길이는 유지한다. 다른 fault의 실제WouldBlock 도달 의무를 대체하지 않는다. 실패receipt에 이미 수신한 worker/peer 원자료를 남기며 과거FAIL은 소급 변경하지 않는다. 최종 수용·실행 상태는 연결 증거를 따른다.
+
+후속 r3는 slow TCP의 일시적인 client write pressure 뒤 같은 cap까지 제공을 재개하고, 새 byte가 진행되면 과거 정체 사유를 지운다. 송신 버퍼를 제한한 r4도 실패하여 그 설정은 제거했다. r5는 보존된 r3를 기준으로 느린 TCP 첫 socket에만 connect 전 TCP_MAXSEG 1,460을 요청한다. 실제 협상 MSS와 자동 buffer 크기를 receipt에 남긴다. 이 협상 설정은 자동 buffer 크기에도 영향을 줄 수 있으므로 packet 크기만의 독립 효과라고 주장하지 않는다. 정상 peer·Unix·worker 코드, payload/cap/측정 길이·필수 압력/취소/정리는 유지한다. source별 실패·단위 검증·완결 native 결과와 독립 검토는 위 증거에서 구분한다.

@@ -2,6 +2,8 @@
 
 - [DEV3 복구 작업 중간 저장·자료 정리](dev3-recovery-paused-20261025.md): 사용자 요청 중지, WIP·FAIL/HOLD·NOT_RUN 보존.
 
+- [COMM 시험 산출물 정리](comm-artifact-cleanup-20261025.md): 전용 Cargo cache35개와 검산된 임시 사본을 정리했다. 원 증거·실행물 보존, 저장소 약3.76GiB·tmpfs 약1.62GiB 절감, 시험 실행0.
+
 - [DEV4 P5 전체 입력 조립 준비](dev4-lifecycle-assembly-inputs-20261025.md) — 독립 후보1658개 정적 한정 검토; 미검토 rich304·전체 D2·제품·시험 NOT_RUN.
 
 - [DEV3 plan4 빈 거래 live·prefix](dev3-retention-live-20261025.md) · [source별 색인](dev3-retention-live-20261025.json) — 신규75 PASS·완료 반복0·원 실패 보존; 최종 독립 D1 제한 수용
@@ -12,9 +14,11 @@
 
 - [DEV4 P5 상태·입력 codec](dev4-lifecycle-codec-20261024.md) — source별 선택 검증·원 compile/실행/fmt 실패 보존; 모델/FE14 미완료.
 
+- [DEV4 P5 수명 모델 독립 입력](dev4-lifecycle-inputs-20261024.md): 12 trace·51 action 논리 기대값과 state4/input7 byte vector의 정적 한정 검토 수용. 전체 D2·모델·시험 NOT_RUN.
+
 - [DEV3 빈 거래·정리 큐 순수 의미 처리](dev3-empty-retention-semantics-20261024.md) · [source별 색인](dev3-empty-retention-semantics-20261024.json) — 필수140 source별 PASS, 원 실패 보존, 최종 독립 D1 제한 수용; live/복구·S5 미완료
 
-- [DEV4 P5 수명 모델 독립 입력](dev4-lifecycle-inputs-20261024.md): 12 trace·51 action 논리 기대값과 state4/input7 byte vector의 정적 한정 검토 수용. 전체 D2·모델·시험 NOT_RUN.
+- [COMM slow-peer 실패 수정](comm-failure-fix-20261024.md): Unix prefix·TCP 시험 협상·실제 TX 정체 판정과 실패 원자료를 보강. source별 두 실패 조합 각각5쌍 PASS, 관련 단위10개 PASS, 최종 독립 D1/D2 수용. 원FAIL·C1 INCOMPLETE 보존.
 
 - [DEV3 원 WAL runtime/core 추출](dev3-runtime-core-20261024.md) · [source별 색인](dev3-runtime-core-20261024.json): 새7개 선택 PASS, 원 compile 실패·증거 보존, 최종 독립 D1 제한 수용.
 

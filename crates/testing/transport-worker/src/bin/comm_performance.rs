@@ -18,6 +18,32 @@ use xadb_transport::{
 
 const MAX_PENDING_ECHO_FRAMES: usize = 2;
 
+#[derive(Default)]
+struct TxPressure {
+    since: Option<(Instant, u64)>,
+    peak_stalled_ns: u64,
+}
+
+impl TxPressure {
+    // A full producer queue alone can be ordinary progress. Only a continuous
+    // open, full TX queue with backlog and unchanged native written bytes is a
+    // pressure witness. Readiness need not permit a syscall returning WouldBlock.
+    fn observe(&mut self, now: Instant, saturated: bool, written_bytes: u64) {
+        if !saturated {
+            self.since = None;
+            return;
+        }
+        match self.since {
+            Some((since, previous_bytes)) if previous_bytes == written_bytes => {
+                self.peak_stalled_ns = self
+                    .peak_stalled_ns
+                    .max(u64::try_from(now.duration_since(since).as_nanos()).unwrap_or(u64::MAX));
+            }
+            _ => self.since = Some((now, written_bytes)),
+        }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Workload {
     Echo,
@@ -45,6 +71,7 @@ struct Owner {
     backpressured_admissions: u64,
     pending_echo_backlog_peak: u64,
     ticket_cap_saturations: u64,
+    tx_pressure: TxPressure,
     dropped_echo_responses: u64,
 }
 
@@ -347,6 +374,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                 "backpressured_admissions": owner.backpressured_admissions,
                 "pending_echo_backlog_peak": owner.pending_echo_backlog_peak,
                 "ticket_cap_saturations": owner.ticket_cap_saturations,
+                "peak_stalled_tx_ns": owner.tx_pressure.peak_stalled_ns,
                 "would_block": owner.stats.would_block,
                 "peak_tx_queue_bytes": owner.stats.peak_queue_bytes[1],
                 "peak_tx_queue_slots": owner.stats.peak_queue_slots[1]
@@ -447,6 +475,7 @@ fn discover(driver: &Driver<LocalNetwork>, owners: &mut Vec<Owner>, payload_byte
                 backpressured_admissions: 0,
                 pending_echo_backlog_peak: 0,
                 ticket_cap_saturations: 0,
+                tx_pressure: TxPressure::default(),
                 dropped_echo_responses: 0,
             });
         }
@@ -557,6 +586,16 @@ fn pump(
                     Err(error) => return Err(format!("echo admission failed: {error}").into()),
                 }
             }
+            if owner.expected_peer_reset {
+                let open = driver
+                    .connection(owner.id)
+                    .is_some_and(|connection| connection.phase() == ConnectionPhase::Open);
+                owner.tx_pressure.observe(
+                    Instant::now(),
+                    open && owner.tickets.len() == 4 && !owner.pending_rx.is_empty(),
+                    owner.stats.written_bytes,
+                );
+            }
         }
     }
     Ok(())
@@ -648,4 +687,51 @@ fn expected_byte(sequence: u64, index: usize) -> u8 {
         .wrapping_mul(37)
         .wrapping_add((index as u64).wrapping_mul(31))
         .wrapping_add(7) as u8
+}
+
+#[cfg(test)]
+mod pressure_tests {
+    use super::TxPressure;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn only_continuous_saturation_without_byte_progress_builds_pressure() {
+        let now = Instant::now();
+        let mut pressure = TxPressure::default();
+        pressure.observe(now, true, 42);
+        pressure.observe(now + Duration::from_millis(499), true, 42);
+        assert_eq!(pressure.peak_stalled_ns, 499_000_000);
+        pressure.observe(now + Duration::from_millis(500), true, 42);
+        assert_eq!(pressure.peak_stalled_ns, 500_000_000);
+        // One native byte of progress restarts the interval, even at a full queue.
+        pressure.observe(now + Duration::from_secs(1), true, 43);
+        pressure.observe(now + Duration::from_millis(1100), true, 43);
+        assert_eq!(pressure.peak_stalled_ns, 500_000_000);
+        pressure.observe(now + Duration::from_millis(1600), true, 43);
+        assert_eq!(pressure.peak_stalled_ns, 600_000_000);
+    }
+
+    #[test]
+    fn closed_or_unsaturated_intervals_never_accumulate_pressure() {
+        let now = Instant::now();
+        let mut pressure = TxPressure::default();
+        pressure.observe(now, true, 0);
+        pressure.observe(now + Duration::from_millis(400), true, 0);
+        pressure.observe(now + Duration::from_millis(450), false, 0);
+        pressure.observe(now + Duration::from_secs(30), false, 0);
+        assert_eq!(pressure.peak_stalled_ns, 400_000_000);
+        pressure.observe(now + Duration::from_secs(31), true, 0);
+        pressure.observe(now + Duration::from_millis(31050), true, 0);
+        assert_eq!(pressure.peak_stalled_ns, 400_000_000);
+    }
+
+    #[test]
+    fn continuing_native_writes_do_not_qualify_even_with_a_full_queue() {
+        let now = Instant::now();
+        let mut pressure = TxPressure::default();
+        for index in 0..100 {
+            pressure.observe(now + Duration::from_millis(index * 100), true, index);
+        }
+        assert_eq!(pressure.peak_stalled_ns, 0);
+    }
 }

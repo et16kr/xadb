@@ -4,6 +4,8 @@
 
 [소유 계약](../contracts/comm-design.md) · [구현·검증 계획](../plans/comm-implementation-plan.md) · [저장소 배치](../policies/repository-build-plan.md)
 
+2026-10-24 [slow-peer 실패 수정](../evidence/comm-failure-fix-20261024.md): Unix의 미완료 prefix를 제한적으로 재확인하고 TCP 시험 연결의 MSS 협상·일시 정체 뒤 제공 재개를 보완했다. 실제 TX 연속 정체를 판정하고 실패 원자료를 보존한다. cell128은 동일 r2 source의 완료분을 반복하지 않고5쌍, cell90은 r5에서5쌍을 통과했다. 관련 단위10개·원 실패/source별 결과를 보존하며 최종 독립 D1/D2를 제한 범위로 수용했다. 전체 C1은 INCOMPLETE다.
+
 2026-10-23 [시간 제한·조합별 성능 인수](#time-bounded-performance-20261023): 원 profile의 cell37/20mode와 별도 미완료 시험으로 진행한38/39의40mode를 source별로 실행해 각각 BATCH_PASS를 확인했다. 같은 보존 source의3조합60mode이며 원74·완료 시험은 반복하지 않았다. [실제 증거](../evidence/comm-performance-batch-20261023.md#standalone-continuation)는 사용자 범위 정정·14:21 완료 확인과 C1 미완료를 구분한다.
 
 2026-10-23 [미완료 인수 재개](#acceptance-resume-20261023): 원 source의30분 fuzz/stress3개·11 mutant 완료 증거를 재실행 없이 대조했다. 실제 RX-prefix 확인 뒤 SIGKILL하는 신규36셀, checker source별6→4→1과 reader 변경 후 native1셀을 선택 검증했다. D1/D2 독립 검토 수용이며 모델·전체 native fault·성능 및 전체 C1은 미완료다. 아래 초기 잔여 목록의 현재 판정은 이 후속 기록을 따른다.

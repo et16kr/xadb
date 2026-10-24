@@ -2068,10 +2068,10 @@
       "role": "evidence",
       "title": "DEV3 runtime/core source별 실행 색인"
     },
-    "dev4-lifecycle-inputs-20261024.md": {
-      "path": "evidence/dev4-lifecycle-inputs-20261024.md",
+    "comm-failure-fix-20261024.md": {
+      "path": "evidence/comm-failure-fix-20261024.md",
       "role": "evidence",
-      "title": "DEV4 P5 수명 모델의 독립 입력 준비"
+      "title": "COMM slow-peer 실패 수정"
     },
     "dev3-empty-retention-semantics.md": {
       "path": "contracts/dev3-empty-retention-semantics.md",
@@ -2087,6 +2087,11 @@
       "path": "evidence/dev3-empty-retention-semantics-20261024.json",
       "role": "evidence",
       "title": "DEV3 빈 거래·정리 의미 source별 실행 색인"
+    },
+    "dev4-lifecycle-inputs-20261024.md": {
+      "path": "evidence/dev4-lifecycle-inputs-20261024.md",
+      "role": "evidence",
+      "title": "DEV4 P5 수명 모델의 독립 입력 준비"
     },
     "dev4-lifecycle-codec.md": {
       "path": "contracts/dev4-lifecycle-codec.md",
@@ -2142,6 +2147,11 @@
       "path": "evidence/dev4-lifecycle-assembly-inputs-20261025.md",
       "role": "evidence",
       "title": "DEV4 P5 전체 입력 조립의 설계·독립 입력 준비"
+    },
+    "comm-artifact-cleanup-20261025.md": {
+      "path": "evidence/comm-artifact-cleanup-20261025.md",
+      "role": "evidence",
+      "title": "COMM 시험 산출물 정리"
     },
     "dev3-recovery-paused-20261025.md": {
       "path": "evidence/dev3-recovery-paused-20261025.md",

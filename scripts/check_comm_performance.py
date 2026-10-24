@@ -53,10 +53,13 @@ SLOW_PEER_TARGET_BYTES = 8 * 1024 * 1024
 SLOW_PEER_MIN_FRAMES = 8
 UNIX_LARGE_FRAME_MIN_FRAMES = 6
 SLOW_PEER_RECEIVE_BUFFER_BYTES = 64 * 1024
+SLOW_PEER_TCP_MAXSEG_BYTES = 1460
 SLOW_PEER_START_SECONDS = WARMUP_SECONDS
 SLOW_PEER_PAUSE_SECONDS = 25
 MAX_ECHO_PENDING_TICKETS = 4
 MAX_RECEIPT_BYTES = 128 * 1024
+SLOW_TX_STALL_NANOS = 500_000_000
+SLOW_PRESSURE_WITNESS = "continuous-full-tx-no-byte-progress-v1"
 
 
 def wire(payload: bytes) -> bytes:
@@ -226,6 +229,7 @@ class Peer:
         self.slow_burst_stopped = False
         self.slow_burst_stop_reason: str | None = None
         self.slow_partial_frame_bytes = 0
+        self.next_prefix_probe_at = 0.0
         self.cancel_target = False
         self.cancel_observed_latency_seconds: float | None = None
         self.sequence = 0
@@ -280,6 +284,10 @@ def connect_peers(
         sock = socket.socket(socket_family)
         if slow_peer and index == 0:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, SLOW_PEER_RECEIVE_BUFFER_BYTES)
+            if socket_family != socket.AF_UNIX:
+                # Negotiate bounded segments in both directions. Large loopback
+                # segments can stall the producer before the echo TX queue fills.
+                sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_MAXSEG, SLOW_PEER_TCP_MAXSEG_BYTES)
         sock.settimeout(5)
         sock.connect(address)
         sock.setblocking(False)
@@ -309,6 +317,8 @@ def prepare_peer_window(
             "receive_buffer_bytes": peer.sock.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF),
             "tcp_nodelay": peer.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY)
             if peer.sock.family in (socket.AF_INET, socket.AF_INET6) else None,
+            "tcp_maxseg": peer.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_MAXSEG)
+            if peer.sock.family in (socket.AF_INET, socket.AF_INET6) else None,
         }
         for peer in peers
     ]
@@ -316,6 +326,37 @@ def prepare_peer_window(
         if peer.active and not peer.slow_reader:
             selector.register(peer.sock, selectors.EVENT_WRITE, peer)
     return selector, peers, active_count, socket_settings
+
+
+def select_peer_events(selector, timeout, prefix_peer):
+    """Probe one bounded nonblocking write when readiness withholds a prefix.
+
+    AF_UNIX writable readiness can disappear while a short write still fits.
+    The probe neither extends the five-second deadline nor lowers the prefix.
+    """
+    events = selector.select(timeout)
+    if prefix_peer is not None and not any(key.data is prefix_peer for key, _ in events):
+        now = time.monotonic()
+        if now >= prefix_peer.next_prefix_probe_at:
+            events.append((selector.get_key(prefix_peer.sock), selectors.EVENT_WRITE))
+            prefix_peer.next_prefix_probe_at = now + 0.02
+    return events
+
+
+def validate_slow_pressure(peer_result, detail, family, payload_bytes):
+    if int(peer_result["socket_frames_fully_written_by_peer"][0]) < slow_peer_pressure_prefix_minimum(family, payload_bytes):
+        raise ValueError("slow peer did not send the minimum pressure prefix")
+    if peer_result["slow_peer_burst_stop_reason"] not in {"socket_backpressure", "frame_limit"}:
+        raise ValueError("slow peer did not report a bounded burst stop reason")
+    # WouldBlock aggregates RX and TX and need not occur when readiness already
+    # withholds writes. Require sustained full TX with no actual byte progress.
+    if (
+        int(detail.get("pending_echo_backlog_peak", 0)) <= 0
+        or int(detail.get("ticket_cap_saturations", 0)) <= 0
+        or int(detail.get("peak_tx_queue_bytes", 0)) <= 0
+        or int(detail.get("peak_stalled_tx_ns", 0)) < SLOW_TX_STALL_NANOS
+    ):
+        raise ValueError("slow peer did not reach sustained native TX queue/socket backpressure")
 
 
 def run_peer_window(
@@ -412,30 +453,46 @@ def run_peer_window(
                     continue
                 if peer.slow_reader and peer.slow_write_blocked_since is not None:
                     if now - peer.slow_write_blocked_since >= 0.5:
-                        peer.slow_burst_stopped = True
+                        peer.slow_burst_stopped = peer.sock.family == socket.AF_UNIX
                         peer.slow_burst_stop_reason = "socket_backpressure"
                         peer.slow_partial_frame_bytes = peer.offset
-                        try:
-                            selector.unregister(peer.sock)
-                        except (KeyError, ValueError):
-                            pass
+                        if peer.slow_burst_stopped:
+                            try:
+                                selector.unregister(peer.sock)
+                            except (KeyError, ValueError):
+                                pass
                         continue
                 if peer.slow_reader and peer.slow_frames_sent >= slow_peer_pressure_prefix_minimum(
                     "unix" if peer.sock.family == socket.AF_UNIX else "tcp", payload_bytes
                 ):
                     if now - peer.last_progress >= 0.5:
-                        peer.slow_burst_stopped = True
+                        # TCP sender pressure can be transient before the echo
+                        # owner's TX queue fills. Keep offering the same bounded
+                        # burst when readiness returns; the worker proves TX stall.
+                        peer.slow_burst_stopped = peer.sock.family == socket.AF_UNIX
                         peer.slow_burst_stop_reason = "socket_backpressure"
                         peer.slow_partial_frame_bytes = peer.offset
-                        try:
-                            selector.unregister(peer.sock)
-                        except (KeyError, ValueError):
-                            pass
+                        if peer.slow_burst_stopped:
+                            try:
+                                selector.unregister(peer.sock)
+                            except (KeyError, ValueError):
+                                pass
                         continue
                 if now - peer.last_progress > 5.0:
                     raise TimeoutError(f"peer {peer.index} made no I/O progress for five seconds")
             timeout = min(0.02, max(0.0, measure_end - now)) if now < measure_end else 0.02
-            for key, mask in selector.select(timeout):
+            prefix_peer = None
+            if slow_peer:
+                candidate = peers[0]
+                if (
+                    candidate.active and not candidate.closed and not candidate.slow_burst_stopped
+                    and now >= slow_start_at
+                    and candidate.slow_frames_sent < slow_peer_pressure_prefix_minimum(
+                        "unix" if candidate.sock.family == socket.AF_UNIX else "tcp", payload_bytes
+                    )
+                ):
+                    prefix_peer = candidate
+            for key, mask in select_peer_events(selector, timeout, prefix_peer):
                 peer: Peer = key.data
                 now = time.monotonic()
                 if mask & selectors.EVENT_WRITE and peer.workload == "BULK":
@@ -459,6 +516,7 @@ def run_peer_window(
                     peer.last_progress = time.monotonic()
                     if peer.slow_reader:
                         peer.slow_write_blocked_since = None
+                        peer.slow_burst_stop_reason = None
                     peer.frame_started = True
                     peer.offset += sent
                     if peer.offset == len(peer.packet):
@@ -496,6 +554,7 @@ def run_peer_window(
                     peer.last_progress = time.monotonic()
                     if peer.slow_reader:
                         peer.slow_write_blocked_since = None
+                        peer.slow_burst_stop_reason = None
                     if starting_frame:
                         peer.sent_at_ns = time.monotonic_ns()
                     peer.frame_started = True
@@ -691,6 +750,8 @@ def run_case(binary: Path, directory: Path, cell: dict[str, object], instrumenta
         argv.append(str(Path(unix_temp.name) / "private"))
     sockets: list[socket.socket] = []
     process: subprocess.Popen[bytes] | None = None
+    ready = peer_result = closed = cancelled = prepared_peer_window = None
+    stdout = stderr = b""
     try:
         process = subprocess.Popen(
             argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0
@@ -809,19 +870,7 @@ def run_case(binary: Path, directory: Path, cell: dict[str, object], instrumenta
                 if is_slow_owner and failed > MAX_ECHO_PENDING_TICKETS:
                     raise ValueError("slow peer left more failed echo tickets than the bounded queue")
             if slow_peer:
-                slow_detail = connection_details[0]
-                offered_by_peer = peer_result["socket_frames_fully_written_by_peer"]
-                if int(offered_by_peer[0]) < slow_peer_pressure_prefix_minimum(family, payload_bytes):
-                    raise ValueError("slow peer did not send the minimum pressure prefix")
-                if peer_result["slow_peer_burst_stop_reason"] not in {"socket_backpressure", "frame_limit"}:
-                    raise ValueError("slow peer did not report a bounded burst stop reason")
-                if (
-                    int(slow_detail.get("pending_echo_backlog_peak", 0)) <= 0
-                    or int(slow_detail.get("ticket_cap_saturations", 0)) <= 0
-                    or int(slow_detail.get("would_block", 0)) <= 0
-                    or int(slow_detail.get("peak_tx_queue_bytes", 0)) <= 0
-                ):
-                    raise ValueError("slow peer did not reach native TX queue/socket backpressure")
+                validate_slow_pressure(peer_result, connection_details[0], family, payload_bytes)
         if workload == "ECHO":
             observed = int(peer_result["echo_responses_fully_observed"])
             flushed = int(totals.get("flushed_frames", -1))
@@ -870,6 +919,7 @@ def run_case(binary: Path, directory: Path, cell: dict[str, object], instrumenta
             "worker_exit_code": process.returncode,
             "measured_seconds": MEASURE_SECONDS,
             "slow_peer_pause_seconds": SLOW_PEER_PAUSE_SECONDS if slow_peer else None,
+            "slow_pressure_witness": SLOW_PRESSURE_WITNESS if slow_peer else None,
             "warmup_seconds": WARMUP_SECONDS,
         }
         return record
@@ -881,9 +931,8 @@ def run_case(binary: Path, directory: Path, cell: dict[str, object], instrumenta
                 pass
         if process is not None and process.poll() is None:
             process.kill()
-        stderr = b""
         if process is not None:
-            _, stderr = process.communicate(timeout=5)
+            stdout, stderr = process.communicate(timeout=5)
         record = {
             "status": "FAIL",
             "cell": cell,
@@ -893,6 +942,27 @@ def run_case(binary: Path, directory: Path, cell: dict[str, object], instrumenta
             "error": str(error),
             "worker_exit_code": None if process is None else process.returncode,
             "worker_stderr": stderr.decode(errors="replace"),
+            "worker_pid": None if process is None else process.pid,
+            "worker_reaped": process is not None and process.returncode is not None,
+            "worker_ready": ready,
+            "peer": peer_result,
+            "worker": closed,
+            "cancelled": cancelled,
+            "slow_pressure_witness": SLOW_PRESSURE_WITNESS if slow_peer else None,
+            "worker_stdout_tail": (
+                (getattr(process, "_comm_line_buffer", b"") + stdout)[-MAX_RECEIPT_BYTES:]
+                .decode(errors="replace")
+            ),
+            "peer_states_at_failure": [] if prepared_peer_window is None else [
+                {name: getattr(peer, name) for name in (
+                    "index", "active", "slow_reader", "socket_frames", "offset",
+                    "awaiting_response", "slow_frames_sent", "slow_burst_stopped",
+                    "slow_burst_stop_reason", "slow_write_blocked_since", "last_progress",
+                    "closed",
+                )}
+                for peer in prepared_peer_window[1]
+            ],
+            "socket_settings": None if prepared_peer_window is None else prepared_peer_window[3],
         }
         write_report(directory / "validation.json", record)
         raise
