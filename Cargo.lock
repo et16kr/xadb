@@ -348,6 +348,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "xadb-sql"
+version = "0.1.0"
+dependencies = [
+ "xadb-foundation",
+ "xadbtest-reference",
+]
+
+[[package]]
 name = "xadb-transport"
 version = "0.1.0"
 dependencies = [

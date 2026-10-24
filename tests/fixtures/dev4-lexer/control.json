@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "contract": "D4-FE-LEX-001",
+  "owner": "/root",
+  "test_target": "frontend_control",
+  "cases": [
+    {
+      "test": "entry_cancel_precedes_deadline_and_source_errors",
+      "input": "cancelled token, clock=7 deadline=7, invalid UTF8 and source length1048577",
+      "expected": [
+        "Cancelled",
+        "Lex",
+        0,
+        0
+      ]
+    },
+    {
+      "test": "deadline_boundary_and_new_call_are_independent",
+      "input": "clock=6/7/8 deadline=7; then new token/control without deadline; source SELECT",
+      "expected": [
+        "success",
+        "Timeout Lex 0..0",
+        "Timeout Lex 0..0",
+        "success"
+      ]
+    },
+    {
+      "test": "utf8_validation_checks_control_inside_long_input",
+      "input": "1048576 ASCII spaces; observer cancels at first byte progress p>=256 (entry checkpoints ignored)",
+      "expected": "Cancelled Lex zero-width 256<=p<=259; constructor cannot succeed; new independent call succeeds"
+    },
+    {
+      "test": "long_tokens_and_comments_check_control_during_scan",
+      "input": [
+        "1 repeated100000",
+        "a repeated100000",
+        "single-quoted a repeated100000",
+        "double-quoted a repeated100000",
+        "block comment a repeated100000",
+        "line comment a repeated100000"
+      ],
+      "setup": "finish constructor; arm observer to cancel only at first scan byte progress p>=256; ignore earlier offsets",
+      "expected": "Cancelled Lex zero-width 256<=p<=259, strictly before EOF; next_token returns identical terminal diagnostic"
+    },
+    {
+      "test": "deadline_inside_scan_and_eof_are_not_hidden",
+      "input": "long digits: constructor completes, then observer sets clock=deadline at first progress p>=256; separate EOF scanner sets clock=deadline before EOF read",
+      "expected": "Timeout Lex zero-width 256<=p<=259 before long token EOF; EOF read also Timeout"
+    },
+    {
+      "test": "name_checks_control_and_rejects_forged_tokens",
+      "input": [
+        "cancelled name",
+        "deadline at name entry",
+        "start>end",
+        "end>len",
+        "start>len",
+        "UTF8 interior start",
+        "UTF8 interior end",
+        "kind mismatch",
+        "unpaired quote escape",
+        "invalidUTF8"
+      ],
+      "expected": "Cancelled/Timeout first at min(start,len); otherwise Name/Name with clamped full supplied token span; no panic"
+    },
+    {
+      "test": "frontend_values_have_bounded_stack_footprints",
+      "input": "size_of Lexer/Name/Diagnostic",
+      "expected_max_bytes": [
+        512,
+        192,
+        64
+      ]
+    },
+    {
+      "test": "independent_calls_share_only_explicit_cancellation",
+      "input": "two native threads with separate sources/clocks and cloned cancellation; signal before barrier release",
+      "expected": "both Cancelled, fresh independent token succeeds; no global state"
+    },
+    {
+      "test": "name_decode_checks_control_after_validation",
+      "input": "quoted 128 escaped double quotes: raw258 bytes, decoded128",
+      "setup": "observer first witnesses p=258 after UTF8 validation; then cancels only when256<=p<258 during decode",
+      "expected": "Cancelled Name at internal decode position256<=p<258; unchanged source and fresh call succeeds"
+    }
+  ],
+  "allocation_inventory": [],
+  "heap_quota_cases": "N/A only for this borrowed no-allocation leaf; FE11 allocation and FE12 owned parser quota remain NOT_RUN",
+  "large_fuzz": "NOT_RUN; separate 30 minute profile remains required for later expanded acceptance",
+  "feature": "test-support",
+  "checkpoint_negative_recipe": "In a separate source copy remove scanning advance() loop checkpoint calls; only long_tokens_and_comments_check_control_during_scan must fail (EOF-only observation exceeds259). Remove name loop checkpoint separately; name_decode_checks_control_after_validation must fail. Preserve expected negative result, not a product PASS.",
+  "review_followup": {
+    "id": "D4-FE-LEX-R1",
+    "test": "ascii_name_validation_checkpoints_do_not_use_unicode_slack",
+    "input": "raw258 ASCII bytes representing128 escaped quotes",
+    "expected": "Cancelled Name at256..256 during UTF8 validation; 258 is not permitted Unicode scalar slack",
+    "original_failure": "source-name-red product r2: observed258..258, expected256..256; preserved in name-red.log"
+  }
+}

@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-24 [DEV4 독립 앞단](dev4-implementation.md): borrowed lexer·고정 이름·호출 제어와 독립 literal 판정기를 구현했다. source별 선택 시험·리뷰 교정은 증거에 보존하며 splitter/parser/값·실제 SQL 실행·Q1은 미완료다.
+
 2026-10-24 [DEV3 Free Undo 초기 page](dev3-implementation.md#undo-free-page): authentic Free432·초기 slot1 page 표현을 구현하고7함수987case를 검증했다. 최종 독립 D1을 제한 수용했으며 mixed INIT/pool/복구·DEV3/S5 미완료.
 
 2026-10-24 [DEV3 불변 Undo 역할](dev3-implementation.md#undo-bootstrap): plan3 설치/readback에 연결한 역할 선행을 구현했다. 선택 검증과 최종 독립 D1을 제한 수용했으며 mixed INIT/pool/복구·DEV3/S5 미완료를 유지한다.
@@ -96,7 +98,8 @@
 | COMM 핵심 | frame·Linux local socket·quota·deadline·취소/종료·focused runner 구현, C1 인수 미완료 | [COMM](comm-implementation.md) |
 | 영속 transaction/WAL/recovery | 구현·정적 통합 완료, 최종 인수 대기 | [DEV2 K1–K5](dev2-implementation.md) |
 | DEV3 저장 표현·선택 page 읽기·상태 모델 | 고정 표현·bounded 읽기 leaf 검증, 실제 쓰기·복구·S1 인수 미완료 | [DEV3](dev3-implementation.md) |
-| SQL/server/client·replication | 미구현 | DEV4 이후 |
+| SQL 앞단 | [lexer/name 제한 구현](dev4-implementation.md) | DEV4 독립 선행; 실제 SQL/Q1 미완료 |
+| server/client·replication | 미구현 | DEV5 이후 |
 
 [기계 판독 상태](implementation-status.json) · [새 실행 증거](../evidence/README.md) · [이관 기록](../history/project-migration.md)
 

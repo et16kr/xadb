@@ -1,0 +1,377 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-24",
+  "scope": "D4-FE-LEX-001 borrowed lexer/name only",
+  "contract_ref": "dev4-independent-frontend.md",
+  "implementation_ref": "dev4-implementation.md",
+  "evidence_ref": "dev4-frontend-20261024.md",
+  "baseline": {
+    "head": "04b2ac3ab23efcd9fde7346fb527e2f5c5cf2297",
+    "started_at": "2026-10-24T15:52:01.583475+09:00",
+    "dirty_diff_sha256": "19dc03a68d36f7b46a8f2247a51839d8d5bfd2e3a5ffce12ff4cc33cdbccaee4",
+    "untracked": {
+      "crates/engine/src/storage/wal_io/fixed_system_operation.rs": "200c1adccb2d5c7e138e6292d6454a15248fdbd09c9db5e2a5b03a18c562eef4",
+      "crates/engine/src/storage/wal_io/mixed_system_history.rs": "55487189cf35b83150211898395715abf77b8f208b7c6d2ee83bc403de3cc526",
+      "crates/engine/src/storage/wal_io/mixed_system_load.rs": "b0e2ac33bcd16d841e0d207afbc4396bb7255f51387a31d502b83526cf44a6a0",
+      "crates/engine/src/storage/wal_io/mixed_system_owner.rs": "251ed0bf20c736dac36373e9079cbff50b5a25871faf0e6607bb7818ebe8ac2c",
+      "crates/engine/src/storage/wal_io/mixed_system_owner_native_tests.rs": "b2246c75f38a14c40946c9f517e0a275f0972e63182e8c1bd134100403f90790",
+      "crates/engine/src/storage/wal_io/mixed_system_owner_tests.rs": "e9cdc37ce032ff4a4d543ff63e6e00d736676b6572c032ce9106b031a2cc46c9"
+    }
+  },
+  "freeze": {
+    "frozen_at": "2026-10-24T15:59:51.203572+09:00",
+    "state": "PRE_IMPLEMENTATION",
+    "files": {
+      "devdoc/contracts/dev4-independent-frontend.md": "f949f768372590c8dce9f4cbea3a0e8db1e6e50ef91cf85d554895519416470a",
+      "crates/testing/reference/src/frontend/literals.rs": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+      "tests/fixtures/dev4-lexer/manifest.json": "7c74415f5fb93e7b708ab10678e22ed1099c63234f569a74ad4aa8462f132ca9",
+      "tests/fixtures/dev4-lexer/control.json": "c122a1c5ee26da2a09a56f3502f06d1f4d868030c7cd5b4f344ddd44df240f9c"
+    }
+  },
+  "sources": [
+    {
+      "base_revision": "04b2ac3ab23efcd9fde7346fb527e2f5c5cf2297",
+      "created_at": "2026-10-24T16:04:02.272596+09:00",
+      "sha256": "9f39623cb1168982a98aa4527b7b833e803ded8bb54c09657318380ee6a53a6c",
+      "selected_tests": {
+        "lexer_contracts": [
+          "literal_lexer_vectors",
+          "source_and_token_limits",
+          "generated_literal_sequences"
+        ],
+        "name_contracts": [
+          "literal_name_vectors"
+        ],
+        "frontend_oracle": [
+          "known_bad_lexical_observations_are_rejected",
+          "known_bad_name_observations_are_rejected"
+        ],
+        "frontend_control": "all9 newly authored tests"
+      },
+      "selection_reason": "All selected tests consume newly written SQL/frontend and independent oracle; no DEV3/foundation/protocol/old reference test cases run. Expanded ignored profiles NOT_RUN.",
+      "artifact": "artifacts/dev4-frontend-20261024/source-r1.json",
+      "manifest_sha256": "cf4fee7a1c8b4df865b5f9e157a890f112512f7cb5fcf5a2db2876b9bd50cd48"
+    },
+    {
+      "base_revision": "04b2ac3ab23efcd9fde7346fb527e2f5c5cf2297",
+      "created_at": "2026-10-24T16:05:20.499794+09:00",
+      "sha256": "412ff18fb568944a31cf8f1c529d2b38bd344f3651f9b42e2503b953693cf113",
+      "selected_tests": {
+        "lexer_contracts": [
+          "literal_lexer_vectors",
+          "source_and_token_limits",
+          "generated_literal_sequences"
+        ],
+        "name_contracts": [
+          "literal_name_vectors"
+        ],
+        "frontend_oracle": [
+          "known_bad_lexical_observations_are_rejected",
+          "known_bad_name_observations_are_rejected"
+        ],
+        "frontend_control": "all9 newly authored tests"
+      },
+      "selection_reason": "All selected tests consume newly written SQL/frontend and independent oracle; no DEV3/foundation/protocol/old reference test cases run. Expanded ignored profiles NOT_RUN.",
+      "artifact": "artifacts/dev4-frontend-20261024/source-r2.json",
+      "manifest_sha256": "39fa9e38f813be3a75af348ef41f2976ca7a9b2b0d4979d6ed52fd9a41480acb"
+    },
+    {
+      "base_revision": "04b2ac3ab23efcd9fde7346fb527e2f5c5cf2297",
+      "created_at": "2026-10-24T16:05:20.499794+09:00",
+      "sha256": "ec2be23e6d6dd30ee27ff763fe5626681b48f40b21a568e035212d97beb6fdbb",
+      "selected_tests": {
+        "frontend_control": [
+          "ascii_name_validation_checkpoints_do_not_use_unicode_slack"
+        ]
+      },
+      "selection_reason": "New review counterexample on r2 product, no completed tests repeated",
+      "artifact": "artifacts/dev4-frontend-20261024/source-name-red.json",
+      "manifest_sha256": "293bd73c795af0237413f2ba5056e4758b79a8dac49cadbf048ce64ade7058f7",
+      "metadata_correction": "Original created_at/previous fields were inherited from r2; command/log and amended selected_tests identify the new review counterexample."
+    },
+    {
+      "base_revision": "04b2ac3ab23efcd9fde7346fb527e2f5c5cf2297",
+      "created_at": "2026-10-24T16:07:30.092411+09:00",
+      "sha256": "3c855e2753e81b2b2ba0ee165b4381c26ed95a5e1112faaea98fe185fbc5c84e",
+      "selected_tests": {
+        "name_contracts": [
+          "literal_name_vectors"
+        ],
+        "frontend_control": [
+          "name_checks_control_and_rejects_forged_tokens",
+          "name_decode_checks_control_after_validation",
+          "ascii_name_validation_checkpoints_do_not_use_unicode_slack"
+        ]
+      },
+      "selection_reason": "Only normalize_name UTF8/decode changed; name110 vectors and three directly related control tests, including new failing review counterexample. No lexer or oracle completed cases repeated.",
+      "artifact": "artifacts/dev4-frontend-20261024/source-r3.json",
+      "manifest_sha256": "5f11008f846f9b212dd76d4462fb6751cedf1f5dfa6aa1d965e8f84f59bd238c"
+    },
+    {
+      "base_revision": "04b2ac3ab23efcd9fde7346fb527e2f5c5cf2297",
+      "created_at": "2026-10-24T16:07:30.092411+09:00",
+      "sha256": "b3c067d233ea17242f70873ae3007dbee7eead432a4f6c2c58e928a5c7256a8f",
+      "selected_tests": {
+        "frontend_control": [
+          "long_tokens_and_comments_check_control_during_scan"
+        ]
+      },
+      "selection_reason": "Mutation changes only the corresponding lexer scanning or name decoding checkpoint; selected_tests names the single directly related control function. The original manifest retains an inherited r3 name-regression explanation, which is not the actual mutant selection reason.",
+      "artifact": "artifacts/dev4-frontend-20261024/mutant-lex-checkpoint.json",
+      "manifest_sha256": "f7f38a0b7d21c396361912d7eb9c3a6947f97fe5685b900d43afddd10654ce34",
+      "inherited_selection_reason": "Only normalize_name UTF8/decode changed; name110 vectors and three directly related control tests, including new failing review counterexample. No lexer or oracle completed cases repeated.",
+      "metadata_correction": "Original artifact manifest unchanged; its previous/selection_reason and created_at fields were inherited from r3. The log command and selected_tests establish actual execution; created_at is parent snapshot time."
+    },
+    {
+      "base_revision": "04b2ac3ab23efcd9fde7346fb527e2f5c5cf2297",
+      "created_at": "2026-10-24T16:07:30.092411+09:00",
+      "sha256": "fb1388f5fe007803c9f4bd046f4452e3962a5add61d76dd68241170d22d8824d",
+      "selected_tests": {
+        "frontend_control": [
+          "name_decode_checks_control_after_validation"
+        ]
+      },
+      "selection_reason": "Mutation changes only the corresponding lexer scanning or name decoding checkpoint; selected_tests names the single directly related control function. The original manifest retains an inherited r3 name-regression explanation, which is not the actual mutant selection reason.",
+      "artifact": "artifacts/dev4-frontend-20261024/mutant-name-checkpoint.json",
+      "manifest_sha256": "91a6970797fc900a2805d6dc8a10d61933abeb192475243e51dbba271aef16e0",
+      "inherited_selection_reason": "Only normalize_name UTF8/decode changed; name110 vectors and three directly related control tests, including new failing review counterexample. No lexer or oracle completed cases repeated.",
+      "metadata_correction": "Original artifact manifest unchanged; its previous/selection_reason and created_at fields were inherited from r3. The log command and selected_tests establish actual execution; created_at is parent snapshot time."
+    }
+  ],
+  "receipts": [
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--offline",
+        "--test",
+        "lexer_contracts",
+        "--test",
+        "name_contracts",
+        "--test",
+        "frontend_oracle",
+        "--test",
+        "frontend_control"
+      ],
+      "source": "source-r1.json",
+      "exit_code": 101,
+      "seconds": 0.9614245220000157,
+      "finished_at": "2026-10-24T16:04:13.731939+09:00",
+      "receipt_id": "r1-tests",
+      "log_path": "artifacts/dev4-frontend-20261024/r1-tests.log",
+      "log_sha256": "941b6c0271fbb56823c8448accee7b2aaf05b2636e1501b06310efac3998a408"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--offline",
+        "--test",
+        "lexer_contracts",
+        "--test",
+        "name_contracts",
+        "--test",
+        "frontend_oracle",
+        "--test",
+        "frontend_control"
+      ],
+      "source": "source-r2.json",
+      "exit_code": 0,
+      "seconds": 2.966836969000724,
+      "finished_at": "2026-10-24T16:05:23.512799+09:00",
+      "receipt_id": "r2-tests",
+      "log_path": "artifacts/dev4-frontend-20261024/r2-tests.log",
+      "log_sha256": "689f58b41ac604ea8fd5ef424b0f455fa49487528acb4a93106cf5dfd53b51a1"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--offline",
+        "--locked",
+        "--test",
+        "frontend_control",
+        "ascii_name_validation_checkpoints_do_not_use_unicode_slack",
+        "--",
+        "--exact"
+      ],
+      "source": "source-name-red.json",
+      "exit_code": 101,
+      "seconds": 0.1925360319983156,
+      "finished_at": "2026-10-24T16:06:55.076049+09:00",
+      "receipt_id": "name-red",
+      "log_path": "artifacts/dev4-frontend-20261024/name-red.log",
+      "log_sha256": "969be9ea3819686bc6fb2675a1f249134616ce02151ebed8d0047d6fb43cb43c"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--offline",
+        "--locked",
+        "--test",
+        "name_contracts",
+        "--test",
+        "frontend_control",
+        "name"
+      ],
+      "source": "source-r3.json",
+      "exit_code": 0,
+      "seconds": 0.23919655200006673,
+      "finished_at": "2026-10-24T16:07:30.347900+09:00",
+      "receipt_id": "r3-name",
+      "log_path": "artifacts/dev4-frontend-20261024/r3-name.log",
+      "log_sha256": "30b7565417ced61769f3e225eaefe90bf1e34548fc7e43394a48958aea167d64"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--offline",
+        "--locked",
+        "--test",
+        "frontend_control",
+        "long_tokens_and_comments_check_control_during_scan",
+        "--",
+        "--exact"
+      ],
+      "source": "mutant-lex-checkpoint.json",
+      "exit_code": 101,
+      "seconds": 0.21943893899879185,
+      "finished_at": "2026-10-24T16:07:59.100422+09:00",
+      "receipt_id": "mutant-lex-result",
+      "log_path": "artifacts/dev4-frontend-20261024/mutant-lex-result.log",
+      "log_sha256": "880b1abe1e91bb6599fa54bb5dd127db47b204e33ce9374eb8a86964249fbdde"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--offline",
+        "--locked",
+        "--test",
+        "frontend_control",
+        "name_decode_checks_control_after_validation",
+        "--",
+        "--exact"
+      ],
+      "source": "mutant-name-checkpoint.json",
+      "exit_code": 0,
+      "seconds": 0.028475492999859853,
+      "finished_at": "2026-10-24T16:08:03.527598+09:00",
+      "validity": "INVALID_SOURCE_SELECTION",
+      "reason": "Shared Cargo target reused previous snapshot binary: no compilation of changed mutant-name source, while mutant files predated previous binary. Exit0 cannot judge mutant. Corrected runner gives each immutable source separate target.",
+      "receipt_id": "mutant-name-result",
+      "log_path": "artifacts/dev4-frontend-20261024/mutant-name-result.log",
+      "log_sha256": "6fb74a009fb6159eeaeb8e0419b5eca7005c54d688efa1eea90e27bdf320debc"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--offline",
+        "--locked",
+        "--test",
+        "frontend_control",
+        "name_decode_checks_control_after_validation",
+        "--",
+        "--exact"
+      ],
+      "source": "mutant-name-checkpoint.json",
+      "exit_code": 101,
+      "seconds": 3.7560780370004068,
+      "finished_at": "2026-10-24T16:08:42.148678+09:00",
+      "receipt_id": "mutant-name-isolated-result",
+      "log_path": "artifacts/dev4-frontend-20261024/mutant-name-isolated-result.log",
+      "log_sha256": "a45db41549af5f3cf6b2f97278b3855eafc8beaf170cf637e00af78ffc4e2a68"
+    },
+    {
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-sql",
+        "--no-default-features",
+        "--offline",
+        "--locked"
+      ],
+      "source": "source-r3.json",
+      "exit_code": 0,
+      "seconds": 0.7351206659986929,
+      "finished_at": "2026-10-24T16:08:04.306128+09:00",
+      "receipt_id": "r3-default",
+      "log_path": "artifacts/dev4-frontend-20261024/r3-default.log",
+      "log_sha256": "9bc85f6a82091a40d7e5f3eebce8686016b8de4d2875ea09a8e039ced93660f3"
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-sql",
+        "-p",
+        "xadbtest-reference",
+        "--all-targets",
+        "--all-features",
+        "--offline",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "source": "source-r3.json",
+      "exit_code": 0,
+      "seconds": 2.75888290399962,
+      "finished_at": "2026-10-24T16:08:07.081600+09:00",
+      "receipt_id": "r3-clippy",
+      "log_path": "artifacts/dev4-frontend-20261024/r3-clippy.log",
+      "log_sha256": "1623f9d98f9e2186db9a38ebd2925e1b115f10407ab7f17d20f2c6e25e64ad81"
+    }
+  ],
+  "result": {
+    "r2": "15 functions PASS:473 literal/generated cases +30 observation mutants +9 control functions;2 expanded functions ignored",
+    "r3": "only changed name:110 cases +3 control functions PASS",
+    "negative_controls": "lex/name checkpoint removal each rejected with assertion failure; one shared-cache name run INVALID_SOURCE_SELECTION",
+    "extended": "NOT_RUN",
+    "d1": "ACCEPTED_LIMITED_LEAF",
+    "q1": "NOT_RUN"
+  },
+  "current_source_matches_r3": true,
+  "independent_review": {
+    "reviewer": "/root/frontend_review",
+    "d2": "ACCEPTED D4-FE-LEX-001 before implementation",
+    "d1": "ACCEPTED limited lexer/name leaf after r3, scope match and original failure/source-selection audit",
+    "review_execution": "Read-only; reviewer did not rerun tests",
+    "required_metadata_correction": "Recorded below; no code/test change required"
+  }
+}

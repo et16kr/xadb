@@ -70,7 +70,7 @@ index_name := [public '.'] name
 `public` prefix도 일반 identifier 정규화 규칙을 적용한다. 단일 고정 namespace의 정규 이름은 `PUBLIC`이며 `public`, `PUBLIC`, `"PUBLIC"`를 같은 prefix로 받는다. `"public"`과 다른 schema는 Unsupported다. engine에는 prefix를 제거한 정규 이름 bytes를 전달한다. Oracle의 사용자별 schema를 구현한 것은 아니다. table/index 이름 namespace는 분리하고 index 이름은 DB 전체에서 유일하다. 열 참조는 입력 table의 단순 이름만 받는다. table alias·qualified column·출력 alias/ordinal을 ORDER BY에서 참조하는 문법은 미지원이다. projection의 중복 열/출력 이름은 허용하며 metadata ordinal로 구별한다.
 
 - keyword와 unquoted name은 ASCII 대소문자를 구별하지 않는다. unquoted name은 `[A-Za-z_][A-Za-z0-9_]*`이고 ASCII 대문자로 저장한다. 열·table·index·출력 alias와 metadata 이름에 같은 규칙을 적용한다. 이 문법의 keyword는 reserved다.
-- quoted name은 `"..."`, 내부 quote는 `""`로 표시하며 UTF-8 bytes를 정규화 없이 비교한다. 정규화 후 1–128 bytes, NUL과 Unicode C0/C1 control은 거절한다. `t`, `T`, `"T"`는 같고 `"t"`는 다르다. native catalog의 byte 비교 자체는 바꾸지 않는다.
+- quoted name은 `"..."`, 내부 quote는 `""`로 표시하며 UTF-8 bytes를 정규화 없이 비교한다. 정규화 후 1–128 bytes, NUL과 Unicode C0/C1 control은 거절한다. [첫 앞단 동결](dev4-independent-frontend.md#lexer-leaf)은 DEL(U+007F)도 같은 control 거절 대상으로 명시한다. `t`, `T`, `"T"`는 같고 `"t"`는 다르다. native catalog의 byte 비교 자체는 바꾸지 않는다.
 - 정수 literal은 선택적 `+`/`-`와 decimal digits이며 Int64 범위를 checked parsing한다. 최소값 `-9223372036854775808`도 허용한다. 소수·지수는 Unsupported, 정수 overflow는 Range다.
 - boolean은 TRUE/FALSE, text는 `'...'` 및 `''` escape, binary는 `X'...'`의 짝수 hex digits, NULL은 값의 부재다. SQL의 빈 text literal `''`는 Utf8 typed NULL로 정규화하고 빈 binary `X''`는 실제 값으로 보존한다. backslash escape·Unicode 정규화를 하지 않는다. 공백과 text의 U+0000은 길이 있는 값으로 보존한다. identifier NUL과 구분한다.
 - 입력은 유효한 UTF-8, 주석은 `--`부터 줄 끝과 중첩하지 않는 `/* ... */`다. 미종료 quote/comment는 Syntax다. literal·identifier·comment 안의 `?`/`;`는 parameter/구분자가 아니다.

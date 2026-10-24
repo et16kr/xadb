@@ -3,6 +3,7 @@
 #![deny(missing_docs)]
 
 pub mod catalog;
+pub mod frontend;
 mod history;
 mod model;
 mod validation;

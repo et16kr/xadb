@@ -1,20 +1,20 @@
 # DEV4 — DEV3 병행 준비·독립 모듈 개발 계획
 
-2026-10-24 · **D4-PREP-001/002 ACCEPTED / 계획 확정 / 개발·시험 NOT_RUN**
+2026-10-24 · **D4-PREP-001/002 ACCEPTED / 독립 lexer·이름 제한 구현 / 전체 DEV4·Q1 미완료**
 
 [독립 앞단 계약](../contracts/dev4-independent-frontend.md) · [전체 DEV4 계획](dev4-implementation-plan.md) · [기존 18개 작업](dev4-work-breakdown.md) · [조사·검토](../evidence/dev4-preparation-research-20261024.md)
 
 <a id="entry"></a>
 ## 1. 목표와 시작 조건
 
-DEV3가 저장·복구를 개발하는 동안 DEV4의 독립 입력 처리·값 의미·검증 도구를 먼저 완성할 수 있도록 한다. 이번 요청은 이 계획과 계약을 확정하는 작업이다. 실제 제품 구현·시험을 시작하거나 DEV3 작업을 변경하지 않는다. 이후 개발 요청에서 아래 순서를 적용한다.
+DEV3가 저장·복구를 개발하는 동안 DEV4의 독립 입력 처리·값 의미·검증 도구를 먼저 완성할 수 있도록 한다. 최초 요청에서는 이 계획과 계약만 확정했다. 후속 사용자의 선행 개발 요청으로 [첫 lexer·이름 구현](../implementation/dev4-implementation.md)을 진행했다. DEV3 작업은 별도 소유이며 이후에도 아래 순서를 적용한다.
 
 독립 모듈은 D4-PREP-001의 허용 범위·독립 D2 채택과 해당 leaf 입력 동결 뒤 시작할 수 있다. DEV3 전체 완료나 존재하지 않는 scan/catalog API를 기다리지 않는다. 엔진을 소비하는 모듈은 [기존 entry](dev4-implementation-plan.md#entry)의 실제 DEV3 최소 공급 증거를 요구한다. Q1과 단계 DAG는 유지하며 준비 작업을 새 stage/gate·XADB task로 등록하지 않는다.
 
 <a id="sequence"></a>
 ## 2. 배정과 순서
 
-아래 P0–P6은 이 계획 안의 배정 묶음이며 DEV2 P0/K0나 새 제품 단계가 아니다. 기존 4.xx ID가 범위의 정체성이다. 모든 상태는 **NOT_RUN**, 담당 구현자·실제 소유 경로는 개발 시작 때 배정한다. 본 계획·계약 담당은 `/root`, 독립 검토자는 조사 기록에 남긴다.
+아래 P0–P6은 이 계획 안의 배정 묶음이며 DEV2 P0/K0나 새 제품 단계가 아니다. 기존 4.xx ID가 범위의 정체성이다. 최초 확정 당시 모든 상태는 **NOT_RUN**이었다. 현재 P0의 lexer 소비 부분과 P1 lexer/이름·해당 P5 literal 판정을 제한 구현했으며 [source별 증거](../evidence/dev4-frontend-20261024.md)에 실제 소유·검증·잔여를 기록한다. 나머지 상태는 NOT_RUN이며 담당 구현자·실제 소유 경로는 해당 개발 시작 때 배정한다. 본 계획·계약 담당은 `/root`, 독립 검토자는 조사 기록에 남긴다.
 
 | 묶음·기존 ID | 직접 선행 | 산출물·독립 종료 조건 | 병행 가능 범위 |
 | --- | --- | --- | --- |
@@ -78,7 +78,7 @@ FE11의 독립 단계에서는 순수 helper의 취소/실패·예약 반환·�
 | 위 실행의 undo/정리 실패 | 4.13.3/4.17 · T11 | 실제 cleanup 실패에 따른 RecoveryRequired/Fenced·원 certainty 보존. helper 오류만 보고 정상 rollback/Idle 응답 금지 |
 | DDL precommit 성공 뒤 native DDL 호출 전 Type/Range 오류 | 4.10.2/4.10.3·4.13.1.2 · T03/T09 | prior=Committed·ddl=NotAttempted·Idle과 실제 phase 보존. native DDL을 실행한 Aborted 또는 원래 Active·NoEffect로 바꾸지 않음 |
 
-테스트 실행은 [사용자 지시](../../AGENTS.md)를 따른다. **이번 문서 작업에는 테스트를 실행하지 않는다.** 이후 새 코드와 수정 코드의 필수 사례를 선택하고 마지막 검증 이후 diff→case 대응을 실행 전에 기록한다. 완료된 무변경 사례·전체 workspace·하위 wrapper 반복은 금지한다. 긴 fuzz·큰 조합은 필수 profile을 줄이지 않고 관련 코드 변경과 함께 선택·계획하며 미실행/중단/FAIL을 보존한다. DEV4에 새 최종 전수 예외를 만들지 않는다. 문서 자동 검사는 push gate 전용이다.
+테스트 실행은 [사용자 지시](../../AGENTS.md)를 따른다. **최초 계획 확정 때는 테스트를 실행하지 않았다.** 후속 개발에서는 새 코드와 수정 코드의 필수 사례를 선택하고 마지막 검증 이후 diff→case 대응을 실행 전에 기록한다. 완료된 무변경 사례·전체 workspace·하위 wrapper 반복은 금지한다. 긴 fuzz·큰 조합은 필수 profile을 줄이지 않고 관련 코드 변경과 함께 선택·계획하며 미실행/중단/FAIL을 보존한다. DEV4에 새 최종 전수 예외를 만들지 않는다. 문서 자동 검사는 push gate 전용이다.
 
 <a id="coordination"></a>
 ## 5. 파일 소유·DEV3 작업 보호

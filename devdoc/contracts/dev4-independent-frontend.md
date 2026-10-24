@@ -1,13 +1,13 @@
 # DEV4 — DEV3와 독립적인 SQL 앞단 계약
 
-2026-10-24 · **D4-PREP-001/002 ACCEPTED / 제품·모델·Q1 NOT_RUN**
+2026-10-24 · **D4-PREP-001/002·D4-FE-LEX-001 ACCEPTED / lexer·이름 제한 구현 / 모델·Q1 NOT_RUN**
 
 [SQL 의미 정본](dev4-sql-design.md) · [개발 계획](../plans/dev4-preparation-plan.md) · [Oracle·로컬 소스 조사와 검토](../evidence/dev4-preparation-research-20261024.md)
 
 <a id="scope"></a>
 ## 1. 적용 범위
 
-DEV4 안에서 저장 엔진에 접근하지 않는 입력 처리·값 계산과 독립 검증 도구를 DEV3 완료 전에 개발할 수 있도록 분리한다. 새 제품 단계나 완료 gate를 만들지 않는다. DEV3 → DEV4의 **실제 엔진 통합·Q1 인수 의존성**은 유지한다. 이 계약은 기존 DEV4 문서의 모든 제품 코드를 DEV3 공급 뒤로 미뤘던 착수 조건을 아래 허용 범위에 한해서 대체한다. 현재 요청의 실행 범위는 계약·계획 확정이며 제품 개발·시험 재개는 아니다.
+DEV4 안에서 저장 엔진에 접근하지 않는 입력 처리·값 계산과 독립 검증 도구를 DEV3 완료 전에 개발할 수 있도록 분리한다. 새 제품 단계나 완료 gate를 만들지 않는다. DEV3 → DEV4의 **실제 엔진 통합·Q1 인수 의존성**은 유지한다. 이 계약은 기존 DEV4 문서의 모든 제품 코드를 DEV3 공급 뒤로 미뤘던 착수 조건을 아래 허용 범위에 한해서 대체한다. 최초 요청의 실행 범위는 계약·계획 확정이었다. 후속 개발 요청으로 [첫 lexer·이름](../implementation/dev4-implementation.md)을 제한 구현했으며 나머지는 아래 범위를 따른다.
 
 | 구분 | 기존 작업 ID | 허용되는 산출물 |
 | --- | --- | --- |
@@ -146,3 +146,38 @@ DEV3와의 접점은 catalog/DDL, row/index, statement token/observation/undo, c
 | 인수·실행 | 준비 계획의 FE10·FE11·FE14 및 후속 T03/T09/T11 연결 의무. 계약/계획 보강이며 제품·모델·Oracle 실행은 NOT_RUN |
 | 검토 | `/root/dev4_contract_reassessment`의 독립 D2 정적 검토 수용, `/root` 반영 확인. [후속 리뷰·반영 기록](../evidence/dev4-preparation-research-20261024.md#review-followup); 실제 API·fixture 동결과 제품 검증은 후속 |
 | 재검토 조건 | adapter가 진단에서 상태를 추정, cleanup 미완료를 정상 종료로 보고, phase/outcome 유실, Oracle/XADB 기대값 혼용 |
+
+<a id="lexer-leaf"></a>
+## 10. D4-FE-LEX-001 — 첫 lexer·이름 입력 동결
+
+2026-10-24 · **D2 ACCEPTED / 제한 구현·선택 시험·최종 D1 수용**. 사용자의 독립 DEV4 개발·병렬 작업·단위 commit 요청에 따른 F01/F04의 첫 부분이다. 기존 D4-PREP-001/002의 의미·DEV3 수신 의무를 유지한다. 작업·통합·공통 API 담당은 `/root`다. 독립 검토·source/fixture hash·실행 기록은 [첫 앞단 증거](../evidence/dev4-frontend-20261024.md)에 남긴다.
+
+### 책임과 실제 API
+
+`crates/sql`의 첫 제품 코드는 foundation만 normal dependency로 소비한다. `frontend::{diagnostic,control,lexer,name}` 책임을 분리한다. lexer는 호출자가 빌린 source 위의 순차 token scanner이며 원문 복사·token 배열·heap allocation이 없다. 이후 parser가 source/arena를 소유하고 session8 MiB/DB64 MiB의 기존 quota를 예약한다. 따라서 이번 borrowed scanner의 heap allocation 실패/합산 quota 사례는 구조상 N/A이며 **FE11/12 전체 완료가 아니다**. 고정 크기 scanner·진단·128-byte 이름은 stack에 두고 크기를 검사한다. lexer마다 새 Quota를 만들지 않는다.
+
+- `Span { start: usize, end: usize }`, `Diagnostic { code: Code, module: Module, span: Span }`는 작은 Copy 관측값이다. 첫 Code는 Syntax/Unsupported/Name/Limit/Cancelled/Timeout이고 Module은 Lex/Name이다. 후속 parser/value 진단은 해당 구현과 함께 추가한다. effect/outcome/session 상태는 없다.
+- `CallControl::new(&Cancellation, &dyn Clock, Option<u64>)`는 호출별 제어를 빌린다. deadline은 해당 clock epoch의 nanoseconds이며 `now >= deadline`은 Timeout이다. 동시 관측 시 Cancelled가 우선한다. clock은 비차단·무할당 구현을 공급해야 한다. 제어를 장기 산출물에 보관하지 않는다.
+- `Lexer::new(&[u8], &CallControl) -> Result<Lexer, Diagnostic>`는 원문 한도·전체 UTF-8를 검사한다. `next_token(&mut self) -> Result<Token, Diagnostic>`, `Token { kind: TokenKind, span: Span }`. 성공 EOF는 반복 호출에도 `[len,len)`이다. 오류 뒤 scanner는 같은 진단을 반환하는 terminal 상태다. 다른 호출의 새 scanner는 독립이다.
+- `TokenKind`: Keyword(Keyword), Identifier, QuotedIdentifier, Digits, Text, Binary, Plus, Minus, Equal, NotEqual, Less, LessEqual, Greater, GreaterEqual, LeftParen, RightParen, Comma, Dot, Star, Semicolon, Marker, Eof. Keyword variant는 현행 EBNF의 CREATE/TABLE/PRIMARY/KEY/UNIQUE/STORAGE/DISK/BIGINT/BOOLEAN/VARCHAR/VARBINARY/INDEX/ON/DROP/INSERT/INTO/VALUES/UPDATE/SET/DELETE/FROM/SELECT/AS/WHERE/ORDER/BY/ASC/DESC/NULLS/FIRST/LAST/LIMIT/NOT/AND/OR/IS/NULL/TRUE/FALSE/BEGIN/COMMIT/ROLLBACK/AUTOCOMMIT/OFF다. PUBLIC·DEFAULT·RETURNING·PREPARE 등은 일반 Identifier로 두며 parser 위치에서 의미를 판정한다.
+- `normalize_name(source: &[u8], token: Token, control: &CallControl) -> Result<Name, Diagnostic>`는 token 범위·경계·kind를 다시 검산한다. `Name`은 고정 `[u8;128]`/길이·원 span·quoted 여부를 소유하며 `as_bytes()`, `span()`, `is_quoted()`만 읽기로 제공한다. heap clone·catalog 접근·PUBLIC prefix 판정은 없다.
+
+### byte 규칙과 오류 우선순위
+
+whitespace는 SP/HT/LF/VT/FF/CR의 여섯 ASCII byte다. line comment는 CR 또는 LF에서 끝나며 CRLF는 두 whitespace로 소비한다. 표시 line/column은 후속 splitter/CLI 범위다. block comment는 첫 `*/`에서 닫히며 중첩하지 않는다. quote는 두 같은 quote로 escape하고 backslash는 특별 처리하지 않는다. contiguous `X'`/`x'`는 Binary token이며 hex 유효성·값 decoding은 후속 scalar 소유다. text/comment 안의 NUL은 lexically 보존한다.
+
+정수 부호는 별도 token이다. decimal/exponent는 이번 scanner가 값으로 변환하지 않고 Digits/Dot/Identifier/부호 token으로 보존하며, scalar 위치의 Unsupported 판정은 parser에 남긴다. `!=`는 Lex/Unsupported와 두 byte span으로 거절한다. 나머지 미등록 punctuation·unquoted non-ASCII는 Lex/Syntax와 해당 첫 Unicode scalar span이다. 알려진 후속 단어를 추가 reserved word로 만들지 않는다.
+
+진입 오류 순서는 호출 취소/deadline → 원문 1 MiB 한도 → 전체 UTF-8 → 좌측부터 lexical 검사다. 원문 초과는 `[1MiB,len)`이며 UTF-8는 `Utf8Error::valid_up_to/error_len`에 대응하는 최초 invalid sequence, EOF에서 잘린 sequence는 남은 byte 범위를 가리킨다. 미종료 quote/comment는 여는 delimiter부터 EOF까지다. token 65,536개를 허용하고 다음 nontrivia token 시작에서 Limit; EOF·comment·whitespace는 세지 않는다. 실패 token은 반환하지 않는다. name 정규화는 Name 모듈에서 빈/128bytes 초과·잘못된 형태·C0(U+0000..001F)/DEL(U+007F)/C1(U+0080..009F)을 Name 오류로 반환하며 span은 전체 원 name token이다. DEL 거절은 같은 control 정책의 명시적 구체화다.
+
+제어 진단은 검사 중인 원문 offset `p`의 `[p,p)`다. scanner 진입은0, UTF-8 검사·lexical loop는 실제 원문 진행 위치, name 진입은 `min(token.start,source.len)`이며 decode 중에는 현재 raw 위치다. token 초과의 span도 다음 nontrivia 시작의 `[start,start)`로 고정한다. name은 caller token을 인증된 값으로 믿지 않는다. 취소/deadline을 먼저 검사한 뒤 역전/범위 초과·잘못된 UTF-8 경계/내용·kind/lexical 형태 불일치를 Name으로 거절한다. 오류 span은 `s=min(start,source.len)`, `e=max(s,min(end,source.len))`다. 이 규칙은 정상 token에서 전체 원 token span과 같다. 미인용 reserved keyword를 Identifier로 위조해도 Name으로 거절한다. name 밖 source의 유효성은 scanner 책임이다. 정규 이름의 identity는 `as_bytes()`이며 span·quoted metadata가 identity를 바꾸지 않는다.
+
+입력 검사·긴 comment/quote/digits/name·keyword 검산은 최대256 source bytes 처리마다 제어를 검사한다(UTF-8 한 scalar 완결을 위한 최대3bytes 추가 허용). 새 token 진입과 반환 전에도 검사한다. heap allocation이 없어 cleanup은 고정 값 폐기뿐이다. 크기 검산은 Lexer512bytes 이하, Name192bytes 이하, Diagnostic64bytes 이하를 요구한다. 성공 결과·EOF라도 반환 전 제어 실패를 성공으로 숨기지 않는다.
+
+비기본 `test-support` feature에만 `CallControl::with_observer(&dyn Fn(Module,Span))`를 제공한다. caller가 빌려 준 observer를 실제 checkpoint에서 취소/deadline 검사 직전에 호출하며 heap allocation이 없다. 기본 제품 build에는 이 field/호출이 없다. 시험은 clock 호출 횟수 대신 실제 진행 offset에서 취소/시간을 바꿔 긴 loop 내부 도달을 검증한다. observer는 정답 계산이나 제품 성공 판정이 아니며 시험 동작을 수행하는 도구다.
+
+### 첫 선택 검증과 잔여
+
+FE01/02의 token·span·정규 이름 literal, FE04의 source/token 경계±1, FE11의 진입/중간 cancel/deadline·실패 뒤 새 호출, FE13의 token/span/name/error/누락 EOF 변조 거절, FE15의 malformed corpus와 고정64seed×128operation 생성 입력을 작성한다. property 최소 profile과 30분 fuzz 확대 profile은 별도 선택하며 실행 증거를 혼합하지 않는다. 실제 fixture/case와 hash는 제품 구현 전에 보존한다. production 의미와 독립인 literal은 `crates/testing/reference`에, 실제 scanner 소비 시험은 `crates/sql/tests`에 둔다. reference의 normal dependency는 SQL/foundation을 추가하지 않는다.
+
+splitter·단일 API 문장 수·AST/depth/marker 번호·scalar 검산·owned 자원·FE14 모델·엔진 통합은 후속 단위다. 첫 scanner가 여러 token/문장을 읽는 것은 단일 SQL API 성공을 뜻하지 않는다. 대안인 전체 원문/token 복사는 아직 parser 소비자가 없어 불필요한 할당과 예약을 만들고, 외부 parser framework는 현재 요구에 비해 의존성이 크므로 채택하지 않는다. 후속 parser·splitter에서 범위/진단/자원 계약을 바꾸면 독립 D2로 재검토한다.

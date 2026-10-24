@@ -1,0 +1,252 @@
+{
+  "schema": 1,
+  "contract": "D4-FE-LEX-001",
+  "owner": "/root/frontend_oracle",
+  "status": "FROZEN_INPUTS_NOT_RUN",
+  "production_dependency": [],
+  "fixture": {
+    "path": "crates/testing/reference/src/frontend/literals.rs",
+    "sha256": "c886c3f285819b94e62cc3e152be293514b9912f87d8a289d2da412a1f5daaf8",
+    "semantics": "Hand-authored literal kinds, byte spans, name bytes and errors; only repetition/offset translation and input spelling construction; no production semantic calls."
+  },
+  "control": {
+    "path": "tests/fixtures/dev4-lexer/control.json",
+    "sha256": "e2ef9f3c10263762d080a172941f43d45729a6ebd74b9bd93b2986c7be272d4e",
+    "owner": "/root",
+    "test_target": "frontend_control"
+  },
+  "tests": [
+    {
+      "target": "lexer_contracts",
+      "function": "literal_lexer_vectors",
+      "families": [
+        "FE01",
+        "FE15"
+      ],
+      "constructor": "lexer_literals",
+      "case_count": 289,
+      "recipe": {
+        "keywords": {
+          "literal_pairs": 44,
+          "spellings": [
+            "upper",
+            "lower",
+            "alternating ASCII case",
+            "keyword plus underscore identifier"
+          ],
+          "count": 176
+        },
+        "plain_identifier_literals": 12,
+        "single_token_literals": 27,
+        "trivia_and_multiple_token_literals": 16,
+        "malformed_literals": 29,
+        "utf8_checkpoint_literals": {
+          "widths": [
+            2,
+            3,
+            4
+          ],
+          "starts": [
+            255,
+            256,
+            257
+          ],
+          "forms": [
+            "valid quoted scalar",
+            "truncated sequence",
+            "invalid next ASCII byte"
+          ],
+          "count": 27
+        },
+        "valid_token_before_lexical_error": 2
+      },
+      "expected": "Every literal token kind and original byte span, exact terminal diagnostic or EOF, complete=true. Repeated EOF and terminal error are stable. Case IDs and input bytes are enumerated by the frozen constructor."
+    },
+    {
+      "target": "lexer_contracts",
+      "function": "source_and_token_limits",
+      "families": [
+        "FE04"
+      ],
+      "constructor": "limit_literals",
+      "case_count": 10,
+      "recipe": {
+        "source_lengths": [
+          1048575,
+          1048576,
+          1048577
+        ],
+        "source_kinds": [
+          "ASCII spaces",
+          "line comment beginning --"
+        ],
+        "token_counts": [
+          65535,
+          65536,
+          65537
+        ],
+        "token_source": "? followed by ASCII space, repeated count times",
+        "priority": "1048577 bytes with invalid byte at zero => Limit before UTF8"
+      },
+      "expected": "Source overflow Limit Lex [1048576,len). Token overflow after 65536 returned Marker tokens => Limit Lex [131072,131072); EOF and trivia excluded from count."
+    },
+    {
+      "target": "name_contracts",
+      "function": "literal_name_vectors",
+      "families": [
+        "FE02"
+      ],
+      "constructor": "name_literals",
+      "case_count": 110,
+      "recipe": {
+        "identity_and_syntax_literals": 18,
+        "ascii_and_utf8_byte_boundaries": 9,
+        "doubled_quote_decoded_boundaries": 3,
+        "controls": {
+          "ranges_inclusive": [
+            [
+              0,
+              31
+            ],
+            [
+              127,
+              159
+            ]
+          ],
+          "count": 65
+        },
+        "forged_or_invalid_token_literals": 14,
+        "nonzero_source_offset": 1
+      },
+      "expected": "Exact normalized bytes, source span and quoted flag; Name/Name otherwise with [min(start,len),max(min(start,len),min(end,len))). PUBLIC bytes only; namespace semantic interpretation remains parser work."
+    },
+    {
+      "target": "lexer_contracts",
+      "function": "generated_literal_sequences",
+      "families": [
+        "FE01",
+        "FE15"
+      ],
+      "constructor": "generated_literals(seed,128)",
+      "case_count": 64,
+      "seeds": {
+        "inclusive_start": 0,
+        "inclusive_end": 63
+      },
+      "operations_per_seed": 128,
+      "source_byte_upper_bound": 1152,
+      "token_upper_bound_including_eof": 129,
+      "recipe": {
+        "generator": "LCG wrapping u64; state=seed+1; state=state*6364136223846793005+1442695040888963407; fragment_index=(state>>32)%16",
+        "fragments": "16 hand-authored raw fragments with independent optional token kind; one separator ASCII space appended after each",
+        "expectation": "Translate fixed fragment start/end by current concatenated byte length; append one EOF. Never tokenize generated source for expected results."
+      }
+    },
+    {
+      "target": "frontend_oracle",
+      "function": "known_bad_lexical_observations_are_rejected",
+      "families": [
+        "FE13"
+      ],
+      "mutation_count": 17,
+      "controls": "Exact good and bad literal observations are accepted first. Mutants alter only the observed response.",
+      "mutation_recipe": [
+        "token kind",
+        "token start + 1",
+        "token end - 1",
+        "missing non-EOF token",
+        "duplicate non-EOF token",
+        "reordered first two tokens",
+        "missing EOF",
+        "duplicate EOF",
+        "wrong EOF position",
+        "incomplete observation",
+        "diagnostic on success",
+        "wrong error code",
+        "wrong error module",
+        "wrong error start",
+        "wrong error end",
+        "token after EOF",
+        "missing diagnostic on failure"
+      ]
+    },
+    {
+      "target": "frontend_oracle",
+      "function": "known_bad_name_observations_are_rejected",
+      "families": [
+        "FE13"
+      ],
+      "mutation_count": 13,
+      "controls": "Exact successful and failing name observations are accepted first.",
+      "mutation_recipe": [
+        "unquoted lower-case result",
+        "duplicated byte",
+        "missing byte",
+        "wrong quoted metadata",
+        "wrong name start",
+        "wrong name end",
+        "error on successful name",
+        "unrequested Unicode normalization",
+        "wrong error code",
+        "wrong error module",
+        "wrong error start",
+        "wrong error end",
+        "success on failed name"
+      ]
+    }
+  ],
+  "unique_literal_and_generated_input_cases": 473,
+  "known_bad_observation_mutations": 30,
+  "execution_commands_after_freeze": [
+    "cargo test -p xadb-sql --test lexer_contracts literal_lexer_vectors -- --exact",
+    "cargo test -p xadb-sql --test lexer_contracts source_and_token_limits -- --exact",
+    "cargo test -p xadb-sql --test lexer_contracts generated_literal_sequences -- --exact",
+    "cargo test -p xadb-sql --test name_contracts literal_name_vectors -- --exact",
+    "cargo test -p xadb-sql --test frontend_oracle known_bad_lexical_observations_are_rejected -- --exact",
+    "cargo test -p xadb-sql --test frontend_oracle known_bad_name_observations_are_rejected -- --exact"
+  ],
+  "resource_plan": {
+    "production_heap_allocations": 0,
+    "allocation_failure": "N/A only for current borrowed scanner/fixed name",
+    "shared_quota": "FE12 NOT_RUN, mandatory for later owned parser",
+    "production_bounds": {
+      "source_bytes": 1048576,
+      "tokens": 65536,
+      "name_bytes": 128,
+      "lexer_stack_max_bytes": 512,
+      "name_stack_max_bytes": 192,
+      "diagnostic_stack_max_bytes": 64
+    },
+    "test_allocation": "Fixture and observation Vec allocations belong to test/reference runner, not the production scanner."
+  },
+  "extended_profiles": {
+    "status": "NOT_RUN",
+    "generated": {
+      "seed_range_inclusive": [
+        0,
+        255
+      ],
+      "operations_per_seed": 1024
+    },
+    "fuzz": {
+      "target": "lexer malformed bytes",
+      "minutes": 30,
+      "max_source_bytes": 1048577,
+      "max_returned_tokens": 65536,
+      "oracle": "No panic or hang; bounded diagnostics/spans; valid literal corpus preserved. Not a full SQL semantic oracle."
+    }
+  },
+  "out_of_scope": [
+    "streaming splitter",
+    "single-statement API",
+    "AST/depth/parameter numbering",
+    "scalar numeric or binary decoding",
+    "PUBLIC prefix semantics",
+    "owned-parser allocation/quota",
+    "FE14 lifecycle model",
+    "engine integration",
+    "Q1",
+    "durability"
+  ],
+  "execution_state": "NOT_RUN; fixture construction and formatting are not product test evidence"
+}

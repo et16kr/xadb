@@ -11,7 +11,7 @@
 <a id="entry"></a>
 ## 1. 착수와 완료를 구분한다
 
-DEV4의 기존 task는 XADB-011, gate는 Q1이며 실제 엔진 통합·인수는 DEV3에 의존한다. [D4-PREP-001](../contracts/dev4-independent-frontend.md#scope)의 독립 lexer/parser·값 처리와 검증 도구는 해당 leaf 입력 동결 뒤 먼저 개발할 수 있다. [병행 준비 계획](dev4-preparation-plan.md)은 허용 ID·공통 자원 부분·FE01–16과 DEV3 수신을 구분한다. DEV2 P0/K0 volatile 실행이나 이관 사실, DEV3 설계 검토를 실제 엔진 공급 증거로 사용하지 않는다. 현재 SQL crate·CLI·실행 harness는 없고 run entrypoint/evidence는 null/빈 목록을 유지한다. 이번 계획 확정만으로 개발·시험을 시작하지 않는다.
+DEV4의 기존 task는 XADB-011, gate는 Q1이며 실제 엔진 통합·인수는 DEV3에 의존한다. [D4-PREP-001](../contracts/dev4-independent-frontend.md#scope)의 독립 lexer/parser·값 처리와 검증 도구는 해당 leaf 입력 동결 뒤 먼저 개발할 수 있다. [병행 준비 계획](dev4-preparation-plan.md)은 허용 ID·공통 자원 부분·FE01–16과 DEV3 수신을 구분한다. DEV2 P0/K0 volatile 실행이나 이관 사실, DEV3 설계 검토를 실제 엔진 공급 증거로 사용하지 않는다. 현재 [독립 lexer/name crate](../implementation/dev4-implementation.md)를 제한 구현했다. 실행 SQL·CLI·Q1 harness는 없고 Q1 run entrypoint/evidence는 null/빈 목록을 유지한다. 이번 계획 확정만으로 개발·시험을 시작하지 않는다.
 
 엔진 소비 구현의 선행 인수에는 DEV3-DESIGN-003의 실제 disk row/catalog/index·bounded scan/point/range, statement token·영속 undo mark와 read-your-writes, 부분 NULL·문장 최종 상태 unique·key lock/overflow, WAL-before-page·commit WAL sync·UNKNOWN/RecoveryRequired fencing·reopen, fuzzy checkpoint/일관 backup/restore·retention과 해당 최소 완료 증거가 필요하다. 새 DEV3 결정의 별도 독립 검토·채택은 확인했으며 실제 공급 증거를 확인한 뒤 해당 구현을 시작한다. 기존 stage DAG와 XADB-011의 통합 의존을 유지한다. COMM/PART/NG·고급 SQL을 추가 선행으로 만들지 않는다.
 

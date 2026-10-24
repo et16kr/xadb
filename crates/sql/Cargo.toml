@@ -1,0 +1,18 @@
+[package]
+name = "xadb-sql"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+test-support = []
+
+[dependencies]
+xadb-foundation.workspace = true
+
+[dev-dependencies]
+xadbtest-reference = { path = "../testing/reference" }
+
+[lints]
+workspace = true

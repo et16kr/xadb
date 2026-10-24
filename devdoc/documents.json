@@ -1917,6 +1917,21 @@
       "path": "evidence/dev4-preparation-research-20261024.md",
       "role": "evidence",
       "title": "DEV4 독립 앞단 — Oracle·로컬 DBMS 조사와 계약 검토"
+    },
+    "dev4-frontend-20261024.md": {
+      "path": "evidence/dev4-frontend-20261024.md",
+      "role": "evidence",
+      "title": "DEV4 독립 앞단 개발·선택 검증"
+    },
+    "dev4-implementation.md": {
+      "path": "implementation/dev4-implementation.md",
+      "role": "implementation",
+      "title": "DEV4 독립 앞단 구현"
+    },
+    "dev4-frontend-20261024.json": {
+      "path": "evidence/dev4-frontend-20261024.json",
+      "role": "evidence",
+      "title": "DEV4 독립 앞단 source별 실행 색인"
     }
   }
 }

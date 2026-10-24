@@ -92,7 +92,7 @@
 | xadbtest-engine-worker | crates/testing/engine-worker | IMPLEMENTED | DEV2 | xadb-engine, xadb-foundation, xadb-platform, xadbtest-protocol |
 | xadb-transport | crates/transport | IMPLEMENTED | COMM | xadb-foundation |
 | xadbtest-transport-worker | crates/testing/transport-worker | IMPLEMENTED | COMM | xadb-foundation, xadb-platform, xadb-transport |
-| xadb-sql | crates/sql | PLANNED | DEV4 | xadb-foundation, xadb-engine |
+| xadb-sql | crates/sql | IMPLEMENTED (독립 lexer/name만) | DEV4 | xadb-foundation |
 | xadb-cli | crates/cli | PLANNED | DEV4 | xadb-foundation, xadb-sql, xadb-platform |
 | xadb-server | crates/server | PLANNED | DEV5 | xadb-foundation, xadb-engine, xadb-sql, xadb-transport, xadb-platform |
 | xadb-client | crates/client | PLANNED | DEV6 | xadb-foundation, xadb-transport |
@@ -419,3 +419,7 @@ raw literal/native oracle·compiler fixture 실제 경로를 JSON에 등록했�
 [Status 후보 선택](../contracts/dev3-task-05-buffer-flush.md#status-residency-pressure)은 기존 dirty frame의
 selector와 EmptyTransactions의 단계별 load/flush 관측을 추가한다. 실제 신규 경로만 관리 JSON의
 `dev3_status_residency_pressure`에 등록하며 새 package/dependency/source root는 없다.
+
+## DEV4 독립 lexer·이름 배치
+
+[첫 앞단 계약](../contracts/dev4-independent-frontend.md#lexer-leaf)의 실제 코드를 `crates/sql`에 등록했다. normal dependency는 foundation만, dev dependency는 독립 literal/판정기 reference만 소비한다. test-support의 borrowed progress observer는 기본 제품 build에서 제외한다. 기존 crates/tests source fingerprint·clean export 범위를 사용한다. 실제 파일 목록은 관리 JSON의 `dev4_frontend`, [구현 범위](../implementation/dev4-implementation.md)·[source별 증거](../evidence/dev4-frontend-20261024.md)를 따른다. binder/executor/engine·Q1은 미구현/미실행이다.

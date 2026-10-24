@@ -301,13 +301,16 @@
       "name": "xadb-sql",
       "path": "crates/sql",
       "stage_ref": "DEV4",
-      "status": "PLANNED",
-      "placement": "RESERVED_DIRECTION",
+      "status": "IMPLEMENTED",
+      "placement": "SELECTED_DEV4_FRONTEND",
       "normal_workspace_dependencies": [
-        "xadb-foundation",
-        "xadb-engine"
+        "xadb-foundation"
       ],
-      "role": "parser/binder/plan/optimizer/executor modules"
+      "role": "Independent borrowed lexer/name only; binder/plan/executor and engine integration remain unimplemented",
+      "test_workspace_dependencies": [
+        "xadbtest-reference"
+      ],
+      "design_ref": "dev4-independent-frontend.md"
     },
     {
       "name": "xadb-cli",
@@ -5135,5 +5138,26 @@
     ],
     "source_roots_changed": false,
     "full_stage_acceptance": false
+  },
+  "dev4_frontend": {
+    "contract_ref": "dev4-independent-frontend.md",
+    "implementation_ref": "dev4-implementation.md",
+    "evidence_ref": "dev4-frontend-20261024.md",
+    "production_paths": [
+      "crates/sql/Cargo.toml",
+      "crates/sql/src/lib.rs",
+      "crates/sql/src/frontend"
+    ],
+    "oracle_paths": [
+      "crates/testing/reference/src/frontend.rs",
+      "crates/testing/reference/src/frontend/literals.rs"
+    ],
+    "test_paths": [
+      "crates/sql/tests",
+      "tests/fixtures/dev4-lexer"
+    ],
+    "source_roots_changed": false,
+    "gate": "Q1 NOT_RUN",
+    "scope": "D4-FE-LEX-001 borrowed lexer/name; no engine or storage effects"
   }
 }
