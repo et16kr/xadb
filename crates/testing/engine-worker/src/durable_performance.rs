@@ -300,6 +300,7 @@ fn execute(
     out: &mut wire::Output,
     phase_values: &mut [Vec<i64>],
     stage_now: &mut wire::Stage,
+    window: &mut crate::measurement_window::Window,
 ) -> Result<()> {
     let counters = Counters::new();
     let options = EngineOptions {
@@ -368,6 +369,7 @@ fn execute(
     out.metrics_before = Some(metrics(&db, &counters)?);
     if out.error.is_none() {
         *stage_now = wire::Stage::Measurement;
+        window.begin().map_err(|error| Failure::Harness(error.0))?;
         let cpu_before = thread_cpu_ns();
         out.error = iterations(
             &db,
@@ -382,6 +384,10 @@ fn execute(
         out.cpu_ns = cpu_before
             .zip(thread_cpu_ns())
             .and_then(|(before, after)| after.checked_sub(before));
+        window.end(out.measurement.elapsed_ns).map_err(|error| {
+            eprintln!("measurement window: {error}");
+            Failure::Harness(error.0)
+        })?;
     }
     out.metrics_after = Some(metrics(&db, &counters)?);
     if out.error.is_some() {
@@ -514,21 +520,36 @@ pub fn run() -> std::result::Result<(), Box<dyn std::error::Error>> {
     for _ in 0..wire::PHASE_COUNT {
         values.push(reserve(wire::ROWS as usize)?);
     }
+    let mut window = crate::measurement_window::Window::prepare("durable")?;
+    out.path = window.path(wire::PATH);
     let mut stage_now = wire::Stage::Setup;
-    if let Err(failure) = execute(&mut out, &mut values, &mut stage_now)
+    if let Err(failure) = execute(&mut out, &mut values, &mut stage_now, &mut window)
         && out.error.is_none()
     {
         out.error = Some(error(stage_now, None, failure));
     }
     out.process_peak_rss_bytes = process_peak_rss_bytes();
-    let response = wire::Response {
+    let mut response = wire::Response {
         version: wire::VERSION,
         run: request.run,
         request: request.request,
         actor: request.actor,
         output: out,
     };
-    response.validate()?;
+    if response.output.path == wire::PATH {
+        response.validate()?;
+    } else {
+        if response.output.path != window.path(wire::PATH) {
+            return Err(ProtocolError("unexpected diagnostic output path").into());
+        }
+        // Reuse all ordinary output bounds on a temporary path, then restore
+        // the diagnostic identity before serialization. Ordinary readers must
+        // still reject these raw diagnostic bytes; the protocol is unchanged.
+        let diagnostic_path = std::mem::replace(&mut response.output.path, wire::PATH.into());
+        let validation = response.validate();
+        response.output.path = diagnostic_path;
+        validation?;
+    }
     struct Bounded<'a>(&'a mut Vec<u8>);
     impl Write for Bounded<'_> {
         fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {

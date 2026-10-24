@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "classification": "D2_DIAGNOSTIC_TOOL_IMPLEMENTATION",
+  "owner": "/root",
+  "plan_commit": "82c14ba",
+  "plan_ref": "dev2-pf04-resolution-plan.md",
+  "status": "IMPLEMENTED_SELECTED_VALIDATION_COMPLETE_SCOPED_REVIEW_ACCEPTED",
+  "performance_acceptance": "NOT_APPLICABLE",
+  "pf04": "FOUR_HISTORICAL_CAMPAIGNS_FAIL_PRESERVED",
+  "dev2": "INCOMPLETE",
+  "actual_pmu": "UNAVAILABLE_PERMISSION_RESTRICTED",
+  "source_scope": "Changed-code scoped results at distinct recorded sources; no full latest-source qualification",
+  "sources": {
+    "r4": "6d25f588fc03ef1229e47d739afd74da686c84ad346ed21dd8df0c122aed02fe",
+    "r5": "e1dd0e126fbf6800faedb6834c5cd387d2c96b6adb7b7064428164495d625f5b",
+    "r6": "c30cf8a7de04e52e7c4fbe5f83b63bbd2426b5a4754a70836fcb1d94b23df2a1",
+    "r2": "cf5677a957a421236ca386047746aacf85e08d5a06d5a6fecf029328348aca7e",
+    "r3": "124920f2f52594ce3fd81a5c9e581bc27a73b80b57d0250297be09254514b094",
+    "r1": "f098cbd702ac0405ded166f566bd3f217290345e1697737e7d6c3b36d3f05c3b",
+    "r3_native": "00a198ef6110cf12ab34a21b678d48f258d16fd2baf1b025e947723154bf9008"
+  },
+  "unique_test_functions": {
+    "python": 16,
+    "platform": 2,
+    "worker_gate": 4,
+    "retained_k0_adapter": 2
+  },
+  "native_cases": {
+    "unique": 8,
+    "initial_pass": 6,
+    "initial_fail_preserved": 2,
+    "changed_failed_cases_rechecked_pass": 2
+  },
+  "other_original_failures": [
+    {
+      "path": "r3/real-perf/result.json",
+      "cause": "Installed restricted message not recognized as unavailable; r4 fixed fallback with literal case, actual PMU remains unavailable"
+    }
+  ],
+  "unchanged_product_tests_reexecuted": false,
+  "lower_regression_or_workspace_wrappers_executed": false,
+  "document_verifier_executed": false,
+  "host_settings_changed": false,
+  "new_external_dependencies": false,
+  "nix_feature_added": "resource",
+  "artifacts": {
+    "artifact-manifest.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-window-20261025/artifact-manifest.json",
+      "bytes": 64835,
+      "sha256": "7aca941147e65dbbd58b52fc46a4af47fd9e91efd97c9bafeae1b65929ecb3da"
+    },
+    "run-inventory.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-window-20261025/run-inventory.json",
+      "bytes": 12914,
+      "sha256": "b3e26b8e68fe7e8232c5986f6ba0e54aa85b2ae6bbe035273c07ee84252ac362"
+    },
+    "final-source.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-window-20261025/final-source.json",
+      "bytes": 1682,
+      "sha256": "c5561542056b1ef70994b682d531fba61ac3738fe494bcd2611288e54936dd8e"
+    },
+    "final-source.tar.gz": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-window-20261025/final-source.tar.gz",
+      "bytes": 5301809,
+      "sha256": "f130d88bbe3739d2ff34db36c009172f9064aa4c2b51631019840c87bb3f3621"
+    },
+    "host-observation.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-window-20261025/host-observation.json",
+      "bytes": 199,
+      "sha256": "cf01f5d76fb0fc67353e0df865dea838e0c82b80122d4e48ec12ebc8f08718ea"
+    }
+  },
+  "independent_review": {
+    "reviewer": "/root/pf04_evidence_review",
+    "status": "PASS_SCOPED_D1_D2_REVIEW",
+    "blocking_findings": 0,
+    "unresolved_findings": 0,
+    "scope": "P1 implementation and selected validation only; actual PMU unavailable; PF04 and DEV2 incomplete",
+    "receipts": {
+      "window-final-review.json": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-window-20261025/window-final-review.json",
+        "sha256": "99e0c912d0729354a642127c371fcd90ac6d44d280c6374a12e8be2b314856e6"
+      },
+      "window-retained-integrity.json": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-window-20261025/window-retained-integrity.json",
+        "sha256": "b779fe828cf979c733bf6602cc34fffd6a006916d39bdec13db7331a37feefc5"
+      }
+    }
+  }
+}

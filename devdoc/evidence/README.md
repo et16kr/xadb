@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV2 PF04 P1 측정 구간 관측 도구](dev2-pf04-window-20261025.md) · [source별 선택 검증](dev2-pf04-window-20261025.json) — 실제 PMU UNAVAILABLE, PF04 FAIL 유지.
+
 - [DEV2 PF04 원인 분석과 해결 후보](dev2-pf04-analysis-20261025.md) · [재분석·source 기록](dev2-pf04-analysis-20261025.json): 기존 K0 80·영속60 실행 자료의 한정 재분석, 해결 후보 PROPOSED·신규 시험0·원 실패 보존.
 
 - [DEV3 복구 작업 중간 저장·자료 정리](dev3-recovery-paused-20261025.md) · [source별 상태 색인](dev3-recovery-paused-20261025.json): 사용자 요청 중지, WIP·FAIL/HOLD·NOT_RUN 보존.

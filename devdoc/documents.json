@@ -3,6 +3,16 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev2-pf04-window-20261025.json": {
+      "path": "evidence/dev2-pf04-window-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 P1 source별 선택 검증 기록"
+    },
+    "dev2-pf04-window-20261025.md": {
+      "path": "evidence/dev2-pf04-window-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 P1 측정 구간 관측 도구"
+    },
     "dev2-pf04-resolution-plan.md": {
       "path": "plans/dev2-pf04-resolution-plan.md",
       "role": "plans",

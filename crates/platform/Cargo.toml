@@ -12,7 +12,7 @@ test-support = ["xadb-foundation/test-support"]
 xadb-foundation.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
-nix = { workspace = true, features = ["dir", "socket", "net", "poll", "time"] }
+nix = { workspace = true, features = ["dir", "socket", "net", "poll", "time", "resource"] }
 
 [dev-dependencies]
 tempfile.workspace = true

@@ -163,6 +163,7 @@ pub fn run(input: &wire::Input) -> Result<wire::Output, ProtocolError> {
     if !input.validate() {
         return Err(ProtocolError("invalid performance input"));
     }
+    let mut window = crate::measurement_window::Window::prepare("k0")?;
     let setup_start = Instant::now();
     let database = DatabaseId::new([2; 16]).map_err(|error| ProtocolError(error.code.id()))?;
     let mut store = VolatileStore::new_with_diagnostics(
@@ -230,6 +231,11 @@ pub fn run(input: &wire::Input) -> Result<wire::Output, ProtocolError> {
     }
     let metrics_before = from_metrics(fixture.store.metrics());
     let diagnostics_before = from_diagnostics(fixture.store.diagnostics());
+    if error.is_none()
+        && let Err(failure) = window.begin()
+    {
+        retain_error(&mut error, failure.to_string());
+    }
     let (measurement, cpu_ns) = if error.is_none() {
         let cpu_before = thread_cpu_ns();
         let start = Instant::now();
@@ -237,6 +243,12 @@ pub fn run(input: &wire::Input) -> Result<wire::Output, ProtocolError> {
         let elapsed_ns = elapsed(start)?;
         let cpu_after = thread_cpu_ns();
         error = failure;
+        if let Err(failure) = window.end(elapsed_ns) {
+            // Keep the first product failure and partial observations. The
+            // separate transport failure also remains in bounded worker stderr.
+            eprintln!("measurement window: {failure}");
+            retain_error(&mut error, failure.to_string());
+        }
         (
             wire::Phase {
                 elapsed_ns,
@@ -305,7 +317,7 @@ pub fn run(input: &wire::Input) -> Result<wire::Output, ProtocolError> {
     Ok(wire::Output {
         version: wire::VERSION,
         input: input.clone(),
-        path: wire::PATH.into(),
+        path: window.path(wire::PATH),
         build: wire::BuildIdentity {
             source_sha256: env!("XADBTEST_SOURCE_SHA256").into(),
             toolchain: env!("XADBTEST_TOOLCHAIN").into(),

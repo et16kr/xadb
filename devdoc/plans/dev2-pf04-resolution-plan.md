@@ -67,6 +67,6 @@ P2의 새로운 탐색은 이전 종료한3후보 예산에 추가하지 않는�
 
 - P0 계획: `/root/pf04_evidence_review`의 `PASS_PLAN_ONLY`를 채택했다. R1 권한 부재 대체 경로, R2 raw PMU·FIFO deadline, R3 시험 소유 구분을 반영했고 차단/미해결 지적은0개다. 검토 뒤 상태·receipt만 기록하고 계획 commit을 생성한다.
 - 검토 receipt: `/home/et16/xadb-dev2-evidence/pf04-analysis-20261025/plan-review.json`, SHA-256 `f0b15ad3063f9f02716c2d3f1d812bf9c8048c02e3d840b20affc50f9c3571c2`. 검토 본문 projection SHA-256 `903f30baec57dfb17855debd644e725887b5a9471b2ca32e42dfe64dc69d2124`는 상단 상태와 본 절을 제외한다. 계획 채택은 구현·시험 실행 증거가 아니다.
-- P1 제품/도구 구현·시험: NOT_RUN. 계획 commit 이후 착수한다.
+- P1 도구 구현·선택 검증: 계획 commit `82c14ba` 뒤 수행했다. [source별 실행 기록](../evidence/dev2-pf04-window-20261025.md)을 따르며 실제 PMU는 UNAVAILABLE, 최종 독립 검토는 해당 기록의 채택 상태를 따른다. P0 검토 projection은 계획 commit 시점의 본문에 해당한다.
 - P2–P4: 진입 전. 구체 대안·새 실행 profile은 별도 검토한다.
 - 원 PF04 네 실패와 DEV2/B2/D0 INCOMPLETE: 유지.

@@ -5906,5 +5906,25 @@
       "tests/fixtures/dev3-plan4-recovery-owner/provenance.md"
     ],
     "test_scope": "Original static2 FAIL; latest phase/oracle source NOT_RUN; effect admission HOLD."
+  },
+  "dev2_pf04_measurement_window": {
+    "implementation_ref": "dev2-implementation.md#dev2-pf04-window-20261025",
+    "plan_ref": "dev2-pf04-resolution-plan.md",
+    "evidence_ref": "dev2-pf04-window-20261025.json",
+    "platform": "crates/platform/src/performance.rs",
+    "private_worker_module": "crates/testing/engine-worker/src/measurement_window.rs",
+    "private_worker_tests": "crates/testing/engine-worker/src/measurement_window_tests.rs",
+    "retained_oracle_adapter": "crates/testing/engine-worker/tests/measurement_window_output.rs",
+    "runner": "scripts/dev2_measurement_window.py",
+    "native_selector": "scripts/check_dev2_window_native.py",
+    "runner_tests": "scripts/test_dev2_measurement_window.py",
+    "synthetic_fixtures": [
+      "scripts/fixtures/measurement_window_peer.py",
+      "scripts/fixtures/measurement_window_perf.py"
+    ],
+    "new_external_dependencies": false,
+    "existing_nix_feature_added": "resource",
+    "source_roots_changed": false,
+    "performance_acceptance": false
   }
 }

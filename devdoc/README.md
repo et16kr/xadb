@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-25 [DEV2 PF04 P1 관측 도구](evidence/dev2-pf04-window-20261025.md): 계획 선행 commit 뒤 측정 경계·bounded runner를 구현하고 변경 범위만 선택 검증했다. 원 실패·실제 PMU UNAVAILABLE·PF04/DEV2 미완료를 유지한다.
+
 2026-10-25 [DEV2 PF04 해결 단계와 커밋 계획](plans/dev2-pf04-resolution-plan.md): 사용자 요청에 따라 계획을 먼저 commit하고 P1 측정 구간 관측 도구부터 시작한다. 단계별 변경 검증·독립 검토·commit을 구분하며 원 실패와 DEV2 미완료를 유지한다.
 
 2026-10-25 [DEV2 PF04 원인 분석과 해결 후보](evidence/dev2-pf04-analysis-20261025.md): 보존 K0·영속 원자료를 재분석해 계측 비용과 실행 간 변동을 구분했다. 원인 관측·K0 소유권 개선·조건부 WAL 후보를 제안하며 제품 변경·새 시험0, PF04 FAIL·DEV2 미완료를 유지한다.

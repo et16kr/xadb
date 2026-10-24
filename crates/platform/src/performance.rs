@@ -59,6 +59,61 @@ pub fn process_peak_rss_bytes() -> Option<u64> {
     parse_peak(&bounded("/proc/self/status", 65536)?)
 }
 
+/// Linux calling-thread identity, distinct from the process ID on other threads.
+pub fn calling_thread_id() -> u32 {
+    nix::unistd::gettid().as_raw() as u32
+}
+
+/// Host monotonic nanoseconds for correlating diagnostic process boundaries.
+pub fn monotonic_ns() -> Option<u64> {
+    let time = clock_gettime(ClockId::CLOCK_MONOTONIC).ok()?;
+    cpu_nanos(time.tv_sec(), time.tv_nsec())
+}
+
+/// Calling-thread cumulative user/system CPU nanoseconds (microsecond precision),
+/// minor/major faults, voluntary/involuntary context switches, in that order.
+/// Unavailable or negative native values remain missing, never fabricated zeros.
+pub fn thread_usage() -> Option<[u64; 6]> {
+    use nix::sys::resource::{UsageWho, getrusage};
+    let usage = getrusage(UsageWho::RUSAGE_THREAD).ok()?;
+    let time = |value: nix::sys::time::TimeVal| {
+        cpu_nanos(value.tv_sec(), value.tv_usec().checked_mul(1000)?)
+    };
+    Some([
+        time(usage.user_time())?,
+        time(usage.system_time())?,
+        u64::try_from(usage.minor_page_faults()).ok()?,
+        u64::try_from(usage.major_page_faults()).ok()?,
+        u64::try_from(usage.voluntary_context_switches()).ok()?,
+        u64::try_from(usage.involuntary_context_switches()).ok()?,
+    ])
+}
+
+/// Open a nonblocking Unix observation stream without waiting for a full backlog.
+/// The caller owns readiness, deadlines, peer validation and the wire protocol.
+///
+/// # Errors
+/// Returns socket/address/connect errors, including a full listener backlog.
+pub fn observation_stream(
+    path: &std::path::Path,
+) -> std::io::Result<std::os::unix::net::UnixStream> {
+    use nix::{
+        errno::Errno,
+        sys::socket::{self, AddressFamily, SockFlag, SockType, UnixAddr},
+    };
+    use std::os::fd::AsRawFd;
+    let fd = socket::socket(
+        AddressFamily::Unix,
+        SockType::Stream,
+        SockFlag::SOCK_NONBLOCK | SockFlag::SOCK_CLOEXEC,
+        None,
+    )?;
+    match socket::connect(fd.as_raw_fd(), &UnixAddr::new(path)?) {
+        Ok(()) | Err(Errno::EINPROGRESS) => Ok(std::os::unix::net::UnixStream::from(fd)),
+        Err(error) => Err(error.into()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -123,5 +178,48 @@ mod tests {
             assert!(peak > 0);
         }
         assert!(bounded("/proc/self/status", 1).is_none());
+    }
+}
+
+#[cfg(test)]
+mod window_primitive_tests {
+    use super::*;
+
+    #[test]
+    fn calling_thread_usage_identity_and_monotonic_bracket() {
+        let id = calling_thread_id();
+        let link = std::fs::read_link("/proc/thread-self").unwrap();
+        assert_eq!(
+            link.file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .parse::<u32>()
+                .unwrap(),
+            id
+        );
+        let start = monotonic_ns().unwrap();
+        let before = thread_usage().unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(2));
+        let after = thread_usage().unwrap();
+        let end = monotonic_ns().unwrap();
+        assert!(end >= start + 2_000_000);
+        assert!(before.iter().zip(after).all(|(b, a)| *b <= a));
+        assert!(after[4] > before[4]);
+    }
+
+    #[test]
+    fn observation_socket_is_nonblocking_and_bad_endpoint_is_error() {
+        use std::io::Read;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("socket");
+        assert!(observation_stream(&path).is_err());
+        let listener = std::os::unix::net::UnixListener::bind(&path).unwrap();
+        let mut stream = observation_stream(&path).unwrap();
+        let (_peer, _) = listener.accept().unwrap();
+        assert_eq!(
+            stream.read(&mut [0]).unwrap_err().kind(),
+            std::io::ErrorKind::WouldBlock
+        );
     }
 }

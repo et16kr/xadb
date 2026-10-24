@@ -3,6 +3,7 @@
 pub mod durable;
 pub mod durable_performance;
 mod fault;
+mod measurement_window;
 pub mod performance;
 
 use std::{

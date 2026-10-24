@@ -664,3 +664,9 @@ ELF에는 symbol table·DWARF가 없어 줄 번호를 직접 조회하지 않았
 ## DEV2 PF04 원인 분석과 해결 후보
 
 **2026-10-25 · 기존 증거 재분석 / 해결 후보 PROPOSED / 제품 변경·새 시험0.** [분석 기록](../evidence/dev2-pf04-analysis-20261025.md)과 [source·자료 색인](../evidence/dev2-pf04-analysis-20261025.json)은 보존 K0 80개·영속60개 실행 자료의 시간 재계산과 독립 검토를 연결한다. K0의 계측 추가 비용과 실행별 p50/경과 시간의 두 대역, 영속 Off/Off tail 변동과 별도의 미해결 CPU 실패를 구분했다. 원인 관측 보완과 K0 소유권 비용 절감을 우선 후보로 제안하며, WAL 공간 준비/data sync는 추가 근거와 복구 설계가 필요한 후순위다. 원 실패 원인의 확정·수정 효과·현재 source의 검증으로 확대하지 않는다. 기존 한도·실패와 PF12/PF13의 한정 완료를 보존하며 PF04·DEV2/B2/D0는 미완료다.
+
+<a id="dev2-pf04-window-20261025"></a>
+
+## PF04 P1 측정 구간 관측 도구 — 2026-10-25
+
+[계획](../plans/dev2-pf04-resolution-plan.md)을 `82c14ba`로 먼저 커밋한 뒤 platform 관측 primitive·worker private gate·bounded runner를 구현했다. [선택 검증과 원 실패](../evidence/dev2-pf04-window-20261025.md)는 source별로 보존한다. 신규24개 시험 함수와8개 native 연결 사례를 변경 범위에 따라 검증했으며 최종 source 전수를 주장하지 않는다. 실제 PMU는 권한 제한으로 UNAVAILABLE이고 RUSAGE_ONLY 수집·도구 실패 정리만 해당 범위에서 확인했다. P2–P4·원 PF04 네 FAIL·DEV2 미완료는 유지한다. 최종 독립 검토는 증거 문서의 채택 상태를 따른다.
