@@ -707,3 +707,38 @@ read/light phase는 Owner34개의 carrier를 보수적으로 센다. 원 r2의 p
 [최종 manifest](../../crates/engine/tests/fixtures/dev3-resident-status/manifest.json)의 신규31·관련4·static2·
 compiler9(제어1 포함)·checker8·native history1과 S5 six/146victim/8200late를 구별한다.
 S5 확대는 작성·NOT_RUN이며 전체 DEV3/S5를 완료로 승격하지 않는다.
+
+<a id="status-residency-pressure"></a>
+## Status의 bounded residency 후보 — D2 수용 / 선택 검증 완료·최종 독립 D1 제한 수용
+
+2026-10-24 `e3d347a` 이후 raw slot 선택을 호출자가 수행하던 차단을 제거한다. 기존
+`EmptyTransactions::residency_step(owner,page,cursor)`는 exact resident 관측, clean/empty
+목적지의 원 latest load, 또는 `FlushRequired` 관측 중 하나를 반환한다. 반환 stamp는 pin·read·
+설치 권한이 아니며 실제 변경/flush/load는 기존 membership·bank·WAL 이력 검산을 계속 수행한다.
+새 pool/WAL owner, retained field, heap/File/page loan을 추가하지 않는다.
+
+cursor는 caller의 작은 순서 hint다. 기본1, 다른 pool에서 가져온 범위 밖 위치는 현재 payload
+개수로 normalize한다. allocator0 제외 N−1 slot을 한 번 순회하며 모든 방문 content/등록/DPT를
+검산한다. 정확 hit가 첫 clean/empty보다 우선하고, clean이 없으면 가장 작은 eligible recLSN의
+dirty를 선택한다. 동률은 cursor부터의 scan 순서다. 교체 generation MAX는 skip하지만 정확
+hit는 MAX에도 가능하다. late poison/불일치는 fence하며 WouldBlock이 섞이면 Busy가
+CounterExhausted보다 우선한다. hit/load 성공 뒤만 실제 선택 slot 다음으로 cursor를 이동한다.
+실패와 FlushRequired는 cursor·등록·페이지·DPT·bank·WAL을 변경하지 않는다.
+
+이 경로는 exclusive owner borrow로 새 pool 사용자를 배제한다. 기존 pin/DPT mutex guard는
+동기 메서드 밖으로 반환되지 않아 이 경계에 활성 경쟁 holder가 없다. 원 `Mutex::lock`을
+try-lock으로 바꿨다고 주장하지 않으며 content는 try_read다. 잊힌 pin/init/flush claim은 원
+accounting에서 Busy로 검출한다. 선택 시 I/O와 content guard 반환은 없다. hit는 frozen allocator
+membership와 pool metadata만 관측하므로 비상주 home를 읽지 않는다.
+
+FlushRequired 뒤 호출자는 원 DedicatedFlusher의 flush/continue를 완료한 뒤 다시 step한다.
+한 step 안에 disk flush 뒤 load 실패를 섞지 않는다. clean-first로 보존되는 알려진 dirty actor의
+명시 flush는 별도 service다. 이 선택만으로 오래된 모든 recLSN의 service 간격, FIFO/forward
+admission 차단, 일반 pressure progress를 보장하지 않는다. 전체 일반 pool/live undo 통합의
+선행 공급 하나이며 AI 실험 소비자1/3을 이 변경만으로2/3으로 승격하지 않는다.
+
+후보 선택 helper가 종료된 뒤 원 load phase로 들어가며, 두 phase의 동시 outer carrier를
+typed size로 가산한다. source-value는 memory65088/native wrapper65152·retained115408이며
+component65536/metadata196608/whole262144, operation114688/flush4MiB를 유지한다.
+실제 stack/RSS 측정은 아니다. memory/native 최초 static과 source별 신규11함수33scenario·새 PID 재진입 결과와
+원 oracle FAIL·S5 438 미실행은 [선택 증거](../evidence/dev3-status-pressure-20261024.md)에 구별한다.

@@ -1,0 +1,1914 @@
+{
+  "schema_version": 1,
+  "status": "ACCEPTED_LIMITED_D1",
+  "base_commit": "e3d347a",
+  "contract_ref": "dev3-task-05-buffer-flush.md#status-residency-pressure",
+  "first_runtime_functions": 4,
+  "first_runtime_scenarios": 11,
+  "changed_static_functions": 3,
+  "remaining": "S5 authored438 NOT_RUN; general buffer/live undo/full DEV3 unfinished",
+  "integration_units_completed": 1,
+  "efficiency_comparison": "NOT_RUN",
+  "source_values": {
+    "memory": 65088,
+    "native_trace_wrapper": 65152,
+    "retained": 115408,
+    "component_limit": 65536,
+    "stack_rss_measured": false
+  },
+  "receipts": [
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r0/build-receipt.json",
+      "source_sha256": "b91c1eafb730204b22975b531f645c3e2902b43dece0ffbba694ff0831ba46c8",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 101,
+      "elapsed_seconds": 6.976016053999956,
+      "time": "2026-10-24T04:34:20.414706+00:00"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r1/build-receipt.json",
+      "source_sha256": "2a630988730b262666c261e3b85c30f82f4538f1df9e9c5e4044602efac3b9f7",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 13.077086682999834,
+      "time": "2026-10-24T04:34:46.983038+00:00",
+      "binary_sha256": "42810223a20969c18f6bb8a7486737bde5597cd52ca4dab38ef4196ec70b5cdf"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r1/empty_pressure_resource_gate.json",
+      "source_sha256": "2a630988730b262666c261e3b85c30f82f4538f1df9e9c5e4044602efac3b9f7",
+      "binary_sha256": "42810223a20969c18f6bb8a7486737bde5597cd52ca4dab38ef4196ec70b5cdf",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r1/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_resource_gate",
+        "--nocapture"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.0014052929991521523,
+      "stdout_sha256": "adc885d2c04fd4be1e21da1f297af544a265dcfedcf4a65bf97045e780480eb1",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r10/build-receipt.json",
+      "source_sha256": "eb65da4dab7c3f80872b77b3fc31707bfbc7078039b878b408af661668f4d7cb",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 13.59593638700062,
+      "time": "2026-10-24T04:57:58.732488+00:00",
+      "binary_sha256": "df8726fa9fe21b8e1a53e3c10f03c36236860a8f5735fd9fbd0ac256bc27876e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r10/clippy.json",
+      "source_sha256": "eb65da4dab7c3f80872b77b3fc31707bfbc7078039b878b408af661668f4d7cb",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 9.959050407998802,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "effdf3b28f3f81e15b79e762418e733253e639513cf79279fab46354148b38ce"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r10/fmt.json",
+      "source_sha256": "eb65da4dab7c3f80872b77b3fc31707bfbc7078039b878b408af661668f4d7cb",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.8525870449993818,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r11/build-receipt.json",
+      "source_sha256": "23c6b656ec1addb9a321717516396f19310928c657a13922ff47bc51471cc31d",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.4114310140012094,
+      "time": "2026-10-24T05:02:39.953920+00:00",
+      "binary_sha256": "df8726fa9fe21b8e1a53e3c10f03c36236860a8f5735fd9fbd0ac256bc27876e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r12/build-receipt.json",
+      "source_sha256": "bfa3f1abf0fd99347de4ebe01d7f0e538dead03aa096e52f9e55ddce56204f33",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.4286874900008115,
+      "time": "2026-10-24T05:03:23.273477+00:00",
+      "binary_sha256": "df8726fa9fe21b8e1a53e3c10f03c36236860a8f5735fd9fbd0ac256bc27876e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r12/checker-resume.json",
+      "source_sha256": "bfa3f1abf0fd99347de4ebe01d7f0e538dead03aa096e52f9e55ddce56204f33",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/test_dev3_status_pressure.py",
+        "StatusPressureOracle.test_ledger_reserves_all_four_pages_not_only_two_redo_writes",
+        "StatusPressureOracle.test_resume_rejects_other_failures_completed_or_missing_processes",
+        "StatusPressureOracle.test_resume_snapshot_rejects_missing_changed_and_extra_files"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.06329027199899429,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "921b60a7fd52e978fbb551cacd29df2d6708879400278e1fcc70fceeb0c6f8e0"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/build-receipt.json",
+      "source_sha256": "f11f256aac580bd81db023495b1d8f6e77d493efeb7764eabc7f4e62ebd9c7b4",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.39263487300013367,
+      "time": "2026-10-24T05:04:25.657792+00:00",
+      "binary_sha256": "df8726fa9fe21b8e1a53e3c10f03c36236860a8f5735fd9fbd0ac256bc27876e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native-command.json",
+      "source_sha256": "f11f256aac580bd81db023495b1d8f6e77d493efeb7764eabc7f4e62ebd9c7b4",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/dev3_status_pressure_native.py",
+        "--root",
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r13/source",
+        "--binary",
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r13/engine-tests",
+        "--build-receipt",
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r13/build-receipt.json",
+        "--output",
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r13/native",
+        "--resume",
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r8/native",
+        "--resume-snapshot",
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r8-native-preserved-files.json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 1.1110445579997759,
+      "stdout_sha256": "55e3244d3a78f206bf82f37382769cdb147d69a3b0320aee5b2d7ee1d74c36fb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r2/build-receipt.json",
+      "source_sha256": "a19d4745eefe20528786b45871fcdf5913e5433b966ae778b09e639bdd455dd2",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 13.101322180999887,
+      "time": "2026-10-24T04:37:09.339683+00:00",
+      "binary_sha256": "4712bc1b5ec91fcd8ea958332f6a0e41c65072f8db2b09f5b77d7d7e007a17f6"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r2/empty_pressure_native_resource_gate.json",
+      "source_sha256": "a19d4745eefe20528786b45871fcdf5913e5433b966ae778b09e639bdd455dd2",
+      "binary_sha256": "4712bc1b5ec91fcd8ea958332f6a0e41c65072f8db2b09f5b77d7d7e007a17f6",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r2/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native::empty_history::empty_pressure_native_resource_gate",
+        "--nocapture"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.0016660559995216317,
+      "stdout_sha256": "17ccec862e9342b8670bda209cbce65f8c83e5bd2e18dc1a3ffac5cc4a5f9f29",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r3/build-receipt.json",
+      "source_sha256": "50838d5b7229101be409b4127d22c2069a76d8032071fe1976678e8dd77da0dc",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 101,
+      "elapsed_seconds": 7.060259598999437,
+      "time": "2026-10-24T04:40:36.323489+00:00"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/build-receipt.json",
+      "source_sha256": "82c673036cd730da1e3c514449836cd2e348980f8eebcbc8573f3ca8cee939ec",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 13.290610258000015,
+      "time": "2026-10-24T04:41:10.319012+00:00",
+      "binary_sha256": "15d06e7631a06e5e64b83a05988240f207babd5a461f9a5fb51fa686631d5ed7"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_empty_destination_and_reused_cursor_are_hints.json",
+      "source_sha256": "82c673036cd730da1e3c514449836cd2e348980f8eebcbc8573f3ca8cee939ec",
+      "binary_sha256": "15d06e7631a06e5e64b83a05988240f207babd5a461f9a5fb51fa686631d5ed7",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r4/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_empty_destination_and_reused_cursor_are_hints",
+        "--nocapture"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.14776761699977214,
+      "stdout_sha256": "1f2b7e485b6bc8b01efdb50538bc2c148d7f4ce975110ca02d90bcdee675376d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_exact_hit_precedes_clean_and_round_robin_wraps.json",
+      "source_sha256": "82c673036cd730da1e3c514449836cd2e348980f8eebcbc8573f3ca8cee939ec",
+      "binary_sha256": "15d06e7631a06e5e64b83a05988240f207babd5a461f9a5fb51fa686631d5ed7",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r4/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_exact_hit_precedes_clean_and_round_robin_wraps",
+        "--nocapture"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.2793309460003002,
+      "stdout_sha256": "577a37261ec49e09dfea62f555776926761b81dea7d4977e9995e41c16f87b58",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_oldest_dirty_preserves_every_frame_until_flush.json",
+      "source_sha256": "82c673036cd730da1e3c514449836cd2e348980f8eebcbc8573f3ca8cee939ec",
+      "binary_sha256": "15d06e7631a06e5e64b83a05988240f207babd5a461f9a5fb51fa686631d5ed7",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r4/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_oldest_dirty_preserves_every_frame_until_flush",
+        "--nocapture"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.231167171999914,
+      "stdout_sha256": "9478bd3b53f6d0508ca3b955479a50d052cf592c8894ee2772e4328b7d2fc885",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_original_actor_continues_after_automatic_replacement.json",
+      "source_sha256": "82c673036cd730da1e3c514449836cd2e348980f8eebcbc8573f3ca8cee939ec",
+      "binary_sha256": "15d06e7631a06e5e64b83a05988240f207babd5a461f9a5fb51fa686631d5ed7",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r4/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_original_actor_continues_after_automatic_replacement",
+        "--nocapture"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.7084933850001107,
+      "stdout_sha256": "203edcb62680671c516a79e6215f536e0c77ecc87e2290a9d6f720353c0ef210",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/build-receipt.json",
+      "source_sha256": "8e45e891eec33308b98090b2ec3a1239ede6c406b973f157b7861684e34b3884",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 13.265092343000106,
+      "time": "2026-10-24T04:44:09.767319+00:00",
+      "binary_sha256": "30a70bfadbf1dab142ee0cbbaa93553c3abf856e4a64ead39e5cc9ed2cef206c"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_dirty_tie_uses_scan_order.json",
+      "status": "PASS",
+      "exit": 0,
+      "elapsed_seconds": 0.15314653299992642,
+      "source_sha256": "8e45e891eec33308b98090b2ec3a1239ede6c406b973f157b7861684e34b3884",
+      "binary_sha256": "30a70bfadbf1dab142ee0cbbaa93553c3abf856e4a64ead39e5cc9ed2cef206c",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r5/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_dirty_tie_uses_scan_order",
+        "--nocapture"
+      ],
+      "stdout_sha256": "e99f0bd4251a2e71ad7e89ec817560fde070475b11eaeeac90eb5da2d5a4c844",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_limit_seconds": 120,
+      "case_limit_seconds": 30
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_foreign_owner_and_invalid_membership_are_no_effect.json",
+      "status": "PASS",
+      "exit": 0,
+      "elapsed_seconds": 0.11574444399957429,
+      "source_sha256": "8e45e891eec33308b98090b2ec3a1239ede6c406b973f157b7861684e34b3884",
+      "binary_sha256": "30a70bfadbf1dab142ee0cbbaa93553c3abf856e4a64ead39e5cc9ed2cef206c",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r5/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_foreign_owner_and_invalid_membership_are_no_effect",
+        "--nocapture"
+      ],
+      "stdout_sha256": "d82fbf0d425c3d01f69e5b3f0d4f80240e12df99f17d33599cc6f01ea1fd9dfc",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_limit_seconds": 120,
+      "case_limit_seconds": 30
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_generation_limits_hit_replacement_and_busy.json",
+      "status": "PASS",
+      "exit": 0,
+      "elapsed_seconds": 0.702068263000001,
+      "source_sha256": "8e45e891eec33308b98090b2ec3a1239ede6c406b973f157b7861684e34b3884",
+      "binary_sha256": "30a70bfadbf1dab142ee0cbbaa93553c3abf856e4a64ead39e5cc9ed2cef206c",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r5/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_generation_limits_hit_replacement_and_busy",
+        "--nocapture"
+      ],
+      "stdout_sha256": "3876d627dec52798e080abe2e2a67515b80e7fb0c418cbb3894e2cdbfc699f38",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_limit_seconds": 120,
+      "case_limit_seconds": 30
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_late_content_corruption_and_poison_are_not_hidden.json",
+      "status": "PASS",
+      "exit": 0,
+      "elapsed_seconds": 0.2167312519995903,
+      "source_sha256": "8e45e891eec33308b98090b2ec3a1239ede6c406b973f157b7861684e34b3884",
+      "binary_sha256": "30a70bfadbf1dab142ee0cbbaa93553c3abf856e4a64ead39e5cc9ed2cef206c",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r5/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_late_content_corruption_and_poison_are_not_hidden",
+        "--nocapture"
+      ],
+      "stdout_sha256": "e03794a1d35a4500b70603f53edb52edf9fa2e97d65ad0669263574577927c26",
+      "stderr_sha256": "d6b2ff8eb73c226944919f080a501a6ada543b58659a4ae233eb0aba6eb92e87",
+      "batch_limit_seconds": 120,
+      "case_limit_seconds": 30
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_read_failure_retry_and_final_drift.json",
+      "status": "PASS",
+      "exit": 0,
+      "elapsed_seconds": 0.4387611709998964,
+      "source_sha256": "8e45e891eec33308b98090b2ec3a1239ede6c406b973f157b7861684e34b3884",
+      "binary_sha256": "30a70bfadbf1dab142ee0cbbaa93553c3abf856e4a64ead39e5cc9ed2cef206c",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r5/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_read_failure_retry_and_final_drift",
+        "--nocapture"
+      ],
+      "stdout_sha256": "bdaece0778d326a1ca886ca754a77b4f17aaab62b518036142684f2b62240e07",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_limit_seconds": 120,
+      "case_limit_seconds": 30
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_retained_pin_flush_claim_and_poison_prevent_io.json",
+      "status": "PASS",
+      "exit": 0,
+      "elapsed_seconds": 0.3166660530005174,
+      "source_sha256": "8e45e891eec33308b98090b2ec3a1239ede6c406b973f157b7861684e34b3884",
+      "binary_sha256": "30a70bfadbf1dab142ee0cbbaa93553c3abf856e4a64ead39e5cc9ed2cef206c",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r5/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_retained_pin_flush_claim_and_poison_prevent_io",
+        "--nocapture"
+      ],
+      "stdout_sha256": "7b89f503ce58e805e3b9a627b23a10326df79c3a4433a572b5f4927621a2dc17",
+      "stderr_sha256": "973600ac4c59a3d5e6e5104a12e13dc25b1f6574c0e2698fc0a8cda5775565f0",
+      "batch_limit_seconds": 120,
+      "case_limit_seconds": 30
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r6/build-receipt.json",
+      "source_sha256": "b38b27b279c6207fe94c95b29dcad32f735ab9afe1314ae53a029aecf2c57914",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 101,
+      "elapsed_seconds": 7.045914502999949,
+      "time": "2026-10-24T04:51:42.918542+00:00"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r7/build-receipt.json",
+      "source_sha256": "929ac6f49502833dd8cea56fd8b30e962c7df416f38a5cf9661d72a39ca2a7a5",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 13.600745405999987,
+      "time": "2026-10-24T04:53:52.676366+00:00",
+      "binary_sha256": "b156eb12703b22b7a9c4f51d0c0b071d7ea53f499ebaf62813a5888b3267ad5f"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r7/pressure_recovery_native_resource_gate.json",
+      "status": "PASS",
+      "exit": 0,
+      "elapsed_seconds": 0.0016549419997318182,
+      "source_sha256": "929ac6f49502833dd8cea56fd8b30e962c7df416f38a5cf9661d72a39ca2a7a5",
+      "binary_sha256": "b156eb12703b22b7a9c4f51d0c0b071d7ea53f499ebaf62813a5888b3267ad5f",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r7/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::native::pressure::pressure_recovery_native_resource_gate",
+        "--nocapture"
+      ],
+      "stdout_sha256": "919cd6f3cc1c2cf2ab48ca330f1b031f602a7453ac556c9013e591bde2638255",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_limit_seconds": 120,
+      "case_limit_seconds": 30
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/build-receipt.json",
+      "source_sha256": "662c4fc180f9d5fc6df31aad73b25ba498573302b281827228aa9c64a20ae246",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.39109777200064855,
+      "time": "2026-10-24T04:54:21.524511+00:00",
+      "binary_sha256": "b156eb12703b22b7a9c4f51d0c0b071d7ea53f499ebaf62813a5888b3267ad5f"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/checker.json",
+      "source_sha256": "662c4fc180f9d5fc6df31aad73b25ba498573302b281827228aa9c64a20ae246",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/test_dev3_status_pressure.py"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.10410790400055703,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "24759018e26ca4869a717d1cfca1705830d88f6e5a7f92214b9e6d23bea30216"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/clippy.json",
+      "source_sha256": "662c4fc180f9d5fc6df31aad73b25ba498573302b281827228aa9c64a20ae246",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-engine",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 9.958443371000612,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "55a1af3d4d5a4be8f83e031b4b0cd882898dc294874955dea6da0e5f9d212bdb"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/empty_pressure_late_registration_and_dpt_mismatch_fence.json",
+      "status": "PASS",
+      "exit": 0,
+      "elapsed_seconds": 0.23924240099950111,
+      "source_sha256": "662c4fc180f9d5fc6df31aad73b25ba498573302b281827228aa9c64a20ae246",
+      "binary_sha256": "b156eb12703b22b7a9c4f51d0c0b071d7ea53f499ebaf62813a5888b3267ad5f",
+      "command": [
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r8/engine-tests",
+        "--exact",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_late_registration_and_dpt_mismatch_fence",
+        "--nocapture"
+      ],
+      "stdout_sha256": "08f872fd70a1ecf7c3575771b68f46fc33a9a8a38b46e33f70d8939b3f21c066",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_limit_seconds": 120,
+      "case_limit_seconds": 30
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/fmt.json",
+      "source_sha256": "662c4fc180f9d5fc6df31aad73b25ba498573302b281827228aa9c64a20ae246",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.8328563539998868,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native-command.json",
+      "source_sha256": "662c4fc180f9d5fc6df31aad73b25ba498573302b281827228aa9c64a20ae246",
+      "command": [
+        "python3",
+        "-B",
+        "scripts/dev3_status_pressure_native.py",
+        "--root",
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r8/source",
+        "--binary",
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r8/engine-tests",
+        "--build-receipt",
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r8/build-receipt.json",
+        "--output",
+        "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r8/native"
+      ],
+      "exit": 1,
+      "elapsed_seconds": 2.4412711650002166,
+      "stdout_sha256": "e0e7537bd3c51a0bb81fe00b8f93f748d5beaa5446969d55c612e76419276eeb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r9/build-receipt.json",
+      "source_sha256": "62e9701ef49f866b5adaa2d211e280cdf98d172dc049c21935d2f28d79dfa95d",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 13.347994282999935,
+      "time": "2026-10-24T04:56:49.039439+00:00",
+      "binary_sha256": "fbc5f0089944b6bcc328baead1dc305fb7484b0bf4e3d7dbbbfd52b89b345700"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/result.json",
+      "status": "PASS",
+      "source_sha256": "f11f256aac580bd81db023495b1d8f6e77d493efeb7764eabc7f4e62ebd9c7b4",
+      "binary_sha256": "df8726fa9fe21b8e1a53e3c10f03c36236860a8f5735fd9fbd0ac256bc27876e",
+      "build_receipt_sha256": "e5ea0c81126ca89174488ac58d1f1d63684feadfc4715648ff05bf476e6dacfa",
+      "checker_sha256": {
+        "scripts/check_dev0.py": "91175fdd7c7158fb4db44390d36506f545eb160a89a47cfffde61900fbec813a",
+        "scripts/check_dev3_allocation_stack.py": "b3c533437f2061921f69f0954918b0ab90e6c50949d8047975dc519c00f85c09",
+        "scripts/dev3_doublewrite_checks.py": "2830dbd22e91661c6111a317b0743b59a2c604273af767456950e05758902457",
+        "scripts/dev3_doublewrite_model.py": "86bcef553137e2d6e42e7b9faa8df8cabdf352bb6a6b0a2b12477e3c0c8a0e76",
+        "scripts/dev3_doublewrite_native.py": "c2c90b764b95c89b7e31df9cd238a2ca41744e0e6f75d313d8f1b24ddc1e788c",
+        "scripts/dev3_operational_recovery_native.py": "5a69385e1aa6f4123aca6c27ecd53817e9a94ceb5c34b0881ad07b7c1ee44134",
+        "scripts/dev3_recovery_effects_native.py": "60d4e2ab3308b40fa78081ab1001fb676bfa90867b28bce5dfbf2dd4a5bdf5d3",
+        "scripts/dev3_recovery_effects_oracle.py": "ea52bda126b671b57f75a095056999586fa3cddc292e3b9a6e3377f6bd5bd29b",
+        "scripts/dev3_recovery_effects_vectors.py": "0b12fdb3f51b0d523dfcd572116e89176c80dd10ec55479ac248519c3f69c48f",
+        "scripts/dev3_recovery_prefix_native.py": "06b9849fea30be640e69c1f3d495b4918a1a252c32053768a3bc9b8b71041fab",
+        "scripts/dev3_recovery_select_native.py": "09ee24670032099a74f656cb1eefbdb102e909b8e9f7ec00896949e2b99cad50",
+        "scripts/dev3_status_home_flush.py": "a774d1616fb2b922a6a69d993cf74bd239111ec9802fa163b713233c48040b5b",
+        "scripts/dev3_status_home_flush_literals.py": "9e52cfc78c1ef093bcdde66af24d5ea974f0e4b7d45cb948edc9c1f26f516eb3",
+        "scripts/dev3_status_pressure_native.py": "77b99baa755a2b362f4ba2e9577e78ebe26f08425352a124583089d93b51cf47",
+        "scripts/dev3_storage_model.py": "371ed5b856f63dd3eb5cbb02d5f3e669cb3ebdfda5c3d61a537bd8ed07db782e",
+        "scripts/dev3_storage_native.py": "ef51196fcc3cdd84ce64c165d6ef66edba99ea4f25a71c3a49c7cda19282ecdc"
+      },
+      "execution_binary_sha256": "b156eb12703b22b7a9c4f51d0c0b071d7ea53f499ebaf62813a5888b3267ad5f",
+      "execution_source_sha256": "662c4fc180f9d5fc6df31aad73b25ba498573302b281827228aa9c64a20ae246",
+      "workers": [
+        {
+          "mode": "reentry",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r13/native/engine-tests",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::native::pressure::worker_status_pressure_native",
+            "--ignored",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "status": "PASS",
+          "timed_out": false,
+          "pid": 64405,
+          "exit_code": 0,
+          "elapsed_seconds": 0.21401543499996478,
+          "stdout_sha256": "b1c8f7c7838867f9a3f2bc6d1ccbb9ddc4ef02f96665dc7b43ca104dfa617e61",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resources": {
+            "handles_peak": 2,
+            "handles_final": 0,
+            "fd_peak": 5,
+            "fd_final": 0,
+            "cut_hits": 0,
+            "cut_ordinal": 0
+          },
+          "home_writes": 0
+        }
+      ],
+      "not_run": [],
+      "origin": {
+        "path": "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r8/native",
+        "report_sha256": "1d56f60047555c5f31f850097edfe4ffbb16673fb5d727ab9fca0ad5e589cdf6",
+        "original_status": "FAIL",
+        "original_error": "FAIL_RECOVERED_LEDGER",
+        "elapsed_seconds": 2.2102442879986484,
+        "execution_source_sha256": "662c4fc180f9d5fc6df31aad73b25ba498573302b281827228aa9c64a20ae246",
+        "execution_binary_sha256": "b156eb12703b22b7a9c4f51d0c0b071d7ea53f499ebaf62813a5888b3267ad5f",
+        "saved_output_audits": [
+          {
+            "mode": "produce",
+            "original_status": "PASS",
+            "original_pid": 63699,
+            "saved_output_audit": "PASS",
+            "home_writes": 70
+          },
+          {
+            "mode": "recover",
+            "original_status": "FAIL",
+            "original_pid": 63701,
+            "saved_output_audit": "PASS",
+            "home_writes": 2
+          }
+        ],
+        "snapshot": "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r8-native-preserved-files.json",
+        "snapshot_sha256": "dc49dde85a3a0b213cabd75a689b3552ebca2f95fc3cd8c81f8a0fda0c5be979"
+      },
+      "receipt_bytes": 102534,
+      "database_bytes": 24356160,
+      "elapsed_seconds": 0.9014157139990857
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/result.json",
+      "status": "FAIL",
+      "source_sha256": "662c4fc180f9d5fc6df31aad73b25ba498573302b281827228aa9c64a20ae246",
+      "binary_sha256": "b156eb12703b22b7a9c4f51d0c0b071d7ea53f499ebaf62813a5888b3267ad5f",
+      "build_receipt_sha256": "e46393b76f600792e450c92a9aaa73c2c24a36b3cec1e8106729641363149e30",
+      "checker_sha256": {
+        "scripts/check_dev0.py": "91175fdd7c7158fb4db44390d36506f545eb160a89a47cfffde61900fbec813a",
+        "scripts/check_dev3_allocation_stack.py": "b3c533437f2061921f69f0954918b0ab90e6c50949d8047975dc519c00f85c09",
+        "scripts/dev3_doublewrite_checks.py": "2830dbd22e91661c6111a317b0743b59a2c604273af767456950e05758902457",
+        "scripts/dev3_doublewrite_model.py": "86bcef553137e2d6e42e7b9faa8df8cabdf352bb6a6b0a2b12477e3c0c8a0e76",
+        "scripts/dev3_doublewrite_native.py": "c2c90b764b95c89b7e31df9cd238a2ca41744e0e6f75d313d8f1b24ddc1e788c",
+        "scripts/dev3_operational_recovery_native.py": "5a69385e1aa6f4123aca6c27ecd53817e9a94ceb5c34b0881ad07b7c1ee44134",
+        "scripts/dev3_recovery_effects_native.py": "60d4e2ab3308b40fa78081ab1001fb676bfa90867b28bce5dfbf2dd4a5bdf5d3",
+        "scripts/dev3_recovery_effects_oracle.py": "ea52bda126b671b57f75a095056999586fa3cddc292e3b9a6e3377f6bd5bd29b",
+        "scripts/dev3_recovery_effects_vectors.py": "0b12fdb3f51b0d523dfcd572116e89176c80dd10ec55479ac248519c3f69c48f",
+        "scripts/dev3_recovery_prefix_native.py": "06b9849fea30be640e69c1f3d495b4918a1a252c32053768a3bc9b8b71041fab",
+        "scripts/dev3_recovery_select_native.py": "09ee24670032099a74f656cb1eefbdb102e909b8e9f7ec00896949e2b99cad50",
+        "scripts/dev3_status_home_flush.py": "a774d1616fb2b922a6a69d993cf74bd239111ec9802fa163b713233c48040b5b",
+        "scripts/dev3_status_home_flush_literals.py": "9e52cfc78c1ef093bcdde66af24d5ea974f0e4b7d45cb948edc9c1f26f516eb3",
+        "scripts/dev3_status_pressure_native.py": "eac58b647539e19f6c4f027505815a0d7f59ed4a82a5b491a84b35eca66a3239",
+        "scripts/dev3_storage_model.py": "371ed5b856f63dd3eb5cbb02d5f3e669cb3ebdfda5c3d61a537bd8ed07db782e",
+        "scripts/dev3_storage_native.py": "ef51196fcc3cdd84ce64c165d6ef66edba99ea4f25a71c3a49c7cda19282ecdc"
+      },
+      "workers": [
+        {
+          "mode": "produce",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r8/native/engine-tests",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::native::pressure::worker_status_pressure_native",
+            "--ignored",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "status": "PASS",
+          "timed_out": false,
+          "pid": 63699,
+          "exit_code": 0,
+          "elapsed_seconds": 1.816458943998441,
+          "stdout_sha256": "d423974e59e0a4f8a5cb52751046f785b4ffbc146f08143ec06e3313f1daf919",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resources": {
+            "handles_peak": 3,
+            "handles_final": 0,
+            "fd_peak": 5,
+            "fd_final": 0,
+            "cut_hits": 0,
+            "cut_ordinal": 0
+          },
+          "home_writes": 70
+        },
+        {
+          "mode": "recover",
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/status-residency-pressure-20261024/r8/native/engine-tests",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::native::pressure::worker_status_pressure_native",
+            "--ignored",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "status": "FAIL",
+          "timed_out": false,
+          "pid": 63701,
+          "exit_code": 0,
+          "elapsed_seconds": 0.3147444060014095,
+          "stdout_sha256": "ab9fb5a97431af16fae1dc676d4979fe289536eab46f0cda6eec37b5da29f2af",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resources": {
+            "handles_peak": 2,
+            "handles_final": 0,
+            "fd_peak": 5,
+            "fd_final": 0,
+            "cut_hits": 0,
+            "cut_ordinal": 0
+          }
+        }
+      ],
+      "not_run": [
+        "reentry"
+      ],
+      "error": "FAIL_RECOVERED_LEDGER",
+      "elapsed_seconds": 2.2102442879986484
+    }
+  ],
+  "artifact_files": [
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/build.py",
+      "bytes": 1551,
+      "sha256": "4a2956f2f0811fa0fbbfa707cef197e8fe4523f6dd97e3761bf18a842e9b7063"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/current-scope-r10.json",
+      "bytes": 1074,
+      "sha256": "6f88ec36bb992d4f477bdb8b06f2bdbc7297c03113b5d777d8f18f2fad2f4c98"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/first-runtime-manifest.json",
+      "bytes": 1195,
+      "sha256": "12cc882f8ac0e5e63a2dfcdfc4fd834dad2a50a4c6701afeb02a947afd37e45c"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/negative-manifest.json",
+      "bytes": 718,
+      "sha256": "548ac779918056511caf4cd4bcf21b847abb35b4bfee8a3298bf9b3f8977bb1e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r0/build-receipt.json",
+      "bytes": 355,
+      "sha256": "e64060aacdf9b80930b74ab98ec441591667da0f624b0bc939d76f87a34d0958"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r0/build.jsonl",
+      "bytes": 32451,
+      "sha256": "975981f71395d352bd4a14aea57225ef3273a84d2fd0cde969a5106acb3b91eb"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r0/build.stderr",
+      "bytes": 223,
+      "sha256": "9ad0d342e9e3dc5d0816bcc7e4079eb6a3ee6218e961ae3ad603a59a86be5c11"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r1/build-receipt.json",
+      "bytes": 441,
+      "sha256": "52cedffac4e51298eafaf1ea1645e3b96b370417cecd33d0f0794c568c589771"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r1/build.jsonl",
+      "bytes": 20708,
+      "sha256": "5650d16525e5eed87a25bd0ac2a27f87317aabc6590ead5d97d85f1f0302d083"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r1/build.stderr",
+      "bytes": 203,
+      "sha256": "af5c190a263f65073d020c1278744cef6f40dc6428caccb8ff2991a9c345a9e4"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r1/empty_pressure_resource_gate.json",
+      "bytes": 743,
+      "sha256": "8cf2e00453dfccbbc6d48c3f4a25587cb4fda6661bf453addf4e08c2d23d8c7f"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r1/empty_pressure_resource_gate.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r1/empty_pressure_resource_gate.stdout",
+      "bytes": 374,
+      "sha256": "adc885d2c04fd4be1e21da1f297af544a265dcfedcf4a65bf97045e780480eb1"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r10/build-receipt.json",
+      "bytes": 440,
+      "sha256": "34bf5961ccaf061a4f8afe539478ddcc3ea92e147b2706929677ea1d09446e8b"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r10/build.jsonl",
+      "bytes": 20717,
+      "sha256": "1ecb9d06e5159fb3b7a92c0dc86e281c0b3c9d6f4d0a0b6b54da560e5315be73"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r10/build.stderr",
+      "bytes": 204,
+      "sha256": "cb1a4088bd9c6998523799c5f6817f435aef454b9b0da01442a8a9d775061db4"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r10/clippy.json",
+      "bytes": 504,
+      "sha256": "81f77542e2e357c5126147a8892f5e850878883e1a03aaf5e969bda3364128e8"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r10/clippy.stderr",
+      "bytes": 202,
+      "sha256": "effdf3b28f3f81e15b79e762418e733253e639513cf79279fab46354148b38ce"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r10/clippy.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r10/fmt.json",
+      "bytes": 389,
+      "sha256": "a7209d21802627e8e67aeb49a58ff7f3f28a82618885d67cc1a62f039dda27e0"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r10/fmt.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r10/fmt.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r11/build-receipt.json",
+      "bytes": 441,
+      "sha256": "0bb02b4f6b193d83ab2cce4f61c1c09b9c350f0c6ae0722a650fbffbfefcf4bb"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r11/build.jsonl",
+      "bytes": 20716,
+      "sha256": "9760c004c427466424714eab61b4dcc14c18de0ceb4ecb644db1e2474e852145"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r11/build.stderr",
+      "bytes": 73,
+      "sha256": "7684d1a819c7613020f243bddbc3045519cfac3b718e516cfaa8c0b15bb15584"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r12/build-receipt.json",
+      "bytes": 441,
+      "sha256": "7136c3ac85f30281a6179d6704c6e7f6cd0272d43027bbe00333433f13abab5c"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r12/build.jsonl",
+      "bytes": 20716,
+      "sha256": "c2d2e3402c83bfb2f1f1b7acceede1aef73b0ee47da85b67de0614a4f3fc2832"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r12/build.stderr",
+      "bytes": 73,
+      "sha256": "84665cd69cf2ee7880b9da312b6d9f0bb8c946832af82968c8d8f3e5516808c3"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r12/checker-resume.json",
+      "bytes": 679,
+      "sha256": "f7c946b9e4412ea6f3e5746946e8304f1bb70709ec2007f13a273d0b987415e8"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r12/checker-resume.stderr",
+      "bytes": 101,
+      "sha256": "921b60a7fd52e978fbb551cacd29df2d6708879400278e1fcc70fceeb0c6f8e0"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r12/checker-resume.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/build-receipt.json",
+      "bytes": 442,
+      "sha256": "e5ea0c81126ca89174488ac58d1f1d63684feadfc4715648ff05bf476e6dacfa"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/build.jsonl",
+      "bytes": 20716,
+      "sha256": "229f3b8eb25ee71bc205645e3270acc92853b35a3a63a249664027bf3651b4d5"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/build.stderr",
+      "bytes": 73,
+      "sha256": "3be63a270c1475ea545697ad53d42d734acbfff283f0af9d1d518cc2dca9992c"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/allocator.page",
+      "bytes": 16384,
+      "sha256": "d52b03f39c196db3e962796dd97309593ea511a649ea57c34b336f50d1b26638"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/effects.txt",
+      "bytes": 835,
+      "sha256": "f4eb7c9f1af765c657da50f7fc6313de3ecb488ac48070b31dc195a691b31d9a"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/events.tsv",
+      "bytes": 20349,
+      "sha256": "4957b134f50cdf535ed35a844b598b03a3be3a7b2848fe2cdab65a8dcff7845a"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/fd.tsv",
+      "bytes": 2417,
+      "sha256": "399dd887c607b915c0f982e57765046d14855b10e05e02273c0a3abe18934904"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/files.json",
+      "bytes": 3976,
+      "sha256": "02d1a74fd94e962dabef529b6e39b74d1760680edf2db7fe85f999d90a791394"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/observation.tsv",
+      "bytes": 1725,
+      "sha256": "6e1bbc67431aa2f60091d0350e03d3bec2726f4a73a26f99725d3b1a0cbe546b"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/resources.tsv",
+      "bytes": 77,
+      "sha256": "f7981ab3558d88f4b4dc1d355f4a3eb6bcf3ddc479794bf1e01ffb1429c04a86"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/source-census.tsv",
+      "bytes": 166,
+      "sha256": "10d348bc31642dc4fa480899df77847ea8cfaf4f87dcc989598c7078a58ea3e2"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/status-1.page",
+      "bytes": 16384,
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/status-2.page",
+      "bytes": 16384,
+      "sha256": "7cc77fa51eb78f80be88b97d1587c0030a982011e5b92e9b6cdb13e3efa0083e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/status-3.page",
+      "bytes": 16384,
+      "sha256": "334656359b89c46d28cc106ede3e62786c9379b6dcc45ede11b5b5808f3778f9"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/stdout.log",
+      "bytes": 368,
+      "sha256": "b1c8f7c7838867f9a3f2bc6d1ccbb9ddc4ef02f96665dc7b43ca104dfa617e61"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/system.descriptor",
+      "bytes": 1536,
+      "sha256": "cc4a45aafbe803922045622dc6b779ca335e0ed46d4ac80f9f2c20c0d8ce14a5"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/transaction-1.descriptor",
+      "bytes": 1536,
+      "sha256": "12ad6636960dd3ba2011dfcdacacddaad107770093bd3cd1c53ca5e2195f0d31"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/reentry/transactions.tsv",
+      "bytes": 37,
+      "sha256": "806680b5913754e665338fc502b55bbf0328772105e446dc25a0213c656cfecc"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/result.json",
+      "bytes": 4479,
+      "sha256": "984d089bb59dca405658b987f49b3fb2949af51d90c2ad331f255034ec2e1690"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native/resumed-input-files.json",
+      "bytes": 3976,
+      "sha256": "02d1a74fd94e962dabef529b6e39b74d1760680edf2db7fe85f999d90a791394"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native-command.json",
+      "bytes": 1089,
+      "sha256": "ecb172ae7fc5cab85eaa2b2ab67857511a85831d9632cf539af5ffc076a0060c"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native-command.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r13/native-command.stdout",
+      "bytes": 73,
+      "sha256": "55e3244d3a78f206bf82f37382769cdb147d69a3b0320aee5b2d7ee1d74c36fb"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r2/build-receipt.json",
+      "bytes": 441,
+      "sha256": "734a9bcdead30b45eb236312d17e42c774450f41c128e8235da16a07ca7ebd7d"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r2/build.jsonl",
+      "bytes": 20708,
+      "sha256": "e7b1da4cde988e152717d1e3fd64e0ec8a835426d8a83b129dddae33f15f6b02"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r2/build.stderr",
+      "bytes": 203,
+      "sha256": "8aeb02c777279cdb8a541b2d9b213cb5e9183c099b4d29237d93a15c28c08ce8"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r2/empty_pressure_native_resource_gate.json",
+      "bytes": 721,
+      "sha256": "798bcc41ff39bb635582455fe8115a55d1ef0eeb519e4b47d81774d2f3abba3c"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r2/empty_pressure_native_resource_gate.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r2/empty_pressure_native_resource_gate.stdout",
+      "bytes": 331,
+      "sha256": "17ccec862e9342b8670bda209cbce65f8c83e5bd2e18dc1a3ffac5cc4a5f9f29"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r3/build-receipt.json",
+      "bytes": 355,
+      "sha256": "29258833dbb5883003588b4f6b0400e5af3deca6ea5e6260a905fb7af16219ec"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r3/build.jsonl",
+      "bytes": 41824,
+      "sha256": "3890547f294388fc4017e8d23f0b082f9788b3936c301c371ee8528be6d9f84c"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r3/build.stderr",
+      "bytes": 204,
+      "sha256": "3602f58fde8771476e27e7739b1fd757a54689c1ed9c44410aef036fa9b0b34e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/build-receipt.json",
+      "bytes": 441,
+      "sha256": "b5c8b281c979c9811b6d01dc141bd5e2d3105ac0dd1317de2c5408c236dc2354"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/build.jsonl",
+      "bytes": 20708,
+      "sha256": "5efebb442f023a4adfd802c1f857b7d45c97864ca43a1e1ba8958f37ade1d5ab"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/build.stderr",
+      "bytes": 203,
+      "sha256": "1bb7f20edfa1d36727d906468c5fe72025bdeed0280f007acb5eab264dee2a77"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_empty_destination_and_reused_cursor_are_hints.json",
+      "bytes": 773,
+      "sha256": "70ce9716518d87e364f3a6f3019772bb5c8e963ddfcb4c2212ded4280cec8fd1"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_empty_destination_and_reused_cursor_are_hints.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_empty_destination_and_reused_cursor_are_hints.stdout",
+      "bytes": 370,
+      "sha256": "1f2b7e485b6bc8b01efdb50538bc2c148d7f4ce975110ca02d90bcdee675376d"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_exact_hit_precedes_clean_and_round_robin_wraps.json",
+      "bytes": 773,
+      "sha256": "1618ffd11f97aa2816dcb574368f748d8d451c18cd7d6609af1c3ae977847179"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_exact_hit_precedes_clean_and_round_robin_wraps.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_exact_hit_precedes_clean_and_round_robin_wraps.stdout",
+      "bytes": 373,
+      "sha256": "577a37261ec49e09dfea62f555776926761b81dea7d4977e9995e41c16f87b58"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_oldest_dirty_preserves_every_frame_until_flush.json",
+      "bytes": 772,
+      "sha256": "09ac1039afbd5c198f7716b9b4d82907a95ee652075034471ec275c8213de6fb"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_oldest_dirty_preserves_every_frame_until_flush.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_oldest_dirty_preserves_every_frame_until_flush.stdout",
+      "bytes": 366,
+      "sha256": "9478bd3b53f6d0508ca3b955479a50d052cf592c8894ee2772e4328b7d2fc885"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_original_actor_continues_after_automatic_replacement.json",
+      "bytes": 779,
+      "sha256": "4b20ec5903b2251a204be8c949f13fa1d79fa59de0973c7308933e6ca2191dbe"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_original_actor_continues_after_automatic_replacement.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r4/empty_pressure_original_actor_continues_after_automatic_replacement.stdout",
+      "bytes": 372,
+      "sha256": "203edcb62680671c516a79e6215f536e0c77ecc87e2290a9d6f720353c0ef210"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/build-receipt.json",
+      "bytes": 441,
+      "sha256": "d1e2c7f95b666ef5b54e3cd1095f1438baf7e5762cc496a9a5b54553f64a7ed6"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/build.jsonl",
+      "bytes": 20708,
+      "sha256": "541271dea1d6927ec1c12a3bc99f4926568ae696da32ac9d178e5775e113d8ed"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/build.stderr",
+      "bytes": 203,
+      "sha256": "2b9ba173fabc568a4559e8e26156ef180bc95e440f16a170827a62dc11719113"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_dirty_tie_uses_scan_order.json",
+      "bytes": 831,
+      "sha256": "d2ba9908a34c9779d4917e840ca82a2e39f9847639f1a19eca02cfbea9aee2dc"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_dirty_tie_uses_scan_order.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_dirty_tie_uses_scan_order.stdout",
+      "bytes": 343,
+      "sha256": "e99f0bd4251a2e71ad7e89ec817560fde070475b11eaeeac90eb5da2d5a4c844"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_foreign_owner_and_invalid_membership_are_no_effect.json",
+      "bytes": 856,
+      "sha256": "eb0da2a817fdfcf8647095965796ac2f0a105e5b13e5a59ac8316e7d3d516528"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_foreign_owner_and_invalid_membership_are_no_effect.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_foreign_owner_and_invalid_membership_are_no_effect.stdout",
+      "bytes": 375,
+      "sha256": "d82fbf0d425c3d01f69e5b3f0d4f80240e12df99f17d33599cc6f01ea1fd9dfc"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_generation_limits_hit_replacement_and_busy.json",
+      "bytes": 846,
+      "sha256": "72c76e0e4f2e56b9f1f8b56b61c23802d9f33a8f74856bb05390827d6b4f8786"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_generation_limits_hit_replacement_and_busy.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_generation_limits_hit_replacement_and_busy.stdout",
+      "bytes": 516,
+      "sha256": "3876d627dec52798e080abe2e2a67515b80e7fb0c418cbb3894e2cdbfc699f38"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_late_content_corruption_and_poison_are_not_hidden.json",
+      "bytes": 854,
+      "sha256": "56acd7a6f5b6fc06e016c63561e522e0c6f370ee902d30439e94e9b6a61b3382"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_late_content_corruption_and_poison_are_not_hidden.stderr",
+      "bytes": 399,
+      "sha256": "d6b2ff8eb73c226944919f080a501a6ada543b58659a4ae233eb0aba6eb92e87"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_late_content_corruption_and_poison_are_not_hidden.stdout",
+      "bytes": 418,
+      "sha256": "e03794a1d35a4500b70603f53edb52edf9fa2e97d65ad0669263574577927c26"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_read_failure_retry_and_final_drift.json",
+      "bytes": 839,
+      "sha256": "07648811bff63698f71dbfee344f4baabd07da84c321ab4a5c0e4969a8c0a439"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_read_failure_retry_and_final_drift.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_read_failure_retry_and_final_drift.stdout",
+      "bytes": 441,
+      "sha256": "bdaece0778d326a1ca886ca754a77b4f17aaab62b518036142684f2b62240e07"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_retained_pin_flush_claim_and_poison_prevent_io.json",
+      "bytes": 851,
+      "sha256": "9ab6afb886e4ce79d858885adddaa10c0cf1b6cede8cdc83e350c673a535bd6b"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_retained_pin_flush_claim_and_poison_prevent_io.stderr",
+      "bytes": 392,
+      "sha256": "973600ac4c59a3d5e6e5104a12e13dc25b1f6574c0e2698fc0a8cda5775565f0"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r5/empty_pressure_retained_pin_flush_claim_and_poison_prevent_io.stdout",
+      "bytes": 424,
+      "sha256": "7b89f503ce58e805e3b9a627b23a10326df79c3a4433a572b5f4927621a2dc17"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r6/build-receipt.json",
+      "bytes": 355,
+      "sha256": "48a6c67301e654e0c7e479c36ca2ff701f31ec876db68fac10e16383b0632ad8"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r6/build.jsonl",
+      "bytes": 31954,
+      "sha256": "d13bc90c3ce6007047de875401ff390e45cca874910622c8999caab3882aa21f"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r6/build.stderr",
+      "bytes": 203,
+      "sha256": "774df21ec6408189d73ecaff9b46cf574a73123dda6b612772f6d30a9a202fad"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r7/build-receipt.json",
+      "bytes": 441,
+      "sha256": "0ad62f48ad5543b5d4f575e1a50b88cc133ff63030ad42a3eb8bc804742a51cc"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r7/build.jsonl",
+      "bytes": 20708,
+      "sha256": "f1033974d2cee674a95c3a089b062d18588f472d485706c551493ff79688caa4"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r7/build.stderr",
+      "bytes": 203,
+      "sha256": "4decc829ae16d1b456f74ff93fd403361f0f78af49797a52f6cef821ff8ec17e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r7/pressure_recovery_native_resource_gate.json",
+      "bytes": 788,
+      "sha256": "8767a1c123e10abefafefed2515ba1d849fe5d627080e9b71d2743aff9bdac50"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r7/pressure_recovery_native_resource_gate.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r7/pressure_recovery_native_resource_gate.stdout",
+      "bytes": 329,
+      "sha256": "919cd6f3cc1c2cf2ab48ca330f1b031f602a7453ac556c9013e591bde2638255"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/build-receipt.json",
+      "bytes": 442,
+      "sha256": "e46393b76f600792e450c92a9aaa73c2c24a36b3cec1e8106729641363149e30"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/build.jsonl",
+      "bytes": 20707,
+      "sha256": "dee9a928b0099148e897f6bcdfc7d9e7efd438da84f9dd2102877dbbdfe72586"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/build.stderr",
+      "bytes": 73,
+      "sha256": "3be63a270c1475ea545697ad53d42d734acbfff283f0af9d1d518cc2dca9992c"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/checker.json",
+      "bytes": 407,
+      "sha256": "dd6b9cb239c6a27bfd0b9abc472d6f7997fca1d70735f1147e0b13b14daccd96"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/checker.stderr",
+      "bytes": 102,
+      "sha256": "24759018e26ca4869a717d1cfca1705830d88f6e5a7f92214b9e6d23bea30216"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/checker.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/clippy.json",
+      "bytes": 504,
+      "sha256": "babf0efd754bea67b1afba423931df23ba9ad2499986dc14815635135c9c1c03"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/clippy.stderr",
+      "bytes": 201,
+      "sha256": "55a1af3d4d5a4be8f83e031b4b0cd882898dc294874955dea6da0e5f9d212bdb"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/clippy.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/empty_pressure_late_registration_and_dpt_mismatch_fence.json",
+      "bytes": 846,
+      "sha256": "1f5a76e7baa199056f9dd966d64304bed2f0ec370fb7f7b9698e423cc06af658"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/empty_pressure_late_registration_and_dpt_mismatch_fence.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/empty_pressure_late_registration_and_dpt_mismatch_fence.stdout",
+      "bytes": 411,
+      "sha256": "08f872fd70a1ecf7c3575771b68f46fc33a9a8a38b46e33f70d8939b3f21c066"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/fmt.json",
+      "bytes": 389,
+      "sha256": "c46a380ee2d9ba5f41243102e276bc24d1677c079c1a617e29f88d4706de053b"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/fmt.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/fmt.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/produce/aborted-dirty.page",
+      "bytes": 16384,
+      "sha256": "7cc77fa51eb78f80be88b97d1587c0030a982011e5b92e9b6cdb13e3efa0083e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/produce/aborting-loaded.page",
+      "bytes": 16384,
+      "sha256": "6e0c3069c4b05ffeb08594d733bdd5548782153b5a8b828e5dee59f7a9bbe0c4"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/produce/active-loaded.page",
+      "bytes": 16384,
+      "sha256": "797b536284af36ff7d1ce1dd3bc70f77a1ffb93a97fb1c79b30b1a97cee153c2"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/produce/events.tsv",
+      "bytes": 108970,
+      "sha256": "f28b8152f765d60281d26b0a6c087a705658911e2d2736568cbe611ac5264aef"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/produce/fd.tsv",
+      "bytes": 14523,
+      "sha256": "c8a436f9e6e3b7f4f2ed231bffa2dde9e10e62a9c362cc478fb47099728b3d89"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/produce/files.json",
+      "bytes": 3498,
+      "sha256": "d08d492a32660fa22f6a664051b4229f1bd831d82078f3ed4a27e83a34f0b198"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/produce/resources.tsv",
+      "bytes": 77,
+      "sha256": "ea44f1b99ff306d9937e788b3be6aaeaeeb7f9ffb3d646d2a011ba5853c6ffcf"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/produce/retained-bank.bin",
+      "bytes": 53248,
+      "sha256": "b6f206240e2ef7adbc487d7a29fad00eeaa368f34f8c6ea21908d922acad4848"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/produce/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/produce/stdout.log",
+      "bytes": 368,
+      "sha256": "d423974e59e0a4f8a5cb52751046f785b4ffbc146f08143ec06e3313f1daf919"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/allocator.page",
+      "bytes": 16384,
+      "sha256": "d52b03f39c196db3e962796dd97309593ea511a649ea57c34b336f50d1b26638"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/effects.txt",
+      "bytes": 837,
+      "sha256": "a301c1a907b0d973ec292cffb30163d9032a8529d64fc337d4bac59c29d4139e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/events.tsv",
+      "bytes": 24975,
+      "sha256": "14b09976dc65178ac54bb6032ac81ff1dcf2656acb0ccf6490e21e29b960bc93"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/fd.tsv",
+      "bytes": 3727,
+      "sha256": "a0e7268aac78daeda6262de691720f5634077c626f59bb05bb450796552e78d8"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/files.json",
+      "bytes": 3976,
+      "sha256": "e99b33a2707fbadd0ed0fd961e8074fb16744c146a8d79e26bf09000b631efd4"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/observation.tsv",
+      "bytes": 1521,
+      "sha256": "42de8bd8f662800cd971eaa042b03f7e3174d9e9c8f3fa3b798bab715d8263d5"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/resources.tsv",
+      "bytes": 77,
+      "sha256": "f7981ab3558d88f4b4dc1d355f4a3eb6bcf3ddc479794bf1e01ffb1429c04a86"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/source-census.tsv",
+      "bytes": 166,
+      "sha256": "10d348bc31642dc4fa480899df77847ea8cfaf4f87dcc989598c7078a58ea3e2"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/status-1.page",
+      "bytes": 16384,
+      "sha256": "7ee0572ae3f0f544582a3d19a9a53e8daab105332824d545269de4710298892b"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/status-2.page",
+      "bytes": 16384,
+      "sha256": "7cc77fa51eb78f80be88b97d1587c0030a982011e5b92e9b6cdb13e3efa0083e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/status-3.page",
+      "bytes": 16384,
+      "sha256": "334656359b89c46d28cc106ede3e62786c9379b6dcc45ede11b5b5808f3778f9"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/stdout.log",
+      "bytes": 368,
+      "sha256": "ab9fb5a97431af16fae1dc676d4979fe289536eab46f0cda6eec37b5da29f2af"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/system.descriptor",
+      "bytes": 1536,
+      "sha256": "cc4a45aafbe803922045622dc6b779ca335e0ed46d4ac80f9f2c20c0d8ce14a5"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/transaction-1.descriptor",
+      "bytes": 1536,
+      "sha256": "12ad6636960dd3ba2011dfcdacacddaad107770093bd3cd1c53ca5e2195f0d31"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/recover/transactions.tsv",
+      "bytes": 37,
+      "sha256": "806680b5913754e665338fc502b55bbf0328772105e446dc25a0213c656cfecc"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native/result.json",
+      "bytes": 4070,
+      "sha256": "1d56f60047555c5f31f850097edfe4ffbb16673fb5d727ab9fca0ad5e589cdf6"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native-command.json",
+      "bytes": 847,
+      "sha256": "f1e3ff9157be622f04aac6bd5f59332cac6c371efef397fafd05653bd4ecb59a"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native-command.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8/native-command.stdout",
+      "bytes": 82,
+      "sha256": "e0e7537bd3c51a0bb81fe00b8f93f748d5beaa5446969d55c612e76419276eeb"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r8-native-preserved-files.json",
+      "bytes": 9536,
+      "sha256": "dc49dde85a3a0b213cabd75a689b3552ebca2f95fc3cd8c81f8a0fda0c5be979"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r9/build-receipt.json",
+      "bytes": 441,
+      "sha256": "59f6597fcf2c6a37bc8fe14f5b516b0d1a249a8dacf35f0630ddc9ead5f503db"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r9/build.jsonl",
+      "bytes": 20708,
+      "sha256": "40df5f08a848f62c4c9c148340b67996c91fecf72cdc3346a55e360105d7cc47"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/r9/build.stderr",
+      "bytes": 203,
+      "sha256": "6a563d935b6ec26ff142e6e716edfd160cebb3c6ef84eca57735008eceb4fb41"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/refresh-evidence.py",
+      "bytes": 2127,
+      "sha256": "2f59a4839e5db17aaf3ad7fbeb6398b4bee0f5c487ddcd5bdec0ac3e298cc35b"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/d1-file-accounting.json",
+      "bytes": 17911,
+      "sha256": "bfb9c4dbaee6f8f1e0ecf8f89c302eebf589854a381da5b2ccfd8c4c15716d01"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/d1-final.md",
+      "bytes": 8070,
+      "sha256": "dbe5d39db702adae25090d770dcd9280d3d772aa4f45f2ecdc56ec0f48c0ae6e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/design-d2.md",
+      "bytes": 10837,
+      "sha256": "558872e1cfa5a5a934f195a172a4f5a4b8650a7c24c749e96bb1005e9a25b2c5"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/final-evidence-audit.json",
+      "bytes": 19959,
+      "sha256": "93faecc89aeb2f154c98f3ac0f5bb82f3bdb29f1afc7060de7a533ed43984e78"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/first-effect-gate.md",
+      "bytes": 7313,
+      "sha256": "0543bd866ae680279c6c5be07f5a356f38a0361f92ee797a640ed9b2f23e4994"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/first-source-audit.json",
+      "bytes": 665,
+      "sha256": "031b7c98279730bfcb467c53fa655230f549345f5ed2d458c904e60fdb5be368"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/native-failure-r8-snapshot.json",
+      "bytes": 8865,
+      "sha256": "2394eaa726d7397426bcd852c638f43120b7c9d3276a2f60bbde3a6200cc6be3"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/native-gate-r8.md",
+      "bytes": 6204,
+      "sha256": "ad49e92bfd8d69f1b0a53707056ba237c73c8a1c3ca70d92b0a1fb4dc7758312"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/native-resume-design.md",
+      "bytes": 3139,
+      "sha256": "64542908c13f669d5794d84dd85dcb6ce42847390e0debedeb6b2860094a844f"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/native-resume-gate-r13.md",
+      "bytes": 4642,
+      "sha256": "185f277d08cb57f4792e1618fa10c9d293b5c5354ab722c2eed60f0cddf95aeb"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/native-resume-r12-source.json",
+      "bytes": 561,
+      "sha256": "fc46b46761952ecf6d753b59ed5585e3d777ac9347aa2a77a7149600da9a431d"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/native-resume-r13-source.json",
+      "bytes": 941,
+      "sha256": "f282f82fde3bd6b40f39f7b368e7da9819d5862c5028a4fbd26706f543784e37"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/native-source-r8.json",
+      "bytes": 694,
+      "sha256": "ea5aad8e6d64e8f06cb249734e28166a36477d946f43a473a21426b7f1dd0bf0"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/negative-gate-r5.md",
+      "bytes": 5506,
+      "sha256": "5adb6d1acf77fea574a881111b89b612f0238bc3c2a716cbe07578a59a9ac3fa"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/negative-source-r5.json",
+      "bytes": 622,
+      "sha256": "1ecdea01cd2041df3a43931328df877ac06293d559c7720ce8a883304e53e1e3"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/ocr-preview-final.json",
+      "bytes": 7103,
+      "sha256": "8b87135434a13b8df4c66b327569402561825a9a50c8e5d8a7aec009e5f6d642"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/ocr-preview-final.stderr",
+      "bytes": 128,
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/ocr-preview.json",
+      "bytes": 6926,
+      "sha256": "059aff4eb3d1a52054517fba41d9938558f8542ca0ce96d8173fb203b57a56d8"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/ocr-preview.stderr",
+      "bytes": 128,
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/ocr-rules.json",
+      "bytes": 15239,
+      "sha256": "9c7dfbe2656e5b3f91d85e9380f88fd70302c43ab814953a743709a8572e499a"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/ocr-rules.stderr",
+      "bytes": 128,
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/raw-corpus-audit.json",
+      "bytes": 1304,
+      "sha256": "a47a6bdc79111fa4c85f4e5d4c1fd474728ba363da4ca0c39d2c185e168a48da"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/review/raw-native-design.md",
+      "bytes": 5125,
+      "sha256": "59084a7c143ff7a2f95e3c28bbc6883b0a134bca81ec448424d41ab4d1b23993"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/run-command.py",
+      "bytes": 964,
+      "sha256": "810480ff36aa3ae3f7761becc3e4a4a27b0254ede4da2fb741e79858c68d8575"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/run-named.py",
+      "bytes": 2141,
+      "sha256": "412974a5996e186d2d02c1024898504a48d417450916daeace6b81072c5ec007"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/runner-tests.json",
+      "bytes": 421,
+      "sha256": "d9ac0aaedf380424499f1b1c6a049640b2406e742ae0069ea534bc1e33aaba2b"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/runner-tests.stderr",
+      "bytes": 101,
+      "sha256": "14837f8e57f1b4576ef558719c8da32ceaacd1dd193fcb9017b40df30dec1f8e"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/runner-tests.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/task-input.md",
+      "bytes": 4641,
+      "sha256": "70d136442560c9c27baa72b5f66ab2187271da0f49375da480dfeca949003062"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/test_runner.py",
+      "bytes": 1362,
+      "sha256": "507c5745bdf268d1982aa2b916cb75992fb15cce2e784f568f4b040aa8b666d0"
+    },
+    {
+      "path": "artifacts/dev3/status-residency-pressure-20261024/timing.jsonl",
+      "bytes": 1044,
+      "sha256": "1bbbd76be1bb35d7a5237b2b98ad322292d3580446a1e43870851ad8bdf7f9e9"
+    }
+  ],
+  "retention_snapshot": {
+    "source_elf": 2923384435,
+    "database": 48712320,
+    "receipt_review": 969481
+  },
+  "shared_build_cache": "artifacts/dev3/empty-transaction-recovery-20261024/target",
+  "original_failures_preserved": true,
+  "unchanged_tests_repeated": false,
+  "document_verifier": "NOT_RUN_PRE_PUSH_ONLY",
+  "inventory": {
+    "schema": "xadb-status-pressure-inventory-v1",
+    "status": "INPUTS_NOT_EXECUTION_EVIDENCE",
+    "mandatory": [
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_exact_hit_precedes_clean_and_round_robin_wraps",
+        "scenarios": 5,
+        "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_empty_destination_and_reused_cursor_are_hints",
+        "scenarios": 1,
+        "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_oldest_dirty_preserves_every_frame_until_flush",
+        "scenarios": 2,
+        "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_original_actor_continues_after_automatic_replacement",
+        "scenarios": 3,
+        "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_generation_limits_hit_replacement_and_busy",
+        "scenarios": 6,
+        "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_dirty_tie_uses_scan_order",
+        "scenarios": 2,
+        "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_foreign_owner_and_invalid_membership_are_no_effect",
+        "scenarios": 4,
+        "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_late_content_corruption_and_poison_are_not_hidden",
+        "scenarios": 2,
+        "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_retained_pin_flush_claim_and_poison_prevent_io",
+        "scenarios": 3,
+        "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_read_failure_retry_and_final_drift",
+        "scenarios": 3,
+        "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+      },
+      {
+        "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_late_registration_and_dpt_mismatch_fence",
+        "scenarios": 2,
+        "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+      }
+    ],
+    "functions": 11,
+    "scenarios": 33,
+    "native": {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::native::pressure::worker_status_pressure_native",
+      "histories": 1,
+      "processes": 3,
+      "runner": "scripts/dev3_status_pressure_native.py",
+      "raw_fixture_manifest": "crates/engine/tests/fixtures/dev3-status-pressure/manifest.json",
+      "continuation": "Retain original FAIL_RECOVERED_LEDGER; readonly saved-output audit with four-page replay reservation; same preserved ELF executes only original NOT_RUN reentry"
+    },
+    "static": 3,
+    "checker_functions": 7,
+    "artifact_runner_selftests": 3,
+    "s5": {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_s5_profiles_slots_and_obstruction",
+      "status": "NOT_RUN",
+      "scenarios": 438,
+      "profiles": [
+        1,
+        2,
+        3
+      ],
+      "frames": [
+        4,
+        8,
+        64
+      ],
+      "obstructions": "each occupied or empty candidate has ordinary and exhausted generation variants; MAX empty slot skips to first slot",
+      "limit": "64 frames use62resident+1empty payload within first extent; no65address claim"
+    },
+    "old_regressions": "NONE: new selector module does not change existing load/flush implementation",
+    "compiler_probes": "NONE: Copy observations and caller hint add no borrow capability; original guards unchanged",
+    "budgets": {
+      "memory_selector_seconds": 30,
+      "memory_batch_seconds": 120,
+      "native_history_seconds": 30,
+      "native_database_bytes": 25165824,
+      "receipt_bytes": 8388608
+    },
+    "full_stage_acceptance": false
+  },
+  "new_checker_functions_passed": 7,
+  "runner_functions_passed": 3,
+  "runtime_functions_passed": 11,
+  "runtime_scenarios_passed": 33,
+  "native_history_closed": true,
+  "native_actual_processes": 3,
+  "native_original_result": "FAIL_RECOVERED_LEDGER_PRESERVED",
+  "native_saved_output_audit": "PASS_WITH_CORRECTED_FOUR_PAGE_RESERVATION",
+  "native_new_reentry": "PASS_R13_CHECKER_R8_ELF",
+  "final_review": {
+    "path": "artifacts/dev3/status-residency-pressure-20261024/review/d1-final.md",
+    "status": "ACCEPTED_LIMITED_D1",
+    "paths": 38,
+    "ocr": 15,
+    "manual_excluded": 23,
+    "skipped": 0
+  }
+}

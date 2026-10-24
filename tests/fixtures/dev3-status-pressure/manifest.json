@@ -1,0 +1,101 @@
+{
+  "schema": "xadb-status-pressure-inventory-v1",
+  "status": "INPUTS_NOT_EXECUTION_EVIDENCE",
+  "mandatory": [
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_exact_hit_precedes_clean_and_round_robin_wraps",
+      "scenarios": 5,
+      "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_empty_destination_and_reused_cursor_are_hints",
+      "scenarios": 1,
+      "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_oldest_dirty_preserves_every_frame_until_flush",
+      "scenarios": 2,
+      "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_original_actor_continues_after_automatic_replacement",
+      "scenarios": 3,
+      "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_generation_limits_hit_replacement_and_busy",
+      "scenarios": 6,
+      "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_dirty_tie_uses_scan_order",
+      "scenarios": 2,
+      "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_foreign_owner_and_invalid_membership_are_no_effect",
+      "scenarios": 4,
+      "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_late_content_corruption_and_poison_are_not_hidden",
+      "scenarios": 2,
+      "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_retained_pin_flush_claim_and_poison_prevent_io",
+      "scenarios": 3,
+      "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_read_failure_retry_and_final_drift",
+      "scenarios": 3,
+      "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_late_registration_and_dpt_mismatch_fence",
+      "scenarios": 2,
+      "changed_path": "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs"
+    }
+  ],
+  "functions": 11,
+  "scenarios": 33,
+  "native": {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::native::pressure::worker_status_pressure_native",
+    "histories": 1,
+    "processes": 3,
+    "runner": "scripts/dev3_status_pressure_native.py",
+    "raw_fixture_manifest": "crates/engine/tests/fixtures/dev3-status-pressure/manifest.json",
+    "continuation": "Retain original FAIL_RECOVERED_LEDGER; readonly saved-output audit with four-page replay reservation; same preserved ELF executes only original NOT_RUN reentry"
+  },
+  "static": 3,
+  "checker_functions": 7,
+  "artifact_runner_selftests": 3,
+  "s5": {
+    "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::pressure_tests::empty_pressure_s5_profiles_slots_and_obstruction",
+    "status": "NOT_RUN",
+    "scenarios": 438,
+    "profiles": [
+      1,
+      2,
+      3
+    ],
+    "frames": [
+      4,
+      8,
+      64
+    ],
+    "obstructions": "each occupied or empty candidate has ordinary and exhausted generation variants; MAX empty slot skips to first slot",
+    "limit": "64 frames use62resident+1empty payload within first extent; no65address claim"
+  },
+  "old_regressions": "NONE: new selector module does not change existing load/flush implementation",
+  "compiler_probes": "NONE: Copy observations and caller hint add no borrow capability; original guards unchanged",
+  "budgets": {
+    "memory_selector_seconds": 30,
+    "memory_batch_seconds": 120,
+    "native_history_seconds": 30,
+    "native_database_bytes": 25165824,
+    "receipt_bytes": 8388608
+  },
+  "full_stage_acceptance": false
+}

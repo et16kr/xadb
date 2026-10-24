@@ -538,6 +538,21 @@ checker8은 borrow provenance/진단2+native protocol/full-image/dirty-home3+실
 활성 input8MiB/case-review32MiB와 별도 source/ELF/cache 보존을 유지한다.
 
 
+<a id="status-pressure-followup"></a>
+## Status 자동 상주 후보 선택의 구현 동반 입력
+
+2026-10-24 [소유 계약](../contracts/dev3-task-05-buffer-flush.md#status-residency-pressure)과
+[확정 manifest](../../tests/fixtures/dev3-status-pressure/manifest.json)에 신규11함수33scenario,
+static3·checker7·native1이력3PID를 등록한다. [source별 증거](../evidence/dev3-status-pressure-20261024.md)는
+원 r8 ledger oracle FAIL·완료한 producer/recovery와 수정 checker의 저장 결과 재검산·새 reentry를
+구분한다. 같은 실행 ELF를 쓰며 완료 시험을 반복하지 않았다. artifact runner 자체시험3은 제품 인수와 별도다.
+
+최종 S5에는 `empty_pressure_s5_profiles_slots_and_obstruction`의 profile1/2/3×frame4/8/64×모든
+후보 위치×ordinary/MAX generation438을 포함한다. Empty slot의 MAX도 실제 설정하여 다음 후보로
+넘어감을 검산한다. 현재는 ignored·NOT_RUN이며 S5 전수 inventory에서 누락하지 않는다. frame64는
+첫 extent 안의62상주+1empty·63주소를 쓰므로65주소 N+1·다음 extent 인수를 대신하지 않는다.
+중간에는 새 selector의 필수 사례만 선택하며 기존 load/flush/복구·전체 wrapper를 재실행하지 않는다.
+
 <a id="empty-transaction-followup"></a>
 ## 빈 거래 통합의 준비 inventory
 

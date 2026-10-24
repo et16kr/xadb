@@ -1287,3 +1287,6 @@ fn empty_history_retired_authority_continues_without_rewriting() {
 
 #[path = "empty_transactions_load_tests.rs"]
 mod load_tests;
+
+#[path = "empty_transactions_pressure_tests.rs"]
+mod pressure_tests;

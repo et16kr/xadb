@@ -1163,3 +1163,6 @@ fn history_fits<W: WriterNamespace>() -> bool {
 #[path = "empty_transactions_load.rs"]
 mod load;
 pub(in super::super::super) use load::EmptyLoadInstall;
+
+#[path = "empty_transactions_pressure.rs"]
+mod pressure;

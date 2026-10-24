@@ -733,3 +733,6 @@ mod resident;
 
 #[path = "empty_native_tests.rs"]
 mod empty;
+
+#[path = "pressure_native_tests.rs"]
+mod pressure;

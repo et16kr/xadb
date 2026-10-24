@@ -415,3 +415,7 @@ private sealed proof를 기존 load permit로 소비하며 기존 caller loan/Sh
 `recovery_empty_transactions.rs`의 canonical bank와 typed callback을 연결한다. 신규 memory/native test,
 raw literal/native oracle·compiler fixture 실제 경로를 JSON에 등록했다. source roots와 clean export 규칙은
 유지하며 [source별 증거](../evidence/dev3-empty-transaction-20261023.md#closed-recovery)에 한정한다.
+
+[Status 후보 선택](../contracts/dev3-task-05-buffer-flush.md#status-residency-pressure)은 기존 dirty frame의
+selector와 EmptyTransactions의 단계별 load/flush 관측을 추가한다. 실제 신규 경로만 관리 JSON의
+`dev3_status_residency_pressure`에 등록하며 새 package/dependency/source root는 없다.

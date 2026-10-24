@@ -907,3 +907,17 @@ allocator LSN·각 Status LSN·전역 issuer를 분리하고, 원 system descrip
 보존하고 제한 단위의 최종 독립 D1을 수용했다. 빈 거래의 실제 producer→flush/load→새 PID 복구/재진입으로
 AI 운영 실험 소비자1/3에 도달했으며 효과 비교는 NOT_RUN이다. 일반 pool/live undo·Commit ACK·행/index/catalog·
 일반 recovery/READY 및 전체 DEV3/S5는 미완료다.
+
+<a id="status-residency-pressure"></a>
+### Status 상주 후보 선택과 작은 압력 이력
+
+2026-10-24 원 SharedPool의 exact hit→clean/empty→eligible oldest dirty 선택을 기존
+EmptyTransactions에 연결했다. caller가 frame 번호를 직접 고르지 않고 원 actor의 Active/Aborting/
+Aborted image를 퇴출·재적재한다. dirty 후보는 관측만 반환하고 원 dedicated flusher가 별도 실행한다.
+새 pool/WAL 권한·page loan은 없으며 clean-first 선택 자체를 모든 dirty의 공정한 service로 간주하지 않는다.
+[source별 선택 검증](../evidence/dev3-status-pressure-20261024.md)은 신규11함수33scenario·static3·checker7과
+원 compile/oracle FAIL을 보존한다. native의 실제 producer/recovery2PID와 원 checker FAIL, 수정 검산기의 저장 결과 재평가·새 reentry1PASS를
+구분한다. 동일 실행 ELF의 실제3PID로 인계를 확인했으며 최종 독립 D1을 제한 단위로 수용했다.
+S5 profile3×frame4/8/64·위치/세대438은 ignored/NOT_RUN이다. 64frame 입력은 첫extent63주소 안의
+62상주+1empty이며 다음extent·일반 page 종류·live undo·큰 profile backing·FIFO 진행을 대신하지 않는다.
+AI 소비자1/3·효율 비교 NOT_RUN·전체 DEV3/S5 미완료를 유지한다.

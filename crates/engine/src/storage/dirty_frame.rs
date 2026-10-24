@@ -24,10 +24,14 @@ use xadb_foundation::error::Effect;
 
 mod registration;
 mod residency;
+mod status_pressure;
 mod status_residency;
 #[cfg(test)]
 pub(in crate::storage) use residency::test_support as residency_test_support;
 pub(in crate::storage) use residency::{AllocatorLoadClaim, ReloadSnapshot};
+#[cfg(test)]
+pub(in crate::storage) use status_pressure::test_support as pressure_test_support;
+pub(in crate::storage) use status_pressure::{StatusCandidate, StatusCandidateKind};
 pub(in crate::storage) use status_residency::StatusLoadSnapshot;
 #[cfg(test)]
 pub(in crate::storage) use status_residency::test_support as status_load_test_support;

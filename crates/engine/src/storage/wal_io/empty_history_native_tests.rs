@@ -131,3 +131,10 @@ fn worker_empty_history_native() {
     fs::write(output.join("fd.tsv"), t.fd_events.join("\n") + "\n").unwrap();
     fs::write(output.join("summary.txt"), format!("actual_live_flushes=3\nfull_pages_compared=3\nwal_frames_compared=5\nhandles_peak={}\nfds_peak={}\nremaining_handles=0\nremaining_fds=0\nclosed_recovery=NOT_RUN\n", t.peak, t.fd_peak)).unwrap();
 }
+
+#[test]
+fn empty_pressure_native_resource_gate() {
+    let layout = wal::EmptyTransactions::<Writer>::pressure_test_layout();
+    println!("pressure_native_wrapper={layout:?}");
+    assert!(layout.2);
+}

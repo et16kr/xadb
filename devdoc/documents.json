@@ -1862,6 +1862,16 @@
       "path": "evidence/dev3-empty-transaction-20261023.json",
       "role": "evidence",
       "title": "DEV3 빈 거래 통합 source별 선택 증거 색인"
+    },
+    "dev3-status-pressure-20261024.md": {
+      "path": "evidence/dev3-status-pressure-20261024.md",
+      "role": "evidence",
+      "title": "DEV3 Status residency 후보 선택 검증"
+    },
+    "dev3-status-pressure-20261024.json": {
+      "path": "evidence/dev3-status-pressure-20261024.json",
+      "role": "evidence",
+      "title": "DEV3 Status 후보 source별 선택 증거 색인"
     }
   }
 }

@@ -4763,5 +4763,23 @@
     "history_contract_ref": "dev3-obligation-format.md#empty-transaction-flush",
     "load_contract_ref": "dev3-obligation-format.md#empty-transaction-load",
     "recovery_contract_ref": "dev3-recovery-effects.md#empty-transaction-recovery"
+  },
+  "dev3_status_residency_pressure": {
+    "status": "implemented_selectively_verified_independent_d1_accepted_limited",
+    "contract_ref": "dev3-task-05-buffer-flush.md#status-residency-pressure",
+    "evidence_ref": "dev3-status-pressure-20261024.json",
+    "implemented_paths": [
+      "crates/engine/src/storage/dirty_frame/status_pressure.rs",
+      "crates/engine/src/storage/wal_io/empty_transactions_pressure.rs",
+      "crates/engine/src/storage/wal_io/empty_transactions_pressure_tests.rs",
+      "crates/engine/src/storage/wal_io/recovery_effect/pressure_native_tests.rs",
+      "scripts/dev3_status_pressure_literals.py",
+      "scripts/dev3_status_pressure_native.py",
+      "scripts/test_dev3_status_pressure.py",
+      "crates/engine/tests/fixtures/dev3-status-pressure",
+      "tests/fixtures/dev3-status-pressure/manifest.json"
+    ],
+    "source_roots_changed": false,
+    "full_stage_acceptance": false
   }
 }
