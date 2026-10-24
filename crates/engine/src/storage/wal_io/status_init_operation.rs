@@ -16,6 +16,7 @@ use crate::storage::{
     session_fence::SessionFence,
     status_home::{STATUS_HOME_BYTES, StatusHome, StatusHomePage},
     transaction_record::TransactionStatusCell,
+    undo_record,
     wal_frame::{
         self, FrameEnvelope, FrameExpectation, FrameKind, RedoKind, RedoRecordView, RedoTarget,
         WalError, WalFrameHeader,
@@ -36,6 +37,115 @@ const DELTA: usize = 15040;
 const PATCH: std::ops::Range<usize> = 15248..21520;
 const INIT: std::ops::Range<usize> = 21520..37968;
 const HOME: std::ops::Range<usize> = 16128..16352;
+
+#[path = "mixed_system_init.rs"]
+pub(super) mod mixed;
+
+/// The legacy wrappers can construct only Status. Mixed scope is selected by
+/// the separate plan3 role-bearing wrapper, never by a stored native tag.
+#[derive(Clone, Copy)]
+enum InitScope {
+    Status,
+    Mixed(mixed::Kind),
+}
+impl InitScope {
+    fn undo(self) -> bool {
+        matches!(self, Self::Mixed(mixed::Kind::UndoRoot))
+    }
+    fn body_bytes(self) -> usize {
+        if self.undo() { 432 } else { 224 }
+    }
+    fn frame_bytes(self) -> usize {
+        FRAME_BYTES + self.body_bytes() - 224
+    }
+    fn home(self) -> std::ops::Range<usize> {
+        if self.undo() {
+            undo_record::INITIAL_UNDO_CELL
+        } else {
+            HOME
+        }
+    }
+    fn body(self) -> std::ops::Range<usize> {
+        STATUS_BODY.start..STATUS_BODY.end + self.body_bytes() - 224
+    }
+    fn delta(self) -> usize {
+        DELTA + self.body_bytes() - 224
+    }
+    fn patch(self) -> std::ops::Range<usize> {
+        PATCH.start + self.body_bytes() - 224..PATCH.end + self.body_bytes() - 224
+    }
+    fn init(self) -> std::ops::Range<usize> {
+        INIT.start + self.body_bytes() - 224..INIT.end + self.body_bytes() - 224
+    }
+    fn owner(self) -> u64 {
+        if self.undo() { 3 } else { 2 }
+    }
+    fn kind(self) -> PageKind {
+        if self.undo() {
+            PageKind::Undo
+        } else {
+            PageKind::TransactionStatus
+        }
+    }
+    fn native(self) -> u8 {
+        if self.undo() { 3 } else { 5 }
+    }
+    fn budget(self) -> OperationBudget {
+        match self {
+            Self::Status => OperationBudget::StatusInit114688,
+            Self::Mixed(_) => OperationBudget::MixedInit114688,
+        }
+    }
+    fn accepts_population(self, population: AllocationPopulation) -> bool {
+        match self {
+            Self::Status => matches!(
+                population,
+                AllocationPopulation::Empty | AllocationPopulation::Status
+            ),
+            Self::Mixed(_) => population == AllocationPopulation::MixedSystem,
+        }
+    }
+    fn finished(self, profile: &Profile, batch: Batch, lsn: PageLsn) -> obligation::DescriptorSpec {
+        match self {
+            Self::Status => operation::finished_status_descriptor(profile, batch, lsn),
+            Self::Mixed(kind) => operation::finished_mixed_descriptor(profile, batch, lsn, kind),
+        }
+    }
+    fn page_lsn(self, bytes: &[u8; PAGE_BYTES], identity: &PageIdentity) -> Result<PageLsn> {
+        if self.undo() {
+            undo_record::initial_undo_page_lsn(bytes, *identity)
+                .map_err(|_| SemanticError::PageMismatch)
+        } else {
+            status_lsn(bytes, identity)
+        }
+    }
+    fn encode_page(
+        self,
+        identity: &PageIdentity,
+        lsn: PageLsn,
+        output: &mut [u8; PAGE_BYTES],
+    ) -> Result<()> {
+        if self.undo() {
+            undo_record::encode_initial_undo_page(*identity, lsn, output)
+                .map_err(|_| SemanticError::PageMismatch)
+        } else {
+            encode_status_image(identity, lsn, output)
+        }
+    }
+}
+
+/// A short borrowed internal context keeps the old pure expectation API fixed.
+/// It cannot be returned as a role or installation permit.
+struct ScopedExpected<'a, 'p> {
+    context: &'a InitExpected<'p>,
+    scope: InitScope,
+}
+impl<'p> std::ops::Deref for ScopedExpected<'_, 'p> {
+    type Target = InitExpected<'p>;
+    fn deref(&self) -> &Self::Target {
+        self.context
+    }
+}
 
 /// Inputs have live authority only because the upper bound owns the actual role
 /// and reservation. Full validation below is still required before preparation.
@@ -161,7 +271,7 @@ fn profile_ref(profile: &Profile) -> ControlRef {
         digest: profile.digest(),
     }
 }
-fn header(plan: &InitExpected<'_>) -> Result<WalFrameHeader> {
+fn header(plan: &ScopedExpected<'_, '_>) -> Result<WalFrameHeader> {
     Ok(WalFrameHeader {
         stream: plan.frame.stream,
         kind: FrameKind::System,
@@ -184,13 +294,13 @@ fn target(identity: &PageIdentity, kind: PageKind) -> RedoTarget {
         level: 0,
     }
 }
-fn plan_index(plan: &InitExpected<'_>) -> Result<usize> {
+fn plan_index(plan: &ScopedExpected<'_, '_>) -> Result<usize> {
     use SemanticError::*;
     let namespace = plan.profile.spec().namespace;
     require(
         plan.allocator.database == namespace.database
             && plan.payload.database == namespace.database
-            && plan.payload.owner.get() == 2
+            && plan.payload.owner.get() == plan.scope.owner()
             && plan.payload.owner_generation.get() == 1
             && plan.frame.stream.database == namespace.database
             && plan.frame.stream.timeline == namespace.timeline,
@@ -214,7 +324,7 @@ fn plan_index(plan: &InitExpected<'_>) -> Result<usize> {
     require(plan.batch.birth == plan.frame.previous_lsn, OrderMismatch)?;
     Ok(index)
 }
-fn token(plan: &InitExpected<'_>) -> Result<[u8; 96]> {
+fn token(plan: &ScopedExpected<'_, '_>) -> Result<[u8; 96]> {
     let mut item = [0; 96];
     item[0] = 1;
     item[1] = 3;
@@ -226,21 +336,25 @@ fn token(plan: &InitExpected<'_>) -> Result<[u8; 96]> {
     put64(&mut item, 72, plan.batch.birth);
     Ok(item)
 }
-fn allocated(plan: &InitExpected<'_>) -> AllocationEntry {
+fn allocated(plan: &ScopedExpected<'_, '_>) -> AllocationEntry {
     AllocationEntry::Allocated {
         generation: plan.payload.page.incarnation,
         object: plan.payload.owner,
         object_generation: plan.payload.owner_generation,
-        kind: PageKind::TransactionStatus,
+        kind: plan.scope.kind(),
     }
 }
 
 /// Ends before any entry array, Status codec or output write exists.
 fn validate_before(
-    plan: &InitExpected<'_>,
+    plan: &ScopedExpected<'_, '_>,
     before: &[u8; PAGE_BYTES],
     population: AllocationPopulation,
 ) -> Result<()> {
+    require(
+        plan.scope.accepts_population(population),
+        SemanticError::StateMismatch,
+    )?;
     plan_index(plan)?;
     let old = allocation_page::decode_allocation_page(
         before,
@@ -254,7 +368,7 @@ fn validate_before(
         Some(plan.batch),
         plan.before_descriptor,
         plan.batch.owner.id(),
-        OperationBudget::StatusInit114688,
+        plan.scope.budget(),
         population,
         TerminalOutcome::Cancelled,
     )?;
@@ -291,22 +405,53 @@ pub(super) fn prepare_init_in_population<'out, 's>(
     population: AllocationPopulation,
 ) -> Result<PreparedInit<'out, 's>> {
     let expected = plan.expected()?;
-    validate_before(&expected, before, population)?;
-    let h = header(&expected)?;
-    let bytes = &mut output[..FRAME_BYTES];
+    prepare_scoped(
+        &ScopedExpected {
+            context: &expected,
+            scope: InitScope::Status,
+        },
+        plan.prefix,
+        plan.role.fence,
+        before,
+        output,
+        allocator_after,
+        status_after,
+        population,
+    )
+}
+#[allow(
+    clippy::too_many_arguments,
+    reason = "short preparation context borrows existing caller loans and authority"
+)]
+fn prepare_scoped<'out, 's>(
+    expected: &ScopedExpected<'_, '_>,
+    prefix: WalPrefix,
+    fence: &'s SessionFence,
+    before: &[u8; PAGE_BYTES],
+    output: &'out mut [u8; 65536],
+    allocator_after: &'out mut [u8; PAGE_BYTES],
+    status_after: &'out mut [u8; PAGE_BYTES],
+    population: AllocationPopulation,
+) -> Result<PreparedInit<'out, 's>> {
+    validate_before(expected, before, population)?;
+    let h = header(expected)?;
+    let bytes = &mut output[..expected.scope.frame_bytes()];
     bytes.fill(0);
-    encode_allocator(&expected, before, h.lsn, bytes, allocator_after)?;
+    encode_allocator(expected, before, h.lsn, bytes, allocator_after)?;
     encode_finished_descriptor(
-        &plan.profile,
-        plan.batch,
+        &expected.profile,
+        expected.batch,
         PageLsn(h.lsn),
         &mut bytes[352..1888],
+        expected.scope,
     )?;
     // Neither allocation entry array nor DescriptorSpec survives into this helper.
-    encode_status_image(&plan.payload, PageLsn(h.lsn), status_after)?;
-    encode_group(&expected, h, before, bytes, allocator_after, status_after)?;
+    expected
+        .scope
+        .encode_page(&expected.payload, PageLsn(h.lsn), status_after)?;
+    encode_group(expected, h, before, bytes, allocator_after, status_after)?;
     validate_expected_in_population(
-        &expected,
+        expected,
         before,
         bytes,
         allocator_after,
@@ -317,13 +462,13 @@ pub(super) fn prepare_init_in_population<'out, 's>(
         bytes,
         allocator_after,
         status_after,
-        prefix: plan.prefix,
+        prefix,
         header: h,
-        fence: plan.role.fence,
+        fence,
     })
 }
 fn encode_allocator(
-    plan: &InitExpected<'_>,
+    plan: &ScopedExpected<'_, '_>,
     before: &[u8; PAGE_BYTES],
     lsn: u64,
     bytes: &mut [u8],
@@ -370,8 +515,9 @@ fn encode_finished_descriptor(
     batch: Batch,
     lsn: PageLsn,
     output: &mut [u8],
+    scope: InitScope,
 ) -> Result<()> {
-    let desc = operation::finished_status_descriptor(profile, batch, lsn);
+    let desc = scope.finished(profile, batch, lsn);
     obligation::encode_descriptor(&desc, output).map_err(|_| SemanticError::Corrupt)
 }
 pub(super) fn validate_finished(
@@ -379,6 +525,15 @@ pub(super) fn validate_finished(
     batch: Batch,
     raw: &[u8; 1536],
     lsn: PageLsn,
+) -> Result<()> {
+    validate_finished_scoped(profile, batch, raw, lsn, InitScope::Status)
+}
+fn validate_finished_scoped(
+    profile: Profile,
+    batch: Batch,
+    raw: &[u8; 1536],
+    lsn: PageLsn,
+    scope: InitScope,
 ) -> Result<()> {
     require(
         batch.count() == 1 && batch.mask & 1 == 0 && batch.birth.checked_add(1) == Some(lsn.0),
@@ -396,7 +551,7 @@ pub(super) fn validate_finished(
             SemanticError::Corrupt
         }
     })?;
-    let expected = operation::finished_status_descriptor(&profile, batch, lsn);
+    let expected = scope.finished(&profile, batch, lsn);
     require(
         current.owner == expected.owner,
         SemanticError::StateMismatch,
@@ -437,7 +592,7 @@ fn encode_status_image(
     .map_err(|_| SemanticError::PageMismatch)
 }
 fn encode_group(
-    plan: &InitExpected<'_>,
+    plan: &ScopedExpected<'_, '_>,
     h: WalFrameHeader,
     before: &[u8; PAGE_BYTES],
     bytes: &mut [u8],
@@ -448,7 +603,7 @@ fn encode_group(
     put16(bytes, 164, 1);
     put16(bytes, 166, 10);
     put16(bytes, 168, 192);
-    put32(bytes, 172, (FRAME_BYTES - 192) as u32);
+    put32(bytes, 172, (plan.scope.frame_bytes() - 192) as u32);
     put64(bytes, 176, h.lsn);
     put64(bytes, 184, plan.batch.birth);
     bytes[192] = 2;
@@ -461,7 +616,7 @@ fn encode_group(
     put16(bytes, 284, 2);
     put16(bytes, 290, 1);
     put16(bytes, 292, 2);
-    put32(bytes, 296, 12896);
+    put32(bytes, 296, (12544 + 128 + plan.scope.body_bytes()) as u32);
     put32(bytes, 308, 208);
     put32(bytes, 312, 22720);
     put16(bytes, 1888, 10);
@@ -476,33 +631,37 @@ fn encode_group(
     put32(bytes, 2164, 12544);
     bytes[2168..2200].copy_from_slice(&content_digest(&before[CELL]));
     bytes[2200..2232].copy_from_slice(&content_digest(&allocator_after[CELL]));
-    bytes[STATUS_NATIVE] = 5;
+    bytes[STATUS_NATIVE] = plan.scope.native();
     bytes[STATUS_NATIVE + 1] = 2;
     put16(bytes, STATUS_NATIVE + 2, 1);
     put16(bytes, STATUS_NATIVE + 4, u16::MAX);
-    put16(bytes, STATUS_NATIVE + 10, 16128);
-    put32(bytes, STATUS_NATIVE + 16, 224);
-    put32(bytes, STATUS_NATIVE + 20, 352);
+    put16(bytes, STATUS_NATIVE + 10, plan.scope.home().start as u16);
+    put32(bytes, STATUS_NATIVE + 16, plan.scope.body_bytes() as u32);
+    put32(
+        bytes,
+        STATUS_NATIVE + 20,
+        (128 + plan.scope.body_bytes()) as u32,
+    );
     bytes[STATUS_NATIVE + 56..STATUS_NATIVE + 88]
-        .copy_from_slice(&content_digest(&status_after[HOME]));
-    bytes[STATUS_BODY].copy_from_slice(&status_after[HOME]);
-    bytes[DELTA] = 2;
-    bytes[DELTA + 1] = 1;
-    bytes[DELTA + 16..DELTA + 112].copy_from_slice(&token(plan)?);
+        .copy_from_slice(&content_digest(&status_after[plan.scope.home()]));
+    bytes[plan.scope.body()].copy_from_slice(&status_after[plan.scope.home()]);
+    bytes[plan.scope.delta()] = 2;
+    bytes[plan.scope.delta() + 1] = 1;
+    bytes[plan.scope.delta() + 16..plan.scope.delta() + 112].copy_from_slice(&token(plan)?);
     wal_frame::encode_patch_record(
         target(&plan.allocator, PageKind::Allocation),
         plan.frame.previous_lsn,
         10144,
         &allocator_after[CELL],
-        &mut bytes[PATCH],
+        &mut bytes[plan.scope.patch()],
     )
     .map_err(frame_error)?;
     wal_frame::encode_init_record(
         plan.payload.database,
         h.lsn,
-        target(&plan.payload, PageKind::TransactionStatus),
+        target(&plan.payload, plan.scope.kind()),
         status_after,
-        &mut bytes[INIT],
+        &mut bytes[plan.scope.init()],
     )
     .map_err(frame_error)?;
     wal_frame::finish_semantic_envelope(h, 2, bytes).map_err(frame_error)?;
@@ -530,7 +689,10 @@ pub(super) fn validate_expected(
     status_after: &[u8; PAGE_BYTES],
 ) -> Result<()> {
     validate_expected_in_population(
-        plan,
+        &ScopedExpected {
+            context: plan,
+            scope: InitScope::Status,
+        },
         before,
         bytes,
         allocator_after,
@@ -539,7 +701,7 @@ pub(super) fn validate_expected(
     )
 }
 fn validate_expected_in_population(
-    plan: &InitExpected<'_>,
+    plan: &ScopedExpected<'_, '_>,
     before: &[u8; PAGE_BYTES],
     bytes: &[u8],
     allocator_after: &[u8; PAGE_BYTES],
@@ -548,20 +710,21 @@ fn validate_expected_in_population(
 ) -> Result<()> {
     validate_before(plan, before, population)?;
     let h = validate_header(plan, bytes)?;
-    validate_finished(
+    validate_finished_scoped(
         plan.profile,
         plan.batch,
         bytes[352..1888].try_into().expect("validated span"),
         PageLsn(h.lsn),
+        plan.scope,
     )?;
     validate_allocator_transition(plan, before, bytes, allocator_after, h)?;
     // No allocation Page/descriptor/entry array is retained in this Status phase.
     validate_status_transition(plan, bytes, status_after, h)?;
     Ok(())
 }
-fn validate_header(plan: &InitExpected<'_>, bytes: &[u8]) -> Result<WalFrameHeader> {
+fn validate_header(plan: &ScopedExpected<'_, '_>, bytes: &[u8]) -> Result<WalFrameHeader> {
     use SemanticError::*;
-    require(bytes.len() == FRAME_BYTES, Corrupt)?;
+    require(bytes.len() == plan.scope.frame_bytes(), Corrupt)?;
     let env = wal_frame::decode_semantic_envelope(
         bytes,
         FrameExpectation {
@@ -582,7 +745,7 @@ fn validate_header(plan: &InitExpected<'_>, bytes: &[u8]) -> Result<WalFrameHead
     require(
         get16(bytes, 168) == 192
             && get16(bytes, 170) == 0
-            && get32(bytes, 172) == (FRAME_BYTES - 192) as u32
+            && get32(bytes, 172) == (plan.scope.frame_bytes() - 192) as u32
             && bytes[192] == 2
             && zero(&bytes[193..200])
             && get32(bytes, 280) == 1536
@@ -592,7 +755,7 @@ fn validate_header(plan: &InitExpected<'_>, bytes: &[u8]) -> Result<WalFrameHead
             && get16(bytes, 290) == 1
             && get16(bytes, 292) == 2
             && get16(bytes, 294) == 0
-            && get32(bytes, 296) == 12896
+            && get32(bytes, 296) == (12544 + 128 + plan.scope.body_bytes()) as u32
             && get32(bytes, 300) == 0
             && get32(bytes, 304) == 0
             && get32(bytes, 308) == 208
@@ -626,7 +789,7 @@ fn validate_header(plan: &InitExpected<'_>, bytes: &[u8]) -> Result<WalFrameHead
     Ok(env.header)
 }
 fn validate_allocator_transition(
-    plan: &InitExpected<'_>,
+    plan: &ScopedExpected<'_, '_>,
     before: &[u8; PAGE_BYTES],
     bytes: &[u8],
     after: &[u8; PAGE_BYTES],
@@ -685,14 +848,14 @@ fn validate_allocator_transition(
         )?;
     }
     require(
-        bytes[DELTA] == 2
-            && bytes[DELTA + 1] == 1
-            && zero(&bytes[DELTA + 2..DELTA + 16])
-            && bytes[DELTA + 16..DELTA + 112] == token(plan)?
-            && zero(&bytes[DELTA + 112..DELTA + 208]),
+        bytes[plan.scope.delta()] == 2
+            && bytes[plan.scope.delta() + 1] == 1
+            && zero(&bytes[plan.scope.delta() + 2..plan.scope.delta() + 16])
+            && bytes[plan.scope.delta() + 16..plan.scope.delta() + 112] == token(plan)?
+            && zero(&bytes[plan.scope.delta() + 112..plan.scope.delta() + 208]),
         InventoryMismatch,
     )?;
-    let redo = wal_frame::decode_redo_record(h, &bytes[PATCH]).map_err(frame_error)?;
+    let redo = wal_frame::decode_redo_record(h, &bytes[plan.scope.patch()]).map_err(frame_error)?;
     require(redo.prior_lsn == plan.batch.birth, OrderMismatch)?;
     require(
         redo.kind == RedoKind::Patch
@@ -703,44 +866,47 @@ fn validate_allocator_transition(
     )
 }
 fn validate_status_transition(
-    plan: &InitExpected<'_>,
+    plan: &ScopedExpected<'_, '_>,
     bytes: &[u8],
     after: &[u8; PAGE_BYTES],
     h: WalFrameHeader,
 ) -> Result<()> {
     use SemanticError::*;
     let n = STATUS_NATIVE;
-    require(bytes[n] == 5, UnsupportedNativeBody)?;
+    require(bytes[n] == plan.scope.native(), UnsupportedNativeBody)?;
     require(
         bytes[n + 1] == 2
             && get16(bytes, n + 2) == 1
             && get16(bytes, n + 4) == u16::MAX
             && get16(bytes, n + 6) == 0
             && get16(bytes, n + 8) == 0
-            && get16(bytes, n + 10) == 16128
+            && get16(bytes, n + 10) == plan.scope.home().start as u16
             && get32(bytes, n + 12) == 0
-            && get32(bytes, n + 16) == 224
-            && get32(bytes, n + 20) == 352
+            && get32(bytes, n + 16) == plan.scope.body_bytes() as u32
+            && get32(bytes, n + 20) == (128 + plan.scope.body_bytes()) as u32
             && zero(&bytes[n + 24..n + 56])
             && zero(&bytes[n + 88..n + 128]),
         Corrupt,
     )?;
     require(
-        bytes[n + 56..n + 88] == content_digest(&bytes[STATUS_BODY]),
+        bytes[n + 56..n + 88] == content_digest(&bytes[plan.scope.body()]),
         Corrupt,
     )?;
-    require(bytes[STATUS_BODY] == after[HOME], PageMismatch)?;
-    let redo = wal_frame::decode_redo_record(h, &bytes[INIT]).map_err(frame_error)?;
+    require(
+        bytes[plan.scope.body()] == after[plan.scope.home()],
+        PageMismatch,
+    )?;
+    let redo = wal_frame::decode_redo_record(h, &bytes[plan.scope.init()]).map_err(frame_error)?;
     require(
         redo.kind == RedoKind::Init
-            && redo.target == target(&plan.payload, PageKind::TransactionStatus)
+            && redo.target == target(&plan.payload, plan.scope.kind())
             && redo.prior_lsn == 0
             && redo.offset == 0
             && redo.data == after,
         PageMismatch,
     )?;
     require(
-        status_lsn(after, &plan.payload)? == PageLsn(h.lsn),
+        plan.scope.page_lsn(after, &plan.payload)? == PageLsn(h.lsn),
         OrderMismatch,
     )
 }
@@ -784,6 +950,26 @@ pub(super) fn materialize_analysis_in_population(
     status_after: &mut [u8; PAGE_BYTES],
     population: AllocationPopulation,
 ) -> Result<()> {
+    materialize_scoped(
+        &ScopedExpected {
+            context: plan,
+            scope: InitScope::Status,
+        },
+        before,
+        bytes,
+        allocator_after,
+        status_after,
+        population,
+    )
+}
+fn materialize_scoped(
+    plan: &ScopedExpected<'_, '_>,
+    before: &[u8; PAGE_BYTES],
+    bytes: &[u8],
+    allocator_after: &mut [u8; PAGE_BYTES],
+    status_after: &mut [u8; PAGE_BYTES],
+    population: AllocationPopulation,
+) -> Result<()> {
     validate_before(plan, before, population)?;
     let h = validate_header(plan, bytes)?;
     allocator_after.copy_from_slice(before);
@@ -791,7 +977,7 @@ pub(super) fn materialize_analysis_in_population(
     put64(allocator_after, 64, h.lsn);
     let digest = content_digest(&allocator_after[..page::DIGEST_OFFSET]);
     allocator_after[page::DIGEST_OFFSET..].copy_from_slice(&digest);
-    status_after.copy_from_slice(&bytes[INIT.start + 64..INIT.end]);
+    status_after.copy_from_slice(&bytes[plan.scope.init().start + 64..plan.scope.init().end]);
     validate_expected_in_population(
         plan,
         before,
@@ -963,15 +1149,20 @@ pub(super) fn status_codec_bytes() -> usize {
         + budget::HASH
 }
 pub(super) fn plan_bytes() -> usize {
-    budget::PLANS.max(
-        6 * size_of::<InitPlan<'static, 'static>>()
-            + 2 * size_of::<InitExpected<'static>>()
-            + 128
-            + 2 * size_of::<PreparedInit<'static, 'static>>(),
-    )
+    budget::PLANS
+        .max(
+            6 * size_of::<InitPlan<'static, 'static>>()
+                + 2 * size_of::<InitExpected<'static>>()
+                + 128
+                + 2 * size_of::<ScopedExpected<'static, 'static>>()
+                + 2 * size_of::<PreparedInit<'static, 'static>>(),
+        )
+        .max(mixed::plan_bytes())
 }
 pub(super) fn temporary_bytes() -> usize {
-    budget::TEMPORARIES.max(status_codec_bytes())
+    budget::TEMPORARIES
+        .max(status_codec_bytes())
+        .max(mixed::codec_bytes())
 }
 /// The reader has no descriptor/entry array or Status encoder. During page
 /// checksum, its caller's Profile and both identity inputs remain live, and
@@ -1030,6 +1221,8 @@ pub(super) fn fits() -> bool {
         && status_codec_bytes() <= 8192
         && temporary_bytes() <= 16384
         && plan_bytes() <= 4096
+        && mixed::plan_bytes() <= plan_bytes()
+        && mixed::codec_bytes() <= status_codec_bytes()
         && 12 * size_of::<&[u8]>()
             + 8 * size_of::<&()>()
             + 4 * size_of::<crate::api::Namespace>()

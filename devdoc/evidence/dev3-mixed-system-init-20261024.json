@@ -1,0 +1,586 @@
+{
+  "schema_version": 1,
+  "unit": "D3-MIXED-SYSTEM-INIT-001",
+  "base_commit": "b5bdd99",
+  "status": "ACCEPTED_LIMITED_D1_WITH_RECORDED_SCOPE_DEVIATION",
+  "contract_ref": "dev3-status-init.md#mixed-system-init",
+  "full_stage_acceptance": false,
+  "consumer_completion": false,
+  "ai_experiment_completed_consumers": 1,
+  "scope": "Sealed mixed Status/FreeUndo INIT preparation and trusted mixed reservation population only",
+  "sources": [
+    {
+      "id": "r0",
+      "source_sha256": "c6b47fe6960df1da7b2f80f6d4d2ac6b4270a686c6706e60c9c11158ceff6288",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 101,
+      "elapsed_seconds": 7.316609353998501,
+      "time": "2026-10-24T05:56:21.654415+00:00",
+      "receipt": {
+        "path": "artifacts/dev3/mixed-system-init-20261024/r0/build-receipt.json",
+        "bytes": 355,
+        "sha256": "42c47895820b6bf50d9ffda47525691439bdacd51b750ead578a48d6d40ac9ce"
+      },
+      "source_directory": "artifacts/dev3/mixed-system-init-20261024/r0/source"
+    },
+    {
+      "id": "r1",
+      "source_sha256": "43f6c8598d1176d2f10cbb786db8cfa2e1532a7778d1ec1afa88e7f8bc91a7e8",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 13.71648081999956,
+      "time": "2026-10-24T06:02:06.889824+00:00",
+      "binary_sha256": "89393f7c8a2b551587e7dde9567beec4755628adbf78de817a76e54cfaf852ab",
+      "receipt": {
+        "path": "artifacts/dev3/mixed-system-init-20261024/r1/build-receipt.json",
+        "bytes": 440,
+        "sha256": "f8e70e3d5ee38527d68f36e1100b1183fd93820081fa4b8d74054ca8560efe3f"
+      },
+      "source_directory": "artifacts/dev3/mixed-system-init-20261024/r1/source"
+    },
+    {
+      "id": "r2",
+      "source_sha256": "9f6099b214df467b5ddb1c20eb0dccc1e39d5974aefb4dd3685e741d5587387d",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 101,
+      "elapsed_seconds": 7.131408549999833,
+      "time": "2026-10-24T06:03:41.515073+00:00",
+      "receipt": {
+        "path": "artifacts/dev3/mixed-system-init-20261024/r2/build-receipt.json",
+        "bytes": 355,
+        "sha256": "c57af84902f6e847052d79b30f516b9b6c9197ccbe154b087d4f68283f3b17da"
+      },
+      "source_directory": "artifacts/dev3/mixed-system-init-20261024/r2/source"
+    },
+    {
+      "id": "r3",
+      "source_sha256": "6027514fb48095fad114851759664a91fa6a6ecc302790202d47963a6d3729a5",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 13.590253819000282,
+      "time": "2026-10-24T06:04:44.519159+00:00",
+      "binary_sha256": "94461c657b668ce40798dd59948d0462cd9fbce0bc5fe89af651b58af4633d69",
+      "receipt": {
+        "path": "artifacts/dev3/mixed-system-init-20261024/r3/build-receipt.json",
+        "bytes": 441,
+        "sha256": "a67ad584aa8b43ceec81d2f64663d06525658b3d3a524f0a2d7560292ea3d75e"
+      },
+      "source_directory": "artifacts/dev3/mixed-system-init-20261024/r3/source"
+    },
+    {
+      "id": "r4",
+      "source_sha256": "f9918e71360004f93d9a308412057821414b54304ee26630bef074a97d697ec8",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 15.092600664000202,
+      "time": "2026-10-24T06:06:08.489795+00:00",
+      "binary_sha256": "84d19ab960f9b5f747190e3191b8cffa2e968fd88178e5daa5beee8690d933b3",
+      "receipt": {
+        "path": "artifacts/dev3/mixed-system-init-20261024/r4/build-receipt.json",
+        "bytes": 441,
+        "sha256": "2b5596aeefd09a2e0908ef0a1a0ae83b402081d0e48e5615abb7a87237cf472f"
+      },
+      "source_directory": "artifacts/dev3/mixed-system-init-20261024/r4/source"
+    },
+    {
+      "id": "r5",
+      "source_sha256": "3a34867784e6b645b247f7463d99601b21ef8eadfae05255ac26f68daeee956f",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 14.836434950000694,
+      "time": "2026-10-24T06:09:33.257123+00:00",
+      "binary_sha256": "4319394306d83eedb2577b685196b6e201a3e1131082c02f2b21142a1c664605",
+      "receipt": {
+        "path": "artifacts/dev3/mixed-system-init-20261024/r5/build-receipt.json",
+        "bytes": 441,
+        "sha256": "5d8498b005ce19c53e34fea07f6c1d1796b94f5a0f212ff5dba43c7505f569f0"
+      },
+      "source_directory": "artifacts/dev3/mixed-system-init-20261024/r5/source"
+    },
+    {
+      "id": "r6",
+      "source_sha256": "86530ed5ca43acf42889d4f71a93e0090f76df485c3ecbc6e0345d566ee7b1d0",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 14.26503940299881,
+      "time": "2026-10-24T06:12:38.365971+00:00",
+      "binary_sha256": "2441031b1c747c0db89a242f977859b1cbedbd86ff5c03c0e3d555701c945899",
+      "receipt": {
+        "path": "artifacts/dev3/mixed-system-init-20261024/r6/build-receipt.json",
+        "bytes": 440,
+        "sha256": "8462e23acf06bd52269942c589b625c300e2cb993a89fed77f32c5201eecb1e1"
+      },
+      "source_directory": "artifacts/dev3/mixed-system-init-20261024/r6/source-at-build"
+    }
+  ],
+  "receipts": [
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r5/clippy.json",
+      "bytes": 505,
+      "sha256": "b6d210eee67e301e1593a017f47c413080bd3f043a9f84db6614949cc3cecf2c"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r5/fmt.json",
+      "bytes": 389,
+      "sha256": "28529522f955054ba5dd0a057434a618438c58d535972a1248505aedd9678d3a"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r5/mixed_init_mi01_sequence_producer_and_observer.json",
+      "bytes": 784,
+      "sha256": "a62b16af111e4efcdd7003406634ca3cdc9ee805d11c8cb18b2456add2a39763"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r5/mixed_init_mi02_reserve_cancel_and_scope.json",
+      "bytes": 779,
+      "sha256": "0af30286605c1f0493f3e0a490fdb772451ea3dd498ba4a323ce4930b56168e8"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r5/mixed_init_mi03_legacy_bytes_and_rejection.json",
+      "bytes": 781,
+      "sha256": "b18edb7f37804da9db4c2c77856348a925ca27832bc504caad4e8e6f11b248b4"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r5/mixed_init_mi04_semantic_corruption.json",
+      "bytes": 773,
+      "sha256": "e229cd3b8f120258a646f44a3af7109c3db64a91253943bfb6fce2b2738c7cca"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r5/mixed_init_mi05_scope_membership_and_identity.json",
+      "bytes": 784,
+      "sha256": "e2c9a7fd40bd06d02ecb3f157245d5299e41739f1da40215ea91162a0b718a7b"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r5/mixed_init_mi06_source_value_census.json",
+      "bytes": 776,
+      "sha256": "594a38bf599b33d151031eb37afc22ae30f0c491a1da0ee0ec30be1046e0c068"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r5/mixed_init_mi07_before_effect_stage_guards.json",
+      "bytes": 783,
+      "sha256": "6a28fa680f88ba36fc6d04ab338d8b08eebdf046276bd2c2e6f154136daed645"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r6/checker.json",
+      "bytes": 416,
+      "sha256": "04d4699546cea391314061eff947764d899a1a84356d39bacf24e6b444292abe"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r6/clippy.json",
+      "bytes": 505,
+      "sha256": "85b4187612947a3026f81a071d0e836ee05994b1bc89d8985106d42ba93680e4"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r6/fmt.json",
+      "bytes": 388,
+      "sha256": "13bf684f8c9ee45044450a7c0ac22ec1151a1f4657e11c6faebc20662ad0fcc4"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r6/mixed_init_mi07_before_effect_stage_guards.json",
+      "bytes": 781,
+      "sha256": "daa238c2a781612168c4b1a5a3990c1e56ab53c273c2fefeac647ad5c8cf4b0e"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r6/mixed_init_mi08_coherent_free_substitution.json",
+      "bytes": 781,
+      "sha256": "7a5cd9fe21941cca83120a8f29c57b4889e19813882e84a3fbbc9ffeeae7c0bb"
+    }
+  ],
+  "runtime_selection": [
+    {
+      "source": "r5",
+      "selector": "mixed_init_mi01_sequence_producer_and_observer",
+      "status": "PASS",
+      "markers": 9,
+      "elapsed_seconds": 0.1260000910006056
+    },
+    {
+      "source": "r5",
+      "selector": "mixed_init_mi02_reserve_cancel_and_scope",
+      "status": "PASS",
+      "markers": 12,
+      "elapsed_seconds": 0.10802260400123487
+    },
+    {
+      "source": "r5",
+      "selector": "mixed_init_mi03_legacy_bytes_and_rejection",
+      "status": "PASS",
+      "markers": 3,
+      "elapsed_seconds": 0.05423500299912121
+    },
+    {
+      "source": "r5",
+      "selector": "mixed_init_mi04_semantic_corruption",
+      "status": "PASS",
+      "markers": 168,
+      "elapsed_seconds": 0.5077135370011092
+    },
+    {
+      "source": "r5",
+      "selector": "mixed_init_mi05_scope_membership_and_identity",
+      "status": "PASS",
+      "markers": 32,
+      "elapsed_seconds": 0.03342073499879916
+    },
+    {
+      "source": "r5",
+      "selector": "mixed_init_mi06_source_value_census",
+      "status": "PASS",
+      "markers": 1,
+      "elapsed_seconds": 0.0015386960003525019
+    },
+    {
+      "source": "r5",
+      "selector": "mixed_init_mi07_before_effect_stage_guards",
+      "status": "FAIL",
+      "markers": 2,
+      "elapsed_seconds": 0.02127106899934006
+    },
+    {
+      "source": "r6",
+      "selector": "mixed_init_mi07_before_effect_stage_guards",
+      "status": "PASS",
+      "markers": 9,
+      "elapsed_seconds": 0.06118478699863772
+    },
+    {
+      "source": "r6",
+      "selector": "mixed_init_mi08_coherent_free_substitution",
+      "status": "PASS",
+      "markers": 12,
+      "elapsed_seconds": 0.09442446100001689
+    }
+  ],
+  "unique_completed_cases": {
+    "runtime": 245,
+    "static": 1,
+    "total": 246,
+    "functions": 8
+  },
+  "original_failures": [
+    "r0 E0004 x4 exhaustive compiler-only test arms",
+    "r2 E0599/E0369 test-only Cause matching",
+    "r5 MI07 FAIL with two completed markers, cumulative fenced effect oracle corrected"
+  ],
+  "execution_scope_deviation": {
+    "status": "EXECUTION_SCOPE_DEVIATION_PRESERVED",
+    "from": "r5",
+    "to": "r6",
+    "changed_paths": [
+      "crates/engine/src/storage/wal_io/mixed_system_init_tests.rs"
+    ],
+    "product_changed": false,
+    "original_failure": "r5 MI07 health-first expectedUnchanged actualCallerMustResolve; test-only oracle fixed",
+    "completed_before_failure": [
+      "MI07-prefix p1 w1",
+      "MI07-fence p1 w1"
+    ],
+    "repeated_completed_scenarios": 2,
+    "unique_credit_from_repeats": 0,
+    "note": "Failed-function reselection included original completed2. Preserve actual logs; never retrospectively narrow execution or relabel original FAIL. Future failed-function selection must exclude completed scenarios.",
+    "r5_mi07": {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r5/mixed_init_mi07_before_effect_stage_guards.json",
+      "bytes": 783,
+      "sha256": "6a28fa680f88ba36fc6d04ab338d8b08eebdf046276bd2c2e6f154136daed645"
+    },
+    "r6_mi07": {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r6/mixed_init_mi07_before_effect_stage_guards.json",
+      "bytes": 781,
+      "sha256": "daa238c2a781612168c4b1a5a3990c1e56ab53c273c2fefeac647ad5c8cf4b0e"
+    }
+  },
+  "source_augmentation": {
+    "status": "SOURCE_AUGMENTATION_PRESERVED",
+    "build_source_sha256": "86530ed5ca43acf42889d4f71a93e0090f76df485c3ecbc6e0345d566ee7b1d0",
+    "source_at_build_reconstructed": "artifacts/dev3/mixed-system-init-20261024/r6/source-at-build",
+    "reconstruction_sha256": "86530ed5ca43acf42889d4f71a93e0090f76df485c3ecbc6e0345d566ee7b1d0",
+    "executed_directory": "artifacts/dev3/mixed-system-init-20261024/r6/source",
+    "post_checker_source_sha256": "0f2eacaa783f1b3e4e4d78b3d3e5ee6027c8f4b554ad84ab62d248add4e7783f",
+    "generated_file": {
+      "path": "artifacts/dev3/mixed-system-init-20261024/r6/source/scripts/__pycache__/check_dev3_mixed_init_borrows.cpython-314.pyc",
+      "bytes": 21158,
+      "sha256": "7b5b669a8cf5056273fcb376d0ceb61ba6d638eab33cf27fa4c4d23ba9e461ab"
+    },
+    "compiler_baseline_source_sha256": "0f2eacaa783f1b3e4e4d78b3d3e5ee6027c8f4b554ad84ab62d248add4e7783f",
+    "product_or_script_text_changed": false,
+    "cause": "checker Python import generated bytecode cache; helper environment did not disable initial imported-module caching",
+    "correction": "preserved augmented original and reconstructed exact build snapshot by excluding only newly generated cache; no original receipts changed or executed product/compiler cases repeated",
+    "future_runner_policy": "set PYTHONDONTWRITEBYTECODE=1 for evidence tools before interpreter starts"
+  },
+  "compiler": {
+    "receipt": {
+      "path": "artifacts/dev3/mixed-system-init-20261024/compiler-result.json",
+      "bytes": 67171,
+      "sha256": "bec79f2fed44708b4cff4991a9bcc63d2e614cb7878e5fc8294c03161ad573ca"
+    },
+    "source_sha256": "0f2eacaa783f1b3e4e4d78b3d3e5ee6027c8f4b554ad84ab62d248add4e7783f",
+    "status": "PASS",
+    "semantic_pass": [
+      "MC00",
+      "MC01",
+      "MC02",
+      "MC03",
+      "MC04",
+      "MC05"
+    ],
+    "infrastructure_pass": [
+      "baseline"
+    ],
+    "compiler_elapsed_seconds": 16.328681265998966,
+    "total_elapsed_seconds": 21.141426154001238
+  },
+  "checker": {
+    "cases": 6,
+    "source": "r6",
+    "status": "PASS"
+  },
+  "resource_census": {
+    "source": "r5",
+    "common_plans": 3344,
+    "mixed_plans": 3344,
+    "temporaries": 14560,
+    "mixed_codec": 6168,
+    "status_codec": 7336,
+    "caller_buffers": 98304,
+    "memory_and_native_original_owner_fits": true,
+    "physical_stack_or_rss": false,
+    "mixed_mutable_owner_f05": false
+  },
+  "inputs": {
+    "raw_manifest": {
+      "path": "tests/fixtures/dev3-mixed-system-init/manifest.json",
+      "bytes": 77414,
+      "sha256": "d42f4474b2e03b4e28b1fe11dd4d5d431743c664725308fb8d007d961aa01a8e"
+    },
+    "raw_count": 285,
+    "raw_bytes": 4407360,
+    "raw_plus_manifest_provenance_count": 287,
+    "compiler_manifest": {
+      "path": "crates/engine/tests/fixtures/dev3-mixed-system-init/compiler/manifest.json",
+      "bytes": 2930,
+      "sha256": "0a9d77c1407de24dc809f6613833b63b3b2b5a14c387364d11a5d8ddb165b631"
+    },
+    "coherent_substitution_dependency": {
+      "path": "tests/fixtures/dev3-undo-free-page/free-g6.bin",
+      "bytes": 432,
+      "sha256": "f897e222e7033965c225fe973cec4af0db948bff5a342dce86d36bc286819be7"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/input.md",
+      "bytes": 5423,
+      "sha256": "b8bad86b57c1b036bf8d5c48c84dc0ac5a4206c31be451bf0d6bac6cd9e06b9e"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/inventory.json",
+      "bytes": 1904,
+      "sha256": "7efc7b501469b4728a4bcc36aa09a00738b48fbad8d70b2b2f749d9f36df44bd"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/selection-r6.json",
+      "bytes": 927,
+      "sha256": "a898a175b4d24bd55a65b6dcf274e3c2fb4e6b857933e421d3ffedbe22c703ab"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/resource-notes.md",
+      "bytes": 2932,
+      "sha256": "7b8c13ef8ee7211df4113ccb6013353a32870553c6200c9a34ab4b569cf7d4e5"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/execution-scope-deviation.json",
+      "bytes": 1152,
+      "sha256": "681a533a1f728a881d711e6046b07e63c4a9d9c1972ac75a034f6da8cedd0143"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/source-augmentation.json",
+      "bytes": 1357,
+      "sha256": "3eebd21cba046350a12fe27e037fd0010d0042d7b5e2118f928acc10cf26ef02"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/timing.jsonl",
+      "bytes": 354,
+      "sha256": "761080b7bd503a9c2708346a4d21ed41d88b39fffd153593462e53252864cc05"
+    },
+    {
+      "path": "artifacts/dev3/mixed-system-init-20261024/s5-count-clarification.json",
+      "bytes": 236,
+      "sha256": "36a53aac95bdc11ed87733a2898e70c4ea3823f24dee87232d1b7a229dd732e2"
+    }
+  ],
+  "artifact_directory": "artifacts/dev3/mixed-system-init-20261024",
+  "artifact_footprint_snapshot": {
+    "files": 63660,
+    "logical_bytes": 2429405114,
+    "shared_build_target_excluded": true,
+    "time": "2026-10-24T06:27:24.400764+00:00"
+  },
+  "s5": {
+    "selector": "mixed_init_s5_expanded_resealed_bytes",
+    "cases": 342960,
+    "status": "AUTHORED_IGNORED_NOT_RUN",
+    "case_semantics": "total expanded executions, including141 mandatory MI04 aliases",
+    "mandatory_input_aliases": 141,
+    "unique_additional_inputs": 342819
+  },
+  "native_mutable_consumer_status": "NOT_IMPLEMENTED_NOT_RUN",
+  "document_verification": "NOT_RUN_PRE_PUSH_ONLY",
+  "integration_parent": "2f262d27cd726bd48e645644bf27c77f52398b6b",
+  "intervening_commit": {
+    "commit": "2f262d27cd726bd48e645644bf27c77f52398b6b",
+    "scope": "devdoc/evidence/README.md prior Status residency JSON link correction only",
+    "preserved": true,
+    "product_diff": false
+  },
+  "review": {
+    "decision": "ACCEPTED_LIMITED_D1_WITH_RECORDED_SCOPE_DEVIATION",
+    "path": "artifacts/dev3/mixed-system-init-20261024/review/d1-final.md",
+    "total_files": 316,
+    "reviewed_files": 316,
+    "skipped_files": 0,
+    "ocr_selected": 15,
+    "manual_excluded": 301,
+    "permission_scope": "bounded prerequisite commit only; no full mixed consumer/DEV3/S5",
+    "receipt": {
+      "path": "artifacts/dev3/mixed-system-init-20261024/review/d1-final.md",
+      "bytes": 8491,
+      "sha256": "984529b97a02626edf238ca3451689cb8fd548e80402f537edc5e25579f0d747"
+    },
+    "history_resource_callsite": {
+      "path": "artifacts/dev3/mixed-system-init-20261024/review/history-resource-callsite-addendum.md",
+      "bytes": 2517,
+      "sha256": "27c38a8159ac9ce8146fd902753365245dba2bec187234b75127cec054c1fdd4"
+    },
+    "accounting": [
+      {
+        "path": "artifacts/dev3/mixed-system-init-20261024/review/compiler-observed-accounting.json",
+        "bytes": 4337,
+        "sha256": "ad4da3341ddaa2569949e90f371ec6d00946ec77a2c702bc0e1d951761840cb1"
+      },
+      {
+        "path": "artifacts/dev3/mixed-system-init-20261024/review/d1-build-receipt-accounting.json",
+        "bytes": 3324,
+        "sha256": "2620d3c8a31211e903369a9a6a205eb65e73ea54e500ccf1b76577129e6ef96c"
+      },
+      {
+        "path": "artifacts/dev3/mixed-system-init-20261024/review/d1-file-accounting.json",
+        "bytes": 170185,
+        "sha256": "0d2644c09ebc3ec4a72a52cac689f0ae71c7230d3d2731ad7ad18bc5d3f885fe"
+      },
+      {
+        "path": "artifacts/dev3/mixed-system-init-20261024/review/d1-retention-snapshot.json",
+        "bytes": 809,
+        "sha256": "c29826e24409bd9a12678156f2345a880ef8b0af96007db67b674355f79a7890"
+      },
+      {
+        "path": "artifacts/dev3/mixed-system-init-20261024/review/d1-runtime-receipt-accounting.json",
+        "bytes": 4385,
+        "sha256": "ac343ff4ca755f350875ab438190a5d88972afacb3a42c0f32abf7605abb9888"
+      },
+      {
+        "path": "artifacts/dev3/mixed-system-init-20261024/review/mi06-source-accounting.json",
+        "bytes": 1387,
+        "sha256": "57511d3ec9d3490e2717d6ec19a80586dd3070606f3d21152c2c9b84df3efcf3"
+      },
+      {
+        "path": "artifacts/dev3/mixed-system-init-20261024/review/ocr-preview-final.json",
+        "bytes": 67180,
+        "sha256": "d76c07cf17ab60244070443d958a197e6ec610f32f51f55b9376ef42694169c2"
+      },
+      {
+        "path": "artifacts/dev3/mixed-system-init-20261024/review/ocr-preview.json",
+        "bytes": 66989,
+        "sha256": "a492b0bf587769541ff58fc556554ee37dc4c5099aead7ced4b64232947d867e"
+      },
+      {
+        "path": "artifacts/dev3/mixed-system-init-20261024/review/ocr-rules.json",
+        "bytes": 15176,
+        "sha256": "800ca69b8034b22878a3d326e57b237b01d602245aef91d9cacc48c5bc156a4c"
+      },
+      {
+        "path": "artifacts/dev3/mixed-system-init-20261024/review/pure-compiler-gate-accounting.json",
+        "bytes": 3039,
+        "sha256": "a84143e0387e59a1a94cf683a6e63386f895e68ac441c14e1a490ab8a667e28b"
+      },
+      {
+        "path": "artifacts/dev3/mixed-system-init-20261024/review/raw-input-accounting.json",
+        "bytes": 51411,
+        "sha256": "11c6f502e5d53ee605046f400af21df0e9c4e0cbdfab270e6df5901b6e2275aa"
+      },
+      {
+        "path": "artifacts/dev3/mixed-system-init-20261024/review/source-lineage-accounting.json",
+        "bytes": 1476,
+        "sha256": "3f9f7850a48f97318a9301cc595fdbe57aa4bd3b16835eb575dabc12a1dd81bc"
+      }
+    ]
+  }
+}

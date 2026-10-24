@@ -22,7 +22,7 @@ use xadb_foundation::{
 pub(crate) struct UndoRole<'s> {
     status: StatusRole<'s>,
 }
-impl UndoRole<'_> {
+impl<'s> UndoRole<'s> {
     pub(crate) fn namespace(&self) -> Namespace {
         self.status.namespace()
     }
@@ -43,6 +43,11 @@ impl UndoRole<'_> {
     }
     pub(crate) fn uses_fence(&self, fence: &SessionFence) -> bool {
         self.status.uses_fence(fence)
+    }
+    /// Original fence for the sealed mixed INIT producer; no inner StatusRole
+    /// is exposed and this borrow cannot outlive the installed session.
+    pub(in crate::storage::wal_io) fn fence(&self) -> &'s SessionFence {
+        self.status.fence
     }
 }
 

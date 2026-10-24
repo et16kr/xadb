@@ -1892,6 +1892,16 @@
       "path": "evidence/dev3-undo-free-page-20261024.json",
       "role": "evidence",
       "title": "DEV3 Free Undo 초기 page source별 선택 증거"
+    },
+    "dev3-mixed-system-init-20261024.md": {
+      "path": "evidence/dev3-mixed-system-init-20261024.md",
+      "role": "evidence",
+      "title": "DEV3 혼합 Status·Free Undo INIT 준비 제한 선행 인수"
+    },
+    "dev3-mixed-system-init-20261024.json": {
+      "path": "evidence/dev3-mixed-system-init-20261024.json",
+      "role": "evidence",
+      "title": "DEV3 혼합 INIT source별 선택 증거"
     }
   }
 }

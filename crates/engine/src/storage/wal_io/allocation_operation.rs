@@ -45,30 +45,32 @@ pub(in super::super) enum OperationBudget {
     Exclusive81920,
     Dirty98304,
     StatusInit114688,
+    MixedInit114688,
 }
 impl OperationBudget {
     pub(in super::super) const fn memory(self) -> u64 {
         match self {
             Self::Exclusive81920 => 81920,
             Self::Dirty98304 => 98304,
-            Self::StatusInit114688 => 114688,
+            Self::StatusInit114688 | Self::MixedInit114688 => 114688,
         }
     }
 
     pub(in super::super) fn accepts_count(self, count: usize) -> bool {
-        (1..=63).contains(&count) && (self != Self::StatusInit114688 || count == 1)
+        (1..=63).contains(&count)
+            && (!matches!(self, Self::StatusInit114688 | Self::MixedInit114688) || count == 1)
     }
 
     pub(in super::super) fn terminal_wal(self, count: usize) -> u64 {
-        if self == Self::StatusInit114688 {
-            38000
-        } else {
-            frame_length(count) as u64
+        match self {
+            Self::StatusInit114688 => 38000,
+            Self::MixedInit114688 => 38208,
+            _ => frame_length(count) as u64,
         }
     }
 
     pub(in super::super) const fn terminal_frames(self) -> u64 {
-        if matches!(self, Self::StatusInit114688) {
+        if matches!(self, Self::StatusInit114688 | Self::MixedInit114688) {
             2
         } else {
             1
@@ -77,7 +79,7 @@ impl OperationBudget {
 
     pub(in super::super) fn terminal_protected(self, count: usize) -> u64 {
         self.terminal_wal(count)
-            + if self == Self::StatusInit114688 {
+            + if matches!(self, Self::StatusInit114688 | Self::MixedInit114688) {
                 2
             } else {
                 count as u64
@@ -91,6 +93,16 @@ impl OperationBudget {
 pub(in super::super) enum AllocationPopulation {
     Empty,
     Status,
+    MixedSystem,
+}
+impl AllocationPopulation {
+    fn accepts_budget(self, budget: OperationBudget) -> bool {
+        match self {
+            Self::Empty => budget != OperationBudget::MixedInit114688,
+            Self::Status => budget == OperationBudget::StatusInit114688,
+            Self::MixedSystem => budget == OperationBudget::MixedInit114688,
+        }
+    }
 }
 
 /// With no active batch, identifies the terminal descriptor retained by the
@@ -100,6 +112,23 @@ pub(in super::super) enum AllocationPopulation {
 pub(in super::super) enum TerminalOutcome {
     Cancelled,
     InitializedStatus,
+    InitializedMixedStatus,
+    InitializedUndoRoot,
+}
+
+/// Closed payload class for the fixed plan3 roles, never a wire discriminator.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in super::super) enum MixedInitKind {
+    Status,
+    UndoRoot,
+}
+impl MixedInitKind {
+    pub(in super::super) fn terminal(self) -> TerminalOutcome {
+        match self {
+            Self::Status => TerminalOutcome::InitializedMixedStatus,
+            Self::UndoRoot => TerminalOutcome::InitializedUndoRoot,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -376,8 +405,19 @@ pub(in super::super) fn validate_population(
     batch: Option<Batch>,
     population: AllocationPopulation,
 ) -> Result<usize> {
+    let counts = population_census(page, batch, population)?;
+    Ok(counts[0] + counts[1])
+}
+
+// Two bounded scalar counters retain compatible terminal membership while the
+// same full 1..63 scan validates every entry, including the last one.
+fn population_census(
+    page: &AllocationPage<'_>,
+    batch: Option<Batch>,
+    population: AllocationPopulation,
+) -> Result<[usize; 2]> {
     let mut observed_mask = 0;
-    let mut allocated = 0;
+    let mut allocated = [0; 2];
     for i in 1..64 {
         match page.entry(i).map_err(|_| SemanticError::PageMismatch)? {
             AllocationEntry::Free(_) => (),
@@ -391,13 +431,20 @@ pub(in super::super) fn validate_population(
                 object,
                 object_generation,
                 kind,
-            } if population == AllocationPopulation::Status
-                && generation.get() >= 2
-                && object.get() == 2
+            } if generation.get() >= 2
                 && object_generation.get() == 1
-                && kind == PageKind::TransactionStatus =>
+                && match population {
+                    AllocationPopulation::Empty => false,
+                    AllocationPopulation::Status => {
+                        object.get() == 2 && kind == PageKind::TransactionStatus
+                    }
+                    AllocationPopulation::MixedSystem => {
+                        (object.get() == 2 && kind == PageKind::TransactionStatus)
+                            || (object.get() == 3 && kind == PageKind::Undo)
+                    }
+                } =>
             {
-                allocated += 1;
+                allocated[usize::from(kind == PageKind::Undo)] += 1;
             }
             _ => return Err(SemanticError::PageMismatch),
         }
@@ -424,10 +471,11 @@ pub(in super::super) fn validate_live_in_population(
     terminal: TerminalOutcome,
 ) -> Result<()> {
     require(
-        population != AllocationPopulation::Status || budget == OperationBudget::StatusInit114688,
+        population.accepts_budget(budget),
         SemanticError::StateMismatch,
     )?;
-    let allocated = validate_population(page, batch, population)?;
+    let members = population_census(page, batch, population)?;
+    let allocated = members[0] + members[1];
     if let Some(batch) = batch {
         validate_reserved(page, &profile, &batch, raw, high_water, budget)
     } else if high_water == 0 {
@@ -440,10 +488,18 @@ pub(in super::super) fn validate_live_in_population(
         )
     } else {
         require(
-            terminal != TerminalOutcome::InitializedStatus
-                || (population == AllocationPopulation::Status
-                    && allocated != 0
-                    && budget == OperationBudget::StatusInit114688),
+            match terminal {
+                TerminalOutcome::Cancelled => true,
+                TerminalOutcome::InitializedStatus => {
+                    population == AllocationPopulation::Status && allocated != 0
+                }
+                TerminalOutcome::InitializedMixedStatus => {
+                    population == AllocationPopulation::MixedSystem && members[0] != 0
+                }
+                TerminalOutcome::InitializedUndoRoot => {
+                    population == AllocationPopulation::MixedSystem && members[1] != 0
+                }
+            },
             SemanticError::StateMismatch,
         )?;
         validate_finished(page, &profile, raw, high_water, budget, terminal)
@@ -538,6 +594,19 @@ fn validate_finished(
             require(progress.limit == 1, SemanticError::StateMismatch)?;
             finished_status_descriptor(profile, batch, page.header().lsn)
         }
+        TerminalOutcome::InitializedMixedStatus | TerminalOutcome::InitializedUndoRoot => {
+            require(progress.limit == 1, SemanticError::StateMismatch)?;
+            finished_mixed_descriptor(
+                profile,
+                batch,
+                page.header().lsn,
+                if terminal == TerminalOutcome::InitializedMixedStatus {
+                    MixedInitKind::Status
+                } else {
+                    MixedInitKind::UndoRoot
+                },
+            )
+        }
     };
     require(current == expected, SemanticError::StateMismatch)
 }
@@ -558,6 +627,30 @@ pub(in super::super) fn finished_status_descriptor(
         OperationBudget::StatusInit114688,
     );
     result.consumed_wal = frame_length(1) as u64 + 38000;
+    result
+}
+
+/// The mixed reservation protects the larger Undo terminal. A finished owner
+/// records only the actual emitted terminal bytes and retains no remainder.
+pub(in super::super) fn finished_mixed_descriptor(
+    profile: &Profile,
+    batch: Batch,
+    lsn: PageLsn,
+    kind: MixedInitKind,
+) -> DescriptorSpec {
+    let actual = match kind {
+        MixedInitKind::Status => 38000,
+        MixedInitKind::UndoRoot => 38208,
+    };
+    let mut result = descriptor(
+        *profile,
+        batch,
+        lsn.0,
+        true,
+        content_digest(&[]),
+        OperationBudget::MixedInit114688,
+    );
+    result.consumed_wal = frame_length(1) as u64 + actual;
     result
 }
 
@@ -625,7 +718,7 @@ pub(in super::super) fn prepare_in_population<'a>(
     // End the producer's array/descriptor stack frame before full validation.
     // Only this wrapper can turn the independently checked bytes into authority.
     require(
-        population != AllocationPopulation::Status || budget == OperationBudget::StatusInit114688,
+        population.accepts_budget(budget),
         SemanticError::StateMismatch,
     )?;
     let h = encode_prepared(plan, before, output, after, budget)?;
@@ -847,9 +940,7 @@ fn validate_analysis_in_population(
     population: AllocationPopulation,
 ) -> Result<()> {
     require(
-        budget.accepts_count(plan.batch.count())
-            && (population != AllocationPopulation::Status
-                || budget == OperationBudget::StatusInit114688),
+        budget.accepts_count(plan.batch.count()) && population.accepts_budget(budget),
         SemanticError::StateMismatch,
     )?;
     // Preserve error precedence while retiring header/descriptor decoder locals

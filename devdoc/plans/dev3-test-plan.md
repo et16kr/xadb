@@ -654,3 +654,21 @@ S5의 `undo_free_s5_expanded_corruption`은 추가49,494case다. Free record432�
 16,352 offset 중 표현 가능한 LSN8·필수16·exact kind/state alias2를 제외한16,326개; page 길이
 1..16,382의 encode/decode32,764개다. 초기 필수 길이0/16,383/16,385와 구분하고 중간에는 ignored/
 NOT_RUN을 유지한다. native INIT·현재-build 복구는 이후 실제 효과 소비자의 별도 inventory다.
+
+<a id="mixed-system-init-followup"></a>
+## 혼합 Status·Free Undo INIT 준비 후속 — 2026-10-24
+
+[소유 계약](../contracts/dev3-status-init.md#mixed-system-init)의 신규 선택은
+`mixed_system_init_tests.rs`의 최초 MI01–07은7함수234case(runtime233/static1)다.
+검토 후 coherent Free gen6/native4의 MI08 12case를 추가하여 최종8함수246case로 확장했다.
+profile3×Status A/Undo B/C의 독립 bytes와 reserve/cancel, 기존 Status 공통 코어의 직접
+영향 producer/observer/materializer, strict scope/budget/terminal, resealed 손상과 길이,
+마지막 entry·identity·반대 종류만 있는 완료 상태, 새 자원식, prefix/fence/health-first의
+before-effect 거절을 검산한다. seed는 실제 설치나 mixed live owner 실행 증거가 아니다.
+
+원 compile·MI07 실패와 완료2case 중복 실행 범위 일탈, source별 실행은
+[선택 증거](../evidence/dev3-mixed-system-init-20261024.md)에
+보존한다. 새 sealed API의 sibling compiler probe를 별도 선택한다. 기존 전체 Status/Undo·
+하위 회귀 wrapper는 반복하지 않는다. `mixed_init_s5_expanded_resealed_bytes`의342,960은
+확대 총실행case이며 필수 MI04의141 alias를 포함한다(고유 추가342,819). 이 변형은 ignored/NOT_RUN이며 최종 DEV3 S5에 배정한다. 후속 실제 동일 pool mixed
+INIT/dirty/pressure/flush/load·별도 process recovery/reentry를 완료해야 소비자2/3을 판단한다.

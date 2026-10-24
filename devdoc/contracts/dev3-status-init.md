@@ -86,3 +86,41 @@ S5 retry18 중 실제 CF16과 같은 profile3/count1/terminal2를 alias로 빼�
 기준 HEAD38132353659935ab581f16521716e301e255a23e에서 `/root`가 상위 binding/authority/literals/통합, `/root/allocation_compiler`가 producer/compiler/runner, `/root/allocation_native`가 native pin/install/protocol을 맡는다. `/root/allocation_review`는 별도 D2/D1을 담당한다. 대안인 raw arbitrary target 등록과 현재 단계의 범용 batch 확장은 권한·자원 범위를 불필요하게 넓혀 채택하지 않는다. 하나의 closed payload와 immutable 역할로 첫 INIT의 실패 경계를 독립 검증한다.
 
 원 제안·D2 자원/addendum·실행 전 source 검토·수정 반례·선택 실행은 각각 다른 identity로 보존한다. 채택과 실제 실행 PASS를 구분한다. 권한 확대, status mutation/transaction 발급, flush/recovery, 새로운 callback/lock, 자원 상한·scope 또는 inventory tuple 변경 시 재검토한다.
+
+<a id="mixed-system-init"></a>
+## 혼합 Status·Free Undo INIT 준비 — D3-MIXED-SYSTEM-INIT-001
+
+2026-10-24 독립 D2를 수용한 plan3 선행 단위다. 실제 mutable owner·동일 pool의 mixed
+registration/flush/load·현재-build 복구는 후속 소비자의 책임이며 이 준비만으로 완료하지 않는다.
+기존 Status API는 고정 Status 의미를 유지한다. private closed scope가 동일 descriptor·allocator·
+Native/redo 검증 코어를 공유하고, 별도 mixed Plan은 실제 non-Copy UndoRole을 빌린다.
+role의 namespace/Object3/gen1/kind8/level0/high-water3와 선택한 payload의 정확한
+Status2/gen1/kind9 또는 Undo3/gen1/kind8 identity를 검증한다. sealed mixed Prepared는 기존
+PreparedInit를 private로 감싸며 raw constructor·기존 Prepared로 변환을 제공하지 않는다.
+순수 Expected/materialize는 stage·install 권한이 아니다. stage는 원 fence·prefix와 불변 output
+loan을 소비하며 기존 health-first 오류 순서를 유지한다.
+
+trusted `MixedInit114688`은 정확 한 page, terminal WAL38,208·frame2·protected70,976·
+memory114,688을 예약한다. reserve21,200 뒤 Status terminal은38,000(합59,200), Undo는38,208
+(합59,408), cancel은21,200(합42,400)을 실제 소비하고 남은 자원은0으로 끝난다. 기존 Status
+예약38,000/70,768은 유지한다. mixed Status/Cancel의 Finished bytes는 기존 terminal bytes와
+같을 수 있으므로 provenance는 검증된 transition 이력과 trusted scope/outcome으로 보존한다.
+
+MixedSystem과 mixed budget은 양방향으로 정확히 짝을 이룬다. 전체 entry1..63을 검사하여
+Free·현재 batch의 정확한 Reserved·incarnation≥2인 고정 Status/Undo Allocated만 받는다.
+완료 InitializedMixedStatus에는 Status 멤버, InitializedUndoRoot에는 Undo 멤버가 있어야 한다.
+active batch에서는 기존대로 terminal tag를 무시하고 정확 Reserved descriptor를 검증한다.
+kind8 membership만으로 cold Undo의 내용·chunk·live 상태를 승인하지 않는다.
+
+Undo native는 kind3/after-only2/redo index1, before slot65535·offset/length/digest0,
+after slot0·offset15,920·length432다. 기존 allocator native12,544 뒤 Undo native560을 배치한다.
+body14,816..15,248, Consume15,248..15,456, Patch15,456..21,728,
+INIT21,728..38,176, checksum trailer32로 총38,208이다. 전체 native13,104/redo22,720이며
+canonical one-slot Free generation1 page와 native/body/digest/full INIT를 모두 맞춘다.
+
+entry array·descriptor·payload codec는 분리된 phase로 유지한다. shared metadata를 포함한
+mixed codec와 borrowed Plan/Expected/Prepared/Result/ScopedExpected를 source-value로 계산하고,
+기존 plans4,096·temporaries16,384와 기존 owner의 전체 gate를 유지한다. caller output65,536+
+두 page32,768은 별도다. 실제 새 mixed mutable owner의 F05·첫 효과·fresh-process 복구는 아직
+이 단위의 자원식이나 순수 준비 시험으로 대신할 수 없다. scratch는 오류 시 폐기 가능하고
+입력은 불변이다. [선택 시험](../plans/dev3-test-plan.md#mixed-system-init-followup)을 따른다.

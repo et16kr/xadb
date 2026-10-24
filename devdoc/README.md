@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-24 [DEV3 혼합 Status·Free Undo INIT 준비](evidence/dev3-mixed-system-init-20261024.md): plan3 역할을 빌리는 sealed 준비와 mixed 예약 census를 연결했다. 독립 D2·source별246case·compiler6+baseline·checker6 PASS, 원 실패/중복2 범위 일탈 보존·최종 D1 제한 수용이며 실제 mixed pool/복구·DEV3/S5는 미완료다.
+
 2026-10-24 [DEV3 Free Undo 초기 page](evidence/dev3-undo-free-page-20261024.md): target 없는 Free codec과 one-slot 초기 page 표현을 연결했다. 독립 D2·compile/fmt/Clippy·관련7함수987case PASS이며 최종 독립 D1을 제한 수용했다. 실제 INIT·mixed pool/복구·DEV3/S5는 미완료다.
 
 2026-10-24 [DEV3 Undo bootstrap 역할](evidence/dev3-undo-bootstrap-20261024.md): plan3의 Status2/Undo3 불변 역할을 추가했다. 신규33assertion과 원 compile/Clippy FAIL을 보존하며 native1·compiler4+baseline·checker7을 검증했고 최종 독립 D1을 제한 단위로 수용했다. S5 추가78은 작성·NOT_RUN, mixed pool/live undo·plan3 복구·전체 DEV3/S5는 미완료다.

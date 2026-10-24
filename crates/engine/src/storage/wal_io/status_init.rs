@@ -1003,7 +1003,7 @@ fn init_caller_bytes<W: WriterNamespace>() -> usize {
 
 /// Conservative source-value bound. It is neither an ABI-stack nor an RSS
 /// measurement; generic owner, reader and File padding are charged before CAS.
-fn fits<W: WriterNamespace>() -> bool {
+pub(super) fn fits<W: WriterNamespace>() -> bool {
     let owner = size_of::<MutableStorageOwner<'_, '_, W>>();
     let control = size_of::<StatusControl<'_, '_, '_>>();
     let reader = size_of::<PageFileReader<'_, W>>();

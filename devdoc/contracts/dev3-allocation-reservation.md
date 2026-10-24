@@ -161,3 +161,13 @@ constructor 첫 읽기 전에 owner/File 각16KiB 상한 외에 `sizeof(owner)+s
 entries64와 producer의 encode_prepared 호출은 최종 validate 전에 끝나며, preflight의 plan_change와 validate_header 호출도 각 후속 decoder 전에 끝난다. 반면 cancel의 prepare→validate→validate_transition→validate_live→descriptor chain은 descriptor5개·remaining 배열 iterator2개·공통 임시값·SHA 작업량을 동시에 보수 계산한다. 이 값은 source에서 소유한 값의 상한이며 compiler의 이동 복사본·ABI/최적화 stack frame·임의 generic adapter 내부 할당·전체 process RSS의 상한으로 확대하지 않는다. caller frame16KiB·operation80KiB·flush4MiB·WAL slot1MiB는 별도 공급이며 한 번씩 센다.
 
 실제 stack 관측은 별도 신규 시험에서 준비한 owner를 scoped thread로 넘겨 constructor·N63 reserve/cancel·observe/drop을 실행한다. `/proc/maps`의 VMA는 guard/인접 anonymous 영역이 합쳐질 수 있어 thread stack 크기의 정답으로 쓰지 않는다. 고정 Linux x86_64 실행의 외부 debugger가 Rust runtime의 원래 `pthread_attr_getstack`/`pthread_attr_getguardsize` 반환만 읽고 TID·thread 이름·local marker·ELF/source identity를 연결한다. inferior 함수 호출은 하지 않는다. 실제 stack≤65536과 marker 범위, 정확1개 시험의 성공을 모두 확인해야 PASS다. 이 intrusive 관측은 성능 측정·모든 오류 경로·다른 adapter/target의 stack 증거가 아니다. process VmHWM도 별도 관측으로 남긴다.
+
+<a id="mixed-init-reservation"></a>
+## plan3 혼합 INIT 예약 후속
+
+2026-10-24의 [혼합 INIT 준비](dev3-status-init.md#mixed-system-init)는 private mixed budget과
+전체 mixed population census를 추가한다. 기존 Exclusive/Dirty/Status 예산과 wire 판정은
+그대로 유지하며 새 숫자를 읽어 scope를 승격하지 않는다. 혼합 Status/Undo terminal은
+각각 실제59,200/59,408을 소비한다. 완료 종류에 해당하는 멤버가 필요하고, 원 Cancel의
+전체 mixed membership 보존과 zero remainder를 검증한다. 이는 sealed 준비/관측 공급이며
+실제 mixed mutable owner·복구 연결의 완료 증거가 아니다.

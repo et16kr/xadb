@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "unit": "D3-MIXED-SYSTEM-INIT-001",
+  "status": "INPUT_ONLY_NOT_RUN",
+  "probe_relative_path": "crates/engine/src/storage/wal_io/mixed_system_init_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/wal_io/mutable_storage.rs",
+  "injection": "mod mixed_system_init_probe;",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_error_diagnostics_are_failures": true,
+  "compiler_budget_seconds": 60,
+  "semantic_case_count": 6,
+  "infrastructure_control_count": 1,
+  "negative_returncode": 101,
+  "cases": [
+    {
+      "name": "baseline",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "semantic_id": null,
+      "reason": "actual unmodified source compiler control"
+    },
+    {
+      "name": "positive",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "semantic_id": "MC00",
+      "reason": "Pure preparation/getters release output loans; consuming stage method typechecks",
+      "bytes": 1000,
+      "sha256": "182b6d7b0fcc074fc3938e5fb409b9550d360a3f5ce53126ce275c099fa725b3"
+    },
+    {
+      "name": "private_constructor",
+      "expected_code": "E0451",
+      "primary_line": 5,
+      "primary_spans": "one",
+      "semantic_id": "MC01",
+      "reason": "Sibling cannot fabricate new Prepared through private inner field",
+      "bytes": 215,
+      "sha256": "cf383800b148a3a76ad73e3ca1a3dc88ccc9f190626d345082fa9525a4c89307"
+    },
+    {
+      "name": "prepared_confusion",
+      "expected_code": "E0308",
+      "primary_line": 5,
+      "primary_spans": "one",
+      "semantic_id": "MC02",
+      "reason": "New sealed Prepared cannot implicitly become old PreparedInit",
+      "bytes": 201,
+      "sha256": "07d81df621669a6596125c2d2e3bb85f6c123fe6ca8ed0b8edece1ade617c90b"
+    },
+    {
+      "name": "output_reborrow",
+      "expected_code": "E0499",
+      "primary_line": 13,
+      "primary_spans": "one",
+      "semantic_id": "MC03",
+      "reason": "Prepared immutable output loan prevents second mutable frame loan before descriptor use",
+      "bytes": 534,
+      "sha256": "dad1f60d3b9809f3b7867b5b9d9a389d49a96f7707a81fbf29f623cc1afa1077"
+    },
+    {
+      "name": "role_confusion",
+      "expected_code": "E0308",
+      "primary_line": 6,
+      "primary_spans": "one",
+      "semantic_id": "MC04",
+      "reason": "Original StatusRole cannot populate the new Plan UndoRole field",
+      "bytes": 258,
+      "sha256": "ad110572661c9b2921caa663bfebff189a1b7e6f73870c38b2840c173d61076e"
+    },
+    {
+      "name": "owner_drop",
+      "expected_code": "E0505",
+      "primary_line": 36,
+      "primary_spans": "one",
+      "semantic_id": "MC05",
+      "reason": "Original FreshStorageSession cannot be dropped while prepared output retains its fence borrow",
+      "bytes": 1120,
+      "sha256": "38d89f167ae8b8f3ea3f0265a94759fe1e4e4423e4e79e216906e09fe6779194"
+    }
+  ]
+}

@@ -941,3 +941,16 @@ AI 소비자1/3과 효율 비교 NOT_RUN·전체 DEV3/S5 미완료를 유지한�
 공통 header 이동의 기대값/오류 순서와 기존 Free 위임도 직접 관련 선택에 포함한다.
 [선택 증거](../evidence/dev3-undo-free-page-20261024.md)의 r0 compile·fmt·Clippy와 runtime986·static1의7함수987case PASS이며
 최종 독립 D1을 제한 단위로 수용했다. S5 추가49,494는 작성·NOT_RUN이고 실제 INIT·mixed pool/복구·live undo·전체 DEV3/S5는 미완료다.
+
+<a id="mixed-system-init"></a>
+### 혼합 Status·Free Undo INIT의 sealed 준비
+
+2026-10-24 [혼합 INIT 계약](../contracts/dev3-status-init.md#mixed-system-init)의 trusted mixed
+budget/population과 role-bearing Plan, sealed Prepared 및 순수 observer/materializer를 연결했다.
+기존 Status wrapper는 고정 의미를 유지하며 같은 descriptor/allocator/Native/redo 코어를 공유한다.
+완료 종류에 맞는 멤버 존재와 전체63entry census, canonical Free gen1 root를 검증한다.
+[source별 검증](../evidence/dev3-mixed-system-init-20261024.md)의 고유8함수246case·compiler6+baseline·
+checker6 PASS를 보존하며 실행 범위 일탈을 기록한 최종 독립 D1을 제한 수용했다. 원 compile/시험 FAIL, 실패 함수 내 완료2case의
+중복 실행 범위 일탈과 Python cache로 인한 별도 compiler source를 분리해 기록했다.
+S5 확대 총342,960(필수 MI04 입력141 alias 포함, 고유 추가342,819)은 ignored/NOT_RUN이다. 실제 mixed mutable owner·pool/flush/load·현재-build 복구,
+live undo·소비자2/3·전체 DEV3/S5는 미완료다.

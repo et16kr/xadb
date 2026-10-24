@@ -4,6 +4,9 @@ use super::*;
 #[path = "undo_bootstrap_native_tests.rs"]
 mod native_undo;
 
+#[path = "mixed_system_init_tests.rs"]
+mod mixed_init;
+
 const UNDO_INPUT: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tests/fixtures/dev3-undo-bootstrap"
