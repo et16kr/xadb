@@ -1,6 +1,6 @@
 # XADB 조사·실행 증거
 
-- [DEV4 독립 앞단 — Oracle·로컬 DBMS 조사와 계약 검토](dev4-preparation-research-20261024.md): 공식19c와 사용자 제공 OracleManual·PostgreSQL/SQLite/MariaDB/CUBRID의 실제 revision/hash·차이 해결·D2 검토. 제품/Oracle 실행 NOT_RUN.
+- [DEV4 독립 앞단 — Oracle·로컬 DBMS 조사와 계약 검토](dev4-preparation-research-20261024.md): 공식19c와 사용자 제공 OracleManual·PostgreSQL/SQLite/MariaDB/CUBRID의 실제 revision/hash·차이 해결·D2 검토. 후속 P2 발견·진단 효과 교정과 D4-PREP-002 독립 수용을 별도 보존. 제품/Oracle 실행 NOT_RUN.
 
 2026-10-24 [DEV3 혼합 INIT 준비](dev3-mixed-system-init-20261024.md) · [source 색인](dev3-mixed-system-init-20261024.json): 독립 raw285·source별246case·compiler6+baseline·checker6 PASS, 원 실패/중복2 범위 일탈 보존·최종 D1 제한 수용; 실제 mixed 소비자·DEV3/S5 미완료.
 

@@ -1,6 +1,6 @@
 # XADB 개발 문서
 
-2026-10-24 [DEV4 독립 앞단 계약](contracts/dev4-independent-frontend.md)·[DEV3 병행 준비 계획](plans/dev4-preparation-plan.md): Oracle19c 공식/로컬 매뉴얼과4개 DBMS를 대조해 lexer/parser·값 처리·독립 검증의 선행 범위와 FE01–16을 구체화했다. 독립 D2 채택을 완료했으며 실제 engine 통합·Q1의 DEV3 선행과 제품·시험 NOT_RUN을 유지한다.
+2026-10-24 [DEV4 독립 앞단 계약](contracts/dev4-independent-frontend.md)·[DEV3 병행 준비 계획](plans/dev4-preparation-plan.md): Oracle19c 공식/로컬 매뉴얼과4개 DBMS를 대조해 lexer/parser·값 처리·독립 검증의 선행 범위와 FE01–16을 구체화했다. [후속 리뷰 교정](evidence/dev4-preparation-research-20261024.md#review-followup)으로 순수 진단과 호출 전체의 거래/정리 효과를 분리하고 Oracle 끝 공백 차이·연결 시험 의무를 보강했다. D4-PREP-001/002 독립 D2 채택, 실제 engine 통합·Q1의 DEV3 선행과 제품·시험 NOT_RUN을 유지한다.
 
 2026-10-24 [DEV3 혼합 Status·Free Undo INIT 준비](evidence/dev3-mixed-system-init-20261024.md): plan3 역할을 빌리는 sealed 준비와 mixed 예약 census를 연결했다. 독립 D2·source별246case·compiler6+baseline·checker6 PASS, 원 실패/중복2 범위 일탈 보존·최종 D1 제한 수용이며 실제 mixed pool/복구·DEV3/S5는 미완료다.
 

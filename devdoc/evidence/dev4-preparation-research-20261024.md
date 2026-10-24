@@ -2,6 +2,8 @@
 
 2026-10-24 · **읽기 조사·독립 D2 검토 완료 / D4-PREP-001 ACCEPTED / 제품·모델·Oracle 실행 NOT_RUN**
 
+최초 조사·채택 기록은 아래 1–4절에 보존한다. 후속 사용자 리뷰에서 발견한 진단 효과 충돌과 [D4-PREP-002 교정](#review-followup)은 별도 기록이며 독립 D2 재검토를 거쳐 ACCEPTED로 반영했다. 제품·모델·Oracle 실행은 계속 NOT_RUN이다.
+
 [채택 대상 계약](../contracts/dev4-independent-frontend.md) · [개발 계획](../plans/dev4-preparation-plan.md) · [기존 DEV4 조사](dev4-source-research.md) · [참고 소스 목록](../reference/opensource-references.md)
 
 ## 1. 질문과 작업 정체성
@@ -96,3 +98,24 @@ foundation 실제 `Value::Null`은 타입을 담지 않고 `Value::compare`는 N
 검토자는5개 checkout의 HEAD/origin/clean, 기록한12개 파일 hash·열람 범위와 기준 identity hash를 직접 대조했고 Oracle19c 공식 문서 및 로컬 OracleManual의 차이 처리도 확인했다. 선택적 보완으로 제안한 OracleManual 링크 명칭을 자료 모음으로 구별하고 Comparison Conditions 공식 근거를 추가했다. 이 검토는 계약·계획의 정적 판단이며 실제 Rust API·fixture/profile 동결과 제품 실행 검증은 후속 의무다.
 
 이번 실행은 문서·소스 읽기, revision/hash 기록, 문서 편집·의미 검토뿐이다. 제품 코드/fixture/oracle/harness 구현·제품 시험·모델 실행·Oracle differential·compiler/Clippy·문서 자동 검사·commit/push는 **미실행**이다. DEV3 및 Q1 실행 상태를 승격하지 않는다.
+
+<a id="review-followup"></a>
+## 5. 후속 리뷰와 D4-PREP-002 교정
+
+사용자는 commit `0aa9e070a576c6e92d00818db06dd3d77945c518` 이후 새 계약·계획을 기본 계획·일반 DBMS/Oracle·내용 충분성에 비추어 다시 검토하도록 요청했고, 결과를 받은 뒤 개선을 지시했다. 작업·SQL 계약·통합 담당은 `/root`다. 최초 채택과 “남은 P1/P2 없음”은 그 시점의 판단으로 보존하며 후속 P2 발견을 소급 삭제하지 않는다.
+
+| 항목 | 후속 관측·반영 |
+| --- | --- |
+| 독립 재검토 | `/root/dev4_contract_reassessment`가 원 계약·계획과 SQL 정본을 읽기 전용 대조. 진단 효과에 P2 한 건 확인; 독립 범위·DEV3 선행·자원·leaf 동결·시험 구조는 대체로 일치 |
+| 원 반례 | FrontendDiagnostic 전체의 phase를 lex/parse/bind로 제한하고 기존 Idle/Active 보존을 요구했으나, 동일 범위의 typed predicate는 실행 중 취소를 반환할 수 있음. ON SELECT fetch 취소에는 cursor/snapshot 해제와 implicit 거래 종료가 필요하므로 SQL 정본과 충돌 |
+| 계약 반영 | [진단 효과 경계](../contracts/dev4-independent-frontend.md#diagnostic-effects)에 순수 진단과 SQL adapter의 phase·cleanup·effect/state/outcome 소유를 분리. NoEffect·기존 상태 보존은 진입 전 검사로 한정. DDL prior commit과 cleanup 실패의 RecoveryRequired/Fenced 우선, 순수 앞단의 I/O 금지가 engine undo를 막지 않도록 명시 |
+| 계획 반영 | FE10에 끝 공백 비교 기대값, FE11에 순수 진단의 취소/실패, FE14에 implicit fetch 취소 뒤 거래/result 유지 mutant를 연결. [후속 실제 연결 시나리오](../plans/dev4-preparation-plan.md#diagnostic-handoff-tests)에 기존 T03/T09/T11·owner·관측 의무를 배정하고 NOT_RUN 유지 |
+| Oracle 보강 근거 | [Oracle19c Data Type Comparison Rules](https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/Data-Type-Comparison-Rules.html)의 Blank-Padded and Nonpadded Comparison Semantics를 후속 리뷰에서 열람. 두 text literal의 `'a' = 'a '`는 TRUE, 한쪽 이상 VARCHAR2/NVARCHAR2이면 nonpadded 비교. XADB의 기존 Utf8 byte 비교에서는 FALSE이며 문서상 기대값으로 구분; Oracle binary 실행은 없음 |
+| 구조 대조 근거 | [PostgreSQL18 Parser Stage](https://www.postgresql.org/docs/18/parser-stage.html)의 raw parsing과 transaction 내 catalog 의미 분석 분리 설명을 열람. XADB 독립 앞단 방향의 근거이며 PostgreSQL 전체 구현·SQL 호환성 주장 아님 |
+| 선택·대체 | [D4-PREP-002 결정](../contracts/dev4-independent-frontend.md#diagnostic-effect-decision). 원 오류 효과 문구만 한정 교정하고 기존 SQL 의미·기능·자원 한도·DEV3 선행·단계 완료·시험 실행 정책은 유지 |
+| 변경 범위 | 기존 앞단 계약·준비 계획·이 기록과 README 진입점. 기존 문서 ID·경로·역할 유지로 `documents.json` 등록 추가 없음. 동시 작업 중인 `crates/engine` 변경은 읽기 검토·수정·검증·commit 범위 밖 |
+| 교정 중 지적·반영 | 독립 검토에서 원 P2 해소를 확인하고, 후속 DDL 시나리오 담당을 잘못 적은 `4.06/4.13`을 지적. 실제 owner인 `4.10.2/4.10.3·4.13.1.2`로 수정하고 native DDL 호출 전 검증 실패의 prior=Committed·ddl=NotAttempted·Idle을 명시. 작성자 대조에서 진단의 검출 모듈 구분도 보존해 parser 안쪽 lexer 오류의 lex/parse 유실을 방지 |
+| 교정 독립 검토 | `/root/dev4_contract_reassessment`가 실제 3문서 diff·SQL 정본과 공식 Oracle/PostgreSQL 원문을 대조하고 위 최종 변경까지 확인하여 **D4-PREP-002 수용·추가 필수 수정 없음**으로 판정. `/root`가 반영을 확인하고 ACCEPTED로 전환. 자기 검토를 독립 검토로 계산하지 않음 |
+| 이번 실행 | 문서 읽기·편집·diff 대조·독립 정적 검토. 제품·모델·Oracle 실행, compiler/Clippy·문서 자동 검사·commit/push는 이번 교정에서 미실행 |
+
+이는 원 반례에 대한 계약·계획 교정이며, 실제 Rust API·fixture/hash·모델 탐색 profile은 기존 leaf 동결 의무로 남는다. 이번 문서 작업에는 제품 테스트를 선택하지 않으며 문서 자동 검사는 기존 push gate에서 수행한다.

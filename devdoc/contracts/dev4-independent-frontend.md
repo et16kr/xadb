@@ -1,6 +1,6 @@
 # DEV4 — DEV3와 독립적인 SQL 앞단 계약
 
-2026-10-24 · **D4-PREP-001 ACCEPTED / 제품·모델·Q1 NOT_RUN**
+2026-10-24 · **D4-PREP-001/002 ACCEPTED / 제품·모델·Q1 NOT_RUN**
 
 [SQL 의미 정본](dev4-sql-design.md) · [개발 계획](../plans/dev4-preparation-plan.md) · [Oracle·로컬 소스 조사와 검토](../evidence/dev4-preparation-research-20261024.md)
 
@@ -29,10 +29,13 @@ DEV4 안에서 저장 엔진에 접근하지 않는 입력 처리·값 계산과
 | text/NULL | SQL 빈 Utf8 입력만 **Utf8 typed NULL**로 정규화한다. native non-NULL 빈 Utf8와 빈 binary는 보존. Oracle의 빈 문자열 의미를 참고하되 XADB의 원래 타입 검사를 생략하지 않음 |
 | 조건식 | 비교·IS NULL → NOT → AND → OR 우선순위와 3값 논리. WHERE는 TRUE만 통과. Oracle의 AND/OR 왼쪽부터 실행을 보장한다고 설명하지 않음 |
 | 문자열·숫자 | 단일 quote와 두 quote escape는 참고. Oracle q-quote·N-string·NUMBER·소수·지수·날짜·암묵 변환은 이번 지원 범위 밖. Int64 범위·UTF-8 byte 비교·명시 타입 유지 |
+| 끝 공백 비교 | XADB는 literal·열·bind 모두 Utf8 byte 비교여서 `'a' = 'a '`는 FALSE다. Oracle19c는 두 text literal 비교에 blank-padding을 적용해 TRUE이며, 어느 한쪽이 VARCHAR2/NVARCHAR2이면 nonpadded 비교다. Oracle의 타입별 padding·collation 선택을 도입하지 않음 |
 | 문법·namespace | 기존 BIGINT/BOOLEAN/VARCHAR/VARBINARY, `X'...'`, `?`, LIMIT, BEGIN·SET AUTOCOMMIT, 고정 PUBLIC·STORAGE DISK 유지. Oracle SQL 문법의 전체 호환이나 동일 bind 문법을 뜻하지 않음 |
 | DDL·거래 | 지원 DDL의 구문 진입과 precommit 뒤 의미 검사를 분리하는 기존 계약 유지. 실제 precommit·두 outcome·UNIQUE·SQL Serializable는 엔진 통합 때 검증. Oracle 기본 격리·CLI 종료 의미로 변경하지 않음 |
 
 현재 제품 의미는 [기존 SQL 정본](dev4-sql-design.md#grammar)이 우선한다. 조사에서 차이를 발견해도 기존 의미를 조용히 바꾸지 않는다. 의미 확장은 별도 D2 및 해당 기능의 독립 인수로 처리한다.
+
+끝 공백 사례는 [Oracle19c 비교 규칙](https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/Data-Type-Comparison-Rules.html)의 Blank-Padded and Nonpadded Comparison Semantics와 대조한 **문서상 기대값**이다. Oracle 실행 결과가 아니며, XADB literal·명시 타입 row·parameter의 기대값은 같은 byte 비교로 고정한다.
 
 <a id="interfaces"></a>
 ## 3. 모듈·입출력·소유권
@@ -49,11 +52,20 @@ DEV4 안에서 저장 엔진에 접근하지 않는 입력 처리·값 계산과
 | batch 경계 인식 | 순차 byte chunk·명시 EOF → 완결 문장 source 또는 NeedMore/진단 | 파일을 직접 열지 않음. UTF-8/quote/comment/escape의 chunk 분할 상태 보존. `;`가 quote/comment 안이면 구분자가 아님 |
 | SQL 값 입력 | raw literal 또는 원래 타입이 있는 bind 값·요구 타입/길이 → typed scalar | untyped NULL과 Utf8 typed NULL 구별. bind 전체 교체/metadata 관리는 후속 prepared owner |
 | typed predicate | 검증한 typed expression·명시적인 typed row/parameter 입력 → TruthValue | 이름/ordinal의 실제 catalog 해석은 후속 binder. 검증 전 표현이나 다른 타입을 NULL 단락 평가로 통과시키지 않음 |
-| 앞단 진단 | 검출 code·phase·span → 할당 실패에도 반환 가능한 작은 진단 | SYNTAX/UNSUPPORTED/NAME/TYPE/RANGE/NOT-NULL/LIMIT/CANCELLED/TIMEOUT, SQL 정본과 동일한 code. phase는 lex/parse, 값 대입 검사는 bind로 대응. session 상태·DDL outcome·commit receipt를 만들어 넣지 않음 |
+| 앞단 진단 | 검출 code·검출 모듈 구분·가능한 source span → 할당 실패에도 반환 가능한 작은 진단 | SYNTAX/UNSUPPORTED/NAME/TYPE/RANGE/NOT-NULL/LIMIT/CANCELLED/TIMEOUT, SQL 정본과 동일한 code. lexer/parser/value/evaluator 등 검출 모듈 구분을 보존하고 실제 variant는 F01에서 동결. SQL adapter가 이를 실제 호출 단계와 결합해 phase와 효과를 부여. 순수 진단이 session 상태·DDL outcome·commit receipt를 만들어 넣지 않음 |
 
 ParsedStatement는 source bytes와 필요한 정규 이름/해석 값을 소유하고, AST 내부 참조는 안정된 arena index 또는 검증된 byte 범위로 표현한다. caller buffer 포인터·engine handle·page/root 주소·snapshot q를 저장하지 않는다. 반환 값의 무상 clone을 제공해 예약을 우회하지 않는다. AST 순회·폐기도 입력 길이에 비례한 call stack을 만들지 않는다.
 
-FrontendDiagnostic는 DB 관점에서 **NoEffect**다. 호출자는 원래 Idle/Active 등을 그대로 보존해 기존 SQL 오류에 붙인다. 앞단이 RecoveryRequired/Fenced·이전 commit 결과를 덮어쓸 권한은 없다. lexer/parser가 이 표현을 사용하려고 session runtime에 의존하지 않는다.
+<a id="diagnostic-effects"></a>
+FrontendDiagnostic는 순수 함수의 실패 원인·위치를 나타내며 그 함수 자체는 DB 효과를 만들지 않는다. 이를 **호출 전체의 NoEffect나 거래 상태 보존으로 일반화하지 않는다.** SQL adapter가 실제 호출 단계·이미 진입한 transaction/statement·cleanup 결과를 사용해 [SQL 오류 효과 정본](dev4-sql-design.md#transactions)의 phase, statement_effect, transaction_state, certainty, retry_scope와 DDL outcome을 조립한다. 진단 code나 `bind`라는 phase만으로 거래 진입 여부를 추정하지 않는다.
+
+| 소비 문맥 | SQL adapter의 책임 |
+| --- | --- |
+| transaction/statement 진입 전 lex/parse·binding 개수/타입 등 입력 검사 | lex/parse/bind에 대응하며 NoEffect·기존 Idle/Active와 이전 binding 보존. 실제 거래를 이미 시작한 뒤의 catalog bind/dependency 검사는 이 규칙에 포함하지 않음 |
+| execute/fetch 중 값·predicate 평가, LIMIT/CANCELLED/TIMEOUT | 실제 execute/fetch phase를 붙이고 필요한 statement 복원·cursor 종료·snapshot 해제를 완료. ON implicit 거래의 terminal 오류는 거래 종료, 명시/OFF 거래의 복구 가능한 오류는 이번 statement 복원 뒤 Active 유지. 같은 호출에서 처음 만든 OFF 거래도 이 규칙 적용 |
+| DDL precommit 이후의 값·타입·길이 검사 | 검출 단계의 phase와 DDL의 두 outcome을 보존. prior Committed 뒤 semantic validation 실패로 native DDL을 호출하지 않았다면 ddl=NotAttempted·Idle. 이전 거래의 Committed를 NoEffect·원래 Active로 되돌리지 않음 |
+
+위 정리는 engine cleanup 완료를 전제로 한다. undo/정리 실패의 RecoveryRequired/Fenced와 이미 알려진 commit 결과가 앞단 진단보다 우선하며, 단순 진단 반환만으로 rollback·거래 종료 성공을 주장하지 않는다. lexer/parser/evaluator는 session runtime에 의존하거나 이 정리를 직접 수행하지 않는다.
 
 <a id="syntax"></a>
 ## 4. 구문·AST 경계
@@ -95,7 +107,7 @@ TruthValue는 T/F/U 세 값이다. NOT의 3가지, AND·OR의 각 9가지 조합
 - 앞단의 compile/retained 공간은 기존 session compiled/bound 8 MiB 및 공유 DB SQL 64 MiB에서 함께 차감한다. 앞단용 추가 8 MiB/64 MiB를 만들지 않는다. caller가 공유 quota owner를 주입하며 제품 경로에서 호출마다 새 ledger를 만들지 않는다. 아직 DB가 없는 단위 fixture는 동일 계약의 시험 ledger를 명시적으로 제공한다.
 - foundation `Quota`/`Reservation`을 소비한다. 여러 quota 중 뒤 예약이 실패하면 앞 예약을 반환하고 기존 AST/binding은 유지한다. quota 승인은 실제 allocation 성공이 아니므로 필요한 `try_reserve` 실패를 typed LIMIT로 처리한다. 실제 capacity와 임시 공존 peak를 포함하고 전역 OOM 복구를 보장한다고 쓰지 않는다.
 - 호출별 cancel/deadline 입력은 새 호출에서 새로 받는다. source 검사·긴 token/주석·decode·parser/평가 loop에 bounded checkpoint를 두며 첫 leaf에서 최대 검사 간격과 allocation inventory를 동결한다. AST에 완료 호출의 cancel/deadline을 저장하지 않는다.
-- 오류·취소·폐기는 새 foreground 예약·DB I/O·숨은 commit 없이 끝나야 한다. recursion/Drop overflow·unchecked capacity·부분 성공 반환을 금지한다. 전체 parser가 끝나지 않았으면 첫 문장 성공을 전체 입력 성공으로 반환하지 않는다.
+- 순수 앞단 자체의 오류·취소·폐기는 새 foreground 예약·DB I/O·숨은 commit 없이 끝나야 한다. 상위 SQL/engine owner의 statement undo·거래 종료에 필요한 I/O는 [오류 효과 경계](#diagnostic-effects)에 따라 별도로 수행한다. recursion/Drop overflow·unchecked capacity·부분 성공 반환을 금지한다. 전체 parser가 끝나지 않았으면 첫 문장 성공을 전체 입력 성공으로 반환하지 않는다.
 
 <a id="handoff"></a>
 ## 7. 독립 검증과 DEV3 수신
@@ -119,3 +131,18 @@ DEV3와의 접점은 catalog/DDL, row/index, statement token/observation/undo, c
 | 동결 범위 | 허용 ID·의존 금지·Oracle 적용/차이·입출력 소유·구문/값 경계·자원/오류·수신 조건. F01–05 전체 실제 Rust/fixture/profile 동결은 아님 |
 | 실행 상태 | 코드·fixture·harness 추가 없음. 제품·모델·Oracle differential·Q1 모두 NOT_RUN |
 | 검토·재검토 | [독립 검토 기록](../evidence/dev4-preparation-research-20261024.md#review). engine 접근/SQL 의미 확장·회계 우회·Oracle 차이 누락·경계 변경 시 D2 재검토 |
+| 후속 교정 | [D4-PREP-002](#diagnostic-effect-decision)가 원 진단의 phase·NoEffect/상태 보존 문구를 한정 대체하고 Oracle 끝 공백 차이를 명시. 나머지 D4-PREP-001 범위와 최초 검토 기록은 보존 |
+
+<a id="diagnostic-effect-decision"></a>
+## 9. D4-PREP-002 — 진단과 호출 효과의 책임 교정
+
+| 항목 | 기록 |
+| --- | --- |
+| 분류·상태·일자 | D2 · ACCEPTED · 2026-10-24 |
+| 권한·담당 | 사용자의 새 계약·계획 리뷰와 후속 개선 요청. 작업·SQL 계약·통합 `/root` |
+| 반례·선택 | ON SELECT의 fetch 중 predicate 취소를 원래 상태 보존으로 조립하면 implicit 거래/result가 남음. 순수 진단과 SQL 호출 효과를 분리하고 실제 adapter가 phase·cleanup·outcome을 소유 |
+| 대안·이유 | 모든 진단을 NoEffect로 포장하는 방식은 SQL 정본과 충돌. evaluator에 session/engine을 주입하는 방식은 독립 앞단 경계를 깨므로 기각 |
+| 대체 범위 | commit `0aa9e070a576c6e92d00818db06dd3d77945c518`의 D4-PREP-001 중 진단 phase 제한과 무조건 상태 보존 문구를 본 문서의 오류 효과 경계로 대체. 순수 cleanup의 I/O 금지 범위를 명확히 하고 기존 byte 비교의 Oracle 차이 사례 추가. SQL 의미 정본·DEV3 선행·단계/시험 정책은 유지 |
+| 인수·실행 | 준비 계획의 FE10·FE11·FE14 및 후속 T03/T09/T11 연결 의무. 계약/계획 보강이며 제품·모델·Oracle 실행은 NOT_RUN |
+| 검토 | `/root/dev4_contract_reassessment`의 독립 D2 정적 검토 수용, `/root` 반영 확인. [후속 리뷰·반영 기록](../evidence/dev4-preparation-research-20261024.md#review-followup); 실제 API·fixture 동결과 제품 검증은 후속 |
+| 재검토 조건 | adapter가 진단에서 상태를 추정, cleanup 미완료를 정상 종료로 보고, phase/outcome 유실, Oracle/XADB 기대값 혼용 |

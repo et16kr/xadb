@@ -1,6 +1,6 @@
 # 기능 계약
 
-- [DEV4 — DEV3와 독립적인 SQL 앞단 계약](dev4-independent-frontend.md): Oracle19c 적용/차이·순수 입력/값·소유/자원/진단·실제 engine 연결 경계. D4-PREP-001 ACCEPTED, 제품 NOT_RUN.
+- [DEV4 — DEV3와 독립적인 SQL 앞단 계약](dev4-independent-frontend.md): Oracle19c 적용/끝 공백 차이·순수 입력/값·소유/자원·진단과 호출 효과·실제 engine 연결 경계. D4-PREP-001/002 ACCEPTED, 제품 NOT_RUN.
 
 2026-10-24 [Free Undo 초기 page](dev3-undo-format.md#free-initial-page): target 없는 Free codec과 한 슬롯의 초기 page 표현 계약을 D2 수용했다. 실제 allocation/INIT·mixed owner의 권한과 복구는 후속 의무다.
 

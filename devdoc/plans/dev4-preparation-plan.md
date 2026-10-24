@@ -1,6 +1,6 @@
 # DEV4 — DEV3 병행 준비·독립 모듈 개발 계획
 
-2026-10-24 · **D4-PREP-001 ACCEPTED / 계획 확정 / 개발·시험 NOT_RUN**
+2026-10-24 · **D4-PREP-001/002 ACCEPTED / 계획 확정 / 개발·시험 NOT_RUN**
 
 [독립 앞단 계약](../contracts/dev4-independent-frontend.md) · [전체 DEV4 계획](dev4-implementation-plan.md) · [기존 18개 작업](dev4-work-breakdown.md) · [조사·검토](../evidence/dev4-preparation-research-20261024.md)
 
@@ -34,7 +34,7 @@ DEV3가 저장·복구를 개발하는 동안 DEV4의 독립 입력 처리·값 
 | 기존 항목 | 이번에 확정한 것 | 해당 leaf 구현 전에 남는 입력 |
 | --- | --- | --- |
 | F01 앞단 | 허용 문법 정본·Oracle 차이, token/AST/값의 책임, source/span/typed NULL·DDL 길이 보존·진단·한도 | 실제 Rust signature·token/AST variant·readonly accessor, capacity 산식·arena layout, whitespace/LF/CR/CRLF·line comment·오류 우선순위, error/span literal 전수 목록·fixture hash. 첫 leaf에서는 소비 부분만 동결 |
-| F02 | 실제 session/engine API는 선행하지 않는 추상 모델 범위, 앞단은 session outcome을 생성하지 않음 | 모델 action/parameter 동치류·상태 전이 표·탐색 상태/전이 상한. 실제 binding/handle/transaction API는 DEV3 공급 뒤 |
+| F02 | 실제 session/engine API는 선행하지 않는 추상 모델 범위, 앞단은 session outcome을 생성하지 않음. [진단과 호출 효과의 책임](../contracts/dev4-independent-frontend.md#diagnostic-effects) 구분 | 모델 action/parameter 동치류·상태 전이 표·탐색 상태/전이 상한. 실제 binding/handle/transaction API와 phase·cleanup·outcome 조립은 DEV3 공급 뒤 |
 | F03 | spill 구현은 이번 독립 제품 범위 밖 | DEV3 sorter 재사용 검토·실제 temp port·codec/manifest·cleanup·FD/disk 산식은 후속 |
 | F04 앞단/모델 | 아래 선택 가능한 필수 사례와 독립성·부정 판정 의무 | case별 실제 입력/기대값·명령·mutation recipe·hash, source/runner identity. 모델은 탐색 recipe·완주 상한 먼저 |
 | F05 | 기존 SQL 입력/메모리 한도와 앞단 측정 항목 유지 | 앞단 cancel 검사 최대 간격·할당 실패 지점, 측정할 때 host/build/표본 조건. 실제 SQL/native PF10·수치 회귀 예산은 후속 |
@@ -57,15 +57,26 @@ DEV3가 저장·복구를 개발하는 동안 DEV4의 독립 입력 처리·값 
 | FE07 | P4 / T01 | SELECT/UPDATE/DELETE/CREATE·DROP TABLE/INDEX 지원 grammar production마다 정상·오류. SELECT clause·projection/order 항목 한도·alias/ordinal 미지원 |
 | FE08 | P4 / T01,T03,V21/22 | `VARCHAR(0)`, `VARCHAR(-1)`, i64보다 긴 decimal 길이는 AST 보존. 잘못된 digits/미지원 타입은 진입 거절. **실제 precommit·두 outcome 시험은 NOT_RUN으로 남김** |
 | FE09 | P3 / T02,V19/20 | Int64 min/max와 양쪽 한계 밖, empty text typed NULL·native empty text·empty binary·공백·U+0000, 타입 불일치·nullable·65,535/65,536/65,537 bytes |
-| FE10 | P3 / T02 | NOT3·AND9·OR9의 독립 표, 6개 비교 연산×지원 타입·NULL 조합, IS NULL/NOT NULL·WHERE T만 통과. NULL/단락 평가 전 타입 불일치 거절 |
-| FE11 | P0–P4 / T11,V28 일부 | 각 allocation 실패·중간 취소/deadline·실패 뒤 새 호출 성공, 호출별 제어 수명·긴 token 안 checkpoint. 반환 진단에 추가 allocation 없음 |
+| FE10 | P3 / T02 | NOT3·AND9·OR9의 독립 표, 6개 비교 연산×지원 타입·NULL 조합, IS NULL/NOT NULL·WHERE T만 통과. NULL/단락 평가 전 타입 불일치 거절. `'a' = 'a '`는 FALSE, `'a' < 'a '`는 TRUE를 literal/literal·명시 타입 row·parameter 조합의 byte 비교로 판정; Oracle literal의 padding 기대값과 혼용 금지 |
+| FE11 | P0–P4 / T11,V28 일부 | 각 allocation 실패·중간 취소/deadline·실패 뒤 새 호출 성공, 호출별 제어 수명·긴 token/평가 loop 안 checkpoint. 반환 진단에 추가 allocation·거래 상태/outcome 조립 없음. 아래 진입 전/실행 중 연결 사례를 후속 owner에 인계 |
 | FE12 | P0–P4 / T11,V28 및 합산 자원 | 두 이상 caller의 같은 DB quota, session/DB 잔여 bytes−1/동일/+1, old/new AST 공존·뒤 예약 실패·잔여 charge. 성공/오류/drop 뒤 원래 사용량으로 회복; retained 결과는 계속 charge |
 | FE13 | P5 / T01,T02,T13 | 잘못된 token/span/AST/typed NULL/3값 결과를 literal 판정기가 거절. bag 중복·순서·incomplete 결과 거절은 해당 판정 구현에 연결. production 함수 공유 금지 |
-| FE14 | P5 / T08,T09,T11,T13 | F02 동결 뒤 2 session·prepared 각2·활성 result 각1·길이6 이내 상태 모델. stale generation 수락·늦은 cancel 전파·close=commit·undo 미완료→Idle mutant 거절. 상한 도달 INCONCLUSIVE |
+| FE14 | P5 / T08,T09,T11,T13 | F02 동결 뒤 2 session·prepared 각2·활성 result 각1·길이6 이내 상태 모델. stale generation 수락·늦은 cancel 전파·close=commit·undo 미완료→Idle·implicit fetch terminal 취소→거래/result 유지 mutant 거절. 상한 도달 INCONCLUSIVE |
 | FE15 | P1–P4 / T01 | 해당 변경 parser/lexer의 malformed/fuzz corpus·seed·길이/깊이/메모리 상한·유효 입력 보존·panic/무한 loop 금지. 최소/확대 profile을 별도 선택 가능하게 작성 |
 | FE16 | P6 / T13,T14 일부 | 실제 dependency/source 경계·원 receipt/fixture/runner identity와 coverage 수합. parse 시간·할당/peak·cancel 검사 간격 관측은 새 경로에 연결. Q1/PF10·내구성 PASS로 확대 금지 |
 
 FE14의 탐색기·모델은 제품 상태 전이 함수를 정답으로 쓰지 않는다. 실제 I/O·thread·engine ACK의 인수를 모델 전수 결과로 대체하지 않는다. FE08의 parser 성공은 DDL 성공이 아니며 FE05의 COMMIT AST는 commit receipt가 아니다.
+
+<a id="diagnostic-handoff-tests"></a>
+FE11의 독립 단계에서는 순수 helper의 취소/실패·예약 반환·진단만 검증한다. 아래는 **실제 DEV3 공급 뒤 작성·실행할 연결 시나리오**이며 현재 전부 NOT_RUN이다. 가짜 session/engine으로 종료 증거를 만들지 않는다. 각 owner는 F02/F04에서 세부 case·오류 관측 지점·cleanup witness를 동결하고 해당 연결 코드가 생길 때 선택 실행한다.
+
+| 연결 시나리오 | 담당 기존 작업·인수 | 필수 관측 |
+| --- | --- | --- |
+| 거래 진입 전 parse/값 입력의 CANCELLED/TIMEOUT | 4.13.1/4.14.2 · T11 | lex/parse/bind phase·NoEffect, 기존 Idle/Active·binding 유지. 실제 거래 진입 뒤 bind 오류와 구분 |
+| ON SELECT의 fetch predicate 평가 중 CANCELLED/TIMEOUT | 4.12/4.13/4.14.2 · T09/T11 | fetch phase·cursor/snapshot 해제·implicit 거래 종료. helper의 무효과를 호출 전체 상태 유지로 포장하는 mutant 거절 |
+| 명시/OFF DML의 평가 중 취소·값 오류 | 4.09/4.13/4.14.2 · T09/T11 | execute phase·이번 statement 복원·이전 성공 변경 보존·Active. 같은 호출에서 처음 시작한 OFF 거래 포함 |
+| 위 실행의 undo/정리 실패 | 4.13.3/4.17 · T11 | 실제 cleanup 실패에 따른 RecoveryRequired/Fenced·원 certainty 보존. helper 오류만 보고 정상 rollback/Idle 응답 금지 |
+| DDL precommit 성공 뒤 native DDL 호출 전 Type/Range 오류 | 4.10.2/4.10.3·4.13.1.2 · T03/T09 | prior=Committed·ddl=NotAttempted·Idle과 실제 phase 보존. native DDL을 실행한 Aborted 또는 원래 Active·NoEffect로 바꾸지 않음 |
 
 테스트 실행은 [사용자 지시](../../AGENTS.md)를 따른다. **이번 문서 작업에는 테스트를 실행하지 않는다.** 이후 새 코드와 수정 코드의 필수 사례를 선택하고 마지막 검증 이후 diff→case 대응을 실행 전에 기록한다. 완료된 무변경 사례·전체 workspace·하위 wrapper 반복은 금지한다. 긴 fuzz·큰 조합은 필수 profile을 줄이지 않고 관련 코드 변경과 함께 선택·계획하며 미실행/중단/FAIL을 보존한다. DEV4에 새 최종 전수 예외를 만들지 않는다. 문서 자동 검사는 push gate 전용이다.
 
@@ -83,6 +94,6 @@ DEV3의 `crates/engine`과 저장 계약은 이번 독립 구현의 수정 범�
 
 독립 leaf 종료에는 코드·필수 선택 시험·부정 판정·자원/오류 증거와 별도 D1 검토가 필요하다. 원 source/범위를 보존하고 부모 분류의 미구현·미실행 부분을 남긴다. 본 계획 채택만으로 어떤 leaf도 완료하지 않는다.
 
-DEV3 수신 후 4.01.1이 실제 catalog/DDL·row/index·token/undo·commit/recovery·temp 공급을 대조한다. 기존 DEV4 최소 선행을 충족한 뒤 binding → 첫 INSERT statement → commit/reopen → 작은 SELECT/fetch → 실패/rollback 순으로 연결하며 [기존 공급 순서](dev4-work-breakdown.md#sequence)를 따른다. 이때 변경된 연결 경로의 시험을 수행하고 앞단 기존 PASS를 새 실행으로 재계산하지 않는다.
+DEV3 수신 후 4.01.1이 실제 catalog/DDL·row/index·token/undo·commit/recovery·temp 공급을 대조한다. 기존 DEV4 최소 선행을 충족한 뒤 binding → 첫 INSERT statement → commit/reopen → 작은 SELECT/fetch → 실패/rollback 순으로 연결하며 [기존 공급 순서](dev4-work-breakdown.md#sequence)를 따른다. 실제 adapter의 phase·cleanup·outcome 책임과 [진단 인계 사례](#diagnostic-handoff-tests)를 해당 owner에 연결한다. 이때 변경된 연결 경로의 시험을 수행하고 앞단 기존 PASS를 새 실행으로 재계산하지 않는다.
 
 Q1은 기존 SC02·KU13·PF10와 D4-T01–14의 실제 저장 통합·오류/복구·prepared·CLI 인수를 모두 요구한다. 앞단 일부 완료를 Q1·DEV4 완료로 승격하지 않는다. 기간·속도 향상은 아직 측정하지 않았으며 첫 leaf부터 구현/검토/시험/재작업 시간을 구분해 이후 배정에 사용한다.
