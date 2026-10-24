@@ -624,3 +624,17 @@ Linux actual producer→새PID recovery→재진입은 native6history21worker로
 compiler EC12–14와 baseline만 선택하며 EC00–11은 반복하지 않는다. 새 native checker4·compiler selection checker1 및
 변경 census checker1·frozen manifest checker1을 구별한다. ignored `empty_recovery_s5_profiles_states_and_homes`의48조합은 최종 S5에 전수 배정한다.
 원 source별 결과와 실패·자원 한도는 [통합 증거](../evidence/dev3-empty-transaction-20261023.md#closed-recovery)를 따른다.
+
+<a id="undo-bootstrap-followup"></a>
+## Undo bootstrap 선행 inventory
+
+[plan3 소유 계약](../contracts/dev3-status-bootstrap.md#undo-bootstrap)과
+[raw 입력](../../tests/fixtures/dev3-undo-bootstrap/manifest.json),
+[compiler 입력](../../crates/engine/tests/fixtures/dev3-undo-bootstrap/compiler/manifest.json)을 따른다.
+새 UB01–05의33assertion(5함수), 실제 Linux creator1, compiler4+baseline1과 신규 checker만 선택한다.
+기존 plan1/2의 완료 설치·fault·borrow 시험은 반복하지 않는다. static/literal4를 실제 설치4건으로 세지 않는다.
+S5의 `undo_bootstrap_s5_plan_matrix`는 profile3×wire6×high5=90에서 exact mandatory alias12를 뺀
+78조합이며 [tuple 목록](../../tests/fixtures/dev3-undo-bootstrap/s5-matrix.json)으로 고정했다.
+중간에는 ignored/NOT_RUN을 유지하고 최종 DEV3 inventory에는 새 필수33과 추가78을 모두 포함한다.
+원 compile/Clippy FAIL과 source별 선택 결과는 [증거](../evidence/dev3-undo-bootstrap-20261024.md)에 보존한다.
+이 선택은 free root INIT·mixed pool·current-build plan3 recovery의 인수를 대신하지 않는다.

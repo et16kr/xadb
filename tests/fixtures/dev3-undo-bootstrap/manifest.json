@@ -1,0 +1,63 @@
+{
+  "unit": "D3-UNDO-BOOTSTRAP-001",
+  "status": "PREPARED_NOT_EXECUTED",
+  "files": {
+    "effects.tsv": {
+      "bytes": 34661,
+      "sha256": "4c118513f3c3000a9b5805f316abea79864d601f8b1c1d325990ceff802e63c5"
+    },
+    "partial-files.tsv": {
+      "bytes": 2157,
+      "sha256": "46de9760d29458896c581d75feb83a928925cb5f3d1b17ef651e190d4b214083"
+    },
+    "profile1-d3-bootstrap.bin": {
+      "bytes": 4096,
+      "sha256": "c0566b18ff533f5d9f85b21a47ffe3777fceeb85e760d19fd46c14ea9991068b"
+    },
+    "profile2-d3-bootstrap.bin": {
+      "bytes": 4096,
+      "sha256": "c72e7468a47301710dfc63fbaa870ffb16bd7c2fa49cb12960fc374e49f10b2a"
+    },
+    "profile3-d3-bootstrap.bin": {
+      "bytes": 4096,
+      "sha256": "80884d61162e0157bdad5c300435e42f0aea9352f8d36d35d164b2de0f4368ac"
+    },
+    "s5-matrix.json": {
+      "bytes": 11505,
+      "sha256": "9f1031930bc936f552f477498f29e6f1fe2d6ce94313621011d82e31472cd661"
+    }
+  },
+  "inputs": {
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-FILEMAP.bin": "092301de885e2485c51c6d2a4a8a42fae1c1b87eced274a0af8eaca844c72280",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-WRITER.bin": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-allocation.bin": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-chunk.bin": "37746fe4d861925812f7f18134fe53a85e71371700d00fb4306051e2f18924b4",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-d3-bootstrap.bin": "432ec3fc6b77eda76c8ae7ec0a64ffc00dde9656bbab1cbd4f52661b3b3be053",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-d3-profile.bin": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-d3-wal-00000001.bin": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-root-ref.bin": "b495e92df0789c5fcbeb68a626811ca729a564123a47e68756857aad34ccb1a8",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile1-root.bin": "c8ddca13874f35180d5b80ddfe856837506e764e1326fdc2c11b3427effe78d8",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-FILEMAP.bin": "2178cc00031e741ad9515ca4e650b0b13d24655bbd80cde01a4ec1d3637d7838",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-WRITER.bin": "d3c1d2c10732339248417a3cfde8b61f056eac8e1856e5cf18a0a9dc6f200b84",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-allocation.bin": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-chunk.bin": "37746fe4d861925812f7f18134fe53a85e71371700d00fb4306051e2f18924b4",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-d3-bootstrap.bin": "1839be899c063de4fb96110406d67831f101e1666d4120908bb906b809634e4b",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-d3-profile.bin": "e45db9f3b6d87837bc2d626f641034c7b647b711fe8c761990731eb5db16052f",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-d3-wal-00000001.bin": "42b0c945b2b50a3a045032a762dd30a0038ea297a48b2e3801ecaf2153b23bc4",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-root-ref.bin": "b495e92df0789c5fcbeb68a626811ca729a564123a47e68756857aad34ccb1a8",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile2-root.bin": "c8ddca13874f35180d5b80ddfe856837506e764e1326fdc2c11b3427effe78d8",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-FILEMAP.bin": "64713dfe9448bf0c17302ff26fd9c9be844df8c2ee318693428677508e6597db",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-WRITER.bin": "c287387733e9969e28b169f4267a9988453e5639db6ed245b7b3e4cf010da584",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-allocation.bin": "1e7974d79a66f61c7baccce3064a70e765dfcd3a1992331c9631ffd9fbe892d7",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-chunk.bin": "37746fe4d861925812f7f18134fe53a85e71371700d00fb4306051e2f18924b4",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-d3-bootstrap.bin": "5e1b39b979938541835affd5e1a32ab92289c97f03118d0bfb65fba67cd7ad00",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-d3-profile.bin": "e86fdb05e8a470f64fa351b9626cd667b45824d40ef0bbe376f9c1bfcc4765d0",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-d3-wal-00000001.bin": "757b6691fc587bbc4692131c6bfa054c68805e54c98cc58371475ac69b7d6d09",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-root-ref.bin": "b495e92df0789c5fcbeb68a626811ca729a564123a47e68756857aad34ccb1a8",
+    "crates/engine/tests/fixtures/dev3-storage-session/literal/profile3-root.bin": "c8ddca13874f35180d5b80ddfe856837506e764e1326fdc2c11b3427effe78d8",
+    "scripts/dev3_storage_model.py": "371ed5b856f63dd3eb5cbb02d5f3e669cb3ebdfda5c3d61a537bd8ed07db782e",
+    "scripts/dev3_storage_native.py": "ef51196fcc3cdd84ce64c165d6ef66edba99ea4f25a71c3a49c7cda19282ecdc",
+    "tests/fixtures/dev3-status-bootstrap/profile1-d3-bootstrap.bin": "c44b414270ed3898d5cf71424c835caffaa86151f00a78dfc26b40d7c188253c",
+    "tests/fixtures/dev3-storage-session/effects.json": "c6ff7445cc963eda23cdd88135ed20fbb9200ae3a47858d1585457f54cbe83b8"
+  }
+}

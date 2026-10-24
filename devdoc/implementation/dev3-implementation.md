@@ -921,3 +921,14 @@ Aborted image를 퇴출·재적재한다. dirty 후보는 관측만 반환하고
 S5 profile3×frame4/8/64·위치/세대438은 ignored/NOT_RUN이다. 64frame 입력은 첫extent63주소 안의
 62상주+1empty이며 다음extent·일반 page 종류·live undo·큰 profile backing·FIFO 진행을 대신하지 않는다.
 AI 소비자1/3·효율 비교 NOT_RUN·전체 DEV3/S5 미완료를 유지한다.
+
+<a id="undo-bootstrap"></a>
+### 불변 Undo root 역할의 선행 공급
+
+2026-10-24 [plan3](../contracts/dev3-status-bootstrap.md#undo-bootstrap)의 새 namespace에서
+Status2와 Undo3/gen1/기존kind8을 고정하고 설치/readback 뒤 borrowed UndoRole을 발급한다.
+기존 allocator/Status adapter와 raw recovery는 plan3를 계속 거절한다. 새 역할은 root container의
+identity 관측이며 free root INIT·chunk·live undo·mixed pool/복구 권한을 만들지 않는다.
+[선택 증거](../evidence/dev3-undo-bootstrap-20261024.md)는 신규33assertion과 원 compile/Clippy FAIL을
+보존한다. native1·compiler4+baseline·checker7을 추가 검증했고 최종 독립 D1을 제한 단위로 수용했다. S5 추가78은 작성·NOT_RUN이다.
+AI 소비자1/3과 효율 비교 NOT_RUN·전체 DEV3/S5 미완료를 유지한다.

@@ -63,3 +63,50 @@ prepare/readback census는 실제 중첩 Profile·namespace·FILEMAP/control·pa
 기준 HEAD `09688384da7e4f2f34b9f3f2938c1f9c07a072b3`에서 `/root/allocation_review`의 독립 D2가 이 subset을 수용했다. 계약·제품 담당 `/root/allocation_compiler`, 독립 입력·통합·실행 `/root`, compiler/native 지원 `/root/allocation_native`다. 원 D2와 실행 전 source/input D1의 identity는 [증거](../evidence/dev3-status-bootstrap-20261022.json)에 보존한다. 넓은 INIT 제안의 known-plan IdentityMismatch 및 별도 API 이름은 이 subset에서 위 경계로 대체한다. INIT/closed frame/F05 전체 설계는 별도 검토 대상이다.
 
 새 역할·plan·opcode, role 재사용, membership/recovery 권한, raw constructor, generic 자원식이나 오류 우선순위 변경 시 재검토한다. 실제 선택 인수와 최종 독립 판정은 [현재 구현](../implementation/dev3-implementation.md#status-bootstrap)을 따른다.
+
+<a id="undo-bootstrap"></a>
+## plan3 Undo root 역할의 제한 선행 공급
+
+2026-10-24 · **D3-UNDO-BOOTSTRAP-001 · 독립 D2·제한 단위 최종 D1 수용**.
+앞 절의 plan2 계약·원 source별 인수는 보존하며 이 절은 새 plan3에만 적용한다.
+[증거](../evidence/dev3-undo-bootstrap-20261024.md)와 [확정 입력](../../tests/fixtures/dev3-undo-bootstrap/manifest.json)을 따른다.
+
+실제 mixed Status/Undo root INIT→같은 pool의 flush/load→현재-build 복구를 막는 불변 역할을
+먼저 공급한다. XBS1 version1/mode1/4096은 그대로이고 plan-version280=3, ObjectId high-water120=3이다.
+같은 profile의 plan2와 비교해 두 u64와 checksum 외의 bytes는 같다. allocator1/gen1,
+Status2/gen1/kind9/level0, Undo3/gen1/kind8/level0을 고정한다. 기존 `PageKind::Undo`는 root와 chunk가
+공유하지만 이 선행 역할의 지원 범위는 root container identity 관측이다. kind만으로 chunk/native
+content·membership·UndoRef·회수 권한을 발급하지 않으며 역할3을 재사용/재지정하지 않는다.
+
+`FreshStorageSession::create_undo`는 raw plan 인자 없이 기존350효과 설치와 전체 readback을
+완료한 plan3만 반환한다. 실패의 원 effects·residue를 보존하고 resume/overwrite하지 않는다.
+`status_role`은 원 poison→fence 순서 뒤 plan2/3에서 Status2를 발급한다. 새 `undo_role`은 이 검사를
+소비한 뒤 exact plan3만 허용하고 private `UndoRole { status: StatusRole }`로 원 plan/fence borrow를
+보존한다. Copy/Clone·raw constructor·inner role 반환/변환은 없다. getters는 불변 관측이며 후속
+mutation owner의 health/origin 검산을 대신하지 않는다. Mutable forwarding은 workspace까지
+포함한 원 health를 먼저 검사하고 Bootstrap 오류/effect를 그대로 감싼다.
+
+기존 allocator bind/consuming adapter는 exact plan1, Status bootstrap/resident bind는 exact plan2를
+유지한다. plan3의 nonconsuming 거절은 binding claim/file/scratch 변화 없이 UnsupportedPlan/Unchanged다.
+consuming allocation 거절은 원 owner 소비·fence와 CallerMustResolve를 유지하고 file/scratch를
+바꾸지 않는다. `prepare_recovery_bootstrap`의1/2 whitelist도 유지하므로 raw plan3를 UnsupportedPlan으로
+거절한다. 이 거절은 plan3 recovery 완료가 아니며 다음 mixed 소비자에서 별도로 확장·검증한다.
+
+새 retained field·File·FD·heap·page loan은 없다. 원 component65,536/scratch49,152와 generic
+alignment/File admission을 유지한다. 원 StatusRole 호출 안에 새 role2개·Result3개·BootstrapError·
+scalar8개를 더하고 Mutable error/Result/변환 wrapper를 별도로 더한다. actual UndoRole16,
+Result48, MutableResult56이며 memory/native wrapper 모두 fresh712≤1024, mutable1080≤2048이다.
+이는 source-value census이며 실제 stack/RSS 측정이 아니다. 한도 초과는 원 첫 effect 전 거절이다.
+
+필수 UB01(독립 profile3+layout1), UB02(decoder12), UB03(health8), UB04(creation/error-prefix4),
+UB05(old adapter/pure recovery refusal5)의33assertion을 선택한다. native profile1 creator1건은
+전체 파일·350effects·최종FD0을 독립 검산하며 INIT/recovery로 집계하지 않는다. compiler는
+UC00 정상 borrow, UC01 private construction, UC02 owner Drop, UC03 Status/Undo type confusion과
+baseline1을 분리한다. native 전체 검산 포함30초/8MiB, compiler60초, runtime case30초/선택120초다.
+source/ELF/cache 보존은 active DB/receipt와 별도로 회계한다.
+
+S5의 profile3×wire{0,1,2,3,4,MAX}×high{0,1,2,3,MAX}=90에서 실제 필수 tuple12만 alias한다.
+정상(profile1/2/3,wire3,high3)3개, (profile1,wire1/2/0/4/MAX,high3)5개,
+(profile1,wire3,high0/1/2/MAX)4개다. 나머지78은
+`undo_bootstrap_s5_plan_matrix`에 ignored/NOT_RUN으로 작성하고 [중앙 계획](../plans/dev3-test-plan.md#undo-bootstrap-followup)에 등록한다.
+Free root INIT·실제 mixed pool·live undo·일반 recovery/READY·DEV3/S5와 AI 소비자2/3은 이 선행 수용으로 승격하지 않는다.

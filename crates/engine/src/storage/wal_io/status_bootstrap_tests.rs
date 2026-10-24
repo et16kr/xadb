@@ -23,6 +23,9 @@ type State = Arc<Mutex<port::State>>;
 #[path = "status_bootstrap_native_tests.rs"]
 mod native;
 
+#[path = "undo_bootstrap_tests.rs"]
+mod undo;
+
 fn mark(id: &str) {
     println!("\nXADB_STATUS_BOOTSTRAP_CASE {id}");
 }

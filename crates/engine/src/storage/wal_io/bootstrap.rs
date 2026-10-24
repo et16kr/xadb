@@ -157,12 +157,14 @@ fn fixed_entry() -> std::result::Result<FileMapEntry, ControlError> {
 enum BootstrapPlanKind {
     AllocatorOnly,
     StatusBootstrap,
+    UndoBootstrap,
 }
 impl BootstrapPlanKind {
     const fn version(self) -> u64 {
         match self {
             Self::AllocatorOnly => 1,
             Self::StatusBootstrap => 2,
+            Self::UndoBootstrap => 3,
         }
     }
 
@@ -170,6 +172,7 @@ impl BootstrapPlanKind {
         match self {
             Self::AllocatorOnly => 1,
             Self::StatusBootstrap => 2,
+            Self::UndoBootstrap => 3,
         }
     }
 }
@@ -666,7 +669,11 @@ fn readback<W: WriterNamespace>(
     Ok(())
 }
 
-/// An immutable system-object role issued only by a completed plan2 bootstrap.
+#[path = "undo_bootstrap.rs"]
+mod undo_bootstrap;
+pub(crate) use undo_bootstrap::UndoRole;
+
+/// An immutable system-object role issued only by a completed plan2/3 bootstrap.
 /// This borrow cannot initialize payload pages or grant transaction admission.
 /// Identity getters remain observations after fencing; future mutation owners
 /// must recheck health and the exact originating plan/fence.
@@ -721,6 +728,8 @@ struct SourceBudget {
     readback_nested: usize,
     fresh_role: usize,
     mutable_role: usize,
+    undo_role: usize,
+    mutable_undo_role: usize,
 }
 fn source_budget<W: WriterNamespace>() -> SourceBudget {
     use crate::storage::{
@@ -793,6 +802,8 @@ fn source_budget<W: WriterNamespace>() -> SourceBudget {
             + 2 * size_of::<MutableRoleResult>()
             + size_of::<BootstrapError>()
             + 12 * size_of::<usize>(),
+        undo_role: undo_bootstrap::role_bytes(fresh_role),
+        mutable_undo_role: undo_bootstrap::mutable_role_bytes(fresh_role),
     }
 }
 
@@ -806,11 +817,14 @@ fn source_budget_fits<W: WriterNamespace>() -> bool {
     let budget = source_budget::<W>();
     size_of::<BootstrapPlanKind>() <= 8
         && size_of::<StatusRole<'_>>() <= 32
+        && size_of::<UndoRole<'_>>() <= 32
         && size_of::<[AllocationEntry; EXTENT_PAGES]>() <= 8192
         && budget.prepare_nested <= 16384
         && budget.readback_nested <= 16384
         && budget.fresh_role <= 1024
         && budget.mutable_role <= 2048
+        && budget.undo_role <= 1024
+        && budget.mutable_undo_role <= 2048
         && owner + size_of::<[AllocationEntry; EXTENT_PAGES]>() + 1032 + budget.prepare_nested
             <= 65536
         && owner + file + 1032 + budget.prepare_nested <= 65536
@@ -873,7 +887,7 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
             })?;
         let plan = match kind {
             BootstrapPlanKind::AllocatorOnly => BootstrapPlan::prepare(wal.profile, scratch)?,
-            BootstrapPlanKind::StatusBootstrap => {
+            BootstrapPlanKind::StatusBootstrap | BootstrapPlanKind::UndoBootstrap => {
                 BootstrapPlan::prepare_for_kind(wal.profile, scratch, kind)?
             }
         };
@@ -900,7 +914,7 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
         })
     }
 
-    /// Borrow the completed plan2's immutable role. No I/O or payload authority.
+    /// Borrow the completed plan2/3's Status role. No I/O or payload authority.
     /// Poison/fence precedes plan rejection and never clears the shared fence.
     pub(crate) fn status_role(&self) -> Result<StatusRole<'_>> {
         let cause = if self.wal.append.is_poisoned()
@@ -921,7 +935,10 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
                 Cause::Wal(super::attempted(super::Phase::Observe, cause)),
             ));
         }
-        if self.plan.kind != BootstrapPlanKind::StatusBootstrap {
+        if !matches!(
+            self.plan.kind,
+            BootstrapPlanKind::StatusBootstrap | BootstrapPlanKind::UndoBootstrap
+        ) {
             return Err(BootstrapError {
                 phase: Phase::Role,
                 effect: Effect::Unchanged,

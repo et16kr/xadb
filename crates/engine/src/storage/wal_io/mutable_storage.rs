@@ -176,6 +176,15 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
             })
     }
 
+    /// Borrow plan3's Undo role only after the full mutable owner is healthy.
+    pub(crate) fn undo_role(&self) -> Result<crate::storage::wal_io::UndoRole<'_>> {
+        self.health()?;
+        self.fresh.undo_role().map_err(|error| MutableStorageError {
+            effect: error.effect,
+            cause: Cause::Bootstrap(error),
+        })
+    }
+
     /// Shape/resource rejection precedes the atomic claim and every readback.
     /// Claimed failure is permanently abandoned; caller scratch is then invalid.
     pub(crate) fn bind_allocator<'s, 'c, 'p, 'd: 'p, 'o>(

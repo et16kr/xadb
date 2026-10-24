@@ -1,0 +1,453 @@
+{
+  "schema_version": 1,
+  "unit": "D3-UNDO-BOOTSTRAP-001",
+  "base_commit": "47a4194",
+  "status": "ACCEPTED_LIMITED_D1",
+  "contract_ref": "dev3-status-bootstrap.md#undo-bootstrap",
+  "scope": "Immutable plan3 Status2/Undo3 root-container role prerequisite; no mixed INIT, pool, live undo or plan3 recovery",
+  "full_stage_acceptance": false,
+  "consumer_completion": false,
+  "ai_experiment_completed_consumers": 1,
+  "sources": [
+    {
+      "id": "r0",
+      "source_directory": "artifacts/dev3/undo-bootstrap-20261024/r0/source",
+      "source_sha256": "fcdb2ab558f1984158d8155ff261cbc270137ba7ae25554270f3d7eda76cf126",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 101,
+      "elapsed_seconds": 7.024432280000838,
+      "time": "2026-10-24T05:20:36.023127+00:00",
+      "receipt": {
+        "path": "artifacts/dev3/undo-bootstrap-20261024/r0/build-receipt.json",
+        "bytes": 355,
+        "sha256": "a8cfb5f9f28cc4056e1582195690709652299b1278b5150186d5607ff3b4563c"
+      }
+    },
+    {
+      "id": "r1",
+      "source_directory": "artifacts/dev3/undo-bootstrap-20261024/r1/source",
+      "source_sha256": "7299bceb8011730438bdd1ba26db2f37eb9cbf79a58ce07997f264ed972f127f",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 12.913652572000501,
+      "time": "2026-10-24T05:21:04.080842+00:00",
+      "binary_sha256": "a0fa4625d620d9193e6a1708418780b87247d83f3ae02708976bceba01009ec4",
+      "receipt": {
+        "path": "artifacts/dev3/undo-bootstrap-20261024/r1/build-receipt.json",
+        "bytes": 441,
+        "sha256": "6f8cd8e91e154460e82e2e587864d72aa7150e5cf27c38f64753b74dae090244"
+      },
+      "binary": {
+        "path": "artifacts/dev3/undo-bootstrap-20261024/r1/engine-tests",
+        "bytes": 117869520,
+        "sha256": "a0fa4625d620d9193e6a1708418780b87247d83f3ae02708976bceba01009ec4"
+      }
+    },
+    {
+      "id": "r2",
+      "source_directory": "artifacts/dev3/undo-bootstrap-20261024/r2/source",
+      "source_sha256": "9e23f7315f7df6c6ab17623c8a008ab7779152bbc8b78b07d5c4584eadc79489",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 0.38686820000111766,
+      "time": "2026-10-24T05:23:58.369794+00:00",
+      "binary_sha256": "a0fa4625d620d9193e6a1708418780b87247d83f3ae02708976bceba01009ec4",
+      "receipt": {
+        "path": "artifacts/dev3/undo-bootstrap-20261024/r2/build-receipt.json",
+        "bytes": 442,
+        "sha256": "0d1d1c16ce2431a5a77a6525104598f543a06902498424a4168686bb1ac176dc"
+      },
+      "binary": {
+        "path": "artifacts/dev3/undo-bootstrap-20261024/r2/engine-tests",
+        "bytes": 117869520,
+        "sha256": "a0fa4625d620d9193e6a1708418780b87247d83f3ae02708976bceba01009ec4"
+      }
+    },
+    {
+      "id": "r3",
+      "source_directory": "artifacts/dev3/undo-bootstrap-20261024/r3/source",
+      "source_sha256": "4438242b0708d9e418cccbb408d53d635efc2934af41f9bd3bafb5c15989a04d",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 13.187823924999975,
+      "time": "2026-10-24T05:25:30.829670+00:00",
+      "binary_sha256": "8adacdd9966e0acf54118250394a86ddd2b09e8add549af97b16627571898fe5",
+      "receipt": {
+        "path": "artifacts/dev3/undo-bootstrap-20261024/r3/build-receipt.json",
+        "bytes": 441,
+        "sha256": "ef02701e1f898c2bba8373d69531381497260f1598bd18b60426aeee77389859"
+      },
+      "binary": {
+        "path": "artifacts/dev3/undo-bootstrap-20261024/r3/engine-tests",
+        "bytes": 117869528,
+        "sha256": "8adacdd9966e0acf54118250394a86ddd2b09e8add549af97b16627571898fe5"
+      }
+    }
+  ],
+  "receipts": [
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/r1/undo_bootstrap_ub01_literals_and_layout.json",
+      "bytes": 764,
+      "sha256": "28ce9b626f62bdb041bcc389d9cd495488fcadb26fb16501182866296c0cc8c1"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/r1/undo_bootstrap_ub02_decoder.json",
+      "bytes": 752,
+      "sha256": "690ed7f1448b2030dc408d5009fbf577fecf6335787b06ed40c9d061d7642700"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/r1/undo_bootstrap_ub03_role_health.json",
+      "bytes": 754,
+      "sha256": "826f6b0bb5f49286af92e191cde4bd228e662bc2c823b4bae03b7833effc97d5"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/r1/undo_bootstrap_ub04_failed_creation.json",
+      "bytes": 758,
+      "sha256": "e20f21a41405fe5f51a54a623d091d03c4cd6b87d4c10cf08b545941a61b4ece"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/r1/undo_bootstrap_ub05_old_consumers_refuse.json",
+      "bytes": 765,
+      "sha256": "f9c60433433e2295ead0d1d7c8f63aac8a232350860f9c9eaed9623f3c4e97ec"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/r2/checker.json",
+      "bytes": 485,
+      "sha256": "40681095f9b07db9f56ffdb2afffb781534160eb5c10dc009c32c821d9b6d047"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/r2/clippy.json",
+      "bytes": 506,
+      "sha256": "3fddada5827703fe38bb6d53c6929ea8d6189d63213c4113fbfb7eef283893c1"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/r2/fmt.json",
+      "bytes": 389,
+      "sha256": "8503ab55cef5f4ee7457325dd34e031840401a6c154445a1724709a86807cbb1"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/r3/checker-deadline.json",
+      "bytes": 470,
+      "sha256": "c9bd9e0952e89ff3ec3af7b5f88106913eaf2f82dfa3f2e784b2dd43ec045422"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/r3/clippy.json",
+      "bytes": 503,
+      "sha256": "29e8febcf35eb8c063c671dfcaa2eeadf47cc271fedf09a66a42095f52a18a60"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/r3/fmt.json",
+      "bytes": 389,
+      "sha256": "0031ed9b69c46096cdf4a9c7e5a4a9423941b72e9c91bae9dbe2b891cdba9280"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/r3/native/result.json",
+      "bytes": 4053,
+      "sha256": "0eabde4b242fe0c5f512bb1df6c9ebf04c34f7cf653746f9aede9859a741cb34"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/compiler-result.json",
+      "bytes": 47504,
+      "sha256": "2173cf766cc38fa44588f08d89f341d5070fb6daca38ec324250bfbc134fc889"
+    }
+  ],
+  "reviews": [
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/d1-final.md",
+      "bytes": 6424,
+      "sha256": "8bbfc9a97e78cc822b8518df2cb343b44b23eeaff673604606b28eb8f6f76847"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/design-d2.md",
+      "bytes": 7500,
+      "sha256": "4c15c6ff4c758e5874b0722e467317adcc92aceda563d2f3cb6eb0a574f186be"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/final-file-accounting.json",
+      "bytes": 16714,
+      "sha256": "c7a5b078fbe8030440c55d98c821c4d7a31a3e1eeef1faf9cc92ae52f96380d8"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/final-retention-audit.json",
+      "bytes": 865,
+      "sha256": "9f0768e531dd6de7ee23f152afeeaf4ef9e720b48fc30993cb037f5d2e3a852c"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/final-source-evidence-audit.json",
+      "bytes": 3281,
+      "sha256": "7e7a7811b1e5a2acbe91fa12570b5e13da93d1af310902d9b882f9d1760a6f2c"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/first-effect-gate-r1.md",
+      "bytes": 3820,
+      "sha256": "8284fdf6cac6c9fc4c7ac013840333c9d580ddfc4b1623f0e3b9742f75d39725"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/mixed-consumer-assessment.md",
+      "bytes": 10909,
+      "sha256": "5ae508219d112f861f73d0774f8c98798803eafcc91ff07fc6052b2ddeb1e8f5"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/native-compiler-gate-r3.md",
+      "bytes": 3324,
+      "sha256": "4c9036616a6f902158df7eda05bfc7ccbee5e7fe5d2220abc4c0ebbff1bac87e"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/ocr-preview-final.json",
+      "bytes": 6636,
+      "sha256": "a75cdd8af15a8cb1f06911aa9a10f8d5bae1c9be4a7bc18f7b85e9075f883723"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/ocr-rules-final.json",
+      "bytes": 15233,
+      "sha256": "15359db33729f43befcdc24702f316c35c0a89318aa7a910f0011b3ccaa86b8c"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/ocr-rules-final.stderr",
+      "bytes": 128,
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/r1-source-input-audit.json",
+      "bytes": 2348,
+      "sha256": "06e425b624394067ca94da0f4333ff62eb4c8c6e5233c64aaecfe208b31e81b0"
+    },
+    {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/review/r3-source-gate-audit.json",
+      "bytes": 5503,
+      "sha256": "ed1c2abac0514ffe4529e2bbde64876e10f7e51164b29b07b51df16296387d5b"
+    }
+  ],
+  "native": {
+    "status": "PASS",
+    "timed_out": false,
+    "scope": "immutable plan3 creator only; INIT/recovery not supplied",
+    "source_sha256": "4438242b0708d9e418cccbb408d53d635efc2934af41f9bd3bafb5c15989a04d",
+    "binary_sha256": "8adacdd9966e0acf54118250394a86ddd2b09e8add549af97b16627571898fe5",
+    "build_receipt_sha256": "ef02701e1f898c2bba8373d69531381497260f1598bd18b60426aeee77389859",
+    "inputs_sha256": "03c53872fe8a65c1c656210bef3273f0632beed24325a97a35c866c1995aa289",
+    "checker_files": {
+      "/home/et16/work/xadb/artifacts/dev3/undo-bootstrap-20261024/r3/source/scripts/check_dev3_allocation_stack.py": "b3c533437f2061921f69f0954918b0ab90e6c50949d8047975dc519c00f85c09",
+      "/home/et16/work/xadb/artifacts/dev3/undo-bootstrap-20261024/r3/source/scripts/dev3_storage_native.py": "ef51196fcc3cdd84ce64c165d6ef66edba99ea4f25a71c3a49c7cda19282ecdc",
+      "/home/et16/work/xadb/artifacts/dev3/undo-bootstrap-20261024/r3/source/scripts/dev3_undo_bootstrap.py": "27202d5c6d63ae234eff7ca4beb84cfc472af812b87f2473278ced30091d7451",
+      "/home/et16/work/xadb/artifacts/dev3/undo-bootstrap-20261024/r3/source/scripts/dev3_storage_model.py": "371ed5b856f63dd3eb5cbb02d5f3e669cb3ebdfda5c3d61a537bd8ed07db782e",
+      "/home/et16/work/xadb/artifacts/dev3/undo-bootstrap-20261024/r3/source/scripts/check_dev0.py": "91175fdd7c7158fb4db44390d36506f545eb160a89a47cfffde61900fbec813a"
+    },
+    "command": [
+      "/home/et16/work/xadb/artifacts/dev3/undo-bootstrap-20261024/r3/engine-tests",
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_bootstrap_tests::undo::native_undo::undo_bootstrap_native_p1",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "pid": 72219,
+    "timeout_seconds": 29.855878792001022,
+    "exit_code": 0,
+    "native": {
+      "files": [
+        {
+          "name": "FILEMAP",
+          "bytes": 4096,
+          "sha256": "04895ece4caa853090859156bbbfb2af1d85dce4cd4fa514004b38cd2df3a996",
+          "device": 66312,
+          "inode": 27663265
+        },
+        {
+          "name": "LOCK",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "device": 66312,
+          "inode": 27663257
+        },
+        {
+          "name": "WRITER",
+          "bytes": 4096,
+          "sha256": "85ab4c131efe42052228bf0ee89b25b63b20b903847133b971e6ad878d3b7716",
+          "device": 66312,
+          "inode": 27663260
+        },
+        {
+          "name": "d3-bootstrap",
+          "bytes": 4096,
+          "sha256": "59d805f6661f491ced70adae13cf3a5c47521eb6759fde7255d28cd9ef53cf2b",
+          "device": 66312,
+          "inode": 27663261
+        },
+        {
+          "name": "d3-data-0000000100000001",
+          "bytes": 1048576,
+          "sha256": "fc31f4a322e175c9754e67bc8ec5283d1a09017e56eeebc65f9fbc715587e5f3",
+          "device": 66312,
+          "inode": 27663262
+        },
+        {
+          "name": "d3-filemap-0",
+          "bytes": 2113536,
+          "sha256": "03e18a30275187490317e38f7e97b09aea9b05c2243c2c5449636c6e281b2c8c",
+          "device": 66312,
+          "inode": 27663263
+        },
+        {
+          "name": "d3-filemap-1",
+          "bytes": 2113536,
+          "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199",
+          "device": 66312,
+          "inode": 27663264
+        },
+        {
+          "name": "d3-profile",
+          "bytes": 4096,
+          "sha256": "6686b2c355bacb74b582b26e309a61ab274a2f391a2da9f7f4a2338eea0c673c",
+          "device": 66312,
+          "inode": 27663258
+        },
+        {
+          "name": "d3-wal-00000001",
+          "bytes": 4096,
+          "sha256": "9a292f659fcd5080d0a37b950885d64b1d56fec10ad959f8d28e6339220679c1",
+          "device": 66312,
+          "inode": 27663259
+        }
+      ],
+      "total_bytes": 5296128,
+      "effects": 350,
+      "wrapped_file_peak": 3,
+      "wrapped_file_final": 0,
+      "live_fd": 3,
+      "final_fd": 0
+    },
+    "stdout.log_sha256": "bc3efe5e0365d162ded28acc66d768f6a30ca5dd45cb5587a9cd981d171deb40",
+    "stderr.log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "elapsed_seconds": 0.45638848199996573
+  },
+  "compiler": {
+    "status": "PASS",
+    "receipt": {
+      "path": "artifacts/dev3/undo-bootstrap-20261024/compiler-result.json",
+      "bytes": 47504,
+      "sha256": "2173cf766cc38fa44588f08d89f341d5070fb6daca38ec324250bfbc134fc889"
+    },
+    "selected": [
+      "baseline",
+      "positive",
+      "private_constructor",
+      "owner_drop",
+      "role_confusion"
+    ]
+  },
+  "raw_inputs": {
+    "path": "tests/fixtures/dev3-undo-bootstrap/manifest.json",
+    "bytes": 5628,
+    "sha256": "03c53872fe8a65c1c656210bef3273f0632beed24325a97a35c866c1995aa289"
+  },
+  "compiler_inputs": {
+    "path": "crates/engine/tests/fixtures/dev3-undo-bootstrap/compiler/manifest.json",
+    "bytes": 2024,
+    "sha256": "7f3208fb364a25f2ed51c779da295a4374d17e2a9d2103c06b6f54b1e5328813"
+  },
+  "execution": {
+    "new_runtime_functions": 5,
+    "mandatory_assertions": 33,
+    "r1_pure_literals": 3,
+    "r1_static_layout": 1,
+    "r1_remaining_assertions": 29,
+    "native_creators": 1,
+    "compiler_semantic_cases": 4,
+    "compiler_baseline": 1,
+    "r2_checker_pass": 6,
+    "r3_new_deadline_checker_pass": 1,
+    "completed_tests_repeated": false,
+    "s5_matrix": 90,
+    "mandatory_tuple_aliases": 12,
+    "s5_additional": 78,
+    "s5_status": "NOT_RUN"
+  },
+  "preserved_failures": [
+    {
+      "source": "r0",
+      "status": "COMPILE_FAIL",
+      "reason": "new native test missing DirectoryPort trait import; no runtime executed"
+    },
+    {
+      "source": "r2",
+      "status": "CLIPPY_FAIL",
+      "reason": "manual_bits lint on eight source-owned scalar slots; fixed with reasoned narrow lint attributes without runtime logic change"
+    }
+  ],
+  "source_value_census": {
+    "UndoRole": 16,
+    "UndoRoleResult": 48,
+    "MutableUndoRoleResult": 56,
+    "fresh_nested": 712,
+    "mutable_nested": 1080,
+    "fresh_bound": 1024,
+    "mutable_bound": 2048,
+    "component_bound": 65536,
+    "caller_scratch": 49152,
+    "stack_or_rss": "NOT_MEASURED"
+  },
+  "not_run": [
+    "plan3 actual Undo root INIT",
+    "mixed pool/flush/load",
+    "plan3 current-build recovery/reentry",
+    "live undo/CLR/Commit",
+    "full DEV3/S5",
+    "AI efficiency comparison"
+  ],
+  "artifact_bytes": {
+    "measurement": "logical file bytes at evidence refresh, not physical allocated disk blocks; disjoint categories",
+    "runtime_source_and_elf": 753729787,
+    "compiler_baseline_source": 100047309,
+    "compiler_probe_sources": 400191065,
+    "compiler_metadata": 55296538,
+    "compiler_target_cache": 162086428,
+    "native_database": 5296128,
+    "receipts_reviews_and_tools": 404868,
+    "unit_total": 1477052123,
+    "shared_build_cache": {
+      "path": "artifacts/dev3/empty-transaction-recovery-20261024/target",
+      "accounting": "shared across units, excluded from this unit total; not duplicated"
+    }
+  }
+}

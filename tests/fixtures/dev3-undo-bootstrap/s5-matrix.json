@@ -1,0 +1,632 @@
+[
+  {
+    "id": "UB-S5-P1-W0-H0",
+    "profile": 1,
+    "wire": 0,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W0-H1",
+    "profile": 1,
+    "wire": 0,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W0-H2",
+    "profile": 1,
+    "wire": 0,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W0-H3",
+    "profile": 1,
+    "wire": 0,
+    "high": 3,
+    "mandatory_alias": true
+  },
+  {
+    "id": "UB-S5-P1-W0-H18446744073709551615",
+    "profile": 1,
+    "wire": 0,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W1-H0",
+    "profile": 1,
+    "wire": 1,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W1-H1",
+    "profile": 1,
+    "wire": 1,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W1-H2",
+    "profile": 1,
+    "wire": 1,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W1-H3",
+    "profile": 1,
+    "wire": 1,
+    "high": 3,
+    "mandatory_alias": true
+  },
+  {
+    "id": "UB-S5-P1-W1-H18446744073709551615",
+    "profile": 1,
+    "wire": 1,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W2-H0",
+    "profile": 1,
+    "wire": 2,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W2-H1",
+    "profile": 1,
+    "wire": 2,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W2-H2",
+    "profile": 1,
+    "wire": 2,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W2-H3",
+    "profile": 1,
+    "wire": 2,
+    "high": 3,
+    "mandatory_alias": true
+  },
+  {
+    "id": "UB-S5-P1-W2-H18446744073709551615",
+    "profile": 1,
+    "wire": 2,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W3-H0",
+    "profile": 1,
+    "wire": 3,
+    "high": 0,
+    "mandatory_alias": true
+  },
+  {
+    "id": "UB-S5-P1-W3-H1",
+    "profile": 1,
+    "wire": 3,
+    "high": 1,
+    "mandatory_alias": true
+  },
+  {
+    "id": "UB-S5-P1-W3-H2",
+    "profile": 1,
+    "wire": 3,
+    "high": 2,
+    "mandatory_alias": true
+  },
+  {
+    "id": "UB-S5-P1-W3-H3",
+    "profile": 1,
+    "wire": 3,
+    "high": 3,
+    "mandatory_alias": true
+  },
+  {
+    "id": "UB-S5-P1-W3-H18446744073709551615",
+    "profile": 1,
+    "wire": 3,
+    "high": 18446744073709551615,
+    "mandatory_alias": true
+  },
+  {
+    "id": "UB-S5-P1-W4-H0",
+    "profile": 1,
+    "wire": 4,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W4-H1",
+    "profile": 1,
+    "wire": 4,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W4-H2",
+    "profile": 1,
+    "wire": 4,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W4-H3",
+    "profile": 1,
+    "wire": 4,
+    "high": 3,
+    "mandatory_alias": true
+  },
+  {
+    "id": "UB-S5-P1-W4-H18446744073709551615",
+    "profile": 1,
+    "wire": 4,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W18446744073709551615-H0",
+    "profile": 1,
+    "wire": 18446744073709551615,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W18446744073709551615-H1",
+    "profile": 1,
+    "wire": 18446744073709551615,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W18446744073709551615-H2",
+    "profile": 1,
+    "wire": 18446744073709551615,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P1-W18446744073709551615-H3",
+    "profile": 1,
+    "wire": 18446744073709551615,
+    "high": 3,
+    "mandatory_alias": true
+  },
+  {
+    "id": "UB-S5-P1-W18446744073709551615-H18446744073709551615",
+    "profile": 1,
+    "wire": 18446744073709551615,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W0-H0",
+    "profile": 2,
+    "wire": 0,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W0-H1",
+    "profile": 2,
+    "wire": 0,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W0-H2",
+    "profile": 2,
+    "wire": 0,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W0-H3",
+    "profile": 2,
+    "wire": 0,
+    "high": 3,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W0-H18446744073709551615",
+    "profile": 2,
+    "wire": 0,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W1-H0",
+    "profile": 2,
+    "wire": 1,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W1-H1",
+    "profile": 2,
+    "wire": 1,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W1-H2",
+    "profile": 2,
+    "wire": 1,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W1-H3",
+    "profile": 2,
+    "wire": 1,
+    "high": 3,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W1-H18446744073709551615",
+    "profile": 2,
+    "wire": 1,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W2-H0",
+    "profile": 2,
+    "wire": 2,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W2-H1",
+    "profile": 2,
+    "wire": 2,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W2-H2",
+    "profile": 2,
+    "wire": 2,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W2-H3",
+    "profile": 2,
+    "wire": 2,
+    "high": 3,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W2-H18446744073709551615",
+    "profile": 2,
+    "wire": 2,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W3-H0",
+    "profile": 2,
+    "wire": 3,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W3-H1",
+    "profile": 2,
+    "wire": 3,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W3-H2",
+    "profile": 2,
+    "wire": 3,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W3-H3",
+    "profile": 2,
+    "wire": 3,
+    "high": 3,
+    "mandatory_alias": true
+  },
+  {
+    "id": "UB-S5-P2-W3-H18446744073709551615",
+    "profile": 2,
+    "wire": 3,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W4-H0",
+    "profile": 2,
+    "wire": 4,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W4-H1",
+    "profile": 2,
+    "wire": 4,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W4-H2",
+    "profile": 2,
+    "wire": 4,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W4-H3",
+    "profile": 2,
+    "wire": 4,
+    "high": 3,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W4-H18446744073709551615",
+    "profile": 2,
+    "wire": 4,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W18446744073709551615-H0",
+    "profile": 2,
+    "wire": 18446744073709551615,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W18446744073709551615-H1",
+    "profile": 2,
+    "wire": 18446744073709551615,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W18446744073709551615-H2",
+    "profile": 2,
+    "wire": 18446744073709551615,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W18446744073709551615-H3",
+    "profile": 2,
+    "wire": 18446744073709551615,
+    "high": 3,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P2-W18446744073709551615-H18446744073709551615",
+    "profile": 2,
+    "wire": 18446744073709551615,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W0-H0",
+    "profile": 3,
+    "wire": 0,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W0-H1",
+    "profile": 3,
+    "wire": 0,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W0-H2",
+    "profile": 3,
+    "wire": 0,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W0-H3",
+    "profile": 3,
+    "wire": 0,
+    "high": 3,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W0-H18446744073709551615",
+    "profile": 3,
+    "wire": 0,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W1-H0",
+    "profile": 3,
+    "wire": 1,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W1-H1",
+    "profile": 3,
+    "wire": 1,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W1-H2",
+    "profile": 3,
+    "wire": 1,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W1-H3",
+    "profile": 3,
+    "wire": 1,
+    "high": 3,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W1-H18446744073709551615",
+    "profile": 3,
+    "wire": 1,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W2-H0",
+    "profile": 3,
+    "wire": 2,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W2-H1",
+    "profile": 3,
+    "wire": 2,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W2-H2",
+    "profile": 3,
+    "wire": 2,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W2-H3",
+    "profile": 3,
+    "wire": 2,
+    "high": 3,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W2-H18446744073709551615",
+    "profile": 3,
+    "wire": 2,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W3-H0",
+    "profile": 3,
+    "wire": 3,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W3-H1",
+    "profile": 3,
+    "wire": 3,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W3-H2",
+    "profile": 3,
+    "wire": 3,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W3-H3",
+    "profile": 3,
+    "wire": 3,
+    "high": 3,
+    "mandatory_alias": true
+  },
+  {
+    "id": "UB-S5-P3-W3-H18446744073709551615",
+    "profile": 3,
+    "wire": 3,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W4-H0",
+    "profile": 3,
+    "wire": 4,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W4-H1",
+    "profile": 3,
+    "wire": 4,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W4-H2",
+    "profile": 3,
+    "wire": 4,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W4-H3",
+    "profile": 3,
+    "wire": 4,
+    "high": 3,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W4-H18446744073709551615",
+    "profile": 3,
+    "wire": 4,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W18446744073709551615-H0",
+    "profile": 3,
+    "wire": 18446744073709551615,
+    "high": 0,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W18446744073709551615-H1",
+    "profile": 3,
+    "wire": 18446744073709551615,
+    "high": 1,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W18446744073709551615-H2",
+    "profile": 3,
+    "wire": 18446744073709551615,
+    "high": 2,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W18446744073709551615-H3",
+    "profile": 3,
+    "wire": 18446744073709551615,
+    "high": 3,
+    "mandatory_alias": false
+  },
+  {
+    "id": "UB-S5-P3-W18446744073709551615-H18446744073709551615",
+    "profile": 3,
+    "wire": 18446744073709551615,
+    "high": 18446744073709551615,
+    "mandatory_alias": false
+  }
+]

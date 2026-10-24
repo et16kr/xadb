@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "unit": "D3-UNDO-BOOTSTRAP-001",
+  "probe_relative_path": "crates/engine/src/storage/undo_role_borrow_probe.rs",
+  "anchor_relative_path": "crates/engine/src/storage/mod.rs",
+  "requires_actual_unmodified_baseline": true,
+  "unrelated_error_diagnostics_are_failures": true,
+  "compiler_budget_seconds": 60,
+  "semantic_case_count": 4,
+  "infrastructure_control_count": 1,
+  "negative_returncode": 101,
+  "cases": [
+    {
+      "name": "baseline",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "semantic_id": null,
+      "reason": "unmodified source compiler control"
+    },
+    {
+      "name": "positive",
+      "expected_code": null,
+      "primary_line": null,
+      "primary_spans": "none",
+      "semantic_id": "UC00",
+      "reason": "borrowed getters, owner move after borrow, fresh constructor typecheck",
+      "bytes": 1073,
+      "sha256": "88c501d34d919e9dd314ea66cab88740237a3e687f48b76ba36fc2d4967f9779"
+    },
+    {
+      "name": "private_constructor",
+      "expected_code": "E0451",
+      "primary_line": 5,
+      "primary_spans": "one",
+      "semantic_id": "UC01",
+      "reason": "private UndoRole wrapper cannot be constructed outside bootstrap",
+      "bytes": 160,
+      "sha256": "5ce5f4b69bfd00bee83629adfd34f9a597eb8dab8717af7a5c996f8b4f0d25c7"
+    },
+    {
+      "name": "owner_drop",
+      "expected_code": "E0505",
+      "primary_line": 7,
+      "primary_spans": "one",
+      "semantic_id": "UC02",
+      "reason": "UndoRole borrow cannot outlive FreshStorageSession",
+      "bytes": 315,
+      "sha256": "4873ff85ded8eb8ae22a2867a3d73a2f96884889e7a0ed6cbdce6ad3b4085199"
+    },
+    {
+      "name": "role_confusion",
+      "expected_code": "E0308",
+      "primary_line": 5,
+      "primary_spans": "one",
+      "semantic_id": "UC03",
+      "reason": "StatusRole cannot implicitly authorize Undo root role",
+      "bytes": 165,
+      "sha256": "6db26cb1d824eed7d51240ac07a04693b2f69f20f21c2e18084e66d6cb1b48cf"
+    }
+  ]
+}

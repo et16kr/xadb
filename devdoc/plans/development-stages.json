@@ -166,7 +166,13 @@
         "status_load_contract_ref": "dev3-task-05-buffer-flush.md#operational-status-p3",
         "status_load_evidence_ref": "dev3-status-load-20261023.json",
         "begin_preparation_contract_ref": "dev3-obligation-format.md#begin-preparation",
-        "begin_preparation_evidence_ref": "dev3-status-begin-20261023.json"
+        "begin_preparation_evidence_ref": "dev3-status-begin-20261023.json",
+        "undo_bootstrap": {
+          "status": "ACCEPTED_LIMITED_D1",
+          "contract_ref": "dev3-status-bootstrap.md#undo-bootstrap",
+          "evidence_ref": "dev3-undo-bootstrap-20261024.json",
+          "scope": "Immutable plan3 Status2/Undo3 root-container roles only. Old allocator/Status/recovery adapters still refuse plan3; mixed INIT/pool/recovery and full DEV3/S5 remain incomplete."
+        }
       }
     },
     {

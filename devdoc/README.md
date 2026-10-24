@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-24 [DEV3 Undo bootstrap 역할](evidence/dev3-undo-bootstrap-20261024.md): plan3의 Status2/Undo3 불변 역할을 추가했다. 신규33assertion과 원 compile/Clippy FAIL을 보존하며 native1·compiler4+baseline·checker7을 검증했고 최종 독립 D1을 제한 단위로 수용했다. S5 추가78은 작성·NOT_RUN, mixed pool/live undo·plan3 복구·전체 DEV3/S5는 미완료다.
+
 2026-10-24 [DEV3 Status 상주 후보 선택](evidence/dev3-status-pressure-20261024.md): 원 pool에서 자동 후보→flush/load와 같은 actor 계속을 연결했다. source별 신규33scenario·static3·checker7을 보존한다. native oracle 원 FAIL과 실제3PID의 source별 결과를 보존하며 최종 독립 D1을 제한 단위로 수용했다. S5 확대438은 작성·NOT_RUN, 일반 pool/live undo·전체 DEV3/S5는 미완료다.
 
 2026-10-23 [DEV3 빈 거래 통합 작업](evidence/dev3-empty-transaction-20261023.md): AI 효율 계획의 입력 묶음·독립 fixture 준비·시간 기록을 적용한다. 빈 AbortEnd 준비·원 Status owner 인계와 실제 Begin/RollbackStart/AbortEnd의 WAL·RAM 설치를 선택 검증했다. WAL 이력에 결합한 live flush·최신 page 재적재와 새 process 복구/재진입을 선택 검증하고 제한 단위의 독립 D1을 수용했다. AI 운영 실험의 소비자1/3에 도달했으며 효과 비교·일반 pool/live undo·전체 DEV3/S5는 미완료다.

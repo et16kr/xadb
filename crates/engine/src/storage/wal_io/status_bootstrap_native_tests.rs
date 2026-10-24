@@ -10,16 +10,16 @@ use xadb_foundation::{
 use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
 
 #[derive(Default)]
-struct Trace {
-    events: Vec<String>,
-    handles: usize,
-    peak: usize,
+pub(super) struct Trace {
+    pub(super) events: Vec<String>,
+    pub(super) handles: usize,
+    pub(super) peak: usize,
 }
-struct Writer {
-    inner: LinuxWriterLease,
-    trace: Arc<Mutex<Trace>>,
+pub(super) struct Writer {
+    pub(super) inner: LinuxWriterLease,
+    pub(super) trace: Arc<Mutex<Trace>>,
 }
-struct File {
+pub(super) struct File {
     inner: Option<LinuxNamespaceFile>,
     name: String,
     trace: Arc<Mutex<Trace>>,
@@ -43,7 +43,7 @@ fn record(
         hex(&content_digest(bytes))
     ));
 }
-fn hex(bytes: &[u8]) -> String {
+pub(super) fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 impl Drop for File {
@@ -124,7 +124,7 @@ impl WriterNamespace for Writer {
         panic!("bootstrap cannot remove")
     }
 }
-fn db_fds(path: &std::path::Path) -> usize {
+pub(super) fn db_fds(path: &std::path::Path) -> usize {
     fs::read_dir("/proc/self/fd")
         .unwrap()
         .filter_map(|entry| fs::read_link(entry.ok()?.path()).ok())

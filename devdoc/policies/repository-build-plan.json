@@ -4781,5 +4781,33 @@
     ],
     "source_roots_changed": false,
     "full_stage_acceptance": false
+  },
+  "dev3_undo_bootstrap": {
+    "status": "implemented_selective_validation_accepted_limited_d1",
+    "contract_ref": "dev3-status-bootstrap.md#undo-bootstrap",
+    "evidence_ref": "dev3-undo-bootstrap-20261024.json",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/undo_bootstrap.rs",
+      "crates/engine/src/storage/wal_io/undo_bootstrap_tests.rs",
+      "crates/engine/src/storage/wal_io/undo_bootstrap_native_tests.rs",
+      "scripts/dev3_undo_bootstrap_literals.py",
+      "scripts/dev3_undo_bootstrap.py",
+      "scripts/check_dev3_undo_role_borrows.py",
+      "scripts/test_dev3_undo_bootstrap.py",
+      "tests/fixtures/dev3-undo-bootstrap/effects.tsv",
+      "tests/fixtures/dev3-undo-bootstrap/manifest.json",
+      "tests/fixtures/dev3-undo-bootstrap/partial-files.tsv",
+      "tests/fixtures/dev3-undo-bootstrap/profile1-d3-bootstrap.bin",
+      "tests/fixtures/dev3-undo-bootstrap/profile2-d3-bootstrap.bin",
+      "tests/fixtures/dev3-undo-bootstrap/profile3-d3-bootstrap.bin",
+      "tests/fixtures/dev3-undo-bootstrap/s5-matrix.json",
+      "crates/engine/tests/fixtures/dev3-undo-bootstrap/compiler/manifest.json",
+      "crates/engine/tests/fixtures/dev3-undo-bootstrap/compiler/owner_drop.rs",
+      "crates/engine/tests/fixtures/dev3-undo-bootstrap/compiler/positive.rs",
+      "crates/engine/tests/fixtures/dev3-undo-bootstrap/compiler/private_constructor.rs",
+      "crates/engine/tests/fixtures/dev3-undo-bootstrap/compiler/role_confusion.rs"
+    ],
+    "source_roots_changed": false,
+    "full_stage_acceptance": false
   }
 }
