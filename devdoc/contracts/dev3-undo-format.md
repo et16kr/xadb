@@ -343,3 +343,40 @@ r1/r2 두 실행의 제품 source는 `4dc364010126ece26dc10bfd4bd6271c15c802376b
 `/root`의 제품 정적 검토에서 Free/Releasing metadata를 외부 소비자가 관찰할 accessor가 없음을 지적했다. raw Releasing before image를 노출하지 않고 state/generation/metadata/release-progress accessor를 추가했으며, 동일 literal 시험 안에서 Free inspection·Releasing progress·Free/Live progress 거절과 Releasing before 거절을 보강했다. r3 제품 source는 `1f94a2dacf70807d9b1e0d4fd9db35ad4322baf98b52b249ca4bf80f74cd7079`, tests는 `a4ad1196e6ba40105475f11e3d6fcdfb8768d0913fb17b025aec80cfd6336709`, 실행 당시 계약은 `4e7f082ff85d5c52e499ee6befc9b80b611d713c8941c2437cabe528c2e30f97`다. 정확한12개 test 이름과0 fail/0 ignore, source files·binary·로그 hash를 r3의 `validation.json`에 보존했다.
 
 root가 최종 source를 독립 검토하고 별도 사본에서 고정12시험을 통과했다(`artifacts/dev3/undo-independent-root-idhtzexi/review.json`). 실제 I/O·WAL/CLR·undo 적용·수명 집행·통합 및 DEV3 전체 인수는 미완료다.
+
+<a id="free-initial-page"></a>
+## target 없는 Free 슬롯과 초기 root page
+
+2026-10-24 · **D3-UNDO-FREE-PAGE-001 · 독립 D2 수용 / 선택7함수 PASS / 최종 독립 D1 제한 수용**.
+기준 `cd8b876`, 구현 `/root`, 독립 검토 `/root/dev3_independent_review`.
+기존 XUR1/XDP1 version1 bytes와 앞 절의 source별 인수는 유지한다. 다음 plan3 mixed
+Status/Undo INIT·동일 pool·flush/load·현재-build 복구가 요구하는 authentic Free root 표현을 공급한다.
+이 내부 선행만으로 해당 소비자나 live undo·DEV3/S5를 완료하지 않는다.
+
+`encode_free_undo_record`는 nonzero Generation과 caller output을 받아432바이트만 쓰고 tail을
+보존한다. 길이 부족은 NoSpace이며 전체 output 불변이다. `decode_free_undo_record`는 target/schema
+없이 expected Generation과 정확432바이트의 Free 형식만 검산하여 Generation을 돌려준다.
+공통 header 순서는 길이/magic→version→reserved→generation이다. 그 뒤 state0은 전체 unused
+16..432 zero와 exact length를 확인한다. state1/2는 StateMismatch, 다른 state는 Corrupt다.
+StateMismatch는 점유 record body가 유효하다는 뜻이 아니다. 기존 generic codec의 expectation-first
+순서·occupied body 의미를 유지하면서 header와 Free body 검사를 공유한다. 기존 Free encoder도
+새 encoder로 위임하며 target 문맥·generation 검사와 오류 순서는 유지한다.
+
+`encode_initial_undo_page`는 안정된 owner에서 받은 PageIdentity와 PageLsn을 표현하여
+Undo kind8/level0·gen1 Free slot 하나를15920..16352에 쓴다. output은 정확16,384바이트이며
+오류 시 불변이다. `initial_undo_page_lsn`은 전체 checksum/envelope/기대 identity와 exact slot1·
+위치·canonical Free gen1 body를 검산하고 LSN만 관측한다. 0/MAX LSN 표현은 허용하되 durability나
+next LSN 발급을 뜻하지 않는다. DB timeline·plan3 role·membership·PageToken·예약은 이후 owner가
+검증한다. 이 helper에 raw identity를 넣었다는 사실로 그 권한이 생기지 않는다.
+
+비교 대안은 가짜 Row/Catalog target, 빈 zero-slot page, generic expectation을 Option으로 완화하는
+방식이다. 각각 없는 의미의 위조·필요한 Free slot 미공급·점유 record 불변식 약화 때문에 선택하지
+않는다. 기존 모듈의 좁은 codec과 page helper를 선택했다. 새 I/O·WAL·heap·retained buffer가 없으며
+실제 mutable 소비자는 자기 전체 F05와 first-effect gate를 별도로 요구한다. 이 pure 선행의 native/
+복구는 해당 경로 없음이며 복구 PASS가 아니다. 점유 root·slot 재사용·형식/target 의미 확대 시 재검토한다.
+
+[독립 raw 입력](../../tests/fixtures/dev3-undo-free-page/manifest.json)은 Free1/6/MAX·초기 page와
+기존 독립 U02/U13의 byte-exact 사본이다. 새 선택7함수987case 중 static1을 따로 구분하며,
+[중앙 inventory](../plans/dev3-test-plan.md#undo-free-page-followup)의 추가49,494는 ignored/NOT_RUN이다.
+독립 판정과 원 source별 결과는 후속 evidence에 보존한다. 기존12 Undo suite·무변경 하위 wrapper를
+반복하지 않는다. 순수 표현의 변경은 실제 INIT·mixed pool·plan3 복구·live undo를 대신하지 않는다.

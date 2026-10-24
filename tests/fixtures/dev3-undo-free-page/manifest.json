@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "unit": "D3-UNDO-FREE-PAGE-001",
+  "status": "INDEPENDENT_RAW_PREPARED_NOT_EXECUTED",
+  "base_commit": "cd8b8762398ae6489a639348d14594fa35c20629",
+  "prepared_at_utc": "2026-10-24T05:38:22.863388+00:00",
+  "preparer": "/root/dev3_independent_review",
+  "construction": "Direct zeroed byte arrays, published little-endian fields and SHA-256 using Python stdlib; no product import/encoder/output or existing generator executed.",
+  "contracts": {
+    "devdoc/contracts/dev3-undo-format.md": {
+      "bytes": 40794,
+      "sha256": "adb5791c6f87b2cec6558ff4c67a0d0fbd32165fbb2a0d2cd379f57348df482c",
+      "commit": "cd8b8762398ae6489a639348d14594fa35c20629"
+    },
+    "devdoc/contracts/dev3-page-format.md": {
+      "bytes": 4845,
+      "sha256": "145acea1f16da02d6868d0cc38e05f696c3b1b18aed356e8842e11e4d01e5fab",
+      "commit": "cd8b8762398ae6489a639348d14594fa35c20629"
+    }
+  },
+  "files": {
+    "existing-U02-live.bin": {
+      "bytes": 432,
+      "sha256": "a093939a406f521e17f54d4f54e9cbee936c85a4dc849d0955df1511cfb38c5a",
+      "origin": "byte-exact copy of preserved independent preimplementation literal"
+    },
+    "existing-U13-releasing.bin": {
+      "bytes": 432,
+      "sha256": "04628be9babed93325eed27f0f77f0e183d60679de90e6813f2f26423365f6da",
+      "origin": "byte-exact copy of preserved independent preimplementation literal"
+    },
+    "free-g1.bin": {
+      "bytes": 432,
+      "sha256": "2b9ca177b2ede2bcf1b71cd1edfb2809dfebe74dafad82e7595414f7bb618505",
+      "origin": "published Free/page offset recipe"
+    },
+    "free-g6.bin": {
+      "bytes": 432,
+      "sha256": "f897e222e7033965c225fe973cec4af0db948bff5a342dce86d36bc286819be7",
+      "origin": "published Free/page offset recipe"
+    },
+    "free-gmax.bin": {
+      "bytes": 432,
+      "sha256": "1139843bf80eabdaede10ff7bc2a9b571605b75c8788bb023deba7115f44c4bd",
+      "origin": "published Free/page offset recipe"
+    },
+    "initial-page.bin": {
+      "bytes": 16384,
+      "sha256": "272753a3a4c23354e426656e42bcf443e977b4a16bd93e4c462e2ac08f7f9839",
+      "origin": "published Free/page offset recipe"
+    }
+  },
+  "free_generations": [
+    1,
+    6,
+    18446744073709551615
+  ],
+  "initial_page": {
+    "database_hex": "31313131313131313131313131313131",
+    "file_id": 4294967297,
+    "page_no": 2,
+    "incarnation": 1,
+    "owner": 3,
+    "owner_generation": 1,
+    "kind": 8,
+    "level": 0,
+    "lsn": 1234,
+    "slots": 1,
+    "lower": 132,
+    "upper": 15920,
+    "slot0_offset": 15920,
+    "slot0_length": 432,
+    "slot0_generation": 1,
+    "checksum_offset": 16352,
+    "checksum": "sha256 bytes[0:16352]"
+  },
+  "legacy_compatibility": [
+    {
+      "id": "U02",
+      "source_path": "artifacts/dev3/undo-format-preimplementation/U02.bin",
+      "bytes": 432,
+      "sha256": "a093939a406f521e17f54d4f54e9cbee936c85a4dc849d0955df1511cfb38c5a",
+      "portable_copy": "existing-U02-live.bin",
+      "scope": "Focused shared-header compatibility only; no prior full-suite rerun or new live authority."
+    },
+    {
+      "id": "U13",
+      "source_path": "artifacts/dev3/undo-format-preimplementation/U13.bin",
+      "bytes": 432,
+      "sha256": "04628be9babed93325eed27f0f77f0e183d60679de90e6813f2f26423365f6da",
+      "portable_copy": "existing-U13-releasing.bin",
+      "scope": "Focused shared-header compatibility only; no prior full-suite rerun or new live authority."
+    }
+  ],
+  "execution_evidence": false,
+  "authority": "Representation only; no allocation membership, role, pin, WAL reservation, durability or installation.",
+  "contract_hash_scope": "Historical base-commit provenance; later appended owner documentation is not an input drift. Resolve with git show at the recorded commit.",
+  "provenance": {
+    "path": "provenance.md",
+    "bytes": 3621,
+    "sha256": "a572de105e7cbc358bce05a2c80530cc13b98bd7e30a8630329f30d73f415949"
+  }
+}

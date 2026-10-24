@@ -172,6 +172,12 @@
           "contract_ref": "dev3-status-bootstrap.md#undo-bootstrap",
           "evidence_ref": "dev3-undo-bootstrap-20261024.json",
           "scope": "Immutable plan3 Status2/Undo3 root-container roles only. Old allocator/Status/recovery adapters still refuse plan3; mixed INIT/pool/recovery and full DEV3/S5 remain incomplete."
+        },
+        "undo_free_page": {
+          "status": "ACCEPTED_LIMITED_D1",
+          "contract_ref": "dev3-undo-format.md#free-initial-page",
+          "evidence_ref": "dev3-undo-free-page-20261024.json",
+          "scope": "Target-free canonical Free record and initial one-slot Undo page representation only; no mixed INIT/pool/recovery, live undo or full DEV3/S5."
         }
       }
     },

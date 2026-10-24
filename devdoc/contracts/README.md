@@ -1,5 +1,7 @@
 # 기능 계약
 
+2026-10-24 [Free Undo 초기 page](dev3-undo-format.md#free-initial-page): target 없는 Free codec과 한 슬롯의 초기 page 표현 계약을 D2 수용했다. 실제 allocation/INIT·mixed owner의 권한과 복구는 후속 의무다.
+
 2026-10-24 [plan3 Undo root 역할](dev3-status-bootstrap.md#undo-bootstrap): 불변 Status2/Undo3 역할과 기존 adapter의 plan3 거절을 D2 수용했다. root INIT·mixed pool·plan3 복구는 별도 후속 계약이다.
 
 2026-10-23 [DEV3 고정 등록 코어·세대 pin](dev3-task-05-buffer-flush.md#registration-core): 기존 SharedPool의 단일 lookup·Copy 요청·compact 세대 token과 실행 전 자원 변경을 D2 검토했다. 제한 단위 구현·선택 검증이며 일반 mutable pool은 미공급이다.

@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "unit": "D3-UNDO-FREE-PAGE-001",
+  "base_commit": "cd8b876",
+  "status": "ACCEPTED_LIMITED_D1",
+  "contract_ref": "dev3-undo-format.md#free-initial-page",
+  "scope": "Pure target-free Free codec and one-slot initial Undo page representation prerequisite",
+  "full_stage_acceptance": false,
+  "consumer_completion": false,
+  "ai_experiment_completed_consumers": 1,
+  "sources": [
+    {
+      "id": "r0",
+      "source_directory": "artifacts/dev3/undo-free-page-20261024/r0/source",
+      "source_sha256": "f2243172749a8656aa270571977c065f12018bd23abf5a3629d50ca26b34170a",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-engine",
+        "--lib",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 13.487096890999965,
+      "time": "2026-10-24T05:40:50.274923+00:00",
+      "binary_sha256": "d64ca4b76c89ebbeefad6107c9ca14967347d761c6b5f7b5ffa77814762a980e",
+      "receipt": {
+        "path": "artifacts/dev3/undo-free-page-20261024/r0/build-receipt.json",
+        "bytes": 441,
+        "sha256": "abbc761a71c0727d361eaea25be2612e9f31f8c85f06db47208f45a7980ce187"
+      },
+      "binary": {
+        "path": "artifacts/dev3/undo-free-page-20261024/r0/engine-tests",
+        "bytes": 118006032,
+        "sha256": "d64ca4b76c89ebbeefad6107c9ca14967347d761c6b5f7b5ffa77814762a980e"
+      }
+    }
+  ],
+  "receipts": [
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/r0/clippy.json",
+      "bytes": 505,
+      "sha256": "c6ef5766aed8323054c510653d99068579eff45bff085973a00de622b3f4e5c2"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/r0/fmt.json",
+      "bytes": 389,
+      "sha256": "f2192303467082cd3e9d95b43c5d2a0b84149b09a2b8afcef7ce6878af756a0e"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/r0/undo_free_uf01_independent_literals.json",
+      "bytes": 705,
+      "sha256": "0fb97d8851ceafb55a7d99450a5c3d3b3c00b0eb60e46aa9e4a7276e0a5a0ee4"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/r0/undo_free_uf02_record_bounds.json",
+      "bytes": 697,
+      "sha256": "c8c9373b7558d788ec7b01e51191b6532e9243b9df3d491011ad9c2389193e37"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/r0/undo_free_uf03_record_rejections.json",
+      "bytes": 702,
+      "sha256": "2e8212a8593e5253870cace0f70c72768f14d6288b41f4175ba062036bb178cd"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/r0/undo_free_uf04_existing_header_compatibility.json",
+      "bytes": 714,
+      "sha256": "e278b098a7af9dbfa95139fd6fcd64b44164ef99656b415a9ec1993489a2b174"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/r0/undo_free_uf05_initial_page.json",
+      "bytes": 696,
+      "sha256": "230bf8cf1a6141815c18610efeb36e96c818124bdf1986dbacafb130e2dfdaa0"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/r0/undo_free_uf06_page_rejections.json",
+      "bytes": 699,
+      "sha256": "c3ad5b05a9d8c0121c652cdc451bf65cf67a6de4b18c0e474dec456dd6cae1f0"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/r0/undo_free_uf07_source_value_census.json",
+      "bytes": 704,
+      "sha256": "e2db5142cc069e9813f8fc16a1613f24cafe94f5d752c23acc83b0c29f77fc4c"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/selection.json",
+      "bytes": 2210,
+      "sha256": "8d2e90f41d79bfa315c03d4b5831de346781da1d8326fd313d83e2b508759aad"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/execution-summary.json",
+      "bytes": 293,
+      "sha256": "78a707782fb30bc2bff0e88c19cd4a852b421739a8674d2a260a18eacf75a234"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/timing.jsonl",
+      "bytes": 283,
+      "sha256": "5df5690b1a60b19b58f7f2f6f37b7428ea8e00bda09caa78a0cf16c4e027e628"
+    }
+  ],
+  "reviews": [
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/review/d1-final.md",
+      "bytes": 5762,
+      "sha256": "09588ded6c1d004b1525743f0fc3cb0c95a878d7d293f3c67c10c00b67bb5622"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/review/design-d2.md",
+      "bytes": 7290,
+      "sha256": "424cef3d7f20cafed56abe8e2d86694f8738a694793d87ffd418bb898d612ddd"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/review/file-accounting.json",
+      "bytes": 12770,
+      "sha256": "149afaa214de8dc892b84132764ede3bc9eb4d376993d66caeae51b0ff4cdeb4"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/review/final-evidence-audit.json",
+      "bytes": 9623,
+      "sha256": "06f459944944c2eaf835396e9901791f08ade70317af95cf9cc326332869f910"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/review/ocr-preview.json",
+      "bytes": 4383,
+      "sha256": "675ae38803ad55f9a5054312895ea0cc0746a8fac50b72cffcb7470022c4224f"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/review/ocr-preview.stderr",
+      "bytes": 128,
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/review/ocr-rules.json",
+      "bytes": 7121,
+      "sha256": "caf65cea9c728505f607bce21b4bfb3e133082190ad940d50070bba3165c5c53"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/review/ocr-rules.stderr",
+      "bytes": 128,
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/review/pre-execution-r0-audit.json",
+      "bytes": 3131,
+      "sha256": "63ebf42cf41568287c5696fea776cf635f44490da4a274bde4900bba5db2ce92"
+    },
+    {
+      "path": "artifacts/dev3/undo-free-page-20261024/review/pre-execution-r0.md",
+      "bytes": 5433,
+      "sha256": "e4d50d8b2ced1d3e9fe7239cb3da30fed9202c6f4ba2d24b17d86b960a7153d6"
+    }
+  ],
+  "selection": {
+    "unit": "D3-UNDO-FREE-PAGE-001",
+    "base_commit": "cd8b876",
+    "state": "FROZEN_BEFORE_EXECUTION",
+    "selectors": {
+      "undo_free_uf01_independent_literals": {
+        "marker": "UF01",
+        "cases": 3,
+        "changed_path": "new encode/decode Free record; raw gen1/6/MAX and output tail"
+      },
+      "undo_free_uf02_record_bounds": {
+        "marker": "UF02",
+        "cases": 866,
+        "changed_path": "new Free record size boundaries:432 encode+432 decode+2 overlong"
+      },
+      "undo_free_uf03_record_rejections": {
+        "marker": "UF03",
+        "cases": 35,
+        "changed_path": "new Free decoder:26 field flips+4 state+2 generation+3 precedence"
+      },
+      "undo_free_uf04_existing_header_compatibility": {
+        "marker": "UF04",
+        "cases": 43,
+        "changed_path": "moved common header:3 states*(normal1+damage8+state/generation2+expectation1)=36; changed old Free delegation7"
+      },
+      "undo_free_uf05_initial_page": {
+        "marker": "UF05",
+        "cases": 9,
+        "changed_path": "new initial page:raw LSN1234/0/MAX3+3 size bounds each encode/decode"
+      },
+      "undo_free_uf06_page_rejections": {
+        "marker": "UF06",
+        "cases": 30,
+        "changed_path": "new initial page inspector:16 byte mutations+6 identities+kind1+slot generation1+state2+chunk1+checksum1+slot count2"
+      },
+      "undo_free_uf07_source_value_census": {
+        "marker": "UF07",
+        "cases": 1,
+        "changed_path": "new helper and nested unchanged page/hash source-value account, not stack/RSS"
+      }
+    },
+    "mandatory_functions": 7,
+    "mandatory_cases": 987,
+    "s5": {
+      "selector": "undo_free_s5_expanded_corruption",
+      "status": "NOT_RUN",
+      "cases": 49494,
+      "record": "432 single-byte xor1 mutations excluding26 UF03 flips and exact mandatory aliases6(state1),8(generation0):404",
+      "page": "16352 checksummed single-byte xor1 mutations excluding8 LSN bytes,16 UF06 flips, exact mandatory aliases6(kind9),15926(state1):16326",
+      "lengths": "all short page lengths1..16382, each encode/decode:32764; mandatory0/16383/16385 excluded",
+      "total": "404+16326+32764=49494"
+    },
+    "limits": {
+      "case_seconds": 30,
+      "batch_seconds": 120
+    },
+    "not_selected": [
+      "existing12 full Undo suites",
+      "all lower wrappers",
+      "native/recovery: no new effect-bearing path",
+      "S5 expanded corruption"
+    ],
+    "remaining": "mixed native INIT, allocation/pool/flush/load, current-build recovery/reentry, live undo, consumer2/3, full DEV3/S5"
+  },
+  "inputs": [
+    {
+      "path": "tests/fixtures/dev3-undo-free-page/manifest.json",
+      "bytes": 3889,
+      "sha256": "ca8a029bcdb6963ab129fe5c3373994a11027a03818d04b0150e1692cc67849f"
+    },
+    {
+      "path": "tests/fixtures/dev3-undo-free-page/provenance.md",
+      "bytes": 3621,
+      "sha256": "a572de105e7cbc358bce05a2c80530cc13b98bd7e30a8630329f30d73f415949"
+    }
+  ],
+  "not_run": [
+    "S5 expanded49494",
+    "actual Undo native INIT",
+    "mixed pool/flush/load",
+    "current-build plan3 recovery/reentry",
+    "live undo/CLR/Commit",
+    "full DEV3/S5",
+    "AI efficiency comparison"
+  ],
+  "applicability": {
+    "native": "No new disk effect path in pure prerequisite; not a recovery PASS",
+    "compiler_capability_probes": "No new sealed/lifetime-bearing capability; ordinary compile and Clippy cover API typing"
+  },
+  "artifact_bytes": {
+    "measurement": "logical file bytes at refresh, not physical disk blocks",
+    "source_and_elf": 218132537,
+    "receipts_reviews_and_tools": 100883,
+    "unit_total": 218233420,
+    "shared_build_cache": "artifacts/dev3/empty-transaction-recovery-20261024/target; retained separately, excluded from unit total"
+  }
+}

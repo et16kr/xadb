@@ -932,3 +932,12 @@ identity 관측이며 free root INIT·chunk·live undo·mixed pool/복구 권한
 [선택 증거](../evidence/dev3-undo-bootstrap-20261024.md)는 신규33assertion과 원 compile/Clippy FAIL을
 보존한다. native1·compiler4+baseline·checker7을 추가 검증했고 최종 독립 D1을 제한 단위로 수용했다. S5 추가78은 작성·NOT_RUN이다.
 AI 소비자1/3과 효율 비교 NOT_RUN·전체 DEV3/S5 미완료를 유지한다.
+
+<a id="undo-free-page"></a>
+### target 없는 Free Undo 초기 page
+
+2026-10-24 [Free root 계약](../contracts/dev3-undo-format.md#free-initial-page)의432-byte codec과
+이를 소비하는 초기 kind8/level0·slot1/gen1 page 준비/관측을 기존 undo_record 모듈에 구현했다.
+공통 header 이동의 기대값/오류 순서와 기존 Free 위임도 직접 관련 선택에 포함한다.
+[선택 증거](../evidence/dev3-undo-free-page-20261024.md)의 r0 compile·fmt·Clippy와 runtime986·static1의7함수987case PASS이며
+최종 독립 D1을 제한 단위로 수용했다. S5 추가49,494는 작성·NOT_RUN이고 실제 INIT·mixed pool/복구·live undo·전체 DEV3/S5는 미완료다.

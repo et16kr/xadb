@@ -1555,3 +1555,6 @@ fn undo_generated_profiles_match_independent_fields() {
     assert_eq!(count, 8192);
     assert_eq!(f.inline.len(), 31);
 }
+
+#[path = "undo_free_page_tests.rs"]
+mod free_page;

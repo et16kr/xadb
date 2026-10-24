@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-24 [DEV3 Free Undo 초기 page](dev3-implementation.md#undo-free-page): authentic Free432·초기 slot1 page 표현을 구현하고7함수987case를 검증했다. 최종 독립 D1을 제한 수용했으며 mixed INIT/pool/복구·DEV3/S5 미완료.
+
 2026-10-24 [DEV3 불변 Undo 역할](dev3-implementation.md#undo-bootstrap): plan3 설치/readback에 연결한 역할 선행을 구현했다. 선택 검증과 최종 독립 D1을 제한 수용했으며 mixed INIT/pool/복구·DEV3/S5 미완료를 유지한다.
 
 2026-10-24 [DEV3 Status 상주 후보 선택](dev3-implementation.md#status-residency-pressure): 원 pool에서 자동 후보→flush/load와 같은 actor 계속을 연결했다. source별 신규33scenario·static3·checker7을 보존한다. native oracle 원 FAIL과 실제3PID의 source별 결과를 보존하며 최종 독립 D1을 제한 단위로 수용했다. S5 확대438은 작성·NOT_RUN, 일반 pool/live undo·전체 DEV3/S5는 미완료다.

@@ -4809,5 +4809,24 @@
     ],
     "source_roots_changed": false,
     "full_stage_acceptance": false
+  },
+  "dev3_undo_free_page": {
+    "status": "implemented_selective_validation_accepted_limited_d1",
+    "contract_ref": "dev3-undo-format.md#free-initial-page",
+    "evidence_ref": "dev3-undo-free-page-20261024.json",
+    "implemented_paths": [
+      "crates/engine/src/storage/undo_free_page_tests.rs",
+      "tests/fixtures/dev3-undo-free-page/existing-U02-live.bin",
+      "tests/fixtures/dev3-undo-free-page/existing-U13-releasing.bin",
+      "tests/fixtures/dev3-undo-free-page/free-g1.bin",
+      "tests/fixtures/dev3-undo-free-page/free-g6.bin",
+      "tests/fixtures/dev3-undo-free-page/free-gmax.bin",
+      "tests/fixtures/dev3-undo-free-page/initial-page.bin",
+      "tests/fixtures/dev3-undo-free-page/manifest.json",
+      "tests/fixtures/dev3-undo-free-page/provenance.md"
+    ],
+    "modified_owner": "crates/engine/src/storage/undo_record.rs",
+    "source_roots_changed": false,
+    "full_stage_acceptance": false
   }
 }

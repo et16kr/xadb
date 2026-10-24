@@ -6,7 +6,9 @@
 
 use super::{
     key::PhysicalKey,
-    page::{PageError, PageHeader, PageIdentity, PageKind, PageRef, decode_page, encode_page},
+    page::{
+        PageError, PageHeader, PageIdentity, PageKind, PageLsn, PageRef, decode_page, encode_page,
+    },
     row_record::{CanonicalRowView, RowError, decode_canonical_row},
     transaction_record::{LogicalRowVersion, TxnRef, VersionStamp, decode_txn_id, encode_txn_id},
     undo_ref::UndoRef,
@@ -26,6 +28,8 @@ pub(crate) const UNDO_CHUNK_PAYLOAD: usize = 16_060;
 pub(crate) const MAX_UNDO_VALUE: usize = 131_072;
 pub(crate) const MAX_UNDO_CHUNKS: usize = 9;
 pub(crate) const MAX_UNDO_SLOTS: usize = 37;
+/// The compact, one-slot initial root container; not a general occupied page.
+pub(crate) const INITIAL_UNDO_CELL: std::ops::Range<usize> = 15_920..16_352;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum UndoError {
@@ -619,6 +623,109 @@ pub(crate) fn undo_record_encoded_len(
     }
 }
 
+/// Encode a target-free Free slot. A typed generation is already nonzero.
+/// The first 432 bytes are written only after the size check; any tail is kept.
+/// This does not issue a slot generation or authorize reuse of an existing slot.
+pub(crate) fn encode_free_undo_record(
+    generation: Generation,
+    output: &mut [u8],
+) -> Result<usize, UndoError> {
+    let output = output
+        .get_mut(..UNDO_RECORD_BYTES)
+        .ok_or(UndoError::NoSpace)?;
+    output.fill(0);
+    output[..4].copy_from_slice(b"XUR1");
+    put16(output, 4, 1);
+    put64(output, 8, generation.get());
+    Ok(UNDO_RECORD_BYTES)
+}
+
+fn decode_record_generation(input: &[u8], expected: Generation) -> Result<Generation, UndoError> {
+    if input.len() < UNDO_RECORD_BYTES || &input[..4] != b"XUR1" {
+        return Err(UndoError::Corrupt);
+    }
+    if u16_at(input, 4) != 1 {
+        return Err(UndoError::UnsupportedFormat);
+    }
+    if input[7] != 0
+        || !zero(&input[329..332])
+        || !zero(&input[334..336])
+        || !zero(&input[424..432])
+    {
+        return Err(UndoError::Corrupt);
+    }
+    let generation = Generation::new(u64_at(input, 8)).map_err(|_| UndoError::Corrupt)?;
+    if generation != expected {
+        return Err(UndoError::IdentityMismatch);
+    }
+    Ok(generation)
+}
+
+fn validate_free_body(input: &[u8]) -> Result<(), UndoError> {
+    if input.len() != UNDO_RECORD_BYTES || !zero(&input[16..]) {
+        return Err(UndoError::Corrupt);
+    }
+    Ok(())
+}
+
+/// Inspect only a canonical Free slot, without inventing a logical target.
+/// The common header is checked before state/body. Live/Releasing headers are
+/// refused, not validated as occupied records. No lifetime grant is returned.
+pub(crate) fn decode_free_undo_record(
+    input: &[u8],
+    expected: Generation,
+) -> Result<Generation, UndoError> {
+    let generation = decode_record_generation(input, expected)?;
+    match input[6] {
+        0 => validate_free_body(input)?,
+        1 | 2 => return Err(UndoError::StateMismatch),
+        _ => return Err(UndoError::Corrupt),
+    }
+    Ok(generation)
+}
+
+/// Prepare the canonical initial one-slot Undo root page in caller storage.
+/// Identity must come from the caller's stabilized owner. This fixes slot
+/// generation1 but grants no allocation, membership, pin or WAL authority.
+/// All errors preserve the output; the LSN is represented, not made durable.
+pub(crate) fn encode_initial_undo_page(
+    identity: PageIdentity,
+    lsn: PageLsn,
+    output: &mut [u8],
+) -> Result<(), UndoError> {
+    let mut cell = [0; UNDO_RECORD_BYTES];
+    encode_free_undo_record(Generation::new(1).expect("nonzero"), &mut cell)?;
+    encode_page(
+        PageHeader {
+            identity,
+            kind: PageKind::Undo,
+            level: 0,
+            lsn,
+        },
+        &[&cell],
+        output,
+    )
+    .map_err(UndoError::from)
+}
+
+/// Inspect the exact initial root shape and generation1 Free body, including
+/// all envelope bytes. Expected identity must not be derived from this input.
+/// The returned LSN is an observation, not a membership or durability proof.
+pub(crate) fn initial_undo_page_lsn(
+    input: &[u8],
+    identity: PageIdentity,
+) -> Result<PageLsn, UndoError> {
+    let page = decode_page(input, identity, PageKind::Undo)?;
+    if page.len() != 1 || page.cell_range(0) != Some(INITIAL_UNDO_CELL) {
+        return Err(UndoError::Corrupt);
+    }
+    decode_free_undo_record(
+        page.cell(0).ok_or(UndoError::Corrupt)?,
+        Generation::new(1).expect("nonzero"),
+    )?;
+    Ok(page.header().lsn)
+}
+
 /// All input and destination bounds are checked before the first caller write.
 pub(crate) fn encode_undo_record(
     cell: UndoCell<'_>,
@@ -635,7 +742,7 @@ pub(crate) fn encode_undo_record(
     put16(&mut header, 4, 1);
     put64(&mut header, 8, expected.reference.generation().get());
     let (key, inline) = match cell {
-        UndoCell::Free(_) => (&[][..], &[][..]),
+        UndoCell::Free(generation) => return encode_free_undo_record(generation, output),
         UndoCell::Live(record) | UndoCell::Releasing(record) => {
             header[6] = if matches!(cell, UndoCell::Live(_)) {
                 1
@@ -697,27 +804,9 @@ pub(crate) fn decode_undo_record<'a>(
     columns: &[Column],
 ) -> Result<UndoRecordView<'a>, UndoError> {
     expectation_valid(expected)?;
-    if input.len() < 432 || &input[..4] != b"XUR1" {
-        return Err(UndoError::Corrupt);
-    }
-    if u16_at(input, 4) != 1 {
-        return Err(UndoError::UnsupportedFormat);
-    }
-    if input[7] != 0
-        || !zero(&input[329..332])
-        || !zero(&input[334..336])
-        || !zero(&input[424..432])
-    {
-        return Err(UndoError::Corrupt);
-    }
-    let generation = Generation::new(u64_at(input, 8)).map_err(|_| UndoError::Corrupt)?;
-    if generation != expected.reference.generation() {
-        return Err(UndoError::IdentityMismatch);
-    }
+    let generation = decode_record_generation(input, expected.reference.generation())?;
     let cell = if input[6] == 0 {
-        if input.len() != 432 || !zero(&input[16..]) {
-            return Err(UndoError::Corrupt);
-        }
+        validate_free_body(input)?;
         UndoCell::Free(generation)
     } else {
         if input[6] != 1 && input[6] != 2 {

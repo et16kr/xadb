@@ -638,3 +638,19 @@ S5의 `undo_bootstrap_s5_plan_matrix`는 profile3×wire6×high5=90에서 exact m
 중간에는 ignored/NOT_RUN을 유지하고 최종 DEV3 inventory에는 새 필수33과 추가78을 모두 포함한다.
 원 compile/Clippy FAIL과 source별 선택 결과는 [증거](../evidence/dev3-undo-bootstrap-20261024.md)에 보존한다.
 이 선택은 free root INIT·mixed pool·current-build plan3 recovery의 인수를 대신하지 않는다.
+
+<a id="undo-free-page-followup"></a>
+## Free Undo 초기 page 선행 inventory
+
+[소유 계약](../contracts/dev3-undo-format.md#free-initial-page)과
+[독립 raw 입력](../../tests/fixtures/dev3-undo-free-page/manifest.json)을 따른다.
+UF01–07의 신규7함수987case를 선택한다: literal3, record bounds866, record 부정35,
+공통 header 이동의 기존3상태/Free 위임43, page 정상·bounds9, page 부정30, static census1.
+이는986 runtime case와 static1이며 정상 page 생성987건이 아니다. raw U02/U13은 이동한 header의
+관련 검증만 수행하고 기존12 full Undo suite와 무변경 하위 시험은 실행하지 않는다.
+
+S5의 `undo_free_s5_expanded_corruption`은 추가49,494case다. Free record432개의 xor1 변이 중
+필수26개 field offset과 exact state/generation alias2를 제외한404개; 초기 page의 checksum 전
+16,352 offset 중 표현 가능한 LSN8·필수16·exact kind/state alias2를 제외한16,326개; page 길이
+1..16,382의 encode/decode32,764개다. 초기 필수 길이0/16,383/16,385와 구분하고 중간에는 ignored/
+NOT_RUN을 유지한다. native INIT·현재-build 복구는 이후 실제 효과 소비자의 별도 inventory다.
