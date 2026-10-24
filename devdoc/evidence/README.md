@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV4 P5 원시 번호·selector](dev4-lifecycle-raw-selection-20261025.md) — 신규1951입력·3484호출/compile/Clippy/fmt PASS; 정적 집계 원 실패 보존·최종 독립 D1 제한 수용.
+
 - [DEV3 복구 이미지·제어 레코드](dev3-recovery-control-base-20261024.md) · [source별 색인](dev3-recovery-control-base-20261024.json) — 신규 필수272 PASS·원 실패 보존·최종 독립 D1 제한 수용; live/복구·S5 미완료
 
 - [DEV4 P5 상태·입력 codec](dev4-lifecycle-codec-20261024.md) — source별 선택 검증·원 compile/실행/fmt 실패 보존; 모델/FE14 미완료.

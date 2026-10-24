@@ -1,0 +1,13 @@
+{
+  "preserved_directory": "artifacts/dev4-lifecycle-model-20261024/resolver-independent-inputs-v1",
+  "files": {
+    "raw-descriptors.json": "001f1b66bd43b86fae4188c2c0e2b6ec6c360c43fe5e619f27a7b976bc60bedf",
+    "manifest.json": "d0e39a71e112ad3f0c3ed71f031d3fcff73c35eeb999b9a3504b2a903f4fa011",
+    "selection-inventory.json": "f778074e361eadc50f7207d3e4740f44422a47b2ad67d5d2d9bf80528d3789cf",
+    "selectors.json": "9a433cc0683ea00f01d50d1c41b62c047392a083a56b3b3e6dd50900207e5146",
+    "authoring.py": "9935e95e542924459d62c6e63e8ad7c7635b54e3c324e6f06e66445c0577d04b",
+    "recipe-source.json": "8f06a8d4ef7ab20c336a548282ae428ec8bd3187f1309630fe139d35ba14f309",
+    "raw-invalid.json": "9b202059826dafe7755034776662f3adeffa2d29aa3e2cd65c4cfed0079058dd",
+    "README.md": "7b7813a710026c3e4d293dbc6f86c546082579c4bb23a014f2223168060db8e1"
+  }
+}

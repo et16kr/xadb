@@ -1,0 +1,1466 @@
+{
+  "id": "DEV4-LM-RESOLVER-ORACLE-PROPOSAL-V2",
+  "status": "DESIGN_ONLY_PENDING_SEPARATE_D2_AND_LITERAL_MATERIALIZATION",
+  "date": "2026-10-24",
+  "supersedes": "resolver-oracle-proposal-v1.md/json initial125case candidate; originals preserved",
+  "source_pins": [
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/design-proposal-v3.md",
+      "sha256": "6db3fced3bc6543d4755e84eb95e8a3f0adf1c58118a584fcb68cd4ba4da844e"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/owner-decisions-v5.md",
+      "sha256": "6a5f368d9e261b0b6535b3580aa52cdd1868b97b12fa0b927407afdab386f934"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/input-layout-v1.md",
+      "sha256": "314cd3725dc1d2e18027e80163238e4872d2ac7ce638a6371b983b6d46eb945c"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/wire-proposal-v2.json",
+      "sha256": "2edefc28473581f8e263c2c74db90a247c0973811787aed73bd26f7679ced1ec"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/checker-call-contract-v2.md",
+      "sha256": "5b989a64a7248231b9307530a822b2307899ab384eda479bd5cbfab496f38e12"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/context-projection-v1.md",
+      "sha256": "22795ece029c43593083f138117fb88b413f3d95bbfa322175bcc192c906b496"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/raw-resolver-proposal-v1.md",
+      "sha256": "ede2ea56a2e0a836e8e14c5cde7fc2395d00120f41645208388bda0e06c50a8d"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/raw-selector-owner-scope-v2.md",
+      "sha256": "1d58f36efdac069865ec225e368c60cd5cb5d8fac828a23381e16fdf102c6495"
+    },
+    {
+      "path": "crates/testing/reference/src/lifecycle/schema.rs",
+      "sha256": "92b94059b656a617f3a72bed727b06a313f13ec30558db0e3a6744402a1a6d7e"
+    },
+    {
+      "path": "crates/testing/reference/src/lifecycle/input_schema.rs",
+      "sha256": "2cc755abce6c3be5156946b32467d76d946660a7e773bd4cd8f77f31c387b633"
+    }
+  ],
+  "first_leaf": [
+    "action_at",
+    "index_of",
+    "resolve_selector"
+  ],
+  "raw_descriptor_plan": {
+    "logical_cases": 1533,
+    "api_calls_when_both_directions_selected": 3066,
+    "endpoint_coverage_labels": 42,
+    "pivot_coverage_labels": 12,
+    "coverage_labels_are_extra_calls": false,
+    "invalid_indices": [
+      1533,
+      1534,
+      65535
+    ],
+    "invalid_fields": "separate literals covering every family-required/unused field and bounds; count frozen after actual materialization",
+    "full1533_expected_file_created": false,
+    "independence": "independent static expected JSON from original literal axes; do not copy research expanded_raw_inventory, use product div/mod/inverse helper, or generate runtime oracle source"
+  },
+  "families_column_order": [
+    "api",
+    "first_inclusive",
+    "last_inclusive",
+    "count",
+    "axes_slow_to_fast"
+  ],
+  "families": [
+    [
+      "Prepare",
+      0,
+      47,
+      48,
+      [
+        "actor",
+        "slot",
+        "shape",
+        "N",
+        "outcome"
+      ]
+    ],
+    [
+      "BindAll",
+      48,
+      399,
+      352,
+      [
+        "actor",
+        "selector",
+        "outcome"
+      ]
+    ],
+    [
+      "Execute",
+      400,
+      751,
+      352,
+      [
+        "actor",
+        "selector",
+        "outcome"
+      ]
+    ],
+    [
+      "Fetch",
+      752,
+      1071,
+      320,
+      [
+        "actor",
+        "selector",
+        "outcome"
+      ]
+    ],
+    [
+      "CloseResult",
+      1072,
+      1167,
+      96,
+      [
+        "actor",
+        "selector",
+        "outcome"
+      ]
+    ],
+    [
+      "CloseStatement",
+      1168,
+      1263,
+      96,
+      [
+        "actor",
+        "selector",
+        "outcome"
+      ]
+    ],
+    [
+      "Begin",
+      1264,
+      1269,
+      6,
+      [
+        "actor",
+        "outcome"
+      ]
+    ],
+    [
+      "SetAutocommit",
+      1270,
+      1281,
+      12,
+      [
+        "actor",
+        "mode",
+        "outcome"
+      ]
+    ],
+    [
+      "CommitAtomic",
+      1282,
+      1301,
+      20,
+      [
+        "actor",
+        "outcome"
+      ]
+    ],
+    [
+      "Rollback",
+      1302,
+      1309,
+      8,
+      [
+        "actor",
+        "outcome"
+      ]
+    ],
+    [
+      "CloseSession",
+      1310,
+      1317,
+      8,
+      [
+        "actor",
+        "outcome"
+      ]
+    ],
+    [
+      "ReopenSession",
+      1318,
+      1321,
+      4,
+      [
+        "actor",
+        "outcome"
+      ]
+    ],
+    [
+      "InspectStatement",
+      1322,
+      1353,
+      32,
+      [
+        "actor",
+        "selector"
+      ]
+    ],
+    [
+      "InspectSession",
+      1354,
+      1355,
+      2,
+      [
+        "actor"
+      ]
+    ],
+    [
+      "SignalContext",
+      1356,
+      1419,
+      64,
+      [
+        "actor",
+        "selector",
+        "outcome"
+      ]
+    ],
+    [
+      "ParkFetch",
+      1420,
+      1483,
+      64,
+      [
+        "actor",
+        "selector",
+        "outcome"
+      ]
+    ],
+    [
+      "ResumeFetch",
+      1484,
+      1503,
+      20,
+      [
+        "actor",
+        "outcome"
+      ]
+    ],
+    [
+      "BeginCommit",
+      1504,
+      1507,
+      4,
+      [
+        "actor",
+        "outcome"
+      ]
+    ],
+    [
+      "CommitFact",
+      1508,
+      1517,
+      10,
+      [
+        "actor",
+        "outcome"
+      ]
+    ],
+    [
+      "FinishCommit",
+      1518,
+      1527,
+      10,
+      [
+        "actor",
+        "outcome"
+      ]
+    ],
+    [
+      "RecoveryConfirmedFreshEngine",
+      1528,
+      1532,
+      5,
+      [
+        "outcome"
+      ]
+    ]
+  ],
+  "pivots": {
+    "Prepare_columns": [
+      "index",
+      "api",
+      "actor",
+      "slot",
+      "shape_tag",
+      "N",
+      "outcome"
+    ],
+    "BindAll_columns": [
+      "index",
+      "api",
+      "actor",
+      "selector",
+      "outcome"
+    ],
+    "ResumeFetch_columns": [
+      "index",
+      "api",
+      "actor",
+      "outcome"
+    ],
+    "rows": [
+      [
+        2,
+        "Prepare",
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      [
+        3,
+        "Prepare",
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        5,
+        "Prepare",
+        0,
+        0,
+        0,
+        1,
+        2
+      ],
+      [
+        6,
+        "Prepare",
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        11,
+        "Prepare",
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      [
+        12,
+        "Prepare",
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        23,
+        "Prepare",
+        0,
+        1,
+        1,
+        1,
+        2
+      ],
+      [
+        24,
+        "Prepare",
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        50,
+        "BindAll",
+        0,
+        0,
+        2
+      ],
+      [
+        58,
+        "BindAll",
+        0,
+        0,
+        10
+      ],
+      [
+        1485,
+        "ResumeFetch",
+        0,
+        1
+      ],
+      [
+        1490,
+        "ResumeFetch",
+        0,
+        6
+      ]
+    ]
+  },
+  "identity_tuple": [
+    "kind",
+    "actor",
+    "slot",
+    "engine",
+    "session",
+    "nonce",
+    "generation"
+  ],
+  "identity16_layout": {
+    "kind": 0,
+    "actor": 1,
+    "slot": 2,
+    "reserved_zero": [
+      3,
+      12,
+      13,
+      14,
+      15
+    ],
+    "engine_u16le": 4,
+    "session_u16le": 6,
+    "nonce_u16le": 8,
+    "generation_u16le": 10
+  },
+  "baseline_selector_matrix": {
+    "pre": "initial complete literal",
+    "count": 96,
+    "requested_kinds": [
+      "Statement",
+      "Result",
+      "Context"
+    ],
+    "actors": [
+      0,
+      1
+    ],
+    "Issued0_to5_each_expected": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "missing_issued_count": 36,
+    "U0_to9_count": 60,
+    "U0_to9_exact_tuples": {
+      "Statement/A0": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          0,
+          0,
+          1,
+          1,
+          255,
+          1
+        ],
+        [
+          3,
+          0,
+          0,
+          255,
+          1,
+          255,
+          1
+        ],
+        [
+          3,
+          0,
+          0,
+          1,
+          255,
+          255,
+          1
+        ],
+        [
+          3,
+          0,
+          2,
+          1,
+          1,
+          255,
+          1
+        ],
+        [
+          3,
+          0,
+          0,
+          1,
+          1,
+          255,
+          255
+        ],
+        [
+          3,
+          0,
+          0,
+          1,
+          1,
+          255,
+          1
+        ],
+        [
+          3,
+          0,
+          1,
+          1,
+          1,
+          255,
+          1
+        ],
+        [
+          3,
+          0,
+          0,
+          1,
+          1,
+          255,
+          0
+        ],
+        [
+          254,
+          0,
+          0,
+          1,
+          1,
+          255,
+          1
+        ]
+      ],
+      "Statement/A1": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          1,
+          0,
+          1,
+          2,
+          255,
+          1
+        ],
+        [
+          3,
+          1,
+          0,
+          255,
+          2,
+          255,
+          1
+        ],
+        [
+          3,
+          1,
+          0,
+          1,
+          255,
+          255,
+          1
+        ],
+        [
+          3,
+          1,
+          2,
+          1,
+          2,
+          255,
+          1
+        ],
+        [
+          3,
+          1,
+          0,
+          1,
+          2,
+          255,
+          255
+        ],
+        [
+          3,
+          1,
+          0,
+          1,
+          2,
+          255,
+          1
+        ],
+        [
+          3,
+          1,
+          1,
+          1,
+          2,
+          255,
+          1
+        ],
+        [
+          3,
+          1,
+          0,
+          1,
+          2,
+          255,
+          0
+        ],
+        [
+          254,
+          1,
+          0,
+          1,
+          2,
+          255,
+          1
+        ]
+      ],
+      "Result/A0": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          1,
+          1,
+          255,
+          1
+        ],
+        [
+          4,
+          0,
+          0,
+          255,
+          1,
+          255,
+          1
+        ],
+        [
+          4,
+          0,
+          0,
+          1,
+          255,
+          255,
+          1
+        ],
+        [
+          4,
+          0,
+          2,
+          1,
+          1,
+          255,
+          1
+        ],
+        [
+          4,
+          0,
+          0,
+          1,
+          1,
+          255,
+          255
+        ],
+        [
+          4,
+          0,
+          0,
+          1,
+          1,
+          255,
+          1
+        ],
+        [
+          4,
+          0,
+          1,
+          1,
+          1,
+          255,
+          1
+        ],
+        [
+          4,
+          0,
+          0,
+          1,
+          1,
+          255,
+          0
+        ],
+        [
+          254,
+          0,
+          0,
+          1,
+          1,
+          255,
+          1
+        ]
+      ],
+      "Result/A1": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          1,
+          0,
+          1,
+          2,
+          255,
+          1
+        ],
+        [
+          4,
+          1,
+          0,
+          255,
+          2,
+          255,
+          1
+        ],
+        [
+          4,
+          1,
+          0,
+          1,
+          255,
+          255,
+          1
+        ],
+        [
+          4,
+          1,
+          2,
+          1,
+          2,
+          255,
+          1
+        ],
+        [
+          4,
+          1,
+          0,
+          1,
+          2,
+          255,
+          255
+        ],
+        [
+          4,
+          1,
+          0,
+          1,
+          2,
+          255,
+          1
+        ],
+        [
+          4,
+          1,
+          1,
+          1,
+          2,
+          255,
+          1
+        ],
+        [
+          4,
+          1,
+          0,
+          1,
+          2,
+          255,
+          0
+        ],
+        [
+          254,
+          1,
+          0,
+          1,
+          2,
+          255,
+          1
+        ]
+      ],
+      "Context/A0": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          1,
+          1,
+          255,
+          1
+        ],
+        [
+          5,
+          0,
+          255,
+          255,
+          1,
+          255,
+          0
+        ],
+        [
+          5,
+          0,
+          255,
+          1,
+          255,
+          255,
+          0
+        ],
+        [
+          5,
+          0,
+          2,
+          1,
+          1,
+          255,
+          0
+        ],
+        [
+          5,
+          0,
+          255,
+          1,
+          1,
+          255,
+          255
+        ],
+        [
+          5,
+          0,
+          255,
+          1,
+          1,
+          255,
+          1
+        ],
+        [
+          5,
+          0,
+          255,
+          1,
+          1,
+          255,
+          2
+        ],
+        [
+          5,
+          0,
+          255,
+          1,
+          1,
+          255,
+          0
+        ],
+        [
+          254,
+          0,
+          255,
+          1,
+          1,
+          255,
+          0
+        ]
+      ],
+      "Context/A1": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          1,
+          0,
+          1,
+          2,
+          255,
+          1
+        ],
+        [
+          5,
+          1,
+          255,
+          255,
+          2,
+          255,
+          0
+        ],
+        [
+          5,
+          1,
+          255,
+          1,
+          255,
+          255,
+          0
+        ],
+        [
+          5,
+          1,
+          2,
+          1,
+          2,
+          255,
+          0
+        ],
+        [
+          5,
+          1,
+          255,
+          1,
+          2,
+          255,
+          255
+        ],
+        [
+          5,
+          1,
+          255,
+          1,
+          2,
+          255,
+          1
+        ],
+        [
+          5,
+          1,
+          255,
+          1,
+          2,
+          255,
+          2
+        ],
+        [
+          5,
+          1,
+          255,
+          1,
+          2,
+          255,
+          0
+        ],
+        [
+          254,
+          1,
+          255,
+          1,
+          2,
+          255,
+          0
+        ]
+      ]
+    },
+    "U0_is_16_zero_bytes_not_None": true
+  },
+  "supplemental_history_readset": {
+    "status": "selector-only; not full invariant or model-reachable claim",
+    "caller": {
+      "actor": 0,
+      "engine": 2,
+      "session": 3
+    },
+    "global_current_engine": 7,
+    "selected_kind_next_nonce": 3,
+    "unrelated_tables": "default/empty allowed",
+    "case_count": 9,
+    "namespace_controls": [
+      {
+        "kind": "Statement",
+        "canonical_records": [
+          {
+            "ordinal": 3,
+            "identity": [
+              3,
+              0,
+              0,
+              1,
+              1,
+              2,
+              3
+            ]
+          },
+          {
+            "ordinal": 1,
+            "identity": [
+              3,
+              1,
+              0,
+              1,
+              2,
+              1,
+              1
+            ]
+          }
+        ],
+        "expected_issued_0_1_2": [
+          [
+            3,
+            1,
+            0,
+            1,
+            2,
+            1,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            3,
+            0,
+            0,
+            1,
+            1,
+            2,
+            3
+          ]
+        ]
+      },
+      {
+        "kind": "Result",
+        "canonical_records": [
+          {
+            "ordinal": 3,
+            "identity": [
+              4,
+              0,
+              0,
+              1,
+              1,
+              2,
+              3
+            ]
+          },
+          {
+            "ordinal": 1,
+            "identity": [
+              4,
+              1,
+              0,
+              1,
+              2,
+              1,
+              1
+            ]
+          }
+        ],
+        "expected_issued_0_1_2": [
+          [
+            4,
+            1,
+            0,
+            1,
+            2,
+            1,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            0,
+            1,
+            1,
+            2,
+            3
+          ]
+        ]
+      },
+      {
+        "kind": "Context",
+        "canonical_records": [
+          {
+            "ordinal": 3,
+            "identity": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              2,
+              0
+            ]
+          },
+          {
+            "ordinal": 1,
+            "identity": [
+              5,
+              1,
+              255,
+              1,
+              2,
+              1,
+              0
+            ]
+          }
+        ],
+        "expected_issued_0_1_2": [
+          [
+            5,
+            1,
+            255,
+            1,
+            2,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            5,
+            0,
+            255,
+            1,
+            1,
+            2,
+            0
+          ]
+        ]
+      }
+    ]
+  },
+  "supplemental_namespace_readset": {
+    "caller": {
+      "actor": 0,
+      "engine": 2,
+      "session": 3
+    },
+    "global_current_engine": 7,
+    "slot0": {
+      "next_statement_generation": 2,
+      "next_result_generation": 5
+    },
+    "slot1": {
+      "next_statement_generation": 4,
+      "next_result_generation": 7
+    },
+    "engine_and_session_tables": "empty; no lookup permitted",
+    "requested_U_order": [
+      2,
+      3,
+      6,
+      7
+    ],
+    "case_count": 12,
+    "expected_tuples": {
+      "Statement": [
+        [
+          3,
+          0,
+          0,
+          255,
+          3,
+          255,
+          1
+        ],
+        [
+          3,
+          0,
+          0,
+          2,
+          255,
+          255,
+          1
+        ],
+        [
+          3,
+          0,
+          0,
+          2,
+          3,
+          255,
+          2
+        ],
+        [
+          3,
+          0,
+          1,
+          2,
+          3,
+          255,
+          4
+        ]
+      ],
+      "Result": [
+        [
+          4,
+          0,
+          0,
+          255,
+          3,
+          255,
+          1
+        ],
+        [
+          4,
+          0,
+          0,
+          2,
+          255,
+          255,
+          1
+        ],
+        [
+          4,
+          0,
+          0,
+          2,
+          3,
+          255,
+          5
+        ],
+        [
+          4,
+          0,
+          1,
+          2,
+          3,
+          255,
+          7
+        ]
+      ],
+      "Context": [
+        [
+          5,
+          0,
+          255,
+          255,
+          3,
+          255,
+          0
+        ],
+        [
+          5,
+          0,
+          255,
+          2,
+          255,
+          255,
+          0
+        ],
+        [
+          5,
+          0,
+          255,
+          2,
+          3,
+          255,
+          1
+        ],
+        [
+          5,
+          0,
+          255,
+          2,
+          3,
+          255,
+          2
+        ]
+      ]
+    }
+  },
+  "selector_positive_candidate_count": 117,
+  "local_error_order": [
+    "InvalidActor",
+    "InvalidSelector",
+    "MissingActor/DuplicateActor",
+    "InvalidCallerScope scalar E/S only",
+    "Issued: entire primitive check",
+    "Issued: all duplicate ordinal checks",
+    "Issued: all duplicate nonce checks",
+    "Issued: selected next_nonce=max retained+1",
+    "Issued ordinal search or U0",
+    "Frozen handle U6/U7: MissingSlot/DuplicateSlot",
+    "Frozen handle U6/U7: requested-kind InvalidGeneration",
+    "exact raw tuple"
+  ],
+  "selector_negative_and_crossing_groups": [
+    [
+      "SC01",
+      "InvalidActor before InvalidSelector",
+      "actor2/255; Issued6/255; Frozen10/255; simultaneous invalid actor+selector"
+    ],
+    [
+      "SC02",
+      "MissingActor / DuplicateActor",
+      "requested actor only; duplicate+invalid scope selects DuplicateActor"
+    ],
+    [
+      "SC03",
+      "InvalidCallerScope",
+      "actor engine0/8 or session0/9; normal endpoints1/7 and1/8; no Engine/Session lookup"
+    ],
+    [
+      "SC04",
+      "InvalidIssuedRecord",
+      "selected namespace entire primitive bounds, including nonrequested ordinal malformed"
+    ],
+    [
+      "SC05",
+      "InvalidIssuedRecord before duplicates",
+      "earlier duplicate + later malformed primitive; all primitive validation precedes all duplicate checks"
+    ],
+    [
+      "SC06",
+      "DuplicateOrdinal before DuplicateNonce",
+      "both errors plus each single-error control"
+    ],
+    [
+      "SC07",
+      "InvalidNextNonce before absent ordinal zero",
+      "wrong max+1 versus gap; valid max+1 gap returns U0"
+    ],
+    [
+      "SC08",
+      "MissingSlot / DuplicateSlot / InvalidGeneration",
+      "handleU6/U7 needed slot only, generation0/14 error and1/13 controls"
+    ],
+    [
+      "SC09",
+      "DuplicateSlot before InvalidGeneration",
+      "same slot duplicate+bad generation; other-kind generation poison ignored"
+    ],
+    [
+      "SC10",
+      "unrelated data is not read",
+      "other namespace/actor/slot, Engine/Session/owner/fact/receipt poison controls"
+    ],
+    [
+      "SC11",
+      "Frozen branch ignores Issued data",
+      "issued namespace and next_nonce poison ignored, caller guard retained"
+    ],
+    [
+      "SC12",
+      "Context U6/U7 ignores slots",
+      "empty/poisoned prepared table still fixed generation1/2"
+    ]
+  ],
+  "negative_total": "NOT_FROZEN: materialize exact pairs after API/owner review; do not count group labels as test calls",
+  "structural_limits": {
+    "max_issued_records": 6,
+    "duplicate_ordinal_pairs": 15,
+    "duplicate_nonce_pairs": 15,
+    "duplicate_pairs_total": 30,
+    "engine_table_lookups": 0,
+    "session_table_lookups": 0,
+    "model_calls": 0,
+    "codec_validation_calls": 0,
+    "heap_allocation_measurement": "not performed; future code evidence must distinguish static bound and measurement"
+  },
+  "deferred": [
+    "full ResolvedInput including fresh/reused context and controls",
+    "Env1 transaction/owner/obligation/receipt/anchor assembly",
+    "mandatory12trace51action complete raw/Issued/control/environment mapping",
+    "admission and API rejection",
+    "full input alias and earlier-completed representative ledger",
+    "EnvExcluded independent verify_edge",
+    "full1533 raw-slot classification per model state",
+    "model/BFS/checkpoint/P5 completion"
+  ],
+  "future_ledger_equations": {
+    "raw": "success+rejection+excluded+alias",
+    "checker_count": "success+rejection+excluded",
+    "checked_transitions": "success+rejection",
+    "alias_additional_model_and_checker_calls": 0
+  },
+  "execution": {
+    "product_code": false,
+    "fixture_runtime": false,
+    "compile": false,
+    "tests": false,
+    "model": false,
+    "completed_codec_suite_repeated": false,
+    "writes": "artifact design MD/JSON only"
+  }
+}

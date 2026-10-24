@@ -1,0 +1,15 @@
+{
+  "preserved_directory": "artifacts/dev4-lifecycle-model-20261024/resolver-independent-inputs-v2",
+  "files": {
+    "README.md": "0569d2025f841c1a97becd80bf2e261d790c1ccc658b0d51a37ad9e2550de1c1",
+    "authoring.py": "4d304ed6f022b93ab01b7530edd97180293c312f951efc3b473463c7bf3a5f36",
+    "correction.json": "2174c26ac35dabe977ee522133009a3087a8ef67e9f2057f4dcacf7edf75703b",
+    "manifest.json": "2eb0b843876d9b4c7f4c633b0258ad06add91d6e7d688c90d8d01b7e11cc4ae5",
+    "raw-descriptors.json": "001f1b66bd43b86fae4188c2c0e2b6ec6c360c43fe5e619f27a7b976bc60bedf",
+    "raw-invalid.json": "9b202059826dafe7755034776662f3adeffa2d29aa3e2cd65c4cfed0079058dd",
+    "recipe-source.json": "8f06a8d4ef7ab20c336a548282ae428ec8bd3187f1309630fe139d35ba14f309",
+    "selection-inventory.json": "f73fc0d0b4d7b8cc8b4d3c5713a3f2b37597818224da29969106eb7b00b8625c",
+    "selectors.json": "52a6ca1f16377b0e264468b1363115911d69c6f302dac198ecdd0bc28b2b25c5",
+    "v1-source-files.json": "69a272d33dd23bf7f562cba48ccb27a1ce93f0e1a3e01692d876b621de0716d3"
+  }
+}

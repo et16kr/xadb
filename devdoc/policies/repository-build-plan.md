@@ -490,3 +490,7 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 ## DEV3 복구 이미지·제어 레코드 — 2026-10-24
 
 [계약](../contracts/dev3-recovery-control-base.md)의 XRB1/XRC1/XWE2/XWS2 codec과 test3개, ownership/allocation/Catalog 공통 bridge를 engine의 기존 storage 경계에 배치했다. 두 fixture 디렉터리의 독립 generator·고정 입력·raw/reference를 함께 등록한다. 구현한 정확68개 경로는 [기계 계획](repository-build-plan.json)의 `dev3_recovery_control_base`가 소유하며 package·의존 방향·export/fingerprint roots는 유지한다. [선택 증거](../evidence/dev3-recovery-control-base-20261024.md)의 신규272 PASS와 S5 추가23,886 NOT_RUN을 구별한다. actual live/recovery owner는 이번 순수 단위에 포함하지 않는다.
+
+## DEV4 P5 원시 번호·target 선택
+
+[소유 계약](../contracts/dev4-lifecycle-raw-selection.md)의 세 순수 API와 독립 입력·시험을 기존 reference lifecycle 경계에 추가한다. 실제 작성한 source와 고정 fixture만 관리 JSON의 `dev4_lifecycle_raw_selection`에 등록한다. package·dependency·export/fingerprint roots는 유지한다. full input 조립·모델·BFS는 후속이다. [선택 증거](../evidence/dev4-lifecycle-raw-selection-20261025.md)는 source별 실제 실행과 미완료 범위를 구분한다.

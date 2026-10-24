@@ -1,0 +1,144 @@
+{
+  "id": "DEV4-LM-INDEPENDENT-RAW-SELECTOR-INPUTS-V3",
+  "status": "MATERIALIZED_STATIC_INPUTS_PENDING_FINAL_D2",
+  "derivation": "Literal owner axes and separately written raw tuples/read-set errors only; no product/research expanded-inventory/model/codec calls or imports.",
+  "logical_cases": 1951,
+  "planned_api_calls": 3484,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4967,
+      "sha256": "1b0f69a4d8a742300408f2e351da4eeea18b67eacb9eb3ed0a71cae02edd0801"
+    },
+    {
+      "path": "authoring.py",
+      "bytes": 22563,
+      "sha256": "284dbd3f673f40a806c4b3185a7277a7f9b4099d9ffa417b24d5c78fb64f7257"
+    },
+    {
+      "path": "correction.json",
+      "bytes": 12157,
+      "sha256": "6f303f866abd9c1753d0e01fc30d56a573a894d6ecdfd1e105f89f9f9fffea9b"
+    },
+    {
+      "path": "raw-descriptors.json",
+      "bytes": 543067,
+      "sha256": "001f1b66bd43b86fae4188c2c0e2b6ec6c360c43fe5e619f27a7b976bc60bedf"
+    },
+    {
+      "path": "raw-invalid.json",
+      "bytes": 45853,
+      "sha256": "9b202059826dafe7755034776662f3adeffa2d29aa3e2cd65c4cfed0079058dd"
+    },
+    {
+      "path": "recipe-source.json",
+      "bytes": 23934,
+      "sha256": "8f06a8d4ef7ab20c336a548282ae428ec8bd3187f1309630fe139d35ba14f309"
+    },
+    {
+      "path": "selection-inventory.json",
+      "bytes": 45809,
+      "sha256": "7a634d18274e0db668146b10fb9bff3083ba0686e018ca6b486eb87c58380bbc"
+    },
+    {
+      "path": "selectors.json",
+      "bytes": 316307,
+      "sha256": "89a4daaa657489c9706906a0cfde3aa2e0d046f3c5d3852060baefcf0f897da0"
+    },
+    {
+      "path": "v1-source-files.json",
+      "bytes": 853,
+      "sha256": "69a272d33dd23bf7f562cba48ccb27a1ce93f0e1a3e01692d876b621de0716d3"
+    },
+    {
+      "path": "v2-source-files.json",
+      "bytes": 1040,
+      "sha256": "d215ec6664ce4479fcf1fd3f7a2646d45257e5c0d36f26b6157c712b923ee6c0"
+    }
+  ],
+  "execution": {
+    "static_authoring_only": true,
+    "product_calls": 0,
+    "compile": false,
+    "tests": false,
+    "runtime_PASS": false
+  },
+  "groups": {
+    "raw1533": 1533,
+    "invalid_index": 3,
+    "invalid_fields": 123,
+    "selector_baseline": 96,
+    "selector_history": 9,
+    "selector_namespace": 12,
+    "local_errors": 115,
+    "readset_control": 60
+  },
+  "planned_api_call_breakdown": {
+    "action_at": 1536,
+    "index_of": 1656,
+    "resolve_selector": 292,
+    "total": 3484
+  },
+  "source_pins": [
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/design-proposal-v3.md",
+      "sha256": "6db3fced3bc6543d4755e84eb95e8a3f0adf1c58118a584fcb68cd4ba4da844e"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/owner-decisions-v5.md",
+      "sha256": "6a5f368d9e261b0b6535b3580aa52cdd1868b97b12fa0b927407afdab386f934"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/input-layout-v1.md",
+      "sha256": "314cd3725dc1d2e18027e80163238e4872d2ac7ce638a6371b983b6d46eb945c"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/wire-proposal-v2.json",
+      "sha256": "2edefc28473581f8e263c2c74db90a247c0973811787aed73bd26f7679ced1ec"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/checker-call-contract-v2.md",
+      "sha256": "5b989a64a7248231b9307530a822b2307899ab384eda479bd5cbfab496f38e12"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/context-projection-v1.md",
+      "sha256": "22795ece029c43593083f138117fb88b413f3d95bbfa322175bcc192c906b496"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/raw-resolver-proposal-v1.md",
+      "sha256": "ede2ea56a2e0a836e8e14c5cde7fc2395d00120f41645208388bda0e06c50a8d"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/raw-selector-owner-scope-v2.md",
+      "sha256": "1d58f36efdac069865ec225e368c60cd5cb5d8fac828a23381e16fdf102c6495"
+    },
+    {
+      "path": "crates/testing/reference/src/lifecycle/schema.rs",
+      "sha256": "92b94059b656a617f3a72bed727b06a313f13ec30558db0e3a6744402a1a6d7e"
+    },
+    {
+      "path": "crates/testing/reference/src/lifecycle/input_schema.rs",
+      "sha256": "2cc755abce6c3be5156946b32467d76d946660a7e773bd4cd8f77f31c387b633"
+    }
+  ],
+  "predecessors": [
+    {
+      "directory": "artifacts/dev4-lifecycle-model-20261024/resolver-independent-inputs-v1",
+      "manifest_sha256": "d0e39a71e112ad3f0c3ed71f031d3fcff73c35eeb999b9a3504b2a903f4fa011",
+      "logical_cases": 1945,
+      "planned_api_calls": 3478
+    },
+    {
+      "directory": "artifacts/dev4-lifecycle-model-20261024/resolver-independent-inputs-v2",
+      "manifest_sha256": "2eb0b843876d9b4c7f4c633b0258ad06add91d6e7d688c90d8d01b7e11cc4ae5",
+      "logical_cases": 1948,
+      "planned_api_calls": 3481
+    }
+  ],
+  "correction_summary": {
+    "new_since_v1": 6,
+    "changed_existing_inputs": 5,
+    "changed_existing_expectations": 0,
+    "removed": 0
+  }
+}

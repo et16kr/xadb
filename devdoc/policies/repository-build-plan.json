@@ -5763,5 +5763,37 @@
     ],
     "scope": "Pure XRB1/XRC1/XWE2/XWS2 codecs and borrowed ownership/allocation/Catalog bridges only. No live/recovery authority.",
     "test_scope": "Mandatory272 source-bound PASS; lint-only successor runtime0; original failures retained; S5additional23886 NOT_RUN; no lower/completed repetition."
+  },
+  "dev4_lifecycle_raw_selection": {
+    "decision": "D4-LM-RAW-001",
+    "contract": "dev4-lifecycle-raw-selection.md",
+    "evidence": "dev4-lifecycle-raw-selection-20261025.md",
+    "status": "IMPLEMENTED_SELECTED_VALIDATION_D1_ACCEPTED_LIMITED",
+    "owner": "/root",
+    "implemented_sources": [
+      "crates/testing/reference/src/lifecycle/mod.rs",
+      "crates/testing/reference/src/lifecycle/raw_action.rs",
+      "crates/testing/reference/src/lifecycle/raw_test_support.rs",
+      "crates/testing/reference/src/lifecycle/raw_tests.rs",
+      "crates/testing/reference/src/lifecycle/selector_literal.rs",
+      "crates/testing/reference/src/lifecycle/selector_tests.rs",
+      "crates/testing/reference/src/lifecycle/target_selector.rs"
+    ],
+    "fixtures": [
+      "tests/fixtures/dev4-lifecycle-raw-selection/README.md",
+      "tests/fixtures/dev4-lifecycle-raw-selection/authoring.py",
+      "tests/fixtures/dev4-lifecycle-raw-selection/correction.json",
+      "tests/fixtures/dev4-lifecycle-raw-selection/manifest.json",
+      "tests/fixtures/dev4-lifecycle-raw-selection/raw-descriptors.json",
+      "tests/fixtures/dev4-lifecycle-raw-selection/raw-invalid.json",
+      "tests/fixtures/dev4-lifecycle-raw-selection/recipe-source.json",
+      "tests/fixtures/dev4-lifecycle-raw-selection/selection-inventory.json",
+      "tests/fixtures/dev4-lifecycle-raw-selection/selectors.json",
+      "tests/fixtures/dev4-lifecycle-raw-selection/v1-source-files.json",
+      "tests/fixtures/dev4-lifecycle-raw-selection/v2-source-files.json"
+    ],
+    "new_dependencies": false,
+    "scope": "Raw1533 action_at/index_of and exact target selector only; full ResolvedInput, environment, model, checker, BFS and FE14 remain incomplete",
+    "validation": "D2 accepted; selected1951cases/3484calls, compile, Clippy and fmt PASS; original static receipt audit failure retained; final independent D1 accepted limited"
   }
 }

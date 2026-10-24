@@ -259,3 +259,12 @@ reader29상태, state4의 원 prefix/후속3 분리와 input7 양방향, codec10
 완료 무변경 사례를 반복하지 않았다. state byte 함수의 시작 선택은
 `XADB_LIFECYCLE_STATE_VECTOR_START=0..3`이며 완료 prefix를 생략한 범위만 새 결과로 기록한다.
 전체 raw resolver·independent edge checker·모델 전이·BFS·파일 재개·FE14는 미완료다.
+
+
+<a id="lifecycle-raw-selection"></a>
+## P5 원시 action 번호·target 선택
+
+[소유 계약](../contracts/dev4-lifecycle-raw-selection.md)의 raw1533 번호 변환과 exact target
+selector를 별도 작은 단위로 구현했다. 순수 세 API만 대상으로 하며 full input/Env1 조립이나
+handle 인증·모델 전이는 포함하지 않는다. [선택 기록](../evidence/dev4-lifecycle-raw-selection-20261025.md)에
+독립1951입력·실제3484호출과 compile/Clippy/fmt PASS, 원 후보·정적 집계 실패 보존을 남겼다. 최종 독립 D1을 세 API 범위로 제한 수용했다.

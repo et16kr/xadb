@@ -1,0 +1,508 @@
+{
+  "status": "STATIC_INPUT_CORRECTION_NOT_RUNTIME",
+  "reason": "Whole-pass error priority witnesses only; semantic contract unchanged.",
+  "predecessors": [
+    {
+      "directory": "artifacts/dev4-lifecycle-model-20261024/resolver-independent-inputs-v1",
+      "manifest_sha256": "d0e39a71e112ad3f0c3ed71f031d3fcff73c35eeb999b9a3504b2a903f4fa011",
+      "logical_cases": 1945,
+      "planned_api_calls": 3478
+    },
+    {
+      "directory": "artifacts/dev4-lifecycle-model-20261024/resolver-independent-inputs-v2",
+      "manifest_sha256": "2eb0b843876d9b4c7f4c633b0258ad06add91d6e7d688c90d8d01b7e11cc4ae5",
+      "logical_cases": 1948,
+      "planned_api_calls": 3481
+    }
+  ],
+  "v1_v2_byte_preservation": "All files match v1-source-files.json and v2-source-files.json.",
+  "added_since_v1": [
+    {
+      "id": "selector/error/SC01/FrozenU0-actor2",
+      "group": "local_errors",
+      "input": {
+        "actor": 2,
+        "kind": "Statement",
+        "selector": {
+          "FrozenUnissued": 0
+        }
+      },
+      "expected_raw_tuple": null,
+      "expected_raw_hex": null,
+      "expected_error": "InvalidActor",
+      "state_must_be_unchanged": true,
+      "read_set": {
+        "current_engine": 1,
+        "actors": [
+          {
+            "actor": 0,
+            "engine": 1,
+            "session": 1
+          },
+          {
+            "actor": 1,
+            "engine": 1,
+            "session": 2
+          }
+        ],
+        "prepared_slots": [
+          {
+            "actor": 0,
+            "slot": 0,
+            "next_statement_generation": 1,
+            "next_result_generation": 1
+          },
+          {
+            "actor": 0,
+            "slot": 1,
+            "next_statement_generation": 1,
+            "next_result_generation": 1
+          },
+          {
+            "actor": 1,
+            "slot": 0,
+            "next_statement_generation": 1,
+            "next_result_generation": 1
+          },
+          {
+            "actor": 1,
+            "slot": 1,
+            "next_statement_generation": 1,
+            "next_result_generation": 1
+          }
+        ],
+        "issued_statements": [],
+        "issued_results": [],
+        "contexts": [],
+        "next_nonce": {
+          "Statement": 1,
+          "Result": 1,
+          "Context": 1
+        },
+        "poison_default_record_tables": []
+      }
+    },
+    {
+      "id": "selector/error/SC02/FrozenU0-missing-actor",
+      "group": "local_errors",
+      "input": {
+        "actor": 0,
+        "kind": "Statement",
+        "selector": {
+          "FrozenUnissued": 0
+        }
+      },
+      "expected_raw_tuple": null,
+      "expected_raw_hex": null,
+      "expected_error": "MissingActor",
+      "state_must_be_unchanged": true,
+      "read_set": {
+        "current_engine": 1,
+        "actors": [],
+        "prepared_slots": [],
+        "issued_statements": [
+          {
+            "id": [
+              3,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "issue_ordinal": 1,
+            "life": "Current",
+            "retirement": "None"
+          }
+        ],
+        "issued_results": [],
+        "contexts": [],
+        "next_nonce": {
+          "Statement": 2,
+          "Result": 1,
+          "Context": 1
+        },
+        "poison_default_record_tables": []
+      }
+    },
+    {
+      "id": "selector/error/SC03/FrozenU0-caller-engine0",
+      "group": "local_errors",
+      "input": {
+        "actor": 0,
+        "kind": "Statement",
+        "selector": {
+          "FrozenUnissued": 0
+        }
+      },
+      "expected_raw_tuple": null,
+      "expected_raw_hex": null,
+      "expected_error": "InvalidCallerScope",
+      "state_must_be_unchanged": true,
+      "read_set": {
+        "current_engine": 1,
+        "actors": [
+          {
+            "actor": 0,
+            "engine": 0,
+            "session": 1
+          }
+        ],
+        "prepared_slots": [],
+        "issued_statements": [
+          {
+            "id": [
+              3,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "issue_ordinal": 1,
+            "life": "Current",
+            "retirement": "None"
+          }
+        ],
+        "issued_results": [],
+        "contexts": [],
+        "next_nonce": {
+          "Statement": 2,
+          "Result": 1,
+          "Context": 1
+        },
+        "poison_default_record_tables": []
+      }
+    },
+    {
+      "id": "selector/error/SC06/Statement/later-ordinal-before-earlier-nonce",
+      "group": "local_errors",
+      "input": {
+        "actor": 0,
+        "kind": "Statement",
+        "selector": {
+          "Issued": 0
+        }
+      },
+      "expected_raw_tuple": null,
+      "expected_raw_hex": null,
+      "expected_error": "DuplicateOrdinal",
+      "state_must_be_unchanged": true,
+      "read_set": {
+        "current_engine": 1,
+        "actors": [
+          {
+            "actor": 0,
+            "engine": 1,
+            "session": 1
+          }
+        ],
+        "prepared_slots": [],
+        "issued_statements": [
+          {
+            "id": [
+              3,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "issue_ordinal": 1,
+            "life": "Current",
+            "retirement": "None"
+          },
+          {
+            "id": [
+              3,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "issue_ordinal": 2,
+            "life": "Current",
+            "retirement": "None"
+          },
+          {
+            "id": [
+              3,
+              0,
+              0,
+              1,
+              1,
+              2,
+              1
+            ],
+            "issue_ordinal": 2,
+            "life": "Current",
+            "retirement": "None"
+          }
+        ],
+        "issued_results": [],
+        "contexts": [],
+        "next_nonce": {
+          "Statement": 3,
+          "Result": 1,
+          "Context": 1
+        },
+        "poison_default_record_tables": []
+      }
+    },
+    {
+      "id": "selector/error/SC06/Result/later-ordinal-before-earlier-nonce",
+      "group": "local_errors",
+      "input": {
+        "actor": 0,
+        "kind": "Result",
+        "selector": {
+          "Issued": 0
+        }
+      },
+      "expected_raw_tuple": null,
+      "expected_raw_hex": null,
+      "expected_error": "DuplicateOrdinal",
+      "state_must_be_unchanged": true,
+      "read_set": {
+        "current_engine": 1,
+        "actors": [
+          {
+            "actor": 0,
+            "engine": 1,
+            "session": 1
+          }
+        ],
+        "prepared_slots": [],
+        "issued_statements": [],
+        "issued_results": [
+          {
+            "id": [
+              4,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "issue_ordinal": 1,
+            "retirement": "None",
+            "public_generation_live": true
+          },
+          {
+            "id": [
+              4,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "issue_ordinal": 2,
+            "retirement": "None",
+            "public_generation_live": true
+          },
+          {
+            "id": [
+              4,
+              0,
+              0,
+              1,
+              1,
+              2,
+              1
+            ],
+            "issue_ordinal": 2,
+            "retirement": "None",
+            "public_generation_live": true
+          }
+        ],
+        "contexts": [],
+        "next_nonce": {
+          "Statement": 1,
+          "Result": 3,
+          "Context": 1
+        },
+        "poison_default_record_tables": []
+      }
+    },
+    {
+      "id": "selector/error/SC06/Context/later-ordinal-before-earlier-nonce",
+      "group": "local_errors",
+      "input": {
+        "actor": 0,
+        "kind": "Context",
+        "selector": {
+          "Issued": 0
+        }
+      },
+      "expected_raw_tuple": null,
+      "expected_raw_hex": null,
+      "expected_error": "DuplicateOrdinal",
+      "state_must_be_unchanged": true,
+      "read_set": {
+        "current_engine": 1,
+        "actors": [
+          {
+            "actor": 0,
+            "engine": 1,
+            "session": 1
+          }
+        ],
+        "prepared_slots": [],
+        "issued_statements": [],
+        "issued_results": [],
+        "contexts": [
+          {
+            "id": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "issue_ordinal": 1,
+            "context_data": "Completed"
+          },
+          {
+            "id": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              1,
+              0
+            ],
+            "issue_ordinal": 2,
+            "context_data": "Completed"
+          },
+          {
+            "id": [
+              5,
+              0,
+              255,
+              1,
+              1,
+              2,
+              0
+            ],
+            "issue_ordinal": 2,
+            "context_data": "Completed"
+          }
+        ],
+        "next_nonce": {
+          "Statement": 1,
+          "Result": 1,
+          "Context": 3
+        },
+        "poison_default_record_tables": []
+      }
+    }
+  ],
+  "added_since_v2_ids": [
+    "selector/error/SC06/Statement/later-ordinal-before-earlier-nonce",
+    "selector/error/SC06/Result/later-ordinal-before-earlier-nonce",
+    "selector/error/SC06/Context/later-ordinal-before-earlier-nonce"
+  ],
+  "changed_existing_cases": [
+    {
+      "id": "selector/error/SC02/duplicate-before-bad-scope",
+      "field_diffs": [
+        {
+          "pointer": "/read_set/actors/0/engine",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "pointer": "/read_set/actors/1/engine",
+          "before": 0,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "id": "selector/error/SC09/Statement/slot0-duplicate-before-generation",
+      "field_diffs": [
+        {
+          "pointer": "/read_set/prepared_slots/0/next_statement_generation",
+          "before": 2,
+          "after": 0
+        },
+        {
+          "pointer": "/read_set/prepared_slots/2/next_statement_generation",
+          "before": 0,
+          "after": 2
+        }
+      ]
+    },
+    {
+      "id": "selector/error/SC09/Statement/slot1-duplicate-before-generation",
+      "field_diffs": [
+        {
+          "pointer": "/read_set/prepared_slots/1/next_statement_generation",
+          "before": 4,
+          "after": 0
+        },
+        {
+          "pointer": "/read_set/prepared_slots/2/next_statement_generation",
+          "before": 0,
+          "after": 4
+        }
+      ]
+    },
+    {
+      "id": "selector/error/SC09/Result/slot0-duplicate-before-generation",
+      "field_diffs": [
+        {
+          "pointer": "/read_set/prepared_slots/0/next_result_generation",
+          "before": 5,
+          "after": 0
+        },
+        {
+          "pointer": "/read_set/prepared_slots/2/next_result_generation",
+          "before": 0,
+          "after": 5
+        }
+      ]
+    },
+    {
+      "id": "selector/error/SC09/Result/slot1-duplicate-before-generation",
+      "field_diffs": [
+        {
+          "pointer": "/read_set/prepared_slots/1/next_result_generation",
+          "before": 7,
+          "after": 0
+        },
+        {
+          "pointer": "/read_set/prepared_slots/2/next_result_generation",
+          "before": 0,
+          "after": 7
+        }
+      ]
+    }
+  ],
+  "removed_case_ids": [],
+  "existing_expected_values_changed": 0,
+  "other_original_case_content_changed": 0,
+  "original_relative_case_order_preserved": true,
+  "unchanged_byte_files": [
+    "raw-descriptors.json",
+    "raw-invalid.json",
+    "recipe-source.json"
+  ],
+  "logical_cases": 1951,
+  "planned_api_calls": 3484,
+  "static_comparison_only": true,
+  "product_calls": 0,
+  "tests": false,
+  "compile": false
+}

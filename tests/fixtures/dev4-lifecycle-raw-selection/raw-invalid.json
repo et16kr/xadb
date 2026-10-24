@@ -1,0 +1,1922 @@
+{
+  "invalid_index": [
+    {
+      "id": "raw-index/1533",
+      "group": "invalid_index",
+      "index": 1533,
+      "expected_error": {
+        "OutOfRange": {
+          "index": 1533
+        }
+      }
+    },
+    {
+      "id": "raw-index/1534",
+      "group": "invalid_index",
+      "index": 1534,
+      "expected_error": {
+        "OutOfRange": {
+          "index": 1534
+        }
+      }
+    },
+    {
+      "id": "raw-index/65535",
+      "group": "invalid_index",
+      "index": 65535,
+      "expected_error": {
+        "OutOfRange": {
+          "index": 65535
+        }
+      }
+    }
+  ],
+  "invalid_fields": [
+    {
+      "id": "raw-fields/Prepare/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Prepare",
+        "actor": 2,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Prepare/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 3
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Prepare/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Prepare/missing-prepare",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Prepare/prepare-slot-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 2,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Prepare/prepare-parameter_count-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 2
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Prepare/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Prepare",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/BindAll/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "BindAll",
+        "actor": 2,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/BindAll/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 11
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/BindAll/missing-selector",
+      "group": "invalid_fields",
+      "action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/BindAll/Issued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 6
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/BindAll/FrozenUnissued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "FrozenUnissued",
+          "index": 10
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/BindAll/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/BindAll/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "BindAll",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Execute/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Execute",
+        "actor": 2,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Execute/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 11
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Execute/missing-selector",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Execute/Issued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 6
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Execute/FrozenUnissued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "FrozenUnissued",
+          "index": 10
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Execute/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Execute/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Execute",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Fetch/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Fetch",
+        "actor": 2,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Fetch/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 10
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Fetch/missing-selector",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Fetch/Issued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 6
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Fetch/FrozenUnissued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "FrozenUnissued",
+          "index": 10
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Fetch/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Fetch/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Fetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseResult/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseResult",
+        "actor": 2,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseResult/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseResult",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 3
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseResult/missing-selector",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseResult",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseResult/Issued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseResult",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 6
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseResult/FrozenUnissued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseResult",
+        "actor": 0,
+        "selector": {
+          "kind": "FrozenUnissued",
+          "index": 10
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseResult/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseResult",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseResult/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseResult",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseStatement/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseStatement",
+        "actor": 2,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseStatement/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseStatement",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 3
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseStatement/missing-selector",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseStatement",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseStatement/Issued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseStatement",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 6
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseStatement/FrozenUnissued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseStatement",
+        "actor": 0,
+        "selector": {
+          "kind": "FrozenUnissued",
+          "index": 10
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseStatement/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseStatement",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseStatement/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseStatement",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Begin/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Begin",
+        "actor": 2,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Begin/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Begin",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 3
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Begin/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Begin",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Begin/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Begin",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Begin/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Begin",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/SetAutocommit/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "SetAutocommit",
+        "actor": 2,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/SetAutocommit/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "SetAutocommit",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 3
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/SetAutocommit/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "SetAutocommit",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/SetAutocommit/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "SetAutocommit",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/SetAutocommit/missing-autocommit",
+      "group": "invalid_fields",
+      "action": {
+        "api": "SetAutocommit",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CommitAtomic/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CommitAtomic",
+        "actor": 2,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CommitAtomic/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CommitAtomic",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 10
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CommitAtomic/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CommitAtomic",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CommitAtomic/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CommitAtomic",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CommitAtomic/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CommitAtomic",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Rollback/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Rollback",
+        "actor": 2,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Rollback/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Rollback",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 4
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Rollback/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Rollback",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Rollback/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Rollback",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/Rollback/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "Rollback",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseSession/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseSession",
+        "actor": 2,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseSession/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 4
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseSession/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseSession",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseSession/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CloseSession/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CloseSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ReopenSession/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ReopenSession",
+        "actor": 2,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ReopenSession/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ReopenSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 2
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ReopenSession/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ReopenSession",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ReopenSession/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ReopenSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ReopenSession/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ReopenSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/InspectStatement/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "InspectStatement",
+        "actor": 2,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/InspectStatement/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "InspectStatement",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/InspectStatement/missing-selector",
+      "group": "invalid_fields",
+      "action": {
+        "api": "InspectStatement",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/InspectStatement/Issued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "InspectStatement",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 6
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/InspectStatement/FrozenUnissued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "InspectStatement",
+        "actor": 0,
+        "selector": {
+          "kind": "FrozenUnissued",
+          "index": 10
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/InspectStatement/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "InspectStatement",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/InspectStatement/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "InspectStatement",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/InspectSession/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "InspectSession",
+        "actor": 2,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/InspectSession/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 1
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/InspectSession/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/InspectSession/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/InspectSession/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "InspectSession",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/SignalContext/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "SignalContext",
+        "actor": 2,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/SignalContext/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "SignalContext",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 2
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/SignalContext/missing-selector",
+      "group": "invalid_fields",
+      "action": {
+        "api": "SignalContext",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/SignalContext/Issued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "SignalContext",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 6
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/SignalContext/FrozenUnissued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "SignalContext",
+        "actor": 0,
+        "selector": {
+          "kind": "FrozenUnissued",
+          "index": 10
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/SignalContext/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "SignalContext",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/SignalContext/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "SignalContext",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ParkFetch/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ParkFetch",
+        "actor": 2,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ParkFetch/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ParkFetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 2
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ParkFetch/missing-selector",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ParkFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ParkFetch/Issued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ParkFetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 6
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ParkFetch/FrozenUnissued-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ParkFetch",
+        "actor": 0,
+        "selector": {
+          "kind": "FrozenUnissued",
+          "index": 10
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ParkFetch/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ParkFetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ParkFetch/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ParkFetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ResumeFetch/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ResumeFetch",
+        "actor": 2,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ResumeFetch/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 10
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ResumeFetch/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ResumeFetch/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/ResumeFetch/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "ResumeFetch",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/BeginCommit/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "BeginCommit",
+        "actor": 2,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/BeginCommit/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "BeginCommit",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 2
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/BeginCommit/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "BeginCommit",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/BeginCommit/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "BeginCommit",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/BeginCommit/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "BeginCommit",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CommitFact/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CommitFact",
+        "actor": 2,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CommitFact/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CommitFact",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 5
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CommitFact/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CommitFact",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CommitFact/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CommitFact",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/CommitFact/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "CommitFact",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/FinishCommit/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "FinishCommit",
+        "actor": 2,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/FinishCommit/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "FinishCommit",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 5
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/FinishCommit/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "FinishCommit",
+        "actor": 0,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/FinishCommit/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "FinishCommit",
+        "actor": 0,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/FinishCommit/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "FinishCommit",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/RecoveryConfirmedFreshEngine/actor-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "RecoveryConfirmedFreshEngine",
+        "actor": 0,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/RecoveryConfirmedFreshEngine/outcome-domain",
+      "group": "invalid_fields",
+      "action": {
+        "api": "RecoveryConfirmedFreshEngine",
+        "actor": 255,
+        "selector": null,
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 5
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/RecoveryConfirmedFreshEngine/unused-selector-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "RecoveryConfirmedFreshEngine",
+        "actor": 255,
+        "selector": {
+          "kind": "Issued",
+          "index": 0
+        },
+        "prepare": null,
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/RecoveryConfirmedFreshEngine/unused-prepare-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "RecoveryConfirmedFreshEngine",
+        "actor": 255,
+        "selector": null,
+        "prepare": {
+          "slot": 0,
+          "shape": "Select",
+          "parameter_count": 0
+        },
+        "autocommit": null,
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    },
+    {
+      "id": "raw-fields/RecoveryConfirmedFreshEngine/unused-autocommit-present",
+      "group": "invalid_fields",
+      "action": {
+        "api": "RecoveryConfirmedFreshEngine",
+        "actor": 255,
+        "selector": null,
+        "prepare": null,
+        "autocommit": "On",
+        "outcome": 0
+      },
+      "expected_error": "InvalidFields"
+    }
+  ]
+}
