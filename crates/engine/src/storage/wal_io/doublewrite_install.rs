@@ -689,3 +689,7 @@ pub(in crate::storage) use mutable_storage::StatusLoadPermit;
 
 pub(in crate::storage) use mutable_storage::EmptyTransactionInstall;
 pub(crate) use mutable_storage::EmptyTransactionObservation;
+
+pub(in crate::storage) use allocation_reservation::operation::{
+    plan4_base_allocation_source_bytes, validate_plan4_base_allocation,
+};

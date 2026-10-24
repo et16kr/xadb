@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-24 [DEV3 복구 이미지·제어 레코드](evidence/dev3-recovery-control-base-20261024.md): 신규 필수272개를 source별 선택 검증했다. 원 fmt·Clippy 실패와 별도 live HOLD/FAIL을 보존하며 최종 독립 D1을 순수 codec 범위로 제한 수용했다. 실제 live·새 epoch 복구·DEV3/S5는 미완료다.
+
 2026-10-24 [DEV4 P5 상태·입력 codec](evidence/dev4-lifecycle-codec-20261024.md): bounded 수명 자료형·canonical byte와 독립 reader를 구현하고 source별 선택 검증했다. 원 compile·ParkedFetch 실행·fmt 실패를 보존하며 최종 독립 D1을 제한 수용했다. 전체 모델·BFS·FE14·실제 engine/Q1은 미완료다.
 
 2026-10-24 [DEV3 빈 거래·정리 큐 순수 의미 처리](evidence/dev3-empty-retention-semantics-20261024.md): Root/Job/Aging·tag3 인계의 필수140을 source별 선택 검증했다. 원 생성·시험2·Clippy 실패와 완료 반복0을 보존하며 최종 독립 D1을 제한 범위로 수용했다. 실제 live/flush/복구·DEV3/S5는 미완료다.

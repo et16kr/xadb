@@ -275,20 +275,68 @@ impl OwnerOrder {
     }
 }
 
-fn validate_expected(expected: InventoryExpected, descriptors: &[DescriptorSpec]) -> Result<()> {
+// These are two fixed source expansions, not a runtime adapter. The slice
+// expansion retains its original signatures, direct indexing and iterators.
+// Borrowed decoding exists only in the new XRB1 consumer's expansion.
+macro_rules! descriptor_count {
+    (slice, $descriptors:ident, $count:ident) => {
+        $descriptors.len()
+    };
+    (borrowed, $descriptors:ident, $count:ident) => {
+        $count
+    };
+}
+macro_rules! descriptor_each {
+    (slice, $descriptors:ident, $count:ident, $descriptor:ident, $body:block) => {
+        for $descriptor in $descriptors $body
+    };
+    (borrowed, $descriptors:ident, $count:ident, $descriptor:ident, $body:block) => {
+        for ordinal in 0..$count {
+            let decoded = $descriptors(ordinal)?;
+            let $descriptor = &decoded;
+            $body
+        }
+    };
+}
+macro_rules! descriptor_zip {
+    (slice, $descriptors:ident, $count:ident, $iter:expr, $left:ident, $descriptor:ident, $body:block) => {
+        for ($left, $descriptor) in $iter.zip($descriptors) $body
+    };
+    (borrowed, $descriptors:ident, $count:ident, $iter:expr, $left:ident, $descriptor:ident, $body:block) => {
+        for (ordinal, $left) in $iter.take($count).enumerate() {
+            let decoded = $descriptors(ordinal)?;
+            let $descriptor = &decoded;
+            $body
+        }
+    };
+}
+macro_rules! descriptor_change_lsn {
+    (slice, $descriptors:ident, $owner:ident) => {
+        $descriptors[$owner].inventory.change_lsn
+    };
+    (borrowed, $descriptors:ident, $owner:ident) => {
+        $descriptors($owner)?.inventory.change_lsn
+    };
+}
+macro_rules! inventory_descriptor_pipeline {
+    ($mode:ident, $validate_expected:ident, $decode_root:ident, $decode_item:ident,
+     $next:ident, $next_kind:ident, $observe:ident,
+     $descriptors:ident, $count:ident,
+     ($($descriptor_args:tt)*), ($($descriptor_call:tt)*)) => {
+fn $validate_expected(expected: InventoryExpected, $($descriptor_args)*) -> Result<()> {
     if expected.namespace.timeline == 0
         || expected.capture_lsn == 0
-        || descriptors.len() > MAX_OWNERS
+        || descriptor_count!($mode, $descriptors, $count) > MAX_OWNERS
         || expected.reference.kind != ControlKind::OwnershipRoot
         || expected.reference.encode(&mut [0; 64]).is_err()
-        || expected.reference.encoded_len as usize != 160 + 56 * descriptors.len()
+        || expected.reference.encoded_len as usize != 160 + 56 * descriptor_count!($mode, $descriptors, $count)
         || expected.profile.kind != ControlKind::Profile
         || expected.profile.encode(&mut [0; 64]).is_err()
     {
         return Err(InventoryError::InvalidInput);
     }
     let mut order = OwnerOrder::default();
-    for descriptor in descriptors {
+    descriptor_each!($mode, $descriptors, $count, descriptor, {
         validate_descriptor(descriptor).map_err(|_| InventoryError::InvalidInput)?;
         let active = match descriptor.owner {
             OwnerState::Transaction(status) => matches!(
@@ -308,49 +356,14 @@ fn validate_expected(expected: InventoryExpected, descriptors: &[DescriptorSpec]
         order
             .accept(owner)
             .map_err(|_| InventoryError::InvalidInput)?;
-    }
+    });
     Ok(())
 }
 
-#[derive(Clone, Copy)]
-struct Root {
-    namespace: Namespace,
-    bank: u8,
-    generation: u64,
-    capture: u64,
-    owners: usize,
-    chunks: u64,
-    items: u64,
-    aggregate: [u8; 32],
-    owner_digest: [u8; 32],
-}
-
-fn envelope(bytes: &[u8], kind: u8) -> Result<()> {
-    if bytes.len() < 160
-        || bytes[..4] != *b"XOI1"
-        || bytes[6] != kind
-        || bytes[7] > 2
-        || u16_at(bytes, 8) != 128
-        || u16_at(bytes, 10) != ITEM_BYTES as u16
-        || u32_at(bytes, 12) as usize != bytes.len()
-        || u64_at(bytes, 40) == 0
-        || u64_at(bytes, 48) == 0
-    {
-        return Err(InventoryError::Corrupt);
-    }
-    if u16_at(bytes, 4) != 1 {
-        return Err(InventoryError::UnsupportedFormat);
-    }
-    let end = bytes.len() - 32;
-    if content_digest(&bytes[..end]) != bytes[end..] {
-        return Err(InventoryError::Corrupt);
-    }
-    Ok(())
-}
-fn decode_root(
+fn $decode_root(
     bytes: &[u8],
     expected: InventoryExpected,
-    descriptors: &[DescriptorSpec],
+    $($descriptor_args)*,
 ) -> Result<Root> {
     if bytes.len() > 2176 {
         return Err(InventoryError::Corrupt);
@@ -400,30 +413,26 @@ fn decode_root(
         || root.capture != expected.capture_lsn
         || bytes.len() != expected.reference.encoded_len as usize
         || content_digest(bytes) != expected.reference.digest
-        || owners != descriptors.len()
+        || owners != descriptor_count!($mode, $descriptors, $count)
     {
         return Err(InventoryError::IdentityMismatch);
     }
-    for (encoded, descriptor) in bytes[128..128 + 56 * owners]
-        .chunks_exact(56)
-        .zip(descriptors)
-    {
+    descriptor_zip!($mode, $descriptors, $count,
+        bytes[128..128 + 56 * owners].chunks_exact(56), encoded, descriptor, {
         if decode_owner(encoded)? != descriptor.owner.reference() {
             return Err(InventoryError::IdentityMismatch);
         }
-    }
+    });
     if items > expected.item_limit {
         return Err(InventoryError::LimitExceeded);
     }
     Ok(root)
 }
 
-#[derive(Clone, Copy)]
-struct Item {
-    bytes: [u8; ITEM_BYTES],
-}
 impl Item {
-    fn decode(bytes: &[u8], root: Root, descriptors: &[DescriptorSpec]) -> Result<Self> {
+    // The fixed borrowed signature retains count; root.owners already bounds this item.
+    #[allow(unused_variables)]
+    fn $decode_item(bytes: &[u8], root: Root, $($descriptor_args)*) -> Result<Self> {
         let owner = usize::from(u16_at(bytes, 2));
         if !(1..=4).contains(&bytes[0])
             || !(1..=5).contains(&bytes[1])
@@ -432,7 +441,7 @@ impl Item {
             || !zero(&bytes[80..96])
             || u64_at(bytes, 72) == 0
             || u64_at(bytes, 72) > root.capture
-            || u64_at(bytes, 72) > descriptors[owner].inventory.change_lsn
+            || u64_at(bytes, 72) > descriptor_change_lsn!($mode, $descriptors, owner)
         {
             return Err(InventoryError::Corrupt);
         }
@@ -483,6 +492,234 @@ impl Item {
             bytes: bytes.try_into().expect("exact item slice"),
         })
     }
+}
+impl Cursor {
+    fn $next(
+        &mut self,
+        root: Root,
+        $($descriptor_args)*,
+        source: &mut impl InventorySource,
+        buffer: &mut [u8; PAGE_BYTES],
+        calls: &mut u64,
+    ) -> Result<Option<Item>> {
+        if self.next_slot == self.slots {
+            if self.next_chunk == root.chunks {
+                if self.visited != root.items || self.digest.digest() != root.aggregate {
+                    return Err(InventoryError::Corrupt);
+                }
+                return Ok(None);
+            }
+            let index = self.next_chunk;
+            let count = (root.items - index * CHUNK_ITEMS).min(CHUNK_ITEMS) as usize;
+            *calls += 1; // At most five times the bounded u32 chunk namespace.
+            let length = source
+                .read_chunk(index, buffer)
+                .map_err(|_| InventoryError::Source)?;
+            if length != 160 + count * ITEM_BYTES {
+                return Err(InventoryError::Corrupt);
+            }
+            let bytes = &buffer[..length];
+            envelope(bytes, 2)?;
+            let declared_count = u32_at(bytes, 80) as usize;
+            if !(1..=CHUNK_ITEMS as usize).contains(&declared_count)
+                || length != 160 + ITEM_BYTES * declared_count
+                || !zero(&bytes[84..88])
+                || !zero(&bytes[120..128])
+            {
+                return Err(InventoryError::Corrupt);
+            }
+            if namespace(bytes)? != root.namespace
+                || bytes[7] != root.bank
+                || u64_at(bytes, 40) != root.generation
+                || u64_at(bytes, 48) != root.capture
+                || u64_at(bytes, 56) != index
+                || u64_at(bytes, 64) != root.chunks
+                || u64_at(bytes, 72) != index * CHUNK_ITEMS
+                || declared_count != count
+                || bytes[88..120] != root.owner_digest
+            {
+                return Err(InventoryError::IdentityMismatch);
+            }
+            self.digest.update(bytes);
+            self.next_chunk += 1;
+            self.next_slot = 0;
+            self.slots = count;
+        }
+        let start = 128 + self.next_slot * ITEM_BYTES;
+        let item = Item::$decode_item(&buffer[start..start + ITEM_BYTES], root, $($descriptor_call)*)?;
+        let key = item.key();
+        if self.previous.is_some_and(|previous| previous >= key) {
+            return Err(InventoryError::Corrupt);
+        }
+        self.previous = Some(key);
+        self.next_slot += 1;
+        self.visited += 1;
+        Ok(Some(item))
+    }
+
+    // Keep the original slice call layer; the borrowed policy adds its bounded count.
+    #[allow(clippy::too_many_arguments)]
+    fn $next_kind(
+        &mut self,
+        kind: u8,
+        root: Root,
+        $($descriptor_args)*,
+        source: &mut impl InventorySource,
+        buffer: &mut [u8; PAGE_BYTES],
+        calls: &mut u64,
+    ) -> Result<Option<Item>> {
+        while let Some(item) = self.$next(root, $($descriptor_call)*, source, buffer, calls)? {
+            if item.kind() == kind {
+                return Ok(Some(item));
+            }
+        }
+        Ok(None)
+    }
+}
+
+fn $observe(
+    root_bytes: &[u8],
+    expected: InventoryExpected,
+    $($descriptor_args)*,
+    source: &mut impl InventorySource,
+    scratch: &mut [[u8; PAGE_BYTES]; 4],
+    mut intents: Option<&mut IntentCollector<'_>>,
+) -> Result<InventoryObservation> {
+    let root = $decode_root(root_bytes, expected, $($descriptor_call)*)?;
+    let mut state = VerifierState {
+        totals: std::array::from_fn(|_| OwnerTotals::default()),
+        cursors: std::array::from_fn(|_| Cursor::default()),
+        heads: [None; 4],
+    };
+    let mut calls = 0;
+    while let Some(item) =
+        state.cursors[0].$next(root, $($descriptor_call)*, source, &mut scratch[0], &mut calls)?
+    {
+        if let Some(collector) = intents.as_mut() {
+            collector.accept(item)?;
+        }
+        let totals = &mut state.totals[item.owner()];
+        let mut normalized = item.bytes;
+        normalized[2..4].fill(0);
+        totals.digest.update(&normalized);
+        totals.count = totals.count.checked_add(1).ok_or(InventoryError::Corrupt)?;
+        let counter = &mut totals.categories[item.category()][usize::from(item.kind() - 1)];
+        *counter = counter
+            .checked_add(u64_at(&item.bytes, 64))
+            .ok_or(InventoryError::Corrupt)?;
+    }
+    descriptor_zip!($mode, $descriptors, $count, state.totals.iter(), totals, descriptor, {
+        if totals.count != descriptor.inventory.items
+            || totals.digest.digest() != descriptor.inventory.digest
+        {
+            return Err(InventoryError::Corrupt);
+        }
+        for (actual, budget) in totals.categories.iter().zip(descriptor.remaining) {
+            if *actual
+                != [
+                    budget.pages,
+                    budget.undo_slots,
+                    budget.status_slots,
+                    budget.growth,
+                ]
+            {
+                return Err(InventoryError::Corrupt);
+            }
+        }
+    });
+    for (lane, buffer) in scratch.iter_mut().enumerate() {
+        state.cursors[lane] = Cursor::default();
+        state.heads[lane] = state.cursors[lane].$next_kind(
+            lane as u8 + 1,
+            root,
+            $($descriptor_call)*,
+            source,
+            buffer,
+            &mut calls,
+        )?;
+    }
+    let mut physical = PhysicalOrder::default();
+    loop {
+        let next = state
+            .heads
+            .iter()
+            .enumerate()
+            .filter_map(|(lane, head)| head.map(|item| (lane, item)))
+            .min_by_key(|(_, item)| item.physical_key());
+        let Some((lane, item)) = next else {
+            break;
+        };
+        physical.accept(item)?;
+        state.heads[lane] = state.cursors[lane].$next_kind(
+            lane as u8 + 1,
+            root,
+            $($descriptor_call)*,
+            source,
+            &mut scratch[lane],
+            &mut calls,
+        )?;
+    }
+    debug_assert_eq!(calls, 5 * root.chunks);
+    Ok(InventoryObservation {
+        owners: root.owners,
+        items: root.items,
+        chunks: root.chunks,
+        read_calls: calls,
+    })
+}
+
+    };
+}
+inventory_descriptor_pipeline!(slice, validate_expected, decode_root, decode,
+    next, next_kind, observe_inventory, descriptors, descriptor_count,
+    (descriptors: &[DescriptorSpec]), (descriptors));
+inventory_descriptor_pipeline!(borrowed, validate_borrowed_expected, decode_borrowed_root,
+    decode_borrowed, next_borrowed, next_borrowed_kind, observe_borrowed_inventory,
+    descriptors, descriptor_count,
+    (descriptors: &mut impl FnMut(usize) -> Result<DescriptorSpec>, descriptor_count: usize),
+    (descriptors, descriptor_count));
+
+#[derive(Clone, Copy)]
+struct Root {
+    namespace: Namespace,
+    bank: u8,
+    generation: u64,
+    capture: u64,
+    owners: usize,
+    chunks: u64,
+    items: u64,
+    aggregate: [u8; 32],
+    owner_digest: [u8; 32],
+}
+
+fn envelope(bytes: &[u8], kind: u8) -> Result<()> {
+    if bytes.len() < 160
+        || bytes[..4] != *b"XOI1"
+        || bytes[6] != kind
+        || bytes[7] > 2
+        || u16_at(bytes, 8) != 128
+        || u16_at(bytes, 10) != ITEM_BYTES as u16
+        || u32_at(bytes, 12) as usize != bytes.len()
+        || u64_at(bytes, 40) == 0
+        || u64_at(bytes, 48) == 0
+    {
+        return Err(InventoryError::Corrupt);
+    }
+    if u16_at(bytes, 4) != 1 {
+        return Err(InventoryError::UnsupportedFormat);
+    }
+    let end = bytes.len() - 32;
+    if content_digest(&bytes[..end]) != bytes[end..] {
+        return Err(InventoryError::Corrupt);
+    }
+    Ok(())
+}
+
+#[derive(Clone, Copy)]
+struct Item {
+    bytes: [u8; ITEM_BYTES],
+}
+impl Item {
     fn kind(self) -> u8 {
         self.bytes[0]
     }
@@ -548,87 +785,6 @@ struct Cursor {
     visited: u64,
     previous: Option<[u64; 9]>,
     digest: ContentHasher,
-}
-impl Cursor {
-    fn next(
-        &mut self,
-        root: Root,
-        descriptors: &[DescriptorSpec],
-        source: &mut impl InventorySource,
-        buffer: &mut [u8; PAGE_BYTES],
-        calls: &mut u64,
-    ) -> Result<Option<Item>> {
-        if self.next_slot == self.slots {
-            if self.next_chunk == root.chunks {
-                if self.visited != root.items || self.digest.digest() != root.aggregate {
-                    return Err(InventoryError::Corrupt);
-                }
-                return Ok(None);
-            }
-            let index = self.next_chunk;
-            let count = (root.items - index * CHUNK_ITEMS).min(CHUNK_ITEMS) as usize;
-            *calls += 1; // At most five times the bounded u32 chunk namespace.
-            let length = source
-                .read_chunk(index, buffer)
-                .map_err(|_| InventoryError::Source)?;
-            if length != 160 + count * ITEM_BYTES {
-                return Err(InventoryError::Corrupt);
-            }
-            let bytes = &buffer[..length];
-            envelope(bytes, 2)?;
-            let declared_count = u32_at(bytes, 80) as usize;
-            if !(1..=CHUNK_ITEMS as usize).contains(&declared_count)
-                || length != 160 + ITEM_BYTES * declared_count
-                || !zero(&bytes[84..88])
-                || !zero(&bytes[120..128])
-            {
-                return Err(InventoryError::Corrupt);
-            }
-            if namespace(bytes)? != root.namespace
-                || bytes[7] != root.bank
-                || u64_at(bytes, 40) != root.generation
-                || u64_at(bytes, 48) != root.capture
-                || u64_at(bytes, 56) != index
-                || u64_at(bytes, 64) != root.chunks
-                || u64_at(bytes, 72) != index * CHUNK_ITEMS
-                || declared_count != count
-                || bytes[88..120] != root.owner_digest
-            {
-                return Err(InventoryError::IdentityMismatch);
-            }
-            self.digest.update(bytes);
-            self.next_chunk += 1;
-            self.next_slot = 0;
-            self.slots = count;
-        }
-        let start = 128 + self.next_slot * ITEM_BYTES;
-        let item = Item::decode(&buffer[start..start + ITEM_BYTES], root, descriptors)?;
-        let key = item.key();
-        if self.previous.is_some_and(|previous| previous >= key) {
-            return Err(InventoryError::Corrupt);
-        }
-        self.previous = Some(key);
-        self.next_slot += 1;
-        self.visited += 1;
-        Ok(Some(item))
-    }
-
-    fn next_kind(
-        &mut self,
-        kind: u8,
-        root: Root,
-        descriptors: &[DescriptorSpec],
-        source: &mut impl InventorySource,
-        buffer: &mut [u8; PAGE_BYTES],
-        calls: &mut u64,
-    ) -> Result<Option<Item>> {
-        while let Some(item) = self.next(root, descriptors, source, buffer, calls)? {
-            if item.kind() == kind {
-                return Ok(Some(item));
-            }
-        }
-        Ok(None)
-    }
 }
 
 #[derive(Default)]
@@ -701,95 +857,66 @@ pub(crate) fn verify_inventory(
     observe_inventory(root_bytes, expected, descriptors, source, scratch, None)
 }
 
-fn observe_inventory(
+/// Observe the same XOI1 bytes through a stable, borrowed descriptor bank.
+/// The actual XRB1 caller borrows immutable plain bytes and uses only pure
+/// decoders. This callback is not a selected-source or restoration capability.
+/// Callback-local resources are the caller's additional source-value charge.
+pub(crate) fn verify_borrowed_inventory(
     root_bytes: &[u8],
     expected: InventoryExpected,
-    descriptors: &[DescriptorSpec],
+    descriptor_count: usize,
+    mut descriptor_at: impl FnMut(usize) -> Result<DescriptorSpec>,
     source: &mut impl InventorySource,
     scratch: &mut [[u8; PAGE_BYTES]; 4],
-    mut intents: Option<&mut IntentCollector<'_>>,
 ) -> Result<InventoryObservation> {
-    let root = decode_root(root_bytes, expected, descriptors)?;
-    let mut state = VerifierState {
-        totals: std::array::from_fn(|_| OwnerTotals::default()),
-        cursors: std::array::from_fn(|_| Cursor::default()),
-        heads: [None; 4],
-    };
-    let mut calls = 0;
-    while let Some(item) =
-        state.cursors[0].next(root, descriptors, source, &mut scratch[0], &mut calls)?
-    {
-        if let Some(collector) = intents.as_mut() {
-            collector.accept(item)?;
-        }
-        let totals = &mut state.totals[item.owner()];
-        let mut normalized = item.bytes;
-        normalized[2..4].fill(0);
-        totals.digest.update(&normalized);
-        totals.count = totals.count.checked_add(1).ok_or(InventoryError::Corrupt)?;
-        let counter = &mut totals.categories[item.category()][usize::from(item.kind() - 1)];
-        *counter = counter
-            .checked_add(u64_at(&item.bytes, 64))
-            .ok_or(InventoryError::Corrupt)?;
-    }
-    for (totals, descriptor) in state.totals.iter().zip(descriptors) {
-        if totals.count != descriptor.inventory.items
-            || totals.digest.digest() != descriptor.inventory.digest
-        {
-            return Err(InventoryError::Corrupt);
-        }
-        for (actual, budget) in totals.categories.iter().zip(descriptor.remaining) {
-            if *actual
-                != [
-                    budget.pages,
-                    budget.undo_slots,
-                    budget.status_slots,
-                    budget.growth,
-                ]
-            {
-                return Err(InventoryError::Corrupt);
-            }
-        }
-    }
-    for (lane, buffer) in scratch.iter_mut().enumerate() {
-        state.cursors[lane] = Cursor::default();
-        state.heads[lane] = state.cursors[lane].next_kind(
-            lane as u8 + 1,
-            root,
-            descriptors,
-            source,
-            buffer,
-            &mut calls,
-        )?;
-    }
-    let mut physical = PhysicalOrder::default();
-    loop {
-        let next = state
-            .heads
-            .iter()
-            .enumerate()
-            .filter_map(|(lane, head)| head.map(|item| (lane, item)))
-            .min_by_key(|(_, item)| item.physical_key());
-        let Some((lane, item)) = next else {
-            break;
-        };
-        physical.accept(item)?;
-        state.heads[lane] = state.cursors[lane].next_kind(
-            lane as u8 + 1,
-            root,
-            descriptors,
-            source,
-            &mut scratch[lane],
-            &mut calls,
-        )?;
-    }
-    debug_assert_eq!(calls, 5 * root.chunks);
-    Ok(InventoryObservation {
-        owners: root.owners,
-        items: root.items,
-        chunks: root.chunks,
-        read_calls: calls,
-    })
+    validate_borrowed_expected(expected, &mut descriptor_at, descriptor_count)?;
+    observe_borrowed_inventory(
+        root_bytes,
+        expected,
+        &mut descriptor_at,
+        descriptor_count,
+        source,
+        scratch,
+        None,
+    )
+}
+
+/// Source values for the common five-pass step and its new indexed expansion.
+/// Excludes the caller's four page loans, callback capture and callback decoder
+/// closure. The XRB1 consumer adds those costs; this is not a capacity grant.
+/// Existing slice entries do not call this function or retain any new fields.
+pub(crate) fn borrowed_inventory_source_bytes() -> usize {
+    use super::obligation::RemainingBudget;
+    use std::mem::size_of;
+    let common = size_of::<VerifierState>()
+        + 4 * size_of::<Root>()
+        + 4 * size_of::<InventoryExpected>()
+        + 2 * size_of::<OwnerOrder>()
+        + size_of::<PhysicalOrder>()
+        + 4 * size_of::<Item>()
+        + 4 * size_of::<Option<Item>>()
+        + 4 * size_of::<Result<Option<Item>>>()
+        + 2 * size_of::<Result<Root>>()
+        + 3 * size_of::<Result<InventoryObservation>>()
+        + 4 * size_of::<Result<()>>()
+        // The totals zip and common obligation validator copy row iterators.
+        + 2 * size_of::<[RemainingBudget; 5]>()
+        + 3 * size_of::<RemainingBudget>()
+        + 2 * size_of::<[u64; 14]>()
+        + 4 * size_of::<[u64; 6]>()
+        + 4 * size_of::<ContentHasher>()
+        + 1536 // pinned SHA nested block/output/compression storage
+        + ITEM_BYTES // normalized item, separate from Item return copies
+        + 4 * size_of::<[u64; 9]>()
+        + 2 * 64 // ControlRef encode scratch
+        + 32 * size_of::<usize>()
+        + 32 * size_of::<&[u8]>()
+        + 1024; // narrow reference codecs and iterator/error return carriers
+    let indexed = 2 * size_of::<DescriptorSpec>()
+        + 2 * size_of::<Result<DescriptorSpec>>()
+        + size_of::<[usize; 8]>()
+        + 8 * size_of::<&DescriptorSpec>();
+    common + indexed
 }
 
 #[cfg(test)]

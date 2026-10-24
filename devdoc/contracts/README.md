@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV3 복구 이미지·제어 레코드](dev3-recovery-control-base.md) — XRB1·XRC1/XWE2/XWS2와 닫힌 census/공통 bridge; 실제 복구 권한·live F05 별도
+
 - [DEV4 P5 상태·입력 codec](dev4-lifecycle-codec.md) — D4-LM-CODEC-001 D2 수용; bounded 자료형·canonical wire·raw negative 보존과 loader 필수 거절. 모델 전이·FE14 완주는 후속.
 
 - [DEV3 빈 거래·정리 큐 순수 의미 처리](dev3-empty-retention-semantics.md) — Root/Job/Aging·N=0 Begin/AbortEnd/Finish·tag3 경계; 실제 live/복구 권한 별도

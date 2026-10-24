@@ -1042,6 +1042,19 @@
           "live_owner": false,
           "full_stage_acceptance": false,
           "ai_experiment_completed_consumers": 1
+        },
+        "recovery_control_base": {
+          "status": "ACCEPTED_LIMITED_D1",
+          "contract_ref": "dev3-recovery-control-base.md",
+          "evidence_ref": "dev3-recovery-control-base-20261024.json",
+          "mandatory_unique_pass": 272,
+          "static": 3,
+          "semantic": 269,
+          "native_runtime": 0,
+          "s5_additional": 23886,
+          "live_owner": false,
+          "full_stage_acceptance": false,
+          "ai_experiment_completed_consumers": 1
         }
       }
     },

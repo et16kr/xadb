@@ -842,3 +842,11 @@ S5 memory 전체600s/32MiB, 추가 native 두 chain 합60s와 P1 포함 whole-hi
 G6_CONTEXT/BEGIN/PASS/FAIL/SKIP과 source/ELF/input identity를 사용한다. static G6-ST01을 먼저 검산하고 독립 수용 뒤 semantic을 선택한다. static은 worker10초+감사5초/전체15초/1MiB, semantic은 worker120초+감사30초/전체150초/개별15초/4MiB다. 첫 audit·source/hash·prior·마지막 기록을 모두 포함하고100ms 최종 기록 charge를 검산한다. 원 explicit FAIL과 미실행을 구분하며 완료 ID는 후속 선택에서 제외한다. 새 checker12는 별도 분모다.
 
 중간 실행은 P1/ordinal0의 raw24+reference10만 사용했다. S5에는 profile/ordinal 확대·reserved field·truncation 조합475를 선택한다. 이번 필수140은 source별로 충족했고 원 N07/N08 실패를 보존한 뒤 두 시험의 도달성 수정만 별도 검증했다. 원 ST01을 새 source/ELF의 재실행 PASS로 표시하지 않는다. 실제 live/flush/base/epoch/recovery 및 최종 전체 G6 inventory는 별도이며 이 순수 단위로 완료하지 않는다.
+
+<a id="recovery-control-base"></a>
+
+## 복구 이미지·제어 레코드 선택 inventory — 2026-10-24
+
+[소유 계약](../contracts/dev3-recovery-control-base.md)·[실행 증거](../evidence/dev3-recovery-control-base-20261024.md)를 따른다. base 신규 필수128(semantic126/static2)과 control 신규 필수144(semantic143/static1)를 서로 다른 XB/G6RC ID·exact selector로 선택했다. 272개 원 PASS는 source/ELF별로 보존한다. S5 추가는 base256/control23,630, 총23,886이며 S5에는 필수272도 포함한다. 중간 완료 사례·무변경 하위·workspace wrapper를 반복하지 않는다.
+
+실행 입력 `artifacts/dev3/plan4-g6-recovery-20261024/execution-input-r1.json`은 static30초(worker20/감사10), semantic180초(worker150/감사30), 함수별5/30초와 출력1/8MiB를 고정했다. 완료된 static 다음에는 caller를 포함한 source phase admission을 별도로 확인했다. 실제 live/recovery/native 효과는 별도 source·F05·입력·시험을 요구하며 순수272의 PASS를 전용하지 않는다. 실패·중단·미실행을 PASS로 바꾸지 않는다.

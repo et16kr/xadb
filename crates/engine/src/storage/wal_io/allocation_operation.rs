@@ -611,6 +611,141 @@ fn validate_finished(
     require(current == expected, SemanticError::StateMismatch)
 }
 
+/// Exact plan4 population followed by the original count-one descriptor
+/// algebra. This byte observation does not establish historical INIT/WAL or
+/// reservation-restoration authority. Old population dispatch is unchanged.
+pub(crate) fn validate_plan4_base_allocation(
+    bytes: &[u8; PAGE_BYTES],
+    profile: Profile,
+    raw: Option<&[u8; 1536]>,
+    high_water: u64,
+    terminal: u8,
+) -> Result<()> {
+    let namespace = profile.spec().namespace;
+    require(namespace.timeline == 1, SemanticError::IdentityMismatch)?;
+    let fixed = super::super::super::fixed_entry().map_err(|_| SemanticError::IdentityMismatch)?;
+    let identity = fixed
+        .metadata_identity(namespace, 0)
+        .map_err(|_| SemanticError::IdentityMismatch)?;
+    let page = allocation_page::decode_allocation_page(bytes, identity, namespace)
+        .map_err(|_| SemanticError::PageMismatch)?;
+    require(page.header().level == 0, SemanticError::PageMismatch)?;
+    let mut batch = None;
+    let mut statuses = 0;
+    for ordinal in 0..64 {
+        let entry = page
+            .entry(ordinal)
+            .map_err(|_| SemanticError::PageMismatch)?;
+        if ordinal < 9 {
+            let (expected_object, expected_kind) = match ordinal {
+                0 => (1, PageKind::Allocation),
+                1 => (4, PageKind::RetentionRoot),
+                2..=6 => (4, PageKind::RetentionJobs),
+                7 => (5, PageKind::TreeAnchor),
+                8 => (5, PageKind::CatalogLeaf),
+                _ => unreachable!("bounded fixed genesis role"),
+            };
+            require(
+                matches!(entry, AllocationEntry::Allocated {
+                    generation, object, object_generation, kind,
+                } if generation.get() == 1 && object.get() == expected_object
+                    && object_generation.get() == 1 && kind == expected_kind),
+                SemanticError::PageMismatch,
+            )?;
+            continue;
+        }
+        match entry {
+            AllocationEntry::Free(generation) => {
+                require(
+                    high_water != 0 || generation.get() == 1,
+                    SemanticError::StateMismatch,
+                )?;
+            }
+            AllocationEntry::Reserved {
+                generation,
+                claimant: ReservationOwner::System(owner),
+            } if generation.get() >= 2
+                && owner.namespace() == namespace
+                && owner.kind() == allocation_page::SystemWorkKind::AllocationMaintenance
+                && owner.id() == high_water
+                && owner.generation().get() == 1
+                && batch.is_none() =>
+            {
+                batch = Some(Batch {
+                    owner,
+                    mask: 1u64 << ordinal,
+                    birth: page.header().lsn.0,
+                });
+            }
+            AllocationEntry::Allocated {
+                generation,
+                object,
+                object_generation,
+                kind,
+            } if generation.get() >= 2
+                && object.get() == 2
+                && object_generation.get() == 1
+                && kind == PageKind::TransactionStatus =>
+            {
+                statuses += 1;
+            }
+            _ => return Err(SemanticError::PageMismatch),
+        }
+    }
+    if let Some(batch) = batch {
+        require(
+            high_water != 0 && terminal == 0,
+            SemanticError::StateMismatch,
+        )?;
+        validate_reserved(
+            &page,
+            &profile,
+            &batch,
+            raw.ok_or(SemanticError::StateMismatch)?,
+            high_water,
+            OperationBudget::StatusInit114688,
+        )
+    } else if high_water == 0 {
+        require(
+            raw.is_none() && terminal == 0 && statuses == 0 && page.header().lsn.0 == 0,
+            SemanticError::StateMismatch,
+        )
+    } else {
+        let outcome = match terminal {
+            1 => TerminalOutcome::Cancelled,
+            2 if statuses != 0 => TerminalOutcome::InitializedStatus,
+            _ => return Err(SemanticError::StateMismatch),
+        };
+        validate_finished(
+            &page,
+            &profile,
+            raw.ok_or(SemanticError::StateMismatch)?,
+            high_water,
+            OperationBudget::StatusInit114688,
+            outcome,
+        )
+    }
+}
+
+/// New-only forwarding/population values plus the unchanged original codec and
+/// descriptor bound. No caller page or bank array is copied into this closure.
+pub(crate) fn plan4_base_allocation_source_bytes() -> usize {
+    use std::mem::size_of;
+    super::budget::TEMPORARIES
+        + 2 * size_of::<AllocationPage<'_>>()
+        + 2 * size_of::<std::result::Result<AllocationPage<'_>, allocation_page::AllocationError>>()
+        + 2 * size_of::<Profile>()
+        + 2 * size_of::<crate::storage::control::FileMapEntry>()
+        + 2 * size_of::<PageIdentity>()
+        + 2 * size_of::<Batch>()
+        + 2 * size_of::<Option<Batch>>()
+        + 2 * size_of::<AllocationEntry>()
+        + 2 * size_of::<std::result::Result<AllocationEntry, allocation_page::AllocationError>>()
+        + 4 * size_of::<Result<()>>()
+        + 24 * size_of::<usize>()
+        + 12 * size_of::<&[u8]>()
+}
+
 /// Canonical terminal for reserve-one + Status INIT. Shared by the producer and
 /// later live-owner validation; it has no storage, stage or recovery authority.
 pub(in super::super) fn finished_status_descriptor(

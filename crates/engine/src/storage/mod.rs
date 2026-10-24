@@ -27,3 +27,6 @@ pub(crate) mod undo_ref;
 pub(crate) mod volatile;
 pub(crate) mod wal_frame;
 pub(crate) mod wal_io;
+
+mod plan4_recovery_base;
+mod plan4_recovery_control;

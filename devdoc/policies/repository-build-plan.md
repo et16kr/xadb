@@ -486,3 +486,7 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 [소유 계약](../contracts/dev3-empty-retention-semantics.md)의 `retention_page.rs`, `retention_obligation.rs`, `semantic_retention.rs`와 각 시험 파일을 engine storage 안에 둔다. 기존 `obligation.rs`의 고정 macro와 `wal_frame.rs`의 별도 tag3 진입점을 공유하고 새 package/의존성은 추가하지 않는다. 실제 새 fixture와 원 vector를 포함한48경로는 [관리 JSON](repository-build-plan.json)의 `dev3_empty_retention_semantics`에 등록한다. [실행 증거](../evidence/dev3-empty-retention-semantics-20261024.md)는 필수140의 source별 PASS와 원 실패를 구분한다. 별도 control/base/live 초안은 이 범위에서 제외하며 최종 독립 D1을 이 순수 단위에서 수용했다.
 
 [DEV4 P5 상태·입력 codec](../contracts/dev4-lifecycle-codec.md)은 `crates/testing/reference/src/lifecycle`에 순수 bounded 자료형과 canonical wire를 둔다. 기존 sha20.10.9를 normal, serde_json1.0.145를 독립 literal의 dev dependency로 재사용하며 새 외부 패키지·production 의미 의존은 없다. 실제 source만 관리 JSON의 `dev4_lifecycle_codec`에 등록한다. controller BFS·파일 재개는 아직 추가하지 않았다.
+
+## DEV3 복구 이미지·제어 레코드 — 2026-10-24
+
+[계약](../contracts/dev3-recovery-control-base.md)의 XRB1/XRC1/XWE2/XWS2 codec과 test3개, ownership/allocation/Catalog 공통 bridge를 engine의 기존 storage 경계에 배치했다. 두 fixture 디렉터리의 독립 generator·고정 입력·raw/reference를 함께 등록한다. 구현한 정확68개 경로는 [기계 계획](repository-build-plan.json)의 `dev3_recovery_control_base`가 소유하며 package·의존 방향·export/fingerprint roots는 유지한다. [선택 증거](../evidence/dev3-recovery-control-base-20261024.md)의 신규272 PASS와 S5 추가23,886 NOT_RUN을 구별한다. actual live/recovery owner는 이번 순수 단위에 포함하지 않는다.

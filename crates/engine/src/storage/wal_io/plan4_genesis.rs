@@ -152,6 +152,42 @@ fn canonical_payload(
     }
 }
 
+/// Original plan4 Catalog bytes for the borrowed XRB1 observation. This does
+/// not select an installed page or prove its original INIT/source lineage.
+pub(in crate::storage) fn encode_plan4_catalog_genesis(
+    namespace: Namespace,
+    ordinal: usize,
+    output: &mut [u8; PAGE_BYTES],
+) -> PureResult<()> {
+    if namespace.timeline != 1 || !matches!(ordinal, 7 | 8) {
+        return Err(Plan4GenesisCause::InvalidInput);
+    }
+    canonical_payload(namespace, ordinal, output)
+}
+
+/// New bridge closure only; output page is a caller loan. Both old canonical
+/// producer call paths remain unchanged. Empty Catalog has only its metadata
+/// cell, so validate_cells never enters an entry-key decoder.
+pub(in crate::storage) fn plan4_catalog_genesis_source_bytes() -> usize {
+    8 * size_of::<PageHeader>()
+        + 4 * size_of::<PageIdentity>()
+        + 6 * size_of::<PageRef>()
+        + 4 * size_of::<AnchorRoot>()
+        + 3 * size_of::<Namespace>()
+        + 4 * size_of::<PureResult<()>>()
+        + 4 * size_of::<std::result::Result<(), PageError>>()
+        + 4 * size_of::<std::result::Result<(), TreeError>>()
+        + 2 * size_of::<std::result::Result<Option<PageRef>, TreeError>>()
+        + 4 * size_of::<ContentHasher>()
+        + 1536 // pinned SHA nested block/output/compression storage
+        + 48 // anchor cell
+        + tree_page::TREE_METADATA_BYTES
+        + 2 * 24 // PageRef codec scratch
+        + 32 * size_of::<usize>()
+        + 24 * size_of::<&[u8]>()
+        + 1024 // narrow tree layout/iterator/error and scalar return carriers
+}
+
 pub(super) fn prepare<'i>(
     profile: Profile,
     images: &'i mut [[u8; PAGE_BYTES]; 9],

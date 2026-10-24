@@ -1,0 +1,106 @@
+{
+  "approval_sha256": "744ac353ad0607a69a22075df1efb9c2e5511cc84334bcd7dab175c78b176b1b",
+  "files": {
+    "raw/current-base-fallback.bin": {
+      "bytes": 4096,
+      "sha256": "92a562614319a30113c3d860645d0b15e519d8d84cd2996e1341be8309bb30d4"
+    },
+    "raw/current-base-pair.bin": {
+      "bytes": 4096,
+      "sha256": "80ef2d1e2308685081306e34b08008d754d7fea631062e7def290880e9db57d7"
+    },
+    "raw/current-base-same.bin": {
+      "bytes": 4096,
+      "sha256": "a75482814e7100492bc00e57ef8d7abbf90e6043e45eaf131d28c56f8a2f5c1e"
+    },
+    "raw/current-burned.bin": {
+      "bytes": 4096,
+      "sha256": "e1a89b50b8f2c056501863d6811f91182a36db003cbbd5ef916cbc0ed7ce073e"
+    },
+    "raw/current-genesis-fallback.bin": {
+      "bytes": 4096,
+      "sha256": "2769a3fe29b9d1194777373f44cb5f5731473fb0ba1edcfd36c25b7e6687cc2c"
+    },
+    "raw/current-intent.bin": {
+      "bytes": 4096,
+      "sha256": "519a034e54a2820fe030133fe1ec8e524a78608609af07c90989adfbeff78108"
+    },
+    "raw/current-open.bin": {
+      "bytes": 4096,
+      "sha256": "e168f634d874f438c7dc9189c8c2074af636c56c43c499ba677c928be7ae2da0"
+    },
+    "raw/current-sealed-empty.bin": {
+      "bytes": 4096,
+      "sha256": "bd4a9b706241ab57817705725e903d5ee0d5bda7300a2fa38cfce1c0b74f9ea6"
+    },
+    "raw/current-sealed.bin": {
+      "bytes": 4096,
+      "sha256": "f9ab4fb979ac99d1aa0407904ea4e5b46de3520ae9647e1c745e9499d6d628b8"
+    },
+    "raw/epoch2.bin": {
+      "bytes": 4096,
+      "sha256": "3cbed7e54c7ddbe5f642b415b69e9ccbdeb8d68092fe5621bd2f1bb87ad2e18b"
+    },
+    "raw/epoch3.bin": {
+      "bytes": 4096,
+      "sha256": "03b850cdc2d5a8620c807fb9930d5f0394fe1ac7f11c586bd76292047c022615"
+    },
+    "raw/writer2.bin": {
+      "bytes": 4096,
+      "sha256": "c39618ed391120caf800c7487c681a2e3f01b028aa369f841fcb0986894cd87c"
+    },
+    "raw/writer3.bin": {
+      "bytes": 4096,
+      "sha256": "e463a712bb044a9cad28aa3be412ac4148e95b83796d469b0683ffa0ba4d37b4"
+    },
+    "references/BOOTSTRAP.bin": {
+      "bytes": 4096,
+      "sha256": "3fff3147da995ed11998320c6a056198283a3f5f7b775877c9c801117937bdcb"
+    },
+    "references/PROFILE.bin": {
+      "bytes": 4096,
+      "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+    },
+    "references/WAL1.bin": {
+      "bytes": 4096,
+      "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+    },
+    "references/WRITER1.bin": {
+      "bytes": 4096,
+      "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+    }
+  },
+  "generator_sha256": "29d6e22c207e12c6fd14b8ff144f54c5183725da53355c4be2237d616063c15e",
+  "input_plan_sha256": "72c70e844695662b455f486c02fe6228668e498b599eaa79430a184ca2d3ccb1",
+  "limitation": "Opaque base/prefix digest tags are local byte inputs, not an actual base, WAL prefix, selected epoch, burn or deletion proof",
+  "payload_bytes": 69632,
+  "profile": 1,
+  "provenance": [
+    {
+      "bytes": 4096,
+      "path": "tests/fixtures/dev3-plan4-genesis/references/REF-P1-WRITER.bin",
+      "sha256": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+    },
+    {
+      "bytes": 4096,
+      "path": "tests/fixtures/dev3-plan4-genesis/references/REF-P1-d3-profile.bin",
+      "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+    },
+    {
+      "bytes": 4096,
+      "path": "tests/fixtures/dev3-plan4-genesis/references/REF-P1-d3-wal-00000001.bin",
+      "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+    },
+    {
+      "bytes": 4096,
+      "path": "tests/fixtures/dev3-plan4-genesis/raw/XBS-P1.bin",
+      "sha256": "3fff3147da995ed11998320c6a056198283a3f5f7b775877c9c801117937bdcb"
+    }
+  ],
+  "raw_files": 13,
+  "raw_index_sha256": "24fc3ed635ae36177021e696d1ac14e0f3396fa6b04e72fa5f329875b667e7f0",
+  "reference_files": 4,
+  "schema": "XADB_G6_CONTROL_LITERAL_V1",
+  "status": "GENERATED_INPUT_NOT_PRODUCT_EVIDENCE",
+  "wire_sha256": "0561d2c1fc40daeacf65d530b245932a8daf4b213e9476ca1df72a48023e3ae2"
+}

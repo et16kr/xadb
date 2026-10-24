@@ -1042,3 +1042,8 @@ pub(in crate::storage) use bootstrap::StatusLoadPermit;
 pub(in crate::storage) use bootstrap::EmptyTransactionInstall;
 #[allow(unused_imports)] // The live consumer is connected in the next integration step.
 pub(crate) use bootstrap::EmptyTransactionObservation;
+
+pub(in crate::storage) use bootstrap::{
+    encode_plan4_catalog_genesis, plan4_base_allocation_source_bytes,
+    plan4_catalog_genesis_source_bytes, validate_plan4_base_allocation,
+};

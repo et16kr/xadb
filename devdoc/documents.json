@@ -2097,6 +2097,21 @@
       "path": "evidence/dev4-lifecycle-codec-20261024.md",
       "role": "evidence",
       "title": "DEV4 P5 수명 상태·입력 codec의 선택 검증"
+    },
+    "dev3-recovery-control-base.md": {
+      "path": "contracts/dev3-recovery-control-base.md",
+      "role": "contracts",
+      "title": "DEV3 복구 이미지·제어 레코드 순수 표현 계약"
+    },
+    "dev3-recovery-control-base-20261024.md": {
+      "path": "evidence/dev3-recovery-control-base-20261024.md",
+      "role": "evidence",
+      "title": "DEV3 복구 이미지·제어 레코드 선택 검증"
+    },
+    "dev3-recovery-control-base-20261024.json": {
+      "path": "evidence/dev3-recovery-control-base-20261024.json",
+      "role": "evidence",
+      "title": "DEV3 복구 이미지·제어 source별 실행 색인"
     }
   }
 }

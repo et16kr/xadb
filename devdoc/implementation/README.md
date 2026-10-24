@@ -1,5 +1,7 @@
 # 현재 구현
 
+- [DEV3 복구 이미지·제어 레코드](dev3-implementation.md#recovery-control-base) — 필수272 source별 PASS·원 실패 보존; 실제 복구 owner와 DEV3/S5 미완료
+
 - [DEV3 빈 거래·정리 큐 순수 의미 처리](dev3-implementation.md#empty-retention-semantics) — 필수140 source별 PASS·최종 독립 D1 제한 수용; 원 실패·실제 연결 잔여 범위 구분
 
 2026-10-24 [DEV3 원 WAL runtime/core 추출](dev3-implementation.md#private-runtime-core): private core와 원 소유권 이동·전달을 새7개 사례로 확인했다. 최종 독립 D1 제한 수용, recovered constructor·G6/DEV3/S5는 미완료다.

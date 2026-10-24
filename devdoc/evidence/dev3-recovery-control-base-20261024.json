@@ -1,0 +1,705 @@
+{
+  "schema_version": 1,
+  "unit": "D3-RECOVERY-CONTROL-BASE-001",
+  "base_commit": "7b32338d9c1b8e71d4567dc78ab9726cd99dc2db",
+  "execution_base_commit": "ea84bf0e7a5a409591235ffb1961748f96e184c3",
+  "status": "ACCEPTED_LIMITED_D1",
+  "contract_ref": "dev3-recovery-control-base.md",
+  "test_plan_ref": "dev3-test-plan.md#recovery-control-base",
+  "scope": "Pure XRB1/XRC1/XWE2/XWS2 codecs and borrowed ownership/allocation/Catalog bridges only. No live/recovery authority.",
+  "owned_source_files": {
+    "crates/engine/src/storage/mod.rs": "7d5be6ed62c871dc098016bfbff4b995e07d526656711e5e4ff6a1747e85a84b",
+    "crates/engine/src/storage/ownership.rs": "a97945467d1805483cfeae78683f88c70f2cc360253338e2c83e038a9583f1ba",
+    "crates/engine/src/storage/plan4_recovery_base.rs": "b766f57cda376849b160172d2b50ded4d9b6eece83e0f8440715ac2ac286b2d2",
+    "crates/engine/src/storage/plan4_recovery_base_bridge_tests.rs": "b6c2ea675aa865c1157596e4fd3ef5f0bcd4adf4b0173a6482001ebdef9f3d98",
+    "crates/engine/src/storage/plan4_recovery_base_tests.rs": "1a70a84f951f4fcd43466eb21ab3eaba0a0bf873aaca6a9f4b2ec5873f5da0b3",
+    "crates/engine/src/storage/plan4_recovery_control.rs": "e5a9ef58c4518cd3ac9977c272db721ab62435751911da2fdcca4d0195670026",
+    "crates/engine/src/storage/plan4_recovery_control_tests.rs": "d5375a3d14f5aebfc238c560663e32e6e52ed1fd02ef4af6d59cdc427ce17b1f",
+    "crates/engine/src/storage/wal_io.rs": "e5897cdd61ae6c9747786a38e7c4b9e9759eda778489a039dca7681d603817b9",
+    "crates/engine/src/storage/wal_io/allocation_operation.rs": "4915340d61a1d7097daf9380294894dc34509f8d99d146d4a39b5b80b22530ee",
+    "crates/engine/src/storage/wal_io/bootstrap.rs": "1583f3cf980b0d44c472280657022055c0de4b9bc3c71aedecf285d8c9c2e2be",
+    "crates/engine/src/storage/wal_io/doublewrite_install.rs": "215601330cf5f86f971328f8830d1fe52e35d632cab17f8b6642b7c29fc5d2cb",
+    "crates/engine/src/storage/wal_io/plan4_genesis.rs": "e79ef850856b244aa38922cdbd832d362bda17d78e9f150f98bad0e4c8ef1678",
+    "tests/fixtures/dev3-plan4-recovery-base/generator.py": "7a2f53644b75f4d792ee0ba88f6b08afeb9f5fd144650c3eac3d0fabf845077d",
+    "tests/fixtures/dev3-plan4-recovery-base/input-plan.json": "86d008ca5ffad39385e9fa8b9aa512443dda80574d6ede9aa2f442c25db63fab",
+    "tests/fixtures/dev3-plan4-recovery-base/provenance.md": "ded070c1fc49cfee264218295a1648854c66d83fdde1dc1f15f20de2a938cbd6",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/manifest.json": "f456c2a1e926cbc131573daa210651e5fcd21aff2457299b2d97cd59ad73af62",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw-index.tsv": "b3f7e7f018baf54284ac062ef1f7cf39b0c6da4991748097ce9431889d05fef1",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/active.xrb": "1d66e83db0dbcffa88cfdb9940ca9e942483bee654efc1e1b115767fb2806507",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/active2.xrb": "d84c044aad1156fde6af1f1d889d0cb4e2000e8d3d5c2e18acea262cd0a583cf",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/active32.xrb": "41eb9f1210bc7ad6b8c63326d1752568b31c446d35399cb1d312aa0923534588",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/cancelled.xrb": "3ed5a11a2f1b023f1fff002951b0dd36e18d60c4d413d023fa4687fb5beb2a23",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/epoch2.xrb": "032db7d210e93735d78ec2e73666b54a5a1eae22464610b23af960725de392e5",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/finish.xrb": "cb2ba8a9cf004201111e8353c97020602df2917a1f6dc77933bdac39910f4587",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/init.xrb": "0c713bd67949b9bca90b65444068e472cd679439537763a26e064569b195e71a",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/mixed55.xrb": "aec85642a2db903b18297bfcd5ce17fd6b032da20556c0ae38d35da4f1a8c0f7",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/ordinal63.xrb": "14ca886d01162914d4a8bd748ecad38af33da45546fa43fb8c6e411ceb77c79c",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/ready.xrb": "caa762e7f9c2043c4f810aa04384631b7ad997c42a0d137b9203c4bdcd582438",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/ready55.xrb": "1fd554ba1f206b61259bd740af4a0342f31fc61138556ec2e7b02610d54a74eb",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/reserved.xrb": "51e8c85a58a668890868b0eec3e4f1e610761bd8e8871c8ec9c01e84ee0538a9",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/reserved32.xrb": "e0d4e602b374e673e3bdc37feebfc908169e67fe8053557e93b558c7c9ffaad3",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/rollback.xrb": "064d81eccf6f139973398b5cbe17f743293a2e89190db698150fcdb391b189c2",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/raw/start.xrb": "0608ff43d72ea74ce72030ca331c799d13ee9aac4ed7715e99e6619024fdfd00",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P00.bin": "077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P01.bin": "eba8bb02bacd91999b00f9891322b8cfebfb222004aa7b0f9332142834858f9c",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P02.bin": "49dafbbf9fdd3e8c8d93e073170114602d50a86e5f82697f4de7ba5232f4f0b3",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P03.bin": "2d7b85d1b4fcb607482de1186e2faeafb6f15667d9d1c1b1d520aebf50345046",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P04.bin": "0d3592d3f9b3399368722c03b864696f85ff1d157f7b4a3d509f3d1bb2660deb",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P05.bin": "950df8eb976fea1bb99cc4842816f27bd83c7e373268e07ceedde35006c0a182",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P06.bin": "9f53a1983f5b03e2b22454e9fc6f44a516530fd3ba17bd919147394228f746d5",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P07.bin": "c666b6d1954d2b19faa83d5bdb381f4edd337af835a47713e31d1efa52bcee90",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P08.bin": "646d2c91744594c80afc26e4919dffece69dd996e436a1390191a164c5a68567",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/bootstrap.bin": "3fff3147da995ed11998320c6a056198283a3f5f7b775877c9c801117937bdcb",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/filemap.bin": "092301de885e2485c51c6d2a4a8a42fae1c1b87eced274a0af8eaca844c72280",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/other-profile.bin": "e45db9f3b6d87837bc2d626f641034c7b647b711fe8c761990731eb5db16052f",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/profile.bin": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4",
+    "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/wal-header.bin": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c",
+    "tests/fixtures/dev3-plan4-recovery-control/generator.py": "29d6e22c207e12c6fd14b8ff144f54c5183725da53355c4be2237d616063c15e",
+    "tests/fixtures/dev3-plan4-recovery-control/input-plan.json": "72c70e844695662b455f486c02fe6228668e498b599eaa79430a184ca2d3ccb1",
+    "tests/fixtures/dev3-plan4-recovery-control/provenance.md": "dd8523890b1698d80b8b808a9efc0e9ecc165a85ef840bab1e6b36de58f905cb",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/manifest.json": "5a4d6fdc4d4f5769ab6581baa1b2dfbcab5ce619f7c85acbb6593a26a728af63",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw-index.tsv": "24fc3ed635ae36177021e696d1ac14e0f3396fa6b04e72fa5f329875b667e7f0",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/current-base-fallback.bin": "92a562614319a30113c3d860645d0b15e519d8d84cd2996e1341be8309bb30d4",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/current-base-pair.bin": "80ef2d1e2308685081306e34b08008d754d7fea631062e7def290880e9db57d7",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/current-base-same.bin": "a75482814e7100492bc00e57ef8d7abbf90e6043e45eaf131d28c56f8a2f5c1e",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/current-burned.bin": "e1a89b50b8f2c056501863d6811f91182a36db003cbbd5ef916cbc0ed7ce073e",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/current-genesis-fallback.bin": "2769a3fe29b9d1194777373f44cb5f5731473fb0ba1edcfd36c25b7e6687cc2c",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/current-intent.bin": "519a034e54a2820fe030133fe1ec8e524a78608609af07c90989adfbeff78108",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/current-open.bin": "e168f634d874f438c7dc9189c8c2074af636c56c43c499ba677c928be7ae2da0",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/current-sealed-empty.bin": "bd4a9b706241ab57817705725e903d5ee0d5bda7300a2fa38cfce1c0b74f9ea6",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/current-sealed.bin": "f9ab4fb979ac99d1aa0407904ea4e5b46de3520ae9647e1c745e9499d6d628b8",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/epoch2.bin": "3cbed7e54c7ddbe5f642b415b69e9ccbdeb8d68092fe5621bd2f1bb87ad2e18b",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/epoch3.bin": "03b850cdc2d5a8620c807fb9930d5f0394fe1ac7f11c586bd76292047c022615",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/writer2.bin": "c39618ed391120caf800c7487c681a2e3f01b028aa369f841fcb0986894cd87c",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw/writer3.bin": "e463a712bb044a9cad28aa3be412ac4148e95b83796d469b0683ffa0ba4d37b4",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/references/BOOTSTRAP.bin": "3fff3147da995ed11998320c6a056198283a3f5f7b775877c9c801117937bdcb",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/references/PROFILE.bin": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/references/WAL1.bin": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c",
+    "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/references/WRITER1.bin": "266b75b0428795c4ce01100377555f66477b58170112470d5be624ee7882aa34"
+  },
+  "mandatory_results": {
+    "schema": "XADB_G6_RECOVERY_CODEC_RESULT_INDEX_V1",
+    "status": "MANDATORY272_SOURCE_BOUND_PASS_FINAL_REVIEW_PENDING",
+    "mandatory_unique_pass": 272,
+    "static": 3,
+    "semantic": 269,
+    "completed_case_replays": 0,
+    "s5_additional_not_run": 23886,
+    "product_native": 0,
+    "source_sha256": "b5f1598e8be4b54af1fe2dd698a3f7a0602218a3edc929f6d3763cae6728721c",
+    "binary_sha256": "8ac348abdbdf98a8b283d2def60bc5544cb3932b3a20a7469974d41f8ac1b68c",
+    "input_sha256": "4a6123649a6f681f399766a28281fcf3701ff1bac70b00f138ed028f2fd6dbed",
+    "receipts": [
+      {
+        "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-tests-r0/static-r0/result.json",
+        "sha256": "4d7781ba2f79ac716f5f2b342e4cfc8f845fc1297dcaba6712f2fa4650406491"
+      },
+      {
+        "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-tests-r0/semantic-r0/result.json",
+        "sha256": "204f2a1dcd2c7015fdd53341502720c4e46e3dbe7e67530d0a8d20b121567e29"
+      }
+    ],
+    "passed_ids": [
+      "G6RC-D01",
+      "G6RC-D02",
+      "G6RC-D03",
+      "G6RC-D04",
+      "G6RC-D05",
+      "G6RC-D06",
+      "G6RC-D07",
+      "G6RC-D08",
+      "G6RC-D09",
+      "G6RC-D10",
+      "G6RC-D11",
+      "G6RC-D12",
+      "G6RC-D13",
+      "G6RC-E01",
+      "G6RC-E02",
+      "G6RC-E03",
+      "G6RC-E04",
+      "G6RC-E05",
+      "G6RC-E06",
+      "G6RC-E07",
+      "G6RC-E08",
+      "G6RC-E09",
+      "G6RC-E10",
+      "G6RC-H01",
+      "G6RC-H02",
+      "G6RC-H03",
+      "G6RC-H04",
+      "G6RC-H05",
+      "G6RC-H06",
+      "G6RC-H07",
+      "G6RC-H08",
+      "G6RC-H09",
+      "G6RC-H10",
+      "G6RC-H11",
+      "G6RC-H12",
+      "G6RC-H13",
+      "G6RC-H14",
+      "G6RC-H15",
+      "G6RC-H16",
+      "G6RC-H17",
+      "G6RC-H18",
+      "G6RC-H19",
+      "G6RC-H20",
+      "G6RC-H21",
+      "G6RC-N01",
+      "G6RC-N02",
+      "G6RC-N03",
+      "G6RC-N04",
+      "G6RC-N05",
+      "G6RC-N06",
+      "G6RC-N07",
+      "G6RC-N08",
+      "G6RC-N09",
+      "G6RC-N10",
+      "G6RC-N11",
+      "G6RC-N12",
+      "G6RC-N13",
+      "G6RC-N14",
+      "G6RC-N15",
+      "G6RC-N16",
+      "G6RC-N17",
+      "G6RC-N18",
+      "G6RC-N19",
+      "G6RC-N20",
+      "G6RC-N21",
+      "G6RC-N22",
+      "G6RC-N23",
+      "G6RC-N24",
+      "G6RC-N25",
+      "G6RC-N26",
+      "G6RC-N27",
+      "G6RC-N28",
+      "G6RC-N29",
+      "G6RC-N30",
+      "G6RC-N31",
+      "G6RC-N32",
+      "G6RC-N33",
+      "G6RC-N34",
+      "G6RC-N35",
+      "G6RC-N36",
+      "G6RC-N37",
+      "G6RC-N38",
+      "G6RC-N39",
+      "G6RC-N40",
+      "G6RC-N41",
+      "G6RC-N42",
+      "G6RC-N43",
+      "G6RC-N44",
+      "G6RC-N45",
+      "G6RC-N46",
+      "G6RC-N47",
+      "G6RC-N48",
+      "G6RC-N49",
+      "G6RC-N50",
+      "G6RC-N51",
+      "G6RC-N52",
+      "G6RC-N53",
+      "G6RC-N54",
+      "G6RC-N55",
+      "G6RC-N56",
+      "G6RC-N57",
+      "G6RC-N58",
+      "G6RC-N59",
+      "G6RC-N60",
+      "G6RC-P01",
+      "G6RC-P02",
+      "G6RC-P03",
+      "G6RC-P04",
+      "G6RC-P05",
+      "G6RC-P06",
+      "G6RC-P07",
+      "G6RC-P08",
+      "G6RC-P09",
+      "G6RC-P10",
+      "G6RC-P11",
+      "G6RC-P12",
+      "G6RC-P13",
+      "G6RC-R01",
+      "G6RC-R02",
+      "G6RC-R03",
+      "G6RC-R04",
+      "G6RC-R05",
+      "G6RC-R06",
+      "G6RC-R07",
+      "G6RC-R08",
+      "G6RC-R09",
+      "G6RC-R10",
+      "G6RC-R11",
+      "G6RC-R12",
+      "G6RC-R13",
+      "G6RC-R14",
+      "G6RC-ST01",
+      "G6RC-V01",
+      "G6RC-V02",
+      "G6RC-V03",
+      "G6RC-V04",
+      "G6RC-V05",
+      "G6RC-W01",
+      "G6RC-W02",
+      "G6RC-W03",
+      "G6RC-W04",
+      "G6RC-W05",
+      "G6RC-W06",
+      "G6RC-W07",
+      "XB-BA001",
+      "XB-BA002",
+      "XB-BA003",
+      "XB-BA004",
+      "XB-BA005",
+      "XB-BA006",
+      "XB-BA007",
+      "XB-BA008",
+      "XB-BA009",
+      "XB-BA010",
+      "XB-BA011",
+      "XB-BA012",
+      "XB-BA013",
+      "XB-BA014",
+      "XB-BA015",
+      "XB-BA016",
+      "XB-BA017",
+      "XB-BA018",
+      "XB-BA019",
+      "XB-BA020",
+      "XB-BA021",
+      "XB-BA022",
+      "XB-BA023",
+      "XB-BA024",
+      "XB-BB001",
+      "XB-BC001",
+      "XB-BC002",
+      "XB-BC003",
+      "XB-BC004",
+      "XB-BC005",
+      "XB-BC006",
+      "XB-BI001",
+      "XB-BI002",
+      "XB-BI003",
+      "XB-BI004",
+      "XB-BI005",
+      "XB-BI006",
+      "XB-BI007",
+      "XB-BI008",
+      "XB-BST001",
+      "XB-C001",
+      "XB-C002",
+      "XB-C003",
+      "XB-C004",
+      "XB-C005",
+      "XB-C006",
+      "XB-C007",
+      "XB-C008",
+      "XB-C009",
+      "XB-C010",
+      "XB-C011",
+      "XB-C012",
+      "XB-C013",
+      "XB-C014",
+      "XB-C015",
+      "XB-E001",
+      "XB-E002",
+      "XB-E003",
+      "XB-E004",
+      "XB-E005",
+      "XB-E006",
+      "XB-E007",
+      "XB-E008",
+      "XB-G001",
+      "XB-G002",
+      "XB-G003",
+      "XB-G004",
+      "XB-G005",
+      "XB-G006",
+      "XB-G007",
+      "XB-G008",
+      "XB-G009",
+      "XB-G010",
+      "XB-G011",
+      "XB-G012",
+      "XB-G013",
+      "XB-G014",
+      "XB-G015",
+      "XB-G016",
+      "XB-G017",
+      "XB-G018",
+      "XB-G019",
+      "XB-G020",
+      "XB-G021",
+      "XB-G022",
+      "XB-G023",
+      "XB-G024",
+      "XB-H001",
+      "XB-H002",
+      "XB-H003",
+      "XB-H004",
+      "XB-H005",
+      "XB-H006",
+      "XB-H007",
+      "XB-H008",
+      "XB-H009",
+      "XB-H010",
+      "XB-H011",
+      "XB-H012",
+      "XB-H013",
+      "XB-H014",
+      "XB-H015",
+      "XB-H016",
+      "XB-I001",
+      "XB-I002",
+      "XB-I003",
+      "XB-I004",
+      "XB-I005",
+      "XB-I006",
+      "XB-I007",
+      "XB-I008",
+      "XB-S001",
+      "XB-S002",
+      "XB-S003",
+      "XB-S004",
+      "XB-S005",
+      "XB-S006",
+      "XB-S007",
+      "XB-S008",
+      "XB-S009",
+      "XB-S010",
+      "XB-S011",
+      "XB-S012",
+      "XB-S013",
+      "XB-S014",
+      "XB-S015",
+      "XB-S016",
+      "XB-ST001"
+    ],
+    "worker_seconds": 7.394892130985681,
+    "charged_seconds": 11.279,
+    "limits": "Pure codecs/common borrowed bridges only; live/native/F05/DEV3/S5 incomplete"
+  },
+  "final_quality_source_sha256": "96a212ef4a2832c9da9d79d871a994ece5359eb354653910a622cf2fff4f7aa5",
+  "source_equivalence": {
+    "status": "READ_ONLY_SOURCE_EQUIVALENCE",
+    "changes": "lint annotations/comments and size_of<[usize;8]>() == 8*size_of<usize>() on every Rust target; no runtime statement/control-flow/type/borrow change",
+    "files": [
+      {
+        "path": "crates/engine/src/storage/ownership.rs",
+        "original_sha256": "8be71e8058d6b4a98b4dced15fabcc7ea0ac7b82d773d7166fbddddc5e83ee21",
+        "successor_sha256": "a97945467d1805483cfeae78683f88c70f2cc360253338e2c83e038a9583f1ba",
+        "exact_authorized_transform_matches": true
+      },
+      {
+        "path": "crates/engine/src/storage/plan4_recovery_control.rs",
+        "original_sha256": "3175dc8c8b9769c8a085ac24ff94a88ae76054fcd3dd99c4cb9434f98764e58e",
+        "successor_sha256": "e5a9ef58c4518cd3ac9977c272db721ab62435751911da2fdcca4d0195670026",
+        "exact_authorized_transform_matches": true
+      }
+    ],
+    "runtime_reexecution": 0,
+    "limits": "Not new execution/stack evidence; original static/semantic records remain bound to original source/ELF"
+  },
+  "pure_call_source_bytes": {
+    "base": 63204,
+    "control": 21620,
+    "cap": 65536,
+    "actual_owner_f05": false,
+    "abi_stack_or_rss": false
+  },
+  "original_failures": [
+    "metadata-followup-attempt-r0.json",
+    "codec-tests-r0 quality fmt FAIL",
+    "codec-quality-r0 Clippy4 FAIL"
+  ],
+  "separate_live_records": [
+    "live-tests-r0/cached-artifact-audit.json HOLD; runtime0",
+    "live-tests-r1/static-r0 FAIL memory cap",
+    "live-tests-r1/static-r1 FAIL native cap"
+  ],
+  "prepared_fixture": {
+    "files": 50,
+    "bytes": 15982393,
+    "old_generator_reexecutions": 0
+  },
+  "quality": {
+    "fmt_changed_files": "PASS",
+    "engine_all_targets_all_features_clippy": "PASS",
+    "runtime_reexecutions": 0,
+    "document_verifier": "NOT_RUN_PRE_PUSH_ONLY",
+    "push": "NOT_RUN"
+  },
+  "full_dev3_acceptance": false,
+  "s5_acceptance": false,
+  "ai_completed_consumers": 1,
+  "receipts": [
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/base-generation-gate-r0.json",
+      "sha256": "d7d417b891dcc76f206b90855b0ec9c6bcd6acb7fd9168980692174bce42fb55",
+      "bytes": 998
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/base-generation-receipt-r0.json",
+      "sha256": "2111580017c0e2c1a91a19a0e4645abfe33b9611bca971e021253fb1ca356160",
+      "bytes": 1010
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/bridge-input-r1.json",
+      "sha256": "64b18684263a8278b519b8c4ec0ae76a71d00327fe877cd55a3889d4f898d666",
+      "bytes": 15297
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-adapter-test-r0.json",
+      "sha256": "192f5dd37bc7a7ae7ac69793fe64c3efdc1a62741aa3bf3a2837ec8228e14c82",
+      "bytes": 568
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-lint-source-proof.json",
+      "sha256": "b6b7e56010fbbb8f746766e4983cff5df1d30721ccc8bc77c55ddb5957551450",
+      "bytes": 997
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-mandatory-results.json",
+      "sha256": "d5a095e035de1e0a4c84eddf0536f4bae926ea67be54f916c9606ff7e1b825d5",
+      "bytes": 5393
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-quality-r0/clean-receipt-r0.json",
+      "sha256": "45a7e13e44a7b30099d985991f59a8c70c9a5117882349338ec0879f76235d91",
+      "bytes": 584
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-quality-r0/clippy-receipt-r0.json",
+      "sha256": "4ef0fa98d923c7341abd9acf171216747ef13224e37ffa4259e97b1f3848de36",
+      "bytes": 584
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-quality-r0/fmt-receipt-r0.json",
+      "sha256": "7e05c806ef65ad5ad229463d73b45b2cbb215af77e800a82a7011f1f039fad45",
+      "bytes": 692
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-quality-r0/freeze.json",
+      "sha256": "1645c004b4b3d71d054c73358aeb946482ac6ab90ae8cecacd69cc8a54f24668",
+      "bytes": 1657
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-quality-r1/clean-receipt-r0.json",
+      "sha256": "f0311a77710c4a0da51dc43a3fcce313a5852696f606bb961b916182c8c67ef1",
+      "bytes": 584
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-quality-r1/clippy-receipt-r0.json",
+      "sha256": "10c1a59e27854b035b6d5ac3ad0b5129642d383c336589a3545394ad2370b641",
+      "bytes": 582
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-quality-r1/fmt-receipt-r0.json",
+      "sha256": "be7bb3dcb82d76f12276c097686b8f805d87da59eb2fbb6713c06d7f82e46426",
+      "bytes": 638
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-quality-r1/freeze.json",
+      "sha256": "41ba64b5c9562496c9950157f16f7690fee399a8a35440600261909ab8415fc5",
+      "bytes": 1369
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-tests-r0/build-receipt.json",
+      "sha256": "c063084e1493dd70d0f8801e94d30cebd8f33b8e16b6b7e8c682ecb8022d2a67",
+      "bytes": 6118
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-tests-r0/fmt-receipt-r0.json",
+      "sha256": "ee7508f94552109fad8430f0e448070f21663cc210f0622e3e494152f336e471",
+      "bytes": 1210
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-tests-r0/freeze.json",
+      "sha256": "c8f0ce4cc3fcf4e7d1dad5dbf62c9904a9d1a11105af61923153e58c84958437",
+      "bytes": 12756
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-tests-r0/overlay/tests/fixtures/dev3-plan4-recovery-base/input-plan.json",
+      "sha256": "86d008ca5ffad39385e9fa8b9aa512443dda80574d6ede9aa2f442c25db63fab",
+      "bytes": 262063
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-tests-r0/overlay/tests/fixtures/dev3-plan4-recovery-base/provenance.md",
+      "sha256": "2ad87a453044b9bcdeb9d39158972f6c10dc5d1b35b7f2152cc88018fce89b38",
+      "bytes": 6004
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-tests-r0/overlay/tests/fixtures/dev3-plan4-recovery-control/input-plan.json",
+      "sha256": "72c70e844695662b455f486c02fe6228668e498b599eaa79430a184ca2d3ccb1",
+      "bytes": 735866
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-tests-r0/overlay/tests/fixtures/dev3-plan4-recovery-control/provenance.md",
+      "sha256": "943468aef50fb3a7f71c42a70715587b94e90fd1b93ec8ea85dc8e6e613381c8",
+      "bytes": 8936
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-tests-r0/overlay/tests/fixtures/dev3-plan4-recovery-control/vectors/p1/manifest.json",
+      "sha256": "5a4d6fdc4d4f5769ab6581baa1b2dfbcab5ce619f7c85acbb6593a26a728af63",
+      "bytes": 4024
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-tests-r0/semantic-r0/result.json",
+      "sha256": "204f2a1dcd2c7015fdd53341502720c4e46e3dbe7e67530d0a8d20b121567e29",
+      "bytes": 62437
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/codec-tests-r0/static-r0/result.json",
+      "sha256": "4d7781ba2f79ac716f5f2b342e4cfc8f845fc1297dcaba6712f2fa4650406491",
+      "bytes": 5456
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/control-generation-gate-r0.json",
+      "sha256": "744ac353ad0607a69a22075df1efb9c2e5511cc84334bcd7dab175c78b176b1b",
+      "bytes": 593
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/control-generation-receipt-r0.json",
+      "sha256": "6aa5e0e12058edfd6e166652812183eeccc9d59b2eca726ea0494c5ef8a30952",
+      "bytes": 1044
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/execution-input-r0.json",
+      "sha256": "67cc7b031ac613542bd266c2d9b0b2abc8325de580002abcf10e8570904c73bc",
+      "bytes": 181057
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/execution-input-r1.json",
+      "sha256": "4a6123649a6f681f399766a28281fcf3701ff1bac70b00f138ed028f2fd6dbed",
+      "bytes": 181536
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/metadata-followup-attempt-r0.json",
+      "sha256": "1edf9540b235c61a27e6b738cb3f04acd2c6868d1f97fcbbc21221b1bf979b67",
+      "bytes": 160
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/preparation-before-build-r0.json",
+      "sha256": "e8d8620c02c59a61ca32b65b9e777cb206b2b4974e7de061cb3264b35d273fba",
+      "bytes": 1496
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/preparation-before-freeze.json",
+      "sha256": "2364d1b75fea7749c60ed8cf59bb702a195f7cbbbdf7478d1db2c2d5ab4e93de",
+      "bytes": 1476
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/preparation-before-generation-r0.json",
+      "sha256": "1ecd063b188fbfa7a795473d3f7b22174f12bc72264c98a6777ba2170f5082cf",
+      "bytes": 1480
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/preparation-before-live-build-r0.json",
+      "sha256": "a756411ba2652682067166b10643eedd838aac09f82a297a373b7c6088c8f612",
+      "bytes": 1511
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/preparation-before-live-check-r0.json",
+      "sha256": "d74e3959412338ec0f5906fb96c8f33d814d1fe146ccf7d5caa4ce3af130238b",
+      "bytes": 1510
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/preparation-before-live-rebuild-r1.json",
+      "sha256": "c54a35dcbb8b47856ca9928faf8997b817ffe236915b2d37a2d9d9db3a8a0367",
+      "bytes": 1511
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/preparation-input-r0.json",
+      "sha256": "53a697eed529315858b35da2258e609d1a4a49c943adfde3080a47aaabe9a7d8",
+      "bytes": 2386
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/preparation-input-r1.json",
+      "sha256": "799df80dc7ada998e87e1984ee02bcd36488d5eea48f05b52524f1cfd2445c85",
+      "bytes": 4112
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/pure-call-admission-r0.json",
+      "sha256": "6285ce88b5d5820d00296d700ca36bcc54f7ada66f5f9b47d4cc5de7213b1c6b",
+      "bytes": 5633
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/pure-call-preparation-r0.json",
+      "sha256": "175289ea35534d23a7c63d900eeaf16613f349d6b0c0ddcddf477fe995e8e7e6",
+      "bytes": 1859
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/quality-preparation-input-r0.json",
+      "sha256": "9a336318ca67a1c5dc514b967255cdd7bc3d8934156af657ff9a631fc694bd60",
+      "bytes": 1606
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/quality-preparation-input-r1.json",
+      "sha256": "82998678dfe738ebce48a49b560f2d136aa27290a504170597c753df02acffb6",
+      "bytes": 1551
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/review/base-codec-bridges-source-input-d2.json",
+      "sha256": "a278db5fe33ea83655f0f37e3711f9dfd5a9b19bd304d9636bf443273fe65f9c",
+      "bytes": 8713
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/review/base-codec-bridges-source-input-d2.md",
+      "sha256": "6974b6bd50926f158d75867ec6264ce4e8e261c3fb55fcf9f279d27a9f55377c",
+      "bytes": 8480
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/review/base-codec-r2-metadata-readback.md",
+      "sha256": "cb0d852e33b2d707aad921f83f465291a26c17c4f56f3dfd248f8021df57d7b3",
+      "bytes": 1278
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/review/codec-runner-static-gate-r1.md",
+      "sha256": "f68f9e0ea26c858c5a0bfb29de6e276e8f4f2a0c95ae878e42996471ae0711f8",
+      "bytes": 3177
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/review/live-source-phase-advice-r0.md",
+      "sha256": "96aa6e5b5c5b13d8394b3c873a2064e3333871ecb3b7faba39792a86867b4d9f",
+      "bytes": 2547
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/review/live-static-first-gate-r1.md",
+      "sha256": "f30940c92247c853b087730b50f8295f9d4a16a9bf26398941a2886de539f717",
+      "bytes": 2785
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/review/pure-call-phase-admission-r0.md",
+      "sha256": "07499a190f5ddf682a41b4d2f8d9a7f5cabffbe9f802fee9a984e191debe238a",
+      "bytes": 6816
+    },
+    {
+      "path": "artifacts/dev3/plan4-g6-recovery-20261024/root-source-before.json",
+      "sha256": "29d25d2acc3f52cd6cae0810d2bfc0cc83b1b4c421b1f0e09e8a8562eb3870d7",
+      "bytes": 1962
+    }
+  ],
+  "documentation_successors": [
+    {
+      "path": "tests/fixtures/dev3-plan4-recovery-base/provenance.md",
+      "original_sha256": "2ad87a453044b9bcdeb9d39158972f6c10dc5d1b35b7f2152cc88018fce89b38",
+      "successor_sha256": "ded070c1fc49cfee264218295a1648854c66d83fdde1dc1f15f20de2a938cbd6",
+      "change": "Historical status header and follow-up evidence link only"
+    },
+    {
+      "path": "tests/fixtures/dev3-plan4-recovery-control/provenance.md",
+      "original_sha256": "943468aef50fb3a7f71c42a70715587b94e90fd1b93ec8ea85dc8e6e613381c8",
+      "successor_sha256": "dd8523890b1698d80b8b808a9efc0e9ecc165a85ef840bab1e6b36de58f905cb",
+      "change": "Historical status header and follow-up evidence link only"
+    }
+  ],
+  "independent_final_review": {
+    "path": "artifacts/dev3/plan4-g6-recovery-20261024/review/codec-final-d1.json",
+    "sha256": "c12e62223a62ea1fa27a82830cdbccf79cf1e0f435ffa4237b603e4666ea27d7",
+    "report_path": "artifacts/dev3/plan4-g6-recovery-20261024/review/codec-final-d1.md",
+    "report_sha256": "ef9420ff0c6a20d197d50d84120aee92b8ee59783194d3bca743104bbdd5c20d",
+    "decision": "ACCEPTED_LIMITED_D1_PURE_CODEC",
+    "reviewed_scope_sha256": "916aa4f6bf2f8583f9fd1e13ddca55cf3e2426c0043145c979f88fede44ac851",
+    "owned_paths": 81,
+    "limits": "Live/recovery/F05/full DEV3/S5 and AI consumer2/3 incomplete"
+  },
+  "mandatory_results_note": "Embedded result index retains its original pre-final-review status; only the outer acceptance status is updated after independent D1."
+}
