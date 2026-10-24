@@ -1,0 +1,447 @@
+{
+  "id": "DEV4-LM-INDEPENDENT-BYTE-VECTORS-V1",
+  "status": "STATIC_VECTORS_AUTHORED",
+  "interpretation": "Packing authoring completed; no codec/model/product/test verdict.",
+  "state_vector_count": 4,
+  "input_vector_count": 7,
+  "source_pins": {
+    "literal-design-v1.json": "ec4a7940a457882c155eb84e2d9e5602eaf880563bab4f6f04d0b643bcec42d2",
+    "wire-proposal-v2.json": "2edefc28473581f8e263c2c74db90a247c0973811787aed73bd26f7679ced1ec",
+    "wire-proposal-v2.md": "2adfb63a2c006c91003e5613962226ffdf7a6c9311578eb044fe77cdbf770937",
+    "input-layout-v1.md": "314cd3725dc1d2e18027e80163238e4872d2ac7ce638a6371b983b6d46eb945c"
+  },
+  "packing_recipe_sha256": "87aa123a7cd6130fe1a709969e31afed7d7be4d3e776ec5d1077889d6ef95c7d",
+  "selection_sha256": "8dc9e4325150f53663ed4d5e11426da2e7270675b43e59dc3220a598b0d42911",
+  "descriptor_hashes": {
+    "layout": "0000000000000000000000000000000000000000000000000000000000000000",
+    "profile": "1111111111111111111111111111111111111111111111111111111111111111",
+    "action": "2222222222222222222222222222222222222222222222222222222222222222",
+    "exclusion": "3333333333333333333333333333333333333333333333333333333333333333",
+    "meaning": "Fixed synthetic fixture markers only; not SHA values of actual run descriptors or self-referential schema documents."
+  },
+  "vectors": [
+    {
+      "id": "state-initial",
+      "literal_state": "initial",
+      "hand_counted_bytes": 444,
+      "hand_counted_section_bytes": [
+        26,
+        52,
+        26,
+        52,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "kind": "state",
+      "byte_length": 444,
+      "byte_sha256": "4b87162ef3b30ba4fae016580fe0ff600ff3a763f5e891e342e626e56125aaaf",
+      "binary": "vectors/state-initial.bin",
+      "hex_file": "vectors/state-initial.hex",
+      "expanded_logical": "vectors/state-initial.logical.json",
+      "offsets": "vectors/state-initial.offsets.json"
+    },
+    {
+      "id": "state-sel-parked",
+      "literal_state": "sel.parked",
+      "hand_counted_bytes": 946,
+      "hand_counted_section_bytes": [
+        26,
+        52,
+        32,
+        58,
+        32,
+        30,
+        16,
+        81,
+        36,
+        0,
+        30,
+        0,
+        181,
+        42,
+        0,
+        42
+      ],
+      "kind": "state",
+      "byte_length": 946,
+      "byte_sha256": "445056f14cc7c839ef68b8d5f983ffb2ead0876979e2f32e3bafec025066757a",
+      "binary": "vectors/state-sel-parked.bin",
+      "hex_file": "vectors/state-sel-parked.hex",
+      "expanded_logical": "vectors/state-sel-parked.logical.json",
+      "offsets": "vectors/state-sel-parked.offsets.json"
+    },
+    {
+      "id": "state-sel-stale-rejected",
+      "literal_state": "sel.stale_rejected",
+      "hand_counted_bytes": 1313,
+      "hand_counted_section_bytes": [
+        26,
+        52,
+        30,
+        58,
+        32,
+        62,
+        16,
+        105,
+        70,
+        0,
+        30,
+        0,
+        292,
+        126,
+        0,
+        126
+      ],
+      "kind": "state",
+      "byte_length": 1313,
+      "byte_sha256": "a06dcd8f9b29e454c2043c8eaba9dac25d6a805f69b3c6955b584aaae511e0c4",
+      "binary": "vectors/state-sel-stale-rejected.bin",
+      "hex_file": "vectors/state-sel-stale-rejected.hex",
+      "expanded_logical": "vectors/state-sel-stale-rejected.logical.json",
+      "offsets": "vectors/state-sel-stale-rejected.offsets.json"
+    },
+    {
+      "id": "state-rw-recovery-pending",
+      "literal_state": "rw.recovery_pending",
+      "hand_counted_bytes": 1058,
+      "hand_counted_section_bytes": [
+        30,
+        52,
+        28,
+        56,
+        32,
+        0,
+        0,
+        84,
+        38,
+        39,
+        30,
+        0,
+        212,
+        84,
+        12,
+        73
+      ],
+      "kind": "state",
+      "byte_length": 1058,
+      "byte_sha256": "e90d0e47a5e10ea49cd0a84110e24b0b0c8cec371abe4a6c4895d263785b8bab",
+      "binary": "vectors/state-rw-recovery-pending.bin",
+      "hex_file": "vectors/state-rw-recovery-pending.hex",
+      "expanded_logical": "vectors/state-rw-recovery-pending.logical.json",
+      "offsets": "vectors/state-rw-recovery-pending.offsets.json"
+    },
+    {
+      "id": "input-select-prepare",
+      "literal_input": "sel.prepare",
+      "pre_state": "initial",
+      "hand_counted_bytes": 32,
+      "expected_semantic_response": "prepare_idle",
+      "kind": "input",
+      "byte_length": 32,
+      "byte_sha256": "9d7d13caa5599ce94d9bc7159aa73377cbb951ec9f7f418fa3f449335b64c671",
+      "binary": "vectors/input-select-prepare.bin",
+      "hex_file": "vectors/input-select-prepare.hex",
+      "expanded_logical": "vectors/input-select-prepare.logical.json",
+      "offsets": "vectors/input-select-prepare.offsets.json"
+    },
+    {
+      "id": "input-select-execute",
+      "literal_input": "sel.execute",
+      "pre_state": "sel.prepared",
+      "hand_counted_bytes": 214,
+      "hand_counted_envelope_bytes": 166,
+      "expected_semantic_response": "execute_select",
+      "kind": "input",
+      "byte_length": 214,
+      "byte_sha256": "5ac9cec9788f3ad80177e0e184afa3f18edf64fd9a8118ffb32c3e75a287cf69",
+      "binary": "vectors/input-select-execute.bin",
+      "hex_file": "vectors/input-select-execute.hex",
+      "expanded_logical": "vectors/input-select-execute.logical.json",
+      "offsets": "vectors/input-select-execute.offsets.json"
+    },
+    {
+      "id": "input-atomic-terminal-cancel",
+      "literal_input": "sel.terminal_cancel",
+      "pre_state": "sel.open",
+      "hand_counted_bytes": 214,
+      "hand_counted_envelope_bytes": 166,
+      "expected_semantic_response": "fetch_cancelled",
+      "kind": "input",
+      "byte_length": 214,
+      "byte_sha256": "ba45f74dfca6860f4610f67c1f3ebb7b8f7032a33d24eb8988bf6443cbd5c813",
+      "binary": "vectors/input-atomic-terminal-cancel.bin",
+      "hex_file": "vectors/input-atomic-terminal-cancel.hex",
+      "expanded_logical": "vectors/input-atomic-terminal-cancel.logical.json",
+      "offsets": "vectors/input-atomic-terminal-cancel.offsets.json"
+    },
+    {
+      "id": "input-resume-pending-deadline",
+      "literal_input": "sel.resume_timeout",
+      "pre_state": "sel.signalled",
+      "hand_counted_bytes": 198,
+      "hand_counted_envelope_bytes": 166,
+      "expected_semantic_response": "fetch_timeout",
+      "kind": "input",
+      "byte_length": 198,
+      "byte_sha256": "2fd073c6ef031195007bee13b66fb77660791073a57d430aecbe908bca7e512c",
+      "binary": "vectors/input-resume-pending-deadline.bin",
+      "hex_file": "vectors/input-resume-pending-deadline.hex",
+      "expanded_logical": "vectors/input-resume-pending-deadline.logical.json",
+      "offsets": "vectors/input-resume-pending-deadline.offsets.json"
+    },
+    {
+      "id": "input-rollback-incomplete",
+      "literal_input": "rw.rollback_incomplete",
+      "pre_state": "rw.written",
+      "hand_counted_bytes": 371,
+      "hand_counted_envelope_bytes": 339,
+      "expected_semantic_response": "rollback_incomplete",
+      "kind": "input",
+      "byte_length": 371,
+      "byte_sha256": "7fa9f4973bd7410981493042487f2f338f38eaa3befbd9cf4b606d33a03ea10c",
+      "binary": "vectors/input-rollback-incomplete.bin",
+      "hex_file": "vectors/input-rollback-incomplete.hex",
+      "expanded_logical": "vectors/input-rollback-incomplete.logical.json",
+      "offsets": "vectors/input-rollback-incomplete.offsets.json"
+    },
+    {
+      "id": "input-stale-result",
+      "literal_input": "sel.stale_rows",
+      "pre_state": "sel.reexecuted",
+      "hand_counted_bytes": 81,
+      "hand_counted_envelope_bytes": 33,
+      "expected_semantic_response": "stale_rejected",
+      "kind": "input",
+      "byte_length": 81,
+      "byte_sha256": "29904dcdc12fcae493bdb2cf2afb633c5dd8d74b2a7341214a3e4bc4af348fda",
+      "binary": "vectors/input-stale-result.bin",
+      "hex_file": "vectors/input-stale-result.hex",
+      "expanded_logical": "vectors/input-stale-result.logical.json",
+      "offsets": "vectors/input-stale-result.offsets.json"
+    },
+    {
+      "id": "input-malformed-child-u9",
+      "literal_input": "sel.stale_rows",
+      "pre_state": "sel.reexecuted",
+      "literal_put": {
+        "/target": [
+          254,
+          0,
+          0,
+          1,
+          1,
+          255,
+          1
+        ]
+      },
+      "hand_counted_bytes": 81,
+      "hand_counted_envelope_bytes": 33,
+      "expected_semantic_response": "stale_rejected",
+      "raw_selector": "FrozenUnissued U9 requested Result; unknown kind254, actor0, slot0, E1/S1, nonce255, generation1. Preserve raw bytes until API identity gate. Fresh caller C5 remains valid.",
+      "kind": "input",
+      "byte_length": 81,
+      "byte_sha256": "147f3735f7915f27427ca9da0bbc1293ceba9d2f1871e3389e3f667906a20923",
+      "binary": "vectors/input-malformed-child-u9.bin",
+      "hex_file": "vectors/input-malformed-child-u9.hex",
+      "expanded_logical": "vectors/input-malformed-child-u9.logical.json",
+      "offsets": "vectors/input-malformed-child-u9.offsets.json"
+    }
+  ],
+  "files": {
+    "vectors/state-initial.bin": {
+      "bytes": 444,
+      "sha256": "4b87162ef3b30ba4fae016580fe0ff600ff3a763f5e891e342e626e56125aaaf"
+    },
+    "vectors/state-initial.hex": {
+      "bytes": 902,
+      "sha256": "19a168eb4d6503936c04dfb87c607d0beedae1dbfaacbfce8e4e5acdbfc0a772"
+    },
+    "vectors/state-initial.logical.json": {
+      "bytes": 3467,
+      "sha256": "2583fcf4ac131318d8a9eedbae65d94ebcdbf94ecb9a355f862cafb34531594e"
+    },
+    "vectors/state-initial.offsets.json": {
+      "bytes": 20860,
+      "sha256": "07949c9ff2cd6e7af72058079e150141db57f74c6e7ecd67e5391ba190547c38"
+    },
+    "vectors/state-sel-parked.bin": {
+      "bytes": 946,
+      "sha256": "445056f14cc7c839ef68b8d5f983ffb2ead0876979e2f32e3bafec025066757a"
+    },
+    "vectors/state-sel-parked.hex": {
+      "bytes": 1922,
+      "sha256": "65d1246ace2e54d9a52ec583305a5e348376072ebdf70787dbc8c98ab31ca0eb"
+    },
+    "vectors/state-sel-parked.logical.json": {
+      "bytes": 12860,
+      "sha256": "a90b72c738d82cf73cc874dd40aca8a3d56bf8b5c822a5aefd3d904568d1cc55"
+    },
+    "vectors/state-sel-parked.offsets.json": {
+      "bytes": 49729,
+      "sha256": "c241bbe35aba4899c96dc85c2e299706fb35ea759ac336cbfb81f6b441dda1ae"
+    },
+    "vectors/state-sel-stale-rejected.bin": {
+      "bytes": 1313,
+      "sha256": "a06dcd8f9b29e454c2043c8eaba9dac25d6a805f69b3c6955b584aaae511e0c4"
+    },
+    "vectors/state-sel-stale-rejected.hex": {
+      "bytes": 2668,
+      "sha256": "b190cb0dc021c3a73cbdbf68cf016b407a1ea5f030d2c0d7f5ca62cadf5f541f"
+    },
+    "vectors/state-sel-stale-rejected.logical.json": {
+      "bytes": 19558,
+      "sha256": "b90f0e660764aa3eedde86ae1aa8d93a940b04d3459335f619b5c43c98813566"
+    },
+    "vectors/state-sel-stale-rejected.offsets.json": {
+      "bytes": 72631,
+      "sha256": "3ce52b6492a574597e8d0087ee7b0146f9fc5488b47be584d6c9533d0c8e5e0e"
+    },
+    "vectors/state-rw-recovery-pending.bin": {
+      "bytes": 1058,
+      "sha256": "e90d0e47a5e10ea49cd0a84110e24b0b0c8cec371abe4a6c4895d263785b8bab"
+    },
+    "vectors/state-rw-recovery-pending.hex": {
+      "bytes": 2150,
+      "sha256": "acc4c2864a23d0ec3053fe4f7d1b6bce4b9e4f4952e95ace0d721f5db5ea43cf"
+    },
+    "vectors/state-rw-recovery-pending.logical.json": {
+      "bytes": 15130,
+      "sha256": "4093384bc2fd0ad519842dbd887a586b41904780be46b5e245b215c0db0c93a2"
+    },
+    "vectors/state-rw-recovery-pending.offsets.json": {
+      "bytes": 55271,
+      "sha256": "f8eb25e20f7c93cfac5cfc789ffdea1ae41f7fcf187c5ccbea6a73d742f91243"
+    },
+    "vectors/input-select-prepare.bin": {
+      "bytes": 32,
+      "sha256": "9d7d13caa5599ce94d9bc7159aa73377cbb951ec9f7f418fa3f449335b64c671"
+    },
+    "vectors/input-select-prepare.hex": {
+      "bytes": 65,
+      "sha256": "fda7797becf730ada54ad96fd1fb73f86c202e965b4e65c62f19a2968867e382"
+    },
+    "vectors/input-select-prepare.logical.json": {
+      "bytes": 410,
+      "sha256": "5132f4068dca79ff3f6b0e6d6acf7d4bf368468e0bf21d541f1c54933cc56a62"
+    },
+    "vectors/input-select-prepare.offsets.json": {
+      "bytes": 1594,
+      "sha256": "428212d5f38cb0ce7a9a407bf3eaad4b599be3124b6c6c5f3c4ffe1a7254e48a"
+    },
+    "vectors/input-select-execute.bin": {
+      "bytes": 214,
+      "sha256": "5ac9cec9788f3ad80177e0e184afa3f18edf64fd9a8118ffb32c3e75a287cf69"
+    },
+    "vectors/input-select-execute.hex": {
+      "bytes": 435,
+      "sha256": "e875528092b3ab6928cff5c8a4940bd4656b72df6ebc45b0824b6c571a04eca9"
+    },
+    "vectors/input-select-execute.logical.json": {
+      "bytes": 2120,
+      "sha256": "ddf593523f70f650b7ea6a18891bded939c1459cdd412fb8e111cc5c1a3e266c"
+    },
+    "vectors/input-select-execute.offsets.json": {
+      "bytes": 7792,
+      "sha256": "2baac2348169aa998faf23ec229d48f0cd3ff25d986c32a5a4b5c7a53cdf747b"
+    },
+    "vectors/input-atomic-terminal-cancel.bin": {
+      "bytes": 214,
+      "sha256": "ba45f74dfca6860f4610f67c1f3ebb7b8f7032a33d24eb8988bf6443cbd5c813"
+    },
+    "vectors/input-atomic-terminal-cancel.hex": {
+      "bytes": 435,
+      "sha256": "e0f8db074ab42f5e005eed9cc050f1b899bf17dd4bb2e0a71ec7dd930f9f3178"
+    },
+    "vectors/input-atomic-terminal-cancel.logical.json": {
+      "bytes": 2135,
+      "sha256": "b6d9a69ae777dcc88b6555754564e0c6d1d1b84184693f2d0a493a94f4abb686"
+    },
+    "vectors/input-atomic-terminal-cancel.offsets.json": {
+      "bytes": 7792,
+      "sha256": "56c02ea558db7ae14896a5fd0faea5124dc8790eac3eaa01487b898b3a73e5dd"
+    },
+    "vectors/input-resume-pending-deadline.bin": {
+      "bytes": 198,
+      "sha256": "2fd073c6ef031195007bee13b66fb77660791073a57d430aecbe908bca7e512c"
+    },
+    "vectors/input-resume-pending-deadline.hex": {
+      "bytes": 403,
+      "sha256": "500f9a5fc4ef078fe55ffbe428cfda145a4b71a69b1acb66ee95e6ffaeef32c8"
+    },
+    "vectors/input-resume-pending-deadline.logical.json": {
+      "bytes": 2100,
+      "sha256": "26c0d473de39382086fa080d4b6c57aea8ca6fce1441034c382683026f29d35d"
+    },
+    "vectors/input-resume-pending-deadline.offsets.json": {
+      "bytes": 7759,
+      "sha256": "6da7c8bc1124e5f820ce39698a96c5738a877d291022e770e67225e7ca372a30"
+    },
+    "vectors/input-rollback-incomplete.bin": {
+      "bytes": 371,
+      "sha256": "7fa9f4973bd7410981493042487f2f338f38eaa3befbd9cf4b606d33a03ea10c"
+    },
+    "vectors/input-rollback-incomplete.hex": {
+      "bytes": 754,
+      "sha256": "6e6e20099c2d1328d27ae7baa019bffba535e84c81f747bb87160f37f769111c"
+    },
+    "vectors/input-rollback-incomplete.logical.json": {
+      "bytes": 3470,
+      "sha256": "3003a65503159e3580181aa77716af6f0c984178313a0cead3f02cae22973590"
+    },
+    "vectors/input-rollback-incomplete.offsets.json": {
+      "bytes": 10019,
+      "sha256": "ff4a75483c803d4e75d67e36056c6e3be0a628638d67af68672039f20940e56f"
+    },
+    "vectors/input-stale-result.bin": {
+      "bytes": 81,
+      "sha256": "29904dcdc12fcae493bdb2cf2afb633c5dd8d74b2a7341214a3e4bc4af348fda"
+    },
+    "vectors/input-stale-result.hex": {
+      "bytes": 165,
+      "sha256": "f2c5a2c747b50ed682fb5c1d9cc5337d895ebea8e7b73bcc9b5ff590c40c9329"
+    },
+    "vectors/input-stale-result.logical.json": {
+      "bytes": 856,
+      "sha256": "d594b651178b88ab4fefc44512c0e5171728db23efcf37712fac3746d158f487"
+    },
+    "vectors/input-stale-result.offsets.json": {
+      "bytes": 3591,
+      "sha256": "963a4c3e090d35c403f42d29f1de6bee8fdd6ff8b2f2d02ed55584e303cc4944"
+    },
+    "vectors/input-malformed-child-u9.bin": {
+      "bytes": 81,
+      "sha256": "147f3735f7915f27427ca9da0bbc1293ceba9d2f1871e3389e3f667906a20923"
+    },
+    "vectors/input-malformed-child-u9.hex": {
+      "bytes": 165,
+      "sha256": "844c0f30e1db14fcccc58600d0dcfe6b5de7800e77ae1d22622286a87267fa82"
+    },
+    "vectors/input-malformed-child-u9.logical.json": {
+      "bytes": 860,
+      "sha256": "26fd58259a41b6df819d54837815c7a6e796b82c65a54a5fb5064189fb2f0b4e"
+    },
+    "vectors/input-malformed-child-u9.offsets.json": {
+      "bytes": 3591,
+      "sha256": "c59e06bd60e0cf120f51b4b55a8eef24cbb89521abf688f9e0204f170ecb8b98"
+    }
+  },
+  "prohibited_claims": [
+    "No model transition or expected-post calculation",
+    "No Rust codec/helper reuse",
+    "No decoder round-trip or checker PASS",
+    "No product/runtime/test execution",
+    "No full 29-state binary coverage",
+    "No actual engine ACK/LSN/durability",
+    "Synthetic descriptor hashes are not run descriptors"
+  ]
+}

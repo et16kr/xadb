@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV4 P5 상태·입력 codec](dev4-lifecycle-codec.md) — D4-LM-CODEC-001 D2 수용; bounded 자료형·canonical wire·raw negative 보존과 loader 필수 거절. 모델 전이·FE14 완주는 후속.
+
 - [DEV3 빈 거래·정리 큐 순수 의미 처리](dev3-empty-retention-semantics.md) — Root/Job/Aging·N=0 Begin/AbortEnd/Finish·tag3 경계; 실제 live/복구 권한 별도
 
 - [DEV4 — DEV3와 독립적인 SQL 앞단 계약](dev4-independent-frontend.md): Oracle19c 적용/끝 공백 차이·순수 입력/값·소유/자원·진단과 호출 효과·실제 engine 연결 경계. D4-PREP-001/002 및 D4-FE-LEX-001/SPLIT-001/PARSE-001/SCALAR-001/PREDICATE-001/TYPED-001/REMAINING-001 ACCEPTED. lexer·이름·streaming·P2/P4 raw 문장·owned AST·P3 scalar/predicate 구문과 명시 타입 검사·3값 평가를 제한 구현했다. P4 정상 선택 검증·21제품 변조 거절과 최종 독립 D1을 제한 수용했으며 typed 문장 binding·P5/P6·실제 engine·Q1은 미완료다.

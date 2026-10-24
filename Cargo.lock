@@ -421,6 +421,8 @@ dependencies = [
 name = "xadbtest-reference"
 version = "0.1.0"
 dependencies = [
+ "serde_json",
+ "sha2",
  "xadbtest-protocol",
 ]
 

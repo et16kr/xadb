@@ -263,7 +263,7 @@
       "normal_workspace_dependencies": [
         "xadbtest-protocol"
       ],
-      "role": "independent row/history oracle, no production semantics dependency"
+      "role": "independent row/history/frontend oracle and bounded lifecycle codec, no production semantics dependency"
     },
     {
       "name": "xadbtest-engine-worker",
@@ -834,7 +834,7 @@
     "current": "DEV1 checker verifies foundation and platform normal dependency closures and independent builds on Linux; document verifier compares all current direct normal workspace edges with manifests",
     "planned": "DEV2 checker must check transitive normal/build/dev/target/feature closures and independent package builds; controller/reference must not depend on production engine semantics",
     "planned_execution_status": "NOT_RUN",
-    "future_controller_dependency_addition": "xadbtest -> xadbtest-reference added for K0-004 native catalog recipe; the reference closure remains protocol only",
+    "future_controller_dependency_addition": "xadbtest -> xadbtest-reference added for K0-004 native catalog recipe; original DEV2 local closure remains protocol only; D4-LM-CODEC-001 additionally reuses sha2 normal and serde_json dev external dependencies",
     "intra_engine_visibility": "Public api and re-exports only; transaction orchestrates publication/storage/durable through explicit contracts. Internal modules must not reach upward to SQL/server/test implementations.",
     "design_review": {
       "normative_ref": "repository-build-plan.md#dependency-review",
@@ -5651,5 +5651,40 @@
     ],
     "scope": "Pure Root/Job/Aging codecs and N=0 handoff semantic/tag3 envelope. Current live/base/control drafts excluded.",
     "test_scope": "Mandatory140 source-specific PASS, original generator/semantic2/Clippy failures retained; S5additional475 NOT_RUN; no lower/workspace/completed runtime repetition."
+  },
+  "dev4_lifecycle_codec": {
+    "decision": "D4-LM-CODEC-001",
+    "contract": "dev4-lifecycle-codec.md",
+    "status": "IMPLEMENTED_SELECTED_VALIDATION_D1_ACCEPTED_LIMITED",
+    "owner": "/root",
+    "implemented_sources": [
+      "crates/testing/reference/src/lifecycle/codec.rs",
+      "crates/testing/reference/src/lifecycle/codec_records.rs",
+      "crates/testing/reference/src/lifecycle/codec_tests.rs",
+      "crates/testing/reference/src/lifecycle/codec_validate.rs",
+      "crates/testing/reference/src/lifecycle/input_schema.rs",
+      "crates/testing/reference/src/lifecycle/literal.rs",
+      "crates/testing/reference/src/lifecycle/literal_tests.rs",
+      "crates/testing/reference/src/lifecycle/mod.rs",
+      "crates/testing/reference/src/lifecycle/schema.rs",
+      "crates/testing/reference/src/lifecycle/workspace.rs",
+      "crates/testing/reference/src/lifecycle/workspace_tests.rs"
+    ],
+    "dependencies": {
+      "normal_existing_external": {
+        "sha2": "0.10.9"
+      },
+      "dev_existing_external": {
+        "serde_json": "1.0.145"
+      },
+      "normal_workspace": [
+        "xadbtest-protocol"
+      ],
+      "new_external_packages": false,
+      "production_semantics_dependency": false
+    },
+    "fixtures": "tests/fixtures/dev4-lifecycle-model",
+    "scope": "schema/state-input codec/test-only independent literal reader; full model, resolver, checker, BFS and filesystem checkpoint remain incomplete",
+    "evidence": "dev4-lifecycle-codec-20261024.md"
   }
 }

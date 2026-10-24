@@ -1,6 +1,6 @@
 # DEV4 독립 앞단 구현
 
-2026-10-24 · **lexer·이름·splitter·P2/P4 raw 문장·P3 scalar·predicate 구문·typed 평가 제한 구현 / P4 최종 독립 D1 제한 수용 / 실제 SQL 실행·DEV4·Q1 미완료**
+2026-10-24 · **lexer·이름·splitter·P2/P4 raw 문장·P3 scalar·predicate 구문·typed 평가 제한 구현 / P4·P5 codec 최종 독립 D1 제한 수용 / 실제 SQL 실행·DEV4·Q1 미완료**
 
 [독립 앞단 계약](../contracts/dev4-independent-frontend.md#lexer-leaf) · [병행 계획](../plans/dev4-preparation-plan.md) · [source별 증거](../evidence/dev4-frontend-20261024.md)
 
@@ -242,4 +242,20 @@ prepare/bind/engine·DDL precommit/SQL 실행과 DEV4/Q1은 미완료다.
 
 공개 disk statement/undo·Catalog 변경·row/index·실제 commit/reopen·temp/cleanup 공급을
 확인한 뒤 binding→첫 INSERT→commit/reopen→SELECT/fetch→실패/rollback의 새 연결 경로를
-구현·선택 검증한다. P5 수명 모델은 아직 설계 후보이며 실제 모델 탐색·수용은 NOT_RUN이다.
+구현·선택 검증한다. P5의 첫 상태·입력 codec은 아래와 같이 구현했으며 실제 모델 전이·탐색·수용은 NOT_RUN이다.
+
+
+<a id="lifecycle-codec"></a>
+## P5 수명 상태·입력 codec
+
+[첫 codec 계약](../contracts/dev4-lifecycle-codec.md)의 bounded flat 자료형·원 identity·Completed
+payload 제거와 state/input byte codec을 reference에 구현했다. caller buffer를 재사용하고
+잘못된 참조·slot/descriptor·continuation·owner/obligation 연결을 거절한다. 독립 literal reader는
+원 JSON에서 기대값을 구성하며 malformed raw input의 원 byte와 순서를 보존한다.
+
+[source별 선택 증거](../evidence/dev4-lifecycle-codec-20261024.md)에 native workspace1함수,
+reader29상태, state4의 원 prefix/후속3 분리와 input7 양방향, codec10함수 및 reader순환을
+기록했다. 원 compile·ParkedFetch·fmt 실패와 검토 보완을 보존하며 최종 독립 D1을 제한 수용했다.
+완료 무변경 사례를 반복하지 않았다. state byte 함수의 시작 선택은
+`XADB_LIFECYCLE_STATE_VECTOR_START=0..3`이며 완료 prefix를 생략한 범위만 새 결과로 기록한다.
+전체 raw resolver·independent edge checker·모델 전이·BFS·파일 재개·FE14는 미완료다.

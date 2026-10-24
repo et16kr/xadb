@@ -2087,6 +2087,16 @@
       "path": "evidence/dev3-empty-retention-semantics-20261024.json",
       "role": "evidence",
       "title": "DEV3 빈 거래·정리 의미 source별 실행 색인"
+    },
+    "dev4-lifecycle-codec.md": {
+      "path": "contracts/dev4-lifecycle-codec.md",
+      "role": "contracts",
+      "title": "DEV4 P5 수명 모델의 상태·입력 codec"
+    },
+    "dev4-lifecycle-codec-20261024.md": {
+      "path": "evidence/dev4-lifecycle-codec-20261024.md",
+      "role": "evidence",
+      "title": "DEV4 P5 수명 상태·입력 codec의 선택 검증"
     }
   }
 }

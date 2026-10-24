@@ -5,6 +5,7 @@
 pub mod catalog;
 pub mod frontend;
 mod history;
+pub mod lifecycle;
 mod model;
 mod validation;
 

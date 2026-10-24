@@ -1,0 +1,33 @@
+{
+  "id":"DEV4-LM-INDEPENDENT-BYTE-VECTORS-V1",
+  "status":"STATIC_FIXTURE_AUTHORING_NOT_MODEL_OR_PRODUCT_EVIDENCE",
+  "source_pins":{
+    "literal-design-v1.json":"ec4a7940a457882c155eb84e2d9e5602eaf880563bab4f6f04d0b643bcec42d2",
+    "wire-proposal-v2.json":"2edefc28473581f8e263c2c74db90a247c0973811787aed73bd26f7679ced1ec",
+    "wire-proposal-v2.md":"2adfb63a2c006c91003e5613962226ffdf7a6c9311578eb044fe77cdbf770937",
+    "input-layout-v1.md":"314cd3725dc1d2e18027e80163238e4872d2ac7ce638a6371b983b6d46eb945c"
+  },
+  "test_descriptor_hashes":{
+    "layout":"0000000000000000000000000000000000000000000000000000000000000000",
+    "profile":"1111111111111111111111111111111111111111111111111111111111111111",
+    "action":"2222222222222222222222222222222222222222222222222222222222222222",
+    "exclusion":"3333333333333333333333333333333333333333333333333333333333333333",
+    "meaning":"Fixed synthetic fixture markers only; not SHA values of actual run descriptors or self-referential schema documents."
+  },
+  "state_vectors":[
+    {"id":"state-initial","literal_state":"initial","hand_counted_bytes":444,"hand_counted_section_bytes":[26,52,26,52,0,0,0,0,0,0,0,0,0,0,0,0]},
+    {"id":"state-sel-parked","literal_state":"sel.parked","hand_counted_bytes":946,"hand_counted_section_bytes":[26,52,32,58,32,30,16,81,36,0,30,0,181,42,0,42]},
+    {"id":"state-sel-stale-rejected","literal_state":"sel.stale_rejected","hand_counted_bytes":1313,"hand_counted_section_bytes":[26,52,30,58,32,62,16,105,70,0,30,0,292,126,0,126]},
+    {"id":"state-rw-recovery-pending","literal_state":"rw.recovery_pending","hand_counted_bytes":1058,"hand_counted_section_bytes":[30,52,28,56,32,0,0,84,38,39,30,0,212,84,12,73]}
+  ],
+  "input_vectors":[
+    {"id":"input-select-prepare","literal_input":"sel.prepare","pre_state":"initial","hand_counted_bytes":32,"expected_semantic_response":"prepare_idle"},
+    {"id":"input-select-execute","literal_input":"sel.execute","pre_state":"sel.prepared","hand_counted_bytes":214,"hand_counted_envelope_bytes":166,"expected_semantic_response":"execute_select"},
+    {"id":"input-atomic-terminal-cancel","literal_input":"sel.terminal_cancel","pre_state":"sel.open","hand_counted_bytes":214,"hand_counted_envelope_bytes":166,"expected_semantic_response":"fetch_cancelled"},
+    {"id":"input-resume-pending-deadline","literal_input":"sel.resume_timeout","pre_state":"sel.signalled","hand_counted_bytes":198,"hand_counted_envelope_bytes":166,"expected_semantic_response":"fetch_timeout"},
+    {"id":"input-rollback-incomplete","literal_input":"rw.rollback_incomplete","pre_state":"rw.written","hand_counted_bytes":371,"hand_counted_envelope_bytes":339,"expected_semantic_response":"rollback_incomplete"},
+    {"id":"input-stale-result","literal_input":"sel.stale_rows","pre_state":"sel.reexecuted","hand_counted_bytes":81,"hand_counted_envelope_bytes":33,"expected_semantic_response":"stale_rejected"},
+    {"id":"input-malformed-child-u9","literal_input":"sel.stale_rows","pre_state":"sel.reexecuted","literal_put":{"/target":[254,0,0,1,1,255,1]},"hand_counted_bytes":81,"hand_counted_envelope_bytes":33,"expected_semantic_response":"stale_rejected","raw_selector":"FrozenUnissued U9 requested Result; unknown kind254, actor0, slot0, E1/S1, nonce255, generation1. Preserve raw bytes until API identity gate. Fresh caller C5 remains valid."}
+  ],
+  "prohibited_claims":["No model transition or expected-post calculation","No Rust codec/helper reuse","No decoder round-trip or checker PASS","No product/runtime/test execution","No full 29-state binary coverage","No actual engine ACK/LSN/durability","Synthetic descriptor hashes are not run descriptors"]
+}
