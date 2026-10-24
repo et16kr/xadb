@@ -1,0 +1,197 @@
+{
+  "prefix_fields": [
+    {
+      "field": "schema_version",
+      "offset": 0,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "api_tag",
+      "offset": 2,
+      "length": 1,
+      "hex": "03"
+    },
+    {
+      "field": "actor",
+      "offset": 3,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "outcome_tag",
+      "offset": 4,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "prepare_slot",
+      "offset": 5,
+      "length": 1,
+      "hex": "ff"
+    },
+    {
+      "field": "prepare_shape",
+      "offset": 6,
+      "length": 1,
+      "hex": "ff"
+    },
+    {
+      "field": "parameter_count",
+      "offset": 7,
+      "length": 1,
+      "hex": "ff"
+    },
+    {
+      "field": "set_autocommit",
+      "offset": 8,
+      "length": 1,
+      "hex": "ff"
+    },
+    {
+      "field": "target",
+      "offset": 9,
+      "length": 17,
+      "hex": "0104000000010001000100010000000000"
+    },
+    {
+      "field": "context",
+      "offset": 26,
+      "length": 17,
+      "hex": "010500ff00010001000500000000000000"
+    },
+    {
+      "field": "original_deadline",
+      "offset": 43,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "supplied_cancel",
+      "offset": 44,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "deadline_reached",
+      "offset": 45,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "bind_count",
+      "offset": 46,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "environment_presence",
+      "offset": 47,
+      "length": 1,
+      "hex": "01"
+    },
+    {
+      "field": "environment",
+      "offset": 48,
+      "length": 33,
+      "hex": "210001010bffff000100000004000000000000000200ffff000000000000000000"
+    }
+  ],
+  "environment": {
+    "fields_relative_to_envelope": [
+      {
+        "field": "envelope_bytes",
+        "offset": 0,
+        "length": 2,
+        "hex": "2100"
+      },
+      {
+        "field": "envelope_schema",
+        "offset": 2,
+        "length": 1,
+        "hex": "01"
+      },
+      {
+        "field": "kind",
+        "offset": 3,
+        "length": 1,
+        "hex": "01"
+      },
+      {
+        "field": "fact",
+        "offset": 4,
+        "length": 16,
+        "hex": "0bffff00010000000400000000000000"
+      },
+      {
+        "field": "work_kind",
+        "offset": 20,
+        "length": 1,
+        "hex": "02"
+      },
+      {
+        "field": "work_class",
+        "offset": 21,
+        "length": 1,
+        "hex": "00"
+      },
+      {
+        "field": "cleanup",
+        "offset": 22,
+        "length": 1,
+        "hex": "ff"
+      },
+      {
+        "field": "commit_class",
+        "offset": 23,
+        "length": 1,
+        "hex": "ff"
+      },
+      {
+        "field": "reserved0",
+        "offset": 24,
+        "length": 1,
+        "hex": "00"
+      },
+      {
+        "field": "transaction",
+        "offset": 25,
+        "length": 1,
+        "hex": "00"
+      },
+      {
+        "field": "receipt",
+        "offset": 26,
+        "length": 1,
+        "hex": "00"
+      },
+      {
+        "field": "anchor",
+        "offset": 27,
+        "length": 1,
+        "hex": "00"
+      },
+      {
+        "field": "fresh_engine",
+        "offset": 28,
+        "length": 1,
+        "hex": "00"
+      },
+      {
+        "field": "obligation_count",
+        "offset": 29,
+        "length": 2,
+        "hex": "0000"
+      },
+      {
+        "field": "owner_count",
+        "offset": 31,
+        "length": 2,
+        "hex": "0000"
+      }
+    ],
+    "owner_records": [],
+    "offset": 48,
+    "length": 33
+  }
+}

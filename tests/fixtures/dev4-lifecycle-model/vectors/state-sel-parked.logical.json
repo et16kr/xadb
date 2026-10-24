@@ -1,0 +1,872 @@
+{
+  "current_engine": [
+    1,
+    255,
+    255,
+    1,
+    0,
+    1,
+    0
+  ],
+  "next_nonce": {
+    "Engine": 2,
+    "Session": 3,
+    "Statement": 2,
+    "Result": 2,
+    "Context": 4,
+    "Transaction": 2,
+    "Binding": 2,
+    "Receipt": 1,
+    "Resource": 6,
+    "Obligation": 1,
+    "Fact": 2,
+    "Anchor": 1
+  },
+  "engines": {
+    "1": {
+      "id": [
+        1,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ],
+      "admission": "Admitting",
+      "first_cause": "None",
+      "known_decision": "NotApplicable",
+      "cause_transaction": null,
+      "first_fence_context": null,
+      "successor_engine": null,
+      "recovery_fact": null
+    }
+  },
+  "session_incarnations": {
+    "1": {
+      "id": [
+        2,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "engine": [
+        1,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ],
+      "actor": 0,
+      "lifecycle": "Open",
+      "reopen_kind": "Initial",
+      "previous_session": null,
+      "closing_context": null
+    },
+    "2": {
+      "id": [
+        2,
+        1,
+        255,
+        1,
+        2,
+        2,
+        0
+      ],
+      "engine": [
+        1,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ],
+      "actor": 1,
+      "lifecycle": "Open",
+      "reopen_kind": "Initial",
+      "previous_session": null,
+      "closing_context": null
+    }
+  },
+  "actors": {
+    "0": {
+      "actor": 0,
+      "shell": "Open",
+      "autocommit": "On",
+      "session": [
+        2,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "engine": [
+        1,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ],
+      "transaction": [
+        6,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "parked_context": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        3,
+        0
+      ],
+      "active_public_result": [
+        4,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "1": {
+      "actor": 1,
+      "shell": "Open",
+      "autocommit": "On",
+      "session": [
+        2,
+        1,
+        255,
+        1,
+        2,
+        2,
+        0
+      ],
+      "engine": [
+        1,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ],
+      "transaction": null,
+      "parked_context": null,
+      "active_public_result": null
+    }
+  },
+  "prepared_slots": {
+    "0:0": {
+      "actor": 0,
+      "slot": 0,
+      "state": "ResultOpen",
+      "next_statement_generation": 2,
+      "next_result_generation": 2,
+      "statement": [
+        3,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "binding": [
+        7,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "descriptor_result": [
+        4,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "0:1": {
+      "actor": 0,
+      "slot": 1,
+      "state": "Vacant",
+      "next_statement_generation": 1,
+      "next_result_generation": 1,
+      "statement": null,
+      "binding": null,
+      "descriptor_result": null
+    },
+    "1:0": {
+      "actor": 1,
+      "slot": 0,
+      "state": "Vacant",
+      "next_statement_generation": 1,
+      "next_result_generation": 1,
+      "statement": null,
+      "binding": null,
+      "descriptor_result": null
+    },
+    "1:1": {
+      "actor": 1,
+      "slot": 1,
+      "state": "Vacant",
+      "next_statement_generation": 1,
+      "next_result_generation": 1,
+      "statement": null,
+      "binding": null,
+      "descriptor_result": null
+    }
+  },
+  "issued_statements": {
+    "1": {
+      "id": [
+        3,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "issue_ordinal": 1,
+      "shape": "Select",
+      "parameter_count": 0,
+      "metadata": "SelectN0",
+      "life": "Current",
+      "retirement": "None",
+      "session": [
+        2,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "creation_context": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "retirement_context": null
+    }
+  },
+  "issued_results": {
+    "1": {
+      "id": [
+        4,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "issue_ordinal": 1,
+      "statement": [
+        3,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "retirement": "None",
+      "public_generation_live": true,
+      "creation_context": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        2,
+        0
+      ],
+      "retirement_context": null
+    }
+  },
+  "private_descriptors": {
+    "1": {
+      "result": [
+        4,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "statement": [
+        3,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "state": "Open",
+      "public_generation_live": true,
+      "blocked_by_fence": false,
+      "position": 0,
+      "transaction": [
+        6,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "terminal": null
+    }
+  },
+  "contexts": {
+    "1": {
+      "id": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "issue_ordinal": 1,
+      "status": "Completed"
+    },
+    "2": {
+      "id": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        2,
+        0
+      ],
+      "issue_ordinal": 2,
+      "status": "Completed"
+    },
+    "3": {
+      "id": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        3,
+        0
+      ],
+      "issue_ordinal": 3,
+      "api": "ParkFetch",
+      "status": "ParkedFetch",
+      "original_deadline": "FutureAtEntry",
+      "cancel_supplied_or_signalled": false,
+      "deadline_reached": false,
+      "cancel_observed_at_completion": false,
+      "deadline_observed_at_completion": false,
+      "completion_phase": "NotCompleted",
+      "statement": [
+        3,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "result": [
+        4,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "transaction": [
+        6,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ]
+    }
+  },
+  "transactions": {
+    "1": {
+      "id": [
+        6,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "origin": "ImplicitReadOnly",
+      "access": "ReadOnly",
+      "life": "Active",
+      "prior_successful_write": false,
+      "progress": "None",
+      "decision": "NotApplicable",
+      "client_knowledge": "NoDecisionObserved",
+      "delivery": "NotApplicable",
+      "birth_session": [
+        2,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "receipt": null,
+      "parked_context": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        3,
+        0
+      ],
+      "obligation": null,
+      "completion_fact": null
+    }
+  },
+  "obligations": {},
+  "bindings": {
+    "1": {
+      "id": [
+        7,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "statement": [
+        3,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "issue_ordinal": 1,
+      "value": "Empty",
+      "life": "Current",
+      "replaced_by": null,
+      "creation_context": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ]
+    }
+  },
+  "receipts": {},
+  "owners": {
+    "1": {
+      "id": [
+        9,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "resource_kind": "Plan",
+      "disposition": "Held",
+      "transfer_count": 0,
+      "original_holder": [
+        3,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "current_holder": [
+        3,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "previous_holder": null,
+      "birth_context": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "last_fact": null
+    },
+    "2": {
+      "id": [
+        9,
+        0,
+        255,
+        1,
+        1,
+        2,
+        0
+      ],
+      "resource_kind": "Binding",
+      "disposition": "Held",
+      "transfer_count": 0,
+      "original_holder": [
+        3,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "current_holder": [
+        3,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "previous_holder": null,
+      "birth_context": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "last_fact": null
+    },
+    "3": {
+      "id": [
+        9,
+        0,
+        255,
+        1,
+        1,
+        3,
+        0
+      ],
+      "resource_kind": "Snapshot",
+      "disposition": "Held",
+      "transfer_count": 0,
+      "original_holder": [
+        4,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "current_holder": [
+        4,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "previous_holder": null,
+      "birth_context": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        2,
+        0
+      ],
+      "last_fact": [
+        11,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "4": {
+      "id": [
+        9,
+        0,
+        255,
+        1,
+        1,
+        4,
+        0
+      ],
+      "resource_kind": "Scratch",
+      "disposition": "Held",
+      "transfer_count": 0,
+      "original_holder": [
+        4,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "current_holder": [
+        4,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "previous_holder": null,
+      "birth_context": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        2,
+        0
+      ],
+      "last_fact": [
+        11,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "5": {
+      "id": [
+        9,
+        0,
+        255,
+        1,
+        1,
+        5,
+        0
+      ],
+      "resource_kind": "Temp",
+      "disposition": "Held",
+      "transfer_count": 0,
+      "original_holder": [
+        4,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "current_holder": [
+        4,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "previous_holder": null,
+      "birth_context": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        2,
+        0
+      ],
+      "last_fact": [
+        11,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "facts": {
+    "1": {
+      "id": [
+        11,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ],
+      "kind": "Execution",
+      "api": "Execute",
+      "outcome_class": 0,
+      "cleanup": "NotConsumed",
+      "decision": "NotApplicable",
+      "delivery": "NotApplicable",
+      "next_work": "NotConsumed",
+      "consumed_parts": 1,
+      "engine": [
+        1,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ],
+      "obligation_count": 0,
+      "owner_count": 3,
+      "context": [
+        5,
+        0,
+        255,
+        1,
+        1,
+        2,
+        0
+      ],
+      "transaction": [
+        6,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "receipt": null,
+      "fresh_engine": null,
+      "anchor": null
+    }
+  },
+  "fact_obligations": {},
+  "fact_owners": {
+    "1": [
+      {
+        "resource": [
+          9,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "disposition": "Held",
+        "obligation": null,
+        "before_holder": null,
+        "after_holder": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "resource": [
+          9,
+          0,
+          255,
+          1,
+          1,
+          4,
+          0
+        ],
+        "disposition": "Held",
+        "obligation": null,
+        "before_holder": null,
+        "after_holder": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "resource": [
+          9,
+          0,
+          255,
+          1,
+          1,
+          5,
+          0
+        ],
+        "disposition": "Held",
+        "obligation": null,
+        "before_holder": null,
+        "after_holder": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    ]
+  }
+}

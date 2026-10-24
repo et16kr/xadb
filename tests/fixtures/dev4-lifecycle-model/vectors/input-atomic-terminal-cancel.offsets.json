@@ -1,0 +1,360 @@
+{
+  "prefix_fields": [
+    {
+      "field": "schema_version",
+      "offset": 0,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "api_tag",
+      "offset": 2,
+      "length": 1,
+      "hex": "03"
+    },
+    {
+      "field": "actor",
+      "offset": 3,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "outcome_tag",
+      "offset": 4,
+      "length": 1,
+      "hex": "05"
+    },
+    {
+      "field": "prepare_slot",
+      "offset": 5,
+      "length": 1,
+      "hex": "ff"
+    },
+    {
+      "field": "prepare_shape",
+      "offset": 6,
+      "length": 1,
+      "hex": "ff"
+    },
+    {
+      "field": "parameter_count",
+      "offset": 7,
+      "length": 1,
+      "hex": "ff"
+    },
+    {
+      "field": "set_autocommit",
+      "offset": 8,
+      "length": 1,
+      "hex": "ff"
+    },
+    {
+      "field": "target",
+      "offset": 9,
+      "length": 17,
+      "hex": "0104000000010001000100010000000000"
+    },
+    {
+      "field": "context",
+      "offset": 26,
+      "length": 17,
+      "hex": "010500ff00010001000300000000000000"
+    },
+    {
+      "field": "original_deadline",
+      "offset": 43,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "supplied_cancel",
+      "offset": 44,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "deadline_reached",
+      "offset": 45,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "bind_count",
+      "offset": 46,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "environment_presence",
+      "offset": 47,
+      "length": 1,
+      "hex": "01"
+    },
+    {
+      "field": "environment",
+      "offset": 48,
+      "length": 166,
+      "hex": "a60001010bffff00010000000200000000000000020501ff00010600ff000100010001000000000000000000000000030027000900ff0001000100030000000000000002020001040000000100010001000100000000000027000900ff0001000100040000000000000003020001040000000100010001000100000000000027000900ff00010001000500000000000000040200010400000001000100010001000000000000"
+    }
+  ],
+  "environment": {
+    "fields_relative_to_envelope": [
+      {
+        "field": "envelope_bytes",
+        "offset": 0,
+        "length": 2,
+        "hex": "a600"
+      },
+      {
+        "field": "envelope_schema",
+        "offset": 2,
+        "length": 1,
+        "hex": "01"
+      },
+      {
+        "field": "kind",
+        "offset": 3,
+        "length": 1,
+        "hex": "01"
+      },
+      {
+        "field": "fact",
+        "offset": 4,
+        "length": 16,
+        "hex": "0bffff00010000000200000000000000"
+      },
+      {
+        "field": "work_kind",
+        "offset": 20,
+        "length": 1,
+        "hex": "02"
+      },
+      {
+        "field": "work_class",
+        "offset": 21,
+        "length": 1,
+        "hex": "05"
+      },
+      {
+        "field": "cleanup",
+        "offset": 22,
+        "length": 1,
+        "hex": "01"
+      },
+      {
+        "field": "commit_class",
+        "offset": 23,
+        "length": 1,
+        "hex": "ff"
+      },
+      {
+        "field": "reserved0",
+        "offset": 24,
+        "length": 1,
+        "hex": "00"
+      },
+      {
+        "field": "transaction",
+        "offset": 25,
+        "length": 17,
+        "hex": "010600ff00010001000100000000000000"
+      },
+      {
+        "field": "receipt",
+        "offset": 42,
+        "length": 1,
+        "hex": "00"
+      },
+      {
+        "field": "anchor",
+        "offset": 43,
+        "length": 1,
+        "hex": "00"
+      },
+      {
+        "field": "fresh_engine",
+        "offset": 44,
+        "length": 1,
+        "hex": "00"
+      },
+      {
+        "field": "obligation_count",
+        "offset": 45,
+        "length": 2,
+        "hex": "0000"
+      },
+      {
+        "field": "owner_count",
+        "offset": 47,
+        "length": 2,
+        "hex": "0300"
+      },
+      {
+        "field": "owners.0",
+        "offset": 49,
+        "length": 39,
+        "hex": "27000900ff00010001000300000000000000020200010400000001000100010001000000000000"
+      },
+      {
+        "field": "owners.1",
+        "offset": 88,
+        "length": 39,
+        "hex": "27000900ff00010001000400000000000000030200010400000001000100010001000000000000"
+      },
+      {
+        "field": "owners.2",
+        "offset": 127,
+        "length": 39,
+        "hex": "27000900ff00010001000500000000000000040200010400000001000100010001000000000000"
+      }
+    ],
+    "owner_records": [
+      {
+        "index": 0,
+        "offset": 49,
+        "fields": [
+          {
+            "field": "record_bytes",
+            "offset": 0,
+            "length": 2,
+            "hex": "2700"
+          },
+          {
+            "field": "resource",
+            "offset": 2,
+            "length": 16,
+            "hex": "0900ff00010001000300000000000000"
+          },
+          {
+            "field": "resource_kind",
+            "offset": 18,
+            "length": 1,
+            "hex": "02"
+          },
+          {
+            "field": "after_disposition",
+            "offset": 19,
+            "length": 1,
+            "hex": "02"
+          },
+          {
+            "field": "obligation",
+            "offset": 20,
+            "length": 1,
+            "hex": "00"
+          },
+          {
+            "field": "before_holder",
+            "offset": 21,
+            "length": 17,
+            "hex": "0104000000010001000100010000000000"
+          },
+          {
+            "field": "after_holder",
+            "offset": 38,
+            "length": 1,
+            "hex": "00"
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "offset": 88,
+        "fields": [
+          {
+            "field": "record_bytes",
+            "offset": 0,
+            "length": 2,
+            "hex": "2700"
+          },
+          {
+            "field": "resource",
+            "offset": 2,
+            "length": 16,
+            "hex": "0900ff00010001000400000000000000"
+          },
+          {
+            "field": "resource_kind",
+            "offset": 18,
+            "length": 1,
+            "hex": "03"
+          },
+          {
+            "field": "after_disposition",
+            "offset": 19,
+            "length": 1,
+            "hex": "02"
+          },
+          {
+            "field": "obligation",
+            "offset": 20,
+            "length": 1,
+            "hex": "00"
+          },
+          {
+            "field": "before_holder",
+            "offset": 21,
+            "length": 17,
+            "hex": "0104000000010001000100010000000000"
+          },
+          {
+            "field": "after_holder",
+            "offset": 38,
+            "length": 1,
+            "hex": "00"
+          }
+        ]
+      },
+      {
+        "index": 2,
+        "offset": 127,
+        "fields": [
+          {
+            "field": "record_bytes",
+            "offset": 0,
+            "length": 2,
+            "hex": "2700"
+          },
+          {
+            "field": "resource",
+            "offset": 2,
+            "length": 16,
+            "hex": "0900ff00010001000500000000000000"
+          },
+          {
+            "field": "resource_kind",
+            "offset": 18,
+            "length": 1,
+            "hex": "04"
+          },
+          {
+            "field": "after_disposition",
+            "offset": 19,
+            "length": 1,
+            "hex": "02"
+          },
+          {
+            "field": "obligation",
+            "offset": 20,
+            "length": 1,
+            "hex": "00"
+          },
+          {
+            "field": "before_holder",
+            "offset": 21,
+            "length": 17,
+            "hex": "0104000000010001000100010000000000"
+          },
+          {
+            "field": "after_holder",
+            "offset": 38,
+            "length": 1,
+            "hex": "00"
+          }
+        ]
+      }
+    ],
+    "offset": 48,
+    "length": 166
+  }
+}

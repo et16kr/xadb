@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV4 P5 수명 모델 독립 입력](dev4-lifecycle-inputs-20261024.md): 12 trace·51 action 논리 기대값과 state4/input7 byte vector의 정적 한정 검토 수용. 전체 D2·모델·시험 NOT_RUN.
+
 - [DEV3 원 WAL runtime/core 추출](dev3-runtime-core-20261024.md) · [source별 색인](dev3-runtime-core-20261024.json): 새7개 선택 PASS, 원 compile 실패·증거 보존, 최종 독립 D1 제한 수용.
 
 - [DEV4 P6 실제 공급·연결 준비](dev4-supply-handoff-20261024.md) · [관측·독립 검토 색인](dev4-supply-handoff-20261024.json): 시점별 DEV3 source·공개 API·P1–P4 증거 수합. 독립 사실 검토 수용이며 새 제품 시험·engine 공급 인수 아님.

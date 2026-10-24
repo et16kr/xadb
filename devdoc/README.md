@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-24 [DEV4 P5 독립 입력 준비](evidence/dev4-lifecycle-inputs-20261024.md): 12 trace·51 action과 state4/input7 byte vector를 독립 작성·정적 검토했다. 전체 D2·모델 구현·시험은 NOT_RUN이며 실제 engine·Q1은 미완료다.
+
 2026-10-24 [DEV3 원 WAL runtime/core 추출](evidence/dev3-runtime-core-20261024.md): 원 자원과 Fresh provenance를 유지하는 내부 구조·전달 함수를 연결했다. 신규 static2·memory5 PASS, 원 compile 실패 보존, 최종 독립 D1 제한 수용이며 G6 live/복구·DEV3/S5는 미완료다.
 
 2026-10-24 [DEV4 P6 실제 공급 수합](evidence/dev4-supply-handoff-20261024.md): DEV3 초기 page clean 소비와 빈 Catalog/Free 큐 census의 제한 공급을 공개 SQL 소비 API와 구분했다. P1–P4 원 증거·API 차이·후속 연결 의무를 독립 사실 검토로 수합했으며 최소 disk 공급·실제 engine 연결·Q1은 미충족이다. 제품 변경·시험 실행0이며 P5 수명 모델은 설계 중이다.

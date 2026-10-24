@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "api": "Prepare",
+  "api_tag": 0,
+  "actor": 0,
+  "outcome_tag": 0,
+  "prepare_slot": 0,
+  "prepare_shape": 0,
+  "parameter_count": 0,
+  "set_autocommit": 255,
+  "target": null,
+  "context": [
+    5,
+    0,
+    255,
+    1,
+    1,
+    1,
+    0
+  ],
+  "original_deadline": "Absent",
+  "supplied_cancel": false,
+  "deadline_reached": false,
+  "bind_values": [],
+  "environment": null
+}

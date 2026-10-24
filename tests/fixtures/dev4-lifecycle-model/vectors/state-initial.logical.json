@@ -1,0 +1,205 @@
+{
+  "current_engine": [
+    1,
+    255,
+    255,
+    1,
+    0,
+    1,
+    0
+  ],
+  "next_nonce": {
+    "Engine": 2,
+    "Session": 3,
+    "Statement": 1,
+    "Result": 1,
+    "Context": 1,
+    "Transaction": 1,
+    "Binding": 1,
+    "Receipt": 1,
+    "Resource": 1,
+    "Obligation": 1,
+    "Fact": 1,
+    "Anchor": 1
+  },
+  "engines": {
+    "1": {
+      "id": [
+        1,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ],
+      "admission": "Admitting",
+      "first_cause": "None",
+      "known_decision": "NotApplicable",
+      "cause_transaction": null,
+      "first_fence_context": null,
+      "successor_engine": null,
+      "recovery_fact": null
+    }
+  },
+  "session_incarnations": {
+    "1": {
+      "id": [
+        2,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "engine": [
+        1,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ],
+      "actor": 0,
+      "lifecycle": "Open",
+      "reopen_kind": "Initial",
+      "previous_session": null,
+      "closing_context": null
+    },
+    "2": {
+      "id": [
+        2,
+        1,
+        255,
+        1,
+        2,
+        2,
+        0
+      ],
+      "engine": [
+        1,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ],
+      "actor": 1,
+      "lifecycle": "Open",
+      "reopen_kind": "Initial",
+      "previous_session": null,
+      "closing_context": null
+    }
+  },
+  "actors": {
+    "0": {
+      "actor": 0,
+      "shell": "Open",
+      "autocommit": "On",
+      "session": [
+        2,
+        0,
+        255,
+        1,
+        1,
+        1,
+        0
+      ],
+      "engine": [
+        1,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ],
+      "transaction": null,
+      "parked_context": null,
+      "active_public_result": null
+    },
+    "1": {
+      "actor": 1,
+      "shell": "Open",
+      "autocommit": "On",
+      "session": [
+        2,
+        1,
+        255,
+        1,
+        2,
+        2,
+        0
+      ],
+      "engine": [
+        1,
+        255,
+        255,
+        1,
+        0,
+        1,
+        0
+      ],
+      "transaction": null,
+      "parked_context": null,
+      "active_public_result": null
+    }
+  },
+  "prepared_slots": {
+    "0:0": {
+      "actor": 0,
+      "slot": 0,
+      "state": "Vacant",
+      "next_statement_generation": 1,
+      "next_result_generation": 1,
+      "statement": null,
+      "binding": null,
+      "descriptor_result": null
+    },
+    "0:1": {
+      "actor": 0,
+      "slot": 1,
+      "state": "Vacant",
+      "next_statement_generation": 1,
+      "next_result_generation": 1,
+      "statement": null,
+      "binding": null,
+      "descriptor_result": null
+    },
+    "1:0": {
+      "actor": 1,
+      "slot": 0,
+      "state": "Vacant",
+      "next_statement_generation": 1,
+      "next_result_generation": 1,
+      "statement": null,
+      "binding": null,
+      "descriptor_result": null
+    },
+    "1:1": {
+      "actor": 1,
+      "slot": 1,
+      "state": "Vacant",
+      "next_statement_generation": 1,
+      "next_result_generation": 1,
+      "statement": null,
+      "binding": null,
+      "descriptor_result": null
+    }
+  },
+  "issued_statements": {},
+  "issued_results": {},
+  "private_descriptors": {},
+  "contexts": {},
+  "transactions": {},
+  "obligations": {},
+  "bindings": {},
+  "receipts": {},
+  "owners": {},
+  "facts": {},
+  "fact_obligations": {},
+  "fact_owners": {}
+}

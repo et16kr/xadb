@@ -1,0 +1,2338 @@
+{
+  "header": [
+    {
+      "field": "magic",
+      "offset": 0,
+      "length": 8,
+      "hex": "584144424c4d3032"
+    },
+    {
+      "field": "version",
+      "offset": 8,
+      "length": 2,
+      "hex": "0200"
+    },
+    {
+      "field": "header_bytes",
+      "offset": 10,
+      "length": 2,
+      "hex": "0001"
+    },
+    {
+      "field": "state_bytes_including_sha256",
+      "offset": 12,
+      "length": 4,
+      "hex": "22040000"
+    },
+    {
+      "field": "layout_test_descriptor_sha256",
+      "offset": 16,
+      "length": 32,
+      "hex": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "field": "profile_test_descriptor_sha256",
+      "offset": 48,
+      "length": 32,
+      "hex": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "field": "action_test_descriptor_sha256",
+      "offset": 80,
+      "length": 32,
+      "hex": "2222222222222222222222222222222222222222222222222222222222222222"
+    },
+    {
+      "field": "exclusion_test_descriptor_sha256",
+      "offset": 112,
+      "length": 32,
+      "hex": "3333333333333333333333333333333333333333333333333333333333333333"
+    },
+    {
+      "field": "current_engine",
+      "offset": 144,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "next_nonce.Engine",
+      "offset": 146,
+      "length": 2,
+      "hex": "0200"
+    },
+    {
+      "field": "next_nonce.Session",
+      "offset": 148,
+      "length": 2,
+      "hex": "0300"
+    },
+    {
+      "field": "next_nonce.Statement",
+      "offset": 150,
+      "length": 2,
+      "hex": "0200"
+    },
+    {
+      "field": "next_nonce.Result",
+      "offset": 152,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "next_nonce.Context",
+      "offset": 154,
+      "length": 2,
+      "hex": "0500"
+    },
+    {
+      "field": "next_nonce.Transaction",
+      "offset": 156,
+      "length": 2,
+      "hex": "0200"
+    },
+    {
+      "field": "next_nonce.Binding",
+      "offset": 158,
+      "length": 2,
+      "hex": "0200"
+    },
+    {
+      "field": "next_nonce.Receipt",
+      "offset": 160,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "next_nonce.Resource",
+      "offset": 162,
+      "length": 2,
+      "hex": "0700"
+    },
+    {
+      "field": "next_nonce.Obligation",
+      "offset": 164,
+      "length": 2,
+      "hex": "0200"
+    },
+    {
+      "field": "next_nonce.Fact",
+      "offset": 166,
+      "length": 2,
+      "hex": "0300"
+    },
+    {
+      "field": "next_nonce.Anchor",
+      "offset": 168,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "count.engines",
+      "offset": 170,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "count.session_incarnations",
+      "offset": 172,
+      "length": 2,
+      "hex": "0200"
+    },
+    {
+      "field": "count.actors",
+      "offset": 174,
+      "length": 2,
+      "hex": "0200"
+    },
+    {
+      "field": "count.prepared_slots",
+      "offset": 176,
+      "length": 2,
+      "hex": "0400"
+    },
+    {
+      "field": "count.issued_statements",
+      "offset": 178,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "count.issued_results",
+      "offset": 180,
+      "length": 2,
+      "hex": "0000"
+    },
+    {
+      "field": "count.private_descriptors",
+      "offset": 182,
+      "length": 2,
+      "hex": "0000"
+    },
+    {
+      "field": "count.contexts",
+      "offset": 184,
+      "length": 2,
+      "hex": "0400"
+    },
+    {
+      "field": "count.transactions",
+      "offset": 186,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "count.obligations",
+      "offset": 188,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "count.bindings",
+      "offset": 190,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "count.receipts",
+      "offset": 192,
+      "length": 2,
+      "hex": "0000"
+    },
+    {
+      "field": "count.owners",
+      "offset": 194,
+      "length": 2,
+      "hex": "0600"
+    },
+    {
+      "field": "count.facts",
+      "offset": 196,
+      "length": 2,
+      "hex": "0200"
+    },
+    {
+      "field": "count.fact_obligations",
+      "offset": 198,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "count.fact_owners",
+      "offset": 200,
+      "length": 2,
+      "hex": "0400"
+    },
+    {
+      "field": "reserved",
+      "offset": 202,
+      "length": 54,
+      "hex": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "sections": [
+    {
+      "name": "engines",
+      "offset": 256,
+      "count": 1,
+      "length": 30,
+      "records": [
+        {
+          "offset": 256,
+          "length": 30,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1e00"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "01ffff00010000000100000000000000"
+            },
+            {
+              "field": "admission",
+              "offset": 18,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "first_cause",
+              "offset": 19,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "known_decision",
+              "offset": 20,
+              "length": 1,
+              "hex": "03"
+            },
+            {
+              "field": "reserved",
+              "offset": 21,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "cause_transaction",
+              "offset": 22,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "first_fence_context",
+              "offset": 25,
+              "length": 3,
+              "hex": "010400"
+            },
+            {
+              "field": "successor_engine",
+              "offset": 28,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "recovery_fact",
+              "offset": 29,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "session_incarnations",
+      "offset": 286,
+      "count": 2,
+      "length": 52,
+      "records": [
+        {
+          "offset": 286,
+          "length": 26,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1a00"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0200ff00010001000100000000000000"
+            },
+            {
+              "field": "engine",
+              "offset": 18,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "actor",
+              "offset": 20,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "lifecycle",
+              "offset": 21,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reopen_kind",
+              "offset": 22,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 23,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "previous_session",
+              "offset": 24,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "closing_context",
+              "offset": 25,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        },
+        {
+          "offset": 312,
+          "length": 26,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1a00"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0201ff00010002000200000000000000"
+            },
+            {
+              "field": "engine",
+              "offset": 18,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "actor",
+              "offset": 20,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "lifecycle",
+              "offset": 21,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reopen_kind",
+              "offset": 22,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 23,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "previous_session",
+              "offset": 24,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "closing_context",
+              "offset": 25,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "actors",
+      "offset": 338,
+      "count": 2,
+      "length": 28,
+      "records": [
+        {
+          "offset": 338,
+          "length": 15,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "0f00"
+            },
+            {
+              "field": "actor",
+              "offset": 2,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "shell",
+              "offset": 3,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "autocommit",
+              "offset": 4,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 5,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "session",
+              "offset": 6,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "engine",
+              "offset": 8,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "transaction",
+              "offset": 10,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "parked_context",
+              "offset": 13,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "active_public_result",
+              "offset": 14,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        },
+        {
+          "offset": 353,
+          "length": 13,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "0d00"
+            },
+            {
+              "field": "actor",
+              "offset": 2,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "shell",
+              "offset": 3,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "autocommit",
+              "offset": 4,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 5,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "session",
+              "offset": 6,
+              "length": 2,
+              "hex": "0200"
+            },
+            {
+              "field": "engine",
+              "offset": 8,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "transaction",
+              "offset": 10,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "parked_context",
+              "offset": 11,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "active_public_result",
+              "offset": 12,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "prepared_slots",
+      "offset": 366,
+      "count": 4,
+      "length": 56,
+      "records": [
+        {
+          "offset": 366,
+          "length": 17,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1100"
+            },
+            {
+              "field": "actor",
+              "offset": 2,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "slot",
+              "offset": 3,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "state",
+              "offset": 4,
+              "length": 1,
+              "hex": "02"
+            },
+            {
+              "field": "reserved",
+              "offset": 5,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "next_statement_generation",
+              "offset": 6,
+              "length": 2,
+              "hex": "0200"
+            },
+            {
+              "field": "next_result_generation",
+              "offset": 8,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "statement",
+              "offset": 10,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "binding",
+              "offset": 13,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "descriptor_result",
+              "offset": 16,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        },
+        {
+          "offset": 383,
+          "length": 13,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "0d00"
+            },
+            {
+              "field": "actor",
+              "offset": 2,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "slot",
+              "offset": 3,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "state",
+              "offset": 4,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 5,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "next_statement_generation",
+              "offset": 6,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "next_result_generation",
+              "offset": 8,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "statement",
+              "offset": 10,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "binding",
+              "offset": 11,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "descriptor_result",
+              "offset": 12,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        },
+        {
+          "offset": 396,
+          "length": 13,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "0d00"
+            },
+            {
+              "field": "actor",
+              "offset": 2,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "slot",
+              "offset": 3,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "state",
+              "offset": 4,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 5,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "next_statement_generation",
+              "offset": 6,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "next_result_generation",
+              "offset": 8,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "statement",
+              "offset": 10,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "binding",
+              "offset": 11,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "descriptor_result",
+              "offset": 12,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        },
+        {
+          "offset": 409,
+          "length": 13,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "0d00"
+            },
+            {
+              "field": "actor",
+              "offset": 2,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "slot",
+              "offset": 3,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "state",
+              "offset": 4,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 5,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "next_statement_generation",
+              "offset": 6,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "next_result_generation",
+              "offset": 8,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "statement",
+              "offset": 10,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "binding",
+              "offset": 11,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "descriptor_result",
+              "offset": 12,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "issued_statements",
+      "offset": 422,
+      "count": 1,
+      "length": 32,
+      "records": [
+        {
+          "offset": 422,
+          "length": 32,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "2000"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "03000000010001000100010000000000"
+            },
+            {
+              "field": "issue_ordinal",
+              "offset": 18,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "shape",
+              "offset": 20,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "parameter_count",
+              "offset": 21,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "metadata",
+              "offset": 22,
+              "length": 1,
+              "hex": "02"
+            },
+            {
+              "field": "life",
+              "offset": 23,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "retirement",
+              "offset": 24,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 25,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "session",
+              "offset": 26,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "creation_context",
+              "offset": 28,
+              "length": 3,
+              "hex": "010200"
+            },
+            {
+              "field": "retirement_context",
+              "offset": 31,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "issued_results",
+      "offset": 454,
+      "count": 0,
+      "length": 0,
+      "records": []
+    },
+    {
+      "name": "private_descriptors",
+      "offset": 454,
+      "count": 0,
+      "length": 0,
+      "records": []
+    },
+    {
+      "name": "contexts",
+      "offset": 454,
+      "count": 4,
+      "length": 84,
+      "records": [
+        {
+          "offset": 454,
+          "length": 21,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1500"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0500ff00010001000100000000000000"
+            },
+            {
+              "field": "issue_ordinal",
+              "offset": 18,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "status",
+              "offset": 20,
+              "length": 1,
+              "hex": "02"
+            }
+          ]
+        },
+        {
+          "offset": 475,
+          "length": 21,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1500"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0500ff00010001000200000000000000"
+            },
+            {
+              "field": "issue_ordinal",
+              "offset": 18,
+              "length": 2,
+              "hex": "0200"
+            },
+            {
+              "field": "status",
+              "offset": 20,
+              "length": 1,
+              "hex": "02"
+            }
+          ]
+        },
+        {
+          "offset": 496,
+          "length": 21,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1500"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0500ff00010001000300000000000000"
+            },
+            {
+              "field": "issue_ordinal",
+              "offset": 18,
+              "length": 2,
+              "hex": "0300"
+            },
+            {
+              "field": "status",
+              "offset": 20,
+              "length": 1,
+              "hex": "02"
+            }
+          ]
+        },
+        {
+          "offset": 517,
+          "length": 21,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1500"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0500ff00010001000400000000000000"
+            },
+            {
+              "field": "issue_ordinal",
+              "offset": 18,
+              "length": 2,
+              "hex": "0400"
+            },
+            {
+              "field": "status",
+              "offset": 20,
+              "length": 1,
+              "hex": "02"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "transactions",
+      "offset": 538,
+      "count": 1,
+      "length": 38,
+      "records": [
+        {
+          "offset": 538,
+          "length": 38,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "2600"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0600ff00010001000100000000000000"
+            },
+            {
+              "field": "origin",
+              "offset": 18,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "access",
+              "offset": 19,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "life",
+              "offset": 20,
+              "length": 1,
+              "hex": "02"
+            },
+            {
+              "field": "prior_successful_write",
+              "offset": 21,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "progress",
+              "offset": 22,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "decision",
+              "offset": 23,
+              "length": 1,
+              "hex": "03"
+            },
+            {
+              "field": "client_knowledge",
+              "offset": 24,
+              "length": 1,
+              "hex": "02"
+            },
+            {
+              "field": "delivery",
+              "offset": 25,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "birth_session",
+              "offset": 26,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "reserved",
+              "offset": 28,
+              "length": 2,
+              "hex": "0000"
+            },
+            {
+              "field": "receipt",
+              "offset": 30,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "parked_context",
+              "offset": 31,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "obligation",
+              "offset": 32,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "completion_fact",
+              "offset": 35,
+              "length": 3,
+              "hex": "010200"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "obligations",
+      "offset": 576,
+      "count": 1,
+      "length": 39,
+      "records": [
+        {
+          "offset": 576,
+          "length": 39,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "2700"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0a00ff00010001000100000000000000"
+            },
+            {
+              "field": "engine",
+              "offset": 18,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "transaction",
+              "offset": 20,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "origin_session",
+              "offset": 22,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "creation_reason",
+              "offset": 24,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "latest_reason",
+              "offset": 25,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reason_mask",
+              "offset": 26,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "disposition",
+              "offset": 27,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "known_decision",
+              "offset": 28,
+              "length": 1,
+              "hex": "03"
+            },
+            {
+              "field": "settlement",
+              "offset": 29,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 30,
+              "length": 2,
+              "hex": "0000"
+            },
+            {
+              "field": "first_fact",
+              "offset": 32,
+              "length": 3,
+              "hex": "010200"
+            },
+            {
+              "field": "latest_fact",
+              "offset": 35,
+              "length": 3,
+              "hex": "010200"
+            },
+            {
+              "field": "recovery_fact",
+              "offset": 38,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bindings",
+      "offset": 615,
+      "count": 1,
+      "length": 30,
+      "records": [
+        {
+          "offset": 615,
+          "length": 30,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1e00"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0700ff00010001000100000000000000"
+            },
+            {
+              "field": "statement",
+              "offset": 18,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "issue_ordinal",
+              "offset": 20,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "value",
+              "offset": 22,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "life",
+              "offset": 23,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 24,
+              "length": 2,
+              "hex": "0000"
+            },
+            {
+              "field": "replaced_by",
+              "offset": 26,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "creation_context",
+              "offset": 27,
+              "length": 3,
+              "hex": "010200"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "receipts",
+      "offset": 645,
+      "count": 0,
+      "length": 0,
+      "records": []
+    },
+    {
+      "name": "owners",
+      "offset": 645,
+      "count": 6,
+      "length": 212,
+      "records": [
+        {
+          "offset": 645,
+          "length": 35,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "2300"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0900ff00010001000100000000000000"
+            },
+            {
+              "field": "resource_kind",
+              "offset": 18,
+              "length": 1,
+              "hex": "05"
+            },
+            {
+              "field": "disposition",
+              "offset": 19,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "transfer_count",
+              "offset": 20,
+              "length": 2,
+              "hex": "0000"
+            },
+            {
+              "field": "original_holder",
+              "offset": 22,
+              "length": 3,
+              "hex": "060100"
+            },
+            {
+              "field": "reserved",
+              "offset": 25,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "current_holder",
+              "offset": 26,
+              "length": 4,
+              "hex": "01060100"
+            },
+            {
+              "field": "previous_holder",
+              "offset": 30,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "birth_context",
+              "offset": 31,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "last_fact",
+              "offset": 34,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        },
+        {
+          "offset": 680,
+          "length": 35,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "2300"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0900ff00010001000200000000000000"
+            },
+            {
+              "field": "resource_kind",
+              "offset": 18,
+              "length": 1,
+              "hex": "06"
+            },
+            {
+              "field": "disposition",
+              "offset": 19,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "transfer_count",
+              "offset": 20,
+              "length": 2,
+              "hex": "0000"
+            },
+            {
+              "field": "original_holder",
+              "offset": 22,
+              "length": 3,
+              "hex": "060100"
+            },
+            {
+              "field": "reserved",
+              "offset": 25,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "current_holder",
+              "offset": 26,
+              "length": 4,
+              "hex": "01060100"
+            },
+            {
+              "field": "previous_holder",
+              "offset": 30,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "birth_context",
+              "offset": 31,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "last_fact",
+              "offset": 34,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        },
+        {
+          "offset": 715,
+          "length": 35,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "2300"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0900ff00010001000300000000000000"
+            },
+            {
+              "field": "resource_kind",
+              "offset": 18,
+              "length": 1,
+              "hex": "07"
+            },
+            {
+              "field": "disposition",
+              "offset": 19,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "transfer_count",
+              "offset": 20,
+              "length": 2,
+              "hex": "0000"
+            },
+            {
+              "field": "original_holder",
+              "offset": 22,
+              "length": 3,
+              "hex": "060100"
+            },
+            {
+              "field": "reserved",
+              "offset": 25,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "current_holder",
+              "offset": 26,
+              "length": 4,
+              "hex": "01060100"
+            },
+            {
+              "field": "previous_holder",
+              "offset": 30,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "birth_context",
+              "offset": 31,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "last_fact",
+              "offset": 34,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        },
+        {
+          "offset": 750,
+          "length": 35,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "2300"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0900ff00010001000400000000000000"
+            },
+            {
+              "field": "resource_kind",
+              "offset": 18,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "disposition",
+              "offset": 19,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "transfer_count",
+              "offset": 20,
+              "length": 2,
+              "hex": "0000"
+            },
+            {
+              "field": "original_holder",
+              "offset": 22,
+              "length": 3,
+              "hex": "030100"
+            },
+            {
+              "field": "reserved",
+              "offset": 25,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "current_holder",
+              "offset": 26,
+              "length": 4,
+              "hex": "01030100"
+            },
+            {
+              "field": "previous_holder",
+              "offset": 30,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "birth_context",
+              "offset": 31,
+              "length": 3,
+              "hex": "010200"
+            },
+            {
+              "field": "last_fact",
+              "offset": 34,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        },
+        {
+          "offset": 785,
+          "length": 35,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "2300"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0900ff00010001000500000000000000"
+            },
+            {
+              "field": "resource_kind",
+              "offset": 18,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "disposition",
+              "offset": 19,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "transfer_count",
+              "offset": 20,
+              "length": 2,
+              "hex": "0000"
+            },
+            {
+              "field": "original_holder",
+              "offset": 22,
+              "length": 3,
+              "hex": "030100"
+            },
+            {
+              "field": "reserved",
+              "offset": 25,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "current_holder",
+              "offset": 26,
+              "length": 4,
+              "hex": "01030100"
+            },
+            {
+              "field": "previous_holder",
+              "offset": 30,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "birth_context",
+              "offset": 31,
+              "length": 3,
+              "hex": "010200"
+            },
+            {
+              "field": "last_fact",
+              "offset": 34,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        },
+        {
+          "offset": 820,
+          "length": 37,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "2500"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0900ff00010001000600000000000000"
+            },
+            {
+              "field": "resource_kind",
+              "offset": 18,
+              "length": 1,
+              "hex": "08"
+            },
+            {
+              "field": "disposition",
+              "offset": 19,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "transfer_count",
+              "offset": 20,
+              "length": 2,
+              "hex": "0000"
+            },
+            {
+              "field": "original_holder",
+              "offset": 22,
+              "length": 3,
+              "hex": "060100"
+            },
+            {
+              "field": "reserved",
+              "offset": 25,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "current_holder",
+              "offset": 26,
+              "length": 4,
+              "hex": "01060100"
+            },
+            {
+              "field": "previous_holder",
+              "offset": 30,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "birth_context",
+              "offset": 31,
+              "length": 3,
+              "hex": "010400"
+            },
+            {
+              "field": "last_fact",
+              "offset": 34,
+              "length": 3,
+              "hex": "010200"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "facts",
+      "offset": 857,
+      "count": 2,
+      "length": 84,
+      "records": [
+        {
+          "offset": 857,
+          "length": 42,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "2a00"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0bffff00010000000100000000000000"
+            },
+            {
+              "field": "kind",
+              "offset": 18,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "api",
+              "offset": 19,
+              "length": 1,
+              "hex": "02"
+            },
+            {
+              "field": "outcome_class",
+              "offset": 20,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "cleanup",
+              "offset": 21,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "decision",
+              "offset": 22,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "delivery",
+              "offset": 23,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "next_work",
+              "offset": 24,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "consumed_parts",
+              "offset": 25,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "reserved",
+              "offset": 26,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "engine",
+              "offset": 27,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "obligation_count",
+              "offset": 29,
+              "length": 2,
+              "hex": "0000"
+            },
+            {
+              "field": "owner_count",
+              "offset": 31,
+              "length": 2,
+              "hex": "0000"
+            },
+            {
+              "field": "context",
+              "offset": 33,
+              "length": 3,
+              "hex": "010300"
+            },
+            {
+              "field": "transaction",
+              "offset": 36,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "receipt",
+              "offset": 39,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "fresh_engine",
+              "offset": 40,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "anchor",
+              "offset": 41,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        },
+        {
+          "offset": 899,
+          "length": 42,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "2a00"
+            },
+            {
+              "field": "id",
+              "offset": 2,
+              "length": 16,
+              "hex": "0bffff00010000000200000000000000"
+            },
+            {
+              "field": "kind",
+              "offset": 18,
+              "length": 1,
+              "hex": "05"
+            },
+            {
+              "field": "api",
+              "offset": 19,
+              "length": 1,
+              "hex": "09"
+            },
+            {
+              "field": "outcome_class",
+              "offset": 20,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "cleanup",
+              "offset": 21,
+              "length": 1,
+              "hex": "02"
+            },
+            {
+              "field": "decision",
+              "offset": 22,
+              "length": 1,
+              "hex": "03"
+            },
+            {
+              "field": "delivery",
+              "offset": 23,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "next_work",
+              "offset": 24,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "consumed_parts",
+              "offset": 25,
+              "length": 1,
+              "hex": "02"
+            },
+            {
+              "field": "reserved",
+              "offset": 26,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "engine",
+              "offset": 27,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "obligation_count",
+              "offset": 29,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "owner_count",
+              "offset": 31,
+              "length": 2,
+              "hex": "0400"
+            },
+            {
+              "field": "context",
+              "offset": 33,
+              "length": 3,
+              "hex": "010400"
+            },
+            {
+              "field": "transaction",
+              "offset": 36,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "receipt",
+              "offset": 39,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "fresh_engine",
+              "offset": 40,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "anchor",
+              "offset": 41,
+              "length": 1,
+              "hex": "00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "fact_obligations",
+      "offset": 941,
+      "count": 1,
+      "length": 12,
+      "records": [
+        {
+          "offset": 941,
+          "length": 12,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "0c00"
+            },
+            {
+              "field": "fact",
+              "offset": 2,
+              "length": 2,
+              "hex": "0200"
+            },
+            {
+              "field": "obligation",
+              "offset": 4,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "known_decision",
+              "offset": 6,
+              "length": 1,
+              "hex": "03"
+            },
+            {
+              "field": "disposition",
+              "offset": 7,
+              "length": 1,
+              "hex": "01"
+            },
+            {
+              "field": "owner_count",
+              "offset": 8,
+              "length": 2,
+              "hex": "0400"
+            },
+            {
+              "field": "reserved",
+              "offset": 10,
+              "length": 2,
+              "hex": "0000"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "fact_owners",
+      "offset": 953,
+      "count": 4,
+      "length": 73,
+      "records": [
+        {
+          "offset": 953,
+          "length": 19,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1300"
+            },
+            {
+              "field": "fact",
+              "offset": 2,
+              "length": 2,
+              "hex": "0200"
+            },
+            {
+              "field": "resource",
+              "offset": 4,
+              "length": 2,
+              "hex": "0100"
+            },
+            {
+              "field": "disposition",
+              "offset": 6,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 7,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "obligation",
+              "offset": 8,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "before_holder",
+              "offset": 11,
+              "length": 4,
+              "hex": "01060100"
+            },
+            {
+              "field": "after_holder",
+              "offset": 15,
+              "length": 4,
+              "hex": "01060100"
+            }
+          ]
+        },
+        {
+          "offset": 972,
+          "length": 19,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1300"
+            },
+            {
+              "field": "fact",
+              "offset": 2,
+              "length": 2,
+              "hex": "0200"
+            },
+            {
+              "field": "resource",
+              "offset": 4,
+              "length": 2,
+              "hex": "0200"
+            },
+            {
+              "field": "disposition",
+              "offset": 6,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 7,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "obligation",
+              "offset": 8,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "before_holder",
+              "offset": 11,
+              "length": 4,
+              "hex": "01060100"
+            },
+            {
+              "field": "after_holder",
+              "offset": 15,
+              "length": 4,
+              "hex": "01060100"
+            }
+          ]
+        },
+        {
+          "offset": 991,
+          "length": 19,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1300"
+            },
+            {
+              "field": "fact",
+              "offset": 2,
+              "length": 2,
+              "hex": "0200"
+            },
+            {
+              "field": "resource",
+              "offset": 4,
+              "length": 2,
+              "hex": "0300"
+            },
+            {
+              "field": "disposition",
+              "offset": 6,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 7,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "obligation",
+              "offset": 8,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "before_holder",
+              "offset": 11,
+              "length": 4,
+              "hex": "01060100"
+            },
+            {
+              "field": "after_holder",
+              "offset": 15,
+              "length": 4,
+              "hex": "01060100"
+            }
+          ]
+        },
+        {
+          "offset": 1010,
+          "length": 16,
+          "fields_relative_to_record": [
+            {
+              "field": "record_bytes",
+              "offset": 0,
+              "length": 2,
+              "hex": "1000"
+            },
+            {
+              "field": "fact",
+              "offset": 2,
+              "length": 2,
+              "hex": "0200"
+            },
+            {
+              "field": "resource",
+              "offset": 4,
+              "length": 2,
+              "hex": "0600"
+            },
+            {
+              "field": "disposition",
+              "offset": 6,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "reserved",
+              "offset": 7,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "obligation",
+              "offset": 8,
+              "length": 3,
+              "hex": "010100"
+            },
+            {
+              "field": "before_holder",
+              "offset": 11,
+              "length": 1,
+              "hex": "00"
+            },
+            {
+              "field": "after_holder",
+              "offset": 12,
+              "length": 4,
+              "hex": "01060100"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "trailer": {
+    "offset": 1026,
+    "length": 32,
+    "hex": "e8cf39c9113d219d1797e3ec385e4f397a79dc62d2b27fcbe5aeb57fec068b61"
+  }
+}

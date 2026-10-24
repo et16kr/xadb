@@ -1,0 +1,95 @@
+{
+  "prefix_fields": [
+    {
+      "field": "schema_version",
+      "offset": 0,
+      "length": 2,
+      "hex": "0100"
+    },
+    {
+      "field": "api_tag",
+      "offset": 2,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "actor",
+      "offset": 3,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "outcome_tag",
+      "offset": 4,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "prepare_slot",
+      "offset": 5,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "prepare_shape",
+      "offset": 6,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "parameter_count",
+      "offset": 7,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "set_autocommit",
+      "offset": 8,
+      "length": 1,
+      "hex": "ff"
+    },
+    {
+      "field": "target",
+      "offset": 9,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "context",
+      "offset": 10,
+      "length": 17,
+      "hex": "010500ff00010001000100000000000000"
+    },
+    {
+      "field": "original_deadline",
+      "offset": 27,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "supplied_cancel",
+      "offset": 28,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "deadline_reached",
+      "offset": 29,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "bind_count",
+      "offset": 30,
+      "length": 1,
+      "hex": "00"
+    },
+    {
+      "field": "environment_presence",
+      "offset": 31,
+      "length": 1,
+      "hex": "00"
+    }
+  ],
+  "environment": null
+}

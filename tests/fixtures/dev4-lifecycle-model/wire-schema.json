@@ -1,0 +1,2829 @@
+{
+  "id": "D4-LM-WIRE-PROPOSAL-002",
+  "status": "PROPOSED_NOT_ADOPTED",
+  "date": "2026-10-24",
+  "author": "/root/frontend_research",
+  "base_head": "848d6ccfc7083e70cfc7301b3d55deaec49d95da",
+  "scope": "New declarative state/input schema and integer arithmetic only. No literal states, serializer, model, checker, explorer, product or test implementation.",
+  "inputs": [
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/wire-proposal-v1.md",
+      "sha256": "622122a14a31e654dfe0337f2d0935faba60d2d84b19a7bb86eda65f060bddd5",
+      "read_scope": "entire"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/wire-proposal-v1.json",
+      "sha256": "4bcb372fc09dd11aed5374f10f97a50973d107c954e41610602a7025cd5b77ee",
+      "read_scope": "entire"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/context-projection-v1.md",
+      "sha256": "22795ece029c43593083f138117fb88b413f3d95bbfa322175bcc192c906b496",
+      "read_scope": "entire"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/context-projection-v1.json",
+      "sha256": "270fe2e581109595d526963d6a15c3e2fc937b15a03506b9c9ecc15ac1fbe0a0",
+      "read_scope": "entire"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/owner-decisions-v5.md",
+      "sha256": "6a5f368d9e261b0b6535b3580aa52cdd1868b97b12fa0b927407afdab386f934",
+      "read_scope": "entire"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/input-layout-v1.md",
+      "sha256": "314cd3725dc1d2e18027e80163238e4872d2ac7ce638a6371b983b6d46eb945c",
+      "read_scope": "entire"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/identity-transition-v1.md",
+      "sha256": "1ed868b456e158687fc20e14554e8a59581175aa7e9f58f53760bbba1f1373bb",
+      "read_scope": "entire"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/resource-proposal-v1.md",
+      "sha256": "14465bf76debe3af9f1e35582bc8b56fdc4027fee59623ed5d479a3ede1a0ea4",
+      "read_scope": "prior authored complete resource design, retained unchanged"
+    },
+    {
+      "path": "artifacts/dev4-lifecycle-model-20261024/resource-proposal-v1.json",
+      "sha256": "a758eadf2105deee635fb07516162b9982c00b02443e63914009d2dad44c084d",
+      "read_scope": "prior authored complete resource design, retained unchanged"
+    }
+  ],
+  "profile": {
+    "actors": 2,
+    "slots_per_actor": 2,
+    "public_open_results_per_actor": 1,
+    "max_action_length": 6,
+    "raw_slots_per_state": 1533,
+    "unique_state_cap": 500000,
+    "memory_cap_bytes": 2147483648,
+    "active_wall_seconds": 1800
+  },
+  "encoding": {
+    "endianness": "little",
+    "alignment": "none",
+    "record_length_prefix_bytes": 2,
+    "optional_absent": {
+      "tag": 0,
+      "payload_bytes": 0
+    },
+    "optional_present_tag": 1,
+    "vector": "header u16 count followed by exactly that many length-prefixed records; fixed section order",
+    "typed_reference": "u16 original kind-local nonce, not a sorted-array position; resolve exact Identity16 in its namespace",
+    "holder_reference": {
+      "bytes": 3,
+      "offsets": {
+        "kind_u8": 0,
+        "nonce_u16le": 1
+      },
+      "allowed_kinds": [
+        "Engine",
+        "Statement",
+        "Result",
+        "Transaction",
+        "Obligation"
+      ]
+    },
+    "sort": "numeric identity tuple (kind,engine,session,actor,slot,nonce,generation), never little-endian memcmp",
+    "checksum": "32-byte SHA-256 trailer over all prior state bytes; checksum is integrity only; visited equality compares the entire canonical bytes",
+    "header": [
+      {
+        "name": "magic",
+        "type": "ascii XADBLM02",
+        "bytes": 8,
+        "meaning": "",
+        "offset": 0
+      },
+      {
+        "name": "version",
+        "type": "u16le=2",
+        "bytes": 2,
+        "meaning": "",
+        "offset": 8
+      },
+      {
+        "name": "header_bytes",
+        "type": "u16le=256",
+        "bytes": 2,
+        "meaning": "",
+        "offset": 10
+      },
+      {
+        "name": "state_bytes_including_sha256",
+        "type": "u32le",
+        "bytes": 4,
+        "meaning": "",
+        "offset": 12
+      },
+      {
+        "name": "layout_sha256",
+        "type": "bytes32",
+        "bytes": 32,
+        "meaning": "",
+        "offset": 16
+      },
+      {
+        "name": "profile_sha256",
+        "type": "bytes32",
+        "bytes": 32,
+        "meaning": "",
+        "offset": 48
+      },
+      {
+        "name": "action_sha256",
+        "type": "bytes32",
+        "bytes": 32,
+        "meaning": "",
+        "offset": 80
+      },
+      {
+        "name": "exclusion_sha256",
+        "type": "bytes32",
+        "bytes": 32,
+        "meaning": "",
+        "offset": 112
+      },
+      {
+        "name": "current_engine",
+        "type": "Ref<Engine>",
+        "bytes": 2,
+        "meaning": "",
+        "offset": 144
+      },
+      {
+        "name": "next_nonce_by_kind_1_through_12",
+        "type": "12*u16le",
+        "bytes": 24,
+        "meaning": "",
+        "offset": 146
+      },
+      {
+        "name": "section_counts_in_schema_order",
+        "type": "16*u16le",
+        "bytes": 32,
+        "meaning": "",
+        "offset": 170
+      },
+      {
+        "name": "reserved",
+        "type": "zero",
+        "bytes": 54,
+        "meaning": "",
+        "offset": 202
+      }
+    ],
+    "identity16": [
+      {
+        "name": "kind",
+        "type": "IdentityKind",
+        "bytes": 1,
+        "meaning": "",
+        "offset": 0
+      },
+      {
+        "name": "actor",
+        "type": "u8:0|1|255",
+        "bytes": 1,
+        "meaning": "",
+        "offset": 1
+      },
+      {
+        "name": "slot",
+        "type": "u8:0|1|255",
+        "bytes": 1,
+        "meaning": "",
+        "offset": 2
+      },
+      {
+        "name": "reserved0",
+        "type": "zero",
+        "bytes": 1,
+        "meaning": "",
+        "offset": 3
+      },
+      {
+        "name": "engine",
+        "type": "u16le",
+        "bytes": 2,
+        "meaning": "",
+        "offset": 4
+      },
+      {
+        "name": "session",
+        "type": "u16le",
+        "bytes": 2,
+        "meaning": "",
+        "offset": 6
+      },
+      {
+        "name": "nonce",
+        "type": "u16le",
+        "bytes": 2,
+        "meaning": "",
+        "offset": 8
+      },
+      {
+        "name": "generation",
+        "type": "u16le",
+        "bytes": 2,
+        "meaning": "",
+        "offset": 10
+      },
+      {
+        "name": "reserved1",
+        "type": "zero",
+        "bytes": 4,
+        "meaning": "",
+        "offset": 12
+      }
+    ],
+    "diagnostic16": [
+      {
+        "name": "code",
+        "type": "ReturnCode",
+        "bytes": 1,
+        "meaning": "",
+        "offset": 0
+      },
+      {
+        "name": "phase",
+        "type": "Phase",
+        "bytes": 1,
+        "meaning": "",
+        "offset": 1
+      },
+      {
+        "name": "effect",
+        "type": "StatementEffect",
+        "bytes": 1,
+        "meaning": "",
+        "offset": 2
+      },
+      {
+        "name": "certainty",
+        "type": "Certainty",
+        "bytes": 1,
+        "meaning": "",
+        "offset": 3
+      },
+      {
+        "name": "retry",
+        "type": "Retry",
+        "bytes": 1,
+        "meaning": "",
+        "offset": 4
+      },
+      {
+        "name": "engine_cause",
+        "type": "EngineCause",
+        "bytes": 1,
+        "meaning": "",
+        "offset": 5
+      },
+      {
+        "name": "origin_cause",
+        "type": "OriginCause",
+        "bytes": 1,
+        "meaning": "",
+        "offset": 6
+      },
+      {
+        "name": "reserved0",
+        "type": "zero",
+        "bytes": 1,
+        "meaning": "",
+        "offset": 7
+      },
+      {
+        "name": "span_start",
+        "type": "u16le=0",
+        "bytes": 2,
+        "meaning": "",
+        "offset": 8
+      },
+      {
+        "name": "span_end",
+        "type": "u16le=0",
+        "bytes": 2,
+        "meaning": "",
+        "offset": 10
+      },
+      {
+        "name": "reserved1",
+        "type": "zero",
+        "bytes": 4,
+        "meaning": "",
+        "offset": 12
+      }
+    ],
+    "enum_tags": {
+      "IdentityKind": {
+        "None": 0,
+        "Engine": 1,
+        "Session": 2,
+        "Statement": 3,
+        "Result": 4,
+        "Context": 5,
+        "Transaction": 6,
+        "Binding": 7,
+        "Receipt": 8,
+        "Resource": 9,
+        "Obligation": 10,
+        "Fact": 11,
+        "Anchor": 12
+      },
+      "EngineAdmission": {
+        "Admitting": 0,
+        "Fenced": 1,
+        "RecoveryConfirmedRetired": 2
+      },
+      "EngineCause": {
+        "None": 0,
+        "UndoIncomplete": 1,
+        "CommitUnknown": 2,
+        "CommittedPublicationPending": 3,
+        "PeerFence": 4
+      },
+      "Shell": {
+        "Open": 0,
+        "Closed": 1
+      },
+      "Autocommit": {
+        "On": 0,
+        "Off": 1
+      },
+      "ReopenKind": {
+        "Initial": 0,
+        "HealthySameEngine": 1,
+        "RecoveredFreshEngine": 2
+      },
+      "SlotState": {
+        "Vacant": 0,
+        "ReadyUnbound": 1,
+        "ReadyBound": 2,
+        "ResultOpen": 3,
+        "Invalid": 4,
+        "Closed": 5
+      },
+      "Shape": {
+        "Select": 0,
+        "Dml": 1
+      },
+      "Metadata": {
+        "SelectN0": 0,
+        "SelectN1Utf8NotNullMax1": 1,
+        "DmlN0": 2,
+        "DmlN1Utf8NotNullMax1": 3
+      },
+      "StatementLife": {
+        "Current": 0,
+        "CurrentClosed": 1,
+        "Retired": 2
+      },
+      "Retirement": {
+        "None": 0,
+        "Reexecute": 1,
+        "StatementClose": 2,
+        "Rollback": 3,
+        "SessionClose": 4,
+        "EngineFence": 5,
+        "SlotReuse": 6
+      },
+      "ResultState": {
+        "Open": 0,
+        "Eof": 1,
+        "Error": 2,
+        "Closed": 3
+      },
+      "ContextStatus": {
+        "ParkedFetch": 0,
+        "ParkedCommit": 1,
+        "Completed": 2
+      },
+      "Deadline": {
+        "Absent": 0,
+        "FutureAtEntry": 1,
+        "ReachedAtEntry": 2
+      },
+      "CompletionPhase": {
+        "NotCompleted": 0,
+        "RejectedBeforeAdmission": 1,
+        "AdmittedCompleted": 2,
+        "CachedOrIdempotentCompleted": 3
+      },
+      "TransactionOrigin": {
+        "ExplicitBegin": 0,
+        "OffStarted": 1,
+        "ImplicitReadOnly": 2,
+        "ImplicitReadWrite": 3
+      },
+      "Access": {
+        "ReadOnly": 0,
+        "ReadWrite": 1
+      },
+      "TransactionLife": {
+        "Active": 0,
+        "Ended": 1,
+        "RecoveryPending": 2
+      },
+      "CommitProgress": {
+        "None": 0,
+        "BeforeAttempt": 1,
+        "Attempted": 2,
+        "DurableConfirmed": 3,
+        "Published": 4,
+        "NoWriteValidated": 5
+      },
+      "Decision": {
+        "NotApplicable": 0,
+        "NotAttempted": 1,
+        "Aborted": 2,
+        "NotCommittedRecoveryRequired": 3,
+        "Unknown": 4,
+        "Committed": 5
+      },
+      "ClientKnowledge": {
+        "NoDecisionObserved": 0,
+        "KnownAborted": 1,
+        "KnownNotCommittedRecoveryRequired": 2,
+        "Unknown": 3,
+        "KnownCommitted": 4
+      },
+      "Delivery": {
+        "NotApplicable": 0,
+        "Delivered": 1,
+        "NotDelivered": 2
+      },
+      "ObligationReason": {
+        "KnownNotCommittedUndoPending": 0,
+        "CommitDecisionUnknown": 1,
+        "KnownCommittedPublicationPending": 2,
+        "PeerActiveTransactionAtFence": 3
+      },
+      "OwnerDisposition": {
+        "Held": 0,
+        "Transferred": 1,
+        "Released": 2
+      },
+      "Settlement": {
+        "Outstanding": 0,
+        "RecoveryConfirmed": 1,
+        "DrainedConfirmed": 2
+      },
+      "BindingValue": {
+        "Empty": 0,
+        "A_61": 1,
+        "B_62": 2
+      },
+      "BindingLife": {
+        "Current": 0,
+        "Replaced": 1,
+        "Released": 2
+      },
+      "ReceiptKind": {
+        "NoWriteCompletion": 0,
+        "DurableWrite": 1
+      },
+      "ResourceKind": {
+        "Plan": 0,
+        "Binding": 1,
+        "Snapshot": 2,
+        "Scratch": 3,
+        "Temp": 4,
+        "Undo": 5,
+        "Locks": 6,
+        "AbortReserve": 7,
+        "Recovery": 8
+      },
+      "FactKind": {
+        "Execution": 0,
+        "CommitAtomic": 2,
+        "CommitProgress": 3,
+        "CommitFinish": 4,
+        "RollbackCleanup": 5,
+        "SessionCleanup": 6,
+        "RecoveryConfirmed": 7,
+        "FetchWorkOrCleanup": 1,
+        "LocalCleanup": 8
+      },
+      "Cleanup": {
+        "NotConsumed": 0,
+        "Complete": 1,
+        "Incomplete": 2,
+        "LocalReleaseAndHandoff": 3,
+        "RecoveryConfirmed": 4
+      },
+      "NextWork": {
+        "NotConsumed": 0,
+        "Rows": 1,
+        "Eof": 2,
+        "ReadError": 3,
+        "Conflict": 4,
+        "RowBufferTooSmall": 5
+      },
+      "Api": {
+        "Prepare": 0,
+        "BindAll": 1,
+        "Execute": 2,
+        "Fetch": 3,
+        "CloseResult": 4,
+        "CloseStatement": 5,
+        "Begin": 6,
+        "SetAutocommit": 7,
+        "CommitAtomic": 8,
+        "Rollback": 9,
+        "CloseSession": 10,
+        "ReopenSession": 11,
+        "InspectStatement": 12,
+        "InspectSession": 13,
+        "SignalContext": 14,
+        "ParkFetch": 15,
+        "ResumeFetch": 16,
+        "BeginCommit": 17,
+        "CommitFact": 18,
+        "FinishCommit": 19,
+        "RecoveryConfirmedFreshEngine": 20
+      },
+      "ReturnCode": {
+        "Ok": 0,
+        "Eof": 1,
+        "InvalidHandle": 2,
+        "HandleClosed": 3,
+        "SessionState": 4,
+        "Busy": 5,
+        "EngineFenced": 6,
+        "ResultBusy": 7,
+        "SlotBusy": 8,
+        "TxnState": 9,
+        "BindCount": 10,
+        "StalePlan": 11,
+        "Type": 12,
+        "NotNull": 13,
+        "Range": 14,
+        "SyntaxUtf8": 15,
+        "Limit": 16,
+        "Cancelled": 17,
+        "Timeout": 18,
+        "ValueError": 19,
+        "ReadError": 20,
+        "Conflict": 21,
+        "RecoveryRequired": 22,
+        "ResultUnknown": 23,
+        "RowBufferTooSmall": 24,
+        "IgnoredCompleted": 25,
+        "InvalidContext": 28,
+        "NoPendingOperation": 29,
+        "ContinuationKind": 30
+      },
+      "Phase": {
+        "NotApplicable": 0,
+        "Entry": 1,
+        "Prepare": 2,
+        "Bind": 3,
+        "Execute": 4,
+        "Fetch": 5,
+        "Close": 6,
+        "Commit": 7,
+        "Rollback": 8,
+        "Recovery": 9
+      },
+      "StatementEffect": {
+        "NoEffect": 0,
+        "StatementRestored": 1,
+        "StatementApplied": 2,
+        "CursorReleased": 3,
+        "RecoveryRequired": 4
+      },
+      "Certainty": {
+        "NotApplicable": 0,
+        "Known": 1,
+        "Unknown": 2
+      },
+      "Retry": {
+        "NotApplicable": 0,
+        "Never": 1,
+        "Operation": 2,
+        "AfterRecovery": 3,
+        "WholeTransactionDecision": 4
+      },
+      "OriginCause": {
+        "None": 0,
+        "ValueError": 1,
+        "ReadError": 2,
+        "Conflict": 3,
+        "Cancelled": 4,
+        "Timeout": 5,
+        "UndoIncomplete": 6,
+        "CommitUnknown": 7,
+        "PublicationPending": 8,
+        "PeerFence": 9
+      },
+      "OwnershipSummary": {
+        "None": 0,
+        "AllHeld": 1,
+        "AllTransferred": 2,
+        "AllReleased": 3,
+        "Mixed": 4
+      }
+    },
+    "records": [
+      {
+        "name": "engines",
+        "max_count": 7,
+        "sort_key": "id numeric tuple",
+        "fixed_prefix_bytes": 22,
+        "min_record_bytes": 26,
+        "max_record_bytes": 34,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "id",
+            "type": "Identity16",
+            "bytes": 16,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "admission",
+            "type": "EngineAdmission",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 18
+          },
+          {
+            "name": "first_cause",
+            "type": "EngineCause",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 19
+          },
+          {
+            "name": "known_decision",
+            "type": "Decision",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 20
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 21
+          },
+          {
+            "name": "cause_transaction",
+            "type": "Option<Ref<Transaction>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "22"
+          },
+          {
+            "name": "first_fence_context",
+            "type": "Option<Ref<Context>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "22 + len(cause_transaction)"
+          },
+          {
+            "name": "successor_engine",
+            "type": "Option<Ref<Engine>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "22 + len(cause_transaction) + len(first_fence_context)"
+          },
+          {
+            "name": "recovery_fact",
+            "type": "Option<Ref<Fact>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "22 + len(cause_transaction) + len(first_fence_context) + len(successor_engine)"
+          }
+        ],
+        "bound_basis": "Initial 1 + at most one fresh engine per action, depth <=6. This is conservative, not jointly reachable."
+      },
+      {
+        "name": "session_incarnations",
+        "max_count": 8,
+        "sort_key": "id numeric tuple",
+        "fixed_prefix_bytes": 24,
+        "min_record_bytes": 26,
+        "max_record_bytes": 30,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "id",
+            "type": "Identity16",
+            "bytes": 16,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "engine",
+            "type": "Ref<Engine>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 18
+          },
+          {
+            "name": "actor",
+            "type": "Actor",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 20
+          },
+          {
+            "name": "lifecycle",
+            "type": "Shell",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 21
+          },
+          {
+            "name": "reopen_kind",
+            "type": "ReopenKind",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 22
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 23
+          },
+          {
+            "name": "previous_session",
+            "type": "Option<Ref<Session>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "24"
+          },
+          {
+            "name": "closing_context",
+            "type": "Option<Ref<Context>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "24 + len(previous_session)"
+          }
+        ],
+        "bound_basis": "Initial 2 + at most one reopen incarnation per action."
+      },
+      {
+        "name": "actors",
+        "max_count": 2,
+        "sort_key": "actor numeric",
+        "fixed_prefix_bytes": 10,
+        "min_record_bytes": 13,
+        "max_record_bytes": 19,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "actor",
+            "type": "Actor",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "shell",
+            "type": "Shell",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 3
+          },
+          {
+            "name": "autocommit",
+            "type": "Autocommit",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 4
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 5
+          },
+          {
+            "name": "session",
+            "type": "Ref<Session>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 6
+          },
+          {
+            "name": "engine",
+            "type": "Ref<Engine>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 8
+          },
+          {
+            "name": "transaction",
+            "type": "Option<Ref<Transaction>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "10"
+          },
+          {
+            "name": "parked_context",
+            "type": "Option<Ref<Context>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "10 + len(transaction)"
+          },
+          {
+            "name": "active_public_result",
+            "type": "Option<Ref<Result>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "10 + len(transaction) + len(parked_context)"
+          }
+        ],
+        "bound_basis": "Exactly actor 0 and actor 1; closed actors remain present."
+      },
+      {
+        "name": "prepared_slots",
+        "max_count": 4,
+        "sort_key": "(actor,slot) numeric",
+        "fixed_prefix_bytes": 10,
+        "min_record_bytes": 13,
+        "max_record_bytes": 19,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "actor",
+            "type": "Actor",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "slot",
+            "type": "Slot",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 3
+          },
+          {
+            "name": "state",
+            "type": "SlotState",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 4
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 5
+          },
+          {
+            "name": "next_statement_generation",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 6
+          },
+          {
+            "name": "next_result_generation",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 8
+          },
+          {
+            "name": "statement",
+            "type": "Option<Ref<Statement>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "10"
+          },
+          {
+            "name": "binding",
+            "type": "Option<Ref<Binding>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "10 + len(statement)"
+          },
+          {
+            "name": "descriptor_result",
+            "type": "Option<Ref<Result>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "10 + len(statement) + len(binding)"
+          }
+        ],
+        "bound_basis": "Exactly 2 actors x 2 slots. Reset on fresh session incarnation only; old identities remain in history."
+      },
+      {
+        "name": "issued_statements",
+        "max_count": 6,
+        "sort_key": "id numeric tuple",
+        "fixed_prefix_bytes": 28,
+        "min_record_bytes": 30,
+        "max_record_bytes": 34,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "id",
+            "type": "Identity16",
+            "bytes": 16,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "issue_ordinal",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 18
+          },
+          {
+            "name": "shape",
+            "type": "Shape",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 20
+          },
+          {
+            "name": "parameter_count",
+            "type": "u8:0|1",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 21
+          },
+          {
+            "name": "metadata",
+            "type": "Metadata",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 22
+          },
+          {
+            "name": "life",
+            "type": "StatementLife",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 23
+          },
+          {
+            "name": "retirement",
+            "type": "Retirement",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 24
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 25
+          },
+          {
+            "name": "session",
+            "type": "Ref<Session>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 26
+          },
+          {
+            "name": "creation_context",
+            "type": "Option<Ref<Context>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "28"
+          },
+          {
+            "name": "retirement_context",
+            "type": "Option<Ref<Context>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "28 + len(creation_context)"
+          }
+        ],
+        "bound_basis": "At most one successful Prepare per action; immutable shape/metadata survive slot reuse as model history."
+      },
+      {
+        "name": "issued_results",
+        "max_count": 6,
+        "sort_key": "id numeric tuple",
+        "fixed_prefix_bytes": 26,
+        "min_record_bytes": 28,
+        "max_record_bytes": 32,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "id",
+            "type": "Identity16",
+            "bytes": 16,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "issue_ordinal",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 18
+          },
+          {
+            "name": "statement",
+            "type": "Ref<Statement>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 20
+          },
+          {
+            "name": "retirement",
+            "type": "Retirement",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 22
+          },
+          {
+            "name": "public_generation_live",
+            "type": "bool",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 23
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 24
+          },
+          {
+            "name": "creation_context",
+            "type": "Option<Ref<Context>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "26"
+          },
+          {
+            "name": "retirement_context",
+            "type": "Option<Ref<Context>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "26 + len(creation_context)"
+          }
+        ],
+        "bound_basis": "At most one result issued by an Execute action. History never collapses retired identities."
+      },
+      {
+        "name": "private_descriptors",
+        "max_count": 4,
+        "sort_key": "resolved result id numeric tuple",
+        "fixed_prefix_bytes": 12,
+        "min_record_bytes": 14,
+        "max_record_bytes": 32,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "result",
+            "type": "Ref<Result>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "statement",
+            "type": "Ref<Statement>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 4
+          },
+          {
+            "name": "state",
+            "type": "ResultState",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 6
+          },
+          {
+            "name": "public_generation_live",
+            "type": "bool",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 7
+          },
+          {
+            "name": "blocked_by_fence",
+            "type": "bool",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 8
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 9
+          },
+          {
+            "name": "position",
+            "type": "u16le:0..6",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 10
+          },
+          {
+            "name": "transaction",
+            "type": "Option<Ref<Transaction>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "12"
+          },
+          {
+            "name": "terminal",
+            "type": "Option<Diagnostic16>",
+            "min_bytes": 1,
+            "max_bytes": 17,
+            "meaning": "Some exactly for Error. No row, SQL text, snapshot, or receipt payload.",
+            "offset_expression": "12 + len(transaction)"
+          }
+        ],
+        "bound_basis": "At most one current/private descriptor per prepared slot. Issued-result history remains after descriptor removal; no extra historical descriptors are added."
+      },
+      {
+        "name": "contexts",
+        "max_count": 6,
+        "sort_key": "id numeric tuple",
+        "fixed_prefix_bytes": 21,
+        "min_record_bytes": 21,
+        "max_record_bytes": 39,
+        "bound_basis": "At most one fresh context/action including rejected/cached/idempotent fresh calls, at most six total; at most one Parked/actor, two total. Continuations reuse identity. Completed has no old payload.",
+        "max_parked_count": 2,
+        "max_section_bytes": 162,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "id",
+            "type": "Identity16",
+            "bytes": 16,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "issue_ordinal",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "One-based issue ordinal; Issued[k] selects original ordinal k+1, without renumbering.",
+            "offset": 18
+          },
+          {
+            "name": "status",
+            "type": "ContextStatus",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 20
+          }
+        ],
+        "variants": [
+          {
+            "status_tag": 2,
+            "name": "Completed",
+            "record_bytes": 21,
+            "additional_fields": [],
+            "reject": "Any trailing payload, including zero-filled A payload."
+          },
+          {
+            "status_tag": 0,
+            "name": "ParkedFetch",
+            "record_bytes": 39,
+            "api_tag": 15,
+            "required_options": {
+              "statement": "Some",
+              "result": "Some",
+              "transaction": "Some"
+            },
+            "additional_fields": [
+              {
+                "name": "api",
+                "type": "Api",
+                "bytes": 1,
+                "meaning": "",
+                "offset": 21
+              },
+              {
+                "name": "original_deadline",
+                "type": "Deadline",
+                "bytes": 1,
+                "meaning": "",
+                "offset": 22
+              },
+              {
+                "name": "cancel_supplied_or_signalled",
+                "type": "bool",
+                "bytes": 1,
+                "meaning": "",
+                "offset": 23
+              },
+              {
+                "name": "deadline_reached",
+                "type": "bool",
+                "bytes": 1,
+                "meaning": "",
+                "offset": 24
+              },
+              {
+                "name": "cancel_observed_at_completion",
+                "type": "bool",
+                "bytes": 1,
+                "meaning": "Must be false in Parked.",
+                "offset": 25
+              },
+              {
+                "name": "deadline_observed_at_completion",
+                "type": "bool",
+                "bytes": 1,
+                "meaning": "Must be false in Parked.",
+                "offset": 26
+              },
+              {
+                "name": "completion_phase",
+                "type": "CompletionPhase",
+                "bytes": 1,
+                "meaning": "Must be NotCompleted=0 in Parked.",
+                "offset": 27
+              },
+              {
+                "name": "reserved",
+                "type": "zero",
+                "bytes": 2,
+                "meaning": "",
+                "offset": 28
+              },
+              {
+                "name": "statement",
+                "type": "Option<Ref<Statement>>",
+                "min_bytes": 1,
+                "max_bytes": 3,
+                "meaning": "",
+                "offset_expression": "30"
+              },
+              {
+                "name": "result",
+                "type": "Option<Ref<Result>>",
+                "min_bytes": 1,
+                "max_bytes": 3,
+                "meaning": "",
+                "offset_expression": "30 + len(statement)"
+              },
+              {
+                "name": "transaction",
+                "type": "Option<Ref<Transaction>>",
+                "min_bytes": 1,
+                "max_bytes": 3,
+                "meaning": "",
+                "offset_expression": "30 + len(statement) + len(result)"
+              }
+            ]
+          },
+          {
+            "status_tag": 1,
+            "name": "ParkedCommit",
+            "record_bytes": 35,
+            "api_tag": 17,
+            "required_options": {
+              "statement": "None",
+              "result": "None",
+              "transaction": "Some"
+            },
+            "additional_fields": [
+              {
+                "name": "api",
+                "type": "Api",
+                "bytes": 1,
+                "meaning": "",
+                "offset": 21
+              },
+              {
+                "name": "original_deadline",
+                "type": "Deadline",
+                "bytes": 1,
+                "meaning": "",
+                "offset": 22
+              },
+              {
+                "name": "cancel_supplied_or_signalled",
+                "type": "bool",
+                "bytes": 1,
+                "meaning": "",
+                "offset": 23
+              },
+              {
+                "name": "deadline_reached",
+                "type": "bool",
+                "bytes": 1,
+                "meaning": "",
+                "offset": 24
+              },
+              {
+                "name": "cancel_observed_at_completion",
+                "type": "bool",
+                "bytes": 1,
+                "meaning": "Must be false in Parked.",
+                "offset": 25
+              },
+              {
+                "name": "deadline_observed_at_completion",
+                "type": "bool",
+                "bytes": 1,
+                "meaning": "Must be false in Parked.",
+                "offset": 26
+              },
+              {
+                "name": "completion_phase",
+                "type": "CompletionPhase",
+                "bytes": 1,
+                "meaning": "Must be NotCompleted=0 in Parked.",
+                "offset": 27
+              },
+              {
+                "name": "reserved",
+                "type": "zero",
+                "bytes": 2,
+                "meaning": "",
+                "offset": 28
+              },
+              {
+                "name": "statement",
+                "type": "Option<Ref<Statement>>",
+                "min_bytes": 1,
+                "max_bytes": 3,
+                "meaning": "",
+                "offset_expression": "30"
+              },
+              {
+                "name": "result",
+                "type": "Option<Ref<Result>>",
+                "min_bytes": 1,
+                "max_bytes": 3,
+                "meaning": "",
+                "offset_expression": "30 + len(statement)"
+              },
+              {
+                "name": "transaction",
+                "type": "Option<Ref<Transaction>>",
+                "min_bytes": 1,
+                "max_bytes": 3,
+                "meaning": "",
+                "offset_expression": "30 + len(statement) + len(result)"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "transactions",
+        "max_count": 6,
+        "sort_key": "id numeric tuple",
+        "fixed_prefix_bytes": 30,
+        "min_record_bytes": 34,
+        "max_record_bytes": 42,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "id",
+            "type": "Identity16",
+            "bytes": 16,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "origin",
+            "type": "TransactionOrigin",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 18
+          },
+          {
+            "name": "access",
+            "type": "Access",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 19
+          },
+          {
+            "name": "life",
+            "type": "TransactionLife",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 20
+          },
+          {
+            "name": "prior_successful_write",
+            "type": "bool",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 21
+          },
+          {
+            "name": "progress",
+            "type": "CommitProgress",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 22
+          },
+          {
+            "name": "decision",
+            "type": "Decision",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 23
+          },
+          {
+            "name": "client_knowledge",
+            "type": "ClientKnowledge",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 24
+          },
+          {
+            "name": "delivery",
+            "type": "Delivery",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 25
+          },
+          {
+            "name": "birth_session",
+            "type": "Ref<Session>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 26
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 28
+          },
+          {
+            "name": "receipt",
+            "type": "Option<Ref<Receipt>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "30"
+          },
+          {
+            "name": "parked_context",
+            "type": "Option<Ref<Context>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "30 + len(receipt)"
+          },
+          {
+            "name": "obligation",
+            "type": "Option<Ref<Obligation>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "30 + len(receipt) + len(parked_context)"
+          },
+          {
+            "name": "completion_fact",
+            "type": "Option<Ref<Fact>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "30 + len(receipt) + len(parked_context) + len(obligation)"
+          }
+        ],
+        "bound_basis": "At most one new transaction per Begin/Execute action. Ended and unresolved transactions remain distinct."
+      },
+      {
+        "name": "obligations",
+        "max_count": 6,
+        "sort_key": "(engine id,transaction id,origin session id) numeric",
+        "fixed_prefix_bytes": 32,
+        "min_record_bytes": 35,
+        "max_record_bytes": 41,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "id",
+            "type": "Identity16",
+            "bytes": 16,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "engine",
+            "type": "Ref<Engine>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 18
+          },
+          {
+            "name": "transaction",
+            "type": "Ref<Transaction>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 20
+          },
+          {
+            "name": "origin_session",
+            "type": "Ref<Session>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 22
+          },
+          {
+            "name": "creation_reason",
+            "type": "ObligationReason",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 24
+          },
+          {
+            "name": "latest_reason",
+            "type": "ObligationReason",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 25
+          },
+          {
+            "name": "reason_mask",
+            "type": "u8 bits0..3",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 26
+          },
+          {
+            "name": "disposition",
+            "type": "OwnershipSummary",
+            "bytes": 1,
+            "meaning": "Derived aggregate only; exact per-resource ownership remains in owners/fact_owners. Mixed is explicit.",
+            "offset": 27
+          },
+          {
+            "name": "known_decision",
+            "type": "Decision",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 28
+          },
+          {
+            "name": "settlement",
+            "type": "Settlement",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 29
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 30
+          },
+          {
+            "name": "first_fact",
+            "type": "Option<Ref<Fact>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "32"
+          },
+          {
+            "name": "latest_fact",
+            "type": "Option<Ref<Fact>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "32 + len(first_fact)"
+          },
+          {
+            "name": "recovery_fact",
+            "type": "Option<Ref<Fact>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "Settlement evidence: RecoveryConfirmed=1 refers fresh-engine recovery fact; DrainedConfirmed=2 refers confirming Published progress fact, without clearing engine fence.",
+            "offset_expression": "32 + len(first_fact) + len(latest_fact)"
+          }
+        ],
+        "bound_basis": "One record per unique (engine,transaction,origin session), <= total transactions <=6. A fence may create two records in one action; repeated/updated reasons update this same key, never duplicate it."
+      },
+      {
+        "name": "bindings",
+        "max_count": 6,
+        "sort_key": "id numeric tuple",
+        "fixed_prefix_bytes": 26,
+        "min_record_bytes": 28,
+        "max_record_bytes": 32,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "id",
+            "type": "Identity16",
+            "bytes": 16,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "statement",
+            "type": "Ref<Statement>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 18
+          },
+          {
+            "name": "issue_ordinal",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 20
+          },
+          {
+            "name": "value",
+            "type": "BindingValue",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 22
+          },
+          {
+            "name": "life",
+            "type": "BindingLife",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 23
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 24
+          },
+          {
+            "name": "replaced_by",
+            "type": "Option<Ref<Binding>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "26"
+          },
+          {
+            "name": "creation_context",
+            "type": "Option<Ref<Context>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "26 + len(replaced_by)"
+          }
+        ],
+        "bound_basis": "At most one retained binding per Prepare N0 or successful Bind action. Failed Bind candidates and internal temporaries receive no model identity."
+      },
+      {
+        "name": "receipts",
+        "max_count": 6,
+        "sort_key": "id numeric tuple",
+        "fixed_prefix_bytes": 24,
+        "min_record_bytes": 27,
+        "max_record_bytes": 47,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "id",
+            "type": "Identity16",
+            "bytes": 16,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "transaction",
+            "type": "Ref<Transaction>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 18
+          },
+          {
+            "name": "engine",
+            "type": "Ref<Engine>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 20
+          },
+          {
+            "name": "kind",
+            "type": "ReceiptKind",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 22
+          },
+          {
+            "name": "delivery",
+            "type": "Delivery",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 23
+          },
+          {
+            "name": "anchor",
+            "type": "Option<Identity16<Anchor>>",
+            "min_bytes": 1,
+            "max_bytes": 17,
+            "meaning": "DurableWrite Some; NoWriteCompletion None. Supplied fact identity, not derived q/LSN.",
+            "offset_expression": "24"
+          },
+          {
+            "name": "source_fact",
+            "type": "Option<Ref<Fact>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "24 + len(anchor)"
+          },
+          {
+            "name": "delivery_context",
+            "type": "Option<Ref<Context>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "24 + len(anchor) + len(source_fact)"
+          }
+        ],
+        "bound_basis": "At most one supplied completion/receipt per action. DurableConfirmed may retain an undelivered receipt. One receipt per transaction in this profile."
+      },
+      {
+        "name": "owners",
+        "max_count": 54,
+        "sort_key": "resource id numeric tuple",
+        "fixed_prefix_bytes": 26,
+        "min_record_bytes": 30,
+        "max_record_bytes": 40,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "id",
+            "type": "Identity16<Resource>",
+            "bytes": 16,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "resource_kind",
+            "type": "ResourceKind",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 18
+          },
+          {
+            "name": "disposition",
+            "type": "OwnerDisposition",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 19
+          },
+          {
+            "name": "transfer_count",
+            "type": "u16le:0..6",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 20
+          },
+          {
+            "name": "original_holder",
+            "type": "HolderRef",
+            "bytes": 3,
+            "meaning": "",
+            "offset": 22
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 25
+          },
+          {
+            "name": "current_holder",
+            "type": "Option<HolderRef>",
+            "min_bytes": 1,
+            "max_bytes": 4,
+            "meaning": "",
+            "offset_expression": "26"
+          },
+          {
+            "name": "previous_holder",
+            "type": "Option<HolderRef>",
+            "min_bytes": 1,
+            "max_bytes": 4,
+            "meaning": "",
+            "offset_expression": "26 + len(current_holder)"
+          },
+          {
+            "name": "birth_context",
+            "type": "Option<Ref<Context>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "26 + len(current_holder) + len(previous_holder)"
+          },
+          {
+            "name": "last_fact",
+            "type": "Option<Ref<Fact>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "26 + len(current_holder) + len(previous_holder) + len(birth_context)"
+          }
+        ],
+        "bound_basis": "Retained aggregate resources plus every newly-created RW transaction termination obligation including same-action Ended: at most 8/action; retain conservative 54. Initial resources=0. Released history retained."
+      },
+      {
+        "name": "facts",
+        "max_count": 6,
+        "sort_key": "id numeric tuple",
+        "fixed_prefix_bytes": 33,
+        "min_record_bytes": 38,
+        "max_record_bytes": 48,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "id",
+            "type": "Identity16<Fact>",
+            "bytes": 16,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "kind",
+            "type": "FactKind",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 18
+          },
+          {
+            "name": "api",
+            "type": "Api",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 19
+          },
+          {
+            "name": "outcome_class",
+            "type": "u8 family-local frozen tag",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 20
+          },
+          {
+            "name": "cleanup",
+            "type": "Cleanup",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 21
+          },
+          {
+            "name": "decision",
+            "type": "Decision",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 22
+          },
+          {
+            "name": "delivery",
+            "type": "Delivery",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 23
+          },
+          {
+            "name": "next_work",
+            "type": "NextWork",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 24
+          },
+          {
+            "name": "consumed_parts",
+            "type": "u8 mask bits0..4",
+            "bytes": 1,
+            "meaning": "Raw outcome class remains exact; this records only Work/Cleanup/Receipt/CommitProgress/RecoverySet actually consumed.",
+            "offset": 25
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 26
+          },
+          {
+            "name": "engine",
+            "type": "Ref<Engine>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 27
+          },
+          {
+            "name": "obligation_count",
+            "type": "u16le:0..6",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 29
+          },
+          {
+            "name": "owner_count",
+            "type": "u16le:0..54",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 31
+          },
+          {
+            "name": "context",
+            "type": "Option<Ref<Context>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "33"
+          },
+          {
+            "name": "transaction",
+            "type": "Option<Ref<Transaction>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "33 + len(context)"
+          },
+          {
+            "name": "receipt",
+            "type": "Option<Ref<Receipt>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "33 + len(context) + len(transaction)"
+          },
+          {
+            "name": "fresh_engine",
+            "type": "Option<Ref<Engine>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "33 + len(context) + len(transaction) + len(receipt)"
+          },
+          {
+            "name": "anchor",
+            "type": "Option<Ref<Anchor>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "33 + len(context) + len(transaction) + len(receipt) + len(fresh_engine)"
+          }
+        ],
+        "bound_basis": "At most one consumed aggregate envelope/action; separate Work/Cleanup/Receipt/CommitProgress/RecoverySet bits. Rejected/cached/idempotent/fenced-terminal raw envelopes are not registered."
+      },
+      {
+        "name": "fact_obligations",
+        "max_count": 36,
+        "sort_key": "(resolved fact id,resolved obligation key) numeric",
+        "fixed_prefix_bytes": 12,
+        "min_record_bytes": 12,
+        "max_record_bytes": 12,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "fact",
+            "type": "Ref<Fact>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "obligation",
+            "type": "Ref<Obligation>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 4
+          },
+          {
+            "name": "known_decision",
+            "type": "Decision",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 6
+          },
+          {
+            "name": "disposition",
+            "type": "OwnershipSummary",
+            "bytes": 1,
+            "meaning": "Derived aggregate only; exact per-resource ownership remains in owners/fact_owners. Mixed is explicit.",
+            "offset": 7
+          },
+          {
+            "name": "owner_count",
+            "type": "u16le:0..54",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 8
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 10
+          }
+        ],
+        "bound_basis": "At most 6 consumed facts x at most 6 obligation keys per fact. Immutable supplied set, not a query over current obligations."
+      },
+      {
+        "name": "fact_owners",
+        "max_count": 324,
+        "sort_key": "(resolved fact id,resolved resource id) numeric",
+        "fixed_prefix_bytes": 8,
+        "min_record_bytes": 11,
+        "max_record_bytes": 19,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "meaning": "Includes this prefix; exactly consumed.",
+            "offset": 0
+          },
+          {
+            "name": "fact",
+            "type": "Ref<Fact>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 2
+          },
+          {
+            "name": "resource",
+            "type": "Ref<Resource>",
+            "bytes": 2,
+            "meaning": "",
+            "offset": 4
+          },
+          {
+            "name": "disposition",
+            "type": "OwnerDisposition",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 6
+          },
+          {
+            "name": "reserved",
+            "type": "zero",
+            "bytes": 1,
+            "meaning": "",
+            "offset": 7
+          },
+          {
+            "name": "obligation",
+            "type": "Option<Ref<Obligation>>",
+            "min_bytes": 1,
+            "max_bytes": 3,
+            "meaning": "",
+            "offset_expression": "8"
+          },
+          {
+            "name": "before_holder",
+            "type": "Option<HolderRef>",
+            "min_bytes": 1,
+            "max_bytes": 4,
+            "meaning": "",
+            "offset_expression": "8 + len(obligation)"
+          },
+          {
+            "name": "after_holder",
+            "type": "Option<HolderRef>",
+            "min_bytes": 1,
+            "max_bytes": 4,
+            "meaning": "",
+            "offset_expression": "8 + len(obligation) + len(before_holder)"
+          }
+        ],
+        "bound_basis": "At most 6 facts x 54 historical resource identities; a resource occurs at most once in one fact. before/after is fact-time data, not a pointer to mutable current ownership."
+      }
+    ],
+    "family_outcome_tags": {
+      "Prepare": {
+        "Normal": 0,
+        "EntryCancelled": 1,
+        "EntryTimeout": 2
+      },
+      "BindAll": {
+        "SuccessA": 0,
+        "SuccessB": 1,
+        "Type": 3,
+        "NotNull": 4,
+        "Range": 5,
+        "SyntaxUtf8": 6,
+        "Limit": 7,
+        "EntryCancelled": 8,
+        "EntryTimeout": 9,
+        "Count0": 2,
+        "Count2": 10
+      },
+      "Execute": {
+        "Success": 0,
+        "EntryCancelled": 1,
+        "EntryTimeout": 2,
+        "StalePlan": 3,
+        "StatementRestoredValueError": 4,
+        "TerminalCancelled": 5,
+        "TerminalTimeout": 6,
+        "ConflictWholeAbortComplete": 7,
+        "UndoIncomplete": 8,
+        "CommitUnknown": 9,
+        "CommittedPublicationPending": 10
+      },
+      "Fetch": {
+        "Rows": 0,
+        "Eof": 1,
+        "RowBufferTooSmall": 2,
+        "EntryCancelled": 3,
+        "EntryTimeout": 4,
+        "TerminalCancelled": 5,
+        "TerminalTimeout": 6,
+        "StatementRestoredReadError": 7,
+        "WholeAbortComplete": 8,
+        "UndoIncomplete": 9
+      },
+      "CloseResult": {
+        "Normal": 0,
+        "EntryCancelled": 1,
+        "EntryTimeout": 2
+      },
+      "CloseStatement": {
+        "Normal": 0,
+        "EntryCancelled": 1,
+        "EntryTimeout": 2
+      },
+      "Begin": {
+        "Normal": 0,
+        "EntryCancelled": 1,
+        "EntryTimeout": 2
+      },
+      "SetAutocommit": {
+        "Normal": 0,
+        "EntryCancelled": 1,
+        "EntryTimeout": 2
+      },
+      "CommitAtomic": {
+        "Success": 0,
+        "NoWriteSuccessWithoutIdentity": 1,
+        "ValidationAborted": 2,
+        "UndoIncomplete": 3,
+        "Unknown": 4,
+        "TerminalCancelledAbortComplete": 5,
+        "TerminalTimeoutAbortComplete": 6,
+        "CommittedPublicationPending": 7,
+        "EntryCancelled": 8,
+        "EntryTimeout": 9
+      },
+      "Rollback": {
+        "Complete": 0,
+        "Incomplete": 1,
+        "EntryCancelled": 2,
+        "EntryTimeout": 3
+      },
+      "CloseSession": {
+        "Complete": 0,
+        "Incomplete": 1,
+        "EntryCancelled": 2,
+        "EntryTimeout": 3
+      },
+      "ReopenSession": {
+        "HealthySameEngine": 0,
+        "RecoveredFreshEngine": 1
+      },
+      "InspectStatement": {
+        "Inspect": 0
+      },
+      "InspectSession": {
+        "Inspect": 0
+      },
+      "SignalContext": {
+        "Cancel": 0,
+        "DeadlineReached": 1
+      },
+      "ParkFetch": {
+        "AbsentDeadline": 0,
+        "FutureDeadline": 1
+      },
+      "ResumeFetch": {
+        "Rows_Complete": 0,
+        "Rows_Incomplete": 1,
+        "Eof_Complete": 2,
+        "Eof_Incomplete": 3,
+        "ReadError_Complete": 4,
+        "ReadError_Incomplete": 5,
+        "Conflict_Complete": 6,
+        "Conflict_Incomplete": 7,
+        "RowBufferTooSmall_Complete": 8,
+        "RowBufferTooSmall_Incomplete": 9
+      },
+      "BeginCommit": {
+        "AbsentDeadline": 0,
+        "FutureDeadline": 1
+      },
+      "CommitFact": {
+        "Attempted": 0,
+        "DurableConfirmed": 1,
+        "Published": 2,
+        "NoWriteValidatedWithIdentity": 3,
+        "NoWriteValidatedWithoutIdentity": 4
+      },
+      "FinishCommit": {
+        "Committed": 0,
+        "Aborted": 1,
+        "NotCommittedRecoveryRequired": 2,
+        "Unknown": 3,
+        "CommittedPublicationPending": 4
+      },
+      "RecoveryConfirmedFreshEngine": {
+        "Exact": 0,
+        "MissingFirst": 1,
+        "ExtraNeverIssued": 2,
+        "ForeignEngineFirst": 3,
+        "DuplicateFirst": 4
+      }
+    },
+    "fact_consumption_bits": {
+      "Work": 1,
+      "Cleanup": 2,
+      "Receipt": 4,
+      "CommitProgress": 8,
+      "RecoverySet": 16
+    },
+    "primitive_constraints": {
+      "Actor": "u8 0 or 1",
+      "Slot": "u8 0 or 1",
+      "bool": "u8 0 or 1",
+      "zero": "all designated bytes are zero",
+      "Ref<T>": "u16 >0, exact existing kind-local original nonce; no renumbering",
+      "normal_identity_generation": "0 for non-handle kinds; statement/result 1..12; slot next generation 1..13",
+      "normal_nonce": "Engine 1..7; Session 1..8; Resource 1..54; other defining kinds 1..6",
+      "required_section_counts": {
+        "actors": 2,
+        "prepared_slots": 4
+      },
+      "initial_resources": 0,
+      "context_ordinal": "1-based 1..6; Issued[k] selects ordinal k+1. Nonce and ordinal both retained exactly.",
+      "completed_extra_payload": "reject, including zero-filled old API/deadline/target fields",
+      "cross_actor_context_provenance": "Only same-engine exact first_fence_context may retire peer results or birth peer Recovery; ordinary birth/retirement foreign actor is rejected.",
+      "no_write_no_identity_delivery": "receipt=None and delivery=NotApplicable before/after Finish; knowledge becomes KnownCommitted at Finish.",
+      "all_issue_ordinals": "All issued statement/result/context/binding ordinals use 1-based kind-local issue order; zero is not a defined ordinal."
+    },
+    "reserved_enum_tags": {
+      "ReturnCode": {
+        "26": "v1 IgnoredUnissued; rejected in v2 normal responses/state diagnostics",
+        "27": "v1 IgnoredForeign; rejected in v2 normal responses/state diagnostics"
+      }
+    }
+  },
+  "bounds": {
+    "original_candidate_bytes": 6720,
+    "header_bytes": 256,
+    "trailer_bytes": 32,
+    "sum_record_maxima_bytes": 11286,
+    "max_state_bytes": 11574,
+    "sum_record_counts": 487,
+    "owner_records": 54,
+    "fact_obligation_records": 36,
+    "fact_owner_records": 324,
+    "bound_kind": "Safe section-wise bound with total contexts<=6 and parked<=2; not a reachable tight maximum or native-memory measurement.",
+    "arena_at_500000_max_states_bytes": 5787000000,
+    "visited_packed_bytes": 25165824,
+    "metadata_at_500000_if_exact_capacity_bytes": 28000000,
+    "rectangular_state_bytes_without_parked_cross_constraint": 11646,
+    "context_section_bytes": 162,
+    "context_section_formula": "2*39+4*21"
+  },
+  "pending_decisions": [
+    "Independent D2 adoption of this exact B state/input schema and pre-state recipes; no implementation authorization from this proposal.",
+    "Independent exact initial and mandatory input/state/response literals remain separate author work; not generated here."
+  ],
+  "execution": {
+    "design_arithmetic_only": true,
+    "native_size_measured": false,
+    "literal_bytes_generated": false,
+    "serializer_written": false,
+    "model_written": false,
+    "checker_written": false,
+    "explorer_written": false,
+    "product_changed": false,
+    "tests_run": false,
+    "compile_run": false,
+    "document_verification_run": false,
+    "commit_created": false
+  },
+  "resolved_input": {
+    "version": 1,
+    "input_state_version_namespaces_distinct": true,
+    "prefix_fields": [
+      {
+        "name": "version",
+        "type": "u16le=1",
+        "bytes": 2,
+        "offset": 0,
+        "meaning": ""
+      },
+      {
+        "name": "api",
+        "type": "Api",
+        "bytes": 1,
+        "offset": 2,
+        "meaning": ""
+      },
+      {
+        "name": "actor",
+        "type": "0|1; Recovery=255",
+        "bytes": 1,
+        "offset": 3,
+        "meaning": ""
+      },
+      {
+        "name": "outcome",
+        "type": "family-local u8",
+        "bytes": 1,
+        "offset": 4,
+        "meaning": ""
+      },
+      {
+        "name": "prepare_slot",
+        "type": "0|1; unused255",
+        "bytes": 1,
+        "offset": 5,
+        "meaning": ""
+      },
+      {
+        "name": "prepare_shape",
+        "type": "Shape; unused255",
+        "bytes": 1,
+        "offset": 6,
+        "meaning": ""
+      },
+      {
+        "name": "prepare_N",
+        "type": "0|1; unused255",
+        "bytes": 1,
+        "offset": 7,
+        "meaning": ""
+      },
+      {
+        "name": "set_autocommit",
+        "type": "Autocommit; unused255",
+        "bytes": 1,
+        "offset": 8,
+        "meaning": ""
+      },
+      {
+        "name": "target",
+        "type": "Option<RawIdentity16>",
+        "offset_expression": "9",
+        "min_bytes": 1,
+        "max_bytes": 17
+      },
+      {
+        "name": "context",
+        "type": "Option<RawIdentity16>",
+        "offset_expression": "9+len(target)",
+        "min_bytes": 1,
+        "max_bytes": 17
+      },
+      {
+        "name": "original_deadline",
+        "type": "Deadline",
+        "bytes": 1,
+        "offset_expression": "9+len(target)+len(context)"
+      },
+      {
+        "name": "cancel",
+        "type": "bool",
+        "bytes": 1,
+        "offset_expression": "9+len(target)+len(context) + 1"
+      },
+      {
+        "name": "deadline_reached",
+        "type": "bool",
+        "bytes": 1,
+        "offset_expression": "9+len(target)+len(context) + 1 + 1"
+      },
+      {
+        "name": "bind_count",
+        "type": "u8:0..2",
+        "bytes": 1,
+        "offset_expression": "9+len(target)+len(context) + 1 + 1 + 1"
+      },
+      {
+        "name": "bind_values",
+        "type": "BindValue[bind_count]",
+        "offset_expression": "9+len(target)+len(context) + 1 + 1 + 1 + 1"
+      },
+      {
+        "name": "environment",
+        "type": "Option<Env1>",
+        "offset_expression": "9+len(target)+len(context) + 1 + 1 + 1 + 1 + len(bind_values)"
+      }
+    ],
+    "bind_value": {
+      "fields": [
+        {
+          "name": "tag",
+          "type": "Utf8=0, Int64=1, TypedNullUtf8=2",
+          "bytes": 1,
+          "offset": 0,
+          "meaning": ""
+        },
+        {
+          "name": "byte_length",
+          "type": "u16le",
+          "bytes": 2,
+          "offset": 1,
+          "meaning": ""
+        },
+        {
+          "name": "bytes",
+          "type": "exact bytes",
+          "offset": 3,
+          "bytes_expression": "byte_length"
+        }
+      ],
+      "normal_profile_max_one_value_bytes": 11,
+      "invalid_utf8_is_raw_negative_input": true
+    },
+    "environment": {
+      "schema": 1,
+      "fixed_prefix_bytes": 25,
+      "fields": [
+        {
+          "name": "envelope_bytes",
+          "type": "u16le",
+          "bytes": 2,
+          "offset": 0,
+          "meaning": "Includes prefix; exactly consumed."
+        },
+        {
+          "name": "schema",
+          "type": "u8=1",
+          "bytes": 1,
+          "offset": 2,
+          "meaning": ""
+        },
+        {
+          "name": "kind",
+          "type": "FactKind",
+          "bytes": 1,
+          "offset": 3,
+          "meaning": ""
+        },
+        {
+          "name": "fact",
+          "type": "RawIdentity16",
+          "bytes": 16,
+          "offset": 4,
+          "meaning": ""
+        },
+        {
+          "name": "work_kind",
+          "type": "EnvironmentWorkKind",
+          "bytes": 1,
+          "offset": 20,
+          "meaning": ""
+        },
+        {
+          "name": "work_class",
+          "type": "u8 family-local; unused255",
+          "bytes": 1,
+          "offset": 21,
+          "meaning": ""
+        },
+        {
+          "name": "cleanup",
+          "type": "Cleanup 1..4 or unused255",
+          "bytes": 1,
+          "offset": 22,
+          "meaning": ""
+        },
+        {
+          "name": "commit_class",
+          "type": "EnvironmentCommitClass or unused255",
+          "bytes": 1,
+          "offset": 23,
+          "meaning": ""
+        },
+        {
+          "name": "reserved",
+          "type": "zero",
+          "bytes": 1,
+          "offset": 24,
+          "meaning": ""
+        },
+        {
+          "name": "transaction",
+          "type": "Option<RawIdentity16>",
+          "min_bytes": 1,
+          "max_bytes": 17,
+          "offset_expression": "25"
+        },
+        {
+          "name": "receipt",
+          "type": "Option<RawIdentity16>",
+          "min_bytes": 1,
+          "max_bytes": 17,
+          "offset_expression": "25 + len(transaction)"
+        },
+        {
+          "name": "anchor",
+          "type": "Option<RawIdentity16>",
+          "min_bytes": 1,
+          "max_bytes": 17,
+          "offset_expression": "25 + len(transaction) + len(receipt)"
+        },
+        {
+          "name": "fresh_engine",
+          "type": "Option<RawIdentity16>",
+          "min_bytes": 1,
+          "max_bytes": 17,
+          "offset_expression": "25 + len(transaction) + len(receipt) + len(anchor)"
+        },
+        {
+          "name": "obligation_count",
+          "type": "u16le:0..7",
+          "bytes": 2,
+          "offset_expression": "25 + len(transaction) + len(receipt) + len(anchor) + len(fresh_engine)"
+        },
+        {
+          "name": "obligations",
+          "type": "InputObligation22[obligation_count]",
+          "offset_expression": "25 + len(transaction) + len(receipt) + len(anchor) + len(fresh_engine) + 2"
+        },
+        {
+          "name": "owner_count",
+          "type": "u16le:0..54",
+          "bytes": 2,
+          "offset_expression": "25 + len(transaction) + len(receipt) + len(anchor) + len(fresh_engine) + 2 + 22*obligation_count"
+        },
+        {
+          "name": "owners",
+          "type": "InputOwner[owner_count]",
+          "offset_expression": "25 + len(transaction) + len(receipt) + len(anchor) + len(fresh_engine) + 2 + 22*obligation_count + 2"
+        }
+      ],
+      "work_tags": {
+        "None": 0,
+        "Execute": 1,
+        "Fetch": 2,
+        "Resume": 3
+      },
+      "work_class": "Execute/Fetch original family outcome; Resume Rows0/Eof1/ReadError2/Conflict3/RowBufferTooSmall4; None255",
+      "cleanup_tags": {
+        "Complete": 1,
+        "Incomplete": 2,
+        "LocalReleaseAndHandoff": 3,
+        "RecoveryConfirmed": 4,
+        "Absent": 255
+      },
+      "commit_tags": {
+        "Aborted": 0,
+        "NotCommittedRecoveryRequired": 1,
+        "Attempted": 2,
+        "DurableConfirmed": 3,
+        "Published": 4,
+        "NoWriteWithIdentity": 5,
+        "NoWriteWithoutIdentity": 6,
+        "Unknown": 7,
+        "PublicationPending": 8,
+        "Absent": 255
+      },
+      "input_obligation": {
+        "min_bytes": 22,
+        "max_bytes": 22,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le=22",
+            "bytes": 2,
+            "offset": 0,
+            "meaning": ""
+          },
+          {
+            "name": "obligation",
+            "type": "RawIdentity16",
+            "bytes": 16,
+            "offset": 2,
+            "meaning": ""
+          },
+          {
+            "name": "known_decision",
+            "type": "Decision",
+            "bytes": 1,
+            "offset": 18,
+            "meaning": ""
+          },
+          {
+            "name": "after_ownership_summary",
+            "type": "OwnershipSummary",
+            "bytes": 1,
+            "offset": 19,
+            "meaning": ""
+          },
+          {
+            "name": "associated_owner_count",
+            "type": "u16le:0..54",
+            "bytes": 2,
+            "offset": 20,
+            "meaning": ""
+          }
+        ]
+      },
+      "input_owner": {
+        "min_bytes": 23,
+        "max_bytes": 71,
+        "fields": [
+          {
+            "name": "record_bytes",
+            "type": "u16le",
+            "bytes": 2,
+            "offset": 0,
+            "meaning": ""
+          },
+          {
+            "name": "resource",
+            "type": "RawIdentity16",
+            "bytes": 16,
+            "offset": 2,
+            "meaning": ""
+          },
+          {
+            "name": "resource_kind",
+            "type": "ResourceKind",
+            "bytes": 1,
+            "offset": 18,
+            "meaning": ""
+          },
+          {
+            "name": "after_disposition",
+            "type": "OwnerDisposition",
+            "bytes": 1,
+            "offset": 19,
+            "meaning": ""
+          },
+          {
+            "name": "obligation",
+            "type": "Option<RawIdentity16>",
+            "min_bytes": 1,
+            "max_bytes": 17,
+            "offset_expression": "20"
+          },
+          {
+            "name": "before_holder",
+            "type": "Option<RawIdentity16>",
+            "min_bytes": 1,
+            "max_bytes": 17,
+            "offset_expression": "20 + len(obligation)"
+          },
+          {
+            "name": "after_holder",
+            "type": "Option<RawIdentity16>",
+            "min_bytes": 1,
+            "max_bytes": 17,
+            "offset_expression": "20 + len(obligation) + len(before_holder)"
+          }
+        ]
+      },
+      "max_obligations_normal": 6,
+      "max_obligations_negative": 7,
+      "max_owners": 54,
+      "max_bytes": 4085,
+      "formula": "25+4*17+2+7*22+2+54*71",
+      "consumed_parts": "Output only. Input raw work retained even if ignored. State registration iff actual part consumed."
+    },
+    "max_bytes_rectangular": 4144,
+    "max_bytes_with_family_exclusivity": 4133,
+    "max_formula": "47+11+1+4085 (Bind and Env mutually exclusive, allowing tighter 4133)",
+    "raw_identity": "Do not prevalidate child target or recovery members as state definitions. U9 kind254. Full Identity16 in inputs; compact typed Ref only in validated state.",
+    "pre_state_selection_spec": "선택기는 **pre-state와 raw action만** 읽는다. transition/post-state/checker의 예상 성공 결과·이전 forensic edge는 읽지 않는다. admission 결과를 먼저 실행해 얻는 방식도 금지한다. typed target을 인증할 수 없으면 target-derived descriptor/statement 집합은 empty이며 raw target은 prefix에 그대로 남는다. child 인증 실패인 target family의 transaction은 None이다. 세션 단위 Commit/Rollback/CloseSession만 actor.transaction을 직접 선택한다. 이 입력이 앞단 handle/state/control gate에서 거절되면 환경 관계를 후검산하거나 fact를 등록하지 않는다.\n\n기호: `Live(X)`는 disposition≠Released이고 original holder X 또는 그 transaction의 obligation으로 명시 handoff된 owner다. `L(statement)`는 해당 current plan/current binding과 해당 private result의 cursor3 중 Live인 것, `C(result)`는 그 cursor3, `RW(T)`는 T의 Undo/Locks/AbortReserve, `R(T)`는 T의 Recovery aggregate다. 과거 Replaced/Released는 재선택하지 않는다. `O(E)`는 E의 **Outstanding** obligation, `RWO(E)`는 O(E)의 txn에 속한 Live RW/Recovery다. 원 actor의 local set은 두 current slot의 L 합집합이다. 이전 incarnation·peer plan/binding/cursor는 포함하지 않는다.\n\n### prospective identity allocation plan\n\n- fact는 caller의 attached engine(Recovery는 current old engine), next Fact nonce의 supplied symbol이다. receipt/anchor/fresh engine은 관련 family에서만 next 미사용 symbol 또는 명시 기존 receipt를 사용한다. 이 선택은 counter를 전진시키지 않는다.\n- txn은 Execute에서만 인증된 statement 뒤 현재 actor.transaction을 선택한다. Fetch/CloseResult는 인증된 descriptor.transaction, CloseStatement는 소속 descriptor가 있으면 그 원 transaction, 없으면 None이다. unrelated actor 거래를 붙이지 않는다. continuation은 일치하는 Parked.transaction, 세션 API는 actor.transaction이다. Execute에서 현재 txn이 없고 인증된 statement metadata가 있으면 pre-state next Transaction을 후보로 제공한다: ON Select=implicit RO, ON Dml=implicit RW, OFF=RW. 기존 token 거절/ReadyUnbound/기존Invalid/entry control은 이 후보를 소비하지 않는다.\n- **admitted Execute StalePlan도 실제 transaction을 먼저 고정한다.** 처음 만든 OFF RW3은 Active로 남고 ON implicit은 RO 종료 또는 RW whole-abort Complete다. row effect0/NoEffect를 새 거래0으로 해석하지 않는다. metadata/binding은 보존하고 statement는 Invalid다.\n- 새 resource ID는 identity-transition의 phase 순서와 pre-state next Resource에서 연속 선택한다. 새 RW3은 txn 생성 시 항상 후보에 포함하고, cursor3은 raw Execute Success+Select에만 포함한다. 원인을 포함한 outstanding RW가 처음 fence를 받는 raw class이면 신규 Recovery를 txn numeric order로 덧붙인다. 이미 Published/NoWriteValidated Ended인 peer는 제외한다. 새 obligation도 같은 txn numeric order로 next Obligation부터 선택하고 기존 unique key가 있으면 그 exact ID를 재사용한다.\n- Prepare/Bind/Begin의 순수 추상 owner는 이 순서로 상태에 생기지만 **외부 envelope는 None**이다. 실제 allocation/engine 사실로 해석하지 않는다.\n- born resource row의 original holder는 plan/binding→Statement, cursor→Result, RW/Recovery→Transaction으로 위 계획에서 정한다. 기존 original holder는 변경하지 않는다. handoff는 previous=current/current=Obligation/Transferred/transfer_count+1; release는 previous=current/current=None/Released/transfer_count 유지다. born+released의 previous는 그 예정 original holder다.\n\n### family selection table\n\n아래 `births`와 dispositions는 pre-state+raw class가 제시하는 환경 입력 recipe다. 환경 가능성은 앞단 admission 뒤에만 검사한다. 불가능한 class를 적법한 다른 outcome으로 바꾸거나 admission 거절을 environment exclusion으로 바꾸지 않는다. `changed union`은 다음 표에 명시한 예정 birth/release/handoff 집합의 합집합이며 구현 결과 diff가 아니다. 같은 자원은 한 번만 들어간다.\n\n| family / raw 경로 | envelope kind·제공 class | 사전 대상과 예정 disposition |\n| --- | --- | --- |\n| Execute, entry 이외 | Execution0; WorkKind Execute/원 outcome | 새 txn RW3 births. Success Select cursor3 births Held. explicit/OFF Success·recoverable value/control/StalePlan은 RW 유지. ON Dml Success RW3 Released+Published/receipt, ON Dml recoverable/ StalePlan/terminal control Complete는 RW3 Released+Aborted. ConflictComplete는 현재 RW3 및 현재 Open cursor Released. Incomplete/Unknown/PublicationPending은 아래 fence census. 실패 Execute에는 cursor birth0 |\n| Fetch | FetchWorkOrCleanup1; Fetch/원 outcome | Rows/RowBufferTooSmall owner set empty. Eof/recoverable terminal Complete는 C(result) Released, explicit/OFF RW 보존, implicit RO 종료. ConflictComplete는 C(current Open result)+RW(T) Released. UndoIncomplete는 fence census, cursor owner 보존 |\n| Resume | FetchWorkOrCleanup1; Resume work0..4와 raw Complete/Incomplete 유지 | pending Cancel/Deadline이면 work와 무관하게 C(result) cleanup, Complete는 explicit/OFF RW 보존/implicit 종료, Incomplete는 fence. 무신호는 Fetch 대응. Rows/RowBufferTooSmall/Eof+Incomplete는 admitted 뒤 제외. 선행 fence terminal은 제공 envelope 전체 미소비 |\n| CloseResult Normal | LocalCleanup8/Complete1 | C(result) Released만, implicit RO 종료, explicit/OFF RW 불변. current Closed는 fact0 |\n| CloseStatement Normal | LocalCleanup8/Complete1 | L(statement) Released만. 소속 descriptor 원 txn(Ended일 수 있음)만 참조하고 unrelated 현재 actor txn/result/RW/peer frame 보존. current Closed는 fact0 |\n| Rollback | RollbackCleanup5/Complete1 또는 Incomplete2 | Complete는 RW(T)+현재 Open cursor Released; 이미 terminal인 다른 descriptor 불변. Incomplete는 fence census |\n| CloseSession | SessionCleanup6 | Admitting Complete는 actor local set Released+RW(T) Released(whole abort), Idle/RO는 존재하는 local만. Incomplete는 실제 RW에서만 fence census이고 local 성공을 발명하지 않음. Fenced Complete는 actor local set Released+해당 origin session의 Live RW/Recovery를 정확 obligation으로 handoff, 이미 handoff된 것은 보존. Closed cached는 fact0 |\n| CommitAtomic | CommitAtomic2 | Success changed RW: RW Released/Published+durable receipt. Success no-write: RW Released/NoWriteWithIdentity; WithoutIdentity는 None. validation/observed cancel/timeout Complete: RW Released/Aborted. Incomplete/Unknown/PublicationPending은 fence census. entry controls는 None |\n| CommitFact | CommitProgress3 | Attempted는 owner changes0/Attempted. DurableConfirmed는 changes0/새 durable receipt+anchor. Published는 Live RW(T)+R(T) Released; 기존 Outstanding obligation이면 DrainedConfirmed2. NoWriteValidated는 RW Released, 선택 receipt/None. BeforeAttempt pending control/peer fence는 ENV gate이며 소비0 |\n| FinishCommit | CommitFinish4 | BeforeAttempt Aborted는 RW Released, NCR는 Incomplete fence 또는 이미 fenced인 해당 txn owner의 정확 handoff. Attempted Unknown/DurableConfirmed PublicationPending은 기존 의무 보존·원인 갱신. Published/NoWriteValidated Committed는 기존 receipt/None 전달만, owner changes0. 첫 fence 필요 시 census 추가 |\n| Recovery | RecoveryConfirmed7/RecoveryConfirmed4 | O(E)의 exact obligation들과 RWO(E) Released, fresh Engine supplied. 이미 settled 의무/Released owner 제외. peer local은 Closed 전제에서 이미 처리됐어야 함 |\n| 나머지 / 모든 entry-control class | None | Prepare/Bind/Begin/Set/Park/BeginCommit/Inspect/Signal/Reopen에 외부 fact 없음 |\n\n**Fence census:** cause action에서 새로 생긴 RW3을 포함해 old engine의 실제 미종료 RW txn 중 progress None/BeforeAttempt/Attempted/DurableConfirmed를 txn numeric order로 선택한다. Published/NoWriteValidated Ended는 제외한다. 신규 obligation별 `RW(T)∪R(T)`를 input에 넣고, 그대로 유지되는 RW는 before=after=원 holder/Held(이미 Transferred이면 그 상태 유지)로 제공한다. 최초 recovery birth는 before=None/after=Transaction/Held다. cause의 cursor owner를 실패 확인 없이 release하지 않으며 peer cursor/plan/binding은 input census에 포함하지 않고 frame으로 보존한다. 기존 obligation의 reason update만이면 기존 member 전체를 재복사할 필요 없이 예정 owner change 집합을 쓴다. owner.last_fact는 birth/holder/disposition이 실제 바뀔 때만 갱신하고 unchanged census에는 갱신하지 않는다.\n\n**Obligation membership:** 신규 obligation census, handoff/drain/recovery가 직접 다루는 existing obligation, 원 cause 갱신의 existing obligation만 포함한다. 각 row의 associated_owner_count는 이 envelope owner rows 중 해당 obligation과 연결한 개수이고 after summary는 그 연결 rows의 after disposition으로 계산한 None/AllHeld/AllTransferred/AllReleased/Mixed다. 이는 입력 작성 시 산술이고 현재 전체 state obligation summary와 혼동하지 않는다. state의 obligation summary는 retained 연결 owner 전체를 검산한다. 같은 owner를 둘 이상의 obligation에 붙이지 않는다. 기존 owner의 직접 release가 obligation에 속하면 해당 obligation row도 같이 포함한다.\n\n제공 receipt는 새 durable/no-write confirmation일 때만 next Receipt를 사용한다. DurableConfirmed 다음 Published/Finish는 pre-state에 있던 동일 receipt+anchor를 복사하며 새 nonce를 발급하지 않는다. Unknown에는 새 success receipt가 없다. NoWriteWithoutIdentity는 receipt/anchor None이고 receipt delivery는 Finish 전후 NotApplicable, knowledge만 Finish에서 KnownCommitted다. Published/Finish의 confirmation이 원 txn/engine과 다르면 gate 후 environment 제외다. Recovery 이외 fresh_engine=None이다. 이 symbol은 실제 ACK/q/LSN이 아니다.\n\n### recovery negative sets의 완전한 변경 규칙\n\n먼저 pre-state에서 Exact의 sorted O(E)와 RWO(E) owner rows를 만든다. O(E)가 비면 **네 mutation 모두** ENV-RECOVERY-NO-FIRST로 제외하며 Exact로 alias하지 않는다. nonempty이면 owner vector와 나머지 envelope bytes는 Exact 그대로 두고 obligation vector만 다음과 같이 바꾼다.\n\n- MissingFirst: index0 row 삭제; count-1.\n- ExtraNeverIssued: 첫 row를 복사해 identity의 nonce만255로 바꾸고(원 kind/actor/slot/engine/session/generation/reserved 유지) 맨 끝에 append; count+1. 이 valid-shape/unissued ID는 상태 정의가 아니다.\n- ForeignEngineFirst: 첫 row의 identity.engine만255로 바꾸며 나머지 row/원 위치 유지; count 불변.\n- DuplicateFirst: 첫 row를 바로 뒤 index1에 그대로 복제; count+1.\n\n이 네 입력은 semantic ENV-RECOVERY-SET이며 structural reader가 정렬·dedup하여 고치지 않는다. profile raw label은 input key 밖이어도 family outcome tag0..4가 input에 있으므로 empty mutation이 Exact와 같다는 이유로 alias하지 않는다. count가 owner bound를 넘지 않게 negative owner를 따로 발급하지 않는다.",
+    "validation_and_checkpoint_spec": "state loader는 길이/checksum/profile/layout/정렬/중복/enum/reserved/범위를 먼저 검산하고 모든 exact typed refs를 resolve한다. Completed trailing payload, Parked API/status/required target 불일치, actor당 두 Parked, dangling incoming context, duplicate txn obligation key, Held/Transferred current-holder 없음, Released current-holder 있음, wrong current slot/descriptor, terminal payload 불일치, durable/no-write anchor 불일치를 reject한다. incoming provenance는 Completed ID만 검산하며 삭제된 payload를 요구하지 않는다. settlement2는 기존 peer obligation·Published fact·확인된 RW/Recovery release와 연결되어야 하고 fresh engine recovery로 바꿔 해석하지 않는다.\n\ninput reader는 프레이밍/length/알려진 container tags/structural count만 검사한다. malformed target, wrong recovery identity/order/duplicates, invalid Bind bytes는 해당 normal raw negative input 그대로 남긴다. 환경 관계 검산은 API의 identity→Closed/Busy→fence→API state→entry controls 뒤다. 불가능한 environment는 successor/registration/consumption0이고 executed API rejection과 다른 분류다. fresh malformed caller context는 별도 envelope 제외다. v2 schema/state parse reject와 checked API 오류·environment 제외를 하나의 실패 code로 합치지 않는다.\n\ncheckpoint는 state bytes 전체와 이 v2 schema/profile/action/input/exclusion hash를 묶는다. 입력 hash가 다른 prefix·env field는 resume/alias와 호환되지 않는다. B equality로 dedup해도 원 completed edge/classification/응답/입력 원본은 append ledger에 남기고 이전 A context를 복원하기 위해 forensic를 읽지 않는다. completed durable batch 경계·pending edge·FIFO cursor·visited reconstruction은 resource-proposal-v1의 atomic batch 규칙을 유지한다. B mutant는 normal key에 hidden 오염 state를 합치지 않고 별도 전체 latent key/mandatory trace를 유지한다.\n\n2GiB/500k/30분 cap 또는 archive 실패는 INCONCLUSIVE다. 현재 작은 문서 저장 공간과10GiB durable checkpoint 공간 확보는 다르다. `/tmp`의 여유를 durable archive라고 주장하지 않는다. v2의 byte 절약으로 원 필수 입력·owner·edge 보존량을 줄이지 않는다.",
+    "supplied_class_mapping": "위 bytes의 중복 scalar도 임의 조합이 아니다. 아래 선택을 적용하고 해당하지 않는 work는 None/255, cleanup/commit은255, receipt/anchor/fresh_engine은 None으로 둔다. raw outcome byte는 이 선택과 별개로 prefix에 항상 남는다.\n\n| raw class | work kind/class | cleanup | commit / receipt·anchor |\n| --- | --- | --- | --- |\n| Execute Success Select 또는 explicit/OFF Dml | Execute/0 | 255 | 255/None |\n| Execute Success ON Dml | Execute/0 | 255 | Published4 / 새 durable receipt+anchor |\n| Execute StalePlan3 / ValueError4 / TerminalCancelled5 / TerminalTimeout6 | Execute/원 tag | Complete1 | 새 ON implicit RW만 Aborted0, 그 외255 / None |\n| Execute Conflict7 | Execute/7 | Complete1 | RW일 때 Aborted0, 그 외255 / None |\n| Execute Incomplete8 / Unknown9 / PublicationPending10 | Execute/원 tag | 2 / 255 / 255 | NCR1 / Unknown7 / PublicationPending8; 마지막만 새 durable receipt+anchor |\n| Fetch Rows0 / RowBufferTooSmall2 | Fetch/원 tag | 255 | 255/None |\n| Fetch Eof1 / TerminalCancelled5 / TerminalTimeout6 / ReadError7 | Fetch/원 tag | Complete1 | 255/None |\n| Fetch ConflictWholeAbort8 / Incomplete9 | Fetch/원 tag | 1 / 2 | RW이면 Aborted0 / NCR1, 그 외255 / None |\n| Resume 각10class | Resume/원 next_work0..4 | 원 raw Complete1 또는 Incomplete2 그대로 | RW+Incomplete는 NCR1, 무신호 RW+Conflict+Complete는 Aborted0, 나머지255; receipt None |\n| CloseResult/CloseStatement Normal | None/255 | Complete1 | 255/None |\n| Rollback Complete/Incomplete | None/255 | 1/2 | Aborted0/NCR1, receipt None |\n| CloseSession Complete Admitting RW / Idle·RO | None/255 | Complete1 | RW면 Aborted0, 그 외255; None |\n| CloseSession Complete Fenced / Incomplete | None/255 | LocalReleaseAndHandoff3 / Incomplete2 | Fenced는255, Incomplete는NCR1; None |\n| CommitAtomic Success | None/255 | 255 | changed RW면Published4+새 durable receipt/anchor, no-write면NoWriteWithIdentity5+새 no-write receipt/anchorNone |\n| CommitAtomic WithoutIdentity1 | None/255 | 255 | NoWriteWithoutIdentity6 / None |\n| CommitAtomic ValidationAborted2 / TerminalCancelled5 / TerminalTimeout6 | None/255 | Complete1 | Aborted0 / None |\n| CommitAtomic Incomplete3 / Unknown4 / PublicationPending7 | None/255 | 2 / 255 / 255 | NCR1 / Unknown7 / PublicationPending8; 마지막만 새 durable receipt+anchor |\n| CommitFact Attempted0 / Durable1 / Published2 / NoWriteWith3 / NoWriteWithout4 | None/255 | 255 | Attempted2 / DurableConfirmed3 / Published4 / NoWriteWithIdentity5 / NoWriteWithoutIdentity6; Durable는새 receipt+anchor, Published는기존, NoWriteWith는새 no-write receipt, 나머지None |\n| Finish Committed0 | None/255 | 255 | preprogress Published면Published4, NoWriteValidated는기존 receipt유무에따라5/6; 기존 receipt/anchor 그대로 |\n| Finish Aborted1 / NCR2 / Unknown3 / PublicationPending4 | None/255 | 1 / (Fenced이면3 아니면2) / 255 / 255 | 0 / 1 / 7 / 8; PublicationPending은기존 durable receipt+anchor, 나머지None |\n| Recovery 다섯class | None/255 | RecoveryConfirmed4 | 255/receiptNone/anchorNone; fresh_engine Some |\n\n없거나 인증되지 않은 txn 때문에 raw CommitAtomic Success의 changed 여부를 읽을 수 없으면 **no-write with identity**를 입력 fallback으로 제공한다. Finish Committed의 matching pending이 없거나 progress가 Published/NoWriteValidated가 아니면 Published+기존 receipt(없으면None)를 fallback으로 제공한다. 이 fallback은 TxnState/NoPendingOperation/ContinuationKind 등의 앞단 진단을 바꾸지 않으며 gate를 통과한 불가능한 조합은 환경 제외다. 새 receipt symbol의 scope는 선택 txn이 있으면 그 origin actor/session/engine, 없으면 caller 현재 scope다. anchor는 해당 engine scope다. 소비하지 않은 후보는 counter0 변화다."
+  },
+  "state_identity_and_projection_spec": "state magic은 ASCII `XADBLM02`, schema version은 u16 LE 2다. header는256 bytes이며 나머지 offset은 v1과 같다: total length@12, layout/profile/action/exclusion SHA-256@16/48/80/112, current engine Ref@144, kind1..12 next nonce@146, section count16개@170, reserved zero54@202. trailer는 앞의 모든 bytes에 대한 SHA-256 32 bytes다. layout/profile/action/exclusion 입력 hash가 바뀌므로 v1 checkpoint를 v2로 자동 이주하지 않는다. layout hash는 이 제안 문서의 자기참조 hash가 아니라 D2 때 고정하는 독립 schema descriptor의 hash다.\n\n16개 section 순서·Identity16·Diagnostic16·비context record field 순서는 v1 그대로다. JSON은 상속 명령이 아니라 전체 선언을 포함한다. 정수 little-endian, wire alignment 없음, bool0/1, 지정 reserved0, Option0=tag만/1=payload, record length u16은 자기 prefix까지 포함한다. section count0은 byte0개이며 None과 빈 vector는 다르다. references는 원 kind-local nonce u16이고 정렬 후 배열 index가 아니다. 모든 defining identity를 유지하며 숫자 재번호·actor 치환·과거 nonce 병합은 없다.\n\n정렬은 `(kind, engine, session, actor, slot, nonce, generation)`의 **정수 tuple**이다. LE bytes memcmp가 아니다. actor/slot은 숫자순, obligation은 `(engine,transaction,origin_session)` exact key, membership은 `(fact,obligation/resource)`의 해석된 exact key순이다. visited hash collision은 전체 정상 canonical bytes를 대조한다. 과거 forensic edge나 탐색 depth/parent/queue 위치는 state key 밖이다.\n\n### context tagged record\n\n| offset | bytes | 필드 |\n| --- | ---: | --- |\n| 0 | 2 | record_bytes |\n| 2 | 16 | exact Context Identity16 |\n| 18 | 2 | issue_ordinal; 원 발급순,1부터 시작; Issued[k]는 ordinal k+1 |\n| 20 | 1 | status: ParkedFetch0 / ParkedCommit1 / Completed2 |\n\nCompleted는 **정확21 bytes**에서 끝난다. outgoing target/API/deadline/control/completion payload가 없다. 기존 A payload를0으로 채워 추가하거나 record 길이를39로 둔 Completed는 reject한다. actor/engine/session은 ID 안에 남고 issue ordinal·next counter도 남는다. admission 거절·cached·멱등 새 호출은 Completed 등록, continuation 종료는 기존 ID의 variant 교체다. 환경 제외에는 등록0이다.\n\nParked는 위 prefix 뒤에 기존 전체 payload를 보존한다: api@21, original_deadline@22, cancel_supplied_or_signalled@23, deadline_reached@24, cancel_observed_at_completion@25, deadline_observed_at_completion@26, completion_phase@27, reserved zero2@28, statement Option@30, result Option@`30+len(statement)`, transaction Option@`30+len(statement)+len(result)`. 마지막 세 completion 필드는 Parked에서 반드시 false/false/NotCompleted0이다. 이 상수 필드를 남긴 것은 기존 Parked 전체를 보존하는 선택이며 Completed payload 부활이 아니다.\n\nParkedFetch는 api15, statement/result/transaction 모두 Some이므로39 bytes다. ParkedCommit은 api17, statement/result None, transaction Some이므로35 bytes다. actor당 Parked≤1, 전체≤2이며 actor/transaction parked links는 정확 이 variant만 참조한다. Published/NoWriteValidated 뒤 Ended txn도 Finish 전에는 ParkedCommit과 actor.transaction에 남아 Busy를 유지한다. original deadline은 signal 뒤 바뀌지 않으며 reached bit는 별도다. original Absent에 reached=true인 Parked는 불가능한 normal state다.\n\nB는 engine/session/issued/binding/receipt/owner/fact의 incoming context refs를 제거하지 않는다. peer Recovery birth_context와 peer result retirement_context는 같은 engine의 정확 first_fence_context에 한해 다른 actor를 가리킬 수 있다. 일반 birth/retirement의 foreign actor 허용으로 확대하지 않는다. 미래 validator는 Completed의 삭제된 API/target을 따라 provenance를 재구성하지 않는다. 해당 provenance는 완료 edge의 pre-state + resolved input 또는 원 Parked를 이용해 삭제 전에 검산한다.\n\n### 추가 및 유지 tag\n\n- `FactKind::LocalCleanup=8`; 기존0..7 유지. CloseResult/CloseStatement Normal의 실제 local cleanup만 소비하며 current Closed 멱등은 fact0이다.\n- `Settlement::DrainedConfirmed=2`; Outstanding0/RecoveryConfirmed1 유지. field `obligation.recovery_fact`는2일 때 원 Published confirmation fact를 가리키는 settlement evidence로 해석한다. 새 engine recovery를 뜻하지 않는다. engine Fenced·original reason/client decision/delivery는 보존한다.\n- Bind outcome2는 `Count0`, 새10은 `Count2`; 나머지0/1/3..9 유지. raw outcome byte 때문에 N0 SuccessA/B/Count0는 alias가 아니다. A=1533이다.\n- ReturnCode 추가: **InvalidContext28, NoPendingOperation29, ContinuationKind30**. 기존0..25는 유지하고26/27은 v1 IgnoredUnissued/IgnoredForeign의 예약 번호로 남기되 v2 normal 응답/Diagnostic에서는 reject한다. unknown/foreign Signal은28이며 Completed는 deadline 검사 전에25다. 29는 actor에 continuation 없음,30은 존재하지만 API종류 불일치다. 다른 enum의 번호를 밀지 않는다.\n- CompletionPhase enum은 이번 edge 관측 및 Parked 상수0에만 남는다. Completed record에는 없다. unknown enum, 사용하지 않는 bit, reserved nonzero는 reject한다."
+}

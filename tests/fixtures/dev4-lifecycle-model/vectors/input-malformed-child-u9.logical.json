@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "api": "Fetch",
+  "api_tag": 3,
+  "actor": 0,
+  "outcome_tag": 0,
+  "prepare_slot": 255,
+  "prepare_shape": 255,
+  "parameter_count": 255,
+  "set_autocommit": 255,
+  "target": [
+    254,
+    0,
+    0,
+    1,
+    1,
+    255,
+    1
+  ],
+  "context": [
+    5,
+    0,
+    255,
+    1,
+    1,
+    5,
+    0
+  ],
+  "original_deadline": "Absent",
+  "supplied_cancel": false,
+  "deadline_reached": false,
+  "bind_values": [],
+  "environment": {
+    "envelope_schema": 1,
+    "fact": [
+      11,
+      255,
+      255,
+      1,
+      0,
+      4,
+      0
+    ],
+    "kind": "FetchWorkOrCleanup",
+    "work_kind": "Fetch",
+    "work_class": 0,
+    "cleanup": 255,
+    "commit_class": 255,
+    "reserved0": 0,
+    "transaction": null,
+    "receipt": null,
+    "anchor": null,
+    "fresh_engine": null,
+    "obligations": [],
+    "owners": []
+  }
+}

@@ -1,0 +1,285 @@
+{
+  "id": "D4-LM-STATIC-FIXTURES-001",
+  "status": "INDEPENDENT_STATIC_INPUTS_ONLY_FULL_D2_PENDING",
+  "source_manifest_sha256": "e58a94580d9f1edcababa0a36458582c70b798a4346a6d36f309391deec25cad",
+  "files": [
+    {
+      "path": "literals.json",
+      "sha256": "ec4a7940a457882c155eb84e2d9e5602eaf880563bab4f6f04d0b643bcec42d2",
+      "bytes": 72625,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/literal-design-v1.json"
+    },
+    {
+      "path": "wire-schema.json",
+      "sha256": "2edefc28473581f8e263c2c74db90a247c0973811787aed73bd26f7679ced1ec",
+      "bytes": 100812,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/wire-proposal-v2.json"
+    },
+    {
+      "path": "vectors/input-atomic-terminal-cancel.bin",
+      "sha256": "ba45f74dfca6860f4610f67c1f3ebb7b8f7032a33d24eb8988bf6443cbd5c813",
+      "bytes": 214,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-atomic-terminal-cancel.bin"
+    },
+    {
+      "path": "vectors/input-atomic-terminal-cancel.hex",
+      "sha256": "e0f8db074ab42f5e005eed9cc050f1b899bf17dd4bb2e0a71ec7dd930f9f3178",
+      "bytes": 435,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-atomic-terminal-cancel.hex"
+    },
+    {
+      "path": "vectors/input-atomic-terminal-cancel.logical.json",
+      "sha256": "b6d9a69ae777dcc88b6555754564e0c6d1d1b84184693f2d0a493a94f4abb686",
+      "bytes": 2135,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-atomic-terminal-cancel.logical.json"
+    },
+    {
+      "path": "vectors/input-atomic-terminal-cancel.offsets.json",
+      "sha256": "56c02ea558db7ae14896a5fd0faea5124dc8790eac3eaa01487b898b3a73e5dd",
+      "bytes": 7792,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-atomic-terminal-cancel.offsets.json"
+    },
+    {
+      "path": "vectors/input-malformed-child-u9.bin",
+      "sha256": "147f3735f7915f27427ca9da0bbc1293ceba9d2f1871e3389e3f667906a20923",
+      "bytes": 81,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-malformed-child-u9.bin"
+    },
+    {
+      "path": "vectors/input-malformed-child-u9.hex",
+      "sha256": "844c0f30e1db14fcccc58600d0dcfe6b5de7800e77ae1d22622286a87267fa82",
+      "bytes": 165,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-malformed-child-u9.hex"
+    },
+    {
+      "path": "vectors/input-malformed-child-u9.logical.json",
+      "sha256": "26fd58259a41b6df819d54837815c7a6e796b82c65a54a5fb5064189fb2f0b4e",
+      "bytes": 860,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-malformed-child-u9.logical.json"
+    },
+    {
+      "path": "vectors/input-malformed-child-u9.offsets.json",
+      "sha256": "c59e06bd60e0cf120f51b4b55a8eef24cbb89521abf688f9e0204f170ecb8b98",
+      "bytes": 3591,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-malformed-child-u9.offsets.json"
+    },
+    {
+      "path": "vectors/input-resume-pending-deadline.bin",
+      "sha256": "2fd073c6ef031195007bee13b66fb77660791073a57d430aecbe908bca7e512c",
+      "bytes": 198,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-resume-pending-deadline.bin"
+    },
+    {
+      "path": "vectors/input-resume-pending-deadline.hex",
+      "sha256": "500f9a5fc4ef078fe55ffbe428cfda145a4b71a69b1acb66ee95e6ffaeef32c8",
+      "bytes": 403,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-resume-pending-deadline.hex"
+    },
+    {
+      "path": "vectors/input-resume-pending-deadline.logical.json",
+      "sha256": "26c0d473de39382086fa080d4b6c57aea8ca6fce1441034c382683026f29d35d",
+      "bytes": 2100,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-resume-pending-deadline.logical.json"
+    },
+    {
+      "path": "vectors/input-resume-pending-deadline.offsets.json",
+      "sha256": "6da7c8bc1124e5f820ce39698a96c5738a877d291022e770e67225e7ca372a30",
+      "bytes": 7759,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-resume-pending-deadline.offsets.json"
+    },
+    {
+      "path": "vectors/input-rollback-incomplete.bin",
+      "sha256": "7fa9f4973bd7410981493042487f2f338f38eaa3befbd9cf4b606d33a03ea10c",
+      "bytes": 371,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-rollback-incomplete.bin"
+    },
+    {
+      "path": "vectors/input-rollback-incomplete.hex",
+      "sha256": "6e6e20099c2d1328d27ae7baa019bffba535e84c81f747bb87160f37f769111c",
+      "bytes": 754,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-rollback-incomplete.hex"
+    },
+    {
+      "path": "vectors/input-rollback-incomplete.logical.json",
+      "sha256": "3003a65503159e3580181aa77716af6f0c984178313a0cead3f02cae22973590",
+      "bytes": 3470,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-rollback-incomplete.logical.json"
+    },
+    {
+      "path": "vectors/input-rollback-incomplete.offsets.json",
+      "sha256": "ff4a75483c803d4e75d67e36056c6e3be0a628638d67af68672039f20940e56f",
+      "bytes": 10019,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-rollback-incomplete.offsets.json"
+    },
+    {
+      "path": "vectors/input-select-execute.bin",
+      "sha256": "5ac9cec9788f3ad80177e0e184afa3f18edf64fd9a8118ffb32c3e75a287cf69",
+      "bytes": 214,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-select-execute.bin"
+    },
+    {
+      "path": "vectors/input-select-execute.hex",
+      "sha256": "e875528092b3ab6928cff5c8a4940bd4656b72df6ebc45b0824b6c571a04eca9",
+      "bytes": 435,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-select-execute.hex"
+    },
+    {
+      "path": "vectors/input-select-execute.logical.json",
+      "sha256": "ddf593523f70f650b7ea6a18891bded939c1459cdd412fb8e111cc5c1a3e266c",
+      "bytes": 2120,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-select-execute.logical.json"
+    },
+    {
+      "path": "vectors/input-select-execute.offsets.json",
+      "sha256": "2baac2348169aa998faf23ec229d48f0cd3ff25d986c32a5a4b5c7a53cdf747b",
+      "bytes": 7792,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-select-execute.offsets.json"
+    },
+    {
+      "path": "vectors/input-select-prepare.bin",
+      "sha256": "9d7d13caa5599ce94d9bc7159aa73377cbb951ec9f7f418fa3f449335b64c671",
+      "bytes": 32,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-select-prepare.bin"
+    },
+    {
+      "path": "vectors/input-select-prepare.hex",
+      "sha256": "fda7797becf730ada54ad96fd1fb73f86c202e965b4e65c62f19a2968867e382",
+      "bytes": 65,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-select-prepare.hex"
+    },
+    {
+      "path": "vectors/input-select-prepare.logical.json",
+      "sha256": "5132f4068dca79ff3f6b0e6d6acf7d4bf368468e0bf21d541f1c54933cc56a62",
+      "bytes": 410,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-select-prepare.logical.json"
+    },
+    {
+      "path": "vectors/input-select-prepare.offsets.json",
+      "sha256": "428212d5f38cb0ce7a9a407bf3eaad4b599be3124b6c6c5f3c4ffe1a7254e48a",
+      "bytes": 1594,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-select-prepare.offsets.json"
+    },
+    {
+      "path": "vectors/input-stale-result.bin",
+      "sha256": "29904dcdc12fcae493bdb2cf2afb633c5dd8d74b2a7341214a3e4bc4af348fda",
+      "bytes": 81,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-stale-result.bin"
+    },
+    {
+      "path": "vectors/input-stale-result.hex",
+      "sha256": "f2c5a2c747b50ed682fb5c1d9cc5337d895ebea8e7b73bcc9b5ff590c40c9329",
+      "bytes": 165,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-stale-result.hex"
+    },
+    {
+      "path": "vectors/input-stale-result.logical.json",
+      "sha256": "d594b651178b88ab4fefc44512c0e5171728db23efcf37712fac3746d158f487",
+      "bytes": 856,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-stale-result.logical.json"
+    },
+    {
+      "path": "vectors/input-stale-result.offsets.json",
+      "sha256": "963a4c3e090d35c403f42d29f1de6bee8fdd6ff8b2f2d02ed55584e303cc4944",
+      "bytes": 3591,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/input-stale-result.offsets.json"
+    },
+    {
+      "path": "vectors/state-initial.bin",
+      "sha256": "4b87162ef3b30ba4fae016580fe0ff600ff3a763f5e891e342e626e56125aaaf",
+      "bytes": 444,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-initial.bin"
+    },
+    {
+      "path": "vectors/state-initial.hex",
+      "sha256": "19a168eb4d6503936c04dfb87c607d0beedae1dbfaacbfce8e4e5acdbfc0a772",
+      "bytes": 902,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-initial.hex"
+    },
+    {
+      "path": "vectors/state-initial.logical.json",
+      "sha256": "2583fcf4ac131318d8a9eedbae65d94ebcdbf94ecb9a355f862cafb34531594e",
+      "bytes": 3467,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-initial.logical.json"
+    },
+    {
+      "path": "vectors/state-initial.offsets.json",
+      "sha256": "07949c9ff2cd6e7af72058079e150141db57f74c6e7ecd67e5391ba190547c38",
+      "bytes": 20860,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-initial.offsets.json"
+    },
+    {
+      "path": "vectors/state-rw-recovery-pending.bin",
+      "sha256": "e90d0e47a5e10ea49cd0a84110e24b0b0c8cec371abe4a6c4895d263785b8bab",
+      "bytes": 1058,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-rw-recovery-pending.bin"
+    },
+    {
+      "path": "vectors/state-rw-recovery-pending.hex",
+      "sha256": "acc4c2864a23d0ec3053fe4f7d1b6bce4b9e4f4952e95ace0d721f5db5ea43cf",
+      "bytes": 2150,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-rw-recovery-pending.hex"
+    },
+    {
+      "path": "vectors/state-rw-recovery-pending.logical.json",
+      "sha256": "4093384bc2fd0ad519842dbd887a586b41904780be46b5e245b215c0db0c93a2",
+      "bytes": 15130,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-rw-recovery-pending.logical.json"
+    },
+    {
+      "path": "vectors/state-rw-recovery-pending.offsets.json",
+      "sha256": "f8eb25e20f7c93cfac5cfc789ffdea1ae41f7fcf187c5ccbea6a73d742f91243",
+      "bytes": 55271,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-rw-recovery-pending.offsets.json"
+    },
+    {
+      "path": "vectors/state-sel-parked.bin",
+      "sha256": "445056f14cc7c839ef68b8d5f983ffb2ead0876979e2f32e3bafec025066757a",
+      "bytes": 946,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-sel-parked.bin"
+    },
+    {
+      "path": "vectors/state-sel-parked.hex",
+      "sha256": "65d1246ace2e54d9a52ec583305a5e348376072ebdf70787dbc8c98ab31ca0eb",
+      "bytes": 1922,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-sel-parked.hex"
+    },
+    {
+      "path": "vectors/state-sel-parked.logical.json",
+      "sha256": "a90b72c738d82cf73cc874dd40aca8a3d56bf8b5c822a5aefd3d904568d1cc55",
+      "bytes": 12860,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-sel-parked.logical.json"
+    },
+    {
+      "path": "vectors/state-sel-parked.offsets.json",
+      "sha256": "c241bbe35aba4899c96dc85c2e299706fb35ea759ac336cbfb81f6b441dda1ae",
+      "bytes": 49729,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-sel-parked.offsets.json"
+    },
+    {
+      "path": "vectors/state-sel-stale-rejected.bin",
+      "sha256": "a06dcd8f9b29e454c2043c8eaba9dac25d6a805f69b3c6955b584aaae511e0c4",
+      "bytes": 1313,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-sel-stale-rejected.bin"
+    },
+    {
+      "path": "vectors/state-sel-stale-rejected.hex",
+      "sha256": "b190cb0dc021c3a73cbdbf68cf016b407a1ea5f030d2c0d7f5ca62cadf5f541f",
+      "bytes": 2668,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-sel-stale-rejected.hex"
+    },
+    {
+      "path": "vectors/state-sel-stale-rejected.logical.json",
+      "sha256": "b90f0e660764aa3eedde86ae1aa8d93a940b04d3459335f619b5c43c98813566",
+      "bytes": 19558,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-sel-stale-rejected.logical.json"
+    },
+    {
+      "path": "vectors/state-sel-stale-rejected.offsets.json",
+      "sha256": "3ce52b6492a574597e8d0087ee7b0146f9fc5488b47be584d6c9533d0c8e5e0e",
+      "bytes": 72631,
+      "authored_source": "artifacts/dev4-lifecycle-model-20261024/independent-vectors-v1/vectors/state-sel-stale-rejected.offsets.json"
+    }
+  ],
+  "test_execution": "NOT_RUN",
+  "model_implementation": "NOT_WRITTEN"
+}

@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "api": "Execute",
+  "api_tag": 2,
+  "actor": 0,
+  "outcome_tag": 0,
+  "prepare_slot": 255,
+  "prepare_shape": 255,
+  "parameter_count": 255,
+  "set_autocommit": 255,
+  "target": [
+    3,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1
+  ],
+  "context": [
+    5,
+    0,
+    255,
+    1,
+    1,
+    2,
+    0
+  ],
+  "original_deadline": "Absent",
+  "supplied_cancel": false,
+  "deadline_reached": false,
+  "bind_values": [],
+  "environment": {
+    "envelope_schema": 1,
+    "fact": [
+      11,
+      255,
+      255,
+      1,
+      0,
+      1,
+      0
+    ],
+    "kind": "Execution",
+    "work_kind": "Execute",
+    "work_class": 0,
+    "cleanup": 255,
+    "commit_class": 255,
+    "reserved0": 0,
+    "transaction": [
+      6,
+      0,
+      255,
+      1,
+      1,
+      1,
+      0
+    ],
+    "receipt": null,
+    "anchor": null,
+    "fresh_engine": null,
+    "obligations": [],
+    "owners": [
+      {
+        "resource": [
+          9,
+          0,
+          255,
+          1,
+          1,
+          3,
+          0
+        ],
+        "resource_kind": "Snapshot",
+        "after_disposition": "Held",
+        "obligation": null,
+        "before_holder": null,
+        "after_holder": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "resource": [
+          9,
+          0,
+          255,
+          1,
+          1,
+          4,
+          0
+        ],
+        "resource_kind": "Scratch",
+        "after_disposition": "Held",
+        "obligation": null,
+        "before_holder": null,
+        "after_holder": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "resource": [
+          9,
+          0,
+          255,
+          1,
+          1,
+          5,
+          0
+        ],
+        "resource_kind": "Temp",
+        "after_disposition": "Held",
+        "obligation": null,
+        "before_holder": null,
+        "after_holder": [
+          4,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    ]
+  }
+}

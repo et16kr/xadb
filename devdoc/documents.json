@@ -2067,6 +2067,11 @@
       "path": "evidence/dev3-runtime-core-20261024.json",
       "role": "evidence",
       "title": "DEV3 runtime/core source별 실행 색인"
+    },
+    "dev4-lifecycle-inputs-20261024.md": {
+      "path": "evidence/dev4-lifecycle-inputs-20261024.md",
+      "role": "evidence",
+      "title": "DEV4 P5 수명 모델의 독립 입력 준비"
     }
   }
 }

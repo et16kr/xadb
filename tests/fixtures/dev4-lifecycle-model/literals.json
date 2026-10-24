@@ -1,0 +1,542 @@
+{
+  "id": "DEV4-LM-LITERAL-DESIGN-V1",
+  "status": "PROPOSED_FOR_INDEPENDENT_D2",
+  "execution": "NOT_RUN; no model, checker, explorer, fixture implementation, compile or product execution",
+  "author": "/root/frontend_oracle",
+  "read_head": "383db69d878853df3df3b7c11974046d7f86ffb0",
+  "authoring_history": {
+    "prefinal_wire_original_md": "artifacts/dev4-lifecycle-model-20261024/literal-prefinal-wire-v1/literal-design-v1.md",
+    "prefinal_wire_original_md_sha256": "1a19b20f811c0a7ef9a58d26e2adfc93de48412285ccc3cff6323aa1daee3b56",
+    "prefinal_wire_original_json": "artifacts/dev4-lifecycle-model-20261024/literal-prefinal-wire-v1/literal-design-v1.json",
+    "prefinal_wire_original_json_sha256": "d9cc0ce1b84a0a09130ffe258a01983dfeaf5fd7031456bf158d76683cb030b9",
+    "preservation": "Root preserved exact originals in the repository artifact subdirectory. Earlier byte-identical temporary copies remain under /tmp/xadb-dev4-lifecycle-design-20261024/literal-prefinal-wire-v1/. This is document preservation, not engine durability evidence.",
+    "wire_v2_md_sha256": "2adfb63a2c006c91003e5613962226ffdf7a6c9311578eb044fe77cdbf770937",
+    "wire_v2_json_sha256": "2edefc28473581f8e263c2c74db90a247c0973811787aed73bd26f7679ced1ec",
+    "wire_alignment": "Exact Env1 work_kind/work_class/cleanup/commit_class and full input owner ResourceKind fields added; normal states, responses, edges, identities and traces unchanged."
+  },
+  "scope": {"mandatory_mutants": 5, "opposing_controls": 7, "traces": 12, "action_occurrences": 51, "maximum_trace_length": 6, "normal_bfs_replacement": false},
+  "expansion": {
+    "identities": "Every @name in an identity-typed field expands to the exact seven-component tuple in identities. The tuple order is kind,actor,slot,engine,session,nonce,generation. Identity16 reserved fields are zero. These names are document aliases, never alpha-renaming or nonce compression.",
+    "states": "A state with base clones that complete named state, applies remove paths first, then put paths. put is an exact JSON-pointer replacement or insertion; it is not a merge, predicate, model action or arithmetic recipe. Unmentioned fields are inherited byte-for-byte. Every table is a map keyed by original kind-local nonce except actor/slot keys. Empty maps remain present.",
+    "values": "An object whose only field is $value expands to the named literal from values. No expression, wildcard, iteration, automatic defaults, semantic helper or expected-state computation is permitted. Repeated state/base references share immutable text only.",
+    "inputs_responses": "Named input/response/envelope with base uses the same clone and exact put convention. environment.envelope_ref expands the exact named envelope. All absent semantic values are explicit null; supplied Env1 missing cleanup/commit is exact tag255. NotApplicable is a semantic enum, not null. Every edge names complete pre, complete input, complete response and complete post.",
+    "fact_membership_groups": "fact_owners and fact_obligations map keys are exact fact nonces. Every member in group k has fact=states.facts[k].id; the parent records that field once. Empty group absence denotes zero members, not missing historical data. State members omit ResourceKind because the original owner definition retains it; input I_* members explicitly supply ResourceKind.",
+    "wire_boundary": "This is full LOGICAL data. Header lengths/checksum, record_bytes, zero reserved fields and canonical binary encoding are wire mechanics, not omitted semantic state. No input hex/codec/round-trip claim is made before wire-v2 freeze. All counters are literal numbers."
+  },
+  "pending_review": [
+    {"id":"LIT-RESPONSE", "status":"OWNER_AND_INDEPENDENT_REVIEW_REQUIRED", "scope":"Exact response candidate rows in this document: phase/effect/certainty/retry/diagnostic and DML affected_count. These are model labels, not foundation variants."},
+    {"id":"LIT-ENVELOPE", "status":"WIRE_V2_ALIGNED_INDEPENDENT_REVIEW_REQUIRED", "scope":"Exact Env1 and supplied membership are written below; no expected identity was derived from a model result. Stale child target has transaction=null and owner set empty per wire-v2 section4."},
+    {"id":"LIT-ENDED-DESCRIPTOR", "status":"OWNER_SELECTED_INDEPENDENT_REVIEW_REQUIRED", "scope":"Root selected: terminal Eof/Error/Closed descriptors retain their original transaction reference for provenance, even when actor.transaction becomes null. Reexecute removes the old descriptor."},
+    {"id":"LIT-INCOMPLETE", "status":"OWNER_SELECTED_INDEPENDENT_REVIEW_REQUIRED", "scope":"Root selected: incomplete rollback leaves RW3 and new Recovery held by Transaction; no implicit transfer. Obligation summary AllHeld; completion_fact is the consumed incomplete fact; progress None is preserved."},
+    {"id":"LIT-CONSUMPTION-BITS", "status":"OWNER_SELECTED_INDEPENDENT_REVIEW_REQUIRED", "scope":"Root selected: bits record actually applied semantic domains, not parsed/read fields. Atomic TerminalCancelled/Timeout are pre-work checkpoint observations, so Cleanup2 only; pending-control Resume also2. Rollback applies cleanup/decision, not attempted commit progress, so Cleanup2. Actual EOF/ReadError/Conflict work uses Work1 plus necessary Cleanup2. Literal values unchanged."}
+  ],
+  "identity_decisions": {
+    "source":"identity-transition-v1.md",
+    "first_result":"nonce1/generation1; next result generation2",
+    "reexecute":"retire current once: next2 to3; issue nonce2/generation3; next4",
+    "resource_issue_order":"Prepare Plan then Binding; new RW Undo then Locks then AbortReserve; SELECT Snapshot then Scratch then Temp; Recovery by transaction numeric identity",
+    "release":"previous_holder=old current_holder; current_holder=null; disposition Released; transfer_count unchanged",
+    "completed_context":"Only exact identity, issue_ordinal and Completed tag remain. Incoming manager references are preserved.",
+    "symbol_limit":"Fact/receipt/nonce symbols are abstract environment input, not actual engine ACK/q/LSN."
+  },
+  "identities": {
+    "e1":[1,255,255,1,0,1,0], "s1":[2,0,255,1,1,1,0], "s2":[2,1,255,1,2,2,0],
+    "p1":[3,0,0,1,1,1,1], "p2":[3,0,1,1,1,2,1],
+    "r1s0":[4,0,0,1,1,1,1], "r1s1":[4,0,1,1,1,1,1], "r2s0":[4,0,0,1,1,2,3],
+    "c1":[5,0,255,1,1,1,0], "c2":[5,0,255,1,1,2,0], "c3":[5,0,255,1,1,3,0], "c4":[5,0,255,1,1,4,0], "c5":[5,0,255,1,1,5,0], "c6":[5,0,255,1,1,6,0],
+    "t1":[6,0,255,1,1,1,0], "t2":[6,0,255,1,1,2,0], "b1":[7,0,255,1,1,1,0], "b2":[7,0,255,1,1,2,0],
+    "u1":[9,0,255,1,1,1,0], "u2":[9,0,255,1,1,2,0], "u3":[9,0,255,1,1,3,0], "u4":[9,0,255,1,1,4,0], "u5":[9,0,255,1,1,5,0], "u6":[9,0,255,1,1,6,0], "u7":[9,0,255,1,1,7,0], "u8":[9,0,255,1,1,8,0], "u9":[9,0,255,1,1,9,0], "u10":[9,0,255,1,1,10,0],
+    "o1":[10,0,255,1,1,1,0], "f1":[11,255,255,1,0,1,0], "f2":[11,255,255,1,0,2,0], "f3":[11,255,255,1,0,3,0], "f4":[11,255,255,1,0,4,0]
+  },
+  "values": {
+    "C1":{"id":"@c1","issue_ordinal":1,"status":"Completed"},
+    "C2":{"id":"@c2","issue_ordinal":2,"status":"Completed"},
+    "C3":{"id":"@c3","issue_ordinal":3,"status":"Completed"},
+    "C4":{"id":"@c4","issue_ordinal":4,"status":"Completed"},
+    "C5":{"id":"@c5","issue_ordinal":5,"status":"Completed"},
+    "C6":{"id":"@c6","issue_ordinal":6,"status":"Completed"},
+    "D_CANCEL":{"code":"Cancelled","phase":"Fetch","effect":"CursorReleased","certainty":"Known","retry":"Operation","engine_cause":"None","origin_cause":"Cancelled","span_start":0,"span_end":0},
+    "D_TIMEOUT":{"code":"Timeout","phase":"Fetch","effect":"CursorReleased","certainty":"Known","retry":"Operation","engine_cause":"None","origin_cause":"Timeout","span_start":0,"span_end":0},
+    "D_INVALID":{"code":"InvalidHandle","phase":"Entry","effect":"NoEffect","certainty":"Known","retry":"Never","engine_cause":"None","origin_cause":"None","span_start":0,"span_end":0},
+    "D_ENTRY_CANCEL":{"code":"Cancelled","phase":"Entry","effect":"NoEffect","certainty":"Known","retry":"Operation","engine_cause":"None","origin_cause":"Cancelled","span_start":0,"span_end":0},
+    "D_BUFFER":{"code":"RowBufferTooSmall","phase":"Fetch","effect":"NoEffect","certainty":"Known","retry":"Operation","engine_cause":"None","origin_cause":"None","span_start":0,"span_end":0},
+    "D_RECOVERY":{"code":"RecoveryRequired","phase":"Rollback","effect":"RecoveryRequired","certainty":"Known","retry":"AfterRecovery","engine_cause":"UndoIncomplete","origin_cause":"UndoIncomplete","span_start":0,"span_end":0},
+    "SEL_CREATE_OWNERS":[
+      {"resource":"@u3","disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r1s0"},
+      {"resource":"@u4","disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r1s0"},
+      {"resource":"@u5","disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r1s0"}
+    ],
+    "SEL_RELEASE_OWNERS":[
+      {"resource":"@u3","disposition":"Released","obligation":null,"before_holder":"@r1s0","after_holder":null},
+      {"resource":"@u4","disposition":"Released","obligation":null,"before_holder":"@r1s0","after_holder":null},
+      {"resource":"@u5","disposition":"Released","obligation":null,"before_holder":"@r1s0","after_holder":null}
+    ],
+    "SEL2_CREATE_OWNERS":[
+      {"resource":"@u6","disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r2s0"},
+      {"resource":"@u7","disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r2s0"},
+      {"resource":"@u8","disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r2s0"}
+    ],
+    "RWSEL_CREATE_OWNERS":[
+      {"resource":"@u8","disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r1s1"},
+      {"resource":"@u9","disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r1s1"},
+      {"resource":"@u10","disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r1s1"}
+    ],
+    "RWSEL_RELEASE_OWNERS":[
+      {"resource":"@u8","disposition":"Released","obligation":null,"before_holder":"@r1s1","after_holder":null},
+      {"resource":"@u9","disposition":"Released","obligation":null,"before_holder":"@r1s1","after_holder":null},
+      {"resource":"@u10","disposition":"Released","obligation":null,"before_holder":"@r1s1","after_holder":null}
+    ],
+    "RW_RELEASE_OWNERS":[
+      {"resource":"@u1","disposition":"Released","obligation":null,"before_holder":"@t1","after_holder":null},
+      {"resource":"@u2","disposition":"Released","obligation":null,"before_holder":"@t1","after_holder":null},
+      {"resource":"@u3","disposition":"Released","obligation":null,"before_holder":"@t1","after_holder":null}
+    ],
+    "RW_INCOMPLETE_OWNERS":[
+      {"resource":"@u1","disposition":"Held","obligation":"@o1","before_holder":"@t1","after_holder":"@t1"},
+      {"resource":"@u2","disposition":"Held","obligation":"@o1","before_holder":"@t1","after_holder":"@t1"},
+      {"resource":"@u3","disposition":"Held","obligation":"@o1","before_holder":"@t1","after_holder":"@t1"},
+      {"resource":"@u6","disposition":"Held","obligation":"@o1","before_holder":null,"after_holder":"@t1"}
+    ],
+    "RW_INCOMPLETE_OBLIGATIONS":[{"obligation":"@o1","known_decision":"NotCommittedRecoveryRequired","disposition":"AllHeld","owner_count":4}],
+    "I_SEL_CREATE":[
+      {"resource":"@u3","resource_kind":"Snapshot","after_disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r1s0"},
+      {"resource":"@u4","resource_kind":"Scratch","after_disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r1s0"},
+      {"resource":"@u5","resource_kind":"Temp","after_disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r1s0"}
+    ],
+    "I_SEL_RELEASE":[
+      {"resource":"@u3","resource_kind":"Snapshot","after_disposition":"Released","obligation":null,"before_holder":"@r1s0","after_holder":null},
+      {"resource":"@u4","resource_kind":"Scratch","after_disposition":"Released","obligation":null,"before_holder":"@r1s0","after_holder":null},
+      {"resource":"@u5","resource_kind":"Temp","after_disposition":"Released","obligation":null,"before_holder":"@r1s0","after_holder":null}
+    ],
+    "I_SEL2_CREATE":[
+      {"resource":"@u6","resource_kind":"Snapshot","after_disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r2s0"},
+      {"resource":"@u7","resource_kind":"Scratch","after_disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r2s0"},
+      {"resource":"@u8","resource_kind":"Temp","after_disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r2s0"}
+    ],
+    "I_RWSEL_CREATE":[
+      {"resource":"@u8","resource_kind":"Snapshot","after_disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r1s1"},
+      {"resource":"@u9","resource_kind":"Scratch","after_disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r1s1"},
+      {"resource":"@u10","resource_kind":"Temp","after_disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@r1s1"}
+    ],
+    "I_RWSEL_RELEASE":[
+      {"resource":"@u8","resource_kind":"Snapshot","after_disposition":"Released","obligation":null,"before_holder":"@r1s1","after_holder":null},
+      {"resource":"@u9","resource_kind":"Scratch","after_disposition":"Released","obligation":null,"before_holder":"@r1s1","after_holder":null},
+      {"resource":"@u10","resource_kind":"Temp","after_disposition":"Released","obligation":null,"before_holder":"@r1s1","after_holder":null}
+    ],
+    "I_RW_RELEASE":[
+      {"resource":"@u1","resource_kind":"Undo","after_disposition":"Released","obligation":null,"before_holder":"@t1","after_holder":null},
+      {"resource":"@u2","resource_kind":"Locks","after_disposition":"Released","obligation":null,"before_holder":"@t1","after_holder":null},
+      {"resource":"@u3","resource_kind":"AbortReserve","after_disposition":"Released","obligation":null,"before_holder":"@t1","after_holder":null}
+    ],
+    "I_RW_INCOMPLETE":[
+      {"resource":"@u1","resource_kind":"Undo","after_disposition":"Held","obligation":"@o1","before_holder":"@t1","after_holder":"@t1"},
+      {"resource":"@u2","resource_kind":"Locks","after_disposition":"Held","obligation":"@o1","before_holder":"@t1","after_holder":"@t1"},
+      {"resource":"@u3","resource_kind":"AbortReserve","after_disposition":"Held","obligation":"@o1","before_holder":"@t1","after_holder":"@t1"},
+      {"resource":"@u6","resource_kind":"Recovery","after_disposition":"Held","obligation":"@o1","before_holder":null,"after_holder":"@t1"}
+    ],
+    "I_OFF_RW_CREATE":[
+      {"resource":"@u3","resource_kind":"Undo","after_disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@t1"},
+      {"resource":"@u4","resource_kind":"Locks","after_disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@t1"},
+      {"resource":"@u5","resource_kind":"AbortReserve","after_disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@t1"}
+    ],
+    "I_RW_INCOMPLETE_OBLIGATIONS":[{"obligation":"@o1","known_decision":"NotCommittedRecoveryRequired","after_ownership_summary":"AllHeld","associated_owner_count":4}]
+  },
+  "states": {
+    "initial": {
+      "current_engine":"@e1",
+      "next_nonce":{"Engine":2,"Session":3,"Statement":1,"Result":1,"Context":1,"Transaction":1,"Binding":1,"Receipt":1,"Resource":1,"Obligation":1,"Fact":1,"Anchor":1},
+      "engines":{"1":{"id":"@e1","admission":"Admitting","first_cause":"None","known_decision":"NotApplicable","cause_transaction":null,"first_fence_context":null,"successor_engine":null,"recovery_fact":null}},
+      "session_incarnations":{
+        "1":{"id":"@s1","engine":"@e1","actor":0,"lifecycle":"Open","reopen_kind":"Initial","previous_session":null,"closing_context":null},
+        "2":{"id":"@s2","engine":"@e1","actor":1,"lifecycle":"Open","reopen_kind":"Initial","previous_session":null,"closing_context":null}
+      },
+      "actors":{
+        "0":{"actor":0,"shell":"Open","autocommit":"On","session":"@s1","engine":"@e1","transaction":null,"parked_context":null,"active_public_result":null},
+        "1":{"actor":1,"shell":"Open","autocommit":"On","session":"@s2","engine":"@e1","transaction":null,"parked_context":null,"active_public_result":null}
+      },
+      "prepared_slots":{
+        "0:0":{"actor":0,"slot":0,"state":"Vacant","next_statement_generation":1,"next_result_generation":1,"statement":null,"binding":null,"descriptor_result":null},
+        "0:1":{"actor":0,"slot":1,"state":"Vacant","next_statement_generation":1,"next_result_generation":1,"statement":null,"binding":null,"descriptor_result":null},
+        "1:0":{"actor":1,"slot":0,"state":"Vacant","next_statement_generation":1,"next_result_generation":1,"statement":null,"binding":null,"descriptor_result":null},
+        "1:1":{"actor":1,"slot":1,"state":"Vacant","next_statement_generation":1,"next_result_generation":1,"statement":null,"binding":null,"descriptor_result":null}
+      },
+      "issued_statements":{},"issued_results":{},"private_descriptors":{},"contexts":{},"transactions":{},"obligations":{},"bindings":{},"receipts":{},"owners":{},"facts":{},"fact_obligations":{},"fact_owners":{}
+    },
+    "sel.prepared":{"base":"initial","put":{
+      "/next_nonce/Statement":2,"/next_nonce/Context":2,"/next_nonce/Binding":2,"/next_nonce/Resource":3,
+      "/prepared_slots/0:0":{"actor":0,"slot":0,"state":"ReadyBound","next_statement_generation":2,"next_result_generation":1,"statement":"@p1","binding":"@b1","descriptor_result":null},
+      "/issued_statements/1":{"id":"@p1","issue_ordinal":1,"shape":"Select","parameter_count":0,"metadata":"SelectN0","life":"Current","retirement":"None","session":"@s1","creation_context":"@c1","retirement_context":null},
+      "/contexts/1":{"$value":"C1"},
+      "/bindings/1":{"id":"@b1","statement":"@p1","issue_ordinal":1,"value":"Empty","life":"Current","replaced_by":null,"creation_context":"@c1"},
+      "/owners/1":{"id":"@u1","resource_kind":"Plan","disposition":"Held","transfer_count":0,"original_holder":"@p1","current_holder":"@p1","previous_holder":null,"birth_context":"@c1","last_fact":null},
+      "/owners/2":{"id":"@u2","resource_kind":"Binding","disposition":"Held","transfer_count":0,"original_holder":"@p1","current_holder":"@p1","previous_holder":null,"birth_context":"@c1","last_fact":null}
+    }},
+    "sel.open":{"base":"sel.prepared","put":{
+      "/next_nonce/Result":2,"/next_nonce/Context":3,"/next_nonce/Transaction":2,"/next_nonce/Resource":6,"/next_nonce/Fact":2,
+      "/actors/0/transaction":"@t1","/actors/0/active_public_result":"@r1s0",
+      "/prepared_slots/0:0/state":"ResultOpen","/prepared_slots/0:0/next_result_generation":2,"/prepared_slots/0:0/descriptor_result":"@r1s0",
+      "/issued_results/1":{"id":"@r1s0","issue_ordinal":1,"statement":"@p1","retirement":"None","public_generation_live":true,"creation_context":"@c2","retirement_context":null},
+      "/private_descriptors/1":{"result":"@r1s0","statement":"@p1","state":"Open","public_generation_live":true,"blocked_by_fence":false,"position":0,"transaction":"@t1","terminal":null},
+      "/contexts/2":{"$value":"C2"},
+      "/transactions/1":{"id":"@t1","origin":"ImplicitReadOnly","access":"ReadOnly","life":"Active","prior_successful_write":false,"progress":"None","decision":"NotApplicable","client_knowledge":"NoDecisionObserved","delivery":"NotApplicable","birth_session":"@s1","receipt":null,"parked_context":null,"obligation":null,"completion_fact":null},
+      "/owners/3":{"id":"@u3","resource_kind":"Snapshot","disposition":"Held","transfer_count":0,"original_holder":"@r1s0","current_holder":"@r1s0","previous_holder":null,"birth_context":"@c2","last_fact":"@f1"},
+      "/owners/4":{"id":"@u4","resource_kind":"Scratch","disposition":"Held","transfer_count":0,"original_holder":"@r1s0","current_holder":"@r1s0","previous_holder":null,"birth_context":"@c2","last_fact":"@f1"},
+      "/owners/5":{"id":"@u5","resource_kind":"Temp","disposition":"Held","transfer_count":0,"original_holder":"@r1s0","current_holder":"@r1s0","previous_holder":null,"birth_context":"@c2","last_fact":"@f1"},
+      "/facts/1":{"id":"@f1","kind":"Execution","api":"Execute","outcome_class":0,"cleanup":"NotConsumed","decision":"NotApplicable","delivery":"NotApplicable","next_work":"NotConsumed","consumed_parts":1,"engine":"@e1","obligation_count":0,"owner_count":3,"context":"@c2","transaction":"@t1","receipt":null,"fresh_engine":null,"anchor":null},
+      "/fact_owners/1":{"$value":"SEL_CREATE_OWNERS"}
+    }},
+    "sel.eof":{"base":"sel.open","put":{
+      "/next_nonce/Context":4,"/next_nonce/Fact":3,"/actors/0/transaction":null,"/actors/0/active_public_result":null,
+      "/prepared_slots/0:0/state":"ReadyBound","/private_descriptors/1/state":"Eof","/contexts/3":{"$value":"C3"},
+      "/transactions/1/life":"Ended","/transactions/1/completion_fact":"@f2",
+      "/owners/3/disposition":"Released","/owners/3/current_holder":null,"/owners/3/previous_holder":"@r1s0","/owners/3/last_fact":"@f2",
+      "/owners/4/disposition":"Released","/owners/4/current_holder":null,"/owners/4/previous_holder":"@r1s0","/owners/4/last_fact":"@f2",
+      "/owners/5/disposition":"Released","/owners/5/current_holder":null,"/owners/5/previous_holder":"@r1s0","/owners/5/last_fact":"@f2",
+      "/facts/2":{"id":"@f2","kind":"FetchWorkOrCleanup","api":"Fetch","outcome_class":1,"cleanup":"Complete","decision":"NotApplicable","delivery":"NotApplicable","next_work":"Eof","consumed_parts":3,"engine":"@e1","obligation_count":0,"owner_count":3,"context":"@c3","transaction":"@t1","receipt":null,"fresh_engine":null,"anchor":null},
+      "/fact_owners/2":{"$value":"SEL_RELEASE_OWNERS"}
+    }},
+    "sel.reexecuted":{"base":"sel.eof","remove":["/private_descriptors/1"],"put":{
+      "/next_nonce/Result":3,"/next_nonce/Context":5,"/next_nonce/Transaction":3,"/next_nonce/Resource":9,"/next_nonce/Fact":4,
+      "/actors/0/transaction":"@t2","/actors/0/active_public_result":"@r2s0",
+      "/prepared_slots/0:0/state":"ResultOpen","/prepared_slots/0:0/next_result_generation":4,"/prepared_slots/0:0/descriptor_result":"@r2s0",
+      "/issued_results/1/retirement":"Reexecute","/issued_results/1/public_generation_live":false,"/issued_results/1/retirement_context":"@c4",
+      "/issued_results/2":{"id":"@r2s0","issue_ordinal":2,"statement":"@p1","retirement":"None","public_generation_live":true,"creation_context":"@c4","retirement_context":null},
+      "/private_descriptors/2":{"result":"@r2s0","statement":"@p1","state":"Open","public_generation_live":true,"blocked_by_fence":false,"position":0,"transaction":"@t2","terminal":null},
+      "/contexts/4":{"$value":"C4"},
+      "/transactions/2":{"id":"@t2","origin":"ImplicitReadOnly","access":"ReadOnly","life":"Active","prior_successful_write":false,"progress":"None","decision":"NotApplicable","client_knowledge":"NoDecisionObserved","delivery":"NotApplicable","birth_session":"@s1","receipt":null,"parked_context":null,"obligation":null,"completion_fact":null},
+      "/owners/6":{"id":"@u6","resource_kind":"Snapshot","disposition":"Held","transfer_count":0,"original_holder":"@r2s0","current_holder":"@r2s0","previous_holder":null,"birth_context":"@c4","last_fact":"@f3"},
+      "/owners/7":{"id":"@u7","resource_kind":"Scratch","disposition":"Held","transfer_count":0,"original_holder":"@r2s0","current_holder":"@r2s0","previous_holder":null,"birth_context":"@c4","last_fact":"@f3"},
+      "/owners/8":{"id":"@u8","resource_kind":"Temp","disposition":"Held","transfer_count":0,"original_holder":"@r2s0","current_holder":"@r2s0","previous_holder":null,"birth_context":"@c4","last_fact":"@f3"},
+      "/facts/3":{"id":"@f3","kind":"Execution","api":"Execute","outcome_class":0,"cleanup":"NotConsumed","decision":"NotApplicable","delivery":"NotApplicable","next_work":"NotConsumed","consumed_parts":1,"engine":"@e1","obligation_count":0,"owner_count":3,"context":"@c4","transaction":"@t2","receipt":null,"fresh_engine":null,"anchor":null},
+      "/fact_owners/3":{"$value":"SEL2_CREATE_OWNERS"}
+    }},
+    "sel.stale_rejected":{"base":"sel.reexecuted","put":{"/next_nonce/Context":6,"/contexts/5":{"$value":"C5"}}},
+    "sel.current_rows":{"base":"sel.reexecuted","put":{
+      "/next_nonce/Context":6,"/next_nonce/Fact":5,"/contexts/5":{"$value":"C5"},"/private_descriptors/2/position":1,
+      "/facts/4":{"id":"@f4","kind":"FetchWorkOrCleanup","api":"Fetch","outcome_class":0,"cleanup":"NotConsumed","decision":"NotApplicable","delivery":"NotApplicable","next_work":"Rows","consumed_parts":1,"engine":"@e1","obligation_count":0,"owner_count":0,"context":"@c5","transaction":"@t2","receipt":null,"fresh_engine":null,"anchor":null}
+    }},
+    "sel.rows":{"base":"sel.open","put":{
+      "/next_nonce/Context":4,"/next_nonce/Fact":3,"/contexts/3":{"$value":"C3"},"/private_descriptors/1/position":1,
+      "/facts/2":{"id":"@f2","kind":"FetchWorkOrCleanup","api":"Fetch","outcome_class":0,"cleanup":"NotConsumed","decision":"NotApplicable","delivery":"NotApplicable","next_work":"Rows","consumed_parts":1,"engine":"@e1","obligation_count":0,"owner_count":0,"context":"@c3","transaction":"@t1","receipt":null,"fresh_engine":null,"anchor":null}
+    }},
+    "sel.parked":{"base":"sel.open","put":{
+      "/next_nonce/Context":4,"/actors/0/parked_context":"@c3","/transactions/1/parked_context":"@c3",
+      "/contexts/3":{"id":"@c3","issue_ordinal":3,"api":"ParkFetch","status":"ParkedFetch","original_deadline":"FutureAtEntry","cancel_supplied_or_signalled":false,"deadline_reached":false,"cancel_observed_at_completion":false,"deadline_observed_at_completion":false,"completion_phase":"NotCompleted","statement":"@p1","result":"@r1s0","transaction":"@t1"}
+    }},
+    "sel.signalled":{"base":"sel.parked","put":{"/contexts/3/deadline_reached":true}},
+    "sel.timeout":{"base":"sel.eof","put":{
+      "/private_descriptors/1/state":"Error","/private_descriptors/1/terminal":{"$value":"D_TIMEOUT"},
+      "/facts/2/api":"ResumeFetch","/facts/2/outcome_class":0,"/facts/2/next_work":"NotConsumed","/facts/2/consumed_parts":2
+    }},
+    "sel.cancelled":{"base":"sel.eof","put":{
+      "/private_descriptors/1/state":"Error","/private_descriptors/1/terminal":{"$value":"D_CANCEL"},
+      "/facts/2/outcome_class":5,"/facts/2/next_work":"NotConsumed","/facts/2/consumed_parts":2
+    }},
+    "sel.entry_cancelled":{"base":"sel.open","put":{"/next_nonce/Context":4,"/contexts/3":{"$value":"C3"}}},
+    "sel.buffer_small":{"base":"sel.open","put":{
+      "/next_nonce/Context":4,"/next_nonce/Fact":3,"/contexts/3":{"$value":"C3"},
+      "/facts/2":{"id":"@f2","kind":"FetchWorkOrCleanup","api":"Fetch","outcome_class":2,"cleanup":"NotConsumed","decision":"NotApplicable","delivery":"NotApplicable","next_work":"RowBufferTooSmall","consumed_parts":1,"engine":"@e1","obligation_count":0,"owner_count":0,"context":"@c3","transaction":"@t1","receipt":null,"fresh_engine":null,"anchor":null}
+    }},
+    "sel.closed":{"base":"sel.eof","put":{
+      "/private_descriptors/1/state":"Closed","/facts/2/kind":"LocalCleanup","/facts/2/api":"CloseResult","/facts/2/outcome_class":0,"/facts/2/next_work":"NotConsumed","/facts/2/consumed_parts":2
+    }},
+    "rw.begun":{"base":"initial","put":{
+      "/next_nonce/Context":2,"/next_nonce/Transaction":2,"/next_nonce/Resource":4,"/actors/0/transaction":"@t1","/contexts/1":{"$value":"C1"},
+      "/transactions/1":{"id":"@t1","origin":"ExplicitBegin","access":"ReadWrite","life":"Active","prior_successful_write":false,"progress":"None","decision":"NotAttempted","client_knowledge":"NoDecisionObserved","delivery":"NotApplicable","birth_session":"@s1","receipt":null,"parked_context":null,"obligation":null,"completion_fact":null},
+      "/owners/1":{"id":"@u1","resource_kind":"Undo","disposition":"Held","transfer_count":0,"original_holder":"@t1","current_holder":"@t1","previous_holder":null,"birth_context":"@c1","last_fact":null},
+      "/owners/2":{"id":"@u2","resource_kind":"Locks","disposition":"Held","transfer_count":0,"original_holder":"@t1","current_holder":"@t1","previous_holder":null,"birth_context":"@c1","last_fact":null},
+      "/owners/3":{"id":"@u3","resource_kind":"AbortReserve","disposition":"Held","transfer_count":0,"original_holder":"@t1","current_holder":"@t1","previous_holder":null,"birth_context":"@c1","last_fact":null}
+    }},
+    "rw.prepared":{"base":"rw.begun","put":{
+      "/next_nonce/Statement":2,"/next_nonce/Context":3,"/next_nonce/Binding":2,"/next_nonce/Resource":6,
+      "/prepared_slots/0:0":{"actor":0,"slot":0,"state":"ReadyBound","next_statement_generation":2,"next_result_generation":1,"statement":"@p1","binding":"@b1","descriptor_result":null},
+      "/issued_statements/1":{"id":"@p1","issue_ordinal":1,"shape":"Dml","parameter_count":0,"metadata":"DmlN0","life":"Current","retirement":"None","session":"@s1","creation_context":"@c2","retirement_context":null},
+      "/contexts/2":{"$value":"C2"},
+      "/bindings/1":{"id":"@b1","statement":"@p1","issue_ordinal":1,"value":"Empty","life":"Current","replaced_by":null,"creation_context":"@c2"},
+      "/owners/4":{"id":"@u4","resource_kind":"Plan","disposition":"Held","transfer_count":0,"original_holder":"@p1","current_holder":"@p1","previous_holder":null,"birth_context":"@c2","last_fact":null},
+      "/owners/5":{"id":"@u5","resource_kind":"Binding","disposition":"Held","transfer_count":0,"original_holder":"@p1","current_holder":"@p1","previous_holder":null,"birth_context":"@c2","last_fact":null}
+    }},
+    "rw.written":{"base":"rw.prepared","put":{
+      "/next_nonce/Context":4,"/next_nonce/Fact":2,"/contexts/3":{"$value":"C3"},"/transactions/1/prior_successful_write":true,
+      "/facts/1":{"id":"@f1","kind":"Execution","api":"Execute","outcome_class":0,"cleanup":"NotConsumed","decision":"NotAttempted","delivery":"NotApplicable","next_work":"NotConsumed","consumed_parts":1,"engine":"@e1","obligation_count":0,"owner_count":0,"context":"@c3","transaction":"@t1","receipt":null,"fresh_engine":null,"anchor":null}
+    }},
+    "rw.select_prepared":{"base":"rw.written","put":{
+      "/next_nonce/Statement":3,"/next_nonce/Context":5,"/next_nonce/Binding":3,"/next_nonce/Resource":8,
+      "/prepared_slots/0:1":{"actor":0,"slot":1,"state":"ReadyBound","next_statement_generation":2,"next_result_generation":1,"statement":"@p2","binding":"@b2","descriptor_result":null},
+      "/issued_statements/2":{"id":"@p2","issue_ordinal":2,"shape":"Select","parameter_count":0,"metadata":"SelectN0","life":"Current","retirement":"None","session":"@s1","creation_context":"@c4","retirement_context":null},
+      "/contexts/4":{"$value":"C4"},
+      "/bindings/2":{"id":"@b2","statement":"@p2","issue_ordinal":2,"value":"Empty","life":"Current","replaced_by":null,"creation_context":"@c4"},
+      "/owners/6":{"id":"@u6","resource_kind":"Plan","disposition":"Held","transfer_count":0,"original_holder":"@p2","current_holder":"@p2","previous_holder":null,"birth_context":"@c4","last_fact":null},
+      "/owners/7":{"id":"@u7","resource_kind":"Binding","disposition":"Held","transfer_count":0,"original_holder":"@p2","current_holder":"@p2","previous_holder":null,"birth_context":"@c4","last_fact":null}
+    }},
+    "rw.select_open":{"base":"rw.select_prepared","put":{
+      "/next_nonce/Result":2,"/next_nonce/Context":6,"/next_nonce/Resource":11,"/next_nonce/Fact":3,
+      "/actors/0/active_public_result":"@r1s1","/prepared_slots/0:1/state":"ResultOpen","/prepared_slots/0:1/next_result_generation":2,"/prepared_slots/0:1/descriptor_result":"@r1s1",
+      "/issued_results/1":{"id":"@r1s1","issue_ordinal":1,"statement":"@p2","retirement":"None","public_generation_live":true,"creation_context":"@c5","retirement_context":null},
+      "/private_descriptors/1":{"result":"@r1s1","statement":"@p2","state":"Open","public_generation_live":true,"blocked_by_fence":false,"position":0,"transaction":"@t1","terminal":null},
+      "/contexts/5":{"$value":"C5"},
+      "/owners/8":{"id":"@u8","resource_kind":"Snapshot","disposition":"Held","transfer_count":0,"original_holder":"@r1s1","current_holder":"@r1s1","previous_holder":null,"birth_context":"@c5","last_fact":"@f2"},
+      "/owners/9":{"id":"@u9","resource_kind":"Scratch","disposition":"Held","transfer_count":0,"original_holder":"@r1s1","current_holder":"@r1s1","previous_holder":null,"birth_context":"@c5","last_fact":"@f2"},
+      "/owners/10":{"id":"@u10","resource_kind":"Temp","disposition":"Held","transfer_count":0,"original_holder":"@r1s1","current_holder":"@r1s1","previous_holder":null,"birth_context":"@c5","last_fact":"@f2"},
+      "/facts/2":{"id":"@f2","kind":"Execution","api":"Execute","outcome_class":0,"cleanup":"NotConsumed","decision":"NotAttempted","delivery":"NotApplicable","next_work":"NotConsumed","consumed_parts":1,"engine":"@e1","obligation_count":0,"owner_count":3,"context":"@c5","transaction":"@t1","receipt":null,"fresh_engine":null,"anchor":null},
+      "/fact_owners/2":{"$value":"RWSEL_CREATE_OWNERS"}
+    }},
+    "rw.select_closed":{"base":"rw.select_open","put":{
+      "/next_nonce/Context":7,"/next_nonce/Fact":4,"/contexts/6":{"$value":"C6"},"/actors/0/active_public_result":null,
+      "/prepared_slots/0:1/state":"ReadyBound","/private_descriptors/1/state":"Closed",
+      "/owners/8/disposition":"Released","/owners/8/current_holder":null,"/owners/8/previous_holder":"@r1s1","/owners/8/last_fact":"@f3",
+      "/owners/9/disposition":"Released","/owners/9/current_holder":null,"/owners/9/previous_holder":"@r1s1","/owners/9/last_fact":"@f3",
+      "/owners/10/disposition":"Released","/owners/10/current_holder":null,"/owners/10/previous_holder":"@r1s1","/owners/10/last_fact":"@f3",
+      "/facts/3":{"id":"@f3","kind":"LocalCleanup","api":"CloseResult","outcome_class":0,"cleanup":"Complete","decision":"NotAttempted","delivery":"NotApplicable","next_work":"NotConsumed","consumed_parts":2,"engine":"@e1","obligation_count":0,"owner_count":3,"context":"@c6","transaction":"@t1","receipt":null,"fresh_engine":null,"anchor":null},
+      "/fact_owners/3":{"$value":"RWSEL_RELEASE_OWNERS"}
+    }},
+    "rw.aborted":{"base":"rw.written","put":{
+      "/next_nonce/Context":5,"/next_nonce/Fact":3,"/contexts/4":{"$value":"C4"},"/actors/0/transaction":null,
+      "/transactions/1/life":"Ended","/transactions/1/decision":"Aborted","/transactions/1/client_knowledge":"KnownAborted","/transactions/1/completion_fact":"@f2",
+      "/owners/1/disposition":"Released","/owners/1/current_holder":null,"/owners/1/previous_holder":"@t1","/owners/1/last_fact":"@f2",
+      "/owners/2/disposition":"Released","/owners/2/current_holder":null,"/owners/2/previous_holder":"@t1","/owners/2/last_fact":"@f2",
+      "/owners/3/disposition":"Released","/owners/3/current_holder":null,"/owners/3/previous_holder":"@t1","/owners/3/last_fact":"@f2",
+      "/facts/2":{"id":"@f2","kind":"RollbackCleanup","api":"Rollback","outcome_class":0,"cleanup":"Complete","decision":"Aborted","delivery":"NotApplicable","next_work":"NotConsumed","consumed_parts":2,"engine":"@e1","obligation_count":0,"owner_count":3,"context":"@c4","transaction":"@t1","receipt":null,"fresh_engine":null,"anchor":null},
+      "/fact_owners/2":{"$value":"RW_RELEASE_OWNERS"}
+    }},
+    "rw.recovery_pending":{"base":"rw.written","put":{
+      "/next_nonce/Context":5,"/next_nonce/Resource":7,"/next_nonce/Obligation":2,"/next_nonce/Fact":3,"/contexts/4":{"$value":"C4"},
+      "/engines/1/admission":"Fenced","/engines/1/first_cause":"UndoIncomplete","/engines/1/known_decision":"NotCommittedRecoveryRequired","/engines/1/cause_transaction":"@t1","/engines/1/first_fence_context":"@c4",
+      "/transactions/1/life":"RecoveryPending","/transactions/1/decision":"NotCommittedRecoveryRequired","/transactions/1/client_knowledge":"KnownNotCommittedRecoveryRequired","/transactions/1/obligation":"@o1","/transactions/1/completion_fact":"@f2",
+      "/obligations/1":{"id":"@o1","engine":"@e1","transaction":"@t1","origin_session":"@s1","creation_reason":"KnownNotCommittedUndoPending","latest_reason":"KnownNotCommittedUndoPending","reason_mask":1,"disposition":"AllHeld","known_decision":"NotCommittedRecoveryRequired","settlement":"Outstanding","first_fact":"@f2","latest_fact":"@f2","recovery_fact":null},
+      "/owners/6":{"id":"@u6","resource_kind":"Recovery","disposition":"Held","transfer_count":0,"original_holder":"@t1","current_holder":"@t1","previous_holder":null,"birth_context":"@c4","last_fact":"@f2"},
+      "/facts/2":{"id":"@f2","kind":"RollbackCleanup","api":"Rollback","outcome_class":1,"cleanup":"Incomplete","decision":"NotCommittedRecoveryRequired","delivery":"NotApplicable","next_work":"NotConsumed","consumed_parts":2,"engine":"@e1","obligation_count":1,"owner_count":4,"context":"@c4","transaction":"@t1","receipt":null,"fresh_engine":null,"anchor":null},
+      "/fact_obligations/2":{"$value":"RW_INCOMPLETE_OBLIGATIONS"},"/fact_owners/2":{"$value":"RW_INCOMPLETE_OWNERS"}
+    }},
+    "off.set":{"base":"initial","put":{"/next_nonce/Context":2,"/contexts/1":{"$value":"C1"},"/actors/0/autocommit":"Off"}},
+    "off.prepared":{"base":"sel.prepared","put":{
+      "/next_nonce/Context":3,"/contexts/2":{"$value":"C2"},"/actors/0/autocommit":"Off",
+      "/issued_statements/1/shape":"Dml","/issued_statements/1/metadata":"DmlN0","/issued_statements/1/creation_context":"@c2","/bindings/1/creation_context":"@c2","/owners/1/birth_context":"@c2","/owners/2/birth_context":"@c2"
+    }},
+    "off.written":{"base":"rw.written","put":{
+      "/actors/0/autocommit":"Off","/transactions/1/origin":"OffStarted",
+      "/owners/1":{"id":"@u1","resource_kind":"Plan","disposition":"Held","transfer_count":0,"original_holder":"@p1","current_holder":"@p1","previous_holder":null,"birth_context":"@c2","last_fact":null},
+      "/owners/2":{"id":"@u2","resource_kind":"Binding","disposition":"Held","transfer_count":0,"original_holder":"@p1","current_holder":"@p1","previous_holder":null,"birth_context":"@c2","last_fact":null},
+      "/owners/3":{"id":"@u3","resource_kind":"Undo","disposition":"Held","transfer_count":0,"original_holder":"@t1","current_holder":"@t1","previous_holder":null,"birth_context":"@c3","last_fact":"@f1"},
+      "/owners/4":{"id":"@u4","resource_kind":"Locks","disposition":"Held","transfer_count":0,"original_holder":"@t1","current_holder":"@t1","previous_holder":null,"birth_context":"@c3","last_fact":"@f1"},
+      "/owners/5":{"id":"@u5","resource_kind":"AbortReserve","disposition":"Held","transfer_count":0,"original_holder":"@t1","current_holder":"@t1","previous_holder":null,"birth_context":"@c3","last_fact":"@f1"},
+      "/facts/1/owner_count":3,
+      "/fact_owners/1":[
+        {"resource":"@u3","disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@t1"},
+        {"resource":"@u4","disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@t1"},
+        {"resource":"@u5","disposition":"Held","obligation":null,"before_holder":null,"after_holder":"@t1"}
+      ]
+    }},
+    "off.select_prepared":{"base":"off.written","put":{
+      "/next_nonce/Statement":3,"/next_nonce/Context":5,"/next_nonce/Binding":3,"/next_nonce/Resource":8,
+      "/prepared_slots/0:1":{"actor":0,"slot":1,"state":"ReadyBound","next_statement_generation":2,"next_result_generation":1,"statement":"@p2","binding":"@b2","descriptor_result":null},
+      "/issued_statements/2":{"id":"@p2","issue_ordinal":2,"shape":"Select","parameter_count":0,"metadata":"SelectN0","life":"Current","retirement":"None","session":"@s1","creation_context":"@c4","retirement_context":null},
+      "/contexts/4":{"$value":"C4"},
+      "/bindings/2":{"id":"@b2","statement":"@p2","issue_ordinal":2,"value":"Empty","life":"Current","replaced_by":null,"creation_context":"@c4"},
+      "/owners/6":{"id":"@u6","resource_kind":"Plan","disposition":"Held","transfer_count":0,"original_holder":"@p2","current_holder":"@p2","previous_holder":null,"birth_context":"@c4","last_fact":null},
+      "/owners/7":{"id":"@u7","resource_kind":"Binding","disposition":"Held","transfer_count":0,"original_holder":"@p2","current_holder":"@p2","previous_holder":null,"birth_context":"@c4","last_fact":null}
+    }},
+    "off.select_open":{"base":"off.select_prepared","put":{
+      "/next_nonce/Result":2,"/next_nonce/Context":6,"/next_nonce/Resource":11,"/next_nonce/Fact":3,
+      "/actors/0/active_public_result":"@r1s1","/prepared_slots/0:1/state":"ResultOpen","/prepared_slots/0:1/next_result_generation":2,"/prepared_slots/0:1/descriptor_result":"@r1s1",
+      "/issued_results/1":{"id":"@r1s1","issue_ordinal":1,"statement":"@p2","retirement":"None","public_generation_live":true,"creation_context":"@c5","retirement_context":null},
+      "/private_descriptors/1":{"result":"@r1s1","statement":"@p2","state":"Open","public_generation_live":true,"blocked_by_fence":false,"position":0,"transaction":"@t1","terminal":null},
+      "/contexts/5":{"$value":"C5"},
+      "/owners/8":{"id":"@u8","resource_kind":"Snapshot","disposition":"Held","transfer_count":0,"original_holder":"@r1s1","current_holder":"@r1s1","previous_holder":null,"birth_context":"@c5","last_fact":"@f2"},
+      "/owners/9":{"id":"@u9","resource_kind":"Scratch","disposition":"Held","transfer_count":0,"original_holder":"@r1s1","current_holder":"@r1s1","previous_holder":null,"birth_context":"@c5","last_fact":"@f2"},
+      "/owners/10":{"id":"@u10","resource_kind":"Temp","disposition":"Held","transfer_count":0,"original_holder":"@r1s1","current_holder":"@r1s1","previous_holder":null,"birth_context":"@c5","last_fact":"@f2"},
+      "/facts/2":{"id":"@f2","kind":"Execution","api":"Execute","outcome_class":0,"cleanup":"NotConsumed","decision":"NotAttempted","delivery":"NotApplicable","next_work":"NotConsumed","consumed_parts":1,"engine":"@e1","obligation_count":0,"owner_count":3,"context":"@c5","transaction":"@t1","receipt":null,"fresh_engine":null,"anchor":null},
+      "/fact_owners/2":{"$value":"RWSEL_CREATE_OWNERS"}
+    }},
+    "off.select_closed":{"base":"off.select_open","put":{
+      "/next_nonce/Context":7,"/next_nonce/Fact":4,"/contexts/6":{"$value":"C6"},"/actors/0/active_public_result":null,
+      "/prepared_slots/0:1/state":"ReadyBound","/private_descriptors/1/state":"Closed",
+      "/owners/8/disposition":"Released","/owners/8/current_holder":null,"/owners/8/previous_holder":"@r1s1","/owners/8/last_fact":"@f3",
+      "/owners/9/disposition":"Released","/owners/9/current_holder":null,"/owners/9/previous_holder":"@r1s1","/owners/9/last_fact":"@f3",
+      "/owners/10/disposition":"Released","/owners/10/current_holder":null,"/owners/10/previous_holder":"@r1s1","/owners/10/last_fact":"@f3",
+      "/facts/3":{"id":"@f3","kind":"LocalCleanup","api":"CloseResult","outcome_class":0,"cleanup":"Complete","decision":"NotAttempted","delivery":"NotApplicable","next_work":"NotConsumed","consumed_parts":2,"engine":"@e1","obligation_count":0,"owner_count":3,"context":"@c6","transaction":"@t1","receipt":null,"fresh_engine":null,"anchor":null},
+      "/fact_owners/3":{"$value":"RWSEL_RELEASE_OWNERS"}
+    }}
+  },
+  "envelopes": {
+    "sel.execute":{"envelope_schema":1,"fact":"@f1","kind":"Execution","work_kind":"Execute","work_class":0,"cleanup":255,"commit_class":255,"reserved0":0,"transaction":"@t1","receipt":null,"anchor":null,"fresh_engine":null,"obligations":[],"owners":{"$value":"I_SEL_CREATE"}},
+    "sel.eof":{"base":"sel.execute","put":{"/fact":"@f2","/kind":"FetchWorkOrCleanup","/work_kind":"Fetch","/work_class":1,"/cleanup":1,"/owners":{"$value":"I_SEL_RELEASE"}}},
+    "sel.reexecute":{"base":"sel.execute","put":{"/fact":"@f3","/transaction":"@t2","/owners":{"$value":"I_SEL2_CREATE"}}},
+    "sel.stale_rows":{"base":"sel.eof","put":{"/fact":"@f4","/transaction":null,"/work_class":0,"/cleanup":255,"/owners":[]}},
+    "sel.current_rows":{"base":"sel.stale_rows","put":{"/transaction":"@t2"}},
+    "sel.rows":{"base":"sel.eof","put":{"/work_class":0,"/cleanup":255,"/owners":[]}},
+    "sel.resume":{"base":"sel.eof","put":{"/work_kind":"Resume","/work_class":0}},
+    "sel.cancel":{"base":"sel.eof","put":{"/work_class":5}},
+    "sel.buffer":{"base":"sel.eof","put":{"/work_class":2,"/cleanup":255,"/owners":[]}},
+    "sel.close":{"base":"sel.eof","put":{"/kind":"LocalCleanup","/work_kind":"None","/work_class":255}},
+    "rw.execute":{"base":"sel.execute","put":{"/owners":[]}},
+    "rw.select_execute":{"base":"rw.execute","put":{"/fact":"@f2","/owners":{"$value":"I_RWSEL_CREATE"}}},
+    "rw.close":{"base":"sel.close","put":{"/fact":"@f3","/owners":{"$value":"I_RWSEL_RELEASE"}}},
+    "rw.rollback_complete":{"base":"sel.close","put":{"/kind":"RollbackCleanup","/commit_class":0,"/owners":{"$value":"I_RW_RELEASE"}}},
+    "rw.rollback_incomplete":{"base":"rw.rollback_complete","put":{"/cleanup":2,"/commit_class":1,"/obligations":{"$value":"I_RW_INCOMPLETE_OBLIGATIONS"},"/owners":{"$value":"I_RW_INCOMPLETE"}}},
+    "off.execute":{"base":"rw.execute","put":{"/owners":{"$value":"I_OFF_RW_CREATE"}}}
+  },
+  "inputs": {
+    "sel.prepare":{"schema_version":1,"api":"Prepare","api_tag":0,"actor":0,"outcome_tag":0,"prepare_slot":0,"prepare_shape":0,"parameter_count":0,"set_autocommit":255,"target":null,"context":"@c1","original_deadline":"Absent","supplied_cancel":false,"deadline_reached":false,"bind_values":[],"environment":null},
+    "sel.execute":{"base":"sel.prepare","put":{"/api":"Execute","/api_tag":2,"/prepare_slot":255,"/prepare_shape":255,"/parameter_count":255,"/target":"@p1","/context":"@c2","/environment":{"envelope_ref":"sel.execute"}}},
+    "sel.eof":{"base":"sel.execute","put":{"/api":"Fetch","/api_tag":3,"/outcome_tag":1,"/target":"@r1s0","/context":"@c3","/environment":{"envelope_ref":"sel.eof"}}},
+    "sel.reexecute":{"base":"sel.execute","put":{"/context":"@c4","/environment":{"envelope_ref":"sel.reexecute"}}},
+    "sel.stale_rows":{"base":"sel.eof","put":{"/outcome_tag":0,"/context":"@c5","/environment":{"envelope_ref":"sel.stale_rows"}}},
+    "sel.current_rows":{"base":"sel.stale_rows","put":{"/target":"@r2s0","/environment":{"envelope_ref":"sel.current_rows"}}},
+    "sel.signal_completed":{"base":"sel.prepare","put":{"/api":"SignalContext","/api_tag":14,"/prepare_slot":255,"/prepare_shape":255,"/parameter_count":255,"/target":"@c2","/context":null}},
+    "sel.rows":{"base":"sel.eof","put":{"/outcome_tag":0,"/environment":{"envelope_ref":"sel.rows"}}},
+    "sel.park":{"base":"sel.eof","put":{"/api":"ParkFetch","/api_tag":15,"/outcome_tag":1,"/original_deadline":"FutureAtEntry","/environment":null}},
+    "sel.signal_parked":{"base":"sel.signal_completed","put":{"/outcome_tag":1,"/target":"@c3"}},
+    "sel.resume_timeout":{"base":"sel.eof","put":{"/api":"ResumeFetch","/api_tag":16,"/outcome_tag":0,"/target":null,"/original_deadline":"FutureAtEntry","/deadline_reached":true,"/environment":{"envelope_ref":"sel.resume"}}},
+    "sel.terminal_cancel":{"base":"sel.eof","put":{"/outcome_tag":5,"/environment":{"envelope_ref":"sel.cancel"}}},
+    "sel.entry_cancel":{"base":"sel.eof","put":{"/outcome_tag":3,"/supplied_cancel":true,"/environment":null}},
+    "sel.buffer":{"base":"sel.eof","put":{"/outcome_tag":2,"/environment":{"envelope_ref":"sel.buffer"}}},
+    "sel.close":{"base":"sel.eof","put":{"/api":"CloseResult","/api_tag":4,"/outcome_tag":0,"/environment":{"envelope_ref":"sel.close"}}},
+    "rw.begin":{"base":"sel.prepare","put":{"/api":"Begin","/api_tag":6,"/prepare_slot":255,"/prepare_shape":255,"/parameter_count":255}},
+    "rw.prepare":{"base":"sel.prepare","put":{"/prepare_shape":1,"/context":"@c2"}},
+    "rw.execute":{"base":"sel.execute","put":{"/context":"@c3","/environment":{"envelope_ref":"rw.execute"}}},
+    "rw.prepare_select":{"base":"sel.prepare","put":{"/prepare_slot":1,"/context":"@c4"}},
+    "rw.execute_select":{"base":"sel.execute","put":{"/target":"@p2","/context":"@c5","/environment":{"envelope_ref":"rw.select_execute"}}},
+    "rw.close":{"base":"sel.close","put":{"/target":"@r1s1","/context":"@c6","/environment":{"envelope_ref":"rw.close"}}},
+    "rw.rollback_complete":{"base":"sel.eof","put":{"/api":"Rollback","/api_tag":9,"/outcome_tag":0,"/target":null,"/context":"@c4","/environment":{"envelope_ref":"rw.rollback_complete"}}},
+    "rw.rollback_incomplete":{"base":"rw.rollback_complete","put":{"/outcome_tag":1,"/environment":{"envelope_ref":"rw.rollback_incomplete"}}},
+    "off.set":{"base":"rw.begin","put":{"/api":"SetAutocommit","/api_tag":7,"/set_autocommit":1}},
+    "off.execute":{"base":"rw.execute","put":{"/environment":{"envelope_ref":"off.execute"}}}
+  },
+  "responses": {
+    "prepare_idle":{
+      "code":"Ok","phase":"Prepare","statement_effect":"NoEffect","certainty":"Known","retry":"NotApplicable","engine_cause":"None","origin_cause":"None","diagnostic":null,
+      "rows":"NotApplicable","complete":"NotApplicable","affected_count":null,"returned_statement":"@p1","returned_result":null,
+      "public_transaction":"Idle","transaction_decision":"NotApplicable","client_knowledge":"NoDecisionObserved","commit_progress":"None","completion":null,"delivery":"NotApplicable","recovery_obligations":[]
+    },
+    "execute_select":{"base":"prepare_idle","put":{"/phase":"Execute","/rows":0,"/returned_statement":null,"/returned_result":"@r1s0","/public_transaction":"Active"}},
+    "fetch_eof":{"base":"execute_select","put":{"/code":"Eof","/phase":"Fetch","/statement_effect":"CursorReleased","/rows":0,"/complete":true,"/returned_result":null,"/public_transaction":"Idle"}},
+    "execute_select2":{"base":"execute_select","put":{"/returned_result":"@r2s0"}},
+    "stale_rejected":{"base":"execute_select","put":{"/code":"InvalidHandle","/phase":"Entry","/retry":"Never","/diagnostic":{"$value":"D_INVALID"},"/rows":0,"/complete":false,"/returned_result":null}},
+    "fetch_rows":{"base":"execute_select","put":{"/phase":"Fetch","/rows":1,"/complete":false,"/returned_result":null}},
+    "signal_ignored":{"base":"prepare_idle","put":{"/code":"IgnoredCompleted","/phase":"NotApplicable","/certainty":"NotApplicable","/returned_statement":null,"/public_transaction":"Active"}},
+    "park":{"base":"prepare_idle","put":{"/phase":"Fetch","/returned_statement":null,"/public_transaction":"Active"}},
+    "signal_parked":{"base":"signal_ignored","put":{"/code":"Ok"}},
+    "fetch_cancelled":{"base":"fetch_eof","put":{"/code":"Cancelled","/retry":"Operation","/origin_cause":"Cancelled","/diagnostic":{"$value":"D_CANCEL"},"/complete":false}},
+    "fetch_timeout":{"base":"fetch_cancelled","put":{"/code":"Timeout","/origin_cause":"Timeout","/diagnostic":{"$value":"D_TIMEOUT"}}},
+    "fetch_entry_cancelled":{"base":"fetch_cancelled","put":{"/phase":"Entry","/statement_effect":"NoEffect","/diagnostic":{"$value":"D_ENTRY_CANCEL"},"/public_transaction":"Active"}},
+    "fetch_buffer":{"base":"fetch_entry_cancelled","put":{"/code":"RowBufferTooSmall","/phase":"Fetch","/origin_cause":"None","/diagnostic":{"$value":"D_BUFFER"}}},
+    "close_implicit":{"base":"fetch_eof","put":{"/code":"Ok","/phase":"Close","/rows":"NotApplicable","/complete":"NotApplicable"}},
+    "begin":{"base":"prepare_idle","put":{"/phase":"Entry","/returned_statement":null,"/public_transaction":"Active","/transaction_decision":"NotAttempted"}},
+    "prepare_active":{"base":"prepare_idle","put":{"/public_transaction":"Active","/transaction_decision":"NotAttempted"}},
+    "execute_dml":{"base":"begin","put":{"/phase":"Execute","/statement_effect":"StatementApplied","/affected_count":1}},
+    "prepare_select_active":{"base":"prepare_active","put":{"/returned_statement":"@p2"}},
+    "execute_select_active":{"base":"execute_select","put":{"/returned_result":"@r1s1","/transaction_decision":"NotAttempted"}},
+    "close_active":{"base":"close_implicit","put":{"/public_transaction":"Active","/transaction_decision":"NotAttempted"}},
+    "rollback_complete":{"base":"begin","put":{"/phase":"Rollback","/statement_effect":"StatementRestored","/public_transaction":"Idle","/transaction_decision":"Aborted","/client_knowledge":"KnownAborted"}},
+    "rollback_incomplete":{"base":"rollback_complete","put":{"/code":"RecoveryRequired","/statement_effect":"RecoveryRequired","/retry":"AfterRecovery","/engine_cause":"UndoIncomplete","/origin_cause":"UndoIncomplete","/diagnostic":{"$value":"D_RECOVERY"},"/public_transaction":"RecoveryPending","/transaction_decision":"NotCommittedRecoveryRequired","/client_knowledge":"KnownNotCommittedRecoveryRequired","/recovery_obligations":["@o1"]}},
+    "set_off":{"base":"prepare_idle","put":{"/phase":"Entry","/returned_statement":null}}
+  },
+  "edges": {
+    "sel.prepare":{"pre":"initial","input":"sel.prepare","response":"prepare_idle","post":"sel.prepared","class":"CheckedAdmitted","context_event":{"identity":"@c1","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":0},
+    "sel.execute":{"pre":"sel.prepared","input":"sel.execute","response":"execute_select","post":"sel.open","class":"CheckedAdmitted","context_event":{"identity":"@c2","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":1},
+    "sel.eof":{"pre":"sel.open","input":"sel.eof","response":"fetch_eof","post":"sel.eof","class":"CheckedAdmitted","context_event":{"identity":"@c3","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":3},
+    "sel.reexecute":{"pre":"sel.eof","input":"sel.reexecute","response":"execute_select2","post":"sel.reexecuted","class":"CheckedAdmitted","context_event":{"identity":"@c4","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":1},
+    "sel.stale":{"pre":"sel.reexecuted","input":"sel.stale_rows","response":"stale_rejected","post":"sel.stale_rejected","class":"CheckedRejected","context_event":{"identity":"@c5","before":null,"after":"Completed"},"controls":{"entry_cancel":"NotChecked","entry_deadline":"NotChecked","observed_cancel":false,"observed_deadline":false},"authenticated_targets":{"statement":null,"result":null,"transaction":null},"consumed_fact_parts":0},
+    "sel.current_rows":{"pre":"sel.reexecuted","input":"sel.current_rows","response":"fetch_rows","post":"sel.current_rows","class":"CheckedAdmitted","context_event":{"identity":"@c5","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":1},
+    "sel.signal_completed":{"pre":"sel.open","input":"sel.signal_completed","response":"signal_ignored","post":"sel.open","class":"CheckedNoEffect","context_event":null,"controls":{"entry_cancel":"NotChecked","entry_deadline":"NotChecked","observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":0},
+    "sel.rows":{"pre":"sel.open","input":"sel.rows","response":"fetch_rows","post":"sel.rows","class":"CheckedAdmitted","context_event":{"identity":"@c3","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":1},
+    "sel.park":{"pre":"sel.open","input":"sel.park","response":"park","post":"sel.parked","class":"CheckedAdmitted","context_event":{"identity":"@c3","before":null,"after":"ParkedFetch"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":0},
+    "sel.signal_parked":{"pre":"sel.parked","input":"sel.signal_parked","response":"signal_parked","post":"sel.signalled","class":"CheckedNoContextIssue","context_event":null,"controls":{"entry_cancel":"NotChecked","entry_deadline":"NotChecked","observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":0},
+    "sel.resume":{"pre":"sel.signalled","input":"sel.resume_timeout","response":"fetch_timeout","post":"sel.timeout","class":"CheckedContinuation","context_event":{"identity":"@c3","before":"ParkedFetch","after":"Completed"},"controls":{"entry_cancel":"NotChecked","entry_deadline":"NotChecked","observed_cancel":false,"observed_deadline":true},"consumed_fact_parts":2},
+    "sel.cancel":{"pre":"sel.open","input":"sel.terminal_cancel","response":"fetch_cancelled","post":"sel.cancelled","class":"CheckedAdmitted","context_event":{"identity":"@c3","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":true,"observed_deadline":false},"consumed_fact_parts":2},
+    "sel.entry_cancel":{"pre":"sel.open","input":"sel.entry_cancel","response":"fetch_entry_cancelled","post":"sel.entry_cancelled","class":"CheckedRejected","context_event":{"identity":"@c3","before":null,"after":"Completed"},"controls":{"entry_cancel":true,"entry_deadline":"NotChecked","observed_cancel":true,"observed_deadline":false},"consumed_fact_parts":0},
+    "sel.buffer":{"pre":"sel.open","input":"sel.buffer","response":"fetch_buffer","post":"sel.buffer_small","class":"CheckedAdmitted","context_event":{"identity":"@c3","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":1},
+    "sel.close":{"pre":"sel.open","input":"sel.close","response":"close_implicit","post":"sel.closed","class":"CheckedAdmitted","context_event":{"identity":"@c3","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":2},
+    "rw.begin":{"pre":"initial","input":"rw.begin","response":"begin","post":"rw.begun","class":"CheckedAdmitted","context_event":{"identity":"@c1","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":0},
+    "rw.prepare":{"pre":"rw.begun","input":"rw.prepare","response":"prepare_active","post":"rw.prepared","class":"CheckedAdmitted","context_event":{"identity":"@c2","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":0},
+    "rw.execute":{"pre":"rw.prepared","input":"rw.execute","response":"execute_dml","post":"rw.written","class":"CheckedAdmitted","context_event":{"identity":"@c3","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":1},
+    "rw.prepare_select":{"pre":"rw.written","input":"rw.prepare_select","response":"prepare_select_active","post":"rw.select_prepared","class":"CheckedAdmitted","context_event":{"identity":"@c4","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":0},
+    "rw.execute_select":{"pre":"rw.select_prepared","input":"rw.execute_select","response":"execute_select_active","post":"rw.select_open","class":"CheckedAdmitted","context_event":{"identity":"@c5","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":1},
+    "rw.close":{"pre":"rw.select_open","input":"rw.close","response":"close_active","post":"rw.select_closed","class":"CheckedAdmitted","context_event":{"identity":"@c6","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":2},
+    "rw.rollback_complete":{"pre":"rw.written","input":"rw.rollback_complete","response":"rollback_complete","post":"rw.aborted","class":"CheckedAdmitted","context_event":{"identity":"@c4","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":2},
+    "rw.rollback_incomplete":{"pre":"rw.written","input":"rw.rollback_incomplete","response":"rollback_incomplete","post":"rw.recovery_pending","class":"CheckedAdmitted","context_event":{"identity":"@c4","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":2},
+    "off.set":{"pre":"initial","input":"off.set","response":"set_off","post":"off.set","class":"CheckedAdmitted","context_event":{"identity":"@c1","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":0},
+    "off.prepare":{"pre":"off.set","input":"rw.prepare","response":"prepare_idle","post":"off.prepared","class":"CheckedAdmitted","context_event":{"identity":"@c2","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":0},
+    "off.execute":{"pre":"off.prepared","input":"off.execute","response":"execute_dml","post":"off.written","class":"CheckedAdmitted","context_event":{"identity":"@c3","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":1},
+    "off.prepare_select":{"pre":"off.written","input":"rw.prepare_select","response":"prepare_select_active","post":"off.select_prepared","class":"CheckedAdmitted","context_event":{"identity":"@c4","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":0},
+    "off.execute_select":{"pre":"off.select_prepared","input":"rw.execute_select","response":"execute_select_active","post":"off.select_open","class":"CheckedAdmitted","context_event":{"identity":"@c5","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":1},
+    "off.close":{"pre":"off.select_open","input":"rw.close","response":"close_active","post":"off.select_closed","class":"CheckedAdmitted","context_event":{"identity":"@c6","before":null,"after":"Completed"},"controls":{"entry_cancel":false,"entry_deadline":false,"observed_cancel":false,"observed_deadline":false},"consumed_fact_parts":2}
+  },
+  "traces": [
+    {"id":"LM-M1","role":"mandatory_mutant_witness","length":5,"initial":"initial","edges":["sel.prepare","sel.execute","sel.eof","sel.reexecute","sel.stale"],"final":"sel.stale_rejected","detector":"retired_result_rejects_and_preserves_current","opposing_controls":["LM-C1"]},
+    {"id":"LM-M2","role":"mandatory_mutant_witness","length":4,"initial":"initial","edges":["sel.prepare","sel.execute","sel.signal_completed","sel.rows"],"final":"sel.rows","detector":"completed_context_signal_cannot_poison_fresh_fetch","opposing_controls":["LM-C2"]},
+    {"id":"LM-M3","role":"mandatory_mutant_witness","length":6,"initial":"initial","edges":["rw.begin","rw.prepare","rw.execute","rw.prepare_select","rw.execute_select","rw.close"],"final":"rw.select_closed","detector":"close_result_releases_only_cursor_and_preserves_rw","opposing_controls":["LM-C3-OFF","LM-C3-IMPLICIT"]},
+    {"id":"LM-M4","role":"mandatory_mutant_witness","length":4,"initial":"initial","edges":["rw.begin","rw.prepare","rw.execute","rw.rollback_incomplete"],"final":"rw.recovery_pending","detector":"incomplete_undo_retains_fence_and_exact_owners","opposing_controls":["LM-C4"]},
+    {"id":"LM-M5","role":"mandatory_mutant_witness","length":3,"initial":"initial","edges":["sel.prepare","sel.execute","sel.cancel"],"final":"sel.cancelled","detector":"implicit_terminal_cancel_ends_cursor_and_readonly","opposing_controls":["LM-C5-ENTRY","LM-C5-BUFFER"]},
+    {"id":"LM-C1","role":"opposing_control","length":5,"initial":"initial","edges":["sel.prepare","sel.execute","sel.eof","sel.reexecute","sel.current_rows"],"final":"sel.current_rows","distinction":"Same prefix and context C5; supplied token is current R2 nonce2/generation3, not retired R1. Rows1, position1, unchanged owner holders."},
+    {"id":"LM-C2","role":"opposing_control","length":5,"initial":"initial","edges":["sel.prepare","sel.execute","sel.park","sel.signal_parked","sel.resume"],"final":"sel.timeout","distinction":"Signal targets current parked C3 with FutureAtEntry; pending deadline observed by original C3. Supplied Rows work is NOT consumed, only Complete cleanup is consumed; no fresh context C4."},
+    {"id":"LM-C3-OFF","role":"opposing_control","length":6,"initial":"initial","edges":["off.set","off.prepare","off.execute","off.prepare_select","off.execute_select","off.close"],"final":"off.select_closed","distinction":"OFF starts RW3 at DML Execute, not Set. Close preserves active OffStarted transaction and its original resource identities u3/u4/u5."},
+    {"id":"LM-C3-IMPLICIT","role":"opposing_control","length":3,"initial":"initial","edges":["sel.prepare","sel.execute","sel.close"],"final":"sel.closed","distinction":"ON implicit ReadOnly close ends transaction and cursor; no RW3, commit decision or durable receipt is invented. Closed result remains current."},
+    {"id":"LM-C4","role":"opposing_control","length":4,"initial":"initial","edges":["rw.begin","rw.prepare","rw.execute","rw.rollback_complete"],"final":"rw.aborted","distinction":"Complete whole undo permits Idle/Aborted and released RW3; plan and binding remain held. No fence or recovery aggregate."},
+    {"id":"LM-C5-ENTRY","role":"opposing_control","length":3,"initial":"initial","edges":["sel.prepare","sel.execute","sel.entry_cancel"],"final":"sel.entry_cancelled","distinction":"Cancellation rejected before admission registers C3 only; open cursor, position0, transaction and all owners remain. No fact F2 is supplied or consumed."},
+    {"id":"LM-C5-BUFFER","role":"opposing_control","length":3,"initial":"initial","edges":["sel.prepare","sel.execute","sel.buffer"],"final":"sel.buffer_small","distinction":"Admitted RowBufferTooSmall consumes Work F2 but no cleanup; open cursor, position0, transaction and holders remain."}
+  ],
+  "mutants": [
+    {
+      "id":"LM-M1","mandatory_trace":"LM-M1","first_required_divergence_edge":"sel.stale",
+      "fault":"Treat retired issued result R1 as accepted, for example return its former cached EOF.",
+      "bad_response":{"base":"stale_rejected","put":{"/code":"Eof","/phase":"Fetch","/retry":"NotApplicable","/diagnostic":null,"/complete":true}},
+      "bad_post":{"base":"sel.stale_rejected","put":{}},
+      "required_rejection":["response.code InvalidHandle", "complete false", "R1 retirement Reexecute remains", "R2 generation3/position0 and all manager fields preserved"],
+      "note":"This hand-authored representative corrupts the reply only. Other stale-accept effects are also rejected against the full normal trace; this is not a claim that a product mutant executed."
+    },
+    {
+      "id":"LM-M2","mandatory_trace":"LM-M2","first_required_divergence_edge":"sel.rows",
+      "fault":"Mutant-private completed-context target relation propagates a signal from old Execute C2 to a later Fetch C3.",
+      "hidden_state_literals":[
+        {"after_edge":"sel.prepare","completed_attachments":[],"latent_poison":[]},
+        {"after_edge":"sel.execute","completed_attachments":[{"context":"@c2","result":"@r1s0","statement":"@p1","transaction":"@t1"}],"latent_poison":[]},
+        {"after_edge":"sel.signal_completed","completed_attachments":[{"context":"@c2","result":"@r1s0","statement":"@p1","transaction":"@t1"}],"latent_poison":[{"source_context":"@c2","result":"@r1s0","cancel":true}]}
+      ],
+      "bad_response":{"base":"fetch_entry_cancelled","put":{}},
+      "bad_post":{"base":"sel.entry_cancelled","put":{}},
+      "required_rejection":["fresh C3 input cancel=false", "response Ok rows1 complete=false", "position1", "Work F2 consumed", "completed Signal left normal full state unchanged"],
+      "mandatory_replay":"Replay all four actions even when normal Signal is a self-loop. Mutant hidden state survives normal B projection and normal visited dedup. Any later joint exploration keys normal B state + complete mutant hidden state + remaining length."
+    },
+    {
+      "id":"LM-M3","mandatory_trace":"LM-M3","first_required_divergence_edge":"rw.close",
+      "fault":"Treat result close as an implicit commit of the enclosing explicit RW transaction.",
+      "bad_response":{"base":"close_active","put":{"/public_transaction":"Idle","/transaction_decision":"Committed","/client_knowledge":"KnownCommitted"}},
+      "bad_post":{"base":"rw.select_closed","put":{
+        "/actors/0/transaction":null,"/transactions/1/life":"Ended","/transactions/1/decision":"Committed","/transactions/1/client_knowledge":"KnownCommitted","/transactions/1/completion_fact":"@f3",
+        "/owners/1/disposition":"Released","/owners/1/current_holder":null,"/owners/1/previous_holder":"@t1","/owners/1/last_fact":"@f3",
+        "/owners/2/disposition":"Released","/owners/2/current_holder":null,"/owners/2/previous_holder":"@t1","/owners/2/last_fact":"@f3",
+        "/owners/3/disposition":"Released","/owners/3/current_holder":null,"/owners/3/previous_holder":"@t1","/owners/3/last_fact":"@f3"
+      }},
+      "required_rejection":["LocalCleanup F3 supplied owners u8/u9/u10 only", "RW owners u1/u2/u3 Held", "transaction Active/priorWrite/NotAttempted", "no supplied receipt/commit fact"]
+    },
+    {
+      "id":"LM-M4","mandatory_trace":"LM-M4","first_required_divergence_edge":"rw.rollback_incomplete",
+      "fault":"Return normal Idle/Aborted after incomplete whole undo.",
+      "bad_response":{"base":"rollback_complete","put":{}},
+      "bad_post":{"base":"rw.recovery_pending","put":{"/actors/0/transaction":null,"/transactions/1/life":"Ended","/transactions/1/decision":"Aborted","/transactions/1/client_knowledge":"KnownAborted"}},
+      "required_rejection":["supplied Cleanup Incomplete", "RecoveryPending and attached transaction", "NotCommittedRecoveryRequired known outcome", "engine Fenced and obligation Outstanding", "RW3 plus Recovery retained"]
+    },
+    {
+      "id":"LM-M5","mandatory_trace":"LM-M5","first_required_divergence_edge":"sel.cancel",
+      "fault":"Terminal fetch cancellation leaves the implicit transaction/cursor open despite confirmed cleanup.",
+      "bad_response":{"base":"fetch_cancelled","put":{"/public_transaction":"Active"}},
+      "bad_post":{"base":"sel.cancelled","put":{
+        "/actors/0/transaction":"@t1","/actors/0/active_public_result":"@r1s0","/prepared_slots/0:0/state":"ResultOpen","/private_descriptors/1/state":"Open","/private_descriptors/1/terminal":null,"/transactions/1/life":"Active","/transactions/1/completion_fact":null,
+        "/owners/3/disposition":"Held","/owners/3/current_holder":"@r1s0","/owners/3/previous_holder":null,"/owners/3/last_fact":"@f1",
+        "/owners/4/disposition":"Held","/owners/4/current_holder":"@r1s0","/owners/4/previous_holder":null,"/owners/4/last_fact":"@f1",
+        "/owners/5/disposition":"Held","/owners/5/current_holder":"@r1s0","/owners/5/previous_holder":null,"/owners/5/last_fact":"@f1"
+      }},
+      "required_rejection":["confirmed Complete cleanup owners u3/u4/u5", "terminal Error/Cancelled with complete=false", "ReadyBound", "implicit Ended/actor Idle", "no cursor owner still held", "no invented commit receipt"]
+    }
+  ],
+  "not_claimed": [
+    "These 12 traces are not complete 2-session x 2-slot x depth6 BFS and do not reduce the 1533 raw-action denominator.",
+    "No model transition, production helper, foundation Value algorithm or executable oracle generated these post states.",
+    "No code, compile, test, checker acceptance, mutant rejection, runtime, engine cleanup, ACK/durability or bounded-search completion is claimed.",
+    "The opposite controls are normal independent literals; no positive checker acceptance is claimed before implementation and execution.",
+    "Shared peer fence, fresh recovery, late commit continuation, Bind Count0/Count2, no-write and same-call implicit RW release remain full-profile obligations outside this deliberately small first literal set.",
+    "Original v1/v2/v3, context designs and owner files are preserved. This file is a new review candidate, not a retroactive correction or adoption."
+  ]
+}
