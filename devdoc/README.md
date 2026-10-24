@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-24 [DEV4 P6 실제 공급 수합](evidence/dev4-supply-handoff-20261024.md): DEV3 초기 page clean 소비와 빈 Catalog/Free 큐 census의 제한 공급을 공개 SQL 소비 API와 구분했다. P1–P4 원 증거·API 차이·후속 연결 의무를 독립 사실 검토로 수합했으며 최소 disk 공급·실제 engine 연결·Q1은 미충족이다. 제품 변경·시험 실행0이며 P5 수명 모델은 설계 중이다.
+
 2026-10-24 [DEV4 나머지 raw 문장 parser](evidence/dev4-remaining-parser-20261024.md): SELECT/UPDATE/DELETE·CREATE/DROP TABLE/INDEX를 기존 flat AST·원문·marker에 연결했다. 보존 source의 semantic8함수(8,980parse·known-bad50/통제12)와 자원13함수·Clippy를 선택 검증했다. 원 M21 compile·fmt FAIL을 보존하고21제품 변조 거절·최종 독립 D1을 제한 수용했다. P5/P6·typed 문장 binding·실제 engine·Q1은 미완료다.
 
 2026-10-24 [DEV3 plan4 초기 page의 원 공유 버퍼 소비](evidence/dev3-plan4-clean-owner-20261024.md): 원 CAS와 한 SharedPool의 clean load·Catalog3pin·정리 큐4/4/3pin을 구현했다. 필수78의 source별 결과와 원 실패·HOLD를 보존하며 최종 독립 D1을 제한 수용했다. dirty/flush·복구 owner·CREATE/CLR·DEV3/S5는 미완료다.

@@ -2047,6 +2047,16 @@
       "path": "evidence/dev4-remaining-parser-20261024.json",
       "role": "evidence",
       "title": "DEV4 나머지 raw 문장 parser source별 실행 색인"
+    },
+    "dev4-supply-handoff-20261024.md": {
+      "path": "evidence/dev4-supply-handoff-20261024.md",
+      "role": "evidence",
+      "title": "DEV4 P6 실제 공급과 연결 준비 수합"
+    },
+    "dev4-supply-handoff-20261024.json": {
+      "path": "evidence/dev4-supply-handoff-20261024.json",
+      "role": "evidence",
+      "title": "DEV4 P6 source별 공급 관측·독립 사실 검토 색인"
     }
   }
 }

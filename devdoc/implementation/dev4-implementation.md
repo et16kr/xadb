@@ -83,7 +83,7 @@ cargo test -p xadb-sql --lib frontend::splitter::tests::absolute_offset_overflow
 
 P0/P1의 lexer·이름·streaming 경계와 원문 예약, 아래 P2 공통 parser·INSERT/거래 구문을
 제한 구현했다. 단일 API 문장 수·AST/marker 번호·source/arena 수명과 독립 literal의 선택
-증거를 수합했다. 아래 P3 scalar 입력과 predicate AST/parser를 추가했다. 재귀 depth64·256KiB stack은 새 조건식 경로에서 검증했으며 아래 typed predicate에서 전체 타입 분석·3값 계산을 추가했다. 아래 P4에서 나머지 raw 구문을 추가했다. P5 추상 수명 모델, P6 공급 수합과 실제 binding의 FE11/12는 미완료다.
+증거를 수합했다. 아래 P3 scalar 입력과 predicate AST/parser를 추가했다. 재귀 depth64·256KiB stack은 새 조건식 경로에서 검증했으며 아래 typed predicate에서 전체 타입 분석·3값 계산을 추가했다. 아래 P4에서 나머지 raw 구문을 추가했다. P6의 현재 공급/API 대조는 아래 수합에 기록했다. P5 추상 수명 모델, 후속 공급 수신과 실제 binding의 FE11/12는 미완료다.
 
 실제 catalog binding·실행 CLI·session·engine adapter와 Q1 entrypoint는 제공하지
 않는다. engine 연결은 DEV3 catalog/row/index/statement/undo/commit/recovery/temp의 실제 선행
@@ -230,3 +230,16 @@ cargo test -p xadb-sql --features test-support --locked --test remaining_parser_
 동시에 쓰지 않는다. 미지정은 기존 전체 함수 범위이고 완료 시험 반복을 허용하지 않는다.
 이 구현은 raw 구문 공급이다. typed 문장 binding·P5 수명 모델·P6 전체 공급 수합·실제 catalog/
 prepare/bind/engine·DDL precommit/SQL 실행과 DEV4/Q1은 미완료다.
+
+
+<a id="supply-handoff"></a>
+## 실제 공급과 연결 준비 수합
+
+[P6 source별 대조](../evidence/dev4-supply-handoff-20261024.md)는 DEV3 `bc93de1`과 당시 dirty를
+구분해 기존 공개 API, G5 private clean owner와 빈 Catalog/Free64 census, P1–P4 앞단 산출물의
+실제 범위·원 영수증·잔여를 연결한다. 이 사실 수합은 독립 검토를 거쳤지만 새 제품 실행이나
+최소 engine 공급 인수는 아니다. 후속 P4 commit과 engine dirty 변화도 원 관측과 분리했다.
+
+공개 disk statement/undo·Catalog 변경·row/index·실제 commit/reopen·temp/cleanup 공급을
+확인한 뒤 binding→첫 INSERT→commit/reopen→SELECT/fetch→실패/rollback의 새 연결 경로를
+구현·선택 검증한다. P5 수명 모델은 아직 설계 후보이며 실제 모델 탐색·수용은 NOT_RUN이다.

@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-24 [DEV4 P6 공급/API 수합](../evidence/dev4-supply-handoff-20261024.md): DEV3 clean owner의 제한 진전과 공개 disk 거래·live 큐·Catalog CREATE/CLR·첫 행 ACK의 미제공을 대조했다. 제품·시험 실행0, 실제 engine 연결·P5 모델·Q1은 미완료다.
+
 2026-10-24 [DEV4 나머지 raw 문장 parser](dev4-implementation.md#remaining-parser): SELECT/DML/DDL 구문 전체를 기존 source·arena·WHERE·marker에 연결하고 새 semantic8·자원13함수를 선택 검증했다. 원 실패와21제품 변조 거절을 보존하고 최종 독립 D1을 제한 수용했으며 typed 문장 binding·P5/P6·engine·Q1은 미완료다.
 
 2026-10-24 [DEV4 typed predicate](dev4-implementation.md#typed-predicate): 전체 Name/Type/marker 검산과 borrowed eager3VL을 구현하고 source별 필수 선택·18제품 변조 거절을 보존했다. 최종 독립 D1을 제한 수용했으며 실제 SQL 실행·Q1은 미완료다.
