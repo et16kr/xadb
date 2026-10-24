@@ -207,7 +207,7 @@ fn validate_header(
 }
 
 fn definition_len(
-    header: CatalogHeader,
+    object: ObjectId,
     definition: CatalogDefinition<'_>,
 ) -> Result<usize, CatalogError> {
     match definition {
@@ -228,7 +228,7 @@ fn definition_len(
         }
         CatalogDefinition::Index(index) => {
             if !valid_name(index.name)
-                || index.parent.object == header.identity.object
+                || index.parent.object == object
                 || !(1..=4).contains(&index.columns.len())
             {
                 return Err(CatalogError::InvalidInput);
@@ -249,7 +249,7 @@ pub(crate) fn catalog_encoded_len(
     definition: CatalogDefinition<'_>,
 ) -> Result<usize, CatalogError> {
     validate_header(header, expected)?;
-    Ok(CATALOG_HEADER_BYTES + definition_len(header, definition)?)
+    Ok(CATALOG_HEADER_BYTES + definition_len(header.identity.object, definition)?)
 }
 
 /// Validate every field before the first caller-buffer write. Fixed local
@@ -298,6 +298,13 @@ pub(crate) fn encode_catalog_record(
     fixed[224..228].copy_from_slice(&((length - CATALOG_HEADER_BYTES) as u32).to_le_bytes());
     output[..CATALOG_HEADER_BYTES].copy_from_slice(&fixed);
     let body = &mut output[CATALOG_HEADER_BYTES..length];
+    write_definition(definition, body);
+    Ok(length)
+}
+
+/// The caller validates the definition and provides its exact body length
+/// before any output write. Both XCT1 and XCB1 use this same definition body.
+fn write_definition(definition: CatalogDefinition<'_>, body: &mut [u8]) {
     match definition {
         CatalogDefinition::Table(spec) => {
             body[..2].copy_from_slice(&(spec.name.len() as u16).to_le_bytes());
@@ -323,7 +330,6 @@ pub(crate) fn encode_catalog_record(
             body[8..].copy_from_slice(index.name.as_bytes());
         }
     }
-    Ok(length)
 }
 
 fn decode_identity(input: &[u8], offset: usize) -> Result<ObjectHandle, CatalogError> {
@@ -481,3 +487,10 @@ pub(crate) fn validate_index_against_table(
 #[cfg(test)]
 #[path = "catalog_record_tests.rs"]
 mod tests;
+
+#[path = "catalog_before.rs"]
+pub(crate) mod before;
+
+#[cfg(test)]
+#[path = "catalog_before_tests.rs"]
+pub(in crate::storage) mod before_tests;

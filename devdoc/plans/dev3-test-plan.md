@@ -700,3 +700,37 @@ S5 추가 `mixed_owner_s5_profile2_three_frame_lifecycle`와 profile3 대응 함
 기존 혼합 INIT의342,819 변형과 이 새 실제 owner2case를 서로 대체하지 않는다. 일반 page·live undo·
 첫 행 거래·일반 복구의 후속 inventory도 여전히 필요하다. 실제 source별 결과는
 [선택 증거](../evidence/dev3-mixed-system-owner-20261024.md)에 기록한다.
+
+
+<a id="catalog-before-followup"></a>
+## 첫 catalog 소비자의 typed Undo before — 2026-10-24
+
+[소유 계약](../contracts/dev3-catalog-format.md#undo-before)과
+[독립 입력·정확 ID inventory](../../tests/fixtures/dev3-catalog-before/manifest.json)를 따른다.
+새 raw68과 기존 독립 raw 참조2를 구별한다. [선택 증거](../evidence/dev3-catalog-before-20261024.md)의
+r1 필수123은 PASS이며 최종 독립 D1을 제한 수용했다. S5 확대9,534는 NOT_RUN이다.
+
+| 중간 선택 | case |
+| --- | ---: |
+| 독립 P root literal·typed inline |15|
+| target/stamp N01–12 |12|
+| shape N13–36 + header/definition H01–14 |38|
+| chunk C01–03 + N37–40/N49–50 |9|
+| release N41–48 + accessor A01–09 |17|
+| loaded version L01–06 |6|
+| encoder NoSpace E01–08 + invalid input I01–10 |18|
+| 변경 legacy Catalog K01–05 |5|
+| 기존 XCT1 wrapper의 새 Table/Index 연결 B01–02 |2|
+| source-value static ST01 |1|
+| **필수 합계 / 함수** |**123 /10**|
+
+source/raw/provenance/selector의 독립 검토 뒤 ST01 하나를 먼저 선택하고 동일 source의 나머지
+semantic122만 실행한다. K5를 분리한 기존 함수의 unchanged Row/Index·key 시험은 실행하지 않는다.
+P 정상 inline과 A 거절 accessor의 입력/연산을 구별하며 같은 완료 operation을 재실행하지 않는다.
+함수 내부 중단 때도 exact ID의 BEGIN/PASS/FAIL·source/ELF를 보존하고 완료 ID를 다음 선택에서 제외한다.
+
+S5 추가3함수는 G의64 seeds×8 profiles=512, typed XCB1 prefix8992+trailing6=8998,
+reserved/flag 확대24의 **9534case**다. ignored/NOT_RUN으로 작성하며 최종 S5에 필수123과 함께
+등록한다. 이 단위 전체9657case는 실제 catalog create/CLR·queue·첫 행 ACK/recovery를 대신하지 않는다.
+pure private borrowed view이므로 신규 compiler/native campaign을 만들지 않으며 실제 source D1에서
+field/lifetime을 확인한다. 첫 actual consumer의 compiler·현재-build 복구·F05 의무는 유지한다.

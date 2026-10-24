@@ -5,6 +5,10 @@
 #![allow(dead_code)]
 
 use super::{
+    catalog_record::{
+        CatalogError, CatalogExpectation,
+        before::{CatalogBeforeView, MAX_CATALOG_BEFORE_BYTES, decode_catalog_before},
+    },
     key::PhysicalKey,
     page::{
         PageError, PageHeader, PageIdentity, PageKind, PageLsn, PageRef, decode_page, encode_page,
@@ -66,6 +70,19 @@ impl From<RowError> for UndoError {
             RowError::SchemaMismatch => Self::SchemaMismatch,
             RowError::TooLarge => Self::TooLarge,
             _ => Self::Corrupt,
+        }
+    }
+}
+
+impl From<CatalogError> for UndoError {
+    fn from(error: CatalogError) -> Self {
+        match error {
+            CatalogError::InvalidInput => Self::InvalidInput,
+            CatalogError::NoSpace => Self::NoSpace,
+            CatalogError::Corrupt => Self::Corrupt,
+            CatalogError::UnsupportedFormat => Self::UnsupportedFormat,
+            CatalogError::IdentityMismatch => Self::IdentityMismatch,
+            CatalogError::DefinitionMismatch => Self::SchemaMismatch,
         }
     }
 }
@@ -258,6 +275,7 @@ pub(crate) enum UndoBeforeKind {
     RowValue = 2,
     IndexAbsent = 3,
     IndexPresent = 4,
+    CatalogValue = 5,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -477,9 +495,6 @@ fn validate_record(
     columns: &[Column],
 ) -> Result<usize, UndoError> {
     record.target.validate()?;
-    if record.target.kind == UndoTargetKind::Catalog {
-        return Err(UndoError::UnsupportedCatalogBody);
-    }
     if record.target != expected.target || !in_namespace(record.creator.id, expected.namespace) {
         return Err(UndoError::IdentityMismatch);
     }
@@ -525,7 +540,10 @@ fn validate_record(
             record.before_kind,
             UndoBeforeKind::Missing | UndoBeforeKind::IndexAbsent | UndoBeforeKind::IndexPresent
         ),
-        UndoTargetKind::Catalog => false,
+        UndoTargetKind::Catalog => matches!(
+            record.before_kind,
+            UndoBeforeKind::Missing | UndoBeforeKind::CatalogValue
+        ),
     };
     if !matching_kind {
         return Err(UndoError::InvalidInput);
@@ -569,7 +587,14 @@ fn validate_record(
         }
     }
     let inline = match record.payload {
-        UndoPayload::None if record.before_kind != UndoBeforeKind::RowValue => 0,
+        UndoPayload::None
+            if !matches!(
+                record.before_kind,
+                UndoBeforeKind::RowValue | UndoBeforeKind::CatalogValue
+            ) =>
+        {
+            0
+        }
         UndoPayload::Inline(bytes)
             if record.before_kind == UndoBeforeKind::RowValue
                 && (5..=2048).contains(&bytes.len()) =>
@@ -577,7 +602,17 @@ fn validate_record(
             decode_canonical_row(bytes, columns)?;
             bytes.len()
         }
-        UndoPayload::Chunks(head) if record.before_kind == UndoBeforeKind::RowValue => {
+        UndoPayload::Inline(bytes)
+            if record.before_kind == UndoBeforeKind::CatalogValue && bytes.len() <= 2048 =>
+        {
+            decode_catalog_before(bytes, catalog_expectation(record, expected.namespace)?)?;
+            bytes.len()
+        }
+        UndoPayload::Chunks(head)
+            if record.before_kind == UndoBeforeKind::RowValue
+                || (record.before_kind == UndoBeforeKind::CatalogValue
+                    && head.total <= MAX_CATALOG_BEFORE_BYTES) =>
+        {
             if same_address(head.root, expected.reference.page()) {
                 return Err(UndoError::IdentityMismatch);
             }
@@ -823,6 +858,7 @@ pub(crate) fn decode_undo_record<'a>(
             2 => UndoBeforeKind::RowValue,
             3 => UndoBeforeKind::IndexAbsent,
             4 => UndoBeforeKind::IndexPresent,
+            5 => UndoBeforeKind::CatalogValue,
             _ => return Err(UndoError::Corrupt),
         };
         let total = u32_at(input, 320) as usize;
@@ -1248,6 +1284,9 @@ pub(crate) fn decode_materialized_before<'a>(
     columns: &[Column],
 ) -> Result<CanonicalRowView<'a>, UndoError> {
     let record = view.live_before()?;
+    if record.target.kind != UndoTargetKind::Row || record.before_kind != UndoBeforeKind::RowValue {
+        return Err(UndoError::StateMismatch);
+    }
     let UndoPayload::Chunks(head) = record.payload else {
         return Err(UndoError::StateMismatch);
     };
@@ -1255,6 +1294,56 @@ pub(crate) fn decode_materialized_before<'a>(
         return Err(UndoError::Corrupt);
     }
     Ok(decode_canonical_row(input, columns)?)
+}
+
+fn catalog_expectation(
+    record: UndoRecord<'_>,
+    namespace: Namespace,
+) -> Result<CatalogExpectation, UndoError> {
+    Ok(CatalogExpectation {
+        namespace,
+        object: ObjectId::new(record.target.entity).map_err(|_| UndoError::InvalidInput)?,
+    })
+}
+
+/// Only a Live Catalog Missing/Inline before image is available here. The
+/// borrowed definition does not stabilize its historical anchor or parent.
+pub(crate) fn decode_inline_catalog_before<'a>(
+    view: UndoRecordView<'a>,
+) -> Result<Option<CatalogBeforeView<'a>>, UndoError> {
+    let record = view.live_before()?;
+    if record.target.kind != UndoTargetKind::Catalog {
+        return Err(UndoError::StateMismatch);
+    }
+    match (record.before_kind, record.payload) {
+        (UndoBeforeKind::Missing, UndoPayload::None) => Ok(None),
+        (UndoBeforeKind::CatalogValue, UndoPayload::Inline(bytes)) => Ok(Some(
+            decode_catalog_before(bytes, catalog_expectation(record, view.namespace)?)?,
+        )),
+        _ => Err(UndoError::StateMismatch),
+    }
+}
+
+pub(crate) fn decode_materialized_catalog_before<'a>(
+    view: UndoRecordView<'_>,
+    input: &'a [u8],
+) -> Result<CatalogBeforeView<'a>, UndoError> {
+    let record = view.live_before()?;
+    if record.target.kind != UndoTargetKind::Catalog
+        || record.before_kind != UndoBeforeKind::CatalogValue
+    {
+        return Err(UndoError::StateMismatch);
+    }
+    let UndoPayload::Chunks(head) = record.payload else {
+        return Err(UndoError::StateMismatch);
+    };
+    if input.len() != head.total || content_digest(input) != head.digest {
+        return Err(UndoError::Corrupt);
+    }
+    Ok(decode_catalog_before(
+        input,
+        catalog_expectation(record, view.namespace)?,
+    )?)
 }
 pub(crate) fn validate_release_chunk(
     view: UndoRecordView<'_>,

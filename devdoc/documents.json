@@ -1967,6 +1967,16 @@
       "path": "evidence/dev4-parser-20261024.json",
       "role": "evidence",
       "title": "DEV4 parser source별 선택 실행 색인"
+    },
+    "dev3-catalog-before-20261024.md": {
+      "path": "evidence/dev3-catalog-before-20261024.md",
+      "role": "evidence",
+      "title": "DEV3 Catalog typed Undo before 선택 증거"
+    },
+    "dev3-catalog-before-20261024.json": {
+      "path": "evidence/dev3-catalog-before-20261024.json",
+      "role": "evidence",
+      "title": "DEV3 Catalog before source별 선택 증거 색인"
     }
   }
 }

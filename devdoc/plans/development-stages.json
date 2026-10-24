@@ -190,6 +190,12 @@
           "contract_ref": "dev3-mixed-system-owner.md",
           "evidence_ref": "dev3-mixed-system-owner-20261024.json",
           "scope": "Original mixed Status/FreeUndo owner and closed recovery; mandatory memory144/static3 and native continuation2 pass with limited independent D1 accepted; strict same-ELF3 unmet; general pool/live undo, first-row transaction and DEV3/S5 remain incomplete. AI consumer count remains1/3."
+        },
+        "catalog_before": {
+          "status": "ACCEPTED_LIMITED_D1",
+          "contract_ref": "dev3-catalog-format.md#undo-before",
+          "evidence_ref": "dev3-catalog-before-20261024.json",
+          "scope": "Pure typed Catalog historical before; mandatory123 PASS, S5 additional9534 NOT_RUN. No actual Catalog/row/queue/terminal/recovery or DEV3/S5 completion; AI consumer remains1/3."
         }
       }
     },

@@ -968,3 +968,14 @@ source별 PASS다. 실제 producer는 PASS이고 첫 recovery의 terminal hold �
 최종 독립 D1은 현재 제품 이어가기의 제한 종료점을 수용했다. 원 동일 ELF 세 phase PASS는 미충족이며
 일반 pool/live undo와 방법론 소비자2/3으로 승격하지 않는다. AI 완료 소비자1/3을 유지한다.
 S5 profile 확대2와 일반 page·live undo·첫 행 거래·일반 recovery/READY·전체 DEV3/S5는 미완료다.
+
+<a id="catalog-before"></a>
+### 첫 Catalog 소비자의 typed Undo before
+
+2026-10-24 [XCB1 소유 계약](../contracts/dev3-catalog-format.md#undo-before)에 따라 historical
+Table/Index 정의와 Catalog Missing/Value를 기존 Undo root에 연결했다. XCT1 정의 코드를 공유하고
+inline/chunk·Row/Catalog·Live/Releasing의 접근 경계를 검산한다. 새 값 view는 실제 handle이나
+anchor 수명 권한이 아니다. [선택 증거](../evidence/dev3-catalog-before-20261024.md)의 r1
+static1·semantic122 PASS, 원 r0 Clippy FAIL와 수집기 부분 판정/원자료 재판독을 보존했다.
+최종 독립 D1을 제한 수용했으며 S5 추가9,534는 작성·NOT_RUN이다. 실제 Catalog create/CLR·queue·
+terminal·첫 행 ACK/recovery·전체 DEV3/S5는 미완료이고 AI 완료 소비자1/3을 유지한다.

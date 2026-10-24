@@ -82,7 +82,7 @@ table당 최대8 indexes·PK 최대1개, 이름 중복·statement-final uniquene
 | `catalog_namespace_handle_and_versions` | DB/timeline/key/handle generation/schema epoch, stamp와 token TxnId 불일치; 과거 writer epoch 정상; retired 정의 유지 |
 | `catalog_tree_values_and_fixed_profiles` | ObjectId key 순서와 catalog leaf entry 통합,64 seed×128=8,192 table/index 정의의 독립 offset·길이·roundtrip |
 
- catalog undo의 before body는 이 typed 정의를 소비하는 후속 계약에서 별도로 연결한다. 현재 undo 제안의 UnsupportedCatalogBody를 이 문서가 해소했다고 표시하지 않는다.
+ 원 D3-CATALOG-F01 인수 당시 catalog undo before는 미지원이었다. 이후 typed before의 설계·구현·시험은 [D3-CATALOG-BEFORE-001](#undo-before)로 별도 구분하며 원 실행 결과를 승계하지 않는다.
 
 ### 독립 literal과 상세 입력
 
@@ -124,3 +124,68 @@ namespace/handle/version 검사는DB/timeline/keyObjectId/handleObjectId/handleG
 `artifacts/dev3/catalog-leaf-ci_khgn4/validation.json`의 보존 source에서 고정6시험·all-target/all-feature Clippy·소유 formatter를 통과했다. source 지문은 `07502184108c250786418ae57895aa469a591cbedaa068cf0918f182de3794ef`이며 기존 commit `c800e81`과 이 두 source, export의 module 연결만 포함한다. 처음 실행한6시험에 실패·무시는 없었다. `/root/dev3_model`이 별도 사본에서6시험과 독립 raw literal reader6개를 재검증하여 PASS했다(`artifacts/dev3/catalog-independent-model-r1/review.json`).
 
 생성 corpus의 짝/홀수 분할 때문에 생성 table 열 수는 홀수, index arity는2/4다. 전체32열 경계와arity1..4는 별도 고정 boundary/matrix에서 검증했다. 이 제한을 생성 corpus만의 전수 인수로 표시하지 않는다. 통합 source의 하위 회귀·복구는 별도이며 실제 DDL/visibility/catalog undo는 미완료다.
+
+
+<a id="undo-before"></a>
+## 8. Undo의 historical catalog before
+
+2026-10-24 · **D3-CATALOG-BEFORE-001 독립 D2 입력 동결 수용 / 필수123 PASS·최종 D1 제한 수용**.
+최소 실제 catalog create와 첫 행 거래에 필요한 표현이다. 실제 DDL/CLR·anchor 보존·terminal queue·commit/recovery는 여전히 별도 미공급이며 이 준비를 소비자 완료로 세지 않는다.
+
+기존 XCT1 전체를 Undo payload로 중첩하면 stamp/logical/UndoRef가 중복되어 세 번째 edge 정본이 생긴다. 따라서 기존 [Undo root](dev3-undo-format.md)에 stamp/logical·두 previous role을 한 번만 보존하고, payload XCB1에는 historical typed definition만 둔다. Missing과 완전한 CatalogValue를 함께 지원하며 Missing만 우회 허용하지 않는다.
+
+### XCB1 bytes와 의미
+
+정수는 LE, 전체 input은 exact length이며 별도 checksum은 없다. Inline은 외부 root/page, Chunks는 기존 total/digest와 page가 보호한다.
+
+| offset | bytes | 값 |
+| --- | --- | --- |
+|0|4|XCB1|
+|4|2|format1|
+|6|1|Table1 또는 Index2|
+|7|1|bit0 retired, 나머지0|
+|8|8|historical object generation, nonzero|
+|16|8|historical schema epoch, nonzero|
+|24|24|historical anchor PageRef|
+|48|24|Index parent ObjectId/Generation/SchemaEpoch; Table 전체0|
+|72|4|typed body bytes|
+|76|20|reserved0|
+|96|body|위 Table/Index 정의와 동일한 typed body|
+
+ObjectId는 trusted target의 entry entity에서 받으며 payload에 중복 저장하지 않는다. root target owner/generation은 catalog namespace/object이고 before definition의 generation/schema와 다를 수 있다. Index parent는 nonzero/nonself이며 current parent/table 검증은 historical definition decoder의 보장이 아니다. XCB1은 namespace, stamp, logical, UndoRef를 포함하지 않는다.
+
+Table은106..4452 bytes, Index는105..232 bytes다. CatalogValue는 실제 typed length105..2048이면 Inline,2049..4452이면 Chunks이고 exact1 chunk다. 유효 Index는 Chunks일 수 없다. root shape 검산만으로 materialized definition을 검증했다고 하지 않는다. root header432/max2480과 Row128KiB/9chunk 한도는 바꾸지 않는다. CatalogValue+None, Missing+payload는 거절한다.
+
+historical retired도 완전한 body와 anchor를 유지한다. PageRef shape의 성공은 실제 anchor/parent의 존재·pin·retirement 소유 권한이 아니다. 현재 catalog entry의 논리 복원은 root before stamp/logical과 **현재 previous-version**을 사용하며 과거 전체 page를 덮거나 cut 이전 edge를 되살리지 않는다. Missing CLR의 entry 제거도 새 tree/anchor 할당 책임 소멸을 뜻하지 않는다.
+
+### API·오류·수명
+
+기존 `catalog_record`의 private `before` 하위 모듈이 definition parser/writer를 공유한다. fake CatalogHeader/stamp를 만들어 old decoder를 호출하지 않는다. 공용 UndoRecord/DescriptorSpec/SystemProgress의 retained 크기와 공개 API·crate·의존성은 늘리지 않는다.
+
+| API | 경계 |
+| --- | --- |
+|`CatalogBeforeHeader`|ObjectHandle, retired, anchor 값. identity.object는 trusted expectation.object와 일치|
+|`catalog_before_encoded_len` / `encode_catalog_before`|모든 input·length·capacity 검산 뒤 첫 write. 오류의 전체 output와 성공 tail 보존|
+|`decode_catalog_before`|exact typed XCB1과 checked expectation. private borrowed view 반환|
+|`CatalogBeforeView::header/definition/validate_handle`|historical 값/identity 비교만 수행. input lifetime과 namespace context 보존|
+|`decode_inline_catalog_before`|Live Catalog Missing→None, Live CatalogValue Inline→Some. 그 외 StateMismatch|
+|`decode_materialized_catalog_before`|Live CatalogValue Chunks만 허용. exact total/digest 및 typed XCB1 검산|
+|기존 `decode_materialized_before`|Live Row+RowValue+Chunks 명시 요구. 다른 domain의 유효 payload도 StateMismatch|
+
+standalone length/encoder/decoder는 expectation의 timeline0을 InvalidInput으로 거절한다. encoder의 object 기대값 불일치는 IdentityMismatch다. CatalogError는 기존 의미를 유지하고 Undo 경계에서 같은 이름으로 대응하며 DefinitionMismatch만 SchemaMismatch로 대응한다. raw root decode의 InvalidInput→Corrupt 경계와 여러 결함의 오류 우선순서 미보장은 유지한다.
+
+Releasing은 before body가 남아 있어도 새 live accessor를 허용하지 않는다. cursor3의 stamp는 absent이고 logical/body는 보존한다. 별도 release chunk 관측은 기존 규칙을 따르며 이를 live materialization 성공으로 세지 않는다. 입력으로부터 만든 private borrowed view는 효과·pin·예약 token이 아니므로 신규 compiler campaign은 만들지 않고 source 독립 D1에서 field/lifetime을 확인한다. 새 capability나 mutable loan을 추가하면 해당 compiler 입력을 별도 동결한다.
+
+### 자원·검증 범위
+
+새 순수 호출의 source-value 합성 상한은65536 bytes, 그 안의 nominal caller backing은24576 bytes다. XCB1 input4452+encoder output4452+inline root2480+chunked root432+chunk cell4612=16428 bytes를 보수적으로 함께 계상한다. 여기에 TableSpec/Column32의 실제 크기와 이름4224 bytes, Index name128/columns4/carrier를 더한다. 임의 String/Vec capacity의 전체 quota를 공급했다는 뜻은 아니며 실제 mutable caller가 자기 capacity/예약을 계상해야 한다.
+
+root432/XCB1 96/기존 XCT1 232 header scratch, Table offset66, Catalog·Undo view/head/expected/context/verifier, ContentHasher clone, 인자·Result·error·return carrier를 실제 source 경로에서 합산한다. phase-max 차감은 helper 반환으로 수명이 끝나는 근거가 있을 때만 허용한다. page envelope·page loan·mutable owner 전체 F05나 ABI stack/RSS 증거로 확대하지 않는다.
+
+동결 inventory는 raw68(positive18+negative/context50), mandatory123(semantic122+static1)/10함수, S59534/3함수다. S5는 generated512+prefix/trailing8998+reserved/flag24이며 중간 실행에서 제외한다. exact ID별 BEGIN/PASS/FAIL·source/ELF를 보존하며 원 완료 ID를 반복하지 않는다. existing legacy Catalog5만 분리하여 바뀐 거절을 검사하고 unchanged Row/Index 전체를 실행하지 않는다. shared XCT1 definition 연결은 Table/Index2만 새로 검증한다.
+
+실제 source/fixture/provenance/selector의 독립 검토 뒤 ST01 자원 함수 하나를 먼저 실행하고 같은 source에서 나머지 필수 semantic122를 선택한다. mandatory wall10초, S5 wall30초, raw512KiB, 각 실행 history 로그/receipt8MiB는 측정 전 상한이다. build/static 준비 시간은 별도 기록한다. native/reopen은 순수 codec에 해당하지 않지만 첫 실제 소비자의 현재-build 복구 의무는 유지한다. 구현·source census·실행·최종 D1 결과는 후속 증거에서 별도로 기록한다.
+
+[실제 선택 증거](../evidence/dev3-catalog-before-20261024.md)는 r1의 static1·semantic122 PASS와
+원 Clippy FAIL·수집기 부분 판정·재실행 없는 원자료 재판독을 구별한다. source-value는
+nominal21,920/24,576, 전체62,239/65,536 bytes이며 S5 추가9,534는 NOT_RUN이다.

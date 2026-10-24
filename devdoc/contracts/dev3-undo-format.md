@@ -4,7 +4,7 @@
 
 [undo·aging](disk-storage-design.md#undo) · [참조 수명](disk-storage-design.md#undo-lifecycle) · [변경 그룹](disk-storage-design.md#mutation-protocol) · [복구 예약](disk-storage-design.md#recovery-reservation) · [M01/M02](dev3-undo-model.md) · [M04](dev3-recovery-model.md) · [참조](dev3-reference-format.md) · [거래](dev3-transaction-format.md) · [row/index](dev3-row-format.md) · [작업 소유](../implementation/dev3-implementation.md#wave-2)
 
-이 계약은 **row/index undo와 그 before-image의 무효과 표현**을 제안한다. catalog target identity까지 표현하지만 catalog before body는 `UnsupportedCatalogBody`로 거절한다. catalog 복구·전체 F01·S1의 완료가 아니다. I/O, pin/lock, undo 발급·적용, incoming count 변경, cut, queue 실행, slot 재사용, WAL/CLR, quota/obligation 복원은 실행하지 않는다. 기존 DEV2와 이미 동결한 PageRef/UndoRef/TxnRef/row/index bytes를 변경하지 않는다.
+이 계약은 **row/index undo와 그 before-image의 무효과 표현**을 소유한다. 2026-10-24 [typed Catalog before](dev3-catalog-format.md#undo-before)의 D2 입력 동결을 수용하여 Missing/CatalogValue 지원을 구현했다. [선택 증거](../evidence/dev3-catalog-before-20261024.md)의 새 필수123은 PASS이며 최종 독립 D1을 제한 수용했다. 원 Catalog occupied 미지원 경계와 그 실행 결과는 당시 증거로 보존한다. catalog 복구·전체 F01·S1의 완료가 아니다. I/O, pin/lock, undo 발급·적용, incoming count 변경, cut, queue 실행, slot 재사용, WAL/CLR, quota/obligation 복원은 실행하지 않는다. 기존 DEV2와 이미 동결한 PageRef/UndoRef/TxnRef/row/index bytes를 변경하지 않는다.
 
 `/root`는 두 previous edge에 별도 expected sequence를 두는 선택, row before의 별도 undo chunk, own/resolved before stamp, catalog body 미지원 경계와 아래 상세 offset·API·고정 corpus를 독립 검토하여 수용했다. 제품 작성 전 독립 raw vector/hash도 수신 검토했다. 제품 표현과 고정12개 시험을 작성했으며, 실행한 정확한 source와 남은 검토는 아래 실행 상태로 구분한다.
 
@@ -44,15 +44,16 @@ target은 아래32-byte core와 optional key를 갖는다. standalone target cod
 
 Row owner는 table, Index owner는 index, Catalog owner는 catalog namespace/object다. catalog entry ID는 catalog tree의8-byte BE key를 구성하는 nonzero u64다. 이름을 table/index identity로 대신하지 않는다. root의 creator DB/timeline이 namespace를 제공하고, 기대 namespace·owner·generation·entity·index arity/full key는 caller의 안정화된 context에서 받는다. 저장값으로 기대값을 다시 만들어 자신과 비교하지 않는다.
 
-index key는 기존 PhysicalKey decoder로 canonical scalar·arity·1,024-byte composite 한도·RowId suffix를 확인한다. suffix RowId와 target entity는 같아야 한다. standalone Catalog target은 정상적으로 검증할 수 있지만 **Catalog target의 occupied undo record는 body 종류와 무관하게 UnsupportedCatalogBody**다. Missing·retire만 성공시키거나 opaque bytes를 catalog before-value로 승인하지 않는다.
+index key는 기존 PhysicalKey decoder로 canonical scalar·arity·1,024-byte composite 한도·RowId suffix를 확인한다. suffix RowId와 target entity는 같아야 한다. standalone Catalog target을 검증하고 occupied Catalog는 Missing 또는 typed CatalogValue만 허용한다. XCB1의 exact body/한도는 [Catalog owner](dev3-catalog-format.md#undo-before)를 따른다. Missing·retire만 우회 지원하거나 opaque bytes를 before-value로 승인하지 않는다.
 
 | before kind | tag | target | stamp/logical | canonical value |
 | --- | --- | --- | --- | --- |
-| Missing | 0 | Row 또는 Index | 둘 다 zero | 없음 |
+| Missing | 0 | Row, Index 또는 Catalog | 둘 다 zero | 없음 |
 | RowDeleted | 1 | Row | 있음 | 없음 |
 | RowValue | 2 | Row | 있음 | 5–131,072 bytes |
 | IndexAbsent | 3 | Index | 있음 | 없음 |
 | IndexPresent | 4 | Index | 있음 | 없음 |
+| CatalogValue | 5 | Catalog | 있음 | typed XCB1 105–4452 bytes |
 
 Missing은 이전 physical entry 자체가 없던 상태다. RowDeleted와 IndexAbsent는 이전 entry가 존재하며 그 version identity를 보존하는 상태다. 이 차이를 상태 tag 하나로 지우지 않는다. target kind와 before kind의 조합이 undo 종류를 정한다. Missing의 previous-version은 Never여야 한다. row/index를 복구할 때 이전 entry를 제거할지 versioned tombstone을 남길지는 별도 WAL/visibility 실행 계약이며 codec이 tree를 변경하지 않는다.
 
@@ -86,7 +87,7 @@ root cell은432-byte header, target key K bytes, optional inline value L bytes �
 | 216 | 56 | before VersionStamp |
 | 272 | 48 | before LogicalRowVersion |
 | 320 | 4 | 전체 canonical before value bytes; 값 없으면0 |
-| 324 | 1 | before kind0..4 |
+| 324 | 1 | before kind0..5 |
 | 325 | 1 | value storage: None0, Inline1, Chunks2 |
 | 326 | 1 | previous-transaction edge state |
 | 327 | 1 | previous-version edge state |
@@ -106,7 +107,7 @@ root record는 kind8 Undo·level0 page의 cell이다. slot당 최소 비용은43
 
 공통 page decoder의 성공만으로 모든 root cell의 schema/target 의미가 검증됐다고 하지 않는다. 선택한 cell은 `decode_undo_record`로 추가 검증한다. root page에 보관하는 cell은 XUR1 root만이며 XUC1 chunk와 혼합하지 않는다. page를 작성하는 상위 owner는 모든 cell의 검증된 root bytes를 준비한 뒤 기존 page encoder를 호출한다. 이 leaf는 schema가 서로 다른 전체 page를 검증한 것처럼 표시하는 새 우회 API를 만들지 않는다.
 
-RowValue는 total5–2,048이면 Inline이고 L=total이다. total2,049–131,072이면 Chunks이며 L=0이다. 다른 before kind는 None/total0/L0이고 head도 zero다. Index의 K≤1,032와 Row의 L≤2,048은 서로 배타적이므로 최대 root는 **2,480 bytes**다. 두 상한을 더한 가짜 최대값을 사용하지 않는다.
+RowValue는 total5–2,048이면 Inline이고 L=total이다. total2,049–131,072이면 Chunks이며 L=0이다. CatalogValue는 typed total105–2048이면 Inline,2049–4452이면 Chunks/count1이며 None을 거절한다. 다른 before kind는 None/total0/L0이고 head도 zero다. Index의 K≤1,032와 Row의 L≤2,048은 서로 배타적이므로 최대 root는 **2,480 bytes**다. 두 상한을 더한 가짜 최대값을 사용하지 않는다.
 
 ## 4. Cut와 release cursor
 
@@ -174,7 +175,7 @@ chunk는 **kind8 Undo·level0 page의 유일한 cell**이며 아래160-byte head
 
 expected chunk context는 이미 검증한 root record에서 얻은 namespace, undo store owner/generation, root UndoRef/sequence, head다. 저장 chunk 자체의 필드로 기대 context를 만들지 않는다. page decoder가 DB/PageRef/owner/kind/level을 확인하고 cell decoder가 timeline·record identity·sequence·head·index를 대조한다. 공통 page header에는 timeline이 없으므로 cell의 명시 timeline과 root creator의 timeline을 함께 확인한다.
 
-`UndoChunkVerifier`는 최대9개 방문 물리 주소와 streaming SHA-256만 유지한다. 순서·정확한 next·중복 주소·전체 byte 수·digest를 모두 확인하고 finish는 count개 완료 후만 성공한다. 오류에서 verifier 상태를 보존한다. materialization은 caller의 별도 예약된 buffer에 하고, `decode_materialized_before`가 total/digest와 기존 CanonicalRow schema/type을 함께 검증한다. chunk bytes만 맞다고 row type까지 검증했다고 하지 않는다.
+`UndoChunkVerifier`는 최대9개 방문 물리 주소와 streaming SHA-256만 유지한다. 순서·정확한 next·중복 주소·전체 byte 수·digest를 모두 확인하고 finish는 count개 완료 후만 성공한다. 오류에서 verifier 상태를 보존한다. materialization은 caller의 별도 예약된 buffer에 한다. `decode_materialized_before`는 Live Row+RowValue+Chunks를 명시 요구하고 total/digest와 기존 CanonicalRow schema/type을 함께 검증한다. `decode_materialized_catalog_before`는 Live Catalog+CatalogValue+Chunks와 total/digest·typed XCB1을 검산한다. 유효한 다른 domain payload를 주어도 두 accessor는 StateMismatch로 거절한다. chunk bytes만 맞다고 row type까지 검증했다고 하지 않는다.
 
 Releasing의 `validate_release_chunk`는 durable released/index와 next를 기준으로 해당 한 chunk를 확인한다. 이미 반환한 앞 chunk를 순회하거나 전체 digest를 다시 계산할 수 있다고 주장하지 않는다. 최초 chain 공개의 전체 검산, 각 page checksum·owner binding, allocator의 정확한 PageRef 소유와 원자 cursor 인계가 별도 선행조건이다. index가 증가하고 남은 count가 줄어드는 표현과 actual exactly-once 반환은 구별한다.
 
@@ -196,10 +197,11 @@ Releasing의 `validate_release_chunk`는 durable released/index와 next를 기�
 | `UndoPayloadHead::{new,encode,decode}` |64-byte 값과 count/total 검사 |
 | `encode_undo_chunk_cell`, `encode_undo_chunk_page`, `decode_undo_chunk_page` | caller cell/page와 expected owner context, exact chunk shape |
 | `UndoChunkVerifier::{push,finish}` | 최대9-page bounded 검산; 오류 시 verifier 보존 |
-| `decode_materialized_before`, `validate_release_chunk` | 각각 live canonical value 또는 release 단계의 한 chunk 검증 |
+| `decode_materialized_before`, `decode_inline_catalog_before`, `decode_materialized_catalog_before` | live before의 Row/Catalog domain·storage·typed body 검산 |
+| `validate_release_chunk` | release 단계의 한 chunk 검증; live before 접근 권한 없음 |
 | checked incoming increment/decrement, `next_slot_generation` | overflow/underflow/Free 사전조건 검사만 하는 무효과 산술 |
 
-오류는 InvalidInput, NoSpace, TooLarge, Corrupt, UnsupportedFormat, UnsupportedCatalogBody, IdentityMismatch, SequenceMismatch, StateMismatch, SchemaMismatch, Incomplete, Exhausted로 구분한다. wire version/tag/길이와 shape 손상은 Corrupt 또는 UnsupportedFormat, 유효한 기대값과 identity/sequence/state 차이는 대응 오류다. count underflow·overflow와 generation wrap은 정상 성공이 아니다. caller/schema 불일치와 손상 우선순서의 일반적 총순서는 약속하지 않되 아래 고정 부정 corpus에서는 각 손상을 단독 주입한다.
+`UnsupportedCatalogBody`는 원 미지원 경계의 enum variant와 역사적 증거로 남지만 새 typed Catalog 경로에서 사용하지 않는다. 현행 오류는 InvalidInput, NoSpace, TooLarge, Corrupt, UnsupportedFormat, IdentityMismatch, SequenceMismatch, StateMismatch, SchemaMismatch, Incomplete, Exhausted로 구분한다. wire version/tag/길이와 shape 손상은 Corrupt 또는 UnsupportedFormat, 유효한 기대값과 identity/sequence/state 차이는 대응 오류다. count underflow·overflow와 generation wrap은 정상 성공이 아니다. caller/schema 불일치와 손상 우선순서의 일반적 총순서는 약속하지 않되 아래 고정 부정 corpus에서는 각 손상을 단독 주입한다.
 
 ## 7. 실제 byte 상한과 남은 의무
 
@@ -208,6 +210,7 @@ Releasing의 `validate_release_chunk`는 durable released/index와 next를 기�
 | root fixed / minimum slot cost / max slots |432 /436 /37 |
 | Row inline root |432+L,5≤L≤2,048; 최대2,480 bytes |
 | Row chunked root |432 bytes; head64는 이미 header에 포함 |
+| Catalog inline / chunked root | 최대2480 /432; XCB1 최대4452, chunk exact1 |
 | Index root |432+K,9≤K≤1,032; 최대1,464 bytes |
 | chunk cell / page |160+payload≤16,220 /16,384 bytes |
 |128 KiB before chunks |9개; 앞8개16,060 bytes, 마지막2,592 bytes |

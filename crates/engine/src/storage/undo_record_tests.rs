@@ -538,25 +538,42 @@ fn undo_targets_bind_namespace_owner_and_key() {
         assert!(f.decode(7, &b).is_err());
     }
     UndoTargetView::decode(&literal(18), target(UndoTargetKind::Catalog)).unwrap();
-    for before in [
+}
+
+#[test]
+fn undo_catalog_legacy_malformed_bodies() {
+    use crate::storage::catalog_record::before_tests::{Harness, ids};
+    let f = Fixtures::new();
+    let mut harness = Harness::new(ids("K", 1, 5));
+    for (index, before) in [
         UndoBeforeKind::Missing,
         UndoBeforeKind::RowDeleted,
         UndoBeforeKind::RowValue,
         UndoBeforeKind::IndexAbsent,
         UndoBeforeKind::IndexPresent,
-    ] {
-        let mut r = f.record(3);
-        r.target = target(UndoTargetKind::Catalog);
-        r.before_kind = before;
-        assert_eq!(
-            undo_record_encoded_len(
-                UndoCell::Live(r),
-                expected(UndoTargetKind::Catalog),
-                &inline_schema()
-            ),
-            Err(UndoError::UnsupportedCatalogBody)
-        );
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        harness.case(&format!("CB-K{:02}", index + 1), || {
+            let mut r = f.record(3);
+            r.target = target(UndoTargetKind::Catalog);
+            r.before_kind = before;
+            assert_eq!(
+                undo_record_encoded_len(
+                    UndoCell::Live(r),
+                    expected(UndoTargetKind::Catalog),
+                    &inline_schema()
+                ),
+                Err(if index == 0 {
+                    UndoError::StateMismatch
+                } else {
+                    UndoError::InvalidInput
+                })
+            );
+        });
     }
+    harness.finish();
 }
 
 #[test]

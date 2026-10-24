@@ -1,0 +1,707 @@
+{
+  "schema_version": 1,
+  "unit": "D3-CATALOG-BEFORE-001",
+  "base_commit": "e486195c3e72f14383ff14806d4e28f306ed28ea",
+  "status": "ACCEPTED_LIMITED_D1",
+  "contract_ref": "dev3-catalog-format.md#undo-before",
+  "test_plan_ref": "dev3-test-plan.md#catalog-before-followup",
+  "scope": "Pure typed historical Catalog before codec and Undo accessors; no mutable catalog/queue/row effect",
+  "full_stage_acceptance": false,
+  "consumer_completion": false,
+  "ai_experiment_completed_consumers": 1,
+  "sources": [
+    {
+      "id": "r0",
+      "source_directory": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/source",
+      "source_sha256": "91593c58228bed549bf1603938fc9bfcc1bd0d01e71000af93ab15307608df07",
+      "binary": {
+        "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/xadb-engine-tests",
+        "bytes": 39522416,
+        "sha256": "0906299fbdbd912436c1839f69ea34b633c77f171bc3f1127fd9314bbe6f9296"
+      },
+      "build_receipt": {
+        "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/build-receipt.json",
+        "bytes": 856,
+        "sha256": "616d223fc3c0a69f509492466204dd0b9a88cbdde223f5f7e4c9db67c1485ba5"
+      },
+      "runtime": "NOT_RUN"
+    },
+    {
+      "id": "r1",
+      "source_directory": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/source",
+      "source_sha256": "1ca8f72d1a37324efa6c6181081c0a082d87c358f758fbb5e75d34ee3e3ad35c",
+      "binary": {
+        "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/xadb-engine-tests",
+        "bytes": 39522352,
+        "sha256": "b9c1e06765b0b6f38a537b47889c5be9747d4fd46d6d03c8122ccb69e8ffbf40"
+      },
+      "build_receipt": {
+        "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/build-receipt.json",
+        "bytes": 856,
+        "sha256": "ab4f46c0507ef7e71ce3dea3365f376219a24df73587d63446d66d7286743839"
+      },
+      "runtime": "123_unique_PASS"
+    }
+  ],
+  "selection": {
+    "mandatory_cases": 123,
+    "semantic_cases": 122,
+    "static_cases": 1,
+    "mandatory_functions": 10,
+    "s5_cases": 9534,
+    "s5_functions": 3,
+    "s5_status": "NOT_RUN",
+    "semantic_selectors": {
+      "storage::catalog_record::before_tests::catalog_before_chunk_materialization_is_typed": 9,
+      "storage::catalog_record::before_tests::catalog_before_encoder_failure_preserves_output": 18,
+      "storage::catalog_record::before_tests::catalog_before_literals_match_independent_raw": 15,
+      "storage::catalog_record::before_tests::catalog_before_loaded_version_identity": 6,
+      "storage::catalog_record::before_tests::catalog_before_release_has_no_live_accessor": 17,
+      "storage::catalog_record::before_tests::catalog_before_shape_and_storage_rejections": 38,
+      "storage::catalog_record::before_tests::catalog_before_target_and_stamp_rejections": 12,
+      "storage::catalog_record::before_tests::catalog_before_xct1_definition_bridge": 2,
+      "storage::undo_record::tests::undo_catalog_legacy_malformed_bodies": 5
+    },
+    "no_completed_cases_reexecuted": true,
+    "case_results": {
+      "CB-A01": "PASS",
+      "CB-A02": "PASS",
+      "CB-A03": "PASS",
+      "CB-A04": "PASS",
+      "CB-A05": "PASS",
+      "CB-A06": "PASS",
+      "CB-A07": "PASS",
+      "CB-A08": "PASS",
+      "CB-A09": "PASS",
+      "CB-B01": "PASS",
+      "CB-B02": "PASS",
+      "CB-C01": "PASS",
+      "CB-C02": "PASS",
+      "CB-C03": "PASS",
+      "CB-E01": "PASS",
+      "CB-E02": "PASS",
+      "CB-E03": "PASS",
+      "CB-E04": "PASS",
+      "CB-E05": "PASS",
+      "CB-E06": "PASS",
+      "CB-E07": "PASS",
+      "CB-E08": "PASS",
+      "CB-H01": "PASS",
+      "CB-H02": "PASS",
+      "CB-H03": "PASS",
+      "CB-H04": "PASS",
+      "CB-H05": "PASS",
+      "CB-H06": "PASS",
+      "CB-H07": "PASS",
+      "CB-H08": "PASS",
+      "CB-H09": "PASS",
+      "CB-H10": "PASS",
+      "CB-H11": "PASS",
+      "CB-H12": "PASS",
+      "CB-H13": "PASS",
+      "CB-H14": "PASS",
+      "CB-I01": "PASS",
+      "CB-I02": "PASS",
+      "CB-I03": "PASS",
+      "CB-I04": "PASS",
+      "CB-I05": "PASS",
+      "CB-I06": "PASS",
+      "CB-I07": "PASS",
+      "CB-I08": "PASS",
+      "CB-I09": "PASS",
+      "CB-I10": "PASS",
+      "CB-K01": "PASS",
+      "CB-K02": "PASS",
+      "CB-K03": "PASS",
+      "CB-K04": "PASS",
+      "CB-K05": "PASS",
+      "CB-L01": "PASS",
+      "CB-L02": "PASS",
+      "CB-L03": "PASS",
+      "CB-L04": "PASS",
+      "CB-L05": "PASS",
+      "CB-L06": "PASS",
+      "CB-N01": "PASS",
+      "CB-N02": "PASS",
+      "CB-N03": "PASS",
+      "CB-N04": "PASS",
+      "CB-N05": "PASS",
+      "CB-N06": "PASS",
+      "CB-N07": "PASS",
+      "CB-N08": "PASS",
+      "CB-N09": "PASS",
+      "CB-N10": "PASS",
+      "CB-N11": "PASS",
+      "CB-N12": "PASS",
+      "CB-N13": "PASS",
+      "CB-N14": "PASS",
+      "CB-N15": "PASS",
+      "CB-N16": "PASS",
+      "CB-N17": "PASS",
+      "CB-N18": "PASS",
+      "CB-N19": "PASS",
+      "CB-N20": "PASS",
+      "CB-N21": "PASS",
+      "CB-N22": "PASS",
+      "CB-N23": "PASS",
+      "CB-N24": "PASS",
+      "CB-N25": "PASS",
+      "CB-N26": "PASS",
+      "CB-N27": "PASS",
+      "CB-N28": "PASS",
+      "CB-N29": "PASS",
+      "CB-N30": "PASS",
+      "CB-N31": "PASS",
+      "CB-N32": "PASS",
+      "CB-N33": "PASS",
+      "CB-N34": "PASS",
+      "CB-N35": "PASS",
+      "CB-N36": "PASS",
+      "CB-N37": "PASS",
+      "CB-N38": "PASS",
+      "CB-N39": "PASS",
+      "CB-N40": "PASS",
+      "CB-N41": "PASS",
+      "CB-N42": "PASS",
+      "CB-N43": "PASS",
+      "CB-N44": "PASS",
+      "CB-N45": "PASS",
+      "CB-N46": "PASS",
+      "CB-N47": "PASS",
+      "CB-N48": "PASS",
+      "CB-N49": "PASS",
+      "CB-N50": "PASS",
+      "CB-P01": "PASS",
+      "CB-P02": "PASS",
+      "CB-P03": "PASS",
+      "CB-P04": "PASS",
+      "CB-P05": "PASS",
+      "CB-P06": "PASS",
+      "CB-P07": "PASS",
+      "CB-P08": "PASS",
+      "CB-P09": "PASS",
+      "CB-P10": "PASS",
+      "CB-P11": "PASS",
+      "CB-P12": "PASS",
+      "CB-P13": "PASS",
+      "CB-P14": "PASS",
+      "CB-P15": "PASS",
+      "CB-ST01": "PASS"
+    }
+  },
+  "static_source_value": {
+    "census": {
+      "nominal_caller": 21920,
+      "retained_inputs_returns": 5017,
+      "xcb1_codecs_accessors": 1929,
+      "shared_definition_helpers": 1299,
+      "xct1_bridge": 2297,
+      "undo_root_codecs": 6584,
+      "undo_accessors_edges": 13644,
+      "chunk_cell_codecs": 4153,
+      "chunk_verifier_hash": 1626,
+      "wire_identity_helpers": 3770,
+      "conservative_total": 62239
+    },
+    "nominal_limit": 24576,
+    "total_limit": 65536,
+    "scope": "source-level conservative nominal pure-codec values, not live owner F05/physical stack/RSS"
+  },
+  "timing": {
+    "r1_semantic_execution_wall_seconds": 2.6955381260013382,
+    "r1_semantic_process_seconds": 0.3437160440007574,
+    "static_process_seconds": 0.007818119000148727,
+    "mandatory_budget_seconds": 10,
+    "mandatory_budget_pass": true,
+    "selfcheck_product_executions": 0
+  },
+  "original_failures": [
+    {
+      "kind": "fixture_generation_metadata",
+      "status": "FAIL_BEFORE_ANY_OUTPUT_WRITE",
+      "details": [
+        {
+          "attempt": 1,
+          "correction": "Use conditional selection instead of eagerly evaluating dict.get default for N keys.",
+          "elapsed_note": "Script did not reach its timing receipt; no measured script duration is claimed.",
+          "elapsed_seconds": null,
+          "exit_code": 1,
+          "status": "FAIL_BEFORE_ANY_OUTPUT_WRITE",
+          "stderr": "IndexError: list index out of range at main raw metadata notes.get default evaluation (former line 322)"
+        }
+      ]
+    },
+    {
+      "kind": "r0_clippy",
+      "exit_code": 101,
+      "reason": "two test-only style lints; r1 expression-only fix"
+    },
+    {
+      "kind": "r1_static_collector",
+      "original_status": "PARTIAL_OR_FAIL",
+      "product_exit_code": 0,
+      "reason": "exact libtest prefix caused original collector to miss BEGIN",
+      "reparse": "read-only original stdout; no product rerun"
+    }
+  ],
+  "fixtures": {
+    "new_raw_files": 68,
+    "new_raw_bytes": 55227,
+    "existing_reference_files": 2,
+    "existing_reference_bytes": 905,
+    "product_encoder_used_as_oracle": false
+  },
+  "applicability": {
+    "native": "NOT_APPLICABLE_PURE_CODEC; actual consumer recovery remains required",
+    "compiler": "No new capability; private borrowed fields/lifetime independently source reviewed"
+  },
+  "receipts": [
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/build-receipt.json",
+      "bytes": 856,
+      "sha256": "616d223fc3c0a69f509492466204dd0b9a88cbdde223f5f7e4c9db67c1485ba5"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/build.jsonl",
+      "bytes": 21268,
+      "sha256": "a0ebd9a63009fffb4ba828801559699c00586768260668540721aa54479a7207"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/build.stderr",
+      "bytes": 946,
+      "sha256": "860335ebaf05ff28ab70e634ee79b25bd4cd4b9dfef6f4111e0e5874987ffb8b"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/clippy.json",
+      "bytes": 387,
+      "sha256": "bd51a3ffaf4127e757e23986d9cf6a4fb4bcad5b444dac3e3f9a3b5b023ebca8"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/clippy.stderr",
+      "bytes": 1945,
+      "sha256": "6b07bd8c4011d1e4262b5d379ccfa24d519a2ded5e1ff3a70fb1aac82d63a24b"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/clippy.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/export-receipt.json",
+      "bytes": 247,
+      "sha256": "97887e3c74941b85c2f16c30a0ec61e8a9e8ddae957b6a63b91e7a99cde8dc94"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/export.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/format.json",
+      "bytes": 579,
+      "sha256": "dd35f32586415ae7ffcab3313c44892744b903c274fde70173dc028ba23c8115"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/format.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/format.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r0/source-receipt.json",
+      "bytes": 14730,
+      "sha256": "e1193cf56ba7637f48866c878bde28749027aeef97ac9185c9268de4b1cccbe3"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/build-receipt.json",
+      "bytes": 856,
+      "sha256": "ab4f46c0507ef7e71ce3dea3365f376219a24df73587d63446d66d7286743839"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/build.jsonl",
+      "bytes": 21247,
+      "sha256": "6803fdb2a90edc383a2f6bc65a92db722f12586ed6af2f5a5fdd9f2274571fd6"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/build.stderr",
+      "bytes": 202,
+      "sha256": "51698cd32f5642a22eeba73fb5a189f5322e8d0e9b8a814e931a1286d748c294"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/clippy.json",
+      "bytes": 611,
+      "sha256": "1e8ef485c28d497371e4886a30258cdce0560e76390fd4af456e76c23e3831cd"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/clippy.stderr",
+      "bytes": 201,
+      "sha256": "9d4481cbd9c616749dc06dccad7682b66ec054202d2f6616fb7a303c6778b61b"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/clippy.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/format.json",
+      "bytes": 602,
+      "sha256": "d47ba99fe837e396ec10d2fabeea4e89f23f174a0619d06417bf090450d46059"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/format.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/format.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/r0-r1.patch",
+      "bytes": 749,
+      "sha256": "b3b298fee06a8b9d9b0566f332bc3c439707345e734080826c830340d1ec7189"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/01-catalog_before_chunk_materialization_is_typed.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/01-catalog_before_chunk_materialization_is_typed.stdout",
+      "bytes": 706,
+      "sha256": "e84f5db7673d60061cc3225e63478d7ba450c156b5a3d568f2ddd10883d34cdc"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/02-catalog_before_encoder_failure_preserves_output.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/02-catalog_before_encoder_failure_preserves_output.stdout",
+      "bytes": 1203,
+      "sha256": "6e1286ca3f07785388384ddb2c8469f8e0dc094373d0ae3d3aa388fcdf3056eb"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/03-catalog_before_literals_match_independent_raw.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/03-catalog_before_literals_match_independent_raw.stdout",
+      "bytes": 1036,
+      "sha256": "2ab735d494e5aa50a50d17c85dac3b3d5d1c30ef389c37b62079604a4fcd151a"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/04-catalog_before_loaded_version_identity.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/04-catalog_before_loaded_version_identity.stdout",
+      "bytes": 534,
+      "sha256": "fdafc4a5c5d7a6bf50c2b88a260fa6871ed1805887afc1bac04dcb2ff353ea0c"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/05-catalog_before_release_has_no_live_accessor.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/05-catalog_before_release_has_no_live_accessor.stdout",
+      "bytes": 1144,
+      "sha256": "782d985e1952d495602eed68e86af219428196cafd2c36b317cac0c78dcc573a"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/06-catalog_before_shape_and_storage_rejections.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/06-catalog_before_shape_and_storage_rejections.stdout",
+      "bytes": 2299,
+      "sha256": "1a6cd140b63eb73fb41645789705d9eb7da0f1e8a53d0f0e269ff93eef40eb4d"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/07-catalog_before_target_and_stamp_rejections.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/07-catalog_before_target_and_stamp_rejections.stdout",
+      "bytes": 868,
+      "sha256": "cb1b580e5d32dcbbbe60bc132386f90d7cc87b69b74274499540e58b30887ffb"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/08-catalog_before_xct1_definition_bridge.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/08-catalog_before_xct1_definition_bridge.stdout",
+      "bytes": 313,
+      "sha256": "edce4c2b7e5ea80851310658c03838de4ac1bb4143948c064e0a3ce1e7e6724b"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/09-undo_catalog_legacy_malformed_bodies.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/09-undo_catalog_legacy_malformed_bodies.stdout",
+      "bytes": 467,
+      "sha256": "da6c56492f298dd60e9142f0be54a071dc1f36ade5ed38b91e685f1b27dd2633"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/semantic/result.json",
+      "bytes": 24620,
+      "sha256": "a048c8b74c323509a127b4ee96899b8e683fe8425fe2bcf007b95f13f3395d89"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/source-receipt.json",
+      "bytes": 15008,
+      "sha256": "44ab0faf8256d226b5418f4fecf515cdfd0258750197bf3fff93b0cf06f92bf3"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/static/01-catalog_before_static_source_census.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/static/01-catalog_before_static_source_census.stdout",
+      "bytes": 774,
+      "sha256": "5f305a270ec738eecdb0ffbd842d0eb7d3f8854dc570e9f0e607e7cc5c1ca6dc"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/static/reparse-receipt.json",
+      "bytes": 1509,
+      "sha256": "5126c22f64e7b3fa4d4b51248a96bf823edde67f99bf56390c51e4f20929ac48"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/r1/static/result.json",
+      "bytes": 1827,
+      "sha256": "052308b0095aa73a09baf3745219751191a09c020ec6ea2f0791cd22f72d882c"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/run-selected-r0.py",
+      "bytes": 3691,
+      "sha256": "338f94b1a9632a3441514bc3f8312e6e0c319c680f898d2873a8aff113f94802"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/run-selected-r1.py",
+      "bytes": 3831,
+      "sha256": "a8c1631fde6c55feffa74d3e8a5284a67ddc20c4ce478a5b5b9af571ed899542"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/run-selected.py",
+      "bytes": 7184,
+      "sha256": "29d42caa868e59f6621165b4b17a79548f93f7b76d2484c6d319da6502c9df6e"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/runner-selfcheck.json",
+      "bytes": 1506,
+      "sha256": "879c557327e3cf954b17df5301a0a490980bb8b60fb986e72497554ab6aba377"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/runner-selfcheck.py",
+      "bytes": 2873,
+      "sha256": "77cc748d5bb9c00d9f10f8efa01ed1c03a6ca20f863cbee65366090d63f6d71a"
+    }
+  ],
+  "inputs": [
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before-candidate.md",
+      "bytes": 10974,
+      "sha256": "1f12055bc585a84c9567cf511fc90ab3c0efcec3086fea097a0b48c0d3f6c4e3"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before-d2.md",
+      "bytes": 12406,
+      "sha256": "d52aeddea80b48b1422cd92b4a17f8f775dacd4b99b5ac291efde8f6f322846e"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before-input-freeze-d2.md",
+      "bytes": 10357,
+      "sha256": "b9fdf44e1bf636742808089e72015c32929d3c0561e912f1007fbb42163a1fdd"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before-oracle-review.md",
+      "bytes": 15638,
+      "sha256": "58b56ee65656a5ef0fac203eadcfb219996916dbcba3ee5b630c6fe81794b08a"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before-test-spec.md",
+      "bytes": 37423,
+      "sha256": "58d0b314df8477a924587e7f0ec4e62a28be24aeee6fe8dc5a4fbcf22dde6444"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/input-preparation/catalog-before-generation-r1-generator.py",
+      "bytes": 17281,
+      "sha256": "d5faff5ba650901709b83363d012a78c99e9fd71c1590ca7776af6c994e7387b"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/input-preparation/catalog-before-generation-r1-manifest.json",
+      "bytes": 2616336,
+      "sha256": "99f4e0e3748a043300b8f4248d538015adf68b4700b58e282db11a2bd10a5c9c"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/input-preparation/catalog-before-generation-r1-provenance.md",
+      "bytes": 1410,
+      "sha256": "565d9c717d5d0d2aeaa8e7cea47f4c5a6ce1380e37c801a165f0631a398b0dca"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/timing.jsonl",
+      "bytes": 1773,
+      "sha256": "571b878ddd428d8573d24b1fdbec0dcf85a7f7caa86c4c94bb7a887695dffb1c"
+    },
+    {
+      "path": "tests/fixtures/dev3-catalog-before/generator.py",
+      "bytes": 18020,
+      "sha256": "04618822fa028af4a0ecd9ec895c958d4ad74e57eab08fdd7670f3b634049708"
+    },
+    {
+      "path": "tests/fixtures/dev3-catalog-before/manifest.json",
+      "bytes": 2617251,
+      "sha256": "7c23b31a45ee6520a97e800f081f32714ed253f0e38a7789bc7594e8f1803def"
+    },
+    {
+      "path": "tests/fixtures/dev3-catalog-before/provenance.md",
+      "bytes": 2238,
+      "sha256": "a3649017f2a3d3d8cafe5d89e93c9327cd55ca349f9d905f60ae3c590c8b924c"
+    }
+  ],
+  "reviews": [
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/build-final-raw-audit.json",
+      "bytes": 3926,
+      "sha256": "550e35601e40b23f1f4839d73624c0e6320a677c1901ea2105d7df2e68f56da1"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/d1-final.md",
+      "bytes": 10663,
+      "sha256": "a95b50a4799c126a1f436b2427668b13ce3883b5aa6f702c8ddf5dd26f5df0c0"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/file-accounting-d1.json",
+      "bytes": 52354,
+      "sha256": "2719865dd7cd8e03f05812ee4134b743975d092cdeac9fc7b27529c73968c94c"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/indexed-evidence-d1-audit.json",
+      "bytes": 20965,
+      "sha256": "5abac00bd9fafbc9e46ff875d5b556cc1321df9a935c56d84e5756643a6c6e8b"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/ocr-preview-d1.json",
+      "bytes": 19736,
+      "sha256": "1b0ef9390fbe4d04ffe22a8c99fd11c7f743bfb299cb37cce2642511cb701b65"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/ocr-preview-d1.stderr",
+      "bytes": 128,
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/ocr-preview-final.json",
+      "bytes": 18440,
+      "sha256": "54ded35e549d8ed32857a1168087c31b7f3c8b27e595f16e7a9894b2ecf78321"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/ocr-preview-initial.json",
+      "bytes": 16995,
+      "sha256": "6338a4621460f1deb88f58a1849bd5ba5de3c47917b79d55bf331d28d4712e18"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/ocr-rules-d1.json",
+      "bytes": 7907,
+      "sha256": "ba2c015e6b38c10c3f2a621cef15f5d3a94a971574ba8e134756be23e39171c3"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/ocr-rules-d1.stderr",
+      "bytes": 128,
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/ocr-rules-initial.json",
+      "bytes": 7333,
+      "sha256": "26fba00d652480063a529c115e8e1d03dab69c64cdf5886ed3f6e64a4ef59890"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/ocr-rules-initial.stderr",
+      "bytes": 128,
+      "sha256": "90c32d88c448ef6e46d2a638727c8597dd5d3279ceb3a51d2c01b4cf8863ab58"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/pre-semantic-r1.md",
+      "bytes": 6265,
+      "sha256": "f8e9f5ab117a8ccc919cbec9a86dff250a48440874e5b598a7c0c942a083b508"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/pre-static-r0.md",
+      "bytes": 4609,
+      "sha256": "394f3ddc7519211f8a8b680b2c595f2823077cb25e61f30732871757e71daf8c"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/pre-static-r1.md",
+      "bytes": 1603,
+      "sha256": "1ee25f5993408d0762d942c4abb8082d32d876a39b9cb1ac3959abab80a56e06"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/retention-d1-audit.json",
+      "bytes": 7687,
+      "sha256": "ac5ca8073a9a6e02e4d539201ef30d5b3691ebb0e6f9150d3566738fdc7dd23b"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/retention-d1-initial-classification.json",
+      "bytes": 421,
+      "sha256": "2018dd40bd4dffa1e397d0185765179629ee0c43d578eb8b65b07e6a1e643f98"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/semantic-final-raw-audit.json",
+      "bytes": 3791,
+      "sha256": "f01ac1ba52aa3c0e127627668f1362656e929ea8705b73cdea0360742d0caa6a"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/source-input-r0-audit.json",
+      "bytes": 18292,
+      "sha256": "852268fd65107b3baec9add559e9a0b2b5fe078f0dce5e8e8341a0e2a011bccd"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/source-input-r1-audit.json",
+      "bytes": 440,
+      "sha256": "ac2645566ac13272b84c7b3f5bca412d354c517a1a199d72500c8920c541e253"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/static-r1-raw-audit.json",
+      "bytes": 1308,
+      "sha256": "a2727e06b4d404949b44cc13fb90a602f5d4c5f801bc668bb0a88f427e8c668d"
+    },
+    {
+      "path": "artifacts/dev3/first-row-transaction-20261024/catalog-before/review/static-r1-readback.md",
+      "bytes": 1754,
+      "sha256": "3821e93de946b79500592fa08104b6c2683b91bf522132b86e3d66f4d5bb3a1c"
+    }
+  ],
+  "not_run": [
+    "S5 expanded9534",
+    "unchanged legacy Row/Index/key cases and lower wrappers",
+    "actual catalog/queue/live Undo/CLR/terminal/first-row ACK/recovery",
+    "full DEV3/S5",
+    "AI efficiency comparison",
+    "document verifier/pre-push gate; no push requested"
+  ],
+  "artifact_bytes": {
+    "measurement": "logical file bytes, not physical allocation",
+    "source_and_elf": 296158620,
+    "receipts_reviews_tools": 363290,
+    "build_cache": "catalog-before/target separate disposable cache; excluded",
+    "build_cache_bytes": 101817435,
+    "unit_without_cache_total": 296521910,
+    "unit_with_cache_total": 398339345,
+    "measured_utc": "2026-10-24T08:55:19.370086+00:00"
+  }
+}
