@@ -31,6 +31,8 @@ pub(in crate::storage) use dirty_allocation::InstallPermit as DirtyInstallPermit
 pub(crate) use dirty_allocation::{AllocationWriter, DirtyAllocationError};
 use dirty_allocation::{OPERATION_BYTES, WriterControl};
 
+#[path = "plan4_recovery.rs"]
+mod plan4_recovery;
 #[path = "recovery_prefix.rs"]
 mod recovery_prefix;
 #[path = "status_init.rs"]
@@ -145,6 +147,51 @@ impl<'m, 'w, W: WriterNamespace> DoublewriteStorageSession<'m, 'w, W> {
     }
 }
 impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
+    /// Only the recovery child can create the selected-epoch transfer seal.
+    /// Move its original writer, file, WAL slot, fence and condition variable
+    /// directly into the installed core; no Fresh capability is constructed.
+    fn from_plan4_recovery(
+        parts: plan4_recovery::SelectedEpochParts<'m, W>,
+        flush: &'w mut [u8; super::WORKSPACE_BYTES],
+    ) -> Self {
+        let plan4_recovery::SelectedEpochParts {
+            writer,
+            file,
+            slot,
+            fenced,
+            completion,
+            prefix,
+            bootstrap,
+            doublewrite,
+            ..
+        } = parts;
+        Self {
+            core: super::super::InstalledStorageCore {
+                wal: WalRuntime {
+                    _writer: Mutex::new(writer),
+                    file: Mutex::new(file),
+                    append: Mutex::new(wal::AppendState {
+                        slot: Some(slot),
+                        state: wal::SlotState::Idle,
+                        prefix,
+                    }),
+                    completion,
+                    #[cfg(test)]
+                    durability_waits: std::sync::atomic::AtomicUsize::new(0),
+                    #[cfg(test)]
+                    durability_before_wait: Mutex::new(None),
+                    fenced,
+                    profile: bootstrap.profile,
+                },
+                plan: bootstrap,
+                reader_active: std::sync::atomic::AtomicBool::new(false),
+            },
+            plan: doublewrite,
+            workspace: Mutex::new(Some(flush)),
+            binding: AtomicU8::new(AVAILABLE),
+        }
+    }
+
     pub(crate) fn session_fence(&self) -> &SessionFence {
         &self.core.wal.fenced
     }
@@ -573,3 +620,5 @@ pub(in crate::storage) use plan4_pages::{
 };
 
 pub(in crate::storage) use status_init::InitInstallPhase;
+
+pub(in crate::storage) use plan4_recovery::RecoveryPoolSeed;

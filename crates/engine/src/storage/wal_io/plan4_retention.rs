@@ -30,6 +30,8 @@ mod load;
 mod population;
 #[path = "plan4_retention_read.rs"]
 mod read;
+#[path = "plan4_retention_recovery.rs"]
+mod recovery;
 #[path = "plan4_retention_resources.rs"]
 mod resources;
 
@@ -55,6 +57,11 @@ pub(in crate::storage) use population::{
     reason = "internal typed consumer exports retained for follow-on integration"
 )]
 pub(crate) use read::{RetentionReadGuard, RetentionReader};
+pub(in crate::storage) use recovery::{
+    RetentionFrameObservation, RetentionRecoveryStep, RetentionReplayCursor,
+    observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_image,
+    seed_recovery_replay,
+};
 #[allow(
     unused_imports,
     reason = "internal typed consumer exports retained for follow-on integration"
@@ -115,7 +122,7 @@ pub(crate) enum RetentionCause {
     Io(xadb_foundation::Error),
     #[allow(
         private_interfaces,
-        reason = "opaque internal diagnostic preserves the sealed flush executor error"
+        reason = "retain original private executor error; no shared authority visibility expansion"
     )]
     Flush(super::super::flush_io::FlushIoError),
 }
@@ -170,6 +177,7 @@ pub(crate) struct Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamesp
     inner: Plan4Pages<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>,
     control: control::RetentionControl<'a, 'c, 's>,
     flush: flush::RetentionFlushControl<'c, 's, 'w>,
+    recovery_binding: Option<super::super::plan4_recovery::RecoveryRetentionBinding<'s, 's>>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -266,6 +274,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
                     inner: self,
                     control,
                     flush,
+                    recovery_binding: None,
                 })
             }
             Err(error) if error.effect == Effect::Unchanged => {

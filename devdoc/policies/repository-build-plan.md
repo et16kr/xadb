@@ -503,3 +503,7 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 ## DEV3 plan4 빈 거래 live·prefix — 2026-10-25
 
 [소유 계약](../contracts/dev3-retention-live.md)의 실제 구현39개 경로를 [관리 JSON](repository-build-plan.json)의 `dev3_retention_live`에 등록한다. engine storage 내부 child와 fixture만 추가하고 package·dependency·export/fingerprint roots는 유지한다. 새 recovery owner 작업은 별도 미완료다. [원 결과](../evidence/dev3-retention-live-20261025.md)는75개 source별 PASS와 S5 추가269 NOT_RUN을 구별한다.
+
+## DEV3 plan4 복구 중간 저장 — 2026-10-25
+
+[중지 기록](../evidence/dev3-recovery-paused-20261025.md)의 실제 작성 파일만 관리 JSON `dev3_plan4_recovery_checkpoint`에 등록한다. 최신 후보는 미검증 WIP이며 패키지·의존성·공개 지원 범위를 추가하지 않는다. 미연결 fault/observation source도 draft 상태로 보존하고, 인수 완료로 세지 않는다.

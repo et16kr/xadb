@@ -1,5 +1,7 @@
 # DEV3 구현·검증 현황
 
+2026-10-25 [복구 작업 중간 저장·자료 정리](../evidence/dev3-recovery-paused-20261025.md): 사용자 요청으로 중지했다. fresh75의 원 증거와 복구 static2 FAIL·F05 HOLD를 보존한다. 최신 phase/oracle 후보는 compile/runtime NOT_RUN이며 전체 복구·DEV3/S5는 미완료다.
+
 2026-10-23 · **표현·유한 모델, 제한 allocator/Status 쓰기·flush·닫힌 복구, 등록 코어·동일 주소 reload의 선택 검증 / 일반 저장 경로·DEV3·제품 S1·최종 S5 미완료**
 
 [설계](../contracts/disk-storage-design.md) · [구현 계획](../plans/dev3-implementation-plan.md) · [단계 완료 정본](../plans/stage-completion.json)

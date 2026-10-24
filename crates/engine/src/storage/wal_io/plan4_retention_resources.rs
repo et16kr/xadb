@@ -3,7 +3,6 @@
 use super::*;
 use crate::storage::{
     dirty_frame::{CapturedPage, DptStamp, StatusLoadSnapshot},
-    obligation::DescriptorSpec,
     semantic_retention::{
         RetentionAfter, RetentionBefore, RetentionExpected,
         RetentionObservation as CodecObservation,
@@ -22,6 +21,11 @@ pub(in crate::storage) struct RetentionSourceCensus {
     pub(in crate::storage) semantic_producer: usize,
     pub(in crate::storage) population_producer: usize,
     pub(in crate::storage) population_replay: usize,
+    pub(in crate::storage) recovered_seed: usize,
+    pub(in crate::storage) recovered_conversion: usize,
+    pub(in crate::storage) recovered_ledger: usize,
+    pub(in crate::storage) recovered_cleanup: usize,
+    pub(in crate::storage) recovered_verify: usize,
     pub(in crate::storage) history_outer: usize,
     pub(in crate::storage) history_metadata: usize,
     pub(in crate::storage) history_hashing: usize,
@@ -31,6 +35,8 @@ pub(in crate::storage) struct RetentionSourceCensus {
     pub(in crate::storage) history_population: usize,
     pub(in crate::storage) history_rollback: usize,
     pub(in crate::storage) history_closure: usize,
+    pub(in crate::storage) history_frame_return: usize,
+    pub(in crate::storage) recovery_frame: usize,
     pub(in crate::storage) producer: usize,
     pub(in crate::storage) installation: usize,
     pub(in crate::storage) replay: usize,
@@ -86,6 +92,20 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     // Only the pure semantic caller has these Before/After/Expected carriers.
     // population's original INIT claims and producer are a different entry.
     let history = history::source_bytes::<W>();
+    let recovery = recovery::phase_source_bytes::<W>();
+    let recovered_conversion = (original_owner
+        + size_of::<Old<'_, W>>()
+        + size_of::<control::RetentionControl<'_, '_, '_>>()
+        + size_of::<recovery::RetentionReplayCursor>()
+        + size_of::<super::super::super::plan4_recovery::RecoveryRetentionBinding<'_, '_>>()
+        + recovery.seed.max(recovery.ledger)
+        + 1024)
+        .max(
+            conversion_return
+                + size_of::<recovery::RetentionReplayCursor>()
+                + size_of::<super::super::super::plan4_recovery::RecoveryRetentionBinding<'_, '_>>(
+                ),
+        );
     let population = population::phase_source_bytes();
     let semantic_producer = scalar
         + crate::storage::semantic_retention::source_bytes().max(history.rollback)
@@ -93,7 +113,10 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + 2 * size_of::<RetentionBefore<'_>>()
         + 2 * size_of::<RetentionAfter<'_>>()
         + 2 * size_of::<Result<CodecObservation<'_>>>()
-        + 2 * size_of::<DescriptorSpec>()
+        // live::apply retains before_sender and aging as borrowed descriptor
+        // bytes. The codec's four owned decoded values and their Results are
+        // already charged by semantic_retention::source_bytes above.
+        + 2 * size_of::<Option<&[u8; 1536]>>()
         + 88;
     let population_producer = population.producer()
         + 2 * size_of::<Result<()>>()
@@ -151,8 +174,11 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         .max(replay)
         .max(load)
         .max(flush)
-        .max(scalar + old.catalog_nested);
-    let peak = conversion.max(retained + active);
+        .max(scalar + old.catalog_nested)
+        .max(recovery.ledger)
+        .max(recovery.cleanup)
+        .max(recovery.verify);
+    let peak = conversion.max(recovered_conversion).max(retained + active);
     // 36 descriptor/bookkeeping slots are actual retained metadata, even
     // though their backing is caller owned. Job and page snapshots are data.
     let metadata = peak + 36 * control::SLOT_BYTES;
@@ -165,6 +191,11 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         semantic_producer,
         population_producer,
         population_replay: population.replay,
+        recovered_seed: recovery.seed,
+        recovered_conversion,
+        recovered_ledger: recovery.ledger,
+        recovered_cleanup: recovery.cleanup,
+        recovered_verify: recovery.verify,
         history_outer: history.outer,
         history_metadata: history.metadata,
         history_hashing: history.hashing,
@@ -174,6 +205,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         history_population: history.population,
         history_rollback: history.rollback,
         history_closure: history.closure,
+        history_frame_return: history.frame_return,
+        recovery_frame: history.frame,
         producer,
         installation,
         replay,

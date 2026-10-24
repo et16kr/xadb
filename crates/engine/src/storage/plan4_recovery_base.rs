@@ -1438,3 +1438,25 @@ pub(super) fn source_bytes() -> usize {
             .max(super::wal_io::plan4_base_allocation_source_bytes())
             .max(super::wal_io::plan4_catalog_genesis_source_bytes())
 }
+
+/// Caller-excluded bounds for recovery's separately scoped decode phases.
+/// A caller must add its retained owner and each phase's actual arguments.
+pub(super) struct RecoverySourcePhases {
+    pub(super) deep: usize,
+    pub(super) other: usize,
+}
+pub(super) fn recovery_source_phases() -> RecoverySourcePhases {
+    use std::mem::size_of;
+    let inventory = ownership::borrowed_inventory_source_bytes();
+    let allocation = super::wal_io::plan4_base_allocation_source_bytes();
+    let catalog = super::wal_io::plan4_catalog_genesis_source_bytes();
+    let full = source_bytes();
+    RecoverySourcePhases {
+        // These return packets are constructed only after the deep inventory
+        // callback returns. No already-retained caller view is subtracted.
+        deep: full - 2 * size_of::<BaseView<'_>>() - 3 * size_of::<Result<BaseView<'_>>>(),
+        // Other phases still include the allocation or Catalog bridge. Removing
+        // all bridges would undercount those real nested calls.
+        other: full - inventory.max(allocation).max(catalog) + allocation.max(catalog),
+    }
+}

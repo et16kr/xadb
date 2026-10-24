@@ -2,6 +2,7 @@
 //! original WAL File is read only after wait/ensure_durable, without pool,
 //! append, namespace or content locks. No RAM-complete offset is disk proof.
 use super::control::{self, ACTOR, AGING_SLOT, LOCATION, PHASE, SLOT_BYTES, STABLE};
+use super::recovery::{self, HistorySource};
 use super::*;
 use crate::storage::{
     allocation_page::{self, AllocationEntry},
@@ -25,11 +26,11 @@ use xadb_foundation::{
     namespace::{FileIdentity, FileName},
 };
 
-const ARENA_END: usize = 1_048_576;
-const JOB_END: usize = 1_114_112;
-const BANK_END: usize = 1_179_648;
+pub(super) const ARENA_END: usize = 1_048_576;
+pub(super) const JOB_END: usize = 1_114_112;
+pub(super) const BANK_END: usize = 1_179_648;
 const FRAME_END: usize = 1_245_184;
-const AFTER_END: usize = 1_294_336;
+pub(super) const AFTER_END: usize = 1_294_336;
 const HOME_END: usize = AFTER_END + PAGE_BYTES;
 
 #[derive(Clone, Copy, Debug)]
@@ -42,6 +43,8 @@ pub(super) struct HistorySourceCensus {
     pub(super) population: usize,
     pub(super) rollback: usize,
     pub(super) closure: usize,
+    pub(super) frame_return: usize,
+    pub(super) frame: usize,
     pub(super) returning: usize,
     pub(super) peak: usize,
 }
@@ -68,6 +71,8 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
         + 32 * size_of::<&[u8]>()
         + 32 * size_of::<u64>()
         + 6 * 32
+        + 2 * size_of::<HistorySource<'_>>()
+        + size_of::<recovery::RetentionReplayCursor>()
         + 512;
     let metadata = size_of::<MutexGuard<'_, W>>()
         + 2 * size_of::<FileMetadata>()
@@ -82,13 +87,20 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
     // The selected genesis readback accounting is deliberately a larger
     // closure than initialize's canonical encoders; it also covers the nested
     // bootstrap plan/result and Catalog/Root/Jobs envelope/hash functions.
+    let recovered = recovery::phase_source_bytes::<W>();
     let initialize =
-        super::super::genesis::owned_source_bytes::<W>() + 2 * size_of::<Result<()>>() + 256;
+        (super::super::genesis::owned_source_bytes::<W>() + 2 * size_of::<Result<()>>() + 256)
+            .max(recovered.seed);
+    // apply_frame_semantics completes before AppliedFrame and the wider final
+    // observation are constructed. Keep those return carriers in their own
+    // phase below, rather than making them live inside the deep byte codec.
     let frame_outer = 2 * size_of::<FrameExpectation>()
         + 2 * size_of::<WalFrameHeader>()
         + 2 * size_of::<FrameEnvelope<'_>>()
         + 2 * size_of::<Result<WalFrameHeader>>()
-        + size_of::<super::population::ReplayAllocation>()
+        + size_of::<recovery::RetentionReplayCursor>()
+        + size_of::<Option<TargetRequest>>()
+        + 2 * size_of::<usize>()
         + 24 * size_of::<&[u8]>()
         + 24 * size_of::<u64>()
         + 512;
@@ -126,10 +138,26 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
         + 4 * size_of::<wal_frame::RedoRecordView<'_>>()
         + hashing
         + 2048;
-    // The bijection/census phase follows the complete frame observer. Retain
-    // all outer page/root/status views plus decode_descriptor's value/result
-    // closure; the 64 job cells remain the original borrowed replay loan.
+    let observation_return = 2 * size_of::<recovery::RetentionFrameObservation>()
+        + 2 * size_of::<std::result::Result<recovery::RetentionFrameObservation, RetentionCause>>();
+    // The small semantic packet, image->request decoding and all four wide
+    // observation/Result carriers are retained here. No deep semantic producer
+    // runs in finish_frame_observation or in this packet's move/return phase.
+    let frame_return = frame_outer
+        + 2 * size_of::<recovery::AppliedFrame>()
+        + 2 * size_of::<std::result::Result<recovery::AppliedFrame, RetentionCause>>()
+        + observation_return
+        + size_of::<[Option<TargetRequest>; 3]>()
+        + 2 * size_of::<TargetRequest>()
+        + 2 * size_of::<std::result::Result<TargetRequest, RetentionCause>>()
+        + 2 * size_of::<crate::storage::page::PageView<'_>>()
+        + 2 * size_of::<crate::storage::page::PageHeader>()
+        + hashing;
+    // close_recovery_frame and reconstruct perform this phase after complete
+    // observation. Keep its observation/return carriers and all page/root/
+    // status views; the 64 job cells remain the original borrowed replay loan.
     let closure = frame_outer
+        + observation_return
         + 4 * size_of::<retention_page::RootSpec>()
         + 4 * size_of::<retention_page::JobSpec>()
         + 2 * size_of::<allocation_page::AllocationPage<'_>>()
@@ -140,13 +168,13 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
         >()
         + hashing
         + 4096;
+    let frame = retention
+        .max(population)
+        .max(rollback)
+        .max(frame_return)
+        .max(closure);
     let file_scope = size_of::<MutexGuard<'_, W::File>>()
-        + hashing
-            .max(initialize)
-            .max(retention)
-            .max(population)
-            .max(rollback)
-            .max(closure);
+        + hashing.max(recovered.header).max(initialize).max(frame);
     let returning = 2 * size_of::<RetentionFlushAuthority<'_, '_>>()
         + size_of::<Result<RetentionFlushAuthority<'_, '_>>>()
         + hashing;
@@ -164,6 +192,8 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
         population,
         rollback,
         closure,
+        frame_return,
+        frame,
         returning,
         peak,
     }
@@ -260,6 +290,7 @@ fn invalid<W: WriterNamespace>(storage: &MutableStorageOwner<'_, '_, W>) -> Rete
 }
 fn metadata<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
+    source: HistorySource<'_>,
     identity: FileIdentity,
     end: u64,
 ) -> Result<()> {
@@ -269,13 +300,12 @@ fn metadata<W: WriterNamespace>(
             fatal(storage, RetentionPhase::Source, RetentionCause::Poisoned)
         }
     })?;
-    let name = FileName::new(wal::WAL_NAME).map_err(|e| {
-        fatal(
-            storage,
-            RetentionPhase::Source,
-            RetentionCause::Namespace(e),
-        )
-    })?;
+    let name = source.name();
+    if let HistorySource::Base { epoch, .. } = source {
+        if epoch.identity() != identity {
+            return Err(invalid(storage));
+        }
+    }
     let m = writer
         .metadata(&name)
         .map_err(|e| {
@@ -307,8 +337,13 @@ fn hash_prefix<F: FileIo>(
     Ok(hash.digest())
 }
 
+#[allow(
+    clippy::too_many_arguments,
+    reason = "sealed source, capture and caller loans remain distinct"
+)]
 pub(super) fn prove_capture<'c, 's, W: WriterNamespace>(
     storage: &'s MutableStorageOwner<'_, '_, W>,
+    source: HistorySource<'s>,
     pool: &SharedPool<'c, 's, '_, '_>,
     capture: &CapturedPage<'c, 's>,
     durable: &DurableWal<'s>,
@@ -363,8 +398,13 @@ pub(super) fn prove_capture<'c, 's, W: WriterNamespace>(
     if home_lsn.0 > capture.stamp().page_lsn.0 {
         return Err(invalid(storage));
     }
-    let (source, matched, zero_init) =
-        replay_durable(storage, durable, working, Some((request, home, image)))?;
+    let (source, matched, zero_init) = replay_durable(
+        storage,
+        source,
+        durable,
+        working,
+        Some((request, home, image)),
+    )?;
     if !matched {
         return Err(invalid(storage));
     }
@@ -391,13 +431,33 @@ pub(super) fn validate_live<W: WriterNamespace>(
     control: &mut control::RetentionControl<'_, '_, '_>,
     prefix: WalPrefix,
 ) -> Result<()> {
-    if prefix.complete_lsn == 0 {
-        if control.durable.is_some() || prefix.complete_offset != 4096 || control.adopted_local != 0
+    let source = control.source;
+    source
+        .validate(storage.profile())
+        .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
+    if prefix.stream.writer_epoch != source.epoch() {
+        return Err(invalid(storage));
+    }
+    if prefix.complete_lsn == source.anchor() && prefix.complete_offset == 4096 {
+        if control.durable.is_some()
+            || control.adopted_local != 0
+            || prefix.synced_lsn != source.anchor()
+            || prefix.synced_offset != 4096
         {
             return Err(invalid(storage));
         }
-        initialize(storage.profile(), &mut control.replay[..AFTER_END])
-            .map_err(|_| invalid(storage))?;
+        verify_seed_epoch(
+            storage,
+            source,
+            prefix,
+            &mut control.replay[BANK_END..FRAME_END],
+        )?;
+        recovery::seed_replay_slice(
+            storage.profile(),
+            source.base(),
+            &mut control.replay[..AFTER_END],
+        )
+        .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
     } else {
         let durable = control.durable.as_ref().ok_or_else(|| invalid(storage))?;
         if durable.observation().frame.lsn != prefix.complete_lsn
@@ -405,7 +465,13 @@ pub(super) fn validate_live<W: WriterNamespace>(
         {
             return Err(invalid(storage));
         }
-        replay_durable(storage, durable, &mut control.replay[..AFTER_END], None)?;
+        replay_durable(
+            storage,
+            source,
+            durable,
+            &mut control.replay[..AFTER_END],
+            None,
+        )?;
     }
     let replay_bank = &control.replay[JOB_END..BANK_END];
     // Canonical replay stores identical encoded descriptors and location/actor
@@ -418,7 +484,36 @@ pub(super) fn validate_live<W: WriterNamespace>(
     Ok(())
 }
 
-fn initialize(profile: Profile, replay: &mut [u8]) -> std::result::Result<(), ()> {
+/// An empty recovered suffix has no WAL requirement. Its authority is the
+/// actual selection witness; re-read that exact same File/header without
+/// inventing a dirty receipt for the base LSN.
+fn verify_seed_epoch<W: WriterNamespace>(
+    storage: &MutableStorageOwner<'_, '_, W>,
+    source: HistorySource<'_>,
+    prefix: WalPrefix,
+    scratch: &mut [u8],
+) -> Result<()> {
+    if matches!(source, HistorySource::Genesis) {
+        return Ok(());
+    }
+    metadata(storage, source, prefix.file, 4096)?;
+    {
+        let mut file = storage.wal().file.try_lock().map_err(|e| match e {
+            TryLockError::WouldBlock => unchanged(RetentionPhase::Source, RetentionCause::Busy),
+            TryLockError::Poisoned(_) => {
+                fatal(storage, RetentionPhase::Source, RetentionCause::Poisoned)
+            }
+        })?;
+        read_exact_at(&mut *file, &mut scratch[..4096], 0)
+            .map_err(|e| fatal(storage, RetentionPhase::Source, RetentionCause::Io(e)))?;
+        source
+            .header(storage.profile(), &scratch[..4096])
+            .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
+    }
+    metadata(storage, source, prefix.file, 4096)
+}
+
+pub(super) fn initialize(profile: Profile, replay: &mut [u8]) -> std::result::Result<(), ()> {
     replay.fill(0);
     {
         let three: &mut [[u8; PAGE_BYTES]; 3] = replay[..3 * PAGE_BYTES]
@@ -463,7 +558,7 @@ fn initialize(profile: Profile, replay: &mut [u8]) -> std::result::Result<(), ()
     refresh_jobs(profile, replay)?;
     Ok(())
 }
-fn refresh_jobs(profile: Profile, replay: &mut [u8]) -> std::result::Result<(), ()> {
+pub(super) fn refresh_jobs(profile: Profile, replay: &mut [u8]) -> std::result::Result<(), ()> {
     let (arena, rest) = replay.split_at_mut(ARENA_END);
     let cells = rest[..65_536].as_chunks_mut::<JOB_BYTES>().0;
     for index in 0..5 {
@@ -482,6 +577,7 @@ fn refresh_jobs(profile: Profile, replay: &mut [u8]) -> std::result::Result<(), 
 
 fn replay_durable<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
+    source: HistorySource<'_>,
     durable: &DurableWal<'_>,
     replay: &mut [u8],
     target: Option<(TargetRequest, &[u8; PAGE_BYTES], &[u8; PAGE_BYTES])>,
@@ -490,13 +586,14 @@ fn replay_durable<W: WriterNamespace>(
     let synchronized = durable.observation().prefix;
     if synchronized.synced_lsn < exact.lsn
         || synchronized.synced_offset < exact.end
-        || exact.stream.writer_epoch != 1
+        || exact.stream.writer_epoch != source.epoch()
+        || exact.lsn <= source.anchor()
         || exact.end < 4096
         || replay.len() < AFTER_END
     {
         return Err(invalid(storage));
     }
-    metadata(storage, exact.file, exact.end)?;
+    metadata(storage, source, exact.file, exact.end)?;
     let (header_digest, digest, matched, zero_init) = {
         let mut file = storage.wal().file.try_lock().map_err(|e| match e {
             TryLockError::WouldBlock => unchanged(RetentionPhase::Source, RetentionCause::Busy),
@@ -507,12 +604,22 @@ fn replay_durable<W: WriterNamespace>(
         let header = &mut replay[FRAME_END - 4096..FRAME_END];
         read_exact_at(&mut *file, header, 0)
             .map_err(|e| fatal(storage, RetentionPhase::Source, RetentionCause::Io(e)))?;
-        let header_digest =
-            wal::decode_epoch(header, storage.profile()).map_err(|_| invalid(storage))?;
+        let header_digest = source
+            .header(storage.profile(), header)
+            .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
         let digest = hash_prefix(&mut *file, exact.end, &mut replay[BANK_END..FRAME_END])
             .map_err(|e| fatal(storage, RetentionPhase::Source, RetentionCause::Io(e)))?;
-        initialize(storage.profile(), replay).map_err(|_| invalid(storage))?;
-        let (matched, zero_init) = reconstruct(storage, &mut *file, exact, replay, target)?;
+        let mut cursor = recovery::seed_replay_slice(storage.profile(), source.base(), replay)
+            .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
+        let (matched, zero_init) = reconstruct(
+            storage,
+            &mut *file,
+            source.anchor(),
+            exact,
+            replay,
+            target,
+            &mut cursor,
+        )?;
         let second = hash_prefix(&mut *file, exact.end, &mut replay[BANK_END..FRAME_END])
             .map_err(|e| fatal(storage, RetentionPhase::Source, RetentionCause::Io(e)))?;
         if digest != second {
@@ -521,7 +628,7 @@ fn replay_durable<W: WriterNamespace>(
         (header_digest, digest, matched, zero_init)
     };
     // The File guard ended before reacquiring the namespace or health locks.
-    metadata(storage, exact.file, exact.end)?;
+    metadata(storage, source, exact.file, exact.end)?;
     storage
         .health()
         .map_err(|e| fatal(storage, RetentionPhase::Source, RetentionCause::Storage(e)))?;
@@ -537,27 +644,27 @@ fn replay_durable<W: WriterNamespace>(
 }
 
 #[allow(
-    clippy::collapsible_if,
-    reason = "separate source and page membership checks preserve reviewed control flow"
+    clippy::too_many_arguments,
+    reason = "fixed source plus separate borrowed replay cursor"
 )]
 fn reconstruct<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
     file: &mut W::File,
+    anchor: u64,
     exact: WalFrameLocation,
     replay: &mut [u8],
     target: Option<(TargetRequest, &[u8; PAGE_BYTES], &[u8; PAGE_BYTES])>,
+    cursor: &mut recovery::RetentionReplayCursor,
 ) -> Result<(bool, bool)> {
     let profile = storage.profile();
     let mut offset = 4096u64;
-    let mut previous = 0u64;
-    let mut adopted = 0u64;
+    let mut previous = anchor;
     let mut home_seen = target.is_none();
     let mut zero_init = false;
     if let Some((request, home, _)) = target {
         home_seen = home == arena_page(replay, request.identity.page.page_no as usize)
             && home.iter().any(|b| *b != 0);
     }
-    let mut allocation = super::population::ReplayAllocation::new();
     while offset < exact.end {
         let expected = FrameExpectation {
             stream: exact.stream,
@@ -591,42 +698,17 @@ fn reconstruct<W: WriterNamespace>(
             .0
             .try_into()
             .expect("after pages");
-        let retention = input[160..164] == *b"XHG1"
-            || (input[160..164] == *b"XSG1"
-                && matches!(
-                    u16::from_le_bytes(input[166..168].try_into().expect("opcode")),
-                    16 | 17
-                ));
-        if allocation.reserved() && (retention || length == semantic_retention::ROLLBACK_BYTES) {
-            return Err(invalid(storage));
+        let observed =
+            recovery::apply_frame(profile, expected, input, arena, jobs, bank, pages, cursor)
+                .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
+        if let Some((request, home, _)) = target
+            && observed.initialized == Some(request)
+            && home.iter().all(|b| *b == 0)
+        {
+            zero_init = true;
+            home_seen = true;
         }
-        let header = if retention {
-            replay_retention(
-                profile,
-                expected,
-                input,
-                arena,
-                jobs,
-                bank,
-                pages,
-                &mut adopted,
-            )
-            .map_err(|e| fatal(storage, RetentionPhase::Source, RetentionCause::Semantic(e)))?
-        } else if length == semantic_retention::ROLLBACK_BYTES {
-            replay_rollback(profile, expected, input, arena, bank, &mut pages[2])
-                .map_err(|e| fatal(storage, RetentionPhase::Source, RetentionCause::Rollback(e)))?
-        } else {
-            let result = allocation
-                .apply(profile, expected, input, arena, bank, pages)
-                .map_err(|_| invalid(storage))?;
-            if let Some((request, home, _)) = target {
-                if result.initialized == Some(request) && home.iter().all(|b| *b == 0) {
-                    zero_init = true;
-                    home_seen = true;
-                }
-            }
-            result.header
-        };
+        let header = observed.header;
         if header.lsn != previous.checked_add(1).ok_or_else(|| invalid(storage))? {
             return Err(invalid(storage));
         }
@@ -634,30 +716,29 @@ fn reconstruct<W: WriterNamespace>(
         offset += length as u64;
         refresh_jobs(profile, replay).map_err(|_| invalid(storage))?;
         validate_bijection(profile, replay).map_err(|_| invalid(storage))?;
-        if let Some((request, home, _)) = target {
-            if home == arena_page(replay, request.identity.page.page_no as usize)
-                && home.iter().any(|b| *b != 0)
-            {
-                home_seen = true;
-            }
+        if let Some((request, home, _)) = target
+            && home == arena_page(replay, request.identity.page.page_no as usize)
+            && home.iter().any(|b| *b != 0)
+        {
+            home_seen = true;
         }
     }
     if previous != exact.lsn || offset != exact.end {
         return Err(invalid(storage));
     }
-    if let Some((request, _, image)) = target {
-        if image != arena_page(replay, request.identity.page.page_no as usize) {
-            return Err(invalid(storage));
-        }
+    if let Some((request, _, image)) = target
+        && image != arena_page(replay, request.identity.page.page_no as usize)
+    {
+        return Err(invalid(storage));
     }
     Ok((home_seen, zero_init))
 }
 
 #[allow(
     clippy::too_many_arguments,
-    reason = "explicit caller loans and replay state avoid a new retained carrier"
+    reason = "disjoint caller-owned before/after lanes"
 )]
-fn replay_retention(
+pub(super) fn replay_retention(
     profile: Profile,
     frame: FrameExpectation,
     input: &[u8],
@@ -790,7 +871,7 @@ fn replay_retention(
     Ok(header)
 }
 
-fn replay_rollback(
+pub(super) fn replay_rollback(
     profile: Profile,
     expected: FrameExpectation,
     input: &[u8],
@@ -846,7 +927,7 @@ fn replay_rollback(
 
 /// Pure whole-state bijection. Every occupied Status has one Job; every live
 /// Active/Aborting Status has one ATT row; Ready Aborted owns no ATT row.
-fn validate_bijection(profile: Profile, replay: &[u8]) -> std::result::Result<(), ()> {
+pub(super) fn validate_bijection(profile: Profile, replay: &[u8]) -> std::result::Result<(), ()> {
     let namespace = profile.spec().namespace;
     let (_, root) =
         retention_page::decode_root_page(arena_page(replay, 1), namespace).map_err(|_| ())?;

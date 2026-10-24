@@ -698,3 +698,5 @@ pub(in crate::storage) use mutable_storage::{
     RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
     RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
 };
+
+pub(in crate::storage) use mutable_storage::RecoveryPoolSeed;

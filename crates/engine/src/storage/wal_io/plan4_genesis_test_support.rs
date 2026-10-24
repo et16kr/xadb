@@ -121,6 +121,8 @@ pub(in crate::storage) struct State {
     pub(in crate::storage) acquisition_error_after_lock: bool,
     /// Opt-in only for new live tests; old genesis fixtures retain their restriction.
     pub(in crate::storage) live_writes: bool,
+    /// New recovery fixtures alone admit their finite publication/epoch files.
+    pub(in crate::storage) recovery_writes: bool,
     next_inode: u64,
     continuation: Option<(String, u64)>,
 }
@@ -190,6 +192,7 @@ impl Directory {
             acquisition_error: None,
             acquisition_error_after_lock: false,
             live_writes: false,
+            recovery_writes: false,
             next_inode,
             continuation: None,
         })))
@@ -497,11 +500,15 @@ impl WriterNamespace for Writer {
     ) -> NamespaceResult<(File, FileMetadata)> {
         // The original genesis mode keeps data/control opens read-only.
         // Live tests opt in to the exact DWB/home write inventory.
+        let (live_writes, recovery_writes) = {
+            let state = self.0.lock().unwrap();
+            (state.live_writes, state.recovery_writes)
+        };
         assert!(
             mode == OpenMode::ReadOnly
                 || (mode == OpenMode::ReadWrite
                     && (name.as_str() == crate::storage::wal_io::WAL_NAME
-                        || (self.0.lock().unwrap().live_writes
+                        || (live_writes
                             && matches!(
                                 name.as_str(),
                                 "d3-data-0000000100000001"
@@ -509,6 +516,17 @@ impl WriterNamespace for Writer {
                                     | "d3-dwb-stage"
                                     | "d3-dwb-0"
                                     | "d3-dwb-1"
+                            ))
+                        || (recovery_writes
+                            && matches!(
+                                name.as_str(),
+                                "d3-current-stage"
+                                    | "d3-writer-stage"
+                                    | "d3-dwb-select-stage"
+                                    | "d3-rebase-0"
+                                    | "d3-rebase-1"
+                                    | "d3-wal-00000002"
+                                    | "d3-wal-00000003"
                             ))))
         );
         let (i, a) = begin(&self.0, "open", name.as_str(), 0, 0);
@@ -584,8 +602,27 @@ impl WriterNamespace for Writer {
         complete(&self.0, i, None);
         after(a).map_err(|_| ns_error(Effect::CallerMustResolve))
     }
-    fn remove_retired(&mut self, _: &FileName) -> NamespaceResult<()> {
-        panic!("plan4 unexpectedly retired file")
+    fn remove_retired(&mut self, name: &FileName) -> NamespaceResult<()> {
+        assert!(
+            self.0.lock().unwrap().recovery_writes
+                && matches!(
+                    name.as_str(),
+                    "d3-wal-00000001" | "d3-wal-00000002" | "d3-wal-00000003"
+                ),
+            "plan4 unexpectedly retired file"
+        );
+        let (i, action) = begin(&self.0, "remove", name.as_str(), 0, 0);
+        before(action).map_err(|_| ns_error(Effect::Unchanged))?;
+        let removed = self.0.lock().unwrap().files.remove(name.as_str());
+        if removed.is_none() {
+            return Err(NamespaceError::new(
+                NamespaceErrorKind::NotFound,
+                Effect::Unchanged,
+                "plan4 exact retired file absent",
+            ));
+        }
+        complete(&self.0, i, None);
+        after(action).map_err(|_| ns_error(Effect::CallerMustResolve))
     }
 }
 

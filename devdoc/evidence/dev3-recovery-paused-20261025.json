@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "status": "PAUSED_USER_REQUEST_WIP_NOT_ACCEPTED",
+  "date": "2026-10-25",
+  "fresh_milestone_commit": "c2b1691a652c45c559975bfdf35ffdd9183c840d",
+  "fresh_mandatory_source_specific_pass": 75,
+  "owned_source_files": {
+    "crates/engine/src/storage/dirty_frame.rs": "137524d58b135a21553e07d4da5fa117684b808b0bf038e927cdc8f41353583b",
+    "crates/engine/src/storage/dirty_frame/recovered_plan4.rs": "ad08e41e1510d430e7bc8f5afb6bda2f787a19708deba04bf510d8ceb471783f",
+    "crates/engine/src/storage/plan4_recovery_base.rs": "07fd7777f22283a45c2a48b3e8e14eb9e4224f3a54115c3824a933db17f08f64",
+    "crates/engine/src/storage/wal_io.rs": "4c1c1b8f9de489acd2cadf48e95b4a6511342e31a0d369e2b9d995a2c4044aa7",
+    "crates/engine/src/storage/wal_io/bootstrap.rs": "b86350a94626857c6ed2f1ac5e781d31de25671689d9d50a2db71da33d2028dc",
+    "crates/engine/src/storage/wal_io/doublewrite_install.rs": "a868d671a499a6773c2fb005493204da1a1a1fc7e542128bf782f73681168dc8",
+    "crates/engine/src/storage/wal_io/flush_io.rs": "3cfacc4fdd45241ef3407ce568c62566c634dd4df66420b11c4c9999161f6f3e",
+    "crates/engine/src/storage/wal_io/mutable_storage.rs": "821c93d5a64c75a826ca4f87e30577ff642ff4a12b0114360224eade8871caae",
+    "crates/engine/src/storage/wal_io/plan4_genesis_test_support.rs": "917d6084d8d0053c3267c45bfb41b2fb0ce69b67ea1953dcf0892be5d78a67d9",
+    "crates/engine/src/storage/wal_io/plan4_pages.rs": "5378411dd54e6b6d5b4ffc35d334f01ea920555ff6ac78be8f59f0b5d2d6fa8f",
+    "crates/engine/src/storage/wal_io/plan4_pages_native_tests.rs": "1829a9377eed868759a79025be4acf7fa78ba31934248169c9bb807452ce6597",
+    "crates/engine/src/storage/wal_io/plan4_recovered_bind.rs": "97234ab0b5455e9cea97d124c70bb2da6c203e90651c153b62a59a27bef3f6d7",
+    "crates/engine/src/storage/wal_io/plan4_recovery.rs": "8898bccb017c8211d0676b97ec7c8e375d85fb86b8bc1b917a1c0231636ad3e0",
+    "crates/engine/src/storage/wal_io/plan4_recovery_analysis.rs": "9a90acaab1ef1f602c2a39a3c067040c94d992dc782032a08d231fefabca7597",
+    "crates/engine/src/storage/wal_io/plan4_recovery_epoch.rs": "c58c6d4b505b9761fef5397b8755ef584e816e517812b086ae7d1d7b8e42c714",
+    "crates/engine/src/storage/wal_io/plan4_recovery_physical.rs": "15bbcc877f08c60cad9428b735a4bd19a303ff2db8a6736991f9b072bffcd1ec",
+    "crates/engine/src/storage/wal_io/plan4_recovery_resources.rs": "e8869c81c266b2c8b57bbd4eaa882d89c1a274529a2d7dad7c9ca76767a19a0c",
+    "crates/engine/src/storage/wal_io/plan4_recovery_select.rs": "52ecefeb5fcc3c4e8ff8dea32a2885eae3f128d8bc30c0b7fda6470addbd5e5a",
+    "crates/engine/src/storage/wal_io/plan4_recovery_tests.rs": "9a0c8e041a2d9ba778324f3636dc9fb77500b40480a728b7865667b853044497",
+    "crates/engine/src/storage/wal_io/plan4_recovery_tests_cases.rs": "43b010e99f0789fd4e51b044eb15d672ba28ca02ac43a0aafc960e7c0f539993",
+    "crates/engine/src/storage/wal_io/plan4_recovery_tests_faults.rs": "d9c93aeac322b9124b68c35ad93bc1c1bbd82f14dea633368b75d1df8afac1fa",
+    "crates/engine/src/storage/wal_io/plan4_recovery_tests_literals.rs": "2d4a107968ec29974b838787750dfe97724af36b7dfea36bc96633986b11654b",
+    "crates/engine/src/storage/wal_io/plan4_recovery_tests_support.rs": "11671a70a8cfa303ad188b94d2ef407e9bb032940219f2ac4370d960f8bb1b44",
+    "crates/engine/src/storage/wal_io/plan4_retention.rs": "b05762dc7b9399f3b2beb05978d53461245661e5b74d8d789b5e5ea80cf6acda",
+    "crates/engine/src/storage/wal_io/plan4_retention_control.rs": "e039240e3013899c5cddfeb9032a4d63852a880b40b8ab22d1f80642b387115a",
+    "crates/engine/src/storage/wal_io/plan4_retention_flush.rs": "c6a8d8539cf80751afaf7edc5e6b39675aa5bf952e97bad9bbb9dc8ac728b319",
+    "crates/engine/src/storage/wal_io/plan4_retention_history.rs": "39e3a7ed780fb7dcc87ba387743186d0376a5170f135d1c9e6e80d5b606a0d22",
+    "crates/engine/src/storage/wal_io/plan4_retention_live.rs": "58b6a460ac94d2d9e4dda696135c261ccba0e80bdb051f4ec7915df484583cd7",
+    "crates/engine/src/storage/wal_io/plan4_retention_population.rs": "9937a8c981bfe4e6705e22a174f5d1dba6c6049cdcbf6d60ec71ce648f032f4b",
+    "crates/engine/src/storage/wal_io/plan4_retention_recovery.rs": "16e777ae3985141fa06c98c4c014e5868949b214462fb93aa385446d690742d2",
+    "crates/engine/src/storage/wal_io/plan4_retention_recovery_test_observation.rs": "8d8a0e30cece2e652423b0d84fd9e04673f5bffbd502929b4efc3cdc9e567f33",
+    "crates/engine/src/storage/wal_io/plan4_retention_resources.rs": "dfa8814113215cb8cadafcb79b8601d386c21e8945e1e1be2a1bdad3fb844466",
+    "tests/fixtures/dev3-plan4-recovery-owner/input-plan.json": "1daddfe72d0ca2e29dedd2d2e32855bc91f042ba9bd885711555aac41e11280e",
+    "tests/fixtures/dev3-plan4-recovery-owner/provenance.md": "c746b9495cfb98deedf6e11a367d6591b584ef9217858cdaa1a7f222f22bd672"
+  },
+  "recovery": {
+    "original_static_tests": {
+      "FAIL": 2,
+      "product_effects": 0
+    },
+    "F05": "HOLD",
+    "latest_source_compile": "NOT_RUN",
+    "semantic_runtime": "NOT_RUN",
+    "native_lifecycle": "NOT_RUN",
+    "test_inventory": "48 candidate; not frozen; E09 expansion only proposed",
+    "unlinked_drafts": [
+      "plan4_recovery_tests_faults.rs",
+      "plan4_retention_recovery_test_observation.rs"
+    ],
+    "pending": [
+      "Split sealed digest ContentMismatch from offset/LSN OrderMismatch.",
+      "Recheck actual bind/history phase source census on successor; original static2 remain FAIL.",
+      "Complete L/B10 oracle assertions and independently review; S15 bodies remain unlinked/uncompiled.",
+      "Freeze exact mandatory/S5 inventory and source/ELF-bound effect admission before execution."
+    ]
+  },
+  "review": {
+    "independent_reviewer": "/root/dev3_independent_review",
+    "checkpoint": "source-only incomplete checkpoint permitted",
+    "final_recovery_acceptance": false
+  },
+  "user_instruction": "정리한 뒤 이번 진행 종료; 정리 대상은 artifacts",
+  "cleanup_evidence_directory": "artifacts/cleanup-20261025",
+  "new_builds_or_tests_during_cleanup": 0,
+  "dev3_complete": false,
+  "evidence_ref": "dev3-recovery-paused-20261025.md",
+  "source_snapshot_note": "Hashes describe WIP bytes; no latest-source compile or effect acceptance.",
+  "cleanup": {
+    "cargo-cache-cleanup.json": {
+      "sha256": "842d982d686bb3be7ce88ef1dda715a1b8c6f62947f6083fef2f2d0c33e9eb5b",
+      "free_before": 13196853248,
+      "free_after": 49917743104
+    },
+    "build-products-cleanup.json": {
+      "sha256": "4873c6d2e5fa767d32c55be6dc5d0017125153aea17c042b7ca87b068458150e",
+      "free_before": 49903276032,
+      "free_after": 83969196032
+    },
+    "evidence-archive.json": {
+      "sha256": "52b0b82ea971fdbe5bb1ae0ddf37913b4924b34853a21e5f6d7dca44aab1343b",
+      "free_before": 83968786432,
+      "free_after": 150870761472
+    },
+    "artifacts_allocated_bytes_after": 7058722816,
+    "space_measurement_note": "Observed free-space deltas include concurrent filesystem activity; initial artifacts audit approximately139GiB; COMM has separate cleanup receipts."
+  },
+  "archive": {
+    "archive": "artifacts/cleanup-20261025/used-evidence.tar.zst",
+    "sha256": "56d3aa5538c2db3ea51a54ea2ccc061af973ae056308e4de78e6a4b38e8bddd2",
+    "bytes": 2761088077,
+    "content_compare": "PASS",
+    "status": "ARCHIVED_VERIFIED_EXPANDED_COPIES_REMOVED"
+  },
+  "review_receipt_sha256": "003b440dd559dfa33d1b1e794a230d1e11d45e778b63c268c2780386a0c7ad21"
+}

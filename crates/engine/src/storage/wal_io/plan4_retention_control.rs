@@ -30,6 +30,7 @@ pub(super) struct RetentionControl<'a, 'c, 's> {
     pub(super) pending: Option<WalRequirement<'s>>,
     pub(super) durable: Option<DurableWal<'s>>,
     pub(super) population: super::population::Population<'c, 's>,
+    pub(super) source: super::recovery::HistorySource<'s>,
 }
 impl<'a, 'c, 's> RetentionControl<'a, 'c, 's> {
     pub(super) fn new(loan: EmptyRetentionControlLoan<'a>) -> Self {
@@ -42,6 +43,7 @@ impl<'a, 'c, 's> RetentionControl<'a, 'c, 's> {
             pending: None,
             durable: None,
             population: super::population::Population::new(),
+            source: super::recovery::HistorySource::Genesis,
         }
     }
     pub(super) fn row(&self, index: usize) -> &[u8] {
@@ -97,8 +99,9 @@ impl<'a, 'c, 's> RetentionControl<'a, 'c, 's> {
             .map_err(|_| unchanged(RetentionPhase::Census, RetentionCause::Invariant))?;
             if row[PHASE] != STABLE
                 || row[PHASE + 1..].iter().any(|v| *v != 0)
-                || actor.id().writer_epoch != prefix.stream.writer_epoch
-                || actor.id().local > self.adopted_local
+                || !self
+                    .source
+                    .allows_actor(actor, prefix.stream.writer_epoch, self.adopted_local)
                 || actor.generation() != status.generation()
                 || status.slot() != 0
                 || d.chain.apply > prefix.complete_lsn

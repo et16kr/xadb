@@ -29,6 +29,7 @@ mod resources;
 pub(in crate::storage) use load::Plan4LoadPermit;
 #[cfg(test)]
 pub(in crate::storage) use resources::source_census;
+pub(in crate::storage) use resources::source_census as plan4_recovery_clean_source_census;
 
 #[cfg(all(test, target_os = "linux"))]
 #[path = "plan4_pages_native_tests.rs"]
@@ -45,9 +46,21 @@ mod retention;
 )]
 pub(crate) use retention::Plan4Retention;
 pub(in crate::storage) use retention::{
-    RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
-    RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
+    EmptyRetentionControlLoan, RetentionCause, RetentionError, RetentionFlushAuthority,
+    RetentionFlushPhase, RetentionFlushStep, RetentionFrameObservation, RetentionInitAuthority,
+    RetentionInitCommit, RetentionInitCompleted, RetentionInitInstall, RetentionInstall,
+    RetentionLoadPermit, RetentionObservation, RetentionRecoveryStep, RetentionReplayCursor,
+    observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_image,
+    seed_recovery_replay,
 };
+
+#[cfg(test)]
+pub(in crate::storage) use retention::{
+    IntoRetentionError, RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES, RetentionReservationError,
+    RetentionResidencyStep,
+};
+
+pub(in crate::storage) use retention::source_census as retention_recovery_source_census;
 
 const OPERATION_BYTES: usize = 7 * PAGE_BYTES;
 const FLUSH_BYTES: usize = 4_194_304;
@@ -439,3 +452,6 @@ impl<W: WriterNamespace> Drop for Plan4Pages<'_, '_, '_, '_, '_, '_, '_, W> {
         let _ = self.pool.has_pins();
     }
 }
+
+#[path = "plan4_recovered_bind.rs"]
+mod recovered_bind;

@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-25 [DEV3 복구 작업 중간 저장·자료 정리](evidence/dev3-recovery-paused-20261025.md): 사용자 요청으로 진행을 중지했다. 원 static2 FAIL·F05 HOLD와 최신 source NOT_RUN을 보존하며 복구·DEV3/S5는 미완료다.
+
 2026-10-25 [DEV4 P5 전체 입력 조립 준비](evidence/dev4-lifecycle-assembly-inputs-20261025.md): 설계와 독립 후보1658개를 정적 한정 검토했다. 미검토 rich304를 보존하며 전체 D2·제품·시험은 NOT_RUN이다. 사용자 정리 요청에 따라 준비 단위를 기록한다.
 
 2026-10-25 [DEV3 plan4 빈 거래 live·prefix](evidence/dev3-retention-live-20261025.md): 신규 필수75개 source별 PASS·완료 반복0, 원 실패 보존, 최종 독립 D1을 제한 수용했다. fresh 수명·flush·재적재를 연결했으며 복구 owner·native 수명·DEV3/S5는 미완료다.

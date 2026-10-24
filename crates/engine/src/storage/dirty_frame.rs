@@ -23,6 +23,7 @@ use std::{
 use xadb_foundation::error::Effect;
 
 mod plan4_residency;
+mod recovered_plan4;
 mod registration;
 mod retention_residency;
 pub(in crate::storage) use plan4_residency::source_census as plan4_core_census;

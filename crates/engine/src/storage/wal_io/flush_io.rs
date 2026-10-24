@@ -248,6 +248,20 @@ impl<'s, 'w> FlushIo<'s, 'w> {
         }
     }
 
+    /// Only actual recovery selection can supply this sealed DWB issuance.
+    /// An Empty record can still have burned a batch; preserve that high-water
+    /// before the first new capture instead of treating it as fresh genesis.
+    pub(super) fn from_plan4_recovery(
+        selected: &super::plan4_recovery::SelectedRecoveryDwb,
+        workspace: &'w mut [u8; WORKSPACE_BYTES],
+        binding: &'s AtomicU8,
+        fence: &'s SessionFence,
+    ) -> Self {
+        let mut io = Self::new(selected.selected(), workspace, binding, fence);
+        io.observation.last_issued = selected.last_issued();
+        io
+    }
+
     pub(super) fn snapshot(&self) -> IoObservation {
         self.observation
     }

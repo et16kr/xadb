@@ -427,7 +427,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
     }
     #[allow(
         clippy::collapsible_if,
-        reason = "explicit rollback target scope preserves reviewed post-force checks"
+        reason = "keep guarded readback validation distinct from the operation selector"
     )]
     fn apply<const N: usize>(
         &mut self,

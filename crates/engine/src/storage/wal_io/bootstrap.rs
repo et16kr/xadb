@@ -1215,3 +1215,5 @@ pub(in crate::storage) use doublewrite_install::{
     RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
     RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
 };
+
+pub(in crate::storage) use doublewrite_install::RecoveryPoolSeed;

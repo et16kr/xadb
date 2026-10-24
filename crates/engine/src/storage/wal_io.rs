@@ -1056,3 +1056,5 @@ pub(in crate::storage) use bootstrap::{
     RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
     RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
 };
+
+pub(in crate::storage) use bootstrap::RecoveryPoolSeed;

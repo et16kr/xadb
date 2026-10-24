@@ -1,0 +1,872 @@
+{
+  "schema": "XADB_PLAN4_RECOVERY_OWNER_INPUT_DRAFT_V1",
+  "status": "SOURCE_ONLY_CANDIDATE_NOT_D2_FROZEN",
+  "source_authoring_only": true,
+  "raw_generation": false,
+  "product_execution": false,
+  "source": {
+    "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests.rs",
+    "sha256": "b0a0af5bc97a6cf702adb6a09b368d6f7856d1ee97fdd86463c9874f550b5ebb"
+  },
+  "counts": {
+    "mandatory_memory": 43,
+    "mandatory_static": 2,
+    "mandatory_native": 3,
+    "mandatory_total": 48,
+    "mandatory_unique_selectors": 9,
+    "s5_additional": "PENDING_BOUNDED_REACHABILITY_REVIEW; no frozen denominator"
+  },
+  "cases": {
+    "P4-REC-ST01": {
+      "id": "P4-REC-ST01",
+      "phase": "mandatory",
+      "category": "static",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory",
+      "operation": "actual owner/runtime/closed/live phase census and concrete native/memory W/File sizes; print all beforeassert",
+      "expected": "source caps65536/196608/262144 plusactualoriginal loans; no I/O/ownerconstruction",
+      "source_status": "SOURCE_READY_UNCOMPILED",
+      "completion": "NOT_RUN"
+    },
+    "P4-REC-ST02": {
+      "id": "P4-REC-ST02",
+      "phase": "mandatory",
+      "category": "static",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native",
+      "operation": "actual owner/runtime/closed/live phase census and concrete native/memory W/File sizes; print all beforeassert",
+      "expected": "source caps65536/196608/262144 plusactualoriginal loans; no I/O/ownerconstruction",
+      "source_status": "SOURCE_READY_UNCOMPILED",
+      "completion": "NOT_RUN"
+    },
+    "P4-REC-L01": {
+      "id": "P4-REC-L01",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle",
+      "entry": "recover",
+      "operation": "Active L4 -> epoch2 cleanup L5..7 -> same-pool new actor(epoch2,local1) L8..11",
+      "setup": "actual fresh reserve/INIT/AgingStart/Begin; close producer without terminal",
+      "independent_oracle": "WAL2 exact3 cleanup+4 newTx frames; all afterpages/rows; old epoch actor preserved until Abort; final empty ATT/Ready, Slot/Job generations3; original pool/core/loans retained",
+      "expected_cause": "success",
+      "effect": "actual attempts/completions and full files retained; no fabricated requirements or Fresh",
+      "completion": "NOT_RUN",
+      "source_status": "SOURCE_READY_UNCOMPILED_NOT_D2_FROZEN",
+      "freeze_blockers": []
+    },
+    "P4-REC-L02": {
+      "id": "P4-REC-L02",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle",
+      "entry": "recover",
+      "operation": "Reserved L1 -> compulsory cancel L2 before any other semantic append",
+      "setup": "actual linear reserve; drop reservation/owner to preserve durable reserved disk",
+      "independent_oracle": "first WAL2 frame exact21200 Cancel, page9 Free2, work1 finished; original reserved credit restored once; no INIT/body repair",
+      "expected_cause": "success",
+      "effect": "actual attempts/completions and full files retained; no fabricated requirements or Fresh",
+      "completion": "NOT_RUN",
+      "source_status": "SOURCE_READY_UNCOMPILED_NOT_D2_FROZEN",
+      "freeze_blockers": []
+    },
+    "P4-REC-L03": {
+      "id": "P4-REC-L03",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle",
+      "entry": "recover",
+      "operation": "Aborting L5 -> AbortEnd6/Finish7",
+      "setup": "actual producer through RollbackStart",
+      "independent_oracle": "two exactframes, no duplicate RollbackStart; actor epoch1 remains exact; Status/Job becomeFree2",
+      "expected_cause": "success",
+      "effect": "actual attempts/completions and full files retained; no fabricated requirements or Fresh",
+      "completion": "NOT_RUN",
+      "source_status": "SOURCE_READY_UNCOMPILED_NOT_D2_FROZEN",
+      "freeze_blockers": []
+    },
+    "P4-REC-L04": {
+      "id": "P4-REC-L04",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle",
+      "entry": "recover",
+      "operation": "Ready L6 -> Finish7",
+      "setup": "actual producer through AbortEnd",
+      "independent_oracle": "one exact55112 frame, no ATT reconstruction for terminal actor; root/Aging update matches independent raw",
+      "expected_cause": "success",
+      "effect": "actual attempts/completions and full files retained; no fabricated requirements or Fresh",
+      "completion": "NOT_RUN",
+      "source_status": "SOURCE_READY_UNCOMPILED_NOT_D2_FROZEN",
+      "freeze_blockers": []
+    },
+    "P4-REC-L05": {
+      "id": "P4-REC-L05",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle",
+      "entry": "recover",
+      "operation": "Finished L7 -> new epoch with no cleanup frame",
+      "setup": "actual producer through Finish and flush all dirty",
+      "independent_oracle": "WAL2 header4096 only; home repair0; base capturesL7, controls mutate as prescribed, cleanup returnsVerified",
+      "expected_cause": "success",
+      "effect": "actual attempts/completions and full files retained; no fabricated requirements or Fresh",
+      "completion": "NOT_RUN",
+      "source_status": "SOURCE_READY_UNCOMPILED_NOT_D2_FROZEN",
+      "freeze_blockers": []
+    },
+    "P4-REC-L06": {
+      "id": "P4-REC-L06",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_lifecycle",
+      "entry": "recover",
+      "operation": "base plus attached newer epoch suffix, old WAL absent -> epoch3",
+      "setup": "independent setup actual L01-like driver; remove nothing by test, verify product retired WAL1",
+      "independent_oracle": "baseL4+WAL2 suffix reachesL11; WAL3 header only, no old-WAL open; two full canonical bases/current/WRITER new selection",
+      "expected_cause": "success",
+      "effect": "actual attempts/completions and full files retained; no fabricated requirements or Fresh",
+      "completion": "NOT_RUN",
+      "source_status": "SOURCE_READY_UNCOMPILED_NOT_D2_FROZEN",
+      "freeze_blockers": []
+    },
+    "P4-REC-S01": {
+      "id": "P4-REC-S01",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover",
+      "operation": "reject genesis source with no semantic frame",
+      "setup": "fresh plan4 WAL1 exactly4096",
+      "independent_oracle": "no base/epoch publication and original15files unchanged",
+      "expected_cause": "Analysis/Unsupported",
+      "effect": "postlease error CallerMustResolve; database Unchanged before first attempted mutation; original owner/fence/failure retained until Drop",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": []
+    },
+    "P4-REC-S02": {
+      "id": "P4-REC-S02",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover",
+      "operation": "invalid expected namespace timeline0 before lease",
+      "setup": "no producer required; real empty adapter not acquired",
+      "independent_oracle": "loan sentinel unchanged, acquire0",
+      "expected_cause": "Preflight/Capacity",
+      "effect": "beforelease Unchanged",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": []
+    },
+    "P4-REC-S03": {
+      "id": "P4-REC-S03",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover",
+      "operation": "both WalOpen closures require missing selected WAL; no silent older fallback",
+      "setup": "actual established CURRENT bothWalOpen; remove exact current WAL in independent working clone",
+      "independent_oracle": "no deletion/selection effect; required source missing is retained failure",
+      "expected_cause": "Selection/Namespace(NotFound)",
+      "effect": "postlease error CallerMustResolve; database Unchanged before first attempted mutation; original owner/fence/failure retained until Drop",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": []
+    },
+    "P4-REC-S04": {
+      "id": "P4-REC-S04",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover",
+      "operation": "explicit allowed damaged-current base fallback selects exact previous closure",
+      "setup": "literal CURRENT currentBaseOnly+distinct valid previousBaseOnly; current base fullSHA differs",
+      "independent_oracle": "selected_previous only; repaired output equals previous canonicalbase, no highestgeneration scan",
+      "expected_cause": "success",
+      "effect": "actual attempts/completions and full files retained; no fabricated requirements or Fresh",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze closure generation/slot tuple and base recipe after actual valid setup"
+      ]
+    },
+    "P4-REC-S05": {
+      "id": "P4-REC-S05",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover",
+      "operation": "SHA-valid semantically unsupported selected base cannot fallback",
+      "setup": "current selected XRB1 header version u16[4]=2; independently reseal full base and exact CURRENT base digest; previous valid closure retained",
+      "independent_oracle": "rejection even when previous independentlyvalid; mutations0",
+      "expected_cause": "Selection/Base(Unsupported)",
+      "effect": "postlease error CallerMustResolve; database Unchanged before first attempted mutation; original owner/fence/failure retained until Drop",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze actual valid CURRENT/base previous tuple before the exact unsupported mutation"
+      ]
+    },
+    "P4-REC-S06": {
+      "id": "P4-REC-S06",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover",
+      "operation": "new epoch header predecessor mismatch against selected base",
+      "setup": "valid selected newerXWE2 with wrong previous_header_digest; independentlyreseal XWE2 and CURRENT own digest",
+      "independent_oracle": "identity rejection and no newbase/epoch publication",
+      "expected_cause": "Selection/IdentityMismatch",
+      "effect": "postlease error CallerMustResolve; database Unchanged before first attempted mutation; original owner/fence/failure retained until Drop",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": []
+    },
+    "P4-REC-S07": {
+      "id": "P4-REC-S07",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover",
+      "operation": "third unknown valid epoch does not grant deletion permission",
+      "setup": "actual known base/source plus independentlyvalid unrelated d3-wal-000000fe",
+      "independent_oracle": "unknown file bytes+inode retained; no recoveryeffects",
+      "expected_cause": "Selection/Unsupported",
+      "effect": "postlease error CallerMustResolve; database Unchanged before first attempted mutation; original owner/fence/failure retained until Drop",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": []
+    },
+    "P4-REC-S08": {
+      "id": "P4-REC-S08",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover",
+      "operation": "same-length source pathname identity changes between bound open and named observation",
+      "setup": "adapter OpenedIdentity on selectedsource open only",
+      "independent_oracle": "fault hit1, no analysis/publication; originalfile bytes preserved",
+      "expected_cause": "Selection/IdentityMismatch",
+      "effect": "postlease error CallerMustResolve; database Unchanged before first attempted mutation; original owner/fence/failure retained until Drop",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "exact adapter key occurrence from final source"
+      ]
+    },
+    "P4-REC-S09": {
+      "id": "P4-REC-S09",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover",
+      "operation": "unsealed partial suffix excluded from accepted prefix",
+      "setup": "actual ActiveL4 WAL1 plus first159 bytes of independent RollbackStart5",
+      "independent_oracle": "acceptedL4/end; partial bytes never staged innewWAL2; cleanup emits exact5/6/7",
+      "expected_cause": "success",
+      "effect": "actual attempts/completions and full files retained; no fabricated requirements or Fresh",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": []
+    },
+    "P4-REC-S10": {
+      "id": "P4-REC-S10",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover",
+      "operation": "sealed source cannot discard identical partial suffix",
+      "setup": "independent CURRENT Sealed exactend covering same159-byte suffix",
+      "independent_oracle": "rejection before source retirement, no incompleteasPASS",
+      "expected_cause": "Analysis/Frame(error exact pending)",
+      "effect": "postlease error CallerMustResolve; database Unchanged before first attempted mutation; original owner/fence/failure retained until Drop",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "exact tail-policy error from current scan API"
+      ]
+    },
+    "P4-REC-P01": {
+      "id": "P4-REC-P01",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_physical",
+      "entry": "recover",
+      "operation": "selected one-image Pending repaired and retired",
+      "setup": "actual sourceL4 plus independentlyconstructed matching Pending Root@4/image",
+      "independent_oracle": "one exacthome image then Empty generations; fullsource matches; no othercanonicalpage overwritten",
+      "expected_cause": "success",
+      "effect": "actual attempts/completions and full files retained; no fabricated requirements or Fresh",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": []
+    },
+    "P4-REC-P02": {
+      "id": "P4-REC-P02",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_physical",
+      "entry": "recover",
+      "operation": "Pending SHA-valid cross-class image rejected",
+      "setup": "P01 selectedimage kind/catalogtarget mismatch with own checksums resealed",
+      "independent_oracle": "no home write; retained Pending exact",
+      "expected_cause": "Analysis/Unsupported or Retention exact pending",
+      "effect": "postlease error CallerMustResolve; database Unchanged before first attempted mutation; original owner/fence/failure retained until Drop",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "exact primary error and check precedence"
+      ]
+    },
+    "P4-REC-P03": {
+      "id": "P4-REC-P03",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_physical",
+      "entry": "recover",
+      "operation": "torn allocated Status home repaired from complete source",
+      "setup": "actual L4; flip payloadbyte without SHA update in Status home",
+      "independent_oracle": "canonical Status@4 fullbytes restored; physical topup16384 consumed only touchedtarget",
+      "expected_cause": "success",
+      "effect": "actual attempts/completions and full files retained; no fabricated requirements or Fresh",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": []
+    },
+    "P4-REC-P04": {
+      "id": "P4-REC-P04",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_physical",
+      "entry": "recover",
+      "operation": "intact valid home from unsupported later LSN rejected",
+      "setup": "actual L4; independentlyencode Status@5 whosestate is not adoptedprefix",
+      "independent_oracle": "no overwrite of valid incompatiblehome; mutation0",
+      "expected_cause": "Analysis/Unsupported",
+      "effect": "postlease error CallerMustResolve; database Unchanged before first attempted mutation; original owner/fence/failure retained until Drop",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": []
+    },
+    "P4-REC-P05": {
+      "id": "P4-REC-P05",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_physical",
+      "entry": "recover",
+      "operation": "home write AfterError retained as uncertain database effect",
+      "setup": "P03; fault write on Status9 absolute offset147456",
+      "independent_oracle": "before/after fullbytes and exact fault1; no Runtime/Live returned",
+      "expected_cause": "Redo/Io",
+      "effect": "CallerMustResolve and database CallerMustResolve after mutation attempt; original possible/known selections, files and logs retained; no live owner",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "exact writer operation key occurrence"
+      ]
+    },
+    "P4-REC-P06": {
+      "id": "P4-REC-P06",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_physical",
+      "entry": "recover",
+      "operation": "DWB unsupported batch/generation relation rejected at selection",
+      "setup": "independent Empty selectedbank batch2 generation2 instead valid5/7, selector ownSHA valid",
+      "independent_oracle": "no Pending processing/home mutation",
+      "expected_cause": "Selection/Unsupported",
+      "effect": "postlease error CallerMustResolve; database Unchanged before first attempted mutation; original owner/fence/failure retained until Drop",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": []
+    },
+    "P4-REC-E01": {
+      "id": "P4-REC-E01",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_publication",
+      "entry": "recover",
+      "operation": "base write failure before CURRENT publication",
+      "setup": "actual ActiveL4; first target base write BeforeError",
+      "independent_oracle": "originalselectedclosure stillknown; partialnewbase retained, no source delete",
+      "expected_cause": "Rebase/Io",
+      "effect": "CallerMustResolve and database CallerMustResolve after mutation attempt; original possible/known selections, files and logs retained; no live owner",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze exact op/name/offset/occurrence and fault-hit1 from final source"
+      ]
+    },
+    "P4-REC-E02": {
+      "id": "P4-REC-E02",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_publication",
+      "entry": "recover",
+      "operation": "CURRENT publish AfterError retains both possible selections",
+      "setup": "actual ActiveL4; publish CURRENT AfterError",
+      "independent_oracle": "old/new exactcontrols preserved inreceipt; no livehandoff; no retrycompletedproducer",
+      "expected_cause": "Rebase/Namespace",
+      "effect": "CallerMustResolve and database CallerMustResolve after mutation attempt; original possible/known selections, files and logs retained; no live owner",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze exact op/name/offset/occurrence and fault-hit1 from final source"
+      ]
+    },
+    "P4-REC-E03": {
+      "id": "P4-REC-E03",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_publication",
+      "entry": "recover",
+      "operation": "selected old source retirement remove failure",
+      "setup": "reach paired BaseOnly closure; remove oldepoch BeforeError",
+      "independent_oracle": "canonical bases andBaseOnly aredurable; originalsource remains; no source chosen byhighwater",
+      "expected_cause": "Reclaim/Namespace",
+      "effect": "CallerMustResolve and database CallerMustResolve after mutation attempt; original possible/known selections, files and logs retained; no live owner",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze exact op/name/offset/occurrence and fault-hit1 from final source"
+      ]
+    },
+    "P4-REC-E04": {
+      "id": "P4-REC-E04",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_publication",
+      "entry": "recover",
+      "operation": "new epoch create failure burns prior durable intent",
+      "setup": "reach actual intent; create epoch2 BeforeError",
+      "independent_oracle": "CURRENT intent issued2 durable; next explicit recovery cannotreuse2; orphan/source deletion constrained",
+      "expected_cause": "LogOpen/Namespace",
+      "effect": "CallerMustResolve and database CallerMustResolve after mutation attempt; original possible/known selections, files and logs retained; no live owner",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze exact op/name/offset/occurrence and fault-hit1 from final source"
+      ]
+    },
+    "P4-REC-E05": {
+      "id": "P4-REC-E05",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_publication",
+      "entry": "recover",
+      "operation": "new epoch header partial write rejected",
+      "setup": "create epoch2; write4096 PrefixError at independentlyselectedprefix",
+      "independent_oracle": "intent remains; partialnewfile retained, WRITER notbound/newliveabsent",
+      "expected_cause": "LogOpen/Io",
+      "effect": "CallerMustResolve and database CallerMustResolve after mutation attempt; original possible/known selections, files and logs retained; no live owner",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze exact op/name/offset/occurrence and fault-hit1 from final source"
+      ]
+    },
+    "P4-REC-E06": {
+      "id": "P4-REC-E06",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_publication",
+      "entry": "recover",
+      "operation": "WRITER publication AfterError cannot expose live owner",
+      "setup": "reach synced epoch2; publish WRITER AfterError",
+      "independent_oracle": "known/possible receipt retained; no syntheticselected witness",
+      "expected_cause": "LogOpen/Namespace",
+      "effect": "CallerMustResolve and database CallerMustResolve after mutation attempt; original possible/known selections, files and logs retained; no live owner",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze exact op/name/offset/occurrence and fault-hit1 from final source"
+      ]
+    },
+    "P4-REC-E07": {
+      "id": "P4-REC-E07",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_publication",
+      "entry": "recover",
+      "operation": "directory sync error after final WalOpen selection",
+      "setup": "reach CURRENT bothWalOpen; directorysync AfterError",
+      "independent_oracle": "failure retained even bytesappearcomplete; no automaticphase replay",
+      "expected_cause": "LogOpen/Namespace",
+      "effect": "CallerMustResolve and database CallerMustResolve after mutation attempt; original possible/known selections, files and logs retained; no live owner",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze exact op/name/offset/occurrence and fault-hit1 from final source"
+      ]
+    },
+    "P4-REC-E08": {
+      "id": "P4-REC-E08",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_publication",
+      "entry": "recover",
+      "operation": "source content drift between complete prefix hash passes",
+      "setup": "selected heldFile length/identitysame; mutate frame payload afterfirsthash withoutreseal",
+      "independent_oracle": "secondhash rejection before any namespace/home mutation",
+      "expected_cause": "Analysis/ContentMismatch",
+      "effect": "postlease error CallerMustResolve; database Unchanged before first attempted mutation; original owner/fence/failure retained until Drop",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze exact op/name/offset/occurrence and fault-hit1 from final source"
+      ]
+    },
+    "P4-REC-B01": {
+      "id": "P4-REC-B01",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_binding",
+      "entry": "Runtime::bind/Closed::into_live",
+      "operation": "second bind observes consumed loans before attempting another pool CAS",
+      "setup": "one actual Runtime and first4framebound stillalive",
+      "independent_oracle": "secondframes/operation sentinel unchanged; firstbound retained; originalbinding single",
+      "expected_cause": "Bind/Invariant",
+      "effect": "Unchanged and no new I/O; database_effect CallerMustResolve records prior recovery effects; original binding and first facade remain",
+      "completion": "NOT_RUN",
+      "source_status": "SOURCE_READY_UNCOMPILED_NOT_D2_FROZEN",
+      "freeze_blockers": []
+    },
+    "P4-REC-B02": {
+      "id": "P4-REC-B02",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_binding",
+      "entry": "Runtime::bind/Closed::into_live",
+      "operation": "foreign core Owner rejected before pool replacement",
+      "setup": "two actual PageConcurrency withsameoriginalfence",
+      "independent_oracle": "frames/gen/cursor unchanged, binding stillavailable, no I/O",
+      "expected_cause": "Bind/Invariant",
+      "effect": "Unchanged and no new I/O; database_effect CallerMustResolve records prior recovery effects; current owner remains healthy",
+      "completion": "NOT_RUN",
+      "source_status": "SOURCE_READY_UNCOMPILED_NOT_D2_FROZEN",
+      "freeze_blockers": []
+    },
+    "P4-REC-B03": {
+      "id": "P4-REC-B03",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_binding",
+      "entry": "Runtime::bind/Closed::into_live",
+      "operation": "nonIdle Owner rejected before first load",
+      "setup": "actual same-core try_apply followed by deliberate forgotten guard leaves actual nonIdle admission",
+      "independent_oracle": "noRAMreplacement/pin/I/O; exacteffect preservesoriginalcontract",
+      "expected_cause": "Bind/Concurrency(Invariant)",
+      "effect": "CallerMustResolve, original fence; no new I/O/RAM replacement; database_effect CallerMustResolve retains earlier recovery effects",
+      "completion": "NOT_RUN",
+      "source_status": "SOURCE_READY_UNCOMPILED_NOT_D2_FROZEN",
+      "freeze_blockers": []
+    },
+    "P4-REC-B04": {
+      "id": "P4-REC-B04",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::cases::recovery_binding",
+      "entry": "Runtime::bind/Closed::into_live",
+      "operation": "early consuming into_live denied and returns same closed facade",
+      "setup": "actual bound beforefirstcleanupstep",
+      "independent_oracle": "no publiclive Begin capability; exactfacade maycontinue, no extraeffects",
+      "expected_cause": "returnedSelf",
+      "effect": "Unchanged/no IO for rejected boundary; original acquisition effects remain recorded",
+      "completion": "NOT_RUN",
+      "source_status": "SOURCE_READY_UNCOMPILED_NOT_D2_FROZEN",
+      "freeze_blockers": []
+    },
+    "P4-REC-V01": {
+      "id": "P4-REC-V01",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_closure",
+      "entry": "Closed::step/into_live -> actual consumer",
+      "operation": "postcleanup actual canonical home readback detects tamper",
+      "setup": "stop beforefinalverify via actualfault adapterhook; sameidentity alteredhome",
+      "independent_oracle": "no livehandoff; bytes retained; error sourcephase recorded",
+      "expected_cause": "Retention/Census/Invariant",
+      "effect": "CallerMustResolve and database CallerMustResolve after mutation attempt; original possible/known selections, files and logs retained; no live owner",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze reachable hook/key/actual private-helper scope without synthetic authority"
+      ]
+    },
+    "P4-REC-V02": {
+      "id": "P4-REC-V02",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_closure",
+      "entry": "Closed::step/into_live -> actual consumer",
+      "operation": "SHA-valid future Empty DWB cannot pass final exact selection",
+      "setup": "actualoriginal io known selection; replace DWB+bank with higher validgeneration beforestabilize",
+      "independent_oracle": "actualknown/lastissued equality rejects futureselection",
+      "expected_cause": "Stabilize/Invariant",
+      "effect": "CallerMustResolve and database CallerMustResolve after mutation attempt; original possible/known selections, files and logs retained; no live owner",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze reachable hook/key/actual private-helper scope without synthetic authority"
+      ]
+    },
+    "P4-REC-V03": {
+      "id": "P4-REC-V03",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_closure",
+      "entry": "Closed::step/into_live -> actual consumer",
+      "operation": "retained flush continuation completes same capture before semantic resume",
+      "setup": "actual dirtypressure duringloser cleanup; source Busy hook once",
+      "independent_oracle": "first Busy unchanged; no newsemantic frame whileWaiting; samecapture laterfinalizedonce",
+      "expected_cause": "progress then success",
+      "effect": "actual attempts/completions and full files retained; no fabricated requirements or Fresh",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze reachable hook/key/actual private-helper scope without synthetic authority"
+      ]
+    },
+    "P4-REC-V04": {
+      "id": "P4-REC-V04",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_closure",
+      "entry": "Closed::step/into_live -> actual consumer",
+      "operation": "recovered status target fullidentity mismatch after same-pool live",
+      "setup": "finishactualcleanup then pass target issuedbydifferentnamespaceowner",
+      "independent_oracle": "Membership/Unchanged after authentic base+suffix read-only source proof; no pool publication and original owner healthy",
+      "expected_cause": "Retention/Membership",
+      "effect": "Unchanged for rejected target; existing recovery effects remain recorded; read-only I/O is permitted by actual load order",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze reachable hook/key/actual private-helper scope without synthetic authority"
+      ]
+    },
+    "P4-REC-N01": {
+      "id": "P4-REC-N01",
+      "phase": "mandatory",
+      "category": "native",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::native::recovery_three_process_worker",
+      "worker_phase": "produce",
+      "operation": "fresh actual profile1 -> ActiveL4, fullfiles/entropy snapshot, releaseallowner/lease",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "predecessor": null
+    },
+    "P4-REC-N02": {
+      "id": "P4-REC-N02",
+      "phase": "mandatory",
+      "category": "native",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::native::recovery_three_process_worker",
+      "worker_phase": "recover",
+      "operation": "new PID sameELF -> recoveryepoch2 -> actualcleanupL5..7 -> samepoolnewTxnL8..11 -> exacthomeflush/close",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "predecessor": "P4-REC-N01"
+    },
+    "P4-REC-N03": {
+      "id": "P4-REC-N03",
+      "phase": "mandatory",
+      "category": "native",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::native::recovery_three_process_worker",
+      "worker_phase": "reenter",
+      "operation": "thirdPID sameELF -> base+WAL2 only -> epoch3, no losercleanupframe, physicalhome repair0, livecatalogread",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "predecessor": "P4-REC-N02"
+    },
+    "P4-REC-S11": {
+      "id": "P4-REC-S11",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover pre-effect seal",
+      "operation": "reject late CURRENT drift before first mutation",
+      "setup": "actual valid source accepted initially; inject same identity, different canonical closure content after selection seal",
+      "independent_oracle": "fault/hook hit exactly1; original complete accepted byte model retained; no sync/write/publish/remove and no live owner",
+      "expected_cause": "source exact phase/cause pending final seal hook mapping",
+      "effect": "CallerMustResolve for acquired owner; database Unchanged before any mutation attempt",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze operation/name/offset/occurrence against actual source pre-effect seal and retain source-defined primary error"
+      ]
+    },
+    "P4-REC-S12": {
+      "id": "P4-REC-S12",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover pre-effect seal",
+      "operation": "reject late selected XRB1 drift before first mutation",
+      "setup": "actual valid source accepted initially; inject same identity, altered base content after selection seal",
+      "independent_oracle": "fault/hook hit exactly1; original complete accepted byte model retained; no sync/write/publish/remove and no live owner",
+      "expected_cause": "source exact phase/cause pending final seal hook mapping",
+      "effect": "CallerMustResolve for acquired owner; database Unchanged before any mutation attempt",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze operation/name/offset/occurrence against actual source pre-effect seal and retain source-defined primary error"
+      ]
+    },
+    "P4-REC-S13": {
+      "id": "P4-REC-S13",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover pre-effect seal",
+      "operation": "reject late DWB drift before first mutation",
+      "setup": "actual valid source accepted initially; inject same identity, altered selected selector/content after selection seal",
+      "independent_oracle": "fault/hook hit exactly1; original complete accepted byte model retained; no sync/write/publish/remove and no live owner",
+      "expected_cause": "source exact phase/cause pending final seal hook mapping",
+      "effect": "CallerMustResolve for acquired owner; database Unchanged before any mutation attempt",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze operation/name/offset/occurrence against actual source pre-effect seal and retain source-defined primary error"
+      ]
+    },
+    "P4-REC-S14": {
+      "id": "P4-REC-S14",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover pre-effect seal",
+      "operation": "reject late FILEMAP drift before first mutation",
+      "setup": "actual valid source accepted initially; inject same identity, altered selected mapping content after selection seal",
+      "independent_oracle": "fault/hook hit exactly1; original complete accepted byte model retained; no sync/write/publish/remove and no live owner",
+      "expected_cause": "source exact phase/cause pending final seal hook mapping",
+      "effect": "CallerMustResolve for acquired owner; database Unchanged before any mutation attempt",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze operation/name/offset/occurrence against actual source pre-effect seal and retain source-defined primary error"
+      ]
+    },
+    "P4-REC-S15": {
+      "id": "P4-REC-S15",
+      "phase": "mandatory",
+      "category": "memory",
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_selection",
+      "entry": "acquire/recover pre-effect seal",
+      "operation": "reject late selected named input drift before first mutation",
+      "setup": "actual valid source accepted initially; inject identical bytes/length with a different named identity after selection seal",
+      "independent_oracle": "fault/hook hit exactly1; original complete accepted byte model retained; no sync/write/publish/remove and no live owner",
+      "expected_cause": "source exact phase/cause pending final seal hook mapping",
+      "effect": "CallerMustResolve for acquired owner; database Unchanged before any mutation attempt",
+      "completion": "NOT_RUN",
+      "source_status": "PLANNED_NOT_IMPLEMENTED",
+      "freeze_blockers": [
+        "freeze operation/name/offset/occurrence against actual source pre-effect seal and retain source-defined primary error"
+      ]
+    }
+  },
+  "selection": {
+    "include": "XADB_PLAN4_RECOVERY_INCLUDE",
+    "exclude": "XADB_PLAN4_RECOVERY_EXCLUDE",
+    "exact": true,
+    "unknown_duplicate_empty_rejected": true,
+    "context": "P4_RECOVERY_CONTEXT\\t<ID>\\t<SOURCE_SHA256>\\t<ELF_SHA256>\\t<INPUT_SHA256>",
+    "source_env": "XADB_PLAN4_RECOVERY_SOURCE_SHA256",
+    "elf_env": "XADB_PLAN4_RECOVERY_ELF_SHA256",
+    "input_env": "XADB_PLAN4_RECOVERY_INPUT_SHA256",
+    "markers": [
+      "BEGIN",
+      "PASS",
+      "FAIL",
+      "SKIP",
+      "CONTEXT"
+    ],
+    "completed_function_reuse": 0,
+    "completed_ids_repeat": 0
+  },
+  "immutable_raw_dependencies": [
+    {
+      "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw-index.tsv",
+      "sha256": "ce3fd367007a6d798dbb6c2f18367a714d4f105611fb190fe57a1aa72d6d99a8",
+      "bytes": 3146
+    },
+    {
+      "path": "tests/fixtures/dev3-plan4-recovery-control/vectors/p1/raw-index.tsv",
+      "sha256": "24fc3ed635ae36177021e696d1ac14e0f3396fa6b04e72fa5f329875b667e7f0",
+      "bytes": 1595
+    }
+  ],
+  "oracle": {
+    "product_encoder_used_for_expected": false,
+    "setup": "actual public fresh producer and actual originalowner activation, never fabricate Fresh/DurableWal/VerifiedBase/selected authority",
+    "reuse": "pinned immutable literals only; no old generator or completed testcase execution",
+    "new_bytes": "no new fixture generated; planned independent recipe extends raw field formulas to exact epoch2/3 controls and XRB1 snapshots",
+    "native": "3distinctPIDs/sameimmutableELF/source/input; fullstablefile bytes+lengths+SHA+inode inventory; source/partial fingerprints preserved; entropy trace fixed and validated",
+    "reentry": "epoch3 and control/base writes are expected; only duplicate physicalhome repairs0, never blanket writes0",
+    "literal_helper": {
+      "path": "crates/engine/src/storage/wal_io/plan4_retention_literal_tests.rs",
+      "bytes": 8264,
+      "sha256": "5d6803a928a6c94a8aff58433b7b9c8bb3a071e0b8ff068a0597ed300624d65c"
+    }
+  },
+  "s5_candidate": {
+    "profiles": "same43 actual full owner operations at profile2 and3:86 proposed additional; exact reachability list not frozen",
+    "crashcuts": "bounded cut after actual namedwrite/sync/publish/remove boundaries, no generic crossproduct; exact finite list pending finalsource",
+    "status_extent": "largest legal55statuses/queueordinal63; no reachable64nonFreepositive; targets that need extraSTATUS use actualreserve/INIT",
+    "native": "profile2/3 eachcomplete3PIDchain:6additional phases; sharedselector exactphase IDs",
+    "freeze_rule": "do not execute or count candidate expansions until exact list/recipes and source/error reachability reviewed"
+  },
+  "budgets_candidate": {
+    "static": {
+      "process_seconds": 10,
+      "audit_seconds": 5,
+      "aggregate_seconds": 15,
+      "output_bytes": 8388608
+    },
+    "memory": {
+      "process_seconds": 180,
+      "audit_seconds": 30,
+      "aggregate_seconds": 210,
+      "per_selector_seconds": 30,
+      "per_output_bytes": 8388608,
+      "all_records_bytes": 16777216
+    },
+    "native": {
+      "aggregate_seconds": 30,
+      "reserved_final_audit_seconds": 1,
+      "max_worker_total_seconds": 29,
+      "history_bytes": 134217728,
+      "log_bytes": 8388608,
+      "max_live_database_bytes": 33554432,
+      "expected_snapshots": "producer + recover + reentry plus1 workingDB; source/ELF separate preparation bound",
+      "no_replay": "spawn-preceded INVOKING receipt; uncertain output or productPASS+oracleFAIL requires auditHOLD; unfinished explicitphase only"
+    },
+    "preparation": {
+      "total_bytes": 1073741824,
+      "classification": "sourceexports/ELF/cache/overlays/probes/raw/receipts/failedattempts counted distinctly; root actualaudit beforeeffect",
+      "records_bytes": 33554432
+    }
+  },
+  "execution_holds": [
+    "product compile andsourceD1 pending",
+    "actual memory/native static2 sourcevalueF05 first",
+    "remaining33memory+native3 bodies pending; lifecycle6/binding4 source only",
+    "all per-ID freeze_blockers resolved +D2inputfreeze",
+    "S5 candidate list notfrozen; no countclaim",
+    "native test-only factory supplied; new worker/oracle/harness and resource gate still pending"
+  ],
+  "semantic_sources": [
+    {
+      "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests_literals.rs",
+      "bytes": 14804,
+      "sha256": "19ca8643ddec57b859358a6f3a37e30ee40ad79017f154daa530df44dc8bbd6c"
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests_support.rs",
+      "bytes": 11839,
+      "sha256": "b7d3692873d7d1db60522ab182fd7afab77b03625e4c088a715f41b81db1de11"
+    },
+    {
+      "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests_cases.rs",
+      "bytes": 14420,
+      "sha256": "432b3e48c69ddf5eb0021c254296e15646856a1519b7095578cb324420e0d632"
+    }
+  ]
+}

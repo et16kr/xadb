@@ -2142,6 +2142,16 @@
       "path": "evidence/dev4-lifecycle-assembly-inputs-20261025.md",
       "role": "evidence",
       "title": "DEV4 P5 전체 입력 조립의 설계·독립 입력 준비"
+    },
+    "dev3-recovery-paused-20261025.md": {
+      "path": "evidence/dev3-recovery-paused-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 복구 작업 중간 저장·자료 정리"
+    },
+    "dev3-recovery-paused-20261025.json": {
+      "path": "evidence/dev3-recovery-paused-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 복구 미완료 source 상태 색인"
     }
   }
 }

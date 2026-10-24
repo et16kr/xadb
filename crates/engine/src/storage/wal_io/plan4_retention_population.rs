@@ -600,7 +600,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             active: true,
         })
     }
-    fn allocate(&mut self, owner: &mut Owner<'c, 's>, cancel: bool) -> Result<()> {
+    pub(super) fn allocate(&mut self, owner: &mut Owner<'c, 's>, cancel: bool) -> Result<()> {
         let storage = self.inner.storage;
         let _unwind = storage.session_fence().unwind_guard();
         health(storage, &self.inner.pool)?;
@@ -829,6 +829,85 @@ impl ReplayAllocation {
     }
     pub(super) fn reserved(&self) -> bool {
         self.state.reserved.is_some()
+    }
+    pub(super) fn from_verified_base(
+        profile: crate::storage::control::Profile,
+        seed: &super::super::super::plan4_recovery::VerifiedPlan4Base<'_>,
+        bank: &mut [u8],
+    ) -> std::result::Result<Self, RetentionCause> {
+        use crate::storage::{
+            allocation_page::{self, AllocationEntry, ReservationOwner},
+            plan4_recovery_base::AllocationTerminal,
+        };
+        let view = seed.view();
+        let h = view.header();
+        let high_water = h.system_high_water[0];
+        let terminal = match h.allocation_terminal {
+            AllocationTerminal::None => 0,
+            AllocationTerminal::Cancelled => 1,
+            AllocationTerminal::InitializedStatus => 2,
+        };
+        let reserved = if let Some(page) = view.census().reserved {
+            let mut identity = crate::storage::retention_genesis::expected_header(
+                profile.spec().namespace,
+                crate::storage::retention_genesis::RetentionGenesisPage::Root,
+            )
+            // Fixed Root recipe on the already selected, validated profile.
+            // Failure here denotes an internal reconstruction invariant.
+            .map_err(|_| RetentionCause::Invariant)?
+            .identity;
+            identity.page.page_no = 0;
+            identity.owner = xadb_foundation::identity::ObjectId::new(1).expect("allocator object");
+            let allocation = allocation_page::decode_allocation_page(
+                view.allocator(),
+                identity,
+                profile.spec().namespace,
+            )
+            .map_err(RetentionCause::Allocation)?;
+            let AllocationEntry::Reserved {
+                generation,
+                claimant: ReservationOwner::System(owner),
+            } = allocation
+                .entry(page.page_no as usize)
+                .map_err(RetentionCause::Allocation)?
+            else {
+                return Err(RetentionCause::Invariant);
+            };
+            if generation != page.incarnation
+                || owner.id() != high_water
+                || terminal != 0
+                || allocation.header().lsn.0 != h.capture_lsn
+            {
+                return Err(RetentionCause::Invariant);
+            }
+            Some(operation::RetentionReservation {
+                owner,
+                page,
+                birth: h.capture_lsn,
+            })
+        } else {
+            None
+        };
+        let state = operation::RetentionAllocationState {
+            high_water,
+            terminal,
+            reserved,
+        };
+        let row = control::row_mut(bank, ALLOCATION_SLOT);
+        if high_water == 0 {
+            if row.iter().any(|b| *b != 0) || terminal != 0 || reserved.is_some() {
+                return Err(RetentionCause::Invariant);
+            }
+        } else {
+            if row[..1536].iter().all(|b| *b == 0) {
+                return Err(RetentionCause::Invariant);
+            }
+            remember(row, state);
+        }
+        Ok(Self { state })
+    }
+    pub(super) fn restore_population(&self, population: &mut Population<'_, '_>) {
+        population.adopt(self.state);
     }
     pub(super) fn apply(
         &mut self,

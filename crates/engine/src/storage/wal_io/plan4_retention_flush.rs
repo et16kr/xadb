@@ -24,7 +24,7 @@ pub(crate) enum RetentionFlushStep {
         captured: FrameStamp,
         #[allow(
             private_interfaces,
-            reason = "internal observation keeps the original conditional finalize result"
+            reason = "original storage-private finalize observation"
         )]
         finalized: FinalizedPage,
     },
@@ -36,6 +36,7 @@ pub(super) struct RetentionFlushControl<'c, 's, 'w> {
     authority: Option<RetentionFlushAuthority<'c, 's>>,
     retired: Option<RetiredBatch<'s>>,
     pub(super) phase: RetentionFlushPhase,
+    source: super::recovery::HistorySource<'s>,
 }
 impl<'c, 's, 'w> RetentionFlushControl<'c, 's, 'w> {
     pub(super) fn new<W: WriterNamespace>(
@@ -54,6 +55,28 @@ impl<'c, 's, 'w> RetentionFlushControl<'c, 's, 'w> {
             authority: None,
             retired: None,
             phase: RetentionFlushPhase::Ready,
+            source: super::recovery::HistorySource::Genesis,
+        }
+    }
+    pub(super) fn from_recovery<W: WriterNamespace>(
+        storage: &'s MutableStorageOwner<'_, '_, W>,
+        workspace: &'w mut [u8; super::super::FLUSH_BYTES],
+        selected: &super::super::super::plan4_recovery::SelectedRecoveryDwb,
+        source: super::recovery::HistorySource<'s>,
+    ) -> Self {
+        Self {
+            io: FlushIo::from_plan4_recovery(
+                selected,
+                workspace,
+                &storage.binding,
+                storage.session_fence(),
+            ),
+            capture: None,
+            durable: None,
+            authority: None,
+            retired: None,
+            phase: RetentionFlushPhase::Ready,
+            source,
         }
     }
 }
@@ -192,6 +215,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionFlusher<'_, 's, 'c, '_, '_, '_, '_, W>
                 .ok_or_else(|| fatal(storage, RetentionPhase::Source, RetentionCause::Capacity))?;
             match history::prove_capture(
                 storage,
+                self.control.source,
                 self.pool,
                 capture,
                 self.control

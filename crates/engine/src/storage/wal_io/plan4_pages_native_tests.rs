@@ -477,3 +477,62 @@ fn worker_g5_clean() {
     });
     harness.finish();
 }
+
+/// New recovery workers use the same measured native Writer/File types.
+/// Construction creates only caller-selected trace files; the namespace root
+/// must already exist. No completed G5 test function is invoked.
+pub(in crate::storage) fn open_native(
+    root: &Path,
+    output: &Path,
+    entropy_output: &Path,
+    readonly: bool,
+) -> (Directory, Arc<Mutex<Trace>>) {
+    let trace = Arc::new(Mutex::new(Trace {
+        root: root.to_path_buf(),
+        output: OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(output)
+            .unwrap(),
+        entropy_output: OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(entropy_output)
+            .unwrap(),
+        readonly,
+        handles: 0,
+        peak: 0,
+        fd_peak: 0,
+        events: 0,
+        mutations: 0,
+        entropy: 0,
+        log_bytes: 0,
+    }));
+    let directory = Directory {
+        inner: Some(LinuxDirectory::open_existing(root).unwrap()),
+        trace: Arc::clone(&trace),
+    };
+    (directory, trace)
+}
+#[derive(Clone, Copy, Debug)]
+pub(in crate::storage) struct NativeTraceReceipt {
+    pub(in crate::storage) handles: usize,
+    pub(in crate::storage) peak: usize,
+    pub(in crate::storage) fd_peak: usize,
+    pub(in crate::storage) events: usize,
+    pub(in crate::storage) mutations: usize,
+    pub(in crate::storage) entropy: usize,
+    pub(in crate::storage) log_bytes: usize,
+}
+pub(in crate::storage) fn native_receipt(trace: &Arc<Mutex<Trace>>) -> NativeTraceReceipt {
+    let trace = trace.lock().unwrap();
+    NativeTraceReceipt {
+        handles: trace.handles,
+        peak: trace.peak,
+        fd_peak: trace.fd_peak,
+        events: trace.events,
+        mutations: trace.mutations,
+        entropy: trace.entropy,
+        log_bytes: trace.log_bytes,
+    }
+}
