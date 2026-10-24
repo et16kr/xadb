@@ -79,6 +79,15 @@ const CLAIMED: u8 = 1;
 const BOUND: u8 = 2;
 const ABANDONED: u8 = 3;
 
+#[path = "plan4_pages.rs"]
+mod plan4_pages;
+pub(in crate::storage) use plan4_pages::Plan4LoadPermit;
+#[allow(unused_imports)]
+pub(crate) use plan4_pages::{
+    Plan4CatalogLookup, Plan4GenesisCensus, Plan4LoadObservation, Plan4Page, Plan4PageCause,
+    Plan4PageError, Plan4PagePhase, Plan4Pages, Plan4ResidencyCursor, Plan4Resident, Plan4Target,
+};
+
 #[cfg(test)]
 #[path = "status_bootstrap_tests.rs"]
 mod status_bootstrap_tests;

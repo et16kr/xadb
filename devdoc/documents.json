@@ -1993,6 +1993,11 @@
       "role": "contracts",
       "title": "DEV3 plan4 정리 큐·빈 Catalog의 최초 설치"
     },
+    "dev3-plan4-clean-owner.md": {
+      "path": "contracts/dev3-plan4-clean-owner.md",
+      "role": "contracts",
+      "title": "DEV3 plan4 초기 page의 원 공유 버퍼 소비"
+    },
     "dev4-predicate-20261024.md": {
       "path": "evidence/dev4-predicate-20261024.md",
       "role": "evidence",
@@ -2022,6 +2027,16 @@
       "path": "evidence/dev4-typed-predicate-20261024.json",
       "role": "evidence",
       "title": "DEV4 typed predicate source별 실행 색인"
+    },
+    "dev3-plan4-clean-owner-20261024.md": {
+      "path": "evidence/dev3-plan4-clean-owner-20261024.md",
+      "role": "evidence",
+      "title": "DEV3 plan4 초기 page의 원 공유 버퍼 소비 검증"
+    },
+    "dev3-plan4-clean-owner-20261024.json": {
+      "path": "evidence/dev3-plan4-clean-owner-20261024.json",
+      "role": "evidence",
+      "title": "DEV3 plan4 clean owner source별 실행 색인"
     }
   }
 }

@@ -735,6 +735,26 @@ reserved/flag 확대24의 **9534case**다. ignored/NOT_RUN으로 작성하며 �
 pure private borrowed view이므로 신규 compiler/native campaign을 만들지 않으며 실제 source D1에서
 field/lifetime을 확인한다. 첫 actual consumer의 compiler·현재-build 복구·F05 의무는 유지한다.
 
+<a id="plan4-clean-owner-followup"></a>
+## plan4 초기 page의 원 공유 버퍼 소비 시험
+
+[소유 계약](../contracts/dev3-plan4-clean-owner.md)과
+[고정 inventory](../../tests/fixtures/dev3-plan4-clean-owner/manifest.json)의 필수78은
+memory75·static2·native1이다. memory C01–05/B01–16/R01–13/M01–08/I01–14/Q01–08/J01–11은
+정확 ID로 선택한다. compiler10과 checker13은 별도이며, 바뀐 checker H12만 추가 검증한다.
+S5 추가128은 memory126(SL10/SS53/SI56/SH7)·native2로 구현하되 중간에는 실행하지 않는다.
+
+원 fresh→Mutable CAS→한 SharedPool에서 clean load·eviction·Catalog3-pin·queue4/4/3-pin을
+검증한다. native P1은 실제 파일의 fresh setup→clean 소비이며 재시작/dirty flush 인수가 아니다.
+원 source별 완료 ID는 제외하고 실패·중단·미실행만 이어간다. 수정이 생기면 실제 diff와 해당
+사례의 경로를 대조해 필요한 범위만 다시 선택한다. source fingerprint 변화로 전체를 재실행하지 않는다.
+기존 genesis42raw/274720bytes의 identity와 원 실패·HOLD를 보존한다.
+
+[source별 선택 증거](../evidence/dev3-plan4-clean-owner-20261024.md)의 필수78은 완료했다.
+r2 static2/native1/memory4, r3 memory32, r4 memory39로 나누어 보존하며 최신 ELF에서
+모두 실행했다고 표현하지 않는다. r2 B04의 oracle abort, r3 C02 후보 선택 FAIL과 compiler
+receipt HOLD는 그대로 남긴다. S5 추가128과 G6 dirty/flush/복구 소비는 미완료다.
+
 <a id="plan4-genesis-followup"></a>
 ## plan4 정리 큐·빈 Catalog 최초 설치 — 2026-10-24
 

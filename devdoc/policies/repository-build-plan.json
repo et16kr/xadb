@@ -5439,5 +5439,51 @@
     "scope": "Canonical nine-page fresh queue/empty Catalog and genesis-only SELECT/reentry. No live queue, Catalog CREATE/CLR, general recovery/READY or DEV3/S5 completion.",
     "source_contract": "Immutable original source exports plus independently reviewed exact overlays; old failures and completed source-specific receipts retained.",
     "test_scope": "Changed/new mandatory304; additionalS51417 remains NOT_RUN; no lower/workspace wrappers."
+  },
+  "dev3_plan4_clean_owner": {
+    "status": "ACCEPTED_LIMITED_D1",
+    "contract_ref": "dev3-plan4-clean-owner.md",
+    "evidence_ref": "dev3-plan4-clean-owner-20261024.json",
+    "scope": "Original Mutable CAS and SharedPool clean genesis consumption, Catalog3-pin and retention4/4/3-pin; mandatory78 source-specific PASS, final independent D1 accepted for this limited clean endpoint. No dirty/flush/recovered owner, CREATE/CLR, first row or full DEV3/S5 completion. AI consumer remains1/3.",
+    "implemented_paths": [
+      "crates/engine/src/storage/dirty_frame/plan4_residency.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages_load.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages_native_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages_read.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages_resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages_tests.rs",
+      "scripts/dev3_plan4_clean_cases.py",
+      "scripts/dev3_plan4_clean_compiler.py",
+      "scripts/dev3_plan4_clean_native.py",
+      "scripts/test_dev3_plan4_clean_compiler.py",
+      "scripts/test_dev3_plan4_clean_harness.py",
+      "tests/fixtures/dev3-plan4-clean-owner/compiler/CP01.rs",
+      "tests/fixtures/dev3-plan4-clean-owner/compiler/CP02.rs",
+      "tests/fixtures/dev3-plan4-clean-owner/compiler/CP03.rs",
+      "tests/fixtures/dev3-plan4-clean-owner/compiler/CP04.rs",
+      "tests/fixtures/dev3-plan4-clean-owner/compiler/CP05.rs",
+      "tests/fixtures/dev3-plan4-clean-owner/compiler/CP06.rs",
+      "tests/fixtures/dev3-plan4-clean-owner/compiler/CP07.rs",
+      "tests/fixtures/dev3-plan4-clean-owner/compiler/CP08.rs",
+      "tests/fixtures/dev3-plan4-clean-owner/compiler/CP09.rs",
+      "tests/fixtures/dev3-plan4-clean-owner/compiler/CP10.rs",
+      "tests/fixtures/dev3-plan4-clean-owner/compiler/manifest.json",
+      "tests/fixtures/dev3-plan4-clean-owner/execution-recipes.json",
+      "tests/fixtures/dev3-plan4-clean-owner/manifest.json",
+      "tests/fixtures/dev3-plan4-clean-owner/provenance.md"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/dirty_frame.rs",
+      "crates/engine/src/storage/dirty_frame/registration.rs",
+      "crates/engine/src/storage/dirty_frame/status_residency.rs",
+      "crates/engine/src/storage/wal_io.rs",
+      "crates/engine/src/storage/wal_io/bootstrap.rs",
+      "crates/engine/src/storage/wal_io/doublewrite_install.rs",
+      "crates/engine/src/storage/wal_io/mutable_storage.rs",
+      "crates/engine/src/storage/wal_io/plan4_genesis.rs"
+    ],
+    "source_contract": "Immutable source exports and exact owned overlays; unrelated concurrent DEV4 changes excluded. Original source/ELF/PASS/FAIL/abort/HOLD retained.",
+    "test_scope": "Mandatory78=memory75+static2+native1; S5additional128=memory126+native2. Compiler10 and checker13 separate; changed checkerH12 follow-up only. No lower/workspace runtime wrappers."
   }
 }

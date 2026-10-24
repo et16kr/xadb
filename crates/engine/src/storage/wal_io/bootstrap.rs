@@ -53,6 +53,7 @@ pub(in crate::storage) use plan4_genesis::{
 
 #[path = "doublewrite_install.rs"]
 mod doublewrite_install;
+pub(in crate::storage) use doublewrite_install::Plan4LoadPermit;
 pub(crate) use doublewrite_install::{
     AllocationObservation, AllocationSession, AllocationSessionCause, AllocationSessionError,
     AllocationSessionPhase, Cause as DoublewriteInstallCause, DoublewriteInstallError,
@@ -88,6 +89,11 @@ pub(in crate::storage) use doublewrite_install::{
 };
 pub(crate) use doublewrite_install::{
     IntoOperationalError, OperationalAllocation, ReloadError, ReloadObservation,
+};
+#[allow(unused_imports)]
+pub(crate) use doublewrite_install::{
+    Plan4CatalogLookup, Plan4GenesisCensus, Plan4LoadObservation, Plan4Page, Plan4PageCause,
+    Plan4PageError, Plan4PagePhase, Plan4Pages, Plan4ResidencyCursor, Plan4Resident, Plan4Target,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

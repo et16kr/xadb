@@ -29,6 +29,7 @@ const PROFILE_NAME: &str = "d3-profile";
 const STAGE_NAME: &str = "d3-writer-stage";
 
 mod bootstrap;
+pub(in crate::storage) use bootstrap::Plan4LoadPermit;
 #[cfg(test)]
 pub(in crate::storage) use bootstrap::plan4_test_mutate_page;
 #[cfg(test)]
@@ -77,6 +78,11 @@ pub(in crate::storage) use bootstrap::{
 #[allow(unused_imports)] // The consuming allocator reload is assembled by scoped consumers.
 pub(crate) use bootstrap::{
     IntoOperationalError, OperationalAllocation, ReloadError, ReloadObservation,
+};
+#[allow(unused_imports)]
+pub(crate) use bootstrap::{
+    Plan4CatalogLookup, Plan4GenesisCensus, Plan4LoadObservation, Plan4Page, Plan4PageCause,
+    Plan4PageError, Plan4PagePhase, Plan4Pages, Plan4ResidencyCursor, Plan4Resident, Plan4Target,
 };
 #[allow(unused_imports)]
 pub(in crate::storage) use bootstrap::{

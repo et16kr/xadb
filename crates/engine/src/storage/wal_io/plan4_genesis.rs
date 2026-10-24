@@ -388,6 +388,21 @@ impl Plan4GenesisSeed {
         })
     }
 
+    pub(in crate::storage) fn verify_data<W: WriterNamespace>(
+        &self,
+        writer: &mut W,
+        scratch: &mut [[u8; PAGE_BYTES]; 3],
+    ) -> PureResult<()> {
+        BorrowedPlan4 { plan: &self.plan }.verify_data(writer, scratch)
+    }
+}
+
+// Borrowing the original private plan does not create a second canonical seed
+// or a mutation/recovery capability. All old and new validators share this body.
+struct BorrowedPlan4<'a> {
+    plan: &'a BootstrapPlan,
+}
+impl BorrowedPlan4<'_> {
     fn verify_selected(
         &self,
         writer: &mut impl WriterNamespace,
@@ -529,28 +544,162 @@ pub(super) fn readback_prepared<W: WriterNamespace>(
     prepared: &PreparedPlan4<'_>,
     scratch: &mut [[u8; PAGE_BYTES]; 3],
 ) -> EffectResult<()> {
-    let result = (|| {
-        let stamps = readback_stamps(writer)?;
-        prepared.seed.verify_descriptor(writer, &mut scratch[0])?;
-        // The unselected bank has geometry/identity authority, never content
-        // authority or fallback semantics.
-        let name = FileName::new("d3-filemap-1").map_err(Plan4GenesisCause::Namespace)?;
-        drop(open_bound(writer, &name, control::CONTAINER_BYTES)?);
-        prepared.seed.verify_data(writer, scratch)?;
-        // Re-open the authoritative profile/selection/root/chunk and XBS1 after
-        // both data passes. Existing common codecs remain the only control parser.
-        prepared.seed.verify_selected(writer, scratch)?;
-        prepared.seed.verify_descriptor(writer, &mut scratch[0])?;
-        if readback_stamps(writer)? != stamps {
-            return Err(Plan4GenesisCause::IdentityMismatch);
-        }
-        Ok(())
-    })();
-    result.map_err(|cause| Plan4GenesisError {
+    readback_seed(
+        writer,
+        &BorrowedPlan4 {
+            plan: &prepared.seed.plan,
+        },
+        scratch,
+    )
+    .map_err(|cause| Plan4GenesisError {
         phase: Plan4GenesisPhase::Readback,
         effect: Effect::CallerMustResolve,
         cause,
     })
+}
+
+fn readback_seed<W: WriterNamespace>(
+    writer: &mut W,
+    seed: &BorrowedPlan4<'_>,
+    scratch: &mut [[u8; PAGE_BYTES]; 3],
+) -> PureResult<()> {
+    let stamps = readback_stamps(writer)?;
+    seed.verify_descriptor(writer, &mut scratch[0])?;
+    // Unselected FILEMAP geometry remains authoritative, never its content.
+    let name = FileName::new("d3-filemap-1").map_err(Plan4GenesisCause::Namespace)?;
+    drop(open_bound(writer, &name, control::CONTAINER_BYTES)?);
+    seed.verify_data(writer, scratch)?;
+    seed.verify_selected(writer, scratch)?;
+    seed.verify_descriptor(writer, &mut scratch[0])?;
+    if readback_stamps(writer)? != stamps {
+        return Err(Plan4GenesisCause::IdentityMismatch);
+    }
+    Ok(())
+}
+
+fn borrowed_owned(plan: &BootstrapPlan) -> PureResult<BorrowedPlan4<'_>> {
+    if plan.kind != BootstrapPlanKind::RetentionCatalogBootstrap {
+        return Err(Plan4GenesisCause::UnsupportedPlan);
+    }
+    Ok(BorrowedPlan4 { plan })
+}
+
+pub(super) fn owned_header(plan: &BootstrapPlan, page_no: usize) -> PureResult<PageHeader> {
+    let borrowed = borrowed_owned(plan)?;
+    let namespace = borrowed.plan.profile.spec().namespace;
+    match page_no {
+        1 => retention_genesis::expected_header(namespace, RetentionGenesisPage::Root)
+            .map_err(Plan4GenesisCause::Retention),
+        2..=6 => retention_genesis::expected_header(
+            namespace,
+            RetentionGenesisPage::Jobs {
+                index: (page_no - 2) as u8,
+            },
+        )
+        .map_err(Plan4GenesisCause::Retention),
+        7 | 8 => Ok(catalog_header(namespace, page_no as u64)),
+        _ => Err(Plan4GenesisCause::InvalidInput),
+    }
+}
+
+pub(super) fn verify_owned_allocator(
+    plan: &BootstrapPlan,
+    bytes: &[u8; PAGE_BYTES],
+) -> PureResult<()> {
+    borrowed_owned(plan)?.verify_allocator(bytes)
+}
+
+pub(super) fn verify_owned_payload(
+    plan: &BootstrapPlan,
+    page_no: usize,
+    actual: &[u8; PAGE_BYTES],
+    expected: &mut [u8; PAGE_BYTES],
+) -> PureResult<()> {
+    borrowed_owned(plan)?.verify_payload(page_no, actual, expected)
+}
+
+pub(super) fn verify_owned_genesis<W: WriterNamespace>(
+    plan: &BootstrapPlan,
+    writer: &mut W,
+    scratch: &mut [[u8; PAGE_BYTES]; 3],
+    allocator: &mut [u8; PAGE_BYTES],
+) -> PureResult<()> {
+    readback_seed(writer, &borrowed_owned(plan)?, scratch)?;
+    // verify_selected's last output survives the descriptor read in scratch[0].
+    allocator.copy_from_slice(&scratch[2]);
+    Ok(())
+}
+
+pub(super) fn read_owned_payload<W: WriterNamespace>(
+    plan: &BootstrapPlan,
+    writer: &mut W,
+    request: crate::storage::dirty_frame::TargetRequest,
+    scratch: &mut [[u8; PAGE_BYTES]; 2],
+    output: &mut [u8; PAGE_BYTES],
+) -> PureResult<()> {
+    let seed = borrowed_owned(plan)?;
+    let index = usize::try_from(request.identity.page.page_no)
+        .map_err(|_| Plan4GenesisCause::InvalidInput)?;
+    let header = owned_header(plan, index)?;
+    if request.identity != header.identity
+        || request.kind != header.kind
+        || request.level != header.level
+    {
+        return Err(Plan4GenesisCause::IdentityMismatch);
+    }
+    let stamps = readback_stamps(writer)?;
+    seed.verify_descriptor(writer, &mut scratch[0])?;
+    {
+        let [root, work] = scratch;
+        let mut checked = CheckedPlan4Namespace(writer);
+        let mut reader = PageFileReader::open(
+            &mut checked,
+            Some(plan.profile.spec().namespace),
+            root,
+            work,
+        )
+        .map_err(Plan4GenesisCause::PageIo)?;
+        if reader.profile() != plan.profile || reader.selected() != plan.selected {
+            return Err(Plan4GenesisCause::IdentityMismatch);
+        }
+        reader
+            .read_page(request.identity, request.kind, request.level, output)
+            .map_err(Plan4GenesisCause::PageIo)?;
+    }
+    seed.verify_descriptor(writer, &mut scratch[0])?;
+    // Re-read the authoritative root after the home read. The caller performs
+    // two complete helper calls and compares their canonical home images.
+    {
+        let [root, work] = scratch;
+        let mut checked = CheckedPlan4Namespace(writer);
+        let reader = PageFileReader::open(
+            &mut checked,
+            Some(plan.profile.spec().namespace),
+            root,
+            work,
+        )
+        .map_err(Plan4GenesisCause::PageIo)?;
+        if reader.profile() != plan.profile || reader.selected() != plan.selected {
+            return Err(Plan4GenesisCause::IdentityMismatch);
+        }
+    }
+    if readback_stamps(writer)? != stamps {
+        return Err(Plan4GenesisCause::IdentityMismatch);
+    }
+    Ok(())
+}
+
+/// G5 borrowed-plan helpers add typed argument/return values to the shared
+/// canonical readback bound. Some headers overlap that bound conservatively.
+pub(super) fn owned_source_bytes<W: WriterNamespace>() -> usize {
+    source_census::<W>().readback_nested
+        + 2 * size_of::<BorrowedPlan4<'_>>()
+        + 2 * size_of::<PureResult<BorrowedPlan4<'_>>>()
+        + 2 * size_of::<crate::storage::dirty_frame::TargetRequest>()
+        + 2 * size_of::<PageHeader>()
+        + 2 * size_of::<PureResult<PageHeader>>()
+        + 16 * size_of::<&()>()
+        + 64
 }
 
 fn readback_stamps(writer: &impl WriterNamespace) -> PureResult<[FileMetadata; 6]> {
@@ -594,7 +743,10 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> Census {
         + 4 * size_of::<EffectResult<()>>()
         + 4 * size_of::<PureResult<()>>()
         + 4 * size_of::<Plan4GenesisCause>()
-        + 1024; // Borrowed arguments, iterator/scalar/pattern/closure values.
+        // Borrowed args/iterators/scalars include the shared readback forwarding:
+        // 2 BorrowedPlan4 values + 6 references = 64 bytes on this target. No
+        // Result<BorrowedPlan4> occurs on the unchanged old constructor path.
+        + 1024;
     let payload = retention_genesis::source_bytes()
         + 6 * size_of::<PageHeader>()
         + 4 * size_of::<PageIdentity>()

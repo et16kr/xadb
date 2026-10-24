@@ -4,13 +4,13 @@ use super::*;
 use crate::storage::wal_io::{StatusLoadPermit, WalFrameLocation};
 
 pub(in crate::storage) struct StatusLoadSnapshot<'c, 's> {
-    core: &'c PageConcurrency<'s>,
-    binding: &'s AtomicU8,
-    allocator: DirtyObservation,
-    requirement: Option<WalFrameLocation>,
-    payload: Option<FrameStamp>,
-    generation: u64,
-    index: usize,
+    pub(super) core: &'c PageConcurrency<'s>,
+    pub(super) binding: &'s AtomicU8,
+    pub(super) allocator: DirtyObservation,
+    pub(super) requirement: Option<WalFrameLocation>,
+    pub(super) payload: Option<FrameStamp>,
+    pub(super) generation: u64,
+    pub(super) index: usize,
 }
 impl StatusLoadSnapshot<'_, '_> {
     pub(in crate::storage) fn allocator(&self) -> FrameStamp {

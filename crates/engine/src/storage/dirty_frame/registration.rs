@@ -13,6 +13,7 @@ enum Mode {
     OperationalStatus,
     ResidentStatus,
     ResidentMixed,
+    Plan4Genesis,
 }
 
 struct Slot {
@@ -106,6 +107,47 @@ impl RegistrationDirectory {
     pub(super) fn operational_payloads(&self) -> bool {
         self.operational_status() || self.resident_mixed()
     }
+    pub(super) fn plan4_payloads(&self) -> bool {
+        self.mode == Mode::Plan4Genesis
+    }
+    /// This predicate is deliberately separate from Status/Mixed eligibility.
+    pub(super) fn accepts_plan4_payload(&self, request: TargetRequest) -> bool {
+        self.plan4_payloads()
+            && request.level == 0
+            && request.identity.page.incarnation.get() == 1
+            && request.identity.owner_generation.get() == 1
+            && match request.identity.page.page_no {
+                1 => request.kind == PageKind::RetentionRoot && request.identity.owner.get() == 4,
+                2..=6 => {
+                    request.kind == PageKind::RetentionJobs && request.identity.owner.get() == 4
+                }
+                7 => request.kind == PageKind::TreeAnchor && request.identity.owner.get() == 5,
+                8 => request.kind == PageKind::CatalogLeaf && request.identity.owner.get() == 5,
+                _ => false,
+            }
+    }
+    pub(super) fn open_plan4(&mut self, frames: &[DirtyFrame<'_>]) -> bool {
+        if self.mode != Mode::Fixed
+            || self.closed_index.is_some()
+            || !(4..=MAX_FRAMES).contains(&frames.len())
+            || !self.valid(frames)
+            || self.entries[1..]
+                .iter()
+                .any(|slot| slot.registration().is_some())
+        {
+            return false;
+        }
+        self.mode = Mode::Plan4Genesis;
+        self.valid(frames)
+    }
+    pub(super) fn next_plan4_generation(&self, index: usize) -> Option<u64> {
+        self.plan4_payloads().then_some(())?;
+        (index != 0).then_some(())?;
+        self.entries.get(index)?.generation.checked_add(1)
+    }
+    pub(super) fn replace_plan4(&mut self, index: usize, registration: Registration) {
+        self.entries[index].replace(registration);
+    }
     pub(super) fn accepts_payload(&self, request: TargetRequest) -> bool {
         request.level == 0
             && request.identity.owner_generation.get() == 1
@@ -194,7 +236,9 @@ impl RegistrationDirectory {
     pub(super) fn resolve(&self, frames: &[DirtyFrame<'_>], index: usize) -> Option<Registration> {
         let frame = frames.get(index)?;
         let original = self.entries.get(index)?.registration();
-        if self.closed_index == Some(index) || (self.resident_payloads() && index != 0) {
+        if self.closed_index == Some(index)
+            || ((self.resident_payloads() || self.plan4_payloads()) && index != 0)
+        {
             if frame.registration.is_some() {
                 return None;
             }
@@ -206,7 +250,8 @@ impl RegistrationDirectory {
                         Mode::Fixed
                         | Mode::OperationalStatus
                         | Mode::ResidentStatus
-                        | Mode::ResidentMixed => frame.registration == Some(*value),
+                        | Mode::ResidentMixed
+                        | Mode::Plan4Genesis => frame.registration == Some(*value),
                         Mode::AllocatorReloadable => self.resident & (1u64 << index) != 0,
                     }
             })
@@ -323,6 +368,9 @@ impl RegistrationDirectory {
     /// Fixed-adapter provenance, including its generation-one restriction.
     /// This is not a future movable-directory or page reuse invariant.
     pub(super) fn valid(&self, frames: &[DirtyFrame<'_>]) -> bool {
+        if self.plan4_payloads() {
+            return self.valid_plan4(frames);
+        }
         if self.resident_payloads() {
             let Some(selected) = self.closed_index else {
                 return false;
@@ -443,12 +491,62 @@ impl RegistrationDirectory {
             }
         })
     }
+
+    fn valid_plan4(&self, frames: &[DirtyFrame<'_>]) -> bool {
+        if !(4..=MAX_FRAMES).contains(&frames.len())
+            || self.closed_index.is_some()
+            || self.resident != 0
+            || self.eviction_epoch != 0
+        {
+            return false;
+        }
+        let Some(allocator) = self.entries[0].registration() else {
+            return false;
+        };
+        if allocator.generation != 1
+            || frames[0].registration != Some(allocator)
+            || allocator.request.kind != PageKind::Allocation
+            || allocator.request.level != 0
+            || allocator.request.identity.page.page_no != 0
+            || allocator.request.identity.page.incarnation.get() != 1
+            || allocator.request.identity.owner.get() != 1
+            || allocator.request.identity.owner_generation.get() != 1
+        {
+            return false;
+        }
+        self.entries.iter().enumerate().all(|(index, slot)| {
+            if index >= frames.len() {
+                return slot.generation == 0 && slot.registration().is_none();
+            }
+            if index == 0 {
+                return true;
+            }
+            if frames[index].registration.is_some() {
+                return false;
+            }
+            let Some(entry) = slot.registration() else {
+                return true;
+            };
+            entry.generation != 0
+                && self.accepts_plan4_payload(entry.request)
+                && entry.request.identity.database == allocator.request.identity.database
+                && entry.request.identity.page.file == allocator.request.identity.page.file
+                && !self.entries[..index]
+                    .iter()
+                    .filter_map(Slot::registration)
+                    .any(|prior| prior.request.same_address(&entry.request))
+        })
+    }
 }
 
 pub(super) fn fits() -> bool {
     use std::mem::size_of;
     size_of::<Slot>() <= size_of::<Option<Registration>>() + 8
         && size_of::<RegistrationDirectory>() <= MAX_FRAMES * size_of::<Slot>() + 48
+}
+
+pub(super) fn plan4_mode_bytes() -> usize {
+    std::mem::size_of::<Mode>()
 }
 
 #[cfg(test)]

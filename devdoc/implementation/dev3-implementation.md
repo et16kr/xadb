@@ -980,6 +980,19 @@ static1·semantic122 PASS, 원 r0 Clippy FAIL와 수집기 부분 판정/원자�
 최종 독립 D1을 제한 수용했으며 S5 추가9,534는 작성·NOT_RUN이다. 실제 Catalog create/CLR·queue·
 terminal·첫 행 ACK/recovery·전체 DEV3/S5는 미완료이고 AI 완료 소비자1/3을 유지한다.
 
+<a id="plan4-clean-owner"></a>
+## plan4 초기 page의 원 공유 버퍼 소비
+
+2026-10-24 [소유 계약](../contracts/dev3-plan4-clean-owner.md)의 원 Mutable CAS·DWB loan과
+한 SharedPool을 연결했다. 정확8개 payload의 canonical load, clean eviction, 실제 Catalog3-pin과
+정리 큐4/4/3-pin census를 제공한다. 64frame에서 불필요하게 기존 page를 퇴거하던 C02 실패를
+보존하고 빈 frame 우선 선택으로 수정했다. dirty/flush·복구 owner, CREATE/CLR와 첫 행은 후속이다.
+[필수78 및 추가128](../plans/dev3-test-plan.md#plan4-clean-owner-followup) 중 필수78은
+source별로 통과했다. static2/native1은 r2, memory75는 r2의4·r3의32·r4의39로 나누어
+원 증거를 보존한다. compiler10의 진단은 통과했으나 원 수집기의 receipt 한도 HOLD는 유지한다.
+checker13과 변경 H12의 추가 검증을 구별한다. S5 추가128은 미실행이며 최종 독립 D1은 제한 수용했다.
+AI 소비자1/3·DEV3/S5 미완료를 유지한다.
+
 <a id="plan4-genesis"></a>
 ### plan4 정리 큐·빈 Catalog의 실제 최초 설치와 선택
 

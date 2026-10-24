@@ -437,6 +437,17 @@ parser/predicate.rs, reference predicate literal/recipe, predicate_contracts/pre
 P4 연결·실제 engine/Q1 미완료를 구분한다.
 
 
+<a id="plan4-clean-owner-layout"></a>
+## plan4 초기 page의 원 공유 버퍼 소비 배치
+
+[소유 계약](../contracts/dev3-plan4-clean-owner.md)의 원 CAS·loan·SharedPool 결합은
+`wal_io/plan4_pages.rs`가 담당하고, load·실제 pin 소비·자원 census는 같은 모듈의
+`plan4_pages_load.rs`, `plan4_pages_read.rs`, `plan4_pages_resources.rs`에 둔다.
+`dirty_frame/plan4_residency.rs`는 기존 directory와 frame을 쓰며 별도 pool을 만들지 않는다.
+memory/native 시험과 exact-ID·compiler 수집기는 [관리 JSON](repository-build-plan.json)의
+`dev3_plan4_clean_owner`에 실제 경로만 등록한다. 기존 genesis raw는 그대로 재사용한다.
+dirty/flush·복구 owner와 Catalog CREATE/CLR의 구현·인수를 이 배치로 대체하지 않는다.
+
 <a id="plan4-genesis-layout"></a>
 ### DEV3 plan4 최초 설치 배치 — 2026-10-24
 

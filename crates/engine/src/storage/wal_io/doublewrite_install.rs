@@ -32,6 +32,7 @@ mod mutable_storage;
 pub(in crate::storage) use allocation_reservation::operation::SemanticError as Plan4TestSemanticError;
 #[cfg(test)]
 pub(in crate::storage) use mutable_storage::Cause as Plan4TestMutableCause;
+pub(in crate::storage) use mutable_storage::Plan4LoadPermit;
 pub(crate) use mutable_storage::{
     AllocationWriter, AllocatorFlushError, AllocatorFlusher, BoundAllocation, DirtyAllocationError,
     DirtyReader, FlushProgress, MutableStorageError, MutableStorageOwner,
@@ -62,6 +63,11 @@ pub(in crate::storage) use mutable_storage::{
 };
 pub(crate) use mutable_storage::{
     IntoOperationalError, OperationalAllocation, ReloadError, ReloadObservation,
+};
+#[allow(unused_imports)]
+pub(crate) use mutable_storage::{
+    Plan4CatalogLookup, Plan4GenesisCensus, Plan4LoadObservation, Plan4Page, Plan4PageCause,
+    Plan4PageError, Plan4PagePhase, Plan4Pages, Plan4ResidencyCursor, Plan4Resident, Plan4Target,
 };
 
 const WORKSPACE_BYTES: usize = 4 << 20;
