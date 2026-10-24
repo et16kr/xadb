@@ -26,6 +26,12 @@ pub enum Code {
     Range,
     /// A correctly typed NULL is not permitted by explicit scalar metadata.
     NotNull,
+    /// A predicate marker has neither a concrete hint nor an inferred type.
+    ParameterTypeUnknown,
+    /// Hint or SQL parameter count differs from the parsed marker count.
+    BindCount,
+    /// Native row width differs from the explicit compiled schema.
+    RowCount,
     /// The current call's cancellation was observed.
     Cancelled,
     /// The current call's monotonic deadline was reached.
@@ -45,6 +51,10 @@ pub enum Module {
     Parse,
     /// Scalar decoding, typed input validation, and retained value allocation.
     Value,
+    /// Whole predicate metadata/type analysis and immutable compiled ownership.
+    Compile,
+    /// Native row/SQL parameter validation and borrowed predicate evaluation.
+    Eval,
 }
 
 /// Small failure result that does not allocate or manufacture transaction effects.

@@ -1,6 +1,6 @@
 # DEV4 — DEV3와 독립적인 SQL 앞단 계약
 
-2026-10-24 · **D4-PREP-001/002·D4-FE-LEX-001/SPLIT-001/PARSE-001/SCALAR-001 ACCEPTED / 독립 앞단·scalar 제한 구현 / 모델·Q1 NOT_RUN**
+2026-10-24 · **D4-PREP-001/002·D4-FE-LEX-001/SPLIT-001/PARSE-001/SCALAR-001/PREDICATE-001/TYPED-001 ACCEPTED / 독립 앞단·scalar·typed predicate 제한 구현 / 모델·Q1 NOT_RUN**
 
 [SQL 의미 정본](dev4-sql-design.md) · [개발 계획](../plans/dev4-preparation-plan.md) · [Oracle·로컬 소스 조사와 검토](../evidence/dev4-preparation-research-20261024.md)
 
@@ -393,3 +393,192 @@ bare TRUE/NULL/이름/marker, `(a)=1`, `a=(1)`, 비교 chain은 Syntax다. 이�
 PostgreSQL/SQLite 실제 revision·선택 파일 hash/열람 범위를 보존한다. nary boolean·전체 의미 검산과 평가 분리는 참고하되 broader grammar·implicit coercion·NULL comparison rewrite는 도입하지 않는다. 별도 D2 reviewer가 계약/API/fixture/resource를 확인하기 전 제품 구현을 시작하지 않는다. 구현 뒤 D1에서 코드·원 source/결과와 잔여를 확인한다. 기존 P2/scalar runtime과 DEV3 제품을 다시 실행하지 않으며 새로운 함수/소비 경로만 선택한다. 문서 자동 검사는 push gate에서만 실행한다.
 
 독립 검토자 `/root/frontend_review`가 계약·API·정확 literal/recipe·semantic adapter와 자원9함수 입력을 확인했고 `/root`가 채택했다. 원 검토 사본·이전 지적·최종 해시는 `artifacts/dev4-predicate-20261024/{d2-acceptance,freeze}.json`과 `frozen-inputs/`에 보존한다. 채택 시 제품 predicate parser·컴파일·시험은 미실행이었다.
+
+
+<a id="typed-predicate"></a>
+## 15. D4-FE-TYPED-001 — 명시 타입 조건식 compile/evaluate
+
+2026-10-24 · **D2 ACCEPTED / 제품 구현·필수 선택 검증 / 최종 독립 D1 제한 수용**. 독립 P3 4.04.3 전체 typed compile/evaluate·3값 논리의 입력을 구체화한다. 담당·계약·통합은 `/root`, 제품·로컬 소스 조사는 `/root/frontend_research`, 독립 semantic 입력·판정은 `/root/frontend_oracle`, 별도 D2/D1 검토는 `/root/frontend_review`다. 기준 commit은 `186085e49cf11308fca47bb13775168bdcaa5f54`이며 별도 DEV3 dirty를 보존·제외한다. 실제 catalog·owned prepared binding·P4 문장·session·engine·Q1은 범위 밖이다.
+
+### 1. 공개 API와 원래 소유 경계
+
+```rust
+pub struct ColumnSpec<'a> {
+    pub name: &'a Name,
+    pub spec: ScalarSpec,
+}
+
+pub struct PredicateCompiler { /* private typed budget + ScalarReader */ }
+impl PredicateCompiler {
+    pub fn new(session: &Quota, database: &Quota) -> Self;
+    pub fn compile(
+        &mut self,
+        parsed: &ParsedStatement,
+        columns: &[ColumnSpec<'_>],
+        parameter_hints: Option<&[Option<ScalarType>]>,
+        control: &CallControl<'_>,
+    ) -> Result<CompiledPredicate, Diagnostic>;
+}
+
+pub struct CompiledPredicate { /* private owned data and leases */ }
+impl CompiledPredicate {
+    pub fn evaluate(
+        &self,
+        native_row: &[ScalarRef<'_>],
+        sql_parameters: &[ScalarRef<'_>],
+        control: &CallControl<'_>,
+    ) -> Result<TruthValue, Diagnostic>;
+    pub fn nodes(&self) -> &[CompiledNode];
+    pub fn columns(&self) -> &[CompiledColumn];
+    pub fn parameters(&self) -> &[ParameterMetadata];
+    pub fn span(&self) -> Span;
+}
+
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TruthValue { True, False, Unknown }
+impl TruthValue {
+    pub fn passes_where(self) -> bool;
+}
+```
+
+compile과 evaluate가 두 동작이다. CompiledPredicate는 Clone/가변 accessor/backing 반출을 제공하지 않는다. compiler, 원 ParsedStatement·source, columns의 Name과 hints를 폐기한 뒤에도 평가·진단·Drop이 가능하다. 원문 전체는 추가 복사하지 않는다. source-relative node/use span과 canonical schema name bytes를 소유한다. source byte가 없으므로 source accessor를 가장하거나 원문 재해석으로 진단 위치를 만들지 않는다.
+
+Name은 public 필드/생성자가 없는 기존 검산 타입이다. ColumnSpec은 이를 borrow하며 raw 정규 이름을 선언하는 우회 API를 만들지 않는다. Name 자체는 Clone이 아니므로 compiled metadata는 검산된 `as_bytes()`를 고정 `[u8;128]`로 bounded copy하고 길이·quoted flag만 보존한다. Name.span은 다른 SQL 원문에 속할 수 있어 metadata 오류나 새 source 위치로 사용하지 않는다.
+
+evaluate의 row/parameters는 호출 전체만 borrow하고 보관하지 않는다. 다음 호출은 그때의 새 입력을 다시 검산한다. SQL parameter empty Utf8를 논리적 typed NULL view로 보되 payload를 복사/변경하지 않는다. OwnedScalar::as_ref() 입력도 목적 검사를 다시 받는다. 원자적 owned binding/rebind/handle identity는 별도 session 책임이며 이 API의 성공으로 주장하지 않는다.
+
+### 2. typed layout와 읽기 관측
+
+최적화/상수 folding을 하지 않고 원 preorder node 수·links·span을 유지한다. ScalarSyntax는 변환된 literal/marker로, Name은 column ordinal로 바뀐다. 모든 표준 bool wrapper가 남으며 raw NULL은 독립 역할로 보존한다.
+
+```text
+ExpressionType = Truth | Scalar(ScalarType) | UntypedNull
+CompiledKindRef<'a> =
+  Predicate | Or | And | Not | Group |
+  Compare { op: ComparisonOp, scalar_type: Option<ScalarType> } |
+  IsNull { negated: bool } |
+  Column { ordinal: u8 } |
+  Literal(ScalarRef<'a>) | Null | Parameter { ordinal: u16 }
+```
+
+CompiledNode는 private owned kind, ExpressionType, Span, first_child/next_sibling을 가진다. kind()는 위 borrowed view를 반환하고 result_type()/span()/first_child()/next_sibling()은 읽기 전용이다. Literal의 private 저장은 OwnedScalar이며 public view만 빌린다. `Null` node는 항상 UntypedNull로 남고 Compare.scalar_type에 상대 concrete 타입을 기록한다. `NULL=NULL`은 Compare.scalar_type=None, 두 자식 모두 UntypedNull이다. public ScalarType에 Null variant를 추가하지 않는다. IsNull의 raw NULL 자식도 UntypedNull이고 결과는 Truth다.
+
+CompiledColumn은 고정 canonical name bytes/len/quoted, ScalarSpec, first_use:Option<Span>을 소유하고 name_bytes()/is_quoted()/spec()/first_use()를 읽기 제공한다. row index가 column ordinal이며 Name identity는 정규 bytes다. quoted flag가 같거나 다르다는 이유로 같은 bytes를 두 열로 허용하지 않는다. ParameterMetadata는 ordinal1..N, ScalarSpec, use Span을 소유하며 ordinal()/spec()/span()을 제공한다. parameter는 항상 nullable=true이고 가변 타입 maxbytes=65536이다. 상대 열의 nullable/선언 길이를 전파하지 않는다.
+
+제안 size 상한: PredicateCompiler≤256B, CompiledPredicate≤512B, CompiledNode≤256B, CompiledColumn≤256B, ParameterMetadata≤64B. 실제 Linux/Rust layout을 첫 compile에서 확인하고 cap 회계는 상한 추정치가 아니라 size_of/actual capacity로 계산한다. 실패를 피하려고 size·256KiB stack 시험을 사후 확대하지 않는다.
+
+### 3. compile 순서·정확 진단
+
+새 Module은 Compile/Eval, 새 Code는 ParameterTypeUnknown/BindCount/RowCount를 제안한다. 기존 ScalarReader의 Value 진단은 그대로 전달한다. code가 같아도 실제 거래 effect를 붙이지 않는다. 외부 metadata/count의 공통 위치는 **point0=[0,0)**이며 root.start가 0보다 커도 바꾸지 않는다.
+
+| 단계 | 결정 순서·오류 |
+| --- | --- |
+| C0 | 다음 호출 injection을 관측/할당 없이 consume/reset→Compile point0 entry check→root 검사. 실제 root가 Predicate가 아니면 Compile/Syntax, 그 root 전체 span. 내부적으로 빈 arena면 point0 Syntax. 원 ParsedStatement가 제공하는 private AST provenance를 사용하며 public forged node 입력은 받지 않음 |
+| C1 shape | columns.len>32이면 Compile/Limit point0. 다음 hint가 Some이고 len!=parsed.marker_count이면 Compile/BindCount point0. None은 N개의 None과 같고 N=0의 Some(empty)도 정상 |
+| C2 metadata | column index 순서로 각 ScalarSpec 선언 길이1..65536 확인(Range point0), 그 다음 자신보다 앞선 canonical bytes 중복 확인(Name point0). 미사용 열도 포함. nullable은 bool이라 malformed 별도 상태 없음. 같은 index의 길이 오류가 중복보다 먼저이며 앞 index의 오류가 뒤 index보다 먼저 |
+| C3 전체 이름 | 전체 preorder/source 순서로 모든 Name을 찾음. 없는 이름은 Compile/Name, 해당 Name 전체 span. 각 열의 첫 사용 span을 기록. 이 단계에서 literal decode·type conflict 판정·값 계산 없음 |
+| C4 전체 concrete 타입 | 모든 Compare를 preorder로 확인하고 marker inference. 첫 concrete conflict를 반환. Name/Literal끼리 mismatch는 Compile/Type Compare 전체 span. marker hint가 관여한 mismatch는 해당 marker token span; 양쪽 marker의 incompatible hints는 더 작은 ordinal의 span |
+| C5 unknown | C4 전체 성공 뒤 ordinal1..N 순서로 첫 미해결 marker를 Compile/ParameterTypeUnknown, marker 전체 span. 뒤 source의 concrete conflict는 앞 ordinal의 unknown보다 우선 |
+| C6 소유 | 검산된 columns→parameters→nodes backing 순으로 exact 할당. nodes를 원 preorder로 채우며 모든 literal을 source 순서로 ScalarReader::decode. 사용되지 않을 논리 분기도 decode함. 앞서 성공한 source/AST·compiled 출력의 예약은 그대로 유지 |
+| C7 게시 | Compile root.span.end point에서 최종 check. source/AST/schema/hint borrow와 호출 control을 보관하지 않고 immutable 결과 게시 |
+
+할당/제어 실패는 실제 발생 지점에서 반환한다. C6 이전에는 metadata/type scratch가 고정 공간이므로 backing allocation이 없다. 따라서 semantic Name/Type/Unknown가 compiled backing quota 부족보다 먼저다. 원 parser/source는 caller가 이미 소유·회계한 별도 입력이다. C6 typed backing allocation의 Limit는 Compile point0, raw literal payload의 quota/할당/숫자/hex/길이 오류는 기존 Value module/span 그대로다. 최종 check를 제외한 compile node 처리 checkpoint는 그 node.start point다. metadata 각 column·중복 candidate 검사는 Compile point0의 전후 제어로 감싼다. 뒤 checkpoint를 통과한 후 보관한 metadata Range/Name을 반환하므로 그 checkpoint에서 관측한 제어 오류가 먼저다. hints의 복사는 실제 M개 marker 항목마다 point0을 사용한다(M=0이면0개). 고정 [None;256] storage 자체 초기화를256개의 hint checkpoint로 세지 않는다. Unknown ordinal 순회는 각 marker.start point를 사용한다. AST Name lookup의 candidate 제어는 그 Name.start point를 사용하여 외부 metadata 순회와 구별한다. cancel은 같은 checkpoint에서 deadline보다 우선한다.
+
+범위 밖 NodeKind를 실제 Predicate subtree에서 발견하는 내부 불변식 오류는 Compile/Syntax 해당 node span으로 실패한다. 일반 호출은 기존 immutable parser 구조를 신뢰해 깊이·links를 임의로 재검산하는 별도 public raw AST validator를 추가하지 않는다.
+
+#### 타입 추론
+
+원래 raw 타입은 Integer→Int64, Text→Utf8(빈/초과길이 포함), Binary→Binary(잘못된 hex 포함), Bool→Bool, Name→declared 논리 타입, marker→hint/상대 inference, raw NULL→미정이다. Bool scalar와 Truth는 별도다. variable 길이가 달라도 같은 Utf8/Binary 비교 타입이다.
+
+현재 marker는 occurrence당 서로 다른 ordinal이고 다른 Compare와 공유되지 않는다. 각 Compare의 두 operand만 조사하면 된다. 한쪽 concrete이고 다른 쪽 unknown marker면 전파한다. `?=?`는 한쪽 hint만 있어도 다른 쪽으로 전파하며 둘 다 같은 hint는 정상, 다른 hint는 Type다. raw NULL로는 marker 타입을 추론하지 않는다. `? IS NULL`도 hint가 없으면 Unknown이다. `?=''`은 Utf8 inference이며 empty normalization이 이 정보를 지우지 않는다.
+
+NULL node를 typed literal로 변환하지 않아 원래 untyped 출처를 보존하되 comparison annotation에는 concrete 상대가 있으면 그 타입을 기록한다. `NULL=NULL` 및 `NULL IS NULL`에 임의 Int64 기본값을 넣지 않는다. 이 계산을 끝내기 전에 ScalarReader를 호출하지 않으므로 `9223372036854775808='x'`는 Type, 같은 타입 overflow가 거짓 분기 안에 있어도 이후 C6에서 Range다. whole Name pass 때문에 뒤의 없는 열이 앞 비교 Type보다 우선한다.
+
+### 4. compile 알고리즘·exact 예약
+
+별도 입력 비례 type-map backing 없이 고정 scratch `marker_types[256]`, `marker_spans[256]`, `first_column_use[32]`를 사용한다. 이 제한된 metadata scratch의 합은 8KiB 안에서 static assert로 고정한다. 전체 raw arena pass와 column≤32 선형 lookup은 반복문이다. Name 비교는 최대128byte 두 입력을 처리하고 매 candidate 전후 check하여 byte 처리량도256 안에 둔다. 임의 source 크기의 stack 배열/재귀 semantic walk는 없다.
+
+C3에서 Name을 검산한 뒤 C4/C6에서 같은 validated schema로 재조회한다. 이를 위해 AST8192개 전체의 ordinal/type 임시 배열을 native stack에 만들지 않는다. source/metadata는 call 동안 immutable이므로 재조회 의미는 같다. marker는 고정 ordinal array에서 공유하고 C4 뒤 Unknown를 순서대로 검산한다.
+
+N=원 node 수, C=column 수, M=marker 수다. typed backing은 세 개를 exact 크기로 한 번씩 reserve하여 grow/realloc을 없앤다. 각각 C=0/M=0이면 할당0, N은 유효 Predicate에서 양수다. 유효 고정/NULL/marker scalar는 payload 할당0이며 nonempty decoded Text/Binary만 ScalarReader가 정확 길이로 한 번 할당한다.
+
+```text
+retained_new = cap_columns * size_of::<CompiledColumn>()
+             + cap_parameters * size_of::<ParameterMetadata>()
+             + cap_nodes * size_of::<CompiledNode>()
+             + sum(actual literal payload capacities)
+peak_shared = already_retained_AST/source/other_compiled
+            + all live new typed backings and decoded payloads
+```
+
+각 요청의 byte 산식/usize→u64는 checked다. session base→DB base→try_reserve_exact→관측 excess session→DB 보정→게시 순서, data를 leases보다 먼저 drop한다. typed arenas는 정확 N을 이미 아므로 예전 parser arena를 성장·복사하는 경로를 추가하지 않는다. 이전 compiled output과 새 output의 공존은 모두 charge한다. 새 compile 실패 시 이전 결과를 바꾸지 않고 이번 partial Vec·OwnedScalar만 flat Drop한다. 이 leaf는 compiled backing charge 외 AST/source charge를 소유했다고 주장하지 않는다.
+
+ParseBudget/ChargedVec는 현재 source/AstNode 전용의 Module::Parse와 test-support 상태를 소유한다. 이를 직접 새 compiled owner에 붙이면 잘못된 module과 서로 다른 호출 ordinal이 된다. 이번에는 SQL-local typed budget에 필요한 reserve/actual capacity/leases를 작게 구현하는 대안을 제안한다. 기존 parser/scalar budget을 범용화하거나 foundation API를 바꾸지 않는다. 동일 예약 의미의 별도 소비자인 이유와 추후 공통화 검토 조건을 D2에 기록한다. grow가 없는 exact typed arena는 parser보다 단순하다.
+
+### 5. fault injection과 ScalarReader 재사용
+
+PredicateCompiler에 test-support `fail_allocation_at(ordinal)`, `set_allocation_padding(elements)`, `allocation_count()`를 제공한다. compile 호출마다 시작 시 다음 ordinal을 consume/reset하고 실패·미도달 여부와 무관하게 다음 호출로 이월하지 않는다. evaluate는 무할당이며 compiler를 받지 않으므로 다음 compile injection을 소비하지 않는다. padding은 명시0 전까지 유지하며 typed Vec에는 추가 element 수, scalar payload에는 추가 byte 수로 동일 usize를 적용한다. zero requested에는 padding/할당을 적용하지 않는다. allocation_count는 양 quota base 예약이 성공한 backing site부터 주입 실패를 포함해 센다.
+
+ScalarReader::decode는 실제 AST/source를 받는 기존 구현을 그대로 호출한다. compiler 전체의 fault ordinal과 decode마다 reset되는 reader ordinal을 연결하려고, test-support에서 literal 호출 직전 `remaining=target-total`(아직 도달 전일 때)로 reader.fail_allocation_at을 설정하고 호출 결과를 전파하기 전에 reader.allocation_count를 total에 더한다. target이 이미 지나갔거나 없으면0을 설정한다. ScalarReader는 literal당 최대1 backing site이며 잘못된 literal/고정값/empty/NULL/marker는0이다. early return 전에도 실제 count를 반영해야 한다. normal build에는 이 test bookkeeping과 injection 분기가 없다.
+
+CompiledPredicate의 test-support `capacity_bytes()`는 위 세 backing+literal 합, 필요하면 `node_capacity_bytes()/column_capacity_bytes()/parameter_capacity_bytes()/literal_capacity_bytes()`로 분해 관측한다. 고정 schema/type/marker array는 input 크기로 grow하는 heap이 아니며 scratch 상한을 따로 관측한다. opaque lease를 외부로 노출하지 않는다.
+
+### 6. evaluate 입력 검산·진단 순서
+
+| 단계 | 순서와 결과 |
+| --- | --- |
+| E0 | Eval point0 entry check. row.len!=C이면 Eval/RowCount point0, 다음 parameters.len!=M이면 Eval/BindCount point0 |
+| E1 모든 원래 tag | row index순 전체 태그, 다음 parameter ordinal순 전체 태그를 metadata와 비교. typed NULL도 원래 ScalarType을 먼저 확인. 첫 mismatch는 Eval/Type |
+| E2 모든 NULL/길이 | E1 전체가 성공한 뒤 row index순, 다음 parameter ordinal순. native empty Utf8는 값, SQL parameter empty Utf8만 같은 타입 Null(Utf8) view. 같은 타입 NULL+nullable=false는 NotNull, nonNULL 가변 길이>global65536 또는 해당 spec.max는 Range |
+| E3 계산 | 모든 입력 검산 뒤 bounded flat traversal로 전체 3VL 계산. 행/parameter payload를 소유·복사·수정하지 않음 |
+| E4 | Eval root.span.end point 최종 check→Truth 반환. passes_where는 True에만 true |
+
+Eval point0은 E0 진입에 정확히 한 번 사용한다. 고정 scratch 준비 전후의 추가 check가 필요하면 root.start point를 사용하고, 아래 local byte 비교 entry/final과 섞지 않는다. E1/E2는 각 항목 시작에 Eval point(first-use.start/미사용0/marker.start)를 검사한다. 제어 오류는 그 point로 반환하고 Type/NotNull/Range는 아래의 전체 use span으로 반환한다. 미참조 row 열과 사용되지 않을 분기의 parameter도 E1/E2에 포함한다. 뒤 parameter의 Type가 앞 row의 NotNull/Range보다 먼저다. row field 오류 span은 그 열의 첫 Name 사용 span, 미참조 열은 point0이다. parameter 오류는 원 marker token span이다. 외부 Name.span이나 column ordinal을 SQL byte offset처럼 사용하지 않는다.
+
+ScalarRef::Utf8는 안전한 &str라 invalid UTF-8가 표현되지 않는다. metadata/type/length 검산을 위해 전체 bytes를 다시 읽을 필요는 없다. O(1) len 검사와 bounded 고정 태그 순회만 수행한다. raw external bytes→ScalarRef를 만드는 protocol decoder는 별도 책임이다. 이 API에 unsafe UTF8 위조 시험을 추가하지 않는다.
+
+### 7. 3VL·반복 traversal·borrowed 비교
+
+초기 구현은 eager evaluation을 선택한다. 정적/동적 전체 검산 후에도 전체 arena를 역 preorder로 계산한다. 이 순서에서 원 source의 뒤쪽 비교가 먼저 계산될 수 있다. 모든 입력 오류 우선순위는 이미 끝난 E0/E1/E2가 결정하며 평가 순회 중에는 취소/deadline 위치가 해당 실제 node/byte 진행에 따라 정해진다. 단락 최적화는 의미에 필수가 아니며 이번에는 넣지 않는다. F AND/U OR 등에 대한 결과는 SQL 3VL 그대로다. 나중에 단락을 넣으려면 전체 검산 불변과 취소 관측 차이를 별도 검토한다.
+
+고정 `TruthValue[8192]`를 Unknown으로 초기화하고 node index N−1부터0까지 반복한다. TruthValue는 repr(u8)의 세 variant라 scratch는 정확8192bytes이며 static assert로 고정한다. 이 입력 크기와 무관한8KiB 초기화는 bounded setup으로 분리해 앞뒤 entry/control을 확인한다. payload byte quantum256은 입력값 검사/비교의 실제 처리 loop에 적용하며 고정 scratch 초기화를 사용자 payload 처리로 계수하지 않는다.
+
+parent-before-child preorder이므로 역순 방문 시 각 truth child 결과가 이미 존재한다. Scalar/Column/Parameter/Null leaf는 결과 배열을 사용하지 않고 skip하며 checkpoint만 유지한다. Compare/IsNull은 직접 operand를 조회해 현재 index에 Truth를 쓴다. Not/Group/Predicate는 자식 Truth를 읽고, Or/And는 first_child/next_sibling을 반복해 accumulator를 계산한다. 모든 node와 sibling edge가 각각 bounded 횟수만 처리되므로 O(N+실제 비교 byte 수)이고, 64중첩과 flat8192 모두 동일한8KiB scratch를 쓴다. recursive call/recursive owned Drop은 없다.
+
+196-frame 명시 DFS 대안은 깊이 산식/진입·복귀 상태를 추가하므로 기각한다. 8192배열을 함수 반환/대입으로 반복 복사하지 않고 evaluator 내부 한 지역에 둔다. fixed-size scratch 및 debug 임시 공간을 포함해 compiled/eval/Drop을256KiB thread stack에서 검증한다. heap0은 제품 경로 정적 inventory, 이미 보유한 compiled 외 예산 여유0에서 평가 성공/usage 불변, 반복 평가 allocation 관측을 조합한다. 새 unsafe global allocator를 시험 도구로 추가하지 않는다.
+
+Truth 연산은 독립 oracle의21cell literal table과 대조한다. product는 명시 match로 NOT, AND, OR를 계산하며 SQL Bool scalar를 truth tag로 취급하지 않는다. AND는 F가 있으면F, 모두T면T, 나머지U. OR는T가 있으면T, 모두F면F, 나머지U. NOT U는U. NULL comparison은U, IS NULL/IS NOT NULL은T/F다.
+
+비교값은 private operand view `UntypedNull | Typed(ScalarRef)`로 읽는다. literal은 OwnedScalar.as_ref(), column은 원 native row, parameter는 검산 후 SQL empty normalization view다. NULL이 하나라도 있으면 U지만 runtime tag 및 static original type 검산은 이미 전부 완료됐다. nonNULL Int64는 signed 비교, Bool은 false<true, Utf8/Binary는 unsigned byte 사전식 비교다. 끝 공백·NUL·Unicode bytes·zero-length Binary를 그대로 보존하며 padding/trim/casefold/locale/문자별 정렬을 하지 않는다.
+
+긴 byte 비교는 전체 slice.cmp/memcmp에 맡기지 않는다. 한 chunk에서 최대128byte pair(좌우 합256payload bytes)를 읽고 최초 다른 byte에서 relation을 결정한다. equal prefix 종료 후 길이만 비교한다. entry0, 각 처리 chunk 종료, 반환 직전의 local paired-byte progress p에서 CallControl을 검사한다. p는 각 operand에서 실제 비교한 prefix 길이이므로 연속 증가 폭≤128이며 source offset을 뜻하지 않는다. 짧은 mismatch도 반환 직전 check를 거친다. p=0인 empty 비교도 entry/final check한다.
+
+긴 비교 observer는 Module::Eval, local `[p,p)`를 받지만 Cancelled/Timeout 반환은 Eval과 **Compare 전체 span**으로 매핑한다. 이를 `source.start+p`로 변환하지 않는다. 일반 node/list 순회 observer·제어 진단은 실제 방문하는 node.start point, final은 root.end point다. source 좌표와 local 진행의 구분은 이 contract에서 명시하고, resource fixture는 source 좌표를 비교 local 범위 밖으로 옮긴 leading trivia와 row/parameter long-prefix 비교로 interior byte checkpoint를 독립 관측하고, 별도 짧은 fragment로 eager/반환 경계를 확인한다. source-order node 관측과 local reset은 하나의 단조 cursor가 아니다.
+
+### 8. foundation Value 대안 비교
+
+1. `ScalarRef`를 foundation Value로 복사해 compare: String/Vec allocation이 생기고 typed NULL을 잃는다. Value::compare는 NULL 전에 크기를 검사하지만 타입 mismatch는 NULL 뒤이며 긴 cmp 내부에 CallControl이 없다. eval heap0/원래 NULL type/256byte 협력 제어와 맞지 않아 기각한다.
+2. foundation에 borrowed typed ValueRef/controlled compare 추가: 향후 복수 native 소비자에서 의미가 합의되면 검토할 수 있으나 현재 lower API·기존 검사 범위까지 바꾸는 확대다. 이 leaf에서 자동 추정하여 수정하지 않는다.
+3. SQL-local borrowed comparator: 기존 foundation의 same nonNULL type/byte 사전식 의미를 좁게 재현하면서 SQL typedNULL·native/SQL origin·bounded controls를 소유한다. 채택 제안이다. `std::cmp`의 고정 숫자 비교만 쓰고 payload 전체 cmp는 쓰지 않는다. 이 작은 중복은 quota 없는 borrow와 호출 제어라는 실제 다른 계약 때문에 필요하며 product/oracle comparator 공유는 금지한다.
+
+### 9. P4 재사용과 종료 조건
+
+공개 compile은 현재 실제 Predicate root만 받는다. 내부는 selection(root index/subtree range), 전체 marker table, 명시 schema, typed builder를 받는 pass로 분리할 수 있다. 미래 P4 WHERE는 같은 원 ParsedStatement/typed statement builder와 global marker ordinal을 사용하며 predicate 부분을 추가한다. synthetic Predicate root, SQL prefix, source copy나 local marker reset을 요구하지 않는다. statement 전체의 name/type 검산을 WHERE 하위 decode보다 먼저 완료할 상위 phase 순서도 유지한다. 이번에 미구현 WHERE를 public 성공 입력으로 열지 않는다.
+
+종료 조건은 모든 3VL/6비교×4타입/NULL/원래 타입·empty 원천·hint inference·전역 오류 순서·전체 runtime 검산·owned compile 수명·borrowed eval 수명·quota/actual capacity/모든 backing 실패·취소/deadline·heap0/256KiB stack·8192node/256marker/32column 경계를 포함한 full typed semantics다. compiler만 또는 fixed scalar 비교만 끝낸 별도 완료로 쪼개지 않는다.
+
+독립 oracle의 literal/관계표/whole typed observation을 product 함수로 생성하지 않는다. compile calls/eval calls/operations와64×128 operation 분모를 구분하고 확대256×1024/30분 profile은 선택 여부를 별도 기록한다. Name/Type pass 생략, decode-before-type, unknown/hint 무시, 런타임tag-afterNULL, empty 원천 혼동, 3VL/WHERE, signedbyte/trailing-space/NULL-totalorder, compare checkpoint 제거, actualcapacity/partial cleanup 변조를 신규 detector에 연결한다. 기존 parser/scalar/foundation runtime은 변경 없이 반복하지 않는다. 새 compiler가 해당 owner를 소비하는 경로의 선택 검증만 한다.
+
+읽은 PostgreSQL/SQLite 실제 revision·hash·line 범위 및 채택/거절은 `artifacts/dev4-typed-predicate-20261024/research.json`에 기록한다. 이 설계와 oracle API/fixture/resource 입력이 독립 D2로 동결되기 전 제품 구현·컴파일·runtime을 시작하지 않는다.
+
+
+### 결정·검증 입력 기록
+
+사용자의 DEV3 병행 선행 개발·병렬 개발·단계별 commit 위임과 DP01에 따른 D2다. 실제 foundation Value 수정/복사 대안과 SQL-local borrowed 비교, 재귀 frame 대안과 고정8192 truth 배열, 동적 타입 임시표와 고정 marker scratch를 비교했다. 타입·소유·제어가 다른 경계를 앞단에 두고 실제 소비에 필요한 최소 API를 선택한다. 이전 scalar/predicate 결정은 원 identity·실행 범위로 보존하며 이 절이 그 의미를 소급 변경하지 않는다.
+
+독립 semantic 입력은 전체 typed 배열·literal·column/parameter metadata와 오류/완결을 관측한다. 고정 case와 generated64×128 operations, known-bad 및 실제 product mutant를 구별한다. 자원 입력은 `typed_predicate_resources`의 수명·회계·실패·취소·stack·공유 DB 선택 함수를 동결한다. 정확 case inventory·입력/hash·API별 호출 수는 D2 채택 기록에 연결하며 미실행을 PASS로 바꾸지 않는다. retained source별 실패·수정·실행과 제품 변조의 실제 단언 거절을 보존한다.
+
+별도 검토자 `/root/frontend_review`가 API·전체 literal/관측·자원12함수·18제품 변조 범주와 보존 하네스를 확인했고 `/root`가 D2를 채택했다. 원 검토 사본·정확 hash는 `artifacts/dev4-typed-predicate-20261024/{freeze,d2-acceptance}.json`과 `frozen-inputs/`에 보존한다. 채택 시 제품 작성·컴파일·시험은 미실행이었다. 새로운 native 소비자의 borrowed value 공유, 단락/constant-folding, 확대문법의 marker공유, 실제 schema/binding/수명 통합, 한도/오류순서 변경이 재검토 조건이다.
+
+실제 typed 구현·원 compile/fixture FAIL·13건 교정과 완료 prefix를 반복하지 않은 검증은 [source별 증거](../evidence/dev4-typed-predicate-20261024.md)에 기록한다. D2 동결 당시 미실행 상태와 원 입력 identity는 소급 변경하지 않는다. 실제 engine 수신·전체 DEV4/Q1은 미완료다.

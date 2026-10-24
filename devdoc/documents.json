@@ -2012,6 +2012,16 @@
       "path": "evidence/dev3-plan4-genesis-20261024.json",
       "role": "evidence",
       "title": "DEV3 plan4 최초 설치 source별 실행 색인"
+    },
+    "dev4-typed-predicate-20261024.md": {
+      "path": "evidence/dev4-typed-predicate-20261024.md",
+      "role": "evidence",
+      "title": "DEV4 명시 타입 조건식 compile/evaluate 선택 검증"
+    },
+    "dev4-typed-predicate-20261024.json": {
+      "path": "evidence/dev4-typed-predicate-20261024.json",
+      "role": "evidence",
+      "title": "DEV4 typed predicate source별 실행 색인"
     }
   }
 }

@@ -33,8 +33,9 @@ impl<'a> CallControl<'a> {
 
     /// Attach a borrowed test observer invoked before each control check.
     /// It receives actual processing progress and may drive cancellation or a
-    /// manual clock. Scalar copy calls report local input byte positions here,
-    /// while their returned diagnostics retain the caller's original span.
+    /// manual clock. Scalar copy and predicate byte comparisons report local
+    /// input progress here, while their returned diagnostics retain the
+    /// caller's original span or the original comparison span.
     /// The observer must return promptly; it is not a product verdict.
     #[cfg(feature = "test-support")]
     pub fn with_observer(mut self, observer: &'a dyn Fn(Module, Span)) -> Self {

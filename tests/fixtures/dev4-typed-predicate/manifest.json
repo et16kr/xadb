@@ -1,0 +1,406 @@
+{
+  "schema": "xadb.dev4.typed-predicate.manifest.v1",
+  "status": "D2_REVIEWED_FIXTURE_CORRECTION_NOT_RUN",
+  "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+  "scope": "new independent typed compile/evaluate consumer; no parser/scalar rerun, actual engine/catalog mock, or owned binding claim",
+  "counts": {
+    "coverage_cells": 959,
+    "canonical_cases": 946,
+    "shared_coverage_references": 13,
+    "compile_calls": 946,
+    "compile_successes": 688,
+    "compile_errors": 258,
+    "eval_calls": 688,
+    "eval_successes": 596,
+    "eval_errors": 92
+  },
+  "required_semantic_functions": [
+    {
+      "function": "typed_truth_and_type_matrix",
+      "families": [
+        "is_null",
+        "raw_null_context",
+        "runtime_tag",
+        "same_type",
+        "static_cross_type",
+        "truth_and",
+        "truth_not",
+        "truth_or",
+        "where"
+      ],
+      "canonical_cases": 359,
+      "compile_calls": 359,
+      "eval_calls": 287,
+      "full_arrays": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_bytes_and_input_origins",
+      "families": [
+        "byte_order",
+        "empty_origin",
+        "empty_static_type",
+        "origin_is_null",
+        "trailing_origin"
+      ],
+      "canonical_cases": 282,
+      "compile_calls": 282,
+      "eval_calls": 246,
+      "full_arrays": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_parameter_inference_and_bounds",
+      "families": [
+        "hint_conflict",
+        "hint_count",
+        "hint_resolves_null",
+        "inference",
+        "max_parameter_hint_count",
+        "max_parameter_value_count",
+        "occurrence_independence",
+        "pair_hint",
+        "pair_hint_conflict",
+        "parameter_count",
+        "parameter_length",
+        "parameter_length_independent",
+        "parameter_nullable",
+        "unknown_marker"
+      ],
+      "canonical_cases": 136,
+      "compile_calls": 136,
+      "eval_calls": 86,
+      "full_arrays": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_schema_and_value_boundaries",
+      "families": [
+        "compiled_constant_boundary",
+        "max_schema_reference",
+        "metadata_length",
+        "row_count",
+        "row_length",
+        "row_not_null",
+        "schema_count"
+      ],
+      "canonical_cases": 51,
+      "compile_calls": 51,
+      "eval_calls": 38,
+      "full_arrays": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_whole_validation_and_error_priority",
+      "families": [
+        "decode_all",
+        "decode_order",
+        "input_priority",
+        "leading_trivia",
+        "name_identity",
+        "phase_precedence",
+        "priority_positions",
+        "runtime_priority",
+        "static_before_decode",
+        "static_priority",
+        "whole_validation_guards"
+      ],
+      "canonical_cases": 118,
+      "compile_calls": 118,
+      "eval_calls": 31,
+      "full_arrays": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "generated_typed_predicate_operations",
+      "seeds": {
+        "first": 0,
+        "last_inclusive": 63
+      },
+      "operations_per_seed": 128,
+      "operations": 8192,
+      "compile_calls": 8192,
+      "eval_calls": 8192,
+      "full_arrays": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "known_bad_typed_predicate_observations_are_rejected",
+      "mutations": 44,
+      "unchanged_controls": 8,
+      "product_calls": 0,
+      "status": "NOT_RUN"
+    }
+  ],
+  "expanded": [
+    {
+      "function": "extended_generated_typed_predicate_operations",
+      "ignored": true,
+      "seeds": {
+        "first": 0,
+        "last_inclusive": 255
+      },
+      "operations_per_seed": 1024,
+      "operations": 262144,
+      "compile_calls": 262144,
+      "eval_calls": 262144,
+      "includes_required_seeds_operations": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "extended_typed_predicate_generated_30_minutes",
+      "ignored": true,
+      "first_seed": 256,
+      "operations_per_seed": 128,
+      "minimum_seconds": 1800,
+      "grammar": "valid typed predicate grammar only",
+      "arbitrary_malformed_bytes": false,
+      "status": "NOT_RUN"
+    }
+  ],
+  "generated_recipe": {
+    "source": "crates/testing/reference/src/frontend/typed_predicate/recipes.rs",
+    "operation": "one new canonical source/schema/row/params with compile then evaluate",
+    "k": "seed % 1000000",
+    "type_index": "(k + operation / 9) % 4",
+    "relation_index": "(k * 17 + operation) % 6",
+    "origin_pair_index": "(k * 5 + operation / 6) % 9",
+    "comparison_index": "(k * 3 + operation / 54) % 6",
+    "tree_template_index": "(k + operation) % 8",
+    "relation_order": [
+      "LT",
+      "EQ",
+      "GT",
+      "left_NULL",
+      "right_NULL",
+      "both_NULL"
+    ],
+    "origin_order": [
+      "L",
+      "R",
+      "P"
+    ],
+    "tree_templates": [
+      "comparison",
+      "NOT comparison",
+      "(comparison)",
+      "comparison AND TRUE",
+      "comparison OR FALSE",
+      "NOT (comparison OR UNKNOWN)",
+      "(comparison AND FALSE) OR UNKNOWN",
+      "NOT NOT comparison"
+    ],
+    "truth": "literal 3VL and relation tables, independent of production",
+    "expected_nodes": "constructed alongside input spelling; never parsed from product output; compare all arrays",
+    "boundary_ownership": "fixed semantic cases cover 32columns/256markers/65536bytes; root resource functions cover new typed consumption at8192nodes/depth64/256KiB stack"
+  },
+  "known_bad": {
+    "source": "crates/testing/reference/src/frontend/typed_predicate.rs",
+    "mutations": 44,
+    "unchanged_control_ids": [
+      "truth_not/U",
+      "truth_not/F",
+      "same_type/Int64/LT/0",
+      "runtime_tag/parameter/Utf8/Int64/nonnull",
+      "empty_origin/LL/0",
+      "raw_null_context/Binary/left/0",
+      "leading_trivia/07-phase_precedence-type-before-unknown",
+      "leading_trivia/03-input_priority-row-tag-before-param-tag"
+    ],
+    "ids": [
+      "truth-unknown-as-false",
+      "truth-unknown-as-true",
+      "where-accept-unknown",
+      "where-drop-true",
+      "incomplete",
+      "missing-plan",
+      "partial-nodes",
+      "extra-node",
+      "root-span",
+      "node-span",
+      "first-child",
+      "next-sibling",
+      "truth-as-scalar-bool",
+      "column-name",
+      "column-quoted",
+      "column-nullable",
+      "column-first-use",
+      "column-ordinal",
+      "missing-column",
+      "parameter-ordinal",
+      "parameter-type",
+      "parameter-nullable",
+      "parameter-length",
+      "parameter-span",
+      "missing-parameter",
+      "typed-null-type",
+      "sql-empty-nonnull",
+      "literal-byte",
+      "compile-error-code",
+      "compile-error-module",
+      "compile-error-span",
+      "evaluate-after-compile-error",
+      "eval-error-code",
+      "eval-error-module",
+      "eval-error-span",
+      "truth-on-eval-error",
+      "comparison-operator",
+      "raw-null-invented-comparison-type",
+      "raw-null-invented-node-type",
+      "raw-null-invented-literal",
+      "parameter-node-ordinal",
+      "column-declared-length",
+      "missing-evaluation",
+      "missing-truth"
+    ],
+    "require_noop_rejection": true,
+    "require_exact_controls": true,
+    "product_mutations_are_separate": true
+  },
+  "root_resources": {
+    "owner": "root",
+    "adapter": "crates/sql/tests/typed_predicate_resources.rs",
+    "control": "tests/fixtures/dev4-typed-predicate/control.json",
+    "status": "D2_REVIEW_INPUT_NOT_EXECUTED",
+    "sha256": "1c3b7ac1ebb5b9b9b7f9f1cadcf38169b4925758597ad460dfc146cbca27a119",
+    "control_sha256": "b50e67f672d8b8d4d1c243811c48a0b19bf0a8e6567d3db735e44532e2b104b8",
+    "required_functions": 12
+  },
+  "authoring": {
+    "source": "artifacts/dev4-typed-predicate-20261024/author_fixtures.py",
+    "reads": "explicit independently authored semantic inputs",
+    "uses_production_code_or_results": false,
+    "computes_truth_by_evaluating_sql": false,
+    "outputs": "full fixed arrays and exact error literals, reviewed and frozen before product",
+    "runtime_uses_authoring_script": false
+  },
+  "files": [
+    {
+      "path": "tests/fixtures/dev4-typed-predicate/semantic.json",
+      "sha256": "64266354a6bfc33ea62861d65dfac8b1ed8927f78cc66fad87c1506fdc64f1f4"
+    },
+    {
+      "path": "crates/testing/reference/src/frontend/typed_predicate.rs",
+      "sha256": "5f9a730b720added608a37cddc99fc62c4ce9a1e0247b09078877276ccd3f479"
+    },
+    {
+      "path": "crates/testing/reference/src/frontend/typed_predicate/literals.rs",
+      "sha256": "b794caad99ce7c0d06cdf4e8267451e691f72d2cb0d35edaa2cd756df3930422"
+    },
+    {
+      "path": "crates/testing/reference/src/frontend/typed_predicate/recipes.rs",
+      "sha256": "899aeaf782f2fd86ed5666a8c5b59a9dbafb3d6fcacd7b4510ef7a098e3cb8c1"
+    },
+    {
+      "path": "crates/sql/tests/typed_predicate_contracts.rs",
+      "sha256": "41b3f51c6674fe265429f9c95c0b159cbeb692891d1ac61474bd4ead6b51c30a"
+    },
+    {
+      "path": "artifacts/dev4-typed-predicate-20261024/author_fixtures.py",
+      "sha256": "201b26348e0170c49099572252d5339ea4790152b9ddc6557c5a1c6f4db38841"
+    },
+    {
+      "path": "artifacts/dev4-typed-predicate-20261024/semantic-inputs-draft.json",
+      "sha256": "4deb1f420dff3be21b90d1dbebf1738cbf4a71a997be1f60420ddc9e99aa89a3"
+    },
+    {
+      "path": "crates/sql/tests/typed_predicate_resources.rs",
+      "sha256": "1c3b7ac1ebb5b9b9b7f9f1cadcf38169b4925758597ad460dfc146cbca27a119"
+    },
+    {
+      "path": "tests/fixtures/dev4-typed-predicate/control.json",
+      "sha256": "b50e67f672d8b8d4d1c243811c48a0b19bf0a8e6567d3db735e44532e2b104b8"
+    }
+  ],
+  "fixture_corrections": [
+    {
+      "id": "typed-fixture-correction-01",
+      "report": "artifacts/dev4-typed-predicate-20261024/fixture-correction.json",
+      "sha256": "0fd1965c6cd8d95ffe68d38fef06081e579d9345d7f3407ab3a155081f23e63d",
+      "changed_cases": 13,
+      "changed_inputs": 1,
+      "changed_error_spans": 12,
+      "counts_and_truth_unchanged": true,
+      "status": "NOT_RUN",
+      "continuations": [
+        {
+          "function": "typed_parameter_inference_and_bounds",
+          "selector": {
+            "XADB_TYPED_FROM_CASE": "pair_hint_conflict/Int64/Bool"
+          },
+          "completed_prefix_cases_not_selected": 91,
+          "planned_compile_calls": 45,
+          "planned_eval_calls": 27,
+          "status": "NOT_RUN"
+        },
+        {
+          "function": "typed_schema_and_value_boundaries",
+          "selector": {
+            "XADB_TYPED_FROM_CASE": "max_schema_reference/last-column"
+          },
+          "completed_prefix_cases_not_selected": 49,
+          "planned_compile_calls": 2,
+          "planned_eval_calls": 2,
+          "status": "NOT_RUN"
+        }
+      ]
+    }
+  ],
+  "source_history": [
+    {
+      "stage": "original_D2_freeze",
+      "receipt": "artifacts/dev4-typed-predicate-20261024/freeze.json",
+      "receipt_sha256": "d1899cd1993c186a6c2d8cd573d1c0d89ccfc68e63eef8fb43410f383a146c59",
+      "frozen_input_directory": "artifacts/dev4-typed-predicate-20261024/frozen-inputs",
+      "manifest_sha256": "f1d00c59a530661924f4e7bcf4943590b7dbe959009a2647bc13d129ef429c21",
+      "files_sha256": {
+        "tests/fixtures/dev4-typed-predicate/semantic.json": "dd99248990367838716d93708a05d9aca9084d5f49f218fae9a0b2ca66fbd08c",
+        "crates/testing/reference/src/frontend/typed_predicate.rs": "683757c1733a1ca5bbc6258a2dd7ce0e5e33db3b6766e00347d964b3da2f2756",
+        "crates/testing/reference/src/frontend/typed_predicate/literals.rs": "46739f1452136086291bc75747f8593e07feff12f656e98e406f0577272ecc2a",
+        "crates/testing/reference/src/frontend/typed_predicate/recipes.rs": "899aeaf782f2fd86ed5666a8c5b59a9dbafb3d6fcacd7b4510ef7a098e3cb8c1",
+        "crates/sql/tests/typed_predicate_contracts.rs": "52e63166d1cac67b24de75224ddd8256ead35ff2ac94ad918e6680f386fffe92",
+        "artifacts/dev4-typed-predicate-20261024/author_fixtures.py": "c117295651449ef0aab93fe4a7bee4e2d4112088f922351190a48c75a198f2ba",
+        "artifacts/dev4-typed-predicate-20261024/semantic-inputs-draft.json": "9df754c425968463cf7fda8e292ab09af9fd846f15d2ae4f5263ec1ae3110def",
+        "crates/sql/tests/typed_predicate_resources.rs": "ba3faa854f06a2a414d22aba8981438732903e29a5e14ad223016adf752eacd6",
+        "tests/fixtures/dev4-typed-predicate/control.json": "b50e67f672d8b8d4d1c243811c48a0b19bf0a8e6567d3db735e44532e2b104b8"
+      },
+      "preserved": true
+    },
+    {
+      "stage": "source_r3_before_fixture_correction",
+      "source_receipt": "artifacts/dev4-typed-predicate-20261024/source-r3.json",
+      "source_receipt_sha256": "f34aa9784cb993424ca3b4e1ee9cd3a4d3c74a9f2edc913dd01d5be4c3e6e05a",
+      "source_fingerprint_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "failed_receipts": [
+        {
+          "receipt": "artifacts/dev4-typed-predicate-20261024/r3-test-03.json",
+          "receipt_sha256": "419e929d83b2e235b7186d8f8e0e7047c2bbc194127ece6bcf14236ed8c4439f",
+          "exit_code": 101,
+          "log": "artifacts/dev4-typed-predicate-20261024/r3-test-03.log",
+          "log_sha256": "bdce4602553247ff7f4a3d5642ecdc89b1d0f19a2d4160ddc45bedc832513d08",
+          "source_receipt": "artifacts/dev4-typed-predicate-20261024/source-r3.json",
+          "source_receipt_sha256": "f34aa9784cb993424ca3b4e1ee9cd3a4d3c74a9f2edc913dd01d5be4c3e6e05a",
+          "source_fingerprint_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250"
+        },
+        {
+          "receipt": "artifacts/dev4-typed-predicate-20261024/r3-test-04.json",
+          "receipt_sha256": "f74ad28f4d9fb1b65ba42f009487ed79813380693f75408942bf03be076206fa",
+          "exit_code": 101,
+          "log": "artifacts/dev4-typed-predicate-20261024/r3-test-04.log",
+          "log_sha256": "89a260eeba13e9c68d6d7c089a1803c9034111a8c91093debdbd81f49ed1d71a",
+          "source_receipt": "artifacts/dev4-typed-predicate-20261024/source-r3.json",
+          "source_receipt_sha256": "f34aa9784cb993424ca3b4e1ee9cd3a4d3c74a9f2edc913dd01d5be4c3e6e05a",
+          "source_fingerprint_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250"
+        }
+      ],
+      "preserved": true
+    },
+    {
+      "stage": "corrected_inputs_pending_selected_continuation",
+      "correction_receipt": "artifacts/dev4-typed-predicate-20261024/fixture-correction.json",
+      "correction_receipt_sha256": "0fd1965c6cd8d95ffe68d38fef06081e579d9345d7f3407ab3a155081f23e63d",
+      "original_frozen_hashes_not_replaced": true,
+      "runtime_status": "NOT_RUN"
+    }
+  ]
+}

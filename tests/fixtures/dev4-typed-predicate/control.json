@@ -1,0 +1,231 @@
+{
+  "schema": "xadb.dev4.typed-predicate.control.v1",
+  "status": "D2_REVIEW_INPUT_NOT_EXECUTED",
+  "created_at": "2026-10-24T19:26:34.275998+09:00",
+  "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+  "API": "PredicateCompiler::compile(parsed,columns,hints,control) -> CompiledPredicate; evaluate(native_row,sql_parameters,control) -> TruthValue",
+  "constants": {
+    "session_bytes": 8388608,
+    "database_bytes": 67108864,
+    "source_bytes": 1048576,
+    "ast_nodes": 8192,
+    "nesting": 64,
+    "markers": 256,
+    "columns": 32,
+    "value_bytes": 65536,
+    "stack_bytes": 262144,
+    "truth_scratch_bytes": 8192,
+    "compile_metadata_scratch_maximum_bytes": 8192,
+    "paired_compare_payload_quantum": 256
+  },
+  "required": [
+    {
+      "function": "typed_owned_lifetimes",
+      "cases": "Name/source/AST/hints/compiler를 폐기한 뒤 compiled typed nodes/metadata/literal·span·평가 유지. 두 compiled 결과와 같은 ledger의 원 AST 합산. 외부 row/param은 호출만 borrow; caller를 바꾼 다음 호출에 새 결과. 마지막 Drop 원 charge 반환",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_quota_boundaries",
+      "cases": "C=1/M=1/N=9 및 Text4/Binary2 payload의 정확 backing 수식. session/DB 각각 total−1/total/total+1, 이전 compiled+새 compiled/AST 공존. 마지막 literal DB 예약 실패의 partial peak와 원 output 불변",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_actual_capacity",
+      "cases": "typed 각 backing에1element, literal에1byte padding. 각 actual capacity 합산, 마지막 excess session/DB−1/동일/+1 실패 원복. typed columns/parameters/nodes 각각의 초과분 session/DB 예약 실패도 별도 입력으로 검산. checked padding overflow. zero columns/parameters/fixed values는 padding 대상 할당0",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_allocation_failures",
+      "cases": "columns→parameters→nodes→Text→Binary의5 allocation site 모두 fail. 정확 ordinal/module/span·잔여/old output 확인. 미도달6은 다음 호출로 이월되지 않음. metadata 조기 오류에도 다음 injection 소비. Value decode 오류 후 partial 반환",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_semantics_before_quota",
+      "cases": "quota0과 Name/Type/Unknown/metadata 오류 교차로 C0–C5가 allocation 전임을 검산. zeroquota 정상식은 Compile/Limit. eval 입력 전체 tag가 nullable/length보다 우선하는 cross-error는 semantic fixture에서 별도 담당",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_compile_controls",
+      "cases": "entry/final·metadata candidate 순회·Name/Type pass·literal decode 내부 취소와 deadline, cancel 우선. 원 retained 결과와 caller control 수명, 실패 뒤 새 호출 성공. checkpoint max256byte의 Name candidates/typed node copy static 크기 확인",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_eval_controls",
+      "cases": "entry/final·whole input validation·flat node traversal의 취소/시간초과. 늦은 이전 cancel이 새 evaluate를 오염하지 않음. Eval node 제어 span과 최종 root.end 구별",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_validation_controls",
+      "cases": "row32/parameter256 각각의 tag·length pass 내부를 취소/timeout으로 구별한다. 뒤 입력 오류와 앞 checkpoint를 교차하고 length detector는 마지막 tag 관측 뒤에만 활성화",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_long_compare_controls",
+      "cases": "65,537개 leading space 뒤 `a=?`(source/node좌표≥65,537, local진행≤65,536 분리), native row와 parameter의65,536byte 동일 prefix Utf8/Binary. 각 관측 간격≤128·paired byte≤256, p∈[32768,32896) interior 취소/시간초과→Compare 전체span. 초기/final checks와 구별. mismatch 끝·prefix길이·빈값의 최종 검사를 포함",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_eval_no_new_charge",
+      "cases": "정확 compiled charge로 잔여0 상태, borrowed 긴 값 평가·다음호출 바뀐 값·error·정리에서 charge/peak불변. heap0은 allocation 없는 실제 evaluate call graph 정적 검토와 함께 주장하며 ledger 수치만으로 global allocator 부재를 증명하지 않음. unsafe allocator 도입 없음",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_stack_and_drop",
+      "cases": "기존 parser로 만든64nested/8192nodes/256markers/32columns 입력을 독립256KiB thread에 이동, compile/eval/flatDrop 성공. 입력 AST 파싱은 thread 밖에서 수행하며 원 parser stack 시험을 반복하지 않음. size상한, TruthValue[8192]8192B, compiler scratch≤8KiB static/runtime확인",
+      "status": "NOT_RUN"
+    },
+    {
+      "function": "typed_shared_database",
+      "cases": "native2thread, 별도session/sharedDB, 첫 native thread가 반환한 compiled를 root가 보유한 채 두 번째 native thread compile 제한−1/동일/+1. DB합산과 failed partial cleanup, 첫 결과 유효, join후0",
+      "status": "NOT_RUN"
+    }
+  ],
+  "allocation_fixture": {
+    "source": "a = 'text' AND ? = X'ABCD'",
+    "nodes": 9,
+    "columns": 1,
+    "parameters": 1,
+    "literal_bytes": [
+      4,
+      2
+    ],
+    "literal_spans": [
+      [
+        4,
+        10
+      ],
+      [
+        19,
+        26
+      ]
+    ],
+    "allocation_sites": [
+      "columns",
+      "parameters",
+      "nodes",
+      "Text",
+      "Binary"
+    ],
+    "padding": "elements for typed backings, bytes for literal payloads; zero requested has no site",
+    "capacity_equation": "(1+p)*size_of(CompiledColumn)+(1+p)*size_of(ParameterMetadata)+(9+p)*size_of(CompiledNode)+6+2p"
+  },
+  "non_predicate": "actual Parser::parse(\"  BEGIN\"), quota0 and wrong hint count -> Compile/Syntax[2,7),allocation0",
+  "heap_zero_evidence": "actual evaluate call graph read-only audit plus no-new-charge/full-quota runtime; quota alone is not proof of global allocator behavior; no unsafe test allocator",
+  "native_shared_scope": "two native threads; first returned owner retained by parent while second compiles; no simultaneous-allocation claim",
+  "negative_product_recipes": [
+    {
+      "id": "M01",
+      "change": "Skip whole Name validation so earlier Type hides missing name",
+      "detector": "typed_whole_validation_and_error_priority",
+      "test_target": "typed_predicate_contracts"
+    },
+    {
+      "id": "M02",
+      "change": "Decode overflow/invalid hex before whole concrete Type validation",
+      "detector": "typed_whole_validation_and_error_priority",
+      "test_target": "typed_predicate_contracts"
+    },
+    {
+      "id": "M03",
+      "change": "Fail to propagate the one concrete hint in marker-to-marker comparison",
+      "detector": "typed_parameter_inference_and_bounds",
+      "test_target": "typed_predicate_contracts"
+    },
+    {
+      "id": "M04",
+      "change": "Assign a default type to unresolved marker",
+      "detector": "typed_parameter_inference_and_bounds",
+      "test_target": "typed_predicate_contracts"
+    },
+    {
+      "id": "M05",
+      "change": "Permit wrong typed NULL before original runtime tag validation",
+      "detector": "typed_truth_and_type_matrix",
+      "test_target": "typed_predicate_contracts"
+    },
+    {
+      "id": "M06",
+      "change": "Normalize native empty Utf8 to NULL",
+      "detector": "typed_bytes_and_input_origins",
+      "test_target": "typed_predicate_contracts"
+    },
+    {
+      "id": "M07",
+      "change": "Wrong AND/OR/NOT truth-table cell",
+      "detector": "typed_truth_and_type_matrix",
+      "test_target": "typed_predicate_contracts"
+    },
+    {
+      "id": "M08",
+      "change": "WHERE permits Unknown",
+      "detector": "typed_truth_and_type_matrix",
+      "test_target": "typed_predicate_contracts"
+    },
+    {
+      "id": "M09",
+      "change": "Treat two raw NULL operands as equal instead of Unknown",
+      "detector": "typed_truth_and_type_matrix",
+      "test_target": "typed_predicate_contracts"
+    },
+    {
+      "id": "M10",
+      "change": "Compare variable bytes as signed bytes",
+      "detector": "typed_bytes_and_input_origins",
+      "test_target": "typed_predicate_contracts"
+    },
+    {
+      "id": "M11",
+      "change": "Ignore trailing Utf8 spaces during comparison",
+      "detector": "typed_bytes_and_input_origins",
+      "test_target": "typed_predicate_contracts"
+    },
+    {
+      "id": "M12",
+      "change": "Omit interior paired-byte comparison checks",
+      "detector": "typed_long_compare_controls",
+      "test_target": "typed_predicate_resources"
+    },
+    {
+      "id": "M13",
+      "change": "Omit runtime input validation loop control checks",
+      "detector": "typed_validation_controls",
+      "test_target": "typed_predicate_resources"
+    },
+    {
+      "id": "M14",
+      "change": "Omit AST Name lookup candidate checks",
+      "detector": "typed_compile_controls",
+      "test_target": "typed_predicate_resources"
+    },
+    {
+      "id": "M15",
+      "change": "Omit typed actual excess-capacity charge",
+      "detector": "typed_actual_capacity",
+      "test_target": "typed_predicate_resources"
+    },
+    {
+      "id": "M16",
+      "change": "Leak partial compiled backing on failure",
+      "detector": "typed_allocation_failures",
+      "test_target": "typed_predicate_resources"
+    },
+    {
+      "id": "M17",
+      "change": "Omit final compile publication check",
+      "detector": "typed_compile_controls",
+      "test_target": "typed_predicate_resources"
+    },
+    {
+      "id": "M18",
+      "change": "Omit metadata validation loop checks",
+      "detector": "typed_compile_controls",
+      "test_target": "typed_predicate_resources"
+    }
+  ],
+  "source_scope": "Only this new typed compile/eval consumer; old parser/scalar/foundation runtime not selected. Existing exhaustive enum adapters compile-only.",
+  "document_verifier": "NOT_RUN; pre-push only",
+  "expanded": "Separately ignored 256*1024 and30minute valid typed generation, NOT_RUN unless independently selected",
+  "adapter_path": "crates/sql/tests/typed_predicate_resources.rs",
+  "adapter_sha256": "ba3faa854f06a2a414d22aba8981438732903e29a5e14ad223016adf752eacd6",
+  "resource_plan_sha256": "daa82ebe9e403625096133999d5885603ce3b97dd61c15a50c5846869849a19c"
+}

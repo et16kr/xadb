@@ -1,6 +1,6 @@
 # DEV4 — DEV3 병행 준비·독립 모듈 개발 계획
 
-2026-10-24 · **D4-PREP-001/002 ACCEPTED / 독립 lexer·이름·splitter·P2 parser·P3 scalar·predicate 구문 제한 구현 / 전체 DEV4·Q1 미완료**
+2026-10-24 · **D4-PREP-001/002 ACCEPTED / 독립 lexer·이름·splitter·P2 parser·P3 scalar·predicate 구문·typed 평가 제한 구현 / 전체 DEV4·Q1 미완료**
 
 [독립 앞단 계약](../contracts/dev4-independent-frontend.md) · [전체 DEV4 계획](dev4-implementation-plan.md) · [기존 18개 작업](dev4-work-breakdown.md) · [조사·검토](../evidence/dev4-preparation-research-20261024.md)
 
@@ -14,7 +14,7 @@ DEV3가 저장·복구를 개발하는 동안 DEV4의 독립 입력 처리·값 
 <a id="sequence"></a>
 ## 2. 배정과 순서
 
-아래 P0–P6은 이 계획 안의 배정 묶음이며 DEV2 P0/K0나 새 제품 단계가 아니다. 기존 4.xx ID가 범위의 정체성이다. 최초 확정 당시 모든 상태는 **NOT_RUN**이었다. 현재 P0/P1의 lexer/이름과 [streaming 경계·원문 예약](../evidence/dev4-splitter-20261024.md), 해당 P5 literal 판정을 제한 구현했다. [첫 source별 증거](../evidence/dev4-frontend-20261024.md)와 splitter 증거에 실제 소유·검증·잔여를 기록한다. 후속 [P2 parser/AST 증거](../evidence/dev4-parser-20261024.md)에 INSERT·거래 구문과 단일 API 한 문장 검사·원문/arena 예약의 제한 구현을 수합했다. [P3 scalar 입력](../evidence/dev4-scalar-20261024.md)은 제한 구현·선택 검증했다. [predicate AST/parser](../evidence/dev4-predicate-20261024.md)는 원 stack overflow·수정과 source별 선택 검증을 보존한다. P3 typed compile/eval·3값 논리, P4·추상 수명 모델과 실제 engine 연결은 NOT_RUN이며 담당 구현자·실제 소유 경로는 해당 개발 시작 때 배정한다. 본 계획·계약 담당은 `/root`, 독립 검토자는 조사 기록에 남긴다.
+아래 P0–P6은 이 계획 안의 배정 묶음이며 DEV2 P0/K0나 새 제품 단계가 아니다. 기존 4.xx ID가 범위의 정체성이다. 최초 확정 당시 모든 상태는 **NOT_RUN**이었다. 현재 P0/P1의 lexer/이름과 [streaming 경계·원문 예약](../evidence/dev4-splitter-20261024.md), 해당 P5 literal 판정을 제한 구현했다. [첫 source별 증거](../evidence/dev4-frontend-20261024.md)와 splitter 증거에 실제 소유·검증·잔여를 기록한다. 후속 [P2 parser/AST 증거](../evidence/dev4-parser-20261024.md)에 INSERT·거래 구문과 단일 API 한 문장 검사·원문/arena 예약의 제한 구현을 수합했다. [P3 scalar 입력](../evidence/dev4-scalar-20261024.md)은 제한 구현·선택 검증했다. [predicate AST/parser](../evidence/dev4-predicate-20261024.md)는 원 stack overflow·수정과 source별 선택 검증을 보존한다. 후속 [typed predicate](../evidence/dev4-typed-predicate-20261024.md)는 전체 타입 검산·3값 평가를 구현하고 source별 필수 선택 증거를 보존했다. P4·추상 수명 모델과 실제 engine 연결은 NOT_RUN이며 담당 구현자·실제 소유 경로는 해당 개발 시작 때 배정한다. 본 계획·계약 담당은 `/root`, 독립 검토자는 조사 기록에 남긴다.
 
 | 묶음·기존 ID | 직접 선행 | 산출물·독립 종료 조건 | 병행 가능 범위 |
 | --- | --- | --- | --- |

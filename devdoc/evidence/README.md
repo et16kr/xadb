@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV4 typed predicate](dev4-typed-predicate-20261024.md): 전체 타입·3값 평가, 원 fixture/compile FAIL·좁은 재검증과 [source별 실행 색인](dev4-typed-predicate-20261024.json).
+
 - [DEV3 plan4 정리 큐·빈 Catalog 최초 설치](dev3-plan4-genesis-20261024.md) · [source 색인](dev3-plan4-genesis-20261024.json): 필수304·compiler9·checker15, 원 실패·source별 결과와 S5 미실행. 최종 D1 제한 수용.
 
 

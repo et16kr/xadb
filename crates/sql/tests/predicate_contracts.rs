@@ -92,6 +92,9 @@ fn error_observation(error: Diagnostic) -> ErrorObservation {
             Code::Limit => "Limit",
             Code::Cancelled => "Cancelled",
             Code::Timeout => "Timeout",
+            Code::ParameterTypeUnknown => "ParameterTypeUnknown",
+            Code::BindCount => "BindCount",
+            Code::RowCount => "RowCount",
             Code::Type => "Type",
             Code::Range => "Range",
             Code::NotNull => "NotNull",
@@ -102,6 +105,8 @@ fn error_observation(error: Diagnostic) -> ErrorObservation {
             Module::Split => "Split",
             Module::Parse => "Parse",
             Module::Value => "Value",
+            Module::Compile => "Compile",
+            Module::Eval => "Eval",
         },
         span: [error.span.start, error.span.end],
     }

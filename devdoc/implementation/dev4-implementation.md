@@ -1,6 +1,6 @@
 # DEV4 독립 앞단 구현
 
-2026-10-24 · **lexer·이름·splitter·P2 parser·P3 scalar·predicate 구문 제한 구현 / 실제 SQL 실행·DEV4·Q1 미완료**
+2026-10-24 · **lexer·이름·splitter·P2 parser·P3 scalar·predicate 구문·typed 평가 제한 구현 / 실제 SQL 실행·DEV4·Q1 미완료**
 
 [독립 앞단 계약](../contracts/dev4-independent-frontend.md#lexer-leaf) · [병행 계획](../plans/dev4-preparation-plan.md) · [source별 증거](../evidence/dev4-frontend-20261024.md)
 
@@ -83,9 +83,9 @@ cargo test -p xadb-sql --lib frontend::splitter::tests::absolute_offset_overflow
 
 P0/P1의 lexer·이름·streaming 경계와 원문 예약, 아래 P2 공통 parser·INSERT/거래 구문을
 제한 구현했다. 단일 API 문장 수·AST/marker 번호·source/arena 수명과 독립 literal의 선택
-증거를 수합했다. 아래 P3 scalar 입력과 predicate AST/parser를 추가했다. 재귀 depth64·256KiB stack은 새 조건식 경로에서 검증했으며 전체 타입 분석·3값 계산은 다음 단위다. P4 나머지 구문, P5 추상 수명 모델, P6 공급 수합과 실제 binding의 FE11/12도 미완료다.
+증거를 수합했다. 아래 P3 scalar 입력과 predicate AST/parser를 추가했다. 재귀 depth64·256KiB stack은 새 조건식 경로에서 검증했으며 아래 typed predicate에서 전체 타입 분석·3값 계산을 추가했다. P4 나머지 구문, P5 추상 수명 모델, P6 공급 수합과 실제 binding의 FE11/12도 미완료다.
 
-조건식 평가·catalog binding·실행 CLI·session·실제 engine adapter와 Q1 entrypoint는 제공하지
+실제 catalog binding·실행 CLI·session·engine adapter와 Q1 entrypoint는 제공하지
 않는다. engine 연결은 DEV3 catalog/row/index/statement/undo/commit/recovery/temp의 실제 선행
 증거 뒤다. 앞단 단위 결과를 실제 SQL·복구·내구성·전체 DEV4/Q1 완료로 확대하지 않는다.
 
@@ -109,7 +109,7 @@ splitter 시험은 반복하지 않았다. parser_contracts의 필수6함수, pa
 `frontend::parse_budget::tests::typed_capacity_arithmetic_rejects_overflow`가 이번 선택이다.
 확대2profile은 NOT_RUN이다. 이후 실행도 실제 diff에 대응하는 함수만 고른다.
 
-P3 조건식 구문은 아래 후속 절을 따르며 typed compile/eval·P4 나머지 문법·P5 수명 모델·P6 실제 DEV3 수합과 engine 통합·Q1은 남아 있다.
+P3 조건식 구문과 typed compile/eval은 아래 후속 절을 따른다. P4 나머지 문법·P5 수명 모델·P6 실제 DEV3 수합과 engine 통합·Q1은 남아 있다.
 
 <a id="scalar"></a>
 ## Scalar 디코딩과 typed 값 소유
@@ -134,7 +134,7 @@ cargo test -p xadb-sql --features test-support --locked --test scalar_contracts 
 cargo test -p xadb-sql --features test-support --locked --test scalar_resources <function> -- --exact
 ```
 
-이 진입점은 실제 diff에 대응하는 함수 선택용이다. P3의 3값/전체 타입 분석과 실제 SQL 실행·Q1은 미완료다.
+이 진입점은 실제 diff에 대응하는 함수 선택용이다. P3의 3값/전체 타입 분석은 아래 typed predicate에 추가했으며 실제 SQL 실행·Q1은 미완료다.
 
 <a id="predicate-parser"></a>
 ## Predicate AST/parser
@@ -161,3 +161,31 @@ cargo test -p xadb-sql --features test-support --locked --test predicate_resourc
 
 실제 diff와 관계있는 함수만 선택한다. 이 구문 공급은 P3 전체 타입 검사/3값 평가·P4 WHERE 연결·
 P5 추상 수명 모델·P6 실제 공급 수합 및 engine 통합·Q1 완료를 의미하지 않는다.
+
+<a id="typed-predicate"></a>
+## 명시 타입 compile과 3값 평가
+
+`PredicateCompiler::compile`은 실제 Predicate root와 명시 ColumnSpec/hint에서 전체 이름·타입·
+marker 해소를 마친 뒤 모든 literal과 세 exact arena를 소유한다. readonly CompiledPredicate는
+AST/source·schema/hints·compiler를 폐기한 뒤에도 metadata·literal·진단 span을 유지한다.
+`evaluate`는 전체 native row와 SQL parameter의 원래 tag를 먼저 검산하고 NULL/길이를 확인한 뒤
+고정8KiB 배열로 eager3VL을 계산한다. raw NULL과 typed NULL, native empty와 SQL empty를 구별한다.
+
+세 backing과 literal 실제 capacity를 같은 session/DB ledger에 charge하고 실패한 partial 출력만
+반환한다. 긴 비교는128byte-pair마다 취소/deadline을 검사하며 local progress와 SQL span을 구분한다.
+제품 평가 경로는 payload 복사·heap 할당·재귀가 없다. foundation/parser/scalar 제품은 변경하지 않는다.
+
+[source별 증거](../evidence/dev4-typed-predicate-20261024.md)에 고정946case(946compile/688eval),
+별도8192생성 operations·known-bad44/통제8·자원12함수와18제품 변조/19detector 실행을 보존했다.
+r1/r2 compile FAIL과 r3 fixture FAIL을 남기고 r4는 교정·미실행47case만 검증했다. 원 실패 job의
+완료140case와 앞서 통과한17함수는 반복하지 않았다. 확대2profile은 작성·NOT_RUN이다.
+최종 독립 D1을 제한 수용했으며 실제 catalog/prepared/session·engine binding과Q1은 미완료다.
+
+```bash
+cargo test -p xadb-sql --features test-support --locked --test typed_predicate_contracts <function> -- --exact
+cargo test -p xadb-sql --features test-support --locked --test typed_predicate_resources <function> -- --exact
+```
+
+실제 diff에 대응하는 새/수정 사례만 선택한다. 실패 그룹의 완료 prefix를 제외할 때는 기록된
+`XADB_TYPED_FROM_CASE` exact ID와 원 source의 순차 단언 증거를 사용한다. 미지정은 해당 그룹 전체이며
+이 진입점 자체가 완료 시험 반복을 허용하지 않는다.

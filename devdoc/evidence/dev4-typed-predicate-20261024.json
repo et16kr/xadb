@@ -1,0 +1,2889 @@
+{
+  "schema": 1,
+  "contract": "D4-FE-TYPED-001",
+  "status": "LOCAL_SELECTED_VERIFICATION_AND_LIMITED_D1_ACCEPTED",
+  "scope": "P3 4.04.3 pure typed predicate compile/evaluate and3VL; no catalog/prepared/session/engine/Q1 integration",
+  "recorded_at": "2026-10-24T19:56:43.789204+09:00",
+  "baseline": {
+    "at": "2026-10-24T19:00:39.094789+09:00",
+    "head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+    "status": " M crates/engine/src/storage/allocation_page_tests.rs\n M crates/engine/src/storage/doublewrite_control_tests.rs\n M crates/engine/src/storage/mod.rs\n M crates/engine/src/storage/page.rs\n M crates/engine/src/storage/page_tests.rs\n M crates/engine/src/storage/recovery_select.rs\n M crates/engine/src/storage/wal_frame_tests.rs\n M crates/engine/src/storage/wal_io.rs\n M crates/engine/src/storage/wal_io/bootstrap.rs\n M crates/engine/src/storage/wal_io/doublewrite_install.rs\n M devdoc/contracts/README.md\n M devdoc/contracts/dev3-page-format.md\n M devdoc/documents.json\n M scripts/dev3_page_vectors.py\n?? crates/engine/src/storage/plan4_genesis_native_tests.rs\n?? crates/engine/src/storage/plan4_recovery_select.rs\n?? crates/engine/src/storage/plan4_recovery_select_tests.rs\n?? crates/engine/src/storage/retention_genesis.rs\n?? crates/engine/src/storage/retention_genesis_tests.rs\n?? crates/engine/src/storage/wal_io/plan4_genesis.rs\n?? crates/engine/src/storage/wal_io/plan4_genesis_test_support.rs\n?? crates/engine/src/storage/wal_io/plan4_genesis_tests.rs\n?? devdoc/contracts/dev3-plan4-genesis.md\n?? scripts/dev3_plan4_genesis_cases.py\n?? scripts/dev3_plan4_genesis_native.py\n?? scripts/test_dev3_plan4_genesis_cases.py\n?? scripts/test_dev3_plan4_genesis_native.py\n?? tests/fixtures/dev3-plan4-genesis/\n",
+    "dirty_patch_sha256": "abbd500125ed95622348b5a44af9f9404b272644dad08a85d4df0372870b8042",
+    "previous_goal_turn": "progress: predicate AST/parser implementation, source-specific verification,6mutants,independentD1 and commit186085e",
+    "scope": "Full independent typed predicate compile/evaluation/3VL,4.04.3;P4/P5/P6 still required;engine integration requires actualDEV3supply",
+    "owners": {
+      "root": "contracts/resources/wiring/selection/evidence/commit",
+      "frontend_research": "localDBMSresearch/API-layout proposal and postfreeze product",
+      "frontend_oracle": "independent semantic inputs/reference/adapter",
+      "frontend_review": "read-only independentD2/D1"
+    },
+    "DEV3_dirty": "excluded/preserved",
+    "execution": "NOT_RUN"
+  },
+  "head_at_evidence": "b3098c1ffe0d555c0021ceb9a4ee5ce958dd7634",
+  "d2": {
+    "decision": "D4-FE-TYPED-001",
+    "status": "ACCEPTED",
+    "at": "2026-10-24T19:29:02.232927+09:00",
+    "owner_and_integrator": "/root",
+    "independent_reviewer": "/root/frontend_review",
+    "review_result": "D4-FE-TYPED-001 전체 D2 수용 가능합니다. 추가 blocking은 없습니다. 계약·독립 기대값·adapter·자원12함수·18제품 변조 범주와 보존 하네스를 읽기 검토했습니다. 동결 후 제품 구현에 착수할 수 있습니다. 실행·성능·heap0 실제 근거와 변조 검출은 후속 D1 대상입니다.",
+    "reviewed_contract_sha256": "9080f6b21e031ed383e29339846e97ae6305154bb78924e281bedc4a8c2638de",
+    "reviewed_manifest_sha256": "f1d00c59a530661924f4e7bcf4943590b7dbe959009a2647bc13d129ef429c21",
+    "corrections_before_freeze": [
+      "no barrier hang on failed native caller",
+      "all eval input tags before NULL/length",
+      "metadata/name lookup bounded checkpoints and distinct diagnostics",
+      "arbitrary chunk<=128 progress detector separated from source coordinates",
+      "empty/mismatch final checks and eager branch witness",
+      "padding persistence/reset and every typed excess failure",
+      "actual non-Predicate root before metadata/quota",
+      "canonical cases vs compile/eval call denominators",
+      "lossless ELF preservation with original and archive SHA"
+    ],
+    "owner_adoption": "/root confirmed policy, invariants and exact frozen inputs; GO after this freeze only",
+    "product_compile_and_runtime": "NOT_RUN_AT_ADOPTION"
+  },
+  "freeze": {
+    "decision": "D4-FE-TYPED-001",
+    "status": "D2_ACCEPTED_INPUTS_FROZEN",
+    "at": "2026-10-24T19:29:02.232927+09:00",
+    "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+    "files_sha256": {
+      "tests/fixtures/dev4-typed-predicate/semantic.json": "dd99248990367838716d93708a05d9aca9084d5f49f218fae9a0b2ca66fbd08c",
+      "crates/testing/reference/src/frontend/typed_predicate.rs": "683757c1733a1ca5bbc6258a2dd7ce0e5e33db3b6766e00347d964b3da2f2756",
+      "crates/testing/reference/src/frontend/typed_predicate/literals.rs": "46739f1452136086291bc75747f8593e07feff12f656e98e406f0577272ecc2a",
+      "crates/testing/reference/src/frontend/typed_predicate/recipes.rs": "899aeaf782f2fd86ed5666a8c5b59a9dbafb3d6fcacd7b4510ef7a098e3cb8c1",
+      "crates/sql/tests/typed_predicate_contracts.rs": "52e63166d1cac67b24de75224ddd8256ead35ff2ac94ad918e6680f386fffe92",
+      "artifacts/dev4-typed-predicate-20261024/author_fixtures.py": "c117295651449ef0aab93fe4a7bee4e2d4112088f922351190a48c75a198f2ba",
+      "artifacts/dev4-typed-predicate-20261024/semantic-inputs-draft.json": "9df754c425968463cf7fda8e292ab09af9fd846f15d2ae4f5263ec1ae3110def",
+      "crates/sql/tests/typed_predicate_resources.rs": "ba3faa854f06a2a414d22aba8981438732903e29a5e14ad223016adf752eacd6",
+      "tests/fixtures/dev4-typed-predicate/control.json": "b50e67f672d8b8d4d1c243811c48a0b19bf0a8e6567d3db735e44532e2b104b8",
+      "tests/fixtures/dev4-typed-predicate/manifest.json": "f1d00c59a530661924f4e7bcf4943590b7dbe959009a2647bc13d129ef429c21",
+      "devdoc/contracts/dev4-independent-frontend.md": "9080f6b21e031ed383e29339846e97ae6305154bb78924e281bedc4a8c2638de",
+      "artifacts/dev4-typed-predicate-20261024/resource-plan.md": "daa82ebe9e403625096133999d5885603ce3b97dd61c15a50c5846869849a19c",
+      "artifacts/dev4-typed-predicate-20261024/mutation-contract.json": "b9a2422e7a2408b4ef5e1452c2139864b333fa384de062c810e09b7af41d5f4b",
+      "artifacts/dev4-typed-predicate-20261024/research.json": "919750f116043cc981b8e60ab18e0fb234e47da94c9bc658f819e00b32516b0e",
+      "artifacts/dev4-typed-predicate-20261024/design-proposal.md": "179ddb4f72faf7c74915576affd82524123fbb606c5b4edd10d2e613e0641465",
+      "artifacts/dev4-typed-predicate-20261024/storage-plan.json": "65c9705f1668703f0dd8a5a87bbf67a88dc4f1397a5c03c4b674c5cf9c06a734",
+      "artifacts/dev4-typed-predicate-20261024/export.py": "87a229f1446b822f9e7e90d5e950d2a95f4ff7b18407c49b90c52ea8c3373cd2",
+      "artifacts/dev4-typed-predicate-20261024/run.py": "0ccf9aa50e6e79398116903ae919c5933d41d58d9a74ea1a31920a29fbf6c073",
+      "artifacts/dev4-typed-predicate-20261024/make_mutant.py": "6d4d5c7b01c636d63bcee385189dd79234473005209545cd91624f559139be01",
+      "artifacts/dev4-typed-predicate-20261024/run_mutants.py": "ecd493130aef3253a405f71371435fe23c62842e767731f15f01d3f1947206df"
+    },
+    "product_implementation": "NOT_STARTED_AT_FREEZE",
+    "product_compile_and_runtime": "NOT_RUN_AT_FREEZE",
+    "required_functions": 19,
+    "expanded_status": "NOT_RUN"
+  },
+  "research": {
+    "status": "D2_DESIGN_AND_LOCAL_SOURCE_RESEARCH_ONLY",
+    "recorded_at": "2026-10-24T19:09:09.759852+09:00",
+    "xadb_revision": "186085e49cf11308fca47bb13775168bdcaa5f54",
+    "xadb_status_porcelain": "M crates/engine/src/storage/allocation_page_tests.rs\n M crates/engine/src/storage/doublewrite_control_tests.rs\n M crates/engine/src/storage/mod.rs\n M crates/engine/src/storage/page.rs\n M crates/engine/src/storage/page_tests.rs\n M crates/engine/src/storage/recovery_select.rs\n M crates/engine/src/storage/wal_frame_tests.rs\n M crates/engine/src/storage/wal_io.rs\n M crates/engine/src/storage/wal_io/bootstrap.rs\n M crates/engine/src/storage/wal_io/doublewrite_install.rs\n M devdoc/contracts/README.md\n M devdoc/contracts/dev3-page-format.md\n M devdoc/documents.json\n M scripts/dev3_page_vectors.py\n?? crates/engine/src/storage/plan4_genesis_native_tests.rs\n?? crates/engine/src/storage/plan4_recovery_select.rs\n?? crates/engine/src/storage/plan4_recovery_select_tests.rs\n?? crates/engine/src/storage/retention_genesis.rs\n?? crates/engine/src/storage/retention_genesis_tests.rs\n?? crates/engine/src/storage/wal_io/plan4_genesis.rs\n?? crates/engine/src/storage/wal_io/plan4_genesis_test_support.rs\n?? crates/engine/src/storage/wal_io/plan4_genesis_tests.rs\n?? devdoc/contracts/dev3-plan4-genesis.md\n?? scripts/dev3_plan4_genesis_cases.py\n?? scripts/dev3_plan4_genesis_native.py\n?? scripts/test_dev3_plan4_genesis_cases.py\n?? scripts/test_dev3_plan4_genesis_native.py\n?? tests/fixtures/dev3-plan4-genesis/",
+    "scope": "P3 4.04.3 full typed predicate compile/eval and three-valued logic; no product edits until D2/fixture freeze.",
+    "sources": [
+      {
+        "root": "/home/et16/work/postgres",
+        "origin": "https://github.com/postgres/postgres.git",
+        "revision": "45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851",
+        "status_porcelain": "",
+        "files": [
+          {
+            "path": "/home/et16/work/postgres/src/backend/executor/execExprInterp.c",
+            "sha256": "aa6dc6414bb7549a712224aae0c60f3228a3a4b80f058735f7120e80dc4c4b9b",
+            "read_line_ranges": [
+              [
+                1030,
+                1188
+              ],
+              [
+                3080,
+                3138
+              ]
+            ],
+            "observations": [
+              {
+                "lines": [
+                  1034,
+                  1101
+                ],
+                "finding": "AND records any NULL and chooses false if a false term is present, otherwise NULL if any term is unknown.",
+                "adopt": "Explicit three-valued Truth semantics; FALSE dominates AND while UNKNOWN is retained.",
+                "reject": "No VM instruction stream or short-circuit machinery copied; initial XADB evaluator is eager after complete validation."
+              },
+              {
+                "lines": [
+                  1104,
+                  1182
+                ],
+                "finding": "OR records NULL, true dominates; NOT preserves the separate null flag.",
+                "adopt": "OR/NOT truth semantics and clear distinction between boolean payload and unknownness.",
+                "reject": "XADB uses a separate TruthValue enum, not Datum null/value flags or scalar Bool as a predicate result."
+              },
+              {
+                "lines": [
+                  3100,
+                  3117
+                ],
+                "finding": "External parameter runtime ptype is checked against prepared expected paramtype before consuming value/isnull.",
+                "adopt": "Check original parameter type including typed NULL before normalization/evaluation.",
+                "reject": "Runtime provider hooks and engine expression contexts are outside the pure borrowed API."
+              }
+            ]
+          },
+          {
+            "path": "/home/et16/work/postgres/src/backend/parser/parse_param.c",
+            "sha256": "3e2c67e7594ac573b14165e518fc4f378ad2c9c4006a1a78cdd1b9307b13a9e9",
+            "read_line_ranges": [
+              [
+                132,
+                230
+              ],
+              [
+                267,
+                328
+              ]
+            ],
+            "observations": [
+              {
+                "lines": [
+                  151,
+                  183
+                ],
+                "finding": "Unknown parameter slots retain an unknown type until a coercion context is found.",
+                "adopt": "Keep unresolved markers distinct from raw NULL and concrete ScalarType.",
+                "reject": "XADB occurrence ordinals are unique and capped256; no arbitrary parameter array growth or repeated variable unification."
+              },
+              {
+                "lines": [
+                  187,
+                  230
+                ],
+                "finding": "A target type resolves an unknown parameter; incompatible already-resolved type is diagnosed.",
+                "adopt": "Use concrete peer/hint inference and reject incompatible hints.",
+                "reject": "Do not adopt general coercions, OIDs or catalog type resolution."
+              },
+              {
+                "lines": [
+                  267,
+                  325
+                ],
+                "finding": "A separate post-analysis tree walk verifies parameter resolution.",
+                "adopt": "Finish all concrete type checks before a separate ordinal-order unknown-marker rejection phase.",
+                "reject": "No recursive query walk or subquery semantics introduced."
+              }
+            ]
+          },
+          {
+            "path": "/home/et16/work/postgres/src/backend/parser/parse_expr.c",
+            "sha256": "27ebc4ac2997222e6773e1a014a9554c528690c29a95f3187f73070694f81323",
+            "read_line_ranges": [
+              [
+                1414,
+                1448
+              ]
+            ],
+            "observations": [
+              {
+                "lines": [
+                  1436,
+                  1446
+                ],
+                "finding": "All BoolExpr arguments are transformed and coerced before the semantic expression is returned.",
+                "adopt": "Whole-tree name/type validation cannot be skipped by a true/false/NULL branch.",
+                "reject": "Implicit boolean coercion remains unsupported in XADB."
+              }
+            ]
+          },
+          {
+            "path": "/home/et16/work/postgres/src/backend/utils/adt/varlena.c",
+            "sha256": "5be38077fcf94f99fee9aea1a35db8caae9b97cc59b94c5f7b1ef4bfcb851562",
+            "read_line_ranges": [
+              [
+                1355,
+                1398
+              ]
+            ],
+            "observations": [
+              {
+                "lines": [
+                  1364,
+                  1369
+                ],
+                "finding": "C collation compares common byte prefix and then lengths.",
+                "adopt": "Unsigned byte lexicographic semantics, with prefix length tie-break and no padding.",
+                "reject": "Whole payload memcmp lacks XADB CallControl checkpoints; locale/collation branches are outside current SQL semantics."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "root": "/home/et16/work/sqlite",
+        "origin": "https://github.com/sqlite/sqlite.git",
+        "revision": "43a48f77585a88940c727f33682151418f544059",
+        "status_porcelain": "",
+        "files": [
+          {
+            "path": "/home/et16/work/sqlite/src/vdbe.c",
+            "sha256": "0db58f144da7de9508a8285a5fee9a458d5ff499286a77b784f2c7c38c457d6d",
+            "read_line_ranges": [
+              [
+                2654,
+                2695
+              ],
+              [
+                2714,
+                2743
+              ]
+            ],
+            "observations": [
+              {
+                "lines": [
+                  2670,
+                  2690
+                ],
+                "finding": "AND/OR use explicit three-state truth tables and preserve NULL output.",
+                "adopt": "Cross-check independent SQL 3VL semantics and mandatory21-cell acceptance inventory.",
+                "reject": "Do not copy the table into the product oracle; oracle uses independently frozen literal truth values. SQLite truth coercion is not XADB Bool typing."
+              },
+              {
+                "lines": [
+                  2730,
+                  2740
+                ],
+                "finding": "NOT yields NULL when input is NULL and otherwise complements boolean truth.",
+                "adopt": "Unknown survives NOT.",
+                "reject": "No dynamic Mem coercion or VM register model."
+              }
+            ]
+          },
+          {
+            "path": "/home/et16/work/sqlite/src/vdbeaux.c",
+            "sha256": "b5861fefc82cb754987635deab85abc4062883200202e08ff609f185af91bae6",
+            "read_line_ranges": [
+              [
+                4550,
+                4660
+              ]
+            ],
+            "observations": [
+              {
+                "lines": [
+                  4555,
+                  4580
+                ],
+                "finding": "sqlite3MemCompare makes NULL lower than non-NULL and equal to NULL.",
+                "adopt": "Evidence that key/total order must be separated from SQL predicate null comparison.",
+                "reject": "Never use NULL total-order equality for XADB ordinary comparison; it must return Unknown."
+              },
+              {
+                "lines": [
+                  4580,
+                  4651
+                ],
+                "finding": "Comparison supports numeric mixed kinds and text/blob category ordering/collations.",
+                "adopt": null,
+                "reject": "XADB rejects cross-type comparisons and uses strict Int64/Bool/Utf8/Binary; no numeric coercion or type-tag sort order."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "xadb_api_findings": [
+      {
+        "path": "crates/sql/src/frontend/scalar.rs",
+        "read_line_ranges": [
+          [
+            1,
+            285
+          ]
+        ],
+        "finding": "OwnedScalar is nonClone with borrowed as_ref. ScalarReader decode consumes actual immutable AST and validates raw values. ScalarRef type/length helpers are private. Fault state/count resets per decode call.",
+        "application": "Reuse decode only after complete static passes; compiler aggregates test-support allocation ordinals through remaining target and actual reached sites; eval borrows existing ScalarRef views.",
+        "sha256": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64"
+      },
+      {
+        "path": "crates/sql/src/frontend/scalar/budget.rs",
+        "read_line_ranges": [
+          [
+            1,
+            130
+          ]
+        ],
+        "finding": "Scalar backing reserves session then DB and charges observed allocator excess before publication. Data field drops before leases.",
+        "application": "Preserve original scalar implementation and diagnostics; typed owner uses same shared-ledger invariants for fixed exact arenas.",
+        "sha256": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e"
+      },
+      {
+        "path": "crates/sql/src/frontend/parse_budget.rs",
+        "read_line_ranges": [
+          [
+            1,
+            192
+          ]
+        ],
+        "finding": "ChargedVec carries Parse module/injection scope and source/AstNode ownership assumptions.",
+        "application": "Do not directly reuse it with wrong module/whole-compile ordinal; a local exact typed budget is the proposed narrow new consumer, not a foundation/general budget refactor.",
+        "sha256": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6"
+      },
+      {
+        "path": "crates/sql/src/frontend/name.rs",
+        "read_line_ranges": [
+          [
+            1,
+            90
+          ]
+        ],
+        "finding": "Name has private fixed bytes and no Clone; as_bytes identity ignores source span/quoted flag.",
+        "application": "ColumnSpec borrows validated Name; compiled metadata makes bounded canonical copy, and external metadata diagnostics use point0 rather than Name.span from another source.",
+        "sha256": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1"
+      },
+      {
+        "path": "crates/foundation/src/value.rs",
+        "read_line_ranges": [
+          [
+            1,
+            71
+          ]
+        ],
+        "finding": "Value owns payload, Null is untyped, compare handles NULL before type discrimination and delegates variable data comparison to Ord.",
+        "application": "Foundation remains unchanged. SQL-local borrowed comparator is necessary for typed NULL/full tag validation, no allocation, and cooperative byte checkpoints.",
+        "sha256": "f70fd414065e650f6cbf5fbe1ca5450160db9495d8c255b37a0b4b8c339ff0ce"
+      }
+    ],
+    "input_hashes": {
+      "devdoc/README.md": "1bbda631b64360353d9c12ad2535552e4708851bd30eeefffc6871a890f6ba27",
+      "devdoc/contracts/dev4-independent-frontend.md": "a45ca46f7f65521e9203864acdadaebfd12946b77c71e82e2af528e8525dfa26",
+      "devdoc/contracts/dev4-sql-design.md": "a7b2c9db54633b4460281693c83531d3f06aeba3b13db7a2fc01370bb1811952",
+      "artifacts/dev4-typed-predicate-20261024/oracle-input-proposal.md": "afb8c837b45b8a7a87bc87b547e73c848598af3c7d1c3e37962b67ac54e0925e",
+      "crates/sql/src/frontend/ast.rs": "490a3ef3950d6dce7cf4370328bba185fdfc7386646c160fedbe9ba3848a29b9",
+      "crates/sql/src/frontend/parser.rs": "12f7e61583fad5e9b7544b6a3909dd8c015144e5bc37863b507b34c1a0344b68",
+      "crates/sql/src/frontend/parser/predicate.rs": "ceb978f4fdf57b6e25cc6727846b9c62a79e532814c4d5ded01b056fb84d9ac8",
+      "crates/sql/src/frontend/scalar.rs": "4518fd7bb9ce8271e777c14d502eea48b55405fefc438cd49f23fad209d88f64",
+      "crates/sql/src/frontend/scalar/budget.rs": "0c3ea05ec49a4fe0a3de5e0d5b2e370caa1ac48fad7e0e81d3756ce60caf459e",
+      "crates/sql/src/frontend/parse_budget.rs": "21e5958d1865df5dcefe8a5b05ed3e8deb6d9eb91335381a5c71a74c8ca927d6",
+      "crates/sql/src/frontend/name.rs": "9d20be8c6da394f57ff9111d0d39b82151eac69fadc4bc3f6370dbd79d24e1e1",
+      "crates/sql/src/frontend/control.rs": "8e45b2d3f7f94cffe625ba15e2c4a4d11ff1ac9de0d0d176513091c87a92f5d1",
+      "crates/sql/src/frontend/diagnostic.rs": "3282984ec6ddc445e583bc9e59e16eadad6b19d912354cb5f3bb3590fb39a5c5",
+      "crates/foundation/src/value.rs": "f70fd414065e650f6cbf5fbe1ca5450160db9495d8c255b37a0b4b8c339ff0ce"
+    },
+    "proposal": {
+      "path": "artifacts/dev4-typed-predicate-20261024/design-proposal.md",
+      "sha256": "179ddb4f72faf7c74915576affd82524123fbb606c5b4edd10d2e613e0641465"
+    },
+    "decisions_proposed": [
+      "Two APIs compile/evaluate with borrowed native row and SQL params; owned compiled lifetime independent of AST/source/schema/hints; no actual catalog or prepared binding claim.",
+      "Compile validation before backing allocation: root/shape and whole metadata, all names, all concrete types, unknown markers, then exact typed backings and every literal decode.",
+      "Runtime row count, param count, all row tags, all param tags, all row null/length, all param null/length, then eager reverse-preorder3VL.",
+      "Single fixed TruthValue[8192] scratch repru8, bounded8KiB setup, input-proportional loops checkpointed; no recursion or evaluator heap allocations.",
+      "Read at most128byte pairs per comparison chunk (256payload bytes total), observer local progress and returned Compare span kept separate.",
+      "Foundation Value compare retained unchanged; bounded borrowed SQL comparator justified by different ownership/null/control contracts."
+    ],
+    "execution": {
+      "product_edits": false,
+      "fixture_edits": false,
+      "compile": "NOT_RUN",
+      "runtime": "NOT_RUN",
+      "commit": "NOT_RUN",
+      "dbms_execution": "NOT_RUN",
+      "dbms_source_edits": false
+    },
+    "only_written": [
+      "artifacts/dev4-typed-predicate-20261024/design-proposal.md",
+      "artifacts/dev4-typed-predicate-20261024/research.json"
+    ],
+    "limitations": "Local source inspection informs an independent XADB design. It neither executes these DBMS nor establishes identical behavior. D2/API/fixture/resource adoption and actual product execution remain future steps."
+  },
+  "fixture_correction": {
+    "schema": "xadb.dev4.typed-predicate.fixture-correction.v1",
+    "at": "2026-10-24T19:49:44.630139+09:00",
+    "status": "OWNER_APPROVED_AND_INDEPENDENTLY_REVIEWED_INPUT_CORRECTION_NOT_EXECUTED",
+    "authorization": "Root explicitly approved twelve marker-span corrections and one last-column row input correction. Root reported independent reviewer acceptance of the exact thirteen-case diff.",
+    "contract": {
+      "path": "devdoc/contracts/dev4-independent-frontend.md",
+      "section": "15 / C4",
+      "line": 481,
+      "rule": "Two incompatible marker hints identify the lower ordinal marker token, not the entire Compare expression."
+    },
+    "findings": [
+      {
+        "id": "F01-pair-hint-span",
+        "affected_cases": 12,
+        "cause_status": "PROVEN_IN_PRESERVED_AUTHOR",
+        "cause": "The comparison-subject author branch selected the entire conflicting Compare span without distinguishing markers. The correction selects the lowest-ordinal direct marker when a marker participates, otherwise the entire Compare.",
+        "changed_expectation": "Compile/Type span [0,3] to [0,1] for ?=? with incompatible hints",
+        "unchanged": "all inputs, phase/code/module, case ordering, and all other observation fields"
+      },
+      {
+        "id": "F02-last-column-input",
+        "affected_cases": 1,
+        "cause_status": "SHARED_LIST_ALIAS_IS_INFERRED_NOT_PROVEN",
+        "cause": "The original draft already contains Utf8 x in the last element of an Int64 schema success case. Its row equals the separate intended wrong-tag case. The original bulk draft author/helper is not preserved, so an add_case/deep-copy or list-alias mechanism cannot be established from available source.",
+        "correction": "Set row[31] to Int64(1), retaining C31=?, Int64 parameter(1), 32 columns, and expected T.",
+        "wrong_tag_control_unchanged": "max_schema_reference/last-unreferenced-tag"
+      }
+    ],
+    "counts_unchanged": {
+      "coverage_cells": 959,
+      "canonical_cases": 946,
+      "shared_coverage_references": 13,
+      "compile_calls": 946,
+      "compile_successes": 688,
+      "compile_errors": 258,
+      "eval_calls": 688,
+      "eval_successes": 596,
+      "eval_errors": 92
+    },
+    "case_diff_summary": {
+      "canonical_cases": 946,
+      "changed_cases": 13,
+      "fully_unchanged_cases": 933,
+      "changed_inputs": 1,
+      "changed_compile_error_spans": 12,
+      "unchanged_truth_and_where_fields": 946,
+      "unchanged_plans": 946,
+      "unchanged_top_level_metadata": true
+    },
+    "case_diffs": [
+      {
+        "canonical_index_zero_based": 732,
+        "id": "pair_hint_conflict/Int64/Bool",
+        "operation": "replace",
+        "path": "/observation/compile_error/span",
+        "before": [
+          0,
+          3
+        ],
+        "after": [
+          0,
+          1
+        ]
+      },
+      {
+        "canonical_index_zero_based": 733,
+        "id": "pair_hint_conflict/Int64/Utf8",
+        "operation": "replace",
+        "path": "/observation/compile_error/span",
+        "before": [
+          0,
+          3
+        ],
+        "after": [
+          0,
+          1
+        ]
+      },
+      {
+        "canonical_index_zero_based": 734,
+        "id": "pair_hint_conflict/Int64/Binary",
+        "operation": "replace",
+        "path": "/observation/compile_error/span",
+        "before": [
+          0,
+          3
+        ],
+        "after": [
+          0,
+          1
+        ]
+      },
+      {
+        "canonical_index_zero_based": 738,
+        "id": "pair_hint_conflict/Bool/Int64",
+        "operation": "replace",
+        "path": "/observation/compile_error/span",
+        "before": [
+          0,
+          3
+        ],
+        "after": [
+          0,
+          1
+        ]
+      },
+      {
+        "canonical_index_zero_based": 739,
+        "id": "pair_hint_conflict/Bool/Utf8",
+        "operation": "replace",
+        "path": "/observation/compile_error/span",
+        "before": [
+          0,
+          3
+        ],
+        "after": [
+          0,
+          1
+        ]
+      },
+      {
+        "canonical_index_zero_based": 740,
+        "id": "pair_hint_conflict/Bool/Binary",
+        "operation": "replace",
+        "path": "/observation/compile_error/span",
+        "before": [
+          0,
+          3
+        ],
+        "after": [
+          0,
+          1
+        ]
+      },
+      {
+        "canonical_index_zero_based": 744,
+        "id": "pair_hint_conflict/Utf8/Int64",
+        "operation": "replace",
+        "path": "/observation/compile_error/span",
+        "before": [
+          0,
+          3
+        ],
+        "after": [
+          0,
+          1
+        ]
+      },
+      {
+        "canonical_index_zero_based": 745,
+        "id": "pair_hint_conflict/Utf8/Bool",
+        "operation": "replace",
+        "path": "/observation/compile_error/span",
+        "before": [
+          0,
+          3
+        ],
+        "after": [
+          0,
+          1
+        ]
+      },
+      {
+        "canonical_index_zero_based": 746,
+        "id": "pair_hint_conflict/Utf8/Binary",
+        "operation": "replace",
+        "path": "/observation/compile_error/span",
+        "before": [
+          0,
+          3
+        ],
+        "after": [
+          0,
+          1
+        ]
+      },
+      {
+        "canonical_index_zero_based": 750,
+        "id": "pair_hint_conflict/Binary/Int64",
+        "operation": "replace",
+        "path": "/observation/compile_error/span",
+        "before": [
+          0,
+          3
+        ],
+        "after": [
+          0,
+          1
+        ]
+      },
+      {
+        "canonical_index_zero_based": 751,
+        "id": "pair_hint_conflict/Binary/Bool",
+        "operation": "replace",
+        "path": "/observation/compile_error/span",
+        "before": [
+          0,
+          3
+        ],
+        "after": [
+          0,
+          1
+        ]
+      },
+      {
+        "canonical_index_zero_based": 752,
+        "id": "pair_hint_conflict/Binary/Utf8",
+        "operation": "replace",
+        "path": "/observation/compile_error/span",
+        "before": [
+          0,
+          3
+        ],
+        "after": [
+          0,
+          1
+        ]
+      },
+      {
+        "canonical_index_zero_based": 927,
+        "id": "max_schema_reference/last-column",
+        "operation": "replace",
+        "path": "/input/native_row/31",
+        "before": {
+          "type": "Utf8",
+          "payload": {
+            "kind": "Bytes",
+            "hex": "78"
+          }
+        },
+        "after": {
+          "type": "Int64",
+          "payload": {
+            "kind": "Int64",
+            "value": 1
+          }
+        }
+      }
+    ],
+    "draft_diff": {
+      "path": "artifacts/dev4-typed-predicate-20261024/semantic-inputs-draft.json",
+      "changed_cases": 1,
+      "id": "max_schema_reference/last-column",
+      "replace_path": "/input/native_row/31",
+      "other_json_fields_unchanged": true
+    },
+    "rust_literal_diff": {
+      "path": "crates/testing/reference/src/frontend/typed_predicate/literals.rs",
+      "changed_span_lines": 12,
+      "changed_row_lines": 1,
+      "other_lines_unchanged": true
+    },
+    "static_review": {
+      "kind": "JSON structural/data consistency inspection, not product execution or test evidence",
+      "success_input_checks": [
+        "row and parameter counts",
+        "logical type tags before null payload",
+        "payload/tag compatibility",
+        "declared nullable flags",
+        "byte length upper bounds",
+        "i64 payload range"
+      ],
+      "before": {
+        "expected_success_cases_inspected": 596,
+        "issues": [
+          {
+            "id": "max_schema_reference/last-column",
+            "path": "/input/native_row/31",
+            "kind": "type_tag"
+          }
+        ]
+      },
+      "after": {
+        "expected_success_cases_inspected": 596,
+        "issues": []
+      },
+      "contaminated_row_exact_matches_before": [
+        "max_schema_reference/last-column",
+        "max_schema_reference/last-unreferenced-tag"
+      ],
+      "contaminated_row_exact_matches_after": [
+        "max_schema_reference/last-unreferenced-tag"
+      ],
+      "canonical_inputs_unique": 946,
+      "all_json_cases_compared": 946,
+      "additional_affected_cases_detected": 0,
+      "limits": "No original bulk helper exists to prove historical object alias identity; no predicate truth was recomputed and no product algorithm was called. These static checks do not classify any formerly unexecuted runtime scope as PASS."
+    },
+    "files": [
+      {
+        "path": "artifacts/dev4-typed-predicate-20261024/author_fixtures.py",
+        "before_sha256": "c117295651449ef0aab93fe4a7bee4e2d4112088f922351190a48c75a198f2ba",
+        "after_sha256": "201b26348e0170c49099572252d5339ea4790152b9ddc6557c5a1c6f4db38841"
+      },
+      {
+        "path": "artifacts/dev4-typed-predicate-20261024/semantic-inputs-draft.json",
+        "before_sha256": "9df754c425968463cf7fda8e292ab09af9fd846f15d2ae4f5263ec1ae3110def",
+        "after_sha256": "4deb1f420dff3be21b90d1dbebf1738cbf4a71a997be1f60420ddc9e99aa89a3"
+      },
+      {
+        "path": "tests/fixtures/dev4-typed-predicate/semantic.json",
+        "before_sha256": "dd99248990367838716d93708a05d9aca9084d5f49f218fae9a0b2ca66fbd08c",
+        "after_sha256": "64266354a6bfc33ea62861d65dfac8b1ed8927f78cc66fad87c1506fdc64f1f4"
+      },
+      {
+        "path": "crates/testing/reference/src/frontend/typed_predicate/literals.rs",
+        "before_sha256": "46739f1452136086291bc75747f8593e07feff12f656e98e406f0577272ecc2a",
+        "after_sha256": "b794caad99ce7c0d06cdf4e8267451e691f72d2cb0d35edaa2cd756df3930422"
+      }
+    ],
+    "before_manifest_sha256": "f1d00c59a530661924f4e7bcf4943590b7dbe959009a2647bc13d129ef429c21",
+    "preserved_original_inputs": [
+      {
+        "path": "artifacts/dev4-typed-predicate-20261024/frozen-inputs/artifacts/dev4-typed-predicate-20261024/author_fixtures.py",
+        "sha256": "c117295651449ef0aab93fe4a7bee4e2d4112088f922351190a48c75a198f2ba"
+      },
+      {
+        "path": "artifacts/dev4-typed-predicate-20261024/frozen-inputs/artifacts/dev4-typed-predicate-20261024/semantic-inputs-draft.json",
+        "sha256": "9df754c425968463cf7fda8e292ab09af9fd846f15d2ae4f5263ec1ae3110def"
+      },
+      {
+        "path": "artifacts/dev4-typed-predicate-20261024/frozen-inputs/tests/fixtures/dev4-typed-predicate/semantic.json",
+        "sha256": "dd99248990367838716d93708a05d9aca9084d5f49f218fae9a0b2ca66fbd08c"
+      },
+      {
+        "path": "artifacts/dev4-typed-predicate-20261024/frozen-inputs/crates/testing/reference/src/frontend/typed_predicate/literals.rs",
+        "sha256": "46739f1452136086291bc75747f8593e07feff12f656e98e406f0577272ecc2a"
+      },
+      {
+        "path": "artifacts/dev4-typed-predicate-20261024/frozen-inputs/tests/fixtures/dev4-typed-predicate/manifest.json",
+        "sha256": "f1d00c59a530661924f4e7bcf4943590b7dbe959009a2647bc13d129ef429c21"
+      },
+      {
+        "path": "artifacts/dev4-typed-predicate-20261024/source-r3/tests/fixtures/dev4-typed-predicate/semantic.json",
+        "sha256": "dd99248990367838716d93708a05d9aca9084d5f49f218fae9a0b2ca66fbd08c"
+      },
+      {
+        "path": "artifacts/dev4-typed-predicate-20261024/source-r3/crates/testing/reference/src/frontend/typed_predicate/literals.rs",
+        "sha256": "46739f1452136086291bc75747f8593e07feff12f656e98e406f0577272ecc2a"
+      }
+    ],
+    "preserved_fail_receipts": [
+      {
+        "receipt": "artifacts/dev4-typed-predicate-20261024/r3-test-03.json",
+        "receipt_sha256": "419e929d83b2e235b7186d8f8e0e7047c2bbc194127ece6bcf14236ed8c4439f",
+        "exit_code": 101,
+        "log": "artifacts/dev4-typed-predicate-20261024/r3-test-03.log",
+        "log_sha256": "bdce4602553247ff7f4a3d5642ecdc89b1d0f19a2d4160ddc45bedc832513d08",
+        "source_receipt": "artifacts/dev4-typed-predicate-20261024/source-r3.json",
+        "source_receipt_sha256": "f34aa9784cb993424ca3b4e1ee9cd3a4d3c74a9f2edc913dd01d5be4c3e6e05a",
+        "source_fingerprint_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250"
+      },
+      {
+        "receipt": "artifacts/dev4-typed-predicate-20261024/r3-test-04.json",
+        "receipt_sha256": "f74ad28f4d9fb1b65ba42f009487ed79813380693f75408942bf03be076206fa",
+        "exit_code": 101,
+        "log": "artifacts/dev4-typed-predicate-20261024/r3-test-04.log",
+        "log_sha256": "89a260eeba13e9c68d6d7c089a1803c9034111a8c91093debdbd81f49ed1d71a",
+        "source_receipt": "artifacts/dev4-typed-predicate-20261024/source-r3.json",
+        "source_receipt_sha256": "f34aa9784cb993424ca3b4e1ee9cd3a4d3c74a9f2edc913dd01d5be4c3e6e05a",
+        "source_fingerprint_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250"
+      }
+    ],
+    "runtime_scope": {
+      "product_code_changed_by_this_correction": false,
+      "compile_executed": false,
+      "product_or_test_runtime_executed": false,
+      "original_failures_reclassified": false,
+      "generated_recipe_changed": false,
+      "known_bad_cases_changed": false,
+      "control_fixture_changed": false,
+      "continuations": [
+        {
+          "function": "typed_parameter_inference_and_bounds",
+          "selector": {
+            "XADB_TYPED_FROM_CASE": "pair_hint_conflict/Int64/Bool"
+          },
+          "completed_prefix_cases_not_selected": 91,
+          "planned_compile_calls": 45,
+          "planned_eval_calls": 27,
+          "status": "NOT_RUN"
+        },
+        {
+          "function": "typed_schema_and_value_boundaries",
+          "selector": {
+            "XADB_TYPED_FROM_CASE": "max_schema_reference/last-column"
+          },
+          "completed_prefix_cases_not_selected": 49,
+          "planned_compile_calls": 2,
+          "planned_eval_calls": 2,
+          "status": "NOT_RUN"
+        }
+      ],
+      "completed_unchanged_prefix_cases_excluded": 140
+    },
+    "root_owned_nonsemantic_updates": [
+      {
+        "path": "crates/sql/tests/typed_predicate_contracts.rs",
+        "current_sha256": "41b3f51c6674fe265429f9c95c0b159cbeb692891d1ac61474bd4ead6b51c30a",
+        "meaning": "XADB_TYPED_FROM_CASE resume selector, excludes completed unchanged group prefixes; root-authored and independently reviewed."
+      },
+      {
+        "path": "crates/sql/tests/typed_predicate_resources.rs",
+        "current_sha256": "1c3b7ac1ebb5b9b9b7f9f1cadcf38169b4925758597ad460dfc146cbca27a119",
+        "meaning": "Root-owned Span type correction; no semantic fixture modification."
+      }
+    ]
+  },
+  "selection": {
+    "r1": {
+      "status": "SELECTED_BEFORE_EXECUTION",
+      "at": "2026-10-24T19:31:12.703453+09:00",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "last_completed_validation": "predicate leaf at commit186085e; its normal runtime is not selected",
+      "changed_code": "new typed_predicate compile/eval owner, new independent reference/fixtures and two new adapters; new Code/Module variants and exhaustive observational wiring only in old adapters",
+      "runtime": [
+        {
+          "target": "typed_predicate_contracts",
+          "function": "typed_truth_and_type_matrix",
+          "relation": "new typed semantics or new independent oracle known-bad"
+        },
+        {
+          "target": "typed_predicate_contracts",
+          "function": "typed_bytes_and_input_origins",
+          "relation": "new typed semantics or new independent oracle known-bad"
+        },
+        {
+          "target": "typed_predicate_contracts",
+          "function": "typed_parameter_inference_and_bounds",
+          "relation": "new typed semantics or new independent oracle known-bad"
+        },
+        {
+          "target": "typed_predicate_contracts",
+          "function": "typed_schema_and_value_boundaries",
+          "relation": "new typed semantics or new independent oracle known-bad"
+        },
+        {
+          "target": "typed_predicate_contracts",
+          "function": "typed_whole_validation_and_error_priority",
+          "relation": "new typed semantics or new independent oracle known-bad"
+        },
+        {
+          "target": "typed_predicate_contracts",
+          "function": "generated_typed_predicate_operations",
+          "relation": "new typed semantics or new independent oracle known-bad"
+        },
+        {
+          "target": "typed_predicate_contracts",
+          "function": "known_bad_typed_predicate_observations_are_rejected",
+          "relation": "new typed semantics or new independent oracle known-bad"
+        },
+        {
+          "target": "typed_predicate_resources",
+          "function": "typed_owned_lifetimes",
+          "relation": "Name/source/AST/hints/compiler를 폐기한 뒤 compiled typed nodes/metadata/literal·span·평가 유지. 두 compiled 결과와 같은 ledger의 원 AST 합산. 외부 row/param은 호출만 borrow; caller를 바꾼 다음 호출에 새 결과. 마지막 Drop 원 charge 반환"
+        },
+        {
+          "target": "typed_predicate_resources",
+          "function": "typed_quota_boundaries",
+          "relation": "C=1/M=1/N=9 및 Text4/Binary2 payload의 정확 backing 수식. session/DB 각각 total−1/total/total+1, 이전 compiled+새 compiled/AST 공존. 마지막 literal DB 예약 실패의 partial peak와 원 output 불변"
+        },
+        {
+          "target": "typed_predicate_resources",
+          "function": "typed_actual_capacity",
+          "relation": "typed 각 backing에1element, literal에1byte padding. 각 actual capacity 합산, 마지막 excess session/DB−1/동일/+1 실패 원복. typed columns/parameters/nodes 각각의 초과분 session/DB 예약 실패도 별도 입력으로 검산. checked padding overflow. zero columns/parameters/fixed values는 padding 대상 할당0"
+        },
+        {
+          "target": "typed_predicate_resources",
+          "function": "typed_allocation_failures",
+          "relation": "columns→parameters→nodes→Text→Binary의5 allocation site 모두 fail. 정확 ordinal/module/span·잔여/old output 확인. 미도달6은 다음 호출로 이월되지 않음. metadata 조기 오류에도 다음 injection 소비. Value decode 오류 후 partial 반환"
+        },
+        {
+          "target": "typed_predicate_resources",
+          "function": "typed_semantics_before_quota",
+          "relation": "quota0과 Name/Type/Unknown/metadata 오류 교차로 C0–C5가 allocation 전임을 검산. zeroquota 정상식은 Compile/Limit. eval 입력 전체 tag가 nullable/length보다 우선하는 cross-error는 semantic fixture에서 별도 담당"
+        },
+        {
+          "target": "typed_predicate_resources",
+          "function": "typed_compile_controls",
+          "relation": "entry/final·metadata candidate 순회·Name/Type pass·literal decode 내부 취소와 deadline, cancel 우선. 원 retained 결과와 caller control 수명, 실패 뒤 새 호출 성공. checkpoint max256byte의 Name candidates/typed node copy static 크기 확인"
+        },
+        {
+          "target": "typed_predicate_resources",
+          "function": "typed_eval_controls",
+          "relation": "entry/final·whole input validation·flat node traversal의 취소/시간초과. 늦은 이전 cancel이 새 evaluate를 오염하지 않음. Eval node 제어 span과 최종 root.end 구별"
+        },
+        {
+          "target": "typed_predicate_resources",
+          "function": "typed_validation_controls",
+          "relation": "row32/parameter256 각각의 tag·length pass 내부를 취소/timeout으로 구별한다. 뒤 입력 오류와 앞 checkpoint를 교차하고 length detector는 마지막 tag 관측 뒤에만 활성화"
+        },
+        {
+          "target": "typed_predicate_resources",
+          "function": "typed_long_compare_controls",
+          "relation": "65,537개 leading space 뒤 `a=?`(source/node좌표≥65,537, local진행≤65,536 분리), native row와 parameter의65,536byte 동일 prefix Utf8/Binary. 각 관측 간격≤128·paired byte≤256, p∈[32768,32896) interior 취소/시간초과→Compare 전체span. 초기/final checks와 구별. mismatch 끝·prefix길이·빈값의 최종 검사를 포함"
+        },
+        {
+          "target": "typed_predicate_resources",
+          "function": "typed_eval_no_new_charge",
+          "relation": "정확 compiled charge로 잔여0 상태, borrowed 긴 값 평가·다음호출 바뀐 값·error·정리에서 charge/peak불변. heap0은 allocation 없는 실제 evaluate call graph 정적 검토와 함께 주장하며 ledger 수치만으로 global allocator 부재를 증명하지 않음. unsafe allocator 도입 없음"
+        },
+        {
+          "target": "typed_predicate_resources",
+          "function": "typed_stack_and_drop",
+          "relation": "기존 parser로 만든64nested/8192nodes/256markers/32columns 입력을 독립256KiB thread에 이동, compile/eval/flatDrop 성공. 입력 AST 파싱은 thread 밖에서 수행하며 원 parser stack 시험을 반복하지 않음. size상한, TruthValue[8192]8192B, compiler scratch≤8KiB static/runtime확인"
+        },
+        {
+          "target": "typed_predicate_resources",
+          "function": "typed_shared_database",
+          "relation": "native2thread, 별도session/sharedDB, 첫 native thread가 반환한 compiled를 root가 보유한 채 두 번째 native thread compile 제한−1/동일/+1. DB합산과 failed partial cleanup, 첫 결과 유효, join후0"
+        }
+      ],
+      "static_commands": [
+        [
+          "cargo",
+          "build",
+          "-p",
+          "xadb-sql",
+          "--locked"
+        ],
+        [
+          "cargo",
+          "clippy",
+          "-p",
+          "xadb-sql",
+          "-p",
+          "xadbtest-reference",
+          "--all-targets",
+          "--all-features",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        [
+          "cargo",
+          "fmt",
+          "--all",
+          "--check"
+        ]
+      ],
+      "selection_limits": "Each new exact function once per relevant source. Stop after build failure. Preserve every result. After a correction select only incomplete/failed functions and code-affected cases, never completed unchanged leaf runtime. Separate mutants each execute only their frozen detector.",
+      "excluded": [
+        "DEV3 dirty engine/tests",
+        "existing scalar/parser/predicate/lexer/name/splitter normal runtime",
+        "workspace/lower regression wrappers",
+        "expanded256x1024 and30minute generated profiles",
+        "document verifier pre-push-only"
+      ],
+      "evidence": "source+selection immutable before every execution; original ELF and log SHA retained, skips/failures not PASS"
+    },
+    "r4": {
+      "status": "SELECTED_BEFORE_EXECUTION",
+      "at": "2026-10-24T19:50:11.846607+09:00",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "last_completed_validation": "r3 Clippy/fmt PASS; normal17 complete functions and140 completed prefix cases retained; original2 failed jobs preserved",
+      "changed_code": "12 marker error spans and one successful32-column row input corrected from canonical contract, corresponding literal/author/manifest history; semantic adapter optional exact resume ID. Product unchanged.",
+      "runtime": [
+        {
+          "target": "typed_predicate_contracts",
+          "function": "typed_parameter_inference_and_bounds",
+          "from_case": "pair_hint_conflict/Int64/Bool",
+          "compile_calls": 45,
+          "eval_calls": 27,
+          "completed_prefix_excluded": 91
+        },
+        {
+          "target": "typed_predicate_contracts",
+          "function": "typed_schema_and_value_boundaries",
+          "from_case": "max_schema_reference/last-column",
+          "compile_calls": 2,
+          "eval_calls": 2,
+          "completed_prefix_excluded": 49
+        }
+      ],
+      "static_commands": [
+        [
+          "cargo",
+          "clippy",
+          "-p",
+          "xadb-sql",
+          "-p",
+          "xadbtest-reference",
+          "--all-targets",
+          "--all-features",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        [
+          "cargo",
+          "fmt",
+          "--all",
+          "--check"
+        ]
+      ],
+      "selection_limits": "Each new exact function once per relevant source. Stop after build failure. Preserve every result. After a correction select only incomplete/failed functions and code-affected cases, never completed unchanged leaf runtime. Separate mutants each execute only their frozen detector.",
+      "excluded": [
+        "DEV3 dirty engine/tests",
+        "existing scalar/parser/predicate/lexer/name/splitter normal runtime",
+        "workspace/lower regression wrappers",
+        "expanded256x1024 and30minute generated profiles",
+        "document verifier pre-push-only"
+      ],
+      "evidence": "source+selection immutable before every execution; original ELF and log SHA retained, skips/failures not PASS",
+      "fixture_correction": "fixture-correction.json"
+    }
+  },
+  "sources": [
+    {
+      "id": "source-r1",
+      "source_sha256": "d2d99a096ea63a79c287a7a9af322eda4433fd69c76edf875710e074aa87ab0c",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/source-r1.json",
+        "sha256": "b046b5a6a34a8481de2a6d4c67a6642f99c26f99ee198d8f092e546338ffceee"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "source-r2",
+      "source_sha256": "457f298a513ccc8eebacc8e26fa9bcbd6d8a54f12e8ecfb70073e9ad567f972f",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/source-r2.json",
+        "sha256": "9be286815ee083f9e7ecc47e90748268f2c3d17538bc70e3f31b0c394ac51700"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "source-r3",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/source-r3.json",
+        "sha256": "f34aa9784cb993424ca3b4e1ee9cd3a4d3c74a9f2edc913dd01d5be4c3e6e05a"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "source-r4",
+      "source_sha256": "df9701e863aa58d0335f0171b571ed027605a9808157e4c0724fc4621cdc0295",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/source-r4.json",
+        "sha256": "936215ca123de6da5636474d52362049a2cff1790831d40889029459149e4dc2"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m01",
+      "source_sha256": "0e8b8ea16cfd6b820caf31f15f50eefdb71a16f53718031f8a304045747a10e0",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m01.json",
+        "sha256": "0b4d5a148804fc96573b51deeccb208a277a6f809c99ea11a93ce6a98faca866"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m02",
+      "source_sha256": "007b41ec56c9bdc9b3a01063d0195d815e6fdcc0cb49529bf306795902074dcc",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m02.json",
+        "sha256": "e9b187544522b9776b96d7e47f530359acd81532ef2e5b41a74da9b3e250e9b3"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m03",
+      "source_sha256": "bf3713562a2995fbf8b9a93c63f4b6fe0947c81199265af2a789c6fd5cf84028",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m03.json",
+        "sha256": "bafc0b50f0db7a779301b4f68abfbb2c393541497f27d8c94b4112d2ba947284"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m04",
+      "source_sha256": "4d5f0c34c62b260f3ee479e6f0af0f501c56f79872a7e6e3e270540363ec5eb6",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m04.json",
+        "sha256": "23d0f7d1ce681fa0c73e3ce5e01a23cefe4b3d3733e2b71e8c6b33d2123b12db"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m05",
+      "source_sha256": "b5fc30dcdef19a2ab75c12006f067baa9a41dd1f72fe1772927464788359bc42",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m05.json",
+        "sha256": "d8eca5fb471bcc96e8b9dde036f332e3ef78cb6458f03e6572b205304f229f8d"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m06",
+      "source_sha256": "9abadcfce055cad219eaa4e1e079e0803eb92b38215bfdccaa26e376386b143f",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m06.json",
+        "sha256": "c9d2226cf3d63f8b3a39d30be355ddec49199a964576dd711599344dc61f2a1a"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m07",
+      "source_sha256": "539ded8acce9393639fa22f55a43ce96b4aaa87a3ca5a060de81f072903aef12",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m07.json",
+        "sha256": "2f9e2dff0fab4b3fe0983b7a179eb662f35ca8bbdc9daf06d2f7647ad48cf783"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m08",
+      "source_sha256": "177d12e632e5a78cbe572e1a1339789b9e882a3b44d86980ab9d090a3453825a",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m08.json",
+        "sha256": "e468a0510a1582d913ca519fd273df56f27005285e1f161fb8cc5226e8ce429e"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m09",
+      "source_sha256": "6e0c9e80b67023141508daccd2381fbc44257edf9f1d14d8026807b5ca2f91be",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m09.json",
+        "sha256": "7c055910faa71dfc7a4d2ea9637ef7d9b90b47622ae2e6ed0a6e4d64814bfdfe"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m10",
+      "source_sha256": "ec15fcdbed88fafd64ded3b2afdb0b2f4b8da6f10b9e0a1fb21490b3e913c160",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m10.json",
+        "sha256": "bd7ffe3c0c85d7539c122016c535a38efa17bca01571be456c65915d8c651d93"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m11",
+      "source_sha256": "4a5a85d7630bb706b127e5cf10aa0d144e874e598ff9fcc6033cafe85f3c89ca",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m11.json",
+        "sha256": "cd9cdd0a116b539aa1a27791ab6bcc7e098250ab6eac106edd78eff0ffb37c19"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m12",
+      "source_sha256": "70d42d0624f1beb639deabb38e5562e0493243c8982179ca548ec3aa44a7560b",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m12.json",
+        "sha256": "a158369b756c57c0697363418499fe33c1237d360b8282fc5a6b1c38822a71b6"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m13",
+      "source_sha256": "e874789dad5bd1604bbcda7c6337192a66b4f5f03e6c040de9b7f23977ffa9c8",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m13.json",
+        "sha256": "ab12c85a02ee3891a3c2a2872bc5f01b413107401871bb060ffe4aebe4579cb6"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m14",
+      "source_sha256": "9a1f5d7a9745685408730206e899fd49706308e1a4c1cbf43cce5711d2fc3a2d",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m14.json",
+        "sha256": "1b804de75c614600ed385cbd821b875aee9c976d3945033174ce46fa52cd0dec"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m15",
+      "source_sha256": "9089a02e2f396ea423fc528aa4c570731971e7e30b751a232b5442d7089e0819",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m15.json",
+        "sha256": "584e0f61bc74b35bbd3ee15f0a22ad8a009f340ddf729df4cf98610a0ac450da"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m16",
+      "source_sha256": "e2966a02e84753945d2294bc9a23d924888a4957dccfd705cc2bcdb8a1570bef",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m16.json",
+        "sha256": "769a37f5baed39a898fe714862c214d108097345fad60f6368ff24e9c28c88bb"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m17",
+      "source_sha256": "0de6acf1c95cc60444dbec176ec377d5b4f8bd34d3beaf2f3b3ebebae7b6aa9c",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m17.json",
+        "sha256": "e382cb2b2e1f7069649288ba1ef22bd294e968bbde4cc1ae36646333ee3a5845"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    },
+    {
+      "id": "mutant-m18",
+      "source_sha256": "c77652c66b072c366869fd2e2fe553dcc43f2cb883a9e08e0363fabac70a4fba",
+      "base_head": "186085e49cf11308fca47bb13775168bdcaa5f54",
+      "manifest": {
+        "path": "artifacts/dev4-typed-predicate-20261024/mutant-m18.json",
+        "sha256": "751c6adea8c301b5ed8c535c1194abe9d58a53d640a5ccfcecdc818c3c96ed4f"
+      },
+      "overlay_count": 54,
+      "all_file_count": 4412
+    }
+  ],
+  "normal_runs": [
+    {
+      "id": "r1-build",
+      "source": "source-r1.json",
+      "source_sha256": "d2d99a096ea63a79c287a7a9af322eda4433fd69c76edf875710e074aa87ab0c",
+      "command": [
+        "cargo",
+        "build",
+        "-p",
+        "xadb-sql",
+        "--locked"
+      ],
+      "exit_code": 0,
+      "seconds": 0.9656449849971978,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r1-build.json",
+        "sha256": "6e6dae4fb3ae14cf11a4cd15b7b823cb20c6e828ccc0172178146a99e04736a4"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r1-build.log",
+        "sha256": "5f371f58816f6fb00535581dfa2b4249e428598b072ec36a9334d9a7f614f949"
+      },
+      "binary_archives": {}
+    },
+    {
+      "id": "r1-clippy",
+      "source": "source-r1.json",
+      "source_sha256": "d2d99a096ea63a79c287a7a9af322eda4433fd69c76edf875710e074aa87ab0c",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-sql",
+        "-p",
+        "xadbtest-reference",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 101,
+      "seconds": 5.610993107999093,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r1-clippy.json",
+        "sha256": "8843f1b7a629a9e500f94bdf6c5ff74a92cd4f30f43198c302d08cc45b3a28ee"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r1-clippy.log",
+        "sha256": "97ac56a20af9bf84ca831b8e36cfdc4277a4c7a99051586a01cd7a726305f9e9"
+      },
+      "binary_archives": {
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r2-clippy",
+      "source": "source-r2.json",
+      "source_sha256": "457f298a513ccc8eebacc8e26fa9bcbd6d8a54f12e8ecfb70073e9ad567f972f",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-sql",
+        "-p",
+        "xadbtest-reference",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 101,
+      "seconds": 5.257263579002029,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r2-clippy.json",
+        "sha256": "f38e08de4557ef014a5c1fba459f2ffe1e42024c32a37a387b9b82720e0b9cc1"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r2-clippy.log",
+        "sha256": "1d0d1c10e7344dc0aeb96d8892492e304c6bd212991e12a62d99905111cea82c"
+      },
+      "binary_archives": {
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-clippy",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-sql",
+        "-p",
+        "xadbtest-reference",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 5.201686344000336,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-clippy.json",
+        "sha256": "8d7fe28a55d28b2b96f08b00c81973a000adbd92523a9ae4f86c81b62f691f4a"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-clippy.log",
+        "sha256": "f56dbfd6a7b5232c5a8e8db1c1dfe580681c9b9dedf3e8e5e8e61576f50fc6b0"
+      },
+      "binary_archives": {
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-fmt",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 1.2711934709986963,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-fmt.json",
+        "sha256": "93f58670b38463225540ec258bb936fd760fe00d029dc2e509ed4c1a808907e9"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-fmt.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "binary_archives": {
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-01",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_contracts",
+        "typed_truth_and_type_matrix",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 6.781869753001956,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-01.json",
+        "sha256": "66bcc929e8ef32f43657ea3d05f2a53653f85a0f304feb4a513532910071b220"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-01.log",
+        "sha256": "815c2d059ac5be29daa0722f824cf2f4ffbd77ba7dd5e130de9e743a998c34d0"
+      },
+      "binary_archives": {
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-02",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_contracts",
+        "typed_bytes_and_input_origins",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.21809990200199536,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-02.json",
+        "sha256": "57286d00271dd79bf911be0cea314bdcfca0afa8e2fec8ac5bd03004f4fca65b"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-02.log",
+        "sha256": "f97a1f6d35d9242c73fabff59f369a0472ccf2fa4cfb143520caf4063df340c6"
+      },
+      "binary_archives": {
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-03",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_contracts",
+        "typed_parameter_inference_and_bounds",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "seconds": 0.21769597299862653,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-03.json",
+        "sha256": "419e929d83b2e235b7186d8f8e0e7047c2bbc194127ece6bcf14236ed8c4439f"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-03.log",
+        "sha256": "bdce4602553247ff7f4a3d5642ecdc89b1d0f19a2d4160ddc45bedc832513d08"
+      },
+      "binary_archives": {
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-04",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_contracts",
+        "typed_schema_and_value_boundaries",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "seconds": 0.23761808399649453,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-04.json",
+        "sha256": "f74ad28f4d9fb1b65ba42f009487ed79813380693f75408942bf03be076206fa"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-04.log",
+        "sha256": "89a260eeba13e9c68d6d7c089a1803c9034111a8c91093debdbd81f49ed1d71a"
+      },
+      "binary_archives": {
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-05",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_contracts",
+        "typed_whole_validation_and_error_priority",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.22736731999975746,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-05.json",
+        "sha256": "a3f23f64b7cffdf34bde5bf8c0ae3f5459976983fe2f639def2d293b6a2eb6dc"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-05.log",
+        "sha256": "3150478039b4b7a2bb62985ed2e940fc46a6c603552e4500197ddf0de22bc72f"
+      },
+      "binary_archives": {
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-06",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_contracts",
+        "generated_typed_predicate_operations",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.3043942980002612,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-06.json",
+        "sha256": "3066c8dd81a60fa071cb86e6ef07c43977f9a097fa1e61286feede947f078d74"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-06.log",
+        "sha256": "c1e120ef05afdbe89e0a964e50bcd9478b25957513e63acfa7acef6c1378a743"
+      },
+      "binary_archives": {
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-07",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_contracts",
+        "known_bad_typed_predicate_observations_are_rejected",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.21816406700236257,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-07.json",
+        "sha256": "f46a9b8937226f2372a8b4e30c06d2d7cf2ae8271046337183bb38b83e611236"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-07.log",
+        "sha256": "98993e50b3862d07c0cecc4cb084848d3ce75bfee03faf278b06356d1e71abf8"
+      },
+      "binary_archives": {
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-08",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_resources",
+        "typed_owned_lifetimes",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 1.0536781889968552,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-08.json",
+        "sha256": "fdb0d2c17bcc96c6e78e5ca3c29c1300c88eff2db53da0f579f73d2c14a5690e"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-08.log",
+        "sha256": "04494a8b37c49d0d084e5ee32e7f87d3ab73f7870324037d2ec009bbbd9260ac"
+      },
+      "binary_archives": {
+        "binaries/280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c/typed_predicate_resources-f8fb7b9b5b57d490.gz": {
+          "elf_sha256": "280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c",
+          "artifact_sha256": "66b2c6491380c499e48c914c962262cdca7df3519ca1f2befd7780f4a12138e5",
+          "elf_bytes": 9527688,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-09",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_resources",
+        "typed_quota_boundaries",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.24657008000212954,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-09.json",
+        "sha256": "8ce79fa4d2a0d0f765db0526c0dc0bcf8cd087d53b81a24f6d8fc86e9e494acd"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-09.log",
+        "sha256": "7b46842faa1945e2521cf7995a6ebcec8acbafbd519b866faba81b1b3f7c892c"
+      },
+      "binary_archives": {
+        "binaries/280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c/typed_predicate_resources-f8fb7b9b5b57d490.gz": {
+          "elf_sha256": "280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c",
+          "artifact_sha256": "66b2c6491380c499e48c914c962262cdca7df3519ca1f2befd7780f4a12138e5",
+          "elf_bytes": 9527688,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-10",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_resources",
+        "typed_actual_capacity",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.2430354450007144,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-10.json",
+        "sha256": "d19701b861b97e00e2a6e7065c9a76e1851740b0c18f7bda2266b182737b7f82"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-10.log",
+        "sha256": "929cc6b4fc011b996236ec593bd8f6369409fa88451f17bf635c6283d206e31e"
+      },
+      "binary_archives": {
+        "binaries/280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c/typed_predicate_resources-f8fb7b9b5b57d490.gz": {
+          "elf_sha256": "280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c",
+          "artifact_sha256": "66b2c6491380c499e48c914c962262cdca7df3519ca1f2befd7780f4a12138e5",
+          "elf_bytes": 9527688,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-11",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_resources",
+        "typed_allocation_failures",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.24288704599894118,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-11.json",
+        "sha256": "e4bd8a5ee4a957efad7e20ff04369ae2dfb4c6db43d36981cf26ee7be5395acf"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-11.log",
+        "sha256": "664185b345263d8d545dc79dd73b9e2ea36ee1f76ab3dac350974306711bbb09"
+      },
+      "binary_archives": {
+        "binaries/280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c/typed_predicate_resources-f8fb7b9b5b57d490.gz": {
+          "elf_sha256": "280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c",
+          "artifact_sha256": "66b2c6491380c499e48c914c962262cdca7df3519ca1f2befd7780f4a12138e5",
+          "elf_bytes": 9527688,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-12",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_resources",
+        "typed_semantics_before_quota",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.2468976689997362,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-12.json",
+        "sha256": "f642a628bb8052aaaf0126c04474d840af6dd5c41b2af4b3ac94b526fcea2654"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-12.log",
+        "sha256": "ed14199fe50c04a6c723d556e130fdc78d34b5ce5986100257154e7e91713c6a"
+      },
+      "binary_archives": {
+        "binaries/280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c/typed_predicate_resources-f8fb7b9b5b57d490.gz": {
+          "elf_sha256": "280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c",
+          "artifact_sha256": "66b2c6491380c499e48c914c962262cdca7df3519ca1f2befd7780f4a12138e5",
+          "elf_bytes": 9527688,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-13",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_resources",
+        "typed_compile_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.24261126999772387,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-13.json",
+        "sha256": "50132d5e531ad876e2035e623b408819951918379984d93daf3c2e849d4fc5be"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-13.log",
+        "sha256": "9cfc603237fabee420b00442e847514abc180fd1e6f9597fa6a05358f1f803a1"
+      },
+      "binary_archives": {
+        "binaries/280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c/typed_predicate_resources-f8fb7b9b5b57d490.gz": {
+          "elf_sha256": "280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c",
+          "artifact_sha256": "66b2c6491380c499e48c914c962262cdca7df3519ca1f2befd7780f4a12138e5",
+          "elf_bytes": 9527688,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-14",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_resources",
+        "typed_eval_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.24166248500114307,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-14.json",
+        "sha256": "9efff866e78fef9a5103bc12fc93f6feb7ce31337a08258f9fe75e8d9f2f9d12"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-14.log",
+        "sha256": "e1d69a05a3d6b8b700c7864c2f93c4532ee0ca6e24541c86a28f9d0a22d643c6"
+      },
+      "binary_archives": {
+        "binaries/280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c/typed_predicate_resources-f8fb7b9b5b57d490.gz": {
+          "elf_sha256": "280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c",
+          "artifact_sha256": "66b2c6491380c499e48c914c962262cdca7df3519ca1f2befd7780f4a12138e5",
+          "elf_bytes": 9527688,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-15",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_resources",
+        "typed_validation_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.24423065399969346,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-15.json",
+        "sha256": "b4371bf7fd2d70300996d8fc27ed05891fe8309a640f3fa4de0ddb2ec30882bf"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-15.log",
+        "sha256": "2e848beb015eb30b76769dfb52da62113cbbce4011542dd060b0381cb5ab9b7f"
+      },
+      "binary_archives": {
+        "binaries/280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c/typed_predicate_resources-f8fb7b9b5b57d490.gz": {
+          "elf_sha256": "280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c",
+          "artifact_sha256": "66b2c6491380c499e48c914c962262cdca7df3519ca1f2befd7780f4a12138e5",
+          "elf_bytes": 9527688,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-16",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_resources",
+        "typed_long_compare_controls",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.2494133310028701,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-16.json",
+        "sha256": "693e8db5353747c20350a835af38cf01300861439ea1154ed0810ca2fab9c3eb"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-16.log",
+        "sha256": "c0cdac176ef77bdcc7f57033bfff3ce5b0e501ff4b8fb1b46d986f615ee38dad"
+      },
+      "binary_archives": {
+        "binaries/280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c/typed_predicate_resources-f8fb7b9b5b57d490.gz": {
+          "elf_sha256": "280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c",
+          "artifact_sha256": "66b2c6491380c499e48c914c962262cdca7df3519ca1f2befd7780f4a12138e5",
+          "elf_bytes": 9527688,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-17",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_resources",
+        "typed_eval_no_new_charge",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.24594835699826945,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-17.json",
+        "sha256": "0e79a0a28e91103fd678cd6a5c6536d9e11922d2b0dea3a4695304473aa8cb47"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-17.log",
+        "sha256": "572a55e1a46c0a845289ed4eea6eb2340ddf0bb3ad0a6a99916e19b5c70d2c2c"
+      },
+      "binary_archives": {
+        "binaries/280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c/typed_predicate_resources-f8fb7b9b5b57d490.gz": {
+          "elf_sha256": "280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c",
+          "artifact_sha256": "66b2c6491380c499e48c914c962262cdca7df3519ca1f2befd7780f4a12138e5",
+          "elf_bytes": 9527688,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-18",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_resources",
+        "typed_stack_and_drop",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.24913614099932602,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-18.json",
+        "sha256": "27e793417b9525de24525992a6ab7821efa7d57c83d000ec893d9e87eb7e1836"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-18.log",
+        "sha256": "329edbd2a958114c1506691c1524b2dac896a5a9b467cfbd822186b0ebb5857c"
+      },
+      "binary_archives": {
+        "binaries/280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c/typed_predicate_resources-f8fb7b9b5b57d490.gz": {
+          "elf_sha256": "280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c",
+          "artifact_sha256": "66b2c6491380c499e48c914c962262cdca7df3519ca1f2befd7780f4a12138e5",
+          "elf_bytes": 9527688,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r3-test-19",
+      "source": "source-r3.json",
+      "source_sha256": "725345d45a3b8a87a9466fa6ff68b4252c246169ec0612d8b398e232b45f7250",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_resources",
+        "typed_shared_database",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.2456380639996496,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-19.json",
+        "sha256": "c7db6f1a7dba67a20256cea605e2979fa5de286cf2f48ae3479cb2d37eda268a"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r3-test-19.log",
+        "sha256": "672e60793fd4e4fcdda36637c5a50055ffa5f5d821fee3fae270f53637bef506"
+      },
+      "binary_archives": {
+        "binaries/280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c/typed_predicate_resources-f8fb7b9b5b57d490.gz": {
+          "elf_sha256": "280970dbb6efa32e75f8d1cb841101c349322fd7f985b631ced496a666ef165c",
+          "artifact_sha256": "66b2c6491380c499e48c914c962262cdca7df3519ca1f2befd7780f4a12138e5",
+          "elf_bytes": 9527688,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "b6c1a73534cab9d82915ba6de8951c67c70df38706359fa9e35ab1599b3d684c",
+          "artifact_sha256": "26348a8a9bc19895f4eaac8a3db032b930a3b549ee3731b1b3ee9ea6d47e34c8",
+          "elf_bytes": 27456704,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r4-clippy",
+      "source": "source-r4.json",
+      "source_sha256": "df9701e863aa58d0335f0171b571ed027605a9808157e4c0724fc4621cdc0295",
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-sql",
+        "-p",
+        "xadbtest-reference",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 5.248400092998054,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r4-clippy.json",
+        "sha256": "39e4b2ed16463bddb86974f4e4020e472833c6e3add7223c2d4fb891083d23d6"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r4-clippy.log",
+        "sha256": "61ae788080d6f2d339e33705abbe8f0cce08e9f9ab5b2c22bdfb5e4b87a73c47"
+      },
+      "binary_archives": {
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r4-fmt",
+      "source": "source-r4.json",
+      "source_sha256": "df9701e863aa58d0335f0171b571ed027605a9808157e4c0724fc4621cdc0295",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 1.263919952998549,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r4-fmt.json",
+        "sha256": "3555dc90d15b5b7349c5af0abbe89150ac5aadd1e638ee9ea2f6876e7937ed38"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r4-fmt.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "binary_archives": {
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r4-test-1",
+      "source": "source-r4.json",
+      "source_sha256": "df9701e863aa58d0335f0171b571ed027605a9808157e4c0724fc4621cdc0295",
+      "command": [
+        "env",
+        "XADB_TYPED_FROM_CASE=pair_hint_conflict/Int64/Bool",
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_contracts",
+        "typed_parameter_inference_and_bounds",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 6.747821868997562,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r4-test-1.json",
+        "sha256": "55189022b48df2beb97816855a3fdfc451e53c91702c577b38e7f639e5b6e941"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r4-test-1.log",
+        "sha256": "912749fb4ff232bea5abb45916665f613f04d169e4dfec58f8bce45b298b9ebc"
+      },
+      "binary_archives": {
+        "binaries/63b32bb9ae8399e38c662e83e575546c57b1b0d6924a70143e867e86fdc1b2d6/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "63b32bb9ae8399e38c662e83e575546c57b1b0d6924a70143e867e86fdc1b2d6",
+          "artifact_sha256": "ebc3904dd09669e811f43a4c66bf61411b0e1a3e7346bb4b3720f375d643da83",
+          "elf_bytes": 27488232,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    },
+    {
+      "id": "r4-test-2",
+      "source": "source-r4.json",
+      "source_sha256": "df9701e863aa58d0335f0171b571ed027605a9808157e4c0724fc4621cdc0295",
+      "command": [
+        "env",
+        "XADB_TYPED_FROM_CASE=max_schema_reference/last-column",
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--locked",
+        "--test",
+        "typed_predicate_contracts",
+        "typed_schema_and_value_boundaries",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.21998415000052773,
+      "receipt": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r4-test-2.json",
+        "sha256": "f81be92b8feaa23c22155fc3655317f5d27defc35502081fa265cc36ceca1a90"
+      },
+      "log": {
+        "path": "artifacts/dev4-typed-predicate-20261024/r4-test-2.log",
+        "sha256": "14dfd21f70a0423cb92bd9f36b05301e19d996ed2e32a33f6d9bb3fad7ae2335"
+      },
+      "binary_archives": {
+        "binaries/63b32bb9ae8399e38c662e83e575546c57b1b0d6924a70143e867e86fdc1b2d6/typed_predicate_contracts-ad3de7da705a361a.gz": {
+          "elf_sha256": "63b32bb9ae8399e38c662e83e575546c57b1b0d6924a70143e867e86fdc1b2d6",
+          "artifact_sha256": "ebc3904dd09669e811f43a4c66bf61411b0e1a3e7346bb4b3720f375d643da83",
+          "elf_bytes": 27488232,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        },
+        "binaries/96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605/libserde_derive-c30b669326a285d8.so.gz": {
+          "elf_sha256": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+          "artifact_sha256": "e208e277fe342b82f7e10177523bbbbeeb175afb4e1bc099f8c625e1aae8e682",
+          "elf_bytes": 8626112,
+          "compression": "gzip lossless; mtime=0; filename empty"
+        }
+      }
+    }
+  ],
+  "fixed_semantics": {
+    "canonical_cases": 946,
+    "compile_calls_required": 946,
+    "eval_calls_required": 688,
+    "coverage_cells": 959,
+    "coverage_aliases": 13,
+    "complete_group_cases_on_r3": 759,
+    "completed_cases_inside_failed_r3_jobs": 140,
+    "corrected_or_unexecuted_cases_on_r4": 47,
+    "r3_failed_jobs_remain_failed": true,
+    "fixed_actual_compile_calls_including_failed_attempts": 948,
+    "fixed_actual_eval_calls_including_failed_attempts": 689,
+    "prefix_completion_basis": "Original immutable factory/group order and assert_case cleanup complete sequentially before named panic. These are completed assertions in failed jobs, not PASS jobs or new r4 evidence.",
+    "r4_runtime": "45compile/27eval after parameter91prefix;2compile/2eval after schema49prefix; explicit env selection in commands"
+  },
+  "generated_operations": {
+    "seeds": 64,
+    "operations": 8192,
+    "compile_calls": 8192,
+    "eval_calls": 8192,
+    "source": "source-r3"
+  },
+  "known_bad_observations": {
+    "mutants": 44,
+    "unchanged_controls": 8,
+    "product_calls": 0,
+    "source": "source-r3"
+  },
+  "resources": {
+    "functions": 12,
+    "source": "source-r3",
+    "results": "r3-test-08..19 all PASS",
+    "heap0": "Allocation-free product evaluate call graph independently inspected plus no-new-charge/peak runtime; not global allocator instrumentation",
+    "shared_database": "Two native callers sequentially; first retained output consumes shared DB budget while second compiles; not simultaneous allocation race"
+  },
+  "product_mutation_review": {
+    "at": "2026-10-24T19:56:43.760972+09:00",
+    "reviewer": "/root",
+    "method": "Read each actual failed assertion against frozen category and exact product edit; no compile/setup/timeout treated as detection",
+    "categories": 18,
+    "detector_jobs": 19,
+    "mutants": [
+      {
+        "id": "M01",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m01",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m01-detector.json",
+          "sha256": "f91507a3b1b882c044c679c785ce38eabd97a36a85dda3e5b91bad576e548734"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_contracts.rs:283:9:\ncase=phase_precedence/name-before-type full-observation mismatch: compile=Some(ErrorObservation { code: \"Type\", module: \"Compile\", span: [0, 5] })/Some(ErrorObservation { code: \"Name\", module: \"Compile\", span: [10, 17] }), eval=None/None, truth=None/None, where=None/None, first-node=None, node-count=None/None, columns-equal=true, parameters-equal=true",
+        "reason": "Whole Name pass skipped: Type[0,5] hides missing Name[10,17]."
+      },
+      {
+        "id": "M02",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m02",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m02-detector.json",
+          "sha256": "0c65947f9dca3a53e1852bb1a0ed0bbb6c8ef1865f046bcf89b610a07edf9b3b"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_contracts.rs:283:9:\ncase=phase_precedence/unknown-before-decode full-observation mismatch: compile=Some(ErrorObservation { code: \"Range\", module: \"Value\", span: [14, 33] })/Some(ErrorObservation { code: \"ParameterTypeUnknown\", module: \"Compile\", span: [0, 1] }), eval=None/None, truth=None/None, where=None/None, first-node=None, node-count=None/None, columns-equal=true, parameters-equal=true",
+        "reason": "Early literal decode: Value/Range hides ParameterTypeUnknown; still-unexecuted next case additionally shows Value/Range[0,19] hides Compile/Type[26,31].",
+        "unexecuted_type_case_continuation": {
+          "receipt": {
+            "path": "artifacts/dev4-typed-predicate-20261024/mutant-m02-type-detector.json",
+            "sha256": "2974415cc827a8a53bbbc2da4fd0ad0bb89d688eb2bc1d7c893f54d26571f00e"
+          },
+          "assertion": "panicked at crates/sql/tests/typed_predicate_contracts.rs:283:9:\ncase=phase_precedence/type-before-earlier-decode full-observation mismatch: compile=Some(ErrorObservation { code: \"Range\", module: \"Value\", span: [0, 19] })/Some(ErrorObservation { code: \"Type\", module: \"Compile\", span: [26, 31] }), eval=None/None, truth=None/None, where=None/None, first-node=None, node-count=None/None, columns-equal=true, parameters-equal=true",
+          "selection": {
+            "path": "artifacts/dev4-typed-predicate-20261024/selection-mutant-m02-continuation.json",
+            "sha256": "2ffbb97d8f333bc4da968f983399b3c68283d0c7015e60e8cbf62695f0f92e9f"
+          }
+        }
+      },
+      {
+        "id": "M03",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m03",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m03-detector.json",
+          "sha256": "0900c7d542bbfb2417971a8b00abd64df14cf837877f36c21a36cd24d2b82138"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_contracts.rs:283:9:\ncase=pair_hint/Int64/left full-observation mismatch: compile=Some(ErrorObservation { code: \"ParameterTypeUnknown\", module: \"Compile\", span: [2, 3] })/None, eval=None/None, truth=None/Some(T), where=None/Some(true), first-node=None, node-count=None/Some(6), columns-equal=false, parameters-equal=false",
+        "reason": "One hint no longer propagates: inferred second marker is rejected Unknown[2,3]."
+      },
+      {
+        "id": "M04",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m04",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m04-detector.json",
+          "sha256": "5b8ac3225ed81d030d60c3f6569971f4d290062f304797cf46b03a1cfcfbf510"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_contracts.rs:283:9:\ncase=unknown_marker/is-null/omitted full-observation mismatch: compile=None/Some(ErrorObservation { code: \"ParameterTypeUnknown\", module: \"Compile\", span: [0, 1] }), eval=None/None, truth=None/None, where=None/None, first-node=None, node-count=Some(5)/None, columns-equal=false, parameters-equal=false",
+        "reason": "Default unresolved marker: accepted typed plan replaces expected Unknown."
+      },
+      {
+        "id": "M05",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m05",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m05-detector.json",
+          "sha256": "aa4ccbab9ad382c38c7ffab66598e88f6326b632e8f1e39699398276b5907352"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_contracts.rs:283:9:\ncase=runtime_tag/row/Int64/Bool/null full-observation mismatch: compile=None/None, eval=None/Some(ErrorObservation { code: \"Type\", module: \"Eval\", span: [0, 1] }), truth=Some(T)/None, where=Some(true)/None, first-node=Some(5), node-count=Some(5)/Some(5), columns-equal=true, parameters-equal=true",
+        "reason": "Wrong typed NULL accepted: runtime_tag row Int64/Bool null returns True instead of Type."
+      },
+      {
+        "id": "M06",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m06",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m06-detector.json",
+          "sha256": "980e076bdc0b3882364e19c39f7973e9c9b5ef0f2dfef7b6d102fb396bcab1d2"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_contracts.rs:283:9:\ncase=byte_order/Utf8/8/0 full-observation mismatch: compile=None/None, eval=None/None, truth=Some(U)/Some(F), where=Some(false)/Some(false), first-node=Some(6), node-count=Some(6)/Some(6), columns-equal=true, parameters-equal=true",
+        "reason": "Native empty Utf8 normalized: byte order returns Unknown instead of False."
+      },
+      {
+        "id": "M07",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m07",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m07-detector.json",
+          "sha256": "e2046b9f964722f6d21e0340c3406993f696b6d8ebe240342fb032b48163e889"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_contracts.rs:283:9:\ncase=truth_not/F full-observation mismatch: compile=None/None, eval=None/None, truth=Some(F)/Some(T), where=Some(false)/Some(true), first-node=Some(10), node-count=Some(10)/Some(10), columns-equal=true, parameters-equal=true",
+        "reason": "Wrong AND true/true cell affects NOT wrapper: False instead of True."
+      },
+      {
+        "id": "M08",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m08",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m08-detector.json",
+          "sha256": "5424ec47347ae7b37757312252a02bbad68eab9c253ac2495e295c668da25a2d"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_contracts.rs:283:9:\ncase=truth_not/U full-observation mismatch: compile=None/None, eval=None/None, truth=Some(U)/Some(U), where=Some(true)/Some(false), first-node=Some(10), node-count=Some(10)/Some(10), columns-equal=true, parameters-equal=true",
+        "reason": "WHERE Unknown allowed: truth stays Unknown but where_keep becomes true."
+      },
+      {
+        "id": "M09",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m09",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m09-detector.json",
+          "sha256": "9300e81c134b13efa4258a9b6522b2fa557d476b6098879e320b8e0c727a773e"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_contracts.rs:283:9:\ncase=truth_not/U full-observation mismatch: compile=None/None, eval=None/None, truth=Some(F)/Some(U), where=Some(false)/Some(false), first-node=Some(10), node-count=Some(10)/Some(10), columns-equal=true, parameters-equal=true",
+        "reason": "Raw NULL equality treated True: NOT(NULL=NULL) becomes False instead of Unknown."
+      },
+      {
+        "id": "M10",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m10",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m10-detector.json",
+          "sha256": "2034d75fd11cfcb918dc90f71358319b62c1ac45758225e157bc22210ad994aa"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_contracts.rs:283:9:\ncase=byte_order/Utf8/4/2 full-observation mismatch: compile=None/None, eval=None/None, truth=Some(T)/Some(F), where=Some(true)/Some(false), first-node=Some(6), node-count=Some(6)/Some(6), columns-equal=true, parameters-equal=true",
+        "reason": "Signed byte ordering reverses nonASCII Utf8 comparison."
+      },
+      {
+        "id": "M11",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m11",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m11-detector.json",
+          "sha256": "a8f8e7c14a7a5fb373d9d645d9e01e42bad5eeb8ff5178bcc3a6b5c5d1a14ffc"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_contracts.rs:283:9:\ncase=byte_order/Utf8/0/0 full-observation mismatch: compile=None/None, eval=None/None, truth=Some(T)/Some(F), where=Some(true)/Some(false), first-node=Some(6), node-count=Some(6)/Some(6), columns-equal=true, parameters-equal=true",
+        "reason": "Trailing-space trimming changes unequal strings to equal."
+      },
+      {
+        "id": "M12",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m12",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m12-detector.json",
+          "sha256": "d3102437f03526d79e3170235141adfb530f404283c47877735762de2706f6b1"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_resources.rs:671:17:\nassertion failed: at.start - last.get() <= 128",
+        "reason": "Interior checks absent: observed paired-byte progress gap exceeds128."
+      },
+      {
+        "id": "M13",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m13",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m13-detector.json",
+          "sha256": "29b6acdcaf8632faf56b167e9662b2861c2e70df30afb074a2083a4cdda3ac08"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_resources.rs:879:17:\nassertion `left == right` failed\n  left: Err(Diagnostic { code: Type, module: Eval, span: Span { start: 455, end: 458 } })\n right: Err(Diagnostic { code: Cancelled, module: Eval, span: Span { start: 230, end: 230 } })",
+        "reason": "Input validation checks absent: later Type[455,458] replaces interior Cancelled point230."
+      },
+      {
+        "id": "M14",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m14",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m14-detector.json",
+          "sha256": "3a127e70a03a9df1c9441a869255c52c0d171ba3e04f3076c8738567ebcd5be5"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_resources.rs:573:18:\ncalled `Result::unwrap_err()` on an `Ok` value: CompiledPredicate { nodes: 6, columns: 32, parameters: 0, span: Span { start: 0, end: 132 } }",
+        "reason": "Name candidate checks absent: compile succeeds instead of cancellation."
+      },
+      {
+        "id": "M15",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m15",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m15-detector.json",
+          "sha256": "139d77b1fa8ecd3b57bf4aca4ee8ab2123c548ca263f60cc9fc17535142fbd38"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_resources.rs:242:28:\ncalled `Result::unwrap_err()` on an `Ok` value: CompiledPredicate { nodes: 9, columns: 1, parameters: 1, span: Span { start: 0, end: 26 } }",
+        "reason": "Typed excess charge absent: exact insufficient budget accepts padded plan."
+      },
+      {
+        "id": "M16",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m16",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m16-detector.json",
+          "sha256": "54aa1da96fae030ca11d3e9010dc5899ea2ff17b4ef5801b61a9159641493896"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_resources.rs:85:5:\nassertion `left == right` failed\n  left: 1806\n right: 1614",
+        "reason": "Before-allocation typed backing reservation leak: base leases retain192bytes (1806 instead of1614). This is not an executed buffer allocation leak."
+      },
+      {
+        "id": "M17",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m17",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m17-detector.json",
+          "sha256": "8bcdba16571eeebb401cc05d6e518bd1461b4d1261b3bdec06eb9cf228c923c6"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_resources.rs:457:18:\ncalled `Result::unwrap_err()` on an `Ok` value: CompiledPredicate { nodes: 6, columns: 1, parameters: 0, span: Span { start: 0, end: 2052 } }",
+        "reason": "Final publication check absent: long literal compile succeeds instead of cancellation."
+      },
+      {
+        "id": "M18",
+        "status": "DETECTED_REVIEWED_ASSERTION",
+        "source": "mutant-m18",
+        "receipt": {
+          "path": "artifacts/dev4-typed-predicate-20261024/mutant-m18-detector.json",
+          "sha256": "7a789cf7e926513831999c73158e381204013b2976768d5e8ff6a61ad5898aba"
+        },
+        "assertion": "panicked at crates/sql/tests/typed_predicate_resources.rs:521:9:\nassertion `left == right` failed\n  left: Diagnostic { code: Range, module: Compile, span: Span { start: 0, end: 0 } }\n right: Diagnostic { code: Cancelled, module: Compile, span: Span { start: 0, end: 0 } }",
+        "reason": "Metadata checks absent: Range replaces Cancelled at point0."
+      }
+    ]
+  },
+  "postfreeze_changes": {
+    "at": "2026-10-24T19:50:11.846607+09:00",
+    "changes": [
+      {
+        "path": "tests/fixtures/dev4-typed-predicate/semantic.json",
+        "frozen": "dd99248990367838716d93708a05d9aca9084d5f49f218fae9a0b2ca66fbd08c",
+        "current": "64266354a6bfc33ea62861d65dfac8b1ed8927f78cc66fad87c1506fdc64f1f4"
+      },
+      {
+        "path": "crates/testing/reference/src/frontend/typed_predicate.rs",
+        "frozen": "683757c1733a1ca5bbc6258a2dd7ce0e5e33db3b6766e00347d964b3da2f2756",
+        "current": "5f9a730b720added608a37cddc99fc62c4ce9a1e0247b09078877276ccd3f479"
+      },
+      {
+        "path": "crates/testing/reference/src/frontend/typed_predicate/literals.rs",
+        "frozen": "46739f1452136086291bc75747f8593e07feff12f656e98e406f0577272ecc2a",
+        "current": "b794caad99ce7c0d06cdf4e8267451e691f72d2cb0d35edaa2cd756df3930422"
+      },
+      {
+        "path": "crates/sql/tests/typed_predicate_contracts.rs",
+        "frozen": "52e63166d1cac67b24de75224ddd8256ead35ff2ac94ad918e6680f386fffe92",
+        "current": "41b3f51c6674fe265429f9c95c0b159cbeb692891d1ac61474bd4ead6b51c30a"
+      },
+      {
+        "path": "artifacts/dev4-typed-predicate-20261024/author_fixtures.py",
+        "frozen": "c117295651449ef0aab93fe4a7bee4e2d4112088f922351190a48c75a198f2ba",
+        "current": "201b26348e0170c49099572252d5339ea4790152b9ddc6557c5a1c6f4db38841"
+      },
+      {
+        "path": "artifacts/dev4-typed-predicate-20261024/semantic-inputs-draft.json",
+        "frozen": "9df754c425968463cf7fda8e292ab09af9fd846f15d2ae4f5263ec1ae3110def",
+        "current": "4deb1f420dff3be21b90d1dbebf1738cbf4a71a997be1f60420ddc9e99aa89a3"
+      },
+      {
+        "path": "crates/sql/tests/typed_predicate_resources.rs",
+        "frozen": "ba3faa854f06a2a414d22aba8981438732903e29a5e14ad223016adf752eacd6",
+        "current": "1c3b7ac1ebb5b9b9b7f9f1cadcf38169b4925758597ad460dfc146cbca27a119"
+      },
+      {
+        "path": "tests/fixtures/dev4-typed-predicate/manifest.json",
+        "frozen": "f1d00c59a530661924f4e7bcf4943590b7dbe959009a2647bc13d129ef429c21",
+        "current": "aeb23acd99bf10daf1be370cc61c16c544e2cec6ed96ba0485d157a9ff87e0bf"
+      },
+      {
+        "path": "devdoc/contracts/dev4-independent-frontend.md",
+        "frozen": "9080f6b21e031ed383e29339846e97ae6305154bb78924e281bedc4a8c2638de",
+        "current": "02c495580110b918ac88c1f06ecd412285e4c98b7b5728634f829fb43ae2f689"
+      },
+      {
+        "path": "artifacts/dev4-typed-predicate-20261024/run_mutants.py",
+        "frozen": "ecd493130aef3253a405f71371435fe23c62842e767731f15f01d3f1947206df",
+        "current": "3219695c107bddd4eb5b7a0aacada2579ad8b32eb77651014e2689345f8f71f2"
+      }
+    ],
+    "review": "d1-static-review.json, independent reviewer accepted13literal corrections and resume guard; originalfrozen copies unchanged"
+  },
+  "d1_static": {
+    "at": "2026-10-24T19:47:00.666371+09:00",
+    "reviewer": "/root/frontend_review",
+    "status": "STATIC_D1_NO_BLOCKING_PRODUCT_FINDING_FINAL_EVIDENCE_PENDING",
+    "product_files": {
+      "crates/sql/src/frontend/typed_predicate.rs": "d134c8d27e74ad75bf192a5e3ea314e1ec50ab6378d87e3a7acf0bda0869be68",
+      "crates/sql/src/frontend/typed_predicate/budget.rs": "a3fed2289f9a8031c266878c0ff4e80dfe1dcfc09069dfa5f3db82159b1e3ba1",
+      "crates/sql/src/frontend/typed_predicate/compile.rs": "ce7c0868e53dfc5e8e5ef0d971e873bd596ef44a3361b157ab40bcb5161e7606",
+      "crates/sql/src/frontend/typed_predicate/eval.rs": "89ed45c6d895537774ec921a40664f4cb63d062175550f9a87026da08ab0f467"
+    },
+    "reviewed_properties": [
+      "C0-C7 full validation before three exact typed backings and all literal decode",
+      "Vec-first Drop before same-owner base/excess leases; partial failure release",
+      "compiler global injection count incorporates failed ScalarReader sites",
+      "original typed NULL and native empty retained; all E0/E1/E2 checks before eager reverse traversal",
+      "evaluate call graph has no Vec/String/Box/owned-copy/allocator call and no recursion; fixed truth8192 bytes",
+      "128 pairs per variable comparison checkpoint; local observer and SQL span remap separated",
+      "old runtime adapters only exhaustive enum arms; no old product runtime selected"
+    ],
+    "source_r3_normal": {
+      "complete_functions_pass": 17,
+      "failed_functions": 2,
+      "original_failures": "r3-test-03.log and r3-test-04.log; fixture mismatch confirmed independently"
+    },
+    "fixture_corrections_accepted": "12 incompatible marker pair spans [0,3)->[0,1); one max schema successful row[31] Utf8(x)->Int64(1); no product correction",
+    "resume_review": {
+      "parameter_complete_prefix": 91,
+      "new_compile": 45,
+      "new_eval": 27,
+      "schema_complete_prefix": 49,
+      "schema_new_compile": 2,
+      "schema_new_eval": 2,
+      "guard": "NotUnicode/unknown ID fail; mutants explicitly unset XADB_TYPED_FROM_CASE"
+    },
+    "current_resume_environment": null,
+    "tests_run_by_reviewer": false,
+    "head": "b3098c1ffe0d555c0021ceb9a4ee5ce958dd7634"
+  },
+  "expanded_profiles": {
+    "256x1024": "NOT_RUN",
+    "30minute_valid_typed_grammar": "NOT_RUN"
+  },
+  "unchanged_runtime_repeated": false,
+  "document_verifier": "NOT_RUN_PRE_PUSH_ONLY",
+  "push": "NOT_REQUESTED_NOT_RUN",
+  "remaining": [
+    "P4 remaining parser grammar",
+    "P5 abstract lifetime model full normal space and mutants",
+    "P6 latest actual DEV3 supply/receipt/API gap handoff",
+    "actual engine binding/execution andQ1"
+  ],
+  "d1_final": {
+    "at": "2026-10-24T20:00:04.150744+09:00",
+    "decision": "D4-FE-TYPED-001",
+    "status": "LIMITED_D1_ACCEPTED",
+    "reviewer": "/root/frontend_review",
+    "adopter": "/root",
+    "result": "No blocking findings. Pure typed predicate implementation and selected evidence accepted.",
+    "verified": {
+      "sources": 22,
+      "source_file_entries": 97064,
+      "normal_receipts": 28,
+      "mutant_detector_receipts": 19,
+      "preserved_binary_archives": 22,
+      "live_overlay_files": 54,
+      "live_source_sha256": "df9701e863aa58d0335f0171b571ed027605a9808157e4c0724fc4621cdc0295",
+      "product_r1_through_current_identical": true,
+      "fixture_corrections": 13,
+      "completed_prefix_not_repeated": 140,
+      "r4_compile_calls": 47,
+      "r4_eval_calls": 29,
+      "unique_fixed_cases": 946,
+      "mutation_categories": 18
+    },
+    "scope_notes": [
+      "Original compile and fixture failures remain failures",
+      "M02 concrete Type witness present in still-unexecuted continuation",
+      "M16 proves192byte pre-allocation typed backing reservation leak rejection, not an actual buffer allocation leak",
+      "Lifetime/quota/drop/full validation/3VL/bounded controls and product allocation-free evaluate call graph inspected"
+    ],
+    "reviewer_executed_product_tests_or_compile": false,
+    "reviewer_executed_document_verifier": false,
+    "excluded": [
+      "expanded2profiles",
+      "P4",
+      "P5",
+      "P6",
+      "actual engine integration",
+      "whole DEV4/Q1 completion"
+    ]
+  },
+  "d1_final_receipt": {
+    "path": "artifacts/dev4-typed-predicate-20261024/d1-final-review.json",
+    "sha256": "27a7c7c4731fc0c1c751969d197af6fcc031b0a189a5a1757bcb13b4dc881200"
+  }
+}

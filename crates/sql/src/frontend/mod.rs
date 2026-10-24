@@ -12,6 +12,7 @@ mod parser;
 mod scalar;
 mod source;
 mod splitter;
+mod typed_predicate;
 
 pub use ast::{AstNode, ComparisonOp, NodeKind, ParsedStatement, ScalarSyntax, Sign};
 pub use control::CallControl;
@@ -24,3 +25,7 @@ pub use scalar::{
 };
 pub use source::StatementSource;
 pub use splitter::{SplitOutcome, SplitStep, Splitter};
+pub use typed_predicate::{
+    ColumnSpec, CompiledColumn, CompiledKindRef, CompiledNode, CompiledPredicate, ExpressionType,
+    ParameterMetadata, PredicateCompiler, TruthValue,
+};

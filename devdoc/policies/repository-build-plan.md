@@ -92,7 +92,7 @@
 | xadbtest-engine-worker | crates/testing/engine-worker | IMPLEMENTED | DEV2 | xadb-engine, xadb-foundation, xadb-platform, xadbtest-protocol |
 | xadb-transport | crates/transport | IMPLEMENTED | COMM | xadb-foundation |
 | xadbtest-transport-worker | crates/testing/transport-worker | IMPLEMENTED | COMM | xadb-foundation, xadb-platform, xadb-transport |
-| xadb-sql | crates/sql | IMPLEMENTED (독립 앞단·scalar·predicate 구문) | DEV4 | xadb-foundation |
+| xadb-sql | crates/sql | IMPLEMENTED (독립 앞단·scalar·typed predicate) | DEV4 | xadb-foundation |
 | xadb-cli | crates/cli | PLANNED | DEV4 | xadb-foundation, xadb-sql, xadb-platform |
 | xadb-server | crates/server | PLANNED | DEV5 | xadb-foundation, xadb-engine, xadb-sql, xadb-transport, xadb-platform |
 | xadb-client | crates/client | PLANNED | DEV6 | xadb-foundation, xadb-transport |
@@ -449,3 +449,10 @@ P4 연결·실제 engine/Q1 미완료를 구분한다.
 [관리 JSON](repository-build-plan.json)의 `dev3_plan4_genesis`에 등록하고
 [source별 실행 증거](../evidence/dev3-plan4-genesis-20261024.md)를 구별한다.
 이 배치 자체는 live 큐·Catalog CREATE/CLR·일반 복구 또는 DEV3/S5 완료가 아니다.
+
+[P3 typed predicate](../contracts/dev4-independent-frontend.md#typed-predicate)는 기존 frontend에
+`typed_predicate.rs`와 budget/compile/eval을 추가한다. reference의 독립 typed_predicate literal/recipe,
+두 신규 typed_predicate test target과 실제 fixture를 등록했다. exact typed quota와 borrowed3VL은
+SQL 책임이며 새 crate/dependency·foundation 변경·source/export root 변경은 없다.
+[source별 증거](../evidence/dev4-typed-predicate-20261024.md)에 원 실패/교정·선택 범위와 남은 실제
+engine 연결을 구분한다.

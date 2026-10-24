@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-24 [DEV4 typed predicate](evidence/dev4-typed-predicate-20261024.md): 명시 타입의 전체 검산·3값 평가와 독립 소유/자원을 구현했다. 원 compile·fixture FAIL, 완료 prefix 재실행 없는 source별 선택 증거와18제품 변조 거절을 보존한다. 최종 독립 D1을 제한 수용했으며 P4·수명 모델·실제 engine 통합·Q1은 미완료다.
+
 2026-10-24 [DEV3 plan4 정리 큐·빈 Catalog 최초 설치](evidence/dev3-plan4-genesis-20261024.md): 원 FreshStorageSession·DWB의9page 설치와 private genesis-only 선택을 연결했다. 필수304·compiler9·checker15 및 같은 ELF의 실제3PID 인수를 보존하며 원 실패·보완을 구별한다. 최종 독립 D1을 제한 수용했고 live 큐·Catalog CREATE/CLR·전체 DEV3/S5는 미완료다.
 
 

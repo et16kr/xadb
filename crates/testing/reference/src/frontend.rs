@@ -8,6 +8,8 @@ pub mod parser;
 pub mod predicate;
 pub mod scalar;
 pub mod splitter;
+/// Independent complete typed predicate observations and generated inputs.
+pub mod typed_predicate;
 
 use literals::{DiagnosticObservation, LexCase, LexObservation, NameCase, NameObservation};
 
