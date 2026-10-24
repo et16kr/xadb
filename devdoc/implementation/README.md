@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-24 [DEV4 splitter·원문 예약](dev4-implementation.md#splitter): streaming chunk/EOF·반환 source 수명·session/DB 공유 quota를 구현하고 새 경로를 선택 검증했다. parser/값·모델·실제 SQL 실행·Q1은 미완료다.
+
 2026-10-24 [DEV4 독립 앞단](dev4-implementation.md): borrowed lexer·고정 이름·호출 제어와 독립 literal 판정기를 구현했다. source별 선택 시험·리뷰 교정은 증거에 보존하며 splitter/parser/값·실제 SQL 실행·Q1은 미완료다.
 
 2026-10-24 [DEV3 Free Undo 초기 page](dev3-implementation.md#undo-free-page): authentic Free432·초기 slot1 page 표현을 구현하고7함수987case를 검증했다. 최종 독립 D1을 제한 수용했으며 mixed INIT/pool/복구·DEV3/S5 미완료.

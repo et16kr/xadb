@@ -1,6 +1,6 @@
 # DEV4 — DEV3 병행 준비·독립 모듈 개발 계획
 
-2026-10-24 · **D4-PREP-001/002 ACCEPTED / 독립 lexer·이름 제한 구현 / 전체 DEV4·Q1 미완료**
+2026-10-24 · **D4-PREP-001/002 ACCEPTED / 독립 lexer·이름·splitter 제한 구현 / 전체 DEV4·Q1 미완료**
 
 [독립 앞단 계약](../contracts/dev4-independent-frontend.md) · [전체 DEV4 계획](dev4-implementation-plan.md) · [기존 18개 작업](dev4-work-breakdown.md) · [조사·검토](../evidence/dev4-preparation-research-20261024.md)
 
@@ -14,7 +14,7 @@ DEV3가 저장·복구를 개발하는 동안 DEV4의 독립 입력 처리·값 
 <a id="sequence"></a>
 ## 2. 배정과 순서
 
-아래 P0–P6은 이 계획 안의 배정 묶음이며 DEV2 P0/K0나 새 제품 단계가 아니다. 기존 4.xx ID가 범위의 정체성이다. 최초 확정 당시 모든 상태는 **NOT_RUN**이었다. 현재 P0의 lexer 소비 부분과 P1 lexer/이름·해당 P5 literal 판정을 제한 구현했으며 [source별 증거](../evidence/dev4-frontend-20261024.md)에 실제 소유·검증·잔여를 기록한다. 나머지 상태는 NOT_RUN이며 담당 구현자·실제 소유 경로는 해당 개발 시작 때 배정한다. 본 계획·계약 담당은 `/root`, 독립 검토자는 조사 기록에 남긴다.
+아래 P0–P6은 이 계획 안의 배정 묶음이며 DEV2 P0/K0나 새 제품 단계가 아니다. 기존 4.xx ID가 범위의 정체성이다. 최초 확정 당시 모든 상태는 **NOT_RUN**이었다. 현재 P0/P1의 lexer/이름과 [streaming 경계·원문 예약](../evidence/dev4-splitter-20261024.md), 해당 P5 literal 판정을 제한 구현했다. [첫 source별 증거](../evidence/dev4-frontend-20261024.md)와 splitter 증거에 실제 소유·검증·잔여를 기록한다. 단일 API 한 문장 검사는 parser에 남으며 나머지 상태는 NOT_RUN이며 담당 구현자·실제 소유 경로는 해당 개발 시작 때 배정한다. 본 계획·계약 담당은 `/root`, 독립 검토자는 조사 기록에 남긴다.
 
 | 묶음·기존 ID | 직접 선행 | 산출물·독립 종료 조건 | 병행 가능 범위 |
 | --- | --- | --- | --- |

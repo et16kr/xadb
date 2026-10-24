@@ -53,6 +53,7 @@ fn literal_name_vectors() {
                 module: match error.module {
                     Module::Lex => "Lex",
                     Module::Name => "Name",
+                    Module::Split => "Split",
                 },
                 start: error.span.start,
                 end: error.span.end,

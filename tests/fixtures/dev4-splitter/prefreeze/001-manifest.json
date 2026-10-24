@@ -1,0 +1,456 @@
+{
+  "schema": 1,
+  "contract": "D4-FE-SPLIT-001",
+  "owner": "/root/frontend_oracle",
+  "state": "INPUTS_PREPARED_NOT_RUN",
+  "fixture": {
+    "path": "crates/testing/reference/src/frontend/splitter.rs",
+    "sha256": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864"
+  },
+  "control": {
+    "path": "tests/fixtures/dev4-splitter/control.json",
+    "sha256": "82a297164fe246d4056e2923448cfb465c86fa0e6787fb352da7e1324e628bc5"
+  },
+  "literal_inventory": {
+    "partition_literals": [
+      {
+        "id": "two-statements",
+        "source_bytes": 3,
+        "schedule_count": 4
+      },
+      {
+        "id": "text-semicolon",
+        "source_bytes": 5,
+        "schedule_count": 16
+      },
+      {
+        "id": "text-escape",
+        "source_bytes": 7,
+        "schedule_count": 64
+      },
+      {
+        "id": "name-semicolon",
+        "source_bytes": 4,
+        "schedule_count": 8
+      },
+      {
+        "id": "name-escape",
+        "source_bytes": 5,
+        "schedule_count": 16
+      },
+      {
+        "id": "block-semicolon",
+        "source_bytes": 7,
+        "schedule_count": 64
+      },
+      {
+        "id": "line-lf",
+        "source_bytes": 6,
+        "schedule_count": 32
+      },
+      {
+        "id": "utf8-three",
+        "source_bytes": 6,
+        "schedule_count": 32
+      },
+      {
+        "id": "utf8-four",
+        "source_bytes": 7,
+        "schedule_count": 64
+      },
+      {
+        "id": "line-crlf",
+        "source_bytes": 7,
+        "schedule_count": 64
+      },
+      {
+        "id": "binary-quote",
+        "source_bytes": 5,
+        "schedule_count": 16
+      },
+      {
+        "id": "non-nested-comment",
+        "source_bytes": 10,
+        "schedule_count": 512
+      }
+    ],
+    "edge_literals": [
+      {
+        "id": "pending-minus-replay",
+        "source_bytes": 3,
+        "schedule_count": 4
+      },
+      {
+        "id": "pending-slash-replay",
+        "source_bytes": 2,
+        "schedule_count": 2
+      },
+      {
+        "id": "block-repeated-star",
+        "source_bytes": 7,
+        "schedule_count": 8
+      },
+      {
+        "id": "empty",
+        "source_bytes": 0,
+        "schedule_count": 1
+      },
+      {
+        "id": "only-whitespace",
+        "source_bytes": 6,
+        "schedule_count": 7
+      },
+      {
+        "id": "empty-segments",
+        "source_bytes": 20,
+        "schedule_count": 21
+      },
+      {
+        "id": "retained-trivia",
+        "source_bytes": 8,
+        "schedule_count": 9
+      },
+      {
+        "id": "parenthesis-does-not-hide-semicolon",
+        "source_bytes": 6,
+        "schedule_count": 7
+      },
+      {
+        "id": "closed-text-eof",
+        "source_bytes": 2,
+        "schedule_count": 2
+      },
+      {
+        "id": "closed-name-eof",
+        "source_bytes": 2,
+        "schedule_count": 2
+      },
+      {
+        "id": "line-comment-eof",
+        "source_bytes": 3,
+        "schedule_count": 4
+      },
+      {
+        "id": "nonempty-line-comment-eof",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "block-comment-eof",
+        "source_bytes": 5,
+        "schedule_count": 6
+      },
+      {
+        "id": "minus-eof",
+        "source_bytes": 1,
+        "schedule_count": 1
+      },
+      {
+        "id": "slash-eof",
+        "source_bytes": 1,
+        "schedule_count": 1
+      },
+      {
+        "id": "multiple-empty",
+        "source_bytes": 6,
+        "schedule_count": 7
+      },
+      {
+        "id": "only-semicolons",
+        "source_bytes": 2,
+        "schedule_count": 2
+      },
+      {
+        "id": "line-cr",
+        "source_bytes": 6,
+        "schedule_count": 7
+      },
+      {
+        "id": "text-nul",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "backslash-not-escape",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "parenthesized-comment",
+        "source_bytes": 8,
+        "schedule_count": 9
+      },
+      {
+        "id": "line-terminator-before-semi",
+        "source_bytes": 5,
+        "schedule_count": 6
+      },
+      {
+        "id": "nul-is-parser-work",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "unsupported-is-parser-work",
+        "source_bytes": 5,
+        "schedule_count": 6
+      },
+      {
+        "id": "non-ascii-is-lexer-work",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "trailing-crlf",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "non-nested-empty",
+        "source_bytes": 9,
+        "schedule_count": 10
+      },
+      {
+        "id": "comment-after-token",
+        "source_bytes": 7,
+        "schedule_count": 8
+      },
+      {
+        "id": "pending-minus-after-token",
+        "source_bytes": 2,
+        "schedule_count": 2
+      },
+      {
+        "id": "pending-slash-after-token",
+        "source_bytes": 2,
+        "schedule_count": 2
+      },
+      {
+        "id": "prefix-before-invalid",
+        "source_bytes": 3,
+        "schedule_count": 4
+      },
+      {
+        "id": "prefix-before-bad-continuation",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "prefix-before-carry-eof",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "invalid-comment-byte",
+        "source_bytes": 3,
+        "schedule_count": 4
+      },
+      {
+        "id": "carry-before-open-comment",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "open-text",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "open-name",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "open-comment",
+        "source_bytes": 5,
+        "schedule_count": 6
+      },
+      {
+        "id": "binary-quote-position",
+        "source_bytes": 5,
+        "schedule_count": 6
+      },
+      {
+        "id": "text-escape-needs-close",
+        "source_bytes": 3,
+        "schedule_count": 4
+      },
+      {
+        "id": "name-escape-needs-close",
+        "source_bytes": 3,
+        "schedule_count": 4
+      },
+      {
+        "id": "absolute-open-comment",
+        "source_bytes": 8,
+        "schedule_count": 9
+      },
+      {
+        "id": "semicolon-inside-open-text",
+        "source_bytes": 2,
+        "schedule_count": 2
+      },
+      {
+        "id": "prefix-pending-delimiter-invalid",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "carry-two",
+        "source_bytes": 1,
+        "schedule_count": 1
+      },
+      {
+        "id": "carry-three",
+        "source_bytes": 2,
+        "schedule_count": 2
+      },
+      {
+        "id": "carry-four",
+        "source_bytes": 3,
+        "schedule_count": 4
+      },
+      {
+        "id": "stray-continuation",
+        "source_bytes": 1,
+        "schedule_count": 1
+      },
+      {
+        "id": "overlong",
+        "source_bytes": 2,
+        "schedule_count": 2
+      },
+      {
+        "id": "surrogate",
+        "source_bytes": 3,
+        "schedule_count": 4
+      },
+      {
+        "id": "too-large",
+        "source_bytes": 4,
+        "schedule_count": 5
+      },
+      {
+        "id": "only-open-text",
+        "source_bytes": 1,
+        "schedule_count": 1
+      },
+      {
+        "id": "only-open-name",
+        "source_bytes": 1,
+        "schedule_count": 1
+      },
+      {
+        "id": "only-open-comment",
+        "source_bytes": 2,
+        "schedule_count": 2
+      }
+    ]
+  },
+  "test_inventory": [
+    {
+      "target": "splitter_contracts",
+      "function": "every_short_literal_byte_partition",
+      "families": [
+        "FE03",
+        "FE15"
+      ],
+      "literal_count": 12,
+      "schedules": 892,
+      "recipe": "All2^(N-1) internal byte-boundary subsets for each fixed short input. Source, emitted bytes/spans and error boundaries are literals; schedule expansion only translates those boundaries."
+    },
+    {
+      "target": "splitter_contracts",
+      "function": "edge_literal_chunk_boundaries",
+      "families": [
+        "FE03",
+        "FE15"
+      ],
+      "literal_count": 54,
+      "schedules": 256,
+      "recipe": "Whole input, every one-cut, bytewise; unique chunk offset vectors only. All edge inputs<=20bytes; one-cut generator limited to256bytes."
+    },
+    {
+      "target": "splitter_contracts",
+      "function": "source_limit_and_reset_boundaries",
+      "families": [
+        "FE04"
+      ],
+      "schedules": 13,
+      "recipe": "Lengths1048575/1048576/1048577, a bytes or --comment, whole and fixed cuts1/255/256/257/len-1/len. Plus1048576byte terminated source followed by b; in same chunk. No all-onecut allocation for huge inputs."
+    },
+    {
+      "target": "splitter_contracts",
+      "function": "generated_fragment_streams",
+      "families": [
+        "FE03",
+        "FE15"
+      ],
+      "schedules": 64,
+      "seed_range_inclusive": [
+        0,
+        63
+      ],
+      "fragments_per_seed": 128,
+      "recipe": "LCG sameconstants6364136223846793005/1442695040888963407, fragment state=seed+1, choose11 terminated fixed literals; concatenate explicit expected outputs with offsettranslation. Chunk state=seed XOR0x5841444253504c54; 1+(state>>32)%17 bytechunks."
+    },
+    {
+      "target": "splitter_contracts",
+      "function": "empty_push_and_finish_lifecycle",
+      "families": [
+        "FE03"
+      ],
+      "schedules": 1,
+      "recipe": "Push empty is NeedMore; push a, empty, semicolon; finishNone; push empty after finish givesSyntax2..2."
+    },
+    {
+      "target": "splitter_contracts",
+      "function": "known_bad_splitter_observations_are_rejected",
+      "families": [
+        "FE13"
+      ],
+      "mutation_count": 16,
+      "recipe": [
+        "quote-internal split",
+        "treat chunk boundary as EOF",
+        "wrong CR/comment resulting bytes",
+        "UTF8 carry byte loss",
+        "wrong absolute start",
+        "wrong absolute end",
+        "wrong consumed count",
+        "wrong terminated flag",
+        "missing statement",
+        "duplicate statement",
+        "reorder statements",
+        "incomplete trace",
+        "wrong diagnostic code",
+        "wrong diagnostic module",
+        "wrong diagnostic span",
+        "prefix invalid suffix hides first statement"
+      ]
+    }
+  ],
+  "known_bad_mutations": 16,
+  "earlier_pre_freeze_arithmetic_correction": "The same12shortinputs have892partitions, not the initially estimated992; no input or partition was removed.",
+  "extended_profiles": {
+    "state": "NOT_RUN",
+    "generated": {
+      "function": "extended_generated_fragment_streams",
+      "seeds_inclusive": [
+        0,
+        255
+      ],
+      "fragments": 1024
+    },
+    "fuzz": {
+      "function": "extended_splitter_fuzz_30_minutes",
+      "minimum_minutes": 30,
+      "seed_hex": "5841444253504c54",
+      "max_input_bytes": 1048577,
+      "maximum_retained_production_bytes_per_source": 1048576,
+      "oracle": "No panic/hang; full source consumption or terminal diagnostic; bounded spans/consumed; frozen valid literals preserved periodically; no execution semantics claimed."
+    }
+  },
+  "execution": "Root selects only new splitter/resource targets after independentD2, frozen source/fixture hashes, and compiled adapters. No tests have run.",
+  "schedule_inventory_total": 1226
+}

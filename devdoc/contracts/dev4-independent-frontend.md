@@ -1,6 +1,6 @@
 # DEV4 — DEV3와 독립적인 SQL 앞단 계약
 
-2026-10-24 · **D4-PREP-001/002·D4-FE-LEX-001 ACCEPTED / lexer·이름 제한 구현 / 모델·Q1 NOT_RUN**
+2026-10-24 · **D4-PREP-001/002·D4-FE-LEX-001/SPLIT-001 ACCEPTED / lexer·이름·splitter 제한 구현 / 모델·Q1 NOT_RUN**
 
 [SQL 의미 정본](dev4-sql-design.md) · [개발 계획](../plans/dev4-preparation-plan.md) · [Oracle·로컬 소스 조사와 검토](../evidence/dev4-preparation-research-20261024.md)
 
@@ -105,7 +105,7 @@ TruthValue는 T/F/U 세 값이다. NOT의 3가지, AND·OR의 각 9가지 조합
 - 원문 한도에는 comment/공백을 포함한다. token count는 comment/공백·EOF를 제외하고 punctuation·marker를 포함한다. AST node는 저장하는 statement/clause·식·이름·scalar 노드를 모두 계산하며 list/edge capacity도 별도 byte 회계에 넣는다. 연속 NOT·괄호 등 입력 유래 중첩은 공통 깊이 한도를 소비한다.
 - 원문 보관·token/AST arena·decoded payload·진단용 고정 공간을 **할당 전에** checked 산식으로 예약한다. 두 단계의 전체 source copy가 동시에 있으면 둘 다 charge한다. 성공 후 retained AST/source의 예약도 수명 종료까지 유지한다.
 - 앞단의 compile/retained 공간은 기존 session compiled/bound 8 MiB 및 공유 DB SQL 64 MiB에서 함께 차감한다. 앞단용 추가 8 MiB/64 MiB를 만들지 않는다. caller가 공유 quota owner를 주입하며 제품 경로에서 호출마다 새 ledger를 만들지 않는다. 아직 DB가 없는 단위 fixture는 동일 계약의 시험 ledger를 명시적으로 제공한다.
-- foundation `Quota`/`Reservation`을 소비한다. 여러 quota 중 뒤 예약이 실패하면 앞 예약을 반환하고 기존 AST/binding은 유지한다. quota 승인은 실제 allocation 성공이 아니므로 필요한 `try_reserve` 실패를 typed LIMIT로 처리한다. 실제 capacity와 임시 공존 peak를 포함하고 전역 OOM 복구를 보장한다고 쓰지 않는다.
+- foundation `Quota`/`Reservation`을 소비한다. 여러 quota 중 뒤 예약이 실패하면 앞 예약을 반환하고 기존 AST/binding은 유지한다. quota 승인은 실제 allocation 성공이 아니므로 필요한 `try_reserve` 실패를 typed LIMIT로 처리한다. 실제 capacity와 임시 공존 peak를 포함하고 전역 OOM 복구를 보장한다고 쓰지 않는다. Vec 기반 원문 backing의 allocator 초과분에 한해서는 [D4-FE-SPLIT-001](#splitter-leaf)의 요청량 선예약·관측 초과분 게시 전 보정이 위 할당 전 예약의 구체화다. allocator 내부의 미관측 bytes까지 사전 예약한다는 의미를 대체한다.
 - 호출별 cancel/deadline 입력은 새 호출에서 새로 받는다. source 검사·긴 token/주석·decode·parser/평가 loop에 bounded checkpoint를 두며 첫 leaf에서 최대 검사 간격과 allocation inventory를 동결한다. AST에 완료 호출의 cancel/deadline을 저장하지 않는다.
 - 순수 앞단 자체의 오류·취소·폐기는 새 foreground 예약·DB I/O·숨은 commit 없이 끝나야 한다. 상위 SQL/engine owner의 statement undo·거래 종료에 필요한 I/O는 [오류 효과 경계](#diagnostic-effects)에 따라 별도로 수행한다. recursion/Drop overflow·unchecked capacity·부분 성공 반환을 금지한다. 전체 parser가 끝나지 않았으면 첫 문장 성공을 전체 입력 성공으로 반환하지 않는다.
 
@@ -181,3 +181,44 @@ whitespace는 SP/HT/LF/VT/FF/CR의 여섯 ASCII byte다. line comment는 CR 또�
 FE01/02의 token·span·정규 이름 literal, FE04의 source/token 경계±1, FE11의 진입/중간 cancel/deadline·실패 뒤 새 호출, FE13의 token/span/name/error/누락 EOF 변조 거절, FE15의 malformed corpus와 고정64seed×128operation 생성 입력을 작성한다. property 최소 profile과 30분 fuzz 확대 profile은 별도 선택하며 실행 증거를 혼합하지 않는다. 실제 fixture/case와 hash는 제품 구현 전에 보존한다. production 의미와 독립인 literal은 `crates/testing/reference`에, 실제 scanner 소비 시험은 `crates/sql/tests`에 둔다. reference의 normal dependency는 SQL/foundation을 추가하지 않는다.
 
 splitter·단일 API 문장 수·AST/depth/marker 번호·scalar 검산·owned 자원·FE14 모델·엔진 통합은 후속 단위다. 첫 scanner가 여러 token/문장을 읽는 것은 단일 SQL API 성공을 뜻하지 않는다. 대안인 전체 원문/token 복사는 아직 parser 소비자가 없어 불필요한 할당과 예약을 만들고, 외부 parser framework는 현재 요구에 비해 의존성이 크므로 채택하지 않는다. 후속 parser·splitter에서 범위/진단/자원 계약을 바꾸면 독립 D2로 재검토한다.
+
+<a id="splitter-leaf"></a>
+## 11. D4-FE-SPLIT-001 — streaming 문장 경계와 원문 소유
+
+2026-10-24 · **D2 ACCEPTED / 구현·선택 검증 / 최종 D1 제한 수용**. 기존 P1/FE03·04·11·12·13·15의 splitter 소비 부분이다. root가 계약·공통 자원·통합을, frontend_research가 splitter를, frontend_oracle이 독립 입력·관측 판정을, frontend_review가 별도 D2/D1을 맡는다. lexer 의미·원 시험 증거·DEV3 선행은 유지한다. 실제 동결 hash·원 실패·source별 실행과 검토는 [splitter 증거](../evidence/dev4-splitter-20261024.md)에 보존한다.
+
+### API와 byte 경계
+
+- `Splitter::new(session: &Quota, database: &Quota) -> Self`는 기존 session compiled/bound 및 DB SQL ledger의 handle만 복제한다. `push(&mut self, chunk: &[u8], control: &CallControl) -> Result<SplitStep, Diagnostic>`와 `finish(&mut self, control: &CallControl) -> Result<Option<StatementSource>, Diagnostic>`를 제공한다. 제어를 저장하지 않는다.
+- `SplitStep { consumed: usize, outcome: SplitOutcome }`, `SplitOutcome::{NeedMore, Statement(StatementSource)}`. 성공 push는 첫 nonempty 문장 끝까지만 소비한다. consumed는 이번 chunk 상대 byte 수이며 caller는 suffix를 재제출한다. NeedMore는 chunk 전부를 소비했음을 뜻하며 EOF가 아니다. 오류는 terminal이므로 재개용 consumed를 제공하지 않는다. 실패 뒤는 입력·제어와 무관하게 원 진단을 반복한다.
+- `StatementSource`는 bytes·예약을 함께 소유하며 `as_bytes()`, `span()`, `terminated()`만 제공한다. Clone·가변 bytes·예약 없는 Vec 추출은 없다. span은 batch 절대 byte `[start,end)`, 내용은 직전 외부 semicolon 직후부터 현재 외부 semicolon **포함**, EOF면 남은 모든 bytes다. leading/trailing whitespace/comment를 보존한다. 표시 line/column은 CLI 후속 책임이다.
+- 이 source를 빌리는 lexer의 span은 source-local이다. 상위 adapter는 source span.start를 checked-add해 batch 절대 위치로 옮긴다. splitter가 lexer 진단의 모듈이나 원 local span을 조용히 바꾸지 않는다.
+- whitespace·quote doubling·backslash·CR/LF·비중첩 comment는 §10과 같다. 외부 `;`는 괄호 깊이와 무관하게 경계다. whitespace/comment/semicolon만인 구간은 버리고 새 구간을 시작한다. pending `-`/`/`가 EOF에 남으면 일반 nontrivia다. NUL·미지원 punctuation·숫자·binary payload·token 수·문법은 여기서 판정하지 않는다. 정상 UTF-8만 보장하며 parser/lexer가 나머지를 판정한다.
+- `finish`만 EOF다. 닫는 quote 후보로 끝난 입력·line comment는 완결, quote escape 뒤 다시 열린 quote·block comment·불완전 UTF-8는 Syntax다. `X'abc`의 열린 quote span은 실제 quote인 `[1,5)`이며 Binary token 시작을 추정하지 않는다. 정상 finish 뒤 반복 finish는 None(새 제어 검사 포함), 그 뒤 push는 빈 chunk도 Syntax terminal이다.
+- chunk를 미리 전체 검사하지 않는다. `a;` 뒤 같은 chunk의 invalid UTF-8·초과 bytes는 첫 반환에 영향이 없다. 구분자/escape/UTF-8의 모든 byte 분할에서 동일한 문장·절대 span·terminal 진단을 내야 한다. pending delimiter/quote의 다음 byte는 lexical 상태만 재처리하며 append·UTF-8·offset을 중복 처리하지 않는다.
+
+### 오류·한도·제어
+
+진단 모듈에 `Split`을 추가한다. active 호출은 취소/deadline → 각 소비 byte의 offset checked-add/구간1 MiB 한도 → UTF-8 → 필요한 예약/할당 → 경계 처리 순이다. chunk 전체 길이나 아직 소비하지 않은 suffix로 실패하지 않는다. 반환 전에도 제어를 확인한다. failed 상태는 원 오류가 우선한다. finished 상태는 호출 제어 뒤 finish=None 또는 push=Syntax다.
+
+구간 한도는 trivia·외부 semicolon을 포함하며 빈 구간도 적용한다. 외부 semicolon을 소비·skip/반환한 뒤에만 초기화한다. batch 총량은 제한하지 않고 absolute offset overflow를 checked 처리한다. 첫 초과 byte는 `[p,p+1)`, offset overflow는 `[p,p)`의 Limit다. 예약/할당 실패도 `[p,p)`의 Limit다. 잘못된 UTF-8는 표준 `Utf8Error::valid_up_to/error_len`에 해당하는 첫 sequence 범위, EOF carry는 carry 시작부터 EOF까지다. 열린 quote/comment는 여는 delimiter부터 EOF, finish 뒤 push는 EOF의 zero-width Syntax다.
+
+byte scan과 성장 copy는 최대256 bytes마다 제어를 검사한다. scan은 다음 원문 절대 offset, copy는 현재 구간 시작+복사 완료 bytes의 zero-width span을 보고한다. copy 시작/끝 및 allocation 전후에도 검사하며 allocator 내부 latency의 실시간 상한은 보장하지 않는다. copy 검사 좌표는 이미 scan한 구간으로 되돌아갈 수 있다. 진입·반환도 검사한다. 취소/오류 시 미완결 buffer와 새 예약을 모두 폐기하고 이미 반환한 source는 유지한다. 폐기는 추가 예약·I/O 없이 고정 깊이로 끝난다.
+
+### 공유 예약과 실제 capacity
+
+초기 buffer는 allocation 없이 비어 있다. 첫 byte에256 bytes를 요청하고 이후 기존 capacity의2배(checked, 최대1 MiB)를 요청한다. allocator 실제 capacity가 요청보다 크면 그 capacity를 사용하지만 논리 source 길이는 여전히1 MiB다. 각 성장에서 기존 buffer를 그대로 유지한 채 새 요청 전체를 session → DB 순으로 예약하고 `Vec::try_reserve_exact`로 새 backing을 만든다. 실제 capacity 초과분은 session → DB 순으로 추가 예약한 뒤에만 복사·게시한다. 이는 transport의 기존 accounting과 같은 **요청량 선예약·관측 초과분 게시 전 보정**이다. allocator가 내부에서 잠시 점유하는 전체 bytes를 사전 예약하거나 RSS/OOM 전체를 보장한다는 뜻이 아니다. quota 승인과 실제 allocation 성공은 별개다.
+
+성장 copy 중 old/new 실제 capacity의 합을 charge한다. 새 buffer 게시 후 옛 bytes를 먼저 폐기하고 옛 예약을 반환한다. 부분 실패에서도 새 bytes를 관련 lease보다 먼저 폐기하며, splitter는 기존 미완결 buffer까지 정리한다. backing 생성 직후부터 bytes를 첫 field, 모든 lease를 후속 field로 가진 동일 owner로 관리한다. 추가 예약·제어 실패의 조기 return에서도 이 field Drop 순서를 유지한다. returned source는 shrink/copy 없이 이동하여 실제 capacity charge를 수명 종료까지 유지한다. 빈 구간 skip·정상 빈 EOF·terminal 오류·Drop은 미완결 buffer charge를 반환한다. 모든 capacity/offset 산식과 `usize`→`u64` 변환은 checked다. 고정 bookkeeping은 caller 소유 stack 값이며 별도 heap control cell이 없다. Splitter≤512bytes, StatementSource≤192bytes를 검사한다.
+
+비기본 test-support에서 splitter별 `fail_next_allocation()`은 다음 backing의 fallible allocation 지점에서 Limit를 주입한다. `set_allocation_padding(bytes)`는 다음 요청들의 allocator request에 checked padding을 더해 실제 초과 capacity 보정 경로를 강제한다. 정상 제품에는 둘 다 없다. base 요청만 선예약하고 관측한 전체 capacity를 반드시 추가 charge하므로 시험용 padding도 accounting을 우회하지 않는다. quota 실패는 실제 주입 ledger의 잔여량으로 유도한다. 기존 CallControl observer로 scan/copy의 실제 checkpoint와 동시 old/new 사용량을 관측한다.
+
+같은 test-support의 `StatementSource::capacity_bytes()`와 `Splitter::buffer_capacity()`는 실제 backing capacity의 읽기 관측만 제공한다. allocator의 정확한 capacity 일치를 API 보장으로 가정하지 않고, 요청 이상·quota=실제 capacity 및 실제 공존 peak를 대조한다. offset overflow는 private 상태를 구성하는 splitter 내부 단위 시험으로 실제 checked 경로를 검증하며 제품에 offset 변경 API를 추가하지 않는다.
+
+### 독립 입력·검토와 선택
+
+제품 구현 전에 literal bytes·span·terminated·consumed/NeedMore/EOF·오류를 동결한다. 짧은 quote/comment/UTF-8 입력은 모든 byte partition, 256bytes 이하 literal/실패 입력은 whole/각 one-cut/bytewise로 검증한다. 1 MiB 한도 입력은 whole·명시한 한도/UTF-8 경계 cut만 선택하고 모든 one-cut을 적용하지 않는다. fixture가 실제 대상 길이·partition 건수와 생성 상한을 고정한다. 별도 수작업 기대값의 반복·offset 이동만 허용하며 제품 scanner로 기대값을 만들지 않는다. FE15 최소 생성은64seed×128개 독립 fragment이며 확대 profile은 별도 선택·NOT_RUN으로 보존한다.
+
+자원 입력은 초기256·성장768(256+512)·retained source+다음 source의 잔여−1/동일/+1, session 성공 뒤 DB 실패, 실제 capacity 초과분 양쪽 실패, allocation 주입 실패, scan/copy 중 취소·deadline, 새 호출 제어, 두 splitter의 동일 DB 공유·실제 thread 합산, 모든 종료 후 baseline 회복을 포함한다. known-bad 관측은 quote 내 분할·chunk를EOF로 해석·CR/comment/UTF-8 carry·절대좌표·consumed/terminated·누락/중복 출력·불완전 관측을 거절한다. 자원 해제/검사 제거의 제품 mutant도 별도 source로 거절한다.
+
+무변경 lexer/name의 기존 시험은 재실행하지 않는다. Module::Split 추가의 단순 관측 adapter 연결은 compile로 확인하며 새 splitter/자원 경로를 선택한다. 단일 SQL API의 다중 문장 거절·parser/AST/값·session runtime·Q1은 이 leaf의 완료로 대체하지 않는다. 전체 파일을 모아 반환하는 대안은 caller backpressure와 유지량 상한을 약화하고, 기존 lexer를 매 chunk 재시작하는 대안은 미완결/EOF 및 반복 복사 문제를 만들므로 채택하지 않는다.

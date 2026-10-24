@@ -18,7 +18,7 @@ pub enum Code {
     Unsupported,
     /// Invalid identifier syntax, control character, or normalized byte length.
     Name,
-    /// Declared source or token capacity exhausted.
+    /// Declared capacity, shared quota, allocation, or offset range exhausted.
     Limit,
     /// The current call's cancellation was observed.
     Cancelled,
@@ -33,6 +33,8 @@ pub enum Module {
     Lex,
     /// Identifier validation and normalization.
     Name,
+    /// Streaming boundary recognition and owned source allocation.
+    Split,
 }
 
 /// Small failure result that does not allocate or manufacture transaction effects.

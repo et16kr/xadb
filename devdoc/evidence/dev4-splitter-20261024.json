@@ -1,0 +1,545 @@
+{
+  "schema": 1,
+  "contract_ref": "dev4-independent-frontend.md",
+  "evidence_ref": "dev4-splitter-20261024.md",
+  "status": "LIMITED_LEAF_D1_ACCEPTED",
+  "baseline": {
+    "path": "artifacts/dev4-splitter-20261024/baseline.json",
+    "sha256": "b977cb5f06580c90c8196a8522118a1ff9927b2de47ca736f5abe8bb2f382ac3"
+  },
+  "freeze": {
+    "created_at": "2026-10-24T16:32:10.019011+09:00",
+    "product_files_present": [],
+    "hashes": {
+      "devdoc/contracts/dev4-independent-frontend.md": "ed7cc48540cafbafd3f7ec79be4a91c1606d8d3b7d9ce5c4f5cefd6c316284f8",
+      "crates/testing/reference/src/frontend/splitter.rs": "7212a5cc2aef62f8b073b4c7509605839a5bebd6b398ba4b472faa673a066864",
+      "tests/fixtures/dev4-splitter/control.json": "86f37a34f9b8643438961c08887bef14276852a776895e2342dc6367acf1f13d",
+      "tests/fixtures/dev4-splitter/manifest.json": "e7b5e56b62d5abd099027bcca76fed86cf0d80c1de6ba1854a15d8d138e9d1c2"
+    }
+  },
+  "independent_D2": {
+    "reviewer": "/root/frontend_review",
+    "status": "ACCEPTED_BEFORE_PRODUCT_IMPLEMENTATION",
+    "scope": "D4-FE-SPLIT-001 and frozen1226schedules/resource18/overflow1/observation16/productmutants4"
+  },
+  "sources": {
+    "source-r1": {
+      "manifest": "artifacts/dev4-splitter-20261024/source-r1.json",
+      "manifest_sha256": "e0dfad7ca519746f52d431c9f84975381e81a7113a865b8df34b6b7e51ab3d7b",
+      "source_sha256": "3413bebd7d8b3a4acdb5ac95df3c960b8d94e18e8e1962832f8a70ef8f508b0a",
+      "base_head": "a291e060af30e7865b41a6a6cb25edc852385fdc",
+      "selected": {
+        "selected_before_execution_at": "2026-10-24T16:36:01.957312+09:00",
+        "previous_validation": "a291e06 lexer/name scope only; no splitter/source code existed",
+        "changed_paths": [
+          "crates/sql/src/frontend/source.rs",
+          "crates/sql/src/frontend/splitter.rs",
+          "crates/sql/src/frontend/splitter/utf8.rs",
+          "crates/sql/src/frontend/{mod,diagnostic}.rs",
+          "crates/testing/reference/src/frontend/splitter.rs",
+          "crates/testing/reference/src/frontend.rs",
+          "crates/sql/tests/splitter_contracts.rs",
+          "crates/sql/tests/splitter_resources.rs",
+          "crates/sql/tests/support/frontend.rs"
+        ],
+        "mapping": {
+          "new boundary state/UTF8/source limit": "splitter_contracts first5 functions,1226 schedules",
+          "new reference checker": "known_bad_splitter_observations_are_rejected,16 mutations",
+          "new source budget/growth/retention/control": "splitter_resources18 functions",
+          "new absolute checked offset": "sole library test frontend::splitter::tests::absolute_offset_overflow_releases_without_allocation",
+          "Module Split and registration": "compiled by selected targets; old adapter static compile later"
+        },
+        "not_selected": [
+          "lexer_contracts",
+          "name_contracts",
+          "frontend_oracle",
+          "frontend_control",
+          "DEV3",
+          "workspace",
+          "expanded ignored profiles"
+        ],
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-sql",
+          "--features",
+          "test-support",
+          "--offline",
+          "--locked",
+          "--lib",
+          "--test",
+          "splitter_contracts",
+          "--test",
+          "splitter_resources",
+          "--",
+          "--nocapture"
+        ]
+      }
+    },
+    "source-r2": {
+      "manifest": "artifacts/dev4-splitter-20261024/source-r2.json",
+      "manifest_sha256": "6f3aa7db8639379c903b3b32729ea135c5c1d9d1f06ebdc682d9bd6071b7570a",
+      "source_sha256": "d79e5689b2af7c1ccf63a27e9e75979c67bb5880c7ef1c0ac341304edf68e520",
+      "base_head": "a291e060af30e7865b41a6a6cb25edc852385fdc",
+      "selected": {
+        "selected_before_execution_at": "2026-10-24T16:37:31.555399+09:00",
+        "previous_validation": "r1-tests25functionsPASS; r1-defaultPASS; r1-clippy compile FAIL on missing new Module arm in old name adapter",
+        "actual_diff_since_validation": [
+          "crates/sql/tests/name_contracts.rs: exhaustive mapping adds Module::Split => Split, no changed product algorithm or existing case expectations"
+        ],
+        "selected": [
+          "cargo clippy -p xadb-sql -p xadbtest-reference --all-targets --all-features --offline --locked -- -D warnings",
+          "cargo fmt -p xadb-sql -- --check",
+          "rustfmt --check reference frontend splitter"
+        ],
+        "test_execution": "NONE: static-only enum observation arm is unreachable from unchanged normalize_name; completed normal25 and old lexer/name tests are preserved without rerun",
+        "coverage": "all-target compile checks newly exhaustive adapter and static lint checks current changed packages"
+      }
+    },
+    "mutant-scan": {
+      "manifest": "artifacts/dev4-splitter-20261024/mutant-scan.json",
+      "manifest_sha256": "e53a84604b818c0d52b24ee7185a62fe34d297946888b5206997b13bc0a9772a",
+      "source_sha256": "e17cbfec9f40c93370255e065b4b80aca99a2e5b0bc1732c7a6af8497bcaf478",
+      "base_head": "a291e060af30e7865b41a6a6cb25edc852385fdc",
+      "selected": {
+        "actual_changed_path": "crates/sql/src/frontend/splitter.rs",
+        "mutation": "scan",
+        "selected_test": "scan_control_is_bounded_and_terminal",
+        "reason": "New deliberate product defect in named path; corresponding completed normal detector is run only against the changed mutant source",
+        "excluded": "all unchanged product targets, lexer/name, other resource cases",
+        "expected": "test assertion failure (compile failure is not rejection evidence)"
+      }
+    },
+    "mutant-copy": {
+      "manifest": "artifacts/dev4-splitter-20261024/mutant-copy.json",
+      "manifest_sha256": "477444cee225ca833247c5bd3ec5bafe102222301bc77f49e6422f55e14f819b",
+      "source_sha256": "0519ea1b89ce61f764b2b3639a359797425c6074ccc597b2ef6c414f7ab680b2",
+      "base_head": "a291e060af30e7865b41a6a6cb25edc852385fdc",
+      "selected": {
+        "actual_changed_path": "crates/sql/src/frontend/source.rs",
+        "mutation": "copy",
+        "selected_test": "copy_control_is_bounded_and_cleans_old_new",
+        "reason": "New deliberate product defect in named path; corresponding completed normal detector is run only against the changed mutant source",
+        "excluded": "all unchanged product targets, lexer/name, other resource cases",
+        "expected": "test assertion failure (compile failure is not rejection evidence)"
+      }
+    },
+    "mutant-cleanup": {
+      "manifest": "artifacts/dev4-splitter-20261024/mutant-cleanup.json",
+      "manifest_sha256": "08450dbc3478711f9eb2c27a0193557daf35679782f474b976b52cb8f0750392",
+      "source_sha256": "53c306bd8c2ec8ad2ddd54176523c1ff67c1ae7336062965d182d52a1579e0b1",
+      "base_head": "a291e060af30e7865b41a6a6cb25edc852385fdc",
+      "selected": {
+        "actual_changed_path": "crates/sql/src/frontend/splitter.rs",
+        "mutation": "cleanup",
+        "selected_test": "allocation_failure_during_growth",
+        "reason": "New deliberate product defect in named path; corresponding completed normal detector is run only against the changed mutant source",
+        "excluded": "all unchanged product targets, lexer/name, other resource cases",
+        "expected": "test assertion failure (compile failure is not rejection evidence)"
+      }
+    },
+    "mutant-capacity": {
+      "manifest": "artifacts/dev4-splitter-20261024/mutant-capacity.json",
+      "manifest_sha256": "2e3ad144cabdfcd37b276f6a34206d73eba8b11e26d2f2c317b055bd103128ce",
+      "source_sha256": "2b9152c2a05a6e62400bbfff44cec3cfcc4a59890e8cd3fc1809684cf5ff4128",
+      "base_head": "a291e060af30e7865b41a6a6cb25edc852385fdc",
+      "selected": {
+        "actual_changed_path": "crates/sql/src/frontend/source.rs",
+        "mutation": "capacity",
+        "selected_test": "actual_capacity_padding_is_charged",
+        "reason": "New deliberate product defect in named path; corresponding completed normal detector is run only against the changed mutant source",
+        "excluded": "all unchanged product targets, lexer/name, other resource cases",
+        "expected": "test assertion failure (compile failure is not rejection evidence)"
+      }
+    }
+  },
+  "runs": [
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--offline",
+        "--locked",
+        "--lib",
+        "--test",
+        "splitter_contracts",
+        "--test",
+        "splitter_resources",
+        "--",
+        "--nocapture"
+      ],
+      "source": "source-r1.json",
+      "source_sha256": "3413bebd7d8b3a4acdb5ac95df3c960b8d94e18e8e1962832f8a70ef8f508b0a",
+      "exit_code": 0,
+      "seconds": 4.221295646002545,
+      "finished_at": "2026-10-24T16:36:12.783316+09:00",
+      "log_sha256": "f516be486396684791fa0df85b4e94347fa879d83960247ca11ec4c9ce783341",
+      "binaries": {
+        "isolated-targets/source-r1/debug/deps/splitter_contracts-08e9feece9c06e5b": "811aa9e67e6ff09246a72d159ff862fbd28dd2b59ecec634c871c3b16eb6e7e8",
+        "isolated-targets/source-r1/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/source-r1/debug/deps/xadb_sql-aecc1be51a0ac331": "e42644dfc28920232fcdb2fb1503ca9741707e3300c4d05b3f0387c4795b6ca6",
+        "isolated-targets/source-r1/debug/deps/splitter_resources-7572fc213381e0ae": "23fef51ec2d52db8a5e1e1cfc1f5543542b3d141e857a44caf1bac952836fccb"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-splitter-20261024/r1-tests.json",
+      "receipt_sha256": "a4af963b8cc5b8bd8a628aa39736a60b45f5264a01519bd7da73963ef6595678",
+      "log_path": "artifacts/dev4-splitter-20261024/r1-tests.log",
+      "classification": "PASS"
+    },
+    {
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "xadb-sql",
+        "--no-default-features",
+        "--offline",
+        "--locked"
+      ],
+      "source": "source-r1.json",
+      "source_sha256": "3413bebd7d8b3a4acdb5ac95df3c960b8d94e18e8e1962832f8a70ef8f508b0a",
+      "exit_code": 0,
+      "seconds": 0.7055747080012225,
+      "finished_at": "2026-10-24T16:36:21.901810+09:00",
+      "log_sha256": "cd558feafedc40ae23d87b1c2aa8d84ad8f14d2b41fa6092dab0b9c3f62547ba",
+      "binaries": {
+        "isolated-targets/source-r1/debug/deps/splitter_contracts-08e9feece9c06e5b": "811aa9e67e6ff09246a72d159ff862fbd28dd2b59ecec634c871c3b16eb6e7e8",
+        "isolated-targets/source-r1/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/source-r1/debug/deps/xadb_sql-aecc1be51a0ac331": "e42644dfc28920232fcdb2fb1503ca9741707e3300c4d05b3f0387c4795b6ca6",
+        "isolated-targets/source-r1/debug/deps/splitter_resources-7572fc213381e0ae": "23fef51ec2d52db8a5e1e1cfc1f5543542b3d141e857a44caf1bac952836fccb"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-splitter-20261024/r1-default.json",
+      "receipt_sha256": "97dff03d20fc890451e439951af1ee4e56fcef0ccb8439fef51c23a1a369b651",
+      "log_path": "artifacts/dev4-splitter-20261024/r1-default.log",
+      "classification": "PASS"
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-sql",
+        "-p",
+        "xadbtest-reference",
+        "--all-targets",
+        "--all-features",
+        "--offline",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "source": "source-r1.json",
+      "source_sha256": "3413bebd7d8b3a4acdb5ac95df3c960b8d94e18e8e1962832f8a70ef8f508b0a",
+      "exit_code": 101,
+      "seconds": 2.854655584000284,
+      "finished_at": "2026-10-24T16:36:29.858878+09:00",
+      "log_sha256": "e098d0dbe52d1c5fd9516a66858148a07ed0769c4be0b6c55c38963a9b720a43",
+      "binaries": {
+        "isolated-targets/source-r1/debug/deps/splitter_contracts-08e9feece9c06e5b": "811aa9e67e6ff09246a72d159ff862fbd28dd2b59ecec634c871c3b16eb6e7e8",
+        "isolated-targets/source-r1/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/source-r1/debug/deps/xadb_sql-aecc1be51a0ac331": "e42644dfc28920232fcdb2fb1503ca9741707e3300c4d05b3f0387c4795b6ca6",
+        "isolated-targets/source-r1/debug/deps/splitter_resources-7572fc213381e0ae": "23fef51ec2d52db8a5e1e1cfc1f5543542b3d141e857a44caf1bac952836fccb"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-splitter-20261024/r1-clippy.json",
+      "receipt_sha256": "64b47d2281b71d303af846b4baa0ab4be20329dc74da6d1e703a3e9ff8311c98",
+      "log_path": "artifacts/dev4-splitter-20261024/r1-clippy.log",
+      "classification": "STATIC_COMPILE_FAIL"
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "xadb-sql",
+        "-p",
+        "xadbtest-reference",
+        "--all-targets",
+        "--all-features",
+        "--offline",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "source": "source-r2.json",
+      "source_sha256": "d79e5689b2af7c1ccf63a27e9e75979c67bb5880c7ef1c0ac341304edf68e520",
+      "exit_code": 0,
+      "seconds": 3.767524848000903,
+      "finished_at": "2026-10-24T16:37:35.487888+09:00",
+      "log_sha256": "d970ccc23ad5aa115b0c9b4745f9345dbc18d7d3046726d788ae55ff4aba3c9d",
+      "binaries": {
+        "isolated-targets/source-r2/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-splitter-20261024/r2-clippy.json",
+      "receipt_sha256": "5d0d6addcbcd087a02709969793511a30586ecc60a3f6e3f0e9c7bdd0d53aa68",
+      "log_path": "artifacts/dev4-splitter-20261024/r2-clippy.log",
+      "classification": "PASS"
+    },
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "-p",
+        "xadb-sql",
+        "--",
+        "--check"
+      ],
+      "source": "source-r2.json",
+      "source_sha256": "d79e5689b2af7c1ccf63a27e9e75979c67bb5880c7ef1c0ac341304edf68e520",
+      "exit_code": 0,
+      "seconds": 0.05230363499867963,
+      "finished_at": "2026-10-24T16:37:46.752917+09:00",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "binaries": {
+        "isolated-targets/source-r2/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-splitter-20261024/r2-fmt.json",
+      "receipt_sha256": "56c3168c6d046538d52a00ae5a97a91cf798938c8658294718af198321bd2247",
+      "log_path": "artifacts/dev4-splitter-20261024/r2-fmt.log",
+      "classification": "PASS"
+    },
+    {
+      "command": [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "crates/testing/reference/src/frontend.rs",
+        "crates/testing/reference/src/frontend/splitter.rs"
+      ],
+      "source": "source-r2.json",
+      "source_sha256": "d79e5689b2af7c1ccf63a27e9e75979c67bb5880c7ef1c0ac341304edf68e520",
+      "exit_code": 0,
+      "seconds": 0.03142751999985194,
+      "finished_at": "2026-10-24T16:37:46.732050+09:00",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "binaries": {
+        "isolated-targets/source-r2/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-splitter-20261024/r2-reference-fmt.json",
+      "receipt_sha256": "83625188ea5953c33191381bdd5bb9ec7a497796a5301da59446948a3e865de2",
+      "log_path": "artifacts/dev4-splitter-20261024/r2-reference-fmt.log",
+      "classification": "PASS"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--offline",
+        "--locked",
+        "--test",
+        "splitter_resources",
+        "scan_control_is_bounded_and_terminal",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "mutant-scan.json",
+      "source_sha256": "e17cbfec9f40c93370255e065b4b80aca99a2e5b0bc1732c7a6af8497bcaf478",
+      "exit_code": 101,
+      "seconds": 4.4857174980024865,
+      "finished_at": "2026-10-24T16:37:19.861197+09:00",
+      "log_sha256": "6c944b24093f94f0a42894f360c20652fadea9ad8c672ddf883b069e47d3dedd",
+      "binaries": {
+        "isolated-targets/mutant-scan/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/mutant-scan/debug/deps/splitter_resources-7572fc213381e0ae": "b3cf80d9564474693448a60aaf74371999859a4e4e9d0403645af7ef69aeab91"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-splitter-20261024/mutant-scan-result.json",
+      "receipt_sha256": "a36c2bad0891ba4806946cf786919f39388ef9bea5c3f282ba5a890e738fe911",
+      "log_path": "artifacts/dev4-splitter-20261024/mutant-scan-result.log",
+      "classification": "EXPECTED_MUTANT_REJECTION"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--offline",
+        "--locked",
+        "--test",
+        "splitter_resources",
+        "copy_control_is_bounded_and_cleans_old_new",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "mutant-copy.json",
+      "source_sha256": "0519ea1b89ce61f764b2b3639a359797425c6074ccc597b2ef6c414f7ab680b2",
+      "exit_code": 101,
+      "seconds": 4.662134920999961,
+      "finished_at": "2026-10-24T16:37:20.037611+09:00",
+      "log_sha256": "215f8c011db4cb372cd0ccfdfb0346b7e38367e9a9b3e045979e24d383f7dc1f",
+      "binaries": {
+        "isolated-targets/mutant-copy/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/mutant-copy/debug/deps/splitter_resources-7572fc213381e0ae": "cad9ac0fb292bc3d22beaa9c10d7ada2a92a0802aad0b4776196f66bc5f22a3d"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-splitter-20261024/mutant-copy-result.json",
+      "receipt_sha256": "a7ad8d6d39c3bdbb0844aebaf5c5c9232b1855e349db37e5d14cd2603dda64c1",
+      "log_path": "artifacts/dev4-splitter-20261024/mutant-copy-result.log",
+      "classification": "EXPECTED_MUTANT_REJECTION"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--offline",
+        "--locked",
+        "--test",
+        "splitter_resources",
+        "allocation_failure_during_growth",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "mutant-cleanup.json",
+      "source_sha256": "53c306bd8c2ec8ad2ddd54176523c1ff67c1ae7336062965d182d52a1579e0b1",
+      "exit_code": 101,
+      "seconds": 4.552067659999011,
+      "finished_at": "2026-10-24T16:37:19.927546+09:00",
+      "log_sha256": "8f964bb2b6fcb83c750e6fe3551617b4bbb41584bc94832c1b24aa23f9eccb51",
+      "binaries": {
+        "isolated-targets/mutant-cleanup/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/mutant-cleanup/debug/deps/splitter_resources-7572fc213381e0ae": "5c1e1db5011e6e9acceafe66e8830fc0013a7e1a734b8c3853db8dd9f9b22beb"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-splitter-20261024/mutant-cleanup-result.json",
+      "receipt_sha256": "3428987434ac9c5b27ecbc463a5e44ca071fa7744e8ebf86ba19a9c9f5c64744",
+      "log_path": "artifacts/dev4-splitter-20261024/mutant-cleanup-result.log",
+      "classification": "EXPECTED_MUTANT_REJECTION"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--offline",
+        "--locked",
+        "--test",
+        "splitter_resources",
+        "empty_error_and_drop_release_pending_capacity",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "mutant-cleanup.json",
+      "source_sha256": "53c306bd8c2ec8ad2ddd54176523c1ff67c1ae7336062965d182d52a1579e0b1",
+      "exit_code": 101,
+      "seconds": 0.03972820600029081,
+      "finished_at": "2026-10-24T16:39:10.648527+09:00",
+      "log_sha256": "b00b7cb5b5eff38c0696fde290c9d918b7d185c93c98bd32ec6c163878c67832",
+      "binaries": {
+        "isolated-targets/mutant-cleanup/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/mutant-cleanup/debug/deps/splitter_resources-7572fc213381e0ae": "5c1e1db5011e6e9acceafe66e8830fc0013a7e1a734b8c3853db8dd9f9b22beb"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-splitter-20261024/mutant-cleanup-second-result.json",
+      "receipt_sha256": "3934606294a6531191d93896f8cb69bbfb19b458a2c30a1e5a9059e299b640bf",
+      "log_path": "artifacts/dev4-splitter-20261024/mutant-cleanup-second-result.log",
+      "classification": "EXPECTED_MUTANT_REJECTION",
+      "selection_supplement": "artifacts/dev4-splitter-20261024/selection-mutant-cleanup-second.json"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "xadb-sql",
+        "--features",
+        "test-support",
+        "--offline",
+        "--locked",
+        "--test",
+        "splitter_resources",
+        "actual_capacity_padding_is_charged",
+        "--",
+        "--exact",
+        "--nocapture"
+      ],
+      "source": "mutant-capacity.json",
+      "source_sha256": "2b9152c2a05a6e62400bbfff44cec3cfcc4a59890e8cd3fc1809684cf5ff4128",
+      "exit_code": 101,
+      "seconds": 4.662736487000075,
+      "finished_at": "2026-10-24T16:37:20.038216+09:00",
+      "log_sha256": "3b6c538e37687fa13140323864c964bb2975e11ad9105a5857aeef505bda1681",
+      "binaries": {
+        "isolated-targets/mutant-capacity/debug/deps/libserde_derive-c30b669326a285d8.so": "96e26a9bd9000964057bed2d2b6d6e62635c3f7dc0e9794639d55babcc281605",
+        "isolated-targets/mutant-capacity/debug/deps/splitter_resources-7572fc213381e0ae": "f235b64944a8356b7dc40ab2f8e18a0c3d1a14ea201264fd6ddec1716102ea38"
+      },
+      "runner_sha256": "272d64dc52e5c60a955a3eb1f76cd57be4770eef5e3c7233456b1b4a3b79723c",
+      "receipt_path": "artifacts/dev4-splitter-20261024/mutant-capacity-result.json",
+      "receipt_sha256": "deb2ef081ab3e8034ae87d6dbf5fd9c55d862143356bf39fd92691335ea4a7bf",
+      "log_path": "artifacts/dev4-splitter-20261024/mutant-capacity-result.log",
+      "classification": "EXPECTED_MUTANT_REJECTION"
+    }
+  ],
+  "counts": {
+    "normal_test_functions": 25,
+    "splitter_schedules": 1226,
+    "observation_mutants": 16,
+    "resource_functions": 18,
+    "offset_overflow_functions": 1,
+    "product_mutant_sources": 4,
+    "product_mutant_detector_runs": 5
+  },
+  "runtime_scope": "r1 product and frozen fixtures; r2 differs only by exhaustive Module::Split arm in old name observation adapter, statically compiled without rerunning unchanged tests",
+  "not_run": [
+    "expanded256x1024",
+    "expanded30minute fuzz",
+    "parser/AST/scalar/predicate",
+    "abstract lifecycle model",
+    "DEV3/engine integration",
+    "Q1"
+  ],
+  "documentation_verifier": "NOT_RUN: pre-push only",
+  "current_source_matches": "All29 r2 overlay files; final review verifies again",
+  "failures_preserved": [
+    "r1-clippy: old name observation adapter lacked new Module::Split exhaustive arm; fixed in r2. No runtime case failed."
+  ],
+  "test_policy": "Only new splitter/resource/overflow and independent checker targets; mutants use changed source and exact detectors. No repeated normal or old lexer/name tests.",
+  "independent_D1": {
+    "reviewer": "/root/frontend_review",
+    "status": "ACCEPTED",
+    "scope": "D4-FE-SPLIT-001 streaming boundary/owned source/shared quota only",
+    "verified": [
+      "current29overlayfiles match r2",
+      "all6source manifests and11run receipts/log/binary hashes",
+      "25normalfunctions and4mutant sources/5detectors",
+      "originalClippyFAIL preserved; r2static-only correction",
+      "shared DEV4-only docs patch excludes DEV3 edits"
+    ],
+    "not_completed": [
+      "parser/values/predicate",
+      "lifecycle model",
+      "DEV3 integration",
+      "Q1",
+      "expanded profiles"
+    ]
+  }
+}

@@ -1932,6 +1932,16 @@
       "path": "evidence/dev4-frontend-20261024.json",
       "role": "evidence",
       "title": "DEV4 독립 앞단 source별 실행 색인"
+    },
+    "dev4-splitter-20261024.md": {
+      "path": "evidence/dev4-splitter-20261024.md",
+      "role": "evidence",
+      "title": "DEV4 streaming 문장 경계·원문 소유"
+    },
+    "dev4-splitter-20261024.json": {
+      "path": "evidence/dev4-splitter-20261024.json",
+      "role": "evidence",
+      "title": "DEV4 splitter source별 선택 실행 색인"
     }
   }
 }

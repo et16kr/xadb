@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV4 streaming 문장 경계·원문 소유](dev4-splitter-20261024.md): 입력 동결·공유 quota·[선택 실행 색인](dev4-splitter-20261024.json).
+
 - [DEV4 독립 앞단 개발·선택 검증](dev4-frontend-20261024.md): lexer/이름 입력 동결·병렬 구현·[source별 실행 색인](dev4-frontend-20261024.json)과 잔여 의무.
 
 - [DEV4 독립 앞단 — Oracle·로컬 DBMS 조사와 계약 검토](dev4-preparation-research-20261024.md): 공식19c와 사용자 제공 OracleManual·PostgreSQL/SQLite/MariaDB/CUBRID의 실제 revision/hash·차이 해결·D2 검토. 후속 P2 발견·진단 효과 교정과 D4-PREP-002 독립 수용을 별도 보존. 제품/Oracle 실행 NOT_RUN.

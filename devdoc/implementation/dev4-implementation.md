@@ -1,6 +1,6 @@
 # DEV4 독립 앞단 구현
 
-2026-10-24 · **lexer·이름 제한 구현 / 실제 SQL 실행·DEV4·Q1 미완료**
+2026-10-24 · **lexer·이름·splitter 제한 구현 / 실제 SQL 실행·DEV4·Q1 미완료**
 
 [독립 앞단 계약](../contracts/dev4-independent-frontend.md#lexer-leaf) · [병행 계획](../plans/dev4-preparation-plan.md) · [source별 증거](../evidence/dev4-frontend-20261024.md)
 
@@ -14,7 +14,8 @@ nontrivia token65,536 한도를 적용하며 UTF-8·긴 token/comment·이름 de
 
 normal dependency는 foundation 하나다. borrowed scanner와 고정 이름은 heap allocation을
 하지 않는다. 반환된 이름은 원문 수명과 독립이고 lexer는 source/control을 빌린다.
-source/AST를 소유하는 parser의 session8 MiB/DB64 MiB quota는 아직 구현하지 않았다.
+streaming 원문 backing은 아래 splitter의 기존 session8 MiB/DB64 MiB quota를 소비한다.
+parser AST arena의 예약·수명은 아직 구현하지 않았다.
 test-support feature의 progress observer는 기본 제품 build에 포함되지 않는다.
 
 제품 경로는 `crates/sql/src/frontend/`이며 독립 literal/엄격 비교는
@@ -44,13 +45,47 @@ cargo test -p xadb-sql --features test-support --locked --test frontend_control 
 이를 최소 profile PASS에 합산하지 않는다. 시험용 mutant의 의도한 실패와 잘못된 build 선택은
 제품 FAIL/PASS와 구분하여 보존한다. 문서 검사는 push 때만 실행한다.
 
+<a id="splitter"></a>
+## Streaming 문장 경계와 원문 수명
+
+`Splitter::push`는 caller chunk에서 첫 nonempty 문장까지 소비하고 consumed와
+NeedMore/StatementSource를 반환한다. `finish`만 실제 EOF를 선언한다. quote/comment/UTF-8
+carry는 chunk 사이에 보존하고 첫 문장 뒤 suffix를 미리 검사하지 않는다. 빈 구간도1 MiB
+상한을 소비하며 외부 semicolon 뒤에만 상한을 초기화한다. 반환 원문은 앞뒤 trivia·종료
+semicolon을 포함하고 batch 절대 span을 유지한다. 이는 구문 분석이나 SQL 실행 성공이 아니다.
+
+source backing은 주입된 기존 session/DB Quota handle을 공유한다. 초기256에서 성장하며
+새 backing 전체의 예약을 먼저 확보하고 실제 capacity 초과분을 게시 전에 추가 회계한다.
+copy 중 old/new capacity가 함께 charge되고 반환 source가 살아 있는 동안 예약이 유지된다.
+오류·취소·Drop에서 pending bytes를 먼저 폐기하고 lease를 반환한다. 긴 scan/copy는256byte
+간격으로 새 호출의 제어를 검사한다. 이전 호출 제어를 splitter나 반환 source가 저장하지 않는다.
+
+제품은 `frontend/source.rs`, `splitter.rs`, `splitter/utf8.rs`이며 독립 기대값은 reference의
+`frontend/splitter.rs`다. normal dependency는 foundation만 유지하고 engine을 소비하지 않는다.
+비기본 test-support의 allocation 실패·capacity padding/관측과 기존 progress observer는
+시험에서만 사용한다. 기본 feature compile도 확인했다.
+
+[splitter source별 증거](../evidence/dev4-splitter-20261024.md)에 새25함수,1,226schedule,
+관측변조16개, 실제 제품mutant4개/선택detector5개의 거절을 보존한다. 정상runtime은 r1이고
+r2는 기존 이름 관측 adapter의 새 Module::Split 분기만 보완한 static compile이다. 원 Clippy
+compile FAIL을 남겼으며 runtime/기존 lexer 시험을 반복하지 않았다. 포맷·SQL/reference
+Clippy가 통과했고 최종 독립 D1을 이 제한 leaf에 수용했다. 확대256×1024와30분fuzz는 작성·NOT_RUN이다.
+
+새 경로의 선택 가능한 진입점은 아래와 같다. 전체 target을 무변경 반복하라는 지시가 아니다.
+
+```bash
+cargo test -p xadb-sql --test splitter_contracts <function> -- --exact
+cargo test -p xadb-sql --features test-support --test splitter_resources <function> -- --exact
+cargo test -p xadb-sql --lib frontend::splitter::tests::absolute_offset_overflow_releases_without_allocation -- --exact
+```
+
 ## 계속할 작업
 
-첫 P0/P1 소비 부분을 구현했으며 P1 streaming splitter, P2 공통 parser·INSERT/거래 구문,
-P3 scalar/typed predicate, P4 나머지 구문, P5 추상 수명 모델, P6 공급 수합은 남아 있다.
-다음 종료점은 같은 quote/comment/UTF-8 경계를 사용하는 streaming splitter다. chunk 보관의
-공유 quota·할당 실패·진단 좌표·EOF와 chunk 끝 구별을 실제 입력으로 동결한 뒤 구현한다.
+P0/P1의 lexer·이름·streaming 경계와 원문 예약을 구현했다. 다음은 P2 공통 parser·INSERT/거래
+구문이며 단일 API의 다중 문장 거절·AST/depth/marker 번호·source/arena 수명과 독립 literal을
+먼저 동결한다. P3 scalar/typed predicate, P4 나머지 구문, P5 추상 수명 모델, P6 공급 수합은
+계속 미완료다. 새 원문 owner만으로 AST/binding의 FE11/12를 완료하지 않는다.
 
-단일 API 한 문장 검사·AST/depth/marker 번호·값 변환·catalog binding·실행 CLI·session·실제
-engine adapter는 이 scanner가 제공하지 않는다. Q1 entrypoint와 실제 SQL 인수 결과도 없다.
-engine 연결은 DEV3 catalog/row/index/statement/undo/commit/recovery/temp의 실제 선행 증거 뒤다.
+값 변환·catalog binding·실행 CLI·session·실제 engine adapter와 Q1 entrypoint는 제공하지
+않는다. engine 연결은 DEV3 catalog/row/index/statement/undo/commit/recovery/temp의 실제 선행
+증거 뒤다. 앞단 단위 결과를 실제 SQL·복구·내구성·전체 DEV4/Q1 완료로 확대하지 않는다.

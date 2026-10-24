@@ -5150,14 +5150,17 @@
     ],
     "oracle_paths": [
       "crates/testing/reference/src/frontend.rs",
-      "crates/testing/reference/src/frontend/literals.rs"
+      "crates/testing/reference/src/frontend/literals.rs",
+      "crates/testing/reference/src/frontend/splitter.rs"
     ],
     "test_paths": [
       "crates/sql/tests",
-      "tests/fixtures/dev4-lexer"
+      "tests/fixtures/dev4-lexer",
+      "tests/fixtures/dev4-splitter"
     ],
     "source_roots_changed": false,
     "gate": "Q1 NOT_RUN",
-    "scope": "D4-FE-LEX-001 borrowed lexer/name; no engine or storage effects"
+    "scope": "D4-FE-LEX-001 borrowed lexer/name and D4-FE-SPLIT-001 streaming boundary/owned source/shared quota; parser and engine integration remain incomplete",
+    "splitter_evidence_ref": "dev4-splitter-20261024.md"
   }
 }

@@ -1,0 +1,155 @@
+{
+  "schema": 1,
+  "contract": "D4-FE-SPLIT-001",
+  "fixture_owner": "/root/frontend_oracle",
+  "implementation_owner": "/root",
+  "test_target": "splitter_resources",
+  "execution_state": "NOT_RUN",
+  "capacity_observation": {
+    "accessors": [
+      "Splitter::buffer_capacity()",
+      "StatementSource::capacity_bytes()"
+    ],
+    "rules": [
+      "actual capacity >= requested capacity",
+      "session and database used bytes equal the sum of all live backing capacities",
+      "normal requested capacities start at256 and double actual prior capacity; old+new coexist during copy",
+      "normal allocator expected measurements256/512; report actual measurements and do not substitute requested capacity for charge"
+    ],
+    "padding16": "base256 requests272 actual capacity; when actual=272 next base544 plus16=560, old+new peak832; use actual capacity in charge and growth assertions"
+  },
+  "tests": [
+    {
+      "function": "capacity_and_retained_source_lifetimes",
+      "input": "session8MiB/DB64MiB; new splitter; push a;; keep first source; push b; keep both; drop each then splitter",
+      "expected": "initial capacity/usage0; each source exact bytes/spans and capacity>=256; usage=sum live source capacities; splitter pending capacity0 after moves; each drop subtracts only its own capacity; final0"
+    },
+    {
+      "function": "initial_reservation_boundaries",
+      "input": "independent fresh splitters; constrained session then constrained DB limits255/256/257, other ledger8MiB; push a",
+      "expected": "255 fails Limit Split[0,0), all charges return0; 256/257 admit normal256 backing, returned NeedMore consumed1, charge==actual; record actual capacity rather than assume allocator equality"
+    },
+    {
+      "function": "growth_reservation_boundaries",
+      "input": "fresh splitters; constrained session then constrained DB limits767/768/769; push256 a bytes then one b byte",
+      "expected": "normal old256+new512 requires768 during copy; 767 Limit Split[256,256) and both ledgers0; 768/769 succeeds with512 retained pending capacity and both ledgers512; observer witnessespeak768 before publish, old bytes released before old reservation"
+    },
+    {
+      "function": "retained_source_preserved_after_next_failure",
+      "input": "return a; and hold its capacity C; next splitter source allocation with constrained session then DB remaining255/256/257",
+      "expected": "remaining255 fails next source while retained a; remains readable and charged C; 256/257 succeeds normal next256 backing; cleanup of pending source restores C; dropping retained source restores0"
+    },
+    {
+      "function": "database_failure_releases_prior_session_reservation",
+      "input": "session8MiB; DB255; push a on fresh splitter",
+      "expected": "session base reservation succeeds, DB base fails at[0,0); final session0/DB0; terminal error repeated; next splitter with fresh adequate ledgers succeeds"
+    },
+    {
+      "function": "actual_capacity_padding_is_charged",
+      "input": "adequate ledgers; set_allocation_padding16; push a then enough bytes to cross actual initial capacity",
+      "expected": "first actual>=272 and charge exact actual; next base=2*actual, observed new>=base+16; copy peak old+new exact; publication usage=new; terminal/drop0"
+    },
+    {
+      "function": "padding_extra_session_failure_cleans_all",
+      "input": "session256/DB8MiB; set_allocation_padding16; push a",
+      "expected": "base reservations256 both succeed; actual exceeds256; extra session reservation fails Limit Split[0,0); allocated bytes discarded before leases; used0 both"
+    },
+    {
+      "function": "padding_extra_database_failure_cleans_all",
+      "input": "session8MiB/DB256; set_allocation_padding16; push a",
+      "expected": "base reservations256 both succeed; extra session succeeds; extra DB fails Limit Split[0,0); all extra/base reservations returned; used0 both"
+    },
+    {
+      "function": "allocation_failure_before_first_backing",
+      "input": "adequate ledgers; fail_next_allocation; push a",
+      "expected": "fallible backing allocation point fails Limit Split[0,0), base charges rolled back; sticky failure; fresh splitter succeeds; used0 after drops"
+    },
+    {
+      "function": "allocation_failure_during_growth",
+      "input": "push256 a into pending normal256 backing; fail_next_allocation; push b",
+      "expected": "new512 reservation reaches peak768 then injected allocation fails Limit Split[256,256); new and old pending charges cleaned; earlier returned source if retained unchanged"
+    },
+    {
+      "function": "scan_control_is_bounded_and_terminal",
+      "input": "fresh splitter push100000 a bytes; with_observer when Module Split coordinate first>=256 and quotas not in copy growth, arm cancel or clock deadline; repeat for long quote and comment; separate pre-cancelled+expired input",
+      "expected": "middle scan Cancelled/Timeout Split zero-width within256bytes after last scan witness; entry simultaneous conditions choosesCancelled; no complete output; pending0; repeat push/finish repeats exact error; fresh caller control succeeds"
+    },
+    {
+      "function": "copy_control_is_bounded_and_cleans_old_new",
+      "input": "pending512 bytes, next byte requires new1024; observer only when usage1536 and copy coordinate first>=256; inject cancel and deadline separately",
+      "expected": "observer proves old512+new1024 coexist during copy and p in[256,512); Cancelled/Timeout Split[p,p); pending and new0 after failure; no partially published source"
+    },
+    {
+      "function": "new_calls_do_not_retain_previous_control",
+      "input": "push a with token1; then cancel token1; push ; with fresh token2; finished source held; cancel token2; finish with token3",
+      "expected": "push2 returns a; successfully, finish token3 returnsNone; only supplied call control is checked; holding returned source does not retain previous control"
+    },
+    {
+      "function": "finished_and_failed_precedence",
+      "input": "finish empty splitter; call cancelled finish then uncancelled push; separate Syntax-failed splitter then cancelled push and finish",
+      "expected": "active/finished checks current cancellation first; failed always repeats original diagnostic; successful finish then active push errorsSyntax atEOF; errors clean pending"
+    },
+    {
+      "function": "shared_database_two_splitters_are_bounded",
+      "input": "two separate sessions8MiB sharing DB511/512/513; each push a concurrently or sequentially and retain result/pending",
+      "expected": "DB511 cannot hold two normal256 backings; DB512/513 can; sum actual live capacities equals DBused and each sessionused; no overbooking; failed caller cleanup preserves other caller; all drops restore0"
+    },
+    {
+      "function": "native_threads_share_database_quota",
+      "input": "two native threads, own session ledgers, shared DB256, start barrier, each pushes a; second barrier retains successful pending allocations before either drops",
+      "expected": "exactly one admitted normal256 backing; other Limit, combined DBused<=256; winner data valid; after join DB0; cancellation is separate per caller"
+    },
+    {
+      "function": "empty_error_and_drop_release_pending_capacity",
+      "input": [
+        "spaces and semicolon",
+        "completed comment and EOF",
+        "open quote and EOF",
+        "open comment and EOF",
+        "UTF8 carry and EOF",
+        "pending nonempty splitter Drop"
+      ],
+      "expected": "empty skip/emptyEOF/error/Drop all return pending charges0, including a capacity that grew; Syntax span follows literal absolute coordinates"
+    },
+    {
+      "function": "splitter_stack_footprints_are_bounded",
+      "input": "size_of Splitter and StatementSource",
+      "expected_max_bytes": [
+        512,
+        192
+      ]
+    }
+  ],
+  "private_unit": {
+    "owner": "/root/frontend_research",
+    "function": "absolute_offset_overflow_releases_without_allocation",
+    "setup": "private empty Active splitter with absolute offset and segment start=usize::MAX; push a",
+    "expected": "Limit Split[usize::MAX,usize::MAX), no new backing, session0/DB0; same terminal diagnostic thereafter"
+  },
+  "product_mutants": [
+    {
+      "mutation": "skip scan checkpoints while retaining entry/return checks",
+      "detector": "scan_control_is_bounded_and_terminal"
+    },
+    {
+      "mutation": "skip copy loop checkpoint while retaining copy start/end checks",
+      "detector": "copy_control_is_bounded_and_cleans_old_new"
+    },
+    {
+      "mutation": "forget pending reservation release on terminal error",
+      "detector": "allocation_failure_during_growth and empty_error_and_drop_release_pending_capacity"
+    },
+    {
+      "mutation": "charge only requested capacity, omit padding excess",
+      "detector": "actual_capacity_padding_is_charged"
+    }
+  ],
+  "separate_source_rule": "Each product mutant is built from a separate immutable changed source and only its detector is executed. Never replay unchanged lexer/name tests.",
+  "out_of_scope": [
+    "owned parser AST arena",
+    "global allocator OOM guarantee",
+    "RSS accounting",
+    "engine cleanup",
+    "Q1"
+  ]
+}

@@ -4,6 +4,7 @@
 //! Expected semantics live in the separately frozen [`literals`] inventory.
 
 pub mod literals;
+pub mod splitter;
 
 use literals::{DiagnosticObservation, LexCase, LexObservation, NameCase, NameObservation};
 
