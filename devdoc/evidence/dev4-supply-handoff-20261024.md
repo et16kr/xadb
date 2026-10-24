@@ -4,7 +4,7 @@
 
 DEV3 `bc93de1bc119739e99521c452b5a2e1be1775638`는 plan4 초기 page의 원 공유 버퍼 clean 소비를 제한 공급한다. 원 Mutable CAS·DWB loan·하나의 SharedPool을 유지하는 실제 clean load/교체와 빈 Catalog 조회·Free64 큐 census가 새 진전이다. **공개 disk 거래·live 정리 큐·Catalog CREATE/CLR·첫 행 ACK/reopen은 아직 DEV4에 인계되지 않았다.** P1–P4 독립 frontend 산출물은 이 차이를 대신하지 않는다.
 
-[원 draft.md](../../artifacts/dev4-supply-handoff-20261024/draft.md)와 [draft.json](../../artifacts/dev4-supply-handoff-20261024/draft.json), P5 v1/v2/v3는 변경하지 않았다. 이번 [동결 관측 draft-v2.json](../../artifacts/dev4-supply-handoff-20261024/draft-v2.json)은 실제 revision, 파일 bytes/SHA256, HEAD blob SHA256, dirty 목록, 원 영수증 연결과 아래 판단을 담는다. 관측 작성자는 제품·모델·시험·compiler·문서 verifier·commit을 실행하지 않았다. 통합 담당은 이 관측과 후속 리뷰를 문서로 수합한다. 외부 DBMS 자료를 새로 조사하지 않았다.
+원 draft.md (로컬 `../../artifacts/dev4-supply-handoff-20261024/draft.md`)와 draft.json (로컬 `../../artifacts/dev4-supply-handoff-20261024/draft.json`), P5 v1/v2/v3는 변경하지 않았다. 이번 동결 관측 draft-v2.json (로컬 `../../artifacts/dev4-supply-handoff-20261024/draft-v2.json`)은 실제 revision, 파일 bytes/SHA256, HEAD blob SHA256, dirty 목록, 원 영수증 연결과 아래 판단을 담는다. 관측 작성자는 제품·모델·시험·compiler·문서 verifier·commit을 실행하지 않았다. 통합 담당은 이 관측과 후속 리뷰를 문서로 수합한다. 외부 DBMS 자료를 새로 조사하지 않았다.
 
 ## 관측 기준과 보존
 
@@ -34,7 +34,7 @@ JSON 수집 시각은 **21:05:40 KST**이며 시작/종료 HEAD는 위 `bc93de1`
 
 ## 새 G5 원 영수증과 한계
 
-[G5 증거](../evidence/dev3-plan4-clean-owner-20261024.md)와 [독립 D1](../../artifacts/dev3/plan4-clean-owner-20261024/review/final-d1.md)은 `ACCEPTED_LIMITED_D1`이다. 필수78은 memory75+static2+native1이며 memory는 원 r2의4건, r3의32건, r4의39건을 합친 고유 범위다. 현재 source 전체를 재실행한 결과로 바꾸지 않는다.
+[G5 증거](../evidence/dev3-plan4-clean-owner-20261024.md)와 독립 D1 (로컬 `../../artifacts/dev3/plan4-clean-owner-20261024/review/final-d1.md`)은 `ACCEPTED_LIMITED_D1`이다. 필수78은 memory75+static2+native1이며 memory는 원 r2의4건, r3의32건, r4의39건을 합친 고유 범위다. 현재 source 전체를 재실행한 결과로 바꾸지 않는다.
 
 - 최종 r4 source는 `36d5645c2e5f3b5342b2e168a6acf388c35b729a415a9ee04689d4170612e7b9`, ELF는 `8db64629269cf10ff48300e3f88a3f17a02d4dcb65e095530387baf95735390e`다.
 - native는 **원 r2** source `7d620404a786934b5e1c58b8db25d85b250c96223130f12d37df8785e516e664`, ELF `dd861ec37bdaade6a09ec68e418e3d3ef23d897686b83361f11ee0fa3d0eb388`, PID247411의 fresh→clean 소비1process다. G5 mutation0·entropy0이며 same-ELF3process recovery 증거가 아니다.

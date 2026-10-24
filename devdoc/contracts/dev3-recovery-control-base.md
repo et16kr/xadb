@@ -1,6 +1,6 @@
 # DEV3 복구 이미지·제어 레코드의 순수 표현
 
-계약 ID: **D3-RECOVERY-CONTROL-BASE-001**. XRB1 복구 이미지와 XRC1 CURRENT·XWE2 WAL header·XWS2 WRITER의 byte 표현, 닫힌 plan4 census와 공통 검산 bridge를 다룬다. [wire 결정](../../artifacts/dev3/plan4-g6-empty-retention-wire-decision-20261024.md)의 SHA256은 `0561d2c1fc40daeacf65d530b245932a8daf4b213e9476ca1df72a48023e3ae2`다. 실제 파일 선택·공개·복구 권한과 분리하며, 디코딩 성공으로 VerifiedBase·Fresh·WalRequirement를 만들지 않는다.
+계약 ID: **D3-RECOVERY-CONTROL-BASE-001**. XRB1 복구 이미지와 XRC1 CURRENT·XWE2 WAL header·XWS2 WRITER의 byte 표현, 닫힌 plan4 census와 공통 검산 bridge를 다룬다. wire 결정 (로컬 `../../artifacts/dev3/plan4-g6-empty-retention-wire-decision-20261024.md`)의 SHA256은 `0561d2c1fc40daeacf65d530b245932a8daf4b213e9476ca1df72a48023e3ae2`다. 실제 파일 선택·공개·복구 권한과 분리하며, 디코딩 성공으로 VerifiedBase·Fresh·WalRequirement를 만들지 않는다.
 
 신규 필수272개(static3·semantic269)를 원 source/ELF에서 검증했다. 최종 독립 D1을 순수 codec 범위로 제한 수용했다. [실행 증거](../evidence/dev3-recovery-control-base-20261024.md)와 [단계별 선택](../plans/dev3-test-plan.md#recovery-control-base)을 따른다. live owner·새 epoch 복구·DEV3/S5는 미완료다.
 
@@ -42,7 +42,7 @@ INIT claim 대조는 원 recipe의 초기 full image를 확인하는 순수 call
 
 ## 자원과 시험 경계
 
-원 static 값은 base64,564bytes(공통 bridge 포함), control14,660bytes다. 이 값만으로 caller 포함 한도나 live F05를 선언하지 않는다. [독립 phase 검토](../../artifacts/dev3/plan4-g6-recovery-20261024/review/pure-call-phase-admission-r0.md)는 실제 순수 호출의 deep/return 단계와 caller를 합쳐 base63,204·control21,620bytes로 계산했다. 각65,536bytes 이하이며 machine stack/RSS 측정은 아니다.
+원 static 값은 base64,564bytes(공통 bridge 포함), control14,660bytes다. 이 값만으로 caller 포함 한도나 live F05를 선언하지 않는다. 독립 phase 검토 (로컬 `../../artifacts/dev3/plan4-g6-recovery-20261024/review/pure-call-phase-admission-r0.md`)는 실제 순수 호출의 deep/return 단계와 caller를 합쳐 base63,204·control21,620bytes로 계산했다. 각65,536bytes 이하이며 machine stack/RSS 측정은 아니다.
 
 BaseView/Result는 깊은 inventory 검산이 끝난 뒤 생성한다. encode는 decode를 tail 호출한다. 따라서 deep phase의64,564에서 아직 없는 반환 carrier5,440을 제외한59,124에 실제 caller 상계4,080을 더한다. 반환 phase는 종료된 최대 bridge24,212를 제외한40,352에 같은 caller를 더한다. 다른 live/recovery caller에는 이 수치를 자동 전용하지 않는다.
 

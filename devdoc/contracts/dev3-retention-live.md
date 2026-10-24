@@ -1,6 +1,6 @@
 # DEV3 plan4 빈 거래의 실제 live 소비
 
-계약 ID: **D3-RETENTION-LIVE-001**. [빈 거래·정리 큐 의미 처리](dev3-empty-retention-semantics.md)를 원 `MutableStorageOwner`와 한 `SharedPool`에 연결한다. [wire 결정](../../artifacts/dev3/plan4-g6-empty-retention-wire-decision-20261024.md)의 `0561d2c1fc40daeacf65d530b245932a8daf4b213e9476ca1df72a48023e3ae2`를 따른다. 이 단위는 fresh epoch1의 N=0 거래다. 복구된 base·새 epoch·loser 정리·실제3PID 인수와 Catalog CREATE/CLR·첫 행 ACK는 후속 단위다.
+계약 ID: **D3-RETENTION-LIVE-001**. [빈 거래·정리 큐 의미 처리](dev3-empty-retention-semantics.md)를 원 `MutableStorageOwner`와 한 `SharedPool`에 연결한다. wire 결정 (로컬 `../../artifacts/dev3/plan4-g6-empty-retention-wire-decision-20261024.md`)의 `0561d2c1fc40daeacf65d530b245932a8daf4b213e9476ca1df72a48023e3ae2`를 따른다. 이 단위는 fresh epoch1의 N=0 거래다. 복구된 base·새 epoch·loser 정리·실제3PID 인수와 Catalog CREATE/CLR·첫 행 ACK는 후속 단위다.
 
 ## 원 자원과 실제 실행
 

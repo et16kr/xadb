@@ -4,7 +4,7 @@
 
 ## 실제 범위와 원 결과
 
-live 필수32는 static2와 memory30(A4/L4/R4/W6/F6/D6), prefix 필수43은 독립 literal envelope의 visible header·SHA-256 header/body digest·연결·EOF 경계다. [75개 source별 결과](../../artifacts/dev3/plan4-g6-recovery-20261024/fresh-mandatory-results-r0.json)는 완료 반복0과 원 실패6을 함께 보존한다. live memory 실행은36개 시도이며 charged wall21.529초(worker17.537765009/감사3.991234991)다. semantic 상한210초(worker180/감사30), 함수·사례30초, 출력8MiB 안이다. static은 무효과이고 prefix43도 파일 효과 없는 검산이다. 후속 native 수명 인수로 세지 않는다.
+live 필수32는 static2와 memory30(A4/L4/R4/W6/F6/D6), prefix 필수43은 독립 literal envelope의 visible header·SHA-256 header/body digest·연결·EOF 경계다. 75개 source별 결과 (로컬 `../../artifacts/dev3/plan4-g6-recovery-20261024/fresh-mandatory-results-r0.json`)는 완료 반복0과 원 실패6을 함께 보존한다. live memory 실행은36개 시도이며 charged wall21.529초(worker17.537765009/감사3.991234991)다. semantic 상한210초(worker180/감사30), 함수·사례30초, 출력8MiB 안이다. static은 무효과이고 prefix43도 파일 효과 없는 검산이다. 후속 native 수명 인수로 세지 않는다.
 
 | 원 source | 새 PASS | 원 실패/범위 |
 | --- | ---: | --- |
@@ -32,4 +32,4 @@ S5 고유 추가269(live32/prefix237)는 NOT_RUN이며 최종 S5에는 필수75�
 
 독립 source D1은39개 owned 경로와 OCR 제외/foreign 항목을 회계했다. 최종 결과·문서·commit 조립의 독립 D1을 fresh live·prefix 범위로 제한 수용했다. 복구 CURRENT 선택·공개, REBASE/LOG_OPEN·loser 정리·VERIFY/STABILIZE·동일 pool 재진입·3PID와 Catalog CREATE/CLR·첫 행 ACK는 후속이다. AI 완료 소비자1/3·DEV3 미완료를 유지한다. 문서 verifier·push는 실행하지 않았다.
 
-[최종 독립 D1](../../artifacts/dev3/plan4-g6-recovery-20261024/review/fresh-final-d1-r0/final-d1.md) SHA `da80736110ebf2cf7587b0932758c7db279f5db593037db85858a8e71eebdc17`를 fresh live·prefix 범위로 수용했다. 현재 host 상한576MiB는 이후 별도 recovery static ELF도 보존하는 한도이며 fresh 실행 당시512MiB와 구별한다.
+최종 독립 D1 (로컬 `../../artifacts/dev3/plan4-g6-recovery-20261024/review/fresh-final-d1-r0/final-d1.md`) SHA `da80736110ebf2cf7587b0932758c7db279f5db593037db85858a8e71eebdc17`를 fresh live·prefix 범위로 수용했다. 현재 host 상한576MiB는 이후 별도 recovery static ELF도 보존하는 한도이며 fresh 실행 당시512MiB와 구별한다.

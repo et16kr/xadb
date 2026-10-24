@@ -14,15 +14,15 @@ typed read, N+1 pressure, WAL 선행 flush/retirement, exact INIT history load�
 Free root만 지원하며 live undo record/chunk, 일반 page 종류, Commit ACK/행·index/catalog·READY는
 이 단위의 증거에 포함하지 않는다.
 
-[독립 D2](../../artifacts/dev3/mixed-system-owner-20261024/review/design-d2.md)는 실제 역할/원 owner,
+독립 D2 (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/review/design-d2.md`)는 실제 역할/원 owner,
 sealed 권한, exact history와 기존 F05 상한을 조건으로 수용했다.
-[중간 코드 검토](../../artifacts/dev3/mixed-system-owner-20261024/review/common-draft-01.md)의 Prepared escape·
+중간 코드 검토 (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/review/common-draft-01.md`)의 Prepared escape·
 class/control retained 비용·wrapper/return 수명 지적을 수정했다.
-[r4 source/F05/input 검토](../../artifacts/dev3/mixed-system-owner-20261024/review/pre-effect-r4.md)는
+r4 source/F05/input 검토 (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/review/pre-effect-r4.md`)는
 storage38경로와 raw286개를 대조하고 메모리138개만 최초 실행하도록 수용했다.
-이후 [load6](../../artifacts/dev3/mixed-system-owner-20261024/review/pre-effect-r5-load.md)와
-[수정 flush2](../../artifacts/dev3/mixed-system-owner-20261024/review/pre-effect-r6-flush.md)를 별도 수용했다.
-[최종 독립 D1](../../artifacts/dev3/mixed-system-owner-20261024/review/final-d1.md)은
+이후 load6 (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/review/pre-effect-r5-load.md`)와
+수정 flush2 (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/review/pre-effect-r6-flush.md`)를 별도 수용했다.
+최종 독립 D1 (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/review/final-d1.md`)은
 `ACCEPTED_LIMITED_D1_CURRENT_PRODUCT_CONTINUATION`으로 수용했다. code/fixture/script56와
 문서/metadata12의68경로를 전부 검토하고 실제 r7 source 동등성·원 receipt·native 전체 파일을 대조했다.
 미해결 차단은 없으며 원 동일 ELF3 미충족·일반 page/live undo·AI 소비자2/3 불승격을 유지한다.
@@ -54,15 +54,15 @@ r6와 같고 native 시험의 승인된 차이와 이 test-only 공백 차이를
 
 ## 완료된 메모리 선택과 자원
 
-[r4 memory-a](../../artifacts/dev3/mixed-system-owner-20261024/r4/memory-a/result.json)는7 PASS 후
+r4 memory-a (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/r4/memory-a/result.json`)는7 PASS 후
 MO-FLUSH-003에서 실패했다. 첫 DWB 효과의 기대 파일명이 images였으나 실제 protocol은 stage/offset0/
 PAGE_BYTES다. State MutexGuard 안의 잘못된 assertion 뒤 Drop panic으로 exit −6가 되었고 원 stdout/
 stderr를 보존했다. fault 위치를 옮기지 않고 기대값을 고쳤으며 단언 전에 guard를 해제했다.
 
-[memory-b](../../artifacts/dev3/mixed-system-owner-20261024/r4/memory-b/result.json)는 완료7과 동일 입력
-오류의003/004를 제외한129 PASS다. [r5 load](../../artifacts/dev3/mixed-system-owner-20261024/r5/memory-load/result.json)는
+memory-b (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/r4/memory-b/result.json`)는 완료7과 동일 입력
+오류의003/004를 제외한129 PASS다. r5 load (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/r5/memory-load/result.json`)는
 home EOF2·SHA-valid 잘못된 WAL/descriptor4의 새6 PASS다.
-[r6 flush](../../artifacts/dev3/mixed-system-owner-20261024/r6/memory-flush/result.json)는 실패003 재검증과
+r6 flush (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/r6/memory-flush/result.json`)는 실패003 재검증과
 미실행004의2 PASS다. 합계 고유144이며 완료 ID의 중복 실행은0이다. 실패 job의 BEGIN만으로 PASS를
 등록하지 않고 각 원 stdout의 유일한 BEGIN→PASS와 exact libtest 결과를 연결한다.
 
@@ -75,7 +75,7 @@ conversion65424/load64840/pressure65152가 각각65536 안에 든다. 원 source
 
 ## Compiler와 실행 도구
 
-[compiler 결과](../../artifacts/dev3/mixed-system-owner-20261024/compiler-result-r2.json)는 baseline1과
+compiler 결과 (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/compiler-result-r2.json`)는 baseline1과
 MOC00–08의9 semantic 사례다. 실제 mixed interface의 positive와 core/role/Prepared fabrication,
 Prepared/actor 혼동, output/guard/reservation 재대여 거절의 정확 diagnostic/path/line을 확인했다.
 기대된 negative exit101과 최초 build FAIL을 구별한다. 이후 동일 권한 경계를 반복하지 않았다.
@@ -92,24 +92,24 @@ fixture 수285 오기를 수정했다. actual raw286, exact ledger24344416+16384
 
 ## Native 원 실패와 이어가기
 
-[첫 native 실행](../../artifacts/dev3/mixed-system-owner-20261024/r6/native-a/result.json)의 producer PID147421은
+첫 native 실행 (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/r6/native-a/result.json`)의 producer PID147421은
 PASS다. 전체 파일·원 A/B load·allocator/C dirty·독립 raw WAL을 확인했다. recover PID147423은 실제
 복구 뒤 시험의 terminal hold 기대값0에서14를 받아 실패했다. 원 파일 효과는 보존된 snapshot에서
 allocator+C 쓰기2, WAL 쓰기0, canonical home4장과 DWB generation13/batch4를 보이지만, 필수 dump와
 완료 marker가 없으므로 **원 recover FAIL을 PASS로 재분류하지 않는다**. reentry는 미실행이다.
 
 terminal hold는 Finished inventory/remaining0과 별개인 완료 주소 union14다. native 입력 검토에서
-이를 놓친 사실과 [후속 독립 D2](../../artifacts/dev3/mixed-system-owner-20261024/review/native-continuation-d2.md)를
+이를 놓친 사실과 후속 독립 D2 (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/review/native-continuation-d2.md`)를
 보존한다. 원 producer를 반복하지 않고 검증된 producer snapshot의 새 inode 복제본에서 실패 recovery와
 미실행 reentry만 이어간다. 제품·실제 wrapper·빌드 설정 동일성을 확인하고 승인된 시험/harness 차이를
 기록해야 한다. 원 execution.tsv나 producer PASS의 source를 고치지 않는다.
 
 원 동일 ELF 세 phase PASS 요건은 미충족으로 남긴다. 후속의 실제 증거는 “r6 실제 producer 입력 →
 제품 소스가 같은 후속 build의 복구·재진입”으로 구별한다. 원6.206148767초와 immutable evidence
-71,393,368bytes를 후속의30초/128MiB 합계에 포함한다. [r7 동결 실행 전 검토](../../artifacts/dev3/mixed-system-owner-20261024/review/pre-effect-r7-continuation.md)를
-수용한 뒤 [이어가기 결과](../../artifacts/dev3/mixed-system-owner-20261024/r7/native-continuation-a/result.json)는
+71,393,368bytes를 후속의30초/128MiB 합계에 포함한다. r7 동결 실행 전 검토 (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/review/pre-effect-r7-continuation.md`)를
+수용한 뒤 이어가기 결과 (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/r7/native-continuation-a/result.json`)는
 recover PID159102와 reentry PID159104가 모두 PASS다. 원 producer PID147421·실패 PID147423와도
-서로 다름을 [별도 읽기 검산](../../artifacts/dev3/mixed-system-owner-20261024/r7/native-continuation-pid-audit.json)으로
+서로 다름을 별도 읽기 검산 (로컬 `../../artifacts/dev3/mixed-system-owner-20261024/r7/native-continuation-pid-audit.json`)으로
 확인했다. 새 두 phase의 source882118bbec8b/ELF3856f83d7706은 같으며 원 producer identity는 별도 보존한다.
 
 원 producer의15파일22,247,264bytes를 fsync한 새 inode로 복사했고, 원 실패 DB·immutable79파일은

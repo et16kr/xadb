@@ -59,8 +59,7 @@ pub(in crate::storage) use population::{
 pub(crate) use read::{RetentionReadGuard, RetentionReader};
 pub(in crate::storage) use recovery::{
     RetentionFrameObservation, RetentionRecoveryStep, RetentionReplayCursor,
-    observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_image,
-    seed_recovery_replay,
+    observe_recovery_frame, retention_replay_bank, retention_replay_image, seed_recovery_replay,
 };
 #[allow(
     unused_imports,

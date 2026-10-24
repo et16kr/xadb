@@ -293,7 +293,7 @@ DEV0/1/2의 중첩 command wrapper는 exclusive regular log에 stdout/stderr를 
 <a id="private-runtime-core"></a>
 ## 원 자원을 유지하는 private runtime/core
 
-2026-10-24 `DEV3_RUNTIME_CORE_EXTRACTION_D2`는 [독립 source-only D2](../../artifacts/dev3/plan4-g6-runtime-extraction-d2-20261024.md)에 따라 기존 내부 구조를 추출한다. 목적은 후속 plan4 복구가 Fresh 소유자를 합성하지 않고 원 writer·File·slot·fence를 인계할 수 있게 하는 것이다. 이 단위는 recovered constructor나 새 epoch를 구현하지 않는다.
+2026-10-24 `DEV3_RUNTIME_CORE_EXTRACTION_D2`는 독립 source-only D2 (로컬 `../../artifacts/dev3/plan4-g6-runtime-extraction-d2-20261024.md`)에 따라 기존 내부 구조를 추출한다. 목적은 후속 plan4 복구가 Fresh 소유자를 합성하지 않고 원 writer·File·slot·fence를 인계할 수 있게 하는 것이다. 이 단위는 recovered constructor나 새 epoch를 구현하지 않는다.
 
 `GenesisWalSession`은 private `WalRuntime` 하나를 보유한다. Runtime에는 기존 순서의 writer/File/append mutex, Condvar, 시험 hook, SessionFence, Profile만 들어간다. `FreshStorageSession`은 같은 runtime·BootstrapPlan·reader claim을 가진 private `InstalledStorageCore` 하나를 보유한다. 원 Fresh→DWB→Mutable 전환은 그 core와 기존 InstallPlan·DWB loan을 소비하여 옮긴다. 새 Drop, lease 획득, fence 초기화, Core→Fresh 변환, Deref/DerefMut 또는 raw mutable escape는 없다.
 
@@ -301,4 +301,4 @@ DEV0/1/2의 중첩 command wrapper는 exclusive regular log에 stdout/stderr를 
 
 새 검증 범위는 [선택 입력 및 증거](../evidence/dev3-runtime-core-20261024.md)의 static2·memory5다. 기존 시험의 필드 접근 적응은 컴파일하며 완료 사례를 재실행하지 않는다. 실제 소유권 이동, public Genesis stage/sync 전달, fence·poison·명시적 reader claim fault 보존을 판정한다. Native는 타입 크기만 관측하며 새 disk durability 결과를 주장하지 않는다. G6 live/복구·Catalog CREATE/CLR·첫 행 ACK·AI 소비자2/3·DEV3/S5는 이 추출로 완료되지 않는다.
 
-이 추출의 generic reader 전달은 고정 compiler/target의 [호출·반환 단계 상한 근거](../../artifacts/dev3/plan4-runtime-core-20261024/review/generic-reader-source-proof.md)를 따른다. 깊은 codec 실행 중 wrapper는 참조만 보유하고, codec 종료 뒤 인접 반환 carrier의 이동을 기존 owner·File·readback 예약이 지배한다. 미래 전달 scope·필드·target 변경은 다시 계산한다.
+이 추출의 generic reader 전달은 고정 compiler/target의 호출·반환 단계 상한 근거 (로컬 `../../artifacts/dev3/plan4-runtime-core-20261024/review/generic-reader-source-proof.md`)를 따른다. 깊은 codec 실행 중 wrapper는 참조만 보유하고, codec 종료 뒤 인접 반환 carrier의 이동을 기존 owner·File·readback 예약이 지배한다. 미래 전달 scope·필드·target 변경은 다시 계산한다.

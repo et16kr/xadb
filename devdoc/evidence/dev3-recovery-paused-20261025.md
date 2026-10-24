@@ -35,3 +35,7 @@ push에 필요한 보완은8개 Rust 파일의 import와 시험 전용 re-export
 검증 선택은 이 diff의 정적 성격에 한정한다. 기능·알고리즘·평가 순서·할당·시험 기대값은 변경하지 않아 제품 시험을 추가 실행하지 않으며, 전송할 commit의 fmt·전체 target/feature Clippy·문서 검사는 기존 pre-push 훅에서 수행한다. 이후 실제 gate 출력은 `artifacts/push-20261025/`에 commit별로 남긴다. 이번 정적 검사와 push를 복구 개발 재개나 기능 인수로 해석하지 않는다. 원 static2 FAIL·F05 HOLD와 최신 runtime NOT_RUN, DEV3/S5 미완료는 유지한다.
 
 별도 검토자 `/root/push_lint_review`는 `27ae7fe` 위 Rust8파일 diff(SHA-256 `817bcc6288c79e8e4049feb01c2ecf78e45dc73beac4f99a31db906877a76e8c`)를 읽기 전용으로 확인해 차단 지적 없이 제한 D1을 수용했다. 조건값의 Copy·동일 평가/반환 순서, 실제 자원 검사를 남기는 re-export 정리, 항목별 lint 이유와 oracle 계산·assertion 불변을 확인했다. 새 기능 시험이나 완료 시험 반복은 요구하지 않았으며 `/root`가 이 제한 보완을 반영했다. 최종 정적 gate 통과 여부는 실제 push 출력으로 별도 확인한다.
+
+두 번째 후보 `5d2df62a3aa56ed18e2c33cce7a109f6b9db1fef`는 fmt PASS 뒤 안쪽 `retention_replay_cells` 재수출1개의 unused import로 Clippy FAIL했다(`push-Qlvrx5.log`). 소비자 없는 재수출만 추가 제거했고 함수 구현은 유지했다. 같은 검토자가 이 후속 diff(SHA-256 `50e570de44d44fdac31babc493534944c8377052536c54bab1ff6f15b6cf77d0`)를 제한 D1으로 수용했으며 기능 시험은 추가하지 않았다.
+
+같은 commit의 별도 임시 export에서 실행한 문서 검사도 FAIL했다(`documents-5d2df62a.log`). Git에 포함되지 않는 `artifacts` 대상 링크는 표시 문구와 원 경로를 보존한 로컬 증거 표기로 바꾸고, 이 문서의 상태 JSON을 evidence README에 추가했다. 원자료·기록된 결과·계약 의미와 검사기 기준은 바꾸지 않았다. 두 로그 모두 위 `artifacts/push-20261025/`에 보존하며 최종 후보의 검증은 기존 훅에 남긴다.

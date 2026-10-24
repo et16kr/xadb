@@ -1,6 +1,6 @@
 # XADB 조사·실행 증거
 
-- [DEV3 복구 작업 중간 저장·자료 정리](dev3-recovery-paused-20261025.md): 사용자 요청 중지, WIP·FAIL/HOLD·NOT_RUN 보존.
+- [DEV3 복구 작업 중간 저장·자료 정리](dev3-recovery-paused-20261025.md) · [source별 상태 색인](dev3-recovery-paused-20261025.json): 사용자 요청 중지, WIP·FAIL/HOLD·NOT_RUN 보존.
 
 - [COMM 시험 산출물 정리](comm-artifact-cleanup-20261025.md): 전용 Cargo cache35개와 검산된 임시 사본을 정리했다. 원 증거·실행물 보존, 저장소 약3.76GiB·tmpfs 약1.62GiB 절감, 시험 실행0.
 

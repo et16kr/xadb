@@ -7,7 +7,7 @@
 [소유 계약](../contracts/dev3-plan4-clean-owner.md),
 [중앙 시험 목록](../plans/dev3-test-plan.md#plan4-clean-owner-followup),
 [source별 원본 색인](dev3-plan4-clean-owner-20261024.json)을 따른다.
-[최종 독립 D1](../../artifacts/dev3/plan4-clean-owner-20261024/review/final-d1.md)은
+최종 독립 D1 (로컬 `../../artifacts/dev3/plan4-clean-owner-20261024/review/final-d1.md`)은
 변경47개 경로와 source별 결과를 검토하여 이 clean 소비 범위를 제한 수용했다.
 원 compiler campaign HOLD와 준비 peak FAIL은 그대로 유지한다.
 
@@ -47,7 +47,7 @@ compiler10과 checker13은 제품 case 분모에 더하지 않는다.
 r3 종료 당시 memory 원장은 **서로 다른 PASS36, C02 FAIL1, NOT_RUN38**였다.
 r2의 완료 B01–03/B08(4)와 r3의 B04–07/B09–16(12), M01–08(8),
 J01–11(11), C01(1)은 중복되지 않는다. 미완39는 C02–05, I01–14, Q01–08,
-R01–13이었다. [정확 ID 원장](../../artifacts/dev3/plan4-clean-owner-20261024/memory-r3-ledger.md)에
+R01–13이었다. 정확 ID 원장 (로컬 `../../artifacts/dev3/plan4-clean-owner-20261024/memory-r3-ledger.md`)에
 source별 PID·marker·전체 목록·원 log SHA를 보존한다. r4는 완료36을 제외한39를 모두 PASS했다.
 따라서 memory75와 원 r2의 static2/native1을 합한 필수78이 source별로 완료됐다.
 r4 결과 SHA는 `b511a2d954387f5371e35f1655e404dbdbed36b861877851432b2157a090dbb3`다.
@@ -65,7 +65,7 @@ r4의 변경은 기존 candidate Option 안에서 eligible empty를 먼저 선�
 full scan·dirty 검사·required full-address 보호·MAX 제외의 검산은 유지한다.
 r3 C01과 r2 native4frame 완료를 반복하지 않고 C02와 미실행 입력만 준비했다.
 r4의39 PASS는 원 C02 FAIL을 보존한 후속 결과다.
-[독립 후보 선택 D2와 원 결과 감사](../../artifacts/dev3/plan4-clean-owner-20261024/review/empty-first-candidate-d2.md)는
+독립 후보 선택 D2와 원 결과 감사 (로컬 `../../artifacts/dev3/plan4-clean-owner-20261024/review/empty-first-candidate-d2.md`)는
 이 변경·39개 선택·이전 완료36개 제외를 수용했다. 기존 static/native/compiler의 source별
 증거와 새 source의 영향 분석을 구별하며 최신 ELF에서 native를 실행했다고 주장하지 않는다.
 

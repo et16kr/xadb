@@ -27,11 +27,11 @@ r1 ELF는 `005ab7781f6c29bf230f3bef7361abe51819e889a14f759a04c200fcfec21bc7`이�
 
 두 타입 모두 Empty 전환은65,424bytes, retained115,416bytes, 합180,840bytes이며64KiB/192KiB 한도를 유지한다. wrapper/inner의 실제 size/align, 원 소유자 크기, Result·인자 전달 phase, Fresh 생성/reader/role 상한과 G5 source census를 새 정적 ID로 검산했다. 이는 source-value 회계이며 machine stack/RSS 측정이나 native durability 실행이 아니다.
 
-[정적 원 결과](../../artifacts/dev3/plan4-runtime-core-20261024/tests-r2/static-r0/result.json)는 RC-ST01/02를 각각 한 번 실행한 PASS다. 최초 audit부터 final receipt까지 보수0.659초, 저장 뒤 실제 관측0.559033초이며 총10초 제한 안이다. [정적 수용](../../artifacts/dev3/plan4-runtime-core-20261024/static-admission.json) 뒤 [메모리 원 결과](../../artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/result.json)의 RC-M01–05를 각각 한 번 실행하여5개 모두 PASS했다. 이동 중 효과0·원 backing/reader·fence·poison·선언된 busy fault를 확인했다. 전체 보수7.000초/실제 저장 뒤6.899573초로180초 안이며 완료 정적2는 반복하지 않았다.
+정적 원 결과 (로컬 `../../artifacts/dev3/plan4-runtime-core-20261024/tests-r2/static-r0/result.json`)는 RC-ST01/02를 각각 한 번 실행한 PASS다. 최초 audit부터 final receipt까지 보수0.659초, 저장 뒤 실제 관측0.559033초이며 총10초 제한 안이다. 정적 수용 (로컬 `../../artifacts/dev3/plan4-runtime-core-20261024/static-admission.json`) 뒤 메모리 원 결과 (로컬 `../../artifacts/dev3/plan4-runtime-core-20261024/tests-r2/memory-r0/result.json`)의 RC-M01–05를 각각 한 번 실행하여5개 모두 PASS했다. 이동 중 효과0·원 backing/reader·fence·poison·선언된 busy fault를 확인했다. 전체 보수7.000초/실제 저장 뒤6.899573초로180초 안이며 완료 정적2는 반복하지 않았다.
 
 ## 준비와 보존
 
-Source160MiB/ELF96MiB/공유 compile192MiB/records16MiB/native0의 준비 상한을 고정했다. [정적 전 회계](../../artifacts/dev3/plan4-runtime-core-20261024/preparation-before-static.json)는 고유 backing116,607,074/87,648,192/123,644,312/4,594,294/0bytes로 모두 한도 안이며 compile과 source/ELF의 inode 교집합은0이다. 같은 cache를 쓰는 compiler는 직렬화한다.
+Source160MiB/ELF96MiB/공유 compile192MiB/records16MiB/native0의 준비 상한을 고정했다. 정적 전 회계 (로컬 `../../artifacts/dev3/plan4-runtime-core-20261024/preparation-before-static.json`)는 고유 backing116,607,074/87,648,192/123,644,312/4,594,294/0bytes로 모두 한도 안이며 compile과 source/ELF의 inode 교집합은0이다. 같은 cache를 쓰는 compiler는 직렬화한다.
 
 독립 검토 후 mutable G5 cache의 중복 실행 파일43,582,032bytes와 구형 operational-recovery incremental cache의 exact8개150,760,346bytes만 회수했다. 별도 원 ELF·source·raw·로그·영수증·진단 metadata는 유지했다. G5 보호67,963경로와 operational-recovery 보호43,268경로의 inode/bytes/SHA를 전후 대조했다. Read-only source hardlink의 nlink 증가를 원 bytes 변경과 구별한다. 원 준비 cutoff·실패·HOLD를 현재 cache 회계로 소급 변경하지 않는다.
 
@@ -39,8 +39,8 @@ Source160MiB/ELF96MiB/공유 compile192MiB/records16MiB/native0의 준비 상한
 
 ## 최종 독립 검토
 
-[최종 D1](../../artifacts/dev3/plan4-runtime-core-20261024/review/final-d1.md)·[기계 색인](../../artifacts/dev3/plan4-runtime-core-20261024/review/final-d1.json)은50개 소유 경로를 모두 검토하고 이 추출 단위를 `ACCEPTED_LIMITED_D1`으로 수용했다. 동시 G6/COMM 변경은 제외했다. [generic reader의 소스 상한](../../artifacts/dev3/plan4-runtime-core-20261024/review/generic-reader-source-proof.md)은 고정 Rust/target에서 codec 실행과 반환 단계를 나눠 기존 예약량의 지배를 확인한 정적 근거이며, 제품 변경·추가 시험 실행은0이다. 실제 두 포트의 보수 static 식과 일반 타입의 단계별 증명을 구별한다.
+최종 D1 (로컬 `../../artifacts/dev3/plan4-runtime-core-20261024/review/final-d1.md`)·기계 색인 (로컬 `../../artifacts/dev3/plan4-runtime-core-20261024/review/final-d1.json`)은50개 소유 경로를 모두 검토하고 이 추출 단위를 `ACCEPTED_LIMITED_D1`으로 수용했다. 동시 G6/COMM 변경은 제외했다. generic reader의 소스 상한 (로컬 `../../artifacts/dev3/plan4-runtime-core-20261024/review/generic-reader-source-proof.md`)은 고정 Rust/target에서 codec 실행과 반환 단계를 나눠 기존 예약량의 지배를 확인한 정적 근거이며, 제품 변경·추가 시험 실행은0이다. 실제 두 포트의 보수 static 식과 일반 타입의 단계별 증명을 구별한다.
 
-최종 검토 중 일시적인 ENOSPC로 OCR 출력 저장이 실패했다. 빈 원 실패 파일과 [별도 tmpfs 재수집 기록](../../artifacts/dev3/plan4-runtime-core-20261024/review/ocr-enospc-recovery.json)을 보존하며 원인을 추정하지 않는다. [저장 실패 뒤 대조](../../artifacts/dev3/plan4-runtime-core-20261024/preservation-after-enospc.json)는 소유 source38·기존 색인87·원 ELF2가 바뀌지 않았음을 확인했다. 별도 G6 미검증 source 복구는 이 커밋·검증 범위에 포함하지 않는다. 앞선 준비 cutoff를 이후 가용 공간의 보장으로 바꾸지 않는다.
+최종 검토 중 일시적인 ENOSPC로 OCR 출력 저장이 실패했다. 빈 원 실패 파일과 별도 tmpfs 재수집 기록 (로컬 `../../artifacts/dev3/plan4-runtime-core-20261024/review/ocr-enospc-recovery.json`)을 보존하며 원인을 추정하지 않는다. 저장 실패 뒤 대조 (로컬 `../../artifacts/dev3/plan4-runtime-core-20261024/preservation-after-enospc.json`)는 소유 source38·기존 색인87·원 ELF2가 바뀌지 않았음을 확인했다. 별도 G6 미검증 source 복구는 이 커밋·검증 범위에 포함하지 않는다. 앞선 준비 cutoff를 이후 가용 공간의 보장으로 바꾸지 않는다.
 
-[최종 리뷰 후 준비 회계](../../artifacts/dev3/plan4-runtime-core-20261024/preparation-after-final-d1.json)는 records4,715,523bytes를 포함한 다섯 범주가 원 상한 안임을 확인했다. 새 제품 시험을 실행한 결과가 아니다.
+최종 리뷰 후 준비 회계 (로컬 `../../artifacts/dev3/plan4-runtime-core-20261024/preparation-after-final-d1.json`)는 records4,715,523bytes를 포함한 다섯 범주가 원 상한 안임을 확인했다. 새 제품 시험을 실행한 결과가 아니다.
