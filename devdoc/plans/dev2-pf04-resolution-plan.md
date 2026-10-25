@@ -179,3 +179,21 @@ native 예산은 새16-probe/data 경로를 검증하는 Off/control→Off/trace
 결과를 통해 물리 요청과 journal 대기의 위치를 구분한 뒤 P4 WAL 후보를 채택/기각한다. K0·영속 CPU 한도는 별개 완료 조건이다. 이 후속 관측만으로 목표 완료나 PF04 PASS를 선언하지 않는다.
 
 후속 계획 상태: **PASS_PLAN_ONLY 채택 / 구현·실행 전**. 독립 검토 차단0개. receipt는 `/home/et16/xadb-dev2-evidence/pf04-flush-provenance-20261025/plan-review.json`, SHA-256 `401defe67b60b3d0632f56fb4c1938796b538ec959782089c2578823f3b2f727`이다. 본 anchor부터 이 상태 문장 직전까지의 검토 projection SHA-256은 `daaa7627e6b0a2f6cf4669224f9eafd1c74d1cf20fa474b4203002aa6c9b14aa`다. 계획 채택은 구현·실행 통과가 아니다.
+
+<a id="p3-stack-output"></a>
+
+## P3 수집 오류 보완: 출력 버퍼를 호출별 stack으로 제한
+
+후속 계획 commit `f157846` 뒤 source-r1..r4의 신규11개 단위 사례(관련 변경 재검증 포함12회)와 BPF codegen을 확인하고 고정 native를 실행했다. Off/control과 Off/trace는 수집·정답을 통과했다. Always/trace는 제품 scalar·ACK/image 검산과 수집 종료 뒤 원 kernel count와 행 수가 불일치해 **FAILED**다. 마지막 Always/control은 시작하지 않았다. 원자료는 `/home/et16/xadb-dev2-evidence/pf04-flush-provenance-20261025`에 보존하고 원 FAIL을 재분류하지 않는다.
+
+Always 원행10198/10199의 COMPLETE는 timestamp·pointer·전체 payload가 동일하다. ISSUE는 kernel2712/저장2711, COMPLETE는 kernel3299/저장3300이다. 설치 bpftrace0.25가 만든 IR에서 두 probe는 같은 CPU별 `__bt__fmt_str_buf[cpu][0]`를 공유하고 각각 format ID11/12와56byte를 출력한다. 공식 v0.25.0 소스와 기본 `on_stack_limit=32`도 대조했다. 같은 CPU의 중첩 호출이 공유 버퍼를 덮는 경로는 관측과 일치하는 유력 원인이다. 당시 CPU/IRQ 중첩은 수집하지 않았으므로 단일 원인 확정으로 쓰지 않는다.
+
+D2 선택은 고정 BPF config의 `on_stack_limit=128`이다. 현재 최대72byte의 모든 printf payload를 호출별 BPF stack에 놓아 이 공유 경로를 제거한다. 커널 전역·설치 bpftrace·worker·root owner 수명·count/output 검증·schema와16probe를 바꾸지 않는다. raw를 중복 제거하거나 kernel count를 맞추는 대안은 증거를 왜곡하므로 기각한다. 별도 BPF 프로그램/사용자 수집기 교체는 이번 결함보다 범위가 커 제외한다.
+
+수정 뒤 선택 검증은 실제 compiler가 만든 optimized IR에서 printf 공용 scratch 참조가 없고 각 출력이 stack allocation을 쓰는지 확인하는 신규 정적 사례1개와, 새 수집기의 실패했던 Always/trace 연결1개다. 미실행 Always/control1개를 이어서 실행해 해당 모드의 coarse 영향 screen을 완성한다. Off의 완료 연결과 기존 root owner6개·하위/제품 인수는 반복하지 않는다. 원 Always 실패와 새 source의 검증을 별도 디렉터리/recipe/hash로 구별하며 제품 ELF·input·idle·deadline·quality 기준은 유지한다. 새 trace도 실패하면 이 보완 예산에서 반복하지 않는다. 새 소스 native는 총2slot이며 실패한 동일 코드를 다시 돌려 통과를 찾는 실행이 아니다.
+
+이 보완은 바뀐 도구의 오류 경로를 검증하기 위한 한정 예산이다. 원4slot의 started 실패 무재시도 규칙을 불리한 성능 값의 재시도 허용으로 확대하지 않는다. 상위 사용자 지시의 수정 코드 필수 시험 범위에 해당하며, Off/Always의 서로 다른 수집기 source를 합쳐 하나의 성능 확인 표본으로 쓰지 않는다. P4와 K0/영속 CPU 원인 종료 검토는 계속 남는다.
+
+Off/trace의 원 count·연결 검사 통과는 보존한다. 다만 같은 공유 scratch 수집기여서 count가 맞아도 조용한 payload 오염이 전혀 없었다는 증명은 아니다. 이 해석 한계를 추가하고 완료 사례를 반복하거나 원 판정을 소급 변경하지 않는다.
+
+수집 오류 보완 계획 상태: **PASS_PLAN_ONLY 채택 / 수정 전**. 독립 검토 차단0개. receipt `/home/et16/xadb-dev2-evidence/pf04-flush-provenance-20261025/stack-plan-review.json`의 SHA-256은 `43f62dfc789a63e9da8ec1c7a806e03767fa5f828e60525ad3d61572d74a93f1`, 본 anchor부터 상태 문장 직전까지의 검토 projection은 `ef290419c358a4456feb992a24bb63357b621fbcef286b24704c5feb2456fbad`다.
