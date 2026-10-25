@@ -1,19 +1,27 @@
-# XADB 전체 수명 입력 조립의 독립 준비 자료
+# XADB 전체 수명 입력 조립의 독립 입력
 
-2026-10-25 · **정적 검토 후보1658 / 전체 D2·구현·시험 NOT_RUN**.
+2026-10-25 · **D4-LM-ASM-001 선택 입력 / 원 후보 byte 동일 보존**.
 
-[manifest](manifest.json)는 실제 원 artifact의 path·bytes·SHA와 byte-identical 보존을 기록한다.
-초기 raw1533, 원 입력의 중복 제외27, Bind22, 오류·상한76(성공 기대34/오류 기대42)을 포함한다.
-원51 trace 위치 및 초기 중복3은 연결 정보이며 추가 호출 수가 아니다. 새 API를 실행한 결과는0이다.
+[소유 계약](../../../devdoc/contracts/dev4-lifecycle-assembler.md)의 `assemble_input` 시험 입력이다.
+[selection inventory](selection-inventory.json)가 그룹·개수·hash·시험 함수를 고정하며 시험 코드도 같은
+hash를 확인한다. [준비 manifest](manifest.json)는 2026-10-25 준비 단위의 원 기록이며 수정하지 않는다.
 
-`normal/`과 `boundaries/`는 독립 literal 후보다. boundary는 필요한 read-set의 구조를 갖춘
-합성 workspace이며 전체 State 불변식이나 모델 도달성을 인증하지 않는다. rich 상태 추가304개는
-미검토·NOT_FROZEN으로 원 로컬 artifact에 남아 있으며 이 디렉터리에 포함하지 않았다.
+| 그룹 | 파일 | 개수 | 출처와 상태 |
+| --- | --- | ---: | --- |
+| initial | `normal/initial.json` | 1533 | 준비 단계 정적 검토 |
+| original | `normal/original-links.json` | 27 | 원51 occurrence·30쌍 연결, 초기 중복3은 추가 호출 아님 |
+| bind | `normal/rich-bind.json` | 22 | 준비 단계 정적 검토 |
+| boundary | `boundaries/cases.json` | 76 | 성공34·오류42, 준비 단계 정적 검토 |
+| rich_normal/continuation/rest | `rich/*.json` | 97/77/130 | 준비 단계 미검토 후보를 byte 동일 반입 |
+| supplement | `supplement/cases.json` | 17 | 이번 독립 literal 작성자가 손으로 작성한 공백 보완 |
+| supplement2 | `supplement/cases-2.json` | 9 | 계약 D2 검토가 요청한 owner 결정·A2 witness |
+| supplement3 | `supplement/cases-3.json` | 6 | 구현 D1 검토가 요청한 RW 거래 Resume witness |
 
-`provenance/`의 source manifest·독립 검토 JSON·Python 작성 원본은 당시 identity를 보존한다.
-Python은 원 artifact 디렉터리 배치를 가정하는 보존 자료이며 이 복사 위치의 실행 진입점이 아니다.
-제품 assembler/model/codec의 출력을 기대값으로 채택하지 않았고 기존 완료 시험도 반복하지 않았다.
+`rich/correction.json`은 rich 후보 두 건의 기대값 정정이다. 원 기대값의 논리 SHA를 먼저 확인하고
+해당 기대값만 대체하며 원 파일은 그대로다. 근거는 wire-v2의 Resume work 순서이고 독립 검토가
+정정을 판정했다. rich304는 개별 정적 검토를 모두 마친 자료가 아니며, 같은 계약에서 독립 작성한
+구현과 대조해 불일치 두 건을 정정한 범위로만 기록한다.
 
-전체 입력 inventory·추가 참조/receipt 경계·판정기 known-bad와 최종 D2가 남아 있다.
-이 준비 자료를 제품 구현 GO·시험 PASS·P5/FE14 완료로 사용하지 않는다.
-검토 범위와 다음 단계는 [준비 기록](../../../devdoc/evidence/dev4-lifecycle-assembly-inputs-20261025.md)을 따른다.
+`provenance/`의 Python은 원 artifact 배치에서 후보를 작성한 보존 자료이며 이 위치의 실행 진입점이
+아니다. 제품 assembler·model·codec의 출력을 기대값으로 채택하지 않는다. 실행 결과와 실패·정정 이력은
+[선택 증거](../../../devdoc/evidence/dev4-lifecycle-assembler-20261025.md)에 둔다.
