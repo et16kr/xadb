@@ -1,6 +1,6 @@
 # XADB 조사·실행 증거
 
-2026-10-25 [DEV2 PF04 CPU 성능 요청 범위 제어](dev2-pf04-frequency-control-20261025.md): max-only·지속 lease·자동 원복 도구와 신규12개 source별 선택 검증을 완료했다. 실제 host 연결은 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
+2026-10-25 [DEV2 PF04 CPU 성능 요청 범위 제어](dev2-pf04-frequency-control-20261025.md): 도구12·driver4개 선택 검증 뒤 첫 host 연결이 즉시 readback 불일치로 실패했다. 최종234필드는 원 값과 같고 프로세스는 종료됐다. 나머지2개 미실행·격리 lease 보존·사용자 조건에 따른 중단이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 
 - [DEV3 Catalog CREATE 순수 전이](dev3-catalog-transition-20261025.md) · [source별 기록](dev3-catalog-transition-20261025.json) — 새108·전이72 선택 검증, 원 harness FAIL 보존·실제 CREATE/F05/S5 미완료.
 

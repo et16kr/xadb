@@ -1,5 +1,8 @@
 # DEV2 구현 기록
 
+<a id="pf04-frequency-control"></a>
+2026-10-25 [PF04 CPU 요청 제어 도구](../evidence/dev2-pf04-frequency-control-20261025.md): 도구12·driver4개의 신규 선택 검증 뒤 첫 실제 연결에서 apply/restore 즉시 readback 확인이 실패했다. 최종 환경234필드는 원 값과 동일·관련 프로세스0을 확인했으나 도구 인수는 미완료다. 나머지2개는미실행이며 사용자 조건에 따라 추가 작업을 멈추고 격리 lease·원 실패를 보존한다. 원 PF04 네 FAIL·DEV2 미완료는 유지한다.
+
 **이관 상태:** 아래의 API·동작·제약 설명을 현재 코드와 함께 유지한다. 이전 실행 횟수·검토 기록은 새 XADB qualification이 아니다. K0-005 통합 후 r3 실행에서28개 check와 DEV0·DEV1 회귀를 확인했고, 별도 성능 진단 r1에서35개 시험과60개 release 실행을 확인했다. 최초 성능 비교의 sample-p99 guardrail FAIL은 유지한다. 현재 적용 source와 한계는 [구현 상태](implementation-status.json)와 [증거 색인](../evidence/README.md)을 따른다.
 
 

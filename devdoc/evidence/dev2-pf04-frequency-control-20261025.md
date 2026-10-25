@@ -1,6 +1,6 @@
 # DEV2 PF04 CPU 성능 요청 범위 제어
 
-2026-10-25 · **구현·선택 단위 검증 완료 / 실제 host 연결 NOT_RUN / PF04·DEV2 미완료**
+2026-10-25 · **구현·선택 검증 완료 / 첫 host 연결 FAIL·나머지2개 NOT_RUN / 사용자 조건에 따라 중단 / PF04·DEV2 미완료**
 
 [한정 계획](../plans/dev2-pf04-resolution-plan.md#frequency-control) · [source별 기록](dev2-pf04-frequency-control-20261025.json) · [선행 CPU 배치 결과](dev2-pf04-controller-placement-20261025.md)
 
@@ -24,8 +24,26 @@
 
 제품 회귀·전체 workspace·완료 성능 진단 실행0회다.
 
-외부 원본은 `/home/et16/xadb-dev2-evidence/pf04-frequency-control-20261025/`에 보존한다. `unit-selection-r1/r2.json`·원 로그·source 사본·커널 연구 identity·독립 검토를 구분한다. host 기능 연결과 원복 결과는 후속에 기록한다.
+외부 원본은 `/home/et16/xadb-dev2-evidence/pf04-frequency-control-20261025/`에 보존한다. `unit-selection-r1/r2.json`·원 로그·source 사본·커널 연구 identity·독립 검토를 구분한다. host 기능 연결과 원복 결과는 아래에 구분한다.
 
-## 잔여와 의미
+## 실제 연결: 첫 정상 사례에서 중단
 
-구현·실행 준비의 최종 독립 D1/D2는 한정 수용됐다. 실제 최대3개 기능 연결·독립 결과 검토는 아직 미실행이다. 새 성능 profile·제품 비용 측정은 이번 범위가 아니다. 원 PF04 네 FAIL과 DEV2 미완료를 유지하며, 도구 완료를 성능 해결로 표시하지 않는다. 재부팅·기존 서비스 재시작은 하지 않는다.
+구현·준비를 `64dbb21`에 commit한 뒤 동결16개 입력을 확인했다. 최초 유휴 관측10.007초 동안 CPU2 busy2.004%·CPU18 busy0.100%, 관련 build/worker 감지0으로 통과했다. `normal` 한 사례만 시작했으며 전용 unit의 실제 시간·권한 속성 확인도 통과했다.
+
+- CPU2 max를2,500,000으로 쓰는 intent를 저장하고 write했으나 곧바로 읽은 값의 확인이 `apply readback mismatch`로 실패했다. CPU18 적용과 일반 사용자 본체는 시작하지 않았다.
+- systemd가 실패한 Pre 뒤 root StopPost를 실행했다. 이 시점 CPU2 max는2,500,000으로 관측됐다. 원 값5,460,527로 복구하는 intent·write를 수행했으나 즉시 확인은 `restore readback mismatch`로 실패했다.
+- 원 state는 **QUARANTINED**이며 apply/restore 두 오류·두 intent를 보존한다. 드라이버는 `restore receipt` 오류로 exit1, 전체 연결0.239초를 기록했다. 실행에 성공한 본체0개·연결PASS0개다.
+- 드라이버의 독립 host-after와 뒤의 읽기 전용 종료 확인은32개 policy·전역·identity 등 **234필드 모두 실행 전과 동일**했다. CPU2/18 max는각각5,460,527이며 관련 cgroup은 소멸했고 MainPID/ControlPID는0이다. 이는 최종 환경 값 확인이며, 도구의 자동 원복 검증 PASS를 뜻하지 않는다.
+- 사용자 중단 조건에 따라 `partial-pre-failure`·`body-sigkill`은 **NOT_RUN**이다. 실제 재시도·추가 sysfs write·새 성능 실행·완료 시험 반복은0이다.
+
+실패 순간 readback snapshot은 저장되지 않았다. 코드와 후속 restore-intent를 통해 상태 변화의 일부는 추론할 수 있지만, 비동기 반영 여부나 지연 길이를 직접 입증하지 못한다. 즉시 readback 일치를 기대한 도구 전제가 이 실제 연결에서는 충족되지 않았다는 범위로 기록한다. 이를 과거 PF04 CPU 비용 실패의 원인으로 연결하지 않는다.
+
+## 종료·재검토 지점
+
+원 실패 state·실행 로그·journal·before/after·독립 종료 확인을 보존했다. 계획의 과거 NOT_RUN 표시는 실행 뒤 시점 구분만 보완했으며, 실행 당시 원 byte를 `plan-at-execution.md`와 별도 사후 binding에 보존했다. 최초48개 manifest도 `manifest-r1.json`으로 남기고 보존 파일을 포함한 최종 목록을 구분했다. `/run/xadb-pf04-frequency-5e22a8418cf94da2/`와 해당 config의 전역 lease를 그대로 남겨 검증되지 않은 새 적용을 차단한다. 이 전용 unit은 failed 상태(실행 프로세스 없음)이고 실행 중인 제어 프로세스는 없다. root 상태를 RESTORED로 고치거나 lease를 강제 해제하지 않았다.
+
+사용자의 “여기에서도 중단되면 다음은 일단 멈추고 처음부터 고민” 지시에 따라 **이 접근의 추가 구현·시험을 멈춘다.** 다시 시작할 때는 설정 write의 수락, 실제 반영 관측, 원복 완료를 어떻게 구분할지부터 검토해야 한다. 실패 readback 원자료를 저장하지 못한 관측 한계도 함께 검토한다. 이는 재개 후보이며 새 계획 채택·자동 재시도 요청이 아니다.
+
+CPU 제어 도구의 실제 인수는 미완료이고, 원 PF04 네 FAIL과 DEV2 미완료도 유지한다. 재부팅·기존 서비스 재시작은0회다. 문서 자동 검사는 push gate로 남겼으며 이번 요청에서 push하지 않았다.
+
+최종 독립 검토는 `PASS_SCOPED_D1_D2_FAILED_CONNECTION_AND_USER_STOP_RECORD`로 실패·환경 종료·사용자 중단 기록만 수용했다. 최종 manifest51개582,370bytes, 원 preparation16개(계획은 실행 당시 보존본),234필드·동일 invocation의 Pre/Post 오류를 재측정 없이 검산했다. 이 판정은 도구 연결이나 성능 PASS가 아니다.

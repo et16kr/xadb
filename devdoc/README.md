@@ -1,6 +1,6 @@
 # XADB 개발 문서
 
-2026-10-25 [DEV2 PF04 CPU 성능 요청 범위 제어](evidence/dev2-pf04-frequency-control-20261025.md): max-only·지속 lease·자동 원복 도구와 신규12개 source별 선택 검증을 완료했다. 실제 host 연결은 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
+2026-10-25 [DEV2 PF04 CPU 성능 요청 범위 제어](evidence/dev2-pf04-frequency-control-20261025.md): 도구12·driver4개 선택 검증 뒤 첫 host 연결이 즉시 readback 불일치로 실패했다. 최종234필드는 원 값과 같고 프로세스는 종료됐다. 나머지2개 미실행·격리 lease 보존·사용자 조건에 따른 중단이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 
 2026-10-25 [DEV2 PF04 원 제어기 CPU 배치](evidence/dev2-pf04-controller-placement-20261025.md): 원 e3 worker의60slot을 완료했다. CPU2/3 중앙 차이0.26–0.61%로 큰 배치 효과는 지지되지 않았고, 원 FAIL·DEV2 미완료를 보존하며 해결 조사를 계속한다.
 

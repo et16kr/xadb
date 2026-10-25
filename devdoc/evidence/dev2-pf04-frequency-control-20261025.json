@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "status": "IMPLEMENTED_SELECTED_UNIT_TESTS_PASS_HOST_NOT_RUN",
+  "status": "STOPPED_ON_FIRST_HOST_CONNECTION_FAILURE",
   "plan_commit": "014e9ef",
   "external_root": "/home/et16/xadb-dev2-evidence/pf04-frequency-control-20261025",
   "selected_functions_by_source": {
     "r1": 11,
     "r2": 1
   },
-  "host_connections": 0,
+  "host_connections": 1,
   "performance_runs": 0,
   "original_pf04": "FAIL",
   "dev2": "INCOMPLETE",
@@ -17,5 +17,49 @@
     "path": "/home/et16/xadb-dev2-evidence/pf04-frequency-control-20261025/frequency-preflight-review.json",
     "sha256": "77515ac7da6dd1c67423cd164818f67b6e54803c8cfde9d26f9246085334b69d",
     "status": "PASS_SCOPED_D1_D2_FREQUENCY_CONTROL_PREFLIGHT"
+  },
+  "implementation_commit": "64dbb21",
+  "host_connections_attempted": 1,
+  "host_connections_passed": 0,
+  "general_user_body_runs": 0,
+  "cases": {
+    "normal": "FAIL_APPLY_AND_RESTORE_IMMEDIATE_READBACK",
+    "partial-pre-failure": "NOT_RUN",
+    "body-sigkill": "NOT_RUN"
+  },
+  "final_host_baseline_fields_equal": 234,
+  "owned_cgroup_absent": true,
+  "quarantine_lease_retained": true,
+  "new_performance_runs": 0,
+  "automatic_retry": false,
+  "user_requested_stop_condition_met": true,
+  "root_installation": "/run/xadb-pf04-frequency-5e22a8418cf94da2",
+  "raw_records": {
+    "connections-result.json": "8deb699607188ca6a0cedf70d60542d67e2a889b99d7aa4bee73d9d5de170bde",
+    "shutdown-readback.json": "8d6a2ecc59195997a9e774ce71947f2d5ca6978a3096c218d4e9dc572de1509e",
+    "host-before.json": "9aee2c4d43cb1d566ce73e25b0957c1f117da1e08dcc97ee333101a3db07f331",
+    "idle.json": "c305dcf6b58659814e170d891dda3e84a503e8823ba228ec6f92fd57f9282244",
+    "normal/state.json": "df8b4aa23d1d4abc10444026fd3434f1ba62ce792fd42136a4f75ef97f865b40",
+    "normal/execution.json": "75741479b2c8c7acee7133bc17f571301f5d082b024b6d359886e779f073cf90",
+    "normal/host-after.json": "9aee2c4d43cb1d566ce73e25b0957c1f117da1e08dcc97ee333101a3db07f331",
+    "normal/stderr.log": "09d6a848ba13f57a32531e01aa7447111aa93e5f20fdf25a80408a77b47fbf03",
+    "normal/journal.jsonl": "45ac5e7ab49904428858267d2c6cae2a87ace083c3e551a902dfef6fd33f6077"
+  },
+  "external_manifest": {
+    "files": 51,
+    "bytes": 582370,
+    "sha256": "91c28a3474919a3854890a8ace4e892f483f1a548fb5ac1d29c6b78cabe62bd4"
+  },
+  "post_execution_plan_binding": {
+    "original_repository_path": "/home/et16/work/xadb/devdoc/plans/dev2-pf04-resolution-plan.md",
+    "execution_sha256": "a59c5d2b5f154d308d84dd88149ea9b2ad3bdfd0eb300c8a889ddfa9c3507eee",
+    "frozen_copy": "/home/et16/xadb-dev2-evidence/pf04-frequency-control-20261025/plan-at-execution.md",
+    "post_execution_sha256": "18a48b3d409e261b0e14c9e7f8bfacd150977b16a4d1a5632f7817d8cb4946c2",
+    "scope": "Documentation-only status clarification after stopped execution; preparation and original plan preserved"
+  },
+  "outcome_review": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-frequency-control-20261025/outcome-review.json",
+    "sha256": "cd7a6b11fc0adbc5f383fb2233ebf9efe275a4f5a22624a4e0d3f44724be0643",
+    "status": "PASS_SCOPED_D1_D2_FAILED_CONNECTION_AND_USER_STOP_RECORD"
   }
 }
