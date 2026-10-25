@@ -158,3 +158,24 @@ P3 계획 상태: **PASS_PLAN_ONLY 채택**. 계획 채택 당시 구현·실행
 - 원 PF04 네 실패와 DEV2/B2/D0 INCOMPLETE: 유지.
 
 - P3: 계획 commit `360961b` 뒤 [도구·선택 관측](../evidence/dev2-pf04-io-cause-20261025.md)을 완료했다. helper 새 경계2개를 추가해6개로 한정 검증하고 제품 연결4slot은 유지했다. 정답과512 fsync/wait 연결은 확인했으나 요청 전체 비율은 INCONCLUSIVE·Always 영향 screen FAIL이다. P3 후속 provenance 관측과 원 CPU 한도 설명이 남고 P4는 시작하지 않았다.
+
+
+<a id="p3-flush-provenance"></a>
+
+## P3 후속: 물리 완료와 flush 순서 완료 구분
+
+2026-10-25 지속 목표 “이 작업을 완료”에 따른 D2 후속이다. 담당·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`. 앞선 P3의 두 요청 비율 INCONCLUSIVE와 Always 영향 FAIL은 보존한다. 계획을 먼저 commit하고 도구의 실제 변경 범위만 검증한다. 제품 원인·개선 단계로 진행하기 위한 정보이며 새 성능 합격을 만들기 위한 반복이 아니다.
+
+실행7.0.0-38 kernel의 적용 `blk-flush.c`에서 `blk_flush_complete_seq`는 입력 seq를 누적하고 다음 단계가 DONE이면 `blk_flush_restore_request` 뒤 `blk_mq_end_request`를 호출한다. `blk_flush_restore_request`가 `RQF_FLUSH_SEQ`를 지우고 saved_end_io를 복원한다. 새 `fentry:vmlinux:blk_flush_complete_seq`가 현재 BTF에 존재함을 확인했다. 함수 진입의 rq pointer·seq_before·action·error·rq_flags·cmd_flags·data_len·end_io·saved_end_io를 수집하고, 기존 ISSUE/COMPLETE에도 rq_flags와 end_io를, COMPLETE에는 cmd_flags도 추가한다. free 뒤 rq를 읽는 fexit는 사용하지 않는다. probe16개·clock/identity/권한/한도/worker 경계와 원 workload는 앞 계약을 유지한다.
+
+분석은 이번 kernel의 `RQF_FLUSH_SEQ=1<<1`, `REQ_FSEQ_ACTIONS=7`에 결합한다. seq_before와 action은0..7의 서로 겹치지 않는 mask이고 action=0·다중 bit도 합법이다. error=0이며 `(seq_before | action)==7`인 실제 DONE 전환 marker만 요청 세대별1:1로 소비해 같은 pointer의 다음 COMPLETE와 연결한다. marker 후 다른 ISSUE·중복 marker·동일 timestamp·error·필드 불일치·순서 역전·미완료는 unknown으로 남긴다. 논리 완료는 rq_flags에서 FLUSH_SEQ만 지워지고 end_io가 saved_end_io와 같으며 cmd_flags/data_len이 marker와 일치하는0byte 성공인 경우에만 구분한다. marker 없는0byte 완료는 예전처럼 고아다. 물리 요청 구간과 논리 종료를 별도 반환하고 원 event/kernel count를 줄이지 않는다. physical/logical/unknown 완료 census의 합은 모든 COMPLETE 행 수와 일치해야 한다. v2 schema marker를 명시하고 과거 v1 원자료의 판정은 보존한다.
+
+journal wait의 transaction과5개 지점을 연결해 start→locking→flushing→logging→end의4구간과 wait의 앞/뒤 잔여 겹침을 산출한다. 순서·transaction 재사용·누락·동일시각·경계를 별도로 다룬다. commit sequence 공개가 end_commit trace보다 먼저이므로 정상 wait가 end marker 전에 반환할 수 있다. end_commit 대비 반환 시차는 부호를 보존하며 순수 scheduler 지연이라고 단정하지 않는다. phase/request가 겹쳐도 공유 journal의 배타적인 WAL 소유를 뜻하지 않는다. 이상·경계가 남으면 해당 분모를 거절하며 전체 순수 device service time을 주장하지 않는다.
+
+새 선택 vector는 v2 정상/고아0byte/유효 logical completion/marker 충돌·잘못된flag/end_io·오류/partial·재사용·경계, v1 보존, journal 단계 clip·순서/누락/불완전 transaction이다. root 수명 코드는 바꾸지 않으므로 이전 native owner6개는 반복하지 않는다. fixed probe count/source 연결만 새 실제 관측에서 확인한다. 외부 driver는 CPU2/18 정확8필드·비음수delta·양수total/time·disk delta와 per-process affinity를 실행 전에 검증하도록 보강하고 선택 부정 vector를 갖춘다.
+
+native 예산은 새16-probe/data 경로를 검증하는 Off/control→Off/trace→Always/trace→Always/control 각1개, 총4slot이다. 제품은 앞 P3의 보존5253caa source/ELF 그대로 사용한다. 재빌드·기존 제품/하위 시험은 없다. 실행 전 source/hash·probe/clock·기존 고정 input·CPU2/18와 disk idle5%·deadline60초·coarse screen을 별도 recipe로 동결한다. started 실패는 재시도하지 않고 원자료를 보존한다. helper 새 시험이 필요하면 실제 수정/새 경계에 한정하며 예산을 실행 전에 기록한다. 영향 screen의 elapsed/p99 1.25·CPU2배는 기존대로이며 모드별 한 쌍으로 원 PF04 인수를 대체하지 않는다.
+
+결과를 통해 물리 요청과 journal 대기의 위치를 구분한 뒤 P4 WAL 후보를 채택/기각한다. K0·영속 CPU 한도는 별개 완료 조건이다. 이 후속 관측만으로 목표 완료나 PF04 PASS를 선언하지 않는다.
+
+후속 계획 상태: **PASS_PLAN_ONLY 채택 / 구현·실행 전**. 독립 검토 차단0개. receipt는 `/home/et16/xadb-dev2-evidence/pf04-flush-provenance-20261025/plan-review.json`, SHA-256 `401defe67b60b3d0632f56fb4c1938796b538ec959782089c2578823f3b2f727`이다. 본 anchor부터 이 상태 문장 직전까지의 검토 projection SHA-256은 `daaa7627e6b0a2f6cf4669224f9eafd1c74d1cf20fa474b4203002aa6c9b14aa`다. 계획 채택은 구현·실행 통과가 아니다.
