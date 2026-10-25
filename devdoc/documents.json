@@ -2198,6 +2198,16 @@
       "role": "evidence",
       "title": "DEV4 P5 원시 번호·selector의 선택 검증"
     },
+    "dev4-lifecycle-assembler.md": {
+      "path": "contracts/dev4-lifecycle-assembler.md",
+      "role": "contracts",
+      "title": "DEV4 P5 전체 입력 조립"
+    },
+    "dev4-lifecycle-assembler-20261025.md": {
+      "path": "evidence/dev4-lifecycle-assembler-20261025.md",
+      "role": "evidence",
+      "title": "DEV4 P5 전체 입력 조립의 선택 검증"
+    },
     "dev3-retention-live.md": {
       "path": "contracts/dev3-retention-live.md",
       "role": "contracts",

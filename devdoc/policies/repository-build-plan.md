@@ -502,6 +502,11 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 
 ## DEV4 P5 원시 번호·target 선택
 
+[전체 입력 조립 계약](../contracts/dev4-lifecycle-assembler.md)의 `assemble_input`은 같은 reference
+lifecycle 경계의 `input_assembler.rs`와 `input_assembler/rows.rs`에 둔다. 시험 전용 `assembler_literal.rs`·
+`assembler_tests.rs`와 rich·supplement 입력을 추가하며 package·dependency·export/fingerprint roots는 유지한다.
+실제 경로는 관리 JSON의 `dev4_lifecycle_assembler`에 등록한다. 모델 전이·BFS는 후속이다.
+
 후속 [전체 입력 조립 준비](../evidence/dev4-lifecycle-assembly-inputs-20261025.md)는
 `tests/fixtures/dev4-lifecycle-assembly`의 실제 정적 자료만 추가한다. 검토 후보1658개와 원
 작성/검토 hash를 보존하며 제품 모듈·Cargo 의존·시험 진입점은 추가하지 않는다. 전체 D2와

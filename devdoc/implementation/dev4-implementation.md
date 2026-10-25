@@ -1,6 +1,6 @@
 # DEV4 독립 앞단 구현
 
-2026-10-24 · **lexer·이름·splitter·P2/P4 raw 문장·P3 scalar·predicate 구문·typed 평가 제한 구현 / P4·P5 codec 최종 독립 D1 제한 수용 / 실제 SQL 실행·DEV4·Q1 미완료**
+2026-10-25 · **lexer·이름·splitter·P2/P4 raw 문장·P3 scalar·predicate 구문·typed 평가 제한 구현 / P4·P5 codec 최종 독립 D1 제한 수용 / P5 전체 입력 조립 선택 검증 / 실제 SQL 실행·DEV4·Q1 미완료**
 
 [독립 앞단 계약](../contracts/dev4-independent-frontend.md#lexer-leaf) · [병행 계획](../plans/dev4-preparation-plan.md) · [source별 증거](../evidence/dev4-frontend-20261024.md)
 
@@ -276,3 +276,24 @@ handle 인증·모델 전이는 포함하지 않는다. [선택 기록](../evide
 오류·상한76을 정적 한정 검토하고 원 source/hash를 보존했다. 추가 rich304개는 미검토로 남긴다.
 사용자의 정리·commit 요청에 따라 준비 단위를 보존하며 전체 D2·`assemble_input`·시험 harness는
 미완료다. 이 단위의 제품 변경·compile/runtime/test는0이며 이전 완료 시험을 반복하지 않았다.
+
+<a id="lifecycle-assembler"></a>
+## P5 전체 입력 조립
+
+[소유 계약](../contracts/dev4-lifecycle-assembler.md) D4-LM-ASM-001의
+`assemble_input(&State, &RawAction, &mut ResolvedInput)`을 reference lifecycle에 구현했다.
+21 family의 prefix/context/control, A1 Bind payload, Env1 class·receipt/anchor, 인증·continuation과
+transaction 선택, owner/obligation recipe·fence census·recovery negative를 조립한다. 오류는 S0–S5
+순서이며 사용 namespace만 검사하고 State를 바꾸지 않는다. 제품 경로는 heap·재귀·State clone이 없다.
+
+[선택 증거](../evidence/dev4-lifecycle-assembler-20261025.md)에 준비 후보1658·rich304·독립 supplement의
+선택 실행, rich 후보 정정2건, 개발 중 불일치·교정 이력을 기록했다. admission·환경 가능성·전이,
+독립 edge checker, 원51 action model replay, alias, BFS/재개와 FE14는 미완료다.
+
+```bash
+cargo test -p xadbtest-reference --lib --offline --locked lifecycle::assembler_tests::<function> -- --exact
+```
+
+실제 diff에 대응하는 함수만 선택한다. `XADB_ASSEMBLY_CASE`는 한 case ID, `XADB_ASSEMBLY_FROM_CASE`는
+완료 prefix를 제외한 suffix를 고르며 둘은 함께 쓰지 않는다. 어느 그룹에도 없는 ID는 실패한다.
+

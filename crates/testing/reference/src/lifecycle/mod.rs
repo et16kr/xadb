@@ -2,12 +2,17 @@
 //! This module does not establish SQL execution, engine durability, or FE14 exploration completion.
 
 mod codec;
+mod input_assembler;
 mod input_schema;
 mod raw_action;
 mod schema;
 mod target_selector;
 mod workspace;
 
+#[cfg(test)]
+mod assembler_literal;
+#[cfg(test)]
+mod assembler_tests;
 #[cfg(test)]
 mod literal;
 #[cfg(test)]
@@ -25,6 +30,7 @@ mod selector_literal;
 mod selector_tests;
 
 pub use codec::{CodecError, decode_input, decode_state, encode_input, encode_state};
+pub use input_assembler::{AssemblyError, assemble_input};
 pub use input_schema::*;
 pub use raw_action::{
     PrepareChoice, RAW_ACTION_COUNT, RawAction, RawActionError, action_at, index_of,

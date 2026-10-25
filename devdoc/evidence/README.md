@@ -22,6 +22,8 @@
 
 - [COMM 시험 산출물 정리](comm-artifact-cleanup-20261025.md): 전용 Cargo cache35개와 검산된 임시 사본을 정리했다. 원 증거·실행물 보존, 저장소 약3.76GiB·tmpfs 약1.62GiB 절감, 시험 실행0.
 
+- [DEV4 P5 전체 입력 조립](dev4-lifecycle-assembler-20261025.md) — 신규1994입력 선택 검증·rich 후보 정정2·독립 supplement32; 원 개발 불일치와 교정 이력 보존. 모델/FE14 미완료.
+
 - [DEV4 P5 전체 입력 조립 준비](dev4-lifecycle-assembly-inputs-20261025.md) — 독립 후보1658개 정적 한정 검토; 미검토 rich304·전체 D2·제품·시험 NOT_RUN.
 
 - [DEV3 plan4 빈 거래 live·prefix](dev3-retention-live-20261025.md) · [source별 색인](dev3-retention-live-20261025.json) — 신규75 PASS·완료 반복0·원 실패 보존; 최종 독립 D1 제한 수용

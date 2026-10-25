@@ -5883,6 +5883,38 @@
     "reviewed_call_candidates": 1658,
     "runtime_tests": 0
   },
+  "dev4_lifecycle_assembler": {
+    "decision": "D4-LM-ASM-001",
+    "contract": "dev4-lifecycle-assembler.md",
+    "evidence": "dev4-lifecycle-assembler-20261025.md",
+    "status": "IMPLEMENTED_SELECTED_VALIDATION_D2_D1_ACCEPTED",
+    "implemented_sources": [
+      "crates/testing/reference/src/lifecycle/assembler_literal.rs",
+      "crates/testing/reference/src/lifecycle/assembler_tests.rs",
+      "crates/testing/reference/src/lifecycle/input_assembler.rs",
+      "crates/testing/reference/src/lifecycle/input_assembler/rows.rs",
+      "crates/testing/reference/src/lifecycle/mod.rs"
+    ],
+    "fixtures": [
+      "tests/fixtures/dev4-lifecycle-assembly/README.md",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/author-continuation.py",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/author-normal-rest.py",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/author-rich.py",
+      "tests/fixtures/dev4-lifecycle-assembly/provenance/rich-snapshot.json",
+      "tests/fixtures/dev4-lifecycle-assembly/rich/correction.json",
+      "tests/fixtures/dev4-lifecycle-assembly/rich/rich-continuation-3.json",
+      "tests/fixtures/dev4-lifecycle-assembly/rich/rich-normal-2.json",
+      "tests/fixtures/dev4-lifecycle-assembly/rich/rich-normal-rest-4.json",
+      "tests/fixtures/dev4-lifecycle-assembly/selection-inventory.json",
+      "tests/fixtures/dev4-lifecycle-assembly/supplement/cases-2.json",
+      "tests/fixtures/dev4-lifecycle-assembly/supplement/cases-3.json",
+      "tests/fixtures/dev4-lifecycle-assembly/supplement/cases.json"
+    ],
+    "new_dependencies": false,
+    "scope": "Pure assemble_input of one pre-state and raw action; admission, environment possibility, transitions, checker, alias, 51-action replay, BFS and FE14 remain incomplete",
+    "logical_cases": 1994,
+    "validation": "Independent D2 and D1 accepted; selected 1994 cases PASS, fmt and Clippy PASS; rich 304 differential plus 57-case static sample; 2 rich corrections"
+  },
   "dev3_plan4_recovery_checkpoint": {
     "status": "PAUSED_WIP_NOT_ACCEPTED",
     "evidence_ref": "dev3-recovery-paused-20261025.md",
