@@ -23,3 +23,9 @@ MC03, MT01–MT07, MF14의9개 실제 입력은 NOT_RUN이다. MF01/MF13은 원 
 [세부 source·ELF·실행·검토 해시](dev3-catalog-live-milestone-20261025.json)에 실제 파일과 근거를 기록했다. 초기 slot 없음의 정상 상태 처리, CREATE7개 target 동시 보호, 복구 allocator 재로드 제외/CLR9개 target 보호를 각각 독립 검토했고, root가 cap 유지와 원 authority 조건을 대조하여 채택했다. checker actor remap와 MF10은 제품 동작 변경이 아닌 동결 계약에 맞춘 기대값 수정으로 D2 채택했다.
 
 고정 원본은 `artifacts/dev3/catalog-create-20261025/integration-r28`, `integration-r29`, `integration-r32`와 `implementation-commit-r0`에 있다. 원 ELF·source manifest·로그·DB snapshot은 보존한다. 사용이 끝난 compiler target만 해시 확인 뒤 제거한다. [선행 독립 입력/제어기 증거](dev3-catalog-input-controller-20261025.md)와 [순수 전이 증거](dev3-catalog-transition-20261025.md)는 원 범위 그대로 유지한다.
+
+## 2026-10-26 일반 빌드 오류 정정
+
+사용자 보고를 확인한 결과 기본 `cargo build --locked --offline`에서 E0432 두 개가 재현됐다. `bootstrap.rs`의 `#[cfg(test)]`가 일반 경로에 필요한 `CatalogRetirementRejected` 재노출에 잘못 적용되고, 다음 줄의 시험 전용 `Plan4TestMutableCause`/`Plan4TestSemanticError`에는 빠져 있었다. 원 커밋의 문제이며 남겨 둔5개 초안이 원인이 아니다. 앞서 통과한 것은 engine 테스트 대상 컴파일이었으므로 일반 빌드 성공을 보장하지 않았다.
+
+조건부 속성을 원래 시험 전용 별칭 앞으로 옮겼다. 별도 D1 소스 검토는 ACCEPTED이며, 같은 수정 source에서 기본 workspace 빌드14.734초 PASS와 `cargo test -p xadb-engine --lib --all-features --locked --offline --no-run`21.739초 PASS를 확인했다. 기능 시험은 실행하지 않았고 기존 경고는 남아 있다. 원 기본 빌드 FAIL과 모든 compiler 로그/source를 보존했으며, 완료된 진단 compiler target만 제거했다. [원본 receipt·소스·검토 해시](dev3-catalog-live-milestone-20261025.json)의 `non_test_build_regression_20261026`에 연결한다.

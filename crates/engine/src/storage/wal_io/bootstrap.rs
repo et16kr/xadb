@@ -38,8 +38,8 @@ const PROTECTED_BYTES: u64 = FIXED_BYTES - control::EXTENT_BYTES;
 
 #[path = "plan4_genesis.rs"]
 mod plan4_genesis;
-#[cfg(test)]
 pub(in crate::storage) use doublewrite_install::CatalogRetirementRejected;
+#[cfg(test)]
 pub(in crate::storage) use doublewrite_install::{Plan4TestMutableCause, Plan4TestSemanticError};
 #[cfg(test)]
 pub(in crate::storage) use plan4_genesis::tests::mutate_page as plan4_test_mutate_page;

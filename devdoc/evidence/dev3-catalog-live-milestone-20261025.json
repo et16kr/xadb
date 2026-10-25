@@ -841,5 +841,91 @@
       "receipt": "artifacts/dev3/catalog-create-20261025/implementation-commit-r0/target-cleanup.json",
       "removed_file_bytes": 98848616
     }
-  ]
+  ],
+  "non_test_build_regression_20261026": {
+    "cause": "bootstrap.rs incorrectly placed cfg(test) on CatalogRetirementRejected and left the following Plan4Test aliases unconditional",
+    "errors": [
+      "E0432 Plan4TestMutableCause/Plan4TestSemanticError unavailable outside test configuration",
+      "E0432 CatalogRetirementRejected incorrectly excluded from non-test bootstrap re-export"
+    ],
+    "fix": "Move cfg(test) to the following Plan4Test aliases; one source file, one attribute moved",
+    "scope": "Original commit regression, not the five unstaged drafts. Runtime behavior and those drafts unchanged. Previous compile success was engine unit-test configuration only.",
+    "review": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-build-cfg-review.md",
+      "sha256": "d05fa68dbdedc5ed342a4e30c2d2cb5ec8d54562fc6e7dadbb9b6b9090694e1f",
+      "status": "SOURCE_D1_ACCEPTED"
+    },
+    "builds": [
+      {
+        "revision": "build-diagnosis-default-r0",
+        "receipt": "artifacts/dev3/catalog-create-20261025/build-diagnosis-default-r0/build-receipt.json",
+        "sha256": "1f65ec8ef3a28e18416788680ce76a8c58a52c57abae345273d8531d7678df40",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "status": "FAIL",
+        "source": "9b4b4269c027aec3b281377a571e7a8ed4aa162e0b9b80e2b9eb111cdebaa02a",
+        "seconds": 10.623055137002666,
+        "cleanup": {
+          "kind": "VERIFIED_DIAGNOSTIC_COMPILER_TARGET_ONLY_CLEANUP",
+          "build_receipt_sha256": "1f65ec8ef3a28e18416788680ce76a8c58a52c57abae345273d8531d7678df40",
+          "removed_file_bytes": 120889622,
+          "preserved": "frozen source, full compiler logs, receipts; successful engine test executable; no product test was run"
+        }
+      },
+      {
+        "revision": "build-diagnosis-default-r1",
+        "receipt": "artifacts/dev3/catalog-create-20261025/build-diagnosis-default-r1/build-receipt.json",
+        "sha256": "65d98609edfde665e4eccb67dffb362683eb334a3a8c061a8a26abce0f441f41",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline",
+          "--message-format=json"
+        ],
+        "status": "PASS",
+        "source": "71ab0fd6e55182899fe0ab01985112be604f222427eb1d02ba06e507a0ad81ca",
+        "seconds": 14.73395534500014,
+        "cleanup": {
+          "kind": "VERIFIED_DIAGNOSTIC_COMPILER_TARGET_ONLY_CLEANUP",
+          "build_receipt_sha256": "65d98609edfde665e4eccb67dffb362683eb334a3a8c061a8a26abce0f441f41",
+          "removed_file_bytes": 305576334,
+          "preserved": "frozen source, full compiler logs, receipts; successful engine test executable; no product test was run"
+        }
+      },
+      {
+        "revision": "build-diagnosis-test-r1",
+        "receipt": "artifacts/dev3/catalog-create-20261025/build-diagnosis-test-r1/build-receipt.json",
+        "sha256": "64279ea9704f7e616fe0a30c5a2b8d00581f4444a4b6cad2a71ebac674658031",
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "xadb-engine",
+          "--lib",
+          "--all-features",
+          "--locked",
+          "--offline",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "status": "PASS",
+        "source": "71ab0fd6e55182899fe0ab01985112be604f222427eb1d02ba06e507a0ad81ca",
+        "seconds": 21.73853606099874,
+        "cleanup": {
+          "kind": "VERIFIED_DIAGNOSTIC_COMPILER_TARGET_ONLY_CLEANUP",
+          "build_receipt_sha256": "64279ea9704f7e616fe0a30c5a2b8d00581f4444a4b6cad2a71ebac674658031",
+          "removed_file_bytes": 98877546,
+          "preserved": "frozen source, full compiler logs, receipts; successful engine test executable; no product test was run"
+        }
+      }
+    ],
+    "product_tests_run": 0,
+    "warnings_remain": true
+  }
 }
