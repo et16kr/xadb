@@ -4,7 +4,7 @@
 
 - DEV3 비교 분석 반영: [완료분 보완·우선순위](dev3-implementation-plan.md#comparison-adoption), [D3-COMP-01–10 구현 동반 인수](dev3-test-plan.md#comparison-adoption). 계획 채택과 실행 결과를 구별한다.
 
-- [DEV2 PF04 해결 단계와 커밋 계획](dev2-pf04-resolution-plan.md): 계획 선행 commit, P1–P3 관측·선택 검증, P4 WAL 미채택 판단과 C2 K0 단일 writer 통계 후보·고정 비교 예산.
+- [DEV2 PF04 해결 단계와 커밋 계획](dev2-pf04-resolution-plan.md): 계획 선행 commit, P1–P3 관측·선택 검증, P4 WAL 미채택 판단과 C2 K0 단일 writer 통계 후보·고정 비교 예산. 후속 [C3 thread별 shard counter와 측정 profile B](dev2-pf04-resolution-plan.md#c3-profile-b)는 실행 전 계획으로 독립 D2 r5 채택, 영속 처리는 결정 대기다.
 
 - [DEV4 — DEV3 병행 준비·독립 모듈 개발 계획](dev4-preparation-plan.md): 기존4.xx에 연결한 개발 순서·F01–05 부분 동결/잔여·FE01–16 선택 시험·진단 효과의 실제 연결 인수·DEV3 수신. D4-PREP-001/002 독립 D2 채택, 개발/시험 NOT_RUN.
 

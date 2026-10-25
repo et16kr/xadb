@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-25 [DEV2 PF04 C3·측정 profile B 계획](plans/dev2-pf04-resolution-plan.md#c3-profile-b): K0 계측 비용을 반복당 locked RMW로 설명하고, thread별 shard counter(C3)와 결과를 보지 않는 환경 타당성 판정(B)을 실행 전 계획으로 정했다. 한도·pair별 판정은 그대로다. 독립 D2 검토5회 끝에 차단0으로 채택했고 구현·측정은 NOT_RUN, 영속 처리는 결정 대기다. 원 PF04 FAIL·DEV2 미완료를 유지한다.
+
 2026-10-25 [DEV2 PF04 CPU 성능 요청 범위 제어](evidence/dev2-pf04-frequency-control-20261025.md): 도구12·driver4개 선택 검증 뒤 첫 host 연결이 즉시 readback 불일치로 실패했다. 최종234필드는 원 값과 같고 프로세스는 종료됐다. 나머지2개 미실행·격리 lease 보존·사용자 조건에 따른 중단이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 
 2026-10-25 [DEV2 PF04 원 제어기 CPU 배치](evidence/dev2-pf04-controller-placement-20261025.md): 원 e3 worker의60slot을 완료했다. CPU2/3 중앙 차이0.26–0.61%로 큰 배치 효과는 지지되지 않았고, 원 FAIL·DEV2 미완료를 보존하며 해결 조사를 계속한다.

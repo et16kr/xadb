@@ -513,3 +513,272 @@ user instructions 중앙비1.053185367/1.076304360와 user CPI1.036546289/1.0467
 ### 결과별 계속 조치
 
 기능 검증에서 원복·권한·대상 한도 결합이 실패하면 도구를 고치고 변경된 실패 경계만 다시 검증한다. 2026-10-25 후속 사용자 요청에 따라 이번 재개는 이미 계획한 도구와 최대3개 기능 연결까지로 한정한다. 여기에서 해결되지 않는 문제가 남으면 상태·증거·재개 지점을 정리하고 멈추며 새 가설이나 후속 성능 실행을 자동 추가하지 않는다. 성공하더라도 다음 성능 profile은 아직 미확정이며 이번 실행에 포함하지 않는다. 이후 필요한 실패 사례의 해결 검증은 그 profile·source·기존 threshold·정답/품질·원복 조건에 묶는다. 이번 단계만으로 원 FAIL을 해결 또는 과거 주파수 원인 확정으로 표시하지 않는다. 영속 journal/tail·CPU 잔여는 별도 해결 의무이며 filesystem/ACK/sync 의미를 이번 도구에서 변경하지 않는다.
+
+<a id="c3-profile-b"></a>
+
+## 후속 해결 계획: C3 계측 counter의 locked RMW 제거와 측정 profile B
+
+2026-10-25 · **실행 전 계획 / 독립 D2 검토 r5 PASS_PLAN_ONLY_WITH_NONBLOCKING 채택 / 구현·build·측정 NOT_RUN / 영속 처리 결정 대기 / 원 PF04 네 FAIL·DEV2 미완료 유지**
+
+사용자의 “C3(locked RMW 제거)와 측정 profile 보완(A/B)을 실행 전 계획으로 작성하고 독립 검토까지 진행, 영속 처리는 결정 대기” 요청에 따른 D2 계획이다. 결정 ID는 C3가 `PF04-C3-001`, 측정 profile이 `PF04-PB-001`, 영속 처리가 `PF04-DUR-001`(결정 대기)이다.
+
+- 작성·계약·통합: Claude Code 세션 `18b2cd67`
+- 작성자 외 독립 D2 검토: 같은 세션이 작성 맥락 없이 띄운 검토 subagent. 검토 receipt 파일로 식별한다(아래 검토 상태).
+- 이번 요청의 범위는 계획과 검토까지다. 구현·build·성능 실행·commit은 별도 착수 지시를 따른다.
+
+### 근거: 세 실패 성분의 분리
+
+| 성분 | 근거 | 해결 수단 |
+| --- | --- | --- |
+| K0 실제 계측 비용 | [모드별 진단](../evidence/dev2-pf04-mode-attribution-20261025.md)의 CPU On/Off 중앙 Always1.092334·Detailed1.122806, 최악 pair1.104277/1.133935 | 제품 수정 C3 |
+| K0 실행 단위 속도 대역 | [원인 분석](../evidence/dev2-pf04-analysis-20261025.md)의 원 audit Off 경과 약14.7ms/16.8–16.9ms(약1.14–1.15배), 표본 p50 약240/280ns | 측정 profile B |
+| 영속 tail·CPU | fsync 대기가 cycle의97–99%. 계측을 끈 Off/Off 대조는 cycle p99만 실패(pair8 2.26082배)했고 CPU 초과는 없었다. replay CPU 실패의 원인은 미확정 | 결정 대기 |
+
+원 K0 실패값은 두 K0 성분의 곱과 같은 크기다. Always 1.0923×1.146≈1.252(원 pair5 경과1.25555), Detailed 1.1228×1.146≈1.287(원 pair0/2/6 1.260–1.300)이다. 이 대응은 설명력의 확인이며 원인 확정이 아니다. 계측 비용을2%로 줄여도 같은 대역이 끼면 1.02×1.146≈1.17로1.15를 넘는다. 반대로 측정만 보완하면 Detailed 최악 pair의 여유는 약1.6%p뿐이다. 따라서 C3와 B를 함께 계획한다.
+
+### 대역에 대해 보존 자료가 보여 주는 것
+
+- **형제 CPU·외부 작업과 함께 나타난 유일한 대역 크기 사례:** [C1 평가](../evidence/dev2-pf04-k0-owner-20261025.md)의 실제 PMU 한 쌍에서 측정 경과는 baseline 16,246,777ns, candidate 17,941,858ns(+10.4%)였다. instructions:u는 92,911,919/92,911,888로 같았고, user cycles/ref는 2.0851/2.0804로 거의 같았다. 보존 `host.json`의 약119ms 창에서 baseline은 CPU18 non-idle tick0, CPU2 nice tick0이었다. candidate는 CPU18 non-idle tick6/13(user2·nice3·system1), CPU2 nice tick3이었다. 명령 수와 주파수 비율이 같은데 느려졌고, 그 시간에 형제 CPU와 같은 CPU에서 다른 작업이 실행됐다. 원인 확정은 아니지만 대역의 1차 후보는 주파수보다 **형제 CPU·외부 작업 경합**이다.
+- **slot별 유휴 확인만으로는 설명되지 않음:** slot마다 유휴를 확인한 [Off 분류](../evidence/dev2-pf04-off-classification-20261025.md)20회·[모드별 진단](../evidence/dev2-pf04-mode-attribution-20261025.md)40회와, batch 앞에서만 확인한 [제어기 배치](../evidence/dev2-pf04-controller-placement-20261025.md)60slot 모두에서 원 대역이 나타나지 않았다. 사전 유휴 확인 자체보다 측정 중 경합 여부가 중요하다는 해석과 양립한다.
+- **Off/Off 대조의 한계:** e3 K0 동일 Off 대조(Exploration 형식, Off/Off)는 원 audit이 실패한 같은 시기에 최악1.0196으로 PASS했다. Off 대역은 약1.146이라1.15 guardrail을 넘지 않는다. 따라서 Off/Off 대조는 대역을 검출하지 못하며, 15%를 넘는 교란과 전체 절차의 A/A 통과만 보여 준다.
+
+### C3 가설: 계측 비용은 반복당 locked RMW 수에 비례
+
+[보존 ELF 검토](../evidence/dev2-pf04-hotpath-20261025.md)와 [diagnostics](../../crates/engine/src/diagnostics.rs)에 따르면 측정 반복(Replace→Snapshot→Read→해제)마다 계측이 더하는 원자 RMW는 다음과 같다. queue를 측정 전에 비우므로 처음 약85회는 queue 경로를 타며, 아래는 정상 상태 기준이다.
+
+- `fetch_update` 포화 검사 CAS(`lock cmpxchg`): started·completed 각3회
+- Detailed full queue의 dropped CAS: 3회
+- Snapshot이 복제·해제하는 collector Arc의 증가·감소: 2회
+
+합은 Always8회, Detailed11회다. CPU 증가분을 나누면 연산당 각각 약1.15%와1.12%로 비슷하다. 각각2회를 없앤 기각 후보의 확인 감소(C1 2.46%, C2 2.92%, 모두 Detailed)도 이 모델의 예측 약2.0%와 같은 크기다.
+
+이 일치는 **가설 H-C3**의 근거일 뿐이다. 원자 명령 시간은 측정하지 않았고, C1/C2 기각과 두 수치의 합산 금지는 그대로다. C1/C2는 범위가 작아 동결 기준0.95에 못 미쳤다고 해석한다. C3는 counter의 locked RMW 전체를 한 후보로 새로 동결하고 독립 탐색·확인으로만 판정한다. 모델대로라면 Arc2회만 남아 Detailed candidate/baseline 경과 비율 약0.91, On/Off 비용 약+2–3%가 예상된다. 이 예상치는 판정 기준이 아니다.
+
+<a id="c3-shard-counters"></a>
+
+### C3 설계: thread별 shard counter
+
+| 대안 | 판단 |
+| --- | --- |
+| wrap 가능한 `fetch_add` | 포화·비wrap 계약을 위반하고 locked RMW도 남는다. 기각 |
+| C2식 mutation writer 분리 | `&mut self`의 5 label만 해당한다. 측정 반복의 Snapshot/Read CAS4회와 Detailed dropped CAS3회가 남는다. 기각 |
+| PostgreSQL식 local pending과 주기 반영 | 로컬 checkout `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851`의 `src/include/utils/pgstat_internal.h` 43–45행, `src/backend/utils/activity/pgstat.c` 126·724행은 backend-local 누적 뒤 최소1초 간격 반영을 보인다. XADB는 측정 전후 진단 snapshot의 정확한 delta를 요구하므로 지연 반영은 계약 위반이다. 원자 연산 없는 로컬 누적이라는 원리만 참고 |
+| 생성 thread 전용 block | 아래 설계에서 shard가1개인 경우와 같다. 다른 thread의 snapshot 읽기가 모두 CAS로 가고, 실제 thread stress가 shard 간 동시성을 검증하지 못한다 |
+| **claim 가능한 thread별 shard4개 + 기존 CAS fallback** | 채택. 한 thread만 쓰는 shard는 load→checked_add→store로 정확하다. 5번째 이후 thread와 id/token 소진은 기존 CAS 의미를 유지한다 |
+
+shard 수를4로 고정하는 이유: PF04 fixture는 단일 thread이므로 1개면 성능 요구는 충족한다. 그러나 `stress.rs`는 round마다 새 store에 writer1개·reader4개 thread를 띄운다. 4개면 매 round에서 shard 4개와 fallback 1개가 동시에 실제 thread로 실행되므로, 기존 V3 stress가 두 경로의 동시 정확성을 함께 검증한다. 추가 메모리는 collector당1,280바이트다. 다중 thread counter 확장성은 현재 요구가 아니다. 서버 경로가 실제로 많은 thread에서 이 counter를 갱신하게 되는 DEV5 단계에서 필요하면 shard 수를 다시 검토한다.
+
+- **구조:** 활성 Collector에 64-byte 정렬 `Shard` 4개를 둔다. 각 shard는 `owner` thread token, 11 label×started/completed/failed, `dropped`를 가진다. 기존 operations/dropped atomic은 fallback block으로 남긴다.
+- **식별자:** collector id와 thread token은 각각 전역 `AtomicU64`에서 checked 증가로 발급하고0을 예약한다. 소진되면 0을 받고, 그 collector 또는 thread는 항상 fallback을 쓴다. 발급은 전달받은 atomic만 다루는 작은 함수로 두어 `u64::MAX` 경계를 전역 상태 없이 단위 시험한다. id0 collector의 fallback 동작은 `cfg(test)` 생성 경로로 시험한다.
+- **소유:** thread는 const 초기화 `thread_local!` `Cell`에 자기 token과 (collector id, shard 번호 또는 FALLBACK) 한 항목을 둔다. cache가 맞지 않으면 shard owner를 읽어 자기 token을 찾고, 없으면 빈 owner를0→token CAS로 claim한다. 빈 shard가 없으면 (collector id, FALLBACK)을 cache해 다시 scan하지 않는다. claim은 collector·thread 쌍마다 최초1회이며 측정 반복 밖이다. owner는 해제·재사용하지 않으므로 종료한 thread의 shard 값이 보존되고 ABA가 없다.
+- **TLS 접근:** `Drop`이 없는 const 초기화 `Cell`은 thread 종료 시 파괴 상태가 생기지 않는다. 그래도 `try_with`를 쓰고 실패하면 fallback으로 간다. 이 분기는 정적 근거로 남기며 별도 실행 시험은 두지 않는다.
+- **기록:** 자기 shard는 Relaxed load→`checked_add(1)`→Relaxed store로 갱신한다. overflow면 값은 MAX로 두고 `saturated`를 set한다. fallback은 현재 `fetch_update` 그대로다. full queue·`try_lock` 경합·sequence overflow를 포함한 모든 drop은 해당 thread의 shard(또는 fallback)의 dropped에 기록한다. started→작업→completed/failed 순서, panic 미완료, Err의 failed 부분집합, full hint 우회 의미를 바꾸지 않는다. Off는 collector가 None이므로 TLS를 읽지 않고 할당·동작이 현재와 같다.
+- **관측:** `DiagnosticsSnapshot.operations`는 label별로 shard4개와 fallback을 checked 합산한다. 합이 넘치면 MAX와 `saturated=true`다. 각 atomic을 따로 관측하며 동시 단일 시점이 아니라는 기존 API 의미를 유지한다. 단일 thread fixture에서는 같은 thread가 쓰고 읽으므로 정확한 delta가 보존된다. thread join 뒤의 합계도 정확하다.
+- **event sequence:** queue 기록은 event lock 아래에서 `emitted + Σdropped(shard4개+fallback) + 1`을 checked 계산한다. 각 성분은 단조 증가하며, lock의 happens-before와 atomic별 coherence 때문에 다음 기록이 앞 기록보다 작은 합을 읽지 않는다. 이 순서 성질은 새 동시 시험으로 확인한다. 합 overflow는 현재처럼 saturated와 drop으로 공개한다. controller의 Detailed sequence 검사(`Σ측정 전 completed + i + 1`)는 단일 thread에서 그대로 성립하므로 바꾸지 않는다.
+- **자원:** shard 하나는 owner8+label264+dropped8=280바이트, 정렬 뒤320바이트다. Collector가 64-byte 정렬이 되면 Arc header 뒤 padding이 생긴다. 그래서 `logical_bytes`는 현재 식(`size_of::<Collector>()+2*size_of::<usize>()`) 대신 `Layout::new::<[usize; 2]>().extend(Layout::new::<Collector>())`의 실제 크기와 queue capacity×event 크기로 계산한다. capacity 0/1/256/1,024의 정확한 기대값과64KiB 이하를 시험한다. row quota charge, Snapshot/Cursor 필드 크기, pin 회계는 바꾸지 않는다.
+- **제외:** Snapshot의 collector Arc 복제(C1 대상)는 유지한다. counter 삭제·표본화·공개 API/형식 변경·unsafe·새 dependency·controller oracle 변경은 없다. C3 확인 뒤에도 PF04가 실패하고 잔여 비용이 Arc2회로 설명될 때만 새 가설로 다시 동결한다.
+- **DP07 재검토 조건:** C3 확인이 IMPROVED가 아니면 제품에 넣지 않는다. 채택 뒤 shard 구조가 결함·시험 비용의 원인이 되거나 PF04가 다른 방법으로 해결되면 단순 CAS로 되돌리는 것을 먼저 검토한다.
+
+### C3 변경별 시험 선택
+
+실제 diff가 확정되면 exact selector를 실행 전에 기록한다. 변경하지 않은 하위 회귀·workspace 전체·완료 성능 campaign은 반복하지 않는다.
+
+- 바뀌는 기록·관측 경로를 지나는 기존 시험:
+  - diagnostics 4함수. 내부 counter를 직접 조작하는 시험은 shard 구조에 맞게 고치고, fallback block의 합 overflow와 shard별 overflow를 구분한다.
+  - `crates/engine/tests/performance.rs` 5함수
+  - `crates/engine/tests/stress.rs`의 `four_readers_keep_old_rows_and_release_pins_smoke`
+  - `crates/testing/engine-worker/tests/performance.rs:131`의 `real_fixture_matrix_preserves_all_read_values_old_roots_and_exact_measurement_cuts`. 실제 worker fixture에서 Always/Detailed counter·drop delta를 capacity 0/1/256으로 정확히 검사한다.
+- 새 시험:
+  1. 11 label 성공/실패의 shard 정확값, shard별 MAX-1/MAX, shard 간 합 overflow
+  2. 5개 이상 thread의 fallback 사용과 join 뒤 합계 보존
+  3. 종료한 thread shard의 값 보존과 재claim 없음
+  4. 한 thread가 두 collector를 번갈아 쓸 때 교차 오염 없음, FALLBACK cache
+  5. Detailed에서 여러 shard·fallback의 drop(full·경합)과 동시 drain 중 sequence 유일·증가, 보존/drop 합 보존
+  6. started 뒤 panic의 미완료
+  7. capacity 0/1/256/1,024의 정확한 logical bytes와 Off 무할당
+  8. id/token 발급 함수의 `u64::MAX` 경계와 id0 collector의 fallback
+- 정적 확인(baseline 대비 차분): fallback `fetch_update`, shard claim CAS, id/token 발급 CAS는 `#[cold]` `#[inline(never)]` 함수로 분리한다. baseline·candidate release ELF에서 replace·snapshot·read·Snapshot drop·record_event의 `lock` 접두 명령 목록을 뽑는다. 합격 조건은 다음 두 가지다.
+  - 후보 목록 = baseline 목록 − diagnostics counter RMW 지점 전부. 빠지는 것은 다음과 같다. 보존 baseline ELF의 주소는 예시다.
+    - replace·snapshot·read에 inline된 각 label의 started·completed·failed CAS(started/completed 예: [주요 경로 검토](../evidence/dev2-pf04-hotpath-20261025.md)의 `0x8e82a/0x8e92e`, `0x8f03a/0x8f1da`, `0x8fc7e/0x8fcee`; failed 예: `0x8eaaa`, `0x8f21a`, `0x8ff0a`)
+    - full hint 경로의 dropped CAS
+    - record_event의 sequence overflow·`try_lock` 경합 dropped CAS(예: `0x9151a`, `0x9157c`)
+  - diagnostics counter RMW용 `lock` 명령은 위 cold 함수 밖에 없어야 한다.
+  - counter가 아닌 지점은 baseline과 같아야 한다. base metrics `Counters::add` CAS, Quota reserve/release, Arc 증가·감소·고유성 CAS, record_event의 event queue Mutex `try_lock`(예: `0x913a7`)이 여기에 해당한다.
+  
+  주소는 build마다 달라지므로 지점은 명령 종류·대상 offset·source 대응으로 식별한다. 식별 규칙은 S2 착수 전에 baseline ELF로 고정한다.
+- 관련 fmt, engine/worker Clippy, baseline·candidate release build.
+- C3는 `stress.rs`의 `four_readers_keep_old_rows_and_release_pins_v3_30_minutes`가 지나는 동시성 경로를 바꾼다. DEV2 종료 증거로 C3 source에서 이 V3 target을 30분 이상1회 새로 실행한다(S6).
+
+### C3 비교 예산과 판정
+
+C1/C2와 같은 방식이다. 기준선은 본 계획을 commit한 시점의 깨끗한 export(병행 DEV3 미커밋 변경 제외)이고, 후보는 그 위에 C3 diff만 적용한 export다. toolchain·target·release 설정이 같아야 한다. 입력은 128행·old snapshot·capacity256·warmup4096·측정65536·stride16·seed20261018이며 controller 분석기와 한도는 그대로다.
+
+1. 탐색: Detailed 1campaign(order seed2026102561). correctness PASS·validity VALID·guardrails PASS·경과 중앙<1일 때만 다음으로 간다.
+2. 확인: 새 Detailed 1campaign(2026102562), 확인 시도1. 순서통계 구간 상한<0.95(IMPROVED)와 세 품질 판정을 모두 요구한다.
+3. guard: 확인 통과 때만 baseline/candidate의 Off 10쌍(2026102563)과 Always 10쌍(2026102564)을 1회씩 실행한다. correctness PASS·validity VALID를 요구하고, pair별 경과·CPU·외부1.15, 표본 p99 1.25, RSS 4MiB를 그대로 적용한다. 여기에 더해 두 guard 모두 controller가 계산한 candidate/baseline 경과 비율 구간의 상한(정렬 index8)이 1.05 이하여야 한다. 회귀 쪽만 보는 조건이므로, 구간이 0.95에 걸치는 개선(분석기의 `INCONCLUSIVE`)은 통과한다. C3는 Off도 실행하는 inline 함수를 바꾸므로, 15%보다 작은 Off 회귀가 On/Off 비율을 유리하게 만드는 일까지 막기 위한 조건이다. Always는 C3가 빨라지게 하려는 모드이므로 개선을 불합격으로 만들지 않는다.
+
+**C3 campaign의 환경 처리:** 네 campaign 모두 B1 pair 앞 유휴 gate를 적용하고, B2 환경 관측은 **판정에 쓰지 않고 기술 기록으로만** 남긴다. C1/C2처럼 controller 판정이 결론을 정한다. 이렇게 정한 이유는 다음과 같다.
+
+- 보존된 slot별 host 자료(Off 분류20·모드별 진단40·경계 대조20)에 B2 tick 규칙을 적용하면 80개 중 79개가 VALID다. 20slot campaign 하나가 모두 VALID일 확률은 약0.9875^20≈0.78, 네 campaign이 모두 VALID일 확률은 약0.37이다. 엄격히 gate하면 효과를 보기도 전에 환경 잡음만으로 C3가 끝날 가능성이 더 크다.
+- controller의 Confirmation은 시도1·이전 확인 run 없음만 허용하고, 계약은 실패한 확인을 포함한 모든 후보의 보존을 요구한다. 환경 사유로 다시 시도할 정직한 경로가 없다.
+- 대역 잡음은 구간을 넓혀 IMPROVED를 어렵게 하거나 guardrail을 넘겨 기각으로 이어진다. 둘 다 보수적인 방향이다. 거짓 IMPROVED가 되려면 대역이 대부분의 pair에서 baseline 쪽에만 걸려야 한다.
+
+각 C3 campaign의 결과 옆에 B2 환경 판정을 함께 적는다. 환경 INVALID인 campaign에서 기각이 나왔다면 환경이 그 결과를 설명할 수 있다고 함께 기록하되, 기각은 그대로 유지한다.
+
+C3 campaign에는 교체를 허용하지 않는다. 다음 경우 C3는 INCOMPLETE로 기록하고 채택하지 않으며 종료한다.
+
+- campaign이 20slot을 모두 마치지 못함(유휴10분 초과·30분 상한·GO 전 도구 실패·비정상 종료·취소)
+- 첫 GO 이후 slot 수준의 도구·환경 실패(worker nice 불일치, gate EOF·deadline, 수집기 사망, controller·native 전송 실패). controller가 validity INVALID·correctness UNKNOWN 같은 판정을 내더라도 기각이 아니라 INCOMPLETE로 분류한다.
+
+후보 build의 worker가 panic·오류 응답·정답 불일치를 내면 제품 결함이므로 INCOMPLETE가 아니라 기각이다. INCOMPLETE는 기각이 아니다. 다만 다시 평가하려면 새 후보 hash와 정직한 lineage를 갖춘 새 사전 등록 계획이 필요하다. 한 단계라도 미달·불확실·실패면 C3를 기각하고 제품을 기준선 byte로 되돌린다. 후보 source·raw를 보존하며 추가 tuning·재확인은 없다. 세 단계를 모두 통과할 때만 제품에 반영하고 별도 commit한다.
+
+<a id="measurement-profile-b"></a>
+
+### 측정 profile B: 한도는 유지하고 환경 타당성 판정을 추가
+
+**바꾸지 않는 것:** campaign당10쌍·AB5/BA5, 위 입력, pair마다 경과·CPU·외부 시간1.15배·표본 p99 1.25배·RSS 증가4MiB 한도, controller의 정수 비율 판정과 AB/BA drift 검사, 원 campaign의 FAIL.
+
+B는 [DP03](../policies/development-policy.md#section-4)의 실행 전 D2 profile 변경이다. 한도는 그대로 두고, 결과를 보지 않은 채 미리 정한 환경 기준으로만 campaign을 무효화·교체한다. 원 실패를 없애는 사후 축소가 아니며 새 source에만 적용한다. 교체가 허용되면 단일 campaign이었다면 FAIL이었을 상황에서 뒤의 환경 VALID campaign이 PASS할 수 있다. 이것이 정당한 이유는 교체 조건이 결과와 독립인 환경 관측뿐이기 때문이다. 그 독립성은 경합 규칙은 구조적으로, 주파수 비율은 campaign마다 중앙비 검사로 확인한다(아래 공변량 독립성). 이 규칙은 S5 인수 역할에만 적용하며, C3 campaign에서는 기술 기록이다.
+
+| 대안 | 판단 |
+| --- | --- |
+| 현재처럼 campaign 앞 유휴 확인만 | 원 대역을 막지 못했다. 기각 |
+| isolcpus·cpuset partition 등 host 격리 | isolcpus는 재부팅이 필요해 사용자 지시(재부팅·서비스 재시작 금지)와 충돌한다. 실행 중 cpuset partition은 공유 host의 다른 작업 배치까지 바꾸는 host 설정 변경이라 이번 범위에서 제외한다 |
+| CPU 최대 주파수 고정 | 첫 연결이 즉시 readback 불일치로 실패했다(비동기 반영으로 설명되나 실행으로 확인하지 않음). 보존 자료상 대역의 1차 후보도 주파수가 아니다. 후순위 |
+| 한 worker 안에서 Off/On store를 block 단위로 교대 | 대역을 양쪽 공통으로 만들 수 있지만 동결 fixture·측정 경로·oracle을 바꾸는 더 큰 D2 변경이다. B가 환경 사유로 INCOMPLETE로 끝날 때 재검토 |
+| **결과와 무관한 환경 판정 + pair 앞 유휴 gate + Off/Off 대조** | 채택. 기존 경로·한도·정답 검사를 그대로 둔다 |
+
+- **B1 pair 앞 유휴 gate:** 각 pair의 첫 slot 전에 10초 동안 CPU2·CPU18 busy 각5% 이하, fixture 장치 io_ticks5% 이하, CPU2/18을 제외한 CPU의 평균 busy10% 이하(`/proc/stat`)를 요구한다. pair의 둘째 slot은 기다리지 않고 바로 시작한다. 원 pair처럼 두 실행이 붙어 있어야 paired 잡음 구조가 유지되기 때문이다. 유휴 대기가10분을 넘으면 GO 전에 ABORT한다.
+- **B2 slot 중 환경 관측(1차: 경합):** supervisor는 GO부터 DONE까지 `/proc/stat`의 CPU2·CPU18 tick 차이를 기록한다. slot이 환경 VALID이려면 다음을 모두 만족해야 한다.
+  - CPU18 non-idle tick(user+nice+system+irq+softirq+steal) 차이 ≤1. tick 단위가 10ms라 1tick은 양자화 여유다.
+  - CPU2 nice+steal tick 차이 =0. controller·worker는 nice0으로 실행하고 시작 때 확인한다.
+  - PMU를 쓸 수 있으면 추가로 CPU18 `cycles`가 같은 창 CPU2 `cycles`의5% 이하.
+  
+  C1 PMU 쌍에 이 규칙을 적용하면 baseline은 VALID, 느린 candidate는 INVALID다. 독립 검토가 보존된 slot별 host 자료(Off 분류20·모드별 진단40·경계 대조20)에 tick 규칙을 적용한 결과는 79/80 VALID였다. 실행 전 preflight에서 같은 계산을 판정기 코드로 다시 해 기술 보고한다. 재측정은 아니다.
+  
+  검출 한계도 기록한다. CPU2의 nice0 외부 작업은 worker·controller와 구별되지 않는다. 이 host는 bare metal이라 steal은 항상0이다. CPU18 ≤1tick 규칙은 약10–20ms의 형제 작업을 허용하므로 14–19ms loop 대부분과 겹칠 수 있어, PMU 5% 규칙보다 약하다.
+- **실행 조건:** controller는 worker를 띄운 직후, Performance 요청을 보내기 전에 `/proc/<pid>/stat`의 nice가0인지 확인한다. 아니면 slot failure다. supervisor와 `slot-env-v1` 수집기·launcher는 CPU4에 고정해 CPU2/18에 스스로 tick을 만들지 않게 한다.
+- **pair 위치 효과:** pair 앞 유휴 gate 때문에 첫 slot은 유휴 직후, 둘째 slot은 바로 뒤에 실행된다. 원 campaign(연속 실행)이나 slot별 유휴 진단에는 없던 차이다. AB/BA drift 검사는 약10% 이상만 잡으므로, 첫 slot과 둘째 slot의 비율 차이를 AB·BA별로 기술 보고한다. e3 자료에서는 일관된 첫 slot 효과가 보이지 않았다.
+- **B2 보조(주파수):** PMU를 쓸 수 있으면 CPU2의 `cycles`/`ref-cycles`가 그 campaign 20slot 중앙값의 ±3% 안이어야 한다(정확히3%는 VALID). 20개 중앙값은 정렬한 10번째와11번째 값의 정확한 분수 평균이다. 설치 커널 원본 `arch/x86/events/amd/core.c` 278–293행에서 이 host(Zen5, family0x1a)의 `ref-cycles` encoding은 `0x100000120`(PMCx120)이다. 이것이 halt가 아닌 동안의 P0 기준 cycle이라는 의미는 AMD 문서로 확인하기 전까지 가정이다. Off 분류20회의 user cycles/ref가 약2.084–2.085로 안정적이었던 것과는 양립한다. GO→DONE 창은 약120ms로 측정 loop(14–19ms)보다 길어서 loop 안의 주파수 변화는 희석된다. 그래서 이 항목은 보조 검사다.
+- **공변량 독립성:** 환경 기준으로 run을 무효화해도 비교가 치우치지 않으려면 공변량이 계측 모드와 무관해야 한다.
+  - 경합 규칙(CPU18 tick·cycles, CPU2 nice/steal tick)은 구조적으로 무관하다. K0 worker는 단일 thread로 controller와 함께 CPU2에 고정되며(e3 campaign도 `taskset -c 2`로 controller를 실행했다), 계측 모드는 CPU18의 작업이나 CPU2의 nice 작업을 만들지 않는다. 다만 On 실행의 창이 약2–3ms 길어 tick이 걸릴 기회가 조금 더 많다. 무효화는 campaign 단위이므로 한쪽 side만 골라 버리는 일은 없다. tick은 드문 정수라 모드 간 비율 검사는 하지 않고, side별 INVALID slot 수를 기술 보고한다.
+  - 주파수 비율은 수치로 확인한다. [모드별 진단](../evidence/dev2-pf04-mode-attribution-20261025.md)의 모드 간 user cycles/ref 차이는 0.999316·1.000361이었다. 하지만 CPU 범위 계수는 범위가 다르므로, campaign마다 baseline/candidate의 CPU2 cycles/ref 중앙비를 계산한다. 이 값이[0.99, 1.01] 밖이면 독립 전제가 깨진 것으로 보고 그 campaign을 환경 UNKNOWN으로 처리한다.
+- **B3 Off/Off 대조:** e3 K0 동일 Off 대조와 같은 Exploration 형식(양쪽 같은 worker·receipt·config, mode Off)으로 각 모드의 audit 바로 앞에 1회 실행한다. controller recipe 종류는 추가하지 않는다. 이 campaign은 어떤 확인의 provenance로도 쓰지 않고 replay하지 않는다. 앞에서 보았듯 대역을 검출하지 못하며, 15%를 넘는 교란과 절차 전체의 A/A 통과만 확인한다.
+
+**PMU 권한:** 현재 승인 범위는 worker TID 한정 `sudo-cap-perfmon`이다. B2의 CPU 범위 계수는 별도 고정 profile `slot-env-v1`(CPU 2·18, `cycles`·`ref-cycles`만, counting)로 둔다. [CPU 분리 계획](#cpu-user-kernel)의 “시스템 전체·다른 thread 수집 불허” 규칙은 `user-kernel-v1`에 그대로 남기며, 이 profile은 그 규칙을 대체하지 않는 별도 기록이다. B 구현에 착수할 때 사용자 확인을 받는다. 확인이 없으면 PMU 항목은 `UNAVAILABLE`로 표시하고 tick 기반 경합 규칙과 B1·B3만 적용한다. tick 규칙은 권한 없이 항상 쓸 수 있으므로 S5는 진행할 수 있다. `/proc/stat`을 읽을 수 없으면 S5를 실행하지 않는다.
+
+#### 종료 상태와 교체·최종성
+
+**결과를 보지 않는 절차:**
+
+- supervisor는 worker 출력·journal을 읽지 않는다. 환경 판정은 자기 관측만으로 계산한다.
+- supervisor는 B2 INVALID slot이 나와도 campaign을 멈추지 않고 20slot을 모두 진행한다. 진행 중 중단은 유휴 대기 초과와 30분 상한에 따른 GO 전 중단뿐이다.
+- 마지막 slot의 DONE을 받은 뒤 환경 판정을 SHA-256과 함께 기록하고, 그 hash를 실은 ACK를 보낸다. controller는 그 hash를 bundle index에 쓴 다음 분석·verify를 시작한다.
+- 측정을 운영하는 세션도 환경 판정 hash가 기록될 때까지 bundle·worker 출력을 읽지 않고, host에서 새 작업을 시작하지 않는다. supervisor는 slot마다 DONE 시점의 CPU2/18 실행 task 목록을 기록해, 환경 INVALID의 원인 작업을 사후에 확인할 수 있게 한다.
+
+| campaign 종료 상태 | 분류 | 교체(인수 역할만) |
+| --- | --- | --- |
+| 첫 GO 전 도구 실패(recipe/identity 거절, FIFO 생성, `slot-env-v1` 시작 실패) | 그 시도 NOT_RUN. 교체1회로 계산 | 가능 |
+| pair 앞 유휴 대기10분 초과, 또는 campaign 30분 상한에 걸려 다음 GO 전에 중단 | 환경 INVALID | 가능 |
+| 20slot 완료, 수집기가 살아 있는 상태에서 한 slot이라도 B2 INVALID 또는 사전 등록 품질 미달(coverage<100%·scaled)로 UNKNOWN, 또는 공변량 독립성 검사 UNKNOWN | 환경 INVALID | 가능 |
+| 첫 GO 이후 gate EOF·deadline·ordinal/run 불일치, 수집기 사망, supervisor·controller 비정상 종료, worker nice 불일치, 사용자·운영자 취소, controller·native 전송 실패 | 그 역할 INCOMPLETE(TERMINATED)로 종료 | 불가 |
+| worker의 panic·오류 응답·정답 불일치(제품 결함) | correctness FAIL과 같이 FAIL, 최종 | 불가 |
+| 환경 VALID이고 controller validity INVALID/UNKNOWN | 계약의 `invalid_or_unknown_comparison`에 따라 효과 INCONCLUSIVE. 그 역할 INCOMPLETE(INCONCLUSIVE_COMPARISON)로 종료 | 불가 |
+| correctness FAIL(환경 판정과 무관) | FAIL, 최종 | 불가 |
+| 환경 VALID·validity VALID·correctness PASS | guardrail 판정이 최종 | 불가 |
+| 전체 3시간 상한에 도달해 새 campaign을 시작하지 못함 | 남은 역할 NOT_RUN, 판정 INCOMPLETE | — |
+
+- 교체는 인수 역할(Always·Detailed 각각의 control·audit·replay)마다 최대2회이며 order seed를 미리 고정한다. 초과하면 그 역할은 INCOMPLETE(ENVIRONMENT)다. C3 campaign은 교체하지 않는다(위 C3 판정).
+- 역할별로 처음 환경 VALID로 완료한 campaign의 판정이 최종이며 같은 역할을 다시 실행하지 않는다.
+- 환경 INVALID campaign도 controller가 계산한 판정을 최종 결론 옆에 함께 공개한다.
+
+**모드 m(Always, Detailed)의 PF04 K0 판정:**
+
+| control(Off/Off) | audit(Off/m) | replay(audit bundle 재현) | 판정 |
+| --- | --- | --- | --- |
+| guardrail PASS | PASS | PASS | 새 source의 m PASS |
+| guardrail FAIL 또는 control 역할 INCOMPLETE·NOT_RUN | 실행 안 함 | 실행 안 함 | INCOMPLETE(CONTROL_GUARDRAIL_FAIL 또는 control의 사유). audit는 control PASS 뒤에만 실행 |
+| PASS | FAIL | 실행 안 함 | 새 source의 m FAIL. 재측정 없음 |
+| PASS | PASS | FAIL | 새 source의 m FAIL |
+| 어느 역할이든 위 종료 상태표의 FAIL·INCOMPLETE·NOT_RUN | | | 그 분류를 따름(FAIL이 INCOMPLETE보다 우선) |
+
+표의 PASS/FAIL은 환경 VALID·validity VALID·correctness PASS로 완료한 campaign의 guardrail 판정이다. PF04 K0 PASS는 두 모드가 모두 PASS일 때다. 판정 이름은 기존 verdict 어휘(PASS/FAIL/INCOMPLETE, validity VALID/INVALID/UNKNOWN)와 괄호 안 사유로 표현한다. 어떤 결과도 원 e3 source의 네 FAIL을 바꾸지 않는다.
+
+**order seed:** C3 탐색2026102561·확인2026102562·Off guard2026102563·Always guard2026102564. Always control/audit 2026102571/2026102572, Detailed control/audit 2026102573/2026102574. 인수 역할의 교체 campaign은 각 seed에1,000,000과2,000,000을 더한 값만 쓴다. replay는 원 bundle의 순서를 따른다.
+
+### B 구현과 시험
+
+- **controller(XADBTest, D2 runner 변경):** `run-performance`와 `replay-performance`에 선택적 slot gate를 추가한다.
+  - gate profile JSON과 SHA-256을 입력으로 받는다. slot마다 `Session::start` 전에 supervisor 소유 FIFO에 `READY ordinal run`을 쓰고, 같은 ordinal·run의 `GO`를 받은 뒤에만 worker를 시작한다. GO 대기 deadline은 11분으로 유휴 대기 상한(10분)보다 길다. slot이 끝나면 `DONE`과 `ACK`를 교환한다.
+  - gate 교환은 Invoke→Observe 구간 밖에서 일어나므로 `external_ns`에 들어가지 않는다. 이를 시험으로 확인한다.
+  - `ABORT`·EOF·deadline·ordinal/run 불일치는 slot failure로 기록하고 남은 slot은 NOT_RUN이다.
+  - gate profile, 교환 전문, 마지막 ACK의 환경 판정 hash를 bundle에 보존하고 verify가 재검사한다. gate 사용 bundle은 index inventory version을 올려 기존 형식과 구별한다. gate를 쓴 원본의 replay에 gate가 없으면 거절한다. 옵션이 없으면 현재 동작·bundle과 같다.
+  - guardrail 산식·정답 검사·분석기와 recipe 형식은 바꾸지 않는다.
+- **supervisor·환경 판정기(`scripts/`, XADBTest):** CPU4에서 실행한다. B1·B2 수집, slot별 기록, 환경 판정, 교체·최종성 관리, 위 판정표의 조합을 맡는다. controller 판정을 덮어쓰지 않고 별도 축 `environment_validity`와 `pf04_decision`을 낸다. controller·worker affinity는 원 campaign의 CPU2 배치를 유지한다. PMU를 쓰면 승인된 launcher 방식으로 `slot-env-v1`만 실행한다.
+- **부정 시험(known-bad):**
+  - controller: gate ABORT·EOF·deadline·ordinal/run 불일치·중복 READY, profile hash 불일치, 교환 전문 변조, ACK 없는 분석, ACK hash 불일치, gate 없는 replay, gate 대기가 `external_ns`에 섞이지 않음
+  - 판정기: slot 기록 누락, CPU18 tick 1/2 경계, CPU2 nice tick 0/1, PMU scaled/coverage 미달, ±3%와 CPU18 cycles 5%의 정확한 경계, 공변량 중앙비[0.99, 1.01] 경계, 한 slot만 INVALID인 campaign(20slot 계속 진행), 종료 상태표의 각 행(GO 전 도구 실패의 교체 계산, GO 뒤 수집기 사망의 TERMINATED, worker nice 불일치 포함), 교체 초과, 환경 VALID 완료 뒤 같은 역할 재실행 시도 거절, control FAIL·INCOMPLETE 뒤 audit 실행 거절, correctness FAIL 우선, C3 campaign의 교체 거절과 B2 판정 미사용
+  - `slot-env-v1`: 다른 CPU·event 거절, identity·pidfd·deadline·정리
+- 기존 시험은 바뀐 controller 경로(run·verify·replay·bundle index)를 지나는 performance 시험만 선택하고 exact selector를 실행 전에 기록한다. 무변경 하위 회귀는 반복하지 않는다.
+- **도구 연결 시험:** S1 끝에 gate·supervisor·tick 수집(승인 시 PMU 포함)을 실제 native에 연결하는 Off/Off 한 쌍(2slot)을 1회 실행한다. [CPU 요청 제어](#frequency-control)의 첫 실제 연결이 단위 시험에서 드러나지 않은 전제로 실패했던 것을 반영한다. 이 실행은 도구 연결 증거이며 성능 판정에 쓰지 않는다.
+
+### 단계·commit·예산
+
+| 단계 | 내용 | 종료 조건 |
+| --- | --- | --- |
+| S0 | 본 계획과 독립 D2 검토 | 차단0 검토 receipt 반영. commit은 사용자 지시를 따름 |
+| S1 | B 도구 구현·선택 검증·도구 연결 | 부정 시험·선택 시험·연결 시험 PASS, 원 실패 보존, 독립 D1/D2. K0-005 계약(`dev2-implementation.md`)과 성능 계약 JSON에 profile B·환경 축·판정 사유를 등록. 별도 commit |
+| S2 | C3 구현·선택 검증 | C3 시험·정적 lock 대조 PASS, 독립 D2, 후보 source 고정(제품 반영 전) |
+| S3 | C3 탐색·확인·guard(B1 gate 적용, B2는 기술 기록, 교체 없음) | 모두 통과하면 S4. 아니면 기각 또는 INCOMPLETE를 기록하고 원복한 뒤 commit하고 종료 |
+| S4 | C3 제품 반영 | 확인된 diff만 반영한 commit |
+| S5 | PF04 K0 인수(B 적용, 새 source) | 판정표로 결론. 재실행은 환경 교체 규칙 안에서만 |
+| S6 | V3 K0 thread stress | C3 source에서 30분 target 1회 |
+| S7 | 기록 | 증거·구현 상태·완료 계약 반영. 영속 결정 전에는 DEV2/B2/D0 종료를 주장하지 않음 |
+
+- 측정 예산: C3 campaign 최대4개, 인수 campaign 최대18개(역할6개×(1+교체2)). campaign당 pair10개, pair 앞 유휴 대기 최대10분, slot 실행 deadline60초, campaign 실제 시간 최대30분.
+- 전체 상한: S1 연결 시험과 S3·S5 측정을 합친 실제 시간 최대3시간. 새 campaign을 시작하기 전에만 검사하며, 시작한 campaign은 자기 30분 상한 안에서 끝낸다. S6의 30분 V3는 별도다.
+- pair 앞 유휴10초 때문에 campaign당 유휴만 최소100초다. 인수18개와 C3 4개를 합친22개면 유휴만 최소 약37분이다.
+- 측정 창 동안 다른 세션의 build/test를 멈춰 달라고 사용자에게 요청한다. 재부팅·서비스 재시작·host 설정 변경은 없다.
+- S1–S7 착수는 사용자의 별도 지시를 따른다. 문서 자동 검사는 push gate에 남긴다.
+
+<a id="durable-decision-pending"></a>
+
+### 영속 경로: 결정 대기(`PF04-DUR-001`)
+
+영속 audit/replay의 FAIL은 이번 계획에서 실행하지 않는다. 제품 WAL·sync·형식·ACK 의미를 바꾸지 않으며, fsync 생략이나 `fdatasync` 한 줄 교체는 후보가 아니다.
+
+- **tail(p99):** 계측 Span 비용은 fsync의 ms 단위 대기에 비해 작다. 계측을 끈 Off/Off 대조도 cycle p99가 2.26배로 실패했다. 512거래의 표본 p99는 정렬 index506이라, 느린 cycle이 6개 이상이면 크게 움직인다. 현재 pair 판정은 이 경로의 tail 비용을 판별하지 못한다.
+- **CPU:** Off/Off 대조의 pair별 CPU 비율은 최대 약1.094로 한도 안이었다. 따라서 replay pair1/9의 CPU 실패(1.20089/1.19741)는 tail 잡음으로 설명되지 않으며 원인이 미확정이다. CPU 실패는 tail과 따로 다뤄야 한다.
+- **선택지:**
+  - (a) 한 실행 안의 Off/On block 교대, 거래 수 확대, Off/Off 대조를 갖춘 새 profile
+  - (b) loop device 위 전용 ext4로 root journal 공유를 피하는 측정 저장소. root ext4가 하나뿐이고 `nvme0n1`은 NTFS라 쓰지 않는다. sudo mount가 필요하다
+  - (c) 이 host에서는 판별 불가로 기록하고 공식 대상 환경으로 미룸
+  - CPU 실패의 원인 구분 진단(예: 같은 B2 경합 관측을 붙인 Off/On 고정 진단)은 (a)–(c)와 별개로 필요하다.
+- **AGENTS.md와의 관계:** 영속 코드는 C3와 B에서 바뀌지 않는다. (a)(b)를 **인수 재실행**으로 쓰면 [AGENTS.md](../../AGENTS.md)의 무변경 코드 시험 제한과 충돌하므로 사용자가 먼저 정한다. 같은 실행을 원인 구분 **진단**으로 수행하는 것은 PF04 디버깅 적용 범위에 들 수 있지만, 그 결과로 인수를 닫을 수는 없다. 결정 전 상태는 NOT_RUN이며 DEV2/B2/D0 종료는 이 결정에 달려 있다.
+
+### 범위 밖과 유지
+
+- PF04 사례 문구의 “사전 비용 예산 준수 또는 명시 실패·불충분”을 실패 기록만으로 PF04를 닫는 근거로 쓰지 않는다. 단계 기준은 이를 PASS로 세지 않는다.
+- [CPU 요청 제어](#frequency-control) 첫 연결 실패의 정적 소스 확인: 설치 커널의 `linux_7.0.0.orig.tar.gz`(SHA-256 `c6343795c8c7e4feff55f5b309365c8e0eaf49cd6abcb412e32315313f149536`)에서 `drivers/cpufreq/cpufreq.c` 752–768행은 `scaling_max_freq` write를 freq QoS 요청 갱신으로만 처리한다. 1205–1232행의 notifier는 `schedule_work(&policy->update)`로 `policy->max`를 나중에 갱신한다. Ubuntu `7.0.0-38.38` diff는 이 부분을 바꾸지 않는다. 보존 `state.json`의 restore-intent `pre`가2,500,000인 것과 일치한다. helper의 즉시 readback 전제가 틀렸다는 설명이며 새 실행으로 확인하지 않았다. 이 도구는 B로도 대역이 남을 때만 다시 검토하고, 격리 lease와 failed unit은 그대로 둔다.
+- 원 PF04 네 FAIL, C1/C2 기각, P4 WAL 미채택, PF12/PF13 한정 완료를 유지한다.
+
+### 검토 상태
+
+검토 원문과 receipt는 `/home/et16/xadb-dev2-evidence/pf04-c3-profile-b-20261025/`에 보존한다.
+
+| 회차 | 검토한 본문 | 판정 | receipt |
+| --- | --- | --- | --- |
+| r1 | `plan-section-r1.md` SHA-256 `dc20498b5cebf708b0c39c9be1c161fc226eb490579e48e54fd6096c823baa83` | **BLOCKED**(차단4·비차단7) | `plan-review-r1.json` SHA-256 `94795e9c3543252b85baa1e7c5e651c527f205b41b7ba7694573f8452dd3488c` |
+| r2 | `plan-section-r2.md` SHA-256 `b40ee4d9ee862281a166913f6f49f90c415dcf017d8e3e2f4308f682d2c9d0bd` | **BLOCKED**(r1 차단 전부 해소, 새 차단1·비차단5) | `plan-review-r2.json` SHA-256 `e6ed47934cd5d89d48e7c6af960f305692b19d16e7df0729ccbf3e7b76f04f77` |
+| r3 | `plan-section-r3.md` SHA-256 `9fa566485523bbbcb454b59eac22cf9a8fb8eb16ed3a14d8899517f21a3670dc` | **BLOCKED**(r2 차단 해소, 새 차단2·비차단1) | `plan-review-r3.json` SHA-256 `0883e54e1a6d954a71c728090c442647df2fa9e02843ff24d5da3783682b1a77` |
+| r4 | `plan-section-r4.md` SHA-256 `f3484ae160c93484841738d387a2fdb29e9a016139b4462a6ab447049ceb09f4` | **BLOCKED**(P1·P3 해소, P2 부분 해소, 새 차단1) | `plan-review-r4.json` SHA-256 `fa4cd2de3e9657b80731c35a3624c5c8bc33745aa1541e588d19ebeb5d15c9f6` |
+| r5 | `plan-section-r5.md` SHA-256 `084054492b324fb005f7ad9b7b9c2cd99293984c27690742bee69cb76c88de1e` | **PASS_PLAN_ONLY_WITH_NONBLOCKING**(차단0·비차단1) | `plan-review-r5.json` SHA-256 `ec7827840882f8c8512383ae8e9172b95e426825e4afd451ff9cfd457e73a659` |
+
+- r1 차단: C3 확인의 교체가 controller lineage·계약과 맞지 않음(R1), 종료 상태 미분류(R2), 대역 검출 근거의 오기·누락(R3), 영속 Off/Off CPU 서술 오류(R4).
+- r2 차단: C3 campaign 4개에 B2를 엄격히 적용하면 환경 잡음만으로 C3가 끝날 확률이 약63%(N1). C3에는 B2를 기술 기록으로만 쓰는 방식으로 고쳤다. 비차단 N2–N6(guard 효과 조건, cold 경로 분리, 종료 상태 보완, 검출 한계·위치 효과, 문서 정확성)도 반영했다.
+- r3 차단: Always guard의 효과 조건이 실제 개선을 기각할 수 있음(P1), 측정 함수의 `lock` 절대 기준이 base metrics·Quota·Arc 지점 때문에 충족 불가(P2). guard를 회귀 쪽 조건(구간 상한≤1.05)으로, 정적 확인을 baseline 대비 차분 대조로 고쳤다. 비차단 P3(GO 뒤 slot 실패의 INCOMPLETE 분류, S3 종료 문구)도 반영했다.
+- r4 차단: 차분 정적 확인이 failed CAS와 record_event의 drop CAS 두 곳을 빼지 않았고, event queue `try_lock`을 cold 조건에 잘못 포함함(Q1). 빼는 목록을 diagnostics counter RMW 전부로, cold 조건을 counter RMW로 한정하고 `try_lock`은 그대로 남는 지점으로 옮겼다. 선택 정리로 guard의 correctness·validity 요구, 후보 worker의 제품 결함은 기각(인수에서는 FAIL)이라는 구분, C3 INCOMPLETE 문단 정리도 반영했다.
+- r5: 차단 지적 없음. 검토자는 baseline ELF의 모든 `lock` 지점이 새 규칙의 한 분류에만 속함을 다시 확인했다.
+- **남은 비차단 N-r5-1(S1 계약 등록 때 반영):** worker panic·오류 응답은 controller에서 validity INVALID·correctness UNKNOWN으로도 보여, 증상만으로는 INCONCLUSIVE_COMPARISON 행과도 맞는다. S1에서 다음을 계약에 명시한다. 한 campaign 안에서는 제품 결함·correctness FAIL 행이 TERMINATED와 INCONCLUSIVE_COMPARISON보다 우선한다. 제품 결함은 worker의 panic 종료 상태, worker `Output.error`, `check_output` 불일치이며, 환경 판정 hash를 기록한 뒤 native 증거에서 읽는다. signal로 종료된 worker와 C3 비교의 baseline 쪽 실패는 TERMINATED/INCOMPLETE다. 이 항목은 PASS나 채택 경로를 만들지 않는 분류 문구이며, 검토받은 본문은 r5 그대로 둔다.
+
+C3·B 계획 상태: **독립 D2 검토 r5 PASS_PLAN_ONLY_WITH_NONBLOCKING 채택 / 실행 전 / S1–S7 착수는 사용자 지시 대기**. 검토 projection은 본 절 anchor부터 `### 검토 상태` 직전까지에서 둘째 줄의 날짜·상태 문장을 뺀 본문이다. 계획 채택은 구현·실행 통과가 아니다.
