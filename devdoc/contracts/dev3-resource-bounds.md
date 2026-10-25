@@ -1,6 +1,6 @@
 # DEV3 실제 표현 크기와 자원 계산
 
-2026-10-21 · **F05 준비 계산 / opcode·실제 I/O 인수 미완료**
+2026-10-25 · **표현·수학적 회계 보강 / opcode별 수치 F05·실제 I/O 인수 미완료**
 
 [자원 소유 계약](disk-storage-design.md#reserve-accounting) · [고정 profile](disk-storage-design.md#capacity-profile) · [최악 조건 인수](../plans/dev3-implementation-plan.md#resource-proof) · [병렬 소유](../implementation/dev3-implementation.md#wave-2)
 
@@ -25,7 +25,7 @@
 | DWB batch metadata | control128+88N+checksum32. N64이면5,792. control 공간의 설치 peak는 실제 길이 대신 고정 선할당65,536에 포함 |
 | undo root | 고정432+target key≤1,032+inline before≤2,048. Row target key0이므로 row 최대2,480; Index before는presence만 저장하며 최대1,464. 공통 page의 row 최대 root는6개, 최소432-byte root는37개 |
 | undo chunk | metadata160+payload≤16,060, 한 page에한cell. canonical before≤131,072라 최대9page; old row overflow와 별도 소유 |
-| catalog cell | header232+typed body. table 최대4,588, index 최대368. catalog occupied before body는 undo codec에 미연결 |
+| catalog cell | header232+typed body. table 최대4,588, index 최대368. typed XCB1 occupied before codec은 제한 공급됨. 실제 Catalog effect/CLR 연결은 미완료 |
 | 선택 profile·selector | 각각4,096 bytes. FILEMAP/DWB selector와 profile의 전체 digest·generation 결합 |
 | FILEMAP | root224+96K, K≤128으로최대12,512; chunk160+96N, N≤64로최대6,304. root16KiB+128chunk×16KiB인고정container2,113,536을두벌예약 |
 | 알려진 control 고정 소계 | control 계약의23,130,112 bytes는 FILEMAP·profile·DWB·제안REBASE 공간 소계. checkpoint/obligation/epoch를 포함한 전체 F05가 아님 |
@@ -90,3 +90,33 @@ DS03/PF09의 각 inventory 접근량은 configured buffer의4배 이상이다. �
 ## 최초 DWB 설치의 제한 회계
 
 [설치 계약](dev3-doublewrite-install.md)은 기존 Fresh에 DWB16,777,216bytes를 한 번 더하여 fixed22,073,344/max290,504,704/protected21,024,768을 고정한다. 첫 실제 file 총량22,069,248과 미래 selector 교체4096 예약은 구별한다. caller4MiB는 system flush 몫이며 metadata component64KiB는 retained Fresh를 포함해 재사용한다. caller directory는 component4FD 밖의 추가1FD다. D2 산술 채택이며 실제 type/handle·전체 F05 인수는 미완료다.
+
+<a id="resource-vector-proof"></a>
+## 비교 분석 반영 — opcode 자원 벡터와 진행 증명
+
+[DEV3-REVIEW-011](disk-storage-design.md#task-review-011)은 기존 한도를 유지하고 F05 제출 형식을 강화한다. 아래 산식 채택은 개별 opcode의 수치 동결·구현·실행 완료가 아니다.
+
+자원 성분 r마다 capacity C_r, 이미 실현·점유한 A_r, 기존 owner의 미소비 예약 R_r, 새 opcode의 **동시 peak와 종료 의무를 포함한** 추가 예약 b_r을 둔다. admission은 모든 성분에서 `A_r+R_r+b_r ≤ C_r`일 때만 가능하다. 이질 거래는 `Σ b_r(op_i)`를 사용한다. 기존 거래 slot 점유를 n_active라 하면 동일 상한 신규 작업의 보수적 추가 admission 수는 `n ≤ min(32−n_active, min_r floor((C_r−A_r−R_r)/b_r))`이며 b_r=0인 성분은 제외한다. 처음부터 빈 상태에서는 n_active=0이다. 공유 scratch는 동시 보유 불가를 증명한 경우만 한 번 계산한다.
+
+32는 거래 개수 상한이다. private 총64MiB에서 각8MiB를 예약하면 최악 동시 admission은8개 이하이고, 32개 허용에는 평균 예약2MiB 이하와 모든 다른 성분의 여유가 필요하다. 최대 거래 수를 최대 크기 거래의 동시 성공 보장으로 쓰지 않는다. 기본 owned8GiB·protected1GiB에는 `protected ⊆ owned`와 별도 protected 하위 한도를 모두 적용한다. 실현 extent의 disk bytes와 그 안의 page token은 disk 차감에서 중복 계산하지 않지만 사용 가능한 page 수 제약은 따로 검사한다.
+
+| opcode별 필수 열 | 제출할 내용 |
+| --- | --- |
+| 입력·경로 | 최소/최대 row·key·index 수, tree 높이·split/overflow, 성공·실패 statement·full abort·CLR·terminal·restart 경로 |
+| 실제 자원 벡터 | owned/protected/WAL bytes, 기존/신규 page token, 동시 pin/frame, private/metadata/flush/maintenance bytes, locks·FD·owner slots. 각 항의 codec·source와 peak 시점 |
+| 그룹·전이 | 그룹별 forward/보상 WAL와 page 집합, 기존 token→신규 실현, charged 증가 δ_r·확인 반환 d_r·잔여 예약 r_old→r_new |
+| 보존식 | 각 전이에서 `δ_r+r_new ≤ r_old+d_r`; 다른 owner 예약을 침범하지 않음. 재admission은 아직 시작하지 않은 선택적 새 forward/statement에 한정. 기존 작업 종료에 필수인 CLR·rollback·terminal·recovery·cleanup은 기존 보존 예약 안에서 완료하고 새 admission 성공에 의존하지 않음 |
+| crash 인계 | 같은 durable prefix의 descriptor·실현 소유·잔여 의무를 한 번 복원. restart 횟수에 비례한 중복 예약/새 파일 증가 금지 |
+| 진행 근거 | 마지막 crash 뒤 유한 의무·충분한 무장애 시간·공정 turn을 전제로 감소 rank 또는 유한 fair-cycle 증명. 계속되는 새 admission을 닫는 조건과 기존 rollback/flush/cleanup의 독립 몫 |
+| 경계·계측 | 독립 계산의 한도−1/동일/+1, 허용 동시 수, 실제 peak와 잔여 의무. 작은 구현 동반 인수와 S5 확대를 별도 선택 |
+
+`δ`는 새 실현량, `d`는 별도로 확인한 실제 반환량이다. unlink/dirsync 불명·열린 inode·미완료 DWB retirement는 d=0으로 보수 처리한다. 논리 rollback이 성공해도 이미 소비한 WAL/CLR·회수 전 Undo/overflow·잠금은 A에 남는다. rollback 전 ledger snapshot으로 돌아가지 않는다. 안전한 상한 보존만으로 종료 진행성이 증명되지는 않는다. 첫 행 opcode에도 이 표를 요구하며 누락된 항을 평균값·0·최종 qualification 작업으로 미루지 않는다.
+
+<a id="representation-cost"></a>
+## 비교 분석 반영 — 표현 비용의 측정 기준선
+
+현재 leaf entry 공간16,188에서 row canonical bytes r가 inline일 때 비용은 `4(slot)+4(key/value lengths)+8(key)+168(header)+r=184+r`, leaf 수용량은 `floor(16188/(184+r))`다. r=5/64/2048에서 각각85/65/7행이고 이상적 가득 찬 leaf의 page당 사용자 payload 비율은2.59%/25.39%/87.50%다. index physical key K는 RowId suffix를 포함하며 entry 비용168+K, K=16/64/1032에서87/69/13개다. internal fanout은 `1+floor(16188/(32+K))`로338/169/16이다.
+
+r=64와 index8개·각K=64인 가득 찬 leaf 근사에서 `16384/65+8×16384/69=2151.6613 bytes/row`다. 이는 사용자64 bytes의33.6197배이나 internal/allocator/Undo/WAL·빈 공간을 제외한 근사이며 실제 DB 크기나 타 DBMS 대비 배율이 아니다. 128KiB row의 old/new overflow와 before Undo가 각각9page이면 일시 공존27page=432KiB, 그중 새 row+before만 신규라면18page=288KiB다. root/SMO/추가 WAL·예약은 별도다.
+
+PF09는 실제 allocated/reserved/retained bytes를 row·index·overflow·Undo·WAL·allocator/control별로 분리하고 이상적 leaf 산식과 차이를 설명한다. key가 변하지 않는 UPDATE의 index mutation 생략은 기존 계약을 유지한다. 압축·metadata 축소·형식 변경은 측정 후 별도 D2이며 이번에 채택하지 않는다.

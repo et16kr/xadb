@@ -15,7 +15,7 @@
 <a id="early-recovery"></a>
 ### 1.1 현재 쓰기 경로를 먼저 연결하는 제한 복구
 
-[방향 리뷰 후속 결정](../plans/dev3-implementation-plan.md#direction-review-adoption)에 따라 첫 목표는 현재 reserve/cancel·Status INIT·flush가 만든 파일을 새 프로세스에서 복원·검산하는 것이다. 아래3.12.1–4의 공급을 조기에 구현하되3.12 전체 완료나 일반 open API로 공개하지 않는다. 정확 지원 prefix·opcode·control 조합은 실제 producer와 F01/F02/F05를 대조해 동결한다. 그 전에 미지원 연산을 no-op으로 읽는 replay를 작성하지 않는다.
+[방향 리뷰 후속 결정](../plans/dev3-implementation-plan.md#direction-review-adoption)의 최초 목표는 reserve/cancel·Status INIT·flush 파일의 새 프로세스 복원·검산이었다. [N=0 plan4 재개](../evidence/dev3-recovery-resumed-20261025.md)는 이 제한 공급을 확장한 source별 완료이며, 아래는 초기 inspection 범위의 계약이다. 현재 후속 작업은 [추가 의무](#post-plan4-obligations)를 따른다. 아래3.12.1–4의 공급을 조기에 구현하되3.12 전체 완료나 일반 open API로 공개하지 않는다. 정확 지원 prefix·opcode·control 조합은 실제 producer와 F01/F02/F05를 대조해 동결한다. 그 전에 미지원 연산을 no-op으로 읽는 replay를 작성하지 않는다.
 
 1. LEASE/PREFLIGHT/SELECT에서 profile·namespace·선택 closure·bootstrap 예약을 검산하고 admission을 닫는다. 지원 여부 판정에 필요한 WAL/control을 검산해 미지원 입력은 가능한 첫 변경 전에 거절한다. 뒤늦게 손상/미지원 의미가 드러나면 기존 오류·fence를 보존하고 성공으로 반환하지 않는다.
 2. 선택된 Pending만으로 DWB repair·sync·retirement를 수행한다. raw retired 슬롯은 복원 근거가 아니다. pending 없는 torn home의 완전 INIT+연속 WAL 예외와 healthy higher-pageLSN 거절은 아래 정본을 그대로 따른다.
@@ -166,3 +166,18 @@ commit/publication의 공급은 3.11.1, logical undo는 3.09.2/3에서 받는다
 현재 DEV3 표현 진입점은 [control.rs](../../crates/engine/src/storage/control.rs), [ownership.rs](../../crates/engine/src/storage/ownership.rs), [obligation.rs](../../crates/engine/src/storage/obligation.rs), [wal_io.rs](../../crates/engine/src/storage/wal_io.rs)다. [기존 durable recovery](../../crates/engine/src/durable/recovery.rs)는 DEV2 의미의 수신 비교 대상이며 이 알고리즘의 구현 완료가 아니다.
 
 각 장벽 착수 전에 exact control/epoch/closure bytes, 허용 selector 상태, empty-DPT sentinel, inventory bank·owner bound, 각 fault cut와 정상/거절 oracle, source-WAL/namespace 보존 규칙, bootstrap 수치표를 동결한다. 3.12.1–7의 변경 경로를 좁게 검증하고 3.12.8은 새 연결 경로와 미완료 의무를 닫는다. 기존 완료 시험을 종합을 이유로 재실행하지 않는다. DS02–05·RC-T12–14의 미실행/미해결 항목이 남으면 전체 복구·S1은 미완료다.
+
+<a id="post-plan4-obligations"></a>
+## 완료된 plan4 이후의 추가 인수 의무
+
+[2026-10-25 재개 증거](../evidence/dev3-recovery-resumed-20261025.md)의 N=0 owner 고유50개(static2/memory45/native3) source별 PASS와 한정 수용은 유지한다. 원 FAIL/HOLD·중단과 실제 실행 source도 유지한다. 다음은 그 결과의 소급 미완료 판정이 아니라 새 consumer/표현/경로의 추가 의무다.
+
+| 추가 ID | 새 공급·인수 경계 | 연결 |
+| --- | --- | --- |
+| D3-COMP-01 | 최소 공통 terminal·Catalog CREATE로 실제 table/anchor 공급, 하나의 row opcode·Undo·CLR·ACK/loser·새 프로세스 복구. 각 effect 전 F05 | DS01/02/04/06, M01/02/04/06 |
+| D3-COMP-02 | nonempty Active/부분 CLR·terminal retained queue/credit의 ANALYSIS→RESERVE_RESTORE→REDO→REBASE→LOG_OPEN→UNDO→VERIFY/STABILIZE. 같은 prefix 채택은 한 번, 재장애 peak 고정 | DS03/05, RC-T14, M04/06 |
+| D3-COMP-03 | snapshot/horizon·edge multiset·aging/reuse 및 BEGIN-WAL 삭제 뒤 undo 독립성 | DS04/05, RC-T13/14, M01/02/06 |
+| D3-COMP-05/06 | immutable fuzzy capture와 source-WAL-free namespace rewrite restore·새 unflushed ACK/recrash | DS02/05, RC-T14, M04/06 |
+| D3-COMP-08 | 작은/대형 inventory와 실제 지원 profile·bounded recovery peak | DS03/05, PF09, M06 |
+
+[plan4 owner](dev3-plan4-recovery-owner.md)의 newer-home 예외는 동일 target/owner/incarnation·선택 base+완결 suffix의 전체 canonical bytes 증명이라는 N=0 경계를 유지한다. 더 큰 pageLSN만으로 일반 row/Undo/Catalog의 stale image를 건너뛰도록 확장하지 않는다. home write skip이어도 해당 실제 sync/readback과 DWB Empty retirement 의무는 남는다. 새 opcode는 mixed-page redo·logical CLR·소유 인계의 별도 증명 없이 이 예외를 재사용할 수 없다. 정상 fuzzy checkpoint 전체 완료를 복구 REBASE의 선행 조건으로 만들지 않는다.

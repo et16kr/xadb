@@ -266,3 +266,10 @@ fault 기대값에는 각 group의 before/after page·role별 edge·stored count
 | catalog 확장 | occupied catalog before body·schema/target·logical CLR와 DDL 원자 종료 | 3.08/3.09 대상 통합 전 |
 
 3.09.1 완료는 표현을 live 저장에 연결한 제한 공급이다. 3.09.2는 실제 구현된 target별로, 3.09.3은 그 target을 포함한 statement/full 종료별로 판정한다. 일반 recovery/REBASE/loser undo·전체 DEV3/S1 완료는 3.12·3.16의 별도 의무를 유지한다. 문서군의 D2 상태·독립 검토 기록은 [공통 결정](dev3-task-designs.md#decision)이 소유한다.
+
+<a id="integrated-lifecycle-proof"></a>
+## 비교 분석 후속 — 값·참조 다중도·잔여 의무의 통합 증명
+
+표현 codec과 N=0 terminal 완료 뒤 실제 행 소비자는 `row 값/가시성 → Undo 연결 → statement rollback/CLR → commit 또는 full abort → 재장애 → cut/release → 실제 재사용`을 하나의 독립 이력으로 연결한다. previous-transaction과 previous-version이 같은 UndoRef를 가리켜도 **별개 edge 두 개**다. oracle는 집합이 아닌 edge multiset으로 incoming을 계산하고 before TxnRef/status edge와 transient pin을 구별한다. count0만으로 horizon·rollback·pin·DWB claim을 생략해 free하지 않는다.
+
+원래 값 oracle, graph 다중도 oracle, [자원 전이 회계](dev3-resource-bounds.md#resource-vector-proof)를 독립적으로 대조한다. 새 CLR·기존 row/Undo overflow·retained WAL의 실제 charge는 논리 statement 복원 뒤에도 남을 수 있다. 같은 prefix의 restart는 remaining을 한 번만 복원하고 release cursor가 완료한 edge/chunk를 다시 반환하지 않는다. begin-WAL 제거 뒤 Active chain·부분 CLR의 두 번째 crash는 별도 후속 통합 의무이며 N=0 완료를 일반 Undo 복구로 승격하지 않는다.

@@ -1,5 +1,8 @@
 # DEV3 구현·검증 현황
 
+<a id="comparison-adoption"></a>
+2026-10-25 [비교 분석 반영](../evidence/dev3-comparison-adoption-20261025.md): 설계·계획만 보강했다. N=0 plan4 고유50개와 기존 codec/pool의 원 source별 완료는 유지한다. [추가 보완표](../plans/dev3-implementation-plan.md#comparison-adoption)의 실제 행/Undo/CLR 통합, opcode 수치 F05, immutable fuzzy capture, typed namespace rewrite restore, 충돌/공간 계측·대형 qualification은 미완료다. 새 제품 코드·시험·성능 실행은 없다. 설계 채택을 지원 기능이나 DEV3/S5 PASS로 승격하지 않는다.
+
 2026-10-25 [중단된 plan4 복구 단위 재개](../evidence/dev3-recovery-resumed-20261025.md): N=0 recovery owner의 구현·시험을 마쳐 static2/memory45/native3, 고유50개가 source별 PASS다. 완료 제품 ID 반복0, 원 실패 보존, 도구 고유14개 선택 검증·Clippy·fmt를 마쳤으며 최종 독립 D1을 한정 수용했다. 전체 DEV3/S5는 미완료다.
 
 2026-10-25 [복구 작업 중간 저장·자료 정리](../evidence/dev3-recovery-paused-20261025.md): 사용자 요청으로 중지했다. fresh75의 원 증거와 복구 static2 FAIL·F05 HOLD를 보존한다. 최신 phase/oracle 후보는 compile/runtime NOT_RUN이며 전체 복구·DEV3/S5는 미완료다.

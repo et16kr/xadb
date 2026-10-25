@@ -864,3 +864,23 @@ G6_CONTEXT/BEGIN/PASS/FAIL/SKIP과 source/ELF/input identity를 사용한다. st
 static15초(worker10/감사5), memory210초(worker180/감사30, 함수·사례30초, 출력8MiB), native30초(worker 합29초/최종 감사 예약1초, 모든 감사는 전체30초에 계상, 출력8MiB, live DB32MiB, 이력128MiB)를 실행 전에 고정한다. 완료 사례는 재실행하지 않고 source별 원 결과를 유지하며 변경 없는 static 증거는 독립 lineage 검토로 연결한다. native controller 자체 시험은 제품50개와 별도 분모로 기록한다.
 
 이50개는 최종 S5 inventory에도 같은 ID로 포함한다. 과거 제안인 profile·crash cut·최대 Status 확대는 아직 동결되지 않았으며 이 중단 작업 완료에 포함하지 않는다. 전체 DEV3/S5, 일반 Undo·행 거래·Catalog CREATE/CLR를 이 한정 복구로 완료 처리하지 않는다.
+
+<a id="comparison-adoption"></a>
+## 비교 보고서 반영 인수 — D3-COMP-01–10
+
+2026-10-25 [DEV3-REVIEW-011](../contracts/disk-storage-design.md#task-review-011)의 **구현 동반 예정 case family**다. 아래10행은 실행 가능한 test10개나 PASS10개를 뜻하지 않는다. 세부 case/fixture/oracle/harness·variant ID·정확 분모·fault cut·수치 한도는 해당 구현과 함께 동결하고 기존 DS/RC/M/PF09 inventory에 연결한다. 필요한 이전 모델/profile 의무는 축소하지 않는다. 현재 전 행 NOT_RUN이며 계획 적용만으로 실행하지 않는다.
+
+| ID·owner | 중간 필수: 새/변경 경로와 함께 준비·선택 | 최종 S5 확대 | 기존 인수 |
+| --- | --- | --- | --- |
+| D3-COMP-01 · 3.06/08/09/11/12 | 최소 terminal·실제 Catalog CREATE/table/anchor→한 row opcode. no-force ACK/new-process reopen, steal loser, 실패 statement 이전 값 보존/full abort, CLR 재장애, admitted quota 경계. RAM 전용 table·위조 handle 거절 | 전체 지원 CRUD·row/index/catalog·다중 객체와 오류/cut 조합 | DS01/02/04/06, M01/02/04/06, RC-T12 |
+| D3-COMP-02 · 각 opcode/3.12/16 | 독립 벡터 산식과 한도−1/동일/+1, 이미 admitted 종료의 새 admission 의존 mutant, 논리 rollback 후 물리 charge 유지, 같은 prefix remaining 한번 복원/두 번째 crash | 최대 입력·허용 동시 수·quota pressure·반복 crash의 고정 peak/종료 rank. 새 admission 중단 후 유한 작업 완료 | DS03/05, M03/04/06, RC-T14 |
+| D3-COMP-03 · 3.09/14 | 같은 target의 prev-txn/prev-version 두 edge, before status·pin/horizon·release cursor, 값/graph/ledger 독립 oracle. count0 조기 free mutant. 실제 reuse 세대 | 장기 reader와 부하·retention pressure·BEGIN-WAL 제거 뒤 Active/부분 CLR 복구 및 종료 후 회수 | DS04/05, M01/02/06, RC-T13/14 |
+| D3-COMP-04 · 3.10/11/16 | 같은 q0/table·다른 행 cohort의 성공/충돌, 실제 range/absence/unique/DDL 의존. 기존 지연 Commit 설치/큰 pageLSN 추월 mutant와 계측 분모 검증 |1/2/8/32 요청×독립 table/같은 table 독립 행/실제 충돌×지원 격리, retry·abort·UNKNOWN 포함 PF09. batch 도입 시 batch 내부 prefix validation 추가 | DS02/04/06, M02/03/04, PF09 |
+| D3-COMP-05 · 3.13/02/12 | base/prefix pin-before-release, 같은-cut ATT/DPT/volatile snapshot, flush가 WAL 없이 DPT를 바꾸는 경우, metadata snapshot의 turn 간 보존, partition new/free/reuse/동일주소 세대, source/prefix 누락 거절, 선택 불명 union·cleanup | 동시 mutation/flush와 다중 partition, previous fallback·WAL256MiB/출력 peak·새 admission 중지 후 완료, capture/선택/회수 crash 조합 | DS03/05, M04/06, RC-T14 |
+| D3-COMP-06 · 3.15/02/12 | typed namespace census·사용자 bytes 비변환, row/index/status/Catalog/Undo·Releasing 남은 chunk/retained credit, digest 누락 mutant, L/epoch overflow, nonempty destination 거절, intent cleanup/불명 선택, source-WAL-free→새 unflushed ACK→재장애 | 모든 지원 kind/version·다중 파일·전체 closure·취소/설치 crash cut, 원본 bytes 보존·전체 destination audit·최대 retained 의무 | DS02/03/05, M04/06, RC-T14 |
+| D3-COMP-07 · 3.06/07/16 | 실제 entry/overflow 비용과 독립 계산, key-unchanged update의 index mutation 생략. cursor 개선 시 invisible 후보·candidate/byte 한도·snapshot/own mutation/full-key 재개 | row5/64/2047/2048/2049/131072 bytes·넓은 key·다중 index/낮은 충전율, 긴 scan/Undo chain·split/reuse 동시성·실제 공간/PF09 | DS01/03/04/06, PF09 |
+| D3-COMP-08 · 3.03/12/16 | 새 supported profile tuple·미지원 거절·checked 산술·growth8192-bound 후속, 작은 생성기 known-bad와 진짜 cell inventory 분모 검증 |4/16/64MiB buffer 각각 inventory≥4배,64GiB qualification의43,241 extent 이상 및 row/index/locator·WAL/control·clone 동시 총량, 실제 native 복구 peak | DS03/05, M06, PF09 |
+| D3-COMP-09 · 3.05/16 | 일반 page 소비·claim/reload/dirty lifetime과 DWB image/home/control 단계별 bytes/sync 집계. metadata와 payload 비용 분리 | batch1/8/64·deadline·multi-file·repair/recrash·redirty/최대 서비스 간격/latency | DS02/03/05, M05, RC-T14, PF09 |
+| D3-COMP-10 · 3.15/16 | 독립 edge multiset audit의 T/E/B 방문 count·bounded workspace, 누락/중복 edge와 잘린 scan 거절. 정상 open vs full audit 분리 | 대형 T/E에서 `E×ceil(T/B)` 재순회와 실제 read bytes/time, 고정 budget·시간 초과를 INCONCLUSIVE/FAIL로 보존 | DS03/04/05, PF09 |
+
+원 plan4 고유50개와 codec/pool의 source별 PASS·FAIL/HOLD는 새 family 분모에 합쳐 새 실행인 것처럼 표시하지 않는다. 중간에는 실제 diff가 있는 소비 경로·새 oracle/harness의 필요한 사례만 실행하고 무변경 완료 시험은 반복하지 않는다. S5에서 확정 DEV3 inventory를 전수 실행하되 DEV0/1/2나 전체 workspace로 확대하지 않는다. 최종 뒤 수정도 관련 diff/실패 사례만 재검증한다. 문서만 바뀐 이번 작업은 제품·모델·성능·compiler/Clippy·문서 verifier 미실행이다.

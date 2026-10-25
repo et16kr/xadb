@@ -23,7 +23,7 @@
 
 transaction owner는 최종 검사·commit 상태·오류 certainty를, durable owner는 WAL의 실제 시도/sync prefix와 namespace를, storage owner는 authoritative status home·dirty/recLSN을, publication owner는 작은 CommittedView/frontier를 관리한다. 실제 page flush/복구/terminal aging은 각 owner에게 인계한다. 같은 이름의 DEV2 private/COW commit hook과 publication 구현은 비교 입력이며 DEV3 disk commit 공급으로 간주하지 않는다.
 
-**terminal queue의 영속 owner/credit은 아직 동결되지 않았다.** [status home의 terminal 경계](dev3-status-home.md)는 Commit/AbortEnd 뒤 retained head/incoming을 가진 status/undo의 수명과 자원을 인계하기 전 실제 terminal opcode를 Unsupported로 유지한다. 이 문서의 상태도와 Committed 표현만으로 미지원 Commit body를 실행 가능하게 만들지 않는다.
+**일반 Commit과 nonempty retained Undo의 terminal owner/credit 인계는 미완료다.** [N=0 plan4 terminal·복구](dev3-plan4-recovery-owner.md)의 제한 공급은 유지하지만 이를 일반 Commit 지원으로 확대하지 않는다. [status home의 terminal 경계](dev3-status-home.md)는 Commit/AbortEnd 뒤 retained head/incoming을 가진 status/undo의 수명과 자원을 인계하기 전 실제 terminal opcode를 Unsupported로 유지한다. 이 문서의 상태도와 Committed 표현만으로 미지원 Commit body를 실행 가능하게 만들지 않는다.
 
 ## 2. 기능 요구·경계 API
 
@@ -212,3 +212,19 @@ F01/F02에서 Commit operation/native body, q와 terminal status/descriptor·que
 F03은 transaction별 외부 witness·known-bad 이력과 다중 객체 expected delta를, F04는 write/sync/status/frontier/reply와 실제 재장애 cut을, F05는 terminal/dirty/frame/registry/view/응답의 동시 peak를 고정한다. F06은 기존 DEV2 symbol의 reuse/adapt/DEV2-only/new를 구분하고 F07은 transaction/publication/terminal 공유 상태의 단일 수정 소유를 정한다.
 
 문서 작성 담당은 `/root/dev3_specs_review`다. 본 작성자는 이 문서를 독립 승인하지 않는다. 별도 검토·채택은 [공통 결정 기록](dev3-task-designs.md#decision)에, 실제 제품·시험 상태는 [구현 기록](../implementation/dev3-implementation.md#dev3-work-breakdown)에 기록한다.
+
+<a id="commit-service-bound"></a>
+## 비교 분석 후속 — 의미 설치 장벽의 비용과 batch 조건
+
+기준선은 기존 단일 Commit 의미 설치 장벽이다. I/O 중 mutex를 놓아도 stage→sync→status/terminal·descriptor·DPT 설치 동안 후속 semantic admission이 막히는 비용은 남는다. 다른 거래의 더 큰 pageLSN이 같은 status page에 먼저 설치되어 앞 commit을 recovery skip으로 숨기는 것을 금지한다. published q는 설치가 끝난 committed prefix만 반영한다.
+
+장벽 서비스 시간 S, 거래당 한 번 서비스이면 포화 처리량 상한은 `X≤1/E[S]`다. Poisson 도착·독립 서비스·무한 FCFS queue의 M/G/1 근사에서 `E[Wq]=λE[S²]/(2(1−ρ))`, `ρ=λE[S]<1`이다. 평균2ms·분산0이면 부하율50/80/90/99%에서 평균 대기는1/4/9/99ms다. 이 값은 유한32 요청의 실제 queue나 p99 예측이 아니다. 실제 계측은 admission 대기·장벽 대기·sync·의미 설치·원래 요청 끝까지를 구별한다.
+
+batch b에서 sync 비용 f와 거래별 설치 s의 이상식 `b/(f+b·s)`는 후보 비용식일 뿐이다. group commit을 구현하려면 다음을 별도 F02/F05·D2로 닫는다.
+
+- batch admission·최대 bytes/count/deadline과 각 거래의 rollback/UNKNOWN 잔여 예약.
+- batch 내 직렬 순서의 validation과 q 부여. 먼저 성공할 거래의 table/catalog epoch를 반영한 가상 prefix를 뒤 거래가 검증하며, 모두 옛 q0로 사전 검증해 통과시키지 않음.
+- complete WAL prefix와 shared-page의 모든 관련 선행 효과 설치. checkpoint·snapshot 공개와 published q가 부분 설치를 추월하지 않음.
+- sync 불명·prefix 일부 영속·일부 의미 설치 후 crash에서 외부 ACK/UNKNOWN과 winner/loser를 보존. batch 대기 중 workspace/turn이 completion을 막지 않음.
+
+현재 table validation에서는 batch sync 횟수가 줄어도 [같은 snapshot·같은 table cohort의 제약](dev3-task-10-concurrency.md#serializable-conflict-bound)이 남는다. 먼저 실제 충돌·서비스 시간을 측정하고 bottleneck이 입증된 뒤 후보를 평가한다. 이 절은 group commit 채택·구현 승인이나 기존 ACK 의미 변경이 아니다.

@@ -247,3 +247,12 @@ transaction/lock/publication 공통 의미는 한 owner가 조정한다. 파일�
 | F06/F07 | DEV2 재사용/adapt/전용/new inventory·실제 공급 source, 공통 transaction/publication 단일 owner와 소비자 수신·독립 검토·병합 순서 |
 
 위 항목이 필요한 effect는 미동결 상태로 실행하지 않는다.
+
+<a id="serializable-conflict-bound"></a>
+## 비교 분석 후속 — Serializable 충돌 상한과 개선 조건
+
+현재 table read-set validation을 유지한다. 같은 table의 서로 다른 행을 읽고 쓰는 k개 거래가 모두 snapshot q0를 잡은 뒤 commit 경쟁하면 첫 성공의 table write epoch q1>q0가 나머지 validation을 무효화할 수 있다. 모든 거래가 해당 table을 read-set에 등록하고 다른 실패가 없다는 고정 cohort에서 성공은 최대1개, 비율은 `1/k` 이하이고 k=32이면3.125%다. 이는 고정 cohort 반례이며 재시도·새 snapshot이 계속 생기는 실제 steady-state TPS나 모든 workload의 성공률이 아니다.
+
+PF09의 최초 다중 거래 기준선은1/2/8/32 요청 × 독립 table/같은 table의 독립 행/실제 같은 행·key 충돌을 구분한다. true/보수적 conflict는 row ID가 다른지만 보고 분류하지 않는다. 독립 oracle가 읽은 값·범위·부재 predicate·unique key·catalog/schema 의존을 포함한 이력을 판단한다. 단순 Poisson 가정의 `P(conflict)=1−exp(−λ_T τ)`는 관측 설계용 민감도 식이며 실측 또는 직렬화 가능성 판정의 대용이 아니다.
+
+미세 validation은 측정 뒤 별도 D2 후보다. 채택하려면 bounded row/range/absence·catalog 의존 추적, phantom/write skew·DDL 무효화, 추적 공간 초과 시 안전한 table validation fallback과 commit 순서의 증명을 먼저 제출한다. 기본 Serializable을 RC로 바꾸거나 read-set을 생략하여 성능 통과로 만들지 않는다. group commit 후보도 같은 batch의 앞선 성공을 뒤 거래 validation에 반영해야 한다. 상세 batch 장벽은 [commit 소유 문서](dev3-task-11-commit.md#commit-service-bound)를 따른다.

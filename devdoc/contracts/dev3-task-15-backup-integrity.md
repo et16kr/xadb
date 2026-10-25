@@ -127,9 +127,35 @@ drain한 backup에 Active/Aborting loser와 실행 중인 미완결 변경 그�
 
 새 timeline·writer epoch, base q=C와 manifest high-water를 인증한 baseLSN, genesis WAL/checkpoint/control 및 고정 bootstrap 슬롯을 설치한다. 새 timeline의 첫 LSN은 source high-water보다 커야 한다. 새 namespace의 파일/선택·필요한 sync가 완료되기 전 READY를 노출하지 않는다. 설치 중 crash는 완성되지 않은 destination을 정상 DB로 열지 않으며 source backup의 bytes·선택을 수정하지 않는다.
 
-**새 timeline과 복사된 영속 identity의 결합은 F01/F02 미동결 항목이다.** 기존 row/index/catalog의 LogicalRowVersion, TxnRef/status/undo decoder는 DB/timeline의 정확한 일치를 요구한다. source page를 그대로 복사하고 control의 timeline만 바꾸면 이 검사를 만족하지 못한다. 착수 전 모든 포함 identity·참조·generation·digest의 새 namespace 인계 방식을 고정하고 source 검증과 destination 검증의 expected context를 분리해야 한다. 임의로 과거 timeline을 허용하거나 provenance field를 새로 추가하거나 bytes를 재작성하는 방식을 이 문서가 채택한 것은 아니다. 동결·독립 검토 전 해당 restore effect는 Unsupported다.
+새 namespace 인계는 아래 **offline typed rewrite**를 설계 방향으로 채택한다. exact field census·설치 intent/control bytes·오류 API·전체 F05가 동결되고 구현되기 전 실제 restore effect는 Unsupported다. 기존 decoder가 임의 과거 timeline을 받아들이도록 완화하지 않는다.
 
 인수의 마지막 단계에서는 source WAL을 제공하지 않은 복원 DB에서 새 변경을 commit하여 ACK를 외부에서 관측한 후, 새 data page를 아직 home에 쓰지 않은 상태로 다시 crash한다. 두 번째 reopen이 새 WAL redo를 pageLSN 때문에 잘못 건너뛰지 않고 C와 새 ACK를 모두 보존해야 한다. restore 직후 read 성공만으로 이 인수를 완료하지 않는다.
+
+
+<a id="namespace-rewrite"></a>
+### 5.1 namespace의 offline typed rewrite
+
+source backup은 읽기 전용으로 고정한다. manifest가 인증한 source namespace `(D,t)`의 모든 살아 있는 typed identity를 단일 destination `(D′,t′)`로 치환하며 t′는 새로운 timeline이다. namespace를 제외한 FileId/PageRef·ObjectId/RowId·slot/generation·incarnation·epoch/local·mutation sequence·UndoSequence·q·pageLSN은 보존한다. 따라서 동일 source identity의 모든 참조는 동일 destination identity로 가고, 서로 다른 source identity를 합치지 않는다. logical 버전과 참조의 동등성·edge 다중도는 보존된다. source 외 namespace가 살아 있는 typed identity에 섞여 있으면 preflight에서 거절한다. 새 writer/파일·객체 발급은 복사된 모든 관련 issued high-water와 충돌하지 않는 새 epoch를 사용하며 namespace만 바뀌었다는 이유로 번호를0부터 재사용하지 않는다. overflow는 첫 destination 설치 effect 전에 거절한다.
+
+| 표현·digest 분류 | 변환·검증 의무 |
+| --- | --- |
+| page envelope와 row/index/catalog | page의 DB identity, LogicalRowVersion의 TxnId, Transaction stamp/TxnRef를 typed decode로 변환. Committed q·key·사용자 row/문자열/bytes는 보존. page checksum은 최종 page bytes로 다시 계산 |
+| status·Undo·allocator·소유 | status TxnId와 directory key, Undo creator/진단 logical token/before stamp, chunk 명시 timeline, allocation·terminal queue·reservation descriptor의 namespace-bearing owner 및 기대 context를 함께 변환. 실제 codec의 모든 variant를 census에 등록 |
+| namespace 없는 참조·payload | PageRef/UndoRef의 물리 identity와 세대는 유지. canonical row와 XCB1 Catalog-before는 namespace/stamp/logical/UndoRef를 포함하지 않으므로 covered payload bytes와 payload digest를 유지. row overflow·Undo chunk의 local envelope/명시 timeline 검산은 별도 |
+| Releasing·retained 상태 | release cursor·released count·남은 chunk/next·영속 incoming·retained credit을 보존. 반환된 prefix chunk를 되살리거나 전체 payload digest를 다시 계산하려 하지 않음. [Undo의 부분 release 검증](dev3-undo-format.md)에 따라 남은 chunk의 owner/새 timeline/page checksum을 확인하며 payload digest 불변의 coverage를 증명 |
+| control/manifest/ledger | source checkpoint와 WAL reference를 그대로 destination 선택에 남기지 않음. 변환된 closure에서 새 base inventory·유지보수 의무·profile/FILEMAP 및 필요한 control reference digest를 구성하고 선택을 마지막에 설치. source manifest는 원본 검증 근거로만 보존 |
+
+F01 field census에는 `format/version/kind, field offset/type, source expected context, destination rewrite, digest coverage, live/retired/releasing 적용 조건`을 전수 열거한다. 표는 이 census의 분류이며 모든 byte offset의 동결을 대신하지 않는다. 미등록 kind/version/opaque payload나 namespace-bearing payload가 새로 생기면 effect 전 Unsupported다. 사용자 bytes에 UUID와 같은 패턴이 있어도 검색·치환하지 않는다. namespace-bearing 변환은 고정 폭이므로 page 배치/참조를 유지하며, 가변 폭 변환·압축 변경은 별도 형식 설계다.
+
+semantic 참조 graph에는 역참조/순환이 있으므로 전체 객체를 위상 정렬할 수 있다고 가정하지 않는다. payload hash가 덮는 불변 bytes, 최종 local page checksum, 변환된 child container digest를 가리키는 control digest를 구별한다. 후자의 실제 hash dependency DAG·재계산 순서는 census로 증명한다. 순환 hash나 이미 소실된 covered bytes의 재계산이 필요한 새 형식은 지원하지 않는다. reference의 숫자 identity를 유지하는 것과 참조 대상 bytes의 checksum을 유지하는 것은 다른 의무다.
+
+### 5.2 bounded pass·설치·재진입
+
+첫 pass는 source full audit, field census 지원 여부·source high-water L·새 epoch 가능성·destination 총량/cleanup 예약을 검증한다. 다음 pass는 bounded page/chunk 단위로 변환하고 소유한 미선택 destination에 기록한다. 새 namespace 전체 audit에서 값·참조 다중도·ownership·credit 및 source와의 대응을 확인한다. RAM에 DB 전체 변환 map을 만들지 않으며 필요한 source/destination 재순회·read/write bytes·FD·hash scratch·공존 disk peak를 F05에 포함한다.12MiB maintenance와4MiB flush 몫을 넘겨 spill로 숨기지 않는다.
+
+destination 초기 intent는 source manifest digest·선택한 namespace mapping·복사 high-water·소유 파일 범위를 인증한다. exact intent 형식/선택 protocol은 F01/F02의 필수 후속이다. 완료 전 crash는 READY가 아니며 **기본 재시도는 이 intent로 소유를 검증한 미완성 출력의 명시 cleanup 뒤 immutable source에서 재시작**한다. 일부 변환 page에 rewrite를 재적용하거나 source namespace로 decode하지 않는다. 삭제 불명/namespace 충돌이면 fence 또는 명시 거절하고 원본 및 외부 파일은 보존한다. 완료 selector가 있을 가능성이 있는 불명 결과는 먼저 선택 protocol로 해소하며 임의 cleanup하지 않는다.
+
+전체 destination 검산·새 base q=C/baseLSN=L·bootstrap/WRITER 설치와 모든 필요한 file/dirsync 뒤만 최종 선택/READY를 허용한다. manifest L은 backup drain 시점 L0가 아니라 flush/checkpoint/retirement 뒤 최종 완결 high-water다. 모든 copied pageLSN≤L, 새 WAL 첫 LSN>L을 유지하며, source WAL 없는 새 unflushed ACK와 재장애를 끝까지 검증한다. loser0과 terminal maintenance credit0을 혼동하지 않는다.
 
 ## 6. 오류·자원·관측
 
@@ -191,7 +217,7 @@ full audit와 독립 history 모두 성공해야 해당 인수 경로를 통과�
 | [durable/backup.rs](../../crates/engine/src/durable/backup.rs) | DEV2 immutable archive의 `inspect_checkpoint/inspect_archive/copy_archive` 참고. DEV3 mutable page drain·새 timeline identity 인계·일반 restore를 이미 공급한 것으로 보지 않음 |
 | [controller/oracle.rs](../../crates/testing/controller/src/oracle.rs), [controller/durable.rs](../../crates/testing/controller/src/durable.rs) | 기존 controller의 typed expected 비교·외부 process 관측/actor 경계. DEV3 full graph/history oracle의 새 case와 protocol은 별도 동결 |
 
-F01은 backup manifest/완료 selector·allocated/free physical copy 표현, authenticated source high-water/baseLSN, 복사 identity의 새 timeline 인계, 새 genesis/checkpoint/control·bootstrap의 정확 bytes를 고정한다. F02는 audit 대상별 순회/coverage·읽기 기준, admission drain 소유/timeout·공유 workspace 반환과 기존 작업/backup 하위 단계의 진행 권한, destination 소유와 취소/cleanup/restart, loser abort obligation0 판정과 retained terminal 참조/queue/credit의 base ledger 인계를 고정한다. 현재 control codec의 지원 범위를 임의 확대하지 않는다.
+F01은 backup manifest/완료 selector·allocated/free physical copy 표현, authenticated source high-water/baseLSN, 채택한 typed rewrite의 field/digest census·restore intent, 새 genesis/checkpoint/control·bootstrap의 정확 bytes를 고정한다. F02는 audit 대상별 순회/coverage·읽기 기준, admission drain 소유/timeout·공유 workspace 반환과 기존 작업/backup 하위 단계의 진행 권한, destination 소유와 취소/cleanup/restart, loser abort obligation0 판정과 retained terminal 참조/queue/credit의 base ledger 인계를 고정한다. 현재 control codec의 지원 범위를 임의 확대하지 않는다.
 
 F03은 typed 이력·row/index 대응·명시 edge multiset·known-bad bytes, F04는 drain/flush/copy/selection/restore/새 ACK의 실제 cut, F05는 target batch·재순회/시간·복사 buffer·FD·destination disk/cleanup peak와 full-audit receipt 상한을 동결한다. F06은 DEV2-only archive와 재사용 가능한 foundation port를 구별하고 F07은 audit/checker·backup/restore·control 공유 파일의 수정 소유를 정한다.
 

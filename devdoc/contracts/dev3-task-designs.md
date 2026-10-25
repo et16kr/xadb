@@ -163,3 +163,10 @@ private : 거래당 8 MiB, 전체 64 MiB / 최대 거래 32 / FD 128
 독립 검토는 기존 소유 계약·분해 계획·실제 제한 공급과 대조한 설계 검토다. Commit의 sync 뒤 status 공개, catalog 열 위치와 create/drop 공통 commit 장벽, catalog 내부 변경의 직접 공급, offline build 중 전용 flusher 진행을 보완했다. frame pin과 content latch를 구별하고, REDO는 다중 page 그룹의 대상별 반영 여부로 판정하도록 수정했다. commit-q stamp는 Committed(q)에 한정하고 회수 queue의 작업 소유를 외부 보존 소유와 구별했다. 관련 인수 사례도 같은 경계로 정리했다.
 
 수용 범위는 이 16개 작업의 개발 명세·설계도와 문서 연결이다. 구현 전 추가 동결 표는 남은 작업이며, 미채택 terminal queue/credit·checkpoint/control body·restore namespace 인계·opcode별 F05를 이번 결정으로 확정하지 않는다. 기존 구현·시험 결과와 DEV3/S1 완료 상태는 변경하지 않는다.
+
+<a id="comparison-adoption"></a>
+## 2026-10-25 비교 분석의 후속 설계 인계
+
+[DEV3-REVIEW-011](disk-storage-design.md#task-review-011)은16개 task의 기존 소유/DAG 안에서 자원 벡터·실제 행 수명·immutable checkpoint 입력·offline restore identity 변환과 병목 측정을 보강한다. [계획의 완료분 보완표](../plans/dev3-implementation-plan.md#comparison-adoption)와 [D3-COMP-01–10](../plans/dev3-test-plan.md#comparison-adoption)을 따른다. 2026-10-22 당시 미채택으로 기록한 restore namespace 방식은 이번에 typed rewrite 방향을 선택했으나 exact F01/F02/F05와 구현은 남는다. 당시 기록과 실행 결과는 보존한다.
+
+최소 공통 terminal→최소 Catalog CREATE→실제 table/anchor→하나의 row opcode→Undo/CLR/ACK·새 프로세스 복구를 연결하고, 나머지 CRUD/index/DDL을 확장한다. 완료 N=0 복구는 공급이며 반복 실행 대상이 아니다. general pool·opcode별 자원 증명은 각 consumer의 선행, 정상 checkpoint 전체는 REBASE의 선행이 아니다. bounded audit·profile·restore census 준비는 필요한 consumer 전에 배정한다.

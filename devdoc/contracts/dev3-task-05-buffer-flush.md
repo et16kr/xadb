@@ -742,3 +742,10 @@ typed size로 가산한다. source-value는 memory65088/native wrapper65152·ret
 component65536/metadata196608/whole262144, operation114688/flush4MiB를 유지한다.
 실제 stack/RSS 측정은 아니다. memory/native 최초 static과 source별 신규11함수33scenario·새 PID 재진입 결과와
 원 oracle FAIL·S5 438 미실행은 [선택 증거](../evidence/dev3-status-pressure-20261024.md)에 구별한다.
+
+<a id="comparison-followup"></a>
+## 비교 분석 후속 — 완료 primitive의 일반 page 소비
+
+완료한 SharedPool 전체 대상 pin 집합·Status 수명·plan4 제한 flush 증거는 원 범위로 유지한다. 일반 tree/row/Undo/catalog 소비는 clean↔dirty·eviction/reload·여러 page 적용·retirement 권한과 실제 동시 frame peak를 추가로 입증해야 한다. 기존 primitive를 다시 시험하는 것으로 새 소비 경로 인수를 대신하지 않는다.
+
+DWB batch1/8/64와 deadline을 기준선으로 유지한다. n개16KiB page의 image+home payload는 `2n×16384`, batch metadata는 `160+88n` bytes지만 selector 교체·file sync/dirsync·재시도/repair I/O는 별도다. PF09는 실제 평균 batch 크기, 각 단계 bytes·sync 횟수·대기·redirty·최대 서비스 간격을 기록한다. 큰 batch가 항상 낮은 tail latency를 준다고 가정하거나 metadata 산식만으로 실제 write amplification을 보고하지 않는다.

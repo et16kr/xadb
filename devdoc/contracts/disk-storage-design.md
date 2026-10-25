@@ -1,6 +1,6 @@
 # DEV3 — 디스크 저장·인덱스 상세 설계
 
-2026-10-22 · **DEV3-DESIGN-003·REVIEW-004–009 ACCEPTED / 전체 DEV3 인수 미완료**
+2026-10-25 · **DEV3-DESIGN-003·REVIEW-004–011 ACCEPTED / 전체 DEV3 인수 미완료**
 
 [구현 계획](../plans/dev3-implementation-plan.md) · [이번 조사](../evidence/dev3-wal-undo-research.md) · [이전 조사](../evidence/dev3-source-research.md) · [커널 계약](implementation-contracts.md) · [DEV2 계약](dev2-kernel-design.md) · [복구 계약](recovery-logging-design.md) · [인수 항목](disk-test-matrix.json)
 
@@ -13,7 +13,7 @@
 <a id="scope"></a>
 ## 1. 범위와 대체 관계
 
-사용자가 선행 리뷰 보완 뒤 COW pack/GC의 재설계를 요청했다. [DEV3-REVIEW-002](#review-followup)를 먼저 검토·반영했고, 이어 **mutable disk page + 단일 WAL + 영속 undo + bounded dirty buffer**를 선택한다. 제품 저장 엔진은 [제품 방향](../plans/project-direction.md)에 따라 DISK 하나로 개발한다. 기존 DEV0/1·DEV2 P0/K0 구현과 실행 증거를 바꾸지 않는다. DEV2 영속 구현·잔여 인수는 [현재 DEV2 기록](../implementation/dev2-implementation.md)을 따르며, DEV3 page 기반 영속 경로는 미구현이다.
+사용자가 선행 리뷰 보완 뒤 COW pack/GC의 재설계를 요청했다. [DEV3-REVIEW-002](#review-followup)를 먼저 검토·반영했고, 이어 **mutable disk page + 단일 WAL + 영속 undo + bounded dirty buffer**를 선택한다. 제품 저장 엔진은 [제품 방향](../plans/project-direction.md)에 따라 DISK 하나로 개발한다. 기존 DEV0/1·DEV2 P0/K0 구현과 실행 증거를 바꾸지 않는다. DEV2 영속 구현·잔여 인수는 [현재 DEV2 기록](../implementation/dev2-implementation.md)을 따르며, DEV3의 제한 allocator/Status/공유 버퍼·[N=0 plan4 복구](../evidence/dev3-recovery-resumed-20261025.md)는 source별 선택 검증되었으나 일반 row/index/catalog·Undo/CLR/commit·checkpoint/backup 경로와 전체 인수는 미완료다.
 
 DEV3-DESIGN-003은 DEV3-DESIGN-001의 COW tree·sealed pack·root closure GC·전체 재작성 compaction·page-before-commit·root-only disk recovery를 대체한다. DEV3-PARALLEL-001의 pack/COW 작업 분할도 새 계획으로 대체한다. DEV2의 private/COW substrate·AXF1 한 거래 frame·exact checkpoint는 **DEV2 전용 기준선**으로 남으며 DEV3 page 경로에 적용하지 않는다. 상위 계약의 불변 CommittedRoot는 DEV3에서는 논리 snapshot/commit frontier를 뜻한다. mutable page 내용의 불변성이나 root graph 보존을 요구하지 않는다.
 
@@ -494,3 +494,21 @@ F01은 profile identity·필수 항목·무결성/지원 여부의 검사 위치
 | 근거·독립 검토 | [반례·16문서 판정·실제 source revision](../evidence/dev3-task-design-review-20261022-r2.md). `/root/independent_review`가 최종 설계 diff·보고서·case/NT/FT·PF09·색인 연결을 독립 검토: PASS, 잔여 필수 P1/P2 없음. `/root` 반영 확인 |
 | 실행·남은 의무 | 문서만 변경. 제품 시험·compiler/Clippy·문서 verifier·push 미실행. 3.11-T11·3.07-T11·3.15-T12는 구현 동반 인수 명세. 일반 Commit/terminal·F01/F02/F05와 DEV3/S1은 미완료 |
 | 재검토 | 지연 설치 추월·장벽/turn 교착·staged Commit 취소 오류, build 종료 정체, 복사 cut 불일치 또는 page별 병렬 설치/group commit 도입 |
+
+<a id="task-review-011"></a>
+## DEV3-REVIEW-011 — DBMS 비교 보고서의 설계·인수 반영
+
+2026-10-25 · D2 · **ACCEPTED / 제품·모델·성능 미실행**. 독립 검토 `/root/dev3_design_review`: 최종24개 문서와 후속6문서 delta PASS, 잔여 필수 P1/P2 없음. 작업/계약/통합 `/root` 반영 확인. [반영 근거와 검토 기록](../evidence/dev3-comparison-adoption-20261025.md).
+
+기존 mutable page·단일 WAL·durable Undo·default Serializable·durable ACK/UNKNOWN·기본 quota와 단계 DAG를 유지한다. 다음 상세 소유 절을 이 정본의 보강으로 채택하며, 실제 F01/F02/F05 수치/codec/API 동결·구현·인수를 대신하지 않는다.
+
+| 설계 의무 | 상세 정본과 완료 경계 |
+| --- | --- |
+| opcode admission·rollback/restart | [자원 벡터](dev3-resource-bounds.md#resource-vector-proof). 모든 성분의 peak·확인 반환·잔여 예약 보존, 종료 의무는 새 admission에 의존하지 않음 |
+| 최초 행 수명 | [plan4 이후 추가 의무](dev3-task-12-recovery.md#post-plan4-obligations). 최소 공통 terminal→Catalog CREATE/실제 table→하나의 row opcode→Undo/CLR/ACK·새 프로세스 복구. 완료 N=0을 일반화하지 않음 |
+| 의미 설치·병렬 성능 | [Serializable 충돌](dev3-task-10-concurrency.md#serializable-conflict-bound), [Commit 서비스](dev3-task-11-commit.md#commit-service-bound). 현 장벽 보존, batch의 prefix validation 필수. group commit/미세 validation은 측정 뒤 별도 D2 후보 |
+| normal checkpoint 입력 | [immutable capture](dev3-task-13-checkpoint.md#immutable-capture-source). pinned base+complete prefix, 같은-cut bounded ATT/DPT/volatile 소유 snapshot, partition 재생·turn 간 snapshot 수명·선택 불명 합집합 보호 |
+| offline restore | [typed namespace rewrite](dev3-task-15-backup-integrity.md#namespace-rewrite). 고정 폭 identity 변환·참조 동등성/다중도 보존·digest coverage 분류·Releasing/credit 인계·새 high-water/ACK 재장애 |
+| 공간·운영 비용 | [표현 비용](dev3-resource-bounds.md#representation-cost), [보존 압력](dev3-task-14-reclamation.md#retention-pressure-model), [측정](dev3-task-16-qualification.md#comparison-measurement). 산술과 실측 구분,64GiB profile은 기존 준비 방향이며 현재 지원 아님 |
+
+계획은 [실행 순서와 완료분 보완](../plans/dev3-implementation-plan.md#comparison-adoption), 인수는 [D3-COMP-01–10](../plans/dev3-test-plan.md#comparison-adoption)을 따른다. 후속 의무가 기존 완료 codec/pool/plan4의 원 source·PASS를 소급 취소하거나 무변경 시험 반복을 요구하지 않는다. 현재 범위 밖 row semantics에 plan4 newer-home 예외를 그대로 확대하지 않는다. checkpoint/restore의 이번 선택은 이전 상세 문서의 미선택 대안을 구체화하며, byte 형식·실행 지원은 소비 구현 전에 별도 동결한다.

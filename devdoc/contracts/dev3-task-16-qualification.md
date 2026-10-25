@@ -129,3 +129,21 @@ F02/F05에는 monotonic clock·구간 시작/끝·중첩 구간의 중복 합산
 문서 검사는 push gate에서 수행한다. 원본 FAIL·중단 receipt를 수정하거나 omitted case를 새 PASS로 만드는 집계는 금지한다.
 
 완료를 선언하려면 실제 DS/KU/RC/PF 의무를 모두 추적하고, source별 적용 범위·변경 경로 증거·검토 결과·정상/거절/미실행 분모를 명확히 해야 한다. 단순 완료 문서 수/16, 모델 case 수, 코드량으로 진행률을 만들지 않는다.
+
+<a id="comparison-measurement"></a>
+## 비교 분석 후속 — 병목 판정과 확대 인수
+
+[표현/예약 산식](dev3-resource-bounds.md#resource-vector-proof), [Serializable cohort](dev3-task-10-concurrency.md#serializable-conflict-bound), [Commit 서비스 시간](dev3-task-11-commit.md#commit-service-bound), [보존 압력](dev3-task-14-reclamation.md#retention-pressure-model)은 측정 가설이다. 실제 TPS/p99·타 DBMS 우열로 재표기하지 않는다. PF09는 같은 durability·isolation·data/index 분포·buffer/profile·retry 정책에서 비교한다.
+
+| 판단 | 먼저 수집할 값 | 후속 후보·선행 조건 |
+| --- | --- | --- |
+| 같은 table 병렬 요청 실패 | 원래 요청/attempt/성공·충돌·거절·UNKNOWN,1/2/8/32 요청의 실제 dependency와 retry 비용 | bounded fine validation은 phantom/absence/write skew/DDL 증명 뒤 별도 D2 |
+| Commit 장벽 포화 | sync와 의미 설치 S의 평균·분산·분위수, queue/installation 대기와 원래 요청의 전체 latency | group commit은 batch prefix validation/설치·UNKNOWN·checkpoint·F05 증명 뒤 |
+| scan 비용 | visible 결과·candidate·Undo hop·root reseek·read bytes·시간 | candidate/byte bounded batch, snapshot/own mutation/full-key 보존 뒤 |
+| 공간·retention | 사용자 bytes와 row/index/overflow/Undo/WAL/control의 allocated/reserved/retained, horizon lag와 실제 반환 | 형식 최적화는 measured 비용과 compatibility 검토 뒤 |
+| full audit 비용 | target T·edge E·batch B, 방문 수·재순회·bytes·시간 | batch별 incoming 계산이 전체 E를 읽으면 `E×ceil(T/B)` visits. E≈T이면 고정 B에서 이차 증가 가능. RAM 상한과 I/O 예산 동시 검토 |
+| 대형 allocator | encoded cell inventory≥4×buffer, 실제 extent 수·전체 disk 공존·growth 배열/FD/복구 workspace | [64GiB 준비](dev3-resource-bounds.md#qualification-profile-preparation). 지원 tuple/43,241 extents와 전체 회계·fixture 없이는 PASS 금지 |
+
+T=E=1,000,000에서 audit B=4096/32768이면245,000,000/31,000,000 edge visits라는 예시다. B=32768을 승인된 capacity로 쓰지 않는다. 실제 entry bytes·hash/cursor·local 합계로 B를 먼저 동결한다. measured 개선이 필요할 때만 다른 bounded 알고리즘을 검토하며 무제한 map/spill을 숨기지 않는다.
+
+PF09 반복은 일반 DP07의 최소10쌍을 따른다. COMM 전용5+5 규칙을 적용하지 않는다. 평균뿐 아니라 분포·실패/재시도·누락 이력과 계측 비용을 보존하며 원래 요청의 최종 결과까지 latency를 집계한다. 미실행은 NOT_RUN이며 docs 채택·산술·모델·memory/native 실행을 각각 구분한다.

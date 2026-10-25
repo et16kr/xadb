@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV3 비교 분석 후속 설계](disk-storage-design.md#task-review-011) — 자원 벡터, immutable checkpoint 입력, offline typed namespace restore와 성능 판정 경계.
+
 - [DEV3 plan4 빈 거래 복구 owner](dev3-plan4-recovery-owner.md) — 원 자원·선택/REBASE·새 epoch·같은 pool의 복구 종료; 중단 작업 검증 완료·독립 D1/D2 한정 수용
 
 - [DEV3 plan4 빈 거래 live](dev3-retention-live.md) — 원 owner/pool의 fresh 수명·flush·재적재와 관측용 tag3 prefix; 복구 owner 별도

@@ -248,11 +248,11 @@ F05는 3.16까지 미루는 작업이 아니다. [opcode 자원 계산](#resourc
 
 | 우선순위 | 먼저 닫을 공급·통합 | 함께 준비할 것 |
 | --- | --- | --- |
-| 1 | 현재 reserve/cancel·Status INIT·flush를 소비하는3.12.1–4의 [제한 복구 연결](../contracts/dev3-task-12-recovery.md#early-recovery) | 실제 producer가 만든 파일·선택 pending·혼합 home을 새 프로세스에서 복원·검산. 파일 열기만으로 완료하지 않음. inspection 결과는 일반 READY/거래 ACK가 아님 |
-| 2 | 3.05의 [일반 page 수명·권한](../contracts/dev3-task-05-buffer-flush.md#operational-pool), 필요한3.10.1 guard, 3.09.1 live undo/status와3.06.1 tree의 최소 공급 | clean reader 전환·단일 주소 권한·eviction/reload·반복 상태 변경, 실제 page 집합별 F05. tree 변경 opcode도 해당 redo/undo 소비를 함께 공급 |
-| 3 | [첫 행 거래](../contracts/dev3-task-11-commit.md#first-row-integration)의3.06.2·3.09.2/3·3.11.1·3.12.5–8과 필요한3.10 통합 | 실제 영속 table/anchor 공급, 작은 ACK/loser/statement 실패·CLR 재장애, 정상 admitted quota 경계 복구 성공. terminal queue·REBASE·epoch·VERIFY/STABILIZE 생략 금지 |
-| 4 | 3.07 인덱스·3.08 catalog의 나머지 기능, 대상별 rollback/commit/recovery와3.10.2·3.11.2 다중 객체 인수 | 새 opcode마다 같은 경로의 독립 이력·실제 장애를 확장. 첫 행 공급을 전체 CRUD·두 isolation·DDL 인수 완료로 승격하지 않음 |
-| 5 | 3.13 checkpoint·3.14 회수/3.03.4 reuse·3.15.2 backup/restore·3.16 남은 PF09/최종 인수 | [64GiB 준비](../contracts/dev3-resource-bounds.md#qualification-profile-preparation)와 [계측](../contracts/dev3-task-16-qualification.md#observation-delivery)은 각 소비 구현 전에 준비. 장시간·대규모·전체 조합은 S5 |
+| 1 | 완료된 [N=0 plan4 복구](../evidence/dev3-recovery-resumed-20261025.md)를 공급으로 수신하고, 일반3.05 page 수명·필요3.10.1 guard·3.09.1 live undo/status·3.06.1 tree 최소 공급을 보완 | 원50개 source별 PASS/실패 보존. 완료 사례 재실행 없이 새 consumer의 F05·대상 page 권한·eviction/reload를 검증 |
+| 2 | 최소 공통 terminal→3.08 최소 Catalog CREATE→실제 영속 table/anchor 공급 | typed XCB1 codec 공급을 소비하되 Catalog effect/CLR·commit/recovery는 별도 연결. 전체 DDL/index build 완료를 선행하지 않음 |
+| 3 | [첫 행 거래](../contracts/dev3-task-11-commit.md#first-row-integration)의 하나의3.06.2 opcode→3.09.2/3→3.11.1→3.12.5–8과 필요한3.10 통합 | effect 전 opcode별 F05. 작은 no-force ACK/steal loser/statement 실패·CLR 재장애, quota 경계 복구. terminal queue·REBASE·epoch·VERIFY/STABILIZE 생략 금지 |
+| 4 | 나머지 row CRUD·3.07 index·3.08 DDL와 대상별 rollback/commit/recovery·3.10.2·3.11.2 다중 객체 | 새 opcode마다 독립 이력·오류/장애를 확장. 같은 table Serializable 충돌과 Commit 장벽 계측을 함께 공급 |
+| 5 | 3.13 immutable capture/current/previous·3.14 aging/3.03.4 reuse·3.15.2 typed rewrite restore·3.16 남은 PF09/S5 | 실제 행 경로 뒤 BEGIN-WAL 삭제·Active/부분 CLR·retained credit 통합.64GiB profile·큰 fixture 준비는 각 소비 구현 전에 착수, 장시간·대규모·전체 조합 실행은 S5 |
 
 자원 증명·독립 검증·fault 설계는 전 구간에 걸쳐 수행한다. 개발 중 아직 제공하지 않은 durability/rollback/복구 기능의 인수는 명시적으로 남기며, 뒤 묶음에 있다는 이유로 해당 effect의 F05나 필수 실패 처리를 미루지 않는다.
 
@@ -531,3 +531,23 @@ DEV3-DESIGN-001/PARALLEL-001의 소스 조사·독립 검토와 당시 문서 �
 사용자의 후속 전체 문서 검사·commit·push 지시에 따라, commit 대상 사본에서 전체 검사 중 current-source evidence 지문 불일치 3건을 확인했다. COMM 반영 소스와 이미 보존된 회귀 보고서의 지문 일치를 대조하여 문서 ID·현재 증거 설명을 수정했다. 이전 보고서 바이트와 성능 실패·미완료 상태는 보존한다. 제품 코드/checker 변경 및 새 제품 시험 실행은 없으며 최종 문서 결과는 [문서 검사 보고서](../document-validation.json)를 따른다.
 
 증거 참조 보완도 `/root/dev34_conflict_reserve_review`가 후보 소스 지문·채택 사본의 byte identity·원본 보존·미실행 범위를 읽기 전용으로 독립 확인하여 PASS, 필수 수정 지적 없음으로 판정했다. 검토자는 checker나 제품 시험을 재실행하지 않았다. `/root`가 반영 확인했다.
+
+<a id="comparison-adoption"></a>
+## DEV3-REVIEW-011 반영 — 완료분 보완과 다음 작업
+
+[설계 결정](../contracts/disk-storage-design.md#task-review-011)과 [반영 기록](../evidence/dev3-comparison-adoption-20261025.md)을 기존16개 작업에 배정한다. 문서 적용 요청은 제품 개발·테스트 실행 재개가 아니다. 개발 착수 시 정확 소비 leaf의 F01–F07을 채우며, 모든 기능 완료를 기다린 뒤 수치 회계를 하는 순서를 금지한다.
+
+| 기존 공급·원 완료 범위 | 추가 보완·담당 | 새 인수·완료 기준 |
+| --- | --- | --- |
+| row/tree/Undo/status/Catalog codec | 3.06/08/09/11: 최소 terminal과 Catalog CREATE부터 실제 row 변경의 producer/consumer 연결 | D3-COMP-01. bytes decode 성공을 실제 값·ACK·rollback 성공으로 확대하지 않음 |
+| 전체 대상 pin·Status 수명·N=0 plan4 고유50 PASS | 3.05/12: 일반 page 권한·N>0 row/Undo/CLR의 mixed-page redo·예약 복원·새 ACK | D3-COMP-01/02/09. 원 실패·중단/소스별 PASS 보존, 실제 diff 관련 새 사례만 중간 실행 |
+| 한정 reservation/obligation 표현·모델 | 각 opcode owner,3.16 취합: [수치 벡터 표](../contracts/dev3-resource-bounds.md#resource-vector-proof)와 종료 rank/공정 진행 | D3-COMP-02. private/metadata/flush/maintenance·disk/protected/WAL·page/FD 모두, 종료 경로의 새 admission 의존 금지 |
+| Undo 다중 edge·부분 모델 | 3.09/14/12: 실제 값·edge multiset·incoming·pin/horizon·release cursor·physical credit의 통합 | D3-COMP-03. BEGIN-WAL 삭제와 부분 CLR 재장애, 실제 generation 재사용 |
+| coarse Serializable·단일 Commit 설계 | 3.10/11/16: 실제 의존 충돌과 stage/sync/전체 설치 지연 계측 | D3-COMP-04. 기준선 측정 전 group commit·미세 validation을 필수 구현으로 추가하지 않음 |
+| fuzzy checkpoint 요구·제한 control 표현 | 3.13/02/12: immutable base/prefix·bounded cut snapshot·partition/cursor·persistent pin/선택·WAL/출력 peak | D3-COMP-05. F01/F02의 census·chunk/control body·정확 B와 turn 수명, F05 수치 동결 뒤 구현 |
+| exact-C backup·restore 요구 | 3.15/02/12: namespace field/digest census·offline rewrite·intent/cleanup·retained ledger·새 epoch/LSN | D3-COMP-06. source-WAL-free restore→새 unflushed ACK→재장애. Releasing도 소실 payload 재구성 없이 검증 |
+| 공간 산식·DWB batch·audit·64GiB 준비 | 3.03/05/06/16 및3.15 audit: 표현 비용/계측·fixture와 profile 지원·growth bound | D3-COMP-07–10. 현재8GiB 지원과 구별, 중간 작은 경계와 S5 확대 분리 |
+
+착수 순서는 [우선 실행 묶음](#work-priority)을 따른다. 독립 audit/history 준비·checkpoint/restore census·64GiB 회계는 consumer 선행 준비로 진행할 수 있지만, 최초 row 통합이 전체 index/DDL/normal checkpoint에 의존하도록 DAG를 바꾸지 않는다. REBASE는 정상 checkpoint 전체 완료를 기다리지 않는다. 각 미정 수치/형식은 해당 effect의 차단 조건으로 남으며 문서 채택으로 지원 flag를 올리지 않는다.
+
+성능 후보는 실제 durable 성공/충돌·원래 요청 latency·공간/IO 비용이 병목을 입증한 뒤 별도 D2로 평가한다. DEV3 PF09는 DP07 최소10쌍, S5는 확정된 DEV3 inventory 전수이며 COMM5+5와 DEV0/1/2 전수 반복은 적용하지 않는다.

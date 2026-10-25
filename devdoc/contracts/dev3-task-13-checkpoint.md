@@ -19,7 +19,7 @@
 
 normal checkpoint는 전체 DB data snapshot이 아니다. 변경·flush는 capture 전후 계속될 수 있으며 모든 dirty home flush를 요구하지 않는다. previous checkpoint는 더 이른 analysis/redo 시작점이다. mutable datafile의 과거 사본·cold-page 손상 수리·완전 backup을 제공하지 않는다. exact-C backup은 3.15.2의 별도 drain/flush/복사/선택 작업이다.
 
-현행 [control](dev3-control-format.md)은 Profile/FILEMAP/DWB selector·ControlRef를 지원하고 일반 CURRENT/checkpoint·recovery WRITER body를 지원하지 않는다. [obligation](dev3-obligation-format.md)은 descriptor와 일부 ownership 관측을 공급하지만 최종 checkpoint closure와 capture·선택·복구 적용을 공급하지 않는다. DEV2 checkpoint나 genesis WRITER의 제한 I/O를 DEV3 정상 checkpoint 구현으로 재표기하지 않는다.
+현행 [control](dev3-control-format.md)은 Profile/FILEMAP/DWB selector·ControlRef를 지원한다. [plan4 N=0 선택·복구](dev3-plan4-recovery-owner.md)의 제한 공급과 별개로 일반 fuzzy CURRENT/checkpoint·전체 recovery WRITER 인계는 미완료다. [obligation](dev3-obligation-format.md)은 descriptor와 일부 ownership 관측을 공급하지만 최종 checkpoint closure와 capture·선택·복구 적용을 공급하지 않는다. DEV2 checkpoint나 genesis WRITER의 제한 I/O를 DEV3 정상 checkpoint 구현으로 재표기하지 않는다.
 
 <a id="requirements"></a>
 ## 2. 요구 ID와 불변식
@@ -108,7 +108,21 @@ current와 previous가 같은 closure를 가리키면 물리 파일 bytes는 한
 5. 고정 공간에 capture LSN, ATT의 owner identity/descriptor/head/rollback next/target·remaining, DPT identity/recLSN, allocator/high-water·예약 소유의 같은-prefix 참조, published q를 고정한다. descriptor core·status home·ledger가 서로 다른 시점이면 실패다. exact field 목록과 고정 capacity는 F01/F05에서 동결한다.
 6. 모든 capture 등록을 마친 뒤 gate/registry를 해제한다. 필요한 WAL/closure의 소유는 checkpoint 작업이 유지한다. gate 아래 file read/write/sync·hash를 위한 큰 stream 순회·allocation·사용자 callback을 넣지 않는다.
 
-큰 ownership inventory를 짧은 gate 아래 전체 복사할 수 있다고 가정하지 않는다. capture에는 고정 크기의 불변 근거와 같은-prefix owner 표를 인계하고 chunk는 밖에서 구성해야 한다. **그 근거를 어떻게 안정화하는지는 아직 F02 미동결**이다. immutable capture source 또는 보존된 checkpoint inventory+complete WAL prefix에서 cut까지 재현하는 방식 등은 정확 수명·재검사·읽기 비용·peak를 독립 검토해야 한다. mutable home allocator를 gate 해제 후 읽은 최신 값으로 capture cut을 대신하거나, root hash만 저장하여 전체 closure가 있다고 주장하는 구현은 허용하지 않는다.
+큰 ownership inventory는 **선택된 immutable base inventory + 보존된 완결 WAL prefix를 cut까지 재생**하여 구성한다. 같은 cut의 bounded ATT/DPT·volatile 소유 snapshot을 합치는 구체 절차는 아래와 같다. 설계 방향을 채택하되, 실제 base/chunk bytes·정확 capacity·Rust API와 opcode별 replay 공급은 F01/F02/F05의 후속 동결이다. 미공급 의미를 mutable home read로 대신하지 않는다.
+
+<a id="immutable-capture-source"></a>
+#### 5.1.1 불변 입력·bounded 재생·실패 소유
+
+1. gate 밖에서 base namespace/identity·format/profile와 완전 closure를 검증하고 작업 공간·출력 최대량을 예약한다. 최초 capture에는 임의 현재 allocator home이 아닌 검증된 genesis/base census와 그 이후 완결 prefix가 필요하다. capture LSN보다 뒤를 기준으로 만든 base는 사용할 수 없다.
+2. coordinator/version/retention의 기존 순서를 지키는 같은 cut에서 선택 세대를 재검사하고, base closure·정확 FILEMAP 세대와 WAL 구간의 **삭제/재사용 방지 소유**를 등록한다. cut LSN과 마지막 complete group의 파일·offset을 고정한다. 마지막 WAL 파일의 suffix append는 허용하지만 cut 이하 bytes는 불변이어야 한다. 큰 hash/stream 검산은 gate 밖에서 pin된 bytes로 한다. 참조만 복사한 뒤 pin을 늦게 잡지 않는다.
+3. ATT의 head/progress·remaining과 실제 runtime DPT/flush-inflight, published q, 영속 log에서 유도할 수 없는 bounded live 예약 상태는 같은 cut의 사전 예약 snapshot에 복사한다. **WAL만으로 flush 완료·현재 DPT를 재현할 수 있다고 가정하지 않는다.** DPT는 frame+inflight의 고정 최대 entry 안에서 동결한다. DB 크기에 비례하는 allocation/ownership inventory는 base+prefix에서 재생한다. 새 opcode가 바꾸는 의미가 재생 입력과 bounded snapshot 어느 쪽에도 없으면 capture 지원 전에 그 공급을 추가한다.
+4. gate 해제 후 base와 prefix를 canonical physical identity 순서로 bounded partition 재생한다. 메모리에 전체 key 집합을 만들지 않는다. base 및 WAL에 등장한 identity의 합집합을 다음 미처리 identity부터 반복 scan하여 최대 B개 distinct identity를 선택하고, 그 B개에 대해 base부터 cut까지 complete group 순서로 의미를 적용한다. absent·new·free·reuse도 후보에 포함하며 최종 incarnation/generation을 검산한다. 동일 주소의 다른 generation을 동시에 살아 있는 page로 합치지 않는다. 그룹 전체 검증과 owner/예약 효과는 별도 bounded owner snapshot으로 처리하고 partition마다 중복 charge하지 않는다.
+5. 각 partition의 최종 상태를 canonical chunk로 기록·검산한다. ATT/descriptor/allocator 소유·high-water와 snapshot의 같은-cut 관계를 최종 검산한 뒤만 end를 작성한다. pageLSN만 큰 home, capture 이후 바뀐 live registry, 잘린 prefix를 정답 입력으로 쓰지 않는다. FILEMAP의 고정 container도 pin 중 덮어쓸 수 없다. 사용 가능한 replacement 슬롯이 없으면 해당 새 mutation admission을 거절/지연하되 pin 해제에 필요한 checkpoint continuation은 막지 않는다.
+6. 선택 성공 시 필요한 pin을 새 current/previous owner에 인계한다. 아직 진행 중인 reader/복구/previous가 요구하는 입력은 선택 성공만으로 해제하지 않는다. 실패·취소 시 기존 CURRENT를 유지하고 unselected 출력의 명시 cleanup이 끝나며 의존 owner가 없어진 뒤 pin을 반환한다. selector 불명은 가능한 old/new closure 합집합을 계속 보호하고 fence한다. crash 시 선택된 base+prefix로 진행 소유/고아 출력의 정리 책임을 재구성해야 하며, pin이 RAM에서 사라졌다고 회수하지 않는다.
+
+capture snapshot과 turn 간 continuation의 고정 owner/cursor는 **기존 metadata8MiB 안에서** WAL slot·locator·다른 registry와 겹치지 않게 선예약하여 보존한다. 이 별도 수명 몫이 fit하지 않으면 capture를 시작하지 않는다. partition별 B entries·WAL decode·chunk/hash·중첩 local은 기존 공유 maintenance12MiB를 빌렸다가 해당 bounded step 종료 때 반환한다. 다음 turn/WAL admission/기존 거래 종료를 기다릴 때 이 workspace를 보유하지 않는다. snapshot을 검산된 staging chunk로 영속 인계한 뒤에는 그 pin된 chunk와 고정 cursor로 재개할 수 있지만, 인계 전 snapshot을 버리거나 live registry에서 다시 읽지 않는다. 정확 snapshot/continuation bytes와 B는 metadata·maintenance 각각의 동시 peak F05로 동결한다. T개 identity, base I bytes, prefix W bytes라면 반복 선택·재생은 적어도 `ceil(T/B)`회에 비례하는 입력 순회를 요구한다. distinct 선택 알고리즘의 실제 비교 비용·재순회와 read bytes 상한도 F05/PF09에 제출한다. bounded RAM을 선형 I/O 또는 짧은 pause의 증거로 쓰지 않는다.
+
+prefix pin 중 `retained+outstanding WAL ≤256MiB`, owned/protected 안의 current·previous·new output·staging·cleanup 공존을 항상 만족해야 한다. 정상 admission은 checkpoint 완료와 기존 작업의 rollback/flush를 위한 WAL·출력 몫을 먼저 남긴다. 부족이 예상되면 새 foreground admission을 닫고 유한 기존 의무와 checkpoint를 진행시킨다. 이미 pin한 prefix를 지우거나 limit을 넘겨 해결하지 않는다. 첫 effect 전 출력 최대량을 예약할 수 없으면 checkpoint를 시작하지 않는다. 예상 밖 I/O 실패는 원래 오류와 보호 소유를 유지한다. pin된 입력을 release하기 위해 필요한 cleanup 자체가 WAL 공간을 새로 기다리는 순환이 없도록 cleanup의 peak도 선예약한다. 무장애·새 admission 중지·유한 T/W를 전제로 partition cursor가 증가하는 종료 증명을 제출해야 실제 진행성을 인수한다.
 
 ### 5.2 3.13.2: end metadata와 current/previous 선택
 
@@ -171,7 +185,7 @@ recovery는 checkpoint 이전 owner 상태를 다시 analysis하여 terminal 거
 
 | 자원 | 현재 소유 계약의 입력 | 이 작업의 미완료 증명 |
 | --- | --- | --- |
-| 메모리 | metadata8MiB, system16MiB=flush4MiB+단일 maintenance12MiB | capture ATT/DPT·owner table·chunk/hash/cursor·WAL frame·중첩 local·selector staging의 동시 peak. 별도 무제한 DPT/전체 inventory 복제 금지 |
+| 메모리 | metadata8MiB, system16MiB=flush4MiB+단일 maintenance12MiB | metadata 안의 turn 간 capture ATT/DPT·owner snapshot/continuation, maintenance 안의 partition·chunk/hash·WAL decode·중첩 local, selector staging의 각각 동시 peak. 무제한 DPT/전체 inventory 복제 금지 |
 | runtime DPT | buffer4/16/64MiB의 dirty와 flush-inflight recLSN | 실제 frame/claim 구조에 따른 최대 entry·중복 제거 규칙, 동시 capture 공간·수명 |
 | transaction/owner | 최대32거래; descriptor1536-byte 표현 | system 상한4·총36과 inventory 세 bank는 원문 제안 범위. 전체 실행 지원 한도로 자동 채택 금지 |
 | control | CURRENT/WRITER selection/staging 각4KiB capacity 입력, REBASE 두1MiB slot 제안 | 정상 fuzzy checkpoint의 exact body/chunk/file name·선택 공존 peak는 별도. REBASE1MiB에 정상 checkpoint 전체가 든다고 가정 금지 |
@@ -242,7 +256,7 @@ fault별 실제 bytes·file identity·sync/publish events, capture cut·owner �
 | 항목 | 구체 미동결 내용 | 구현 경계 |
 | --- | --- | --- |
 | F01 checkpoint/current | begin/capture/end bytes·WAL opcode, ATT/DPT/high-water/publication·ownership closure body, CURRENT refs/generation·fallback 허용표·file 이름 | 3.13.1/2의 첫 새 효과 전 |
-| F02 capture | CommitAttempted 대기와 coordinator/version/registry rank, short capture buffer, 큰 inventory의 같은-prefix 안정화·참조 수명 | capture 구현 전 |
+| F02 capture | CommitAttempted 대기와 coordinator/version/registry/retention rank, 채택한 immutable base+prefix의 pin/cleanup API, 같은-cut snapshot의 metadata 수명·turn continuation·정확 partition B | capture 구현 전 |
 | F02 소유·취소 | 진행 checkpoint retention 등록·실패 staging owner·Drop·retry·terminal cleanup | begin 효과 전 |
 | F02 retention | 신규 owner/dirty 등록과 단조 floor, physical WAL file 끝 경계·predecessor closure·Retiring 재개/불명 판정 | 실제 회수 전 |
 | F05 전체 peak | runtime DPT/capture·owner/inventory N_max·normal current/previous/new 공존·FD/12MiB workspace·WAL/protected 회계 | 해당 operation admission 전 |

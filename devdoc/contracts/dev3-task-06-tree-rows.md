@@ -236,3 +236,12 @@ T06-15는 3.12의 실제 복구 공급 뒤 닫는 통합 의무다. 그 전 무�
 | F07 | 작업/계약/통합 담당·독립 검토자, 전용/공유 파일 소유·병합 순서·소비자 수신 조건. 현재 미구현 symbol을 공급 완료로 등록하지 않음 |
 
 동결과 독립 검토는 이 상세 설계 작성 자체의 실행 결과가 아니다. 정본 계약과 충돌하거나 새 형식·수치·API가 필요한 항목은 해당 owner의 D2 기록으로 먼저 해결하고, 이 문서가 그 결정을 소급 채택한 것으로 사용하지 않는다.
+
+<a id="cursor-batch-bound"></a>
+## 비교 분석 후속 — cursor batch의 수명·비용 경계
+
+현행 snapshot/own mutation 재검사와 full key resume를 기준선으로 유지한다. 결과 N개, root reseek 비용 H, 후보당 처리 c일 때 단순 N회 비용 `N(H+c)`에 비해 b개씩 처리하는 이상 비용은 `ceil(N/b)H+Nc`다. invisible/tombstone/Undo 체인을 만나면 후보 수가 결과 수보다 크므로 **반환 행 수만 b로 제한하는 것은 bounded 작업이 아니다**. 향후 batch 후보는 방문 candidate 수·decode/복사 bytes·Undo hop 작업량·취소 확인 간격·workspace를 함께 제한한다. 숫자는 실제 F05 뒤 동결한다.
+
+batch 사이에는 page pointer/latch를 보존하지 않고 snapshot token·own mutation revision·마지막 검사한 full physical key로 재진입한다. candidate budget 소진 시 결과0이라도 진행 cursor와 완료/미완료를 구분해야 하며 같은 invisible 후보를 영원히 반복하지 않아야 한다. split/delete/reuse·자기 변경이 cursor 권한을 바꾸면 기존 규약대로 재검사한다. 최적화 전후 같은 결과·중복/누락 없음과 실제 candidate/read bytes를 검증한다. batch 구현은 실측 뒤 별도 후보이고 최초 행 통합의 선행 조건이 아니다.
+
+작은 row·넓은 key·다중 index의 공간 기준선은 [표현 비용 산식](dev3-resource-bounds.md#representation-cost)에 둔다. 형식 축소나 압축을 이번 변경으로 채택하지 않는다.

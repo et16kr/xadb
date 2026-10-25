@@ -77,7 +77,7 @@ offline create-index는 [3.07의 drain owner 규약](dev3-task-07-indexes.md)을
 | commit 뒤 reply 실패 | 선택된 DDL 유지, 외부 응답 미관측은 UNKNOWN |
 | restart orphan build | allocation ownership·transaction/system terminal 상태로 검증한 미공개 작업만 정리. directory 이름 추측으로 삭제 금지 |
 
-현재 undo codec는 Catalog target identity만 표현하며 occupied before body는 `UnsupportedCatalogBody`다. Missing/retire를 우회 허용하지 않는다. **catalog before body·native effect·logical CLR을 먼저 동결·구현한 뒤** catalog effect를 활성화한다. body bytes를 opaque blob으로 저장해 rollback 지원을 가장하지 않는다.
+typed XCB1 Catalog occupied before codec은 [현재 Undo 계약](dev3-undo-format.md)에 제한 공급되었다. 이 표현 완료는 실제 Catalog effect·logical CLR 완료가 아니다. **최소 Catalog CREATE의 before/after·공통 terminal·예약·복구 소비를 연결한 뒤** 실제 table/anchor를 공개한다. Missing/retire를 우회하거나 opaque body로 rollback 지원을 가장하지 않는다.
 
 ## 6. 자원·개발 단위
 
