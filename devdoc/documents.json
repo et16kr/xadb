@@ -2297,6 +2297,11 @@
       "path": "evidence/dev2-pf04-cpu-split-20261025.json",
       "role": "evidence",
       "title": "DEV2 PF04 CPU 분리 source별 선택 검증"
+    },
+    "dev3-plan4-free-undo.md": {
+      "path": "contracts/dev3-plan4-free-undo.md",
+      "role": "contract",
+      "title": "DEV3 원 plan4의 Free Undo 페이지 수명"
     }
   }
 }
