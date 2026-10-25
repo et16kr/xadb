@@ -681,3 +681,12 @@ ELF에는 symbol table·DWARF가 없어 줄 번호를 직접 조회하지 않았
 [구체 계획](../plans/dev2-pf04-resolution-plan.md#p2-k0-owner)을 독립 검토하고 `a64ca58`로 먼저 commit했다. 활성 Collector가 Counters Arc를 소유해 snapshot/cursor의 별도 clone/drop을 줄이는 C1만 구현했다. [선택12함수·실제 PMU2·paired40실행](../evidence/dev2-pf04-k0-owner-20261025.md)의 정답·자원·guard는 통과했지만 확인 elapsed 중앙 비율0.975373, 구간 상한0.990642로 동결 채택 조건0.95 미만에 미달했다. C1은 기각하고 두 제품 파일을 원래 byte로 돌렸다. 후보 구현·시험·raw는 원 source로 보존하며 현재 제품에 최적화를 적용하지 않았다.
 
 Off/Always guard는 확인 실패 중단 규칙에 따라 NOT_RUN이고 완료 시험·무변경 하위 회귀는 반복하지 않았다. 최종 독립 검토 상태는 증거 기록을 따른다. P2 후보 평가를 종료하며 P3/P4·원 PF04 네 FAIL·DEV2/B2/D0 INCOMPLETE는 유지한다.
+
+
+<a id="dev2-pf04-io-cause-20261025"></a>
+
+## 2026-10-25 P3 영속 I/O 원인 관측
+
+`360961b` 계획 commit 뒤 [새 BPF 수집·분석 도구와 source별 선택 검증](../evidence/dev2-pf04-io-cause-20261025.md)을 구현했다. 제품은 고정5253caa clean export이며 제품 변경0이다. 도구 unit 고유16·native owner6·제품 연결4slot의 정답을 검증했고 기존 완료 제품 시험은 반복하지 않았다. 두 추적의512개 fsync가 원 측정구간과 대응하며 fsync 중 journal wait 겹침은99.0435%/99.2930%다.
+
+0byte 미연결 완료의 논리 종료 여부를 구분할 kernel state가 없어 전체 요청 비율은 INCONCLUSIVE다. Always trace/control p99 screen은1.92731배로 FAIL이다. 다음 단계는 flush 순서 provenance·transaction별 phase 연결이며 이를 확인하기 전 P4 WAL 후보를 자동 채택하지 않는다. 원 PF04 네 FAIL·DEV2/B2/D0 INCOMPLETE는 유지하고 독립 최종 검토 상태는 증거 기록을 따른다.

@@ -3,6 +3,16 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev2-pf04-io-cause-20261025.md": {
+      "path": "evidence/dev2-pf04-io-cause-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 P3 영속 I/O 관측"
+    },
+    "dev2-pf04-io-cause-20261025.json": {
+      "path": "evidence/dev2-pf04-io-cause-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 P3 영속 I/O 관측 source별 기록"
+    },
     "dev2-pf04-k0-owner-20261025.md": {
       "path": "evidence/dev2-pf04-k0-owner-20261025.md",
       "role": "evidence",

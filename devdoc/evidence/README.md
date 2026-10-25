@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV2 PF04 P3 영속 I/O 관측](dev2-pf04-io-cause-20261025.md) · [source·결과 기록](dev2-pf04-io-cause-20261025.json) — 선택 도구 검증·4slot 정답 PASS, 요청 비율 미확정·Always 영향 FAIL·원 PF04 FAIL 유지.
+
 - [DEV2 PF04 P2 K0 관측 소유권 후보 기각](dev2-pf04-k0-owner-20261025.md) · [source·측정 기록](dev2-pf04-k0-owner-20261025.json) — 선택12함수·PMU2·paired40실행, 확인 개선 기준 미달로 제품 원복, PF04 FAIL 유지.
 
 - [DEV2 PF04 P1 실제 PMU 수집 후속](dev2-pf04-pmu-20261025.md) · [source별 선택 검증](dev2-pf04-pmu-20261025.json) — 명시적 CAP_PERFMON 수집·정리 검증 완료, PF04 FAIL 유지.

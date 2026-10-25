@@ -130,7 +130,7 @@ P2의 새로운 탐색은 이전 종료한3후보 예산에 추가하지 않는�
 
 ### 변경별 시험과 고정 native 예산
 
-새 분석기의 수동 vector로 interval clip/union·중첩·동일 timestamp·request 재사용/중복/고아/requeue·오류·512개/구간/inode 불일치·count/loss·알 수 없는 record 거절을 검증한다. 수집기의 fixed argv/필터·identity·deadline/취소·준비 실패·소유 cleanup·원자료 보존을 새 사례로 선택한다. native helper는 정상·attach 뒤 payload 전 실패·활성 취소·parent-death watchdog 각1개다. 구현 결함 때문에 실패한 경우 실제 수정 diff/실패 사례만 다시 검증하고 최초 실패를 보존한다. 기존 제품·하위 회귀·전체 wrapper·완료 P1/P2 시험은 반복하지 않는다.
+새 분석기의 수동 vector로 interval clip/union·중첩·동일 timestamp·request 재사용/중복/고아/requeue·오류·512개/구간/inode 불일치·count/loss·알 수 없는 record 거절을 검증한다. 수집기의 fixed argv/필터·identity·deadline/취소·준비 실패·소유 cleanup·원자료 보존을 새 사례로 선택한다. native helper는 정상·attach 뒤 payload 전 실패·활성 취소·runner EOF 각1개다. 구현 검토에서 root supervisor 강제 사망의 PDEATHSIG 설정 전 race와 독립 deadline의 별도 증거가 필요해, 고정 parent 검증 launch를 보완하고 supervisor 강제 사망·실제55초 watchdog 각1개를 추가했다. helper 총6개이며 앞선4개는 반복하지 않고 제품 연결4slot은 유지한다. 구현 결함 때문에 실패한 경우 실제 수정 diff/실패 사례만 다시 검증하고 최초 실패를 보존한다. 기존 제품·하위 회귀·전체 wrapper·완료 P1/P2 시험은 반복하지 않는다.
 
 clean export 기준선은 `5253caa`이며 병행 DEV3 변경을 제외한다. 제품 source는 그대로 두고 이번 새 도구만 결합한 release worker를 사용한다. 실행 input은 기존 영속 seed20261018·128행·warmup64·측정512다. 새 도구의 실제 연결·영향을 검증하는 native는 아래4slot만 허용하며 원 제품 인수 반복으로 세지 않는다.
 
@@ -147,12 +147,14 @@ clean export 기준선은 `5253caa`이며 병행 DEV3 변경을 제외한다. �
 
 종료 산출물은 source/binary/kernel/device/recipe·원자료·정답·필수512 대응/누락·CPU 관측·영향 screen·cleanup과 독립 검토다. 충분히 연결되지 않은 원인은 INCONCLUSIVE로 기록하고, 그 원인을 구분하려면 무엇을 추가로 관측해야 하는지 구체화해 P3 commit한다. P4는 충분한 근거와 별도 형식/복구 계약 없이는 시작하지 않는다.
 
-P3 계획 상태: **PASS_PLAN_ONLY 채택 / 구현·실행 전**. 독립 검토자가 clock·완료 경로·root child 소유·EOF·예산 보완본의 차단0을 확인했다. 전용 supervisor의 control pipe는 BPF에 상속하지 않고 BPF child에만 parent-death KILL을 적용한다.
+P3 계획 상태: **PASS_PLAN_ONLY 채택**. 계획 채택 당시 구현·실행 전이었으며 이후 실행은 [P3 증거](../evidence/dev2-pf04-io-cause-20261025.md)를 따른다. 독립 검토자가 clock·완료 경로·root child 소유·EOF·예산 보완본의 차단0을 확인했다. 전용 supervisor의 control pipe는 BPF에 상속하지 않고 BPF child에만 parent-death KILL을 적용한다.
 
 ## 검토·상태 기록
 
 - P0 계획: `/root/pf04_evidence_review`의 `PASS_PLAN_ONLY`를 채택했다. R1 권한 부재 대체 경로, R2 raw PMU·FIFO deadline, R3 시험 소유 구분을 반영했고 차단/미해결 지적은0개다. 검토 뒤 상태·receipt만 기록하고 계획 commit을 생성한다.
 - 검토 receipt: `/home/et16/xadb-dev2-evidence/pf04-analysis-20261025/plan-review.json`, SHA-256 `f0b15ad3063f9f02716c2d3f1d812bf9c8048c02e3d840b20affc50f9c3571c2`. 검토 본문 projection SHA-256 `903f30baec57dfb17855debd644e725887b5a9471b2ca32e42dfe64dc69d2124`는 상단 상태와 본 절을 제외한다. 계획 채택은 구현·시험 실행 증거가 아니다.
 - P1 도구 구현·선택 검증: 계획 commit `82c14ba` 뒤 수행했다. [source별 실행 기록](../evidence/dev2-pf04-window-20261025.md)을 따르며 당시 일반 사용자 PMU는 UNAVAILABLE이었다. 승인된 후속의 [실제 PMU 수집·선택 검증](../evidence/dev2-pf04-pmu-20261025.md)을 별도 연결하며 최종 독립 검토는 각 기록의 채택 상태를 따른다. P0 검토 projection은 계획 commit 시점의 본문에 해당한다.
-- P2: 계획 commit `a64ca58` 뒤 C1 구현·선택 검증·확인 측정을 수행했다. [후보 기각 증거](../evidence/dev2-pf04-k0-owner-20261025.md)의 확인 구간 상한0.990642가 동결0.95 미만 조건을 충족하지 못해 제품을 원복하고 후보 평가를 종료했다. Off/Always guard는 NOT_RUN, 최종 검토는 증거 기록을 따른다. P3–P4는 진입 전이며 별도 구체 검토를 유지한다.
+- P2: 계획 commit `a64ca58` 뒤 C1 구현·선택 검증·확인 측정을 수행했다. [후보 기각 증거](../evidence/dev2-pf04-k0-owner-20261025.md)의 확인 구간 상한0.990642가 동결0.95 미만 조건을 충족하지 못해 제품을 원복하고 후보 평가를 종료했다. Off/Always guard는 NOT_RUN, 최종 검토는 증거 기록을 따른다. P2 종료 당시 P3–P4는 진입 전이었으며 별도 구체 검토를 유지한다.
 - 원 PF04 네 실패와 DEV2/B2/D0 INCOMPLETE: 유지.
+
+- P3: 계획 commit `360961b` 뒤 [도구·선택 관측](../evidence/dev2-pf04-io-cause-20261025.md)을 완료했다. helper 새 경계2개를 추가해6개로 한정 검증하고 제품 연결4slot은 유지했다. 정답과512 fsync/wait 연결은 확인했으나 요청 전체 비율은 INCONCLUSIVE·Always 영향 screen FAIL이다. P3 후속 provenance 관측과 원 CPU 한도 설명이 남고 P4는 시작하지 않았다.

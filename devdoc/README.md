@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-25 [DEV2 PF04 P3 영속 I/O 관측](evidence/dev2-pf04-io-cause-20261025.md): 새 도구·선택 검증과4slot 정답 검산을 완료했다. 두 추적의512 fsync와 journal wait를 연결했으며 요청 전체 비율은 미확정, Always 영향 screen FAIL·원 PF04 FAIL·DEV2 미완료를 유지한다.
+
 2026-10-25 [DEV2 PF04 P2 K0 소유권 후보 기각](evidence/dev2-pf04-k0-owner-20261025.md): 계획 commit 뒤 C1을 구현·선택 검증했으나 확인10쌍의 개선 약2.46%가 동결 기준에 미달해 제품을 원복했다. 후보·원자료를 보존하며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 
 2026-10-25 [DEV3 중단된 plan4 복구 단위 재개](evidence/dev3-recovery-resumed-20261025.md): 필수50개 source별 PASS, 완료 제품 ID 반복0, 원 실패 보존. 복구 owner의 같은 pool 인계와 실제3PID 재진입을 검증했으며 최종 독립 D1을 한정 수용했다. 전체 DEV3/S5는 미완료다.

@@ -1,0 +1,49 @@
+config = { max_map_keys = 8192; perf_rb_pages = 256; missing_probes = error; }
+BEGIN { @enabled = 1; }
+self:signal:SIGUSR1 { @enabled = 0; printf("DISABLED %llu\n", nsecs(monotonic)); }
+tracepoint:ext4:ext4_sync_file_enter /@enabled && pid == __WORKER__/ {
+ @counts[0] = count();
+ printf("FS_IN %llu %u %u %llu\n", nsecs(monotonic), tid, args.dev, args.ino);
+}
+tracepoint:ext4:ext4_sync_file_exit /@enabled && pid == __WORKER__/ {
+ @counts[1] = count();
+ printf("FS_OUT %llu %u %u %llu %d\n", nsecs(monotonic), tid, args.dev, args.ino, args.ret);
+}
+fentry:vmlinux:jbd2_log_wait_commit /@enabled && pid == __WORKER__/ {
+ @counts[2] = count();
+ printf("WAIT_IN %llu %u %u %u\n", nsecs(monotonic), tid, args.journal->j_fs_dev->bd_dev, args.tid);
+}
+fexit:vmlinux:jbd2_log_wait_commit /@enabled && pid == __WORKER__/ {
+ @counts[3] = count();
+ printf("WAIT_OUT %llu %u %u %u %d\n", nsecs(monotonic), tid, args.journal->j_fs_dev->bd_dev, args.tid, retval);
+}
+tracepoint:jbd2:jbd2_start_commit,
+tracepoint:jbd2:jbd2_commit_locking,
+tracepoint:jbd2:jbd2_commit_flushing,
+tracepoint:jbd2:jbd2_commit_logging,
+tracepoint:jbd2:jbd2_end_commit /@enabled && args.dev == __DEV__/ {
+ @counts[4] = count();
+ printf("PHASE %llu %u %s %u %u\n", nsecs(monotonic), pid, probe, args.dev, args.transaction);
+}
+rawtracepoint:vmlinux:block_rq_issue /@enabled/ {
+ $r = args.rq;
+ if ($r->q->disk->major == __MAJOR__ && $r->q->disk->first_minor == __MINOR__) {
+  @counts[5] = count();
+  printf("ISSUE %llu %llu %u %u %llu\n", nsecs(monotonic), (uint64)$r, $r->cmd_flags, $r->__data_len, $r->__sector);
+ }
+}
+rawtracepoint:vmlinux:block_rq_complete /@enabled/ {
+ $r = args.rq;
+ if ($r->q->disk->major == __MAJOR__ && $r->q->disk->first_minor == __MINOR__) {
+  @counts[6] = count();
+  printf("COMPLETE %llu %llu %u %u %u\n", nsecs(monotonic), (uint64)$r, args.error, args.nr_bytes, $r->__data_len);
+ }
+}
+rawtracepoint:vmlinux:block_rq_requeue /@enabled/ {
+ $r = args.rq;
+ if ($r->q->disk->major == __MAJOR__ && $r->q->disk->first_minor == __MINOR__) {
+  @counts[7] = count();
+  printf("REQUEUE %llu %llu\n", nsecs(monotonic), (uint64)$r);
+ }
+}
+END { print(@counts); clear(@counts); clear(@enabled); }

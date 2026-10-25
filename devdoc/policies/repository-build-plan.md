@@ -509,3 +509,8 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 [중지 기록](../evidence/dev3-recovery-paused-20261025.md)의 실제 작성 파일만 관리 JSON `dev3_plan4_recovery_checkpoint`에 등록한다. 최신 후보는 미검증 WIP이며 패키지·의존성·공개 지원 범위를 추가하지 않는다. 미연결 fault/observation source도 draft 상태로 보존하고, 인수 완료로 세지 않는다.
 
 2026-10-25 [중단 작업 재개](../evidence/dev3-recovery-resumed-20261025.md)는 별도 `dev3_plan4_recovery_owner`에 실제 추가한 closure/physical/publication/observation/native 시험과 native controller를 등록한다. 앞의 checkpoint는 당시 상태로 보존한다. 기존 engine·scripts·tests source roots 안의 구현이며 패키지나 의존성을 추가하지 않는다. 원 source·완료·실패와 새 선택 실행의 경계는 재개 증거를 따른다.
+
+
+## DEV2 PF04 P3 영속 I/O 관측 도구
+
+[단계 계획](../plans/dev2-pf04-resolution-plan.md#p3-io-cause)의 XADBTest 도구를 기존 scripts root에 추가했다. `dev2_io_trace.py`는 P1 runner 조립, `dev2_io_supervisor.py`는 고정 root child 수명, `dev2_io_trace.bt`는 kernel event, `dev2_io_analysis.py`는 보존 event 분석, `test_dev2_io_trace.py`는 변경 범위 선택 검증을 소유한다. 제품 package·의존·source root·clean export 규칙은 바꾸지 않는다. 설치된 bpftrace0.25와 kernel BTF가 필요한 opt-in 진단이며 제품 성능 인수나 자동 최적화 경로가 아니다. [실제 실행·미확정 범위](../evidence/dev2-pf04-io-cause-20261025.md)를 따른다.

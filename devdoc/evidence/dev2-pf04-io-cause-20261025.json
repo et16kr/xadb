@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "classification": "D2_SCOPED_IO_OBSERVATION",
+  "owner": "/root",
+  "status": "IMPLEMENTED_OBSERVED_SCOPED_REVIEW_ACCEPTED",
+  "plan_commit": "360961bc965d27480cbba321824b7db54bc613da",
+  "plan_ref": "dev2-pf04-resolution-plan.md#p3-io-cause",
+  "product_source": {
+    "build": {
+      "source_sha256": "7ced0a5622825b971a4a146cdd8d1ce4a5ef01eefe633e59deb6b338390a5329",
+      "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+      "target": "x86_64-unknown-linux-gnu",
+      "profile": "release",
+      "self_test": false
+    },
+    "workers": {
+      "durable": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-io-cause-20261025/target/x86_64-unknown-linux-gnu/release/xadbtest-durable-performance-worker",
+        "sha256": "ea1f0f7c5f2d58a61199f399ae6961f290449dea488a9187ebf11505bc501c51"
+      }
+    }
+  },
+  "tool_sources": {
+    "scripts/dev2_io_analysis.py": "d605ccd80bdaf8a289bb822785e9fc5692a61e684d57a906c24cd3ea8cb74acf",
+    "scripts/dev2_io_supervisor.py": "f2f4b91dfc8e844b22a7923e4b23a43a3716fbdcd0b4cc634fc8df1c79479458",
+    "scripts/dev2_io_trace.bt": "be0b3eab4a45db4a3fd28200b0b64c63de9a1e224dc2a6b88c4f6cb13543c31c",
+    "scripts/dev2_io_trace.py": "4979eae8cedb3806eb69777a2bf4a1a95eeaf571c4d317f088d8022f36496ac8",
+    "scripts/test_dev2_io_trace.py": "1ac2543b18e7f15e256a214357029edfc25f7899334b6a16150f8494bc6b04c1"
+  },
+  "selected_validation": {
+    "new_unit_functions": 16,
+    "source_scoped_unit_executions": 18,
+    "unit_logs": [
+      "vectors-r2.log",
+      "vectors-r4.log",
+      "vectors-r5.log",
+      "vectors-r7.log"
+    ],
+    "native_owner_cases": 6,
+    "native_owner_logs": [
+      "native-r3-normal.log",
+      "native-r3-failure-paths.log",
+      "native-r6.log"
+    ],
+    "product_connection_cases": 4,
+    "unchanged_product_regressions": 0,
+    "whole_workspace_runs": 0,
+    "original_import_error": "vectors-r1.log",
+    "scope": "source-specific evidence; not a final-source full rerun",
+    "source_snapshots": [
+      "source-r2",
+      "source-r3",
+      "source-r6",
+      "source-r7"
+    ],
+    "intermediate_full_trees_not_retained": [
+      "r4",
+      "r5"
+    ]
+  },
+  "slots": [
+    {
+      "slot": {
+        "index": 0,
+        "observations": false,
+        "trace": false
+      },
+      "status": "CORRECT_DIAGNOSTIC",
+      "measurement_ns": 2719346386,
+      "cpu_ns": 19809002,
+      "cycle_p99_ns": 5883019
+    },
+    {
+      "slot": {
+        "index": 1,
+        "observations": false,
+        "trace": true
+      },
+      "status": "CORRECT_DIAGNOSTIC",
+      "measurement_ns": 2728408963,
+      "cpu_ns": 20471185,
+      "cycle_p99_ns": 5807436,
+      "io": {
+        "status": "INCONCLUSIVE_REQUEST_COVERAGE",
+        "fsync_count": 512,
+        "fsync_ns": 2720199439,
+        "journal_wait_ns": 2694181002,
+        "fsync_journal_overlap_ns": 2694181002,
+        "request_count": 2070,
+        "zero_byte_flush_count": 515,
+        "request_overlap_ns": null,
+        "counts": {
+          "3": 585,
+          "2": 586,
+          "1": 587,
+          "0": 588,
+          "5": 2366,
+          "4": 2944,
+          "6": 2953
+        },
+        "phase_count": 2575
+      },
+      "unmatched_requests": 515
+    },
+    {
+      "slot": {
+        "index": 2,
+        "observations": true,
+        "trace": true
+      },
+      "status": "CORRECT_DIAGNOSTIC",
+      "measurement_ns": 2749110769,
+      "cpu_ns": 24306714,
+      "cycle_p99_ns": 10441849,
+      "io": {
+        "status": "INCONCLUSIVE_REQUEST_COVERAGE",
+        "fsync_count": 512,
+        "fsync_ns": 2739366808,
+        "journal_wait_ns": 2719999901,
+        "fsync_journal_overlap_ns": 2719999901,
+        "request_count": 2119,
+        "zero_byte_flush_count": 525,
+        "request_overlap_ns": null,
+        "counts": {
+          "3": 585,
+          "2": 586,
+          "1": 587,
+          "0": 588,
+          "5": 2422,
+          "4": 2974,
+          "6": 3019
+        },
+        "phase_count": 2605
+      },
+      "unmatched_requests": 525
+    },
+    {
+      "slot": {
+        "index": 3,
+        "observations": true,
+        "trace": false
+      },
+      "status": "CORRECT_DIAGNOSTIC",
+      "measurement_ns": 2693737704,
+      "cpu_ns": 18063863,
+      "cycle_p99_ns": 5417841
+    }
+  ],
+  "screens": [
+    {
+      "observations": false,
+      "ratios": {
+        "measurement_ns": 1.0033326306080965,
+        "cpu_ns": 1.033428387760272,
+        "cycle_p99_ns": 0.9871523447400051
+      },
+      "status": "PASS"
+    },
+    {
+      "observations": true,
+      "ratios": {
+        "measurement_ns": 1.0205562200498495,
+        "cpu_ns": 1.3455988898941493,
+        "cycle_p99_ns": 1.9273081288284393
+      },
+      "status": "FAIL"
+    }
+  ],
+  "retained_recalculation": {
+    "scope": "retained bytes only, no worker execution",
+    "idle": {
+      "0": {
+        "status": "VALID_RETAINED_RAW",
+        "busy_percent": {
+          "cpu2": 1.21580547112462,
+          "cpu18": 0.3,
+          "disk": 1.6099293641881534
+        }
+      },
+      "1": {
+        "status": "VALID_RETAINED_RAW",
+        "busy_percent": {
+          "cpu2": 2.644964394710071,
+          "cpu18": 0.7,
+          "disk": 2.389902667629007
+        }
+      },
+      "2": {
+        "status": "VALID_RETAINED_RAW",
+        "busy_percent": {
+          "cpu2": 1.0214504596527068,
+          "cpu18": 0.2002002002002002,
+          "disk": 2.489905323839966
+        }
+      },
+      "3": {
+        "status": "VALID_RETAINED_RAW",
+        "busy_percent": {
+          "cpu2": 2.33502538071066,
+          "cpu18": 1.7,
+          "disk": 2.209909404763952
+        }
+      }
+    },
+    "io": {
+      "1": {
+        "fsync_pairs": 512,
+        "fsync_ns": 2720199439,
+        "wait_ns": 2694181002,
+        "fsync_fraction_of_elapsed": 0.9969910947693951,
+        "journal_fraction_of_fsync": 0.990435099490512,
+        "orphan_in_window": 515,
+        "all_orphans_zero_after_4096_completion": true,
+        "status": "INCONCLUSIVE_REQUEST_COVERAGE",
+        "cause": "pattern consistent with logical REQ_FSEQ_DONE; missing rq_flags/flush state prevents definitive classification"
+      },
+      "2": {
+        "fsync_pairs": 512,
+        "fsync_ns": 2739366808,
+        "wait_ns": 2719999901,
+        "fsync_fraction_of_elapsed": 0.9964555953474569,
+        "journal_fraction_of_fsync": 0.9929301519813114,
+        "orphan_in_window": 525,
+        "all_orphans_zero_after_4096_completion": true,
+        "status": "INCONCLUSIVE_REQUEST_COVERAGE",
+        "cause": "pattern consistent with logical REQ_FSEQ_DONE; missing rq_flags/flush state prevents definitive classification"
+      }
+    },
+    "files": {
+      "0": 5,
+      "1": 12,
+      "2": 12,
+      "3": 5
+    }
+  },
+  "limitations": [
+    "block completion lacks rq_flags/flush state; 515/525 zero-byte unpaired completions remain unknown",
+    "phase records collected but no transaction-phase request attribution computed",
+    "Always p99 screen FAIL; no extrapolation to untraced proportions",
+    "one traced/control pair per mode is not a stable cost estimate or original failure reproduction",
+    "idle driver did not reject missing/negative raw fields at runtime; all four retained windows independently satisfy exact completeness/nonnegative rules",
+    "runner was launched with taskset -c 3; per-process collector affinity snapshots were not retained"
+  ],
+  "next_actions": [
+    "Add kernel-validated rq_flags/end_io/flush-sequence provenance at ISSUE and COMPLETE before excluding logical completions. Freeze a new collector validation budget first.",
+    "Join wait transaction IDs to journal phases with independent vectors, preserving overlap/non-ownership semantics.",
+    "Do not adopt WAL preallocation/data-sync until metadata cause and current-build recovery contract justify it."
+  ],
+  "artifact_root": "/home/et16/xadb-dev2-evidence/pf04-io-cause-20261025",
+  "manifest": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-io-cause-20261025/artifact-manifest.json",
+    "sha256": "d502b27af2d75cea3e82b53db2f2c7272c3d99da246c27efb1ba4c7a31fe5141",
+    "files": 246
+  },
+  "plan_review": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-io-cause-20261025/p3-plan-review.json",
+    "sha256": "6f97ce39986fdac220452212dfbe71ef901b281c4059126556436b5bc57107a1",
+    "status": "PASS_PLAN_ONLY_ORIGINAL_PROJECTION"
+  },
+  "final_review": {
+    "status": "PASS_SCOPED_D1_D2_P3_OBSERVATION",
+    "reviewer": "/root/pf04_evidence_review",
+    "path": "/home/et16/xadb-dev2-evidence/pf04-io-cause-20261025/p3-final-review.json",
+    "sha256": "24fa9b16cc8b09af9afab1dfb1e1d1e3028d9996500f9a33d116a92fa917d0da",
+    "blockers": 0
+  },
+  "product_changes": 0,
+  "system_restarts": 0,
+  "pf04": "ORIGINAL_FOUR_FAIL_UNCHANGED",
+  "dev2": "INCOMPLETE"
+}

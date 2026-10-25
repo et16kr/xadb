@@ -5959,5 +5959,20 @@
     "controller_tests": 14,
     "new_packages": [],
     "new_dependencies": []
+  },
+  "dev2_pf04_io_observation": {
+    "plan_ref": "dev2-pf04-resolution-plan.md#p3-io-cause",
+    "evidence_ref": "dev2-pf04-io-cause-20261025.json",
+    "implementation_ref": "dev2-implementation.md#dev2-pf04-io-cause-20261025",
+    "implemented_paths": [
+      "scripts/dev2_io_trace.py",
+      "scripts/dev2_io_supervisor.py",
+      "scripts/dev2_io_trace.bt",
+      "scripts/dev2_io_analysis.py",
+      "scripts/test_dev2_io_trace.py"
+    ],
+    "product_changes": false,
+    "source_roots_changed": false,
+    "performance_acceptance": false
   }
 }
