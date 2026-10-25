@@ -197,3 +197,35 @@ D2 선택은 고정 BPF config의 `on_stack_limit=128`이다. 현재 최대72byt
 Off/trace의 원 count·연결 검사 통과는 보존한다. 다만 같은 공유 scratch 수집기여서 count가 맞아도 조용한 payload 오염이 전혀 없었다는 증명은 아니다. 이 해석 한계를 추가하고 완료 사례를 반복하거나 원 판정을 소급 변경하지 않는다.
 
 수집 오류 보완 계획 상태: **PASS_PLAN_ONLY 채택 / 채택 당시 수정 전**. 이후 변경 검증은 [후속 증거](../evidence/dev2-pf04-flush-provenance-20261025.md)를 따른다. 독립 검토 차단0개. receipt `/home/et16/xadb-dev2-evidence/pf04-flush-provenance-20261025/stack-plan-review.json`의 SHA-256은 `43f62dfc789a63e9da8ec1c7a806e03767fa5f828e60525ad3d61572d74a93f1`, 본 anchor부터 상태 문장 직전까지의 검토 projection은 `ef290419c358a4456feb992a24bb63357b621fbcef286b24704c5feb2456fbad`다.
+
+<a id="p4-wal-decision"></a>
+
+## P4 판단: PF04 해결책으로서 WAL 변경은 미채택
+
+P3b는 `688b9af`에서 [한정 검증·독립 검토](../evidence/dev2-pf04-flush-provenance-20261025.md)를 마쳤다. 수정 Always의 fsync512개와 물리 요청·journal phase를 연결했지만, 공유 장치의 대기 겹침은 원 PF04 상대 비용 실패의 인과 증명이 아니다. 고정 계측 CPU 비용을 둔 채 Off/On 공통 sync 시간을 줄이면 상대 비용은 오히려 커질 수 있다. 따라서 이번 PF04 해결책으로 WAL 선확보/data sync를 채택하지 않는다. 전체 WAL 성능 개선을 영구 기각한다는 뜻은 아니다.
+
+설치 커널 Ubuntu `7.0.0-38.38`의 보존 소스 `fs/ext4/fsync.c`에서 data sync도 `i_datasync_tid`의 journal commit을 기다린다. `fs/ext4/inode.c:ext4_do_update_inode`는 on-disk 크기가 달라지면 `need_datasync=1`로 기록하며 delayed-allocation write-end/writeback도 크기 갱신을 수행한다. PostgreSQL 로컬 revision `45fc51fcbf4534ea2f6f85e36f8155dbd5ba9851`의 `XLogFileInitInternal`은 segment 준비·sync를 별도 수행한다. XADB의 현재 물리 EOF·유효 tail·quota·rotation·backup·복구 계약을 그대로 둔 한 줄 치환과 같지 않다. 원 소스와 해석 범위는 후속 증거에 연결한다. 이 읽기 전용 판단에 제품 시험을 실행하지 않는다.
+
+<a id="c2-single-writer"></a>
+
+## C2: K0 단일 쓰기 소유자의 통계 갱신
+
+2026-10-25 후속 “이어서 해주세요”에 따른 D2 후보다. 작업·계약·통합 담당 `/root`, 독립 검토자 `/root/pf04_evidence_review`. 본 계획을 검토·commit한 뒤 구현한다. C1의 Arc 소유권 통합과 종료된 탐색은 재개하지 않는다. 새로운 근거는 실제 mutation callsite의 단일 writer 소유권이며 C2 하나만 허용한다. PMU 이벤트 확장은 구현하지 않는다.
+
+### 소유권과 보존할 의미
+
+`VolatileStore`는 복제되지 않으며 Create/Drop/Insert/Replace/Delete는 각각 `&mut self`에서만 시작·완료한다. 이 다섯 label의 started/completed/failed는 writer가 하나이므로 relaxed atomic load→checked_add→store로 정확히 갱신할 수 있다. 다른 thread의 snapshot은 별도 atomic 관측만 수행한다. Snapshot/Lookup/Schema/Read/Scan/NextPage는 여러 작성자가 가능하므로 기존 CAS 갱신을 유지한다. 포화 때 값은 MAX를 유지하고 saturated를 공개하며 panic을 completed로 세지 않는다.
+
+단순 `&mut Diagnostics`는 clone된 collector와 경쟁할 수 있으므로 충분하지 않다. 비 Clone writer wrapper가 Diagnostics 하나를 소유하고, store만 이 wrapper를 보유한다. snapshot/cursor에는 clone 가능한 shared view만 전달한다. 내부 MutationOperation5개와 SharedOperation6개를 분리하여 shared 갱신으로 mutation label을 선택할 수 없게 한다. shared view의 constructor는 모듈 내부로 좁힌다. wrapper는 추가 Arc·heap allocation·quota charge를 만들지 않는다. 기존 공통 Counters, row/quota/root/ID/오류/공개 순서, dropped/emitted/sequence/queue의 원자 경로, clock·부하·WAL은 유지한다. 별도 포화 전 fast/wrap 경로나 unsafe는 도입하지 않는다.
+
+### 변경별 검증과 비교 예산
+
+- 기준선은 `688b9af`의 깨끗한 export, 후보는 그 export에 C2의 diagnostics/substrate와 관련 시험 diff만 적용한다. 병행 DEV3 변경은 포함하지 않는다. release 설정·target·toolchain은 양쪽에서 같게 한다. 후보가 기각되면 diff·source·원 결과를 보존하고 제품을 기준선으로 복원한다.
+- 새 unit은 writer label별 성공/실패·MAX-1/MAX 포화·started 후 panic/미완료·writer 종료 뒤 shared view 수명과 동시 shared 읽기/drain을 검증한다. 새 API가 mutation label을 shared 경로로 기록하지 못하고 writer가 Clone이 아닌 경계는 compiler 반례로 확인한다. 기존 `performance`의 mode별 값/오류/quota, 모든 label의 성공/실패, concurrent snapshot/read3개만 직접 변경 경로로 선택한다. 새 wrapper와 shared 호출 형태가 바뀌는 기존 diagnostics4개는 관련 경계로 선택한다. 실행 전 실제 diff에 맞춰 exact selector를 기록한다. 무변경 하위/전체 workspace·완료 사례 반복은 없다. 관련 fmt·engine/worker Clippy는 시험 실행과 구분한다.
+- 비교 입력은 기존128행·old snapshot·capacity256·warmup4096·측정65536·stride16·seed20261018 그대로다. controller/analyzer·인수 한도도 유지한다. 각각10쌍,5AB+5BA로 실행한다. C2의 새로운 탐색은 Detailed1campaign(order seed2026102511), 확인은 새 Detailed1campaign(2026102512)뿐이다. 탐색의 correctness PASS·validity VALID·guardrails PASS 및 elapsed 중앙 비율<1일 때만 확인한다. 확인은 기존 순서통계 구간 상한<0.95인 IMPROVED와 세 품질 판정을 모두 요구한다. C1의 기준을 낮추지 않는다.
+- 확인이 통과한 경우에만 Off/Always 각10쌍 guard(2026102513/2026102514)를 한 번씩 실행한다. pair별 elapsed/CPU/external1.15, sample p99 1.25, RSS 증가4MiB를 그대로 적용한다. 최대4campaign80native 실행이며 실패/불확실이면 추가 tuning·재확인 없이 중단·기각한다. 이번에는 별도 PMU native를 추가하지 않는다. 유리한 부수 지표나 실패 pair 제거로 채택하지 않는다.
+- CPU2 controller/worker, sibling18 관측, 각 campaign 직전10초 CPU2/18 busy 각각5% 이하, 최대10분 유휴 대기를 유지한다. CPU key/길이/비음수 delta/양의 합을 검증하고 자기 소유 build/test와 측정을 겹치지 않는다. 프로세스·원 output·실패·deadline·source/ELF를 보존한다. 실행 wrapper의 timeout 때 원 stdout/stderr를 저장하고 소유 group을 bounded 정리한다. 재시작·서비스/전력/governor/sysctl 변경은 없다.
+
+후보 확인 통과는 C2의 한정 개선 증거다. 원 PF04 네 FAIL·DEV2 미완료를 자동 해제하지 않으며 영속 CPU/tail 실패도 별개다. 최종 독립 D1/D2가 소유권·반례·선택 시험·모든 원 측정과 채택/기각을 확인한 뒤 단계 commit한다. 동일 코드 인수를 다시 돌릴 명목으로 본 계획을 확장하지 않는다.
+
+C2 계획 상태: **PASS_PLAN_ONLY 채택 / 구현·실행 전**. 독립 검토 차단0개. receipt `/home/et16/xadb-dev2-evidence/pf04-single-writer-20261025/plan-review.json`의 SHA-256은 `ac13e33f7cab54184a653d7847808918f96d7fc4126f2e06cf103ff40683e8c7`, P4 anchor부터 이 상태 문장 직전 본문의 검토 projection은 `7c9d96fec4da315d185fe72889d0b10a8004b52222e575cd7254dfb83c67f3dc`다.
