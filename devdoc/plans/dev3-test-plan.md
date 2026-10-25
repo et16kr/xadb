@@ -907,3 +907,10 @@ S5는 고유5개와 `storage::tree_page::edit::extended_tests::leaf_edit_extende
 `scripts/dev3_plan4_free_undo_compiler.py`는 동결 baseline1·positive1·negative5의 컴파일러 검사이고, `scripts/test_dev3_free_undo_native.py`는 도구 고유4개다. 이들을 제품 실행 분모에 합치지 않는다. 최종 S5에는 위 신규 함수와 native3단계를 모두 포함한다. 기존 v1 순수 codec·원 실행 증거는 보존하며, v2로 변경된 실제 plan4 소비자의 기존 S5 입력은 실행 전에 현재 형식으로 적응하고 그 diff와 oracle 근거를 별도 검토한다. 과거 v1 runtime 입력을 새 runtime의 PASS로 간주하거나 누락하지 않는다.
 
 이 단위의 Free container는 Live Undo·UndoSequence·Catalog CREATE·첫 Row·Commit·nonempty 복구의 인수가 아니다. 중간에는 무변경 완료 시험을 반복하지 않으며 최종 S5의 DEV3 전수 예외만 기존 규칙대로 적용한다.
+
+<a id="commit-continuation-inventory"></a>
+## 원 Commit continuation 공통 공급
+
+[계약](../contracts/dev3-commit-continuation.md)·[동결 입력](../../tests/fixtures/dev3-commit-continuation/input-plan.json)·[source별 증거](../evidence/dev3-commit-continuation-20261025.md)를 따른다. 확정 선택 함수21개는 정적2·pool pre-stage4·core pre-stage1·WAL 물리14다. 중간 r1의 단일 WAL 함수에서 case0–2 완료 후 case3 기대값 FAIL을 보존하고, r2에는 변경 case3·미실행4–13 및 새 capacity/fence1만 실행했다. 이 부분 완료를 r2에서 분리된00–02함수의 새 PASS로 표시하지 않는다.
+
+S5에는 분리된21개 함수와 compiler baseline1/positive1/negative5, tool6을 포함한다. actual semantic grants·durable Drain/flush 순서·terminal 설치·native CREATE/restart는 이 공통 inventory에 포함된 것으로 보지 않으며 실제 소비자 구현과 함께 별도로 동결한다. 각 source의 실패와 미실행을 보존하고 중간 무변경 완료 시험을 반복하지 않는다.

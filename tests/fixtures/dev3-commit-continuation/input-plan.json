@@ -1,0 +1,148 @@
+{
+  "schema": "XADB_DEV3_COMMIT_COMMON_INPUT_V1",
+  "decision": "D3-COMMIT-CONTINUATION-001",
+  "status": "PRE_EXECUTION_FROZEN_COMMON_ONLY",
+  "scope": "original core Intent/cancel, original pool physical pre-stage ownership, original WAL first File write marker, changed source bounds",
+  "actual_commit_semantics": "NOT_RUN_NO_RECEIPT_CONSTRUCTORS",
+  "selected_functions": [
+    {
+      "selector": "storage::dirty_frame::commit::tests::commit_targets_intent_preserves_pins_and_checked_cancel",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::dirty_frame::commit::tests::commit_targets_prepare_rejection_returns_original_guard_before_pins",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::dirty_frame::commit::tests::commit_targets_intent_unwind_fences_and_releases_physical_ownership",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::dirty_frame::commit::tests::commit_common_source_bounds",
+      "phase": "source"
+    },
+    {
+      "selector": "transaction::concurrency::commit::tests::commit_common_prestage_intent_and_checked_cleanup",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::commit_common::commit_common_original_owner_source_admission",
+      "phase": "source"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c00_sync_pending",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c01_ensure_durable",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c02_wait_durable",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c03_prefix_error",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c04_zero_write",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c05_interrupted",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c06_short_write",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c07_sync_error",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c08_file_poison",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c09_prewrite_fence",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c10_claim_wait_fence",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c11_foreign_origin",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c12_lsn_gap",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::wal_io::first_write_tests::wal_first_write_c13_existing_io_owner",
+      "phase": "memory"
+    },
+    {
+      "selector": "storage::dirty_frame::commit::tests::commit_targets_capacity_preflight_preserves_fence_priority",
+      "phase": "memory"
+    }
+  ],
+  "budgets": {
+    "build_seconds": 180,
+    "source_seconds": 15,
+    "memory_seconds": 120,
+    "case_seconds": 30,
+    "channel_seconds": 5,
+    "compiler_total_seconds": 210,
+    "output_bytes": 8388608,
+    "artifact_bytes": 1073741824
+  },
+  "mandatory_deferred": [
+    "actual semantic stage and durable/install grants",
+    "durable Drain schedules and lower-image flush finalize",
+    "Commit stage-call certainty and private rejection receipt",
+    "actual terminal status/Root C/Job/credit/ATT installation",
+    "native CREATE Commit/restart and nonempty REBASE"
+  ],
+  "repeat_completed_unchanged_tests": false,
+  "old_evidence": "preserve original source, FAIL and NOT_RUN; no global source fingerprint promotion",
+  "prior_receipts": {
+    "r1_source": "210ad7d975b4dd625ba30096df09b471353d7408fb3863762a38f24284404ea6",
+    "source_functions_pass": 2,
+    "memory_functions_pass": 4,
+    "wal_old_function": "FAIL_CASE3_PREFIX_CALL_EXPECTATION",
+    "wal_cases_0_2": "completed sequential assertions before case3 failure; retain original partial evidence, no repeat",
+    "fmt": "FAIL_module_order",
+    "clippy": "NOT_RUN"
+  },
+  "r2_changed_selection": [
+    "storage::wal_io::first_write_tests::wal_first_write_c03_prefix_error",
+    "storage::wal_io::first_write_tests::wal_first_write_c04_zero_write",
+    "storage::wal_io::first_write_tests::wal_first_write_c05_interrupted",
+    "storage::wal_io::first_write_tests::wal_first_write_c06_short_write",
+    "storage::wal_io::first_write_tests::wal_first_write_c07_sync_error",
+    "storage::wal_io::first_write_tests::wal_first_write_c08_file_poison",
+    "storage::wal_io::first_write_tests::wal_first_write_c09_prewrite_fence",
+    "storage::wal_io::first_write_tests::wal_first_write_c10_claim_wait_fence",
+    "storage::wal_io::first_write_tests::wal_first_write_c11_foreign_origin",
+    "storage::wal_io::first_write_tests::wal_first_write_c12_lsn_gap",
+    "storage::wal_io::first_write_tests::wal_first_write_c13_existing_io_owner",
+    "storage::dirty_frame::commit::tests::commit_targets_capacity_preflight_preserves_fence_priority"
+  ],
+  "oracle_correction": "Original PrefixError returns 96 of 192 bytes, then BeforeError on the remaining 96. Two calls/writes at offsets4096/4192, marker1/fence unchanged. Reviewed before r2. No product WAL change.",
+  "compiler": {
+    "manifest_sha256": "491b1b663b7edac154b86bc6586fa0c990e86d878c5fe329593371f0a9252581",
+    "baseline": 1,
+    "positive": 1,
+    "negative": 5,
+    "status": "NOT_RUN"
+  },
+  "tool_tests": {
+    "functions": 6,
+    "seconds": 10,
+    "status": "NOT_RUN"
+  }
+}

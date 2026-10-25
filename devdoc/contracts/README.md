@@ -1,6 +1,8 @@
 # 기능 계약
 
-- [DEV3 원 plan4의 Free Undo 페이지 수명](dev3-plan4-free-undo.md) — 같은 allocator/pool의 INIT·flush·재적재·selected base/재장애 공급 계약; 구현·시험 미완료.
+- [DEV3 원 Commit의 지연 설치 수명](dev3-commit-continuation.md) — 기존 PinSet·WAL·core의 비공개 continuation과 durable content drain을 한정 D2 채택; actual terminal 권한·Commit/복구 검증 미완료.
+
+- [DEV3 원 plan4의 Free Undo 페이지 수명](dev3-plan4-free-undo.md) — 같은 allocator/pool의 INIT·flush·재적재·selected base/재장애 공급 계약; Free container 선택 검증·독립 D1 수용, Live Undo·행 거래 미완료.
 
 - [저장 세션의 국소 개선 경계](dev3-storage-session.md#consumer-driven-refinement) · [첫 행 완료 조건](dev3-task-11-commit.md#first-row-integration) — 원 권한·자원 수명과 live/recovery 상태 차이를 보존하며 실제 소비자에 필요한 변경만 선택한다. 제품 구현·시험 완료를 뜻하지 않는다.
 

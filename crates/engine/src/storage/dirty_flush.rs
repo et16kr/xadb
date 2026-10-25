@@ -322,7 +322,13 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
 }
 
 fn retryable(error: DirtyError) -> bool {
-    error.effect == Effect::Unchanged && matches!(error.cause, Cause::Busy | Cause::Capacity)
+    error.effect == Effect::Unchanged
+        && matches!(
+            error.cause,
+            Cause::Busy
+                | Cause::Capacity
+                | Cause::Concurrency(concurrency::Cause::InstallationPending)
+        )
 }
 
 struct CaptureAttempt<'b, 'c, 's, 'p, 'd> {

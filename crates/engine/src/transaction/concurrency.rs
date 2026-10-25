@@ -1,6 +1,6 @@
 //! DEV3 3.10.1.a.1: bounded operation admission and one version-edit gate.
-//! No page latch, snapshot, FIFO turn, WAL stage or Commit installation API.
-//! The separate test-support module simulates the future installation boundary.
+//! Private Commit continuation retains the original core and consumes sealed WAL
+//! receipts. Their semantic constructors remain unavailable until the real producer.
 #![allow(dead_code)] // Awaiting separately reviewed page/transaction consumers.
 
 use crate::storage::session_fence::SessionFence;
@@ -8,7 +8,18 @@ use foundation::error::Effect;
 use std::{
     marker::PhantomData,
     rc::Rc,
-    sync::{Mutex, MutexGuard, TryLockError},
+    sync::{Condvar, Mutex, MutexGuard, TryLockError},
+};
+
+#[path = "concurrency_commit.rs"]
+mod commit;
+use commit::Installation;
+#[allow(unused_imports)] // The source-census consumer is a separately supplied leaf.
+pub(crate) use commit::source_bytes as commit_common_source_bytes;
+#[allow(unused_imports)] // Sealed continuation types are named by their later consumer.
+pub(crate) use commit::{
+    CommitInstalling, CommitStage, DrainingInstallation, InstallationKey, PendingInstallation,
+    PrepareCommitError,
 };
 
 #[cfg(test)]
@@ -66,11 +77,9 @@ enum Mode {
     Apply,
     Content,
     Retired,
-    #[cfg(test)]
     CommitStage,
-    #[cfg(test)]
     CommitPending,
-    #[cfg(test)]
+    CommitDraining,
     CommitInstalling,
 }
 
@@ -90,9 +99,7 @@ struct State {
     slots: [OwnerSlot; OWNER_SLOTS],
     active_apply: u16,
     active_content: u16,
-    #[cfg(test)]
-    installation: test_support::Installation,
-    #[cfg(test)]
+    installation: Installation,
     installation_generation: u64,
 }
 impl State {
@@ -101,9 +108,7 @@ impl State {
             slots: [OwnerSlot::EMPTY; OWNER_SLOTS],
             active_apply: 0,
             active_content: 0,
-            #[cfg(test)]
-            installation: test_support::Installation::Open,
-            #[cfg(test)]
+            installation: Installation::Open,
             installation_generation: 0,
         }
     }
@@ -119,14 +124,13 @@ impl State {
                 Mode::Idle if slot.generation != 0 => {}
                 Mode::Apply if slot.generation != 0 && index != FLUSHER_SLOT => apply += 1,
                 Mode::Content if slot.generation != 0 => content += 1,
-                #[cfg(test)]
                 Mode::CommitStage | Mode::CommitInstalling
                     if slot.generation != 0 && index < FOREGROUND_OWNERS =>
                 {
                     apply += 1;
                 }
-                #[cfg(test)]
-                Mode::CommitPending if slot.generation != 0 && index < FOREGROUND_OWNERS => {}
+                Mode::CommitPending | Mode::CommitDraining
+                    if slot.generation != 0 && index < FOREGROUND_OWNERS => {}
                 _ => return false,
             }
         }
@@ -144,22 +148,14 @@ impl State {
         if !self.accounting_valid() {
             return false;
         }
-        #[cfg(test)]
-        if !test_support::valid_installation(self) {
+        if !commit::valid_installation(self) {
             return false;
         }
         true
     }
 
     fn installation_open(&self) -> bool {
-        #[cfg(test)]
-        {
-            self.installation == test_support::Installation::Open
-        }
-        #[cfg(not(test))]
-        {
-            true
-        }
+        self.installation == Installation::Open
     }
 }
 
@@ -169,6 +165,7 @@ pub(crate) struct PageConcurrency<'f> {
     fence: &'f SessionFence,
     state: Mutex<State>,
     version: Mutex<()>,
+    continuation: Condvar,
     #[cfg(test)]
     hooks: Mutex<test_support::Hooks>,
 }
@@ -206,6 +203,7 @@ impl<'f> PageConcurrency<'f> {
             fence,
             state: Mutex::new(State::new()),
             version: Mutex::new(()),
+            continuation: Condvar::new(),
             #[cfg(test)]
             hooks: Mutex::new(test_support::Hooks::default()),
         })
@@ -213,6 +211,7 @@ impl<'f> PageConcurrency<'f> {
 
     fn fatal(&self, cause: Cause) -> ConcurrencyError {
         self.fence.fence();
+        self.continuation.notify_all();
         ConcurrencyError {
             cause,
             effect: Effect::CallerMustResolve,
@@ -264,6 +263,7 @@ impl<'f> PageConcurrency<'f> {
     fn fence_unwind(&self) {
         if std::thread::panicking() {
             self.fence.fence();
+            self.continuation.notify_all();
             #[cfg(test)]
             test_support::hit_pause(self, test_support::PausePoint::FencedBeforeRelease);
         }
@@ -396,6 +396,12 @@ impl<'c, 'f> Owner<'c, 'f> {
         {
             let mut state = self.core.entry_state()?;
             self.check_mode(&state, Mode::Idle)?;
+            if matches!(
+                state.installation,
+                Installation::Draining(_, _) | Installation::Installing(_, _)
+            ) {
+                return Err(unchanged(Cause::InstallationPending));
+            }
             let count = state
                 .active_content
                 .checked_add(1)
@@ -430,6 +436,8 @@ impl<'c, 'f> Owner<'c, 'f> {
             state.slots[self.index].mode = Mode::Idle;
             Ok(())
         })();
+        drop(state);
+        self.core.continuation.notify_all();
         match failure {
             Some(error) => Err(error),
             None => cleanup,

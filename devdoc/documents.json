@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-commit-continuation.md": {
+      "path": "contracts/dev3-commit-continuation.md",
+      "role": "contract",
+      "title": "DEV3 원 Commit의 지연 설치 수명"
+    },
     "dev2-pf04-off-classification-20261025.md": {
       "path": "evidence/dev2-pf04-off-classification-20261025.md",
       "role": "evidence",
@@ -2342,6 +2347,16 @@
       "path": "evidence/dev3-plan4-free-undo-20261025.json",
       "role": "evidence",
       "title": "DEV3 원 plan4 Free Undo source별 검증 기록"
+    },
+    "dev3-commit-continuation-20261025.md": {
+      "path": "evidence/dev3-commit-continuation-20261025.md",
+      "title": "DEV3 원 Commit 공통 continuation 선택 검증",
+      "role": "evidence"
+    },
+    "dev3-commit-continuation-20261025.json": {
+      "path": "evidence/dev3-commit-continuation-20261025.json",
+      "title": "DEV3 원 Commit 공통 continuation source별 기록",
+      "role": "evidence"
     }
   }
 }

@@ -1,0 +1,116 @@
+{
+  "anchor": "crates/engine/src/storage/mod.rs",
+  "baseline_count": 1,
+  "budget": {
+    "artifacts_bytes": 1073741824,
+    "audit_seconds": 30,
+    "case_seconds": 30,
+    "output_bytes": 8388608,
+    "total_seconds": 210,
+    "worker_seconds": 180
+  },
+  "cases": [
+    {
+      "expected_code": null,
+      "name": "baseline",
+      "primary_spans": [],
+      "reason": "Unmodified coherent source baseline; infrastructure only."
+    },
+    {
+      "bytes": 689,
+      "expected_code": null,
+      "name": "positive",
+      "path": "positive.rs",
+      "primary_spans": [],
+      "reason": "Actual whole-set preparation and unstaged cancellation; original Owner can be borrowed again after core cancellation.",
+      "sha256": "85a44f8f6441d8ed4bbd15730209bd157874e7195f20787b96dc30023aafb0fc"
+    },
+    {
+      "bytes": 235,
+      "expected_code": "E0382",
+      "name": "double_consume",
+      "path": "double_consume.rs",
+      "primary_spans": [
+        {
+          "column_end": 15,
+          "column_start": 10,
+          "line_end": 6,
+          "line_start": 6
+        }
+      ],
+      "reason": "The actual physical CommitStageTargets cannot cancel twice.",
+      "sha256": "8020d4d1bb2b85d5bc765f58c723965a532da463cde0add42e092eea3f5fc604"
+    },
+    {
+      "bytes": 473,
+      "expected_code": "E0499",
+      "name": "owner_reborrow",
+      "path": "owner_reborrow.rs",
+      "primary_spans": [
+        {
+          "column_end": 37,
+          "column_start": 26,
+          "line_end": 13,
+          "line_start": 13
+        }
+      ],
+      "reason": "An actual core CommitStage retains the original mutable Owner borrow until cancellation.",
+      "sha256": "c873cf0aad818d0d166837942440d783ada45ec402a21e89a2f2eea7b1dbad4a"
+    },
+    {
+      "bytes": 352,
+      "expected_code": "E0382",
+      "name": "pending_double_consume",
+      "path": "pending_double_consume.rs",
+      "primary_spans": [
+        {
+          "column_end": 17,
+          "column_start": 10,
+          "line_end": 10,
+          "line_start": 10
+        }
+      ],
+      "reason": "The actual physical PendingCommitTargets cannot resume twice; opaque durable grant is only a function parameter.",
+      "sha256": "afbd3aae43361a70d6a87b2ec0768cb5dc31be240ff6191caba4f612f057ac42"
+    },
+    {
+      "bytes": 154,
+      "expected_code": "E0599",
+      "name": "raw_grant",
+      "path": "raw_grant.rs",
+      "primary_spans": [
+        {
+          "column_end": 30,
+          "column_start": 27,
+          "line_end": 5,
+          "line_start": 5
+        }
+      ],
+      "reason": "No StagedCommit::new(raw_lsn) factory exists outside the original producer; no private field or unsafe bypass is used.",
+      "sha256": "f1e132d981e34e7e08644cf63573fc63d3ca5f20fe72bc6201aadfc7e7fd3d74"
+    },
+    {
+      "bytes": 299,
+      "expected_code": "E0308",
+      "name": "physical_durable",
+      "path": "physical_durable.rs",
+      "primary_spans": [
+        {
+          "column_end": 40,
+          "column_start": 33,
+          "line_end": 9,
+          "line_start": 9
+        }
+      ],
+      "reason": "Physical DurableWal cannot replace semantic DurableCommit when resuming the actual pending target set.",
+      "sha256": "9377dc9ab4e29eaf8bbff0f2574c1fd7cc5cbd8a3dbeb92a0b81cf1f19666d7a"
+    }
+  ],
+  "declaration": "\n#[path = \"commit_continuation_compiler_probe.rs\"]\nmod commit_continuation_compiler_probe;\n",
+  "negative_count": 5,
+  "positive_count": 1,
+  "probe": "crates/engine/src/storage/commit_continuation_compiler_probe.rs",
+  "schema": "XADB_COMMIT_CONTINUATION_COMPILER_INPUT_V1",
+  "semantic_count": 6,
+  "status": "FROZEN_SOURCE_EXPECTATIONS_NOT_EXECUTED"
+}

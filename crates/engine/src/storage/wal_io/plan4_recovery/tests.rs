@@ -8,6 +8,9 @@ use std::{
     panic::{AssertUnwindSafe, catch_unwind, resume_unwind},
 };
 
+#[path = "tests/commit_common.rs"]
+mod commit_common;
+
 struct Harness {
     owned: BTreeSet<String>,
     selected: BTreeSet<String>,

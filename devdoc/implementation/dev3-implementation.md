@@ -1,5 +1,8 @@
 # DEV3 구현·검증 현황
 
+<a id="commit-continuation"></a>
+2026-10-25 [원 Commit 공통 continuation](../evidence/dev3-commit-continuation-20261025.md): 원 PinSet/core/WAL의 준비·취소·지연 설치 수명과 첫 File write 관측을 구현했다. source별 정적2·prestage5·WAL14사례의 완료/부분완료 경계, compiler7/tool6·fmt/Clippy와 독립 D1을 한정 수용했다. 실제 semantic receipt 생성자는 닫혀 있으며 Commit·nonempty 복구와 DEV3/S5는 미완료다.
+
 <a id="plan4-free-undo"></a>
 2026-10-25 [원 plan4 Free Undo container 수명](../evidence/dev3-plan4-free-undo-20261025.md): 같은 원 owner/pool의 발급·INIT·flush·실제 eviction/reload와 v2 base·old WAL 제거 뒤 재장애 복구를 연결했다. 정적2·메모리7·compiler7·native3PID의 source별 선택 검증과 최종 독립 D1을 수용했다. 원 실패·미실행을 보존했고 사용 완료 사본·전용 cache를 정리했다. Live Undo·Catalog CREATE·Row INSERT·Commit/publication·nonempty 복구·전체 DEV3/S5는 미완료다.
 

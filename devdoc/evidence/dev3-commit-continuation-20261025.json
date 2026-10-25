@@ -1,0 +1,142 @@
+{
+  "decision": "D3-COMMIT-CONTINUATION-001",
+  "status": "D1_ACCEPTED_COMMON_ONLY",
+  "independent_reviewer": "/root/page_lifetime",
+  "scope": "private original-owner continuation, pre-stage cleanup, physical first-write fact; no semantic grant constructors",
+  "actual_commit": "NOT_RUN",
+  "completed_unchanged_test_repeats": 0,
+  "source_revisions": [
+    {
+      "revision": "r0",
+      "source_fingerprint": "d7ff04504acfdfe7bf04c1814d0cdd009856507a33724353a7153c9893bec120",
+      "binary_sha256": null,
+      "build": {
+        "path": "artifacts/dev3/commit-common-20261025/r0/build-receipt.json",
+        "sha256": "3ca4fec229d3047a413765f97c698560fa3743fc0e33a1e90127b729949985cc"
+      },
+      "source_archive": {
+        "path": "artifacts/dev3/commit-common-20261025/r0/source-cleanup.json",
+        "sha256": "1aa0caf2a3b77ad344ca4b6a93352c8e5dbafb2451f06c9f3f13cfe3a0dfc2d9"
+      }
+    },
+    {
+      "revision": "r1",
+      "source_fingerprint": "210ad7d975b4dd625ba30096df09b471353d7408fb3863762a38f24284404ea6",
+      "binary_sha256": "9777166460f9d093c46335705ac4b7d41455066965ea942ca36412cb492f51ef",
+      "build": {
+        "path": "artifacts/dev3/commit-common-20261025/r1/build-receipt.json",
+        "sha256": "19351cf9fb2cd07aa4f0ccb10ca58dad4fd3c8e17a7c33ec0eab7e06eb0c2a16"
+      },
+      "source_archive": {
+        "path": "artifacts/dev3/commit-common-20261025/r1/source-cleanup.json",
+        "sha256": "f6e69a039215c8e3482f60e17d60941c193446987474de0b54742494e4bfdd88"
+      }
+    },
+    {
+      "revision": "r2",
+      "source_fingerprint": "a16902ac8e48abbe49263ac86278b44fc32976f3d75a6ef4a6c679bd20052d80",
+      "binary_sha256": "6d8d66f942be5d9b9b6085318bd745c13f6c23c0bd9d5354125dfa06f7f35fb0",
+      "build": {
+        "path": "artifacts/dev3/commit-common-20261025/r2/build-receipt.json",
+        "sha256": "6d7817e5a1e30c7e4c9eb6452d0b6b5622a82dcf333ca8e16fa31015a4d7a3e8"
+      },
+      "source_archive": {
+        "path": "artifacts/dev3/commit-common-20261025/r2/source-cleanup.json",
+        "sha256": "fa29cfa67693e80d45bccd1cdc6a91af076ec0e1a0ebf8645bf02efce8266edb"
+      }
+    }
+  ],
+  "receipts": {
+    "r1/source-selected/result.json": {
+      "path": "artifacts/dev3/commit-common-20261025/r1/source-selected/result.json",
+      "sha256": "40b868e2a00801ef7f4e6ada581ac0d154c396fa7ff7e040ac7f694c01d71f6e"
+    },
+    "r1/memory-selected/result.json": {
+      "path": "artifacts/dev3/commit-common-20261025/r1/memory-selected/result.json",
+      "sha256": "7a54aded5957c4958a5b169fea548f91df81459ba924e0ef4241b1f71bfccdfd"
+    },
+    "r1/fmt-result.json": {
+      "path": "artifacts/dev3/commit-common-20261025/r1/fmt-result.json",
+      "sha256": "072465e8eec9b44fd05281ba776f61c3985d21b67823f70a066bbf4d97782201"
+    },
+    "r2/memory-selected/result.json": {
+      "path": "artifacts/dev3/commit-common-20261025/r2/memory-selected/result.json",
+      "sha256": "3f7cbd34531bfb0f3e5ca76cdb14eac3c5794616a868daeb8c3a86eb8edbd81c"
+    },
+    "r2/fmt-result.json": {
+      "path": "artifacts/dev3/commit-common-20261025/r2/fmt-result.json",
+      "sha256": "14aa33ce6c403ce2c7da2ab23f9ec21e5c0249ac8f69194e59e2514ef52a5c31"
+    },
+    "r2/clippy-result.json": {
+      "path": "artifacts/dev3/commit-common-20261025/r2/clippy-result.json",
+      "sha256": "e5f9cb0cf64270cdd3790bc548c637f664bb2578b62563e8b3e0a04e1bec2959"
+    },
+    "r2/tool-tests/result.json": {
+      "path": "artifacts/dev3/commit-common-20261025/r2/tool-tests/result.json",
+      "sha256": "8e2b46dab674761aeeed8c29f758a1499306f89d7ebacd87dd0a77e7a58f707a"
+    },
+    "compiler-history/r2/result.json": {
+      "path": "artifacts/dev3/commit-common-20261025/compiler-history/r2/result.json",
+      "sha256": "a4940f93f8dff66aac81386404ca09e6636f99cfe096bd6bd52d6aa625198dee"
+    },
+    "compiler-history/r2/cleanup.json": {
+      "path": "artifacts/dev3/commit-common-20261025/compiler-history/r2/cleanup.json",
+      "sha256": "332baf9954ee2f5864f8261621c4fce282a355ac99c6a8a4e61af025f6f3a104"
+    },
+    "target-cleanup.json": {
+      "path": "artifacts/dev3/commit-common-20261025/target-cleanup.json",
+      "sha256": "1d4ceae8d417c4f0984395f6080196b6cc00c8c62b8540fc7dd4889673a3ada9"
+    }
+  },
+  "preserved_failures": [
+    "r0 build: explicit module path and E0499 test Result lifetime",
+    "r1 WAL old function case3: expected one write but PrefixError fixture performs two; cases0\u20132 completed before failure",
+    "r1 fmt module order"
+  ],
+  "r1_partial_wal_completion": {
+    "cases": [
+      0,
+      1,
+      2
+    ],
+    "status": "PARTIAL_COMPLETED_ASSERTIONS_BEFORE_CASE3_FAILURE",
+    "not_new_r2_function_pass": true
+  },
+  "mandatory_deferred": [
+    "semantic stage factories and protected stage-call certainty",
+    "durable Drain and lower-image flush interleavings",
+    "terminal Root C/Job/credit/ATT installation and publication/ACK",
+    "native CREATE Commit/restart, nonempty REBASE, separate Row transaction",
+    "DEV3 final S5 inventory"
+  ],
+  "owned_source_files": {
+    "crates/engine/src/storage/dirty_flush.rs": "803fcff7cffe8b2df62237ed07d2afdf4108e068209888667f4bf356bbc0a345",
+    "crates/engine/src/storage/dirty_frame.rs": "767e5f2ad328e334a5da0e976694857f37d1f7835dc60778121e9632ac7cc0f3",
+    "crates/engine/src/storage/dirty_frame/commit.rs": "992ce041bdfb7b8416cf5397f32afa5f1f60c31717f1d9089f456a04bfbaf3c3",
+    "crates/engine/src/storage/dirty_frame/commit/tests.rs": "53e6e98f1daf55b6a76c3ddeb756f1f7e882a7f8537945b42887703a604e3b29",
+    "crates/engine/src/storage/wal_first_write_tests.rs": "a3b799c5553a96a219da428dc3343f7492a97a2c3ce44ddebdabadd3f05b0052",
+    "crates/engine/src/storage/wal_io.rs": "bb86dd4961273d67df2490247016b02be57fc23be2a8917af9b9fa8fa4afa900",
+    "crates/engine/src/storage/wal_io/commit_bridge.rs": "545e6d137def1dbdb3947a9b8bfe3d28f1fecb232baf4fd7b434af1dab303a2c",
+    "crates/engine/src/storage/wal_io/mutable_storage.rs": "ec9c613c25b7a463884f91c7f558e94b64ba4508ff71d5a28f1d11cbcb77f512",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs": "ced2bcd355ef8866dc7f042a297b91118fd840771656efe610bffeba1a737769",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/commit_common.rs": "5b0365023d815d4191328a66df2d5adad6daf47bb1dbe193ab047b1f4064a055",
+    "crates/engine/src/storage/wal_io/status_home_flush/resource_tests.rs": "a437db15d5fde89fac4e81240f9b83d05c6a11276f74a273b28ed9b54dc7a2f9",
+    "crates/engine/src/storage/wal_io/status_init_resource_tests.rs": "8e6d50949916112a7f72c8191d41aabeaa62a52238816a37f258fa7cf7741634",
+    "crates/engine/src/transaction/concurrency.rs": "3ee7685319d05b1bf701c2532644111dfba481d2737499c6e40a390fcb9a4ba3",
+    "crates/engine/src/transaction/concurrency_commit.rs": "e3db29e93c63c20cac638b07087a2403e98304a4e3e7cdbd0b24e72466fb5873",
+    "crates/engine/src/transaction/concurrency_commit_tests.rs": "ebe20fc93f0c333ca4e8ffa564322e7f47cd18b5a4a6b7a97c8c4c2959d4c1ee",
+    "crates/engine/src/transaction/concurrency_test_support.rs": "0464407c67bcd9deadfa2733df92fcf31d39b23a9bcdd4537f83a16d0971e4ca",
+    "crates/engine/src/transaction/concurrency_tests.rs": "4d0f0176ae71ea4da39991edc82ad4e933afd45f7e1e33cf73021ae35c30c8ff",
+    "scripts/dev3_commit_continuation_compiler.py": "03d2ef5a070ba8e7f1dfe82c64408ffe1eacd06dcff4069fea04dfa7c7b3a91c",
+    "scripts/test_dev3_commit_continuation_compiler.py": "739c28e726b087e480b2b7b619494df9035f5fb904cc24a7836b0820d2bb8c2f",
+    "tests/fixtures/dev3-commit-continuation/compiler/double_consume.rs": "8020d4d1bb2b85d5bc765f58c723965a532da463cde0add42e092eea3f5fc604",
+    "tests/fixtures/dev3-commit-continuation/compiler/manifest.json": "491b1b663b7edac154b86bc6586fa0c990e86d878c5fe329593371f0a9252581",
+    "tests/fixtures/dev3-commit-continuation/compiler/owner_reborrow.rs": "c873cf0aad818d0d166837942440d783ada45ec402a21e89a2f2eea7b1dbad4a",
+    "tests/fixtures/dev3-commit-continuation/compiler/pending_double_consume.rs": "afbd3aae43361a70d6a87b2ec0768cb5dc31be240ff6191caba4f612f057ac42",
+    "tests/fixtures/dev3-commit-continuation/compiler/physical_durable.rs": "9377dc9ab4e29eaf8bbff0f2574c1fd7cc5cbd8a3dbeb92a0b81cf1f19666d7a",
+    "tests/fixtures/dev3-commit-continuation/compiler/positive.rs": "85a44f8f6441d8ed4bbd15730209bd157874e7195f20787b96dc30023aafb0fc",
+    "tests/fixtures/dev3-commit-continuation/compiler/raw_grant.rs": "f1e132d981e34e7e08644cf63573fc63d3ca5f20fe72bc6201aadfc7e7fd3d74",
+    "tests/fixtures/dev3-commit-continuation/input-plan.json": "09899f751364866cd8bdb7bd257566f0c57d8695fe00591465268e059b1a374d",
+    "tests/fixtures/dev3-commit-continuation/provenance.md": "094570f02e3e565e3f518a4d39fab952c221e9aaa8e7ff29d03fa2662c48a4ca"
+  }
+}

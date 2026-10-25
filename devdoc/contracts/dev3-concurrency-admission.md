@@ -84,6 +84,8 @@ checked counter overflow/owner modes와 불일치는 healthy capacity 거절로 
 
 ## 5. F02: 후속 Commit 설치 명세와 cfg(test) 모의 경계
 
+2026-10-25 후속: [D3-COMMIT-CONTINUATION-001](dev3-commit-continuation.md)이 실제 원 pool/WAL을 위한 비공개 공통 소유를 구체화한다. Pending의 원 physical PinSet 보유, durable 뒤 새 content 진입을 닫는 Drain, 같은 state mutex의 Condvar와 외부 fence 재검사를 한정 채택했다. 아래 최초 모의 명세의 “pin 미소유”와 Pending→Installing의 무조건 try/retry는 이 실제 continuation에 한해 후속 계약을 따른다. 최초 .a.1 증거는 원 source 범위로 보존하며 실제 terminal authority·Commit/recovery 검증이 완료된 것은 아니다.
+
 다음 전이는 이번 .a.1 제품 완료 분모에서 제외하며 명세와 cfg(test) seam으로만 검증한다. 일반 caller가 LSN/true를 주어 권한을 얻는 product API는 제공하지 않는다. **이 절 전체를 WAL owner와 함께 동결하고 실제 private receipt 공급을 추가해야 실제 Commit stage에 연결할 수 있다.**
 
 | 전이 | 필요한 실제 권한·효과·반환 |

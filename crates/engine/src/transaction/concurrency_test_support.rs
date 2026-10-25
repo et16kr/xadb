@@ -7,53 +7,7 @@ use std::{
     time::Duration,
 };
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) struct InstallationKey {
-    pub(super) slot: usize,
-    pub(super) owner_generation: u64,
-    pub(super) installation_generation: u64,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum Installation {
-    Open,
-    Intent(InstallationKey),
-    Pending(InstallationKey, u64),
-    Installing(InstallationKey, u64),
-    Abandoned(InstallationKey, Option<u64>),
-}
-
-pub(super) fn valid_installation(state: &State) -> bool {
-    let expected = match state.installation {
-        Installation::Open => None,
-        Installation::Intent(key) => Some((key, Mode::CommitStage)),
-        Installation::Pending(key, lsn) if lsn != 0 => Some((key, Mode::CommitPending)),
-        Installation::Installing(key, lsn) if lsn != 0 => Some((key, Mode::CommitInstalling)),
-        // Abandoned is never healthy; new entry must first observe the shared fence.
-        _ => return false,
-    };
-    let mut found = 0;
-    for (index, slot) in state.slots.iter().enumerate() {
-        if matches!(
-            slot.mode,
-            Mode::CommitStage | Mode::CommitPending | Mode::CommitInstalling
-        ) {
-            found += 1;
-            let Some((key, mode)) = expected else {
-                return false;
-            };
-            if key.slot != index
-                || key.owner_generation != slot.generation
-                || key.installation_generation != state.installation_generation
-                || key.installation_generation == 0
-                || slot.mode != mode
-            {
-                return false;
-            }
-        }
-    }
-    found == usize::from(expected.is_some())
-}
+pub(super) use super::commit::{Installation, InstallationKey};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum PausePoint {

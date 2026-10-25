@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV3 원 Commit 공통 continuation](dev3-commit-continuation-20261025.md) · [source별 기록](dev3-commit-continuation-20261025.json) — 변경 선택 검증·독립 D1 한정 수용; actual Commit·nonempty 복구·DEV3/S5 미완료.
+
 - [DEV2 PF04 동일 Off 실행의 변동 분류](dev2-pf04-off-classification-20261025.md) · [실행·집계 기록](dev2-pf04-off-classification-20261025.json) — 사용자 한정 예외로20회·새 출력 정답 검산 완료. 큰 변동 미관측으로 UNKNOWN, 원 FAIL 유지.
 
 - [DEV3 원 plan4 Free Undo container 수명](dev3-plan4-free-undo-20261025.md) · [source별 기록](dev3-plan4-free-undo-20261025.json) — 정적2·메모리7·컴파일러7·native3단계 선택 완료, 최종 D1 수용. 원 실패 보존·실제 행 거래와 DEV3/S5 미완료.

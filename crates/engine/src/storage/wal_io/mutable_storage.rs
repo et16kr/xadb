@@ -176,6 +176,7 @@ impl<'m, 'w, W: WriterNamespace> MutableStorageOwner<'m, 'w, W> {
                         prefix,
                     }),
                     completion,
+                    first_write_lsn: std::sync::atomic::AtomicU64::new(0),
                     #[cfg(test)]
                     durability_waits: std::sync::atomic::AtomicUsize::new(0),
                     #[cfg(test)]

@@ -22,7 +22,12 @@ use std::{
     },
 };
 
+mod commit;
 mod plan4_residency;
+#[allow(unused_imports)] // The actual terminal producer will consume these opaque carriers.
+pub(in crate::storage) use commit::{
+    CommitInstallTargets, CommitStageTargets, PendingCommitTargets,
+};
 mod recovered_plan4;
 mod registration;
 mod retention_residency;
