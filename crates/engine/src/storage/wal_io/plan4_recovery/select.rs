@@ -242,8 +242,12 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             .0
             .try_into()
             .expect("base scratch");
-        base::decode(&prior[..BASE_BYTES], expected, scratch)
-            .map_err(|e| error(phase, Plan4RecoveryCause::Base(e)))
+        let view = base::decode(&prior[..BASE_BYTES], expected, scratch)
+            .map_err(|e| error(phase, Plan4RecoveryCause::Base(e)))?;
+        if view.header().format != base::BaseFormat::V2System {
+            return Err(error(phase, Plan4RecoveryCause::Unsupported));
+        }
+        Ok(view)
     }
     pub(super) fn select(&mut self) -> Result<()> {
         self.observation.phase = Plan4RecoveryPhase::Selection;

@@ -1205,7 +1205,8 @@ pub(in crate::storage) use doublewrite_install::EmptyTransactionInstall;
 pub(crate) use doublewrite_install::EmptyTransactionObservation;
 
 pub(in crate::storage) use doublewrite_install::{
-    plan4_base_allocation_source_bytes, validate_plan4_base_allocation,
+    plan4_base_allocation_source_bytes, plan4_system_base_allocation_source_bytes,
+    validate_plan4_base_allocation, validate_plan4_system_base_allocation,
 };
 pub(in crate::storage) use plan4_genesis::{
     encode_plan4_catalog_genesis, plan4_catalog_genesis_source_bytes,

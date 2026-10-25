@@ -16,7 +16,8 @@ use foundation::identity::{Generation, ObjectId};
 
 const INIT_LSNS: usize = STATUS_START + 64 * base::STATUS_BYTES;
 const TARGETS: usize = CERT_START + 64 * base::CERTIFICATE_BYTES;
-const TARGET_BYTES: usize = 48;
+const TARGET_BYTES: usize = 56;
+const _: () = assert!(TARGETS + 64 * TARGET_BYTES <= CERT_END);
 const BANK_BYTES: usize = 65_536;
 const RAM_ROW: usize = 1664;
 const RAM_AGING: usize = 32;
@@ -67,16 +68,66 @@ pub(super) fn request(profile: Profile, index: usize, incarnation: Generation) -
         level: 0,
     }
 }
+/// Role is supplied only by a validated replay/base image or its sealed target
+/// table. Physical home/DWB bytes never choose the expected page role.
+fn request_for_kind(
+    profile: Profile,
+    index: usize,
+    incarnation: Generation,
+    kind: PageKind,
+) -> Result<TargetRequest> {
+    let p = Plan4RecoveryPhase::Analysis;
+    if index >= 64 || (index < 9 && incarnation.get() != 1) || (index >= 9 && incarnation.get() < 2)
+    {
+        return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
+    }
+    let mut req = request(profile, index, incarnation);
+    if index >= 9 && kind == PageKind::Undo {
+        req.kind = kind;
+        req.identity.owner = ObjectId::new(3).expect("Undo role");
+    }
+    if req.kind != kind {
+        return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
+    }
+    Ok(req)
+}
+fn canonical_request(
+    profile: Profile,
+    index: usize,
+    image: &[u8; PAGE_BYTES],
+) -> Result<TargetRequest> {
+    let p = Plan4RecoveryPhase::Analysis;
+    let incarnation =
+        Generation::new(u64_at(image, 40)).map_err(|_| error(p, Plan4RecoveryCause::Invariant))?;
+    let kind = PageKind::from_byte(image[6]).map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?;
+    let req = request_for_kind(profile, index, incarnation, kind)?;
+    let view = page::decode_page(image, req.identity, req.kind)
+        .map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?;
+    if view.header().level != 0 {
+        return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
+    }
+    Ok(req)
+}
 pub(super) fn target_at(
     bytes: &[u8],
     profile: Profile,
     index: usize,
 ) -> Result<(TargetRequest, u64, [u8; 32])> {
+    if index >= 64 {
+        return Err(error(
+            Plan4RecoveryPhase::Verify,
+            Plan4RecoveryCause::Invariant,
+        ));
+    }
     let at = TARGETS + index * TARGET_BYTES;
+    let role = u8::try_from(u64_at(bytes, at + 48))
+        .map_err(|_| error(Plan4RecoveryPhase::Verify, Plan4RecoveryCause::Invariant))?;
+    let kind = PageKind::from_byte(role)
+        .map_err(|e| error(Plan4RecoveryPhase::Verify, Plan4RecoveryCause::Page(e)))?;
     let incarnation = Generation::new(u64_at(bytes, at + 8))
         .map_err(|_| error(Plan4RecoveryPhase::Verify, Plan4RecoveryCause::Invariant))?;
     Ok((
-        request(profile, index, incarnation),
+        request_for_kind(profile, index, incarnation, kind)?,
         u64_at(bytes, at),
         bytes[at + 16..at + 48].try_into().expect("target hash"),
     ))
@@ -88,6 +139,7 @@ fn note_target(table: &mut [u8], request: TargetRequest, image: &[u8; PAGE_BYTES
     put64(table, at, view.header().lsn.0);
     put64(table, at + 8, request.identity.page.incarnation.get());
     table[at + 16..at + 48].copy_from_slice(&content_digest(image));
+    put64(table, at + 48, request.kind as u64);
     Ok(())
 }
 fn scan_prefix(
@@ -136,9 +188,7 @@ fn observe_home(
     repair: &mut u64,
 ) -> Result<()> {
     let p = Plan4RecoveryPhase::Analysis;
-    let incarnation =
-        Generation::new(u64_at(image, 40)).map_err(|_| error(p, Plan4RecoveryCause::Invariant))?;
-    let req = request(profile, index, incarnation);
+    let req = canonical_request(profile, index, image)?;
     let canonical = page::decode_page(image, req.identity, req.kind)
         .map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?;
     if home == image {
@@ -275,12 +325,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                 &mut matched,
                 &mut repair,
             )?;
-            let req = request(
-                profile,
-                index,
-                Generation::new(u64_at(image, 40))
-                    .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?,
-            );
+            let req = canonical_request(profile, index, image)?;
             note_target(
                 &mut tail[TARGETS - REPLAY_END..TARGETS - REPLAY_END + 64 * TARGET_BYTES],
                 req,
@@ -291,7 +336,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                 profile,
                 self.doublewrite.expect("selected DWB"),
                 &self.flush[..PAGE_BYTES],
-                index,
+                req,
                 image,
                 &mut pending_matched,
             )?;
@@ -419,7 +464,14 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                 }
                 for req in observed.changed.into_iter().flatten() {
                     let index = req.identity.page.page_no as usize;
-                    if index >= 64 || req != request(profile, index, req.identity.page.incarnation)
+                    if index >= 64
+                        || req
+                            != request_for_kind(
+                                profile,
+                                index,
+                                req.identity.page.incarnation,
+                                req.kind,
+                            )?
                     {
                         return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
                     }
@@ -447,7 +499,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                         profile,
                         self.doublewrite.expect("selected DWB"),
                         &self.flush[..PAGE_BYTES],
-                        index,
+                        req,
                         image,
                         &mut pending_matched,
                     )?;
@@ -509,7 +561,15 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
         let bank = retention_replay_bank(replay);
         let (remaining_wal, remaining_steps) = remaining(profile, bank)?;
         let state_digest = content_digest(&replay[..1_179_648]);
-        let status_mask = targets & !511;
+        let mut status_mask = 0;
+        for index in 9..64 {
+            if targets & (1u64 << index) != 0
+                && canonical_request(profile, index, retention_replay_image(replay, index))?.kind
+                    == PageKind::TransactionStatus
+            {
+                status_mask |= 1u64 << index;
+            }
+        }
         // Pending may supply the exact authoritative image for an otherwise
         // unparseable genesis allocator; physical repair validates it first.
         let supported = matched | repair | pending_matched;
@@ -522,12 +582,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                 continue;
             }
             let image = retention_replay_image(replay, index);
-            let req = request(
-                profile,
-                index,
-                Generation::new(u64_at(image, 40))
-                    .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?,
-            );
+            let req = canonical_request(profile, index, image)?;
             match page::decode_page(
                 &tail[index * PAGE_BYTES..(index + 1) * PAGE_BYTES],
                 req.identity,
@@ -979,16 +1034,11 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                 continue;
             }
             let image = retention_replay_image(replay, index);
-            let req = request(
-                profile,
-                index,
-                Generation::new(u64_at(image, 40))
-                    .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?,
-            );
+            let req = canonical_request(profile, index, image)?;
             let header = page::decode_page(image, req.identity, req.kind)
                 .map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?
                 .header();
-            base::encode_certificate(
+            base::encode_system_certificate(
                 expected,
                 header,
                 image,
@@ -999,7 +1049,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             .map_err(|e| error(p, Plan4RecoveryCause::Base(e)))?;
             if index >= 9 {
                 let init = u64_at(status, 64 * base::STATUS_BYTES + index * 8);
-                base::encode_status_record(
+                base::encode_system_record(
                     expected,
                     header,
                     init,
@@ -1032,9 +1082,11 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             0 => base::AllocationTerminal::None,
             1 => base::AllocationTerminal::Cancelled,
             2 => base::AllocationTerminal::InitializedStatus,
+            3 => base::AllocationTerminal::InitializedUndo,
             _ => return Err(error(p, Plan4RecoveryCause::Invariant)),
         };
         let header = base::Header {
+            format: base::BaseFormat::V2System,
             generation,
             capture_lsn: facts.lsn,
             previous_generation,

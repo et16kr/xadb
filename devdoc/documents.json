@@ -2322,6 +2322,16 @@
       "path": "evidence/dev2-pf04-hotpath-20261025.json",
       "role": "evidence",
       "title": "DEV2 PF04 보존 주요 경로 source·주소 기록"
+    },
+    "dev3-plan4-free-undo-20261025.md": {
+      "path": "evidence/dev3-plan4-free-undo-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 원 plan4 Free Undo container 수명"
+    },
+    "dev3-plan4-free-undo-20261025.json": {
+      "path": "evidence/dev3-plan4-free-undo-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 원 plan4 Free Undo source별 검증 기록"
     }
   }
 }

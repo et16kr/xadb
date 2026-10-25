@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-free-undo-check-inputs.py", line 55, in <module>
+    assert u16(frame,166) == 10
+           ^^^^^^^^^^^^^^^^^^^^
+AssertionError

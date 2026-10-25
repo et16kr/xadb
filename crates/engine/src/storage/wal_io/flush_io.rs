@@ -660,6 +660,7 @@ impl<'s, 'w> FlushIo<'s, 'w> {
                             | PageKind::RetentionRoot
                             | PageKind::RetentionJobs
                             | PageKind::TransactionStatus
+                            | PageKind::Undo
                     ),
                 }
                 && prepared.selections[2] == retired.selected

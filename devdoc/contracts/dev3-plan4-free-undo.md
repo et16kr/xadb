@@ -1,6 +1,6 @@
 # DEV3 원 plan4의 Free Undo 페이지 수명
 
-2026-10-25 · **D3-PLAN4-FREE-UNDO-001 / ACCEPTED, 독립 D2 PASS / 제품·시험 NOT_RUN**
+2026-10-25 · **D3-PLAN4-FREE-UNDO-001 / ACCEPTED, 독립 D2·D1 PASS / 제한 Free container 구현·선택 검증 완료**
 
 [원 live owner](dev3-retention-live.md) · [Undo 초기 표현](dev3-undo-format.md) · [현재 복구 owner](dev3-plan4-recovery-owner.md) · [복구 base](dev3-recovery-control-base.md)
 
@@ -85,3 +85,7 @@ PID2 cut은 **`A_FU_AFTER_UNDO_DURABLE`**, initialize10 성공을 받은 뒤 occ
 ## 8. 독립 설계 채택 기록
 
 2026-10-25 `/root/dev3_review`의 최종 D2 PASS를 통합 담당 `/root`가 채택했다. 검토한 정본의 SHA256은 `391ff1ecf07765bcf0ad78658a9b50302d093e9021744e2e331096ac9c247f63`, allocation 공급 r3은 `f6b60bc89349d2dcf386d9647663ec9d17f1e0154f9040d2ccedb25e1447d57d`, 독립 입력 r3은 `7505f9755cc6ee3e202d0b825d3ec9bee0bea7d41ed26d33734b1f2f3b51438e`다. 형식·실제 권한·예약·provenance·native 일정·자원 한도·F07 분담을 채택한 기록이며 제품 실행과 최종 D1은 아직 NOT_RUN이다.
+
+## 9. 제한 구현 인수
+
+후속 [source별 실행 증거](../evidence/dev3-plan4-free-undo-20261025.md)는 정적2·메모리7·컴파일러7과 같은 ELF의 native3PID 일정을 완료했다. r5의 L6 Pending 장애→old WAL 실제 제거→L10 재장애→L14 추가 발급/flush/load를 독립 D1이 원 snapshot·trace로 확인했고 `/root`가 채택했다. 원 D2 당시의 NOT_RUN과 이후 실패·검토 보류는 각 원 source에 보존한다. 최종 S5·Live Undo·첫 CREATE/INSERT/Commit·nonempty 복구는 이 인수에 포함하지 않는다.

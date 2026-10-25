@@ -220,8 +220,10 @@ impl RegistrationDirectory {
                 }
                 9..=63 => {
                     request.identity.page.incarnation.get() >= 2
-                        && request.kind == PageKind::TransactionStatus
-                        && request.identity.owner.get() == 2
+                        && matches!(
+                            (request.kind, request.identity.owner.get()),
+                            (PageKind::TransactionStatus, 2) | (PageKind::Undo, 3)
+                        )
                 }
                 _ => false,
             }

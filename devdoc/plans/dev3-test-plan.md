@@ -896,3 +896,14 @@ S5는 고유5개와 `storage::tree_page::edit::extended_tests::leaf_edit_extende
 ## 원 Catalog guard의 typed 조회 — 추가 inventory
 
 [계약](../contracts/dev3-retention-live.md#typed-catalog-read)·[고정 이름과 원 결과](../evidence/dev3-catalog-reader-20261025.json)의 `retention::read::catalog::tests::` 고유5개를 exact selector로 실행했다. 전체3pin/해제, 원 core/fence, physical version/부재, 검색 밖 손상/identity, source-value 경계다. S5 전체 DEV3 inventory에는 이5개도 포함하며 중간 완료 반복0을 유지한다. `check_dev3_catalog_read_borrows.py`의 baseline1+positive/negative6 및 `test_check_dev3_catalog_read_borrows.py`의 새3개는 도구별 별도 분모다. 실제 nonempty owner/native/dirty·load·recovery는 후속 구현의 고정 입력과 선택 검증을 요구하며 순수 literal PASS로 대체하지 않는다.
+
+<a id="plan4-free-undo-inventory"></a>
+## 원 plan4 Free Undo container의 실제 수명
+
+[계약](../contracts/dev3-plan4-free-undo.md)과 [동결 입력](../../tests/fixtures/dev3-plan4-free-undo/input-plan.json)을 따른다. 원 plan4의 새 SystemInit scope와 base v2를 소비하는 신규 선택 함수는 정적2·메모리7·native worker1개다. native worker는 같은 ELF의 별도3PID에서 produce/recover/reentry를 수행하므로 실행 단계의 분모는 정적2+메모리7+native3이다. 최초 실패와 아직 실행하지 않은 항목은 원 source별로 구분한다.
+
+정적은 `free_undo_recovery_source_admission`, `free_undo_scope_budget_literals_and_source_census`다. 메모리는 `free_undo_base_literal_reconstruction_and_capture`, `free_undo_base_rejects_role_scope_and_forged_provenance`, `free_undo_record_refuses_noncanonical_and_preserves_output`, `free_undo_original_owner_gap_cancel_reuse_flush_reload`, `free_undo_original_role_rejection_and_corruption_cleanup`, `free_undo_new_role_preflight_and_install_failure_boundaries`, `free_undo_reserved_recovery_uses_original_scope_cancel`다. native는 `free_undo_three_process_worker`와 `scripts/dev3_free_undo_native.py`의 L6/L10 장애·L14 완료 일정으로 고정한다. installer 함수의 내부7분기와 corrupted literal 조합은 동결 입력의 하위 검사이며 함수 분모와 합산하지 않는다.
+
+`scripts/dev3_plan4_free_undo_compiler.py`는 동결 baseline1·positive1·negative5의 컴파일러 검사이고, `scripts/test_dev3_free_undo_native.py`는 도구 고유4개다. 이들을 제품 실행 분모에 합치지 않는다. 최종 S5에는 위 신규 함수와 native3단계를 모두 포함한다. 기존 v1 순수 codec·원 실행 증거는 보존하며, v2로 변경된 실제 plan4 소비자의 기존 S5 입력은 실행 전에 현재 형식으로 적응하고 그 diff와 oracle 근거를 별도 검토한다. 과거 v1 runtime 입력을 새 runtime의 PASS로 간주하거나 누락하지 않는다.
+
+이 단위의 Free container는 Live Undo·UndoSequence·Catalog CREATE·첫 Row·Commit·nonempty 복구의 인수가 아니다. 중간에는 무변경 완료 시험을 반복하지 않으며 최종 S5의 DEV3 전수 예외만 기존 규칙대로 적용한다.

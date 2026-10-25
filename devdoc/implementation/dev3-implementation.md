@@ -1,5 +1,8 @@
 # DEV3 구현·검증 현황
 
+<a id="plan4-free-undo"></a>
+2026-10-25 [원 plan4 Free Undo container 수명](../evidence/dev3-plan4-free-undo-20261025.md): 같은 원 owner/pool의 발급·INIT·flush·실제 eviction/reload와 v2 base·old WAL 제거 뒤 재장애 복구를 연결했다. 정적2·메모리7·compiler7·native3PID의 source별 선택 검증과 최종 독립 D1을 수용했다. 원 실패·미실행을 보존했고 사용 완료 사본·전용 cache를 정리했다. Live Undo·Catalog CREATE·Row INSERT·Commit/publication·nonempty 복구·전체 DEV3/S5는 미완료다.
+
 <a id="typed-catalog-read"></a>
 2026-10-25 [원 Catalog guard의 typed 조회](../evidence/dev3-catalog-reader-20261025.md): 기존 allocator/anchor/leaf3pin의 수명 안에서 physical record를 반환한다. 신규 제품5·compiler7·도구3 PASS, 원 실패와 source별 경계를 보존한다. 실제 owner는 empty이며 nonempty는 순수 literal 검증이다. Catalog CREATE/CLR·Row/Undo·일반 복구·DEV3/S5는 미완료다.
 

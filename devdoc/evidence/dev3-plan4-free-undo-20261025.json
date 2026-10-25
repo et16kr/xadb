@@ -1,0 +1,555 @@
+{
+  "decision": "D3-PLAN4-FREE-UNDO-001",
+  "scope": "Original plan4 Free Undo container lifetime through same-ELF recovery, selected v2 base, actual old-WAL removal and recrash. No live Undo or nonempty transaction.",
+  "status": "D1_ACCEPTED",
+  "independent_d2": "ACCEPTED; contract adoption commit e4ebe83",
+  "source_revisions": [
+    {
+      "revision": "r0",
+      "source_fingerprint": "5babfe8e5c115b0911b796e9483cfee1dabb2bb94d241b5c32823ebdaac73dec",
+      "source_manifest_sha256": "9ecd12ee3cef252889a34014f227f37cb925d884945c099b4894e2ece07a390f",
+      "build": {
+        "path": "artifacts/dev3/free-undo-20261025/r0/build-receipt.json",
+        "sha256": "6707d09c2533d71062f07f9c5d55244d4f2b413a8be54b1cb397c207ea653672"
+      },
+      "binary_sha256": null,
+      "source_storage": {
+        "path": "artifacts/dev3/free-undo-20261025/r0/source-cleanup.json",
+        "sha256": "2b06779b3781393908add39a5b09907d1b9a041be30ab369d1240eb70aa1e54d"
+      }
+    },
+    {
+      "revision": "r1",
+      "source_fingerprint": "e4f8d8f5348a3e31016183b9ecf5ab5ea7bc1ec5d22190597190b1b0e0a88e49",
+      "source_manifest_sha256": "b1f5eb7d5a0dd6b25d747d71e9a15d545d484d58ca3a6df7a9346444995c7345",
+      "build": {
+        "path": "artifacts/dev3/free-undo-20261025/r1/build-receipt.json",
+        "sha256": "6099c9b073361fe4fc63a285646bc719c1672df017168d3f2917fd80557b0efc"
+      },
+      "binary_sha256": "ff77b0ef94ed75bfb0f9f7a838b5a4e8c3907677c8705e86e2f54b45afd1e4b7",
+      "source_storage": {
+        "path": "artifacts/dev3/free-undo-20261025/r1/source-cleanup.json",
+        "sha256": "b1251ad8b765f5b8fcaf2a877947e8159423363c16a3376d2e85a5049aa44a61"
+      }
+    },
+    {
+      "revision": "r2",
+      "source_fingerprint": "9759970340359e1bd13287f11d6d65f310229dadacbf7ed4137be7b68cfd3b2b",
+      "source_manifest_sha256": "63d7b2e5dfc3fd3fc6485fe12c0083f63fab6b40ab4167e9327cf73824cf26ba",
+      "build": {
+        "path": "artifacts/dev3/free-undo-20261025/r2/build-receipt.json",
+        "sha256": "b7e8b7ec0a8dd42cca0e438665e816daad032bdd49095849fd86e9c1c954194c"
+      },
+      "binary_sha256": "456748d1b9e80f5593b499e9a8789a37b30fa72e04a6f21eca727662a0d20955",
+      "source_storage": {
+        "path": "artifacts/dev3/free-undo-20261025/r2/source-cleanup.json",
+        "sha256": "0a522ec06b2835c74643b79f20077a1cf8df5ea8fed43e6b68a4ac28733da011"
+      }
+    },
+    {
+      "revision": "r3",
+      "source_fingerprint": "02a0e27216a42342cede8163a8f01a4417afbd647c75dc593baa8329b2614f61",
+      "source_manifest_sha256": "e98e0e5408c6e3a3d9d05ebb79c5b0f29ab435e18b426838c625e539b6091c33",
+      "build": {
+        "path": "artifacts/dev3/free-undo-20261025/r3/build-receipt.json",
+        "sha256": "e5fed7f48c058d82f6ffcefc1a5f7d939f9e25d1151372b44e6581ef7c922c40"
+      },
+      "binary_sha256": "5ad4749a2fefafc7630b0b23cfdeea0e30d448acf0e92cd8fc01c7bedc781fa2",
+      "source_storage": {
+        "path": "artifacts/dev3/free-undo-20261025/r3/source-cleanup.json",
+        "sha256": "9b771979636d4440c90d2a1a662a97f19bde1728b51c0f002d466f591ef0e12d"
+      }
+    },
+    {
+      "revision": "r4",
+      "source_fingerprint": "b27c65a242f1327ec505e036deb05b20acd7c72b0d08da2146341bf6cd2bfd41",
+      "source_manifest_sha256": "fba33ceea2745f89453020eef46e03fbbacc60e64d7c807e38260fe16129851d",
+      "build": {
+        "path": "artifacts/dev3/free-undo-20261025/r4/build-receipt.json",
+        "sha256": "bcdfb01cec74d74cb9ab210462a5c8655afcf5f24fc28a0fdfff6472f04be3cd"
+      },
+      "binary_sha256": "04d3b3f0ba8ee30fb534b3678db5077bc60f898463c5473be94dccd20e32bfef",
+      "source_storage": {
+        "path": "artifacts/dev3/free-undo-20261025/r4/source-cleanup.json",
+        "sha256": "f76105200e6203da20904c499855612c944ca1cd7c602e1438087356cc39872f"
+      }
+    },
+    {
+      "revision": "r5",
+      "source_fingerprint": "2b0fb7df40f481e23f1a68794c4fa9db36f17670e0c2dc7f9e1b4ff14fcdd44d",
+      "source_manifest_sha256": "2066265969d470d4f5b3f437d7e4030fd2ec8d39a4679fbeee211a86cfb11a64",
+      "build": {
+        "path": "artifacts/dev3/free-undo-20261025/r5/build-receipt.json",
+        "sha256": "9b23f80757387050468ae4c4187f50a579be97bd0daaaa8bf96e2e2f26d16f82"
+      },
+      "binary_sha256": "ead9b292588bce25eaf8c885df67eda46fd47f4db79581c2c74e8bff9a87e3ba",
+      "source_storage": {
+        "path": "artifacts/dev3/free-undo-20261025/r5/source-cleanup.json",
+        "sha256": "662993dec8e3b2302a2da67bc14594bb8b15ff52b1e6a91b2b4c7d78fd571e49"
+      }
+    }
+  ],
+  "owned_source_files": {
+    "crates/engine/src/storage/dirty_frame/registration.rs": "1a16285149a7a0d57ab73c6a63dc265c0ccdc13571fc46e765ba23be44abd47c",
+    "crates/engine/src/storage/dirty_init.rs": "415f254e391eb090cbf134f6469226a06761c1498d832464adf00c477d63039c",
+    "crates/engine/src/storage/plan4_free_undo_base_tests.rs": "934e9c705f1bfe548ed26e2e2cf7bee158864701e4104844db67e6b18f710629",
+    "crates/engine/src/storage/plan4_recovery_base.rs": "c2d8deaf83a8e1981733910a70a2d17c4c8fdc26e3b8dfc48bcc590ec8a88b3c",
+    "crates/engine/src/storage/plan4_recovery_base_tests.rs": "d188ef2ad2e66e501b18fa9ab516cc002ba809467ff7420134a295b79fcd8981",
+    "crates/engine/src/storage/wal_io.rs": "cc8060fd16b8e998299381d3a1fe84365cbb5d7c1af7eaf5c7442c6c009f698a",
+    "crates/engine/src/storage/wal_io/allocation_operation.rs": "9fd094f563d9f15ce7c8b0a83777d7d4fdb377c5ac06de4e44eed1bd4351671d",
+    "crates/engine/src/storage/wal_io/bootstrap.rs": "7fef909e2787b4503f849f946e3cd329c2a3650956ba8d26c62c74576ee80fe0",
+    "crates/engine/src/storage/wal_io/doublewrite_install.rs": "830d5c9872c2e131e738bd3f06c5f0327c2172aef551be7801bc03b5d35005b4",
+    "crates/engine/src/storage/wal_io/flush_io.rs": "29c79caaccf9be505b012fcc65ca9a13c338be41452b5353c6a9ba5b67968af4",
+    "crates/engine/src/storage/wal_io/plan4_allocation_operation.rs": "e189e2b50a5087a900d348797604964eb6fe9065191845074578899e1e345e45",
+    "crates/engine/src/storage/wal_io/plan4_pages.rs": "993bc4c38952a3570cd6443762731f817cdd69f8074450ac6869a7610116a504",
+    "crates/engine/src/storage/wal_io/plan4_pages/native_tests.rs": "3af573be1e3cee6e36d681874b736c6fadb1382dc43f226aaa47ddcc1158db1a",
+    "crates/engine/src/storage/wal_io/plan4_recovery/analysis.rs": "116811fef5eacddf424d0475ddef6585ab228df759b3e69460683e6627838f91",
+    "crates/engine/src/storage/wal_io/plan4_recovery/physical.rs": "e9dda048a009020aefcce8b6cf863e4e954f50b360d7e99aacb3372fd63defdb",
+    "crates/engine/src/storage/wal_io/plan4_recovery/select.rs": "7841c781a260cb21cb3ee3bccd72d4ac27140f3070cd8ac361f433584fb6cc3e",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs": "a54a18defb2778b9f2cd6cbfec0ae73c1ff7faa2654079cf3813dd4deafbcc85",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/free_undo.rs": "a6d3b30908793f15693b3bb184b91ee952cc9ec20ae86b331c4b9efd932ccb85",
+    "crates/engine/src/storage/wal_io/plan4_retention.rs": "d380f2ec0ff9e392c7f4a171ccfd32713e124686384f8eae04983be16fbd2adf",
+    "crates/engine/src/storage/wal_io/plan4_retention/flush.rs": "34ece91085a8144858c63488120bd1241969d3e1d3a399a2f99d623ea587e967",
+    "crates/engine/src/storage/wal_io/plan4_retention/free_undo_literal_tests.rs": "47b06d6cd589a7dc87a38996e0eae97420f2b3705a39403bf82623ea0e131802",
+    "crates/engine/src/storage/wal_io/plan4_retention/free_undo_tests.rs": "71c11d169cc5570639ed18fca1b6d234fcacecda30c5e07d0ea98308accab457",
+    "crates/engine/src/storage/wal_io/plan4_retention/history.rs": "a95dee283278b83551c40f9aefecd792cd80db8a407578c2c72daf69b692a3b4",
+    "crates/engine/src/storage/wal_io/plan4_retention/load.rs": "bb710806e0b3942b423544653894bd31ab6366dc5130af5968ae6025861789a9",
+    "crates/engine/src/storage/wal_io/plan4_retention/population.rs": "b1859d39775458d231543063a2af134a45a714b0274d6378af4bc4863a37d845",
+    "crates/engine/src/storage/wal_io/plan4_retention/read.rs": "2cbbe9df18777a2c99e12c659294bec1d1f47c3901cf1d4b630f7139412ba917",
+    "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs": "268ad0131a0648d3a03447ef80dc09c0d9989cc7766da532292e410a8a1e723b",
+    "crates/engine/src/storage/wal_io/plan4_retention/recovery_observation_tests.rs": "3a966b1f9d9bf31b5f92db92dc22a1220c25498f4cd2d4741ced794132448726",
+    "crates/engine/src/storage/wal_io/plan4_retention/resources.rs": "3dc33fcd84cb6e855ca726486ab943755f686f1abc454c20771c56dd5f813258",
+    "crates/engine/src/storage/wal_io/plan4_status_init_operation.rs": "19d835930bdc8b4995b81fbc2ece92172e8594eb29bc444c4d21f6e6a9d3e1c5",
+    "crates/engine/src/storage/wal_io/status_init_operation.rs": "40eff799016eb678302bdc2f120febd082df0f8d8333f83828f63e24b709ce6d",
+    "scripts/dev3_free_undo_native.py": "9dd450776b059e1172ddb61c92417b8963171f8086131d45446a03827150c1fc",
+    "scripts/dev3_plan4_free_undo_compiler.py": "0c484b08e8335819d3f8e7f5a9e71a75b90479027dfda6060484bdd68ab06511",
+    "scripts/test_dev3_free_undo_native.py": "6525fa3db8666e2874baaf364380916c585c925d5ee4d8e7464fa1d2ecff9bcc",
+    "tests/fixtures/dev3-plan4-free-undo/compiler/cancel_after_initialize.rs": "671a7a9da2400a18fbe2442ab67bb5cbd562343694e41abeb390737fb6571c00",
+    "tests/fixtures/dev3-plan4-free-undo/compiler/double_consume.rs": "53de00ee6355977e94136433d32343c6c45f09bb353aea57eff5e891a8ad6aa8",
+    "tests/fixtures/dev3-plan4-free-undo/compiler/manifest.json": "ee24ab42f4fcc17678206613ce443d84dcffd1ee7c36d3f9f19c855c6d53b9e5",
+    "tests/fixtures/dev3-plan4-free-undo/compiler/owner_reborrow.rs": "b3a12fcdc5b95dc58a3c910bd8055c0340e4978b7264f1f2e4f183104a0cda01",
+    "tests/fixtures/dev3-plan4-free-undo/compiler/plan3_role.rs": "b28924f335c9b2a49b6de11a12a11bd262da441c7964c7474333d4f44ce993c7",
+    "tests/fixtures/dev3-plan4-free-undo/compiler/positive.rs": "5e0007d297479d92446303de49e3eb7abfe480c5c298e7f179e3811f739c121c",
+    "tests/fixtures/dev3-plan4-free-undo/compiler/role_escape.rs": "a191e3579221a926a31ffb320a62ea22954bf6d4b8f7d0486ee7ca82a4d263f6",
+    "tests/fixtures/dev3-plan4-free-undo/generate_literals.py": "a9a646f5fd047b1fbd73d743d99d56cde9a8217bf65587d08e9dd1f892e6bb42",
+    "tests/fixtures/dev3-plan4-free-undo/input-plan.json": "e0f3885a4aaf0fabc6ac3a271c52b38e3b8c3afa224bfad1f749718f71358ffa",
+    "tests/fixtures/dev3-plan4-free-undo/literals/base/mixed-l6.xrb": "cb5296b57764dff962c72743b3e6a68e5758ff5822e5119a40fb78ae8b1cc395",
+    "tests/fixtures/dev3-plan4-free-undo/literals/generation-receipt.json": "59ae4b88caecdc906ee9197336ae74a78e748e7856ccc8214e38ea34e48979c9",
+    "tests/fixtures/dev3-plan4-free-undo/literals/history/r0/checker-preservation.json": "87ddddade5701b8b0098c1f01b42cf1bccd5f65fcfea7b53e624dba25e8e8ce4",
+    "tests/fixtures/dev3-plan4-free-undo/literals/history/r0/dev3-free-undo-check-inputs-r0-failed.py": "b71e10c2cfedecc53026b23c7a3ea8480fd5944b4097ce81f9aeede10d86ea95",
+    "tests/fixtures/dev3-plan4-free-undo/literals/history/r0/dev3-free-undo-check-inputs.py": "b8ae8a478da06b4f68da794e85b4b4493e071085ca4e0b1a40ed087c69850d2f",
+    "tests/fixtures/dev3-plan4-free-undo/literals/history/r0/dev3-free-undo-input-check-r1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/fixtures/dev3-plan4-free-undo/literals/history/r0/dev3-free-undo-input-check-r1.stdout": "4ff33fa40667a80f1919be76e9a669a38b4dd9ebb2cd9901958b0bab25dd9619",
+    "tests/fixtures/dev3-plan4-free-undo/literals/history/r0/dev3-free-undo-input-check.stderr": "f5fe8476894d03323f42faad1b346e7e1203e7045c3c260414e7dedc74f3e09b",
+    "tests/fixtures/dev3-plan4-free-undo/literals/history/r0/dev3-free-undo-input-check.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/fixtures/dev3-plan4-free-undo/literals/history/r0/generate_literals.py": "1f9cb46584539abd801f10fe50b813578014c09d64de8d669da989a2afad4f63",
+    "tests/fixtures/dev3-plan4-free-undo/literals/history/r0/input-plan.json": "d4adb2b9c53363754db138d44e1b3362786b9e27f872be5f89839764fe996245",
+    "tests/fixtures/dev3-plan4-free-undo/literals/history/r0/raw-index.tsv": "e48c132b3473e9f160d77903774fcfedb66cbae9e410481307ef15a42de23239",
+    "tests/fixtures/dev3-plan4-free-undo/literals/history/r1/input-plan-at-extension.json": "fe18ef492986f67bdb8d21e90679c63f49354e2a63a9f3e6c2a82cb02216623f",
+    "tests/fixtures/dev3-plan4-free-undo/literals/history/r2/input-plan-before-coherent-counter.json": "2a80c6abcfd97c21ed639994e1a12a750d4a9d7f1a7110e39da9414e23fa9670",
+    "tests/fixtures/dev3-plan4-free-undo/literals/independent-check.json": "8965dace1c7a59c4991c9973d66fcb82ef93a72f1cea50a5619c9461a56b3b05",
+    "tests/fixtures/dev3-plan4-free-undo/literals/memory/08.wal": "40b0eb05d8339dd261f5c97f92da51ed5d55a1663a48dbd2fc03d2e9d7ae768c",
+    "tests/fixtures/dev3-plan4-free-undo/literals/memory/09.wal": "b4ec174d04952b31917ca84b1a101613a92d5d304a81b6eda125f47d5112c440",
+    "tests/fixtures/dev3-plan4-free-undo/literals/memory/10.wal": "108e82e4bb212fd698c2b41028277a597c98a65f7eeaac8a256f9082abbba096",
+    "tests/fixtures/dev3-plan4-free-undo/literals/memory/11.wal": "0dbd58469d20a334891e541ec5a5c1fe286543cb5fcdac1a7d34d1276d516573",
+    "tests/fixtures/dev3-plan4-free-undo/literals/memory/12.wal": "f141d89eeef54956c4726d18a2e88812e3f429269a1df259438b6f77bd77f58f",
+    "tests/fixtures/dev3-plan4-free-undo/literals/memory/13.wal": "a22316dc1132b721fdee90352ee95686669d72c47d8b0c484eaff433fd0ae65b",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-allocator-l10.page": "7d4797bea50ea46c207026561eed4247ea6f9a306532c722a0afab6df0e3ca7f",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-allocator-l12.page": "3cec003a18bbfe533d381aef58db75379e74760814c1cd8e1bea14d34b2f8c80",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-allocator-l14.page": "1d395f2b131343fc117fed845776af53a056865ed5ae71b80d82ca3b226ba1a2",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-allocator-l2.page": "951b6ea8cb88cff432a71ef2cd684abbb0599239c1db3c64a1f2719a66ba09c9",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-allocator-l4.page": "be97962bb43031c82d7422cf6b9ec4d35bfdde2d61a2cd7825f03873869b92f2",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-allocator-l6.page": "03a1fdbee26baa99e1e107568cf6eec74d423f03cfbb9c748f1aa01cc50669cf",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-allocator-l8.page": "173d5ffe4d532121dd7c48d0fbbf8601c5a88d5d3eda3ec43e552d53db567e7c",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-page10-init.page": "6e8b01638b83cab229c5650411d34ca6a284992dcb24c9f0cd545b96ee369d4f",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-page11-init.page": "140eef6d4648591313f7941010ed46777be86e0008e2d29edba28c94886fa37d",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-page12-init.page": "1349812689c5908c0c456abe5bf9eae4317a4e831b68cf9bb90d5e3b88e34433",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-page13-init.page": "4ab62e5cb0f655ed83250dad4651f07abe6f4cec7b6a02c524e5c68e6b33f1e6",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-page14-init.page": "efe5f79862619a041cba1cfda9379eee677502fa36ec1b8f9d93c19f7e4d6266",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-page15-init.page": "5195474df0a8f8ecc9ed4c6ea8faf0e4b63f5525660675e3ab52c8ad8f39f05f",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-page9-init.page": "adba494d6cfce831d5af1d9bb61e661166b85defccfca20c4bf43b8340ad69bc",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-wal-e1-suffix.bin": "0a3b14a79f167dfcbbfab3240eec070da7f489e7360a20f3480f132e4ee02c8e",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-wal-e2-suffix.bin": "e01ecebc3e68076cf4b49aff5f60a6e18acc874f05ca55942505c547886d56d8",
+    "tests/fixtures/dev3-plan4-free-undo/literals/native-wal-e3-suffix.bin": "4adcb000fc920f2454e83b6ab4befe7b05586b3329c9507db72b175ee31079ae",
+    "tests/fixtures/dev3-plan4-free-undo/literals/pure/cancel-02.wal": "542106d84236218579063ea9c755642ff1f087a1023e1e1c23bd0bf9cd9f74ca",
+    "tests/fixtures/dev3-plan4-free-undo/literals/pure/undo-02.wal": "124edc17f06e328023d29415944af10dae540451f8369d559aba43610c7f9a1a",
+    "tests/fixtures/dev3-plan4-free-undo/literals/reserved-cancel-l6.page": "0dc173487c2216771c1fbbd731c772c5ff062a99377be4243bcdc304cc585a04",
+    "tests/fixtures/dev3-plan4-free-undo/literals/reserved-cancel-l6.wal": "668246e84d85a4c34028454f5200efe614a0cdb9077038ae362766cac7eaf88f",
+    "tests/fixtures/dev3-plan4-free-undo/literals/reserved-recovery-generation-receipt.json": "404347778081426c7efeece3086e2577ac6ca0c8479b60753582a58711f2183b",
+    "tests/fixtures/dev3-plan4-free-undo/literals/reserved-recovery-independent-check.json": "caa0431292e89d097b632656c3b6e882e761bd849c8b723dda47fd10ec8cd5d2",
+    "tests/fixtures/dev3-plan4-free-undo/provenance.md": "1f00f2063f20c4b9e6a72c1646c46c2e688a13985ca9440a4f6a6541e1dd14e8",
+    "tests/fixtures/dev3-plan4-free-undo/raw-index.tsv": "17ba2d2855b5fa38366dadb8ce3c2b927e477c0f125b452229969cdb4d5ace72"
+  },
+  "product_runs": [
+    {
+      "revision": "r3",
+      "original_result": {
+        "path": "artifacts/dev3/free-undo-20261025/r3/static-selected/result.json",
+        "sha256": "8671a6af198c4e942e1228a65b626951638f527cfc272779be298d6d0f677f6b"
+      },
+      "source_fingerprint": "02a0e27216a42342cede8163a8f01a4417afbd647c75dc593baa8329b2614f61",
+      "binary_sha256": "5ad4749a2fefafc7630b0b23cfdeea0e30d448acf0e92cd8fc01c7bedc781fa2",
+      "status": "PASS",
+      "selection": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_recovery_source_admission",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_scope_budget_literals_and_source_census"
+      ],
+      "cases": [
+        {
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_recovery_source_admission",
+          "status": "PASS",
+          "seconds": 0.010474878999957582,
+          "stdout_sha256": "a13561a9c74cf40ac605544aaafdfbf37c56997f1cb3169e1f3ccd9ae1fc1f84",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_scope_budget_literals_and_source_census",
+          "status": "PASS",
+          "seconds": 0.08171897899956093,
+          "stdout_sha256": "6ba7d3e61fa09d89125d52b86405a6943d19f66fa3f855b8160b1a4b2cb37ce9",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "revision": "r3",
+      "original_result": {
+        "path": "artifacts/dev3/free-undo-20261025/r3/memory-selected/result.json",
+        "sha256": "353ddcd2bd50fc145a2198ab9064677190092a3a5f8e4cd0e58589c0df9841f6"
+      },
+      "source_fingerprint": "02a0e27216a42342cede8163a8f01a4417afbd647c75dc593baa8329b2614f61",
+      "binary_sha256": "5ad4749a2fefafc7630b0b23cfdeea0e30d448acf0e92cd8fc01c7bedc781fa2",
+      "status": "FAIL",
+      "selection": [
+        "storage::plan4_recovery_base::free_undo_tests::free_undo_base_literal_reconstruction_and_capture",
+        "storage::plan4_recovery_base::free_undo_tests::free_undo_base_rejects_role_scope_and_forged_provenance",
+        "storage::plan4_recovery_base::free_undo_tests::free_undo_record_refuses_noncanonical_and_preserves_output",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_original_owner_gap_cancel_reuse_flush_reload",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_original_role_rejection_and_corruption_cleanup",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_new_role_preflight_and_install_failure_boundaries",
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_reserved_recovery_uses_original_scope_cancel"
+      ],
+      "cases": [
+        {
+          "selector": "storage::plan4_recovery_base::free_undo_tests::free_undo_base_literal_reconstruction_and_capture",
+          "status": "PASS",
+          "seconds": 0.11206044899881817,
+          "stdout_sha256": "76417ef7cd33f06a0a9486c91f112dd8d197e9ed6b63dc2c1c7c0bc9eb1ba2b2",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "selector": "storage::plan4_recovery_base::free_undo_tests::free_undo_base_rejects_role_scope_and_forged_provenance",
+          "status": "PASS",
+          "seconds": 0.23397680800007947,
+          "stdout_sha256": "793dcff3cda6c3524c342da4b3afed6b40576e29fcf03eb4d402c3c099935cea",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "selector": "storage::plan4_recovery_base::free_undo_tests::free_undo_record_refuses_noncanonical_and_preserves_output",
+          "status": "PASS",
+          "seconds": 0.07182557999840355,
+          "stdout_sha256": "50cc9d77cd053a88c62a2a82982ae6de7669385fd205297d8e16034566e693d1",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_original_owner_gap_cancel_reuse_flush_reload",
+          "status": "PASS",
+          "seconds": 1.307098560000668,
+          "stdout_sha256": "d787a43f59ca286914bcd20991139b4c453b72a22d7ece8d38151ae52c01aa0d",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_original_role_rejection_and_corruption_cleanup",
+          "status": "PASS",
+          "seconds": 0.17508884999915608,
+          "stdout_sha256": "e9362f2efdb3a0af49da91a473b213807e0d21fb7f35609c0e078ad5a150ea8c",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_new_role_preflight_and_install_failure_boundaries",
+          "status": "FAIL",
+          "seconds": 0.21590395600105694,
+          "stdout_sha256": "84857ae15634c4dd0797095a037cd5070a9d9cf6676047b80574ef4bfeb5f538",
+          "stderr_sha256": "4e175cabccb41b38b374d5c90a67ff59dab08f799e1ce62b1d9ebee4e60886a7"
+        }
+      ]
+    },
+    {
+      "revision": "r3",
+      "original_result": {
+        "path": "artifacts/dev3/free-undo-20261025/r3/reserved-selected/result.json",
+        "sha256": "b26993209b4749458409e8bc16177cc003abb08e634ec62fbdf67c41de750206"
+      },
+      "source_fingerprint": "02a0e27216a42342cede8163a8f01a4417afbd647c75dc593baa8329b2614f61",
+      "binary_sha256": "5ad4749a2fefafc7630b0b23cfdeea0e30d448acf0e92cd8fc01c7bedc781fa2",
+      "status": "PASS",
+      "selection": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_reserved_recovery_uses_original_scope_cancel"
+      ],
+      "cases": [
+        {
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_reserved_recovery_uses_original_scope_cancel",
+          "status": "PASS",
+          "seconds": 1.3506389049998688,
+          "stdout_sha256": "ccf5474bb39f85dd728138bbeda24624ce1c3c3b1432214f7fdeb86e42e5956c",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "revision": "r4",
+      "original_result": {
+        "path": "artifacts/dev3/free-undo-20261025/r4/memory-selected/result.json",
+        "sha256": "baf256fc4a2da600a92bd0735008d9f2ac605b1f79991b2bc2f71f9b116686f0"
+      },
+      "source_fingerprint": "b27c65a242f1327ec505e036deb05b20acd7c72b0d08da2146341bf6cd2bfd41",
+      "binary_sha256": "04d3b3f0ba8ee30fb534b3678db5077bc60f898463c5473be94dccd20e32bfef",
+      "status": "PASS",
+      "selection": [
+        "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_new_role_preflight_and_install_failure_boundaries"
+      ],
+      "cases": [
+        {
+          "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::free_undo_tests::free_undo_new_role_preflight_and_install_failure_boundaries",
+          "status": "PASS",
+          "seconds": 1.3337376710005628,
+          "stdout_sha256": "130393ac19f37c23d97564b5eb396acb46445385e0bf1ae9309c2bdc9e48c8c4",
+          "stderr_sha256": "58ab27b07c3a8c45ded63d715d9d8e0f61ed3670effbc6b711ee6d800eca0117"
+        }
+      ]
+    }
+  ],
+  "native": {
+    "revision": "r5",
+    "admission": {
+      "path": "artifacts/dev3/free-undo-20261025/r5/native-admission.json",
+      "sha256": "d6cb4b6d1d0e024217fd34a73add12a6eb501054cea1137f42b3c9e5d507008a"
+    },
+    "result": {
+      "path": "artifacts/dev3/free-undo-20261025/r5/native/result.json",
+      "sha256": "b76387fd9eccfb243adbdd1724bffa5773b5d2ba08db24c69e85251f8bff9ed5"
+    },
+    "observation": {
+      "audit_seconds": 0.29951820700080134,
+      "seconds": 7.275605659999201,
+      "status": "PASS",
+      "workers": [
+        {
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/free-undo-20261025/r5/xadb-engine-tests",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_three_process_worker",
+            "--ignored",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "cut": "A_FU_BEFORE_UNDO_HOME",
+          "cut_resources": {
+            "fd_peak": 6,
+            "handles": 2,
+            "peak": 3
+          },
+          "exit_code": -9,
+          "externally_killed": true,
+          "phase": "produce",
+          "pid": 249737,
+          "trace_sha256": "ca0790306bfb40a87091ec33ef59c9b11733ed6a7cc2191553916c2d594b4616"
+        },
+        {
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/free-undo-20261025/r5/xadb-engine-tests",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_three_process_worker",
+            "--ignored",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "cut": "A_FU_AFTER_UNDO_DURABLE",
+          "cut_resources": {
+            "fd_peak": 6,
+            "handles": 1,
+            "peak": 3
+          },
+          "exit_code": -9,
+          "externally_killed": true,
+          "phase": "recover",
+          "pid": 249752,
+          "trace_sha256": "aa302de78a90c9f98200427c2555eda29846f83555477ee859b16e23ad0c908f"
+        },
+        {
+          "command": [
+            "/home/et16/work/xadb/artifacts/dev3/free-undo-20261025/r5/xadb-engine-tests",
+            "--exact",
+            "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_three_process_worker",
+            "--ignored",
+            "--nocapture",
+            "--test-threads=1"
+          ],
+          "cut": null,
+          "exit_code": 0,
+          "externally_killed": false,
+          "phase": "reentry",
+          "pid": 249769,
+          "trace_sha256": "c6f3195a20e3fec7c104c43125b32bc9500e57061f03c3aa8deb599785c08822"
+        }
+      ]
+    },
+    "normal_worker": {
+      "path": "artifacts/dev3/free-undo-20261025/r5/native/reentry/worker.tsv",
+      "sha256": "c5c6250342e8ba374d477100e919551b44a9deb287c3ce9d1012f8dc3fd27804"
+    },
+    "reentry_home_observation": {
+      "status14_init_lsn": 12,
+      "status14_home": "NOT_INSTALLED",
+      "undo15_init_lsn": 14,
+      "undo15_home": "INSTALLED_L14_AND_FLUSH_EVICT_LOAD_VERIFIED"
+    }
+  },
+  "compiler": {
+    "revision": "r3",
+    "result": {
+      "path": "artifacts/dev3/free-undo-20261025/r3/compiler/result.json",
+      "sha256": "893cac5afcf4f24a27239e35a64048894ebf891ba48e08a35bd74adfa08e6218"
+    },
+    "status": "PASS",
+    "total": 7,
+    "baseline": 1,
+    "positive": 1,
+    "negative": 5,
+    "cleanup": {
+      "path": "artifacts/dev3/free-undo-20261025/r3/compiler/cleanup.json",
+      "sha256": "1c0c94af919f57e2d1ab99b266068980d72995e27cef5919346f375933ec98ae"
+    }
+  },
+  "tools": {
+    "unique_tests": 4,
+    "executions": 6,
+    "runs": [
+      {
+        "path": "artifacts/dev3/free-undo-20261025/controller-r1/result.json",
+        "sha256": "ea3587a4db67d77c728aecc3a65b5d11eefe7dfa32c6bdad3ec53b58b3172dc3"
+      },
+      {
+        "path": "artifacts/dev3/free-undo-20261025/controller-r2/result.json",
+        "sha256": "9d13fa4f833be823f80f0d3bd747340abf6dd76859b1145cb4a4e1fd19d6458e"
+      },
+      {
+        "path": "artifacts/dev3/free-undo-20261025/controller-r3/result.json",
+        "sha256": "0a35beb5eeba954672604ba2c27285597e7a49ef760e17d9e126839228f87751"
+      }
+    ],
+    "reason": "Only changed durable no-force and armed home-write audit tests were rerun."
+  },
+  "quality": [
+    {
+      "revision": "r3",
+      "fmt": {
+        "path": "artifacts/dev3/free-undo-20261025/r3/fmt-result.json",
+        "sha256": "d88418c2985e0c1aed8b915092a87c6326fbc65931dfa879d8cc54ebfed9bdab"
+      },
+      "clippy": {
+        "path": "artifacts/dev3/free-undo-20261025/r3/clippy-result.json",
+        "sha256": "72f92404863c943bdc46dd8110b2ba7d8fd460640b4dee28fcc2a7c94b3f69df"
+      }
+    },
+    {
+      "revision": "r4",
+      "fmt": {
+        "path": "artifacts/dev3/free-undo-20261025/r4/fmt-result.json",
+        "sha256": "3a2278c8ba3f61f62c452b3f99b58bb676be84edfea4e903a224c694bc0bba57"
+      },
+      "clippy": {
+        "path": "artifacts/dev3/free-undo-20261025/r4/clippy-result.json",
+        "sha256": "e96fcc27bad574d1a104c17fbbc0627a5e9ca87b37219dc35316f915ec4cb66e"
+      }
+    },
+    {
+      "revision": "r5",
+      "fmt": {
+        "path": "artifacts/dev3/free-undo-20261025/r5/fmt-result.json",
+        "sha256": "42ea4f0b5fa66a709a90bbb196e62cb7c060df830b6c8dcea8772edc2e8982ac"
+      },
+      "clippy": {
+        "path": "artifacts/dev3/free-undo-20261025/r5/clippy-result.json",
+        "sha256": "e6848f85da8ccc8ddd00a96fe4b628b6b9cdb0e550d2ee572a0ff3a45cb90739"
+      }
+    }
+  ],
+  "source_value_census": {
+    "component_cap": 65536,
+    "memory_recovery_peak": 65320,
+    "native_recovery_peak": 65456,
+    "native_recovery_metadata": 93760,
+    "native_recovery_whole": 159296,
+    "native_retention_peak": 63304,
+    "native_retention_metadata": 123208,
+    "native_retention_whole": 188744,
+    "interpretation": "Typed source-value upper bounds, not measured machine stack/RSS."
+  },
+  "failures_preserved": [
+    {
+      "revision": "r0",
+      "kind": "BUILD_ERROR",
+      "reason": "Missing test import, foreign-core test lifetime and unused imports; product execution0."
+    },
+    {
+      "revision": "r1",
+      "kind": "STATIC_AND_CLIPPY_FAIL",
+      "reason": "Native source-value census66070>65536; mutually exclusive Catalog/Status/Undo image phases were summed. Test never_loop and tuple complexity also corrected. No subsequent memory/native execution."
+    },
+    {
+      "revision": "r2",
+      "kind": "REVIEW_HOLD_NOT_RUN",
+      "reason": "Compiled source predates helper borrow correction; no product/static/compiler/native test execution."
+    },
+    {
+      "revision": "r3",
+      "kind": "BOUNDARY_FIXTURE_FAIL",
+      "reason": "Only frame counter set to MAX while DPT counter remained2, so invariant failed before intended checked overflow. Coherent frame+DPT setup corrected without changing expected Unchanged/Exhausted."
+    },
+    {
+      "revision": "r4",
+      "kind": "NATIVE_CONTROLLER_FAIL",
+      "reason": "Pre-arm fresh-file page11 zero filling was misclassified as INIT6 home write. Raw trace proves attempted INIT6 then cut before syscall; cleanup killed/reaped worker. Explicit arm interval correction reviewed and one changed tool case passed."
+    }
+  ],
+  "completed_unchanged_tests_repeated": 0,
+  "not_run": [
+    "S5 full DEV3 inventory and current-format adaptations of prior plan4 runtime fixtures",
+    "Live/Releasing Undo producer, sequence issuance and nonempty Forward/CLR",
+    "Actual Catalog CREATE, Row INSERT and Commit/publication",
+    "Nonempty REBASE/current-build loser recovery",
+    "Overall DEV3 acceptance"
+  ],
+  "cleanup": {
+    "owned_target": {
+      "path": "artifacts/dev3/free-undo-20261025/target-cleanup.json",
+      "sha256": "e638e160f92bd7dd7f93782665549ab07c1159f8ca2e7f75d22f86d15fd36dde"
+    },
+    "other_task_caches_touched": false,
+    "source_and_native_archive_finalization": "COMPLETE_ALL_MEMBERS_VERIFIED",
+    "native_archives": {
+      "path": "artifacts/dev3/free-undo-20261025/native-cleanup.json",
+      "sha256": "74e9a20082c69c66e4be07ae7b0d5b44569525cdba8e33163e64f7b2aa0d0dcf"
+    },
+    "retained_artifact_bytes": 436713161,
+    "receipt_label_note": "The preserved text in r1-r5 source-cleanup.json reuses the r0 wording original build failure and logs. Those builds passed; each immutable build-receipt.json exit_code is authoritative. Cleanup originals are retained unchanged."
+  },
+  "coordination": {
+    "integrator": "/root",
+    "supplier": "/root/page_lifetime",
+    "independent_inputs": "/root/undo_design",
+    "reviewer": "/root/dev3_review"
+  },
+  "final_review": {
+    "status": "D1_PASS",
+    "reviewer": "/root/dev3_review",
+    "integrator": "/root",
+    "scope": "Free Undo container only. Original product/source/input and native trace/snapshot evidence accepted.",
+    "source_file_inventory_verified": 4921,
+    "raw_literal_bytes": 1951392,
+    "literal_index_entries_verified": 50,
+    "reviewer_product_test_executions": 0,
+    "remaining": "Overall DEV3/S5, actual Catalog/Row transaction, live Undo/CLR, Commit/publication, nonempty REBASE remain incomplete."
+  }
+}

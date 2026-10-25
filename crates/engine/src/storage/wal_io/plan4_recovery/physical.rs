@@ -17,11 +17,12 @@ pub(super) fn observe_pending(
     profile: Profile,
     selected: SelectedControl,
     raw: &[u8],
-    index: usize,
+    req: crate::storage::dirty_frame::TargetRequest,
     image: &[u8; PAGE_BYTES],
     matched: &mut u64,
 ) -> Result<()> {
     let p = Plan4RecoveryPhase::Analysis;
+    let index = req.identity.page.page_no as usize;
     let view = control::decode_selected_doublewrite(
         &raw[..selected.reference.encoded_len as usize],
         selected.reference,
@@ -33,7 +34,6 @@ pub(super) fn observe_pending(
         if pending.page.page_no as usize != index {
             continue;
         }
-        let req = analysis::request(profile, index, pending.page.incarnation);
         if pending.page != req.identity.page
             || pending.owner != req.identity.owner
             || pending.owner_generation != req.identity.owner_generation

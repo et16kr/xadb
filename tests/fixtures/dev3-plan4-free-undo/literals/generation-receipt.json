@@ -1,0 +1,12 @@
+{
+  "base_claim": "pure capture6 physical32MiB/DWB-generation1; no selected-source authority",
+  "elapsed_seconds": 0.013997242000186816,
+  "generated_bytes": 1913808,
+  "generated_files": 26,
+  "generator_sha256": "1f9cb46584539abd801f10fe50b813578014c09d64de8d669da989a2afad4f63",
+  "indexed_files": 48,
+  "input_plan_sha256": "d4adb2b9c53363754db138d44e1b3362786b9e27f872be5f89839764fe996245",
+  "raw_index_sha256": "e48c132b3473e9f160d77903774fcfedb66cbae9e410481307ef15a42de23239",
+  "schema": "XADB_PLAN4_FREE_UNDO_GENERATION_V1",
+  "status": "INPUT_GENERATED_NOT_PRODUCT_VERIFICATION"
+}

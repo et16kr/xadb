@@ -1,0 +1,376 @@
+{
+  "budget": {
+    "all_run_artifacts_bytes": 1073741824,
+    "generator_memory_bytes": 67108864,
+    "generator_seconds": 30,
+    "live_database_bytes": 33554432,
+    "memory_case_seconds": 30,
+    "memory_seconds": 210,
+    "native_audit_seconds": 1,
+    "native_db_fd_peak": 6,
+    "native_file_peak": 3,
+    "native_snapshot_bytes": 134217728,
+    "native_total_seconds": 30,
+    "native_workers_seconds": 29,
+    "new_literal_bytes": 2097152,
+    "output_bytes": 8388608,
+    "static_seconds": 15,
+    "trace_phase_bytes": 4194304
+  },
+  "compiler": {
+    "baseline": 1,
+    "negative": 5,
+    "positive": 1,
+    "semantic": [
+      "normal use",
+      "reservation double-consume",
+      "owner reborrow during live reservation",
+      "role escapes source session",
+      "plan3 UndoRole used in plan4",
+      "cancel reuses reservation after initialize"
+    ],
+    "total": 7
+  },
+  "contract": "devdoc/contracts/dev3-plan4-free-undo.md",
+  "cuts": [
+    {
+      "barrier_max_seconds": 5,
+      "file": "d3-data-0000000100000001",
+      "incarnation": 2,
+      "length": 16384,
+      "lsn": 6,
+      "name": "A_FU_BEFORE_UNDO_HOME",
+      "occurrence_after_arm": 1,
+      "offset": 180224,
+      "page": 11,
+      "pid": 1,
+      "requires": "Pending selector publish and successful directory sync",
+      "termination": "controller SIGKILL"
+    },
+    {
+      "barrier_max_seconds": 5,
+      "lsn": 10,
+      "name": "A_FU_AFTER_UNDO_DURABLE",
+      "occurrence": 1,
+      "pid": 2,
+      "requires": "initialize success, durability, RAM install/claim complete; old WAL removed and directory synced; no new home force",
+      "termination": "controller SIGKILL"
+    }
+  ],
+  "d2_input_sha256": "7505f9755cc6ee3e202d0b825d3ec9bee0bea7d41ed26d33734b1f2f3b51438e",
+  "installer_boundaries": {
+    "additional_raw_files": 0,
+    "case": "free_undo_new_role_preflight_and_install_failure_boundaries",
+    "channel_cut_max_seconds": 5,
+    "fresh_cases": [
+      {
+        "action": "prepare Undo then allocator counter MAX; reserve rejects",
+        "expected": "no WAL, no partial pins",
+        "name": "allocator_overflow"
+      },
+      {
+        "action": "copy registration slot1 to slot2 then reserve",
+        "expected": "reject, no WAL, no partial pins",
+        "name": "directory_duplicate"
+      },
+      {
+        "action": "drop actual reserved Undo token at L3",
+        "expected": "owner fenced; zero claims",
+        "name": "reserved_drop"
+      },
+      {
+        "cut": "AllocatorImageInstalled",
+        "expected": "allocator bytes L4, payload old, metadata/DPT/descriptor pre-INIT; complete WAL4/synced3, pending+claim retained, zero pins",
+        "name": "allocator_install_panic"
+      },
+      {
+        "cut": "PayloadImageInstalled",
+        "expected": "both image bytes L4, metadata/DPT/descriptor pre-INIT; complete WAL4/synced3, pending+claim retained, zero pins",
+        "name": "payload_install_panic"
+      },
+      {
+        "effect": "8192-byte prefix then error",
+        "expected": "Unknown/CallerMustResolve/AfterRecovery; owner fenced, both pages published, claim retained",
+        "file": "d3-wal-00000001",
+        "name": "wal_prefix_error",
+        "occurrence_after_reserve3_trace_clear": 1,
+        "offset": 84496,
+        "operation": "write"
+      },
+      {
+        "effect": "actual sync completes then error",
+        "expected": "Unknown/CallerMustResolve/AfterRecovery; owner fenced, both pages published, claim retained",
+        "file": "d3-wal-00000001",
+        "name": "wal_sync_after_error",
+        "occurrence_after_reserve3_trace_clear": 1,
+        "offset": 0,
+        "operation": "sync"
+      }
+    ],
+    "per_case_seconds": 30,
+    "prefix": "native Status9 L1/2; Undo10 Reserve3/INIT4",
+    "total_memory_seconds": 210
+  },
+  "limitations": [
+    "base is pure capture6 input; physical32MiB and DWB-generation1 are explicit observations, not native trace authority",
+    "epoch suffix files omit physical 4096-byte headers and cannot stand alone as complete WAL files",
+    "prior fixtures are read-only source references, not new product PASS"
+  ],
+  "memory_gap_cancel": {
+    "first": "native L1/2",
+    "new": [
+      [
+        2,
+        10,
+        2,
+        8,
+        9,
+        "undo"
+      ],
+      [
+        3,
+        11,
+        2,
+        10,
+        11,
+        "cancel"
+      ],
+      [
+        4,
+        11,
+        3,
+        12,
+        13,
+        "undo"
+      ]
+    ],
+    "preserved_n0_lsns": [
+      3,
+      4,
+      5,
+      6,
+      7
+    ]
+  },
+  "native": [
+    {
+      "epoch": 1,
+      "incarnation": 2,
+      "init_lsn": 2,
+      "kind": "status",
+      "page": 9,
+      "reserve_lsn": 1,
+      "work": 1
+    },
+    {
+      "epoch": 1,
+      "incarnation": 2,
+      "init_lsn": 4,
+      "kind": "undo",
+      "page": 10,
+      "reserve_lsn": 3,
+      "work": 2
+    },
+    {
+      "epoch": 1,
+      "incarnation": 2,
+      "init_lsn": 6,
+      "kind": "undo",
+      "page": 11,
+      "reserve_lsn": 5,
+      "work": 3
+    },
+    {
+      "epoch": 2,
+      "incarnation": 2,
+      "init_lsn": 8,
+      "kind": "status",
+      "page": 12,
+      "reserve_lsn": 7,
+      "work": 4
+    },
+    {
+      "epoch": 2,
+      "incarnation": 2,
+      "init_lsn": 10,
+      "kind": "undo",
+      "page": 13,
+      "reserve_lsn": 9,
+      "work": 5
+    },
+    {
+      "epoch": 3,
+      "incarnation": 2,
+      "init_lsn": 12,
+      "kind": "status",
+      "page": 14,
+      "reserve_lsn": 11,
+      "work": 6
+    },
+    {
+      "epoch": 3,
+      "incarnation": 2,
+      "init_lsn": 14,
+      "kind": "undo",
+      "page": 15,
+      "reserve_lsn": 13,
+      "work": 7
+    }
+  ],
+  "negative_input_contract": [
+    "scope/version mismatch without fallback",
+    "208-byte WAL/protected shortfall",
+    "wrong kind/object/incarnation/work/birth/order",
+    "missing INIT or mismatched native/redo",
+    "Free generation2 or extra slot",
+    "v1 base with FreeUndo tag",
+    "record/allocator/certificate role mismatch",
+    "resealed base without original INIT provenance",
+    "copied record with wrong external identity",
+    "Undo counted as Status or unvalidated skip"
+  ],
+  "references": {
+    "P00.bin": {
+      "bytes": 16384,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P00.bin",
+      "sha256": "077d06af8b37bec32a9472ed498d3fa884fbe5e8fd84c457f6ebfa96e9946cfd"
+    },
+    "P01.bin": {
+      "bytes": 16384,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P01.bin",
+      "sha256": "eba8bb02bacd91999b00f9891322b8cfebfb222004aa7b0f9332142834858f9c"
+    },
+    "P02.bin": {
+      "bytes": 16384,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P02.bin",
+      "sha256": "49dafbbf9fdd3e8c8d93e073170114602d50a86e5f82697f4de7ba5232f4f0b3"
+    },
+    "P03.bin": {
+      "bytes": 16384,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P03.bin",
+      "sha256": "2d7b85d1b4fcb607482de1186e2faeafb6f15667d9d1c1b1d520aebf50345046"
+    },
+    "P04.bin": {
+      "bytes": 16384,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P04.bin",
+      "sha256": "0d3592d3f9b3399368722c03b864696f85ff1d157f7b4a3d509f3d1bb2660deb"
+    },
+    "P05.bin": {
+      "bytes": 16384,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P05.bin",
+      "sha256": "950df8eb976fea1bb99cc4842816f27bd83c7e373268e07ceedde35006c0a182"
+    },
+    "P06.bin": {
+      "bytes": 16384,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P06.bin",
+      "sha256": "9f53a1983f5b03e2b22454e9fc6f44a516530fd3ba17bd919147394228f746d5"
+    },
+    "P07.bin": {
+      "bytes": 16384,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P07.bin",
+      "sha256": "c666b6d1954d2b19faa83d5bdb381f4edd337af835a47713e31d1efa52bcee90"
+    },
+    "P08.bin": {
+      "bytes": 16384,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/P08.bin",
+      "sha256": "646d2c91744594c80afc26e4919dffece69dd996e436a1390191a164c5a68567"
+    },
+    "bootstrap.bin": {
+      "bytes": 4096,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/bootstrap.bin",
+      "sha256": "3fff3147da995ed11998320c6a056198283a3f5f7b775877c9c801117937bdcb"
+    },
+    "filemap.bin": {
+      "bytes": 4096,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/filemap.bin",
+      "sha256": "092301de885e2485c51c6d2a4a8a42fae1c1b87eced274a0af8eaca844c72280"
+    },
+    "memory-03.wal": {
+      "bytes": 19672,
+      "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/aging-start.wal",
+      "sha256": "aec4bb0b39714379943228d922c28bac3e032c4280a6bc970cf10a76fead1f9f"
+    },
+    "memory-04.wal": {
+      "bytes": 56712,
+      "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/begin.wal",
+      "sha256": "47f67e5b6177151a47649b70690a9c0e9ceb3cffc12a04f3840dbf1bf6975ddd"
+    },
+    "memory-05.wal": {
+      "bytes": 3040,
+      "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/rollback.wal",
+      "sha256": "d127a46b187f8a904da8ae9c7699abbc42dc61d0c4b9edc60d70d76189a540d9"
+    },
+    "memory-06.wal": {
+      "bytes": 56712,
+      "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/abort.wal",
+      "sha256": "19263ac31f2f77860af938359b72d63042f6308f0885963875962e9918cf8028"
+    },
+    "memory-07.wal": {
+      "bytes": 55112,
+      "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/finish.wal",
+      "sha256": "06fcd737da47f038671b593c3d09b26c881b98ac4c12164a238796deb11a8b1d"
+    },
+    "memory-aging-finish.descriptor": {
+      "bytes": 1536,
+      "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/aging-finish.descriptor",
+      "sha256": "05a73e8aebfd7a807d5f2455be1a386f9c1d230de20b7a4254021cc6b4e197d9"
+    },
+    "memory-jobs-finish.page": {
+      "bytes": 16384,
+      "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/jobs-finish.page",
+      "sha256": "bbbb336fd2ee264e5ced1f19770c849d6bca5e7c7273c5c25d250e500c165fdd"
+    },
+    "memory-root-finish.page": {
+      "bytes": 16384,
+      "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/root-finish.page",
+      "sha256": "0004e6b2dbfd214a576c79bed517ef9b45290272f8d4c065c91e82282191e4ab"
+    },
+    "memory-status-finish.page": {
+      "bytes": 16384,
+      "path": "tests/fixtures/dev3-plan4-empty-retention/vectors/p1-o00/raw/status-finish.page",
+      "sha256": "99aba4a66f7878d522b2eff9e1003544a04bbe34cd8fc5eee4eefa5ac3b2ba41"
+    },
+    "profile.bin": {
+      "bytes": 4096,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/profile.bin",
+      "sha256": "c440c3143d335aad95eeaff540f2918dd7dd16bb0e8cfaf43ca8a8fd8da62bf4"
+    },
+    "wal-header.bin": {
+      "bytes": 4096,
+      "path": "tests/fixtures/dev3-plan4-recovery-base/vectors/p1/references/wal-header.bin",
+      "sha256": "2acd1b8f1a6199eb2f97f0b7e1a710ca8fa27e0570375ac7b660656ce0798a0c"
+    }
+  },
+  "reserved_recovery_cancel": {
+    "allocator": "reserved-cancel-l6.page",
+    "cancel_lsn": 6,
+    "case": "A-FU-reserved-recovery",
+    "consumed_wal": 42400,
+    "descriptor_frame_range": [
+      352,
+      1888
+    ],
+    "frame": "reserved-cancel-l6.wal",
+    "incarnation": 2,
+    "page": 11,
+    "prefix": "native frames 1..5, ending unfinished work3 Undo reservation",
+    "requires": "drop token fences original owner; new epoch original recovery cancels Reserved and reaches Verified",
+    "reserve_lsn": 5,
+    "work": 3,
+    "writer_epoch": 2
+  },
+  "schema": "XADB_PLAN4_FREE_UNDO_INPUT_V1",
+  "scope": {
+    "base_version": 2,
+    "reserve_wal": 21200,
+    "reserved_protected": 70976,
+    "reserved_terminal_wal": 38208,
+    "status_init_wal": 38000,
+    "undo_init_wal": 38208,
+    "xsg_flags": 1,
+    "xsg_flags_offset": 170,
+    "xsg_version": 2,
+    "xsg_version_offset": 164
+  },
+  "status": "D2_ACCEPTED_INPUT_NOT_EXECUTION_EVIDENCE"
+}

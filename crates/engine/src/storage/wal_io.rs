@@ -1045,7 +1045,8 @@ pub(crate) use bootstrap::EmptyTransactionObservation;
 
 pub(in crate::storage) use bootstrap::{
     encode_plan4_catalog_genesis, plan4_base_allocation_source_bytes,
-    plan4_catalog_genesis_source_bytes, validate_plan4_base_allocation,
+    plan4_catalog_genesis_source_bytes, plan4_system_base_allocation_source_bytes,
+    validate_plan4_base_allocation, validate_plan4_system_base_allocation,
 };
 
 #[allow(

@@ -34,6 +34,7 @@ pub(in crate::storage) struct Trace {
     mutations: usize,
     entropy: usize,
     log_bytes: usize,
+    undo_home_cut: Option<UndoHomeCut>,
 }
 impl Trace {
     fn event(&mut self, operation: &str, name: &str, offset: u64, length: usize, outcome: &str) {
@@ -177,6 +178,44 @@ impl FileIo for File {
             .lock()
             .unwrap()
             .mutation("write", self.name.as_str(), offset, bytes.len());
+        let cut = {
+            let mut trace = self.trace.lock().unwrap();
+            if self.name.as_str() == "d3-data-0000000100000001"
+                && offset == 11 * PAGE_BYTES as u64
+                && trace.undo_home_cut.is_some()
+            {
+                let cut = trace.undo_home_cut.take().expect("armed one-shot cut");
+                assert_eq!(bytes.len(), PAGE_BYTES);
+                assert_eq!(&bytes[..8], b"XDP1\x01\x00\x08\x00");
+                for (at, expected) in [
+                    (24, 0x100000001u64),
+                    (32, 11),
+                    (40, 2),
+                    (48, 3),
+                    (56, 1),
+                    (64, 6),
+                ] {
+                    assert_eq!(
+                        u64::from_le_bytes(bytes[at..at + 8].try_into().unwrap()),
+                        expected
+                    );
+                }
+                assert_eq!(foundation::codec::content_digest(bytes), cut.digest);
+                trace.event(
+                    "cut",
+                    "A_FU_BEFORE_UNDO_HOME",
+                    offset,
+                    bytes.len(),
+                    "REACHED:1",
+                );
+                Some(cut)
+            } else {
+                None
+            }
+        };
+        if let Some(cut) = cut {
+            crash_barrier(&self.trace, &cut.marker, "A_FU_BEFORE_UNDO_HOME");
+        }
         let result = self.inner.as_mut().unwrap().write_at(bytes, offset);
         let outcome = match &result {
             Ok(n) => format!("OK:{n}:{}", hash_hex(&bytes[..*n])),
@@ -435,7 +474,7 @@ fn worker_g5_clean() {
         assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
         let trace_file = OpenOptions::new().create_new(true).write(true).open(output.join("effects.tsv")).unwrap();
         let entropy_file = OpenOptions::new().create_new(true).write(true).open(output.join("entropy.tsv")).unwrap();
-        let trace = Arc::new(Mutex::new(Trace { root: root.clone(), output: trace_file, entropy_output: entropy_file, readonly: false, handles: 0, peak: 0, fd_peak: 0, events: 0, mutations: 0, entropy: 0, log_bytes: 0 }));
+        let trace = Arc::new(Mutex::new(Trace { root: root.clone(), output: trace_file, entropy_output: entropy_file, readonly: false, handles: 0, peak: 0, fd_peak: 0, events: 0, mutations: 0, entropy: 0, log_bytes: 0, undo_home_cut: None }));
         let directory = Directory { inner: Some(LinuxDirectory::open_existing(&root).unwrap()), trace: Arc::clone(&trace) };
         let writer = directory.acquire_writer().unwrap();
         drop(directory);
@@ -507,6 +546,7 @@ pub(in crate::storage) fn open_native(
         mutations: 0,
         entropy: 0,
         log_bytes: 0,
+        undo_home_cut: None,
     }));
     let directory = Directory {
         inner: Some(LinuxDirectory::open_existing(root).unwrap()),
@@ -535,4 +575,69 @@ pub(in crate::storage) fn native_receipt(trace: &Arc<Mutex<Trace>>) -> NativeTra
         entropy: trace.entropy,
         log_bytes: trace.log_bytes,
     }
+}
+
+/// One exact before-syscall cut for the new Free Undo integration worker. The
+/// expected digest is an independent literal; every existing worker is unarmed.
+struct UndoHomeCut {
+    marker: PathBuf,
+    digest: [u8; 32],
+}
+pub(in crate::storage) fn arm_undo_home_cut(
+    trace: &Arc<Mutex<Trace>>,
+    marker: &Path,
+    digest: [u8; 32],
+) {
+    assert!(marker.is_absolute() && !marker.exists());
+    let mut trace = trace.lock().unwrap();
+    assert!(trace.undo_home_cut.is_none());
+    trace.undo_home_cut = Some(UndoHomeCut {
+        marker: marker.to_path_buf(),
+        digest,
+    });
+    trace.event(
+        "arm",
+        "A_FU_BEFORE_UNDO_HOME",
+        11 * PAGE_BYTES as u64,
+        PAGE_BYTES,
+        "ARMED:1",
+    );
+}
+/// Flushes a reached marker, releases the trace mutex and awaits an external
+/// SIGKILL for at most five seconds. Returning is a failed crash injection.
+pub(in crate::storage) fn crash_barrier(trace: &Arc<Mutex<Trace>>, marker: &Path, name: &str) -> ! {
+    assert!(matches!(
+        name,
+        "A_FU_BEFORE_UNDO_HOME" | "A_FU_AFTER_UNDO_DURABLE"
+    ));
+    let peaks = {
+        let mut trace = trace.lock().unwrap();
+        trace.event("barrier", name, 0, 1, "REACHED");
+        trace.output.sync_all().unwrap();
+        assert!(trace.peak <= 3 && trace.fd_peak <= 6);
+        (trace.handles, trace.peak, trace.fd_peak)
+    };
+    let staged = marker.with_extension("staged");
+    let mut output = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&staged)
+        .unwrap();
+    writeln!(
+        output,
+        "{name}\t{}\t1\t{}\t{}\t{}",
+        std::process::id(),
+        peaks.0,
+        peaks.1,
+        peaks.2
+    )
+    .unwrap();
+    output.sync_all().unwrap();
+    drop(output);
+    fs::rename(staged, marker).unwrap();
+    let until = std::time::Instant::now() + std::time::Duration::from_secs(5);
+    while std::time::Instant::now() < until {
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+    panic!("external controller failed to SIGKILL reached cut {name}");
 }

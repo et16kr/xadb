@@ -1,0 +1,22 @@
+{
+  "elapsed_seconds": 0.012890062000224134,
+  "generated": [
+    {
+      "bytes": 21200,
+      "path": "reserved-cancel-l6.wal",
+      "sha256": "668246e84d85a4c34028454f5200efe614a0cdb9077038ae362766cac7eaf88f"
+    },
+    {
+      "bytes": 16384,
+      "path": "reserved-cancel-l6.page",
+      "sha256": "0dc173487c2216771c1fbbd731c772c5ff062a99377be4243bcdc304cc585a04"
+    }
+  ],
+  "generator_sha256": "a9a646f5fd047b1fbd73d743d99d56cde9a8217bf65587d08e9dd1f892e6bb42",
+  "indexed_files": 50,
+  "input_plan_sha256": "fe18ef492986f67bdb8d21e90679c63f49354e2a63a9f3e6c2a82cb02216623f",
+  "previous_index_sha256": "e48c132b3473e9f160d77903774fcfedb66cbae9e410481307ef15a42de23239",
+  "raw_index_sha256": "17ba2d2855b5fa38366dadb8ce3c2b927e477c0f125b452229969cdb4d5ace72",
+  "schema": "XADB_PLAN4_FREE_UNDO_EXTENSION_V1",
+  "status": "INPUT_GENERATED_NOT_PRODUCT_VERIFICATION"
+}

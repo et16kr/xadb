@@ -11,7 +11,7 @@ pub(crate) struct RetentionAllocationPlan<'p, 's> {
     pub(crate) allocator: PageIdentity,
     pub(crate) prefix: wal::WalPrefix,
     pub(crate) high_water: u64,
-    /// None/active0, Cancelled1, InitializedStatus2. No mixed/Undo terminal.
+    /// None/active0, Cancelled1, InitializedStatus2, InitializedUndoRoot3.
     pub(crate) terminal: u8,
     pub(crate) before_descriptor: Option<&'p [u8; 1536]>,
     pub(crate) fence: &'s SessionFence,
@@ -66,7 +66,7 @@ fn analyze<'p>(
             && expected.frame.stream.timeline == namespace.timeline,
         SemanticError::IdentityMismatch,
     )?;
-    validate_plan4_base_allocation(
+    validate_plan4_system_base_allocation(
         before,
         expected.profile,
         expected.before_descriptor,
@@ -235,7 +235,7 @@ fn prepare<'out, 's>(
         before,
         output,
         after,
-        OperationBudget::StatusInit114688,
+        OperationBudget::MixedInit114688,
     )?;
     let bytes = &output[..RETENTION_RESERVE_BYTES];
     validate(&expected, before, bytes, after, cancel)?;
@@ -274,7 +274,7 @@ fn validate(
     cancel: bool,
 ) -> Result<RetentionAllocationState> {
     let (analysis, reservation) = analyze(expected, before, cancel)?;
-    let h = validate_header(&analysis, bytes)?;
+    let h = validate_header_scoped(&analysis, bytes, true)?;
     let descriptor = obligation::decode_descriptor(
         &bytes[352..1888],
         ReservationOwner::System(analysis.batch.owner),
@@ -289,7 +289,7 @@ fn validate(
         after,
         h,
         &descriptor,
-        OperationBudget::StatusInit114688,
+        OperationBudget::MixedInit114688,
     )?;
     Ok(state(reservation, cancel))
 }
@@ -318,7 +318,7 @@ fn materialize(
     cancel: bool,
 ) -> Result<RetentionAllocationState> {
     let (analysis, _) = analyze(expected, before, cancel)?;
-    let header = validate_header(&analysis, bytes)?;
+    let header = validate_header_scoped(&analysis, bytes, true)?;
     let old = allocation_page::decode_allocation_page(
         before,
         expected.allocator,
@@ -359,7 +359,7 @@ pub(crate) fn retention_allocation_source_bytes() -> usize {
     // The full-population preflight returns before the encoder or transition
     // retains its descriptor. These are separate nested peaks, not concurrent
     // descriptor/entry closures. All new outer/result values are added below.
-    super::plan4_base_allocation_source_bytes()
+    super::plan4_system_base_allocation_source_bytes()
         .max(super::super::budget::PLANS + super::super::budget::TEMPORARIES)
         + 4 * size_of::<RetentionAllocationPlan<'_, '_>>()
         + 6 * size_of::<RetentionAllocationExpected<'_>>()

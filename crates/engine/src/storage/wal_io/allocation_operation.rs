@@ -621,6 +621,34 @@ pub(crate) fn validate_plan4_base_allocation(
     high_water: u64,
     terminal: u8,
 ) -> Result<()> {
+    validate_plan4_population(bytes, profile, raw, high_water, terminal, false)
+}
+
+/// Exact v2 plan4 system population. This observation never issues a role or
+/// a restored reservation; the caller supplies the explicitly selected scope.
+pub(crate) fn validate_plan4_system_base_allocation(
+    bytes: &[u8; PAGE_BYTES],
+    profile: Profile,
+    raw: Option<&[u8; 1536]>,
+    high_water: u64,
+    terminal: u8,
+) -> Result<()> {
+    validate_plan4_population(bytes, profile, raw, high_water, terminal, true)
+}
+
+fn validate_plan4_population(
+    bytes: &[u8; PAGE_BYTES],
+    profile: Profile,
+    raw: Option<&[u8; 1536]>,
+    high_water: u64,
+    terminal: u8,
+    system: bool,
+) -> Result<()> {
+    let budget = if system {
+        OperationBudget::MixedInit114688
+    } else {
+        OperationBudget::StatusInit114688
+    };
     let namespace = profile.spec().namespace;
     require(namespace.timeline == 1, SemanticError::IdentityMismatch)?;
     let fixed = super::super::super::fixed_entry().map_err(|_| SemanticError::IdentityMismatch)?;
@@ -632,6 +660,7 @@ pub(crate) fn validate_plan4_base_allocation(
     require(page.header().level == 0, SemanticError::PageMismatch)?;
     let mut batch = None;
     let mut statuses = 0;
+    let mut undos = 0;
     for ordinal in 0..64 {
         let entry = page
             .entry(ordinal)
@@ -689,6 +718,19 @@ pub(crate) fn validate_plan4_base_allocation(
             {
                 statuses += 1;
             }
+            AllocationEntry::Allocated {
+                generation,
+                object,
+                object_generation,
+                kind,
+            } if system
+                && generation.get() >= 2
+                && object.get() == 3
+                && object_generation.get() == 1
+                && kind == PageKind::Undo =>
+            {
+                undos += 1;
+            }
             _ => return Err(SemanticError::PageMismatch),
         }
     }
@@ -703,17 +745,28 @@ pub(crate) fn validate_plan4_base_allocation(
             &batch,
             raw.ok_or(SemanticError::StateMismatch)?,
             high_water,
-            OperationBudget::StatusInit114688,
+            budget,
         )
     } else if high_water == 0 {
         require(
-            raw.is_none() && terminal == 0 && statuses == 0 && page.header().lsn.0 == 0,
+            raw.is_none()
+                && terminal == 0
+                && statuses == 0
+                && undos == 0
+                && page.header().lsn.0 == 0,
             SemanticError::StateMismatch,
         )
     } else {
         let outcome = match terminal {
             1 => TerminalOutcome::Cancelled,
-            2 if statuses != 0 => TerminalOutcome::InitializedStatus,
+            2 if statuses != 0 => {
+                if system {
+                    TerminalOutcome::InitializedMixedStatus
+                } else {
+                    TerminalOutcome::InitializedStatus
+                }
+            }
+            3 if system && undos != 0 => TerminalOutcome::InitializedUndoRoot,
             _ => return Err(SemanticError::StateMismatch),
         };
         validate_finished(
@@ -721,7 +774,7 @@ pub(crate) fn validate_plan4_base_allocation(
             &profile,
             raw.ok_or(SemanticError::StateMismatch)?,
             high_water,
-            OperationBudget::StatusInit114688,
+            budget,
             outcome,
         )
     }
@@ -744,6 +797,13 @@ pub(crate) fn plan4_base_allocation_source_bytes() -> usize {
         + 4 * size_of::<Result<()>>()
         + 24 * size_of::<usize>()
         + 12 * size_of::<&[u8]>()
+}
+
+/// Same bounded full-population observer plus its explicit scope/counter values.
+pub(crate) fn plan4_system_base_allocation_source_bytes() -> usize {
+    plan4_base_allocation_source_bytes()
+        + 4 * std::mem::size_of::<OperationBudget>()
+        + 8 * std::mem::size_of::<usize>()
 }
 
 /// Canonical terminal for reserve-one + Status INIT. Shared by the producer and
@@ -883,6 +943,22 @@ macro_rules! allocation_before_lsn {
         $actual <= $previous
     };
 }
+macro_rules! allocation_group_version {
+    (legacy) => {
+        1
+    };
+    (retention) => {
+        2
+    };
+}
+macro_rules! allocation_group_flags {
+    (legacy) => {
+        0
+    };
+    (retention) => {
+        1
+    };
+}
 macro_rules! allocation_encoder {
     ($name:ident, $policy:ident) => {
         fn $name(
@@ -916,7 +992,8 @@ macro_rules! allocation_encoder {
             raw.fill(0);
             let g = 160;
             raw[g..g + 4].copy_from_slice(b"XSG1");
-            put16(raw, g + 4, 1);
+            put16(raw, g + 4, allocation_group_version!($policy));
+            put16(raw, g + 10, allocation_group_flags!($policy));
             put16(raw, g + 6, if plan.cancel { 10 } else { 8 });
             put16(raw, g + 8, 192);
             put32(raw, g + 12, (length - 192) as u32);
@@ -1118,6 +1195,13 @@ fn validate_analysis_in_population(
 }
 
 fn validate_header(plan: &AnalysisExpected<'_>, bytes: &[u8]) -> Result<WalFrameHeader> {
+    validate_header_scoped(plan, bytes, false)
+}
+fn validate_header_scoped(
+    plan: &AnalysisExpected<'_>,
+    bytes: &[u8],
+    system: bool,
+) -> Result<WalFrameHeader> {
     use SemanticError::*;
     let n = plan.batch.count();
     require(
@@ -1142,9 +1226,9 @@ fn validate_header(plan: &AnalysisExpected<'_>, bytes: &[u8]) -> Result<WalFrame
     )?;
     require(
         &bytes[160..164] == b"XSG1"
-            && get16(bytes, 164) == 1
+            && get16(bytes, 164) == if system { 2 } else { 1 }
             && get16(bytes, 168) == 192
-            && get16(bytes, 170) == 0
+            && get16(bytes, 170) == u16::from(system)
             && get32(bytes, 172) as usize == bytes.len() - 192
             && get32(bytes, 280) == 1536
             && get16(bytes, 284) == 1

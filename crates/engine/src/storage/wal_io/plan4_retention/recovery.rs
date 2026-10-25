@@ -57,6 +57,9 @@ impl<'s> HistorySource<'s> {
         if let Self::Base { base, epoch } = self {
             let view = base.view();
             let h = view.header();
+            if h.format != crate::storage::plan4_recovery_base::BaseFormat::V2System {
+                return Err(RetentionCause::Unsupported);
+            }
             let e = epoch.header();
             if view.digest() != base.digest()
                 || e.base_digest != base.digest()
@@ -181,7 +184,11 @@ fn actor_status(
         else {
             continue;
         };
-        if kind != PageKind::TransactionStatus || object.get() != 2 || object_generation.get() != 1
+        if object_generation.get() != 1
+            || !matches!(
+                (object.get(), kind),
+                (2, PageKind::TransactionStatus) | (3, PageKind::Undo)
+            )
         {
             return Err(RetentionCause::Invariant);
         }
@@ -190,6 +197,22 @@ fn actor_status(
             incarnation: generation,
             ..identity.page
         };
+        if kind == PageKind::Undo {
+            let lsn = crate::storage::undo_record::initial_undo_page_lsn(
+                history::arena_page(replay, i),
+                PageIdentity {
+                    page,
+                    owner: object,
+                    owner_generation: object_generation,
+                    ..identity
+                },
+            )
+            .map_err(RetentionCause::Undo)?;
+            if lsn.0 == 0 {
+                return Err(RetentionCause::Invariant);
+            }
+            continue;
+        }
         let home = status_home::decode_status_home_page(
             history::arena_page(replay, i),
             PageIdentity {
@@ -241,16 +264,14 @@ pub(super) fn seed_replay_slice(
         });
     };
     let view = seed.view();
+    if view.header().format != crate::storage::plan4_recovery_base::BaseFormat::V2System {
+        return Err(RetentionCause::Unsupported);
+    }
     if view.digest() != seed.digest() {
         return Err(RetentionCause::Invariant);
     }
     replay.fill(0);
-    for i in 0..64 {
-        let out: &mut [u8; PAGE_BYTES] = (&mut replay[i * PAGE_BYTES..(i + 1) * PAGE_BYTES])
-            .try_into()
-            .expect("image loan");
-        view.image(i, out).map_err(|_| RetentionCause::Invariant)?;
-    }
+    seed_base_images(&view, replay)?;
     history::refresh_jobs(profile, replay).map_err(|_| RetentionCause::Invariant)?;
     for slot in 0..36 {
         let Some(descriptor) = view
@@ -304,6 +325,22 @@ pub(super) fn seed_replay_slice(
         predecessor_epoch: view.header().source_epoch,
         base_seeded: true,
     })
+}
+
+/// End all image reconstruction before descriptor/actor recovery begins. Within
+/// BaseView::image, catalog and dynamic payload reconstruction are exclusive
+/// ordinal branches; neither creates a descriptor or a recovery cursor.
+fn seed_base_images(
+    view: &crate::storage::plan4_recovery_base::BaseView<'_>,
+    replay: &mut [u8],
+) -> ObservationResult<()> {
+    for i in 0..64 {
+        let out: &mut [u8; PAGE_BYTES] = (&mut replay[i * PAGE_BYTES..(i + 1) * PAGE_BYTES])
+            .try_into()
+            .expect("image loan");
+        view.image(i, out).map_err(|_| RetentionCause::Invariant)?;
+    }
+    Ok(())
 }
 
 pub(in crate::storage) fn observe_recovery_frame(
@@ -1105,20 +1142,26 @@ pub(super) fn phase_source_bytes<W: WriterNamespace>() -> RecoveryPhaseCensus {
         + 2 * size_of::<std::result::Result<DescriptorSpec, ObligationError>>()
         + crate::storage::retention_obligation::source_bytes()
         + small;
-    // image() reconstructs one Status or calls the canonical catalog bridge.
-    // Include its certificate/header/home/hash closure; these are successive
-    // calls, not simultaneous with descriptor decoding in the next loop.
+    // seed_base_images ends before the descriptor loop. Each image has one
+    // certificate/header/hash closure plus exactly one ordinal branch:
+    // 0..6 borrowed copies, 7..8 catalog genesis, or 9..63 one typed payload.
+    // The large conservative genesis closure cannot coexist with either
+    // payload encoder's StatusHome values or 432-byte Free Undo cell.
+    let payload_image = (4 * size_of::<status_home::StatusHome>()
+        + 4 * size_of::<crate::storage::status_home::StatusHomePage<'_>>()
+        + 640)
+        .max(
+            crate::storage::undo_record::UNDO_RECORD_BYTES
+                + super::read::undo_decode_source_bytes(),
+        );
     let image = views
         + 4 * size_of::<base::Certificate>()
         + 3 * size_of::<std::result::Result<Option<base::Certificate>, base::Error>>()
         + 4 * size_of::<PageHeader>()
         + 4 * size_of::<PageView<'_>>()
-        + 4 * size_of::<status_home::StatusHome>()
-        + 4 * size_of::<crate::storage::status_home::StatusHomePage<'_>>()
-        + 640
         + hashing
         + small
-        + super::super::genesis::owned_source_bytes::<W>();
+        + super::super::genesis::owned_source_bytes::<W>().max(payload_image);
     let seed_outer = 2 * size_of::<RetentionReplayCursor>()
         + 2 * size_of::<ObservationResult<RetentionReplayCursor>>()
         + size_of::<population::ReplayAllocation>()

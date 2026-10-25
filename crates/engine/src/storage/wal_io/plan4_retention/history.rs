@@ -157,6 +157,7 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
     // observation. Keep its observation/return carriers and all page/root/
     // status views; the 64 job cells remain the original borrowed replay loan.
     let closure = frame_outer
+        + super::read::undo_decode_source_bytes()
         + observation_return
         + 4 * size_of::<retention_page::RootSpec>()
         + 4 * size_of::<retention_page::JobSpec>()
@@ -958,7 +959,11 @@ pub(super) fn validate_bijection(profile: Profile, replay: &[u8]) -> std::result
         else {
             continue;
         };
-        if object.get() != 2 || object_generation.get() != 1 || kind != PageKind::TransactionStatus
+        if object_generation.get() != 1
+            || !matches!(
+                (object.get(), kind),
+                (2, PageKind::TransactionStatus) | (3, PageKind::Undo)
+            )
         {
             return Err(());
         }
@@ -972,6 +977,17 @@ pub(super) fn validate_bijection(profile: Profile, replay: &[u8]) -> std::result
             owner: object,
             owner_generation: object_generation,
         };
+        if kind == PageKind::Undo {
+            let lsn = crate::storage::undo_record::initial_undo_page_lsn(
+                arena_page(replay, index),
+                identity,
+            )
+            .map_err(|_| ())?;
+            if lsn.0 == 0 {
+                return Err(());
+            }
+            continue;
+        }
         let page = crate::storage::status_home::decode_status_home_page(
             arena_page(replay, index),
             identity,

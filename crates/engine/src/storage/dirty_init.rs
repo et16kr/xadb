@@ -56,7 +56,10 @@ impl InitClaimRecord {
             && self.allocator.identity.owner_generation.get() == 1
             && (if pool.directory.retention_payloads() {
                 pool.directory.accepts_retention_payload(self.payload)
-                    && self.payload.kind == PageKind::TransactionStatus
+                    && matches!(
+                        self.payload.kind,
+                        PageKind::TransactionStatus | PageKind::Undo
+                    )
             } else {
                 pool.directory.accepts_payload(self.payload)
             })
@@ -1183,6 +1186,21 @@ pub(in crate::storage) mod test_support {
             pins.init_claim
                 .is_some_and(|slot| slot.initializer_pins_held),
         )
+    }
+    /// Test-only damage of an already registered original page. This cannot
+    /// publish, register or construct a replacement payload/claim.
+    pub(in crate::storage) fn corrupt_retention_content(
+        pool: &SharedPool<'_, '_, '_, '_>,
+        index: usize,
+        offset: usize,
+        value: u8,
+    ) {
+        pool.frames[index].content.write().unwrap().bytes[offset] = value;
+    }
+    /// Scalar-only observer: never copies the retained pin counts or pages.
+    pub(in crate::storage) fn claim_state(pool: &SharedPool<'_, '_, '_, '_>) -> (bool, u16) {
+        let pins = pool.pins.lock().unwrap_or_else(|error| error.into_inner());
+        (pins.init_claim.is_some(), pins.total)
     }
     pub(in crate::storage) fn init_layout() -> [(&'static str, usize); 15] {
         use std::mem::size_of;

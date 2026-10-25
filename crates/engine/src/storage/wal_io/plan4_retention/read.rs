@@ -167,6 +167,29 @@ impl<'b, 's, 'c, 'p, 'd, W: WriterNamespace> RetentionReader<'b, 's, 'c, 'p, 'd,
                         ));
                     }
                 }
+                PageKind::Undo => {
+                    let lsn = crate::storage::undo_record::initial_undo_page_lsn(
+                        bytes,
+                        target.request.identity,
+                    )
+                    .map_err(|e| {
+                        fatal(
+                            self.storage,
+                            RetentionPhase::Census,
+                            RetentionCause::Undo(e),
+                        )
+                    })?;
+                    let observed = read
+                        .observe(1)
+                        .map_err(|e| frame(RetentionPhase::Census, e))?;
+                    if lsn == PageLsn(0) || observed.frame.page_lsn != lsn {
+                        return Err(fatal(
+                            self.storage,
+                            RetentionPhase::Census,
+                            RetentionCause::Invariant,
+                        ));
+                    }
+                }
                 _ => {
                     return Err(unchanged(
                         RetentionPhase::Census,
@@ -325,4 +348,39 @@ impl<'b, 's, 'c, 'p, 'd, W: WriterNamespace> RetentionReader<'b, 's, 'c, 'p, 'd,
                 .map_err(|e| frame(RetentionPhase::Census, e)),
         )
     }
+}
+
+/// Source values for the new two-target Free Undo reader. The decoder borrows
+/// its cell; no page or 432-byte Free cell is copied during validation.
+pub(super) fn undo_read_source_bytes() -> usize {
+    use std::mem::size_of;
+    type Guard<'a> = RetentionReadGuard<'a, 'a, 'a, 'a, 'a, 'a>;
+    dirty_frame::target_set_call_bytes::<2>()
+        + 2 * size_of::<Guard<'_>>()
+        + 2 * size_of::<Result<Guard<'_>>>()
+        + undo_decode_source_bytes()
+        + 2 * size_of::<allocation_page::AllocationPage<'_>>()
+        + 2 * size_of::<dirty_frame::DirtyObservation>()
+        + 4 * size_of::<TargetRequest>()
+        + 4 * size_of::<Result<()>>()
+        + 1024
+}
+
+/// The canonical initial-Undo decoder uses a borrowed PageView and a Free
+/// generation observation. Shared by reader/history/recovered census phases.
+pub(super) fn undo_decode_source_bytes() -> usize {
+    use crate::storage::{
+        page::{PageError, PageHeader, PageView},
+        undo_record::UndoError,
+    };
+    use std::mem::size_of;
+    2 * size_of::<PageView<'_>>()
+        + 2 * size_of::<std::result::Result<PageView<'_>, PageError>>()
+        + 2 * size_of::<PageHeader>()
+        + 2 * size_of::<std::result::Result<PageLsn, UndoError>>()
+        + 2 * size_of::<std::result::Result<(), UndoError>>()
+        + 2 * size_of::<std::ops::Range<usize>>()
+        + 4 * size_of::<PageLsn>()
+        + 4 * size_of::<foundation::identity::Generation>()
+        + 8 * size_of::<&[u8]>()
 }

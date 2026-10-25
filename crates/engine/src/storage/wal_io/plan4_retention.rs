@@ -51,7 +51,9 @@ pub(in crate::storage) use load::RetentionLoadPermit;
     unused_imports,
     reason = "internal typed consumer exports retained for follow-on integration"
 )]
-pub(crate) use population::{ReservedRetentionStatus, RetentionReservationError};
+pub(crate) use population::{
+    ReservedRetentionStatus, ReservedRetentionSystem, RetentionReservationError,
+};
 pub(in crate::storage) use population::{
     RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted, RetentionInitInstall,
 };
@@ -106,12 +108,14 @@ pub(crate) enum RetentionCause {
     WrongState,
     MissingTransaction,
     Invariant,
+    Unsupported,
     Fenced,
     Poisoned,
     Frame(dirty_frame::DirtyError),
     Page(crate::storage::page::PageError),
     Tree(crate::storage::tree_page::TreeError),
     Catalog(crate::storage::catalog_record::CatalogError),
+    Undo(crate::storage::undo_record::UndoError),
     Allocation(crate::storage::allocation_page::AllocationError),
     AllocationOperation(super::super::super::allocation_reservation::operation::SemanticError),
     Retention(retention_page::RetentionError),
@@ -379,3 +383,13 @@ fn health<W: WriterNamespace>(
 #[cfg(test)]
 #[path = "plan4_retention/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "plan4_retention/free_undo_literal_tests.rs"]
+mod free_undo_literals;
+#[cfg(test)]
+pub(in crate::storage) use free_undo_literals::Oracle as FreeUndoOracle;
+
+#[cfg(test)]
+#[path = "plan4_retention/free_undo_tests.rs"]
+mod free_undo_tests;

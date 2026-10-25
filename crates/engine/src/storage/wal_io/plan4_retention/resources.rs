@@ -119,6 +119,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + 2 * size_of::<Option<&[u8; 1536]>>()
         + 88;
     let population_producer = population.producer()
+        + population::reservation_source_bytes::<W>()
         + 2 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
         + 16 * size_of::<&[u8]>()
@@ -234,6 +235,8 @@ pub(super) fn fits<W: WriterNamespace>() -> bool {
         && read::catalog_source_bytes::<W>() <= read::CATALOG_READ_SOURCE_BYTES
         && read::CATALOG_READ_SOURCE_BYTES
             <= super::super::resources::source_census::<W>().catalog_nested
+        && read::undo_read_source_bytes() <= 16_384
+        && 16_384 <= super::super::resources::source_census::<W>().catalog_nested
         && c.peak <= 65_536
         && c.metadata <= 196_608
         && c.whole <= 262_144

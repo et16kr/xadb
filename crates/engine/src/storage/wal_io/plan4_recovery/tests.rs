@@ -171,3 +171,6 @@ mod physical;
 mod publication;
 #[path = "tests/support.rs"]
 mod support;
+
+#[path = "tests/free_undo.rs"]
+mod free_undo;

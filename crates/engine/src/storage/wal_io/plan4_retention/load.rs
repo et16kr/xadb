@@ -4,7 +4,7 @@ use super::*;
 use crate::storage::{
     allocation_page::{self, AllocationEntry},
     dirty_frame::{StatusCandidateKind, StatusLoadSnapshot},
-    page::{PageKind, PageRef},
+    page::PageRef,
 };
 
 pub(in crate::storage) struct RetentionLoadPermit<'a, 'c, 's> {
@@ -33,6 +33,16 @@ impl<'a, 'c, 's> RetentionLoadPermit<'a, 'c, 's> {
 }
 impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, W> {
     pub(crate) fn status_target(&mut self, page: PageRef) -> Result<Plan4Target> {
+        self.system_target(page, super::population::RetentionPageKind::Status)
+    }
+    pub(crate) fn undo_target(&mut self, page: PageRef) -> Result<Plan4Target> {
+        self.system_target(page, super::population::RetentionPageKind::FreeUndo)
+    }
+    fn system_target(
+        &mut self,
+        page: PageRef,
+        expected: super::population::RetentionPageKind,
+    ) -> Result<Plan4Target> {
         self.health()?;
         let storage = self.inner.storage;
         let prefix = storage
@@ -67,9 +77,9 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             return Err(unchanged(RetentionPhase::Load, RetentionCause::Membership));
         };
         if generation != page.incarnation
-            || object.get() != 2
+            || object != expected.object()
             || object_generation.get() != 1
-            || kind != PageKind::TransactionStatus
+            || kind != expected.kind()
         {
             return Err(unchanged(RetentionPhase::Load, RetentionCause::Membership));
         }

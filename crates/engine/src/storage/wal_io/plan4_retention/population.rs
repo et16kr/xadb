@@ -11,14 +11,48 @@ use super::control::{self, ALLOCATION_SLOT, PHASE, STABLE};
 use super::*;
 use crate::{
     storage::{
-        allocation_page::SystemWorkRef,
-        dirty_frame::InitClaimKey,
-        page::{PageKind, PageRef},
+        allocation_page::SystemWorkRef, dirty_frame::InitClaimKey, page::PageRef,
         session_fence::SessionFence,
     },
     transaction::concurrency::PageConcurrency,
 };
+pub(super) use init::RetentionPageKind;
 use std::sync::atomic::AtomicU8;
+
+/// A non-copy loan of the actual installed plan4 identity and session fence.
+/// A decoded kind or copied namespace can never construct this live role.
+struct Plan4SystemRole<'s> {
+    plan: &'s super::super::super::super::super::BootstrapPlan,
+    fence: &'s SessionFence,
+    kind: RetentionPageKind,
+}
+impl<'s> Plan4SystemRole<'s> {
+    fn new<W: WriterNamespace>(
+        storage: &'s MutableStorageOwner<'_, '_, W>,
+        kind: RetentionPageKind,
+    ) -> Result<Self> {
+        if storage.core.plan.kind
+            != super::super::super::super::super::BootstrapPlanKind::RetentionCatalogBootstrap
+        {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::BindingMismatch,
+            ));
+        }
+        Ok(Self {
+            plan: &storage.core.plan,
+            fence: storage.session_fence(),
+            kind,
+        })
+    }
+    fn matches<W: WriterNamespace>(&self, storage: &MutableStorageOwner<'_, '_, W>) -> bool {
+        std::ptr::eq(self.plan, &storage.core.plan)
+            && std::ptr::eq(self.fence, storage.session_fence())
+            && self.plan.profile == storage.profile()
+            && self.plan.kind
+                == super::super::super::super::super::BootstrapPlanKind::RetentionCatalogBootstrap
+    }
+}
 
 pub(in crate::storage) struct RetentionInitAuthority<'c, 's> {
     core: &'c PageConcurrency<'s>,
@@ -126,6 +160,10 @@ impl Population<'_, '_> {
     pub(super) fn reserved(&self) -> bool {
         self.reservation.is_some() || self.installation.is_some()
     }
+    #[cfg(test)]
+    pub(super) fn test_state(&self) -> (bool, bool) {
+        (self.reservation.is_some(), self.installation.is_some())
+    }
     fn adopt(&mut self, state: operation::RetentionAllocationState) {
         self.high_water = state.high_water;
         self.terminal = state.terminal;
@@ -140,13 +178,17 @@ pub(crate) enum RetentionReservationError<R> {
     },
     Fatal(RetentionError),
 }
-pub(crate) struct ReservedRetentionStatus<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
+/// Existing Status API keeps its source-level name; both wrappers use v2 scope.
+pub(crate) type ReservedRetentionStatus<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W> =
+    ReservedRetentionSystem<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>;
+pub(crate) struct ReservedRetentionSystem<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
     bound: &'r mut Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
     owner: &'r mut Owner<'c, 's>,
     page: PageRef,
+    role: Plan4SystemRole<'s>,
     active: bool,
 }
-impl<W: WriterNamespace> Drop for ReservedRetentionStatus<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+impl<W: WriterNamespace> Drop for ReservedRetentionSystem<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
     fn drop(&mut self) {
         if self.active {
             self.bound.inner.storage.session_fence().fence();
@@ -154,13 +196,13 @@ impl<W: WriterNamespace> Drop for ReservedRetentionStatus<'_, '_, '_, '_, '_, '_
         }
     }
 }
-impl<W: WriterNamespace> ReservedRetentionStatus<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
+impl<W: WriterNamespace> ReservedRetentionSystem<'_, '_, '_, '_, '_, '_, '_, '_, '_, W> {
     pub(crate) fn page(&self) -> PageRef {
         self.page
     }
 }
 
-impl<'s, 'c, W: WriterNamespace> ReservedRetentionStatus<'_, '_, 's, 'c, '_, '_, '_, '_, '_, W> {
+impl<'s, 'c, W: WriterNamespace> ReservedRetentionSystem<'_, '_, 's, 'c, '_, '_, '_, '_, '_, W> {
     #[allow(
         clippy::result_large_err,
         reason = "unchanged failure retains the same linear reservation"
@@ -222,7 +264,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedRetentionStatus<'_, '_, 's, 'c, '_, '_,
             .population
             .reservation
             .ok_or_else(|| fatal(storage, RetentionPhase::Prepare, RetentionCause::Invariant))?;
-        if page != self.page {
+        if page != self.page || !self.role.matches(storage) {
             return Err(fatal(
                 storage,
                 RetentionPhase::Prepare,
@@ -236,11 +278,11 @@ impl<'s, 'c, W: WriterNamespace> ReservedRetentionStatus<'_, '_, 's, 'c, '_, '_,
             identity: PageIdentity {
                 database: allocator.identity.database,
                 page,
-                owner: foundation::identity::ObjectId::new(2).expect("Status object"),
+                owner: self.role.kind.object(),
                 owner_generation: foundation::identity::Generation::new(1)
                     .expect("Status generation"),
             },
-            kind: PageKind::TransactionStatus,
+            kind: self.role.kind.kind(),
             level: 0,
         };
         let authority = InitAuthority::from_retention(RetentionInitAuthority {
@@ -303,6 +345,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedRetentionStatus<'_, '_, 's, 'c, '_, '_,
             };
             let prepared = init::prepare_retention_init(
                 &plan,
+                self.role.kind,
                 before,
                 frame_bytes,
                 allocator_after,
@@ -468,6 +511,21 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         owner: &Owner<'c, 's>,
         cursor: &mut Plan4ResidencyCursor,
     ) -> Result<Option<RetentionResidencyStep>> {
+        self.prepare_system_slot(owner, cursor, RetentionPageKind::Status)
+    }
+    pub(crate) fn prepare_undo_slot(
+        &mut self,
+        owner: &Owner<'c, 's>,
+        cursor: &mut Plan4ResidencyCursor,
+    ) -> Result<Option<RetentionResidencyStep>> {
+        self.prepare_system_slot(owner, cursor, RetentionPageKind::FreeUndo)
+    }
+    fn prepare_system_slot(
+        &mut self,
+        owner: &Owner<'c, 's>,
+        cursor: &mut Plan4ResidencyCursor,
+        kind: RetentionPageKind,
+    ) -> Result<Option<RetentionResidencyStep>> {
         self.health()?;
         self.inner
             .pool
@@ -477,6 +535,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
         }
         let storage = self.inner.storage;
+        let role = Plan4SystemRole::new(storage, kind)?;
         let prefix = storage
             .wal()
             .prefix()
@@ -520,11 +579,11 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                                 .expect("checked generation"),
                             ..allocator.identity.page
                         },
-                        owner: foundation::identity::ObjectId::new(2).expect("Status object"),
+                        owner: role.kind.object(),
                         owner_generation: foundation::identity::Generation::new(1)
                             .expect("Status generation"),
                     },
-                    kind: PageKind::TransactionStatus,
+                    kind: role.kind.kind(),
                     level: 0,
                 });
                 break;
@@ -572,6 +631,19 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         &'r mut self,
         owner: &'r mut Owner<'c, 's>,
     ) -> Result<ReservedRetentionStatus<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
+        self.reserve_system(owner, RetentionPageKind::Status)
+    }
+    pub(crate) fn reserve_undo<'r>(
+        &'r mut self,
+        owner: &'r mut Owner<'c, 's>,
+    ) -> Result<ReservedRetentionSystem<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
+        self.reserve_system(owner, RetentionPageKind::FreeUndo)
+    }
+    fn reserve_system<'r>(
+        &'r mut self,
+        owner: &'r mut Owner<'c, 's>,
+        kind: RetentionPageKind,
+    ) -> Result<ReservedRetentionSystem<'r, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         self.health()?;
         if self.control.population.reserved() {
             return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
@@ -580,6 +652,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .pool
             .init_payload_index()
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+        let role = Plan4SystemRole::new(self.inner.storage, kind)?;
         self.allocate(owner, false)?;
         let page = self
             .control
@@ -593,10 +666,11 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 )
             })?
             .1;
-        Ok(ReservedRetentionStatus {
+        Ok(ReservedRetentionSystem {
             bound: self,
             owner,
             page,
+            role,
             active: true,
         })
     }
@@ -624,7 +698,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             self.control
                 .check_ledger(storage.profile(), prefix)
                 .map_err(|e| fatal(storage, RetentionPhase::Census, e.cause))?;
-        let extra = if cancel { 0 } else { 21_200 + 38_000 };
+        let extra = if cancel { 0 } else { 21_200 + 38_208 };
         if prefix
             .complete_offset
             .checked_add(existing_wal)
@@ -841,11 +915,15 @@ impl ReplayAllocation {
         };
         let view = seed.view();
         let h = view.header();
+        if h.format != crate::storage::plan4_recovery_base::BaseFormat::V2System {
+            return Err(RetentionCause::Unsupported);
+        }
         let high_water = h.system_high_water[0];
         let terminal = match h.allocation_terminal {
             AllocationTerminal::None => 0,
             AllocationTerminal::Cancelled => 1,
             AllocationTerminal::InitializedStatus => 2,
+            AllocationTerminal::InitializedUndo => 3,
         };
         let reserved = if let Some(page) = view.census().reserved {
             let mut identity = crate::storage::retention_genesis::expected_header(
@@ -924,6 +1002,8 @@ impl ReplayAllocation {
         if envelope.header.kind != crate::storage::wal_frame::FrameKind::System
             || bytes.len() < 2144
             || bytes[160..164] != *b"XSG1"
+            || bytes[164..166] != [2, 0]
+            || bytes[170..172] != [1, 0]
         {
             return Err(E::UnsupportedOperation);
         }
@@ -963,10 +1043,20 @@ impl ReplayAllocation {
                 )?,
                 _ => return Err(E::StateMismatch),
             }
-        } else if bytes.len() == init::RETENTION_INIT_BYTES && opcode == 10 {
+        } else if matches!(
+            bytes.len(),
+            init::RETENTION_INIT_BYTES | init::RETENTION_UNDO_INIT_BYTES
+        ) && opcode == 10
+        {
+            let kind = if bytes.len() == init::RETENTION_INIT_BYTES {
+                RetentionPageKind::Status
+            } else {
+                RetentionPageKind::FreeUndo
+            };
             let reserved = self.state.reserved.ok_or(E::StateMismatch)?;
             let state = init::materialize_retention_init(
                 &expected,
+                kind,
                 before,
                 bytes,
                 allocator_after,
@@ -976,11 +1066,11 @@ impl ReplayAllocation {
                 identity: PageIdentity {
                     database: profile.spec().namespace.database,
                     page: reserved.page,
-                    owner: foundation::identity::ObjectId::new(2).expect("Status object"),
+                    owner: kind.object(),
                     owner_generation: foundation::identity::Generation::new(1)
                         .expect("Status generation"),
                 },
-                kind: PageKind::TransactionStatus,
+                kind: kind.kind(),
                 level: 0,
             };
             let index = reserved.page.page_no as usize;
@@ -1030,6 +1120,17 @@ impl PopulationSourceCensus {
 /// caller. The encoded descriptor, pages and frame are borrowed caller loans.
 /// A retained Installation/Population and pool INIT slot are already fields of
 /// that owner/pool; only temporary construction/move carriers are added here.
+pub(super) fn reservation_source_bytes<W: WriterNamespace>() -> usize {
+    use std::mem::size_of;
+    type Token<'a, W> = ReservedRetentionSystem<'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, W>;
+    // reserve returns the linear token; initialize/cancel return it only on an
+    // unchanged failure. Count the owned token and both move/return carriers.
+    2 * size_of::<Token<'_, W>>()
+        + size_of::<Result<Token<'_, W>>>()
+        + size_of::<std::result::Result<Plan4Target, RetentionReservationError<Token<'_, W>>>>()
+        + size_of::<std::result::Result<(), RetentionReservationError<Token<'_, W>>>>()
+}
+
 pub(super) fn phase_source_bytes() -> PopulationSourceCensus {
     use crate::storage::{
         dirty_frame::{InitWriteTargets, ReadTargets},
@@ -1037,7 +1138,10 @@ pub(super) fn phase_source_bytes() -> PopulationSourceCensus {
     };
     use std::mem::size_of;
     type Write<'a> = InitWriteTargets<'a, 'a, 'a, 'a, 'a, 'a>;
-    let outer = size_of::<WalPrefix>()
+    let outer = 3 * size_of::<Plan4SystemRole<'_>>()
+        + 3 * size_of::<Result<Plan4SystemRole<'_>>>()
+        + 8 * size_of::<RetentionPageKind>()
+        + size_of::<WalPrefix>()
         + 2 * size_of::<TargetRequest>()
         + size_of::<FrameStamp>()
         + 2 * size_of::<operation::RetentionAllocationState>()
