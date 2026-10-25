@@ -1084,7 +1084,9 @@ impl<'b, 'c, 's, 'p, 'd> StatusReader<'b, 'c, 's, 'p, 'd> {
             self.role,
             allocator,
             status,
-            self.pool.operational_payloads(),
+            self.pool
+                .operational_payloads()
+                .map_err(|error| frame_error(Phase::Observe, error))?,
         )
         .map_err(|e| {
             self.fence.fence();

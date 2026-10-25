@@ -172,7 +172,7 @@ pub(super) fn stable_inventory<W: WriterNamespace>(
         let valid = if let Some((_, length)) = FIXED.iter().find(|(fixed, _)| *fixed == path) {
             entry.metadata.length == *length
         } else if BASE_NAMES.contains(&path) {
-            entry.metadata.length == BASE_BYTES as u64
+            entry.metadata.length == profile.base_bytes() as u64
         } else if path == "CURRENT" {
             entry.metadata.length == CONTROL_BYTES as u64
         } else if STAGES.contains(&path) {
@@ -230,7 +230,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             }
         }))
     }
-    pub(super) fn selected_base_view(&mut self) -> Result<base::BaseView<'_>> {
+    pub(super) fn selected_base_view(&mut self) -> Result<base::catalog::CatalogBaseView<'_>> {
         if self.selected_base.is_none() {
             return Err(error(self.observation.phase, Plan4RecoveryCause::Invariant));
         }
@@ -242,9 +242,9 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             .0
             .try_into()
             .expect("base scratch");
-        let view = base::decode(&prior[..BASE_BYTES], expected, scratch)
+        let view = base::catalog::decode(&prior[..BASE_BYTES], expected, scratch)
             .map_err(|e| error(phase, Plan4RecoveryCause::Base(e)))?;
-        if view.header().format != base::BaseFormat::V2System {
+        if view.header().format != base::BaseFormat::V3Catalog {
             return Err(error(phase, Plan4RecoveryCause::Unsupported));
         }
         Ok(view)
@@ -264,7 +264,10 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             self.expected_namespace,
         )
         .map_err(|e| error(self.observation.phase, Plan4RecoveryCause::Control(e)))?;
-        if profile.spec().generation != 1 || profile.spec().namespace.timeline != 1 {
+        if profile.format() != 2
+            || profile.spec().generation != 1
+            || profile.spec().namespace.timeline != 1
+        {
             return Err(error(
                 self.observation.phase,
                 Plan4RecoveryCause::Unsupported,
@@ -783,7 +786,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                     return Err(error(p, Plan4RecoveryCause::LengthMismatch));
                 }
             } else if BASE_NAMES.contains(&path) {
-                if entry.metadata.length > BASE_BYTES as u64 {
+                if entry.metadata.length > self.profile().base_bytes() as u64 {
                     return Err(error(p, Plan4RecoveryCause::LengthMismatch));
                 }
             } else if path == "CURRENT" {

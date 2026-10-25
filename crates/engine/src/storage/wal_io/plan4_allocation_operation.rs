@@ -14,6 +14,8 @@ pub(crate) struct RetentionAllocationPlan<'p, 's> {
     /// None/active0, Cancelled1, InitializedStatus2, InitializedUndoRoot3.
     pub(crate) terminal: u8,
     pub(crate) before_descriptor: Option<&'p [u8; 1536]>,
+    /// Last accepted System INIT; current graph/provenance is checked by the caller.
+    pub(crate) initialized: Option<(PageRef, PageKind, u64)>,
     pub(crate) fence: &'s SessionFence,
 }
 pub(crate) struct RetentionAllocationExpected<'p> {
@@ -23,6 +25,8 @@ pub(crate) struct RetentionAllocationExpected<'p> {
     pub(crate) high_water: u64,
     pub(crate) terminal: u8,
     pub(crate) before_descriptor: Option<&'p [u8; 1536]>,
+    /// Last accepted System INIT; current graph/provenance is checked by the caller.
+    pub(crate) initialized: Option<(PageRef, PageKind, u64)>,
 }
 impl<'p> RetentionAllocationPlan<'p, '_> {
     pub(crate) fn expected(&self) -> RetentionAllocationExpected<'p> {
@@ -36,6 +40,7 @@ impl<'p> RetentionAllocationPlan<'p, '_> {
             high_water: self.high_water,
             terminal: self.terminal,
             before_descriptor: self.before_descriptor,
+            initialized: self.initialized,
         }
     }
 }
@@ -66,13 +71,24 @@ fn analyze<'p>(
             && expected.frame.stream.timeline == namespace.timeline,
         SemanticError::IdentityMismatch,
     )?;
-    validate_plan4_system_base_allocation(
-        before,
-        expected.profile,
-        expected.before_descriptor,
-        expected.high_water,
-        expected.terminal,
-    )?;
+    if expected.profile.format() == 2 {
+        validate_catalog_base_allocation(
+            before,
+            expected.profile,
+            expected.before_descriptor,
+            expected.high_water,
+            expected.terminal,
+            expected.initialized,
+        )?;
+    } else {
+        validate_plan4_system_base_allocation(
+            before,
+            expected.profile,
+            expected.before_descriptor,
+            expected.high_water,
+            expected.terminal,
+        )?;
+    }
     let page = allocation_page::decode_allocation_page(before, expected.allocator, namespace)
         .map_err(|_| SemanticError::PageMismatch)?;
     require(
@@ -317,24 +333,26 @@ fn materialize(
     after: &mut [u8; PAGE_BYTES],
     cancel: bool,
 ) -> Result<RetentionAllocationState> {
-    let (analysis, _) = analyze(expected, before, cancel)?;
-    let header = validate_header_scoped(&analysis, bytes, true)?;
-    let old = allocation_page::decode_allocation_page(
-        before,
-        expected.allocator,
-        expected.profile.spec().namespace,
-    )
-    .map_err(|_| SemanticError::PageMismatch)?;
-    allocation_page::encode_allocation_page(
-        PageHeader {
-            lsn: PageLsn(header.lsn),
-            ..old.header()
-        },
-        expected.profile.spec().namespace,
-        &bytes[NEW_CELL],
-        after,
-    )
-    .map_err(|_| SemanticError::PageMismatch)?;
+    {
+        let (analysis, _) = analyze(expected, before, cancel)?;
+        let header = validate_header_scoped(&analysis, bytes, true)?;
+        let old = allocation_page::decode_allocation_page(
+            before,
+            expected.allocator,
+            expected.profile.spec().namespace,
+        )
+        .map_err(|_| SemanticError::PageMismatch)?;
+        allocation_page::encode_allocation_page(
+            PageHeader {
+                lsn: PageLsn(header.lsn),
+                ..old.header()
+            },
+            expected.profile.spec().namespace,
+            &bytes[NEW_CELL],
+            after,
+        )
+        .map_err(|_| SemanticError::PageMismatch)?;
+    }
     validate(expected, before, bytes, after, cancel)
 }
 pub(crate) fn materialize_retention_reserve(
@@ -371,4 +389,25 @@ pub(crate) fn retention_allocation_source_bytes() -> usize {
         + 2 * size_of::<Result<(AnalysisExpected<'_>, RetentionReservation)>>()
         + 3 * size_of::<Result<RetentionReservation>>()
         + 1024
+}
+
+/// Actual replay materialization, excluding live producer Plan/Prepared return
+/// alternatives. The first analyze/encode scope has ended before validate
+/// analyzes the same immutable predecessor again; no check is omitted.
+pub(crate) fn retention_materialize_source_bytes() -> usize {
+    use std::mem::size_of;
+    super::plan4_system_base_allocation_source_bytes().max(super::super::budget::TEMPORARIES)
+        + 2 * size_of::<RetentionAllocationExpected<'_>>()
+        + 3 * size_of::<AnalysisExpected<'_>>()
+        + 3 * size_of::<Result<(AnalysisExpected<'_>, RetentionReservation)>>()
+        + 3 * size_of::<RetentionReservation>()
+        + 2 * size_of::<Result<RetentionReservation>>()
+        + 2 * size_of::<RetentionAllocationState>()
+        + 2 * size_of::<Result<RetentionAllocationState>>()
+        + 2 * size_of::<AllocationPage<'_>>()
+        + 2 * size_of::<WalFrameHeader>()
+        + 16 * size_of::<&[u8]>()
+        + 16 * size_of::<u64>()
+        + 4 * size_of::<Result<()>>()
+        + 512
 }

@@ -21,6 +21,7 @@ mod leaf_tests;
 pub(crate) mod ledger;
 mod projection;
 pub(crate) mod queue;
+mod resources;
 mod transition;
 #[cfg(test)]
 mod transition_tests;
@@ -28,6 +29,9 @@ mod wire;
 pub(crate) use core::{CoreView, decode_core};
 pub(crate) use effects::{EffectIndices, reference_changes};
 pub(crate) use projection::catalog_projection_digest;
+pub(crate) use resources::{
+    layout_source_bytes, schema_source_bytes, source_bytes, source_census, transaction_source_bytes,
+};
 pub(crate) use transition::{Change, Inputs, Observation, observe, produce};
 pub(crate) use wire::{LayoutView, decode_layout};
 

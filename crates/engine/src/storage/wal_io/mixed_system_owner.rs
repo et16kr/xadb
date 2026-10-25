@@ -106,7 +106,12 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> MixedSystem<'s, 'c, 'p, 'd,
         storage
             .health()
             .map_err(|source| fatal(storage, Cause::Storage(source)))?;
-        if !bound.control.role.mixed() || !bound.pool.mixed_payloads() {
+        if !bound.control.role.mixed()
+            || !bound
+                .pool
+                .mixed_payloads()
+                .map_err(|source| error(Cause::Frame(source), source.effect))?
+        {
             return Err(fatal(storage, Cause::BindingMismatch));
         }
         if bound.control.installation.is_some()

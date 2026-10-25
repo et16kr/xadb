@@ -127,6 +127,25 @@ def selected_fixture(root):
 
 
 class ControllerRejections(unittest.TestCase):
+    def test_native_epoch_two_uses_actor_local_one(self):
+        oracle = controller.Oracle(Path(__file__).resolve().parents[1])
+        actor = oracle.actor(oracle.rows['N01', 16])
+        self.assertEqual(controller.number(actor, 24, 4), 2)
+        self.assertEqual(controller.number(actor, 32), 1)
+        self.assertEqual(controller.number(actor, 40), 3)
+        for page in (13, 14):
+            provenance = oracle.provenance('N01', 19, page)
+            self.assertEqual(provenance[128:176], actor)
+
+    def test_native_actor_rejects_unmapped_cycle_local(self):
+        oracle = controller.Oracle(Path(__file__).resolve().parents[1])
+        row = oracle.rows['N01', 16]
+        raw = bytearray(oracle.raw[row['transaction_after']])
+        raw[56:64] = (2).to_bytes(8, 'little')
+        oracle.raw[row['transaction_after']] = bytes(raw)
+        with self.assertRaisesRegex(ValueError, 'model cycle to actor'):
+            oracle.actor(row)
+
     def test_marker_pid_occurrence_and_resource_bounds(self):
         cut = 'A_CREATE_ACK_T'
         self.assertEqual(controller.marker_resources(f'{cut}\t100\t1\t2\t3\t6\n', cut, 100)['peak'], 3)

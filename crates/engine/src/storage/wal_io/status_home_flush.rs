@@ -481,7 +481,11 @@ impl<'s, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> StatusFlusher<'_, 's, 'c, 'p, '
             || allocator.kind != PageKind::Allocation
             || allocator.level != 0
             || allocator.identity.page.page_no != 0
-            || if self.pool.operational_payloads() {
+            || if self
+                .pool
+                .operational_payloads()
+                .map_err(|error| self.frame_error(error))?
+            {
                 !(1..64).contains(&request.identity.page.page_no)
             } else {
                 request.identity.page.page_no != 1

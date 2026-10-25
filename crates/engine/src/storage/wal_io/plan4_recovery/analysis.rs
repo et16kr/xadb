@@ -1,7 +1,8 @@
 //! Canonical complete-prefix analysis. The actual home is used solely as a
 //! physical before-image to classify; it never seeds a semantic before state.
 use super::super::plan4_pages::{
-    observe_recovery_frame, retention_replay_bank, retention_replay_image, seed_recovery_replay,
+    observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_digest,
+    retention_replay_image, retention_replay_provenance, seed_recovery_replay,
 };
 use super::*;
 use crate::storage::{
@@ -14,9 +15,8 @@ use crate::storage::{
 };
 use foundation::identity::{Generation, ObjectId};
 
-const INIT_LSNS: usize = STATUS_START + 64 * base::STATUS_BYTES;
 const TARGETS: usize = CERT_START + 64 * base::CERTIFICATE_BYTES;
-const TARGET_BYTES: usize = 56;
+const TARGET_BYTES: usize = 72;
 const _: () = assert!(TARGETS + 64 * TARGET_BYTES <= CERT_END);
 const BANK_BYTES: usize = 65_536;
 const RAM_ROW: usize = 1664;
@@ -75,6 +75,8 @@ fn request_for_kind(
     index: usize,
     incarnation: Generation,
     kind: PageKind,
+    owner: ObjectId,
+    owner_generation: Generation,
 ) -> Result<TargetRequest> {
     let p = Plan4RecoveryPhase::Analysis;
     if index >= 64 || (index < 9 && incarnation.get() != 1) || (index >= 9 && incarnation.get() < 2)
@@ -82,11 +84,20 @@ fn request_for_kind(
         return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
     }
     let mut req = request(profile, index, incarnation);
-    if index >= 9 && kind == PageKind::Undo {
+    if index >= 9 {
+        let valid = match kind {
+            PageKind::TransactionStatus => owner.get() == 2,
+            PageKind::Undo => owner.get() == 3,
+            PageKind::TreeAnchor | PageKind::RowLeaf => owner.get() >= 6,
+            _ => false,
+        };
+        if !valid {
+            return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
+        }
         req.kind = kind;
-        req.identity.owner = ObjectId::new(3).expect("Undo role");
+        req.identity.owner = owner;
     }
-    if req.kind != kind {
+    if req.kind != kind || req.identity.owner != owner || owner_generation.get() != 1 {
         return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
     }
     Ok(req)
@@ -100,7 +111,11 @@ fn canonical_request(
     let incarnation =
         Generation::new(u64_at(image, 40)).map_err(|_| error(p, Plan4RecoveryCause::Invariant))?;
     let kind = PageKind::from_byte(image[6]).map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?;
-    let req = request_for_kind(profile, index, incarnation, kind)?;
+    let owner = ObjectId::new(u64_at(image, 48))
+        .map_err(|_| error(p, Plan4RecoveryCause::IdentityMismatch))?;
+    let owner_generation = Generation::new(u64_at(image, 56))
+        .map_err(|_| error(p, Plan4RecoveryCause::IdentityMismatch))?;
+    let req = request_for_kind(profile, index, incarnation, kind, owner, owner_generation)?;
     let view = page::decode_page(image, req.identity, req.kind)
         .map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?;
     if view.header().level != 0 {
@@ -113,13 +128,20 @@ pub(super) fn target_at(
     profile: Profile,
     index: usize,
 ) -> Result<(TargetRequest, u64, [u8; 32])> {
+    target_record(&bytes[TARGETS..TARGETS + 64 * TARGET_BYTES], profile, index)
+}
+pub(super) fn target_record(
+    bytes: &[u8],
+    profile: Profile,
+    index: usize,
+) -> Result<(TargetRequest, u64, [u8; 32])> {
     if index >= 64 {
         return Err(error(
             Plan4RecoveryPhase::Verify,
             Plan4RecoveryCause::Invariant,
         ));
     }
-    let at = TARGETS + index * TARGET_BYTES;
+    let at = index * TARGET_BYTES;
     let role = u8::try_from(u64_at(bytes, at + 48))
         .map_err(|_| error(Plan4RecoveryPhase::Verify, Plan4RecoveryCause::Invariant))?;
     let kind = PageKind::from_byte(role)
@@ -127,7 +149,24 @@ pub(super) fn target_at(
     let incarnation = Generation::new(u64_at(bytes, at + 8))
         .map_err(|_| error(Plan4RecoveryPhase::Verify, Plan4RecoveryCause::Invariant))?;
     Ok((
-        request_for_kind(profile, index, incarnation, kind)?,
+        request_for_kind(
+            profile,
+            index,
+            incarnation,
+            kind,
+            ObjectId::new(u64_at(bytes, at + 56)).map_err(|_| {
+                error(
+                    Plan4RecoveryPhase::Verify,
+                    Plan4RecoveryCause::IdentityMismatch,
+                )
+            })?,
+            Generation::new(u64_at(bytes, at + 64)).map_err(|_| {
+                error(
+                    Plan4RecoveryPhase::Verify,
+                    Plan4RecoveryCause::IdentityMismatch,
+                )
+            })?,
+        )?,
         u64_at(bytes, at),
         bytes[at + 16..at + 48].try_into().expect("target hash"),
     ))
@@ -140,6 +179,8 @@ fn note_target(table: &mut [u8], request: TargetRequest, image: &[u8; PAGE_BYTES
     put64(table, at + 8, request.identity.page.incarnation.get());
     table[at + 16..at + 48].copy_from_slice(&content_digest(image));
     put64(table, at + 48, request.kind as u64);
+    put64(table, at + 56, request.identity.owner.get());
+    put64(table, at + 64, request.identity.owner_generation.get());
     Ok(())
 }
 fn scan_prefix(
@@ -216,6 +257,14 @@ fn observe_home(
                 }
             }
         }
+        Err(PageError::IdentityMismatch)
+            if PageRef::decode(&home[24..48]).is_ok_and(|p| p.file == req.identity.page.file)
+                && u64_at(home, 32) == req.identity.page.page_no
+                && u64_at(home, 40) > req.identity.page.incarnation.get() =>
+        {
+            // A future incarnation must later appear as an exact accepted
+            // image. No match or repair bit is issued by this observation.
+        }
         Err(
             PageError::IdentityMismatch | PageError::KindMismatch | PageError::UnsupportedFormat,
         ) => {
@@ -243,7 +292,6 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             name(HOME_NAME),
             &mut self.maintenance[PHYSICAL_START..PHYSICAL_END],
         )?;
-        self.maintenance[INIT_LSNS..INIT_LSNS + 512].fill(0);
         self.maintenance[TARGETS..TARGETS + 64 * TARGET_BYTES].fill(0);
         let (before, replay_tail) = self.maintenance.split_at_mut(REPLAY_START);
         let (replay, tail) = replay_tail.split_at_mut(REPLAY_END - REPLAY_START);
@@ -257,7 +305,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                     .0
                     .try_into()
                     .expect("base scratch");
-                let view = base::decode(&before[..BASE_BYTES], expected, scratch)
+                let view = base::catalog::decode(&before[..BASE_BYTES], expected, scratch)
                     .map_err(|e| error(p, Plan4RecoveryCause::Base(e)))?;
                 Some(VerifiedPlan4Base {
                     digest: view.digest(),
@@ -266,15 +314,6 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             } else {
                 None
             };
-            if let Some(seed) = &seed {
-                for i in 9..64 {
-                    let record = seed
-                        .view
-                        .status_record(i)
-                        .map_err(|e| error(p, Plan4RecoveryCause::Base(e)))?;
-                    put64(tail, INIT_LSNS - REPLAY_END + 8 * i, u64_at(record, 56));
-                }
-            }
             let inherited = seed.as_ref().map(|seed| {
                 let h = seed.view.header();
                 SourceFacts {
@@ -302,6 +341,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             )
         };
         let mut matched = 0u64;
+        let mut historical_home = 0u64;
         let mut repair = 0u64;
         let mut targets = 0u64;
         let mut pending_matched = 0u64;
@@ -325,6 +365,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                 &mut matched,
                 &mut repair,
             )?;
+            historical_home |= matched;
             let req = canonical_request(profile, index, image)?;
             note_target(
                 &mut tail[TARGETS - REPLAY_END..TARGETS - REPLAY_END + 64 * TARGET_BYTES],
@@ -454,13 +495,35 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                 if previous.checked_add(1) != Some(observed.header.lsn) {
                     return Err(error(p, Plan4RecoveryCause::OrderMismatch));
                 }
-                if let Some(init) = observed.initialized {
-                    let index = init.identity.page.page_no as usize;
-                    let at = INIT_LSNS - REPLAY_END + 8 * index;
-                    if u64_at(tail, at) != 0 {
+                // Retirement and a later INIT are distinct identities at one address.
+                // Earlier home/Pending matches never transfer across that boundary.
+                for req in observed.retired.into_iter().flatten() {
+                    let index = req.identity.page.page_no as usize;
+                    if index >= 64 || targets & (1u64 << index) == 0 {
+                        return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
+                    }
+                    let (prior, _, _) =
+                        target_record(&tail[TARGETS - REPLAY_END..], profile, index)?;
+                    if prior != req {
+                        return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
+                    }
+                    let bit = !(1u64 << index);
+                    targets &= bit;
+                    matched &= bit;
+                    repair &= bit;
+                    pending_matched &= bit;
+                    let at = TARGETS - REPLAY_END + index * TARGET_BYTES;
+                    tail[at..at + TARGET_BYTES].fill(0);
+                }
+                for req in observed.initialized.into_iter().flatten() {
+                    let index = req.identity.page.page_no as usize;
+                    if index >= 64 || targets & (1u64 << index) != 0 {
                         return Err(error(p, Plan4RecoveryCause::OrderMismatch));
                     }
-                    put64(tail, at, observed.header.lsn);
+                    let bit = !(1u64 << index);
+                    matched &= bit;
+                    repair &= bit;
+                    pending_matched &= bit;
                 }
                 for req in observed.changed.into_iter().flatten() {
                     let index = req.identity.page.page_no as usize;
@@ -471,6 +534,8 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                                 index,
                                 req.identity.page.incarnation,
                                 req.kind,
+                                req.identity.owner,
+                                req.identity.owner_generation,
                             )?
                     {
                         return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
@@ -480,16 +545,31 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                         [index * PAGE_BYTES..(index + 1) * PAGE_BYTES]
                         .try_into()
                         .expect("physical page");
-                    observe_home(
-                        profile,
-                        index,
-                        image,
-                        home,
-                        false,
-                        observed.initialized == Some(req),
-                        &mut matched,
-                        &mut repair,
-                    )?;
+                    let replaces_known_prior = observed.initialized.contains(&Some(req))
+                        && historical_home & (1u64 << index) != 0
+                        && PageRef::decode(&home[24..48]).is_ok_and(|prior| {
+                            prior.file == req.identity.page.file
+                                && prior.page_no == req.identity.page.page_no
+                                && prior.incarnation.get() < req.identity.page.incarnation.get()
+                        });
+                    if replaces_known_prior {
+                        // This immutable physical home matched an actual prior
+                        // accepted incarnation. Only a new authenticated INIT
+                        // permits replacing it; its match bit is not inherited.
+                        repair |= 1u64 << index;
+                    } else {
+                        observe_home(
+                            profile,
+                            index,
+                            image,
+                            home,
+                            false,
+                            observed.initialized.contains(&Some(req)),
+                            &mut matched,
+                            &mut repair,
+                        )?;
+                    }
+                    historical_home |= matched;
                     note_target(
                         &mut tail[TARGETS - REPLAY_END..TARGETS - REPLAY_END + 64 * TARGET_BYTES],
                         req,
@@ -558,9 +638,18 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
         if previous == 0 {
             return Err(error(p, Plan4RecoveryCause::Unsupported));
         }
+        physical::validate_pending_membership(
+            profile,
+            self.doublewrite.expect("selected DWB"),
+            &self.flush[..PAGE_BYTES],
+            targets,
+            pending_matched,
+            &tail[TARGETS - REPLAY_END..TARGETS - REPLAY_END + 64 * TARGET_BYTES],
+        )?;
         let bank = retention_replay_bank(replay);
-        let (remaining_wal, remaining_steps) = remaining(profile, bank)?;
-        let state_digest = content_digest(&replay[..1_179_648]);
+        let (remaining_wal, remaining_steps) =
+            remaining(profile, bank, retention_replay_image(replay, 1))?;
+        let state_digest = retention_replay_digest(replay);
         let mut status_mask = 0;
         for index in 9..64 {
             if targets & (1u64 << index) != 0
@@ -643,7 +732,11 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
     }
 }
 
-fn remaining(profile: Profile, bank: &[u8; BANK_BYTES]) -> Result<(u64, u64)> {
+fn remaining(
+    profile: Profile,
+    bank: &[u8; BANK_BYTES],
+    root: &[u8; PAGE_BYTES],
+) -> Result<(u64, u64)> {
     let p = Plan4RecoveryPhase::Analysis;
     let mut wal = 0u64;
     let mut steps = 0u64;
@@ -652,7 +745,7 @@ fn remaining(profile: Profile, bank: &[u8; BANK_BYTES]) -> Result<(u64, u64)> {
         if raw.iter().all(|b| *b == 0) {
             continue;
         }
-        let descriptor = decode_ram_descriptor(profile, slot, raw, bank)?;
+        let descriptor = decode_ram_descriptor(profile, slot, raw, bank, root)?;
         if matches!(descriptor.owner,OwnerState::System(s) if s.phase==WorkPhase::Finished) {
             continue;
         }
@@ -673,6 +766,7 @@ fn decode_ram_descriptor(
     slot: usize,
     raw: &[u8],
     bank: &[u8],
+    root: &[u8; PAGE_BYTES],
 ) -> Result<DescriptorSpec> {
     use crate::storage::{
         allocation_page::{ReservationOwner, SystemWorkRef},
@@ -691,11 +785,8 @@ fn decode_ram_descriptor(
                 .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?,
         )
     } else if slot == RAM_AGING {
-        let owner = ReservationOwner::System(
-            SystemWorkRef::decode(&raw[24..72])
-                .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?,
-        );
-        return obligation::decode_aging_descriptor(raw, owner, reference)
+        return retention_obligation::catalog::decode(raw, profile, root)
+            .map(|view| view.descriptor())
             .map_err(|_| error(p, Plan4RecoveryCause::Invariant));
     } else {
         return Err(error(p, Plan4RecoveryCause::Unsupported));
@@ -744,6 +835,7 @@ fn pack_bank(
     profile: Profile,
     bank: &[u8; BANK_BYTES],
     out: &mut [u8; base::DESCRIPTOR_BYTES],
+    root: &[u8; PAGE_BYTES],
 ) -> Result<(u32, u32, [RemainingBudget; 5])> {
     use crate::storage::transaction_record::TxnRef;
     let p = Plan4RecoveryPhase::Rebase;
@@ -774,7 +866,7 @@ fn pack_bank(
         }
         let Some((slot, _)) = best else { break };
         let raw = &bank[slot * RAM_ROW..slot * RAM_ROW + 1536];
-        let descriptor = decode_ram_descriptor(profile, slot, raw, bank)?;
+        let descriptor = decode_ram_descriptor(profile, slot, raw, bank, root)?;
         add_remaining(&mut remaining, &descriptor.remaining)?;
         let at = transactions as usize * 1536;
         out[at..at + 1536].copy_from_slice(raw);
@@ -787,7 +879,7 @@ fn pack_bank(
         if raw.iter().all(|v| *v == 0) {
             continue;
         }
-        let descriptor = decode_ram_descriptor(profile, ram, raw, bank)?;
+        let descriptor = decode_ram_descriptor(profile, ram, raw, bank, root)?;
         out[wire * 1536..(wire + 1) * 1536].copy_from_slice(raw);
         if !matches!(descriptor.owner,OwnerState::System(s) if s.phase==WorkPhase::Finished) {
             systems += 1;
@@ -797,138 +889,61 @@ fn pack_bank(
     Ok((transactions, systems, remaining))
 }
 
-fn put16(bytes: &mut [u8], at: usize, value: u16) {
-    bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
+/// Borrowed capture sections; descriptor order is independently canonicalized
+/// by the shared current-XOI codec, without another owned descriptor bank.
+struct CaptureInventoryRows<'a> {
+    bank: &'a [u8; base::DESCRIPTOR_BYTES],
+    replay: &'a [u8; 1_572_864],
 }
-fn put32(bytes: &mut [u8], at: usize, value: u32) {
-    bytes[at..at + 4].copy_from_slice(&value.to_le_bytes());
+impl CaptureInventoryRows<'_> {
+    fn descriptor(&self, slot: usize) -> Option<&[u8; 1536]> {
+        let bytes = &self.bank[slot * 1536..(slot + 1) * 1536];
+        bytes
+            .iter()
+            .any(|byte| *byte != 0)
+            .then(|| bytes.try_into().expect("descriptor"))
+    }
 }
-fn seal(bytes: &mut [u8]) {
-    let n = bytes.len() - 32;
-    let digest = content_digest(&bytes[..n]);
-    bytes[n..].copy_from_slice(&digest);
+impl base::catalog::inventory::InventoryRows for CaptureInventoryRows<'_> {
+    fn transaction(&self, index: usize) -> Option<&[u8; 1536]> {
+        self.descriptor(index)
+    }
+    fn allocation(&self) -> Option<&[u8; 1536]> {
+        self.descriptor(32)
+    }
+    fn aging(&self) -> Option<&[u8; 1536]> {
+        self.descriptor(34)
+    }
+    fn root(&self) -> &[u8; PAGE_BYTES] {
+        retention_replay_image(self.replay, 1)
+    }
+    fn allocator(&self) -> &[u8; PAGE_BYTES] {
+        retention_replay_image(self.replay, 0)
+    }
+    fn job(&self, ordinal: usize) -> std::result::Result<&[u8], base::Error> {
+        retention_replay_cells(self.replay)
+            .get(ordinal)
+            .map(|cell| &cell[..])
+            .ok_or(base::Error::InvalidInput)
+    }
 }
-
-/// Encodes the closed zero/one-item embedded XOI1 form. The original borrowed
-/// ownership verifier inside base::encode remains the authority on its grammar
-/// and descriptor/census equality; this producer adds no alternate parser.
 fn pack_inventory(
     profile: Profile,
     generation: u64,
     capture: u64,
-    transactions: u32,
     bank: &[u8; base::DESCRIPTOR_BYTES],
-    allocator: &[u8; PAGE_BYTES],
+    replay: &[u8; 1_572_864],
     output: &mut [u8; PAGE_BYTES],
 ) -> Result<()> {
-    let p = Plan4RecoveryPhase::Rebase;
-    output.fill(0);
-    let mut owners = transactions as usize;
-    for i in 0..transactions as usize {
-        output[128 + i * 56..128 + (i + 1) * 56]
-            .copy_from_slice(&bank[i * 1536 + 16..i * 1536 + 72]);
-    }
-    let mut allocation_owner = None;
-    for wire in [32, 34] {
-        let raw = &bank[wire * 1536..(wire + 1) * 1536];
-        if raw.iter().all(|v| *v == 0) {
-            continue;
-        }
-        let owner = crate::storage::allocation_page::SystemWorkRef::decode(&raw[24..72])
-            .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?;
-        let d = if wire == 34 {
-            obligation::decode_aging_descriptor(
-                raw,
-                crate::storage::allocation_page::ReservationOwner::System(owner),
-                retention_obligation::profile_reference(profile),
-            )
-        } else {
-            obligation::decode_descriptor(
-                raw,
-                crate::storage::allocation_page::ReservationOwner::System(owner),
-                retention_obligation::profile_reference(profile),
-            )
-        }
-        .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?;
-        if matches!(d.owner,OwnerState::System(s) if s.phase==WorkPhase::Finished) {
-            continue;
-        }
-        if wire == 32 {
-            allocation_owner = Some(owners);
-        }
-        output[128 + owners * 56..128 + (owners + 1) * 56].copy_from_slice(&raw[16..72]);
-        owners += 1;
-    }
-    let req = request(profile, 0, Generation::new(1).expect("fixed incarnation"));
-    let allocation =
-        allocation_page::decode_allocation_page(allocator, req.identity, profile.spec().namespace)
-            .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?;
-    let mut reserved = None;
-    for i in 0..64 {
-        if let AllocationEntry::Reserved { generation, .. } = allocation
-            .entry(i)
-            .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?
-        {
-            if reserved.is_some() {
-                return Err(error(p, Plan4RecoveryCause::Invariant));
-            }
-            reserved = Some((i, generation));
-        }
-    }
-    let chunk_len = if let Some((index, incarnation)) = reserved {
-        let owner = allocation_owner.ok_or_else(|| error(p, Plan4RecoveryCause::Invariant))?;
-        let table_hash = content_digest(&output[128..128 + owners * 56]);
-        let chunk = &mut output[2176..2176 + 256];
-        chunk[..4].copy_from_slice(b"XOI1");
-        put16(chunk, 4, 1);
-        chunk[6] = 2;
-        chunk[7] = 2;
-        put16(chunk, 8, 128);
-        put16(chunk, 10, 96);
-        put32(chunk, 12, 256);
-        chunk[16..32].copy_from_slice(&profile.spec().namespace.database.bytes());
-        put64(chunk, 32, profile.spec().namespace.timeline);
-        put64(chunk, 40, generation);
-        put64(chunk, 48, capture);
-        put64(chunk, 64, 1);
-        put32(chunk, 80, 1);
-        chunk[88..120].copy_from_slice(&table_hash);
-        chunk[128] = 1;
-        chunk[129] = 3;
-        put16(chunk, 130, owner as u16);
-        request(profile, index, incarnation)
-            .identity
-            .page
-            .encode(&mut chunk[136..160])
-            .map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?;
-        put64(chunk, 192, 1);
-        put64(chunk, 200, u64_at(allocator, 64));
-        seal(chunk);
-        256usize
-    } else {
-        0
-    };
-    let chunks_hash = content_digest(&output[2176..2176 + chunk_len]);
-    let root_len = 160 + owners * 56;
-    let root = &mut output[..root_len];
-    root[..4].copy_from_slice(b"XOI1");
-    put16(root, 4, 1);
-    root[6] = 1;
-    root[7] = 2;
-    put16(root, 8, 128);
-    put16(root, 10, 96);
-    put32(root, 12, root_len as u32);
-    root[16..32].copy_from_slice(&profile.spec().namespace.database.bytes());
-    put64(root, 32, profile.spec().namespace.timeline);
-    put64(root, 40, generation);
-    put64(root, 48, capture);
-    put16(root, 56, owners as u16);
-    put64(root, 64, u64::from(reserved.is_some()));
-    put64(root, 72, u64::from(reserved.is_some()));
-    put64(root, 80, chunk_len as u64);
-    root[88..120].copy_from_slice(&chunks_hash);
-    seal(root);
-    Ok(())
+    base::catalog::inventory::encode_current(
+        profile,
+        generation,
+        capture,
+        &CaptureInventoryRows { bank, replay },
+        output,
+    )
+    .map(|_| ())
+    .map_err(|e| error(Plan4RecoveryPhase::Rebase, Plan4RecoveryCause::Base(e)))
 }
 
 impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
@@ -950,7 +965,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
         let (replay, tail) = from_replay.split_at_mut(REPLAY_END - REPLAY_START);
         let (_, packing) = tail.split_at_mut(PACK_START - REPLAY_END);
         let (pack, packing) = packing.split_at_mut(PACK_END - PACK_START);
-        let (status, packing) = packing.split_at_mut(STATUS_END - STATUS_START);
+        let (_status, packing) = packing.split_at_mut(STATUS_END - STATUS_START);
         let (certs, packing) = packing.split_at_mut(CERT_END - CERT_START);
         let (inventory, packing) = packing.split_at_mut(PAGE_BYTES);
         let scratch: &mut [[u8; PAGE_BYTES]; 4] = packing[..4 * PAGE_BYTES]
@@ -958,29 +973,25 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             .0
             .try_into()
             .expect("base scratch");
-        let sections = base::Sections {
+        let replay: &[u8; 1_572_864] = (&*replay).try_into().expect("replay");
+        let sections = base::catalog::Sections {
             descriptors: (&pack[..base::DESCRIPTOR_BYTES])
                 .try_into()
                 .expect("packed bank"),
-            allocator: (&replay[..PAGE_BYTES]).try_into().expect("allocator"),
-            queue: replay[PAGE_BYTES..7 * PAGE_BYTES]
-                .as_chunks::<PAGE_BYTES>()
-                .0
-                .try_into()
-                .expect("queue pages"),
-            statuses: status[..64 * 352]
-                .as_chunks::<352>()
-                .0
-                .try_into()
-                .expect("status records"),
             certificates: certs[..64 * 96]
                 .as_chunks::<96>()
                 .0
                 .try_into()
                 .expect("certificates"),
+            provenance: retention_replay_provenance(replay),
             inventory: (&*inventory).try_into().expect("inventory"),
+            images: replay[..64 * PAGE_BYTES]
+                .as_chunks::<PAGE_BYTES>()
+                .0
+                .try_into()
+                .expect("images"),
         };
-        let view = base::encode(
+        let view = base::catalog::encode(
             header,
             expected,
             sections,
@@ -1011,23 +1022,23 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
         let (_, from_new) = self.maintenance.split_at_mut(BASE_BYTES);
         let (_, from_replay) = from_new.split_at_mut(BASE_BYTES);
         let (replay, tail) = from_replay.split_at_mut(REPLAY_END - REPLAY_START);
-        if content_digest(&replay[..1_179_648]) != analyzed.state_digest {
+        if retention_replay_digest((&*replay).try_into().expect("replay")) != analyzed.state_digest
+        {
             return Err(error(p, Plan4RecoveryCause::ContentMismatch));
         }
         let replay: &[u8; 1_572_864] = (&*replay).try_into().expect("replay");
         let bank = retention_replay_bank(replay);
-        let allocator = retention_replay_image(replay, 0);
         let (before_pack, packing) = tail.split_at_mut(PACK_START - REPLAY_END);
         let _ = before_pack;
         let (pack, packing) = packing.split_at_mut(PACK_END - PACK_START);
         let packed: &mut [u8; base::DESCRIPTOR_BYTES] = (&mut pack[..base::DESCRIPTOR_BYTES])
             .try_into()
             .expect("packed bank");
-        let (transactions, systems, remaining) = pack_bank(profile, bank, packed)?;
-        let (status, packing) = packing.split_at_mut(STATUS_END - STATUS_START);
+        let (transactions, systems, remaining) =
+            pack_bank(profile, bank, packed, retention_replay_image(replay, 1))?;
+        let (_status, packing) = packing.split_at_mut(STATUS_END - STATUS_START);
         let (certs, packing) = packing.split_at_mut(CERT_END - CERT_START);
         let (inventory, _) = packing.split_at_mut(PAGE_BYTES);
-        status[..64 * base::STATUS_BYTES].fill(0);
         certs[..64 * base::CERTIFICATE_BYTES].fill(0);
         for index in 0..64 {
             if analyzed.target_mask & (1u64 << index) == 0 {
@@ -1038,7 +1049,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             let header = page::decode_page(image, req.identity, req.kind)
                 .map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?
                 .header();
-            base::encode_system_certificate(
+            base::catalog::encode_certificate(
                 expected,
                 header,
                 image,
@@ -1047,37 +1058,15 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                     .expect("certificate"),
             )
             .map_err(|e| error(p, Plan4RecoveryCause::Base(e)))?;
-            if index >= 9 {
-                let init = u64_at(status, 64 * base::STATUS_BYTES + index * 8);
-                base::encode_system_record(
-                    expected,
-                    header,
-                    init,
-                    image,
-                    (&mut status[index * 352..(index + 1) * 352])
-                        .try_into()
-                        .expect("status record"),
-                )
-                .map_err(|e| error(p, Plan4RecoveryCause::Base(e)))?;
-            }
         }
         let inventory: &mut [u8; PAGE_BYTES] = inventory.try_into().expect("inventory");
-        pack_inventory(
-            profile,
-            generation,
-            facts.lsn,
-            transactions,
-            packed,
-            allocator,
-            inventory,
-        )?;
-        let root = crate::storage::retention_page::decode_root_page(
+        pack_inventory(profile, generation, facts.lsn, packed, replay, inventory)?;
+        let root = crate::storage::retention_page::catalog::decode_root_page(
             retention_replay_image(replay, 1),
             profile.spec().namespace,
         )
         .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?
-        .1
-        .spec();
+        .1;
         let terminal = match bank[RAM_ALLOCATION * RAM_ROW + 1544] {
             0 => base::AllocationTerminal::None,
             1 => base::AllocationTerminal::Cancelled,
@@ -1086,7 +1075,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             _ => return Err(error(p, Plan4RecoveryCause::Invariant)),
         };
         let header = base::Header {
-            format: base::BaseFormat::V2System,
+            format: base::BaseFormat::V3Catalog,
             generation,
             capture_lsn: facts.lsn,
             previous_generation,
@@ -1098,16 +1087,16 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             system_high_water: [
                 u64_at(bank, RAM_ALLOCATION * RAM_ROW + 1536),
                 0,
-                u64::from(root.aging.is_some()),
+                u64::from(root.aging().is_some()),
                 0,
             ],
             active_transactions: transactions,
             active_systems: systems,
             status_mask: analyzed.status_mask,
-            leased: root.leased,
-            ready: root.ready,
-            root_revision: root.revision,
-            aging_groups: root.revision - 1,
+            leased: root.masks()[1],
+            ready: root.masks()[2],
+            root_revision: root.revision(),
+            aging_groups: root.revision() - 1,
             allocation_terminal: terminal,
             retired_batch: selected.batch_id,
             doublewrite_generation: selected.generation,
@@ -1117,7 +1106,31 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             source_header_digest: facts.header_digest,
         };
         // The original base INITs and the accepted unique full INIT frames
-        // supplied every compressed record above. No home bytes fed this table.
+        // supplied every current provenance record. No home bytes fed this table.
         Ok(header)
     }
+}
+
+/// Nested capture packing carriers. The caller separately retains RecoveryState,
+/// Header/Expected and its exact original backing; no owner table copy exists.
+pub(super) fn packing_source_bytes() -> usize {
+    use crate::storage::retention_page::catalog as queue;
+    use std::mem::size_of;
+    let outer = 288 // one normalized/current CREATE XOI item packet
+        + 2 * size_of::<[RemainingBudget; 5]>()
+        + 3 * size_of::<DescriptorSpec>()
+        + 3 * size_of::<std::result::Result<DescriptorSpec, crate::storage::obligation::ObligationError>>()
+        + 3 * size_of::<Result<DescriptorSpec>>()
+        + 2 * size_of::<Result<(u32, u32, [RemainingBudget; 5])>>()
+        + 2 * size_of::<allocation_page::AllocationPage<'_>>()
+        + 4 * size_of::<queue::JobView<'_>>()
+        + 4 * size_of::<Result<()>>()
+        + 32 * size_of::<&[u8]>() + 32 * size_of::<u64>();
+    let hash = 4 * size_of::<ContentHasher>() + 1536;
+    (size_of::<CaptureInventoryRows<'_>>() + base::catalog::inventory::current_source_bytes()).max(
+        outer
+            + crate::storage::retention_obligation::catalog::source_bytes()
+                .max(queue::source_bytes())
+                .max(hash),
+    )
 }

@@ -120,9 +120,9 @@ fn canonical_payload(
     output: &mut [u8; PAGE_BYTES],
 ) -> PureResult<()> {
     match index {
-        1 => retention_genesis::encode(namespace, RetentionGenesisPage::Root, output)
+        1 => retention_genesis::encode_current(namespace, RetentionGenesisPage::Root, output)
             .map_err(Plan4GenesisCause::Retention),
-        2..=6 => retention_genesis::encode(
+        2..=6 => retention_genesis::encode_current(
             namespace,
             RetentionGenesisPage::Jobs {
                 index: (index - 2) as u8,
@@ -193,6 +193,9 @@ pub(super) fn prepare<'i>(
     images: &'i mut [[u8; PAGE_BYTES]; 9],
     scratch: &mut [[u8; PAGE_BYTES]; 3],
 ) -> PureResult<PreparedPlan4<'i>> {
+    if profile.format() != 2 {
+        return Err(Plan4GenesisCause::UnsupportedPlan);
+    }
     let plan = BootstrapPlan::prepare_for_kind(
         profile,
         scratch,
@@ -273,6 +276,9 @@ pub(in crate::storage) fn inspect_bootstrap(
     selected: SelectedControl,
     scratch: &mut [[u8; PAGE_BYTES]; 3],
 ) -> PureResult<Plan4GenesisSeed> {
+    if profile.format() != 2 {
+        return Err(Plan4GenesisCause::UnsupportedPlan);
+    }
     let bytes = &scratch[0][..super::super::CONTROL_BYTES];
     super::super::check_control(bytes, profile, b"XBS1").map_err(Plan4GenesisCause::Control)?;
     if super::super::u64_at(bytes, 280) != 4 {
@@ -491,9 +497,9 @@ impl BorrowedPlan4<'_> {
     ) -> PureResult<()> {
         let namespace = self.plan.profile.spec().namespace;
         match index {
-            1 => retention_genesis::validate(actual, namespace, RetentionGenesisPage::Root)
+            1 => retention_genesis::validate_current(actual, namespace, RetentionGenesisPage::Root)
                 .map_err(Plan4GenesisCause::Retention)?,
-            2..=6 => retention_genesis::validate(
+            2..=6 => retention_genesis::validate_current(
                 actual,
                 namespace,
                 RetentionGenesisPage::Jobs {
@@ -614,7 +620,7 @@ fn readback_seed<W: WriterNamespace>(
 }
 
 fn borrowed_owned(plan: &BootstrapPlan) -> PureResult<BorrowedPlan4<'_>> {
-    if plan.kind != BootstrapPlanKind::RetentionCatalogBootstrap {
+    if plan.kind != BootstrapPlanKind::RetentionCatalogBootstrap || plan.profile.format() != 2 {
         return Err(Plan4GenesisCause::UnsupportedPlan);
     }
     Ok(BorrowedPlan4 { plan })
@@ -783,7 +789,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> Census {
         // 2 BorrowedPlan4 values + 6 references = 64 bytes on this target. No
         // Result<BorrowedPlan4> occurs on the unchanged old constructor path.
         + 1024;
-    let payload = retention_genesis::source_bytes()
+    let payload = retention_genesis::current_source_bytes()
         + 6 * size_of::<PageHeader>()
         + 4 * size_of::<PageIdentity>()
         + 6 * size_of::<PageRef>()

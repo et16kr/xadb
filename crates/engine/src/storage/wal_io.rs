@@ -34,6 +34,7 @@ const STAGE_NAME: &str = "d3-writer-stage";
 mod bootstrap;
 mod commit_bridge;
 pub(in crate::storage) use bootstrap::Plan4LoadPermit;
+pub(in crate::storage) use bootstrap::CatalogRetirementRejected;
 #[cfg(test)]
 pub(in crate::storage) use bootstrap::plan4_test_mutate_page;
 #[cfg(test)]
@@ -97,7 +98,7 @@ pub(in crate::storage) use bootstrap::{
 pub(in crate::storage) use bootstrap::{
     Plan4TestMutableCause, Plan4TestSemanticError, plan4_test_owner_boundary,
 };
-pub(crate) use commit_bridge::{DurableCommit, InstalledCommit, StagedCommit};
+pub(crate) use commit_bridge::{DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Phase {
@@ -501,8 +502,28 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
     /// Install only in a complete LOCK-only namespace; no existing files are reused.
     /// Failure after the first create attempt preserves every surviving artifact.
     pub(crate) fn create(
+        writer: W,
+        profile_id: u32,
+        slot: &'m mut [u8; MAX_FRAME_BYTES],
+        scratch: &mut [u8; 16384],
+    ) -> Result<Self> {
+        Self::create_with_profile(writer, profile_id, false, slot, scratch)
+    }
+
+    /// Same original namespace/WAL owner with the explicit current plan4 tuple.
+    fn create_catalog(
+        writer: W,
+        profile_id: u32,
+        slot: &'m mut [u8; MAX_FRAME_BYTES],
+        scratch: &mut [u8; 16384],
+    ) -> Result<Self> {
+        Self::create_with_profile(writer, profile_id, true, slot, scratch)
+    }
+
+    fn create_with_profile(
         mut writer: W,
         profile_id: u32,
+        catalog: bool,
         slot: &'m mut [u8; MAX_FRAME_BYTES],
         scratch: &mut [u8; 16384],
     ) -> Result<Self> {
@@ -536,7 +557,12 @@ impl<'m, W: WriterNamespace> GenesisWalSession<'m, W> {
         let (profile_bytes, rest) = scratch.split_at_mut(CONTROL_BYTES);
         let (epoch_bytes, rest) = rest.split_at_mut(CONTROL_BYTES);
         let (selector_bytes, readback) = rest.split_at_mut(CONTROL_BYTES);
-        control::encode_profile(
+        let encode_profile = if catalog {
+            control::encode_catalog_profile
+        } else {
+            control::encode_profile
+        };
+        encode_profile(
             ProfileSpec {
                 namespace,
                 generation: 1,
@@ -1112,7 +1138,20 @@ pub(in crate::storage) use bootstrap::{
 )]
 pub(in crate::storage) use bootstrap::{
     RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
-    RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
+    RetentionInitInstall, RetentionInstall, RetentionLoadPermit, VerifiedLookupLoad,
 };
 
 pub(in crate::storage) use bootstrap::RecoveryPoolSeed;
+
+#[allow(unused_imports)] // Same original owner capabilities across the private module chain.
+pub(in crate::storage) use bootstrap::{
+    AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
+    HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
+    RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
+    StagedRetirement, UndoPin, TxnPin, VerifiedRetirement, VisibilityCause, VisibilityError,
+    VisibilityLoan, VisibilityResult, VISIBILITY_BYTES,
+    TxPairAuthority, TxPairInstallPermit, TxPairStageRejection, TxPairCancelKind,
+    TxPairCancelPermit, TxPairRetirePermit, TxPairControlCommit,
+};
+
+pub(in crate::storage) use bootstrap::{CatalogAllocationError, validate_catalog_base_allocation};

@@ -16,6 +16,28 @@ use crate::{
 };
 use foundation::{error::Effect, namespace::WriterNamespace};
 
+#[path = "plan4_retention/create_pair.rs"]
+mod create_pair;
+#[path = "plan4_retention/visibility.rs"]
+mod visibility;
+pub(in crate::storage) use create_pair::CatalogRetirementRejected;
+#[allow(unused_imports)]
+pub(crate) use create_pair::PreparedCatalog;
+pub(in crate::storage) use create_pair::{CatalogCommitAttempt, CatalogCommitInstalled};
+
+pub(in crate::storage) use create_pair::{
+    TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
+    TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection,
+};
+#[allow(unused_imports)]
+pub(in crate::storage) use visibility::{
+    AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
+    HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
+    RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
+    StagedRetirement, TxnPin, UndoPin, VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause,
+    VisibilityError, VisibilityLoan, VisibilityResult,
+};
+
 #[path = "plan4_retention/control.rs"]
 mod control;
 #[path = "plan4_retention/flush.rs"]
@@ -26,6 +48,9 @@ mod history;
 mod live;
 #[path = "plan4_retention/load.rs"]
 mod load;
+#[path = "plan4_retention/lookup_load.rs"]
+mod lookup_load;
+pub(in crate::storage) use lookup_load::VerifiedLookupLoad;
 #[path = "plan4_retention/population.rs"]
 mod population;
 #[path = "plan4_retention/read.rs"]
@@ -61,10 +86,11 @@ pub(in crate::storage) use population::{
     unused_imports,
     reason = "internal typed consumer exports retained for follow-on integration"
 )]
-pub(crate) use read::{RetentionReadGuard, RetentionReader};
+pub(crate) use read::{CatalogLookupStep, RetentionReadGuard, RetentionReader};
 pub(in crate::storage) use recovery::{
     RetentionFrameObservation, RetentionRecoveryStep, RetentionReplayCursor,
-    observe_recovery_frame, retention_replay_bank, retention_replay_image, seed_recovery_replay,
+    observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_digest,
+    retention_replay_image, retention_replay_provenance, seed_recovery_replay,
 };
 #[allow(
     unused_imports,
@@ -112,6 +138,7 @@ pub(crate) enum RetentionCause {
     Fenced,
     Poisoned,
     Frame(dirty_frame::DirtyError),
+    Concurrency(crate::transaction::concurrency::ConcurrencyError),
     Page(crate::storage::page::PageError),
     Tree(crate::storage::tree_page::TreeError),
     Catalog(crate::storage::catalog_record::CatalogError),
@@ -120,6 +147,17 @@ pub(crate) enum RetentionCause {
     AllocationOperation(super::super::super::allocation_reservation::operation::SemanticError),
     Retention(retention_page::RetentionError),
     Semantic(RetentionSemanticError),
+    CatalogSemantic(crate::storage::semantic_catalog::Error),
+    #[allow(
+        private_interfaces,
+        reason = "preserve the original storage visibility failure"
+    )]
+    Visibility(visibility::VisibilityError),
+    #[allow(
+        private_interfaces,
+        reason = "preserve the original inventory/base codec cause without exposing its authority scope"
+    )]
+    Base(crate::storage::plan4_recovery_base::Error),
     Rollback(crate::storage::semantic_group::SemanticError),
     Wal(WalIoError),
     Storage(crate::storage::wal_io::MutableStorageError),
@@ -183,7 +221,9 @@ pub(crate) enum IntoRetentionError<B> {
 pub(crate) struct Plan4Retention<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
     inner: Plan4Pages<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>,
     control: control::RetentionControl<'a, 'c, 's>,
+    history: history::runtime::RuntimeHistory<'a, 'c, 's>,
     flush: flush::RetentionFlushControl<'c, 's, 'w>,
+    catalog_visibility: Option<visibility::BoundVisibility<'a, 'c, 's>>,
     recovery_binding: Option<super::super::plan4_recovery::RecoveryRetentionBinding<'s, 's>>,
 }
 
@@ -265,6 +305,13 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
     > {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
+        let seed_prefix = storage.wal().prefix().map_err(|error| {
+            IntoRetentionError::Fatal(fatal(
+                storage,
+                RetentionPhase::Activate,
+                RetentionCause::Wal(error),
+            ))
+        })?;
         let prepared = self.preflight_empty_retention(owner);
         match prepared {
             Ok(()) => {
@@ -274,13 +321,22 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
                     ._flush_workspace
                     .take()
                     .expect("checked original DWB loan");
-                let mut control = control::RetentionControl::new(loan);
+                let mut control = control::RetentionControl::new(loan.control);
+                let history = history::runtime::RuntimeHistory::new(
+                    storage,
+                    self.pool.bound_core(),
+                    recovery::HistorySource::Genesis,
+                    seed_prefix,
+                    loan.replay,
+                );
                 control.initialize_jobs(storage.profile().spec().namespace);
                 let flush = flush::RetentionFlushControl::new(storage, workspace);
                 Ok(Plan4Retention {
                     inner: self,
                     control,
+                    history,
                     flush,
+                    catalog_visibility: None,
                     recovery_binding: None,
                 })
             }
@@ -299,7 +355,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         &'b mut self,
     ) -> (
         RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
-        RetentionReader<'b, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        RetentionReader<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
         RetentionFlusher<'b, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) {
         (
@@ -308,10 +364,14 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 pool: &self.inner.pool,
                 operation: &mut self.inner.operation,
                 control: &mut self.control,
+                history: &self.history,
+                visibility: self.catalog_visibility.as_ref(),
             },
             RetentionReader {
                 storage: self.inner.storage,
                 pool: &self.inner.pool,
+                history: &self.history,
+                visibility: self.catalog_visibility.as_ref(),
             },
             RetentionFlusher {
                 storage: self.inner.storage,
@@ -368,7 +428,9 @@ fn health<W: WriterNamespace>(
     storage
         .health()
         .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Storage(e)))?;
-    if !pool.retention_payloads()
+    if !pool
+        .retention_payloads()
+        .map_err(|error| frame(RetentionPhase::Prepare, error))?
         || !pool.uses_storage_origin(&storage.binding, storage.session_fence())
     {
         return Err(fatal(
@@ -383,6 +445,8 @@ fn health<W: WriterNamespace>(
 #[cfg(test)]
 #[path = "plan4_retention/tests.rs"]
 mod tests;
+#[cfg(test)]
+pub(in crate::storage) use tests::install_after_capture as install_catalog_after_capture;
 
 #[cfg(test)]
 #[path = "plan4_retention/free_undo_literal_tests.rs"]
@@ -393,3 +457,7 @@ pub(in crate::storage) use free_undo_literals::Oracle as FreeUndoOracle;
 #[cfg(test)]
 #[path = "plan4_retention/free_undo_tests.rs"]
 mod free_undo_tests;
+
+#[cfg(test)]
+#[path = "plan4_retention/catalog_source_tests.rs"]
+mod catalog_source_tests;

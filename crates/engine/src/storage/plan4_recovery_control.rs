@@ -313,7 +313,7 @@ fn check_profile(bytes: &[u8], at: usize, profile: Profile) -> Result<()> {
     }
     Ok(())
 }
-fn write_closure(bytes: &mut [u8], value: Closure) {
+fn write_closure(bytes: &mut [u8], value: Closure, profile: Profile) {
     bytes[0] = match value.anchor {
         AnchorKind::Genesis => 1,
         AnchorKind::Base => 2,
@@ -332,7 +332,7 @@ fn write_closure(bytes: &mut [u8], value: Closure) {
         bytes,
         24,
         if value.anchor == AnchorKind::Base {
-            BASE_BYTES
+            profile.base_bytes() as u32
         } else {
             BYTES as u32
         },
@@ -346,7 +346,7 @@ fn write_closure(bytes: &mut [u8], value: Closure) {
     bytes[152..184].copy_from_slice(&value.writer_digest);
     put64(bytes, 184, value.writer_generation);
 }
-fn read_closure(bytes: &[u8]) -> Result<Closure> {
+fn read_closure(bytes: &[u8], profile: Profile) -> Result<Closure> {
     let anchor = match bytes[0] {
         1 => AnchorKind::Genesis,
         2 => AnchorKind::Base,
@@ -365,7 +365,7 @@ fn read_closure(bytes: &[u8]) -> Result<Closure> {
         || !zeros(&bytes[192..256])
         || u32_at(bytes, 24)
             != if anchor == AnchorKind::Base {
-                BASE_BYTES
+                profile.base_bytes() as u32
             } else {
                 BYTES as u32
             }
@@ -415,8 +415,8 @@ pub(super) fn encode_current(
     }
     put64(output, 224, value.writer_high_water);
     put64(output, 232, value.base_high_water);
-    write_closure(&mut output[256..512], value.current);
-    write_closure(&mut output[512..768], value.previous);
+    write_closure(&mut output[256..512], value.current, profile);
+    write_closure(&mut output[512..768], value.previous, profile);
     seal(output);
     Ok(())
 }
@@ -451,8 +451,8 @@ pub(super) fn decode_current(input: &[u8], profile: Profile) -> Result<Current> 
         writer_high_water: u64_at(input, 224),
         base_high_water: u64_at(input, 232),
         intent,
-        current: read_closure(&input[256..512])?,
-        previous: read_closure(&input[512..768])?,
+        current: read_closure(&input[256..512], profile)?,
+        previous: read_closure(&input[512..768], profile)?,
     };
     value.validate()?;
     Ok(value)
@@ -469,7 +469,7 @@ pub(super) fn encode_epoch(
     write_profile(output, 48, profile);
     put64(output, 88, value.base_lsn);
     put64(output, 96, BYTES as u64);
-    put32(output, 104, BASE_BYTES);
+    put32(output, 104, profile.base_bytes() as u32);
     put64(output, 112, WAL_CAP);
     put64(output, 120, value.base_generation);
     output[128..160].copy_from_slice(&value.base_digest);
@@ -488,7 +488,7 @@ pub(super) fn decode_epoch(input: &[u8], profile: Profile) -> Result<EpochHeader
         || !zeros(&input[164..168])
         || !zeros(&input[212..TRAILER])
         || u64_at(input, 96) != BYTES as u64
-        || u32_at(input, 104) != BASE_BYTES
+        || u32_at(input, 104) != profile.base_bytes() as u32
         || u64_at(input, 112) != WAL_CAP
         || u32_at(input, 208) != 1
         || u64_at(input, 168) != u64_at(input, 88)

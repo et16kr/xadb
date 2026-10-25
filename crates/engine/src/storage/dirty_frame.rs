@@ -18,15 +18,26 @@ use std::{
     rc::Rc,
     sync::{
         Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockError,
-        atomic::AtomicU8,
+        atomic::{AtomicBool, AtomicU8, Ordering},
     },
 };
 
 mod commit;
+mod reader_load;
+mod retirement;
+#[allow(unused_imports)]
+pub(in crate::storage) use reader_load::{
+    LoadClaimIdentity, LoadClaimStep, RetentionLoadClaim, source_census as lookup_load_census,
+};
+#[allow(unused_imports)] // Original semantic retirement consumer uses these wrappers.
+pub(in crate::storage) use retirement::{
+    RetirementApply, RetirementTargets, retirement_source_bytes,
+};
 mod plan4_residency;
 #[allow(unused_imports)] // The actual terminal producer will consume these opaque carriers.
 pub(in crate::storage) use commit::{
     CommitInstallTargets, CommitStageTargets, PendingCommitTargets,
+    source_bytes as commit_source_bytes,
 };
 mod recovered_plan4;
 mod registration;
@@ -59,6 +70,10 @@ mod flush;
 pub(in crate::storage) use flush::{CapturedPage, FinalizedPage};
 #[path = "dirty_init.rs"]
 mod init;
+#[allow(unused_imports)]
+pub(in crate::storage) use init::{
+    CompletedTxPair, TxPairClaimKey, TxPairWriteTargets, tx_pair_source_census,
+};
 pub(in crate::storage) use init::{InitClaimKey, InitWriteTargets};
 
 pub(crate) const MAX_FRAMES: usize = 64;
@@ -277,12 +292,27 @@ struct DirtyRegistry<'s> {
     last_attempt: u64,
 }
 
+/// One bounded leaf owns registration, quota and physical claims together.
+/// Original layout-only shapes above remain for historical delta accounting.
+struct PoolRegistry<'s> {
+    directory: RegistrationDirectory,
+    counts: [u16; MAX_FRAMES],
+    total: u16,
+    init_claim: Option<init::InitClaimSlot>,
+    entries: [Option<DirtyEntry>; MAX_FRAMES],
+    requirements: [Option<WalRequirement<'s>>; MAX_FRAMES],
+    claim: Option<flush::Claim>,
+    last_attempt: u64,
+    load: Option<reader_load::LoadClaimRecord>,
+    last_load_attempt: u64,
+}
+
 /// Bounded directory and leaf registries; the exact core cannot be caller-selected.
 pub(crate) struct SharedPool<'c, 's, 'p, 'd> {
     frames: &'p [DirtyFrame<'d>],
-    directory: RegistrationDirectory,
-    pins: Mutex<PinAccounting>,
-    dpt: Mutex<DirtyRegistry<'s>>,
+    registry: Mutex<PoolRegistry<'s>>,
+    // Negative-only C5 hint: false never certifies publication or identity.
+    init_unpublished: AtomicBool,
     core: &'c PageConcurrency<'s>,
     fence: &'s SessionFence,
     binding: &'s AtomicU8,
@@ -324,18 +354,19 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         })?;
         Ok(Self {
             frames,
-            directory,
-            pins: Mutex::new(PinAccounting {
+            registry: Mutex::new(PoolRegistry {
+                directory,
                 counts: [0; MAX_FRAMES],
                 total: 0,
                 init_claim: None,
-            }),
-            dpt: Mutex::new(DirtyRegistry {
                 entries: [None; MAX_FRAMES],
                 requirements: [None; MAX_FRAMES],
                 claim: None,
                 last_attempt: 0,
+                load: None,
+                last_load_attempt: 0,
             }),
+            init_unpublished: AtomicBool::new(false),
             core,
             fence,
             binding,
@@ -383,17 +414,24 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             self.fence.fence();
         }
     }
-    fn pins_valid(&self, pins: &PinAccounting) -> bool {
-        if !self.registrations_valid() || !self.init_pins_valid(pins) {
+    fn pins_valid(&self, state: &PoolRegistry<'s>) -> bool {
+        if !state.directory.valid(self.frames) || !self.init_pins_valid(state) {
             return false;
         }
         let mut sum = 0u16;
-        for (index, count) in pins.counts.iter().enumerate() {
-            let initialized = self.resolve_registration(index).is_some();
-            let initializer_pin = pins.init_claim.as_ref().is_some_and(|slot| {
-                slot.initializer_pins_held && self.directory.closed_index() == Some(index)
-            });
-            if *count > MAX_FRAME_PINS || (!initialized && *count != u16::from(initializer_pin)) {
+        for (index, count) in state.counts.iter().enumerate() {
+            let initialized = state.directory.resolve(self.frames, index).is_some();
+            let initializer_pin = state
+                .init_claim
+                .as_ref()
+                .is_some_and(|slot| slot.owns_unpublished_pin(index));
+            let load_pin = state
+                .load
+                .as_ref()
+                .is_some_and(|claim| claim.index() == index);
+            if *count > MAX_FRAME_PINS
+                || (!initialized && *count != u16::from(initializer_pin || load_pin))
+            {
                 return false;
             }
             let Some(next) = sum.checked_add(*count) else {
@@ -401,28 +439,25 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             };
             sum = next;
         }
-        sum == pins.total && sum <= MAX_PINS
+        sum == state.total
+            && sum <= MAX_PINS
+            && state
+                .load
+                .as_ref()
+                .is_none_or(|claim| claim.valid(self, state))
     }
-    fn entry_pins(&self) -> Result<MutexGuard<'_, PinAccounting>> {
-        self.health()?;
-        let pins = self.pins.lock().map_err(|_| self.fatal(Cause::Poisoned))?;
-        self.health()?;
-        if !self.pins_valid(&pins) {
-            return Err(self.fatal(Cause::Invariant));
-        }
-        Ok(pins)
-    }
-    fn dpt_valid(&self, dpt: &DirtyRegistry<'s>) -> bool {
-        self.registrations_valid()
-            && dpt
+    fn dpt_valid(&self, state: &PoolRegistry<'s>) -> bool {
+        state.directory.valid(self.frames)
+            && state
                 .claim
                 .as_ref()
-                .is_none_or(|claim| claim.valid(self, dpt.last_attempt))
-            && dpt.entries.iter().enumerate().all(|(index, entry)| {
-                match (entry, dpt.requirements[index]) {
+                .is_none_or(|claim| claim.valid(self, state))
+            && state.entries.iter().enumerate().all(|(index, entry)| {
+                match (entry, state.requirements[index]) {
                     (None, None) => true,
-                    (Some(entry), Some(requirement)) => self
-                        .resolve_registration(index)
+                    (Some(entry), Some(requirement)) => state
+                        .directory
+                        .resolve(self.frames, index)
                         .is_some_and(|registration| {
                             entry.identity == registration.request.identity
                                 && entry.generation == registration.generation
@@ -435,30 +470,84 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                 }
             })
     }
-    fn entry_dpt(&self) -> Result<MutexGuard<'_, DirtyRegistry<'s>>> {
+    fn registry_valid(&self, state: &PoolRegistry<'s>) -> bool {
+        self.pins_valid(state) && self.dpt_valid(state)
+    }
+    fn entry_registry(&self) -> Result<MutexGuard<'_, PoolRegistry<'s>>> {
         self.health()?;
-        let dpt = self.dpt.lock().map_err(|_| self.fatal(Cause::Poisoned))?;
+        let state = self
+            .registry
+            .lock()
+            .map_err(|_| self.fatal(Cause::Poisoned))?;
         self.health()?;
-        if !self.dpt_valid(&dpt) {
+        if !self.registry_valid(&state) {
             return Err(self.fatal(Cause::Invariant));
         }
-        Ok(dpt)
+        Ok(state)
+    }
+    fn try_registry(&self) -> Result<MutexGuard<'_, PoolRegistry<'s>>> {
+        self.health()?;
+        let state = self.registry.try_lock().map_err(|error| match error {
+            TryLockError::WouldBlock => unchanged(Cause::Busy),
+            TryLockError::Poisoned(_) => self.fatal(Cause::Poisoned),
+        })?;
+        self.health()?;
+        if !self.registry_valid(&state) {
+            return Err(self.fatal(Cause::Invariant));
+        }
+        Ok(state)
+    }
+    // Never return a directory reference or a registry guard to the caller.
+    // This also ends temporary guards before a second query in one expression.
+    fn directory_read<T>(&self, read: impl FnOnce(&RegistrationDirectory) -> T) -> Result<T> {
+        let state = self.entry_registry()?;
+        Ok(read(&state.directory))
+    }
+    fn directory_edit<T>(&self, edit: impl FnOnce(&mut RegistrationDirectory) -> T) -> Result<T> {
+        let mut state = self.entry_registry()?;
+        Ok(edit(&mut state.directory))
+    }
+    fn registration_in(&self, state: &PoolRegistry<'s>, index: usize) -> Result<Registration> {
+        state
+            .directory
+            .resolve(self.frames, index)
+            .ok_or_else(|| self.fatal(Cause::Invariant))
+    }
+    fn stamp_in(
+        &self,
+        state: &PoolRegistry<'s>,
+        index: usize,
+        content: &FrameContent<'_>,
+    ) -> Result<FrameStamp> {
+        let registration = self.registration_in(state, index)?;
+        if !content.valid() {
+            return Err(self.fatal(Cause::Invariant));
+        }
+        Ok(FrameStamp {
+            identity: registration.request.identity,
+            generation: registration.generation,
+            page_lsn: content.page_lsn,
+            modification_counter: content.modification_counter,
+            rec_lsn: content.rec_lsn,
+        })
     }
     /// Copy snapshot only; callers need a checked pin for content authority.
-    fn resolve_registration(&self, index: usize) -> Option<Registration> {
-        self.directory.resolve(self.frames, index)
+    fn resolve_registration(&self, index: usize) -> Result<Option<Registration>> {
+        let state = self.entry_registry()?;
+        Ok(state.directory.resolve(self.frames, index))
     }
-    fn registrations_valid(&self) -> bool {
-        self.directory.valid(self.frames)
+    fn registrations_valid(&self) -> Result<bool> {
+        let _state = self.entry_registry()?;
+        Ok(true)
     }
     fn registration(&self, index: usize) -> Result<Registration> {
-        self.resolve_registration(index)
+        self.resolve_registration(index)?
             .ok_or_else(|| self.fatal(Cause::Invariant))
     }
     /// A copied request grants no pin, content or mutation authority.
     pub(in crate::storage) fn target_request(&self, index: usize) -> Result<TargetRequest> {
         self.health()?;
-        if !self.registrations_valid() {
+        if !self.registrations_valid()? {
             return Err(self.fatal(Cause::Invariant));
         }
         Ok(self.registration(index)?.request)
@@ -476,17 +565,21 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             rec_lsn: content.rec_lsn,
         })
     }
-    fn pair(&self, index: usize, content: &FrameContent<'_>) -> Result<DirtyObservation> {
-        let frame = self.stamp(index, content)?;
-        let dpt = self.entry_dpt()?;
+    fn pair_in(
+        &self,
+        state: &PoolRegistry<'s>,
+        index: usize,
+        content: &FrameContent<'_>,
+    ) -> Result<DirtyObservation> {
+        let frame = self.stamp_in(state, index, content)?;
         let expected = frame.rec_lsn.map(|rec_lsn| DirtyEntry {
             identity: frame.identity,
             generation: frame.generation,
             rec_lsn,
             modification_counter: frame.modification_counter,
         });
-        if dpt.entries[index] != expected
-            || dpt.requirements[index].map(|value| value.location().lsn)
+        if state.entries[index] != expected
+            || state.requirements[index].map(|value| value.location().lsn)
                 != frame.rec_lsn.map(|_| frame.page_lsn.0)
         {
             return Err(self.fatal(Cause::Invariant));
@@ -495,6 +588,10 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
             frame,
             entry: expected,
         })
+    }
+    fn pair(&self, index: usize, content: &FrameContent<'_>) -> Result<DirtyObservation> {
+        let state = self.entry_registry()?;
+        self.pair_in(&state, index, content)
     }
 
     /// Existing one/two-target consumers retain the same carrier layout.
@@ -527,7 +624,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         if !owner.check_binding(self.core).map_err(DirtyError::from)? {
             return Err(unchanged(Cause::BindingMismatch));
         }
-        if !self.registrations_valid() {
+        if !self.registrations_valid()? {
             return Err(self.fatal(Cause::Invariant));
         }
         if requests.is_empty() || requests.len() > N {
@@ -544,17 +641,34 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         let mut indices = [0; N];
         let mut generations = [0; N];
         {
-            let mut pins = self.entry_pins()?;
+            let mut pins = self.entry_registry()?;
             for (at, request) in requests.iter().enumerate() {
-                let (index, registration) = self
+                if pins
+                    .load
+                    .as_ref()
+                    .is_some_and(|claim| claim.wants(*request))
+                {
+                    return Err(unchanged(Cause::Busy));
+                }
+                let (index, registration) = pins
                     .directory
                     .lookup(self.frames, *request)
                     .ok_or_else(|| unchanged(Cause::MissingTarget))?;
-                // Bounded insertion sort needs only the token arrays. The
-                // directory cannot change while this shared pool is borrowed.
+                if pins
+                    .load
+                    .as_ref()
+                    .is_some_and(|claim| claim.blocks(*request, index))
+                {
+                    return Err(unchanged(Cause::Busy));
+                }
+                // The original whole lookup and quota update share this leaf.
                 let mut position = at;
                 while position != 0
-                    && self.registration(indices[position - 1])?.request.rank() > request.rank()
+                    && self
+                        .registration_in(&pins, indices[position - 1])?
+                        .request
+                        .rank()
+                        > request.rank()
                 {
                     indices[position] = indices[position - 1];
                     generations[position] = generations[position - 1];
@@ -589,7 +703,10 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
     }
 
     pub(in crate::storage) fn has_pins(&self) -> Result<bool> {
-        let pins = self.pins.lock().map_err(|_| self.fatal(Cause::Poisoned))?;
+        let pins = self
+            .registry
+            .lock()
+            .map_err(|_| self.fatal(Cause::Poisoned))?;
         if !self.pins_valid(&pins) {
             return Err(self.fatal(Cause::Invariant));
         }
@@ -601,13 +718,11 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
     /// observation itself is not an admission or pin capability. Dirty entries
     /// and their WAL requirements may remain, but no pin/INIT/flush claim may.
     pub(in crate::storage) fn handoff_quiescent(&self) -> Result<bool> {
-        {
-            let pins = self.entry_pins()?;
-            if pins.total != 0 || pins.init_claim.is_some() {
-                return Ok(false);
-            }
-        }
-        Ok(self.entry_dpt()?.claim.is_none())
+        let state = self.entry_registry()?;
+        Ok(state.total == 0
+            && state.init_claim.is_none()
+            && state.claim.is_none()
+            && state.load.is_none())
     }
 }
 
@@ -624,7 +739,7 @@ impl<const N: usize> PinSet<'_, '_, '_, '_, '_, N> {
         if at >= self.len {
             return Err(unchanged(Cause::Shape));
         }
-        if !self.pool.registrations_valid() {
+        if !self.pool.registrations_valid()? {
             return Err(self.pool.fatal(Cause::Invariant));
         }
         let expected = self.generations[at];
@@ -640,7 +755,7 @@ impl<const N: usize> PinSet<'_, '_, '_, '_, '_, N> {
         }
         self.active = false;
         self.pool.fence_unwind();
-        let (mut pins, poison) = match self.pool.pins.lock() {
+        let (mut pins, poison) = match self.pool.registry.lock() {
             Ok(pins) => (pins, None),
             Err(error) => (error.into_inner(), Some(self.pool.fatal(Cause::Poisoned))),
         };
@@ -649,8 +764,11 @@ impl<const N: usize> PinSet<'_, '_, '_, '_, '_, N> {
                 return Err(self.pool.fatal(Cause::Invariant));
             }
             for (at, index) in self.indices[..self.len].iter().enumerate() {
-                self.registration(at)?;
-                if pins.counts[*index] == 0 {
+                let registration = self.pool.registration_in(&pins, *index)?;
+                if registration.generation != self.generations[at]
+                    || self.generations[at] == 0
+                    || pins.counts[*index] == 0
+                {
                     return Err(self.pool.fatal(Cause::Invariant));
                 }
             }
@@ -990,7 +1108,7 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> WriteTargets<'a, 'b, 'c, 's, 'p, 'd
         {
             return Err(pins.pool.fatal(Cause::Invariant));
         }
-        let mut dpt = pins.pool.entry_dpt()?;
+        let mut dpt = pins.pool.entry_registry()?;
         let expected = stamp.rec_lsn.map(|rec_lsn| DirtyEntry {
             identity: actual.identity,
             generation: stamp.generation,
@@ -1070,7 +1188,7 @@ pub(in crate::storage) const fn target_set_call_bytes<const N: usize>() -> usize
         + 6 * size_of::<Result<Registration>>()
         + 2 * size_of::<DirtyObservation>()
         + 4 * size_of::<Result<()>>()
-        + 2 * size_of::<MutexGuard<'_, PinAccounting>>()
+        + 2 * size_of::<MutexGuard<'_, PoolRegistry<'_>>>()
         + 32 * 8
         + 64
 }
@@ -1095,8 +1213,8 @@ pub(in crate::storage) fn fits() -> bool {
         && size_of::<Result<Registration>>() <= 128
         && size_of::<DirtyError>() <= 32
         && size_of::<Result<()>>() <= 32
-        && size_of::<MutexGuard<'_, PinAccounting>>() <= 32
-        && size_of::<std::sync::LockResult<MutexGuard<'_, PinAccounting>>>() <= 32
+        && size_of::<MutexGuard<'_, PoolRegistry<'_>>>() <= 32
+        && size_of::<std::sync::LockResult<MutexGuard<'_, PoolRegistry<'_>>>>() <= 32
         && size_of::<RwLockReadGuard<'_, FrameContent<'_>>>() <= 32
         && size_of::<RwLockWriteGuard<'_, FrameContent<'_>>>() <= 32
         && size_of::<WalRequirement<'_>>() <= 128
@@ -1225,8 +1343,8 @@ pub(crate) mod test_support {
             error: size_of::<DirtyError>(),
             unit_result: size_of::<Result<()>>(),
             registration_result: size_of::<Result<Registration>>(),
-            pin_guard: size_of::<MutexGuard<'_, PinAccounting>>(),
-            pin_lock_result: size_of::<std::sync::LockResult<MutexGuard<'_, PinAccounting>>>(),
+            pin_guard: size_of::<MutexGuard<'_, PoolRegistry<'_>>>(),
+            pin_lock_result: size_of::<std::sync::LockResult<MutexGuard<'_, PoolRegistry<'_>>>>(),
             read_guard: size_of::<RwLockReadGuard<'_, FrameContent<'_>>>(),
             write_guard: size_of::<RwLockWriteGuard<'_, FrameContent<'_>>>(),
             pool: size_of::<SharedPool<'_, '_, '_, '_>>(),
@@ -1292,6 +1410,22 @@ pub(crate) mod test_support {
             }
         }
     }
+    /// Read-only original registry census, including after a test fence.
+    pub(in crate::storage) fn registered_index(
+        pool: &SharedPool<'_, '_, '_, '_>,
+        number: u64,
+    ) -> Option<usize> {
+        let registry = pool
+            .registry
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        (0..pool.frames.len()).find(|&index| {
+            registry
+                .directory
+                .resolve(pool.frames, index)
+                .is_some_and(|entry| entry.request.identity.page.page_no == number)
+        })
+    }
     pub(crate) fn content_busy(pool: &SharedPool<'_, '_, '_, '_>, index: usize) -> bool {
         match pool.frames[index].content.try_write() {
             Ok(guard) => {
@@ -1324,14 +1458,13 @@ pub(crate) mod test_support {
             .content
             .read()
             .unwrap_or_else(|error| error.into_inner());
-        let registration = pool.resolve_registration(index).unwrap();
-        output.copy_from_slice(content.bytes);
-        let entry = pool
-            .dpt
+        let pins = pool
+            .registry
             .lock()
-            .unwrap_or_else(|error| error.into_inner())
-            .entries[index];
-        let pins = pool.pins.lock().unwrap_or_else(|error| error.into_inner());
+            .unwrap_or_else(|error| error.into_inner());
+        let registration = pins.directory.resolve(pool.frames, index).unwrap();
+        output.copy_from_slice(content.bytes);
+        let entry = pins.entries[index];
         Snapshot {
             frame: FrameStamp {
                 identity: registration.request.identity,
@@ -1358,7 +1491,7 @@ pub(crate) mod test_support {
         index: usize,
         entry: Option<DirtyEntry>,
     ) {
-        pool.dpt.lock().unwrap().entries[index] = entry;
+        pool.registry.lock().unwrap().entries[index] = entry;
     }
     pub(crate) fn seed_pins(
         pool: &SharedPool<'_, '_, '_, '_>,
@@ -1366,7 +1499,7 @@ pub(crate) mod test_support {
         count: u16,
         total: u16,
     ) {
-        let mut pins = pool.pins.lock().unwrap();
+        let mut pins = pool.registry.lock().unwrap();
         pins.counts[index] = count;
         pins.total = total;
     }
@@ -1384,13 +1517,13 @@ pub(crate) mod test_support {
     }
     pub(crate) fn poison_dpt(pool: &SharedPool<'_, '_, '_, '_>) {
         let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let _held = pool.dpt.lock().unwrap();
+            let _held = pool.registry.lock().unwrap();
             panic!("injected DPT poison");
         }));
     }
     pub(crate) fn poison_pins(pool: &SharedPool<'_, '_, '_, '_>) {
         let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let _held = pool.pins.lock().unwrap();
+            let _held = pool.registry.lock().unwrap();
             panic!("injected pin poison");
         }));
     }

@@ -177,3 +177,10 @@ mod support;
 
 #[path = "tests/free_undo.rs"]
 mod free_undo;
+
+#[cfg(target_os = "linux")]
+#[path = "tests/catalog_create.rs"]
+mod catalog_create;
+
+#[path = "tests/catalog_memory.rs"]
+mod catalog_memory;

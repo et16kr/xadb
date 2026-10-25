@@ -38,7 +38,7 @@ fn requests() -> [TargetRequest; 4] {
 }
 
 fn clean(pool: &SharedPool<'_, '_, '_, '_>) {
-    assert_eq!(pool.pins.lock().unwrap().total, 0);
+    assert_eq!(pool.registry.lock().unwrap().total, 0);
     assert!(!pool.core.diagnostic_version_busy());
     for frame in pool.frames {
         assert!(frame.content.try_write().is_ok());
@@ -57,8 +57,8 @@ fn commit_targets_intent_preserves_pins_and_checked_cancel() {
             .unwrap()
             .prepare_commit()
             .unwrap();
-        assert_eq!(pool.pins.lock().unwrap().counts[..5], [1, 1, 1, 1, 0]);
-        assert_eq!(pool.pins.lock().unwrap().total, 4);
+        assert_eq!(pool.registry.lock().unwrap().counts[..5], [1, 1, 1, 1, 0]);
+        assert_eq!(pool.registry.lock().unwrap().total, 4);
         assert!(pool.core.diagnostic_version_busy());
         for at in 0..4 {
             let stable = intent.stable[at].unwrap();
@@ -179,7 +179,7 @@ fn commit_targets_intent_unwind_fences_and_releases_physical_ownership() {
             .is_err()
         );
         assert!(pool.fence.is_fenced());
-        assert_eq!(pool.pins.lock().unwrap().total, 0);
+        assert_eq!(pool.registry.lock().unwrap().total, 0);
         // Unwind may poison guards; try_lock must still show no live lock.
         assert!(!pool.core.diagnostic_version_busy());
         for frame in pool.frames {

@@ -831,7 +831,7 @@ fn page_change<'a>(
     })
 }
 
-enum Output<'a> {
+pub(super) enum Output<'a> {
     Encode(&'a mut [u8]),
     Observe(&'a [u8]),
 }

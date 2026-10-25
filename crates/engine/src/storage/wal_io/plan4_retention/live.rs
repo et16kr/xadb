@@ -58,6 +58,8 @@ pub(crate) struct RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterN
     pub(super) pool: &'b SharedPool<'c, 's, 'p, 'd>,
     pub(super) operation: &'b mut &'o mut [u8; super::super::OPERATION_BYTES],
     pub(super) control: &'b mut control::RetentionControl<'a, 'c, 's>,
+    pub(super) history: &'b history::runtime::RuntimeHistory<'a, 'c, 's>,
+    pub(super) visibility: Option<&'b visibility::BoundVisibility<'a, 'c, 's>>,
 }
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Change {
@@ -145,6 +147,39 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         actor: Option<TxnRef>,
         supplied_job: Option<JobSlotRef>,
     ) -> Result<RetentionObservation> {
+        // The legacy N=0 producer owns four scratch pages starting at the
+        // old Job tail. Profile2 uses that first page for its persistent XOI
+        // cache and must enter the separately checked scope2 producer.
+        if self.storage.profile().format() != 1 {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::WrongState,
+            ));
+        }
+        let runtime = self.history;
+        let mut scope = runtime.replay_scope(owner)?;
+        let mut replay = Some(scope.checkout()?);
+        let result =
+            self.change_with_replay(owner, change, supplied, actor, supplied_job, &mut replay);
+        let returned = match replay.take() {
+            Some(loan) => loan.return_checked(),
+            None => Ok(()),
+        };
+        merge(merge(result, returned), scope.finish_checked())
+    }
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "original operation with its checked replay loan"
+    )]
+    fn change_with_replay(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        change: Change,
+        supplied: Option<TargetRequest>,
+        actor: Option<TxnRef>,
+        supplied_job: Option<JobSlotRef>,
+        replay: &mut Option<history::runtime::ReplayLoan<'_, '_, '_, '_>>,
+    ) -> Result<RetentionObservation> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
         let prefix = self.enter(owner)?;
@@ -157,7 +192,12 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         }
         // This uses the original durable source, and ends its File guard before
         // any target pin. It checks the complete ATT/Status/Job bijection.
-        history::validate_live(storage, self.control, prefix)?;
+        history::validate_live(
+            storage,
+            self.control,
+            replay.as_mut().expect("checked checkout").bytes_mut(),
+            prefix,
+        )?;
         let (remaining, steps) = self
             .control
             .check_ledger(storage.profile(), prefix)
@@ -199,6 +239,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                     slot: None,
                 },
                 [allocator, root],
+                replay,
             );
         }
         let slot = if change == Change::Begin {
@@ -223,9 +264,15 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         let (actor, status, job, target) = if change == Change::Begin {
             let target = supplied
                 .ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::Membership))?;
-            self.status_member(target, allocator.identity)?;
-            let bytes =
-                history::arena_page(self.control.replay, target.identity.page.page_no as usize);
+            self.status_member(
+                target,
+                allocator.identity,
+                replay.as_ref().expect("checked checkout").bytes(),
+            )?;
+            let bytes = history::arena_page(
+                replay.as_ref().expect("checked checkout").bytes(),
+                target.identity.page.page_no as usize,
+            );
             let page = status_home::decode_status_home_page(
                 bytes,
                 target.identity,
@@ -301,7 +348,11 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                 },
                 PageKind::TransactionStatus,
             );
-            self.status_member(target, allocator.identity)?;
+            self.status_member(
+                target,
+                allocator.identity,
+                replay.as_ref().expect("checked checkout").bytes(),
+            )?;
             (source, status, job, target)
         };
         let jobs = self.fixed_request(job.page().page_no as usize)?;
@@ -316,6 +367,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                 slot,
             },
             [allocator, root, jobs, target],
+            replay,
         )
     }
     fn fixed_request(&self, index: usize) -> Result<TargetRequest> {
@@ -329,7 +381,12 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
             })?;
         Ok(request(h.identity, h.kind))
     }
-    fn status_member(&self, target: TargetRequest, allocator: PageIdentity) -> Result<()> {
+    fn status_member(
+        &self,
+        target: TargetRequest,
+        allocator: PageIdentity,
+        replay: &[u8],
+    ) -> Result<()> {
         let page = target.identity.page.page_no as usize;
         if !(9..64).contains(&page)
             || target.kind != PageKind::TransactionStatus
@@ -343,7 +400,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
             ));
         }
         let view = allocation_page::decode_allocation_page(
-            history::arena_page(self.control.replay, 0),
+            history::arena_page(replay, 0),
             allocator,
             self.storage.profile().spec().namespace,
         )
@@ -436,6 +493,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         change: Change,
         selected: Selected,
         requests: [TargetRequest; N],
+        replay: &mut Option<history::runtime::ReplayLoan<'_, '_, '_, '_>>,
     ) -> Result<RetentionObservation> {
         let storage = self.storage;
         let mut stamps = [None; 4];
@@ -468,7 +526,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                     );
                     if out
                         != history::arena_page(
-                            self.control.replay,
+                            replay.as_ref().expect("checked checkout").bytes(),
                             target.identity.page.page_no as usize,
                         )
                     {
@@ -487,6 +545,9 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
                     .map_err(|e| frame(RetentionPhase::Prepare, e)),
             )?;
         }
+        // Canonical bytes have been copied and all read guards released. No
+        // replay checkout survives stage, durability or a future continuation.
+        replay.take().expect("checked checkout").return_checked()?;
         let mut actor_bytes = [0; 48];
         let mut status_bytes = [0; 40];
         if let Some(actor) = selected.actor {
@@ -835,6 +896,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionWriter<'_, '_, 's, 'c, '_, '_, '_, '_,
         }
         self.control.durable = Some(durable);
         self.control.pending = None;
+        self.history.installed(requirement)?;
         Ok(RetentionObservation {
             actor: selected.actor,
             status: selected.status,

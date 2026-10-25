@@ -314,7 +314,15 @@ impl<'s, 'c, W: WriterNamespace> ReservedRetentionSystem<'_, '_, 's, 'c, '_, '_,
                 RetentionCause::Invariant,
             ));
         }
-        let (bank, before_space) = control.bytes.split_at_mut(131_072);
+        let generation = control
+            .source
+            .base()
+            .map_or(1, |base| base.view().header().generation);
+        let (bank, before_space) = control.bytes.split_at_mut(147_456);
+        let (before_space, inventory_space) = before_space.split_at_mut(PAGE_BYTES);
+        let inventory_after: &mut [u8; PAGE_BYTES] = (&mut inventory_space[..PAGE_BYTES])
+            .try_into()
+            .expect("projected XOI");
         let before: &mut [u8; PAGE_BYTES] = (&mut before_space[..PAGE_BYTES])
             .try_into()
             .expect("allocator before");
@@ -341,6 +349,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedRetentionSystem<'_, '_, 's, 'c, '_, '_,
                 high_water: control.population.high_water,
                 terminal: control.population.terminal,
                 before_descriptor: descriptor(control::row(bank, ALLOCATION_SLOT)),
+                initialized: None,
                 fence: storage.session_fence(),
             };
             let prepared = init::prepare_retention_init(
@@ -362,6 +371,17 @@ impl<'s, 'c, W: WriterNamespace> ReservedRetentionSystem<'_, '_, 's, 'c, '_, '_,
             let allocator_after = prepared.allocator_after();
             let status_after = prepared.status_after();
             let state = prepared.state();
+            prepare_system_inventory(
+                storage.profile(),
+                generation,
+                prepared.header().lsn,
+                bank,
+                history::arena_page(self.bound.history.exclusive()?, 1),
+                allocator_after,
+                after_descriptor,
+                inventory_after,
+            )
+            .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Base(e)))?;
             write
                 .preflight(&stamp)
                 .map_err(|e| frame(RetentionPhase::Install, e))?;
@@ -404,6 +424,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedRetentionSystem<'_, '_, 's, 'c, '_, '_,
                 .map_err(|e| frame(RetentionPhase::Install, e))?
                 .install();
             remember(control::row_mut(bank, ALLOCATION_SLOT), state);
+            bank[131_072..147_456].copy_from_slice(inventory_after);
             // Preserve the reservation until the genuine durable proof and
             // checked original claim completion below have both succeeded.
             control.population.high_water = state.high_water;
@@ -486,8 +507,42 @@ impl<'s, 'c, W: WriterNamespace> ReservedRetentionSystem<'_, '_, 's, 'c, '_, '_,
         control.population.reservation = None;
         control.durable = Some(durable);
         control.pending = None;
+        self.bound.history.installed(requirement)?;
         Ok(Plan4Target { request: payload })
     }
+}
+
+/// The original System successor supplies allocator/descriptor changes; all
+/// other rows and Jobs remain the authenticated current before. Output uses a
+/// second page of the existing control scratch, not new retained backing.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "borrowed original projection sections"
+)]
+fn prepare_system_inventory(
+    profile: crate::storage::control::Profile,
+    generation: u64,
+    capture: u64,
+    bank: &[u8],
+    root: &[u8; PAGE_BYTES],
+    allocator: &[u8; PAGE_BYTES],
+    allocation: &[u8; 1536],
+    output: &mut [u8; PAGE_BYTES],
+) -> std::result::Result<(), crate::storage::plan4_recovery_base::Error> {
+    crate::storage::plan4_recovery_base::catalog::inventory::encode_current(
+        profile,
+        generation,
+        capture,
+        &history::inventory::Rows {
+            bank,
+            cells: control::jobs(bank),
+            root,
+            allocator,
+            allocation_after: Some(allocation),
+        },
+        output,
+    )
+    .map(|_| ())
 }
 
 // The actual prepare/materialize entry points below are linked to the new
@@ -540,14 +595,19 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .wal()
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
-        history::validate_live(storage, &mut self.control, prefix)?;
+        history::validate_live(storage, &self.control, self.history.exclusive()?, prefix)?;
+        let initialized = history::catalog::system_initial(
+            self.history.exclusive()?,
+            self.control.population.high_water,
+        )
+        .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
         let allocator = self
             .inner
             .pool
             .target_request(0)
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
         let page = crate::storage::allocation_page::decode_allocation_page(
-            history::arena_page(self.control.replay, 0),
+            history::arena_page(self.history.exclusive()?, 0),
             allocator.identity,
             storage.profile().spec().namespace,
         )
@@ -617,7 +677,12 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             ));
         }
         if !(candidate.frame.is_none()
-            && self.inner.pool.init_payload_index().ok() == Some(candidate.index))
+            && self
+                .inner
+                .pool
+                .prepared_init_payload_index()
+                .map_err(|e| frame(RetentionPhase::Prepare, e))?
+                == Some(candidate.index))
         {
             self.inner
                 .pool
@@ -693,7 +758,12 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .wal()
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
-        history::validate_live(storage, &mut self.control, prefix)?;
+        history::validate_live(storage, &self.control, self.history.exclusive()?, prefix)?;
+        let initialized = history::catalog::system_initial(
+            self.history.exclusive()?,
+            self.control.population.high_water,
+        )
+        .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
         let (existing_wal, existing_steps) =
             self.control
                 .check_ledger(storage.profile(), prefix)
@@ -717,7 +787,16 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .pool
             .target_request(0)
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-        let (bank, before_space) = self.control.bytes.split_at_mut(131_072);
+        let generation = self
+            .control
+            .source
+            .base()
+            .map_or(1, |base| base.view().header().generation);
+        let (bank, before_space) = self.control.bytes.split_at_mut(147_456);
+        let (before_space, inventory_space) = before_space.split_at_mut(PAGE_BYTES);
+        let inventory_after: &mut [u8; PAGE_BYTES] = (&mut inventory_space[..PAGE_BYTES])
+            .try_into()
+            .expect("projected XOI");
         let before: &mut [u8; PAGE_BYTES] = (&mut before_space[..PAGE_BYTES])
             .try_into()
             .expect("before allocator");
@@ -736,7 +815,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             read.release_checked()
                 .map_err(|e| frame(RetentionPhase::Prepare, e)),
         )?;
-        if before != history::arena_page(self.control.replay, 0) {
+        if before != history::arena_page(self.history.exclusive()?, 0) {
             return Err(fatal(
                 storage,
                 RetentionPhase::Prepare,
@@ -761,6 +840,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             high_water: self.control.population.high_water,
             terminal: self.control.population.terminal,
             before_descriptor: descriptor(control::row(bank, ALLOCATION_SLOT)),
+            initialized,
             fence: storage.session_fence(),
         };
         let prepared = if cancel {
@@ -778,6 +858,17 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let state = prepared.state();
         let after = prepared.allocator_after();
         let after_descriptor = prepared.descriptor_bytes();
+        prepare_system_inventory(
+            storage.profile(),
+            generation,
+            prepared.header().lsn,
+            bank,
+            history::arena_page(self.history.exclusive()?, 1),
+            after,
+            after_descriptor,
+            inventory_after,
+        )
+        .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Base(e)))?;
         let mut write = self
             .inner
             .pool
@@ -819,6 +910,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             let row = control::row_mut(bank, ALLOCATION_SLOT);
             row[..1536].copy_from_slice(after_descriptor);
             remember(row, state);
+            bank[131_072..147_456].copy_from_slice(inventory_after);
             write
                 .install_dpt(dpt, &permit)
                 .map_err(|e| frame(RetentionPhase::Install, e))?;
@@ -878,6 +970,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         .map_err(|e| fatal(storage, RetentionPhase::Durable, e.cause))?;
         self.control.durable = Some(durable);
         self.control.pending = None;
+        self.history.installed(requirement)?;
         Ok(())
     }
 }
@@ -915,7 +1008,7 @@ impl ReplayAllocation {
         };
         let view = seed.view();
         let h = view.header();
-        if h.format != crate::storage::plan4_recovery_base::BaseFormat::V2System {
+        if h.format != crate::storage::plan4_recovery_base::BaseFormat::V3Catalog {
             return Err(RetentionCause::Unsupported);
         }
         let high_water = h.system_high_water[0];
@@ -925,44 +1018,44 @@ impl ReplayAllocation {
             AllocationTerminal::InitializedStatus => 2,
             AllocationTerminal::InitializedUndo => 3,
         };
-        let reserved = if let Some(page) = view.census().reserved {
-            let mut identity = crate::storage::retention_genesis::expected_header(
-                profile.spec().namespace,
-                crate::storage::retention_genesis::RetentionGenesisPage::Root,
-            )
-            // Fixed Root recipe on the already selected, validated profile.
-            // Failure here denotes an internal reconstruction invariant.
-            .map_err(|_| RetentionCause::Invariant)?
-            .identity;
-            identity.page.page_no = 0;
-            identity.owner = foundation::identity::ObjectId::new(1).expect("allocator object");
+        let reserved = if view.census().reserved
+            == crate::storage::plan4_recovery_base::catalog::ReservedInventory::SystemPage
+        {
+            let identity = super::recovery::allocator_identity(profile)?;
             let allocation = allocation_page::decode_allocation_page(
                 view.allocator(),
                 identity,
                 profile.spec().namespace,
             )
             .map_err(RetentionCause::Allocation)?;
-            let AllocationEntry::Reserved {
-                generation,
-                claimant: ReservationOwner::System(owner),
-            } = allocation
-                .entry(page.page_no as usize)
-                .map_err(RetentionCause::Allocation)?
-            else {
-                return Err(RetentionCause::Invariant);
-            };
-            if generation != page.incarnation
-                || owner.id() != high_water
-                || terminal != 0
-                || allocation.header().lsn.0 != h.capture_lsn
-            {
-                return Err(RetentionCause::Invariant);
+            let mut found = None;
+            for index in 9..64 {
+                if let AllocationEntry::Reserved {
+                    generation,
+                    claimant: ReservationOwner::System(owner),
+                } = allocation
+                    .entry(index)
+                    .map_err(RetentionCause::Allocation)?
+                {
+                    if found.is_some() || owner.id() != high_water || terminal != 0 {
+                        return Err(RetentionCause::Invariant);
+                    }
+                    let descriptor = view
+                        .descriptor(32)
+                        .map_err(|_| RetentionCause::Invariant)?
+                        .ok_or(RetentionCause::Invariant)?;
+                    found = Some(operation::RetentionReservation {
+                        owner,
+                        page: PageRef {
+                            page_no: index as u64,
+                            incarnation: generation,
+                            ..identity.page
+                        },
+                        birth: descriptor.chain.birth,
+                    });
+                }
             }
-            Some(operation::RetentionReservation {
-                owner,
-                page,
-                birth: h.capture_lsn,
-            })
+            Some(found.ok_or(RetentionCause::Invariant)?)
         } else {
             None
         };
@@ -995,6 +1088,7 @@ impl ReplayAllocation {
         arena: &mut [u8],
         bank: &mut [u8],
         after: &mut [[u8; PAGE_BYTES]; 3],
+        claims: &mut [[u8; 352]; 64],
     ) -> std::result::Result<ReplayAllocationObservation, allocation::SemanticError> {
         use allocation::SemanticError as E;
         let envelope = crate::storage::wal_frame::decode_semantic_envelope(bytes, frame)
@@ -1022,6 +1116,8 @@ impl ReplayAllocation {
             high_water: self.state.high_water,
             terminal: self.state.terminal,
             before_descriptor: descriptor(control::row(bank, ALLOCATION_SLOT)),
+            initialized: history::catalog::system_initial_claims(claims, self.state.high_water)
+                .map_err(|_| E::StateMismatch)?,
         };
         let before: &[u8; PAGE_BYTES] = arena[..PAGE_BYTES].try_into().expect("allocator arena");
         let opcode = u16::from_le_bytes(bytes[166..168].try_into().expect("opcode"));
@@ -1081,7 +1177,23 @@ impl ReplayAllocation {
             {
                 return Err(E::StateMismatch);
             }
+            if claims[index].iter().any(|b| *b != 0) {
+                return Err(E::StateMismatch);
+            }
+            let mut claim = [0; 352];
+            history::catalog::init_record(
+                request,
+                envelope.header,
+                foundation::codec::content_digest(bytes),
+                status_after,
+                crate::storage::allocation_page::ReservationOwner::System(reserved.owner),
+                reserved.birth,
+                None,
+                &mut claim,
+            )
+            .map_err(|_| E::StateMismatch)?;
             arena[index * PAGE_BYTES..(index + 1) * PAGE_BYTES].copy_from_slice(status_after);
+            claims[index] = claim;
             initialized = Some(request);
             state
         } else {
@@ -1156,7 +1268,7 @@ pub(super) fn phase_source_bytes() -> PopulationSourceCensus {
         + size_of::<operation::RetentionAllocationPlan<'_, '_>>()
         + size_of::<operation::PreparedRetentionAllocation<'_, '_>>()
         + size_of::<Result<operation::PreparedRetentionAllocation<'_, '_>>>()
-        + operation::retention_allocation_source_bytes();
+        + operation::retention_allocation_source_bytes().max(history::inventory::source_bytes());
     // initialize_inner really holds the original INIT write targets while the
     // producer runs. Count that guard and its typed return, not just references.
     let init_prepare = outer
@@ -1166,7 +1278,7 @@ pub(super) fn phase_source_bytes() -> PopulationSourceCensus {
         + size_of::<operation::RetentionAllocationPlan<'_, '_>>()
         + size_of::<init::PreparedRetentionInit<'_, '_>>()
         + size_of::<Result<init::PreparedRetentionInit<'_, '_>>>()
-        + init::retention_init_source_bytes();
+        + init::retention_init_source_bytes().max(history::inventory::source_bytes());
     // The pure producer has returned before original stage/publication. Keep
     // all bridge moves, retained-claim construction and small return carriers.
     let publication = outer
@@ -1204,10 +1316,13 @@ pub(super) fn phase_source_bytes() -> PopulationSourceCensus {
         + 2 * size_of::<crate::storage::wal_frame::FrameEnvelope<'_>>()
         + 2 * size_of::<crate::storage::wal_frame::WalFrameHeader>()
         + 2 * size_of::<Option<TargetRequest>>()
+        + 352 // actual INIT provenance temporary before canonical publication
+        + 2 * size_of::<Option<(PageRef, crate::storage::page::PageKind, u64)>>()
         + 24 * size_of::<&[u8]>()
         + 24 * size_of::<u64>()
         + 512
-        + operation::retention_allocation_source_bytes().max(init::retention_init_source_bytes());
+        + operation::retention_materialize_source_bytes()
+            .max(init::retention_materialize_source_bytes());
     PopulationSourceCensus {
         allocation_prepare,
         init_prepare,

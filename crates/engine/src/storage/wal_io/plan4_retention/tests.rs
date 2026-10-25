@@ -190,7 +190,7 @@ struct AfterCapturePause {
     resume: std::sync::mpsc::Receiver<crate::storage::dirty_frame::test_support::Resume>,
 }
 static AFTER_CAPTURE: std::sync::Mutex<Option<AfterCapturePause>> = std::sync::Mutex::new(None);
-fn install_after_capture(
+pub(in crate::storage) fn install_after_capture(
     pool: &crate::storage::dirty_frame::SharedPool<'_, '_, '_, '_>,
     arrived: std::sync::mpsc::SyncSender<()>,
     resume: std::sync::mpsc::Receiver<crate::storage::dirty_frame::test_support::Resume>,

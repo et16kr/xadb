@@ -58,7 +58,7 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         seed: &RecoveryPoolSeed<'_>,
     ) -> Result<Self> {
         prepare_allocator(core, fence, binding, frames, seed)?;
-        let mut pool = Self::new(core, fence, binding, frames).map_err(|error| {
+        let pool = Self::new(core, fence, binding, frames).map_err(|error| {
             fence.fence();
             DirtyError {
                 cause: error.cause,
@@ -67,8 +67,8 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
         })?;
         // No view escapes the temporary clean directory. It is converted
         // before restoring metadata from the authenticated physical image.
-        if !pool.directory.open_plan4(pool.frames)
-            || !pool.directory.activate_retention(pool.frames)
+        if !pool.directory_edit(|directory| directory.open_plan4(pool.frames))?
+            || !pool.directory_edit(|directory| directory.activate_retention(pool.frames))?
         {
             return Err(pool.fatal(Cause::Invariant));
         }

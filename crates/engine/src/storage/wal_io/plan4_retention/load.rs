@@ -49,7 +49,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             .wal()
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Load, RetentionCause::Wal(e)))?;
-        history::validate_live(storage, &mut self.control, prefix)?;
+        history::validate_live(storage, &self.control, self.history.exclusive()?, prefix)?;
         let allocator = self
             .inner
             .pool
@@ -57,7 +57,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             .map_err(|e| frame(RetentionPhase::Load, e))?
             .identity;
         let allocation = allocation_page::decode_allocation_page(
-            history::arena_page(self.control.replay, 0),
+            history::arena_page(self.history.exclusive()?, 0),
             allocator,
             storage.profile().spec().namespace,
         )
@@ -111,14 +111,15 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             .wal()
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Load, RetentionCause::Wal(e)))?;
-        history::validate_live(storage, &mut self.control, prefix)?;
+        history::validate_live(storage, &self.control, self.history.exclusive()?, prefix)?;
         let request = expected.request;
         let page_no = usize::try_from(request.identity.page.page_no)
             .map_err(|_| unchanged(RetentionPhase::Load, RetentionCause::Membership))?;
         if !(1..64).contains(&page_no) {
             return Err(unchanged(RetentionPhase::Load, RetentionCause::Membership));
         }
-        let canonical = history::arena_page(self.control.replay, page_no);
+        let replay = self.history.exclusive()?;
+        let canonical = history::arena_page(replay, page_no);
         crate::storage::page::decode_page(canonical, request.identity, request.kind)
             .map_err(|_| unchanged(RetentionPhase::Load, RetentionCause::Membership))?;
         let pages: &mut [[u8; PAGE_BYTES]; 7] = self
@@ -134,7 +135,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             .pool
             .prepare_retention_load_at(index, allocator)
             .map_err(|e| frame(RetentionPhase::Load, e))?;
-        if allocator != history::arena_page(self.control.replay, 0) {
+        if allocator != history::arena_page(replay, 0) {
             return Err(fatal(
                 storage,
                 RetentionPhase::Load,
@@ -208,7 +209,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
     ) -> Result<RetentionResidencyStep> {
         self.prepare_required(expected, cursor, &[expected.request])
     }
-    fn prepare_required(
+    pub(super) fn prepare_required(
         &mut self,
         expected: &Plan4Target,
         cursor: &mut Plan4ResidencyCursor,
@@ -311,6 +312,48 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             leaf.request,
         ];
         for target in [&anchor, &leaf] {
+            let step = self.prepare_required(target, cursor, &required)?;
+            if matches!(step, RetentionResidencyStep::FlushRequired { .. }) {
+                return Ok(Some(step));
+            }
+        }
+        Ok(None)
+    }
+
+    /// Prepare CREATE's existing set together. Separate empty-transaction and
+    /// Catalog scans may otherwise replace pages prepared by the previous scan.
+    pub(crate) fn prepare_catalog_create_targets(
+        &mut self,
+        owner: &Owner<'c, 's>,
+        status: &Plan4Target,
+        undo: &Plan4Target,
+        job: JobSlotRef,
+        cursor: &mut Plan4ResidencyCursor,
+    ) -> Result<Option<RetentionResidencyStep>> {
+        self.health()?;
+        self.inner
+            .pool
+            .check_retention_reader(owner)
+            .map_err(|e| frame(RetentionPhase::Load, e))?;
+        let root = self.target(Plan4Page::Root)?;
+        let jobs = self.target(Plan4Page::Jobs {
+            index: (job.page().page_no - 2) as u8,
+        })?;
+        let anchor = self.target(Plan4Page::CatalogAnchor)?;
+        let leaf = self.target(Plan4Page::CatalogLeaf)?;
+        let required = [
+            self.inner
+                .pool
+                .target_request(0)
+                .map_err(|e| frame(RetentionPhase::Load, e))?,
+            root.request,
+            jobs.request,
+            anchor.request,
+            leaf.request,
+            status.request,
+            undo.request,
+        ];
+        for target in [&root, &jobs, &anchor, &leaf, status, undo] {
             let step = self.prepare_required(target, cursor, &required)?;
             if matches!(step, RetentionResidencyStep::FlushRequired { .. }) {
                 return Ok(Some(step));

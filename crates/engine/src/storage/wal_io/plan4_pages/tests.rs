@@ -875,7 +875,7 @@ fn assert_source<W: WriterNamespace>(label: &str) {
         assert!(c.owner + nested <= 65_536);
     }
     assert!(c.peak <= 65_536 && c.whole <= 262_144);
-    assert_eq!(c.old_common_delta, 0);
+    assert_eq!(c.old_common_growth, 0);
     assert_eq!(
         (c.caller_operation, c.caller_flush, c.temporary_files),
         (114_688, 4_194_304, 2)

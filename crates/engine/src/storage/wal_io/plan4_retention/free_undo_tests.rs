@@ -372,10 +372,11 @@ fn free_undo_scope_budget_literals_and_source_census() {
             arena,
             boxed::<65_536>(),
             vec![[0xa7; PAGE_BYTES]; 3],
+            vec![[0; 352]; 64],
         )
     };
     for kind in ["status", "undo", "cancel"] {
-        let (mut cursor, mut arena, mut bank, mut after) = fresh();
+        let (mut cursor, mut arena, mut bank, mut after, mut claims) = fresh();
         cursor
             .apply(
                 profile,
@@ -387,6 +388,7 @@ fn free_undo_scope_budget_literals_and_source_census() {
                 &mut arena[..],
                 &mut bank[..],
                 after.as_mut_slice().try_into().unwrap(),
+                claims.as_mut_slice().try_into().unwrap(),
             )
             .unwrap();
         assert!(cursor.reserved());
@@ -401,6 +403,7 @@ fn free_undo_scope_budget_literals_and_source_census() {
                 &mut arena[..],
                 &mut bank[..],
                 after.as_mut_slice().try_into().unwrap(),
+                claims.as_mut_slice().try_into().unwrap(),
             )
             .unwrap();
         assert!(!cursor.reserved());
@@ -425,7 +428,7 @@ fn free_undo_scope_budget_literals_and_source_census() {
         FrameFault::UndoGeneration,
     ] {
         let raw = oracle.bad_frame(fault);
-        let (mut cursor, mut arena, mut bank, mut after) = fresh();
+        let (mut cursor, mut arena, mut bank, mut after, mut claims) = fresh();
         // INIT faults start from the same independent valid reserve; reserve
         // faults remain at genesis. Never derive identity or role from a mutant.
         let init = raw.len() == 38_208;
@@ -441,6 +444,7 @@ fn free_undo_scope_budget_literals_and_source_census() {
                     &mut arena[..],
                     &mut bank[..],
                     after.as_mut_slice().try_into().unwrap(),
+                    claims.as_mut_slice().try_into().unwrap(),
                 )
                 .unwrap();
         }
@@ -458,7 +462,8 @@ fn free_undo_scope_budget_literals_and_source_census() {
                     &raw,
                     &mut arena[..],
                     &mut bank[..],
-                    after.as_mut_slice().try_into().unwrap()
+                    after.as_mut_slice().try_into().unwrap(),
+                    claims.as_mut_slice().try_into().unwrap(),
                 )
                 .is_err()
         );

@@ -184,6 +184,9 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
 
     fn write_base_copy(&mut self, slot: u8) -> Result<()> {
         let p = Plan4RecoveryPhase::Rebase;
+        if self.profile().base_bytes() != BASE_BYTES {
+            return Err(error(p, Plan4RecoveryCause::LengthMismatch));
+        }
         let path = name(BASE_NAMES[slot as usize]);
         let stamp = selection::metadata(&self.writer, &mut self.observation, path)?;
         if stamp.is_some_and(|s| s.length > BASE_BYTES as u64) {

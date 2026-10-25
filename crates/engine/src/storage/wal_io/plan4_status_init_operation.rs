@@ -272,3 +272,26 @@ pub(crate) fn retention_init_source_bytes() -> usize {
         + 208 // Free Undo codec cell exceeds the Status cell by this amount.
         + 512
 }
+
+/// Pure replay-only call chain. `context` finishes the original reservation
+/// analysis before the local InitExpected/ScopedExpected run header, allocator,
+/// descriptor and payload validation. No producer Plan/Prepared owner is live.
+pub(crate) fn retention_materialize_source_bytes() -> usize {
+    operation::retention::retention_materialize_source_bytes()
+        .max(temporary_bytes())
+        + 2 * size_of::<RetentionAllocationExpected<'_>>()
+        + 2 * size_of::<InitExpected<'_>>()
+        + 2 * size_of::<Result<InitExpected<'_>>>()
+        + 2 * size_of::<ScopedExpected<'_, '_>>()
+        + 2 * size_of::<RetentionReservation>()
+        + 2 * size_of::<RetentionAllocationState>()
+        + 2 * size_of::<Result<RetentionAllocationState>>()
+        + 2 * size_of::<WalFrameHeader>()
+        + 2 * size_of::<allocation_page::AllocationPage<'_>>()
+        + 4 * size_of::<RetentionPageKind>()
+        + 16 * size_of::<&[u8]>()
+        + 16 * size_of::<u64>()
+        + 4 * size_of::<Result<()>>()
+        + 208 // actual Free Undo cell above the existing Status codec bound
+        + 512
+}

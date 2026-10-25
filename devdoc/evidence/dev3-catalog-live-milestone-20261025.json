@@ -1,0 +1,845 @@
+{
+  "id": "D3-CATALOG-LIVE-MILESTONE-20261025",
+  "status": "REVIEWED_IMPLEMENTATION_MILESTONE_PARTIAL_ACCEPTANCE",
+  "stop_before": "first Row INSERT",
+  "whole_DEV3_S5_complete": false,
+  "staged_source_manifest": {
+    "baseline": "integration-r32",
+    "head_before": "435c9e068a83e10d50717de538241eb2b9bb5fd2",
+    "paths": [
+      {
+        "path": "crates/engine/src/storage/dirty_flush.rs",
+        "sha256": "284d5fbe11f60bf9bec8b9499de0537b6ad28407f703e66b593b83f658321403",
+        "git_blob": "fa4dc3f73020e94173720b472efcb02551a96c91"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/commit/tests.rs",
+        "sha256": "363513d64f5f7af19c9fa7e9cd4b605e9780ab69a008710c8990e66401478831",
+        "git_blob": "2133e83154d278d699609244a10d04ebf26f7957"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/commit.rs",
+        "sha256": "a366c1e50ba50bea7448f90a8f244eda839656bd842eb37fcb4d469697cd782d",
+        "git_blob": "55a5a93389e0ed223c59c33bbdf7ee61f0ee973b"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/plan4_residency.rs",
+        "sha256": "9c9698a31824126d76209a0c814a0ea343de548536f2a020a7504754597779c6",
+        "git_blob": "e690193829bae933d38086a7f7a88c8e21294c70"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/reader_load.rs",
+        "sha256": "e2045871db1d21874a209ffcb0f475f7b963d9843230828c7c704a55cc3eb824",
+        "git_blob": "3cb669a39da037cb4213ef013a51782c757f439f"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/recovered_plan4.rs",
+        "sha256": "18a303f1bdbaf25f36ec0be4aacf1231638ffaa82e649dde856db27f06d0d86a",
+        "git_blob": "f76e1795ba814a85f221ef870b41e2873f1635a7"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/registration.rs",
+        "sha256": "4811fa8ba1a9badf33e8b9687f83bb392ad68873d4d88bde093924adb1301c62",
+        "git_blob": "b4d8782f1c221cece1bba818c179e8d1728258f7"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/registration_tests.rs",
+        "sha256": "46d1807748005f4ff883565eb083c6508f52d25f802bbc6fac4bf30bb2626b50",
+        "git_blob": "39b15327da9428ca8caee4688cf0742e0f68573c"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/residency.rs",
+        "sha256": "0b0d0d816625f09c18902dd8f00469d4b50293035b9cad7b7ce16d579d9a5c63",
+        "git_blob": "873b35fdda206d28913c4449918bb406752e0a32"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/retention_residency.rs",
+        "sha256": "ab658ea39f55a64af5705b79ef38e4d761b4ee296b93e0df6cf19ecefaff1f3e",
+        "git_blob": "0219562ae4f0aef7e4a4ece66d395663ad339310"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/retirement.rs",
+        "sha256": "f75e550a1d2e40dd0bb3bca3bca0d23c78e0c6944d53bc5e38878ef49fb31204",
+        "git_blob": "18ff1aa5d51105483663a430fd7a845e9b710d41"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/status_pressure.rs",
+        "sha256": "8d01cbf4d925b4b971626ca80b51f79d6902c980839fb100b52fa7ba1c9c4d4b",
+        "git_blob": "85a7ad498074ef7e6bae38f8e1c9f105595f6891"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/status_residency.rs",
+        "sha256": "cd08c608f323013846cb7df61f5080d696f63affe85eb3920ac14da0d1b1446b",
+        "git_blob": "f76341cfd6bbc893a005916248c0104c280ce19d"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame/target_set_tests.rs",
+        "sha256": "0dc33fc0b67e94b8ed9ac79bca62f869b64763f23b51307cd8f0a40cc5681ca2",
+        "git_blob": "0f3e4a68898fc1b25cdd14e6f0e21dab8fc6f8f2"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_frame.rs",
+        "sha256": "d048dda0b533051c997ad590b2f7a947189ada5101489fdbb2386d6304a96650",
+        "git_blob": "a2357baa457a1d203bbb46d63eab042fc0f4c8bd"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_init/tx_pair.rs",
+        "sha256": "51d4fbe9a572b9739ddc24ae0e95d5f1b01fcdf0123c0aeb06c9b6f6ff4b73d7",
+        "git_blob": "beb3e3630c946d6be367f8b1ea08621acd7df375"
+      },
+      {
+        "path": "crates/engine/src/storage/dirty_init.rs",
+        "sha256": "1864066b5065e9f1832d10f3e88f693348a428295304deda4e62a7b73ddfcdd5",
+        "git_blob": "87b2b4d2a6947f854a57976a88a602d01d481b45"
+      },
+      {
+        "path": "crates/engine/src/storage/obligation.rs",
+        "sha256": "e4f856c28c9edecec2508858fc412ba3ce265f395a7774f7faea4d73a65b2b0a",
+        "git_blob": "df1eec7763cf322943d4c131f01e3d06a11aaccb"
+      },
+      {
+        "path": "crates/engine/src/storage/plan4_recovery_base/catalog/graph/ledger.rs",
+        "sha256": "ca38ad7f7881bc09c3e383dbd29b903242678801c04b5218cbbfdebb482b045b",
+        "git_blob": "921f84d36e06e4dce0cd37429a5649149874ee48"
+      },
+      {
+        "path": "crates/engine/src/storage/plan4_recovery_base/catalog/graph/relations.rs",
+        "sha256": "0db27b563c036a4fab67f455a26a67355cd991a17988b2a7dfa345dadcfbf89f",
+        "git_blob": "e1d6f758d598b2acfff8710c13f119ee5aa817c7"
+      },
+      {
+        "path": "crates/engine/src/storage/plan4_recovery_base/catalog/graph.rs",
+        "sha256": "32d227f47ed6d8d27578bd968232af5810df1304810a99a5925ac1f3d5dc6ecf",
+        "git_blob": "c45ecf54215f18ce59d5df6c0b6d20ad2d2f9c90"
+      },
+      {
+        "path": "crates/engine/src/storage/plan4_recovery_base/catalog/inventory/current.rs",
+        "sha256": "36e5f77246d4be11efa05f907ca7d46f07f2ee8d4715893c67a8b3769e538c5d",
+        "git_blob": "9174050aa510a450875d4901605e8d213cca5723"
+      },
+      {
+        "path": "crates/engine/src/storage/plan4_recovery_base/catalog/inventory.rs",
+        "sha256": "42d33d49407d5dc04f8f57c4f34e612a492a84d6ea9a1047a9a70f828ee5d780",
+        "git_blob": "dc442c374dc3f8406db6d753dc54ee1e44913b00"
+      },
+      {
+        "path": "crates/engine/src/storage/plan4_recovery_base/catalog.rs",
+        "sha256": "c62e92b85b8a2a48dedabdd6f101a5cad2bd03a09ec04f9c71933aaf604d4c53",
+        "git_blob": "dc477b3ef7a74f381b6e491a5f741fe134d72419"
+      },
+      {
+        "path": "crates/engine/src/storage/plan4_recovery_base.rs",
+        "sha256": "0a411861019b1eab9df23a12a6c4c5d2191098d1da9bcc0a952d2489221f0131",
+        "git_blob": "4e6381b030fd48556944877d161071c823a229b9"
+      },
+      {
+        "path": "crates/engine/src/storage/plan4_recovery_control.rs",
+        "sha256": "6145d1ef8b6c2b5d31c249f35ecac42e5c9a584c6fd5dca1087fad5042c598a8",
+        "git_blob": "4dfa2aaaec9af3e767ca2bb661981fd18dd0f421"
+      },
+      {
+        "path": "crates/engine/src/storage/retention_genesis.rs",
+        "sha256": "af9f1aad8a2e0158129c0658d6ade0a3ac882b72226a26d7c5e4029e2e99bb38",
+        "git_blob": "1331a5e29ab244557f2af669bc673e3741cf12da"
+      },
+      {
+        "path": "crates/engine/src/storage/semantic_catalog/frame.rs",
+        "sha256": "ea27ffaf755d5111166b94a6873916cd896b6e82c0f42abe7a52aba24a5b8140",
+        "git_blob": "9a8ae07ee195bf457ca7cf15de156e1cfcd43df6"
+      },
+      {
+        "path": "crates/engine/src/storage/semantic_catalog/resources.rs",
+        "sha256": "c7a3301420addb50286bed4de462a6e047439a6ca716cfb3e4d3f7ba437e9b80",
+        "git_blob": "3904bffa26262dd71552818f194d328c974f0cc0"
+      },
+      {
+        "path": "crates/engine/src/storage/semantic_catalog/transition.rs",
+        "sha256": "0f7f7bdb08bb31992b8db003ce58f5d987d0e2c98f50f0935d9bd5669cc202e7",
+        "git_blob": "80a628d76ce2bd17338e896c2a9692003697ce86"
+      },
+      {
+        "path": "crates/engine/src/storage/semantic_catalog.rs",
+        "sha256": "8348c9d9b5c75d5d43d5fede9e6c1a5da869f93de4f1c32c3aae9bef88adf615",
+        "git_blob": "87e76d5dca971cf5efa7cef4bf9fb81367ed526e"
+      },
+      {
+        "path": "crates/engine/src/storage/tree_page.rs",
+        "sha256": "52b21ddb7c0b65bb04f96194cc931aaa42915036f33d7d40a3ef0a878997514f",
+        "git_blob": "5f18ea4a1e729ecae3c04fc2dedfc4bc6a40c28e"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/allocation_operation.rs",
+        "sha256": "02a1557821d95817559b224f3c0e3f72bc115f6a922d2fdec35b422ab847c4ab",
+        "git_blob": "2f699bbf60fd365a6f3979b352b3a7d05ea76ce4"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/bootstrap.rs",
+        "sha256": "b25e918bb1ecdf22fe117ea02b2ba740aa7cf97083b610ced3157126f2ddead7",
+        "git_blob": "f22f4bde457e16cd81ee33b31edf0baad775134f"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/commit_bridge.rs",
+        "sha256": "2f0a062504d108ca651a757cda01d8ff39c5baf8530c23608233aa6b5dc834b6",
+        "git_blob": "e4f96c9ea7ca2209f5459db37702c2acf0c5a77b"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/doublewrite_install.rs",
+        "sha256": "c4234310951777687056665dbf9e70f4ee6c825d3348b2bfa4ed170aebd04cd0",
+        "git_blob": "4f60055b7fb77b9c5271fea23b56c7f020882a6e"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/flush_io.rs",
+        "sha256": "b54eb6a5d0637629e079d2d8786c12a856e37d37f239d3ccf69f2a4f28e1c1f0",
+        "git_blob": "7ad58bc425019ecbc3f6d960d21b3ba0ba50ccb7"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/mixed_system_load.rs",
+        "sha256": "2d7fbacc27b1072c7552f7d29626c6dd22ad00d2422ab1ee01a4daeb9fa867de",
+        "git_blob": "5182b33887ff34456ee0559cf9a65accafc697b0"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/mixed_system_owner.rs",
+        "sha256": "3063ac137d4fca24a6bc265100e2de4ba8f2724faf3c4cdb1fd03275e8a34d28",
+        "git_blob": "ee96402a0033ae15337ca8d226212046fbc88954"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/mutable_storage.rs",
+        "sha256": "88eea3c495848c4f52e1bfdb6e08108ed828f63a2a8264b7c43f694efd4816ba",
+        "git_blob": "12729308825f899396cc115dcd5637f24a28d4b8"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_allocation_operation.rs",
+        "sha256": "571a135a6d72c98390fbfe85284bb70bc90ec3629cc6c91b6d8cb145c1a82934",
+        "git_blob": "c2f2660ea41512cefadb76ab14d7f734b1e88d3c"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_genesis.rs",
+        "sha256": "ef0c1c427d4f765053ecf77336117d82128dc13c3f079e8efba4925b8cb897cc",
+        "git_blob": "885bd64253d097221742fba3146d391d06d84498"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_pages/native_tests.rs",
+        "sha256": "b1e1d3d09affffb8d288fccf1062595cf7f7c0b9f24f2e47ed9c9435c6634df9",
+        "git_blob": "d7ce7e6cbc33e8753c659f8ee4d29ec6f4bfaef0"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_pages/resources.rs",
+        "sha256": "1944ee7905f0b65123555f68c40c6a52509235728226cd4af30f8199e0bfcc91",
+        "git_blob": "deead297bb3911d9414bc1cdd97e652d32f54a7e"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_pages/tests.rs",
+        "sha256": "950a95577d6f519e634081cdac9c82bba05856b3c499fda2182fc26de9b18717",
+        "git_blob": "4c295bb59e543ca3aec20feb4322d547594d8f69"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_pages.rs",
+        "sha256": "9318cb3be866f2a3d577126b8b9a8e58234913a471a0e7999943590d2054e5b1",
+        "git_blob": "1ef4715c2b24fbbc455af77635794f1e426f6686"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_recovery/analysis.rs",
+        "sha256": "716fd7f712d44a7a3714b94fa084b551146a692b98fb0f62c271c9837d8c4a03",
+        "git_blob": "7ecbc2cefa231cb5c170b1b43e2708946b41cfbf"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_recovery/epoch.rs",
+        "sha256": "f47fca0fe0f0b71e96c803f0f75dccb425ca579640b86d08aef36affd7ba00f3",
+        "git_blob": "f82060c2fa975de927fdf71e1aeb9ad80d66fd47"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_recovery/physical.rs",
+        "sha256": "99899654b40493becd0ef3536925b8c351b172c4481a404d9af44f133e80fee8",
+        "git_blob": "ab90f29750b7cc2ebae78806fe1b4cc4045969c8"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_recovery/resources.rs",
+        "sha256": "281b69fb87626f45171c82486acf84702e2f92bdc13014122e34e03a4e9e02b0",
+        "git_blob": "0aca6573ecde71aa491037861f4d4437e6ad256f"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_recovery/select.rs",
+        "sha256": "1d81f00f5c380b729be36b47c657eaeb49c1ab830a78de907e1e53f6e5f716e1",
+        "git_blob": "c57c438e045b4f5cfe2535d9f761d6df9cbf5436"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_create.rs",
+        "sha256": "c07ea64299dbcd3c09d3d7c8c0a31f0fb845f2e1ab69fec53bbd3c670ee873b7",
+        "git_blob": "544f6e76bbdaf38b1a728b45742ff6ba18313c51"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/commit_failures.rs",
+        "sha256": "fd51140c930105643492a11878b9f10064f64ae89a8020ed2e9c8e68e71fd352",
+        "git_blob": "dc3d3bc42607f73639bdcfa20b9b9c089c376c77"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/lifecycle.rs",
+        "sha256": "2c7d47dbbf38ef639210267f5b545b5808628d447259f0f7bf213307d11e6e91",
+        "git_blob": "e9f6a0dc9ad0bd152d0384ad21cdb307691f4515"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+        "sha256": "4c70037049aba0c76dd4c224671ff9cb557d058ddaed52ca954dd03a269d1c7b",
+        "git_blob": "04ccda47be35f17c69e7b9b1985c4d54e005f470"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs",
+        "sha256": "624115ef4b9f137053bf9fc559e0575d0f94d7d5539edeeb7cb525065a3bff98",
+        "git_blob": "d9b605c413c0014fe98fdd12d1409a8a77eb72fc"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_recovery.rs",
+        "sha256": "1d7c317c514710951eaeb44d3492270f7b6a0ea1f093d3fe5890cc2c6950ef2e",
+        "git_blob": "798f000342e9d3810cab49ca24d97667d4a77908"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/catalog_commit.rs",
+        "sha256": "1fe9ef1e68d58d81dac7f0f7a225bdadf2e7ae145af6e53241ddc87fa05bc5fb",
+        "git_blob": "80ed0233f5979539823b789ddb1ed28878fde214"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs",
+        "sha256": "31cd34e60654ca91bbdf8ba461ba818063d2b5611784024e6285f5d0dd26c6ab",
+        "git_blob": "920a86b4af5dd8a30fb1cfcd9757a8710cbab2e5"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/catalog_retire.rs",
+        "sha256": "adb7d74b7ebc57a25bd2a24955661b4d7475346e6a07906228d53f1a0b93de80",
+        "git_blob": "3ee02ced3d354c7938d322dee231cdf040ade3f7"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/catalog_source_tests.rs",
+        "sha256": "b557d2ec6772f72815784c3a55b0608c66a4293520cbdf111adf4f8918bc2847",
+        "git_blob": "aae6dbb78d7fd81c778f89eb0cbda8a4e9f47ac2"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/control/catalog.rs",
+        "sha256": "fb57cf3a0039fd14399b758f8c3c9d0511b779680b4a2b53d5cbd000bbd1a667",
+        "git_blob": "91ea895d5774640c1228c234c183fbcb5e9e448d"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/control.rs",
+        "sha256": "99825381d01ee97812925ba32b85dfae14a799094d524e65d33765266532896f",
+        "git_blob": "13984db6092fd32c9d92623af3eb9b8597628925"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/create_pair.rs",
+        "sha256": "267bb18d87e90a5c9f98b9de5ed827a61f6eeed88316d76fd85066dcdb5d9dc3",
+        "git_blob": "26613e3dd0ec7ca62053068da9ad42188d1aeaa7"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/flush.rs",
+        "sha256": "3732e2acddee4020f30383be5ccb438a0d67e5d0e8bb6d006de46c16452bc3f7",
+        "git_blob": "03d645227c4082c5b86cd2c3c1338895371acf0d"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/free_undo_tests.rs",
+        "sha256": "d3c7e8a8d501625a1590e3653772f2758afbc07681f705dac1b943a9ec08d35c",
+        "git_blob": "43d3712c928d3a16034b531d32d5ba4e9fffa0bf"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/history/catalog.rs",
+        "sha256": "a4263a5ec58f70967f646040f6f9dcb26be6a1fd16bda8c36e7e16586c36d1f6",
+        "git_blob": "bfb2ad009c90af7df27e9c8ac127094047925b14"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/history/inventory.rs",
+        "sha256": "dd917e21a4dff01cdce6f44a3f6a2e025424a93cbe147a0593e22cc9d403d2a9",
+        "git_blob": "a1966442e5f24cdd24ed26d15b2533763e9a5324"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/history/runtime.rs",
+        "sha256": "c5a5a8c56e0053945c0fee7f032d96d3dcfc471fdf13df235dd43c684576d819",
+        "git_blob": "516676840768daf28c0da44bb977b83faea21ab6"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/history.rs",
+        "sha256": "3b4172b54e94edf81122a35cf2fe77ca0e85e96b7772d20c8402335b5d926f3d",
+        "git_blob": "84b9f3d7b423423f465a67215e69aa975b9b6667"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs",
+        "sha256": "27ef6dba9abe7834d3b1ae074bd0d47ad5eaf953c0ab3a7da552f8774f174076",
+        "git_blob": "263c173ac0d51aef67a703165aba5d74888ed3f5"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/live.rs",
+        "sha256": "0a5ad800afb667d7830db2c9343820c0048cc0b250f19bae3083b8c1d32e8b36",
+        "git_blob": "16f46e40d07b6b8c56f3a1d93073588809a800e5"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/load.rs",
+        "sha256": "d510fb45b840d4b6e000a89289d563d3d949240d8834eb0f33edfe66ceac7139",
+        "git_blob": "0e28020ea0b227d43c0d2dc10787389e1e183e14"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/lookup_load.rs",
+        "sha256": "54ff88821ad62ab0211acbdf0307014174c1f122a400160f82f7972e92ea407b",
+        "git_blob": "9261058dc1b75e1cee13d2adc856244fff8862e8"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/population.rs",
+        "sha256": "d7a1bc1c383292c5e8cedaf3b03e67fd56e78921e93b64bcabaccd340650d349",
+        "git_blob": "0d0f41d35403598fc15e71994fe925f65314d4df"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/read/catalog.rs",
+        "sha256": "8950f795e884a272f5f00af197cc6b7fb5a3a235f860fa56a958b19669f5d810",
+        "git_blob": "50fc32bcd9e9cceced574d3a9088a0df9be47d67"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/read/lookup.rs",
+        "sha256": "05f02292eaba2eafb05410a88afb35f4a91eb371df4a19d9f6ef11da24e1d5f9",
+        "git_blob": "d8ccc2b437f9b892bef50153b4c5d990aeaf49e1"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/read.rs",
+        "sha256": "51ecc207d09b35b4cc7d1fcf96bf5fe210fd40fbd51635becf184b2eecc1d69e",
+        "git_blob": "b7eebbb709c99351159c707eb11e77691ef84dae"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/recovery/catalog.rs",
+        "sha256": "b502a8d4148353ae015f44655a9704324fe375a95f97ecf675ceb55d73b0d649",
+        "git_blob": "f06466b8fe218f4033a7768d6c4645370c47f44a"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
+        "sha256": "e6ec964d4e6cdffbfb2c52ce2140bce347e21e57b067a85aba4479e238b96c9a",
+        "git_blob": "3759e5b41939244b9ed56126d50004f2b905a1de"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/recovery_observation_tests.rs",
+        "sha256": "851fc8a92d70ebd2ba357f8c59676e05cd168c33b8d7774e5548066be637611b",
+        "git_blob": "dee49e31be9e720c26e87974a8132644f6b771cd"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/resources.rs",
+        "sha256": "f9c5772d2adfd0fb05d66d26107803a8da7d0bf70826665b3e05383a49da16c1",
+        "git_blob": "d3dcfef3b83830bd5d99a11a9dc28d937d064def"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/tests.rs",
+        "sha256": "a46518ffe53df2b37a90951186c4be0fd7daf4007e1d340ade9d6307c19d0150",
+        "git_blob": "a99ba48013caedac2b52438f2dbb680a08f27f76"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/visibility/authority.rs",
+        "sha256": "871d20283347f897276e03dc0cd2b1d26b1fd37f9aae5705cb9e6edd30f8933a",
+        "git_blob": "69fe357716a51e6763fd913eb08f3043c3325e55"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/visibility/binding.rs",
+        "sha256": "562253aba1a6453e59149304fe1a9106b3cb45efae0a2dbab86402aabeecae6f",
+        "git_blob": "584c542e50cd898d1a7289bebe75caeed5f829fd"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/visibility/catalog_retirement.rs",
+        "sha256": "343461bd90818c2a7a943e25a5f51b325925afe3067e165dd0066fb45878bc28",
+        "git_blob": "fb9ba5b997e3a1d3c0ff43b24a70070ea10c0d2f"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/visibility/pins.rs",
+        "sha256": "0ad699745bae9811d4a2eb652e2a7f6297a47c225ecf0d4f608f8a61cefd651e",
+        "git_blob": "b3591750fe852283c56cb62efadbdd94626b5b17"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/visibility/retirement.rs",
+        "sha256": "ce550ae2266054e5b5e024b9a6744125a8f434fdb962d237fa6d0a05def5bacf",
+        "git_blob": "34084fd1ac802dbde74836b1779ac86c3ca19366"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/visibility/snapshot.rs",
+        "sha256": "c6281b42f5a844190c296e25182e2459c450cea6f67007842cf6711b2118410e",
+        "git_blob": "59596a2cb22f06ae5e2d0681cc2dc2fbbcd74662"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/visibility/source.rs",
+        "sha256": "f366d0ad986b0f6cdd7f89a904d74da677cf847e36a2a7d24bc71987e6a3d298",
+        "git_blob": "2590305039e5855fe645aed36c599886c5f22ff5"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention/visibility.rs",
+        "sha256": "30f4b565f372b748285ee2bb5b77c14f6dd373998312f1648cefad1f40df5fd5",
+        "git_blob": "ad91479b8b99103e4bb1d2fec6dbe94c79d1b4f7"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_retention.rs",
+        "sha256": "6af61b792360ad8bf74389cb061ba0ae47d338d1cf5ecf6f8e158e584e2cf554",
+        "git_blob": "10c3ed328d6261676287e85bda7cecad1cfc4cbf"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/plan4_status_init_operation.rs",
+        "sha256": "ce024657e817c03005c5da6c8a6eee432163363ccec7c3382a603d50dbfd9078",
+        "git_blob": "5a89ff4b723b703f29a669f1e5fc99e3727a7154"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/status_home_flush.rs",
+        "sha256": "eb24a3b21966fb7095b780a5c1f67a536d10453c2cd80ace41d7f7f903a14c52",
+        "git_blob": "654ae619782e9fc6401ddb6e4777b73c19c9fd61"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/status_init.rs",
+        "sha256": "37eec9d258766c8521f09aa7b27460c960167cfb900561f07261428100c76ec9",
+        "git_blob": "1dd10c02bce29cd8fd272740cd94259dd37a3c7c"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io/status_init_protocol_tests.rs",
+        "sha256": "8d2aa62c75f28b6eb6c8c9dcb63b974230867306cdee1e3adf9292666a1a8566",
+        "git_blob": "58ad03fec2fdac5d9a5094f4d4f41a91dbf9db3c"
+      },
+      {
+        "path": "crates/engine/src/storage/wal_io.rs",
+        "sha256": "5ca43ff20756deadf6707f3d7524888d02b4793cb6508b29dc18d229e956cd5e",
+        "git_blob": "25095c6f4b2ddfba372b88e52177c655e5733e2d"
+      },
+      {
+        "path": "crates/engine/src/transaction/concurrency.rs",
+        "sha256": "b42551b82c894c51c1ece2a67edf52d7b1a1e2d53b3fe6aea78645424ca550df",
+        "git_blob": "da584296af8fe195c20bf04da9bdb6c10c43bff1"
+      },
+      {
+        "path": "crates/engine/src/transaction/concurrency_catalog_test_support.rs",
+        "sha256": "6c59cc27d2edd469a3a6c76889aeab9f43503895388711fe2c840a32dd33a865",
+        "git_blob": "c8955298158a019c1d8e34227650fd47e1f0b765"
+      },
+      {
+        "path": "crates/engine/src/transaction/concurrency_commit.rs",
+        "sha256": "11cfe2de93c3d111e6b341f9213a4ecf4da24517a6d3528fd1d76cc6f8451443",
+        "git_blob": "db4e4d72047bea67215404bcc2ebbbb1798f6f53"
+      },
+      {
+        "path": "crates/engine/src/transaction/concurrency_test_support.rs",
+        "sha256": "f73d1520555b1058c1242ada95e17a6ee9041ff9e6e6985501f4b6bb9b8d30f4",
+        "git_blob": "b35d2c52ac25fa29d7829c371ea64cce536a09d4"
+      }
+    ],
+    "note": "No prepared-view or issued-gap draft included; r29 compiled production + independently reviewed MF10 oracle repair. Runtime evidence remains source-specific; remaining peer schedules unexecuted."
+  },
+  "commit_candidate_compile": {
+    "path": "artifacts/dev3/catalog-create-20261025/implementation-commit-r0/build-receipt.json",
+    "sha256": "ad3094ff1a0a45dcae02dd5de3c90ef21448ec7e15730372810a024e14a74e88",
+    "source": "675fde9db1207caf5328d64c99adfc8157c484096dac21485d8d071240b50145",
+    "elf": "953f06b13e83bec29435b9d21b6acf025cf2b55046a1a60454e20196f6606a2f",
+    "kind": "COMPILE_ONLY_NO_PRODUCT_TESTS",
+    "warnings": 8
+  },
+  "native": [
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r29/catalog-native/N01/result.json",
+      "sha256": "52cb8a143c008aa608ccb00424394b9301c4e467537667059066308f4578888d",
+      "status": "FAIL",
+      "source": "149607403b07b477f713cc74b4bcf0227829bf2eb16449f85b2d8fe3319db816",
+      "elf": "d8b49bdd7e605eb98cfe07fc7f12065abfa0cc369536eaff3fa044036b47620c",
+      "error": "ValueError('Base3 source adopted local')",
+      "kind": null,
+      "seconds": 22.908143804997962
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r29/n01-saved-output-reaudit-r1.json",
+      "sha256": "71e89751eee018c0002b225713b97fb9d10041602caa883219a29d1f4341f0e1",
+      "status": "PASS",
+      "source": "149607403b07b477f713cc74b4bcf0227829bf2eb16449f85b2d8fe3319db816",
+      "elf": "d8b49bdd7e605eb98cfe07fc7f12065abfa0cc369536eaff3fa044036b47620c",
+      "error": null,
+      "kind": "SAVED_OUTPUT_AUDIT_NO_NEW_PRODUCT_EXECUTION",
+      "seconds": 0.7949929739988875
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r32/catalog-native/N02/result.json",
+      "sha256": "66b3c515d71a0a262bd75ca82686ad1459215f7c9880ff67b20fdc3103ca10c9",
+      "status": "PASS",
+      "source": "986a29c0963b643a1b0cafdfa8790f8219b5c1291320253fc511561a3c7259c1",
+      "elf": "aa3534785b87282a0cb88e99d396381c3c4bddd5118bf75fc29d303c97f68207",
+      "error": null,
+      "kind": null,
+      "seconds": 15.325800648002769
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r32/catalog-native/N03/result.json",
+      "sha256": "45ef4f40f91922d3c9862e6f9881f830b1920e427f8afe4c59fb6d81dc2c419b",
+      "status": "PASS",
+      "source": "986a29c0963b643a1b0cafdfa8790f8219b5c1291320253fc511561a3c7259c1",
+      "elf": "aa3534785b87282a0cb88e99d396381c3c4bddd5118bf75fc29d303c97f68207",
+      "error": null,
+      "kind": null,
+      "seconds": 11.855706577000092
+    }
+  ],
+  "memory": [
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r28/catalog-memory/MC01/result.json",
+      "sha256": "0664ae04bd1bba475cb49e43dce00e508a38c8a8ddb7f1e5bdff68db4edd4caf",
+      "revision": "integration-r28",
+      "case": "MC01",
+      "status": "PASS",
+      "source": "83fea015bba026a60e15de84b5e539eb36aeb6248eeb554fef43da14f8031d36",
+      "elf": "3ec93640ce0962d4f26a52280878989fde2962d0adee337c3c99c14d3415d2e8",
+      "seconds": 3.7191382099990733,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r28/catalog-memory/MC02/result.json",
+      "sha256": "f5c6c0865961da33bc0977bb51fee9ff328d71cb43412edd060bc8b42beba29f",
+      "revision": "integration-r28",
+      "case": "MC02",
+      "status": "PASS",
+      "source": "83fea015bba026a60e15de84b5e539eb36aeb6248eeb554fef43da14f8031d36",
+      "elf": "3ec93640ce0962d4f26a52280878989fde2962d0adee337c3c99c14d3415d2e8",
+      "seconds": 3.421169903995178,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r29/catalog-memory/MC04/result.json",
+      "sha256": "6fe7bf19d8472afc1e17b56d79e9731096ccbb2295b4d29af695521c6e411acc",
+      "revision": "integration-r29",
+      "case": "MC04",
+      "status": "PASS",
+      "source": "149607403b07b477f713cc74b4bcf0227829bf2eb16449f85b2d8fe3319db816",
+      "elf": "d8b49bdd7e605eb98cfe07fc7f12065abfa0cc369536eaff3fa044036b47620c",
+      "seconds": 5.741608536001877,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r29/catalog-memory/MF02/result.json",
+      "sha256": "8abfe32e5017c6b755de4b2adbd3523c5975cd6761bbd54a95e4abff2b9374c4",
+      "revision": "integration-r29",
+      "case": "MF02",
+      "status": "PASS",
+      "source": "149607403b07b477f713cc74b4bcf0227829bf2eb16449f85b2d8fe3319db816",
+      "elf": "d8b49bdd7e605eb98cfe07fc7f12065abfa0cc369536eaff3fa044036b47620c",
+      "seconds": 1.4568726740035345,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r29/catalog-memory/MF03/result.json",
+      "sha256": "3bf0d8f4bce0f4a8f1d084dc2bc709771d9e0470ea32e1b2b5fb5203f7aa9558",
+      "revision": "integration-r29",
+      "case": "MF03",
+      "status": "PASS",
+      "source": "149607403b07b477f713cc74b4bcf0227829bf2eb16449f85b2d8fe3319db816",
+      "elf": "d8b49bdd7e605eb98cfe07fc7f12065abfa0cc369536eaff3fa044036b47620c",
+      "seconds": 1.4544031930054189,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r29/catalog-memory/MF04/result.json",
+      "sha256": "8d7bda414e6bccf705f6413437d3b1aa98619d04be096b66918fefce936bf6c5",
+      "revision": "integration-r29",
+      "case": "MF04",
+      "status": "PASS",
+      "source": "149607403b07b477f713cc74b4bcf0227829bf2eb16449f85b2d8fe3319db816",
+      "elf": "d8b49bdd7e605eb98cfe07fc7f12065abfa0cc369536eaff3fa044036b47620c",
+      "seconds": 1.4618189440006972,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r29/catalog-memory/MF05/result.json",
+      "sha256": "dd532dd3d8b2a2670b7ca8bfb8c28597cd77427bd011f7be20543b8de7af406b",
+      "revision": "integration-r29",
+      "case": "MF05",
+      "status": "PASS",
+      "source": "149607403b07b477f713cc74b4bcf0227829bf2eb16449f85b2d8fe3319db816",
+      "elf": "d8b49bdd7e605eb98cfe07fc7f12065abfa0cc369536eaff3fa044036b47620c",
+      "seconds": 1.453252840001369,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r29/catalog-memory/MF06/result.json",
+      "sha256": "c3b0b453dcf8b72c2c0c9226ee021d650e696b879f84bcdccf3f12d88006de88",
+      "revision": "integration-r29",
+      "case": "MF06",
+      "status": "PASS",
+      "source": "149607403b07b477f713cc74b4bcf0227829bf2eb16449f85b2d8fe3319db816",
+      "elf": "d8b49bdd7e605eb98cfe07fc7f12065abfa0cc369536eaff3fa044036b47620c",
+      "seconds": 1.4574994770009653,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r29/catalog-memory/MF07/result.json",
+      "sha256": "03125cfda3683a89ca562b1a8a8031f55740047fb9f515af53a6b8a7e5b90ef9",
+      "revision": "integration-r29",
+      "case": "MF07",
+      "status": "PASS",
+      "source": "149607403b07b477f713cc74b4bcf0227829bf2eb16449f85b2d8fe3319db816",
+      "elf": "d8b49bdd7e605eb98cfe07fc7f12065abfa0cc369536eaff3fa044036b47620c",
+      "seconds": 1.4579644260011264,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r29/catalog-memory/MF08/result.json",
+      "sha256": "91480252541b94f5b2570c3a57535106d2f43bfad578daf4c50f71ee3396e0e4",
+      "revision": "integration-r29",
+      "case": "MF08",
+      "status": "PASS",
+      "source": "149607403b07b477f713cc74b4bcf0227829bf2eb16449f85b2d8fe3319db816",
+      "elf": "d8b49bdd7e605eb98cfe07fc7f12065abfa0cc369536eaff3fa044036b47620c",
+      "seconds": 1.4636403909971705,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r29/catalog-memory/MF09/result.json",
+      "sha256": "31d20ab5aaa5dc28a474a062b64b73c1b898b5535bb84b61e0d0868955bc7cc3",
+      "revision": "integration-r29",
+      "case": "MF09",
+      "status": "PASS",
+      "source": "149607403b07b477f713cc74b4bcf0227829bf2eb16449f85b2d8fe3319db816",
+      "elf": "d8b49bdd7e605eb98cfe07fc7f12065abfa0cc369536eaff3fa044036b47620c",
+      "seconds": 8.027091680996818,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r29/catalog-memory/MF10/result.json",
+      "sha256": "7250212577f34952e97f52e272b01c78dcc35db38e9f153238fd27e9a15da449",
+      "revision": "integration-r29",
+      "case": "MF10",
+      "status": "FAIL",
+      "source": "149607403b07b477f713cc74b4bcf0227829bf2eb16449f85b2d8fe3319db816",
+      "elf": "d8b49bdd7e605eb98cfe07fc7f12065abfa0cc369536eaff3fa044036b47620c",
+      "seconds": 1.4676591459938209,
+      "error": "ValueError('exact case completion')"
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r32/catalog-memory/MF10/result.json",
+      "sha256": "e02a983306a53272ec7c62228c2d95e489b44b0dcf09f6cf36997cb43d200571",
+      "revision": "integration-r32",
+      "case": "MF10",
+      "status": "PASS",
+      "source": "986a29c0963b643a1b0cafdfa8790f8219b5c1291320253fc511561a3c7259c1",
+      "elf": "aa3534785b87282a0cb88e99d396381c3c4bddd5118bf75fc29d303c97f68207",
+      "seconds": 8.089620154998556,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r32/catalog-memory/MF11/result.json",
+      "sha256": "01d19d7403b9f3a031d4b060efb389ba762692e3d95b01206e6787ac3fff64cb",
+      "revision": "integration-r32",
+      "case": "MF11",
+      "status": "PASS",
+      "source": "986a29c0963b643a1b0cafdfa8790f8219b5c1291320253fc511561a3c7259c1",
+      "elf": "aa3534785b87282a0cb88e99d396381c3c4bddd5118bf75fc29d303c97f68207",
+      "seconds": 8.144291553995572,
+      "error": null
+    },
+    {
+      "path": "artifacts/dev3/catalog-create-20261025/integration-r32/catalog-memory/MF12/result.json",
+      "sha256": "ab6013bb7bd51ed3709b1fefb4ab2ab327b9cf396f275bed3a136803168bb7fe",
+      "revision": "integration-r32",
+      "case": "MF12",
+      "status": "PASS",
+      "source": "986a29c0963b643a1b0cafdfa8790f8219b5c1291320253fc511561a3c7259c1",
+      "elf": "aa3534785b87282a0cb88e99d396381c3c4bddd5118bf75fc29d303c97f68207",
+      "seconds": 8.003274142996815,
+      "error": null
+    }
+  ],
+  "memory_passed_unique": 14,
+  "memory_not_run": [
+    "MC03",
+    "MT01",
+    "MT02",
+    "MT03",
+    "MT04",
+    "MT05",
+    "MT06",
+    "MT07",
+    "MF14"
+  ],
+  "unreachable_not_pass": [
+    "MF01",
+    "MF13"
+  ],
+  "reviews": {
+    "dev3-catalog-final-source-d1.md": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-catalog-final-source-d1.md",
+      "sha256": "a39766ec11eb05ea631e5ed186a214110fb7f5ff7bf67168f793ba9c0a5fa790"
+    },
+    "dev3-initial-slot-absence-review-r1.md": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-initial-slot-absence-review-r1.md",
+      "sha256": "fd03b8f959976da53317492d8e8ce0d7d6f7a7af8137665b2ec295fc7a7d1bf5"
+    },
+    "dev3-catalog-create-residency-review-r28.md": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-catalog-create-residency-review-r28.md",
+      "sha256": "3a9ebf60716662e242e8ca39a8f72a1a74ce11090d6639ad6a148d8edb689610"
+    },
+    "dev3-catalog-recovery-target-review-r29.md": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-catalog-recovery-target-review-r29.md",
+      "sha256": "b3d578ab6e516326b15a218c541ce72379e7571d53921c1b54c27cc27d274152"
+    },
+    "dev3-r29-native-local-mf10-oracle-review.md": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-r29-native-local-mf10-oracle-review.md",
+      "sha256": "0984eca18ca6aeca5f8ccb5b4b5a02a4a82b6cf5268d9ed5c9dbce0025631946"
+    },
+    "dev3-catalog-actor-correction-reaudit-review-r1.md": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-catalog-actor-correction-reaudit-review-r1.md",
+      "sha256": "8bf34ac9e83d8a13b14204de31f8cb53627a9f65d937e43f0f25266795f08d4e"
+    },
+    "dev3-catalog-memory-controller-review-r1.md": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-catalog-memory-controller-review-r1.md",
+      "sha256": "3677aef7842c6138404c2393f54b7b6e37c4116cc5ef4b39f71b0e98bb63b43d"
+    },
+    "dev3-catalog-commit-memory-d1-root.md": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-catalog-commit-memory-d1-root.md",
+      "sha256": "71f64e49f6b569c503f9dec70f37ed80cf0e64be5bdb3a48d319306fe388c185"
+    }
+  },
+  "checker_tests": {
+    "status": "PASS",
+    "kind": "new checker-only unit tests; no product execution",
+    "command": "python3 -B -m unittest scripts.test_dev3_catalog_native.ControllerRejections.test_native_epoch_two_uses_actor_local_one scripts.test_dev3_catalog_native.ControllerRejections.test_native_actor_rejects_unmapped_cycle_local",
+    "exit_code": 0,
+    "tests": 2,
+    "reported_test_seconds": 0.01,
+    "evidence_origin": "exec tool response, chunk 896371; no separate stdout file was captured",
+    "files": {
+      "scripts/dev3_catalog_native.py": "a4509345dde56ee81dc3eaa4142c7e3cb9a0e1450a323697502144ba22f5d4b5",
+      "scripts/test_dev3_catalog_native.py": "810748356d135611ec954aa2a95394cb9a17446cfcdff88e55754f6f59ffa13f",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/commit_failures.rs": "fd51140c930105643492a11878b9f10064f64ae89a8020ed2e9c8e68e71fd352"
+    }
+  },
+  "source_caps": {
+    "source": 65536,
+    "metadata": 196608,
+    "whole": 262144,
+    "r32_memory_peak": 65234,
+    "r32_native_peak": 65370,
+    "runtime_f05_complete": false
+  },
+  "pending_drafts_not_staged": [
+    "CatalogPreparation and Writer preparation factoring",
+    "MC03 issued-gap test and module registration"
+  ],
+  "historical_failures_preserved": true,
+  "new_native_workers_for_n01_correction": 0,
+  "compiler_target_cleanup": [
+    {
+      "revision": "integration-r28",
+      "receipt": "artifacts/dev3/catalog-create-20261025/integration-r28/target-cleanup.json",
+      "removed_file_bytes": 98846638
+    },
+    {
+      "revision": "integration-r29",
+      "receipt": "artifacts/dev3/catalog-create-20261025/integration-r29/target-cleanup.json",
+      "removed_file_bytes": 98846670
+    },
+    {
+      "revision": "integration-r30",
+      "receipt": "artifacts/dev3/catalog-create-20261025/integration-r30/target-cleanup.json",
+      "removed_file_bytes": 43663630
+    },
+    {
+      "revision": "integration-r31",
+      "receipt": "artifacts/dev3/catalog-create-20261025/integration-r31/target-cleanup.json",
+      "removed_file_bytes": 98876010
+    },
+    {
+      "revision": "integration-r32",
+      "receipt": "artifacts/dev3/catalog-create-20261025/integration-r32/target-cleanup.json",
+      "removed_file_bytes": 98846902
+    },
+    {
+      "revision": "implementation-commit-r0",
+      "receipt": "artifacts/dev3/catalog-create-20261025/implementation-commit-r0/target-cleanup.json",
+      "removed_file_bytes": 98848616
+    }
+  ]
+}

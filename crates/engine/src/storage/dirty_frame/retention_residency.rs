@@ -19,8 +19,8 @@ pub(in crate::storage) fn source_census() -> usize {
         + size_of::<RetentionLoadPermit<'_, '_, '_>>()
         + 6 * size_of::<TargetRequest>()
         + 4 * size_of::<Result<FrameStamp>>()
-        + 2 * size_of::<MutexGuard<'_, PinAccounting>>()
-        + 4 * size_of::<MutexGuard<'_, DirtyRegistry<'_>>>()
+        + 2 * size_of::<MutexGuard<'_, PoolRegistry<'_>>>()
+        + 4 * size_of::<MutexGuard<'_, PoolRegistry<'_>>>()
         + 3 * size_of::<RwLockReadGuard<'_, FrameContent<'_>>>()
         + size_of::<RwLockWriteGuard<'_, FrameContent<'_>>>()
         + 2 * size_of::<crate::storage::page::PageView<'_>>()
@@ -33,22 +33,35 @@ pub(in crate::storage) fn source_census() -> usize {
         + 2048 // Bounded hash/envelope locals, indices, borrowed inputs and bools.
 }
 
+pub(super) fn pair_source_census() -> usize {
+    use std::mem::size_of;
+    source_census()
+        + size_of::<StatusCandidate>()
+        + 2 * size_of::<Result<[StatusCandidate; 2]>>()
+        + size_of::<[StatusCandidate; 2]>()
+        + 2 * size_of::<RwLockWriteGuard<'_, FrameContent<'_>>>()
+        + 3 * size_of::<Result<[u64; 2]>>()
+        + size_of::<[u64; 2]>()
+        + 2 * size_of::<Result<Option<FrameStamp>>>()
+        + 256 // extra borrowed inputs, selected indices and checked-generation locals
+}
+
 impl<'c, 's> SharedPool<'c, 's, '_, '_> {
     pub(in crate::storage) fn activate_plan4_retention(&mut self) -> Result<()> {
         self.plan4_quiescent()?;
-        if !self.directory.activate_retention(self.frames) {
+        if !self.directory_edit(|directory| directory.activate_retention(self.frames))? {
             return Err(self.fatal(Cause::Invariant));
         }
         Ok(())
     }
 
-    pub(in crate::storage) fn retention_payloads(&self) -> bool {
-        self.directory.retention_payloads()
+    pub(in crate::storage) fn retention_payloads(&self) -> Result<bool> {
+        self.directory_read(|directory| directory.retention_payloads())
     }
 
     pub(in crate::storage) fn check_retention_reader(&self, owner: &Owner<'c, 's>) -> Result<()> {
         self.health()?;
-        if !self.retention_payloads() {
+        if !self.retention_payloads()? {
             return Err(unchanged(Cause::Shape));
         }
         if !owner.check_binding(self.core).map_err(DirtyError::from)? {
@@ -59,21 +72,33 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
 
     fn retention_quiescent(&self) -> Result<()> {
         self.health()?;
-        if !self.retention_payloads() {
+        if !self.retention_payloads()? {
             return Err(unchanged(Cause::Shape));
         }
         if !self.handoff_quiescent()? {
             return Err(unchanged(Cause::Busy));
         }
+        if self
+            .directory_read(|directory| directory.closed_pair())?
+            .is_some()
+        {
+            return Err(unchanged(Cause::Busy));
+        }
         Ok(())
     }
 
-    fn retention_request(&self, request: TargetRequest) -> bool {
-        self.directory.accepts_retention_payload(request)
-            && self.resolve_registration(0).is_some_and(|allocator| {
-                request.identity.database == allocator.request.identity.database
-                    && request.identity.page.file == allocator.request.identity.page.file
-            })
+    pub(super) fn retention_request(&self, request: TargetRequest) -> Result<bool> {
+        let state = self.entry_registry()?;
+        Ok({
+            state.directory.accepts_retention_payload(request)
+                && state
+                    .directory
+                    .resolve(self.frames, 0)
+                    .is_some_and(|allocator| {
+                        request.identity.database == allocator.request.identity.database
+                            && request.identity.page.file == allocator.request.identity.page.file
+                    })
+        })
     }
 
     pub(in crate::storage) fn retention_allocator_snapshot(
@@ -98,13 +123,50 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         start: usize,
         required: &[TargetRequest],
     ) -> Result<StatusCandidate> {
+        // CREATE protects seven existing pages; recovered CLR additionally
+        // protects both initialized pair pages before retiring them.
+        self.retention_candidate_at(request, start, required, 9, None)
+    }
+
+    /// Copy-only selection for the actual two-page CREATE reservation. No
+    /// directory generation is consumed until both selected clean slots close.
+    pub(in crate::storage) fn retention_pair_candidates(
+        &mut self,
+        pair: &[TargetRequest; 2],
+        start: usize,
+        required: &[TargetRequest; 7],
+    ) -> Result<[StatusCandidate; 2]> {
+        self.health()?;
+        if pair[0].same_address(&pair[1]) {
+            return Err(unchanged(Cause::DuplicateTarget));
+        }
+        let first = self.retention_candidate_at(pair[0], start, required, 7, None)?;
+        if first.kind == StatusCandidateKind::Resident {
+            return Err(unchanged(Cause::AlreadyInitialized));
+        }
+        let second =
+            self.retention_candidate_at(pair[1], first.next, required, 7, Some(first.index))?;
+        if second.kind == StatusCandidateKind::Resident {
+            return Err(unchanged(Cause::AlreadyInitialized));
+        }
+        Ok([first, second])
+    }
+
+    fn retention_candidate_at(
+        &mut self,
+        request: TargetRequest,
+        start: usize,
+        required: &[TargetRequest],
+        required_limit: usize,
+        excluded: Option<usize>,
+    ) -> Result<StatusCandidate> {
         self.retention_quiescent()?;
-        if start == 0 || required.len() > 4 || !self.retention_request(request) {
+        if start == 0 || required.len() > required_limit || !self.retention_request(request)? {
             return Err(unchanged(Cause::Shape));
         }
         let allocator = self.registration(0)?.request;
         for (index, target) in required.iter().enumerate() {
-            if *target != allocator && !self.retention_request(*target) {
+            if *target != allocator && !self.retention_request(*target)? {
                 return Err(unchanged(Cause::Shape));
             }
             if required[..index]
@@ -138,7 +200,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
                 }
                 Err(TryLockError::Poisoned(_)) => return Err(self.fatal(Cause::Poisoned)),
             };
-            let registered = self.resolve_registration(index).map(|entry| entry.request);
+            let registered = self.resolve_registration(index)?.map(|entry| entry.request);
             let frame = if let Some(actual) = registered {
                 let frame = self.pair(index, &content)?.frame;
                 if actual.same_address(&request) {
@@ -159,7 +221,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
                 }
                 Some(frame)
             } else {
-                let dpt = self.entry_dpt()?;
+                let dpt = self.entry_registry()?;
                 if !content.fresh()
                     || dpt.entries[index].is_some()
                     || dpt.requirements[index].is_some()
@@ -168,9 +230,14 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
                 }
                 None
             };
-            let keep = registered.is_some_and(|actual| required.contains(&actual));
+            let keep = excluded == Some(index)
+                || registered.is_some_and(|actual| required.contains(&actual));
             outside |= !keep;
-            if keep || self.directory.next_retention_generation(index).is_none() {
+            if keep
+                || self
+                    .directory_read(|directory| directory.next_retention_generation(index))?
+                    .is_none()
+            {
                 continue;
             }
             let candidate = StatusCandidate {
@@ -226,8 +293,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             return Err(unchanged(Cause::Shape));
         }
         let generation = self
-            .directory
-            .next_retention_generation(index)
+            .directory_read(|directory| directory.next_retention_generation(index))?
             .ok_or_else(|| unchanged(Cause::CounterExhausted))?;
         {
             let allocator = self.frames[0]
@@ -241,16 +307,85 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             .try_write()
             .map_err(|e| self.load_lock_error(e))?;
         let before = self.status_payload(index, &content)?;
-        if before.is_none() && self.directory.closed_index() == Some(index) {
+        if before.is_none()
+            && self.directory_read(|directory| directory.closed_index())? == Some(index)
+        {
             return Err(unchanged(Cause::MissingTarget));
         }
         self.health()?;
-        self.directory.prepare_retention_slot(index, generation);
+        self.directory_edit(|directory| directory.prepare_retention_slot(index, generation))?;
+        self.init_unpublished.store(true, Ordering::Release);
         content.page_lsn = PageLsn(0);
         content.modification_counter = 0;
         content.rec_lsn = None;
         content.dirty = false;
         Ok(before)
+    }
+
+    /// Close two clean slots together, protecting all seven already resident
+    /// Forward targets. This reserves RAM generations only; a raw slot plan is
+    /// never an allocator reservation or permission to initialize either page.
+    pub(super) fn prepare_retention_pair_slots(
+        &mut self,
+        indices: [usize; 2],
+        required: &[TargetRequest; 7],
+    ) -> Result<[u64; 2]> {
+        self.retention_quiescent()?;
+        if self
+            .directory_read(|directory| directory.closed_pair())?
+            .is_some()
+            || indices[0] == indices[1]
+            || indices
+                .iter()
+                .any(|index| *index == 0 || *index >= self.frames.len())
+        {
+            return Err(unchanged(Cause::Shape));
+        }
+        for (at, request) in required.iter().enumerate() {
+            if required[..at]
+                .iter()
+                .any(|prior| prior.same_address(request))
+            {
+                return Err(unchanged(Cause::DuplicateTarget));
+            }
+            let (index, _) = self
+                .directory_read(|directory| directory.lookup(self.frames, *request))?
+                .ok_or_else(|| unchanged(Cause::MissingTarget))?;
+            if indices.contains(&index) {
+                return Err(unchanged(Cause::DuplicateTarget));
+            }
+        }
+        let generations = [
+            self.directory_read(|directory| directory.next_retention_generation(indices[0]))?
+                .ok_or_else(|| unchanged(Cause::CounterExhausted))?,
+            self.directory_read(|directory| directory.next_retention_generation(indices[1]))?
+                .ok_or_else(|| unchanged(Cause::CounterExhausted))?,
+        ];
+        let mut first = self.frames[indices[0]]
+            .content
+            .try_write()
+            .map_err(|error| self.load_lock_error(error))?;
+        let mut second = self.frames[indices[1]]
+            .content
+            .try_write()
+            .map_err(|error| self.load_lock_error(error))?;
+        for (index, content) in [(indices[0], &*first), (indices[1], &*second)] {
+            if self.status_payload(index, content)?.is_none()
+                && self.directory_read(|directory| directory.closed_index())? == Some(index)
+            {
+                return Err(unchanged(Cause::MissingTarget));
+            }
+        }
+        self.health()?;
+        self.directory_edit(|directory| directory.prepare_retention_pair(indices, generations))?;
+        self.init_unpublished.store(false, Ordering::Release);
+        for content in [&mut *first, &mut *second] {
+            content.page_lsn = PageLsn(0);
+            content.modification_counter = 0;
+            content.rec_lsn = None;
+            content.dirty = false;
+        }
+        Ok(generations)
     }
 
     pub(in crate::storage) fn prepare_retention_load_at(
@@ -263,8 +398,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             return Err(unchanged(Cause::Shape));
         }
         let generation = self
-            .directory
-            .next_retention_generation(index)
+            .directory_read(|directory| directory.next_retention_generation(index))?
             .ok_or_else(|| unchanged(Cause::CounterExhausted))?;
         let allocator = {
             let content = self.frames[0]
@@ -282,7 +416,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
                 .map_err(|e| self.load_lock_error(e))?;
             self.status_payload(index, &content)?
         };
-        let requirement = self.entry_dpt()?.requirements[0].map(WalRequirement::location);
+        let requirement = self.entry_registry()?.requirements[0].map(WalRequirement::location);
         self.health()?;
         Ok(StatusLoadSnapshot {
             core: self.core,
@@ -306,7 +440,9 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             || snapshot.index >= self.frames.len()
             || !std::ptr::eq(self.core, snapshot.core)
             || !std::ptr::eq(self.binding, snapshot.binding)
-            || self.directory.next_retention_generation(snapshot.index) != Some(snapshot.generation)
+            || self
+                .directory_read(|directory| directory.next_retention_generation(snapshot.index))?
+                != Some(snapshot.generation)
         {
             return Err(self.fatal(Cause::Invariant));
         }
@@ -317,7 +453,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
                 .map_err(|e| self.load_lock_error(e))?;
             if self.pair(0, &content)? != snapshot.allocator
                 || content.bytes != permit.allocator()
-                || self.entry_dpt()?.requirements[0].map(WalRequirement::location)
+                || self.entry_registry()?.requirements[0].map(WalRequirement::location)
                     != snapshot.requirement
             {
                 return Err(self.fatal(Cause::Invariant));
@@ -331,7 +467,9 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             return Err(self.fatal(Cause::Invariant));
         }
         let request = permit.request();
-        if !self.retention_request(request) || self.directory.address_present(request) {
+        if !self.retention_request(request)?
+            || self.directory_read(|directory| directory.address_present(request))?
+        {
             return Err(self.fatal(Cause::Invariant));
         }
         // The permit owns the independent canonical-image proof. Its checked
@@ -350,18 +488,22 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             rec_lsn: None,
         };
         self.health()?;
+        let mut registry = self.entry_registry()?;
         content.bytes.copy_from_slice(permit.bytes());
         content.page_lsn = stamp.page_lsn;
         content.modification_counter = stamp.modification_counter;
         content.rec_lsn = None;
         content.dirty = false;
-        self.directory.replace_retention(
+        registry.directory.replace_retention(
             snapshot.index,
             Registration {
                 request,
                 generation: stamp.generation,
             },
         );
+        if registry.directory.closed_index() == Some(snapshot.index) {
+            self.init_unpublished.store(false, Ordering::Release);
+        }
         Ok(stamp)
     }
 }

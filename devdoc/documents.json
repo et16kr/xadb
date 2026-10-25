@@ -2457,6 +2457,16 @@
       "path": "evidence/dev3-catalog-input-controller-20261025.json",
       "role": "evidence",
       "title": "DEV3 Catalog 독립 입력·실행기 source별 기록"
+    },
+    "dev3-catalog-live-milestone-20261025.md": {
+      "path": "evidence/dev3-catalog-live-milestone-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 Catalog CREATE 구현 중간 저장"
+    },
+    "dev3-catalog-live-milestone-20261025.json": {
+      "path": "evidence/dev3-catalog-live-milestone-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 Catalog CREATE 구현·실제 검증 source별 기록"
     }
   }
 }

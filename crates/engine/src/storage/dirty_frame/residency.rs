@@ -30,12 +30,12 @@ impl ReloadSnapshot<'_, '_> {
 impl<'c, 's> SharedPool<'c, 's, '_, '_> {
     pub(super) fn reload_quiescent(&self) -> Result<()> {
         {
-            let pins = self.entry_pins()?;
+            let pins = self.entry_registry()?;
             if pins.total != 0 || pins.init_claim.is_some() {
                 return Err(unchanged(Cause::Busy));
             }
         }
-        let dpt = self.entry_dpt()?;
+        let dpt = self.entry_registry()?;
         if dpt.claim.is_some()
             || dpt.entries.iter().any(Option::is_some)
             || dpt.requirements.iter().any(Option::is_some)
@@ -57,7 +57,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
                 })?;
             self.pair(0, &content)?;
         }
-        if !self.directory.enable_allocator_reload(self.frames) {
+        if !self.directory_edit(|directory| directory.enable_allocator_reload(self.frames))? {
             return Err(unchanged(Cause::Shape));
         }
         Ok(())
@@ -83,12 +83,13 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         self.health()?;
         self.reload_quiescent()?;
         let index = self
-            .directory
-            .allocator_index()
+            .directory_read(|directory| directory.allocator_index())?
             .ok_or_else(|| unchanged(Cause::MissingTarget))?;
         let registration = self.registration(index)?;
-        if (renew && !self.directory.can_renew_allocator(index, registration))
-            || (!renew && self.directory.eviction_epoch == u64::MAX)
+        if (renew
+            && !self
+                .directory_read(|directory| directory.can_renew_allocator(index, registration))?)
+            || (!renew && self.directory_read(|directory| directory.eviction_epoch)? == u64::MAX)
         {
             return Err(unchanged(Cause::CounterExhausted));
         }
@@ -114,7 +115,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             registration,
             stamp: before.frame,
             index,
-            epoch: self.directory.eviction_epoch,
+            epoch: self.directory_read(|directory| directory.eviction_epoch)?,
         })
     }
     /// All fallible checks precede renewal/copy. An unwind fences the original
@@ -128,10 +129,10 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         if !std::ptr::eq(self.core, snapshot.core)
             || !std::ptr::eq(self.binding, snapshot.binding)
             || self.registration(snapshot.index)? != snapshot.registration
-            || self.directory.eviction_epoch != snapshot.epoch
-            || !self
-                .directory
-                .can_renew_allocator(snapshot.index, snapshot.registration)
+            || self.directory_read(|directory| directory.eviction_epoch)? != snapshot.epoch
+            || !self.directory_read(|directory| {
+                directory.can_renew_allocator(snapshot.index, snapshot.registration)
+            })?
         {
             return Err(self.fatal(Cause::Invariant));
         }
@@ -149,9 +150,9 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             return Err(self.fatal(Cause::Invariant));
         }
         self.health()?;
-        let Some(generation) = self
-            .directory
-            .renew_allocator(snapshot.index, snapshot.registration)
+        let Some(generation) = self.directory_edit(|directory| {
+            directory.renew_allocator(snapshot.index, snapshot.registration)
+        })?
         else {
             return Err(self.fatal(Cause::Invariant));
         };
@@ -175,7 +176,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         self.reload_quiescent()?;
         if !std::ptr::eq(self.core, snapshot.core)
             || !std::ptr::eq(self.binding, snapshot.binding)
-            || self.directory.eviction_epoch != snapshot.epoch
+            || self.directory_read(|directory| directory.eviction_epoch)? != snapshot.epoch
             || self.registration(snapshot.index)? != snapshot.registration
         {
             return Err(self.fatal(Cause::Invariant));
@@ -193,8 +194,9 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             }
         }
         snapshot.epoch = self
-            .directory
-            .evict_allocator(snapshot.index, snapshot.registration)
+            .directory_edit(|directory| {
+                directory.evict_allocator(snapshot.index, snapshot.registration)
+            })?
             .ok_or_else(|| self.fatal(Cause::Invariant))?;
         Ok(snapshot)
     }
@@ -208,8 +210,10 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         self.reload_quiescent()?;
         if !std::ptr::eq(self.core, snapshot.core)
             || !std::ptr::eq(self.binding, snapshot.binding)
-            || self.directory.eviction_epoch != snapshot.epoch
-            || self.directory.allocator_index().is_some()
+            || self.directory_read(|directory| directory.eviction_epoch)? != snapshot.epoch
+            || self
+                .directory_read(|directory| directory.allocator_index())?
+                .is_some()
         {
             return Err(self.fatal(Cause::Invariant));
         }
@@ -230,8 +234,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             }
         }
         let registration = self
-            .directory
-            .claim_allocator_load(index, snapshot.request())
+            .directory_edit(|directory| directory.claim_allocator_load(index, snapshot.request()))?
             .ok_or_else(|| unchanged(Cause::CounterExhausted))?;
         Ok(AllocatorLoadClaim {
             core: self.core,
@@ -256,9 +259,9 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
             || !std::ptr::eq(self.binding, claim.binding)
             || claim.epoch != snapshot.epoch
             || claim.registration.request != snapshot.request()
-            || !self
-                .directory
-                .matches_load(claim.index, claim.registration, claim.epoch)
+            || !self.directory_read(|directory| {
+                directory.matches_load(claim.index, claim.registration, claim.epoch)
+            })?
         {
             return Err(self.fatal(Cause::Invariant));
         }
@@ -276,12 +279,13 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         self.health()?;
         // All fallible checks precede bytes and publication. The exclusive pool
         // borrow keeps the newly installed frame inaccessible until return.
+        let mut registry = self.entry_registry()?;
         content.bytes.copy_from_slice(permit.bytes());
         content.page_lsn = snapshot.stamp.page_lsn;
         content.modification_counter = u64::from(content.page_lsn.0 != 0);
         content.dirty = false;
         content.rec_lsn = None;
-        self.directory.publish_load(claim.index);
+        registry.directory.publish_load(claim.index);
         Ok(FrameStamp {
             generation: claim.registration.generation,
             modification_counter: content.modification_counter,
@@ -303,15 +307,19 @@ pub(in crate::storage) mod test_support {
         pool: &mut SharedPool<'_, '_, '_, '_>,
         generation: u64,
     ) {
-        pool.directory.test_seed_reload_generation(generation);
+        pool.registry
+            .lock()
+            .unwrap()
+            .directory
+            .test_seed_reload_generation(generation);
     }
     pub(in crate::storage) fn resident_slot(pool: &SharedPool<'_, '_, '_, '_>) -> Option<usize> {
-        pool.directory.allocator_index()
+        pool.registry.lock().unwrap().directory.allocator_index()
     }
     pub(in crate::storage) fn seed_eviction_epoch(
         pool: &mut SharedPool<'_, '_, '_, '_>,
         epoch: u64,
     ) {
-        pool.directory.eviction_epoch = epoch;
+        pool.registry.lock().unwrap().directory.eviction_epoch = epoch;
     }
 }

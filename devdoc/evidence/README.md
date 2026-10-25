@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV3 Catalog CREATE 구현 중간 저장](dev3-catalog-live-milestone-20261025.md) · [source별 기록](dev3-catalog-live-milestone-20261025.json) — native3경로·메모리14개 확인, 원 FAIL 보존·동시성 등9개 NOT_RUN.
+
 - [DEV3 Catalog 독립 입력과 native 실행기 검증](dev3-catalog-input-controller-20261025.md) · [source별 기록](dev3-catalog-input-controller-20261025.json) — 입력 생성·별도 검산 완료, 실행기 거부14 PASS; 실제 Catalog 통합 진행 중.
 
 2026-10-25 [DEV2 PF04 CPU 성능 요청 범위 제어](dev2-pf04-frequency-control-20261025.md): 도구12·driver4개 선택 검증 뒤 첫 host 연결이 즉시 readback 불일치로 실패했다. 최종234필드는 원 값과 같고 프로세스는 종료됐다. 나머지2개 미실행·격리 lease 보존·사용자 조건에 따른 중단이며 원 PF04 FAIL·DEV2 미완료를 유지한다.

@@ -1,6 +1,6 @@
 //! Private common continuation. No semantic Commit receipt is constructed here.
 use super::*;
-use crate::storage::wal_io::{DurableCommit, InstalledCommit, StagedCommit};
+use crate::storage::wal_io::{DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit};
 use std::time::Duration;
 
 const FENCE_RECHECK: Duration = Duration::from_millis(10);
@@ -66,6 +66,7 @@ pub(crate) struct CommitStage<'o, 'c, 'f> {
     core: &'c PageConcurrency<'f>,
     guard: Option<VersionEditGuard<'o, 'c, 'f>>,
     key: InstallationKey,
+    stage_call_started: bool,
 }
 
 impl<'o, 'c, 'f> VersionEditGuard<'o, 'c, 'f> {
@@ -109,6 +110,7 @@ impl<'o, 'c, 'f> VersionEditGuard<'o, 'c, 'f> {
                 core: self.core,
                 guard: Some(self),
                 key,
+                stage_call_started: false,
             }),
             Err(error) => Err(PrepareCommitError {
                 error,
@@ -127,13 +129,38 @@ impl<'o, 'c, 'f> CommitStage<'o, 'c, 'f> {
         self.release(false)
     }
 
-    /// No actual staged receipt constructor exists in B1. The future terminal
-    /// producer must also bind its stage-call unwind guard before staging bytes.
+    /// Mark before entering the original WAL stage call. A panic, lost result
+    /// or unrecognized failure then preserves Abandoned rather than cancelling.
+    pub(crate) fn stage_call_started(&mut self) -> Result<InstallationKey> {
+        if self.stage_call_started || self.guard.is_none() {
+            return Err(self.core.fatal(Cause::Invariant));
+        }
+        let state = self.core.entry_state()?;
+        if state.installation != Installation::Intent(self.key) {
+            return Err(self.core.fatal(Cause::Invariant));
+        }
+        self.stage_call_started = true;
+        Ok(self.key)
+    }
+
+    pub(crate) fn restore_unstaged(&mut self, receipt: UnstagedCommit<'c, 'f>) -> Result<()> {
+        if !self.stage_call_started || !receipt.matches(self.core, self.key) {
+            return Err(self.core.fatal(Cause::Invariant));
+        }
+        let state = self.core.entry_state()?;
+        if state.installation != Installation::Intent(self.key) {
+            return Err(self.core.fatal(Cause::Invariant));
+        }
+        self.stage_call_started = false;
+        Ok(())
+    }
+
+    /// Requires the actual marked call and matching sealed semantic receipt.
     pub(crate) fn suspend(
         mut self,
         staged: StagedCommit<'c, 'f>,
     ) -> Result<PendingInstallation<'o, 'c, 'f>> {
-        if !staged.matches(self.core, self.key) {
+        if !self.stage_call_started || !staged.matches(self.core, self.key) {
             return Err(self.core.fatal(Cause::Invariant));
         }
         {
@@ -176,7 +203,7 @@ impl<'o, 'c, 'f> CommitStage<'o, 'c, 'f> {
         let Some(mut guard) = self.guard.take() else {
             return Ok(());
         };
-        if abandon || std::thread::panicking() {
+        if abandon || self.stage_call_started || std::thread::panicking() {
             self.core.fence.fence();
         }
         self.core.fence_unwind();
@@ -243,6 +270,8 @@ impl<'o, 'c, 'f> PendingInstallation<'o, 'c, 'f> {
             state.slots[self.key.slot].mode = Mode::CommitDraining;
             state.installation = Installation::Draining(self.key, self.staged.lsn());
         }
+        #[cfg(test)]
+        super::catalog_test_support::hit(self.core, super::catalog_test_support::Point::Draining);
         Ok(DrainingInstallation {
             pending: Some(self),
         })

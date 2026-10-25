@@ -4,8 +4,8 @@
 
 use super::*;
 use crate::{
-    storage::wal_io::{DurableCommit, InstalledCommit, StagedCommit},
-    transaction::concurrency::{CommitInstalling, CommitStage, PendingInstallation},
+    storage::wal_io::{DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit},
+    transaction::concurrency::{CommitInstalling, CommitStage, InstallationKey, PendingInstallation},
 };
 use foundation::codec::content_digest;
 
@@ -105,6 +105,14 @@ impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> WriteTargets<'a, 'b, 'c, 's, 'p, 'd
 }
 
 impl<'a, 'b, 'c, 's, 'p, 'd, const N: usize> CommitStageTargets<'a, 'b, 'c, 's, 'p, 'd, N> {
+    pub(in crate::storage) fn stage_call_started(&mut self) -> Result<InstallationKey> {
+        self.stage.as_mut().expect("owned Commit intent").stage_call_started().map_err(DirtyError::from)
+    }
+
+    pub(in crate::storage) fn restore_unstaged(&mut self, receipt: UnstagedCommit<'c, 's>) -> Result<()> {
+        self.stage.as_mut().expect("owned Commit intent").restore_unstaged(receipt).map_err(DirtyError::from)
+    }
+
     pub(in crate::storage) fn cancel_unstaged(mut self) -> Result<()> {
         if let Some(targets) = &mut self.targets {
             release_guards(targets);

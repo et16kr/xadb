@@ -1,6 +1,7 @@
 //! Typed physical catalog reads under the original whole-set pin. This does not
 //! select transaction visibility or authorize catalog mutation/load/replay.
 use super::*;
+use crate::transaction::concurrency::PageConcurrency;
 use crate::{
     api::Namespace,
     storage::{
@@ -20,6 +21,7 @@ pub(crate) struct RetentionCatalogGuard<'a, 'b, 'c, 's, 'p, 'd, 'm, 'w, W: Write
     read: ReadTargets<'a, 'b, 'c, 's, 'p, 'd, 3>,
     storage: &'s MutableStorageOwner<'m, 'w, W>,
     leaf: PageIdentity,
+    core: &'c PageConcurrency<'s>,
 }
 
 fn leaf_view(
@@ -80,7 +82,55 @@ fn lookup<'a>(
     .map(Some)
 }
 
-impl<W: WriterNamespace> RetentionCatalogGuard<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+impl<'c, 's, W: WriterNamespace> RetentionCatalogGuard<'_, '_, 'c, 's, '_, '_, '_, '_, W> {
+    pub(in super::super) fn source_origin(
+        &self,
+    ) -> (
+        &'c PageConcurrency<'s>,
+        &'s std::sync::atomic::AtomicU8,
+        &'s crate::storage::session_fence::SessionFence,
+    ) {
+        (
+            self.core,
+            &self.storage.binding,
+            self.storage.session_fence(),
+        )
+    }
+
+    pub(in super::super) fn value(&self, object: ObjectId) -> Result<Option<&[u8]>> {
+        let bytes = self
+            .read
+            .bytes(2)
+            .map_err(|e| frame(RetentionPhase::Census, e))?;
+        let view = leaf_view(bytes, self.leaf, self.storage.profile().spec().namespace)
+            .map_err(|cause| fatal(self.storage, RetentionPhase::Census, cause))?;
+        let position = view.lower_bound(&object.get().to_be_bytes()).map_err(|e| {
+            fatal(
+                self.storage,
+                RetentionPhase::Census,
+                RetentionCause::Tree(e),
+            )
+        })?;
+        if !position.equal {
+            return Ok(None);
+        }
+        let entry = view.entry(position.index).map_err(|e| {
+            fatal(
+                self.storage,
+                RetentionPhase::Census,
+                RetentionCause::Tree(e),
+            )
+        })?;
+        let EntryPayload::Value(value) = entry.payload else {
+            return Err(fatal(
+                self.storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            ));
+        };
+        Ok(Some(value))
+    }
+
     /// Return the stored physical version, including retired/uncommitted cells.
     /// ObjectId already excludes zero; an absent object is a normal `None`.
     /// Stored corruption fences the original session and preserves its cause.
@@ -103,15 +153,14 @@ impl<W: WriterNamespace> RetentionCatalogGuard<'_, '_, '_, '_, '_, '_, '_, '_, W
     }
 }
 
-impl<'b, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
-    RetentionReader<'b, 's, 'c, 'p, 'd, 'm, 'w, W>
+impl<'b, 'arena, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
+    RetentionReader<'b, 'arena, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
     /// Borrow the resident fixed catalog root through the original pool. Call
     /// `prepare_catalog` first; this never loads, allocates, stages WAL or writes.
     ///
-    /// The current production loader/replay still accepts only the N=0 catalog.
-    /// Nonempty validation here is a supply for a later sealed mutation path,
-    /// not permission to inject arbitrary resident bytes or persist them.
+    /// Semantic lookup captures references under this guard and copies the
+    /// value before releasing these physical source latches.
     pub(crate) fn read_catalog<'a>(
         &'b self,
         owner: &'a mut Owner<'c, 's>,
@@ -232,6 +281,7 @@ impl<'b, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 read,
                 storage: self.storage,
                 leaf: leaf.identity,
+                core: self.pool.bound_core(),
             }),
             Err(error) => merge(
                 Err(error),

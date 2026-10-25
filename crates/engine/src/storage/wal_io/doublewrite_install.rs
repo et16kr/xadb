@@ -28,6 +28,8 @@ pub(crate) use allocation_reservation::{
 
 #[path = "mutable_storage.rs"]
 mod mutable_storage;
+pub(in crate::storage) use mutable_storage::CatalogRetirementRejected;
+pub(in crate::storage) use mutable_storage::{CatalogCommitAttempt, CatalogCommitInstalled};
 #[cfg(test)]
 pub(in crate::storage) use allocation_reservation::operation::SemanticError as Plan4TestSemanticError;
 #[cfg(test)]
@@ -691,13 +693,25 @@ pub(in crate::storage) use mutable_storage::EmptyTransactionInstall;
 pub(crate) use mutable_storage::EmptyTransactionObservation;
 
 pub(in crate::storage) use allocation_reservation::operation::{
+    SemanticError as CatalogAllocationError, validate_catalog_base_allocation,
     plan4_base_allocation_source_bytes, plan4_system_base_allocation_source_bytes,
     validate_plan4_base_allocation, validate_plan4_system_base_allocation,
 };
 
 pub(in crate::storage) use mutable_storage::{
     RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
-    RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
+    RetentionInitInstall, RetentionInstall, RetentionLoadPermit, VerifiedLookupLoad,
 };
 
 pub(in crate::storage) use mutable_storage::RecoveryPoolSeed;
+
+#[allow(unused_imports)] // Same original owner capabilities across the private module chain.
+pub(in crate::storage) use mutable_storage::{
+    AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
+    HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
+    RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
+    StagedRetirement, UndoPin, TxnPin, VerifiedRetirement, VisibilityCause, VisibilityError,
+    VisibilityLoan, VisibilityResult, VISIBILITY_BYTES,
+    TxPairAuthority, TxPairInstallPermit, TxPairStageRejection, TxPairCancelKind,
+    TxPairCancelPermit, TxPairRetirePermit, TxPairControlCommit,
+};

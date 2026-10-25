@@ -26,12 +26,23 @@ use foundation::{
 };
 use std::sync::{TryLockError, atomic::AtomicU8};
 
+#[path = "history/catalog.rs"]
+pub(super) mod catalog;
+#[path = "history/inventory.rs"]
+pub(super) mod inventory;
+#[path = "history/runtime.rs"]
+pub(super) mod runtime;
+
 pub(super) const ARENA_END: usize = 1_048_576;
 pub(super) const JOB_END: usize = 1_114_112;
 pub(super) const BANK_END: usize = 1_179_648;
-const FRAME_END: usize = 1_245_184;
-pub(super) const AFTER_END: usize = 1_294_336;
-const HOME_END: usize = AFTER_END + PAGE_BYTES;
+pub(super) const REPLAY_FRAME_BYTES: usize = 163_840;
+pub(super) const FRAME_END: usize = BANK_END + REPLAY_FRAME_BYTES;
+pub(super) const AFTER_END: usize = FRAME_END + 8 * PAGE_BYTES;
+pub(super) const PROVENANCE_BYTES: usize = 64 * 352;
+pub(super) const WORK_END: usize = AFTER_END + 2 * PAGE_BYTES;
+const HOME_END: usize = WORK_END + PAGE_BYTES;
+const _: () = assert!(HOME_END + 2 * PAGE_BYTES <= RETENTION_REPLAY_BYTES);
 
 #[derive(Clone, Copy, Debug)]
 pub(super) struct HistorySourceCensus {
@@ -55,18 +66,12 @@ pub(super) struct HistorySourceCensus {
 /// FileMetadata or namespace guard survives into that scope. Each hash_prefix
 /// call consumes its hasher before reconstruct or the next hash call starts.
 pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
-    use crate::storage::{
-        obligation::DescriptorSpec,
-        wal_frame::{FrameEnvelope, WalFrameHeader},
-    };
     use foundation::namespace::FileMetadata;
     use std::{mem::size_of, sync::MutexGuard};
     let outer = 3 * size_of::<WalFrameLocation>()
         + 2 * size_of::<WalPrefix>()
         + 3 * size_of::<TargetRequest>()
         + 2 * size_of::<PageIdentity>()
-        + 2 * size_of::<SourceSeal>()
-        + 2 * size_of::<Result<(SourceSeal, bool, bool)>>()
         + 4 * size_of::<RetentionError>()
         + 32 * size_of::<&[u8]>()
         + 32 * size_of::<u64>()
@@ -91,84 +96,26 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
     let initialize =
         (super::super::genesis::owned_source_bytes::<W>() + 2 * size_of::<Result<()>>() + 256)
             .max(recovered.seed);
-    // apply_frame_semantics completes before AppliedFrame and the wider final
-    // observation are constructed. Keep those return carriers in their own
-    // phase below, rather than making them live inside the deep byte codec.
-    let frame_outer = 2 * size_of::<FrameExpectation>()
-        + 2 * size_of::<WalFrameHeader>()
-        + 2 * size_of::<FrameEnvelope<'_>>()
-        + 2 * size_of::<Result<WalFrameHeader>>()
+    // Current dispatch has no decoded FrameEnvelope or standalone header
+    // before the scope observer returns. Its envelope/header lives inside the
+    // catalog/System closure; returned observations belong to frame_return.
+    // Keep copied profile/expectation arguments at all three dispatch layers.
+    let frame_outer = 3 * size_of::<FrameExpectation>()
+        + 3 * size_of::<Profile>()
         + size_of::<recovery::RetentionReplayCursor>()
-        + size_of::<Option<TargetRequest>>()
-        + 2 * size_of::<usize>()
         + 24 * size_of::<&[u8]>()
         + 24 * size_of::<u64>()
-        + 512;
-    let retention = frame_outer
-        + size_of::<RetentionExpected>()
-        + size_of::<RetentionBefore<'_>>()
-        + size_of::<RetentionAfter<'_>>()
-        + size_of::<semantic_retention::RetentionObservation<'_>>()
-        + size_of::<
-            std::result::Result<
-                semantic_retention::RetentionObservation<'_>,
-                RetentionSemanticError,
-            >,
-        >()
-        + semantic_retention::source_bytes();
+        + 4 * size_of::<Result<()>>();
+    let current = catalog::source_bytes();
+    let retention = frame_outer + current.semantic;
     let population = frame_outer + super::population::phase_source_bytes().replay;
-    // Existing RollbackStart's build/materialize/observe chain: descriptor
-    // before/after/decoded/return values, both home views and full observer
-    // return. No live installation carrier is created by these byte observers.
-    let rollback = frame_outer
-        + 6 * size_of::<DescriptorSpec>()
-        + 4 * size_of::<
-            std::result::Result<DescriptorSpec, crate::storage::obligation::ObligationError>,
-        >()
-        + 4 * size_of::<RollbackStartExpected>()
-        + 4 * size_of::<semantic_group::RollbackStartObservation>()
-        + 4 * size_of::<
-            std::result::Result<
-                semantic_group::RollbackStartObservation,
-                semantic_group::SemanticError,
-            >,
-        >()
-        + 4 * size_of::<crate::storage::status_home::StatusHomePage<'_>>()
-        + 8 * size_of::<crate::storage::status_home::StatusHome>()
-        + 4 * size_of::<wal_frame::RedoRecordView<'_>>()
-        + hashing
-        + 2048;
+    // Rollback is now one exact scope2 observer branch, with the same caller
+    // packet. No legacy N=0 Rollback parser participates in current history.
+    let rollback = retention;
     let observation_return = 2 * size_of::<recovery::RetentionFrameObservation>()
         + 2 * size_of::<std::result::Result<recovery::RetentionFrameObservation, RetentionCause>>();
-    // The small semantic packet, image->request decoding and all four wide
-    // observation/Result carriers are retained here. No deep semantic producer
-    // runs in finish_frame_observation or in this packet's move/return phase.
-    let frame_return = frame_outer
-        + 2 * size_of::<recovery::AppliedFrame>()
-        + 2 * size_of::<std::result::Result<recovery::AppliedFrame, RetentionCause>>()
-        + observation_return
-        + size_of::<[Option<TargetRequest>; 3]>()
-        + 2 * size_of::<TargetRequest>()
-        + 2 * size_of::<std::result::Result<TargetRequest, RetentionCause>>()
-        + 2 * size_of::<crate::storage::page::PageView<'_>>()
-        + 2 * size_of::<crate::storage::page::PageHeader>()
-        + hashing;
-    // close_recovery_frame and reconstruct perform this phase after complete
-    // observation. Keep its observation/return carriers and all page/root/
-    // status views; the 64 job cells remain the original borrowed replay loan.
-    let closure = frame_outer
-        + super::read::undo_decode_source_bytes()
-        + observation_return
-        + 4 * size_of::<retention_page::RootSpec>()
-        + 4 * size_of::<retention_page::JobSpec>()
-        + 2 * size_of::<allocation_page::AllocationPage<'_>>()
-        + 2 * size_of::<crate::storage::status_home::StatusHomePage<'_>>()
-        + 4 * size_of::<DescriptorSpec>()
-        + 4 * size_of::<
-            std::result::Result<DescriptorSpec, crate::storage::obligation::ObligationError>,
-        >()
-        + hashing
-        + 4096;
+    let frame_return = frame_outer + current.finishing;
+    let closure = frame_outer + observation_return + current.closure;
     let frame = retention
         .max(population)
         .max(rollback)
@@ -176,13 +123,19 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
         .max(closure);
     let file_scope = size_of::<MutexGuard<'_, W::File>>()
         + hashing.max(recovered.header).max(initialize).max(frame);
-    let returning = 2 * size_of::<RetentionFlushAuthority<'_, '_>>()
+    // SourceSeal is constructed only after reconstruct/hash and both File and
+    // metadata guards have ended. Do not charge nonexistent return slots to
+    // every frame. They still coexist with proof construction in this phase.
+    let returning = 2 * size_of::<SourceSeal>()
+        + 2 * size_of::<Result<(SourceSeal, bool, bool)>>()
+        + 2 * size_of::<RetentionFlushAuthority<'_, '_>>()
         + size_of::<Result<RetentionFlushAuthority<'_, '_>>>()
         + hashing;
     let peak = outer
         + metadata
             .max(file_scope)
             .max(returning)
+            .max(inventory::source_bytes())
             .max(crate::storage::page_io::retention_home_source_bytes::<W>());
     HistorySourceCensus {
         outer,
@@ -363,7 +316,7 @@ pub(super) fn prove_capture<'c, 's, W: WriterNamespace>(
         .map_err(|e| frame(RetentionPhase::Source, e))?
         .identity;
     let request = capture.request();
-    let (working, rest) = replay.split_at_mut(AFTER_END);
+    let (working, rest) = replay.split_at_mut(WORK_END);
     let (home, scratch) = rest.split_at_mut(PAGE_BYTES);
     let home: &mut [u8; PAGE_BYTES] = home.try_into().expect("home loan");
     let scratch: &mut [[u8; PAGE_BYTES]; 2] = scratch[..2 * PAGE_BYTES]
@@ -429,7 +382,8 @@ pub(super) fn prove_capture<'c, 's, W: WriterNamespace>(
 /// forced. A later RAM append is never used to extend the disk read limit.
 pub(super) fn validate_live<W: WriterNamespace>(
     storage: &MutableStorageOwner<'_, '_, W>,
-    control: &mut control::RetentionControl<'_, '_, '_>,
+    control: &control::RetentionControl<'_, '_, '_>,
+    replay: &mut [u8; RETENTION_REPLAY_BYTES],
     prefix: WalPrefix,
 ) -> Result<()> {
     let source = control.source;
@@ -447,18 +401,9 @@ pub(super) fn validate_live<W: WriterNamespace>(
         {
             return Err(invalid(storage));
         }
-        verify_seed_epoch(
-            storage,
-            source,
-            prefix,
-            &mut control.replay[BANK_END..FRAME_END],
-        )?;
-        recovery::seed_replay_slice(
-            storage.profile(),
-            source.base(),
-            &mut control.replay[..AFTER_END],
-        )
-        .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
+        verify_seed_epoch(storage, source, prefix, &mut replay[BANK_END..FRAME_END])?;
+        recovery::seed_replay_slice(storage.profile(), source.base(), &mut replay[..WORK_END])
+            .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
     } else {
         let durable = control.durable.as_ref().ok_or_else(|| invalid(storage))?;
         if durable.observation().frame.lsn != prefix.complete_lsn
@@ -466,23 +411,85 @@ pub(super) fn validate_live<W: WriterNamespace>(
         {
             return Err(invalid(storage));
         }
-        replay_durable(
-            storage,
-            source,
-            durable,
-            &mut control.replay[..AFTER_END],
-            None,
-        )?;
+        replay_durable(storage, source, durable, &mut replay[..WORK_END], None)?;
     }
-    let replay_bank = &control.replay[JOB_END..BANK_END];
+    let replay_bank = &replay[JOB_END..BANK_END];
     // Canonical replay stores identical encoded descriptors and location/actor
     // rows; issued-only gaps deliberately remain a live scalar, not adoption.
     if control.bytes[..36 * SLOT_BYTES] != replay_bank[..36 * SLOT_BYTES]
-        || control.bytes[65_536..131_072] != control.replay[ARENA_END..JOB_END]
+        || control.bytes[65_536..131_072] != replay[ARENA_END..JOB_END]
     {
         return Err(invalid(storage));
     }
+    if storage.profile().format() == 2 {
+        let cache = &control.bytes[131_072..147_456];
+        if prefix.complete_lsn == 0 {
+            if source.base().is_some() || cache.iter().any(|byte| *byte != 0) {
+                return Err(invalid(storage));
+            }
+        } else {
+            let generation = source
+                .base()
+                .map_or(1, |base| base.view().header().generation);
+            // The frame scratch is discardable after exact durable replay;
+            // canonical pages, bank and INIT provenance remain untouched.
+            let (canonical, scratch) = replay.split_at_mut(BANK_END);
+            let output: &mut [u8; PAGE_BYTES] = (&mut scratch[..PAGE_BYTES])
+                .try_into()
+                .expect("XOI scratch");
+            crate::storage::plan4_recovery_base::catalog::inventory::encode_current(
+                storage.profile(),
+                generation,
+                prefix.complete_lsn,
+                &inventory::Rows::replay(canonical),
+                output,
+            )
+            .map_err(|e| fatal(storage, RetentionPhase::Source, RetentionCause::Base(e)))?;
+            if cache != output {
+                return Err(invalid(storage));
+            }
+        }
+    }
     Ok(())
+}
+
+/// Replays only an authentic original installed cut. This path deliberately
+/// does not compare pending live ATT/Job bytes with the older installed bank.
+/// The caller owns the exact load claim and copies its canonical target before
+/// returning the checked replay loan; no grant is issued by these bytes.
+pub(super) fn replay_lookup_cut<W: WriterNamespace>(
+    storage: &MutableStorageOwner<'_, '_, W>,
+    cut: &runtime::LookupSourceCut<'_, '_, '_, '_>,
+    durable: Option<&DurableWal<'_>>,
+    replay: &mut [u8; RETENTION_REPLAY_BYTES],
+) -> Result<()> {
+    cut.check_origin(storage)?;
+    cut.unchanged()?;
+    let source = cut.source();
+    source
+        .validate(storage.profile())
+        .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
+    match (cut.requirement(), durable) {
+        (Some(requirement), Some(durable)) if durable.confirms(&requirement) => {
+            replay_durable(storage, source, durable, &mut replay[..WORK_END], None)?;
+        }
+        (None, None) => {
+            let prefix = cut.seed();
+            if prefix.stream.writer_epoch != source.epoch()
+                || prefix.complete_lsn != source.anchor()
+                || prefix.synced_lsn != source.anchor()
+                || prefix.complete_offset != 4096
+                || prefix.synced_offset != 4096
+            {
+                return Err(invalid(storage));
+            }
+            verify_seed_epoch(storage, source, prefix, &mut replay[BANK_END..FRAME_END])?;
+            recovery::seed_replay_slice(storage.profile(), source.base(), &mut replay[..WORK_END])
+                .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
+        }
+        _ => return Err(invalid(storage)),
+    }
+    cut.unchanged()
 }
 
 /// An empty recovered suffix has no WAL requirement. Its authority is the
@@ -535,7 +542,7 @@ pub(super) fn initialize(profile: Profile, replay: &mut [u8]) -> std::result::Re
             .try_into()
             .map_err(|_| ())?;
         if index <= 6 {
-            retention_genesis::encode(
+            retention_genesis::encode_current(
                 profile.spec().namespace,
                 if index == 1 {
                     RetentionGenesisPage::Root
@@ -563,7 +570,7 @@ pub(super) fn refresh_jobs(profile: Profile, replay: &mut [u8]) -> std::result::
     let (arena, rest) = replay.split_at_mut(ARENA_END);
     let cells = rest[..65_536].as_chunks_mut::<JOB_BYTES>().0;
     for index in 0..5 {
-        let view = retention_page::decode_jobs_page(
+        let view = retention_page::catalog::decode_jobs_page(
             &arena[(index + 2) * PAGE_BYTES..(index + 3) * PAGE_BYTES],
             profile.spec().namespace,
             index as u8,
@@ -590,7 +597,7 @@ fn replay_durable<W: WriterNamespace>(
         || exact.stream.writer_epoch != source.epoch()
         || exact.lsn <= source.anchor()
         || exact.end < 4096
-        || replay.len() < AFTER_END
+        || replay.len() < WORK_END
     {
         return Err(invalid(storage));
     }
@@ -672,7 +679,7 @@ fn reconstruct<W: WriterNamespace>(
             previous_lsn: previous,
         };
         let (prior, scratch) = replay.split_at_mut(BANK_END);
-        let (raw, after) = scratch.split_at_mut(FRAME_BYTES);
+        let (raw, after) = scratch.split_at_mut(REPLAY_FRAME_BYTES);
         if exact.end - offset < 160 {
             return Err(invalid(storage));
         }
@@ -681,7 +688,7 @@ fn reconstruct<W: WriterNamespace>(
         // Both tags share the same fixed header-length validation; the exact
         // observer below still closes the tag and complete semantic grammar.
         let length = u32::from_le_bytes(raw[12..16].try_into().expect("WAL length")) as usize;
-        if !(192..=FRAME_BYTES).contains(&length) || length as u64 > exact.end - offset {
+        if !(192..=REPLAY_FRAME_BYTES).contains(&length) || length as u64 > exact.end - offset {
             return Err(invalid(storage));
         }
         read_exact_at(file, &mut raw[160..length], offset + 160)
@@ -694,16 +701,23 @@ fn reconstruct<W: WriterNamespace>(
             .0
             .try_into()
             .expect("64 cells");
-        let pages: &mut [[u8; PAGE_BYTES]; 3] = after[..3 * PAGE_BYTES]
+        let (after, claims) = after.split_at_mut(8 * PAGE_BYTES);
+        let claims = claims[..PROVENANCE_BYTES]
+            .as_chunks_mut::<352>()
+            .0
+            .try_into()
+            .expect("claims");
+        let pages: &mut [[u8; PAGE_BYTES]; 8] = after[..8 * PAGE_BYTES]
             .as_chunks_mut::<PAGE_BYTES>()
             .0
             .try_into()
             .expect("after pages");
-        let observed =
-            recovery::apply_frame(profile, expected, input, arena, jobs, bank, pages, cursor)
-                .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
+        let observed = recovery::apply_frame(
+            profile, expected, input, arena, jobs, bank, pages, claims, cursor,
+        )
+        .map_err(|e| fatal(storage, RetentionPhase::Source, e))?;
         if let Some((request, home, _)) = target
-            && observed.initialized == Some(request)
+            && observed.initialized.contains(&Some(request))
             && home.iter().all(|b| *b == 0)
         {
             zero_init = true;
@@ -929,6 +943,9 @@ pub(super) fn replay_rollback(
 /// Pure whole-state bijection. Every occupied Status has one Job; every live
 /// Active/Aborting Status has one ATT row; Ready Aborted owns no ATT row.
 pub(super) fn validate_bijection(profile: Profile, replay: &[u8]) -> std::result::Result<(), ()> {
+    if profile.format() == 2 {
+        return catalog::validate_current(profile, replay).map_err(|_| ());
+    }
     let namespace = profile.spec().namespace;
     let (_, root) =
         retention_page::decode_root_page(arena_page(replay, 1), namespace).map_err(|_| ())?;

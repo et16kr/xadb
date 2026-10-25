@@ -18,6 +18,9 @@ use foundation::{
     identity::{Generation, ObjectId},
 };
 
+#[path = "recovery/catalog.rs"]
+mod catalog;
+
 type ObservationResult<T> = std::result::Result<T, RetentionCause>;
 
 /// Both references borrow a runtime-owned selection witness. No wide BaseView
@@ -57,7 +60,7 @@ impl<'s> HistorySource<'s> {
         if let Self::Base { base, epoch } = self {
             let view = base.view();
             let h = view.header();
-            if h.format != crate::storage::plan4_recovery_base::BaseFormat::V2System {
+            if h.format != crate::storage::plan4_recovery_base::BaseFormat::V3Catalog {
                 return Err(RetentionCause::Unsupported);
             }
             let e = epoch.header();
@@ -121,8 +124,9 @@ impl RetentionReplayCursor {
 }
 pub(in crate::storage) struct RetentionFrameObservation {
     pub(in crate::storage) header: WalFrameHeader,
-    pub(in crate::storage) changed: [Option<TargetRequest>; 3],
-    pub(in crate::storage) initialized: Option<TargetRequest>,
+    pub(in crate::storage) changed: [Option<TargetRequest>; 8],
+    pub(in crate::storage) initialized: [Option<TargetRequest>; 2],
+    pub(in crate::storage) retired: [Option<TargetRequest>; 2],
 }
 pub(in crate::storage) fn retention_replay_image(
     replay: &[u8; RETENTION_REPLAY_BYTES],
@@ -148,7 +152,20 @@ pub(in crate::storage) fn retention_replay_cells(
         .expect("fixed cells")
 }
 
-fn allocator_identity(profile: Profile) -> ObservationResult<PageIdentity> {
+/// Historical claims are observations of the same accepted replay backing.
+/// No claim here independently grants INIT or selected-base authority.
+pub(in crate::storage) fn retention_replay_provenance(
+    replay: &[u8; RETENTION_REPLAY_BYTES],
+) -> &[[u8; 352]; 64] {
+    history::catalog::provenance(replay)
+}
+pub(in crate::storage) fn retention_replay_digest(
+    replay: &[u8; RETENTION_REPLAY_BYTES],
+) -> [u8; 32] {
+    history::catalog::state_digest(replay)
+}
+
+pub(super) fn allocator_identity(profile: Profile) -> ObservationResult<PageIdentity> {
     let mut identity = crate::storage::retention_genesis::expected_header(
         profile.spec().namespace,
         crate::storage::retention_genesis::RetentionGenesisPage::Root,
@@ -184,12 +201,10 @@ fn actor_status(
         else {
             continue;
         };
-        if object_generation.get() != 1
-            || !matches!(
-                (object.get(), kind),
-                (2, PageKind::TransactionStatus) | (3, PageKind::Undo)
-            )
-        {
+        if object.get() != 2 || kind != PageKind::TransactionStatus {
+            continue;
+        }
+        if object_generation.get() != 1 {
             return Err(RetentionCause::Invariant);
         }
         let page = PageRef {
@@ -197,22 +212,6 @@ fn actor_status(
             incarnation: generation,
             ..identity.page
         };
-        if kind == PageKind::Undo {
-            let lsn = crate::storage::undo_record::initial_undo_page_lsn(
-                history::arena_page(replay, i),
-                PageIdentity {
-                    page,
-                    owner: object,
-                    owner_generation: object_generation,
-                    ..identity
-                },
-            )
-            .map_err(RetentionCause::Undo)?;
-            if lsn.0 == 0 {
-                return Err(RetentionCause::Invariant);
-            }
-            continue;
-        }
         let home = status_home::decode_status_home_page(
             history::arena_page(replay, i),
             PageIdentity {
@@ -249,7 +248,7 @@ pub(super) fn seed_replay_slice(
     seed: Option<&VerifiedPlan4Base<'_>>,
     replay: &mut [u8],
 ) -> ObservationResult<RetentionReplayCursor> {
-    if replay.len() < history::AFTER_END {
+    if replay.len() < history::WORK_END {
         return Err(RetentionCause::Capacity);
     }
     let Some(seed) = seed else {
@@ -264,7 +263,7 @@ pub(super) fn seed_replay_slice(
         });
     };
     let view = seed.view();
-    if view.header().format != crate::storage::plan4_recovery_base::BaseFormat::V2System {
+    if view.header().format != crate::storage::plan4_recovery_base::BaseFormat::V3Catalog {
         return Err(RetentionCause::Unsupported);
     }
     if view.digest() != seed.digest() {
@@ -327,18 +326,20 @@ pub(super) fn seed_replay_slice(
     })
 }
 
-/// End all image reconstruction before descriptor/actor recovery begins. Within
-/// BaseView::image, catalog and dynamic payload reconstruction are exclusive
-/// ordinal branches; neither creates a descriptor or a recovery cursor.
+/// Copy only from the original selected witness. The immutable v3 view already
+/// checked current image and claim grammar; its source owner supplies history.
 fn seed_base_images(
-    view: &crate::storage::plan4_recovery_base::BaseView<'_>,
+    view: &crate::storage::plan4_recovery_base::catalog::CatalogBaseView<'_>,
     replay: &mut [u8],
 ) -> ObservationResult<()> {
     for i in 0..64 {
-        let out: &mut [u8; PAGE_BYTES] = (&mut replay[i * PAGE_BYTES..(i + 1) * PAGE_BYTES])
-            .try_into()
-            .expect("image loan");
-        view.image(i, out).map_err(|_| RetentionCause::Invariant)?;
+        if let Some(image) = view.image(i).map_err(|_| RetentionCause::Invariant)? {
+            replay[i * PAGE_BYTES..(i + 1) * PAGE_BYTES].copy_from_slice(image);
+        }
+        if let Some(claim) = view.init_claim(i).map_err(|_| RetentionCause::Invariant)? {
+            let at = history::AFTER_END + i * 352;
+            replay[at..at + 352].copy_from_slice(claim.bytes());
+        }
     }
     Ok(())
 }
@@ -355,33 +356,30 @@ pub(in crate::storage) fn observe_recovery_frame(
         let (arena, rest) = prior.split_at_mut(history::ARENA_END);
         let (cells, bank) = rest.split_at_mut(65536);
         let cells: &[[u8; 1024]; 64] = cells.as_chunks::<1024>().0.try_into().expect("cells");
-        let after: &mut [[u8; PAGE_BYTES]; 3] = scratch[FRAME_BYTES..FRAME_BYTES + 3 * PAGE_BYTES]
+        let (_, outputs) = scratch.split_at_mut(history::REPLAY_FRAME_BYTES);
+        let (pages, claims) = outputs.split_at_mut(8 * PAGE_BYTES);
+        let after = pages
             .as_chunks_mut::<PAGE_BYTES>()
             .0
             .try_into()
-            .expect("after loan");
-        apply_frame(profile, expected, input, arena, cells, bank, after, cursor)?
+            .expect("eight after pages");
+        let claims = claims[..history::PROVENANCE_BYTES]
+            .as_chunks_mut::<352>()
+            .0
+            .try_into()
+            .expect("claims");
+        apply_frame(
+            profile, expected, input, arena, cells, bank, after, claims, cursor,
+        )?
     };
-    close_recovery_frame(profile, replay, observed)
-}
-
-fn close_recovery_frame(
-    profile: Profile,
-    replay: &mut [u8; RETENTION_REPLAY_BYTES],
-    observed: RetentionFrameObservation,
-) -> ObservationResult<RetentionFrameObservation> {
     history::refresh_jobs(profile, replay).map_err(|_| RetentionCause::Invariant)?;
-    history::validate_bijection(profile, replay).map_err(|_| RetentionCause::Invariant)?;
+    history::catalog::validate_current(profile, replay)?;
     Ok(observed)
 }
 
-// This packet is created only after the deep semantic observer has returned.
-// It carries no authority and never copies a page or descriptor bank.
-pub(super) type AppliedFrame = (WalFrameHeader, usize, Option<TargetRequest>);
-
 #[allow(
     clippy::too_many_arguments,
-    reason = "disjoint original caller slices, no copied state"
+    reason = "disjoint original canonical replay loans"
 )]
 pub(super) fn apply_frame(
     profile: Profile,
@@ -390,132 +388,82 @@ pub(super) fn apply_frame(
     arena: &mut [u8],
     cells: &[[u8; 1024]; 64],
     bank: &mut [u8],
-    after: &mut [[u8; PAGE_BYTES]; 3],
+    after: &mut [[u8; PAGE_BYTES]; 8],
+    claims: &mut [[u8; 352]; 64],
     cursor: &mut RetentionReplayCursor,
 ) -> ObservationResult<RetentionFrameObservation> {
-    let applied =
-        apply_frame_semantics(profile, expected, input, arena, cells, bank, after, cursor)?;
-    finish_frame_observation(
-        profile,
-        expected.stream.writer_epoch,
-        after,
-        cursor,
-        applied,
-    )
-}
-
-#[allow(
-    clippy::too_many_arguments,
-    reason = "disjoint original caller slices, no copied state"
-)]
-fn apply_frame_semantics(
-    profile: Profile,
-    expected: FrameExpectation,
-    input: &[u8],
-    arena: &mut [u8],
-    cells: &[[u8; 1024]; 64],
-    bank: &mut [u8],
-    after: &mut [[u8; PAGE_BYTES]; 3],
-    cursor: &mut RetentionReplayCursor,
-) -> ObservationResult<AppliedFrame> {
-    if expected.previous_lsn != cursor.previous_lsn
+    if profile.format() != 2
+        || expected.previous_lsn != cursor.previous_lsn
         || expected.stream.database != profile.spec().namespace.database
         || expected.stream.timeline != profile.spec().namespace.timeline
         || cursor
             .epoch
             .is_some_and(|epoch| epoch != expected.stream.writer_epoch)
-        || (cursor.epoch.is_none()
-            && (!cursor.base_seeded || expected.stream.writer_epoch <= cursor.predecessor_epoch))
+        || cursor.epoch.is_none()
+            && (!cursor.base_seeded || expected.stream.writer_epoch <= cursor.predecessor_epoch)
     {
         return Err(RetentionCause::Invariant);
     }
-    let envelope = if input.get(7) == Some(&3) {
-        wal_frame::decode_retention_envelope(input, expected)
-    } else {
-        wal_frame::decode_semantic_envelope(input, expected)
+    if input.len() < 172 || input[164..166] != [2, 0] {
+        return Err(RetentionCause::Unsupported);
     }
-    .map_err(|_| RetentionCause::Invariant)?;
-    if input.len() < 168 {
-        return Err(RetentionCause::Invariant);
-    }
-    let retention = input[160..164] == *b"XHG1"
-        || (input[160..164] == *b"XSG1"
-            && matches!(
-                u16::from_le_bytes(input[166..168].try_into().expect("opcode")),
-                16 | 17
-            ));
-    if cursor.allocation.reserved()
-        && (retention || input.len() == crate::storage::semantic_retention::ROLLBACK_BYTES)
-    {
-        return Err(RetentionCause::Invariant);
-    }
-    let mut initialized = None;
-    let (header, count) = if retention {
-        let h = history::replay_retention(
-            profile,
-            expected,
-            input,
-            arena,
-            cells,
-            bank,
-            after,
-            &mut cursor.adopted_local,
-        )
-        .map_err(RetentionCause::Semantic)?;
-        (
-            h,
-            if input[160..164] == *b"XSG1"
-                && u16::from_le_bytes(input[166..168].try_into().unwrap()) == 16
-            {
-                1
-            } else {
-                3
-            },
-        )
-    } else if input.len() == crate::storage::semantic_retention::ROLLBACK_BYTES {
-        (
-            history::replay_rollback(profile, expected, input, arena, bank, &mut after[2])
-                .map_err(RetentionCause::Rollback)?,
-            0,
-        )
-    } else {
-        let observed = cursor
-            .allocation
-            .apply(profile, expected, input, arena, bank, after)
-            .map_err(RetentionCause::AllocationOperation)?;
-        initialized = observed.initialized;
-        (observed.header, if initialized.is_some() { 2 } else { 1 })
+    let scope = u16::from_le_bytes(input[170..172].try_into().expect("scope"));
+    let observed = match scope {
+        2 => {
+            if cursor.allocation.reserved() {
+                return Err(RetentionCause::Invariant);
+            }
+            history::catalog::apply(
+                profile,
+                expected,
+                input,
+                arena,
+                cells,
+                bank,
+                after,
+                claims,
+                &mut cursor.adopted_local,
+            )?
+        }
+        1 => {
+            if cells.iter().any(|cell| {
+                crate::storage::retention_page::catalog::decode_job(cell, profile.spec().namespace)
+                    .is_ok_and(|j| {
+                        j.state() == crate::storage::retention_page::catalog::JobState::RootReserved
+                    })
+            }) {
+                return Err(RetentionCause::Invariant);
+            }
+            let pages: &mut [[u8; PAGE_BYTES]; 3] =
+                (&mut after[..3]).try_into().expect("System after prefix");
+            let observed = cursor
+                .allocation
+                .apply(profile, expected, input, arena, bank, pages, claims)
+                .map_err(RetentionCause::AllocationOperation)?;
+            let mut result = RetentionFrameObservation {
+                header: observed.header,
+                changed: [None; 8],
+                initialized: [None; 2],
+                retired: [None; 2],
+            };
+            result.changed[0] = Some(request_from_image(profile, &pages[0])?);
+            if let Some(request) = observed.initialized {
+                result.changed[1] = Some(request);
+                result.initialized[0] = Some(request);
+            }
+            result
+        }
+        _ => return Err(RetentionCause::Unsupported),
     };
-    if header != envelope.header || expected.previous_lsn.checked_add(1) != Some(header.lsn) {
+    if expected.previous_lsn.checked_add(1) != Some(observed.header.lsn) {
         return Err(RetentionCause::Invariant);
     }
-    Ok((header, count, initialized))
+    cursor.previous_lsn = observed.header.lsn;
+    cursor.epoch = Some(expected.stream.writer_epoch);
+    Ok(observed)
 }
 
-fn finish_frame_observation(
-    profile: Profile,
-    epoch: u32,
-    after: &[[u8; PAGE_BYTES]; 3],
-    cursor: &mut RetentionReplayCursor,
-    (header, count, initialized): AppliedFrame,
-) -> ObservationResult<RetentionFrameObservation> {
-    let mut changed = [None; 3];
-    if count == 0 {
-        changed[0] = Some(request_from_image(profile, &after[2])?);
-    } else {
-        for i in 0..count {
-            changed[i] = Some(request_from_image(profile, &after[i])?);
-        }
-    }
-    cursor.previous_lsn = header.lsn;
-    cursor.epoch = Some(epoch);
-    Ok(RetentionFrameObservation {
-        header,
-        changed,
-        initialized,
-    })
-}
-fn request_from_image(
+pub(super) fn request_from_image(
     profile: Profile,
     bytes: &[u8; PAGE_BYTES],
 ) -> ObservationResult<TargetRequest> {
@@ -590,13 +538,23 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
                 RetentionCause::Invariant,
             ));
         }
-        let mut control = control::RetentionControl::new(loan);
+        let mut control = control::RetentionControl::new(loan.control);
         control.source = source;
-        let cursor = seed_recovery_replay(storage.profile(), source.base(), control.replay)
+        let mut history = history::runtime::RuntimeHistory::new(
+            storage,
+            self.pool.bound_core(),
+            source,
+            prefix,
+            loan.replay,
+        );
+        let replay = history.exclusive()?;
+        let cursor = seed_recovery_replay(storage.profile(), source.base(), replay)
             .map_err(|e| fatal(storage, RetentionPhase::Activate, e))?;
-        control.bytes[..65536].copy_from_slice(retention_replay_bank(control.replay));
-        control.bytes[65536..131072]
-            .copy_from_slice(&control.replay[history::ARENA_END..history::JOB_END]);
+        control.bytes[..65536].copy_from_slice(retention_replay_bank(replay));
+        control.bytes[65536..131072].copy_from_slice(&replay[history::ARENA_END..history::JOB_END]);
+        // The live XOI cache starts from the original selected source; its
+        // generation/capture are observations, never new inventory authority.
+        control.bytes[131_072..147_456].copy_from_slice(binding.base().view().inventory());
         cursor
             .allocation
             .restore_population(&mut control.population);
@@ -606,7 +564,7 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
         self.pool
             .retention_allocator_snapshot(allocator)
             .map_err(|e| frame(RetentionPhase::Activate, e))?;
-        if allocator != retention_replay_image(control.replay, 0) {
+        if allocator != retention_replay_image(replay, 0) {
             return Err(fatal(
                 storage,
                 RetentionPhase::Activate,
@@ -635,8 +593,10 @@ impl<'s, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Plan4Pages<'s, 'c, 'p, 'd, 
         // Keep the linear restored-credit receipt through cleanup/stabilize.
         // Its immutable witness references do not retain a copied BaseView.
         Ok(Plan4Retention {
+            catalog_visibility: None,
             inner: self,
             control,
+            history,
             flush,
             recovery_binding: Some(binding),
         })
@@ -657,6 +617,10 @@ pub(in crate::storage) enum RetentionRecoveryStep {
     },
     Finished {
         job: JobSlotRef,
+    },
+    CatalogAdvanced {
+        job: JobSlotRef,
+        operation: crate::storage::semantic_catalog::Operation,
     },
     FlushRequired {
         target: Plan4Target,
@@ -714,7 +678,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             .wal()
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Census, RetentionCause::Wal(e)))?;
-        history::validate_live(storage, &mut self.control, prefix)?;
+        history::validate_live(storage, &self.control, self.history.exclusive()?, prefix)?;
         self.control
             .check_ledger(storage.profile(), prefix)
             .map_err(|e| fatal(storage, RetentionPhase::Census, e.cause))?;
@@ -908,11 +872,11 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             Cleanup::Complete => unreachable!("handled before writer borrow"),
         }
     }
-    fn recovery_flush_target_unchecked(&self, index: usize) -> Result<Option<Plan4Target>> {
+    fn recovery_flush_target_unchecked(&mut self, index: usize) -> Result<Option<Plan4Target>> {
         if index >= 64 {
             return Err(unchanged(RetentionPhase::Flush, RetentionCause::Membership));
         }
-        let image = history::arena_page(self.control.replay, index);
+        let image = history::arena_page(self.history.exclusive()?, index);
         if image.iter().all(|b| *b == 0) {
             return Ok(None);
         }
@@ -933,13 +897,13 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         }
         self.health()?;
         self.refresh_recovered()?;
-        if matches!(index, 7 | 8) {
+        if self.inner.storage.profile().format() != 2 && matches!(index, 7 | 8) {
             return Ok(None);
         }
         self.recovery_flush_target_unchecked(index)
     }
     fn recovery_resident_rec_lsn(
-        &self,
+        &mut self,
         owner: &mut Owner<'c, 's>,
         target: Plan4Target,
     ) -> Result<Option<PageLsn>> {
@@ -959,7 +923,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                 .map_err(|e| frame(RetentionPhase::Census, e))?;
             if bytes
                 != history::arena_page(
-                    self.control.replay,
+                    self.history.exclusive()?,
                     target.request.identity.page.page_no as usize,
                 )
             {
@@ -981,7 +945,12 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         self.recovery_enter(owner)?;
         self.health()?;
         self.refresh_recovered()?;
-        if !matches!(self.select_cleanup()?, Cleanup::Complete) {
+        let complete = if self.inner.storage.profile().format() == 2 {
+            matches!(self.select_catalog_cleanup()?, catalog::Selected::Complete)
+        } else {
+            matches!(self.select_cleanup()?, Cleanup::Complete)
+        };
+        if !complete {
             return Err(unchanged(
                 RetentionPhase::Census,
                 RetentionCause::WrongState,
@@ -1003,6 +972,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             return Err(unchanged(RetentionPhase::Census, RetentionCause::Busy));
         }
         self.recovery_home_readback()?;
+        self.history.quiescent()?;
         Ok(())
     }
 }
@@ -1061,7 +1031,7 @@ impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
                 .open_reader(root, chunk)
                 .map_err(|e| fatal(storage, RetentionPhase::Census, RetentionCause::PageIo(e)))?;
             for index in 0..64 {
-                let canonical = history::arena_page(self.control.replay, index);
+                let canonical = history::arena_page(self.history.exclusive()?, index);
                 if canonical.iter().all(|b| *b == 0) {
                     continue;
                 }
@@ -1123,9 +1093,9 @@ pub(super) fn phase_source_bytes<W: WriterNamespace>() -> RecoveryPhaseCensus {
     use foundation::codec::ContentHasher;
     use std::mem::size_of;
     let hashing = 4 * size_of::<ContentHasher>() + 1536;
-    let views = 2 * size_of::<base::BaseView<'_>>()
+    let views = 2 * size_of::<base::catalog::CatalogBaseView<'_>>()
         + 3 * size_of::<base::Header>()
-        + 2 * size_of::<base::Census>();
+        + 2 * size_of::<base::catalog::CatalogCensus>();
     let small = 32 * size_of::<&[u8]>()
         + 32 * size_of::<u64>()
         + 4 * size_of::<ObservationResult<()>>()
@@ -1140,28 +1110,21 @@ pub(super) fn phase_source_bytes<W: WriterNamespace>() -> RecoveryPhaseCensus {
         + 3 * size_of::<DescriptorSpec>()
         + 3 * size_of::<std::result::Result<Option<DescriptorSpec>, base::Error>>()
         + 2 * size_of::<std::result::Result<DescriptorSpec, ObligationError>>()
-        + crate::storage::retention_obligation::source_bytes()
+        + crate::storage::retention_obligation::catalog::source_bytes()
         + small;
-    // seed_base_images ends before the descriptor loop. Each image has one
-    // certificate/header/hash closure plus exactly one ordinal branch:
-    // 0..6 borrowed copies, 7..8 catalog genesis, or 9..63 one typed payload.
-    // The large conservative genesis closure cannot coexist with either
-    // payload encoder's StatusHome values or 432-byte Free Undo cell.
-    let payload_image = (4 * size_of::<status_home::StatusHome>()
-        + 4 * size_of::<crate::storage::status_home::StatusHomePage<'_>>()
-        + 640)
-        .max(
-            crate::storage::undo_record::UNDO_RECORD_BYTES
-                + super::read::undo_decode_source_bytes(),
-        );
+    // v3 seed images are borrowed exact pages; no Status/Undo or Catalog
+    // re-encoder runs here. Only certificate/provenance views and the selected
+    // current header are decoded before copying into the original arena.
     let image = views
         + 4 * size_of::<base::Certificate>()
         + 3 * size_of::<std::result::Result<Option<base::Certificate>, base::Error>>()
         + 4 * size_of::<PageHeader>()
         + 4 * size_of::<PageView<'_>>()
+        + 4 * size_of::<base::catalog::InitProvenance<'_>>()
+        + 4 * size_of::<std::result::Result<Option<base::catalog::InitProvenance<'_>>, base::Error>>(
+        )
         + hashing
-        + small
-        + super::super::genesis::owned_source_bytes::<W>().max(payload_image);
+        + small;
     let seed_outer = 2 * size_of::<RetentionReplayCursor>()
         + 2 * size_of::<ObservationResult<RetentionReplayCursor>>()
         + size_of::<population::ReplayAllocation>()
@@ -1169,20 +1132,24 @@ pub(super) fn phase_source_bytes<W: WriterNamespace>() -> RecoveryPhaseCensus {
         + 2 * size_of::<allocation_page::AllocationPage<'_>>()
         + 2 * size_of::<StatusSlotRef>()
         + small;
-    let seed = seed_outer + image.max(descriptor);
+    let seed = seed_outer
+        + image
+            .max(descriptor)
+            .max(history::catalog::source_bytes().closure);
     // allows_actor's sealed ATT lookup is nested while check_ledger retains
     // the current descriptor; no live producer/installer exists at this point.
     let ledger = descriptor
         + 2 * size_of::<DescriptorSpec>()
         + 2 * size_of::<TxnRef>()
         + 2 * size_of::<StatusSlotRef>();
-    let cleanup = descriptor
+    let legacy_cleanup = descriptor
         + 2 * size_of::<Cleanup>()
         + 2 * size_of::<Result<Cleanup>>()
         + 2 * size_of::<JobSpec>()
         + 2 * size_of::<JobView<'_>>()
         + 2 * size_of::<Result<RetentionRecoveryStep>>()
         + 2 * size_of::<Plan4ResidencyCursor>();
+    let cleanup = legacy_cleanup.max(catalog::selection_source_bytes());
     let verify = small
         + 2 * size_of::<super::super::super::flush_io::IoObservation>()
         + 2 * size_of::<Result<(crate::storage::control::SelectedControl, u64)>>()

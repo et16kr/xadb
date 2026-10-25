@@ -193,6 +193,21 @@ class Oracle:
     def page(self, case, lsn, page):
         return self.raw[self.points[case, lsn]['pages'][str(page)]]
 
+    def actor(self, row):
+        # plan.local is the serializer's model cycle. The native input maps
+        # cycle 2 to epoch 2/local 1 while retaining cycle-2 slot generations.
+        # Read the frozen independent descriptor, never a product result.
+        descriptor = self.raw[row['transaction_after']]
+        require(len(descriptor) == 1536 and descriptor[16:24] == b'\x01' + bytes(7),
+                'native transaction descriptor owner')
+        actor = descriptor[24:72]
+        require(actor[:16] == bytes(range(1, 17)) and number(actor, 16) == 1
+                and number(actor, 24, 4) == row['plan']['local']
+                and not any(actor[28:32]) and number(actor, 32) == 1
+                and number(actor, 40) == row['plan']['generation'],
+                'native model cycle to actor mapping')
+        return actor
+
     def wal(self, db, case, lsn):
         row = self.rows[case, lsn]
         raw = (db / f"d3-wal-{row['epoch']:08x}").read_bytes()
@@ -272,9 +287,7 @@ class Oracle:
             owner[32:40] = (1 if page_number == 9 else 2).to_bytes(8, 'little')
             owner[40:48] = (1).to_bytes(8, 'little')
         else:
-            owner[24:28] = init['epoch'].to_bytes(4, 'little')
-            owner[32:40] = init['plan']['local'].to_bytes(8, 'little')
-            owner[40:48] = init['plan']['generation'].to_bytes(8, 'little')
+            owner[:] = self.actor(init)
             for at, value in ((184, init['plan']['object']), (192, 1), (200, 1)):
                 expected[at:at + 8] = value.to_bytes(8, 'little')
             for at, pair in zip((208, 232), init['plan']['pair']):
@@ -329,7 +342,7 @@ class Oracle:
                 and number(raw, 272) == point['root_masks'][1] and number(raw, 280) == point['root_masks'][2]
                 and number(raw, 288) == point['scalar']['revision']
                 and number(raw, 296) == point['scalar']['aging_groups'], 'Base3 current census/header')
-        adopted_local = max((row['plan']['local'] for row in self.rows.values()
+        adopted_local = max((number(self.actor(row), 32) for row in self.rows.values()
                              if row['scenario'] == case and row['epoch'] == epoch - 1
                              and row['lsn'] <= capture and row['operation'] == 1), default=0)
         require(number(raw, 192) == adopted_local, 'Base3 source adopted local')

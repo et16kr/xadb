@@ -35,6 +35,9 @@ pub(in crate::storage) struct Trace {
     entropy: usize,
     log_bytes: usize,
     undo_home_cut: Option<UndoHomeCut>,
+    catalog_home_cut: Option<CatalogHomeCut>,
+    catalog_sync_after_error: Option<u64>,
+    catalog_wal_write_end: u64,
 }
 impl Trace {
     fn event(&mut self, operation: &str, name: &str, offset: u64, length: usize, outcome: &str) {
@@ -216,7 +219,52 @@ impl FileIo for File {
         if let Some(cut) = cut {
             crash_barrier(&self.trace, &cut.marker, "A_FU_BEFORE_UNDO_HOME");
         }
+        let catalog_cut = {
+            let mut trace = self.trace.lock().unwrap();
+            if self.name.as_str() == "d3-data-0000000100000001"
+                && offset == 8 * PAGE_BYTES as u64
+                && trace.catalog_home_cut.is_some()
+            {
+                let cut = trace.catalog_home_cut.take().expect("armed Catalog cut");
+                assert_eq!(bytes.len(), PAGE_BYTES);
+                assert_eq!(&bytes[..4], b"XDP1");
+                for (at, expected) in [
+                    (24, 0x100000001u64),
+                    (32, 8),
+                    (40, 1),
+                    (48, 5),
+                    (56, 1),
+                    (64, 8),
+                ] {
+                    assert_eq!(
+                        u64::from_le_bytes(bytes[at..at + 8].try_into().unwrap()),
+                        expected
+                    );
+                }
+                assert_eq!(foundation::codec::content_digest(bytes), cut.digest);
+                trace.event(
+                    "cut",
+                    "A_CREATE_BEFORE_CATALOG_HOME",
+                    offset,
+                    bytes.len(),
+                    "REACHED:1",
+                );
+                Some(cut)
+            } else {
+                None
+            }
+        };
+        if let Some(cut) = catalog_cut {
+            crash_barrier(&self.trace, &cut.marker, "A_CREATE_BEFORE_CATALOG_HOME");
+        }
         let result = self.inner.as_mut().unwrap().write_at(bytes, offset);
+        if self.name.as_str() == "d3-wal-00000001" {
+            if let Ok(written) = result {
+                self.trace.lock().unwrap().catalog_wal_write_end = offset
+                    .checked_add(written as u64)
+                    .expect("native WAL write end");
+            }
+        }
         let outcome = match &result {
             Ok(n) => format!("OK:{n}:{}", hash_hex(&bytes[..*n])),
             Err(e) => format!("ERR:{e:?}"),
@@ -240,6 +288,31 @@ impl FileIo for File {
             .lock()
             .unwrap()
             .event("sync", self.name.as_str(), 0, 0, &format!("{result:?}"));
+        let inject = {
+            let mut trace = self.trace.lock().unwrap();
+            if result.is_ok()
+                && self.name.as_str() == "d3-wal-00000001"
+                && trace.catalog_sync_after_error == Some(trace.catalog_wal_write_end)
+            {
+                let end = trace
+                    .catalog_sync_after_error
+                    .take()
+                    .expect("armed one-shot sync error");
+                trace.event(
+                    "fault",
+                    "A_CREATE_COMMIT_SYNC_AFTER_ERROR",
+                    end,
+                    0,
+                    "AFTER_SUCCESS:1",
+                );
+                true
+            } else {
+                false
+            }
+        };
+        if inject {
+            return Err(io::Error::other("Catalog Commit sync AfterError"));
+        }
         result
     }
     fn set_len(&mut self, length: u64) -> io::Result<()> {
@@ -474,7 +547,7 @@ fn worker_g5_clean() {
         assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
         let trace_file = OpenOptions::new().create_new(true).write(true).open(output.join("effects.tsv")).unwrap();
         let entropy_file = OpenOptions::new().create_new(true).write(true).open(output.join("entropy.tsv")).unwrap();
-        let trace = Arc::new(Mutex::new(Trace { root: root.clone(), output: trace_file, entropy_output: entropy_file, readonly: false, handles: 0, peak: 0, fd_peak: 0, events: 0, mutations: 0, entropy: 0, log_bytes: 0, undo_home_cut: None }));
+        let trace = Arc::new(Mutex::new(Trace { root: root.clone(), output: trace_file, entropy_output: entropy_file, readonly: false, handles: 0, peak: 0, fd_peak: 0, events: 0, mutations: 0, entropy: 0, log_bytes: 0, undo_home_cut: None, catalog_home_cut: None, catalog_sync_after_error: None, catalog_wal_write_end: 0 }));
         let directory = Directory { inner: Some(LinuxDirectory::open_existing(&root).unwrap()), trace: Arc::clone(&trace) };
         let writer = directory.acquire_writer().unwrap();
         drop(directory);
@@ -547,6 +620,9 @@ pub(in crate::storage) fn open_native(
         entropy: 0,
         log_bytes: 0,
         undo_home_cut: None,
+        catalog_home_cut: None,
+        catalog_sync_after_error: None,
+        catalog_wal_write_end: 0,
     }));
     let directory = Directory {
         inner: Some(LinuxDirectory::open_existing(root).unwrap()),
@@ -603,12 +679,61 @@ pub(in crate::storage) fn arm_undo_home_cut(
         "ARMED:1",
     );
 }
+struct CatalogHomeCut {
+    marker: PathBuf,
+    digest: [u8; 32],
+}
+
+pub(in crate::storage) fn arm_catalog_home_cut(
+    trace: &Arc<Mutex<Trace>>,
+    marker: &Path,
+    digest: [u8; 32],
+) {
+    assert!(marker.is_absolute() && !marker.exists());
+    let mut trace = trace.lock().unwrap();
+    assert!(trace.catalog_home_cut.is_none() && trace.undo_home_cut.is_none());
+    trace.catalog_home_cut = Some(CatalogHomeCut {
+        marker: marker.to_path_buf(),
+        digest,
+    });
+    trace.event(
+        "arm",
+        "A_CREATE_BEFORE_CATALOG_HOME",
+        8 * PAGE_BYTES as u64,
+        PAGE_BYTES,
+        "ARMED:1",
+    );
+}
+
+pub(in crate::storage) fn arm_catalog_sync_after_error(
+    trace: &Arc<Mutex<Trace>>,
+    expected_epoch1_end_offset: u64,
+) {
+    let mut trace = trace.lock().unwrap();
+    assert!(trace.catalog_sync_after_error.is_none());
+    assert!(expected_epoch1_end_offset > trace.catalog_wal_write_end);
+    trace.catalog_sync_after_error = Some(expected_epoch1_end_offset);
+    trace.event(
+        "arm",
+        "A_CREATE_COMMIT_SYNC_AFTER_ERROR",
+        expected_epoch1_end_offset,
+        0,
+        "ARMED:1",
+    );
+}
+
 /// Flushes a reached marker, releases the trace mutex and awaits an external
 /// SIGKILL for at most five seconds. Returning is a failed crash injection.
 pub(in crate::storage) fn crash_barrier(trace: &Arc<Mutex<Trace>>, marker: &Path, name: &str) -> ! {
     assert!(matches!(
         name,
-        "A_FU_BEFORE_UNDO_HOME" | "A_FU_AFTER_UNDO_DURABLE"
+        "A_FU_BEFORE_UNDO_HOME"
+            | "A_FU_AFTER_UNDO_DURABLE"
+            | "A_CREATE_ACK_T"
+            | "A_CREATE_ACK_U"
+            | "A_CREATE_BEFORE_CATALOG_HOME"
+            | "A_CREATE_AFTER_CLR_DURABLE"
+            | "A_CREATE_UNKNOWN_AFTER_SYNC"
     ));
     let peaks = {
         let mut trace = trace.lock().unwrap();

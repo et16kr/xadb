@@ -178,7 +178,7 @@ fn group_header(spec: &FrameSpec<'_>, output: &mut [u8; 256]) -> Result<usize> {
     Ok(size)
 }
 
-struct Native<'a> {
+pub(super) struct Native<'a> {
     header: [u8; 128],
     before: &'a [u8],
     after: &'a [u8],

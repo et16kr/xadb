@@ -39,6 +39,7 @@ const PROTECTED_BYTES: u64 = FIXED_BYTES - control::EXTENT_BYTES;
 #[path = "plan4_genesis.rs"]
 mod plan4_genesis;
 #[cfg(test)]
+pub(in crate::storage) use doublewrite_install::CatalogRetirementRejected;
 pub(in crate::storage) use doublewrite_install::{Plan4TestMutableCause, Plan4TestSemanticError};
 #[cfg(test)]
 pub(in crate::storage) use plan4_genesis::tests::mutate_page as plan4_test_mutate_page;
@@ -54,6 +55,7 @@ pub(in crate::storage) use plan4_genesis::{
 
 #[path = "doublewrite_install.rs"]
 mod doublewrite_install;
+pub(in crate::storage) use doublewrite_install::{CatalogCommitAttempt, CatalogCommitInstalled};
 pub(in crate::storage) use doublewrite_install::Plan4LoadPermit;
 pub(crate) use doublewrite_install::{
     AllocationObservation, AllocationSession, AllocationSessionCause, AllocationSessionError,
@@ -932,7 +934,7 @@ impl<'m, W: WriterNamespace> FreshStorageSession<'m, W> {
         let images: &mut [[u8; PAGE_BYTES]; 9] = images.try_into().expect("fixed nine-page loan");
         let (work, _) = work.as_chunks_mut::<PAGE_BYTES>();
         let scratch: &mut [[u8; PAGE_BYTES]; 3] = work.try_into().expect("fixed three-page loan");
-        let mut wal = GenesisWalSession::create(writer, profile_id, slot, &mut scratch[0])
+        let mut wal = GenesisWalSession::create_catalog(writer, profile_id, slot, &mut scratch[0])
             .map_err(|cause| Plan4GenesisError {
                 phase: Plan4GenesisPhase::Genesis,
                 effect: cause.effect,
@@ -1214,7 +1216,20 @@ pub(in crate::storage) use plan4_genesis::{
 
 pub(in crate::storage) use doublewrite_install::{
     RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
-    RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
+    RetentionInitInstall, RetentionInstall, RetentionLoadPermit, VerifiedLookupLoad,
 };
 
 pub(in crate::storage) use doublewrite_install::RecoveryPoolSeed;
+
+#[allow(unused_imports)] // Same original owner capabilities across the private module chain.
+pub(in crate::storage) use doublewrite_install::{
+    AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
+    HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
+    RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
+    StagedRetirement, UndoPin, TxnPin, VerifiedRetirement, VisibilityCause, VisibilityError,
+    VisibilityLoan, VisibilityResult, VISIBILITY_BYTES,
+    TxPairAuthority, TxPairInstallPermit, TxPairStageRejection, TxPairCancelKind,
+    TxPairCancelPermit, TxPairRetirePermit, TxPairControlCommit,
+};
+
+pub(in crate::storage) use doublewrite_install::{CatalogAllocationError, validate_catalog_base_allocation};

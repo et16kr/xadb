@@ -83,7 +83,9 @@ const ABANDONED: u8 = 3;
 
 #[path = "plan4_pages.rs"]
 mod plan4_pages;
+pub(in crate::storage) use plan4_pages::CatalogRetirementRejected;
 pub(in crate::storage) use plan4_pages::Plan4LoadPermit;
+pub(in crate::storage) use plan4_pages::{CatalogCommitAttempt, CatalogCommitInstalled};
 #[allow(unused_imports)]
 pub(crate) use plan4_pages::{
     Plan4CatalogLookup, Plan4GenesisCensus, Plan4LoadObservation, Plan4Page, Plan4PageCause,
@@ -617,9 +619,20 @@ mod runtime_core_tests;
 
 pub(in crate::storage) use plan4_pages::{
     RetentionFlushAuthority, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
-    RetentionInitInstall, RetentionInstall, RetentionLoadPermit,
+    RetentionInitInstall, RetentionInstall, RetentionLoadPermit, VerifiedLookupLoad,
 };
 
 pub(in crate::storage) use status_init::InitInstallPhase;
 
 pub(in crate::storage) use plan4_recovery::RecoveryPoolSeed;
+
+#[allow(unused_imports)] // Same original owner capabilities across the private module chain.
+pub(in crate::storage) use plan4_pages::{
+    AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
+    HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
+    RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
+    StagedRetirement, UndoPin, TxnPin, VerifiedRetirement, VisibilityCause, VisibilityError,
+    VisibilityLoan, VisibilityResult, VISIBILITY_BYTES,
+    TxPairAuthority, TxPairInstallPermit, TxPairStageRejection, TxPairCancelKind,
+    TxPairCancelPermit, TxPairRetirePermit, TxPairControlCommit,
+};

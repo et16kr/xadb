@@ -9,6 +9,9 @@
 //! descriptor validators. Integration/selected-source ownership stays separate.
 #![allow(dead_code)] // The selected recovery owner is being connected.
 
+#[path = "plan4_recovery_base/catalog.rs"]
+pub(super) mod catalog;
+
 use super::{
     allocation_page::{self, AllocationEntry, AllocationError, ReservationOwner, SystemWorkRef},
     control::{ControlError, ControlKind, ControlRef, Profile, SelectedControl},
@@ -71,6 +74,10 @@ pub(super) enum Error {
     Aging(AgingObligationError),
     Inventory(InventoryError),
     Undo(UndoError),
+    Catalog(super::catalog_record::CatalogError),
+    Tree(super::tree_page::TreeError),
+    CatalogSemantic(super::semantic_catalog::Error),
+    CatalogAllocation(super::wal_io::CatalogAllocationError),
 }
 macro_rules! from_error {
     ($source:ty, $variant:ident) => {
@@ -89,6 +96,10 @@ from_error!(RetentionError, Retention);
 from_error!(AgingObligationError, Aging);
 from_error!(InventoryError, Inventory);
 from_error!(UndoError, Undo);
+from_error!(super::catalog_record::CatalogError, Catalog);
+from_error!(super::tree_page::TreeError, Tree);
+from_error!(super::semantic_catalog::Error, CatalogSemantic);
+from_error!(super::wal_io::CatalogAllocationError, CatalogAllocation);
 type Result<T> = std::result::Result<T, Error>;
 
 /// Actual selected immutable geometry. These values alone confer no selection.
@@ -122,6 +133,7 @@ impl AllocationTerminal {
 pub(super) enum BaseFormat {
     V1Status = 1,
     V2System = 2,
+    V3Catalog = 3,
 }
 
 /// Scalar capture observations. Physical charge is rechecked by the namespace
@@ -379,7 +391,7 @@ fn validate_header(h: Header, e: Expected) -> Result<()> {
         || h.active_systems > 2
         || h.status_mask & 0x1ff != 0
         || h.leased & h.ready != 0
-        || h.leased.count_ones() != h.active_transactions
+        || (h.format != BaseFormat::V3Catalog && h.leased.count_ones() != h.active_transactions)
         || (h.leased | h.ready).count_ones() > 55
         || h.root_revision == 0
         || h.doublewrite_generation == 0
@@ -389,6 +401,7 @@ fn validate_header(h: Header, e: Expected) -> Result<()> {
         || h.system_high_water[2] > 1
         || (h.format == BaseFormat::V1Status
             && h.allocation_terminal == AllocationTerminal::InitializedUndo)
+        || (h.format == BaseFormat::V3Catalog) != (e.profile.format() == 2)
     {
         return Err(Error::InvalidInput);
     }
@@ -432,7 +445,7 @@ fn write_header(h: Header, e: Expected, output: &mut [u8]) -> Result<()> {
     output[..4].copy_from_slice(b"XRB1");
     put16(output, 4, h.format as u16);
     put16(output, 6, 1);
-    put32(output, 8, BASE_BYTES as u32);
+    put32(output, 8, e.profile.base_bytes() as u32);
     put32(output, 12, 4096);
     output[16..32].copy_from_slice(&e.profile.spec().namespace.database.bytes());
     put(output, 32, e.profile.spec().namespace.timeline);
@@ -482,18 +495,25 @@ fn write_header(h: Header, e: Expected, output: &mut [u8]) -> Result<()> {
 }
 
 fn read_header(bytes: &[u8; BASE_BYTES], e: Expected) -> Result<Header> {
+    read_header_format(bytes, e, false)
+}
+
+fn read_header_format(bytes: &[u8], e: Expected, catalog: bool) -> Result<Header> {
+    if bytes.len() < 4096 { return Err(Error::Corrupt); }
     if &bytes[..4] != b"XRB1" {
         return Err(Error::Corrupt);
     }
     let format = match get16(bytes, 4) {
         1 => BaseFormat::V1Status,
         2 => BaseFormat::V2System,
+        3 if catalog => BaseFormat::V3Catalog,
         _ => return Err(Error::Unsupported),
     };
     if get16(bytes, 6) != 1 {
         return Err(Error::Unsupported);
     }
-    if get32(bytes, 8) != BASE_BYTES as u32
+    if bytes.len() != e.profile.base_bytes()
+        || get32(bytes, 8) != e.profile.base_bytes() as u32
         || get32(bytes, 12) != 4096
         || bytes[16..32] != e.profile.spec().namespace.database.bytes()
         || get(bytes, 32) != e.profile.spec().namespace.timeline
@@ -514,7 +534,7 @@ fn read_header(bytes: &[u8; BASE_BYTES], e: Expected) -> Result<Header> {
         || !zero(&bytes[1160..1184])
         || !zero(&bytes[1188..1192])
         || !zero(&bytes[1224..1280])
-        || !zero(&bytes[1664..4096])
+        || !zero(&bytes[if format == BaseFormat::V3Catalog { 1600 } else { 1664 }..4096])
     {
         return Err(Error::IdentityMismatch);
     }
@@ -540,7 +560,7 @@ fn read_header(bytes: &[u8; BASE_BYTES], e: Expected) -> Result<Header> {
             0 => AllocationTerminal::None,
             1 => AllocationTerminal::Cancelled,
             2 => AllocationTerminal::InitializedStatus,
-            3 if format == BaseFormat::V2System => AllocationTerminal::InitializedUndo,
+            3 if matches!(format, BaseFormat::V2System | BaseFormat::V3Catalog) => AllocationTerminal::InitializedUndo,
             _ => return Err(Error::Unsupported),
         },
         retired_batch: get(bytes, 496),
@@ -1491,6 +1511,7 @@ pub(super) fn decode<'a>(
     let validate_allocation = match h.format {
         BaseFormat::V1Status => super::wal_io::validate_plan4_base_allocation,
         BaseFormat::V2System => super::wal_io::validate_plan4_system_base_allocation,
+        BaseFormat::V3Catalog => return Err(Error::Unsupported),
     };
     validate_allocation(
         page_at(bytes, ALLOCATOR),
@@ -1534,6 +1555,7 @@ pub(super) fn encode<'a>(
     output: &'a mut [u8; BASE_BYTES],
     scratch: &mut [[u8; PAGE_BYTES]; 4],
 ) -> Result<BaseView<'a>> {
+    if h.format == BaseFormat::V3Catalog { return Err(Error::Unsupported); }
     validate_header(h, expected)?;
     output.fill(0);
     write_header(h, expected, &mut output[..4096])?;
