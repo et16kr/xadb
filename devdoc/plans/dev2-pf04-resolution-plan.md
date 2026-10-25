@@ -108,6 +108,47 @@ P2의 새로운 탐색은 이전 종료한3후보 예산에 추가하지 않는�
 
 최종 reviewer가 계약·후보 diff·선택 시험·모든 실행 원자료와 채택/기각을 독립 확인한 뒤 단계 commit한다. P2 계획 상태: **독립 설계 검토 PASS 채택 / 계획 commit `a64ca58` 뒤 실행·후보 기각 종료**. 검토는 계획만 대상으로 하며 구현·성능의 통과가 아니다. receipt는 `/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/p2-plan-review.json`, SHA-256 `e7c1c90fa901d2feb9743539745e82b229411d98076099c8b71c63c6fd60f002`다. 검토 P2 본문 projection SHA-256은 `f1132d8a0589fa80a0e58b07e11d333fbd05631bc423cf22aaef6159b1205f03`이며 이 상태 문장 앞까지를 고정한다. 차단·미해결 지적0개다.
 
+<a id="p3-io-cause"></a>
+
+## P3 실행 계약: 영속 구간의 journal·block 관측
+
+2026-10-25 후속 “이어서 해주세요”에 따라 P3를 시작한다. D2 담당 `/root`, 독립 검토 `/root/pf04_evidence_review`. 본 계약의 독립 검토·선행 commit 뒤 관측 도구를 구현한다. P2 C1 기각은 유지하고 제품/WAL·fsync 의미·측정 workload·인수 기준은 바꾸지 않는다.
+
+### 질문·환경·관측 의미
+
+현재 fixture는 `/dev/nvme1n1p2`의 공유 ext4이며 시스템과 journal을 공유한다. 다른 디렉터리는 격리가 아니다. `/tmp`·`/dev/shm`의 tmpfs는 collector 기록에만 쓰며 제품 fixture는 기존 ext4에 둔다. 미사용 NTFS 장치를 mount/포맷하거나 재부팅·서비스/전력/governor/sysctl/mount 옵션 변경을 하지 않는다.
+
+기존 worker fsync→journal transaction/phase 관측에 동일 boot·CLOCK_MONOTONIC(`nsecs(monotonic)`) 시간축의 실제 block request 시작→완료를 추가해, 대기가 FLUSH/FUA를 포함한 어느 요청 구간과 겹치는지 구분한다. 동시에 P1 PMU/rusage로 현재 Off/Always의 CPU 작업을 별도로 관측한다. 이전 실패 pair를 새 관측으로 설명했다고 주장하지 않는다. request 시작→완료는 커널 요청 경과 시간이며 순수 NVMe service time이 아니다. 공유 journal·device 요청의 시간 겹침은 해당 WAL만의 소유나 배타적 인과 귀속이 아니다. 누락·requeue·중복·불완전 경계는 명시하고 비율 합산으로 가리지 않는다.
+
+### 구현·권한·경계
+
+- XADBTest의 새 Python 수집기/분석기·BPF source·선택 시험으로 제한한다. P1 Runner를 조립/상속하여 socket·PMU·worker의 기존 bounded lifecycle을 재사용한다. 제품과 기존 도구의 무관한 경로를 수정하지 않는다. 새 source는 구현과 함께 빌드 색인에 등록한다.
+- worker를 일반 사용자로 생성해 stdin 앞에서 기다리게 한 뒤 BPF의 전체 attach 알림·정확 probe 수·살아 있는 collector를 확인하고 payload를 전달한다. P1 HELLO/START/STOP으로 원 측정구간을 연결하며 worker의2초 교환 deadline은 늘리지 않는다. 수집은 warmup/후처리도 포함하므로 분석에서 원 측정 timestamp와 실제 source WAL inode를 사용해 양 경계 안의 완전한512개 fsync pair를 선택한다. boot_id와 clock domain·초기 time namespace 및 monotonic offset0의 근거를 raw에 결합한다.
+- BPF는 worker의 ext4 sync enter/exit와 jbd2 wait enter/exit, 대상 filesystem의 journal phase, 대상 disk의 raw `block_rq_issue`/`block_rq_complete`/`block_rq_requeue`를 관측한다. BTF와 실행 kernel에 맞는 필드·flag 의미를 확인한다. request pointer는 수집 내부의 일시적 대응 키이며 영속 ID가 아니다. start/end 재사용·오류/partial/requeue가 있는 연결은 정상 요청으로 추정하지 않는다. 개별·NVMe batch·internal FLUSH가 공통 complete tracepoint를 지나는 실제 source/BTF를 대조한다. 0byte flush·partial completion·partition/whole-disk dev·FUA flag를 구분한다. cross-CPU 출력 순서를 신뢰하지 않고 monotonic timestamp와 요청별 시작 세대로 대응하며 동일시각 모호성은 거절한다. race-safe count()의 event별 kernel count와 종료 후 저장 행 수를 정확히 대조하고 유실·warning·map overflow는 분석 거절 사유다. capture 경계의 미완료 요청도 명시하며 대응이 불완전하면 전체 비율을 거절한다.
+- 설치된 root 소유 sudo/python3/setpriv/bpftrace와 검토된 전용 Python supervisor만 명시 호출하고 최소 환경·고정 프로그램/인자·새 private tmpfs spool을 사용한다. supervisor는 임의 명령을 받지 않으며 고정 BPF source·PID/device 정수 인자만 받는다. BPF attach에는 root가 필요하며 worker는 승격하지 않는다. 전역 hook은 worker PID, filesystem dev 또는 disk dev로 일찍 필터한다. 고정 memory/map·record 크기와 wall deadline을 적용하고 link를 pin하지 않는다. root collector의 전체 attach 후 준비 실패·취소·정상 종료와 독립 watchdog의 parent-death 정리를 선택 검증한다.
+- 일반 사용자 runner→sudo/root supervisor→별도 session의 root BPF topology와 각 UID/PID/starttime을 기록한다. supervisor가 직접 생성한 unreaped BPF leader와 pidfd를 유지하고 모든 signal을 직접 보낸다. runner는 pipe로 STOP/CANCEL을 요청하며 EOF도 parent 상실로 처리한다. root supervisor 내부 독립 monotonic deadline은 생성부터55초이며 cleanup TERM/INT→KILL·수거에 최대3초를 더 쓴다. setpriv의 parent-death KILL로 supervisor 강제 사망도 제한하되 실제 일반 사용자 parent 사망 사례에서 검증한다. 정상 종료는 producer disable ACK→고정1초 drain→collector INT→수거다. drain을 CPU barrier로 주장하지 않으며 종료 후 count·행·미완료 상태를 대조한다. 오류에서는 직접 소유 child/group만 bounded 종료하고 원자료·실패/정리 상태를 보존한다. slot의 Python 수집 deadline은 유휴 대기 뒤 worker 생성 전부터60초이며 오류 원자료 보존·cleanup에는 추가8초까지 허용한다. 유휴 대기10분은 이 per-slot deadline 밖이다. raw 각64MiB, map 최대8192 key, event 최대200,000행이다. 제한을 넘으면 FAILED/INCONCLUSIVE이고 기존 결과를 덮어쓰지 않는다.
+
+### 변경별 시험과 고정 native 예산
+
+새 분석기의 수동 vector로 interval clip/union·중첩·동일 timestamp·request 재사용/중복/고아/requeue·오류·512개/구간/inode 불일치·count/loss·알 수 없는 record 거절을 검증한다. 수집기의 fixed argv/필터·identity·deadline/취소·준비 실패·소유 cleanup·원자료 보존을 새 사례로 선택한다. native helper는 정상·attach 뒤 payload 전 실패·활성 취소·parent-death watchdog 각1개다. 구현 결함 때문에 실패한 경우 실제 수정 diff/실패 사례만 다시 검증하고 최초 실패를 보존한다. 기존 제품·하위 회귀·전체 wrapper·완료 P1/P2 시험은 반복하지 않는다.
+
+clean export 기준선은 `5253caa`이며 병행 DEV3 변경을 제외한다. 제품 source는 그대로 두고 이번 새 도구만 결합한 release worker를 사용한다. 실행 input은 기존 영속 seed20261018·128행·warmup64·측정512다. 새 도구의 실제 연결·영향을 검증하는 native는 아래4slot만 허용하며 원 제품 인수 반복으로 세지 않는다.
+
+| slot | 제품 observations | 추가 BPF | 목적 |
+| --- | --- | --- | --- |
+| 0 | Off | 꺼짐 | 같은 P1 구간/PMU의 현재 대조 |
+| 1 | Off | 켜짐 | fsync/journal/request 연결 |
+| 2 | Always | 켜짐 | 동일 관측에서 CPU·진단 작업 구분 |
+| 3 | Always | 꺼짐 | 반대 순서의 현재 대조 |
+
+모든 slot에서 P1 PMU를 수집하고 raw 진단 path와 원 scalar/ACK/image 정답을 기존 독립 checker로 검산한다. 관측자는 verdict를 제품에 넣지 않는다. CPU2 worker, CPU3 runner/collector, sibling18을 관측한다. 각 slot 전10초 CPU2/18·대상 disk busy 각각5% 이하일 때만 실행하고 자기 소유 build/test를 겹치지 않는다. 유휴 조건은 최대10분 대기 후 NOT_RUN, 시작한 실패 slot은 재실행하지 않는다. 뒤 slot 진행은 앞 slot의 정답/수집/정리 완결에만 의존하며 유리한 성능 수치 때문에 선택하지 않는다.
+
+이는 성능 최적화의10쌍 확인이 아닌 도구의4개 신규 연결 사례다. 모드별 traced/control elapsed·기존 durable cycle-duration p99(ns)는1.25배, CPU는2배를 넘으면 coarse 영향/환경 screen FAIL로 표시한다. 한 쌍씩의 screen PASS도 순수 tracing overhead 추정이나 안정적 모드 비용의 입증이 아니다. screen FAIL이면 해당 추적의 대응 사실만 기록하고 untraced 비중으로 일반화하지 않는다. 원 PF04 한도를 이 screen으로 대체하지 않는다. kernel request 겹침·PMU 한 쌍으로 P4 WAL 변경을 자동 채택하지 않는다.
+
+종료 산출물은 source/binary/kernel/device/recipe·원자료·정답·필수512 대응/누락·CPU 관측·영향 screen·cleanup과 독립 검토다. 충분히 연결되지 않은 원인은 INCONCLUSIVE로 기록하고, 그 원인을 구분하려면 무엇을 추가로 관측해야 하는지 구체화해 P3 commit한다. P4는 충분한 근거와 별도 형식/복구 계약 없이는 시작하지 않는다.
+
+P3 계획 상태: **PASS_PLAN_ONLY 채택 / 구현·실행 전**. 독립 검토자가 clock·완료 경로·root child 소유·EOF·예산 보완본의 차단0을 확인했다. 전용 supervisor의 control pipe는 BPF에 상속하지 않고 BPF child에만 parent-death KILL을 적용한다.
+
 ## 검토·상태 기록
 
 - P0 계획: `/root/pf04_evidence_review`의 `PASS_PLAN_ONLY`를 채택했다. R1 권한 부재 대체 경로, R2 raw PMU·FIFO deadline, R3 시험 소유 구분을 반영했고 차단/미해결 지적은0개다. 검토 뒤 상태·receipt만 기록하고 계획 commit을 생성한다.
