@@ -350,7 +350,7 @@ PMU bracket에는 원 loop 밖의 부가 작업이 포함될 수 있다. 도구�
 
 ## 후속 한정 대조: warmup 뒤 교환의 영향
 
-2026-10-25 · **PROPOSED / 계획 선행 commit / 사용자 시험 예외·독립 D2 대기 / 실행 NOT_RUN**. 구현4연결의 성능 수치를 표본에 재사용하지 않는다. 담당·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`다.
+2026-10-25 · **계획 `8444a45` 선행 commit / D2 설계·실행조립 한정 검토 채택 / 사용자 시험 예외 대기 / 대조 실행 NOT_RUN**. 구현4연결의 성능 수치를 표본에 재사용하지 않는다. 담당·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`다.
 
 ### 질문·입력·예산
 
@@ -360,21 +360,34 @@ PMU bracket에는 원 loop 밖의 부가 작업이 포함될 수 있다. 도구�
 - 순서 seed2026102521로5CW+5WC를 섞은 고정 순서는 `CW, WC, WC, CW, CW, CW, WC, WC, WC, CW`다. 각 쌍을 인접하게 실행하되 매 slot 앞 유휴 확인을 한다. 결과를 보고 순서·입력·반복 수를 바꾸지 않는다.
 - worker CPU2·runner/perf CPU3, sibling CPU18을 유지한다. 매 slot 전에 CPU2/18와 disk busy가10초 동안 각각5% 이하인지 한 번만 확인한다. 미달·계측 실패·정답 실패·취소·시간 부족이면 중단하고 나머지는 NOT_RUN이다. 전체 host·CPU를 독점한다고 주장하지 않으며 kernel/boot·전후 host 관측을 보존한다. 재부팅·서비스·host 설정을 바꾸지 않는다.
 - source `759d9952d8a45bffc342eb852ee6f29cc84e3991f7a633becb895cbc09071604`와 release ELF `14d25271a4927a2eac0ce7293afd67bd18c561bf2e34c75eda74f8c8e4909eb2`, 구현 단계의 보존 oracle·수집 source를 그대로 사용한다. 새 build·다른 native 사례·기존 시험 반복은 없다. 각 새 출력만 정확한 path/build·전 scalar/old/final 값·counter oracle로 검산한다.
-- 전체20개 완료,8event reported full coverage·raw unscaled, migration0·major fault0, identity/시간 경계·소유 정리를 요구한다. PMU는 warmup 포함 범위이고 원 loop CPU/latency와 구별한다. 이전4기능 연결이나20Off 진단을 합산하지 않는다.
+- 전체20개 완료,8event reported full coverage·raw unscaled, migration0·측정 STOP rusage delta[3]의 major fault0, identity/시간 경계·소유 정리를 요구한다. rusage 누락이나 원 CPU0/음수는 UNKNOWN 품질 실패다. warmup까지 major fault0이라고 주장하지 않는다. PMU는 warmup 포함 범위이고 원 loop CPU/latency와 구별한다. 이전4기능 연결이나20Off 진단을 합산하지 않는다.
 
 ### 사전 판정과 결과별 조치
 
-주 지표는 각 pair의 **W/C 원 measurement thread CPU 비율**이다.10개 비율의 중앙값과 정렬한 zero-based `[1,8]` 구간을 계산한다. IID 중앙값 조건에서 nominal coverage는1002/1024이며 공유 host·시간순 관측의 독립성을 보장하지 않는다. 비율/경계 비교에는 정수 분수의 교차 곱을 써 반올림으로 판정을 바꾸지 않는다.
+주 지표는 각 pair의 **W/C 원 measurement thread CPU 비율**이다.10개 비율의 중앙값(정렬한 zero-based4·5의 산술평균)과 정렬한 zero-based `[1,8]` 구간을 계산한다. 각 순서 집단5개의 중앙값은 정렬한 index2다. IID 중앙값 조건에서 nominal coverage는1002/1024이며 공유 host·시간순 관측의 독립성을 보장하지 않는다. 비율/경계 비교에는 정수 분수의 교차 곱을 써 반올림으로 판정을 바꾸지 않는다.
 
 CW5개와 WC5개의 주 지표 중앙값 비율이 `[10/11,11/10]` 밖이면 순서 의존으로 UNKNOWN이다. 모든 품질 조건을 만족한20개에서 구간 하한이11/10보다 크거나 상한이10/11보다 작을 때만 **BOUNDARY_SENSITIVITY_OBSERVED**로 분류한다. 각각 wait가 느리거나 빠른 방향을 그대로 보고한다.10%는 이번 가설의 최소 조사 대상이며 원15% CPU/경과·25% p99 한도를 변경하지 않는다.
 
-elapsed·p50/p99·user/kernel instructions/cycles·user ref-cycles·switch/fault·rusage·PMU runtime/coverage·bracket·host delta는 같은 pair의 보조 설명 자료다. 이들 중 유리한 하나를 골라 주 판정을 구제하지 않는다. instruction 수와 CPI·cycles/ref의 변화는 모두 제시하되 PMU 범위 차감·GHz 환산·원 CPU 보정은 하지 않는다.
+elapsed·p50/p99·user/kernel instructions/cycles·user ref-cycles·switch/fault·rusage·PMU runtime/coverage·bracket·host delta는 같은 pair의 보조 설명 자료다. p50은 정렬한 latency의 정확 중앙값, p99는 one-based `ceil(99*n/100)` nearest rank다. 각 수치의 W/C를 같은 pair로 내고,0분모나 정의되지 않은 run 비율은 사유가 있는 null로 표시한다. host의 원 전후·증분은 path/hash로 결합한다. 이들 중 유리한 하나를 골라 주 판정을 구제하지 않는다. instruction 수와 CPI·cycles/ref의 변화는 모두 제시하되 PMU 범위 차감·GHz 환산·원 CPU 보정은 하지 않는다.
 
-- 큰 차이가 지지되면 이 관측 구성의 경계 민감도를 확인한 것으로 한정한다. 향후 원인 관측 설계에서는 continuous 경계를 우선하고, 남은 계측 모드 비용/인수 실행은 별도 계획으로만 다룬다. 이 결과만으로 제품 수정·과거 FAIL 무효화·PF04 PASS를 만들지 않는다.
+- 큰 차이가 지지되면 이 관측 구성의 경계 민감도를 확인한 것으로 한정한다. 향후 원인 관측 설계에서는 더 빠른 수치가 아니라 추가 IPC를 줄이는 목적에서 continuous 경계를 우선하고, 남은 계측 모드 비용/인수 실행은 별도 계획으로만 다룬다. 이 결과만으로 제품 수정·과거 FAIL 무효화·PF04 PASS를 만들지 않는다.
 - 완전하지만 동결한 큰 차이가 지지되지 않으면 `UNKNOWN_NO_FROZEN_LARGE_BOUNDARY_SHIFT`, 불완전·품질/순서 문제는 `UNKNOWN_INCOMPLETE_OR_QUALITY_OR_ORDER`다. 어느 경우에도 자동 추가 실행·환경 조정·가설 사후 변경을 하지 않는다.
 
 ### 실행 조건과 준비 자료
 
 [AGENTS.md](../../AGENTS.md)의 “수정이 발생하지 않은 코드에 대해서는 테스트를 실행하지 않는다”에 해당하는 별도 반복 진단이다. 이전 “허용”은 Off20회로 소진했다. **이10쌍에 한정한 사용자 예외가 있어야 실행**하며, 계획/도구 작성이나 독립 검토만으로 승인된 것으로 보지 않는다. 문서 verifier는 push gate에 남긴다.
 
-준비 루트는 `/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025`, 동결 proposal은 `proposal.json` SHA-256 `ed187f71e3764d278408351ec5d72f63ec5ccc9a3a5026280ee24031caea27b3`다. 실제 driver·분석 규칙·원 source/ELF·입력의 hash와 독립 preflight를 실행 전 연결한다. 준비 상태에서 worker/perf/oracle 실행은0이다.
+준비 루트는 `/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025`, 동결 proposal은 `proposal.json` SHA-256 `b9b4ec8d7679756c185c2fa1c56186369637ac372f1eef97e7501a2a183bc4b4`다. 실제 driver·분석 규칙·원 source/ELF·입력의 hash와 독립 preflight를 실행 전 연결한다. 준비 상태에서 worker/perf/oracle 실행은0이다.
+
+
+### 대조 실행 준비
+
+후속 설계 보완에서 기계 입력의 비율도 정수 분수로 바꾸고 중앙값 산술·측정 rusage major fault 범위를 명시했다. 독립 **PASS_D2_DESIGN_ONLY_EXECUTION_NOT_AUTHORIZED**를 채택하며 차단0개다. `design-review.json` SHA-256은 `5466bf79c8e17b8db9e7b8ef03c6e3e453ff9afd0acb732ac44ef939e4e7deef`이고, 검토 당시 본 절 projection은 `9541f191f3fde856bc6dd9cacbf718fbcdce764c6b7a3277edd4a95396c6020e`다.
+
+같은 준비 루트의 `run.py`는 검증한 구현 단계의 PinnedRunner·수집/정리 경로를 사용한다. 원 host `sample`/`busy` 두 함수만 AST 동일 사본으로 가져오며 기존 driver의 main은 호출하지 않는다. source 전체 지문·입력·ELF·oracle·driver/분석기를 slot 전후 결합하고, authorization과 준비 manifest가 일치해야 시작한다. 소유된 collector/oracle의 취소를 상위에 전달하며 한 실패 뒤 잔여를 NOT_RUN으로 보존한다. 마지막 지문 검사 직후 취소·시간을 다시 확인한다. 분석기도 completed20·cancel null·전체0초 초과900초 이하·각 slot0초 초과60초 이하를 별도로 요구하고 어기면 UNKNOWN이다.
+
+`analyze.py`의 새 주 지표 판정만 합성 입력4함수로 선택 검증했다. 정확10% 양방향 경계와 큰 정수의1단위 차이, 전10쌍 구간·짝수 중앙값, 순서 의존, 누락/실패/중복/비양수 CPU 거절이 PASS다. 이것은 새 분석 코드 시험이며 무변경 제품·기존 도구 시험을 반복하지 않았다. 실제 대조 worker/perf/oracle는 각각0이다.
+
+r1의 `preparation.json` SHA-256 `0f21268c3ac8ff3965b00e9405461d6f601e8d6fff37932f0978475787fbb2a8`과 당시 입력·source·선택4시험은 `r1/`에 함께 보존한다. 최초 proposal `ed187f…`도 `proposal-initial.json`으로 보존했다. 후속 preflight의 취소/예산 지적과 보조 집계 방법 명시를 반영하여 새 summary gate·보조 수치·원자료 reader3함수만 선택 검증해 PASS다. 변경 없는 앞4시험은 반복하지 않았다.
+
+최종 `preparation-r2.json`은 현재 source·driver·분석기·입력·ELF·oracle·r1/r2 원 로그를 결합하며 SHA-256은 `4cadd7aa72ec46a9cc1e1e3193e60cd453160a2130f7d4378230f5fb59c7f4e1`다. 현재 `authorization.json`과 `execution/`는 없다. 새 proposal의 보조 집계 규칙과 실행조립을 포함한 최종 **PASS_SCOPED_D1_D2_PREFLIGHT_EXECUTION_NOT_AUTHORIZED**를 채택했다. 차단0개이며 `preflight-review.json` SHA-256은 `8511bdbe1416e62bee3696aa5e6bca7e1f1fd11c617b48c5dbb0b47afefa5818`다. 검토 당시 본 절 projection은 `33e20affd4acdd34391973bedbd1d3379a093be441c02cdbea0951d1ad1ca04a`다. 이는 준비 한정 검토이며 새 사용자 예외 전에는 실행하지 않는다.
