@@ -3,6 +3,16 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev2-pf04-boundary-comparison-20261025.md": {
+      "path": "evidence/dev2-pf04-boundary-comparison-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 warmup 뒤 관측 경계 대조"
+    },
+    "dev2-pf04-boundary-comparison-20261025.json": {
+      "path": "evidence/dev2-pf04-boundary-comparison-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 warmup 뒤 관측 경계 대조 기록"
+    },
     "dev3-catalog-create.md": {
       "path": "contracts/dev3-catalog-create.md",
       "role": "contract",

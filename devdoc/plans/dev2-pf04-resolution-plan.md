@@ -350,7 +350,7 @@ PMU bracket에는 원 loop 밖의 부가 작업이 포함될 수 있다. 도구�
 
 ## 후속 한정 대조: warmup 뒤 교환의 영향
 
-2026-10-25 · **계획 `8444a45` 선행 commit / D2 설계·실행조립 한정 검토 채택 / 디버깅 적용 범위 정정 / 대조 실행 NOT_RUN**. 구현4연결의 성능 수치를 표본에 재사용하지 않는다. 담당·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`다.
+2026-10-25 · **계획 `8444a45` 선행 commit / D2 설계·실행조립 한정 검토 채택 / 디버깅 적용 범위 정정 / 대조10쌍 완료·UNKNOWN_NO_FROZEN_LARGE_BOUNDARY_SHIFT**. 구현4연결의 성능 수치를 표본에 재사용하지 않는다. 담당·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`다.
 
 ### 질문·입력·예산
 
@@ -390,7 +390,7 @@ elapsed·p50/p99·user/kernel instructions/cycles·user ref-cycles·switch/fault
 
 r1의 `preparation.json` SHA-256 `0f21268c3ac8ff3965b00e9405461d6f601e8d6fff37932f0978475787fbb2a8`과 당시 입력·source·선택4시험은 `r1/`에 함께 보존한다. 최초 proposal `ed187f…`도 `proposal-initial.json`으로 보존했다. 후속 preflight의 취소/예산 지적과 보조 집계 방법 명시를 반영하여 새 summary gate·보조 수치·원자료 reader3함수만 선택 검증해 PASS다. 변경 없는 앞4시험은 반복하지 않았다.
 
-최종 `preparation-r2.json`은 현재 source·driver·분석기·입력·ELF·oracle·r1/r2 원 로그를 결합하며 SHA-256은 `4cadd7aa72ec46a9cc1e1e3193e60cd453160a2130f7d4378230f5fb59c7f4e1`다. 현재 `authorization.json`과 `execution/`는 없다. 새 proposal의 보조 집계 규칙과 실행조립을 포함한 최종 **PASS_SCOPED_D1_D2_PREFLIGHT_EXECUTION_NOT_AUTHORIZED**를 채택했다. 차단0개이며 `preflight-review.json` SHA-256은 `8511bdbe1416e62bee3696aa5e6bca7e1f1fd11c617b48c5dbb0b47afefa5818`다. 검토 당시 본 절 projection은 `33e20affd4acdd34391973bedbd1d3379a093be441c02cdbea0951d1ad1ca04a`다. 이는 당시 추가 예외가 필요하다고 해석한 상태의 준비 검토 기록이다. 아래 적용 범위 정정이 현재 실행 근거이며, 원 검토 receipt는 보존한다.
+최종 `preparation-r2.json`은 현재 source·driver·분석기·입력·ELF·oracle·r1/r2 원 로그를 결합하며 SHA-256은 `4cadd7aa72ec46a9cc1e1e3193e60cd453160a2130f7d4378230f5fb59c7f4e1`다. 당시 준비 시점에는 `authorization.json`과 `execution/`가 없었다. 새 proposal의 보조 집계 규칙과 실행조립을 포함한 최종 **PASS_SCOPED_D1_D2_PREFLIGHT_EXECUTION_NOT_AUTHORIZED**를 채택했다. 차단0개이며 `preflight-review.json` SHA-256은 `8511bdbe1416e62bee3696aa5e6bca7e1f1fd11c617b48c5dbb0b47afefa5818`다. 검토 당시 본 절 projection은 `33e20affd4acdd34391973bedbd1d3379a093be441c02cdbea0951d1ad1ca04a`다. 이는 당시 추가 예외가 필요하다고 해석한 상태의 준비 검토 기록이다. 아래 적용 범위 정정이 현재 실행 근거이며, 원 검토 receipt는 보존한다.
 
 
 ### 디버깅 적용 범위 정정 — 2026-10-25
@@ -400,3 +400,8 @@ r1의 `preparation.json` SHA-256 `0f21268c3ac8ff3965b00e9405461d6f601e8d6fff3793
 원 `run.py`와 `preparation-r2.json`을 그대로 보존하고, `run-debug.py`는 실행 근거 검사만 `scope_correction=debugging_not_development_regression`으로 바꾸며 새 준비 파일을 참조한다. 이 두 literal 치환을 되돌리면 원 driver byte와 정확히 같다. collector·수명·예산·분석기·입력·source·ELF는 변경하지 않는다. 이전 선택 시험을 반복할 이유가 없으며 이 단위는 AST/byte 대조와 독립 변경 검토로 확인한다.
 
 `run-debug.py` SHA-256은 `666ffe14e2ec6b7f23bace5d5f15a37b506683f4ec015716aeb859d9228728c0`, `preparation-debug.json`은 `b80de203237bf74b1de79023da6250c32db9b207232784b6f219183a186f1dd9`다. `authorization.json`에는 실제 사용자 정정 원문·기존 작업 지시·이번 미실행 진단의 범위와 이 준비 지문을 연결한다. 새 예외를 받았다고 기록하지 않는다. 독립 변경 검토 **PASS_SCOPED_DEBUGGING_APPLICABILITY_CORRECTION**를 채택했다. `debug-scope-review.json` SHA-256은 `b764cd37a4392e91896ba7fa24c3d380637f9b3e681108a628ad88022cb1b138`이며 차단0개다. 기존 기술 preflight를 유지하고, 앞의 추가 허용 필요 판단은 이 사용자 적용 범위 정정으로 대체한다. 동결된1회 실행에서 원 조건을 만족하지 못하면 그대로 중단한다.
+
+
+### 경계 대조 완료 — 2026-10-25
+
+동결20slot/10쌍을208.675208초에 한 번 완료했다. 새 출력20개 정답·PMU160행·소유 group60개와 actual collector20개의 종료를 확인했다. CPU W/C paired 중앙1.002127138, [1,8]구간0.991354900–1.015730013, CW/WC중앙비1.010741214로 **UNKNOWN_NO_FROZEN_LARGE_BOUNDARY_SHIFT**다. 큰 경계 효과를 이번 조건에서 관측하지 못했으며 작은 효과·과거 원인 배제를 주장하지 않는다. 재시도·새 build·완료 시험 재실행0, 원 PF04 FAIL·DEV2/B2/D0 미완료다. 원자료·독립 검산·최종 검토·manifest는 [대조 증거](../evidence/dev2-pf04-boundary-comparison-20261025.md)와 연결 JSON을 따른다. 같은 대조는 반복하지 않는다.

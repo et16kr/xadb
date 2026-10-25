@@ -726,4 +726,11 @@ P4 WAL 선확보/data sync도 PF04 상대 비용의 해결책으로 채택할 �
 
 계획 `12096d4` 뒤 K0 private gate에 명시적인 prewarmup continuous/wait 두 모드를 구현했다. 둘 다 warmup 앞에서 PMU를 한 번 enable하며 continuous는 warmup 뒤 추가 IPC 없이, wait는 추가 START/GO 뒤 측정에 진입한다. 새 PMU는 warmup+drain+measurement+control bracket이고 기존 loop 지표·원 인수 path와 구분한다. 기본 모드와 비활성 경로는 유지한다.
 
-[선택 증거](../evidence/dev2-pf04-prewarmup-20261025.md)는 Python6·Rust5·compile/Clippy/release/fmt와 실제4연결의 정답·정리 PASS를 보존한다. 동시 DEV3 변경을 제외한 source의 검증이며 최종 독립 검토 상태는 연결 증거를 따른다. 경계 효과는 미평가이고 기존20회 UNKNOWN·원 PF04 네 FAIL·DEV2/B2/D0 미완료를 유지한다. 성능/인과 campaign은 별도 동결·시험 예외 전에는 실행하지 않는다.
+[선택 증거](../evidence/dev2-pf04-prewarmup-20261025.md)는 Python6·Rust5·compile/Clippy/release/fmt와 실제4연결의 정답·정리 PASS를 보존한다. 동시 DEV3 변경을 제외한 source의 검증이며 최종 독립 검토 상태는 연결 증거를 따른다. 구현 검증 당시 경계 효과는 미평가였다. 후속 사용자 정정에 따라 PF04 원인 진단은 개발 회귀 제한과 구분하며 별도 예외 승인 없이 아래 동결 대조를 진행했다.
+
+
+<a id="dev2-pf04-boundary-comparison-20261025"></a>
+
+## DEV2 PF04 warmup 뒤 관측 경계 대조 — 2026-10-25
+
+[동결 디버깅10쌍](../evidence/dev2-pf04-boundary-comparison-20261025.md)을208.675208초에 완료했다. 새 출력20개·PMU160행·소유 process 정리와 독립 원자료 검산을 확인했다. CPU W/C 중앙1.002127138, 구간0.991354900–1.015730013로 큰 경계 효과는 UNKNOWN이다. 작은 효과·과거 원인 배제나 성능 인수 완료를 뜻하지 않는다. 원 PF04 네 FAIL·DEV2/B2/D0 미완료, 기존 후보 기각과 완료 증거를 유지한다. 다음에는 모드별 추가 작업과 실행 간 변동을 구분할 진단을 동결한다.
