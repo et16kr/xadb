@@ -345,3 +345,36 @@ PMU bracket에는 원 loop 밖의 부가 작업이 포함될 수 있다. 도구�
 ### 구현·기능 연결 완료
 
 [source별 실행 기록](../evidence/dev2-pf04-prewarmup-20261025.json)에 Python6·Rust5·관련 정적 검사와4연결/4정답 검산의 PASS를 보존했다. PMU3연결은 각각8event reported100.00%, 비활성1연결은 원 출력 의미를 유지했다. 전체1.532522243초·재시도0이며 성능 효과는 평가하지 않았다. `go_ns`/`armed_go_ns`는 send 직전 송신 하한으로 해석한다. 최종 독립 D1/D2를 구현·기능·증거 범위로 한정 채택했으며 원 PF04·DEV2를 승격하지 않는다.
+
+<a id="boundary-comparison"></a>
+
+## 후속 한정 대조: warmup 뒤 교환의 영향
+
+2026-10-25 · **PROPOSED / 계획 선행 commit / 사용자 시험 예외·독립 D2 대기 / 실행 NOT_RUN**. 구현4연결의 성능 수치를 표본에 재사용하지 않는다. 담당·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`다.
+
+### 질문·입력·예산
+
+새 도구로 구분할 질문은 “동일 ELF와 warmup 포함 PMU 범위에서 warmup 뒤 START/GO가 원 측정 CPU를 크게 바꾸는가”다. 제품 계측의 Off/Always/Detailed 상대 비용이나 과거 FAIL의 원인 확정은 이 실험의 질문이 아니다. C는 `prewarmup-continuous-v1`, W는 `prewarmup-wait-v1`이고 두 경로 모두 Off, seed20261018·128행·old snapshot·capacity256·warmup4096·measure65536·stride16을 사용한다.
+
+- **10쌍·20slot·campaign1회·재시도0·전체900초**다. slot60초 중 유휴 확인10초, 수집 최대28초, 수집 정리10초, oracle4초·정리5초를 배정한다. 남은 총 예산이60초 미만이면 새 slot을 시작하지 않는다. 실행 뒤 읽기 분석·독립 검토 시간은900초에 포함되지 않는다.
+- 순서 seed2026102521로5CW+5WC를 섞은 고정 순서는 `CW, WC, WC, CW, CW, CW, WC, WC, WC, CW`다. 각 쌍을 인접하게 실행하되 매 slot 앞 유휴 확인을 한다. 결과를 보고 순서·입력·반복 수를 바꾸지 않는다.
+- worker CPU2·runner/perf CPU3, sibling CPU18을 유지한다. 매 slot 전에 CPU2/18와 disk busy가10초 동안 각각5% 이하인지 한 번만 확인한다. 미달·계측 실패·정답 실패·취소·시간 부족이면 중단하고 나머지는 NOT_RUN이다. 전체 host·CPU를 독점한다고 주장하지 않으며 kernel/boot·전후 host 관측을 보존한다. 재부팅·서비스·host 설정을 바꾸지 않는다.
+- source `759d9952d8a45bffc342eb852ee6f29cc84e3991f7a633becb895cbc09071604`와 release ELF `14d25271a4927a2eac0ce7293afd67bd18c561bf2e34c75eda74f8c8e4909eb2`, 구현 단계의 보존 oracle·수집 source를 그대로 사용한다. 새 build·다른 native 사례·기존 시험 반복은 없다. 각 새 출력만 정확한 path/build·전 scalar/old/final 값·counter oracle로 검산한다.
+- 전체20개 완료,8event reported full coverage·raw unscaled, migration0·major fault0, identity/시간 경계·소유 정리를 요구한다. PMU는 warmup 포함 범위이고 원 loop CPU/latency와 구별한다. 이전4기능 연결이나20Off 진단을 합산하지 않는다.
+
+### 사전 판정과 결과별 조치
+
+주 지표는 각 pair의 **W/C 원 measurement thread CPU 비율**이다.10개 비율의 중앙값과 정렬한 zero-based `[1,8]` 구간을 계산한다. IID 중앙값 조건에서 nominal coverage는1002/1024이며 공유 host·시간순 관측의 독립성을 보장하지 않는다. 비율/경계 비교에는 정수 분수의 교차 곱을 써 반올림으로 판정을 바꾸지 않는다.
+
+CW5개와 WC5개의 주 지표 중앙값 비율이 `[10/11,11/10]` 밖이면 순서 의존으로 UNKNOWN이다. 모든 품질 조건을 만족한20개에서 구간 하한이11/10보다 크거나 상한이10/11보다 작을 때만 **BOUNDARY_SENSITIVITY_OBSERVED**로 분류한다. 각각 wait가 느리거나 빠른 방향을 그대로 보고한다.10%는 이번 가설의 최소 조사 대상이며 원15% CPU/경과·25% p99 한도를 변경하지 않는다.
+
+elapsed·p50/p99·user/kernel instructions/cycles·user ref-cycles·switch/fault·rusage·PMU runtime/coverage·bracket·host delta는 같은 pair의 보조 설명 자료다. 이들 중 유리한 하나를 골라 주 판정을 구제하지 않는다. instruction 수와 CPI·cycles/ref의 변화는 모두 제시하되 PMU 범위 차감·GHz 환산·원 CPU 보정은 하지 않는다.
+
+- 큰 차이가 지지되면 이 관측 구성의 경계 민감도를 확인한 것으로 한정한다. 향후 원인 관측 설계에서는 continuous 경계를 우선하고, 남은 계측 모드 비용/인수 실행은 별도 계획으로만 다룬다. 이 결과만으로 제품 수정·과거 FAIL 무효화·PF04 PASS를 만들지 않는다.
+- 완전하지만 동결한 큰 차이가 지지되지 않으면 `UNKNOWN_NO_FROZEN_LARGE_BOUNDARY_SHIFT`, 불완전·품질/순서 문제는 `UNKNOWN_INCOMPLETE_OR_QUALITY_OR_ORDER`다. 어느 경우에도 자동 추가 실행·환경 조정·가설 사후 변경을 하지 않는다.
+
+### 실행 조건과 준비 자료
+
+[AGENTS.md](../../AGENTS.md)의 “수정이 발생하지 않은 코드에 대해서는 테스트를 실행하지 않는다”에 해당하는 별도 반복 진단이다. 이전 “허용”은 Off20회로 소진했다. **이10쌍에 한정한 사용자 예외가 있어야 실행**하며, 계획/도구 작성이나 독립 검토만으로 승인된 것으로 보지 않는다. 문서 verifier는 push gate에 남긴다.
+
+준비 루트는 `/home/et16/xadb-dev2-evidence/pf04-boundary-comparison-20261025`, 동결 proposal은 `proposal.json` SHA-256 `ed187f71e3764d278408351ec5d72f63ec5ccc9a3a5026280ee24031caea27b3`다. 실제 driver·분석 규칙·원 source/ELF·입력의 hash와 독립 preflight를 실행 전 연결한다. 준비 상태에서 worker/perf/oracle 실행은0이다.
