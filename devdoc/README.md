@@ -1,6 +1,8 @@
 # XADB 개발 문서
 
-2026-10-25 [DEV2 PF04 P1 관측 도구](evidence/dev2-pf04-window-20261025.md): 계획 선행 commit 뒤 측정 경계·bounded runner를 구현하고 변경 범위만 선택 검증했다. 원 실패·실제 PMU UNAVAILABLE·PF04/DEV2 미완료를 유지한다.
+2026-10-25 [DEV2 PF04 실제 PMU 수집 후속](evidence/dev2-pf04-pmu-20261025.md): 승인된 CAP_PERFMON 경로로 실제6개 counter 수집과 권한·중단 정리를 선택 검증했다. worker의 일반 사용자 상태와 기존 실패를 보존하며 PF04/DEV2는 미완료다.
+
+2026-10-25 [DEV2 PF04 P1 관측 도구](evidence/dev2-pf04-window-20261025.md): 계획 선행 commit 뒤 측정 경계·bounded runner를 구현하고 변경 범위만 선택 검증했다. 원 실패·당시 일반 사용자 PMU UNAVAILABLE 증거와 PF04/DEV2 미완료를 유지한다.
 
 2026-10-25 [DEV2 PF04 해결 단계와 커밋 계획](plans/dev2-pf04-resolution-plan.md): 사용자 요청에 따라 계획을 먼저 commit하고 P1 측정 구간 관측 도구부터 시작한다. 단계별 변경 검증·독립 검토·commit을 구분하며 원 실패와 DEV2 미완료를 유지한다.
 

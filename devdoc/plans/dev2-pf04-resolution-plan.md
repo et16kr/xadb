@@ -34,7 +34,7 @@ P2의 새로운 탐색은 이전 종료한3후보 예산에 추가하지 않는�
 ### 경계와 관측 의미
 
 1. worker가 준비 단계에 소유된 로컬 Unix socket으로 연결한다. runner는 OS peer PID와 자신이 생성한 child PID, worker PID/TID·process starttime·source·workload·실행 token을 대조한다. 단일 main-thread driver만 지원하며 TID=child PID를 확인한다. 불일치하면 측정에 진입하지 않는다.
-2. runner는 자신의 worker TID만 대상으로 perf stat을 disabled 상태로 준비한다. `--no-inherit`와 `--no-scale`을 사용해 후손을 제외하고 unscaled count를 수집한다. 명시적 OS 권한 변경·sudo·공유 host tuning을 자동 수행하지 않는다. 준비 단계에서 확인된 미지원/권한 거절만 원 오류·`UNAVAILABLE`과 명시적 `RUSAGE_ONLY`로 보존하고 진행한다. attach 이후 enable/disable ACK 실패·중간 소실은 진단 실패다.
+2. runner는 자신의 worker TID만 대상으로 perf stat을 disabled 상태로 준비한다. `--no-inherit`와 `--no-scale`을 사용해 후손을 제외하고 unscaled count를 수집한다. 기본 모드는 OS 권한 변경·sudo·공유 host tuning을 자동 수행하지 않는다. 후속 사용자 승인에 따른 명시적 특권 수집은 아래 보완 계약을 따른다. 준비 단계에서 확인된 미지원/권한 거절만 원 오류·`UNAVAILABLE`과 명시적 `RUSAGE_ONLY`로 보존하고 진행한다. attach 이후 enable/disable ACK 실패·중간 소실은 진단 실패다.
 3. 기존 warmup 뒤 worker가 START를 보내고 runner가 PMU 모드에서는 perf enable ACK를 확인한 뒤, 준비 단계에서 확정한 RUSAGE_ONLY 모드에서는 해당 모드를 명시해 진행을 허용한다. worker는 추가 경계 monotonic timestamp와 calling-thread rusage를 얻고 기존 측정 loop를 수행한다. 측정 loop의 workload·warmup·길이·표본화·원 clock은 바꾸지 않는다.
 4. 기존 측정 endpoint 직후 경계 timestamp와 rusage를 얻고 STOP을 전달한다. runner는 PMU 모드에서는 perf disable ACK를 확인하고, RUSAGE_ONLY에서는 해당 모드의 종료 응답을 준다. 경계 protocol 실패는 진단 실패이며 기존 제품 오류·부분 완료를 숨기지 않는다.
 5. PMU가 덮는 구간에는 시작/종료 handshake 등의 부가 작업이 포함될 수 있다. worker 경계·원 측정 길이·runner enable/disable bracket을 모두 보존한다. 이를 loop만의 정확한 PMU 수치나 순수 CPU 주파수로 표시하지 않는다.
@@ -48,6 +48,19 @@ P2의 새로운 탐색은 이전 종료한3후보 예산에 추가하지 않는�
 - 단일 실행 입력 최대64KiB, stdout 최대4MiB, stderr/perf 자료 각각1MiB, control line512bytes로 제한한다. deadline·용량 초과·worker 실패·부분 output·정리 실패는 따로 남기고 성공으로 절단하지 않는다.
 - 결과 디렉터리는 새로 생성하고 덮어쓰지 않는다. 입력·worker SHA-256·source 기대값·runner/hash·명령·원 output·PMU raw·phase bracket·미지원·실패·정리 상태를 연결한다. 합격 판정은 도구 계약 범위이며 `performance_acceptance=NOT_APPLICABLE`을 고정한다.
 - 실제 경계 비용은 측정값으로 보존한다. 인위적으로 빼거나 한도를 낮춰 인수 결과를 만들지 않는다. 수집 영향이 충분히 분리되기 전에는 원인 확정이나 성능 개선을 주장하지 않는다.
+
+<a id="p1-privileged-perf"></a>
+
+## P1 후속: 승인된 실제 PMU 수집
+
+2026-10-25 사용자는 sudo 권한이 있으면 해결을 진행해야 한다고 정정했고, 일시 중지 뒤 “이어서 해주세요”로 재개했다. 기존 일반 사용자 실행의 UNAVAILABLE은 원 source의 증거로 보존한다. 새 경로는 D2이며 작업·계약·통합 담당 `/root`, 별도 검토자 `/root/pf04_evidence_review`다.
+
+- 명시적 `--perf-privilege sudo-cap-perfmon`에서만 `sudo -n → setpriv → 설치된 /usr/bin/perf`를 사용한다. 세 도구의 실제 경로·상위 디렉터리는 root 소유이며 group/other 쓰기가 없어야 한다. 임의 perf fixture의 특권 실행은 거절한다.
+- worker는 일반 UID/GID·기존 그룹/capability 상태를 유지하며 caller의 permitted/effective/ambient는0이어야 한다. perf는 호출자 UID/GID, 보조 그룹 없음, CAP_PERFMON만 inheritable/permitted/effective/bounding/ambient에 보유하고 no-new-privs를 적용한다. sudo supervisor의 EUID0·전체 capability는 이 launcher의 준비·감독 범위에 존재하며 perf 자체 권한과 구분해 기록한다.
+- `PATH=/usr/bin:/bin`, `LC_ALL=C`, 임시 작업 HOME, `PERF_CONFIG=/dev/null`의 최소 환경을 사용한다. 사용자 perf config·loader 환경을 상속하지 않는다. sysctl, 설치 파일 capability, 부팅/서비스 설정을 변경하지 않는다.
+- perf의 UID/GID/capability·명령·소유 session/group을 READY 전에 확인한다. 실제 collector는 sudo supervisor와 별도로 pidfd를 보관하여 PID 재사용 없이 종료를 확인하고, group이 달라 거절될 때도 해당 직접 자식을 종료한다. launcher 정리 뒤 pin한 collector가 남아 있으면 pidfd KILL 후 추가 최대2초로 종료를 확인한다. stdin DEVNULL, stdout/stderr pipe, 새 session으로 controlling TTY 없이 실행한다. 정리 확인은 소유 group과 pin한 직접 collector 범위이며, pin 전에 거절한 미확인 복수/중첩 topology의 외부 descendant까지 보장하지 않는다. sudo의 임의 policy plugin이나 적대적 descendant를 봉쇄하는 sandbox는 아니며 외부 SIGKILL에서 runner finally가 실행된다고 주장하지 않는다.
+- 신규 선택 검증은 명령/권한 반례, 임의 실행 파일 거절, 실제 PMU synthetic 구간, 준비 중 취소·identity 거절, 활성 상태 SIGINT/SIGTERM/deadline 정리다. 기본 호출 인자 연결이 변경되므로 기존 fake PMU 연결 사례1개만 관련 회귀로 선택한다. Rust hook·완료 native·원 성능 campaign·문서 verifier를 반복하지 않는다.
+- 실제 구간 counter·coverage·rusage·bracket과 sudo/perf/worker identity·종료 상태를 보존한다. `performance_acceptance=NOT_APPLICABLE`, PF04 네 실패·DEV2 미완료는 유지한다. 실행 전 diff·선택 이유·source를 보존하고 최종 독립 검토 뒤 후속 commit한다.
 
 ## P1 필수 선택 검증
 
@@ -67,6 +80,6 @@ P2의 새로운 탐색은 이전 종료한3후보 예산에 추가하지 않는�
 
 - P0 계획: `/root/pf04_evidence_review`의 `PASS_PLAN_ONLY`를 채택했다. R1 권한 부재 대체 경로, R2 raw PMU·FIFO deadline, R3 시험 소유 구분을 반영했고 차단/미해결 지적은0개다. 검토 뒤 상태·receipt만 기록하고 계획 commit을 생성한다.
 - 검토 receipt: `/home/et16/xadb-dev2-evidence/pf04-analysis-20261025/plan-review.json`, SHA-256 `f0b15ad3063f9f02716c2d3f1d812bf9c8048c02e3d840b20affc50f9c3571c2`. 검토 본문 projection SHA-256 `903f30baec57dfb17855debd644e725887b5a9471b2ca32e42dfe64dc69d2124`는 상단 상태와 본 절을 제외한다. 계획 채택은 구현·시험 실행 증거가 아니다.
-- P1 도구 구현·선택 검증: 계획 commit `82c14ba` 뒤 수행했다. [source별 실행 기록](../evidence/dev2-pf04-window-20261025.md)을 따르며 실제 PMU는 UNAVAILABLE, 최종 독립 검토는 해당 기록의 채택 상태를 따른다. P0 검토 projection은 계획 commit 시점의 본문에 해당한다.
+- P1 도구 구현·선택 검증: 계획 commit `82c14ba` 뒤 수행했다. [source별 실행 기록](../evidence/dev2-pf04-window-20261025.md)을 따르며 당시 일반 사용자 PMU는 UNAVAILABLE이었다. 승인된 후속의 [실제 PMU 수집·선택 검증](../evidence/dev2-pf04-pmu-20261025.md)을 별도 연결하며 최종 독립 검토는 각 기록의 채택 상태를 따른다. P0 검토 projection은 계획 commit 시점의 본문에 해당한다.
 - P2–P4: 진입 전. 구체 대안·새 실행 profile은 별도 검토한다.
 - 원 PF04 네 실패와 DEV2/B2/D0 INCOMPLETE: 유지.

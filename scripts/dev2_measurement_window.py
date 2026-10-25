@@ -27,6 +27,8 @@ EVENTS = ('cycles:u', 'instructions:u', 'ref-cycles:u', 'context-switches',
 CAP = 1024 * 1024
 LINE_CAP = 512
 SUFFIX = '.diagnostic_window.v1'
+PERFMON = 1 << 38
+PRIVILEGES = ('none', 'sudo-cap-perfmon')
 
 
 class DiagnosticError(Exception):
@@ -46,6 +48,74 @@ def digest(path):
 def starttime(pid):
     # comm may contain spaces and parentheses; fields after its final ')' start at 3.
     return int(Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()[19])
+
+
+def trusted_tool(path):
+    """Privilege mode uses fixed, root-controlled installed tools only."""
+    resolved = Path(path).resolve(strict=True)
+    for item in (resolved, *resolved.parents):
+        info = item.stat()
+        require(info.st_uid == 0 and not info.st_mode & 0o022,
+                f'privilege tool/path is not root controlled: {item}')
+    require(resolved.is_file() and os.access(resolved, os.X_OK), 'privilege tool is not executable')
+    return resolved
+
+
+def perf_invocation(command, privilege, work):
+    require(privilege in PRIVILEGES, 'unsupported perf privilege mode')
+    if privilege == 'none':
+        return command, {'mode': privilege}
+    uid, gid = os.getuid(), os.getgid()
+    require(uid != 0 and os.geteuid() == uid and os.getegid() == gid,
+            'privileged perf requires an ordinary caller')
+    caller = process_identity(os.getpid())
+    require(all(caller['caps'][k] == 0 for k in ('CapPrm', 'CapEff', 'CapAmb')),
+            'privileged perf requires a caller without usable capabilities')
+    paths = [trusted_tool(p) for p in ('/usr/bin/sudo', '/usr/bin/setpriv', '/usr/bin/perf')]
+    sudo, setpriv, perf = paths
+    require(Path(command[0]).resolve() == perf, 'privileged mode only supports installed /usr/bin/perf')
+    command = [str(perf), *command[1:]]
+    environment = {'PATH': '/usr/bin:/bin', 'LC_ALL': 'C', 'HOME': str(work), 'PERF_CONFIG': '/dev/null'}
+    wrapped = [str(sudo), '-n', '--preserve-env=' + ','.join(environment), '--',
+               str(setpriv), f'--reuid={uid}', f'--regid={gid}',
+               '--clear-groups', '--inh-caps=-all,+perfmon', '--ambient-caps=-all,+perfmon',
+               '--bounding-set=-all,+perfmon', '--no-new-privs', '--pdeathsig=KILL', '--', *command]
+    return wrapped, {'mode': privilege, 'uid': uid, 'gid': gid, 'perf_command': command,
+                     'caller': caller,
+                     'environment': environment,
+                     'tools': [{'path': str(p), 'sha256': digest(p)} for p in paths]}
+
+
+def process_identity(pid):
+    proc = Path(f'/proc/{pid}')
+    status = dict(line.split(':', 1) for line in (proc / 'status').read_text().splitlines())
+    return {'pid': pid, 'starttime': starttime(pid), 'pgid': os.getpgid(pid), 'sid': os.getsid(pid),
+            'ppid': int(status['PPid']), 'uids': list(map(int, status['Uid'].split())),
+            'gids': list(map(int, status['Gid'].split())), 'groups': list(map(int, status['Groups'].split())),
+            'caps': {k: int(status[k], 16) for k in ('CapInh', 'CapPrm', 'CapEff', 'CapBnd', 'CapAmb')},
+            'no_new_privs': int(status['NoNewPrivs']),
+            'command': (proc / 'cmdline').read_bytes().rstrip(b'\0').decode().split('\0')}
+
+
+def validate_worker_identity(worker, policy):
+    uid, gid = policy['uid'], policy['gid']
+    require(worker['uids'] == [uid] * 4 and worker['gids'] == [gid] * 4 and
+            worker['caps'] == policy['caller']['caps'] and worker['groups'] == policy['caller']['groups'],
+            'worker must remain unprivileged')
+
+
+def validate_perf_identity(launcher, collector, worker, policy):
+    uid, gid = policy['uid'], policy['gid']
+    validate_worker_identity(worker, policy)
+    require(launcher['uids'][0] == uid and launcher['pgid'] == launcher['pid'] == launcher['sid'],
+            'perf launcher must remain signalable in its owned session')
+    require(collector['pgid'] == collector['sid'] == launcher['pid'] and
+            (collector['pid'] == launcher['pid'] or collector['ppid'] == launcher['pid']),
+            'perf escaped owned process group')
+    require(collector['uids'] == [uid] * 4 and collector['gids'] == [gid] * 4 and
+            collector['groups'] == [] and collector['no_new_privs'] == 1 and
+            all(v == PERFMON for v in collector['caps'].values()), 'perf capability/identity mismatch')
+    require(collector['command'] == policy['perf_command'], 'perf command mismatch')
 
 
 def parse_perf(raw):
@@ -213,6 +283,56 @@ class Owned:
         return self.cleanup
 
 
+class PrivilegedPerf(Owned):
+    """Pin the actual perf child separately from its sudo supervisor."""
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.member = None
+
+    def pin_collector(self, identity):
+        if identity['pid'] == self.pid:
+            return
+        fd = os.pidfd_open(identity['pid'])
+        try:
+            current = process_identity(identity['pid'])
+            require(current['starttime'] == identity['starttime'] and current['ppid'] == self.pid,
+                    'perf child identity changed before pinning')
+        except Exception:
+            os.close(fd)
+            raise
+        self.member = (fd, identity['pid'], identity['starttime'])
+
+    def finish(self):
+        errors = []
+        result = None
+        try:
+            try:
+                result = super().finish()
+            except Exception as error:
+                errors.append(f'launcher cleanup: {error!r}')
+            result = result or self.cleanup or {'pid': self.pid, 'starttime': self.start,
+                'returncode': None, 'signals': [], 'group_gone': False,
+                'output_overflow': any(c.overflow for c in self.captures), 'capture_errors': []}
+            if self.member:
+                fd, pid, epoch = self.member
+                # A verified direct collector may have an unsupported group.
+                # pidfd never signals a reused PID, even after sudo reaps it.
+                exited = bool(select.select([fd], [], [], 0)[0])
+                try:
+                    if not exited:
+                        signal.pidfd_send_signal(fd, signal.SIGKILL)
+                        exited = bool(select.select([fd], [], [], 2)[0])
+                except OSError as error:
+                    errors.append(f'collector cleanup: {error!r}')
+                result['collector'] = {'pid': pid, 'starttime': epoch, 'exited': exited}
+                result['group_gone'] &= exited
+            result['capture_errors'].extend(errors)
+            return result
+        finally:
+            if self.member:
+                os.close(self.member[0])
+
+
 class PerfAck:
     """One outstanding FIFO command; tolerate a split optional NUL terminator.
 
@@ -272,8 +392,8 @@ class Runner:
                 return value
             time.sleep(.001)
 
-    def spawn(self, command, work, env, stdin, name, cap):
-        child = Owned(command, work, env, stdin, self.directory / name, cap)
+    def spawn(self, command, work, env, stdin, name, cap, owned_type=Owned):
+        child = owned_type(command, work, env, stdin, self.directory / name, cap)
         self.children.append(child)
         child.start = starttime(child.pid)
         for pipe, suffix, limit in ((child.process.stdout, '.stdout', cap), (child.process.stderr, '.stderr', CAP)):
@@ -329,8 +449,10 @@ class Runner:
                 pass
             time.sleep(.001)
 
-    def prepare_perf(self, executable, work, pid, control_dir):
+    def prepare_perf(self, executable, work, pid, control_dir, privilege='none'):
+        require(privilege in PRIVILEGES, 'unsupported perf privilege mode')
         if executable is None:
+            require(privilege == 'none', 'privileged mode requires installed perf')
             self.record['pmu'] = {'status': 'UNAVAILABLE', 'reason': 'no perf executable selected or available'}
             return None
         ctl_path, ack_path = control_dir / 'ctl', control_dir / 'ack'
@@ -345,7 +467,15 @@ class Runner:
                    '-x', ';', '--log-fd', '1', '-e', ','.join(EVENTS), '--delay=-1',
                    '--control', f'fifo:{ctl_path},{ack_path}', '--tid', str(pid)]
         self.record['perf_executable'] = {'path': str(executable), 'sha256': digest(executable)}
-        perf = self.spawn(command, work, os.environ.copy(), subprocess.DEVNULL, 'perf', CAP)
+        command, policy = perf_invocation(command, privilege, work)
+        self.record['perf_privilege'] = policy
+        if privilege != 'none':
+            worker = process_identity(pid)
+            policy['worker_before_attach'] = worker
+            validate_worker_identity(worker, policy)
+        env = policy.get('environment', os.environ.copy())
+        perf = self.spawn(command, work, env, subprocess.DEVNULL, 'perf', CAP,
+                          PrivilegedPerf if privilege != 'none' else Owned)
         try:
             self.perf_command('disable', ctl, ack, perf, timeout=1)
         except DiagnosticError:
@@ -359,10 +489,23 @@ class Runner:
                 self.record['pmu'] = {'status': 'UNAVAILABLE', 'reason': text}
                 return None
             raise
+        if privilege != 'none':
+            launcher = process_identity(perf.pid)
+            collector = launcher
+            if launcher['command'] != policy['perf_command']:
+                children = Path(f'/proc/{perf.pid}/task/{perf.pid}/children').read_text().split()
+                require(len(children) == 1, 'unexpected sudo process topology')
+                collector = process_identity(int(children[0]))
+            perf.pin_collector(collector)
+            worker = process_identity(pid)
+            # Save even a rejected identity, before refusing to enable counters.
+            policy['observed'] = {'launcher': launcher, 'collector': collector, 'worker': worker}
+            require(launcher['starttime'] == perf.start, 'perf launcher starttime changed')
+            validate_perf_identity(launcher, collector, worker, policy)
         self.record['pmu'] = {'status': 'ATTACHED', 'tid': pid}
         return perf
 
-    def observe(self, worker, input_file, source, workload, perf_executable, affinity=None):
+    def observe(self, worker, input_file, source, workload, perf_executable, affinity=None, perf_privilege='none'):
         self.fifos = ()
         token = secrets.token_hex(16)
         work = self.directory / 'work'
@@ -398,7 +541,7 @@ class Runner:
                     peer_pid = struct.unpack('3i', peer.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))[0]
                     validate_hello(hello, peer_pid, child.pid, child.start, source, workload, token)
                     self.record['identity'] = {'hello': hello, 'peer_pid': peer_pid, 'starttime': child.start}
-                    perf = self.prepare_perf(perf_executable, work, child.pid, local)
+                    perf = self.prepare_perf(perf_executable, work, child.pid, local, perf_privilege)
                     mode = 'PMU' if perf else 'RUSAGE_ONLY'
                     self.record['mode'] = mode
                     self.send(peer, f'READY {token} {mode}', end)
@@ -482,10 +625,12 @@ def bounded_input(path):
         os.close(fd)
 
 
-def collect(worker, input_file, source, workload, output, *, deadline=30, perf=None, affinity=None):
+def collect(worker, input_file, source, workload, output, *, deadline=30, perf=None, affinity=None,
+            perf_privilege='none'):
     require(0 < deadline <= 60, 'deadline must be in (0, 60]')
     require(len(source) == 64 and all(v in '0123456789abcdef' for v in source), 'source SHA256 required')
     require(workload in ('k0', 'durable', 'synthetic'), 'unsupported workload')
+    require(perf_privilege in PRIVILEGES, 'unsupported perf privilege mode')
     input_bytes = bounded_input(input_file)
     output = output.resolve()
     output.mkdir(mode=0o700)  # Never overwrite an existing result, even on retry.
@@ -497,7 +642,7 @@ def collect(worker, input_file, source, workload, output, *, deadline=30, perf=N
     try:
         for sig in (signal.SIGINT, signal.SIGTERM):
             old_handlers[sig] = signal.signal(sig, interrupt)
-        run.observe(worker.resolve(), output / 'input.bin', source, workload, perf, affinity)
+        run.observe(worker.resolve(), output / 'input.bin', source, workload, perf, affinity, perf_privilege)
     except Exception as error:
         run.record['error'] = f'{type(error).__name__}: {error}'
     finally:
@@ -529,9 +674,12 @@ def main():
     parser.add_argument('--deadline', type=float, default=30)
     parser.add_argument('--affinity', type=int)
     parser.add_argument('--perf', type=Path, default=shutil.which('perf'))
+    parser.add_argument('--perf-privilege', choices=PRIVILEGES, default='none',
+                        help='explicit opt-in: sudo drops to caller with only CAP_PERFMON for installed perf')
     args = parser.parse_args()
     result = collect(args.worker, args.input, args.source, args.workload, args.output.resolve(),
-                     deadline=args.deadline, perf=args.perf, affinity=args.affinity)
+                     deadline=args.deadline, perf=args.perf, affinity=args.affinity,
+                     perf_privilege=args.perf_privilege)
     print(json.dumps({'status': result['status'], 'mode': result.get('mode'), 'output': str(args.output)}))
     return 0 if result['status'] == 'COLLECTED_DIAGNOSTIC_ONLY' else 1
 

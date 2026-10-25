@@ -43,6 +43,10 @@ with socket.socket(socket.AF_UNIX) as peer:
         time.sleep(120)
     send(f'START {token}')
     assert receive() == f'GO {token} {mode}'
+    if behavior == 'active-hang':
+        # Privilege-path cancellation must occur after the actual perf attach.
+        print('ACTIVE_WINDOW', flush=True)
+        time.sleep(120)
     start = time.monotonic_ns()
     before = usage()
     measured = time.monotonic_ns()

@@ -669,4 +669,6 @@ ELF에는 symbol table·DWARF가 없어 줄 번호를 직접 조회하지 않았
 
 ## PF04 P1 측정 구간 관측 도구 — 2026-10-25
 
-[계획](../plans/dev2-pf04-resolution-plan.md)을 `82c14ba`로 먼저 커밋한 뒤 platform 관측 primitive·worker private gate·bounded runner를 구현했다. [선택 검증과 원 실패](../evidence/dev2-pf04-window-20261025.md)는 source별로 보존한다. 신규24개 시험 함수와8개 native 연결 사례를 변경 범위에 따라 검증했으며 최종 source 전수를 주장하지 않는다. 실제 PMU는 권한 제한으로 UNAVAILABLE이고 RUSAGE_ONLY 수집·도구 실패 정리만 해당 범위에서 확인했다. P2–P4·원 PF04 네 FAIL·DEV2 미완료는 유지한다. 최종 독립 검토는 증거 문서의 채택 상태를 따른다.
+[계획](../plans/dev2-pf04-resolution-plan.md)을 `82c14ba`로 먼저 커밋한 뒤 platform 관측 primitive·worker private gate·bounded runner를 구현했다. [선택 검증과 원 실패](../evidence/dev2-pf04-window-20261025.md)는 source별로 보존한다. 신규24개 시험 함수와8개 native 연결 사례를 변경 범위에 따라 검증했으며 최종 source 전수를 주장하지 않는다. 최초 일반 사용자 PMU는 권한 제한으로 UNAVAILABLE이었고 RUSAGE_ONLY 수집·도구 실패 정리만 당시 범위에서 확인했다. P2–P4·원 PF04 네 FAIL·DEV2 미완료는 유지한다. 최종 독립 검토는 증거 문서의 채택 상태를 따른다.
+
+후속 사용자 승인으로 [실제 PMU 수집 경로](../evidence/dev2-pf04-pmu-20261025.md)를 추가했다. `scripts/dev2_measurement_window.py`의 `--perf-privilege sudo-cap-perfmon`은 설치된 perf에만 CAP_PERFMON을 주고 worker의 일반 사용자 상태를 유지한다. 실제 synthetic 구간의6개 counter와 coverage100%, 권한·signal/deadline·pidfd 정리를 source별 선택 검증했다. 기본 호출은 기존 무특권 경로다. 기존 native/Rust/제품 시험은 반복하지 않았고, PMU 자료는 진단용으로서 PF04 인수 PASS가 아니다.

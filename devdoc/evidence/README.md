@@ -1,6 +1,8 @@
 # XADB 조사·실행 증거
 
-- [DEV2 PF04 P1 측정 구간 관측 도구](dev2-pf04-window-20261025.md) · [source별 선택 검증](dev2-pf04-window-20261025.json) — 실제 PMU UNAVAILABLE, PF04 FAIL 유지.
+- [DEV2 PF04 P1 실제 PMU 수집 후속](dev2-pf04-pmu-20261025.md) · [source별 선택 검증](dev2-pf04-pmu-20261025.json) — 명시적 CAP_PERFMON 수집·정리 검증 완료, PF04 FAIL 유지.
+
+- [DEV2 PF04 P1 측정 구간 관측 도구](dev2-pf04-window-20261025.md) · [source별 선택 검증](dev2-pf04-window-20261025.json) — 당시 일반 사용자 PMU UNAVAILABLE 증거 보존, PF04 FAIL 유지.
 
 - [DEV2 PF04 원인 분석과 해결 후보](dev2-pf04-analysis-20261025.md) · [재분석·source 기록](dev2-pf04-analysis-20261025.json): 기존 K0 80·영속60 실행 자료의 한정 재분석, 해결 후보 PROPOSED·신규 시험0·원 실패 보존.
 

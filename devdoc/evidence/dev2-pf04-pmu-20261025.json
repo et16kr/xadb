@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "classification": "D2_SCOPED_PERF_PRIVILEGE",
+  "owner": "/root",
+  "base_commit": "f22e956",
+  "plan_ref": "dev2-pf04-resolution-plan.md#p1-privileged-perf",
+  "previous_evidence_ref": "dev2-pf04-window-20261025.json",
+  "status": "IMPLEMENTED_SELECTED_VALIDATION_COMPLETE_SCOPED_REVIEW_ACCEPTED",
+  "actual_pmu": "COLLECTED_DIAGNOSTIC_ONLY",
+  "performance_acceptance": "NOT_APPLICABLE",
+  "pf04": "FOUR_HISTORICAL_CAMPAIGNS_FAIL_PRESERVED",
+  "dev2": "INCOMPLETE",
+  "sources": {
+    "r1": {
+      "base_commit": "f22e9561c249e9d0f5e53cd8f88e34c72c203256",
+      "files": {
+        "scripts/dev2_measurement_window.py": "933882d993631ec79a9ed495aad6ad1b41308db901600a78c58d31378d6f46fd",
+        "scripts/test_dev2_measurement_window.py": "cfefdde1b75f64f451e7b8a3a6e2c78791ba06a265e16165c512f267df4f4180",
+        "scripts/fixtures/measurement_window_peer.py": "9a8c903864f168895b937e50fd676746a5532ffcb51c5056b36f1de982e15d66"
+      }
+    },
+    "r2": {
+      "base_commit": "f22e9561c249e9d0f5e53cd8f88e34c72c203256",
+      "files": {
+        "scripts/dev2_measurement_window.py": "43e053cf3530a38fe5217c0185b58dae4906975d9a7f74ee4ffa84563e35c497",
+        "scripts/test_dev2_measurement_window.py": "b257bf1d56ed6a54bb39ea51f9b0a1b3aa5735b8f91124bbb099cb53ff1e59e1",
+        "scripts/fixtures/measurement_window_peer.py": "9a8c903864f168895b937e50fd676746a5532ffcb51c5056b36f1de982e15d66"
+      }
+    },
+    "r3": {
+      "base_commit": "f22e9561c249e9d0f5e53cd8f88e34c72c203256",
+      "files": {
+        "scripts/dev2_measurement_window.py": "b17a7a4fe146ffbd78acba365c525ae41317804ce8e829c1801805da6202e1c9",
+        "scripts/test_dev2_measurement_window.py": "64bc3e2a409d5f9b606d450b84da238c6f2e571a85af33386eb3ab9cf3747784",
+        "scripts/fixtures/measurement_window_peer.py": "9a8c903864f168895b937e50fd676746a5532ffcb51c5056b36f1de982e15d66"
+      }
+    },
+    "r4": {
+      "base_commit": "f22e9561c249e9d0f5e53cd8f88e34c72c203256",
+      "files": {
+        "scripts/dev2_measurement_window.py": "b17a7a4fe146ffbd78acba365c525ae41317804ce8e829c1801805da6202e1c9",
+        "scripts/test_dev2_measurement_window.py": "b2f3951619159eaedcce9f4080343fa6a6614a80d31dbe0e2b5a13a742debee8",
+        "scripts/fixtures/measurement_window_peer.py": "9a8c903864f168895b937e50fd676746a5532ffcb51c5056b36f1de982e15d66"
+      }
+    }
+  },
+  "selected_results": {
+    "r1": {
+      "functions": 8,
+      "pass": 5,
+      "fail": 3,
+      "failure_assertions": 5
+    },
+    "r2": {
+      "functions": 5,
+      "pass": 2,
+      "fail": 3,
+      "failure_assertions": 5
+    },
+    "r3": {
+      "functions": 6,
+      "pass": 6,
+      "fail": 0
+    },
+    "r4": {
+      "functions": 2,
+      "pass": 2,
+      "fail": 0
+    }
+  },
+  "unique_functions": 11,
+  "new_functions": 10,
+  "existing_changed_routing_case": 1,
+  "actual_pmu_receipt": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-window-privilege-20261025/r3/tests/test_actual_pmu_window_keeps_worker_unprivileged-z7q7aq96/result/result.json",
+    "sha256": "126a6e67072691fd6f04a3ffa8e83b03a84dab997108ee95bf538fec6ec755e3",
+    "event_counts": {
+      "cycles:u": 1018558,
+      "instructions:u": 5564984,
+      "ref-cycles:u": 488825,
+      "context-switches": 3,
+      "cpu-migrations": 0,
+      "page-faults": 1
+    },
+    "coverage_percent": 100,
+    "worker_elapsed_ns": 2211311,
+    "worker_boundary_excess_ns": 7585,
+    "enable_disable_bracket_ns": 6338925
+  },
+  "host_settings_changed": false,
+  "product_or_native_or_rust_tests_reexecuted": false,
+  "document_verifier_executed": false,
+  "artifacts": {
+    "artifact-manifest.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-window-privilege-20261025/artifact-manifest.json",
+      "sha256": "6414a0288724e697bda243bd24df4efba11a2cd5afb27cf826a9b0f0cbc69587"
+    },
+    "run-inventory.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-window-privilege-20261025/run-inventory.json",
+      "sha256": "190d32574af4905a12aee5dc8b2041250bd932d3b79928bc9241529daa8d2dfb"
+    },
+    "host-observation.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-window-privilege-20261025/host-observation.json",
+      "sha256": "51f3864e20eecf70537ae3d29635b8c074ee9936125b1360ffad85b4f55acd44"
+    },
+    "privilege-design-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-window-privilege-20261025/privilege-design-review.json",
+      "sha256": "2cf603cfd7c20c7591a825525663b4d9f89081d88dd3a42db8dc7de83d0b2aa2"
+    }
+  },
+  "independent_review": {
+    "reviewer": "/root/pf04_evidence_review",
+    "status": "PASS_SCOPED_D1_D2_PMU_PRIVILEGE_REVIEW",
+    "blocking_findings": 0,
+    "unresolved_findings": 0,
+    "receipt": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-window-privilege-20261025/privilege-final-review.json",
+      "sha256": "7936e240eb8b7eaab31fce91fc45caae67c4625f11f82d2886229548df1f93c0"
+    },
+    "scope": "Explicit sudo-cap-perfmon Python runner path, its changed synthetic fixture and selected tests, actual retained PMU/control/identity/cleanup evidence, related DEV2 plan/index/state/evidence. This is not a full security audit, arbitrary sudo-policy sandbox, product correctness rerun or PF04 performance acceptance.",
+    "accepted_by": "/root"
+  }
+}

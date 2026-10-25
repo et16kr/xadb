@@ -19,6 +19,52 @@ SOURCE = 'a' * 64
 
 
 class WindowVectors(unittest.TestCase):
+    def test_privilege_rejects_usable_caller_capabilities(self):
+        for name in ('CapPrm', 'CapEff', 'CapAmb'):
+            caller = {'caps': dict.fromkeys(('CapPrm', 'CapEff', 'CapAmb'), 0)}
+            caller['caps'][name] = 1
+            with patch.object(window, 'process_identity', return_value=caller), self.assertRaises(window.DiagnosticError):
+                window.perf_invocation(['/usr/bin/perf'], 'sudo-cap-perfmon', Path('/tmp'))
+
+    def test_privilege_command_is_explicit_and_restricted_to_installed_perf(self):
+        plain = [str(PERF), 'stat']
+        work = Path('/tmp/xadb-window-policy-vector')
+        self.assertEqual(window.perf_invocation(plain, 'none', work), (plain, {'mode': 'none'}))
+        with self.assertRaises(window.DiagnosticError):
+            window.perf_invocation(plain, 'sudo-cap-perfmon', work)
+        with patch.object(window.os, 'getuid', return_value=0), self.assertRaises(window.DiagnosticError):
+            window.perf_invocation(['/usr/bin/perf'], 'sudo-cap-perfmon', work)
+        command, policy = window.perf_invocation(['/usr/bin/perf', 'stat', '--tid', '123'], 'sudo-cap-perfmon', work)
+        self.assertEqual(command[1:4], ['-n', '--preserve-env=PATH,LC_ALL,HOME,PERF_CONFIG', '--'])
+        self.assertEqual(policy['environment'], {'PATH': '/usr/bin:/bin', 'LC_ALL': 'C', 'HOME': str(work), 'PERF_CONFIG': '/dev/null'})
+        self.assertEqual(command[5:-4], [f'--reuid={os.getuid()}', f'--regid={os.getgid()}',
+            '--clear-groups', '--inh-caps=-all,+perfmon', '--ambient-caps=-all,+perfmon',
+            '--bounding-set=-all,+perfmon', '--no-new-privs', '--pdeathsig=KILL', '--'])
+        self.assertEqual(policy['perf_command'], ['/usr/bin/perf', 'stat', '--tid', '123'])
+        with tempfile.TemporaryDirectory() as temp, self.assertRaises(window.DiagnosticError):
+            window.trusted_tool(temp)
+
+    def test_privilege_identity_rejects_extra_caps_root_worker_and_escaped_group(self):
+        policy = {'uid': 1000, 'gid': 1000, 'perf_command': ['/usr/bin/perf', 'stat']}
+        launcher = dict(pid=10, pgid=10, sid=10, uids=[1000, 0, 0, 0])
+        collector = dict(pid=11, ppid=10, pgid=10, sid=10, uids=[1000]*4, gids=[1000]*4,
+                         groups=[], no_new_privs=1, command=policy['perf_command'],
+                         caps={k: 1 << 38 for k in ('CapInh', 'CapPrm', 'CapEff', 'CapBnd', 'CapAmb')})
+        worker = dict(uids=[1000]*4, gids=[1000]*4, groups=[1000],
+                      caps={k: 0 for k in ('CapInh', 'CapPrm', 'CapEff', 'CapAmb')})
+        policy['caller'] = {'caps': worker['caps'], 'groups': worker['groups']}
+        window.validate_perf_identity(launcher, collector, worker, policy)
+        for change in ({'uids': [0]*4}, {'pgid': 12}, {'sid': 12}, {'ppid': 12},
+                       {'groups': [0]}, {'no_new_privs': 0}, {'command': ['/tmp/perf']},
+                       {'caps': collector['caps'] | {'CapEff': (1 << 38) | 1}}):
+            with self.assertRaises(window.DiagnosticError):
+                window.validate_perf_identity(launcher, collector | change, worker, policy)
+        for changed in (worker | {'uids': [0]*4}, worker | {'caps': worker['caps'] | {'CapEff': 1}}):
+            with self.assertRaises(window.DiagnosticError):
+                window.validate_perf_identity(launcher, collector, changed, policy)
+        with self.assertRaises(window.DiagnosticError):
+            window.validate_perf_identity(launcher | {'uids': [0]*4}, collector, worker, policy)
+
     def test_literal_pmu_coverage_missing_duplicates_and_invalid_counts(self):
         lines = [f'{100+i};;{event};100000;100.00;' for i, event in enumerate(window.EVENTS)]
         result = window.parse_perf('\n'.join(lines))
@@ -103,6 +149,52 @@ class WindowProcesses(unittest.TestCase):
         self.assertEqual(result['status'], 'COLLECTED_DIAGNOSTIC_ONLY', result)
         self.assertEqual(result['mode'], 'PMU')
         self.assertEqual(result['pmu']['events']['cycles:u']['count'], 100)
+
+    def test_privilege_rejects_fixture_before_sudo_and_reaps_worker(self):
+        base = self.directory()
+        source = base / 'input.json'
+        source.write_text(json.dumps({'source': SOURCE}))
+        result = window.collect(PEER, source, SOURCE, 'synthetic', base / 'result', perf=PERF,
+                                perf_privilege='sudo-cap-perfmon')
+        self.assertEqual(result['status'], 'FAILED')
+        self.assertIn('only supports installed', result['error'])
+        self.assertEqual(len(result['cleanup']), 1)
+        self.assertTrue(result['cleanup'][0]['group_gone'])
+        self.assertNotIn('perf', result['commands'])
+
+    def test_pinned_collector_outside_launcher_group_is_terminated(self):
+        result = self.pinned_collector_cleanup()
+        self.assertTrue(result['cleanup'][0]['collector']['exited'])
+        self.assertTrue(result['cleanup'][0]['group_gone'])
+
+    def test_pinned_collector_cleanup_survives_launcher_cleanup_error(self):
+        finish = window.Owned.finish
+        def fail_after_launcher(child):
+            finish(child)
+            raise PermissionError('injected launcher cleanup failure')
+        with patch.object(window.Owned, 'finish', fail_after_launcher):
+            result = self.pinned_collector_cleanup()
+        self.assertTrue(result['cleanup'][0]['collector']['exited'])
+        self.assertEqual(result['status'], 'FAILED')
+        self.assertIn('injected launcher cleanup failure', result['cleanup'][0]['capture_errors'][0])
+
+    def pinned_collector_cleanup(self):
+        base = self.directory()
+        code = ('import os,time; from pathlib import Path; pid=os.fork(); '
+                'os.setsid() if pid == 0 else None; '
+                'Path("collector.pid").write_text(str(os.getpid())) if pid == 0 else None; time.sleep(5)')
+        run = window.Runner(base, 3)
+        try:
+            child = run.spawn([sys.executable, '-B', '-c', code], base, os.environ.copy(),
+                              subprocess.DEVNULL, 'launcher', window.CAP, window.PrivilegedPerf)
+            run.wait(lambda: (base / 'collector.pid').exists())
+            identity = window.process_identity(int((base / 'collector.pid').read_text()))
+            child.pin_collector(identity)
+            self.assertNotEqual(identity['pgid'], child.pid)
+        finally:
+            run.cleanup()
+            (base / 'cleanup.json').write_text(json.dumps(run.record, indent=2) + '\n')
+        return run.record
 
     def test_installed_perf_restricted_message_is_preserved_unavailable(self):
         result, _ = self.collect({'perf': 'restricted'}, perf=PERF)
@@ -243,6 +335,110 @@ class WindowProcesses(unittest.TestCase):
             self.assertEqual(result['status'], 'FAILED')
             self.assertIn('interrupted by signal', result['error'])
             self.assertTrue(all(r['group_gone'] for r in result['cleanup']))
+
+
+@unittest.skipUnless(os.environ.get('XADBTEST_WINDOW_PRIVILEGED_TESTS') == '1',
+                     'explicit sudo/real-PMU diagnostic validation only')
+class WindowPrivilegeIntegration(unittest.TestCase):
+    directory = WindowProcesses.directory
+
+    def test_privileged_spawn_cancelled_before_first_control_ack(self):
+        base = self.directory()
+        source = base / 'input.json'
+        source.write_text(json.dumps({'source': SOURCE}))
+        original = window.Runner.perf_command
+        def interrupt_before_control(runner, *args, **kwargs):
+            runner.cancel_signal = signal.SIGTERM
+            return original(runner, *args, **kwargs)
+        with patch.object(window.Runner, 'perf_command', interrupt_before_control):
+            result = window.collect(PEER, source, SOURCE, 'synthetic', base / 'result',
+                perf=Path('/usr/bin/perf'), perf_privilege='sudo-cap-perfmon')
+        self.assertEqual(result['status'], 'FAILED')
+        self.assertIn('interrupted by signal 15', result['error'])
+        self.assertNotIn('mode', result)
+        self.assertNotIn('observed', result['perf_privilege'])
+        self.assertEqual(len(result['cleanup']), 2)
+        self.assertTrue(all(r['group_gone'] for r in result['cleanup']), result)
+
+    def test_privileged_pre_ready_rejection_and_interruption_cleanup(self):
+        original = window.Runner.perf_command
+        def interrupt_during_prepare(runner, command, ctl, ack, child, timeout=2):
+            # Cancel after the real disabled collector's ACK, before READY.
+            value = original(runner, command, ctl, ack, child, timeout)
+            runner.cancel_signal = signal.SIGTERM
+            runner.tick()
+            return value
+        for label, target, replacement in (
+                ('prepare-interrupt', 'perf_command', interrupt_during_prepare),
+                ('identity-rejection', None, None)):
+            base = self.directory()
+            source = base / 'input.json'
+            source.write_text(json.dumps({'source': SOURCE}))
+            context = (patch.object(window.Runner, target, replacement) if target else
+                       patch.object(window, 'validate_perf_identity', side_effect=window.DiagnosticError('injected topology rejection')))
+            with context:
+                result = window.collect(PEER, source, SOURCE, 'synthetic', base / 'result',
+                    perf=Path('/usr/bin/perf'), perf_privilege='sudo-cap-perfmon')
+            self.assertEqual(result['status'], 'FAILED', result)
+            self.assertIn('interrupted' if target else 'topology rejection', result['error'])
+            self.assertNotIn('mode', result)
+            self.assertEqual(len(result['cleanup']), 2)
+            self.assertTrue(all(r['group_gone'] for r in result['cleanup']), result)
+            if label == 'identity-rejection':
+                self.assertTrue(result['cleanup'][0]['collector']['exited'])
+
+    def test_actual_pmu_window_keeps_worker_unprivileged(self):
+        base = self.directory()
+        source = base / 'input.json'
+        source.write_text(json.dumps({'source': SOURCE}))
+        result = window.collect(PEER, source, SOURCE, 'synthetic', base / 'result', perf=Path('/usr/bin/perf'),
+                                perf_privilege='sudo-cap-perfmon', affinity=min(os.sched_getaffinity(0)))
+        self.assertEqual(result['status'], 'COLLECTED_DIAGNOSTIC_ONLY', result)
+        self.assertEqual(result['mode'], 'PMU')
+        self.assertEqual(result['pmu']['status'], 'COLLECTED')
+        self.assertTrue(result['pmu']['all_events_reported_full_coverage'])
+        for event in ('cycles:u', 'instructions:u', 'ref-cycles:u'):
+            self.assertGreater(result['pmu']['events'][event]['count'], 0)
+        observed = result['perf_privilege']['observed']
+        self.assertEqual(observed['worker']['uids'], [os.getuid()]*4)
+        self.assertEqual(observed['worker']['caps']['CapEff'], 0)
+        self.assertEqual(observed['collector']['caps']['CapEff'], 1 << 38)
+        self.assertTrue(all(r['group_gone'] for r in result['cleanup']), result)
+        self.assertEqual(result['performance_acceptance'], 'NOT_APPLICABLE')
+
+    def test_privileged_active_sigint_sigterm_and_deadline_cleanup(self):
+        for sig in (signal.SIGINT, signal.SIGTERM, None):
+            with self.subTest(signal=sig):
+                base = self.directory()
+                source = base / 'input.json'
+                source.write_text(json.dumps({'source': SOURCE, 'behavior': 'active-hang'}))
+                command = [sys.executable, '-B', str(HERE / 'dev2_measurement_window.py'), '--worker', str(PEER),
+                    '--input', str(source), '--source', SOURCE, '--workload', 'synthetic',
+                    '--output', str(base / 'result'), '--perf', '/usr/bin/perf',
+                    '--perf-privilege', 'sudo-cap-perfmon', '--deadline', '2' if sig is None else '10']
+                with (base / 'runner.stdout').open('wb') as out, (base / 'runner.stderr').open('wb') as err:
+                    process = subprocess.Popen(command, stdout=out, stderr=err)
+                    try:
+                        marker = base / 'result/worker.stdout'
+                        end = time.monotonic() + 5
+                        while not marker.exists() or b'ACTIVE_WINDOW' not in marker.read_bytes():
+                            self.assertIsNone(process.poll())
+                            self.assertLess(time.monotonic(), end)
+                            time.sleep(.01)
+                        if sig is not None:
+                            process.send_signal(sig)
+                        self.assertEqual(process.wait(timeout=7), 1)
+                    finally:
+                        if process.poll() is None:
+                            process.terminate()
+                            process.wait(timeout=7)
+                result = json.loads((base / 'result/result.json').read_text())
+                self.assertEqual(result['status'], 'FAILED')
+                self.assertEqual(result['pmu']['status'], 'ATTACHED')
+                self.assertIn('deadline exceeded' if sig is None else f'interrupted by signal {sig.value}', result['error'])
+                self.assertEqual(len(result['cleanup']), 2)
+                self.assertTrue(all(r['group_gone'] for r in result['cleanup']), result)
+                self.assertTrue(all(r['returncode'] is not None for r in result['cleanup']))
 
 
 if __name__ == '__main__':

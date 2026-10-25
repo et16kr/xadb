@@ -5925,6 +5925,13 @@
     "new_external_dependencies": false,
     "existing_nix_feature_added": "resource",
     "source_roots_changed": false,
-    "performance_acceptance": false
+    "performance_acceptance": false,
+    "privileged_perf_followup": {
+      "evidence_ref": "dev2-pf04-pmu-20261025.json",
+      "opt_in": "sudo-cap-perfmon",
+      "worker_privilege_unchanged": true,
+      "system_settings_changed": false,
+      "new_source_paths": false
+    }
   }
 }
