@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "input_id": "D3-CREATE-LEAF-L1-R1",
+  "author": "/root/dev3_review",
+  "adopted_by": "/root",
+  "new_input": "NW19 duplicate native selected physical cell with different kinds",
+  "contract": "dev3-obligation-format section 6.3: one physical cell cannot have duplicate effects; root explicitly assigns this check to LayoutView",
+  "base": "W02 in original leaf manifest 84b8aa4c0607d314dc373a956e6d75c7dcdca701209ef18ab0470c23826a6d5d",
+  "offset_derivation": "160+256+3072+256+12544+1152+2=17442",
+  "patch_hex": "010000000000",
+  "meaning": "Job native kind9 now uses redo1/before slot0/after slot0, following Root native kind8 with the same redo1/slot0; tuple rank increases but physical key duplicates",
+  "expected": "layout rejection after valid envelope checksums; semantic grant is never requested",
+  "limits": {"new_raw_files": 1, "new_raw_bytes": 6, "generation_seconds": 10},
+  "original_outputs": "Original generator, raw, manifest and index remain unchanged; original manifest and index also copied under original-r0",
+  "execution": "Input generation only; product/compiler/test runner calls remain zero"
+}

@@ -1,0 +1,697 @@
+{
+  "schema": 1,
+  "input_id": "D3-CREATE-LEAF-HARNESS-1",
+  "state": "WRITTEN_NOT_COMPILED_NOT_EXECUTED",
+  "author": "/root/dev3_review",
+  "source": "crates/engine/src/storage/semantic_catalog/leaf_tests.rs",
+  "source_sha256": "2b0f5a30e724f7385f90f426d0be1eb3bf99dff3f8f4c676441be8793f218d09",
+  "r0_candidates": 107,
+  "r1_candidates": 1,
+  "required_local_candidates": 108,
+  "selection_prefix": "storage::semantic_catalog::leaf_tests::",
+  "required_test_functions": [
+    {
+      "id": "C01",
+      "test": "storage::semantic_catalog::leaf_tests::core_c01",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C02",
+      "test": "storage::semantic_catalog::leaf_tests::core_c02",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C03",
+      "test": "storage::semantic_catalog::leaf_tests::core_c03",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C04",
+      "test": "storage::semantic_catalog::leaf_tests::core_c04",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C05",
+      "test": "storage::semantic_catalog::leaf_tests::core_c05",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C06",
+      "test": "storage::semantic_catalog::leaf_tests::core_c06",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C07",
+      "test": "storage::semantic_catalog::leaf_tests::core_c07",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C08",
+      "test": "storage::semantic_catalog::leaf_tests::core_c08",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C09",
+      "test": "storage::semantic_catalog::leaf_tests::core_c09",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C10",
+      "test": "storage::semantic_catalog::leaf_tests::core_c10",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C11",
+      "test": "storage::semantic_catalog::leaf_tests::core_c11",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C12",
+      "test": "storage::semantic_catalog::leaf_tests::core_c12",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C13",
+      "test": "storage::semantic_catalog::leaf_tests::core_c13",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C14",
+      "test": "storage::semantic_catalog::leaf_tests::core_c14",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C15",
+      "test": "storage::semantic_catalog::leaf_tests::core_c15",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C16",
+      "test": "storage::semantic_catalog::leaf_tests::core_c16",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C17",
+      "test": "storage::semantic_catalog::leaf_tests::core_c17",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C18",
+      "test": "storage::semantic_catalog::leaf_tests::core_c18",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C19",
+      "test": "storage::semantic_catalog::leaf_tests::core_c19",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "C20",
+      "test": "storage::semantic_catalog::leaf_tests::core_c20",
+      "expected": "ACCEPT_CORE_ONLY",
+      "layer": "core"
+    },
+    {
+      "id": "NC01",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc01",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC02",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc02",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC03",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc03",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC04",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc04",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC05",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc05",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC06",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc06",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC07",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc07",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC08",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc08",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC10",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc10",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC11",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc11",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC12",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc12",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC13",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc13",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC14",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc14",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC15",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc15",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC16",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc16",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC17",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc17",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC18",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc18",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC19",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc19",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC20",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc20",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC21",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc21",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC22",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc22",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC23",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc23",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC24",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc24",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC25",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc25",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC26",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc26",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC27",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc27",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC28",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc28",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC29",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc29",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC30",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc30",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC31",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc31",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC32",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc32",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC33",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc33",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC34",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc34",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "NC35",
+      "test": "storage::semantic_catalog::leaf_tests::core_nc35",
+      "expected": "REJECT",
+      "layer": "core"
+    },
+    {
+      "id": "P01",
+      "test": "storage::semantic_catalog::leaf_tests::projection_p01",
+      "expected": "DIGEST_MATCH",
+      "layer": "projection"
+    },
+    {
+      "id": "P02",
+      "test": "storage::semantic_catalog::leaf_tests::projection_p02",
+      "expected": "DIGEST_MATCH",
+      "layer": "projection"
+    },
+    {
+      "id": "P03",
+      "test": "storage::semantic_catalog::leaf_tests::projection_p03",
+      "expected": "DIGEST_MATCH",
+      "layer": "projection"
+    },
+    {
+      "id": "P04",
+      "test": "storage::semantic_catalog::leaf_tests::projection_p04",
+      "expected": "DIGEST_MATCH",
+      "layer": "projection"
+    },
+    {
+      "id": "P05",
+      "test": "storage::semantic_catalog::leaf_tests::projection_p05",
+      "expected": "DIGEST_MATCH",
+      "layer": "projection"
+    },
+    {
+      "id": "P06",
+      "test": "storage::semantic_catalog::leaf_tests::projection_p06",
+      "expected": "DIGEST_MATCH",
+      "layer": "projection"
+    },
+    {
+      "id": "NP01",
+      "test": "storage::semantic_catalog::leaf_tests::projection_np01",
+      "expected": "REJECT",
+      "layer": "projection"
+    },
+    {
+      "id": "NP02",
+      "test": "storage::semantic_catalog::leaf_tests::projection_np02",
+      "expected": "REJECT",
+      "layer": "projection"
+    },
+    {
+      "id": "NP03",
+      "test": "storage::semantic_catalog::leaf_tests::projection_np03",
+      "expected": "REJECT",
+      "layer": "projection"
+    },
+    {
+      "id": "NP04",
+      "test": "storage::semantic_catalog::leaf_tests::projection_np04",
+      "expected": "REJECT",
+      "layer": "projection"
+    },
+    {
+      "id": "NP05",
+      "test": "storage::semantic_catalog::leaf_tests::projection_np05",
+      "expected": "REJECT",
+      "layer": "projection"
+    },
+    {
+      "id": "NP06",
+      "test": "storage::semantic_catalog::leaf_tests::projection_np06",
+      "expected": "REJECT",
+      "layer": "projection"
+    },
+    {
+      "id": "NP07",
+      "test": "storage::semantic_catalog::leaf_tests::projection_np07",
+      "expected": "REJECT",
+      "layer": "projection"
+    },
+    {
+      "id": "NP08",
+      "test": "storage::semantic_catalog::leaf_tests::projection_np08",
+      "expected": "REJECT",
+      "layer": "projection"
+    },
+    {
+      "id": "NP09",
+      "test": "storage::semantic_catalog::leaf_tests::projection_np09",
+      "expected": "REJECT",
+      "layer": "projection"
+    },
+    {
+      "id": "NP10",
+      "test": "storage::semantic_catalog::leaf_tests::projection_np10",
+      "expected": "REJECT",
+      "layer": "projection"
+    },
+    {
+      "id": "NP11",
+      "test": "storage::semantic_catalog::leaf_tests::projection_np11",
+      "expected": "REJECT",
+      "layer": "projection"
+    },
+    {
+      "id": "NP12",
+      "test": "storage::semantic_catalog::leaf_tests::projection_np12",
+      "expected": "REJECT",
+      "layer": "projection"
+    },
+    {
+      "id": "W01",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w01",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W02",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w02",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W03",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w03",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W04",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w04",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W05",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w05",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W06",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w06",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W07",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w07",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W08",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w08",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W09",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w09",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W10",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w10",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W11",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w11",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W12",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w12",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W13",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w13",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W14",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w14",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W15",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w15",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W16",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w16",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "W17",
+      "test": "storage::semantic_catalog::leaf_tests::wire_w17",
+      "expected": "ACCEPT_LAYOUT_ONLY",
+      "layer": "layout"
+    },
+    {
+      "id": "NW01",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw01",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW02",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw02",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW03",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw03",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW04",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw04",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW05",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw05",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW06",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw06",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW07",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw07",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW08",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw08",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW09",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw09",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW10",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw10",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW11",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw11",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW12",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw12",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW13",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw13",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW14",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw14",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW15",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw15",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW16",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw16",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW17",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw17",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW18",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw18",
+      "expected": "REJECT",
+      "layer": "layout"
+    },
+    {
+      "id": "NW19",
+      "test": "storage::semantic_catalog::leaf_tests::wire_nw19",
+      "expected": "REJECT_LAYOUT_DUPLICATE_PHYSICAL_CELL",
+      "layer": "layout"
+    }
+  ],
+  "not_run_semantic_obligations": [
+    "NC09",
+    "NS01",
+    "NS02",
+    "NS03"
+  ],
+  "fixture_files": 120,
+  "fixture_raw_bytes": 1296921,
+  "profile2_context_sha256": "b8aab8141cbc1807844468c353d62b759e5001d5c3f8f82e54c1f4efeadd3b24",
+  "fixture_provenance": "Frozen r0/r1 manifest/index/generator/plan hashes are checked by the harness; no original inputs changed. Profile context is independent control-format tuple ID1, format2, generation1, database01..10, timeline1, base2MiB.",
+  "oracle_boundary": "Literal fields/sections/digests/mutant hashes are from independent fixed inputs. No candidate encoder or runtime output creates expected results. Descriptor/native sentinels are layout-only.",
+  "rejection_contract": "Original REJECT expectation, no new diagnostic ordering imposed; each actual error is logged.",
+  "limits": {
+    "per_test_worker_seconds": 10,
+    "full_selected_worker_seconds": 60,
+    "output_bytes": 8388608,
+    "retained_run_artifact_bytes": 67108864,
+    "raw_corpus_bytes": 2097152,
+    "per_input_file_bytes": 262144,
+    "parallelism": 1,
+    "enforcement": "Proposed execution bounds for parent controller; Rust harness bounds input reads/corpus but does not implement worker timeout or artifact/log controller."
+  },
+  "execution_counts": {
+    "compiler": 0,
+    "runtime": 0,
+    "product": 0,
+    "fixture_regeneration": 0
+  },
+  "further_admission": "Root must bind coherent source/ELF, check exact libtest inventory and input hashes, and independently accept this harness before first execution. No unchanged lower-code suite invocation.",
+  "static_preparation": {
+    "rustfmt": "single new source only; completed",
+    "macro_inventory": "read-only source inspection: exact 108 names and fixed IDs match plan",
+    "libtest_inventory": "NOT_RUN; coherent compile required",
+    "expected_fields": "Core digest constants also transcribed from frozen independent raw core bytes, whose complete SHA is pinned; no candidate decoder/output used."
+  }
+}

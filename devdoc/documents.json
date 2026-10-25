@@ -2417,6 +2417,16 @@
       "path": "evidence/dev3-commit-continuation-20261025.json",
       "title": "DEV3 원 Commit 공통 continuation source별 기록",
       "role": "evidence"
+    },
+    "dev3-catalog-transition-20261025.md": {
+      "path": "evidence/dev3-catalog-transition-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 Catalog CREATE 순수 전이 검증"
+    },
+    "dev3-catalog-transition-20261025.json": {
+      "path": "evidence/dev3-catalog-transition-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 Catalog CREATE 순수 전이 source별 기록"
     }
   }
 }

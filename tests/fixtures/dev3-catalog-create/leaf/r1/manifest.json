@@ -1,0 +1,31 @@
+{
+  "base_index_sha256": "728977808b9c1abd66939bce4989c487d7c3ebc6c71182b97222419dd113b35c",
+  "base_manifest_sha256": "84b8aa4c0607d314dc373a956e6d75c7dcdca701209ef18ab0470c23826a6d5d",
+  "cases": [
+    {
+      "base": "W02",
+      "base_manifest": "../manifest.json",
+      "bytes": 6,
+      "category": "wire-negative-patch",
+      "expected": "REJECT_LAYOUT_DUPLICATE_PHYSICAL_CELL",
+      "file": "raw/NW19.bin",
+      "id": "NW19",
+      "materialized_sha256": "c7a1cd5d6ce4333cfc9c8a15f89de0e7848b8e1baac5ad932fdab0c6365c45b0",
+      "offset": 17442,
+      "reason": "same redo1/slot0 with distinct kind8 and kind9 is forbidden",
+      "reseal": "XWF_HEADER_AND_FRAME_SHA256",
+      "sha256": "36c159d76b52e03e496363607c5940227f62f4e048df344b050159bc97bba3d7"
+    }
+  ],
+  "compiler_calls": 0,
+  "generator_sha256": "9456a20f1ac07c287bf12804950f41238345cb52ac8ac4fd21a43a312ad04b7f",
+  "input_id": "D3-CREATE-LEAF-L1-R1",
+  "plan_sha256": "ebf74e4b4aa34fe93563994af3aad717db142c7d0950a21309304328d8841432",
+  "previous_raw_regenerated": 0,
+  "product_calls": 0,
+  "raw_bytes": 6,
+  "raw_files": 1,
+  "schema": 1,
+  "state": "NEW_INPUT_FROZEN_NOT_EXECUTED",
+  "test_runner_calls": 0
+}
