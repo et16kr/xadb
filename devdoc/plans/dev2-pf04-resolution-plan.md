@@ -256,7 +256,7 @@ CPU 집계 읽기 후속: `038236b` 뒤 [설치 커널 source 조사](../evidenc
 
 ## 후속 제안: 동일 Off 실행의 변동 분류
 
-2026-10-25 · **D2 한정 설계 검토 채택 / 사용자 시험 범위 예외 대기 / NOT_RUN**. 작업·계약·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`.
+2026-10-25 · **D2 한정 설계 검토 채택 / 사용자 한정 예외 적용 / 진단20회 완료·UNKNOWN_NO_FROZEN_BAND**. 작업·계약·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`. 아래 조건을 계획 commit `5da1573`에서 동결한 뒤 사용자의 “허용”에 따라 실행했다. [실제 결과](../evidence/dev2-pf04-off-classification-20261025.md)를 따른다.
 
 [보존 실행 파일의 주요 경로 검토](../evidence/dev2-pf04-hotpath-20261025.md)에서 큰 신규 중복 후보는 확인하지 못했다. 스케줄링 수집기와 ASLR 변경을 곧바로 추가하는 안은 보류한다. 후자는 특정한 고정 주소 배치 하나와 여러 무작위 배치를 비교하므로, 유리한 한 배치와 일반적인 정책 효과를 구분하기 어렵다. 다음은 **기존 도구로 K0 Off 자체의 속도 변동을 한 번 분류하는 진단**이다. 제품 최적화나 PF04 합격 판정이 아니다.
 
@@ -293,4 +293,8 @@ PMU bracket에는 원 loop 밖의 부가 작업이 포함될 수 있다. 도구�
 
 준비 자료는 `/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025`의 `proposal.json`, `request.bin`, `build.json`이다. 이번 계획 commit은 실행 승인이 아니며 사용자 예외·최종 설계 검토 전 상태는 NOT_RUN이다.
 
-후속 설계 상태: **PASS_SCOPED_D1_D2_STATIC_EVIDENCE_AND_CONDITIONAL_PLAN 채택**, 설계 차단0개. `/root/pf04_evidence_review`의 receipt는 `/home/et16/xadb-dev2-evidence/pf04-hotpath-review-20261025/final-review.json`, SHA-256 `a23723dc2f9e6031a16c5df02d1ed660b80744bacdc418cd4ad39387362e0a8a`다. 검토 당시 본 anchor 뒤 본문 projection은 `99a4aaa9ca5a1df4d0edc8a54980d0f245af34745fdfb87ab2c0d20eb3ce41cb`, 준비 proposal은 `a2876aaa2332915e6894ab53c978b34fd8191e9a477b740d9ad8ed044b501e29`다. 상태·receipt metadata만 반영했으며 사용자 예외·실행은 아직 없다.
+후속 설계 상태: **PASS_SCOPED_D1_D2_STATIC_EVIDENCE_AND_CONDITIONAL_PLAN 채택**, 설계 차단0개. `/root/pf04_evidence_review`의 receipt는 `/home/et16/xadb-dev2-evidence/pf04-hotpath-review-20261025/final-review.json`, SHA-256 `a23723dc2f9e6031a16c5df02d1ed660b80744bacdc418cd4ad39387362e0a8a`다. 검토 당시 본 anchor 뒤 본문 projection은 `99a4aaa9ca5a1df4d0edc8a54980d0f245af34745fdfb87ab2c0d20eb3ce41cb`, 준비 proposal은 `a2876aaa2332915e6894ab53c978b34fd8191e9a477b740d9ad8ed044b501e29`다. 당시에는 상태·receipt metadata만 반영했으며 사용자 예외·실행은 없었다.
+
+### 한정 실행 완료
+
+후속 “허용”으로 위 예외를 적용해 Off20회와 새 출력20개의 정답 검산을203.627477초에 완료했다. CPU 상/하위5의 중앙값 비율은1.012035, 같은 집단의 p50 비율은1.038961로 동결한1.10 조건에 미달했다. **UNKNOWN_NO_FROZEN_BAND**로 종료하며 추가·재시도0, 원 PF04 FAIL·DEV2/B2/D0 미완료를 유지한다. 입력·도구·실행·독립 검토·manifest는 [실행 기록](../evidence/dev2-pf04-off-classification-20261025.json)을 따른다. 이 실행은 다음 인수나 환경 변경을 자동 승인하지 않는다.

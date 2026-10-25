@@ -3,6 +3,16 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev2-pf04-off-classification-20261025.md": {
+      "path": "evidence/dev2-pf04-off-classification-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 동일 Off 실행의 변동 분류"
+    },
+    "dev2-pf04-off-classification-20261025.json": {
+      "path": "evidence/dev2-pf04-off-classification-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 한정 Off 진단 실행·집계 기록"
+    },
     "dev2-pf04-single-writer-20261025.md": {
       "path": "evidence/dev2-pf04-single-writer-20261025.md",
       "role": "evidence",
