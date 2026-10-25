@@ -65,6 +65,17 @@
   "cleanup": {
     "compiler_disposable_bytes": 166384441,
     "root_target_removed_bytes": 113782993,
-    "preserved": "source, binary, frozen input, original failures, probe patches and raw logs"
-  }
+    "preserved": "source, binary, frozen input, original failures, probe patches and raw logs",
+    "source_archive": {
+      "archive": "/home/et16/work/xadb/artifacts/dev3/leaf-edit-20261025/source.tar.gz",
+      "sha256": "84f5f89f528a6dc7b12bb2ef235cd5abce166ebd262396244cdfe5542fc43951",
+      "bytes": 9261560,
+      "members": 4840,
+      "removed_expanded_bytes": 145741233,
+      "source_fingerprint": "1cbed969ae706ccf7e315a35bdd0873a3c11d4865bcb9e19f92b2c84e0e79494",
+      "validation": "Every file length and sha256 matched before expanded source removal. Original ELF and raw logs preserved."
+    }
+  },
+  "source_archive": "/home/et16/work/xadb/artifacts/dev3/leaf-edit-20261025/source.tar.gz",
+  "source_directory_note": "Original execution path, now stored losslessly in source_archive after full member verification."
 }

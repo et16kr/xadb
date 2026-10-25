@@ -30,3 +30,5 @@
 다음 소비는 동일 authoritative owner의 카탈로그/행 변경과 live Undo/status·terminal·N>0 recovery다. 표현 후보가 검증됐다는 이유로 실제 DB CREATE/INSERT/COMMIT/reopen이나 DEV3 S5를 완료 처리하지 않는다.
 
 독립 리뷰 뒤 root 전용 Cargo target의 재생성 자료113782993 bytes도 제거했다. 보존 ELF는 별도 copy로 inode가 다름을 확인했으며 다른 담당 target은 건드리지 않았다.
+
+후속 정리에서 원 source를 `source.tar.gz`로 압축하고 모든 4840개 파일의 길이·SHA-256 및 표준 source 지문을 대조한 뒤 expanded 145741233bytes를 제거했다. 실행 당시 source 경로는 기계 기록에 남기며 현재 복원 위치는 archive다. source 내용·ELF·원 로그·시험 결과는 바뀌지 않았다.
