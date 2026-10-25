@@ -4,6 +4,7 @@
 mod codec;
 mod input_assembler;
 mod input_schema;
+mod model;
 mod raw_action;
 mod schema;
 mod target_selector;
@@ -17,6 +18,8 @@ mod assembler_tests;
 mod literal;
 #[cfg(test)]
 mod literal_tests;
+#[cfg(test)]
+mod model_tests;
 #[cfg(test)]
 mod workspace_tests;
 
@@ -32,6 +35,10 @@ mod selector_tests;
 pub use codec::{CodecError, decode_input, decode_state, encode_input, encode_state};
 pub use input_assembler::{AssemblyError, assemble_input};
 pub use input_schema::*;
+pub use model::{
+    Authenticated, Check, Complete, ContextEvent, Controls, Edge, EdgeClass, Exclusion, ModelError,
+    PublicTransaction, Response, Rows, transition,
+};
 pub use raw_action::{
     PrepareChoice, RAW_ACTION_COUNT, RawAction, RawActionError, action_at, index_of,
 };

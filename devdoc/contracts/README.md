@@ -8,6 +8,8 @@
 
 - [DEV3 plan4 빈 거래 live](dev3-retention-live.md) — 원 owner/pool의 fresh 수명·flush·재적재와 관측용 tag3 prefix; 복구 owner 별도
 
+- [DEV4 P5 수명 모델 전이](dev4-lifecycle-model.md) — D4-LM-MODEL-001; gate 순서·응답 행·family 전이·환경 제외·소비 bit와 owner 결정. 독립 checker·BFS·FE14는 후속.
+
 - [DEV4 P5 전체 입력 조립](dev4-lifecycle-assembler.md) — D4-LM-ASM-001; 21 family의 prefix/context/control·Bind·Env1·owner/obligation 조립과 S0–S5 오류 순서, owner 결정3건. admission·모델 전이·FE14는 후속.
 
 - [DEV4 P5 원시 action 번호·target 선택](dev4-lifecycle-raw-selection.md) — D4-LM-RAW-001 D2·제한 D1 수용; raw1533 번호·exact selector의 국소 계약. 전체 input/model은 후속.

@@ -2208,6 +2208,16 @@
       "role": "evidence",
       "title": "DEV4 P5 전체 입력 조립의 선택 검증"
     },
+    "dev4-lifecycle-model.md": {
+      "path": "contracts/dev4-lifecycle-model.md",
+      "role": "contracts",
+      "title": "DEV4 P5 수명 모델 전이"
+    },
+    "dev4-lifecycle-model-20261025.md": {
+      "path": "evidence/dev4-lifecycle-model-20261025.md",
+      "role": "evidence",
+      "title": "DEV4 P5 수명 모델 전이의 선택 검증"
+    },
     "dev3-retention-live.md": {
       "path": "contracts/dev3-retention-live.md",
       "role": "contracts",

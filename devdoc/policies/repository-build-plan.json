@@ -5915,6 +5915,26 @@
     "logical_cases": 1994,
     "validation": "Independent D2 and D1 accepted; selected 1994 cases PASS, fmt and Clippy PASS; rich 304 differential plus 57-case static sample; 2 rich corrections"
   },
+  "dev4_lifecycle_model": {
+    "decision": "D4-LM-MODEL-001",
+    "contract": "dev4-lifecycle-model.md",
+    "evidence": "dev4-lifecycle-model-20261025.md",
+    "status": "IMPLEMENTED_SELECTED_VALIDATION_D2_ACCEPTED_D1_LIMITED",
+    "implemented_sources": [
+      "crates/testing/reference/src/lifecycle/mod.rs",
+      "crates/testing/reference/src/lifecycle/model.rs",
+      "crates/testing/reference/src/lifecycle/model/common.rs",
+      "crates/testing/reference/src/lifecycle/model/edit.rs",
+      "crates/testing/reference/src/lifecycle/model/result.rs",
+      "crates/testing/reference/src/lifecycle/model/session.rs",
+      "crates/testing/reference/src/lifecycle/model/statement.rs",
+      "crates/testing/reference/src/lifecycle/model_tests.rs"
+    ],
+    "fixtures": [],
+    "new_dependencies": false,
+    "scope": "Abstract transition of one resolved input; independent edge checker, alias, BFS/checkpoint and FE14 remain incomplete",
+    "validation": "29 literal edges, 12 traces/51 occurrences and 5 known-bad distinctions PASS; census and deep-walk smoke without model error or loader violation; fixed traces are implementer-derived"
+  },
   "dev3_plan4_recovery_checkpoint": {
     "status": "PAUSED_WIP_NOT_ACCEPTED",
     "evidence_ref": "dev3-recovery-paused-20261025.md",

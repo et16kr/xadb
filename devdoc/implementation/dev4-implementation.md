@@ -297,3 +297,19 @@ cargo test -p xadbtest-reference --lib --offline --locked lifecycle::assembler_t
 실제 diff에 대응하는 함수만 선택한다. `XADB_ASSEMBLY_CASE`는 한 case ID, `XADB_ASSEMBLY_FROM_CASE`는
 완료 prefix를 제외한 suffix를 고르며 둘은 함께 쓰지 않는다. 어느 그룹에도 없는 ID는 실패한다.
 
+<a id="lifecycle-model"></a>
+## P5 수명 모델 전이
+
+[소유 계약](../contracts/dev4-lifecycle-model.md) D4-LM-MODEL-001의
+`transition(&State, &ResolvedInput, &mut State, &mut Edge)`을 reference lifecycle에 구현했다. fresh 호출의
+envelope→child→shell→parked→fence→API 상태→entry control→환경→admit gate, 21 family 전이, 공급 Env1의
+fact·owner·obligation 기록과 canonical 정렬을 수행한다. 제외는 상태를 바꾸지 않고, 모델 오류는 게시하지 않는다.
+
+[선택 증거](../evidence/dev4-lifecycle-model-20261025.md)에 원 literal 29 edge·12 trace·5 known-bad 대조,
+census·walk smoke, 고정 trace와 1차 검토 교정 이력을 기록했다. 독립 edge checker·BFS·FE14는 미완료다.
+
+```bash
+cargo test -p xadbtest-reference --lib --offline --locked lifecycle::model_tests::<function> -- --exact
+```
+
+`model_deep_walks`의 walk 수는 `XADB_MODEL_WALKS`(기본40)로 정한다. 실제 diff에 대응하는 함수만 선택한다.

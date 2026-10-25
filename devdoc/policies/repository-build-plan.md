@@ -502,6 +502,10 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 
 ## DEV4 P5 원시 번호·target 선택
 
+[수명 모델 전이 계약](../contracts/dev4-lifecycle-model.md)의 `transition`은 reference lifecycle의 `model.rs`와
+`model/` 하위 파일에 두고 시험 `model_tests.rs`를 추가한다. 관리 JSON의 `dev4_lifecycle_model`에 실제 경로를
+등록하며 package·dependency는 유지한다.
+
 [전체 입력 조립 계약](../contracts/dev4-lifecycle-assembler.md)의 `assemble_input`은 같은 reference
 lifecycle 경계의 `input_assembler.rs`와 `input_assembler/rows.rs`에 둔다. 시험 전용 `assembler_literal.rs`·
 `assembler_tests.rs`와 rich·supplement 입력을 추가하며 package·dependency·export/fingerprint roots는 유지한다.
