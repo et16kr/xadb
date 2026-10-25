@@ -4,6 +4,8 @@
 // Remove when a tree consumer connects this representation leaf.
 #![allow(dead_code)]
 
+pub(crate) mod edit;
+
 use std::cmp::Ordering;
 
 use super::{

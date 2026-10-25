@@ -1,5 +1,8 @@
 # DEV3 구현·검증 현황
 
+<a id="leaf-edit"></a>
+2026-10-25 [첫 행의 leaf 후보 편집](../evidence/dev3-leaf-edit-20261025.md): caller scratch로 Insert/Replace/Remove 후보·single-page encode·기존 split 인계를 공급했다. 신규5·compiler7·도구3 선택 PASS, 원 실패·S5 확대 NOT_RUN 보존. 실제 Catalog CREATE/row/Undo·terminal·N>0 복구 연결은 미완료다.
+
 <a id="comparison-adoption"></a>
 2026-10-25 [비교 분석 반영](../evidence/dev3-comparison-adoption-20261025.md): 설계·계획만 보강했다. N=0 plan4 고유50개와 기존 codec/pool의 원 source별 완료는 유지한다. [추가 보완표](../plans/dev3-implementation-plan.md#comparison-adoption)의 실제 행/Undo/CLR 통합, opcode 수치 F05, immutable fuzzy capture, typed namespace rewrite restore, 충돌/공간 계측·대형 qualification은 미완료다. 새 제품 코드·시험·성능 실행은 없다. 설계 채택을 지원 기능이나 DEV3/S5 PASS로 승격하지 않는다.
 

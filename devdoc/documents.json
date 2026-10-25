@@ -2257,6 +2257,16 @@
       "path": "evidence/naming-cleanup-20261025.md",
       "role": "evidence",
       "title": "XADB 내부 명칭과 반복 파일명 정리"
+    },
+    "dev3-leaf-edit-20261025.md": {
+      "path": "evidence/dev3-leaf-edit-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 첫 행의 bounded leaf 후보 편집"
+    },
+    "dev3-leaf-edit-20261025.json": {
+      "path": "evidence/dev3-leaf-edit-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 leaf 후보 편집 source별 선택 검증"
     }
   }
 }

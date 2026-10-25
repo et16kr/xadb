@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-25 [DEV3 첫 행의 leaf 후보 편집](dev3-implementation.md#leaf-edit): Insert/Replace/Remove 후보·수명 선택 검증 완료, 실제 행 거래·DEV3/S5 미완료.
+
 - [DEV3 plan4 빈 거래 live·prefix](dev3-implementation.md#retention-live) — 필수75 source별 PASS; fresh 수명·flush·재적재 연결, 복구/DEV3/S5 미완료
 
 - [DEV3 복구 이미지·제어 레코드](dev3-implementation.md#recovery-control-base) — 필수272 source별 PASS·원 실패 보존; 실제 복구 owner와 DEV3/S5 미완료

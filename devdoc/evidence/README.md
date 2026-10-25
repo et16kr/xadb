@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV3 첫 행의 leaf 후보 편집](dev3-leaf-edit-20261025.md) · [source별 기록](dev3-leaf-edit-20261025.json) — 신규5·compiler7·도구3 선택 PASS, 첫 행·DEV3/S5 미완료.
+
 - [DEV2 PF04 flush 완료 구분·출력 버퍼 보완](dev2-pf04-flush-provenance-20261025.md) · [source별 기록](dev2-pf04-flush-provenance-20261025.json) — 원 수집 FAIL 보존, 수정 Always 완료2932개·512 fsync/phase 연결. 원 PF04 FAIL 유지.
 
 - [XADB 전체 방향성 점검](xadb-direction-review-20261025.md) · [재점검·계획/설계 반영](xadb-direction-review-20261025.md#review-adoption) — 원 검토·첫 판단을 보존하고 수용7개를 구체화했다. 첫 행 통합 우선, 구조·명명·공통화는 국소 후보, 운영 개선은 기존 절차 활용으로 제한한다. PF04 면제·상위 계획 일괄 동결은 거부하며 제품·시험 미실행이다.

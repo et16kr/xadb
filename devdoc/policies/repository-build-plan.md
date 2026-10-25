@@ -531,3 +531,8 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 두 durable worker source는 짧은 이름과 명시적 `[[bin]]`으로 연결한다. controller의 private 실행 조립은 `runner.rs`, 문서 계약 시험은 `test_contracts.py`다. 빈 거래 borrowing checker는 `scripts/dev3/empty_transactions/check_borrows.py`이며 직접 실행과 `PYTHONPATH=scripts python3 -B -m unittest dev3.empty_transactions.test_borrows` package 진입점을 지원한다. 변경 사례만 선택하며 전체 모듈 시험 명령을 자동 실행 요구로 해석하지 않는다.
 
 현재 compiler fixture의 import·길이·해시와 관련 runner pin을 함께 갱신한다. 과거 compiler 이력은 그 보존 source의 Cargo library 이름을 읽어 원 target과 결합한다. 실제 변경·선택 검증·독립 검토 및 원 실패는 [명칭 정리 기록](../evidence/naming-cleanup-20261025.md)을 따른다. 기존 증거의 원 이름과 byte는 보존한다.
+
+
+## 첫 행의 leaf 후보 편집 — 2026-10-25
+
+`storage/tree_page/edit.rs`와 `edit/tests.rs`는 기존 tree codec의 caller-scratch 편집 책임이다. 별도 crate/dependency·source root·I/O 권한을 추가하지 않으며 실제 Catalog/Row/CLR producer가 소비한다. `check_dev3_leaf.py`의 새 선택 inventory와 `check_dev3_tree_edit_borrows.py`·`test_dev3_tree_edit.py`를 기존 scripts 지문 범위에서 관리한다. 실제 source·binary·입력·원 실패·정리는 [선택 증거](../evidence/dev3-leaf-edit-20261025.md)를 따른다.

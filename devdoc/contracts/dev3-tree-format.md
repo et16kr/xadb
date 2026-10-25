@@ -103,3 +103,24 @@ internal profile은 state=seed(1..64), 각 cell마다 `state=state*6364136223846
 | catalog internal | `977aefe78ea8f9ffeec46a69e513fbd4cfff13de573711e3a174c7da305c1147` | `54a1664f6ae5e019cbbea67e8a1bcafc01cf06d2ccac1e7e25bca18ed786c636` |
 
 정렬 oracle의20 scalar 순서는 NULL; Bool(false,true); Int64(MIN,-2,-1,0,1,MAX); Utf8(빈문자열, NUL, a, a+NUL, é); Binary(빈값,00,0000,00ff,01,ff)다. 손상 분모는 공통8종×6 page=48, leaf/internal의역순·동일key각3family×2=12, leaf leftmost3, internal reserved/FileId0/incarnation0/self/duplicate 5종×3=15로 총78개다.
+
+<a id="leaf-edit"></a>
+## D3-TREE-EDIT-001 — 첫 행·카탈로그의 leaf 후보 편집
+
+2026-10-25 · **D2 수용 / 신규5개 선택 검증 완료·최종 독립 D1 수용**. 기준 `688b9af`, 작업·계약·통합 `/root`, 별도 검토 `/root/dev3_review`. 다음 소비자는 최소 Catalog CREATE와 Row INSERT 및 해당 CLR이다. 기존 format·비교·page envelope를 재사용하며 새 I/O·pool·WAL owner는 추가하지 않는다.
+
+`tree_page::edit`는 검증된 `TreePageView`에서 caller가 준비한 canonical cell을 Insert/Replace하거나 key를 Remove하여 정렬된 후보를 만든다. Insert의 중복은 `KeyExists`, Replace/Remove의 부재는 `KeyMissing`이다. Replace는 cell에 들어 있는 같은 key의 value만 교체한다. Remove는 CLR의 이전 Missing 복원·허가된 물리 회수를 위한 공급이며 사용자 DELETE의 tombstone을 대신하지 않는다. leaf value의 row/catalog 의미는 해당 decoder·producer 책임이다.
+
+`prepare_leaf_edit(edit, scratch)`는 leaf만 받는다. 새 cell·key와 전후 정렬·비용을 검산한 뒤 caller-owned slice-reference scratch에 metadata와 결과 cell 참조를 채운다. 실패 시 원본·cell·scratch 전부 보존한다. 성공 시 필요한 prefix만 쓰고 tail은 보존한다. `LeafEditPlan`은 immutable 원본/cell과 scratch를 대여하므로 그 수명 중 해당 bytes·참조 배열을 변경할 수 없다. page에 적용할 권한·pin·latch·WAL 보호를 발급하지 않는다.
+
+후보 총 비용은 기존 `C+H=24282`까지 받는다. `entry_bytes`와 `needs_split`을 반환하며, 단일 page에 못 들어가면 `encode(lsn, output)`는 `NoSpace`로 output을 전부 보존한다. `split()`은 기존 byte-balanced `choose_split`을 소비한다. split page 설치·부모 전파는 후속 SMO이며 이 단위에서 수행하지 않는다. encode는 원 identity/kind/level을 유지하고 caller가 넘긴 pageLSN만 사용한다. pageLSN은 기존 표현처럼 숫자이며 complete WAL 증명이 아니다. 실제 producer가 해당 그룹의 LSN을 주고 before/stamp 재검사 후 stage/apply해야 한다.
+
+F05: 원 page 최대1011 entry에 Insert 하나를 더한 후보는 metadata 포함 최대1013개 참조다. `MAX_LEAF_EDIT_CELLS=1013`은 caller의 선택 상한이며 실제 필요한 개수보다 짧으면 `ScratchTooSmall`로 거절한다. x86_64에서 reference scratch 최대16208 bytes, 원 page16384, output16384, 새 cell8090으로 caller backing 소계57066 bytes다. 함수 안에는 page/참조 배열·heap·I/O·lock이 없고 고정 크기 view/plan만 있다. typed carrier 크기는 구현 후 기록한다. 이는 표현 공급의 회계이며 일반 transaction·CLR opcode의 전체 F05가 아니다. 이 단위의 encode 호출은 output 한 개만 쓰며 위 회계는 그 호출의 생존량이다. 후속 split producer는 두 output·retained plan의 동시 생존량을 별도 합산한다.
+
+선택 시험은 새 `tree_page::edit::tests`만 실행한다. 세 family의 처음/중간/끝·empty Insert/Replace/Remove를 독립 cell sequence·envelope bytes와 비교하고, 중복/부재·internal·잘린/비정상 cell/key·scratch 필요량−1/동일/+1·최대1013 참조·C−1/C/C+1·H/H+1·출력 sentinel·overflow split을 확인한다. source image와 입력 cell 불변, metadata/identity 보존, index physical key의 RowId 순서, 64 seed×128 operation 독립 ordered-map 이력을 포함한다. 기존 codec·N=0 복구 시험은 반복하지 않는다. I/O/thread/reopen은 이 무효과 표현에 적용되지 않으며 실제 consumer 연결에서 수행한다. S5는 같은 고정 시험과 별도 ignored 256 seed×1024 operation 확대를 포함한다.
+
+별도 `/root/dev3_review`가 계약·한도·오류·LSN 권한 경계를 읽기 전용 D2 검토하여 수용했다. seed 동결과 output 회계 범위 지적을 반영한다. 이 검토는 실행 증거가 아니다.
+
+실행 전 동결한 generator는 D3-TREE-EDIT-G1이다. seed1..64(최종1..256), state=seed, 매 draw `state=state*6364136223846793005+1 mod2^64`, 값=high32다. operation별 action=draw%3, ordinal=draw%31+1, value 길이=draw%97 순서로 소비한다. value byte는 step%251이며 각 history는 빈 leaf에서 시작한다. 세 family마다 같은 stream을 실행한다. 동결 시험 source SHA-256 `bf3d0421238eea56afd670921638f79d039b9cda9549da715824b0d209076e60`, 원 source·binary·입력은 [실행 증거](../evidence/dev3-leaf-edit-20261025.md)에 보존한다.
+
+실제 x86_64 typed 크기는 TreePageView128, LeafEdit24, LeafEditPlan104, Result104 bytes다. 신규5개/생성24576 operation, compiler7, 도구3개가 source별 PASS다. 전체 transaction/CLR F05·실제 I/O/행 거래는 이 결과에 포함되지 않는다.

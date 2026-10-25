@@ -884,3 +884,10 @@ static15초(worker10/감사5), memory210초(worker180/감사30, 함수·사례30
 | D3-COMP-10 · 3.15/16 | 독립 edge multiset audit의 T/E/B 방문 count·bounded workspace, 누락/중복 edge와 잘린 scan 거절. 정상 open vs full audit 분리 | 대형 T/E에서 `E×ceil(T/B)` 재순회와 실제 read bytes/time, 고정 budget·시간 초과를 INCONCLUSIVE/FAIL로 보존 | DS03/04/05, PF09 |
 
 원 plan4 고유50개와 codec/pool의 source별 PASS·FAIL/HOLD는 새 family 분모에 합쳐 새 실행인 것처럼 표시하지 않는다. 중간에는 실제 diff가 있는 소비 경로·새 oracle/harness의 필요한 사례만 실행하고 무변경 완료 시험은 반복하지 않는다. S5에서 확정 DEV3 inventory를 전수 실행하되 DEV0/1/2나 전체 workspace로 확대하지 않는다. 최종 뒤 수정도 관련 diff/실패 사례만 재검증한다. 문서만 바뀐 이번 작업은 제품·모델·성능·compiler/Clippy·문서 verifier 미실행이다.
+
+<a id="leaf-edit-inventory"></a>
+## 첫 행의 leaf 후보 편집 — 추가 inventory
+
+[계약](../contracts/dev3-tree-format.md#leaf-edit)·[원 실행 증거](../evidence/dev3-leaf-edit-20261025.md)의 `storage::tree_page::edit::tests::` 고유5개를 기존 tree codec9개와 분리해 선택한다. 정확 이름은 `scripts/check_dev3_leaf.py`의 `LEAF_EDIT_TESTS`로 고정하며 named result·고정 layout witness·분모를 함께 검산한다. 중간에는 이 신규5개만 실행했고 완료된 하부 시험은 반복하지 않았다.
+
+S5는 고유5개와 `storage::tree_page::edit::extended_tests::leaf_edit_extended_histories_match_ordered_map`의 별도 ignored256 seeds×1024 operation×3family를 전부 포함한다. 중간64×128×3와 확대 stream의 seed·LCG·hash는 계약/실행 전 frozen-input에 기록한다. `scripts/check_dev3_tree_edit_borrows.py`의 source/cell/scratch positive/negative+baseline7과 `scripts/test_dev3_tree_edit.py`의 receipt/probe/layout3도 새 검증 도구 inventory다. 같은 코드의 완료 결과는 원 source에 귀속하며 이후 변경은 관련 사례만 검증한다.
