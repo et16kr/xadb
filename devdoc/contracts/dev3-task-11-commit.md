@@ -17,6 +17,8 @@
 
 공급 순서는3.11.1 공통 terminal/공개 primitive→최소 catalog create와 해당 undo/commit 의미의 연결→성공한 영속 table handle→첫 행 거래 인수다. 공통 primitive를 첫 행 거래 완료 뒤에만 공급하는 순환을 만들지 않는다. 최소 catalog 생성도 실제 recovery에서 재현되어야 하며 codec 성공이나 임의 사전 생성 파일로 원자성·identity 검산을 대신하지 않는다.
 
+[실행 범위 보완](../plans/dev3-implementation-plan.md#direction-refinement)에 따라 이 종료점은 실제 engine API의 table 생성·행 변경·commit·새 process 복구·읽기로 판정한다. DEV4 SQL 연결은 후속 소비이며 첫 행 검증의 새 선행이 아니다. 필요한 page 수명·eviction/reload·live undo·guard와 아래 실패/복구 의무는 유지한다. 전체 구조 정리·이름 변경·문서 개편·효율 보고 체계의 완성을 이 경로의 선행으로 요구하지 않는다.
+
 첫 연결도 해당 opcode의 before image·UndoRef/head·status incoming edge·잔여 예약과 CLR 진행점을 하나의 규약으로 소비한다. terminal queue의 표현·credit·종료 소유, 필요한 잠금/관측 검증·commit 설치 장벽·fence가 동결되지 않았으면 terminal opcode를 허용하지 않는다. 인덱스 없는 지원 fixture를 사용할 수 있으나 실제 존재하는 index/constraint를 건너뛰는 모드는 만들지 않는다.
 
 완료에는 작은 fixture의 no-force ACK 후 새 프로세스 복구, uncommitted steal 뒤 loser 제거, 실패 statement 이전 결과 보존과 full abort, commit 불명 결과, 부분 CLR 재장애와 정상 admitted quota 경계의 복구 성공이 필요하다. [복구 정본](dev3-task-12-recovery.md)의 REBASE/LOG_OPEN/UNDO/VERIFY/STABILIZE·새 ACK 후 재개를 생략하지 않는다. 이 결과는 지원 opcode의 연결 증거이며 전체 CRUD·두 isolation·다중 객체·전체 DEV3 인수를 대신하지 않는다. 신규 사례는 [통합 목표별 시험](../plans/dev3-test-plan.md#direction-integration)에 배정한다.

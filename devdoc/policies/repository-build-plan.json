@@ -29,6 +29,12 @@
     "server_platform_policy": "Linux implementation now; additional OS only after business decision, adapter implementation and qualification",
     "document_layout": "DOC-001 role directories are the current layout; preserve original source paths/revisions/hashes of historical evidence after migration"
   },
+  "local_artifact_retention": {
+    "decision_ref": "dev3-implementation-plan.md#direction-refinement",
+    "contract_ref": "repository-build-plan.md#local-artifact-retention",
+    "evidence_ref": "dev3-runtime-core-20261024.md",
+    "automatic_cleanup_implemented": false
+  },
   "toolchain": {
     "rust": "1.95.0",
     "edition": "2024",

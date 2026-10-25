@@ -1,5 +1,9 @@
 # XADB 조사·실행 증거
 
+- [XADB 전체 방향성 점검](xadb-direction-review-20261025.md) · [재점검·계획/설계 반영](xadb-direction-review-20261025.md#review-adoption) — 원 검토·첫 판단을 보존하고 수용7개를 구체화했다. 첫 행 통합 우선, 구조·명명·공통화는 국소 후보, 운영 개선은 기존 절차 활용으로 제한한다. PF04 면제·상위 계획 일괄 동결은 거부하며 제품·시험 미실행이다.
+
+- [DEV3 비교 분석의 설계·계획 반영](dev3-comparison-adoption-20261025.md) — 자원 벡터·immutable capture·typed restore·완료분 보완과 D3-COMP-01–10. 문서 변경, 제품 미실행.
+
 - [DEV2 PF04 P3 영속 I/O 관측](dev2-pf04-io-cause-20261025.md) · [source·결과 기록](dev2-pf04-io-cause-20261025.json) — 선택 도구 검증·4slot 정답 PASS, 요청 비율 미확정·Always 영향 FAIL·원 PF04 FAIL 유지.
 
 - [DEV2 PF04 P2 K0 관측 소유권 후보 기각](dev2-pf04-k0-owner-20261025.md) · [source·측정 기록](dev2-pf04-k0-owner-20261025.json) — 선택12함수·PMU2·paired40실행, 확인 개선 기준 미달로 제품 원복, PF04 FAIL 유지.

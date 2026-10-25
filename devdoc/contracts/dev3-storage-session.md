@@ -302,3 +302,12 @@ DEV0/1/2의 중첩 command wrapper는 exclusive regular log에 stdout/stderr를 
 새 검증 범위는 [선택 입력 및 증거](../evidence/dev3-runtime-core-20261024.md)의 static2·memory5다. 기존 시험의 필드 접근 적응은 컴파일하며 완료 사례를 재실행하지 않는다. 실제 소유권 이동, public Genesis stage/sync 전달, fence·poison·명시적 reader claim fault 보존을 판정한다. Native는 타입 크기만 관측하며 새 disk durability 결과를 주장하지 않는다. G6 live/복구·Catalog CREATE/CLR·첫 행 ACK·AI 소비자2/3·DEV3/S5는 이 추출로 완료되지 않는다.
 
 이 추출의 generic reader 전달은 고정 compiler/target의 호출·반환 단계 상한 근거 (로컬 `../../artifacts/dev3/plan4-runtime-core-20261024/review/generic-reader-source-proof.md`)를 따른다. 깊은 codec 실행 중 wrapper는 참조만 보유하고, codec 종료 뒤 인접 반환 carrier의 이동을 기존 owner·File·readback 예약이 지배한다. 미래 전달 scope·필드·target 변경은 다시 계산한다.
+
+<a id="consumer-driven-refinement"></a>
+### 실제 소비자에 필요한 국소 개선
+
+[D3-DIRECTION-002](../plans/dev3-implementation-plan.md#direction-refinement)의 구조 단순화는 다음 소비자의 연결 비용이 확인된 부분에 한정한다. `WalRuntime`·`InstalledStorageCore`의 실제 공유 자원과 Genesis/Fresh/recovered의 권한 구분은 유지한다. 중첩 깊이·타입 수만을 이유로 wrapper를 제거하거나 raw mutable 접근·역변환을 열지 않는다. 추출·전달 함수 변경은 원 writer/File/slot/fence, Drop·poison·notify 순서, 대여 수명과 동시 생존 자원량을 보존하는 좁은 대안과 비교한다.
+
+내부 장부 공통화는 같은 필드의 바이트 표현·소유·오류 의미가 확인된 부분만 대상으로 한다. 현재 `empty_transactions_live`의 offset1624는 설치 phase1–5이고 `recovery_empty_transactions`의 같은 위치는 present0/1이다. offset 일치가 같은 상태 전이라는 근거는 아니다. 정리 큐의 별도 stage 규약도 각각 유지하며, 전체 live/recovery 장부를 하나의 범용 상태 기계로 합치지 않는다. 독립 oracle의 정답 계산에 제품 codec·상수를 공유하는 근거로 사용하지 않는다.
+
+새 이름은 역할을 드러내되 plan4의 실제 bootstrap version과 제한 지원 범위를 지우지 않는다. 기존 이름은 관련 소비자 변경에서 혼동·잘못된 의존의 원인이 확인될 때만 변경 후보로 삼는다. wire 값·지원 capability·원 증거 identity는 이름 정리로 변경하지 않는다. 이 절은 리팩터링 완료 증거나 새 owner/API 공급이 아니며, 실제 변경 시 해당 diff의 수명·자원·실패 검증과 독립 검토를 적용한다.

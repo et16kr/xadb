@@ -256,6 +256,25 @@ F05는 3.16까지 미루는 작업이 아니다. [opcode 자원 계산](#resourc
 
 자원 증명·독립 검증·fault 설계는 전 구간에 걸쳐 수행한다. 개발 중 아직 제공하지 않은 durability/rollback/복구 기능의 인수는 명시적으로 남기며, 뒤 묶음에 있다는 이유로 해당 effect의 F05나 필수 실패 처리를 미루지 않는다.
 
+<a id="direction-refinement"></a>
+#### D3-DIRECTION-002 — 첫 행 중심 실행과 개선 범위
+
+[전체 방향 리뷰의 재점검](../evidence/xadb-direction-review-20261025.md#review-adoption)은 위 우선순위를 유지하고, 개선 후보를 아래 범위로 제한한다. 첫 행 연결은 [3.11 완료 조건](../contracts/dev3-task-11-commit.md#first-row-integration)에 따른 실제 engine 경로다. page 수명·guard·live undo·최소 tree·Catalog·commit·복구의 필요한 공급을 먼저 연결하며, SQL 앞단 전체나 나머지 index/DDL을 새로운 선행으로 추가하지 않는다.
+
+- **기능 작업과 국소 개선:** 착수 기록에 다음 소비자, 막는 상태 전이, 필요한 제품 변경과 관련 필수 case를 적는다. 구조 정리는 그 소비자 연결에서 불필요한 내부 수정·동일 책임의 중복이 확인될 때 후보로 삼는다. 기존 구조 유지와 좁은 추출을 비교하고, 소유권·오류·자원 영향과 변경 범위를 검토한 뒤 적용한다. 전체 `wal_io` 재배치·wrapper 제거·일괄 rename을 첫 행의 선행 작업으로 배정하지 않는다.
+- **설계 경계:** [저장 세션의 국소 개선 기준](../contracts/dev3-storage-session.md#consumer-driven-refinement)을 적용한다. 같은 바이트 위치나 유사한 코드 모양만으로 live와 recovery 상태 규약을 합치지 않는다. 명명 개선은 실제 역할을 드러내되 지원 범위·wire version·과거 source identity를 바꾸지 않는다.
+- **보조 작업의 한도:** [기존 시간 기록 활용](dev3-ai-throughput-improvement.md#bounded-application), [문서 진입점·지침 관리](../policies/documentation-policy.md#entry-maintenance), [로컬 산출물 관리](../policies/repository-build-plan.md#local-artifact-retention)를 적용한다. 별도 플랫폼·보고 체계·문서 전면 개편을 기능 구현의 선행으로 만들지 않는다. 실제 자원 부족이나 입력 오류는 해당 작업의 차단 원인으로 처리한다.
+- **유지할 의무:** 원 PF04 FAIL·DEV2 미완료, 첫 행의 정상/실패/재장애·effect 전 자원 검산, 변경 코드 관련 시험과 DEV3 최종 S5 전수를 유지한다. 상위 계획의 일괄 동결 없이 현재 소비자나 미해결 질문이 없는 세분화만 미룬다. 이 보완은 새 제품 기능·지원 flag·시험 분모·신규 실행 명령을 추가하지 않는다.
+
+| 결정 항목 | 기록 |
+| --- | --- |
+| 상태·분류·일자 | ACCEPTED · D2 · 2026-10-25; 소유 문서 반영안과 링크 보완의 독립 검토 PASS 후 통합 담당 확정 |
+| 담당·권한 | 작업·계약·통합 `/root`; 사용자의 수용 범위 재점검과 리뷰·계획·설계 반영 지시, DP01의 기존 D2 위임 |
+| 선택·대안 | 첫 행 통합을 중심으로 필요한 국소 개선과 기존 운영 절차 활용. 일괄 리팩터링·관리 체계 신설·품질 면제는 채택하지 않음 |
+| 소유·관계 | 본 실행 범위, 저장 세션·첫 행 계약, AI 효율 계획, 문서 운영·빌드 정책. D3-DIRECTION-001의 순서·완료 조건을 유지하며 원 리뷰의 포괄적 수용 해석을 좁힘 |
+| 검토·보존 | 독립 검토자 `/root/direction_adoption_review`가 고정한13개 파일의 변경과 후속 링크 보완을 대조해 최종 D2 PASS. 최초 검토의 이동 전 소스 링크 지적은 원 경로·revision을 보존하고 현재 링크를 연결해 해소했으며 의미상 차단 지적은 없음. 기준 HEAD `f15784600b7c2e61f5daa14901e37a84129bf248`; 편집 전 파일·SHA-256·dirty 목록, 반영안·변경 patch·링크 보완 hash는 `/tmp/xadb-direction-adoption-3epaicy7/`에 보존. 동시 DEV2 도구·제품 경로 이동·배치 목록 변경은 이 판정 범위 밖 |
+| 실행·재검토 | 제품·시험·자동 문서 검사 미실행. 국소 개선이 권한 경계를 약화하거나 범위를 넓히는 경우, 보조 작업이 기능 연결을 지연시키는 경우, 새 소비자로 실제 계약 차이가 드러나는 경우 재검토 |
+
 <a id="parallel-execution-plan"></a>
 #### 초기 병렬 배치의 기록과 후속 순차 통합
 

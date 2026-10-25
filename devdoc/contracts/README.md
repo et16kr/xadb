@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [저장 세션의 국소 개선 경계](dev3-storage-session.md#consumer-driven-refinement) · [첫 행 완료 조건](dev3-task-11-commit.md#first-row-integration) — 원 권한·자원 수명과 live/recovery 상태 차이를 보존하며 실제 소비자에 필요한 변경만 선택한다. 제품 구현·시험 완료를 뜻하지 않는다.
+
 - [DEV3 비교 분석 후속 설계](disk-storage-design.md#task-review-011) — 자원 벡터, immutable checkpoint 입력, offline typed namespace restore와 성능 판정 경계.
 
 - [DEV3 plan4 빈 거래 복구 owner](dev3-plan4-recovery-owner.md) — 원 자원·선택/REBASE·새 epoch·같은 pool의 복구 종료; 중단 작업 검증 완료·독립 D1/D2 한정 수용

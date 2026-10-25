@@ -1,12 +1,14 @@
 # 개발 계획
 
+- [첫 행 중심 실행과 개선 범위](dev3-implementation-plan.md#direction-refinement) — 방향 재점검 반영. 구조·명명·공통화는 소비자 연결의 국소 후보, 문서·효율·캐시 관리는 기존 절차 활용으로 제한하며 새 선행 장벽을 추가하지 않는다.
+
 - DEV3 비교 분석 반영: [완료분 보완·우선순위](dev3-implementation-plan.md#comparison-adoption), [D3-COMP-01–10 구현 동반 인수](dev3-test-plan.md#comparison-adoption). 계획 채택과 실행 결과를 구별한다.
 
 - [DEV2 PF04 해결 단계와 커밋 계획](dev2-pf04-resolution-plan.md): 계획 선행 commit, P1 측정 구간 관측 도구와 변경 범위 시험, P2–P4 조건부 비용 절감·영속 원인 분리·종료 검토.
 
 - [DEV4 — DEV3 병행 준비·독립 모듈 개발 계획](dev4-preparation-plan.md): 기존4.xx에 연결한 개발 순서·F01–05 부분 동결/잔여·FE01–16 선택 시험·진단 효과의 실제 연결 인수·DEV3 수신. D4-PREP-001/002 독립 D2 채택, 개발/시험 NOT_RUN.
 
-2026-10-23 [DEV3 AI 개발 효율 개선 계획](dev3-ai-throughput-improvement.md): 에이전트의 작업 입력·소스 조사·독립 검토·시험 준비·모델 배정을 개선하고, 세 통합 작업의 실제 인수 시간을 측정하는 실험을 제안한다. 실험은 미실행이며 기존 품질 기준과 S5 전수 인수는 유지한다.
+2026-10-23 [DEV3 AI 개발 효율 개선 계획](dev3-ai-throughput-improvement.md): 작업 입력·시간 기록의 첫 운영 적용으로 소비자1/3, 효과 비교는 미완료다. [후속 적용 범위](dev3-ai-throughput-improvement.md#bounded-application)는 기존 기록을 활용하며 별도 플랫폼·보고 체계를 첫 행의 선행으로 만들지 않는다. 기존 품질 기준과 S5 전수 인수를 유지한다.
 
 2026-10-22 [DEV3 개발 모델·검토 운영](dev3-implementation-plan.md#model-roles): GPT-6.1 Sol 주 개발, 작성자 외 독립 검토, 가능하면 Astra의 핵심 복구·동시성 설계 검토. 첫 평가 단위3.12.1.a와 후속 실제 복구 연결로 적합성을 확인한다.
 

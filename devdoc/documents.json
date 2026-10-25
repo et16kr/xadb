@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "xadb-direction-review-20261025.md": {
+      "path": "evidence/xadb-direction-review-20261025.md",
+      "role": "evidence",
+      "title": "XADB 전체 방향성 점검 — README 취지 대비"
+    },
     "dev2-pf04-io-cause-20261025.md": {
       "path": "evidence/dev2-pf04-io-cause-20261025.md",
       "role": "evidence",
@@ -2232,6 +2237,11 @@
       "path": "evidence/dev3-recovery-resumed-20261025.json",
       "role": "evidence",
       "title": "DEV3 중단된 복구 단위의 source별 선택 검증 색인"
+    },
+    "dev3-comparison-adoption-20261025.md": {
+      "path": "evidence/dev3-comparison-adoption-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 비교 분석의 설계·계획 반영"
     }
   }
 }

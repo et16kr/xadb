@@ -287,6 +287,15 @@ DEV1 검사는 DEV0 회귀와 production foundation/platform의 실제 연결을
 
 첫 사내 배포 전에 `packaging/`의 고정 recipe와 설치 smoke를 작성하고 결과는 `artifacts/dist/<version>/<target>/`에 둔다. source revision/dirty digest, toolchain/lockfile, target OS/kernel/filesystem, feature/profile, binary·symbol hash, stage/capability와 인수 증거를 manifest에 담는다. install prefix와 DB 경로는 분리하고, 라이브러리·header/JAR·도구는 해당 capability가 구현된 경우에만 포함한다. 지금 설치 패키지가 존재하거나 배포 검증을 마쳤다는 뜻은 아니다.
 
+<a id="local-artifact-retention"></a>
+### 로컬 산출물과 재생성 가능한 캐시
+
+[D3-DIRECTION-002](../plans/dev3-implementation-plan.md#direction-refinement)의 운영 보완은 [기존 캐시 회수·증거 보존 사례](../evidence/dev3-runtime-core-20261024.md)를 재사용한다. [DP06](development-policy.md#section-7)의 배포/결함 보존 기간과 [원본 identity 보존](documentation-policy.md)을 유지하며, 전체 크기·나이만으로 `artifacts/`를 삭제하거나 원본을 요약으로 대체하지 않는다.
+
+정리 전 소유 작업·사용 중 여부·증거 참조를 확인해 재생성 가능한 build/incremental cache와 보존할 source·binary·fixture·raw·원 FAIL·로그를 구분한다. cache 경로에 있다는 이유만으로 삭제 가능하다고 보지 않는다. hardlink·공유 cache는 보호 대상 inode/bytes와 실제 사용자를 확인하고, 정확한 회수 대상·이유·원본 보존 확인을 기존 작업 기록에 남긴다. 사용 중이거나 증거와의 관계가 불명확한 대상은 보류한다.
+
+새 보관 서비스·자동 만료·전체 산출물 정리를 기능 개발의 선행으로 만들지 않는다. 실제 공간 부족은 해당 작업 범위에서 해결하며 기존 source별 증거를 새 실행 PASS로 바꾸지 않는다. 이번 문서 반영으로 캐시 삭제나 자동 정리 도구를 실행·구현한 것은 아니다.
+
 
 <a id="section-11"></a>
 
