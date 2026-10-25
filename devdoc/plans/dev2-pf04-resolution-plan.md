@@ -298,3 +298,46 @@ PMU bracket에는 원 loop 밖의 부가 작업이 포함될 수 있다. 도구�
 ### 한정 실행 완료
 
 후속 “허용”으로 위 예외를 적용해 Off20회와 새 출력20개의 정답 검산을203.627477초에 완료했다. CPU 상/하위5의 중앙값 비율은1.012035, 같은 집단의 p50 비율은1.038961로 동결한1.10 조건에 미달했다. **UNKNOWN_NO_FROZEN_BAND**로 종료하며 추가·재시도0, 원 PF04 FAIL·DEV2/B2/D0 미완료를 유지한다. 입력·도구·실행·독립 검토·manifest는 [실행 기록](../evidence/dev2-pf04-off-classification-20261025.json)을 따른다. 이 실행은 다음 인수나 환경 변경을 자동 승인하지 않는다.
+
+<a id="prewarmup-boundary"></a>
+
+## 후속 도구: warmup 앞 PMU 준비와 경계 대조
+
+2026-10-25 · **D2 계획 한정 검토 채택 / 계획 선행 commit / 구현·시험 NOT_RUN**. 작업·계약·통합 `/root`, 별도 검토 `/root/pf04_evidence_review`. 기존 PF04 네 FAIL·DEV2 미완료와 위20회 UNKNOWN을 보존한다.
+
+### 해결하려는 관측 한계와 선택
+
+기존 활성 진단은 warmup 뒤 START/GO를 교환한다. nonblocking socket이 준비되지 않으면 재시도마다1ms sleep을 요청하며 실제 대기는 scheduler에 따라 길어질 수 있다. 원 비활성 인수는 이 교환을 하지 않는다. 따라서 큰 변동이 관측되지 않은 위20회만으로 원 인수의 측정 직전 상태를 설명할 수 없다.
+
+이 한계를 줄이기 위해 **K0 전용 명시 모드2개**를 기존 private gate에 추가한다. 두 모드 모두 PMU enable과 ACK를 warmup 앞에서 완료한다. 하나는 warmup 뒤 추가 IPC 없이 로컬 clock/rusage만 읽으며, 다른 하나는 같은 위치에서 START/GO를 한 번 더 교환하는 대조 경로다. 같은 새 ELF·같은 PMU 범위에서 이 차이만 선택할 수 있게 한다. 두 새 모드 간 비용 비교는 아래 기능 연결 시험과 별개다.
+
+기존20회 재실행은 정보가 부족하고 허용 범위를 소진했다. 전체 worker를 perf로 감싸면 setup·결과 JSON 직렬화까지 포함돼 측정 경로의 해석이 더 어려워진다. ASLR·주파수·SMT/서비스 설정 변경은 현재 원인 근거가 없다. 새 profiler·BPF·제품 최적화는 이번 대안에 포함하지 않는다.
+
+### 소유권·wire·시간 범위
+
+- 기존 `measurement` 모드가 기본이며 기존 HELLO v1·START/GO·path를 유지한다. 새 `prewarmup-continuous-v1`과 `prewarmup-wait-v1`은 CLI와 worker 환경에서 명시하고 HELLO v2에 정확한 모드를 결합한다. 인식하지 못한 모드·부분 설정·durable 적용·선택 불일치를 측정 전에 거절한다. runner가 worker의 상속 환경에 남은 모드값을 기본 동작으로 소비하지 않는다.
+- K0 setup 뒤, 기존 warmup 직전에 새 `before_warmup()` 경계를 호출한다. 새 두 모드만 ARM/ARMED 교환에서 perf를 enable하고 ACK를 확인한다. 한 번만 arm할 수 있으며 실패하면 warmup/measurement에 진입하지 않는다. 기존 모드와 disabled 경로는 여기서 IPC·clock·rusage를 수행하지 않는다.
+- `prewarmup-continuous-v1`의 `begin()`은 arm 완료를 확인하고 로컬 경계 timestamp/rusage를 읽는다. `prewarmup-wait-v1`의 `begin()`은 arm 완료 뒤 START/GO를 교환하지만 perf를 다시 enable하지 않는다. 로컬 관측 호출까지 제거된 원 인수와 동일한 실행 상태라고 주장하지 않는다.
+- 새 PMU scope는 **warmup+drain+measurement+control bracket**이다. setup·최종 값 수합/JSON 직렬화는 범위 밖이다. 원 loop의 cpu_ns/elapsed_ns/latency와 rusage before/after는 기존 측정 경계로 유지한다. PMU count/runtime에서 warmup이나 경계 시간을 추정·차감하지 않는다. 기존 loop-bracket PMU와 새 범위의 수치를 직접 효과 비율로 비교하지 않는다.
+- 새 STOP에는 ARM 응답 뒤의 `armed_ns`를 추가하고 `runner arm 응답 시각 ≤ armed_ns ≤ loop start ≤ loop end ≤ STOP 수신`을 확인한다. wait 모드는 추가로 `GO 송신 시각 ≤ loop start`도 확인한다. legacy STOP의 필드는 바꾸지 않는다. 새 output path는 `.diagnostic_prewarmup_continuous.v1` 또는 `.diagnostic_prewarmup_wait.v1`이다. 원 인수 checker가 거절하는 것을 명시 adapter에서 확인하며 원 output byte는 보존한다.
+- 기존 socket512byte·절대2초 교환 deadline, 전체 bounded runner·출력 한도, P1 소유 group/pidfd 정리·일반 worker·CAP_PERFMON 경계를 재사용한다. 새 수명 소유자나 무한 재시도는 만들지 않는다. ARM/START/STOP 순서·중복·누락·잘못된 ACK·취소/부분 결과는 실패로 남긴다.
+- warmup4096, measure65536, stride16, seed20261018,128행, old snapshot·capacity256, 제품 counter 의미와 원15%/25% 한도는 바꾸지 않는다. engine·WAL·복구 코드는 변경하지 않는다.
+
+### 구현과 선택 검증
+
+계획을 먼저 commit한 뒤 기존 measurement_window와 K0 hook, Python runner/selector, 새 모드의 retained-output adapter·fixture/선택 시험을 수정한다. 새 crate·외부 의존성·새 source root는 없다. 동시 DEV3 미커밋 변경을 제외한 export에 이 diff만 반영해 build하고 source/ELF/도구 지문을 보존한다.
+
+| 변경 | 필요한 선택 검증 |
+| --- | --- |
+| Rust mode/config·arm/begin/end | 두 새 모드의 literal 순서와 path, arm 전 begin·중복 arm/begin·잘못된 ACK 거절, continuous begin이 peer 응답 없이 끝남, disabled/legacy의 바뀐 분기 보존. 미변경 exchange byte/deadline 시험은 반복하지 않음 |
+| Python mode/HELLO/STOP·enable 위치 | literal mode/identity/armed timestamp 반례·최대u64 STOP+armed_ns512byte 경계, 두 새 fake PMU 연결의 enable 정확히1회·phase 순서, 잘못된 ARM/후속 START와 ARM 뒤 warmup 실패/취소의 소유 정리. 수정 observe의 legacy fake 연결1개만 관련 회귀로 선택 |
+| K0 실제 연결 | 새 두 모드 각각1회 실제8event PMU·정답 adapter, 변경된 기본 선택/게이트의 legacy active1회와 disabled1회. 총4개 새 출력만 검산하며 원 campaign·전체 하위 회귀는 실행하지 않음 |
+| 정적·리뷰 | 수정 Rust 파일 fmt와 관련 worker의 compile/Clippy, 실제 diff/선택 결과의 독립 D1/D2 검토. 문서 verifier는 push gate로 남김 |
+
+이4개 연결은 **새로 수정한 경계·wire·출력 path의 기능 검증**이다. 기존 허용20회의 연장이나 성능/인과 표본으로 사용하지 않는다. 테스트 실패 후에는 원 실패를 보존하고 해당 수정·실패 사례만 재검증한다. 실제 PMU가 불가/부분이면 UNAVAILABLE/FAIL로 보존하고 인수나 동작 검증을 합성하지 않는다. 재부팅·서비스/host 설정 변경은 하지 않는다.
+
+### 결과에 따른 다음 조치
+
+기능·정답·정리·분리된 scope가 충족되면 도구를 채택하고 구현·증거를 별도 commit한다. 이 완료만으로 PF04를 승격하지 않는다. 연결 실패가 있으면 그 경계만 수정하거나 새 모드를 기각하며 원 증거를 유지한다.
+
+실제 경계 효과를 측정하려면 **같은 새 ELF·동일한 warmup 포함 PMU 범위의 두 새 모드**를 동시기 대조해야 한다. 최소10쌍·순서 균형·품질·원자료·예산·결과별 조치를 별도로 동결해야 하며, 이번 기능 구현이나 이전 “허용”을 그 무변경 코드 campaign 승인으로 취급하지 않는다. 큰 차이가 있더라도 해당 관측 구성의 경계 민감도만 입증하며 과거 실패의 원인 확정·원 한도 면제로 확대하지 않는다. 차이가 없거나 불확실하면 UNKNOWN을 보존하고 반복 예산을 자동 늘리지 않는다.
