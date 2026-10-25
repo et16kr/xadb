@@ -405,3 +405,37 @@ r1의 `preparation.json` SHA-256 `0f21268c3ac8ff3965b00e9405461d6f601e8d6fff3793
 ### 경계 대조 완료 — 2026-10-25
 
 동결20slot/10쌍을208.675208초에 한 번 완료했다. 새 출력20개 정답·PMU160행·소유 group60개와 actual collector20개의 종료를 확인했다. CPU W/C paired 중앙1.002127138, [1,8]구간0.991354900–1.015730013, CW/WC중앙비1.010741214로 **UNKNOWN_NO_FROZEN_LARGE_BOUNDARY_SHIFT**다. 큰 경계 효과를 이번 조건에서 관측하지 못했으며 작은 효과·과거 원인 배제를 주장하지 않는다. 재시도·새 build·완료 시험 재실행0, 원 PF04 FAIL·DEV2/B2/D0 미완료다. 원자료·독립 검산·최종 검토·manifest는 [대조 증거](../evidence/dev2-pf04-boundary-comparison-20261025.md)와 연결 JSON을 따른다. 같은 대조는 반복하지 않는다.
+
+
+<a id="mode-attribution"></a>
+
+## 후속 디버깅: 같은 경계의 모드별 실행 작업과 CPU 비용
+
+2026-10-25 · **D2 제안 / 선행 계획 commit 후 실행조립 / 미실행**. 담당·계약·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`. 앞선 경계 대조는 [UNKNOWN으로 종료](../evidence/dev2-pf04-boundary-comparison-20261025.md)했으며 반복하지 않는다. 현재 작업은 PF04 디버깅으로 기존 분석·해결 지시 안에서 진행한다.
+
+### 질문과 선택
+
+Off-only 경계 대조로는 계측을 켰을 때의 추가 작업을 알 수 없다. 이번 질문은 **같은 continuous 경계에서 Always/Detailed가 Off에 비해 어떤 user/kernel 작업과 CPU 비용을 추가하며, 큰 CPU 변화가 instructions 또는 명령당 실행 비용 변화와 함께 나타나는가**다. 동일 보존 release ELF의 입력 모드만 바꾼다. kernel/제품·수집 경계를 수정하거나 새로운 profiler·host 설정을 추가하지 않는다.
+
+기존 Rust adapter의 `Side.mode=Off`만 보고 새 adapter가 필요하다고 한 판단은 실제 호출 경로 확인으로 철회했다. `controller::performance::check_output`은 `side.build`를 읽고, decoded request의 `input.mode`로 output.input·snapshot·counter·Always 이벤트 미수집·Detailed drop/sequence를 검산한다. 따라서 보존 continuous exact-case oracle를 재사용하되 **새 driver가 slot별 기대 input 전체 byte/hash와 decoded mode를 독립적으로 결합**한다. 요청과 출력이 서로 같기만 해서는 의도한 실험 모드가 보장되지 않는다. raw를 수정하지 않고 원 인수의 diagnostic path 거절도 그대로 확인한다.
+
+### 고정 inventory와 예산
+
+- Always/Off10쌍과 Detailed/Off10쌍, 총40slot이다. Off 표본을 두 비교에서 공유하지 않는다. 각 모드는 CW5/WC5이며 C=Off, W=해당 On 모드다. 두 종류 pair의 block 순서도 AD5/DA5로 균형화한다. seed2026102522의 실제 순서 전부를 proposal에 고정한다.
+- 경계는 전부 `prewarmup-continuous-v1`, seed20261018·128행·old snapshot·capacity256·warmup4096·measure65536·stride16이다. ELF/source/8event profile과 CPU affinity는 앞선 대조의 보존본 그대로다. 새 worker·oracle build는 없다.
+- campaign1회·전체900초·slot60초·각 slot의 유휴10초1회·collector최대28초와 정리10초·oracle4초와 정리5초, 재시도0이다. 시작 전 CPU2/18·disk busy≤5%, worker CPU2 payload 전·runner/실제 perf CPU3 READY 전, host 원자료 보존, migration0·측정 rusage major fault0·8event raw unscaled reported100%·fresh output 정답·모든 소유 process 정리를 요구한다.
+- source·ELF·3종 입력·driver·분석기·준비 지문을 사전/매 slot 뒤 확인하고 마지막 확인 뒤에도 취소·deadline을 검사한다. 첫 실패/품질 미달/취소/시간 부족에 멈추며 남은 slot은 NOT_RUN, 원 실패와 부분 자료는 보존한다. 유휴 조건을 만족할 때까지 반복하지 않는다.
+
+### 분석과 결과별 조치
+
+모드마다10개 원 loop CPU On/Off 비율의 정확한 분수 중앙과 정렬0-based[1,8] 구간, CW/WC 중앙비를 계산한다. 구간1002/1024는 IID 가정의 명목 coverage이며 독립성은 보장하지 않는다. CW/WC 중앙비가[10/11,11/10] 밖이면 그 모드는 `UNKNOWN_INCOMPLETE_OR_QUALITY_OR_ORDER`다. 필수40slot·정답·품질·예산을 공통 gate로 삼는다. 중간에 한 모드10쌍만 완성됐더라도 전체가 불완전하면 두 모드의 최종 분류는 모두 UNKNOWN이며 부분 기술 수치만 보존한다.
+
+원 CPU 한도23/20은 진단 설명의 기준선으로만 표시한다. 구간 하한>23/20은 `MEDIAN_INTERVAL_ABOVE_REFERENCE`, 상한≤23/20은 `MEDIAN_INTERVAL_WITHIN_REFERENCE`, 사이에 걸치면 `MEDIAN_INTERVAL_CROSSES_REFERENCE`다. **어느 결과도 PF04 인수 PASS나 원 실패의 삭제가 아니다.** 전 pair의 원값·정확한 >23/20 초과 여부와 최악 비율을 별도로 남기며 불리한 pair를 제거하지 않는다. 중앙값 구간 분류와 원 pair별 인수 기준을 구별한다.
+
+보조 지표는 같은 pair의 elapsed·p50/p99·8PMU count/runtime/coverage·rusage·user/kernel CPI·user cycles/reference cycles·control bracket 전체다. 각 모드의 paired 중앙/구간을 정확 분수로 기록하며 분모0은 null과 이유를 보존한다. PMU는 warmup+drain+measurement+control bracket이고 원 CPU/latency는 loop 범위다. scope가 다른 수치를 빼거나 더해 정확 CPU 분해를 만들지 않으며 CPI만으로 cache/atomic·주파수 원인을 확정하지 않는다.
+
+안정적인 instructions 증가와 대체로 비슷한 CPI는 추가 실행 작업과 양립하는 관측이다. instructions 대비 큰 cycles/CPI 변화가 있으면 해당 경로를 좁힐 증거이며 그 자체로 원인 확정은 아니다. 결과가 이미 알려진 안정적 작업만 보여 주고 의미 보존이 가능한 새 제품 후보를 뒷받침하지 못하면 **원인·해결책 UNKNOWN으로 기록하고 이번 campaign을 종료**한다. 자동 반복·유리한 임계값 변경·C1/C2 조합 복원·새 profiler 추가는 하지 않는다. 다음 가설이 필요하면 새 근거와 유한 범위를 먼저 정한다.
+
+### 준비·검토
+
+준비 루트는 `/home/et16/xadb-dev2-evidence/pf04-mode-attribution-20261025`, proposal SHA-256은 `1d8014088a5278588d1b2fdeecc03111f6188a1d6723e6e8b816db4bb8bf6df9`다. 새 실행조립의 mode 결합·inventory와 분석기의 분수 경계·누락/순서·보조 분모 처리를 직접 검증한다. 기존 제품·완료 수집기·원 oracle 기능 시험은 반복하지 않고,40개 fresh diagnostic output에 대한 정답 검산만 수행한다. 실제 실행 전에 driver·분석기·입력·원 source/ELF/oracle 지문과 독립 preflight를 결합한다. 문서 verifier는 push gate에 남긴다.
