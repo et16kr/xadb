@@ -1,6 +1,6 @@
 # XADB 개발 문서
 
-2026-10-25 [DEV4 P5 수명 모델 전이](evidence/dev4-lifecycle-model-20261025.md): [소유 계약](contracts/dev4-lifecycle-model.md)의 `transition`을 구현해 원 literal 29 edge·12 trace·5 known-bad와 맞췄다. 1차 독립 검토가 찾은 금지 전이 2건을 교정했고 독립 D2 수용·D1 제한 수용이다. 독립 checker·BFS·FE14는 미완료다.
+2026-10-25 [DEV4 P5 독립 edge checker](evidence/dev4-lifecycle-checker-20261025.md): 모델을 호출하지 않는 [`verify_edge`](contracts/dev4-lifecycle-checker.md)를 구현하고 모델 출력을 차등 판정했다. 불일치9건·검토 결정2건을 원문으로 판정해 [모델 계약](contracts/dev4-lifecycle-model.md#checker-adjudication)에 남기고 조립기 공백1건을 고쳤다. 독립 D2 수용·D1 제한 수용이며 alias·BFS·FE14는 미완료다.
 
 [DEV3 실행 범위](plans/dev3-implementation-plan.md#direction-refinement) · [구현 상태](implementation/README.md) · [최신 증거](evidence/README.md) · [이전 변경 기록](#previous-updates)
 
@@ -63,6 +63,8 @@
 
 <a id="previous-updates"></a>
 ## 이전 변경 기록
+
+2026-10-25 [DEV4 P5 수명 모델 전이](evidence/dev4-lifecycle-model-20261025.md): [소유 계약](contracts/dev4-lifecycle-model.md)의 `transition`을 구현해 원 literal 29 edge·12 trace·5 known-bad와 맞췄다. 1차 독립 검토가 찾은 금지 전이 2건을 교정했고 독립 D2 수용·D1 제한 수용이다. 독립 checker·BFS·FE14는 미완료다.
 
 2026-10-25 [DEV4 P5 전체 입력 조립](evidence/dev4-lifecycle-assembler-20261025.md): [소유 계약](contracts/dev4-lifecycle-assembler.md)의 `assemble_input`을 구현하고 신규 입력1994개를 선택 검증했다. 독립 supplement32·rich 후보 정정2건과 개발 중 불일치 교정 이력을 보존하며 모델 전이·FE14는 미완료다.
 

@@ -1,7 +1,8 @@
 //! Shared transition steps: target authentication, facts, fences and transaction endings.
 use super::edit::Fact;
 use super::{
-    Complete, ContextEvent, EdgeClass, Exclusion, Flow, INVALID, Response, Rows, Run, Step, unpack,
+    Complete, ContextEvent, ENVELOPE, EdgeClass, Exclusion, Flow, INVALID, Response, Rows, Run,
+    Step, unpack,
 };
 use crate::lifecycle::input_schema::Environment;
 use crate::lifecycle::schema::{
@@ -154,7 +155,12 @@ impl Run<'_> {
             .record_fact(&env, &fact, decision, delivery, &holder)?;
         self.fact = Some(id);
         self.edge.consumed_parts = consumed;
-        if let Some(t) = transaction {
+        // A fenced CloseSession handoff confirms neither the end nor the incompletion of the
+        // transaction (owner decision 2026-10-25), so it is not its completion fact; the fenced
+        // Finish NCR handoff confirms NCR and is.
+        let handoff_only =
+            self.input.api == Api::CloseSession && cleanup == Cleanup::LocalReleaseAndHandoff;
+        if let Some(t) = transaction.filter(|_| !handoff_only) {
             let id_ref = crate::lifecycle::schema::FactRef(id.nonce);
             let record = self.edit.transaction_mut(t)?;
             if record.life != TransactionLife::Active && record.completion_fact.is_none() {
@@ -302,6 +308,13 @@ impl Run<'_> {
             self.retire_result(nonce, Retirement::EngineFence, false)?;
             let d = self.edit.descriptor_mut(nonce)?;
             d.blocked_by_fence = true;
+            // The retired public result no longer holds its slot open (owner decision
+            // 2026-10-25); the descriptor keeps its owner and position behind the fence.
+            let id = self.edit.result_mut(nonce)?.id;
+            let slot = self.edit.slot_mut(id.actor, id.slot)?;
+            if slot.state == SlotState::ResultOpen {
+                slot.state = SlotState::ReadyBound;
+            }
         }
         Ok(())
     }
@@ -444,7 +457,14 @@ impl Run<'_> {
         let record = self.edit.context(reference.0)?;
         match (record.data, kind) {
             (ContextData::ParkedFetch(p), Api::ParkFetch)
-            | (ContextData::ParkedCommit(p), Api::BeginCommit) => Ok(Ok((record.id, p))),
+            | (ContextData::ParkedCommit(p), Api::BeginCommit) => {
+                // The supplied continuation identity is part of the envelope (owner decision
+                // 2026-10-25): another identity is `Excluded(Envelope)`, not a continuation.
+                if self.input.context.and_then(unpack) != Some(record.id) {
+                    return Err(ENVELOPE);
+                }
+                Ok(Ok((record.id, p)))
+            }
             (ContextData::Completed, _) => Err(INVALID),
             _ => Ok(Err(ReturnCode::ContinuationKind)),
         }

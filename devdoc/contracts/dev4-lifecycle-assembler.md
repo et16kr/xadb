@@ -163,7 +163,11 @@ outcome을 보존한 empty다.
   RecoveryConfirmedRetired는 LocalReleaseAndHandoff(cleanup3·commit255·actor-local release와 origin
   session의 Outstanding O handoff)다. 회복된 engine에서 Aborted 결정을 새로 공급하지 않기 위해서다.
 - Finish NCR은 wire-v2 문구대로 admission이 Fenced일 때만 cleanup3·handoff이며 Admitting과
-  RecoveryConfirmedRetired는 cleanup2·census다.
+  RecoveryConfirmedRetired는 cleanup2·census다. Fenced에서 parked T가 이미 끝나 O가 없으면
+  (NoWriteValidated·Published) 넘길 O가 없으므로 같은 header를 row 없이 공급한다. 이 class는 진행 순서
+  밖이라 모델이 제외한다(2026-10-25 [checker 차등 대조](../evidence/dev4-lifecycle-checker-20261025.md)에서
+  도달 상태의 InvalidState로 발견). 조립 시험의 독립 case는 없고 `differential_tests`의 다섯째 고정 경로가
+  이 분기의 시험 근거다.
 - 무신호 Resume Eof+Incomplete는 wire-v2가 admission 뒤 제외할 조합이며 원문이 공급 recipe를 정하지
   않는다. 일반 Incomplete 규칙대로 census를 공급한다. ReadError/Conflict+Incomplete도 census다.
 - CommitAtomic Success changed RW의 Published 공급은 publication 확인으로 보아 연결 기존 O를

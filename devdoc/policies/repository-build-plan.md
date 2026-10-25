@@ -502,6 +502,11 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 
 ## DEV4 P5 원시 번호·target 선택
 
+[독립 edge checker 계약](../contracts/dev4-lifecycle-checker.md)의 `verify_edge`는 같은 reference lifecycle
+경계의 `checker.rs`와 `checker/` 하위 파일에 두고 시험 `checker_tests.rs`·모델 차등 `differential_tests.rs`를
+추가한다. 관리 JSON의 `dev4_lifecycle_checker`에 실제 경로를 등록하며 package·dependency는 유지한다.
+판정으로 고친 모델·조립기 파일은 기존 등록을 유지한다.
+
 [수명 모델 전이 계약](../contracts/dev4-lifecycle-model.md)의 `transition`은 reference lifecycle의 `model.rs`와
 `model/` 하위 파일에 두고 시험 `model_tests.rs`를 추가한다. 관리 JSON의 `dev4_lifecycle_model`에 실제 경로를
 등록하며 package·dependency는 유지한다.

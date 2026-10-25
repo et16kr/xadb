@@ -1,6 +1,7 @@
 //! Independent DEV4 lifecycle records and canonical state/input serialization.
 //! This module does not establish SQL execution, engine durability, or FE14 exploration completion.
 
+mod checker;
 mod codec;
 mod input_assembler;
 mod input_schema;
@@ -14,6 +15,10 @@ mod workspace;
 mod assembler_literal;
 #[cfg(test)]
 mod assembler_tests;
+#[cfg(test)]
+mod checker_tests;
+#[cfg(test)]
+mod differential_tests;
 #[cfg(test)]
 mod literal;
 #[cfg(test)]
@@ -32,6 +37,7 @@ mod selector_literal;
 #[cfg(test)]
 mod selector_tests;
 
+pub use checker::{CheckFailure, verify_edge};
 pub use codec::{CodecError, decode_input, decode_state, encode_input, encode_state};
 pub use input_assembler::{AssemblyError, assemble_input};
 pub use input_schema::*;

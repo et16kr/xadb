@@ -313,3 +313,23 @@ cargo test -p xadbtest-reference --lib --offline --locked lifecycle::model_tests
 ```
 
 `model_deep_walks`의 walk 수는 `XADB_MODEL_WALKS`(기본40)로 정한다. 실제 diff에 대응하는 함수만 선택한다.
+
+<a id="lifecycle-checker"></a>
+## P5 독립 edge checker
+
+[소유 계약](../contracts/dev4-lifecycle-checker.md) D4-LM-CHECK-001의
+`verify_edge(&State, &ResolvedInput, &Edge, &State)`를 reference lifecycle에 구현했다. 사전 상태와 원문
+규칙만으로 class·응답·context event·controls·소비 bit·authenticated와 `pre ⊕ delta` 후상태를 다시 계산하고,
+공급 Env1을 독립 recipe와 비교하며 환경 제외의 조건도 판정한다. 모델·조립기를 호출하지 않는다.
+
+`differential_tests`는 모델 출력을 checker로 판정한다. 판정한 불일치·검토 결정11건은 모델 계약의
+[차등 판정](../contracts/dev4-lifecycle-model.md#checker-adjudication)에 기록했고
+[선택 증거](../evidence/dev4-lifecycle-checker-20261025.md)에 실행 기록을 남겼다. BFS·FE14는 미완료다.
+
+```bash
+cargo test -p xadbtest-reference --lib --offline --locked lifecycle::checker_tests::<function> -- --exact
+cargo test -p xadbtest-reference --lib --offline --locked lifecycle::differential_tests -- --nocapture
+```
+
+walk 크기는 `XADB_DIFF_WALKS`(기본30)·`XADB_DIFF_DEPTH`(기본6), 한 관측의 재현은
+`XADB_DIFF_REPLAY="raw,…:raw"`로 정한다. 실제 diff에 대응하는 함수만 선택한다.

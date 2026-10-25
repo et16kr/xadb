@@ -255,6 +255,7 @@ pub fn transition(
             context: None,
             fact: None,
             new_result: None,
+            authenticated: None,
         };
         match run.dispatch() {
             Ok(Flow::Done) => run.edit.canonicalize().map(|()| Flow::Done),
@@ -297,6 +298,8 @@ struct Run<'a> {
     fact: Option<Identity>,
     /// The result handle issued by an admitted Execute Success Select.
     new_result: Option<Identity>,
+    /// Targets authenticated by the child gate, observed on a later rejection (v5 §1).
+    authenticated: Option<Authenticated>,
 }
 
 impl Run<'_> {
@@ -395,6 +398,9 @@ impl Run<'_> {
     fn reject(&mut self, code: ReturnCode) -> Step<Flow> {
         self.complete_fresh()?;
         self.edge.class = EdgeClass::Rejected;
+        if let Some(targets) = self.authenticated {
+            self.edge.authenticated = Some(targets);
+        }
         let phase = Phase::Entry;
         let (retry, origin) = match code {
             ReturnCode::Busy | ReturnCode::ResultBusy | ReturnCode::SlotBusy => {
@@ -406,11 +412,45 @@ impl Run<'_> {
             _ => (Retry::Never, OriginCause::None),
         };
         let mut response = self.error(code, phase, StatementEffect::NoEffect, retry, origin);
+        self.fenced_cause(&mut response)?;
         if self.fetch_like() {
             response.rows = Rows::Count(0);
             response.complete = Complete::No;
         }
         self.respond(response, None)
+    }
+
+    /// `EngineFenced` reports the attached engine's first cause (owner decision 2026-10-25).
+    fn fenced_cause(&self, response: &mut Response) -> Step<()> {
+        if response.code != ReturnCode::EngineFenced {
+            return Ok(());
+        }
+        let cause = self.edit.engine(self.caller()?.engine.0)?.first_cause;
+        response.engine_cause = cause;
+        if let Some(d) = response.diagnostic.as_mut() {
+            d.engine_cause = cause;
+        }
+        Ok(())
+    }
+
+    /// Child authentication passed: a later state/control rejection records these targets
+    /// (owner decision 2026-10-25). The transaction is the call's wire-v2 §4 selection.
+    fn authenticated_child(
+        &mut self,
+        statement: Option<Identity>,
+        result: Option<Identity>,
+        transaction: Option<u16>,
+    ) -> Step<()> {
+        let transaction = match transaction {
+            Some(t) => Some(self.edit.transaction(t)?.id),
+            None => None,
+        };
+        self.authenticated = Some(Authenticated {
+            statement,
+            result,
+            transaction,
+        });
+        Ok(())
     }
 
     /// Child authentication failure: typed targets are recorded as None.

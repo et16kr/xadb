@@ -1,5 +1,7 @@
 //! Prepare, BindAll, Execute, CloseStatement and InspectStatement transitions.
-use super::{EdgeClass, Exclusion, Flow, INVALID, OriginCause, Response, Rows, Run, Step};
+use super::{
+    Authenticated, EdgeClass, Exclusion, Flow, INVALID, OriginCause, Response, Rows, Run, Step,
+};
 use crate::lifecycle::schema::{
     Access, Autocommit, BindingLife, BindingRecord, BindingValue, Cleanup, ClientKnowledge,
     CommitProgress, ContextRef, Decision, Delivery, Descriptor, EngineCause, HolderRef,
@@ -114,6 +116,8 @@ impl Run<'_> {
         let Some(statement) = self.authenticate_statement()? else {
             return self.reject_handle();
         };
+        // BindAll selects no transaction (wire-v2 §4 selection).
+        self.authenticated_child(Some(statement.id), None, None)?;
         if let Some(code) = self.session_gates(false)? {
             return self.reject(code);
         }
@@ -212,6 +216,8 @@ impl Run<'_> {
         let Some(statement) = self.authenticate_statement()? else {
             return self.reject_handle();
         };
+        let held = self.caller()?.transaction.map(|t| t.0);
+        self.authenticated_child(Some(statement.id), None, held)?;
         if let Some(code) = self.session_gates(false)? {
             return self.reject(code);
         }
@@ -562,6 +568,16 @@ impl Run<'_> {
         let Some(statement) = self.authenticate_statement()? else {
             return self.reject_handle();
         };
+        // CloseStatement selects its slot descriptor's transaction, if any (wire-v2 §4).
+        let held = match self
+            .edit
+            .slot(statement.id.actor, statement.id.slot)?
+            .descriptor_result
+        {
+            Some(r) => self.descriptor_of(r.0)?.transaction.map(|t| t.0),
+            None => None,
+        };
+        self.authenticated_child(Some(statement.id), None, held)?;
         if let Some(code) = self.session_gates(true)? {
             return self.reject(code);
         }
@@ -602,8 +618,11 @@ impl Run<'_> {
         )?;
         if let Some(r) = slot.descriptor_result {
             let d = self.descriptor_of(r.0)?;
+            // Only an Active implicit transaction ends here; a fenced RecoveryPending one keeps
+            // its completion fact (owner decision 2026-10-25).
             if d.state == ResultState::Open
                 && let Some(t) = d.transaction
+                && self.edit.transaction(t.0)?.life == TransactionLife::Active
             {
                 self.end_if_implicit(t.0)?;
                 self.settle_completion(t.0)?;
@@ -630,8 +649,11 @@ impl Run<'_> {
 
     pub(super) fn inspect_statement(&mut self) -> Step<Flow> {
         let Some(statement) = self.authenticate_statement()? else {
+            self.edge.authenticated = Some(Authenticated::default());
             return self.no_context_reject(ReturnCode::InvalidHandle);
         };
+        // InspectStatement selects no transaction (wire-v2 §4 selection).
+        self.authenticated_child(Some(statement.id), None, None)?;
         let caller = self.caller()?;
         if caller.shell == crate::lifecycle::schema::Shell::Closed {
             return self.no_context_reject(ReturnCode::SessionState);
@@ -650,18 +672,22 @@ impl Run<'_> {
     /// A context-free diagnostic rejected at a gate: no context and no state change.
     pub(super) fn no_context_reject(&mut self, code: ReturnCode) -> Step<Flow> {
         self.edge.class = EdgeClass::Rejected;
+        if let Some(targets) = self.authenticated {
+            self.edge.authenticated = Some(targets);
+        }
         let retry = match code {
             ReturnCode::Busy => Retry::Operation,
             ReturnCode::EngineFenced => Retry::AfterRecovery,
             _ => Retry::Never,
         };
-        let response: Response = self.error(
+        let mut response: Response = self.error(
             code,
             Phase::Entry,
             StatementEffect::NoEffect,
             retry,
             OriginCause::None,
         );
+        self.fenced_cause(&mut response)?;
         self.respond(response, None)
     }
 }

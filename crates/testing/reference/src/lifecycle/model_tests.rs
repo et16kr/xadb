@@ -150,7 +150,24 @@ fn check(value: &Value) -> Check {
     }
 }
 
-fn expected_edge(source: &Value, edge: &Value) -> Edge {
+/// Literal edges corrected against a higher-ranked source (owner decision 2026-10-25): the hand
+/// literal predates v5 §1, which records the authenticated targets of a rejection after child
+/// authentication. Targets are literal identity names.
+struct AuthenticatedCorrection {
+    edge: &'static str,
+    statement: Option<&'static str>,
+    result: Option<&'static str>,
+    transaction: Option<&'static str>,
+}
+
+const AUTHENTICATED_CORRECTIONS: [AuthenticatedCorrection; 1] = [AuthenticatedCorrection {
+    edge: "sel.entry_cancel",
+    statement: None,
+    result: Some("r1s0"),
+    transaction: Some("t1"),
+}];
+
+fn expected_edge(source: &Value, name: &str, edge: &Value) -> Edge {
     let class = match edge["class"].as_str().expect("class") {
         "CheckedAdmitted" => EdgeClass::Admitted,
         "CheckedRejected" => EdgeClass::Rejected,
@@ -166,9 +183,17 @@ fn expected_edge(source: &Value, edge: &Value) -> Edge {
     let mut expanded_event = event.clone();
     expand(source, &mut expanded_event);
     let controls = &edge["controls"];
-    let authenticated = edge
-        .get("authenticated_targets")
-        .map(|_| super::model::Authenticated::default());
+    let named_identity = |n: Option<&str>| n.map(|n| identity(&source["identities"][n]));
+    let authenticated = match AUTHENTICATED_CORRECTIONS.iter().find(|c| c.edge == name) {
+        Some(c) => Some(super::model::Authenticated {
+            statement: named_identity(c.statement),
+            result: named_identity(c.result),
+            transaction: named_identity(c.transaction),
+        }),
+        None => edge
+            .get("authenticated_targets")
+            .map(|_| super::model::Authenticated::default()),
+    };
     Edge {
         class,
         response: Some(response(&named(
@@ -217,7 +242,13 @@ fn model_literal_edges() {
         let input: ResolvedInput = literals
             .input(edge["input"].as_str().unwrap(), None)
             .expect("input");
-        cases.push((name.clone(), pre, input, post, expected_edge(&source, edge)));
+        cases.push((
+            name.clone(),
+            pre,
+            input,
+            post,
+            expected_edge(&source, name, edge),
+        ));
     }
     let report_all = std::env::var("XADB_MODEL_REPORT_ALL").is_ok();
     let worker = std::thread::Builder::new()
@@ -320,7 +351,7 @@ fn literal_case(
     literals
         .state(edge["post"].as_str().unwrap(), &mut post)
         .expect("post");
-    (input, post, expected_edge(source, edge))
+    (input, post, expected_edge(source, name, edge))
 }
 
 /// Replay the 12 traces (51 occurrences) from their initial states, chaining model successors.

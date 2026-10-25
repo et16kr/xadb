@@ -780,6 +780,10 @@ impl<'a> Assembly<'a> {
                     engine(self.state, caller.engine.0)?.admission == EngineAdmission::Fenced;
                 self.set(if fenced { 3 } else { 2 }, 1, transaction);
                 match transaction {
+                    // A parked T that already ended (NoWriteValidated or Published) has no O to
+                    // hand off: the class is environment-impossible and is supplied without
+                    // rows (owner decision 2026-10-25).
+                    Txn::Existing(t) if fenced && t.obligation.is_none() => {}
                     Txn::Existing(t) if fenced => self.rows.handoff_transaction(self.state, t)?,
                     Txn::Existing(_) => self.rows.census(
                         self.state,

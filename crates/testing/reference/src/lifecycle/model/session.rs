@@ -1048,10 +1048,15 @@ impl Run<'_> {
             record.recovery_fact = Some(fact_ref);
             let t = record.transaction.0;
             let row = self.edit.transaction_mut(t)?;
+            // The recovery fact names no transaction: it settles the obligation, not the
+            // transaction's completion fact (owner decision 2026-10-25).
             row.life = TransactionLife::Ended;
         }
         self.edge.class = EdgeClass::NoContextIssue;
-        let response = self.success(Phase::Recovery, StatementEffect::NoEffect);
+        // An external completion fact like CommitFact: no statement certainty (owner decision
+        // 2026-10-25).
+        let mut response = self.success(Phase::Recovery, StatementEffect::NoEffect);
+        response.certainty = Certainty::NotApplicable;
         self.respond(response, None)
     }
 }

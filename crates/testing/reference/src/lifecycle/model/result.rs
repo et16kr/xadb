@@ -26,10 +26,11 @@ impl Run<'_> {
         let Some(result) = self.authenticate_result()? else {
             return self.reject_handle();
         };
+        let d = self.descriptor_of(result.id.nonce)?;
+        self.authenticated_child(None, Some(result.id), d.transaction.map(|t| t.0))?;
         if let Some(code) = self.session_gates(false)? {
             return self.reject(code);
         }
-        let d = self.descriptor_of(result.id.nonce)?;
         match d.state {
             ResultState::Closed => return self.reject(ReturnCode::HandleClosed),
             ResultState::Eof => {
@@ -116,13 +117,14 @@ impl Run<'_> {
         if fenced {
             // The original call ends as a fenced terminal; work and cleanup are not consumed.
             self.complete_parked(context)?;
-            let response = self.error(
+            let mut response = self.error(
                 ReturnCode::EngineFenced,
                 Phase::Fetch,
                 StatementEffect::NoEffect,
                 Retry::AfterRecovery,
                 OriginCause::None,
             );
+            self.fenced_cause(&mut response)?;
             let response = Self::fetch_response(response, 0, false);
             return self.respond(response, transaction);
         }
@@ -191,9 +193,16 @@ impl Run<'_> {
                 EngineCause::UndoIncomplete,
                 Decision::NotCommittedRecoveryRequired,
             )?;
+            // Atomic Fetch UndoIncomplete9 names no next work of its own; the supplied work
+            // class stays in the fact outcome (owner decision 2026-10-25).
+            let next_work = if resume {
+                next(work)
+            } else {
+                NextWork::NotConsumed
+            };
             self.consume(
                 Cleanup::Incomplete,
-                next(work),
+                next_work,
                 parts,
                 transaction,
                 Some(ObligationReason::KnownNotCommittedUndoPending),
@@ -353,11 +362,12 @@ impl Run<'_> {
         let Some(result) = self.authenticate_result()? else {
             return self.reject_handle();
         };
+        let d = self.descriptor_of(result.id.nonce)?;
+        let transaction = d.transaction.map(|t| t.0);
+        self.authenticated_child(None, Some(result.id), transaction)?;
         if let Some(code) = self.session_gates(false)? {
             return self.reject(code);
         }
-        let d = self.descriptor_of(result.id.nonce)?;
-        let transaction = d.transaction.map(|t| t.0);
         if d.state == ResultState::Closed {
             self.complete_fresh()?;
             let response = self.success(Phase::Close, StatementEffect::NoEffect);

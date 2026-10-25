@@ -5935,6 +5935,33 @@
     "scope": "Abstract transition of one resolved input; independent edge checker, alias, BFS/checkpoint and FE14 remain incomplete",
     "validation": "29 literal edges, 12 traces/51 occurrences and 5 known-bad distinctions PASS; census and deep-walk smoke without model error or loader violation; fixed traces are implementer-derived"
   },
+  "dev4_lifecycle_checker": {
+    "decision": "D4-LM-CHECK-001",
+    "contract": "dev4-lifecycle-checker.md",
+    "evidence": "dev4-lifecycle-checker-20261025.md",
+    "status": "IMPLEMENTED_SELECTED_VALIDATION_D2_ACCEPTED_D1_LIMITED",
+    "implemented_sources": [
+      "crates/testing/reference/src/lifecycle/checker.rs",
+      "crates/testing/reference/src/lifecycle/checker/delta.rs",
+      "crates/testing/reference/src/lifecycle/checker/expect.rs",
+      "crates/testing/reference/src/lifecycle/checker/fence.rs",
+      "crates/testing/reference/src/lifecycle/checker/gates.rs",
+      "crates/testing/reference/src/lifecycle/checker/ident.rs",
+      "crates/testing/reference/src/lifecycle/checker/materialize.rs",
+      "crates/testing/reference/src/lifecycle/checker/owners.rs",
+      "crates/testing/reference/src/lifecycle/checker/result.rs",
+      "crates/testing/reference/src/lifecycle/checker/session.rs",
+      "crates/testing/reference/src/lifecycle/checker/shared.rs",
+      "crates/testing/reference/src/lifecycle/checker/statement.rs",
+      "crates/testing/reference/src/lifecycle/checker/txn.rs",
+      "crates/testing/reference/src/lifecycle/checker_tests.rs",
+      "crates/testing/reference/src/lifecycle/differential_tests.rs"
+    ],
+    "fixtures": [],
+    "new_dependencies": false,
+    "scope": "Independent relational edge checker and model differential; model and assembler corrections from adjudication; alias, BFS/checkpoint and FE14 remain incomplete",
+    "validation": "checker_tests 10, model_tests 6, assembler_tests 11 PASS; differential over 29 literal states, 7 fixed paths, corrupted inputs and six walk configurations up to 57,276,849 judged edges with 0 disagreements"
+  },
   "dev3_plan4_recovery_checkpoint": {
     "status": "PAUSED_WIP_NOT_ACCEPTED",
     "evidence_ref": "dev3-recovery-paused-20261025.md",
