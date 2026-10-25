@@ -2287,6 +2287,16 @@
       "path": "evidence/dev3-catalog-reader-20261025.json",
       "role": "evidence",
       "title": "DEV3 typed Catalog 조회 source별 선택 검증"
+    },
+    "dev2-pf04-cpu-split-20261025.md": {
+      "path": "evidence/dev2-pf04-cpu-split-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 사용자·커널 CPU 분리 관측"
+    },
+    "dev2-pf04-cpu-split-20261025.json": {
+      "path": "evidence/dev2-pf04-cpu-split-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 CPU 분리 source별 선택 검증"
     }
   }
 }

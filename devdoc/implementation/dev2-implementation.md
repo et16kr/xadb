@@ -710,3 +710,12 @@ Off/Always guard는 확인 실패 중단 규칙에 따라 NOT_RUN이고 완료 �
 [평가 기록](../evidence/dev2-pf04-single-writer-20261025.md)의 탐색/확인 각10쌍에서 정답·유효성·guard는 통과했으나 확인 중앙0.9707905·구간 상한0.9765757로 동결0.95 미만 조건에 미달했다. C2는 기각하여 제품에 반영하지 않았고 Off/Always guard·추가 PMU는 실행하지 않았다. 원 후보/source/raw와 외부 일회성 실행기의 미검증 timeout 정리 race를 보존한다. 독립 검토 범위와 receipt는 연결 증거를 따른다.
 
 P4 WAL 선확보/data sync도 PF04 상대 비용의 해결책으로 채택할 근거가 부족하여 미채택했다. 기존 P3b 연결을 원 비용 실패의 인과 증거로 확대하지 않는다. 원 PF04 네 FAIL·영속 CPU/tail 원인 미확정·DEV2 미완료는 유지하며, C1/C2 재확인을 이번 예산에 추가하지 않는다.
+
+
+<a id="dev2-pf04-cpu-split-20261025"></a>
+
+## DEV2 PF04 사용자·커널 CPU 분리 — 2026-10-25
+
+계획 `b33f1e4` 뒤 수집 도구의 고정 `user-kernel-v1`8event profile을 추가하고 기본6event와 기존 권한·정리 경로를 유지했다. 실제 변경 범위의 선택6함수와 보존 release ELF의 새 Off/Always 연결2개를 완료했다.8개 모두 reported full coverage,512개 거래의 진단 정답 검산과 소유 process 종료를 확인했다.
+
+[관측 증거](../evidence/dev2-pf04-cpu-split-20261025.md)는 커널 count와 rusage user/system 분할을 구별한다. 이 두 연결로 안정적 모드 비용이나 과거 실패 원인을 판정하지 않는다. 코드·원자료·해석의 독립 검토 상태는 연결 증거를 따른다. 원 PF04 네 FAIL·DEV2/B2/D0 미완료, C1/C2 기각·WAL 미채택은 유지한다.

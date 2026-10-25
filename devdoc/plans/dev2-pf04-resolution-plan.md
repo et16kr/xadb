@@ -247,3 +247,5 @@ Native 예산은 새 profile의 durable Off1회→Always1회 **총2slot**이다.
 결과는 새로운8event 연결과 source별 관측 범위로 기록한다. 같은 collector의 별도 control과10쌍 확인이 없으므로 영향/모드비용 screen 또는 PF04 합격을 만들지 않는다. 원 실패와 미확정 원인은 유지한다. user/kernel counter가 무엇을 구분했고 무엇을 구분하지 못했는지 기록·독립 검토한 뒤 단계 commit한다.
 
 CPU 분리 계획 상태: **PASS_PLAN_ONLY 채택 / 채택 당시 도구 수정·실행 전**. 독립 검토 차단0개. receipt `/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/plan-review.json`의 SHA-256은 `38d36549d547b91609ffd187592b6d92aa91f6bdc3c43c28e5ec63e357e3ea7c`, 본 anchor부터 상태 문장 직전 projection은 `f1d0423a5a505ee049b4c82390c2cb02387f493bfbac1929b1b99feb97ad981a`다.
+
+CPU 분리 실행: 선행 계획 commit `b33f1e4` 뒤 도구를 구현하고 선택6함수·실제2연결을 완료했다. [관측 증거](../evidence/dev2-pf04-cpu-split-20261025.md)의 원자료·해석·최종 검토를 따른다.8event reported coverage와 진단 정답을 확인했으며 원 PF04·DEV2 완료 판정은 변경하지 않았다.

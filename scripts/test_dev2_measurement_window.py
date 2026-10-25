@@ -337,6 +337,82 @@ class WindowProcesses(unittest.TestCase):
             self.assertTrue(all(r['group_gone'] for r in result['cleanup']))
 
 
+class WindowProfiles(unittest.TestCase):
+    directory = WindowProcesses.directory
+    EVENTS = ('cycles:u', 'cycles:k', 'instructions:u', 'instructions:k', 'ref-cycles:u',
+              'context-switches', 'cpu-migrations', 'page-faults')
+
+    def test_literal_user_kernel_profile_quality_and_wrong_events(self):
+        lines = [f'{200+i};;{event};100000;100.00;' for i, event in enumerate(self.EVENTS)]
+        raw = '\n'.join(lines)
+        result = window.parse_perf(raw, 'user-kernel-v1')
+        self.assertEqual(result['profile'], 'user-kernel-v1')
+        self.assertEqual(tuple(result['events']), self.EVENTS)
+        self.assertEqual(result['events']['instructions:k']['count'], 203)
+        self.assertTrue(result['all_events_reported_full_coverage'])
+        self.assertIsNone(result['ratios'])
+        for altered, event, status in (
+                ('\n'.join(lines[:3] + lines[4:]), 'instructions:k', 'MISSING'),
+                (raw.replace('201;;cycles:k;100000;100.00', '201;;cycles:k;100000;97.50'),
+                 'cycles:k', 'PARTIAL_OR_EMPTY'),
+                (raw.replace('203;;instructions:k;100000;100.00', '<not supported>;;instructions:k;0;'),
+                 'instructions:k', 'UNAVAILABLE')):
+            value = window.parse_perf(altered, 'user-kernel-v1')
+            self.assertEqual(value['events'][event]['status'], status)
+            self.assertFalse(value['all_events_reported_full_coverage'])
+            self.assertIsNone(value['ratios'])
+        for altered, profile in ((raw + '\n' + lines[1], 'user-kernel-v1'),
+                                 (raw.replace('cycles:k', 'cycles:h'), 'user-kernel-v1'),
+                                 (raw, 'user-v1')):
+            with self.assertRaises(window.DiagnosticError):
+                window.parse_perf(altered, profile)
+
+    def test_invalid_profile_rejected_before_input_output_or_spawn(self):
+        base = self.directory()
+        for profile in ('unknown', 'cycles:k', None, []):
+            with patch.object(window, 'Runner') as runner, self.assertRaisesRegex(
+                    window.DiagnosticError, 'unsupported perf event profile'):
+                window.collect(PEER, base / 'missing-input', SOURCE, 'synthetic',
+                               base / 'result', perf_profile=profile)
+            runner.assert_not_called()
+            self.assertFalse((base / 'result').exists())
+
+    def test_cli_user_kernel_profile_reaches_fake_perf_and_parser(self):
+        base = self.directory()
+        source = base / 'input.json'
+        source.write_text(json.dumps({'source': SOURCE}))
+        command = [sys.executable, '-B', str(HERE / 'dev2_measurement_window.py'),
+                   '--worker', str(PEER), '--input', str(source), '--source', SOURCE,
+                   '--workload', 'synthetic', '--output', str(base / 'result'),
+                   '--perf', str(PERF), '--perf-profile', 'user-kernel-v1']
+        completed = subprocess.run(command, capture_output=True, timeout=15, check=False)
+        (base / 'cli.stdout').write_bytes(completed.stdout)
+        (base / 'cli.stderr').write_bytes(completed.stderr)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        result = json.loads((base / 'result/result.json').read_text())
+        self.assertEqual(result['perf_profile'], 'user-kernel-v1')
+        self.assertEqual(result['pmu']['profile'], 'user-kernel-v1')
+        self.assertTrue(result['pmu']['all_events_reported_full_coverage'])
+        self.assertEqual(tuple(result['pmu']['events']), self.EVENTS)
+        for i, event in enumerate(self.EVENTS):
+            self.assertEqual(result['pmu']['events'][event]['count'], 100 + i)
+        argv = result['commands']['perf']
+        self.assertEqual(argv[argv.index('-e') + 1], ','.join(self.EVENTS))
+
+    def test_selected_profile_survives_unavailable_and_pre_attach_failure(self):
+        for config, expected_status, expected_mode in (
+                ({'perf': 'permission'}, 'COLLECTED_DIAGNOSTIC_ONLY', 'RUSAGE_ONLY'),
+                ({'behavior': 'bad_identity'}, 'FAILED', None)):
+            base = self.directory()
+            source = base / 'input.json'
+            source.write_text(json.dumps({'source': SOURCE, **config}))
+            result = window.collect(PEER, source, SOURCE, 'synthetic', base / 'result',
+                                    perf=PERF, perf_profile='user-kernel-v1')
+            self.assertEqual(result['perf_profile'], 'user-kernel-v1')
+            self.assertEqual(result['status'], expected_status)
+            self.assertEqual(result.get('mode'), expected_mode)
+
+
 @unittest.skipUnless(os.environ.get('XADBTEST_WINDOW_PRIVILEGED_TESTS') == '1',
                      'explicit sudo/real-PMU diagnostic validation only')
 class WindowPrivilegeIntegration(unittest.TestCase):

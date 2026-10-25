@@ -8,6 +8,14 @@ import time
 
 args = sys.argv[1:]
 assert '--no-scale' in args and '--no-inherit' in args
+# Independent literal expectations, never imported from the collector.
+profiles = (
+    ('cycles:u', 'instructions:u', 'ref-cycles:u', 'context-switches', 'cpu-migrations', 'page-faults'),
+    ('cycles:u', 'cycles:k', 'instructions:u', 'instructions:k', 'ref-cycles:u',
+     'context-switches', 'cpu-migrations', 'page-faults'),
+)
+events = tuple(args[args.index('-e') + 1].split(','))
+assert events in profiles
 behavior = json.loads(Path.cwd().parent.joinpath('input.bin').read_text()).get('perf', 'normal')
 if behavior in ('permission', 'restricted'):
     print('No permission to enable cycles:u event.' if behavior == 'permission' else 'No supported events found.\nAccess to performance monitoring and observability operations is limited.', file=sys.stderr)
@@ -32,7 +40,7 @@ with open(ctl) as commands, open(ack, 'wb', buffering=0) as replies:
             assert Path(f'/proc/{tid}/stat').exists()
             if behavior == 'empty-finalization':
                 break
-            for index, event in enumerate(('cycles:u', 'instructions:u', 'ref-cycles:u', 'context-switches', 'cpu-migrations', 'page-faults')):
+            for index, event in enumerate(events):
                 print(f'{100 + index};;{event};100000;100.00;', flush=True)
             break
         if command == 'enable\n':
