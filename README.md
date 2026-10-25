@@ -27,16 +27,14 @@ XADB는 **오픈소스 DBMS를 참고하여, AI가 이해하고 개발하기 좋
 | COMM | 프레임·소켓·흐름 제어·취소 | DEV1 |
 | DEV2 | SQL 없는 트랜잭션·WAL·복구 커널 | DEV1 |
 | DEV3 | 디스크 페이지·버퍼·행·인덱스 | DEV2 |
-| PART | 디스크 파티션·로컬 인덱스 | DEV3 |
-| NG | 파티션 간 native global index | PART |
 | DEV4 | 최소 SQL·prepared 실행·embedded CLI | DEV3 |
 | DEV5 | 서버·인증·권한·세션·요청 처리 | DEV4, COMM |
 | DEV6 | native/C·JDBC·ODBC 클라이언트 | DEV5 |
 | DEV7 | 확장 SQL·타입·저장 프로그램·외부 연계 | DEV4 |
 | DEV8 | 복제·백업/PITR·보안·운영·성능 | DEV3, DEV5 |
-| DEV9 | 제품 기능·운영·성능·설치·문서 최종 인수 | DEV6–8, PART |
+| DEV9 | 제품 기능·운영·성능·설치·문서 최종 인수 | DEV6–8 |
 
-DEV4의 저장 비의존 앞단은 DEV3와 병행 개발할 수 있습니다. 확장 기능은 해당 서버·클라이언트·PART/NG 공급도 필요하며, global index 인수에는 NG의 실제 통합 증거를 요구합니다.
+DEV4의 저장 비의존 앞단은 DEV3와 병행 개발할 수 있습니다.
 
 ## 소스 구성
 
