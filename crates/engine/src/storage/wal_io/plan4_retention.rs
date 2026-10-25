@@ -32,6 +32,9 @@ mod population;
 mod read;
 #[path = "plan4_retention_recovery.rs"]
 mod recovery;
+#[cfg(test)]
+#[path = "plan4_retention_recovery_test_observation.rs"]
+mod recovery_test_observation;
 #[path = "plan4_retention_resources.rs"]
 mod resources;
 

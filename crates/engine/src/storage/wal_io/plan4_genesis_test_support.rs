@@ -82,6 +82,8 @@ pub(in crate::storage) enum Action {
     Zero,
     InvalidCount,
     PrefixError,
+    /// Write/read exactly the bounded prefix before returning an I/O error.
+    PrefixErrorBytes(usize),
     PrefixEof,
     OpenedIdentity,
 }
@@ -382,6 +384,7 @@ impl FileIo for File {
         }
         let cap = match action {
             Some(Action::Short(n)) => n,
+            Some(Action::PrefixErrorBytes(n)) => n,
             Some(Action::PrefixError | Action::PrefixEof) => 17,
             _ => out.len(),
         };
@@ -399,7 +402,10 @@ impl FileIo for File {
             count
         };
         complete(&self.state, index, Some(count));
-        if action == Some(Action::PrefixError) {
+        if matches!(
+            action,
+            Some(Action::PrefixError | Action::PrefixErrorBytes(_))
+        ) {
             let mut state = self.state.lock().unwrap();
             state.events[index].returned = None;
             state.events[index].error_prefix = count;
@@ -419,6 +425,7 @@ impl FileIo for File {
             }
             Some(Action::Short(n)) => n.min(bytes.len()),
             Some(Action::PrefixError) => 8192.min(bytes.len()),
+            Some(Action::PrefixErrorBytes(n)) => n.min(bytes.len()),
             _ => bytes.len(),
         };
         if count > 0 {
@@ -432,7 +439,10 @@ impl FileIo for File {
             e.length = e.bytes.len() as u64;
         }
         complete(&self.state, index, Some(count));
-        if action == Some(Action::PrefixError) {
+        if matches!(
+            action,
+            Some(Action::PrefixError | Action::PrefixErrorBytes(_))
+        ) {
             let mut state = self.state.lock().unwrap();
             state.events[index].returned = None;
             state.events[index].error_prefix = count;

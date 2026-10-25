@@ -4,6 +4,8 @@
 
 - [DEV2 PF04 P1 실제 PMU 수집 후속](dev2-pf04-pmu-20261025.md) · [source별 선택 검증](dev2-pf04-pmu-20261025.json) — 명시적 CAP_PERFMON 수집·정리 검증 완료, PF04 FAIL 유지.
 
+- [DEV3 중단된 plan4 복구 작업 재개](dev3-recovery-resumed-20261025.md) · [source별 색인](dev3-recovery-resumed-20261025.json) — 필수50 source별 PASS, 최종 독립 D1 한정 수용; 원 FAIL/HOLD 보존
+
 - [DEV2 PF04 P1 측정 구간 관측 도구](dev2-pf04-window-20261025.md) · [source별 선택 검증](dev2-pf04-window-20261025.json) — 당시 일반 사용자 PMU UNAVAILABLE 증거 보존, PF04 FAIL 유지.
 
 - [DEV2 PF04 원인 분석과 해결 후보](dev2-pf04-analysis-20261025.md) · [재분석·source 기록](dev2-pf04-analysis-20261025.json): 기존 K0 80·영속60 실행 자료의 한정 재분석, 해결 후보 PROPOSED·신규 시험0·원 실패 보존.

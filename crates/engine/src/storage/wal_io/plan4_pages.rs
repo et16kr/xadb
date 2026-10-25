@@ -56,7 +56,7 @@ pub(in crate::storage) use retention::{
 #[cfg(test)]
 pub(in crate::storage) use retention::{
     IntoRetentionError, RETENTION_CONTROL_BYTES, RETENTION_REPLAY_BYTES, RetentionFlushPhase,
-    RetentionReservationError, RetentionResidencyStep,
+    RetentionPhase, RetentionReservationError, RetentionResidencyStep,
 };
 
 pub(in crate::storage) use retention::source_census as retention_recovery_source_census;

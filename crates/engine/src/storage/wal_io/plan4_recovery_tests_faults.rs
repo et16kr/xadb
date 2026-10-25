@@ -3,14 +3,18 @@
 use super::literals::{Oracle, put, seal};
 use super::support::*;
 use super::*;
+use crate::{
+    storage::dirty_frame::DirtyFrame,
+    transaction::concurrency::{OwnerRole, PageConcurrency},
+};
 use xadb_foundation::namespace::NamespaceErrorKind;
 
-fn get(raw: &[u8], at: usize, width: usize) -> u64 {
+pub(super) fn get(raw: &[u8], at: usize, width: usize) -> u64 {
     let mut out = [0; 8];
     out[..width].copy_from_slice(&raw[at..at + width]);
     u64::from_le_bytes(out)
 }
-fn established() -> Images {
+pub(super) fn established() -> Images {
     let d = clone_directory(&fresh_memory(4));
     let state = d.state();
     let mut maintenance = boxed::<12_582_912>();
@@ -36,7 +40,7 @@ fn paired_base_only(files: &mut Images) {
     seal(current);
     files.remove("d3-wal-00000002").unwrap();
 }
-fn rejected(
+pub(super) fn rejected(
     directory: &port::Directory,
     state: &State,
     check: impl FnOnce(&Plan4RecoveryError, &Plan4RecoveryObservation),
@@ -67,7 +71,7 @@ fn rejected(
     drop(failed);
     assert_closed(state);
 }
-fn unchanged_error(
+pub(super) fn unchanged_error(
     error: &Plan4RecoveryError,
     observation: &Plan4RecoveryObservation,
     phase: Plan4RecoveryPhase,
@@ -143,14 +147,20 @@ fn recovery_selection() {
             state.lock().unwrap().hook=Some(port::Hook{key:port::Key::new("list","",0,5),edit});
         }
         if case==9 {
-            let mut maintenance=boxed::<12_582_912>();let mut dwb=boxed::<4_194_304>();let mut slot=boxed::<1_048_576>();
-            {let runtime=actual_runtime(&d,&mut maintenance,&mut dwb,&mut slot);assert_eq!((runtime.observation().source_lsn,runtime.observation().source_end),(4,139_680));assert_eq!(file(&state,"d3-wal-00000002").len(),4096);}
+            recovered!(&d, |runtime, closed, owner, flusher, _core, _backing| {
+                assert_eq!((runtime.observation().source_lsn,runtime.observation().source_end),(4,139_680));
+                assert_eq!(file(&state,"d3-wal-00000002").len(),4096);
+                finish_closed(&mut closed, &mut owner, &mut flusher);
+                super::cases::assert_cleanup(&|name| file(&state,name), &Oracle::new(),4);
+                super::observations::bank(closed.inner.recovery_test_bank(), &Oracle::new(), 7, None);
+                assert!(closed.into_live().is_ok());
+            });
             // The original incomplete suffix remains in the immutable input;
             // only the complete adopted source is eligible for rebase.
             assert_eq!(files["d3-wal-00000001"].len(),139_839);assert_closed(&state);return;
         }
         rejected(&d,&state,|error,observation|{
-            let phase=if matches!(case,1|10..=15){Plan4RecoveryPhase::Analysis}else{Plan4RecoveryPhase::Selection};unchanged_error(error,observation,phase);
+            let phase=if matches!(case,10..=15){Plan4RecoveryPhase::Analysis}else{Plan4RecoveryPhase::Selection};unchanged_error(error,observation,phase);
             let correct=match case {
                 1|7=>matches!(error.cause,Plan4RecoveryCause::Unsupported),
                 3=>matches!(&error.cause,Plan4RecoveryCause::Namespace(e) if e.kind==NamespaceErrorKind::NotFound),
@@ -162,7 +172,9 @@ fn recovery_selection() {
             };assert!(correct,"wrong primary rejection: {error:?}");
         });
         let observed={let s=state.lock().unwrap();(s.mutations(),s.fault_hits,s.hook_hits,s.events.iter().filter(|e|e.op=="list").count())};
-        assert_eq!(observed.0,0);if case==8 {assert_eq!(observed.1,1);}if case>=11 {assert_eq!(observed.2,1);assert!(observed.3>=5);}
+        assert_eq!(observed.0,0);
+        if case==8 {assert_eq!(observed.1,1);}
+        if case>=11 {assert_eq!(observed.2,1);assert!(observed.3>=5);}
         if case<11 {assert_eq!(images(&state),files);}
     });
     }

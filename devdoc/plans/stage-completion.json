@@ -1070,6 +1070,20 @@
           "recovered_owner": false,
           "full_stage_acceptance": false,
           "ai_experiment_completed_consumers": 1
+        },
+        "plan4_recovery_owner": {
+          "status": "ACCEPTED_LIMITED_D1",
+          "contract_ref": "dev3-plan4-recovery-owner.md",
+          "evidence_ref": "dev3-recovery-resumed-20261025.json",
+          "mandatory_unique_pass": 50,
+          "static": 2,
+          "memory": 45,
+          "native_runtime": 3,
+          "controller_unique_tests": 14,
+          "s5_additional_frozen": 0,
+          "recovered_n0_owner": true,
+          "full_stage_acceptance": false,
+          "scope": "Interrupted N=0 owner only; same-pool recovery/live handoff; source-specific original failures retained, no repeated successful product IDs. Larger profile/crash proposals and full DEV3/S5 remain pending."
         }
       }
     },

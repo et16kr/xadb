@@ -93,6 +93,28 @@ pub(super) fn assert_closed(state: &State) {
     };
     assert_eq!(observed, (0, 0));
 }
+pub(super) fn snapshot(read: &impl Fn(&str) -> Vec<u8>) -> Images {
+    [
+        "LOCK",
+        "d3-profile",
+        "d3-bootstrap",
+        "FILEMAP",
+        "d3-filemap-0",
+        "d3-filemap-1",
+        HOME_NAME,
+        "d3-dwb-stage",
+        "DWB",
+        "d3-dwb-0",
+        "d3-dwb-1",
+        "d3-dwb-images",
+        "d3-dwb-reserved",
+        "d3-wal-00000001",
+        "WRITER",
+    ]
+    .into_iter()
+    .map(|name| (name.to_owned(), read(name)))
+    .collect()
+}
 pub(super) fn drive_flush<'s, 'c, W: WriterNamespace>(
     live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
     flusher: &mut Owner<'c, 's>,

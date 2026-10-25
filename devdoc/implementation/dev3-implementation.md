@@ -1,5 +1,7 @@
 # DEV3 구현·검증 현황
 
+2026-10-25 [중단된 plan4 복구 단위 재개](../evidence/dev3-recovery-resumed-20261025.md): N=0 recovery owner의 구현·시험을 마쳐 static2/memory45/native3, 고유50개가 source별 PASS다. 완료 제품 ID 반복0, 원 실패 보존, 도구 고유14개 선택 검증·Clippy·fmt를 마쳤으며 최종 독립 D1을 한정 수용했다. 전체 DEV3/S5는 미완료다.
+
 2026-10-25 [복구 작업 중간 저장·자료 정리](../evidence/dev3-recovery-paused-20261025.md): 사용자 요청으로 중지했다. fresh75의 원 증거와 복구 static2 FAIL·F05 HOLD를 보존한다. 최신 phase/oracle 후보는 compile/runtime NOT_RUN이며 전체 복구·DEV3/S5는 미완료다.
 
 2026-10-23 · **표현·유한 모델, 제한 allocator/Status 쓰기·flush·닫힌 복구, 등록 코어·동일 주소 reload의 선택 검증 / 일반 저장 경로·DEV3·제품 S1·최종 S5 미완료**

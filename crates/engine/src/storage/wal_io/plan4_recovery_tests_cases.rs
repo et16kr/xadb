@@ -2,6 +2,7 @@
 //! ID owns its setup and receipt; no completed wrapper is called.
 use super::super::super::plan4_pages::Plan4Page;
 use super::literals::{Oracle, SecondCycle};
+use super::observations;
 use super::support::*;
 use super::*;
 use crate::{
@@ -25,7 +26,7 @@ fn assert_homes(read: &impl Fn(&str) -> Vec<u8>, oracle: &Oracle) {
         );
     }
 }
-fn assert_cleanup(read: &impl Fn(&str) -> Vec<u8>, oracle: &Oracle, stop: u64) {
+pub(super) fn assert_cleanup(read: &impl Fn(&str) -> Vec<u8>, oracle: &Oracle, stop: u64) {
     let actual = read(&wal_name(2));
     let mut expected = Vec::new();
     if stop == 1 {
@@ -46,9 +47,74 @@ fn assert_cleanup(read: &impl Fn(&str) -> Vec<u8>, oracle: &Oracle, stop: u64) {
     assert_eq!(&actual[..4], b"XWE2");
 }
 
+pub(super) fn third_cycle<D: DirectoryPort>(directory: &D, read: impl Fn(&str) -> Vec<u8>) {
+    let mut original = snapshot_without_old_wal(&read);
+    original.insert("d3-wal-00000002".into(), read("d3-wal-00000002"));
+    for path in ["CURRENT", "d3-rebase-0", "d3-rebase-1"] {
+        original.insert(path.into(), read(path));
+    }
+    let expected_base = observations::second_base(&original);
+    recovered!(directory, |runtime,
+                           closed,
+                           owner,
+                           flusher,
+                           _core,
+                           _backing| {
+        assert_eq!(runtime.observation().source_lsn, 11);
+        observations::controls(
+            &read,
+            &expected_base,
+            3,
+            2,
+            14,
+            &original["d3-wal-00000002"][..4096],
+        );
+        observations::bank(
+            closed.inner.recovery_test_bank(),
+            &Oracle::new(),
+            11,
+            Some(&SecondCycle::new(&Oracle::new())),
+        );
+        let credits = closed.inner.recovery_test_credit().unwrap();
+        assert_eq!((credits.0, credits.1), (0, 0));
+        finish_closed(&mut closed, &mut owner, &mut flusher);
+        assert_eq!(read("d3-wal-00000003").len(), 4096);
+        assert_eq!(read(HOME_NAME), original[HOME_NAME]);
+        let mut live = match closed.into_live() {
+            Ok(value) => value,
+            Err(_) => panic!("epoch3 did not verify"),
+        };
+        catalog(&mut live, &mut owner, &mut flusher);
+    });
+}
+
+fn snapshot_without_old_wal(read: &impl Fn(&str) -> Vec<u8>) -> Images {
+    [
+        "LOCK",
+        "d3-profile",
+        "d3-bootstrap",
+        "FILEMAP",
+        "d3-filemap-0",
+        "d3-filemap-1",
+        HOME_NAME,
+        "d3-dwb-stage",
+        "DWB",
+        "d3-dwb-0",
+        "d3-dwb-1",
+        "d3-dwb-images",
+        "d3-dwb-reserved",
+        "WRITER",
+    ]
+    .into_iter()
+    .map(|name| (name.to_owned(), read(name)))
+    .collect()
+}
+
 pub(super) fn second_cycle<D: DirectoryPort>(directory: &D, read: impl Fn(&str) -> Vec<u8>) {
     let oracle = Oracle::new();
     let expected = SecondCycle::new(&oracle);
+    let original = snapshot(&read);
+    let expected_base = observations::first_base(&original, 4);
     recovered!(directory, |runtime,
                            closed,
                            owner,
@@ -56,7 +122,29 @@ pub(super) fn second_cycle<D: DirectoryPort>(directory: &D, read: impl Fn(&str) 
                            core,
                            backing| {
         assert_eq!(runtime.observation().source_lsn, 4);
+        assert_eq!(
+            runtime.observation().calls_attempted,
+            runtime.observation().calls_completed
+        );
+        assert_eq!(
+            runtime.observation().mutations_attempted,
+            runtime.observation().mutations_completed
+        );
+        assert!(runtime.observation().mutations_attempted > 0);
+        observations::controls(
+            &read,
+            &expected_base,
+            2,
+            1,
+            7,
+            &original["d3-wal-00000001"][..4096],
+        );
+        observations::bank(closed.inner.recovery_test_bank(), &oracle, 4, None);
+        let credits = closed.inner.recovery_test_credit().unwrap();
+        assert_eq!((credits.0, credits.1), observations::remaining(&oracle, 4));
         finish_closed(&mut closed, &mut owner, &mut flusher);
+        observations::bank(closed.inner.recovery_test_bank(), &oracle, 7, None);
+        assert_eq!(closed.inner.recovery_test_credit(), Some(credits));
         assert_cleanup(&read, &oracle, 4);
         assert_homes(&read, &oracle);
         let mut live = match closed.into_live() {
@@ -95,6 +183,13 @@ pub(super) fn second_cycle<D: DirectoryPort>(directory: &D, read: impl Fn(&str) 
             assert_eq!(&actual[offset..], expected.frames[i]);
             offset += expected.frames[i].len();
             assert_eq!(actual.len(), offset);
+            observations::bank(
+                live.recovery_test_bank(),
+                &oracle,
+                8 + i as u64,
+                Some(&expected),
+            );
+            assert_eq!(live.recovery_test_credit(), Some(credits));
             let at = if i == 0 || i == 1 { 0 } else { i - 1 };
             assert_resident(&mut live, &mut owner, &root, &expected.roots[at], &backing);
             assert_resident(&mut live, &mut owner, &jobs, &expected.jobs[at], &backing);
@@ -159,43 +254,65 @@ fn recovery_lifecycle() {
                     let next = clone_directory(&accepted);
                     let next_state = next.state();
                     clear(&next_state);
-                    recovered!(&next, |runtime, closed, owner, flusher, _core, _backing| {
-                        assert_eq!(runtime.observation().source_lsn, 11);
-                        finish_closed(&mut closed, &mut owner, &mut flusher);
-                        let mut live = match closed.into_live() {
-                            Ok(value) => value,
-                            Err(_) => panic!("epoch3 did not verify"),
-                        };
-                        assert_eq!(file(&next_state, &wal_name(3)).len(), 4096);
-                        assert!(!images(&next_state).contains_key(&wal_name(1)));
-                        assert!(!images(&next_state).contains_key(&wal_name(2)));
-                        let evidence = {
-                            let s = next_state.lock().unwrap();
-                            s.events.clone()
-                        };
-                        assert!(
-                            !evidence
-                                .iter()
-                                .any(|e| e.op == "open" && e.name == wal_name(1))
-                        );
-                        assert!(
-                            !evidence
-                                .iter()
-                                .any(|e| e.op == "write" && e.name == HOME_NAME),
-                            "duplicate home repair after exact finished suffix"
-                        );
-                        catalog(&mut live, &mut owner, &mut flusher);
-                    });
+                    third_cycle(&next, |name| file(&next_state, name));
+                    assert!(!images(&next_state).contains_key(&wal_name(1)));
+                    assert!(!images(&next_state).contains_key(&wal_name(2)));
+                    let evidence = {
+                        let s = next_state.lock().unwrap();
+                        s.events.clone()
+                    };
+                    assert!(
+                        !evidence
+                            .iter()
+                            .any(|e| e.op == "open" && e.name == wal_name(1))
+                    );
+                    assert!(
+                        !evidence
+                            .iter()
+                            .any(|e| e.op == "write" && e.name == HOME_NAME),
+                        "duplicate home repair after exact finished suffix"
+                    );
                     assert_closed(&next_state);
                 }
             } else {
                 let oracle = Oracle::new();
+                let expected_base = observations::first_base(&original, stop);
                 recovered!(&d, |runtime, closed, owner, flusher, _core, _backing| {
                     assert_eq!(runtime.observation().source_lsn, stop);
+                    assert_eq!(
+                        runtime.observation().calls_attempted,
+                        runtime.observation().calls_completed
+                    );
+                    assert_eq!(
+                        runtime.observation().mutations_attempted,
+                        runtime.observation().mutations_completed
+                    );
+                    assert!(runtime.observation().mutations_attempted > 0);
+                    observations::controls(
+                        &|name| file(&state, name),
+                        &expected_base,
+                        2,
+                        1,
+                        7,
+                        &original["d3-wal-00000001"][..4096],
+                    );
+                    observations::bank(closed.inner.recovery_test_bank(), &oracle, stop, None);
+                    let credits = closed.inner.recovery_test_credit().unwrap();
+                    assert_eq!(
+                        (credits.0, credits.1),
+                        observations::remaining(&oracle, stop)
+                    );
                     if case == 2 {
                         assert_eq!(closed.phase, Plan4RecoveryPhase::CancelReservedFirst);
                     }
                     finish_closed(&mut closed, &mut owner, &mut flusher);
+                    observations::bank(
+                        closed.inner.recovery_test_bank(),
+                        &oracle,
+                        if stop == 1 { 2 } else { 7 },
+                        None,
+                    );
+                    assert_eq!(closed.inner.recovery_test_credit(), Some(credits));
                     assert_cleanup(&|name| file(&state, name), &oracle, stop);
                     if case == 2 {
                         let (_, allocator, _) = oracle.allocation(1);
@@ -273,7 +390,9 @@ fn recovery_binding() {
                         (Plan4RecoveryPhase::Bind, Effect::Unchanged)
                     );
                     assert!(matches!(error.cause, Plan4RecoveryCause::Invariant));
+                    assert_eq!((error.database_effect, error.lease_acquired), (Effect::CallerMustResolve, true));
                     assert!(!runtime.session_fence().is_fenced());
+                    assert_eq!(runtime.storage.binding.load(std::sync::atomic::Ordering::Acquire), super::super::super::BOUND);
                     drop(first);
                 }
                 2 => {
@@ -292,7 +411,9 @@ fn recovery_binding() {
                         (Plan4RecoveryPhase::Bind, Effect::Unchanged)
                     );
                     assert!(matches!(error.cause, Plan4RecoveryCause::Invariant));
+                    assert_eq!((error.database_effect, error.lease_acquired), (Effect::CallerMustResolve, true));
                     assert!(!runtime.session_fence().is_fenced());
+                    assert_eq!(runtime.storage.binding.load(std::sync::atomic::Ordering::Acquire), super::super::super::AVAILABLE);
                 }
                 3 => {
                     // The real foreground admission, not a fabricated Owner state.
@@ -310,19 +431,27 @@ fn recovery_binding() {
                         (error.phase, error.effect),
                         (Plan4RecoveryPhase::Bind, Effect::CallerMustResolve)
                     );
-                    assert!(matches!(error.cause, Plan4RecoveryCause::Concurrency(_)));
+                    assert!(matches!(error.cause, Plan4RecoveryCause::Concurrency(e) if e.cause == crate::transaction::concurrency::Cause::Invariant && e.effect == Effect::CallerMustResolve));
                     assert!(runtime.session_fence().is_fenced());
+                    assert_eq!(runtime.storage.binding.load(std::sync::atomic::Ordering::Acquire), super::super::super::AVAILABLE);
+                    assert_eq!((error.database_effect, error.lease_acquired), (Effect::CallerMustResolve, true));
                 }
                 4 => {
                     let closed = runtime
                         .bind(&owner, &core, &mut first_frames, &mut first_operation)
                         .unwrap();
                     clear(&state);
+                    let bank = closed.inner.recovery_test_bank().to_vec();
+                    let pointer = closed.inner.recovery_test_bank().as_ptr() as usize;
+                    let credit = closed.inner.recovery_test_credit();
                     let mut closed = match closed.into_live() {
                         Err(value) => value,
                         Ok(_) => panic!("early live capability"),
                     };
                     assert!(state.lock().unwrap().events.is_empty());
+                    assert_eq!(closed.inner.recovery_test_bank(), bank);
+                    assert_eq!(closed.inner.recovery_test_bank().as_ptr() as usize, pointer);
+                    assert_eq!(closed.inner.recovery_test_credit(), credit);
                     finish_closed(&mut closed, &mut owner, &mut flusher);
                     assert!(closed.into_live().is_ok());
                     return;

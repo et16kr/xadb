@@ -308,9 +308,54 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                 HOME,
             );
             self.write_home(index, HOME)?;
+        } else {
+            // Equality or a later canonical home avoids a redundant write,
+            // but does not prove the observed bytes have reached durable
+            // storage. Keep Pending selected until that same home is synced.
+            self.sync_unchanged_home(index)?;
         }
         // All selected homes are synced before this whole-batch retirement.
         self.select_dwb(header.batch_id, dwb::ControlState::Empty, None)?;
+        Ok(())
+    }
+    fn sync_unchanged_home(&mut self, index: usize) -> Result<()> {
+        let p = self.observation.phase;
+        let path = name(HOME_NAME);
+        let (mut file, opened) = selection::open(
+            &mut self.writer,
+            &mut self.observation,
+            path,
+            OpenMode::ReadWrite,
+            Some(control::EXTENT_BYTES),
+        )?;
+        let offset = index as u64 * PAGE_BYTES as u64;
+        selection::read(
+            &mut file,
+            &mut self.observation,
+            path,
+            offset,
+            &mut self.maintenance[IO_WORK..IO_WORK + PAGE_BYTES],
+        )?;
+        let prior = &self.maintenance
+            [PHYSICAL_START + index * PAGE_BYTES..PHYSICAL_START + (index + 1) * PAGE_BYTES];
+        if prior != &self.maintenance[IO_WORK..IO_WORK + PAGE_BYTES] {
+            return Err(error(p, Plan4RecoveryCause::ContentMismatch));
+        }
+        epoch::file_sync(&mut file, &mut self.observation, path)?;
+        selection::read(
+            &mut file,
+            &mut self.observation,
+            path,
+            offset,
+            &mut self.maintenance[IO_WORK..IO_WORK + PAGE_BYTES],
+        )?;
+        let prior = &self.maintenance
+            [PHYSICAL_START + index * PAGE_BYTES..PHYSICAL_START + (index + 1) * PAGE_BYTES];
+        if prior != &self.maintenance[IO_WORK..IO_WORK + PAGE_BYTES]
+            || selection::metadata(&self.writer, &mut self.observation, path)? != Some(opened)
+        {
+            return Err(error(p, Plan4RecoveryCause::ContentMismatch));
+        }
         Ok(())
     }
     fn write_home(&mut self, index: usize, image_at: usize) -> Result<()> {

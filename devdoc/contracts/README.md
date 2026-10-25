@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV3 plan4 빈 거래 복구 owner](dev3-plan4-recovery-owner.md) — 원 자원·선택/REBASE·새 epoch·같은 pool의 복구 종료; 중단 작업 검증 완료·독립 D1/D2 한정 수용
+
 - [DEV3 plan4 빈 거래 live](dev3-retention-live.md) — 원 owner/pool의 fresh 수명·flush·재적재와 관측용 tag3 prefix; 복구 owner 별도
 
 - [DEV4 P5 원시 action 번호·target 선택](dev4-lifecycle-raw-selection.md) — D4-LM-RAW-001 D2·제한 D1 수용; raw1533 번호·exact selector의 국소 계약. 전체 input/model은 후속.

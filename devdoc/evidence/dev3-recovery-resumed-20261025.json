@@ -1,0 +1,1018 @@
+{
+  "schema": "XADB_DEV3_RECOVERY_RESUMED_EVIDENCE_V1",
+  "status": "ACCEPTED_LIMITED_D1_D2",
+  "date": "2026-10-25",
+  "scope": "Only interrupted plan4 N=0 recovery owner implementation/tests/review; original48 plus changed-code E09/E10.",
+  "contract_ref": "dev3-plan4-recovery-owner.md",
+  "test_plan_ref": "dev3-test-plan.md#plan4-recovery-owner",
+  "original_checkpoint_ref": "dev3-recovery-paused-20261025.json",
+  "baseline_commit": "f22e956",
+  "full_dev3_acceptance": false,
+  "s5_executed": false,
+  "original_checkpoint_failures_preserved": true,
+  "inventory": {
+    "static": 2,
+    "memory": 45,
+    "native": 3,
+    "total": 50
+  },
+  "unique_product_pass_count": 50,
+  "repeated_successful_product_ids": [],
+  "case_attempts": {
+    "P4-REC-ST01": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/static-r0/static/result.json",
+        "receipt_sha256": "bacc4946b2ecbc5d76514ae1005c689cc6600c1f084075f9de7f2385a8031f12",
+        "identity": [
+          "05187d64be7cf27f79e533f3292ae3c119f0d88e021cb0bd8256932ded72609b",
+          "bb513fb924998c2eccc7b83090489e72e52db37b8a78fc1826954e13c01e9a8f",
+          "758ae96476528c0f750b75050f018661049d540897acdf6cfb67bab88d1565ba"
+        ]
+      }
+    ],
+    "P4-REC-ST02": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/static-r0/static/result.json",
+        "receipt_sha256": "bacc4946b2ecbc5d76514ae1005c689cc6600c1f084075f9de7f2385a8031f12",
+        "identity": [
+          "05187d64be7cf27f79e533f3292ae3c119f0d88e021cb0bd8256932ded72609b",
+          "bb513fb924998c2eccc7b83090489e72e52db37b8a78fc1826954e13c01e9a8f",
+          "758ae96476528c0f750b75050f018661049d540897acdf6cfb67bab88d1565ba"
+        ]
+      }
+    ],
+    "P4-REC-L01": [
+      {
+        "outcome": "FAIL",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/mandatory/result.json",
+        "receipt_sha256": "f87aceb2181d68f2fc18788834e86da84ff1341f7b996ec74d05ba036cc1c914",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      },
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r3/successor/result.json",
+        "receipt_sha256": "a9dd48499d466b70e1781d3d650800843df1f4fba1c698d1adee824d0b58b8b6",
+        "identity": [
+          "1909f4dd63d89c591e91feb75c206e5c0bd84a3526966cf92f952c4d5a987265",
+          "be38634fe2e28cfe28725c9bfe87e4a4468b6517c1bf99a10e738c430f0f5cb4",
+          "bbba932691116a16ee05b4b6d08dfb9fc96c0194af33c22420922f599e2a358f"
+        ]
+      }
+    ],
+    "P4-REC-L02": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r3/successor/result.json",
+        "receipt_sha256": "a9dd48499d466b70e1781d3d650800843df1f4fba1c698d1adee824d0b58b8b6",
+        "identity": [
+          "1909f4dd63d89c591e91feb75c206e5c0bd84a3526966cf92f952c4d5a987265",
+          "be38634fe2e28cfe28725c9bfe87e4a4468b6517c1bf99a10e738c430f0f5cb4",
+          "bbba932691116a16ee05b4b6d08dfb9fc96c0194af33c22420922f599e2a358f"
+        ]
+      }
+    ],
+    "P4-REC-L03": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r3/successor/result.json",
+        "receipt_sha256": "a9dd48499d466b70e1781d3d650800843df1f4fba1c698d1adee824d0b58b8b6",
+        "identity": [
+          "1909f4dd63d89c591e91feb75c206e5c0bd84a3526966cf92f952c4d5a987265",
+          "be38634fe2e28cfe28725c9bfe87e4a4468b6517c1bf99a10e738c430f0f5cb4",
+          "bbba932691116a16ee05b4b6d08dfb9fc96c0194af33c22420922f599e2a358f"
+        ]
+      }
+    ],
+    "P4-REC-L04": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r3/successor/result.json",
+        "receipt_sha256": "a9dd48499d466b70e1781d3d650800843df1f4fba1c698d1adee824d0b58b8b6",
+        "identity": [
+          "1909f4dd63d89c591e91feb75c206e5c0bd84a3526966cf92f952c4d5a987265",
+          "be38634fe2e28cfe28725c9bfe87e4a4468b6517c1bf99a10e738c430f0f5cb4",
+          "bbba932691116a16ee05b4b6d08dfb9fc96c0194af33c22420922f599e2a358f"
+        ]
+      }
+    ],
+    "P4-REC-L05": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r3/successor/result.json",
+        "receipt_sha256": "a9dd48499d466b70e1781d3d650800843df1f4fba1c698d1adee824d0b58b8b6",
+        "identity": [
+          "1909f4dd63d89c591e91feb75c206e5c0bd84a3526966cf92f952c4d5a987265",
+          "be38634fe2e28cfe28725c9bfe87e4a4468b6517c1bf99a10e738c430f0f5cb4",
+          "bbba932691116a16ee05b4b6d08dfb9fc96c0194af33c22420922f599e2a358f"
+        ]
+      }
+    ],
+    "P4-REC-L06": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r3/successor/result.json",
+        "receipt_sha256": "a9dd48499d466b70e1781d3d650800843df1f4fba1c698d1adee824d0b58b8b6",
+        "identity": [
+          "1909f4dd63d89c591e91feb75c206e5c0bd84a3526966cf92f952c4d5a987265",
+          "be38634fe2e28cfe28725c9bfe87e4a4468b6517c1bf99a10e738c430f0f5cb4",
+          "bbba932691116a16ee05b4b6d08dfb9fc96c0194af33c22420922f599e2a358f"
+        ]
+      }
+    ],
+    "P4-REC-S01": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S02": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S03": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S04": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S05": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S06": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S07": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S08": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S09": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S10": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-P01": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-P02": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-P03": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-P04": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-P05": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-P06": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-E01": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-E02": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-E03": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-E04": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-E05": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-E06": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-E07": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-E08": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-B01": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/mandatory/result.json",
+        "receipt_sha256": "f87aceb2181d68f2fc18788834e86da84ff1341f7b996ec74d05ba036cc1c914",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-B02": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/mandatory/result.json",
+        "receipt_sha256": "f87aceb2181d68f2fc18788834e86da84ff1341f7b996ec74d05ba036cc1c914",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-B03": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/mandatory/result.json",
+        "receipt_sha256": "f87aceb2181d68f2fc18788834e86da84ff1341f7b996ec74d05ba036cc1c914",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-B04": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/mandatory/result.json",
+        "receipt_sha256": "f87aceb2181d68f2fc18788834e86da84ff1341f7b996ec74d05ba036cc1c914",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-V01": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-V02": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-V03": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-V04": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-N01": [
+      {
+        "outcome": "FAIL",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r3/native/result.json",
+        "receipt_sha256": "6f8ec0c11974052edd1bfbd0722e0229891771a0322029c1a5204c227db905f6",
+        "identity": [
+          "1909f4dd63d89c591e91feb75c206e5c0bd84a3526966cf92f952c4d5a987265",
+          "be38634fe2e28cfe28725c9bfe87e4a4468b6517c1bf99a10e738c430f0f5cb4",
+          "904aa7ae3aea20b2bab64f171dc004618172e822b57aeed6865249a913397cd0"
+        ],
+        "pid": 49680
+      },
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/final-r4/native/result.json",
+        "receipt_sha256": "6bdbe9d8da60c5d1eeb3cd99843a4f8d5c698713ae05acda703f5a1468f133e6",
+        "identity": [
+          "ee40b448904aeba355192abed146011fbff46ea645f64f527e4559ce8fc2827d",
+          "688511fd4f32230d27f90b5a153adec6dd44142c300d14a6545b3475ca0a0389",
+          "5e68a22a62e576f81c7011ff99777ec24c8250461535118c826643635e2c8e3b"
+        ],
+        "pid": 67576
+      }
+    ],
+    "P4-REC-N02": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/final-r4/native/result.json",
+        "receipt_sha256": "6bdbe9d8da60c5d1eeb3cd99843a4f8d5c698713ae05acda703f5a1468f133e6",
+        "identity": [
+          "ee40b448904aeba355192abed146011fbff46ea645f64f527e4559ce8fc2827d",
+          "688511fd4f32230d27f90b5a153adec6dd44142c300d14a6545b3475ca0a0389",
+          "5e68a22a62e576f81c7011ff99777ec24c8250461535118c826643635e2c8e3b"
+        ],
+        "pid": 67585
+      }
+    ],
+    "P4-REC-N03": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/final-r4/native/result.json",
+        "receipt_sha256": "6bdbe9d8da60c5d1eeb3cd99843a4f8d5c698713ae05acda703f5a1468f133e6",
+        "identity": [
+          "ee40b448904aeba355192abed146011fbff46ea645f64f527e4559ce8fc2827d",
+          "688511fd4f32230d27f90b5a153adec6dd44142c300d14a6545b3475ca0a0389",
+          "5e68a22a62e576f81c7011ff99777ec24c8250461535118c826643635e2c8e3b"
+        ],
+        "pid": 67645
+      }
+    ],
+    "P4-REC-S11": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S12": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S13": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S14": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-S15": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-E09": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+        "receipt_sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+        "identity": [
+          "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+          "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+          "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+        ]
+      }
+    ],
+    "P4-REC-E10": [
+      {
+        "outcome": "PASS",
+        "receipt_path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r3/successor/result.json",
+        "receipt_sha256": "a9dd48499d466b70e1781d3d650800843df1f4fba1c698d1adee824d0b58b8b6",
+        "identity": [
+          "1909f4dd63d89c591e91feb75c206e5c0bd84a3526966cf92f952c4d5a987265",
+          "be38634fe2e28cfe28725c9bfe87e4a4468b6517c1bf99a10e738c430f0f5cb4",
+          "bbba932691116a16ee05b4b6d08dfb9fc96c0194af33c22420922f599e2a358f"
+        ]
+      }
+    ]
+  },
+  "runs": [
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/static-r0/static/result.json",
+      "sha256": "bacc4946b2ecbc5d76514ae1005c689cc6600c1f084075f9de7f2385a8031f12",
+      "category": "static",
+      "status": "PASS",
+      "identity": [
+        "05187d64be7cf27f79e533f3292ae3c119f0d88e021cb0bd8256932ded72609b",
+        "bb513fb924998c2eccc7b83090489e72e52db37b8a78fc1826954e13c01e9a8f",
+        "758ae96476528c0f750b75050f018661049d540897acdf6cfb67bab88d1565ba"
+      ],
+      "execution_wall_seconds": 0.902,
+      "process_wall_seconds": 0.0055053600001429,
+      "post_execution_verified": true
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/mandatory/result.json",
+      "sha256": "f87aceb2181d68f2fc18788834e86da84ff1341f7b996ec74d05ba036cc1c914",
+      "category": "semantic",
+      "status": "PARTIAL_OR_FAIL",
+      "identity": [
+        "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+        "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+        "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+      ],
+      "execution_wall_seconds": 5.801,
+      "process_wall_seconds": 5.009945847999916,
+      "post_execution_verified": true
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/remaining/result.json",
+      "sha256": "3791f170d4a751d8274139c5bdd07047250b6965218f89c1fcc2678eec7f5ec8",
+      "category": "semantic",
+      "status": "PASS",
+      "identity": [
+        "e362ff2990afe9a384a142a9ce876c3cdc717a24e5c0beee6473d6a152073675",
+        "144036a89b6bac723302ac821db34598f4aa12a82465f7fba2993b5a146819be",
+        "17ebc3a02a4a45e6d469d19e0482100d27656ba94922d7e822a769c73167233d"
+      ],
+      "execution_wall_seconds": 31.083,
+      "process_wall_seconds": 29.7922289750004,
+      "post_execution_verified": true
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r3/successor/result.json",
+      "sha256": "a9dd48499d466b70e1781d3d650800843df1f4fba1c698d1adee824d0b58b8b6",
+      "category": "semantic",
+      "status": "PASS",
+      "identity": [
+        "1909f4dd63d89c591e91feb75c206e5c0bd84a3526966cf92f952c4d5a987265",
+        "be38634fe2e28cfe28725c9bfe87e4a4468b6517c1bf99a10e738c430f0f5cb4",
+        "bbba932691116a16ee05b4b6d08dfb9fc96c0194af33c22420922f599e2a358f"
+      ],
+      "execution_wall_seconds": 15.639,
+      "process_wall_seconds": 14.676753812000243,
+      "post_execution_verified": true
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r3/native/result.json",
+      "sha256": "6f8ec0c11974052edd1bfbd0722e0229891771a0322029c1a5204c227db905f6",
+      "category": "native",
+      "status": "PARTIAL_OR_FAIL",
+      "identity": [
+        "1909f4dd63d89c591e91feb75c206e5c0bd84a3526966cf92f952c4d5a987265",
+        "be38634fe2e28cfe28725c9bfe87e4a4468b6517c1bf99a10e738c430f0f5cb4",
+        "904aa7ae3aea20b2bab64f171dc004618172e822b57aeed6865249a913397cd0"
+      ],
+      "execution_wall_seconds": 1.536,
+      "worker_seconds": 0.9666470269999081,
+      "post_execution_verified": true
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/final-r4/native/result.json",
+      "sha256": "6bdbe9d8da60c5d1eeb3cd99843a4f8d5c698713ae05acda703f5a1468f133e6",
+      "category": "native",
+      "status": "PASS",
+      "identity": [
+        "ee40b448904aeba355192abed146011fbff46ea645f64f527e4559ce8fc2827d",
+        "688511fd4f32230d27f90b5a153adec6dd44142c300d14a6545b3475ca0a0389",
+        "5e68a22a62e576f81c7011ff99777ec24c8250461535118c826643635e2c8e3b"
+      ],
+      "execution_wall_seconds": 10.891,
+      "worker_seconds": 7.731015030999515,
+      "post_execution_verified": true
+    }
+  ],
+  "final_owned_source": {
+    "source_sha256": "ee40b448904aeba355192abed146011fbff46ea645f64f527e4559ce8fc2827d",
+    "binary_sha256": "688511fd4f32230d27f90b5a153adec6dd44142c300d14a6545b3475ca0a0389",
+    "files": {
+      "crates/engine/src/storage/wal_io/plan4_genesis_test_support.rs": "1db265f116bd3800eb1cbcfab99c6f61655148eacfa4af61e07d61970cc7bda8",
+      "crates/engine/src/storage/wal_io/plan4_pages.rs": "1ceac6a7a0c0494474464b3cd1b138d9c4988b102d0f23184107fc71b95593ae",
+      "crates/engine/src/storage/wal_io/plan4_recovery_analysis.rs": "4ff0f7e11996416ff9c4d2287a805310ef60e81f7fd8942a6a709ad8cc26a414",
+      "crates/engine/src/storage/wal_io/plan4_recovery_physical.rs": "d45b943b783d5c16a24d480ac44a1c2928104cd5402ec549f852a1d2e9ac1941",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests.rs": "116a8bcbf8d995b76200d0713ac6f52eef54611814e8b81cbb059fbd4e8a1278",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_cases.rs": "c86295e225518abaf7d7d8373a3400c586a94434e92bf3e703e986ae8cad365c",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_closure.rs": "9a3f9ae85b04f595d7fd03392d2737c2c8ca9dbb16cc65596b276411b8321d91",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_faults.rs": "a393d94d89fd0fb2db5a3c97f112d889ecddc4e6a4d64afa2f20e57b08021024",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_native.rs": "1719ee9d71c9129336cdd991ad401783516291ba2667b7c715a35ebfa3896edd",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_observations.rs": "9fa0f88edfd8d5939bac3f7d2480124ae32391f7c7c07d9b711d3ab7124184fc",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_physical.rs": "89527afdb4b718fecf8875e51bd3e7c4808d75a26ebfaee5a1ac03322956a389",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_publication.rs": "e434ff34f5f5ddcbd92eb18e45940d8b245b83b7dd979f55188a2eb81263fa4a",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_support.rs": "ecac94765e2d0be5eb159e2cf7c935485dd75e5819725ccc60befd552783a1a2",
+      "crates/engine/src/storage/wal_io/plan4_retention.rs": "43934bd91c53e71361a12750f3a378a56ec083e244a3353bbccdefa02b49a133",
+      "crates/engine/src/storage/wal_io/plan4_retention_recovery_test_observation.rs": "b0637db8a6e15536cbefd8918a0efe072b981d2be41bb21775dbd81348d9bb3b",
+      "scripts/dev3_plan4_recovery_native.py": "b49fe16193ecae1416174c0628025e3bf9cad74e15a1b98a3de9bd2c68b93dc9",
+      "scripts/test_dev3_plan4_recovery_native.py": "6436c5fc2e3fe6555f80d718360ff864b00a14c2b11c88b8d31b3004ab165caa",
+      "tests/fixtures/dev3-plan4-recovery-owner/input-plan.json": "6472fe35ea7cbce764268c33030a62b37ad17b2a87ba2660bd4546ccb73a4ed1",
+      "tests/fixtures/dev3-plan4-recovery-owner/provenance.md": "18fde0305486c8094db8771db00496332a3d6859704f52b9786ca9c487b93bd6"
+    },
+    "build_receipt": {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/final-r4/build-receipt.json",
+      "sha256": "f4c0629538c833d1f391076e6c603f17062b491e935bb2ec02531ac10fa904ca"
+    }
+  },
+  "build_history": [
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/final-r4/build-receipt.json",
+      "sha256": "f4c0629538c833d1f391076e6c603f17062b491e935bb2ec02531ac10fa904ca"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r0/build-receipt.json",
+      "sha256": "5639eec9de0fcb3046edf7f9a9a227c175a89c3f6d96dd86fb5e653f9adc49e7"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r1/build-receipt.json",
+      "sha256": "771db59b3df572baecce3aee8ae0158270d22a82877a678f9a3ddeb7fdce9ef7"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r2/build-receipt.json",
+      "sha256": "79515d5d944e3e21cd2ba647363d8631b3ab6c5194efdd085dd5a8f280df2f19"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r3/build-receipt.json",
+      "sha256": "723f814415ab45b577f3e5ac1d9102e46a454abf5bcaeb4ffa5cd4b061e3522c"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/static-r0/build-receipt.json",
+      "sha256": "295a29c488de1718c7548ff5b8e3c171a2e3afb144e0e4d6df716d2825e76420"
+    }
+  ],
+  "controller": {
+    "unique_test_ids": 14,
+    "original_selected": 9,
+    "changed_successor_selected": 11,
+    "unchanged_excluded": [
+      "HN01",
+      "HN03",
+      "HN05"
+    ],
+    "changed_revalidated": [
+      "HN02",
+      "HN04",
+      "HN06",
+      "HN07",
+      "HN08",
+      "HN09"
+    ],
+    "new_successor_ids": [
+      "HN10",
+      "HN11",
+      "HN12",
+      "HN13",
+      "HN14"
+    ],
+    "engine_processes": 0,
+    "receipts": [
+      {
+        "path": "artifacts/dev3/plan4-recovery-resumed-20261025/native-controller-unit-r0/receipt.json",
+        "sha256": "678d3d5e852180c358558582b2d2bde252e95d2fa0d3e1d1be43f079d586504f"
+      },
+      {
+        "path": "artifacts/dev3/plan4-recovery-resumed-20261025/native-controller-unit-r1/receipt.json",
+        "sha256": "99603871f1567f51c25452b8cb66db9852087fa93b249b203110f5f8a9514bfa"
+      }
+    ]
+  },
+  "native": {
+    "same_source_elf_input": [
+      "ee40b448904aeba355192abed146011fbff46ea645f64f527e4559ce8fc2827d",
+      "688511fd4f32230d27f90b5a153adec6dd44142c300d14a6545b3475ca0a0389",
+      "5e68a22a62e576f81c7011ff99777ec24c8250461535118c826643635e2c8e3b"
+    ],
+    "pids": {
+      "produce": 67576,
+      "recover": 67585,
+      "reentry": 67645
+    },
+    "resource_peaks": {
+      "produce": {
+        "peak": 3,
+        "fd_peak": 6,
+        "handles": 0,
+        "entropy": 1
+      },
+      "recover": {
+        "peak": 3,
+        "fd_peak": 6,
+        "handles": 0,
+        "entropy": 0
+      },
+      "reentry": {
+        "peak": 3,
+        "fd_peak": 6,
+        "handles": 0,
+        "entropy": 0
+      }
+    },
+    "cumulative_wall_seconds": 10.891,
+    "cumulative_worker_seconds": 7.731015030999515,
+    "cumulative_audit_seconds": 3.159984969000485,
+    "history": {
+      "audit_seconds": 0.5693529730000919,
+      "original_retained_database_bytes": 44409664,
+      "output_bytes": 235640,
+      "prior_result_sha256": "6f8ec0c11974052edd1bfbd0722e0229891771a0322029c1a5204c227db905f6",
+      "prior_run": "semantic-r3/native",
+      "retained_database_bytes": 22204832,
+      "retired_duplicate_bytes": 22204832,
+      "wall_seconds": 1.536,
+      "worker_seconds": 0.9666470269999081
+    },
+    "retained_database_bytes": 117207592,
+    "reentry_home_writes": 0,
+    "duplicate_retirement": {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/native-duplicate-retirement-r0.json",
+      "sha256": "eb4a06f019acfad96d025158a5749994fc3179bd4f2f52b9da3f3b064d58de7b"
+    }
+  },
+  "quality": {
+    "clippy": {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/final-r4/lint/receipt.json",
+      "sha256": "6c0f7570257a409758b214951bcfe3f3953f3698d53e57c10b243820483d1d0f"
+    },
+    "clippy_original_failure": {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/semantic-r3/lint/receipt.json",
+      "sha256": "d6e9f3e799d6462a349d03d0598900e323f67f7d799c718d9ca7e3c53ed3c98e"
+    },
+    "fmt_original": [
+      {
+        "path": "artifacts/dev3/plan4-recovery-resumed-20261025/fmt-final-r0/receipt.json",
+        "sha256": "9320e4bcbf8994e6aa39b63733c3c6b8b9e2f54d8d450f12dfa8305abd08d9a8"
+      },
+      {
+        "path": "artifacts/dev3/plan4-recovery-resumed-20261025/fmt-final-r1/receipt.json",
+        "sha256": "010895c1df0d16cf2e554ae89523cd8271ba9a00b0ab9e10d2ba9197b2501d51"
+      }
+    ],
+    "documentation_verification": "NOT_RUN; pre-push gate only; no push requested"
+  },
+  "independent_reviews": [
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/f05-static-caller-readback-r0.json",
+      "sha256": "ed06d21a9cff3a5ee9a9775b602dde9e3bcbf0a7b92194e84bb699de08bfbedd"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/f05-static-r0.json",
+      "sha256": "5fe6eb2fd28e73e44fedbf853dac9382391755ccfb560072ea38d33ce624f491"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/final-d1-d2-r4.json",
+      "sha256": "f2d29c189c5446aba2c5f4b7d210820aa94c0f3c41341704700a9a71f52f0d24"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/final-preparation-readback.json",
+      "sha256": "faf9c3002d94e37384b7c5a5729e37f02bd10320f2aa3d9c0a143c14f8d0853e"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/memory-lineage-final-r4.json",
+      "sha256": "8b8fc3c84ce3972c4d22aa0eb3ca1cbead39d0558889a2fabb5e395b4b9ba9d9"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/native-admission-r2.json",
+      "sha256": "34325a1f447909ed70e775ec458d8e4c15f21f82b61d9c2390085f8492fff7f6"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/native-admission-r3.json",
+      "sha256": "c7cb02ddb5a2c34649dfe7bedc1d6c4ec23dc07639489f750847928292bff370"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/native-admission-r4.json",
+      "sha256": "e50ecb4fd2be02763ac73e23dbab6d0a3b3ad14078cea425283f17c62cbdd1eb"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/native-controller-r1-review.json",
+      "sha256": "4013a209b16041d73fc9bf3cd25fe5ea5366d1f90879b482a84f5c06f2887fa3"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/native-final-r4-readback.json",
+      "sha256": "68d7722f1e0f086c68dfcbfad483eff2af70a7abcaf5c08eadeae419afe2530c"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/native-r3-duplicate-retirement.json",
+      "sha256": "651d049e5f3a468d501ab1c3d4b0ea167b5c23dd5823f0f629c566cbefd6c97f"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/preliminary-source-input-r0.json",
+      "sha256": "134ff8c8d9e1e0263715b8e33fd1e7cd6ff0c52cbf38553b498694a88794b875"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/semantic-admission-r2.json",
+      "sha256": "b8d05f1a1f22d9a2a6959ce284bf2d5272743e245cb081f80b8c887875a3bd70"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/semantic-admission-r3.json",
+      "sha256": "a9c612f654d14854486543fe9588a46c5a33f5c7605a65a0507a0b4c6985d98d"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/semantic-memory45-readback.json",
+      "sha256": "94d0a05428279055b612f8900eea744cdeef49a58cd794eb374896fb98d85079"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/semantic-r2-partial-r0.json",
+      "sha256": "1809d9020123f63e955705e997f2548ec88a594e313b8a6304a4f18569a6ce1f"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/semantic-r2-readback-r1.json",
+      "sha256": "a192094277ace4730f291074bd3d6c2f2cf98c1626024fe53d7b02657730857e"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/source-input-semantic-r2.json",
+      "sha256": "faeea267eac86e03dda470dc4de36b99e10989fef3b729064e9d06c1d1df513d"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/source-input-semantic-r3.json",
+      "sha256": "dbf8a5019d71a5263e775e57d7c92d18e52a71d851938c0d80a2880f7e4cd3af"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/static-lineage-final-r4.json",
+      "sha256": "166214c546fb689522969d3cff17c87f0b7d3d18e7f8680250fdd661f6cbc72e"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/static-lineage-semantic-r1.json",
+      "sha256": "8ed685d645090198551a9e044b1bb774722c037463b6bf69e623133472a5e545"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/static-lineage-semantic-r2.json",
+      "sha256": "a3a6ee1e5a973306c0540209da02f7e3681c97ca579c8d9d343dc4066b313d24"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/static-lineage-semantic-r3.json",
+      "sha256": "0d33bd727f8bfec3000d28207d2dd9668c5661e614ded9c50fe9630bcad92c5f"
+    },
+    {
+      "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/final-preparation-readback.json",
+      "sha256": "faf9c3002d94e37384b7c5a5729e37f02bd10320f2aa3d9c0a143c14f8d0853e"
+    }
+  ],
+  "remaining_outside_scope": [
+    "General Undo/row transactions/Catalog CREATE and CLR",
+    "Unfrozen profile/crash/large Status expansion",
+    "Full DEV3 and S5 acceptance"
+  ],
+  "foreign_work_excluded": [
+    "DEV2 PMU/measurement",
+    "crates/engine/src/diagnostics.rs",
+    "crates/engine/src/substrate.rs",
+    "DEV4"
+  ],
+  "final_review": {
+    "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/final-d1-d2-r4.json",
+    "sha256": "f2d29c189c5446aba2c5f4b7d210820aa94c0f3c41341704700a9a71f52f0d24"
+  },
+  "final_preparation_audit": {
+    "path": "artifacts/dev3/plan4-recovery-resumed-20261025/final-preparation-audit.json",
+    "sha256": "5f62ca694a60f5f37df4b05915149a3b0c2cbf042ea57fc08bbe837c81c0110d"
+  },
+  "final_preparation_independent_readback": {
+    "path": "artifacts/dev3/plan4-recovery-resumed-20261025/review/final-preparation-readback.json",
+    "sha256": "faf9c3002d94e37384b7c5a5729e37f02bd10320f2aa3d9c0a143c14f8d0853e"
+  }
+}

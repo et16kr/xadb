@@ -5933,5 +5933,31 @@
       "system_settings_changed": false,
       "new_source_paths": false
     }
+  },
+  "dev3_plan4_recovery_owner": {
+    "status": "ACCEPTED_LIMITED_D1",
+    "contract_ref": "dev3-plan4-recovery-owner.md",
+    "evidence_ref": "dev3-recovery-resumed-20261025.md",
+    "test_plan_ref": "dev3-test-plan.md#plan4-recovery-owner",
+    "historical_checkpoint": "dev3_plan4_recovery_checkpoint",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_closure.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_native.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_observations.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_physical.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery_tests_publication.rs",
+      "scripts/dev3_plan4_recovery_native.py",
+      "scripts/test_dev3_plan4_recovery_native.py"
+    ],
+    "mandatory_inventory": {
+      "static": 2,
+      "memory": 45,
+      "native": 3,
+      "total": 50
+    },
+    "s5_additional_frozen": 0,
+    "controller_tests": 14,
+    "new_packages": [],
+    "new_dependencies": []
   }
 }

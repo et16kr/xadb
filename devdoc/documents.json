@@ -2207,6 +2207,21 @@
       "path": "evidence/dev3-recovery-paused-20261025.json",
       "role": "evidence",
       "title": "DEV3 복구 미완료 source 상태 색인"
+    },
+    "dev3-plan4-recovery-owner.md": {
+      "path": "contracts/dev3-plan4-recovery-owner.md",
+      "role": "contracts",
+      "title": "DEV3 plan4 빈 거래 실제 복구 owner"
+    },
+    "dev3-recovery-resumed-20261025.md": {
+      "path": "evidence/dev3-recovery-resumed-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 중단된 plan4 복구 작업 재개"
+    },
+    "dev3-recovery-resumed-20261025.json": {
+      "path": "evidence/dev3-recovery-resumed-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 중단된 복구 단위의 source별 선택 검증 색인"
     }
   }
 }

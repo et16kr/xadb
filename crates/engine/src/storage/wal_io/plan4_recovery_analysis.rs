@@ -458,8 +458,11 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             }
             let replay_digest = consumed.digest();
             if let Some((end, lsn, digest)) = source.sealed {
-                if offset != end || previous != lsn || replay_digest != digest {
+                if offset != end || previous != lsn {
                     return Err(error(p, Plan4RecoveryCause::OrderMismatch));
+                }
+                if replay_digest != digest {
+                    return Err(error(p, Plan4RecoveryCause::ContentMismatch));
                 }
                 let actual = prefix_hash(
                     source,

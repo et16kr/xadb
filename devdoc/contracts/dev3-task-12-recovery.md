@@ -84,6 +84,8 @@ flowchart TD
 
 healthy home이 pending보다 더 높은 LSN/incarnation이면 오래된 image로 덮지 않고 불변식 오류로 거절한다. 유효 pending 없는 initialized home 손상은 원칙적으로 거절한다. 예외는 FILEMAP·allocation generation과 일치하는 완전 INIT와 그 이후 채택 끝까지의 WAL 전체가 남은 경우다. 이 경우 REDO가 INIT부터 재구성하도록 표시하며 bootstrap에서 blanket page-load 거절하지 않는다. zero/uninitialized no-force home도 이 경로로 다룬다. delta WAL만으로 checksum 오류를 숨기지 않는다.
 
+plan4 N=0의 실제 복구 owner에는 [동일 채택 이력의 정규 후속 home 예외](dev3-plan4-recovery-owner.md#선택분석과-물리-복구)를 적용한다. 같은 target·owner·incarnation과 선택 base/완결 suffix의 전체 바이트 증명, sync·재검산을 모두 요구하며 일반 higher-LSN/incarnation 허용으로 확대하지 않는다.
+
 선행은 3.05.2/3의 pending·retirement 공급이다. repair 중 두 번째 장애에도 남은 선택 pending에서 재실행하고 retired raw image를 부활시키지 않는다.
 
 ## 6. 3.12.3 — ANALYSIS·RESERVE_RESTORE

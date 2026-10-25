@@ -855,3 +855,12 @@ G6_CONTEXT/BEGIN/PASS/FAIL/SKIP과 source/ELF/input identity를 사용한다. st
 ## Plan4 빈 거래의 실제 live·prefix 필수 선택
 
 [계약](../contracts/dev3-retention-live.md)·[증거](../evidence/dev3-retention-live-20261025.md)의 필수75는 live static2/memory30과 prefix43이다. live 확대32와 prefix EOF 확대237, 합269는 S5 고유 추가이며 최종 전수에는 필수75도 포함한다. exact ID·함수별 선택으로 완료 반복0을 유지하고 실패한 사례와 미실행 사례만 successor에서 실행했다. semantic210초(worker180/감사30), 함수·사례30초, 출력8MiB이며 원 source/ELF/input/marker를 보존한다. 복구 owner·native 수명은 별도 입력/자원/실행을 요구한다. 최종 S5·하위 wrapper를 지금 실행하지 않는다.
+
+<a id="plan4-recovery-owner"></a>
+## 중단된 Plan4 복구 owner의 필수 선택
+
+[계약](../contracts/dev3-plan4-recovery-owner.md)·[동결 inventory](../../tests/fixtures/dev3-plan4-recovery-owner/input-plan.json)·[source별 실행 증거](../evidence/dev3-recovery-resumed-20261025.md)를 따른다. 중단된 원48에 consumed-frame digest 회귀 E09와 sealed 경계 오류 구분 E10을 더한50개다. static2, memory45(L6/B4/S15/P6/E10/V4), Linux native3(N01 producer/N02 recover/N03 reentry)을 exact ID로 선택한다. memory는 전체 바이트·bank·credit·오류·효과를 프로세스 안에서 비교하고 marker/stdout을 보존한다. native는 같은 ELF의 서로 다른3PID와 각 단계의 전체 파일 snapshot·trace·entropy·identity를 별도로 보존한다.
+
+static15초(worker10/감사5), memory210초(worker180/감사30, 함수·사례30초, 출력8MiB), native30초(worker 합29초/최종 감사 예약1초, 모든 감사는 전체30초에 계상, 출력8MiB, live DB32MiB, 이력128MiB)를 실행 전에 고정한다. 완료 사례는 재실행하지 않고 source별 원 결과를 유지하며 변경 없는 static 증거는 독립 lineage 검토로 연결한다. native controller 자체 시험은 제품50개와 별도 분모로 기록한다.
+
+이50개는 최종 S5 inventory에도 같은 ID로 포함한다. 과거 제안인 profile·crash cut·최대 Status 확대는 아직 동결되지 않았으며 이 중단 작업 완료에 포함하지 않는다. 전체 DEV3/S5, 일반 Undo·행 거래·Catalog CREATE/CLR를 이 한정 복구로 완료 처리하지 않는다.

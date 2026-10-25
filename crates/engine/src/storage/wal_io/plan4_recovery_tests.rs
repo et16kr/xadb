@@ -154,7 +154,20 @@ fn recovery_source_native() {
 
 #[path = "plan4_recovery_tests_cases.rs"]
 mod cases;
+#[path = "plan4_recovery_tests_closure.rs"]
+mod closure;
+#[path = "plan4_recovery_tests_faults.rs"]
+mod faults;
 #[path = "plan4_recovery_tests_literals.rs"]
 mod literals;
+#[cfg(target_os = "linux")]
+#[path = "plan4_recovery_tests_native.rs"]
+mod native;
+#[path = "plan4_recovery_tests_observations.rs"]
+mod observations;
+#[path = "plan4_recovery_tests_physical.rs"]
+mod physical;
+#[path = "plan4_recovery_tests_publication.rs"]
+mod publication;
 #[path = "plan4_recovery_tests_support.rs"]
 mod support;

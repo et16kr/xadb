@@ -507,3 +507,5 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 ## DEV3 plan4 복구 중간 저장 — 2026-10-25
 
 [중지 기록](../evidence/dev3-recovery-paused-20261025.md)의 실제 작성 파일만 관리 JSON `dev3_plan4_recovery_checkpoint`에 등록한다. 최신 후보는 미검증 WIP이며 패키지·의존성·공개 지원 범위를 추가하지 않는다. 미연결 fault/observation source도 draft 상태로 보존하고, 인수 완료로 세지 않는다.
+
+2026-10-25 [중단 작업 재개](../evidence/dev3-recovery-resumed-20261025.md)는 별도 `dev3_plan4_recovery_owner`에 실제 추가한 closure/physical/publication/observation/native 시험과 native controller를 등록한다. 앞의 checkpoint는 당시 상태로 보존한다. 기존 engine·scripts·tests source roots 안의 구현이며 패키지나 의존성을 추가하지 않는다. 원 source·완료·실패와 새 선택 실행의 경계는 재개 증거를 따른다.
