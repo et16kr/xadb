@@ -1,5 +1,8 @@
 # XADB 개발 문서
 
+2026-10-25 [DEV2 PF04 원 제어기 CPU 배치](evidence/dev2-pf04-controller-placement-20261025.md): 원 e3 worker의60slot을 완료했다. CPU2/3 중앙 차이0.26–0.61%로 큰 배치 효과는 지지되지 않았고, 원 FAIL·DEV2 미완료를 보존하며 해결 조사를 계속한다.
+
+
 2026-10-25 [DEV2 PF04 모드별 실행 작업·CPU 비용](evidence/dev2-pf04-mode-attribution-20261025.md): 같은 경계의40slot을 완료했다. CPU 중앙 Always+9.23%·Detailed+12.28%와 명령 수/CPI 증가를 관측했고, 원 FAIL·과거 원인 미확정·DEV2 미완료를 유지한다.
 
 2026-10-25 [DEV2 PF04 warmup 뒤 관측 경계 대조](evidence/dev2-pf04-boundary-comparison-20261025.md): 디버깅10쌍·20개 정답·PMU160행을 완료했다. CPU W/C 중앙1.002127로 큰 경계 효과 UNKNOWN, 원 PF04 FAIL·DEV2 미완료를 유지한다.

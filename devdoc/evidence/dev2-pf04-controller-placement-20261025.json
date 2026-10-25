@@ -1,0 +1,1153 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "owner": "/root",
+  "reviewer": "/root/pf04_evidence_review",
+  "scope": "original worker/native controller placement diagnostic, not acceptance",
+  "evidence_root": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025",
+  "plan_commit": "61293d7",
+  "preparation_commit": "56ebd6d",
+  "bindings": {
+    "proposal.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/proposal.json",
+      "sha256": "9e0e4e0701fc6d11d2b7427a6c89dfcc2f1c42160d507f7a46a33e467d162141"
+    },
+    "preparation.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/preparation.json",
+      "sha256": "ef2c84d3bd4e92ba80ac4acffb426ea4f4518f288aa48ad9edbe5f5c6678d330"
+    },
+    "preflight-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/preflight-review.json",
+      "sha256": "ec2c20a90aeb77c138fa23ba75a35c2bdfa5f9322823fd4ac8b43b8d73fee168"
+    },
+    "execution-basis.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/execution-basis.json",
+      "sha256": "2bd759ef2d95c7bb1604dc0a14c829284f58ed63bdcde50fbf02db6585946c97"
+    },
+    "execution-receipt.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/execution-receipt.json",
+      "sha256": "d9d58ccc5f8cd1a5c90b60d59d8341ab5b11ac94291bcce1ef3f0022ee8e6e12"
+    },
+    "execution/summary.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/execution/summary.json",
+      "sha256": "531663d4af60cd881b0f3a35845b0f01d45c7e5ad61eac2fa6bd4f178d2b0399"
+    },
+    "analysis.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/analysis.json",
+      "sha256": "e45a36fc41ec866b7a628cdd59ebc26fba6bc41b02f762f31fbd94e5bc2eb8df"
+    },
+    "source-comparison.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/source-comparison.json",
+      "sha256": "2928eaf380499eb4534e2d86bcfef790759155578d2707bea7326ce6852f28d8"
+    },
+    "host-before.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/host-before.json",
+      "sha256": "b5ea482ee5d39efaed7c30aed0d44268be9f4ac50d206d291e7ef40e7c51119e"
+    },
+    "driver": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/driver",
+      "sha256": "330a39e38cff656b55b8a32c6711ba981a963631628b39d0ec62affb5092b3e9"
+    },
+    "manifest.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/manifest.json",
+      "sha256": "27082001ef0267f608f29b85d03a0fb505841af91d605e033d57d4c29a0cae3d"
+    },
+    "raw-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/raw-review.json",
+      "sha256": "287513d6401a4d038939632e36ada20df433de730f6bb9f2bae0fe11f4331ab8"
+    },
+    "review-raw.py": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/review-raw.py",
+      "sha256": "c61ed216bcb089cb53a7eccf042c1655a254e30d9ea8f92a514785dbcc850f09"
+    },
+    "outcome-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025/outcome-review.json",
+      "sha256": "184eacdf5efe1f788352cea3a29d4507a3e494cf1548e638d193ab8b0921818a"
+    }
+  },
+  "status": "COMPLETE_DIAGNOSTIC",
+  "modes": {
+    "off": {
+      "status": "NO_LARGE_PLACEMENT_SHIFT",
+      "median": {
+        "fraction": "3936001068376/3912002098843",
+        "value": 1.0061347026219893
+      },
+      "interval": [
+        {
+          "fraction": "14566309/14619978",
+          "value": 0.9963290642434619
+        },
+        {
+          "fraction": "14715821/14540871",
+          "value": 1.0120316038839765
+        }
+      ],
+      "order_ratio": {
+        "fraction": "7496037763/7467127515",
+        "value": 1.0038716692519212
+      },
+      "pairs": [
+        {
+          "fraction": "14715821/14540871",
+          "value": 1.0120316038839765
+        },
+        {
+          "fraction": "14617435/14595873",
+          "value": 1.0014772668959233
+        },
+        {
+          "fraction": "271305/270001",
+          "value": 1.0048296117421787
+        },
+        {
+          "fraction": "27763/27523",
+          "value": 1.0087199796533808
+        },
+        {
+          "fraction": "14566309/14619978",
+          "value": 0.9963290642434619
+        },
+        {
+          "fraction": "4892401/4846249",
+          "value": 1.009523241583336
+        },
+        {
+          "fraction": "14600462/14545199",
+          "value": 1.0037993980006736
+        },
+        {
+          "fraction": "14601817/14707012",
+          "value": 0.9928472894426141
+        },
+        {
+          "fraction": "14596637/14488843",
+          "value": 1.0074397935018
+        },
+        {
+          "fraction": "14747250/14500273",
+          "value": 1.0170325758694336
+        }
+      ],
+      "detail": [
+        {
+          "pair": 0,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "14715821/14540871",
+              "value": 1.0120316038839765
+            },
+            "elapsed_ns": {
+              "fraction": "14788945/14540616",
+              "value": 1.0170782998464438
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "251/241",
+              "value": 1.04149377593361
+            },
+            "warmup_ns": {
+              "fraction": "908128/1350795",
+              "value": 0.6722915024115428
+            }
+          }
+        },
+        {
+          "pair": 4,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "14617435/14595873",
+              "value": 1.0014772668959233
+            },
+            "elapsed_ns": {
+              "fraction": "7345741/7297795",
+              "value": 1.0065699296842403
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "251/241",
+              "value": 1.04149377593361
+            },
+            "warmup_ns": {
+              "fraction": "302866/296651",
+              "value": 1.0209505445793206
+            }
+          }
+        },
+        {
+          "pair": 8,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "271305/270001",
+              "value": 1.0048296117421787
+            },
+            "elapsed_ns": {
+              "fraction": "14721779/14579820",
+              "value": 1.0097366771331882
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "251/241",
+              "value": 1.04149377593361
+            },
+            "warmup_ns": {
+              "fraction": "1520066/1182867",
+              "value": 1.2850692427804649
+            }
+          }
+        },
+        {
+          "pair": 11,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "27763/27523",
+              "value": 1.0087199796533808
+            },
+            "elapsed_ns": {
+              "fraction": "14730184/14531939",
+              "value": 1.013642019829563
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "251/241",
+              "value": 1.04149377593361
+            },
+            "warmup_ns": {
+              "fraction": "905102/1216231",
+              "value": 0.7441859317843403
+            }
+          }
+        },
+        {
+          "pair": 14,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "14566309/14619978",
+              "value": 0.9963290642434619
+            },
+            "elapsed_ns": {
+              "fraction": "7319641/7309873",
+              "value": 1.0013362749257066
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "251/250",
+              "value": 1.004
+            },
+            "warmup_ns": {
+              "fraction": "900353/1107085",
+              "value": 0.8132645641481909
+            }
+          }
+        },
+        {
+          "pair": 16,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "4892401/4846249",
+              "value": 1.009523241583336
+            },
+            "elapsed_ns": {
+              "fraction": "14750452/14538471",
+              "value": 1.0145806942146804
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "251/241",
+              "value": 1.04149377593361
+            },
+            "warmup_ns": {
+              "fraction": "820387/447266",
+              "value": 1.8342261651902894
+            }
+          }
+        },
+        {
+          "pair": 20,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "14600462/14545199",
+              "value": 1.0037993980006736
+            },
+            "elapsed_ns": {
+              "fraction": "7335566/7272487",
+              "value": 1.0086736490556807
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "warmup_ns": {
+              "fraction": "112578/162461",
+              "value": 0.6929540012679967
+            }
+          }
+        },
+        {
+          "pair": 23,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "14601817/14707012",
+              "value": 0.9928472894426141
+            },
+            "elapsed_ns": {
+              "fraction": "14673476/14706749",
+              "value": 0.9977375693295643
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "warmup_ns": {
+              "fraction": "82251/80924",
+              "value": 1.0163981019227917
+            }
+          }
+        },
+        {
+          "pair": 26,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "14596637/14488843",
+              "value": 1.0074397935018
+            },
+            "elapsed_ns": {
+              "fraction": "772062/762563",
+              "value": 1.012456675710728
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "251/241",
+              "value": 1.04149377593361
+            },
+            "warmup_ns": {
+              "fraction": "904331/1599145",
+              "value": 0.5655090689086981
+            }
+          }
+        },
+        {
+          "pair": 28,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "14747250/14500273",
+              "value": 1.0170325758694336
+            },
+            "elapsed_ns": {
+              "fraction": "14825184/14505719",
+              "value": 1.0220233826396334
+            },
+            "p50_twice_ns": {
+              "fraction": "241/240",
+              "value": 1.0041666666666667
+            },
+            "p99_ns": {
+              "fraction": "261/241",
+              "value": 1.0829875518672198
+            },
+            "warmup_ns": {
+              "fraction": "907877/1094491",
+              "value": 0.8294969990616643
+            }
+          }
+        }
+      ],
+      "ranges": {
+        "2": {
+          "cpu_ns": [
+            14566309,
+            14747250
+          ],
+          "p50_twice_ns": [
+            480,
+            482
+          ],
+          "p99_ns": [
+            251,
+            261
+          ],
+          "warmup_ns": [
+            900353,
+            1640774
+          ]
+        },
+        "3": {
+          "cpu_ns": [
+            14488843,
+            14707012
+          ],
+          "p50_twice_ns": [
+            480,
+            480
+          ],
+          "p99_ns": [
+            241,
+            251
+          ],
+          "warmup_ns": [
+            889953,
+            1599145
+          ]
+        }
+      }
+    },
+    "always": {
+      "status": "NO_LARGE_PLACEMENT_SHIFT",
+      "median": {
+        "fraction": "126206077346143/125602928612820",
+        "value": 1.0048020276277334
+      },
+      "interval": [
+        {
+          "fraction": "2283920/2312533",
+          "value": 0.987626987377045
+        },
+        {
+          "fraction": "16267819/15990992",
+          "value": 1.0173114338372504
+        }
+      ],
+      "order_ratio": {
+        "fraction": "42829335221640/42460079760947",
+        "value": 1.0086965324316848
+      },
+      "pairs": [
+        {
+          "fraction": "15982014/17062883",
+          "value": 0.9366537882255889
+        },
+        {
+          "fraction": "16267819/15990992",
+          "value": 1.0173114338372504
+        },
+        {
+          "fraction": "16006321/15951969",
+          "value": 1.003407228286364
+        },
+        {
+          "fraction": "15901272/16060973",
+          "value": 0.9900565800091937
+        },
+        {
+          "fraction": "16938055/15894811",
+          "value": 1.0656342500706677
+        },
+        {
+          "fraction": "15988978/15873991",
+          "value": 1.0072437359955666
+        },
+        {
+          "fraction": "7961323/7931646",
+          "value": 1.0037415941155214
+        },
+        {
+          "fraction": "2283920/2312533",
+          "value": 0.987626987377045
+        },
+        {
+          "fraction": "7964253/7917835",
+          "value": 1.0058624611399454
+        },
+        {
+          "fraction": "8054680/7958121",
+          "value": 1.0121333917893431
+        }
+      ],
+      "detail": [
+        {
+          "pair": 1,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "15982014/17062883",
+              "value": 0.9366537882255889
+            },
+            "elapsed_ns": {
+              "fraction": "16058668/17061605",
+              "value": 0.9412167260934713
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "warmup_ns": {
+              "fraction": "1668717/1082828",
+              "value": 1.5410730051310089
+            }
+          }
+        },
+        {
+          "pair": 3,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "16267819/15990992",
+              "value": 1.0173114338372504
+            },
+            "elapsed_ns": {
+              "fraction": "16347614/15990739",
+              "value": 1.022317605208865
+            },
+            "p50_twice_ns": {
+              "fraction": "251/260",
+              "value": 0.9653846153846154
+            },
+            "p99_ns": {
+              "fraction": "271/261",
+              "value": 1.0383141762452108
+            },
+            "warmup_ns": {
+              "fraction": "498814/492707",
+              "value": 1.0123947904129635
+            }
+          }
+        },
+        {
+          "pair": 7,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "16006321/15951969",
+              "value": 1.003407228286364
+            },
+            "elapsed_ns": {
+              "fraction": "16085007/15951736",
+              "value": 1.008354639269356
+            },
+            "p50_twice_ns": {
+              "fraction": "251/260",
+              "value": 0.9653846153846154
+            },
+            "p99_ns": {
+              "fraction": "271/281",
+              "value": 0.9644128113879004
+            },
+            "warmup_ns": {
+              "fraction": "997126/1707941",
+              "value": 0.5838175908886782
+            }
+          }
+        },
+        {
+          "pair": 10,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "15901272/16060973",
+              "value": 0.9900565800091937
+            },
+            "elapsed_ns": {
+              "fraction": "15979297/16060831",
+              "value": 0.9949234258177551
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "warmup_ns": {
+              "fraction": "990885/1707059",
+              "value": 0.5804632411650681
+            }
+          }
+        },
+        {
+          "pair": 13,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "16938055/15894811",
+              "value": 1.0656342500706677
+            },
+            "elapsed_ns": {
+              "fraction": "17022320/15894597",
+              "value": 1.0709500844846838
+            },
+            "p50_twice_ns": {
+              "fraction": "270/251",
+              "value": 1.0756972111553784
+            },
+            "p99_ns": {
+              "fraction": "281/271",
+              "value": 1.03690036900369
+            },
+            "warmup_ns": {
+              "fraction": "1065746/980735",
+              "value": 1.086680907686582
+            }
+          }
+        },
+        {
+          "pair": 17,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "15988978/15873991",
+              "value": 1.0072437359955666
+            },
+            "elapsed_ns": {
+              "fraction": "16067393/15877144",
+              "value": 1.011982570668881
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "warmup_ns": {
+              "fraction": "995353/1539672",
+              "value": 0.646470806769234
+            }
+          }
+        },
+        {
+          "pair": 19,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "7961323/7931646",
+              "value": 1.0037415941155214
+            },
+            "elapsed_ns": {
+              "fraction": "15994446/15862867",
+              "value": 1.0082947805084668
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "warmup_ns": {
+              "fraction": "984953/980154",
+              "value": 1.0048961693774652
+            }
+          }
+        },
+        {
+          "pair": 21,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "2283920/2312533",
+              "value": 0.987626987377045
+            },
+            "elapsed_ns": {
+              "fraction": "5355965/5395817",
+              "value": 0.9926142788015235
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "270/271",
+              "value": 0.996309963099631
+            },
+            "warmup_ns": {
+              "fraction": "992317/977148",
+              "value": 1.015523748705416
+            }
+          }
+        },
+        {
+          "pair": 25,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "7964253/7917835",
+              "value": 1.0058624611399454
+            },
+            "elapsed_ns": {
+              "fraction": "16008602/15835445",
+              "value": 1.0109347732255076
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "warmup_ns": {
+              "fraction": "496584/680327",
+              "value": 0.7299195827888648
+            }
+          }
+        },
+        {
+          "pair": 29,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "8054680/7958121",
+              "value": 1.0121333917893431
+            },
+            "elapsed_ns": {
+              "fraction": "16279595/15915957",
+              "value": 1.022847385174514
+            },
+            "p50_twice_ns": {
+              "fraction": "260/251",
+              "value": 1.0358565737051793
+            },
+            "p99_ns": {
+              "fraction": "280/271",
+              "value": 1.033210332103321
+            },
+            "warmup_ns": {
+              "fraction": "61996/103023",
+              "value": 0.6017685371227784
+            }
+          }
+        }
+      ],
+      "ranges": {
+        "2": {
+          "cpu_ns": [
+            15901272,
+            16938055
+          ],
+          "p50_twice_ns": [
+            502,
+            540
+          ],
+          "p99_ns": [
+            270,
+            281
+          ],
+          "warmup_ns": [
+            984953,
+            1668717
+          ]
+        },
+        "3": {
+          "cpu_ns": [
+            15835670,
+            17062883
+          ],
+          "p50_twice_ns": [
+            502,
+            520
+          ],
+          "p99_ns": [
+            261,
+            281
+          ],
+          "warmup_ns": [
+            977148,
+            1707941
+          ]
+        }
+      }
+    },
+    "detailed": {
+      "status": "NO_LARGE_PLACEMENT_SHIFT",
+      "median": {
+        "fraction": "22363008385747/22305547972512",
+        "value": 1.002576059252425
+      },
+      "interval": [
+        {
+          "fraction": "16427562/16452719",
+          "value": 0.9984709518226136
+        },
+        {
+          "fraction": "970336/962975",
+          "value": 1.0076440198343675
+        }
+      ],
+      "order_ratio": {
+        "fraction": "269707712777603/268267015741683",
+        "value": 1.005370384547414
+      },
+      "pairs": [
+        {
+          "fraction": "16389757/16388207",
+          "value": 1.0000945802063643
+        },
+        {
+          "fraction": "16388273/16303037",
+          "value": 1.0052282283356162
+        },
+        {
+          "fraction": "16427562/16452719",
+          "value": 0.9984709518226136
+        },
+        {
+          "fraction": "16487222/16338063",
+          "value": 1.0091295400195237
+        },
+        {
+          "fraction": "16459831/16368631",
+          "value": 1.0055716327162607
+        },
+        {
+          "fraction": "16460277/16848892",
+          "value": 0.9769352785928
+        },
+        {
+          "fraction": "16389093/16385813",
+          "value": 1.0002001731619907
+        },
+        {
+          "fraction": "970336/962975",
+          "value": 1.0076440198343675
+        },
+        {
+          "fraction": "2045467/2043216",
+          "value": 1.001101694583441
+        },
+        {
+          "fraction": "5480550/5458441",
+          "value": 1.004050423921409
+        }
+      ],
+      "detail": [
+        {
+          "pair": 2,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "16389757/16388207",
+              "value": 1.0000945802063643
+            },
+            "elapsed_ns": {
+              "fraction": "8232343/8193995",
+              "value": 1.0046800126189972
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "280/271",
+              "value": 1.033210332103321
+            },
+            "warmup_ns": {
+              "fraction": "1009129/1010061",
+              "value": 0.9990772834511975
+            }
+          }
+        },
+        {
+          "pair": 5,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "16388273/16303037",
+              "value": 1.0052282283356162
+            },
+            "elapsed_ns": {
+              "fraction": "16471909/16302810",
+              "value": 1.01037238365656
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "281/271",
+              "value": 1.03690036900369
+            },
+            "warmup_ns": {
+              "fraction": "1020420/1009489",
+              "value": 1.0108282507288342
+            }
+          }
+        },
+        {
+          "pair": 6,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "16427562/16452719",
+              "value": 0.9984709518226136
+            },
+            "elapsed_ns": {
+              "fraction": "16506595/16452473",
+              "value": 1.0032895966460482
+            },
+            "p50_twice_ns": {
+              "fraction": "30/29",
+              "value": 1.0344827586206897
+            },
+            "p99_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "warmup_ns": {
+              "fraction": "1695718/1230187",
+              "value": 1.3784229552092486
+            }
+          }
+        },
+        {
+          "pair": 9,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "16487222/16338063",
+              "value": 1.0091295400195237
+            },
+            "elapsed_ns": {
+              "fraction": "3399739/3267539",
+              "value": 1.0404585836618936
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "281/271",
+              "value": 1.03690036900369
+            },
+            "warmup_ns": {
+              "fraction": "1021783/1008237",
+              "value": 1.0134353331607548
+            }
+          }
+        },
+        {
+          "pair": 12,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "16459831/16368631",
+              "value": 1.0055716327162607
+            },
+            "elapsed_ns": {
+              "fraction": "8273105/8184187",
+              "value": 1.010864610009522
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "281/280",
+              "value": 1.0035714285714286
+            },
+            "warmup_ns": {
+              "fraction": "850489/626645",
+              "value": 1.3572102226938698
+            }
+          }
+        },
+        {
+          "pair": 15,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "16460277/16848892",
+              "value": 0.9769352785928
+            },
+            "elapsed_ns": {
+              "fraction": "8271281/8424331",
+              "value": 0.9818323852659635
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "280/281",
+              "value": 0.99644128113879
+            },
+            "warmup_ns": {
+              "fraction": "1023416/1360023",
+              "value": 0.7524990386191999
+            }
+          }
+        },
+        {
+          "pair": 18,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "16389093/16385813",
+              "value": 1.0002001731619907
+            },
+            "elapsed_ns": {
+              "fraction": "16479513/16385606",
+              "value": 1.0057310666447123
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "280/271",
+              "value": 1.033210332103321
+            },
+            "warmup_ns": {
+              "fraction": "1023065/1006253",
+              "value": 1.0167075278284885
+            }
+          }
+        },
+        {
+          "pair": 22,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "970336/962975",
+              "value": 1.0076440198343675
+            },
+            "elapsed_ns": {
+              "fraction": "16577439/16370306",
+              "value": 1.012652970567563
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "warmup_ns": {
+              "fraction": "1023256/1435545",
+              "value": 0.7127996684186145
+            }
+          }
+        },
+        {
+          "pair": 24,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "2045467/2043216",
+              "value": 1.001101694583441
+            },
+            "elapsed_ns": {
+              "fraction": "16446972/16345349",
+              "value": 1.0062172425929847
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "warmup_ns": {
+              "fraction": "1019399/1005762",
+              "value": 1.013558873769341
+            }
+          }
+        },
+        {
+          "pair": 27,
+          "ratios": {
+            "cpu_ns": {
+              "fraction": "5480550/5458441",
+              "value": 1.004050423921409
+            },
+            "elapsed_ns": {
+              "fraction": "1271005/1259622",
+              "value": 1.0090368380355377
+            },
+            "p50_twice_ns": {
+              "fraction": "1",
+              "value": 1.0
+            },
+            "p99_ns": {
+              "fraction": "281/280",
+              "value": 1.0035714285714286
+            },
+            "warmup_ns": {
+              "fraction": "1684577/1537158",
+              "value": 1.095903609128014
+            }
+          }
+        }
+      ],
+      "ranges": {
+        "2": {
+          "cpu_ns": [
+            16363736,
+            16495712
+          ],
+          "p50_twice_ns": [
+            522,
+            540
+          ],
+          "p99_ns": [
+            271,
+            281
+          ],
+          "warmup_ns": [
+            1009129,
+            1700978
+          ]
+        },
+        "3": {
+          "cpu_ns": [
+            16303037,
+            16848892
+          ],
+          "p50_twice_ns": [
+            522,
+            522
+          ],
+          "p99_ns": [
+            271,
+            281
+          ],
+          "warmup_ns": [
+            1005762,
+            1537158
+          ]
+        }
+      }
+    }
+  },
+  "elapsed_seconds": 7.508770897,
+  "slots": 60,
+  "retries": 0,
+  "product_source_changes": 0,
+  "original_pf04": "FAIL_PRESERVED",
+  "dev2": "INCOMPLETE",
+  "review": "PASS_SCOPED_D1_D2_CONTROLLER_PLACEMENT_EVIDENCE_AND_DOCUMENTS",
+  "manifest": {
+    "files": 999,
+    "bytes": 1946111356
+  },
+  "independent_raw_counts": {
+    "scalar": 3932160,
+    "latency": 245760,
+    "paired_ratios": 150,
+    "native_output_frames": 120,
+    "history_records": 420,
+    "counter_deltas": 440,
+    "events": 5120,
+    "drops": 20,
+    "affinity_statuses": 240,
+    "worker_identities": 60
+  }
+}

@@ -467,7 +467,7 @@ user instructions 중앙비1.053185367/1.076304360와 user CPI1.036546289/1.0467
 
 ## 후속 디버깅: 원 native 제어기의 CPU 배치
 
-2026-10-25 · **계획 `61293d7` 선행 commit / 구현·선택 검증 중 / 성능 실행 NOT_RUN**. 담당·계약·통합 `/root`, 독립 D1/D2 `/root/pf04_evidence_review`. 사용자의 완료 요청과 디버깅 적용 범위 정정에 따라 계속하며 새 허가를 요구하지 않는다. 개별 실험의 예산 종료를 전체 해결 작업 종료로 해석하지 않는다.
+2026-10-25 · **계획 `61293d7` 선행 commit / 구현·선택 검증·60slot 완료 / 원 FAIL 유지**. 담당·계약·통합 `/root`, 독립 D1/D2 `/root/pf04_evidence_review`. 사용자의 완료 요청과 디버깅 적용 범위 정정에 따라 계속하며 새 허가를 요구하지 않는다. 개별 실험의 예산 종료를 전체 해결 작업 종료로 해석하지 않는다.
 
 원 r3/r4 실행은 controller를 CPU2에 고정했고 child는 그 affinity를 상속했다. 원 `native::receive()`는 무진행 때200µs를 sleep한다. 최근 진단은 runner/perf CPU3·worker CPU2였으며 원 controller를 우회했다. 기존 xpc-r1의20회도 느린 CPU/p50 대역이 없었고 reference-cycle이 없어 이 차이를 배제하지 못한다. 독립 근거는 `/tmp/xadb-pf04-review-20261025/controller-placement-xpc-review.json`(SHA-256 `d5c788d4ffc2350c7dc367e717c025d31aee66e2772561737cf090470d9a08d8`)이다.
 
@@ -483,3 +483,6 @@ user instructions 중앙비1.053185367/1.076304360와 user CPI1.036546289/1.0467
 
 
 준비 증거: 원 source204파일 byte 동일·진단 example1개만 추가, source `bd4a204ae7df29d0e6dd08d343c94ec14944523d0b27f251804f1138f4c30ab8`다. 새 Rust4·서비스 소유8·분석/idle4함수(16개)의17회 선택 검증을 source별로 보존했다. 변경된 p50 필드의 분석1함수만 다시 검증했고 기존 제품 시험은0회다. 원 fmt CLI 오류·Clippy3회 실패를 보존하며 최종 example fmt·Clippy·release build는 PASS다. `preparation.json` SHA-256 `ef2c84d3bd4e92ba80ac4acffb426ea4f4518f288aa48ad9edbe5f5c6678d330`가250개 파일을 결합한다. 이 기록 시점 성능60slot은 아직 NOT_RUN이다.
+
+
+실행 결과: [원 제어기 배치 대조](../evidence/dev2-pf04-controller-placement-20261025.md)의60slot을7.508770897초에 완료했다. CPU2/3 중앙은 Off1.006135·Always1.004802·Detailed1.002576이며 세 모드 모두 동결한 큰 배치 효과를 지지하지 않았다. 원 정답·소유 정리와 독립 원자료 검산을 만족하고 원 PF04 FAIL·DEV2 미완료를 보존한다. 이것으로 전체 작업을 종료하지 않고 실행 상태 통제와 영속 잔여 해결을 계속한다.
