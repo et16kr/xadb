@@ -719,3 +719,11 @@ P4 WAL 선확보/data sync도 PF04 상대 비용의 해결책으로 채택할 �
 계획 `b33f1e4` 뒤 수집 도구의 고정 `user-kernel-v1`8event profile을 추가하고 기본6event와 기존 권한·정리 경로를 유지했다. 실제 변경 범위의 선택6함수와 보존 release ELF의 새 Off/Always 연결2개를 완료했다.8개 모두 reported full coverage,512개 거래의 진단 정답 검산과 소유 process 종료를 확인했다.
 
 [관측 증거](../evidence/dev2-pf04-cpu-split-20261025.md)는 커널 count와 rusage user/system 분할을 구별한다. 이 두 연결로 안정적 모드 비용이나 과거 실패 원인을 판정하지 않는다. 코드·원자료·해석의 독립 검토 상태는 연결 증거를 따른다. 원 PF04 네 FAIL·DEV2/B2/D0 미완료, C1/C2 기각·WAL 미채택은 유지한다.
+
+<a id="dev2-pf04-prewarmup-20261025"></a>
+
+## DEV2 PF04 warmup 전 관측 경계 — 2026-10-25
+
+계획 `12096d4` 뒤 K0 private gate에 명시적인 prewarmup continuous/wait 두 모드를 구현했다. 둘 다 warmup 앞에서 PMU를 한 번 enable하며 continuous는 warmup 뒤 추가 IPC 없이, wait는 추가 START/GO 뒤 측정에 진입한다. 새 PMU는 warmup+drain+measurement+control bracket이고 기존 loop 지표·원 인수 path와 구분한다. 기본 모드와 비활성 경로는 유지한다.
+
+[선택 증거](../evidence/dev2-pf04-prewarmup-20261025.md)는 Python6·Rust5·compile/Clippy/release/fmt와 실제4연결의 정답·정리 PASS를 보존한다. 동시 DEV3 변경을 제외한 source의 검증이며 최종 독립 검토 상태는 연결 증거를 따른다. 경계 효과는 미평가이고 기존20회 UNKNOWN·원 PF04 네 FAIL·DEV2/B2/D0 미완료를 유지한다. 성능/인과 campaign은 별도 동결·시험 예외 전에는 실행하지 않는다.

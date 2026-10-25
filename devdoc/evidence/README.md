@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV2 PF04 warmup 전 관측 경계](dev2-pf04-prewarmup-20261025.md) · [source·검증 기록](dev2-pf04-prewarmup-20261025.json) — 선택11함수·새/기존 경계4연결 완료. 경계 효과 미평가·원 FAIL 유지.
+
 - [DEV3 원 Commit 공통 continuation](dev3-commit-continuation-20261025.md) · [source별 기록](dev3-commit-continuation-20261025.json) — 변경 선택 검증·독립 D1 한정 수용; actual Commit·nonempty 복구·DEV3/S5 미완료.
 
 - [DEV2 PF04 동일 Off 실행의 변동 분류](dev2-pf04-off-classification-20261025.md) · [실행·집계 기록](dev2-pf04-off-classification-20261025.json) — 사용자 한정 예외로20회·새 출력 정답 검산 완료. 큰 변동 미관측으로 UNKNOWN, 원 FAIL 유지.

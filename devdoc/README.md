@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-25 [DEV2 PF04 warmup 전 관측 경계](evidence/dev2-pf04-prewarmup-20261025.md): 선택11함수·실제4연결을 완료했다. 새 두 모드는 같은 warmup 포함 PMU 범위로 진입 경계를 구분하며, 성능 효과 미평가·원 PF04 FAIL·DEV2 미완료를 유지한다.
+
 2026-10-25 [DEV2 PF04 사용자·커널 CPU 분리](evidence/dev2-pf04-cpu-split-20261025.md): 선택6함수·새 profile의 Off/Always2연결을 완료했다. 커널 counter와 rusage 분할을 구별하며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 
 2026-10-25 [DEV2 PF04 C2 단일 쓰기 통계 후보](evidence/dev2-pf04-single-writer-20261025.md): 선택11함수·compiler2개와40개 비교 실행을 완료했다. 확인 개선 약2.92%로5% 기준에 미달해 제품에 반영하지 않았고 PF04·DEV2 미완료를 유지한다.

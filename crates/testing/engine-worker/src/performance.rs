@@ -215,6 +215,7 @@ pub fn run(input: &wire::Input) -> Result<wire::Output, ProtocolError> {
         latency: reserve((input.measure / input.latency_stride) as usize)?,
     };
     let setup_ns = elapsed(setup_start)?;
+    window.before_warmup()?;
     let warmup_start = Instant::now();
     let (warmup_completed, mut error) = fixture.iterations(input.warmup, None);
     let warmup = wire::Phase {

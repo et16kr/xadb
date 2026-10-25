@@ -22,6 +22,7 @@ if behavior == 'descendant':
         os._exit(0)
     time.sleep(120)
 token = os.environ['XADBTEST_WINDOW_TOKEN']
+boundary = os.environ.get('XADBTEST_WINDOW_BOUNDARY', 'measurement')
 with socket.socket(socket.AF_UNIX) as peer:
     peer.connect(os.environ['XADBTEST_WINDOW_SOCKET'])
     stream = peer.makefile('rwb', buffering=0)
@@ -34,15 +35,30 @@ with socket.socket(socket.AF_UNIX) as peer:
         return [int(r.ru_utime * 1e9), int(r.ru_stime * 1e9), r.ru_minflt, r.ru_majflt, r.ru_nvcsw, r.ru_nivcsw]
     source = settings['source']
     tid = os.getpid() + (1 if behavior == 'bad_identity' else 0)
-    send(f'HELLO 1 {token} {os.getpid()} {tid} {source} synthetic')
+    hello = f'HELLO 1 {token} {os.getpid()} {tid} {source} synthetic'
+    if boundary != 'measurement':
+        hello = f'HELLO 2 {token} {os.getpid()} {tid} {source} synthetic {boundary}'
+    send(hello)
     ready = receive()
     assert ready.startswith(f'READY {token} '), ready
     mode = ready.split()[-1]
     if behavior == 'partial':
         stream.write(b'S')
         time.sleep(120)
-    send(f'START {token}')
-    assert receive() == f'GO {token} {mode}'
+    armed = None
+    if boundary != 'measurement':
+        send(f'{"WRONG" if behavior == "bad-arm" else "ARM"} {token}')
+        assert receive() == f'ARMED {token} {mode}'
+        armed = time.monotonic_ns()
+        if behavior == 'warmup-fail':
+            raise SystemExit(7)
+        if behavior == 'warmup-hang':
+            print('ARMED_WARMUP', flush=True)
+            time.sleep(120)
+        sum(v * v for v in range(10000))
+    if boundary != 'prewarmup-continuous-v1':
+        send(f'{"WRONG" if behavior == "bad-start" else "START"} {token}')
+        assert receive() == f'GO {token} {mode}'
     if behavior == 'active-hang':
         # Privilege-path cancellation must occur after the actual perf attach.
         print('ACTIVE_WINDOW', flush=True)
@@ -56,7 +72,10 @@ with socket.socket(socket.AF_UNIX) as peer:
     elapsed = time.monotonic_ns() - measured
     after = usage()
     end = time.monotonic_ns()
-    send(json.dumps(dict(phase='STOP', token=token, start_ns=start, end_ns=end,
-                         elapsed_ns=elapsed, before=before, after=after)))
+    stop = dict(phase='STOP', token=token, start_ns=start, end_ns=end,
+                elapsed_ns=elapsed, before=before, after=after)
+    if armed is not None:
+        stop['armed_ns'] = armed
+    send(json.dumps(stop))
     assert receive() == f'DONE {token} {mode}'
 print(json.dumps({'path': 'synthetic.diagnostic_window.v1', 'completed': True}))

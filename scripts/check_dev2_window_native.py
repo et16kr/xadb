@@ -56,6 +56,7 @@ def plain(worker, input_file, source, workload, directory, partial):
     env = os.environ.copy()
     env.pop('XADBTEST_WINDOW_SOCKET', None)
     env.pop('XADBTEST_WINDOW_TOKEN', None)
+    env.pop('XADBTEST_WINDOW_BOUNDARY', None)
     if partial:
         env['XADBTEST_WINDOW_TOKEN'] = '0'*32
     old_handlers = {}
@@ -109,12 +110,19 @@ def validate(directory, workload, case, build):
     output = outputs[-1]['output'] if workload == 'durable' else outputs[-1]['observation']['output']
     original_path = durable.PATH if workload == 'durable' else K0_PATH
     window.require(output['build'] == build['build'], 'compiled build identity mismatch')
-    window.require(output['path'] == original_path + (window.SUFFIX if case in ('active', 'stop-error') else ''), 'diagnostic path mismatch')
+    prewarmup = case in ('prewarmup-continuous-v1', 'prewarmup-wait-v1')
+    suffix = window.BOUNDARIES[case] if prewarmup else window.SUFFIX if case in ('active', 'stop-error') else ''
+    window.require(output['path'] == original_path + suffix, 'diagnostic path mismatch')
+    if prewarmup:
+        window.require(workload == 'k0' and record['boundary'] == case, 'prewarmup mode/workload mismatch')
+        window.require(record['pmu_scope'] == 'warmup-drain-measurement-and-control-bracket', 'prewarmup scope')
+        window.require(record['window']['start_ns'] - record['window']['armed_ns'] >= output['warmup']['elapsed_ns'],
+                       'warmup not enclosed by PMU arm boundary')
     if case == 'stop-error':
         window.require(output['error'] is not None and output['measurement']['completed'] == (512 if workload == 'durable' else 65536), 'gate failure lost completed measurement/error')
         window.require(b'measurement window' in (directory / 'worker.stderr').read_bytes(), 'gate error not retained')
         return {'status': 'EXPECTED_STOP_FAILURE_WITH_PARTIAL_OUTPUT', 'performance_acceptance': 'NOT_APPLICABLE'}
-    if case == 'active':
+    if case == 'active' or prewarmup:
         window.require(record['window']['elapsed_ns'] == output['measurement']['elapsed_ns'], 'window bound to wrong measured output')
     if workload == 'durable':
         duration = record['observed_ns'] - record['invoke_ns']
@@ -140,7 +148,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--build', type=Path, required=True)
     parser.add_argument('--workload', choices=('k0', 'durable'), required=True)
-    parser.add_argument('--case', choices=('active', 'disabled', 'partial', 'stop-error'), required=True)
+    parser.add_argument('--case', choices=('active', 'disabled', 'partial', 'stop-error',
+                                         'prewarmup-continuous-v1', 'prewarmup-wait-v1'), required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     build = json.loads(args.build.read_text())
@@ -150,14 +159,15 @@ def main():
     input_file = args.output / 'request.bin'
     input_file.write_bytes(encode(requests(args.workload)))
     directory = args.output / 'run'
-    if args.case in ('active', 'stop-error'):
+    if args.case in ('active', 'stop-error', 'prewarmup-continuous-v1', 'prewarmup-wait-v1'):
         original_send = window.Runner.send
         def send(runner, peer, message, end):
             if args.case == 'stop-error' and message.startswith('DONE '):
                 message = 'WRONG completion'
             return original_send(runner, peer, message, end)
         with patch.object(window.Runner, 'send', send):
-            window.collect(worker, input_file, source, args.workload, directory, affinity=2)
+            window.collect(worker, input_file, source, args.workload, directory, affinity=2,
+                           boundary=args.case if args.case.startswith('prewarmup-') else 'measurement')
     else:
         plain(worker, input_file, source, args.workload, directory, args.case == 'partial')
     verdict = validate(directory, args.workload, args.case, build)

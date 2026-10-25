@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "owner": "/root",
+  "reviewer": "/root/pf04_evidence_review",
+  "scope": "New explicit K0 prewarmup boundary implementation and changed-code functional verification only",
+  "evidence_root": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025",
+  "plan_commit": "12096d4",
+  "source": {
+    "base_commit": "12096d4a52def423e5e18e4b9000866e4d30d8cf",
+    "build": {
+      "build": {
+        "source_sha256": "759d9952d8a45bffc342eb852ee6f29cc84e3991f7a633becb895cbc09071604",
+        "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+        "target": "x86_64-unknown-linux-gnu",
+        "profile": "release",
+        "self_test": false
+      },
+      "workers": {
+        "k0": {
+          "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/target/release/xadbtest-engine-worker",
+          "sha256": "14d25271a4927a2eac0ce7293afd67bd18c561bf2e34c75eda74f8c8e4909eb2"
+        }
+      }
+    },
+    "selected_paths": {
+      "crates/testing/engine-worker/src/measurement_window.rs": "a991c7d2d87260424324e287591468d19157b376dbcfb870676a06fc65900210",
+      "crates/testing/engine-worker/src/measurement_window_tests.rs": "2926f5a6cf28cd3662aefa0236309f372b00a4ccf75066ef380035406b9eb96b",
+      "crates/testing/engine-worker/src/performance.rs": "d1ad02578b6373c1c4d8f51a32a43a88f6a42dfae4cf4dd5ac8198075515bdf1",
+      "crates/testing/engine-worker/tests/measurement_window_output.rs": "b838d95544dd73bbb49c2f444b89e4f37246ce4e486a26825e260adb042a4aec",
+      "scripts/check_dev2_window_native.py": "cb1a00b01da9ad5725bc5adb2f50ee3ce7242346b109dfcfb6263829200eed2f",
+      "scripts/dev2_measurement_window.py": "375caf24dddff08f4962b4741dd2c74897f7976f263048a370ee0d05e91d90d9",
+      "scripts/fixtures/measurement_window_peer.py": "d1092e049f43c2fc397d59afef0cfff5bae9eaba0be79f0a12445b10ad8b3df2",
+      "scripts/test_dev2_measurement_window.py": "62900c6d4b94bcf0ae22d64772a0fb4fc43fa6bf73eb546eb33105543e60cc8e"
+    },
+    "selection": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/selection-r1.json",
+      "sha256": "6b8b9ff41941a941ae82541d21f04c6d33d9d76267b3169ede0f921695dc942a"
+    },
+    "patch": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/implementation-r1.diff",
+      "sha256": "996201e8ec17278a116b267f58716c1c2c34bbdaedcea7eb4033f152c188bd0a"
+    },
+    "simultaneous_dev3_changes_included": false
+  },
+  "execution": {
+    "driver": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/native.py",
+      "sha256": "eaf8e55e3f73a745bfc86925a511eea6b9ffc56543835cab2dd0c74a4453c0b1"
+    },
+    "freeze": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/native/freeze.json",
+      "sha256": "bc89066fa26991688f8b61e0e71a522610ab75ddca087bb029ac1199017ddb75"
+    },
+    "summary": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/native/summary.json",
+      "sha256": "d4f2ac24fa2df821071dc9c0f235eadb5fd38810249b1f1d2f70b93dea539fd8"
+    },
+    "read_only_summary": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/retained-summary.json",
+      "sha256": "89d7b9bee84a1dda8c7af8751669d9ff30aaa67127585f4412f5d143fbf7a1c4"
+    },
+    "summary_script": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/summarize.py",
+      "sha256": "a2a90838079ef4c09940b9b4d3dda9dab4541d4280df66a24f583cf93d4a7f7d"
+    },
+    "cases": [
+      {
+        "case": "prewarmup-continuous-v1",
+        "status": "CORRECT_CONNECTION",
+        "output_path": "k0.replace_snapshot_read.v1.diagnostic_prewarmup_continuous.v1",
+        "pmu_scope": "warmup-drain-measurement-and-control-bracket",
+        "bounds": {
+          "armed_go_lower_bound_ns": 18980795747857,
+          "armed_ns": 18980796318800,
+          "resume_go_lower_bound_ns": null,
+          "start_ns": 18980797214370,
+          "end_ns": 18980811622190,
+          "stop_received_ns": 18980813299563,
+          "warmup_elapsed_ns": 894918,
+          "warmup_enclosure_ns": 895570
+        },
+        "measurement_completed": 65536,
+        "pmu_events": 8,
+        "all_events_reported_full_coverage": true,
+        "oracle_status": "ORACLE_PASSED",
+        "cleanup_groups": 3,
+        "all_owned_groups_gone": true,
+        "all_pinned_collectors_exited": true,
+        "all_capture_clean": true
+      },
+      {
+        "case": "prewarmup-wait-v1",
+        "status": "CORRECT_CONNECTION",
+        "output_path": "k0.replace_snapshot_read.v1.diagnostic_prewarmup_wait.v1",
+        "pmu_scope": "warmup-drain-measurement-and-control-bracket",
+        "bounds": {
+          "armed_go_lower_bound_ns": 18981183602583,
+          "armed_ns": 18981184016428,
+          "resume_go_lower_bound_ns": 18981185847012,
+          "start_ns": 18981185992228,
+          "end_ns": 18981200489648,
+          "stop_received_ns": 18981201365409,
+          "warmup_elapsed_ns": 914365,
+          "warmup_enclosure_ns": 1975800
+        },
+        "measurement_completed": 65536,
+        "pmu_events": 8,
+        "all_events_reported_full_coverage": true,
+        "oracle_status": "ORACLE_PASSED",
+        "cleanup_groups": 3,
+        "all_owned_groups_gone": true,
+        "all_pinned_collectors_exited": true,
+        "all_capture_clean": true
+      },
+      {
+        "case": "active",
+        "status": "CORRECT_CONNECTION",
+        "output_path": "k0.replace_snapshot_read.v1.diagnostic_window.v1",
+        "pmu_scope": "measurement-and-control-bracket",
+        "bounds": null,
+        "measurement_completed": 65536,
+        "pmu_events": 8,
+        "all_events_reported_full_coverage": true,
+        "oracle_status": "ORACLE_PASSED",
+        "cleanup_groups": 3,
+        "all_owned_groups_gone": true,
+        "all_pinned_collectors_exited": true,
+        "all_capture_clean": true
+      },
+      {
+        "case": "disabled",
+        "status": "CORRECT_CONNECTION",
+        "output_path": "k0.replace_snapshot_read.v1",
+        "pmu_scope": null,
+        "bounds": null,
+        "measurement_completed": 65536,
+        "pmu_events": 0,
+        "all_events_reported_full_coverage": null,
+        "oracle_status": "ORACLE_PASSED",
+        "cleanup_groups": 2,
+        "all_owned_groups_gone": true,
+        "all_pinned_collectors_exited": true,
+        "all_capture_clean": true
+      }
+    ]
+  },
+  "validation": {
+    "python": {
+      "functions": 6,
+      "status": "PASS",
+      "receipt": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/python-r1.json",
+        "sha256": "55876bfe788c0e26c1aafe282d2c073ab406445c595fabb2079bfb8ebd691f8b"
+      },
+      "log": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/python-r1.log",
+        "sha256": "99305d9acd484ab23ad51e94ed6f15a85fee3d660dcdbb2fdb7654003c0cdd06"
+      }
+    },
+    "rust": {
+      "exact_functions": 5,
+      "status": "PASS",
+      "receipt": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/rust-r1.json",
+        "sha256": "d0c1a84654ec12c08e0c196d93511dc5f3cc7117864fba0f17dedbc688d37b92"
+      }
+    },
+    "static_and_build": {
+      "compile": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/compile-r1.json",
+        "sha256": "6c661b3fd47484a90408e473f32a9cb85b4b7402ca5124664bc5625c8e382e81"
+      },
+      "clippy": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/clippy-r1.json",
+        "sha256": "645fa2c24cf1e5e3acf0e09eaf71e56b595614338a117c3a6bf2b3818d8b65f5"
+      },
+      "release": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/release-r1.json",
+        "sha256": "b4b6e5d675dc3459a0daec40ba24a0f07fa80b9865ee1a433cbc91cd5c22da37"
+      },
+      "fmt": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/fmt-r1.json",
+        "sha256": "b736a15b16e429c6a4d045ddc51bea758774b3941263ac3fb19e4bf0fa7cb101"
+      }
+    },
+    "native_connections": 4,
+    "new_output_oracle_cases": 4,
+    "native_status": "CORRECT_CONNECTION",
+    "native_elapsed_seconds": 1.5325222430001304,
+    "selected_source_matches_export": {
+      "crates/testing/engine-worker/src/measurement_window.rs": true,
+      "crates/testing/engine-worker/src/measurement_window_tests.rs": true,
+      "crates/testing/engine-worker/src/performance.rs": true,
+      "crates/testing/engine-worker/tests/measurement_window_output.rs": true,
+      "scripts/check_dev2_window_native.py": true,
+      "scripts/dev2_measurement_window.py": true,
+      "scripts/fixtures/measurement_window_peer.py": true,
+      "scripts/test_dev2_measurement_window.py": true
+    }
+  },
+  "review": {
+    "status": "PASS_SCOPED_D1_D2_IMPLEMENTATION_FUNCTIONAL_EVIDENCE_AND_DOCUMENTS",
+    "plan": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-design-review-20261025.json",
+      "sha256": "1a9f6b9dfd82ae6c2829267ca3b3007f0e6676e158210b539f025698536d0e31"
+    },
+    "implementation": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/code-review-r1.json",
+      "sha256": "3e90255d842aac9b4ff94503d28ca1a25fe895c3c78506c1334716d3fea3f19e"
+    },
+    "native_preflight": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/native-preflight-review.json",
+      "sha256": "e9d55a29264b05eb8ac9ef965591c3dad9e13011914c0c47078bd9e5821fc670"
+    },
+    "raw": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-raw-review-20261025.json",
+      "sha256": "70587cf002ce20a722c8d02a82e25d169495894422623975edc784b5cdacf95d"
+    },
+    "outcome": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/outcome-review.json",
+      "sha256": "2ffc8fb16e8d6a84263fe6fa4ec02fb1d88f04a5daaab50b35360ebc37a91ec3",
+      "blocking_findings": 0
+    }
+  },
+  "manifest": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-prewarmup-20261025/manifest.json",
+    "sha256": "26ea0987b2899769c8419a7b337387292f5081c05a895d9dc4d5ef832172d3f2",
+    "file_count": 5050,
+    "bytes": 368809390,
+    "excluded": [
+      "manifest.json (self)",
+      "outcome-review.json (final review written later)",
+      "**/__pycache__/**",
+      "target/** except executed lib-test, output oracle and release worker"
+    ]
+  },
+  "activity": {
+    "unchanged_test_reruns": 0,
+    "original_acceptance_campaigns": 0,
+    "performance_comparison_campaigns": 0,
+    "new_native_connections": 4,
+    "new_output_oracle_cases": 4,
+    "retries": 0,
+    "host_setting_changes": 0,
+    "restarts": 0,
+    "bpf_runs": 0,
+    "document_verifier_runs": 0,
+    "pushes": 0
+  },
+  "decision": {
+    "tool_functionality": "VERIFIED_AND_ADOPTED_SCOPED",
+    "causal_comparison": "NOT_EVALUATED",
+    "performance_acceptance": "NOT_APPLICABLE",
+    "prior_off20": "UNKNOWN_NO_FROZEN_BAND",
+    "original_pf04": "FAIL_UNCHANGED",
+    "dev2_b2_d0": "INCOMPLETE",
+    "overall_goal_achieved": false,
+    "automatic_additional_execution": false
+  },
+  "limitations": [
+    "New PMU scope includes warmup, drain, measurement and control bracket; no subtraction or direct effect comparison against legacy loop bracket.",
+    "GO timestamps precede send and are sender-side lower bounds, not peer receipt or acknowledgement completion.",
+    "Failed runs may have incomplete phases; preserved fixture/raw/cleanup evidence does not claim a complete failure chronology.",
+    "Continuous mode still reads local clock/rusage; it is not identical to inactive original acceptance.",
+    "Four functional connections are not causal or performance samples; no cost effect estimated.",
+    "Reported 100% coverage is perf reporting precision, not proof of loop-only or perfect simultaneous hardware allocation.",
+    "The earlier twenty-run exception is exhausted; a repeated causal campaign needs a separately frozen plan and unchanged-code exception."
+  ]
+}
