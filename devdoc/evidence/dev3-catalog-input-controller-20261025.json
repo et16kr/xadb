@@ -1,0 +1,102 @@
+{
+  "id": "D3-CATALOG-INPUT-CONTROLLER-20261025",
+  "scope": "Completed independent input generation/audit and native controller rejection checks only; product integration remains incomplete",
+  "fixtures": {
+    "native": {
+      "receipt": "tests/fixtures/dev3-catalog-create/native/input-receipt.json",
+      "receipt_sha256": "30c0949937671778e17923db745a753a36a6174e986ca0c1c787305dcd466071",
+      "manifest_sha256": "87aa46dd81711cc5080097c674e6fb419e371680ea3e19faa5bafbe3e4847b23",
+      "raw_count": 221,
+      "raw_bytes": 5794810,
+      "generation_runs": 1,
+      "audit_runs": 1
+    },
+    "memory-gap": {
+      "receipt": "tests/fixtures/dev3-catalog-create/memory-gap/input-receipt.json",
+      "receipt_sha256": "d7adea9336a812dd3dbdbfe3a2a5b1489468b4e84d9c1e5c083cc36534826275",
+      "manifest_sha256": "edfe57082b56540ea5e71f0d5109ca98dc131369d1906388f5dd171f69d3a92b",
+      "raw_count": 137,
+      "raw_bytes": 3382130,
+      "generation_runs": 1,
+      "audit_runs": 1
+    }
+  },
+  "controller": {
+    "scripts/dev3_catalog_native.py": "f9fb8129a0cafa61f7301519b276e0bbaea6cd2292d904e72d8a24931c474887",
+    "scripts/test_dev3_catalog_native.py": "f16826689f8bcf752349450b9a3af9e5eaad08871fdc24554392013439b94d05"
+  },
+  "negative_results": {
+    "catalog-controller-negative-r0": {
+      "receipt_sha256": "0a5732dac1c8642dbf14a676c42c3b363075bb1df00e7f070745bce71c812c37",
+      "receipt": {
+        "status": "PASS",
+        "exit_code": 0,
+        "seconds": 0.06400660999497632,
+        "source": {
+          "scripts/dev3_catalog_native.py": "82739fe1aa480d326bb1dfb74a3bfee3b674ad83d30dc5727bf5d8f0ec0066ad",
+          "scripts/test_dev3_catalog_native.py": "61a672725c7bcb1a1ca93fc01c3cae041b4d44801f82971b68dd8e229051a6cd"
+        },
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "913e5507d0d837e920e94134de52cae30dcee9ede2cc9485c03e85ad5f57286f"
+      }
+    },
+    "catalog-controller-negative-r1": {
+      "receipt_sha256": "ef2f98bbc4aab00a4aa65501de8f52c44812aa9456d4fe5ae2bdca9402425353",
+      "receipt": {
+        "status": "PASS",
+        "exit_code": 0,
+        "seconds": 0.11435368299862603,
+        "source": {
+          "scripts/dev3_catalog_native.py": "531aad3daefb7cd9c53f580d33b31f038d693e615a8e62cc90b83155c8540486",
+          "scripts/test_dev3_catalog_native.py": "d65ba6e57c3771228f4b85d86db9f4dc939509c7900cf04b6b87e1757a55bc3e"
+        },
+        "stderr_sha256": "ba98c6f12cf4eb57e222642d3dee2f01977c26653eb94aba2e6d46e879fa7cef"
+      }
+    },
+    "catalog-controller-negative-r2": {
+      "receipt_sha256": "ceec7cdff16c9cf7d2410cbf63eb7ac760538f754e55890da905dd3ab76e5e5f",
+      "receipt": {
+        "status": "PASS",
+        "exit_code": 0,
+        "seconds": 0.16499978100182489,
+        "source": {
+          "scripts/dev3_catalog_native.py": "191ded9926c1a4b7a1aebebbc5fb212ce6d106ae059112b06ae00f63937c23d6",
+          "scripts/test_dev3_catalog_native.py": "d2d8bc1d3256d20ae28481f68c2db6c17951faf1d758042f1ed628161bd84960"
+        },
+        "stderr_sha256": "943503ba8c7303d5944d95d1dfc8ac55a369a3f1dbf3af2170461b80cbcf457f"
+      }
+    },
+    "catalog-controller-negative-r3": {
+      "receipt_sha256": "4ef750f2c3da529e9872777831625aceea8d0549cb7eb666e89c44e109e77ee7",
+      "receipt": {
+        "status": "PASS",
+        "seconds": 0.06455921399901854,
+        "source": {
+          "scripts/dev3_catalog_native.py": "f9fb8129a0cafa61f7301519b276e0bbaea6cd2292d904e72d8a24931c474887",
+          "scripts/test_dev3_catalog_native.py": "f16826689f8bcf752349450b9a3af9e5eaad08871fdc24554392013439b94d05"
+        },
+        "stderr_sha256": "10aa2f64c8e5cec72050bab8c54c7f9c383125c5d53633fe59c864410d5e2f72"
+      }
+    }
+  },
+  "unique_negative_tests": 14,
+  "independent_review": {
+    "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-catalog-controller-d1-final.md",
+    "sha256": "6a1121fc98a5c7977ad395f75fd4a742d7f3699c53a9621210a8a543f063ecdd",
+    "status": "SOURCE_ACCEPTED_NOT_RUNTIME_PASS"
+  },
+  "product_integration": {
+    "N01": "FAIL preserved at integration-r18/r21/r25; corrected r27 source compiled and source admission passed, actual retry pending",
+    "N02": "NOT_RUN",
+    "N03": "NOT_RUN",
+    "memory": "NOT_RUN",
+    "row_insert": "NOT_STARTED",
+    "dev3_complete": false
+  },
+  "artifact_cleanup": {
+    "r13_r20_completed_compiler_targets_removed_bytes": 730807525,
+    "receipts": "artifacts/dev3/catalog-create-20261025/integration-r*/target-cleanup.json",
+    "preserved": "copied ELFs, build logs, source manifests and original failures"
+  },
+  "repeated_completed_product_tests": 0
+}

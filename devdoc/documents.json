@@ -2447,6 +2447,16 @@
       "path": "evidence/dev2-pf04-frequency-control-20261025.json",
       "role": "evidence",
       "title": "DEV2 PF04 CPU 성능 요청 범위 제어"
+    },
+    "dev3-catalog-input-controller-20261025.md": {
+      "path": "evidence/dev3-catalog-input-controller-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 Catalog 독립 입력과 native 실행기 검증"
+    },
+    "dev3-catalog-input-controller-20261025.json": {
+      "path": "evidence/dev3-catalog-input-controller-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 Catalog 독립 입력·실행기 source별 기록"
     }
   }
 }

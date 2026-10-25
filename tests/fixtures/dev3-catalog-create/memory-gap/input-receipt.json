@@ -1,0 +1,53 @@
+{
+  "id": "D3-CREATE-MEMORY-GAP-INPUT-RECEIPT-R0",
+  "status": "INPUT_GENERATED_AND_AUDITED_NOT_PRODUCT_EXECUTION",
+  "plan_sha256": "3c21253e75cb168a34c7f4d054a27e1bbeb536221a96389208052371f4dd9208",
+  "root_adoption": "Exact plan 3c21253e\u2026 adopted before generation; independent reader dev3_review accepted before generation.",
+  "generation_runs": 1,
+  "auditor_runs": 1,
+  "generation": {
+    "status": "GENERATED_INPUT_NOT_PRODUCT_EXECUTION",
+    "rows": 26,
+    "checkpoints": 6,
+    "raw_count": 137,
+    "raw_bytes": 3382130,
+    "manifest_sha256": "edfe57082b56540ea5e71f0d5109ca98dc131369d1906388f5dd171f69d3a92b",
+    "wall_seconds": 0.0362571600053343,
+    "generator_sha256": "a93f2c5a519a04ec758467b7c2345a2e5021d61b5061a56be4ad9b348b9c38d7"
+  },
+  "audit": {
+    "checkpoints": 6,
+    "manifest_sha256": "edfe57082b56540ea5e71f0d5109ca98dc131369d1906388f5dd171f69d3a92b",
+    "raw_bytes": 3382130,
+    "raw_count": 137,
+    "rows": 26,
+    "status": "INPUT_AUDIT_PASS_NOT_PRODUCT_EXECUTION",
+    "wall_seconds": 0.008654930999909993
+  },
+  "audit_exit_code": 0,
+  "stderr_bytes": {
+    "generation": 0,
+    "audit": 0
+  },
+  "files": {
+    "input-plan.json": "3c21253e75cb168a34c7f4d054a27e1bbeb536221a96389208052371f4dd9208",
+    "generate_literals.py": "a93f2c5a519a04ec758467b7c2345a2e5021d61b5061a56be4ad9b348b9c38d7",
+    "audit_literals.py": "668c7175351e02dc63e0ef0f610d505d885bdeec1d8ddad1173ef924a5a3f9fe",
+    "generation-result.json": "a79ad2ff1846e7274d1354e072fff842cec81250db22aac6b93bd096d2c0ad14",
+    "generation.stdout": "296b7b9cb816589a432fc36b8b09446b9174740bbdc47aa1749d6fc2ca09b425",
+    "generation.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "audit.stdout": "9ccd88bf4696baa302e70d9e57e6ac56bbc2b079607bda82f5cf0cbae664be69",
+    "audit.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "manifest.json": "edfe57082b56540ea5e71f0d5109ca98dc131369d1906388f5dd171f69d3a92b",
+    "raw-index.tsv": "bb484d66484b12b72a8b847ac7da6d8391b4c7fc99ce1b3809ea7d2e5b19de39",
+    "steps.tsv": "8fdf4dcf7b3a5848cba9e5ecf0e6d91ec75f32748b5a33caf3aeaeccb02a9047"
+  },
+  "authority": "NONE",
+  "product_runtime": "NOT_RUN",
+  "original_corpora": "SHA-pinned original serializers/plans/manifests remained unchanged; independent audit checked declared prefixes and MC04 K suffix.",
+  "caps": {
+    "generation_seconds": 30,
+    "audit_seconds": 30,
+    "raw_bytes": 8388608
+  }
+}
