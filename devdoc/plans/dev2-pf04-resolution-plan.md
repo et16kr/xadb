@@ -461,3 +461,22 @@ Off-only 경계 대조로는 계측을 켰을 때의 추가 작업을 알 수 �
 동결40slot/20개 비공유 pair를417.476283초에 한 번 완료했다.40개 fresh output 정답·PMU320행·소유 group120개/actual collector40개 종료를 확인했고 재시도·실패·취소0이다. CPU On/Off paired 중앙은 Always1.092334187, Detailed1.122806355이며 최악은1.104277470/1.133934999, pair별23/20 초과는각0/10이다. 두 중앙 구간은 `MEDIAN_INTERVAL_WITHIN_REFERENCE`지만 원 pair별 인수 판정을 대체하지 않는다.
 
 user instructions 중앙비1.053185367/1.076304360와 user CPI1.036546289/1.046707780을 함께 관측했다. 원 느린 실행 대역의 원인이나 새 제품 수정의 충분한 근거는 아직 아니며, 이번 campaign을 종료하고 원 PF04 FAIL·DEV2/B2/D0 미완료를 유지한다. 실행·분석·독립 검산·최종 문서 검토·manifest는 [모드별 진단 증거](../evidence/dev2-pf04-mode-attribution-20261025.md)와 연결 JSON을 따른다. 다음 단계는 새로 뒷받침되는 발생 조건이나 코드 가설을 정하는 것이며, 이번40slot을 자동 반복하지 않는다.
+
+
+<a id="controller-placement"></a>
+
+## 후속 디버깅: 원 native 제어기의 CPU 배치
+
+2026-10-25 · **계획 선행 commit / 구현·실행 NOT_RUN**. 담당·계약·통합 `/root`, 독립 D1/D2 `/root/pf04_evidence_review`. 사용자의 완료 요청과 디버깅 적용 범위 정정에 따라 계속하며 새 허가를 요구하지 않는다. 개별 실험의 예산 종료를 전체 해결 작업 종료로 해석하지 않는다.
+
+원 r3/r4 실행은 controller를 CPU2에 고정했고 child는 그 affinity를 상속했다. 원 `native::receive()`는 무진행 때200µs를 sleep한다. 최근 진단은 runner/perf CPU3·worker CPU2였으며 원 controller를 우회했다. 기존 xpc-r1의20회도 느린 CPU/p50 대역이 없었고 reference-cycle이 없어 이 차이를 배제하지 못한다. 독립 근거는 `/tmp/xadb-pf04-review-20261025/controller-placement-xpc-review.json`(SHA-256 `d5c788d4ffc2350c7dc367e717c025d31aee66e2772561737cf090470d9a08d8`)이다.
+
+원 e3 worker ELF와 원 source의 native/process/oracle을 그대로 사용한다. 외부 보존 source 사본에 작은 진단 example만 추가한다. 매 slot 시작 시 controller를 CPU2로 고정하고 원 NativeSession을 spawn한 뒤 controller만2 또는3으로 설정한다. 양쪽 모두 같은 taskset 호출을 수행하고 worker PID/affinity2와 controller affinity를 입력 전후 검증한다. 초기화·입력·socket·200µs 수신 경로·종료 소유권은 원 코드를 호출한다. 제품·원 source·기존 산출물은 변경하지 않는다. 새 example 때문에 controller 빌드 identity는 달라짐을 기록하며 원 controller ELF와 같다고 주장하지 않는다.
+
+- Off/Always/Detailed 각각10쌍, 각 쌍 같은 모드의 controller2/3 대조: 총30쌍60slot. 모드별 방향5/5, seed2026102531로 순서를 동결한다. worker는 항상CPU2, 입력은 원 seed20261018/128row/old snapshot/capacity256/warmup4096/measure65536/stride16이다.
+- 원 실행처럼 전체 batch 앞10초 idle 확인, slot 사이 추가 idle 없음. CPU2/18 및 비교CPU3/19 각각 busy≤5%, 실제 ext4 device busy≤5%, 관련 build/시험 부재를 확인한다. 최대6회 경계 관측 후 이번 batch 미실행으로 남긴다. 실행300초·정리30초·보존5GiB·free20GiB 한도, 재시도·실패 slot 대체 없음. 재부팅·서비스 재시작·host 설정 변경 없음.
+- 각 응답을 원 독립 `performance::check_output`과 요청/응답 identity로 검산한다. 양쪽 worker hash·빌드·입력·모드·affinity·완료·raw 파일을 보존한다. 새 driver의 설정/identity 거절 등 필요한 테스트만 선택하며 기존 제품 시험은 반복하지 않는다.
+- 주 지표는 모드별 CPU2/CPU3 paired thread CPU 비율의 중앙과 정렬[1,8] 구간이다. 모든60slot 품질이 유효할 때만 분류한다. 구간이[10/11,11/10] 바깥이면 LARGE_PLACEMENT_SHIFT, 안에 들어오면 NO_LARGE_PLACEMENT_SHIFT, 교차하면 INCONCLUSIVE; 방향 그룹 중앙 비율이 같은 범위를 벗어나면 ORDER_SENSITIVE로 남긴다. 구간은10쌍 중앙의 비모수 약97.85% 구간이며 per-pair15% 인수 한도를 대신하지 않는다. elapsed/p50/p99·warmup·전체 분포를 함께 보존하고 원 느린 대역 관측 여부는 기술한다.
+- 큰 배치 효과가 있으면 실제 polling/CPU 실행 상태를 분리하는 수정 후보를 검토한다. 효과가 작거나 불확실하면 배치만으로 원 실패를 설명하지 않고 원 batch의 연속 실행·주파수 상태와 관측 경계를 다음 가설로 좁힌다. 어느 결과도 과거 원인 확정·PF04 PASS가 아니며 durable 잔여도 계속 해결한다. 단순 deschedule은 worker thread CPU에 포함되지 않으므로 polling 대기만으로 원 CPU 증가를 설명하지 않는다.
+
+산출물 위치는 `/home/et16/xadb-dev2-evidence/pf04-controller-placement-20261025`다. 실행 전 proposal·source/driver/worker/도구 지문·선택 테스트·독립 검토를 결합한다.
