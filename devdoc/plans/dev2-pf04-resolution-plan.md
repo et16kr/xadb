@@ -76,10 +76,42 @@ P2의 새로운 탐색은 이전 종료한3후보 예산에 추가하지 않는�
 
 구현자는 시험 전에 diff와 선택 사례의 관계를 기록한다. 최초 실행 결과를 source별로 보존하며, 수정 후에는 그 diff와 실패 사례에 필요한 것만 선택한다. P1 native 실행은 새 관측 경계·도구를 검증하는 목적이며 기존 K0/영속 성능 인수를 재판정하지 않는다.
 
+<a id="p2-k0-owner"></a>
+
+## P2 실행 계약: K0 관측 소유권 후보 하나
+
+2026-10-25 사용자의 후속 “이어서 진행해줘”에 따라 P2를 시작한다. D2 작업·계약·통합 담당 `/root`, 독립 검토자 `/root/pf04_evidence_review`이며 본 구체 계약을 검토·commit한 뒤 구현한다. P1 실제 PMU 도구의 완료는 이 후보의 성능 효과나 PF04 원인 증거가 아니다.
+
+### 가설·대안·불변식
+
+현재 snapshot/cursor는 `Arc<Counters>`와 활성 collector의 Arc를 각각 복제한다. 후보 C1은 K0 전용 `Diagnostics` 내부 owner를 `Off(Arc<Counters>) | Active(Arc<Collector>)`로 만들고 Active collector가 기존 Counters Arc를 한 번 소유하게 한다. store/snapshot/cursor는 이 owner 하나를 공유한다. 활성 snapshot마다 두 번째 clone/drop 한 쌍을 제거하는 대신 counter 접근의 한 단계 간접 참조가 생기므로 실제 이득은 미확정이다.
+
+공통 `metrics::Counters`의 구조·constructor·포화 갱신, transaction/recovery 소비자는 변경하지 않는다. Off는 기존 Counters Arc만 사용하며 collector/queue 추가 할당과 진단 logical bytes는0이다. Active collector에 추가되는 Counters handle은 `size_of<Collector>`를 통해 별도 진단 budget에 포함한다. 기존 row quota charge·pin 수·오류 순서·행/ID/old-root 값·snapshot/cursor의 store 독립 수명, 정확 started/completed/failed·drop/포화·event 순서를 유지한다. counter 감소·표본 누락·sync/부하 변경은 후보가 아니다.
+
+공통 Counters에 Diagnostics를 넣는 대안은 거래/복구의 크기·quota를 바꾸므로 제외한다. 별도 K0 wrapper Arc를 추가하는 대안은 Off에도 할당·부가 charge를 만들므로 제외한다. 이번은 C1 하나, 구현 수정은 계약/정확성 결함 보완만 허용한다. 측정 수치를 본 뒤 다른 배치·알고리즘을 추가하지 않는다. 성능 이득이 부족하면 제품 변경을 채택하지 않고 원 source·후보 diff·실패/불충분 결과를 보존해 기각을 commit한다.
+
+### 실행 전 고정한 범위
+
+- 기준선은 commit `77d919f`의 깨끗한 export다. 후보도 같은 export에 이번 명시한 source diff만 적용하며 병행 DEV3 작업 트리는 포함하지 않는다. baseline 실행은 변경한 K0 경로의 상대 비교 대조군이며 기존 제품 인수 재검증으로 세지 않는다. `metrics.rs`, WAL/transaction/recovery를 포함한 무변경 하위 시험·workspace wrapper는 실행하지 않는다.
+- 정확성은 변경된 Diagnostics owner/constructor를 직접 사용하는 기존 진단 unit4개, engine performance 사례5개를 선택한다. store보다 오래 사는 snapshot/cursor/row view의 값·오류·정확 진단·drop·quota 최종 해제와 동시 read/drain 수명을 새 사례로 검증한다. constructor의 invalid capacity 실패와 최종 owner drop에서 Counters의 Weak upgrade 불가·Quota=0을 확인하고, 관측용 Diagnostics 강한 clone은 실제 최종 view/owner 해제 전에 내려 자원 회수를 가리지 않게 한다. 관련 Rust fmt와 engine/worker의 scoped compile/Clippy를 수행한다. 문서 자동 검사는 push gate에 남긴다.
+- P1 PMU 연결은 Detailed의 baseline/candidate 각1회만 새 구간을 관측한다. 원 workload와 sampling은 바꾸지 않고 worker/runner/ELF/source·raw counter/rusage/제어 bracket을 보존한다. 기존 retained-output adapter/check_output은 input.mode를 직접 검산하고 Side.mode를 사용하지 않으므로 checker source 변경 없이 새 Detailed 출력의 scalar/진단 정답을 확인한다. 원 raw·exact 진단 suffix 확인·임시 copy의 path 정규화는 그대로 유지한다. PMU 결과는 원 성능 인수나 효과 채택 표본에 넣지 않는다. PMU 한 쌍과 C1 전체 비교는 Collector 배치·간접 참조·컴파일 결과 변화까지 포함하므로 clone/drop만의 독립 기여로 해석하지 않는다.
+- release toolchain·features·target·최적화 설정을 baseline/candidate에서 같게 유지한다. workload는 기존 K0 정책의128행, old snapshot 유지, capacity256, warmup4096, 측정65536, stride16, fixture seed20261018이다. controller/analyzer·성능 한도는 변경하지 않는다.
+- 모든 campaign은10쌍,5AB+5BA다. CPU2에 controller/worker를 고정하고 sibling CPU18을 관측한다. campaign 직전10초 동안 CPU2/18 busy가 각각5% 이하일 때만 실행한다. 자기 소유 build/test는 측정과 겹치지 않는다. 다른 작업과의 공유 host라는 한계 및 경계/종료 busy·load/process 관측을 보존하며 CPU governor/sysctl/서비스를 바꾸지 않는다. 유휴 조건이 없으면 측정 시작 없이 최대10분 기다리고 NOT_RUN으로 남긴다. 이미 시작한 실패 campaign을 유리한 결과를 얻기 위해 반복하지 않는다.
+
+### 측정 예산·판정·중단
+
+1. C1 탐색 Detailed10쌍1campaign만 실행한다(order seed2026102501). correctness PASS·validity VALID·guardrails PASS이고 elapsed paired 중앙 비율이1 미만이면 후보/분석 규칙을 그대로 동결하고 확인으로 간다. 아니면 중단·기각한다.
+2. 새 Detailed 확인10쌍1campaign(order seed2026102502)을 사용한다. 탐색 run ID와 겹치지 않으며 exploration contract/hash·후보 ELF를 결합한다. 주 지표는 기존 `measurement.elapsed_ns`; 기존 분석기의 run-level 순서통계 구간 `[1,8]` 상한이0.95 미만인 IMPROVED와 correctness PASS·validity VALID·guardrails PASS를 모두 요구한다. 구간의 IID 가정과 표시 nominal coverage1002/1024를 통계적 보장으로 확대하지 않는다.
+3. 확인이 통과한 경우에만 Off/Always의 각각10쌍 guard campaign을 한 번씩 실행한다(order seed2026102503/2026102504). 이들은 효과 선택용 후보 탐색에 피드백하지 않는 사전 고정 guard이며 recipe kind는 기존 Exploration을 그대로 사용한다. 두 모드 모두 correctness PASS·validity VALID·guardrails PASS여야 채택한다. 부수 효과가 좋아 보여도 Detailed 확인 실패를 구제하지 않는다.
+4. 모든 모드의 pair별 guard는 기존 elapsed/CPU/external1.15배, sample p99 1.25배, RSS 증가4MiB다. incomplete/missing·실패·drift를 제거하거나 한도를 바꾸지 않는다. 주 지표 하나의 확인1회만 채택 근거이며 여러 mode에서 유리한 결과 하나를 고르는 규칙이 아니다.
+5. 최대4campaign80실행과 별도 PMU2실행이다. 확인 실패/불확실·guard 실패 시 추가 tuning/확인 없이 기각하고, 변경 관련 정답 결과와 원 실패를 보존한다. 기존 종료한3후보 예산에 이번을 붙이지 않는다. P2 한정 채택도 원 PF04 네 campaign FAIL이나 영속 경로를 PASS로 바꾸지 않는다. 새 instrumentation audit는 이번 예산에 포함하지 않는다.
+
+최종 reviewer가 계약·후보 diff·선택 시험·모든 실행 원자료와 채택/기각을 독립 확인한 뒤 단계 commit한다. P2 계획 상태: **독립 설계 검토 PASS 채택 / 구현·실행 전**. 검토는 계획만 대상으로 하며 구현·성능의 통과가 아니다. receipt는 `/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/p2-plan-review.json`, SHA-256 `e7c1c90fa901d2feb9743539745e82b229411d98076099c8b71c63c6fd60f002`다. 검토 P2 본문 projection SHA-256은 `f1132d8a0589fa80a0e58b07e11d333fbd05631bc423cf22aaef6159b1205f03`이며 이 상태 문장 앞까지를 고정한다. 차단·미해결 지적0개다.
+
 ## 검토·상태 기록
 
 - P0 계획: `/root/pf04_evidence_review`의 `PASS_PLAN_ONLY`를 채택했다. R1 권한 부재 대체 경로, R2 raw PMU·FIFO deadline, R3 시험 소유 구분을 반영했고 차단/미해결 지적은0개다. 검토 뒤 상태·receipt만 기록하고 계획 commit을 생성한다.
 - 검토 receipt: `/home/et16/xadb-dev2-evidence/pf04-analysis-20261025/plan-review.json`, SHA-256 `f0b15ad3063f9f02716c2d3f1d812bf9c8048c02e3d840b20affc50f9c3571c2`. 검토 본문 projection SHA-256 `903f30baec57dfb17855debd644e725887b5a9471b2ca32e42dfe64dc69d2124`는 상단 상태와 본 절을 제외한다. 계획 채택은 구현·시험 실행 증거가 아니다.
 - P1 도구 구현·선택 검증: 계획 commit `82c14ba` 뒤 수행했다. [source별 실행 기록](../evidence/dev2-pf04-window-20261025.md)을 따르며 당시 일반 사용자 PMU는 UNAVAILABLE이었다. 승인된 후속의 [실제 PMU 수집·선택 검증](../evidence/dev2-pf04-pmu-20261025.md)을 별도 연결하며 최종 독립 검토는 각 기록의 채택 상태를 따른다. P0 검토 projection은 계획 commit 시점의 본문에 해당한다.
-- P2–P4: 진입 전. 구체 대안·새 실행 profile은 별도 검토한다.
+- P2: 위 K0 owner 후보 계약으로 후속 착수. P3–P4는 진입 전이며 별도 구체 검토를 유지한다.
 - 원 PF04 네 실패와 DEV2/B2/D0 INCOMPLETE: 유지.
