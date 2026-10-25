@@ -229,3 +229,21 @@ P3b는 `688b9af`에서 [한정 검증·독립 검토](../evidence/dev2-pf04-flus
 후보 확인 통과는 C2의 한정 개선 증거다. 원 PF04 네 FAIL·DEV2 미완료를 자동 해제하지 않으며 영속 CPU/tail 실패도 별개다. 최종 독립 D1/D2가 소유권·반례·선택 시험·모든 원 측정과 채택/기각을 확인한 뒤 단계 commit한다. 동일 코드 인수를 다시 돌릴 명목으로 본 계획을 확장하지 않는다.
 
 C2 계획 상태: **PASS_PLAN_ONLY 채택 / 채택 당시 구현·실행 전**. 이후 [후보 평가](../evidence/dev2-pf04-single-writer-20261025.md)에서 확인 기준 미달로 제품 미반영·기각했다. 독립 검토 차단0개. receipt `/home/et16/xadb-dev2-evidence/pf04-single-writer-20261025/plan-review.json`의 SHA-256은 `ac13e33f7cab54184a653d7847808918f96d7fc4126f2e06cf103ff40683e8c7`, P4 anchor부터 이 상태 문장 직전 본문의 검토 projection은 `7c9d96fec4da315d185fe72889d0b10a8004b52222e575cd7254dfb83c67f3dc`다.
+
+<a id="cpu-user-kernel"></a>
+
+## 영속 CPU 후속: 사용자·커널 PMU 분리
+
+C2는 `c2822d9`에서 기각·미반영 기록을 마쳤다. 남은 원 영속 CPU 한도 FAIL의 관측 공백을 다룬다. D2 담당·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`. 계획을 먼저 commit한 뒤 도구만 보완한다. 제품·WAL·부하·판정 한도와 종료된 C1/C2 탐색을 변경하지 않는다.
+
+기존 PMU는 user-only cycles/instructions여서 같은 thread의 커널 CPU를 구분하지 못한다. 새 고정 `user-kernel-v1` profile은 `cycles:u`, `cycles:k`, `instructions:u`, `instructions:k`, `ref-cycles:u`, `context-switches`, `cpu-migrations`, `page-faults`8개를 같은 enable/disable bracket에서 수집한다. 원6개는 기본 `user-v1`으로 유지한다. 임의 event 문자열·시스템 전체·다른 thread 수집은 허용하지 않는다. profile 선택을 argv/결과에 기록하고 parser의 예상 event 집합과 결합한다. raw unscaled·각 runtime/coverage·missing/unsupported와 원 rusage를 모두 보존하며 partial/0/missing에서 정상 비율을 합성하지 않는다.
+
+기존 CAP_PERFMON, 일반 사용자 worker, fixed trusted tools·identity·pidfd·deadline·정리 정책은 유지한다. 새 privilege/sysctl/재시작·서비스 변경은 없다. PMU kernel count는 해당 task가 실행 중인 privilege-domain 관측이며 syscall별 비용·다른 task의 journal 작업·순수 workload CPU 또는 GHz로 해석하지 않는다. 두 번의 새 연결로 안정적 On/Off 비용이나 과거 실패의 단일 원인을 확정하지 않는다. rusage user/system 분할도 PMU와 같다고 강제하거나 차이를 보정하지 않는다.
+
+선택 검증은 새 profile의 literal 정상/부재/부분 coverage/중복/다른 profile event 거절·잘못된 선택의 spawn 전 거절·CLI→fake perf→최종 parser 연결이다. 기본 parser와 fake 연결은 실제 예상집합/호출 연결 변경에 대응하는 기존2개만 선택한다. Rust hook, 기존 privilege/lifecycle suite·BPF·하위 회귀·제품 인수는 반복하지 않는다. fake 출력은 독립 literal profile로 제공하며 실제 kernel PMU라고 표시하지 않는다.
+
+Native 예산은 새 profile의 durable Off1회→Always1회 **총2slot**이다. P3의 보존 release ELF `ea1f0f7c5f2d58a61199f399ae6961f290449dea488a9187ebf11505bc501c51`, source `7ced0a5622825b971a4a146cdd8d1ce4a5ef01eefe633e59deb6b338390a5329`,128행·warmup64·measure512·seed20261018을 재사용한다. rebuild·BPF 추가·원 인수 재실행은 없다. CPU2 worker·CPU3 runner/perf, sibling18 관측과 시작 전10초 CPU2/18·disk busy 각각5% 이하, 유휴 대기 최대10분을 유지한다. worker affinity를 payload 전 확인한다. 총60초 deadline과 기존 owned cleanup·원자료 보존을 적용하고8event full coverage·정답·identity·원512거래 검산을 요구한다. 실패·미지원·유휴 부족이면 원 사유를 남기고 남은 slot도 NOT_RUN으로 종료하며 시작한 같은 소스를 반복하지 않는다. Off/Always 순서나 미리 정한 입력을 수치 때문에 바꾸지 않는다.
+
+결과는 새로운8event 연결과 source별 관측 범위로 기록한다. 같은 collector의 별도 control과10쌍 확인이 없으므로 영향/모드비용 screen 또는 PF04 합격을 만들지 않는다. 원 실패와 미확정 원인은 유지한다. user/kernel counter가 무엇을 구분했고 무엇을 구분하지 못했는지 기록·독립 검토한 뒤 단계 commit한다.
+
+CPU 분리 계획 상태: **PASS_PLAN_ONLY 채택 / 채택 당시 도구 수정·실행 전**. 독립 검토 차단0개. receipt `/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/plan-review.json`의 SHA-256은 `38d36549d547b91609ffd187592b6d92aa91f6bdc3c43c28e5ec63e357e3ea7c`, 본 anchor부터 상태 문장 직전 projection은 `f1d0423a5a505ee049b4c82390c2cb02387f493bfbac1929b1b99feb97ad981a`다.
