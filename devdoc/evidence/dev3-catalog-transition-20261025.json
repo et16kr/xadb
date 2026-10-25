@@ -848,5 +848,138 @@
     "build_receipt_sha256": "3278839892059e14e9f8ac91276b06487b06e1b8a7bddb1e19304030cba4216c",
     "runtime_tests": 0,
     "warnings": "unused typed reexports awaiting actual consumer; preserved, not zero-warning claim"
+  },
+  "catalog_scratch_followup": {
+    "status": "PASS_CHANGED_PURE_ONLY",
+    "source": "a99a3b66d72a6297b204aa52c8b05b42642f0da6896c9782559819110948d741",
+    "elf": "b8662587fcc92bdd2f9e46d36fd06fb106b8de031b8db87772eace883a8d7572",
+    "plan_sha256": "7df7327f860e821852306c17993e5869f9db54327f7ede1aa1d11b72863fe68a",
+    "controller_sha256": "0e85ee10e8b7f59844e22629401de7acd01e3fbf4dbbf2ec495ef0284bcc35c0",
+    "result_sha256": "ac0e928efa168a40a8a9f4b502ca692cd074ceccf50f1034de6b68e97601eecd",
+    "selectors": [
+      {
+        "selector": "storage::semantic_catalog::images::catalog::scratch_tests::dense_catalog_scratch_has_room_for_metadata_and_insert",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::images::catalog::scratch_tests::dense_catalog_scratch_has_room_for_metadata_and_insert",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.011287698995147366,
+        "error": null,
+        "stdout_sha256": "0df0b7f46a464e54b0f15b453a6d86e2aedff0958805934ce6c4c9ec77d34683",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "selector": "storage::semantic_catalog::images::catalog::scratch_tests::tiny_or_mismatched_prior_catalog_value_is_rejected",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::images::catalog::scratch_tests::tiny_or_mismatched_prior_catalog_value_is_rejected",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.010930804004601669,
+        "error": null,
+        "stdout_sha256": "85a6364fe57822707870969b94ba7f4f737f8b2fd580a45545976117a8825602",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "selector": "storage::semantic_catalog::transition_tests::c03",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::transition_tests::c03",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.2538028140043025,
+        "error": null,
+        "stdout_sha256": "d95ab7e115b71406403ab2ade39436982e52ad9f9fe0b55e33898d1811a5f182",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "selector": "storage::semantic_catalog::transition_tests::c13",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::transition_tests::c13",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.19326369000191335,
+        "error": null,
+        "stdout_sha256": "5114d7a6308c5f034845b2e5c9888cf612681da50fc3b43200919afe9cf898be",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "selector": "storage::semantic_catalog::transition_tests::p02",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::transition_tests::p02",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.1933070820014109,
+        "error": null,
+        "stdout_sha256": "860cc7790159b9744bb9f749dbb03e0b3b9ddfe2c21a33f37d8a7ffa4d59ea11",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "selector": "storage::semantic_catalog::transition_tests::c05",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::transition_tests::c05",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.17291287000261946,
+        "error": null,
+        "stdout_sha256": "a31b92192fde822a6cd178f39368c9f5d6c7904a04edce6536db618cdf85dcea",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "selector": "storage::semantic_catalog::transition_tests::r05",
+        "status": "PASS",
+        "command": [
+          "/home/et16/work/xadb/artifacts/dev3/catalog-create-20261025/integration-r10/xadb-engine-tests",
+          "--exact",
+          "storage::semantic_catalog::transition_tests::r05",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 0.19342862100165803,
+        "error": null,
+        "stdout_sha256": "2fcfb9d635a27f466d037259955805368fec50947a23caccae1437c0263ecb2c",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "seconds": 1.0295977350033354,
+    "independent_review": "page_lifetime source read: semantic minimum record size is established before the smaller array; no optimizer liveness deduction",
+    "fixture_alias": "Test source now refers to already committed transition/raw/ca16fa2a2869199554b3638706d8b2269c757ba4ef510c69667979dfddd4fcad.bin instead of identical native raw alias; full bytes/SHA equal; no repeated semantic execution",
+    "live_admission": "integration-r11 source/native static caps still FAIL 67466>65536; effects0; no native PASS",
+    "staged_index_compile": {
+      "revision": "core-scratch-index-r1",
+      "status": "PASS",
+      "source": "acc1bb4bae91f116fa5e6de807870e8695296714a3372fb933b9d50d1d60d9c3",
+      "elf": "1165edc31b6e8a4836b83ae942d874b16497b0535064d45a35667c14a1c11139",
+      "tests": "NOT_RUN; changed seven already preserved at r10"
+    }
   }
 }

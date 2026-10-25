@@ -7,12 +7,42 @@ use crate::storage::{
     page::PageKind,
     semantic_catalog::catalog_projection_digest,
     transaction_record::{LogicalRowVersion, VersionStamp},
-    tree_page::{
-        self, EntryPayload, TreeExpectation,
-        edit::{LeafEdit, MAX_LEAF_EDIT_CELLS},
-    },
+    tree_page::{self, EntryPayload, TreeExpectation, edit::LeafEdit},
 };
 use foundation::identity::CommitSeq;
+
+/// A decoded Catalog record owns at least its 232-byte fixed header. Every
+/// leaf entry additionally occupies a 12-byte key/value prefix and four-byte
+/// page slot. Two reference slots cover metadata and a possible insertion.
+/// This is deliberately wider than the minimum table definition permits.
+pub(crate) const CATALOG_EDIT_CELLS: usize =
+    tree_page::TREE_ENTRY_CAPACITY / (catalog_record::CATALOG_HEADER_BYTES + 12 + 4) + 2;
+
+/// Establish the semantic lower cell bound before using the smaller scratch.
+/// A structurally valid tree page can still contain tiny opaque values; such
+/// values must never turn into an unproved Catalog capacity assumption.
+pub(crate) fn validate_catalog_leaf(
+    leaf: &tree_page::TreePageView<'_>,
+    namespace: crate::api::Namespace,
+) -> Result<()> {
+    if leaf.header().kind != PageKind::CatalogLeaf || leaf.header().level != 0 {
+        return Err(Error::IdentityMismatch);
+    }
+    for index in 0..leaf.len() {
+        let entry = leaf.entry(index)?;
+        let EntryPayload::Value(value) = entry.payload else {
+            return Err(Error::Corrupt);
+        };
+        let key: [u8; 8] = entry.key.try_into().map_err(|_| Error::Corrupt)?;
+        let object = foundation::identity::ObjectId::new(u64::from_be_bytes(key))
+            .map_err(|_| Error::IdentityMismatch)?;
+        catalog_record::decode_catalog_record(value, CatalogExpectation { namespace, object })?;
+    }
+    if leaf.len() + 2 > CATALOG_EDIT_CELLS {
+        return Err(Error::Corrupt);
+    }
+    Ok(())
+}
 
 pub(crate) enum CatalogChange<'a> {
     Forward(CatalogTableInput<'a>),
@@ -70,6 +100,7 @@ pub(crate) fn change_catalog(
             arity: 0,
         },
     )?;
+    validate_catalog_leaf(&leaf, context.namespace)?;
     if leaf.header().lsn.0 >= context.lsn.0 {
         return Err(Error::OrderMismatch);
     }
@@ -191,7 +222,7 @@ pub(crate) fn change_catalog(
             }
         }
     };
-    let mut cells = [&[][..]; MAX_LEAF_EDIT_CELLS];
+    let mut cells = [&[][..]; CATALOG_EDIT_CELLS];
     let plan = leaf.prepare_leaf_edit(edit, &mut cells)?;
     if plan.needs_split() {
         return Err(Error::BudgetMismatch);
@@ -232,4 +263,119 @@ pub(crate) fn initialize_pair(
         row_after,
     )?;
     Ok(())
+}
+
+#[cfg(test)]
+mod scratch_tests {
+    use super::*;
+    use crate::{
+        api::DatabaseId,
+        storage::page::{self, FileId, PageHeader, PageIdentity, PageLsn, PageRef},
+    };
+    use foundation::identity::{Generation, ObjectId};
+
+    fn namespace() -> crate::api::Namespace {
+        crate::api::Namespace {
+            database: DatabaseId::new(std::array::from_fn(|i| i as u8 + 1)).unwrap(),
+            timeline: 1,
+        }
+    }
+    fn header() -> PageHeader {
+        PageHeader {
+            identity: PageIdentity {
+                database: namespace().database,
+                page: PageRef {
+                    file: FileId::new(0x100000001).unwrap(),
+                    page_no: 8,
+                    incarnation: Generation::new(1).unwrap(),
+                },
+                owner: ObjectId::new(5).unwrap(),
+                owner_generation: Generation::new(1).unwrap(),
+            },
+            kind: PageKind::CatalogLeaf,
+            level: 0,
+            lsn: PageLsn(8),
+        }
+    }
+    fn expectation() -> TreeExpectation {
+        TreeExpectation {
+            identity: header().identity,
+            kind: PageKind::CatalogLeaf,
+            level: 0,
+            arity: 0,
+        }
+    }
+    fn literal_cell() -> Vec<u8> {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/fixtures/dev3-catalog-create/transition/raw/ca16fa2a2869199554b3638706d8b2269c757ba4ef510c69667979dfddd4fcad.bin");
+        let bytes = std::fs::read(path).unwrap();
+        assert_eq!(
+            foundation::codec::content_digest(&bytes),
+            [
+                0xca, 0x16, 0xfa, 0x2a, 0x28, 0x69, 0x19, 0x95, 0x54, 0xb3, 0x63, 0x87, 0x06, 0xd8,
+                0xb2, 0x26, 0x9c, 0x75, 0x7b, 0xa4, 0xef, 0x51, 0x0c, 0x69, 0x66, 0x79, 0x79, 0xdf,
+                0xdd, 0xd4, 0xfc, 0xad
+            ]
+        );
+        let page = page::decode_page(&bytes, header().identity, PageKind::CatalogLeaf).unwrap();
+        page.cell(1).unwrap().to_vec()
+    }
+    fn candidate(cells: &[Vec<u8>]) -> [u8; PAGE_BYTES] {
+        let mut metadata = [0; 32];
+        let meta =
+            tree_page::encode_metadata(PageKind::CatalogLeaf, 0, None, &mut metadata).unwrap();
+        let refs: Vec<_> = std::iter::once(meta)
+            .chain(cells.iter().map(Vec::as_slice))
+            .collect();
+        let mut bytes = [0; PAGE_BYTES];
+        tree_page::encode_tree_page(header(), 0, &refs, &mut bytes).unwrap();
+        bytes
+    }
+    #[test]
+    fn dense_catalog_scratch_has_room_for_metadata_and_insert() {
+        let original = literal_cell();
+        assert_eq!(original.len(), 254);
+        let mut cells = Vec::new();
+        for object in 6u64..68 {
+            let mut cell = original.clone();
+            cell[4..12].copy_from_slice(&object.to_be_bytes());
+            cell[20..28].copy_from_slice(&object.to_le_bytes());
+            cells.push(cell);
+        }
+        let bytes = candidate(&cells);
+        let view = tree_page::decode_tree_page(&bytes, expectation()).unwrap();
+        assert_eq!(view.len(), 62);
+        validate_catalog_leaf(&view, namespace()).unwrap();
+        let mut inserted = original;
+        inserted[4..12].copy_from_slice(&68u64.to_be_bytes());
+        inserted[20..28].copy_from_slice(&68u64.to_le_bytes());
+        let mut scratch = [&[][..]; CATALOG_EDIT_CELLS];
+        let plan = view
+            .prepare_leaf_edit(LeafEdit::Insert(&inserted), &mut scratch)
+            .unwrap();
+        assert!(
+            plan.needs_split(),
+            "63 minimal entries exceed the fixed leaf bytes"
+        );
+        assert_eq!(bytes, candidate(&cells));
+    }
+    #[test]
+    fn tiny_or_mismatched_prior_catalog_value_is_rejected() {
+        let mut tiny = [0; 32];
+        let raw = tree_page::encode_leaf_cell(
+            PageKind::CatalogLeaf,
+            0,
+            &6u64.to_be_bytes(),
+            b"x",
+            &mut tiny,
+        )
+        .unwrap();
+        let bytes = candidate(&[raw.to_vec()]);
+        let view = tree_page::decode_tree_page(&bytes, expectation()).unwrap();
+        assert!(validate_catalog_leaf(&view, namespace()).is_err());
+        let mut wrong = literal_cell();
+        wrong[4..12].copy_from_slice(&7u64.to_be_bytes());
+        let bytes = candidate(&[wrong]);
+        let view = tree_page::decode_tree_page(&bytes, expectation()).unwrap();
+        assert!(validate_catalog_leaf(&view, namespace()).is_err());
+    }
 }

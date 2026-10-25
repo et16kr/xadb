@@ -12,11 +12,13 @@ use crate::{
 use foundation::identity::{Generation, ObjectId};
 
 mod allocator;
-mod catalog;
+pub(super) mod catalog;
 mod status;
 mod undo;
 pub(crate) use allocator::change_pair;
-pub(crate) use catalog::{CatalogChange, change_catalog, initialize_pair};
+pub(crate) use catalog::{
+    CATALOG_EDIT_CELLS, CatalogChange, change_catalog, initialize_pair, validate_catalog_leaf,
+};
 pub(crate) use status::{StatusChange, StatusContext, change_status};
 pub(crate) use undo::{change_undo, validate_retained_undo};
 

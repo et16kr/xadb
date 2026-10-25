@@ -27,3 +27,13 @@ artifact `artifacts/dev3/catalog-create-20261025`에 immutable export의 파일�
 다음 단계는 원 owner의 CREATE admission·stage·whole install, installed Q·snapshot·참조 pin, 현재 v3 base/replay와 loser cleanup, 정확 source/metadata/loan census 및 해당 compiler/native/동시성 시험이다. DEV3 전체 완료와 최종 S5는 아직 주장하지 않는다. 완료된 하위 시험·workspace wrapper는 실행하지 않았다.
 
 커밋에 포함할 경로만 별도 index tree로 export하여 컴파일했다. 첫 export는 Profile2 의존 경로 누락으로 실패했고 `core-index-r0`에 보존했다. 의존 경로를 포함한 `core-index-r1` source `5fddd5a3b06b69a4890ae88d44f43c2f4e829711b889b7cd65334907d620df29` 컴파일은 PASS다. 실제 소비자 연결 전 typed reexport의 unused 경고는 남아 있으며 zero-warning gate 통과로 표시하지 않는다. 완료한 시험은 이 확인에서 반복하지 않았다.
+
+## Catalog 편집 작업 버퍼 후속 변경
+
+기존 generic leaf의 1,013개 참조 배열 대신, 모든 기존 Catalog 값을 실제 namespace·key의 ObjectId로 XCT1 검산한 뒤 최소 header232+leaf prefix12+slot4에 근거한67개 배열을 사용한다. 작은 opaque value나 key/header 불일치는 이 상계를 적용하기 전에 거절한다. 최소 크기는 보수적으로 잡았으며 metadata와 새 삽입 공간 두 칸을 포함한다. 독립 검토에서 이 선행 검산과 실제 배열 교체를 수용했다.
+
+`integration-r10` source `a99a3b66d72a6297b204aa52c8b05b42642f0da6896c9782559819110948d741`, ELF `b8662587fcc92bdd2f9e46d36fd06fb106b8de031b8db87772eace883a8d7572`에서 새 dense62/63 split·opaque/mismatch2개와 직접 영향받은 C03/C13/P02/C05/R05의5개, 총7개가1.03초에 PASS였다. 새5초/사례·35초/전체·출력1MiB 계획과 원 stdout/stderr를 보존한다. 변경 없는 나머지 하위 시험은 반복하지 않았다. 시험이 읽은 독립 raw는 이미 커밋된 transition 입력과 SHA가 같으므로 최종 시험 소스의 경로를 그 기존 파일로 연결했다.
+
+이 후속 변경의 순수 검증은 실제 owner 연결의 인수가 아니다. r11 빌드는 통과했지만 새 전체 source 상계67,466B가65,536B를 넘으므로 실제 Catalog native 효과는 아직0이며, 원 FAIL 기록과 고정 cap을 유지한다. 사용자 최신 중단점은 최소 CREATE→Commit→새 프로세스 복구·조회까지이며 첫 Row INSERT는 시작하지 않는다.
+
+이 후속 commit의 선택 경로만 별도 index export한 `core-scratch-index-r1` source `acc1bb4bae91f116fa5e6de807870e8695296714a3372fb933b9d50d1d60d9c3`도 컴파일 PASS다. 완료 시험은 반복하지 않았고, 실제 연결 이전 typed reexport의 unused 경고는 남는다.
