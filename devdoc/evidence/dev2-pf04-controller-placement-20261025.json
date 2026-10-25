@@ -1133,7 +1133,7 @@
   "product_source_changes": 0,
   "original_pf04": "FAIL_PRESERVED",
   "dev2": "INCOMPLETE",
-  "review": "PASS_SCOPED_D1_D2_CONTROLLER_PLACEMENT_EVIDENCE_AND_DOCUMENTS",
+  "review": "PASS_SCOPED_D1_D2_CONTROLLER_PLACEMENT_OUTCOME_DOCUMENTS",
   "manifest": {
     "files": 999,
     "bytes": 1946111356

@@ -486,3 +486,30 @@ user instructions 중앙비1.053185367/1.076304360와 user CPI1.036546289/1.0467
 
 
 실행 결과: [원 제어기 배치 대조](../evidence/dev2-pf04-controller-placement-20261025.md)의60slot을7.508770897초에 완료했다. CPU2/3 중앙은 Off1.006135·Always1.004802·Detailed1.002576이며 세 모드 모두 동결한 큰 배치 효과를 지지하지 않았다. 원 정답·소유 정리와 독립 원자료 검산을 만족하고 원 PF04 FAIL·DEV2 미완료를 보존한다. 이것으로 전체 작업을 종료하지 않고 실행 상태 통제와 영속 잔여 해결을 계속한다.
+
+
+<a id="frequency-control"></a>
+
+## 후속 구현: 측정용 CPU 성능 요청 범위의 일시 고정과 원복
+
+2026-10-25 · **계획 선행 commit / 도구·host 변경·새 성능 실행 NOT_RUN**. 담당·계약·통합 `/root`, 독립 D1/D2 `/root/pf04_evidence_review`. 사용자의 계속 완료 요청과 sudo 작업 허용에 따라 디버깅에 필요한 가역적 측정 환경 제어를 준비한다. 과거의 한정 진단에서 제외했던 host 변경을 그 실행에 소급 추가하지 않는다. 이번 새 범위는CPU2/18의 성능 요청 한도만 일시 제어하며 별도 설계·소유·원복 증거로 결합한다. 재부팅·기존 서비스 재시작은 하지 않는다.
+
+### 근거·선택과 한계
+
+원 e3 worker·원 native 코드의60slot에서도 큰 배치 효과와 과거 느린 대역을 관측하지 못했다. 정상 계측 비용(Detailed 약12%)은 원15% CPU 한도에 가깝고, 원 audit에는 Off/On 양쪽의 실행 전반 속도 대역 변화가 섞였다. 이것은 주파수 원인 확정이 아니다. 그러나 같은 입력의 성능 비교를 위해 CPU 성능 요청 범위를 관측 가능한 값으로 좁히는 것은 후속 환경 통제 후보가 된다. 무제한 정상 구간 재측정이나 계측 counter 삭제보다 먼저 가역적 제어 도구를 검증한다.
+
+현재CPU2/18은 각각 `policy2`/`policy18`, related CPU는각각2/18, driver=`amd-pstate-epp`, governor/EPP=`performance`다. 원 한도는 min1,480,264kHz·max5,460,527kHz이며 ACPI CPP nominal_freq=2500MHz·nominal_perf=76이다. 이는 사전 읽기 snapshot이며 적용 시 다시 identity/값을 확인한다. 전역 boost·driver mode·governor·EPP·다른 CPU는 변경하지 않는다.
+
+설치 커널과 대응하는 Ubuntu source package `linux 7.0.0-38.38`(tag peeled commit `740b32353f43e9b00d0350d6fa7b29a6667deabd`)의 orig archive와 package diff에서 AMD-pstate 소스/문서를 따로 추출했다. `freq_to_perf`, `amd_pstate_update_min_max_limit`, `amd_pstate_epp_update_limit`는 performance 정책의 min을 nominal/max 중 작은 값으로, max를 요청 max로 변환한다. 따라서 두 policy의 min/max를2,500,000kHz로 설정하면 이 host의 nominal 성능 요청 범위를 선택하는 후보가 된다. CPUFreq 문서는 sysfs current frequency가 정확한 순간 하드웨어 주파수라는 보장은 없다고 명시한다. **설정 일치만으로 실제 loop 주파수가 고정됐다고 주장하지 않는다.** 원본/수정 source와 patch provenance는 `/home/et16/xadb-dev2-evidence/pf04-frequency-control-20261025/research-identity.json`에 보존한다. 최초 빈 patch 선택과 올바른 두 파일 fuzz0 적용도 구분한다.
+
+### 구현·권한·원복 계약
+
+- 범용 root shell 대신CPU2/18 두 policy와 네 sysfs 파일만 다루는 작은 helper를 작성한다. canonical policy 경로·related CPU·driver·governor·EPP·nominal 값·기존 한도·소유 UID를 확인한다. 허용된 원 값과 목표 밖의 값, 잘못된 policy/경로/부분 metadata는 적용 전에 거절한다. 사용자가 이미 승인한 sudo를 이 고정 작업에 사용하며 worker/일반 검산기를 root로 실행하지 않는다.
+- 코드와 상태는 새 root 소유 `/run/xadb-pf04-frequency-<고유ID>/`에 hash를 검산해 설치한다. 원 상태를 먼저 저장하고 네 write의 의도/관측을 남긴다. 각 policy에서 max를2,500,000으로 내린 뒤 min을 같은 값으로 올리며 모든 readback을 확인한다. 부분 실패도 원복 대상이다. 동시에 두 owned 제어가 실행되지 않도록 배타적 lease를 둔다.
+- 새 전용 systemd system service의 `ExecStartPre`에서 root helper를 적용하고, 본체는 원 사용자로 실행하며 `ExecStopPost`에서 root helper가 원 값을 복원한다. Type=exec·Restart=no·KillMode=control-group·RuntimeMaxSec와TimeoutStopSec를 명시한다. caller 취소·본체SIGKILL·deadline·시작 실패도 manager가 원복 경로를 수행하게 한다. 별도PGID 자식을 포함한 종료와 원래 네 값·전역 설정 불변을 독립 읽기로 확인한 뒤만 다음 작업을 시작한다.
+- 적용 이후 현재 값이 own target/부분 적용/원 값과 맞지 않으면 외부 변경 충돌로 보존한다. 임의 타 설정을 덮어쓰거나 성공으로 숨기지 않는다. 원복 실패는 작업 결함이며 즉시 소유 범위에서 복구·확인한다. unit/프로세스·root 작업 디렉터리의 소유 ID를 결합하고 무관한 서비스/프로세스를 종료하지 않는다.
+- 정상·중단·부분 실패 의미는 fake sysfs/상태 fixture의 필요한 새 단위 시험으로 먼저 검증한다. 이후 실제 host에서는 새 도구의 정상 원복, 본체 실패, 본체 강제 종료의 최대3개 기능 연결만 선택한다. 각 요청 한도 제어는 최대10초·정리30초, 재시도/실패 은폐0이다. 제품 worker/성능 인수는 이 도구 연결 시험에 포함하지 않는다. 최초 대기10초CPU2/18≤5%·관련 build/시험 부재를 확인하며 실행에 영향을 받는 작업이 있으면 준비 작업을 계속하고 적용은 보류한다.
+
+### 결과별 계속 조치
+
+기능 검증에서 원복·권한·대상 한도 결합이 실패하면 도구를 고치고 변경된 실패 경계만 다시 검증한다. 성공하면 실제 성능 요청 제어와 관측 가능한 실행 상태가 일치하는지 확인할 새 고정 profile을 따로 설계·commit한다. 이후 필요한 실패 사례의 해결 검증은 그 profile·source·기존 threshold·정답/품질·원복 조건에 묶는다. 이번 단계만으로 원 FAIL을 해결 또는 과거 주파수 원인 확정으로 표시하지 않는다. 영속 journal/tail·CPU 잔여는 별도 해결 의무이며 filesystem/ACK/sync 의미를 이번 도구에서 변경하지 않는다.
