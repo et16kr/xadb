@@ -1,5 +1,7 @@
-config = { max_map_keys = 8192; perf_rb_pages = 256; missing_probes = error; }
-BEGIN { @enabled = 1; }
+// Keep every fixed output payload (at most 72 bytes) on the invocation stack.
+// A CPU scratch slot can be overwritten by a different probe in interrupt context.
+config = { on_stack_limit = 128; max_map_keys = 8192; perf_rb_pages = 256; missing_probes = error; }
+BEGIN { @enabled = 1; printf("SCHEMA 2\n"); }
 self:signal:SIGUSR1 { @enabled = 0; printf("DISABLED %llu\n", nsecs(monotonic)); }
 tracepoint:ext4:ext4_sync_file_enter /@enabled && pid == __WORKER__/ {
  @counts[0] = count();
@@ -29,14 +31,14 @@ rawtracepoint:vmlinux:block_rq_issue /@enabled/ {
  $r = args.rq;
  if ($r->q->disk->major == __MAJOR__ && $r->q->disk->first_minor == __MINOR__) {
   @counts[5] = count();
-  printf("ISSUE %llu %llu %u %u %llu\n", nsecs(monotonic), (uint64)$r, $r->cmd_flags, $r->__data_len, $r->__sector);
+  printf("ISSUE %llu %llu %u %u %llu %u %llu\n", nsecs(monotonic), (uint64)$r, $r->cmd_flags, $r->__data_len, $r->__sector, $r->rq_flags, (uint64)$r->end_io);
  }
 }
 rawtracepoint:vmlinux:block_rq_complete /@enabled/ {
  $r = args.rq;
  if ($r->q->disk->major == __MAJOR__ && $r->q->disk->first_minor == __MINOR__) {
   @counts[6] = count();
-  printf("COMPLETE %llu %llu %u %u %u\n", nsecs(monotonic), (uint64)$r, args.error, args.nr_bytes, $r->__data_len);
+  printf("COMPLETE %llu %llu %u %u %u %u %u %llu\n", nsecs(monotonic), (uint64)$r, args.error, args.nr_bytes, $r->__data_len, $r->cmd_flags, $r->rq_flags, (uint64)$r->end_io);
  }
 }
 rawtracepoint:vmlinux:block_rq_requeue /@enabled/ {
@@ -44,6 +46,13 @@ rawtracepoint:vmlinux:block_rq_requeue /@enabled/ {
  if ($r->q->disk->major == __MAJOR__ && $r->q->disk->first_minor == __MINOR__) {
   @counts[7] = count();
   printf("REQUEUE %llu %llu\n", nsecs(monotonic), (uint64)$r);
+ }
+}
+fentry:vmlinux:blk_flush_complete_seq /@enabled/ {
+ $r = args.rq;
+ if ($r->q->disk->major == __MAJOR__ && $r->q->disk->first_minor == __MINOR__) {
+  @counts[8] = count();
+  printf("SEQ %llu %llu %u %u %u %u %u %u %llu %llu\n", nsecs(monotonic), (uint64)$r, $r->flush.seq, args.seq, args.error, $r->rq_flags, $r->cmd_flags, $r->__data_len, (uint64)$r->end_io, (uint64)$r->flush.saved_end_io);
  }
 }
 END { print(@counts); clear(@counts); clear(@enabled); }

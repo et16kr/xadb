@@ -159,6 +159,142 @@ class AnalysisVectors(unittest.TestCase):
         self.assertEqual(calls,['attach','ready',('payload',b'frame'),'close','DONE','stop'])
 
 
+class ProvenanceVectors(unittest.TestCase):
+    BASE = BASE[:4] + ['ISSUE 125 1234 2 0 0 3 55', 'COMPLETE 170 1234 0 0 0 2 3 55']
+    LOGICAL = ['ISSUE 130 9 131073 4096 0 3 66', 'COMPLETE 150 9 0 4096 4096 131073 3 66',
+               'SEQ 151 9 5 2 0 3 131073 0 66 0', 'COMPLETE 152 9 0 0 0 131073 1 0']
+
+    def check(self, rows):
+        return analysis.analyze('SCHEMA 2\n'+raw(rows),start=100,end=200,worker=7,device=99,inode=42,expected=1)
+
+    def test_v1_keeps_original_shape_and_verdict(self):
+        value = analyze(BASE)
+        self.assertNotIn('schema_version', value)
+        self.assertEqual(value['request_overlap_ns']['all_requests'],45)
+        self.assertIsNone(analyze(BASE+['COMPLETE 175 1234 0 0 0'])['request_overlap_ns'])
+
+    def test_physical_logical_census_and_reuse(self):
+        value = self.check(self.BASE+self.LOGICAL+[
+            'ISSUE 175 9 1 8 0 1 0', 'COMPLETE 185 9 0 8 8 1 1 0'])
+        self.assertEqual(value['completion_census'],dict(physical=3,logical=1,unknown=0,total=4))
+        self.assertEqual(value['request_overlap_ns']['all_requests'],55)
+        self.assertEqual(value['request_overlap_ns']['fua'],20)
+        self.assertEqual(value['request_count'],3)
+
+    def test_zero_and_multiple_action_masks_are_legal(self):
+        for before, action in ((7,0),(0,7),(1,6),(3,4),(5,2),(6,1)):
+            rows = self.BASE+[f'SEQ 175 9 {before} {action} 0 2 1 0 66 0','COMPLETE 176 9 0 0 0 1 0 0']
+            self.assertEqual(self.check(rows)['completion_census']['logical'],1)
+        value=self.check(self.BASE+['SEQ 175 9 0 0 0 2 1 4096 66 0'])
+        self.assertEqual(value['status'],'CONNECTED_DIAGNOSTIC_ONLY')
+
+    def test_repeated_marker_collision_taints_until_new_issue(self):
+        rows = self.BASE+[
+            'SEQ 80 9 5 2 0 3 131073 0 66 0',
+            'SEQ 90 9 5 2 0 3 131073 0 66 0',
+            'SEQ 151 9 5 2 0 3 131073 0 66 0',
+            'COMPLETE 152 9 0 0 0 131073 1 0']
+        value=self.check(rows)
+        self.assertIsNone(value['request_overlap_ns'])
+        self.assertEqual(value['completion_census'],dict(physical=1,logical=0,unknown=1,total=2))
+        self.assertIsNone(self.check(rows[:-1])['request_overlap_ns'])
+        extra=['SEQ 155 9 5 2 0 3 131073 0 66 0','COMPLETE 156 9 0 0 0 131073 1 0']
+        self.assertEqual(self.check(rows+extra)['completion_census']['unknown'],2)
+        value=self.check(rows[:8]+['ISSUE 153 9 1 8 0 1 0','COMPLETE 160 9 0 8 8 1 1 0'])
+        self.assertEqual(value['completion_census']['physical'],2)
+
+    def test_invalid_marker_fields_and_logical_mismatches_stay_unknown(self):
+        marker=self.LOGICAL[2];complete=self.LOGICAL[3]
+        bad_markers=[marker.replace('5 2 0','5 1 0'),marker.replace('5 2 0','8 2 0'),
+                     marker.replace('5 2 0','5 2 1'),marker.replace('0 3 131073','0 1 131073')]
+        bad_ends=[complete.replace('131073 1 0','131073 3 0'),complete.replace('131073 1 0','131073 0 0'),
+                  complete.replace('131073 1 0','131073 1 9'),complete.replace('131073','1'),
+                  complete.replace('9 0 0 0','9 1 0 0'),complete.replace('9 0 0 0','9 0 0 1')]
+        cases=[self.LOGICAL[:2]+[m,complete] for m in bad_markers]+[self.LOGICAL[:3]+[c] for c in bad_ends]
+        cases += [self.LOGICAL[:2]+[complete],self.LOGICAL[:3],
+                  self.LOGICAL[:3]+[marker.replace('151','250')],
+                  self.LOGICAL[:3]+[marker.replace('151','152'),complete.replace('152','153')],
+                  self.LOGICAL[:3]+['ISSUE 152 9 1 0 0 1 0',complete.replace('152','153')]]
+        for case in cases:
+            with self.subTest(case=case):
+                value=self.check(self.BASE+case)
+                self.assertIsNone(value['request_overlap_ns'])
+                self.assertEqual(value['completion_census']['logical'],0)
+
+    def test_invalid_generation_cannot_recover_without_new_issue(self):
+        endings=['SEQ 151 9 5 2 0 3 131073 0 66 0','COMPLETE 152 9 0 0 0 131073 1 0']
+        bad_prefixes=[['SEQ 80 9 5 1 0 3 131073 0 66 0'],
+                      ['SEQ 80 9 5 2 0 3 131073 0 66 0','COMPLETE 90 9 0 0 0 131073 3 0']]
+        for prefix in bad_prefixes:
+            value=self.check(self.BASE+prefix+endings)
+            self.assertIsNone(value['request_overlap_ns'])
+            self.assertEqual(value['completion_census']['logical'],0)
+
+    def test_partial_boundary_ties_and_v2_shape(self):
+        rows=self.BASE+['ISSUE 50 9 1 8 0 1 0','COMPLETE 80 9 0 3 8 1 1 0','COMPLETE 175 9 0 5 5 1 1 0']
+        value=self.check(rows)
+        self.assertIsNone(value['request_overlap_ns'])
+        self.assertEqual(value['completion_census']['unknown'],2)
+        for rows in (self.BASE+self.LOGICAL+[self.LOGICAL[2]],self.BASE+['ISSUE 125 1234 2 0 0 3 55']):
+            with self.assertRaisesRegex(ValueError,'ambiguous'): self.check(rows)
+        text='SCHEMA 2\n'+raw(self.BASE)
+        self.assertEqual(analysis.parse(text),analysis.parse(raw(self.BASE)+'SCHEMA 2\n'))
+        for value in (text.replace('SCHEMA 2','SCHEMA 3'),text+'SCHEMA 2\n',text.replace(' 2 3 55','')):
+            with self.assertRaises(ValueError): analysis.parse(value)
+        self.assertEqual(self.check(self.BASE+['COMPLETE 50 9 0 0 0 1 0 0'])['boundary_unknown_count'],1)
+
+    def test_journal_partition_signed_return_and_incomplete(self):
+        names=['start_commit','commit_locking','commit_flushing','commit_logging','end_commit']
+        phases=[f'PHASE {t} 11 tracepoint:jbd2:jbd2_{name} 99 8' for t,name in zip([115,125,140,150,175],names)]
+        value=self.check(self.BASE+phases)['journal_phases']
+        self.assertEqual(value['overlap_ns'],dict(start_to_locking=5,locking_to_flushing=15,flushing_to_logging=10,logging_to_end=25,before_start=0,after_end=5))
+        self.assertEqual(value['connected'][0]['return_minus_end_ns'],5)
+        value=self.check([r.replace('WAIT_OUT 180','WAIT_OUT 170') for r in self.BASE]+phases)['journal_phases']
+        self.assertEqual(value['connected'][0]['return_minus_end_ns'],-5)
+        self.assertEqual(value['overlap_ns']['logging_to_end'],20)
+        for bad in (phases[:-1],phases+[phases[0]],phases[:2]+[phases[2].replace('140','125')]+phases[3:],
+                    [phases[0].replace('115','145')]+phases[1:]):
+            value=self.check(self.BASE+bad)['journal_phases']
+            self.assertIsNone(value['overlap_ns'])
+            self.assertEqual(len(value['unknown']),1)
+        outside=[f'PHASE {t} 11 tracepoint:jbd2:jbd2_{name} 99 8' for t,name in zip([90,95,145,195,210],names)]
+        self.assertEqual(self.check(self.BASE+outside)['journal_phases']['overlap_ns']['flushing_to_logging'],35)
+
+    def test_v2_probe_contract(self):
+        program=supervisor.render(7,99,259,6)
+        self.assertEqual(supervisor.PROBES,16)
+        self.assertIn('SCHEMA 2',program)
+        self.assertIn('fentry:vmlinux:blk_flush_complete_seq',program)
+        self.assertNotIn('fexit:vmlinux:blk_flush_complete_seq',program)
+        self.assertIn('$r->flush.saved_end_io',program)
+
+
+class CompilerVectors(unittest.TestCase):
+    def test_printf_payloads_use_invocation_stack(self):
+        import re
+        root=Path(os.environ['XADB_IO_TEST_ROOT'])/'stack-compile'
+        root.mkdir()
+        for name in ('sudo','timeout','bpftrace'):
+            trace.window.trusted_tool('/usr/bin/'+name)
+        program=root/'program.bt'
+        program.write_text(supervisor.render(7,271581192,259,6))
+        command=['/usr/bin/sudo','-n','--','/usr/bin/timeout','--kill-after=1s','20s',
+                 '/usr/bin/bpftrace','--mode','codegen','--emit-llvm',str(root/'compiled'),str(program)]
+        with (root/'compiler.log').open('x') as stream:
+            result=subprocess.run(command,stdout=stream,stderr=subprocess.STDOUT,timeout=25)
+        (root/'command.json').write_text(json.dumps(dict(command=command,returncode=result.returncode,
+             source_sha256=trace.window.digest(program),scope='codegen only; no attach'),indent=2))
+        self.assertEqual(result.returncode,0)
+        ir=(root/'compiled.optimized.ll').read_text()
+        self.assertNotIn('__bt__fmt_str_buf',ir)
+        # BEGIN, disable, fsync2, wait2, journal5, block3, sequence1.
+        allocations=re.findall(r'%printf_args = alloca %printf_t(?:\.\d+)?, align 8',ir)
+        self.assertEqual(len(allocations),15)
+        self.assertIn('on_stack_limit = 128',program.read_text())
+        (root/'verdict.json').write_text(json.dumps(dict(status='PASS',printf_stack_allocations=len(allocations),
+             shared_printf_buffer_references=0,ir_sha256=trace.window.digest(root/'compiled.optimized.ll'))))
+
+
 class NativeOwner(unittest.TestCase):
     def run_case(self, case):
         root=Path(os.environ['XADB_IO_TEST_ROOT'])/case

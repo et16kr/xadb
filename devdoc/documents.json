@@ -3,6 +3,16 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev2-pf04-flush-provenance-20261025.md": {
+      "path": "evidence/dev2-pf04-flush-provenance-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 flush 완료 구분과 수집 출력 수정"
+    },
+    "dev2-pf04-flush-provenance-20261025.json": {
+      "path": "evidence/dev2-pf04-flush-provenance-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 flush provenance source별 실행 기록"
+    },
     "xadb-direction-review-20261025.md": {
       "path": "evidence/xadb-direction-review-20261025.md",
       "role": "evidence",

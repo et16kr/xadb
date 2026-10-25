@@ -178,7 +178,7 @@ native 예산은 새16-probe/data 경로를 검증하는 Off/control→Off/trace
 
 결과를 통해 물리 요청과 journal 대기의 위치를 구분한 뒤 P4 WAL 후보를 채택/기각한다. K0·영속 CPU 한도는 별개 완료 조건이다. 이 후속 관측만으로 목표 완료나 PF04 PASS를 선언하지 않는다.
 
-후속 계획 상태: **PASS_PLAN_ONLY 채택 / 구현·실행 전**. 독립 검토 차단0개. receipt는 `/home/et16/xadb-dev2-evidence/pf04-flush-provenance-20261025/plan-review.json`, SHA-256 `401defe67b60b3d0632f56fb4c1938796b538ec959782089c2578823f3b2f727`이다. 본 anchor부터 이 상태 문장 직전까지의 검토 projection SHA-256은 `daaa7627e6b0a2f6cf4669224f9eafd1c74d1cf20fa474b4203002aa6c9b14aa`다. 계획 채택은 구현·실행 통과가 아니다.
+후속 계획 상태: **PASS_PLAN_ONLY 채택 / 채택 당시 구현·실행 전**. 이후 실행은 [후속 증거](../evidence/dev2-pf04-flush-provenance-20261025.md)를 따른다. 독립 검토 차단0개. receipt는 `/home/et16/xadb-dev2-evidence/pf04-flush-provenance-20261025/plan-review.json`, SHA-256 `401defe67b60b3d0632f56fb4c1938796b538ec959782089c2578823f3b2f727`이다. 본 anchor부터 이 상태 문장 직전까지의 검토 projection SHA-256은 `daaa7627e6b0a2f6cf4669224f9eafd1c74d1cf20fa474b4203002aa6c9b14aa`다. 계획 채택은 구현·실행 통과가 아니다.
 
 <a id="p3-stack-output"></a>
 
@@ -196,4 +196,4 @@ D2 선택은 고정 BPF config의 `on_stack_limit=128`이다. 현재 최대72byt
 
 Off/trace의 원 count·연결 검사 통과는 보존한다. 다만 같은 공유 scratch 수집기여서 count가 맞아도 조용한 payload 오염이 전혀 없었다는 증명은 아니다. 이 해석 한계를 추가하고 완료 사례를 반복하거나 원 판정을 소급 변경하지 않는다.
 
-수집 오류 보완 계획 상태: **PASS_PLAN_ONLY 채택 / 수정 전**. 독립 검토 차단0개. receipt `/home/et16/xadb-dev2-evidence/pf04-flush-provenance-20261025/stack-plan-review.json`의 SHA-256은 `43f62dfc789a63e9da8ec1c7a806e03767fa5f828e60525ad3d61572d74a93f1`, 본 anchor부터 상태 문장 직전까지의 검토 projection은 `ef290419c358a4456feb992a24bb63357b621fbcef286b24704c5feb2456fbad`다.
+수집 오류 보완 계획 상태: **PASS_PLAN_ONLY 채택 / 채택 당시 수정 전**. 이후 변경 검증은 [후속 증거](../evidence/dev2-pf04-flush-provenance-20261025.md)를 따른다. 독립 검토 차단0개. receipt `/home/et16/xadb-dev2-evidence/pf04-flush-provenance-20261025/stack-plan-review.json`의 SHA-256은 `43f62dfc789a63e9da8ec1c7a806e03767fa5f828e60525ad3d61572d74a93f1`, 본 anchor부터 상태 문장 직전까지의 검토 projection은 `ef290419c358a4456feb992a24bb63357b621fbcef286b24704c5feb2456fbad`다.

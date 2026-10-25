@@ -19,7 +19,7 @@ import subprocess
 import time
 
 LIMIT = 64 * 1024 * 1024
-PROBES = 15
+PROBES = 16
 
 
 def identity(pid):
@@ -142,7 +142,7 @@ def run(args):
             stdout = bytes(logs[child.stdout.fileno()][2])
             stderr = bytes(logs[child.stderr.fileno()][2])
             if not ready and b'__BPFTRACE_NOTIFY_PROBES_ATTACHED\n' in stdout and b'\n' in stderr:
-                if stdout.count(b'__BPFTRACE_NOTIFY_PROBES_ATTACHED\n') != 1 or stderr.strip() != b'Attached 15 probes':
+                if stdout.count(b'__BPFTRACE_NOTIFY_PROBES_ATTACHED\n') != 1 or stderr.strip() != f'Attached {PROBES} probes'.encode():
                     raise RuntimeError('attach count/warning mismatch')
                 ready = True
                 record['collector'] = identity(child.pid)
@@ -209,7 +209,7 @@ def run(args):
                 attempt('log close', stream.close)
                 attempt('pipe close', pipe.close)
             final_stderr = attempt('read final stderr', lambda: (directory / 'stderr').read_bytes())
-            if final_stderr is not None and final_stderr.strip() != b'Attached 15 probes':
+            if final_stderr is not None and final_stderr.strip() != f'Attached {PROBES} probes'.encode():
                 errors.append('final BPF stderr warning/error')
             record['collector_gone'] = attempt('collector disappearance', lambda: not Path('/proc', str(child.pid)).exists())
             def group_gone():

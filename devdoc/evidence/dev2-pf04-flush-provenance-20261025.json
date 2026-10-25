@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "classification": "D2_SCOPED_FLUSH_PROVENANCE",
+  "owner": "/root",
+  "status": "IMPLEMENTED_OBSERVED_SCOPED_REVIEW_ACCEPTED",
+  "plan_commits": [
+    "f157846",
+    "f18700d"
+  ],
+  "plan_ref": "dev2-pf04-resolution-plan.md#p3-flush-provenance",
+  "artifact_root": "/home/et16/xadb-dev2-evidence/pf04-flush-provenance-20261025",
+  "manifest": {
+    "path": "artifact-manifest.json",
+    "files": 252,
+    "sha256": "c2d9d22e8bc6d277a178d89db51e589676ff43fcb939023f20bbc423690436fd"
+  },
+  "product_source": {
+    "build": {
+      "source_sha256": "7ced0a5622825b971a4a146cdd8d1ce4a5ef01eefe633e59deb6b338390a5329",
+      "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+      "target": "x86_64-unknown-linux-gnu",
+      "profile": "release",
+      "self_test": false
+    },
+    "workers": {
+      "durable": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-io-cause-20261025/target/x86_64-unknown-linux-gnu/release/xadbtest-durable-performance-worker",
+        "sha256": "ea1f0f7c5f2d58a61199f399ae6961f290449dea488a9187ebf11505bc501c51"
+      }
+    }
+  },
+  "tool_sources": {
+    "scripts/dev2_io_analysis.py": "db1a16147b3f00254b20a0e14ad16176d91cb56627d455fb0c8049460fb575c9",
+    "scripts/dev2_io_supervisor.py": "ae7fce799e580b5cf06e729b6a4b0fb2753373c603121a7e01fddcf5f5817195",
+    "scripts/dev2_io_trace.bt": "28346cef592f3556bbd58956e1c9229c82dd9ca3eb21499c9256da5ea857fc42",
+    "scripts/test_dev2_io_trace.py": "4c8ac43135fb28a3854bfe56f193853d54afe8f2626d798b06e104b5085e802e"
+  },
+  "selected_validation": {
+    "unit_unique": 11,
+    "unit_executions": 12,
+    "compiler_new": 1,
+    "source_scoped_total_executions": 13,
+    "native_original": 3,
+    "native_changed": 2,
+    "native_semantics_pass": 5,
+    "native_collection_fail": 1,
+    "original_slot_3": "NOT_RUN",
+    "unchanged_owner_repeats": 0,
+    "unchanged_product_regressions": 0
+  },
+  "slots": [
+    {
+      "evidence": "slot-0",
+      "slot": {
+        "index": 0,
+        "observations": false,
+        "trace": false
+      },
+      "status": "CORRECT_DIAGNOSTIC",
+      "measurement_ns": 2754384237,
+      "cpu_ns": 28190175,
+      "cycle_p99_ns": 6065518,
+      "error": null
+    },
+    {
+      "evidence": "slot-1",
+      "slot": {
+        "index": 1,
+        "observations": false,
+        "trace": true
+      },
+      "status": "CORRECT_DIAGNOSTIC",
+      "measurement_ns": 2746991041,
+      "cpu_ns": 28925698,
+      "cycle_p99_ns": 5778102,
+      "error": null
+    },
+    {
+      "evidence": "slot-2",
+      "slot": {
+        "index": 2,
+        "observations": true,
+        "trace": true
+      },
+      "status": "FAILED",
+      "measurement_ns": 2765722462,
+      "cpu_ns": 17659738,
+      "cycle_p99_ns": 7223756,
+      "error": "ValueError('kernel count/output mismatch')"
+    },
+    {
+      "evidence": "repair/slot-2",
+      "slot": {
+        "index": 2,
+        "observations": true,
+        "trace": true
+      },
+      "status": "CORRECT_DIAGNOSTIC",
+      "measurement_ns": 2735125743,
+      "cpu_ns": 23061924,
+      "cycle_p99_ns": 5517020,
+      "error": null
+    },
+    {
+      "evidence": "repair/slot-3",
+      "slot": {
+        "index": 3,
+        "observations": true,
+        "trace": false
+      },
+      "status": "CORRECT_DIAGNOSTIC",
+      "measurement_ns": 2754364755,
+      "cpu_ns": 24749558,
+      "cycle_p99_ns": 5523400,
+      "error": null
+    }
+  ],
+  "source_scoped_screens": [
+    {
+      "scope": "Partial original v2 campaign Off pair only; Always screen unavailable",
+      "ratios": {
+        "measurement_ns": 0.9973158443543619,
+        "cpu_ns": 1.026091466264399,
+        "cycle_p99_ns": 0.9526147643119681
+      },
+      "status": "PASS",
+      "limitation": "Original shared-scratch payloads; count agreement is not proof of no silent corruption"
+    },
+    {
+      "scope": "Changed stack-output Always trace and previously unrun Always control",
+      "ratios": {
+        "measurement_ns": 0.9930150819839401,
+        "cpu_ns": 0.9318115499274775,
+        "cycle_p99_ns": 0.9988449143643408
+      },
+      "status": "PASS",
+      "performance_acceptance": "NOT_APPLICABLE"
+    }
+  ],
+  "limitations": [
+    "Original Off shared-scratch count agreement is not proof of no silent payload corruption",
+    "Different collector sources must not be pooled for mode-cost inference",
+    "One pair each is diagnostic influence screen, not performance acceptance",
+    "Actual interrupt nesting causing original corruption not recorded"
+  ],
+  "remaining": [
+    "P4 WAL candidate adoption/rejection",
+    "K0 and durable CPU cost cause and completion audit"
+  ],
+  "original_pf04": "FOUR_FAIL_UNCHANGED",
+  "dev2": "INCOMPLETE",
+  "performance_acceptance": "NOT_APPLICABLE",
+  "independent_review": {
+    "status": "PASS_SCOPED_D1_D2_P3_FLUSH_PROVENANCE",
+    "reviewer": "/root/pf04_evidence_review",
+    "receipt": "final-review.json",
+    "sha256": "362b9a2b538301d9ad7de828e15d565dd5edc735e5b7461b8e97abe3dbce6f73",
+    "blockers": []
+  }
+}

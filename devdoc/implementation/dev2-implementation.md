@@ -690,3 +690,12 @@ Off/Always guard는 확인 실패 중단 규칙에 따라 NOT_RUN이고 완료 �
 `360961b` 계획 commit 뒤 [새 BPF 수집·분석 도구와 source별 선택 검증](../evidence/dev2-pf04-io-cause-20261025.md)을 구현했다. 제품은 고정5253caa clean export이며 제품 변경0이다. 도구 unit 고유16·native owner6·제품 연결4slot의 정답을 검증했고 기존 완료 제품 시험은 반복하지 않았다. 두 추적의512개 fsync가 원 측정구간과 대응하며 fsync 중 journal wait 겹침은99.0435%/99.2930%다.
 
 0byte 미연결 완료의 논리 종료 여부를 구분할 kernel state가 없어 전체 요청 비율은 INCONCLUSIVE다. Always trace/control p99 screen은1.92731배로 FAIL이다. 다음 단계는 flush 순서 provenance·transaction별 phase 연결이며 이를 확인하기 전 P4 WAL 후보를 자동 채택하지 않는다. 원 PF04 네 FAIL·DEV2/B2/D0 INCOMPLETE는 유지하고 독립 최종 검토 상태는 증거 기록을 따른다.
+
+
+<a id="dev2-pf04-flush-provenance-20261025"></a>
+
+## 2026-10-25 P3 flush 완료 구분과 출력 버퍼 보완
+
+계획 `f157846`·오류 보완 계획 `f18700d` 뒤 [16-probe 수집·세대별 분석과 source별 검증](../evidence/dev2-pf04-flush-provenance-20261025.md)을 완료했다. 실제 compiler에서 출력15개를 호출별 stack에 배치하고 공유 scratch 참조0을 확인했다. 원 Always count 불일치 FAIL은 보존하며 변경 source의 Always 완료2932개(물리2347·논리585)와512 fsync/phase를 연결했다. 실제5연결은 원3+수정2이고 제품/하위 인수 반복은0이다.
+
+수정 Always의 fsync 중 장치 요청 겹침은 약98.90%이며 journal wait의 대부분이 logging→end 구간에 있다. 원 Off 수집기의 잠재 scratch 오염 한계와 원 PF04 네 FAIL·DEV2/B2/D0 INCOMPLETE를 유지한다. 한 쌍의 영향 screen PASS를 상대 비용 인수로 쓰지 않는다. P4 후보 채택/기각과 K0/영속 CPU 원인 종료 검토가 남는다.

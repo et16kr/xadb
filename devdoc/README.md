@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-25 [DEV2 PF04 flush 완료 구분·출력 버퍼 보완](evidence/dev2-pf04-flush-provenance-20261025.md): 수집기 변경과 source별 선택 검증을 완료했다. 원 count 불일치 FAIL을 보존하고 수정 Always의512 fsync/phase와 완료2932개를 연결했다. PF04·DEV2 미완료를 유지한다.
+
 [DEV3 실행 범위](plans/dev3-implementation-plan.md#direction-refinement) · [구현 상태](implementation/README.md) · [최신 증거](evidence/README.md) · [이전 변경 기록](#previous-updates)
 
 ## 작업을 시작할 때
