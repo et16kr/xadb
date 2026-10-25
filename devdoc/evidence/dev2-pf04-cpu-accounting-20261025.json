@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "classification": "D2_SCOPED_CPU_ACCOUNTING_SOURCE_REVIEW",
+  "status": "SOURCE_ANALYSIS_COMPLETE_SCOPED_REVIEW_ACCEPTED",
+  "owner": "/root",
+  "previous_commit": "038236b",
+  "source_manifest": {
+    "package": "linux 7.0.0-38.38",
+    "tag": "Ubuntu-7.0.0-38.38",
+    "peeled_commit": "740b32353f43e9b00d0350d6fa7b29a6667deabd",
+    "method": "orig archive plus selected Ubuntu source-package patches, --fuzz=0; no compiler or live kernel mutation",
+    "package_sources": {
+      "/home/et16/xadb-kernel-7.0.0-38.38-research/linux_7.0.0.orig.tar.gz": "c6343795c8c7e4feff55f5b309365c8e0eaf49cd6abcb412e32315313f149536",
+      "/home/et16/xadb-kernel-7.0.0-38.38-research/ubuntu.diff": "15a83c259eb9ce030006b8cc7f836e57492eabeb25e406af8a6ff2556b9cb887"
+    },
+    "patched_files": [
+      "include/linux/vtime.h",
+      "kernel/events/core.c",
+      "kernel/sys.c",
+      "kernel/time/posix-cpu-timers.c",
+      "kernel/time/tick-sched.c",
+      "include/linux/perf_event.h",
+      "kernel/sched/core.c"
+    ],
+    "files": {
+      "drivers/base/cpu.c": "1f4073e4b9370668d48bd7d85291190a66e17a5d47f869b5be0a6a869336dea4",
+      "include/linux/context_tracking_state.h": "5557ceaeb600d949177c9dc73315448f3e2b61f442e9e53ce8b727de80afe673",
+      "include/linux/perf_event.h": "44beced5223ebf327e86167009f1eee81e99e45e2eab74fe7189f6eb71efce39",
+      "include/linux/vtime.h": "45fc546681f2718d66f48332adf42423d0d331840875ae55bc69a41bc77cfff2",
+      "kernel/context_tracking.c": "2e410f4c3aab6ad4b7d933d523c31582f7b65690b3056417a9875e4ac8035354",
+      "kernel/events/core.c": "1f3d8cbfaf2851dd09acd3aecdc44eb4a3e642dc0bb97a4fd4b0bd4ea564708b",
+      "kernel/sched/core.c": "8a4c000ddf69ab5334452e55f67346ba7c8fc6e46f382a9c93e61befbbc17cbc",
+      "kernel/sched/cputime.c": "b7fb24b5eff60bfe22eb621ddd7e9ac58a16bb4d63a14ff0668c7ede12cce1d3",
+      "kernel/sched/stats.c": "6c99cc2bb2eb78fd89b6f231ffcdfa0b52192f87d528857b6dfef05da856245c",
+      "kernel/sys.c": "a0e3a885a608890d5e7b033b8dbd461282200a6416315bae66bcf7070fc62818",
+      "kernel/time/posix-cpu-timers.c": "205aca87c575d5338ac8ae0975dce7c71bc5bb2a4bd232af5dd5d1c003cd694a",
+      "kernel/time/tick-sched.c": "3b75443d594443062336156c7b2889ef18bad5cc474162b5bc35bebea8564441"
+    },
+    "product_source_commit": "5253caa",
+    "product_files": {
+      "product-measurement_window.rs": "dc70728ea92e64131a7826748ab5364ff0ec19edd3b8dc814a08d696edfe3ad8",
+      "product-durable_performance.rs": "8d515cfcfb18bdefdfdf0b0060af705c6abbc497d1f41c8e89ee8d136d9a02c0",
+      "product-performance.rs": "f691854b7f50e7e7944bd742f4c1034fff87f0d0feea964ed5703d4973d8ccac"
+    }
+  },
+  "host": {
+    "kernel": "7.0.0-38-generic",
+    "boot_id": "6a44532b-2d9c-4df3-bda8-d4b586a79cd4",
+    "nohz_full_bytes": [
+      10
+    ],
+    "relevant_boot_parameters": [],
+    "config": {
+      "CONFIG_CONTEXT_TRACKING": "y",
+      "CONFIG_CONTEXT_TRACKING_IDLE": "y",
+      "CONFIG_NO_HZ_COMMON": "y",
+      "CONFIG_NO_HZ_FULL": "y",
+      "CONFIG_CONTEXT_TRACKING_USER": "y",
+      "CONFIG_NO_HZ": "y",
+      "CONFIG_VIRT_CPU_ACCOUNTING": "y",
+      "CONFIG_VIRT_CPU_ACCOUNTING_GEN": "y",
+      "CONFIG_HZ": "1000",
+      "CONFIG_HAVE_CONTEXT_TRACKING_USER": "y",
+      "CONFIG_HAVE_CONTEXT_TRACKING_USER_OFFSTACK": "y",
+      "CONFIG_HAVE_VIRT_CPU_ACCOUNTING_GEN": "y",
+      "CONFIG_HAVE_IRQ_TIME_ACCOUNTING": "y"
+    },
+    "disabled_config_lines": [
+      "# CONFIG_CONTEXT_TRACKING_USER_FORCE is not set",
+      "# CONFIG_IRQ_TIME_ACCOUNTING is not set"
+    ],
+    "cpu_split_boot_id": "6a44532b-2d9c-4df3-bda8-d4b586a79cd4"
+  },
+  "execution": {
+    "product_changes": 0,
+    "collector_changes": 0,
+    "builds": 0,
+    "tests": 0,
+    "native_workers": 0,
+    "pmu_bpf_runs": 0,
+    "reboots": 0,
+    "host_setting_changes": 0
+  },
+  "conclusions": {
+    "rusage_split": "Tick-derived cumulative user/system ratio is adjusted to scheduler runtime on the supported inactive generic-vtime path; microsecond output units do not prove microsecond domain accuracy.",
+    "original_cpu": "CLOCK_THREAD_CPUTIME_ID uses CPUCLOCK_SCHED/task_sched_runtime separately from the rusage split; original total-CPU FAIL remains.",
+    "perf_runtime": "Event/context enabled and running time is not privilege-domain CPU time.",
+    "historical_cause": "UNRESOLVED",
+    "performance_effect": "NOT_EVALUATED",
+    "pf04": "FAIL_UNCHANGED",
+    "dev2": "INCOMPLETE",
+    "rusage_total_boundary": "With inactive generic vtime, task_cputime returns false and task_cputime_adjusted uses already accounted se.sum_exec_runtime without task_sched_runtime refresh; this differs from the original thread clock pending-runtime update and does not numerically attribute observed differences."
+  },
+  "artifacts": {
+    "source-manifest.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-accounting-20261025/source-manifest.json",
+      "sha256": "9499ace64a755870e92df55dbf9cbd0497e2795d13963ab5de4857a100994bce"
+    },
+    "host.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-accounting-20261025/host.json",
+      "sha256": "fee8a953962e5301d0c8f0f94a5d06d0992eb622633ead48d4fae844db294749"
+    },
+    "artifact-manifest.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-accounting-20261025/artifact-manifest.json",
+      "sha256": "5b038cc9aa25dfd2df656e3d3e36b743276c57850e08708fbfe621b6dee02b7d"
+    },
+    "final-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-accounting-20261025/final-review.json",
+      "sha256": "cf6af0f1acde8d7a332c0fd988a0ba99fe697bb213bbc24cb628394f2d98f869"
+    }
+  },
+  "independent_review": {
+    "reviewer": "/root/pf04_evidence_review",
+    "status": "PASS_SCOPED_D1_D2_CPU_ACCOUNTING_SOURCE_ANALYSIS",
+    "blocking_findings": 0,
+    "accepted_by": "/root",
+    "receipt": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-cpu-accounting-20261025/final-review.json",
+      "sha256": "cf6af0f1acde8d7a332c0fd988a0ba99fe697bb213bbc24cb628394f2d98f869"
+    },
+    "scope": "Source/host bindings and CPU-accounting distinctions only; no historical cause or PF04/DEV2 acceptance."
+  }
+}

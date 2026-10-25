@@ -249,3 +249,5 @@ Native 예산은 새 profile의 durable Off1회→Always1회 **총2slot**이다.
 CPU 분리 계획 상태: **PASS_PLAN_ONLY 채택 / 채택 당시 도구 수정·실행 전**. 독립 검토 차단0개. receipt `/home/et16/xadb-dev2-evidence/pf04-cpu-split-20261025/plan-review.json`의 SHA-256은 `38d36549d547b91609ffd187592b6d92aa91f6bdc3c43c28e5ec63e357e3ea7c`, 본 anchor부터 상태 문장 직전 projection은 `f1d0423a5a505ee049b4c82390c2cb02387f493bfbac1929b1b99feb97ad981a`다.
 
 CPU 분리 실행: 선행 계획 commit `b33f1e4` 뒤 도구를 구현하고 선택6함수·실제2연결을 완료했다. [관측 증거](../evidence/dev2-pf04-cpu-split-20261025.md)의 원자료·해석·최종 검토를 따른다.8event reported coverage와 진단 정답을 확인했으며 원 PF04·DEV2 완료 판정은 변경하지 않았다.
+
+CPU 집계 읽기 후속: `038236b` 뒤 [설치 커널 source 조사](../evidence/dev2-pf04-cpu-accounting-20261025.md)로 rusage tick 비율 보정·원 thread CPU·perf context runtime 경로를 구분했다. 제품/수집 변경·새 시험0이며 이 의미 차이를 원 전체 CPU FAIL의 무효화나 원인 해결로 처리하지 않는다.

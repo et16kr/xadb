@@ -2302,6 +2302,16 @@
       "path": "contracts/dev3-plan4-free-undo.md",
       "role": "contract",
       "title": "DEV3 원 plan4의 Free Undo 페이지 수명"
+    },
+    "dev2-pf04-cpu-accounting-20261025.md": {
+      "path": "evidence/dev2-pf04-cpu-accounting-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 CPU 시간 집계 의미 조사"
+    },
+    "dev2-pf04-cpu-accounting-20261025.json": {
+      "path": "evidence/dev2-pf04-cpu-accounting-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 CPU accounting 실제 source 기록"
     }
   }
 }
