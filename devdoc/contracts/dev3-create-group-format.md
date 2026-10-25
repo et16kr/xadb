@@ -90,9 +90,11 @@ Native kind6Allocator/8Root/9Job/7Catalog/3Undo/5Status는 현재 정수 의미�
 |4|Status9|4 /5|224→224: Active headNone→U, incoming0→1|
 |5|Undo10|5 /3|Free(g2)432→Live Missing432: seq1,mutation1,incoming2, creator actor, target Catalog5/gen1/entity6, both Never|
 |6|Anchor11|6 /10|absent→48: object6/gen1, root R, revision1, RowLeaf/level0|
-|7|RowRoot12|7 /11|absent→32: object6/gen1, RowLeaf/level0, arity1, leftmostNone, entries0|
+|7|RowRoot12|7 /11|absent→32: object6/gen1, RowLeaf/level0, arity0, leftmostNone, entries0|
 
 CatalogAnchor7 is the **ninth pin/proof**, with no mutation/native/redo. It proves the trusted current CatalogLeaf root. It is not an invented extra after image. RootJob could be on pages3..6 without changing relative order. U/Status/pair dynamic physical order is not assumed outside this concrete literal; native/redo indices must be recomputed from actual sorted target set.
+
+2026-10-25 오기 정정: RowRoot의 metadata arity는 기존 RowId key 계약에 따라0이다. 최소 TableSpec의 열1개와 Index 전용 metadata arity를 혼동한 표의1을 고쳤다. 독립 검토자 `/root/dev3_review`가 원 tree format·`tree_page::validate_schema`와 대조했으며, 이미 동결한 scope2 leaf Row INIT도 arity0이므로 raw 입력은 바꾸지 않는다.
 
 Edge array sorted by source effect/role has exactly:
 
