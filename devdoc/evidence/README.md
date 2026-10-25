@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV2 PF04 보존 실행 파일의 주요 경로 검토](dev2-pf04-hotpath-20261025.md) · [source·주소 기록](dev2-pf04-hotpath-20261025.json) — 기계어7범위·source5파일 확인, 큰 신규 후보 미확인. 새 실행0·원 FAIL 유지.
+
 - [DEV2 PF04 CPU 시간 집계 의미](dev2-pf04-cpu-accounting-20261025.md) · [source 기록](dev2-pf04-cpu-accounting-20261025.json) — kernel12파일 읽기 조사, rusage 분할·원 thread CPU·perf runtime 구분. 새 실행0, 원 FAIL 유지.
 
 - [DEV2 PF04 사용자·커널 CPU 분리](dev2-pf04-cpu-split-20261025.md) · [source별 기록](dev2-pf04-cpu-split-20261025.json) — 선택6함수·실제2연결 완료,8event 수집·정답 검산. 원 PF04 FAIL 유지.

@@ -251,3 +251,46 @@ CPU 분리 계획 상태: **PASS_PLAN_ONLY 채택 / 채택 당시 도구 수정�
 CPU 분리 실행: 선행 계획 commit `b33f1e4` 뒤 도구를 구현하고 선택6함수·실제2연결을 완료했다. [관측 증거](../evidence/dev2-pf04-cpu-split-20261025.md)의 원자료·해석·최종 검토를 따른다.8event reported coverage와 진단 정답을 확인했으며 원 PF04·DEV2 완료 판정은 변경하지 않았다.
 
 CPU 집계 읽기 후속: `038236b` 뒤 [설치 커널 source 조사](../evidence/dev2-pf04-cpu-accounting-20261025.md)로 rusage tick 비율 보정·원 thread CPU·perf context runtime 경로를 구분했다. 제품/수집 변경·새 시험0이며 이 의미 차이를 원 전체 CPU FAIL의 무효화나 원인 해결로 처리하지 않는다.
+
+<a id="off-variation-classification"></a>
+
+## 후속 제안: 동일 Off 실행의 변동 분류
+
+2026-10-25 · **D2 한정 설계 검토 채택 / 사용자 시험 범위 예외 대기 / NOT_RUN**. 작업·계약·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`.
+
+[보존 실행 파일의 주요 경로 검토](../evidence/dev2-pf04-hotpath-20261025.md)에서 큰 신규 중복 후보는 확인하지 못했다. 스케줄링 수집기와 ASLR 변경을 곧바로 추가하는 안은 보류한다. 후자는 특정한 고정 주소 배치 하나와 여러 무작위 배치를 비교하므로, 유리한 한 배치와 일반적인 정책 효과를 구분하기 어렵다. 다음은 **기존 도구로 K0 Off 자체의 속도 변동을 한 번 분류하는 진단**이다. 제품 최적화나 PF04 합격 판정이 아니다.
+
+### 실행 전에 필요한 사용자 범위 확인
+
+[AGENTS.md](../../AGENTS.md)의 “수정이 발생하지 않은 코드에 대해서는 테스트를 실행하지 않는다”가 현재 적용된다. 앞선 도구 변경의 연결 시험은 완료됐으며, 이번에는 같은 ELF와 같은 도구를 사용한다. 따라서 필요한 확인은 sudo 재허가가 아니라 **이 절의 무변경 코드 원인 진단20회와 새 출력의 정답 검산에 한정한 예외**다. 일반 회귀·원 인수 반복·DEV2 전수 허가로 확대하지 않는다. 명시적 사용자 예외가 오기 전에는 실행하지 않는다. 준비한 입력·ELF·도구 지문과 중단 조건을 검토·commit하는 일은 계속한다.
+
+### 고정 입력·관측·예산
+
+- 보존 K0 baseline ELF는 `/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/baseline-release/xadbtest-engine-worker`, SHA-256 `b554e895ab3026f5d393c5566ac2cbef3b406801c659ef4da9b0800a2096fb45`다. source fingerprint `7ced0a5622825b971a4a146cdd8d1ce4a5ef01eefe633e59deb6b338390a5329`와 release build receipt를 고정한다. 새 build와 현재 병행 DEV3 소스의 혼입은 없다.
+- **Off만20회, campaign1회, 추가·재시도0**이다. seed20261018,128행, old snapshot 유지, capacity256, warmup4096, measure65536, stride16을 그대로 사용한다. 전20개의 순서·입력·결과를 남기고 유리한 결과에 따른 조기 종료는 하지 않는다. Always/Detailed 비교나 원 campaign replay는 범위 밖이다.
+- 기존 `user-kernel-v1`의8event를 고정한다: cycles:u/k, instructions:u/k, ref-cycles:u, context-switches, cpu-migrations, page-faults. 기존 특권 P1 runner와 종료 소유권을 사용한다. worker CPU2는 payload 전에, runner와 실제 perf collector CPU3는 준비 ACK/identity 뒤 READY 전에 확인하며 sibling18을 관측한다. BPF·새 profiler·새 PMU event 구현은 없다.
+- 각 slot 앞에 CPU2/18·장치의10초 유휴 확인을 **한 번만** 적용한다. CPU2/18·disk busy 중 하나라도5% 초과 또는 입력/증분 검산 실패, 권한/identity/구간/출력/정답/정리 실패, 누락·부분 PMU coverage이면 그 자료를 보존하고 잔여를 NOT_RUN으로 끝낸다. 기존 helper의 반복형 `idle()`는 호출하지 않고 `sample() → 10초 대기 → sample()/busy()`만 한 번 사용한다. 유휴 조건이 만족할 때까지 반복하지 않는다. 측정 중 host delta도 보존하며 불리한 표본을 삭제하지 않는다.
+- 측정 전체900초, slot별60초와 기존 bounded cleanup을 상한으로 둔다. 남은 전체 예산이 해당 slot의 유휴 확인·실행·정리 상한을 담지 못하면 시작하지 않는다. 전체15분은 실행 예산이며 후속 읽기 분석·독립 검토 시간을 포함한 완료 시간 보장은 아니다. 완료20개가 없으면 분류는 UNKNOWN이다.
+- syscall/부팅·서비스·CPU governor·주파수 한도·SMT·파일시스템·ASLR 설정을 변경하지 않는다. 소유된 fixture/process의 affinity와 앞서 승인된 CAP_PERFMON 수집만 사용한다. 재부팅·서비스 재시작은 없다.
+- 원 worker 출력의 진단 path·build·envelope·구간을 확인하고 보존된 K0 정답 adapter로 새 출력만 검산한다. scalar·old/final 값·counter·완료량 검산에 대한 허용은 위 한정 예외에 포함한다. 원 byte를 바꾸거나 diagnostic path를 원 인수 결과로 승격하지 않는다. oracle 실행·정리도 campaign과 slot의 남은 deadline 안에서 제한하며, slot 진입 전에 관측과 oracle·양쪽 정리 여유를 함께 확보한다. 기존 driver의 `main()`이나 C1/C2의 옛 command/cleanup helper는 실행하지 않고 P1의 소유 process 종료 경로를 사용한다. 기존 제품 시험·완료 도구 시험은 반복하지 않는다.
+
+### 분류와 다음 결정
+
+전20개를 시간순으로 표시하고 원 cpu_ns, elapsed_ns, 표본 p50/p99,8개 raw count/runtime/coverage, rusage·bracket·host delta를 보존한다. CPU 기준 상위5개와 하위5개를 slot 번호로 tie-break하여 선택하고, **같은 집단**의 각 지표 중앙값과 상위/하위 비율을 기술적으로 비교한다. 극단 집단을 골랐으므로 차이 존재의 통계 검정·전체 분포 효과 추정·성능 개선 신뢰구간으로 쓰지 않는다.
+
+CPU와 p50의 위 집단 비율이 모두1.10 이상일 때만 새 실행 전반의 속도 변동 후보를 분류한다.10%는 이 진단에서 작은 흔들림과 조사 대상을 구분하기 위한 고정 조건이며, 원15% CPU/경과·25% p99 한도를 바꾸지 않는다. band 미발생·불완전/품질 미달이면 UNKNOWN으로 종료하고 자동 추가 실행을 하지 않는다.
+
+| 관측 조합 | 허용하는 다음 판단·조치 | 허용하지 않는 결론 |
+| --- | --- | --- |
+| user 또는 kernel instructions 변화가 함께 큼 | 어느 영역의 실제 작업량 차이를 먼저 설명해야 하는지 정한다. 동일 작업량·정답과 source 경로를 대조하고 수정 후보가 나오기 전 새 성능 비교를 시작하지 않는다 | instruction 차이만으로 원 과거 실패 원인을 확정 |
+| user instructions는 비슷하고 cycles/instruction 또는 cycles/ref가 달라짐 | 두 비율을 모두 제시하고 실행 효율 변화와 CPU 상태 변화 중 어느 구분 실험을 설계할지 좁힌다. 해당 설정의 소유 범위·원복·한 요인 대조가 준비되기 전 host를 변경하지 않는다 | cycles/ref를 GHz로 환산하거나 ASLR/주파수/SMT 중 하나를 확정 |
+| u/k 작업량과 비율로 thread CPU 변동을 설명하지 못함 | 미설명 차이를 수치와 함께 남긴다. schedule/IRQ 등 새 수집을 제안하려면 그 차이를 검증할 경계와 결과별 조치를 먼저 고정한다 | rusage 배분으로 원 전체 CPU를 보정하거나 무효화 |
+| 변동이 안 나타남·혼합·관측 품질 부족 | 이번 진단 UNKNOWN, 한정 예산 종료. 추가 관측·인수는 자동 실행하지 않는다 | 정상 구간만으로 기존 FAIL이 해결됐다고 판정 |
+
+위 표의 “큼/비슷”은 자동 판정의 추가 threshold가 아니다. 전 지표의 실제 비율과 서로 설명되지 않는 차이를 제시하여 기술적으로 가설 우선순위를 정하며, 결과를 본 뒤 새로운 수치 경계를 골라 원인 지지 여부를 판정하지 않는다.
+
+PMU bracket에는 원 loop 밖의 부가 작업이 포함될 수 있다. 도구가 보고한100% coverage는 loop-only PMU나 원인 완전성을 뜻하지 않는다. 이 분류는 새 범위의 가설 우선순위를 정할 뿐이며 어느 결과에서도 PF04·DEV2를 PASS로 바꾸지 않는다. 영속 tail/CPU 실패는 별도 잔여 의무다.
+
+준비 자료는 `/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025`의 `proposal.json`, `request.bin`, `build.json`이다. 이번 계획 commit은 실행 승인이 아니며 사용자 예외·최종 설계 검토 전 상태는 NOT_RUN이다.
+
+후속 설계 상태: **PASS_SCOPED_D1_D2_STATIC_EVIDENCE_AND_CONDITIONAL_PLAN 채택**, 설계 차단0개. `/root/pf04_evidence_review`의 receipt는 `/home/et16/xadb-dev2-evidence/pf04-hotpath-review-20261025/final-review.json`, SHA-256 `a23723dc2f9e6031a16c5df02d1ed660b80744bacdc418cd4ad39387362e0a8a`다. 검토 당시 본 anchor 뒤 본문 projection은 `99a4aaa9ca5a1df4d0edc8a54980d0f245af34745fdfb87ab2c0d20eb3ce41cb`, 준비 proposal은 `a2876aaa2332915e6894ab53c978b34fd8191e9a477b740d9ad8ed044b501e29`다. 상태·receipt metadata만 반영했으며 사용자 예외·실행은 아직 없다.

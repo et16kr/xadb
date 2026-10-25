@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "owner": "/root",
+  "reviewer": "/root/pf04_evidence_review",
+  "scope": "Bounded static inspection of retained K0 and durable release paths; no new native execution or acceptance",
+  "evidence_root": "/home/et16/xadb-dev2-evidence/pf04-hotpath-review-20261025",
+  "inputs_manifest": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-hotpath-review-20261025/inputs.json",
+    "sha256": "3c7b416458b5c3e4bc17292043e1b275080d2bffe4f59acb303e83e267fd2bfb"
+  },
+  "inputs": {
+    "source_sha256": "7ced0a5622825b971a4a146cdd8d1ce4a5ef01eefe633e59deb6b338390a5329",
+    "source_read_commit": "5253caa",
+    "current_comparison_commit": "78517fa9507862f9f828ec8ef0d9ba3fc7f3a30e",
+    "binaries": {
+      "k0": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/baseline-release/xadbtest-engine-worker",
+        "sha256": "b554e895ab3026f5d393c5566ac2cbef3b406801c659ef4da9b0800a2096fb45"
+      },
+      "durable": {
+        "path": "/home/et16/xadb-dev2-evidence/pf04-io-cause-20261025/target/x86_64-unknown-linux-gnu/release/xadbtest-durable-performance-worker",
+        "sha256": "ea1f0f7c5f2d58a61199f399ae6961f290449dea488a9187ebf11505bc501c51"
+      }
+    },
+    "assembly_ranges": 7,
+    "source_files": 5,
+    "current_source_difference": "diagnostics identical; four remaining files differ only in dependency aliases/import order"
+  },
+  "findings": [
+    {
+      "id": "K0_COUNTERS",
+      "status": "KNOWN_PATH_CONFIRMED",
+      "addresses": [
+        "0x8e82a",
+        "0x8e92e",
+        "0x8f03a",
+        "0x8f1da",
+        "0x8fc7e",
+        "0x8fcee"
+      ],
+      "conclusion": "Six successful-path counter update sites per step; static sites are not a measurement of CAS retries or latency."
+    },
+    {
+      "id": "K0_FULL_QUEUE",
+      "status": "KNOWN_OPTIMIZATION_CONFIRMED",
+      "addresses": [
+        "0x8eaea",
+        "0x8f2aa",
+        "0x8ff5a"
+      ],
+      "conclusion": "Full hint branches bypass record_event and update the drop counter; do not re-propose the completed PF12 change."
+    },
+    {
+      "id": "K0_COLLECTOR_ARC",
+      "status": "C1_REMAINS_REJECTED",
+      "addresses": [
+        "0x8f160",
+        "0x749b2"
+      ],
+      "conclusion": "Additional active collector clone/drop is already evaluated by C1; no new effect established."
+    },
+    {
+      "id": "DURABLE_SPAN",
+      "status": "KNOWN_OPTIMIZATION_CONFIRMED",
+      "addresses": [
+        "0xbf6cf",
+        "0xbf70f",
+        "0xbfc3e",
+        "0xbfdfe"
+      ],
+      "conclusion": "Zero amount skips and conditional max updates are present. finish normal path records once; unwind branches are not ordinary double recording."
+    },
+    {
+      "id": "HIDDEN_NAMESPACE_ITEMS",
+      "status": "LOW_PRIORITY_UNIMPLEMENTED",
+      "conclusion": "Items are not publicly exposed for NamespaceWait/Hold, but global saturation is observable. No new semantic proof or material performance effect established."
+    }
+  ],
+  "decision": {
+    "new_product_candidate": "NONE_ADOPTED",
+    "scheduler_collector": "DEFERRED_NO_ACTIONABLE_CAUSAL_BRANCH",
+    "environment_experiment": "NOT_AUTHORIZED_OR_EXECUTED_BY_THIS_RECORD",
+    "original_pf04": "FAIL_UNCHANGED",
+    "dev2_b2_d0": "INCOMPLETE",
+    "overall_goal_achieved": false
+  },
+  "activity": {
+    "product_changes": 0,
+    "tool_changes": 0,
+    "builds": 0,
+    "tests": 0,
+    "native_measurements": 0,
+    "host_configuration_changes": 0,
+    "restarts": 0,
+    "pushes": 0
+  },
+  "review": {
+    "status": "PASS_SCOPED_D1_D2_STATIC_EVIDENCE_AND_CONDITIONAL_PLAN",
+    "direction_receipt": "/home/et16/xadb-dev2-evidence/pf04-hotpath-review-20261025/direction-review.json",
+    "direction_receipt_sha256": "c897c9b71cbe00249270b6904d7958fd8eee0fb35a9e1f3266f5a5b6fe22318d",
+    "static_receipt": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-hotpath-review-20261025/hotpath-independent-review.json",
+      "sha256": "bfa114d5731df0635739711e531c204e339b37fc945f221c09a423e39d345c3e"
+    },
+    "final_receipt": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-hotpath-review-20261025/final-review.json",
+      "sha256": "a23723dc2f9e6031a16c5df02d1ed660b80744bacdc418cd4ad39387362e0a8a",
+      "blocking_findings": 0
+    }
+  },
+  "limitations": [
+    "Static path inspection is not an exhaustive optimization proof or dynamic profile.",
+    "Original failing windows lack contemporaneous PMU evidence.",
+    "The selected retained binaries are not a claim about the entire current source/build.",
+    "No source fingerprint change alone authorizes repeating unchanged product tests."
+  ],
+  "manifest": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-hotpath-review-20261025/manifest.json",
+    "sha256": "c3b870c1bee09d53ea6fcd6a85309d9f17fd0ac272caae17b4ee593946b0a4ca",
+    "file_count": 18,
+    "bytes": 256030
+  },
+  "next_proposal": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-off-classification-20261025/proposal.json",
+    "sha256": "a2876aaa2332915e6894ab53c978b34fd8191e9a477b740d9ad8ed044b501e29",
+    "status": "NOT_RUN_AWAITING_USER_EXCEPTION",
+    "execution_limit": "one campaign, 20 Off slots, 900 seconds, no retries",
+    "required_user_exception": "Only these unchanged-code diagnostics and correctness checking of their newly collected outputs"
+  }
+}
