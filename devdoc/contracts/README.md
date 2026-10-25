@@ -1,5 +1,7 @@
 # 기능 계약
 
+- [DEV3 첫 Catalog CREATE](dev3-catalog-create.md) — 원 owner의 실제 CREATE·Commit·복구 결합 D2 채택; 제품 효과·인수 미완료. [Root v2](dev3-create-root-format.md) · [Job v2](dev3-create-job-format.md) · [group scope2](dev3-create-group-format.md) · [base v3](dev3-create-recovery-base.md) · [visibility·회수](dev3-visibility-retirement.md).
+
 - [DEV3 원 Commit의 지연 설치 수명](dev3-commit-continuation.md) — 기존 PinSet·WAL·core의 비공개 continuation과 durable content drain을 한정 D2 채택; actual terminal 권한·Commit/복구 검증 미완료.
 
 - [DEV3 원 plan4의 Free Undo 페이지 수명](dev3-plan4-free-undo.md) — 같은 allocator/pool의 INIT·flush·재적재·selected base/재장애 공급 계약; Free container 선택 검증·독립 D1 수용, Live Undo·행 거래 미완료.

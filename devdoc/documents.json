@@ -3,6 +3,36 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-catalog-create.md": {
+      "path": "contracts/dev3-catalog-create.md",
+      "role": "contract",
+      "title": "DEV3 원 저장 세션의 첫 Catalog CREATE"
+    },
+    "dev3-create-root-format.md": {
+      "path": "contracts/dev3-create-root-format.md",
+      "role": "contract",
+      "title": "DEV3 실제 CREATE의 Root512 v2"
+    },
+    "dev3-create-job-format.md": {
+      "path": "contracts/dev3-create-job-format.md",
+      "role": "contract",
+      "title": "DEV3 실제 CREATE의 Job1024 v2"
+    },
+    "dev3-create-group-format.md": {
+      "path": "contracts/dev3-create-group-format.md",
+      "role": "contract",
+      "title": "DEV3 실제 CREATE의 scope2 그룹 표현"
+    },
+    "dev3-create-recovery-base.md": {
+      "path": "contracts/dev3-create-recovery-base.md",
+      "role": "contract",
+      "title": "DEV3 실제 CREATE의 exact-image 복구 base"
+    },
+    "dev3-visibility-retirement.md": {
+      "path": "contracts/dev3-visibility-retirement.md",
+      "role": "contract",
+      "title": "DEV3 실제 snapshot·참조 pin·retirement 경계"
+    },
     "dev2-pf04-prewarmup-20261025.md": {
       "path": "evidence/dev2-pf04-prewarmup-20261025.md",
       "role": "evidence",
