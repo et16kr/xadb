@@ -1,0 +1,759 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "classification": "D2_SCOPED_K0_OWNER",
+  "owner": "/root",
+  "status": "CANDIDATE_REJECTED_PRODUCT_REVERTED_SCOPED_REVIEW_ACCEPTED",
+  "plan_commit": "a64ca58b92f1d138105dabed5c259f3904b075ec",
+  "plan_ref": "dev2-pf04-resolution-plan.md#p2-k0-owner",
+  "sources": {
+    "baseline": {
+      "source_sha256": "7ced0a5622825b971a4a146cdd8d1ce4a5ef01eefe633e59deb6b338390a5329",
+      "files": {
+        "crates/engine/src/diagnostics.rs": "4b029dcd7ca8f17a13d8f8a5f34528c04b42d654889a004a8ff7fae2fa49b349",
+        "crates/engine/src/substrate.rs": "dfe4b321500c27f73044160c36e3fc26632ab0602cc07f8c9f0e7520e32fb866"
+      }
+    },
+    "candidate": {
+      "source_sha256": "51b52f4b03ef84a52de48447820242a67bf099b943792a241afa7805501c0887",
+      "files": {
+        "crates/engine/src/diagnostics.rs": "c02b452fabbcabd587275b1e9adae3274dd3255d93745846eb2335985fd8f10e",
+        "crates/engine/src/substrate.rs": "dfda736714d01a0d1549c614207077c0638aefc90ca3e0db4294c54acfc7cc80"
+      }
+    },
+    "baseline_commit": "77d919f1b1ea7396bb01132d874833e218854977",
+    "plan_commit": "a64ca58b92f1d138105dabed5c259f3904b075ec"
+  },
+  "candidate_patch": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/candidate.patch",
+    "sha256": "d7c1d65ff862fef9a45fb66422823a5f19132c84ccdd83a5a301a0fe5725defe"
+  },
+  "selected_validation": {
+    "diagnostics_existing": 4,
+    "diagnostics_constructor_new": 1,
+    "substrate_lifetime_new": 2,
+    "engine_performance_existing": 5,
+    "product_test_functions": 12,
+    "status": "PASS",
+    "fmt": "PASS",
+    "scoped_clippy": "PASS",
+    "release_builds": 2,
+    "retained_output_oracle_checks": 2,
+    "unchanged_lower_tests": 0,
+    "workspace_wrappers": 0,
+    "product_tests_after_reversion": 0
+  },
+  "campaigns": {
+    "exploration": {
+      "runs": 20,
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "NO_MATERIAL_CHANGE",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 15925516,
+            "denominator": 16423248
+          },
+          {
+            "numerator": 15947450,
+            "denominator": 16403618
+          },
+          {
+            "numerator": 18393095,
+            "denominator": 18806202
+          },
+          {
+            "numerator": 15994337,
+            "denominator": 16376749
+          },
+          {
+            "numerator": 16454792,
+            "denominator": 16427903
+          },
+          {
+            "numerator": 15967639,
+            "denominator": 16594227
+          },
+          {
+            "numerator": 16186690,
+            "denominator": 16593836
+          },
+          {
+            "numerator": 15893142,
+            "denominator": 16478756
+          },
+          {
+            "numerator": 16103428,
+            "denominator": 16323250
+          },
+          {
+            "numerator": 15867034,
+            "denominator": 16468607
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 15867034,
+            "denominator": 16468607
+          },
+          {
+            "numerator": 16103428,
+            "denominator": 16323250
+          }
+        ],
+        "median": [
+          530149649362620,
+          544397893797296
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 16454792,
+          "denominator": 16427903
+        },
+        "worst_cpu": {
+          "numerator": 16364545,
+          "denominator": 16348876
+        },
+        "worst_external": {
+          "numerator": 23180250,
+          "denominator": 23244087
+        },
+        "worst_sample_p99": {
+          "numerator": 311,
+          "denominator": 271
+        },
+        "worst_process_peak_rss_delta": 57344
+      },
+      "directory": "/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/exploration-artifacts/performance-ewHtwR",
+      "index_sha256": "0e3146410da70c3cdbf4a4e1f3fbccb2d450e5f19e99413184141c6e61eb216f"
+    },
+    "confirmation": {
+      "runs": 20,
+      "comparison": {
+        "validity": "VALID",
+        "correctness": "PASS",
+        "performance_effect": "NO_MATERIAL_CHANGE",
+        "guardrails": "PASS",
+        "cause_status": "UNRESOLVED",
+        "promotion": "INCOMPLETE",
+        "reasons": [],
+        "ratios": [
+          {
+            "numerator": 16027654,
+            "denominator": 16377877
+          },
+          {
+            "numerator": 15893603,
+            "denominator": 16375768
+          },
+          {
+            "numerator": 15920662,
+            "denominator": 16353828
+          },
+          {
+            "numerator": 16211677,
+            "denominator": 16336265
+          },
+          {
+            "numerator": 15886840,
+            "denominator": 16467076
+          },
+          {
+            "numerator": 15898211,
+            "denominator": 16980188
+          },
+          {
+            "numerator": 15880438,
+            "denominator": 16524411
+          },
+          {
+            "numerator": 16267740,
+            "denominator": 16421412
+          },
+          {
+            "numerator": 16153430,
+            "denominator": 16488986
+          },
+          {
+            "numerator": 16014565,
+            "denominator": 16387660
+          }
+        ],
+        "interval": [
+          {
+            "numerator": 15880438,
+            "denominator": 16524411
+          },
+          {
+            "numerator": 16267740,
+            "denominator": 16421412
+          }
+        ],
+        "median": [
+          522801837335740,
+          536001945924960
+        ],
+        "nominal_interval_coverage": [
+          1002,
+          1024
+        ],
+        "worst_elapsed": {
+          "numerator": 16211677,
+          "denominator": 16336265
+        },
+        "worst_cpu": {
+          "numerator": 16132541,
+          "denominator": 16256892
+        },
+        "worst_external": {
+          "numerator": 23203148,
+          "denominator": 22725030
+        },
+        "worst_sample_p99": {
+          "numerator": 271,
+          "denominator": 271
+        },
+        "worst_process_peak_rss_delta": 69632
+      },
+      "directory": "/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/confirmation-artifacts/performance-DMgj4e",
+      "index_sha256": "8ac3dc45ed0757478c5ab5ce14f730f7b9f8d706a70d3076e9ad52c3172e8347"
+    }
+  },
+  "decision": {
+    "status": "REJECTED",
+    "campaigns": [
+      {
+        "name": "exploration",
+        "comparison": {
+          "validity": "VALID",
+          "correctness": "PASS",
+          "performance_effect": "NO_MATERIAL_CHANGE",
+          "guardrails": "PASS",
+          "cause_status": "UNRESOLVED",
+          "promotion": "INCOMPLETE",
+          "reasons": [],
+          "ratios": [
+            {
+              "numerator": 15925516,
+              "denominator": 16423248
+            },
+            {
+              "numerator": 15947450,
+              "denominator": 16403618
+            },
+            {
+              "numerator": 18393095,
+              "denominator": 18806202
+            },
+            {
+              "numerator": 15994337,
+              "denominator": 16376749
+            },
+            {
+              "numerator": 16454792,
+              "denominator": 16427903
+            },
+            {
+              "numerator": 15967639,
+              "denominator": 16594227
+            },
+            {
+              "numerator": 16186690,
+              "denominator": 16593836
+            },
+            {
+              "numerator": 15893142,
+              "denominator": 16478756
+            },
+            {
+              "numerator": 16103428,
+              "denominator": 16323250
+            },
+            {
+              "numerator": 15867034,
+              "denominator": 16468607
+            }
+          ],
+          "interval": [
+            {
+              "numerator": 15867034,
+              "denominator": 16468607
+            },
+            {
+              "numerator": 16103428,
+              "denominator": 16323250
+            }
+          ],
+          "median": [
+            530149649362620,
+            544397893797296
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "worst_elapsed": {
+            "numerator": 16454792,
+            "denominator": 16427903
+          },
+          "worst_cpu": {
+            "numerator": 16364545,
+            "denominator": 16348876
+          },
+          "worst_external": {
+            "numerator": 23180250,
+            "denominator": 23244087
+          },
+          "worst_sample_p99": {
+            "numerator": 311,
+            "denominator": 271
+          },
+          "worst_process_peak_rss_delta": 57344
+        }
+      },
+      {
+        "name": "confirmation",
+        "comparison": {
+          "validity": "VALID",
+          "correctness": "PASS",
+          "performance_effect": "NO_MATERIAL_CHANGE",
+          "guardrails": "PASS",
+          "cause_status": "UNRESOLVED",
+          "promotion": "INCOMPLETE",
+          "reasons": [],
+          "ratios": [
+            {
+              "numerator": 16027654,
+              "denominator": 16377877
+            },
+            {
+              "numerator": 15893603,
+              "denominator": 16375768
+            },
+            {
+              "numerator": 15920662,
+              "denominator": 16353828
+            },
+            {
+              "numerator": 16211677,
+              "denominator": 16336265
+            },
+            {
+              "numerator": 15886840,
+              "denominator": 16467076
+            },
+            {
+              "numerator": 15898211,
+              "denominator": 16980188
+            },
+            {
+              "numerator": 15880438,
+              "denominator": 16524411
+            },
+            {
+              "numerator": 16267740,
+              "denominator": 16421412
+            },
+            {
+              "numerator": 16153430,
+              "denominator": 16488986
+            },
+            {
+              "numerator": 16014565,
+              "denominator": 16387660
+            }
+          ],
+          "interval": [
+            {
+              "numerator": 15880438,
+              "denominator": 16524411
+            },
+            {
+              "numerator": 16267740,
+              "denominator": 16421412
+            }
+          ],
+          "median": [
+            522801837335740,
+            536001945924960
+          ],
+          "nominal_interval_coverage": [
+            1002,
+            1024
+          ],
+          "worst_elapsed": {
+            "numerator": 16211677,
+            "denominator": 16336265
+          },
+          "worst_cpu": {
+            "numerator": 16132541,
+            "denominator": 16256892
+          },
+          "worst_external": {
+            "numerator": 23203148,
+            "denominator": 22725030
+          },
+          "worst_sample_p99": {
+            "numerator": 271,
+            "denominator": 271
+          },
+          "worst_process_peak_rss_delta": 69632
+        }
+      }
+    ],
+    "stop_after": "confirmation",
+    "remaining": "NOT_RUN_BY_FROZEN_STOP_RULE"
+  },
+  "actual_pmu": {
+    "baseline": {
+      "events": {
+        "cycles:u": {
+          "raw": "83960347;;cycles:u;16285937;100.00;;",
+          "unit": "",
+          "count": 83960347,
+          "runtime_ns": 16285937,
+          "coverage_percent": 100.0,
+          "status": "REPORTED_FULL_COVERAGE"
+        },
+        "instructions:u": {
+          "raw": "92911919;;instructions:u;16285937;100.00;;",
+          "unit": "",
+          "count": 92911919,
+          "runtime_ns": 16285937,
+          "coverage_percent": 100.0,
+          "status": "REPORTED_FULL_COVERAGE"
+        },
+        "ref-cycles:u": {
+          "raw": "40266875;;ref-cycles:u;16285937;100.00;;",
+          "unit": "",
+          "count": 40266875,
+          "runtime_ns": 16285937,
+          "coverage_percent": 100.0,
+          "status": "REPORTED_FULL_COVERAGE"
+        },
+        "context-switches": {
+          "raw": "3;;context-switches;16285937;100.00;;",
+          "unit": "",
+          "count": 3,
+          "runtime_ns": 16285937,
+          "coverage_percent": 100.0,
+          "status": "REPORTED_FULL_COVERAGE"
+        },
+        "cpu-migrations": {
+          "raw": "0;;cpu-migrations;16285937;100.00;;",
+          "unit": "",
+          "count": 0,
+          "runtime_ns": 16285937,
+          "coverage_percent": 100.0,
+          "status": "REPORTED_FULL_COVERAGE"
+        },
+        "page-faults": {
+          "raw": "135;;page-faults;16285937;100.00;;",
+          "unit": "",
+          "count": 135,
+          "runtime_ns": 16285937,
+          "coverage_percent": 100.0,
+          "status": "REPORTED_FULL_COVERAGE"
+        }
+      },
+      "window": {
+        "after": [
+          17346000,
+          2040000,
+          338,
+          0,
+          54,
+          1
+        ],
+        "before": [
+          2085000,
+          1042000,
+          203,
+          0,
+          54,
+          1
+        ],
+        "elapsed_ns": 16246777,
+        "end_ns": 2981851766304,
+        "phase": "STOP",
+        "start_ns": 2981835516582,
+        "token": "9646c6f58304e71f2a55b9293e45b5ff",
+        "usage_delta": [
+          15261000,
+          998000,
+          135,
+          0,
+          0,
+          0
+        ],
+        "boundary_excess_ns": 2945
+      },
+      "enable_disable_bracket_ns": 20005488,
+      "logical_bytes": 6488,
+      "input": {
+        "version": 1,
+        "seed": 20261018,
+        "row_count": 128,
+        "pin_old": true,
+        "mode": "detailed",
+        "capacity": 256,
+        "warmup": 4096,
+        "measure": 65536,
+        "latency_stride": 16
+      },
+      "cleanup": [
+        {
+          "pid": 67356,
+          "starttime": 298179,
+          "returncode": -2,
+          "signals": [
+            "SIGTERM"
+          ],
+          "group_gone": true,
+          "output_overflow": false,
+          "capture_errors": [],
+          "collector": {
+            "pid": 67358,
+            "starttime": 298180,
+            "exited": true
+          }
+        },
+        {
+          "pid": 67355,
+          "starttime": 298177,
+          "returncode": 0,
+          "signals": [
+            "SIGTERM"
+          ],
+          "group_gone": true,
+          "output_overflow": false,
+          "capture_errors": []
+        }
+      ]
+    },
+    "candidate": {
+      "events": {
+        "cycles:u": {
+          "raw": "91967203;;cycles:u;17992067;100.00;;",
+          "unit": "",
+          "count": 91967203,
+          "runtime_ns": 17992067,
+          "coverage_percent": 100.0,
+          "status": "REPORTED_FULL_COVERAGE"
+        },
+        "instructions:u": {
+          "raw": "92911888;;instructions:u;17992067;100.00;;",
+          "unit": "",
+          "count": 92911888,
+          "runtime_ns": 17992067,
+          "coverage_percent": 100.0,
+          "status": "REPORTED_FULL_COVERAGE"
+        },
+        "ref-cycles:u": {
+          "raw": "44205275;;ref-cycles:u;17992067;100.00;;",
+          "unit": "",
+          "count": 44205275,
+          "runtime_ns": 17992067,
+          "coverage_percent": 100.0,
+          "status": "REPORTED_FULL_COVERAGE"
+        },
+        "context-switches": {
+          "raw": "2;;context-switches;17992067;100.00;;",
+          "unit": "",
+          "count": 2,
+          "runtime_ns": 17992067,
+          "coverage_percent": 100.0,
+          "status": "REPORTED_FULL_COVERAGE"
+        },
+        "cpu-migrations": {
+          "raw": "0;;cpu-migrations;17992067;100.00;;",
+          "unit": "",
+          "count": 0,
+          "runtime_ns": 17992067,
+          "coverage_percent": 100.0,
+          "status": "REPORTED_FULL_COVERAGE"
+        },
+        "page-faults": {
+          "raw": "135;;page-faults;17992067;100.00;;",
+          "unit": "",
+          "count": 135,
+          "runtime_ns": 17992067,
+          "coverage_percent": 100.0,
+          "status": "REPORTED_FULL_COVERAGE"
+        }
+      },
+      "window": {
+        "after": [
+          18703000,
+          1968000,
+          340,
+          0,
+          51,
+          1
+        ],
+        "before": [
+          1805000,
+          902000,
+          205,
+          0,
+          51,
+          1
+        ],
+        "elapsed_ns": 17941858,
+        "end_ns": 2992068832824,
+        "phase": "STOP",
+        "start_ns": 2992050883293,
+        "token": "3cf38775f2787f48e3def9a0f2a77b5d",
+        "usage_delta": [
+          16898000,
+          1066000,
+          135,
+          0,
+          0,
+          0
+        ],
+        "boundary_excess_ns": 7673
+      },
+      "enable_disable_bracket_ns": 20967652,
+      "logical_bytes": 6496,
+      "input": {
+        "version": 1,
+        "seed": 20261018,
+        "row_count": 128,
+        "pin_old": true,
+        "mode": "detailed",
+        "capacity": 256,
+        "warmup": 4096,
+        "measure": 65536,
+        "latency_stride": 16
+      },
+      "cleanup": [
+        {
+          "pid": 67434,
+          "starttime": 299201,
+          "returncode": -2,
+          "signals": [
+            "SIGTERM"
+          ],
+          "group_gone": true,
+          "output_overflow": false,
+          "capture_errors": [],
+          "collector": {
+            "pid": 67436,
+            "starttime": 299201,
+            "exited": true
+          }
+        },
+        {
+          "pid": 67433,
+          "starttime": 299198,
+          "returncode": 0,
+          "signals": [
+            "SIGTERM"
+          ],
+          "group_gone": true,
+          "output_overflow": false,
+          "capture_errors": []
+        }
+      ]
+    }
+  },
+  "idle_observations": {
+    "baseline-pmu-idle.json": {
+      "attempts": 1,
+      "final_busy_percent": {
+        "cpu2": 0.4995004995004995,
+        "cpu18": 0.3
+      }
+    },
+    "candidate-pmu-idle.json": {
+      "attempts": 1,
+      "final_busy_percent": {
+        "cpu2": 1.3,
+        "cpu18": 0.999000999000999
+      }
+    },
+    "confirmation-idle.json": {
+      "attempts": 1,
+      "final_busy_percent": {
+        "cpu2": 3.2064128256513027,
+        "cpu18": 1.098901098901099
+      }
+    },
+    "exploration-idle.json": {
+      "attempts": 1,
+      "final_busy_percent": {
+        "cpu2": 0.8991008991008991,
+        "cpu18": 0.1
+      }
+    }
+  },
+  "recording_driver_limitations": [
+    "TimeoutExpired lacks durable partial output/owned native worker cleanup; not encountered in this execution; driver is retained evidence, not adopted as a supported tool.",
+    "Missing CPU keys/nonnegative delta and actual PMU were incompletely enforced by the one-off driver; this retained-byte inspection confirms both CPU keys, nonnegative deltas, idle thresholds and actual six-counter PMU for all observed executions."
+  ],
+  "host_settings_changed": false,
+  "product_files_restored": {
+    "time_ns": 1792904955619194678,
+    "reason": "Confirmation interval upper 0.990641974 is not below frozen 0.95 requirement; no candidate adoption",
+    "files": {
+      "crates/engine/src/diagnostics.rs": {
+        "restored_sha256": "4b029dcd7ca8f17a13d8f8a5f34528c04b42d654889a004a8ff7fae2fa49b349",
+        "candidate_sha256": "c02b452fabbcabd587275b1e9adae3274dd3255d93745846eb2335985fd8f10e"
+      },
+      "crates/engine/src/substrate.rs": {
+        "restored_sha256": "dfe4b321500c27f73044160c36e3fc26632ab0602cc07f8c9f0e7520e32fb866",
+        "candidate_sha256": "dfda736714d01a0d1549c614207077c0638aefc90ca3e0db4294c54acfc7cc80"
+      }
+    },
+    "tests_reexecuted": false
+  },
+  "document_verifier_executed": false,
+  "performance_acceptance": "NOT_QUALIFIED",
+  "pf04": "FOUR_HISTORICAL_CAMPAIGNS_FAIL_PRESERVED",
+  "dev2": "INCOMPLETE",
+  "p2": "REJECTED_CLOSED",
+  "p3_p4": "NOT_ENTERED",
+  "artifacts": {
+    "artifact-manifest.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/artifact-manifest.json",
+      "sha256": "31d33d459c3bfffd07881f50e8595a79f8a4eaf348ada18f530f492283ffbc3e"
+    },
+    "source-manifest.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/source-manifest.json",
+      "sha256": "8681cd80b2cc5452cdb8bbe89f43beb8644eed618ad33a5568f2a331dba02c20"
+    },
+    "p2-plan-review.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/p2-plan-review.json",
+      "sha256": "e7c1c90fa901d2feb9743539745e82b229411d98076099c8b71c63c6fd60f002"
+    },
+    "campaign-freeze.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/campaign-freeze.json",
+      "sha256": "f7b00533dbbcb1a0a9caade2a1719a7385d3ce7639c6415f71c0fcc18783d151"
+    },
+    "postcheck.json": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/postcheck.json",
+      "sha256": "12982735dd39b738ca875366c631757e999fb0086d9f89ef22fb840a0b28356f"
+    }
+  },
+  "independent_review": {
+    "reviewer": "/root/pf04_evidence_review",
+    "status": "PASS_SCOPED_D1_D2_P2_REJECTION_REVIEW",
+    "blocking_findings": 0,
+    "unresolved_adoption_findings": 0,
+    "receipt": {
+      "path": "/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/p2-final-review.json",
+      "sha256": "52c83222da646131062c1403f23cb29cd80100b11dbbb1ac28039875e45b1666"
+    },
+    "scope": "C1 implementation and selected correctness evidence, frozen performance decision, rejection and product-byte reversion, retained raw integrity, and seven staged DEV2 documents. Candidate is NOT adopted; this is acceptance of a rejected experiment record, not a performance PASS.",
+    "accepted_by": "/root"
+  }
+}

@@ -3,6 +3,16 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev2-pf04-k0-owner-20261025.md": {
+      "path": "evidence/dev2-pf04-k0-owner-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 P2 K0 관측 소유권 후보 기각"
+    },
+    "dev2-pf04-k0-owner-20261025.json": {
+      "path": "evidence/dev2-pf04-k0-owner-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 P2 K0 후보 source·측정·기각 기록"
+    },
     "dev2-pf04-pmu-20261025.md": {
       "path": "evidence/dev2-pf04-pmu-20261025.md",
       "role": "evidence",

@@ -1,5 +1,7 @@
 # XADB 개발 문서
 
+2026-10-25 [DEV2 PF04 P2 K0 소유권 후보 기각](evidence/dev2-pf04-k0-owner-20261025.md): 계획 commit 뒤 C1을 구현·선택 검증했으나 확인10쌍의 개선 약2.46%가 동결 기준에 미달해 제품을 원복했다. 후보·원자료를 보존하며 원 PF04 FAIL·DEV2 미완료를 유지한다.
+
 2026-10-25 [DEV2 PF04 실제 PMU 수집 후속](evidence/dev2-pf04-pmu-20261025.md): 승인된 CAP_PERFMON 경로로 실제6개 counter 수집과 권한·중단 정리를 선택 검증했다. worker의 일반 사용자 상태와 기존 실패를 보존하며 PF04/DEV2는 미완료다.
 
 2026-10-25 [DEV2 PF04 P1 관측 도구](evidence/dev2-pf04-window-20261025.md): 계획 선행 commit 뒤 측정 경계·bounded runner를 구현하고 변경 범위만 선택 검증했다. 원 실패·당시 일반 사용자 PMU UNAVAILABLE 증거와 PF04/DEV2 미완료를 유지한다.

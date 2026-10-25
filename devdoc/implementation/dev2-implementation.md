@@ -672,3 +672,12 @@ ELF에는 symbol table·DWARF가 없어 줄 번호를 직접 조회하지 않았
 [계획](../plans/dev2-pf04-resolution-plan.md)을 `82c14ba`로 먼저 커밋한 뒤 platform 관측 primitive·worker private gate·bounded runner를 구현했다. [선택 검증과 원 실패](../evidence/dev2-pf04-window-20261025.md)는 source별로 보존한다. 신규24개 시험 함수와8개 native 연결 사례를 변경 범위에 따라 검증했으며 최종 source 전수를 주장하지 않는다. 최초 일반 사용자 PMU는 권한 제한으로 UNAVAILABLE이었고 RUSAGE_ONLY 수집·도구 실패 정리만 당시 범위에서 확인했다. P2–P4·원 PF04 네 FAIL·DEV2 미완료는 유지한다. 최종 독립 검토는 증거 문서의 채택 상태를 따른다.
 
 후속 사용자 승인으로 [실제 PMU 수집 경로](../evidence/dev2-pf04-pmu-20261025.md)를 추가했다. `scripts/dev2_measurement_window.py`의 `--perf-privilege sudo-cap-perfmon`은 설치된 perf에만 CAP_PERFMON을 주고 worker의 일반 사용자 상태를 유지한다. 실제 synthetic 구간의6개 counter와 coverage100%, 권한·signal/deadline·pidfd 정리를 source별 선택 검증했다. 기본 호출은 기존 무특권 경로다. 기존 native/Rust/제품 시험은 반복하지 않았고, PMU 자료는 진단용으로서 PF04 인수 PASS가 아니다.
+
+
+<a id="dev2-pf04-k0-owner-20261025"></a>
+
+## 2026-10-25 P2 K0 관측 소유권 후보 기각
+
+[구체 계획](../plans/dev2-pf04-resolution-plan.md#p2-k0-owner)을 독립 검토하고 `a64ca58`로 먼저 commit했다. 활성 Collector가 Counters Arc를 소유해 snapshot/cursor의 별도 clone/drop을 줄이는 C1만 구현했다. [선택12함수·실제 PMU2·paired40실행](../evidence/dev2-pf04-k0-owner-20261025.md)의 정답·자원·guard는 통과했지만 확인 elapsed 중앙 비율0.975373, 구간 상한0.990642로 동결 채택 조건0.95 미만에 미달했다. C1은 기각하고 두 제품 파일을 원래 byte로 돌렸다. 후보 구현·시험·raw는 원 source로 보존하며 현재 제품에 최적화를 적용하지 않았다.
+
+Off/Always guard는 확인 실패 중단 규칙에 따라 NOT_RUN이고 완료 시험·무변경 하위 회귀는 반복하지 않았다. 최종 독립 검토 상태는 증거 기록을 따른다. P2 후보 평가를 종료하며 P3/P4·원 PF04 네 FAIL·DEV2/B2/D0 INCOMPLETE는 유지한다.

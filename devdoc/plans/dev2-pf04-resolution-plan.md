@@ -106,12 +106,12 @@ P2의 새로운 탐색은 이전 종료한3후보 예산에 추가하지 않는�
 4. 모든 모드의 pair별 guard는 기존 elapsed/CPU/external1.15배, sample p99 1.25배, RSS 증가4MiB다. incomplete/missing·실패·drift를 제거하거나 한도를 바꾸지 않는다. 주 지표 하나의 확인1회만 채택 근거이며 여러 mode에서 유리한 결과 하나를 고르는 규칙이 아니다.
 5. 최대4campaign80실행과 별도 PMU2실행이다. 확인 실패/불확실·guard 실패 시 추가 tuning/확인 없이 기각하고, 변경 관련 정답 결과와 원 실패를 보존한다. 기존 종료한3후보 예산에 이번을 붙이지 않는다. P2 한정 채택도 원 PF04 네 campaign FAIL이나 영속 경로를 PASS로 바꾸지 않는다. 새 instrumentation audit는 이번 예산에 포함하지 않는다.
 
-최종 reviewer가 계약·후보 diff·선택 시험·모든 실행 원자료와 채택/기각을 독립 확인한 뒤 단계 commit한다. P2 계획 상태: **독립 설계 검토 PASS 채택 / 구현·실행 전**. 검토는 계획만 대상으로 하며 구현·성능의 통과가 아니다. receipt는 `/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/p2-plan-review.json`, SHA-256 `e7c1c90fa901d2feb9743539745e82b229411d98076099c8b71c63c6fd60f002`다. 검토 P2 본문 projection SHA-256은 `f1132d8a0589fa80a0e58b07e11d333fbd05631bc423cf22aaef6159b1205f03`이며 이 상태 문장 앞까지를 고정한다. 차단·미해결 지적0개다.
+최종 reviewer가 계약·후보 diff·선택 시험·모든 실행 원자료와 채택/기각을 독립 확인한 뒤 단계 commit한다. P2 계획 상태: **독립 설계 검토 PASS 채택 / 계획 commit `a64ca58` 뒤 실행·후보 기각 종료**. 검토는 계획만 대상으로 하며 구현·성능의 통과가 아니다. receipt는 `/home/et16/xadb-dev2-evidence/pf04-k0-owner-20261025/p2-plan-review.json`, SHA-256 `e7c1c90fa901d2feb9743539745e82b229411d98076099c8b71c63c6fd60f002`다. 검토 P2 본문 projection SHA-256은 `f1132d8a0589fa80a0e58b07e11d333fbd05631bc423cf22aaef6159b1205f03`이며 이 상태 문장 앞까지를 고정한다. 차단·미해결 지적0개다.
 
 ## 검토·상태 기록
 
 - P0 계획: `/root/pf04_evidence_review`의 `PASS_PLAN_ONLY`를 채택했다. R1 권한 부재 대체 경로, R2 raw PMU·FIFO deadline, R3 시험 소유 구분을 반영했고 차단/미해결 지적은0개다. 검토 뒤 상태·receipt만 기록하고 계획 commit을 생성한다.
 - 검토 receipt: `/home/et16/xadb-dev2-evidence/pf04-analysis-20261025/plan-review.json`, SHA-256 `f0b15ad3063f9f02716c2d3f1d812bf9c8048c02e3d840b20affc50f9c3571c2`. 검토 본문 projection SHA-256 `903f30baec57dfb17855debd644e725887b5a9471b2ca32e42dfe64dc69d2124`는 상단 상태와 본 절을 제외한다. 계획 채택은 구현·시험 실행 증거가 아니다.
 - P1 도구 구현·선택 검증: 계획 commit `82c14ba` 뒤 수행했다. [source별 실행 기록](../evidence/dev2-pf04-window-20261025.md)을 따르며 당시 일반 사용자 PMU는 UNAVAILABLE이었다. 승인된 후속의 [실제 PMU 수집·선택 검증](../evidence/dev2-pf04-pmu-20261025.md)을 별도 연결하며 최종 독립 검토는 각 기록의 채택 상태를 따른다. P0 검토 projection은 계획 commit 시점의 본문에 해당한다.
-- P2: 위 K0 owner 후보 계약으로 후속 착수. P3–P4는 진입 전이며 별도 구체 검토를 유지한다.
+- P2: 계획 commit `a64ca58` 뒤 C1 구현·선택 검증·확인 측정을 수행했다. [후보 기각 증거](../evidence/dev2-pf04-k0-owner-20261025.md)의 확인 구간 상한0.990642가 동결0.95 미만 조건을 충족하지 못해 제품을 원복하고 후보 평가를 종료했다. Off/Always guard는 NOT_RUN, 최종 검토는 증거 기록을 따른다. P3–P4는 진입 전이며 별도 구체 검토를 유지한다.
 - 원 PF04 네 실패와 DEV2/B2/D0 INCOMPLETE: 유지.
