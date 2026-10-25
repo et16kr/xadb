@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "status": "IMPLEMENTED_SELECTED_UNIT_TESTS_PASS_HOST_NOT_RUN",
+  "plan_commit": "014e9ef",
+  "external_root": "/home/et16/xadb-dev2-evidence/pf04-frequency-control-20261025",
+  "selected_functions_by_source": {
+    "r1": 11,
+    "r2": 1
+  },
+  "host_connections": 0,
+  "performance_runs": 0,
+  "original_pf04": "FAIL",
+  "dev2": "INCOMPLETE",
+  "driver_selected_functions": 4,
+  "preparation_sha256": "cb2ac660f2869a8de3fdbfa50edd952d8c4f02da06cba565ff93e7bcf2966ce8",
+  "preflight_review": {
+    "path": "/home/et16/xadb-dev2-evidence/pf04-frequency-control-20261025/frequency-preflight-review.json",
+    "sha256": "77515ac7da6dd1c67423cd164818f67b6e54803c8cfde9d26f9246085334b69d",
+    "status": "PASS_SCOPED_D1_D2_FREQUENCY_CONTROL_PREFLIGHT"
+  }
+}

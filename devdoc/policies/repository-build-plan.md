@@ -536,3 +536,8 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 ## 첫 행의 leaf 후보 편집 — 2026-10-25
 
 `storage/tree_page/edit.rs`와 `edit/tests.rs`는 기존 tree codec의 caller-scratch 편집 책임이다. 별도 crate/dependency·source root·I/O 권한을 추가하지 않으며 실제 Catalog/Row/CLR producer가 소비한다. `check_dev3_leaf.py`의 새 선택 inventory와 `check_dev3_tree_edit_borrows.py`·`test_dev3_tree_edit.py`를 기존 scripts 지문 범위에서 관리한다. 실제 source·binary·입력·원 실패·정리는 [선택 증거](../evidence/dev3-leaf-edit-20261025.md)를 따른다.
+
+
+### PF04 CPU 요청 범위 제어 도구
+
+[한정 계획](../plans/dev2-pf04-resolution-plan.md#frequency-control)의 구현은 `scripts/dev2_frequency_control.py`, 새 경계 시험은 `scripts/test_dev2_frequency_control.py`가 소유한다. 두 CPU의 max 요청만 일시 제어하고 root 소유 lease·systemd StopPost로 원복한다. 제품·WAL·source root·의존성은 변경하지 않으며 제품 성능 인수와 구분한다.

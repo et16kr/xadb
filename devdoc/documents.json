@@ -2437,6 +2437,16 @@
       "path": "evidence/dev2-pf04-controller-placement-20261025.json",
       "role": "evidence",
       "title": "DEV2 PF04 원 native 제어기의 CPU 배치 대조 기록"
+    },
+    "dev2-pf04-frequency-control-20261025.md": {
+      "path": "evidence/dev2-pf04-frequency-control-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 CPU 성능 요청 범위 제어"
+    },
+    "dev2-pf04-frequency-control-20261025.json": {
+      "path": "evidence/dev2-pf04-frequency-control-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 CPU 성능 요청 범위 제어"
     }
   }
 }
