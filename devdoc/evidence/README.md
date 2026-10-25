@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV2 PF04 같은 경계의 모드별 실행 작업과 CPU 비용](dev2-pf04-mode-attribution-20261025.md) · [실행·분석 기록](dev2-pf04-mode-attribution-20261025.json) — 새40slot 완료, CPU 중앙 Always+9.23%·Detailed+12.28%, 원 FAIL·과거 원인 미확정 유지.
+
 - [DEV2 PF04 warmup 뒤 관측 경계 대조](dev2-pf04-boundary-comparison-20261025.md) · [원자료·판정 기록](dev2-pf04-boundary-comparison-20261025.json) — 디버깅10쌍 완료, 큰 경계 효과 UNKNOWN·원 FAIL 유지.
 
 - [DEV2 PF04 warmup 전 관측 경계](dev2-pf04-prewarmup-20261025.md) · [source·검증 기록](dev2-pf04-prewarmup-20261025.json) — 선택11함수·새/기존 경계4연결 완료. 경계 효과 미평가·원 FAIL 유지.

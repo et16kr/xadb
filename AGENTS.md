@@ -14,7 +14,7 @@
 - 사용자는 현재 작업이 개발이 아니라 실패 원인을 조사하는 **디버깅**임을 명확히 했다. 위 개발 테스트 제한을 이 작업의 미실행 원인 구분 진단에 적용하지 않는다. 이는 규정의 예외 승인이 아니라 적용 대상의 구분이다.
 - PF04 디버깅에 필요한 새 가설·관측 경계의 계획된 진단과 새 출력의 정답 검산은 기존 원인 분석·해결 지시 안에서 진행한다. 같은 소스라는 이유만으로 매번 추가 허용을 요구하지 않는다.
 - 완료한 개발 회귀시험·전체 workspace를 반복하지 않으며, 기존 source별 결과·FAIL·UNKNOWN을 보존한다. 진단의 입력·품질·반복 수·시간 예산·중단 조건을 사전에 정하고, 유리한 결과를 얻기 위한 반복이나 인수 기준 완화로 확대하지 않는다. 재부팅·서비스 재시작 금지는 유지한다.
-- [PF04 경계 대조](devdoc/plans/dev2-pf04-resolution-plan.md#boundary-comparison)는10쌍1회로 완료했다. 후속은 [모드별 실행 작업·CPU 비용 진단](devdoc/plans/dev2-pf04-resolution-plan.md#mode-attribution)의 새40slot·최대900초1회이며, 완료한 Off 진단·기능 연결·경계 대조를 반복하지 않는다.
+- [PF04 경계 대조](devdoc/plans/dev2-pf04-resolution-plan.md#boundary-comparison)는10쌍1회로 완료했다. 후속 [모드별 실행 작업·CPU 비용 진단](devdoc/plans/dev2-pf04-resolution-plan.md#mode-attribution)도40slot1회로 완료했다. 완료한 Off 진단·기능 연결·경계 대조·모드 대조를 자동 반복하지 않고, 후속 디버깅은 새 근거·질문과 유한 범위를 먼저 정한다.
 
 ## 별도 COMM 미완료 시험 — 2026-10-23 사용자 적용 범위 정정
 

@@ -411,7 +411,7 @@ r1의 `preparation.json` SHA-256 `0f21268c3ac8ff3965b00e9405461d6f601e8d6fff3793
 
 ## 후속 디버깅: 같은 경계의 모드별 실행 작업과 CPU 비용
 
-2026-10-25 · **계획 `091a38b` 선행 commit / D2 설계 채택 / 실행조립 준비·미실행**. 담당·계약·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`. 앞선 경계 대조는 [UNKNOWN으로 종료](../evidence/dev2-pf04-boundary-comparison-20261025.md)했으며 반복하지 않는다. 현재 작업은 PF04 디버깅으로 기존 분석·해결 지시 안에서 진행한다.
+2026-10-25 · **계획 `091a38b` 선행 commit / D2 설계·실행조립 검토 채택 / 진단40slot 완료·원 FAIL 유지**. 담당·계약·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`. 앞선 경계 대조는 [UNKNOWN으로 종료](../evidence/dev2-pf04-boundary-comparison-20261025.md)했으며 반복하지 않는다. 현재 작업은 PF04 디버깅으로 기존 분석·해결 지시 안에서 진행한다.
 
 ### 질문과 선택
 
@@ -453,4 +453,11 @@ Off-only 경계 대조로는 계측을 켰을 때의 추가 작업을 알 수 �
 독립 preflight에서 실제 retained CPU가0이면 common gate 실패 뒤에도 분수 나눗셈이 먼저 실행되는 경계를 발견했다. `analyze()`의 실제 numerator/denominator 타입·양수 검사를 나눗셈 앞에 두고, 모든 모드에 공통 UNKNOWN을 적용하며 불량 pair의 null·이유를 보존했다. 새 반례1함수/20vector만 선택해 PASS했으며 앞선 완료4함수는 반복하지 않았다. 원 preflight source와 r2준비·로그를 보존했고 r3분석기·반례의 별도 선택 기록을 남겼다. 실행기는 변경하지 않았다. 최종 `preparation.json`은66개 지문, SHA-256 `78dad09b795b11ba0c14c9130b560042d23b1d476108ed255126bab6991323bf`다.
 
 
-최종 독립 preflight를 채택했다. 차단0개이며 `preflight-review.json` SHA-256은 `97980fdc363e39f6b7d4c5972c0a3b8465e8c5245d100f462038a0fa31c6d6d1`이다. 준비 검산에서66개 binding과 보존 source4444파일 지문 일치, 원 cleanup owner·input mode 결합·전체40 gate를 확인했다. 실제 native 실행 전 상태이며 기존 PF04 디버깅 지시에 따라 동결1회를 진행한다.
+최종 독립 preflight를 채택했다. 차단0개이며 `preflight-review.json` SHA-256은 `97980fdc363e39f6b7d4c5972c0a3b8465e8c5245d100f462038a0fa31c6d6d1`이다. 준비 검산에서66개 binding과 보존 source4444파일 지문 일치, 원 cleanup owner·input mode 결합·전체40 gate를 확인했다. 당시 실제 native 실행 전 상태였으며 기존 PF04 디버깅 지시에 따라 동결1회를 진행하기로 했다.
+
+
+### 모드별 진단 완료 — 2026-10-25
+
+동결40slot/20개 비공유 pair를417.476283초에 한 번 완료했다.40개 fresh output 정답·PMU320행·소유 group120개/actual collector40개 종료를 확인했고 재시도·실패·취소0이다. CPU On/Off paired 중앙은 Always1.092334187, Detailed1.122806355이며 최악은1.104277470/1.133934999, pair별23/20 초과는각0/10이다. 두 중앙 구간은 `MEDIAN_INTERVAL_WITHIN_REFERENCE`지만 원 pair별 인수 판정을 대체하지 않는다.
+
+user instructions 중앙비1.053185367/1.076304360와 user CPI1.036546289/1.046707780을 함께 관측했다. 원 느린 실행 대역의 원인이나 새 제품 수정의 충분한 근거는 아직 아니며, 이번 campaign을 종료하고 원 PF04 FAIL·DEV2/B2/D0 미완료를 유지한다. 실행·분석·독립 검산·최종 문서 검토·manifest는 [모드별 진단 증거](../evidence/dev2-pf04-mode-attribution-20261025.md)와 연결 JSON을 따른다. 다음 단계는 새로 뒷받침되는 발생 조건이나 코드 가설을 정하는 것이며, 이번40slot을 자동 반복하지 않는다.
