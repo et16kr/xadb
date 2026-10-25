@@ -411,7 +411,7 @@ r1의 `preparation.json` SHA-256 `0f21268c3ac8ff3965b00e9405461d6f601e8d6fff3793
 
 ## 후속 디버깅: 같은 경계의 모드별 실행 작업과 CPU 비용
 
-2026-10-25 · **D2 제안 / 선행 계획 commit 후 실행조립 / 미실행**. 담당·계약·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`. 앞선 경계 대조는 [UNKNOWN으로 종료](../evidence/dev2-pf04-boundary-comparison-20261025.md)했으며 반복하지 않는다. 현재 작업은 PF04 디버깅으로 기존 분석·해결 지시 안에서 진행한다.
+2026-10-25 · **계획 `091a38b` 선행 commit / D2 설계 채택 / 실행조립 준비·미실행**. 담당·계약·통합 `/root`, 독립 검토 `/root/pf04_evidence_review`. 앞선 경계 대조는 [UNKNOWN으로 종료](../evidence/dev2-pf04-boundary-comparison-20261025.md)했으며 반복하지 않는다. 현재 작업은 PF04 디버깅으로 기존 분석·해결 지시 안에서 진행한다.
 
 ### 질문과 선택
 
@@ -439,3 +439,18 @@ Off-only 경계 대조로는 계측을 켰을 때의 추가 작업을 알 수 �
 ### 준비·검토
 
 준비 루트는 `/home/et16/xadb-dev2-evidence/pf04-mode-attribution-20261025`, proposal SHA-256은 `1d8014088a5278588d1b2fdeecc03111f6188a1d6723e6e8b816db4bb8bf6df9`다. 새 실행조립의 mode 결합·inventory와 분석기의 분수 경계·누락/순서·보조 분모 처리를 직접 검증한다. 기존 제품·완료 수집기·원 oracle 기능 시험은 반복하지 않고,40개 fresh diagnostic output에 대한 정답 검산만 수행한다. 실제 실행 전에 driver·분석기·입력·원 source/ELF/oracle 지문과 독립 preflight를 결합한다. 문서 verifier는 push gate에 남긴다.
+
+
+### 모드별 진단 준비 — 2026-10-25
+
+독립 설계 검토 `design-review.json` SHA-256 `f0021cc0eeedd960891ac449f50c26bea89a04588862cf9e8ae9b75eaff714ff`를 채택했다. 원 pair별 기준과 중앙 구간 기술 분류를 구분하고 전체40 공통 gate·mode 입력 결합을 명확히 했다. 제품·기존 collector·oracle 변경과 새 build는0이다.
+
+새 외부 `run.py`는 이전 한정 driver의 소유 수집·정리 경로를 재사용하고40slot·기대 입력 mode/byte 결합을 추가한다. `analyze.py`는20개 비공유 pair를 mode별로 묶고 공통 완료·참조 구간·개별 초과/최악값·보조 분모를 처리한다. 새4함수 선택 검증에서3함수 PASS·합성 기대값1FAIL을 보존했다. 원 crossing fixture가 CW/WC 순서 차이 기준에 걸리는 자료였으므로 fixture만 수정하고 해당1함수만 다시 실행해 PASS했다. 분석기는 바뀌지 않았고 앞선3함수·제품·완료 도구 시험은 반복하지 않았다. `r1/`, `test-selection*.json`, `tests*.log`, `tests.json`에 source별 범위를 보존한다.
+
+처음 `preparation.json` SHA-256은 `f78531e2707f144b2ec2063a378f3afa7330150782e6de821b49621bc5c40fd6`이며58개 지문을 결합했고 원본은 `r2/`에 보존했다. Off 입력은 기존 request와 byte가 같고 Always/Detailed는 input.mode만 다르다. 실행조립 독립 preflight와 기존 디버깅 근거를 결합한 뒤 동결1회를 진행한다. 이 준비 시점의 실제 native·oracle 실행은0이다.
+
+
+독립 preflight에서 실제 retained CPU가0이면 common gate 실패 뒤에도 분수 나눗셈이 먼저 실행되는 경계를 발견했다. `analyze()`의 실제 numerator/denominator 타입·양수 검사를 나눗셈 앞에 두고, 모든 모드에 공통 UNKNOWN을 적용하며 불량 pair의 null·이유를 보존했다. 새 반례1함수/20vector만 선택해 PASS했으며 앞선 완료4함수는 반복하지 않았다. 원 preflight source와 r2준비·로그를 보존했고 r3분석기·반례의 별도 선택 기록을 남겼다. 실행기는 변경하지 않았다. 최종 `preparation.json`은66개 지문, SHA-256 `78dad09b795b11ba0c14c9130b560042d23b1d476108ed255126bab6991323bf`다.
+
+
+최종 독립 preflight를 채택했다. 차단0개이며 `preflight-review.json` SHA-256은 `97980fdc363e39f6b7d4c5972c0a3b8465e8c5245d100f462038a0fa31c6d6d1`이다. 준비 검산에서66개 binding과 보존 source4444파일 지문 일치, 원 cleanup owner·input mode 결합·전체40 gate를 확인했다. 실제 native 실행 전 상태이며 기존 PF04 디버깅 지시에 따라 동결1회를 진행한다.
