@@ -2,7 +2,7 @@
 
 use super::{Diagnostic, OwnedScalar, ScalarData, Span, diagnostic};
 use crate::frontend::Code;
-use xadb_foundation::runtime::{Quota, Reservation};
+use foundation::runtime::{Quota, Reservation};
 
 pub(super) struct ScalarBudget {
     session: Quota,

@@ -263,7 +263,7 @@ def main():
         engine = build('build-engine', ['cargo', 'test', '-p', 'xadb-engine', '--lib',
             '--test', 'transaction', '--test', 'durable_recovery', '--release', '--locked',
             '--offline', '--no-default-features', '--no-run', '--message-format=json'],
-            {('xadb_engine', True), ('transaction', True), ('durable_recovery', True)})
+            {('engine', True), ('transaction', True), ('durable_recovery', True)})
         worker = build('build-native', ['cargo', 'test', '-p', 'xadbtest-engine-worker',
             '--test', 'native_fault', '--test', 'kernel_stress', '--release', '--locked',
             '--offline', '--no-default-features', '--no-run', '--message-format=json'],
@@ -271,7 +271,7 @@ def main():
         output = command('independent-oracle-self-tests', ['python3', '-B', '-m', 'unittest',
             'discover', '-s', 'scripts', '-p', 'test_dev2_durable*.py', '-v'])
         require_python_tests(output)
-        for name, target in (('engine-units', engine[('xadb_engine', True)]),
+        for name, target in (('engine-units', engine[('engine', True)]),
                              ('transactions', engine[('transaction', True)])):
             inventory = test_inventory(command(name + '-inventory', [target, '--list']))
             ignored = ({'durable::codec_fuzz::disk_record_mutation_v3_30_minutes'}

@@ -1,5 +1,5 @@
+use foundation::error::{Certainty, Effect, RetryScope};
 use std::fmt;
-use xadb_foundation::error::{Certainty, Effect, RetryScope};
 
 /// Engine operation result; current substrate errors leave the public root unchanged.
 pub type Result<T> = std::result::Result<T, Error>;

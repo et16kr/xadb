@@ -13,7 +13,7 @@ use std::{
     os::unix::fs::{MetadataExt, OpenOptionsExt},
     path::{Path, PathBuf},
 };
-use xadbtest_protocol::{
+use test_protocol::{
     durable::{Action, Observation},
     fault::Phase,
 };

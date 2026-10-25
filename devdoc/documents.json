@@ -664,9 +664,9 @@
       "title": "test_document_tools.py"
     },
     "test_xadb_contracts.py": {
-      "path": "test_xadb_contracts.py",
+      "path": "test_contracts.py",
       "role": "entrypoint",
-      "title": "test_xadb_contracts.py"
+      "title": "test_contracts.py"
     },
     "verify_documents.py": {
       "path": "verify_documents.py",
@@ -2242,6 +2242,11 @@
       "path": "evidence/dev3-comparison-adoption-20261025.md",
       "role": "evidence",
       "title": "DEV3 비교 분석의 설계·계획 반영"
+    },
+    "naming-cleanup-20261025.md": {
+      "path": "evidence/naming-cleanup-20261025.md",
+      "role": "evidence",
+      "title": "XADB 내부 명칭과 반복 파일명 정리"
     }
   }
 }

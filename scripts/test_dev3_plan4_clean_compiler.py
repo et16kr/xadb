@@ -40,7 +40,7 @@ def lines(rows):
     return ''.join(json.dumps(row) + '\n' for row in rows)
 
 
-def prior_fixture(root, identifier='CP01', wrong_code=None):
+def prior_fixture(root, identifier='CP01', wrong_code=None, lib_name='engine'):
     """Synthetic runner records with real frozen probe bytes; no compiler work."""
     history, revision = root / 'history', root / 'revision'
     session, source = history / 'first', revision / 'source'
@@ -68,6 +68,9 @@ def prior_fixture(root, identifier='CP01', wrong_code=None):
     probe = overlay / runner.PROBE
     probe.parent.mkdir(parents=True)
     probe.write_bytes((source / runner.INPUT / frozen['path']).read_bytes())
+    cargo = overlay / 'crates/engine/Cargo.toml'
+    cargo.write_text('[package]\nname = "xadb-engine"\n' +
+                     (f'[lib]\nname = "{lib_name}"\n' if lib_name else ''))
     stdout, stderr, patch_path = (evidence / name for name in ('compiler.jsonl', 'compiler.stderr', 'probe.patch'))
     stdout.write_text(lines(messages(frozen, wrong_code)))
     stderr.write_text('synthetic compiler capture\n')
@@ -78,7 +81,7 @@ def prior_fixture(root, identifier='CP01', wrong_code=None):
            'expectation': frozen, 'source': str(overlay), 'source_sha256': fingerprint(overlay),
            'probe_sha256': runner.sha(probe), 'stop_reason': None, 'truncated': False,
            'exit_code': 0 if frozen['expected_code'] is None else 101,
-           'metadata': [{'target': 'xadb_engine', 'retained_path': str(metadata), 'sha256': runner.sha(metadata)}]}
+           'metadata': [{'target': lib_name or 'xadb_engine', 'retained_path': str(metadata), 'sha256': runner.sha(metadata)}]}
     for key, path in [('stdout', stdout), ('stderr', stderr), ('patch', patch_path)]:
         row[key], row[key + '_sha256'] = str(path), runner.sha(path)
     report = {'schema': runner.SCHEMA, 'run_sha256': runner.sha(session / 'run.json'),
@@ -101,6 +104,22 @@ def prior_mocks(source, identity):
 
 
 class G5CompilerHarness(unittest.TestCase):
+    def test_prior_target_matches_retained_source(self):
+        """Current aliases and original target names remain bound to their source."""
+        for lib_name in (None, 'engine'):
+            with self.subTest(lib_name=lib_name), tempfile.TemporaryDirectory() as temp:
+                history, source, identity, session, _, report = prior_fixture(
+                    Path(temp), lib_name=lib_name)
+                with prior_mocks(source, identity):
+                    completed, *_ = runner.load_prior(history)
+                self.assertEqual(completed, {'CP01'})
+                report['cases'][0]['metadata'][0]['target'] = (
+                    'engine' if lib_name is None else 'xadb_engine')
+                write_json(session / 'result.json', report)
+                with prior_mocks(source, identity), self.assertRaisesRegex(
+                        ValueError, 'prior positive engine metadata missing'):
+                    runner.load_prior(history)
+
     def test_h09_exact_diagnostic_contract(self):
         """G5-H09: code, one-error count, exact file and every primary span."""
         manifest = json.loads((runner.ROOT / runner.INPUT / 'manifest.json').read_text())

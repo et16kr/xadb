@@ -8,11 +8,14 @@ publish.workspace = true
 [features]
 test-support = []
 
+[lib]
+name = "sql"
+
 [dependencies]
-xadb-foundation.workspace = true
+foundation.workspace = true
 
 [dev-dependencies]
-xadbtest-reference = { path = "../testing/reference" }
+test_reference = { package = "xadbtest-reference", path = "../testing/reference" }
 
 [lints]
 workspace = true

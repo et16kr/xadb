@@ -1,9 +1,9 @@
 //! Native time and cooperative scheduling using Rust standard facilities.
-use std::time::Instant;
-use xadb_foundation::{
+use foundation::{
     Result,
     runtime::{Clock, Scheduler},
 };
+use std::time::Instant;
 
 /// Native monotonic clock with a per-instance Instant epoch.
 /// Values saturate at u64::MAX nanoseconds; unrelated instances cannot be compared.

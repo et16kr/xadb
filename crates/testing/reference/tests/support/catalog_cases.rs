@@ -1,4 +1,4 @@
-use xadbtest_protocol::engine::{
+use test_protocol::engine::{
     Action, Cell, Column, DataType, Metrics, Observation, Request, Response, Row, RowIdentity,
     TableIdentity, TableSpec,
 };

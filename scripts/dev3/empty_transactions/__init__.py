@@ -1,0 +1,1 @@
+"""Empty transaction ownership checks."""

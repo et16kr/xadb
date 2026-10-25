@@ -14,28 +14,28 @@ use crate::{
     },
     transaction::concurrency::Owner,
 };
-use xadb_foundation::{error::Effect, namespace::WriterNamespace};
+use foundation::{error::Effect, namespace::WriterNamespace};
 
-#[path = "plan4_retention_control.rs"]
+#[path = "plan4_retention/control.rs"]
 mod control;
-#[path = "plan4_retention_flush.rs"]
+#[path = "plan4_retention/flush.rs"]
 mod flush;
-#[path = "plan4_retention_history.rs"]
+#[path = "plan4_retention/history.rs"]
 mod history;
-#[path = "plan4_retention_live.rs"]
+#[path = "plan4_retention/live.rs"]
 mod live;
-#[path = "plan4_retention_load.rs"]
+#[path = "plan4_retention/load.rs"]
 mod load;
-#[path = "plan4_retention_population.rs"]
+#[path = "plan4_retention/population.rs"]
 mod population;
-#[path = "plan4_retention_read.rs"]
+#[path = "plan4_retention/read.rs"]
 mod read;
-#[path = "plan4_retention_recovery.rs"]
+#[path = "plan4_retention/recovery.rs"]
 mod recovery;
 #[cfg(test)]
-#[path = "plan4_retention_recovery_test_observation.rs"]
+#[path = "plan4_retention/recovery_observation_tests.rs"]
 mod recovery_test_observation;
-#[path = "plan4_retention_resources.rs"]
+#[path = "plan4_retention/resources.rs"]
 mod resources;
 
 #[allow(
@@ -120,8 +120,8 @@ pub(crate) enum RetentionCause {
     Storage(crate::storage::wal_io::MutableStorageError),
     Plan4(super::Plan4PageError),
     PageIo(crate::storage::page_io::PageIoError),
-    Namespace(xadb_foundation::namespace::NamespaceError),
-    Io(xadb_foundation::Error),
+    Namespace(foundation::namespace::NamespaceError),
+    Io(foundation::Error),
     #[allow(
         private_interfaces,
         reason = "retain original private executor error; no shared authority visibility expansion"
@@ -376,5 +376,5 @@ fn health<W: WriterNamespace>(
 }
 
 #[cfg(test)]
-#[path = "plan4_retention_tests.rs"]
+#[path = "plan4_retention/tests.rs"]
 mod tests;

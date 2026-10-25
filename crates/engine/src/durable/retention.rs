@@ -6,16 +6,16 @@ use super::{
     observation::Observations,
 };
 use crate::storage::volatile::ARC_HEADER_BYTES;
+use foundation::{
+    namespace::FileName,
+    runtime::{Quota, Reservation},
+};
 use std::{
     mem::size_of,
     sync::{
         Arc, Mutex, MutexGuard,
         atomic::{AtomicBool, Ordering},
     },
-};
-use xadb_foundation::{
-    namespace::FileName,
-    runtime::{Quota, Reservation},
 };
 
 /// Separate single-owner system pin reservations, independent of user snapshots.

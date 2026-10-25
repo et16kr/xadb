@@ -5,12 +5,12 @@ use crate::storage::{
     page::PageIdentity,
 };
 use crate::{api::DatabaseId, transaction::TxnId};
+use foundation::{codec::content_digest, identity::ObjectId};
 use std::{
     collections::{BTreeMap, BTreeSet},
     panic::{AssertUnwindSafe, catch_unwind, resume_unwind},
     path::PathBuf,
 };
-use xadb_foundation::{codec::content_digest, identity::ObjectId};
 
 pub(in crate::storage) fn ids(prefix: &str, count: usize) -> Vec<String> {
     (1..=count).map(|i| format!("G6-{prefix}{i:02}")).collect()

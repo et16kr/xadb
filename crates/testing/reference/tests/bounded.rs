@@ -10,10 +10,10 @@
 //! a no-op. Successful equal-value replacement does not advance the version.
 
 use std::time::{Duration, Instant};
-use xadbtest_protocol::history::{
+use test_protocol::history::{
     Action, Cell, CommitFault, Event, History, Key, Mode, Mutation, Observation, Rejection,
 };
-use xadbtest_reference::{SearchBudget, Verdict, check};
+use test_reference::{SearchBudget, Verdict, check};
 
 const GENERATOR: &str = "p0-bounded-net-zero-v2";
 const EXCLUDED: &str = "Insert,Delete,multi-mutation,rollback,UNKNOWN,crash,catalog";

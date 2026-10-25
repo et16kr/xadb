@@ -12,12 +12,12 @@ use crate::{
     metrics::Counters,
     storage::volatile::{ARC_HEADER_BYTES, Charge, StoredRow, array, reserve},
 };
-use std::{mem::size_of, sync::Arc};
-use xadb_foundation::{
+use foundation::{
     identity::{Generation, ObjectHandle, SchemaEpoch},
     runtime::{Quota, Reservation},
     value::Value,
 };
+use std::{mem::size_of, sync::Arc};
 
 /// Single-owner volatile mutation driver. Snapshots may be read on other threads.
 /// Dropping this driver never commits or syncs anything; owning views remain valid.

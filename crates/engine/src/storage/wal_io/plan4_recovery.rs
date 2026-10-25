@@ -20,8 +20,7 @@ use crate::{
         wal_frame::{WalError, WalStreamIdentity},
     },
 };
-use std::sync::{Condvar, Mutex};
-use xadb_foundation::{
+use foundation::{
     codec::{ContentHasher, content_digest},
     error::Effect,
     io::{FileIo, read_exact_at, sync, write_all_at},
@@ -30,19 +29,20 @@ use xadb_foundation::{
         WriterNamespace,
     },
 };
+use std::sync::{Condvar, Mutex};
 
-#[path = "plan4_recovery_analysis.rs"]
+#[path = "plan4_recovery/analysis.rs"]
 mod analysis;
-#[path = "plan4_recovery_epoch.rs"]
+#[path = "plan4_recovery/epoch.rs"]
 mod epoch;
-#[path = "plan4_recovery_physical.rs"]
+#[path = "plan4_recovery/physical.rs"]
 mod physical;
-#[path = "plan4_recovery_resources.rs"]
+#[path = "plan4_recovery/resources.rs"]
 mod resources;
-#[path = "plan4_recovery_select.rs"]
+#[path = "plan4_recovery/select.rs"]
 mod selection;
 #[cfg(test)]
-#[path = "plan4_recovery_tests.rs"]
+#[path = "plan4_recovery/tests.rs"]
 mod tests;
 #[cfg(test)]
 pub(in crate::storage) use resources::source_census;
@@ -112,7 +112,7 @@ pub(crate) enum Plan4RecoveryCause {
     Poisoned,
     Exhausted,
     Namespace(NamespaceError),
-    Io(xadb_foundation::Error),
+    Io(foundation::Error),
     Control(ControlError),
     Doublewrite(DoublewriteError),
     Page(PageError),

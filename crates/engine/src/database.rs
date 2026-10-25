@@ -23,16 +23,16 @@ use crate::{
         VolatileDatabase,
     },
 };
+use foundation::{
+    namespace::{DirectoryPort, Selector, WriterNamespace},
+    runtime::{Cancellation, Clock, Quota, Reservation},
+};
 use std::{
     cell::RefCell,
     fmt,
     mem::size_of,
     ops::{Deref, DerefMut},
     sync::{Arc, Mutex, MutexGuard},
-};
-use xadb_foundation::{
-    namespace::{DirectoryPort, Selector, WriterNamespace},
-    runtime::{Cancellation, Clock, Quota, Reservation},
 };
 
 pub use crate::durable::error::{DurableError, DurableErrorCode, TransactionOutcome};
@@ -757,7 +757,7 @@ fn rehome_observations(observations: &mut Arc<Observations>, control: &Control) 
 fn require_empty<W: WriterNamespace>(writer: &W, quota: &Quota) -> Result<()> {
     let _charge = reserve(
         quota,
-        MAX_FILES * size_of::<xadb_foundation::namespace::DirectoryEntry>(),
+        MAX_FILES * size_of::<foundation::namespace::DirectoryEntry>(),
     )?;
     let entries = writer
         .list_owned(MAX_FILES)
@@ -766,7 +766,7 @@ fn require_empty<W: WriterNamespace>(writer: &W, quota: &Quota) -> Result<()> {
     let extra = entries
         .capacity()
         .saturating_sub(MAX_FILES)
-        .checked_mul(size_of::<xadb_foundation::namespace::DirectoryEntry>())
+        .checked_mul(size_of::<foundation::namespace::DirectoryEntry>())
         .ok_or_else(|| {
             storage(
                 StorageError::limit("empty directory inventory capacity"),

@@ -1,9 +1,9 @@
 //! Actual plan3 creator; external checker verifies every byte and effect.
 use super::super::native::{Trace, Writer, db_fds, hex};
 use super::*;
+use foundation::namespace::DirectoryPort;
+use platform::namespace::LinuxDirectory;
 use std::{fs, path::PathBuf};
-use xadb_foundation::namespace::DirectoryPort;
-use xadb_platform::namespace::LinuxDirectory;
 
 #[test]
 #[ignore = "explicit native plan3 creator with a fresh output directory"]

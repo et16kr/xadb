@@ -32,8 +32,8 @@
       "reason": "Actual new assembly, consuming initialize, reader release and owner reuse type-check",
       "probe_relative_path": "crates/engine/src/storage/status_init_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 1544,
-      "sha256": "d66abba4176faf1a50041e6de4eb486ab0f182efe378ea0021b231714444b8da"
+      "bytes": 1539,
+      "sha256": "e7fc3ac1cb29d55ddc005601d56d3ada328eb235b53472fc1c674b47b2935e09"
     },
     {
       "name": "authority_private",
@@ -44,8 +44,8 @@
       "reason": "Raw InitAuthority construction is private",
       "probe_relative_path": "crates/engine/src/storage/status_init_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 726,
-      "sha256": "2fb699fa6fbc73d91b817512147a3f6e7b91bb38f6bad82adff4c69a7f9328e4"
+      "bytes": 721,
+      "sha256": "9cc28a193794e1ba434ea94b5591345e977a7b494c21cdafb34a5266e85422ff"
     },
     {
       "name": "permit_private",
@@ -56,8 +56,8 @@
       "reason": "Raw InitInstallPermit construction is private",
       "probe_relative_path": "crates/engine/src/storage/status_init_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 732,
-      "sha256": "438296ffebd905abe4ac8393ddeea1449cd49a063a83c0c3dfa3edba8f03a7dc"
+      "bytes": 727,
+      "sha256": "0d2fec7fe5bd24f6f70a5769caf333604ab04b4e69e30cf361b1d8044eb9e5bb"
     },
     {
       "name": "reservation_private",
@@ -68,8 +68,8 @@
       "reason": "Raw linear ReservedStatus construction is private",
       "probe_relative_path": "crates/engine/src/storage/wal_io/status_init_operation_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/wal_io/status_init_operation.rs",
-      "bytes": 956,
-      "sha256": "5b1a404d0aef53b3b199abbe965d1891f464134737d2c455d0bdd6184a4bc443"
+      "bytes": 951,
+      "sha256": "c3b4fe8ee0eb90b1a625f9e1bd3188c39c1317a12de128f585e640471703cb18"
     },
     {
       "name": "permit_clone",
@@ -80,8 +80,8 @@
       "reason": "Install permit has no Clone",
       "probe_relative_path": "crates/engine/src/storage/status_init_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 716,
-      "sha256": "97b73c840deec74429f7d273d5b9f7aa14764a93f57b781b6da3a793ee69b038"
+      "bytes": 711,
+      "sha256": "9a9599b6182abeb07c4676925a235490ec956e1e2f3c869bb01c3613c047c098"
     },
     {
       "name": "raw_lsn_apply",
@@ -92,8 +92,8 @@
       "reason": "Raw LSN cannot substitute for sealed permit",
       "probe_relative_path": "crates/engine/src/storage/status_init_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 768,
-      "sha256": "10a8e6a641c5d05be255c6f8c12f95e7c6a63d7da2161643d146d07e524d7e4b"
+      "bytes": 763,
+      "sha256": "019e5665441515bd7535b3f4ddada9781dbb48869ddf70d1dac43ff2c655d250"
     },
     {
       "name": "prepared_after_reborrow",
@@ -116,8 +116,8 @@
       "reason": "ReservedStatus retains mutable writer borrow",
       "probe_relative_path": "crates/engine/src/storage/status_init_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 887,
-      "sha256": "498a4ff9b840ee4b3f70bdf3a50cc2cb460a8a96990f8f539ede069a0e90b727"
+      "bytes": 882,
+      "sha256": "7e6150da0751ea2b1c60d5e99c4993341363885c6794c67ae652df87e5c92462"
     },
     {
       "name": "owner_reborrow",
@@ -128,8 +128,8 @@
       "reason": "ReservedStatus retains mutable Owner borrow",
       "probe_relative_path": "crates/engine/src/storage/status_init_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 886,
-      "sha256": "d3f66766f7ca665b186189e573e5fc6895b706a2481df1f000876bf10b12a83c"
+      "bytes": 881,
+      "sha256": "7c27a8b30e7ca115c1ff4ad46d9d4f0a83d86aef4fe413da3567761ffbaa8d30"
     },
     {
       "name": "consumed_reservation",
@@ -140,8 +140,8 @@
       "reason": "initialize consumes reservation even when result is dropped",
       "probe_relative_path": "crates/engine/src/storage/status_init_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 748,
-      "sha256": "71d1f460dfa3204a2a32ad38dd20fb118ee73e627018cd628db5c589e646c1e8"
+      "bytes": 743,
+      "sha256": "f5dcab85704ed69edf4a2924ccfe2ca1cf1037dcb7850f598ac3c6d406e2d4ed"
     },
     {
       "name": "frame_reborrow",
@@ -152,8 +152,8 @@
       "reason": "Bound retains actual frame-array mutable borrow",
       "probe_relative_path": "crates/engine/src/storage/status_init_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 1077,
-      "sha256": "a1b12a99958e8a36326125e399e82cf6f6925881fe9982d18b3f42bf956b0a6d"
+      "bytes": 1072,
+      "sha256": "922f6666cdc4a86982aad8462e442e47812005257aedceb63782232f96c31e3e"
     },
     {
       "name": "bound_move",
@@ -164,8 +164,8 @@
       "reason": "Reader view prevents moving its bound",
       "probe_relative_path": "crates/engine/src/storage/status_init_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 1050,
-      "sha256": "7d7559bb02c9d86a2542fe64ff8824bc1fd5e38b4717fe2d40ae85af40606151"
+      "bytes": 1045,
+      "sha256": "71cb1c96995faecaea1a8f66e74a619f1cfe1c0edee5fb74ed00fa443c1c9e26"
     },
     {
       "name": "mutable_read_bytes",
@@ -176,8 +176,8 @@
       "reason": "StatusReadGuard bytes cannot become mutable",
       "probe_relative_path": "crates/engine/src/storage/status_init_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 773,
-      "sha256": "aa0b3d9dfaada0ec6d85fd7cfdf9f080567d780aff13e2cc90fa9d6fb9726dd3"
+      "bytes": 768,
+      "sha256": "9d927b68b7873b6e9904bddb5dd300d9aca9b7a575a00c1ce395d8cbac20a260"
     }
   ]
 }

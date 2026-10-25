@@ -535,7 +535,7 @@ pub(super) mod test_support {
                     .as_mut()
                     .expect("actual captured claim")
                     .identity
-                    .owner = xadb_foundation::identity::ObjectId::new(2).unwrap()
+                    .owner = foundation::identity::ObjectId::new(2).unwrap()
             }
             6 => {
                 claim

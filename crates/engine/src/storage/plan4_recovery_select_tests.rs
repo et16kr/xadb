@@ -8,8 +8,8 @@ use crate::storage::{
     wal_frame::{self, FrameExpectation, WalStreamIdentity},
     wal_io::plan4_test_support::{Action, Directory, Fault, Key},
 };
+use foundation::{ErrorCode, identity::ObjectId, namespace::NamespaceErrorKind};
 use std::collections::BTreeMap;
-use xadb_foundation::{ErrorCode, identity::ObjectId, namespace::NamespaceErrorKind};
 
 const DATA: &str = "d3-data-0000000100000001";
 fn backing<const N: usize>() -> Box<[u8; N]> {
@@ -510,7 +510,7 @@ fn plan4_selection_page_boundaries() {
 struct OversizedDirectory;
 impl DirectoryPort for OversizedDirectory {
     type Writer = wal_io::plan4_test_support::SizedWriter<65_537>;
-    fn acquire_writer(&self) -> xadb_foundation::namespace::NamespaceResult<Self::Writer> {
+    fn acquire_writer(&self) -> foundation::namespace::NamespaceResult<Self::Writer> {
         panic!("oversized selector reached namespace acquisition")
     }
 }

@@ -6,53 +6,53 @@
       "primary_line": null
     },
     {
-      "bytes": 941,
+      "bytes": 936,
       "expected_code": null,
       "name": "shared_thread",
       "primary_line": null,
-      "sha256": "41b14c63a1da9227dadbf727b7744aec5c34057cf820daccfa98e004e4223f4b"
+      "sha256": "a4d1e985318ac67f7e318565b4c7dc32e555d898eecea02c9e0b8de01bfd4b5b"
     },
     {
-      "bytes": 1026,
+      "bytes": 1021,
       "expected_code": null,
       "name": "buffer_thread",
       "primary_line": null,
-      "sha256": "9883c342026e8fed92e86d79e6f5583eebd504f2ed3de242fd6d282040b8f856"
+      "sha256": "85bb29b4de247f88b8a7403c63623f9ad166c50eb9ea254747746b344726ed58"
     },
     {
-      "bytes": 715,
+      "bytes": 710,
       "expected_code": "E0505",
       "name": "session",
       "primary_line": 8,
-      "sha256": "c70e40580e9daad3076fa9e3eb10148705a567b79af50164b1b008cffccb6aa5"
+      "sha256": "da2a5d84abdcf719005ce4682cbadca6c0b42c053dae7acc968e27071e87b403"
     },
     {
-      "bytes": 757,
+      "bytes": 752,
       "expected_code": "E0499",
       "name": "slot",
       "primary_line": 8,
-      "sha256": "8a2676d46e3ca163e3723a41106257bac6db2b3b6638d715e9fbbd50127330d9"
+      "sha256": "0a2b58e80506ac69d5a50b2db43338afe454f4ae4b82c666d71aa5cbc8ac1d56"
     },
     {
-      "bytes": 757,
+      "bytes": 752,
       "expected_code": "E0499",
       "name": "root",
       "primary_line": 8,
-      "sha256": "dd90d3af5c4896368587d93523f06a7c7b8b49138e5f20cbb3b4e3ffb9c4ad7b"
+      "sha256": "3cabefbfaa591b57d41b14b8aa68d45e3ecfd73581acb504969a38e9434d0218"
     },
     {
-      "bytes": 760,
+      "bytes": 755,
       "expected_code": "E0499",
       "name": "scratch",
       "primary_line": 8,
-      "sha256": "5f913705e84b64b82ac2c766dfddffd4f983c6edb1bcb9fe4d7898d5e0a978a9"
+      "sha256": "72ac7336d0c7973ac2994d991afd5a9f45059206fffd57c2c738412ae3f3a90c"
     },
     {
-      "bytes": 730,
+      "bytes": 725,
       "expected_code": "E0382",
       "name": "writer",
       "primary_line": 8,
-      "sha256": "6ebae304dde6d6aff46f3382027e1826907ccb04991daebec406c689dff2bc67"
+      "sha256": "72e32343f3c84ef438074f43ceea0581fef895467b681f570c84a887dc7a2ad2"
     }
   ],
   "probe_relative_path": "crates/engine/src/bootstrap_borrow_probe.rs",

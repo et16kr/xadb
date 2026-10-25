@@ -1,5 +1,5 @@
 use std::{collections::BTreeMap, path::PathBuf, process::ExitCode};
-use xadbtest::{RunOptions, file_sha256, run};
+use test_controller::{RunOptions, file_sha256, run};
 
 fn campaign_id(value: &str) -> Result<[u8; 16], Box<dyn std::error::Error>> {
     if value.len() != 32 || !value.is_ascii() {
@@ -27,7 +27,7 @@ fn execute() -> Result<u8, Box<dyn std::error::Error>> {
                 if options.insert(key,value).is_some() {return Err("duplicate option".into());}
             }
             let mut take=|name| options.remove(name).ok_or_else(||format!("missing option: {name}"));
-            let report=xadbtest::durable_performance::run(xadbtest::durable_performance::Options {
+            let report=test_controller::durable_performance::run(test_controller::durable_performance::Options {
                 input:take("--input")?.into(),input_sha256:take("--input-sha256")?,worker:take("--worker")?.into(),worker_sha256:take("--worker-sha256")?,artifacts:take("--artifacts")?.into(),run:campaign_id(&take("--run-id")?)?,
             })?;
             println!("{}",serde_json::to_string(&report)?);
@@ -35,13 +35,13 @@ fn execute() -> Result<u8, Box<dyn std::error::Error>> {
         }
         Some("performance-profile") => {
             if args.next().is_some() { return Err("performance-profile accepts no options".into()); }
-            println!("{}", serde_json::to_string_pretty(&xadbtest::performance::profile())?);
+            println!("{}", serde_json::to_string_pretty(&test_controller::performance::profile())?);
             Ok(0)
         }
         Some("prepare-performance") => {
             use std::io::{Read, Write};
-            use xadbtest::performance::{BuildReceipt, Recipe, Side};
-            use xadbtest_protocol::performance::DiagnosticsMode;
+            use test_controller::performance::{BuildReceipt, Recipe, Side};
+            use test_protocol::performance::DiagnosticsMode;
             let allowed=["--receipt","--receipt-sha256","--campaign-id","--seed","--mode","--output"];
             let mut options=BTreeMap::new();
             while let Some(key)=args.next() {
@@ -64,11 +64,11 @@ fn execute() -> Result<u8, Box<dyn std::error::Error>> {
             Recipe::parse(&bytes)?;
             let mut file=std::fs::OpenOptions::new().write(true).create_new(true).open(&output)?;
             file.write_all(&bytes)?;file.flush()?;
-            println!("{}",serde_json::json!({"recipe":output,"recipe_sha256":xadbtest::sha256(&bytes)}));
+            println!("{}",serde_json::json!({"recipe":output,"recipe_sha256":test_controller::sha256(&bytes)}));
             Ok(0)
         }
         Some("run-performance") | Some("verify-performance") | Some("replay-performance") => {
-            use xadbtest::performance;
+            use test_controller::performance;
             let mode=std::env::args().nth(1).expect("matched command");
             let allowed=match mode.as_str() {
                 "run-performance"=>vec!["--recipe","--recipe-sha256","--baseline-worker","--candidate-worker","--baseline-receipt","--candidate-receipt","--baseline-config","--candidate-config","--artifacts"],
@@ -112,13 +112,13 @@ fn execute() -> Result<u8, Box<dyn std::error::Error>> {
             let recipe_sha256 = take("--recipe-sha256")?;
             let worker_sha256 = take("--worker-sha256")?;
             let report = if mode == "run-catalog" {
-                xadbtest::catalog::run(&xadbtest::catalog::Options {
+                test_controller::catalog::run(&test_controller::catalog::Options {
                     recipe: take("--recipe")?.into(), recipe_sha256,
                     worker: take("--worker")?.into(), worker_sha256,
                     artifacts: take("--artifacts")?.into(),
                 })?
             } else {
-                xadbtest::catalog::verify(&PathBuf::from(take("--directory")?), &recipe_sha256, &worker_sha256)?
+                test_controller::catalog::verify(&PathBuf::from(take("--directory")?), &recipe_sha256, &worker_sha256)?
             };
             println!("{}", serde_json::to_string(&report)?);
             Ok(report.exit_code())

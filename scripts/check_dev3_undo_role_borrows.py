@@ -19,7 +19,7 @@ from comm_campaign import capture_source, write_json
 ROOT = Path(__file__).resolve().parent.parent
 INPUT_RELATIVE = 'crates/engine/tests/fixtures/dev3-undo-bootstrap/compiler'
 INPUTS = ROOT / INPUT_RELATIVE
-INPUTS_SHA256 = '7f3208fb364a25f2ed51c779da295a4374d17e2a9d2103c06b6f54b1e5328813'
+INPUTS_SHA256 = '1c9840f3ca2ec74555ebd3cc6f4ffc0c74b29f85c97df86432a38654e903053f'
 PROBE = 'crates/engine/src/storage/undo_role_borrow_probe.rs'
 ANCHOR = 'crates/engine/src/storage/mod.rs'
 EXPECTATIONS = {
@@ -221,7 +221,7 @@ def main():
             remaining_budget(report['compiler_elapsed_seconds'])
             row['diagnostics'] = verify_diagnostics(output, returncode, frozen)
             if frozen['expected_code'] is None and not any(
-                    item['target'] == 'xadb_engine' for item in row['binary_artifacts']):
+                    item['target'] == 'engine' for item in row['binary_artifacts']):
                 raise ValueError('successful compile has no xadb-engine metadata artifact')
             if source_fingerprint(source) != fingerprint:
                 raise ValueError('probe source changed during compilation')

@@ -1,8 +1,8 @@
 use super::*;
 use crate::storage::page_io::test_support::expected;
 use crate::transaction::concurrency::OwnerRole;
+use foundation::identity::{Generation, ObjectId};
 use std::mem::size_of;
-use xadb_foundation::identity::{Generation, ObjectId};
 
 fn request(page: u64) -> TargetRequest {
     let mut identity = expected();

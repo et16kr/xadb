@@ -1,11 +1,11 @@
-use std::collections::BTreeSet;
-use std::time::{Duration, Instant};
-use xadb_foundation::runtime::{Cancellation, Clock, Quota};
-use xadb_sql::frontend::{
+use foundation::runtime::{Cancellation, Clock, Quota};
+use sql::frontend::{
     CallControl, Code, DeclaredType, DecodedScalar, Diagnostic, Module, Parser, ScalarReader,
     ScalarRef, ScalarSpec, ScalarType, Span,
 };
-use xadbtest_reference::frontend::scalar::{
+use std::collections::BTreeSet;
+use std::time::{Duration, Instant};
+use test_reference::frontend::scalar::{
     Call, ErrorObservation, Origin, Outcome, Payload, ScalarCase, ScalarObservation, Spec, TypeTag,
     ValueObservation, check_scalar, copy_boundaries, copy_matrix, decode_boundaries,
     decode_literals, generated_cases, known_bad_observations, wrong_node_literals,

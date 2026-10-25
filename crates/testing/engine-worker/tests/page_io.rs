@@ -1,8 +1,8 @@
 //! Fresh native files connect the internal reader to Linux; no DB READY claim.
+use engine::testing::{PageReadFailure, PageReadRequest, read_selected_page};
+use foundation::namespace::DirectoryPort;
+use platform::namespace::LinuxDirectory;
 use std::fs;
-use xadb_engine::testing::{PageReadFailure, PageReadRequest, read_selected_page};
-use xadb_foundation::namespace::DirectoryPort;
-use xadb_platform::namespace::LinuxDirectory;
 
 #[path = "support/selected_pages.rs"]
 mod selected_pages;

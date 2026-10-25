@@ -113,7 +113,7 @@ class AllocationBorrowCheckerTests(unittest.TestCase):
             binary = target / 'libxadb_engine.rmeta'
             binary.write_bytes(b'frozen compiler metadata')
             output = json.dumps({'reason': 'compiler-artifact',
-                                 'target': {'name': 'xadb_engine'}, 'filenames': [str(binary)]})
+                                 'target': {'name': 'engine'}, 'filenames': [str(binary)]})
             result = preserve_artifacts(output, evidence, target, True)
             self.assertEqual(result[0]['sha256'], digest(binary))
             self.assertEqual(Path(result[0]['retained_path']).read_bytes(), binary.read_bytes())

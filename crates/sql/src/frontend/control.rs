@@ -1,7 +1,7 @@
 //! Per-call borrowed cancellation and monotonic deadline inputs.
 
 use super::diagnostic::{Code, Diagnostic, Module, Span};
-use xadb_foundation::runtime::{Cancellation, Clock};
+use foundation::runtime::{Cancellation, Clock};
 
 /// Controls borrowed for one input-processing call; no retained operation state.
 /// The supplied clock must be nonblocking and allocation-free. Cancellation and

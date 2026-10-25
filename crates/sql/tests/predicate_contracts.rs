@@ -1,12 +1,12 @@
-use std::collections::{BTreeMap, BTreeSet};
-use std::time::{Duration, Instant};
-use xadb_foundation::runtime::{Cancellation, Clock, Quota};
-use xadb_sql::frontend::{
+use foundation::runtime::{Cancellation, Clock, Quota};
+use sql::frontend::{
     CallControl, Code, ComparisonOp, Diagnostic, Module, NodeKind, ParsedStatement, Parser,
     ScalarSyntax, Sign,
 };
-use xadbtest_reference::frontend::parser::{ErrorObservation, NameObservation, ScalarObservation};
-use xadbtest_reference::frontend::predicate::{
+use std::collections::{BTreeMap, BTreeSet};
+use std::time::{Duration, Instant};
+use test_reference::frontend::parser::{ErrorObservation, NameObservation, ScalarObservation};
+use test_reference::frontend::predicate::{
     Case, Comparison, Kind, Node, Observation, boundary_cases, check, error_cases, generated_case,
     known_bad_observations, literal_shapes, raw_value_cases,
 };

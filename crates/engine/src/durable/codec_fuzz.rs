@@ -3,16 +3,16 @@
 //! oracle. This is deterministic mutation fuzzing, not coverage-guided fuzzing.
 use super::codec::*;
 use crate::api::{Column, DataType, DatabaseId, TableSpec};
+use foundation::{
+    codec::encode_frame,
+    identity::{Generation, ObjectHandle, ObjectId, RowId, SchemaEpoch},
+    value::Value,
+};
 use std::{
     fs,
     io::Write,
     panic::{AssertUnwindSafe, catch_unwind, resume_unwind},
     time::{Duration, Instant},
-};
-use xadb_foundation::{
-    codec::encode_frame,
-    identity::{Generation, ObjectHandle, ObjectId, RowId, SchemaEpoch},
-    value::Value,
 };
 
 const GENERATOR: &str = "dev2-disk-record-mutation-v1";

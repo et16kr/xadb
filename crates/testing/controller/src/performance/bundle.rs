@@ -7,7 +7,7 @@ use std::{
     io::{Read, Write},
     path::{Component, Path, PathBuf},
 };
-use xadbtest_protocol::{
+use test_protocol::{
     engine::{Action, Observation, Request, Response},
     frame,
     performance::{BuildIdentity, Input, Output},
@@ -729,7 +729,7 @@ pub fn replay(options: &ReplayOptions) -> Result<Report> {
         options.campaign_id,
         recipe.order_seed,
         recipe.baseline.clone(),
-        xadbtest_protocol::performance::DiagnosticsMode::Always,
+        test_protocol::performance::DiagnosticsMode::Always,
     )?;
     recipe.kind = CampaignKind::ReplayAudit;
     recipe.campaign_id = options.campaign_id;

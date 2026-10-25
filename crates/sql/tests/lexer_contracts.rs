@@ -1,7 +1,7 @@
 mod support;
 
 use support::frontend::{assert_case, observe};
-use xadbtest_reference::frontend::literals::{
+use test_reference::frontend::literals::{
     MERGE_SEEDS, generated_literals, lexer_literals, limit_literals,
 };
 

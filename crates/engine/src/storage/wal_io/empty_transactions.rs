@@ -12,8 +12,8 @@ use crate::{
     },
     transaction::concurrency::Owner,
 };
+use foundation::{error::Effect, namespace::WriterNamespace};
 use std::{mem::size_of, sync::TryLockError};
-use xadb_foundation::{error::Effect, namespace::WriterNamespace};
 
 /// Thirty-two retained slots, each with a 1536-byte descriptor and 128 bytes
 /// reserved for private location/state bookkeeping. This is not a disk format.
@@ -39,7 +39,7 @@ pub(crate) enum Cause {
     WrongState,
     NotResident,
     AlreadyResident,
-    HistoryIo(xadb_foundation::Error),
+    HistoryIo(foundation::Error),
     Flush(super::super::StatusFlushError),
     Exhausted,
 }
@@ -342,10 +342,10 @@ fn handoff_fits<W: WriterNamespace>() -> bool {
 }
 
 #[cfg(test)]
-#[path = "empty_transactions_tests.rs"]
+#[path = "empty_transactions/tests.rs"]
 mod tests;
 
-#[path = "empty_transactions_live.rs"]
+#[path = "empty_transactions/live.rs"]
 mod live;
 pub(in crate::storage) use live::EmptyTransactionInstall;
 pub(crate) use live::EmptyTransactionObservation;

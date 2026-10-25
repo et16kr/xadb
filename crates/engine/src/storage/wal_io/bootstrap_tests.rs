@@ -541,13 +541,13 @@ fn bootstrap_faults_preserve_artifacts() {
     println!("STORAGE_FAULTS before=338 after=338 unwind=338");
 }
 
-fn lower_io(error: &xadb_foundation::Error, write: bool, kind: Option<std::io::ErrorKind>) {
+fn lower_io(error: &foundation::Error, write: bool, kind: Option<std::io::ErrorKind>) {
     assert_eq!(
         error.code,
         if write {
-            xadb_foundation::ErrorCode::IoWriteUnknown
+            foundation::ErrorCode::IoWriteUnknown
         } else {
-            xadb_foundation::ErrorCode::IoRead
+            foundation::ErrorCode::IoRead
         }
     );
     assert_eq!(error.io_kind, kind);
@@ -561,10 +561,7 @@ fn lower_io(error: &xadb_foundation::Error, write: bool, kind: Option<std::io::E
     );
 }
 fn lower_namespace(error: &NamespaceError, effect: Effect) {
-    assert_eq!(
-        error.kind,
-        xadb_foundation::namespace::NamespaceErrorKind::Io
-    );
+    assert_eq!(error.kind, foundation::namespace::NamespaceErrorKind::Io);
     assert_eq!(error.effect, effect);
     assert_eq!(error.io_kind, Some(std::io::ErrorKind::Other));
 }

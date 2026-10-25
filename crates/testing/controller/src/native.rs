@@ -12,7 +12,7 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
-use xadbtest_protocol::{
+use test_protocol::{
     engine::{self, MAX_PENDING, MAX_REQUESTS},
     frame,
 };

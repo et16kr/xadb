@@ -1,5 +1,5 @@
-use xadbtest_engine_worker::Session;
-use xadbtest_protocol::{
+use engine_worker::Session;
+use test_protocol::{
     engine::{Action, Observation, Request},
     performance::{DiagnosticsMode, Input},
 };

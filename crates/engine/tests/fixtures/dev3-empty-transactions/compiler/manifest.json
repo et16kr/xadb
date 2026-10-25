@@ -18,8 +18,8 @@
       "primary_line": null,
       "primary_path": null,
       "reason": "Consuming/dropping the whole Result releases the bank loan.",
-      "bytes": 519,
-      "sha256": "275bf2f89657b3926f8ef327d08a6a169a697f17b77525020ee72be38d1446bc"
+      "bytes": 514,
+      "sha256": "e72f566e661aab7886cb8f2fc305b71aeeecbec64173ee49e566bd07acf6d3a0"
     },
     {
       "name": "before_retry",
@@ -27,8 +27,8 @@
       "primary_line": null,
       "primary_path": null,
       "reason": "Before returns the original owner for a later explicit retry.",
-      "bytes": 617,
-      "sha256": "802aef4d674290e69b3bdc9f148fd0e7cae1d83257003fe7ec10147e9a6af5c4"
+      "bytes": 612,
+      "sha256": "f395195888770f40e3dc2bd23fd4c776f60b66e45bba294c26fcd172154ab5a4"
     },
     {
       "name": "result_bank_alias",
@@ -36,8 +36,8 @@
       "primary_line": 7,
       "primary_path": "crates/engine/src/storage/empty_transactions_borrow_probe.rs",
       "reason": "Even a retained Result prevents mutation of its possible bank loan.",
-      "bytes": 542,
-      "sha256": "b5409b82381d315808e54130897689c478f4dd1849fc188799564122b7030a54"
+      "bytes": 537,
+      "sha256": "5da99468fd757ca713eb8ad7e8cf246dc1364ef46695dacf098bcca97294c051"
     },
     {
       "name": "owner_bank_alias",
@@ -45,8 +45,8 @@
       "primary_line": 7,
       "primary_path": "crates/engine/src/storage/empty_transactions_borrow_probe.rs",
       "reason": "A successful converted owner exclusively retains its bank.",
-      "bytes": 579,
-      "sha256": "d5b5b8e3d6bfd2fbec780bc949921e38f72baa82e42c8e5b9832b87bd626f0a2"
+      "bytes": 574,
+      "sha256": "d81bb7ddf662adf2c3f2c1bd052d25689a0c1f896915cdcaf8137fc35f23e21b"
     },
     {
       "name": "consumed_status",
@@ -54,8 +54,8 @@
       "primary_line": 7,
       "primary_path": "crates/engine/src/storage/empty_transactions_borrow_probe.rs",
       "reason": "The consumed Status provisioning API cannot be reopened.",
-      "bytes": 579,
-      "sha256": "640bf7a7b3b3380db9488217c0564bdd678786116b08a888e2f7bc22eff34085"
+      "bytes": 574,
+      "sha256": "d817cedad75e38f70f2bcff22d8d7bc4c0a063097ca6481a55ff78e07ddc71cb"
     },
     {
       "name": "retained_wide_result",
@@ -63,8 +63,8 @@
       "primary_line": 8,
       "primary_path": "crates/engine/src/storage/empty_transactions_borrow_probe.rs",
       "reason": "A retained wide Result prevents the handoff, including a shape-error Result.",
-      "bytes": 686,
-      "sha256": "886f29816a5a85132fc8f290304d4b5522774823f89f04a05c67e30e56f3e6cb"
+      "bytes": 681,
+      "sha256": "f3311e99eddbb0632c75b3094eeea2c3c4f74c7a1631d9a127351d3b75df1a89"
     },
     {
       "name": "no_system_split",
@@ -72,8 +72,8 @@
       "primary_line": 6,
       "primary_path": "crates/engine/src/storage/empty_transactions_borrow_probe.rs",
       "reason": "The converted API has no system writer/read/flush split.",
-      "bytes": 395,
-      "sha256": "00fbb5e9463575aba0c1ee2130ef254401ff0720f31edc07dd32e15a93e744d2"
+      "bytes": 390,
+      "sha256": "8220743825aa8d0fb3e87bfabef3f6c3651978830af46510b5ee69781eca883e"
     },
     {
       "name": "live_sequence",
@@ -81,8 +81,8 @@
       "primary_line": null,
       "primary_path": null,
       "reason": "Value observations do not retain a writer loan; the actual serialized lifecycle compiles.",
-      "bytes": 543,
-      "sha256": "6984f2e9aa86a3b74544d8de97b39933da7ddb9656f0c19aaae7f827f5e4cd46"
+      "bytes": 538,
+      "sha256": "5148c9648d33bd1a1069c9b82ac39fbaaa340b7bb7b7daf5a78ea03d82281a0a"
     },
     {
       "name": "sealed_install",

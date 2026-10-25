@@ -1,6 +1,9 @@
 //! Linux local-only socket effects through std and safe nix wrappers.
 //! Registrations own no native fd. Wait temporarily borrows live socket owners;
 //! the single driver must not concurrently wait and close its streams.
+use foundation::network::{
+    ByteStream, Connector, Interest, Listener, ReadinessEvent, ReadinessWait, Ready, Registration,
+};
 use nix::{
     errno::Errno,
     poll::{PollFd, PollFlags, ppoll},
@@ -20,9 +23,6 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, Mutex, Weak},
     time::Duration,
-};
-use xadb_foundation::network::{
-    ByteStream, Connector, Interest, Listener, ReadinessEvent, ReadinessWait, Ready, Registration,
 };
 const REGISTRATIONS: usize = 131;
 fn invalid(message: &'static str) -> io::Error {

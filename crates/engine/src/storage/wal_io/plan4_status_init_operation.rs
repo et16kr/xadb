@@ -3,11 +3,11 @@
 //! redo validation reuse the original Status implementation without extending
 //! its old population or role authority.
 use super::*;
+use foundation::identity::ObjectId;
 use operation::retention::{
     RetentionAllocationExpected, RetentionAllocationPlan, RetentionAllocationState,
     RetentionReservation, retained_reservation,
 };
-use xadb_foundation::identity::ObjectId;
 
 pub(crate) const RETENTION_INIT_BYTES: usize = FRAME_BYTES;
 

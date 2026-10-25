@@ -3,14 +3,14 @@
 #[path = "support/durable_disk.rs"]
 mod durable_disk;
 use durable_disk::{Disk, Failure, Fault, Operation, Writer};
-use xadb_engine::{
+use engine::{
     api::{Column, DataType, RowUid, TableSpec},
     database::{
         CommitReceipt, DurableErrorCode, Engine, EngineError, EngineOptions, TransactionOutcome,
     },
     transaction::{Mutation, TransactionMode},
 };
-use xadb_foundation::value::Value;
+use foundation::value::Value;
 
 type Database = Engine<Writer>;
 fn open(disk: &Disk) -> Database {
@@ -48,11 +48,7 @@ fn fixture() -> (Disk, [RowUid; 2]) {
     drop(db);
     (disk, [rows[0], rows[1]])
 }
-fn change(
-    db: &Database,
-    rows: [RowUid; 2],
-    first: i64,
-) -> xadb_engine::database::Result<CommitReceipt> {
+fn change(db: &Database, rows: [RowUid; 2], first: i64) -> engine::database::Result<CommitReceipt> {
     let mut txn = db.begin(TransactionMode::ReadWrite)?;
     let table = txn.lookup_table("items")?;
     txn.execute_statement(vec![
@@ -119,9 +115,7 @@ fn restored_rows(db: &Database, name: &str, original: &[RowUid]) -> Vec<RowUid> 
         match txn.read(&table, *row) {
             Err(error) => assert_eq!(
                 error.code,
-                xadb_engine::transaction::TransactionErrorCode::Product(
-                    xadb_engine::ErrorCode::StaleHandle
-                )
+                engine::transaction::TransactionErrorCode::Product(engine::ErrorCode::StaleHandle)
             ),
             Ok(_) => panic!("restore admitted a source-timeline row identity"),
         }
@@ -810,7 +804,7 @@ fn blob_change(
     db: &Database,
     rows: &[RowUid],
     byte: u8,
-) -> xadb_engine::database::Result<CommitReceipt> {
+) -> engine::database::Result<CommitReceipt> {
     let mut txn = db.begin(TransactionMode::ReadWrite)?;
     let table = txn.lookup_table("blobs")?;
     txn.execute_statement(

@@ -1,8 +1,8 @@
 mod support;
+use foundation::network::{Ready, Registration};
 use std::sync::{Arc, Mutex};
 use support::{Action, Script, Stream, TestClock, advance, fixture, frame, outcome};
-use xadb_foundation::network::{Ready, Registration};
-use xadb_transport::{
+use transport::{
     ConnectionPhase, ErrorKind, MAX_WIRE_BYTES, PROCESS_PAYLOAD_BYTES, SendOutcome, Transport,
 };
 
@@ -153,7 +153,7 @@ fn cancellation_after_partial_tx_never_sends_the_next_accepted_frame() {
 
 #[test]
 fn poisoned_fixture_cleanup_preserves_the_original_failure_without_resuming_io() {
-    use xadb_foundation::network::ByteStream;
+    use foundation::network::ByteStream;
     let script = Arc::new(Mutex::new(Script::default()));
     let mut stream = Stream(
         script.clone(),

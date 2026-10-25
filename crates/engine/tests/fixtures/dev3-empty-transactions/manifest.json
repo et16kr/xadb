@@ -4,68 +4,68 @@
   "static": [
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_resource_gate",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     }
   ],
   "mandatory": [
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_dirty_system_and_two_status_pages_preserve_identity",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_without_status_returns_owner_and_unchanged_bank_for_retry",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_foreign_owner_preserves_binding_and_bank",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_retained_flush_claim_blocks_with_zero_pins",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_forgotten_actual_capture_keeps_claim_without_pins",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_poisoned_dpt_fences_before_bank_initialization",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_forgotten_reservation_keeps_bank_and_owner",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_forgotten_read_admission_blocks_without_pins",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_forgotten_pool_pins_block_without_read_gate",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_poisoned_read_gate_fences_without_touching_bank",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_corrupt_system_descriptor_fences_and_preserves_bank",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_fence_during_checked_release_preserves_bank",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     },
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_preexisting_fence_never_returns_usable_owner",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     }
   ],
   "related": [],
   "s5": [
     {
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::tests::empty_handoff_s5_profiles_and_resident_capacities",
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_tests.rs"
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/tests.rs"
     }
   ],
   "fixtures": []

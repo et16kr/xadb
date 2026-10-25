@@ -58,9 +58,9 @@
   ],
   "dependencies": [
     {
-      "path": "crates/engine/src/storage/wal_io/status_home_flush_native_tests.rs",
-      "bytes": 19497,
-      "sha256": "d891f6d872b4c59e74d8febdf54b4531af942a912f1448733590b004f8462d72"
+      "path": "crates/engine/src/storage/wal_io/status_home_flush/native_tests.rs",
+      "bytes": 20079,
+      "sha256": "a0d936f4ebd43e33c4721ea2b4fe5b5e3cb606c5a39caf3c3e6664a3069cde3d"
     },
     {
       "path": "tests/fixtures/dev3-status-home-flush/manifest.json",
@@ -273,5 +273,19 @@
     "flush_authority_none",
     "flush_phase_ready",
     "healthy"
-  ]
+  ],
+  "source_history": {
+    "manifest_sha256": "f8309cd9750e585ff41aadaaeb68fb8ad00630e744d581be465e68111724a354",
+    "dependency": {
+      "path": "crates/engine/src/storage/wal_io/status_home_flush_native_tests.rs",
+      "bytes": 19497,
+      "sha256": "d891f6d872b4c59e74d8febdf54b4531af942a912f1448733590b004f8462d72"
+    },
+    "pre_rename_source": {
+      "path": "crates/engine/src/storage/wal_io/status_home_flush_native_tests.rs",
+      "bytes": 20077,
+      "sha256": "a90aefcb62e7e0f5fb898fbaaa6a782288499fbed3da93eb6ae39e8adde9a8ba"
+    },
+    "note": "The original native source pin was already stale before this naming change. Preserve that identity and bind the active dependency to the current source. Input binding only; no native runtime or acceptance result is carried forward."
+  }
 }

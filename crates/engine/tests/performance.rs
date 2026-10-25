@@ -1,4 +1,4 @@
-use xadb_engine::{
+use engine::{
     ErrorCode,
     api::{Column, DataType, DatabaseId, Metrics, StoreOptions, TableSpec},
     diagnostics::{
@@ -6,7 +6,7 @@ use xadb_engine::{
     },
     substrate::VolatileStore,
 };
-use xadb_foundation::value::Value;
+use foundation::value::Value;
 
 fn spec() -> TableSpec {
     TableSpec {

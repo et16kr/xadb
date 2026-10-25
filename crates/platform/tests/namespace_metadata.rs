@@ -1,9 +1,5 @@
 //! Metadata is observed from the actual opened inode, with the existing lease.
-use std::{
-    fs,
-    os::unix::fs::{MetadataExt, symlink},
-};
-use xadb_foundation::{
+use foundation::{
     error::Effect,
     io::{FileIo, read_exact_at, write_all_at},
     namespace::{
@@ -11,7 +7,11 @@ use xadb_foundation::{
         WriterNamespace,
     },
 };
-use xadb_platform::namespace::LinuxDirectory;
+use platform::namespace::LinuxDirectory;
+use std::{
+    fs,
+    os::unix::fs::{MetadataExt, symlink},
+};
 
 fn name(value: &str) -> FileName {
     FileName::new(value).unwrap()

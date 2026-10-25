@@ -1,12 +1,12 @@
 //! P3 scalar resource inputs; frozen before product implementation.
 #![cfg(feature = "test-support")]
 
-use std::{cell::Cell, mem::size_of, sync::Barrier};
-use xadb_foundation::runtime::{Cancellation, Clock, Quota};
-use xadb_sql::frontend::{
+use foundation::runtime::{Cancellation, Clock, Quota};
+use sql::frontend::{
     CallControl, Code, DeclaredType, DecodedScalar, Diagnostic, Module, NodeKind, OwnedScalar,
     ParsedStatement, Parser, ScalarReader, ScalarRef, ScalarSpec, ScalarType, Span,
 };
+use std::{cell::Cell, mem::size_of, sync::Barrier};
 
 const SESSION: u64 = 8 << 20;
 const DATABASE: u64 = 64 << 20;

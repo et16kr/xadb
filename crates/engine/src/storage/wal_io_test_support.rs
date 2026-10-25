@@ -1,10 +1,10 @@
 //! Deterministic namespace effects and independent raw frame construction.
 use super::*;
-use std::{collections::BTreeMap, io, sync::Arc};
-use xadb_foundation::{
+use foundation::{
     io::FileIo,
     namespace::{DirectoryEntry, FileMetadata, NamespaceErrorKind, NamespaceResult},
 };
+use std::{collections::BTreeMap, io, sync::Arc};
 
 pub(super) const PROFILE: &[u8] = include_bytes!("../../tests/fixtures/dev3-genesis-profile.bin");
 pub(super) const EPOCH: &[u8] = include_bytes!("../../tests/fixtures/dev3-genesis-epoch.bin");

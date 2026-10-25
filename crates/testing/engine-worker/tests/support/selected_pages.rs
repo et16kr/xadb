@@ -1,5 +1,5 @@
+use foundation::codec::content_digest;
 use std::{collections::BTreeMap, fs, path::Path};
-use xadb_foundation::codec::content_digest;
 
 pub(super) const GOLDEN: &[u8] =
     include_bytes!("../../../../engine/tests/fixtures/dev3-page-v1-cells.bin");

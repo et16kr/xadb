@@ -5,13 +5,13 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
-use xadbtest::{
+use test_controller::{
     durable::{self, Session},
     fault::{CapturedImage, Control},
     file_sha256,
     native::Options,
 };
-use xadbtest_protocol::{
+use test_protocol::{
     durable::{Action as A, Cell, Column, DataType, Mode, Mutation, Observation as O, TableSpec},
     fault::{Boundary as B, Cut, Decision, Plan, Target as T},
 };
@@ -255,7 +255,7 @@ fn synced_unacknowledged_commit_survives_kill_and_recovery_sync_refault() {
         .invoke(0, A::OpenDatabase { directory: 0 }.into())
         .unwrap();
     let witness = control.reached(&mut second, request, 0).unwrap();
-    assert_eq!(witness.phase, xadbtest_protocol::fault::Phase::Open);
+    assert_eq!(witness.phase, test_protocol::fault::Phase::Open);
     control.kill_reached(&mut second).unwrap();
     let second_image = control.capture_after_kill(&second).unwrap();
     let mut third = start(&artifacts, 34, Some(work));
@@ -395,7 +395,7 @@ fn control_from_another_session_never_qualifies_or_cleans_up_its_process() {
     let mut unrelated = start(&artifacts, 121, None);
     assert_eq!(
         control.kill_reached(&mut unrelated).unwrap_err().kind,
-        xadbtest::native::ErrorKind::Configuration
+        test_controller::native::ErrorKind::Configuration
     );
     // The ownership error must leave the unrelated process alive and usable.
     assert!(matches!(

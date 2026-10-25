@@ -1,4 +1,8 @@
 //! Engine-free RX-prefix fixture. The independent controller owns SIGKILL.
+use platform::{
+    network::{LocalEndpoint, LocalNetwork, UnixDirectory},
+    runtime::MonotonicClock,
+};
 use serde_json::json;
 use std::{
     io::{self, Write},
@@ -6,11 +10,7 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use xadb_platform::{
-    network::{LocalEndpoint, LocalNetwork, UnixDirectory},
-    runtime::MonotonicClock,
-};
-use xadb_transport::{ConnectionPhase, Driver, MAX_WIRE_BYTES, Transport};
+use transport::{ConnectionPhase, Driver, MAX_WIRE_BYTES, Transport};
 
 fn main() {
     if let Err(error) = run() {

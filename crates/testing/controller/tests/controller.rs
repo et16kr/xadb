@@ -1,6 +1,6 @@
 use serde_json::{Value, json};
 use std::{fs, path::Path, process::Command};
-use xadbtest::{RunOptions, RunReport, file_sha256, run, sha256, spec, verdict::*};
+use test_controller::{RunOptions, RunReport, file_sha256, run, sha256, spec, verdict::*};
 
 const CASE: &str = include_str!("../../../../tests/cases/dev0-smoke.json");
 const WORKER: &str = env!("CARGO_BIN_EXE_xadbtest-mutant-worker");

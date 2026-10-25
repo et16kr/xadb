@@ -1,11 +1,11 @@
 //! Consumes the independently frozen dev4-splitter/control.json inventory.
 #![cfg(feature = "test-support")]
 
-use std::{cell::Cell, sync::Barrier};
-use xadb_foundation::runtime::{Cancellation, Clock, Quota};
-use xadb_sql::frontend::{
+use foundation::runtime::{Cancellation, Clock, Quota};
+use sql::frontend::{
     CallControl, Code, Diagnostic, Module, Span, SplitOutcome, SplitStep, Splitter, StatementSource,
 };
+use std::{cell::Cell, sync::Barrier};
 
 const SESSION: u64 = 8 << 20;
 const DATABASE: u64 = 64 << 20;

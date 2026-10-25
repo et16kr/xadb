@@ -17,56 +17,56 @@
       "expected_code": null,
       "primary_line": null,
       "reason": "Released split permits retirement/resplit; consuming Before returns exact bound; final owner Drop returns original scratch.",
-      "bytes": 1780,
-      "sha256": "ae2f33142084116092ad59c87ac4e52a375283c34e0abaf92fd7c4199fc1d6ec"
+      "bytes": 1775,
+      "sha256": "d3eef64a41aa03c7b1f6574cdbfa0044aed6df26f4ab6a15c3290286b03353d1"
     },
     {
       "name": "live_split",
       "expected_code": "E0499",
       "primary_line": 8,
       "reason": "Any live writer/reader/flusher view prevents exclusive retirement.",
-      "bytes": 407,
-      "sha256": "604ca5435e1d2e782b4b15ce265d242adba96d5b413ee4297ad66a1bc28ea93c"
+      "bytes": 402,
+      "sha256": "d7369cf012e8d644885f3ce0586e9800cca18b6666cb475e2b1f4d9854c1fb08"
     },
     {
       "name": "consumed_owner",
       "expected_code": "E0382",
       "primary_line": 8,
       "reason": "The old bound is moved into the operational result, including failure ownership.",
-      "bytes": 424,
-      "sha256": "fdabd5637ab3936f11f3ac8f7a1b5ffad5ff88ba549418fbaec739d910be5320"
+      "bytes": 419,
+      "sha256": "a3c58878226865600ede023a40ab8b568e449e3653af87389fcef796e2ad2f00"
     },
     {
       "name": "live_reservation",
       "expected_code": "E0499",
       "primary_line": 11,
       "reason": "The exact linear reservation keeps its operational owner exclusively borrowed.",
-      "bytes": 559,
-      "sha256": "5d205f4162b93c6b445cdaee47e49ca009e7a5575a2ef08ca6f54adee2d600c0"
+      "bytes": 554,
+      "sha256": "4ae577c7985f272146ac56e1451744520ae0247aab0ae240aa0b8dee3da83ed7"
     },
     {
       "name": "workspace",
       "expected_code": "E0499",
       "primary_line": 12,
       "reason": "Consuming conversion retains the original scratch loan.",
-      "bytes": 967,
-      "sha256": "1e45bdb48bb315073ffd648281fe29b3ae3814be2b66af82b7e3017055cfe339"
+      "bytes": 962,
+      "sha256": "bca1fc04f26cf91d177b4862dc0fe451bfe4fffb90490f82e1d287c2da27ad2c"
     },
     {
       "name": "load_release",
       "expected_code": null,
       "primary_line": null,
       "reason": "Released views allow actual selected load and subsequent resplit.",
-      "bytes": 497,
-      "sha256": "32e7cb8bbbc0a0abff14e524bfc1d77f309d9d8e1397adf9d1862ae6569df410"
+      "bytes": 492,
+      "sha256": "5db7cf3701f95a4a267617aa9121385a35b1a561f2f271a0264ddd0d7089d741"
     },
     {
       "name": "load_split",
       "expected_code": "E0499",
       "primary_line": 8,
       "reason": "Live reader/writer/flusher views prevent exclusive load.",
-      "bytes": 435,
-      "sha256": "0a0d50a0190f850b5ed1118d41331e0d348cf41af5972f2a1883368cb69c899b"
+      "bytes": 430,
+      "sha256": "38d6a268fe0df656ed1bd75d6960506860e0f81f4a971117aa58b1a957a9b73f"
     },
     {
       "name": "load_permit",

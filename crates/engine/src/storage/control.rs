@@ -9,7 +9,7 @@ use super::{
     page::{FileId, PAGE_BYTES, PageIdentity, PageRef},
 };
 use crate::api::{DatabaseId, Namespace};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     identity::{Generation, ObjectId},
     namespace::FileName,

@@ -9,8 +9,8 @@ use crate::storage::{
     page::{PAGE_BYTES, PageIdentity, PageKind, PageLsn, PageRef},
     page_io::PageIoError,
 };
+use foundation::{error::Effect, identity::Generation, namespace::WriterNamespace};
 use std::sync::atomic::Ordering;
-use xadb_foundation::{error::Effect, identity::Generation, namespace::WriterNamespace};
 
 #[path = "allocation_operation.rs"]
 pub(super) mod operation;

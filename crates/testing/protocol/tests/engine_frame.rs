@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
-use xadbtest_protocol::{
+use test_protocol::{
     engine::{Action, Cell, Observation, Request, Response, VERSION},
     frame::{self, Decoder, Envelope, Error, MAX_BODY_BYTES, MAX_FRAME_BYTES},
 };

@@ -15,7 +15,7 @@ use super::{
     session_fence::SessionFence,
 };
 use crate::api::Namespace;
-use xadb_foundation::{
+use foundation::{
     io::read_exact_at,
     namespace::{FileMetadata, FileName, NamespaceError, OpenMode, WriterNamespace},
 };
@@ -24,7 +24,7 @@ use xadb_foundation::{
 #[derive(Debug)]
 pub(crate) enum PageIoError {
     Namespace(NamespaceError),
-    Read(xadb_foundation::Error),
+    Read(foundation::Error),
     Control(control::ControlError),
     Page(PageError),
     InvalidRequest,
@@ -42,8 +42,8 @@ impl From<NamespaceError> for PageIoError {
         Self::Namespace(error)
     }
 }
-impl From<xadb_foundation::Error> for PageIoError {
-    fn from(error: xadb_foundation::Error) -> Self {
+impl From<foundation::Error> for PageIoError {
+    fn from(error: foundation::Error) -> Self {
         Self::Read(error)
     }
 }
@@ -202,7 +202,7 @@ pub(in crate::storage) fn retention_home_source_bytes<W: WriterNamespace>() -> u
         + 4 * size_of::<FileName>()
         + 4 * size_of::<Result<()>>()
         + 2 * size_of::<std::sync::MutexGuard<'_, W>>()
-        + 4 * size_of::<xadb_foundation::codec::ContentHasher>()
+        + 4 * size_of::<foundation::codec::ContentHasher>()
         + 4096 // Original open/profile/mapping nested scalar and codec carriers.
 }
 

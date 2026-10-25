@@ -6,11 +6,11 @@ use std::{
     io::{Read, Write},
     path::{Path, PathBuf},
 };
-use xadbtest_protocol::{
+use test_protocol::{
     engine::{Action, Request, Response},
     frame,
 };
-use xadbtest_reference::catalog::{CatalogInputBudget, CatalogResult, check_catalog};
+use test_reference::catalog::{CatalogInputBudget, CatalogResult, check_catalog};
 
 const RECIPE_BYTES: usize = 16 * 1024 * 1024;
 const HISTORY_BYTES: usize = 64 * 1024 * 1024;

@@ -56,13 +56,13 @@ frame은 `AXF1` + format u16 LE(1) + payload 길이 u32 LE + payload + 앞부분
 
 ## 4. 파일·fault·시간 경계
 
-`xadb_foundation::io::FileIo`는 positional read/write, sync_all, set_len을 제공한다. 공통 read/write 재시도·범위·오류 처리는 foundation에 유지한다. `xadb_platform::linux::LinuxFile`은 실제 std File을 사용한다. Linux의 O_APPEND는 positional write의 offset을 무시하므로 매 write 전에 fcntl로 검사하여 거절한다. caller는 공유 handle의 file status flag를 동시에 변경해서는 안 된다. `write_all_at`은 short write를 남은 offset부터 이어 쓰며 0 write는 오류다. read/write는 Interrupted를 재시도한다. signed 64-bit offset 범위를 첫 effect 전에 검사한다. read 실패 시 caller buffer 전체를 유효하다고 사용하지 않는다.
+`foundation::io::FileIo`는 positional read/write, sync_all, set_len을 제공한다. 공통 read/write 재시도·범위·오류 처리는 foundation에 유지한다. `platform::linux::LinuxFile`은 실제 std File을 사용한다. Linux의 O_APPEND는 positional write의 offset을 무시하므로 매 write 전에 fcntl로 검사하여 거절한다. caller는 공유 handle의 file status flag를 동시에 변경해서는 안 된다. `write_all_at`은 short write를 남은 offset부터 이어 쓰며 0 write는 오류다. read/write는 Interrupted를 재시도한다. signed 64-bit offset 범위를 첫 effect 전에 검사한다. read 실패 시 caller buffer 전체를 유효하다고 사용하지 않는다.
 
-파일 소유 경로·create_new·writer 배제·rename/publication 순서는 caller 책임이다. `xadb_platform::linux::sync_directory`는 디렉터리 handle을 확인한 뒤 sync한다. 생성·잠금·rename/publication을 엔진에 제공할 공통 filesystem port는 DEV2에서 확정하며 이번 분리가 그 계약의 완료는 아니다. 실제 시험은 private temp directory에서 create_new → frame write → file sync → rename → directory sync → reopen을 수행한다. 기존 사용자 경로를 삭제하거나 덮어쓰지 않는다. API 성공·process reopen은 power loss 내구성 증명이 아니다.
+파일 소유 경로·create_new·writer 배제·rename/publication 순서는 caller 책임이다. `platform::linux::sync_directory`는 디렉터리 handle을 확인한 뒤 sync한다. 생성·잠금·rename/publication을 엔진에 제공할 공통 filesystem port는 DEV2에서 확정하며 이번 분리가 그 계약의 완료는 아니다. 실제 시험은 private temp directory에서 create_new → frame write → file sync → rename → directory sync → reopen을 수행한다. 기존 사용자 경로를 삭제하거나 덮어쓰지 않는다. API 성공·process reopen은 power loss 내구성 증명이 아니다.
 
 `test-support` feature에서만 fault adapter와 controlled clock/scheduler를 공개한다. 1부터 시작하는 특정 FileIo 호출에 short write, 실제 prefix write 뒤 error, 실제 sync 뒤 error, read error, zero write를 주입한다. 다른 operation에 지정하면 명시적 오류이며 모든 다른 호출은 실제 adapter에 위임한다. receipt는 최대 256개이고 초과 건수를 기록한다. scheduled는 주입 계획, injected는 실제 적용을 구분한다. 실제 sync 실패를 sync 성공 뒤의 주입으로 기록하지 않는다. 시나리오 끝의 `FaultFile::finish()`는 미도달·잘못된 operation·효과 없는 short write·선행 I/O 실패·receipt 유실을 거절한다. 시험은 이 완료 검사, receipt, 실제 파일 내용을 함께 확인한다.
 
-`Clock`/`Scheduler` 계약과 controlled 구현은 foundation에 있고, `xadb_platform::runtime`의 native clock은 Instant 기반 단조 증가 nanos, native scheduler checkpoint는 thread yield다. manual clock은 overflow를 거절하며 scripted scheduler는 명시한 actor/point 순서와 미소비 step을 검사한다. 한 번 잘못된 checkpoint를 관측하면 그 실패를 유지하여 이후 올바른 호출로 finish 성공을 만들 수 없다. 이 scheduler는 driver가 주도한 순서를 확인하는 최소 port로, 일반 thread를 강제로 제어하거나 모든 interleaving을 탐색하지 않는다. blocking syscall을 취소하는 runtime도 아직 없다.
+`Clock`/`Scheduler` 계약과 controlled 구현은 foundation에 있고, `platform::runtime`의 native clock은 Instant 기반 단조 증가 nanos, native scheduler checkpoint는 thread yield다. manual clock은 overflow를 거절하며 scripted scheduler는 명시한 actor/point 순서와 미소비 step을 검사한다. 한 번 잘못된 checkpoint를 관측하면 그 실패를 유지하여 이후 올바른 호출로 finish 성공을 만들 수 없다. 이 scheduler는 driver가 주도한 순서를 확인하는 최소 port로, 일반 thread를 강제로 제어하거나 모든 interleaving을 탐색하지 않는다. blocking syscall을 취소하는 runtime도 아직 없다.
 
 <a id="section-5"></a>
 
@@ -80,7 +80,7 @@ typed event는 operation ID, 선택적 object handle, monotonic time, event ID, 
 
 `crates/foundation/tests/contracts.rs`의 16개와 `crates/platform/tests/contracts.rs`의 9개, 합계 25개 시험은 production API를 직접 호출한다. 기존 시험의 이름·입력·판정은 보존하고 실제 Linux I/O·clock과 합성하는 시험의 소유 위치를 platform으로 옮겼다. i64 oracle은 i128 계산 후 범위 변환을 사용하고, key는 손계산 hex·명시적 순서 목록, frame은 독립 Python hashlib로 계산한 고정 vector와 비교한다. 모든 truncation과 byte별 single-bit 손상, 1 MiB 한계, 실제 파일·fault·quota·수명·취소·진단을 검사한다. default feature에서는 fault 지원을 제외한 foundation 13개와 platform 4개, 합계 17개가 실행된다.
 
-`xadbtest-foundation-worker`는 기존 fixture와 별도 executable이며 실제 `xadb_foundation::value::checked_add`를 호출한다. controller는 worker에 기대값을 전달하지 않고 `tests/cases/dev1-foundation.json`의 7개 literal 기대값과 비교한다. 기대값 하나를 43으로 고의 변경한 실행은 FAIL/exit 1이어야 검증 성공이다. XADBTest process protocol로 연결한 DEV1 연산은 현재 i64 덧셈뿐이다. 다른 foundation 계약은 Rust 통합 시험으로 검증하며 모든 연산이 process adapter에 연결되었다고 표현하지 않는다.
+`xadbtest-foundation-worker`는 기존 fixture와 별도 executable이며 실제 `foundation::value::checked_add`를 호출한다. controller는 worker에 기대값을 전달하지 않고 `tests/cases/dev1-foundation.json`의 7개 literal 기대값과 비교한다. 기대값 하나를 43으로 고의 변경한 실행은 FAIL/exit 1이어야 검증 성공이다. XADBTest process protocol로 연결한 DEV1 연산은 현재 i64 덧셈뿐이다. 다른 foundation 계약은 Rust 통합 시험으로 검증하며 모든 연산이 process adapter에 연결되었다고 표현하지 않는다.
 
 ```bash
 python3 scripts/check_dev1.py

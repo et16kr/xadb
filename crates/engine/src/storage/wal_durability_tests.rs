@@ -153,10 +153,7 @@ fn wal_requirement_waiter_preserves_failed_claim() {
                     let Cause::Io(original) = error.cause else {
                         panic!("original I/O error lost")
                     };
-                    assert_eq!(
-                        original.code,
-                        xadb_foundation::error::ErrorCode::IoWriteUnknown
-                    );
+                    assert_eq!(original.code, foundation::error::ErrorCode::IoWriteUnknown);
                     assert_eq!(original.io_kind, Some(std::io::ErrorKind::Other));
                     assert_eq!(
                         original.context,
@@ -166,10 +163,7 @@ fn wal_requirement_waiter_preserves_failed_claim() {
                             "write outcome requires caller resolution"
                         }
                     );
-                    assert_eq!(
-                        original.certainty(),
-                        xadb_foundation::error::Certainty::Unknown
-                    );
+                    assert_eq!(original.certainty(), foundation::error::Certainty::Unknown);
                 }
                 fatal(&waiter.join().unwrap().unwrap_err());
             });

@@ -55,7 +55,7 @@ pub(in super::super) fn request(
         identity: PageIdentity {
             database: role.namespace().database,
             page,
-            owner: xadb_foundation::identity::ObjectId::new(scope.owner()).expect("fixed object"),
+            owner: foundation::identity::ObjectId::new(scope.owner()).expect("fixed object"),
             owner_generation: Generation::new(1).expect("fixed generation"),
         },
         kind: scope.kind(),

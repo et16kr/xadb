@@ -19,6 +19,7 @@ use crate::{
     },
     transaction::concurrency::{Owner, PageConcurrency},
 };
+use foundation::{error::Effect, namespace::WriterNamespace};
 use std::{
     marker::PhantomData,
     mem::size_of,
@@ -27,10 +28,9 @@ use std::{
         atomic::{AtomicU8, Ordering},
     },
 };
-use xadb_foundation::{error::Effect, namespace::WriterNamespace};
 
 #[cfg(test)]
-#[path = "status_home_flush_tests.rs"]
+#[path = "status_home_flush/tests.rs"]
 mod tests;
 
 #[path = "mixed_system_owner.rs"]
@@ -188,9 +188,7 @@ impl StatusFlushAuthority<'_, '_> {
         }
         match &self.history {
             None => operation::status_lsn(bytes, &self.request.identity),
-            Some(history)
-                if *history.current() == xadb_foundation::codec::content_digest(bytes) =>
-            {
+            Some(history) if *history.current() == foundation::codec::content_digest(bytes) => {
                 operation::status_envelope(bytes, &self.request.identity)
             }
             Some(_) => Err(SemanticError::PageMismatch),

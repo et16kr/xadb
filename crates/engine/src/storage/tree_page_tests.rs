@@ -6,7 +6,7 @@ use crate::{
         page::{FileId, PAGE_BYTES, PageLsn},
     },
 };
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     identity::{Generation, ObjectId, RowId},
     value::Value,

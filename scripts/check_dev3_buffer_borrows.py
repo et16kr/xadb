@@ -19,7 +19,7 @@ PROBE = 'crates/engine/src/buffer_borrow_probe.rs'
 LIB = 'crates/engine/src/lib.rs'
 PREFIX = '''#![allow(dead_code)]
 use crate::storage::{page::{PageIdentity, PageKind, PAGE_BYTES}, page_io::PageFileReader, read_buffer::{ReadBuffer, ReadFrame}};
-use xadb_foundation::namespace::WriterNamespace;
+use foundation::namespace::WriterNamespace;
 fn probe<W: WriterNamespace>(reader: PageFileReader<'_, W>, frames: &mut [ReadFrame], scratch: &mut [u8; PAGE_BYTES], identity: PageIdentity) {
     let buffer = ReadBuffer::new(reader, frames, scratch).unwrap();
 '''

@@ -1,16 +1,16 @@
 mod support;
 
+use foundation::{
+    network::{ByteStream, Interest, Listener, ReadinessEvent, ReadinessWait, Ready, Registration},
+    runtime::Cancellation,
+};
 use std::{
     io,
     sync::{Arc, Mutex},
     time::Duration,
 };
 use support::{Action, Script, Stream, TestClock, fixture, frame, outcome};
-use xadb_foundation::{
-    network::{ByteStream, Interest, Listener, ReadinessEvent, ReadinessWait, Ready, Registration},
-    runtime::Cancellation,
-};
-use xadb_transport::{ConnectionPhase, Driver, ErrorKind, SendOutcome, Transport};
+use transport::{ConnectionPhase, Driver, ErrorKind, SendOutcome, Transport};
 
 struct ReadyWait;
 impl ReadinessWait for ReadyWait {

@@ -1,18 +1,18 @@
 //! Minimal common-mode forwarding observations. Locks protect only counters;
 //! no namespace/file operation executes while the observation mutex is held.
-use std::{
-    io,
-    sync::{Arc, Mutex},
-};
-use xadb_foundation::{
+use foundation::{
     io::FileIo,
     namespace::{
         DirectoryEntry, DirectoryPort, FileMetadata, FileName, NamespaceResult, OpenMode, Selector,
         WriterNamespace,
     },
 };
-use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
-use xadbtest_protocol::durable_performance::{Effect, Effects};
+use platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
+use std::{
+    io,
+    sync::{Arc, Mutex},
+};
+use test_protocol::durable_performance::{Effect, Effects};
 #[derive(Clone, Copy)]
 enum Kind {
     Create,
@@ -246,11 +246,11 @@ impl FileIo for File {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{fs, os::unix::fs::MetadataExt};
-    use xadb_foundation::{
+    use foundation::{
         io::read_exact_at,
         namespace::{FileIdentity, NamespaceErrorKind},
     };
+    use std::{fs, os::unix::fs::MetadataExt};
 
     #[test]
     fn open_metadata_counts_one_success_or_failure() {

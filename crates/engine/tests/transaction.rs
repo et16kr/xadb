@@ -1,6 +1,5 @@
 //! K1 fixtures exercise volatile serializable publication, not durable recovery.
-use std::sync::{Arc, Barrier};
-use xadb_engine::{
+use engine::{
     ErrorCode,
     api::{Column, DataType, DatabaseId, TableHandle, TableSpec},
     transaction::{
@@ -8,7 +7,8 @@ use xadb_engine::{
         TransactionRetry, VolatileDatabase,
     },
 };
-use xadb_foundation::value::Value;
+use foundation::value::Value;
+use std::sync::{Arc, Barrier};
 
 fn database(options: TransactionOptions) -> VolatileDatabase {
     VolatileDatabase::new(DatabaseId::new([51; 16]).unwrap(), 1, 1, options).unwrap()

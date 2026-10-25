@@ -1,12 +1,12 @@
 //! Native durable API wiring and literal concurrency expectations. This is not a
 //! power-loss/crash-cut acceptance suite: no injected FileIo or ACK/WAL oracle.
 use std::{collections::BTreeMap, fs, path::PathBuf};
-use xadbtest::{
+use test_controller::{
     durable::{self, Session},
     file_sha256,
     native::Options,
 };
-use xadbtest_protocol::{
+use test_protocol::{
     durable::{
         Action as A, Cell, Column, DataType, Failure, Mode, Mutation, Observation as O, TableSpec,
     },
@@ -56,7 +56,7 @@ fn lookup(session: &mut Session, transaction: u64, table: u64) {
 // For gate 1 both invokes must precede either return; the same framed responses
 // must also occur verbatim on stdout. No production/reference implementation used.
 fn journal(directory: &std::path::Path) {
-    use xadbtest_protocol::durable::{Request, Response};
+    use test_protocol::durable::{Request, Response};
     let bytes = fs::read(directory.join("history.bin")).unwrap();
     let mut offset = 0;
     let mut pending = BTreeMap::new();
@@ -224,9 +224,9 @@ fn actual_actor_conflict_old_cursor_and_checkpoint_archive_restore() {
                     },
             } => {
                 assert_eq!(code, "SerializationConflict");
-                assert_eq!(effect, xadbtest_protocol::durable::Effect::Aborted);
-                assert_eq!(certainty, xadbtest_protocol::durable::Certainty::Known);
-                assert_eq!(retry, xadbtest_protocol::durable::Retry::Transaction);
+                assert_eq!(effect, test_protocol::durable::Effect::Aborted);
+                assert_eq!(certainty, test_protocol::durable::Certainty::Known);
+                assert_eq!(retry, test_protocol::durable::Retry::Transaction);
                 conflicts += 1;
             }
             other => panic!("unexpected commit result {other:?}"),
@@ -294,9 +294,9 @@ fn actual_actor_conflict_old_cursor_and_checkpoint_archive_restore() {
             }
         ),
         O::Error {
-            failure: Failure::Transaction { code, effect:xadbtest_protocol::durable::Effect::Active,
-                certainty:xadbtest_protocol::durable::Certainty::Known,
-                retry:xadbtest_protocol::durable::Retry::Never, .. }
+            failure: Failure::Transaction { code, effect:test_protocol::durable::Effect::Active,
+                certainty:test_protocol::durable::Certainty::Known,
+                retry:test_protocol::durable::Retry::Never, .. }
         } if code == "XADB-ENGINE-0005"
     ));
     lookup(&mut session, 6, 2);

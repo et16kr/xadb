@@ -9,7 +9,7 @@ use super::{
     CallControl, Code, Diagnostic, Module, NodeKind, ParsedStatement, ScalarSyntax, Sign, Span,
 };
 use budget::{Backing, Leases, ScalarBudget};
-use xadb_foundation::{runtime::Quota, value::MAX_VALUE_BYTES};
+use foundation::{runtime::Quota, value::MAX_VALUE_BYTES};
 
 /// Original SQL logical type, including the type carried by a NULL value.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -346,7 +346,7 @@ fn undo_bootstrap_ub04_failed_creation() {
                     let boot::Cause::Io(io) = err.cause else {
                         panic!("not IO")
                     };
-                    assert_eq!(io.code, xadb_foundation::error::ErrorCode::IoRead);
+                    assert_eq!(io.code, foundation::error::ErrorCode::IoRead);
                     assert_eq!(io.effect(), Effect::Unchanged);
                 }
             }

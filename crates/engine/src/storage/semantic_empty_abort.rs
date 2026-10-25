@@ -21,8 +21,8 @@ use crate::storage::{
         decode_semantic_envelope, encode_patch_record, finish_semantic_envelope,
     },
 };
+use foundation::codec::content_digest;
 use std::mem::size_of;
-use xadb_foundation::codec::content_digest;
 
 /// The trusted namespace, owner and location context is the same as for rollback.
 pub(crate) type EmptyAbortExpected = RollbackStartExpected;

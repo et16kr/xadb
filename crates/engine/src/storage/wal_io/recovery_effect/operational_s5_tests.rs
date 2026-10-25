@@ -121,7 +121,7 @@ fn operational_recovery_s5_home_fault_matrix() {
             if operation == "write" || operation == "sync" {
                 // Foundation classifies both write and sync uncertainty with this code.
                 assert!(matches!(&failure.error().cause, RecoveryCause::Io(e)
-                    if e.code == xadb_foundation::error::ErrorCode::IoWriteUnknown));
+                    if e.code == foundation::error::ErrorCode::IoWriteUnknown));
             } else {
                 let expected_effect = if remaining % 2 == 0 && operation != "dirsync" {
                     Effect::Unchanged
@@ -129,7 +129,7 @@ fn operational_recovery_s5_home_fault_matrix() {
                     Effect::CallerMustResolve
                 };
                 assert!(matches!(&failure.error().cause, RecoveryCause::Namespace(e)
-                    if e.kind == xadb_foundation::namespace::NamespaceErrorKind::Io
+                    if e.kind == foundation::namespace::NamespaceErrorKind::Io
                     && e.effect == expected_effect));
             }
             assert!(failure.effects().mutation_attempted > failure.effects().mutation_completed);

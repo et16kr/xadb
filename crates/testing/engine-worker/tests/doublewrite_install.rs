@@ -1,5 +1,8 @@
 //! Native DWB installation cuts, with original Fresh files and worker identity.
 //! Reuses the real Linux fault port; its explicit cut index starts after Fresh.
+use engine::testing::storage_session::{DoublewriteStorage, FreshStorage};
+use foundation::codec::content_digest;
+use platform::namespace::LinuxWriterLease;
 use serde_json::{Value, json};
 use std::{
     collections::BTreeMap,
@@ -14,9 +17,6 @@ use std::{
     sync::mpsc,
     time::{Duration, Instant},
 };
-use xadb_engine::testing::storage_session::{DoublewriteStorage, FreshStorage};
-use xadb_foundation::codec::content_digest;
-use xadb_platform::namespace::LinuxWriterLease;
 #[path = "support/storage_session.rs"]
 mod support;
 use support::*;

@@ -1,17 +1,9 @@
 //! Linux selected-page buffer integration; all data files are fresh fixtures.
-use std::{
-    fs, io,
-    path::Path,
-    sync::{
-        Arc,
-        atomic::{AtomicUsize, Ordering},
-    },
-};
-use xadb_engine::testing::{
+use engine::testing::{
     BufferTraceFailure, BufferTraceOperation as Op, BufferTracePage, PageReadFailure,
     PageReadRequest, run_selected_buffer_trace, selected_buffer_pool_bytes,
 };
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     error::Effect,
     io::FileIo,
@@ -20,7 +12,15 @@ use xadb_foundation::{
         NamespaceResult, OpenMode, Selector, WriterNamespace,
     },
 };
-use xadb_platform::namespace::LinuxDirectory;
+use platform::namespace::LinuxDirectory;
+use std::{
+    fs, io,
+    path::Path,
+    sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    },
+};
 #[path = "support/selected_pages.rs"]
 mod selected_pages;
 use selected_pages::*;

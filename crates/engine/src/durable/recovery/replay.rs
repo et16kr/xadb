@@ -11,8 +11,8 @@ use crate::{
     metrics::Counters,
     storage::volatile::StoredRow,
 };
+use foundation::{identity::RowId, namespace::WriterNamespace, runtime::Quota};
 use std::sync::Arc;
-use xadb_foundation::{identity::RowId, namespace::WriterNamespace, runtime::Quota};
 
 fn engine(error: crate::Error) -> Error {
     let code = match error.code {

@@ -7,13 +7,7 @@ use crate::{
     },
     transaction::concurrency::{OwnerRole, PageConcurrency},
 };
-use std::{
-    fs, io,
-    path::{Path, PathBuf},
-    sync::{Arc, Mutex, mpsc},
-    time::Duration,
-};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     io::{FileIo, write_all_at},
     namespace::{
@@ -21,7 +15,13 @@ use xadb_foundation::{
         WriterNamespace,
     },
 };
-use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
+use platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex, mpsc},
+    time::Duration,
+};
 
 #[derive(Default)]
 pub(in crate::storage::wal_io) struct Trace {
@@ -134,9 +134,9 @@ impl Writer {
         if fault {
             t.cut_hits += 1;
             t.fault.clear();
-            return Err(xadb_foundation::namespace::NamespaceError::new(
-                xadb_foundation::namespace::NamespaceErrorKind::Io,
-                xadb_foundation::error::Effect::CallerMustResolve,
+            return Err(foundation::namespace::NamespaceError::new(
+                foundation::namespace::NamespaceErrorKind::Io,
+                foundation::error::Effect::CallerMustResolve,
                 "closed recovery native after-effect unknown",
             ));
         }

@@ -34,7 +34,7 @@ pub(crate) enum RecoveryCause {
     Fenced,
     ArithmeticOverflow,
     Namespace(NamespaceError),
-    Io(xadb_foundation::Error),
+    Io(foundation::Error),
     Control(control::ControlError),
     PageIo(crate::storage::page_io::PageIoError),
     Allocation(allocation_page::AllocationError),

@@ -8,7 +8,7 @@ use super::{
     write_definition, zero,
 };
 use crate::api::Namespace;
-use xadb_foundation::identity::{Generation, ObjectHandle, SchemaEpoch};
+use foundation::identity::{Generation, ObjectHandle, SchemaEpoch};
 
 pub(crate) const CATALOG_BEFORE_HEADER_BYTES: usize = 96;
 pub(crate) const MAX_CATALOG_BEFORE_BYTES: usize = 4452;
@@ -173,11 +173,11 @@ pub(super) fn source_census() -> [(&'static str, usize); 10] {
         },
         transaction::TxnId,
     };
-    use std::mem::size_of;
-    use xadb_foundation::{
+    use foundation::{
         codec::{ContentHasher, KeyPrefix},
         identity::{CommitSeq, ObjectId, RowId},
     };
+    use std::mem::size_of;
 
     macro_rules! values {
         ($($value:ty),* $(,)?) => { 0 $(+ size_of::<$value>())* };
@@ -362,9 +362,9 @@ pub(super) fn source_census() -> [(&'static str, usize); 10] {
         LogicalRowVersion, &mut [u8], [u8; 48], Result<(), PageError>,
         &[u8], TxnId, u64, LogicalRowVersion, Result<LogicalRowVersion, PageError>,
         u64, std::num::NonZeroU64, Option<std::num::NonZeroU64>,
-        xadb_foundation::Error, xadb_foundation::Result<Generation>,
-        xadb_foundation::Result<ObjectId>, xadb_foundation::Result<SchemaEpoch>,
-        xadb_foundation::Result<CommitSeq>, CatalogError, UndoError, PageError, RowError,
+        foundation::Error, foundation::Result<Generation>,
+        foundation::Result<ObjectId>, foundation::Result<SchemaEpoch>,
+        foundation::Result<CommitSeq>, CatalogError, UndoError, PageError, RowError,
         CatalogError, UndoError, PageError, UndoError,
         UndoCreator, Result<CanonicalRowView<'static>, RowError>,
         // A valid different-domain input reaches these existing children
@@ -373,8 +373,8 @@ pub(super) fn source_census() -> [(&'static str, usize); 10] {
         PhysicalKey<'static>, Result<PhysicalKey<'static>, KeyError>,
         &[u8], usize, &[u8], u8, KeyPrefix, CompositeKey<'static>,
         Result<CompositeKey<'static>, KeyError>, usize, Result<(), KeyError>,
-        &[u8], u8, usize, KeyPrefix, xadb_foundation::Result<KeyPrefix>,
-        xadb_foundation::Result<RowId>, KeyError,
+        &[u8], u8, usize, KeyPrefix, foundation::Result<KeyPrefix>,
+        foundation::Result<RowId>, KeyError,
         &[u8], &[Column], usize, [u32; 33], usize, usize, &Column,
         ValueRef<'static>, usize, CanonicalRowView<'static>,
         Result<CanonicalRowView<'static>, RowError>,

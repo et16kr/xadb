@@ -1,13 +1,13 @@
 //! New typed predicate ownership/control inputs, frozen before implementation.
 #![cfg(feature = "test-support")]
 
-use std::{cell::Cell, mem::size_of};
-use xadb_foundation::runtime::{Cancellation, Clock, Quota};
-use xadb_sql::frontend::{
+use foundation::runtime::{Cancellation, Clock, Quota};
+use sql::frontend::{
     CallControl, Code, ColumnSpec, CompiledColumn, CompiledNode, CompiledPredicate, DeclaredType,
     Diagnostic, Module, Name, ParameterMetadata, ParsedStatement, Parser, PredicateCompiler,
     ScalarRef, ScalarSpec, ScalarType, Span, Token, TokenKind, TruthValue, normalize_name,
 };
+use std::{cell::Cell, mem::size_of};
 
 const SESSION: u64 = 8 << 20;
 const DATABASE: u64 = 64 << 20;

@@ -27,6 +27,10 @@ use crate::{
     publication::{CommittedRoot, Publication},
     storage::volatile::{ARC_HEADER_BYTES, AllocationBudget, StoredRow, array_in, reserve},
 };
+use foundation::{
+    identity::{Generation, ObjectHandle, SchemaEpoch},
+    runtime::{Cancellation, Quota, Reservation},
+};
 use std::{
     convert::Infallible,
     mem::size_of,
@@ -35,10 +39,6 @@ use std::{
         Arc, Mutex, MutexGuard,
         atomic::{AtomicBool, Ordering},
     },
-};
-use xadb_foundation::{
-    identity::{Generation, ObjectHandle, SchemaEpoch},
-    runtime::{Cancellation, Quota, Reservation},
 };
 
 struct Coordinator {
@@ -282,7 +282,7 @@ impl VolatileDatabase {
         timeline: u64,
         epoch: u32,
         options: TransactionOptions,
-        clock: Arc<dyn xadb_foundation::runtime::Clock + Send + Sync>,
+        clock: Arc<dyn foundation::runtime::Clock + Send + Sync>,
     ) -> TransactionResult<Self> {
         Self::from_recovered_with_clock(
             database,
@@ -321,7 +321,7 @@ impl VolatileDatabase {
         epoch: u32,
         options: TransactionOptions,
         position: u64,
-        clock: Option<Arc<dyn xadb_foundation::runtime::Clock + Send + Sync>>,
+        clock: Option<Arc<dyn foundation::runtime::Clock + Send + Sync>>,
         build_root: impl FnOnce(&Quota) -> std::result::Result<Arc<Root>, E>,
     ) -> std::result::Result<Self, RecoveryBuildError<E>> {
         if timeline == 0

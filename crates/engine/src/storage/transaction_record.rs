@@ -14,7 +14,7 @@ use crate::{
     api::{DatabaseId, Namespace},
     transaction::TxnId,
 };
-use xadb_foundation::identity::{CommitSeq, Generation};
+use foundation::identity::{CommitSeq, Generation};
 
 pub(crate) const TXN_ID_BYTES: usize = 40;
 pub(crate) const TXN_REF_BYTES: usize = 48;

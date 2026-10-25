@@ -10,12 +10,12 @@ use crate::storage::{
     wal_io::{self as wal, FreshStorageSession, bootstrap::test_support as port},
 };
 use crate::transaction::concurrency::{OwnerRole, PageConcurrency};
+use foundation::codec::content_digest;
 use std::{
     collections::BTreeMap,
     panic::{AssertUnwindSafe, catch_unwind},
     sync::{Arc, Mutex, mpsc},
 };
-use xadb_foundation::codec::content_digest;
 
 const INPUT: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -1170,10 +1170,7 @@ fn lower_error(error: DirtyAllocationError, sync: bool) {
     let wal::Cause::Io(error) = error.cause else {
         panic!("original lower I/O cause lost");
     };
-    assert_eq!(
-        error.code,
-        xadb_foundation::error::ErrorCode::IoWriteUnknown
-    );
+    assert_eq!(error.code, foundation::error::ErrorCode::IoWriteUnknown);
     assert_eq!(error.io_kind, Some(std::io::ErrorKind::Other));
 }
 fn fault_case(cancel: bool, fault: usize) {

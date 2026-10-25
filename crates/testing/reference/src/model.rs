@@ -1,8 +1,6 @@
 //! Deliberately simple full-copy state; do not share production algorithms here.
 use std::collections::BTreeMap;
-use xadbtest_protocol::history::{
-    Action, CommitFault, Mode, Mutation, Observation, Rejection, Rows,
-};
+use test_protocol::history::{Action, CommitFault, Mode, Mutation, Observation, Rejection, Rows};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Transaction {

@@ -12,7 +12,7 @@ use crate::{
         page_io::{PageFileReader, PageIoError},
     },
 };
-use xadb_foundation::{
+use foundation::{
     identity::{Generation, ObjectId},
     namespace::WriterNamespace,
 };
@@ -291,7 +291,7 @@ pub fn run_selected_buffer_trace<W: WriterNamespace>(
                     .map_err(|_| BufferTraceFailure::InvalidInput)?,
             );
             Ok(Some(BufferTracePage {
-                digest: xadb_foundation::codec::content_digest(guard.bytes()),
+                digest: foundation::codec::content_digest(guard.bytes()),
                 identity: (
                     identity.database.bytes(),
                     file,

@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use super::status_init::{MixedSystem, SystemPage, SystemPageKind};
 use crate::transaction::concurrency::Owner;
-use xadb_foundation::namespace::WriterNamespace;
+use foundation::namespace::WriterNamespace;
 fn use_mixed<'c, 's, W: WriterNamespace>(
     bound: &mut MixedSystem<'s, 'c, '_, '_, '_, '_, '_, W>,
     owner: &mut Owner<'c, 's>, target: SystemPage,

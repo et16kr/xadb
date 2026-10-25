@@ -1,7 +1,7 @@
 //! Hook-boundary failure tests. The callback is a local fixture, not a WAL oracle.
 use super::*;
 use crate::api::{Column, DataType};
-use xadb_foundation::{error::Certainty, value::Value};
+use foundation::{error::Certainty, value::Value};
 
 fn fixture() -> (VolatileDatabase, TableHandle) {
     let database = VolatileDatabase::new(
@@ -176,7 +176,7 @@ fn final_no_change_skips_hook_after_validation() {
 fn absent_and_injected_clock_metrics_distinguish_missing_from_observed_time() {
     use std::sync::atomic::AtomicU64;
     struct Clock(AtomicU64);
-    impl xadb_foundation::runtime::Clock for Clock {
+    impl foundation::runtime::Clock for Clock {
         fn now_nanos(&self) -> u64 {
             self.0.fetch_add(10, Ordering::Relaxed)
         }
@@ -207,7 +207,7 @@ fn absent_and_injected_clock_metrics_distinguish_missing_from_observed_time() {
 fn clock_panic_during_guard_release_invalidates_timing_without_poisoning_product_state() {
     use std::sync::atomic::AtomicU64;
     struct Clock(AtomicU64);
-    impl xadb_foundation::runtime::Clock for Clock {
+    impl foundation::runtime::Clock for Clock {
         fn now_nanos(&self) -> u64 {
             let call = self.0.fetch_add(1, Ordering::Relaxed);
             assert_ne!(call, 2, "diagnostic release clock fixture");

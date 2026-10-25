@@ -1,16 +1,16 @@
 //! New plan4 test adapter. Fault keys name the actual operation, not a prior run.
-use std::{
-    collections::BTreeMap,
-    io,
-    sync::{Arc, Mutex},
-};
-use xadb_foundation::{
+use foundation::{
     error::Effect,
     io::FileIo,
     namespace::{
         DirectoryEntry, DirectoryPort, FileIdentity, FileMetadata, FileName, NamespaceError,
         NamespaceErrorKind, NamespaceResult, OpenMode, Selector, WriterNamespace,
     },
+};
+use std::{
+    collections::BTreeMap,
+    io,
+    sync::{Arc, Mutex},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

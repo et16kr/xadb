@@ -14,7 +14,7 @@ use super::{
     page_io::{PageFileReader, PageIoError, validate_page_request},
     session_fence::SessionFence,
 };
-use xadb_foundation::namespace::WriterNamespace;
+use foundation::namespace::WriterNamespace;
 
 #[derive(Debug)]
 pub(crate) enum BufferError {

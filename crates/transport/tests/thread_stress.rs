@@ -1,13 +1,13 @@
 mod support;
 
+use foundation::network::{Ready, Registration};
 use std::{
     sync::{Arc, Barrier, Mutex, mpsc},
     thread,
     time::{Duration, Instant},
 };
 use support::{Action, Script, Stream, TestClock, frame};
-use xadb_foundation::network::{Ready, Registration};
-use xadb_transport::{
+use transport::{
     ConnectionPhase, ErrorKind, PROCESS_PAYLOAD_BYTES, ReceivedFrame, SendOutcome, SendTicket,
     Transport,
 };

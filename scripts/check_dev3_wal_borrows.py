@@ -19,7 +19,7 @@ PROBE = 'crates/engine/src/wal_borrow_probe.rs'
 LIB = 'crates/engine/src/lib.rs'
 PREFIX = '''#![allow(dead_code)]
 use crate::storage::wal_io::GenesisWalSession;
-use xadb_foundation::namespace::WriterNamespace;
+use foundation::namespace::WriterNamespace;
 fn probe<W: WriterNamespace>(writer: W, writer2: W, slot: &mut [u8; 1048576], scratch: &mut [u8; 16384]) {
     let session = GenesisWalSession::create(writer, 1, slot, scratch).unwrap();
 '''

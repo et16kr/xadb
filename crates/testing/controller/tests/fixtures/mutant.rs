@@ -1,6 +1,6 @@
 //! Faulty worker variants for controller self-tests. Never built by default.
 use std::io::{self, Write};
-use xadbtest_protocol::{Observation, Operation, PROTOCOL_VERSION, Request, Value};
+use test_protocol::{Observation, Operation, PROTOCOL_VERSION, Request, Value};
 
 fn main() {
     let mode = std::env::args().nth(1).unwrap_or_else(|| "correct".into());

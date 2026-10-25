@@ -7,6 +7,14 @@ use crate::storage::{
     wal_io::{self as wal, bootstrap::doublewrite_install::mutable_storage::FlushProgress},
 };
 use crate::transaction::concurrency::{OwnerRole, PageConcurrency};
+use foundation::{
+    codec::content_digest,
+    io::FileIo,
+    namespace::{
+        DirectoryEntry, DirectoryPort, FileMetadata, FileName, NamespaceResult, OpenMode, Selector,
+    },
+};
+use platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
 use std::{
     collections::BTreeMap,
     fs, io,
@@ -14,14 +22,6 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
-use xadb_foundation::{
-    codec::content_digest,
-    io::FileIo,
-    namespace::{
-        DirectoryEntry, DirectoryPort, FileMetadata, FileName, NamespaceResult, OpenMode, Selector,
-    },
-};
-use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
 
 const INPUT: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),

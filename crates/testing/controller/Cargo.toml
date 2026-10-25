@@ -8,9 +8,12 @@ publish.workspace = true
 [features]
 self-test = []
 
+[lib]
+name = "test_controller"
+
 [dependencies]
-xadbtest-protocol.workspace = true
-xadbtest-reference = { path = "../reference" }
+test_protocol.workspace = true
+test_reference = { package = "xadbtest-reference", path = "../reference" }
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true

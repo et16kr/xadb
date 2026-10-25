@@ -1,4 +1,11 @@
 //! Actual Linux effects and SIGKILL images, separately checked from durable models.
+use engine::testing::storage_session::FreshStorage;
+use foundation::{
+    codec::content_digest,
+    error::Effect,
+    namespace::{DirectoryPort, NamespaceErrorKind},
+};
+use platform::namespace::{LinuxDirectory, LinuxWriterLease};
 use serde_json::{Value, json};
 use std::{
     collections::BTreeMap,
@@ -13,13 +20,6 @@ use std::{
     sync::mpsc,
     time::{Duration, Instant},
 };
-use xadb_engine::testing::storage_session::FreshStorage;
-use xadb_foundation::{
-    codec::content_digest,
-    error::Effect,
-    namespace::{DirectoryPort, NamespaceErrorKind},
-};
-use xadb_platform::namespace::{LinuxDirectory, LinuxWriterLease};
 #[path = "support/storage_session.rs"]
 mod support;
 use support::*;

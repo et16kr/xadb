@@ -12,13 +12,13 @@ use super::{
     observation::{DurabilityOperation as Operation, Observations},
 };
 use crate::catalog::Root;
-use std::{mem::size_of, sync::Arc};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     io::FileIo,
     namespace::{DirectoryEntry, FileMetadata, FileName, OpenMode, Selector, WriterNamespace},
     runtime::{Quota, Reservation},
 };
+use std::{mem::size_of, sync::Arc};
 
 pub(crate) const SCRATCH_BYTES: u64 = 16 * 1024 * 1024;
 const RECOVERED_BYTES: u64 = 64 * 1024 * 1024;
@@ -26,7 +26,7 @@ const RECOVERED_BYTES: u64 = 64 * 1024 * 1024;
 // schema copying, and the streaming hash stack buffer. Only one large
 // frame is live at a time; headers and selector records are bounded scalars.
 pub(super) const FRAME_WORKSPACE: u64 = (super::codec::MAX_DECODED_BYTES
-    + xadb_foundation::codec::MAX_FRAME_PAYLOAD
+    + foundation::codec::MAX_FRAME_PAYLOAD
     + 2 * 1024 * 1024) as u64;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

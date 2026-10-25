@@ -1,4 +1,8 @@
 //! Default engine-free native echo fixture. AXF1 expectations live in the peer.
+use platform::{
+    network::{LocalEndpoint, LocalNetwork, UnixDirectory},
+    runtime::MonotonicClock,
+};
 use serde_json::json;
 use std::{
     io::{self, Write},
@@ -6,11 +10,7 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use xadb_platform::{
-    network::{LocalEndpoint, LocalNetwork, UnixDirectory},
-    runtime::MonotonicClock,
-};
-use xadb_transport::{ConnectionPhase, Driver, SendOutcome, SendTicket, Transport};
+use transport::{ConnectionPhase, Driver, SendOutcome, SendTicket, Transport};
 fn main() {
     if let Err(error) = run() {
         eprintln!("transport fixture: {error}");

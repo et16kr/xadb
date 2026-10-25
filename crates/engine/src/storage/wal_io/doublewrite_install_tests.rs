@@ -519,12 +519,12 @@ fn doublewrite_install_effect_failures() {
             assert_header(&error, phase(at), (at + 1) as u8, at as u8);
             match (&error.cause, expected[at].kind) {
                 (Cause::Io(e), "write" | "sync") => {
-                    assert_eq!(e.code, xadb_foundation::ErrorCode::IoWriteUnknown);
+                    assert_eq!(e.code, foundation::ErrorCode::IoWriteUnknown);
                     assert_eq!(e.io_kind, Some(std::io::ErrorKind::Other));
                     assert_eq!(e.effect(), Effect::CallerMustResolve);
                 }
                 (Cause::Namespace(e), _) => {
-                    assert_eq!(e.kind, xadb_foundation::namespace::NamespaceErrorKind::Io);
+                    assert_eq!(e.kind, foundation::namespace::NamespaceErrorKind::Io);
                     assert_eq!(e.io_kind, Some(std::io::ErrorKind::Other));
                     assert_eq!(
                         e.effect,
@@ -646,9 +646,9 @@ fn doublewrite_install_short_io() {
                     assert_eq!(
                         io.code,
                         if reading {
-                            xadb_foundation::ErrorCode::IoRead
+                            foundation::ErrorCode::IoRead
                         } else {
-                            xadb_foundation::ErrorCode::IoWriteUnknown
+                            foundation::ErrorCode::IoWriteUnknown
                         }
                     );
                     assert_eq!(
@@ -786,13 +786,13 @@ fn doublewrite_install_observation_failures() {
                 match e.cause {
                     Cause::Io(e) => {
                         assert_eq!(row.0, "read");
-                        assert_eq!(e.code, xadb_foundation::ErrorCode::IoRead);
+                        assert_eq!(e.code, foundation::ErrorCode::IoRead);
                         assert_eq!(e.io_kind, Some(std::io::ErrorKind::Other));
                         assert_eq!(e.effect(), Effect::Unchanged);
                     }
                     Cause::Namespace(e) => {
                         assert_ne!(row.0, "read");
-                        assert_eq!(e.kind, xadb_foundation::namespace::NamespaceErrorKind::Io);
+                        assert_eq!(e.kind, foundation::namespace::NamespaceErrorKind::Io);
                         assert_eq!(e.io_kind, Some(std::io::ErrorKind::Other));
                         assert_eq!(e.effect, Effect::Unchanged);
                     }

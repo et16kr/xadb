@@ -5,7 +5,7 @@ use crate::durable::{
     error::{DurableError as Error, Result},
     io::{self, FrameRead},
 };
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     namespace::{OpenMode, WriterNamespace},
 };

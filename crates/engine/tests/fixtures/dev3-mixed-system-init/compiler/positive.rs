@@ -4,7 +4,7 @@ use crate::storage::{
     page::PAGE_BYTES,
     wal_io::{GenesisWalSession, WalIoError, WalRequirement},
 };
-use xadb_foundation::namespace::WriterNamespace;
+use foundation::namespace::WriterNamespace;
 
 fn prepare_and_release(
     plan: &mixed::Plan<'_, '_>,

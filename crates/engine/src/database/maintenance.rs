@@ -16,14 +16,14 @@ use crate::{
     },
     transaction::{RecoveryBuildError, VolatileDatabase},
 };
+use foundation::{
+    namespace::{DirectoryPort, FileName, OpenMode, Selector, WriterNamespace},
+    runtime::{Quota, Reservation},
+};
 use std::{
     cell::{Cell, RefCell},
     mem::size_of,
     sync::Arc,
-};
-use xadb_foundation::{
-    namespace::{DirectoryPort, FileName, OpenMode, Selector, WriterNamespace},
-    runtime::{Quota, Reservation},
 };
 
 /// A durably selected exact snapshot; newer commits may already exist.
@@ -730,7 +730,7 @@ impl<W: WriterNamespace> Engine<W> {
                     self.collect_selected(&mut state, &mut live, None)?;
                     let inventory_charge = reserve(
                         &self.shared.control.quota,
-                        MAX_FILES * size_of::<xadb_foundation::namespace::DirectoryEntry>(),
+                        MAX_FILES * size_of::<foundation::namespace::DirectoryEntry>(),
                     )?;
                     let mut inventory = state
                         .wal
@@ -740,7 +740,7 @@ impl<W: WriterNamespace> Engine<W> {
                         .map_err(|e| self.maintenance_error(e))?;
                     let bytes = inventory
                         .capacity()
-                        .checked_mul(size_of::<xadb_foundation::namespace::DirectoryEntry>())
+                        .checked_mul(size_of::<foundation::namespace::DirectoryEntry>())
                         .ok_or_else(|| {
                             storage(StorageError::limit("GC inventory capacity"), None)
                         })?;

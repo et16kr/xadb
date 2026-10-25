@@ -1,7 +1,7 @@
 //! Linux file effects. Callers own paths, publication and recovery policy.
+use foundation::{Error, ErrorCode, Result, io::FileIo};
 use nix::fcntl::{FcntlArg, OFlag, fcntl};
 use std::{fs::File, io, os::unix::fs::FileExt};
-use xadb_foundation::{Error, ErrorCode, Result, io::FileIo};
 
 /// Owned native file adapter for explicit-offset I/O.
 /// The caller owns path selection, open mode, writer exclusion, and publication.

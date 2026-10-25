@@ -1,5 +1,15 @@
 //! Real Linux bootstrap effects with retained native fault/hook receipts.
 #![allow(dead_code)]
+use foundation::{
+    codec::content_digest,
+    error::Effect,
+    io::FileIo,
+    namespace::{
+        DirectoryEntry, DirectoryPort, FileMetadata, FileName, NamespaceError, NamespaceErrorKind,
+        NamespaceResult, OpenMode, Selector, WriterNamespace,
+    },
+};
+use platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
 use serde_json::{Value, json};
 use std::{
     collections::BTreeMap,
@@ -9,16 +19,6 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
-use xadb_foundation::{
-    codec::content_digest,
-    error::Effect,
-    io::FileIo,
-    namespace::{
-        DirectoryEntry, DirectoryPort, FileMetadata, FileName, NamespaceError, NamespaceErrorKind,
-        NamespaceResult, OpenMode, Selector, WriterNamespace,
-    },
-};
-use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
 
 pub const WAL: &str = "d3-wal-00000001";
 pub const CUTS: [(&str, usize); 13] = [

@@ -1,10 +1,10 @@
 #![cfg(feature = "test-support")]
 
-use std::{cell::Cell, mem::size_of, sync::Barrier};
-use xadb_foundation::runtime::{Cancellation, Clock};
-use xadb_sql::frontend::{
+use foundation::runtime::{Cancellation, Clock};
+use sql::frontend::{
     CallControl, Code, Diagnostic, Lexer, Module, Name, Span, Token, TokenKind, normalize_name,
 };
+use std::{cell::Cell, mem::size_of, sync::Barrier};
 
 struct ManualClock(Cell<u64>);
 impl Clock for ManualClock {

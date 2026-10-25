@@ -1,9 +1,9 @@
 use std::time::Duration;
-use xadbtest_protocol::history::{
+use test_protocol::history::{
     Action, Cell, CommitFault, Event, History, Key, Mode, Mutation, Observation, Rejection, Row,
     Rows,
 };
-use xadbtest_reference::{SearchBudget, Verdict, check};
+use test_reference::{SearchBudget, Verdict, check};
 
 fn key(row: u64) -> Key {
     Key { table: 1, row }

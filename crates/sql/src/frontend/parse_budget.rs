@@ -1,7 +1,7 @@
 //! Parser-owned backing allocation; source and typed nodes share caller ledgers.
 
 use super::{Code, Diagnostic, Module, Span};
-use xadb_foundation::runtime::{Quota, Reservation};
+use foundation::runtime::{Quota, Reservation};
 
 pub(crate) struct ParseBudget {
     session: Quota,

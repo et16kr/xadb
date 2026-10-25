@@ -3,7 +3,7 @@ use crate::{
     api::DatabaseId,
     storage::page::{DIGEST_OFFSET, FileId, PAGE_BYTES, PageLsn},
 };
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     identity::{Generation, ObjectId},
 };

@@ -83,8 +83,8 @@ impl DurableError {
         )
     }
 
-    pub(crate) fn foundation(error: xadb_foundation::Error) -> Self {
-        use xadb_foundation::ErrorCode;
+    pub(crate) fn foundation(error: foundation::Error) -> Self {
+        use foundation::ErrorCode;
         let code = match error.code {
             ErrorCode::UnsupportedFormat => DurableErrorCode::UnsupportedFormat,
             ErrorCode::LimitExceeded | ErrorCode::Overflow => DurableErrorCode::LimitExceeded,

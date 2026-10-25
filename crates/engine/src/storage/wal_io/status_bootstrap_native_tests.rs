@@ -1,13 +1,13 @@
 //! Actual Linux plan2 creator. External checker audits every file and effect.
 use super::*;
-use std::{fs, io, path::PathBuf};
-use xadb_foundation::{
+use foundation::{
     io::FileIo,
     namespace::{
         DirectoryEntry, DirectoryPort, FileMetadata, FileName, NamespaceResult, OpenMode, Selector,
     },
 };
-use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
+use platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
+use std::{fs, io, path::PathBuf};
 
 #[derive(Default)]
 pub(super) struct Trace {

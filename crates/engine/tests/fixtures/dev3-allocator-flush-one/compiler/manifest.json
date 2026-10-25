@@ -20,8 +20,8 @@
       "expected_code": null,
       "primary_line": null,
       "primary_spans": "none",
-      "bytes": 1408,
-      "sha256": "c992fc9d11e7bd9dac31b114c32792a9824b3915af00b90816c95907f62d8b18"
+      "bytes": 1403,
+      "sha256": "833c70e18e8153646cf31dddabae3432a14e6cc028f4809c3517f5a14aa5e220"
     },
     {
       "name": "resplit",
@@ -29,8 +29,8 @@
       "expected_code": "E0499",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 1044,
-      "sha256": "ae0fdecaa44a8d45c0311bb939db9cca020296205fadcefa181db4617ca70a08"
+      "bytes": 1039,
+      "sha256": "c06af76bec15ca04501e9f19c88de1d49e362f7bffc970caccd436e3c6ee99c6"
     },
     {
       "name": "bound_move",
@@ -38,8 +38,8 @@
       "expected_code": "E0505",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 1010,
-      "sha256": "a903ea89de6ebbd57afc7760972163cf4477c5c29acd55d5132732ad97b1cc4c"
+      "bytes": 1005,
+      "sha256": "79892d51d62ff4569c5aea442346b004baa78a7cf3c99992e1ff4e825166dec2"
     },
     {
       "name": "raw_requirement",
@@ -47,8 +47,8 @@
       "expected_code": "E0308",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 752,
-      "sha256": "38964948a360089b807990233a166b28b583756c9b8236ce9f7e12589596434f"
+      "bytes": 747,
+      "sha256": "38209ddff4649e26c2afad5553e21ff8bae97b8dde8a183d535e779c90a6f94c"
     },
     {
       "name": "requirement_private",
@@ -56,8 +56,8 @@
       "expected_code": "E0451",
       "primary_line": 10,
       "primary_spans": "all_on_line",
-      "bytes": 747,
-      "sha256": "aba127fdc80b2dbb33c0b8f63a2f567eb337c77e50de4c4fc223c986f5445d3f"
+      "bytes": 742,
+      "sha256": "9e8695def488396b9a0fc52bb0baee3823fe65d686996b03aefd597d7e151776"
     },
     {
       "name": "durable_private",
@@ -65,8 +65,8 @@
       "expected_code": "E0451",
       "primary_line": 10,
       "primary_spans": "all_on_line",
-      "bytes": 749,
-      "sha256": "657033888fc2fa2d6a7b94bcd03e950d4f9e4c118e1ab43cf1660c4b080832a9"
+      "bytes": 744,
+      "sha256": "c47ee35f65afaf21f085ef62d914e08f8f8edaecc651b8d4be3ec5e92570c9c3"
     },
     {
       "name": "durable_clone",
@@ -74,8 +74,8 @@
       "expected_code": "E0599",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 699,
-      "sha256": "5b6d6bf5e090a1a60b5970d4d0daf17ef1b20e144103405ec5e17758927017d3"
+      "bytes": 694,
+      "sha256": "f1f9d34eb370c7146f88cc53245bb4a5e3b177b87111b395dd7f1debd6f8e6d9"
     },
     {
       "name": "capture_clone",
@@ -83,8 +83,8 @@
       "expected_code": "E0599",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 709,
-      "sha256": "84cfce19a84fa6e0a7005234bce88aaa5333c3241b3b6b9f7de8f52f81e0754f"
+      "bytes": 704,
+      "sha256": "2bee4b86b03da0be9363a43a92a0bd93a60bdb038fb3be465656cacdfe3c14d8"
     },
     {
       "name": "capture_private",
@@ -92,8 +92,8 @@
       "expected_code": "E0451",
       "primary_line": 10,
       "primary_spans": "all_on_line",
-      "bytes": 905,
-      "sha256": "cbdc8327562a6e53bdc59c63548dc5c7b295003ab6a29b039978cfa6142ed883"
+      "bytes": 900,
+      "sha256": "bec48d87a18735e672705198b5f5fec0f18027b6b2f211b83c68a37e64b21faf"
     },
     {
       "name": "finalize_private",
@@ -101,8 +101,8 @@
       "expected_code": "E0616",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 722,
-      "sha256": "01fcb7317cf626e447b0502273c2d9d7adfa6c299659c1dec521eae0344e473a"
+      "bytes": 717,
+      "sha256": "b317fda4cebf56441d03a24be4c52bad0f7c588ea3fab956e38dbb11d404cf76"
     },
     {
       "name": "raw_finalize",
@@ -110,8 +110,8 @@
       "expected_code": "E0308",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 816,
-      "sha256": "3261b6665152f1441a9c1666693b19ac8b47802c39cb846f9b03882023fb3621"
+      "bytes": 811,
+      "sha256": "2f97f5e50d115a9482a16bd1b4db48e8d6a94709a165e95e9fc7a4c260a36c49"
     }
   ]
 }

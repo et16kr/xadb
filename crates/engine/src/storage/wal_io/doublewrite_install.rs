@@ -11,13 +11,13 @@ use crate::storage::{
     page::{PAGE_BYTES, PageLsn},
     page_io::{PageFileReader, PageIoError},
 };
-use std::sync::atomic::Ordering;
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     error::Effect,
     io::{read_exact_at, sync, write_all_at},
     namespace::{FileName, NamespaceError, OpenMode, Selector, WriterNamespace},
 };
+use std::sync::atomic::Ordering;
 
 #[path = "allocation_reservation.rs"]
 mod allocation_reservation;
@@ -124,7 +124,7 @@ pub(crate) enum Cause {
     Control(ControlError),
     Doublewrite(DoublewriteError),
     Namespace(NamespaceError),
-    Io(xadb_foundation::Error),
+    Io(foundation::Error),
     ContentMismatch,
     SelectionMismatch,
     IdentityMismatch,
@@ -339,8 +339,8 @@ pub(super) fn initial_recovery_expectation(
 }
 
 pub(super) fn recovery_preparation_bytes() -> usize {
+    use foundation::codec::ContentHasher;
     use std::mem::size_of;
-    use xadb_foundation::codec::ContentHasher;
     // Enclosing/returned plan, encode_empty header and inventory iterator,
     // selector reference bytes, descriptor qword table, codec result carriers,
     // and the same pinned SHA-256 call allowance as bootstrap source_budget.

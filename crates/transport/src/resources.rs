@@ -2,8 +2,8 @@ use crate::{
     DiagnosticSnapshot, ErrorKind, Instrumentation, MAX_CONNECTIONS, MAX_WIRE_BYTES,
     PROCESS_PAYLOAD_BYTES, Result, diagnostics::Diagnostics,
 };
+use foundation::runtime::{Clock, Quota, Reservation};
 use std::sync::{Arc, Mutex, atomic::AtomicU64};
-use xadb_foundation::runtime::{Clock, Quota, Reservation};
 
 pub(crate) struct ClockDomain {
     clock: Arc<dyn Clock + Send + Sync>,

@@ -15,8 +15,7 @@ use crate::{
     catalog::{Root, TableRoot},
     storage::volatile::StoredRow,
 };
-use std::mem::size_of;
-use xadb_foundation::{
+use foundation::{
     codec::{MAX_FRAME_PAYLOAD, content_digest},
     identity::{ObjectHandle, RowId},
     io::{FileIo, write_all_at},
@@ -24,6 +23,7 @@ use xadb_foundation::{
     runtime::{Quota, Reservation},
     value::Value,
 };
+use std::mem::size_of;
 
 /// One build reservation leaves room for a simultaneous bounded WAL operation.
 pub(crate) const BUILD_BYTES: usize = 8 * 1024 * 1024;
@@ -481,11 +481,11 @@ mod tests {
         api::{Column, DataType, DatabaseId},
         catalog::{Schema, TableRoot},
     };
+    use foundation::identity::{Generation, ObjectId, SchemaEpoch};
     use std::{
         collections::BTreeMap,
         sync::{Arc, Mutex},
     };
-    use xadb_foundation::identity::{Generation, ObjectId, SchemaEpoch};
 
     #[derive(Default)]
     struct Writes {

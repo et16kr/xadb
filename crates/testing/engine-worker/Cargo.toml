@@ -6,20 +6,31 @@ edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 
+[lib]
+name = "engine_worker"
+
 [dependencies]
 serde_json.workspace = true
-xadb-engine.workspace = true
-xadb-foundation.workspace = true
-xadb-platform.workspace = true
-xadbtest-protocol.workspace = true
+engine.workspace = true
+foundation.workspace = true
+platform.workspace = true
+test_protocol.workspace = true
 
 [build-dependencies]
 sha2.workspace = true
 
 [dev-dependencies]
-xadb-engine = { workspace = true, features = ["test-support"] }
-xadbtest = { path = "../controller" }
+engine = { workspace = true, features = ["test-support"] }
+test_controller = { package = "xadbtest", path = "../controller" }
 tempfile.workspace = true
 
 [lints]
 workspace = true
+
+[[bin]]
+name = "xadbtest-durable-worker"
+path = "src/bin/durable.rs"
+
+[[bin]]
+name = "xadbtest-durable-performance-worker"
+path = "src/bin/durable_performance.rs"

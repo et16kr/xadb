@@ -15,7 +15,7 @@ use crate::{
         },
     },
 };
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     error::Effect,
     identity::{Generation, ObjectId},
@@ -199,9 +199,9 @@ pub struct DoublewriteFailure {
     /// Original lower error fields, for trace comparison only.
     pub detail: String,
     /// Original foundation error when the cause is I/O.
-    pub lower_io: Option<xadb_foundation::error::Error>,
+    pub lower_io: Option<foundation::error::Error>,
     /// Original namespace error, including its effect classification.
-    pub lower_namespace: Option<xadb_foundation::namespace::NamespaceError>,
+    pub lower_namespace: Option<foundation::namespace::NamespaceError>,
     /// Attempted logical mutations, excluding retries and reads.
     pub attempted: u8,
     /// Successfully returned logical mutations.

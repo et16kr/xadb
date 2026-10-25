@@ -19,7 +19,7 @@ from comm_campaign import capture_source, write_json
 ROOT = Path(__file__).resolve().parent.parent
 INPUT_RELATIVE = 'crates/engine/tests/fixtures/dev3-status-init/compiler'
 INPUTS = ROOT / INPUT_RELATIVE
-INPUTS_SHA256 = 'd01dd5f092f01dad9a11acefeea59809b570f0212541e8f992097858e05b15ae'
+INPUTS_SHA256 = '83a2f2be99882cfbe3a0d595f20b9bbbbfea8ef386ec703bb0957a2b9ce72f69'
 PROBE = 'crates/engine/src/storage/status_init_borrow_probe.rs'
 ANCHOR = 'crates/engine/src/storage/mod.rs'
 PRODUCER_PROBE = 'crates/engine/src/storage/wal_io/status_init_operation_probe.rs'
@@ -231,7 +231,7 @@ def main():
             remaining_budget(report['compiler_elapsed_seconds'])
             row['diagnostics'] = verify_diagnostics(output, returncode, frozen)
             if frozen['expected_code'] is None and not any(
-                    item['target'] == 'xadb_engine' for item in row['binary_artifacts']):
+                    item['target'] == 'engine' for item in row['binary_artifacts']):
                 raise ValueError('successful compile has no xadb-engine metadata artifact')
             if source_fingerprint(source) != fingerprint:
                 raise ValueError('probe source changed during compilation')

@@ -3,12 +3,12 @@
 // Remove when the first tree/index consumer connects this representation leaf.
 #![allow(dead_code)]
 
-use std::cmp::Ordering;
-use xadb_foundation::{
+use foundation::{
     codec::{encode_key_into, encoded_key_len, inspect_key_prefix},
     identity::RowId,
     value::Value,
 };
+use std::cmp::Ordering;
 
 pub(crate) const MAX_KEY_BYTES: usize = 1_024;
 pub(crate) const MAX_KEY_COLUMNS: usize = 4;

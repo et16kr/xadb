@@ -8,7 +8,7 @@ use super::super::{
 };
 use super::*;
 use crate::transaction::TxnId;
-use xadb_foundation::identity::{CommitSeq, Generation};
+use foundation::identity::{CommitSeq, Generation};
 
 const EMPTY: &[u8] = include_bytes!("../../tests/fixtures/dev3-ownership-empty-root.bin");
 const MIXED_ROOT: &[u8] = include_bytes!("../../tests/fixtures/dev3-ownership-mixed-root.bin");

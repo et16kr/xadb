@@ -9,7 +9,7 @@ use super::{
     name::normalize_name,
     parse_budget::ParseBudget,
 };
-use xadb_foundation::runtime::Quota;
+use foundation::runtime::Quota;
 
 mod ddl;
 mod predicate;

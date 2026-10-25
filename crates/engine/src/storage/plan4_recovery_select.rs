@@ -15,7 +15,7 @@ use crate::{
         wal_io,
     },
 };
-use xadb_foundation::{
+use foundation::{
     codec::{ContentHasher, content_digest},
     error::Effect,
     identity::Generation,

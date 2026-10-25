@@ -180,7 +180,7 @@ TARGETS = (
      'binary': 'durable_fuzz', 'test': 'v3_durable_and_fault_codecs_mutation_fuzz_30_minutes',
      'generator': 'durable-native-four-codecs-mutation-v1', 'seed': 0,
      'smoke': 'durable_and_fault_mutation_corpus_smoke'},
-    {'target': 'disk_record_fuzz', 'package': 'xadb-engine', 'binary': 'xadb_engine',
+    {'target': 'disk_record_fuzz', 'package': 'xadb-engine', 'binary': 'engine',
      'kind': 'lib', 'test': 'durable::codec_fuzz::disk_record_mutation_v3_30_minutes',
      'generator': 'dev2-disk-record-mutation-v1', 'seed': 0x584144424449534b,
      'smoke': 'durable::codec_fuzz::disk_record_mutation_v2_64_seeds'},

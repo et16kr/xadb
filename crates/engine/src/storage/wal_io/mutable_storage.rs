@@ -16,6 +16,7 @@ use crate::{
     },
     transaction::concurrency::{Owner, PageConcurrency},
 };
+use foundation::{error::Effect, identity::Generation, namespace::WriterNamespace};
 use std::{
     mem::size_of,
     sync::{
@@ -23,7 +24,6 @@ use std::{
         atomic::{AtomicU8, Ordering},
     },
 };
-use xadb_foundation::{error::Effect, identity::Generation, namespace::WriterNamespace};
 
 #[path = "dirty_allocation.rs"]
 mod dirty_allocation;

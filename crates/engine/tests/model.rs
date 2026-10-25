@@ -1,12 +1,12 @@
 //! Independent scalar bookkeeping against the actual volatile API; no product codec/oracle reuse.
-use std::collections::BTreeMap;
-use xadb_engine::{
+use engine::{
     api::{Column, DataType, DatabaseId, RowUid, StoreOptions, TableSpec},
     substrate::VolatileStore,
 };
-use xadb_foundation::value::Value;
+use foundation::value::Value;
+use std::collections::BTreeMap;
 
-fn fixture() -> (VolatileStore, xadb_engine::api::TableHandle) {
+fn fixture() -> (VolatileStore, engine::api::TableHandle) {
     let mut db = VolatileStore::new(
         DatabaseId::new([17; 16]).unwrap(),
         1,

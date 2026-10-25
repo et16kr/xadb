@@ -1,6 +1,6 @@
 //! A deliberately small harness fixture, never a substitute for a production engine.
 use std::io::{self, Read, Write};
-use xadbtest_protocol::{
+use test_protocol::{
     MAX_INPUT_BYTES, MAX_STEPS, Observation, Operation, PROTOCOL_VERSION, Request, Value,
 };
 

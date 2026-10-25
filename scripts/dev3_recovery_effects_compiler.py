@@ -19,7 +19,7 @@ from comm_campaign import capture_source, write_json
 ROOT = Path(__file__).resolve().parent.parent
 INPUT_RELATIVE = 'crates/engine/tests/fixtures/recovery_effects/compiler'
 INPUTS = ROOT / INPUT_RELATIVE
-INPUTS_SHA256 = '683d2286c989b081164a503feebcd44067606271b3f75123ef5e81173fadd42e'
+INPUTS_SHA256 = '5f5eb3698f0a62d2379d78b5b0777f5bb060e2f3251a6798fef7327d371767d9'
 PROBE = 'crates/engine/src/storage/recovery_effects_borrow_probe.rs'
 ANCHOR = 'crates/engine/src/storage/mod.rs'
 EXPECTATIONS = {'baseline': (None, None, 'none', None), 'positive': (None, None, 'none', 'EC00'), 'maintenance_reborrow': ('E0499', 6, 'one', 'EC01'), 'flush_reborrow': ('E0499', 6, 'one', 'EC02'), 'failed_owner_reborrow': ('E0499', 7, 'one', 'EC03'), 'owner_move': ('E0382', 7, 'one', 'EC04'), 'observation_borrow': ('E0505', 6, 'one', 'EC05'), 'private_fields': ('E0616', 5, 'one', 'EC06'), 'raw_writer_missing': ('E0599', 5, 'one', 'EC07'), 'borrowed_image_immutable': ('E0594', 6, 'one', 'EC08'), 'status_images_positive': (None, None, 'none', 'EC09'), 'status_image_borrow': ('E0505', 7, 'one', 'EC10'), 'status_image_immutable': ('E0594', 7, 'one', 'EC11'), 'transaction_descriptors_positive': (None, None, 'none', 'EC12'), 'transaction_descriptor_borrow': ('E0505', 7, 'one', 'EC13'), 'transaction_descriptor_immutable': ('E0594', 7, 'one', 'EC14')}
@@ -232,7 +232,7 @@ def main():
             remaining_budget(report['compiler_elapsed_seconds'])
             row['diagnostics'] = verify_diagnostics(output, returncode, frozen)
             if frozen['expected_code'] is None and not any(
-                    item['target'] == 'xadb_engine' for item in row['binary_artifacts']):
+                    item['target'] == 'engine' for item in row['binary_artifacts']):
                 raise ValueError('successful compile has no xadb-engine metadata artifact')
             if source_fingerprint(source) != fingerprint:
                 raise ValueError('probe source changed during compilation')

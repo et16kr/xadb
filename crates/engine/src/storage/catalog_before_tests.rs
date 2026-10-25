@@ -11,14 +11,14 @@ use crate::{
     },
     transaction::TxnId,
 };
+use foundation::{
+    codec::content_digest,
+    identity::{CommitSeq, Generation, ObjectHandle, ObjectId, SchemaEpoch},
+};
 use std::{
     collections::BTreeSet,
     panic::{AssertUnwindSafe, catch_unwind, resume_unwind},
     path::PathBuf,
-};
-use xadb_foundation::{
-    codec::content_digest,
-    identity::{CommitSeq, Generation, ObjectHandle, ObjectId, SchemaEpoch},
 };
 
 pub(in crate::storage) fn ids(prefix: &str, first: usize, last: usize) -> Vec<String> {

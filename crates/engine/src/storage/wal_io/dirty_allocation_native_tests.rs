@@ -1,6 +1,14 @@
 //! New dirty-owner native workers; the parent runner retains three Linux DBs.
 //! Fixed fixture entropy is the only namespace substitution; all effects use Linux.
 use super::*;
+use foundation::{
+    codec::content_digest,
+    io::{FileIo, write_all_at},
+    namespace::{
+        DirectoryEntry, DirectoryPort, FileMetadata, FileName, NamespaceResult, OpenMode, Selector,
+    },
+};
+use platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
 use std::{
     collections::BTreeMap,
     fs, io,
@@ -8,14 +16,6 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
-use xadb_foundation::{
-    codec::content_digest,
-    io::{FileIo, write_all_at},
-    namespace::{
-        DirectoryEntry, DirectoryPort, FileMetadata, FileName, NamespaceResult, OpenMode, Selector,
-    },
-};
-use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
 
 use crate::storage::{
     dirty_frame::{DirtyFrame, test_support as frame_support},
@@ -372,7 +372,7 @@ fn dirty_allocation_native_selected() {
         let wal::Cause::Io(io) = lower.cause else {
             panic!("lost original I/O cause");
         };
-        assert_eq!(io.code, xadb_foundation::error::ErrorCode::IoWriteUnknown);
+        assert_eq!(io.code, foundation::error::ErrorCode::IoWriteUnknown);
         assert_eq!(io.effect(), Effect::CallerMustResolve);
         assert_eq!(io.io_kind, Some(io::ErrorKind::Other));
         fs::write(

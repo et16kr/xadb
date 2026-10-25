@@ -1,8 +1,8 @@
-use xadb_foundation::runtime::{Cancellation, Clock, Quota};
-use xadb_sql::frontend::{
+use foundation::runtime::{Cancellation, Clock, Quota};
+use sql::frontend::{
     CallControl, Code, Diagnostic, Module, SplitOutcome, Splitter, StatementSource,
 };
-use xadbtest_reference::frontend::splitter::{
+use test_reference::frontend::splitter::{
     ActionFixture, ErrorObservation, EventObservation, SplitCase, StatementObservation,
     StepObservation, TraceObservation, all_partitions, check_trace, edge_literals, edge_partitions,
     generated_case, lifecycle_literals, limit_cases, partition_case, partition_literals,

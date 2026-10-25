@@ -5,7 +5,7 @@ use crate::storage::{
     page_io::{PageFileReader, PageIoError},
     wal_io::{MutableStorageError, StatusLoadPermit, WalIoError},
 };
-use xadb_foundation::{codec::content_digest, error::Certainty, namespace::NamespaceErrorKind};
+use foundation::{codec::content_digest, error::Certainty, namespace::NamespaceErrorKind};
 
 #[derive(Debug)]
 pub(crate) enum LoadCause {

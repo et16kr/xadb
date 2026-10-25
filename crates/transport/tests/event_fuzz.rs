@@ -1,13 +1,13 @@
 mod soak_support;
 mod support;
+use foundation::network::{Ready, Registration};
 use soak_support::random;
 use std::{
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
 use support::{Action, Script, Stream, TestClock, frame};
-use xadb_foundation::network::{Ready, Registration};
-use xadb_transport::{
+use transport::{
     Connection, ConnectionPhase, ErrorKind, MAX_WIRE_BYTES, PROCESS_PAYLOAD_BYTES, ReceivedFrame,
     SendOutcome, SendTicket, Transport,
 };

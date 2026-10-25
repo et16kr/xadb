@@ -5,14 +5,14 @@ use crate::{
     resources::{Buffer, Family},
     sender::{ConnectionSender, SendOutcome, Shared},
 };
-use std::{
-    io,
-    sync::{Arc, atomic::Ordering},
-};
-use xadb_foundation::{
+use foundation::{
     codec::{FRAME_HEADER_BYTES, FRAME_OVERHEAD, decode_frame, inspect_frame_header},
     network::{ByteStream, Connector, Interest, Ready, Registration},
     runtime::{Cancellation, Reservation},
+};
+use std::{
+    io,
+    sync::{Arc, atomic::Ordering},
 };
 
 /// Transport lifetime, independent of authentication or SQL session state.
@@ -739,8 +739,8 @@ impl Connection {
         Ok(next)
     }
 }
-fn codec_error(error: xadb_foundation::Error) -> Error {
-    if error.code == xadb_foundation::ErrorCode::UnsupportedFormat {
+fn codec_error(error: foundation::Error) -> Error {
+    if error.code == foundation::ErrorCode::UnsupportedFormat {
         ErrorKind::UnsupportedFormat.into()
     } else {
         ErrorKind::InvalidFrame.into()
@@ -755,8 +755,8 @@ impl Drop for Connection {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use foundation::runtime::Clock;
     use std::sync::{Mutex, Weak};
-    use xadb_foundation::runtime::Clock;
 
     #[derive(Default)]
     struct GateClock(Mutex<Option<Weak<Shared>>>);

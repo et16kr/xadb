@@ -5346,5 +5346,10 @@
       "bytes": 4096,
       "sha256": "61157fa8f7198fdf7753af41f228f768813c678225fad8310b64b8499bcf1d75"
     }
-  }
+  },
+  "current_source_paths": {
+    "crates/engine/src/storage/wal_io/plan4_pages_tests.rs": "crates/engine/src/storage/wal_io/plan4_pages/tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_pages_native_tests.rs": "crates/engine/src/storage/wal_io/plan4_pages/native_tests.rs"
+  },
+  "current_source_paths_note": "Naming-only navigation map. source_files preserves the original authoring paths/hashes; those hashes do not validate the current sources."
 }

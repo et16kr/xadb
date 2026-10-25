@@ -24,8 +24,8 @@ use crate::storage::{
         finish_semantic_envelope,
     },
 };
+use foundation::codec::content_digest;
 use std::{mem::size_of, ops::Range};
-use xadb_foundation::codec::content_digest;
 
 /// Trusted expected context supplied by a separately serialized owner. Values
 /// here do not certify global uniqueness, reclaim eligibility or reservations.

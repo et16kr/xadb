@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
-use xadbtest_protocol::{MAX_INPUT_BYTES, MAX_STEPS, Step, Value};
+use test_protocol::{MAX_INPUT_BYTES, MAX_STEPS, Step, Value};
 
 pub const WITNESSES: &[&str] = &[
     "fixture.checked_add",

@@ -1,8 +1,8 @@
-use xadbtest_protocol::{
+use test_protocol::{
     engine::{Action, Observation, Request, Response},
     performance::{DiagnosticsMode, Input},
 };
-use xadbtest_reference::catalog::{CatalogInputBudget, CatalogResult, check_catalog};
+use test_reference::catalog::{CatalogInputBudget, CatalogResult, check_catalog};
 
 #[test]
 fn catalog_oracle_never_qualifies_performance_actions() {
@@ -44,7 +44,7 @@ fn catalog_oracle_never_qualifies_performance_actions() {
 fn catalog_oracle_rejects_performance_observation_for_catalog_action() {
     // This deliberately empty performance payload is not workload evidence:
     // the catalog boundary must reject the observation kind itself.
-    use xadbtest_protocol::{engine::Metrics, performance::*};
+    use test_protocol::{engine::Metrics, performance::*};
     let metrics = Metrics {
         operations: 0,
         rows_read: 0,

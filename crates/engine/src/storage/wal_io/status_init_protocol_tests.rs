@@ -935,20 +935,14 @@ fn sync_schedule(profile: u32, action: port::Action, panics: bool, id: &str) {
                     let wal::Cause::Io(lower) = wal_error.cause else {
                         panic!("original lower sync cause lost")
                     };
-                    assert_eq!(
-                        lower.code,
-                        xadb_foundation::error::ErrorCode::IoWriteUnknown
-                    );
+                    assert_eq!(lower.code, foundation::error::ErrorCode::IoWriteUnknown);
                     assert_eq!(lower.context, "sync outcome unknown");
                     assert_eq!(lower.io_kind, Some(std::io::ErrorKind::Other));
                     assert_eq!(lower.effect(), Effect::CallerMustResolve);
-                    assert_eq!(
-                        lower.certainty(),
-                        xadb_foundation::error::Certainty::Unknown
-                    );
+                    assert_eq!(lower.certainty(), foundation::error::Certainty::Unknown);
                     assert_eq!(
                         lower.retry_scope(),
-                        xadb_foundation::error::RetryScope::AfterRecovery
+                        foundation::error::RetryScope::AfterRecovery
                     );
                 }
                 _ => panic!("actual failed sync must retain fatal obligation"),

@@ -21,7 +21,7 @@ use crate::{
     api::{Column, Namespace},
     transaction::TxnId,
 };
-use xadb_foundation::{
+use foundation::{
     codec::{ContentHasher, content_digest},
     identity::{Generation, ObjectId},
 };

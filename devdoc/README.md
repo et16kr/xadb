@@ -270,3 +270,5 @@
 2026-10-19 [DEV2 계측 수정](implementation/dev2-implementation.md#dev2-instrumentation-fix-20261019): CPU 관측과 상세 진단 비용을 수정하고 같은 동결 source에서 ext4 복구 99셀·하위 회귀·필수 성능 시험 36개를 통과했다. 최종 로컬 성능 인수는 INCOMPLETE이며 전체 DEV2 인수는 미완료다.
 
 2026-10-19 [DEV2 새 시험 후 일시 중지](implementation/dev2-implementation.md#dev2-resumed-tests-20261019): 삭제 후 e3 소스로 실행한 11개30분 target 중 11개 PASS와 복구 보완 증거를 보존했다. 집계기 캐시 지문 오류는 별도 기록했으며, 사용자 요청으로 새 성능 측정 전에 중지했다. DEV2 인수는 미완료다.
+
+2026-10-25 [내부 명칭·반복 파일명 정리](evidence/naming-cleanup-20261025.md): Rust crate 별칭과 기능별 파일 배치를 단축하고 외부 명령·과거 증거를 보존했다. 선택 검증 결과와 범위는 기록을 따른다.

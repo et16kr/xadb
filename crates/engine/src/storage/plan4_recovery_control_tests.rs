@@ -1546,7 +1546,7 @@ fn control_source_census() {
             + 8 * size_of::<&[u8]>()
             + 4 * size_of::<&mut [u8; 4096]>()
             + 4 * size_of::<std::result::Result<(), Error>>()
-            + 4 * size_of::<xadb_foundation::codec::ContentHasher>()
+            + 4 * size_of::<foundation::codec::ContentHasher>()
             + 4 * 32
             + 2048;
         let core = current_phase.max(other_phase) + common;

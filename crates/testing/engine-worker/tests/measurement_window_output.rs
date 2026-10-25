@@ -1,8 +1,8 @@
 //! Explicit retained-output adapter for the changed diagnostic hook. Native
 //! invocation is separate; no old performance campaign or worker is reexecuted.
 use std::{fs, io::Cursor, path::PathBuf};
-use xadbtest::performance::{Side, check_output};
-use xadbtest_protocol::{engine, frame, performance as wire};
+use test_controller::performance::{Side, check_output};
+use test_protocol::{engine, frame, performance as wire};
 
 fn check(case: &str) {
     let root = PathBuf::from(

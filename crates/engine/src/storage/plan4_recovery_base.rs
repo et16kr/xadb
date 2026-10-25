@@ -25,7 +25,7 @@ use super::{
     status_home::StatusHome,
     transaction_record::{RollbackState, TransactionState, TransactionStatusCell, TxnRef},
 };
-use xadb_foundation::{
+use foundation::{
     codec::{ContentHasher, content_digest},
     identity::{Generation, ObjectId},
 };

@@ -18,7 +18,7 @@
     },
     {
       "path": "crates/engine/src/storage/allocation_page_tests.rs",
-      "sha256": "40a5606bfda829ecd55ea4d96378510bc5c49f6162d868a236730d0c11c55dc9"
+      "sha256": "c7d0fdfbefda0cbe5f533987032daf2d0088196b0e19c7c0b086287fdfb289c4"
     },
     {
       "path": "crates/engine/src/storage/doublewrite_control_tests.rs",

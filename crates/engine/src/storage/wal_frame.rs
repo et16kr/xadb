@@ -11,7 +11,7 @@ use super::{
     transaction_record::{decode_txn_id, encode_txn_id},
 };
 use crate::{api::DatabaseId, transaction::TxnId};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     identity::{Generation, ObjectId},
 };

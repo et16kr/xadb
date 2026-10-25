@@ -21,7 +21,20 @@
     "test_tool_directories": "crates/testing/<role>; grouping directory only; independent packages retain xadbtest* identifiers",
     "historical_evidence_paths": "preserve original identity",
     "planned_paths_created_as_placeholders": false,
-    "test_tool_layout_decision_ref": "repository-build-plan.md#testing-layout"
+    "test_tool_layout_decision_ref": "repository-build-plan.md#testing-layout",
+    "rust_crate_identifiers": {
+      "xadb-foundation": "foundation",
+      "xadb-platform": "platform",
+      "xadb-engine": "engine",
+      "xadb-transport": "transport",
+      "xadb-sql": "sql",
+      "xadbtest-protocol": "test_protocol",
+      "xadbtest-reference": "test_reference",
+      "xadbtest": "test_controller",
+      "xadbtest-engine-worker": "engine_worker"
+    },
+    "repeated_file_prefix": "Use the owning module directory; preserve logical module paths and test selectors",
+    "naming_decision_ref": "naming-cleanup-20261025.md"
   },
   "current_example_paths": [
     "crates/foundation/src/identity.rs",

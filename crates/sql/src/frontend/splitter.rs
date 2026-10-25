@@ -11,8 +11,8 @@ use super::{
     diagnostic::{Code, Diagnostic, Module, Span},
     source::{SourceBudget, SourceBuffer, StatementSource},
 };
+use foundation::runtime::Quota;
 use utf8::Utf8Carry;
-use xadb_foundation::runtime::Quota;
 
 const MAX_SOURCE_BYTES: usize = 1 << 20;
 const CHECKPOINT_BYTES: usize = 256;
@@ -344,7 +344,7 @@ fn check_at(control: &CallControl<'_>, offset: usize) -> Result<(), Diagnostic> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xadb_foundation::runtime::{Cancellation, Clock};
+    use foundation::runtime::{Cancellation, Clock};
 
     struct FixedClock;
     impl Clock for FixedClock {

@@ -5,7 +5,7 @@
 #![allow(dead_code)]
 
 use crate::api::DatabaseId;
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     identity::{Generation, ObjectId},
 };

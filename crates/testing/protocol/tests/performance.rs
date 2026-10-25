@@ -1,4 +1,4 @@
-use xadbtest_protocol::{
+use test_protocol::{
     engine::{Action, Request},
     frame,
     performance::{DiagnosticsMode, Input, LATENCY_STRIDE, MEASURE, VERSION, WARMUP},
@@ -77,8 +77,8 @@ fn performance_action_roundtrip_preserves_maximum_seed_and_exact_input() {
     assert_eq!(decoded.unwrap(), request);
 }
 
-fn maximum_output() -> xadbtest_protocol::performance::Output {
-    use xadbtest_protocol::{engine::Metrics, performance::*};
+fn maximum_output() -> test_protocol::performance::Output {
+    use test_protocol::{engine::Metrics, performance::*};
     let metrics = Metrics {
         operations: u64::MAX,
         rows_read: u64::MAX,
@@ -145,7 +145,7 @@ fn maximum_output() -> xadbtest_protocol::performance::Output {
 
 #[test]
 fn maximum_performance_observation_fits_frame_and_oversized_output_is_rejected() {
-    use xadbtest_protocol::engine::{Observation, Response};
+    use test_protocol::engine::{Observation, Response};
     let mut response = Response {
         version: 1,
         run: [1; 16],
@@ -172,7 +172,7 @@ fn maximum_performance_observation_fits_frame_and_oversized_output_is_rejected()
 
 #[test]
 fn performance_output_nested_unknown_and_duplicate_fields_are_rejected() {
-    use xadbtest_protocol::performance::Output;
+    use test_protocol::performance::Output;
     let json = serde_json::to_string(&maximum_output()).unwrap();
     for invalid in [
         json.replacen("\"build\":{", "\"build\":{\"unknown\":0,", 1),

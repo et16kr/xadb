@@ -1,15 +1,15 @@
-use std::fs::{File, OpenOptions};
-use xadb_foundation::{
+use foundation::{
     ErrorCode,
     codec::{decode_frame, encode_frame},
     error::Effect,
     io::{read_exact_at, resize, sync, write_all_at},
     runtime::{Cancellation, Clock, Scheduler},
 };
-use xadb_platform::{
+use platform::{
     linux::{LinuxFile, sync_directory},
     runtime::{MonotonicClock, NativeScheduler},
 };
+use std::fs::{File, OpenOptions};
 
 fn hex(bytes: &str) -> Vec<u8> {
     bytes
@@ -124,10 +124,10 @@ fn cancellation_crosses_threads_and_native_clock_is_monotonic() {
 
 #[test]
 fn typed_selectors_replace_reopen_and_preserve_reserved_names() {
-    use xadb_foundation::namespace::{
+    use foundation::namespace::{
         DirectoryPort, FileName, NamespaceErrorKind, OpenMode, Selector, WriterNamespace,
     };
-    use xadb_platform::namespace::LinuxDirectory;
+    use platform::namespace::LinuxDirectory;
     let directory = tempfile::tempdir().unwrap();
     let port = LinuxDirectory::open_existing(directory.path()).unwrap();
     let mut writer = port.acquire_writer().unwrap();
@@ -187,11 +187,11 @@ fn typed_selectors_replace_reopen_and_preserve_reserved_names() {
 
 #[test]
 fn typed_selector_preflight_rejects_aliases_without_effects() {
-    use std::os::unix::fs::{MetadataExt, symlink};
-    use xadb_foundation::namespace::{
+    use foundation::namespace::{
         DirectoryPort, FileName, NamespaceErrorKind, Selector, WriterNamespace,
     };
-    use xadb_platform::namespace::LinuxDirectory;
+    use platform::namespace::LinuxDirectory;
+    use std::os::unix::fs::{MetadataExt, symlink};
     let snapshot = |path: &std::path::Path| {
         let mut entries = std::fs::read_dir(path)
             .unwrap()
@@ -269,7 +269,7 @@ fn typed_selector_preflight_rejects_aliases_without_effects() {
 #[cfg(feature = "test-support")]
 mod faults {
     use super::*;
-    use xadb_foundation::{
+    use foundation::{
         error::{Certainty, RetryScope},
         io::{
             FileIo,

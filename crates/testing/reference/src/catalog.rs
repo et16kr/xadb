@@ -3,7 +3,7 @@
 //! State is copied into small BTreeMaps. No engine/foundation implementation,
 //! allocator layout, codec, or production comparator is consulted.
 use std::collections::{BTreeMap, BTreeSet};
-use xadbtest_protocol::engine::{
+use test_protocol::engine::{
     Action, Cell, DataType, Metrics, Observation, Request, Response, Row, RowIdentity,
     TableIdentity, TableSpec,
 };

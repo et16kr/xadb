@@ -4,7 +4,7 @@ use crate::{
     api::{DatabaseId, Namespace},
     transaction::TxnId,
 };
-use xadb_foundation::identity::{CommitSeq, Generation};
+use foundation::identity::{CommitSeq, Generation};
 
 const ACTIVE: &[u8; 1536] = include_bytes!("../../tests/fixtures/dev3-obligation-active.bin");
 const ABORTING: &[u8; 1536] = include_bytes!("../../tests/fixtures/dev3-obligation-aborting.bin");

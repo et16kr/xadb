@@ -6,8 +6,8 @@ use crate::storage::{
     obligation::{DescriptorSpec, RemainingBudget},
     page_io::PageFileReader,
 };
+use foundation::codec::ContentHasher;
 use std::{mem::size_of, thread};
-use xadb_foundation::codec::ContentHasher;
 
 fn boxed<const N: usize>() -> Box<[u8; N]> {
     vec![0; N].into_boxed_slice().try_into().unwrap()

@@ -9,7 +9,7 @@ use crate::storage::{
     page::PageRef,
     wal_frame::FrameExpectation,
 };
-use xadb_foundation::identity::ObjectId;
+use foundation::identity::ObjectId;
 
 const MIXED_INPUT: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),

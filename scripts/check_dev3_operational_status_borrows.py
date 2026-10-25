@@ -18,7 +18,7 @@ from comm_campaign import capture_source, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
 INPUTS = ROOT / 'crates/engine/tests/fixtures/dev3-operational-status/compiler'
-INPUTS_SHA256 = 'd66764cc2a522b426b1653ec4ac29e1d584baaf74ddc2ec075d6d161560bee3f'
+INPUTS_SHA256 = '81ace2b47a6d0547aec044e0e3d80cf448ef5e8c93c9d5882b3f5f4bdb78f6bc'
 PROBE = 'crates/engine/src/operational_status_borrow_probe.rs'
 LIB = 'crates/engine/src/lib.rs'
 EXPECTATIONS = {'baseline': (None, None), 'release': (None, None), 'live_split': ('E0499', 8), 'consumed_owner': ('E0382', 8), 'live_reservation': ('E0499', 11), 'workspace': ('E0499', 12), 'load_release': (None, None), 'load_split': ('E0499', 8), 'load_permit': ('E0603', 2)}

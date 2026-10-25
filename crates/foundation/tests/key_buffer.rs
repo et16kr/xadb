@@ -1,5 +1,5 @@
 //! Independent literal byte vectors for the shared scalar key buffer boundary.
-use xadb_foundation::{
+use foundation::{
     ErrorCode,
     codec::{encode_key, encode_key_into, encoded_key_len, inspect_key_prefix},
     value::{MAX_VALUE_BYTES, Value},

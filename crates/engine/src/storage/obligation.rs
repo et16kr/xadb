@@ -7,7 +7,7 @@ use super::{
     control::{ControlKind, ControlRef, EXTENT_BYTES},
     transaction_record::{TransactionState, TransactionStatus, TransactionStatusCell, TxnRef},
 };
-use xadb_foundation::codec::content_digest;
+use foundation::codec::content_digest;
 
 pub(crate) const OBLIGATION_BYTES: usize = 1536;
 const DIGEST_OFFSET: usize = 1504;

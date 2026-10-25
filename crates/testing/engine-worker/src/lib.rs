@@ -6,16 +6,16 @@ mod fault;
 mod measurement_window;
 pub mod performance;
 
+use engine::{
+    api,
+    substrate::{Cursor, RowView, Snapshot, VolatileStore},
+};
+use foundation::value::Value;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt,
 };
-use xadb_engine::{
-    api,
-    substrate::{Cursor, RowView, Snapshot, VolatileStore},
-};
-use xadb_foundation::value::Value;
-use xadbtest_protocol::{engine as wire, frame::Envelope};
+use test_protocol::{engine as wire, frame::Envelope};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ProtocolError(pub &'static str);
@@ -28,15 +28,15 @@ impl std::error::Error for ProtocolError {}
 
 enum Failure {
     Protocol(ProtocolError),
-    Product(xadb_engine::Error),
+    Product(engine::Error),
 }
 impl From<ProtocolError> for Failure {
     fn from(value: ProtocolError) -> Self {
         Self::Protocol(value)
     }
 }
-impl From<xadb_engine::Error> for Failure {
-    fn from(value: xadb_engine::Error) -> Self {
+impl From<engine::Error> for Failure {
+    fn from(value: engine::Error) -> Self {
         Self::Product(value)
     }
 }

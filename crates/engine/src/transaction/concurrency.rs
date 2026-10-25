@@ -4,12 +4,12 @@
 #![allow(dead_code)] // Awaiting separately reviewed page/transaction consumers.
 
 use crate::storage::session_fence::SessionFence;
+use foundation::error::Effect;
 use std::{
     marker::PhantomData,
     rc::Rc,
     sync::{Mutex, MutexGuard, TryLockError},
 };
-use xadb_foundation::error::Effect;
 
 #[cfg(test)]
 #[path = "concurrency_test_support.rs"]

@@ -1,7 +1,7 @@
 use super::{CampaignKind, Order, Recipe, Side};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use xadbtest_protocol::performance::{DiagnosticsMode, Input, Operation, Output, PATH};
+use test_protocol::performance::{DiagnosticsMode, Input, Operation, Output, PATH};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

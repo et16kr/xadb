@@ -6,7 +6,7 @@ use crate::storage::{
     page::{PAGE_BYTES, PageIdentity},
     wal_io::{FreshStorageSession, WalPrefix},
 };
-use xadb_foundation::namespace::WriterNamespace;
+use foundation::namespace::WriterNamespace;
 
 fn probe<W: WriterNamespace>(
     owner: FreshStorageSession<'_, W>,

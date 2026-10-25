@@ -1,4 +1,8 @@
 #![allow(dead_code)]
+use foundation::{
+    network::{ByteStream, Ready, Registration},
+    runtime::{Cancellation, Clock},
+};
 use sha2::{Digest, Sha256};
 use std::{
     collections::VecDeque,
@@ -8,11 +12,7 @@ use std::{
         atomic::{AtomicU64, Ordering},
     },
 };
-use xadb_foundation::{
-    network::{ByteStream, Ready, Registration},
-    runtime::{Cancellation, Clock},
-};
-use xadb_transport::{Connection, SendOutcome, SendTicket, Transport};
+use transport::{Connection, SendOutcome, SendTicket, Transport};
 
 #[derive(Default)]
 pub struct TestClock(pub AtomicU64);

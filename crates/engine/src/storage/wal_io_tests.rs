@@ -439,16 +439,13 @@ fn genesis_install_faults_preserve_partial_namespace() {
                     let Cause::Io(cause) = error.cause else {
                         panic!("lost file cause");
                     };
-                    assert_eq!(cause.code, xadb_foundation::ErrorCode::IoWriteUnknown);
+                    assert_eq!(cause.code, foundation::ErrorCode::IoWriteUnknown);
                     assert_eq!(cause.io_kind, Some(std::io::ErrorKind::Other));
                 } else {
                     let Cause::Namespace(cause) = error.cause else {
                         panic!("lost namespace cause");
                     };
-                    assert_eq!(
-                        cause.kind,
-                        xadb_foundation::namespace::NamespaceErrorKind::Io
-                    );
+                    assert_eq!(cause.kind, foundation::namespace::NamespaceErrorKind::Io);
                     assert_eq!(
                         cause.effect,
                         if action == Action::AfterError || matches!(at, 6 | 11) {
@@ -777,7 +774,7 @@ fn wal_io_faults_fence_without_replay() {
             let Cause::Io(cause) = error.cause else {
                 panic!("lost file cause");
             };
-            assert_eq!(cause.code, xadb_foundation::ErrorCode::IoWriteUnknown);
+            assert_eq!(cause.code, foundation::ErrorCode::IoWriteUnknown);
             assert_eq!(
                 cause.io_kind,
                 match action {

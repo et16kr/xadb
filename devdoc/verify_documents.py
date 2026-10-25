@@ -236,7 +236,18 @@ def validate_packages(plan, repo):
         manifest = tomllib.loads((repo / path / 'Cargo.toml').read_text())
         if manifest['package']['name'] != expected['name']:
             errors.append('repository: name mismatch ' + path)
-        actual = sorted(k for k in manifest.get('dependencies', {}) if k in names)
+        actual = []
+        for alias, dependency in manifest.get('dependencies', {}).items():
+            if isinstance(dependency, dict) and dependency.get('workspace') is True:
+                inherited = workspace.get('dependencies', {})
+                if alias not in inherited:
+                    errors.append('repository: missing inherited dependency ' + alias)
+                    continue
+                dependency = inherited[alias]
+            name = dependency.get('package', alias) if isinstance(dependency, dict) else alias
+            if name in names:
+                actual.append(name)
+        actual.sort()
         if actual != sorted(expected['normal_workspace_dependencies']):
             errors.append('repository: dependency mismatch ' + path)
     roots = ['Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml', 'crates', 'tests', 'scripts', '.github']

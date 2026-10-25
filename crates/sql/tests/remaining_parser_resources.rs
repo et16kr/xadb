@@ -2,12 +2,12 @@
 //! Every runtime route starts a newly supported statement; no old suite is run.
 #![cfg(feature = "test-support")]
 
-use std::{cell::Cell, mem::size_of};
-use xadb_foundation::runtime::{Cancellation, Clock, Quota};
-use xadb_sql::frontend::{
+use foundation::runtime::{Cancellation, Clock, Quota};
+use sql::frontend::{
     AstNode, CallControl, Code, Diagnostic, Module, NodeKind, NullabilitySyntax, ParsedStatement,
     Parser, ScalarSyntax, Sign, Span, TypeSyntax,
 };
+use std::{cell::Cell, mem::size_of};
 
 const SESSION: u64 = 8 << 20;
 const DATABASE: u64 = 64 << 20;

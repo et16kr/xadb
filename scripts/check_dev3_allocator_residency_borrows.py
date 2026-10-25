@@ -18,7 +18,7 @@ from comm_campaign import capture_source, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
 INPUTS = ROOT / 'crates/engine/tests/fixtures/dev3-allocator-residency/compiler'
-INPUTS_SHA256 = '7e4e634b61bac4c771c1d6b75b90ac4d0e6b86cb3284b4757f551f969f2585ba'
+INPUTS_SHA256 = 'b4f15a2a2abd031d22ac61be8f43dbdc65384542208e6d1bf1df2716c90227d6'
 PROBE = 'crates/engine/src/allocator_residency_borrow_probe.rs'
 LIB = 'crates/engine/src/lib.rs'
 CASE_NAMES = ('baseline', 'release', 'live_split')
@@ -107,7 +107,7 @@ def preserve_artifacts(output, evidence, target, require_engine):
             if digest(source) != item['sha256']:
                 raise ValueError('compiler artifact changed during capture')
             result.append(item)
-            engine |= item['target'] == 'xadb_engine'
+            engine |= item['target'] == 'engine'
     if require_engine and not engine:
         raise ValueError('successful compile has no xadb-engine metadata artifact')
     return result

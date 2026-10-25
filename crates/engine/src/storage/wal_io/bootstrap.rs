@@ -18,7 +18,7 @@ use crate::storage::{
     page_io::{PageFileReader, PageIoError},
     session_fence::SessionFence,
 };
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     error::Effect,
     identity::{Generation, ObjectId},
@@ -139,7 +139,7 @@ pub(crate) enum Cause {
     Allocation(AllocationError),
     PageIo(PageIoError),
     Namespace(NamespaceError),
-    Io(xadb_foundation::Error),
+    Io(foundation::Error),
     InvalidInput,
     UnsupportedPlan,
     Capacity,
@@ -809,8 +809,8 @@ fn source_budget<W: WriterNamespace>() -> SourceBudget {
         control::{ChunkLocation, FileMapChunk, FileMapCursor, FileMapRoot, ProfileSpec},
         page::PageView,
     };
+    use foundation::{codec::ContentHasher, namespace::FileMetadata};
     use std::mem::size_of;
-    use xadb_foundation::{codec::ContentHasher, namespace::FileMetadata};
 
     type RoleResult = std::result::Result<StatusRole<'static>, BootstrapError>;
     type MutableRoleResult = std::result::Result<StatusRole<'static>, MutableStorageError>;

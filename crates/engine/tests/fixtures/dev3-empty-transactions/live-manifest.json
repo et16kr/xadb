@@ -4,119 +4,119 @@
   "scope": "same empty lifecycle integration; live effects only, load/flush/recovery remain",
   "static": [
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_resource_gate",
       "reason": "New whole live operation accounting; constructor chain inclusion after l1"
     }
   ],
   "mandatory": [
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_actual_lifecycle_matches_raw_literals_and_preserves_system",
       "reason": "actual lifecycle matches raw literals and preserves system"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_interleaves_two_owners_and_preserves_unselected_home",
       "reason": "interleaves two owners and preserves unselected home"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_32_retained_slots_release_for_33rd_different_home",
       "reason": "32 retained slots release for 33rd different home"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_candidate_failure_burns_identity_and_gap_is_adopted",
       "reason": "candidate failure burns identity and gap is adopted"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_issuer_exhaustion_does_not_block_retained_completion",
       "reason": "issuer exhaustion does not block retained completion"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_wrong_actor_and_state_have_no_wal_or_bank_effect",
       "reason": "wrong actor and state have no wal or bank effect"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_foreign_owner_and_flusher_cannot_stage",
       "reason": "foreign owner and flusher cannot stage"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_admission_reserves_all_steps_without_double_charging_completion",
       "reason": "admission reserves all steps without double charging completion"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_corrupt_or_noncanonical_bank_is_fatal_before_stage",
       "reason": "corrupt or noncanonical bank is fatal before stage"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_duplicate_directory_actor_is_fatal_even_with_valid_checksums",
       "reason": "duplicate directory actor is fatal even with valid checksums"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_bank_owner_without_matching_home_is_fatal",
       "reason": "bank owner without matching home is fatal"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_all_staged_failure_cuts_retain_owner_and_fence",
       "reason": "all staged failure cuts retain owner and fence"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_actual_wal_write_and_sync_failures_cannot_return_success",
       "reason": "actual wal write and sync failures cannot return success"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_short_wal_write_completes_exact_suffix_before_sync",
       "reason": "short wal write completes exact suffix before sync"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_abort_sync_failure_keeps_terminal_row_reserved",
       "reason": "abort sync failure keeps terminal row reserved"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_final_observation_rejects_mutually_consistent_wrong_terminal",
       "reason": "final observation rejects mutually consistent wrong terminal"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_old_allocator_observer_remains_global_tip_strict",
       "reason": "old allocator observer remains global tip strict"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_census_reads_nonresident_member_without_losing_dirty_selected_home",
       "reason": "census reads nonresident member without losing dirty selected home"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_nonresident_read_failure_is_retryable_but_corruption_fences",
       "reason": "nonresident read failure is retryable but corruption fences"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_preexisting_poison_or_fence_prevents_candidate_issuance",
       "reason": "preexisting poison or fence prevents candidate issuance"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_valid_bank_orphan_reaches_bidirectional_seen_guard",
       "reason": "Independent D1 direct boundary negative: empty_live_valid_bank_orphan_reaches_bidirectional_seen_guard"
     },
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_final_observation_rejects_pending_origin_interval_and_frame_counter",
       "reason": "Independent D1 direct boundary negative: empty_live_final_observation_rejects_pending_origin_interval_and_frame_counter"
     }
@@ -135,7 +135,7 @@
   ],
   "s5": [
     {
-      "source": "crates/engine/src/storage/wal_io/empty_transactions_live_tests.rs",
+      "source": "crates/engine/src/storage/wal_io/empty_transactions/live_tests.rs",
       "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::resident::empty_transactions::live::tests::empty_live_s5_profiles_and_transaction_depths",
       "expanded_cases": 12,
       "status": "NOT_RUN"

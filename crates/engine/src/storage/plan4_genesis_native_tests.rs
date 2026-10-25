@@ -5,20 +5,20 @@ use crate::storage::{
     wal_frame::MAX_FRAME_BYTES,
     wal_io::FreshStorageSession,
 };
-use std::{
-    fs::{self, OpenOptions},
-    io::{self, Write},
-    path::{Path, PathBuf},
-    sync::{Arc, Mutex},
-};
-use xadb_foundation::{
+use foundation::{
     io::FileIo,
     namespace::{
         DirectoryEntry, DirectoryPort, FileMetadata, FileName, NamespaceResult, OpenMode, Selector,
         WriterNamespace,
     },
 };
-use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
+use platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
+use std::{
+    fs::{self, OpenOptions},
+    io::{self, Write},
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
+};
 
 pub(in crate::storage) struct Trace {
     root: PathBuf,

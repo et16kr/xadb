@@ -3,7 +3,7 @@
 #![allow(dead_code)] // The selected recovery owner is being connected.
 
 use super::control::Profile;
-use xadb_foundation::codec::content_digest;
+use foundation::codec::content_digest;
 
 pub(super) const BYTES: usize = 4096;
 pub(super) const BASE_BYTES: u32 = 1 << 20;

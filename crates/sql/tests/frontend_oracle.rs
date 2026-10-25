@@ -1,7 +1,7 @@
-use xadbtest_reference::frontend::literals::{
+use test_reference::frontend::literals::{
     NameObservation, diagnostic, lexer_literals, name_literals, token,
 };
-use xadbtest_reference::frontend::{Verdict, check_lex, check_name};
+use test_reference::frontend::{Verdict, check_lex, check_name};
 
 #[test]
 fn known_bad_lexical_observations_are_rejected() {

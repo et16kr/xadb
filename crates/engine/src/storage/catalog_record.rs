@@ -9,7 +9,7 @@ use super::{
     undo_ref::UndoRef,
 };
 use crate::api::{DataType, Namespace, TableSpec};
-use xadb_foundation::identity::{Generation, ObjectHandle, ObjectId, SchemaEpoch};
+use foundation::identity::{Generation, ObjectHandle, ObjectId, SchemaEpoch};
 
 pub(crate) const CATALOG_HEADER_BYTES: usize = 232;
 pub(crate) const MAX_CATALOG_CELL_BYTES: usize = 4588;

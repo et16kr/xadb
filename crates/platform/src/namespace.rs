@@ -4,6 +4,14 @@
 //! This is not a sandbox against a non-cooperating process changing the directory.
 //! No effect here supplies WAL ordering, recovery validation or retirement policy.
 use crate::linux::LinuxFile;
+use foundation::{
+    error::Effect,
+    io::FileIo,
+    namespace::{
+        DirectoryEntry, DirectoryPort, FileIdentity, FileMetadata, FileName, MAX_DIRECTORY_ENTRIES,
+        NamespaceError, NamespaceErrorKind, NamespaceResult, OpenMode, Selector, WriterNamespace,
+    },
+};
 use nix::{
     dir::Dir,
     errno::Errno,
@@ -17,14 +25,6 @@ use std::{
     os::unix::fs::MetadataExt,
     path::{Component, Path},
     sync::Arc,
-};
-use xadb_foundation::{
-    error::Effect,
-    io::FileIo,
-    namespace::{
-        DirectoryEntry, DirectoryPort, FileIdentity, FileMetadata, FileName, MAX_DIRECTORY_ENTRIES,
-        NamespaceError, NamespaceErrorKind, NamespaceResult, OpenMode, Selector, WriterNamespace,
-    },
 };
 
 const LOCK_NAME: &str = "LOCK";

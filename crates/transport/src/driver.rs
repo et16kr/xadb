@@ -2,11 +2,11 @@ use crate::{
     Connection, ConnectionPhase, Error, ErrorKind, MAX_CONNECTIONS, MAX_LISTENERS, Result,
     Transport, WAIT_NANOS,
 };
-use std::{io, time::Duration};
-use xadb_foundation::{
+use foundation::{
     network::{Interest, Listener, ReadinessEvent, ReadinessWait, Ready, Registration},
     runtime::Cancellation,
 };
+use std::{io, time::Duration};
 
 /// Driver slot incarnation, distinct from a native registration or fd.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

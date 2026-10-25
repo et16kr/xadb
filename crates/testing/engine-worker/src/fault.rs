@@ -2,13 +2,7 @@
 //! deliberately perturb scheduling: these runs are never PF/performance evidence.
 //! Frame prefix recognition identifies a cut only; it does not decode expected
 //! rows, validate durability, or call a production/reference recovery codec.
-use std::{
-    cell::Cell,
-    io::{self, Read, Write},
-    os::unix::net::UnixStream,
-    sync::{Arc, Mutex},
-};
-use xadb_foundation::{
+use foundation::{
     error::Effect,
     io::FileIo,
     namespace::{
@@ -16,8 +10,14 @@ use xadb_foundation::{
         NamespaceResult, OpenMode, Selector, WriterNamespace,
     },
 };
-use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
-use xadbtest_protocol::{
+use platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
+use std::{
+    cell::Cell,
+    io::{self, Read, Write},
+    os::unix::net::UnixStream,
+    sync::{Arc, Mutex},
+};
+use test_protocol::{
     durable,
     fault::{self as wire, Boundary as B, Target as T},
     frame,

@@ -5,7 +5,7 @@ use crate::storage::{
     wal_frame::MAX_FRAME_BYTES,
     wal_io::{FreshStorageSession, StatusRole},
 };
-use xadb_foundation::namespace::WriterNamespace;
+use foundation::namespace::WriterNamespace;
 
 fn inspect(role: &StatusRole<'_>, fence: &SessionFence) {
     std::hint::black_box((

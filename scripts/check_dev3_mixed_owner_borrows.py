@@ -19,7 +19,7 @@ from comm_campaign import capture_source, write_json
 ROOT = Path(__file__).resolve().parent.parent
 INPUT_RELATIVE = 'crates/engine/tests/fixtures/dev3-mixed-system-owner/compiler'
 INPUTS = ROOT / INPUT_RELATIVE
-INPUTS_SHA256 = '321ee880958ad7f81b5ddafb09971deab2931765444b6f70875ee601834479e2'
+INPUTS_SHA256 = '4014f0820fc9d309e0bc67aedc0d070b47a0ce4d3a89f7422cb7f8d860a986de'
 PROBE = 'crates/engine/src/storage/wal_io/mixed_system_owner_probe.rs'
 ANCHOR = 'crates/engine/src/storage/wal_io/mutable_storage.rs'
 EXPECTATIONS = {'baseline': (None, None, 'none', None), 'positive': (None, None, 'none', 'MOC00'), 'core_escape': ('E0616', 5, 'one', 'MOC01'), 'role_fabrication': ('E0451', 4, 'one', 'MOC02'), 'prepared_fabrication': ('E0451', 4, 'one', 'MOC03'), 'prepared_confusion': ('E0308', 5, 'one', 'MOC04'), 'old_actor': ('E0308', 6, 'one', 'MOC05'), 'output_reborrow': ('E0499', 6, 'one', 'MOC06'), 'guard_owner_reuse': ('E0499', 9, 'one', 'MOC07'), 'reservation_owner_reuse': ('E0499', 9, 'one', 'MOC08')}
@@ -217,7 +217,7 @@ def main():
             remaining_budget(report['compiler_elapsed_seconds'])
             row['diagnostics'] = verify_diagnostics(output, returncode, frozen)
             if frozen['expected_code'] is None and not any(
-                    item['target'] == 'xadb_engine' for item in row['binary_artifacts']):
+                    item['target'] == 'engine' for item in row['binary_artifacts']):
                 raise ValueError('successful compile has no xadb-engine metadata artifact')
             if source_fingerprint(source) != fingerprint:
                 raise ValueError('probe source changed during compilation')

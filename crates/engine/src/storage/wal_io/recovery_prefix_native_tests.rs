@@ -4,13 +4,7 @@ use crate::{
     storage::{dirty_frame::DirtyFrame, page::PAGE_BYTES, wal_io::FreshStorageSession},
     transaction::concurrency::{OwnerRole, PageConcurrency},
 };
-use std::{
-    fs, io,
-    path::{Path, PathBuf},
-    sync::{Arc, Mutex},
-    time::{Duration, Instant},
-};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     io::{FileIo, write_all_at},
     namespace::{
@@ -18,7 +12,13 @@ use xadb_foundation::{
         WriterNamespace,
     },
 };
-use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
+use platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
+    time::{Duration, Instant},
+};
 
 #[derive(Default)]
 struct Trace {
@@ -102,9 +102,9 @@ impl Writer {
         t.events.push(format!("{operation}\t{ordinal}"));
         if t.cut != 0 && t.cut_count == t.cut {
             t.cut_hits += 1;
-            return Err(xadb_foundation::namespace::NamespaceError::new(
-                xadb_foundation::namespace::NamespaceErrorKind::Io,
-                xadb_foundation::error::Effect::CallerMustResolve,
+            return Err(foundation::namespace::NamespaceError::new(
+                foundation::namespace::NamespaceErrorKind::Io,
+                foundation::error::Effect::CallerMustResolve,
                 "fixed recovery-prefix producer outcome unknown",
             ));
         }

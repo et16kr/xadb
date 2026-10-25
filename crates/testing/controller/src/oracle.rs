@@ -4,7 +4,7 @@ use crate::{
     verdict::*,
 };
 use std::collections::BTreeSet;
-use xadbtest_protocol::{Observation, PROTOCOL_VERSION};
+use test_protocol::{Observation, PROTOCOL_VERSION};
 
 pub(crate) fn evaluate(
     case: &Scenario,

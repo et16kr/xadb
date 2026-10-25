@@ -1,14 +1,14 @@
 //! Complete frozen observations for the new typed compile/evaluate consumer.
 
-use std::collections::BTreeSet;
-use std::time::{Duration, Instant};
-use xadb_foundation::runtime::{Cancellation, Clock, Quota};
-use xadb_sql::frontend::{
+use foundation::runtime::{Cancellation, Clock, Quota};
+use sql::frontend::{
     CallControl, Code, ColumnSpec, ComparisonOp, CompiledKindRef, CompiledPredicate, DeclaredType,
     Diagnostic, ExpressionType, Module, Parser, PredicateCompiler, ScalarRef, ScalarSpec,
     ScalarType, Span, Token, TokenKind, TruthValue, normalize_name,
 };
-use xadbtest_reference::frontend::typed_predicate::{
+use std::collections::BTreeSet;
+use std::time::{Duration, Instant};
+use test_reference::frontend::typed_predicate::{
     Case, Column, Comparison, ErrorObservation, Expression, Kind, Node, Observation, Parameter,
     Payload, Plan, Spec, Truth, TypeTag, ValueObservation, check, generated_cases,
     known_bad_observations, literal_cases,

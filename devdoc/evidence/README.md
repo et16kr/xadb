@@ -467,3 +467,5 @@ DEV0/DEV1 wrapper·전체 workspace·DEV2/DEV3/COMM 시험은 실행하지 않�
 로컬 원본은 `artifacts/dev0-cleanup-20261023-6uo9dxng/`의 `red.json`·`red.log`·`red-process.rs`·`green.json`·`green.log`·`static.json`·`format.log`·`clippy.log`와 `source/`에 보존했다. 해당 export의 지문을 진행 중인 전체 작업 트리의 지문으로 재표기하지 않는다.
 
 별도 검토자 `/root/dev0_cleanup_review`는 최종4파일 diff·원 반례·RED/GREEN 원 로그와 source/log hash, 문서의 범위·수치·기존 문서 ID 유지까지 읽기 전용으로 확인해 D1 수용했다. 필수 수정 지적은 없으며 구현자의 자기 검토나 시험 재실행을 독립 검토로 기록하지 않는다.
+
+- [내부 명칭·반복 파일명 정리](naming-cleanup-20261025.md): Cargo/Rust 이름 분리,54개 파일 이동, 변경 범위 검증과 원 실패 보존.

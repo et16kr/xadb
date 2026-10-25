@@ -22,7 +22,7 @@ use super::{
         finish_semantic_envelope,
     },
 };
-use xadb_foundation::codec::content_digest;
+use foundation::codec::content_digest;
 
 const FRAME_BYTES: usize = 3040;
 const GROUP_BYTES: usize = 2848;

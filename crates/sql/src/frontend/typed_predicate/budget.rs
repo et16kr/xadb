@@ -4,7 +4,7 @@
 //! their own leases. This narrow owner has no growth or generic public API.
 
 use super::{Code, Diagnostic, Module, diagnostic, point};
-use xadb_foundation::runtime::{Quota, Reservation};
+use foundation::runtime::{Quota, Reservation};
 
 pub(super) struct TypedBudget {
     session: Quota,

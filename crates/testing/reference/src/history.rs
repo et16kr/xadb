@@ -3,7 +3,7 @@ use crate::model::{Model, Pending};
 use crate::validation::validate;
 use std::collections::BTreeSet;
 use std::time::{Duration, Instant};
-use xadbtest_protocol::history::{Event, History};
+use test_protocol::history::{Event, History};
 
 /// Search limits; exceeding any is inconclusive, never an accepted/rejected history.
 #[derive(Clone, Copy, Debug)]

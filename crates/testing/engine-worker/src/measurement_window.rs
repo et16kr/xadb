@@ -1,14 +1,12 @@
 //! Opt-in, bounded diagnostic gate. The normal fixture performs no extra clocks
 //! or OS observation. Socket ownership ends on every error; no I/O occurs in Drop.
 use crate::ProtocolError;
+use platform::performance::{calling_thread_id, monotonic_ns, observation_stream, thread_usage};
 use std::{
     io::{self, Read, Write},
     os::unix::net::UnixStream,
     path::Path,
     time::{Duration, Instant},
-};
-use xadb_platform::performance::{
-    calling_thread_id, monotonic_ns, observation_stream, thread_usage,
 };
 
 const TIMEOUT: Duration = Duration::from_secs(2);

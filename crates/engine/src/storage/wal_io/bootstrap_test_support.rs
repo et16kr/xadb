@@ -1,13 +1,7 @@
 //! Deterministic fresh-storage effects. Expected bytes come from frozen literals.
 use super::super::{FileIdentity, MAX_FRAME_BYTES};
 use crate::api::{DatabaseId, Namespace};
-use std::{
-    cell::Cell,
-    collections::BTreeMap,
-    io,
-    sync::{Arc, Mutex},
-};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     error::Effect,
     io::FileIo,
@@ -15,6 +9,12 @@ use xadb_foundation::{
         DirectoryEntry, FileMetadata, FileName, NamespaceError, NamespaceErrorKind,
         NamespaceResult, OpenMode, Selector, WriterNamespace,
     },
+};
+use std::{
+    cell::Cell,
+    collections::BTreeMap,
+    io,
+    sync::{Arc, Mutex},
 };
 
 pub(super) fn namespace() -> Namespace {

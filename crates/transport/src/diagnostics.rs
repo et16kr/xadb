@@ -1,10 +1,10 @@
 //! Fixed-size diagnostic records. No payload or application identifiers are kept.
 use crate::{ErrorKind, resources::ClockDomain};
+use foundation::network::Registration;
 use std::sync::{
     Mutex,
     atomic::{AtomicU64, Ordering},
 };
-use xadb_foundation::network::Registration;
 
 /// The release default retains counters; Detailed additionally records events.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

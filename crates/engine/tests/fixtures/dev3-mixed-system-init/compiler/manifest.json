@@ -27,8 +27,8 @@
       "primary_spans": "none",
       "semantic_id": "MC00",
       "reason": "Pure preparation/getters release output loans; consuming stage method typechecks",
-      "bytes": 1000,
-      "sha256": "182b6d7b0fcc074fc3938e5fb409b9550d360a3f5ce53126ce275c099fa725b3"
+      "bytes": 995,
+      "sha256": "df4dc739324a18de4b9e9e77a54a4d8c976bf69c4ae4e705ae45174c193c9889"
     },
     {
       "name": "private_constructor",
@@ -77,8 +77,8 @@
       "primary_spans": "one",
       "semantic_id": "MC05",
       "reason": "Original FreshStorageSession cannot be dropped while prepared output retains its fence borrow",
-      "bytes": 1120,
-      "sha256": "38d89f167ae8b8f3ea3f0265a94759fe1e4e4423e4e79e216906e09fe6779194"
+      "bytes": 1115,
+      "sha256": "f671a61cb833f17053be60f434567c1dcf7ef1f313a49fae350fc7b9e27fdc94"
     }
   ]
 }

@@ -126,7 +126,7 @@ fn worker_empty_recovery_native() {
                 assert_eq!(mode, "fail", "{:?}", e.error());
                 assert_eq!(
                     e.error().effect,
-                    xadb_foundation::error::Effect::CallerMustResolve
+                    foundation::error::Effect::CallerMustResolve
                 );
                 assert_eq!(e.error().phase, super::super::RecoveryPhase::Flush);
                 assert!(e.observation().ledger.restored_once);

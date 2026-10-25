@@ -17,14 +17,14 @@ use crate::{
     },
     transaction::concurrency::{Owner, PageConcurrency},
 };
+use foundation::{error::Effect, identity::ObjectId, namespace::WriterNamespace};
 use std::sync::{TryLockError, atomic::Ordering};
-use xadb_foundation::{error::Effect, identity::ObjectId, namespace::WriterNamespace};
 
-#[path = "plan4_pages_load.rs"]
+#[path = "plan4_pages/load.rs"]
 mod load;
-#[path = "plan4_pages_read.rs"]
+#[path = "plan4_pages/read.rs"]
 mod read;
-#[path = "plan4_pages_resources.rs"]
+#[path = "plan4_pages/resources.rs"]
 mod resources;
 pub(in crate::storage) use load::Plan4LoadPermit;
 #[cfg(test)]
@@ -32,10 +32,10 @@ pub(in crate::storage) use resources::source_census;
 pub(in crate::storage) use resources::source_census as plan4_recovery_clean_source_census;
 
 #[cfg(all(test, target_os = "linux"))]
-#[path = "plan4_pages_native_tests.rs"]
+#[path = "plan4_pages/native_tests.rs"]
 pub(in crate::storage) mod native;
 #[cfg(test)]
-#[path = "plan4_pages_tests.rs"]
+#[path = "plan4_pages/tests.rs"]
 pub(in crate::storage) mod tests;
 
 #[path = "plan4_retention.rs"]

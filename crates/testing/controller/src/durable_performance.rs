@@ -10,7 +10,7 @@ use std::{
     io::{Read, Write},
     path::PathBuf,
 };
-use xadbtest_protocol::{durable_performance as wire, frame::Envelope};
+use test_protocol::{durable_performance as wire, frame::Envelope};
 /// Dedicated bounded deadlines for actual 576-sync batches. Other native protocols
 /// retain the existing five-second request/sixty-second session defaults.
 pub struct PerformanceProtocol;

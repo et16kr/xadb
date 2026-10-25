@@ -18,7 +18,7 @@ from comm_campaign import capture_source, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
 INPUTS = ROOT / 'crates/engine/tests/fixtures/dev3-allocator-flush-one/compiler'
-INPUTS_SHA256 = 'f9f4712f62d2a5d4a3c6d1db9d9c22ca18bb4bb0394fa949d869ad857915749b'
+INPUTS_SHA256 = '85b45da2e50937a3acbea1b0703e890cdf7b767e0670f3a7ace3572d381160bc'
 PROBE = 'crates/engine/src/storage/flush_borrow_probe.rs'
 ANCHOR = 'crates/engine/src/storage/mod.rs'
 EXPECTATIONS = {'baseline': None, 'release': None, 'resplit': 'E0499', 'bound_move': 'E0505', 'raw_requirement': 'E0308', 'requirement_private': 'E0451', 'durable_private': 'E0451', 'durable_clone': 'E0599', 'capture_clone': 'E0599', 'capture_private': 'E0451', 'finalize_private': 'E0616', 'raw_finalize': 'E0308'}

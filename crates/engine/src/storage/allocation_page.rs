@@ -12,7 +12,7 @@ use super::{
     transaction_record::TxnRef,
 };
 use crate::api::{DatabaseId, Namespace};
-use xadb_foundation::identity::{Generation, ObjectId};
+use foundation::identity::{Generation, ObjectId};
 
 pub(crate) const EXTENT_PAGES: usize = 64;
 pub(crate) const ALLOCATION_HEADER_BYTES: usize = 64;

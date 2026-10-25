@@ -262,7 +262,7 @@
     "adapter": "crates/sql/tests/typed_predicate_resources.rs",
     "control": "tests/fixtures/dev4-typed-predicate/control.json",
     "status": "D2_REVIEW_INPUT_NOT_EXECUTED",
-    "sha256": "1c3b7ac1ebb5b9b9b7f9f1cadcf38169b4925758597ad460dfc146cbca27a119",
+    "sha256": "dbe97d736d9b78b631d8be1c4d95e45e3ea5e027bd07f8d8ba7eddb08ebfccfe",
     "control_sha256": "b50e67f672d8b8d4d1c243811c48a0b19bf0a8e6567d3db735e44532e2b104b8",
     "required_functions": 12
   },
@@ -293,7 +293,7 @@
     },
     {
       "path": "crates/sql/tests/typed_predicate_contracts.rs",
-      "sha256": "41b3f51c6674fe265429f9c95c0b159cbeb692891d1ac61474bd4ead6b51c30a"
+      "sha256": "57910432547825b5035e68e41baa3dca4c11f8b3abeaa9db3c35bd177b0926bf"
     },
     {
       "path": "artifacts/dev4-typed-predicate-20261024/author_fixtures.py",
@@ -305,7 +305,7 @@
     },
     {
       "path": "crates/sql/tests/typed_predicate_resources.rs",
-      "sha256": "1c3b7ac1ebb5b9b9b7f9f1cadcf38169b4925758597ad460dfc146cbca27a119"
+      "sha256": "dbe97d736d9b78b631d8be1c4d95e45e3ea5e027bd07f8d8ba7eddb08ebfccfe"
     },
     {
       "path": "tests/fixtures/dev4-typed-predicate/control.json",

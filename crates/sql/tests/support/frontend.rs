@@ -1,9 +1,9 @@
-use xadb_foundation::runtime::{Cancellation, Clock};
-use xadb_sql::frontend::{CallControl, Diagnostic, Keyword, Lexer, Token, TokenKind};
-use xadbtest_reference::frontend::literals::{
+use foundation::runtime::{Cancellation, Clock};
+use sql::frontend::{CallControl, Diagnostic, Keyword, Lexer, Token, TokenKind};
+use test_reference::frontend::literals::{
     DiagnosticObservation, LexCase, LexObservation, TokenObservation,
 };
-use xadbtest_reference::frontend::{Verdict, check_lex};
+use test_reference::frontend::{Verdict, check_lex};
 
 pub struct FixedClock;
 impl Clock for FixedClock {
@@ -13,7 +13,7 @@ impl Clock for FixedClock {
 }
 
 pub fn diagnostic_observation(value: Diagnostic) -> DiagnosticObservation {
-    use xadb_sql::frontend::{Code, Module};
+    use sql::frontend::{Code, Module};
     DiagnosticObservation {
         code: match value.code {
             Code::Syntax => "Syntax",

@@ -8,11 +8,14 @@ publish.workspace = true
 [features]
 test-support = []
 
+[lib]
+name = "engine"
+
 [dependencies]
-xadb-foundation.workspace = true
+foundation.workspace = true
 
 [dev-dependencies]
-xadb-platform.workspace = true
+platform.workspace = true
 
 [lints]
 workspace = true

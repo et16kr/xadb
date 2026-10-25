@@ -9,12 +9,12 @@ use crate::{
     api::Namespace,
     storage::{page::PageKind, session_fence::SessionFence, wal_io::MAX_FRAME_BYTES},
 };
-use std::mem::size_of;
-use xadb_foundation::{
+use foundation::{
     error::Effect,
     identity::{Generation, ObjectId},
     namespace::WriterNamespace,
 };
+use std::mem::size_of;
 
 /// A non-Copy borrow of the installed plan and its original session fence.
 /// PageKind::Undo also encodes chunks, but this role's current consumer contract

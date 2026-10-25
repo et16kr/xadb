@@ -19,7 +19,7 @@ use crate::{
     },
     transaction::concurrency::{Owner, PageConcurrency},
 };
-use xadb_foundation::{error::Effect, identity::Generation, namespace::WriterNamespace};
+use foundation::{error::Effect, identity::Generation, namespace::WriterNamespace};
 
 pub(super) const OPERATION_BYTES: usize = 98304;
 const FRAME_WORK_BYTES: usize = 65536;

@@ -31,8 +31,8 @@
       "reason": "positive",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 566,
-      "sha256": "d7f9a13ac06c0ea3003397591e17b5756f2d13548f02798662b39e4027a32fa8"
+      "bytes": 561,
+      "sha256": "93c7dd1783a362f8ca4b23be9eb0b19ca02d6544b8d1ebe2d05c9b12ffd89645"
     },
     {
       "name": "maintenance_reborrow",
@@ -43,8 +43,8 @@
       "reason": "maintenance reborrow",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 390,
-      "sha256": "616b9bb0da8513e930eb27e89d192b99e56449d52a6b8869f9c73843700ed7ea"
+      "bytes": 385,
+      "sha256": "6efff77cbbb20ec3ceba7946b29ea220c2b081f5ddaf9d84b16ba56fd946d728"
     },
     {
       "name": "flush_reborrow",
@@ -55,8 +55,8 @@
       "reason": "flush reborrow",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 390,
-      "sha256": "7c0daea406ccbfa1c82e5b66317b796f0f0de04540ac9c8a84fb383f9eaffd19"
+      "bytes": 385,
+      "sha256": "0a816eac3a9b7a8d3094c09545cd8e9c268961d270a4183e1d43714d3cef3213"
     },
     {
       "name": "failed_owner_reborrow",
@@ -67,8 +67,8 @@
       "reason": "failed owner reborrow",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 460,
-      "sha256": "cb62dfff2412c09fc53696660d3789033290891ec2a29c7fda0bb6edbc253c6f"
+      "bytes": 455,
+      "sha256": "f4a66c51fb7166661582e50857f052b6ff601e4dfbc0ba08473734f63e3a1a40"
     },
     {
       "name": "owner_move",
@@ -79,8 +79,8 @@
       "reason": "owner move",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 382,
-      "sha256": "d6c8db9c44fbb2c4109bf66c311eceaf3706598a674aef6109fbc52cd5d426db"
+      "bytes": 377,
+      "sha256": "37b22e94b25919f62a822d57c09b29e2aee27a82c403f899a4082fd4072417e7"
     },
     {
       "name": "observation_borrow",
@@ -91,8 +91,8 @@
       "reason": "observation borrow",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 338,
-      "sha256": "a800381f7a3c50c798f56d15c72bfa9fedb267afc879be83eb36b8e4c53d21a2"
+      "bytes": 333,
+      "sha256": "8c3c9993bc559bc67cd9052d91aff489350912789fdbf70ede857834071c0e49"
     },
     {
       "name": "private_fields",
@@ -103,8 +103,8 @@
       "reason": "private fields",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 244,
-      "sha256": "d3dc8dafae4b5695668d9c2125d9941ec7d883bc5420bb2ad79b46653146fdfd"
+      "bytes": 239,
+      "sha256": "3565f1cec82e1123f3599451837c550a4970edcec0c0d99194b0c161b8fcb8fe"
     },
     {
       "name": "raw_writer_missing",
@@ -115,8 +115,8 @@
       "reason": "raw writer missing",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 237,
-      "sha256": "088874f5b662d769ec60fe0528310ddd65ed25cd8685948bec0b86e8e84a5945"
+      "bytes": 232,
+      "sha256": "411075fa3e1d0efd24534a4df89edbeceb7124bf8915a55584ec0dbef048c4f8"
     },
     {
       "name": "borrowed_image_immutable",
@@ -127,8 +127,8 @@
       "reason": "borrowed image immutable",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 271,
-      "sha256": "573fd0e89331952c55e203f3f1f75275e24b33ff583cb43d9654be9dc09e81c7"
+      "bytes": 266,
+      "sha256": "0e20e88dc4d3c0566cd38255559f3df8a5de53ba32ec212da2c54b4161e59325"
     },
     {
       "name": "status_images_positive",
@@ -139,8 +139,8 @@
       "reason": "read several physical Status images then release owner and both arenas",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 409,
-      "sha256": "753d0f24eae60ad0f1f7cdd9ce08ff6186ec31873a1bde37c4bb7298ff2b0ec9"
+      "bytes": 404,
+      "sha256": "b586c991805c226f8ef35a7b9bbcab935841c2e0096f501ede5d7ca2056654a6"
     },
     {
       "name": "status_image_borrow",
@@ -151,8 +151,8 @@
       "reason": "page2 borrow keeps physical inspection owner alive",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 391,
-      "sha256": "8175874e15cfddfccac015b8ab68ac702b8475e31a732f326807616d2f0f4855"
+      "bytes": 386,
+      "sha256": "a232c194986f9717e6c8cb59b6e644b6f41989aff9f3cd671b77f425a14cb7f1"
     },
     {
       "name": "status_image_immutable",
@@ -163,8 +163,8 @@
       "reason": "page2 inspection returns immutable bytes only",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 363,
-      "sha256": "0a6468920e16a6b3e326c998a1ff13db0e1a69ee299d7f50876cc9b7fdafb16e"
+      "bytes": 358,
+      "sha256": "6b846beecfc7b7c53414d00bbc807841e0b50f2270ed4f30599d038aa8fac821"
     },
     {
       "name": "transaction_descriptors_positive",
@@ -175,8 +175,8 @@
       "reason": "borrow both transaction bank descriptors and release owner/arenas",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 444,
-      "sha256": "fdc34b97135cbb51b0abc0a56e8aafd09aa36e073ce78fbc95021af978c53a80"
+      "bytes": 439,
+      "sha256": "4dcb0f10d11be74d7bce4ed0c5a97504f2a9c51be804c0c2ede67f797cf834d9"
     },
     {
       "name": "transaction_descriptor_borrow",
@@ -187,8 +187,8 @@
       "reason": "transaction descriptor keeps inspection owner alive",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 401,
-      "sha256": "6c3740c523eb8f172b2c062f7ec11631cf7ed0f4160d9b29e4e5cb976ec8a400"
+      "bytes": 396,
+      "sha256": "87710ebad1391db4c86931fd9600ec097f3292f8a80e196f01952afa83455472"
     },
     {
       "name": "transaction_descriptor_immutable",
@@ -199,8 +199,8 @@
       "reason": "bank descriptor observation is immutable",
       "probe_relative_path": "crates/engine/src/storage/recovery_effects_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 373,
-      "sha256": "81ea82892ed18acb65e102c7ed3d03c41dd485404b68ffcbfccd4572547dc8d0"
+      "bytes": 368,
+      "sha256": "28bb37b7066abcb8be5dccdb20dc1d25213e78429a29011d0ff229f8faaee193"
     }
   ]
 }

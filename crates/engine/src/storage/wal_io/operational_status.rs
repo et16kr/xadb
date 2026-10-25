@@ -11,8 +11,8 @@ use super::{
 use crate::storage::dirty_frame::FrameStamp;
 use crate::storage::page::PageKind;
 use crate::transaction::concurrency::Owner;
+use foundation::{error::Effect, namespace::WriterNamespace};
 use std::mem::size_of;
-use xadb_foundation::{error::Effect, namespace::WriterNamespace};
 
 #[path = "status_load.rs"]
 pub(in super::super) mod load;

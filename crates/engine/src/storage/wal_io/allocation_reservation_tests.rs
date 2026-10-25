@@ -2,13 +2,13 @@
 use super::super::super::test_support::{self as port, Action, Plan as Fault, State, Writer};
 use super::*;
 use crate::storage::wal_frame::WalError;
+use foundation::codec::content_digest;
 use std::{
     collections::BTreeMap,
     panic::{AssertUnwindSafe, catch_unwind},
     sync::{Arc, Mutex, mpsc},
     time::Duration,
 };
-use xadb_foundation::codec::content_digest;
 
 #[path = "allocation_budget_profile_tests.rs"]
 mod budget_profiles;
@@ -840,7 +840,7 @@ fn allocation_ar06_write_sync_faults() {
                         let wal::Cause::Io(io) = lower.cause else {
                             panic!("missing original I/O")
                         };
-                        assert_eq!(io.code, xadb_foundation::error::ErrorCode::IoWriteUnknown);
+                        assert_eq!(io.code, foundation::error::ErrorCode::IoWriteUnknown);
                         assert_eq!(io.effect(), Effect::CallerMustResolve);
                         assert_eq!(
                             io.io_kind,

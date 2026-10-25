@@ -38,7 +38,7 @@ REQUIRED_TESTS = {
 }
 EXTENDED_TEST = 'v3_fixed_256_seeds_each_reach_1024_operations'
 SUBSTRATE_TESTS = {
-    'xadb_engine': {
+    'engine': {
         'identity::tests::epoch_local_vectors_and_exhaustion_never_wrap_or_reuse',
         'substrate::tests::unchanged_row_and_schema_allocations_are_shared_across_cow_roots',
     },
@@ -373,7 +373,8 @@ def main():
                                   for name, path in binaries.items()},
             }
             for name, required in SUBSTRATE_TESTS.items():
-                require_passed_tests(command(f'substrate-{name}', [str(binaries[name])]), required)
+                label = "substrate-xadb_engine" if name == "engine" else f"substrate-{name}"
+                require_passed_tests(command(label, [str(binaries[name])]), required)
             require_passed_tests(command('substrate-v3-extended', [
                 str(binaries['model']), '--ignored']), {SUBSTRATE_EXTENDED_TEST})
             binary = build_tests('xadbtest-protocol', {'engine_frame'})['engine_frame']

@@ -1,7 +1,7 @@
 //! Logical values, identities and schema. No row address or persistent layout is exposed.
 use crate::{Error, ErrorCode, Result};
+use foundation::identity::{ObjectHandle, ObjectId, RowId};
 use std::sync::Arc;
-use xadb_foundation::identity::{ObjectHandle, ObjectId, RowId};
 
 /// Database incarnation, distinct from timeline and open-instance qualification.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -33,7 +33,7 @@ pub(crate) struct Namespace {
 }
 pub(crate) struct Instance {
     pub namespace: Namespace,
-    pub _charge: xadb_foundation::runtime::Reservation,
+    pub _charge: foundation::runtime::Reservation,
 }
 impl std::fmt::Debug for Instance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

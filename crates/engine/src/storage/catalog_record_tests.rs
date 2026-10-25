@@ -11,7 +11,7 @@ use crate::{
     },
     transaction::TxnId,
 };
-use xadb_foundation::{codec::content_digest, identity::CommitSeq};
+use foundation::{codec::content_digest, identity::CommitSeq};
 
 fn hex(text: &str) -> Vec<u8> {
     text.as_bytes()

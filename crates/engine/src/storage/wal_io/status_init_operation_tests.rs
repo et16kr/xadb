@@ -7,7 +7,7 @@ use crate::storage::{
     wal_frame::WalStreamIdentity,
     wal_io::bootstrap::{self as boot, test_support as port},
 };
-use xadb_foundation::namespace::FileIdentity;
+use foundation::namespace::FileIdentity;
 
 const INPUT: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),

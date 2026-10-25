@@ -28,11 +28,11 @@ use crate::{
     },
     transaction::concurrency::{Owner, PageConcurrency},
 };
+use foundation::{error::Effect, namespace::WriterNamespace};
 use std::{
     mem::size_of,
     sync::atomic::{AtomicU8, Ordering},
 };
-use xadb_foundation::{error::Effect, namespace::WriterNamespace};
 
 pub(super) const OPERATION_BYTES: usize = 114688;
 const FRAME_BYTES: usize = 65536;

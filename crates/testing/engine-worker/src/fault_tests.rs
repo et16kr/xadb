@@ -1,8 +1,8 @@
 //! Native selector port evidence only; these tests neither run DEV3 recovery nor
 //! simulate cache loss. The controller validates observations before releasing.
 use super::*;
+use foundation::io::{read_exact_at, write_all_at};
 use std::{fs, thread, time::Duration};
-use xadb_foundation::io::{read_exact_at, write_all_at};
 
 const RUN: [u8; 16] = [11; 16];
 const TOKEN: [u8; 16] = [22; 16];
@@ -16,8 +16,8 @@ const SELECTORS: [(Selector, T, &str); 2] = [
 
 #[test]
 fn dev3_open_metadata_preserves_selector_roles() {
+    use foundation::namespace::FileIdentity;
     use std::os::unix::fs::MetadataExt;
-    use xadb_foundation::namespace::FileIdentity;
 
     for (_, target, stage) in SELECTORS {
         for mode in [OpenMode::ReadOnly, OpenMode::ReadWrite] {

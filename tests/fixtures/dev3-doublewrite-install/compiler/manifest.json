@@ -6,60 +6,60 @@
       "primary_line": null
     },
     {
-      "bytes": 622,
+      "bytes": 617,
       "expected_code": "E0382",
       "name": "fresh",
       "primary_line": 8,
-      "sha256": "5a018737a54b4e72dcb4819766ef66461b3668000801ce9ebef09c0691c54859"
+      "sha256": "a1d676cf054dbd2c3381e7b5d3ad42cecb8a8b7707918660e3a4933a23315864"
     },
     {
-      "bytes": 644,
+      "bytes": 639,
       "expected_code": "E0505",
       "name": "active_reader",
       "primary_line": 8,
-      "sha256": "79fb328be0d1d658a2b100dabd7f40b41d57ec1220d99b63f3e033bdf5f1105a"
-    },
-    {
-      "bytes": 620,
-      "expected_code": "E0499",
-      "name": "workspace",
-      "primary_line": 8,
-      "sha256": "0273bca9b968767ec83b10695e05e40c9bbd57a186d2cbd4fcf99f5b6c03e6a6"
+      "sha256": "948957991415de836dc25288cb0e314cb8ac444b553efe3d9e94c8d129f3fe00"
     },
     {
       "bytes": 615,
       "expected_code": "E0499",
-      "name": "slot",
+      "name": "workspace",
       "primary_line": 8,
-      "sha256": "c24aa5f0bd066af934d0ee60601bc8c677275a06e1060dab08749ffa47b73e64"
+      "sha256": "252260933eaeef415efe39b17709a16e4c1b69a1f2c58c11041bf3d79a388d62"
     },
     {
-      "bytes": 665,
+      "bytes": 610,
+      "expected_code": "E0499",
+      "name": "slot",
+      "primary_line": 8,
+      "sha256": "22aabbeb0e85fb0855ba29e776009a9d6892e077325f86cef16172c391c18652"
+    },
+    {
+      "bytes": 660,
       "expected_code": "E0505",
       "name": "installed_reader",
       "primary_line": 8,
-      "sha256": "8749c6ec7eeb0397ddf12e81701746976e342ffbe030ef7feaeba84818ed809e"
+      "sha256": "cae1d6f39f716b6364068c6bb11ff11afc50cca20393dcfd4de6ed604681b319"
     },
     {
-      "bytes": 580,
+      "bytes": 575,
       "expected_code": "E0599",
       "name": "raw_stage",
       "primary_line": 8,
-      "sha256": "1b3a55a8b38adfa405fd3ce7b8dcfcad4c6515c84a021ead71da5c7eac91ef5e"
+      "sha256": "1bd644f61a0bc0e9cf88f173504ba4c91c11162b4436b8f67d59ca8ae1b92c3a"
     },
     {
-      "bytes": 661,
+      "bytes": 656,
       "expected_code": null,
       "name": "release",
       "primary_line": null,
-      "sha256": "7527436d474bfea697a2690329fbb78393ee41f8ed4e4e231d368ab5d69ae5ce"
+      "sha256": "e4ddcb22ad89bf2fddfd1cd54de773a34b75fb24875daa1d738e1b20b327a1e8"
     },
     {
-      "bytes": 902,
+      "bytes": 897,
       "expected_code": null,
       "name": "shared_thread",
       "primary_line": null,
-      "sha256": "6a432bd432b74c1a93612e33bd26e41996e9b5c637c16d96161b9f9ff38c111a"
+      "sha256": "cee4d0d84d9c7ee28e3056aa97ddd82b881c5b5314a16dcbbcb01951acf49654"
     }
   ],
   "probe_relative_path": "crates/engine/src/doublewrite_install_borrow_probe.rs",

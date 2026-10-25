@@ -1,10 +1,10 @@
 use super::*;
 use crate::api::DatabaseId;
-use std::sync::Arc;
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     identity::{Generation, ObjectId},
 };
+use std::sync::Arc;
 
 use super::test_support::*;
 

@@ -9,7 +9,7 @@ use crate::{
     },
     transaction::TxnId,
 };
-use xadb_foundation::identity::{Generation, ObjectId};
+use foundation::identity::{Generation, ObjectId};
 
 const BEFORE: &[u8] = include_bytes!("../../tests/fixtures/dev3-empty-abort/before.page");
 const AFTER: &[u8] = include_bytes!("../../tests/fixtures/dev3-empty-abort/after.page");

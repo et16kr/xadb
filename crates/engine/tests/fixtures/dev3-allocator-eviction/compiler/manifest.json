@@ -6,19 +6,19 @@
   "cases": [
     {
       "name": "release",
-      "sha256": "f210bc72d7d96518c8caef2e3c47ca841db46a65d398cb4a3511398bf2ab0042",
+      "sha256": "153e20277cfc5f05efe87ae6d3b753a5ef729b186f70439363ad2cfdfd640324",
       "expected_code": null,
       "primary_line": null
     },
     {
       "name": "live_guard",
-      "sha256": "0fa9ef675650cf12920d1d8d07cf83224b3013c734e7a3a7526c9957d9a1a4f5",
+      "sha256": "4a15f1946c4173ce4fa70abc5ab964512102dd5fa1c5be22dc6347c59e0be37c",
       "expected_code": "E0499",
       "primary_line": 8
     },
     {
       "name": "live_split",
-      "sha256": "95f8ae3489665ba0c82aea1821878be03eb5c328aee67590ff6f7db3ef1be850",
+      "sha256": "4a5bff45263a171dfc5e1ad11befeda916729834d0ee499450a9f19494d58f9e",
       "expected_code": "E0499",
       "primary_line": 8
     }

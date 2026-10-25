@@ -6,12 +6,12 @@ use crate::storage::{
     wal_io::{self as wal, FreshStorageSession, bootstrap::test_support as port},
 };
 use crate::transaction::concurrency::OwnerRole;
+use foundation::codec::content_digest;
+use foundation::identity::Generation;
 use std::{
     collections::BTreeMap,
     sync::{Arc, Mutex},
 };
-use xadb_foundation::codec::content_digest;
-use xadb_foundation::identity::Generation;
 
 const INPUT: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -465,10 +465,7 @@ fn status_init_cf10_wal_failures_retain_installed_obligation() {
                         let wal::Cause::Io(lower) = wal_error.cause else {
                             panic!("original lower I/O cause lost")
                         };
-                        assert_eq!(
-                            lower.code,
-                            xadb_foundation::error::ErrorCode::IoWriteUnknown
-                        );
+                        assert_eq!(lower.code, foundation::error::ErrorCode::IoWriteUnknown);
                         assert_eq!(
                             lower.context,
                             if case == 4 {
@@ -479,13 +476,10 @@ fn status_init_cf10_wal_failures_retain_installed_obligation() {
                         );
                         assert_eq!(lower.io_kind, Some(std::io::ErrorKind::Other));
                         assert_eq!(lower.effect(), Effect::CallerMustResolve);
-                        assert_eq!(
-                            lower.certainty(),
-                            xadb_foundation::error::Certainty::Unknown
-                        );
+                        assert_eq!(lower.certainty(), foundation::error::Certainty::Unknown);
                         assert_eq!(
                             lower.retry_scope(),
-                            xadb_foundation::error::RetryScope::AfterRecovery
+                            foundation::error::RetryScope::AfterRecovery
                         );
                     }
                     _ => panic!("fault must not succeed or return reservation"),

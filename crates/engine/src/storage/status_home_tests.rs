@@ -5,7 +5,7 @@ use super::super::{
 };
 use super::*;
 use crate::{api::DatabaseId, transaction::TxnId};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     identity::{CommitSeq, Generation, ObjectId},
 };

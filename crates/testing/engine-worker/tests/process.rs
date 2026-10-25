@@ -9,7 +9,7 @@ use std::{
     time::{Duration, Instant},
 };
 use support::initialize;
-use xadbtest_protocol::{
+use test_protocol::{
     engine::{Action, Cell, Column, DataType, Observation, Request, Response, TableSpec},
     frame,
 };

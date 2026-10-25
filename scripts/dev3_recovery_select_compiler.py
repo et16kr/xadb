@@ -19,7 +19,7 @@ from comm_campaign import capture_source, write_json
 ROOT = Path(__file__).resolve().parent.parent
 INPUT_RELATIVE = 'crates/engine/tests/fixtures/recovery_select/compiler'
 INPUTS = ROOT / INPUT_RELATIVE
-INPUTS_SHA256 = '8f26b98b92451a06f58de4c9b1f16f7007a3c83135ef70c0705cdc996e355282'
+INPUTS_SHA256 = '79730f86894d7cb6c0fa0441675c0bf4cc60eef38305e31e79e6094a3beb715c'
 PROBE = 'crates/engine/src/storage/recovery_select_borrow_probe.rs'
 ANCHOR = 'crates/engine/src/storage/mod.rs'
 EXPECTATIONS = {'baseline': (None, None, 'none', None), 'positive': (None, None, 'none', 'BC00'), 'owner_move': ('E0382', 6, 'one', 'BC01'), 'observation_borrow': ('E0505', 6, 'one', 'BC02'), 'private_fields': ('E0451', 5, 'all_on_line', 'BC03'), 'into_writer_missing': ('E0599', 5, 'one', 'BC04')}
@@ -225,7 +225,7 @@ def main():
             remaining_budget(report['compiler_elapsed_seconds'])
             row['diagnostics'] = verify_diagnostics(output, returncode, frozen)
             if frozen['expected_code'] is None and not any(
-                    item['target'] == 'xadb_engine' for item in row['binary_artifacts']):
+                    item['target'] == 'engine' for item in row['binary_artifacts']):
                 raise ValueError('successful compile has no xadb-engine metadata artifact')
             if source_fingerprint(source) != fingerprint:
                 raise ValueError('probe source changed during compilation')

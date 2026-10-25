@@ -1,6 +1,6 @@
 //! Validate controller structure before allocating a search frontier.
 use std::collections::{BTreeMap, BTreeSet};
-use xadbtest_protocol::history::{Action, Cell, Event, History, Key, Mutation, Observation, Row};
+use test_protocol::history::{Action, Cell, Event, History, Key, Mutation, Observation, Row};
 
 const MAX_BYTES: usize = 8 * 1024 * 1024;
 
@@ -152,7 +152,7 @@ pub(super) fn tree_entry_bytes<T>() -> usize {
     1024 + 16 * std::mem::size_of::<T>()
 }
 
-pub(super) fn rows_bytes(rows: &xadbtest_protocol::history::Rows) -> usize {
+pub(super) fn rows_bytes(rows: &test_protocol::history::Rows) -> usize {
     rows.len() * tree_entry_bytes::<(Key, Row)>() + rows.values().map(row_allocation).sum::<usize>()
 }
 

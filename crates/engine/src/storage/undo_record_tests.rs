@@ -3,7 +3,7 @@ use crate::{
     api::{DataType, DatabaseId},
     storage::page::{FileId, PAGE_BYTES, PageLsn},
 };
-use xadb_foundation::identity::CommitSeq;
+use foundation::identity::CommitSeq;
 
 // Frozen preimplementation Python struct/hashlib vectors, not candidate output.
 const LITERALS: [&str; 20] = [

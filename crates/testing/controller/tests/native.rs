@@ -2,11 +2,11 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
-use xadbtest::{
+use test_controller::{
     file_sha256,
     native::{ErrorKind, Options, Session},
 };
-use xadbtest_protocol::{
+use test_protocol::{
     engine::{Action, Observation, Request, Response},
     frame,
 };

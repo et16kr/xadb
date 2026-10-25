@@ -1,15 +1,15 @@
 //! One bounded measurement fixture over the actual volatile engine API.
 //! No expected value, baseline, threshold or verdict enters this module.
 use crate::ProtocolError;
-use std::time::Instant;
-use xadb_engine::{
+use ::engine::{
     api::{Column, DataType, DatabaseId, Metrics, RowUid, StoreOptions, TableHandle, TableSpec},
     diagnostics::{self, DiagnosticsMode, DiagnosticsOptions},
     substrate::{Snapshot, VolatileStore},
 };
-use xadb_foundation::value::Value;
-use xadb_platform::performance::{process_peak_rss_bytes, thread_cpu_ns};
-use xadbtest_protocol::{engine, performance as wire};
+use foundation::value::Value;
+use platform::performance::{process_peak_rss_bytes, thread_cpu_ns};
+use std::time::Instant;
+use test_protocol::{engine, performance as wire};
 
 fn reserve<T>(count: usize) -> Result<Vec<T>, ProtocolError> {
     let mut values = Vec::new();

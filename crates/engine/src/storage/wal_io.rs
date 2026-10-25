@@ -15,7 +15,7 @@ use super::{
     wal_frame::{self, FrameExpectation, MAX_FRAME_BYTES, WalError, WalStreamIdentity},
 };
 use crate::api::{DatabaseId, Namespace};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     error::Effect,
     io::{read_exact_at, sync, write_all_at},
@@ -127,7 +127,7 @@ pub(crate) enum Cause {
     Control(ControlError),
     Frame(WalError),
     Namespace(NamespaceError),
-    Io(xadb_foundation::Error),
+    Io(foundation::Error),
     IdentityMismatch,
     LengthMismatch,
     MappingMismatch,

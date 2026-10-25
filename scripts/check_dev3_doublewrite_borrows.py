@@ -16,7 +16,7 @@ from comm_campaign import capture_source, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
 INPUTS = ROOT / 'tests/fixtures/dev3-doublewrite-install/compiler'
-INPUTS_SHA256 = '384cf71fa6eecb3b55511ce4b64bd36b520ca5f376f54a45f1e1b388484b0409'
+INPUTS_SHA256 = 'b9f6bf6ab13a099898be0fff6de81211868a1d3597150d5a7299669ede83302b'
 PROBE = 'crates/engine/src/doublewrite_install_borrow_probe.rs'
 LIB = 'crates/engine/src/lib.rs'
 

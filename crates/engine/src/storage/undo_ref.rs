@@ -4,7 +4,7 @@
 #![allow(dead_code)]
 
 use super::page::{MAX_PAGE_SLOTS, PAGE_REF_BYTES, PageError, PageRef};
-use xadb_foundation::identity::Generation;
+use foundation::identity::Generation;
 
 pub(crate) const UNDO_REF_BYTES: usize = 40;
 

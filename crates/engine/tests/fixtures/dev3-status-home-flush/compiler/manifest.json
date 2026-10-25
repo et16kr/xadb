@@ -32,8 +32,8 @@
       "reason": "actual consuming assembly, Before original-bound reuse, triple release/resplit and external-core positive storage move",
       "probe_relative_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 2465,
-      "sha256": "b3751359cdf5aa02d60c7f399b52b49d27812489bc232f7e267874c24cd3dea4"
+      "bytes": 2460,
+      "sha256": "8f860e1036ecb33efec90e3de4cb813fde0f5bb229e5558156097277d4383cd9"
     },
     {
       "name": "old_bound_moved",
@@ -44,8 +44,8 @@
       "reason": "old bound cannot be used after into_with_flush consumes it",
       "probe_relative_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 579,
-      "sha256": "2d1d7d1d133b0cf95d3ade6081a9f10b27dd44d65aa19e93ca9bdf9be8b7cb6d"
+      "bytes": 574,
+      "sha256": "1c9d8bdac31d5574b3fc2e2cd38784d4c1a14150bae6630ba0ef514b1050a257"
     },
     {
       "name": "flusher_reborrow",
@@ -56,8 +56,8 @@
       "reason": "new flusher loan excludes another split until release",
       "probe_relative_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 651,
-      "sha256": "47f139f02431bb10bc708da4084f38529233c7a023c365c283deea3b5991dd64"
+      "bytes": 646,
+      "sha256": "1c9390634c58354256c7ad8e87c0e6259b762d5ce8a5b7841789cee65ee633e1"
     },
     {
       "name": "authority_private",
@@ -80,8 +80,8 @@
       "reason": "new wrapper retains storage borrow; external core input avoids an independent local core-to-storage borrow",
       "probe_relative_path": "crates/engine/src/storage/status_home_flush_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 735,
-      "sha256": "baeb8a717ec8120f2945d8e2a6af3ad224ca21f3708f86be1d8f00ed579e5bbc"
+      "bytes": 730,
+      "sha256": "7c6c3f2452bfe23e6e0cee8c066d0ef68ad0648e417f8d3ababeb02e5493d6ee"
     },
     {
       "name": "raw_authority",
@@ -92,8 +92,8 @@
       "reason": "raw PageLsn cannot substitute for StatusFlushAuthority in lower bridge",
       "probe_relative_path": "crates/engine/src/storage/wal_io/status_home_flush_bridge_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/wal_io/mutable_storage.rs",
-      "bytes": 695,
-      "sha256": "33cfb1ecee1bbb5bacefc3094a2a521092ca4eec6c31a5b832b84bea12da9ab0"
+      "bytes": 690,
+      "sha256": "8264ee11337c842ede101e59ba21d84a0619761b25cd199e3bdd874a2f081392"
     }
   ]
 }

@@ -17,11 +17,11 @@ use crate::storage::{
     wal_frame::{RedoRecordView, WalFrameHeader},
     wal_io::WalPrefix,
 };
-use std::mem::size_of;
-use xadb_foundation::{
+use foundation::{
     codec::ContentHasher,
     namespace::{FileName, WriterNamespace},
 };
+use std::mem::size_of;
 
 // These counts intentionally include values whose lifetimes do not overlap.
 // Bulk entry/descriptor arrays and Plan copies are charged separately below.

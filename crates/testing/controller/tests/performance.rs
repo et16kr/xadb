@@ -1,8 +1,8 @@
 //! Fixed vectors for the independent controller, not measurements of product speed.
-use xadbtest::performance::{
+use test_controller::performance::{
     CampaignKind, Exploration, Recipe, RunSample, Side, analyze, check_output,
 };
-use xadbtest_protocol::{
+use test_protocol::{
     engine::Metrics,
     performance::{
         BuildIdentity, DiagnosticsMode, DiagnosticsSnapshot, Event, Operation, OperationCounts,
@@ -194,7 +194,7 @@ fn order_drift_and_overflow_cannot_make_a_valid_comparison() {
             .as_mut()
             .unwrap()
             .measurement
-            .elapsed_ns = if pair.order == xadbtest::performance::Order::AB {
+            .elapsed_ns = if pair.order == test_controller::performance::Order::AB {
             8_000_000
         } else {
             10_000_000
@@ -386,9 +386,9 @@ fn write_json(path: &std::path::Path, value: &impl serde::Serialize) {
 // A literal external journal fixture. It never starts an engine or pretends to be
 // product execution evidence; it tests the bundle verifier's trust boundaries.
 fn saved_bundle() -> (tempfile::TempDir, String) {
-    use xadbtest::performance::{BuildReceipt, Order};
-    use xadbtest::{file_sha256, sha256};
-    use xadbtest_protocol::{
+    use test_controller::performance::{BuildReceipt, Order};
+    use test_controller::{file_sha256, sha256};
+    use test_protocol::{
         engine::{Action, Observation, Request, Response},
         frame,
     };
@@ -544,7 +544,7 @@ fn saved_bundle() -> (tempfile::TempDir, String) {
 }
 #[test]
 fn bundle_verifier_reanalyzes_raw_streams_and_rejects_missing_history_identity_and_failure() {
-    use xadbtest::performance::verify;
+    use test_controller::performance::verify;
     let (root, hash) = saved_bundle();
     let directory = root.path();
     let good = verify(directory, &hash).unwrap();
@@ -557,7 +557,7 @@ fn bundle_verifier_reanalyzes_raw_streams_and_rejects_missing_history_identity_a
     );
     assert_eq!(
         good.analyzer_sha256,
-        xadbtest::file_sha256(&std::env::current_exe().unwrap()).unwrap()
+        test_controller::file_sha256(&std::env::current_exe().unwrap()).unwrap()
     );
     for name in [
         "baseline-config.json",

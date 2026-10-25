@@ -12,11 +12,11 @@ use crate::storage::{
     page_io::{PageFileReader, PageIoError},
     wal_io::{self as wal, bootstrap::BootstrapPlanKind},
 };
-use std::mem::size_of;
-use xadb_foundation::{
+use foundation::{
     error::{Certainty, Effect},
     namespace::{NamespaceErrorKind, WriterNamespace},
 };
+use std::mem::size_of;
 
 #[path = "allocator_eviction.rs"]
 mod eviction;

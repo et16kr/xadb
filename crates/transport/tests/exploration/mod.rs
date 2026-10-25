@@ -5,12 +5,12 @@
 //! allocation remain in the canonical state; connections are never permuted.
 #![allow(dead_code)]
 use crate::support::{self, Action as IoAction, Script, Stream, TestClock};
+use foundation::network::{Ready, Registration};
 use std::{
     collections::VecDeque,
     sync::{Arc, Mutex},
 };
-use xadb_foundation::network::{Ready, Registration};
-use xadb_transport::{
+use transport::{
     Connection, ConnectionPhase, ErrorKind, ReceivedFrame, SendOutcome, SendTicket, Transport,
 };
 

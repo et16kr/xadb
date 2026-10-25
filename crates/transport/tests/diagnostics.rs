@@ -1,8 +1,8 @@
 mod support;
+use foundation::network::Registration;
 use std::sync::Arc;
 use support::{Action, Script, Stream, TestClock, advance, frame, outcome};
-use xadb_foundation::network::Registration;
-use xadb_transport::{EventKind, Instrumentation, SendOutcome, Transport};
+use transport::{EventKind, Instrumentation, SendOutcome, Transport};
 
 #[test]
 fn diagnostics_are_bounded_ordered_and_modes_preserve_bytes_and_results() {

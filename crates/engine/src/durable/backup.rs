@@ -9,11 +9,11 @@ use super::{
     recovery::{self, RequiredFile},
 };
 use crate::catalog::{MAX_TABLES, Root};
-use std::{mem::size_of, sync::Arc};
-use xadb_foundation::{
+use foundation::{
     namespace::{DirectoryEntry, Selector, WriterNamespace},
     runtime::{Quota, Reservation},
 };
+use std::{mem::size_of, sync::Arc};
 
 pub(crate) struct ArchivePlan {
     pub identity: Identity,

@@ -1,4 +1,10 @@
 //! Native files, API faults and process kills are separate from power-loss claims.
+use engine::testing::genesis_wal::GenesisWal;
+use foundation::{
+    error::Effect,
+    namespace::{DirectoryPort, NamespaceErrorKind},
+};
+use platform::namespace::{LinuxDirectory, LinuxWriterLease};
 use serde_json::json;
 use std::{
     fs,
@@ -9,12 +15,6 @@ use std::{
     sync::mpsc,
     time::{Duration, Instant},
 };
-use xadb_engine::testing::genesis_wal::GenesisWal;
-use xadb_foundation::{
-    error::Effect,
-    namespace::{DirectoryPort, NamespaceErrorKind},
-};
-use xadb_platform::namespace::{LinuxDirectory, LinuxWriterLease};
 #[path = "support/genesis_wal.rs"]
 mod support;
 use support::*;

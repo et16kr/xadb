@@ -3,7 +3,7 @@
   "status": "SOURCE_ONLY_NOT_COMPILED_NOT_RUN",
   "source_files": {
     "crates/engine/src/storage/wal_retention_prefix_tests.rs": "c68e08bd6474ae25c342d85143186e93c86b5480d6acbee321a337c6fcc70a90",
-    "crates/engine/src/storage/wal_frame.rs": "6b67900df1bc1b7cdd4251c80d00c33dbd9ac5d8a7359f55529c3827099e7a28"
+    "crates/engine/src/storage/wal_frame.rs": "1d7b6f47959920ae6b6fc5bfd65cd02ed1ec19fd0165426483ebfe597e201c4a"
   },
   "scope": "New tag3 prefix entry points only; no old test invocation, no I/O or authority. Primitive hash only; literal wire authoring uses explicit offsets.",
   "cases": {

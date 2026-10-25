@@ -8,7 +8,7 @@ use super::page::{
     DIGEST_OFFSET, HEADER_BYTES, PAGE_BYTES, PageError, PageHeader, PageIdentity, PageKind,
     PageRef, decode_page, encode_page,
 };
-use xadb_foundation::codec::ContentHasher;
+use foundation::codec::ContentHasher;
 
 pub(crate) const OVERFLOW_HEAD_BYTES: usize = 64;
 pub(crate) const OVERFLOW_HEADER_BYTES: usize = 128;

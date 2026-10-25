@@ -27,8 +27,8 @@
       "primary_line": null,
       "primary_path": null,
       "reason": "new resident binding/admission lifetime contract",
-      "bytes": 386,
-      "sha256": "b6121f662b02a0d8df361d0a3b99c7a9201840ba03b3fbab55942ef017d76b33"
+      "bytes": 381,
+      "sha256": "f07b29ae918f21726d56d71b515ce62f6a7cda0d1eff96abbe7d21ee98ddc658"
     },
     {
       "name": "failed_result_reborrow",
@@ -63,8 +63,8 @@
       "primary_line": 6,
       "primary_path": "crates/engine/src/storage/resident_status_borrow_probe.rs",
       "reason": "new resident binding/admission lifetime contract",
-      "bytes": 360,
-      "sha256": "ac6f109601ececcdaef345d3c445fad00fa232314c15a0bc210643ed4d07d041"
+      "bytes": 355,
+      "sha256": "c81e6efbbb69c8b64255372b9b9898f72c84a9bc6155392c09af700a429f71d1"
     },
     {
       "name": "split_prepare",
@@ -72,8 +72,8 @@
       "primary_line": 6,
       "primary_path": "crates/engine/src/storage/resident_status_borrow_probe.rs",
       "reason": "new resident binding/admission lifetime contract",
-      "bytes": 354,
-      "sha256": "4df9369d6c4ef0496cfcb23f538f60832fe8a34cff2b1083bb8ec7db4e75faa8"
+      "bytes": 349,
+      "sha256": "d7e90e5d55ab2409daca34d6c76bc1cf9d6452d5af11ab20e8a7e437b46ee505"
     },
     {
       "name": "frames_alias",
@@ -81,8 +81,8 @@
       "primary_line": 7,
       "primary_path": "crates/engine/src/storage/resident_status_borrow_probe.rs",
       "reason": "new resident binding/admission lifetime contract",
-      "bytes": 555,
-      "sha256": "af78491dee81ca6b6c7247d5f6ed5e193ce0add26770afb8b1774e55b6ab46fb"
+      "bytes": 550,
+      "sha256": "54f1ece0d5ec452541f3162683f6fce661ec466baa56e6754bfeb3e5e35cc384"
     }
   ]
 }

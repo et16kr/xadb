@@ -1,11 +1,11 @@
 //! Counterexamples for the volatile-only exclusive replacement candidate.
-use xadb_engine::{
+use engine::{
     ErrorCode,
     api::{Column, DataType, DatabaseId, StoreOptions, TableSpec},
     diagnostics::{DiagnosticsMode, DiagnosticsOptions},
     substrate::VolatileStore,
 };
-use xadb_foundation::value::Value;
+use foundation::value::Value;
 
 fn spec(name: &str, data_type: DataType) -> TableSpec {
     TableSpec {

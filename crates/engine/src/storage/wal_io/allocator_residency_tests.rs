@@ -7,7 +7,7 @@ use crate::{
     },
     transaction::concurrency::{OwnerRole, PageConcurrency},
 };
-use xadb_foundation::codec::content_digest;
+use foundation::codec::content_digest;
 
 fn boxed<const N: usize>() -> Box<[u8; N]> {
     vec![0; N].into_boxed_slice().try_into().unwrap()
@@ -322,7 +322,7 @@ fn reload_read_failures_keep_authority_and_allow_explicit_retry() {
             }
             match error.cause {
                 Cause::PageIo(PageIoError::Read(error)) if kind == "read" => {
-                    assert_eq!(error.certainty(), xadb_foundation::error::Certainty::Known)
+                    assert_eq!(error.certainty(), foundation::error::Certainty::Known)
                 }
                 Cause::PageIo(PageIoError::Namespace(error)) if kind == "open" => {
                     assert_eq!(error.kind, NamespaceErrorKind::Io);
@@ -481,7 +481,7 @@ fn reload_namespace_structure_is_fatal_but_io_cause_is_preserved() {
             fixture!(|bound, core, state| {
                 let _ = (&core, &state);
                 let bound = operational(bound.into_operational());
-                let original = xadb_foundation::namespace::NamespaceError::new(
+                let original = foundation::namespace::NamespaceError::new(
                     kind,
                     effect,
                     "fixed reload observation",
@@ -513,8 +513,8 @@ fn reload_lower_uncertain_read_is_never_downgraded() {
     fixture!(|bound, core, state| {
         let _ = (&core, &state);
         let bound = operational(bound.into_operational());
-        let original = xadb_foundation::Error::new(
-            xadb_foundation::error::ErrorCode::IoWriteUnknown,
+        let original = foundation::Error::new(
+            foundation::error::ErrorCode::IoWriteUnknown,
             "lower uncertain read wrapper witness",
         );
         assert_eq!(original.effect(), Effect::CallerMustResolve);

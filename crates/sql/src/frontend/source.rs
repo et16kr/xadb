@@ -1,7 +1,7 @@
 //! Owned source backing and shared quota leases. No engine or call state is kept.
 
 use super::{CallControl, Code, Diagnostic, Module, Span};
-use xadb_foundation::runtime::{Quota, Reservation};
+use foundation::runtime::{Quota, Reservation};
 
 const MAX_SOURCE_BYTES: usize = 1 << 20;
 

@@ -11,8 +11,8 @@
     {
       "id": "CP01",
       "path": "CP01.rs",
-      "sha256": "399a92c5fd78bfd3f76587919a783f0b210fab983a0a084f23717d7db1347952",
-      "bytes": 1078,
+      "sha256": "ad3c499cf4c9e1fbb31e5a0d9786e5bcdacb37c4d710c82b89a49305595e8f22",
+      "bytes": 1073,
       "expected_code": null,
       "primary_line": null,
       "primary_spans": "one"
@@ -20,8 +20,8 @@
     {
       "id": "CP02",
       "path": "CP02.rs",
-      "sha256": "a708f42bb100c6da5ef15f6dc2e7513779abc1a737be00997182214c9abf1288",
-      "bytes": 727,
+      "sha256": "4a0ca4b54cf20d0fdb42e97816c38df81eed4a4acb9c7f5eb99402e03b6220af",
+      "bytes": 722,
       "expected_code": null,
       "primary_line": null,
       "primary_spans": "one"
@@ -29,8 +29,8 @@
     {
       "id": "CP03",
       "path": "CP03.rs",
-      "sha256": "20ba9be18ca7fa0a40b4a3ca3255a610ca541aa38b809a003ecd338a06f4b2a9",
-      "bytes": 517,
+      "sha256": "c1234d9bce9d0cd29111c0cb0f96aa522478247a62b8ae47d66f6181bdbe59a1",
+      "bytes": 512,
       "expected_code": "E0616",
       "primary_line": 12,
       "primary_spans": "one"
@@ -38,8 +38,8 @@
     {
       "id": "CP04",
       "path": "CP04.rs",
-      "sha256": "71d5cd91439fd0784676162930171007277d39e38148b7ff864993540fbee4a3",
-      "bytes": 548,
+      "sha256": "2ffc09cb6cdc3c375478cd297428740fe49e8efad34f097bacea7485f654d0db",
+      "bytes": 543,
       "expected_code": "E0451",
       "primary_line": 12,
       "primary_spans": "one"
@@ -47,8 +47,8 @@
     {
       "id": "CP05",
       "path": "CP05.rs",
-      "sha256": "843616a834ba889cd944ffa20c733872cc821f70355d643bb9070fafe3fc1f13",
-      "bytes": 584,
+      "sha256": "5ac5410d3e5b682cf8a1a359dc83b09b5ff87ee7764d1e51e60c1b72c4713900",
+      "bytes": 579,
       "expected_code": "E0308",
       "primary_line": 13,
       "primary_spans": "one"
@@ -56,8 +56,8 @@
     {
       "id": "CP06",
       "path": "CP06.rs",
-      "sha256": "f8028ad280e556ac015a0fe48df0d989af44d9274f8e28bf384e5971c4f921db",
-      "bytes": 663,
+      "sha256": "3994b23790a0b474c99becbf179daf340132d4b803e8a0e223378d527e9af258",
+      "bytes": 658,
       "expected_code": "E0451",
       "primary_line": 13,
       "primary_spans": "one"
@@ -65,8 +65,8 @@
     {
       "id": "CP07",
       "path": "CP07.rs",
-      "sha256": "040b7b0b3ea31a942b67cac2c1aad233bd10c2c4d6cb7db95039ba0af4ddf2d6",
-      "bytes": 664,
+      "sha256": "b5f7c2708e41954c02f8c41ab20445f1dc314bea7c47d2cade71cdcf5e7e9623",
+      "bytes": 659,
       "expected_code": "E0515",
       "primary_line": 13,
       "primary_spans": "one"
@@ -74,8 +74,8 @@
     {
       "id": "CP08",
       "path": "CP08.rs",
-      "sha256": "ed36f5ef15fa4915bf61b150e9824316f64b3051fff2e3d64c9c7ea78a8a33f9",
-      "bytes": 606,
+      "sha256": "b44204cff38f33295e7f108360c597b4c46e5416c471c6f0d2d5ab88f3bbd189",
+      "bytes": 601,
       "expected_code": "E0505",
       "primary_line": 13,
       "primary_spans": "one"
@@ -83,8 +83,8 @@
     {
       "id": "CP09",
       "path": "CP09.rs",
-      "sha256": "19b3007458549c1bdae3a6f8a609bc7d9f213bc0ffee893165012672249a5a60",
-      "bytes": 539,
+      "sha256": "240eefc6354fe981bf3d08ccfc02f5a1421b35f4a6a2201078d946afadb6b025",
+      "bytes": 534,
       "expected_code": "E0277",
       "primary_line": 13,
       "primary_spans": "one"

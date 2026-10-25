@@ -1,14 +1,14 @@
 mod support;
+use foundation::network::{
+    ByteStream, Interest, Listener, ReadinessEvent, ReadinessWait, Ready, Registration,
+};
 use std::{
     io,
     sync::{Arc, Mutex},
     time::Duration,
 };
 use support::*;
-use xadb_foundation::network::{
-    ByteStream, Interest, Listener, ReadinessEvent, ReadinessWait, Ready, Registration,
-};
-use xadb_transport::{Driver, ErrorKind, SendOutcome, Transport};
+use transport::{Driver, ErrorKind, SendOutcome, Transport};
 #[derive(Default)]
 struct WaitLog {
     calls: usize,

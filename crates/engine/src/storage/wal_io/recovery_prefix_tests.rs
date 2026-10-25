@@ -1221,7 +1221,7 @@ fn workspace_owner_and_observation_are_closed() {
 struct OversizedDirectory<const N: usize, const H: usize>(std::cell::Cell<usize>);
 struct OversizedWriter<const N: usize, const H: usize>([u8; N]);
 struct OversizedFile<const H: usize>([u8; H]);
-impl<const H: usize> xadb_foundation::io::FileIo for OversizedFile<H> {
+impl<const H: usize> foundation::io::FileIo for OversizedFile<H> {
     fn read_at(&mut self, _: &mut [u8], _: u64) -> std::io::Result<usize> {
         Err(std::io::ErrorKind::Other.into())
     }

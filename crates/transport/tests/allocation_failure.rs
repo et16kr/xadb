@@ -1,7 +1,7 @@
 #![cfg(feature = "test-support")]
 mod support;
 use support::{advance, fixture, frame, outcome};
-use xadb_transport::{ConnectionPhase, ErrorKind, SendOutcome, test_support::FailurePoint};
+use transport::{ConnectionPhase, ErrorKind, SendOutcome, test_support::FailurePoint};
 
 #[test]
 fn every_send_preparation_failure_returns_all_charges_without_admission() {
@@ -68,7 +68,7 @@ fn receive_reservation_and_allocation_failures_are_terminal_and_return_charges()
 
 #[test]
 fn connection_reservation_failure_precedes_native_creation_and_is_domain_local() {
-    use xadb_foundation::network::{ByteStream, Connector};
+    use foundation::network::{ByteStream, Connector};
     struct NeverConnect;
     impl Connector for NeverConnect {
         fn connect(&mut self) -> std::io::Result<Box<dyn ByteStream>> {

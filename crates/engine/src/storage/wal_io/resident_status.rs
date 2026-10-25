@@ -20,8 +20,8 @@ use crate::{
     },
     transaction::concurrency::Owner,
 };
+use foundation::{error::Effect, namespace::WriterNamespace};
 use std::sync::{Mutex, MutexGuard, TryLockError};
-use xadb_foundation::{error::Effect, namespace::WriterNamespace};
 
 #[path = "empty_transactions.rs"]
 mod empty_transactions;

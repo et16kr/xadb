@@ -1,7 +1,7 @@
 mod support;
+use foundation::codec::{decode_frame, encode_frame, encode_frame_into, inspect_frame_header};
 use support::*;
-use xadb_foundation::codec::{decode_frame, encode_frame, encode_frame_into, inspect_frame_header};
-use xadb_transport::{ConnectionPhase, ErrorKind, MAX_WIRE_BYTES};
+use transport::{ConnectionPhase, ErrorKind, MAX_WIRE_BYTES};
 
 #[test]
 fn independent_vectors_boundaries_and_header_rejection_before_allocation() {
@@ -176,7 +176,7 @@ fn v2_64_seeds_128_frames_chunked_against_independent_bytes() {
                 }
             }
             assert_eq!(received.unwrap().payload(), payload);
-            assert_eq!(outcome(ticket), xadb_transport::SendOutcome::FlushedLocally);
+            assert_eq!(outcome(ticket), transport::SendOutcome::FlushedLocally);
             assert_eq!(std::mem::take(&mut s.lock().unwrap().output), expected);
             s.lock().unwrap().reads.clear();
             clock.set((operation + 1) * 20_000_000);

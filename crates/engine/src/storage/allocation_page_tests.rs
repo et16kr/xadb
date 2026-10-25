@@ -1,6 +1,6 @@
 use super::*;
 use crate::{storage::page::PageLsn, transaction::TxnId};
-use xadb_foundation::codec::content_digest;
+use foundation::codec::content_digest;
 
 const DATA_KINDS: [PageKind; 10] = [
     PageKind::RowLeaf,

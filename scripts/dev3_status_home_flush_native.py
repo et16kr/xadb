@@ -32,7 +32,7 @@ PROFILES = (1, 2, 3)
 CASE_SECONDS, DB_LIMIT, TOTAL_LIMIT, FD_LIMIT = 30, 24 << 20, 72 << 20, 5
 WAL, HOME = 'd3-wal-00000001', 'd3-data-0000000100000001'
 INPUT_REL = Path('crates/engine/tests/fixtures/dev3-status-home-flush/native/manifest.json')
-NATIVE_SHA256 = 'f8309cd9750e585ff41aadaaeb68fb8ad00630e744d581be465e68111724a354'
+NATIVE_SHA256 = 'f7d5cf6c7a7d3f458468cb2adcd1d9440faa91065dba7d22e3d2fcbbda4d7998'
 
 
 def require(ok, reason):

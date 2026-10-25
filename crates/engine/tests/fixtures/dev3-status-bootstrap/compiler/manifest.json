@@ -25,8 +25,8 @@
       "primary_line": null,
       "primary_spans": "none",
       "reason": "Actual create_status signature, immutable borrowed role getters, role scope exit then owner move/reborrow/drop type-check; no function executes.",
-      "bytes": 1083,
-      "sha256": "af868d5886a1954313cd2cc58b1ad6a18424c863d22686157815c93ecde03232"
+      "bytes": 1078,
+      "sha256": "4cde5464784b1db171f112d61136001a3915bc75ae8f25d76de46b1b350dac16"
     },
     {
       "name": "private_constructor",
@@ -45,8 +45,8 @@
       "primary_line": 7,
       "primary_spans": "one",
       "reason": "A borrowed role used after owner drop keeps the actual FreshStorageSession owner alive.",
-      "bytes": 317,
-      "sha256": "5cf80b90c3c50c2fe67e8076225414ca80bb7e59122ee175db32d7940882be69"
+      "bytes": 312,
+      "sha256": "52420fbfae26eec662dd1849dd15514569b4c92c94a4a025a33c81cb1592f6b3"
     }
   ]
 }

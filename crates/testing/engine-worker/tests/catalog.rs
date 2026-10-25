@@ -5,11 +5,11 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
-use xadbtest::{
+use test_controller::{
     catalog::{self, Options, Recipe},
     file_sha256, sha256,
 };
-use xadbtest_protocol::engine::{Observation, Request, Response};
+use test_protocol::engine::{Observation, Request, Response};
 
 struct Root {
     path: PathBuf,
@@ -167,17 +167,16 @@ fn tampered_complete_history_is_rejected_even_after_stream_hashes_are_refreshed(
                     let payload = &history[offset + 29..offset + 29 + count];
                     let mut replacement = payload.to_vec();
                     if header[0] == 3 {
-                        let mut response: Response =
-                            xadbtest_protocol::frame::read(&mut &payload[..])
-                                .unwrap()
-                                .unwrap();
+                        let mut response: Response = test_protocol::frame::read(&mut &payload[..])
+                            .unwrap()
+                            .unwrap();
                         if !mutated
                             && let Observation::Row { value: Some(row) } = &mut response.observation
                         {
-                            row.values = vec![xadbtest_protocol::engine::Cell::Int64(99)];
+                            row.values = vec![test_protocol::engine::Cell::Int64(99)];
                             mutated = true;
                         }
-                        replacement = xadbtest_protocol::frame::encode(&response).unwrap();
+                        replacement = test_protocol::frame::encode(&response).unwrap();
                         raw.extend_from_slice(&replacement);
                     }
                     rebuilt.extend_from_slice(&header[..25]);

@@ -8,13 +8,13 @@ use super::{
     io::{self, OwnedName},
     observation::{DurabilityOperation as Operation, Observations},
 };
-use std::sync::Arc;
-use xadb_foundation::{
+use foundation::{
     codec::{ContentHasher, content_digest},
     io::{FileIo, write_all_at},
     namespace::{Selector, WriterNamespace},
     runtime::{Cancellation, Quota},
 };
+use std::sync::Arc;
 
 const SEAL_BYTES: u64 = (codec::COMMON_BYTES + 48 + codec::FRAME_OVERHEAD) as u64;
 // Normal writes leave space for one subsequent recovery epoch. A linked header
@@ -227,8 +227,7 @@ impl<W: WriterNamespace> Wal<W> {
     /// Refresh only after coordinated metadata changes/retirement, never as a
     /// substitute for retaining a required predecessor or a high-water marker.
     pub fn refresh_inventory(&mut self) -> Result<()> {
-        let requested =
-            MAX_FILES * std::mem::size_of::<xadb_foundation::namespace::DirectoryEntry>();
+        let requested = MAX_FILES * std::mem::size_of::<foundation::namespace::DirectoryEntry>();
         let _inventory = self
             .scratch
             .reserve(requested as u64)
@@ -237,9 +236,7 @@ impl<W: WriterNamespace> Wal<W> {
         let extra = entries
             .capacity()
             .saturating_sub(MAX_FILES)
-            .checked_mul(std::mem::size_of::<
-                xadb_foundation::namespace::DirectoryEntry,
-            >())
+            .checked_mul(std::mem::size_of::<foundation::namespace::DirectoryEntry>())
             .ok_or(Error::limit("WAL inventory capacity"))?;
         let _extra = self
             .scratch

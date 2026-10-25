@@ -53,7 +53,7 @@ Cargo 이름   xadb-engine
 | 제품 crate 폴더 | 제품명 접두어 없이 책임 이름 사용 | `crates/foundation`, `crates/platform`, 계획 `crates/engine` |
 | 시험 도구 crate 폴더 | `crates/testing` 아래 책임 이름 사용 | `controller`, `protocol`, `reference`, `engine-worker` |
 | Cargo 패키지 | 폴더명과 별도 식별자. 현재 소문자·하이픈 이름 유지 | `xadb-foundation`, `xadbtest-protocol` |
-| Rust crate 경로 | Cargo 패키지와 구분해 밑줄 사용 | `xadb_foundation::identity` |
+| Rust crate 경로 | 제품명 없이 책임 이름 사용. 시험 도구는 필요한 구분만 유지 | `foundation::identity`, `test_protocol::frame` |
 | 모듈·Rust 파일 | 책임 중심의 `snake_case` | `transaction`, `commit_batch.rs` |
 | 타입·trait·enum variant | `UpperCamelCase` | `ObjectHandle`, `FileIo`, `Certainty::Unknown` |
 | 함수·메서드 | 동작 중심의 `snake_case` | `validate_current`, `append_batch` |
@@ -61,7 +61,7 @@ Cargo 이름   xadb-engine
 | 상수·static | `SCREAMING_SNAKE_CASE` | `MAX_FRAME_BYTES` |
 | 테스트 함수 | 조건과 기대 동작을 드러내는 `snake_case` | `stale_handle_is_rejected` |
 
-저장소가 이미 XADB 제품을 식별하므로 제품 소스 폴더에 `xadb-`를 반복하지 않는다. 현재 제품 폴더는 `foundation`, `platform`이며, 후속 `engine`, `transport`, `sql`, `server` 등도 같은 기준을 따른다. Cargo package 이름과 Rust import 이름은 별도 식별자이므로 이번 폴더 정리에서 유지한다. 예를 들어 `cargo test -p xadb-foundation`은 `crates/foundation`을 대상으로 한다. 독립 시험 도구의 패키지·명령 이름인 `xadbtest` 계열은 유지하고, 소스 폴더는 `crates/testing/controller`, `protocol`, `reference`, `fixture-worker`, `foundation-worker`, `engine-worker`로 묶는다. `testing`은 분류용 디렉터리이며 각 하위 패키지는 별도 `Cargo.toml`과 의존 경계를 유지한다. 채택 근거와 이전 규칙의 대체는 [시험 도구 배치 결정](repository-build-plan.md#testing-layout)을 따른다. 기존 증거에 기록된 원래 경로는 해당 실행의 identity로 보존한다.
+저장소가 이미 XADB 제품을 식별하므로 제품 소스 폴더에 `xadb-`를 반복하지 않는다. 현재 제품 폴더는 `foundation`, `platform`이며, 후속 `engine`, `transport`, `sql`, `server` 등도 같은 기준을 따른다. Cargo package 이름은 별도 식별자로 유지한다. Rust library target과 workspace dependency alias는 제품명 없이 `foundation`, `platform`, `engine`, `transport`, `sql`을 사용한다. 시험 라이브러리는 `test_protocol`, `test_reference`, `test_controller`, `engine_worker`로 구분하며 외부 실행 명령은 유지한다. 이 규칙은 2026-10-25 이름 정리에서 이전 import 이름 유지 방침을 대체한다. 예를 들어 `cargo test -p xadb-foundation`은 `crates/foundation`을 대상으로 한다. 독립 시험 도구의 패키지·명령 이름인 `xadbtest` 계열은 유지하고, 소스 폴더는 `crates/testing/controller`, `protocol`, `reference`, `fixture-worker`, `foundation-worker`, `engine-worker`로 묶는다. `testing`은 분류용 디렉터리이며 각 하위 패키지는 별도 `Cargo.toml`과 의존 경계를 유지한다. 채택 근거와 이전 규칙의 대체는 [시험 도구 배치 결정](repository-build-plan.md#testing-layout)을 따른다. 기존 증거에 기록된 원래 경로는 해당 실행의 identity로 보존한다.
 
 Rust 코드에는 인자 `a`, 지역변수 `s`, 멤버 `m`, 전역 `g` 같은 범주 접두어를 추가하지 않는다. 변수의 역할은 이름과 선언, 멤버 접근은 `self.field`로 드러낸다. 짧은 루프의 `i`, 일반적인 타입 매개변수 `T`까지 긴 이름으로 바꾸지는 않는다.
 
@@ -86,6 +86,8 @@ Rust 코드에는 인자 `a`, 지역변수 `s`, 멤버 `m`, 전역 `g` 같은 �
 ## 4. 폴더와 모듈 경계
 
 실제 배치는 [저장소 정책](repository-build-plan.md)을 따른다. 현재 공통 의미·effect 계약은 `xadb-foundation`, Linux 파일·시간·scheduler 구현은 `xadb-platform`이 소유한다. DEV2의 `transaction`, `publication`, `catalog`, `storage`, `durable`은 계획된 `xadb-engine` 내부 모듈이다. 역할 하나마다 crate를 만들거나 빈 폴더를 미리 만들지 않는다.
+
+동일한 기능 접두어가 여러 파일에서 반복되면 소유 모듈의 폴더로 표현한다. 예를 들어 `plan4_retention_control.rs`는 `plan4_retention/control.rs`로 둔다. 배치만 바꿀 때 논리 모듈 경로·visibility·시험 selector를 유지하며, 단계 식별자·wire 값·원 증거의 이름은 줄이지 않는다.
 
 작은 모듈은 `name.rs`로 시작하고, 내부 책임이 나뉘면 `name/mod.rs`와 하위 파일로 확장한다. 타입당 파일 하나, 고정 함수 길이, 고정 파일 줄 수를 강제하지 않는다. 하나의 변경을 이해하려고 따라가야 하는 파일 수와 서로 다른 책임의 결합을 함께 검토한다. `common`, `utils`에 소유자를 알 수 없는 코드를 모으지 않는다. 공통화에는 실제 공유 의미와 사용자가 있어야 한다.
 

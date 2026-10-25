@@ -5,11 +5,11 @@ use crate::{
     storage::volatile::{ARC_HEADER_BYTES, reserve},
     transaction::{TransactionError, TransactionErrorCode, TransactionResult},
 };
+use foundation::runtime::{Quota, Reservation};
 use std::{
     mem::size_of,
     sync::{Arc, RwLock},
 };
-use xadb_foundation::runtime::{Quota, Reservation};
 
 pub(crate) struct CommittedRoot {
     pub position: u64,

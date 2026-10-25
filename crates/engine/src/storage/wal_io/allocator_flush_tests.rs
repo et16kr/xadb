@@ -7,15 +7,15 @@ use crate::storage::{
     wal_io::{FreshStorageSession, bootstrap::test_support as port},
 };
 use crate::transaction::concurrency::{OwnerRole, PageConcurrency};
+use foundation::{
+    codec::content_digest,
+    error::{Certainty, ErrorCode},
+};
 use std::{
     collections::BTreeMap,
     panic::{AssertUnwindSafe, catch_unwind},
     sync::{Arc, Mutex, mpsc},
     time::Duration,
-};
-use xadb_foundation::{
-    codec::content_digest,
-    error::{Certainty, ErrorCode},
 };
 
 const STEP: Duration = Duration::from_secs(5);
@@ -393,7 +393,7 @@ fn physical_fault(id: &str, cut: usize, action: port::Action) {
             }
             flush_io::Cause::Namespace(e) => {
                 assert_eq!(e.context, "fixed WAL namespace fault");
-                assert_eq!(e.kind, xadb_foundation::namespace::NamespaceErrorKind::Io);
+                assert_eq!(e.kind, foundation::namespace::NamespaceErrorKind::Io);
                 assert_eq!(e.io_kind, Some(std::io::ErrorKind::Other));
                 let unknown =
                     matches!(action, port::Action::AfterError) || matches!(cut, 9 | 20 | 31);

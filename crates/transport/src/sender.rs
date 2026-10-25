@@ -3,11 +3,11 @@ use crate::{
     diagnostics::increment,
     resources::{Buffer, ClockDomain, Family},
 };
-use std::sync::{Arc, Mutex};
-use xadb_foundation::{
+use foundation::{
     codec::{FRAME_OVERHEAD, MAX_FRAME_PAYLOAD, encode_frame_into},
     runtime::{Cancellation, Reservation},
 };
+use std::sync::{Arc, Mutex};
 
 /// Exactly one terminal local result. This does not certify peer receipt/execution.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -44,7 +44,7 @@ pub(crate) struct Shared {
     pub(crate) clock: Arc<ClockDomain>,
     pub(crate) cancellation: Cancellation,
     pub(crate) admission: Mutex<Admission>,
-    pub(crate) registration: xadb_foundation::network::Registration,
+    pub(crate) registration: foundation::network::Registration,
 }
 impl Shared {
     pub(crate) fn new(
@@ -52,7 +52,7 @@ impl Shared {
         clock: Arc<ClockDomain>,
         cancellation: Cancellation,
         open: bool,
-        registration: xadb_foundation::network::Registration,
+        registration: foundation::network::Registration,
     ) -> Arc<Self> {
         Arc::new(Self {
             family,

@@ -1,11 +1,11 @@
 //! Test-only padded adapters exercise the real pre-CAS admission path. They are
 //! seeded from an existing owner, so no generic bootstrap success is claimed.
 use super::*;
-use std::{io, marker::PhantomData};
-use xadb_foundation::{
+use foundation::{
     io::FileIo,
     namespace::{DirectoryEntry, FileMetadata, FileName, NamespaceResult, OpenMode, Selector},
 };
+use std::{io, marker::PhantomData};
 struct TrapWriter<const O: usize, P> {
     _inner: port::Writer,
     _padding: [u8; O],

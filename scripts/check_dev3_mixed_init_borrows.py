@@ -19,7 +19,7 @@ from comm_campaign import capture_source, write_json
 ROOT = Path(__file__).resolve().parent.parent
 INPUT_RELATIVE = 'crates/engine/tests/fixtures/dev3-mixed-system-init/compiler'
 INPUTS = ROOT / INPUT_RELATIVE
-INPUTS_SHA256 = '0a9d77c1407de24dc809f6613833b63b3b2b5a14c387364d11a5d8ddb165b631'
+INPUTS_SHA256 = '15ddae63e4f253219fbf5e8d3a1c70782c601a6e59bfdb5bc155d16f8d4d3738'
 PROBE = 'crates/engine/src/storage/wal_io/mixed_system_init_probe.rs'
 ANCHOR = 'crates/engine/src/storage/wal_io/mutable_storage.rs'
 EXPECTATIONS = {
@@ -224,7 +224,7 @@ def main():
             remaining_budget(report['compiler_elapsed_seconds'])
             row['diagnostics'] = verify_diagnostics(output, returncode, frozen)
             if frozen['expected_code'] is None and not any(
-                    item['target'] == 'xadb_engine' for item in row['binary_artifacts']):
+                    item['target'] == 'engine' for item in row['binary_artifacts']):
                 raise ValueError('successful compile has no xadb-engine metadata artifact')
             if source_fingerprint(source) != fingerprint:
                 raise ValueError('probe source changed during compilation')

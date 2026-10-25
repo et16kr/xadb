@@ -1,12 +1,12 @@
 //! New predicate entry/resource obligations; prior parser suites are not rerun.
 #![cfg(feature = "test-support")]
 
-use std::{cell::Cell, mem::size_of, sync::Barrier};
-use xadb_foundation::runtime::{Cancellation, Clock, Quota};
-use xadb_sql::frontend::{
+use foundation::runtime::{Cancellation, Clock, Quota};
+use sql::frontend::{
     AstNode, CallControl, Code, DecodedScalar, Diagnostic, Module, ParsedStatement, Parser,
     ScalarReader, ScalarRef, Span,
 };
+use std::{cell::Cell, mem::size_of, sync::Barrier};
 
 const SESSION: u64 = 8 << 20;
 const DATABASE: u64 = 64 << 20;

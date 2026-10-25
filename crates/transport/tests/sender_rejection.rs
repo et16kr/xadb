@@ -1,9 +1,9 @@
 mod support;
 
+use foundation::network::{Interest, ReadinessEvent, ReadinessWait};
 use std::{io, time::Duration};
 use support::{Action, advance, fixture, outcome};
-use xadb_foundation::network::{Interest, ReadinessEvent, ReadinessWait};
-use xadb_transport::{
+use transport::{
     ConnectionPhase, ConnectionSender, Driver, Error, ErrorKind, SendOutcome, SendTicket,
 };
 
@@ -161,7 +161,7 @@ fn open_sender_with_full_slots_remains_backpressured_and_recovers() {
 #[cfg(feature = "test-support")]
 #[test]
 fn preparation_failures_preserve_terminal_errors_and_return_every_charge() {
-    use xadb_transport::test_support::FailurePoint;
+    use transport::test_support::FailurePoint;
 
     for point in [
         FailurePoint::SendSlot,

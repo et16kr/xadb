@@ -1,6 +1,6 @@
 use super::*;
 use crate::storage::page::{FileId, PAGE_BYTES, PageHeader, PageLsn, encode_page};
-use xadb_foundation::identity::ObjectId;
+use foundation::identity::ObjectId;
 
 // Frozen before implementation from the owner offset table, never from encode.
 const LITERALS: [&str; 12] = [

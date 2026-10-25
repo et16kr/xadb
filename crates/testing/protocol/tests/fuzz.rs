@@ -12,7 +12,7 @@ use std::{
     path::PathBuf,
     time::{Duration, Instant},
 };
-use xadbtest_protocol::{
+use test_protocol::{
     engine::{Request, Response},
     frame::{self, Decoder, Envelope, MAX_BODY_BYTES, MAX_FRAME_BYTES},
 };

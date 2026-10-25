@@ -1,6 +1,6 @@
 //! XADBTest adapter calling the production foundation API; no DB engine yet.
 use std::io::{self, Read, Write};
-use xadbtest_protocol::{
+use test_protocol::{
     MAX_INPUT_BYTES, MAX_STEPS, Observation, Operation, PROTOCOL_VERSION, Request, Value,
 };
 
@@ -22,9 +22,9 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut output = io::stdout().lock();
     for (sequence, step) in request.steps.iter().enumerate() {
         let Operation::CheckedAdd { left, right } = step.action;
-        let value = match xadb_foundation::value::checked_add(left, right) {
+        let value = match foundation::value::checked_add(left, right) {
             Ok(value) => Value::Int64(value),
-            Err(error) if error.code == xadb_foundation::ErrorCode::Overflow => Value::Overflow,
+            Err(error) if error.code == foundation::ErrorCode::Overflow => Value::Overflow,
             Err(error) => return Err(error.into()),
         };
         let mut witnesses = vec!["foundation.checked_add".to_owned()];

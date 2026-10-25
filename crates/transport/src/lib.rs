@@ -19,7 +19,7 @@ pub use sender::{ConnectionSender, SendOutcome, SendTicket};
 
 /// Maximum total wire bytes in a single AXF1 frame.
 pub const MAX_WIRE_BYTES: usize =
-    xadb_foundation::codec::MAX_FRAME_PAYLOAD + xadb_foundation::codec::FRAME_OVERHEAD;
+    foundation::codec::MAX_FRAME_PAYLOAD + foundation::codec::FRAME_OVERHEAD;
 /// Connection slots include terminal objects retained by application handles.
 pub const MAX_CONNECTIONS: usize = 128;
 /// Maximum number of listeners in one driver.

@@ -26,7 +26,9 @@ JSON 수집 시각은 **21:05:40 KST**이며 시작/종료 HEAD는 위 `bc93de1`
 | 복구·maintenance | genesis 검사와 원 source의 닫힌 빈 거래/mixed 복구. 기존 durable snapshot checkpoint/backup/restore API도 존재 | 일반 DEV3 row/catalog commit·UNKNOWN·fence/reopen, fuzzy checkpoint·consistent backup/restore·retention의 실제 공개 공급 |
 | temp·자원 | private 첫 extent reserve/cancel와 정해진 backing/loan | SQL temp namespace·quota·cleanup effect와 memory/disk/WAL/FD/rollback 예산 인계 |
 
-근거는 [G5 계약](../contracts/dev3-plan4-clean-owner.md), [G5 구현](../../crates/engine/src/storage/wal_io/plan4_pages.rs), [실제 read 소비자](../../crates/engine/src/storage/wal_io/plan4_pages_read.rs), [공개 거래](../../crates/engine/src/database.rs)와 JSON의 `references`다. `storage`는 private이고 관련 G5 API는 `pub(crate)`다. feature `test-support`의 native 조립은 일반 SQL 소비 포트가 아니다.
+근거는 [G5 계약](../contracts/dev3-plan4-clean-owner.md), [G5 구현](../../crates/engine/src/storage/wal_io/plan4_pages.rs), [실제 read 소비자](../../crates/engine/src/storage/wal_io/plan4_pages/read.rs), [공개 거래](../../crates/engine/src/database.rs)와 JSON의 `references`다. `storage`는 private이고 관련 G5 API는 `pub(crate)`다. feature `test-support`의 native 조립은 일반 SQL 소비 포트가 아니다.
+
+2026-10-25 탐색 링크 보완: 위 read 소비자 링크만 현재 위치로 연결했다. 원 source 경로는 `crates/engine/src/storage/wal_io/plan4_pages_read.rs`이며 기준 commit은 `f15784600b7c2e61f5daa14901e37a84129bf248`이다. 변경 전 이 문서의 SHA-256은 `80362984d18f9138df2daca924d22fa75fe256b602a3aca16e4f19b85f87c600`이고 원 byte는 로컬 `artifacts/maintenance/naming-20261025/history/dev4-supply-handoff-20261024.md`에 보존했다. 원 판단·실행 증거를 갱신하지 않으며 [이동 대응](naming-cleanup-20261025.md)을 따른다.
 
 기존 `Column`은 이름/type/nullable만 갖고 선언 byte 길이가 없다. 기존 `execute_statement`는 private root 복원·누적256변경 상한을 사용하고 취소가 거래 전체를 abort할 수 있다. `DurableTransaction::rollback`은 private state를 버리고 `()`를 반환한다. 이 API를 DEV4 영속 statement undo·cleanup 실패 계약에 그대로 대응시킬 수 없다. 기존 commit/maintenance가 무기능이라는 뜻이 아니라, 현재 필요한 **새 DEV3 disk owner 공급과 다른 경로**라는 구분이다.
 

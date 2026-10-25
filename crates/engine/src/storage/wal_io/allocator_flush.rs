@@ -14,8 +14,8 @@ use crate::{
     },
     transaction::concurrency::Owner,
 };
+use foundation::{error::Effect, namespace::WriterNamespace};
 use std::mem::size_of;
-use xadb_foundation::{error::Effect, namespace::WriterNamespace};
 
 const CAPTURE_FINALIZE_BYTES: usize = 8192;
 const IO_NESTED_BYTES: usize = 8192;

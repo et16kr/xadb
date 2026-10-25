@@ -7,7 +7,7 @@ use crate::storage::{
     wal_frame::MAX_FRAME_BYTES,
     wal_io::Plan4GenesisSeed,
 };
-use xadb_foundation::namespace::{DirectoryPort, WriterNamespace};
+use foundation::namespace::{DirectoryPort, WriterNamespace};
 fn legal_fresh<W: WriterNamespace>(writer: W, slot: &mut [u8; MAX_FRAME_BYTES], maintenance: &mut [u8; 12_582_912], flush: &mut [u8; 4_194_304]) {
     let fresh = FreshStorageSession::create_retention_catalog(writer, 1, slot, maintenance).unwrap();
     std::hint::black_box(&mut *maintenance);

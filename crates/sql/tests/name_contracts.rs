@@ -1,11 +1,7 @@
-use xadb_foundation::runtime::{Cancellation, Clock};
-use xadb_sql::frontend::{
-    CallControl, Code, Keyword, Module, Span, Token, TokenKind, normalize_name,
-};
-use xadbtest_reference::frontend::literals::{
-    DiagnosticObservation, NameObservation, name_literals,
-};
-use xadbtest_reference::frontend::{Verdict, check_name};
+use foundation::runtime::{Cancellation, Clock};
+use sql::frontend::{CallControl, Code, Keyword, Module, Span, Token, TokenKind, normalize_name};
+use test_reference::frontend::literals::{DiagnosticObservation, NameObservation, name_literals};
+use test_reference::frontend::{Verdict, check_name};
 
 struct FixedClock;
 impl Clock for FixedClock {

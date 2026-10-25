@@ -1,5 +1,5 @@
+use foundation::runtime::Quota;
 use std::sync::{Arc, Barrier};
-use xadb_foundation::runtime::Quota;
 
 #[test]
 fn quota_peak_retains_released_reservations_and_excludes_rejections() {

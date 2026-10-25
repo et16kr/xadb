@@ -3,14 +3,7 @@
 //! inventing aborted observations for effects another actor may already have made.
 use super::fault;
 use super::{Aliases, ProtocolError, from_spec, row_identity, table_identity, to_spec, to_values};
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    io::{self, Read, Write},
-    path::PathBuf,
-    sync::{Arc, Barrier, Mutex, MutexGuard, mpsc},
-    thread,
-};
-use xadb_engine::{
+use engine::{
     api::{RowUid, TableHandle},
     database::{DurableTransaction, Engine, EngineError, EngineOptions, TransactionOutcome},
     transaction::{
@@ -18,9 +11,16 @@ use xadb_engine::{
         TransactionRetry, TransactionRow, TxnId,
     },
 };
-use xadb_foundation::{error::Certainty, value::Value};
-use xadb_platform::{namespace::LinuxDirectory, runtime::MonotonicClock};
-use xadbtest_protocol::{durable as wire, frame};
+use foundation::{error::Certainty, value::Value};
+use platform::{namespace::LinuxDirectory, runtime::MonotonicClock};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    io::{self, Read, Write},
+    path::PathBuf,
+    sync::{Arc, Barrier, Mutex, MutexGuard, mpsc},
+    thread,
+};
+use test_protocol::{durable as wire, frame};
 
 const RUN_BYTES: usize = 64 * 1024 * 1024;
 const MAX_OBSERVED_ROWS: usize = 32768;
@@ -182,8 +182,7 @@ fn options(state: &Shared) -> EngineOptions {
     EngineOptions {
         observation_enabled: state.observations,
         clock: state.clock.then(|| {
-            Arc::new(MonotonicClock::default())
-                as Arc<dyn xadb_foundation::runtime::Clock + Send + Sync>
+            Arc::new(MonotonicClock::default()) as Arc<dyn foundation::runtime::Clock + Send + Sync>
         }),
         ..EngineOptions::default()
     }
@@ -604,7 +603,7 @@ fn operation(
 }
 
 pub(crate) fn durability_metrics(
-    metrics: xadb_engine::database::DurabilityMetrics,
+    metrics: engine::database::DurabilityMetrics,
 ) -> wire::DurabilityMetrics {
     let gauges = metrics.gauges;
     wire::DurabilityMetrics {

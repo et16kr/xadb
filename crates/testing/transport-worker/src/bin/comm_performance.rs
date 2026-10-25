@@ -1,4 +1,8 @@
 //! Bounded, engine-free native fixture for the COMM C-V18 acceptance profile.
+use platform::{
+    network::{LocalEndpoint, LocalNetwork, UnixDirectory},
+    runtime::MonotonicClock,
+};
 use serde_json::json;
 use std::{
     collections::VecDeque,
@@ -7,11 +11,7 @@ use std::{
     sync::{Arc, mpsc},
     time::{Duration, Instant},
 };
-use xadb_platform::{
-    network::{LocalEndpoint, LocalNetwork, UnixDirectory},
-    runtime::MonotonicClock,
-};
-use xadb_transport::{
+use transport::{
     ConnectionId, ConnectionPhase, ConnectionSender, Driver, Instrumentation, SendOutcome,
     SendTicket, Transport,
 };
@@ -54,7 +54,7 @@ struct Owner {
     id: ConnectionId,
     sender: ConnectionSender,
     tickets: Vec<SendTicket>,
-    pending_rx: VecDeque<xadb_transport::ReceivedFrame>,
+    pending_rx: VecDeque<transport::ReceivedFrame>,
     received_frames: u64,
     received_bytes: u64,
     measured_received_frames: [u64; 30],
@@ -62,7 +62,7 @@ struct Owner {
     sent_frames: u64,
     flushed_frames: u64,
     failed_tickets: u64,
-    stats: xadb_transport::ConnectionStats,
+    stats: transport::ConnectionStats,
     expected_payload_bytes: usize,
     expected_sequence: u64,
     index: usize,
@@ -296,7 +296,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     connection.cancel();
     let terminal_error = connection.terminal_error();
     if connection.phase() != ConnectionPhase::Closed
-        || terminal_error.is_none_or(|error| error.kind != xadb_transport::ErrorKind::Cancelled)
+        || terminal_error.is_none_or(|error| error.kind != transport::ErrorKind::Cancelled)
     {
         return Err("cancellation did not produce the Cancelled terminal reason".into());
     }
@@ -394,10 +394,10 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                     "generation": event.registration.generation
                 },
                 "kind": match event.kind {
-                    xadb_transport::EventKind::Enqueued => "ENQUEUED",
-                    xadb_transport::EventKind::Received => "RECEIVED",
-                    xadb_transport::EventKind::Flushed => "FLUSHED",
-                    xadb_transport::EventKind::Closed => "CLOSED"
+                    transport::EventKind::Enqueued => "ENQUEUED",
+                    transport::EventKind::Received => "RECEIVED",
+                    transport::EventKind::Flushed => "FLUSHED",
+                    transport::EventKind::Closed => "CLOSED"
                 },
                 "value": event.value,
                 "error": event.error.map(|error| format!("{error:?}"))
@@ -558,7 +558,7 @@ fn pump(
                         owner.sent_frames = owner.sent_frames.saturating_add(1);
                         owner.tickets.push(ticket);
                     }
-                    Err(error) if error.kind == xadb_transport::ErrorKind::Backpressured => {
+                    Err(error) if error.kind == transport::ErrorKind::Backpressured => {
                         owner.backpressured_admissions =
                             owner.backpressured_admissions.saturating_add(1);
                         owner.pending_rx.push_front(frame);
@@ -568,8 +568,7 @@ fn pump(
                         if owner.expected_disconnect
                             && matches!(
                                 error.kind,
-                                xadb_transport::ErrorKind::Closed
-                                    | xadb_transport::ErrorKind::Cancelled
+                                transport::ErrorKind::Closed | transport::ErrorKind::Cancelled
                             ) =>
                     {
                         owner.dropped_echo_responses =
@@ -577,7 +576,7 @@ fn pump(
                     }
                     Err(error)
                         if owner.expected_peer_reset
-                            && error.kind == xadb_transport::ErrorKind::Io
+                            && error.kind == transport::ErrorKind::Io
                             && error.io_kind == Some(std::io::ErrorKind::ConnectionReset) =>
                     {
                         owner.dropped_echo_responses =

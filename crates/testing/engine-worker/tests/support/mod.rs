@@ -1,4 +1,4 @@
-use xadbtest_protocol::engine::{Action, Cell, Column, DataType, Observation, Response, TableSpec};
+use test_protocol::engine::{Action, Cell, Column, DataType, Observation, Response, TableSpec};
 
 pub fn initialize() -> Action {
     Action::Initialize {

@@ -16,16 +16,16 @@
       "name": "release",
       "expected_code": null,
       "primary_line": null,
-      "bytes": 452,
-      "sha256": "49ad1f7f6a013023a131cd9a8096b167593c840263208c2077a991f599ed5785",
+      "bytes": 447,
+      "sha256": "2649bbf1bbeac4871bae38d3602f0cb06a729518c8c1a6126f8f009b54026069",
       "reason": "Release all split views, reload the actual wrapper, and acquire a new split."
     },
     {
       "name": "live_split",
       "expected_code": "E0499",
       "primary_line": 8,
-      "bytes": 412,
-      "sha256": "008ee0114bab2564be6e572c730c1610aa1ba48114c2248d459faad01b0057db",
+      "bytes": 407,
+      "sha256": "37437b03b3065744c02961aface48c7b3fdf87c17ae6af3a6d7abc78eb4e2d46",
       "reason": "A live actual writer/reader/flusher split prevents mutable reload until its last use."
     }
   ]

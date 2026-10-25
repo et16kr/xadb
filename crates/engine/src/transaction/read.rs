@@ -6,8 +6,8 @@ use crate::{
     catalog::{TableRoot, check_row, table_index},
     storage::volatile::{Charge, StoredRow, array_in},
 };
+use foundation::value::Value;
 use std::sync::Arc;
-use xadb_foundation::value::Value;
 
 impl Transaction {
     /// Resolve a name in the fixed private snapshot. Existing transactions may

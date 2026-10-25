@@ -167,7 +167,7 @@ fn worker_operational_recovery_native() {
                 assert_eq!(failure.error().phase, RecoveryPhase::Flush);
                 assert_eq!(
                     failure.error().effect,
-                    xadb_foundation::error::Effect::CallerMustResolve
+                    foundation::error::Effect::CallerMustResolve
                 );
                 let o = failure.observation();
                 assert_eq!(
@@ -181,7 +181,7 @@ fn worker_operational_recovery_native() {
                 let call = failure.effects().last_call.unwrap();
                 if fault == "operational_b_partial" {
                     assert!(
-                        matches!(&failure.error().cause,RecoveryCause::Io(e) if e.code==xadb_foundation::error::ErrorCode::IoWriteUnknown)
+                        matches!(&failure.error().cause,RecoveryCause::Io(e) if e.code==foundation::error::ErrorCode::IoWriteUnknown)
                     );
                     assert_eq!(
                         (call.kind, call.name, call.offset, call.length),
@@ -194,7 +194,7 @@ fn worker_operational_recovery_native() {
                 } else {
                     assert_eq!(fault, "operational_b_retirement_after");
                     assert!(
-                        matches!(&failure.error().cause,RecoveryCause::Namespace(e) if e.kind==xadb_foundation::namespace::NamespaceErrorKind::Io && e.effect==xadb_foundation::error::Effect::CallerMustResolve)
+                        matches!(&failure.error().cause,RecoveryCause::Namespace(e) if e.kind==foundation::namespace::NamespaceErrorKind::Io && e.effect==foundation::error::Effect::CallerMustResolve)
                     );
                     assert_eq!(
                         (call.kind, call.name, call.offset, call.length),

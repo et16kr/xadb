@@ -1,4 +1,9 @@
 mod support;
+use foundation::network::{Connector, Listener};
+use platform::{
+    network::{LocalEndpoint, LocalNetwork, UnixDirectory},
+    runtime::MonotonicClock,
+};
 use std::{
     io::{Read, Write},
     net::{SocketAddr, TcpStream},
@@ -7,12 +12,7 @@ use std::{
     time::{Duration, Instant},
 };
 use support::frame;
-use xadb_foundation::network::{Connector, Listener};
-use xadb_platform::{
-    network::{LocalEndpoint, LocalNetwork, UnixDirectory},
-    runtime::MonotonicClock,
-};
-use xadb_transport::{ConnectionPhase, Driver, SendOutcome, Transport};
+use transport::{ConnectionPhase, Driver, SendOutcome, Transport};
 
 fn exercise(endpoint: LocalEndpoint, network: LocalNetwork) {
     let listener = network.listen(endpoint).unwrap();
@@ -122,7 +122,7 @@ fn native_pending_connect_without_tx_and_refusal() {
     drop(driver);
     let c = t.connect(&mut network.connector(endpoint));
     match c {
-        Err(e) => assert_eq!(e.kind, xadb_transport::ErrorKind::Io),
+        Err(e) => assert_eq!(e.kind, transport::ErrorKind::Io),
         Ok(c) => {
             let sender = c.sender();
             let mut d = Driver::new(t.clone(), network).unwrap();
@@ -205,7 +205,7 @@ fn native_buffered_frame_then_fin_is_delivered_before_eof() {
 
 #[test]
 fn empty_native_wait_preserves_submillisecond_timeout() {
-    use xadb_foundation::network::ReadinessWait;
+    use foundation::network::ReadinessWait;
     let mut network = LocalNetwork::default();
     let start = Instant::now();
     for _ in 0..10 {

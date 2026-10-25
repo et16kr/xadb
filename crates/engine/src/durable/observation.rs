@@ -3,6 +3,7 @@
 //! No labels, event buffers, collector locks, callbacks other than Clock, reset,
 //! percentile estimates, or dynamic allocation are used while recording.
 use super::error::{DurableError as Error, Result};
+use foundation::runtime::{Clock, Quota, Reservation};
 use std::{
     mem::size_of,
     sync::{
@@ -10,7 +11,6 @@ use std::{
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
 };
-use xadb_foundation::runtime::{Clock, Quota, Reservation};
 
 /// Number of fixed production observation sites. New sites change the catalog.
 pub const DURABILITY_OPERATION_COUNT: usize = 21;

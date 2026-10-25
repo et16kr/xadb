@@ -25,8 +25,8 @@
       "primary_spans": "none",
       "semantic_id": "UC00",
       "reason": "borrowed getters, owner move after borrow, fresh constructor typecheck",
-      "bytes": 1073,
-      "sha256": "88c501d34d919e9dd314ea66cab88740237a3e687f48b76ba36fc2d4967f9779"
+      "bytes": 1068,
+      "sha256": "f29062f422f0a098dc88e396c4445964dc44562ebde0fc4dd71d8de5dc9f8d20"
     },
     {
       "name": "private_constructor",
@@ -45,8 +45,8 @@
       "primary_spans": "one",
       "semantic_id": "UC02",
       "reason": "UndoRole borrow cannot outlive FreshStorageSession",
-      "bytes": 315,
-      "sha256": "4873ff85ded8eb8ae22a2867a3d73a2f96884889e7a0ed6cbdce6ad3b4085199"
+      "bytes": 310,
+      "sha256": "4ddc4d1e8eb71625f2d1aa4261b42727040e185e7c8623083ee13ce638302401"
     },
     {
       "name": "role_confusion",

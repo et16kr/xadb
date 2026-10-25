@@ -3,6 +3,17 @@
 //! and performance verdicts. Common-mode forwarding counters remain enabled in Off.
 mod ports;
 use crate::ProtocolError;
+use engine::{
+    api::{Column, DataType, RowUid, TableHandle, TableSpec},
+    database::{CommitReceipt, Engine, EngineError, EngineOptions},
+    transaction::{Mutation, TransactionError, TransactionMetrics, TransactionMode},
+};
+use foundation::value::Value;
+use platform::{
+    namespace::LinuxDirectory,
+    performance::{process_peak_rss_bytes, thread_cpu_ns},
+    runtime::MonotonicClock,
+};
 use ports::{Counters, Directory, Writer};
 use std::{
     fs,
@@ -10,18 +21,7 @@ use std::{
     sync::Arc,
     time::Instant,
 };
-use xadb_engine::{
-    api::{Column, DataType, RowUid, TableHandle, TableSpec},
-    database::{CommitReceipt, Engine, EngineError, EngineOptions},
-    transaction::{Mutation, TransactionError, TransactionMetrics, TransactionMode},
-};
-use xadb_foundation::value::Value;
-use xadb_platform::{
-    namespace::LinuxDirectory,
-    performance::{process_peak_rss_bytes, thread_cpu_ns},
-    runtime::MonotonicClock,
-};
-use xadbtest_protocol::{
+use test_protocol::{
     durable, durable_performance as wire,
     frame::{self, Envelope},
 };
@@ -126,7 +126,7 @@ fn directory(name: &str, counters: Arc<Counters>) -> Result<Directory> {
     Ok(Directory::new(port, counters))
 }
 fn scalar(
-    txn: &xadb_engine::database::DurableTransaction<Writer>,
+    txn: &engine::database::DurableTransaction<Writer>,
     table: &TableHandle,
     row: RowUid,
 ) -> Result<i64> {
@@ -254,7 +254,7 @@ fn output(input: wire::Input) -> std::result::Result<wire::Output, ProtocolError
         version: wire::VERSION,
         path: wire::PATH.into(),
         input,
-        build: xadbtest_protocol::performance::BuildIdentity {
+        build: test_protocol::performance::BuildIdentity {
             source_sha256: env!("XADBTEST_SOURCE_SHA256").into(),
             toolchain: env!("XADBTEST_TOOLCHAIN").into(),
             target: env!("XADBTEST_TARGET").into(),

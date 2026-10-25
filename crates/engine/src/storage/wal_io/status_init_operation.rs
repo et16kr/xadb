@@ -23,8 +23,8 @@ use crate::storage::{
     },
     wal_io::{self as wal, StatusRole, WalPrefix, WalRequirement, WalRuntime},
 };
+use foundation::{codec::content_digest, identity::Generation, namespace::WriterNamespace};
 use std::mem::size_of;
-use xadb_foundation::{codec::content_digest, identity::Generation, namespace::WriterNamespace};
 
 type Result<T> = std::result::Result<T, SemanticError>;
 pub(super) const FRAME_BYTES: usize = 38000;

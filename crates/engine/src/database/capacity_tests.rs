@@ -2,7 +2,7 @@
 //! engine worker's durable_capacity native test. No production limits are shrunk.
 use super::*;
 use crate::api::{Column, DataType};
-use xadb_foundation::value::Value;
+use foundation::value::Value;
 
 #[path = "../../tests/support/durable_disk.rs"]
 #[allow(dead_code)]

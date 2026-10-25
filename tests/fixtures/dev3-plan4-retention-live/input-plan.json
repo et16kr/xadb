@@ -1408,5 +1408,17 @@
     "directory": "artifacts/dev3/plan4-g6-recovery-20261024/fresh30-source-r0",
     "input_sha256": "02965ba73a15c740d9b4f8c09d50c4ebb2d492d841c3e0fd25f6cc2bf5576345",
     "change": "Direct actual control-row comparisons at each step; terminal AbortEnd row lifetime distinguished from cleared ATT. No product/static/ID/raw change."
+  },
+  "current_source_paths": {
+    "crates/engine/src/storage/wal_io/plan4_retention_tests.rs": "crates/engine/src/storage/wal_io/plan4_retention/tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention_lifecycle_tests.rs": "crates/engine/src/storage/wal_io/plan4_retention/lifecycle_tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention_literal_tests.rs": "crates/engine/src/storage/wal_io/plan4_retention/literal_tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention_s5_tests.rs": "crates/engine/src/storage/wal_io/plan4_retention/s5_tests.rs"
+  },
+  "current_source_paths_note": "Naming-only navigation map. source, source_files, required_test_link and provenance preserve original authoring identities; they do not validate current sources or claim execution.",
+  "current_test_link": {
+    "file": "crates/engine/src/storage/wal_io/plan4_retention/tests.rs",
+    "append": "\n#[path = \"lifecycle_tests.rs\"]\nmod lifecycle;\n",
+    "authority": "Navigation recipe for the current layout; the link is already present. No execution or source qualification claimed."
   }
 }

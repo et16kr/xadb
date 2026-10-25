@@ -14,11 +14,11 @@ serde_json = "=1.0.145"
 sha2 = "=0.10.9"
 tempfile = "=3.23.0"
 nix = { version = "=0.30.1", features = ["signal", "process", "fs"] }
-xadbtest-protocol = { path = "crates/testing/protocol" }
-xadb-foundation = { path = "crates/foundation" }
-xadb-platform = { path = "crates/platform" }
-xadb-engine = { path = "crates/engine" }
-xadb-transport = { path = "crates/transport" }
+test_protocol = { package = "xadbtest-protocol", path = "crates/testing/protocol" }
+foundation = { package = "xadb-foundation", path = "crates/foundation" }
+platform = { package = "xadb-platform", path = "crates/platform" }
+engine = { package = "xadb-engine", path = "crates/engine" }
+transport = { package = "xadb-transport", path = "crates/transport" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

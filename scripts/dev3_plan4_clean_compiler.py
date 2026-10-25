@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import time
+import tomllib
 
 sys.dont_write_bytecode = True
 import dev3_plan4_clean_cases as case
@@ -300,7 +301,10 @@ def load_prior(history):
                 require('metadata_error' not in row and isinstance(row.get('metadata'), list),
                         'prior PASS metadata receipt missing')
                 if frozen['expected_code'] is None:
-                    require(any(item['target'] == 'xadb_engine' for item in row['metadata']),
+                    manifest = tomllib.loads((Path(row['source']) / 'crates/engine/Cargo.toml').read_text())
+                    target_name = manifest.get('lib', {}).get(
+                        'name', manifest['package']['name'].replace('-', '_'))
+                    require(any(item['target'] == target_name for item in row['metadata']),
                             'prior positive engine metadata missing')
                 passed.add(row['id'])
                 run_pass.append(row['id'])
@@ -473,7 +477,7 @@ def main():
             current['diagnostic_completed'] = True
             require('metadata_error' not in current, 'compiler metadata preservation failed')
             if frozen['expected_code'] is None:
-                require(any(row['target'] == 'xadb_engine' for row in current['metadata']),
+                require(any(row['target'] == 'engine' for row in current['metadata']),
                         'positive has no preserved engine metadata')
             require(common.source_fingerprint(overlay) == current['source_sha256'], 'overlay changed')
             require(case.validate_build(args.revision)[4] == identity, 'baseline/ELF/input drift')

@@ -5,7 +5,6 @@
 compile_error!("XADBTest DEV0 supports Linux only");
 
 pub mod catalog;
-mod controller;
 pub mod durable;
 pub mod durable_performance;
 pub mod fault;
@@ -13,7 +12,8 @@ pub mod native;
 mod oracle;
 pub mod performance;
 mod process;
+mod runner;
 pub mod spec;
 pub mod verdict;
 
-pub use controller::{RunOptions, RunReport, file_sha256, run, sha256};
+pub use runner::{RunOptions, RunReport, file_sha256, run, sha256};

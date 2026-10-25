@@ -9,7 +9,7 @@ use super::{
     undo_ref::UndoRef,
 };
 use crate::api::{Column, DataType, Namespace};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     identity::RowId,
     value::{MAX_VALUE_BYTES, Value},

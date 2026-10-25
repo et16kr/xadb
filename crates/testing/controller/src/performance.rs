@@ -7,7 +7,7 @@ pub use analysis::{Comparison, RunSample, analyze, check_output};
 pub use bundle::{Options, ReplayOptions, Report, replay, run, verify};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
-use xadbtest_protocol::performance::{BuildIdentity, DiagnosticsMode, Input, PATH};
+use test_protocol::performance::{BuildIdentity, DiagnosticsMode, Input, PATH};
 
 pub const RECIPE_BYTES: usize = 64 * 1024;
 pub const POLICY: &str = "k0-005-paired-v1";

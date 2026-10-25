@@ -1,5 +1,5 @@
 use crate::{Error, ErrorCode, Result};
-use xadb_foundation::identity::{ObjectId, RowId};
+use foundation::identity::{ObjectId, RowId};
 
 pub(crate) struct Issuer {
     epoch: u32,

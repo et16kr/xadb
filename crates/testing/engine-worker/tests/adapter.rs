@@ -1,5 +1,5 @@
-use xadbtest_engine_worker::Session;
-use xadbtest_protocol::engine::{
+use engine_worker::Session;
+use test_protocol::engine::{
     Action as A, Cell, Column, DataType, Observation as O, Request, TableSpec,
 };
 

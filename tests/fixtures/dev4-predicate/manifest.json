@@ -79,7 +79,7 @@
   "resource_adapter": {
     "path": "crates/sql/tests/predicate_resources.rs",
     "owner": "root",
-    "sha256": "e35c43bdb424365b164fcbf844b920b724d0f63739e3457c0259c134ad95bdfb"
+    "sha256": "b39e5b8fd589f3e001b03788012e76becb2c9304b2a97ddefce5028dc2a5edb9"
   },
   "freeze_rule": "Independent exact inputs/arrays/errors/recipes/schema plus root control must receive D2 acceptance and hash preservation before product implementation. Expected changes after freeze require preserved originals and renewed independent review.",
   "scope_note": "New parse_predicate entry only. Existing lexer/name/splitter/P2/scalar completed functions are not rerun. Long-stack/quotas/allocation/control are separate root-owned functions.",

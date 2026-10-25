@@ -2,7 +2,7 @@
 //! events are flushed by native transport; these helpers neither import the
 //! production engine nor declare an oracle/durability verdict.
 use crate::native::{Error, ErrorKind, NativeProtocol, NativeSession};
-use xadbtest_protocol::durable as wire;
+use test_protocol::durable as wire;
 
 /// Separate wire specialization; K0's `native::Session` remains unchanged.
 pub struct DurableProtocol;

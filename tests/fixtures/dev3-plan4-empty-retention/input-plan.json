@@ -6787,8 +6787,8 @@
   "source_files": [
     {
       "path": "crates/engine/src/storage/retention_page_tests.rs",
-      "bytes": 27776,
-      "sha256": "53578f00f67b900d642541851fdba2e36b77a872a24ffdf60446bc65beef1d9f"
+      "bytes": 27771,
+      "sha256": "c86d5897938d28cc5bf51cd16c55aa26f7ee2800e1a9629184c944bc4f19cf44"
     },
     {
       "path": "crates/engine/src/storage/retention_obligation_tests.rs",

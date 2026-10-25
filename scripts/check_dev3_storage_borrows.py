@@ -16,7 +16,7 @@ from comm_campaign import capture_source, write_json
 
 ROOT = Path(__file__).resolve().parent.parent
 INPUTS = ROOT / 'crates/engine/tests/fixtures/dev3-storage-session/compiler'
-INPUTS_SHA256 = '47a5bd5b9a697fe7a8b85f8d889452a538d83379099ebe023c43c6c7b697ecc7'
+INPUTS_SHA256 = 'dbe99337f15eb8a0d4d57de2097062b302a8b8a1627aa84a365d42d9a310278d'
 PROBE = 'crates/engine/src/bootstrap_borrow_probe.rs'
 LIB = 'crates/engine/src/lib.rs'
 

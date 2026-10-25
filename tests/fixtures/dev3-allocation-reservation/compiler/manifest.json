@@ -8,43 +8,43 @@
       "name": "installed",
       "expected_code": "E0382",
       "primary_line": 10,
-      "bytes": 668,
-      "sha256": "6e9f25586f38ffefd3ce1264f2da4db550e71b0fdc77e7a0f11653c269526de1"
+      "bytes": 663,
+      "sha256": "54d0752450ff5a8187d206f96c58f4e8caa028cdc344449e18957365b5239161"
     },
     {
       "name": "frame",
       "expected_code": "E0499",
       "primary_line": 10,
-      "bytes": 658,
-      "sha256": "ef1732e882845fd1072f11a757df2165f2e798572f2e748e3237c11ee9971c6d"
+      "bytes": 653,
+      "sha256": "d773f2b670d86714d6e755c586f42f795b667644af222407fe921f3a1f011d3a"
     },
     {
       "name": "operation",
       "expected_code": "E0499",
       "primary_line": 10,
-      "bytes": 662,
-      "sha256": "41a9acc37d852939733b93817c1ab571ab14a11b05499e9aee33a7cf6b0ce3a7"
+      "bytes": 657,
+      "sha256": "b856515d337a0652244b2b4c84d900471809737d0488f1e8c1dc020bfc4b3f77"
     },
     {
       "name": "flush",
       "expected_code": "E0499",
       "primary_line": 10,
-      "bytes": 658,
-      "sha256": "3a435ca8f64b42478236d6c317bd84ed6ed5115c3979d1304e40886d04ecd379"
+      "bytes": 653,
+      "sha256": "223fa31d67f4670e15d8aabb2da6ee62e52e540eb39232342951d36d931dbbe5"
     },
     {
       "name": "slot",
       "expected_code": "E0499",
       "primary_line": 10,
-      "bytes": 657,
-      "sha256": "c4d00d1ad0840a521f1f746f40b81a0f0a3228c1130857c8f47b49e77b5f908a"
+      "bytes": 652,
+      "sha256": "f21acc05451fb1c0726c5269b628c768131abbff80af4e7a4c60af8734a782c1"
     },
     {
       "name": "release",
       "expected_code": null,
       "primary_line": null,
-      "bytes": 651,
-      "sha256": "5f9b292308cbc9845f86554921a1d75a5402f65f48ef8626fc517cc8cb97a417"
+      "bytes": 646,
+      "sha256": "ab58f71e7f64501ca975b7224b5a539b5b0f8533f581cf5e2862cef615b6b0d0"
     }
   ]
 }

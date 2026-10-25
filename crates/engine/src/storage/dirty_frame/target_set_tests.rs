@@ -2,13 +2,13 @@
 use super::*;
 use crate::storage::page_io::test_support::expected;
 use crate::transaction::concurrency::{OWNER_SLOTS, OwnerRole};
+use foundation::identity::Generation;
 use std::{
     mem::size_of,
     panic::{AssertUnwindSafe, catch_unwind},
     sync::mpsc,
     time::Duration,
 };
-use xadb_foundation::identity::Generation;
 
 fn request(index: usize) -> TargetRequest {
     let mut identity = expected();

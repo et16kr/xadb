@@ -1,7 +1,7 @@
 use super::*;
 use crate::api::DatabaseId;
 use crate::storage::page::{FileId, PageLsn};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     identity::{Generation, ObjectId},
 };

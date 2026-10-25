@@ -1,8 +1,8 @@
 //! Sorted immutable row references, with charges owned by each unique allocation.
 use crate::{Error, ErrorCode, Result};
+use foundation::runtime::{Quota, Reservation};
+use foundation::value::Value;
 use std::mem::size_of;
-use xadb_foundation::runtime::{Quota, Reservation};
-use xadb_foundation::value::Value;
 
 pub(crate) const ARC_HEADER_BYTES: usize = 2 * size_of::<usize>();
 

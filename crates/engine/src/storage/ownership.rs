@@ -15,7 +15,7 @@ use super::{
     undo_ref::UndoRef,
 };
 use crate::api::{DatabaseId, Namespace};
-use xadb_foundation::codec::{ContentHasher, content_digest};
+use foundation::codec::{ContentHasher, content_digest};
 
 pub(crate) const MAX_OWNERS: usize = 36;
 pub(crate) const MAX_GROWTH_ITEMS: usize = 8192;

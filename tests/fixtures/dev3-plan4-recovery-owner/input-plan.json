@@ -5,9 +5,9 @@
   "raw_generation": false,
   "product_execution": false,
   "source": {
-    "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests.rs",
-    "bytes": 6611,
-    "sha256": "116a8bcbf8d995b76200d0713ac6f52eef54611814e8b81cbb059fbd4e8a1278"
+    "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs",
+    "bytes": 6476,
+    "sha256": "92a6bca461a2c569f29da13617c5fda1e9c794c2f93767e2dba387083c25723c"
   },
   "counts": {
     "mandatory_memory": 45,
@@ -811,7 +811,7 @@
     "native": "3distinctPIDs/sameimmutableELF/source/input; fullstablefile bytes+lengths+SHA+inode inventory; source/partial fingerprints preserved; entropy trace fixed and validated",
     "reentry": "epoch3 and control/base writes are expected; only duplicate physicalhome repairs0, never blanket writes0",
     "literal_helper": {
-      "path": "crates/engine/src/storage/wal_io/plan4_retention_literal_tests.rs",
+      "path": "crates/engine/src/storage/wal_io/plan4_retention/literal_tests.rs",
       "bytes": 8264,
       "sha256": "5d6803a928a6c94a8aff58433b7b9c8bb3a071e0b8ff068a0597ed300624d65c"
     }
@@ -861,52 +861,52 @@
   ],
   "semantic_sources": [
     {
-      "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests_cases.rs",
+      "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/cases.rs",
       "bytes": 19911,
       "sha256": "c86295e225518abaf7d7d8373a3400c586a94434e92bf3e703e986ae8cad365c"
     },
     {
-      "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests_closure.rs",
+      "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/closure.rs",
       "bytes": 6303,
       "sha256": "9a3f9ae85b04f595d7fd03392d2737c2c8ca9dbb16cc65596b276411b8321d91"
     },
     {
-      "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests_faults.rs",
-      "bytes": 10953,
-      "sha256": "a393d94d89fd0fb2db5a3c97f112d889ecddc4e6a4d64afa2f20e57b08021024"
+      "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/faults.rs",
+      "bytes": 10948,
+      "sha256": "c61e8f942e90ee3fa52718e0ac97c3bc14d6a508d95772bb6ed87cce3cdb6af7"
     },
     {
-      "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests_literals.rs",
-      "bytes": 15030,
-      "sha256": "fc7b492c7c0930bd712d7cc81433ab7269b41ad14f40f07b85049c577120ea93"
+      "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/literals.rs",
+      "bytes": 15036,
+      "sha256": "8e24b288fcec997b74c1cfd0338a9048c67b1e9267b534511b4b7f56983b1a82"
     },
     {
-      "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests_native.rs",
+      "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/native.rs",
       "bytes": 3941,
       "sha256": "1719ee9d71c9129336cdd991ad401783516291ba2667b7c715a35ebfa3896edd"
     },
     {
-      "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests_observations.rs",
+      "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/observations.rs",
       "bytes": 12358,
       "sha256": "9fa0f88edfd8d5939bac3f7d2480124ae32391f7c7c07d9b711d3ab7124184fc"
     },
     {
-      "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests_physical.rs",
+      "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/physical.rs",
       "bytes": 11327,
       "sha256": "89527afdb4b718fecf8875e51bd3e7c4808d75a26ebfaee5a1ac03322956a389"
     },
     {
-      "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests_publication.rs",
-      "bytes": 9224,
-      "sha256": "e434ff34f5f5ddcbd92eb18e45940d8b245b83b7dd979f55188a2eb81263fa4a"
+      "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/publication.rs",
+      "bytes": 9219,
+      "sha256": "eb3032148072ff7b4f91456b46d67a6b5c5f94e4ffd302f53720b4f8c9a1c5c8"
     },
     {
-      "path": "crates/engine/src/storage/wal_io/plan4_recovery_tests_support.rs",
-      "bytes": 12718,
-      "sha256": "ecac94765e2d0be5eb159e2cf7c935485dd75e5819725ccc60befd552783a1a2"
+      "path": "crates/engine/src/storage/wal_io/plan4_recovery/tests/support.rs",
+      "bytes": 12713,
+      "sha256": "d965b7cda789eabaca05d2aabefa9ea5d1c0293fc805ce8bf5f2e2f3d61fe7ea"
     },
     {
-      "path": "crates/engine/src/storage/wal_io/plan4_retention_recovery_test_observation.rs",
+      "path": "crates/engine/src/storage/wal_io/plan4_retention/recovery_observation_tests.rs",
       "bytes": 676,
       "sha256": "b0637db8a6e15536cbefd8918a0efe072b981d2be41bb21775dbd81348d9bb3b"
     }

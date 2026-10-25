@@ -30,8 +30,8 @@
       "reason": "positive",
       "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 502,
-      "sha256": "a166c35b5025b9b274991c68874a0f03c0b10cf47e9e6e9c279c387536b2a1d4"
+      "bytes": 497,
+      "sha256": "49fa544cd416a3df8e194155d5f0804b1c0a177c0613168ca0e0c873f9181859"
     },
     {
       "name": "workspace_reborrow",
@@ -42,8 +42,8 @@
       "reason": "workspace reborrow",
       "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 404,
-      "sha256": "10f4c2079ad1db205814aa94fc63de29c3df95a045985c96ab52e4a10b0716e1"
+      "bytes": 399,
+      "sha256": "26469d0d8629ff26721819845e16e1de6513f99cd22778fa7ddea53f7174bd81"
     },
     {
       "name": "workspace_move",
@@ -54,8 +54,8 @@
       "reason": "workspace move",
       "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 357,
-      "sha256": "afb5795982bd9c386c9dbc3127726b4f7f5acf3d075406ae1230fa5e75dfb3ce"
+      "bytes": 352,
+      "sha256": "c6c69c09814a38ac75c7018e538730e414aefb4cb216eca2cec61ea4e75095f5"
     },
     {
       "name": "owner_move",
@@ -66,8 +66,8 @@
       "reason": "owner move",
       "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 264,
-      "sha256": "85d58e4a718307289af2c104bde1b6fe650fd55dbc84b736f0759bd06387e089"
+      "bytes": 259,
+      "sha256": "bb8d956b3b83415ce297322b3237d44a8fac067ab18301fedca6379d11d95d8c"
     },
     {
       "name": "observation_borrow",
@@ -78,8 +78,8 @@
       "reason": "observation borrow",
       "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 299,
-      "sha256": "ced425a528c106a9c9f224b5f26e773b82681552f7c7456c226e04ca73f80586"
+      "bytes": 294,
+      "sha256": "25c0c36fd7aa8b8564bb26a7d7a22318cee116ed4d54e769cc14dcdfa043753f"
     },
     {
       "name": "private_fields",
@@ -90,8 +90,8 @@
       "reason": "private fields",
       "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 240,
-      "sha256": "32a59b326960a696485c052352f8b0c18fcc52e83b4304706b0d1992718a3999"
+      "bytes": 235,
+      "sha256": "c6412cfdd1dd80deef6d59655607cc8f22b25eb856d9248db6a3fb18f98ed57a"
     },
     {
       "name": "into_writer_missing",
@@ -102,8 +102,8 @@
       "reason": "into writer missing",
       "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 239,
-      "sha256": "40e915012eaebaee02354aa5a6acc6dfb714eaaa1790ca1193d8dc2628671f80"
+      "bytes": 234,
+      "sha256": "66cdbef8772d1ce12f7b724754ab5c4124174a94367a5485968a3c42d3a6fe41"
     },
     {
       "name": "borrowed_image_immutable",
@@ -114,8 +114,8 @@
       "reason": "borrowed image immutable",
       "probe_relative_path": "crates/engine/src/storage/recovery_prefix_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 259,
-      "sha256": "6f1efec45b66f541a6599748c26a1f278994d9ce54fcd47e3480b72f45004ebd"
+      "bytes": 254,
+      "sha256": "bcc6fd559785072c7f721fa8bbcf937ad6ca09a7a900633847fd453280973b8d"
     }
   ]
 }

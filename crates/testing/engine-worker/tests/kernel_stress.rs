@@ -1,22 +1,22 @@
 //! Real Linux file I/O with two conflicting writers and four old/fresh readers.
 //! Literal driver values and fixed phase barriers check atomicity and ACK replay;
 //! this does not simulate power loss or replace the independent WAL oracle.
+use engine::{
+    api::{Column, DataType, RowUid, TableHandle, TableSpec},
+    database::{CommitReceipt, Engine, EngineError, EngineOptions},
+    transaction::{Mutation, TransactionEffect, TransactionErrorCode, TransactionMode},
+};
+use foundation::value::Value;
+use platform::{
+    namespace::{LinuxDirectory, LinuxWriterLease},
+    runtime::MonotonicClock,
+};
 use std::{
     sync::{
         Arc, Condvar, Mutex,
         atomic::{AtomicBool, AtomicI64, AtomicU8, AtomicUsize, Ordering},
     },
     time::{Duration, Instant},
-};
-use xadb_engine::{
-    api::{Column, DataType, RowUid, TableHandle, TableSpec},
-    database::{CommitReceipt, Engine, EngineError, EngineOptions},
-    transaction::{Mutation, TransactionEffect, TransactionErrorCode, TransactionMode},
-};
-use xadb_foundation::value::Value;
-use xadb_platform::{
-    namespace::{LinuxDirectory, LinuxWriterLease},
-    runtime::MonotonicClock,
 };
 
 const GENERATOR: &str = "dev2-durable-thread-v1";
@@ -129,7 +129,7 @@ fn schema(name: &str) -> TableSpec {
     }
 }
 fn observed(
-    txn: &xadb_engine::database::DurableTransaction<LinuxWriterLease>,
+    txn: &engine::database::DurableTransaction<LinuxWriterLease>,
     tables: &[TableHandle; 2],
     rows: [RowUid; 2],
     expected: i64,

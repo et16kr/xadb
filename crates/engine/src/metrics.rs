@@ -3,11 +3,11 @@ use crate::{
     api::Metrics,
     storage::volatile::{ARC_HEADER_BYTES, reserve},
 };
+use foundation::runtime::{Quota, Reservation};
 use std::sync::{
     Arc,
     atomic::{AtomicU64, Ordering},
 };
-use xadb_foundation::runtime::{Quota, Reservation};
 
 pub(crate) struct Counters {
     operations: AtomicU64,

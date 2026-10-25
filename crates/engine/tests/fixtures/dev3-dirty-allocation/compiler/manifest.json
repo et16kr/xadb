@@ -20,8 +20,8 @@
       "expected_code": null,
       "primary_line": null,
       "primary_spans": "none",
-      "bytes": 2166,
-      "sha256": "5f0e57a8a3bfa874f2d08853d8e54406801ddd918165f7d6bef5a1bb3bfc2f0b"
+      "bytes": 2161,
+      "sha256": "a85496b9fd59f2d611ef628aea0197a6b85cca4d0db9455f363a2f5d779f5a52"
     },
     {
       "name": "old_reader_consume",
@@ -29,8 +29,8 @@
       "expected_code": "E0505",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 855,
-      "sha256": "ef6bbb1f7a6f3394221161b19545ba5ee6cd1ecb38990a55f3a01ef79b45910d"
+      "bytes": 850,
+      "sha256": "cb9c2f4a5cf63504e847f92e4e621c948ca12d55642f964e6f914bc1368d3d77"
     },
     {
       "name": "storage_drop",
@@ -38,8 +38,8 @@
       "expected_code": "E0505",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 887,
-      "sha256": "4ac19e5c63af6e9f52cdabadbdf76d8e3d3e60bf63537e7c986e0c103a58b2f7"
+      "bytes": 882,
+      "sha256": "7daf256a5421eba92711992a5d095cbdc178d5f3cf0ed429346b51fdceb29053"
     },
     {
       "name": "core_drop",
@@ -47,8 +47,8 @@
       "expected_code": "E0505",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 884,
-      "sha256": "482623d606a2f3a574aaec0b23b863421b47cdd8cdfc750900a50f9732af1846"
+      "bytes": 879,
+      "sha256": "206c39240c5c448758ef85e196ad193be1e7aade36195e1e3d5a94d334a409ff"
     },
     {
       "name": "frames_reborrow",
@@ -56,8 +56,8 @@
       "expected_code": "E0499",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 926,
-      "sha256": "9abf49cfb5c79f5357b18345411418d2993a1f5e044fc96f7014969e9207789d"
+      "bytes": 921,
+      "sha256": "102fa00fa9607cd0cd8a1a4a9790ad162e378206dd50a2acc42a909a042d95ae"
     },
     {
       "name": "payload_reborrow",
@@ -65,8 +65,8 @@
       "expected_code": "E0499",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 942,
-      "sha256": "ac2d3b1d1b9d66ef8b81e0410bcbbfd56d629f04a20910e8ee5f726c79707cee"
+      "bytes": 937,
+      "sha256": "54e3267a9befa0781d9a615b85a6db8ee2d841568b91f63d30c84f70349c423a"
     },
     {
       "name": "workspace_reborrow",
@@ -74,8 +74,8 @@
       "expected_code": "E0499",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 930,
-      "sha256": "44ec73c82d7355f026e4b67f5f944119d3f386a9179f6ee9f37abf679945442f"
+      "bytes": 925,
+      "sha256": "ac975e6579f3fcad898b215120747aca53e988060bc7c3d0e3caead6295a23fb"
     },
     {
       "name": "bound_move",
@@ -83,8 +83,8 @@
       "expected_code": "E0505",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 927,
-      "sha256": "b48e8c5a6c3b907c81941eda09c6e4d874431f6dd3302ff4a8eb75c9c22df993"
+      "bytes": 922,
+      "sha256": "18739e6985690b64e26fa85ac3639f070bf185655bc4eeeebd34e7f0e7729656"
     },
     {
       "name": "bound_resplit",
@@ -92,8 +92,8 @@
       "expected_code": "E0499",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 937,
-      "sha256": "7c837f3b63ca816eb037fecdf4bf6954bb977d0cf8e317279b4af6314f9ade72"
+      "bytes": 932,
+      "sha256": "4bfa7e520e55f32f53d1c0f477e3184935461f11bca2702316b47ad34e6562ef"
     },
     {
       "name": "owner_reborrow",
@@ -101,8 +101,8 @@
       "expected_code": "E0499",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 1057,
-      "sha256": "65cdd88b4081dc46826215681f1eead9a5f8f75360d207777dc4eca0e5da0e89"
+      "bytes": 1052,
+      "sha256": "5e74891fd4e5ab8032a179a8dce368e7b57d387025fb39330430f0a24f5a29ae"
     },
     {
       "name": "pins_reuse",
@@ -110,8 +110,8 @@
       "expected_code": "E0382",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 729,
-      "sha256": "7984418cbdd114408a5ed803b9c4bf2e5ea63d50070ea5da3464d230c62e1031"
+      "bytes": 724,
+      "sha256": "4fceb6dc807d537ca6c91602a44377687ac733c7804b5bbaa19725f4abc8bae6"
     },
     {
       "name": "read_mutable",
@@ -119,8 +119,8 @@
       "expected_code": "E0308",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 678,
-      "sha256": "2bd0dd010a5a0621c23f62bad8035e751aba3c72a01b244619b90ff05532793b"
+      "bytes": 673,
+      "sha256": "d63d30fad15b05207cd106a7e3b8a9bab0a3c2474e095657cf7a6161c10fc862"
     },
     {
       "name": "read_sync",
@@ -128,8 +128,8 @@
       "expected_code": "E0277",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 612,
-      "sha256": "131fbb0cbb69e504801f294dee54c2fc3932a09af67db2090eb0384873a45f77"
+      "bytes": 607,
+      "sha256": "4d8b0371a6a21eba9a3d98fc774b56681ecb3654000c8b333a906da4f16769a4"
     },
     {
       "name": "write_sync",
@@ -137,8 +137,8 @@
       "expected_code": "E0277",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 615,
-      "sha256": "993fbd8528145a800c90cee718aff521b210fdfa31bc6c59311247e968cd2b5f"
+      "bytes": 610,
+      "sha256": "6bca97f5558afd1a7d428a182209550313735a1d3945ac65eeeff2f3d435db51"
     },
     {
       "name": "raw_lsn",
@@ -146,8 +146,8 @@
       "expected_code": "E0308",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 633,
-      "sha256": "2c392bd81310cc93736184b6fa2b5aae39eade1891016d10a0e6650c5275c955"
+      "bytes": 628,
+      "sha256": "6cc5bb87e06ea3fb671e487bb0fdbc88381b3455196d570b862ab6468b7cce67"
     },
     {
       "name": "permit_private",
@@ -155,8 +155,8 @@
       "expected_code": "E0451",
       "primary_line": 10,
       "primary_spans": "all_on_line",
-      "bytes": 770,
-      "sha256": "1ebf187cda72751cde944fb2f8608f3e1cb09442ffbfeae8f364d8ec0f8938e7"
+      "bytes": 765,
+      "sha256": "4798146b748de03c37fd2d4f1fce90e534fa3307f7e869cd1ae8026a9008b40e"
     },
     {
       "name": "permit_clone",
@@ -164,8 +164,8 @@
       "expected_code": "E0599",
       "primary_line": 10,
       "primary_spans": "one",
-      "bytes": 632,
-      "sha256": "32909f02289010ed9b4b3f76c1c931de4218ecb180c3f3b73f0807583e811ad8"
+      "bytes": 627,
+      "sha256": "3908c451720c879064e7aad68c2a7c932e8c06467bf091197d6c40a6ae9b5db8"
     }
   ]
 }

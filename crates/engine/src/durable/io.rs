@@ -3,7 +3,7 @@ use super::{
     codec::{self, FRAME_OVERHEAD, Identity, Record},
     error::{DurableError as Error, DurableErrorCode, Result, TransactionOutcome},
 };
-use xadb_foundation::{
+use foundation::{
     codec::{ContentHasher, MAX_FRAME_PAYLOAD},
     error::Effect,
     io::{FileIo, read_exact_at, write_all_at},
@@ -35,7 +35,7 @@ pub(crate) fn metadata_failure(mut error: Error) -> Error {
     error
 }
 
-pub(crate) fn file_error(error: xadb_foundation::Error) -> Error {
+pub(crate) fn file_error(error: foundation::Error) -> Error {
     Error {
         io_kind: error.io_kind,
         ..Error::new(DurableErrorCode::Io, error.context)

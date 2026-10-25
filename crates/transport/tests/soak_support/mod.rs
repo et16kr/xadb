@@ -2,7 +2,7 @@
 use crate::support;
 use sha2::{Digest, Sha256};
 use std::time::{Duration, Instant};
-use xadb_transport::ConnectionPhase;
+use transport::ConnectionPhase;
 
 pub const SEED: u64 = 20_261_019;
 pub fn random(state: &mut u64) -> u64 {
@@ -24,7 +24,7 @@ pub fn independently_decode(bytes: &[u8]) -> Option<&[u8]> {
 }
 pub fn codec_case(bytes: &[u8]) {
     let expected = independently_decode(bytes);
-    let decoded = xadb_foundation::codec::decode_frame(bytes);
+    let decoded = foundation::codec::decode_frame(bytes);
     match (decoded, expected) {
         (Ok(actual), Some(expected)) => assert_eq!(actual, expected),
         (Err(_), None) => (),

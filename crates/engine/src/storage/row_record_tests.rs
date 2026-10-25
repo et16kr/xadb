@@ -12,7 +12,7 @@ use crate::{
     api::{DatabaseId, TableSpec},
     transaction::TxnId,
 };
-use xadb_foundation::identity::{CommitSeq, Generation, ObjectId};
+use foundation::identity::{CommitSeq, Generation, ObjectId};
 
 // Frozen independent bytes generated before this candidate existed.
 const LITERALS: [&str; 16] = [

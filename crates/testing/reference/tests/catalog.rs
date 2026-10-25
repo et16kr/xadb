@@ -2,8 +2,8 @@ mod support {
     pub mod catalog_cases;
 }
 use support::catalog_cases::*;
-use xadbtest_protocol::engine::{Action, Cell, Column, DataType, Observation, Row};
-use xadbtest_reference::catalog::{CatalogResult, check_catalog};
+use test_protocol::engine::{Action, Cell, Column, DataType, Observation, Row};
+use test_reference::catalog::{CatalogResult, check_catalog};
 
 #[test]
 fn literal_catalog_scalar_identity_old_cursor_and_pin_vectors() {
@@ -504,7 +504,7 @@ fn table_cursor_name_value_and_metric_profile_boundaries_are_explicit() {
 
 #[test]
 fn incremental_input_budget_remains_failed_and_matches_pair_limit() {
-    use xadbtest_reference::catalog::CatalogInputBudget;
+    use test_reference::catalog::CatalogInputBudget;
     let pairs = generated(0, 1024);
     let mut budget = CatalogInputBudget::default();
     for (request, response) in &pairs {

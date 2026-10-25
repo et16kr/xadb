@@ -4,11 +4,11 @@ use super::page::{
     self, FileId, PAGE_BYTES, PageError, PageHeader, PageIdentity, PageKind, PageLsn, PageRef,
 };
 use crate::api::Namespace;
-use std::mem::size_of;
-use xadb_foundation::{
+use foundation::{
     codec::{ContentHasher, content_digest},
     identity::{Generation, ObjectId},
 };
+use std::mem::size_of;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum RetentionGenesisPage {

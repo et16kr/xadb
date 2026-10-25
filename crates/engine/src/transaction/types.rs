@@ -2,8 +2,8 @@ use crate::{
     Error, ErrorCode,
     api::{DatabaseId, Metrics, RowUid, StoreOptions, TableHandle},
 };
+use foundation::{error::Certainty, value::Value};
 use std::fmt;
-use xadb_foundation::{error::Certainty, value::Value};
 
 /// Non-reused transaction identity within one durably reserved writer epoch.
 /// K1 supplies a fixture epoch; actual epoch reservation belongs to K2/K3.

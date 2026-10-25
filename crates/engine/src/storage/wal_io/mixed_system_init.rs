@@ -9,7 +9,7 @@ use super::{
     validate_expected_in_population,
 };
 use crate::storage::wal_io::{UndoRole, WalIoError};
-use xadb_foundation::namespace::WriterNamespace;
+use foundation::namespace::WriterNamespace;
 
 pub(in super::super) use super::operation::MixedInitKind as Kind;
 
@@ -180,8 +180,8 @@ pub(in super::super) fn plan_bytes() -> usize {
 }
 pub(in super::super) fn codec_bytes() -> usize {
     use crate::storage::page::{PageHeader, PageView};
+    use foundation::identity::Generation;
     use std::mem::size_of;
-    use xadb_foundation::identity::Generation;
     // Same retained WAL/redo/profile metadata as status_codec_bytes, with the
     // Status record/cell representations replaced by the one Free Undo body.
     432 + 4 * size_of::<Generation>()

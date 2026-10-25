@@ -21,7 +21,7 @@ use super::{
     wal_io::{self, BootstrapCause, BootstrapError, InitialRecoveryError},
 };
 use crate::api::Namespace;
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     error::Effect,
     io::read_exact_at,
@@ -69,7 +69,7 @@ pub(crate) enum Cause {
     LengthMismatch,
     IdentityMismatch,
     Namespace(NamespaceError),
-    Io(xadb_foundation::Error),
+    Io(foundation::Error),
     Control(ControlError),
     PageIo(PageIoError),
     Bootstrap(BootstrapError),

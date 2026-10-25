@@ -658,7 +658,7 @@ def main():
         report['vector_result'] = check_vectors(vectors)
         vectors = run('independent-disk-vectors', ['python3', '-B', 'scripts/dev3_disk_vectors.py'])
         report['disk_vector_result'] = check_disk_vectors(vectors)
-        page = build('xadb-engine', ['--lib'], 'xadb_engine', 'page')
+        page = build('xadb-engine', ['--lib'], 'engine', 'page')
         output = run('page', [page, 'storage::page::tests::', '--nocapture', '--test-threads=1'])
         report['page_tests'] = check_page_output(output, 0)
         output = run('key', [page, 'storage::key::tests::', '--nocapture', '--test-threads=1'])
@@ -714,15 +714,15 @@ def main():
         for name, package, target_args, target_name, prefix, test_filter, expected in [
                 ('selector-platform', 'xadb-platform', ['--test', 'contracts'], 'contracts',
                  '', 'typed_selector', SELECTOR_PLATFORM_TESTS),
-                ('selector-protocol', 'xadbtest-protocol', ['--lib'], 'xadbtest_protocol',
+                ('selector-protocol', 'xadbtest-protocol', ['--lib'], 'test_protocol',
                  'fault::tests::', 'fault::tests::dev3_selector_', SELECTOR_PROTOCOL_TESTS),
-                ('selector-worker', 'xadbtest-engine-worker', ['--lib'], 'xadbtest_engine_worker',
+                ('selector-worker', 'xadbtest-engine-worker', ['--lib'], 'engine_worker',
                  'fault::tests::', 'fault::tests::dev3_selector_', SELECTOR_WORKER_TESTS),
                 ('metadata-platform', 'xadb-platform', ['--test', 'namespace_metadata'],
                  'namespace_metadata', '', '', METADATA_PLATFORM_TESTS),
-                ('metadata-worker', 'xadbtest-engine-worker', ['--lib'], 'xadbtest_engine_worker',
+                ('metadata-worker', 'xadbtest-engine-worker', ['--lib'], 'engine_worker',
                  'fault::tests::', 'fault::tests::dev3_open_metadata_', METADATA_WORKER_TESTS),
-                ('metadata-performance', 'xadbtest-engine-worker', ['--lib'], 'xadbtest_engine_worker',
+                ('metadata-performance', 'xadbtest-engine-worker', ['--lib'], 'engine_worker',
                  'durable_performance::ports::tests::',
                  'durable_performance::ports::tests::open_metadata_', METADATA_PERFORMANCE_TESTS),
                 ('page-io-native', 'xadbtest-engine-worker', ['--test', 'page_io'], 'page_io',

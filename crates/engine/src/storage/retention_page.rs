@@ -10,7 +10,7 @@ use super::{
     transaction_record::{StatusSlotRef, TxnRef},
 };
 use crate::api::Namespace;
-use xadb_foundation::{
+use foundation::{
     codec::{ContentHasher, content_digest},
     identity::Generation,
 };

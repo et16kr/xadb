@@ -11,12 +11,12 @@ use crate::{
     },
     transaction::concurrency::{OwnerRole, PageConcurrency},
 };
+use foundation::codec::content_digest;
 use std::{
     mem::size_of,
     sync::{Arc, Mutex, mpsc},
     time::Duration,
 };
-use xadb_foundation::codec::content_digest;
 
 const HOME: &str = "d3-data-0000000100000001";
 const INIT_OPERATION_BYTES: usize = super::super::super::OPERATION_BYTES;
@@ -351,7 +351,7 @@ fn wrong_read(variant: u8) {
             0 => target.kind = SystemPageKind::UndoRoot,
             1 => target.kind = SystemPageKind::Status,
             2 => target.page.page_no = 3,
-            3 => target.page.incarnation = xadb_foundation::identity::Generation::new(3).unwrap(),
+            3 => target.page.incarnation = foundation::identity::Generation::new(3).unwrap(),
             _ => unreachable!(),
         }
         let before = snapshot(&bound.inner.inner.pool);
@@ -813,7 +813,7 @@ fn load_membership(variant: u8) {
         match variant {
             0 => target.kind = SystemPageKind::UndoRoot,
             1 => target.page.page_no = 4,
-            2 => target.page.incarnation = xadb_foundation::identity::Generation::new(3).unwrap(),
+            2 => target.page.incarnation = foundation::identity::Generation::new(3).unwrap(),
             3 => target = c.target,
             4 => index = 0,
             _ => unreachable!(),

@@ -7,11 +7,11 @@ use crate::{
     api::{Column, TableSpec},
     transaction::PreparedCommit,
 };
-use std::sync::Arc;
-use xadb_foundation::{
+use foundation::{
     runtime::{Quota, Reservation},
     value::Value,
 };
+use std::sync::Arc;
 
 pub(crate) struct PreparedBatch {
     pub batch: Batch,
@@ -161,7 +161,7 @@ pub(crate) fn prepare(change: &PreparedCommit, scratch: &Quota) -> Result<Prepar
                 }
                 (None, None) => break,
             }
-            if canonical > xadb_foundation::codec::MAX_FRAME_PAYLOAD {
+            if canonical > foundation::codec::MAX_FRAME_PAYLOAD {
                 return Err(Error::limit("transaction WAL payload exceeds 1 MiB"));
             }
         }
@@ -195,8 +195,8 @@ fn push(changes: &mut Vec<Change>, value: Change) -> Result<()> {
 
 fn add_row(
     changes: &mut Vec<Change>,
-    table: xadb_foundation::identity::ObjectHandle,
-    id: xadb_foundation::identity::RowId,
+    table: foundation::identity::ObjectHandle,
+    id: foundation::identity::RowId,
     row: &crate::storage::volatile::StoredRow,
     canonical: &mut usize,
     allocated: &mut usize,
@@ -204,7 +204,7 @@ fn add_row(
     *canonical = canonical
         .checked_add(33 + row.canonical_bytes)
         .ok_or(Error::limit("batch encoded size"))?;
-    if *canonical > xadb_foundation::codec::MAX_FRAME_PAYLOAD {
+    if *canonical > foundation::codec::MAX_FRAME_PAYLOAD {
         return Err(Error::limit("transaction WAL payload exceeds 1 MiB"));
     }
     let image = RowImage {

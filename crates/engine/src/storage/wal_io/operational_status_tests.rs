@@ -696,7 +696,7 @@ fn operational_status_population_and_terminal_are_trusted_inputs() {
         ] {
             let mut bytes = literal("work3-allocator.after");
             bytes[offset..offset + 8].copy_from_slice(&u64::to_le_bytes(value));
-            let checksum = xadb_foundation::codec::content_digest(&bytes[..PAGE_BYTES - 32]);
+            let checksum = foundation::codec::content_digest(&bytes[..PAGE_BYTES - 32]);
             bytes[PAGE_BYTES - 32..].copy_from_slice(&checksum);
             let page = allocation_page::decode_allocation_page(
                 &bytes,
@@ -918,7 +918,7 @@ fn operational_status_producer_rejects_wrong_scope_before_writing() {
         let mut invalid = literal("work3-allocator.after");
         // Codec-valid RowLeaf cannot survive in the trusted Status population.
         invalid[10144 + 64 + 96 + 1] = 1;
-        let checksum = xadb_foundation::codec::content_digest(&invalid[..PAGE_BYTES - 32]);
+        let checksum = foundation::codec::content_digest(&invalid[..PAGE_BYTES - 32]);
         invalid[PAGE_BYTES - 32..].copy_from_slice(&checksum);
         let page = allocation_page::decode_allocation_page(
             &invalid,

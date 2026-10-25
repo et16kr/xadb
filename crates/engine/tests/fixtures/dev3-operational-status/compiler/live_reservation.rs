@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use crate::storage::wal_io::OperationalStatus;
 use crate::transaction::concurrency::Owner;
-use xadb_foundation::namespace::WriterNamespace;
+use foundation::namespace::WriterNamespace;
 fn probe<'s, 'c, 'p, 'd: 'p, 'o, 'm, 'w, W: WriterNamespace>(
     mut operational: OperationalStatus<'s, 'c, 'p, 'd, 'o, 'm, 'w, W>,
     owner: &mut Owner<'c, 's>,

@@ -15,7 +15,7 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
-use xadbtest_protocol::{
+use test_protocol::{
     durable::{Action, Observation as Product},
     fault as wire, frame,
 };

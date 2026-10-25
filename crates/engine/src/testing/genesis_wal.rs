@@ -1,6 +1,6 @@
 //! Feature-gated assembly for fresh physical WAL tests; no database readiness.
 use crate::storage::wal_io::{self, GenesisWalSession};
-use xadb_foundation::{error::Effect, namespace::WriterNamespace};
+use foundation::{error::Effect, namespace::WriterNamespace};
 
 /// Test projection retaining the cumulative effect and original cause category.
 #[derive(Debug, PartialEq, Eq)]

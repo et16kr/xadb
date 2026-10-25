@@ -9,7 +9,7 @@ use crate::{
     api::{DatabaseId, Namespace},
     transaction::TxnId,
 };
-use xadb_foundation::identity::{Generation, ObjectId};
+use foundation::identity::{Generation, ObjectId};
 
 const FRAMES: [&[u8]; 2] = [
     include_bytes!("../../tests/fixtures/dev3-rollback-start-empty-head-frame.bin"),

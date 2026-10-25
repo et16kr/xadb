@@ -7,13 +7,13 @@ use super::super::{
 };
 use super::*;
 use crate::api::DatabaseId;
+use foundation::{
+    codec::content_digest,
+    identity::{Generation, ObjectId},
+};
 use std::{
     sync::{Arc, mpsc},
     time::Duration,
-};
-use xadb_foundation::{
-    codec::content_digest,
-    identity::{Generation, ObjectId},
 };
 
 fn request(page: u64) -> PageIdentity {

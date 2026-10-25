@@ -12,7 +12,7 @@ use super::{
     ParsedStatement, ScalarReader, ScalarRef, ScalarSpec, ScalarType, Span,
 };
 use budget::{ChargedVec, TypedBudget};
-use xadb_foundation::{runtime::Quota, value::MAX_VALUE_BYTES};
+use foundation::{runtime::Quota, value::MAX_VALUE_BYTES};
 
 const MAX_COLUMNS: usize = 32;
 const MAX_MARKERS: usize = 256;

@@ -1,7 +1,7 @@
 //! Bounded blocking worker side. The owning controller imposes stream deadlines.
+use engine_worker::Session;
 use std::io::{self, Read, Write};
-use xadbtest_engine_worker::Session;
-use xadbtest_protocol::{
+use test_protocol::{
     engine::{Action, Observation, Request},
     frame,
 };

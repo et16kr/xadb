@@ -13,7 +13,7 @@ use crate::storage::{
         self, FrameExpectation, FrameKind, RedoKind, RedoTarget, WalError, WalFrameHeader,
     },
 };
-use xadb_foundation::{
+use foundation::{
     codec::{ContentHasher, content_digest},
     identity::Generation,
     namespace::WriterNamespace,

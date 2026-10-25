@@ -6,11 +6,11 @@ use crate::storage::{
     },
     retention_genesis::tests as q,
 };
+use foundation::{ErrorCode, namespace::DirectoryPort};
 use std::{
     collections::BTreeMap,
     panic::{AssertUnwindSafe, catch_unwind},
 };
-use xadb_foundation::{ErrorCode, namespace::DirectoryPort};
 
 #[path = "plan4_genesis_test_support.rs"]
 pub(in crate::storage) mod support;
@@ -113,10 +113,9 @@ fn partial_selection(error: crate::storage::recovery_select::Plan4SelectError, s
     } else {
         match error.cause {
             Plan4SelectCause::Existing(inner) => match inner.cause {
-                crate::storage::recovery_select::Cause::Namespace(e) => assert_eq!(
-                    e.kind,
-                    xadb_foundation::namespace::NamespaceErrorKind::NotFound
-                ),
+                crate::storage::recovery_select::Cause::Namespace(e) => {
+                    assert_eq!(e.kind, foundation::namespace::NamespaceErrorKind::NotFound)
+                }
                 other => panic!("unexpected partial input cause {other:?}"),
             },
             other => panic!("unexpected partial selection {other:?}"),
@@ -792,7 +791,7 @@ fn plan4_install_and_final_identity_boundaries() {
                         )) => {
                             assert_eq!(
                                 e.kind,
-                                xadb_foundation::namespace::NamespaceErrorKind::InvalidType
+                                foundation::namespace::NamespaceErrorKind::InvalidType
                             );
                             assert_eq!(e.effect, Effect::Unchanged);
                             assert_eq!(e.context, "plan4 opened identity mismatch");
@@ -1114,7 +1113,7 @@ fn plan4_s5_entropy_profiles() {
 /// specific legacy-role/admission boundary owned by S's single O case marker.
 pub(in crate::storage) fn owner_boundary(case: usize) {
     use crate::storage::wal_io::Plan4TestMutableCause as M;
-    use xadb_foundation::namespace::NamespaceErrorKind;
+    use foundation::namespace::NamespaceErrorKind;
     assert!(matches!(case, 8..=14 | 17 | 18 | 20));
     if matches!(case, 13 | 14) {
         old_mixed_kind_boundary(case);

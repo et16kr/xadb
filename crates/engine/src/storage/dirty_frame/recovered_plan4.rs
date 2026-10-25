@@ -2,7 +2,7 @@
 //! and the original fence/binding; observations cannot manufacture this seed.
 use super::*;
 use crate::storage::{page::decode_page, wal_io::RecoveryPoolSeed};
-use xadb_foundation::codec::content_digest;
+use foundation::codec::content_digest;
 
 fn prepare_allocator(
     core: &PageConcurrency<'_>,

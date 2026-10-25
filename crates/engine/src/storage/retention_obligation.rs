@@ -9,7 +9,7 @@ use super::{
     page::PAGE_BYTES,
     retention_page::{self, FINISH_BYTES, RetentionError, RootView},
 };
-use xadb_foundation::codec::content_digest;
+use foundation::codec::content_digest;
 
 pub(crate) const AGING_START_BYTES: usize = 19_672;
 
@@ -166,7 +166,7 @@ pub(crate) fn source_bytes() -> usize {
         + 4 * size_of::<Result<AgingDescriptorView<'_>>>()
         + 6 * size_of::<super::retention_page::RootSpec>()
         + 4 * size_of::<super::page::PageView<'_>>()
-        + 4 * size_of::<xadb_foundation::codec::ContentHasher>()
+        + 4 * size_of::<foundation::codec::ContentHasher>()
         + 1024
 }
 

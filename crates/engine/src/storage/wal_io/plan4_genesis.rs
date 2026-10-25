@@ -18,8 +18,7 @@ use crate::{
         wal_io::WalIoError,
     },
 };
-use std::mem::size_of;
-use xadb_foundation::{
+use foundation::{
     codec::{ContentHasher, content_digest},
     error::Effect,
     identity::{Generation, ObjectId},
@@ -29,6 +28,7 @@ use xadb_foundation::{
         NamespaceResult, OpenMode, Selector, WriterNamespace,
     },
 };
+use std::mem::size_of;
 
 pub(super) const IMAGE_BYTES: usize = 9 * PAGE_BYTES;
 pub(super) const LOAN_BYTES: usize = IMAGE_BYTES + 3 * PAGE_BYTES;
@@ -47,7 +47,7 @@ pub(crate) enum Plan4GenesisCause {
     Bootstrap(BootstrapError),
     Wal(WalIoError),
     Namespace(NamespaceError),
-    Io(xadb_foundation::Error),
+    Io(foundation::Error),
     PageIo(PageIoError),
     Control(ControlError),
     Allocation(AllocationError),

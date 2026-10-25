@@ -1,11 +1,6 @@
 use super::*;
 use crate::api::DatabaseId;
-use std::{
-    collections::BTreeMap,
-    io,
-    sync::{Arc, Mutex},
-};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     error::Effect,
     identity::{Generation, ObjectId},
@@ -13,6 +8,11 @@ use xadb_foundation::{
     namespace::{
         DirectoryEntry, FileIdentity, FileMetadata, NamespaceErrorKind, NamespaceResult, Selector,
     },
+};
+use std::{
+    collections::BTreeMap,
+    io,
+    sync::{Arc, Mutex},
 };
 
 pub(in crate::storage) const PROFILE: &[u8] =

@@ -1,7 +1,7 @@
 //! Current-build DEV2 records. No Rust memory layout is persisted.
 use super::error::{DurableError as Error, DurableErrorCode, Result};
 use crate::api::{Column, DataType, DatabaseId, TableSpec};
-use xadb_foundation::{
+use foundation::{
     codec::{MAX_FRAME_PAYLOAD, decode_frame, encode_frame},
     identity::{Generation, ObjectHandle, ObjectId, RowId, SchemaEpoch},
     value::Value,

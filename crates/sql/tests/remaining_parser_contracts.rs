@@ -1,14 +1,14 @@
 //! Complete observations for P4's independently authored raw statement inputs.
 
-use std::collections::BTreeSet;
-use std::time::{Duration, Instant};
-use xadb_foundation::runtime::{Cancellation, Clock, Quota};
-use xadb_sql::frontend::{
+use foundation::runtime::{Cancellation, Clock, Quota};
+use sql::frontend::{
     CallControl, Code, ComparisonOp, Diagnostic, Module, NodeKind, NullPlacement,
     NullabilitySyntax, ParsedStatement, Parser, ScalarSyntax, Sign, SortDirection,
     TypeLengthSyntax, TypeSyntax,
 };
-use xadbtest_reference::frontend::remaining_parser::{
+use std::collections::BTreeSet;
+use std::time::{Duration, Instant};
+use test_reference::frontend::remaining_parser::{
     Case, Comparison, DataType, Direction, ErrorObservation, Kind, NameObservation, Node,
     NullPlacement as ObservedNullPlacement, Nullability, Observation, ScalarObservation,
     TypeLength, boundary_cases, changed_dispatch_cases, check, contextual_cases, diagnostic_cases,

@@ -2,7 +2,7 @@
 // Injected below the producer: Batch is visible, reservation fields are not.
 use crate::storage::{dirty_frame::{DirtyFrame, InitWriteTargets}, page::{PAGE_BYTES, PageLsn, PageRef}, wal_io::{DoublewriteStorageSession, MutableStorageOwner, BoundStatusBootstrap, StatusBootstrapWriter, ReservedStatus, StatusReadGuard, InitAuthority, InitInstallPermit, InitControlCommit}};
 use crate::transaction::concurrency::{PageConcurrency, Owner, OwnerRole};
-use xadb_foundation::namespace::WriterNamespace;
+use foundation::namespace::WriterNamespace;
 fn probe<'r,'b,'s,'c,'p,'d,'o,'m,'w,W: WriterNamespace>(writer: &'r mut StatusBootstrapWriter<'b,'s,'c,'p,'d,'o,'m,'w,W>, owner: &'r mut Owner<'c,'s>, page: PageRef, batch: super::Batch) {
     // Frozen ownership boundary.
     // Frozen ownership boundary.

@@ -33,8 +33,7 @@ use crate::{
         },
     },
 };
-use std::mem::size_of;
-use xadb_foundation::{
+use foundation::{
     codec::{ContentHasher, content_digest},
     error::Effect,
     identity::{Generation, ObjectId},
@@ -44,6 +43,7 @@ use xadb_foundation::{
         NamespaceErrorKind, NamespaceResult, OpenMode, Selector, WriterNamespace,
     },
 };
+use std::mem::size_of;
 
 #[path = "recovery_empty_transactions.rs"]
 mod transactions;
@@ -112,7 +112,7 @@ pub(crate) enum Cause {
     IdentityMismatch,
     ArithmeticOverflow,
     Namespace(NamespaceError),
-    Io(xadb_foundation::Error),
+    Io(foundation::Error),
     Control(ControlError),
     PageIo(PageIoError),
     Bootstrap(BootstrapError),
@@ -863,7 +863,7 @@ fn account(observation: &mut RecoveryPrefixObservation) -> Result<()> {
     Ok(())
 }
 // Pure canonical continuation hook. Physical pages never enter adopt_frame.
-fn analyze_with<F: xadb_foundation::io::FileIo>(
+fn analyze_with<F: foundation::io::FileIo>(
     source: &mut F,
     workspace: &mut [u8; WORKSPACE_BYTES],
     mut transaction_arena: Option<&mut [u8; transactions::ARENA_BYTES]>,
@@ -1043,7 +1043,7 @@ fn analyze_with<F: xadb_foundation::io::FileIo>(
     }
     Ok(())
 }
-fn validate_oversized<F: xadb_foundation::io::FileIo>(
+fn validate_oversized<F: foundation::io::FileIo>(
     source: &mut F,
     chunk: &mut [u8],
     offset: u64,

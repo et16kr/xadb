@@ -1,10 +1,10 @@
 //! Fixed counters and optional caller-supplied clock observations. No collection
 //! callback acquires the coordinator or publication lock.
+use foundation::runtime::Clock;
 use std::sync::{
     Arc,
     atomic::{AtomicBool, AtomicU8, AtomicU64, Ordering},
 };
-use xadb_foundation::runtime::Clock;
 
 pub(super) type TransactionClock = Arc<dyn Clock + Send + Sync>;
 

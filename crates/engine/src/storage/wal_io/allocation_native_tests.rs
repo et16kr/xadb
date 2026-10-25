@@ -1,6 +1,14 @@
 //! Native AR02/AR06 workers. The Python runner owns fork, timeout and evidence.
 //! Fixed fixture entropy is the only namespace substitution; all effects use Linux.
 use super::*;
+use foundation::{
+    codec::content_digest,
+    io::{FileIo, write_all_at},
+    namespace::{
+        DirectoryEntry, DirectoryPort, FileMetadata, FileName, NamespaceResult, OpenMode, Selector,
+    },
+};
+use platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
 use std::{
     collections::BTreeMap,
     fs, io,
@@ -8,14 +16,6 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
-use xadb_foundation::{
-    codec::content_digest,
-    io::{FileIo, write_all_at},
-    namespace::{
-        DirectoryEntry, DirectoryPort, FileMetadata, FileName, NamespaceResult, OpenMode, Selector,
-    },
-};
-use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
 
 const WAL: &str = "d3-wal-00000001";
 const INPUT: &str = concat!(
@@ -387,7 +387,7 @@ fn run(profile: u32, operation: &str, cut: &str) {
         let wal::Cause::Io(io) = lower.cause else {
             panic!("original I/O cause missing")
         };
-        assert_eq!(io.code, xadb_foundation::error::ErrorCode::IoWriteUnknown);
+        assert_eq!(io.code, foundation::error::ErrorCode::IoWriteUnknown);
         assert_eq!(io.effect(), Effect::CallerMustResolve);
         assert_eq!(io.io_kind, Some(io::ErrorKind::Other));
         assert_eq!(

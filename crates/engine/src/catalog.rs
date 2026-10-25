@@ -7,12 +7,12 @@ use crate::{
         ARC_HEADER_BYTES, AllocationBudget, Charge, StoredRow, array, array_in, reserve,
     },
 };
-use std::{mem::size_of, sync::Arc};
-use xadb_foundation::{
+use foundation::{
     identity::{ObjectHandle, RowId},
     runtime::{Quota, Reservation},
     value::Value,
 };
+use std::{mem::size_of, sync::Arc};
 
 pub(crate) const MAX_TABLES: usize = 64;
 pub(crate) const MAX_ROW_BYTES: usize = 128 * 1024;

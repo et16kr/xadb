@@ -30,8 +30,8 @@
       "reason": "positive",
       "probe_relative_path": "crates/engine/src/storage/recovery_select_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 664,
-      "sha256": "9173dafcdbe5b973add515da68be55f6693e87721c9c7fb2d2a30c2b315aa506"
+      "bytes": 659,
+      "sha256": "4ba1eb10449fd295e04c455dda01a89e6dbb620a12a133262f9b3745929e64d3"
     },
     {
       "name": "owner_move",
@@ -42,8 +42,8 @@
       "reason": "owner move",
       "probe_relative_path": "crates/engine/src/storage/recovery_select_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 275,
-      "sha256": "c761dca8c86bd7988399744a1c3e30348164ffcaacf6b79711d1ee9ebb719bc3"
+      "bytes": 270,
+      "sha256": "101c7419a371ff5b177090df73ce1b6ee394e30c90e3fe0ecc238f34a680b554"
     },
     {
       "name": "observation_borrow",
@@ -54,8 +54,8 @@
       "reason": "observation borrow",
       "probe_relative_path": "crates/engine/src/storage/recovery_select_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 310,
-      "sha256": "edff8d16f5b42f7c0221eea33faa671127dd3ba534b521be7a18412975841d72"
+      "bytes": 305,
+      "sha256": "c39de90011f830d40b82fe8a94f3d4193cc0f0775d14a992873f3fe3ef3ccf29"
     },
     {
       "name": "private_fields",
@@ -66,8 +66,8 @@
       "reason": "private fields",
       "probe_relative_path": "crates/engine/src/storage/recovery_select_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 329,
-      "sha256": "3fce071305fb95f1ef39cb380d2a0d6628a59662264826556a9026e62fb739e3"
+      "bytes": 324,
+      "sha256": "ce3080559bf07aa135e047bf90343dfa6eb17869c12fcd3b98417b8f2f3b39d2"
     },
     {
       "name": "into_writer_missing",
@@ -78,8 +78,8 @@
       "reason": "into writer missing",
       "probe_relative_path": "crates/engine/src/storage/recovery_select_borrow_probe.rs",
       "anchor_relative_path": "crates/engine/src/storage/mod.rs",
-      "bytes": 250,
-      "sha256": "253cb3e0b5c0433bb8c0e6efb7268aeb4f6b0bdb4d3b1d89ffc8c8a2d38cb1f9"
+      "bytes": 245,
+      "sha256": "8e4e254206bd9d43a089430cf33cccc2c0d5d2da1b7e5fef2670a7f53c1e38f1"
     }
   ]
 }

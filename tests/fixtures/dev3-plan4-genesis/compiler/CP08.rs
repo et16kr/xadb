@@ -7,7 +7,7 @@ use crate::storage::{
     wal_frame::MAX_FRAME_BYTES,
     wal_io::Plan4GenesisSeed,
 };
-use xadb_foundation::namespace::{DirectoryPort, WriterNamespace};
+use foundation::namespace::{DirectoryPort, WriterNamespace};
 fn move_while_borrowed<W: WriterNamespace>(owner: Plan4GenesisSelection<W>) {
     let observation = owner.observation();
     drop(owner); // expected diagnostic

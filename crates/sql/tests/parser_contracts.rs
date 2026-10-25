@@ -1,10 +1,10 @@
-use std::collections::BTreeSet;
-use std::time::{Duration, Instant};
-use xadb_foundation::runtime::{Cancellation, Clock, Quota};
-use xadb_sql::frontend::{
+use foundation::runtime::{Cancellation, Clock, Quota};
+use sql::frontend::{
     CallControl, Code, Diagnostic, Module, NodeKind, ParsedStatement, Parser, ScalarSyntax, Sign,
 };
-use xadbtest_reference::frontend::parser::{
+use std::collections::BTreeSet;
+use std::time::{Duration, Instant};
+use test_reference::frontend::parser::{
     ErrorObservation, KindObservation, NameObservation, NodeObservation, ParseCase,
     ParseObservation, ScalarObservation, boundary_cases, check_parse, error_literals,
     generated_case, known_bad_observations, scalar_literals, structural_literals,

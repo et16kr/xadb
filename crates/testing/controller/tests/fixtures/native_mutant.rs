@@ -1,6 +1,6 @@
 //! Deliberately wrong native streams. Only available in the self-test feature.
 use std::io::{self, Read, Write};
-use xadbtest_protocol::{
+use test_protocol::{
     engine::{Cell, Observation, Request, Response, Row, RowIdentity, TableIdentity},
     frame,
 };

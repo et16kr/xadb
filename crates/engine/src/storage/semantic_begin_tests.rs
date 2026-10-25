@@ -8,7 +8,7 @@ use crate::{
     api::{DatabaseId, Namespace},
     transaction::TxnId,
 };
-use xadb_foundation::identity::{Generation, ObjectId};
+use foundation::identity::{Generation, ObjectId};
 
 const OLD: &[u8] = include_bytes!("../../tests/fixtures/dev3-status-begin/before.page");
 const NEW: &[u8] = include_bytes!("../../tests/fixtures/dev3-status-begin/after.page");

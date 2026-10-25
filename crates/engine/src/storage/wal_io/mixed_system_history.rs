@@ -19,15 +19,15 @@ use crate::storage::{
         bootstrap::{BootstrapPlan, BootstrapPlanKind, FixedSystemRole},
     },
 };
-use operation::{AllocationPopulation, AnalysisExpected, Batch, OperationBudget, TerminalOutcome};
-use std::mem::size_of;
-use xadb_foundation::{
+use foundation::{
     Error as IoFailure,
     codec::content_digest,
     identity::Generation,
     io::{FileIo, read_exact_at},
     namespace::WriterNamespace,
 };
+use operation::{AllocationPopulation, AnalysisExpected, Batch, OperationBudget, TerminalOutcome};
+use std::mem::size_of;
 
 const FRAME_SPACE: usize = 65536;
 const MAX_FRAME: usize = 38208;

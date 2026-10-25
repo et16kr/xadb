@@ -8,11 +8,11 @@ use crate::storage::{
     page_io::{PageFileReader, PageIoError},
     wal_io::{MutableStorageError, WalIoError},
 };
-use std::mem::size_of;
-use xadb_foundation::{
+use foundation::{
     error::{Certainty, Effect},
     namespace::{NamespaceErrorKind, WriterNamespace},
 };
+use std::mem::size_of;
 
 #[derive(Debug)]
 pub(crate) enum Cause {

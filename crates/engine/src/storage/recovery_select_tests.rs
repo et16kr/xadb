@@ -2,12 +2,12 @@
 //! Geometry-only files model length separately; native tests supply actual files.
 use super::*;
 use crate::api::DatabaseId;
+use foundation::{io::FileIo, namespace::FileIdentity};
 use std::{
     collections::{BTreeMap, BTreeSet},
     io,
     sync::{Arc, Mutex},
 };
-use xadb_foundation::{io::FileIo, namespace::FileIdentity};
 
 const OLD: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),

@@ -1,7 +1,7 @@
 #![allow(dead_code, unused_imports)]
 use super::{MutableStorageOwner, plan4_pages::{Plan4LoadPermit, Plan4Page, Plan4Pages, Plan4ResidencyCursor, Plan4Target}};
 use crate::{storage::{dirty_frame::{DirtyFrame, Plan4LoadSnapshot, SharedPool, TargetRequest}, page::PAGE_BYTES}, transaction::concurrency::{Owner, PageConcurrency}};
-use xadb_foundation::{identity::ObjectId, namespace::WriterNamespace};
+use foundation::{identity::ObjectId, namespace::WriterNamespace};
 fn legal<'s, 'c, 'p, 'd: 'p, 'o, 'm, 'w, W: WriterNamespace>(storage: &'s MutableStorageOwner<'m, 'w, W>, core: &'c PageConcurrency<'s>, frames: &'p mut [DirtyFrame<'d>], operation: &'o mut [u8; 114688], owner: &mut Owner<'c, 's>) {
     let mut bound = storage.bind_plan4_pages(core, frames, operation).unwrap();
     let target = bound.target(Plan4Page::Root).unwrap();

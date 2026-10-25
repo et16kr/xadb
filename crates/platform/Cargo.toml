@@ -6,10 +6,13 @@ rust-version.workspace = true
 publish.workspace = true
 
 [features]
-test-support = ["xadb-foundation/test-support"]
+test-support = ["foundation/test-support"]
+
+[lib]
+name = "platform"
 
 [dependencies]
-xadb-foundation.workspace = true
+foundation.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 nix = { workspace = true, features = ["dir", "socket", "net", "poll", "time", "resource"] }

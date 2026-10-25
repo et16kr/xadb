@@ -2,13 +2,13 @@
 //! The separate native worker executes the actual successful full creator.
 use super::*;
 use crate::storage::wal_io::bootstrap::{self as boot, test_support as port};
+use foundation::codec::content_digest;
 use std::{
     collections::BTreeMap,
     mem::size_of,
     panic::{AssertUnwindSafe, catch_unwind},
     sync::Arc,
 };
-use xadb_foundation::codec::content_digest;
 
 const INPUT: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -248,7 +248,7 @@ fn status_bootstrap_sb01_literals_and_layout() {
         },
         page::{PageHeader, PageView},
     };
-    use xadb_foundation::{
+    use foundation::{
         codec::ContentHasher,
         namespace::{FileMetadata, FileName},
     };
@@ -368,7 +368,7 @@ fn status_bootstrap_sb01_literals_and_layout() {
     #[repr(align(4096))]
     struct AlignedFile;
     struct AlignedWriter;
-    impl xadb_foundation::io::FileIo for AlignedFile {
+    impl foundation::io::FileIo for AlignedFile {
         fn read_at(&mut self, _: &mut [u8], _: u64) -> std::io::Result<usize> {
             panic!("alignment preflight must precede read")
         }
@@ -384,57 +384,53 @@ fn status_bootstrap_sb01_literals_and_layout() {
     }
     impl WriterNamespace for AlignedWriter {
         type File = AlignedFile;
-        fn random_incarnation(&mut self) -> xadb_foundation::namespace::NamespaceResult<[u8; 16]> {
+        fn random_incarnation(&mut self) -> foundation::namespace::NamespaceResult<[u8; 16]> {
             panic!("alignment preflight must precede namespace")
         }
         fn create_new(
             &mut self,
             _: &FileName,
-        ) -> xadb_foundation::namespace::NamespaceResult<Self::File> {
+        ) -> foundation::namespace::NamespaceResult<Self::File> {
             panic!("alignment preflight must precede namespace")
         }
         fn open_existing(
             &mut self,
             _: &FileName,
-            _: xadb_foundation::namespace::OpenMode,
-        ) -> xadb_foundation::namespace::NamespaceResult<Self::File> {
+            _: foundation::namespace::OpenMode,
+        ) -> foundation::namespace::NamespaceResult<Self::File> {
             panic!("alignment preflight must precede namespace")
         }
         fn open_existing_with_metadata(
             &mut self,
             _: &FileName,
-            _: xadb_foundation::namespace::OpenMode,
-        ) -> xadb_foundation::namespace::NamespaceResult<(Self::File, FileMetadata)> {
+            _: foundation::namespace::OpenMode,
+        ) -> foundation::namespace::NamespaceResult<(Self::File, FileMetadata)> {
             panic!("alignment preflight must precede namespace")
         }
         fn metadata(
             &self,
             _: &FileName,
-        ) -> xadb_foundation::namespace::NamespaceResult<Option<FileMetadata>> {
+        ) -> foundation::namespace::NamespaceResult<Option<FileMetadata>> {
             panic!("alignment preflight must precede namespace")
         }
         fn list_owned(
             &self,
             _: usize,
-        ) -> xadb_foundation::namespace::NamespaceResult<
-            Vec<xadb_foundation::namespace::DirectoryEntry>,
-        > {
+        ) -> foundation::namespace::NamespaceResult<Vec<foundation::namespace::DirectoryEntry>>
+        {
             panic!("alignment preflight must precede namespace")
         }
-        fn sync_directory(&mut self) -> xadb_foundation::namespace::NamespaceResult<()> {
+        fn sync_directory(&mut self) -> foundation::namespace::NamespaceResult<()> {
             panic!("alignment preflight must precede namespace")
         }
         fn publish_selector(
             &mut self,
             _: &FileName,
-            _: xadb_foundation::namespace::Selector,
-        ) -> xadb_foundation::namespace::NamespaceResult<()> {
+            _: foundation::namespace::Selector,
+        ) -> foundation::namespace::NamespaceResult<()> {
             panic!("alignment preflight must precede namespace")
         }
-        fn remove_retired(
-            &mut self,
-            _: &FileName,
-        ) -> xadb_foundation::namespace::NamespaceResult<()> {
+        fn remove_retired(&mut self, _: &FileName) -> foundation::namespace::NamespaceResult<()> {
             panic!("alignment preflight must precede namespace")
         }
     }
@@ -678,10 +674,7 @@ fn status_bootstrap_sb04_incomplete_creation() {
                     let boot::Cause::Namespace(inner) = error.cause else {
                         panic!("wrong namespace cause")
                     };
-                    assert_eq!(
-                        inner.kind,
-                        xadb_foundation::namespace::NamespaceErrorKind::Io
-                    );
+                    assert_eq!(inner.kind, foundation::namespace::NamespaceErrorKind::Io);
                     assert_eq!(inner.io_kind, Some(std::io::ErrorKind::Other));
                     assert_eq!(
                         inner.effect,
@@ -700,7 +693,7 @@ fn status_bootstrap_sb04_incomplete_creation() {
                     let boot::Cause::Io(inner) = error.cause else {
                         panic!("wrong read cause")
                     };
-                    assert_eq!(inner.code, xadb_foundation::error::ErrorCode::IoRead);
+                    assert_eq!(inner.code, foundation::error::ErrorCode::IoRead);
                     assert_eq!(inner.effect(), Effect::Unchanged);
                     assert_eq!(inner.io_kind, Some(std::io::ErrorKind::Other));
                 }

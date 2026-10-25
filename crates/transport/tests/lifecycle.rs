@@ -1,11 +1,11 @@
 mod support;
+use foundation::network::{ByteStream, Connector, Ready, Registration};
 use std::{
     io,
     sync::{Arc, Mutex},
 };
 use support::*;
-use xadb_foundation::network::{ByteStream, Connector, Ready, Registration};
-use xadb_transport::{ConnectionPhase, ErrorKind, MAX_WIRE_BYTES, SendOutcome, Transport};
+use transport::{ConnectionPhase, ErrorKind, MAX_WIRE_BYTES, SendOutcome, Transport};
 
 #[test]
 fn short_io_interrupt_block_and_zero_keep_offsets_and_exact_failure_bytes() {

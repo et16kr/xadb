@@ -1,6 +1,14 @@
 //! Explicit cache-loss model, not an OS/device qualification. File sync persists
 //! one inode's bytes; directory sync persists names only. Old inodes survive
 //! rename/unlink so an unsynced namespace change can revert after cache loss.
+use foundation::{
+    error::Effect,
+    io::FileIo,
+    namespace::{
+        DirectoryEntry, DirectoryPort, FileIdentity, FileMetadata, FileName, NamespaceError,
+        NamespaceErrorKind as Kind, NamespaceResult, OpenMode, Selector, WriterNamespace,
+    },
+};
 use std::{
     collections::BTreeMap,
     io::{self, Write},
@@ -9,14 +17,6 @@ use std::{
         atomic::{AtomicU64, Ordering},
     },
     time::Duration,
-};
-use xadb_foundation::{
-    error::Effect,
-    io::FileIo,
-    namespace::{
-        DirectoryEntry, DirectoryPort, FileIdentity, FileMetadata, FileName, NamespaceError,
-        NamespaceErrorKind as Kind, NamespaceResult, OpenMode, Selector, WriterNamespace,
-    },
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

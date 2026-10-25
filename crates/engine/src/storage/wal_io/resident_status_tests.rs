@@ -115,7 +115,7 @@ fn resident_status_resource_gate() {
         println!("{name}={value}");
     }
     assert!(fits::<W>());
-    assert!(fits::<xadb_platform::namespace::LinuxWriterLease>());
+    assert!(fits::<platform::namespace::LinuxWriterLease>());
 }
 
 #[test]
@@ -1147,7 +1147,7 @@ s5!(resident_status_s5_p3_n64, 3, 64);
 #[test]
 fn resident_status_late_semantic_failure_releases_whole_read() {
     use crate::storage::{page, status_home, transaction_record::TransactionStatusCell};
-    use xadb_foundation::{codec::content_digest, identity::Generation};
+    use foundation::{codec::content_digest, identity::Generation};
     fixture!(|bound, core, state, storage| {
         let mut owner = core.try_owner(OwnerRole::Maintenance).unwrap();
         let (a, b) = two_dirty!(bound, owner);

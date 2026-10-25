@@ -1,14 +1,14 @@
-use std::{
-    cmp::Ordering,
-    sync::{Arc, Barrier},
-};
-use xadb_foundation::{
+use foundation::{
     Error, ErrorCode,
     codec::{MAX_FRAME_PAYLOAD, decode_frame, encode_frame, encode_key},
     error::{Certainty, Effect, RetryScope},
     identity::{CommitSeq, Generation, ObjectHandle, ObjectId, SchemaEpoch},
     runtime::{Event, EventBuffer, EventSink, Lifecycle, Phase, Quota},
     value::{MAX_VALUE_BYTES, Value, checked_add},
+};
+use std::{
+    cmp::Ordering,
+    sync::{Arc, Barrier},
 };
 
 fn hex(bytes: &str) -> Vec<u8> {
@@ -260,7 +260,7 @@ fn reservations_release_on_error_and_cannot_overflow() {
     assert!(quota.reserve(1).is_err());
     assert_eq!(quota.used(), u64::MAX);
     drop(all);
-    let operation = || -> xadb_foundation::Result<()> {
+    let operation = || -> foundation::Result<()> {
         let _reservation = quota.reserve(10)?;
         Err(Error::new(ErrorCode::Cancelled, "test"))
     };
@@ -345,7 +345,7 @@ fn diagnostics_are_bounded_and_report_loss() {
 #[cfg(feature = "test-support")]
 mod faults {
     use super::*;
-    use xadb_foundation::{
+    use foundation::{
         io::{
             FileIo,
             fault::{Action, FaultFile},

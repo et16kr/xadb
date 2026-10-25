@@ -1,13 +1,13 @@
 //! Native capacity boundaries with fixed literal byte accounting. These tests
 //! use real files and reopen; they do not model power loss or qualify a device.
-use std::{fs, path::Path};
-use xadb_engine::{
+use engine::{
     api::{Column, DataType, TableSpec},
     database::{DurableErrorCode, Engine, EngineError, EngineOptions, TransactionOutcome},
     transaction::{Mutation, TransactionMode},
 };
-use xadb_foundation::value::Value;
-use xadb_platform::namespace::LinuxDirectory;
+use foundation::value::Value;
+use platform::namespace::LinuxDirectory;
+use std::{fs, path::Path};
 
 fn wal_bytes(path: &Path) -> (u64, u64) {
     let mut files: Vec<_> = fs::read_dir(path)

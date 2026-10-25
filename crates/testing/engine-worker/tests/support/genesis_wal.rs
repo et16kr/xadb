@@ -1,13 +1,5 @@
 //! Real Linux effects with retained fault/hook receipts, not a durability model.
-use serde_json::{Value, json};
-use std::{
-    collections::BTreeMap,
-    fs,
-    io::{self, Write},
-    path::{Path, PathBuf},
-    sync::{Arc, Mutex},
-};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     error::Effect,
     io::FileIo,
@@ -16,7 +8,15 @@ use xadb_foundation::{
         NamespaceResult, OpenMode, Selector, WriterNamespace,
     },
 };
-use xadb_platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
+use platform::namespace::{LinuxDirectory, LinuxNamespaceFile, LinuxWriterLease};
+use serde_json::{Value, json};
+use std::{
+    collections::BTreeMap,
+    fs,
+    io::{self, Write},
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
+};
 
 pub const WAL: &str = "d3-wal-00000001";
 pub const CUTS: [(&str, usize); 8] = [

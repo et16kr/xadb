@@ -2,8 +2,8 @@
 #![allow(dead_code)] // Recovery is intentionally not a general open API.
 use super::*;
 use crate::storage::{page, session_fence::SessionFence};
+use foundation::io::{FileIo, sync, write_all_at};
 use std::mem::size_of;
-use xadb_foundation::io::{FileIo, sync, write_all_at};
 
 #[path = "bootstrap.rs"]
 mod boot_io;

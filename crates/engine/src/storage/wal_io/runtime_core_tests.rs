@@ -5,16 +5,16 @@ use crate::storage::{
     retention_genesis::tests::{self as input, Harness},
     wal_io::{bootstrap as boot, plan4_test_support as port},
 };
+use foundation::{
+    codec::content_digest,
+    identity::ObjectId,
+    namespace::{DirectoryPort, FileIdentity},
+};
 use std::{
     collections::BTreeMap,
     mem::{align_of, size_of},
     panic::{AssertUnwindSafe, catch_unwind},
     sync::Arc,
-};
-use xadb_foundation::{
-    codec::content_digest,
-    identity::ObjectId,
-    namespace::{DirectoryPort, FileIdentity},
 };
 
 fn selected(id: &str, operation: impl FnOnce()) {

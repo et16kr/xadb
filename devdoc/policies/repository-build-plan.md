@@ -13,7 +13,7 @@
 
 우선순위는 [하위 계층 개발 결정](../plans/bottom-up-development.md), [단계 JSON](../plans/development-stages.json), [Rust 구현 계약](../contracts/implementation-contracts.md), [버전 정책](version-compatibility-policy.json)이다. DEV0/DEV1의 실제 명령·제약은 각각의 구현 문서와 manifest를 따른다. 이름·API 문서·리뷰는 [코딩 컨벤션](coding-convention.md)을 따른다. 종합 보고서 5.2절도 이 문서의 실제 초기 배치를 사용한다. 초기 제안의 `xadb-types/xadb-txn/xadb-storage/xadb-durable/...`는 역할 이름이었으며 독립 Cargo package 예약이 아니다.
 
-제품 폴더는 `crates/foundation`, `crates/platform`, 후속 `crates/engine`처럼 **제품명 접두어 없이 역할로 명명**한다. Cargo package 이름은 별도 식별자로 `xadb-foundation`, `xadb-platform`, `xadb-engine` 등을 유지한다. `cargo -p`에는 package 이름을, workspace member와 path dependency에는 실제 경로를 쓴다. 독립 시험 도구의 패키지·명령 이름인 `xadbtest` 계열은 유지하고, 폴더는 `crates/testing` 아래 역할별로 묶는다. XADB package·도구 이름으로 이관하고 새 소스 fingerprint와 실행 증거를 생성한다.
+제품 폴더는 `crates/foundation`, `crates/platform`, 후속 `crates/engine`처럼 **제품명 접두어 없이 역할로 명명**한다. Cargo package 이름은 별도 식별자로 `xadb-foundation`, `xadb-platform`, `xadb-engine` 등을 유지한다. Rust library target과 dependency alias는 제품명 없이 책임 이름을 사용한다. 정확한 대응과 2026-10-25 변경 범위는 [명칭 정리 기록](../evidence/naming-cleanup-20261025.md)을 따른다. `cargo -p`에는 package 이름을, workspace member와 path dependency에는 실제 경로를 쓴다. 독립 시험 도구의 패키지·명령 이름인 `xadbtest` 계열은 유지하고, 폴더는 `crates/testing` 아래 역할별로 묶는다. XADB package·도구 이름으로 이관하고 새 소스 fingerprint와 실행 증거를 생성한다.
 
 <a id="testing-layout"></a>
 
@@ -406,16 +406,16 @@ RollbackStart와 공유한다. package·dependency·source root·feature는 바�
 [작업 증거](../evidence/dev3-empty-transaction-20261023.md)의 실제 owner/복구 통합은 진행 중이다.
 같은 통합의 `wal_io/empty_transactions.rs`·시험·선택 manifest·compiler fixture/runner를 추가한다.
 원 ResidentStatus의 consuming 인계와 caller bank를 보존한다. 같은 owner의 실제 Begin/RollbackStart/
-AbortEnd는 `wal_io/empty_transactions_live.rs`·시험·live fixture/manifest와 compiler2개를 추가해
+AbortEnd는 `wal_io/empty_transactions/live.rs`·시험·live fixture/manifest와 compiler2개를 추가해
 연결한다. sealed install proof의 명시적 re-export와 frozen allocator observer를 사용하며 새
 crate/source root/dependency는 없다.
 [§20](../contracts/dev3-obligation-format.md#empty-transaction-flush)의 실제 WAL 이력 검산은
-`empty_transactions_history.rs`에서 기존 semantic materializer를 조합하고 원 Status flush
+`empty_transactions/history.rs`에서 기존 semantic materializer를 조합하고 원 Status flush
 authority에 private digest 이력을 보유한다. Linux worker·선택 manifest·compiler2개 및 전용
 runner/checker를 관리 JSON에 추가한다. live load·native recovery 통합은 남아 있다.
 
 [§21](../contracts/dev3-obligation-format.md#empty-transaction-load)의 최신 Status 재적재는
-`empty_transactions_load.rs`·memory/native 시험·load manifest·새 compiler2개를 추가한다.
+`empty_transactions/load.rs`·memory/native 시험·load manifest·새 compiler2개를 추가한다.
 private sealed proof를 기존 load permit로 소비하며 기존 caller loan/SharedPool을 재사용한다.
 실제 경로만 같은 관리 JSON에 등록하고 package·dependency·source root는 유지한다.
 
@@ -451,7 +451,7 @@ P4 연결·실제 engine/Q1 미완료를 구분한다.
 
 [소유 계약](../contracts/dev3-plan4-clean-owner.md)의 원 CAS·loan·SharedPool 결합은
 `wal_io/plan4_pages.rs`가 담당하고, load·실제 pin 소비·자원 census는 같은 모듈의
-`plan4_pages_load.rs`, `plan4_pages_read.rs`, `plan4_pages_resources.rs`에 둔다.
+`plan4_pages/load.rs`, `plan4_pages/read.rs`, `plan4_pages/resources.rs`에 둔다.
 `dirty_frame/plan4_residency.rs`는 기존 directory와 frame을 쓰며 별도 pool을 만들지 않는다.
 memory/native 시험과 exact-ID·compiler 수집기는 [관리 JSON](repository-build-plan.json)의
 `dev3_plan4_clean_owner`에 실제 경로만 등록한다. 기존 genesis raw는 그대로 재사용한다.
@@ -523,3 +523,11 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 ## DEV2 PF04 P3 영속 I/O 관측 도구
 
 [단계 계획](../plans/dev2-pf04-resolution-plan.md#p3-io-cause)의 XADBTest 도구를 기존 scripts root에 추가했다. `dev2_io_trace.py`는 P1 runner 조립, `dev2_io_supervisor.py`는 고정 root child 수명, `dev2_io_trace.bt`는 kernel event, `dev2_io_analysis.py`는 보존 event 분석, `test_dev2_io_trace.py`는 변경 범위 선택 검증을 소유한다. 제품 package·의존·source root·clean export 규칙은 바꾸지 않는다. 설치된 bpftrace0.25와 kernel BTF가 필요한 opt-in 진단이며 제품 성능 인수나 자동 최적화 경로가 아니다. [실제 실행·미확정 범위](../evidence/dev2-pf04-io-cause-20261025.md)를 따른다.
+
+## 내부 이름과 반복 파일명 정리 — 2026-10-25
+
+`XADB-NAME-001`은 사용자 요청으로 library target·dependency alias를 단축하고 기존 package·bin·환경변수·wire 식별자를 유지한다. `wal_io`의 plan4 retention/recovery/pages, empty transactions, Status home flush child를 기능 폴더에 배치하되 Rust 모듈 경로와 시험 selector는 유지한다. 파일 이동과 import만으로 제품 의미·인수 상태를 변경하지 않는다.
+
+두 durable worker source는 짧은 이름과 명시적 `[[bin]]`으로 연결한다. controller의 private 실행 조립은 `runner.rs`, 문서 계약 시험은 `test_contracts.py`다. 빈 거래 borrowing checker는 `scripts/dev3/empty_transactions/check_borrows.py`이며 직접 실행과 `PYTHONPATH=scripts python3 -B -m unittest dev3.empty_transactions.test_borrows` package 진입점을 지원한다. 변경 사례만 선택하며 전체 모듈 시험 명령을 자동 실행 요구로 해석하지 않는다.
+
+현재 compiler fixture의 import·길이·해시와 관련 runner pin을 함께 갱신한다. 과거 compiler 이력은 그 보존 source의 Cargo library 이름을 읽어 원 target과 결합한다. 실제 변경·선택 검증·독립 검토 및 원 실패는 [명칭 정리 기록](../evidence/naming-cleanup-20261025.md)을 따른다. 기존 증거의 원 이름과 byte는 보존한다.

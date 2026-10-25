@@ -17,15 +17,15 @@ use crate::storage::{
     session_fence::SessionFence,
     wal_io::{DurableWal, WalFrameLocation},
 };
-use std::{
-    mem::size_of,
-    sync::{MutexGuard, atomic::AtomicU8},
-};
-use xadb_foundation::{
+use foundation::{
     codec::content_digest,
     error::Effect,
     io::{read_exact_at, sync, write_all_at},
     namespace::{FileIdentity, FileName, NamespaceError, OpenMode, Selector, WriterNamespace},
+};
+use std::{
+    mem::size_of,
+    sync::{MutexGuard, atomic::AtomicU8},
 };
 
 pub(super) const WORKSPACE_BYTES: usize = 4 << 20;
@@ -91,7 +91,7 @@ pub(super) enum Cause {
     Allocation(AllocationError),
     Status(SemanticError),
     Namespace(NamespaceError),
-    Io(xadb_foundation::Error),
+    Io(foundation::Error),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1352,7 +1352,7 @@ fn temporary_layout() -> [(&'static str, usize, usize); 28] {
         dirty_frame::TargetRequest,
         page::{PageHeader, PageView},
     };
-    use xadb_foundation::{codec::ContentHasher, namespace::FileMetadata};
+    use foundation::{codec::ContentHasher, namespace::FileMetadata};
     [
         ("Prepared", size_of::<Prepared>(), 768),
         ("PreparedResult", size_of::<Inner<Prepared>>(), 768),
@@ -1422,7 +1422,7 @@ fn status_codec_bytes() -> usize {
         status_home::StatusHome,
         transaction_record::TransactionStatusCell,
     };
-    use xadb_foundation::codec::ContentHasher;
+    use foundation::codec::ContentHasher;
     let references = 16 * size_of::<&()>()
         + 16 * size_of::<&[u8]>()
         + size_of::<[usize; 8]>()
@@ -1478,7 +1478,7 @@ fn execute_outer_bytes() -> usize {
             .max(size_of::<Inner<RetiredBatch<'_>>>())
             .max(size_of::<Result<RetiredBatch<'_>>>())
         + size_of::<SelectedControl>()
-        + 3 * size_of::<xadb_foundation::namespace::FileMetadata>()
+        + 3 * size_of::<foundation::namespace::FileMetadata>()
         + 4 * size_of::<Cause>().max(size_of::<Inner<()>>())
         + size_of::<IoObservation>()
         + 256
@@ -1501,7 +1501,7 @@ pub(super) fn retention_source_bytes<W: WriterNamespace>() -> usize {
                 crate::storage::page::PageError,
             >,
         >()
-        + 4 * size_of::<xadb_foundation::codec::ContentHasher>()
+        + 4 * size_of::<foundation::codec::ContentHasher>()
         + 3 * size_of::<std::result::Result<PageLsn, SemanticError>>()
         + 4 * 32
         + 512;
@@ -1601,7 +1601,7 @@ fn status_temporary_layout() -> [(&'static str, usize, usize); 18] {
         ),
         (
             "StatusHash",
-            4 * size_of::<xadb_foundation::codec::ContentHasher>() + 1536,
+            4 * size_of::<foundation::codec::ContentHasher>() + 1536,
             2048,
         ),
     ]

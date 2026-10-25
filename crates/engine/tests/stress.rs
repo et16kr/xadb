@@ -5,13 +5,7 @@
 //! not transaction isolation or durability. The V3 test fixes its 1,800 second
 //! lower bound in code; the evidence wrapper owns timeout and raw failure logs.
 
-use std::{
-    collections::BTreeSet,
-    sync::{Arc, Barrier},
-    thread,
-    time::{Duration, Instant},
-};
-use xadb_engine::{
+use engine::{
     ErrorCode, Result,
     api::{Column, DataType, DatabaseId, RowUid, StoreOptions, TableHandle, TableSpec},
     diagnostics::{
@@ -20,7 +14,13 @@ use xadb_engine::{
     },
     substrate::{RowView, ScanPage, Snapshot, VolatileStore},
 };
-use xadb_foundation::value::Value;
+use foundation::value::Value;
+use std::{
+    collections::BTreeSet,
+    sync::{Arc, Barrier},
+    thread,
+    time::{Duration, Instant},
+};
 
 const READERS: usize = 4;
 const ROWS: usize = 16;

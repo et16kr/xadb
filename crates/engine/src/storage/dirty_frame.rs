@@ -12,6 +12,7 @@ use super::{
 use crate::transaction::concurrency::{
     self, ContentAdmission, Owner, PageConcurrency, VersionEditGuard,
 };
+use foundation::error::Effect;
 use std::{
     marker::PhantomData,
     rc::Rc,
@@ -20,7 +21,6 @@ use std::{
         atomic::AtomicU8,
     },
 };
-use xadb_foundation::error::Effect;
 
 mod plan4_residency;
 mod recovered_plan4;
