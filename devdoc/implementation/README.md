@@ -1,5 +1,7 @@
 # 현재 구현
 
+2026-10-25 [DEV2 PF04 C2 후보 기각](dev2-implementation.md#dev2-pf04-single-writer-20261025): 단일 writer 통계 후보의 선택 검증·40개 비교를 완료했으나5% 기준에 미달하여 제품에 반영하지 않았다. PF04·DEV2는 미완료다.
+
 2026-10-25 [DEV3 첫 행의 leaf 후보 편집](dev3-implementation.md#leaf-edit): Insert/Replace/Remove 후보·수명 선택 검증 완료, 실제 행 거래·DEV3/S5 미완료.
 
 - [DEV3 plan4 빈 거래 live·prefix](dev3-implementation.md#retention-live) — 필수75 source별 PASS; fresh 수명·flush·재적재 연결, 복구/DEV3/S5 미완료

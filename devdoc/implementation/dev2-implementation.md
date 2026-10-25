@@ -699,3 +699,14 @@ Off/Always guard는 확인 실패 중단 규칙에 따라 NOT_RUN이고 완료 �
 계획 `f157846`·오류 보완 계획 `f18700d` 뒤 [16-probe 수집·세대별 분석과 source별 검증](../evidence/dev2-pf04-flush-provenance-20261025.md)을 완료했다. 실제 compiler에서 출력15개를 호출별 stack에 배치하고 공유 scratch 참조0을 확인했다. 원 Always count 불일치 FAIL은 보존하며 변경 source의 Always 완료2932개(물리2347·논리585)와512 fsync/phase를 연결했다. 실제5연결은 원3+수정2이고 제품/하위 인수 반복은0이다.
 
 수정 Always의 fsync 중 장치 요청 겹침은 약98.90%이며 journal wait의 대부분이 logging→end 구간에 있다. 원 Off 수집기의 잠재 scratch 오염 한계와 원 PF04 네 FAIL·DEV2/B2/D0 INCOMPLETE를 유지한다. 한 쌍의 영향 screen PASS를 상대 비용 인수로 쓰지 않는다. P4 후보 채택/기각과 K0/영속 CPU 원인 종료 검토가 남는다.
+
+
+<a id="dev2-pf04-single-writer-20261025"></a>
+
+## DEV2 PF04 C2 단일 쓰기 통계 후보 — 2026-10-25
+
+[계획](../plans/dev2-pf04-resolution-plan.md#c2-single-writer)을 `18eb879`로 먼저 commit한 뒤 깨끗한 `688b9af` export에서 C2를 구현했다. 비 Clone writer와 내부5/6label 구분으로 mutation 통계만 atomic load/store를 사용했고 shared CAS·포화·event·quota 의미는 유지했다. 선택11함수·compiler 반례2개·관련 fmt/Clippy와 release build가 PASS였다.
+
+[평가 기록](../evidence/dev2-pf04-single-writer-20261025.md)의 탐색/확인 각10쌍에서 정답·유효성·guard는 통과했으나 확인 중앙0.9707905·구간 상한0.9765757로 동결0.95 미만 조건에 미달했다. C2는 기각하여 제품에 반영하지 않았고 Off/Always guard·추가 PMU는 실행하지 않았다. 원 후보/source/raw와 외부 일회성 실행기의 미검증 timeout 정리 race를 보존한다. 독립 검토 범위와 receipt는 연결 증거를 따른다.
+
+P4 WAL 선확보/data sync도 PF04 상대 비용의 해결책으로 채택할 근거가 부족하여 미채택했다. 기존 P3b 연결을 원 비용 실패의 인과 증거로 확대하지 않는다. 원 PF04 네 FAIL·영속 CPU/tail 원인 미확정·DEV2 미완료는 유지하며, C1/C2 재확인을 이번 예산에 추가하지 않는다.

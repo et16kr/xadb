@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+- [DEV2 PF04 C2 단일 쓰기 통계 후보](dev2-pf04-single-writer-20261025.md) · [source별 기록](dev2-pf04-single-writer-20261025.json) — 확인 약2.92% 개선, 채택 기준 미달·제품 미반영. PF04 FAIL 유지.
+
 - [DEV3 첫 행의 leaf 후보 편집](dev3-leaf-edit-20261025.md) · [source별 기록](dev3-leaf-edit-20261025.json) — 신규5·compiler7·도구3 선택 PASS, 첫 행·DEV3/S5 미완료.
 
 - [DEV2 PF04 flush 완료 구분·출력 버퍼 보완](dev2-pf04-flush-provenance-20261025.md) · [source별 기록](dev2-pf04-flush-provenance-20261025.json) — 원 수집 FAIL 보존, 수정 Always 완료2932개·512 fsync/phase 연결. 원 PF04 FAIL 유지.

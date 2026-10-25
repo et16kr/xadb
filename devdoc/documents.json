@@ -3,6 +3,16 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev2-pf04-single-writer-20261025.md": {
+      "path": "evidence/dev2-pf04-single-writer-20261025.md",
+      "role": "evidence",
+      "title": "DEV2 PF04 C2 단일 쓰기 통계 후보 평가"
+    },
+    "dev2-pf04-single-writer-20261025.json": {
+      "path": "evidence/dev2-pf04-single-writer-20261025.json",
+      "role": "evidence",
+      "title": "DEV2 PF04 C2 source·검증·기각 기록"
+    },
     "dev2-pf04-flush-provenance-20261025.md": {
       "path": "evidence/dev2-pf04-flush-provenance-20261025.md",
       "role": "evidence",

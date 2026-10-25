@@ -228,4 +228,4 @@ P3b는 `688b9af`에서 [한정 검증·독립 검토](../evidence/dev2-pf04-flus
 
 후보 확인 통과는 C2의 한정 개선 증거다. 원 PF04 네 FAIL·DEV2 미완료를 자동 해제하지 않으며 영속 CPU/tail 실패도 별개다. 최종 독립 D1/D2가 소유권·반례·선택 시험·모든 원 측정과 채택/기각을 확인한 뒤 단계 commit한다. 동일 코드 인수를 다시 돌릴 명목으로 본 계획을 확장하지 않는다.
 
-C2 계획 상태: **PASS_PLAN_ONLY 채택 / 구현·실행 전**. 독립 검토 차단0개. receipt `/home/et16/xadb-dev2-evidence/pf04-single-writer-20261025/plan-review.json`의 SHA-256은 `ac13e33f7cab54184a653d7847808918f96d7fc4126f2e06cf103ff40683e8c7`, P4 anchor부터 이 상태 문장 직전 본문의 검토 projection은 `7c9d96fec4da315d185fe72889d0b10a8004b52222e575cd7254dfb83c67f3dc`다.
+C2 계획 상태: **PASS_PLAN_ONLY 채택 / 채택 당시 구현·실행 전**. 이후 [후보 평가](../evidence/dev2-pf04-single-writer-20261025.md)에서 확인 기준 미달로 제품 미반영·기각했다. 독립 검토 차단0개. receipt `/home/et16/xadb-dev2-evidence/pf04-single-writer-20261025/plan-review.json`의 SHA-256은 `ac13e33f7cab54184a653d7847808918f96d7fc4126f2e06cf103ff40683e8c7`, P4 anchor부터 이 상태 문장 직전 본문의 검토 projection은 `7c9d96fec4da315d185fe72889d0b10a8004b52222e575cd7254dfb83c67f3dc`다.
