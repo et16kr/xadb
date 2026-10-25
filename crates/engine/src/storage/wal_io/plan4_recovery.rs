@@ -879,16 +879,16 @@ impl<W: WriterNamespace> Plan4RecoveryRuntime<'_, '_, '_, W> {
     }
 }
 
+type RecoveryBindingParts<'r, 'a> = (
+    RecoveryRetentionBinding<'r, 'a>,
+    &'a mut [u8; 196_608],
+    &'a mut [u8; 1_572_864],
+    &'a mut [u8; CATALOG_PRIVATE_BYTES],
+    &'a mut [u8; CATALOG_VISIBILITY_BYTES],
+);
+
 impl<'a, W: WriterNamespace> Plan4RecoveryRuntime<'a, '_, '_, W> {
-    pub(super) fn take_recovery_binding(
-        &self,
-    ) -> Result<(
-        RecoveryRetentionBinding<'_, 'a>,
-        &'a mut [u8; 196_608],
-        &'a mut [u8; 1_572_864],
-        &'a mut [u8; CATALOG_PRIVATE_BYTES],
-        &'a mut [u8; CATALOG_VISIBILITY_BYTES],
-    )> {
+    pub(super) fn take_recovery_binding(&self) -> Result<RecoveryBindingParts<'_, 'a>> {
         let p = Plan4RecoveryPhase::Bind;
         if self.session_fence().is_fenced() {
             return Err(error(p, Plan4RecoveryCause::Fenced));

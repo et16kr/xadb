@@ -74,10 +74,7 @@ pub(crate) fn transaction_remaining(
             match status.state() {
                 TransactionState::Active => (),
                 TransactionState::Aborting(RollbackState::Transaction { next })
-                    if next == root.undo() =>
-                {
-                    ()
-                }
+                    if next == root.undo() => {}
                 TransactionState::Committed(_) => (),
                 _ => return Err(Error::OrderMismatch),
             }

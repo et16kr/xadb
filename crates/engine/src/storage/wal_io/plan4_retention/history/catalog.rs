@@ -157,6 +157,10 @@ fn put(bytes: &mut [u8], at: usize, value: u64) {
 }
 /// Caller supplies only a successfully recomputed INIT image and accepted frame.
 /// These bytes remain an observation; the selected owner retains the source proof.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "explicit frame provenance and caller-owned output are validated together without allocation"
+)]
 pub(in super::super) fn init_record(
     request: TargetRequest,
     frame: WalFrameHeader,
@@ -599,9 +603,9 @@ pub(in super::super) fn apply(
         let root = root_before.ok_or_else(invalid)?;
         let pair = root.pair().ok_or_else(invalid)?;
         let object = root.object().ok_or_else(invalid)?;
-        for side in 0..2 {
-            let req = recovery::request_from_image(profile, image(arena, pair[side])?)?;
-            if req.identity.page != pair[side]
+        for (side, page) in pair.iter().enumerate() {
+            let req = recovery::request_from_image(profile, image(arena, *page)?)?;
+            if req.identity.page != *page
                 || req.identity.owner != object.object
                 || req.identity.owner_generation != object.generation
                 || req.level != 0
@@ -640,9 +644,9 @@ pub(in super::super) fn apply(
         arena[index * PAGE_BYTES..(index + 1) * PAGE_BYTES]
             .copy_from_slice(&after[usize::from(role)]);
     }
-    for side in 0..2 {
+    for (side, claim) in new_claims.iter().enumerate() {
         if let Some(request) = result.initialized[side] {
-            claims[request.identity.page.page_no as usize] = new_claims[side];
+            claims[request.identity.page.page_no as usize] = *claim;
         }
         if let Some(request) = result.retired[side] {
             let index = request.identity.page.page_no as usize;

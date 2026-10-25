@@ -2,6 +2,8 @@
 //! issue them; physical intervals or parsed native bytes cannot construct one.
 use super::*;
 
+type CatalogJobSelection<const N: usize> = (Option<usize>, [(TargetRequest, u8); N]);
+
 pub(in crate::storage) struct CatalogRetirementStaged<'r, 'i, 'c, 's> {
     prepared: &'r PreparedCatalog<'i, 'c, 's>,
     requirement: WalRequirement<'s>,
@@ -110,7 +112,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         &self,
         ordinal: usize,
         operation: Operation,
-    ) -> Result<(Option<usize>, [(TargetRequest, u8); N])> {
+    ) -> Result<CatalogJobSelection<N>> {
         let invalid = || unchanged(RetentionPhase::Prepare, RetentionCause::Invariant);
         let job = queue::decode_job(
             self.control.jobs().get(ordinal).ok_or_else(invalid)?,
@@ -411,9 +413,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     .map_err(|e| frame(RetentionPhase::Prepare, e))?;
             }
             let mut dpt = [const { None }; N];
-            for at in 0..N {
+            for (at, dpt_entry) in dpt.iter_mut().enumerate() {
                 if prepared.after(at).is_some() {
-                    dpt[at] = Some(
+                    *dpt_entry = Some(
                         write
                             .preflight_dpt(at, &prepared.stamp(at).expect("actual before"))
                             .map_err(|e| frame(RetentionPhase::Prepare, e))?,
@@ -474,7 +476,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             catalog_mark_staged(&prepared, self.control, requirement)?;
             #[cfg(test)]
             let mut first_page = true;
-            for at in 0..N {
+            for (at, dpt_entry) in dpt.iter_mut().enumerate() {
                 let Some(after) = prepared.after(at) else {
                     continue;
                 };
@@ -500,7 +502,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     .install_metadata(at, &permit)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
                 apply
-                    .install_dpt(dpt[at].take().expect("actual DPT preflight"), &permit)
+                    .install_dpt(dpt_entry.take().expect("actual DPT preflight"), &permit)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
             }
             catalog_apply(&prepared, self.control, storage.profile(), requirement)?;

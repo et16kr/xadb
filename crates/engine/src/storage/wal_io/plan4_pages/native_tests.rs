@@ -258,12 +258,12 @@ impl FileIo for File {
             crash_barrier(&self.trace, &cut.marker, "A_CREATE_BEFORE_CATALOG_HOME");
         }
         let result = self.inner.as_mut().unwrap().write_at(bytes, offset);
-        if self.name.as_str() == "d3-wal-00000001" {
-            if let Ok(written) = result {
-                self.trace.lock().unwrap().catalog_wal_write_end = offset
-                    .checked_add(written as u64)
-                    .expect("native WAL write end");
-            }
+        if self.name.as_str() == "d3-wal-00000001"
+            && let Ok(written) = result
+        {
+            self.trace.lock().unwrap().catalog_wal_write_end = offset
+                .checked_add(written as u64)
+                .expect("native WAL write end");
         }
         let outcome = match &result {
             Ok(n) => format!("OK:{n}:{}", hash_hex(&bytes[..*n])),

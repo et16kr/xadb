@@ -23,6 +23,10 @@ pub(in crate::storage) struct RetirementIntent<'v, 'a, 'c, 's> {
 impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
     /// Only the same-gate, actual semantic Before supplies VerifiedRetirement.
     /// The calling target wrapper retains the original gate through application.
+    #[allow(
+        clippy::result_large_err,
+        reason = "rejection returns the original linear UndoPin without heap allocation"
+    )]
     pub(in crate::storage) fn begin_retirement<'v>(
         &'v self,
         horizon: &HorizonObservation<'c, 's>,
@@ -261,7 +265,7 @@ pub(super) fn validate(bytes: &[u8]) -> Result<(), ()> {
             Err(())
         };
     }
-    if !matches!(marker[0], 1 | 2 | 3)
+    if !matches!(marker[0], 1..=3)
         || marker[3..8]
             .iter()
             .chain(marker[112..128].iter())

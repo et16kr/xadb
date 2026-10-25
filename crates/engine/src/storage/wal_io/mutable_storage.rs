@@ -631,8 +631,8 @@ pub(in crate::storage) use plan4_pages::{
     AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
     HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
     RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
-    StagedRetirement, UndoPin, TxnPin, VerifiedRetirement, VisibilityCause, VisibilityError,
-    VisibilityLoan, VisibilityResult, VISIBILITY_BYTES,
-    TxPairAuthority, TxPairInstallPermit, TxPairStageRejection, TxPairCancelKind,
-    TxPairCancelPermit, TxPairRetirePermit, TxPairControlCommit,
+    StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
+    TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin, UndoPin,
+    VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError, VisibilityLoan,
+    VisibilityResult,
 };

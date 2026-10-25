@@ -596,7 +596,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .prefix()
             .map_err(|e| fatal(storage, RetentionPhase::Prepare, RetentionCause::Wal(e)))?;
         history::validate_live(storage, &self.control, self.history.exclusive()?, prefix)?;
-        let initialized = history::catalog::system_initial(
+        history::catalog::system_initial(
             self.history.exclusive()?,
             self.control.population.high_water,
         )
@@ -1080,6 +1080,10 @@ impl ReplayAllocation {
     pub(super) fn restore_population(&self, population: &mut Population<'_, '_>) {
         population.adopt(self.state);
     }
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "replay borrows independently owned images, control, arena and claims without allocation"
+    )]
     pub(super) fn apply(
         &mut self,
         profile: crate::storage::control::Profile,

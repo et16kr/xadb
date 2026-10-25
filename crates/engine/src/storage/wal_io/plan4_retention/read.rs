@@ -14,14 +14,14 @@ use foundation::identity::ObjectId;
 mod catalog;
 #[path = "read/lookup.rs"]
 mod lookup;
-pub(crate) use lookup::CatalogLookupStep;
-pub(super) use lookup::source_bytes as lookup_source_bytes;
 #[allow(
     unused_imports,
     reason = "typed guard name for the following catalog consumer"
 )]
 pub(crate) use catalog::RetentionCatalogGuard;
 pub(super) use catalog::{CATALOG_READ_SOURCE_BYTES, catalog_source_bytes};
+pub(crate) use lookup::CatalogLookupStep;
+pub(super) use lookup::source_bytes as lookup_source_bytes;
 
 pub(crate) struct RetentionReader<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
     pub(super) storage: &'s MutableStorageOwner<'m, 'w, W>,

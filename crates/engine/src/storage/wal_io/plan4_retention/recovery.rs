@@ -11,7 +11,7 @@ use crate::storage::{
     page::{PageKind, PageRef},
     status_home,
     transaction_record::TransactionStatusCell,
-    wal_frame::{self, FrameExpectation, WalFrameHeader},
+    wal_frame::{FrameExpectation, WalFrameHeader},
 };
 use foundation::{
     codec::content_digest,

@@ -4,8 +4,10 @@ use super::page::{
     self, FileId, PAGE_BYTES, PageError, PageHeader, PageIdentity, PageKind, PageLsn, PageRef,
 };
 use crate::api::Namespace;
+#[cfg(test)]
+use foundation::codec::content_digest;
 use foundation::{
-    codec::{ContentHasher, content_digest},
+    codec::ContentHasher,
     identity::{Generation, ObjectId},
 };
 use std::mem::size_of;
@@ -69,12 +71,14 @@ fn reference(page_no: u64) -> PageRef {
         incarnation: Generation::new(1).expect("fixed genesis incarnation"),
     }
 }
+#[cfg(test)]
 fn free_job(output: &mut [u8; 1024]) {
     output.fill(0);
     output[..4].copy_from_slice(b"XQJ1");
     output[4..6].copy_from_slice(&1u16.to_le_bytes());
     output[8..16].copy_from_slice(&1u64.to_le_bytes());
 }
+#[cfg(test)]
 fn root_cell(namespace: Namespace, output: &mut [u8; 512]) {
     output.fill(0);
     output[..4].copy_from_slice(b"XQR1");
@@ -117,6 +121,7 @@ fn root_cell(namespace: Namespace, output: &mut [u8; 512]) {
 }
 
 /// Pure encoding; all errors preserve the complete caller output.
+#[cfg(test)]
 pub(crate) fn encode(
     namespace: Namespace,
     page: RetentionGenesisPage,
@@ -143,6 +148,7 @@ pub(crate) fn encode(
 }
 
 /// Validates only the exact initial state, never occupied or reused queue cells.
+#[cfg(test)]
 pub(crate) fn validate(
     bytes: &[u8],
     namespace: Namespace,
@@ -195,7 +201,7 @@ pub(crate) fn validate(
 }
 
 /// Current fresh plan4 uses Root/Job version2. The v1 functions above remain
-/// strict byte decoders for historical inputs, never an implicit upgrade path.
+/// strict test codecs for historical inputs, never an implicit upgrade path.
 pub(crate) fn encode_current(
     namespace: Namespace,
     role: RetentionGenesisPage,
@@ -231,7 +237,8 @@ pub(crate) fn validate_current(
     let expected = expected_header(namespace, role)?;
     match role {
         RetentionGenesisPage::Root => {
-            let (header, root) = catalog::decode_root_page(bytes, namespace).map_err(current_error)?;
+            let (header, root) =
+                catalog::decode_root_page(bytes, namespace).map_err(current_error)?;
             if header != expected || root.aging().is_some() {
                 return Err(RetentionGenesisError::Corrupt);
             }

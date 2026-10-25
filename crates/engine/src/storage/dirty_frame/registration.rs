@@ -346,6 +346,10 @@ impl RegistrationDirectory {
                 return false;
             }
         }
+        #[allow(
+            clippy::unused_enumerate_index,
+            reason = "the ordinal selects the first-registration fault cut in test builds"
+        )]
         for (_at, (index, registration)) in indices.into_iter().zip(registrations).enumerate() {
             if !self.entries[index].publish(registration) {
                 return false;

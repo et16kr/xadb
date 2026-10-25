@@ -927,5 +927,69 @@
     ],
     "product_tests_run": 0,
     "warnings_remain": true
+  },
+  "push_quality_20261026": {
+    "baseline_commit": "484b7bc924d961a74f014980b5067fae94c06f85",
+    "scope": "Formatting and behavior-preserving lint corrections to committed source; existing five drafts excluded; historical runtime evidence unchanged.",
+    "source_manifest": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-push-quality/candidate-source-manifest.json",
+      "sha256": "e2e2dd1ccdb980425e02aff5e6aea90b59308ed4b025dc3d8a9a202b88961292"
+    },
+    "lint_diff": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-push-quality/lint-only.diff",
+      "sha256": "cca3f6a517234714c017bf98739d4f547427aa2e913539209acdb6d0ea8526f7"
+    },
+    "original_push": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-push-r0.log",
+      "sha256": "7be8ea3e959646741645e7aad4c25a075a53de7448e10fa5dba0db85b5d577af",
+      "status": "FAIL_RUSTFMT_BEFORE_PUSH"
+    },
+    "clippy": {
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "attempts": [
+        {
+          "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-push-quality/clippy-r0.log",
+          "sha256": "c2ee3538018ffdf05b8af1876232b7be9792c064b78c36c0c29679042a86b6ad",
+          "status": "FAIL"
+        },
+        {
+          "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-push-quality/clippy-r1.log",
+          "sha256": "60244d21e01b3bf4c9c55678bc1f598856fc2d1fe32b195689b3e9e911abebf4",
+          "status": "FAIL"
+        },
+        {
+          "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-push-quality/clippy-r2.log",
+          "sha256": "ef5e93f4a1bbe689224693648add469ce93fafaf71f2f5f80b0e3173e87feb2e",
+          "status": "FAIL"
+        },
+        {
+          "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-push-quality/clippy-r3.log",
+          "sha256": "5d284a8f7bd3118312e02fe077edb9a232bf09a115bdcd242e05b22d6af9626d",
+          "status": "PASS"
+        }
+      ],
+      "successful_attempt": "r3",
+      "seconds_reported": 16.78
+    },
+    "product_tests_run": 0,
+    "review": {
+      "path": "/home/et16/Documents/Codex/2026-10-25/new-chat/work/dev3-push-quality-review.md",
+      "sha256": "6c10f3d7a040a5af704dcdc5c4b703b7699693a288ad20af588044aa25dccb35",
+      "status": "D1_ACCEPTED_NO_BLOCKERS"
+    },
+    "final_committed_gate": "Required actual pre-push immutable export fmt/clippy/document validation; not claimed by this preparation record",
+    "uncommitted_drafts_preserved": 5,
+    "whole_DEV3_S5_complete": false
   }
 }

@@ -189,14 +189,13 @@ fn validate_rows(graph: &Graph<'_>) -> Result<(usize, usize)> {
                 graph.home(terminal)?,
                 root,
             )?;
-            if let Some(root) = root {
-                if spec.chain.apply < root.last_step()
+            if let Some(root) = root
+                && (spec.chain.apply < root.last_step()
                     || root.state() == queue::JobState::RootReserved
                         && (spec.chain.apply != root.lease_lsn()
-                            || spec.inventory.change_lsn != root.lease_lsn())
-                {
-                    return Err(Error::OrderMismatch);
-                }
+                            || spec.inventory.change_lsn != root.lease_lsn()))
+            {
+                return Err(Error::OrderMismatch);
             }
             transactions += 1;
         } else {
@@ -439,7 +438,7 @@ fn descriptor_source_bytes() -> usize {
         + 2 * size_of::<ReservationOwner>()
         + 4 * size_of::<Result<()>>()
         + 8 * size_of::<&[u8]>()
-        + 8 * size_of::<usize>();
+        + size_of::<[usize; 8]>();
     // The Aging bound includes the same original descriptor decoder, its
     // validation/remaining/hash temporaries and the additional Root2 check.
     // Regular Tx/System decode has no wider closure. `descriptor()` following
@@ -454,7 +453,7 @@ fn descriptor_source_bytes() -> usize {
 
 fn active_descriptor_source_bytes() -> usize {
     use std::mem::size_of;
-    let outer = 2 * size_of::<LayoutView<'_>>() + 8 * size_of::<usize>() + 4 * size_of::<&[u8]>();
+    let outer = 2 * size_of::<LayoutView<'_>>() + size_of::<[usize; 8]>() + 4 * size_of::<&[u8]>();
     // Each loop iteration ends before another descriptor is decoded. At the
     // successful return, retain both extracted values and their Result slots.
     let returned = 2 * size_of::<DescriptorSpec>()

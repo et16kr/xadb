@@ -45,7 +45,7 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
         let mut bytes = self.entry()?;
         let base = owner.index() * 2;
         let mut generations = [0; 2];
-        for at in 0..2 {
+        for (at, generation) in generations.iter_mut().enumerate() {
             let row = reference_row(&bytes[..], base + at);
             if row[0] != 0 {
                 return Err(unchanged(if row[0] == RETIRED {
@@ -54,7 +54,7 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
                     VisibilityCause::Busy
                 }));
             }
-            generations[at] = u64_at(row, 8)
+            *generation = u64_at(row, 8)
                 .checked_add(1)
                 .ok_or_else(|| unchanged(VisibilityCause::Exhausted))?;
         }

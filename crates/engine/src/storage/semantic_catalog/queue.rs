@@ -141,6 +141,10 @@ fn lease(
 
 /// Output cells and aggregate are caller scratch and may change on error.
 /// The returned ordinal selects the one modified Job; AgingStart has none.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "separate borrowed before-images and caller-owned output buffers keep preparation allocation-free"
+)]
 pub(crate) fn prepare(
     change: QueueChange<'_>,
     namespace: Namespace,

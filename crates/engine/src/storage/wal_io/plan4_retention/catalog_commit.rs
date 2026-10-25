@@ -373,7 +373,7 @@ pub(in super::super) fn source_bytes() -> usize {
         + 8 * size_of::<Result<()>>()
         + 4 * size_of::<RetentionError>()
         + 20 * size_of::<&()>()
-        + 8 * size_of::<usize>();
+        + size_of::<[usize; 8]>();
     let install = 2 * size_of::<FrameStamp>()
         + size_of::<dirty_frame::DptStamp<'_>>()
         + size_of::<live::RetentionInstall<'_, '_, '_>>()
@@ -392,7 +392,7 @@ pub(in super::super) fn source_bytes() -> usize {
         + 4 * size_of::<foundation::codec::ContentHasher>()
         + size_of::<[bool; TARGETS]>()
         + size_of::<Option<u64>>()
-        + 8 * size_of::<u64>();
+        + size_of::<[u64; 8]>();
     retained
         + dirty_frame::commit_source_bytes::<TARGETS>()
         // The installer loop's stamp/permit/DPT values end before control,

@@ -483,10 +483,10 @@ fn compute<'a>(
         job,
         lsn: PageLsn(lsn),
     });
-    if op == Operation::RollbackStart {
-        if let Some(context) = ctx {
-            images::validate_retained_undo(context, required(inputs.undo)?)?;
-        }
+    if op == Operation::RollbackStart
+        && let Some(context) = ctx
+    {
+        images::validate_retained_undo(context, required(inputs.undo)?)?;
     }
     let mut projection = None;
     let mut catalog_bytes = 0;

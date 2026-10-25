@@ -33,8 +33,8 @@ const STAGE_NAME: &str = "d3-writer-stage";
 
 mod bootstrap;
 mod commit_bridge;
-pub(in crate::storage) use bootstrap::Plan4LoadPermit;
 pub(in crate::storage) use bootstrap::CatalogRetirementRejected;
+pub(in crate::storage) use bootstrap::Plan4LoadPermit;
 #[cfg(test)]
 pub(in crate::storage) use bootstrap::plan4_test_mutate_page;
 #[cfg(test)]
@@ -1148,10 +1148,10 @@ pub(in crate::storage) use bootstrap::{
     AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
     HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
     RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
-    StagedRetirement, UndoPin, TxnPin, VerifiedRetirement, VisibilityCause, VisibilityError,
-    VisibilityLoan, VisibilityResult, VISIBILITY_BYTES,
-    TxPairAuthority, TxPairInstallPermit, TxPairStageRejection, TxPairCancelKind,
-    TxPairCancelPermit, TxPairRetirePermit, TxPairControlCommit,
+    StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
+    TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin, UndoPin,
+    VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError, VisibilityLoan,
+    VisibilityResult,
 };
 
 pub(in crate::storage) use bootstrap::{CatalogAllocationError, validate_catalog_base_allocation};

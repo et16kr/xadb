@@ -135,10 +135,10 @@ pub(in crate::storage) fn encode_current(
         let actor = job.source().ok_or(Error::IdentityMismatch)?;
         let mut owner = None;
         for index in 0..transactions {
-            if TxnRef::decode(&owner_slot(output, index)?[8..56])? == actor {
-                if owner.replace(index).is_some() {
-                    return Err(Error::IdentityMismatch);
-                }
+            if TxnRef::decode(&owner_slot(output, index)?[8..56])? == actor
+                && owner.replace(index).is_some()
+            {
+                return Err(Error::IdentityMismatch);
             }
         }
         let mut items = [0; semantic_catalog::inventory::ITEMS_BYTES];

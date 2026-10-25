@@ -15,8 +15,8 @@ use foundation::identity::{ObjectHandle, ObjectId, SchemaEpoch};
 mod job;
 #[path = "catalog/root.rs"]
 mod root;
-pub(crate) use job::{JobState, JobView, decode_job, encode_job, free_job};
-pub(crate) use root::{RootView, decode_root, encode_root, initial_root};
+pub(crate) use job::{JobState, JobView, decode_job, free_job};
+pub(crate) use root::{RootView, decode_root, initial_root};
 
 /// Trusted first-consumer reservation recipe, not a live allocation authority.
 pub(crate) const CREATE_PEAK: super::ResourcePeak = super::ResourcePeak {
@@ -167,10 +167,10 @@ impl<'a> JobCells<'a> {
         })
     }
     pub(crate) fn cell(self, ordinal: usize) -> &'a [u8; JOB_BYTES] {
-        if let Some((selected, cell)) = self.replacement {
-            if selected == ordinal {
-                return cell;
-            }
+        if let Some((selected, cell)) = self.replacement
+            && selected == ordinal
+        {
+            return cell;
         }
         &self.original[ordinal]
     }

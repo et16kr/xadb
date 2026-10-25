@@ -404,17 +404,17 @@ fn assert_image(live: &Live<'_, '_, '_, '_, '_, '_, '_, '_, port::Writer>, expec
     );
     assert_eq!(
         request.identity.page.file,
-        crate::storage::page::FileId::new(u64_at(&expected, 24)).unwrap()
+        crate::storage::page::FileId::new(u64_at(expected, 24)).unwrap()
     );
-    assert_eq!(request.identity.page.page_no, u64_at(&expected, 32));
+    assert_eq!(request.identity.page.page_no, u64_at(expected, 32));
     assert_eq!(
         request.identity.page.incarnation.get(),
-        u64_at(&expected, 40)
+        u64_at(expected, 40)
     );
-    assert_eq!(request.identity.owner.get(), u64_at(&expected, 48));
+    assert_eq!(request.identity.owner.get(), u64_at(expected, 48));
     assert_eq!(
         request.identity.owner_generation.get(),
-        u64_at(&expected, 56)
+        u64_at(expected, 56)
     );
     assert_eq!(
         (request.kind as u8, request.level),

@@ -436,7 +436,7 @@ pub(in super::super) fn lookup_source_census() -> LookupSourceCensus {
     let common = 4 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
         + 8 * size_of::<&[u8]>()
-        + 8 * size_of::<u64>();
+        + size_of::<[u64; 8]>();
     // source_state copies no payload. source_cut copies InstalledSource once;
     // the guard has ended before the returned Cut is constructed. unchanged
     // retains one guard while comparing two copied optional intervals.

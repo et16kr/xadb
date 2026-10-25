@@ -121,7 +121,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     let request = self
                         .pool
                         .target_request(candidate.index)
-                        .map_err(|error| frame_error(error))?;
+                        .map_err(frame_error)?;
                     Ok(RetentionResidencyStep::FlushRequired {
                         target: Plan4Target { request },
                         rec_lsn: frame.rec_lsn.ok_or_else(|| {

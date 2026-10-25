@@ -851,10 +851,7 @@ impl SharedPool<'_, '_, '_, '_> {
             (TxPairCancelKind::Cancelled, Some(requirement))
                 if requirement.uses_fence(self.fence)
                     && requirement.location().lsn > key.identity.reserve.0
-                    && permit.allocator_after().page_lsn.0 == requirement.location().lsn =>
-            {
-                ()
-            }
+                    && permit.allocator_after().page_lsn.0 == requirement.location().lsn => {}
             _ => return Err(self.fatal(Cause::Invariant)),
         }
         {

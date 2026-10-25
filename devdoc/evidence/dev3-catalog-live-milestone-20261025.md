@@ -29,3 +29,9 @@ MC03, MT01–MT07, MF14의9개 실제 입력은 NOT_RUN이다. MF01/MF13은 원 
 사용자 보고를 확인한 결과 기본 `cargo build --locked --offline`에서 E0432 두 개가 재현됐다. `bootstrap.rs`의 `#[cfg(test)]`가 일반 경로에 필요한 `CatalogRetirementRejected` 재노출에 잘못 적용되고, 다음 줄의 시험 전용 `Plan4TestMutableCause`/`Plan4TestSemanticError`에는 빠져 있었다. 원 커밋의 문제이며 남겨 둔5개 초안이 원인이 아니다. 앞서 통과한 것은 engine 테스트 대상 컴파일이었으므로 일반 빌드 성공을 보장하지 않았다.
 
 조건부 속성을 원래 시험 전용 별칭 앞으로 옮겼다. 별도 D1 소스 검토는 ACCEPTED이며, 같은 수정 source에서 기본 workspace 빌드14.734초 PASS와 `cargo test -p xadb-engine --lib --all-features --locked --offline --no-run`21.739초 PASS를 확인했다. 기능 시험은 실행하지 않았고 기존 경고는 남아 있다. 원 기본 빌드 FAIL과 모든 compiler 로그/source를 보존했으며, 완료된 진단 compiler target만 제거했다. [원본 receipt·소스·검토 해시](dev3-catalog-live-milestone-20261025.json)의 `non_test_build_regression_20261026`에 연결한다.
+
+## 2026-10-26 push 준비 정리
+
+사용자의 문서 점검·push 요청에 따라 커밋된 소스를 분리해 포맷과 Clippy 오류를 정리했다. 미사용 재노출을 제거하고 시험 전용 v1 queue codec·조회 타입을 `cfg(test)`로 구분했다. 조건식·배열 순회·바이트 수식은 같은 의미로 정리했으며, 선형 토큰을 반환하는 오류와 할당 없는 borrowed view의 크기·버퍼 인자 수에는 항목별 lint 허용 이유를 남겼다. 제품 계약·자원 한도·oracle의 기대값은 변경하지 않았다.
+
+원 push의 포맷 실패와 중간 정적 검사 실패를 보존했다. 수정 후보는 workspace의 일반·시험 대상 및 모든 feature를 포함한 Clippy `-D warnings`를16.78초에 통과했다. 이번 정리는 정적 검사 범위이며 기능 시험은0회다. 원 runtime PASS는 당시 source에 귀속하고 미실행9개·전체 DEV3/S5 미완료를 유지한다. 기존5개 초안은 별도로 보존하여 push 대상에서 제외한다. 상세 후보 manifest·로그·독립 검토는 [JSON 후속 기록](dev3-catalog-live-milestone-20261025.json)의 `push_quality_20261026`에 연결한다. 최종 commit의 포맷·Clippy·문서 검사는 실제 pre-push 훅에서 수행한다.

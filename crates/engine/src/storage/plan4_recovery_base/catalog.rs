@@ -16,9 +16,10 @@ use foundation::identity::{Generation, ObjectHandle, ObjectId, SchemaEpoch};
 mod graph;
 #[path = "catalog/inventory.rs"]
 pub(in crate::storage) mod inventory;
+#[cfg(test)]
+pub(in crate::storage) use graph::source_census;
 pub(in crate::storage) use graph::{
-    CatalogBaseView, CatalogCensus, ReservedInventory, SourceCensus, decode, encode, source_bytes,
-    source_census,
+    CatalogBaseView, CatalogCensus, ReservedInventory, decode, encode, source_bytes,
 };
 
 pub(in crate::storage) const BASE_BYTES: usize = 2_097_152;

@@ -173,6 +173,10 @@ impl<'v, 'm, 'a, 'b, 'c, 's, 'p, 'd, const N: usize>
         }
         Ok(())
     }
+    #[allow(
+        clippy::result_large_err,
+        reason = "rejection returns the original linear UndoPin without heap allocation"
+    )]
     pub(in crate::storage) fn begin<'t>(
         &'t mut self,
         verified: VerifiedRetirement<'c, 's>,

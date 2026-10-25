@@ -181,7 +181,6 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
             ));
         }
         source.unchanged()?;
-        drop(source);
         self.bound
             .return_catalog_pair(
                 self.owner,
@@ -300,7 +299,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
             .try_write()
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
         let installed = (|| {
-            for at in 0..9 {
+            for (at, after_image) in after.iter().enumerate() {
                 let actual = write
                     .observe(at)
                     .map_err(|e| frame(RetentionPhase::Prepare, e))?
@@ -308,7 +307,7 @@ impl<'s, 'c, W: WriterNamespace> ReservedCatalogCreate<'_, '_, 's, 'c, '_, '_, '
                 if actual != prepared.stamp(at) {
                     return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy));
                 }
-                if after[at].is_some()
+                if after_image.is_some()
                     && actual.is_some_and(|stamp| {
                         stamp.modification_counter == u64::MAX
                             || stamp.page_lsn.0 >= prepared.observation.header.lsn
@@ -1511,13 +1510,14 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         for (ordinal, bytes) in self.control.jobs().iter().enumerate() {
             let job = queue::decode_job(bytes, self.inner.storage.profile().spec().namespace)
                 .map_err(queue_error)?;
-            if job.source() == Some(actor) && job.state().is_terminal() == terminal {
-                if found.replace(ordinal).is_some() {
-                    return Err(unchanged(
-                        RetentionPhase::Prepare,
-                        RetentionCause::Invariant,
-                    ));
-                }
+            if job.source() == Some(actor)
+                && job.state().is_terminal() == terminal
+                && found.replace(ordinal).is_some()
+            {
+                return Err(unchanged(
+                    RetentionPhase::Prepare,
+                    RetentionCause::Invariant,
+                ));
             }
         }
         found.ok_or_else(|| unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction))
@@ -1712,7 +1712,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             .map_err(|e| frame(RetentionPhase::Install, e))?;
         let installed = (|| {
             let mut dpt = [const { None }; N];
-            for at in 0..N {
+            for (at, dpt_entry) in dpt.iter_mut().enumerate() {
                 let stamp = prepared
                     .stamp(at)
                     .ok_or_else(|| unchanged(RetentionPhase::Install, RetentionCause::Invariant))?;
@@ -1720,7 +1720,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     .matches_stamp(at, &stamp)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
                 if prepared.after(at).is_some() {
-                    dpt[at] = Some(
+                    *dpt_entry = Some(
                         write
                             .preflight_dpt(at, &stamp)
                             .map_err(|e| frame(RetentionPhase::Install, e))?,
@@ -1746,7 +1746,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     }
                 })?;
             catalog_mark_staged(&prepared, &mut self.control, requirement)?;
-            for at in 0..N {
+            for (at, dpt_entry) in dpt.iter_mut().enumerate() {
                 let Some(after) = prepared.after(at) else {
                     continue;
                 };
@@ -1764,7 +1764,7 @@ impl<'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     .install_metadata(at, &permit)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
                 write
-                    .install_dpt(dpt[at].take().expect("preflight DPT"), &permit)
+                    .install_dpt(dpt_entry.take().expect("preflight DPT"), &permit)
                     .map_err(|e| frame(RetentionPhase::Install, e))?;
             }
             catalog_apply(&prepared, &mut self.control, storage.profile(), requirement)?;

@@ -6,7 +6,7 @@ use super::super::plan4_pages::{
 };
 use super::*;
 use crate::storage::{
-    allocation_page::{self, AllocationEntry},
+    allocation_page,
     dirty_frame::TargetRequest,
     obligation::{self, DescriptorSpec, OwnerState, RemainingBudget, WorkPhase},
     page::{self, PageIdentity, PageKind, PageRef},

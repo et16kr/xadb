@@ -176,14 +176,15 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + size_of::<RetentionResidencyStep>()
         + size_of::<Result<Option<RetentionResidencyStep>>>()
         + 64;
-    let load = create_preparation + load_direct.max(
-        replay
-            + 2 * size_of::<WalPrefix>()
-            + 2 * size_of::<Plan4Target>()
-            + 2 * size_of::<Result<()>>()
-            + 16 * size_of::<&[u8]>()
-            + 256,
-    );
+    let load = create_preparation
+        + load_direct.max(
+            replay
+                + 2 * size_of::<WalPrefix>()
+                + 2 * size_of::<Plan4Target>()
+                + 2 * size_of::<Result<()>>()
+                + 16 * size_of::<&[u8]>()
+                + 256,
+        );
     let flush_direct = scalar
         + size_of::<Option<CapturedPage<'_, '_>>>()
         + size_of::<Result<Option<CapturedPage<'_, '_>>>>()

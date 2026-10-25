@@ -7,8 +7,8 @@ pub(crate) use catalog_live::PreparedCatalog;
 pub(in crate::storage) use catalog_live::retirement::CatalogRetirementRejected;
 #[path = "catalog_commit.rs"]
 mod catalog_commit;
-pub(in crate::storage) use catalog_commit::{CatalogCommitAttempt, CatalogCommitInstalled};
 pub(super) use catalog_commit::source_bytes as catalog_commit_source_bytes;
+pub(in crate::storage) use catalog_commit::{CatalogCommitAttempt, CatalogCommitInstalled};
 
 use crate::{
     storage::{

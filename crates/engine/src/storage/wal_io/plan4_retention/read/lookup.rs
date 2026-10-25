@@ -19,6 +19,10 @@ use crate::storage::{
 };
 use foundation::identity::Generation;
 
+#[allow(
+    clippy::large_enum_variant,
+    reason = "the borrowed record view stays inline and is charged by source_bytes; lookup must not allocate"
+)]
 pub(crate) enum CatalogLookupStep<'a> {
     Found(CatalogRecordView<'a>),
     Missing,
@@ -419,14 +423,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                         };
                         if let Some(value) =
                             select(request, history::arena_page(token.bytes(), index))?
+                            && found.replace(value).is_some()
                         {
-                            if found.replace(value).is_some() {
-                                return Err(fatal(
-                                    self.storage,
-                                    RetentionPhase::Census,
-                                    RetentionCause::Invariant,
-                                ));
-                            }
+                            return Err(fatal(
+                                self.storage,
+                                RetentionPhase::Census,
+                                RetentionCause::Invariant,
+                            ));
                         }
                     }
                     cut.unchanged()?;

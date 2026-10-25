@@ -499,7 +499,9 @@ fn read_header(bytes: &[u8; BASE_BYTES], e: Expected) -> Result<Header> {
 }
 
 fn read_header_format(bytes: &[u8], e: Expected, catalog: bool) -> Result<Header> {
-    if bytes.len() < 4096 { return Err(Error::Corrupt); }
+    if bytes.len() < 4096 {
+        return Err(Error::Corrupt);
+    }
     if &bytes[..4] != b"XRB1" {
         return Err(Error::Corrupt);
     }
@@ -534,7 +536,13 @@ fn read_header_format(bytes: &[u8], e: Expected, catalog: bool) -> Result<Header
         || !zero(&bytes[1160..1184])
         || !zero(&bytes[1188..1192])
         || !zero(&bytes[1224..1280])
-        || !zero(&bytes[if format == BaseFormat::V3Catalog { 1600 } else { 1664 }..4096])
+        || !zero(
+            &bytes[if format == BaseFormat::V3Catalog {
+                1600
+            } else {
+                1664
+            }..4096],
+        )
     {
         return Err(Error::IdentityMismatch);
     }
@@ -560,7 +568,9 @@ fn read_header_format(bytes: &[u8], e: Expected, catalog: bool) -> Result<Header
             0 => AllocationTerminal::None,
             1 => AllocationTerminal::Cancelled,
             2 => AllocationTerminal::InitializedStatus,
-            3 if matches!(format, BaseFormat::V2System | BaseFormat::V3Catalog) => AllocationTerminal::InitializedUndo,
+            3 if matches!(format, BaseFormat::V2System | BaseFormat::V3Catalog) => {
+                AllocationTerminal::InitializedUndo
+            }
             _ => return Err(Error::Unsupported),
         },
         retired_batch: get(bytes, 496),
@@ -1555,7 +1565,9 @@ pub(super) fn encode<'a>(
     output: &'a mut [u8; BASE_BYTES],
     scratch: &mut [[u8; PAGE_BYTES]; 4],
 ) -> Result<BaseView<'a>> {
-    if h.format == BaseFormat::V3Catalog { return Err(Error::Unsupported); }
+    if h.format == BaseFormat::V3Catalog {
+        return Err(Error::Unsupported);
+    }
     validate_header(h, expected)?;
     output.fill(0);
     write_header(h, expected, &mut output[..4096])?;

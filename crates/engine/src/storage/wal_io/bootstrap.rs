@@ -55,7 +55,6 @@ pub(in crate::storage) use plan4_genesis::{
 
 #[path = "doublewrite_install.rs"]
 mod doublewrite_install;
-pub(in crate::storage) use doublewrite_install::{CatalogCommitAttempt, CatalogCommitInstalled};
 pub(in crate::storage) use doublewrite_install::Plan4LoadPermit;
 pub(crate) use doublewrite_install::{
     AllocationObservation, AllocationSession, AllocationSessionCause, AllocationSessionError,
@@ -79,6 +78,7 @@ pub(crate) use doublewrite_install::{
     StatusReadGuard, StatusReader, SystemLoadError, SystemLoadObservation, SystemPage,
     SystemPageKind, SystemResidencyCursor, SystemResidencyStep, SystemSlotStep,
 };
+pub(in crate::storage) use doublewrite_install::{CatalogCommitAttempt, CatalogCommitInstalled};
 pub(crate) use doublewrite_install::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
     RecoveryInspection, RecoveryPhase, RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError,
@@ -1226,10 +1226,12 @@ pub(in crate::storage) use doublewrite_install::{
     AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
     HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
     RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
-    StagedRetirement, UndoPin, TxnPin, VerifiedRetirement, VisibilityCause, VisibilityError,
-    VisibilityLoan, VisibilityResult, VISIBILITY_BYTES,
-    TxPairAuthority, TxPairInstallPermit, TxPairStageRejection, TxPairCancelKind,
-    TxPairCancelPermit, TxPairRetirePermit, TxPairControlCommit,
+    StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
+    TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin, UndoPin,
+    VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError, VisibilityLoan,
+    VisibilityResult,
 };
 
-pub(in crate::storage) use doublewrite_install::{CatalogAllocationError, validate_catalog_base_allocation};
+pub(in crate::storage) use doublewrite_install::{
+    CatalogAllocationError, validate_catalog_base_allocation,
+};

@@ -28,10 +28,9 @@ pub(crate) use allocation_reservation::{
 
 #[path = "mutable_storage.rs"]
 mod mutable_storage;
-pub(in crate::storage) use mutable_storage::CatalogRetirementRejected;
-pub(in crate::storage) use mutable_storage::{CatalogCommitAttempt, CatalogCommitInstalled};
 #[cfg(test)]
 pub(in crate::storage) use allocation_reservation::operation::SemanticError as Plan4TestSemanticError;
+pub(in crate::storage) use mutable_storage::CatalogRetirementRejected;
 #[cfg(test)]
 pub(in crate::storage) use mutable_storage::Cause as Plan4TestMutableCause;
 pub(in crate::storage) use mutable_storage::Plan4LoadPermit;
@@ -52,6 +51,7 @@ pub(crate) use mutable_storage::{
     StatusReadGuard, StatusReader, SystemLoadError, SystemLoadObservation, SystemPage,
     SystemPageKind, SystemResidencyCursor, SystemResidencyStep, SystemSlotStep,
 };
+pub(in crate::storage) use mutable_storage::{CatalogCommitAttempt, CatalogCommitInstalled};
 pub(crate) use mutable_storage::{
     ClosedRecovery, RecoveryAcquireError, RecoveryCause, RecoveryError, RecoveryFailure,
     RecoveryInspection, RecoveryPhase, RecoveryPrefix, RecoveryPrefixCause, RecoveryPrefixError,
@@ -693,8 +693,8 @@ pub(in crate::storage) use mutable_storage::EmptyTransactionInstall;
 pub(crate) use mutable_storage::EmptyTransactionObservation;
 
 pub(in crate::storage) use allocation_reservation::operation::{
-    SemanticError as CatalogAllocationError, validate_catalog_base_allocation,
-    plan4_base_allocation_source_bytes, plan4_system_base_allocation_source_bytes,
+    SemanticError as CatalogAllocationError, plan4_base_allocation_source_bytes,
+    plan4_system_base_allocation_source_bytes, validate_catalog_base_allocation,
     validate_plan4_base_allocation, validate_plan4_system_base_allocation,
 };
 
@@ -710,8 +710,8 @@ pub(in crate::storage) use mutable_storage::{
     AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
     HorizonObservation, InstalledFrontier, ReadyFrontier, ReferenceLease, RetirementIntent,
     RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
-    StagedRetirement, UndoPin, TxnPin, VerifiedRetirement, VisibilityCause, VisibilityError,
-    VisibilityLoan, VisibilityResult, VISIBILITY_BYTES,
-    TxPairAuthority, TxPairInstallPermit, TxPairStageRejection, TxPairCancelKind,
-    TxPairCancelPermit, TxPairRetirePermit, TxPairControlCommit,
+    StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
+    TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin, UndoPin,
+    VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError, VisibilityLoan,
+    VisibilityResult,
 };

@@ -445,8 +445,6 @@ fn health<W: WriterNamespace>(
 #[cfg(test)]
 #[path = "plan4_retention/tests.rs"]
 mod tests;
-#[cfg(test)]
-pub(in crate::storage) use tests::install_after_capture as install_catalog_after_capture;
 
 #[cfg(test)]
 #[path = "plan4_retention/free_undo_literal_tests.rs"]

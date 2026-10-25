@@ -101,7 +101,7 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         if !self.registrations_valid()? {
             return Err(self.fatal(Cause::Invariant));
         }
-        Ok(self.directory_read(|directory| directory.address_present(request))?)
+        self.directory_read(|directory| directory.address_present(request))
     }
     pub(in crate::storage) fn resident_request(
         &self,

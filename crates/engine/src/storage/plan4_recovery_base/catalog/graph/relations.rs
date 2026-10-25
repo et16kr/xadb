@@ -330,13 +330,12 @@ fn catalog(graph: &Graph<'_>) -> Result<()> {
                         return Err(Error::OrderMismatch);
                     }
                 }
-                if let Some(job) = graph.jobs.for_actor(actor, false)? {
-                    if job.state() != queue::JobState::RootReleasingCommitted
+                if let Some(job) = graph.jobs.for_actor(actor, false)?
+                    && (job.state() != queue::JobState::RootReleasingCommitted
                         || job.object() != Some(h.identity)
-                        || job.commit_q() != q.get()
-                    {
-                        return Err(Error::IdentityMismatch);
-                    }
+                        || job.commit_q() != q.get())
+                {
+                    return Err(Error::IdentityMismatch);
                 }
             }
         }
