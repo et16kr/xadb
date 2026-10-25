@@ -891,3 +891,8 @@ static15초(worker10/감사5), memory210초(worker180/감사30, 함수·사례30
 [계약](../contracts/dev3-tree-format.md#leaf-edit)·[원 실행 증거](../evidence/dev3-leaf-edit-20261025.md)의 `storage::tree_page::edit::tests::` 고유5개를 기존 tree codec9개와 분리해 선택한다. 정확 이름은 `scripts/check_dev3_leaf.py`의 `LEAF_EDIT_TESTS`로 고정하며 named result·고정 layout witness·분모를 함께 검산한다. 중간에는 이 신규5개만 실행했고 완료된 하부 시험은 반복하지 않았다.
 
 S5는 고유5개와 `storage::tree_page::edit::extended_tests::leaf_edit_extended_histories_match_ordered_map`의 별도 ignored256 seeds×1024 operation×3family를 전부 포함한다. 중간64×128×3와 확대 stream의 seed·LCG·hash는 계약/실행 전 frozen-input에 기록한다. `scripts/check_dev3_tree_edit_borrows.py`의 source/cell/scratch positive/negative+baseline7과 `scripts/test_dev3_tree_edit.py`의 receipt/probe/layout3도 새 검증 도구 inventory다. 같은 코드의 완료 결과는 원 source에 귀속하며 이후 변경은 관련 사례만 검증한다.
+
+<a id="typed-catalog-read-inventory"></a>
+## 원 Catalog guard의 typed 조회 — 추가 inventory
+
+[계약](../contracts/dev3-retention-live.md#typed-catalog-read)·[고정 이름과 원 결과](../evidence/dev3-catalog-reader-20261025.json)의 `retention::read::catalog::tests::` 고유5개를 exact selector로 실행했다. 전체3pin/해제, 원 core/fence, physical version/부재, 검색 밖 손상/identity, source-value 경계다. S5 전체 DEV3 inventory에는 이5개도 포함하며 중간 완료 반복0을 유지한다. `check_dev3_catalog_read_borrows.py`의 baseline1+positive/negative6 및 `test_check_dev3_catalog_read_borrows.py`의 새3개는 도구별 별도 분모다. 실제 nonempty owner/native/dirty·load·recovery는 후속 구현의 고정 입력과 선택 검증을 요구하며 순수 literal PASS로 대체하지 않는다.

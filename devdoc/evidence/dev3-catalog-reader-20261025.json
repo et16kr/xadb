@@ -1,0 +1,188 @@
+{
+  "decision": "D3-PAGE-LIFETIME-CATALOG-001",
+  "scope": "Typed resident physical catalog read supplier; current production owner still N=0",
+  "base_commit": "18eb879e37a0fcc0bea9837270a8c322dd6f3a03",
+  "elf_sha256": "fe82d8f4c92116ef3d1874da70b679fb234aaa4fcfbca628fde7293558c8665b",
+  "owned_source_files": {
+    "crates/engine/src/storage/wal_io/plan4_retention.rs": "7418f6f69bb9177e5469623716170d5f1ce5eb4869ead3631357c60243e3997d",
+    "crates/engine/src/storage/wal_io/plan4_retention/read.rs": "a9cd0ce93156181f6850399a389f87beb0d1763aaa80be38df5608f6b9f6e2d4",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/catalog.rs": "0b150e4e217fed28cca25c2520b34e24e952f5d272afdc704652a75047911315",
+    "crates/engine/src/storage/wal_io/plan4_retention/read/catalog_tests.rs": "ca094806d62c50e51bfdcd48ef34203cc3e2f89e1e3a2bb9284591bfb8ce4bb7",
+    "crates/engine/src/storage/wal_io/plan4_retention/resources.rs": "0308f7468521f0dbf4ceeb68524fae03fe250d729362e20aeb0d3cd4d6740132"
+  },
+  "selection": {
+    "elf_sha256": "fe82d8f4c92116ef3d1874da70b679fb234aaa4fcfbca628fde7293558c8665b",
+    "tests": [
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::catalog::tests::catalog_read_source_reservation_fits_existing_peak",
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::catalog::tests::catalog_read_nonempty_physical_versions_and_absence",
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::catalog::tests::catalog_read_original_owner_binding_and_fence_cleanup",
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::catalog::tests::catalog_read_original_owner_whole_set_and_release",
+      "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::catalog::tests::catalog_read_rejects_corrupt_unselected_values_and_identity"
+    ]
+  },
+  "results": [
+    {
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::catalog::tests::catalog_read_source_reservation_fits_existing_peak",
+      "exit": 0,
+      "seconds": 0.001378107999698841,
+      "stdout_sha256": "395481fef755789afa282aaa7a4870c8b1db6deece5a7fb37ec865a4cbd05b02",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::catalog::tests::catalog_read_nonempty_physical_versions_and_absence",
+      "exit": 0,
+      "seconds": 0.0029700380000576843,
+      "stdout_sha256": "56a67a4b855c7691f781b4e6efce9cdae4b68a79d86d43fece461d6d8d3c3463",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::catalog::tests::catalog_read_original_owner_binding_and_fence_cleanup",
+      "exit": 0,
+      "seconds": 0.15294191199973284,
+      "stdout_sha256": "8d413d985c24d5b67c21328eb16a7f19b5b6247a7faa0f3f24d69ad975db25c2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::catalog::tests::catalog_read_original_owner_whole_set_and_release",
+      "exit": 0,
+      "seconds": 0.14577554300012707,
+      "stdout_sha256": "b78d8c648865aed0d4c5abb6f6c74ef46de16fd0d6913ba921495b487ce40747",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "test": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::read::catalog::tests::catalog_read_rejects_corrupt_unselected_values_and_identity",
+      "exit": 0,
+      "seconds": 0.005105678999825614,
+      "stdout_sha256": "6e233547396393d649d07c93432a41eae8af243c5095362401154161e86e96ab",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "quality": {
+    "compile": "PASS",
+    "clippy": "PASS",
+    "fmt": "PASS",
+    "clippy_stderr_sha256": "b2ef8801b0d5c4cfe3dd6cd857ffa49a66e40e2aa21e21a3d05f39ccb686d0b9"
+  },
+  "prior_failure": {
+    "run": "r0",
+    "phase": "compile",
+    "errors": 8,
+    "reason": "two qualified const-generic arguments missing braces expanded twice",
+    "product_tests_executed": 0
+  },
+  "new_product_test_functions_pass": 5,
+  "completed_unchanged_tests_repeated": 0,
+  "source_value_census": {
+    "reader_actual": 10216,
+    "reader_reserved": 16384,
+    "memory": {
+      "old_catalog": 28676,
+      "retained": 20776,
+      "peak": 63168,
+      "metadata": 123072,
+      "whole": 188608
+    },
+    "native": {
+      "old_catalog": 29700,
+      "retained": 20912,
+      "peak": 63304,
+      "metadata": 123208,
+      "whole": 188744
+    }
+  },
+  "not_run": [
+    "nonempty resident Catalog mutation",
+    "dirty Catalog flush and eviction/reload",
+    "Row/Undo INIT and page lifetimes",
+    "nonempty retention semantic replay/recovery",
+    "native runtime owner read",
+    "DEV3/S5 acceptance"
+  ],
+  "effects": "New read performs no heap allocation, I/O, WAL stage or namespace mutation; fixture setup creates a fresh DB through existing production owner.",
+  "compiler_borrows": {
+    "status": "PASS",
+    "result": "/home/et16/work/xadb/artifacts/dev3/catalog-reader-20261025/catalog-read-borrows-mc36gv6i/result.json",
+    "result_sha256": "02a0b0cbecc6bca7ba57a0328c39aaa356c8d056254d2a3887a7fbbfe7bf7b2d",
+    "source_fingerprint": "eb3ac3507c8a1d4231a9f7c6a50b8b3709bee5b3b6c53304a957aa14088ba01d",
+    "cases": [
+      {
+        "name": "baseline",
+        "status": "PASS",
+        "expected_code": null,
+        "expected_line": null,
+        "source_sha256": "eb3ac3507c8a1d4231a9f7c6a50b8b3709bee5b3b6c53304a957aa14088ba01d"
+      },
+      {
+        "name": "release-positive",
+        "status": "PASS",
+        "expected_code": null,
+        "expected_line": null,
+        "source_sha256": "fe611275a6a2953e53327f469e21e8c0c5c63736b7ca59e5942fc20da71b1990"
+      },
+      {
+        "name": "release-negative",
+        "status": "PASS",
+        "expected_code": "E0505",
+        "expected_line": 11,
+        "source_sha256": "61a082137837ab3c512fb4998e2a74975e0e2430e270707e426520d10782806e"
+      },
+      {
+        "name": "drop-positive",
+        "status": "PASS",
+        "expected_code": null,
+        "expected_line": null,
+        "source_sha256": "ca9fa4616909c1635fa759c0b8c39b0f49682ba0e03b55e514cf626393f4c2fa"
+      },
+      {
+        "name": "drop-negative",
+        "status": "PASS",
+        "expected_code": "E0505",
+        "expected_line": 11,
+        "source_sha256": "5cb5e734c8b5de4cd61f6bf798982750f1cb1347ccb286224860392e930cfe3a"
+      },
+      {
+        "name": "owner-positive",
+        "status": "PASS",
+        "expected_code": null,
+        "expected_line": null,
+        "source_sha256": "3f53b1fda5701ae38a4f87696e470c8c615fadd0eac08d3857ad24b4b2c33243"
+      },
+      {
+        "name": "owner-negative",
+        "status": "PASS",
+        "expected_code": "E0499",
+        "expected_line": 10,
+        "source_sha256": "58ecdb1427edaaad2f3bce522fc91532260eba00986471f6d97be4563f59b21d"
+      }
+    ],
+    "checker_unittests": 3,
+    "disposable_cleanup": "disposable source and target removed; original source, patches and logs retained",
+    "removed_cache_bytes": 166111433
+  },
+  "source_storage": "r0/source.tar.gz and r1/source.tar.gz; every source-files.json member verified before removing expanded copies",
+  "cleanup": {
+    "manifest": "artifacts/dev3/catalog-reader-20261025/cleanup.json",
+    "sha256": "666009a1ab8964c76bc6b78871d6ecf7568e92996a755dd49a8a04044533c0d3",
+    "removed_regenerable_target_bytes": 113837601
+  },
+  "source_manifest_sha256": "c886e231560ecaf5f938258755a28900d0bfb847822749baf1c401bd0c34d442",
+  "source_fingerprint": "eb3ac3507c8a1d4231a9f7c6a50b8b3709bee5b3b6c53304a957aa14088ba01d",
+  "source_identity_note": "source_manifest_sha256 hashes r1/source-files.json bytes; source_fingerprint is the standard capture_source canonical source fingerprint, also used by compiler baseline. Neither field is a source archive SHA.",
+  "prior_receipt": {
+    "path": "receipt-r1.json",
+    "sha256": "7505bb84bd299bb0d17ad65602a501eb6fc2eb90ddac2856238c0a5dd6cbc93b",
+    "reason": "Preserve original receipt before clarifying manifest hash versus standard source fingerprint labels; no test rerun."
+  },
+  "integration": {
+    "status": "D1_ACCEPTED",
+    "implementer": "/root/page_lifetime",
+    "reviewer": "/root/dev3_review",
+    "integrator": "/root",
+    "receipt_path": "artifacts/dev3/catalog-reader-20261025/receipt.json",
+    "receipt_sha256": "f31c5dd9cc155f699936f4bb055246d58c4eb8a894874fd9bc9eeca1309520e5",
+    "new_checker_files": {
+      "scripts/check_dev3_catalog_read_borrows.py": "5bb13de25c989c52f1898f8243cc976ea3c80c6002d9b160ef5d8992c7a43322",
+      "scripts/test_check_dev3_catalog_read_borrows.py": "c0d177605f6639bb567ccd49bd896f3f06bf453268a21e3066342172ded99d10"
+    }
+  }
+}

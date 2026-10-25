@@ -2277,6 +2277,16 @@
       "path": "evidence/dev3-leaf-edit-20261025.json",
       "role": "evidence",
       "title": "DEV3 leaf 후보 편집 source별 선택 검증"
+    },
+    "dev3-catalog-reader-20261025.md": {
+      "path": "evidence/dev3-catalog-reader-20261025.md",
+      "role": "evidence",
+      "title": "DEV3 원 Catalog guard의 typed physical 조회"
+    },
+    "dev3-catalog-reader-20261025.json": {
+      "path": "evidence/dev3-catalog-reader-20261025.json",
+      "role": "evidence",
+      "title": "DEV3 typed Catalog 조회 source별 선택 검증"
     }
   }
 }

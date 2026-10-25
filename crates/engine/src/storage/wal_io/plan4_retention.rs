@@ -111,6 +111,7 @@ pub(crate) enum RetentionCause {
     Frame(dirty_frame::DirtyError),
     Page(crate::storage::page::PageError),
     Tree(crate::storage::tree_page::TreeError),
+    Catalog(crate::storage::catalog_record::CatalogError),
     Allocation(crate::storage::allocation_page::AllocationError),
     AllocationOperation(super::super::super::allocation_reservation::operation::SemanticError),
     Retention(retention_page::RetentionError),

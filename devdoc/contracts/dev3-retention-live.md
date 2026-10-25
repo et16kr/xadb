@@ -29,3 +29,12 @@ fresh 실제 memory/native 타입의 source-value 측정은 각각 peak63,520/63
 중간 inventory는 live32(static2·memory30)와 신규 prefix43, 합75다. S5 고유 추가는 live32와 prefix237, 합269이며 최종 S5에는 필수75도 포함한다. 긴 실행·전체 조합은 최종 인수에 둔다. 완료 사례·무변경 하위 시험은 반복하지 않고 원 실패·중단·미실행을 보존한다.
 
 시험은 독립 literal recipe와 보존 raw34파일550,160byte를 사용한다. 완료된 하위 시험 함수나 제품 encoder를 oracle로 호출하지 않는다. 동시 실행 검산은 실제 capture의 pin/latch 반환 뒤와 실제 RAM 설치 후·WAL force 전에 놓은 시험 전용 one-shot 훅을 쓴다. 훅은 정확 pool 주소에 결합하고 mutex를 놓은 뒤 유한 시간만 기다리며 일반 제품 layout을 바꾸지 않는다. 기존 `Copied`와 조건부 `before_wait` 훅을 이 목적에 잘못 사용했던 원 실패를 보존한다.
+
+<a id="typed-catalog-read"></a>
+## 원 Catalog guard의 typed physical 조회
+
+**D3-PAGE-LIFETIME-CATALOG-001**은 `RetentionReader::read_catalog`와 `RetentionCatalogGuard::{lookup,release_checked}`를 공급한다. 기존 Owner·SharedPool에서 allocator0·anchor7·leaf8 전체3pin을 보유한다. allocator membership, anchor의 Catalog/root8/level0/revision1, envelope와 frame LSN의 일치, 모든 Catalog cell의 key/object/namespace와 typed value를 확인한다. 검색 경로 밖 손상도 원 `CatalogError`와 공통 fence로 반환한다. 다른 core는 효과 전에 거절한다.
+
+반환 record는 guard를 빌린다. 살아 있는 record 중 guard의 release/drop, 살아 있는 guard 중 Owner의 재대여는 컴파일에서 거절한다. 조회는 저장된 physical version이며 retired/uncommitted도 포함한다. 가시성·정의 anchor 존재·CREATE 성공은 별도 소비자 의무다. 새로운 I/O·WAL·heap·page copy·pin registry는 없다. `prepare_catalog`의 현재 canonical loader와 기존 `lookup_catalog_empty`의 N=0 판정을 완화하지 않는다.
+
+typed source-value10,216byte≤예약16,384byte≤기존 Catalog nested28,676/29,700byte를 pin 획득 전에 검산한다. 원 census의 peak63,168/63,304·metadata123,072/123,208·whole188,608/188,744는 현재 source의 memory/native 타입 값이며 과거 source의 재실행이나 machine stack 측정이 아니다. [선택 증거](../evidence/dev3-catalog-reader-20261025.md)의 실제 owner 사례는 empty이고 nonempty는 순수 literal이다. 실제 Catalog mutation/dirty flush/eviction·Row/Undo·일반 복구는 후속 의무다.

@@ -229,6 +229,11 @@ pub(super) fn fits<W: WriterNamespace>() -> bool {
         && dirty_frame::fits()
         && crate::storage::wal_io::durability_types_fit()
         && super::super::super::flush_io::fits::<W>()
+        // The resident catalog read's fixed reservation is below the existing
+        // catalog preparation path already included in `active` above.
+        && read::catalog_source_bytes::<W>() <= read::CATALOG_READ_SOURCE_BYTES
+        && read::CATALOG_READ_SOURCE_BYTES
+            <= super::super::resources::source_census::<W>().catalog_nested
         && c.peak <= 65_536
         && c.metadata <= 196_608
         && c.whole <= 262_144

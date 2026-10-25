@@ -1,5 +1,8 @@
 # DEV3 구현·검증 현황
 
+<a id="typed-catalog-read"></a>
+2026-10-25 [원 Catalog guard의 typed 조회](../evidence/dev3-catalog-reader-20261025.md): 기존 allocator/anchor/leaf3pin의 수명 안에서 physical record를 반환한다. 신규 제품5·compiler7·도구3 PASS, 원 실패와 source별 경계를 보존한다. 실제 owner는 empty이며 nonempty는 순수 literal 검증이다. Catalog CREATE/CLR·Row/Undo·일반 복구·DEV3/S5는 미완료다.
+
 <a id="leaf-edit"></a>
 2026-10-25 [첫 행의 leaf 후보 편집](../evidence/dev3-leaf-edit-20261025.md): caller scratch로 Insert/Replace/Remove 후보·single-page encode·기존 split 인계를 공급했다. 신규5·compiler7·도구3 선택 PASS, 원 실패·S5 확대 NOT_RUN 보존. 실제 Catalog CREATE/row/Undo·terminal·N>0 복구 연결은 미완료다.
 

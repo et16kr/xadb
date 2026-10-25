@@ -10,6 +10,15 @@ use crate::storage::{
 };
 use foundation::identity::ObjectId;
 
+#[path = "read/catalog.rs"]
+mod catalog;
+#[allow(
+    unused_imports,
+    reason = "typed guard name for the following catalog consumer"
+)]
+pub(crate) use catalog::RetentionCatalogGuard;
+pub(super) use catalog::{CATALOG_READ_SOURCE_BYTES, catalog_source_bytes};
+
 pub(crate) struct RetentionReader<'b, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
     pub(super) storage: &'s MutableStorageOwner<'m, 'w, W>,
     pub(super) pool: &'b SharedPool<'c, 's, 'p, 'd>,
