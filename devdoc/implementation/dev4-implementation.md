@@ -322,7 +322,7 @@ cargo test -p xadbtest-reference --lib --offline --locked lifecycle::model_tests
 규칙만으로 class·응답·context event·controls·소비 bit·authenticated와 `pre ⊕ delta` 후상태를 다시 계산하고,
 공급 Env1을 독립 recipe와 비교하며 환경 제외의 조건도 판정한다. 모델·조립기를 호출하지 않는다.
 
-`differential_tests`는 모델 출력을 checker로 판정한다. 판정한 불일치·검토 결정11건은 모델 계약의
+`differential_tests`는 모델 출력을 checker로 판정한다. 판정한 불일치·검토 결정11건(BFS 판정을 더해 12건)은 모델 계약의
 [차등 판정](../contracts/dev4-lifecycle-model.md#checker-adjudication)에 기록했고
 [선택 증거](../evidence/dev4-lifecycle-checker-20261025.md)에 실행 기록을 남겼다. BFS·FE14는 미완료다.
 
@@ -333,3 +333,23 @@ cargo test -p xadbtest-reference --lib --offline --locked lifecycle::differentia
 
 walk 크기는 `XADB_DIFF_WALKS`(기본30)·`XADB_DIFF_DEPTH`(기본6), 한 관측의 재현은
 `XADB_DIFF_REPLAY="raw,…:raw"`로 정한다. 실제 diff에 대응하는 함수만 선택한다.
+
+<a id="lifecycle-explorer"></a>
+## P5 결정적 BFS 탐색기
+
+[소유 계약](../contracts/dev4-lifecycle-explorer.md) D4-LM-BFS-001의 `explore`를 controller `lifecycle`에
+구현했다. 독립 initial vector부터 FIFO 순서로 모든 raw slot을 분류하고 alias가 아닌 slot마다 모델과 checker를 한
+번씩 호출한다. worker가 상태를 평가하고 하나의 merge가 discovery ID와 ledger 순서를 정하므로 결과는 worker 수와
+무관하다. full canonical bytes로 중복을 합치고 edge8(state cap이 2^19 이상이면 edge16) ledger와 discovery32
+stream의 SHA, 깊이·API·rule별 counter를 보고한다. archive와 durable checkpoint는 없어 FIFO가 비어도
+`DrainedUnarchived`다.
+
+[실행 증거](../evidence/dev4-lifecycle-explorer-20261025.md)에 설계 상한 profile과 사용자가 승인한 깊이 5 profile의
+결과를 기록했다. witness 검사·FE14·깊이 6은 미완료다.
+
+```bash
+cargo test -p xadbtest --lib --offline --locked lifecycle::tests::<function> -- --exact
+```
+
+`profile_run`은 `XADB_BFS_RUN=<report>`일 때만 실행하며 `XADB_BFS_PROFILE=depth5`와 `XADB_BFS_WORKERS`로 profile과
+worker 수를 고른다. 실제 diff에 대응하는 함수만 선택한다.

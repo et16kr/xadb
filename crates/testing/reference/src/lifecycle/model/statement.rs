@@ -688,6 +688,10 @@ impl Run<'_> {
             OriginCause::None,
         );
         self.fenced_cause(&mut response)?;
-        self.respond(response, None)
+        let selected = self
+            .authenticated
+            .and_then(|a| a.transaction)
+            .map(|t| t.nonce);
+        self.respond(response, selected)
     }
 }

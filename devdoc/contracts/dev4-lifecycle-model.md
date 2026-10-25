@@ -147,7 +147,7 @@ deadline 없는 parked의 Deadline 신호(SignalNoDeadline), recovery 전제와 
 
 <a id="checker-adjudication"></a>
 독립 checker와의 차등 대조와 그 독립 검토(2026-10-25)에서 원문이 정하지 않았거나 모델이 원문과 어긋난
-열한 항목을 아래처럼 정했다. 각 항목의 근거와 판정 이력은 [checker 증거](../evidence/dev4-lifecycle-checker-20261025.md)에 있다.
+열두 항목을 아래처럼 정했다. 각 항목의 근거와 판정 이력은 [checker 증거](../evidence/dev4-lifecycle-checker-20261025.md)에 있다.
 
 - InspectStatement의 child 인증 실패도 authenticated targets None을 기록한다(위 Edge 규칙의 누락 교정).
 - `EngineFenced`(gate 거절·Reopen·Resume fence terminal)의 engine cause는 attached engine의 first_cause다.
@@ -189,6 +189,10 @@ deadline 없는 parked의 Deadline 신호(SignalNoDeadline), recovery 전제와 
   `Excluded(Envelope)`다. 이 검사는 pending 일치(NoPendingOperation·ContinuationKind) 바로 뒤, Resume fence
   terminal과 pending control보다 앞이다. identity는 Env1이 아닌 input prefix에 있지만(wire-v2 §3) 공급 입력이
   사전 상태와 맞지 않는 경우의 같은 규칙으로 보며 조립기는 항상 Parked identity를 공급한다.
+- child 인증 뒤 거절 응답의 decision·client_knowledge·commit_progress·completion·delivery는 인증 참조의
+  transaction(wire-v2 §4 선택, 위 항목)에서 읽고 그것이 없을 때만 caller의 현재 transaction에서 읽는다. 끝난
+  implicit ReadOnly의 Eof result를 가진 caller가 새 거래를 연 뒤 그 result를 다루는 거절이 예다. BFS 깊이 4에서
+  발견했다([BFS 증거](../evidence/dev4-lifecycle-explorer-20261025.md)).
 
 소비 bit는 실제로 적용한 영역만 센다.
 

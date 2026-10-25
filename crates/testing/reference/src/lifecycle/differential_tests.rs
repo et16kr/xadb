@@ -32,6 +32,11 @@ const REGRESSION_PATHS: [&[u16]; 7] = [
     &[1264, 0, 400, 1420, 1362],
 ];
 
+/// Literal start states with fixed raw suffixes (2026-10-25): after an Eof result of an ended
+/// implicit read-only transaction, Begin opens another transaction, so a rejected CloseResult or
+/// Fetch on the old result must report the descriptor transaction's decision (found by the BFS).
+const LITERAL_REGRESSIONS: [(&str, &[u16]); 1] = [("sel.eof", &[1264])];
+
 #[derive(Default)]
 struct Tally {
     failures: BTreeMap<String, (usize, String)>,
@@ -223,6 +228,10 @@ fn differential_literal_states_and_walks() {
             for path in REGRESSION_PATHS {
                 tally.follow("regression", initial, path, &mut pre);
                 tally.judge_corrupted(&format!("regression{path:?}"), &pre);
+            }
+            for (start, path) in LITERAL_REGRESSIONS {
+                let state = &states.iter().find(|(n, _)| n == start).expect("literal").1;
+                tally.follow(start, state, path, &mut pre);
             }
             let mut edges = Vec::new();
             for walk in 0..walks {

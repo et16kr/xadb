@@ -5962,6 +5962,23 @@
     "scope": "Independent relational edge checker and model differential; model and assembler corrections from adjudication; alias, BFS/checkpoint and FE14 remain incomplete",
     "validation": "checker_tests 10, model_tests 6, assembler_tests 11 PASS; differential over 29 literal states, 7 fixed paths, corrupted inputs and six walk configurations up to 57,276,849 judged edges with 0 disagreements"
   },
+  "dev4_lifecycle_explorer": {
+    "decision": "D4-LM-BFS-001",
+    "contract": "dev4-lifecycle-explorer.md",
+    "evidence": "dev4-lifecycle-explorer-20261025.md",
+    "status": "IMPLEMENTED_IN_MEMORY_RUNS_D2_ACCEPTED_WITH_CHANGES_DEPTH5_DRAINED_UNARCHIVED",
+    "implemented_sources": [
+      "crates/testing/controller/src/lib.rs",
+      "crates/testing/controller/src/lifecycle.rs",
+      "crates/testing/controller/src/lifecycle/tests.rs"
+    ],
+    "fixtures": [
+      "tests/fixtures/dev4-lifecycle-model/vectors/state-initial.bin"
+    ],
+    "new_dependencies": false,
+    "scope": "In-memory deterministic BFS over the lifecycle assembler, model and independent checker with the design caps and the user-approved depth-5 extension; archive, durable checkpoint, witness check, FE14 and depth 6 remain incomplete",
+    "validation": "10 selected explorer tests and the corrected model/differential tests PASS; normal profile INCONCLUSIVE at the 500,000-state cap; approved depth-5 profile drained without archive: 660,911,559 slots, 490,363,251 checker calls, 0 disagreements"
+  },
   "dev3_plan4_recovery_checkpoint": {
     "status": "PAUSED_WIP_NOT_ACCEPTED",
     "evidence_ref": "dev3-recovery-paused-20261025.md",

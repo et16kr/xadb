@@ -22,6 +22,8 @@
 
 - [COMM 시험 산출물 정리](comm-artifact-cleanup-20261025.md): 전용 Cargo cache35개와 검산된 임시 사본을 정리했다. 원 증거·실행물 보존, 저장소 약3.76GiB·tmpfs 약1.62GiB 절감, 시험 실행0.
 
+- [DEV4 P5 BFS 탐색기](dev4-lifecycle-explorer-20261025.md) — 설계 상한 INCONCLUSIVE, 승인된 깊이 5 불일치0·DrainedUnarchived(6.6억 slot), BFS가 찾은 모델 불일치1 교정. archive·FE14·깊이 6 미완료.
+
 - [DEV4 P5 독립 edge checker](dev4-lifecycle-checker-20261025.md) — 모델 차등 판정 불일치0·판정 이력과 조립기 공백 교정; 독립 D2 수용·D1 제한 수용. alias·BFS·FE14 미완료.
 
 - [DEV4 P5 수명 모델 전이](dev4-lifecycle-model-20261025.md) — 원 29 edge·12 trace·5 known-bad 일치, census·walk smoke와 고정 trace; 1차 검토의 금지 전이 2건 교정 보존. 독립 checker·BFS 미완료.

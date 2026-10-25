@@ -502,6 +502,11 @@ SELECT/DML/DDL을 나눈다. 독립 reference의 `frontend/remaining_parser.rs`�
 
 ## DEV4 P5 원시 번호·target 선택
 
+[결정적 BFS 탐색기 계약](../contracts/dev4-lifecycle-explorer.md)의 `explore`는 controller의 `lifecycle.rs`와 시험
+`lifecycle/tests.rs`에 두고 reference의 공개 lifecycle API만 쓴다. 관리 JSON의 `dev4_lifecycle_explorer`에 실제
+경로와 독립 initial vector를 등록하며 package·dependency는 유지한다. 실행 산출물은 gitignored
+`artifacts/dev4-lifecycle-bfs/`에 둔다.
+
 [독립 edge checker 계약](../contracts/dev4-lifecycle-checker.md)의 `verify_edge`는 같은 reference lifecycle
 경계의 `checker.rs`와 `checker/` 하위 파일에 두고 시험 `checker_tests.rs`·모델 차등 `differential_tests.rs`를
 추가한다. 관리 JSON의 `dev4_lifecycle_checker`에 실제 경로를 등록하며 package·dependency는 유지한다.

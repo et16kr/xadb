@@ -417,7 +417,13 @@ impl Run<'_> {
             response.rows = Rows::Count(0);
             response.complete = Complete::No;
         }
-        self.respond(response, None)
+        // Decision fields follow the transaction the authenticated child selects (owner
+        // decision 2026-10-25); without one, the caller's current transaction.
+        let selected = self
+            .authenticated
+            .and_then(|a| a.transaction)
+            .map(|t| t.nonce);
+        self.respond(response, selected)
     }
 
     /// `EngineFenced` reports the attached engine's first cause (owner decision 2026-10-25).
