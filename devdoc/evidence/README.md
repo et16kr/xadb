@@ -4,11 +4,11 @@
 
 - [DEV3 Catalog 독립 입력과 native 실행기 검증](dev3-catalog-input-controller-20261025.md) · [source별 기록](dev3-catalog-input-controller-20261025.json) — 입력 생성·별도 검산 완료, 실행기 거부14 PASS; 실제 Catalog 통합 진행 중.
 
-2026-10-25 [DEV2 PF04 CPU 성능 요청 범위 제어](dev2-pf04-frequency-control-20261025.md): 도구12·driver4개 선택 검증 뒤 첫 host 연결이 즉시 readback 불일치로 실패했다. 최종234필드는 원 값과 같고 프로세스는 종료됐다. 나머지2개 미실행·격리 lease 보존·사용자 조건에 따른 중단이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
+2026-10-25 [DEV2 PF04 CPU 성능 요청 범위 제어](dev2-pf04-frequency-control-20261025.md) · [source별 기록](dev2-pf04-frequency-control-20261025.json): 도구12·driver4개 선택 검증 뒤 첫 host 연결이 즉시 readback 불일치로 실패했다. 최종234필드는 원 값과 같고 프로세스는 종료됐다. 나머지2개 미실행·격리 lease 보존·사용자 조건에 따른 중단이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 
 - [DEV3 Catalog CREATE 순수 전이](dev3-catalog-transition-20261025.md) · [source별 기록](dev3-catalog-transition-20261025.json) — 새108·전이72 선택 검증, 원 harness FAIL 보존·실제 CREATE/F05/S5 미완료.
 
-- [DEV2 PF04 원 제어기 CPU 배치 대조](dev2-pf04-controller-placement-20261025.md):60slot·정답/정리 완료, 큰 배치 효과 미지지·원 FAIL 보존.
+- [DEV2 PF04 원 제어기 CPU 배치 대조](dev2-pf04-controller-placement-20261025.md) · [source별 기록](dev2-pf04-controller-placement-20261025.json):60slot·정답/정리 완료, 큰 배치 효과 미지지·원 FAIL 보존.
 
 - [DEV2 PF04 같은 경계의 모드별 실행 작업과 CPU 비용](dev2-pf04-mode-attribution-20261025.md) · [실행·분석 기록](dev2-pf04-mode-attribution-20261025.json) — 새40slot 완료, CPU 중앙 Always+9.23%·Detailed+12.28%, 원 FAIL·과거 원인 미확정 유지.
 
