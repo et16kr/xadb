@@ -6166,5 +6166,32 @@
     "product_changes": false,
     "performance_acceptance": "NOT_APPLICABLE",
     "source_roots_changed": false
+  },
+  "dev3_module_c0_producer": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#producer-input-api",
+    "evidence_ref": "module-independence-survey-20261026.md#c0-producer-types",
+    "implemented_paths": [
+      "crates/engine/src/storage/disk.rs",
+      "crates/engine/src/storage/wal_io/disk_api.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "tests/fixtures/dev3-module-c0/compiler/consumed_lane.rs",
+      "tests/fixtures/dev3-module-c0/compiler/loan_escape.rs",
+      "tests/fixtures/dev3-module-c0/compiler/manifest.json",
+      "tests/fixtures/dev3-module-c0/compiler/private_context.rs",
+      "tests/fixtures/dev3-module-c0/compiler/private_raw_path.rs",
+      "tests/fixtures/dev3-module-c0/compiler/producer_parts.rs"
+    ],
+    "modified_registration_paths": [
+      "crates/engine/src/storage/mod.rs",
+      "crates/engine/src/storage/wal_io.rs",
+      "crates/engine/src/storage/wal_io/bootstrap.rs",
+      "crates/engine/src/storage/wal_io/doublewrite_install.rs",
+      "crates/engine/src/storage/wal_io/mutable_storage.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages.rs"
+    ],
+    "compiler_scope": "producer data/lifetime/visibility only; not full MBC00 or C0 acceptance",
+    "actual_owner_authority_supply": "NOT_IMPLEMENTED",
+    "source_roots_changed": false
   }
 }

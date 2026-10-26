@@ -20,6 +20,9 @@ use crate::{
 use foundation::{error::Effect, identity::ObjectId, namespace::WriterNamespace};
 use std::sync::{TryLockError, atomic::Ordering};
 
+#[path = "plan4_apply.rs"]
+pub(in crate::storage::wal_io) mod apply;
+
 #[path = "plan4_pages/load.rs"]
 mod load;
 #[path = "plan4_pages/read.rs"]

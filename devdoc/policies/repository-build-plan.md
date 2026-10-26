@@ -560,3 +560,10 @@ lifecycle 경계의 `input_assembler.rs`와 `input_assembler/rows.rs`에 둔다.
 ### PF04 CPU 요청 범위 제어 도구
 
 [한정 계획](../plans/dev2-pf04-resolution-plan.md#frequency-control)의 구현은 `scripts/dev2_frequency_control.py`, 새 경계 시험은 `scripts/test_dev2_frequency_control.py`가 소유한다. 두 CPU의 max 요청만 일시 제어하고 root 소유 lease·systemd StopPost로 원복한다. 제품·WAL·source root·의존성은 변경하지 않으며 제품 성능 인수와 구분한다.
+
+
+## 모듈 독립 개발 C0 생산자 경계 — 2026-10-26
+
+[소유 계약](../contracts/dev3-module-boundaries.md#producer-input-api)의 관측 context·consuming lane·untrusted 후보를 `crates/engine/src/storage/wal_io/plan4_apply.rs`에 구현하고 `wal_io/disk_api.rs`와 `storage/disk.rs`에서 선택 재노출한다. 실제 존재하는 조상 모듈 이름만 `wal_io` 내부에 열며 private field/factory와 원 owner의 효과 경로는 유지한다. 실제 source 포착·예약·설치·read port와 두 소비자 본문은 아직 공급하지 않았다.
+
+`tests/fixtures/dev3-module-c0/compiler/`의 정상1·부정4 입력과 동결 manifest를 등록한다. 실행은 원 소스 export에 각 입력을 따로 연결한 library compiler 검사이며 runtime 시험이 아니다. source·명령·진단·원 판정기 FAIL과 수동 검토는 [선택 증거](../evidence/module-independence-survey-20261026.md#c0-producer-types)를 따른다. 기존 compiler helper를 재사용하며 새 package/dependency·source root·clean export 규칙은 없다. 정확 경로는 관리 JSON의 `dev3_module_c0_producer`에 둔다.

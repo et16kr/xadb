@@ -1,6 +1,6 @@
 # DEV3 모듈 독립 개발을 위한 원 소유·소비 경계
 
-2026-10-26 · `D3-MODULE-BOUNDARIES-001` · **D2 ACCEPTED / M2 완료 / M4 C0 borrowed codec 부분공급 / 공통 공급·제품 인수 미완료**
+2026-10-26 · `D3-MODULE-BOUNDARIES-001` · **D2 ACCEPTED / M2 완료 / M4 C0 codec·생산자 타입 부분공급 / 공통 공급·제품 인수 미완료**
 
 [구조 전환 계획](../plans/module-independence-plan.md) · [M1 조사·기준선](../evidence/module-independence-survey-20261026.md) · [구현 계약](implementation-contracts.md) · [저장 정본](disk-storage-design.md) · [원 runtime/core](dev3-storage-session.md#private-runtime-core)
 
@@ -800,13 +800,16 @@ pub(crate) enum RowSourceRole {
 }
 pub(crate) struct RowSourceBinding {
     before_index: u8, identity: PageIdentity, kind: PageKind, level: u8,
-    slot: Option<u16>, cell_offset: Option<u16>, cell_len: Option<u16>,
+    cell: Option<(u16,u16,u16)>, // slot,offset,len은 함께 존재하거나 모두 없음
 }
 impl RowSourceBinding {
     pub(in crate::storage) fn before_index(&self) -> u8;
     pub(in crate::storage) fn expected(&self) -> (PageIdentity,PageKind,u8);
     pub(in crate::storage) fn cell(&self) -> Option<(u16,u16,u16)>; // slot,offset,len
 }
+// 순수 관측/후보 분류이며 WAL opcode나 wire tag가 아님
+pub(crate) enum RowOperation { Forward, Clr }
+pub(crate) enum RowPageRole { Root, RootJob, Status, Undo, RowLeaf }
 pub(crate) enum RowProducerInput {
     Insert { canonical_len: usize, canonical_digest: [u8;32] },
     Clr { current_row_len: usize, current_projection: [u8;32],
@@ -853,7 +856,7 @@ Insert input은 preflight가 검산한 canonical length/digest를, CLR input은 
 
 공통 pure codec `RowSchemaInput::{Columns(&[Column]),Catalog(TableDefinitionView)}`와 `&[ValueRef]` adapter를 C0 공급에 포함한다. 기존 소유형 함수도 동일 pure 규칙에 위임하고 format·오류·output/tail 보존을 바꾸지 않는다. 이름/값/columns를 heap에 복사하지 않는다. first Missing Undo는 actual Missing/payloadNone 경로에서 columns를 사용하지 않으므로 기존 encode/decode에 `&[]`를 전달하며, CLR의 current Row는 borrowed schema로 검산한다. occupied RowValue schema와 일반3pin은 이번 선행이 아니다.
 
-실제 C0 부분공급의 함수는 [row 표현의 borrowed 입력](dev3-row-format.md#borrowed-schema)에 등록했다. `canonical_row_len_borrowed`·`encode_canonical_row_borrowed`와 canonical/record의 `_with_schema` 진입점은 구현·선택6 검증·독립 코드 검토를 마쳤다. 위 producer context·lane·actual source adapter까지 공급됐다는 뜻은 아니다.
+실제 C0 부분공급의 함수는 [row 표현의 borrowed 입력](dev3-row-format.md#borrowed-schema)에 등록했다. `canonical_row_len_borrowed`·`encode_canonical_row_borrowed`와 canonical/record의 `_with_schema` 진입점은 구현·선택6 검증·독립 코드 검토를 마쳤다. 후속 `plan4_apply.rs`는 위 producer context·getter·consuming lane·untrusted 후보 타입을 구현하고 `wal_io::disk_api → storage::disk`에서 선택 재노출한다. private cell tuple은 세 좌표의 동시 존재를 보장하며 위 두 enum은 A의 Forward/CLR 관측만 분류한다. 실제 context/lane 생성·source 포착·예약/설치 adapter는 미공급이다. 타입 경계의 compiler 결과와 원 판정기 실패는 [별도 부분공급 증거](../evidence/module-independence-survey-20261026.md#c0-producer-types)에 둔다.
 
 producer lane은 [채택한 private 분할](dev3-resource-bounds.md#row-missing-module-budget)의 동일 backing을 짧게 나눈다. C가 원 actual before/proof와 schema를 채운 후 source guards를 해제한 뒤만 A에게 빌려준다. loan을 반환하기 전 reader/version/append/registry latch는0이다.
 

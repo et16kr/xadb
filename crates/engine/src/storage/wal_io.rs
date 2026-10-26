@@ -33,6 +33,7 @@ const STAGE_NAME: &str = "d3-writer-stage";
 
 mod bootstrap;
 mod commit_bridge;
+pub(in crate::storage) mod disk_api;
 pub(in crate::storage) use bootstrap::CatalogRetirementRejected;
 pub(in crate::storage) use bootstrap::Plan4LoadPermit;
 #[cfg(test)]

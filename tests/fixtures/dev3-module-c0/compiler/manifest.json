@@ -1,0 +1,55 @@
+{
+  "schema": "XADB_MODULE_C0_PRODUCER_COMPILER_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "C0 producer observations and borrowed lanes only; no actual owner/authority or full MBC00 acceptance",
+  "anchor": "crates/engine/src/storage/mod.rs",
+  "probe": "crates/engine/src/storage/module_c0_compiler_probe.rs",
+  "declaration": "\nmod module_c0_compiler_probe;\n",
+  "budget": {
+    "total_seconds": 180,
+    "case_seconds": 30,
+    "output_bytes": 8388608
+  },
+  "cases": [
+    {
+      "name": "producer_parts",
+      "path": "producer_parts.rs",
+      "sha256": "c4ad5e02f34e4a265c3caefbe3d7a2700239f11b78b364e4e8ba1bf1f2aace7b",
+      "bytes": 3115,
+      "expected_code": null,
+      "primary_line": null
+    },
+    {
+      "name": "private_context",
+      "path": "private_context.rs",
+      "sha256": "5a166e55d24702314000fc7a1c72f842a76c818acc2e12e698918b283e9d6104",
+      "bytes": 175,
+      "expected_code": "E0616",
+      "primary_line": 4
+    },
+    {
+      "name": "consumed_lane",
+      "path": "consumed_lane.rs",
+      "sha256": "b96fb276ee9a9b16a119c484d09e10160b0937cd1adb07d8e0d04802355e181f",
+      "bytes": 206,
+      "expected_code": "E0382",
+      "primary_line": 5
+    },
+    {
+      "name": "loan_escape",
+      "path": "loan_escape.rs",
+      "sha256": "a98f1f7071ac9fc87365e0403263001f70f849b8e3677287d9d4a220ba9dd3ce",
+      "bytes": 225,
+      "expected_code": "E0521",
+      "primary_line": 5
+    },
+    {
+      "name": "private_raw_path",
+      "path": "private_raw_path.rs",
+      "sha256": "66cc257ccd10d6bc1b857c8ff43c4cc68e00bfb60574fd6a60b25081c374740a",
+      "bytes": 109,
+      "expected_code": "E0603",
+      "primary_line": 2
+    }
+  ]
+}

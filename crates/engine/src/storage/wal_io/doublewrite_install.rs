@@ -27,7 +27,7 @@ pub(crate) use allocation_reservation::{
 };
 
 #[path = "mutable_storage.rs"]
-mod mutable_storage;
+pub(in crate::storage::wal_io) mod mutable_storage;
 #[cfg(test)]
 pub(in crate::storage) use allocation_reservation::operation::SemanticError as Plan4TestSemanticError;
 pub(in crate::storage) use mutable_storage::CatalogRetirementRejected;

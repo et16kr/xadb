@@ -3,6 +3,7 @@ pub(crate) mod anchor;
 pub(crate) mod catalog_record;
 pub(crate) mod control;
 pub(crate) mod dirty_frame;
+pub(crate) mod disk;
 pub(crate) mod doublewrite_control;
 pub(crate) mod key;
 mod obligation;

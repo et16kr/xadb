@@ -82,7 +82,7 @@ const BOUND: u8 = 2;
 const ABANDONED: u8 = 3;
 
 #[path = "plan4_pages.rs"]
-mod plan4_pages;
+pub(in crate::storage::wal_io) mod plan4_pages;
 pub(in crate::storage) use plan4_pages::CatalogRetirementRejected;
 pub(in crate::storage) use plan4_pages::Plan4LoadPermit;
 pub(in crate::storage) use plan4_pages::{CatalogCommitAttempt, CatalogCommitInstalled};

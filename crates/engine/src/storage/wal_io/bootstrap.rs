@@ -54,7 +54,7 @@ pub(in crate::storage) use plan4_genesis::{
 };
 
 #[path = "doublewrite_install.rs"]
-mod doublewrite_install;
+pub(in crate::storage::wal_io) mod doublewrite_install;
 pub(in crate::storage) use doublewrite_install::Plan4LoadPermit;
 pub(crate) use doublewrite_install::{
     AllocationObservation, AllocationSession, AllocationSessionCause, AllocationSessionError,
