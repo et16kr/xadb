@@ -6368,5 +6368,38 @@
     "validation": "r1 compiler2 PASS/runtime5 PASS plus MC04 FAIL; r2 compiler2 PASS/census and MC04/MC03 PASS plus unsupported empty Commit expectation FAIL; r3 test build1 and corrected empty Commit rejection1 PASS. No unchanged test repeats; original failures and identities preserved; independent D1/D2 limited acceptance, zero required fixes",
     "remaining_supply": "transaction/statement, source admission, observed Reserved slot lifetime, successful zero-change Commit, Row APIs, native/full recovery and whole C0/C1-C5/M5",
     "source_roots_changed": false
+  },
+  "dev3_module_c1_read_only": {
+    "status": "ACCEPTED_LIMITED_D1_D2",
+    "contract_ref": "dev3-module-boundaries.md#isolation-api",
+    "evidence_ref": "module-independence-survey-20261026.md#c1-read-only-capsules",
+    "implemented_paths": [
+      "crates/engine/src/storage/wal_io/plan4_apply/transaction.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/transactions.rs",
+      "tests/fixtures/dev3-module-c1/read-only-transactions/canonical.rs",
+      "tests/fixtures/dev3-module-c1/read-only-transactions/live_view.rs",
+      "tests/fixtures/dev3-module-c1/read-only-transactions/manifest.json"
+    ],
+    "modified_paths": [
+      "crates/engine/src/storage/disk.rs",
+      "crates/engine/src/storage/wal_io/disk_api.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_apply/owner_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery_observation_tests.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/visibility/epochs.rs"
+    ],
+    "scope": "actual read-only slot/credit/snapshot/statement/checked finish/Drop; no writable actor or external snapshot/read-set API",
+    "validation": "r1 production PASS and test fixture E0597 FAIL retained; r2 test build/E0505 and changed census plus new lifecycle5 PASS; r3 test build and additional RC snapshot-failure case1 PASS; no completed unchanged test repeats; independent module_handoff_review accepted limited D1/D2 with no required fixes after reading source/artifact identities and eight documents",
+    "handle_source_bytes": {
+      "transaction": 400,
+      "statement": 328,
+      "per_handle_charge": 512,
+      "long_total": 49152,
+      "short_closure": 4564
+    },
+    "remaining_supply": "writable Begin/terminal, automatic actual-source read-set/conflict, short aggregate admission, cursor/Row APIs, whole C0/C1-C5/M5",
+    "source_roots_changed": false
   }
 }

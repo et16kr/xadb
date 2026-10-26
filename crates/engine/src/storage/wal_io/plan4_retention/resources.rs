@@ -240,7 +240,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         .max(catalog_commit)
         .max(catalog_binding)
         .max(catalog_live)
-        .max(catalog_recovery_cleanup);
+        .max(catalog_recovery_cleanup)
+        .max(transaction::source_bytes());
     let peak = conversion.max(recovered_conversion).max(retained + active);
     // 36 descriptor/bookkeeping slots are actual retained metadata, even
     // though their backing is caller owned. Job and page snapshots are data.
@@ -248,7 +249,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         + 36 * control::SLOT_BYTES
         + visibility::VISIBILITY_BYTES
         + visibility::EPOCH_BYTES
-        + ISOLATION_BYTES;
+        + ISOLATION_BYTES
+        + transaction::LONG_SOURCE_BYTES;
     RetentionSourceCensus {
         original_owner,
         retained,
@@ -297,7 +299,9 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
 }
 pub(super) fn fits<W: WriterNamespace>() -> bool {
     let c = source_census::<W>();
-    c.original_owner <= 32_768
+    transaction::handle_census().0 <= transaction::HANDLE_BYTES
+        && transaction::handle_census().1 <= transaction::HANDLE_BYTES
+        && c.original_owner <= 32_768
         && size_of::<W::File>() <= 16_384
         && dirty_frame::fits()
         && crate::storage::wal_io::durability_types_fit()

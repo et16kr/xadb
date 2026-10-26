@@ -159,3 +159,12 @@ impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
         })
     }
 }
+
+impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    // Scalar observation only; cannot issue a slot, credit or snapshot.
+    pub(in crate::storage) fn catalog_test_isolation(&self) -> (u64, u64, u64) {
+        let state = self.control.isolation.lock().unwrap();
+        let n = |at| u64::from_le_bytes(state.bytes[at..at + 8].try_into().unwrap());
+        (n(0), n(8), n(16))
+    }
+}

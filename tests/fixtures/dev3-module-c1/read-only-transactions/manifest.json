@@ -1,0 +1,65 @@
+{
+  "schema": "XADB_MODULE_C1_READ_ONLY_TRANSACTIONS_V1",
+  "status": "FROZEN_INPUTS_NOT_EXECUTION_EVIDENCE",
+  "scope": "actual read-only capsule/view lifecycle and 512-byte long credits, no automatic read-set/conflict, writable Begin, Row consumers or short aggregate admission",
+  "budget": {
+    "total_seconds": 180,
+    "case_seconds": 30,
+    "output_bytes": 8388608
+  },
+  "cases": [
+    {
+      "name": "production",
+      "path": "canonical.rs",
+      "bytes": 717,
+      "sha256": "0bd159cc470cb09c8d59765e2747418ad6bcb067632ba1b7a53c7dac1e68fbb9",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_transaction_probe.rs",
+      "declaration": "\nmod module_c1_transaction_probe;\n",
+      "mode": "check"
+    },
+    {
+      "name": "test_build",
+      "path": "canonical.rs",
+      "bytes": 717,
+      "sha256": "0bd159cc470cb09c8d59765e2747418ad6bcb067632ba1b7a53c7dac1e68fbb9",
+      "expected_code": null,
+      "primary_line": null,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_transaction_probe.rs",
+      "declaration": "\nmod module_c1_transaction_probe;\n",
+      "mode": "test-no-run"
+    },
+    {
+      "name": "live_view",
+      "path": "live_view.rs",
+      "bytes": 655,
+      "sha256": "68f912a57b5fb0ecdc6bc0f1aafc313c83af2fa2ff07397840ce1839a91a189f",
+      "expected_code": "E0505",
+      "primary_line": 8,
+      "anchor": "crates/engine/src/storage/mod.rs",
+      "probe": "crates/engine/src/storage/module_c1_transaction_probe.rs",
+      "declaration": "\nmod module_c1_transaction_probe;\n",
+      "mode": "check"
+    }
+  ],
+  "runtime_tests": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::owner_tests::disk_session_isolation_backing_and_carriers_are_accounted",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::transactions::serializable_keeps_original_snapshot_across_statements",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::transactions::read_committed_renews_statement_snapshot",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::transactions::read_only_capacity_drop_and_generation_are_bounded",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::transactions::foreign_owner_returns_original_handles_and_writes_are_unsupported",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::transactions::failed_snapshot_registration_returns_slot_and_credit",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::transactions::failed_rc_statement_snapshot_returns_credit_without_consuming_sequence"
+  ],
+  "runtime_scope": [
+    "changed source metadata and handle/carrier census",
+    "Serializable same actual snapshot and RC next statement snapshot across actual Catalog Commit",
+    "32 slots, Drop and nonreused generation/sequence",
+    "foreign owner returns original handles; writable request has no effect",
+    "snapshot capacity failure returns original slot and source credit",
+    "new RC begin_statement snapshot failure returns charge and preserves next sequence"
+  ]
+}

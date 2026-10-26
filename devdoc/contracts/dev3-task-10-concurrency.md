@@ -291,6 +291,8 @@ sealed transaction capsule이 원 origin·isolation slot/generation·actual acto
 
 독립 snapshot 조회 API는 해당 q의 조회 보장을 제공한다. 이를 read-only **transaction 완료**로 표시하려면 같은 capsule·자동 read-set·아래 종료 검증을 거쳐야 한다. readonly·writable capsule의 현재 statement/cursor borrow가 살아 있으면 종료 소유를 소비할 수 없다.
 
+현재 [C1 읽기 전용 수명](../evidence/module-independence-survey-20261026.md#c1-read-only-capsules)은 원 slot/slotgen·장기512B 비용·실제 Serializable 및 RC snapshot·statement sequence·checked finish/Drop을 공급했다. writable 요청은 효과 전 Unsupported다. guard를 외부에 노출하거나 legacy lookup을 거래 읽기로 연결하지 않았으며 자동 관측 등록·실제 conflict 인수는 C2/C3 후속이다. 빈 read-set 종료 성공을 Serializable 조회 기능 완료로 표시하지 않는다.
+
 ### Commit 직렬화·공개와 오류
 
 현재 source에는 별도 CommitCoordinator mutex가 없다. 실제 직렬화 권한은 **유일 MutationPort의 원 `&mut RetentionLedger`**다. 이 borrow를 validation→stage→durable→whole install→epoch/Q publication까지 한 호출이 보유한다. [현재 `CommitInstalling::finish`](../../crates/engine/src/transaction/concurrency_commit.rs)는 Q publish 전 Installation을 Open으로 돌리므로, 그 상태만을 Commit coordinator로 해석하지 않는다. split으로 두 writer를 생성하거나 publication 전에 가변 ledger 소유를 반환하지 않는다. read-only Serializable 종료도 같은 MutationPort를 통해 직렬화한다.

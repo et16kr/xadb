@@ -211,7 +211,16 @@ fn disk_session_isolation_backing_and_carriers_are_accounted() {
     assert!(recovered.peak <= 65_536);
     assert!(recovered.metadata <= 196_608);
     assert!(recovered.whole <= 262_144);
-    assert_eq!(live.metadata - live.peak, 73_856);
+    assert_eq!(
+        live.metadata - live.peak,
+        73_856 + transaction::LONG_SOURCE_BYTES
+    );
+    let handles = transaction::handle_census();
+    println!(
+        "C1_READ_ONLY_HANDLES {handles:?} short={}",
+        transaction::source_bytes()
+    );
+    assert!(handles.0 <= 512 && handles.1 <= 512);
     assert_eq!(
         recovered.metadata - recovered.retained_live - directory,
         79_488

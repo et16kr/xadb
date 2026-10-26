@@ -752,7 +752,7 @@ fn query<'s, 'c, W: WriterNamespace>(
 // writer private loans are disjoint parts of the existing 12MiB reservation.
 macro_rules! with_fresh {
     ($oracle:expr, |$live:ident, $owner:ident, $flusher:ident, $status:ident, $undo:ident,
-        $private:ident, $reader_private:ident, $core:ident, $fence:ident, $state:ident| $body:block) => {{
+        $private:ident, $reader_private:ident, $core:ident, $fence:ident, $state:ident $(, $foreign:ident)?| $body:block) => {{
         let directory = port::Directory::fresh();
         let state = directory.state();
         {
@@ -774,6 +774,7 @@ macro_rules! with_fresh {
             .install_doublewrite(&mut dwb)
             .unwrap()
             .into_mutable_storage();
+            $(let $foreign = PageConcurrency::new(storage.session_fence()).unwrap();)?
             let core = PageConcurrency::new(storage.session_fence()).unwrap();
             let mut owner = core.try_owner(OwnerRole::Foreground).unwrap();
             let mut flusher = core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
@@ -1139,3 +1140,6 @@ mod retire_failures;
 
 #[path = "catalog_memory/reader_validation.rs"]
 mod reader_validation;
+
+#[path = "catalog_memory/transactions.rs"]
+mod transactions;

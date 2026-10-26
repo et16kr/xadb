@@ -470,3 +470,39 @@ impl BoundVisibility<'_, '_, '_> {
         )
     }
 }
+
+impl BoundVisibility<'_, '_, '_> {
+    pub(in super::super) fn isolation_frontier(&self) -> VisibilityResult<u64> {
+        let publication = self.publication()?;
+        if !publication.epochs_active {
+            return Err(unchanged(VisibilityCause::Busy));
+        }
+        Ok(publication.q)
+    }
+    // Only the original transaction owner submits its actual stored read-set.
+    // No consumer API accepts masks. Reserved identities await observed-slot supply.
+    pub(in super::super) fn validate_isolation(
+        &self,
+        start: u64,
+        mask: u32,
+        catalog: bool,
+    ) -> VisibilityResult<bool> {
+        let publication = self.publication()?;
+        if !publication.epochs_active || start > publication.q {
+            return Err(self.origin.fatal(VisibilityCause::Invariant));
+        }
+        for slot in 0..TABLES {
+            if mask & (1 << slot) == 0 {
+                continue;
+            }
+            let entry = row(publication.epochs, slot);
+            if entry[0] != PUBLISHED {
+                return Err(self.origin.fatal(VisibilityCause::Invariant));
+            }
+            if u64_at(entry, 32) > start {
+                return Ok(false);
+            }
+        }
+        Ok(!catalog || u64_at(publication.epochs, 0) <= start)
+    }
+}
