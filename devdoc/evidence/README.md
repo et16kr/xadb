@@ -1,8 +1,8 @@
 # XADB 조사·실행 증거
 
-2026-10-26 [DEV2 PF04 C3 shard counter 후보(S2)](dev2-pf04-c3-s2-20261026.md): thread별 shard counter를 기준선 위 diagnostics diff로 구현하고 신규8종·기존 선택 시험과 정적 lock 대조(대상 경로 counter RMW 14→0)를 통과했다. 후보는 고정했으나 제품에 반영하지 않았다. C3 측정(S3)·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
+2026-10-26 [DEV2 PF04 C3 shard counter 후보(S2)](dev2-pf04-c3-s2-20261026.md) · [source별 기록](dev2-pf04-c3-s2-20261026.json): thread별 shard counter를 기준선 위 diagnostics diff로 구현하고 신규8종·기존 선택 시험과 정적 lock 대조(대상 경로 counter RMW 14→0)를 통과했다. 후보는 고정했으나 제품에 반영하지 않았다. C3 측정(S3)·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 
-2026-10-26 [DEV2 PF04 측정 profile B 도구(S1)](dev2-pf04-profile-b-s1-20261026.md): controller slot gate·supervisor/환경 판정기·`slot-env-v1`을 구현하고 K0-005 계약에 등록했다. source별 선택 검증과 실제 native 연결(r1 장치 이름 실패 뒤 r2 `TOOL_CONNECTED`)을 마쳤다. C3·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
+2026-10-26 [DEV2 PF04 측정 profile B 도구(S1)](dev2-pf04-profile-b-s1-20261026.md) · [source별 기록](dev2-pf04-profile-b-s1-20261026.json): controller slot gate·supervisor/환경 판정기·`slot-env-v1`을 구현하고 K0-005 계약에 등록했다. source별 선택 검증과 실제 native 연결(r1 장치 이름 실패 뒤 r2 `TOOL_CONNECTED`)을 마쳤다. C3·PF04 인수는 NOT_RUN이며 원 PF04 FAIL·DEV2 미완료를 유지한다.
 
 - [DEV3 Catalog 검토 후 읽기 수정과 오류 분기 검증](dev3-catalog-review-fix-20261026.md) · [source별 기록](dev3-catalog-review-fix-20261026.json) — 신규8·변경 source2 PASS, 이전 decoder의 예상 FAIL2 보존.
 
